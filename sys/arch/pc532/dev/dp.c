@@ -49,25 +49,25 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "sys/types.h"
-#include "sys/param.h"
-#include "sys/systm.h"
-#include "sys/errno.h"
-#include "sys/ioctl.h"
-#include "sys/buf.h"
-#include "machine/stdarg.h"
-#include "sys/proc.h"
-#include "sys/user.h"
-#include "sys/dkbad.h"
-#include "sys/disklabel.h"
-#include "scsi/scsi_all.h"
-#include "scsi/scsiconf.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/buf.h>
+#include <machine/stdarg.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/dkbad.h>
+#include <sys/disklabel.h>
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
 
-#include "machine/frame.h"
+#include <machine/frame.h>
+#include <machine/icu.h>
+
 #include "device.h"
 #include "dpreg.h"
-
-#include "../pc532/icu.h"
 
 #define DP_DEBUG 0
 
