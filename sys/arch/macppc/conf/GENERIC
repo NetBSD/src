@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.183 2004/11/10 17:54:05 christos Exp $
+# $NetBSD: GENERIC,v 1.184 2004/11/12 02:23:09 jklos Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.183 $"
+#ident 		"GENERIC-$Revision: 1.184 $"
 
 maxusers	32
 
@@ -249,6 +249,8 @@ trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # Other  PCI devices
 ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+# OFB_ENABLE_CACHE speeds up the console on many machines, but should
+# not be enabled on some older machines, such as the rev. A-D iMacs.
 #options 	OFB_ENABLE_CACHE	# Speed up console
 pciide* at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide* at pci? dev ? function ?	# Acard IDE controllers
@@ -315,10 +317,10 @@ zsc*	at obio?
 zstty*	at zsc? channel ?
 mediabay* at obio?
 wdc*	at mediabay? flags 0
-# awacs is disabled because on some systems--e.g., a 350MHz G4 GigE--
-# it may generate interrupt storms, rendering the machine unusable.
-# If you uncomment this, you'll also want to uncomment "audio* at awacs?"
-# below.
+# awacs is disabled because on most systems (7300 - 9600 PowerMacs,
+# many kinds of G4s), very heavy load can cause the machine to lock
+# up. ONLY enable this if your machine is never under heavy load, or
+# you'd rather have audio than worry about occasional lockups.
 #awacs*	at obio?			# Apple audio device
 #ki2c*	at obio?			# Keywest I2C
 wi*	at obio?			# AirMac
