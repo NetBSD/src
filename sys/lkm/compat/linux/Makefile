@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2000/12/14 18:40:14 mycroft Exp $
+#	$NetBSD: Makefile,v 1.13 2001/01/10 02:29:42 fvdl Exp $
 
 .include "../Makefile.inc"
 
@@ -27,7 +27,7 @@ SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
 	linux_sched.c linux_sigaction.c linux_sigarray.c linux_signal.c \
 	linux_socket.c linux_termios.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
-SRCS+=	linux_fdio.c linux_hdio.c
+SRCS+=	linux_fdio.c linux_hdio.c linux_blkio.c
 
 # emul_find() and friends - symbols are redefined to linux_FOO()
 .PATH: $S/compat/common
