@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.354 2001/09/04 20:51:44 thorpej Exp $
+$NetBSD: pcidevs,v 1.355 2001/09/05 13:46:51 drochner Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -544,6 +544,7 @@ vendor ANTARES		0x1754	Antares Microsystems, Inc.
 vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor LAVA		0x1407	Lava Semiconductor Manufacturing, Inc.
+vendor FZJZEL		0x1796	FZ Juelich / ZEL
 vendor 3DLABS		0x3d3d	3D Labs
 vendor AVANCE2		0x4005	Avance Logic (2nd PCI Vendor ID)
 vendor ADDTRON		0x4033	Addtron Technology
@@ -856,6 +857,9 @@ product AUREAL AU8820		0x0001  AU8820 Vortex Digital Audio Processor
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
 product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
+product AMCIRCUITS CAMAC	0x812d	FZJ/ZEL CAMAC controller
+product AMCIRCUITS VICBUS	0x812e	FZJ/ZEL VICBUS interface
+product AMCIRCUITS PCISYNC	0x812f	FZJ/ZEL Synchronisation module
 product AMCIRCUITS S5920	0x5920  S5920 PCI Target
 
 /* Atronics products */
@@ -1115,6 +1119,13 @@ product FORTEMEDIA	FM801	0x0801	Forte Media 801 Sound
 
 /* Future Domain products */
 product FUTUREDOMAIN TMC_18C30	0x0000	TMC-18C30 (36C70)
+
+/* FZ Juelich / ZEL products */
+product FZJZEL	GIGALINK	0x0001	Gigabit link / STR1100
+product FZJZEL	PLXHOTLINK	0x0002	HOTlink interface
+product FZJZEL	PLXCAMAC	0x0004	CAMAC controller
+product FZJZEL	PROFIBUS	0x0005	PROFIBUS interface
+product FZJZEL	AMCCHOTLINK	0x0006	old HOTlink interface
 
 /* Efficient Networks products */
 product EFFICIENTNETS ENI155PF	0x0000	155P-MF1 ATM (FPGA)
