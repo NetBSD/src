@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_core.h,v 1.3 2000/07/01 01:39:01 wiz Exp $	*/
+/* $SourceForge: bktr_core.h,v 1.3 2003/03/11 23:11:23 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp */
+/*	$NetBSD: bktr_core.h,v 1.4 2003/03/12 00:14:41 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp$ */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -51,13 +52,13 @@
  */
 
 
-int		i2cWrite( bktr_ptr_t bktr, int addr, int byte1, int byte2 );
-int		i2cRead( bktr_ptr_t bktr, int addr );
+int		i2cWrite(bktr_ptr_t bktr, int addr, int byte1, int byte2);
+int		i2cRead(bktr_ptr_t bktr, int addr);
 
-void            msp_dpl_reset( bktr_ptr_t bktr, int i2d_addr );
-unsigned int    msp_dpl_read( bktr_ptr_t bktr, int i2c_addr, unsigned char dev, unsigned int addr );
-void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
-			       unsigned int addr, unsigned int data );
+void            msp_dpl_reset(bktr_ptr_t bktr, int i2d_addr);
+unsigned int    msp_dpl_read(bktr_ptr_t bktr, int i2c_addr, unsigned char dev, unsigned int addr);
+void            msp_dpl_write(bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
+			       unsigned int addr, unsigned int data);
 
 
 /*
@@ -65,8 +66,8 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
  *   For /dev/bktr[n] use memory address of bktr structure
  *   For /dev/vbi[n] use memory address of bktr structure + 1
  *                   this is ok as the bktr structure is > 1 byte
- */                 
-#define BKTR_SLEEP  ((caddr_t)bktr    )
+ */
+#define BKTR_SLEEP  ((caddr_t)bktr)
 #define VBI_SLEEP   ((caddr_t)bktr + 1)
 
 
@@ -74,25 +75,25 @@ void            msp_dpl_write( bktr_ptr_t bktr, int i2c_addr, unsigned char dev,
 const char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
-void	common_bktr_attach( bktr_ptr_t bktr, int unit,
-			u_long pci_id, u_int rev ); 
-int	common_bktr_intr( void *arg );
+void	common_bktr_attach(bktr_ptr_t bktr, int unit,
+			u_long pci_id, u_int rev);
+int	common_bktr_intr(void *arg);
 
 
 /* Prototypes for open, close, read, mmap and ioctl calls */
-int	video_open( bktr_ptr_t bktr ); 
-int	video_close( bktr_ptr_t bktr );
-int	video_read( bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio );
-int	video_ioctl( bktr_ptr_t bktr, int unit,
-			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr );
+int	video_open(bktr_ptr_t bktr);
+int	video_close(bktr_ptr_t bktr);
+int	video_read(bktr_ptr_t bktr, int unit, dev_t dev, struct uio *uio);
+int	video_ioctl(bktr_ptr_t bktr, int unit,
+			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr);
 
 
-int	tuner_open( bktr_ptr_t bktr );
-int	tuner_close( bktr_ptr_t bktr );
-int	tuner_ioctl( bktr_ptr_t bktr, int unit,
-			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr );
+int	tuner_open(bktr_ptr_t bktr);
+int	tuner_close(bktr_ptr_t bktr);
+int	tuner_ioctl(bktr_ptr_t bktr, int unit,
+			ioctl_cmd_t cmd, caddr_t arg, struct proc* pr);
 
-int	vbi_open( bktr_ptr_t bktr );
-int	vbi_close( bktr_ptr_t bktr );
-int	vbi_read( bktr_ptr_t bktr, struct uio *uio, int ioflag );
+int	vbi_open(bktr_ptr_t bktr);
+int	vbi_close(bktr_ptr_t bktr);
+int	vbi_read(bktr_ptr_t bktr, struct uio *uio, int ioflag);
 

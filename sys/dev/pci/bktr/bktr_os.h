@@ -1,6 +1,7 @@
-/*	$NetBSD: bktr_os.h,v 1.5 2001/03/16 19:32:35 ross Exp $	*/
+/* $SourceForge: bktr_os.h,v 1.3 2003/03/11 23:11:26 thomasklausner Exp $ */
 
-/* FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp */
+/*	$NetBSD: bktr_os.h,v 1.6 2003/03/12 00:14:41 wiz Exp $	*/
+/* $FreeBSD: src/sys/dev/bktr/bktr_os.h,v 1.4 2000/04/16 07:56:58 roger Exp$ */
 
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -13,7 +14,7 @@
  */
 
 /*
- * 1. Redistributions of source code must retain the 
+ * 1. Redistributions of source code must retain the
  * Copyright (c) 1997 Amancio Hasty, 1999 Roger Hardiman
  * All rights reserved.
  *
@@ -29,7 +30,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by Amancio Hasty and
  *      Roger Hardiman
- * 4. The name of the author may not be used to endorse or promote products 
+ * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -50,7 +51,7 @@
 /* *** Memory Allocation  *** */
 /******************************/
 #if (defined(__FreeBSD__) || defined(__bsdi__))
-vm_offset_t     get_bktr_mem( int unit, unsigned size );
+vm_offset_t     get_bktr_mem(int unit, unsigned size);
 #endif
 
 #if defined(__NetBSD__)
