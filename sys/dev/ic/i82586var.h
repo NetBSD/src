@@ -1,4 +1,40 @@
-/*	$NetBSD: i82586var.h,v 1.6 1998/01/06 04:55:53 perry Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.7 1998/01/10 02:35:33 pk Exp $	*/
+
+/*-
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Paul Kranenburg.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -62,6 +98,9 @@
  * This sun version based on i386 version 1.30.
  */
 
+#define I82586_DEBUG 1
+
+/* Debug elements */
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
 #define	IED_RNR		0x04
@@ -76,12 +115,13 @@
 #define	ETHER_ADDR_LEN	6
 
 #define B_PER_F		3		/* recv buffers per frame */
-#define MAXFRAMES	300		/* max number of recv frames */
-#define	MAXRXBUF	(MAXFRAMES*B_PER_F) /* number of buffers to allocate */
 #define	IE_RBUF_SIZE	256		/* size of each receive buffer;
 						MUST BE POWER OF TWO */
 #define	NTXBUF		2		/* number of transmit commands */
 #define	IE_TBUF_SIZE	ETHER_MAX_LEN	/* length of transmit buffer */
+
+#define IE_MAXMCAST	(IE_TBUF_SIZE/6)/* must fit in transmit buffer */
+
 
 #define INTR_ENTER	0		/* intr hook called on ISR entry */
 #define INTR_EXIT	1		/* intr hook called on ISR exit */
@@ -89,126 +129,139 @@
 
 #define CHIP_PROBE	0		/* reset called from chip probe */
 #define CARD_RESET	1		/* reset called from card reset */
+
 /*
  * Ethernet status, per interface.
  *
- * hardware addresses/sizes to know (all KVA):
- *   sc_iobase = base of chip's 24 bit address space
- *   sc_maddr  = base address of chip RAM as stored in ie_base of iscp
- *   sc_msize  = size of chip's RAM
- *   sc_reg    = address of card dependent registers
+ * The chip uses two types of pointers: 16 bit and 24 bit
+ *   24 bit pointers cover the board's memory.
+ *   16 bit pointers are offsets from the ISCP's `ie_base'
  *
- * the chip uses two types of pointers: 16 bit and 24 bit
- *   16 bit pointers are offsets from sc_maddr/ie_base
- *      KVA(16 bit offset) = offset + sc_maddr
- *   24 bit pointers are offset from sc_iobase in KVA
- *      KVA(24 bit address) = address + sc_iobase
+ * The board's memory is represented by the bus handle `bh'. The MI
+ * i82586 driver deals exclusively with offsets relative to the
+ * board memory bus handle. The `ie_softc' fields below that are marked
+ * `MD' are in the domain of the front-end driver; they opaque to the
+ * MI driver part.
  *
- * on the vme/multibus we have the page map to control where ram appears
- * in the address space.   we choose to have RAM start at 0 in the
- * 24 bit address space.   this means that sc_iobase == sc_maddr!
- * to get the phyiscal address of the board's RAM you must take the
- * top 12 bits of the physical address of the register address
- * and or in the 4 bits from the status word as bits 17-20 (remember that
- * the board ignores the chip's top 4 address lines).
- * For example:
- *   if the register is @ 0xffe88000, then the top 12 bits are 0xffe00000.
- *   to get the 4 bits from the the status word just do status & IEVME_HADDR.
- *   suppose the value is "4".   Then just shift it left 16 bits to get
- *   it into bits 17-20 (e.g. 0x40000).    Then or it to get the
- *   address of RAM (in our example: 0xffe40000).   see the attach routine!
+ * The front-end is required to manage the SCP and ISCP structures. i.e.
+ * allocate room for them on the board's memory, and arrange to point the
+ * chip at the SCB stucture, the offset of which is passed to the MI
+ * driver in `sc_scb'.
  *
- * on the onboard ie interface the 24 bit address space is hardwired
- * to be 0xff000000 -> 0xffffffff of KVA.   this means that sc_iobase
- * will be 0xff000000.   sc_maddr will be where ever we allocate RAM
- * in KVA.    note that since the SCP is at a fixed address it means
- * that we have to allocate a fixed KVA for the SCP.
+ * The following functions provide the glue necessary to deal with
+ * host and bus idiosyncracies:
+ *
+ *	hwreset		- board reset
+ *	hwinit		- board initialization
+ *	chan_attn	- get chip to look at prepared commands
+ *	intrhook	- board dependent interrupt processing
+ *
+ *	All of the following shared-memory access function use an offset
+ *	relative to the bus handle to indicate the shared memory location.
+ *	The bus_{read/write}N function take or return offset into the
+ *	shared memory in the host's byte-order.
+ *
+ *	memcopyin	- copy device memory: board to KVA
+ *	memcopyout	- copy device memory: KVA to board
+ *	bus_read16	- read a 16-bit i82586 pointer
+			  `offset' argument will be 16-bit aligned
+ *	bus_write16	- write a 16-bit i82586 pointer
+			  `offset' argument will be 16-bit aligned
+ *	bus_write24	- write a 24-bit i82586 pointer
+			  `offset' argument will be 32-bit aligned
+ *
  */
 
 struct ie_softc {
 	struct device sc_dev;   /* device structure */
 
-	bus_space_tag_t bt;	/* bus-space tag of card memory */
+	bus_space_tag_t	bt;	/* bus-space tag of card memory */
 	bus_space_handle_t bh;	/* bus-space handle of card memory */
 
-	caddr_t sc_iobase;      /* KVA of base of 24 bit addr space */
-	caddr_t sc_maddr;       /* KVA of base of chip's RAM (16bit addr sp.)*/
-	u_int sc_msize;         /* how much RAM we have/use */
-	caddr_t sc_reg;         /* KVA of car's register */
+	void	*sc_iobase;	/* (MD) KVA of base of 24 bit addr space */
+	void	*sc_maddr;	/* (MD) KVA of base of chip's RAM
+				   (16bit addr space) */
+	u_int	sc_msize;	/* (MD) how much RAM we have/use */
+	void	*sc_reg;	/* (MD) KVA of car's register */
 
-	struct ethercom sc_ethercom;	/* system ethercom structure */
-	struct ifmedia sc_media;	/* supported media information */
+	struct	ethercom sc_ethercom;	/* system ethercom structure */
+	struct	ifmedia sc_media;	/* supported media information */
 
-	void (*hwreset) __P((struct ie_softc *, int));
-				/* card dependent reset function */
-	void (*hwinit) __P((struct ie_softc *));
-				/* card dependent "go on-line" function */
-	void (*chan_attn) __P((struct ie_softc *));
-				/* card dependent attn function */
-	void (*memcopy) __P((const void *, void *, u_int));
-	                        /* card dependent memory copy function */
-        void (*memzero) __P((void *, u_int));
-	                        /* card dependent memory zero function */
-	caddr_t (*align) __P((caddr_t));
-	                        /* arch dependent alignment function */
-	int (*intrhook) __P((struct ie_softc *, int where));
-	                        /* card dependent interrupt handling */
+	/* Bus glue */
+	void	(*hwreset) __P((struct ie_softc *, int));
+	void	(*hwinit) __P((struct ie_softc *));
+	void	(*chan_attn) __P((struct ie_softc *));
+	int	(*intrhook) __P((struct ie_softc *, int where));
 
+	void	(*memcopyin) __P((struct ie_softc *, void *, int, size_t));
+	void	(*memcopyout) __P((struct ie_softc *, const void *,
+				   int, size_t));
+	u_int16_t (*ie_bus_read16) __P((struct ie_softc *, int offset));
+	void	(*ie_bus_write16) __P((struct ie_softc *, int offset,
+					u_int16_t value));
+	void	(*ie_bus_write24) __P((struct ie_softc *, int offset,
+					int addr));
+
+	/* Media management */
         int  (*sc_mediachange) __P((struct ie_softc *));
 				/* card dependent media change */
         void (*sc_mediastatus) __P((struct ie_softc *, struct ifmediareq *));
 				/* card dependent media status */
 
-	int do_xmitnopchain;	/* Controls use of xmit NOP chains */
-	int want_mcsetup;       /* mcsetup flag */
-	int promisc;            /* are we in promisc mode? */
 
 	/*
-	 * pointers to the 3 major control structures
+	 * Offsets (relative to bus handle) of the i82586 SYSTEM structures.
 	 */
-
-	volatile struct ie_sys_conf_ptr *scp;
-	volatile struct ie_int_sys_conf_ptr *iscp;
-	volatile struct ie_sys_ctl_block *scb;
+	int	scp;		/* Offset to the SCP (set by front-end) */
+	int	iscp;		/* Offset to the ISCP (set by front-end) */
+	int	scb;		/* Offset to SCB (set by front-end) */
 
 	/*
-	 * pointer and size of a block of KVA where the buffers
-	 * are to be allocated from
+	 * Offset and size of a block of board memory where the buffers
+	 * are to be allocated from (initialized by front-end).
 	 */
-
-	caddr_t buf_area;
-	int buf_area_sz;
+	int	buf_area;	/* Start of descriptors and buffers */
+	int	buf_area_sz;	/* Size of above */
 
 	/*
-	 * the actual buffers (recv and xmit)
+	 * The buffers & descriptors (recv and xmit)
 	 */
+	int	rframes;	/* Offset to `nrxbuf' frame descriptors */
+	int	rbds;		/* Offset to `nrxbuf' buffer descriptors */
+	int	rbufs;		/* Offset to `nrxbuf' receive buffers */
+#define IE_RBUF_ADDR(sc, i)	(sc->rbufs + ((i) * IE_RBUF_SIZE))
+        int	rfhead, rftail;
+	int	rbhead, rbtail;
+	int	nframes;	/* number of frames in use */
+	int	nrxbuf;		/* number of recv buffs in use */
+	int	rnr_expect;	/* XXX - expect a RCVR not ready interrupt */
 
-	volatile struct ie_recv_frame_desc *rframes[MAXFRAMES];
-	volatile struct ie_recv_buf_desc *rbuffs[MAXRXBUF];
-	volatile char *cbuffs[MAXRXBUF];
-        int rfhead, rftail, rbhead, rbtail;
+	int	nop_cmds;	/* Offset to NTXBUF no-op commands */
+	int	xmit_cmds;	/* Offset to NTXBUF transmit commands */
+	int	xbds;		/* Offset to NTXBUF buffer descriptors */
+	int	xbufs;		/* Offset to NTXBUF transmit buffers */
+#define IE_XBUF_ADDR(sc, i)	(sc->xbufs + ((i) * IE_TBUF_SIZE))
 
-	volatile struct ie_cmd_common *nop_cmds[NTXBUF+1];
-	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
-	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
-	u_char *xmit_cbuffs[NTXBUF];
+	int	xchead, xctail;
+	int	xmit_busy;
+	int	do_xmitnopchain;	/* Controls use of xmit NOP chains */
 
-	int xmit_busy;
-	int xchead, xctail;
+	/* Multicast addresses */
+	/*char	mcast_addrs[ETHER_ADDR_LEN * IE_MAXMCAST];*/
+	char	*mcast_addrs;
+	int	mcast_addrs_size;
+	int	mcast_count;
+	int	want_mcsetup;		/* mcsetup flag */
 
-	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
-	int mcast_count;
-
-	int nframes;      /* number of frames in use */
-	int nrxbuf;       /* number of recv buffs in use */
+	int	promisc;		/* are we in promisc mode? */
 
 #ifdef I82586_DEBUG
-	int sc_debug;
+	int	sc_debug;
 #endif
 };
 
-void 	ie_attach 	__P((struct ie_softc *, char *, u_int8_t *, 
-							int*, int, int));
-int 	ieintr 		__P((void *));
-void 	i82586_reset 	__P((struct ie_softc *, int));
-
+/* Exported functions */
+int 	i82586_intr	__P((void *));
+int 	i82586_proberam __P((struct ie_softc *));
+void 	i82586_attach 	__P((struct ie_softc *, char *, u_int8_t *, 
+			     int*, int, int));
