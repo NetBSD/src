@@ -1,7 +1,7 @@
-/*	$NetBSD: setlocale_sb.c,v 1.4 2000/12/21 11:29:48 itojun Exp $	*/
+/*	$NetBSD: rune_local.h,v 1.1 2000/12/21 11:29:47 itojun Exp $	*/
 
 /*-
- * Copyright (c)1999 Citrus Project,
+ * Copyright (c) 2000 Citrus Project,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,30 +24,24 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	Id: setlocale_sb.c,v 1.4 2000/01/25 14:24:22 cvscitrus Exp
  */
 
+/* rune.c */
+extern _RuneLocale *_Read_RuneMagi __P((FILE *fp));
+extern _RuneLocale *_Read_CTypeAsRune __P((FILE *fp));
+extern void _NukeRune __P((_RuneLocale *));
 
-#include <sys/cdefs.h>
-#include "namespace.h"
-#define __SETLOCALE_SOURCE__
-#include <locale.h>
-#include "runetype.h"
+/* setrunelocale.c */
+extern int _xpg4_setrunelocale __P((char *));
+extern _RuneLocale *_findrunelocale __P((char *));
+extern int _newrunelocale __P((char *));
 
-__warn_references(setlocale,
-    "warning: reference to compatibility setlocale(); include <locale.h> for correct reference")
+/* runeglue.c */
+extern int __runetable_to_netbsd_ctype __P((void));
 
-/*
- * Preparation for the future import of multibyte locale.
- * This function will ensure binary compatibility for old executables.
- */
-char *
-setlocale(category, locale)
-	int category;
-	const char *locale;
-{
-
-	__mb_len_max_runtime = 1;
-	return __setlocale(category, locale);
-}
+/* multibyte.c */
+int _mbsinit_rl __P((const mbstate_t *, _RuneLocale *));
+size_t _mbsrtowcs_rl __P((wchar_t *, const char **, size_t, mbstate_t *,
+	_RuneLocale *));
+size_t _wcsrtombs_rl __P((char *, const wchar_t **, size_t, mbstate_t *,
+	_RuneLocale *));

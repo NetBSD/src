@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale.c,v 1.23 2000/12/20 11:48:58 itojun Exp $	*/
+/*	$NetBSD: setlocale.c,v 1.24 2000/12/21 11:29:47 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)setlocale.c	8.1 (Berkeley) 7/4/93";
 #else
-__RCSID("$NetBSD: setlocale.c,v 1.23 2000/12/20 11:48:58 itojun Exp $");
+__RCSID("$NetBSD: setlocale.c,v 1.24 2000/12/21 11:29:47 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,8 @@ __RCSID("$NetBSD: setlocale.c,v 1.23 2000/12/20 11:48:58 itojun Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "ctypeio.h"
+#include "rune.h"
+#include "rune_local.h"
 
 /*
  * Category names for getenv()
@@ -87,6 +88,7 @@ static char current_categories[_LC_LAST][32] = {
 };
 
 size_t __mb_cur_max = 1;
+size_t __mb_len_max_runtime = MB_LEN_MAX;
 
 /*
  * The locales we are going to try and load
@@ -99,7 +101,7 @@ static char new_categories[_LC_LAST][32];
 static char saved_categories[_LC_LAST][32];
 
 static char current_locale_string[_LC_LAST * 33];
-static char *PathLocale;
+char *_PathLocale;
 
 static char	*currentlocale __P((void));
 static char	*loadlocale __P((int));
@@ -109,13 +111,22 @@ __setlocale_mb_len_max_32(category, locale)
 	int category;
 	const char *locale;
 {
+	__mb_len_max_runtime = 32;
+	return __setlocale(category, locale);
+}
+
+char *
+__setlocale(category, locale)
+	int category;
+	const char *locale;
+{
 	int i, j;
 	size_t len;
 	char *env, *r;
 
 	if (issetugid() ||
-	    (!PathLocale && !(PathLocale = getenv("PATH_LOCALE"))))
-		PathLocale = _PATH_LOCALE;
+	    (!_PathLocale && !(_PathLocale = getenv("PATH_LOCALE"))))
+		_PathLocale = _PATH_LOCALE;
 
 	if (category < 0 || category >= _LC_LAST)
 		return (NULL);
@@ -257,6 +268,7 @@ loadlocale(category)
 				free((void *)_tolower_tab_);
 				_tolower_tab_ = _C_tolower_;
 			}
+			(void)_xpg4_setrunelocale("C");
 		}
 
 		(void)strlcpy(current_categories[category],
@@ -269,16 +281,18 @@ loadlocale(category)
 	 * Some day we will actually look at this file.
 	 */
 	(void)snprintf(name, sizeof(name), "%s/%s/%s",
-	    PathLocale, new_categories[category], categories[category]);
+	    _PathLocale, new_categories[category], categories[category]);
 
 	switch (category) {
 	case LC_CTYPE:
-		if (__loadctype(name)) {
+		if (!_xpg4_setrunelocale(new_categories[category]) &&
+		    !__runetable_to_netbsd_ctype()) {
 			(void)strlcpy(current_categories[category],
 			    new_categories[category],
 			    sizeof(current_categories[category]));
 			return current_categories[category];
-		}
+		} else
+			return __setlocale(LC_CTYPE, "C");
 		return NULL;
 
 	case LC_COLLATE:
