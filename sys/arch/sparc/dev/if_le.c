@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 1995/04/09 12:36:22 pk Exp $ */
+/*	$NetBSD: if_le.c,v 1.20 1995/04/12 08:47:21 pk Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -867,10 +867,8 @@ leioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			(void)leinit(ifp->if_unit);	/* before arpwhohas */
-			((struct arpcom *)ifp)->ac_ipaddr =
-				IA_SIN(ifa)->sin_addr;
-			arpwhohas((struct arpcom *)ifp, &IA_SIN(ifa)->sin_addr);
+			(void)leinit(ifp->if_unit);
+			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif
 #ifdef NS
