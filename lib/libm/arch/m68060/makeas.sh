@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: makeas.sh,v 1.2 1999/08/21 21:04:19 is Exp $
+# $NetBSD: makeas.sh,v 1.3 1999/08/22 08:25:43 is Exp $
 
 # Copyright (c) 1999 Ignatios Souvatzis
 # All rights reserved.
@@ -138,8 +138,8 @@ mk	atan			0038	s_atan
 mks	__ieee754_atanhf	0048	e_atanhf
 mk	__ieee754_atanh		0050	e_atanh
 linebreak
-mks	cosf			0060	s_cosf k_cosf
-mk	cos			0068	s_cos k_cos
+mks	cosf			0060	s_cosf
+mk	cos			0068	s_cos
 mks	__ieee754_coshf		0078	e_coshf
 mk	__ieee754_cosh		0080	e_cosh
 linebreak
@@ -158,8 +158,8 @@ mk	__ieee754_log		0128	e_log
 mks	log1pf			0138	s_log1pf
 mk	log1p			0140	s_log1p
 linebreak
-mks	sinf			0198	s_sinf k_sinf
-mk	sin			01a0	s_sin k_sin
+mks	sinf			0198	s_sinf
+mk	sin			01a0	s_sin
 mks	__ieee754_sinhf		01c8	e_sinhf
 mk	__ieee754_sinh		01d0	e_sinh
 linebreak
