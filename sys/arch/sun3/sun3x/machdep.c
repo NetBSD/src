@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 1997/04/09 21:00:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 1997/04/25 18:52:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -92,9 +92,9 @@
 #include <machine/dvma.h>
 #include <machine/kcore.h>
 #include <machine/db_machdep.h>
+#include <machine/idprom.h>
 #include <machine/machdep.h>
 
-extern char *cpu_string;
 extern char version[];
 
 /* Defined in locore.s */
@@ -105,6 +105,7 @@ extern char etext[];
 int	physmem;
 int	fputype;
 int	msgbufmapped;
+struct msgbuf *msgbufp;
 
 vm_offset_t vmmap;
 
@@ -129,18 +130,24 @@ int	bufpages = BUFPAGES;
 int	bufpages = 0;
 #endif
 
+unsigned char cpu_machine_id = 0;
+char *cpu_string = NULL;
+int cpu_has_vme = 0;
+int has_iocache = 0;
+
 static void identifycpu __P((void));
 static void initcpu __P((void));
 
 /*
  * Console initialization: called early on from main,
- * before vm init or startup.  Do enough configuration
- * to choose and initialize a console.
+ * before vm init or cpu_startup.  This system is able
+ * to setup the console much earlier than here (thanks
+ * to some help from the PROM monitor) so all that is
+ * left to do here is the debugger stuff.
  */
 void
 consinit()
 {
-	cninit();	/* See dev/zs.c */
 
 #ifdef KGDB
 	/* XXX - Ask on console for kgdb_dev? */
@@ -407,20 +414,51 @@ setregs(p, pack, stack, retval)
  */
 char	machine[] = "sun3x";		/* cpu "architecture" */
 char	cpu_model[120];
-extern	long hostid;
+
+/*
+ * XXX - Should empirically estimate the divisor...
+ * Note that the value of delay_divisor is roughly
+ * 2048 / cpuclock	(where cpuclock is in MHz).
+ */
+int delay_divisor = 82;		/* assume the fastest (3/260) */
 
 void
 identifycpu()
 {
-    /*
-     * actual identification done earlier because i felt like it,
-     * and i believe i will need the info to deal with some VAC, and awful
-     * framebuffer placement problems.  could be moved later.
-     */
-	strcpy(cpu_model, "Sun 3/");
+	unsigned char machtype;
 
-    /* should eventually include whether it has a VAC, mc6888x version, etc */
-	strcat(cpu_model, cpu_string);
+	/* Find the IDPROM and copy it to memory. */
+	/* Note: this needs to use peek_byte(). */
+	idprom_init();
+
+	machtype = identity_prom.idp_machtype;
+	if ((machtype & CPU_ARCH_MASK) != SUN3X_ARCH) {
+		printf("not a sun3x?\n");
+		sunmon_abort();
+	}
+
+	cpu_machine_id = machtype & SUN3X_IMPL_MASK;
+	switch (cpu_machine_id) {
+
+	case SUN3X_MACH_80:
+		cpu_string = "80";  	/* Hydra */
+		delay_divisor = 102;	/* 20 MHz ? XXX */
+		cpu_has_vme = FALSE;
+		break;
+
+	case SUN3X_MACH_470:
+		cpu_string = "470"; 	/* Pegasus */
+		delay_divisor = 62; 	/* 33 MHz */
+		cpu_has_vme = TRUE;
+		break;
+
+	default:
+		printf("unknown sun3x model\n");
+		sunmon_abort();
+	}
+
+	/* Other stuff? (VAC, mc6888x version, etc.) */
+	sprintf(cpu_model, "Sun 3/%s", cpu_string);
 
 	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
 }
@@ -533,7 +571,17 @@ cpu_reboot(howto, user_boot_string)
 	if (howto & RB_HALT) {
 	haltsys:
 		printf("Kernel halted.\n");
-		sunmon_halt();
+#if 0
+		/*
+		 * This calls the PROM monitor "exit_to_mon" function
+		 * which appears to have problems...  SunOS uses the
+		 * "abort" function when you halt (bug work-around?)
+		 * so we might as well do the same.
+		 */
+		sunmon_halt(); /* provokes PROM monitor bug */
+#else
+		sunmon_abort();
+#endif
 	}
 
 	/*
@@ -740,7 +788,7 @@ initcpu()
 /* straptrap() in trap.c */
 
 /* from hp300: badaddr() */
-/* peek_byte(), peek_word() moved to autoconf.c */
+/* peek_byte(), peek_word() moved to bus_subr.c */
 
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
