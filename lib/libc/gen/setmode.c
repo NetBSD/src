@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $	*/
+/*	$NetBSD: setmode.c,v 1.16 1997/07/13 19:18:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: setmode.c,v 1.15 1997/02/07 22:21:06 christos Exp $";
+__RCSID("$NetBSD: setmode.c,v 1.16 1997/07/13 19:18:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -178,7 +179,8 @@ setmode(p)
 	BITCMD *set, *saveset, *endset;
 	sigset_t sigset, sigoset;
 	mode_t mask;
-	int equalopdone, permXbits, setlen;
+	int equalopdone = 0;	/* pacify gcc */
+	int permXbits, setlen;
 
 	if (!*p)
 		return (NULL);
