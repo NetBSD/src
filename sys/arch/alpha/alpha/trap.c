@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.81 2003/08/24 17:52:29 chs Exp $ */
+/* $NetBSD: trap.c,v 1.82 2003/09/18 05:26:41 skd Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/08/24 17:52:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2003/09/18 05:26:41 skd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2003/08/24 17:52:29 chs Exp $");
 #include <sys/user.h>
 #include <sys/syscall.h>
 #include <sys/buf.h>
+#include <sys/ptrace.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -320,11 +321,20 @@ trap(const u_long a0, const u_long a1, const u_long a2, const u_long entry,
 		case ALPHA_IF_CODE_GENTRAP:
 			if (framep->tf_regs[FRAME_A0] == -2) { /* weird! */
 				i = SIGFPE;
-				ucode =  a0;	/* exception summary */
-				break;
+			} else {
+				i = SIGTRAP;
+			}
+			ucode = a0;		/* trap type */
+			break;
+
+		case ALPHA_IF_CODE_BPT:
+			if (l->l_md.md_flags & (MDP_STEP1|MDP_STEP2)) {
+				KERNEL_PROC_LOCK(l);
+				process_sstep(l,0);
+				l->l_md.md_tf->tf_regs[FRAME_PC] -= 4;
+				KERNEL_PROC_UNLOCK(l);
 			}
 			/* FALLTHROUTH */
-		case ALPHA_IF_CODE_BPT:
 		case ALPHA_IF_CODE_BUGCHK:
 			ucode = a0;		/* trap type */
 			i = SIGTRAP;
