@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf2aout.1,v 1.6 2000/07/05 15:45:31 msaitoh Exp $
+.\"	$NetBSD: elf2aout.1,v 1.7 2001/12/01 19:05:04 wiz Exp $
 .\"
 .\" Copyright 1996 The Board of Trustees of The Leland Stanford
 .\" Junior University. All Rights Reserved.
@@ -37,16 +37,21 @@ utilities like
 and
 .Xr kvm_mkdb 8 ,
 which currently expect an a.out format kernel.
-.Pp
 .\" .Sh DIAGNOSTICS
-.Pp
 .Sh SEE ALSO
 .Xr elf2ecoff 1 ,
 .Xr ld 1 ,
+.Xr kvm 3 ,
 .Xr a.out 5 ,
 .Xr elf 5 ,
-.Xr kvm 3 ,
 .Xr kvm_mkdb 8
+.Sh HISTORY
+.Nm
+was originally developed for
+.Nx Ns Tn /pmax
+by Ted Lemon
+and was first distributed with the pmax port of
+.Nx 1.1 .
 .Sh BUGS
 .Nm
 assumes there are no multiply-referenced symbols in the input ELF symbol
@@ -58,10 +63,3 @@ In some environments, the GNU binutils
 .Xr objcopy 1
 utility may be a better solution than
 .Nm "" .
-.Sh HISTORY
-.Nm
-was originally developed for
-.Nx Ns Tn /pmax
-by Ted Lemon
-and was first distributed with the pmax port of
-.Nx 1.1 .
