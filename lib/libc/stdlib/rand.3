@@ -1,4 +1,4 @@
-.\"	$NetBSD: rand.3,v 1.3 1995/12/28 08:52:39 thorpej Exp $
+.\"	$NetBSD: rand.3,v 1.4 1997/07/15 00:42:01 kleink Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -42,14 +42,17 @@
 .Os
 .Sh NAME
 .Nm rand ,
-.Nm srand
+.Nm srand ,
+.Nm rand_r
 .Nd bad random number generator
 .Sh SYNOPSIS
 .Fd #include <stdlib.h>
 .Ft void
-.Fn srand "unsigned seed"
+.Fn srand "unsigned int seed"
 .Ft int
 .Fn rand void
+.Ft int
+.Fn rand_r "unsigned int *seed"
 .Sh DESCRIPTION
 .Bf -symbolic
 These interfaces are obsoleted by random(3).
@@ -72,8 +75,15 @@ These sequences are repeatable by calling
 .Fn srand
 with the same seed value.
 .Pp
-If no seed value is provided, the functions are automatically
-seeded with a value of 1.
+If no seed value is provided, the
+.Fn rand
+function is automatically seeded with a value of 1.
+.Pp
+The
+.Fn rand_r
+function is a reentrant interface to
+.Fn rand ;
+the seed has to be supplied and is maintained by the caller.
 .Sh SEE ALSO
 .Xr random 3
 .Sh STANDARDS
@@ -84,3 +94,7 @@ and
 functions
 conform to
 .St -ansiC .
+The
+.Fn rand_r
+function conforms to
+.St -p1003.1c-95 .
