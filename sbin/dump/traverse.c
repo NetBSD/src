@@ -1,4 +1,4 @@
-/*	$NetBSD: traverse.c,v 1.21 1998/08/25 19:18:14 ross Exp $	*/
+/*	$NetBSD: traverse.c,v 1.22 1998/12/28 13:38:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)traverse.c	8.7 (Berkeley) 6/15/95";
 #else
-__RCSID("$NetBSD: traverse.c,v 1.21 1998/08/25 19:18:14 ross Exp $");
+__RCSID("$NetBSD: traverse.c,v 1.22 1998/12/28 13:38:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -149,6 +149,11 @@ mapfileino(ino, tapesize, dirskipped)
 	int mode;
 	struct dinode *dp;
 
+	/*
+	 * Skip inode if we've already marked it for dumping
+	 */
+	if (TSTINO(ino, usedinomap))
+		return;
 	dp = getino(ino);
 	if ((mode = (dp->di_mode & IFMT)) == 0)
 		return;
