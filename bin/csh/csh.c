@@ -1,4 +1,4 @@
-/*	$NetBSD: csh.c,v 1.24 1998/07/28 11:41:41 mycroft Exp $	*/
+/*	$NetBSD: csh.c,v 1.25 2000/05/31 22:48:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.24 1998/07/28 11:41:41 mycroft Exp $");
+__RCSID("$NetBSD: csh.c,v 1.25 2000/05/31 22:48:44 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -801,7 +801,7 @@ srcunit(unit, onlyown, hflg)
 void
 rechist()
 {
-    Char    buf[BUFSIZ], hbuf[BUFSIZ], *hfile;
+    Char    buf[BUFSIZE], hbuf[BUFSIZE], *hfile;
     int     fp, ftmp, oldidfds;
     struct  varent *shist;
 
@@ -1148,7 +1148,7 @@ dosource(v, t)
 {
     Char *f;
     bool    hflg = 0;
-    Char    buf[BUFSIZ];
+    Char    buf[BUFSIZE];
 
     v++;
     if (*v && eq(*v, STRmh)) {
