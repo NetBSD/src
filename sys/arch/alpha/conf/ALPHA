@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.182 2003/05/04 01:19:17 gmcgarry Exp $
+# $NetBSD: ALPHA,v 1.183 2003/06/01 20:30:49 martin Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.182 $"
+ident		"ALPHA-$Revision: 1.183 $"
 
 maxusers 32
 
@@ -72,6 +72,7 @@ file-system	UMAPFS		# User-mapping file system layer
 file-system	PROCFS		# Process file system (/proc)
 file-system	UNION		# union file system
 file-system	CODA		# CODA distributed file system
+file-system	SMBFS		# experimental - CIFS; also needs nsmb (below)
 
 # File system options
 options 	QUOTA		# User and group quotas for the FFS
@@ -593,6 +594,8 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness too
 # a pseudo device needed for Coda	# also needs CODA (above)
 pseudo-device	vcoda		4	# coda minicache <-> venus comm.
+# a pseudo device needed for SMBFS
+pseudo-device	nsmb			# experimental - SMB requester
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
