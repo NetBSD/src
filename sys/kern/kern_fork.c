@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.114.2.1 2004/08/11 19:56:58 jmc Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.114.2.2 2004/08/12 03:48:29 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.114.2.1 2004/08/11 19:56:58 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.114.2.2 2004/08/12 03:48:29 jmc Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -430,12 +430,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	SCHED_LOCK(s);
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
-	p2->p_nrlwps = 1;
 	if (p1->p_flag & P_STOPFORK) {
+		p2->p_nrlwps = 0;
 		p1->p_nstopchild++;
 		p2->p_stat = SSTOP;
 		l2->l_stat = LSSTOP;
 	} else {
+		p2->p_nrlwps = 1;
 		p2->p_stat = SACTIVE;
 		l2->l_stat = LSRUN;
 		setrunqueue(l2);
