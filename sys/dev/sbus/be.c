@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.23 2000/12/14 07:24:21 thorpej Exp $	*/
+/*	$NetBSD: be.c,v 1.24 2001/01/14 17:38:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -1092,7 +1092,7 @@ beinit(sc)
 	u_int8_t *ea;
 	int s;
 
-	s = splimp();
+	s = splnet();
 
 	qec_meminit(&sc->sc_rb, BE_PKT_BUF_SZ);
 
