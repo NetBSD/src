@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrom.c,v 1.1.2.2 2002/02/28 04:11:54 nathanw Exp $	*/
+/*	$NetBSD: ofrom.c,v 1.1.2.3 2002/04/01 07:42:36 nathanw Exp $	*/
 
 /*
  * Copyright 1998
@@ -202,6 +202,18 @@ ofromrw(dev, uio, flags)
 	return (error);
 }
 
+int
+ofromioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+
+	return (ENOTTY);
+}
+
 paddr_t
 ofrommmap(dev, off, prot)
 	dev_t dev;
@@ -220,5 +232,5 @@ ofrommmap(dev, off, prot)
 	if ((u_int)off >= sc->size)
 		return (-1);
 
-	return arm_byte_to_page(sc->base + off);
+	return arm_btop(sc->base + off);
 }

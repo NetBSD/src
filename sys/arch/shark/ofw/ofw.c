@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.7.2.2 2002/02/28 04:11:54 nathanw Exp $	*/
+/*	$NetBSD: ofw.c,v 1.7.2.3 2002/04/01 07:42:36 nathanw Exp $	*/
 
 /*
  * Copyright 1997
@@ -1254,7 +1254,7 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	pmap_link_l2pt(L1pagetable, 0x0, &proc0_pt_sys);
 	pmap_link_l2pt(L1pagetable, KERNEL_BASE, &proc0_pt_kernel);
-	pmap_link_l2pt(L1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(L1pagetable, PTE_BASE,
 	    &proc0_pt_pte);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_link_l2pt(L1pagetable, KERNEL_VM_BASE + i * 0x00400000,
@@ -1371,33 +1371,37 @@ ofw_construct_proc0_addrspace(proc0_ttbbase, proc0_ptpt)
 
 	/* Map entries in the L2pagetable used to map L2PTs. */
 	pmap_map_entry(L1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    proc0_pt_sys.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(L1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    proc0_pt_kernel.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(L1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    proc0_pt_pte.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_VMDATA_PTS; i++)
 		pmap_map_entry(L1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
+		    PTE_BASE + ((KERNEL_VM_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_vmdata[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_OFW_PTS; i++)
 		pmap_map_entry(L1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((OFW_VIRT_BASE + i * 0x00400000)
+		    PTE_BASE + ((OFW_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_ofw[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (i = 0; i < KERNEL_IO_PTS; i++)
 		pmap_map_entry(L1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((IO_VIRT_BASE + i * 0x00400000)
+		    PTE_BASE + ((IO_VIRT_BASE + i * 0x00400000)
 		    >> (PGSHIFT-2)), proc0_pt_io[i].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_VMDATA_PTS * 0x00400000);
+	
 	/* 
          * gross hack for the sake of not thrashing the TLB and making
 	 * cache flush more efficient: blast l1 ptes for sections.

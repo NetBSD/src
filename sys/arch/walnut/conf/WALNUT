@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.5.6.3 2002/02/28 04:12:34 nathanw Exp $
+#	$NetBSD: WALNUT,v 1.5.6.4 2002/04/01 07:43:34 nathanw Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -16,8 +16,8 @@ maxusers	32
 #options 	MEMORY_DISK_HOOKS
 #options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 #options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=16384	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=1		# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=16384	# size of memory disk, in blocks
+#options 	MEMORY_DISK_SIZE=1		# size of memory disk, in blocks
 
 
 #options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -141,9 +141,9 @@ dsrtc0	at mainbus? addr 0xf0000000
 # time-of-day device via rtc device
 todclock0 at dsrtc?
 
-pci0	at mainbus? bus ?
+pchb0	at mainbus?			# PCI-Host bridges
 
-pchb*	at pci? dev ? function ?	# PCI-Host bridges
+pci*	at pchb?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 
 #de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.47.8.3 2002/02/28 04:09:24 nathanw Exp $	*/
+/*	$NetBSD: dcm.c,v 1.47.8.4 2002/04/01 07:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
 /*
  *  98642/MUX
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.47.8.4 2002/04/01 07:39:50 nathanw Exp $");                                                  
 
 #include "opt_kgdb.h"
 
@@ -990,11 +993,13 @@ dcmioctl(dev, cmd, data, flag, p)
 		printf("%s port %d: dcmioctl: cmd %lx data %x flag %x\n",
 		       sc->sc_dev.dv_xname, port, cmd, *data, flag);
 #endif
+
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -1077,7 +1082,7 @@ dcmioctl(dev, cmd, data, flag, p)
 	}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

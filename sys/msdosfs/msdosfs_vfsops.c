@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.7 2002/02/28 04:14:58 nathanw Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.73.2.8 2002/04/01 07:48:16 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.7 2002/02/28 04:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.73.2.8 2002/04/01 07:48:16 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -578,9 +578,10 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	pmp->pm_fatsize = pmp->pm_FATsecs * pmp->pm_BytesPerSec;
 
 	if (argp->flags & MSDOSFSMNT_GEMDOSFS) {
-		if ((pmp->pm_nmbrofclusters <= (0xff0 - 2))
-		      && ((dtype == DTYPE_FLOPPY) || ((dtype == DTYPE_VNODE)
-		      && ((pmp->pm_Heads == 1) || (pmp->pm_Heads == 2))))
+		if (pmp->pm_nmbrofclusters <= (0xff0 - 2)
+		      && (dtype == DTYPE_FLOPPY
+			  || (dtype == DTYPE_VND
+				&& (pmp->pm_Heads == 1 || pmp->pm_Heads == 2)))
 		    ) {
 			pmp->pm_fatmask = FAT12_MASK;
 			pmp->pm_fatmult = 3;

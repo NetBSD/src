@@ -27,14 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro ISA
  *	=====================================================================
  *
- *	$Id: isic_isapnp_elsa_qs1i.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $
+ *	$Id: isic_isapnp_elsa_qs1i.c,v 1.2.2.2 2002/04/01 07:46:00 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.2 2002/04/01 07:46:00 nathanw Exp $");
 
 #include "opt_isicpnp.h"
 #if defined(ISICPNP_ELSA_QS1ISA) || defined(ISICPNP_ELSA_PCC16)
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.1 2001/11/14 19:14:5
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -83,8 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_elsa_qs1i.c,v 1.2.2.1 2001/11/14 19:14:5
 #ifdef __FreeBSD__
 static void i4b_eq1i_clrirq(void* base);
 #else
-static void i4b_eq1i_clrirq(struct l1_softc *sc);
-void isic_attach_Eqs1pi __P((struct l1_softc *sc));
+static void i4b_eq1i_clrirq(struct isic_softc *sc);
+void isic_attach_Eqs1pi __P((struct isic_softc *sc));
 #endif
 
 /* masks for register encoded in base addr */
@@ -128,7 +129,7 @@ i4b_eq1i_clrirq(void* base)
 
 #else
 static void
-i4b_eq1i_clrirq(struct l1_softc *sc)
+i4b_eq1i_clrirq(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -164,7 +165,7 @@ eqs1pi_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-eqs1pi_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+eqs1pi_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -214,7 +215,7 @@ eqs1pi_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-eqs1pi_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+eqs1pi_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -263,7 +264,7 @@ eqs1pi_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-eqs1pi_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+eqs1pi_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -312,7 +313,7 @@ eqs1pi_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-eqs1pi_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+eqs1pi_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -340,7 +341,7 @@ eqs1pi_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_probe_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -463,7 +464,7 @@ isic_attach_Eqs1pi(struct isa_device *dev, unsigned int iobase2)
 #else /* !__FreeBSD__ */
 
 void
-isic_attach_Eqs1pi(struct l1_softc *sc)
+isic_attach_Eqs1pi(struct isic_softc *sc)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;

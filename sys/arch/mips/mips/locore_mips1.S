@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.53.2.5 2002/01/08 00:26:21 nathanw Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.53.2.6 2002/04/01 07:41:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,8 @@
 #include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+
+#include <sys/cdefs.h>
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
@@ -126,7 +128,7 @@ VECTOR(mips1_exception, unknown)
 	and	k1, k1, MIPS1_CR_EXC_CODE	# mask out the cause bits
 	or	k1, k1, k0			# change index to user table
 1:
-	la	k0, mips1_excausesw		# get base of the jump table
+	la	k0, mips1_excpt_sw		# get base of the jump table
 	addu	k0, k0, k1			# get the address of the
 						#  function entry.  Note that
 						#  the cause is already
@@ -1218,7 +1220,7 @@ _C_LABEL(mips1_locoresw):
 	.word _C_LABEL(mips1_proc_trampoline)
 	.word _C_LABEL(mips_idle)
 
-mips1_excausesw:
+mips1_excpt_sw:
 	####
 	#### The kernel exception handlers.
 	####

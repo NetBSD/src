@@ -1,4 +1,4 @@
-/*	$NetBSD: msm6258var.h,v 1.1.2.2 2001/06/21 20:02:58 nathanw Exp $	*/
+/*	$NetBSD: msm6258var.h,v 1.1.2.3 2002/04/01 07:45:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -33,8 +33,6 @@
 /*
  * OKI MSM6258 ADPCM voice synthesizer codec.
  */
-
-#include <dev/auconv.h>
 
 void *msm6258_codec_init (void);
 void msm6258_ulinear8_to_adpcm (void *, u_char *, int);

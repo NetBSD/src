@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.46.8.4 2002/02/28 04:09:25 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.46.8.5 2002/04/01 07:39:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@
 /*
  * SCSI CCS (Command Command Set) disk driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.46.8.5 2002/04/01 07:39:54 nathanw Exp $");                                                  
 
 #include "rnd.h"
 #include "opt_useleds.h"
@@ -172,11 +175,11 @@ void	sdstrategy __P((struct buf *));
 int	sddump __P((dev_t, daddr_t, caddr_t, size_t));
 int	sdsize __P((dev_t));
 
+static int	sderror __P((struct sd_softc *, int));
+static void	sdfinish __P((struct sd_softc *, struct buf *));
 static void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
 static void 	sdgetgeom __P((struct sd_softc *));
 static void	sdlblkstrat __P((struct buf *, int));
-static int	sderror __P((struct sd_softc *, int));
-static void	sdfinish __P((struct sd_softc *, struct buf *));
 
 /*
  * Perform a mode-sense on page 0x04 (rigid geometry).
@@ -316,6 +319,7 @@ void
 sdreset(sc)
 	struct sd_softc *sc;
 {
+
 	sc->sc_stats.sdresets++;
 }
 
@@ -631,13 +635,15 @@ sdlblkstrat(bp, bsize)
 	int bsize;
 {
 	struct sd_softc *sc = sd_cd.cd_devs[sdunit(bp->b_dev)];
-	struct buf *cbp = (struct buf *)malloc(sizeof(struct buf),
-							M_DEVBUF, M_WAITOK);
-	caddr_t cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
+	struct buf *cbp;
+	caddr_t cbuf;
 	int bn, resid;
 	caddr_t addr;
 
-	memset((caddr_t)cbp, 0, sizeof(*cbp));
+	MALLOC(cbp, struct buf *, sizeof(struct buf), M_DEVBUF,
+	    M_WAITOK | M_ZERO);
+	cbuf = (caddr_t)malloc(bsize, M_DEVBUF, M_WAITOK);
+
 	cbp->b_proc = curproc->l_proc;		/* XXX */
 	cbp->b_dev = bp->b_dev;
 	bn = bp->b_blkno;
@@ -1170,7 +1176,6 @@ sdioctl(dev, cmd, data, flag, p)
 	}
 	/*NOTREACHED*/
 }
-
 
 static void
 sdgetdefaultlabel(sc, lp)

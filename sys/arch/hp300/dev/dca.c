@@ -1,4 +1,4 @@
-/*	$NetBSD: dca.c,v 1.44.8.3 2002/02/28 04:09:23 nathanw Exp $	*/
+/*	$NetBSD: dca.c,v 1.44.8.4 2002/04/01 07:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -82,6 +82,9 @@
  *  be any harmful side-effects from setting this bit on non-affected
  *  machines.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dca.c,v 1.44.8.4 2002/04/01 07:39:50 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -261,8 +264,9 @@ dcaattach(parent, self, aux)
 	ipl = DIO_IPL(dca);
 	printf(" ipl %d", ipl);
 
+	DELAY(1000);
 	dca->dca_reset = 0xFF;
-	DELAY(100);
+	DELAY(1000);
 
 	/* look for a NS 16550AF UART with FIFOs */
 	dca->dca_fifo = FIFO_ENABLE|FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_14;
@@ -695,10 +699,11 @@ dcaioctl(dev, cmd, data, flag, p)
 	int error;
  
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -767,7 +772,7 @@ dcaioctl(dev, cmd, data, flag, p)
 	}
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

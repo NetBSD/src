@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.35.8.3 2002/02/28 04:10:21 nathanw Exp $	*/
+/*	$NetBSD: mms.c,v 1.35.8.4 2002/04/01 07:40:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.35.8.3 2002/02/28 04:10:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mms.c,v 1.35.8.4 2002/04/01 07:40:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ mms_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_MMS;
 		return (0);
 	}
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.32.2.4 2001/11/14 19:14:37 nathanw Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.32.2.5 2002/04/01 07:45:39 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.4 2001/11/14 19:14:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.32.2.5 2002/04/01 07:45:39 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -150,7 +150,7 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 1 */
 	NULL,				/* 2 */
 	"SMC91C90/91C92",		/* 3 */
-	"SMC91C94",			/* 4 */
+	"SMC91C94/91C96",		/* 4 */
 	"SMC91C95",			/* 5 */
 	NULL,				/* 6 */
 	"SMC91C100",			/* 7 */
@@ -1018,8 +1018,12 @@ smc91cxx_read(sc)
 	}
 
 	/*
-	 * Pull the packet off the interface.
+	 * Pull the packet off the interface.  Make sure the payload
+	 * is aligned.
 	 */
+	m->m_data = (caddr_t) ALIGN(mtod(m, caddr_t) +
+	    sizeof(struct ether_header)) - sizeof(struct ether_header);
+
 	eh = mtod(m, struct ether_header *);
 	data = mtod(m, u_int8_t *);
 	if (packetlen > 1)

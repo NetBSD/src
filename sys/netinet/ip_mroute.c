@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.52.2.3 2001/11/14 19:17:51 nathanw Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.52.2.4 2002/04/01 07:48:37 nathanw Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.3 2001/11/14 19:17:51 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.52.2.4 2002/04/01 07:48:37 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -175,12 +175,11 @@ struct ip multicast_encap_iphdr = {
  * Private variables.
  */
 static vifi_t	   numvifs = 0;
-static int have_encap_tunnel = 0;
 
 static struct callout expire_upcalls_ch;
 
 /*
- * one-back cache used by mrt_ipip_input to locate a tunnel's vif
+ * one-back cache used by vif_encapcheck to locate a tunnel's vif
  * given a datagram's src ip address.
  */
 static struct in_addr last_encap_src;
@@ -485,7 +484,6 @@ ip_mrouter_done()
 	mfchashtbl = 0;
 	
 	/* Reset de-encapsulation cache. */
-	have_encap_tunnel = 0;
 	
 	ip_mrouter = 0;
 	
@@ -591,12 +589,6 @@ add_vif(m)
 
 		/* Prepare cached route entry. */
 		bzero(&vifp->v_route, sizeof(vifp->v_route));
-
-		/*
-		 * Tell mrt_ipip_input() to start looking at encapsulated
-		 * packets.
-		 */
-		have_encap_tunnel = 1;
 	} else {
 		/* Use the physical interface associated with the address. */
 		ifp = ifa->ifa_ifp;

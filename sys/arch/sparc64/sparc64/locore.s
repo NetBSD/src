@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139.4.9 2002/02/28 04:12:16 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.4.10 2002/04/01 07:43:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996-2001 Eduardo Horvath
@@ -121,6 +121,9 @@
 	.align	4
 	.word	0x0400000
 #endif
+
+	.register	%g2,#scratch
+	.register	%g3,#scratch
 
 /*
  * Here are some defines to try to maintain consistency but still
@@ -4676,13 +4679,6 @@ return_from_trap:
 	ldx	[%sp + CC64FSZ + STKB + TF_PC], %g2
 	ldx	[%sp + CC64FSZ + STKB + TF_NPC], %g3
 
-#ifdef DEBUG
-	tst	%g2
-	tz	1		! tpc NULL? Panic
-	tst	%i6
-	tz	1		! %fp NULL? Panic
-#endif
-
 #ifdef NOTDEF_DEBUG
 	ldub	[%sp + CC64FSZ + STKB + TF_PIL], %g5		! restore %pil
 	wrpr	%g5, %pil				! DEBUG
@@ -5470,7 +5466,13 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable interrupts
 
 #ifdef DEBUG
-	set	1f, %o0		! Debug printf for TEXT page
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
+	 set	1f, %o0		! Debug printf for TEXT page
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
 	or	%l2, TTE_L|TTE_CP|TTE_CV|TTE_P, %o4	! And low bits:	L=1|CP=1|CV=1|E=0|P=1|W=1(ugh)|G=0
@@ -5490,6 +5492,7 @@ _C_LABEL(cpu_initialize):
 	.asciz	"Setting DTLB entry %08x %08x data %08x %08x\r\n"
 	_ALIGN
 	.text
+0:	
 #endif
 	mov	%l0, %o0			! Demap all of kernel dmmu text segment
 	mov	%l3, %o1
@@ -5567,6 +5570,12 @@ _C_LABEL(cpu_initialize):
 	 add	%o2, %l6, %o2			! Increment tag
 	
 #ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	srl	%l0, 0, %o2
@@ -5579,6 +5588,7 @@ _C_LABEL(cpu_initialize):
 	.asciz	"Setting ITLB entry %08x %08x data %08x %08x\r\n"
 	_ALIGN
 	.text
+0:	
 #endif
 	/*
 	 * Finished the DMMU, now we need to do the IMMU which is more
@@ -5597,6 +5607,7 @@ _C_LABEL(cpu_initialize):
 	set	TLB_TAG_ACCESS, %o0
 	or	%l0, 1, %o1			! Context = 1
 	or	%l2, TTE_CP|TTE_P, %o2		! And low bits:	L=0|CP=1|CV=0|E=0|P=1|G=0
+	set	1f, %o5
 2:	
 	stxa	%o1, [%o0] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync				! We may need more membar #Sync in here
@@ -5608,11 +5619,12 @@ _C_LABEL(cpu_initialize):
 	stxa	%o2, [%g0] ASI_IMMU_DATA_IN	! Store it
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5				! Make IMMU see this too
+1:	
 	add	%o1, %l6, %o1			! increment VA
 	cmp	%o1, %l1			! Next 4MB mapping....
 	blu,pt	%xcc, 2b
 	 add	%o2, %l6, %o2			! Increment tag
-
+	
 	!!
 	!! Load 1 as primary context
 	!!
@@ -5717,6 +5729,12 @@ _C_LABEL(cpu_initialize):
 	wrpr	%g0, 0, %tl			! Exit nucleus context
 #endif
 #ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
 	set	1f, %o0		! Debug printf
 	call	_C_LABEL(prom_printf)
 	.data
@@ -5724,6 +5742,7 @@ _C_LABEL(cpu_initialize):
 	.asciz	"Setting CPUINFO mappings...\r\n"
 	_ALIGN
 	.text
+0:	
 #endif
 	
 	/*
@@ -5768,13 +5787,14 @@ _C_LABEL(cpu_initialize):
 	!!  Now, map in the interrupt stack as context==0
 	!!
 	set	TLB_TAG_ACCESS, %l5
+	set	1f, %o5
 	sethi	%hi(INTSTACK), %l0
 	stxa	%l0, [%l5] ASI_DMMU		! Make DMMU point to it
 	membar	#Sync				! We may need more membar #Sync in here
 	stxa	%l2, [%g0] ASI_DMMU_DATA_IN	! Store it
 	membar	#Sync				! We may need more membar #Sync in here
 	flush	%o5
-
+1:	
 !!! Make sure our stack's OK.
 	flushw
 	sethi	%hi(CPUINFO_VA+CI_INITSTACK), %l0
@@ -5803,6 +5823,12 @@ _C_LABEL(cpu_initialize):
 !	srl	%l0, 0, %l0	! DEBUG -- make sure this is a valid pointer by zeroing the high bits
 
 #ifdef DEBUG
+	set	_C_LABEL(pmapdebug), %o1
+	ld	[%o1], %o1
+	sethi	%hi(0x40000), %o2
+	btst	%o2, %o1
+	bz	0f
+	
 	set	1f, %o0		! Debug printf
 	srlx	%l0, 32, %o1
 	call	_C_LABEL(prom_printf)
@@ -5812,6 +5838,7 @@ _C_LABEL(cpu_initialize):
 	.asciz	"Setting TSB pointer %08x %08x\r\n"
 	_ALIGN
 	.text
+0:	
 #endif
 
 	set	TSB, %l2

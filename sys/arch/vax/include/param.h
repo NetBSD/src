@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.47.6.2 2002/02/28 04:12:29 nathanw Exp $    */
+/*      $NetBSD: param.h,v 1.47.6.3 2002/04/01 07:43:29 nathanw Exp $    */
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -90,6 +90,14 @@
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	NBPG		/* default message buffer size */
+#endif
+
+/*
+ * KVA is very tight on vax, reduce the amount of KVA used by pipe
+ * "direct" write code to reasonably low value.
+ */
+#ifndef PIPE_DIRECT_CHUNK
+#define PIPE_DIRECT_CHUNK	65536
 #endif
 
 /*

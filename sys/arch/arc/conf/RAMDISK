@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.20.2.3 2002/02/28 04:07:13 nathanw Exp $
+#	$NetBSD: RAMDISK,v 1.20.2.4 2002/04/01 07:39:03 nathanw Exp $
 #	$OpenBSD: RAMDISK,v 1.9 1999/08/29 12:14:03 niklas Exp $
 #
 #	memory disk based configuration file for MIPS R4x00 ARC Systems
@@ -24,7 +24,7 @@ options 	PLATFORM_SNI_RM200PCI
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=8192	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=8192	# size of memory disk, in blocks
 
 makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
 
@@ -359,7 +359,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

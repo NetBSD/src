@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.9.4.2 2002/01/08 00:24:40 nathanw Exp $	*/
+/*	$NetBSD: leds.c,v 1.9.4.3 2002/04/01 07:39:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,11 +42,14 @@
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.9.4.3 2002/04/01 07:39:56 nathanw Exp $");                                                  
+
 #include <sys/param.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arch/hp300/hp300/leds.h>
+#include <hp300/hp300/leds.h>
 
 extern caddr_t	ledbase;	/* kva of LED page */
 u_int8_t	*ledaddr;	/* actual address of LEDs */

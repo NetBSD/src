@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.26.4.3 2002/02/28 04:09:49 nathanw Exp $
+#	$NetBSD: files.hpcarm,v 1.26.4.4 2002/04/01 07:40:17 nathanw Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -26,14 +26,7 @@ file	arch/arm/arm32/conf.c
 
 # Generic MD files
 file	arch/hpcarm/hpcarm/autoconf.c
-file	arch/hpcarm/hpcarm/fault.c
-file	arch/hpcarm/hpcarm/fusu.S
 file	arch/hpcarm/hpcarm/intr.c
-file	arch/hpcarm/hpcarm/mem.c
-file	arch/hpcarm/hpcarm/process_machdep.c
-file	arch/hpcarm/hpcarm/procfs_machdep.c	procfs
-file	arch/hpcarm/hpcarm/setcpsr.S
-file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c

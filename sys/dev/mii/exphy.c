@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.25.2.3 2001/11/14 19:15:01 nathanw Exp $	*/
+/*	$NetBSD: exphy.c,v 1.25.2.4 2002/04/01 07:46:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.25.2.3 2001/11/14 19:15:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.25.2.4 2002/04/01 07:46:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &exphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-deflate.c,v 1.7.2.3 2002/01/08 00:33:56 nathanw Exp $	*/
+/*	$NetBSD: ppp-deflate.c,v 1.7.2.4 2002/04/01 07:48:25 nathanw Exp $	*/
 /*	Id: ppp-deflate.c,v 1.5 1997/03/04 03:33:28 paulus Exp 	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.7.2.3 2002/01/08 00:33:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp-deflate.c,v 1.7.2.4 2002/04/01 07:48:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ z_decompress(arg, mi, mop)
     state->strm.next_out = wptr + 3;
     state->strm.avail_out = 1;
     decode_proto = 1;
-    olen = PPP_HDRLEN;
+    olen = 0;
 
     /*
      * Call inflate, supplying more input or output as needed.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.2.4.6 2002/02/28 04:12:55 nathanw Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.2.4.7 2002/04/01 07:44:25 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.6 2002/02/28 04:12:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.2.4.7 2002/04/01 07:44:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,9 +124,9 @@ linux_sys_fstat64(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 
 	SCARG(&fsa, fd) = SCARG(uap, fd);
 	SCARG(&fsa, sb) = st;
@@ -160,8 +160,8 @@ linux_do_stat64(l, v, retval, dolstat)
 	int error;
 	struct linux_sys_stat64_args *uap = v;
 
-	sg = stackgap_init(p->p_emul);
-	st = stackgap_alloc(&sg, sizeof (struct stat));
+	sg = stackgap_init(p, 0);
+	st = stackgap_alloc(p, &sg, sizeof (struct stat));
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&sa, ub) = st;
@@ -221,14 +221,64 @@ linux_sys_truncate64(l, v, retval)
 		syscallarg(off_t) length;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return sys_truncate(l, uap, retval);
 }
 
-#ifdef __mips__ /* i386 and powerpc could use it too */
+#if defined(__mips__) || defined(__i386__) /* powerpc could use it too */
+static void bsd_to_linux_flock64 __P((struct linux_flock64 *,
+    const struct flock *));
+static void linux_to_bsd_flock64 __P((struct flock *, 
+    const struct linux_flock64 *));
+
+static void
+bsd_to_linux_flock64(lfp, bfp)
+	struct linux_flock64 *lfp;
+	const struct flock *bfp;
+{
+
+	lfp->l_start = bfp->l_start;
+	lfp->l_len = bfp->l_len;
+	lfp->l_pid = bfp->l_pid;
+	lfp->l_whence = bfp->l_whence;
+	switch (bfp->l_type) {
+	case F_RDLCK:
+		lfp->l_type = LINUX_F_RDLCK;
+		break;
+	case F_UNLCK:
+		lfp->l_type = LINUX_F_UNLCK;
+		break;
+	case F_WRLCK:
+		lfp->l_type = LINUX_F_WRLCK;
+		break;
+	}
+}
+
+static void
+linux_to_bsd_flock64(bfp, lfp)
+	struct flock *bfp;
+	const struct linux_flock64 *lfp;
+{
+
+	bfp->l_start = lfp->l_start;
+	bfp->l_len = lfp->l_len;
+	bfp->l_pid = lfp->l_pid;
+	bfp->l_whence = lfp->l_whence;
+	switch (lfp->l_type) {
+	case LINUX_F_RDLCK:
+		bfp->l_type = F_RDLCK;
+		break;
+	case LINUX_F_UNLCK:
+		bfp->l_type = F_UNLCK;
+		break;
+	case LINUX_F_WRLCK:
+		bfp->l_type = F_WRLCK;
+		break;
+	}
+}
 int
 linux_sys_fcntl64(l, v, retval)
 	struct lwp *l;
@@ -236,34 +286,56 @@ linux_sys_fcntl64(l, v, retval)
 	register_t *retval;
 {
 	struct linux_sys_fcntl64_args /* {
-		syscallarg(unsigned int) fd;
-		syscallarg(unsigned int) cmd;
-		syscallarg(unsigned long) arg;
+		syscallarg(int) fd;
+		syscallarg(int) cmd;
+		syscallarg(void *) arg;
 	} */ *uap = v;
-	unsigned int fd, cmd;
-	unsigned long arg;
+	struct proc *p = l->l_proc;
+	struct sys_fcntl_args fca;
+	struct linux_flock64 lfl;
+	struct flock bfl, *bfp;
 	int error;
-
-	fd = SCARG(uap, fd);
-	cmd = SCARG(uap, cmd);
-	arg = SCARG(uap, arg);
+	caddr_t sg;
+	void *arg = SCARG(uap, arg);
+	int cmd = SCARG(uap, cmd);
+	int fd = SCARG(uap, fd);
 
 	switch (cmd) {
-		/* XXX implement this later */
-		case LINUX_F_GETLK64:
-			error = 0;
-			break;
-		case LINUX_F_SETLK64:
-			error = 0;
-			break;
-		case LINUX_F_SETLKW64:
-			error = 0;
-			break;
-		default:
-			error = linux_sys_fcntl(l, v, retval);
-			break;
+	case LINUX_F_GETLK64:
+		sg = stackgap_init(p, 0);
+		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
+		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
+			return error;
+		linux_to_bsd_flock64(&bfl, &lfl);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
+			return error;
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = F_GETLK;
+		SCARG(&fca, arg) = bfp;
+		if ((error = sys_fcntl(p, &fca, retval)) != 0)
+			return error;
+		if ((error = copyin(bfp, &bfl, sizeof bfl)) != 0)
+			return error;
+		bsd_to_linux_flock64(&lfl, &bfl);
+		return copyout(&lfl, arg, sizeof lfl);
+	case LINUX_F_SETLK64:
+	case LINUX_F_SETLKW64:
+		cmd = (cmd == LINUX_F_SETLK64 ? F_SETLK : F_SETLKW);
+		if ((error = copyin(arg, &lfl, sizeof lfl)) != 0)
+			return error;
+		linux_to_bsd_flock64(&bfl, &lfl);
+		sg = stackgap_init(p, 0);
+		bfp = (struct flock *) stackgap_alloc(p, &sg, sizeof *bfp);
+		if ((error = copyout(&bfl, bfp, sizeof bfl)) != 0)
+			return error;
+		SCARG(&fca, fd) = fd;
+		SCARG(&fca, cmd) = cmd;
+		SCARG(&fca, arg) = bfp;
+		return sys_fcntl(p, &fca, retval);
+	default:
+		return linux_sys_fcntl(l, v, retval);
 	}
 
 	return error;
 }
-#endif /* __mips__ */
+#endif /* __mips__ || __i386__ */

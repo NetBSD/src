@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.83.2.9 2002/02/28 23:59:32 nathanw Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.83.2.10 2002/04/01 07:44:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.9 2002/02/28 23:59:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.83.2.10 2002/04/01 07:44:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,12 @@ const static struct mnttypes {
 };
 #define FSTYPESSIZE (sizeof(fstypes) / sizeof(fstypes[0]))
 
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
+
 /* Local linux_misc.c functions: */
 static void bsd_to_linux_statfs __P((struct statfs *, struct linux_statfs *));
 static int linux_to_bsd_limit __P((int));
@@ -209,8 +215,8 @@ linux_sys_wait4(l, v, retval)
 	caddr_t sg;
 
 	if (SCARG(uap, status) != NULL) {
-		sg = stackgap_init(p->p_emul);
-		status = (int *) stackgap_alloc(&sg, sizeof *status);
+		sg = stackgap_init(p, 0);
+		status = (int *) stackgap_alloc(p, &sg, sizeof *status);
 	} else
 		status = NULL;
 
@@ -299,10 +305,8 @@ bsd_to_linux_statfs(bsp, lsp)
 			break;
 
 	if (i == FSTYPESSIZE) {
-#ifdef DIAGNOSTIC
-		printf("unhandled fstype in linux emulation: %s\n",
-		    bsp->f_fstypename);
-#endif
+		DPRINTF(("unhandled fstype in linux emulation: %s\n",
+		    bsp->f_fstypename));
 		lsp->l_ftype = LINUX_DEFAULT_SUPER_MAGIC;
 	} else {
 		lsp->l_ftype = fstypes[i].linux;
@@ -341,8 +345,8 @@ linux_sys_statfs(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
-	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+	sg = stackgap_init(p, 0);
+	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
 
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
@@ -377,8 +381,8 @@ linux_sys_fstatfs(l, v, retval)
 	caddr_t sg;
 	int error;
 
-	sg = stackgap_init(p->p_emul);
-	bsp = (struct statfs *) stackgap_alloc(&sg, sizeof (struct statfs));
+	sg = stackgap_init(p, 0);
+	bsp = (struct statfs *) stackgap_alloc(p, &sg, sizeof (struct statfs));
 
 	SCARG(&bsa, fd) = SCARG(uap, fd);
 	SCARG(&bsa, buf) = bsp;
@@ -443,63 +447,24 @@ linux_sys_mmap(l, v, retval)
 		syscallarg(linux_off_t) offset;
 	} */ *uap = v;
 	struct sys_mmap_args cma;
-	int flags;
+	int flags, fl = SCARG(uap, flags);
 	
 	flags = 0;
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_ANON, MAP_ANON);
 	/* XXX XAX ERH: Any other flags here?  There are more defined... */
 
-	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
-	SCARG(&cma,len) = SCARG(uap, len);
-	SCARG(&cma,prot) = SCARG(uap, prot);
-	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(&cma,prot) |= VM_PROT_READ;
-	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(&cma,pad) = 0;
-	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
-
-	return sys_mmap(l, &cma, retval);
-}
-
-/*
- * Newer type Linux mmap call.
- */
-int
-linux_sys_mmap2(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_mmap2_args /* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-		syscallarg(int) prot;
-		syscallarg(int) flags;
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-	} */ *uap = v;
-	struct sys_mmap_args cma;
-	int flags;
-	
-	flags = 0;
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(SCARG(uap,flags), LINUX_MAP_ANON, MAP_ANON);
-	/* XXX XAX ERH: Any other flags here?  There are more defined... */
-
-	SCARG(&cma,addr) = (void *)SCARG(uap, addr);
-	SCARG(&cma,len) = SCARG(uap, len);
-	SCARG(&cma,prot) = SCARG(uap, prot);
-	if (SCARG(&cma,prot) & VM_PROT_WRITE) /* XXX */
-		SCARG(&cma,prot) |= VM_PROT_READ;
-	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
-	SCARG(&cma,pos) = (off_t)SCARG(uap, offset);
+	SCARG(&cma, addr) = (void *)SCARG(uap, addr);
+	SCARG(&cma, len) = SCARG(uap, len);
+	SCARG(&cma, prot) = SCARG(uap, prot);
+	if (SCARG(&cma, prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(&cma, prot) |= VM_PROT_READ;
+	SCARG(&cma, flags) = flags;
+	SCARG(&cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
+	SCARG(&cma, pad) = 0;
+	SCARG(&cma, pos) = (off_t)SCARG(uap, offset);
 
 	return sys_mmap(l, &cma, retval);
 }
@@ -576,6 +541,48 @@ linux_sys_msync(l, v, retval)
 	SCARG(&bma, flags) = SCARG(uap, fl);
 
 	return sys___msync13(l, &bma, retval);
+}
+
+int
+linux_sys_mprotect(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mprotect_args /* {
+		syscallarg(const void *) start;
+		syscallarg(unsigned long) len;
+		syscallarg(int) prot;
+	} */ *uap = v;
+	unsigned long end, start = (unsigned long)SCARG(uap, start), len;
+	int prot = SCARG(uap, prot);
+	struct vm_map_entry *entry;
+	struct vm_map *map = &p->p_vmspace->vm_map;
+
+	if (start & PAGE_MASK)
+		return EINVAL;
+
+	len = round_page(SCARG(uap, len));
+	end = start + len;
+
+	if (end < start)
+		return EINVAL;
+	else if (end == start)
+		return 0;
+
+	if (SCARG(uap, prot) & ~(PROT_READ | PROT_WRITE | PROT_EXEC))
+		return EINVAL;
+
+	vm_map_lock(map);
+#ifdef notdef
+	VM_MAP_RANGE_CHECK(map, start, end);
+#endif
+	if (!uvm_map_lookup_entry(map, start, &entry) || entry->start > start) {
+		vm_map_unlock(map);
+		return EFAULT;
+	}
+	vm_map_unlock(map);
+	return uvm_map_protect(map, start, end, prot, FALSE);
 }
 
 /*
@@ -850,8 +857,8 @@ linux_select1(l, retval, nfds, readfds, writefds, exceptfds, timeout)
 			 * The timeval was invalid.  Convert it to something
 			 * valid that will act as it does under Linux.
 			 */
-			sg = stackgap_init(p->p_emul);
-			tvp = stackgap_alloc(&sg, sizeof(utv));
+			sg = stackgap_init(p, 0);
+			tvp = stackgap_alloc(p, &sg, sizeof(utv));
 			utv.tv_sec += utv.tv_usec / 1000000;
 			utv.tv_usec %= 1000000;
 			if (utv.tv_usec < 0) {
@@ -1065,8 +1072,8 @@ linux_sys_getgroups16(l, v, retval)
 	lset = NULL;
 	if (n > 0) {
 		n = min(pc->pc_ucred->cr_ngroups, n);
-		sg = stackgap_init(p->p_emul);
-		bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+		sg = stackgap_init(p, 0);
+		bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 		kbset = malloc(n * sizeof (gid_t), M_TEMP, M_WAITOK);
 		lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 		if (bset == NULL || kbset == NULL || lset == NULL)
@@ -1114,8 +1121,8 @@ linux_sys_setgroups16(l, v, retval)
 	n = SCARG(uap, gidsetsize);
 	if (n < 0 || n > NGROUPS)
 		return EINVAL;
-	sg = stackgap_init(p->p_emul);
-	bset = stackgap_alloc(&sg, n * sizeof (gid_t));
+	sg = stackgap_init(p, 0);
+	bset = stackgap_alloc(p, &sg, n * sizeof (gid_t));
 	lset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	kbset = malloc(n * sizeof (linux_gid_t), M_TEMP, M_WAITOK);
 	if (lset == NULL || bset == NULL)
@@ -1550,7 +1557,7 @@ linux_sys_getrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_getrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
@@ -1559,7 +1566,7 @@ linux_sys_getrlimit(l, v, retval)
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
-	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
 	if ((error = sys_getrlimit(l, &ap, retval)) != 0)
 		return error;
 	if ((error = copyin(SCARG(&ap, rlp), &rl, sizeof(rl))) != 0)
@@ -1579,14 +1586,14 @@ linux_sys_setrlimit(l, v, retval)
 		syscallarg(struct orlimit *) rlp;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	struct sys_setrlimit_args ap;
 	struct rlimit rl;
 	struct orlimit orl;
 	int error;
 
 	SCARG(&ap, which) = linux_to_bsd_limit(SCARG(uap, which));
-	SCARG(&ap, rlp) = stackgap_alloc(&sg, sizeof rl);
+	SCARG(&ap, rlp) = stackgap_alloc(p, &sg, sizeof rl);
 	if ((error = SCARG(&ap, which)) < 0)
 		return -error;
 	if ((error = copyin(SCARG(uap, rlp), &orl, sizeof(orl))) != 0)

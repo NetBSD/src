@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.25 2000/03/23 06:37:23 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.25.12.1 2002/04/01 07:39:50 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
 /*
  * DMA driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.25.12.1 2002/04/01 07:39:50 nathanw Exp $");                                                  
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 

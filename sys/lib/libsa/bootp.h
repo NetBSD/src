@@ -1,4 +1,4 @@
-/*	$NetBSD: bootp.h,v 1.6 2000/11/02 03:22:23 thorpej Exp $	*/
+/*	$NetBSD: bootp.h,v 1.6.2.1 2002/04/01 07:48:08 nathanw Exp $	*/
 
 /*
  * Bootstrap Protocol (BOOTP).  RFC951 and RFC1048.
@@ -116,13 +116,6 @@ struct bootp {
 #define DHCPNAK 6
 #define DHCPRELEASE 7
 #endif
-
-extern int bootp_flags;
-
-/*
- * Flags for bootp_flags.
- */
-#define	BOOTP_PXE	0x01		/* we're a PXE client */
 
 /*
  * "vendor" data permitted for CMU bootp clients.

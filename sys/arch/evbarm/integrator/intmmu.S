@@ -1,4 +1,4 @@
-/*	$NetBSD: intmmu.S,v 1.1.2.2 2002/01/08 00:24:27 nathanw Exp $ */
+/*	$NetBSD: intmmu.S,v 1.1.2.3 2002/04/01 07:39:47 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,13 +64,13 @@ Lflat:
 	bgt	Lflat
 
 /*
- * Map VA 0xa0100000->0xa03fffff to PA 0x00000000->0x002fffff
+ * Map VA 0xc0100000->0xc03fffff to PA 0x00000000->0x002fffff
  */
 	mov	r3, #(AP_KRW << AP_SECTION_SHIFT)
 	add	r3, r3, #(L1_SECTION)
 	mov	r1, #0x8000		/* page table start */
-	add	r1, r1, #(0xa00 * 4)	/* offset to 0xa00xxxxx */
-	add	r1, r1, #(0x001 * 4)	/* offset to 0xa01xxxxx */
+	add	r1, r1, #(0xc00 * 4)	/* offset to 0xc00xxxxx */
+	add	r1, r1, #(0x001 * 4)	/* offset to 0xc01xxxxx */
 	mov	r0, #47
 Lkern:
 	str	r3, [r1], #0x0004	/* 0xa010000-0xa03fffff */

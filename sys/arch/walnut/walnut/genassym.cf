@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.8.2 2001/11/05 19:46:22 briggs Exp $
+#	$NetBSD: genassym.cf,v 1.1.8.3 2002/04/01 07:43:39 nathanw Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -73,3 +73,5 @@ define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 
 define	LSONPROC	LSONPROC
+
+define	CPU_CI		offsetof(struct cpu_info, ci_ci)

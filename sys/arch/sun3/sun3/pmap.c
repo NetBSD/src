@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135.4.2 2001/11/18 19:39:02 scw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135.4.3 2002/04/01 07:43:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1863,7 +1863,7 @@ pmap_init()
 
 	/* Initialize the pmap pool. */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 }
 
 /*

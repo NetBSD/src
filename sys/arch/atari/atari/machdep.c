@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.3 2001/12/02 12:30:31 scw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.4 2002/04/01 07:39:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,6 @@
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
 #include <sys/user.h>
-#include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/vnode.h>
 #include <sys/queue.h>
 #include <sys/mount.h>
@@ -354,7 +353,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -530,7 +529,7 @@ vaddr_t	p;
 	return(p + BYTES_PER_DUMP);
 }
 
-unsigned	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
+u_int32_t	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
 int		dumpsize = 0;		/* also for savecore (pages)	*/
 long		dumplo   = 0;		/* (disk blocks)		*/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.133.2.6 2002/02/28 04:14:30 nathanw Exp $	*/
+/*	$NetBSD: uhci.c,v 1.133.2.7 2002/04/01 07:47:34 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.6 2002/02/28 04:14:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.7 2002/04/01 07:47:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ Static void		uhci_softintr(void *);
 Static usbd_status	uhci_device_request(usbd_xfer_handle xfer);
 
 Static void		uhci_add_intr(uhci_softc_t *, uhci_soft_qh_t *);
-Static void		uhci_remove_intr(uhci_softc_t*, uhci_soft_qh_t*);
+Static void		uhci_remove_intr(uhci_softc_t *, uhci_soft_qh_t *);
 Static usbd_status	uhci_device_setintr(uhci_softc_t *sc,
 			    struct uhci_pipe *pipe, int ival);
 
@@ -1477,7 +1477,7 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, addr);
+	usb_init_task(&uxfer->abort_task, uhci_timeout_task, ii->xfer);
 	usb_add_task(uxfer->xfer.pipe->device, &uxfer->abort_task);
 }
 
@@ -1905,13 +1905,13 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
-		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_uncallout(xfer->timeout_handle, uhci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
-		panic("ohci_abort_xfer: not in process context\n");
+		panic("uhci_abort_xfer: not in process context\n");
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.

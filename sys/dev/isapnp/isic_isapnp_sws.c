@@ -47,7 +47,7 @@
  *		EXPERIMENTAL !!!!
  *		=================
  *
- *	$Id: isic_isapnp_sws.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $
+ *	$Id: isic_isapnp_sws.c,v 1.2.2.2 2002/04/01 07:46:02 nathanw Exp $
  *
  *	last edit-date: [Fri Jan  5 11:38:29 2001]
  *
@@ -57,7 +57,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.2.2.2 2002/04/01 07:46:02 nathanw Exp $");
 
 #include "opt_isicpnp.h"  
 #ifdef ISICPNP_SEDLBAUER
@@ -109,6 +109,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.2.2.1 2001/11/14 19:14:58 nath
 #else
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -120,11 +123,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_sws.c,v 1.2.2.1 2001/11/14 19:14:58 nath
 #include <netisdn/i4b_mbuf.h>
 
 #ifndef __FreeBSD__
-static u_int8_t sws_read_reg   __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void     sws_write_reg  __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void     sws_read_fifo  __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void     sws_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-void		isic_attach_sws __P((struct l1_softc *sc));
+static u_int8_t sws_read_reg   __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void     sws_write_reg  __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void     sws_read_fifo  __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void     sws_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+void		isic_attach_sws __P((struct isic_softc *sc));
 #endif
 
 /*---------------------------------------------------------------------------*
@@ -143,7 +146,7 @@ sws_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-sws_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+sws_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -181,7 +184,7 @@ sws_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-sws_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+sws_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -219,7 +222,7 @@ sws_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-sws_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+sws_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -256,7 +259,7 @@ sws_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+sws_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -283,9 +286,9 @@ sws_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_attach_sws(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 
-	/* fill in l1_softc structure */
+	/* fill in isic_softc structure */
 
 	sc->readreg     = sws_read_reg;
 	sc->writereg    = sws_write_reg;
@@ -335,7 +338,7 @@ isic_attach_sws(struct isa_device *dev)
 #else /* !__FreeBSD__ */
 
 void
-isic_attach_sws(struct l1_softc *sc)
+isic_attach_sws(struct isic_softc *sc)
 {
 	/* setup access routines */
 

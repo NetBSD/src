@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.20.2.3 2002/02/28 04:09:50 nathanw Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.20.2.4 2002/04/01 07:40:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -155,7 +155,7 @@ extern int pmap_debug_level;
 #define	KERNEL_PT_KERNEL	2	/* Page table for mapping kernel */
 #define	KERNEL_PT_IO		3	/* Page table for mapping IO */
 #define	KERNEL_PT_VMDATA	4	/* Page tables for mapping kernel VM */
-#define	KERNEL_PT_VMDATA_NUM	(KERNEL_VM_SIZE >> (PDSHIFT + 2))
+#define	KERNEL_PT_VMDATA_NUM	4	/* start with 16MB of KVM */
 #define	NUM_KERNEL_PTS		(KERNEL_PT_VMDATA + KERNEL_PT_VMDATA_NUM)
 
 pv_addr_t kernel_pt_table[NUM_KERNEL_PTS];
@@ -196,7 +196,6 @@ void dumppages(char *, int);
 extern int db_trapper();
 
 extern void dump_spl_masks	__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vaddr_t va));
 
 extern void dumpsys	__P((void));
 
@@ -370,7 +369,7 @@ initarm(argc, argv, bi)
 	 */
 	physical_start = bootconfig.dram[0].address;
 	physical_freestart = physical_start
-	    + (KERNEL_TEXT_BASE - KERNEL_SPACE_START) + kerneldatasize;
+	    + (KERNEL_TEXT_BASE - KERNEL_BASE) + kerneldatasize;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
 	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * NBPG;
 	physical_freeend = physical_end;
@@ -498,13 +497,17 @@ initarm(argc, argv, bi)
 	/* Map the L2 pages tables in the L1 page table */
 	pmap_link_l2pt(l1pagetable, 0x00000000,
 	    &kernel_pt_table[KERNEL_PT_SYS]);
-	pmap_link_l2pt(l1pagetable, KERNEL_SPACE_START,
+	pmap_link_l2pt(l1pagetable, KERNEL_BASE,
 	    &kernel_pt_table[KERNEL_PT_KERNEL]);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE,
+	pmap_link_l2pt(l1pagetable, PTE_BASE,
 	    &kernel_ptpt);
+
+	/* update the top of the kernel VM */
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + (KERNEL_PT_VMDATA_NUM * 0x00400000);
 #define SAIPIO_BASE		0xd0000000		/* XXX XXX */
 	pmap_link_l2pt(l1pagetable, SAIPIO_BASE,
 	    &kernel_pt_table[KERNEL_PT_IO]);
@@ -566,25 +569,25 @@ initarm(argc, argv, bi)
 	 */
 	/* The -2 is slightly bogus, it should be -log2(sizeof(pt_entry_t)) */
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (0x00000000 >> (PGSHIFT-2)),
+	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (KERNEL_SPACE_START >> (PGSHIFT-2)),
+	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
 		pmap_map_entry(l1pagetable,
-		    PROCESS_PAGE_TBLS_BASE + ((KERNEL_VM_BASE +
+		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (PROCESS_PAGE_TBLS_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
-	    PROCESS_PAGE_TBLS_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
+	    PTE_BASE + (SAIPIO_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_IO].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE);
 
@@ -688,7 +691,7 @@ initarm(argc, argv, bi)
 
 #ifdef BOOT_DUMP
 	dumppages((char *)kernel_l1pt.pv_va, 16);
-	dumppages((char *)PROCESS_PAGE_TBLS_BASE, 16);
+	dumppages((char *)PTE_BASE, 16);
 #endif
 
 #ifdef DDB
@@ -770,7 +773,7 @@ rpc_sa110_cc_setup(void)
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
-		pte = pmap_pte(pmap_kernel(), (sa110_cc_base + loop));
+		pte = vtopte(sa110_cc_base + loop);
 		*pte = L2_PTE(kaddr, AP_KR);
 	}
 	sa110_cache_clean_addr = sa110_cc_base;

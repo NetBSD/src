@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.24.8.2 2002/02/28 04:06:52 nathanw Exp $ */
+/*	$NetBSD: mfc.c,v 1.24.8.3 2002/04/01 07:39:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.8.2 2002/02/28 04:06:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.24.8.3 2002/04/01 07:39:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,11 +639,11 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return ENXIO;
 
 	error = tp->t_linesw->l_ioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return(error);
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return(error);
 
 	switch (cmd) {
@@ -692,7 +692,7 @@ mfcsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		/* XXXX need to change duart parameters? */
 		break;
 	default:
-		return(ENOTTY);
+		return(EPASSTHROUGH);
 	}
 
 	return(0);

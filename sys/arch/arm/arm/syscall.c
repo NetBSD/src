@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6.4.2 2002/02/28 04:07:19 nathanw Exp $	*/
+/*	$NetBSD: syscall.c,v 1.6.4.3 2002/04/01 07:39:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.6.4.2 2002/02/28 04:07:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6.4.3 2002/04/01 07:39:06 nathanw Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -102,13 +102,8 @@ __RCSID("$NetBSD: syscall.c,v 1.6.4.2 2002/02/28 04:07:19 nathanw Exp $");
 #include <machine/pcb.h>
 #include <arm/swi.h>
 
-#ifdef arm26
+#ifdef acorn26
 #include <machine/machdep.h>
-#endif
-
-#ifdef CPU_ARM7
-struct evcnt arm700bugcount =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
 #endif
 
 void
@@ -122,7 +117,7 @@ swi_handler(trapframe_t *frame)
 	 * Since all syscalls *should* come from user mode it will always
 	 * be safe to enable them, but check anyway. 
 	 */
-#ifdef arm26
+#ifdef acorn26
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
@@ -130,7 +125,7 @@ swi_handler(trapframe_t *frame)
 		enable_interrupts(I32_bit);
 #endif
 
-#ifdef arm26
+#ifdef acorn26
 	frame->tf_pc += INSN_SIZE;
 #endif
 
@@ -163,13 +158,7 @@ swi_handler(trapframe_t *frame)
 	 */
 	if ((insn & 0x0f000000) != 0x0f000000) {
 		frame->tf_pc -= INSN_SIZE;
-		/*
-		 * Yuck.  arm700bugcount should be per-CPU and
-		 * attached at the same time as the CPU.
-		 */
-		if (!cold && arm700bugcount.ev_list.tqe_next == NULL)
-			evcnt_attach_static(&arm700bugcount);
-		++arm700bugcount.ev_count;
+		curcpu()->ci_arm700bugcount.ev_count++;
 		userret(p);
 		return;
 	}

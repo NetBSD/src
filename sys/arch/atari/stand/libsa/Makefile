@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.4.2 2002/01/08 00:23:40 nathanw Exp $
+#	$NetBSD: Makefile,v 1.11.4.3 2002/04/01 07:39:34 nathanw Exp $
 
 LIB=	sa
 
@@ -49,6 +49,14 @@ S_KERN=${S}/lib/libkern
 S_MACHSA=${S}/arch/atari/stand/libsa
 
 .PATH:  ${S_SA} ${S_KERN}
+
+.if !make(obj)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+	@([ -h ${MACHINE_ARCH} ] || ln -s ${S}/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH})
+.NOPATH: machine m68k
+CLEANFILES+= machine m68k
+.endif
 
 # only needed during build
 libinstall::

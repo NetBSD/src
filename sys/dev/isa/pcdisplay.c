@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.11.2.4 2002/02/28 04:13:46 nathanw Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.11.2.5 2002/04/01 07:45:57 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.4 2002/02/28 04:13:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.11.2.5 2002/04/01 07:45:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ pcdisplay_ioctl(v, cmd, data, flag, p)
 	/*
 	 * XXX "do something!"
 	 */
-	return (-1);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t

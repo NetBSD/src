@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.101.2.6 2002/02/28 04:14:28 nathanw Exp $	*/
+/*	$NetBSD: ohci.c,v 1.101.2.7 2002/04/01 07:47:31 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.101.2.6 2002/02/28 04:14:28 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.101.2.7 2002/04/01 07:47:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -599,7 +599,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 			return (NULL);
 		for(i = 0; i < OHCI_SITD_CHUNK; i++) {
 			offs = i * OHCI_SITD_SIZE;
-			sitd = (ohci_soft_itd_t *)((char*)KERNADDR(&dma)+offs);
+			sitd = (ohci_soft_itd_t *)((char *)KERNADDR(&dma)+offs);
 			sitd->physaddr = DMAADDR(&dma) + offs;
 			sitd->nextitd = sc->sc_freeitds;
 			sc->sc_freeitds = sitd;
@@ -2130,7 +2130,7 @@ ohci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 		/* If we're dying, just do the software part. */
 		s = splusb();
 		xfer->status = status;	/* make software ignore it */
-		usb_uncallout(xfer->timeout_handle, ehci_timeout, xfer);
+		usb_uncallout(xfer->timeout_handle, ohci_timeout, xfer);
 		usb_transfer_complete(xfer);
 		splx(s);
 	}
@@ -3259,7 +3259,7 @@ ohci_device_isoc_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->status != USBD_IN_PROGRESS)
-		printf("uhci_device_isoc_start: not in progress %p\n", xfer);
+		printf("ohci_device_isoc_start: not in progress %p\n", xfer);
 #endif
 
 	/* XXX anything to do? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.25.2.2 2001/11/14 19:16:30 nathanw Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.25.2.3 2002/04/01 07:47:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.25.2.2 2001/11/14 19:16:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.25.2.3 2002/04/01 07:47:48 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,7 @@ cd9660_init()
 	    M_WAITOK, &idvhash);
 #endif
 	pool_init(&cd9660_node_pool, sizeof(struct iso_node), 0, 0, 0,
-	    "cd9660nopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
-	    M_ISOFSNODE);
+	    "cd9660nopl", &pool_allocator_nointr);
 }
 
 /*

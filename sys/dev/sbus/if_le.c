@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16.2.3 2001/11/14 19:15:58 nathanw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16.2.4 2002/04/01 07:47:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.16.2.3 2001/11/14 19:15:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.16.2.4 2002/04/01 07:47:11 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -184,7 +184,6 @@ leattach_sbus(parent, self, aux)
 			 sa->sa_slot,
 			 sa->sa_offset,
 			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
 			 0, &lesc->sc_reg) != 0) {
 		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.59.4.2 2002/01/08 00:27:45 nathanw Exp $ */
+/*	$NetBSD: iommu.c,v 1.59.4.3 2002/04/01 07:42:50 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -213,12 +213,10 @@ iommu_attach(parent, self, aux)
 	 * XXX struct iommureg is bigger than ra->ra_len; what are the
 	 *     other fields for?
 	 */
-	if (bus_space_map2(
+	if (bus_space_map(
 			ma->ma_bustag,
-			ma->ma_iospace,
 			ma->ma_paddr,
 			sizeof(struct iommureg),
-			0,
 			0,
 			&bh) != 0) {
 		printf("iommu_attach: cannot map registers\n");

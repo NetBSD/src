@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.4.4.3 2002/04/01 07:45:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.4.3 2002/04/01 07:45:21 nathanw Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $
 #include <dev/ic/cs4231reg.h>
 #include <dev/ic/ad1848var.h>
 #include <dev/ic/cs4231var.h>
-#include <dev/ic/apcdmareg.h>
 
 /*---*/
 #define CSAUDIO_DAC_LVL		0
@@ -81,8 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.4.4.2 2001/11/14 19:14:20 nathanw Exp $
 #define CSAUDIO_MONITOR_CLASS	16
 
 #ifdef AUDIO_DEBUG
-int     cs4231debug = 0;
-#define DPRINTF(x)      if (cs4231debug) printf x
+int     cs4231_debug = 0;
+#define DPRINTF(x)      if (cs4231_debug) printf x
 #else
 #define DPRINTF(x)
 #endif
@@ -94,39 +93,16 @@ struct audio_device cs4231_device = {
 };
 
 
-/*
- * Define our interface to the higher level audio driver.
- */
-int	cs4231_open __P((void *, int));
-void	cs4231_close __P((void *));
-size_t	cs4231_round_buffersize __P((void *, int, size_t));
-int	cs4231_round_blocksize __P((void *, int));
-int	cs4231_halt_output __P((void *));
-int	cs4231_halt_input __P((void *));
-int	cs4231_getdev __P((void *, struct audio_device *));
-int	cs4231_set_port __P((void *, mixer_ctrl_t *));
-int	cs4231_get_port __P((void *, mixer_ctrl_t *));
-int	cs4231_query_devinfo __P((void *, mixer_devinfo_t *));
-int	cs4231_get_props __P((void *));
-
-void   *cs4231_malloc __P((void *, int, size_t, int, int));
-void	cs4231_free __P((void *, void *, int));
-int	cs4231_trigger_output __P((void *, void *, void *, int,
-				   void (*)(void *), void *,
-				   struct audio_params *));
-int	cs4231_trigger_input __P((void *, void *, void *, int,
-				  void (*)(void *), void *,
-				  struct audio_params *));
-
-#ifdef AUDIO_DEBUG
-static void	cs4231_regdump __P((char *, struct cs4231_softc *));
-#endif
+/* ad1848 sc_{read,write}reg */
+static int	cs4231_read(struct ad1848_softc *, int);
+static void	cs4231_write(struct ad1848_softc *, int, int);
 
 int
 cs4231_read(sc, index)
 	struct ad1848_softc	*sc;
 	int			index;
 {
+
 	return bus_space_read_1(sc->sc_iot, sc->sc_ioh, (index << 2));
 }
 
@@ -135,86 +111,53 @@ cs4231_write(sc, index, value)
 	struct ad1848_softc	*sc;
 	int			index, value;
 {
+
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, (index << 2), value);
 }
 
-struct audio_hw_if audiocs_hw_if = {
-	cs4231_open,
-	cs4231_close,
-	0,
-	ad1848_query_encoding,
-	ad1848_set_params,
-	cs4231_round_blocksize,
-	ad1848_commit_settings,
-	0,
-	0,
-	NULL,
-	NULL,
-	cs4231_halt_output,
-	cs4231_halt_input,
-	0,
-	cs4231_getdev,
-	0,
-	cs4231_set_port,
-	cs4231_get_port,
-	cs4231_query_devinfo,
-	cs4231_malloc,
-	cs4231_free,
-	cs4231_round_buffersize,
-        0,
-	cs4231_get_props,
-	cs4231_trigger_output,
-	cs4231_trigger_input,
-	NULL,
-};
-
-
-#ifdef AUDIO_DEBUG
-static void
-cs4231_regdump(label, sc)
-	char *label;
-	struct cs4231_softc *sc;
-{
-	char bits[128];
-	volatile struct apc_dma *dma = sc->sc_dmareg;
-
-	printf("cs4231regdump(%s): regs:", label);
-	printf("dmapva: 0x%x; ", dma->dmapva);
-	printf("dmapc: 0x%x; ", dma->dmapc);
-	printf("dmapnva: 0x%x; ", dma->dmapnva);
-	printf("dmapnc: 0x%x\n", dma->dmapnc);
-	printf("dmacva: 0x%x; ", dma->dmacva);
-	printf("dmacc: 0x%x; ", dma->dmacc);
-	printf("dmacnva: 0x%x; ", dma->dmacnva);
-	printf("dmacnc: 0x%x\n", dma->dmacnc);
-
-	printf("apc_dmacsr=%s\n",
-		bitmask_snprintf(dma->dmacsr, APC_BITS, bits, sizeof(bits)) );
-
-	ad1848_dump_regs(&sc->sc_ad1848);
-}
-#endif
 
 void
-cs4231_init(sc)
+cs4231_common_attach(sc, ioh)
 	struct cs4231_softc *sc;
+	bus_space_handle_t ioh;
 {
 	char *buf;
-#if 0
-	volatile struct apc_dma *dma = sc->sc_dmareg;
-#endif
 	int reg;
 
-#if 0
-	dma->dmacsr = APC_CODEC_PDN;
-	delay(20);
-	dma->dmacsr &= ~APC_CODEC_PDN;
-#endif
-	/* First, put chip in native mode */
+	sc->sc_ad1848.parent = sc;
+	sc->sc_ad1848.sc_iot = sc->sc_bustag;
+	sc->sc_ad1848.sc_ioh = ioh;
+	sc->sc_ad1848.sc_readreg = cs4231_read;
+	sc->sc_ad1848.sc_writereg = cs4231_write;
+
+	sc->sc_playback.t_name = "playback";
+	sc->sc_capture.t_name = "capture";
+
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR,
+			     NULL,
+			     sc->sc_ad1848.sc_dev.dv_xname, "total");
+
+	evcnt_attach_dynamic(&sc->sc_playback.t_intrcnt, EVCNT_TYPE_INTR,
+			     &sc->sc_intrcnt,
+			     sc->sc_ad1848.sc_dev.dv_xname, "playback");
+
+	evcnt_attach_dynamic(&sc->sc_playback.t_ierrcnt, EVCNT_TYPE_INTR,
+			     &sc->sc_intrcnt,
+			     sc->sc_ad1848.sc_dev.dv_xname, "perrors");
+
+	evcnt_attach_dynamic(&sc->sc_capture.t_intrcnt, EVCNT_TYPE_INTR,
+			     &sc->sc_intrcnt,
+			     sc->sc_ad1848.sc_dev.dv_xname, "capture");
+
+	evcnt_attach_dynamic(&sc->sc_capture.t_ierrcnt, EVCNT_TYPE_INTR,
+			     &sc->sc_intrcnt,
+			     sc->sc_ad1848.sc_dev.dv_xname, "cerrors");
+
+	/* put chip in native mode to access (extended) ID register */
 	reg = ad_read(&sc->sc_ad1848, SP_MISC_INFO);
 	ad_write(&sc->sc_ad1848, SP_MISC_INFO, reg | MODE2);
 
-	/* Read version numbers from I25 */
+	/* read version numbers from I25 */
 	reg = ad_read(&sc->sc_ad1848, CS_VERSION_ID);
 	switch (reg & (CS_VERSION_NUMBER | CS_VERSION_CHIPID)) {
 	case 0xa0:
@@ -228,10 +171,22 @@ cs4231_init(sc)
 		break;
 	default:
 		if ((buf = malloc(32, M_TEMP, M_NOWAIT)) != NULL) {
-			sprintf(buf, "unknown rev: %x/%x", reg&0xe, reg&7);
+			sprintf(buf, "unknown rev: %x/%x", reg&0xe0, reg&7);
 			sc->sc_ad1848.chip_name = buf;
 		}
 	}
+
+	sc->sc_ad1848.mode = 2;	/* put ad1848 driver in `MODE 2' mode */
+	ad1848_attach(&sc->sc_ad1848);
+
+#if 0
+	/*
+	 * Before we give audiocs proper "outputs" handling, always mute
+	 * internal speaker so that I can test this w/out waking up my family.
+	 */
+	reg = ad_read(&sc->sc_ad1848, CS_MONO_IO_CONTROL);
+	ad_write(&sc->sc_ad1848, CS_MONO_IO_CONTROL, reg | MONO_OUTPUT_MUTE);
+#endif
 }
 
 void *
@@ -310,39 +265,125 @@ cs4231_free(addr, ptr, pool)
 	printf("cs4231_free: rogue pointer\n");
 }
 
+
+/*
+ * Set up transfer and return DMA address and byte count in paddr and psize
+ * for bus dependent trigger_{in,out}put to load into the dma controller.
+ */
+int
+cs4231_transfer_init(sc, t, paddr, psize, start, end, blksize, intr, arg)
+	struct cs4231_softc *sc;
+	struct cs_transfer *t;
+	bus_addr_t *paddr;
+	bus_size_t *psize;
+	void *start, *end;
+	int blksize;
+	void (*intr)(void *);
+	void *arg;
+{
+	struct cs_dma *p;
+	vsize_t n;
+
+	if (t->t_active) {
+		printf("%s: %s already running\n",
+		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name);
+		return (EINVAL);
+	}
+
+	t->t_intr = intr;
+	t->t_arg = arg;
+
+	for (p = sc->sc_dmas; p != NULL && p->addr != start; p = p->next)
+		continue;
+	if (p == NULL) {
+		printf("%s: bad %s addr %p\n",
+		       sc->sc_ad1848.sc_dev.dv_xname, t->t_name, start);
+		return (EINVAL);
+	}
+
+	n = (char *)end - (char *)start;
+
+	t->t_dma = p;		/* the DMA memory segment */
+	t->t_segsz = n;		/* size of DMA segment */
+	t->t_blksz = blksize;	/* do transfers in blksize chunks */
+
+	if (n > t->t_blksz)
+		n = t->t_blksz;
+
+	t->t_cnt = n;
+
+	/* for caller to load into dma controller */
+	*paddr = t->t_dma->dmamap->dm_segs[0].ds_addr;
+	*psize = n;
+
+	DPRINTF(("%s: init %s: [%p..%p] %lu bytes %lu blocks;"
+		 " dma at 0x%lx count %lu\n",
+		 sc->sc_ad1848.sc_dev.dv_xname, t->t_name,
+		 start, end, (u_long)t->t_segsz, (u_long)t->t_blksz,
+		 (u_long)*paddr, (u_long)*psize));
+
+	t->t_active = 1;
+	return (0);
+}
+
+/*
+ * Compute next DMA address/counter, update transfer status.
+ */
+void
+cs4231_transfer_advance(t, paddr, psize)
+	struct cs_transfer *t;
+	bus_addr_t *paddr;
+	bus_size_t *psize;
+{
+	bus_addr_t dmabase, nextaddr;
+	bus_size_t togo;
+
+	dmabase = t->t_dma->dmamap->dm_segs[0].ds_addr;
+
+	togo = t->t_segsz - t->t_cnt;
+	if (togo == 0) {	/* roll over */
+		nextaddr = dmabase;
+		t->t_cnt = togo = t->t_blksz;
+	} else {
+		nextaddr = dmabase + t->t_cnt;
+		if (togo > t->t_blksz)
+			togo = t->t_blksz;
+		t->t_cnt += togo;
+	}
+
+	/* for caller to load into dma controller */
+	*paddr = nextaddr;
+	*psize = togo;
+}
+
+
 int
 cs4231_open(addr, flags)
 	void *addr;
 	int flags;
 {
 	struct cs4231_softc *sc = addr;
-#if 0
-	struct apc_dma *dma = sc->sc_dmareg;
-#endif
 
 	DPRINTF(("sa_open: unit %p\n", sc));
 
 	if (sc->sc_open)
 		return (EBUSY);
+
 	sc->sc_open = 1;
-	sc->sc_locked = 0;
-	sc->sc_rintr = 0;
-	sc->sc_rarg = 0;
-	sc->sc_pintr = 0;
-	sc->sc_parg = 0;
-#if 1
-	/*No interrupts from ad1848 */
+
+	sc->sc_playback.t_active = 0;
+	sc->sc_playback.t_intr = NULL;
+	sc->sc_playback.t_arg = NULL;
+
+	sc->sc_capture.t_active = 0;
+	sc->sc_capture.t_intr = NULL;
+	sc->sc_capture.t_arg = NULL;
+
+	/* no interrupts from ad1848 */
 	ad_write(&sc->sc_ad1848, SP_PIN_CONTROL, 0);
-#endif
-#if 0
-	dma->dmacsr = APC_RESET;
-	delay(10);
-	dma->dmacsr = 0;
-	delay(10);
-#endif
 	ad1848_reset(&sc->sc_ad1848);
 
-	DPRINTF(("saopen: ok -> sc=%p\n", sc));
+	DPRINTF(("sa_open: ok -> sc=%p\n", sc));
 	return (0);
 }
 
@@ -353,11 +394,8 @@ cs4231_close(addr)
 	struct cs4231_softc *sc = addr;
 
 	DPRINTF(("sa_close: sc=%p\n", sc));
-	/*
-	 * halt i/o, clear open flag, and done.
-	 */
-	cs4231_halt_input(sc);
-	cs4231_halt_output(sc);
+
+	/* audio(9) already called halt methods */
 	sc->sc_open = 0;
 
 	DPRINTF(("sa_close: closed.\n"));
@@ -369,10 +407,7 @@ cs4231_round_buffersize(addr, direction, size)
 	int direction;
 	size_t size;
 {
-#if 0
-	if (size > APC_MAX)
-		size = APC_MAX;
-#endif
+
 	return (size);
 }
 
@@ -381,7 +416,8 @@ cs4231_round_blocksize(addr, blk)
 	void *addr;
 	int blk;
 {
-	return (blk & -4);
+
+	return (blk & ~3);
 }
 
 int
@@ -389,6 +425,7 @@ cs4231_getdev(addr, retp)
         void *addr;
         struct audio_device *retp;
 {
+
         *retp = cs4231_device;
         return (0);
 }
@@ -438,6 +475,7 @@ int
 cs4231_get_props(addr)
 	void *addr;
 {
+
 	return (AUDIO_PROP_FULLDUPLEX);
 }
 
@@ -448,27 +486,6 @@ cs4231_query_devinfo(addr, dip)
 {
 
 	switch(dip->index) {
-#if 0
-	case CSAUDIO_MIC_IN_LVL:	/* Microphone */
-		dip->type = AUDIO_MIXER_VALUE;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = CSAUDIO_MIC_IN_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
-		dip->un.v.num_channels = 2;
-		strcpy(dip->un.v.units.name, AudioNvolume);
-		break;
-#endif
-
-	case CSAUDIO_MONO_LVL:	/* mono/microphone mixer */
-		dip->type = AUDIO_MIXER_VALUE;
-		dip->mixer_class = CSAUDIO_INPUT_CLASS;
-		dip->prev = AUDIO_MIXER_LAST;
-		dip->next = CSAUDIO_MONO_MUTE;
-		strcpy(dip->label.name, AudioNmicrophone);
-		dip->un.v.num_channels = 1;
-		strcpy(dip->un.v.units.name, AudioNvolume);
-		break;
 
 	case CSAUDIO_DAC_LVL:		/*  dacout */
 		dip->type = AUDIO_MIXER_VALUE;
@@ -487,6 +504,16 @@ cs4231_query_devinfo(addr, dip)
 		dip->next = CSAUDIO_LINE_IN_MUTE;
 		strcpy(dip->label.name, AudioNline);
 		dip->un.v.num_channels = 2;
+		strcpy(dip->un.v.units.name, AudioNvolume);
+		break;
+
+	case CSAUDIO_MONO_LVL:	/* mono/microphone mixer */
+		dip->type = AUDIO_MIXER_VALUE;
+		dip->mixer_class = CSAUDIO_INPUT_CLASS;
+		dip->prev = AUDIO_MIXER_LAST;
+		dip->next = CSAUDIO_MONO_MUTE;
+		strcpy(dip->label.name, AudioNmicrophone);
+		dip->un.v.num_channels = 1;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
 
@@ -549,7 +576,7 @@ cs4231_query_devinfo(addr, dip)
 		goto mute;
 
 	case CSAUDIO_MONITOR_MUTE:
-		dip->mixer_class = CSAUDIO_OUTPUT_CLASS;
+		dip->mixer_class = CSAUDIO_MONITOR_CLASS;
 		dip->type = AUDIO_MIXER_ENUM;
 		dip->prev = CSAUDIO_MONITOR_LVL;
 		dip->next = AUDIO_MIXER_LAST;
@@ -626,222 +653,4 @@ cs4231_query_devinfo(addr, dip)
 	return (0);
 }
 
-int
-cs4231_trigger_output(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr) __P((void *));
-	void *arg;
-	struct audio_params *param;
-{
-	struct cs4231_softc *sc = addr;
-	struct cs_dma *p;
-	volatile struct apc_dma *dma = sc->sc_dmareg;
-	int csr;
-	vsize_t n;
-
-	if (sc->sc_locked != 0) {
-		printf("cs4231_trigger_output: already running\n");
-		return (EINVAL);
-	}
-
-	sc->sc_locked = 1;
-	sc->sc_pintr = intr;
-	sc->sc_parg = arg;
-
-	for (p = sc->sc_dmas; p != NULL && p->addr != start; p = p->next)
-		/*void*/;
-	if (p == NULL) {
-		printf("cs4231_trigger_output: bad addr %p\n", start);
-		return (EINVAL);
-	}
-
-	n = (char *)end - (char *)start;
-
-	/* XXX
-	 * Do only `blksize' at a time, so audio_pint() is kept
-	 * synchronous with us...
-	 */
-	/*XXX*/sc->sc_blksz = blksize;
-	/*XXX*/sc->sc_nowplaying = p;
-	/*XXX*/sc->sc_playsegsz = n;
-
-	if (n > APC_MAX)
-		n = APC_MAX;
-
-	sc->sc_playcnt = n;
-
-	DPRINTF(("trigger_out: start %p, end %p, size %lu; "
-		 "dmaaddr 0x%lx, dmacnt %lu, segsize %lu\n",
-		 start, end, (u_long)sc->sc_playsegsz, 
-		 (u_long)p->dmamap->dm_segs[0].ds_addr,
-		 (u_long)n, (u_long)p->size));
-
-	csr = dma->dmacsr;
-	dma->dmapnva = (u_long)p->dmamap->dm_segs[0].ds_addr;
-	dma->dmapnc = (u_long)n;
-	if ((csr & PDMA_GO) == 0 || (csr & APC_PPAUSE) != 0) {
-		int reg;
-
-		dma->dmacsr &= ~(APC_PIE|APC_PPAUSE);
-		dma->dmacsr |= APC_EI|APC_IE|APC_PIE|APC_EIE|APC_PMIE|PDMA_GO;
-
-		/* Start chip */
-
-		/* Probably should just ignore this.. */
-		ad_write(&sc->sc_ad1848, SP_LOWER_BASE_COUNT, 0xff);
-		ad_write(&sc->sc_ad1848, SP_UPPER_BASE_COUNT, 0xff);
-
-		reg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-		ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG,
-			 (PLAYBACK_ENABLE|reg));
-	}
-
-	return (0);
-}
-
-int
-cs4231_trigger_input(addr, start, end, blksize, intr, arg, param)
-	void *addr;
-	void *start, *end;
-	int blksize;
-	void (*intr) __P((void *));
-	void *arg;
-	struct audio_params *param;
-{
-	return (ENXIO);
-}
-
-int
-cs4231_halt_output(addr)
-	void *addr;
-{
-	struct cs4231_softc *sc = addr;
-	volatile struct apc_dma *dma = sc->sc_dmareg;
-	int reg;
-
-	dma->dmacsr &= ~(APC_EI | APC_IE | APC_PIE | APC_EIE | PDMA_GO | APC_PMIE);
-	reg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (reg & ~PLAYBACK_ENABLE));
-	sc->sc_locked = 0;
-
-	return (0);
-}
-
-int
-cs4231_halt_input(addr)
-	void *addr;
-{
-	struct cs4231_softc *sc = addr;
-	int reg;
-
-	reg = ad_read(&sc->sc_ad1848, SP_INTERFACE_CONFIG);
-	ad_write(&sc->sc_ad1848, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
-	sc->sc_locked = 0;
-
-	return (0);
-}
-
-
-int
-cs4231_intr(arg)
-	void *arg;
-{
-	struct cs4231_softc *sc = arg;
-	volatile struct apc_dma *dma = sc->sc_dmareg;
-	struct cs_dma *p;
-	int ret = 0;
-	int csr;
-	int reg, status;
-#if defined(DEBUG) || defined(AUDIO_DEBUG)
-	char bits[128];
-#endif
-
-#ifdef AUDIO_DEBUG
-	if (cs4231debug > 1)
-		cs4231_regdump("audiointr", sc);
-#endif
-
-	/* Read DMA status */
-	csr = dma->dmacsr;
-	DPRINTF((
-	    "intr: csr=%s; dmapva=0x%lx,dmapc=%lu;dmapnva=0x%lx,dmapnc=%lu\n",
-		bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits)),
-		(u_long)dma->dmapva, (u_long)dma->dmapc,
-		(u_long)dma->dmapnva, (u_long)dma->dmapnc));
-
-	status = ADREAD(&sc->sc_ad1848, AD1848_STATUS);
-	DPRINTF(("%s: status: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
-		bitmask_snprintf(status, AD_R2_BITS, bits, sizeof(bits))));
-	if (status & (INTERRUPT_STATUS | SAMPLE_ERROR)) {
-		reg = ad_read(&sc->sc_ad1848, CS_IRQ_STATUS);
-		DPRINTF(("%s: i24: %s\n", sc->sc_ad1848.sc_dev.dv_xname,
-		       bitmask_snprintf(reg, CS_I24_BITS, bits, sizeof(bits))));
-
-		if (reg & CS_IRQ_PI) {
-			ad_write(&sc->sc_ad1848, SP_LOWER_BASE_COUNT, 0xff);
-			ad_write(&sc->sc_ad1848, SP_UPPER_BASE_COUNT, 0xff);
-		}
-		/* Clear interrupt bit */
-		ADWRITE(&sc->sc_ad1848, AD1848_STATUS, 0);
-	}
-
-	/* Write back DMA status (clears interrupt) */
-	dma->dmacsr = csr;
-
-	/*
-	 * Simplistic.. if "play emtpy" is set advance to next chunk.
-	 */
-#if 1
-	/* Ack all play interrupts*/
-	if ((csr & (APC_PI|APC_PD|APC_PIE|APC_PMI)) != 0)
-		ret = 1;
-#endif
-	if (csr & APC_PM) {
-		u_long nextaddr, togo;
-
-		p = sc->sc_nowplaying;
-
-		togo = sc->sc_playsegsz - sc->sc_playcnt;
-		if (togo == 0) {
-			/* Roll over */
-			nextaddr = (u_long)p->dmamap->dm_segs[0].ds_addr;
-			sc->sc_playcnt = togo = APC_MAX;
-		} else {
-			nextaddr = dma->dmapnva + APC_MAX;
-			if (togo > APC_MAX)
-				togo = APC_MAX;
-			sc->sc_playcnt += togo;
-		}
-
-		dma->dmapnva = nextaddr;
-		dma->dmapnc = togo;
-
-		if (sc->sc_pintr != NULL)
-			(*sc->sc_pintr)(sc->sc_parg);
-
-		ret = 1;
-	}
-
-	if (csr & APC_CI) {
-		if (sc->sc_rintr != NULL) {
-			ret = 1;
-			(*sc->sc_rintr)(sc->sc_rarg);
-		}
-	}
-
-#ifdef DEBUG
-if (ret == 0) {
-	printf(
-	    "oops: csr=%s; dmapva=0x%lx,dmapc=%lu;dmapnva=0x%lx,dmapnc=%lu\n",
-		bitmask_snprintf(csr, APC_BITS, bits, sizeof(bits)),
-		(u_long)dma->dmapva, (u_long)dma->dmapc,
-		(u_long)dma->dmapnva, (u_long)dma->dmapnc);
-	ret = 1;
-}
-#endif
-
-	return (ret);
-}
 #endif /* NAUDIO > 0 */

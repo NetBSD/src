@@ -1,15 +1,14 @@
-#	$NetBSD: BRIQ,v 1.2.4.3 2002/02/28 04:11:19 nathanw Exp $
+#	$NetBSD: BRIQ,v 1.2.4.4 2002/04/01 07:41:47 nathanw Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
 
 include "arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.2.4.3 $"
+#ident 		"GENERIC-$Revision: 1.2.4.4 $"
 
 maxusers	32
 
-options 	NEWPMAP
 options 	HZ=256
 options 	KERNBASE=0x10000
 makeoptions	TEXTADDR=0x10000

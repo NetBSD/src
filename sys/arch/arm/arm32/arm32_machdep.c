@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.6.2.5 2002/02/28 04:07:20 nathanw Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.6.2.6 2002/04/01 07:39:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -65,7 +65,6 @@
 #include <machine/bootconfig.h>
 
 #include "opt_ipkdb.h"
-#include "opt_mdsize.h"
 #include "md.h"
 
 struct vm_map *exec_map = NULL;
@@ -77,9 +76,9 @@ extern int physmem;
 #ifndef PMAP_STATIC_L1S
 extern int max_processes;
 #endif	/* !PMAP_STATIC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 extern u_int memory_disc_size;		/* Memory disc size */
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 pv_addr_t systempage;
 pv_addr_t kernelstack;
@@ -91,7 +90,6 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
-extern pt_entry_t msgbufpte;
 caddr_t	msgbufaddr;
 extern paddr_t msgbufphys;
 
@@ -204,7 +202,7 @@ cpu_startup()
 	 */
 	printf(version);
 
-	format_bytes(pbuf, sizeof(pbuf), arm_page_to_byte(physmem));
+	format_bytes(pbuf, sizeof(pbuf), arm_ptob(physmem));
 	printf("total memory = %s\n", pbuf);
 
 	/*
@@ -316,8 +314,7 @@ cpu_startup()
 void
 zero_page_readonly()
 {
-	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
+	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KR));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
@@ -332,8 +329,7 @@ zero_page_readonly()
 void
 zero_page_readwrite()
 {
-	WriteWord(PROCESS_PAGE_TBLS_BASE + 0,
-	    L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
+	WriteWord(PTE_BASE + 0, L2_PTE((systempage.pv_pa & PG_FRAME), AP_KRW));
 	cpu_tlb_flushID_SE(0x00000000);
 }
 
@@ -427,7 +423,7 @@ parse_mi_bootargs(args)
 			max_processes = 255;
 	}
 #endif	/* !PMAP_STATUC_L1S */
-#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MINIROOTSIZE)
+#if NMD > 0 && defined(MEMORY_DISK_HOOKS) && !defined(MEMORY_DISK_SIZE)
 	if (get_bootconf_option(args, "memorydisc", BOOTOPT_TYPE_INT, &integer)
 	    || get_bootconf_option(args, "memorydisk", BOOTOPT_TYPE_INT, &integer)) {
 		memory_disc_size = integer;
@@ -437,7 +433,7 @@ parse_mi_bootargs(args)
 		if (memory_disc_size > 2048*1024)
 			memory_disc_size = 2048*1024;
 	}
-#endif	/* NMD && MEMORY_DISK_HOOKS && !MINIROOTSIZE */
+#endif	/* NMD && MEMORY_DISK_HOOKS && !MEMORY_DISK_SIZE */
 
 	if (get_bootconf_option(args, "quiet", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &integer))

@@ -1,4 +1,4 @@
-/*	$NetBSD: vripif.h,v 1.2.4.2 2002/02/28 04:10:07 nathanw Exp $	*/
+/*	$NetBSD: vripif.h,v 1.2.4.3 2002/04/01 07:40:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -74,14 +74,15 @@ struct vrip_chipset_tag {
  * Vrip driver attach arguments. 
  */
 struct vrip_attach_args {
-	vrip_chipset_tag_t va_vc;		/* Chipset tag		*/
-	int		va_unit;	/* unit id		*/
-	bus_space_tag_t va_iot;		/* i/o space tag	*/
-	bus_addr_t	va_addr;	/* i/o address		*/
-	bus_size_t	va_size;
-	bus_addr_t	va_addr2;	/* i/o address 2	*/
-	bus_size_t	va_size2;
-	hpcio_chip_t*	va_gpio_chips;
+	vrip_chipset_tag_t	va_vc;		/* Chipset tag		*/
+	int			va_unit;	/* unit id		*/
+	bus_space_tag_t		va_iot;		/* i/o space tag	*/
+	bus_space_handle_t	va_parent_ioh;	/* parent i/o space	*/
+	bus_addr_t		va_addr;	/* i/o address		*/
+	bus_size_t		va_size;
+	bus_addr_t		va_addr2;	/* i/o address 2	*/
+	bus_size_t		va_size2;
+	hpcio_chip_t*		va_gpio_chips;
 	vrcmu_chipset_tag_t	va_cc;
 	vrdmaau_chipset_tag_t	va_ac;
 	vrdcu_chipset_tag_t	va_dc;

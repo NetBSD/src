@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.15.2.4 2002/01/08 00:29:38 nathanw Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.15.2.5 2002/04/01 07:45:19 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.4 2002/01/08 00:29:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.15.2.5 2002/04/01 07:45:19 nathanw Exp $");
 
 #include "opt_ddb.h"
 
@@ -698,11 +698,11 @@ clmpccioctl(dev, cmd, data, flag, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return error;
 
 	error = 0;
@@ -758,7 +758,7 @@ clmpccioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

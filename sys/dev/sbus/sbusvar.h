@@ -1,4 +1,4 @@
-/*	$NetBSD: sbusvar.h,v 1.11.2.2 2002/02/28 04:14:21 nathanw Exp $ */
+/*	$NetBSD: sbusvar.h,v 1.11.2.3 2002/04/01 07:47:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@ struct sbusdev {
 	void	(*sd_reset) __P((struct device *));
 };
 
+typedef u_int32_t sbus_slot_t;
+typedef u_int32_t sbus_offset_t;
 
 /* Device register space description */
 struct sbus_reg {
@@ -118,9 +120,11 @@ int	sbus_setup_attach_args __P((
 
 void	sbus_destroy_attach_args __P((struct sbus_attach_args *));
 
-#define sbus_bus_map(t, bt, a, s, f, v, hp) \
-	bus_space_map2(t, bt, a, s, f, v, hp)
+#define sbus_bus_map(tag, slot, offset, sz, flags, hp) \
+	bus_space_map(tag, BUS_ADDR(slot,offset), sz, flags, hp)
 bus_addr_t	sbus_bus_addr __P((bus_space_tag_t, u_int, u_int));
+void	sbus_promaddr_to_handle __P((bus_space_tag_t, u_int, 
+	bus_space_handle_t *));
 
 #if notyet
 /* variables per Sbus */

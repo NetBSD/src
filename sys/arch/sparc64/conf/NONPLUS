@@ -1,4 +1,4 @@
-# 	$NetBSD: NONPLUS,v 1.29.2.3 2002/02/28 04:12:10 nathanw Exp $
+# 	$NetBSD: NONPLUS,v 1.29.2.4 2002/04/01 07:42:58 nathanw Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
@@ -68,7 +68,7 @@ options 	NFS_BOOT_BOOTPARAM
 ## intercept.  DDB_HISTORY_SIZE adds up/down arrow command history.
 options 	DDB			# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
-options 	DDB_ONPANIC		# see also sysctl(8): `ddb.onpanic'
+options 	DDB_ONPANIC=1		# see also sysctl(8): `ddb.onpanic'
 
 ## You may also use gdb, on another computer connected to this machine over
 ## a serial port.  Both KGDB_DEV and KGDB_DEVRATE should be specified;

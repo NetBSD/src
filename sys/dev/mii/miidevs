@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.14.2.6 2002/02/28 04:13:53 nathanw Exp $
+$NetBSD: miidevs,v 1.14.2.7 2002/04/01 07:46:11 nathanw Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -138,6 +138,7 @@ model yyINTEL I82553		0x0035 i82553 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
+model LEVEL1 LXT971		0x000e LXT971 10/100 media interface
 model LEVEL1 LXT1000_OLD	0x0003 LXT1000 1000BASE-T media interface
 model LEVEL1 LXT1000		0x000c LXT1000 1000BASE-T media interface
 

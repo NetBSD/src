@@ -1152,7 +1152,7 @@ typedef struct AcpiResource
 
 #define SIZEOF_RESOURCE(Type)   (ACPI_RESOURCE_LENGTH_NO_DATA + sizeof (Type))
 
-#define NEXT_RESOURCE(Res)      (ACPI_RESOURCE *)((UINT8 *) Res + Res->length)
+#define NEXT_RESOURCE(Res)      (ACPI_RESOURCE *)((UINT8 *) Res + Res->Length)
 
 
 /*

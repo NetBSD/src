@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.10.2.2 2002/01/08 00:31:41 nathanw Exp $	*/
+/*	$NetBSD: if_en.c,v 1.10.2.3 2002/04/01 07:47:10 nathanw Exp $	*/
 
 /*
  *
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.10.2.2 2002/01/08 00:31:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_en.c,v 1.10.2.3 2002/04/01 07:47:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,11 @@ en_sbus_attach(parent, self, aux)
 
 	printf("\n");
 
-	if (bus_space_map2(sa->sa_bustag, sa->sa_slot,
+	if (sbus_bus_map(sa->sa_bustag,
+			 sa->sa_slot,
 			 sa->sa_offset,
 			 4*1024*1024,
-			 0, 0, &sc->en_base) != 0) {
+			 0, &sc->en_base) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}

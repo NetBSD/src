@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.1.2.2 2002/02/28 04:11:56 nathanw Exp $       */
+/*      $NetBSD: pccons.c,v 1.1.2.3 2002/04/01 07:42:37 nathanw Exp $       */
 
 /*
  * Copyright 1997
@@ -1563,17 +1563,17 @@ pcioctl(dev_t       dev,
     ** Error > 0 means that the operation requested was known by
     ** the line discipline but something went wrong. Error = 0 means the
     ** request was successfully handled by the line discipline so
-    ** we don't need to to do anything. Error < 0 means the line
+    ** we don't need to to do anything. Error == EPASSTHROUGH means the line
     ** discipline doesn't handle this sort of operation. 
     */
     error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-    if (error < 0)
+    if (error == EPASSTHROUGH)
     {
         /* Try the common tty ioctl routine to see if it recognises the
         ** request.  
         */
         error = ttioctl(tp, cmd, data, flag, p);
-        if (error < 0)
+        if (error == EPASSTHROUGH)
         {
             /* Ok must be something specific to our device, 
             ** lets start by assuming we will succeed.
@@ -1769,7 +1769,7 @@ pcioctl(dev_t       dev,
 #endif /* SHARK */
                
                 default:
-                    error = ENOTTY;
+                    error = EPASSTHROUGH;
                 break;
             } /* End switch on ioctl command */
         } /* End need to check if this is a device specific command */
@@ -3995,7 +3995,7 @@ pcmmap(dev_t   dev,
 	/* Display memory - allow any address since we
 	** don't know the size
 	*/
-	return arm_byte_to_page(offset);
+	return arm_btop(offset);
     }
 
     pam_io_data  = vtophys(isa_io_data_vaddr());
@@ -4009,7 +4009,7 @@ pcmmap(dev_t   dev,
 	   offset <= pam_io_data + displayInfo(ioBase)
 	   + displayInfo(ioLen))
 	{
-	    return arm_byte_to_page(offset);
+	    return arm_btop(offset);
 	}
 	
     }
@@ -4020,7 +4020,7 @@ pcmmap(dev_t   dev,
 	   offset <= vtophys(vam_mem_data) + VGA_BUF
 	   + VGA_BUF_LEN)
 	{
-	    return arm_byte_to_page(offset);
+	    return arm_btop(offset);
 	}
     }
     return -1;
@@ -4030,7 +4030,7 @@ pcmmap(dev_t   dev,
     {
 	return -1;
     }
-    return arm_byte_to_page(0xa0000 + offset);
+    return arm_btop(0xa0000 + offset);
 #endif
 } /* End pcmmap() */
 

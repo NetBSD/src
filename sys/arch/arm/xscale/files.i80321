@@ -1,0 +1,17 @@
+#	$NetBSD: files.i80321,v 1.1.2.2 2002/04/01 07:39:15 nathanw Exp $
+#
+# Configuration info for Intel i80321 XScale I/O Processor support
+#
+
+file	arch/arm/xscale/i80321_icu.c
+file	arch/arm/xscale/i80321_irq.S
+file	arch/arm/xscale/i80321_mcu.c
+file	arch/arm/xscale/i80321_timer.c
+
+device	iopxs: pcibus
+# Board-specific front-end provides attachment.
+file	arch/arm/xscale/i80321.c		iopxs
+file	arch/arm/xscale/i80321_pci.c		iopxs
+file	arch/arm/xscale/i80321_pci_dma.c	iopxs
+file	arch/arm/xscale/i80321_space.c		iopxs
+file	arch/arm/xscale/i80321_space_asm.S	iopxs

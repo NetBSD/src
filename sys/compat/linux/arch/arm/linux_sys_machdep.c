@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sys_machdep.c,v 1.4.4.2 2002/02/28 04:12:48 nathanw Exp $	*/
+/*	$NetBSD: linux_sys_machdep.c,v 1.4.4.3 2002/04/01 07:44:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$Id: linux_sys_machdep.c,v 1.4.4.2 2002/02/28 04:12:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sys_machdep.c,v 1.4.4.3 2002/04/01 07:44:07 nathanw Exp $");
 
 #include <sys/systm.h>
 
@@ -52,7 +52,7 @@ linux_sys_breakpoint(struct proc *p, void *v, register_t *retval)
 int
 linux_sys_cacheflush(struct proc *p, void *v, register_t *retval)
 {
-#ifndef arm26
+#ifndef acorn26
 	struct linux_sys_cacheflush_args /* {
 		syscallarg(uintptr_t) from;
 		syscallarg(uintptr_t) to;

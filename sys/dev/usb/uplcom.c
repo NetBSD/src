@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.11.4.6 2002/02/28 04:14:33 nathanw Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.11.4.7 2002/04/01 07:47:38 nathanw Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.11.4.6 2002/02/28 04:14:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.11.4.7 2002/04/01 07:47:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,10 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	/* RATOC REX-USB60 */
 	{ USB_VENDOR_RATOC, USB_PRODUCT_RATOC_REXUSB60 },
+	/* TDK USB-PHS Adapter UHA6400 */
+	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
+	/* TDK USB-PDC Adapter UPA9664 */
+	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 

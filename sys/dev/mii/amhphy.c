@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.2.6.3 2001/11/14 19:15:01 nathanw Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.2.6.4 2002/04/01 07:46:07 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.2.6.3 2001/11/14 19:15:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.2.6.4 2002/04/01 07:46:07 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ amhphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &amhphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.21.2.3 2001/11/14 19:17:20 nathanw Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.21.2.4 2002/04/01 07:48:20 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -244,10 +244,6 @@ char	*ether_sprintf(const u_int8_t *);
 u_int32_t ether_crc32_le(const u_int8_t *, size_t);
 u_int32_t ether_crc32_be(const u_int8_t *, size_t);
 
-#ifdef ALTQ
-void	altq_etherclassify(struct ifaltq *, struct mbuf *,
-	    struct altq_pktattr *);
-#endif /* ALTQ */
 #else
 /*
  * Prototype ethers(3) functions.

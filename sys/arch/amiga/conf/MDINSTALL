@@ -1,4 +1,4 @@
-#	$NetBSD: MDINSTALL,v 1.4.8.2 2002/02/28 04:06:29 nathanw Exp $
+#	$NetBSD: MDINSTALL,v 1.4.8.3 2002/04/01 07:38:55 nathanw Exp $
 
 #
 # INSTALL kernel for ramdisk installation
@@ -278,6 +278,6 @@ config	netbsd root on ? type ?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MINIROOTSIZE=2048	# size of memory disk, in blocks
+options 	MEMORY_DISK_SIZE=2048	# size of memory disk, in blocks
 
 pseudo-device	md		1	# memory disk [ramdisk]

@@ -1,4 +1,4 @@
-/* $NetBSD: vsxxx.c,v 1.2.8.1 2001/11/14 19:14:03 nathanw Exp $ */
+/* $NetBSD: vsxxx.c,v 1.2.8.2 2002/04/01 07:45:11 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.2.8.1 2001/11/14 19:14:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsxxx.c,v 1.2.8.2 2002/04/01 07:45:11 nathanw Exp $");
 
 /*
  * Common machinary for VSXXX mice and tablet
@@ -115,7 +115,7 @@ vsxxx_ioctl(v, cmd, data, flag, p)
 		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
 		return 0;
 	}
-	return ENOTTY;
+	return EPASSTHROUGH;
 }
 
 /* EXPORT */ void

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.21.8.2 2002/02/28 04:07:10 nathanw Exp $	*/
+/*	$NetBSD: conf.c,v 1.21.8.3 2002/04/01 07:39:02 nathanw Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -100,16 +100,16 @@ int	nblkdev = ARRAY_LENGTH(bdevsw);
  *	Character devices.
  */
 
-#include "i4b.h"
-#include "i4bctl.h"
-#include "i4btrc.h"
-#include "i4brbch.h"
-#include "i4btel.h"
-cdev_decl(i4b);
-cdev_decl(i4bctl);
-cdev_decl(i4btrc);
-cdev_decl(i4brbch);
-cdev_decl(i4btel);
+#include "isdn.h"
+#include "isdnctl.h"
+#include "isdntrc.h"
+#include "isdnbchan.h"
+#include "isdntel.h"
+cdev_decl(isdn);
+cdev_decl(isdnctl);
+cdev_decl(isdntrc);
+cdev_decl(isdnbchan);
+cdev_decl(isdntel);
 
 cdev_decl(cn);
 cdev_decl(sw);
@@ -213,11 +213,11 @@ struct cdevsw	cdevsw[] =
 	cdev_scanner_init(NSS,ss),	/* 34: SCSI scanner */
 	cdev_notdef(),			/* 35: OpenBSD Kernel symbols device */
 	cdev_ch_init(NCH,ch),		/* 36: SCSI autochanger */
-	cdev_i4b_init(NI4B, i4b),	/* 37: i4b main device */
-	cdev_i4bctl_init(NI4BCTL, i4bctl), /* 38: i4b control device */
-	cdev_i4brbch_init(NI4BRBCH, i4brbch), /* 39: i4b raw b-channel access */
-	cdev_i4btrc_init(NI4BTRC, i4btrc), /* 40: i4b trace device */
-	cdev_i4btel_init(NI4BTEL, i4btel), /* 41: i4b phone device */
+	cdev_isdn_init(NISDN, isdn),	/* 37: isdn main device */
+	cdev_isdnctl_init(NISDNCTL, isdnctl), /* 38: isdn control device */
+	cdev_isdnbchan_init(NISDNBCHAN, isdnbchan), /* 39: isdn raw b-channel access */
+	cdev_isdntrc_init(NISDNTRC, isdntrc), /* 40: isdn trace device */
+	cdev_isdntel_init(NISDNTEL, isdntel), /* 41: isdn phone device */
 	cdev_notdef(),			/* 42: */
 	cdev_notdef(),			/* 33: */
 	cdev_notdef(),			/* 44: */

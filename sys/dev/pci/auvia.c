@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.11.2.3 2001/11/14 19:15:07 nathanw Exp $	*/
+/*	$NetBSD: auvia.c,v 1.11.2.4 2002/04/01 07:46:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.2.3 2001/11/14 19:15:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.11.2.4 2002/04/01 07:46:19 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,8 +201,12 @@ auvia_match(struct device *parent, struct cfdata *match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_VIATECH)
 		return 0;
-	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_VIATECH_VT82C686A_AC97)
+	switch (PCI_PRODUCT(pa->pa_id)) {
+	case PCI_PRODUCT_VIATECH_VT82C686A_AC97:
+		break;
+	default:
 		return 0;
+	}
 
 	return 1;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.47.2.2 2002/01/08 00:32:16 nathanw Exp $	*/
+/*	$NetBSD: ums.c,v 1.47.2.3 2002/04/01 07:47:38 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.47.2.2 2002/01/08 00:32:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.47.2.3 2002/04/01 07:47:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,5 +361,5 @@ ums_ioctl(void *v, u_long cmd, caddr_t data, int flag, usb_proc_ptr p)
 		return (0);
 	}
 
-	return (-1);
+	return (EPASSTHROUGH);
 }

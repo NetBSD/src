@@ -1,4 +1,4 @@
-/*	$NetBSD: mpu_ym.c,v 1.1.14.1 2001/11/14 19:14:52 nathanw Exp $	*/
+/*	$NetBSD: mpu_ym.c,v 1.1.14.2 2002/04/01 07:45:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.1.14.1 2001/11/14 19:14:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpu_ym.c,v 1.1.14.2 2002/04/01 07:45:57 nathanw Exp $");
 
 #define NMPU_YM 1
 
@@ -105,7 +105,8 @@ mpu_ym_attach(parent, self, aux)
 	sc->powerctl = mpu_ym_power_ctl;
 	sc->powerarg = ssc;
 #endif
-	sc->model = "OPL3-SA3 MPU-401 MIDI UART";
+	sc->model = YM_IS_SA3(ssc) ?
+	    "OPL3-SA3 MPU-401 MIDI UART" : "OPL3-SA2 MPU-401 MIDI UART";
 
 	mpu_attach(sc);
 }

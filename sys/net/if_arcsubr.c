@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.34.2.3 2001/11/14 19:17:19 nathanw Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.34.2.4 2002/04/01 07:48:19 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.34.2.3 2001/11/14 19:17:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.34.2.4 2002/04/01 07:48:19 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -129,9 +129,10 @@ arc_output(ifp, m0, dst, rt0)
 	struct arccom		*ac;
 	struct arc_header	*ah;
 	struct arphdr		*arph;
-	int			s, error, newencoding;
+	int			s, error, newencoding, len;
 	u_int8_t		atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
+	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) 
 		return(ENETDOWN); /* m, m1 aren't initialized yet */
@@ -165,6 +166,12 @@ arc_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
+
+	/*
+	 * if the queueing discipline needs packet classification,
+	 * do it before prepending link headers.
+	 */
+	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 #ifdef INET
@@ -296,18 +303,19 @@ arc_output(ifp, m0, dst, rt0)
 			ah->arc_flag = rsflag;
 			ah->arc_seqid = ac->ac_seqid;
 
+			len = m->m_pkthdr.len;
 			s = splnet();
 			/*
 			 * Queue message on interface, and start output if 
 			 * interface not yet active.
 			 */
-			if (IF_QFULL(&ifp->if_snd)) {
-				IF_DROP(&ifp->if_snd);
+			IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+			if (error) {
+				/* mbuf is already freed */
 				splx(s);
-				senderr(ENOBUFS);
+				return (error);
 			}
-			ifp->if_obytes += m->m_pkthdr.len;
-			IF_ENQUEUE(&ifp->if_snd, m);
+			ifp->if_obytes += len;
 			if ((ifp->if_flags & IFF_OACTIVE) == 0)
 				(*ifp->if_start)(ifp);
 			splx(s);
@@ -356,18 +364,20 @@ arc_output(ifp, m0, dst, rt0)
 		ah->arc_dhost = adst;
 		ah->arc_shost = myself;
 	}
+
+	len = m->m_pkthdr.len;
 	s = splnet();
 	/*
 	 * Queue message on interface, and start output if interface
 	 * not yet active.
 	 */
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
+	IFQ_ENQUEUE(&ifp->if_snd, m, &pktattr, error);
+	if (error) {
+		/* mbuf is already freed */
 		splx(s);
-		senderr(ENOBUFS);
+		return (error);
 	}
-	ifp->if_obytes += m->m_pkthdr.len;
-	IF_ENQUEUE(&ifp->if_snd, m);
+	ifp->if_obytes += len;
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	splx(s);

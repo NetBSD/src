@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.54.2.3 2002/02/28 04:07:11 nathanw Exp $
+# $NetBSD: GENERIC,v 1.54.2.4 2002/04/01 07:39:03 nathanw Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include		"arch/arc/conf/std.arc"
 
-#ident		"GENERIC-$Revision: 1.54.2.3 $"
+#ident		"GENERIC-$Revision: 1.54.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -301,7 +301,7 @@ ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 ne*		at pci? dev ? function ?	# NE2000-compatible
 pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
-rtk*		at pci? dev ? function ?	# Tealtek 8129/8139
+rtk*		at pci? dev ? function ?	# Realtek 8129/8139
 sip*		at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
 tlp*		at pci? dev ? function ?	# DECchip 21x4x (and clones)
 #options 	TLP_MATCH_21040
@@ -386,7 +386,6 @@ pseudo-device	sl		2	# Serial Line IP
 #pseudo-device	strip		2	# Starmode Radio IP (Metricom)
 pseudo-device	tun		2	# network tunneling over tty
 #pseudo-device	gre		2	# generic L3 over IP tunnel
-pseudo-device	ipip		2	# IP Encapsulation within IP (RFC 2003)
 pseudo-device	gif		4	# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith		1	# IPv[46] tcp relay translation i/f
 #pseudo-device	stf		1	# 6to4 IPv6 over IPv4 encapsulation

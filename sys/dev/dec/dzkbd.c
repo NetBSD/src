@@ -1,4 +1,4 @@
-/*	$NetBSD: dzkbd.c,v 1.1.4.4 2002/02/28 04:13:14 nathanw Exp $	*/
+/*	$NetBSD: dzkbd.c,v 1.1.4.5 2002/04/01 07:45:10 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.1.4.4 2002/02/28 04:13:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dzkbd.c,v 1.1.4.5 2002/04/01 07:45:10 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ const struct wskbd_consops dzkbd_consops = {
 static int dzkbd_sendchar __P((void *, u_char));
 
 const struct wskbd_mapdata dzkbd_keymapdata = {
-	zskbd_keydesctab,
+	lkkbd_keydesctab,
 #ifdef DZKBD_LAYOUT
 	DZKBD_LAYOUT,
 #else
@@ -306,7 +306,7 @@ dzkbd_ioctl(v, cmd, data, flag, p)
 		*(int *)data = sc->sc_itl->dzi_ks.kcvol;
 		return 0;
 	}
-	return -1;
+	return (EPASSTHROUGH);
 }
 
 static int

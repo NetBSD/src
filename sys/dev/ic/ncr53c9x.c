@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.70.2.6 2002/02/28 04:13:29 nathanw Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.70.2.7 2002/04/01 07:45:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.6 2002/02/28 04:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.70.2.7 2002/04/01 07:45:35 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,13 @@ ncr53c9x_attach(sc)
 	printf(": %s, %dMHz, SCSI ID %d\n",
 	    ncr53c9x_variant_names[sc->sc_rev], sc->sc_freq, sc->sc_id);
 
+	/*
+	 * Treat NCR53C90 with the 86C01 DMA chip exactly as ESP100
+	 * from now on.
+	 */
+	if (sc->sc_rev == NCR_VARIANT_NCR53C90_86C01)
+		sc->sc_rev = NCR_VARIANT_ESP100;
+
 	sc->sc_ccf = FREQTOCCF(sc->sc_freq);
 
 	/* The value *must not* be == 1. Make it 2 */
@@ -354,7 +361,6 @@ ncr53c9x_reset(sc)
 	case NCR_VARIANT_ESP100A:
 		sc->sc_features |= NCR_F_SELATN3;
 		NCR_WRITE_REG(sc, NCR_CFG2, sc->sc_cfg2);
-	case NCR_VARIANT_NCR53C90_86C01:
 	case NCR_VARIANT_ESP100:
 		NCR_WRITE_REG(sc, NCR_CFG1, sc->sc_cfg1);
 		NCR_WRITE_REG(sc, NCR_CCF, sc->sc_ccf);
@@ -429,7 +435,7 @@ ncr53c9x_init(sc, doreset)
 	if (!ecb_pool_initialized) {
 		/* All instances share this pool */
 		pool_init(&ecb_pool, sizeof(struct ncr53c9x_ecb), 0, 0, 0,
-		    "ncr53c9x_ecb", 0, NULL, NULL, 0);
+		    "ncr53c9x_ecb", NULL);
 		ecb_pool_initialized = 1;
 	}
 

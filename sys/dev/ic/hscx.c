@@ -27,14 +27,14 @@
  *	i4b - Siemens HSCX chip (B-channel) handling
  *	--------------------------------------------
  *
- *	$Id: hscx.c,v 1.1.2.2 2001/11/14 19:14:23 nathanw Exp $ 
+ *	$Id: hscx.c,v 1.1.2.3 2002/04/01 07:45:24 nathanw Exp $ 
  *
  *      last edit-date: [Fri Jan  5 11:36:10 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.2 2001/11/14 19:14:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.3 2002/04/01 07:45:24 nathanw Exp $");
 
 #include <sys/param.h>
 #if defined(__FreeBSD_version) && __FreeBSD_version >= 300001
@@ -74,19 +74,20 @@ __KERNEL_RCSID(0, "$NetBSD: hscx.c,v 1.1.2.2 2001/11/14 19:14:23 nathanw Exp $")
 #include <netisdn/i4b_trace.h>
 #endif
 
-#include <dev/ic/isic_l1.h>
-#include <dev/ic/isac.h>
-#include <dev/ic/hscx.h>
-
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_global.h>
 #include <netisdn/i4b_mbuf.h>
+
+#include <dev/ic/isic_l1.h>
+#include <dev/ic/isac.h>
+#include <dev/ic/hscx.h>
 
 /*---------------------------------------------------------------------------*
  *	HSCX IRQ Handler
  *---------------------------------------------------------------------------*/
 void
-isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_irq)
+isic_hscx_irq(register struct isic_softc *sc, u_char ista, int h_chan, u_char ex_irq)
 {
 	register l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 	u_char exir = 0;
@@ -209,10 +210,10 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
-				(*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 
 				activity = ACT_RX;
 				
@@ -281,12 +282,12 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_NT;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr,chan->in_mbuf->m_len, chan->in_mbuf->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr,chan->in_mbuf->m_len, chan->in_mbuf->m_data);
 				}
 
 				/* silence detection */
 				
-				if(!(isic_hscx_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
+				if(!(isdn_bchan_silence(chan->in_mbuf->m_data, chan->in_mbuf->m_len)))
 					activity = ACT_RX;
 
 				if(!(IF_QFULL(&chan->rx_queue)))
@@ -300,7 +301,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 
 				/* signal upper driver that data is available */
 
-				(*chan->drvr_linktab->bch_rx_data_ready)(chan->drvr_linktab->unit);
+				(*chan->l4_driver->bch_rx_data_ready)(chan->l4_driver_softc);
 				
 				/* alloc new buffer */
 				
@@ -347,7 +348,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 		int len;
 		int nextlen;
 
-		NDBGL1(L1_H_IRQ, "unit %d, chan %d - XPR, Tx Fifo Empty!", sc->sc_unit, h_chan);
+		NDBGL1(L1_H_IRQ, "%s, chan %d - XPR, Tx Fifo Empty!", sc->sc_dev.dv_xname, h_chan);
 
 		if(chan->out_mbuf_cur == NULL) 	/* last frame is transmitted */
 		{
@@ -356,7 +357,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 			if(chan->out_mbuf_head == NULL)
 			{
 				chan->state &= ~HSCX_TX_ACTIVE;
-				(*chan->drvr_linktab->bch_tx_queue_empty)(chan->drvr_linktab->unit);
+				(*chan->l4_driver->bch_tx_queue_empty)(chan->l4_driver_softc);
 			}
 			else
 			{
@@ -371,12 +372,12 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 					hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 					hdr.dir = FROM_TE;
 					hdr.count = ++sc->sc_trace_bcount;
-					isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+					isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 				}
 				
 				if(chan->bprot == BPROT_NONE)
 				{
-					if(!(isic_hscx_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
+					if(!(isdn_bchan_silence(chan->out_mbuf_cur->m_data, chan->out_mbuf_cur->m_len)))
 						activity = ACT_TX;
 				}
 				else
@@ -426,7 +427,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 						hdr.type = (h_chan == HSCX_CH_A ? TRC_CH_B1 : TRC_CH_B2);
 						hdr.dir = FROM_TE;
 						hdr.count = ++sc->sc_trace_bcount;
-						isdn_layer2_trace_ind(sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
+						isdn_layer2_trace_ind(&sc->sc_l2, &hdr, chan->out_mbuf_cur->m_len, chan->out_mbuf_cur->m_data);
 					}
 				}
 				else
@@ -449,7 +450,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
 	/* call timeout handling routine */
 	
 	if(activity == ACT_RX || activity == ACT_TX)
-		(*chan->drvr_linktab->bch_activity)(chan->drvr_linktab->unit, activity);
+		(*chan->l4_driver->bch_activity)(chan->l4_driver_softc, activity);
 }
 
 /*---------------------------------------------------------------------------*
@@ -459,7 +460,7 @@ isic_hscx_irq(register struct l1_softc *sc, u_char ista, int h_chan, u_char ex_i
  *	for raw hdlc:  transparent mode 0
  *---------------------------------------------------------------------------*/
 void
-isic_hscx_init(struct l1_softc *sc, int h_chan, int activate)
+isic_hscx_init(struct isic_softc *sc, int h_chan, int activate)
 {	
 	l1_bchan_state_t *chan = &sc->sc_chan[h_chan];
 
@@ -626,7 +627,7 @@ isic_hscx_init(struct l1_softc *sc, int h_chan, int activate)
  *	write command to HSCX command register
  *---------------------------------------------------------------------------*/
 void
-isic_hscx_cmd(struct l1_softc *sc, int h_chan, unsigned char cmd)
+isic_hscx_cmd(struct isic_softc *sc, int h_chan, unsigned char cmd)
 {	
 	int timeout = 20;
 
@@ -648,7 +649,7 @@ isic_hscx_cmd(struct l1_softc *sc, int h_chan, unsigned char cmd)
  *	wait for HSCX transmit FIFO write enable
  *---------------------------------------------------------------------------*/
 void
-isic_hscx_waitxfw(struct l1_softc *sc, int h_chan)
+isic_hscx_waitxfw(struct isic_softc *sc, int h_chan)
 {	
 #define WAITVAL 50
 #define WAITTO	200

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.5.2.5 2002/02/28 04:13:35 nathanw Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.5.2.6 2002/04/01 07:45:50 nathanw Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.5.2.5 2002/02/28 04:13:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.5.2.6 2002/04/01 07:45:50 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -159,6 +159,7 @@ fw_attach(struct device *parent, struct device *self, void *aux)
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_baudrate = IF_Mbps(100 << sc->sc_ic.ic_hwaddr.iha_speed);
 	ifp->if_addrlen = sizeof(struct ieee1394_hwaddr);
+	IFQ_SET_READY(&ifp->if_snd);
 
 	printf(":");
 	for (i = 0; i < sizeof(sc->sc_ic.ic_hwaddr); i++)
@@ -242,7 +243,7 @@ fw_start(struct ifnet *ifp)
 	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m0);
+		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
 		error = (*psc->sc1394_ifoutput)
@@ -250,7 +251,6 @@ fw_start(struct ifnet *ifp)
 		if (error)
 			break;
 	}
-	IFQ_POLL(&ifp->if_snd, m0);
 	if (m0 != NULL)
 		ifp->if_flags |= IFF_OACTIVE;
 }
@@ -288,17 +288,11 @@ fw_stop(struct ifnet *ifp, int disable)
 	struct fw_softc *sc = (struct fw_softc *)ifp->if_softc;
 	struct ieee1394_softc *psc =
 	    (struct ieee1394_softc *)sc->sc_sc1394.sc1394_dev.dv_parent;
-	struct mbuf *m;
 
 	(*psc->sc1394_ifinreg)
 	    (sc->sc_sc1394.sc1394_dev.dv_parent, FW_FIFO_HI, FW_FIFO_LO,
 	    NULL);
-	for (;;) {
-		IF_DEQUEUE(&ifp->if_snd, m);
-		if (m == NULL)
-			break;
-		m_freem(m);
-	}
+	IFQ_PURGE(&ifp->if_snd);
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.2.2.4 2001/11/14 19:17:19 nathanw Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.2.2.5 2002/04/01 07:48:19 nathanw Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.4 2001/11/14 19:17:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.2.2.5 2002/04/01 07:48:19 nathanw Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -304,7 +304,7 @@ bridgeattach(int n)
 {
 
 	pool_init(&bridge_rtnode_pool, sizeof(struct bridge_rtnode),
-	    0, 0, 0, "brtpl", 0, NULL, NULL, 0);
+	    0, 0, 0, "brtpl", NULL);
 
 	LIST_INIT(&bridge_list);
 	if_clone_attach(&bridge_cloner);
@@ -578,7 +578,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 		break;
 
 	default:
-		return (EINVAL);
+		error = EINVAL;
+		goto out;
 	}
 
 	bif->bif_ifp = ifs;

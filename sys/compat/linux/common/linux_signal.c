@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.31.2.3 2002/02/28 04:12:57 nathanw Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.31.2.4 2002/04/01 07:44:29 nathanw Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.3 2002/02/28 04:12:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.4 2002/04/01 07:44:29 nathanw Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -87,41 +87,85 @@ __KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.31.2.3 2002/02/28 04:12:57 nathan
 #define	linux_sigaddset(s, n)	((s)->sig[((n) - 1) / LINUX__NSIG_BPW]	\
 					|= (1 << ((n) - 1) % LINUX__NSIG_BPW))
 
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
+
+#ifndef LINUX_SIGINFO
+#define LINUX_SIGINFO	0
+#endif
+#ifndef LINUX_SIGEMT
+#define LINUX_SIGEMT	0
+#endif
 /* Note: linux_to_native_sig[] is in <arch>/linux_sigarray.c */
-const int native_to_linux_sig[NSIG] = {
-	0,
-	LINUX_SIGHUP,
-	LINUX_SIGINT,
-	LINUX_SIGQUIT,
-	LINUX_SIGILL,
-	LINUX_SIGTRAP,
-	LINUX_SIGABRT,
-	0,			/* SIGEMT */
-	LINUX_SIGFPE,
-	LINUX_SIGKILL,
-	LINUX_SIGBUS,
-	LINUX_SIGSEGV,
-	0,			/* SIGSYS */
-	LINUX_SIGPIPE,
-	LINUX_SIGALRM,
-	LINUX_SIGTERM,
-	LINUX_SIGURG,
-	LINUX_SIGSTOP,
-	LINUX_SIGTSTP,
-	LINUX_SIGCONT,
-	LINUX_SIGCHLD,
-	LINUX_SIGTTIN,
-	LINUX_SIGTTOU,
-	LINUX_SIGIO,
-	LINUX_SIGXCPU,
-	LINUX_SIGXFSZ,
-	LINUX_SIGVTALRM,
-	LINUX_SIGPROF,
-	LINUX_SIGWINCH,
-	0,			/* SIGINFO */
-	LINUX_SIGUSR1,
-	LINUX_SIGUSR2,
-	LINUX_SIGPWR,
+const int native_to_linux_sig[] = {
+	0,			/* 0 */
+	LINUX_SIGHUP,		/* 1 */
+	LINUX_SIGINT,		/* 2 */
+	LINUX_SIGQUIT,		/* 3 */
+	LINUX_SIGILL,		/* 4 */
+	LINUX_SIGTRAP,		/* 5 */
+	LINUX_SIGABRT,		/* 6 */
+	LINUX_SIGEMT,		/* 7 */
+	LINUX_SIGFPE,		/* 8 */
+	LINUX_SIGKILL,		/* 9 */
+	LINUX_SIGBUS,		/* 10 */
+	LINUX_SIGSEGV,		/* 11 */
+	LINUX_SIGSYS,		/* 12 */
+	LINUX_SIGPIPE,		/* 13 */
+	LINUX_SIGALRM,		/* 14 */
+	LINUX_SIGTERM,		/* 15 */
+	LINUX_SIGURG,		/* 16 */
+	LINUX_SIGSTOP,		/* 17 */
+	LINUX_SIGTSTP,		/* 18 */
+	LINUX_SIGCONT,		/* 19 */
+	LINUX_SIGCHLD,		/* 20 */
+	LINUX_SIGTTIN,		/* 21 */
+	LINUX_SIGTTOU,		/* 22 */
+	LINUX_SIGIO,		/* 23 */
+	LINUX_SIGXCPU,		/* 24 */
+	LINUX_SIGXFSZ,		/* 25 */
+	LINUX_SIGVTALRM,	/* 26 */
+	LINUX_SIGPROF,		/* 27 */
+	LINUX_SIGWINCH,		/* 28 */
+	LINUX_SIGINFO,		/* 29 */
+	LINUX_SIGUSR1,		/* 30 */
+	LINUX_SIGUSR2,		/* 31 */
+	LINUX_SIGPWR,		/* 32 */
+	LINUX_SIGRTMIN + 0,	/* 33 */
+	LINUX_SIGRTMIN + 1,	/* 34 */
+	LINUX_SIGRTMIN + 2,	/* 35 */
+	LINUX_SIGRTMIN + 3,	/* 36 */
+	LINUX_SIGRTMIN + 4,	/* 37 */
+	LINUX_SIGRTMIN + 5,	/* 38 */
+	LINUX_SIGRTMIN + 6,	/* 39 */
+	LINUX_SIGRTMIN + 7,	/* 40 */
+	LINUX_SIGRTMIN + 8,	/* 41 */
+	LINUX_SIGRTMIN + 9,	/* 42 */
+	LINUX_SIGRTMIN + 10,	/* 43 */
+	LINUX_SIGRTMIN + 11,	/* 44 */
+	LINUX_SIGRTMIN + 12,	/* 45 */
+	LINUX_SIGRTMIN + 13,	/* 46 */
+	LINUX_SIGRTMIN + 14,	/* 47 */
+	LINUX_SIGRTMIN + 15,	/* 48 */
+	LINUX_SIGRTMIN + 16,	/* 49 */
+	LINUX_SIGRTMIN + 17,	/* 50 */
+	LINUX_SIGRTMIN + 18,	/* 51 */
+	LINUX_SIGRTMIN + 19,	/* 52 */
+	LINUX_SIGRTMIN + 20,	/* 53 */
+	LINUX_SIGRTMIN + 21,	/* 54 */
+	LINUX_SIGRTMIN + 22,	/* 55 */
+	LINUX_SIGRTMIN + 23,	/* 56 */
+	LINUX_SIGRTMIN + 24,	/* 57 */
+	LINUX_SIGRTMIN + 25,	/* 58 */
+	LINUX_SIGRTMIN + 26,	/* 59 */
+	LINUX_SIGRTMIN + 27,	/* 60 */
+	LINUX_SIGRTMIN + 28,	/* 61 */
+	LINUX_SIGRTMIN + 29,	/* 62 */
+	LINUX_SIGRTMIN + 30,	/* 63 */
+
 };
 
 /*
@@ -239,12 +283,9 @@ linux_to_native_sigflags(lsf)
 		bsf |= SA_NODEFER;
 	if ((lsf & LINUX_SA_SIGINFO) != 0)
 		bsf |= SA_SIGINFO;
-#ifdef DEBUG_LINUX
 	if ((lsf & ~LINUX_SA_ALLBITS) != 0)
-		uprintf(
-		    "linux_old_to_native_sigflags: %lx extra bits ignored\n",
-		    lsf);
-#endif
+		DPRINTF(("linux_old_to_native_sigflags: "
+		    "%lx extra bits ignored\n", lsf));
 	return bsf;
 }
 
@@ -264,10 +305,9 @@ linux_old_to_native_sigaction(bsa, lsa)
 /*
  * XXX: On the alpha sa_restorer is elsewhere.
  */
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != NULL)
-		uprintf("linux_old_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_old_to_native_sigaction: "
+		    "sa_restorer ignored\n"));
 #endif
 }
 
@@ -294,10 +334,8 @@ linux_to_native_sigaction(bsa, lsa)
 	linux_to_native_sigset(&bsa->sa_mask, &lsa->sa_mask);
 	bsa->sa_flags = linux_to_native_sigflags(lsa->sa_flags);
 #ifndef __alpha__
-#ifdef DEBUG_LINUX
 	if (lsa->sa_restorer != 0)
-		uprintf("linux_to_native_sigaction: sa_restorer ignored\n");
-#endif
+		DPRINTF(("linux_to_native_sigaction: sa_restorer ignored\n"));
 #endif
 }
 

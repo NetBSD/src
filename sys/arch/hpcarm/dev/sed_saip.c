@@ -1,4 +1,4 @@
-/*	$NetBSD: sed_saip.c,v 1.8.6.2 2002/01/08 00:24:51 nathanw Exp $	*/
+/*	$NetBSD: sed_saip.c,v 1.8.6.3 2002/04/01 07:40:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -538,7 +538,7 @@ sed1356_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 		return (EINVAL);
 	}
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 paddr_t

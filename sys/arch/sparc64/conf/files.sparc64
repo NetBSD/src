@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.53.2.3 2002/02/28 04:12:10 nathanw Exp $
+#	$NetBSD: files.sparc64,v 1.53.2.4 2002/04/01 07:42:59 nathanw Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -104,7 +104,7 @@ file	dev/sun/fd.c				fdc | fd needs-flag
 file	arch/sparc64/sparc64/bsd_fdintr.s	fdc
 
 attach	audiocs at ebus with audiocs_ebus
-file	arch/sparc64/dev/cs4231_ebus.c		audiocs_ebus
+file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
 #
 # Console related stuff

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.37.2.5 2002/02/28 04:15:08 nathanw Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.37.2.6 2002/04/01 07:48:38 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995-2001 by Darren Reed.
@@ -11,6 +11,9 @@
 #define _KERNEL
 #endif
 
+#ifdef __sgi
+# include <sys/ptimers.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -32,7 +35,6 @@
 # include <sys/ioctl.h>
 #endif
 #include <sys/fcntl.h>
-#include <sys/uio.h>
 #ifndef linux
 # include <sys/protosw.h>
 #endif
@@ -110,10 +112,10 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.37.2.5 2002/02/28 04:15:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.37.2.6 2002/04/01 07:48:38 nathanw Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.58 2002/01/02 03:40:24 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_nat.c,v 2.37.2.63 2002/03/06 09:44:11 darrenr Exp";
 #endif
 #endif
 
@@ -153,7 +155,7 @@ static	int	nat_match __P((fr_info_t *, ipnat_t *, ip_t *));
 static	hostmap_t *nat_hostmap __P((ipnat_t *, struct in_addr,
 				    struct in_addr));
 static	void	nat_hostmapdel __P((struct hostmap *));
-
+static	void	tcp_mss_clamp __P((tcphdr_t *, uint32_t, fr_info_t *, u_short *));
 
 int nat_init()
 {
@@ -1127,6 +1129,47 @@ int nat_clearlist()
 	return i;
 }
 
+/*
+ * Check for MSS option and clamp it if necessary.
+ */
+static __inline void
+tcp_mss_clamp(tcp, maxmss, fin, csump)
+	tcphdr_t *tcp;
+	uint32_t maxmss;
+	fr_info_t *fin;
+	u_short *csump;
+{
+	uint8_t *cp;
+	uint32_t opt, mss, sumd;
+	int hlen;
+
+	hlen = tcp->th_off << 2;
+	if (hlen > sizeof(*tcp)) {
+		cp = (uint8_t *)tcp + sizeof(*tcp);
+
+		while (hlen > 0) {
+			opt = *cp++;
+			switch(opt) {
+			case TCPOPT_MAXSEG:
+				++cp;
+				mss = (uint32_t)ntohs(*(short *)cp);
+				if (mss > maxmss) {
+					*(short *)cp = htons((short)(maxmss));
+					CALC_SUMD(mss, maxmss, sumd);
+					fix_outcksum(fin, csump, sumd);
+				}
+				hlen = 0;
+				break;
+			case TCPOPT_EOL:
+			case TCPOPT_NOP:
+				hlen--;
+			default:
+				hlen -= *cp;
+				cp += *cp - 2;
+			}
+		}
+	}
+}
 
 /*
  * Create a new NAT table entry.
@@ -1398,14 +1441,10 @@ int direction;
 
 		/*
 		 * When the redirect-to address is set to 0.0.0.0, just
-		 * assume a blank `forwarding' of the packet.  We don't
-		 * setup any translation for this either.
+		 * assume a blank `forwarding' of the packet.
 		 */
-		if (in.s_addr == 0) {
-			if (nport == dport)
-				goto badnat;
+		if (in.s_addr == 0)
 			in.s_addr = ntohl(fin->fin_daddr);
-		}
 
 		nat->nat_inip.s_addr = htonl(in.s_addr);
 		nat->nat_outip = fin->fin_dst;
@@ -1459,6 +1498,7 @@ int direction;
 	nat->nat_dir = direction;
 	nat->nat_ifp = fin->fin_ifp;
 	nat->nat_ptr = np;
+	nat->nat_mssclamp = np->in_mssclamp;
 	nat->nat_p = fin->fin_p;
 	nat->nat_bytes = 0;
 	nat->nat_pkts = 0;
@@ -2364,23 +2404,13 @@ maskloop:
 					continue;
 			} else if ((ipa & np->in_inmsk) != np->in_inip)
 				continue;
-			if (np->in_redir & (NAT_MAP|NAT_MAPBLK)) {
-				if (*np->in_plabel && !appr_ok(ip, tcp, np))
-					continue;
-				/*
-				 * If it's a redirection, then we don't want to
-				 * create new outgoing port stuff.
-				 * Redirections are only for incoming
-				 * connections.
-				 */
-				if (!(np->in_redir & (NAT_MAP|NAT_MAPBLK)))
-					continue;
-				nat = nat_new(fin, ip, np, NULL,
-					      (u_int)nflags, NAT_OUTBOUND);
-				if (nat != NULL) {
-					np->in_hits++;
-					break;
-				}
+			if (*np->in_plabel && !appr_ok(ip, tcp, np))
+				continue;
+			nat = nat_new(fin, ip, np, NULL,
+				      (u_int)nflags, NAT_OUTBOUND);
+			if (nat != NULL) {
+				np->in_hits++;
+				break;
 			}
 		}
 		if ((np == NULL) && (i > 0)) {
@@ -2430,7 +2460,7 @@ maskloop:
 			else
 				fix_incksum(fin, &ip->ip_sum, sumd);
 		}
-#if SOLARIS || defined(__sgi)
+#if (SOLARIS || defined(__sgi)) && defined(_KERNEL)
 		else {
 			if (nat->nat_dir == NAT_OUTBOUND)
 				fix_outcksum(fin, &ip->ip_sum, nat->nat_ipsumd);
@@ -2445,7 +2475,7 @@ maskloop:
 
 		if ((fin->fin_off == 0) && !(fin->fin_fl & FI_SHORT)) {
 
-			if ((nat->nat_outport != 0) && (nflags & IPN_TCPUDP)) {
+			if ((nat->nat_outport != 0) && (tcp != NULL)) {
 				tcp->th_sport = nat->nat_outport;
 				fin->fin_data[0] = ntohs(tcp->th_sport);
 			}
@@ -2469,6 +2499,15 @@ maskloop:
 				 */
 				if (nat->nat_age == fr_tcpclosed)
 					nat->nat_age = fr_tcplastack;
+
+ 				/*
+ 				 * Do a MSS CLAMPING on a SYN packet,
+				 * only deal IPv4 for now.
+ 				 */
+ 				if (nat->nat_mssclamp &&
+				    (tcp->th_flags & TH_SYN) != 0)
+					tcp_mss_clamp(tcp, nat->nat_mssclamp, fin, csump);
+
 				MUTEX_EXIT(&nat->nat_lock);
 			} else if (fin->fin_p == IPPROTO_UDP) {
 				udphdr_t *udp = (udphdr_t *)tcp;
@@ -2588,8 +2627,7 @@ maskloop:
 					continue;
 			} else if ((in.s_addr & np->in_outmsk) != np->in_outip)
 				continue;
-			if ((np->in_redir & NAT_REDIRECT) &&
-			    (!np->in_pmin || (np->in_flags & IPN_FILTER) ||
+			if ((!np->in_pmin || (np->in_flags & IPN_FILTER) ||
 			     ((ntohs(np->in_pmax) >= ntohs(dport)) &&
 			      (ntohs(dport) >= ntohs(np->in_pmin)))))
 				if ((nat = nat_new(fin, ip, np, NULL, nflags,
@@ -2646,7 +2684,7 @@ maskloop:
 		 * Fix up checksums, not by recalculating them, but
 		 * simply computing adjustments.
 		 */
-#if SOLARIS || defined(__sgi)
+#if (SOLARIS || defined(__sgi)) && defined(_KERNEL)
 		if (nat->nat_dir == NAT_OUTBOUND)
 			fix_incksum(fin, &ip->ip_sum, nat->nat_ipsumd);
 		else
@@ -2654,7 +2692,7 @@ maskloop:
 #endif
 		if ((fin->fin_off == 0) && !(fin->fin_fl & FI_SHORT)) {
 
-			if ((nat->nat_inport != 0) && (nflags & IPN_TCPUDP)) {
+			if ((nat->nat_inport != 0) && (tcp != NULL)) {
 				tcp->th_dport = nat->nat_inport;
 				fin->fin_data[1] = ntohs(tcp->th_dport);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.112.2.11 2002/01/18 20:58:00 nathanw Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.112.2.12 2002/04/01 07:47:53 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.11 2002/01/18 20:58:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.112.2.12 2002/04/01 07:47:53 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -111,10 +111,9 @@ signal_init(void)
 {
 
 	pool_init(&sigacts_pool, sizeof(struct sigacts), 0, 0, 0, "sigapl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
+	    &pool_allocator_nointr);
 	pool_init(&siginfo_pool, sizeof(siginfo_t), 0, 0, 0, "siginfo",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_SUBPROC);
-
+	    &pool_allocator_nointr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.12.4.3 2002/02/28 04:10:06 nathanw Exp $	*/
+/*	$NetBSD: vrip.c,v 1.12.4.4 2002/04/01 07:40:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -252,11 +252,19 @@ int
 vrip_print(void *aux, const char *hoge)
 {
 	struct vrip_attach_args *va = (struct vrip_attach_args*)aux;
+	bus_addr_t endaddr, mask;
 
-	if (va->va_addr)
-		printf(" addr 0x%lx", va->va_addr);
-	if (va->va_size > 1)
-		printf("-0x%lx", va->va_addr + va->va_size - 1);
+	if (va->va_addr != VRIPIFCF_ADDR_DEFAULT)
+		printf(" addr 0x%08lx", va->va_addr);
+	if (va->va_size != VRIPIFCF_SIZE_DEFAULT) {
+		endaddr = (va->va_addr + va->va_size - 1);
+		mask = ((va->va_addr ^ endaddr) & 0xff0000) ? 0xffffff:0xffff;
+		printf("-%04lx", endaddr & mask);
+	}
+	if (va->va_addr2 != VRIPIFCF_ADDR2_DEFAULT)
+		printf(", 0x%08lx", va->va_addr2);
+	if (va->va_size2 != VRIPIFCF_SIZE2_DEFAULT)
+		printf("-%04lx", (va->va_addr2 + va->va_size2 - 1) & 0xffff);
 
 	return (UNCONF);
 }
@@ -266,7 +274,15 @@ vrip_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct vrip_softc *sc = (struct vrip_softc *)parent;
 	struct vrip_attach_args va;
+	platid_mask_t mask;
 
+	if (cf->cf_loc[VRIPIFCF_PLATFORM] != VRIPIFCF_PLATFORM_DEFAULT) {
+		mask = PLATID_DEREF(cf->cf_loc[VRIPIFCF_PLATFORM]);
+		if (platid_match(&platid, &mask) == 0)	
+			return (0);
+	}
+
+	memset(&va, 0, sizeof(va));
 	va.va_vc = &sc->sc_chipset;
 	va.va_iot = sc->sc_iot;
 	va.va_unit = cf->cf_loc[VRIPIFCF_UNIT];
@@ -451,7 +467,7 @@ __vrip_intr_setmask2(vrip_chipset_tag_t vc, vrip_intr_handle_t handle,
 		else
 			reg &= ~(mask&0xffff);
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, vu->vu_mlreg, reg);
-		if (vu->vu_mhreg != -1) { /* GIU [16:31] case only */
+		if (vu->vu_mhreg != 0) { /* GIU [16:31] case only */
 			reg = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 			    vu->vu_mhreg);
 			if (onoff)

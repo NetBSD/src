@@ -1,4 +1,4 @@
-/*	$NetBSD: dhu.c,v 1.21.2.4 2002/03/28 16:22:44 ragge Exp $	*/
+/*	$NetBSD: dhu.c,v 1.21.2.5 2002/04/01 07:47:01 nathanw Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.4 2002/03/28 16:22:44 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dhu.c,v 1.21.2.5 2002/04/01 07:47:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -521,10 +521,11 @@ dhuioctl(dev, cmd, data, flag, p)
 	tp = sc->sc_dhu[line].dhu_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -562,7 +563,7 @@ dhuioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

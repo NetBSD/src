@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.306.2.12 2002/02/28 18:37:05 nathanw Exp $
+$NetBSD: pcidevs,v 1.306.2.13 2002/04/01 07:46:35 nathanw Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -759,6 +759,13 @@ product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
+product AMD PBC768_ISA	0x7440	AMD768 PCI to ISA/LPC Bridge
+product AMD PBC768_IDE  0x7441	AMD768 EIDE Controller
+product AMD PBC768_PMC  0x7443	AMD768 Power Management Controller
+product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
+product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
+product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
+product AMD PBC768_USB	0x7449	AMD768 USB Controller
 
 /* American Megatrends products */
 product AMI MEGARAID	0x9010	MegaRAID
@@ -850,6 +857,10 @@ product ATI RAGE4AGP4X 		0x5055	Rage 128 Pro AGP 4x
 product ATI RAGE4PCIT  		0x5056	Rage 128 Pro PCI (TMDS)
 product ATI RAGE4AGP2XT		0x5057	Rage 128 Pro AGP 2x (TMDS)
 product ATI RAGE4AGP4XT		0x5058	Rage 128 Pro AGP 4x (TMDS)
+product ATI RADEON_7200		0x5144	Radeon 7200
+product ATI RADEON_8500		0x514c	Radeon 8500
+product ATI RADEON_7500		0x5157	Radeon 7500
+product ATI RADEON_7000		0x5159	Radeon 7000/VE
 product ATI RAGEGLPCI		0x5245	Rage 128 GL PCI
 product ATI RAGEGLAGP		0x5246	Rage 128 GL AGP 2x
 product ATI RAGEVRPCI		0x524b	Rage 128 VR PCI
@@ -1021,6 +1032,7 @@ product COMPEX RL100TX		0x9881	RL100-TX 10/100 Ethernet
 
 /* Conexant Systems products  */
 product CONEXANT SOFTK56	0x2443	SoftK56 PCI Software Modem
+product CONEXANT 56KFAXMODEM	0x1085	HW 56K Fax Modem
 
 /* Contaq Microsystems products */
 product CONTAQ 82C599		0x0600	82C599 PCI-VLB Bridge
@@ -1299,6 +1311,8 @@ product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
+product INTEL 82845_HB		0x1a30	82845 Host
+product INTEL 82845_AGP		0x1a31	82845 AGP
 product INTEL 82801AA_LPC	0x2410	82801AA LPC Interface Bridge
 product INTEL 82801AA_IDE	0x2411	82801AA IDE Controller
 product INTEL 82801AA_USB	0x2412	82801AA USB Controller
@@ -1478,6 +1492,9 @@ product MOT MPC105	0x0001	MPC105 \"Eagle\" Host Bridge
 product MOT MPC106	0x0002	MPC106 \"Grackle\" Host Bridge
 product MOT MPC8240	0x0003	MPC8240 \"Kahlua\" Host Bridge
 product MOT MPC107	0x0004	MPC107 \"Chaparral\" Host Bridge
+product MOT RAVEN	0x4801	Raven Host Bridge & Multi-Processor Interrupt Controller
+product MOT FALCON	0x4802	Falcon ECC Memory Controller Chip Set
+product MOT HAWK	0x4803	Hawk System Memory Controller & PCI Host Bridge
 
 /* Mylex products */
 product MYLEX RAID_V2		0x0001	DAC960 RAID (v2 interface)

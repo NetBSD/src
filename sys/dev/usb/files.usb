@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.28.2.4 2002/01/11 22:09:05 nathanw Exp $
+#	$NetBSD: files.usb,v 1.28.2.5 2002/04/01 07:47:29 nathanw Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -31,7 +31,7 @@ define	ezload
 file	dev/usb/ezload.c		ezload
 
 # Audio devices
-device	uaudio: audio, auconv, mulaw
+device	uaudio: audio, auconv, mulaw, aurateconv
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
 
@@ -153,6 +153,11 @@ device	upl: ifnet
 attach	upl at uhub
 file	dev/usb/if_upl.c		upl
 
+# Realtek RTL8150L(M)
+device	url: arp, ether, ifnet, mii
+attach	url at uhub
+file	dev/usb/if_url.c		url
+
 
 # Serial drivers
 # Modems
@@ -174,6 +179,11 @@ file	dev/usb/uplcom.c		uplcom
 device	umct: ucombus
 attach	umct at uhub
 file	dev/usb/umct.c			umct
+
+# SUNTAC Slipper U VS-10U driver
+device	uvscom: ucombus
+attach	uvscom at uhub
+file	dev/usb/uvscom.c		uvscom
 
 
 # Scanners

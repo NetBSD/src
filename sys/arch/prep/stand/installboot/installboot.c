@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2001/02/19 22:48:58 cgd Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2.8.1 2002/04/01 07:42:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 NONAKA Kimihiro (nonaka@netbsd.org).
@@ -36,8 +36,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <err.h>
-
-#define	MBR_PTYPE_PREP	0x41
 
 int nowrite, verbose;
 char *boot, *dev;

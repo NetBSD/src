@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.18.6.3 2002/02/28 04:10:40 nathanw Exp $	*/
+/*	$NetBSD: zs.c,v 1.18.6.4 2002/04/01 07:40:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -430,7 +430,7 @@ zsmdioctl(cs, cmd, data)
 {
 	switch (cmd) {
 	default:
-		return (-1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

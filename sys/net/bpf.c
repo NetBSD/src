@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.60.2.3 2001/11/14 19:17:18 nathanw Exp $	*/
+/*	$NetBSD: bpf.c,v 1.60.2.4 2002/04/01 07:48:18 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.3 2001/11/14 19:17:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.60.2.4 2002/04/01 07:48:18 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -990,7 +990,9 @@ bpf_ifname(ifp, ifr)
 /*
  * Support for poll() system call
  *
- * Return true iff the specific operation will not block indefinitely.
+ * Return true iff the specific operation will not block indefinitely - with
+ * the assumption that it is safe to positively acknowledge a request for the
+ * ability to write to the BPF device.
  * Otherwise, return false but make a note that a selwakeup() must be done.
  */
 int
@@ -1000,13 +1002,14 @@ bpfpoll(dev, events, p)
 	struct proc *p;
 {
 	struct bpf_d *d = &bpf_dtab[minor(dev)];
-	int revents = 0;
 	int s = splnet();
+	int revents;
 
-	/*
-	 * An imitation of the FIONREAD ioctl code.
-	 */
+	revents = events & (POLLOUT | POLLWRNORM);
 	if (events & (POLLIN | POLLRDNORM)) {
+		/*
+		 * An imitation of the FIONREAD ioctl code.
+		 */
 		if (d->bd_hlen != 0 || (d->bd_immediate && d->bd_slen != 0))
 			revents |= events & (POLLIN | POLLRDNORM);
 		else

@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.9.4.4 2002/01/08 00:23:07 nathanw Exp $	*/
+/*	$NetBSD: undefined.c,v 1.9.4.5 2002/04/01 07:39:06 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -51,7 +51,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.4 2002/01/08 00:23:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.5 2002/04/01 07:39:06 nathanw Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.9.4.4 2002/01/08 00:23:07 nathanw Ex
 
 #include <arch/arm/arm/disassem.h>
 
-#ifdef arm26
+#ifdef acorn26
 #include <machine/machdep.h>
 #endif
 
@@ -162,7 +162,7 @@ undefinedinstruction(trapframe_t *frame)
 	struct undefined_handler *uh;
 
 	/* Enable interrupts if they were enabled before the exception. */
-#ifdef arm26
+#ifdef acorn26
 	if ((frame->tf_r15 & R15_IRQ_DISABLE) == 0)
 		int_on();
 #else
@@ -170,7 +170,7 @@ undefinedinstruction(trapframe_t *frame)
 		enable_interrupts(I32_bit);
 #endif
 
-#ifndef arm26
+#ifndef acorn26
 	frame->tf_pc -= INSN_SIZE;
 #endif
 

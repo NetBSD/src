@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.6 2001/11/14 19:16:30 nathanw Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.52.2.7 2002/04/01 07:47:49 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.6 2001/11/14 19:16:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.52.2.7 2002/04/01 07:47:49 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -399,6 +399,8 @@ iso_mountfs(devvp, mp, p, argp)
 		error = EINVAL;
 		goto out;
 	}
+
+	isomp->volume_space_size += sess;
 
 	pribp->b_flags |= B_AGE;
 	brelse(pribp);

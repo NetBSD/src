@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_dirent.c,v 1.3.2.2 2002/02/28 04:12:42 nathanw Exp $ */
+/*	$NetBSD: irix_dirent.c,v 1.3.2.3 2002/04/01 07:43:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.3.2.2 2002/02/28 04:12:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_dirent.c,v 1.3.2.3 2002/04/01 07:43:56 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -224,7 +224,7 @@ irix_sys_getdents(p, v, retval)
 
 /*
  * The 64 versions are very close to the 
- * 32 bit versions (only 3 lines of diff 
+ * 32 bit versions (only 3 lines of diff)
  */
 int
 irix_sys_ngetdents64(p, v, retval)
@@ -247,7 +247,7 @@ irix_sys_ngetdents64(p, v, retval)
 	struct file *fp;
 	struct uio auio;
 	struct iovec aiov;
-	struct irix_dirent idb;
+	struct irix_dirent64 idb;
 	off_t off;		/* true file offset */
 	int buflen, error, eofflag;
 	off_t *cookiebuf = NULL, *cookie;

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.8.2 2002/02/28 04:12:34 nathanw Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.8.3 2002/04/01 07:43:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ void do_pending_int(void);
 void ext_intr(void);
 void *intr_establish(int, int, int, int (*)(void *), void *);
 void intr_disestablish(void *);
+void intr_init(void);
 
 static __inline int splraise(int);
 static __inline int spllower(int);
@@ -97,8 +98,8 @@ extern u_long imask[];
 extern u_long intrcnt[];
 
 /*
- *  Reorder protection in the following inline functions is
- * achieved with the "eieio" instruction which the assembler
+ * Reorder protection in the following inline functions is
+ * achived with the "eieio" instruction which the assembler
  * seems to detect and then doesn't move instructions past....
  */
 static __inline int
@@ -156,18 +157,26 @@ set_sint(pending)
 
 #define	ICU_LEN		32
 #define	LEGAL_IRQ(x)	((x) >= 0 && (x) < ICU_LEN)
+#define	IRQ_TO_MASK(x)	(0x80000000UL >> (x))
 
-#define	SINT_NET	0x20000000
-#define	SINT_CLOCK	0x40000000
-#define	SINT_SERIAL	0x80000000
-#define	SPL_CLOCK	0x00000001
+/*
+ * Interrupt bits 0-18 and 25-31 are used by hardware.  This 
+ * leaves us bits 19-24 for stoftware.  
+ */
+#define	HWINT_MASK	~0x1fc0
+
+/* Assign these to unused (reserved) interrupt bits: */
+#define	CNT_SINT_NET	19
+#define	CNT_SINT_CLOCK	20
+#define	CNT_SINT_SERIAL	21
+#define	CNT_CLOCK       22
+#define	CNT_STATCLOCK	23
+
+#define	SINT_NET	IRQ_TO_MASK(CNT_SINT_NET)
+#define	SINT_CLOCK	IRQ_TO_MASK(CNT_SINT_CLOCK)
+#define	SINT_SERIAL	IRQ_TO_MASK(CNT_SINT_SERIAL)
+#define	SPL_CLOCK	IRQ_TO_MASK(CNT_CLOCK)
 #define	SINT_MASK	(SINT_CLOCK|SINT_NET|SINT_SERIAL)
-
-#define	CNT_SINT_NET	29
-#define	CNT_SINT_CLOCK	30
-#define	CNT_SINT_SERIAL	31
-#define	CNT_CLOCK	0
-#define	CNT_STATCLOCK	32	/* note: make sure locore.S has enough space for it */
 
 #define splbio()	splraise(imask[IPL_BIO])
 #define splnet()	splraise(imask[IPL_NET])

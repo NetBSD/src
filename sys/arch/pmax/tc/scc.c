@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.70.8.2 2001/12/15 07:11:00 gmcgarry Exp $	*/
+/*	$NetBSD: scc.c,v 1.70.8.3 2002/04/01 07:42:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70.8.2 2001/12/15 07:11:00 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.70.8.3 2002/04/01 07:42:00 nathanw Exp $");
 
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
@@ -782,11 +782,13 @@ sccioctl(dev, cmd, data, flag, p)
 	line = SCCLINE(dev);
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[line];
+
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
+
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -826,7 +828,7 @@ sccioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

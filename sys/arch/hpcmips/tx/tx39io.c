@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39io.c,v 1.9.8.2 2002/02/28 04:10:02 nathanw Exp $ */
+/*	$NetBSD: tx39io.c,v 1.9.8.3 2002/04/01 07:40:28 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -390,7 +390,7 @@ tx392x_io_out(hpcio_chip_t arg, int port, int onoff)
 	/* IO [0:15] */
 	pos = 1 << port;
 #ifdef DIAGNOSTIC
-	if (!(sc->sc_status.dir_io & pos))
+	if (!(sc->sc_stat_io.dir & pos))
 		panic("%s: IO%d is not output port.\n", devname, port);
 #endif
 	reg = tx_conf_read(tc, TX392X_IODATAINOUT_REG);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ebusvar.h,v 1.1.2.2 2002/02/28 04:13:15 nathanw Exp $ */
+/*	$NetBSD: ebusvar.h,v 1.1.2.3 2002/04/01 07:45:13 nathanw Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -51,8 +51,5 @@ struct ebus_attach_args {
 	int			ea_nvaddr;
 	int			ea_nintr;
 };
-
-#define ebus_bus_map(t, a, s, f, v, hp) \
-	bus_space_map2(t, 0, a, s, f, v, hp)
 
 #endif /* _DEV_EBUS_EBUSVAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.15.2.4 2002/02/28 04:07:16 nathanw Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.15.2.5 2002/04/01 07:39:06 nathanw Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -48,7 +48,6 @@
 #include "opt_compat_netbsd.h"
 #include "opt_cputypes.h"
 #include "opt_cpuoptions.h"
-#include "opt_pmap_debug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -59,9 +58,18 @@
 
 #include <arm/cpufunc.h>
 
-#ifdef CPU_XSCALE
+#ifdef CPU_XSCALE_80200
 #include <arm/xscale/i80200reg.h>
 #include <arm/xscale/i80200var.h>
+#endif
+
+#ifdef CPU_XSCALE_80321
+#include <arm/xscale/i80321reg.h>
+#include <arm/xscale/i80321var.h>
+#endif
+
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#include <arm/xscale/xscalereg.h>
 #endif
 
 /* PRIMARY CACHE VARIABLES */
@@ -488,7 +496,7 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
@@ -543,7 +551,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_setup			/* cpu setup		*/
 };
-#endif /* CPU_XSCALE */
+#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
 
 /*
  * Global constants also used by locore.s
@@ -554,11 +562,11 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_SA110) || defined(CPU_XSCALE)
-static void get_cachetype __P((void));
+    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+static void get_cachetype_cp15 __P((void));
 
 static void
-get_cachetype()
+get_cachetype_cp15()
 {
 	u_int ctype, isize, dsize;
 	u_int multiplier;
@@ -620,7 +628,68 @@ get_cachetype()
  out:
 	arm_dcache_align_mask = arm_dcache_align - 1;
 }
-#endif /* ARM7TDMI || ARM8 || ARM9 || SA110 || XSCALE */
+#endif /* ARM7TDMI || ARM8 || ARM9 || XSCALE */
+
+#if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
+    defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_SA110)
+/* Cache information for CPUs without cache type registers. */
+struct cachetab {
+	u_int32_t ct_cpuid;
+	int	ct_pcache_type;
+	int	ct_pcache_unified;
+	int	ct_pdcache_size;
+	int	ct_pdcache_line_size;
+	int	ct_pdcache_ways;
+	int	ct_picache_size;
+	int	ct_picache_line_size;
+	int	ct_picache_ways;
+};
+
+struct cachetab cachetab[] = {
+    /* cpuid,           cache type,       u,  dsiz, ls, wy,  isiz, ls, wy */
+    { CPU_ID_ARM2,      0,                1,     0,  0,  0,     0,  0,  0 },
+    { CPU_ID_ARM250,    0,                1,     0,  0,  0,     0,  0,  0 },
+    { CPU_ID_ARM3,      CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
+    { CPU_ID_ARM610,	CPU_CT_CTYPE_WT,  1,  4096, 16, 64,     0,  0,  0 },
+    { CPU_ID_ARM710,    CPU_CT_CTYPE_WT,  1,  8192, 32,  4,     0,  0,  0 },
+    { CPU_ID_ARM7500,   CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
+    { CPU_ID_ARM710A,   CPU_CT_CTYPE_WT,  1,  8192, 16,  4,     0,  0,  0 },
+    { CPU_ID_ARM7500FE, CPU_CT_CTYPE_WT,  1,  4096, 16,  4,     0,  0,  0 },
+    /* XXX is this type right for SA-1? */
+    { CPU_ID_SA110,	CPU_CT_CTYPE_WB1, 0, 16384, 32, 32, 16384, 32, 32 },
+    { CPU_ID_SA1100,	CPU_CT_CTYPE_WB1, 0,  8192, 32, 32, 16384, 32, 32 },
+    { CPU_ID_SA1110,	CPU_CT_CTYPE_WB1, 0,  8192, 32, 32, 16384, 32, 32 },
+    { 0, 0, 0, 0, 0, 0, 0, 0}
+};
+
+static void get_cachetype_table __P((void));
+
+static void
+get_cachetype_table()
+{
+	int i;
+	u_int32_t cpuid = cpufunc_id();
+
+	for (i = 0; cachetab[i].ct_cpuid != 0; i++) {
+		if (cachetab[i].ct_cpuid == (cpuid & CPU_ID_CPU_MASK)) {
+			arm_pcache_type = cachetab[i].ct_pcache_type;
+			arm_pcache_unified = cachetab[i].ct_pcache_unified;
+			arm_pdcache_size = cachetab[i].ct_pdcache_size;
+			arm_pdcache_line_size =
+			    cachetab[i].ct_pdcache_line_size;
+			arm_pdcache_ways = cachetab[i].ct_pdcache_ways;
+			arm_picache_size = cachetab[i].ct_picache_size;
+			arm_picache_line_size =
+			    cachetab[i].ct_picache_line_size;
+			arm_picache_ways = cachetab[i].ct_picache_ways;
+		}
+	}
+	arm_dcache_align = arm_pdcache_line_size;
+
+	arm_dcache_align_mask = arm_dcache_align - 1;
+}
+
+#endif /* ARM2 || ARM250 || ARM3 || ARM6 || ARM7 || SA110 */
 
 /*
  * Cannot panic here as we may not have a console yet ...
@@ -638,8 +707,7 @@ set_cpufuncs()
 	    (cputype & 0x00000f00) == 0x00000300) {
 		cpufuncs = arm3_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
-		arm_dcache_align_mask = -1;
+		get_cachetype_table();
 		return 0;
 	}
 #endif	/* CPU_ARM3 */
@@ -648,8 +716,7 @@ set_cpufuncs()
 	    (cputype & 0x00000f00) == 0x00000600) {
 		cpufuncs = arm6_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
-		arm_dcache_align_mask = -1;
+		get_cachetype_table();
 		return 0;
 	}
 #endif	/* CPU_ARM6 */
@@ -659,8 +726,7 @@ set_cpufuncs()
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V3) {
 		cpufuncs = arm7_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		/* XXX Cache info? */
-		arm_dcache_align_mask = -1;
+		get_cachetype_table();
 		return 0;
 	}
 #endif	/* CPU_ARM7 */
@@ -670,7 +736,7 @@ set_cpufuncs()
 	    (cputype & CPU_ID_7ARCH_MASK) == CPU_ID_7ARCH_V4T) {
 		cpufuncs = arm7tdmi_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif	
@@ -679,7 +745,7 @@ set_cpufuncs()
 	    (cputype & 0x0000f000) == 0x00008000) {
 		cpufuncs = arm8_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 0;	/* XXX correct? */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif	/* CPU_ARM8 */
@@ -688,7 +754,7 @@ set_cpufuncs()
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = arm9_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* V4 or higher */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
 #endif /* CPU_ARM9 */
@@ -697,7 +763,7 @@ set_cpufuncs()
 	    cputype == CPU_ID_SA1110) {
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
-		get_cachetype();
+		get_cachetype_table();
 		/*
 		 * Enable the right variant of sleeping.
 		 */
@@ -707,11 +773,11 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_SA110 */
-#ifdef CPU_XSCALE
-	if (cputype == CPU_ID_I80200) {
+#ifdef CPU_XSCALE_80200
+	if (cputype == CPU_ID_80200) {
 		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
 
-		i80200_intr_init();
+		i80200_icu_init();
 
 		/*
 		 * Reset the Performance Monitoring Unit to a
@@ -725,7 +791,7 @@ set_cpufuncs()
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
 
-#ifdef XSCALE_CCLKCFG
+#if defined(XSCALE_CCLKCFG)
 		/*
 		 * Crank CCLKCFG to maximum legal value.
 		 */
@@ -757,14 +823,37 @@ set_cpufuncs()
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
-		get_cachetype();
+		get_cachetype_cp15();
 		return 0;
 	}
-#endif /* CPU_XSCALE */
+#endif /* CPU_XSCALE_80200 */
+#ifdef CPU_XSCALE_80321
+	if (cputype == CPU_ID_80321) {
+		i80321_icu_init();
+
+		/*
+		 * Reset the Performance Monitoring Unit to a
+		 * pristine state:
+		 *	- CCNT, PMN0, PMN1 reset to 0
+		 *	- overflow indications cleared
+		 *	- all counters disabled
+		 */
+		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+			:
+			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
+			       PMNC_CC_IF));
+
+		cpufuncs = xscale_cpufuncs;
+
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
+		get_cachetype_cp15();
+		return 0;
+	}
+#endif /* CPU_XSCALE_80321 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
-/*	panic("No support for this CPU type (%08x) in kernel", cputype);*/
+	panic("No support for this CPU type (%08x) in kernel", cputype);
 	return(ARCHITECTURE_NOT_PRESENT);
 }
 
@@ -779,9 +868,6 @@ set_cpufuncs()
  * when defined should use late aborts
  */
 
-#if defined(DEBUG_FAULT_CORRECTION) && !defined(PMAP_DEBUG)
-#error PMAP_DEBUG must be defined to use DEBUG_FAULT_CORRECTION
-#endif
 
 /*
  * Null abort fixup routine.
@@ -794,14 +880,18 @@ cpufunc_null_fixup(arg)
 	return(ABORT_FIXUP_OK);
 }
 
-#if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
-#ifdef DEBUG_FAULT_CORRECTION
-extern int pmap_debug_level;
-#endif
-#endif
 
 #if defined(CPU_ARM2) || defined(CPU_ARM250) || defined(CPU_ARM3) || \
     defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI)
+
+#ifdef DEBUG_FAULT_CORRECTION
+#define DFC_PRINTF(x)		printf x
+#define DFC_DISASSEMBLE(x)	disassemble(x)
+#else
+#define DFC_PRINTF(x)		/* nothing */
+#define DFC_DISASSEMBLE(x)	/* nothing */
+#endif
+
 /*
  * "Early" data abort fixup.
  *
@@ -858,17 +948,10 @@ early_abort_fixup(arg)
 		int count;
 		int *registers = &frame->tf_r0;
         
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0) {
-			printf("LDM/STM\n");
-			disassemble(fault_pc);
-		}
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_PRINTF(("LDM/STM\n"));
+		DFC_DISASSEMBLE(fault_pc);
 		if (fault_instruction & (1 << 21)) {
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("This instruction must be corrected\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("This instruction must be corrected\n"));
 			base = (fault_instruction >> 16) & 0x0f;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
@@ -878,23 +961,14 @@ early_abort_fixup(arg)
 				if (fault_instruction & (1<<loop))
 					++count;
 			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0) {
-				printf("%d registers used\n", count);
-				printf("Corrected r%d by %d bytes ", base, count * 4);
-			}
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("%d registers used\n", count));
+			DFC_PRINTF(("Corrected r%d by %d bytes ",
+				       base, count * 4));
 			if (fault_instruction & (1 << 23)) {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("down\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("down\n"));
 				registers[base] -= count * 4;
 			} else {
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >= 0)
-					printf("up\n");
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("up\n"));
 				registers[base] += count * 4;
 			}
 		}
@@ -903,34 +977,26 @@ early_abort_fixup(arg)
 		int offset;
 		int *registers = &frame->tf_r0;
 	
-/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
+		/* REGISTER CORRECTION IS REQUIRED FOR THESE INSTRUCTIONS */
 
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 
-/* Only need to fix registers if write back is turned on */
+		/* Only need to fix registers if write back is turned on */
 
 		if ((fault_instruction & (1 << 21)) != 0) {
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+			if (base == 13 &&
+			    (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
 				return ABORT_FIXUP_FAILED;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
 
 			offset = (fault_instruction & 0xff) << 2;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 			if ((fault_instruction & (1 << 23)) != 0)
 				offset = -offset;
 			registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >= 0)
-				printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 		}
 	} else if ((fault_instruction & 0x0e000000) == 0x0c000000)
 		return ABORT_FIXUP_FAILED;
@@ -964,6 +1030,7 @@ early_abort_fixup(arg)
 	return(ABORT_FIXUP_OK);
 }
 #endif	/* CPU_ARM2/250/3/6/7 */
+
 
 #if (defined(CPU_ARM6) && defined(ARM6_LATE_ABORT)) || defined(CPU_ARM7) || \
 	defined(CPU_ARM7TDMI)
@@ -1020,10 +1087,7 @@ late_abort_fixup(arg)
 	/* Was is a swap instruction ? */
 
 	if ((fault_instruction & 0x0fb00ff0) == 0x01000090) {
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 	} else if ((fault_instruction & 0x0c000000) == 0x04000000) {
 
 		/* Was is a ldr/str instruction */
@@ -1033,62 +1097,59 @@ late_abort_fixup(arg)
 		int offset;
 		int *registers = &frame->tf_r0;
 
-#ifdef DEBUG_FAULT_CORRECTION
-		if (pmap_debug_level >= 0)
-			disassemble(fault_pc);
-#endif	/* DEBUG_FAULT_CORRECTION */
+		DFC_DISASSEMBLE(fault_pc);
 		
 		/* This is for late abort only */
 
 		if ((fault_instruction & (1 << 24)) == 0
-		    || (fault_instruction & (1 << 21)) != 0) {
+		    || (fault_instruction & (1 << 21)) != 0) {	
+			/* postindexed ldr/str with no writeback */
+
 			base = (fault_instruction >> 16) & 0x0f;
-			if (base == 13 && (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
+			if (base == 13 &&
+			    (frame->tf_spsr & PSR_MODE) == PSR_SVC32_MODE)
 				return ABORT_FIXUP_FAILED;
 			if (base == 15)
 				return ABORT_FIXUP_FAILED;
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("late abt fix: r%d=%08x ", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("late abt fix: r%d=%08x : ",
+				       base, registers[base]));
 			if ((fault_instruction & (1 << 25)) == 0) {
-				/* Immediate offset - easy */                  
+				/* Immediate offset - easy */
+
 				offset = fault_instruction & 0xfff;
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
 				registers[base] += offset;
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("imm=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("imm=%08x ", offset));
 			} else {
+				/* offset is a shifted register */
 				int shift;
 
 				offset = fault_instruction & 0x0f;
 				if (offset == base)
 					return ABORT_FIXUP_FAILED;
                 
-/* Register offset - hard we have to cope with shifts ! */
+				/*
+				 * Register offset - hard we have to
+				 * cope with shifts !
+				 */
 				offset = registers[offset];
 
 				if ((fault_instruction & (1 << 4)) == 0)
+					/* shift with amount */
 					shift = (fault_instruction >> 7) & 0x1f;
 				else {
+					/* shift with register */
 					if ((fault_instruction & (1 << 7)) != 0)
+						/* undefined for now so bail out */
 						return ABORT_FIXUP_FAILED;
 					shift = ((fault_instruction >> 8) & 0xf);
 					if (base == shift)
 						return ABORT_FIXUP_FAILED;
-#ifdef DEBUG_FAULT_CORRECTION
-					if (pmap_debug_level >=0)
-						printf("shift reg=%d ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
+					DFC_PRINTF(("shift reg=%d ", shift));
 					shift = registers[shift];
 				}
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("shift=%08x ", shift);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("shift=%08x ", shift));
 				switch (((fault_instruction >> 5) & 0x3)) {
 				case 0 : /* Logical left */
 					offset = (int)(((u_int)offset) << shift);
@@ -1101,26 +1162,19 @@ late_abort_fixup(arg)
 					if (shift == 0) shift = 32;
 					offset = (int)(((int)offset) >> shift);
 					break;
-				case 3 : /* Rotate right */
+				case 3 : /* Rotate right (rol or rxx) */
 					return ABORT_FIXUP_FAILED;
+					break;
 				}
 
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("abt: fixed LDR/STR with register offset\n");
-#endif	/* DEBUG_FAULT_CORRECTION */               
+				DFC_PRINTF(("abt: fixed LDR/STR with "
+					       "register offset\n"));
 				if ((fault_instruction & (1 << 23)))
 					offset = -offset;
-#ifdef DEBUG_FAULT_CORRECTION
-				if (pmap_debug_level >=0)
-					printf("offset=%08x ", offset);
-#endif	/* DEBUG_FAULT_CORRECTION */
+				DFC_PRINTF(("offset=%08x ", offset));
 				registers[base] += offset;
 			}
-#ifdef DEBUG_FAULT_CORRECTION
-			if (pmap_debug_level >=0)
-				printf("r%d=%08x\n", base, registers[base]);
-#endif	/* DEBUG_FAULT_CORRECTION */
+			DFC_PRINTF(("r%d=%08x\n", base, registers[base]));
 		}
 	}
 
@@ -1165,8 +1219,7 @@ late_abort_fixup(arg)
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
-	defined(CPU_XSCALE)
-int cpuctrl;
+	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 
 #define IGN	0
 #define OR	1
@@ -1239,7 +1292,7 @@ void
 arm6_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	/* Set up default control registers bits */
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
@@ -1261,7 +1314,8 @@ arm6_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM6 */
@@ -1283,7 +1337,7 @@ void
 arm7_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1301,7 +1355,8 @@ arm7_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7 */
@@ -1323,6 +1378,8 @@ void
 arm7tdmi_setup(args)
 	char *args;
 {
+	int cpuctrl;
+
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
 		 | CPU_CONTROL_IDC_ENABLE | CPU_CONTROL_WBUF_ENABLE;
@@ -1333,7 +1390,8 @@ arm7tdmi_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 }
 #endif	/* CPU_ARM7TDMI */
@@ -1357,7 +1415,7 @@ arm8_setup(args)
 	char *args;
 {
 	int integer;
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 	int clocktest;
 	int setclock = 0;
 
@@ -1407,7 +1465,8 @@ arm8_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 	/* Set the clock/test register */    
@@ -1433,7 +1492,7 @@ void
 arm9_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 	    | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1452,7 +1511,8 @@ arm9_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 	cpu_control(0xffffffff, cpuctrl);
 
 }
@@ -1479,7 +1539,7 @@ void
 sa110_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	cpuctrl = CPU_CONTROL_MMU_ENABLE | CPU_CONTROL_32BP_ENABLE
 		 | CPU_CONTROL_32BD_ENABLE | CPU_CONTROL_SYST_ENABLE
@@ -1498,7 +1558,8 @@ sa110_setup(args)
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
 
-	/* Set the control register */    
+	/* Set the control register */
+	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
@@ -1510,7 +1571,7 @@ sa110_setup(args)
 }
 #endif	/* CPU_SA110 */
 
-#ifdef CPU_XSCALE
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -1530,7 +1591,7 @@ void
 xscale_setup(args)
 	char *args;
 {
-	int cpuctrlmask;
+	int cpuctrl, cpuctrlmask;
 
 	/*
 	 * The XScale Write Buffer is always enabled.  Our option
@@ -1559,6 +1620,7 @@ xscale_setup(args)
 	 * Set the control register.  Note that bits 6:3 must always
 	 * be set to 1.
 	 */
+	curcpu()->ci_ctrl = cpuctrl;
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
@@ -1571,4 +1633,4 @@ xscale_setup(args)
 	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
 #endif
 }
-#endif	/* CPU_XSCALE */
+#endif	/* CPU_XSCALE_80200 */

@@ -1,4 +1,4 @@
-#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.3 2002/02/28 04:05:52 nathanw Exp $
+#	$NetBSD: LOWMEM_WSCONS,v 1.2.2.4 2002/04/01 07:38:44 nathanw Exp $
 #
 #	LOWMEM_WSCONS -- RiscPC config with wscons for SMALL machines
 #
@@ -99,8 +99,7 @@ options 	COMPAT_13	# NetBSD 1.3 compatibility.
 # Device options
 
 options 	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
-#options 	MEMORY_DISK_SIZE=0	# Size in blocks
-#options 	MINIROOTSIZE=3400	# Size in blocks
+#options 	MEMORY_DISK_SIZE=3400	# Size in blocks
 #options 	MEMORY_DISK_IS_ROOT	# use memory disk as root
 
 # Miscellaneous kernel options

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.28.2.7 2001/11/14 19:13:13 nathanw Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.28.2.8 2002/04/01 07:44:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.7 2001/11/14 19:13:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.28.2.8 2002/04/01 07:44:30 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -107,7 +107,7 @@ int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
 int linux_getifhwaddr __P((struct proc *, register_t *, u_int, void *));
-static int linux_sa_get __P((caddr_t *sgp, struct sockaddr **sap,
+static int linux_sa_get __P((struct proc *, caddr_t *sgp, struct sockaddr **sap,
 		const struct osockaddr *osa, int *osalen));
 static int linux_sa_put __P((struct osockaddr *osa));
 
@@ -257,6 +257,7 @@ linux_sys_sendto(l, v, retval)
 		syscallarg(struct osockaddr *)		to;
 		syscallarg(int)				tolen;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct sys_sendto_args bsa;
 	int tolen;
 
@@ -268,9 +269,9 @@ linux_sys_sendto(l, v, retval)
 	if (SCARG(uap, to)) {
 		struct sockaddr *sa;
 		int error;
-		caddr_t sg = stackgap_init(l->l_proc->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
-		if ((error = linux_sa_get(&sg, &sa, SCARG(uap, to), &tolen)))
+		if ((error = linux_sa_get(p, &sg, &sa, SCARG(uap, to), &tolen)))
 			return (error);
 
 		SCARG(&bsa, to) = sa;
@@ -292,6 +293,7 @@ linux_sys_sendmsg(l, v, retval)
 		syscallarg(struct msghdr *) msg;
 		syscallarg(u_int) flags;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct msghdr	msg;
 	int		error;
 	struct sys_sendmsg_args bsa;
@@ -303,14 +305,14 @@ linux_sys_sendmsg(l, v, retval)
 
 	if (msg.msg_name) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(l->l_proc->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
-		nmsg = (struct msghdr *) stackgap_alloc(&sg,
+		nmsg = (struct msghdr *) stackgap_alloc(p, &sg,
 		    sizeof(struct msghdr));
 		if (!nmsg)
 			return (ENOMEM);
 
-		error = linux_sa_get(&sg, &sa,
+		error = linux_sa_get(p, &sg, &sa,
 		    (struct osockaddr *) msg.msg_name, &msg.msg_namelen);
 		if (error)
 			return (error);
@@ -875,11 +877,11 @@ linux_sys_connect(l, v, retval)
 	int		error;
 	struct sockaddr *sa;
 	struct sys_connect_args bca;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int namlen;
 
 	namlen = SCARG(uap, namelen);
-	error = linux_sa_get(&sg, &sa, SCARG(uap, name), &namlen);
+	error = linux_sa_get(p, &sg, &sa, SCARG(uap, name), &namlen);
 	if (error)
 		return (error);
 	
@@ -928,6 +930,7 @@ linux_sys_bind(l, v, retval)
 		syscallarg(const struct osockaddr *) name;
 		syscallarg(int) namelen;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	int		error, namlen;
 	struct sys_bind_args bsa;
 
@@ -935,9 +938,9 @@ linux_sys_bind(l, v, retval)
 	SCARG(&bsa, s) = SCARG(uap, s);
 	if (SCARG(uap, name)) {
 		struct sockaddr *sa;
-		caddr_t sg = stackgap_init(l->l_proc->p_emul);
+		caddr_t sg = stackgap_init(p, 0);
 
-		error = linux_sa_get(&sg, &sa, SCARG(uap, name), &namlen);
+		error = linux_sa_get(p, &sg, &sa, SCARG(uap, name), &namlen);
 		if (error)
 			return (error);
 
@@ -999,7 +1002,8 @@ linux_sys_getpeername(l, v, retval)
  * the converted structure there, address on stackgap returned in sap.
  */
 static int
-linux_sa_get(sgp, sap, osa, osalen)
+linux_sa_get(p, sgp, sap, osa, osalen)
+	struct proc *p;
 	caddr_t *sgp;
 	struct sockaddr **sap;
 	const struct osockaddr *osa;
@@ -1078,7 +1082,7 @@ linux_sa_get(sgp, sap, osa, osalen)
 	sa->sa_family = bdom;
 	sa->sa_len = alloclen;
 
-	usa = (struct sockaddr *) stackgap_alloc(sgp, alloclen);
+	usa = (struct sockaddr *) stackgap_alloc(p, sgp, alloclen);
 	if (!usa) {
 		error = ENOMEM;
 		goto out;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.55.2.4 2002/02/28 04:14:47 nathanw Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.55.2.5 2002/04/01 07:48:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.4 2002/02/28 04:14:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.55.2.5 2002/04/01 07:48:00 nathanw Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -768,19 +768,6 @@ ptyioctl(dev, cmd, data, flag, p)
 		switch (cmd) {
 
 		case TIOCGPGRP:
-#ifdef COMPAT_SUNOS
-			{
-			/*
-			 * I'm not sure about SunOS TIOCGPGRP semantics
-			 * on PTYs, but it's something like this:
-			 */
-			extern struct emul emul_sunos;
-			if (p->p_emul == &emul_sunos && tp->t_pgrp == 0)
-				return (EIO);
-			*(int *)data = tp->t_pgrp->pg_id;
-			return (0);
-			}
-#endif
 			/*
 			 * We avoid calling ttioctl on the controller since,
 			 * in that case, tp must be the controlling terminal.
@@ -831,16 +818,16 @@ ptyioctl(dev, cmd, data, flag, p)
 				return (EINVAL);
 			if (!ISSET(tp->t_lflag, NOFLSH))
 				ttyflush(tp, FREAD|FWRITE);
-			pgsignal(tp->t_pgrp, sig, 1);
 			if ((sig == SIGINFO) &&
 			    (!ISSET(tp->t_lflag, NOKERNINFO)))
 				ttyinfo(tp);
+			pgsignal(tp->t_pgrp, sig, 1);
 			return(0);
 		}
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error < 0)
+	if (error == EPASSTHROUGH)
 		 error = ttioctl(tp, cmd, data, flag, p);
-	if (error < 0) {
+	if (error == EPASSTHROUGH) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {
 			if (cmd & 0xff) {
@@ -849,7 +836,6 @@ ptyioctl(dev, cmd, data, flag, p)
 			}
 			return (0);
 		}
-		error = ENOTTY;
 	}
 	/*
 	 * If external processing and packet mode send ioctl packet.

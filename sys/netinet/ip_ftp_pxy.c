@@ -1,13 +1,13 @@
-/*	$NetBSD: ip_ftp_pxy.c,v 1.17.2.3 2002/02/28 04:15:07 nathanw Exp $	*/
+/*	$NetBSD: ip_ftp_pxy.c,v 1.17.2.4 2002/04/01 07:48:35 nathanw Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.17.2.3 2002/02/28 04:15:07 nathanw Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ip_ftp_pxy.c,v 1.17.2.4 2002/04/01 07:48:35 nathanw Exp $");
 
 /*
  * Simple FTP transparent proxy for in-kernel use.  For use with the NAT
  * code.
  *
- * Id: ip_ftp_pxy.c,v 2.7.2.31 2002/01/09 09:30:04 darrenr Exp
+ * Id: ip_ftp_pxy.c,v 2.7.2.33 2002/02/15 14:48:38 darrenr Exp
  */
 #if SOLARIS && defined(_KERNEL)
 extern	kmutex_t	ipf_rw;
@@ -348,7 +348,8 @@ int dlen;
 		   !strncmp(cmd, "ADAT ", 5)) {
 		ftp->ftp_passok = FTPXY_ADAT_1;
 		ftp->ftp_incok = 1;
-	} else if ((ftp->ftp_passok == FTPXY_PAOK_2) &&
+	} else if ((ftp->ftp_passok == FTPXY_PAOK_1 ||
+		    ftp->ftp_passok == FTPXY_PAOK_2) &&
 		 !strncmp(cmd, "ACCT ", 5)) {
 		ftp->ftp_passok = FTPXY_ACCT_1;
 		ftp->ftp_incok = 1;
@@ -376,8 +377,8 @@ int dlen;
 {
 	tcphdr_t *tcp, tcph, *tcp2 = &tcph;
 	struct in_addr swip, swip2;
-	u_short a5, a6, sp, dp;
 	u_int a1, a2, a3, a4;
+	u_short a5, a6, dp;
 	fr_info_t fi;
 	nat_t *ipn;
 	int inc;
@@ -510,7 +511,6 @@ int dlen;
 	 * other way.
 	 */
 	bcopy((char *)fin, (char *)&fi, sizeof(fi));
-	sp = 0;
 	fi.fin_data[0] = 0;
 	dp = htons(fin->fin_data[1] - 1);
 	fi.fin_data[1] = ntohs(dp);
@@ -525,10 +525,10 @@ int dlen;
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = 0;		/* XXX - fake it for nat_new */
 		tcp2->th_off = 5;
-		fi.fin_data[0] = a5 << 8 | a6;
+		fi.fin_data[1] = a5 << 8 | a6;
 		fi.fin_dlen = sizeof(*tcp2);
-		tcp2->th_dport = htons(fi.fin_data[0]);
-		fi.fin_data[1] = 0;
+		tcp2->th_dport = htons(fi.fin_data[1]);
+		fi.fin_data[0] = 0;
 		fi.fin_dp = (char *)tcp2;
 		fi.fin_fr = &ftppxyfr;
 		fi.fin_out = 1;

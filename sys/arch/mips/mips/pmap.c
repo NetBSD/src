@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.138.2.4 2002/01/11 10:32:53 wdk Exp $	*/
+/*	$NetBSD: pmap.c,v 1.138.2.5 2002/04/01 07:41:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.4 2002/01/11 10:32:53 wdk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.5 2002/04/01 07:41:11 nathanw Exp $");
 
 /*
  *	Manages physical address maps.
@@ -104,6 +104,22 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.138.2.4 2002/01/11 10:32:53 wdk Exp $");
  *	necessary.  This module is given full information as
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
+ */
+
+/* XXX simonb 2002/02/26
+ *
+ * MIPS3_PLUS is used to conditionally compile the r4k MMU support.
+ * This is bogus - for example, some IDT MIPS-II CPUs have r4k style
+ * MMUs (and 32-bit ones at that).
+ *
+ * On the other hand, it's not likely that we'll ever support the R6000
+ * (is it?), so maybe that can be an "if MIPS2 or greater" check.
+ *
+ * Also along these lines are using totally separate functions for
+ * r3k-style and r4k-style MMUs and removing all the MIPS_HAS_R4K_MMU
+ * checks in the current functions.
+ *
+ * These warnings probably applies to other files under sys/arch/mips.
  */
 
 #include "opt_sysv.h"
@@ -225,16 +241,20 @@ boolean_t	pmap_initialized = FALSE;
 })
 
 /* Forward function declarations */
-void pmap_remove_pv __P((pmap_t pmap, vaddr_t va, paddr_t pa));
-void pmap_asid_alloc __P((pmap_t pmap));
-void pmap_enter_pv __P((pmap_t, vaddr_t, paddr_t, u_int *));
-pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
+void pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa);
+void pmap_asid_alloc(pmap_t pmap);
+void pmap_enter_pv(pmap_t, vaddr_t, paddr_t, u_int *);
+pt_entry_t *pmap_pte(pmap_t, vaddr_t);
 
 /*
  * PV table management functions.
  */
-void	*pmap_pv_page_alloc(u_long, int, int);
-void	pmap_pv_page_free(void *, u_long, int);
+void	*pmap_pv_page_alloc(struct pool *, int);
+void	pmap_pv_page_free(struct pool *, void *);
+
+struct pool_allocator pmap_pv_page_allocator = {
+	pmap_pv_page_alloc, pmap_pv_page_free, 0,
+};
 
 #define	pmap_pv_alloc()		pool_get(&pmap_pv_pool, PR_NOWAIT)
 #define	pmap_pv_free(pv)	pool_put(&pmap_pv_pool, (pv))
@@ -243,8 +263,8 @@ void	pmap_pv_page_free(void *, u_long, int);
  * Misc. functions.
  */
 
-#ifdef MIPS3
-void mips_dump_segtab __P((struct proc *));
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+void mips_dump_segtab(struct proc *);
 #endif
 
 #if defined(MIPS3_L2CACHE_ABSENT)
@@ -271,7 +291,7 @@ mips_flushcache_allpvh(paddr_t pa)
 	}
 #endif
 }
-#endif
+#endif	/* MIPS3_L2CACHE_ABSENT */
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -300,6 +320,8 @@ pmap_bootstrap()
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif
+	/* XXX: else runs out of space on 256MB sbmips!! */
+	Sysmapsize += 20000;
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -335,9 +357,9 @@ pmap_bootstrap()
 	 * Initialize the pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    0, pmap_pv_page_alloc, pmap_pv_page_free, M_VMPMAP);
+	    &pmap_pv_page_allocator);
 
 	/*
 	 * Initialize the kernel pmap.
@@ -353,7 +375,7 @@ pmap_bootstrap()
 
 	MachSetPID(0);
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	/*
 	 * The R4?00 stores only one copy of the Global bit in the
 	 * translation lookaside buffer for each 2 page entry.
@@ -361,14 +383,14 @@ pmap_bootstrap()
 	 * when Entry LO and Entry HI G bits are anded together
 	 * they will produce a global bit to store in the tlb.
 	 */
-	if (CPUISMIPS3) {
+	if (MIPS_HAS_R4K_MMU) {
 		int i;
 		pt_entry_t *spte;
 
 		for (i = 0, spte = Sysmap; i < Sysmapsize; i++, spte++)
 			spte->pt_entry = MIPS3_PG_G;
 	}
-#endif
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -609,7 +631,7 @@ pmap_destroy(pmap)
 			}
 #endif
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 			/*
 			 * The pica pmap.c flushed the segmap pages here.  I'm
 			 * not sure why, but I suspect it's because the page(s)
@@ -618,10 +640,10 @@ pmap_destroy(pmap)
 			 * is reused with KSEG2 (mapped) addresses.  This may
 			 * cause problems on machines without secondary caches.
 			 */
-			if (CPUISMIPS3)
+			if (MIPS_HAS_R4K_MMU)
 				mips_dcache_wbinv_range((vaddr_t) pte,
 				    PAGE_SIZE);
-#endif
+#endif	/* MIPS3_PLUS */
 			uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS(pte)));
 
 			pmap->pm_segtab->seg_tab[i] = NULL;
@@ -717,7 +739,7 @@ pmap_remove(pmap, sva, eva)
 				pmap->pm_stats.wired_count--;
 			pmap->pm_stats.resident_count--;
 			pmap_remove_pv(pmap, sva, mips_tlbpfn_to_paddr(entry));
-			if (CPUISMIPS3)
+			if (MIPS_HAS_R4K_MMU)
 				/* See above about G bit */
 				pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
 			else
@@ -742,7 +764,7 @@ pmap_remove(pmap, sva, eva)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
+		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB flush: %d <-> %d",
 				asid, pmap->pm_asid);
@@ -887,6 +909,8 @@ pmap_protect(pmap, sva, eva, prot)
 			entry = pte->pt_entry;
 			if (!mips_pg_v(entry))
 				continue;
+			if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+				mips_dcache_wb_range(sva, PAGE_SIZE);
 			entry &= ~(mips_pg_m_bit() | mips_pg_ro_bit());
 			entry |= p;
 			pte->pt_entry = entry;
@@ -902,7 +926,7 @@ pmap_protect(pmap, sva, eva, prot)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
+		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
 				asid, pmap->pm_asid);
@@ -931,6 +955,8 @@ pmap_protect(pmap, sva, eva, prot)
 			entry = pte->pt_entry;
 			if (!mips_pg_v(entry))
 				continue;
+			if (MIPS_HAS_R4K_MMU && entry & mips_pg_m_bit())
+				mips_dcache_wbinv_range_index(sva, PAGE_SIZE);
 			entry = (entry & ~(mips_pg_m_bit() |
 			    mips_pg_ro_bit())) | p;
 			pte->pt_entry = entry;
@@ -956,33 +982,28 @@ pmap_procwr(p, va, len)
 
 	pmap = p->p_vmspace->vm_map.pmap;
 
-	if (CPUISMIPS3) {
-#ifdef MIPS3
-#if 0
-		printf("pmap_procwr: va %lx len %lx\n", va, len);
-#endif
-		if (p == curproc->l_proc)
+	if (MIPS_HAS_R4K_MMU) {
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+		/* XXX
+		   shouldn't need to do this for physical d$?
+		   should need to do this for virtual i$ if prot == EXEC?
+		 */
+		if (p == curproc->l_proc && mips_pdcache_way_mask < PAGE_SIZE)	/* XXX check icache mask too? */
 			mips_icache_sync_range(va, len);
 		else
 			mips_icache_sync_range_index(va, len);
-#endif /* MIPS3 */
+#endif /* MIPS3_PLUS */	/* XXX mmu XXX */
 	} else {
 #ifdef MIPS1
 		pt_entry_t *pte;
 		unsigned entry;
 
-#if 0
-printf("pmap_procwr: va %lx", va);
-#endif
 		if (!(pte = pmap_segmap(pmap, va)))
 			return;
 		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 		if (!mips_pg_v(entry))
 			return;
-#if 0
-printf(" flush %llx", (long long)mips_tlbpfn_to_paddr(entry) + (va & PGOFSET));
-#endif
 		/*
 		 * XXXJRT -- Wrong -- since page is physically-indexed, we
 		 * XXXJRT need to loop.
@@ -991,9 +1012,6 @@ printf(" flush %llx", (long long)mips_tlbpfn_to_paddr(entry) + (va & PGOFSET));
 		    MIPS_PHYS_TO_KSEG0(mips1_tlbpfn_to_paddr(entry)
 		    + (va & PGOFSET)),
 		    len);
-#if 0
-printf("\n");
-#endif
 #endif /* MIPS1 */
 	}
 }
@@ -1010,7 +1028,7 @@ pmap_is_page_ro(pmap, va, entry)
 	return (entry & mips_pg_ro_bit());
 }
 
-#if defined(MIPS3) && !defined(MIPS3_NO_PV_UNCACHED)
+#if defined(MIPS3_PLUS) && !defined(MIPS3_NO_PV_UNCACHED)	/* XXX mmu XXX */
 /*
  *	pmap_page_cache:
  *
@@ -1065,7 +1083,7 @@ pmap_page_cache(paddr_t pa, int mode)
 		pv = pv->pv_next;
 	}
 }
-#endif
+#endif	/* MIPS3_PLUS && !MIPS3_NO_PV_UNCACHED */
 
 /*
  *	Insert the given physical page (p) at
@@ -1159,11 +1177,13 @@ pmap_enter(pmap, va, pa, prot, flags)
 #ifdef DEBUG
 		enter_stats.unmanaged++;
 #endif
-		if (CPUISMIPS3) {
-			npte = (prot & VM_PROT_WRITE) ?
-			    (MIPS3_PG_IOPAGE & ~MIPS3_PG_G) :
-			    ((MIPS3_PG_IOPAGE | MIPS3_PG_RO) &
-			    ~(MIPS3_PG_G | MIPS3_PG_D));
+		if (MIPS_HAS_R4K_MMU) {
+			npte = MIPS3_PG_IOPAGE(PMAP_CCA_FOR_PA(pa)) &
+			    ~MIPS3_PG_G;
+			if ((prot & VM_PROT_WRITE) == 0) {
+				npte |= MIPS3_PG_RO;
+				npte &= ~MIPS3_PG_D;
+			}
 		} else {
 			npte = (prot & VM_PROT_WRITE) ?
 			    (MIPS1_PG_D | MIPS1_PG_N) :
@@ -1182,7 +1202,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * NOTE: we only support cache flush for read only text.
 	 */
 #ifdef MIPS1
-	if ((!CPUISMIPS3) && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
+	if ((!MIPS_HAS_R4K_MMU) && prot == (VM_PROT_READ | VM_PROT_EXECUTE)) {
 		mips_icache_sync_range(MIPS_PHYS_TO_KSEG0(pa), PAGE_SIZE);
 	}
 #endif
@@ -1194,7 +1214,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
 
-		if (CPUISMIPS3)
+		if (MIPS_HAS_R4K_MMU)
 			npte |= mips_paddr_to_tlbpfn(pa) | MIPS3_PG_G;
 		else
 			npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
@@ -1259,7 +1279,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 	 * MIPS pages in a MACH page.
 	 */
 
-	if (CPUISMIPS3)
+	if (MIPS_HAS_R4K_MMU)
 		npte |= mips_paddr_to_tlbpfn(pa);
 	else
 		npte |= mips_paddr_to_tlbpfn(pa) | MIPS1_PG_V;
@@ -1282,7 +1302,7 @@ pmap_enter(pmap, va, pa, prot, flags)
 		unsigned asid;
 
 		__asm __volatile("mfc0 %0,$10; nop" : "=r"(asid));
-		asid = (CPUISMIPS3) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
+		asid = (MIPS_HAS_R4K_MMU) ? (asid & 0xff) : (asid & 0xfc0) >> 6;
 		if (asid != pmap->pm_asid) {
 			panic("inconsistency for active TLB update: %d <-> %d",
 				asid, pmap->pm_asid);
@@ -1306,8 +1326,8 @@ pmap_enter(pmap, va, pa, prot, flags)
 	if (pmap->pm_asidgen == pmap_asid_generation)
 		MachTLBUpdate(va | asid, npte);
 
-#ifdef MIPS3
-	if (CPUISMIPS3 && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
+	if (MIPS_HAS_R4K_MMU && (prot == (VM_PROT_READ | VM_PROT_EXECUTE))) {
 #ifdef DEBUG
 		if (pmapdebug & PDB_ENTER)
 			printf("pmap_enter: flush I cache va %lx (%lx)\n",
@@ -1337,7 +1357,7 @@ pmap_kenter_pa(va, pa, prot)
 #endif
 
 	npte = mips_paddr_to_tlbpfn(pa) | mips_pg_wired_bit();
-	if (CPUISMIPS3) {
+	if (MIPS_HAS_R4K_MMU) {
 		if (prot & VM_PROT_WRITE) {
 			npte |= MIPS3_PG_D;
 		} else {
@@ -1389,8 +1409,10 @@ pmap_kremove(va, len)
 		if (!mips_pg_v(entry)) {
 			continue;
 		}
-		if (CPUISMIPS3) {
+		if (MIPS_HAS_R4K_MMU) {
+#ifndef sbmips	/* XXX XXX if (dcache_is_virtual) - should also check icache virtual && EXEC mapping */
 			mips_dcache_wbinv_range(va, PAGE_SIZE);
+#endif
 			pte->pt_entry = MIPS3_PG_NV | MIPS3_PG_G;
 		} else {
 			pte->pt_entry = MIPS1_PG_NV;
@@ -1559,7 +1581,7 @@ pmap_zero_page(phys)
 
 	mips_pagezero((caddr_t)MIPS_PHYS_TO_KSEG0(phys));
 
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1569,9 +1591,9 @@ pmap_zero_page(phys)
 	 *
 	 * XXXJRT This is totally disgusting.
 	 */
-	if (CPUISMIPS3 && mips_sdcache_line_size == 0)
+	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0)
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(phys), NBPG);
-#endif
+#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
 }
 
 /*
@@ -1592,7 +1614,7 @@ pmap_copy_page(src, dst)
 		printf("pmap_copy_page(%lx) dst nonphys\n", (u_long)dst);
 #endif
 
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged cache,
 	 * and no L2 cache to warn of aliased mappings, we must force an
@@ -1606,17 +1628,17 @@ pmap_copy_page(src, dst)
 	 * It would probably be better to map the destination as a
 	 * write-through no allocate to reduce cache thrash.
 	 */
-	if (CPUISMIPS3 && mips_sdcache_line_size == 0) {
+	if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 		/*XXX FIXME Not very sophisticated */
 		mips_flushcache_allpvh(src);
 /*		mips_flushcache_allpvh(dst); */
 	}
-#endif
+#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
 
 	mips_pagecopy((caddr_t)MIPS_PHYS_TO_KSEG0(dst),
 		      (caddr_t)MIPS_PHYS_TO_KSEG0(src));
 
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
+#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
 	/*
 	 * If we have a virtually-indexed, physically-tagged WB cache,
 	 * and no L2 cache to warn of aliased mappings,	we must force a
@@ -1628,11 +1650,11 @@ pmap_copy_page(src, dst)
 	 *
 	 * XXXJRT -- This is totally disgusting.
 	 */
-	if (CPUISMIPS3) {
+	if (MIPS_HAS_R4K_MMU) {
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(src), NBPG);
 		mips_dcache_wbinv_range(MIPS_PHYS_TO_KSEG0(dst), NBPG);
 	}
-#endif
+#endif	/* MIPS3_PLUS && !MIPS3_L2CACHE_ABSENT */
 }
 
 /*
@@ -1725,7 +1747,7 @@ pmap_clear_modify(pg)
 		if ((pte->pt_entry & mips_pg_m_bit()) == 0) {
 			continue;
 		}
-		if (CPUISMIPS3) {
+		if (MIPS_HAS_R4K_MMU) {
 			if (PMAP_IS_ACTIVE(pmap)) {
 				mips_dcache_wbinv_range(va, PAGE_SIZE);
 			} else {
@@ -1858,8 +1880,8 @@ again:
 		pv->pv_pmap = pmap;
 		pv->pv_next = NULL;
 	} else {
-#if defined(MIPS3) && defined(MIPS3_L2CACHE_ABSENT)
-		if (CPUISMIPS3 && mips_sdcache_line_size == 0) {
+#if defined(MIPS3_PLUS) && defined(MIPS3_L2CACHE_ABSENT)	/* XXX mmu XXX */
+		if (MIPS_HAS_R4K_MMU && mips_sdcache_line_size == 0) {
 			/*
 			 * There is at least one other VA mapping this page.
 			 * Check if they are cache index compatible.
@@ -1884,7 +1906,7 @@ again:
 					goto again;
 				}
 			}
-#else
+#else	/* !MIPS3_NO_PV_UNCACHED */
 			if (!(pv->pv_flags & PV_UNCACHED)) {
 				for (npv = pv; npv; npv = npv->pv_next) {
 
@@ -1909,9 +1931,9 @@ again:
 			} else {
 				*npte = (*npte & ~MIPS3_PG_CACHEMODE) | MIPS3_PG_UNCACHED;
 			}
-#endif
+#endif	/* !MIPS3_NO_PV_UNCACHED */
 		}
-#endif
+#endif /* MIPS3_PLUS && MIPS3_L2CACHE_ABSENT */
 
 		/*
 		 * There is at least one other VA mapping this page.
@@ -2039,9 +2061,9 @@ pmap_remove_pv(pmap, va, pa)
 			pmap_pv_free(npv);
 		}
 	}
-#ifdef MIPS3
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 #if !defined(MIPS3_NO_PV_UNCACHED)
-	if (CPUISMIPS3 && pv->pv_flags & PV_UNCACHED) {
+	if (MIPS_HAS_R4K_MMU && pv->pv_flags & PV_UNCACHED) {
 
 		/*
 		 * Page is currently uncached, check if alias mapping has been
@@ -2057,9 +2079,9 @@ pmap_remove_pv(pmap, va, pa)
 			pmap_page_cache(pa, 0);
 	}
 #endif
-	if (CPUISMIPS3 && last != 0)
+	if (MIPS_HAS_R4K_MMU && last != 0)
 		mips_dcache_wbinv_range_index(va, PAGE_SIZE);
-#endif
+#endif	/* MIPS3_PLUS */
 }
 
 /*
@@ -2068,7 +2090,7 @@ pmap_remove_pv(pmap, va, pa)
  *	Allocate a page for the pv_entry pool.
  */
 void *
-pmap_pv_page_alloc(u_long size, int flags, int mtype)
+pmap_pv_page_alloc(struct pool *pp, int flags)
 {
 	struct vm_page *pg;
 
@@ -2085,7 +2107,7 @@ pmap_pv_page_alloc(u_long size, int flags, int mtype)
  *	Free a pv_entry pool page.
  */
 void
-pmap_pv_page_free(void *v, u_long size, int mtype)
+pmap_pv_page_free(struct pool *pp, void *v)
 {
 	uvm_pagefree(PHYS_TO_VM_PAGE(MIPS_KSEG0_TO_PHYS((vaddr_t)v)));
 }
@@ -2104,7 +2126,7 @@ pmap_pte(pmap, va)
 	return (pte);
 }
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS	/* XXX mmu XXX */
 /*
  * Find first virtual address >= *vap that doesn't cause
  * a cache alias conflict.
@@ -2117,7 +2139,7 @@ pmap_prefer(foff, vap)
 	vaddr_t	va;
 	vsize_t d;
 
-	if (CPUISMIPS3) {
+	if (MIPS_HAS_R4K_MMU) {
 		va = *vap;
 
 		d = foff - va;
@@ -2125,7 +2147,7 @@ pmap_prefer(foff, vap)
 		*vap = va + d;
 	}
 }
-#endif
+#endif	/* MIPS3_PLUS */
 
 /******************** page table page management ********************/
 

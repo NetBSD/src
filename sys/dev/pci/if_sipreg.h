@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.4.2.4 2002/02/28 04:14:02 nathanw Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.4.2.5 2002/04/01 07:46:23 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -707,6 +707,7 @@ struct sip_desc {
 #define	SIS_REV_630E	0x81
 #define	SIS_REV_630S	0x82
 #define	SIS_REV_630EA1	0x83
+#define	SIS_REV_630ET	0x84
 #define	SIS_REV_635	0x90	/* same for 735 (745?) */
 
 /*

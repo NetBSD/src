@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.10 1996/10/04 07:27:53 leo Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.10.46.1 2002/04/01 07:39:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -93,7 +93,7 @@ u_long gra_def_color16[16] = {
 
 /*
  * XXX: called from ite console init routine.
- * Initialize list of posible video modes.
+ * Initialize list of possible video modes.
  */
 int
 grfabs_probe(probe_fun)

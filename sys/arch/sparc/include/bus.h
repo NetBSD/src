@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.26.4.2 2002/01/08 00:27:37 nathanw Exp $	*/
+/*	$NetBSD: bus.h,v 1.26.4.3 2002/04/01 07:42:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,10 +76,9 @@
 /*
  * Bus address and size types
  */
-typedef	u_long	bus_space_handle_t;
-typedef u_long	bus_type_t;
+typedef	u_long		bus_space_handle_t;
 typedef u_int64_t	bus_addr_t;
-typedef u_long	bus_size_t;
+typedef u_long		bus_size_t;
 
 /* bus_addr_t is extended to 64-bits and has the iospace encoded in it */
 #define	BUS_ADDR_IOSPACE(x)	((x)>>32)
@@ -97,7 +96,6 @@ struct sparc_bus_space_tag {
 
 	int	(*sparc_bus_map) __P((
 				bus_space_tag_t,
-				bus_type_t,
 				bus_addr_t,
 				bus_size_t,
 				int,			/*flags*/
@@ -169,7 +167,6 @@ static int	bus_space_map __P((
 				bus_space_handle_t *));
 static int	bus_space_map2 __P((
 				bus_space_tag_t,
-				bus_type_t,
 				bus_addr_t,
 				bus_size_t,
 				int,			/*flags*/
@@ -221,20 +218,19 @@ bus_space_map(t, a, s, f, hp)
 	int		f;
 	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_map)((t), 0, (a), (s), (f), 0, (hp));
+	_BS_CALL(t, sparc_bus_map)(t, a, s, f, 0, hp);
 }
 
 __inline__ int
-bus_space_map2(t, bt, a, s, f, v, hp)
+bus_space_map2(t, a, s, f, v, hp)
 	bus_space_tag_t	t;
-	bus_type_t	bt;
 	bus_addr_t	a;
 	bus_size_t	s;
 	int		f;
 	vaddr_t		v;
 	bus_space_handle_t *hp;
 {
-	_BS_CALL(t, sparc_bus_map)(t, bt, a, s, f, v, hp);
+	_BS_CALL(t, sparc_bus_map)(t, a, s, f, v, hp);
 }
 
 __inline__ int
@@ -301,6 +297,8 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 	    bus_size_t size));
 #endif
 
+#define	bus_space_vaddr(t, h)	((void *)(h))
+
 /* flags for bus space map functions */
 #define BUS_SPACE_MAP_CACHEABLE	0x0001
 #define BUS_SPACE_MAP_LINEAR	0x0002
@@ -327,7 +325,6 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  */
 int bus_space_probe __P((
 		bus_space_tag_t,
-		bus_type_t,
 		bus_addr_t,
 		bus_size_t,			/* probe size */
 		size_t,				/* offset */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.10.2.1 2001/11/14 19:14:10 nathanw Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.10.2.2 2002/04/01 07:45:16 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.2.1 2001/11/14 19:14:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.10.2.2 2002/04/01 07:45:16 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -893,7 +893,7 @@ ad1848_query_encoding(addr, fp)
 			return EINVAL;
 		strcpy(fp->name, AudioEadpcm);
 		fp->encoding = AUDIO_ENCODING_ADPCM;
-		fp->precision = 8;
+		fp->precision = 4;
 		fp->flags = 0;
 		break;
 	default:
@@ -1139,6 +1139,14 @@ ad1848_commit_settings(addr)
 
 	if (sc->channels == 2)
 		fs |= FMT_STEREO;
+
+	/*
+	 * OPL3-SA2 (YMF711) is sometimes busy here.
+	 * Wait until it becomes ready.
+	 */
+	for (timeout = 0;
+	    timeout < 1000 && ADREAD(sc, AD1848_IADDR) & SP_IN_INIT; timeout++)
+		delay(10);
 
 	ad_write(sc, SP_CLOCK_DATA_FORMAT, fs);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.6 1997/12/29 07:15:10 scottr Exp $	*/
+/*	$NetBSD: inst.c,v 1.6.32.1 2002/04/01 07:40:00 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -77,7 +77,6 @@
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/disklabel.h>
-#include <a.out.h>
 
 #include <lib/libsa/stand.h>
 
@@ -760,7 +759,7 @@ bootmini()
 	howto = RB_SINGLE;	/* _Always_ */
 
 	printf("booting: %s -s\n", bootname);
-	exec(bootname, lowram, howto);
+	exec_hp300(bootname, (u_long)lowram, howto);
 	printf("boot: %s\n", strerror(errno));
 }
 

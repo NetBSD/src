@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.39.2.3 2002/01/08 00:32:15 nathanw Exp $	*/
+/*	$NetBSD: umodem.c,v 1.39.2.4 2002/04/01 07:47:37 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.39.2.3 2002/01/08 00:32:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.39.2.4 2002/04/01 07:47:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +519,7 @@ umodem_param(void *addr, int portno, struct termios *t)
 	err = umodem_set_line_coding(sc, &ls);
 	if (err) {
 		DPRINTF(("umodem_param: err=%s\n", usbd_errstr(err)));
-		return (1);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }
@@ -549,7 +549,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 
 	default:
 		DPRINTF(("umodemioctl: unknown\n"));
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 		break;
 	}
 

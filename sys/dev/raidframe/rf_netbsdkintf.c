@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.8 2002/02/28 04:14:18 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.9 2002/04/01 07:47:05 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.8 2002/02/28 04:14:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.9 2002/04/01 07:47:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -331,7 +331,7 @@ raidattach(num)
 
 	/* Initialize the component buffer pool. */
 	pool_init(&raidframe_cbufpool, sizeof(struct raidbuf), 0,
-	    0, 0, "raidpl", 0, NULL, NULL, M_RAIDFRAME);
+	    0, 0, "raidpl", NULL);
 
 	rc = rf_mutex_init(&rf_sparet_wait_mutex);
 	if (rc) {

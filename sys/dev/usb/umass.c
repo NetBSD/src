@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.5 2002/02/28 04:14:32 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.6 2002/04/01 07:47:36 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.5 2002/02/28 04:14:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.6 2002/04/01 07:47:36 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -834,7 +834,7 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
 
 	DPRINTF(UDMASS_BBB,("%s: umass_bbb_transfer cmd=0x%02x\n",
-		USBDEVNAME(sc->sc_dev), *(u_char*)cmd));
+		USBDEVNAME(sc->sc_dev), *(u_char *)cmd));
 
 	KASSERT(sc->sc_wire & UMASS_WPROTO_BBB,
 		("sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
@@ -1321,7 +1321,7 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		   u_int timeout, umass_callback cb, void *priv)
 {
 	DPRINTF(UDMASS_CBI,("%s: umass_cbi_transfer cmd=0x%02x, len=%d\n",
-		USBDEVNAME(sc->sc_dev), *(u_char*)cmd, datalen));
+		USBDEVNAME(sc->sc_dev), *(u_char *)cmd, datalen));
 
 	KASSERT(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
 		("sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",

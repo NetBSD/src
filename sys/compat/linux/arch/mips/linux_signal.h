@@ -1,4 +1,4 @@
-/* $NetBSD: linux_signal.h,v 1.3.6.5 2002/02/28 04:12:52 nathanw Exp $ */
+/* $NetBSD: linux_signal.h,v 1.3.6.6 2002/04/01 07:44:17 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 2001 The NetBSD Foundation, Inc.
@@ -91,7 +91,9 @@ struct linux_pt_regs {
 #define LINUX_SIGXCPU		30
 #define LINUX_SIGXFSZ		31
 
+/* Min/max real-time linux signal */
 #define LINUX_SIGRTMIN		32
+#define LINUX_SIGRTMAX		(LINUX__NSIG - 1)
 
 #define LINUX__NSIG		128
 #if defined(ELFSIZE) && (ELFSIZE == 64)

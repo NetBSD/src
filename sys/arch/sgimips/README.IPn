@@ -1,4 +1,4 @@
-$NetBSD: README.IPn,v 1.2 2000/06/16 04:15:39 soren Exp $
+$NetBSD: README.IPn,v 1.2.14.1 2002/04/01 07:42:16 nathanw Exp $
 
 Arch (kernel)	Models
 -------------	------
@@ -16,9 +16,9 @@ IP12		4D/30, 4D/35, Indigo R3K
 IP17		Crimson
 IP19		Onyx, Challenge M/L(/XL?)
 IP20		Indigo R4K
-IP21		Power Challenge, Power Onyx 
+IP21		Power Challenge, Power Onyx
 IP22		Indigo2 ("Fullhouse")
-IP24 (IP22)	Indy ("Guiness"), Challenge S 
+IP24 (IP22)	Indy ("Guiness"), Challenge S
 IP25		Power Challenge R10K
 IP26		Power Indigo2 R8K ("Teton")
 IP27		Origin 200, Origin 2000, Onyx2

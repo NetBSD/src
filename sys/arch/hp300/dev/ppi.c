@@ -1,4 +1,4 @@
-/*	$NetBSD: ppi.c,v 1.19 2000/05/27 04:52:27 thorpej Exp $	*/
+/*	$NetBSD: ppi.c,v 1.19.12.1 2002/04/01 07:39:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -74,6 +74,9 @@
 /*
  * Printer/Plotter HPIB interface
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ppi.c,v 1.19.12.1 2002/04/01 07:39:53 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>

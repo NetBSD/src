@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.h,v 1.3 2000/10/05 02:36:45 cgd Exp $	*/
+/*	$NetBSD: rnd.h,v 1.3.10.1 2002/04/01 07:41:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -37,7 +37,7 @@
 
 #ifdef _KERNEL
 
-#ifdef MIPS3
+#ifdef MIPS3_PLUS
 static __inline int
 cpu_hascounter(void)
 {
@@ -45,7 +45,7 @@ cpu_hascounter(void)
 	 * MIPS III and MIPS IV CPU's have a cycle counter
 	 * running at half the internal pipeline rate.
 	 */
-	return (CPUISMIPS3);
+	return (MIPS_HAS_CLOCK);
 }
 
 static __inline u_int32_t
@@ -56,5 +56,4 @@ cpu_counter(void)
 #endif
 
 #endif /* _KERNEL */
-
 #endif /* !_MIPS_RND_H_ */

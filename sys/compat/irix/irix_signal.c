@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.3.2.2 2002/02/28 04:12:42 nathanw Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.3.2.3 2002/04/01 07:43:58 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.2 2002/02/28 04:12:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.3 2002/04/01 07:43:58 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -53,8 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.3.2.2 2002/02/28 04:12:42 nathanw 
 
 #include <machine/regnum.h>
 
+#include <compat/common/compat_util.h>
+
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_wait.h>
+#include <compat/svr4/svr4_signal.h>
+#include <compat/svr4/svr4_lwp.h>
+#include <compat/svr4/svr4_ucontext.h>
+#include <compat/svr4/svr4_syscallargs.h>
 
 #include <compat/irix/irix_signal.h>
 #include <compat/irix/irix_syscallargs.h>
@@ -490,9 +496,9 @@ irix_sys_waitsys(p, v, retval)
 	}
 
 #ifdef DEBUG_IRIX
-	printf("waitsys(%d, %d, %p, %x)\n", 
+	printf("waitsys(%d, %d, %p, %x, %p)\n", 
 		 SCARG(uap, type), SCARG(uap, pid),
-		 SCARG(uap, info), SCARG(uap, options));
+		 SCARG(uap, info), SCARG(uap, options), SCARG(uap, ru));
 #endif
 
 loop:
@@ -512,7 +518,7 @@ loop:
 		    ((SCARG(uap, options) & (SVR4_WEXITED|SVR4_WTRAPPED)))) {
 			*retval = 0;
 #ifdef DEBUG_IRIX
-			printf("found %d\n", q->p_pid);
+			printf("irix_sys_wait(): found %d\n", q->p_pid);
 #endif
 			if ((error = irix_setinfo(q, q->p_xstat,
 						  SCARG(uap, info))) != 0)
@@ -521,14 +527,13 @@ loop:
 
 			if ((SCARG(uap, options) & SVR4_WNOWAIT)) {
 #ifdef DEBUG_IRIX
-				printf(("Don't wait\n"));
+				printf(("irix_sys_wait(): Don't wait\n"));
 #endif
 				return 0;
 			}
 			if (SCARG(uap, ru) &&
-			    (error = copyout((caddr_t)p->p_ru,
-			    (caddr_t)SCARG(uap, ru),
-			    sizeof(struct rusage))))
+			    (error = copyout(&(p->p_stats->p_ru),
+			    (caddr_t)SCARG(uap, ru), sizeof(struct rusage))))
 				return (error);
 
 			/*
@@ -616,4 +621,45 @@ loop:
 		return error;
 	goto loop;
 
+}
+
+int 
+irix_sys_sigprocmask(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct irix_sys_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(irix_sigset_t *) set;
+		syscallarg(irix_sigset_t *) oset;
+	} */ *uap = v;
+	struct svr4_sys_sigprocmask_args cup;
+	int error;
+	sigset_t *obss;
+	irix_sigset_t niss, oiss;
+	caddr_t sg;
+
+	SCARG(&cup, how) = SCARG(uap, how);
+	SCARG(&cup, set) = (svr4_sigset_t *)SCARG(uap, set);
+	SCARG(&cup, oset) = (svr4_sigset_t *)SCARG(uap, oset);
+
+	if (SCARG(uap, how) == IRIX_SIG_SETMASK32) {
+		sg = stackgap_init(p, 0);
+		if ((error = copyin(SCARG(uap, set), &niss, sizeof(niss))) != 0)
+			return error;
+		SCARG(&cup, set) = stackgap_alloc(p, &sg, sizeof(niss));
+
+		obss = &p->p_sigctx.ps_sigmask;	
+		native_to_irix_sigset(obss, &oiss);
+		/* preserve the higher 32 bits */
+		niss.bits[3] = oiss.bits[3]; 
+
+		if ((error = copyout(&niss, (void *)SCARG(&cup, set), 
+		    sizeof(niss))) != 0)
+			return error;
+
+		SCARG(&cup, how) = SVR4_SIG_SETMASK;
+	}
+	return svr4_sys_sigprocmask(p, &cup, retval);
 }

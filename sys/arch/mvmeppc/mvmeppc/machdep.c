@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.2 2002/02/28 04:11:08 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.3 2002/04/01 07:41:30 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -233,13 +233,13 @@ initppc(startkernel, endkernel, btinfo)
 
 	/* map the PCI/ISA I/O 256 MB area */
 	battable[MVMEPPC_PHYS_BASE_IO >> 28].batl =
-	    BATL(MVMEPPC_PHYS_BASE_IO, BAT_I, BAT_PP_RW);
+	    BATL(MVMEPPC_PHYS_BASE_IO, BAT_I|BAT_G, BAT_PP_RW);
 	battable[MVMEPPC_PHYS_BASE_IO >> 28].batu =
 	    BATU(MVMEPPC_KVA_BASE_IO, BAT_BL_256M, BAT_Vs);
 
 	/* map the PCI/ISA MEMORY 256 MB area */
 	battable[MVMEPPC_PHYS_BASE_MEM >> 28].batl =
-	    BATL(MVMEPPC_PHYS_BASE_MEM, BAT_I, BAT_PP_RW);
+	    BATL(MVMEPPC_PHYS_BASE_MEM, BAT_I|BAT_G, BAT_PP_RW);
 	battable[MVMEPPC_PHYS_BASE_MEM >> 28].batu =
 	    BATU(MVMEPPC_KVA_BASE_MEM, BAT_BL_256M, BAT_Vs);
 

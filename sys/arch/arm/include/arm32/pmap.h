@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.16.2.3 2002/02/28 04:07:35 nathanw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.16.2.4 2002/04/01 07:39:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -42,46 +42,34 @@
 /*
  * a pmap describes a processes' 4GB virtual address space.  this
  * virtual address space can be broken up into 4096 1MB regions which
- * are described by PDEs in the PDP.  the PDEs are defined as follows:
+ * are described by L1 PTEs in the L1 table.
  *
- * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
- * (the following assumes that KERNBASE is 0xf0000000)
+ * There is a line drawn at KERNEL_BASE.  Everything below that line
+ * changes when the VM context is switched.  Everything above that line
+ * is the same no matter which VM context is running.  This is achieved
+ * by making the L1 PTEs for those slots above KERNEL_BASE reference
+ * kernel L2 tables.
  *
- * PDE#s	VA range		usage
- * 0->3835	0x0 -> 0xefc00000	user address space
- * 3836->3839	0xefc00000->		recursive mapping of PDP (used for
- *			0xf0000000	linear mapping of PTPs)
- * 3840->3851	0xf0000000->		kernel text address space (constant
- *			0xf0c00000	across all pmap's/processes)
- * 3852->3855	0xf0c00000->		"alternate" recursive PDP mapping
- *			0xf1000000	(for other pmaps)
- * 3856->4095	0xf1000000->		KVM and device mappings, constant
- *			0x00000000	across all pmaps
+ * The L2 tables are mapped linearly starting at PTE_BASE.  PTE_BASE
+ * is below KERNEL_BASE, which means that the current process's PTEs
+ * are always available starting at PTE_BASE.  Another region of KVA
+ * above KERNEL_BASE, APTE_BASE, is reserved for mapping in the PTEs
+ * of another process, should we need to manipulate them.
  *
- * The maths works out that to then map each 1MB block into 4k pages requires
- * 256 entries, of 4 bytes each, totaling 1k per 1MB.  However as we use 4k
- * pages we allocate 4 PDE's at a time, allocating the same access permissions
- * to them all.  This means we only need 1024 entries in the page table page
- * table, IE we use 1 4k page to linearly map all the other page tables used.
+ * The basic layout of the virtual address space thus looks like this:
+ *
+ *	0xffffffff
+ *	.
+ *	.
+ *	.
+ *	KERNEL_BASE
+ *	--------------------
+ *	PTE_BASE
+ *	.
+ *	.
+ *	.
+ *	0x00000000
  */
-
-/*
- * Data structures used by pmap
- */
-
-/*
- * Structure that describes a Level 1 page table and the flags
- * associated with it.
- */
-struct l1pt {
-	SIMPLEQ_ENTRY(l1pt)	pt_queue;	/* Queue pointers */
-	struct pglist		pt_plist;	/* Allocated page list */
-	vaddr_t			pt_va;		/* Allocated virtual address */
-	int	                pt_flags;	/* Flags */
-};
-#define	PTFLAG_STATIC		1		/* Statically allocated */
-#define PTFLAG_KPT		2		/* Kernel pt's are mapped */
-#define PTFLAG_CLEAN		4		/* L1 is clean */
 
 /*
  * The pmap structure itself.
@@ -89,43 +77,16 @@ struct l1pt {
 struct pmap {
 	struct uvm_object	pm_obj;		/* uvm_object */
 #define	pm_lock	pm_obj.vmobjlock	
+	LIST_ENTRY(pmap)	pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t		*pm_pdir;	/* KVA of page directory */
-	struct l1pt		*pm_l1pt;	/* L1 descriptor */
+	struct l1pt		*pm_l1pt;	/* L1 table metadata */
 	paddr_t                 pm_pptpt;	/* PA of pt's page table */
 	vaddr_t                 pm_vptpt;	/* VA of pt's page table */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	struct vm_page		*pm_ptphint;	/* recently used PT */
 };
 
 typedef struct pmap *pmap_t;
-
-/*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- *
- * pv_entry's are only visible within pmap.c, so only provide a placeholder
- * here
- */
-
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
-
-/*
- * Page hooks. I'll eliminate these sometime soon :-)
- *
- * For speed we store the both the virtual address and the page table
- * entry address for each page hook.
- */
-typedef struct {
-	vaddr_t va;
-	pt_entry_t *pte;
-} pagehook_t;
 
 /*
  * Physical / virtual address structure. In a number of places (particularly
@@ -148,15 +109,8 @@ typedef struct pv_addr {
 #define	PTE_CACHE	1
 
 /*
- * _KERNEL specific macros, functions and prototypes
- */
-
-#ifdef  _KERNEL
-
-/*
  * Commonly referenced structures
  */
-extern struct pv_entry	*pv_table;	/* Phys to virt mappings, per page. */
 extern struct pmap	kernel_pmap_store;
 extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
@@ -167,24 +121,28 @@ extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_phys_address(ppn)		(arm_page_to_byte((ppn)))
+#define	pmap_is_modified(pg)		(((pg)->mdpage.pvh_attrs & PT_M) != 0)
+#define	pmap_is_referenced(pg)		(((pg)->mdpage.pvh_attrs & PT_H) != 0)
+
+#define	pmap_copy(dp, sp, da, l, sa)	/* nothing */
+
+#define pmap_phys_address(ppn)		(arm_ptob((ppn)))
 
 /*
  * Functions that we need to export
  */
-extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
-extern void pmap_procwr __P((struct proc *, vaddr_t, int));
-#define	PMAP_NEED_PROCWR
+vaddr_t	pmap_map(vaddr_t, vaddr_t, vaddr_t, int);
+void	pmap_procwr(struct proc *, vaddr_t, int);
 
-/*
- * Functions we use internally
- */
-void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
-void pmap_debug	__P((int));
-int pmap_handled_emulation __P((struct pmap *, vaddr_t));
-int pmap_modified_emulation __P((struct pmap *, vaddr_t));
-void pmap_postinit __P((void));
-pt_entry_t *pmap_pte __P((struct pmap *, vaddr_t));
+#define	PMAP_NEED_PROCWR
+#define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
+
+/* Functions we use internally. */
+void	pmap_bootstrap(pd_entry_t *, pv_addr_t);
+void	pmap_debug(int);
+int	pmap_handled_emulation(struct pmap *, vaddr_t);
+int	pmap_modified_emulation(struct pmap *, vaddr_t);
+void	pmap_postinit(void);
 
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
@@ -198,7 +156,10 @@ void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
 boolean_t	pmap_pageidlezero __P((paddr_t));
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
-#endif	/* _KERNEL */
+/*
+ * The current top of kernel VM
+ */
+extern vaddr_t	pmap_curmaxkvaddr;
 
 /*
  * Useful macros and constants 
@@ -206,26 +167,36 @@ boolean_t	pmap_pageidlezero __P((paddr_t));
 
 /* Virtual address to page table entry */
 #define vtopte(va) \
-	((pt_entry_t *)(PROCESS_PAGE_TBLS_BASE + \
-	(arm_byte_to_page((unsigned int)(va)) << 2)))
+	(((pt_entry_t *)PTE_BASE) + arm_btop((vaddr_t) (va)))
 
 /* Virtual address to physical address */
 #define vtophys(va) \
-	((*vtopte(va) & PG_FRAME) | ((unsigned int)(va) & ~PG_FRAME))
+	((*vtopte(va) & PG_FRAME) | ((vaddr_t) (va) & ~PG_FRAME))
+
+#define	l1pte_valid(pde)	((pde) != 0)
+#define	l1pte_section_p(pde)	(((pde) & L1_MASK) == L1_SECTION)
+#define	l1pte_page_p(pde)	(((pde) & L1_MASK) == L1_PAGE)
+#define	l1pte_fpage_p(pde)	(((pde) & L1_MASK) == L1_FPAGE)
+
+#define	l2pte_valid(pte)	((pte) != 0)
+#define	l2pte_pa(pte)		((pte) & PG_FRAME)
 
 /* L1 and L2 page table macros */
-#define pmap_pde(m, v) (&((m)->pm_pdir[((vaddr_t)(v) >> PDSHIFT)&4095]))
-#define pmap_pte_pa(pte)	(*(pte) & PG_FRAME)
-#define pmap_pde_v(pde)		(*(pde) != 0)
-#define pmap_pde_section(pde)	((*(pde) & L1_MASK) == L1_SECTION)
-#define pmap_pde_page(pde)	((*(pde) & L1_MASK) == L1_PAGE)
-#define pmap_pde_fpage(pde)	((*(pde) & L1_MASK) == L1_FPAGE)
+#define pmap_pdei(v)		((v & PD_MASK) >> PDSHIFT)
+#define pmap_pde(m, v)		(&((m)->pm_pdir[pmap_pdei(v)]))
 
-#define pmap_pte_v(pte)		(*(pte) != 0)
+#define pmap_pde_v(pde)		l1pte_valid(*(pde))
+#define pmap_pde_section(pde)	l1pte_section_p(*(pde))
+#define pmap_pde_page(pde)	l1pte_page_p(*(pde))
+#define pmap_pde_fpage(pde)	l1pte_fpage_p(*(pde))
+
+#define	pmap_pte_v(pte)		l2pte_valid(*(pte))
+#define	pmap_pte_pa(pte)	l2pte_pa(*(pte))
+
 
 /* Size of the kernel part of the L1 page table */
 #define KERNEL_PD_SIZE	\
-	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
+	(PD_SIZE - (KERNEL_BASE >> PDSHIFT) * sizeof(pd_entry_t))
 
 /*
  * tell MI code that the cache is virtually-indexed *and* virtually-tagged.

@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.2.4 2002/02/28 04:14:27 nathanw Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.2.5 2002/04/01 07:47:27 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.4 2002/02/28 04:14:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.5 2002/04/01 07:47:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -338,10 +338,16 @@ stic_init(struct stic_info *si)
 
 	/* Get a font and set up screen metrics. */
 	wsfont_init();
-	cookie = wsfont_find(NULL, 0, 0, 0);
 
-	if (wsfont_lock(cookie, &si->si_font,
-	    WSDISPLAY_FONTORDER_R2L, WSDISPLAY_FONTORDER_L2R) <= 0)
+	cookie = wsfont_find(NULL, 12, 0, 2, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 2, WSDISPLAY_FONTORDER_R2L,
+		    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		panic("stic_init: font table is empty\n");
+
+	if (wsfont_lock(cookie, &si->si_font))
 		panic("stic_init: couldn't lock font\n");
 
 	si->si_fontw = si->si_font->fontwidth;
@@ -625,7 +631,7 @@ sticioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 	if (si->si_ioctl != NULL)
 		return ((*si->si_ioctl)(si, cmd, data, flag, p));
 
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void
@@ -1379,7 +1385,7 @@ stic_get_cursor(struct stic_info *si, struct wsdisplay_cursor *p)
 {
 
 	/* XXX */
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 void

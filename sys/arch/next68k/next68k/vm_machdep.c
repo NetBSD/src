@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.26.4.3 2001/12/08 04:22:22 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.26.4.4 2002/04/01 07:41:46 nathanw Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/vm_machdep.c
@@ -258,8 +258,6 @@ pagemove(from, to, size)
 	}
 	pmap_update(pmap_kernel());
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.61.4.4 2002/02/28 04:09:53 nathanw Exp $
+#	$NetBSD: files.hpcmips,v 1.61.4.5 2002/04/01 07:40:23 nathanw Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -48,8 +48,6 @@ file	arch/hpcmips/vr/vr.c		vr41xx	# NEC VR4000 series
 file	arch/hpcmips/vr/vr_idle.S	vr41xx
 file	arch/hpcmips/tx/tx39.c		tx39xx	# TOSHIBA TX3900 series
 
-file	arch/mips/mips/fp.S		softfloat
-
 file	arch/hpcmips/hpcmips/autoconf.c
 file	arch/hpcmips/hpcmips/bus_dma.c
 file	arch/hpcmips/hpcmips/bus_space.c
@@ -59,7 +57,6 @@ file	arch/hpcmips/hpcmips/conf.c
 file	arch/hpcmips/hpcmips/interrupt.c
 file	arch/hpcmips/hpcmips/machdep.c
 file	arch/hpcmips/hpcmips/mainbus.c
-file	arch/hpcmips/hpcmips/procfs_machdep.c	procfs
 
 file	arch/hpc/hpc/kloader.c
 file	arch/hpcmips/hpcmips/kloader_machdep.c
@@ -182,10 +179,14 @@ file arch/hpcmips/dev/mq200machdep.c		mqvideo
 attach mqvideo at pci with mqvideo_pci
 file arch/hpcmips/pci/mq200_pci.c		mqvideo_pci
 
-device ite8181video: hpcfbif
+device ite8181video: hpcfbif, hpccmap
 attach ite8181video at vripif with ite8181video_vrip
 file arch/hpcmips/vr/ite8181_vrip.c		ite8181video_vrip
 file arch/hpcmips/dev/ite8181.c			ite8181video
+
+device vrc4172pci: pcibus
+attach vrc4172pci at vripif
+file arch/hpcmips/vr/vrc4172pci.c		vrc4172pci
 
 device vrc4172pwm
 attach vrc4172pwm at vripif
@@ -199,23 +200,9 @@ device vrc4173cardu: pcmciabus
 attach vrc4173cardu at pci
 file arch/hpcmips/pci/vrc4173cardu.c		vrc4173cardu
 
-device vrc4173if {}
-
-device vrc4173bcu: vrc4173if
+device vrc4173bcu: vripif
 attach vrc4173bcu at pci
 file arch/hpcmips/vr/vrc4173bcu.c		vrc4173bcu
-
-device vrc4173cmu
-attach vrc4173cmu at vrc4173if
-file arch/hpcmips/vr/vrc4173cmu.c		vrc4173cmu
-
-device vrc4173piu
-attach vrc4173piu at vrc4173if
-file arch/hpcmips/vr/vrc4173piu.c		vrc4173piu
-
-device vrc4173kiu
-attach vrc4173kiu at vrc4173if
-file arch/hpcmips/vr/vrc4173kiu.c		vrc4173kiu
 
 #
 #	TOSHIBA TX3912/3922
@@ -428,3 +415,8 @@ file arch/hpcmips/vr/vrdmaau.c	vrdmaau
 device vrdcu
 attach vrdcu at vripif
 file arch/hpcmips/vr/vrdcu.c	vrdcu
+
+# Audio Interface Unit
+device vraiu: audio
+attach vraiu at vripif
+file arch/hpcmips/vr/vraiu.c	vraiu

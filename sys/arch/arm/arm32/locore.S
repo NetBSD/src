@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.8.3 2002/02/28 04:07:23 nathanw Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.8.4 2002/04/01 07:39:08 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -57,17 +57,17 @@ ENTRY_NP(kernel_text)
 
 ASENTRY_NP(start)
 	add	r1, pc, #(Lstart - . - 8)
-	ldmia	r1, {r1, r2, sp}		/* Set initial stack and */
-	sub	r2, r2, r1			/* get zero init data */
+	ldmia	r1, {r1, r2, sp}	/* Set initial stack and */
+	sub	r2, r2, r1		/* get zero init data */
 	mov	r3, #0
 
 L1:
-	str	r3, [r1], #0x0004		/* Zero the bss */
+	str	r3, [r1], #0x0004	/* Zero the bss */
 	subs	r2, r2, #4
 	bgt	L1
 
-	mov	fp, #0x00000000			/* trace back starts here */
-	bl	_C_LABEL(initarm)		/* Off we go */
+	mov	fp, #0x00000000		/* trace back starts here */
+	bl	_C_LABEL(initarm)	/* Off we go */
 
 	/* init arm will return the new stack pointer. */
 	mov	sp, r0
@@ -77,26 +77,20 @@ L1:
 	stmfd	sp!, {fp, ip, lr, pc}
 	sub	fp, ip, #4
 
-	/* Setup an initial trap frame for start_init to use */
+	bl	_C_LABEL(main)		/* call main()! */
 
-	PUSHFRAME
-
-	mov	r0, sp			/* parameter to main is trap frame */ 
-
-	bl	_C_LABEL(main)		/* Lets light the flame and start her up */
-
-	PULLFRAME			/* Pull the trap frame, now valid */
-
-	movs	pc, lr			/* Exit to user process */
-
-	/* Never gets here */
-
-	b	.
+	add	r0, pc, #Lmainreturned - . - 8
+	b	_C_LABEL(panic)
+	/* NOTEACHED */
 
 Lstart:
 	.word	_edata
 	.word	_end
 	.word	svcstk + INIT_ARM_STACK_SIZE
+
+Lmainreturned:
+	.asciz	"main() returned"
+	.align	0
 
 	.bss
 svcstk:

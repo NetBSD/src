@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.8.2 2002/02/28 04:07:06 nathanw Exp $
+#	$NetBSD: Makefile,v 1.22.8.3 2002/04/01 07:39:02 nathanw Exp $
 
 ### what we need:
 
@@ -20,7 +20,7 @@ BINDIR=/usr/mdec
 
 COBJS = main.o console.o xd.o twiddle.o bzero.o gets.o
 COBJS+=  lseek.o open.o read.o close.o dev.o errno.o
-COBJS+=  ufs.o ustarfs.o panic.o vers.o
+COBJS+=  ufs.o ustarfs.o panic.o vers.o files.o
 
 SOBJS = alloc.o ashrdi3.o ashldi3.o bcopy.o muldi3.o printf.o startit.o
 SOBJS += strlen.o strcmp.o memcmp.o strerror.o sprintf.o subr_prf.o
@@ -73,7 +73,7 @@ CFLAGS= ${COPTIM} ${INCPATH} ${DEFS} -Wall #-Wstrict-prototypes
 .S.o: ; ${CC} ${CAFLAGS} ${COPTS} -x assembler-with-cpp -o $@ -c $<
 
 boot.amiga: x.out
-	${RELOC2BB} -S 32768 x.out $@ || ${NM} -u x.out
+	${RELOC2BB} -S x.out $@ || ${NM} -u x.out
 
 x.out: xxstart.o libboot.a
 	${LD} ${LDFLAGS} -r -dc -e _start -o $@ $>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.16.2.4 2001/11/14 19:13:16 nathanw Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.16.2.5 2002/04/01 07:44:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.16.2.4 2001/11/14 19:13:16 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.16.2.5 2002/04/01 07:44:32 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -100,7 +100,7 @@ compat_43_netbsd32_ocreat(p, v, retval)
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 
 	return (sys_open(p, &ua, retval));
@@ -143,11 +143,11 @@ compat_43_netbsd32_stat43(p, v, retval)
 	struct stat43 sb43, *sgsbp;
 	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_stat_args ua;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int rv, error;
 
 	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
+	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(p, &ua, retval);
 
@@ -175,11 +175,11 @@ compat_43_netbsd32_lstat43(p, v, retval)
 	struct stat43 sb43, *sgsbp;
 	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_lstat_args ua;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int rv, error;
 
 	NETBSD32TOP_UAP(path, const char);
-	SCARG(&ua, ub) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
+	SCARG(&ua, ub) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
 	CHECK_ALT_EXIST(p, &sg, SCARG(&ua, path));
 	rv = compat_43_sys_stat(p, &ua, retval);
 
@@ -207,11 +207,11 @@ compat_43_netbsd32_fstat43(p, v, retval)
 	struct stat43 sb43, *sgsbp;
 	struct netbsd32_stat43 sb32;
 	struct compat_43_sys_fstat_args ua;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int rv, error;
 
 	NETBSD32TO64_UAP(fd);
-	SCARG(&ua, sb) = sgsbp = stackgap_alloc(&sg, sizeof(sb43));
+	SCARG(&ua, sb) = sgsbp = stackgap_alloc(p, &sg, sizeof(sb43));
 	rv = compat_43_sys_fstat(p, &ua, retval);
 
 	error = copyin(sgsbp, &sb43, sizeof(sb43));
@@ -515,7 +515,7 @@ compat_43_netbsd32_orecvmsg(p, v, retval)
 	struct netbsd32_omsghdr omh32;
 	struct iovec iov, *sgsbp2;
 	struct netbsd32_iovec iov32, *iovec32p;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int i, error, rv;
 
 	NETBSD32TO64_UAP(s);
@@ -541,11 +541,11 @@ compat_43_netbsd32_orecvmsg(p, v, retval)
 	if (error)
 		return (error);
 
-	SCARG(&ua, msg) = sgsbp = stackgap_alloc(&sg, sizeof(omh));
+	SCARG(&ua, msg) = sgsbp = stackgap_alloc(p, &sg, sizeof(omh));
 	omh.msg_name = (caddr_t)(u_long)omh32.msg_name;
 	omh.msg_namelen = omh32.msg_namelen;
 	omh.msg_iovlen = (size_t)omh32.msg_iovlen;
-	omh.msg_iov = sgsbp2 = stackgap_alloc(&sg, sizeof(struct iovec) * omh.msg_iovlen);
+	omh.msg_iov = sgsbp2 = stackgap_alloc(p, &sg, sizeof(struct iovec) * omh.msg_iovlen);
 	iovec32p = (struct netbsd32_iovec *)(u_long)omh32.msg_iov;
 	for (i = 0; i < omh.msg_iovlen; i++, sgsbp2++, iovec32p++) {
 		error = copyin(iovec32p, &iov32, sizeof(iov32));
@@ -609,7 +609,7 @@ compat_43_netbsd32_osendmsg(p, v, retval)
 	struct netbsd32_omsghdr omh32;
 	struct iovec iov, *sgsbp2;
 	struct netbsd32_iovec iov32, *iovec32p;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int i, error, rv;
 
 	NETBSD32TO64_UAP(s);
@@ -635,11 +635,11 @@ compat_43_netbsd32_osendmsg(p, v, retval)
 	if (error)
 		return (error);
 
-	SCARG(&ua, msg) = sgsbp = stackgap_alloc(&sg, sizeof(omh));
+	SCARG(&ua, msg) = sgsbp = stackgap_alloc(p, &sg, sizeof(omh));
 	omh.msg_name = (caddr_t)(u_long)omh32.msg_name;
 	omh.msg_namelen = omh32.msg_namelen;
 	omh.msg_iovlen = (size_t)omh32.msg_iovlen;
-	omh.msg_iov = sgsbp2 = stackgap_alloc(&sg, sizeof(struct iovec) * omh.msg_iovlen);
+	omh.msg_iov = sgsbp2 = stackgap_alloc(p, &sg, sizeof(struct iovec) * omh.msg_iovlen);
 	iovec32p = (struct netbsd32_iovec *)(u_long)omh32.msg_iov;
 	for (i = 0; i < omh.msg_iovlen; i++, sgsbp2++, iovec32p++) {
 		error = copyin(iovec32p, &iov32, sizeof(iov32));
@@ -765,16 +765,16 @@ compat_43_netbsd32_osigvec(p, v, retval)
 	struct compat_43_sys_sigvec_args ua;
 	struct netbsd32_sigvec sv32;
 	struct sigvec sv, *sgnsvp, *sgosvp;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int rv, error;
 
 	NETBSD32TO64_UAP(signum);
 	if (SCARG(uap, osv))
-		SCARG(&ua, osv) = sgosvp = stackgap_alloc(&sg, sizeof(sv));
+		SCARG(&ua, osv) = sgosvp = stackgap_alloc(p, &sg, sizeof(sv));
 	else
 		SCARG(&ua, osv) = NULL;
 	if (SCARG(uap, nsv)) {
-		SCARG(&ua, nsv) = sgnsvp = stackgap_alloc(&sg, sizeof(sv));
+		SCARG(&ua, nsv) = sgnsvp = stackgap_alloc(p, &sg, sizeof(sv));
 		error = copyin((caddr_t)(u_long)SCARG(uap, nsv), &sv32, sizeof(sv32));
 		if (error)
 			return (error);
@@ -848,15 +848,15 @@ compat_43_netbsd32_osigstack(p, v, retval)
 	struct compat_43_sys_sigstack_args ua;
 	struct netbsd32_sigstack ss32;
 	struct sigstack ss, *sgossp, *sgnssp;
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 	int error, rv;
 
 	if (SCARG(uap, oss))
-		SCARG(&ua, oss) = sgossp = stackgap_alloc(&sg, sizeof(ss));
+		SCARG(&ua, oss) = sgossp = stackgap_alloc(p, &sg, sizeof(ss));
 	else
 		SCARG(&ua, oss) = NULL;
 	if (SCARG(uap, nss)) {
-		SCARG(&ua, nss) = sgnssp = stackgap_alloc(&sg, sizeof(ss));
+		SCARG(&ua, nss) = sgnssp = stackgap_alloc(p, &sg, sizeof(ss));
 		error = copyin((caddr_t)(u_long)SCARG(uap, nss), &ss32, sizeof(ss32));
 		if (error)
 			return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.11.2.5 2002/01/08 00:28:59 nathanw Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.11.2.6 2002/04/01 07:43:47 nathanw Exp $	*/
 
 /*
  * 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.2.5 2002/01/08 00:28:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.11.2.6 2002/04/01 07:43:47 nathanw Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -421,10 +421,13 @@ coda_nb_statfs(vfsp, sbp, p)
     struct statfs *sbp;
     struct proc *p;
 {
+    struct coda_statfs fsstat;
+    int error;
+
     ENTRY;
-/*  MARK_ENTRY(CODA_STATFS_STATS); */
+    MARK_ENTRY(CODA_STATFS_STATS);
     if (!CODA_MOUNTED(vfsp)) {
-/*	MARK_INT_FAIL(CODA_STATFS_STATS);*/
+/*	MARK_INT_FAIL(CODA_STATFS_STATS); */
 	return(EINVAL);
     }
     
@@ -434,21 +437,27 @@ coda_nb_statfs(vfsp, sbp, p)
     	#define NB_SFS_SIZ 0x895440
      */
     /* Note: Normal fs's have a bsize of 0x400 == 1024 */
-    sbp->f_type = 0;
-    sbp->f_bsize = 8192; /* XXX */
-    sbp->f_iosize = 8192; /* XXX */
-#define NB_SFS_SIZ 0x8AB75D
-    sbp->f_blocks = NB_SFS_SIZ;
-    sbp->f_bfree = NB_SFS_SIZ;
-    sbp->f_bavail = NB_SFS_SIZ;
-    sbp->f_files = NB_SFS_SIZ;
-    sbp->f_ffree = NB_SFS_SIZ;
-    bcopy((caddr_t)&(vfsp->mnt_stat.f_fsid), (caddr_t)&(sbp->f_fsid), sizeof (fsid_t));
-    strncpy(sbp->f_fstypename, MOUNT_CODA, MFSNAMELEN-1);
-    strcpy(sbp->f_mntonname, "/coda");
-    strcpy(sbp->f_mntfromname, "CODA");
-/*  MARK_INT_SAT(CODA_STATFS_STATS); */
-    return(0);
+
+    error = venus_statfs(vftomi(vfsp), p->p_cred->pc_ucred, p, &fsstat);
+
+    if (!error) {
+	sbp->f_type = 0;
+	sbp->f_bsize = 8192; /* XXX */
+	sbp->f_iosize = 8192; /* XXX */
+	sbp->f_blocks = fsstat.f_blocks;
+	sbp->f_bfree  = fsstat.f_bfree;
+	sbp->f_bavail = fsstat.f_bavail;
+	sbp->f_files  = fsstat.f_files;
+	sbp->f_ffree  = fsstat.f_ffree;
+        bcopy((caddr_t)&(vfsp->mnt_stat.f_fsid),
+	      (caddr_t)&(sbp->f_fsid), sizeof (fsid_t));
+        strncpy(sbp->f_fstypename, MOUNT_CODA, MFSNAMELEN-1);
+        strcpy(sbp->f_mntonname, "/coda");
+        strcpy(sbp->f_mntfromname, "CODA");
+    }
+
+    MARK_INT_SAT(CODA_STATFS_STATS);
+    return(error);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: syncicache.c,v 1.3.2.1 2001/09/21 22:36:31 nathanw Exp $	*/
+/*	$NetBSD: syncicache.c,v 1.3.2.2 2002/04/01 07:48:07 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995-1997, 1999 Wolfgang Solfrank.
@@ -40,54 +40,90 @@
 
 #include <machine/cpu.h>
 
-#if	defined(_KERNEL) || defined(_STANDALONE)
+
+#if defined(_STANDALONE)
 #ifndef	CACHELINESIZE
 #error "Must know the size of a cache line"
 #endif
+static struct cache_info _cache_info = {
+	CACHELINESIZE,
+	CACHELINESIZE,
+	CACHELINESIZE,
+	CACHELINESIZE
+};
+#define CACHEINFO	_cache_info
+#elif defined(_KERNEL)
+#define	CACHEINFO	(curcpu()->ci_ci)
 #else
-static void getcachelinesize __P((void));
+static void getcachelinesize (void);
 
-static int _cachelinesize;
-#define	CACHELINESIZE	_cachelinesize
+static int _cachelinesize = 0;
+
+static struct cache_info _cache_info;
+#define CACHEINFO	_cache_info
 
 static void
-getcachelinesize()
+getcachelinesize(void)
 {
 	static int cachemib[] = { CTL_MACHDEP, CPU_CACHELINE };
-	int clen = sizeof(_cachelinesize);
+	static int cacheinfomib[] = { CTL_MACHDEP, CPU_CACHEINFO };
+	size_t clen = sizeof(_cache_info);
 
+	if (sysctl(cacheinfomib, sizeof(cacheinfomib) / sizeof(cacheinfomib[0]),
+		&_cache_info, &clen, NULL, 0) == 0) {
+		_cachelinesize = _cache_info.dcache_line_size;
+		return;
+	}
+
+	/* Try older deprecated sysctl */
+	clen = sizeof(_cachelinesize);
 	if (sysctl(cachemib, sizeof(cachemib) / sizeof(cachemib[0]),
 		   &_cachelinesize, &clen, NULL, 0) < 0
 	    || !_cachelinesize)
 		abort();
+
+	_cache_info.dcache_size = _cachelinesize;
+	_cache_info.dcache_line_size = _cachelinesize;
+	_cache_info.icache_size = _cachelinesize;
+	_cache_info.icache_line_size = _cachelinesize;
+	/* If there is no cache, indicate we have issued the sysctl. */
+	if (!_cachelinesize) _cachelinesize = 1;
 }
 #endif
 
 void
-__syncicache(from, len)
-	void *from;
-	int len;
+__syncicache(void *from, size_t len)
 {
-	int l, off;
+	size_t l, off;
+	size_t linesz;
 	char *p;
 
 #if	!defined(_KERNEL) && !defined(_STANDALONE)
 	if (!_cachelinesize)
 		getcachelinesize();
 #endif	
-	off = (u_int)from & (CACHELINESIZE - 1);
-	l = len += off;
-	p = (char *)from - off;
-	do {
-		__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((l -= CACHELINESIZE) > 0);
+
+	if (CACHEINFO.dcache_size > 0) {
+		linesz = CACHEINFO.dcache_line_size;
+		off = (uintptr_t)from & (linesz - 1);
+		l = (len + off + linesz - 1) & ~(linesz - 1);
+		p = (char *)from - off;
+		do {
+			__asm__ __volatile ("dcbst 0,%0" :: "r"(p));
+			p += linesz;
+		} while ((l -= linesz) != 0);
+	}
 	__asm__ __volatile ("sync");
-	p = (char *)from - off;
-	do {
-		__asm__ __volatile ("icbi 0,%0" :: "r"(p));
-		p += CACHELINESIZE;
-	} while ((len -= CACHELINESIZE) > 0);
-	__asm__ __volatile ("sync");	/* required on 7450 */
-	__asm__ __volatile ("isync");
+
+	if (CACHEINFO.icache_size > 0 ) {
+		linesz = CACHEINFO.icache_line_size;
+		off = (uintptr_t)from & (linesz - 1);
+		l = (len + off + linesz - 1) & ~(linesz - 1);
+		p = (char *)from - off;
+		do {
+			__asm__ __volatile ("icbi 0,%0" :: "r"(p));
+			p += linesz;
+		} while ((l -= linesz) != 0);
+	}
+	__asm__ __volatile ("sync; isync");
 }

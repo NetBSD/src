@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.1 2002/02/28 04:07:01 nathanw Exp $ */
+/*	$NetBSD: view.c,v 1.17.8.2 2002/04/01 07:39:00 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.1 2002/02/28 04:07:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.2 2002/04/01 07:39:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -320,7 +320,7 @@ viewioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		error = view_set_colormap(vu, (colormap_t *)data);
 		break;
 	default:
-		error = EINVAL;
+		error = EPASSTHROUGH;
 		break;
 	}
 	return(error);

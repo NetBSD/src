@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_icu.c,v 1.3.4.2 2002/02/28 04:07:44 nathanw Exp $	*/
+/*	$NetBSD: i80200_icu.c,v 1.3.4.3 2002/04/01 07:39:15 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -61,12 +61,12 @@ i80200_default_extirq_dispatch(struct clockframe *framep)
 }
 
 /*
- * i80200_intr_init:
+ * i80200_icu_init:
  *
  *	Initialize the i80200 ICU.
  */
 void
-i80200_intr_init(void)
+i80200_icu_init(void)
 {
 
 	/* Disable all interrupt sources. */

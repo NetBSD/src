@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.54.4.4 2001/09/21 22:34:59 nathanw Exp $ */
+/* $NetBSD: scc.c,v 1.54.4.5 2002/04/01 07:38:52 nathanw Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.4 2001/09/21 22:34:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.54.4.5 2002/04/01 07:38:52 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dec_3000_300.h"
@@ -612,10 +612,10 @@ sccioctl(dev, cmd, data, flag, p)
 	sc = scc_cd.cd_devs[SCCUNIT(dev)];
 	tp = sc->scc_tty[line];
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag, p);
-	if (error >= 0)
+	if (error != EPASSTHROUGH)
 		return (error);
 
 	switch (cmd) {
@@ -655,7 +655,7 @@ sccioctl(dev, cmd, data, flag, p)
 		break;
 
 	default:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 	}
 	return (0);
 }

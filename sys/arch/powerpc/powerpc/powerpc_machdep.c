@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.8.6.11 2002/03/25 21:48:57 nathanw Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.8.6.12 2002/04/01 07:42:08 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -68,7 +68,7 @@ setregs(l, pack, stack)
 	 * XXX Machine-independent code has already copied arguments and
 	 * XXX environment to userland.  Get them back here.
 	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof (arginfo));
+	(void)copyin((char *)p->p_psstr, &arginfo, sizeof (arginfo));
 
 	/*
 	 * Set up arguments for _start():
@@ -89,7 +89,7 @@ setregs(l, pack, stack)
 	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
 	tf->fixreg[6] = 0;			/* auxillary vector */
 	tf->fixreg[7] = 0;			/* termination vector */
-	tf->fixreg[8] = (register_t)PS_STRINGS;	/* NetBSD extension */
+	tf->fixreg[8] = (register_t)p->p_psstr;	/* NetBSD extension */
 
 	tf->srr0 = pack->ep_entry;
 	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
@@ -115,6 +115,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	switch (name[0]) {
 	case CPU_CACHELINE:
+		/* Deprecated */
 		return sysctl_rdint(oldp, oldlenp, newp, CACHELINESIZE);
 	case CPU_TIMEBASE:
 		if (cpu_timebase)
@@ -123,6 +124,11 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case CPU_PRINTFATALTRAPS:
 		return sysctl_int(oldp, oldlenp, newp, newlen,
 				  &cpu_printfataltraps);
+	case CPU_CACHEINFO:
+		/* Use this instead of CPU_CACHELINE */
+		return sysctl_rdstruct(oldp, oldlenp, newp,
+			&curcpu()->ci_ci, 
+			sizeof(curcpu()->ci_ci));
 	default:
 		break;
 	}
@@ -132,7 +138,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 /*
  * Crash dump handling.
  */
-u_long dumpmag = 0x8fca0101;		/* magic number */
+u_int32_t dumpmag = 0x8fca0101;		/* magic number */
 int dumpsize = 0;			/* size of dump in pages */
 long dumplo = -1;			/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5.2.2 2002/01/08 00:26:48 nathanw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5.2.3 2002/04/01 07:41:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -67,15 +67,14 @@
 
 /*
  * The line between user space and kernel space
- * Mappings >= KERNEL_SPACE_START are constant across all processes
+ * Mappings >= KERNEL_BASE are constant across all processes
  */
-#define	KERNEL_SPACE_START	0xf0000000
+#define	KERNEL_BASE		0xf0000000
 
 /* Various constants used by the MD code*/
-#define	KERNEL_BASE		0xf0000000
-#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0xc000)
-#define	ALT_PAGE_TBLS_BASE	0xf0c00000
-#define	KERNEL_VM_BASE		0xf1000000
+#define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x0000c000)
+#define	APTE_BASE		(KERNEL_BASE + 0x00c00000)
+#define	KERNEL_VM_BASE		(KERNEL_BASE + 0x01000000)
 /*
  * The Kernel VM Size varies depending on the machine depending on how
  * much space is needed (and where) for other mappings.
@@ -89,8 +88,7 @@
  * The range 0xf1000000 - 0xfcffffff is available for kernel VM space
  * Footbridge registers and I/O mappings occupy 0xfd000000 - 0xffffffff
  */
-#define KERNEL_VM_SIZE		0x06000000
-#define	PROCESS_PAGE_TBLS_BASE	PAGE_TABLE_SPACE_START
+#define KERNEL_VM_SIZE		0x0C000000
 
 /*
  * Override the default pager_map size, there's not enough KVA.
@@ -106,7 +104,7 @@
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF
 #define VM_MAX_KERNEL_BUF \
-	((VM_MAXKERN_ADDRESS - KERNEL_VM_BASE) * 4 / 10)
+	((KERNEL_VM_SIZE) * 4 / 10)
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

@@ -33,7 +33,7 @@
  *	isic_pcmcia.h - common definitions for pcmcia isic cards
  *	--------------------------------------------------------
  *
- *	$Id: isic_pcmcia.h,v 1.1 2001/02/18 10:36:43 martin Exp $ 
+ *	$Id: isic_pcmcia.h,v 1.1.2.1 2002/04/01 07:46:53 nathanw Exp $ 
  *
  *      last edit-date: [Sun Feb 14 10:29:33 1999]
  *
@@ -41,8 +41,8 @@
  *
  *---------------------------------------------------------------------------*/
 
-struct pcmcia_l1_softc {
-	struct l1_softc sc_isic;	/* parent class */
+struct pcmcia_isic_softc {
+	struct isic_softc sc_isic;	/* parent class */
 
 	/* PCMCIA-specific goo */
 	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
@@ -51,10 +51,10 @@ struct pcmcia_l1_softc {
 	void *sc_ih;				/* interrupt handler */
 };
 
-typedef int (*isic_pcmcia_attach_func)(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+typedef int (*isic_pcmcia_attach_func)(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
 
-extern int isic_attach_fritzpcmcia(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_elsaisdnmc(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_elsamcall(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
-extern int isic_attach_sbspeedstar2(struct pcmcia_l1_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+extern int isic_attach_fritzpcmcia(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+extern int isic_attach_elsaisdnmc(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+extern int isic_attach_elsamcall(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
+extern int isic_attach_sbspeedstar2(struct pcmcia_isic_softc *sc, struct pcmcia_config_entry *cfe, struct pcmcia_attach_args *pa);
 

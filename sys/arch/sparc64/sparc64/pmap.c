@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.5 2002/02/28 04:12:18 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.6 2002/04/01 07:43:14 nathanw Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1523,8 +1523,7 @@ pmap_init()
 	}
 
 	/* Setup a pool for additional pvlist structures */
-	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", 0,
-		  NULL, NULL, 0);
+	pool_init(&pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pv_entry", NULL);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
@@ -2427,7 +2426,7 @@ pmap_protect(pm, sva, eva, prot)
 	ASSERT(pm != pmap_kernel() || eva < INTSTACK || sva > EINTSTACK);
 	ASSERT(pm != pmap_kernel() || eva < kdata || sva > ekdata);
 
-	if (prot & VM_PROT_WRITE) 
+	if ((prot & (VM_PROT_WRITE|PMAP_WIRED)) == VM_PROT_WRITE) 
 		return;
 
 	if (prot == VM_PROT_NONE) {
@@ -2477,6 +2476,10 @@ pmap_protect(pm, sva, eva, prot)
 			}
 			/* Just do the pmap and TSB, not the pv_list */
 			data &= ~(TLB_W|TLB_REAL_W);
+			/* Turn *ON* write to wired mappings. */
+			if ((prot & (VM_PROT_WRITE|PMAP_WIRED)) == 
+				(VM_PROT_WRITE|PMAP_WIRED))
+				data |= (TLB_W|TLB_REAL_W);
 			ASSERT((data & TLB_NFO) == 0);
 			if (pseg_set(pm, sva, data, 0)) {
 				printf("pmap_protect: gotten pseg empty!\n");

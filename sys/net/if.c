@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.86.2.7 2002/02/28 04:14:59 nathanw Exp $	*/
+/*	$NetBSD: if.c,v 1.86.2.8 2002/04/01 07:48:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.7 2002/02/28 04:14:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.86.2.8 2002/04/01 07:48:18 nathanw Exp $");
 
 #include "opt_inet.h"
 
@@ -258,6 +258,7 @@ if_nulldrain(ifp)
 }
 
 int if_index = 1;
+struct ifnet_head ifnet;
 struct ifaddr **ifnet_addrs = NULL;
 struct ifnet **ifindex2ifnet = NULL;
 

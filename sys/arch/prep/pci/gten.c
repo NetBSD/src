@@ -1,4 +1,4 @@
-/*	$NetBSD: gten.c,v 1.2.10.1 2002/02/28 04:11:30 nathanw Exp $	*/
+/*	$NetBSD: gten.c,v 1.2.10.2 2002/04/01 07:42:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@ gten_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_PUTCMAP:
 		return gten_putcmap(gt, (struct wsdisplay_cmap *)data);
 	}
-	return -1;
+	return EPASSTHROUGH;
 }
 
 static paddr_t

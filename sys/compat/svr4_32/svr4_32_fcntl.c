@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.1.4.2 2001/11/14 19:13:29 nathanw Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.1.4.3 2002/04/01 07:44:51 nathanw Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.1.4.2 2001/11/14 19:13:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.1.4.3 2002/04/01 07:44:51 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,17 +271,10 @@ fd_revoke(p, fd, retval)
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
-	switch (fp->f_type) {
-	case DTYPE_VNODE:
-		vp = (struct vnode *) fp->f_data;
-
-	case DTYPE_SOCKET:
+	if (fp->f_type != DTYPE_VNODE)
 		return EINVAL;
 
-	default:
-		panic("svr4_32_fcntl(F_REVOKE)");
-		/*NOTREACHED*/
-	}
+	vp = (struct vnode *) fp->f_data;
 
 	if (vp->v_type != VCHR && vp->v_type != VBLK) {
 		error = EINVAL;
@@ -372,7 +365,7 @@ svr4_32_sys_open(p, v, retval)
 	int			error;
 	struct sys_open_args	cup;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, flags) = svr4_32_to_bsd_flags(SCARG(uap, flags));
 
@@ -422,7 +415,7 @@ svr4_32_sys_creat(p, v, retval)
 	struct svr4_32_sys_creat_args *uap = v;
 	struct sys_open_args cup;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
@@ -475,7 +468,7 @@ svr4_32_sys_access(p, v, retval)
 	struct svr4_32_sys_access_args *uap = v;
 	struct sys_access_args cup;
 
-	caddr_t sg = stackgap_init(p->p_emul);
+	caddr_t sg = stackgap_init(p, 0);
 
 	SCARG(&cup, path) = (char *)(u_long)SCARG(uap, path);
 	CHECK_ALT_EXIST(p, &sg, SCARG(&cup, path));
@@ -629,9 +622,9 @@ svr4_32_sys_fcntl(p, v, retval)
 		{
 			struct svr4_32_flock	 ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(p->p_emul);
+			caddr_t sg = stackgap_init(p, 0);
 
-			flp = stackgap_alloc(&sg, sizeof(struct flock));
+			flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 			SCARG(&fa, arg) = (void *) flp;
 
 			error = copyin((char *)(u_long)SCARG(uap, arg), 
@@ -693,9 +686,9 @@ svr4_32_sys_fcntl(p, v, retval)
 			{
 				struct svr4_32_flock64	 ifl;
 				struct flock		*flp, fl;
-				caddr_t sg = stackgap_init(p->p_emul);
+				caddr_t sg = stackgap_init(p, 0);
 
-				flp = stackgap_alloc(&sg, sizeof(struct flock));
+				flp = stackgap_alloc(p, &sg, sizeof(struct flock));
 				SCARG(&fa, arg) = (void *) flp;
 
 				error = copyin((char *)(u_long)SCARG(uap, arg), &ifl,

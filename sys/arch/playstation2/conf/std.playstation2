@@ -1,10 +1,9 @@
-#	$NetBSD: std.playstation2,v 1.2.4.2 2002/01/08 00:27:02 nathanw Exp $
+#	$NetBSD: std.playstation2,v 1.2.4.3 2002/04/01 07:41:50 nathanw Exp $
 
 machine playstation2 mips
 
 options 	MIPS3
 options 	MIPS3_5900
-options 	MIPS3_L2CACHE_ABSENT
 
 options 	IPL_ICU_MASK
 

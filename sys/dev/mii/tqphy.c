@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.11.2.4 2001/11/14 19:15:03 nathanw Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.11.2.5 2002/04/01 07:46:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.4 2001/11/14 19:15:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tqphy.c,v 1.11.2.5 2002/04/01 07:46:14 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ tqphyattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &tqphy_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	/*

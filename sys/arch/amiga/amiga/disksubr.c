@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37.8.2 2002/02/28 04:06:21 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.8.3 2002/04/01 07:38:52 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37.8.2 2002/02/28 04:06:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37.8.3 2002/04/01 07:38:52 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ setdisklabel(olp, nlp, openmask, clp)
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
 		return (EINVAL);
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

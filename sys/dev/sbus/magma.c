@@ -1,4 +1,4 @@
-/*	$NetBSD: magma.c,v 1.9.2.4 2002/02/28 04:14:20 nathanw Exp $	*/
+/*	$NetBSD: magma.c,v 1.9.2.5 2002/04/01 07:47:14 nathanw Exp $	*/
 /*
  * magma.c
  *
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.4 2002/02/28 04:14:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: magma.c,v 1.9.2.5 2002/04/01 07:47:14 nathanw Exp $");
 
 #if 0
 #define MAGMA_DEBUG
@@ -389,19 +389,19 @@ magma_attach(parent, self, aux)
 	sc->ms_ncd1190 = card->mb_ncd1190;
 
 	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &bh) != 0) {
+			 sa->sa_slot, sa->sa_offset, sa->sa_size,
+			 BUS_SPACE_MAP_LINEAR, &bh) != 0) {
 		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
 		return;
 	}
 
 	/* the SVCACK* lines are daisychained */
-	sc->ms_svcackr = (caddr_t)bh + card->mb_svcackr;
-	sc->ms_svcackt = (caddr_t)bh + card->mb_svcackt;
-	sc->ms_svcackm = (caddr_t)bh + card->mb_svcackm;
+	sc->ms_svcackr = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackr;
+	sc->ms_svcackt = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackt;
+	sc->ms_svcackm = (caddr_t)bus_space_vaddr(sa->sa_bustag, bh)
+		+ card->mb_svcackm;
 
 	/*
 	 * Find the clock speed; it's the same for all CD1400 chips
@@ -1120,10 +1120,10 @@ mttyioctl(dev, cmd, data, flags, p)
 	int error;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if( error != EPASSTHROUGH ) return(error);
 
 	error = ttioctl(tp, cmd, data, flags, p);
-	if( error >= 0 ) return(error);
+	if( error != EPASSTHROUGH ) return(error);
 
 	error = 0;
 
@@ -1176,7 +1176,7 @@ mttyioctl(dev, cmd, data, flags, p)
 		break;
 
 	default:
-		error = ENOTTY;
+		error = EPASSTHROUGH;
 	}
 
 	return(error);

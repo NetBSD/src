@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopyinout.S,v 1.2.4.2 2002/01/08 00:23:07 nathanw Exp $	*/
+/*	$NetBSD: bcopyinout.S,v 1.2.4.3 2002/04/01 07:39:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1995-1998 Mark Brinicombe.
@@ -54,7 +54,7 @@ Lvm_min_address:
 Lvm_maxuser_address:
 	.word	VM_MAXUSER_ADDRESS
 Lvm_maxkern_address:
-	.word	VM_MAXKERN_ADDRESS
+	.word	_C_LABEL(pmap_curmaxkvaddr)
 
 ENTRY(kcopy)
 	b	do_copyinout
@@ -78,7 +78,8 @@ ENTRY(copyin)
 	cmp	r1, r3
 	bcc	Lbadaddress
 	ldr	r3, Lvm_maxkern_address
-	cmp	r1, r3
+	ldr	ip, [r3]
+	cmp	r1, ip
 	bcs	Lbadaddress
 
 	/* Quick exit if length is zero */	
@@ -98,7 +99,7 @@ ENTRY(copyin)
  */
 
 Lpgbase:
-	.long	PROCESS_PAGE_TBLS_BASE
+	.long	PTE_BASE
 	
 ENTRY(copyout)
 	/* Validate user and kernel addresses */
@@ -111,7 +112,8 @@ ENTRY(copyout)
 	cmp	r0, r3
 	bcc	Lbadaddress
 	ldr	r3, Lvm_maxkern_address
-	cmp	r0, r3
+	ldr	ip, [r3]
+	cmp	r0, ip
 	bcs	Lbadaddress
 
 	/* Quick exit if length is zero */	

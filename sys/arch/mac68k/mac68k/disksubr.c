@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38.6.3 2002/02/28 04:10:36 nathanw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38.6.4 2002/04/01 07:40:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -514,7 +514,7 @@ setdisklabel(olp, nlp, openmask, osdep)
 	 * e.g. Macintosh or (PC) BIOS, will be overwritten.
 	 */
 
-	while ((i = ffs((long)openmask)) != 0) {
+	while ((i = ffs(openmask)) != 0) {
 		i--;
 		openmask &= ~(1 << i);
 		if (nlp->d_npartitions <= i)

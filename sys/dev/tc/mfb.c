@@ -1,4 +1,4 @@
-/* $NetBSD: mfb.c,v 1.26.2.3 2001/11/14 19:16:10 nathanw Exp $ */
+/* $NetBSD: mfb.c,v 1.26.2.4 2002/04/01 07:47:25 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.26.2.3 2001/11/14 19:16:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfb.c,v 1.26.2.4 2002/04/01 07:47:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -294,7 +294,7 @@ mfb_common_init(ri)
 	/* initialize colormap and cursor hardware */
 	mfbhwinit(base);
 
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FORCEMONO;
 	ri->ri_depth = 8;	/* !! watch out !! */
 	ri->ri_width = 1280;
 	ri->ri_height = 1024;
@@ -306,15 +306,17 @@ mfb_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("mfb: font table is empty\n");
 		return;
 	}
 
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("mfb: couldn't lock font\n");
 		return;
 	}
@@ -357,7 +359,7 @@ mfbioctl(v, cmd, data, flag, p)
 
 	case WSDISPLAYIO_GETCMAP:
 	case WSDISPLAYIO_PUTCMAP:
-		return (ENOTTY);
+		return (EPASSTHROUGH);
 
 	case WSDISPLAYIO_SVIDEO:
 		turnoff = *(int *)data == WSDISPLAYIO_VIDEO_OFF;
@@ -396,7 +398,7 @@ mfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t
@@ -669,7 +671,7 @@ get_cursor(sc, p)
 	struct mfb_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

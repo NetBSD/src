@@ -27,17 +27,14 @@
  *	isic - I4B Siemens ISDN Chipset Driver for ELSA Quickstep 1000pro PCI
  *	=====================================================================
  *
- *	$Id: isic_pci_elsa_qs1p.c,v 1.2.2.1 2001/11/14 19:15:20 nathanw Exp $
+ *	$Id: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:58 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.1 2001/11/14 19:15:20 nathanw Exp $");
-
-#include "opt_isicpci.h"
-#ifdef ISICPCI_ELSA_QS1PCI
+__KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.2 2002/04/01 07:46:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -77,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_pci_elsa_qs1p.c,v 1.2.2.1 2001/11/14 19:15:20 n
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_debug.h>
+#include <netisdn/i4b_l2.h>
 #include <netisdn/i4b_l1l2.h>
 #include <netisdn/i4b_mbuf.h>
 
@@ -138,7 +137,7 @@ eqs1pp_read_fifo(void *buf, const void *base, size_t len)
 #else
 
 static void
-eqs1pp_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+eqs1pp_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -188,7 +187,7 @@ eqs1pp_write_fifo(void *base, const void *buf, size_t len)
 #else
 
 static void
-eqs1pp_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+eqs1pp_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -242,7 +241,7 @@ eqs1pp_write_reg(u_char *base, u_int offset, u_int v)
 #else
 
 static void
-eqs1pp_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+eqs1pp_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -300,7 +299,7 @@ eqs1pp_read_reg(u_char *base, u_int offset)
 #else
 
 static u_int8_t
-eqs1pp_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+eqs1pp_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[1].t;
 	bus_space_handle_t h = sc->sc_maps[1].h;
@@ -333,7 +332,7 @@ eqs1pp_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 int
 isic_attach_Eqs1pp(int unit, unsigned int iobase1, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[unit];
+	struct isic_softc *sc = &l1_sc[unit];
 	
 	/* check max unit range */
 	
@@ -401,19 +400,19 @@ isic_attach_Eqs1pp(int unit, unsigned int iobase1, unsigned int iobase2)
 
 void
 isic_attach_Eqs1pp(psc, pa)
-	struct pci_l1_softc *psc;
+	struct pci_isic_softc *psc;
 	struct pci_attach_args *pa;
 {
-	struct l1_softc *sc = &psc->sc_isic;
+	struct isic_softc *sc = &psc->sc_isic;
 
 	/* setup io mappings */
 	sc->sc_num_mappings = 2;
 	MALLOC_MAPS(sc);
 	sc->sc_maps[0].size = 0;
 	if (pci_mapreg_map(pa, ELSA_PORT0_MEM_MAPOFF, PCI_MAPREG_TYPE_MEM, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0
 	   && pci_mapreg_map(pa, ELSA_PORT0_IO_MAPOFF, PCI_MAPREG_TYPE_IO, 0,
-	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, NULL, NULL) != 0) {
+	    &sc->sc_maps[0].t, &sc->sc_maps[0].h, &psc->sc_base, &psc->sc_size) != 0) {
 		printf("%s: can't map card registers\n", sc->sc_dev.dv_xname);
 		return;
 	}
@@ -458,5 +457,3 @@ isic_attach_Eqs1pp(psc, pa)
 }
 
 #endif
-
-#endif /* ISICPCI_ELSA_QS1PCI */

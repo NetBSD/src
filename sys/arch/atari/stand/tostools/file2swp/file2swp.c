@@ -1,4 +1,4 @@
-/*	$NetBSD: file2swp.c,v 1.1.1.1.2.2 2002/02/28 04:08:31 nathanw Exp $	*/
+/*	$NetBSD: file2swp.c,v 1.1.1.1.2.3 2002/04/01 07:39:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,15 +41,18 @@
 #include "libtos.h"
 #include "diskio.h"
 #include "ahdilbl.h"
+#include "disklbl.h"
 #include "cread.h"
 
 char		*Infile = "minifs.gz";
-const char	version[] = "$Revision: 1.1.1.1.2.2 $";
+const char	version[] = "$Revision: 1.1.1.1.2.3 $";
 
 extern const char	*program_name;
 
 int		main    PROTO((int, char **));
-static void	usage   PROTO((void)) NORETURN;
+static int	check_bsdlabel PROTO((disk_t *,u_int32_t,u_int32_t *,u_int32_t *));
+static int	readdisklabel PROTO((disk_t *, u_int32_t *, u_int32_t *));
+static void	usage PROTO((void)) NORETURN;
 
 static void
 usage()
@@ -82,9 +85,9 @@ main(argc, argv)
 	extern char	*optarg;
 
 	disk_t		*dd;
-	ptable_t	pt;
 	int		rv, c, i, fd;
 	u_int32_t	currblk;
+	u_int32_t	start, end;
 	char		buf[AHDI_BSIZE];
 
 	i = rv = 0;
@@ -119,37 +122,25 @@ main(argc, argv)
 		/* NOT REACHED */
 	}
 	dd = disk_open(*argv);
-	pt.nparts = 0;
-	pt.parts  = NULL;
 
-	if (!ahdi_getparts(dd, &pt, AHDI_BBLOCK, AHDI_BBLOCK)) {
-		for (i = 0; i < pt.nparts; i++) {
-			if (!strncmp(pt.parts[i].id, "SWP", 3))
-				break;
-		}
-		if (i == pt.nparts) {
-			eprintf("No swap ('SWP') partition found!\n");
-			xexit(1);
-		}
-	}
-	else xexit(1);
+	if (readdisklabel(dd, &start, &end) != 0)
+		xexit(1);
+
 	if ((fd = open(Infile, O_RDONLY)) < 0) {
 		eprintf("Unable to open <%s>\n", Infile);
 		xexit(1);
 	}
 	
-	eprintf("Found Swap ('SWP') partition start: %d, end: %d.\n",
-				pt.parts[i].start, pt.parts[i].end);
 	switch(key_wait("Are you sure (y/n)? ")) {
 	  case 'y':
 	  case 'Y':
-		currblk = pt.parts[i].start;
+		currblk = start;
 		while(c = read(fd, buf, sizeof(buf)) > 0) {
 		    if (disk_write(dd, currblk, 1, buf) < 0) {
 			eprintf("Error writing to swap partition\n");
 			xexit(1);
 		    }
-		    if (++currblk >= pt.parts[i].end) {
+		    if (++currblk >= end) {
 			eprintf("Error: filesize exceeds swap "
 							"partition size\n");
 			xexit(1);
@@ -165,4 +156,76 @@ main(argc, argv)
 	}
 	rv = EXIT_FAILURE;
 	return(rv);
+}
+
+static int
+check_bsdlabel(dd, offset, start, end)
+	disk_t	*dd;
+	u_int32_t	offset, *start, *end;
+{
+	struct disklabel	dl;
+	int					err;
+	
+	err = bsd_getlabel(dd, &dl, offset);
+	if (err < 0) {
+		eprintf("Device I/O error (hardware problem?)\n\n");
+		return (-1);
+	}
+	if (!err) {
+		if (dl.d_partitions[1].p_size > 0) {
+			*start = dl.d_partitions[1].p_offset;
+			*end   = *start + dl.d_partitions[1].p_size-1;
+			eprintf("NetBSD/Atari format%s, Swap partition start:%d, end:%d\n",
+				offset != 0 ? " (embedded)" : "", *start, *end);
+			return (0);
+		}
+		eprintf("NetBSD/Atari format: no swap defined\n");
+	}
+	return 1;
+}
+
+static int
+readdisklabel(dd, start, end)
+	disk_t		*dd;
+	u_int32_t	*start, *end;
+{
+	ptable_t		pt;
+	int				err, i;
+
+
+	err = check_bsdlabel(dd, LABELSECTOR, start, end);
+	if (err != 1)
+		return (err);
+	memset(&pt, 0, sizeof(pt));
+	err = ahdi_getparts(dd, &pt, AHDI_BBLOCK, AHDI_BBLOCK);
+	if (err < 0) {
+		eprintf("Device I/O error (hardware problem?)\n\n");
+		return (-1);
+	}
+	if (!err) {
+		/*
+		 * Check for hidden BSD labels
+		 */
+		for (i = 0; i < pt.nparts; i++) {
+			if (!strncmp(pt.parts[i].id, "NBD", 3)) {
+				err = check_bsdlabel(dd, pt.parts[i].start, start, end);
+				if (err != 1)
+					return (err);
+			}
+		}
+		for (i = 0; i < pt.nparts; i++) {
+			if (!strncmp(pt.parts[i].id, "SWP", 3))
+				break;
+		}
+		if (i < pt.nparts) {
+			*start = pt.parts[i].start;
+			*end   = pt.parts[i].end;
+			eprintf("AHDI format, SWP partition: start:%d,end: %d\n",
+				*start, *end);
+			return (0);
+		}
+		eprintf("AHDI format, no swap ('SWP') partition found!\n");
+	}
+	eprintf("Unknown label format.\n\n");
+	return(-1);
 }

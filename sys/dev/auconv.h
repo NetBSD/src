@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.h,v 1.5.8.2 2002/02/28 04:13:09 nathanw Exp $	*/
+/*	$NetBSD: auconv.h,v 1.5.8.3 2002/04/01 07:44:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _SYS_DEV_AUCONV_H_
+#define _SYS_DEV_AUCONV_H_
+
 /* Convert between signed and unsigned. */
 extern void change_sign8(void *, u_char *, int);
 extern void change_sign16_le(void *, u_char *, int);
@@ -56,3 +59,5 @@ extern void ulinear8_to_slinear16_le(void *, u_char *, int);
 extern void ulinear8_to_slinear16_be(void *, u_char *, int);
 extern void slinear16_to_ulinear8_le(void *, u_char *, int);
 extern void slinear16_to_ulinear8_be(void *, u_char *, int);
+
+#endif /* !_SYS_DEV_AUCONV_H_ */

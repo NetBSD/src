@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.52.2.4 2002/02/28 04:14:47 nathanw Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.52.2.5 2002/04/01 07:48:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.52.2.4 2002/02/28 04:14:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.52.2.5 2002/04/01 07:48:01 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,13 @@ int	max_protohdr;
 int	max_hdr;
 int	max_datalen;
 
-void	*mclpool_alloc __P((unsigned long, int, int));
-void	mclpool_release __P((void *, unsigned long, int));
+void	*mclpool_alloc __P((struct pool *, int));
+void	mclpool_release __P((struct pool *, void *));
+
+struct pool_allocator mclpool_allocator = {
+	mclpool_alloc, mclpool_release, 0,
+};
+
 static struct mbuf *m_copym0 __P((struct mbuf *, int, int, int, int));
 
 const char mclpool_warnmsg[] =
@@ -121,9 +126,11 @@ void
 mbinit()
 {
 
-	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", 0, NULL, NULL, 0);
-	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", 0, mclpool_alloc,
-	    mclpool_release, 0);
+	pool_init(&mbpool, msize, 0, 0, 0, "mbpl", NULL);
+	pool_init(&mclpool, mclbytes, 0, 0, 0, "mclpl", &mclpool_allocator);
+
+	pool_set_drain_hook(&mbpool, m_reclaim, NULL);
+	pool_set_drain_hook(&mclpool, m_reclaim, NULL);
 
 	pool_cache_init(&mbpool_cache, &mbpool, NULL, NULL, NULL);
 	pool_cache_init(&mclpool_cache, &mclpool, NULL, NULL, NULL);
@@ -218,10 +225,9 @@ sysctl_dombuf(name, namelen, oldp, oldlenp, newp, newlen)
 }
 
 void *
-mclpool_alloc(sz, flags, mtype)
-	unsigned long sz;
+mclpool_alloc(pp, flags)
+	struct pool *pp;
 	int flags;
-	int mtype;
 {
 	boolean_t waitok = (flags & PR_WAITOK) ? TRUE : FALSE;
 
@@ -229,59 +235,16 @@ mclpool_alloc(sz, flags, mtype)
 }
 
 void
-mclpool_release(v, sz, mtype)
+mclpool_release(pp, v)
+	struct pool *pp;
 	void *v;
-	unsigned long sz;
-	int mtype;
 {
 
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 }
 
-/*
- * When MGET failes, ask protocols to free space when short of memory,
- * then re-attempt to allocate an mbuf.
- */
-struct mbuf *
-m_retry(i, t)
-	int i, t;
-{
-	struct mbuf *m;
-
-	m_reclaim(i);
-#define m_retry(i, t)	(struct mbuf *)0
-	MGET(m, i, t);
-#undef m_retry
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
-/*
- * As above; retry an MGETHDR.
- */
-struct mbuf *
-m_retryhdr(i, t)
-	int i, t;
-{
-	struct mbuf *m;
-
-	m_reclaim(i);
-#define m_retryhdr(i, t) (struct mbuf *)0
-	MGETHDR(m, i, t);
-#undef m_retryhdr
-	if (m != NULL)
-		mbstat.m_wait++;
-	else
-		mbstat.m_drops++;
-	return (m);
-}
-
 void
-m_reclaim(how)
-	int how;
+m_reclaim(void *arg, int flags)
 {
 	struct domain *dp;
 	struct protosw *pr;

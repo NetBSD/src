@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.15.4.3 2001/09/21 22:35:10 nathanw Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.15.4.4 2002/04/01 07:40:42 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -119,7 +119,7 @@
 #define	CPUID_SSE	0x02000000	/* streaming SIMD extensions */
 #define	CPUID_SSE2	0x04000000	/* streaming SIMD extensions #2 */
 #define	CPUID_SS	0x08000000	/* self-snoop */
-#define	CPUID_B28	0x10000000	/* reserved */
+#define	CPUID_HTT	0x10000000	/* Hyper-Threading Technology */
 #define	CPUID_TM	0x20000000	/* thermal monitor (TCC) */
 #define	CPUID_B30	0x40000000	/* reserved */
 #define	CPUID_B31	0x80000000	/* reserved */
@@ -128,9 +128,10 @@
 			    "\10MCE\11CX8\12APIC\13B10\14SEP\15MTRR"
 #define CPUID_MASK1	0x00001fff
 #define CPUID_FLAGS2	"\20\16PGE\17MCA\20CMOV\21FGPAT\22PSE36\23PN\24CFLUSH" \
-			    "\25B20\26DS\27ACPI\30MMX\31FXSR\32SSE\33SSE2" \
-			    "\34SS\35B28\36TM\37B30\40B31"
-#define CPUID_MASK2	0xffffe000
+			    "\25B20\26DS\27ACPI\30MMX"
+#define CPUID_MASK2	0x00ffe000
+#define CPUID_FLAGS3	"\20\31FXSR\32SSE\33SSE2\34SS\35HTT\36TM\37B30\40B31"
+#define CPUID_MASK3	0xff000000
 
 /*
  * Model-specific registers for the i386 family

@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.7 1999/08/20 03:53:50 chs Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.7.20.1 2002/04/01 07:43:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -78,3 +78,6 @@ void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
 #define ZSCCF_CHANNEL 0
 #define ZSCCF_CHANNEL_DEFAULT -1
 #endif
+
+#undef cn_trap
+#define cn_trap() zs_abort(NULL)

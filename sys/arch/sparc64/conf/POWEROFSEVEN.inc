@@ -1,6 +1,5 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.3 2002/02/28 04:12:10 nathanw Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.4.2.4 2002/04/01 07:42:59 nathanw Exp $
 #
-# from: $NetBSD: POWEROFSEVEN32,v 1.10 2001/08/25 15:04:26 mrg Exp
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
 # Configuration for Ultra5/Ultra10
@@ -87,7 +86,7 @@ options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 ## such that gdb(1) can be used on a kernel coredump.
 
 makeoptions	DEBUG="-g"
-options 	AUDIO_DEBUG
+makeoptions	COPTS="-O2 -mcpu=ultrasparc"
 
 
 ## Adds code to the kernel that does internal consistency checks, and will
@@ -321,7 +320,7 @@ uk*	at atapibus? drive ? flags 0x0000	# ATAPI unknown
 ## A disk-like interface to files.  Can be used to create floppy, CD,
 ## miniroot images, etc.
 
-pseudo-device	vnd	4
+#pseudo-device	vnd	4
 
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).

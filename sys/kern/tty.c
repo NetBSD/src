@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.125.2.6 2002/02/28 04:14:46 nathanw Exp $	*/
+/*	$NetBSD: tty.c,v 1.125.2.7 2002/04/01 07:47:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.6 2002/02/28 04:14:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.125.2.7 2002/04/01 07:47:59 nathanw Exp $");
 
 #include "opt_uconsole.h"
 
@@ -557,10 +557,10 @@ ttyinput(int c, struct tty *tp)
 			 * ^T - kernel info and generate SIGINFO
 			 */
 			if (CCEQ(cc[VSTATUS], c)) {
-				if (ISSET(lflag, ISIG))
-					pgsignal(tp->t_pgrp, SIGINFO, 1);
 				if (!ISSET(lflag, NOKERNINFO))
 					ttyinfo(tp);
+				if (ISSET(lflag, ISIG))
+					pgsignal(tp->t_pgrp, SIGINFO, 1);
 				goto endcase;
 			}
 		}
@@ -730,7 +730,6 @@ int
 ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	extern struct tty *constty;	/* Temporary virtual console. */
-	extern int	nlinesw;
 	struct linesw	*lp;
 	int		s, error;
 
@@ -1021,7 +1020,7 @@ ttioctl(struct tty *tp, u_long cmd, caddr_t data, int flag, struct proc *p)
 #ifdef COMPAT_OLDTTY
 		return (ttcompat(tp, cmd, data, flag, p));
 #else
-		return (-1);
+		return (EPASSTHROUGH);
 #endif
 	}
 	return (0);
@@ -2109,7 +2108,7 @@ tty_init(void)
 	tty_count = 0;
 
 	pool_init(&tty_pool, sizeof(struct tty), 0, 0, 0, "ttypl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_TTYS);
+	    &pool_allocator_nointr);
 }
 
 /*

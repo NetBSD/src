@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97.4.4 2002/01/08 00:24:42 nathanw Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97.4.5 2002/04/01 07:39:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -129,6 +129,9 @@
  *	to which processors are currently using which maps,
  *	and to when physical maps must be made correct.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97.4.5 2002/04/01 07:39:57 nathanw Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -546,7 +549,7 @@ pmap_init()
 	 * Initialize the pmap pools.
 	 */
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
-	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+	    &pool_allocator_nointr);
 
 	/*
 	 * Now it is safe to enable pv_table recording.

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.75.4.3 2002/03/29 23:22:43 ragge Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.75.4.4 2002/04/01 07:43:33 nathanw Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -287,23 +287,6 @@ cpu_coredump(l, vp, cred, chdr)
 }
 
 /*
- * Kernel stack red zone need to be set when a process is swapped in.
- * Be sure that all pages are valid.
- */
-void
-cpu_swapin(l)
-	struct lwp *l;
-{
-	struct pte *pte;
-	int i;
-
-	pte = kvtopte((vaddr_t)l->l_addr);
-	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
-		pte[i].pg_v = 1;
-	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
-}
-
-/*
  * Map in a bunch of pages read/writeable for the kernel.
  */
 void
@@ -334,8 +317,6 @@ iounaccess(vaddr, npgs)
 		pte[i] = 0;
 	mtpr(0, PR_TBIA);
 }
-
-extern struct vm_map *phys_map;
 
 /*
  * Map a user I/O request into kernel virtual address space.

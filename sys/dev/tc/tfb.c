@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.29.2.3 2001/11/14 19:16:13 nathanw Exp $ */
+/* $NetBSD: tfb.c,v 1.29.2.4 2002/04/01 07:47:27 nathanw Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.3 2001/11/14 19:16:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.29.2.4 2002/04/01 07:47:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,15 +386,17 @@ tfb_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("tfb: font table is empty\n");
 		return;
 	}
 
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("tfb: couldn't lock font\n");
 		return;
 	}
@@ -478,7 +480,7 @@ tfbioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SCURSOR:
 		return set_cursor(sc, (struct wsdisplay_cursor *)data);
 	}
-	return (ENOTTY);
+	return (EPASSTHROUGH);
 }
 
 static paddr_t
@@ -845,7 +847,7 @@ get_cursor(sc, p)
 	struct tfb_softc *sc;
 	struct wsdisplay_cursor *p;
 {
-	return (ENOTTY); /* XXX */
+	return (EPASSTHROUGH); /* XXX */
 }
 
 static void

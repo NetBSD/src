@@ -27,14 +27,14 @@
  *	i4b_drn_ngo.c - Dr. Neuhaus Niccy GO@ and SAGEM Cybermod
  *	--------------------------------------------------------
  *
- *	$Id: isic_isapnp_drn_ngo.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $
+ *	$Id: isic_isapnp_drn_ngo.c,v 1.2.2.2 2002/04/01 07:45:59 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 11:38:29 2001]
  *
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.2.2.1 2001/11/14 19:14:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.2.2.2 2002/04/01 07:45:59 nathanw Exp $");
 
 #include "opt_isicpnp.h"
 #ifdef ISICPNP_DRN_NGO
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_drn_ngo.c,v 1.2.2.1 2001/11/14 19:14:58 
 #endif
 
 #include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 #include <dev/ic/isac.h>
@@ -320,7 +322,7 @@ printf("GO/I/rrd: base=0x%x, addr=0x%x, offset=0x%x, val=0x%x\n",
 int
 isic_probe_drnngo(struct isa_device *dev, unsigned int iobase2)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	
 	/* check max unit range */
 	
@@ -452,11 +454,11 @@ isic_attach_drnngo(struct isa_device *dev, unsigned int iobase2)
 
 #else
 
-static u_int8_t drnngo_read_reg __P((struct l1_softc *sc, int what, bus_size_t offs));
-static void drnngo_write_reg __P((struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data));
-static void drnngo_read_fifo __P((struct l1_softc *sc, int what, void *buf, size_t size));
-static void drnngo_write_fifo __P((struct l1_softc *sc, int what, const void *data, size_t size));
-void isic_attach_drnngo __P((struct l1_softc *sc));
+static u_int8_t drnngo_read_reg __P((struct isic_softc *sc, int what, bus_size_t offs));
+static void drnngo_write_reg __P((struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data));
+static void drnngo_read_fifo __P((struct isic_softc *sc, int what, void *buf, size_t size));
+static void drnngo_write_fifo __P((struct isic_softc *sc, int what, const void *data, size_t size));
+void isic_attach_drnngo __P((struct isic_softc *sc));
 
 /*
  * Mapping from "what" parameter to offsets into the io map
@@ -473,7 +475,7 @@ static struct {
 };
 
 static void
-drnngo_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+drnngo_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t hd = sc->sc_maps[0].h, ha = sc->sc_maps[1].h;
@@ -482,7 +484,7 @@ drnngo_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
 }
 
 static void
-drnngo_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+drnngo_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t hd = sc->sc_maps[0].h, ha = sc->sc_maps[1].h;
@@ -491,7 +493,7 @@ drnngo_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
 }
 
 static void
-drnngo_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+drnngo_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t hd = sc->sc_maps[0].h, ha = sc->sc_maps[1].h;
@@ -500,7 +502,7 @@ drnngo_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
 }
 
 static u_int8_t
-drnngo_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+drnngo_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t hd = sc->sc_maps[0].h, ha = sc->sc_maps[1].h;
@@ -509,7 +511,7 @@ drnngo_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
 }
 
 void
-isic_attach_drnngo(struct l1_softc *sc)
+isic_attach_drnngo(struct isic_softc *sc)
 {
 	/* setup access routines */
 

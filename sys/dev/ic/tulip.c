@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.91.2.6 2002/02/28 04:13:30 nathanw Exp $	*/
+/*	$NetBSD: tulip.c,v 1.91.2.7 2002/04/01 07:45:40 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.91.2.6 2002/02/28 04:13:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.91.2.7 2002/04/01 07:45:40 nathanw Exp $");
 
 #include "bpfilter.h"
 
@@ -103,7 +103,6 @@ void	tlp_stop __P((struct ifnet *, int));
 
 void	tlp_shutdown __P((void *));
 
-void	tlp_reset __P((struct tulip_softc *));
 void	tlp_rxdrain __P((struct tulip_softc *));
 int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
@@ -3538,21 +3537,19 @@ tlp_21142_reset(sc)
 {
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
 	struct tulip_21x4x_media *tm = ife->ifm_aux;
-	const u_int8_t *ncp;
+	const u_int8_t *cp;
 	int i;
 
-	ncp = &sc->sc_srom[tm->tm_reset_offset];
-	for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_reset_offset];
+	for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
-	ncp = &sc->sc_srom[tm->tm_gp_offset];
-	for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+	cp = &sc->sc_srom[tm->tm_gp_offset];
+	for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 		delay(10);
-		TULIP_WRITE(sc, CSR_SIAGEN,
-		    TULIP_ROM_GETW(ncp, 0) << 16);
+		TULIP_WRITE(sc, CSR_SIAGEN, TULIP_ROM_GETW(cp, 0) << 16);
 	}
 
 	/* If there were no sequences, just lower the pins. */
@@ -4130,9 +4127,6 @@ tlp_sia_set(sc)
  * 21140 GPIO utility functions.
  */
 void	tlp_21140_gpio_update_link __P((struct tulip_softc *));
-void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
-	    struct ifmediareq *ifmr));
-int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
 
 void
 tlp_21140_gpio_update_link(sc)
@@ -4536,8 +4530,12 @@ tlp_2114x_isv_tmsw_init(sc)
 	for (; m_cnt != 0; cp = ncp, m_cnt--) {
 		/*
 		 * Determine the type and length of this media block.
+		 * The 21143 is spec'd to always use extended format blocks,
+		 * but some cards don't set the bit to indicate this.
+		 * Hopefully there are no cards which really don't use
+		 * extended format blocks.
 		 */
-		if ((*cp & 0x80) == 0) {
+		if ((*cp & 0x80) == 0 && sc->sc_chip != TULIP_CHIP_21143) {
 			length = 4;
 			type = TULIP_ROM_MB_21140_GPR;
 		} else {
@@ -4798,18 +4796,18 @@ tlp_2114x_isv_tmsw_init(sc)
 			 * it and issue the selection sequence.
 			 */
 
-			ncp = &sc->sc_srom[tm->tm_reset_offset];
-			for (i = 0; i < tm->tm_reset_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_reset_offset];
+			for (i = 0; i < tm->tm_reset_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
-			ncp = &sc->sc_srom[tm->tm_gp_offset];
-			for (i = 0; i < tm->tm_gp_length; i++, ncp += 2) {
+			cp = &sc->sc_srom[tm->tm_gp_offset];
+			for (i = 0; i < tm->tm_gp_length; i++, cp += 2) {
 				delay(10);
 				TULIP_WRITE(sc, CSR_SIAGEN,
-				    TULIP_ROM_GETW(ncp, 0) << 16);
+				    TULIP_ROM_GETW(cp, 0) << 16);
 			}
 
 			/* If there were no sequences, just lower the pins. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gentbi.c,v 1.2.4.4 2001/11/14 19:15:02 nathanw Exp $	*/
+/*	$NetBSD: gentbi.c,v 1.2.4.5 2002/04/01 07:46:08 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.2.4.4 2001/11/14 19:15:02 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gentbi.c,v 1.2.4.5 2002/04/01 07:46:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ gentbiattach(struct device *parent, struct device *self, void *aux)
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_funcs = &gentbi_funcs;
 	sc->mii_pdata = mii;
-	sc->mii_flags = mii->mii_flags;
+	sc->mii_flags = ma->mii_flags;
 	sc->mii_anegticks = 5;
 
 	PHY_RESET(sc);

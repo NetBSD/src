@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.79.2.4 2002/02/28 04:14:36 nathanw Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.79.2.5 2002/04/01 07:47:42 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.4 2002/02/28 04:14:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.79.2.5 2002/04/01 07:47:42 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -925,7 +925,7 @@ usbd_start_next(usbd_pipe_handle pipe)
 usbd_status
 usbd_do_request(usbd_device_handle dev, usb_device_request_t *req, void *data)
 {
-	return (usbd_do_request_flags(dev, req, data, NULL, 0,
+	return (usbd_do_request_flags(dev, req, data, 0, 0,
 				      USBD_DEFAULT_TIMEOUT));
 }
 

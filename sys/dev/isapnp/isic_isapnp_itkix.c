@@ -1,4 +1,4 @@
-/*	$NetBSD: isic_isapnp_itkix.c,v 1.1.4.2 2002/02/28 04:13:50 nathanw Exp $	*/
+/*	$NetBSD: isic_isapnp_itkix.c,v 1.1.4.3 2002/04/01 07:46:01 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2002 Martin Husemann <martin@duskware.de>
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.1.4.2 2002/02/28 04:13:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.1.4.3 2002/04/01 07:46:01 nathanw Exp $");
 
 #include "opt_isicpnp.h"
 
@@ -45,6 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.1.4.2 2002/02/28 04:13:50 na
 
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_global.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 
 #include <dev/ic/isic_l1.h>
 
@@ -55,12 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isapnp_itkix.c,v 1.1.4.2 2002/02/28 04:13:50 na
 #define ISICISA_ITKIX1
 #include <dev/isa/isic_isa_itk_ix1.c>
 #else
-extern int isic_attach_itkix1(struct l1_softc *sc);
+extern int isic_attach_itkix1(struct isic_softc *sc);
 #endif
 
-void isic_attach_isapnp_itkix1(struct l1_softc *sc);
+void isic_attach_isapnp_itkix1(struct isic_softc *sc);
 
-void isic_attach_isapnp_itkix1(struct l1_softc *sc)
+void isic_attach_isapnp_itkix1(struct isic_softc *sc)
 {
 	isic_attach_itkix1(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.62.2.6 2002/02/28 23:58:00 nathanw Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.62.2.7 2002/04/01 07:44:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.6 2002/02/28 23:58:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.62.2.7 2002/04/01 07:44:10 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -111,6 +111,12 @@ int linux_read_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
     register_t *));
 int linux_write_ldt __P((struct lwp *, struct linux_sys_modify_ldt_args *,
     register_t *));
+#endif
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a) uprintf a
+#else
+#define DPRINTF(a)
 #endif
 
 static struct biosdisk_info *fd2biosinfo __P((struct proc *, struct file *));
@@ -361,13 +367,14 @@ linux_read_ldt(l, uap, retval)
 	caddr_t sg;
 	char *parms;
 
-	sg = stackgap_init(p->p_emul);
+	DPRINTF(("linux_read_ldt!"));
+	sg = stackgap_init(p, 0);
 
 	gl.start = 0;
 	gl.desc = SCARG(uap, ptr);
 	gl.num = SCARG(uap, bytecount) / sizeof(union descriptor);
 
-	parms = stackgap_alloc(&sg, sizeof(gl));
+	parms = stackgap_alloc(p, &sg, sizeof(gl));
 
 	if ((error = copyout(&gl, parms, sizeof(gl))) != 0)
 		return (error);
@@ -388,6 +395,7 @@ struct linux_ldt_info {
 	u_int read_exec_only:1;
 	u_int limit_in_pages:1;
 	u_int seg_not_present:1;
+	u_int useable:1;
 };
 
 int
@@ -407,15 +415,27 @@ linux_write_ldt(l, uap, retval)
 	int error;
 	caddr_t sg;
 	char *parms;
+	int oldmode = (int)retval[0];
 
+	DPRINTF(("linux_write_ldt %d\n", oldmode));
 	if (SCARG(uap, bytecount) != sizeof(ldt_info))
 		return (EINVAL);
 	if ((error = copyin(SCARG(uap, ptr), &ldt_info, sizeof(ldt_info))) != 0)
 		return error;
-	if (ldt_info.contents == 3)
+	if (ldt_info.entry_number >= 8192)
 		return (EINVAL);
+	if (ldt_info.contents == 3) {
+		if (oldmode)
+			return (EINVAL);
+		if (ldt_info.seg_not_present)
+			return (EINVAL);
+	}
 
-	if (ldt_info.base_addr == 0 && ldt_info.limit == 0) {
+	if (ldt_info.base_addr == 0 && ldt_info.limit == 0 &&
+	    (oldmode || (ldt_info.contents == 0 &&
+	    ldt_info.read_exec_only == 1 && ldt_info.seg_32bit == 0 &&
+	    ldt_info.limit_in_pages == 0 && ldt_info.seg_not_present == 1 &&
+	    ldt_info.useable == 0))) {
 		/* this means you should zero the ldt */
 		(void)memset(&sd, 0, sizeof(sd));
 	} else {
@@ -429,18 +449,18 @@ linux_write_ldt(l, uap, retval)
 		sd.sd_p = !ldt_info.seg_not_present;
 		sd.sd_def32 = ldt_info.seg_32bit;
 		sd.sd_gran = ldt_info.limit_in_pages;
+		if (!oldmode)
+			sd.sd_xx = ldt_info.useable;
 	}
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	sl.start = ldt_info.entry_number;
-	sl.desc = stackgap_alloc(&sg, sizeof(sd));
+	sl.desc = stackgap_alloc(p, &sg, sizeof(sd));
 	sl.num = 1;
 
-#if 0
-	printf("linux_write_ldt: idx=%d, base=%x, limit=%x\n",
-	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit);
-#endif
+	DPRINTF(("linux_write_ldt: idx=%d, base=0x%lx, limit=0x%x\n",
+	    ldt_info.entry_number, ldt_info.base_addr, ldt_info.limit));
 
-	parms = stackgap_alloc(&sg, sizeof(sl));
+	parms = stackgap_alloc(p, &sg, sizeof(sl));
 
 	if ((error = copyout(&sd, sl.desc, sizeof(sd))) != 0)
 		return (error);
@@ -471,10 +491,19 @@ linux_sys_modify_ldt(l, v, retval)
 	switch (SCARG(uap, func)) {
 #ifdef USER_LDT
 	case 0:
-		return (linux_read_ldt(l, uap, retval));
-
+		return linux_read_ldt(l, uap, retval);
 	case 1:
-		return (linux_write_ldt(l, uap, retval));
+		retval[0] = 1;
+		return linux_write_ldt(l, uap, retval);
+	case 2:
+#ifdef notyet
+		return (linux_read_default_ldt(l, uap, retval);
+#else
+		return (ENOSYS);
+#endif
+	case 0x11:
+		retval[0] = 0;
+		return linux_write_ldt(l, uap, retval);
 #endif /* USER_LDT */
 
 	default:
@@ -725,8 +754,8 @@ linux_machdepioctl(p, v, retval)
 		lvt.relsig = linux_to_native_sig[lvt.relsig];
 		lvt.acqsig = linux_to_native_sig[lvt.acqsig];
 		lvt.frsig = linux_to_native_sig[lvt.frsig];
-		sg = stackgap_init(p->p_emul);
-		bvtp = stackgap_alloc(&sg, sizeof (struct vt_mode));
+		sg = stackgap_init(p, 0);
+		bvtp = stackgap_alloc(p, &sg, sizeof (struct vt_mode));
 		if ((error = copyout(&lvt, bvtp, sizeof (struct vt_mode))))
 			return error;
 		SCARG(&bia, data) = bvtp;
@@ -836,8 +865,8 @@ linux_machdepioctl(p, v, retval)
 		}
 
 		if (error == ENOTTY)
-			printf("linux_machdepioctl: invalid ioctl %08lx\n",
-			    com);
+			DPRINTF(("linux_machdepioctl: invalid ioctl %08lx\n",
+			    com));
 		return error;
 	}
 	SCARG(&bia, com) = com;

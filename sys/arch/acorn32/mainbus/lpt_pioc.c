@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pioc.c,v 1.1.4.3 2002/02/28 04:05:56 nathanw Exp $	*/
+/*	$NetBSD: lpt_pioc.c,v 1.1.4.4 2002/04/01 07:38:45 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -36,7 +36,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: lpt_pioc.c,v 1.1.4.3 2002/02/28 04:05:56 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pioc.c,v 1.1.4.4 2002/04/01 07:38:45 nathanw Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>

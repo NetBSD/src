@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.2.2.3 2001/11/14 19:13:14 nathanw Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.2.2.4 2002/04/01 07:44:31 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.3 2001/11/14 19:13:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.2.2.4 2002/04/01 07:44:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ linux_sys_uselib(l, v, retval)
 	int i, magic, error;
 	size_t rem;
 
-	sg = stackgap_init(p->p_emul);
+	sg = stackgap_init(p, 0);
 	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);

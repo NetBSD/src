@@ -26,7 +26,7 @@
  *	i4b_itk_ix1.c - ITK ix1 micro passive card driver for isdn4bsd
  *	--------------------------------------------------------------
  *
- *	$Id: isic_isa_itk_ix1.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $
+ *	$Id: isic_isa_itk_ix1.c,v 1.2.2.4 2002/04/01 07:45:55 nathanw Exp $
  *
  *      last edit-date: [Fri Jan  5 12:31:50 2001]
  *
@@ -65,7 +65,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.2.2.3 2001/11/14 19:14:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.2.2.4 2002/04/01 07:45:55 nathanw Exp $");
 
 #include "opt_isicisa.h"
 
@@ -100,8 +100,11 @@ __KERNEL_RCSID(0, "$NetBSD: isic_isa_itk_ix1.c,v 1.2.2.3 2001/11/14 19:14:50 nat
 #include <machine/i4b_debug.h>
 #include <machine/i4b_ioctl.h>
 #else
+#include <netisdn/i4b_global.h>
 #include <netisdn/i4b_debug.h>
 #include <netisdn/i4b_ioctl.h>
+#include <netisdn/i4b_l2.h>
+#include <netisdn/i4b_l1l2.h>
 #endif
 
 #include <dev/ic/isic_l1.h>
@@ -134,10 +137,10 @@ static void itkix1_write_reg(u_char *base, u_int offset, u_int v);
 static u_char itkix1_read_reg(u_char *base, u_int offset);
 #else
 /* NetBSD/OpenBSD version */
-static void itkix1_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size);
-static void itkix1_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size);
-static void itkix1_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data);
-static u_int8_t itkix1_read_reg(struct l1_softc *sc, int what, bus_size_t offs);
+static void itkix1_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size);
+static void itkix1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size);
+static void itkix1_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data);
+static u_int8_t itkix1_read_reg(struct isic_softc *sc, int what, bus_size_t offs);
 #endif
 
 /*
@@ -235,7 +238,7 @@ isic_probe_itkix1(struct isic_attach_args *ia)
 int
 isic_attach_itkix1(struct isa_device *dev)
 {
-	struct l1_softc *sc = &l1_sc[dev->id_unit];
+	struct isic_softc *sc = &l1_sc[dev->id_unit];
 	u_int8_t hv1, hv2;
 
 	sc->sc_irq = dev->id_irq;
@@ -289,7 +292,7 @@ isic_attach_itkix1(struct isa_device *dev)
 
 #else
 
-int isic_attach_itkix1(struct l1_softc *sc)
+int isic_attach_itkix1(struct isic_softc *sc)
 {
 	u_int8_t hv1, hv2;
 
@@ -354,7 +357,7 @@ itkix1_read_fifo(void *buf, const void *base, size_t len)
 }
 #else
 static void
-itkix1_read_fifo(struct l1_softc *sc, int what, void *buf, size_t size)
+itkix1_read_fifo(struct isic_softc *sc, int what, void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -396,7 +399,7 @@ itkix1_write_fifo(void *base, const void *buf, size_t len)
 	}
 }
 #else
-static void itkix1_write_fifo(struct l1_softc *sc, int what, const void *buf, size_t size)
+static void itkix1_write_fifo(struct isic_softc *sc, int what, const void *buf, size_t size)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -438,7 +441,7 @@ itkix1_write_reg(u_char *base, u_int offset, u_int v)
 	}
 }
 #else
-static void itkix1_write_reg(struct l1_softc *sc, int what, bus_size_t offs, u_int8_t data)
+static void itkix1_write_reg(struct isic_softc *sc, int what, bus_size_t offs, u_int8_t data)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;
@@ -477,7 +480,7 @@ itkix1_read_reg(u_char *base, u_int offset)
 	}
 }
 #else
-static u_int8_t itkix1_read_reg(struct l1_softc *sc, int what, bus_size_t offs)
+static u_int8_t itkix1_read_reg(struct isic_softc *sc, int what, bus_size_t offs)
 {
 	bus_space_tag_t t = sc->sc_maps[0].t;
 	bus_space_handle_t h = sc->sc_maps[0].h;

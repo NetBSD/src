@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.149.4.5 2002/02/28 04:09:30 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.149.4.6 2002/04/01 07:39:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,9 @@
  *
  *	@(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.149.4.6 2002/04/01 07:39:57 nathanw Exp $");                                                  
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -104,11 +107,11 @@
 
 #include "opt_useleds.h"
 
-#include <arch/hp300/dev/hilreg.h>
-#include <arch/hp300/dev/hilioctl.h>
-#include <arch/hp300/dev/hilvar.h>
+#include <hp300/dev/hilreg.h>
+#include <hp300/dev/hilioctl.h>
+#include <hp300/dev/hilvar.h>
 #ifdef USELEDS
-#include <arch/hp300/hp300/leds.h>
+#include <hp300/hp300/leds.h>
 #endif
 
 /* the following is used externally (sysctl_hw) */
@@ -445,7 +448,7 @@ setregs(l, pack, stack)
 	frame->f_regs[D7] = 0;
 	frame->f_regs[A0] = 0;
 	frame->f_regs[A1] = 0;
-	frame->f_regs[A2] = (int)PS_STRINGS;
+	frame->f_regs[A2] = (int)p->p_psstr;
 	frame->f_regs[A3] = 0;
 	frame->f_regs[A4] = 0;
 	frame->f_regs[A5] = 0;
@@ -859,7 +862,7 @@ cpu_dump(dump, blknop)
 /*
  * These variables are needed by /sbin/savecore
  */
-u_long	dumpmag = 0x8fca0101;	/* magic number */
+u_int32_t dumpmag = 0x8fca0101;	/* magic number */
 int	dumpsize = 0;		/* pages */
 long	dumplo = 0;		/* blocks */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.9.4.4 2002/02/28 04:14:39 nathanw Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.9.4.5 2002/04/01 07:47:46 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.4.4 2002/02/28 04:14:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.9.4.5 2002/04/01 07:47:46 nathanw Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -102,9 +102,9 @@ static void wsmux_do_open(struct wsmux_softc *, struct wseventvar *);
 
 static void wsmux_do_close(struct wsmux_softc *);
 #if NWSDISPLAY > 0
-static int wsmux_set_display(struct device *, struct wsevsrc *);
+static int wsmux_evsrc_set_display(struct device *, struct wsevsrc *);
 #else
-#define wsmux_set_display NULL
+#define wsmux_evsrc_set_display NULL
 #endif
 
 static int wsmux_do_displayioctl(struct device *dev, u_long cmd,
@@ -123,7 +123,7 @@ cdev_decl(wsmux);
 struct wssrcops wsmux_srcops = {
 	WSMUX_MUX,
 	wsmux_mux_open, wsmux_mux_close, wsmux_do_ioctl, wsmux_do_displayioctl,
-	wsmux_set_display
+	wsmux_evsrc_set_display
 };
 
 /* From upper level */
@@ -732,9 +732,9 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 
 	/* 
 	 * Return 0 if any of the ioctl() succeeds, otherwise the last error.
-	 * Return -1 if no mux component accepts the ioctl.
+	 * Return EPASSTHROUGH if no mux component accepts the ioctl.
 	 */
-	error = -1;
+	error = EPASSTHROUGH;
 	ok = 0;
 	CIRCLEQ_FOREACH(me, &sc->sc_cld, me_next) {
 		DPRINTF(("wsmux_displayioctl: me=%p\n", me));
@@ -763,15 +763,11 @@ wsmux_do_displayioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
  * Set display of a mux via the parent mux.
  */
 int
-wsmux_set_display(struct device *dv, struct wsevsrc *ame)
+wsmux_evsrc_set_display(struct device *dv, struct wsevsrc *ame)
 {
 	struct wsmux_softc *muxsc = (struct wsmux_softc *)ame;
 	struct wsmux_softc *sc = (struct wsmux_softc *)dv;
-	struct wsmux_softc *nsc = muxsc ? sc : NULL;
 	struct device *displaydv = muxsc ? muxsc->sc_base.me_dispdv : NULL;
-	struct device *odisplaydv;
-	struct wsevsrc *me;
-	int error, ok;
 
 	DPRINTF(("wsmux_set_display: %s: displaydv=%p\n",
 		 sc->sc_base.me_dv.dv_xname, displaydv));
@@ -783,6 +779,17 @@ wsmux_set_display(struct device *dv, struct wsevsrc *ame)
 		if (sc->sc_base.me_dispdv == NULL)
 			return (ENXIO);
 	}
+
+	return wsmux_set_display(sc, displaydv);
+}
+
+int
+wsmux_set_display(struct wsmux_softc *sc, struct device *displaydv)
+{
+	struct device *odisplaydv;
+	struct wsevsrc *me;
+	struct wsmux_softc *nsc = displaydv ? sc : NULL;
+	int error, ok;
 
 	odisplaydv = sc->sc_base.me_dispdv;
 	sc->sc_base.me_dispdv = displaydv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.1.8.3 2002/02/28 04:11:26 nathanw Exp $	*/
+/*	$NetBSD: bat.h,v 1.1.8.4 2002/04/01 07:42:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ struct bat {
 #define	BAT_W		0x00000040	/* 1 = write-through, 0 = write-back */
 #define	BAT_I		0x00000020	/* cache inhibit */
 #define	BAT_M		0x00000010	/* memory coherency enable */
-#define	BAT_G		0x00000008	/* guarded region */
+#define	BAT_G		0x00000008	/* guarded region (not on 601) */
 
 #define	BAT_PP      0x00000003	/* PP mask */
 #define	BAT_PP_NONE	0x00000000	/* no access permission */
@@ -171,8 +171,14 @@ struct bat {
 #define	BATL601(pa, size, v)						\
 	(((pa) & BAT601_PBN) | (v) | (size))
 
+#define	BAT601_VA_MATCH_P(batu, batl, va)				\
+	(((~(((batl)&BAT601_BSM)<<17))&(va)&BAT601_BLPI)==((batu)&BAT601_BLPI))
+
+#define	BAT601_VALID_P(batl) \
+	((batl) & BAT601_V)
+
 #ifdef	_KERNEL
-extern struct bat battable[16];
+extern struct bat battable[];
 #endif
 
 #endif	/* _MPC6XX_BAT_H_ */

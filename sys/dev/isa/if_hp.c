@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hp.c,v 1.30.6.2 2001/11/14 19:14:48 nathanw Exp $	*/
+/*	$NetBSD: if_hp.c,v 1.30.6.3 2002/04/01 07:45:53 nathanw Exp $	*/
 
 /* XXX THIS DRIVER IS BROKEN.  IT WILL NOT EVEN COMPILE. */
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.30.6.2 2001/11/14 19:14:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hp.c,v 1.30.6.3 2002/04/01 07:45:53 nathanw Exp $");
 
 #include "hp.h"
 #if NHP > 0
@@ -425,6 +425,7 @@ hpattach(dvp)
 	ifp->if_ioctl = hpioctl;
 	ifp->if_reset = hpreset;
 	ifp->if_watchdog = 0;
+	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
 
 #if NBPFILTER > 0
@@ -545,7 +546,7 @@ hpstart(ifp)
 	if ((ns->ns_if.if_flags & IFF_RUNNING) == 0)
 		return;
 
-	IF_DEQUEUE(&ns->ns_if.if_snd, m);
+	IFQ_DEQUEUE(&ns->ns_if.if_snd, m);
 
 	if (m == 0)
 		return;
