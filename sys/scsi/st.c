@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *      $Id: st.c,v 1.16.2.5 1993/11/25 10:17:40 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.6 1993/11/29 03:31:49 mycroft Exp $
  */
 
 /*
@@ -206,12 +206,12 @@ int	st_interpret_sense();
 
 struct scsi_device st_switch =
 {
-    st_interpret_sense,		/* check errors with us first */
-    ststart,			/* we have a queue, and this is how we service it */
-    NULL,
-    NULL,			/* use the default 'done' routine */
-    "st",
-    0
+	st_interpret_sense,
+	ststart,
+	NULL,
+	NULL,
+	"st",
+	0
 };
 
 #define ST_INITIALIZED	0x01
@@ -242,7 +242,6 @@ struct scsi_device st_switch =
  * The routine called by the low level scsi routine when it discovers
  * A device suitable for this driver
  */
-
 void 
 stattach(parent, self, aux)
 	struct device *parent, *self;
@@ -287,6 +286,7 @@ stattach(parent, self, aux)
 			printf("drive empty\n");
 		}
 	}
+
 	/*
 	 * Set up the buf queue for this device
 	 */
@@ -431,26 +431,18 @@ stopen(dev, flags)
 	mode = STMODE(dev);
 	dsty = STDSTY(dev);
 
-	/*
-	 * Check the unit is legal
-	 */
 	if (unit >= stcd.cd_ndevs)
 		return ENXIO;
 	st = stcd.cd_devs[unit];
-	/*
-	 * Make sure the device has been initialised
-	 */
 	if (!st || !(st->flags & ST_INITIALIZED))
 		return ENXIO;
 
 	sc_link = st->sc_link;
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n",
 		 dev, unit, NST));
-	/*
-	 * Only allow one at a time
-	 */
+
 	if (st->flags & ST_OPEN)
-		return ENXIO;
+		return EBUSY;
 
 	/*
 	 * Throw out a dummy instruction to catch 'Unit attention
@@ -477,6 +469,7 @@ stopen(dev, flags)
 		st_unmount(st, NOEJECT);
 		return error;
 	}
+
 	/*
 	 * if it's a different mode, or if the media has been
 	 * invalidated, unmount the tape from the previous
@@ -486,6 +479,7 @@ stopen(dev, flags)
 	    || (!(sc_link->flags & SDEV_MEDIA_LOADED))) {
 		st_unmount(st, NOEJECT);
 	}
+
 	/*
 	 * If we are not mounted, then we should start a new 
 	 * mount session.
@@ -494,6 +488,7 @@ stopen(dev, flags)
 		st_mount_tape(dev, flags);
 		st->last_dsty = dsty;
 	}
+
 	/*
 	 * Make sure that a tape opened in write-only mode will have
 	 * file marks written on it when closed, even if not written to.
@@ -723,7 +718,7 @@ st_decide_mode(st, first_read)
 		st->flags |= ST_FIXEDBLOCKS;
 		st->blksiz = st->blkmin;
 		SC_DEBUG(sc_link, SDEV_DB3,
-		    ("blkmin == blkmax of %d\n", st->blkmin));
+			("blkmin == blkmax of %d\n", st->blkmin));
 		goto done;
 	}
 	/*
@@ -769,7 +764,7 @@ st_decide_mode(st, first_read)
 			st->flags |= ST_FIXEDBLOCKS;
 		st->blksiz = st->media_blksiz;
 		SC_DEBUG(sc_link, SDEV_DB3,
-		    ("Used media_blksiz of %d\n", st->media_blksiz));
+			("Used media_blksiz of %d\n", st->media_blksiz));
 		goto done;
 	}
 	/*
@@ -838,7 +833,7 @@ ststrategy(bp)
 	unit = STUNIT(bp->b_dev);
 	st = stcd.cd_devs[unit];
 	SC_DEBUG(st->sc_link, SDEV_DB1,
-	    (" strategy: %d bytes @ blk%d\n", bp->b_bcount, bp->b_blkno));
+		(" strategy: %d bytes @ blk%d\n", bp->b_bcount, bp->b_blkno));
 	/*
 	 * If it's a null transfer, return immediatly
 	 */
@@ -851,7 +846,7 @@ ststrategy(bp)
 	if (st->flags & ST_FIXEDBLOCKS) {
 		if (bp->b_bcount % st->blksiz) {
 			printf("%s: bad request, must be multiple of %d\n",
-			    st->sc_dev.dv_xname, st->blksiz);
+				st->sc_dev.dv_xname, st->blksiz);
 			bp->b_error = EIO;
 			goto bad;
 		}
@@ -861,7 +856,7 @@ ststrategy(bp)
 	 */
 	else if (bp->b_bcount < st->blkmin || bp->b_bcount > st->blkmax) {
 		printf("%s: bad request, must be between %d and %d\n",
-		    st->sc_dev.dv_xname, st->blkmin, st->blkmax);
+			st->sc_dev.dv_xname, st->blkmin, st->blkmax);
 		bp->b_error = EIO;
 		goto bad;
 	}
@@ -1096,7 +1091,7 @@ stioctl(dev, cmd, arg, flag)
 			error = st_chkeod(st, FALSE, &nmarks, flags);
 			if (!error)
 				error = st_space(st, number - nmarks,
-				    SP_FILEMARKS, flags);
+					SP_FILEMARKS, flags);
 			break;
 		case MTBSR:	/* backward space record */
 			number = -number;
@@ -1222,7 +1217,7 @@ st_read(st, buf, size, flags)
 	if (st->flags & ST_FIXEDBLOCKS) {
 		scsi_cmd.byte2 |= SRWT_FIXED;
 		lto3b(size / (st->blksiz ? st->blksiz : DEF_FIXED_BSIZE),
-		    scsi_cmd.len);
+			scsi_cmd.len);
 	} else {
 		lto3b(size, scsi_cmd.len);
 	}
@@ -1275,7 +1270,7 @@ st_rd_blk_lim(st, flags)
 	st->blkmax = _3btol(&scsi_blkl.max_length_2);
 
 	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("(%d <= blksiz <= %d)\n", st->blkmin, st->blkmax));
+		("(%d <= blksiz <= %d)\n", st->blkmin, st->blkmax));
 	return 0;
 }
 
@@ -1354,17 +1349,17 @@ st_mode_sense(st, flags)
 		st->flags |= ST_READONLY;
 	}
 	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("density code 0x%x, %d-byte blocks, write-%s, ",
+		("density code 0x%x, %d-byte blocks, write-%s, ",
 		st->media_density, st->media_blksiz,
 		st->flags & ST_READONLY ? "protected" : "enabled"));
 	SC_DEBUG(sc_link, SDEV_DB3,
-	    ("%sbuffered\n",
+		("%sbuffered\n",
 		((struct scsi_sense *) scsi_sense_ptr)->header.dev_spec
 		& SMH_DSP_BUFF_MODE ? "" : "un"));
 	if (st->quirks & ST_Q_NEEDS_PAGE_0) {
 		bcopy(((struct scsi_sense_page_0 *) scsi_sense_ptr)->sense_data,
-		    st->sense_data,
-		    sizeof(((struct scsi_sense_page_0 *) scsi_sense_ptr)->sense_data));
+			st->sense_data,
+			sizeof(((struct scsi_sense_page_0 *) scsi_sense_ptr)->sense_data));
 	}
 	sc_link->flags |= SDEV_MEDIA_LOADED;
 	return 0;
@@ -1416,7 +1411,7 @@ st_mode_select(st, flags)
 		lto3b(st->blksiz, ((struct dat *) dat_ptr)->blk_desc.blklen);
 	if (st->quirks & ST_Q_NEEDS_PAGE_0) {
 		bcopy(st->sense_data, ((struct dat_page_0 *) dat_ptr)->sense_data,
-		    sizeof(((struct dat_page_0 *) dat_ptr)->sense_data));
+			sizeof(((struct dat_page_0 *) dat_ptr)->sense_data));
 		/* the Tandberg tapes need the block size to */
 		/* be set on each mode sense/select. */
 	}
@@ -1455,7 +1450,7 @@ st_space(st, number, what, flags)
 					 * right file mark count.
 					 */
 					error = st_space(st, 0, SP_FILEMARKS,
-					    flags);
+						flags);
 					if (error)
 						return error;
 				}
@@ -1680,8 +1675,8 @@ st_interpret_sense(xs)
 			if (sense->error_code & SSD_ERRCODE_VALID &&
 			    !silent)
 				printf("%s: block wrong size"
-				    ", %d blocks residual\n",
-				    st->sc_dev.dv_xname, info);
+					", %d blocks residual\n",
+					st->sc_dev.dv_xname, info);
 
 			/*
 			 * This quirk code helps the drive read
@@ -1723,9 +1718,9 @@ st_interpret_sense(xs)
 				 * the record was bigger than the read
 				 */
 				if (!silent)
-					printf("%s: %d-byte record "
-					    "too big\n", st->sc_dev.dv_xname,
-					    xs->datalen - info);
+					printf("%s: %d-byte record too big\n",
+						st->sc_dev.dv_xname,
+						xs->datalen - info);
 				return EIO;
 			}
 			xs->resid = info;
