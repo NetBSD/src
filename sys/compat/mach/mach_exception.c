@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.3 2004/01/01 22:48:54 manu Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.4 2004/07/27 22:01:56 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.3 2004/01/01 22:48:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.4 2004/07/27 22:01:56 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_darwin.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.3 2004/01/01 22:48:54 manu Exp 
 #include <compat/mach/mach_exception.h>
 #include <compat/mach/mach_message.h>
 #include <compat/mach/mach_services.h>
+#include <compat/mach/mach_sysctl.h>
 
 #include <machine/mach_machdep.h>
 
@@ -155,6 +156,26 @@ mach_exception(exc_l, exc, code)
 	printf("mach_exception: %d.%d, exc %d, code (%d, %d)\n",
 	    exc_l->l_proc->p_pid, exc_l->l_lid, exc, code[0], code[1]);
 #endif
+
+	/*
+	 * It's extremely useful to have the ability of catching 
+	 * the process at the time it dies.
+	 */
+	if (mach_exception_hang) {
+		int s;
+		struct proc *p = exc_l->l_proc;
+		
+		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
+		SCHED_LOCK(s);
+		p->p_pptr->p_nstopchild++; 
+		p->p_stat = SSTOP;
+		exc_l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(exc_l, NULL);
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);	
+	}
+
 	/* 
 	 * No exception if there is no exception port or if it has no receiver
 	 */
