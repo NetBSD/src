@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.3 1996/04/26 06:59:21 leo Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.4 1996/05/15 07:28:51 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -66,7 +66,7 @@ db_check(addr, mask)
 	pte  = kvtopte((vm_offset_t)addr);
 
 	if ((*pte & mask) != PG_V) {
-		db_printf(" address 0x%x not a valid page\n", addr);
+		db_printf(" address 0x%p not a valid page\n", addr);
 		return 0;
 	}
 	return 1;
@@ -118,7 +118,7 @@ db_write_text(dst, ch)
 	pte = kvtopte((vm_offset_t)dst);
 	oldpte = *pte;
 	if ((oldpte & PG_V) == 0) {
-		db_printf(" address 0x%x not a valid page\n", dst);
+		db_printf(" address 0x%p not a valid page\n", dst);
 		return;
 	}
 

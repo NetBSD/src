@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.19 1996/04/18 08:52:14 leo Exp $	*/
+/*	$NetBSD: zs.c,v 1.20 1996/05/15 07:29:08 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman (Atari modifications)
@@ -373,8 +373,8 @@ struct proc	*p;
 		    tp->t_state & TS_CARR_ON)
 			break;
 		tp->t_state |= TS_WOPEN;
-		if(error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0)) {
+		if((error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+		    ttopen, 0)) != 0) {
 			if(!(tp->t_state & TS_ISOPEN)) {
 				zs_modem(cs, 0, DMSET);
 				tp->t_state &= ~TS_WOPEN;
@@ -1099,10 +1099,13 @@ int	unit, wanted, *divisor, *clockmode, *brgenmode, *timeconst;
 {
 	int	bestdiff, bestbps, source;
 
+	bestdiff = bestbps = 0;
 	unit = (unit & 1) << 2;
 	for (source = 0; source < 4; ++source) {
 		long	freq = zs_frequencies[unit + source];
 		int	diff, bps, div, clkm, brgm, tcon;
+
+		bps = div = clkm = brgm = tcon = 0;
 		switch (source) {
 			case 0:	/* BRgen, PCLK */
 				brgm = ZSWR14_BAUD_ENA|ZSWR14_BAUD_FROM_PCLK;

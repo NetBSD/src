@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.13 1996/04/26 06:50:12 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.14 1996/05/15 07:29:03 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -68,7 +68,7 @@
 #undef	DBG_PIO			/* Show the polled-I/O process		*/
 #undef	DBG_INF			/* Show information transfer process	*/
 #define	DBG_NOSTATIC		/* No static functions, all in DDB trace*/
-#define	DBG_PID		25	/* Keep track of driver			*/
+#define	DBG_PID		15	/* Keep track of driver			*/
 #define	REAL_DMA		/* Use DMA if sensible			*/
 #if defined(notdef) && defined(FALCON_SCSI)
 #define	REAL_DMA_POLL	1	/* 1: Poll for end of DMA-transfer	*/
@@ -649,9 +649,6 @@ u_char	mode;
 static void
 fscsi_int()
 {
-	int	itype;
-	int	dma_done;
-
 	if (scsi_falcon_ipending()) {
 		scsi_falcon_idisable();
 		ncr_ctrl_intr(cur_softc);
