@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.20 1995/08/29 22:44:45 phil Exp $ */
+/*	$NetBSD: scn.c,v 1.21 1995/08/30 23:51:40 phil Exp $ */
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -641,6 +641,10 @@ scnintr(int line1)
   u_char   rs_ipcr;
   u_char   ch;
 
+#ifdef CON_BRK_PANIC
+  u_char   nr_brk = 0;
+#endif
+
   while (rs_work) {
 	/* Loop to pick up ALL pending interrupts for device.
 	 */
@@ -668,23 +672,30 @@ scnintr(int line1)
 		}
 		WR_ADR (u_char, rs0->cmd_port, CMD_RESET_BRK);
 		rs_work = TRUE;
+#ifdef CON_BRK_PANIC
 		if (line1 == 1 && (rs0->lstatus & SR_BREAK)) {
-			char c;
-			printf("\r\nDo you wont a dump (y/n)? ");
-			do
-				c = cngetc();
-			while (c != 'y' && c != 'n');
-			printf("%c\r\n", c);
-			if (c == 'y') {
-				panic("Panic Button");
+			if (++nr_brk >= 3) {
+				char c;
+				printf("\r\nDo you want a dump (y/n)? ");
+				do
+					c = cngetc();
+				while (c != 'y' && c != 'n');
+				printf("%c\r\n", c);
+				if (c == 'y') {
+					panic("Panic Button");
+				}
 			}
 		}
+#endif
 	}
 	if (rs_stat & IMR_RX_INT && (tp0 != NULL)) {
 		ch = RD_ADR(u_char, rs0->recv_port);
 		if (tp0->t_state & TS_ISOPEN) 
 			(*linesw[tp0->t_line].l_rint)(ch, tp0);
 		rs_work = TRUE;
+#ifdef CON_BRK_PANIC
+		if (line1 == 1) nr_brk = 0;
+#endif
 	}
 	if ((rs_stat & IMR_TXB_INT)  && (tp1 != NULL)
 	     && (tp1->t_state & TS_BUSY)) {
