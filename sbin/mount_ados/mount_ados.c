@@ -1,4 +1,4 @@
-/* $NetBSD: mount_ados.c,v 1.11 2000/06/14 17:25:26 cgd Exp $ */
+/* $NetBSD: mount_ados.c,v 1.12 2000/10/30 20:56:58 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_ados.c,v 1.11 2000/06/14 17:25:26 cgd Exp $");
+__RCSID("$NetBSD: mount_ados.c,v 1.12 2000/10/30 20:56:58 jdolecek Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -55,20 +55,27 @@ __RCSID("$NetBSD: mount_ados.c,v 1.11 2000/06/14 17:25:26 cgd Exp $");
 #include <adosfs/adosfs.h>
 
 #include "mntopts.h"
+#include <fattr.h>
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
-gid_t	a_gid __P((char *));
-uid_t	a_uid __P((char *));
-mode_t	a_mask __P((char *));
 int	main __P((int, char *[]));
-void	usage __P((void));
+int	mount_ados __P((int argc, char **argv));
+static void	usage __P((void));
+
+#ifndef MOUNT_NOMAIN
+int
+main(int argc, char **argv)
+{
+	return mount_ados(argc, argv);
+}
+#endif
 
 int
-main(argc, argv)
+mount_ados(argc, argv)
 	int argc;
 	char **argv;
 {
@@ -143,65 +150,7 @@ main(argc, argv)
 	exit (0);
 }
 
-gid_t
-a_gid(s)
-	char *s;
-{
-	struct group *gr;
-	char *gname;
-	gid_t gid;
-
-	if ((gr = getgrnam(s)) != NULL)
-		gid = gr->gr_gid;
-	else {
-		for (gname = s; *s && isdigit(*s); ++s);
-		if (!*s)
-			gid = atoi(gname);
-		else
-			errx(1, "unknown group id: %s", gname);
-	}
-	return (gid);
-}
-
-uid_t
-a_uid(s)
-	char *s;
-{
-	struct passwd *pw;
-	char *uname;
-	uid_t uid;
-
-	if ((pw = getpwnam(s)) != NULL)
-		uid = pw->pw_uid;
-	else {
-		for (uname = s; *s && isdigit(*s); ++s);
-		if (!*s)
-			uid = atoi(uname);
-		else
-			errx(1, "unknown user id: %s", uname);
-	}
-	return (uid);
-}
-
-mode_t
-a_mask(s)
-	char *s;
-{
-	int done, rv;
-	char *ep;
-
-	done = 0;
-	rv = -1;
-	if (*s >= '0' && *s <= '7') {
-		done = 1;
-		rv = strtol(optarg, &ep, 8);
-	}
-	if (!done || rv < 0 || *ep)
-		errx(1, "invalid file mode: %s", s);
-	return (rv);
-}
-
-void
+static void
 usage()
 {
 

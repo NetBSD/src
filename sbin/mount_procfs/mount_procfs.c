@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_procfs.c,v 1.10 1999/06/25 19:28:37 perseant Exp $	*/
+/*	$NetBSD: mount_procfs.c,v 1.11 2000/10/30 20:57:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992, 1993 Jan-Simon Pendry
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.4 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_procfs.c,v 1.10 1999/06/25 19:28:37 perseant Exp $");
+__RCSID("$NetBSD: mount_procfs.c,v 1.11 2000/10/30 20:57:01 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,16 +62,27 @@ __RCSID("$NetBSD: mount_procfs.c,v 1.10 1999/06/25 19:28:37 perseant Exp $");
 
 #include "mntopts.h"
 
-const struct mntopt mopts[] = {
+static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
 	{ NULL }
 };
 
 int	main __P((int, char *[]));
-void	usage __P((void));
+int	mount_procfs __P((int argc, char **argv));
+static void	usage __P((void));
 
+#ifndef MOUNT_NOMAIN
 int
 main(argc, argv)
+	int argc;
+	char **argv;
+{
+	return mount_procfs(argc, argv);
+}
+#endif
+
+int
+mount_procfs(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -98,7 +109,7 @@ main(argc, argv)
 	exit(0);
 }
 
-void
+static void
 usage()
 {
 	(void)fprintf(stderr,

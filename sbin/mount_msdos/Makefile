@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.14 2000/08/14 16:38:40 deberg Exp $
+#	$NetBSD: Makefile,v 1.15 2000/10/30 20:57:00 jdolecek Exp $
 
 PROG=	mount_msdos
-SRCS=	mount_msdos.c getmntopts.c
+SRCS=	mount_msdos.c getmntopts.c fattr.c
 MAN=	mount_msdos.8
 
 MOUNT=	${.CURDIR}/../mount
