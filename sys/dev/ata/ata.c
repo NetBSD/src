@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.27 2004/01/03 23:59:58 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.27.2.1 2004/04/18 02:23:45 jmc Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.27 2004/01/03 23:59:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.27.2.1 2004/04/18 02:23:45 jmc Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -165,7 +165,7 @@ atabus_thread(void *arg)
 		splx(s);
 	}
 	chp->ch_thread = NULL;
-	wakeup(&chp->ch_flags);
+	wakeup((void *)&chp->ch_flags);
 	kthread_exit(0);
 }
 
@@ -307,7 +307,7 @@ atabus_detach(struct device *self, int flags)
 	chp->ch_flags |= WDCF_SHUTDOWN;
 	wakeup(&chp->ch_thread);
 	while (chp->ch_thread != NULL)
-		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
+		(void) tsleep((void *)&chp->ch_flags, PRIBIO, "atadown", 0);
 	
 	/*
 	 * Detach atapibus and its children.
