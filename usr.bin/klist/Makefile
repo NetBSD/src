@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2001/12/12 12:24:28 lukem Exp $
+# $NetBSD: Makefile,v 1.10 2001/12/31 19:26:59 thorpej Exp $
 
 NOLINT= # defined
 
@@ -18,8 +18,6 @@ CPPFLAGS+= -I.					\
 	-I${.CURDIR}/../../include/heimdal	\
 	-I${DESTDIR}/usr/include/kerberosIV	\
 	-I${DESTDIR}/usr/include/krb5		\
-	-I${DESTDIR}/usr/include		\
-	-I${DESTDIR}/usr/include/openssl	\
 	-DHAVE_CONFIG_H
 
 VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
