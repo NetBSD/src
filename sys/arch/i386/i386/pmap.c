@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.165 2003/12/10 13:59:48 drochner Exp $	*/
+/*	$NetBSD: pmap.c,v 1.166 2003/12/10 18:13:32 drochner Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.165 2003/12/10 13:59:48 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.166 2003/12/10 18:13:32 drochner Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -777,6 +777,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODEBIG_SEL, SEL_UPL);
 	} else {
 		pcb->pcb_cs = tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
+		return (0);
 	}
 	return (1);
 }
