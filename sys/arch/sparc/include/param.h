@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.46 2001/03/01 15:59:04 pk Exp $ */
+/*	$NetBSD: param.h,v 1.47 2001/05/10 11:01:08 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -155,33 +155,21 @@ extern int nbpg, pgofset, pgshift;
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE / DEV_BSIZE))
 
 /*
- * dvmamap manages a range of DVMA addresses intended to create double
- * mappings of physical memory. In a way, `dvmamap' is a submap of the
- * VM map `phys_map'. The difference is the use of the `resource map'
- * routines to manage page allocation, allowing DVMA addresses to be
- * allocated and freed from within interrupt routines.
- *
- * Note that `phys_map' can still be used to allocate memory-backed pages
- * in DVMA space.
- */
-#if defined(_KERNEL) || defined(_STANDALONE)
-#ifndef _LOCORE
-
-extern void	delay __P((unsigned int));
-#define	DELAY(n)	delay(n)
-
-extern int cputyp;
-
-#endif /* _LOCORE */
-#endif /* _KERNEL */
-
-/*
  * Values for the cputyp variable.
  */
 #define CPU_SUN4	0
 #define CPU_SUN4C	1
 #define CPU_SUN4M	2
 #define CPU_SUN4U	3
+
+#if defined(_KERNEL) || defined(_STANDALONE)
+#ifndef _LOCORE
+
+extern int cputyp;
+
+extern void	delay __P((unsigned int));
+#define	DELAY(n)	delay(n)
+#endif /* _LOCORE */
 
 /*
  * Shorthand CPU-type macros. Enumerate all eight cases.
@@ -271,3 +259,4 @@ extern int cputyp;
 #	define PGOFSET		pgofset
 #	define PGSHIFT		pgshift
 #endif
+#endif /* _KERNEL || _STANDALONE */
