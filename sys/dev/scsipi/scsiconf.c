@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.168 2001/11/19 00:22:47 soren Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.169 2001/11/19 16:54:20 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.168 2001/11/19 00:22:47 soren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.169 2001/11/19 16:54:20 soren Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,8 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "M-Sys", "DiskOnKey",           "2.01"}, PQUIRK_NOMODESENSE
 	      | PQUIRK_NODOORLOCK | PQUIRK_ONLYBIG | PQUIRK_NOBIGMODESENSE},
 	{{T_DIRECT, T_REMOV,
-	 "INSITE", "I325VM",             ""},     PQUIRK_NOLUNS},
+	 "INSITE", "I325VM",             ""},
+				PQUIRK_NOLUNS|PQUIRK_NODOORLOCK},
 
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
