@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.30 1999/11/01 22:34:37 mycroft Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.31 1999/11/09 21:38:09 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ typedef	u_int16_t Elf64_Quarter;
 
 #define	ELFDATANONE	0	/* Invalid data encoding */
 #define	ELFDATA2LSB	1	/* 2's complement values, LSB first */
-#define	ELFDATA2MSB	2	/* 2's complement values, MSG first */
+#define	ELFDATA2MSB	2	/* 2's complement values, MSB first */
 
 #define	PF_R		0x4	/* Segment is readable */
 #define	PF_W		0x2	/* Segment is writable */
