@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.10 2002/06/05 15:24:31 bouyer Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.11 2002/06/05 16:27:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.10 2002/06/05 15:24:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.11 2002/06/05 16:27:29 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -1133,8 +1133,6 @@ ste_stats_update(struct ste_softc *sc)
 	ifp->if_ipackets +=
 	    (u_int) bus_space_read_2(st, sh, STE_FramesReceivedOK);
 
-	(void) bus_space_read_2(st, sh, STE_CarrierSenseErrors);
-
 	ifp->if_collisions +=
 	    (u_int) bus_space_read_1(st, sh, STE_LateCollisions) +
 	    (u_int) bus_space_read_1(st, sh, STE_MultipleColFrames) +
@@ -1147,7 +1145,8 @@ ste_stats_update(struct ste_softc *sc)
 
 	ifp->if_oerrors +=
 	    (u_int) bus_space_read_1(st, sh, STE_FramesWExDeferral) +
-	    (u_int) bus_space_read_1(st, sh, STE_FramesXbortXSColls);
+	    (u_int) bus_space_read_1(st, sh, STE_FramesXbortXSColls) +
+	    bus_space_read_1(st, sh, STE_CarrierSenseErrors);
 
 	(void) bus_space_read_1(st, sh, STE_BcstFramesXmtdOk);
 	(void) bus_space_read_1(st, sh, STE_BcstFramesRcvdOk);
@@ -1321,19 +1320,9 @@ ste_init(struct ifnet *ifp)
 	/*
 	 * Initialize the interrupt mask.
 	 */
-# if 0
 	sc->sc_IntEnable = IE_HostError | IE_TxComplete | IE_UpdateStats |
 	    IE_TxDMAComplete | IE_RxDMAComplete;
-#else
-	/*
-	 * On a Dlink DFE580-TX (DL-1002), attempting to transmit packets
-	 * while the link is down cause the chip to create an IE_UpdateStats
-	 * condition which can't be cleared, causing the driver to enter
-	 * an interrupt loop. workaround: mask IE_UpdateStats
-	 */
-	sc->sc_IntEnable = IE_HostError | IE_TxComplete | /*IE_UpdateStats |*/
-	    IE_TxDMAComplete | IE_RxDMAComplete;
-#endif
+
 	bus_space_write_2(st, sh, STE_IntStatus, 0xffff);
 	bus_space_write_2(st, sh, STE_IntEnable, sc->sc_IntEnable);
 
