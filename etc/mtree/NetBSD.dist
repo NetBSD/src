@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.160 2001/06/08 21:13:23 kim Exp $
+#	$NetBSD: NetBSD.dist,v 1.161 2001/06/08 21:16:15 kim Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -1881,11 +1881,6 @@ newsmips
 # ./usr/share/man/cat8/next68k
 next68k
 # ./usr/share/man/cat8/next68k
-..
-
-# ./usr/share/man/cat8/news68k
-news68k
-# ./usr/share/man/cat8/news68k
 ..
 
 # ./usr/share/man/cat8/pc532
