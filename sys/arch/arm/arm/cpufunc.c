@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.36 2002/03/26 19:29:44 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.37 2002/03/27 01:34:47 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -66,10 +66,6 @@
 #ifdef CPU_XSCALE_80321
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
-#endif
-
-#if (defined(CPU_XSCALE_80200) + defined(CPU_XSCALE_80321)) > 1
-#error "Too many XScale core CPUs defined"
 #endif
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
@@ -777,17 +773,11 @@ set_cpufuncs()
 		return 0;
 	}
 #endif	/* CPU_SA110 */
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
-	if (cputype == CPU_ID_XSCALE) {
-#if defined(CPU_XSCALE_80200)
+#ifdef CPU_XSCALE_80200
+	if (cputype == CPU_ID_80200) {
 		int rev = cpufunc_id() & CPU_ID_REVISION_MASK;
-#endif
 
-#if defined(CPU_XSCALE_80200)
 		i80200_icu_init();
-#elif defined(CPU_XSCALE_80321)
-		i80321_icu_init();
-#endif
 
 		/*
 		 * Reset the Performance Monitoring Unit to a
@@ -801,7 +791,6 @@ set_cpufuncs()
 			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
 			       PMNC_CC_IF));
 
-#if defined(CPU_XSCALE_80200)
 #if defined(XSCALE_CCLKCFG)
 		/*
 		 * Crank CCLKCFG to maximum legal value.
@@ -819,12 +808,10 @@ set_cpufuncs()
 		__asm __volatile("mcr p13, 0, %0, c0, c1, 0"
 			:
 			: "r" (BCUCTL_E0|BCUCTL_E1|BCUCTL_EV));
-#endif /* CPU_XSCALE_80200 */
 
 		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
 		cpufuncs = xscale_cpufuncs;
 
-#if defined(CPU_XSCALE_80200)
 		/*
 		 * i80200 errata: Step-A0 and A1 have a bug where
 		 * D$ dirty bits are not cleared on "invalidate by
@@ -834,17 +821,40 @@ set_cpufuncs()
 		 */
 		if (rev == 0 || rev == 1)
 			cpufuncs.cf_dcache_inv_range = xscale_cache_purgeD_rng;
-#endif /* CPU_XSCALE_80200 */
 
 		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
 		get_cachetype_cp15();
 		return 0;
 	}
-#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
+#endif /* CPU_XSCALE_80200 */
+#ifdef CPU_XSCALE_80321
+	if (cputype == CPU_ID_80321) {
+		i80321_icu_init();
+
+		/*
+		 * Reset the Performance Monitoring Unit to a
+		 * pristine state:
+		 *	- CCNT, PMN0, PMN1 reset to 0
+		 *	- overflow indications cleared
+		 *	- all counters disabled
+		 */
+		__asm __volatile("mcr p14, 0, %0, c0, c0, 0"
+			:
+			: "r" (PMNC_P|PMNC_C|PMNC_PMN0_IF|PMNC_PMN1_IF|
+			       PMNC_CC_IF));
+
+		pte_cache_mode = PT_C;	/* Select write-through cacheing. */
+		cpufuncs = xscale_cpufuncs;
+
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
+		get_cachetype_cp15();
+		return 0;
+	}
+#endif /* CPU_XSCALE_80321 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
-/*	panic("No support for this CPU type (%08x) in kernel", cputype);*/
+	panic("No support for this CPU type (%08x) in kernel", cputype);
 	return(ARCHITECTURE_NOT_PRESENT);
 }
 
