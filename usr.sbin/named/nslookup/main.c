@@ -1,7 +1,11 @@
+/*	$NetBSD: main.c,v 1.1 1996/02/02 15:30:13 mrg Exp $	*/
+
 /*
- * Copyright (c) 1985,1989 Regents of the University of California.
- * All rights reserved.
- *
+ * ++Copyright++ 1985, 1989
+ * -
+ * Copyright (c) 1985, 1989
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +16,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,6 +33,26 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #ifndef lint
@@ -38,12 +62,12 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)main.c	5.42 (Berkeley) 3/3/91";*/
-static char rcsid[] = "$Id: main.c,v 1.4 1995/05/22 01:02:36 mycroft Exp $";
+static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
+static char rcsid[] = "$Id: main.c,v 8.2 1995/12/22 10:20:42 vixie Exp ";
 #endif /* not lint */
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *  
  *   main.c --
  *  
@@ -54,7 +78,7 @@ static char rcsid[] = "$Id: main.c,v 1.4 1995/05/22 01:02:36 mycroft Exp $";
  *	U.C. Berkeley Computer Science Div.
  *	CS298-26, Fall 1985
  *  
- *******************************************************************************
+ ******************************************************************************
  */
 
 #include <sys/param.h>
@@ -68,18 +92,11 @@ static char rcsid[] = "$Id: main.c,v 1.4 1995/05/22 01:02:36 mycroft Exp $";
 #include <setjmp.h>
 #include <ctype.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <errno.h>
+#include <limits.h>
 #include "res.h"
 #include "pathnames.h"
-
-/*
- *  Default Internet address of the current host.
- */
-
-#if BSD < 43
-#define LOCALHOST "127.0.0.1"
-#endif
+#include "conf/portability.h"
 
 
 /*
@@ -88,9 +105,16 @@ static char rcsid[] = "$Id: main.c,v 1.4 1995/05/22 01:02:36 mycroft Exp $";
  */
 
 #ifndef ROOT_SERVER
-#define		ROOT_SERVER "ns.nic.ddn.mil."
+#define		ROOT_SERVER "a.root-servers.net."
 #endif
 char		rootServerName[NAME_LEN] = ROOT_SERVER;
+
+
+/*
+ *  Import the state information from the resolver library.
+ */
+
+extern struct __res_state _res;
 
 
 /*
@@ -121,16 +145,22 @@ int		queryClass = C_IN;
  * Stuff for Interrupt (control-C) signal handler.
  */
 
-extern void	IntrHandler();
+extern SIG_FN	IntrHandler();
 FILE		*filePtr;
 jmp_buf		env;
+
+
+/*
+ * Browser command for help and view.
+ */
+char		*pager;
 
 static void CvtAddrToPtr();
 static void ReadRC();
 
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  main --
  *
@@ -138,7 +168,7 @@ static void ReadRC();
  *	of the initial name server. The yylex routine is used to
  *	read and perform commands.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 main(argc, argv)
@@ -150,7 +180,6 @@ main(argc, argv)
     int		result;
     int		i;
     struct hostent	*hp;
-    extern int	h_errno;
 
     /*
      *  Initialize the resolver library routines.
@@ -213,7 +242,7 @@ main(argc, argv)
 	 * default to the server(s) in resolv.conf.
 	 */ 
 
-	if (inet_aton(*++argv, &addr) != 0) {
+	if (inet_aton(*++argv, &addr)) {
 	    _res.nscount = 1;
 	    _res.nsaddr.sin_addr = addr;
 	} else {
@@ -224,17 +253,12 @@ main(argc, argv)
 		herror((char *)NULL);
 		fputc('\n', stderr);
 	    } else {
-#if BSD < 43
-		bcopy(hp->h_addr, (char *)&_res.nsaddr.sin_addr, hp->h_length);
-		_res.nscount = 1;
-#else
 		for (i = 0; i < MAXNS && hp->h_addr_list[i] != NULL; i++) {
 		    bcopy(hp->h_addr_list[i], 
 			    (char *)&_res.nsaddr_list[i].sin_addr, 
 			    hp->h_length);
 		}
 		_res.nscount = i;
-#endif
 	    } 
 	}
     }
@@ -283,7 +307,7 @@ main(argc, argv)
 #endif
     _res.options |= RES_DEBUG;
     _res.retry    = 2;
-#endif DEBUG
+#endif /* DEBUG */
 
     /*
      * If we're in non-interactive mode, look up the wanted host and quit.
@@ -295,6 +319,11 @@ main(argc, argv)
 	LookupHost(wantedHost, 0);
     } else {
 	PrintHostInfo(stdout, "Default Server:", defaultPtr);
+
+	pager = getenv("PAGER");
+	if (pager == NULL) {
+	    pager = _PATH_PAGERCMD;
+	}
 
 	/*
 	 * Setup the environment to allow the interrupt handler to return here.
@@ -329,40 +358,26 @@ LocalServer(defaultPtr)
     HostInfo *defaultPtr;
 {
     char	hostName[NAME_LEN];
-#if BSD < 43
-    int		result;
-#endif
 
-    gethostname(hostName, sizeof(hostName));
+    (void) gethostname(hostName, sizeof(hostName));
 
-#if BSD < 43
-    (void) inet_aton(LOCALHOST, &defaultAddr);
-    result = GetHostInfoByName(&defaultAddr, C_IN, T_A, 
-		hostName, defaultPtr, 1);
-    if (result != SUCCESS) {
-	fprintf(stderr,
-	"*** Can't find initialize address for server %s: %s\n",
-			defaultServer, DecodeError(result));
-	exit(1);
-    }
-#else
     defaultAddr.s_addr = htonl(INADDR_ANY);
-    (void) GetHostInfoByName(&defaultAddr, C_IN, T_A, "0.0.0.0", defaultPtr, 1);
+    (void) GetHostInfoByName(&defaultAddr, C_IN, T_A,
+			     "0.0.0.0", defaultPtr, 1);
     free(defaultPtr->name);
     defaultPtr->name = Calloc(1, sizeof(hostName)+1);
     strcpy(defaultPtr->name, hostName);
-#endif
 }
 
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  Usage --
  *
  *	Lists the proper methods to run the program and exits.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 Usage()
@@ -380,7 +395,7 @@ Usage()
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * IsAddr --
  *
@@ -388,7 +403,7 @@ Usage()
  *	A string with a trailing dot is not an address, even if it looks
  *	like one.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 Boolean
@@ -406,8 +421,7 @@ IsAddr(host, addrPtr)
 	    }
 	    /* If it has a trailing dot, don't treat it as an address. */
 	    if (*--cp != '.') { 
-		if (inet_aton(host, addrPtr) != 0)
-		    return TRUE;
+		return inet_aton(host, addrPtr);
 	    }
     }
     return FALSE;
@@ -415,7 +429,7 @@ IsAddr(host, addrPtr)
 
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  SetDefaultServer --
  *
@@ -435,7 +449,7 @@ IsAddr(host, addrPtr)
  *	Errors		No info about the new server was found or
  *			requests to the current server timed-out.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 int
@@ -526,7 +540,7 @@ SetDefaultServer(string, local)
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * DoLoookup --
  *
@@ -536,7 +550,7 @@ SetDefaultServer(string, local)
  *	SUCCESS		- the lookup was successful.
  *	Misc. Errors	- an error message is printed if the lookup failed.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 static int
@@ -622,7 +636,7 @@ DoLookup(host, servPtr, serverName)
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  LookupHost --
  *
@@ -634,7 +648,7 @@ DoLookup(host, servPtr, serverName)
  *	ERROR		- the output file could not be opened.
  *	+ results of DoLookup
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 int
@@ -643,7 +657,7 @@ LookupHost(string, putToFile)
     Boolean	putToFile;
 {
     char	host[NAME_LEN];
-    char	file[NAME_LEN];
+    char	file[PATH_MAX];
     int		result;
 
     /*
@@ -683,7 +697,7 @@ LookupHost(string, putToFile)
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  LookupHostWithServer --
  *
@@ -704,7 +718,7 @@ LookupHost(string, putToFile)
  *	ERROR		- the output file could not be opened.
  *	+ results of DoLookup
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 int
@@ -712,7 +726,7 @@ LookupHostWithServer(string, putToFile)
     char	*string;
     Boolean	putToFile;
 {
-    char	file[NAME_LEN];
+    char	file[PATH_MAX];
     char	host[NAME_LEN];
     char	server[NAME_LEN];
     int		result;
@@ -754,7 +768,7 @@ LookupHostWithServer(string, putToFile)
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  SetOption -- 
  *
@@ -791,7 +805,7 @@ LookupHostWithServer(string, putToFile)
  *	SUCCESS		the command was parsed correctly.
  *	ERROR		the command was not parsed correctly.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 int
@@ -856,13 +870,13 @@ SetOption(option)
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
 		sscanf(++ptr, "%s", type);
-		queryType = StringToType(type, queryType);
+		queryType = StringToType(type, queryType, stderr);
 	    }
 	} else if (strncmp(option, "cl", 2) == 0) {	/* query class */
 	    ptr = strchr(option, '=');
 	    if (ptr != NULL) {
 		sscanf(++ptr, "%s", type);
-		queryClass = StringToClass(type, queryClass);
+		queryClass = StringToClass(type, queryClass, stderr);
 	    }
 	} else if (strncmp(option, "rec", 3) == 0) {	/* recurse */
 	    _res.options |= RES_RECURSE;
@@ -968,14 +982,14 @@ res_dnsrch(cp)
 
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  ShowOptions --
  *
  *	Prints out the state information used by the resolver
  *	library and other options set by the user.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 void
@@ -1018,34 +1032,26 @@ ShowOptions()
 #undef SRCHLIST_SEP
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  PrintHelp --
  *
- *	Prints out the help file.
- *	(Code taken from Mail.)
+ *	Displays the help file.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 void
 PrintHelp()
 {
-	register int c;
-	register FILE *helpFilePtr;
+	char cmd[PATH_MAX];
 
-	if ((helpFilePtr = fopen(_PATH_HELPFILE, "r")) == NULL) {
-	    perror(_PATH_HELPFILE);
-	    return;
-	} 
-	while ((c = getc(helpFilePtr)) != EOF) {
-	    putchar((char) c);
-	}
-	fclose(helpFilePtr);
+	sprintf(cmd, "%s %s", pager, _PATH_HELPFILE);
+	system(cmd);
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * CvtAddrToPtr --
  *
@@ -1054,7 +1060,7 @@ PrintHelp()
  *
  *	Assumes the argument buffer is large enougth to hold the result.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 static void
@@ -1075,13 +1081,13 @@ CvtAddrToPtr(name)
 }
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  * ReadRC --
  *
  *	Use the contents of ~/.nslookuprc as options.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 static void
@@ -1089,11 +1095,11 @@ ReadRC()
 {
     register FILE *fp;
     register char *cp;
-    char buf[NAME_LEN];
+    char buf[PATH_MAX];
 
     if ((cp = getenv("HOME")) != NULL) {
 	(void) strcpy(buf, cp);
-	(void) strcat(buf, "/.nslookuprc");
+	(void) strcat(buf, _PATH_NSLOOKUPRC);
 
 	if ((fp = fopen(buf, "r")) != NULL) {
 	    while (fgets(buf, sizeof(buf), fp) != NULL) {

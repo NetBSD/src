@@ -1,7 +1,11 @@
+/*	$NetBSD: getinfo.c,v 1.1 1996/02/02 15:30:05 mrg Exp $	*/
+
 /*
- * Copyright (c) 1985,1989 Regents of the University of California.
- * All rights reserved.
- *
+ * ++Copyright++ 1985, 1989
+ * -
+ * Copyright (c) 1985, 1989
+ *    The Regents of the University of California.  All rights reserved.
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,12 +16,12 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ * 	This product includes software developed by the University of
+ * 	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -29,15 +33,35 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ * -
+ * Portions Copyright (c) 1993 by Digital Equipment Corporation.
+ * 
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies, and that
+ * the name of Digital Equipment Corporation not be used in advertising or
+ * publicity pertaining to distribution of the document or software without
+ * specific, written prior permission.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS" AND DIGITAL EQUIPMENT CORP. DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS.   IN NO EVENT SHALL DIGITAL EQUIPMENT
+ * CORPORATION BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ * -
+ * --Copyright--
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)getinfo.c	5.26 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: getinfo.c,v 1.4 1995/05/22 01:02:34 mycroft Exp $";
+static char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
+static char rcsid[] = "$Id: getinfo.c,v 8.3 1995/12/29 07:16:27 vixie Exp ";
 #endif /* not lint */
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  getinfo.c --
  *
@@ -46,7 +70,7 @@ static char rcsid[] = "$Id: getinfo.c,v 1.4 1995/05/22 01:02:34 mycroft Exp $";
  *
  *	Adapted from 4.3BSD BIND gethostnamadr.c
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 #include <sys/param.h>
@@ -56,9 +80,9 @@ static char rcsid[] = "$Id: getinfo.c,v 1.4 1995/05/22 01:02:34 mycroft Exp $";
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include "res.h"
+#include "conf/portability.h"
 
 extern char *_res_resultcodes[];
 extern char *res_skip();
@@ -86,19 +110,19 @@ ServerTable server[MAXSERVERS];
 
 typedef union {
     HEADER qb1;
-    char qb2[PACKETSZ];
+    u_char qb2[PACKETSZ*2];
 } querybuf;
 
 typedef union {
-    long al;
+    int32_t al;
     char ac;
 } align;
 
-#define GetShort(cp)	_getshort(cp); cp += sizeof(unsigned short);
+#define GetShort(cp)	_getshort(cp); cp += INT16SZ;
 
 
 /*
- *******************************************************************************
+ ******************************************************************************
  *
  *  GetAnswer --
  *
@@ -112,7 +136,7 @@ typedef union {
  *      ERROR           the answer was malformed.
  *      Other errors    returned in the packet header.
  *
- *******************************************************************************
+ ******************************************************************************
  */
 
 static int
@@ -184,7 +208,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 
     bp	   = hostbuf;
     buflen = sizeof(hostbuf);
-    cp	   = (u_char *) &answer + sizeof(HEADER);
+    cp	   = (u_char *) &answer + HFIXEDSZ;
 
     /* Skip over question section. */
     while (qdcount-- > 0) {
@@ -215,14 +239,14 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	    printedAnswers = TRUE;
 	} else {
 	    while (--ancount >= 0 && cp < eom) {
-		if ((n =
-		    dn_expand((u_char *)&answer, eom, cp, bp, buflen)) < 0) {
+		n = dn_expand(answer.qb2, eom, cp, (char *)bp, buflen);
+		if (n < 0) {
 		    return(ERROR);
 		}
 		cp   += n;
 		type  = GetShort(cp);
 		class = GetShort(cp);
-		cp   += sizeof(u_long);	/* skip TTL */
+		cp   += INT32SZ;	/* skip TTL */
 		dlen  = GetShort(cp);
 		if (type == T_CNAME) {
 		    /*
@@ -243,13 +267,13 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    /*
 		     *  Found a "pointer" to the real name.
 		     */
-		    if ((n =
-			dn_expand((u_char *)&answer, eom, cp, bp,buflen)) < 0) {
+		    n = dn_expand(answer.qb2, eom, cp, (char *)bp, buflen);
+		    if (n < 0) {
 			cp += n;
 			continue;
 		    }
 		    cp += n;
-		    len = strlen(bp) + 1;
+		    len = strlen((char *)bp) + 1;
 		    hostPtr->name = Calloc(1, len);
 		    bcopy(bp, hostPtr->name, len);
 		    haveAnswer = TRUE;
@@ -279,11 +303,11 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->addrLen = dlen;
 		    origClass = class;
 		    hostPtr->addrType = (class == C_IN) ? AF_INET : AF_UNSPEC;
-		    len = strlen(bp) + 1;
+		    len = strlen((char *)bp) + 1;
 		    hostPtr->name = Calloc(1, len);
 		    bcopy(bp, hostPtr->name, len);
 		}
-		bp += (((u_long)bp) % sizeof(align));
+		bp += (((long)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (_res.options & RES_DEBUG) {
@@ -308,15 +332,19 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	 */
 
 	if (numAliases > 0) {
-	    hostPtr->aliases = (char **) Calloc(1 + numAliases, sizeof(char *));
+	    hostPtr->aliases =
+		(char **) Calloc(1 + numAliases, sizeof(char *));
 	    for (i = 0; i < numAliases; i++) {
 		hostPtr->aliases[i] = Calloc(1, host_aliases_len[i]);
-		bcopy(host_aliases[i], hostPtr->aliases[i],host_aliases_len[i]);
+		bcopy(host_aliases[i],
+		      hostPtr->aliases[i],
+		      host_aliases_len[i]);
 	    }
 	    hostPtr->aliases[i] = NULL;
 	}
 	if (numAddresses > 0) {
-	    hostPtr->addrList = (char **)Calloc(1+numAddresses, sizeof(char *));
+	    hostPtr->addrList =
+		(char **)Calloc(1+numAddresses, sizeof(char *));
 	    for (i = 0; i < numAddresses; i++) {
 		hostPtr->addrList[i] = Calloc(1, hostPtr->addrLen);
 		bcopy(addr_list[i], hostPtr->addrList[i], hostPtr->addrLen);
@@ -367,17 +395,18 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	     *  that serve the requested domain.
 	     */
 
-	    if ((n = dn_expand((u_char *) &answer, eom, cp, bp, buflen)) < 0) {
+	    n = dn_expand(answer.qb2, eom, cp, (char *)bp, buflen);
+	    if (n < 0) {
 		return(ERROR);
 	    }
 	    cp += n;
-	    len = strlen(bp) + 1;
+	    len = strlen((char *)bp) + 1;
 	    dnamePtr = Calloc(1, len);   /* domain name */
 	    bcopy(bp, dnamePtr, len);
 
 	    type  = GetShort(cp);
 	    class = GetShort(cp);
-	    cp   += sizeof(u_long);	/* skip TTL */
+	    cp   += INT32SZ;	/* skip TTL */
 	    dlen  = GetShort(cp);
 
 	    if (type != T_NS) {
@@ -385,12 +414,12 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	    } else {
 		Boolean	found;
 
-		if ((n =
-		    dn_expand((u_char *) &answer, eom, cp, bp, buflen)) < 0) {
+		n = dn_expand(answer.qb2, eom, cp, (char *)bp, buflen);
+		if (n < 0) {
 		    return(ERROR);
 		}
 		cp += n;
-		len = strlen(bp) + 1;
+		len = strlen((char *)bp) + 1;
 		namePtr = Calloc(1, len); /* server host name */
 		bcopy(bp, namePtr, len);
 
@@ -441,13 +470,14 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 	}
     } else {
 	while (--arcount >= 0 && cp < eom) {
-	    if ((n = dn_expand((u_char *) &answer, eom, cp, bp, buflen)) < 0) {
+	    n = dn_expand(answer.qb2, eom, cp, (char *)bp, buflen);
+	    if (n < 0) {
 		break;
 	    }
 	    cp   += n;
 	    type  = GetShort(cp);
 	    class = GetShort(cp);
-	    cp   += sizeof(u_long);	/* skip TTL */
+	    cp   += INT32SZ;	/* skip TTL */
 	    dlen  = GetShort(cp);
 
 	    if (type != T_A)  {
@@ -455,7 +485,7 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		continue;
 	    } else {
 		for (j = 0; j < numServers; j++) {
-		    if (strcmp(bp, server[j].name) == 0) {
+		    if (strcmp((char *)bp, server[j].name) == 0) {
 			server[j].numAddresses++;
 			if (server[j].numAddresses <= MAXADDRS) {
 			    server[j].address[server[j].numAddresses-1] = 
@@ -545,6 +575,7 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
     register char	*cp, **domain;
     Boolean		got_nodata = FALSE;
     struct in_addr	ina;
+    Boolean		tried_as_is = FALSE;
 
     /* Catch explicit addresses */
     if ((queryType == T_A) && IsAddr(name, &ina)) {
@@ -553,10 +584,10 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
 	hostPtr->aliases = NULL;
 	hostPtr->servers = NULL;
 	hostPtr->addrType = AF_INET;
-	hostPtr->addrLen = sizeof(ina);
+	hostPtr->addrLen = INADDRSZ;
 	hostPtr->addrList = (char **)Calloc(2, sizeof(char *));
-	hostPtr->addrList[0] = Calloc(1, sizeof(ina));
-	bcopy((char *)&ina, hostPtr->addrList[0], sizeof(ina));
+	hostPtr->addrList[0] = Calloc(INT32SZ, sizeof(char));
+	bcopy((char *)&ina, hostPtr->addrList[0], INADDRSZ);
 	hostPtr->addrList[1] = NULL;
 	return(SUCCESS);
     }
@@ -570,6 +601,21 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
 	    return (GetHostDomain(nsAddrPtr, queryClass, queryType,
 		    cp, (char *)NULL, hostPtr, isServer));
     }
+
+    /*
+     * If there are dots in the name already, let's just give it a try
+     * 'as is'.  The threshold can be set with the "ndots" option.
+     */
+    if (n >= (int)_res.ndots) {
+	    result = GetHostDomain(nsAddrPtr, queryClass, queryType,
+				   name, (char *)NULL, hostPtr, isServer);
+            if (result == SUCCESS)
+	        return (result);
+	    if (result == NO_INFO)
+		got_nodata++;
+            tried_as_is++;
+    }
+
     /*
      * We do at least one level of search if
      *	- there is no dot and RES_DEFNAME is set, or
@@ -600,17 +646,16 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
 	    if ((result != NXDOMAIN && result != NO_INFO) ||
 		(_res.options & RES_DNSRCH) == 0)
 		    break;
-    }
-    /*
-     * If the search/default failed, try the name as fully-qualified,
-     * but only if it contained at least one dot (even trailing).
-     * This is purely a heuristic; we assume that any reasonable query
-     * about a top-level domain (for servers, SOA, etc) will not use
-     * res_search.
+	}
+    /* if we have not already tried the name "as is", do that now.
+     * note that we do this regardless of how many dots were in the
+     * name or whether it ends with a dot.
      */
-    if (n && (result = GetHostDomain(nsAddrPtr, queryClass, queryType,
-		    name, (char *)NULL, hostPtr, isServer)) == SUCCESS)
-	    return result;
+    if (!tried_as_is &&
+	(result = GetHostDomain(nsAddrPtr, queryClass, queryType,
+				name, (char *)NULL, hostPtr, isServer)
+	 ) == SUCCESS)
+	    return (result);
     if (got_nodata)
 	result = NO_INFO;
     return (result);
@@ -650,7 +695,7 @@ GetHostDomain(nsAddrPtr, queryClass, queryType, name, domain, hostPtr, isServer)
 	    longname = nbuf;
     }
     n = res_mkquery(QUERY, longname, queryClass, queryType,
-		    (char *)0, 0, 0, (char *) &buf, sizeof(buf));
+		    NULL, 0, 0, buf.qb2, sizeof(buf));
     if (n < 0) {
 	if (_res.options & RES_DEBUG) {
 	    printf("Res_mkquery failed\n");
@@ -679,7 +724,7 @@ GetHostDomain(nsAddrPtr, queryClass, queryType, name, domain, hostPtr, isServer)
 *
 *  GetHostInfoByAddr --
 *
-*	Performs an inverse query to find the host name
+*	Performs a PTR lookup in in-addr.arpa to find the host name
 *	that corresponds to the given address.
 *
 *  Results:
@@ -705,8 +750,8 @@ GetHostInfoByAddr(nsAddrPtr, address, hostPtr)
 	    ((unsigned)p[2] & 0xff),
 	    ((unsigned)p[1] & 0xff),
 	    ((unsigned)p[0] & 0xff));
-    n = res_mkquery(QUERY, qbuf, C_IN, T_PTR,
-	    NULL,  0, NULL, (char *) &buf, sizeof(buf));
+    n = res_mkquery(QUERY, qbuf, C_IN, T_PTR, NULL, 0, NULL,
+		    buf.qb2, sizeof buf);
     if (n < 0) {
 	if (_res.options & RES_DEBUG) {
 	    printf("res_mkquery() failed\n");
@@ -718,8 +763,8 @@ GetHostInfoByAddr(nsAddrPtr, address, hostPtr)
 	hostPtr->addrType = AF_INET;
 	hostPtr->addrLen = 4;
 	hostPtr->addrList = (char **)Calloc(2, sizeof(char *));
-	hostPtr->addrList[0] = Calloc(sizeof(long), sizeof(char));
-	bcopy((char *)p, hostPtr->addrList[0], sizeof(struct in_addr));
+	hostPtr->addrList[0] = Calloc(INT32SZ, sizeof(char));
+	bcopy((char *)p, hostPtr->addrList[0], INADDRSZ);
 	hostPtr->addrList[1] = NULL;
     }
     return n;
