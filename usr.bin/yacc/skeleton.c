@@ -1,4 +1,4 @@
-/*	$NetBSD: skeleton.c,v 1.16 1999/10/29 16:35:46 explorer Exp $	*/
+/*	$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -41,9 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)skeleton.c	5.8 (Berkeley) 4/29/95";
 #else
-#if defined(__NetBSD__) && defined(__RCSID)
-__RCSID("$NetBSD: skeleton.c,v 1.16 1999/10/29 16:35:46 explorer Exp $");
-#endif /* !defined(__NetBSD__) && defined (__RCSID) */
+__RCSID("$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $");
 #endif /* 0 */
 #endif /* not lint */
 
@@ -68,9 +66,11 @@ char *banner[] =
     "#if 0",
     "static char yysccsid[] = \"@(#)yaccpar	1.9 (Berkeley) 02/21/93\";",
     "#else",
-    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.16 1999/10/29 16:35:46 explorer Exp $\");",
-    "#endif",
-    "#endif",
+    "#if defined(__NetBSD__) && defined(__IDSTRING)",
+    "__IDSTRING(yyrcsid, \"$NetBSD: skeleton.c,v 1.17 1999/10/29 16:41:51 explorer Exp $\");",
+    "#endif /* __NetBSD__ && __IDSTRING */",
+    "#endif /* 0 */",
+    "#endif /* lint */",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
     "#define YYMAJOR 1",
