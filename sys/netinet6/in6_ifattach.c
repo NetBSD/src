@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.18 2000/02/04 14:34:25 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.19 2000/02/06 12:49:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -45,10 +45,10 @@
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_ifattach.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 

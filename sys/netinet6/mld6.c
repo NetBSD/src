@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.9 2000/01/06 15:46:10 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.10 2000/02/06 12:49:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -82,9 +82,9 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/mld6_var.h>
 
 #include <net/net_osdep.h>

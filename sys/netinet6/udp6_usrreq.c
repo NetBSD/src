@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_usrreq.c,v 1.22 2000/02/06 08:06:45 itojun Exp $	*/
+/*	$NetBSD: udp6_usrreq.c,v 1.23 2000/02/06 12:49:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -90,10 +90,10 @@
 #include <netinet/in_pcb.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/udp6_var.h>
 #include <netinet6/ip6protosw.h>
 

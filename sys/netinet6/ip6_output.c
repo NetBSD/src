@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.13 2000/01/31 14:19:03 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.14 2000/02/06 12:49:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -82,8 +82,8 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
-#include <netinet6/icmp6.h>
+#include <netinet/ip6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_pcb.h>
 #include <netinet6/nd6.h>
