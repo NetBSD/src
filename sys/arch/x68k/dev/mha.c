@@ -1,4 +1,4 @@
-/*	$NetBSD: mha.c,v 1.24 2001/11/25 16:00:06 minoura Exp $	*/
+/*	$NetBSD: mha.c,v 1.25 2001/12/04 15:21:28 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -388,7 +388,9 @@ mhaattach(parent, self, aux)
 
 	/* drop off */
 	while (SSR & SS_IREQUEST)
-	  ;
+	  {
+	    (void) ISCSR;
+	  }
 
 	CMR = CMD_SET_UP_REG;	/* setup reg cmd. */
 
