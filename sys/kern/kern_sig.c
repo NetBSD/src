@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.43 1995/06/24 20:34:05 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.44 1995/07/24 03:18:42 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -555,29 +555,29 @@ psignal(p, signum)
 			action = SIG_HOLD;
 		else if (p->p_sigcatch & mask)
 			action = SIG_CATCH;
-		else
+		else {
 			action = SIG_DFL;
-	}
 
-	if (p->p_nice > NZERO && action == SIG_DFL && (prop & SA_KILL) &&
-	    (p->p_flag & P_TRACED) == 0)
-		p->p_nice = NZERO;
+			if (prop & SA_KILL && p->p_nice > NZERO)
+				p->p_nice = NZERO;
+
+			/*
+			 * If sending a tty stop signal to a member of an
+			 * orphaned process group, discard the signal here if
+			 * the action is default; don't stop the process below
+			 * if sleeping, and don't clear any pending SIGCONT.
+			 */
+			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
+				return;
+		}
+	}
 
 	if (prop & SA_CONT)
 		p->p_siglist &= ~stopsigmask;
 
-	if (prop & SA_STOP) {
-		/*
-		 * If sending a tty stop signal to a member of an orphaned
-		 * process group, discard the signal here if the action
-		 * is default; don't stop the process below if sleeping,
-		 * and don't clear any pending SIGCONT.
-		 */
-		if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0 &&
-		    action == SIG_DFL)
-			return;
+	if (prop & SA_STOP)
 		p->p_siglist &= ~contsigmask;
-	}
+
 	p->p_siglist |= mask;
 
 	/*
