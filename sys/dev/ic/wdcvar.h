@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.2.2.1 1998/06/04 16:52:47 bouyer Exp $    */
+/*	$NetBSD: wdcvar.h,v 1.2.2.2 1998/06/05 08:38:57 bouyer Exp $    */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -142,6 +142,7 @@ struct wdc_xfer *wdc_get_xfer __P((int)); /* int = WDC_NOSLEEP/CANSLEEP */
 #define WDC_NOSLEEP 0x01
 void   wdc_free_xfer  __P((struct channel_softc *, struct wdc_xfer *));
 void  wdcstart __P((struct wdc_softc *, int));
+void  wdcrestart __P((void*));
 int   wdcreset	__P((struct channel_softc *, int));
 #define VERBOSE 1 
 #define SILENT 0 /* wdcreset will not print errors */
