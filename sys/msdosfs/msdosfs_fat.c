@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.12 1994/08/21 18:44:04 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.13 1994/09/28 11:31:29 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -151,7 +151,7 @@ pcbmap(dep, findcn, bnp, cnp)
 	 * bother doing anything.
 	 */
 	if (bnp == NULL && cnp == NULL)
-		return 0;
+		return (0);
 
 	cn = dep->de_StartCluster;
 	/*
@@ -165,17 +165,17 @@ pcbmap(dep, findcn, bnp, cnp)
 			if (findcn * pmp->pm_SectPerClust > pmp->pm_rootdirsize) {
 				if (cnp)
 					*cnp = pmp->pm_rootdirsize / pmp->pm_SectPerClust;
-				return E2BIG;
+				return (E2BIG);
 			}
 			if (bnp)
 				*bnp = pmp->pm_rootdirblk + (findcn * pmp->pm_SectPerClust);
 			if (cnp)
 				*cnp = MSDOSFSROOT;
-			return 0;
+			return (0);
 		} else {		/* just an empty file */
 			if (cnp)
 				*cnp = 0;
-			return E2BIG;
+			return (E2BIG);
 		}
 	}
 
@@ -202,9 +202,9 @@ pcbmap(dep, findcn, bnp, cnp)
 		if (bn != bp_bn) {
 			if (bp)
 				brelse(bp);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
-			if (error)
-				return error;
+			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED,
+					  &bp))
+				return (error);
 			bp_bn = bn;
 		}
 		prevcn = cn;
@@ -232,7 +232,7 @@ pcbmap(dep, findcn, bnp, cnp)
 		if (cnp)
 			*cnp = cn;
 		fc_setcache(dep, FC_LASTMAP, i, cn);
-		return 0;
+		return (0);
 	}
 
 hiteof:;
@@ -242,13 +242,14 @@ hiteof:;
 		brelse(bp);
 	/* update last file cluster entry in the fat cache */
 	fc_setcache(dep, FC_LASTFC, i - 1, prevcn);
-	return E2BIG;
+	return (E2BIG);
 }
 
 /*
  * Find the closest entry in the fat cache to the cluster we are looking
  * for.
  */
+void
 fc_lookup(dep, findcn, frcnp, fsrcnp)
 	struct denode *dep;
 	u_long findcn;
@@ -276,6 +277,7 @@ fc_lookup(dep, findcn, frcnp, fsrcnp)
  * Purge the fat cache in denode dep of all entries relating to file
  * relative cluster frcn and beyond.
  */
+void
 fc_purge(dep, frcn)
 	struct denode *dep;
 	u_int frcn;
@@ -364,8 +366,8 @@ usemap_alloc(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
 {
-	pmp->pm_inusemap[cn / N_INUSEBITS]
-			 |= 1 << (cn % N_INUSEBITS);
+
+	pmp->pm_inusemap[cn / N_INUSEBITS] |= 1 << (cn % N_INUSEBITS);
 	pmp->pm_freeclustercount--;
 }
 
@@ -374,6 +376,7 @@ usemap_free(pmp, cn)
 	struct msdosfsmount *pmp;
 	u_long cn;
 {
+
 	pmp->pm_freeclustercount++;
 	pmp->pm_inusemap[cn / N_INUSEBITS] &= ~(1 << (cn % N_INUSEBITS));
 }
@@ -387,18 +390,17 @@ clusterfree(pmp, cluster, oldcnp)
 	int error;
 	u_long oldcn;
 
-	error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE);
-	if (error == 0) {
-		/*
-		 * If the cluster was successfully marked free, then update
-		 * the count of free clusters, and turn off the "allocated"
-		 * bit in the "in use" cluster bit map.
-		 */
-		usemap_free(pmp, cluster);
-		if (oldcnp)
-			*oldcnp = oldcn;
-	}
-	return error;
+	if (error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE))
+		return (error);
+	/*
+	 * If the cluster was successfully marked free, then update
+	 * the count of free clusters, and turn off the "allocated"
+	 * bit in the "in use" cluster bit map.
+	 */
+	usemap_free(pmp, cluster);
+	if (oldcnp)
+		*oldcnp = oldcn;
+	return (0);
 }
 
 /*
@@ -444,7 +446,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	 */
 	if ((function & (FAT_SET | FAT_GET)) == 0) {
 		printf("fatentry(): function code doesn't specify get or set\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 
 	/*
@@ -453,7 +455,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	 */
 	if ((function & FAT_GET) && oldcontents == NULL) {
 		printf("fatentry(): get function with no place to put result\n");
-		return EINVAL;
+		return (EINVAL);
 	}
 #endif
 
@@ -461,12 +463,12 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	 * Be sure the requested cluster is in the filesystem.
 	 */
 	if (cn < CLUST_FIRST || cn > pmp->pm_maxcluster)
-		return EINVAL;
+		return (EINVAL);
 
 	byteoffset = FATOFS(pmp, cn);
 	fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 	if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
-		return error;
+		return (error);
 	
 	if (function & FAT_GET) {
 		readcn = getushort(&bp->b_data[bo]);
@@ -499,7 +501,7 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	}
 	if (bp)
 		brelse(bp);
-	return 0;
+	return (0);
 }
 
 /*
@@ -529,13 +531,13 @@ fatchain(pmp, start, count, fillwith)
 	 * Be sure the clusters are in the filesystem.
 	 */
 	if (start < CLUST_FIRST || start + count - 1 > pmp->pm_maxcluster)
-		return EINVAL;
+		return (EINVAL);
 	
 	while (count > 0) {
 		byteoffset = FATOFS(pmp, start);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
 		if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
-			return error;
+			return (error);
 		while (count > 0) {
 			start++;
 			newc = --count > 0 ? start : fillwith;
@@ -562,7 +564,7 @@ fatchain(pmp, start, count, fillwith)
 		updatefats(pmp, bp, bn);
 	}
 	pmp->pm_fmod = 1;
-	return 0;
+	return (0);
 }
 
 /*
@@ -589,11 +591,11 @@ chainlength(pmp, start, count)
 	map &= ~((1 << start) - 1);
 	if (map) {
 		len = ffs(map) - 1 - start;
-		return len > count ? count : len;
+		return (len > count ? count : len);
 	}
 	len = N_INUSEBITS - start;
 	if (len >= count)
-		return count;
+		return (count);
 	while (++idx <= max_idx) {
 		if (len >= count)
 			break;
@@ -603,7 +605,7 @@ chainlength(pmp, start, count)
 		}
 		len += N_INUSEBITS;
 	}
-	return len > count ? count : len;
+	return (len > count ? count : len);
 }
 
 /*
@@ -628,20 +630,19 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 {
 	int error;
 	
-	error = fatchain(pmp, start, count, fillwith);
-	if (error == 0) {
+	if (error = fatchain(pmp, start, count, fillwith))
+		return (error);
 #ifdef MSDOSFS_DEBUG
-		printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
-		       start, count);
+	printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
+	       start, count);
 #endif
-		if (retcluster)
-			*retcluster = start;
-		if (got)
-			*got = count;
-		while (count-- > 0)
-			usemap_alloc(pmp, start++);
-	}
-	return error;
+	if (retcluster)
+		*retcluster = start;
+	if (got)
+		*got = count;
+	while (count-- > 0)
+		usemap_alloc(pmp, start++);
+	return (0);
 }
 
 /*
@@ -664,7 +665,6 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	u_long *retcluster;
 	u_long *got;
 {
-	int error;
 	u_long idx;
 	u_long len, newst, foundcn, foundl, cn, l;
 	u_int map;
@@ -674,7 +674,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 #endif
 	if (start) {
 		if ((len = chainlength(pmp, start, count)) >= count)
-			return chainalloc(pmp, start, count, fillwith, retcluster, got);
+			return (chainalloc(pmp, start, count, fillwith, retcluster, got));
 	} else {
 		/*
 		 * This is a new file, initialize start
@@ -682,7 +682,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 		struct timeval tv;
 		
 		microtime(&tv);
-		start = (tv.tv_usec >> 10)|tv.tv_usec;
+		start = (tv.tv_usec >> 10) | tv.tv_usec;
 		len = 0;
 	}
 	
@@ -700,7 +700,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
-				return chainalloc(pmp, cn, count, fillwith, retcluster, got);
+				return (chainalloc(pmp, cn, count, fillwith, retcluster, got));
 			if (l > foundl) {
 				foundcn = cn;
 				foundl = l;
@@ -717,7 +717,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 		if (map != (u_int)-1) {
 			cn = idx * N_INUSEBITS + ffs(map^(u_int)-1) - 1;
 			if ((l = chainlength(pmp, cn, count)) >= count)
-				return chainalloc(pmp, cn, count, fillwith, retcluster, got);
+				return (chainalloc(pmp, cn, count, fillwith, retcluster, got));
 			if (l > foundl) {
 				foundcn = cn;
 				foundl = l;
@@ -729,12 +729,12 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	}
 
 	if (!foundl)
-		return ENOSPC;
+		return (ENOSPC);
 
 	if (len)
-		return chainalloc(pmp, start, len, fillwith, retcluster, got);
+		return (chainalloc(pmp, start, len, fillwith, retcluster, got));
 	else
-		return chainalloc(pmp, foundcn, foundl, fillwith, retcluster, got);
+		return (chainalloc(pmp, foundcn, foundl, fillwith, retcluster, got));
 }
 
 
@@ -751,11 +751,11 @@ freeclusterchain(pmp, cluster)
 	struct msdosfsmount *pmp;
 	u_long cluster;
 {
-	int error = 0;
+	int error;
 	struct buf *bp = NULL;
 	u_long bn, bo, bsize, byteoffset;
 	u_long readcn, lbn = -1;
-	
+
 	while (cluster >= CLUST_FIRST && cluster <= pmp->pm_maxcluster) {
 		byteoffset = FATOFS(pmp, cluster);
 		fatblock(pmp, byteoffset, &bn, &bsize, &bo);
@@ -763,7 +763,7 @@ freeclusterchain(pmp, cluster)
 			if (bp)
 				updatefats(pmp, bp, bn);
 			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
-				return error;
+				return (error);
 			lbn = bn;
 		}
 		usemap_free(pmp, cluster);
@@ -789,7 +789,7 @@ freeclusterchain(pmp, cluster)
 	}
 	if (bp)
 		updatefats(pmp, bp, bn);
-	return error;
+	return (0);
 }
 
 /*
@@ -827,9 +827,8 @@ fillinusemap(pmp)
 			if (bp)
 				brelse(bp);
 			fatblock(pmp, byteoffset, &bn, &bsize, NULL);
-			error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp);
-			if (error)
-				return error;
+			if (error = bread(pmp->pm_devvp, bn, bsize, NOCRED, &bp))
+				return (error);
 		}
 		readcn = getushort(&bp->b_data[bo]);
 		if (fat12) {
@@ -842,7 +841,7 @@ fillinusemap(pmp)
 			usemap_free(pmp, cn);
 	}
 	brelse(bp);
-	return 0;
+	return (0);
 }
 
 /*
@@ -868,7 +867,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	u_long *ncp;
 	int flags;
 {
-	int error = 0;
+	int error;
 	u_long frcn;
 	u_long cn, got;
 	struct msdosfsmount *pmp = dep->de_pmp;
@@ -879,7 +878,7 @@ extendfile(dep, count, bpp, ncp, flags)
 	 */
 	if (DETOV(dep)->v_flag & VROOT) {
 		printf("extendfile(): attempt to extend root directory\n");
-		return ENOSPC;
+		return (ENOSPC);
 	}
 
 	/*
@@ -893,10 +892,9 @@ extendfile(dep, count, bpp, ncp, flags)
 		error = pcbmap(dep, 0xffff, 0, &cn);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
-			return error;
-		error = 0;
+			return (error);
 	}
-	
+
 	while (count > 0) {
 		/*
 		 * Allocate a new cluster chain and cat onto the end of the file.
@@ -911,7 +909,7 @@ extendfile(dep, count, bpp, ncp, flags)
 		else
 			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
 		if (error = clusteralloc(pmp, cn, count, CLUST_EOFE, &cn, &got))
-			return error;
+			return (error);
 		
 		count -= got;
 		
@@ -928,13 +926,12 @@ extendfile(dep, count, bpp, ncp, flags)
 			dep->de_StartCluster = cn;
 			frcn = 0;
 		} else {
-			error = fatentry(FAT_SET, pmp, dep->de_fc[FC_LASTFC].fc_fsrcn,
-					 0, cn);
-			if (error) {
+			if (error = fatentry(FAT_SET, pmp,
+					     dep->de_fc[FC_LASTFC].fc_fsrcn,
+					     0, cn)) {
 				clusterfree(pmp, cn, NULL);
-				return error;
+				return (error);
 			}
-			
 			frcn = dep->de_fc[FC_LASTFC].fc_frcn + 1;
 		}
 		
@@ -974,5 +971,5 @@ extendfile(dep, count, bpp, ncp, flags)
 		}
 	}
 	
-	return 0;
+	return (0);
 }
