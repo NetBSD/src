@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.17 2002/06/24 12:00:49 enami Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.18 2002/06/25 03:42:28 onoe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.17 2002/06/24 12:00:49 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.18 2002/06/25 03:42:28 onoe Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -94,6 +94,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	struct mbuf *mcopy = NULL;
 	struct ieee1394_hwaddr hwdst, *myaddr;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
+#ifdef INET
+	struct arphdr *ah;
+#endif /* INET */
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
@@ -136,7 +139,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 	 * If the queueing discipline needs packet classification,
 	 * do it before prepending link headers.
 	 */
-	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
+	IFQ_CLASSIFY(&ifp->if_snd, m0, dst->sa_family, &pktattr);
 
 	switch (dst->sa_family) {
 #ifdef INET
@@ -151,7 +154,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, struct sockaddr *dst,
 		etype = htons(ETHERTYPE_IP);
 		break;
 	case AF_ARP:
+		ah = mtod(m0, struct arphdr *);
 		memcpy(&hwdst, ifp->if_broadcastaddr, sizeof(hwdst));
+		ah->ar_hrd = htons(ARPHRD_IEEE1394);
 		etype = htons(ETHERTYPE_ARP);
 		break;
 #endif /* INET */
