@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.47 2004/09/09 19:35:30 bouyer Exp $	*/
+/*	$NetBSD: if_se.c,v 1.48 2004/09/17 23:10:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.47 2004/09/09 19:35:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.48 2004/09/17 23:10:50 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -212,7 +212,7 @@ static void	seattach __P((struct device *, struct device *, void *));
 static void	se_ifstart __P((struct ifnet *));
 static void	sestart __P((struct scsipi_periph *));
 
-static void	sedone __P((struct scsipi_xfer *));
+static void	sedone __P((struct scsipi_xfer *, int));
 static int	se_ioctl __P((struct ifnet *, u_long, caddr_t));
 static void	sewatchdog __P((struct ifnet *));
 
@@ -504,16 +504,14 @@ se_ifstart(ifp)
  * Called from the scsibus layer via our scsi device switch.
  */
 static void
-sedone(xs)
+sedone(xs, error)
 	struct scsipi_xfer *xs;
-{
 	int error;
+{
 	struct se_softc *sc = (void *)xs->xs_periph->periph_dev;
 	struct scsipi_generic *cmd = xs->cmd;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int s;
-
-	error = !(xs->error == XS_NOERROR);
 
 	s = splnet();
 	if(IS_SEND(cmd)) {

@@ -1,7 +1,7 @@
-/*	$NetBSD: sd.c,v 1.223 2004/09/09 19:35:32 bouyer Exp $	*/
+/*	$NetBSD: sd.c,v 1.224 2004/09/17 23:10:51 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.223 2004/09/09 19:35:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.224 2004/09/17 23:10:51 mycroft Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -95,14 +95,12 @@ __KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.223 2004/09/09 19:35:32 bouyer Exp $");
 
 #define	SDLABELDEV(dev)	(MAKESDDEV(major(dev), SDUNIT(dev), RAW_PART))
 
-static int	sdlock(struct sd_softc *);
-static void	sdunlock(struct sd_softc *);
 static void	sdminphys(struct buf *);
 static void	sdgetdefaultlabel(struct sd_softc *, struct disklabel *);
 static void	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
-static void	sddone(struct scsipi_xfer *);
+static void	sddone(struct scsipi_xfer *, int);
 static void	sd_shutdown(void *);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
@@ -220,6 +218,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	char pbuf[9];
 
 	SC_DEBUG(periph, SCSIPI_DB2, ("sdattach: "));
+
+	lockinit(&sd->sc_lock, PRIBIO | PCATCH, "sdlock", 0, 0);
 
 	sd->type = (sa->sa_inqbuf.type & SID_TYPE);
 	if (sd->type == T_SIMPLE_DIRECT)
@@ -351,6 +351,13 @@ sddetach(struct device *self, int flags)
 	bmaj = bdevsw_lookup_major(&sd_bdevsw);
 	cmaj = cdevsw_lookup_major(&sd_cdevsw);
 
+	/* Nuke the vnodes for any open instances */
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = SDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
+
 	/* kill any pending restart */
 	callout_stop(&sd->sc_callout);
 
@@ -371,12 +378,7 @@ sddetach(struct device *self, int flags)
 
 	splx(s);
 
-	/* Nuke the vnodes for any open instances */
-	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = SDMINOR(self->dv_unit, i);
-		vdevgone(bmaj, mn, mn, VBLK);
-		vdevgone(cmaj, mn, mn, VCHR);
-	}
+	lockmgr(&sd->sc_lock, LK_DRAIN, 0);
 
 	/* Detach from the disk list. */
 	disk_detach(&sd->sc_dk);
@@ -390,40 +392,6 @@ sddetach(struct device *self, int flags)
 #endif
 
 	return (0);
-}
-
-/*
- * Wait interruptibly for an exclusive lock.
- *
- * XXX
- * Several drivers do this; it should be abstracted and made MP-safe.
- */
-static int
-sdlock(struct sd_softc *sd)
-{
-	int error;
-
-	while ((sd->flags & SDF_LOCKED) != 0) {
-		sd->flags |= SDF_WANTED;
-		if ((error = tsleep(sd, PRIBIO | PCATCH, "sdlck", 0)) != 0)
-			return (error);
-	}
-	sd->flags |= SDF_LOCKED;
-	return (0);
-}
-
-/*
- * Unlock and wake up any waiters.
- */
-static void
-sdunlock(struct sd_softc *sd)
-{
-
-	sd->flags &= ~SDF_LOCKED;
-	if ((sd->flags & SDF_WANTED) != 0) {
-		sd->flags &= ~SDF_WANTED;
-		wakeup(sd);
-	}
 }
 
 /*
@@ -464,7 +432,7 @@ sdopen(dev_t dev, int flag, int fmt, struct proc *p)
 	    (error = scsipi_adapter_addref(adapt)) != 0)
 		return (error);
 
-	if ((error = sdlock(sd)) != 0)
+	if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		goto bad4;
 
 	if ((periph->periph_flags & PERIPH_OPEN) != 0) {
@@ -577,7 +545,7 @@ out:	/* Insure only one open at a time. */
 	    sd->sc_dk.dk_copenmask | sd->sc_dk.dk_bopenmask;
 
 	SC_DEBUG(periph, SCSIPI_DB3, ("open complete\n"));
-	sdunlock(sd);
+	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 
 bad2:
@@ -593,7 +561,7 @@ bad:
 	}
 
 bad3:
-	sdunlock(sd);
+	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
 bad4:
 	if (sd->sc_dk.dk_openmask == 0)
 		scsipi_adapter_delref(adapt);
@@ -613,7 +581,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 	int part = SDPART(dev);
 	int error;
 
-	if ((error = sdlock(sd)) != 0)
+	if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 		return (error);
 
 	switch (fmt) {
@@ -657,7 +625,7 @@ sdclose(dev_t dev, int flag, int fmt, struct proc *p)
 		scsipi_adapter_delref(adapt);
 	}
 
-	sdunlock(sd);
+	lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
 	return (0);
 }
 
@@ -941,21 +909,29 @@ sdrestart(void *v)
 }
 
 static void
-sddone(struct scsipi_xfer *xs)
+sddone(struct scsipi_xfer *xs, int error)
 {
 	struct sd_softc *sd = (void *)xs->xs_periph->periph_dev;
+	struct buf *bp = xs->bp;
 
 	if (sd->flags & SDF_FLUSHING) {
 		/* Flush completed, no longer dirty. */
 		sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
 
-	if (xs->bp != NULL) {
-		disk_unbusy(&sd->sc_dk, xs->bp->b_bcount - xs->bp->b_resid,
-		    (xs->bp->b_flags & B_READ));
+	if (bp) {
+		bp->b_error = error;
+		bp->b_resid = xs->resid;
+		if (error)
+			bp->b_flags |= B_ERROR;
+
+		disk_unbusy(&sd->sc_dk, bp->b_bcount - bp->b_resid,
+		    (bp->b_flags & B_READ));
 #if NRND > 0
-		rnd_add_uint32(&sd->rnd_source, xs->bp->b_rawblkno);
+		rnd_add_uint32(&sd->rnd_source, bp->b_rawblkno);
 #endif
+
+		biodone(bp);
 	}
 }
 
@@ -1096,7 +1072,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 		lp = (struct disklabel *)addr;
 
-		if ((error = sdlock(sd)) != 0)
+		if ((error = lockmgr(&sd->sc_lock, LK_EXCLUSIVE, NULL)) != 0)
 			goto bad;
 		sd->flags |= SDF_LABELLING;
 
@@ -1115,7 +1091,7 @@ sdioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 		}
 
 		sd->flags &= ~SDF_LABELLING;
-		sdunlock(sd);
+		lockmgr(&sd->sc_lock, LK_RELEASE, NULL);
 bad:
 #ifdef __HAVE_OLD_DISKLABEL
 		if (newlabel != NULL)
