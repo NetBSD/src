@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94"; */
-static char *rcsid = "$Id: rcmd.c,v 1.7 1994/05/27 18:56:24 deraadt Exp $";
+static char *rcsid = "$Id: rcmd.c,v 1.8 1994/06/01 19:23:59 pk Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -372,6 +372,8 @@ __ivaliduser(hostf, raddr, luser, ruser)
 		} else
 			user = p;
 		*p = '\0';
+		if (p == buf)
+			continue;
 		if (__icheckhost(raddr, buf) &&
 		    strcmp(ruser, *user ? user : luser) == 0) {
 			return (0);
