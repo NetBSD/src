@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)spec.c	5.17 (Berkeley) 4/17/92"; */
-static char *rcsid = "$Id: spec.c,v 1.3 1993/11/02 07:51:13 cgd Exp $";
+static char *rcsid = "$Id: spec.c,v 1.4 1994/03/27 09:09:54 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -206,7 +206,7 @@ set(t, ip)
 				err("invalid link count %s", val);
 			break;
 		case F_SIZE:
-			ip->st_size = strtoul(val, &ep, 10);
+			ip->st_size = strtouq(val, &ep, 10);
 			if (*ep)
 				err("invalid size %s", val);
 			break;
