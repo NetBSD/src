@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.336 2000/05/08 18:41:26 joda Exp $
+#	$NetBSD: GENERIC,v 1.337 2000/05/14 04:36:09 jhawk Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.336 $"
+#ident 		"GENERIC-$Revision: 1.337 $"
 
 maxusers	32		# estimated number of users
 
@@ -24,10 +24,6 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
-
-# Misc. i386-specific options
-options 	XSERVER		# X server support in console drivers
-#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
 
 # This option allows you to force a serial console at the specified
 # I/O address.   see console(4) for details.
@@ -276,12 +272,16 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 # ISA console.  You can only configure one of these!
 #pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 #vt0	at isa? port 0x60 irq 1		# PCVT console driver
-
 # Keyboard layout configuration for pccons
 #options 	FRENCH_KBD
 #options 	FINNISH_KBD
 #options 	GERMAN_KBD
 #options 	NORWEGIAN_KBD
+# pccons-specific option:
+#options 	XSERVER_DDB	# PF12 gets you into DDB when X is running
+# pccons/pcvt -specific option:
+#options 	XSERVER		# X server support
+
 
 # wscons
 pckbc0		at isa?			# pc keyboard controller
