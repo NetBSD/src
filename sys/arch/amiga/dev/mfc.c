@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.28 2002/03/17 19:40:31 atatat Exp $ */
+/*	$NetBSD: mfc.c,v 1.28.4.1 2002/05/16 16:17:10 gehenna Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.28 2002/03/17 19:40:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.28.4.1 2002/05/16 16:17:10 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.28 2002/03/17 19:40:31 atatat Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
@@ -60,9 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.28 2002/03/17 19:40:31 atatat Exp $");
 #include <amiga/dev/zbusvar.h>
 
 #include <dev/cons.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "mfcs.h"
 
@@ -224,6 +222,19 @@ struct cfattach mfcp_ca = {
 };
 #endif
 
+dev_type_open(mfcsopen);
+dev_type_close(mfcsclose);
+dev_type_read(mfcsread);
+dev_type_write(mfcswrite);
+dev_type_ioctl(mfcsioctl);
+dev_type_stop(mfcsstop);
+dev_type_tty(mfcstty);
+dev_type_poll(mfcspoll);
+
+const struct cdevsw mfcs_cdevsw = {
+	mfcsopen, mfcsclose, mfcsread, mfcswrite, mfcsioctl,
+	mfcsstop, mfcstty, mfcspoll, nommap, D_TTY
+};
 
 int	mfcs_active;
 int	mfcsdefaultrate = 38400 /*TTYDEF_SPEED*/;
@@ -1071,8 +1082,12 @@ mfcseint(int unit, int stat)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
+		extern const struct cdevsw ser_cdevsw;
+		int maj;
+
 		/* we don't care about parity errors */
-		if (kgdb_dev == makedev(sermajor, unit) && c == FRAME_END)
+		maj = cdevsw_lookup_major(&ser_cdevsw);
+		if (kgdb_dev == makedev(maj, unit) && c == FRAME_END)
 			kgdb_connect(0);	/* trap into kgdb */
 #endif
 		return;

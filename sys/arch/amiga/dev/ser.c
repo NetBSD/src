@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $ */
+/*	$NetBSD: ser.c,v 1.62.4.1 2002/05/16 16:17:10 gehenna Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.62.4.1 2002/05/16 16:17:10 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $");
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
+#include <sys/conf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/serreg.h>
@@ -65,9 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.62 2002/03/17 19:40:31 atatat Exp $");
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
-
-#include <sys/conf.h>
-#include <machine/conf.h>
 
 #include "ser.h"
 #if NSER > 0
@@ -85,6 +83,20 @@ struct cfattach ser_ca = {
 };
 
 extern struct cfdriver ser_cd;
+
+dev_type_open(seropen);
+dev_type_close(serclose);
+dev_type_read(serread);
+dev_type_write(serwrite);
+dev_type_ioctl(serioctl);
+dev_type_stop(serstop);
+dev_type_tty(sertty);
+dev_type_poll(serpoll);
+
+const struct cdevsw ser_cdevsw = {
+	seropen, serclose, serread, serwrite, serioctl,
+	serstop, sertty, serpoll, nommap, D_TTY
+};
 
 #ifndef SEROBUF_SIZE
 #define SEROBUF_SIZE 32
@@ -120,7 +132,6 @@ int	serconsole = -1;
 #endif
 int	serconsinit;
 int	serdefaultrate = TTYDEF_SPEED;
-int	sermajor;
 int	serswflags;
 
 struct	vbl_node ser_vbl_node;
@@ -224,7 +235,7 @@ serattach(struct device *pdp, struct device *dp, void *auxp)
 	ser_vbl_node.function = (void (*) (void *)) sermint;
 	add_vbl_function(&ser_vbl_node, SER_VBL_PRIORITY, (void *) 0);
 #ifdef KGDB
-	if (kgdb_dev == makedev(sermajor, 0)) {
+	if (kgdb_dev == makedev(cdevsw_lookup_major(&ser_cdevsw), 0)) {
 		if (serconsole == 0)
 			kgdb_dev = NODEV; /* can't debug over console port */
 		else {
@@ -572,8 +583,11 @@ sereint(int stat)
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
 #ifdef KGDB
+		int maj;
+
 		/* we don't care about parity errors */
-		if (kgdb_dev == makedev(sermajor, 0) && c == FRAME_END)
+		maj = cdevsw_lookup_major(&ser_cdevsw);
+		if (kgdb_dev == makedev(maj, 0) && c == FRAME_END)
 			kgdb_connect(0);	/* trap into kgdb */
 #endif
 		return;
@@ -1026,12 +1040,13 @@ sermctl(dev_t dev, int bits, int how)
 void
 sercnprobe(struct consdev *cp)
 {
-	int unit;
+	int maj, unit;
+#ifdef KGDB
+	extern const struct cdevsw ctty_cdevsw;
+#endif
 
 	/* locate the major number */
-	for (sermajor = 0; sermajor < nchrdev; sermajor++)
-		if (cdevsw[sermajor].d_open == (void *)seropen)
-			break;
+	maj = cdevsw_lookup_major(&ser_cdevsw);
 
 
 	unit = CONUNIT;			/* XXX: ick */
@@ -1039,14 +1054,15 @@ sercnprobe(struct consdev *cp)
 	/*
 	 * initialize required fields
 	 */
-	cp->cn_dev = makedev(sermajor, unit);
+	cp->cn_dev = makedev(maj, unit);
 	if (serconsole == unit)
 		cp->cn_pri = CN_REMOTE;
 	else
 		cp->cn_pri = CN_NORMAL;
 #ifdef KGDB
-	if (major(kgdb_dev) == 1)	/* XXX */
-		kgdb_dev = makedev(sermajor, minor(kgdb_dev));
+	/* XXX */
+	if (cdevsw_lookup(kgdb_dev) == &ctty_cdevsw)
+		kgdb_dev = makedev(maj, minor(kgdb_dev));
 #endif
 }
 
