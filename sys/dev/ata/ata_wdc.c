@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.48 2004/01/01 17:18:54 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.49 2004/01/01 20:25:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.48 2004/01/01 17:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.49 2004/01/01 20:25:22 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -424,7 +424,7 @@ again:
 				chp->wdc->select(chp, xfer->c_drive);
 			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
 			    0, WDSD_IBM | (xfer->c_drive << 4));
-			switch(wait_for_ready(chp, ATA_DELAY, wait_flags)) {
+			switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags)) {
 			case WDCWAIT_OK:
 				break;	
 			case WDCWAIT_TOUT:
@@ -464,7 +464,7 @@ again:
 			chp->wdc->select(chp, xfer->c_drive);
 		bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh], 0,
 		    WDSD_IBM | (xfer->c_drive << 4));
-		switch(wait_for_ready(chp, ATA_DELAY, wait_flags)) {
+		switch(wdc_wait_for_ready(chp, ATA_DELAY, wait_flags)) {
 		case WDCWAIT_OK:
 			break;
 		case WDCWAIT_TOUT:
@@ -499,7 +499,7 @@ again:
 		 * we have to busy-wait here, we can't rely on running in
 		 * thread context.
 		 */
-		if (wait_for_drq(chp, ATA_DELAY, AT_POLL) != 0) {
+		if (wdc_wait_for_drq(chp, ATA_DELAY, AT_POLL) != 0) {
 			printf("%s:%d:%d: timeout waiting for DRQ, "
 			    "st=0x%02x, err=0x%02x\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
@@ -599,8 +599,8 @@ wdc_ata_bio_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
 		return 1;
 	}
 
-	/* Ack interrupt done by wait_for_unbusy */
-	if (wait_for_unbusy(chp, (irq == 0) ? ATA_DELAY : 0, AT_POLL) < 0) {
+	/* Ack interrupt done by wdc_wait_for_unbusy */
+	if (wdc_wait_for_unbusy(chp, (irq == 0) ? ATA_DELAY : 0, AT_POLL) < 0) {
 		if (irq && (xfer->c_flags & C_TIMEOU) == 0)
 			return 0; /* IRQ was not for us */
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
