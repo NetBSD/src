@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbreg.h,v 1.3 2002/09/24 18:17:25 uwe Exp $ */
+/*	$NetBSD: igsfbreg.h,v 1.4 2003/05/31 18:25:40 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -269,8 +269,8 @@
  * Coprocessor registers location in I/O space.
  * Controlled by COPASELB bit in IGS_EXT_BIU_MISC_CTL.
  */
-#define IGS_COP_BASE_A	0xafc00		/* COPASELB == 0 */
-#define IGS_COP_BASE_B	0xbfc00		/* COPASELB == 1 */
+#define IGS_COP_BASE_A	0xaf000		/* COPASELB == 0 */
+#define IGS_COP_BASE_B	0xbf000		/* COPASELB == 1 */
 #define IGS_COP_SIZE	0x00400
 
 
