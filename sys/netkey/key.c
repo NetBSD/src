@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.116 2004/04/26 03:54:28 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.117 2004/04/26 04:00:06 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.116 2004/04/26 03:54:28 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.117 2004/04/26 04:00:06 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -3094,6 +3094,7 @@ key_setsaval(sav, m, mhp)
 			error = EINVAL;
 			goto fail;
 		}
+		break;
 	default:
 		ipseclog((LOG_DEBUG, "key_setsaval: invalid SA type.\n"));
 		error = EINVAL;
