@@ -1,4 +1,4 @@
-/*	$NetBSD: htons.S,v 1.2 1995/12/13 21:46:15 thorpej Exp $	*/
+/*	$NetBSD: htons.S,v 1.3 1997/04/25 01:00:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,13 +37,13 @@
  * SUCH DAMAGE.
  */
 
-#include "DEFS.h"
+#include <machine/asm.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 	RCSID("from: @(#)htons.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: htons.S,v 1.2 1995/12/13 21:46:15 thorpej Exp $")
+	RCSID("$NetBSD: htons.S,v 1.3 1997/04/25 01:00:46 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
