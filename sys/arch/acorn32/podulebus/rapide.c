@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.15 2003/12/02 23:47:20 bjh21 Exp $	*/
+/*	$NetBSD: rapide.c,v 1.16 2003/12/31 02:41:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.15 2003/12/02 23:47:20 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.16 2003/12/31 02:41:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ struct rapide_softc {
 	bus_space_handle_t	sc_ctlioh;		/* control handler */
 	struct rapide_channel {
 		struct channel_softc wdc_channel; /* generic part */
+		struct channel_queue wdc_chqueue; /* channel queue */
 		irqhandler_t	rc_ih;			/* interrupt handler */
 		int		rc_irqmask;	/* IRQ mask for this channel */
 	} rapide_channels[2];
@@ -256,14 +257,7 @@ rapide_attach(parent, self, aux)
 
 		cp->channel = channel;
 		cp->wdc = &sc->sc_wdcdev;
-		cp->ch_queue = malloc(sizeof(struct channel_queue),
-		    M_DEVBUF, M_NOWAIT);
-		if (cp->ch_queue == NULL) {
-			printf("%s %s channel: can't allocate memory for "
-			    "command queue", self->dv_xname,
-			    (channel == 0) ? "primary" : "secondary");
-			continue;
-		}
+		cp->ch_queue = &rcp->wdc_chqueue;
 		cp->cmd_iot = iot;
 		cp->ctl_iot = iot;
 		cp->data32iot = iot;
