@@ -1,11 +1,11 @@
 #	from: @(#)Makefile.inc	5.21 (Berkeley) 5/24/91
-#	$Id: Makefile.inc,v 1.23 1993/11/14 12:40:23 cgd Exp $
+#	$Id: Makefile.inc,v 1.24 1993/11/17 18:15:32 jtc Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE}/gen ${.CURDIR}/gen
 
-SRCS+=	alarm.c assert.c clock.c ctermid.c ctime.c ctype_.c cuserid.c \
-	difftime.c \
+SRCS+=	alarm.c assert.c clock.c confstr.c ctermid.c ctime.c ctype_.c \
+	cuserid.c difftime.c \
 	directory.c disklabel.c err.c errlst.c exec.c fnmatch.c frexp.c \
 	fstab.c fts.c getcap.c getcwd.c getgrent.c getlogin.c getmntinfo.c \
 	getpass.c getpwent.c getsubopt.c getttyent.c getusershell.c glob.c \
