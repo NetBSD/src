@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.5 2000/04/16 03:24:26 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.6 2000/04/17 19:35:12 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -28,9 +28,6 @@
 
 /* rf_layout.c -- driver code dealing with layout and mapping issues
  */
-
-#include <sys/types.h>
-#include <machine/param.h>
 
 #include "rf_types.h"
 #include "rf_archs.h"
@@ -443,14 +440,6 @@ rf_ConfigureLayout(
 		RF_ERRORMSG2("raid%d: Invalid sectorsPerStripeUnit: %d\n",
 			     raidPtr->raidid, 
 			     (int)layoutPtr->sectorsPerStripeUnit );
-		return (EINVAL); 
-	}
-
-	if ((layoutPtr->sectorsPerStripeUnit * 
-	     (1 << raidPtr->logBytesPerSector)) > MAXPHYS) {
-		RF_ERRORMSG2("raid%d: sectorsPerStripeUnit (%d) would exceed MAXPHYS\n",
-			     raidPtr->raidid, 
-			     (int)layoutPtr->sectorsPerStripeUnit);
 		return (EINVAL); 
 	}
 
