@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.9 1996/03/15 03:03:34 paulus Exp $
+#	$Id: Makefile,v 1.10 1996/03/18 09:19:27 mrg Exp $
 
 PROG=	pppd
 SRCS=	main.c magic.c fsm.c lcp.c ipcp.c upap.c chap.c md5.c ccp.c \
@@ -13,5 +13,6 @@ BINOWN=	root
 LDADD=	-lcrypt -lutil
 DPADD=	${LIBCRYPT} ${LIBUTIL}
 CFLAGS+= -DHAVE_PATHS_H
+CLEANFILES=y.tab.h grammar.c scanner.c
 
 .include <bsd.prog.mk>
