@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2001/05/05 17:53:59 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 2001/09/19 20:25:48 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -148,6 +148,7 @@ matchbiosdisks()
 	int i, ck, error, m, n;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
+	int  dklist_size;
 
 	big = lookup_bootinfo(BTINFO_BIOSGEOM);
 
@@ -168,12 +169,15 @@ matchbiosdisks()
 	if (i386_ndisks == 0)
 		return;
 
+	dklist_size = sizeof (struct disklist) + (i386_ndisks - 1) *
+	    sizeof (struct nativedisk_info);
+
 	/* XXX M_TEMP is wrong */
-	i386_alldisks = malloc(sizeof (struct disklist) + (i386_ndisks - 1) *
-				sizeof (struct nativedisk_info),
-				M_TEMP, M_NOWAIT);
+	i386_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT);
 	if (i386_alldisks == NULL)
 		return;
+
+	memset(i386_alldisks, 0, dklist_size);
 
 	i386_alldisks->dl_nnativedisks = i386_ndisks;
 	i386_alldisks->dl_nbiosdisks = big->num;
