@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.32 2001/05/30 12:30:41 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.33 2001/06/03 04:03:29 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_ddb.h"
 #endif
 
 #include <sys/device.h>
@@ -180,10 +181,6 @@ struct cpu_info {
 	/* Context administration */
 	int		*ctx_tbl;	/* [4m] SRMMU-edible context table */
 	paddr_t		ctx_tbl_pa;	/* [4m] ctx table physical address */
-	union ctxinfo	*ctxinfo;
-	union ctxinfo	*ctx_freelist;  /* context free list */
-	int		ctx_kick;	/* allocation rover when none free */
-	int		ctx_kickdir;	/* ctx_kick roves both directions */
 
 /* XXX - of these, we currently use only cpu_type */
 	int		arch;		/* Architecture: CPU_SUN4x */
@@ -381,6 +378,10 @@ struct cpu_info {
 #define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
 #define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
 					   uncached access */
+#define CPUFLG_STARTUP		0x2000	/* CPU is waiting for startup */
+#define CPUFLG_PAUSED		0x4000	/* CPU is paused */
+#define CPUFLG_GOTMSG		0x8000	/* CPU got an IPI */
+
 
 #define CPU_INFO_ITERATOR		int
 #define CPU_INFO_FOREACH(cii, ci)	cii = 0; ci = cpus[cii], cii < ncpu; cii++
