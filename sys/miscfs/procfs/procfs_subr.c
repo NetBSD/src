@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.46 2003/02/25 21:00:32 jrf Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.47 2003/03/04 18:55:02 tron Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.46 2003/02/25 21:00:32 jrf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.47 2003/03/04 18:55:02 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,6 +195,7 @@ procfs_allocvp(mp, vpp, pid, pfs_type, fd)
 	case Pcmdline:	/* /proc/N/cmdline = -r--r--r-- */
 	case Pmeminfo:	/* /proc/meminfo = -r--r--r-- */
 	case Pcpuinfo:	/* /proc/cpuinfo = -r--r--r-- */
+	case Puptime:	/* /proc/uptime = -r--r--r-- */
 		pfs->pfs_mode = S_IRUSR|S_IRGRP|S_IROTH;
 		vp->v_type = VREG;
 		break;
