@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.7 1999/12/13 09:22:52 christos Exp $	 */
+/*	$NetBSD: load.c,v 1.8 1999/12/13 10:47:38 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -174,7 +174,7 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 		case CTLTYPE_STRING:
 			break;
 		default:
-			warnx("unsupport sysctl type %d", x->ctltype);
+			warnx("unsupported sysctl type %d", x->ctltype);
 			break;
 		}
 
@@ -183,8 +183,8 @@ _rtld_load_by_name(name, obj, needed, dodebug)
 
 		for (i = 0; i < RTLD_MAX_ENTRY && x->entry[i].value != NULL;
 		    i++) {
-		if (dodebug)
-			dbg(("entry %d", i));
+			if (dodebug)
+				dbg(("entry %d", i));
 			if (strcmp(x->entry[i].value, val.s) == 0)
 				break;
 		}
