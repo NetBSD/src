@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.71 2001/12/17 13:08:15 wiz Exp $
+# $NetBSD: mi,v 1.72 2001/12/18 14:11:31 mrg Exp $
 ./usr/share/dict/README				misc-reference-share
 ./usr/share/dict/eign				misc-reference-share
 ./usr/share/dict/propernames			misc-reference-share
@@ -434,6 +434,7 @@
 ./usr/share/examples/supfiles/sup.netbsd.org		misc-sup-examples
 ./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples
 ./usr/share/examples/syslogd/all.debug			misc-sysutil-examples
+./usr/share/examples/syslogd/all.newsyslog.conf		misc-sysutil-examples
 ./usr/share/sendmail/LICENSE				misc-sendmail-share
 ./usr/share/sendmail/README				misc-sendmail-share
 ./usr/share/sendmail/cf/Makefile			misc-sendmail-share
