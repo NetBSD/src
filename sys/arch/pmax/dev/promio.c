@@ -1,4 +1,4 @@
-/*	$NetBSD: promio.c,v 1.1 1995/04/11 10:08:42 mellon Exp $	*/
+/*	$NetBSD: promio.c,v 1.2 1995/09/11 07:45:50 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/device.h>
+#include <dev/cons.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -53,7 +55,6 @@
 
 #include <pmax/stand/dec_prom.h>
 
-#include <pmax/dev/device.h>
 #include <pmax/dev/sccreg.h>
 #include <pmax/pmax/kn01.h>
 #include <pmax/pmax/kn02.h>
@@ -63,17 +64,19 @@
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/turbochannel.h>
 #include <pmax/pmax/pmaxtype.h>
-/* #include <pmax/pmax/cons.h> */
-#include <dev/cons.h>
 
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
-#include <pmax/dev/fbreg.h>
 
-#include <sys/device.h>
 #include <machine/fbio.h>
 #include <sparc/rcons/raster.h>
 #include <machine/fbvar.h>
+
+#include <pmax/dev/fbreg.h>
+
+#include <machine/autoconf.h>
+#include <pmax/tc/tc.h>
+
 
 #include <pm.h>
 #include <cfb.h>
@@ -87,6 +90,7 @@
 #include <asc.h>
 
 #if NDC > 0
+#include <machine/dc7085cons.h>
 extern int dcGetc(), dcparam();
 extern void dcPutc();
 #endif
@@ -101,6 +105,8 @@ static int romgetc __P ((dev_t));
 static void romputc __P ((dev_t, int));
 static void rompollc __P((dev_t, int));
 
+extern int LKgetc __P((dev_t dev)); /* should be in header file, but which one? */
+
 int	pmax_boardtype;		/* Mother board type */
 
 /*
@@ -109,6 +115,7 @@ int	pmax_boardtype;		/* Mother board type */
 #define	DTOPDEV		15
 #define	DCDEV		16
 #define	SCCDEV		17
+#define RCONSDEV	85
 
 /*
  * Console I/O is redirected to the appropriate device, either a screen and
@@ -116,6 +123,7 @@ int	pmax_boardtype;		/* Mother board type */
  */
 
 extern struct consdev *cn_tab;	/* Console I/O table... */
+extern void rcons_vputc __P((dev_t, int));	/* XXX */
 
 struct consdev cd = {
 	(void (*)(struct consdev *))0,		/* probe */
@@ -127,19 +135,42 @@ struct consdev cd = {
 	CN_DEAD,
 };
 
+/* should be locals of consinit, but that's split in two til
+ * new-style config of decstations is finished
+ */
+
+/*
+ * Forward declarations
+ */
+
+
+int consprobetc __P((int prom_slot));
+int consprobeslot __P((caddr_t name, void *addr));
+void consinit __P((void));
+void xconsinit __P((void));
+
+
+extern struct tc_cpu_desc *  cpu_tcdesc __P ((int cputype));
+
+
+int kbd;
+int pending_remcons = 0;
+
 /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
  */
+void
 consinit()
 {
-	register int kbd, crt;
+	int crt;
 	register char *oscon;
 	int screen = 0;
 
+	extern void (*v_putc) __P ((dev_t, int));
 	cn_tab = &cd;
-	(*callv -> _printf)("consinit\n");
+
 
 	/*
 	 * First get the "osconsole" environment variable.
@@ -148,9 +179,11 @@ consinit()
 	crt = kbd = -1;
 	if (oscon && *oscon >= '0' && *oscon <= '9') {
 		kbd = *oscon - '0';
+		/*cn_tab.cn_pri = CN_DEAD;*/
 		screen = 0;
 		while (*++oscon) {
 			if (*oscon == ',')
+				/*cn_tab.cn_pri = CN_INTERNAL;*/
 				screen = 1;
 			else if (screen &&
 			    *oscon >= '0' && *oscon <= '9') {
@@ -160,6 +193,12 @@ consinit()
 			}
 		}
 	}
+	/* we can't do anything until auto-configuration
+	 * has run, and that requires kmalloc(), which
+	 * hasn't been initialized yet.  Just keep using
+	 * whatever the PROM vector gave us.
+	 */
+
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		screen = 1;
 	/*
@@ -167,6 +206,7 @@ consinit()
 	 * osconsole to '1' like the PMAX.
 	 */
 	if (pmax_boardtype == DS_3MAX && crt == -1 && kbd == 1) {
+		/* Try to use pmax onboard framebuffer */
 		screen = 1;
 		crt = 0;
 		kbd = 7;
@@ -182,7 +222,8 @@ consinit()
 #if NDC > 0 && NPM > 0
 		if (pminit()) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
-			cd.cn_getc = dcGetc;
+			cd.cn_getc = LKgetc;
+			lk_divert(dcGetc);
 			cd.cn_pri = CN_INTERNAL;
 			return;
 		}
@@ -209,7 +250,8 @@ consinit()
 #if NDC > 0
 		if (kbd == 7) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
-			cd.cn_getc = dcGetc;
+			cd.cn_getc = LKgetc;
+			lk_divert(dcGetc);
 		} else
 #endif /* NDC */
 			goto remcons;
@@ -220,7 +262,8 @@ consinit()
 #if NSCC > 0
 		if (kbd == 3) {
 			cd.cn_dev = makedev(SCCDEV, SCCKBD_PORT);
-			cd.cn_getc = sccGetc;
+			lk_divert(sccGetc);
+			cd.cn_getc = LKgetc;
 		} else
 #endif /* NSCC */
 			goto remcons;
@@ -230,40 +273,52 @@ consinit()
 		goto remcons;
 	    };
 
+
 	    /*
 	     * Check for a suitable turbochannel frame buffer.
 	     */
-	    if (tc_slot_info[crt].driver_name) {
-#if NMFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "mfb") == 0 &&
-		    mfbinit(tc_slot_info[crt].k1seg_address)) {
+	    if (consprobetc(crt)) {
 			cd.cn_pri = CN_NORMAL;
+#ifdef RCONS_HACK
+/* FIXME */		cd.cn_putc = v_putc;
+/* FIXME */		cd.cn_dev = makedev (RCONSDEV, 0);
+#endif /* RCONS_HACK */
+			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
-		}
-#endif /* NMFB */
-#if NSFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "sfb") == 0 &&
-		    sfbinit(tc_slot_info[crt].k1seg_address, 0)) {
-			cd.cn_pri = CN_NORMAL;
-			return;
-		}
-#endif /* NSFB */
-#if NCFB > 0
-		if (strcmp(tc_slot_info[crt].driver_name, "cfb") == 0 &&
-		    cfbinit(tc_slot_info[crt].k1seg_address)) {
-			cd.cn_pri = CN_NORMAL;
-			return;
-		}
-#endif /* NCFB */
-		printf("crt: %s not supported as console device\n",
-			tc_slot_info[crt].driver_name);
 	    } else
 		printf("No crt console device in slot %d\n", crt);
 	}
+
+
 remcons:
+
 	/*
 	 * Configure a serial port as a remote console.
 	 */
+
+	/* XXX serial drivers need to be rewritten to handle
+	 * init this early. Defer switching to non-PROM
+	 * driver until later.
+	 */
+	pending_remcons = 1;
+	printf("Using PROM serial output until serial drivers initialized\n");
+
+	/* We never cahnged output; go back to using PROM input */
+	cd.cn_dev = makedev (0, 0);
+	cd.cn_getc = /*(int (*)(dev_t)) */ romgetc;
+}
+
+
+/*
+ * Configure a serial port as a remote console.
+ */
+void
+xconsinit()
+{
+	if (!pending_remcons)
+		return;
+
+	pending_remcons = 0;
 	switch (pmax_boardtype) {
 	case DS_PMAX:
 #if NDC > 0
@@ -309,6 +364,91 @@ remcons:
 		printf("Can't configure console!\n");
 }
 
+
+
+/*
+ * Probe for a framebuffer option card.  Configure the first one
+ * found as a console.
+ */
+int
+consprobetc(prom_slot)
+	int prom_slot;
+{
+	void *slotaddr;
+	int slot;
+	struct tc_cpu_desc * sc_desc = cpu_tcdesc(pmax_boardtype);
+	char namebuf[20];
+
+	if (sc_desc == NULL)
+		return;
+
+	/*printf("Looking for fb console in slot %d", slot);*/
+
+	/*
+	 * Try to configure each turbochannel (or CPU-internal) device.
+	 * Knows about gross internals of TurboChannel bus autoconfig
+	 * descriptor, which needs to be fixed badly.
+	 */
+	for (slot = 0; slot < sc_desc->tcd_ndevs; slot++) {
+		slotaddr = (void *)sc_desc->tcd_slots[slot].tsd_dense;
+		/*printf("probing slot %d at 0x%x\n", slot, slotaddr);*/
+
+		if (tc_checkdevmem(slotaddr) == 0)
+			continue;
+		if (tc_checkslot(slotaddr, namebuf) == 0)
+			continue;
+
+		if (consprobeslot(namebuf, slotaddr))
+			return (1);
+	}
+	return (0);
+}
+
+/*
+ * Try and configure one slot as framebuffer console.
+ * Accept only the framebuffers configured in.
+ */
+int
+consprobeslot(name, addr)
+    char *name;
+    void * addr;
+    
+{
+
+	/*printf(", trying to init a \"%s\"", name);*/
+
+#define DRIVER_FOR_SLOT(slotname, drivername) \
+	(strcmp (slotname, drivername) == 0)
+
+#if NMFB > 0
+	if (DRIVER_FOR_SLOT(name, "PMAG-AA ") &&
+	    mfbinit(addr, 0, 1)) {
+		cd.cn_pri = CN_NORMAL;
+		return (1);
+		}
+#endif /* NMFB */
+
+#if NSFB > 0
+	if (DRIVER_FOR_SLOT(name, "PMAGB-BA") &&
+	    sfbinit(addr, 0, 1)) {
+		cd.cn_pri = CN_NORMAL;
+		return (1);
+	}
+#endif /* NSFB */
+
+#if NCFB > 0
+	/*"cfb"*/
+	if (DRIVER_FOR_SLOT(name, "PMAG-BA ") &&
+	    cfbinit(NULL, addr, 0, 1)) {
+		cd.cn_pri = CN_NORMAL;
+		return (1);
+	}
+#endif /* NCFB */
+	return (0);
+}
+
+
+
 /*
  * Get character from ROM console.
  */
@@ -342,3 +482,33 @@ static void rompollc (dev, c)
 	return;
 }
 
+
+extern struct	tty *constty;		/* virtual console output device */
+extern struct	consdev *cn_tab;	/* physical console device info */
+extern struct	vnode *cn_devvp;	/* vnode for underlying device. */
+
+/*ARGSUSED*/
+int
+pmax_cnselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
+{
+
+	/*
+	 * Redirect the ioctl, if that's appropriate.
+	 * I don't want to think of the possible side effects
+	 * of console redirection here.
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return ENXIO;
+	else
+		dev = cn_tab->cn_dev;
+#ifdef RCONS
+	if (cn_tab -> cn_dev == makedev (85, 0))
+		return rconsselect (cn_tab -> cn_dev, rw, p);
+#endif
+	return (ttselect(cn_tab->cn_dev, rw, p));
+}
