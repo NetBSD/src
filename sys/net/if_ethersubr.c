@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.24 1997/04/03 15:25:20 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.25 1997/04/03 18:48:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -209,7 +209,7 @@ ether_output(ifp, m0, dst, rt0)
 		 * ifaddr is the first thing in at_ifaddr
 		 */
 		aa = (struct at_ifaddr *) at_ifawithnet(
-		    (struct sockaddr_at *)dst, ifp->if_addrlist.tqh_first);
+		    (struct sockaddr_at *)dst, ifp);
 		if (aa == NULL)
 		    goto bad;
 		
