@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.65 2004/01/01 21:57:42 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.66 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.65 2004/01/01 21:57:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.66 2004/01/03 01:50:53 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -86,12 +86,12 @@ static int	wdc_atapi_get_params(struct scsipi_channel *, int,
 				     struct ataparams *);
 static void	wdc_atapi_probe_device(struct atapibus_softc *, int);
 static void	wdc_atapi_minphys (struct buf *bp);
-static void	wdc_atapi_start(struct channel_softc *,struct ata_xfer *);
-static int	wdc_atapi_intr(struct channel_softc *, struct ata_xfer *, int);
-static void	wdc_atapi_kill_xfer(struct channel_softc *, struct ata_xfer *);
+static void	wdc_atapi_start(struct wdc_channel *,struct ata_xfer *);
+static int	wdc_atapi_intr(struct wdc_channel *, struct ata_xfer *, int);
+static void	wdc_atapi_kill_xfer(struct wdc_channel *, struct ata_xfer *);
 static void	wdc_atapi_phase_complete(struct ata_xfer *);
-static void	wdc_atapi_done(struct channel_softc *, struct ata_xfer *);
-static void	wdc_atapi_reset(struct channel_softc *, struct ata_xfer *);
+static void	wdc_atapi_done(struct wdc_channel *, struct ata_xfer *);
+static void	wdc_atapi_reset(struct wdc_channel *, struct ata_xfer *);
 static void	wdc_atapi_scsipi_request(struct scsipi_channel *,
 					 scsipi_adapter_req_t, void *);
 static void	wdc_atapi_kill_pending(struct scsipi_periph *);
@@ -110,7 +110,7 @@ static const struct scsipi_bustype wdc_atapi_bustype = {
 void
 wdc_atapibus_attach(struct atabus_softc *ata_sc)
 {
-	struct channel_softc *chp = ata_sc->sc_chan;
+	struct wdc_channel *chp = ata_sc->sc_chan;
 	struct wdc_softc *wdc = chp->wdc;
 	struct scsipi_adapter *adapt = &wdc->sc_atapi_adapter._generic;
 	struct scsipi_channel *chan = &chp->ch_atapi_channel;
@@ -161,14 +161,14 @@ wdc_atapi_kill_pending(struct scsipi_periph *periph)
 {
 	struct wdc_softc *wdc =
 	    (void *)periph->periph_channel->chan_adapter->adapt_dev;
-	struct channel_softc *chp =
+	struct wdc_channel *chp =
 	    wdc->channels[periph->periph_channel->chan_channel];
 
 	wdc_kill_pending(chp);
 }
 
 static void
-wdc_atapi_kill_xfer(struct channel_softc *chp, struct ata_xfer *xfer)
+wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
@@ -184,7 +184,7 @@ wdc_atapi_get_params(struct scsipi_channel *chan, int drive,
     struct ataparams *id)
 {
 	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
-	struct channel_softc *chp = wdc->channels[chan->chan_channel];
+	struct wdc_channel *chp = wdc->channels[chan->chan_channel];
 	struct wdc_command wdc_c;
 
 	/* if no ATAPI device detected at wdc attach time, skip */
@@ -237,7 +237,7 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 	struct ataparams ids;
 	struct ataparams *id = &ids;
 	struct wdc_softc *wdc = (void *)chan->chan_adapter->adapt_dev;
-	struct channel_softc *chp = wdc->channels[chan->chan_channel];
+	struct wdc_channel *chp = wdc->channels[chan->chan_channel];
 	struct ata_drive_datas *drvp = &chp->ch_drive[target];
 	struct scsipibus_attach_args sa;
 	char serial_number[21], model[41], firmware_revision[9];
@@ -390,7 +390,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 }
 
 static void
-wdc_atapi_start(struct channel_softc *chp, struct ata_xfer *xfer)
+wdc_atapi_start(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
@@ -554,7 +554,7 @@ error:
 }
 
 static int
-wdc_atapi_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
+wdc_atapi_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
@@ -872,7 +872,7 @@ again:
 static void
 wdc_atapi_phase_complete(struct ata_xfer *xfer)
 {
-	struct channel_softc *chp = xfer->c_chp;
+	struct wdc_channel *chp = xfer->c_chp;
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 
@@ -947,7 +947,7 @@ wdc_atapi_phase_complete(struct ata_xfer *xfer)
 }
 
 static void
-wdc_atapi_done(struct channel_softc *chp, struct ata_xfer *xfer)
+wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;
 
@@ -966,7 +966,7 @@ wdc_atapi_done(struct channel_softc *chp, struct ata_xfer *xfer)
 }
 
 static void
-wdc_atapi_reset(struct channel_softc *chp, struct ata_xfer *xfer)
+wdc_atapi_reset(struct wdc_channel *chp, struct ata_xfer *xfer)
 {
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->c_drive];
 	struct scsipi_xfer *sc_xfer = xfer->c_cmd;

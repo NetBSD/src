@@ -1,4 +1,4 @@
-/*	$NetBSD: optiide.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: optiide.c,v 1.4 2004/01/03 01:50:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/pci/pciide_opti_reg.h>
 
 static void opti_chip_map(struct pciide_softc*, struct pci_attach_args*);
-static void opti_setup_channel(struct channel_softc*);
+static void opti_setup_channel(struct wdc_channel*);
 
 static int  optiide_match(struct device *, struct cfdata *, void *);
 static void optiide_attach(struct device *, struct device *, void *);
@@ -168,7 +168,7 @@ opti_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 }
 
 static void
-opti_setup_channel(struct channel_softc *chp)
+opti_setup_channel(struct wdc_channel *chp)
 {
 	struct ata_drive_datas *drvp;
 	struct pciide_channel *cp = (struct pciide_channel*)chp;
