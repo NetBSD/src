@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.7 1994/05/05 10:06:32 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.8 1994/08/05 23:41:15 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -210,7 +210,7 @@ deliver(fd, name, lockfile)
 	}
 
 	curoff = lseek(mbfd, 0, SEEK_END);
-	(void)sprintf(biffmsg, "%s@%ld\n", name, curoff);
+	(void)sprintf(biffmsg, "%s@%qd\n", name, curoff);
 	if (lseek(fd, 0, SEEK_SET) == (off_t)-1) {
 		err(FATAL, "temporary file: %s", strerror(errno));
 		rval = 1;
