@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.3 1998/05/25 09:08:08 leo Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.4 2000/01/19 13:12:54 leo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -161,8 +161,6 @@ static void		beb_bus_space_set_region_8 __P((bus_space_tag_t,
 				bus_space_handle_t, bus_size_t, u_int64_t,
 				bus_size_t));
 
-bus_space_tag_t		beb_alloc_bus_space_tag __P((void));
-
 /*
  * Don't force a function call overhead on these primitives...
  */
@@ -177,12 +175,21 @@ bus_space_tag_t		beb_alloc_bus_space_tag __P((void));
 #define __write_8(h, o, v)	*((u_int64_t *)((h) + (o))) = (v)
 
 bus_space_tag_t
-beb_alloc_bus_space_tag()
+beb_alloc_bus_space_tag(storage)
+bus_space_tag_t	storage;
 {
 	bus_space_tag_t	beb_t;
 
-	if ((beb_t = malloc(sizeof(*beb_t), M_TEMP, M_NOWAIT)) == NULL)
+	/*
+	 * Allow the caller to specify storage space for the tag. This
+	 * is used during console config (when malloc() can't be used).
+	 */
+	if (storage != NULL)
+		beb_t = storage;
+	else {
+	    if ((beb_t = malloc(sizeof(*beb_t), M_TEMP, M_NOWAIT)) == NULL)
 		return(NULL);
+	}
 	bzero(beb_t, sizeof(*beb_t));
 	
 	beb_t->abs_p_1   = beb_bus_space_peek_1;

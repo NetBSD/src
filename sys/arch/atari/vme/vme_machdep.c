@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.6 1998/09/15 10:45:11 leo Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.7 2000/01/19 13:13:18 leo Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,11 +78,10 @@ struct device	*pdp, *dp;
 void		*auxp;
 {
 	struct vmebus_attach_args	vba;
-	bus_space_tag_t			beb_alloc_bus_space_tag __P((void));
 
 	vba.vba_busname = "vme";
-	vba.vba_iot     = beb_alloc_bus_space_tag();
-	vba.vba_memt    = beb_alloc_bus_space_tag();
+	vba.vba_iot     = beb_alloc_bus_space_tag(NULL);
+	vba.vba_memt    = beb_alloc_bus_space_tag(NULL);
 	if ((vba.vba_iot == NULL) || (vba.vba_memt == NULL)) {
 		printf("beb_alloc_bus_space_tag failed!\n");
 		return;
