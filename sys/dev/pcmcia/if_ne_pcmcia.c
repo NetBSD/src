@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.20 1998/10/07 01:08:37 jtk Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.21 1998/10/28 00:13:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -450,7 +450,7 @@ ne_pcmcia_attach(parent, self, aux)
 
 	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name);
 
-	ne2000_attach(nsc, enaddr);
+	ne2000_attach(nsc, enaddr, NULL, 0, 0);
 
 	pcmcia_function_disable(pa->pf);
 }

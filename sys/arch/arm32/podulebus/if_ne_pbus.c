@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.1 1998/03/21 21:35:20 mark Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.2 1998/10/28 00:13:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
  * EtherH - The driver currently relies on some part if the RISCOS driver 
  * initialisation code to work correctly. This dependancy needs to be
  * removed.
+ *
+ * Needs to be converted to use media a'la if_ne_pci.c, not the home-grown
+ * hack it currently uses.
  */
 
 #include <sys/param.h>
@@ -300,7 +303,7 @@ ne_pbus_attach(parent, self, aux)
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, myea);
+	ne2000_attach(nsc, myea, NULL, 0, 0);
 
 	/* Does the interface need a postattach call ? */
 	if (ne->postattach)
