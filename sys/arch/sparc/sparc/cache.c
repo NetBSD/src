@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.70 2003/01/03 15:44:55 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.71 2003/01/07 05:57:37 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -996,19 +996,28 @@ viking_pcache_flush_page(pa, invalidate_only)
  * message. This assumes the allocation of CPU contextses is a global
  * operation (remember that the actual context tables for the CPUs
  * are distinct).
- *
- * We don't do cross calls if we're cold or we're not accepting them
- * ourselves (CPUFLG_READY).
- *
- * XXX SUN4D
  */
+
+#if defined(SUN4D)
+static struct simplelock sun4d_cache_lock = SIMPLELOCK_INITIALIZER;
+#define LOCK_4DCACHE()		simple_lock(&sun4d_cache_lock);
+#define UNLOCK_4DCACHE()	simple_unlock(&sun4d_cache_lock);
+#else
+#define LOCK_4DCACHE()		/* nothing */
+#define UNLOCK_4DCACHE()	/* nothing */
+#endif
 
 void
 smp_vcache_flush_page(va, ctx)
 	int va;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
+	if (CPU_ISSUN4D) {
+		LOCK_4DCACHE();
+		(*cpuinfo.sp_vcache_flush_page)(va, ctx);
+		UNLOCK_4DCACHE();
+	} else
+		XCALL2(cpuinfo.sp_vcache_flush_page, va, ctx, CPUSET_ALL);
 }
 
 void
@@ -1016,7 +1025,12 @@ smp_vcache_flush_segment(vr, vs, ctx)
 	int vr, vs;
 	int ctx;
 {
-	XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
+	if (CPU_ISSUN4D) {
+		LOCK_4DCACHE();
+		(*cpuinfo.sp_vcache_flush_segment)(vr, vs, ctx);
+		UNLOCK_4DCACHE();
+	} else
+		XCALL3(cpuinfo.sp_vcache_flush_segment, vr, vs, ctx, CPUSET_ALL);
 }
 
 void
@@ -1024,14 +1038,24 @@ smp_vcache_flush_region(vr, ctx)
 	int vr;
 	int ctx;
 {
-	XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
+	if (CPU_ISSUN4D) {
+		LOCK_4DCACHE();
+		(*cpuinfo.sp_vcache_flush_region)(vr, ctx);
+		UNLOCK_4DCACHE();
+	} else
+		XCALL2(cpuinfo.sp_vcache_flush_region, vr, ctx, CPUSET_ALL);
 }
 
 void
 smp_vcache_flush_context(ctx)
 	int ctx;
 {
-	XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
+	if (CPU_ISSUN4D) {
+		LOCK_4DCACHE();
+		(*cpuinfo.sp_vcache_flush_context)(ctx);
+		UNLOCK_4DCACHE();
+	} else
+		XCALL1(cpuinfo.sp_vcache_flush_context, ctx, CPUSET_ALL);
 }
 
 void
@@ -1040,6 +1064,11 @@ smp_cache_flush(va, size, ctx)
 	u_int size;
 	int ctx;
 {
-	XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
+	if (CPU_ISSUN4D) {
+		LOCK_4DCACHE();
+		(*cpuinfo.sp_cache_flush)(va, size, ctx);
+		UNLOCK_4DCACHE();
+	} else
+		XCALL3(cpuinfo.sp_cache_flush, va, size, ctx, CPUSET_ALL);
 }
 #endif /* MULTIPROCESSOR */
