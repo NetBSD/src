@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.30 2003/04/03 22:19:16 martin Exp $
+#	$NetBSD: genassym.cf,v 1.31 2003/10/26 08:05:26 christos Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -186,7 +186,6 @@ define	FPRS_DU		FPRS_DU
 define	FPRS_DL		FPRS_DL
 
 # system calls
-define	SYS___sigreturn14 SYS___sigreturn14
 define	SYS_execve	SYS_execve
 define	SYS_exit	SYS_exit
 
