@@ -20,7 +20,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pms.c,v 1.12 1994/07/18 07:18:57 mycroft Exp $
+ *	$Id: pms.c,v 1.13 1994/07/19 05:08:55 mycroft Exp $
  */
 
 /*
@@ -30,6 +30,11 @@
  * same I/O ports.  Frobbing the mouse and keyboard at the same time
  * may result in dropped characters and/or corrupted mouse events.
  */
+
+#include "pms.h"
+#if NPMS > 1
+#error Only one PS/2 style mouse may be configured into your system.
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -243,9 +248,9 @@ pmsclose(dev, flag)
 	struct pms_softc *sc = pmscd.cd_devs[PMSUNIT(dev)];
 
 	/* Disable interrupts. */
+	pms_dev_cmd(sc->sc_iobase, PMS_DEV_DISABLE);
 	pms_pit_cmd(sc->sc_iobase, PMS_INT_DISABLE);
 	pms_aux_cmd(sc->sc_iobase, PMS_AUX_DISABLE);
-	pms_dev_cmd(sc->sc_iobase, PMS_DEV_DISABLE);
 
 	sc->sc_state &= ~PMS_OPEN;
 
@@ -369,9 +374,11 @@ pmsintr(sc)
 	static char dx, dy;
 	u_char buffer[5];
 
-	if ((sc->sc_state & PMS_OPEN) == 0)
-		/* Interrupts are not expected. */
+	if ((sc->sc_state & PMS_OPEN) == 0) {
+		/* Interrupts are not expected.  Discard the byte. */
+		(void) inb(iobase + PMS_DATA);
 		return 0;
+	}
 
 	switch (state) {
 
@@ -390,7 +397,7 @@ pmsintr(sc)
 
 	case 2:
 		dy = inb(iobase + PMS_DATA);
-		dy = (dy == -128) ? 127 : -dy;
+		dy = (dy == -128) ? -127 : dy;
 		state = 0;
 
 		buttons = ((buttons & PS2LBUTMASK) << 2) |
