@@ -1,4 +1,4 @@
-/*	$NetBSD: siop2.c,v 1.14.2.3 2001/03/29 09:57:42 bouyer Exp $	*/
+/*	$NetBSD: siop2.c,v 1.14.2.4 2001/04/22 13:20:17 is Exp $	*/
 
 /*
  * Copyright (c) 1994,1998 Michael L. Hitch
@@ -218,7 +218,7 @@ siopng_scsipi_request(chan, req, arg)
 		if (acb == NULL) {
 			scsipi_printaddr(periph);
 			printf("unable to allocate acb\n");
-			panic("sea_scsipi_request");
+			panic("siopng_scsipi_request");
 		}
 #endif
 		acb->flags = ACB_ACTIVE;
