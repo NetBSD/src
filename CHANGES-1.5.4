@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.17 2002/09/04 02:30:47 itojun Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.18 2002/09/04 02:39:01 itojun Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1350,3 +1350,6 @@ lib/libc/net/gethnamaddr.c			1.45
 
 lib/libc/net/gethnamaddr.c			1.48
   query ip6.arpa then ip6.int for IPv6 reverse lookup.  follows RFC3152.
+
+sys/dev/pckbc/wskbdmap_mfii.c			1.24
+  Correct spannish mapping. Fix kern/15509 by Julio Merino <juli@merino.net>.
