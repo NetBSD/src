@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.366 2000/08/13 01:31:18 itojun Exp $
+#	$NetBSD: GENERIC,v 1.367 2000/08/15 20:09:26 ross Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.366 $"
+#ident 		"GENERIC-$Revision: 1.367 $"
 
 maxusers	32		# estimated number of users
 
@@ -406,7 +406,7 @@ aha*	at isapnp? 			# Adaptec AHA-154[02
 aic*	at isapnp?			# Adaptec AHA-1520B
 
 # ISA SCSI controllers
-adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02]
+adv0	at isa? port ? irq ? drq ?	# AdvanSys APB-514[02] SCSI
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 aha1	at isa? port 0x334 irq ? drq ?
 ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI
