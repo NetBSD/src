@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.21 2002/04/12 04:52:53 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.22 2002/06/20 23:53:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -624,7 +624,7 @@ sa_upcall_userret(struct lwp *l)
 	KDASSERT(SIMPLEQ_EMPTY(&sa->sa_upcalls) == 0);
 
 	sau = SIMPLEQ_FIRST(&sa->sa_upcalls);
-	SIMPLEQ_REMOVE_HEAD(&sa->sa_upcalls, sau, sau_next);
+	SIMPLEQ_REMOVE_HEAD(&sa->sa_upcalls, sau_next);
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls))
 		l->l_flag &= ~L_SA_UPCALL;
 
