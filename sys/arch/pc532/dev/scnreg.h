@@ -28,9 +28,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	dpreg.h: definitions for the dp driver.
+ *	scnreg.h: definitions for the scn serial driver.
  *
- *	$Id: scnreg.h,v 1.3 1994/04/21 22:31:36 phil Exp $
+ *	$Id: scnreg.h,v 1.4 1994/07/01 04:24:18 phil Exp $
  */
 
 /* Constants. */

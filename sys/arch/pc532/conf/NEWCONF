@@ -46,7 +46,7 @@ options		INET			# IP
 #options	EON			# ?
 
 # pc532 specific options
-options		"SCNDEF_SPEED=B19200"	# default baud on the scn chips
+options		"COMDEF_SPEED=B19200"	# default baud on the scn chips
 #options	"RAMD_SIZE=1536000"	# Size of the "boot strap ram disk"
 #options	"RAMD_ADR=0x400000"	# Adr of the "boot strap ram disk"
 options		"CONFIG_NEW"		# Use config.new stuff

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: nscn.c,v 1.1 1994/06/26 15:00:10 phil Exp $
+ *	$Id: nscn.c,v 1.2 1994/07/01 04:24:14 phil Exp $
  */
 
 #include "scn.h"
@@ -60,6 +60,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/types.h>
+#include <sys/device.h>
 #include <device.h>
 
 #include <dev/cons.h>
@@ -77,7 +78,7 @@ void	scnstart();
 
 struct cfdriver scncd =
       {	NULL, "scn", scnprobe, scnattach,
-	DV_DULL, sizeof(struct rs232_s), NULL, 0 };
+	DV_TTY, sizeof(struct device), NULL, 0 };
 
 int	scnsoftCAR;
 int	scn_active;
@@ -263,7 +264,7 @@ scnprobe(parent, cf, aux)
 {
   int unit = cf->cf_unit;
 
-  if (strcmp(*((char **) aux), scncd.cd_name)) {
+ if (strcmp(*((char **) aux), scncd.cd_name)) {
     return 0;
   }
 
@@ -313,6 +314,7 @@ scnattach(parent, dev, aux)
   long line_base;
   long uart_base;
   long scn_first_adr;
+
 
   if (unit == 0)  DELAY(5);  /* Let the output go out.... */
 
@@ -433,7 +435,7 @@ scnattach(parent, dev, aux)
 #endif
 
   /* print the device number... */
-  printf ("scn%d at mainbus0 addr 0x%x\n",  unit, line_base);
+  printf (" addr 0x%x\n", line_base);
 }
 
 /* ARGSUSED */
@@ -1062,7 +1064,7 @@ scncnputc (dev_t dev, char c)
 	___lines = 0;
 	scncnputc(dev,'m');scncnputc(dev,'o');scncnputc(dev,'r');
 	scncnputc(dev,'e');scncnputc(dev,':');scncnputc(dev,' ');
-	scncngetc();
+	scncngetc(dev);
 	scncnputc(dev,'\n');
      }
   }

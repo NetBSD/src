@@ -30,7 +30,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Id: nncr.c,v 1.1 1994/06/26 15:00:06 phil Exp $
+ * $Id: nncr.c,v 1.2 1994/07/01 04:24:11 phil Exp $
  *
  */
 
@@ -38,7 +38,7 @@
 
 #define PSEUDO_DMA 1
 
-static int ncr_debug=0;
+static int ncr_debug=1;
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -121,7 +121,7 @@ struct ncr5380_data {
 	struct scsi_link	sc_link;
 } *ncr5380data[NNCR5380];
 
-/* From Guide to Mac II family hardware, p. 137 */
+/* From the mapping of the pc532 address space.  See pc532/machdep.c */
 static volatile sci_padded_regmap_t	*ncr  =   (sci_regmap_t *) 0xffd00000;
 static volatile long			*sci_4byte_addr=  (long *) 0xffe00000;
 static volatile u_char			*sci_1byte_addr=(u_char *) 0xffe00000;
@@ -308,7 +308,9 @@ ncr5380_scsi_cmd(struct scsi_xfer *xs)
 	}
 	 */
 
+printf ("before ncr5380_send_cmd\n");
 	r = ncr5380_send_cmd(xs);
+printf ("after ncr5380_send_cmd\n");
 	xs->flags |= ITSDONE;
 	scsi_done(xs);
 	switch(r) {
@@ -365,12 +367,14 @@ delay(int timeo)
 	for (len=0;len<timeo*2;len++);
 }
 
+#if 0
 extern void
 spinwait(int ms)
 {
 	while (ms--)
 		delay(500);
 }
+#endif
 
 extern void
 ncr5380_intr(int adapter)
@@ -433,8 +437,7 @@ ncr5380_send_cmd(struct scsi_xfer *xs)
 	int	s;
 	int	sense;
 
- 	scsi_select_ctlr (NCR5380);
-/*	ncr5380_show_scsi_cmd(xs); */
+	ncr5380_show_scsi_cmd(xs); 
 	s = splbio();
 	sense = scsi_gen( xs->sc_link->scsibus, xs->sc_link->target,
 			  xs->sc_link->lun, xs->cmd, xs->cmdlen,
@@ -474,7 +477,6 @@ select_target(register volatile sci_padded_regmap_t *regs,
 	register u_char	bid, icmd;
 	int		ret = SCSI_RET_RETRY;
 
- 	scsi_select_ctlr (NCR5380);
 	if ((regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
 	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)) &&
 	    (regs->sci_bus_csr & (SCI_BUS_BSY|SCI_BUS_SEL)))
@@ -485,6 +487,8 @@ select_target(register volatile sci_padded_regmap_t *regs,
 	tid = 1 << tid;
 
 	regs->sci_sel_enb = 0; /*myid;	we don't want any interrupts. */
+	regs->sci_tcmd = 0;	/* get into a harmless state */
+	regs->sci_mode = 0;	/* get into a harmless state */
 
 	regs->sci_odata = myid;
 	regs->sci_mode = SCI_MODE_ARB;
@@ -775,6 +779,7 @@ scsi_request(register volatile sci_padded_regmap_t *regs,
 	u_char	stat, msg, c;
 
 	*sent = 0;
+	scsi_select_ctlr (NCR5380);
 
 	if ( ( r = select_target(regs, 7, target, 1) ) != SCSI_RET_SUCCESS) {
 		*ret = r;
