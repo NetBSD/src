@@ -1,0 +1,161 @@
+$NetBSD: Interrupts,v 1.1.2.2 2000/12/14 20:30:15 scw Exp $
+
+NetBSD/mvme68k Interrupt Levels
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+NetBSD/mvme68k interrupts are dependent on the type of device which
+generates them. This holds true regardless of what bus the device is
+situated on (eg. local, VMEbus or IndustryPack site).
+
+On MVME147, there is a fixed 1:1 mapping of VMEbus interrupt level
+to CPU interrupt level. This implies that VMEbus devices must be
+set to interrupt at the correct level for that type of device.
+
+On the other boards, each VMEbus interrupt level can be mapped to a
+specific CPU interrupt level so the above restriction does not apply.
+However, note that the mapping can only be done once. Therefore it is
+not possible to have two VMEbus devices which require different CPU
+interrupt levels sharing the same VMEbus interrupt level.
+
+The mapping of device type to CPU interrupt levels is as follows:
+
+	CPU Irq		Device Type
+	~~~~~~~		~~~~~~~~~~~
+	<Highest>
+	6 - 7		Anything which generates an exceptional condition
+			which *must* be responded to immediately. For
+			example, a memory parity/uncorrectable data error.
+
+	5		Reserved for the system clock/scheduler. Do not use.
+
+	4		Serial port devices (rs232, rs422 etc).
+
+	3		Network interfaces.
+
+	2		Disk/Block device interfaces.
+
+	1		Anything else.
+	<Lowest>
+
+
+
+Interrupt Vectors
+~~~~~~~~~~~~~~~~~
+
+NetBSD/mvme68k does not use or generate `auto-vectored' interrupts.
+
+All vectored interrupts up to and including vector 0x7f are reserved
+for use by onboard devices.
+
+VMEbus cards and IndustryPack modules are free to use vectors 0x80 -> 0xff.
+
+The onboard devices' vectors are as follows:
+
+MVME147:
+	0x40		PCC: ACFAIL
+	0x41		PCC: BERR
+	0x42		PCC: ABORT Switch
+	0x43		PCC: ZS Chips shared vector
+	0x44		PCC: Lance Ethernet
+	0x45		PCC: WD33C93 SCSI
+	0x46		PCC: DMA
+	0x47		PCC: Printer
+	0x48		PCC: Timer1
+	0x49		PCC: Timer2
+	0x4a		PCC: Soft Interrupt 1
+	0x4b		PCC: Soft Interrupt 2
+	0x4c -> 0x4f	PCC: <unused>
+
+
+MVME167/177:
+	0x50		PCC2: Printer `BUSY'
+	0x51		PCC2: Printer `Paper Empty'
+	0x52		PCC2: Printer `Select'
+	0x53		PCC2: Printer `Fault'
+	0x54		PCC2: Printer `ACK'
+	0x55		PCC2: SCSI
+	0x56		PCC2: Ethernet `Error'
+	0x57		PCC2: Ethernet
+	0x58		PCC2: Timer 2
+	0x59		PCC2: Timer 1
+	0x5a		PCC2: GPIO
+	0x5b		PCC2: <unused>
+	0x5c		PCC2: CD2401 Rx Exception
+	0x5d		PCC2: CD2401 Modem
+	0x5e		PCC2: CD2401 Tx
+	0x5f		PCC2: CD2401 Rx
+
+	0x60 -> 0x67	VME2: <unused>
+	0x68		VME2: Software Interrupt #0
+	0x69		VME2: Software Interrupt #1
+	0x6a		VME2: Software Interrupt #2
+	0x6b		VME2: Software Interrupt #3
+	0x6c		VME2: Software Interrupt #4
+	0x6d		VME2: Software Interrupt #5
+	0x6e		VME2: Software Interrupt #6
+	0x6f		VME2: Software Interrupt #7
+	0x70		VME2: GCSR Location Monitor #0
+	0x71		VME2: GCSR Location Monitor #1
+	0x72		VME2: GCSR SIG #0
+	0x73		VME2: GCSR SIG #1
+	0x74		VME2: GCSR SIG #2
+	0x75		VME2: GCSR SIG #3
+	0x76		VME2: DMA Controller
+	0x77		VME2: VIA
+	0x78		VME2: Tick Timer #1
+	0x79		VME2: Tick Timer #2
+	0x7a		VME2: `IRQ1' feature
+	0x7b		VME2: Parity/ECC Error
+	0x7c		VME2: Master Write Post Error
+	0x7d		VME2: SYSFAIL
+	0x7e		VME2: ABORT Switch
+	0x7f		VME2: ACFAIL
+
+
+MVME162/172:
+	0x40		IPACK: DMA_a
+	0x41		IPACK: DMA_b
+	0x42		IPACK: DMA_c
+	0x43		IPACK: DMA_d
+	0x44		IPACK: Programmable Clock
+
+	0x50 -> 0x52	MC2: <unused>
+	0x53		MC2: Timer 4
+	0x54		MC2: Timer 3
+	0x55		MC2: SCSI
+	0x56		MC2: Ethernet `Error'
+	0x57		MC2: Ethernet
+	0x58		MC2: Timer 2
+	0x59		MC2: Timer 1
+	0x5a		MC2: <unused>
+	0x5b		MC2: Parity/ECC Error
+	0x5c		MC2: ZS #1 (vector supplied by ZS chip)
+	0x5d		MC2: ZS #2 (vector supplied by ZS chip)
+	0x5e		MC2: Abort Switch
+	0x5f		MC2: <unused>
+
+	0x60 -> 0x67	VME2: <unused>
+	0x68		VME2: Software Interrupt #0
+	0x69		VME2: Software Interrupt #1
+	0x6a		VME2: Software Interrupt #2
+	0x6b		VME2: Software Interrupt #3
+	0x6c		VME2: Software Interrupt #4
+	0x6d		VME2: Software Interrupt #5
+	0x6e		VME2: Software Interrupt #6
+	0x6f		VME2: Software Interrupt #7
+	0x70		VME2: GCSR Location Monitor #0
+	0x71		VME2: GCSR Location Monitor #1
+	0x72		VME2: GCSR SIG #0
+	0x73		VME2: GCSR SIG #1
+	0x74		VME2: GCSR SIG #2
+	0x75		VME2: GCSR SIG #3
+	0x76		VME2: DMA Controller
+	0x77		VME2: VIA
+	0x78		VME2: Tick Timer #1
+	0x79		VME2: Tick Timer #2
+	0x7a		VME2: `IRQ1' feature
+	0x7b		VME2: Parity/ECC Error
+	0x7c		VME2: Master Write Post Error
+	0x7d		VME2: SYSFAIL
+	0x7e		VME2: <unused>
+	0x7f		VME2: ACFAIL
