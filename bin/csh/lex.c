@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.16 1999/03/19 12:57:10 christos Exp $	*/
+/*	$NetBSD: lex.c,v 1.17 2000/05/31 22:48:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: lex.c,v 1.16 1999/03/19 12:57:10 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.17 2000/05/31 22:48:45 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ int aret = F_SEEK;
  * process id's from `$$', and modified variable values (from qualifiers
  * during expansion in sh.dol.c) here.
  */
-static Char labuf[BUFSIZ];
+static Char labuf[BUFSIZE];
 
 /*
  * Lex returns to its caller not only a wordlist (as a "var" parameter)
@@ -244,12 +244,12 @@ word()
 {
     Char c, c1;
     Char *wp;
-    Char    wbuf[BUFSIZ];
+    Char    wbuf[BUFSIZE];
     bool dolflg;
     int i;
 
     wp = wbuf;
-    i = BUFSIZ - 4;
+    i = BUFSIZE - 4;
 loop:
     while ((c = getC(DOALL)) == ' ' || c == '\t')
 	continue;
@@ -632,7 +632,7 @@ void
 addla(cp)
     Char   *cp;
 {
-    Char    buf[BUFSIZ];
+    Char    buf[BUFSIZE];
 
     if (Strlen(cp) + (lap ? Strlen(lap) : 0) >=
 	(sizeof(labuf) - 4) / sizeof(Char)) {
@@ -928,7 +928,7 @@ subword(cp, type, adid)
     int     type;
     bool   *adid;
 {
-    Char    wbuf[BUFSIZ];
+    Char    wbuf[BUFSIZE];
     Char *wp, *mp, *np;
     int i;
 
@@ -949,7 +949,7 @@ subword(cp, type, adid)
 
     default:
 	wp = wbuf;
-	i = BUFSIZ - 4;
+	i = BUFSIZE - 4;
 	for (mp = cp; *mp; mp++)
 	    if (matchs(mp, lhsb)) {
 		for (np = cp; np < mp;)
@@ -1449,9 +1449,9 @@ bgetc()
 
 #ifdef FILEC
     int numleft = 0, roomleft;
-    Char    ttyline[BUFSIZ];
+    Char    ttyline[BUFSIZE];
 #endif
-    char    tbuf[BUFSIZ + 1];
+    char    tbuf[BUFSIZE + 1];
 
     if (cantell) {
 	if (fseekp < fbobp || fseekp > feobp) {
@@ -1463,7 +1463,7 @@ bgetc()
 
 	    fbobp = feobp;
 	    do
-		c = read(SHIN, tbuf, BUFSIZ);
+		c = read(SHIN, tbuf, BUFSIZE);
 	    while (c < 0 && errno == EINTR);
 	    if (c <= 0)
 		return (-1);
@@ -1477,7 +1477,7 @@ bgetc()
     }
 
 again:
-    buf = (int) fseekp / BUFSIZ;
+    buf = (int) fseekp / BUFSIZE;
     if (buf >= fblocks) {
 	Char **nfbuf =
 	(Char **) xcalloc((size_t) (fblocks + 2),
@@ -1488,24 +1488,24 @@ again:
 	    xfree((ptr_t) fbuf);
 	}
 	fbuf = nfbuf;
-	fbuf[fblocks] = (Char *) xcalloc(BUFSIZ, sizeof(Char));
+	fbuf[fblocks] = (Char *) xcalloc(BUFSIZE, sizeof(Char));
 	fblocks++;
 	if (!intty)
 	    goto again;
     }
     if (fseekp >= feobp) {
-	buf = (int) feobp / BUFSIZ;
-	off = (int) feobp % BUFSIZ;
-	roomleft = BUFSIZ - off;
+	buf = (int) feobp / BUFSIZE;
+	off = (int) feobp % BUFSIZE;
+	roomleft = BUFSIZE - off;
 
 #ifdef FILEC
-	roomleft = BUFSIZ - off;
+	roomleft = BUFSIZE - off;
 	for (;;) {
 	    if (filec && intty) {
-		c = numleft ? numleft : tenex(ttyline, BUFSIZ);
+		c = numleft ? numleft : tenex(ttyline, BUFSIZE);
 		if (c > roomleft) {
 		    /* start with fresh buffer */
-		    feobp = fseekp = fblocks * BUFSIZ;
+		    feobp = fseekp = fblocks * BUFSIZE;
 		    numleft = c;
 		    goto again;
 		}
@@ -1546,7 +1546,7 @@ again:
 	    goto again;
 #endif
     }
-    c = fbuf[buf][(int) fseekp % BUFSIZ];
+    c = fbuf[buf][(int) fseekp % BUFSIZE];
     fseekp++;
     return (c);
 }
@@ -1560,13 +1560,13 @@ bfree()
 	return;
     if (whyles)
 	return;
-    sb = (int) (fseekp - 1) / BUFSIZ;
+    sb = (int) (fseekp - 1) / BUFSIZE;
     if (sb > 0) {
 	for (i = 0; i < sb; i++)
 	    xfree((ptr_t) fbuf[i]);
 	(void) blkcpy(fbuf, &fbuf[sb]);
-	fseekp -= BUFSIZ * sb;
-	feobp -= BUFSIZ * sb;
+	fseekp -= BUFSIZE * sb;
+	feobp -= BUFSIZE * sb;
 	fblocks -= sb;
     }
 }
@@ -1640,7 +1640,7 @@ settell()
 	return;
     fbuf = (Char **) xcalloc(2, sizeof(Char **));
     fblocks = 1;
-    fbuf[0] = (Char *) xcalloc(BUFSIZ, sizeof(Char));
+    fbuf[0] = (Char *) xcalloc(BUFSIZE, sizeof(Char));
     fseekp = fbobp = feobp = lseek(SHIN, (off_t) 0, SEEK_CUR);
     cantell = 1;
 }
