@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.125 2002/06/14 01:04:41 itojun Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.126 2002/06/14 01:07:01 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.125 2002/06/14 01:04:41 itojun Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.126 2002/06/14 01:07:01 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -1225,10 +1225,9 @@ setifmetric(val, d)
 	const char *val;
 	int d;
 {
-	char *ep;
+	char *ep = NULL;
 
 	(void) strncpy(ifr.ifr_name, name, sizeof (ifr.ifr_name));
-	ep = NULL;
 	ifr.ifr_metric = strtoul(val, &ep, 10);
 	if (!ep || *ep)
 		errx(1, "%s: invalid metric", val);
@@ -1241,7 +1240,7 @@ setifmtu(val, d)
 	const char *val;
 	int d;
 {
-	char *ep;
+	char *ep = NULL;
 
 	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = strtoul(val, &ep, 10);
