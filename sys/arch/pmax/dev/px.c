@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.6 1999/04/26 12:05:11 ad Exp $ */
+/* 	$NetBSD: px.c,v 1.7 1999/04/29 02:50:25 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.6 1999/04/26 12:05:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.7 1999/04/29 02:50:25 ad Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -384,25 +384,19 @@ px_init(fi, slotbase, unit, silent)
 		pxi->pxi_rbuf_size = 128*1024; /* XXX might have 256kB */
 	}
 
-	/* 
-	 * Get a font and lock. If we're not the console, we don't care
-	 * about the bit/byte order; otherwise we'd have to panic.
-	 */
-	wsfont_init();
+	/* Get a font and lock. If we're not the console, we don't care */
+	if (fi == NULL) {
+		wsfont_init();
 
-	if (fi == NULL) {	
-		if ((i = wsfont_find(NULL, 0, 0, 2)) < 0)
+		if ((i = wsfont_find(NULL, 0, 0, 2)) <= 0)
 			panic("px_init: unable to get font");
 		
-		if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) < 0)
+		if (wsfont_lock(i, &pxi->pxi_font, WSFONT_R2L, WSFONT_L2R) <= 0)
 			panic("px_init: unable to lock font");
-	} else {
-		/* Always works */
-		wsfont_find(NULL, 0, 0, 0);
-	
-		if (wsfont_lock(i, &pxi->pxi_font, 0, 0) < 0)
-			panic("px_init: unable to lock font");
-	}
+			
+		pxi->pxi_wsfcookie = i;
+	} else 
+		pxi->pxi_wsfcookie = -1;
 
 	/* Only now can we init the bt459... */
 	px_bt459_init(pxi);
@@ -516,12 +510,18 @@ px_bt459_init(pxi)
 	px_load_cmap(pxi, 0, 256);
 
 	/* Make a sane cursor and load it */
-	px_make_cursor(pxi);
-	px_load_cursor(pxi);
+	if (pxi->pxi_font != NULL) {
+		px_make_cursor(pxi);
+		px_load_cursor(pxi);
 
-	/* Enable cursor */
-	BT459_SELECT(vdac, BT459_REG_CCR);
-	BT459_WRITE_REG(vdac, 0x1c1c1c1);
+		/* Enable cursor */
+		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_WRITE_REG(vdac, 0x1c1c1c1);
+		pxi->pxi_flg |= PX_CURSOR_ENABLE;
+	} else {
+		BT459_SELECT(vdac, BT459_REG_CCR);
+		BT459_WRITE_REG(vdac, 0);
+	}
 }
 
 
@@ -1744,10 +1744,8 @@ pxclose(dev, flag, mode, p)
 	stic->ipdvint = s;
 	tc_wmb();
 
-	/* Reset everything. The Xserver may have messed them all up. */
 	px_init_stic(pxi, 0);
 	px_bt459_init(pxi);
-	px_make_cursor(pxi);
 	px_rect(pxi, 0, 0, 1280, 1024, 0);
 	pxi->pxi_dirty |= PX_DIRTY_ENABLE; /* make sure video is enabled */
 	if (pxi->pxi_option)
@@ -1765,6 +1763,8 @@ pxioctl(dev, cmd, data, flag, p)
 {
 	struct pmax_fbtty *fbtty;
 	struct px_info *pxi;
+	pmKpCmd *kpCmdPtr;
+	u_char *cp;
 	u_int *ptr;
 	int i;
 
@@ -1840,10 +1840,6 @@ pxioctl(dev, cmd, data, flag, p)
 		/*
 		 * Keyboard command.
 		 */
-	    {
-		pmKpCmd *kpCmdPtr;
-		unsigned char *cp;
-
 		kpCmdPtr = (pmKpCmd *)data;
 		if (kpCmdPtr->nbytes == 0)
 			kpCmdPtr->cmd |= 0x80;
@@ -1855,7 +1851,6 @@ pxioctl(dev, cmd, data, flag, p)
 			(*fbtty->KBDPutc)(fbtty->kbddev, (int)*cp);
 		}
 		break;
-	    }
 
 	case QIOKERNLOOP:
 		genConfigMouse();
