@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.18 1997/07/20 05:13:36 thorpej Exp $	*/
+/*	$NetBSD: cp.c,v 1.19 1997/09/14 07:15:28 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: cp.c,v 1.18 1997/07/20 05:13:36 thorpej Exp $");
+__RCSID("$NetBSD: cp.c,v 1.19 1997/09/14 07:15:28 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(argc, argv)
 	char *target;
 
 	Hflag = Lflag = Pflag = Rflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRfipr")) != EOF) 
+	while ((ch = getopt(argc, argv, "HLPRfipr")) != -1) 
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
