@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.3 1996/02/18 20:41:18 mycroft Exp $	*/
+/*	$NetBSD: ss.c,v 1.4 1996/02/18 20:44:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -157,7 +157,7 @@ ssattach(parent, self, aux)
 int
 ssopen(dev, flag, mode, p)
 	dev_t dev;
-	int flag
+	int flag;
 	int mode;
 	struct proc *p;
 {
@@ -237,8 +237,8 @@ ssclose(dev)
 				return (error);
 		} else {
 			/* XXX add code to restart a SCSI2 scanner, if any */
-			ss->sio.scan_window_size = 0;
 		}
+		ss->sio.scan_window_size = 0;
 		ss->flags &= ~SSF_TRIGGERED;
 	}
 	ss->sc_link->flags &= ~SDEV_OPEN;
