@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.25 1999/08/28 09:19:04 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.26 2000/06/04 19:14:53 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -402,7 +402,8 @@ espattach_intio(parent, self, aux)
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
+	    sc->sc_dev.dv_xname, "intr");
 
 	/* Do the common parts of attachment. */
 	sc->sc_adapter.scsipi_cmd = ncr53c9x_scsi_cmd;

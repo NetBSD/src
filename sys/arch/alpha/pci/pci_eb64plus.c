@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $ */
+/* $NetBSD: pci_eb64plus.c,v 1.6 2000/06/04 19:14:23 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.6 2000/06/04 19:14:23 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_eb64plus.c,v 1.5 1999/02/12 06:25:13 thorpej Exp
 int	dec_eb64plus_intr_map __P((void *, pcitag_t, int, int,
 	    pci_intr_handle_t *));
 const char *dec_eb64plus_intr_string __P((void *, pci_intr_handle_t));
+const struct evcnt *dec_eb64plus_intr_evcnt __P((void *, pci_intr_handle_t));
 void	*dec_eb64plus_intr_establish __P((void *, pci_intr_handle_t,
 	    int, int (*func)(void *), void *));
 void	dec_eb64plus_intr_disestablish __P((void *, void *));
@@ -131,6 +132,7 @@ pci_eb64plus_pickintr(acp)
         pc->pc_intr_v = acp;
         pc->pc_intr_map = dec_eb64plus_intr_map;
         pc->pc_intr_string = dec_eb64plus_intr_string;
+	pc->pc_intr_evcnt = dec_eb64plus_intr_evcnt;
         pc->pc_intr_establish = dec_eb64plus_intr_establish;
         pc->pc_intr_disestablish = dec_eb64plus_intr_disestablish;
 
@@ -207,6 +209,16 @@ dec_eb64plus_intr_string(acv, ih)
                 panic("dec_eb64plus_intr_string: bogus eb64+ IRQ 0x%lx\n", ih);
         sprintf(irqstr, "eb64+ irq %ld", ih);
         return (irqstr);
+}
+
+const struct evcnt *
+dec_eb64plus_intr_evcnt(acv, ih)
+	void *acv;
+	pci_intr_handle_t ih;
+{
+
+	/* XXX for now, no evcnt parent reported */
+	return (NULL);
 }
 
 void *
