@@ -2,10 +2,7 @@
 .SH NAME
 hosts_access,
 hosts.allow,
-hosts.deny,
-hosts_ctl,
-request_init,
-request_set \- format of host access control files
+hosts.deny \- format of host access control files
 .SH DESCRIPTION
 This manual page describes a simple access control language that is
 based on client (host name/address, user name), and server (process
@@ -26,7 +23,7 @@ In the following text, \fIdaemon\fR is the process name of a
 network daemon process, and \fIclient\fR is the name and/or address of
 a host requesting service. Network daemon process names are specified
 in the inetd configuration file.
-.SH ACCESS CONTROL FILES
+.SH "ACCESS CONTROL FILES"
 The access control software consults two files. The search stops
 at the first match:
 .IP \(bu
@@ -41,14 +38,15 @@ Otherwise, access will be granted.
 A non-existing access control file is treated as if it were an empty
 file. Thus, access control can be turned off by providing no access
 control files.
-.SH ACCESS CONTROL RULES
+.SH "ACCESS CONTROL RULES"
 Each access control file consists of zero or more lines of text.  These
 lines are processed in order of appearance. The search terminates when a
 match is found.
 .IP \(bu
 A newline character is ignored when it is preceded by a backslash
-character. This permits you to break up long lines so that they are
-easier to edit.
+character.  This permits you to break up long lines so that they are
+easier to edit.  \fBWARNING:\fP  The total length of an entry can be no
+more than 2047 characters long including the final newline.
 .IP \(bu
 Blank lines or lines that begin with a `#\' character are ignored.
 This permits you to insert comments and whitespace so that the tables
@@ -160,7 +158,7 @@ Expands to a single `%\' character.
 .PP
 Characters in % expansions that may confuse the shell are replaced by
 underscores.
-.SH SERVER ENDPOINT PATTERNS
+.SH "SERVER ENDPOINT PATTERNS"
 In order to distinguish clients by the network address that they
 connect to, use patterns of the form:
 .sp
@@ -179,7 +177,7 @@ pseudo interfaces that live in a dedicated network address space.
 The host_pattern obeys the same syntax rules as host names and
 addresses in client_list context. Usually, server endpoint information
 is available only with connection-oriented services.
-.SH CLIENT USERNAME LOOKUP
+.SH "CLIENT USERNAME LOOKUP"
 When the client host supports the RFC 931 protocol or one of its
 descendants (TAP, IDENT, RFC 1413) the wrapper programs can retrieve
 additional information about the owner of a connection. Client username
@@ -223,7 +221,7 @@ daemon_list : @pcnetgroup ALL@ALL
 .PP
 would match members of the pc netgroup without doing username lookups,
 but would perform username lookups with all other systems.
-.SH DETECTING ADDRESS SPOOFING ATTACKS
+.SH "DETECTING ADDRESS SPOOFING ATTACKS"
 A flaw in the sequence number generator of many TCP/IP implementations
 allows intruders to easily impersonate trusted hosts and to break in
 via, for example, the remote shell service.  The IDENT (RFC931 etc.)
@@ -257,7 +255,7 @@ match is found at all.
 The examples use host and domain names. They can be improved by
 including address and/or network/netmask information, to reduce the
 impact of temporary name server lookup failures.
-.SH MOSTLY CLOSED
+.SH "MOSTLY CLOSED"
 In this case, access is denied by default. Only explicitly authorized
 hosts are permitted access. 
 .PP
@@ -287,7 +285,7 @@ in the host name) and from members of the \fIsome_netgroup\fP
 netgroup.  The second rule permits access from all hosts in the
 \fIfoobar.edu\fP domain (notice the leading dot), with the exception of
 \fIterminalserver.foobar.edu\fP.
-.SH MOSTLY OPEN
+.SH "MOSTLY OPEN"
 Here, access is granted by default; only explicitly specified hosts are
 refused service. 
 .PP
@@ -303,7 +301,7 @@ ALL EXCEPT in.fingerd: other.host.name, .other.domain
 .PP
 The first rule denies some hosts and domains all services; the second
 rule still permits finger requests from other hosts and domains.
-.SH BOOBY TRAPS
+.SH "BOOBY TRAPS"
 The next example permits tftp requests from hosts in the local domain
 (notice the leading dot).  Requests from any other hosts are denied.
 Instead of the requested file, a finger probe is sent to the offending
@@ -354,15 +352,18 @@ that shouldn\'t.  All problems are reported via the syslog daemon.
 /etc/hosts.deny, (daemon,client) pairs that are denied access.
 .ad
 .fi
-.SH SEE ALSO
+.SH "SEE ALSO"
 .nf
-tcpdchk(8), tcpdmatch(8), test programs.
+hosts_options(5), tcpdchk(8), tcpdmatch(8), test programs.
 .SH BUGS
 If a name server lookup times out, the host name will not be available
 to the access control software, even though the host is registered.
 .PP
 Domain name server lookups are case insensitive; NIS (formerly YP)
 netgroup lookups are case sensitive.
+.PP
+The total length of an entry can be no more than 2047 characters long,
+including the final newline.
 .SH AUTHOR
 .na
 .nf
@@ -372,4 +373,4 @@ Eindhoven University of Technology
 Den Dolech 2, P.O. Box 513, 
 5600 MB Eindhoven, The Netherlands
 \" @(#) hosts_access.5 1.20 95/01/30 19:51:46
-\"	$NetBSD: hosts_access.5,v 1.4 1997/11/12 00:48:10 mrg Exp $
+\"	$NetBSD: hosts_access.5,v 1.5 1999/01/18 19:39:24 christos Exp $
