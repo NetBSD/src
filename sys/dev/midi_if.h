@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_if.h,v 1.8 2000/03/21 18:05:55 garbled Exp $	*/
+/*	$NetBSD: midi_if.h,v 1.8.4.1 2000/07/24 23:10:11 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ int	midi_unit_count __P((void));
 void	midi_getinfo __P((dev_t, struct midi_info *));
 int	midi_writebytes __P((int, u_char *, int));
 
-#if !defined(__i386__) && !defined(__arm32__) && !defined(prep)
+#if !defined(IPL_AUDIO)
 #define splaudio splbio		/* XXX */
 #define IPL_AUDIO IPL_BIO	/* XXX */
 #endif
