@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.15 1998/07/18 05:04:35 lukem Exp $	*/
+/*	$NetBSD: syslog.c,v 1.16 1998/07/27 14:16:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.15 1998/07/18 05:04:35 lukem Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.16 1998/07/27 14:16:35 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -118,7 +118,7 @@ vsyslog(pri, fmt, ap)
 #define	FMT_LEN		1024
 	char *stdp = NULL;	/* pacify gcc */
 	char tbuf[TBUF_LEN], fmt_cpy[FMT_LEN];
-	int tbuf_left, fmt_left, prlen;
+	size_t tbuf_left, fmt_left, prlen;
 
 #define	INTERNALLOG	LOG_ERR|LOG_CONS|LOG_PERROR|LOG_PID
 	/* Check for invalid bits. */
