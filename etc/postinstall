@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.91 2005/03/01 16:29:44 christos Exp $
+# $NetBSD: postinstall,v 1.92 2005/03/08 14:09:25 lukem Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,9 +50,7 @@
 #	- differentiate between failures caused by missing source
 #	  and real failures
 #	- install moduli into usr/share/examples/ssh and use from there?
-#	- allow installation with "etc.tgz" as source file ?
 #	- differentiate between "needs fix" versus "can't fix" issues
-#	- deprecate etc_release now that it's part of the base set ?
 #
 
 #
@@ -501,23 +499,6 @@ do_postinstall()
 
 	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
 		postinstall
-}
-
-#
-#	release
-#
-additem etc_release "/etc/release being up to date"
-do_etc_release()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_etc_release  fix|check"
-
-	if [  -f "${SRC_DIR}/etc/Makefile" -a \
-	    ! -f "${SRC_DIR}/etc/release" ] ; then
-		msg "etc/release is built by ${SRC_DIR}/etc/Makefile; skipping ${op}"
-		return 0
-	fi
-	compare_dir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 555 \
-		release
 }
 
 #
@@ -994,7 +975,7 @@ do_sendmail()
 
 	_notfixed=""
 	if [ "${_cfversion}" -lt 10 ]; then
-		# XXX no fix here
+#XXX: no fix here
 		if [ "${_op}" = "fix" ]; then
 			_notfixed=${NOT_FIXED}
 		fi
@@ -1161,6 +1142,35 @@ main()
 	done
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
+
+	#
+	# If '-s etc.tgz', extract etc.tgz to a scratch directory
+	# and invoke the copy of etc/postinstall contained within.
+	#
+	if [ -f "${SRC_DIR}" ]; then
+		ETCTGZDIR="${SCRATCHDIR}/etc.tgz"
+		msg "SRC_DIR ${SRC_DIR} is a file; temporarily extracting to ${ETCTGZDIR}"
+		if ! mkdir "${ETCTGZDIR}"; then
+			err 1 "Can't create ${ETCTGZDIR}"
+		fi
+		cat "${SRC_DIR}" | (
+			cd "${ETCTGZDIR}" &&
+			tar -zxf -
+		) || err 1 "Can't extract ${SRC_DIR}"
+		if [ ! -f "${ETCTGZDIR}/etc/postinstall" ]; then
+			err 1 "Can't find etc/postinstall in ${SRC_DIR}"
+		fi
+		msg "Invoking ${ETCTGZDIR}/etc/postinstall -s ${ETCTGZDIR} -d ${DEST_DIR} -m ${MACHINE} -a ${MACHINE_ARCH} $@"
+		"${ETCTGZDIR}/etc/postinstall" -s "${ETCTGZDIR}" \
+		    -d "${DEST_DIR}" -m "${MACHINE}" -a "${MACHINE_ARCH}" "$@"
+		failed=$?
+#XXX: need to improve the following ...
+		cat <<_Fix_my_paths_
+Temporary paths will be wrong; try the following instead:
+    ${0} -s ${SRC_DIR}
+_Fix_my_paths_
+		exit $?
+	fi
 
 	[ -d "${SRC_DIR}" ]	|| err 1 "${SRC_DIR} is not a directory"
 	[ -d "${DEST_DIR}" ]	|| err 1 "${DEST_DIR} is not a directory"
