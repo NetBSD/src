@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.179 2003/01/25 04:45:24 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.180 2003/01/27 18:21:23 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.179 2003/01/25 04:45:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.180 2003/01/27 18:21:23 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3902,6 +3902,9 @@ pdc202xx_chip_map(sc, pa)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
 		sc->sc_wdcdev.irqack = pciide_irqack;
 	}
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_RAID;
 	sc->sc_wdcdev.PIO_cap = 4;
 	sc->sc_wdcdev.DMA_cap = 2;
 	if (PDC_IS_276(sc))
