@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.58 1995/06/04 20:50:14 mycroft Exp $	*/
+/*	$NetBSD: com.c,v 1.59 1995/06/05 19:08:09 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -321,7 +321,7 @@ comopen(dev, flag, mode, p)
 			(void) inb(iobase + com_data);
 		/* you turn me on, baby */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
-		if (!(sc->sc_hwflags & COM_HW_NOIEN))
+		if ((sc->sc_hwflags & COM_HW_NOIEN) == 0)
 			sc->sc_mcr |= MCR_IENABLE;
 		outb(iobase + com_mcr, sc->sc_mcr);
 		outb(iobase + com_ier,
@@ -661,15 +661,9 @@ comstart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_cflag & CRTSCTS && (sc->sc_mcr & MSR_CTS) == 0)
+	if ((tp->t_cflag & CRTSCTS) != 0 &&
+	    (sc->sc_msr & MSR_CTS) == 0)
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((caddr_t)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	tp->t_state |= TS_BUSY;
@@ -681,6 +675,13 @@ comstart(tp)
 		} while (--n);
 	} else
 		outb(iobase + com_data, getc(&tp->t_outq));
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (tp->t_state & TS_ASLEEP) {
+			tp->t_state &= ~TS_ASLEEP;
+			wakeup((caddr_t)&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
 out:
 	splx(s);
 }
@@ -821,9 +822,9 @@ comintr(arg)
 					if (sc->sc_dev.dv_unit == comconsole) {
 						Debugger();
 						goto next;
-					} else
+					}
 #endif
-						data = '\0';
+					data = '\0';
 				} else
 					data = inb(iobase + com_data);
 				if (p >= sc->sc_ibufend) {
@@ -850,10 +851,7 @@ comintr(arg)
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
 			else
-				if (tp->t_line)
-					(*linesw[tp->t_line].l_start)(tp);
-				else
-					comstart(tp);
+				(*linesw[tp->t_line].l_start)(tp);
 		}
 
 		msr = inb(iobase + com_msr);
