@@ -1,2 +1,4 @@
-# $NetBSD: obsolete.next68k,v 1.1 2001/11/28 13:29:30 kleink Exp $
+# $NetBSD: obsolete.next68k,v 1.2 2002/07/09 15:07:19 mycroft Exp $
 /usr/include/next68k/svr4_machdep.h
+/usr/lib/c++rt0.o
+/usr/lib/scrt0.o
