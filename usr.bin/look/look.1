@@ -29,45 +29,76 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)lorder.1	8.1 (Berkeley) 6/6/93
+.\"     @(#)look.1	8.1 (Berkeley) 6/14/93
 .\"
-.Dd June 6, 1993
-.Dt LORDER 1
+.Dd June 14, 1993
+.Dt LOOK 1
 .Os
 .Sh NAME
-.Nm lorder
-.Nd list dependencies for object files
+.Nm look
+.Nd display lines beginning with a given string
 .Sh SYNOPSIS
-.Nm lorder
-.Ar
+.Nm look
+.Op Fl df
+.Op Fl t Ar termchar
+.Ar string
+.Op Ar file
 .Sh DESCRIPTION
-The
-.Nm lorder
-utility uses
-.Xr nm 1
-to determine interdependencies in the list of object files
-specified on the command line.
-.Nm Lorder
-outputs a list of file names where the first file contains a symbol
-which is defined by the second file.
+The 
+.Nm look
+utility displays any lines in
+.Ar file
+which contain
+.Ar string
+as a prefix.
+As
+.Nm look
+performs a binary search, the lines in
+.Ar file
+must be sorted.
 .Pp
-The output is normally used with
-.Xr tsort  1
-when a library is created to determine the optimum ordering of the
-object modules so that all references may be resolved in a single
-pass of the loader.
-.Sh EXAMPLES
-.Bd -literal -offset indent
-ar cr library.a `lorder ${OBJS}  tsort`
-.Ed
+If
+.Ar file
+is not specified, the file
+.Pa /usr/share/dict/words
+is used, only alphanumeric characters are compared and the case of
+alphabetic characters is ignored.
+.Pp
+Options:
+.Bl -tag -width Ds
+.It Fl d
+Dictionary character set and order, i.e. only alphanumeric characters
+are compared.
+.It Fl f
+Ignore the case of alphabetic characters.
+.It Fl t
+Specify a string termination character, i.e. only the characters
+in
+.Ar string
+up to and including the first occurrence of
+.Ar termchar
+are compared.
+.El
+.Pp
+The
+.Nm look
+utility exits 0 if one or more lines were found and displayed,
+1 if no lines were found, and >1 if an error occurred.
+.Sh FILES
+.Bl -tag -width /usr/share/dict/words -compact
+.It Pa /usr/share/dict/words
+the dictionary
+.El
 .Sh SEE ALSO
-.Xr ar 1 ,
-.Xr ld 1 ,
-.Xr nm 1 ,
-.Xr ranlib 1 ,
-.Xr tsort 1
+.Xr grep 1 ,
+.Xr sort 1
+.Sh COMPATIBILITY
+The original manual page stated that tabs and blank characters participated
+in comparisons when the
+.Fl d
+option was specified.
+This was incorrect and the current man page matches the historic
+implementation.
 .Sh HISTORY
-An
-.Nm lorder
-utility appeared in
-.At v7 .
+.Nm Look
+appeared in Version 7 AT&T Unix.
