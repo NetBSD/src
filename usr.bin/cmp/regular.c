@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.8 2000/03/20 18:23:26 kleink Exp $	*/
+/*	$NetBSD: regular.c,v 1.8.4.1 2000/07/20 19:06:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.8 2000/03/20 18:23:26 kleink Exp $");
+__RCSID("$NetBSD: regular.c,v 1.8.4.1 2000/07/20 19:06:09 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,16 +75,22 @@ c_regular(fd1, file1, skip1, len1, fd2, file2, skip2, len2)
 	len2 -= skip2;
 
 	length = MIN(len1, len2);
-	if (length > SIZE_T_MAX)
-		return (c_special(fd1, file1, skip1, fd2, file2, skip2));
+	if (length > SIZE_T_MAX) {
+mmap_failed:
+		c_special(fd1, file1, skip1, fd2, file2, skip2);
+		return;
+	}
 
 	if ((p1 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd1, skip1)) == MAP_FAILED)
-		err(ERR_EXIT, "%s", file1);
+	    PROT_READ, MAP_FILE, fd1, skip1)) == MAP_FAILED)
+		goto mmap_failed;
 	(void)madvise(p1, (size_t)length, MADV_SEQUENTIAL);
+
 	if ((p2 = (u_char *)mmap(NULL, (size_t)length,
-	    PROT_READ, MAP_PRIVATE|MAP_FILE, fd2, skip2)) == MAP_FAILED)
-		err(ERR_EXIT, "%s", file2);
+	    PROT_READ, MAP_FILE, fd2, skip2)) == MAP_FAILED) {
+		munmap(p1, (size_t) length);
+		goto mmap_failed;
+	}
 	(void)madvise(p2, (size_t)length, MADV_SEQUENTIAL);
 
 	dfound = 0;
