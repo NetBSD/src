@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.62 1998/08/21 14:13:53 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.63 1998/08/30 21:27:32 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -664,8 +664,8 @@ timerattach_obio(parent, self, aux)
 		int i;
 
 		/* Get full-size register property */
-		if (getpropA(sa->sa_node, "reg", sizeof(*rr),
-			     &nreg, (void **)&rr) != 0) {
+		if (getprop(sa->sa_node, "reg", sizeof(*rr),
+			    &nreg, (void **)&rr) != 0) {
 			printf("%s: can't map register\n", self->dv_xname);
 			return;
 		}
