@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdutil.c,v 1.1 1998/04/07 13:43:17 hannken Exp $	*/
+/*	$NetBSD: wskbdutil.c,v 1.2 1998/04/09 13:09:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -257,6 +257,7 @@ static int string_tab_inorder = 0;
 
 static inline int compose_tab_cmp __P((struct compose_tab_s *, struct compose_tab_s *));
 static keysym_t ksym_upcase __P((keysym_t));
+static void fillmapentry __P((const keysym_t *, int, struct wscons_keymap *));
 
 static inline int
 compose_tab_cmp(i, j)
@@ -417,6 +418,103 @@ ksym_upcase(ksym)
 	return(ksym);
 }
 
+static void
+fillmapentry(kp, len, mapentry)
+	const keysym_t *kp;
+	int len;
+	struct wscons_keymap *mapentry;
+{
+	switch (len) {
+	case 0:
+		mapentry->group1[0] = KS_voidSymbol;
+		mapentry->group1[1] = KS_voidSymbol;
+		mapentry->group2[0] = KS_voidSymbol;
+		mapentry->group2[1] = KS_voidSymbol;
+		break;
+
+	case 1:
+		mapentry->group1[0] = kp[0];
+		mapentry->group1[1] = ksym_upcase(kp[0]);
+		mapentry->group2[0] = mapentry->group1[0];
+		mapentry->group2[1] = mapentry->group1[1];
+		break;
+
+	case 2:
+		mapentry->group1[0] = kp[0];
+		mapentry->group1[1] = kp[1];
+		mapentry->group2[0] = mapentry->group1[0];
+		mapentry->group2[1] = mapentry->group1[1];
+		break;
+
+	case 3:
+		mapentry->group1[0] = kp[0];
+		mapentry->group1[1] = kp[1];
+		mapentry->group2[0] = kp[2];
+		mapentry->group2[1] = ksym_upcase(kp[2]);
+		break;
+
+	case 4:
+		mapentry->group1[0] = kp[0];
+		mapentry->group1[1] = kp[1];
+		mapentry->group2[0] = kp[2];
+		mapentry->group2[1] = kp[3];
+		break;
+
+	}
+}
+
+void
+wskbd_get_mapentry(name, kdesc, kdesclen, kc, mapentry)
+	kbd_t name;
+	const struct wscons_keydesc *kdesc;
+	int kdesclen;
+	int kc;
+	struct wscons_keymap *mapentry;
+{
+	kbd_t cur;
+	const keysym_t *kp;
+	const struct wscons_keydesc *mp;
+	int i, l;
+
+	mapentry->command = KS_voidSymbol;
+	mapentry->group1[0] = KS_voidSymbol;
+	mapentry->group1[1] = KS_voidSymbol;
+	mapentry->group2[0] = KS_voidSymbol;
+	mapentry->group2[1] = KS_voidSymbol;
+
+	for (cur = name; cur != 0; ) {
+		for (i = 0; i < kdesclen; i++)
+			if (kdesc[i].name == cur)
+				break;
+
+		/* If map not found, return */
+		if (i == kdesclen)
+			return;
+
+		mp = kdesc + i;
+		for (kp = mp->map; kp < mp->map + mp->map_size; kp++)
+			if (KS_GROUP(*kp) == KS_GROUP_Keycode &&
+			    KS_VALUE(*kp) == kc) {
+				/* First skip keycode and possible command */
+				kp++;
+				if (KS_GROUP(*kp) == KS_GROUP_Command ||
+				    *kp == KS_Cmd || *kp == KS_Cmd1 || *kp == KS_Cmd2)
+					mapentry->command = *kp++;
+
+				for (l = 0; kp + l < mp->map + mp->map_size; l++)
+					if (KS_GROUP(kp[l]) == KS_GROUP_Keycode)
+						break;
+				if (l > 4)
+					panic("wskbd_get_mapentry: %d(%d): bad entry",
+					      mp->name, *kp);
+				fillmapentry(kp, l, mapentry);
+				return;
+			}
+
+		cur = kdesc[i].base;
+	}
+}
+
 void
 wskbd_init_keymap(newlen, map, maplen)
 	int newlen;
@@ -504,44 +602,7 @@ wskbd_load_keymap(name, kdesc, kdesclen, map, maplen)
 				panic("wskbd_load_keymap: %d(%d): bad entry",
 				      mp->name, *kp);
 
-			switch (i) {
-			case 0:
-				(*map)[kc].group1[0] = KS_voidSymbol;
-				(*map)[kc].group1[1] = KS_voidSymbol;
-				(*map)[kc].group2[0] = KS_voidSymbol;
-				(*map)[kc].group2[1] = KS_voidSymbol;
-				break;
-
-			case 1:
-				(*map)[kc].group1[0] = kp[0];
-				(*map)[kc].group1[1] = ksym_upcase(kp[0]);
-				(*map)[kc].group2[0] = (*map)[kc].group1[0];
-				(*map)[kc].group2[1] = (*map)[kc].group1[1];
-				break;
-
-			case 2:
-				(*map)[kc].group1[0] = kp[0];
-				(*map)[kc].group1[1] = kp[1];
-				(*map)[kc].group2[0] = (*map)[kc].group1[0];
-				(*map)[kc].group2[1] = (*map)[kc].group1[1];
-				break;
-
-			case 3:
-				(*map)[kc].group1[0] = kp[0];
-				(*map)[kc].group1[1] = kp[1];
-				(*map)[kc].group2[0] = kp[2];
-				(*map)[kc].group2[1] = ksym_upcase(kp[2]);
-				break;
-
-			case 4:
-				(*map)[kc].group1[0] = kp[0];
-				(*map)[kc].group1[1] = kp[1];
-				(*map)[kc].group2[0] = kp[2];
-				(*map)[kc].group2[1] = kp[3];
-				break;
-
-			 }
-
+			fillmapentry(kp, i, &(*map)[kc]);
 			kp += i;
 		}
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.2 1998/04/07 13:43:16 hannken Exp $ */
+/* $NetBSD: pckbd.c,v 1.3 1998/04/09 13:09:45 hannken Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -69,6 +69,11 @@ struct pckbd_internal {
 	pckbc_tag_t t_kbctag;
 	int t_kbcslot;
 
+	int t_led_state;
+	int t_lastchar;
+	int t_extended;
+	int t_extended1;
+
 	struct pckbd_softc *t_sc; /* back pointer */
 };
 
@@ -76,10 +81,6 @@ struct pckbd_softc {
         struct  device sc_dev;
 
 	struct pckbd_internal *id;
-	int sc_lastchar;
-	int sc_extended;
-	int sc_extended1;
-	int sc_led_state;
 
 	struct device *sc_wskbddev;
 };
@@ -98,25 +99,15 @@ struct cfattach pckbd_ca = {
 void	pckbd_set_leds __P((void *, int));
 int	pckbd_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
-const struct wskbd_accessops pckbd_accessops = {
-	pckbd_set_leds,
-	pckbd_ioctl,
-};
-
 void	pckbd_cngetc __P((void *, u_int *, int *));
 void	pckbd_cnpollc __P((void *, int));
-
-const struct wskbd_consops pckbd_consops = {
-	pckbd_cngetc,
-	pckbd_cnpollc,
-};
 
 int	pckbd_set_xtscancode __P((pckbc_tag_t, pckbc_slot_t));
 void	pckbd_init __P((struct pckbd_internal *, pckbc_tag_t, pckbc_slot_t,
 			int));
 void	pckbd_input __P((void *, int));
 
-static int	pckbd_decode __P((struct pckbd_softc *, u_int *, int *));
+static int	pckbd_decode __P((struct pckbd_internal *, u_int *, int *));
 static int	pckbd_led_encode __P((int));
 static int	pckbd_led_decode __P((int));
 
@@ -252,6 +243,7 @@ pckbdattach(parent, self, aux)
 
 	if (isconsole) {
 		sc->id = &pckbd_consdata;
+		sc->id->t_lastchar = 0;
 	} else {
 		sc->id = malloc(sizeof(struct pckbd_internal),
 				M_DEVBUF, M_WAITOK);
@@ -264,6 +256,7 @@ pckbdattach(parent, self, aux)
 	pckbc_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
 			       pckbd_input, sc);
 
+	a.console = isconsole;
 #ifdef PCKBD_LAYOUT
 	a.layout = PCKBD_LAYOUT;
 #else
@@ -271,8 +264,17 @@ pckbdattach(parent, self, aux)
 #endif
 	a.keydesc = wscons_keydesctab;
 	a.num_keydescs = sizeof(wscons_keydesctab)/sizeof(wscons_keydesctab[0]);
-	a.console = isconsole;
-	a.accessops = &pckbd_accessops;
+
+	if (isconsole) {
+		a.getc = pckbd_cngetc;
+		a.pollc = pckbd_cnpollc;
+	} else {
+		a.getc = NULL;
+		a.pollc = NULL;
+	}
+
+	a.set_leds = pckbd_set_leds;
+	a.ioctl = pckbd_ioctl;
 	a.accesscookie = sc->id;
 
 	/*
@@ -282,34 +284,34 @@ pckbdattach(parent, self, aux)
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
 
-static int pckbd_decode(sc, type, data)
-	struct pckbd_softc *sc;
+static int pckbd_decode(id, type, data)
+	struct pckbd_internal *id;
 	u_int *type;
 	int *data;
 {
 	if (*data == KBR_EXTENDED0) {
-		sc->sc_extended = 1;
+		id->t_extended = 1;
 		return(0);
 	} else if (*data == KBR_EXTENDED1) {
-		sc->sc_extended1 = 2;
+		id->t_extended1 = 2;
 		return(0);
 	}
 
 	/* process BREAK key (EXT1 1D 45  EXT1 9D C5) map to (unused) code 7F */
-	if (sc->sc_extended1 == 2 && (*data == 0x1d || *data == 0x9d)) {
-		sc->sc_extended1 = 1;
+	if (id->t_extended1 == 2 && (*data == 0x1d || *data == 0x9d)) {
+		id->t_extended1 = 1;
 		return(0);
-	} else if (sc->sc_extended1 == 1 && (*data == 0x45 || *data == 0xc5)) {
-		sc->sc_extended1 = 0;
+	} else if (id->t_extended1 == 1 && (*data == 0x45 || *data == 0xc5)) {
+		id->t_extended1 = 0;
 		*data = (*data & 0x80) | 0x7f;
-	} else if (sc->sc_extended1 > 0) {
-		sc->sc_extended1 = 0;
+	} else if (id->t_extended1 > 0) {
+		id->t_extended1 = 0;
 	}
  
 	/* Always ignore typematic keys */
-	if (*data == sc->sc_lastchar)
+	if (*data == id->t_lastchar)
 		return(0);
-	sc->sc_lastchar = *data;
+	id->t_lastchar = *data;
 
 	if (*data & 0x80)
 		*type = WSCONS_EVENT_KEY_UP;
@@ -317,9 +319,9 @@ static int pckbd_decode(sc, type, data)
 		*type = WSCONS_EVENT_KEY_DOWN;
 
 	/* map extended keys to (unused) codes 128-254 */
-	*data = (*data & 0x7f) | (sc->sc_extended ? 0x80 : 0);
+	*data = (*data & 0x7f) | (id->t_extended ? 0x80 : 0);
 
-	sc->sc_extended = 0;
+	id->t_extended = 0;
 	return(1);
 }
 
@@ -378,7 +380,7 @@ pckbd_set_leds(v, leds)
 
 	cmd[0] = KBC_MODEIND;
 	cmd[1] = pckbd_led_encode(leds);
-	t->t_sc->sc_led_state = cmd[1];
+	t->t_led_state = cmd[1];
 
 	(void) pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0, 0, 0);
 }
@@ -395,7 +397,7 @@ pckbd_input(vsc, data)
 	struct pckbd_softc *sc = vsc;
 	int type;
 
-	if (pckbd_decode(sc, &type, &data))
+	if (pckbd_decode(sc->id, &type, &data))
 		wskbd_input(sc->sc_wskbddev, type, data);
 }
 
@@ -419,13 +421,13 @@ pckbd_ioctl(v, cmd, data, flag, p)
 		int res;
 		cmd[0] = KBC_MODEIND;
 		cmd[1] = pckbd_led_encode(*(int *)data);
-		t->t_sc->sc_led_state = cmd[1];
+		t->t_led_state = cmd[1];
 		res = pckbc_enqueue_cmd(t->t_kbctag, t->t_kbcslot, cmd, 2, 0,
 					1, 0);
 		return (res);
 		}
 	    case WSKBDIO_GETLEDS:
-		*(int *)data = pckbd_led_decode(t->t_sc->sc_led_state);
+		*(int *)data = pckbd_led_decode(t->t_led_state);
 		return(0);
 	}
 	return -1;
@@ -436,9 +438,25 @@ pckbd_cnattach(kbctag, kbcslot)
 	pckbc_tag_t kbctag;
 	int kbcslot;
 {
+	struct wskbddev_attach_args a;
+
 	pckbd_init(&pckbd_consdata, kbctag, kbcslot, 1);
 
-	wskbd_cnattach(&pckbd_consops, NULL);
+	a.console = 1;
+#ifdef PCKBD_LAYOUT
+	a.layout = PCKBD_LAYOUT;
+#else
+	a.layout = KB_US;
+#endif
+	a.keydesc = wscons_keydesctab;
+	a.num_keydescs = sizeof(wscons_keydesctab)/sizeof(wscons_keydesctab[0]);
+	a.getc = pckbd_cngetc;
+	a.pollc = pckbd_cnpollc;
+	a.set_leds = pckbd_set_leds;
+	a.ioctl = NULL;
+	a.accesscookie = &pckbd_consdata;
+
+	wskbd_cnattach(&a);
 
 	return (0);
 }
@@ -450,10 +468,11 @@ pckbd_cngetc(v, type, data)
 	u_int *type;
 	int *data;
 {
+        struct pckbd_internal *t = v;
+
 	for (;;) {
-		*data = pckbc_poll_data(pckbd_consdata.t_kbctag,
-					pckbd_consdata.t_kbcslot);
-		if (pckbd_decode(pckbd_consdata.t_sc, type, data))
+		*data = pckbc_poll_data(t->t_kbctag, t->t_kbcslot);
+		if (pckbd_decode(t, type, data))
 			return;
 	}
 }
@@ -463,5 +482,7 @@ pckbd_cnpollc(v, on)
 	void *v;
         int on;
 {
-	pckbc_set_poll(pckbd_consdata.t_kbctag, pckbd_consdata.t_kbcslot, on);
+	struct pckbd_internal *t = v;
+
+	pckbc_set_poll(t->t_kbctag, t->t_kbcslot, on);
 }
