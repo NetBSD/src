@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.46 2002/10/23 09:10:32 jdolecek Exp $ */
+/*	$NetBSD: grf.c,v 1.47 2003/01/01 00:28:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.46 2002/10/23 09:10:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.47 2003/01/01 00:28:57 thorpej Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -166,7 +166,7 @@ int
 grfprint(void *auxp, const char *pnp)
 {
 	if (pnp)
-		printf("ite at %s", pnp);
+		aprint_normal("ite at %s", pnp);
 	return(UNCONF);
 }
 

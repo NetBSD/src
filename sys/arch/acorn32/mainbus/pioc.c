@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.5 2002/10/02 03:31:59 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.6 2003/01/01 00:25:02 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -193,13 +193,14 @@ piocprint(aux, name)
 
 	if (!name) {
 		if (pa->pa_offset)
-			printf(" offset 0x%x", pa->pa_offset >> 2);
+			aprint_normal(" offset 0x%x", pa->pa_offset >> 2);
 		if (pa->pa_iosize > 1)
-			printf("-0x%x", ((pa->pa_offset >> 2) + pa->pa_iosize) - 1);
+			aprint_normal("-0x%x",
+			    ((pa->pa_offset >> 2) + pa->pa_iosize) - 1);
 		if (pa->pa_irq != -1)
-			printf(" irq %d", pa->pa_irq);
+			aprint_normal(" irq %d", pa->pa_irq);
 		if (pa->pa_drq != -1)
-			printf(" drq 0x%08x", pa->pa_drq);
+			aprint_normal(" drq 0x%08x", pa->pa_drq);
 	}
 
 /* XXX print flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.34 2002/10/02 04:55:50 thorpej Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.35 2003/01/01 00:28:58 thorpej Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.34 2002/10/02 04:55:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.35 2003/01/01 00:28:58 thorpej Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -572,7 +572,7 @@ grfulprint(auxp, pnp)
 	const char *pnp;
 {
 	if (pnp)
-		printf("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
+		aprint_normal("grf%d at %s", ((struct grf_softc *)auxp)->g_unit,
 			pnp);
 	return(UNCONF);
 }
