@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.30 2001/01/14 02:38:17 mrg Exp $	*/
+/*	$NetBSD: md.c,v 1.1 2002/02/10 19:20:53 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2001/01/14 02:38:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.1 2002/02/10 19:20:53 thorpej Exp $
 #
 # Makefile for arm32
 #

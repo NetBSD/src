@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.6 2000/12/03 01:54:47 minoura Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.1 2002/02/10 19:20:53 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,66 +37,72 @@
  *
  */
 
-/* arm32 machine dependent messages, english */
+/* arm32 machine dependent messages, french */
 
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.
 
 }
 
 message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk or part of the disk.
-Which would you like to do?
+{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
+choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
+sur une partie de celui-ci.
+Que désirez vous faire ?
 }
 
 message badreadbb
-{Cannot read filecore boot block
+{Impossible de lire le contenu du secteur de démarrage
 }
 
 message badreadriscix
-{Cannot read RISCiX partition table
+{Impossible de lire la table de partition RISCiX
 }
 
 message notnetbsdriscix
-{No NetBSD partition found in RISCiX partition table - Cannot label
+{Aucune partition NetBSD trouvée dans la table de partition RISCiX. Impossible
+de crééer un label.
 }
 
 message notnetbsd
-{No NetBSD partition found (filecore only disk ?) - Cannot label
+{Aucune partition NetBSD trouvée (disque juste filecore ?). Impossible
+de crééer un label.
 }
 
 message dobootblks
-{Installing boot blocks on %s....
+{Installation du block de démarrage sur %s ...
 }
 
 message askfsroot
-{I will be asking for partition sizes and on some, mount points.
+{Je vais vous demander la taille et le point de "montage" de quelque partitions.
 
-First the root partition.  You have %d %s left on your disk.
-Root partition size? }
+Et tout d'abord la partition racine. Il vous reste %d %s de libre sur votre
+disque.
+Taille de la partition racine ? }
 
 message askfsswap
 {
-Next the swap partition.  You have %d %s left on your disk.
-Swap partition size? }
+Et maintenant la taille de swap. Il vous reste %d %s de libre sur votre disque.
+Taille du swap ? }
 
 message askfsusr
 {
-Next the /usr partition.  You have %d %s left on your disk.
-/usr partition size? }
+Et ensuite la partition /usr. Il vous reste %d %s de libre sur votre disque.
+Taille de la partition/usr ? }
+
 
 message otherparts
-{You still have some space remaining unallocated on your disk.  Please
-give sizes and mount points for the following partitions.
+{Il vous reste de l'espace libre non alloué sur votre disque. SVP donnez la taille et le point de " montage " des partitions suivantes.
 
 }
 
 message askfspart
-{The next partition is /dev/%s%c.  You have %d %s left on your disk.
-Partition size? }
+{La partition suivante est /dev/%s%c . Il vous reste %d %s de libre sur votre
+disque.
+Taille de la partition ? }
 
 message arm32fspart
-{We now have your NetBSD partitions on %s as follows (Size and Offset in %s):
+{Nous avons maintenant vos partitions NetBSD sur %s comme suit
+(taille et Offset en %s) :
 }
