@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.124.2.26 2002/10/18 03:30:14 nathanw Exp $	*/
+/*	$NetBSD: proc.h,v 1.124.2.27 2002/10/18 03:32:03 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -422,9 +422,6 @@ int	fork1(struct lwp *, int, int, void *, size_t,
 	    void (*)(void *), void *, register_t *, struct proc **);
 void	rqinit(void);
 int	groupmember(gid_t, struct ucred *);
-#ifndef cpu_switch
-void	cpu_switch(struct proc *, struct proc *);
-#endif
 #ifndef cpu_idle
 void	cpu_idle(void);
 #endif
