@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1 1997/02/04 03:52:53 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.2 2003/08/01 01:25:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,7 +54,7 @@
 #include <hp300/stand/common/samachdep.h>
 
 #define _IOCTL_
-#include <hp300/dev/scsireg.h>
+#include <hp300/stand/common/scsireg.h>
 
 struct	disklabel sdlabel;
 
