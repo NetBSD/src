@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28 1999/03/28 19:01:03 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.29 1999/03/30 02:12:37 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -51,7 +51,7 @@
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
 #include "opt_compat_svr4.h"
-#include "opt_compat_sparc32.h"
+#include "opt_compat_netbsd32.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
