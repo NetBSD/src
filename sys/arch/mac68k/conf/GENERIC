@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.89 1999/07/29 10:37:19 augustss Exp $
+#	$NetBSD: GENERIC,v 1.90 1999/11/05 09:59:25 fredb Exp $
 #
 # GENERIC
 
@@ -74,6 +74,7 @@ file-system 	PORTAL		# portal filesystem (still experimental)
 file-system 	PROCFS		# /proc
 file-system 	UMAPFS		# NULLFS + uid and gid remapping
 file-system 	UNION		# union file system
+file-system 	CODA		# Venus/Coda distributed file system
 
 # File system options
 options 	QUOTA		# UFS quotas
@@ -212,6 +213,7 @@ asc0	at obio?			# ASC/EASC audio
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vcoda		1	# Venus/Coda distributed file system
 pseudo-device	vnd		4	# disk-like interface to files
 
 # network pseudo-devices
