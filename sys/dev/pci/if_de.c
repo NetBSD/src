@@ -114,9 +114,8 @@
 
 /*
  * Intel CPUs should use I/O mapped access.
- *    (NetBSD doesn't support it yet)
  */
-#if defined(__i386__) && !defined(__NetBSD__)
+#if defined(__i386__)
 #define	TULIP_IOMAPPED
 #endif
 
