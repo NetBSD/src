@@ -1,5 +1,5 @@
-# $NetBSD: ad.m68k,v 1.10 2001/01/24 09:39:37 jwise Exp $
-./sbin/ldconfig			base-sysutil-bin
+# $NetBSD: ad.m68k,v 1.11 2001/01/26 01:34:21 jwise Exp $
+./sbin/ldconfig			base-sysutil-root
 ./usr/lib/libm68k.so.0.0	base-sys-shlib
 ./usr/libexec/ld.so		base-sys-shlib
 ./usr/lkm/adosfs.o		base-adosfs-lkm
