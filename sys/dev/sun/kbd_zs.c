@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.2 2000/03/19 12:50:43 pk Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.3 2000/03/22 16:08:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -153,8 +153,8 @@ kbd_zs_attach(parent, self, aux)
 			return;
 
 		cc->cc_dev = self;
-		cc->cc_iopen = kbd_iopen;
-		cc->cc_iclose = kbd_iclose;
+		cc->cc_iopen = kbd_cc_open;
+		cc->cc_iclose = kbd_cc_close;
 		cc->cc_upstream = NULL;
 		cons_attach_input(cc);
 		k->k_cc = cc;
