@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.421 2004/06/11 07:14:16 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.422 2004/07/30 04:18:48 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -524,7 +524,8 @@ dependall:	.NOTMAIN realdepend .MAKE
 # Supported NO* options (if defined, MK* will be forced to "no",
 # regardless of user's mk.conf setting).
 #
-.for var in CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
+.for var in \
+	CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
 	SHARE STATICLIB
 .if defined(NO${var})
 MK${var}:=	no
@@ -543,7 +544,8 @@ MK${var}:=	yes
 #
 # MK* options which default to "yes".
 #
-.for var in BFD BINUTILS \
+.for var in \
+	BFD BINUTILS \
 	CATPAGES CRYPTO CVS \
 	DOC \
 	GCC GCCCMDS GDB \
@@ -564,7 +566,8 @@ MK${var}?=	yes
 #
 # MK* options which default to "no".
 #
-.for var in CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
+.for var in \
+	CRYPTO_IDEA CRYPTO_MDC2 CRYPTO_RC5 \
 	MANZ OBJDIRS PRIVATELIB SOFTFLOAT UNPRIVED UPDATE X11
 MK${var}?=	no
 .endfor
@@ -667,9 +670,49 @@ USE_${var}?= yes
 USE_${var}?= yes
 .endfor
 
+
 #
-# Use XFree86 4.x as default version on i386, amd64, macppc, cats, sgimips,
-# and sparc*.
+# Installed system library definitions.
+#
+#	E.g.
+#		LIBC?=${DESTDIR}/usr/lib/libc.a
+#		LIBX11?=${DESTDIR}/usr/X11R6/lib/libX11.a
+#	etc..
+
+.for _lib in \
+	bz2 c c_pic cdk com_err compat crypt crypto crypto_idea \
+	crypto_mdc2 crypto_rc5 curses dbm des edit event \
+	form gcc gnumalloc gssapi hdb intl ipsec \
+	kadm kadm5clnt kadm5srv kafs kdb krb krb5 kstream kvm l \
+	m magic menu objc ossaudio pcap pci pmc posix pthread pthread_dbg \
+	resolv rmt roken rpcsvc rt skey sl ss ssl termcap usbhid util \
+	wrap y z
+.ifndef LIB${_lib:tu}
+LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib}.a
+.MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
+.endif
+.endfor
+
+.ifndef LIBSTDCXX
+LIBSTDCXX=	${DESTDIR}/usr/lib/libstdc++.a
+.MADE:		${LIBSTDCXX}
+.endif
+
+.for _lib in \
+	dps expat fntstubs fontcache fontconfig fontenc freetype FS \
+	GL GLU ICE lbxutil SM X11 Xau Xaw Xdmcp Xext Xfont Xft \
+	Xi Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt \
+	XTrap Xtst Xv Xxf86dga Xxf86misc Xxf86vm
+.ifndef LIB${_lib:tu}
+LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
+.MADE:		${LIB${_lib:tu}}	# Note: ${DESTDIR} will be expanded
+.endif
+.endfor
+
+
+#
+# Use XFree86 4.x as default version on:
+#	i386, amd64, macppc, cats, sgimips, sparc, sparc64.
 #
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE} == "amd64" || \
     ${MACHINE} == "macppc" || ${MACHINE} == "cats" || \
@@ -679,7 +722,7 @@ USE_XF86_4?=	yes
 .endif
 
 #
-# Where X11R6 sources are and where it is installed to
+# Where X11R6 sources are and where it is installed to.
 #
 X11SRCDIR?=		/usr/xsrc
 X11SRCDIR.xc?=		${X11SRCDIR}/xfree/xc
