@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.10 1998/08/21 14:13:54 pk Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.11 1998/09/22 05:40:14 chs Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -79,6 +79,9 @@
 #define DISP19(x)	((x) & 0x7ffff)
 #define DISP22(x)	((x) & 0x3fffff)
 #define DISP30(x)	((x) & 0x3fffffff)
+#define DISP19_SE(x)	((DISP19((long)(x)) << 13) >> 11)
+#define DISP22_SE(x)	((DISP22((long)(x)) << 10) >> 8)
+#define DISP30_SE(x)	((DISP30((long)(x)) << 2))
 
 /* Register Operand Fields */
 #define RS1(x)		(((x) & 0x1f) << 14)
@@ -906,17 +909,17 @@ db_disasm(loc, altfmt)
 			break;
 		case 'm':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x3fffff))),
+				(db_addr_t)(loc + DISP22_SE(insn)),
 				DB_STGY_ANY);
 			break;
 		case 'u':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x7ffff))),
+				(db_addr_t)(loc + DISP19_SE(insn)),
 				DB_STGY_ANY);
 			break;
 		case 'n':
 			db_printsym(
-				(db_addr_t)(loc + (4 * (insn & 0x3fffffff))),
+				(db_addr_t)(loc + DISP30_SE(insn)),
 				DB_STGY_PROC);
 			break;
 		case 's':
