@@ -1,4 +1,4 @@
-/* 	$NetBSD: pxvar.h,v 1.4 1999/04/26 04:37:33 ad Exp $ */
+/* 	$NetBSD: pxvar.h,v 1.5 1999/04/29 02:50:26 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -45,6 +45,7 @@ struct px_info {
 	struct	stic_regs *pxi_stic;
 	struct	bt459_regs *pxi_vdac;
 	struct	wsdisplay_font *pxi_font;
+	int	pxi_wsfcookie;
 
 	int32_t	*pxi_poll;	/* STIC DMA poll area */
 	caddr_t	pxi_stamp;	/* Undocumented stamp registers */
