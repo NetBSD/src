@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.585 2003/12/14 01:32:02 thorpej Exp $
+# $NetBSD: GENERIC,v 1.586 2003/12/14 09:54:01 dyoung Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.585 $"
+#ident 		"GENERIC-$Revision: 1.586 $"
 
 maxusers	32		# estimated number of users
 
@@ -689,6 +689,7 @@ ed*	at edc?
 
 # PCI network interfaces
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11 
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
@@ -782,6 +783,7 @@ we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC Ethernet
 we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 # CardBus network cards
+#ath*	at cardbus? dev ? function ?	# Atheros 5210/5211/5212 802.11
 #atw*	at cardbus? dev ? function ?	# ADMtek ADM8211 (802.11)
 #ex*	at cardbus? dev ? function ?	# 3Com 3C575TX
 #fxp*	at cardbus? dev ? function ?	# Intel i8255x
