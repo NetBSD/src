@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)utsname.h	1.0 (Berkeley) 43/29/93
- *	$Id: utsname.h,v 1.2 1993/05/20 16:23:46 cgd Exp $
+ *	$Id: utsname.h,v 1.3 1993/10/11 18:28:04 jtc Exp $
  */
 
 #ifndef _UTSNAME_H_
@@ -48,14 +48,14 @@ struct utsname {
 };
 
 #ifndef KERNEL
-#ifdef __STDC__
-extern int uname(struct utsname *);
+#include <sys/cdefs.h>
+
+__BEGIN_DECLS
+extern int uname	__P((struct utsname *));
+__END_DECLS
 #else
-extern int uname();
+extern struct utsname	utsname;
 #endif
-#else
-extern struct utsname utsname;
-#endif	/* KERNEL */
 
 #endif	/* _UTSNAME_H_ */
 
