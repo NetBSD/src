@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.1.1.1.2.5 2002/03/07 18:09:06 he Exp $	*/
+/*	$NetBSD: channels.c,v 1.1.1.1.2.6 2003/09/16 23:32:22 christos Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -235,9 +235,10 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 	if (found == -1) {
 		/* There are no free slots.  Take last+1 slot and expand the array.  */
 		found = channels_alloc;
+		debug2("channel: expanding %d", channels_alloc + 10);
+		channels = xrealloc(channels,
+		    (channels_alloc + 10) * sizeof(Channel *));
 		channels_alloc += 10;
-		debug2("channel: expanding %d", channels_alloc);
-		channels = xrealloc(channels, channels_alloc * sizeof(Channel *));
 		for (i = found; i < channels_alloc; i++)
 			channels[i] = NULL;
 	}
