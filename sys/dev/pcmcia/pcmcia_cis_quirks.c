@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis_quirks.c,v 1.21 2004/08/10 19:22:10 mycroft Exp $	*/
+/*	$NetBSD: pcmcia_cis_quirks.c,v 1.22 2004/10/14 00:17:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.21 2004/08/10 19:22:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia_cis_quirks.c,v 1.22 2004/10/14 00:17:12 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,61 +251,68 @@ void pcmcia_check_cis_quirks(sc)
 	struct pcmcia_softc *sc;
 {
 	int wiped = 0;
-	int i, j;
+	size_t i, j;
 	struct pcmcia_function *pf;
 	const struct pcmcia_function *pf_last;
 	struct pcmcia_config_entry *cfe;
+	struct pcmcia_card *card = &sc->card;
 
 	pf = NULL;
 	pf_last = NULL;
 
-	for (i=0; i<pcmcia_cis_nquirks; i++) {
-		if ((sc->card.manufacturer == pcmcia_cis_quirks[i].manufacturer) &&
-			(sc->card.product == pcmcia_cis_quirks[i].product) &&
-			(((sc->card.manufacturer != PCMCIA_VENDOR_INVALID) &&
-			  (sc->card.product != PCMCIA_PRODUCT_INVALID)) ||
-			 ((sc->card.manufacturer == PCMCIA_VENDOR_INVALID) &&
-			  (sc->card.product == PCMCIA_PRODUCT_INVALID) &&
-			  sc->card.cis1_info[0] &&
-			  (strcmp(sc->card.cis1_info[0],
-					  pcmcia_cis_quirks[i].cis1_info[0]) == 0) &&
-			  sc->card.cis1_info[1] &&
-			  (strcmp(sc->card.cis1_info[1],
-					  pcmcia_cis_quirks[i].cis1_info[1]) == 0)))) {
-			if (!wiped) {
-				if (pcmcia_verbose) {
-					printf("%s: using CIS quirks for ", sc->dev.dv_xname);
-					for (j = 0; j < 4; j++) {
-						if (sc->card.cis1_info[j] == NULL)
-							break;
-						if (j)
-							printf(", ");
-						printf("%s", sc->card.cis1_info[j]);
-					}
-					printf("\n");
+	for (i = 0; i < pcmcia_cis_nquirks; i++) {
+
+		if (card->manufacturer != pcmcia_cis_quirks[i].manufacturer &&
+		    card->manufacturer != PCMCIA_VENDOR_INVALID)
+			continue;
+
+		if (card->product != pcmcia_cis_quirks[i].product &&
+		    card->product != PCMCIA_PRODUCT_INVALID)
+			continue;
+
+		for (j = 0; j < 2; j++)
+			if (card->cis1_info[j] == NULL ||
+			    pcmcia_cis_quirks[i].cis1_info[j] == NULL ||
+			    strcmp(card->cis1_info[j],
+			    pcmcia_cis_quirks[i].cis1_info[j]) != 0)
+				break;
+		if (j != 2)
+			continue;
+
+		if (!wiped) {
+			if (pcmcia_verbose) {
+				printf("%s: using CIS quirks for ",
+				    sc->dev.dv_xname);
+				for (j = 0; j < 4; j++) {
+					if (card->cis1_info[j] == NULL)
+						break;
+					if (j)
+						printf(", ");
+					printf("%s", card->cis1_info[j]);
 				}
-				pcmcia_free_pf(&sc->card.pf_head);
-				wiped = 1;
+				printf("\n");
 			}
+			pcmcia_free_pf(&card->pf_head);
+			wiped = 1;
+		}
 
-			if (pf_last == pcmcia_cis_quirks[i].pf) {
-				cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
-				*cfe = *pcmcia_cis_quirks[i].cfe;
+		if (pf_last == pcmcia_cis_quirks[i].pf) {
+			cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+			*cfe = *pcmcia_cis_quirks[i].cfe;
 
-				SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
-			} else {
-				pf = malloc(sizeof(*pf), M_DEVBUF, M_NOWAIT);
-				*pf = *pcmcia_cis_quirks[i].pf;
-				SIMPLEQ_INIT(&pf->cfe_head);
+			SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
+		} else {
+			pf = malloc(sizeof(*pf), M_DEVBUF, M_NOWAIT);
+			*pf = *pcmcia_cis_quirks[i].pf;
+			SIMPLEQ_INIT(&pf->cfe_head);
 
-				cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
-				*cfe = *pcmcia_cis_quirks[i].cfe;
+			cfe = malloc(sizeof(*cfe), M_DEVBUF, M_NOWAIT);
+			*cfe = *pcmcia_cis_quirks[i].cfe;
 
-				SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
-				SIMPLEQ_INSERT_TAIL(&sc->card.pf_head, pf, pf_list);
+			SIMPLEQ_INSERT_TAIL(&pf->cfe_head, cfe, cfe_list);
+			SIMPLEQ_INSERT_TAIL(&card->pf_head, pf, pf_list);
 
-				pf_last = pcmcia_cis_quirks[i].pf;
-			}
+			pf_last = pcmcia_cis_quirks[i].pf;
 		}
 	}
 }
