@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.256 2004/01/13 09:12:22 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.257 2004/01/14 12:52:30 minoura Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -178,6 +178,7 @@
 ./usr/X11R6/lib/X11/xkb/symbols/nec
 ./usr/X11R6/lib/X11/xkb/symbols/pc
 ./usr/X11R6/lib/X11/xkb/symbols/sgi
+./usr/X11R6/lib/X11/xkb/symbols/sharp
 ./usr/X11R6/lib/X11/xkb/symbols/sony
 ./usr/X11R6/lib/X11/xkb/symbols/sun
 ./usr/X11R6/lib/X11/xkb/symbols/xfree68
