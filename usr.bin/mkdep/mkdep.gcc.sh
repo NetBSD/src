@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: mkdep.gcc.sh,v 1.11 1997/07/21 05:37:32 cgd Exp $
+#	$NetBSD: mkdep.gcc.sh,v 1.12 1997/07/22 05:20:06 cgd Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -42,15 +42,15 @@
 # Once we find it, we canonicalize its name and set the path to the
 # default path so that other commands we use are picked properly.
 
-if ! type ${CC:=cc} > /dev/null 2>&1; then
+if ! type "${CC:=cc}" > /dev/null 2>&1; then
 	PATH=/bin:/usr/bin:/usr/ucb
 	export PATH
-	if ! type ${CC} > /dev/null 2>&1; then
+	if ! type "${CC}" > /dev/null 2>&1; then
 		echo "mkdep: ${CC}: not found"
 		exit 1
 	fi
 fi
-cmd='set `type ${CC}` ; eval echo \$$#'
+cmd='set -- `type "${CC}"` ; eval echo \$$#'
 CC=`eval $cmd`
 export CC
 PATH=/bin:/usr/bin:/usr/ucb
