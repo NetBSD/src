@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.15 1993/10/29 17:57:05 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.16 1993/10/29 19:59:09 mycroft Exp $
  */
 
 /*
@@ -306,7 +306,7 @@ comopen(dev, flag, mode, p)
 	(void) inb(iobase + com_data);
 	/* you turn me on, baby */
 	outb(iobase + com_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
-	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);	
+	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);
 
 	if (sc->sc_flags & COM_SOFTCAR || inb(iobase + com_msr) & MSR_DCD)
 		tp->t_state |= TS_CARR_ON;
@@ -474,7 +474,6 @@ comparam(tp, t)
 	struct	com_softc *sc = comcd.cd_devs[unit];
 	u_short	iobase = sc->sc_iobase;
 	int	ospeed = comspeed(t->c_ospeed);
-	tcflag_t cflag = t->c_cflag;
 	u_char	cfcr;
 	int	s;
  
@@ -482,7 +481,7 @@ comparam(tp, t)
 	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
 	        return EINVAL;
 	
-	switch (cflag & CSIZE) {
+	switch (t->c_cflag & CSIZE) {
 	    case CS5:
 		cfcr = CFCR_5BITS;
 		break;
@@ -496,12 +495,12 @@ comparam(tp, t)
 		cfcr = CFCR_8BITS;
 		break;
 	}
-	if (cflag & PARENB) {
+	if (t->c_cflag & PARENB) {
 		cfcr |= CFCR_PENAB;
-		if ((cflag & PARODD) == 0)
+		if ((t->c_cflag & PARODD) == 0)
 			cfcr |= CFCR_PEVEN;
 	}
-	if (cflag & CSTOPB)
+	if (t->c_cflag & CSTOPB)
 		cfcr |= CFCR_STOPB;
 
 	s = spltty();
@@ -509,7 +508,7 @@ comparam(tp, t)
 	/* and copy to tty */
 	tp->t_ispeed = t->c_ispeed;
 	tp->t_ospeed = t->c_ospeed;
-	tp->t_cflag = cflag;
+	tp->t_cflag = t->c_cflag;
 
 	if (ospeed == 0)
 		bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
@@ -522,7 +521,7 @@ comparam(tp, t)
 	outb(iobase + com_cfcr, cfcr);
 
 	/* when not using CRTS_IFLOW, RTS follows DTR */
-	if ((cflag & CRTS_IFLOW) == 0) {
+	if ((t->c_cflag & CRTS_IFLOW) == 0) {
 		u_char	mcr = inb(iobase + com_mcr);
 
 		if (mcr & MCR_DTR)
