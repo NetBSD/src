@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.18 1999/04/11 04:08:25 simonb Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.19 1999/04/12 05:14:51 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -136,22 +136,30 @@ entrypt
 loadfile(fname)
 	char *fname;
 {
-	int fd, i, n;
-	char *buf;
+	int fd, i;
+	char c, *buf, bootfname[64];
 	Elf32_Ehdr ehdr;
 	Elf32_Phdr phdr;
-	char bootfname[64];
 
 	strcpy(bootfname, fname);
 	buf = bootfname;
-	while ((n = *buf++) != '\0') {
-		if (n == ')')
+	while ((c = *buf++) != '\0') {
+		if (c == ')')
 			break;
-		if (n != '/')
+		if (c != '/')
 			continue;
-		while ((n = *buf++) != '\0')
-			if (n == '/')
+		while ((c = *buf++) != '\0')
+			if (c == '/')
 				break;
+		/*
+		 * Make "N/rzY" with no trailing '/' valid by adding
+		 * the extra '/' before appending 'boot' to the path.
+		 */
+		if (c != '/') {
+			buf--;
+			*buf++ = '/';
+			*buf = '\0';
+		}
 		break;
 	}
 	strcpy(buf, "boot");
