@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.new.h,v 1.5 1998/03/02 18:06:32 fvdl Exp $	*/
+/*	$NetBSD: pmap.new.h,v 1.6 1998/05/05 01:36:46 chuck Exp $	*/
 
 /*
  *
@@ -119,18 +119,18 @@
  *   |   0| -> maps the contents of PTP#0 at VA 0xefc00000->0xefc01000
  *   |    |
  *   |    |
- *   | 959| -> maps contents of PTP#959 (the PDP) at VA 0xeffdf000
+ *   | 959| -> maps contents of PTP#959 (the PDP) at VA 0xeffbf000
  *   | 960| -> maps contents of first kernel PTP 
  *   |    |
  *   |1023|
  *   +----+
  *
- * note that mapping of the PDP at PTP#959's VA (0xeffdf000) is 
+ * note that mapping of the PDP at PTP#959's VA (0xeffbf000) is 
  * defined as "PDP_BASE".... within that mapping there are two
  * defines: 
- *   "PDP_PDE" (0xeffdff7c) is the VA of the PDE in the PDP
+ *   "PDP_PDE" (0xeffbfefc) is the VA of the PDE in the PDP
  *      which points back to itself.     
- *   "APDP_PDE" (0xeffdfffc) is the VA of the PDE in the PDP which
+ *   "APDP_PDE" (0xeffbfffc) is the VA of the PDE in the PDP which
  *      establishes the recursive mapping of the alternate pmap.
  *      to set the alternate PDP, one just has to put the correct
  *	PA info in *APDP_PDE.
