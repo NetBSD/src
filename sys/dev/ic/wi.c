@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.102 2002/11/16 06:02:53 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.103 2002/11/16 06:25:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.102 2002/11/16 06:02:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.103 2002/11/16 06:25:05 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1428,17 +1428,8 @@ wi_get_cfg(struct ifnet *ifp, u_long cmd, caddr_t data)
 	case WI_RID_ENCRYPTION:
 	case WI_RID_TX_CRYPT_KEY:
 	case WI_RID_DEFLT_CRYPT_KEYS:
-		return ieee80211_cfgget(ifp, cmd, data);
-
 	case WI_RID_TX_RATE:
-		if (ic->ic_fixed_rate < 0)
-			wreq.wi_val[0] = htole16(3);	/*XXX*/
-		else
-			wreq.wi_val[0] = htole16(
-			    (ic->ic_sup_rates[ic->ic_fixed_rate] &
-			    IEEE80211_RATE_VAL) / 2);
-		len = sizeof(u_int16_t);
-		break;
+		return ieee80211_cfgget(ifp, cmd, data);
 
 	case WI_RID_MICROWAVE_OVEN:
 		if (sc->sc_enabled && (sc->sc_flags & WI_FLAGS_HAS_MOR)) {
@@ -1689,6 +1680,15 @@ wi_write_txrate(struct wi_softc *sc)
 			rate = 3;	/* auto */
 		break;
 	default:
+		/* Choose a bit according to this table.
+		 *
+		 * bit | data rate
+		 * ----+-------------------
+		 * 0   | 1Mbps
+		 * 1   | 2Mbps
+		 * 2   | 5.5Mbps
+		 * 3   | 11Mbps
+		 */
 		for (i = 8; i > 0; i >>= 1) {
 			if (rate >= i)
 				break;
