@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.9 1995/03/26 20:25:00 jtc Exp $	*/
+/*	$NetBSD: uio.h,v 1.10 1995/03/29 22:10:18 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -73,7 +73,7 @@ struct uio {
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
 #endif /* _KERNEL */
 
-#ifndef	KERNEL
+#ifndef	_KERNEL
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS

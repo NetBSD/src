@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_var.h,v 1.3 1995/03/08 02:13:59 cgd Exp $	*/
+/*	$NetBSD: llc_var.h,v 1.4 1995/03/29 22:09:12 briggs Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -575,7 +575,7 @@ struct sdl_hdr {
 #define LLC_AGE_TIMER     40              /* 20 secs */
 #define LLC_DACTION_TIMER  2              /*  1 secs */
 
-#if defined (KERNEL) && defined(LLC)
+#if defined (_KERNEL) && defined(LLC)
 extern int llc_n2;
 extern int llc_ACK_timer;
 extern int llc_P_timer;

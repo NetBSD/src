@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.11 1995/03/26 20:24:45 jtc Exp $	*/
+/*	$NetBSD: socket.h,v 1.12 1995/03/29 22:10:11 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1985, 1986, 1988, 1993, 1994
@@ -312,7 +312,7 @@ struct omsghdr {
 	int	msg_accrightslen;
 };
 
-#ifndef	KERNEL
+#ifndef	_KERNEL
 
 #include <sys/cdefs.h>
 
