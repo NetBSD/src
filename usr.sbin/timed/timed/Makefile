@@ -1,4 +1,4 @@
-#	$NetBSD#
+#	$NetBSD: Makefile,v 1.9 1998/01/05 05:59:45 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # optional flags are: MEASURE TESTING DEBUG
