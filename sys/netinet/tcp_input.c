@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.108.4.5 2000/07/23 07:27:11 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.108.4.6 2000/07/28 02:31:08 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -685,6 +685,19 @@ tcp_input(m, va_alist)
 		/* Be proactive about malicious use of IPv4 mapped address */
 		if (IN6_IS_ADDR_V4MAPPED(&ip6->ip6_src) ||
 		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst)) {
+			/* XXX stat */
+			goto drop;
+		}
+
+		/*
+		 * Be proactive about unspecified IPv6 address in source.
+		 * As we use all-zero to indicate unbounded/unconnected pcb,
+		 * unspecified IPv6 address can be used to confuse us.
+		 *
+		 * Note that packets with unspecified IPv6 destination is
+		 * already dropped in ip6_input.
+		 */
+		if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src)) {
 			/* XXX stat */
 			goto drop;
 		}
