@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 #
 # Copyright (c) 1996 Matthew R. Green
 # All rights reserved.
@@ -67,7 +67,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 SUBDIR=	ipf ipfstat ipftest ipmon ipnat ipresend ipsend iptest rules
 
@@ -80,7 +80,7 @@ cd $d/src/usr.sbin/ipf
 
 echo creating main Makefile.inc
 cat > Makefile.inc<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 WARNS?=	1
 
@@ -103,7 +103,7 @@ cd $d/src/usr.sbin/ipf/ipf
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 .include <bsd.own.mk>
 
@@ -132,7 +132,7 @@ cd $d/src/usr.sbin/ipf/ipfstat
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipfstat
 SRCS=	kmem.c fils.c opt.c parse.c
@@ -158,7 +158,7 @@ cd $d/src/usr.sbin/ipf/ipftest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipftest
 SRCS=	ipt.c ipft_sn.c ipft_ef.c ipft_td.c ipft_pc.c opt.c ipft_tx.c misc.c ip_frag.c ip_state.c ip_nat.c ipft_hx.c ip_fil.c fil.c parse.c ip_proxy.c ip_auth.c
@@ -183,7 +183,7 @@ cd $d/src/usr.sbin/ipf/ipmon
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipmon
 MAN=	ipmon.8
@@ -208,7 +208,7 @@ mv ipnat.1 ipnat.8
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipnat
 SRCS=	kmem.c ipnat.c
@@ -233,7 +233,7 @@ cd $d/src/usr.sbin/ipf/ipresend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipresend
 SRCS=	ipresend.c ip.c resend.c opt.c ipft_ef.c ipft_hx.c ipft_sn.c ipft_td.c ipft_tx.c sbpf.c 44arp.c ipft_pc.c
@@ -264,7 +264,7 @@ cd $d/src/usr.sbin/ipf/ipsend
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	ipsend
 SRCS=	ipsend.c ip.c ipsopt.c 44arp.c sbpf.c iplang_l.l iplang_y.y
@@ -292,7 +292,7 @@ cd $d/src/usr.sbin/ipf/iptest
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 PROG=	iptest
 SRCS=	iptest.c iptests.c ip.c sbpf.c 44arp.c sock.c
@@ -318,7 +318,7 @@ cd $d/src/usr.sbin/ipf/rules
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 FILESDIR= /usr/share/examples/ipf
 MAN=	mkfilters.1
@@ -353,7 +353,7 @@ cd $d/src/sys/lkm/netinet/if_ipl
 
 echo creating Makefile
 cat > Makefile<<'__eof_makefile'
-#	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $
+#	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
 
 .include "../Makefile.inc"
 
@@ -379,14 +379,26 @@ find $d -name '*.[chly]' -print | while read c; do
 		s/"ip_auth.h"/<netinet\/ip_auth.h>/
 		s/\$\(Id.*\)\$/\1/' \
 	< $c > /tmp/ipf2n$$ && mv /tmp/ipf2n$$ $c && echo transformed $c
-	sed 1q < $c | grep '\$NetBSD' || (
-cat <<'__eof_header'
-/*	$NetBSD: ipfilter2netbsd,v 1.23 1998/05/17 16:05:39 veego Exp $	*/
+	sed 1q < $c | grep -q '\$NetBSD' || (
+cat <<'__eof_header'  > /tmp/ipf3n$$
+/*	$NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $	*/
 
 __eof_header
-cat $c
-	) > /tmp/ipf3n$$ && mv /tmp/ipf3n$$ $c && echo added RCS tags to $c
+cat $c  >> /tmp/ipf3n$$
+mv /tmp/ipf3n$$ $c && echo added RCS tag to $c
+	)
 done
+
+#find $d -name '*.[0-9]' -a \! -name 'example.*' -print | while read m; do
+#	sed 1q < $m | grep -q '\$NetBSD' || (
+#cat <<'__eof_header' > /tmp/ipf3n$$
+#.\"     $NetBSD: ipfilter2netbsd,v 1.24 1998/07/12 14:39:11 veego Exp $
+#.\"
+#__eof_header
+#cat $m >> /tmp/ipf3n$$
+#mv /tmp/ipf3n$$ $m && echo added RCS tag to $m
+#        )
+#done
 
 echo done
 
