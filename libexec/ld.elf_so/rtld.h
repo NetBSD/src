@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.46 2002/09/12 20:20:58 mycroft Exp $	 */
+/*	$NetBSD: rtld.h,v 1.47 2002/09/12 20:27:34 mycroft Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -296,11 +296,6 @@ const void *_rtld_function_descriptor_function __P((const void *));
 #endif /* __HAVE_FUNCTION_DESCRIPTORS */
 
 void	_rtld_setup_pltgot __P((const Obj_Entry *));
-
-#if defined(__hppa__)
-/* rtld_start.S */
-void __rtld_setup_hppa_pltgot __P((const Obj_Entry *, Elf_Addr *));
-#endif
 
 #endif /* _RTLD_SOURCE */
 
