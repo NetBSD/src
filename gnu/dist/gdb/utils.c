@@ -410,11 +410,11 @@ fatal_dump_core (va_alist)
    out of range.  Provide a "safe" version that always returns a
    printable string. */
 
-char *
+const char *
 safe_strerror (errnum)
      int errnum;
 {
-  char *msg;
+  const char *msg;
   static char buf[32];
 
   if ((msg = strerror (errnum)) == NULL)
@@ -429,11 +429,11 @@ safe_strerror (errnum)
    out of range.  Provide a "safe" version that always returns a
    printable string. */
 
-char *
+const char *
 safe_strsignal (signo)
      int signo;
 {
-  char *msg;
+  const char *msg;
   static char buf[32];
 
   if ((msg = strsignal (signo)) == NULL)
@@ -453,7 +453,7 @@ void
 perror_with_name (string)
      char *string;
 {
-  char *err;
+  const char *err;
   char *combined;
 
   err = safe_strerror (errno);
@@ -479,7 +479,7 @@ print_sys_errmsg (string, errcode)
      char *string;
      int errcode;
 {
-  char *err;
+  const char *err;
   char *combined;
 
   err = safe_strerror (errcode);
