@@ -1,16 +1,23 @@
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.5 1994/07/27 05:26:15 deraadt Exp $
+#	$Id: Makefile.inc,v 1.6 1994/08/12 01:19:31 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: netbsd inst
+snap_md: netbsd netbsd.scsi3 inst
 	cp ${.CURDIR}/../sys/arch/sparc/compile/SPARC/netbsd \
 	    ${DESTDIR}/snapshot/netbsd
+	cp ${.CURDIR}/../sys/arch/sparc/compile/SPARC_SCSI3/netbsd \
+	    ${DESTDIR}/snapshot/netbsd.scsi3
 
 netbsd:
 	cd ${.CURDIR}/../sys/arch/sparc/conf && config.new SPARC
 	cd ${.CURDIR}/../sys/arch/sparc/compile/SPARC && \
+	    make clean && make depend && make
+
+netbsd.scsi3:
+	cd ${.CURDIR}/../sys/arch/sparc/conf && config.new SPARC_SCSI3
+	cd ${.CURDIR}/../sys/arch/sparc/compile/SPARC_SCSI3 && \
 	    make clean && make depend && make
 
 inst:
