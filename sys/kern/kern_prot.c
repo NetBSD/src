@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.57 2000/04/21 16:15:39 minoura Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.58 2000/05/27 00:40:46 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -287,7 +287,8 @@ sys_setpgid(curp, v, retval)
 		return (EINVAL);
 
 	if (SCARG(uap, pid) != 0 && SCARG(uap, pid) != curp->p_pid) {
-		if ((targp = pfind(SCARG(uap, pid))) == 0 || !inferior(targp))
+		if ((targp = pfind(SCARG(uap, pid))) == 0
+		    || !inferior(targp, curp))
 			return (ESRCH);
 		if (targp->p_session != curp->p_session)
 			return (EPERM);

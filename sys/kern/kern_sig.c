@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.99 2000/05/26 00:36:52 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.100 2000/05/27 00:40:46 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -80,7 +80,7 @@
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
-static int build_corename __P((char *));
+static int build_corename __P((struct proc *, char *));
 #if COMPAT_NETBSD32
 static int coredump32 __P((struct proc *, struct vnode *));
 #endif
@@ -717,7 +717,7 @@ trapsignal(p, signum, code)
 		p->p_stats->p_ru.ru_nsignals++;
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_PSIG))
-			ktrpsig(p->p_tracep, signum,
+			ktrpsig(p, signum,
 			    ps->ps_sigact[signum].sa_handler, &p->p_sigmask,
 			    code);
 #endif
@@ -1029,7 +1029,7 @@ issignal(p)
 				psignal(p->p_pptr, SIGCHLD);
 			do {
 				stop(p);
-				mi_switch();
+				mi_switch(p);
 			} while (!trace_req(p) && p->p_flag & P_TRACED);
 
 			/*
@@ -1090,7 +1090,7 @@ issignal(p)
 				if ((p->p_pptr->p_flag & P_NOCLDSTOP) == 0)
 					psignal(p->p_pptr, SIGCHLD);
 				stop(p);
-				mi_switch();
+				mi_switch(p);
 				break;
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -1166,7 +1166,7 @@ postsig(signum)
 	action = ps->ps_sigact[signum].sa_handler;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_PSIG))
-		ktrpsig(p->p_tracep,
+		ktrpsig(p,
 		    signum, action, ps->ps_flags & SAS_OLDMASK ?
 		    &ps->ps_oldmask : &p->p_sigmask, 0);
 #endif
@@ -1324,7 +1324,7 @@ coredump(p)
 	    (vp->v_mount->mnt_flag & MNT_NOCOREDUMP) != 0)
 		return (EPERM);
 
-	error = build_corename(name);
+	error = build_corename(p, name);
 	if (error)
 		return error;
 
@@ -1510,32 +1510,33 @@ sys_nosys(p, v, retval)
 }
 
 static int
-build_corename(dst)
+build_corename(p, dst)
+	struct proc *p;
 	char *dst;
 {
 	const char *s;
 	char *d;
 	int len, i;
-
-	for (s = curproc->p_limit->pl_corename, len = 0, d = dst;
+	
+	for (s = p->p_limit->pl_corename, len = 0, d = dst;
 	    *s != '\0'; s++) {
 		if (*s == '%') {
 			switch (*(s+1)) {
 			case 'n':
 				i = snprintf(d,MAXPATHLEN - 1 - len, "%s",
-				    curproc->p_comm);
+				    p->p_comm);
 				break;
 			case 'p':
 				i = snprintf(d, MAXPATHLEN - 1 - len, "%d",
-				    curproc->p_pid);
+				    p->p_pid);
 				break;
 			case 'u':
 				i = snprintf(d, MAXPATHLEN - 1 - len, "%s",
-				    curproc->p_pgrp->pg_session->s_login);
+				    p->p_pgrp->pg_session->s_login);
 				break;
 			case 't':
 				i = snprintf(d, MAXPATHLEN - 1 - len, "%ld",
-				    curproc->p_stats->p_start.tv_sec);
+				    p->p_stats->p_start.tv_sec);
 				break;
 			default:
 				goto copy;

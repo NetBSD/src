@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.73 2000/05/26 21:20:31 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.74 2000/05/27 00:40:46 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -369,7 +369,7 @@ tsleep(ident, priority, wmesg, timo)
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 1, 0);
+		ktrcsw(p, 1, 0);
 #endif
 	s = splhigh();
 
@@ -418,7 +418,7 @@ tsleep(ident, priority, wmesg, timo)
 		sig = 0;
 	p->p_stat = SSLEEP;
 	p->p_stats->p_ru.ru_nvcsw++;
-	mi_switch();
+	mi_switch(p);
 #ifdef	DDB
 	/* handy breakpoint location after process "wakes" */
 	asm(".globl bpendtsleep ; bpendtsleep:");
@@ -432,7 +432,7 @@ resume:
 		if (sig == 0) {
 #ifdef KTRACE
 			if (KTRPOINT(p, KTR_CSW))
-				ktrcsw(p->p_tracep, 0, 0);
+				ktrcsw(p, 0, 0);
 #endif
 			return (EWOULDBLOCK);
 		}
@@ -441,7 +441,7 @@ resume:
 	if (catch && (sig != 0 || (sig = CURSIG(p)) != 0)) {
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_CSW))
-			ktrcsw(p->p_tracep, 0, 0);
+			ktrcsw(p, 0, 0);
 #endif
 		if ((p->p_sigacts->ps_sigact[sig].sa_flags & SA_RESTART) == 0)
 			return (EINTR);
@@ -449,7 +449,7 @@ resume:
 	}
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 0, 0);
+		ktrcsw(p, 0, 0);
 #endif
 	return (0);
 }
@@ -528,16 +528,16 @@ sleep(ident, priority)
 	p->p_stats->p_ru.ru_nvcsw++;
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 1, 0);
+		ktrcsw(p, 1, 0);
 #endif
-	mi_switch();
+	mi_switch(p);
 #ifdef	DDB
 	/* handy breakpoint location after process "wakes" */
 	asm(".globl bpendsleep ; bpendsleep:");
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 0, 0);
+		ktrcsw(p, 0, 0);
 #endif
 	curcpu()->ci_schedstate.spc_curpriority = p->p_usrpri;
 	splx(s);
@@ -703,7 +703,7 @@ yield()
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nvcsw++;
-	mi_switch();
+	mi_switch(p);
 	splx(s);
 }
 
@@ -731,7 +731,7 @@ preempt(newp)
 	p->p_stat = SRUN;
 	setrunqueue(p);
 	p->p_stats->p_ru.ru_nivcsw++;
-	mi_switch();
+	mi_switch(p);
 	splx(s);
 }
 
@@ -740,9 +740,9 @@ preempt(newp)
  * Must be called at splstatclock() or higher.
  */
 void
-mi_switch()
+mi_switch(p)
+	struct proc *p;
 {
-	struct proc *p = curproc;	/* XXX */
 	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
 	struct rlimit *rlim;
 	long s, u;

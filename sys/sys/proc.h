@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.93 2000/05/26 21:20:32 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.94 2000/05/27 00:40:48 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -170,7 +170,7 @@ struct	proc {
 	u_quad_t p_iticks;		/* Statclock hits processing intr. */
 
 	int	p_traceflag;		/* Kernel trace points. */
-	void	*p_tracep;		/* Trace to vnode or file */
+	struct 	file *p_tracep;		/* Trace to file */
 
 	sigset_t p_siglist;		/* Signals arrived but not delivered. */
 	char	p_sigcheck;		/* May have deliverable signals. */
@@ -372,11 +372,11 @@ struct pgrp *pgfind __P((pid_t));	/* Find process group by id. */
 int	chgproccnt __P((uid_t uid, int diff));
 int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
-int	inferior __P((struct proc *p));
+int	inferior __P((struct proc *p, struct proc *q));
 int	leavepgrp __P((struct proc *p));
 void	yield __P((void));
 void	preempt __P((struct proc *));
-void	mi_switch __P((void));
+void	mi_switch __P((struct proc *));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
 void	remrunqueue __P((struct proc *));
