@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.70.2.4 2003/08/17 04:55:21 jlam Exp $	*/
+/*	$NetBSD: perform.c,v 1.70.2.5 2003/08/18 04:58:07 jlam Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.70.2.4 2003/08/17 04:55:21 jlam Exp $");
+__RCSID("$NetBSD: perform.c,v 1.70.2.5 2003/08/18 04:58:07 jlam Exp $");
 #endif
 #endif
 
@@ -74,9 +74,7 @@ installprereq(const char *name, int *errc)
 	if (Verbose)
 		printf("Loading it from %s.\n", name);
 	path_setenv("PKG_PATH");
-	if (vsystem("env %s=%s %s/pkg_add -s %s %s%s%s %s%s %s%s%s %s%s",
-			PKG_VIEW,
-			(tmp = getenv(PKG_VIEW) ? tmp : ""),
+	if (vsystem("%s/pkg_add -s %s %s%s%s %s%s %s%s%s %s%s",
 			BINDIR,
 			get_verification(),
 			NoView ? "-L " : "",
@@ -769,11 +767,9 @@ success:
 	/* Add the package to a default view. */
 	if (!NoView && is_depoted_pkg) {
 		if (Verbose) {
-			printf("env %s=%s %s=%s %s/pkg_view %s%s %s%s %sadd %s\n",
+			printf("env %s=%s %s/pkg_view %s%s %s%s %sadd %s\n",
 				PKG_DBDIR,
 				DEF_LOG_DIR,
-				PKG_VIEW,
-				(tmp = getenv(PKG_VIEW) ? tmp : ""),
 				BINDIR,
 				View ? "-w " : "",
 				View ? View : "",
@@ -782,11 +778,9 @@ success:
 				Verbose ? "-v " : "",
 				PkgName);
 		}
-		vsystem("env %s=%s %s=%s %s/pkg_view %s%s %s%s %sadd %s",
+		vsystem("env %s=%s %s/pkg_view %s%s %s%s %sadd %s",
 				PKG_DBDIR,
 				DEF_LOG_DIR,
-				PKG_VIEW,
-				(tmp = getenv(PKG_VIEW) ? tmp : ""),
 				BINDIR,
 				View ? "-w " : "",
 				View ? View : "",
