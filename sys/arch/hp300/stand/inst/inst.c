@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.7 2002/03/16 06:20:08 gmcgarry Exp $	*/
+/*	$NetBSD: inst.c,v 1.8 2002/05/30 18:32:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -176,12 +176,12 @@ dsklabel()
 	char block[DEV_BSIZE], diskname[64];
 	extern struct open_file files[];
 
-	printf("
-You will be asked several questions about your disk, most of which
-require prior knowledge of the disk's geometry.  There is no easy way
-for the system to provide this information for you.  If you do not have
-this information, please consult your disk's manual or another
-informative source.\n\n");
+	printf(
+"You will be asked several questions about your disk, most of which\n"
+"require prior knowledge of the disk's geometry.  There is no easy way\n"
+"for the system to provide this information for you.  If you do not have\n"
+"this information, please consult your disk's manual or another\n"
+"informative source.\n\n");
 
 	/* Error message printed by opendisk() */
 	if (opendisk("Disk to label?", diskname, sizeof(diskname),
@@ -428,8 +428,8 @@ disklabel_edit(lp)
 		lp->d_secperunit = lp->d_ncylinders * lp->d_secpercyl;
 	GETNUM("Total sectors? [%d] ", lp->d_secperunit);
 
-	printf("
-Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
+	printf(
+"Enter partition table.  Note, sizes and offsets are in sectors.\n\n");
 
 	lp->d_npartitions = MAXPARTITIONS;
 	for (i = 0; i < lp->d_npartitions; ++i) {
