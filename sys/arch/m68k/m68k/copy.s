@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.15 1995/02/08 14:19:37 mycroft Exp $	*/
+/*	$NetBSD: copy.s,v 1.16 1995/02/08 14:26:10 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles Hannum.
@@ -65,7 +65,7 @@
  */
 ENTRY(copyin)
 	movl	sp@(12),d0	/* check count */
-	jle	ciabort		/* <= 0, don't do anything */
+	beq	ciabort		/* <= 0, don't do anything */
 #ifdef MAPPEDCOPY
 	.globl	_mappedcopysize,_mappedcopyin
 	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
@@ -130,7 +130,7 @@ cifault:
  */
 ENTRY(copyout)
 	movl	sp@(12),d0	/* check count */
-	jle	coabort		/* <= 0, don't do anything */
+	beq	coabort		/* <= 0, don't do anything */
 #ifdef MAPPEDCOPY
 	.globl	_mappedcopysize,_mappedcopyout
 	cmpl	_mappedcopysize,d0	| size >= mappedcopysize
