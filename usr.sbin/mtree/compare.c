@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.30 2001/10/18 04:37:56 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.31 2001/10/18 04:45:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.30 2001/10/18 04:37:56 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.31 2001/10/18 04:45:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -228,7 +228,7 @@ typeerr:		LABEL;
 		else
 			(void)printf(")\n");
 		tab = "\t";
-	skip:
+	skip:	;
 	}
 	if (s->flags & F_DEV &&
 	    (s->type == F_BLOCK || s->type == F_CHAR) &&
