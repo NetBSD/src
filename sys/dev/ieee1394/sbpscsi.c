@@ -1,4 +1,4 @@
-/*	$NetBSD: sbpscsi.c,v 1.2 2002/12/01 12:12:09 jmc Exp $	*/
+/*	$NetBSD: sbpscsi.c,v 1.3 2002/12/09 22:28:21 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.2 2002/12/01 12:12:09 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbpscsi.c,v 1.3 2002/12/09 22:28:21 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -254,6 +254,9 @@ sbpscsi_status(struct sbp2_status *status, void *arg)
 	    (status->sbp_status != SBP2_STATUS_NOERROR)) {
 #ifdef SBPSCSI_DEBUG
 #endif
+	} else {
+		xs->error = XS_NOERROR;
+		xs->resid = 0;
 	}
 	
 	if (status->datalen) {
