@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $	*/
+/*	$NetBSD: opendir.c,v 1.21 2003/03/02 14:17:07 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.20 2000/01/22 22:19:11 mycroft Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.21 2003/03/02 14:17:07 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -132,7 +132,7 @@ __opendir2(name, flags)
 	if (unionstack || nfsdir) {
 		size_t len;
 		size_t space;
-		char *buf;
+		char *buf, *nbuf;
 		char *ddptr;
 		char *ddeptr;
 		int n;
@@ -165,12 +165,14 @@ retry:
 			if (space < DIRBLKSIZ) {
 				space += incr;
 				len += incr;
-				buf = realloc(buf, len);
-				if (buf == NULL) {
+				nbuf = realloc(buf, len);
+				if (nbuf == NULL) {
+					free(buf);
 					free(dirp);
 					close(fd);
 					return (NULL);
 				}
+				buf = nbuf;
 				ddptr = buf + (len - space);
 			}
 
@@ -281,7 +283,8 @@ retry:
 					free(dpv);
 					break;
 				} else {
-					dpv = malloc((n+1) * sizeof(struct dirent *));
+					dpv = malloc((n + 1) *
+					    sizeof(struct dirent *));
 					if (dpv == NULL)
 						break;
 				}
@@ -295,7 +298,7 @@ retry:
 		dirp->dd_buf = malloc((size_t)dirp->dd_len);
 		if (dirp->dd_buf == NULL) {
 			free(dirp);
-			close (fd);
+			close(fd);
 			return (NULL);
 		}
 		dirp->dd_seek = 0;
