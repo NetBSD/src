@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2001/02/09 18:34:04 uch Exp $
+#	$NetBSD: Makefile,v 1.2 2001/02/21 16:01:52 uch Exp $
 #
 
 PROJECT_DIRS	= hpcboot libz libsa
@@ -39,7 +39,9 @@ clean:
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
 	rm -f hpcboot/hpcboot.plg
 # 
-	rm -rf compile/*
+	rm -rf compile/ARMDebug compile/ARMRelease			\
+	compile/SH3Debug compile/SH3Release				\
+	compile/MIPSDebug compile/MIPSRelease
 	find . -name "hpcboot.exe" -print |xargs rm -f
 
 distclean: clean

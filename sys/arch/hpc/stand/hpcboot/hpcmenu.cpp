@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.1 2001/02/09 18:34:43 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.2 2001/02/21 16:01:53 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -528,10 +528,10 @@ __END_MACRO
 	case 0:	// wd0
 		break;
 	case 1:	// sd0
-		strncpy(loc, "b=sd0", 5);
-		len = strlen("b=sd0") + 1;
-		loc += len;
-		locp += len;
+		argv[argc++] = ptokv(locp);
+		strncpy(loc, "b=sd0", 6);
+		loc += 6;
+		locp += 6;
 		break;
 	case 2:	// memory disk
 		w = _pref.rootfs_file;
