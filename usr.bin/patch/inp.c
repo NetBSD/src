@@ -1,7 +1,7 @@
-/*	$NetBSD: inp.c,v 1.5 1998/11/06 22:40:13 christos Exp $	*/
+/*	$NetBSD: inp.c,v 1.6 1999/02/09 05:15:45 sommerfe Exp $	*/
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: inp.c,v 1.5 1998/11/06 22:40:13 christos Exp $");
+__RCSID("$NetBSD: inp.c,v 1.6 1999/02/09 05:15:45 sommerfe Exp $");
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -145,6 +145,11 @@ char *filename;
 		fatal3("can't check out file %s from %s\n", filename, cs);
 	}
     }
+    if (old_file_is_dev_null && ok_to_create_file && (filestat.st_size != 0)) {
+	fatal2("patch creates new file but existing file %s not empty\n",
+	       filename);
+    }
+
     filemode = filestat.st_mode;
     if (!S_ISREG(filemode))
 	fatal2("%s is not a normal file--can't patch\n", filename);
