@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.328 2004/07/10 14:38:13 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.329 2004/07/10 16:39:28 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -5338,4 +5338,11 @@ sys/sys/namei.h					1.35
 	Resolve longstanding issue with the NFS client code and certain
 	servers which caused hangs.
 	[tls, ticket #634]
+
+sys/arch/sparc/sparc/oclock.c			1.9
+sys/arch/sparc/sparc/timer_sun4m.c		1.10
+
+	Revision 1.27 of clock.c applies to the Intersil interrupt, not
+	sun4m timers.
+	[pk, ticket #637]
 
