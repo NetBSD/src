@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.239 2003/07/21 17:30:33 tshiozak Exp $
+#	$NetBSD: NetBSD.dist,v 1.240 2003/07/25 16:55:15 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -74,7 +74,11 @@
 ./usr/include/fs
 ./usr/include/fs/smbfs
 ./usr/include/g++
+# remove me when gcc3.3 upgrade is complete
 ./usr/include/g++/std
+./usr/include/g++/backward
+./usr/include/g++/ext
+./usr/include/g++/bits
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
