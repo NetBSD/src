@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.11 2001/11/12 23:08:56 lukem Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.12 2003/03/29 22:48:39 wiz Exp $	*/
 
 /*
  * 
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.11 2001/11/12 23:08:56 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.12 2003/03/29 22:48:39 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -397,7 +397,7 @@ coda_nc_zapParentfid(fid, dcstat)
 	/* To get to a specific fid, we might either have another hashing
 	   function or do a sequential search through the cache for the
 	   appropriate entries. The later may be acceptable since I don't
-	   think callbacks or whatever Case 1 covers are frequent occurences.
+	   think callbacks or whatever Case 1 covers are frequent occurrences.
 	 */
 	struct coda_cache *cncp, *ncncp;
 	int i;
