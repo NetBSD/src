@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.88 2002/03/28 11:54:17 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.89 2002/05/02 13:01:45 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -190,7 +190,7 @@ establish_hostid(idp)
 void
 cpu_initclocks()
 {
-	int statint, minint;
+	int minint;
 
 	if (1000000 % hz) {
 		printf("cannot get %d Hz clock; using 100 Hz\n", hz);
