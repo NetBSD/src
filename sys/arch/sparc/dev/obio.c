@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1 1994/08/24 09:16:46 deraadt Exp $	*/
+/*	$NetBSD: obio.c,v 1.2 1994/09/17 23:49:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -43,11 +43,10 @@
 
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
-
-struct vme_attach_args {
-	u_long	paddr;
-	int	irq;
-};
+#include <machine/oldmon.h>
+#include <machine/ctlreg.h>
+#include <sparc/sparc/asm.h>
+#include <sparc/sparc/vaddrs.h>
 
 struct obio_softc {
 	struct	device sc_dev;		/* base device */
@@ -61,13 +60,19 @@ struct cfdriver obiocd = { NULL, "cgsix", obiomatch, obioattach,
 	DV_DULL, sizeof(struct obio_softc)
 };
 
+void *		obio_map __P((void *, int));
+void *		obio_tmp_map __P((void *));
+void		obio_tmp_unmap __P((void));
+
 int
 obiomatch(parent, cf, args)
 	struct device *parent;
 	struct cfdata *cf;
 	void *args;
 {
-printf("obiomatch\n");
+	/*
+	 * This exists for machines that don't have OpenPROM.
+	 */
 	if (cputyp != CPU_SUN4)
 		return 0;
 	return 1;
@@ -78,7 +83,13 @@ obio_print(args, obio)
 	void *args;
 	char *obio;
 {
-	printf("obio_print ");
+	register struct confargs *ca = args;
+
+	if (ca->ca_ra.ra_name == NULL)
+		ca->ca_ra.ra_name = "<unknown>";
+	if (obio)
+		printf("%s at %s", ca->ca_ra.ra_name, obio);
+	printf(" slot %d offset 0x%x", ca->ca_slot, ca->ca_offset);
 	return (UNCONF);
 }
 
@@ -87,10 +98,9 @@ obioattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	extern struct cfdata cfdata[];
-
 	register struct obio_softc *sc = (struct obio_softc *)self;
-	struct vme_attach_args va;
+	extern struct cfdata cfdata[];
+	struct confargs ca;
 	register short *p;
 	struct cfdata *cf;
 
@@ -104,10 +114,62 @@ obioattach(parent, self, aux)
 			continue;
 		for (p = cf->cf_parents; *p >= 0; p++)
 			if (parent->dv_cfdata == &cfdata[*p]) {
-				va.paddr = cf->cf_loc[0];
-				va.irq = cf->cf_loc[1];
-				if ((*cf->cf_driver->cd_match)(self, cf, &va))
-					config_attach(self, cf, &va, NULL);
+				ca.ca_ra.ra_iospace = -1;
+				ca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
+				ca.ca_ra.ra_len = 0;
+				ca.ca_ra.ra_vaddr = obio_tmp_map(ca.ca_ra.ra_paddr);
+				ca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
+				ca.ca_ra.ra_intr[0].int_vec = 0;
+				ca.ca_ra.ra_nintr = 1;
+				if ((*cf->cf_driver->cd_match)(self, cf, &ca) == 0)
+					continue;
+
+				if (ca.ca_ra.ra_len)
+					ca.ca_ra.ra_vaddr =
+					    obio_map(ca.ca_ra.ra_paddr,
+					    ca.ca_ra.ra_len);
+				ca.ca_bustype = BUS_OBIO;
+				config_attach(self, cf, &ca, NULL);
 			}
 	}
+	obio_tmp_unmap();
+}
+
+#define	getpte(va)		lda(va, ASI_PTE)
+
+/*
+ * If we can find a mapping that was established by the rom, use it.
+ * Else, create a new mapping.
+ */
+void *
+obio_map(pa, len)
+	void *pa;
+	int len;
+{
+	u_long	pf = (int)pa >> PGSHIFT;
+	u_long	va, pte;
+
+	for (va = MONSTART; va < MONEND; va += NBPG) {
+		pte = getpte(va);
+		if ((pte & PG_V) != 0 && (pte & PG_TYPE) == PG_OBIO &&
+		    (pte & PG_PFNUM) == pf)
+			return ((void *)va);
+	}
+	return mapiodev(pa, len);
+}
+
+void *
+obio_tmp_map(pa)
+	void *pa;
+{
+	pmap_enter(kernel_pmap, TMPMAP_VA,
+	    (vm_offset_t)pa | PMAP_OBIO | PMAP_NC,
+	    VM_PROT_READ | VM_PROT_WRITE, 1);
+	return ((void *)TMPMAP_VA);
+}
+
+void
+obio_tmp_unmap()
+{
+	pmap_remove(kernel_pmap, TMPMAP_VA, TMPMAP_VA+NBPG);
 }
