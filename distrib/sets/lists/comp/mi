@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.174 1999/12/15 11:30:45 augustss Exp $
+# $NetBSD: mi,v 1.175 1999/12/23 10:22:41 kleink Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -728,6 +728,7 @@
 ./usr/include/ntfs/ntfs.h
 ./usr/include/ntfs/ntfs_inode.h
 ./usr/include/ntfs/ntfsmount.h
+./usr/include/null.h
 ./usr/include/objc/NXConstStr.h
 ./usr/include/objc/Object.h
 ./usr/include/objc/Protocol.h
