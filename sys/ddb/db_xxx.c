@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.20 2003/02/04 01:21:04 thorpej Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.21 2003/04/28 02:49:55 briggs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -40,8 +40,10 @@
  * data structures and functions used by the kernel (proc, callout).
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.20 2003/02/04 01:21:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.21 2003/04/28 02:49:55 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.20 2003/02/04 01:21:04 thorpej Exp $");
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 void
 db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, char *modif)
@@ -98,6 +103,16 @@ db_kill_proc(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	}
 	psignal(p, (int)sig);
 }
+
+#ifdef KGDB
+void
+db_kgdb_cmd(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	kgdb_active++;
+	kgdb_trap(db_trap_type, DDB_REGS);
+	kgdb_active--;
+}
+#endif
 
 void
 db_show_all_procs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
