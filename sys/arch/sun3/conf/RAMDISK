@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.4 1996/08/26 23:41:16 mrg Exp $
+#	$NetBSD: RAMDISK,v 1.5 1996/10/08 18:01:50 jtc Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -8,7 +8,7 @@
 #	install the miniroot in the swap partition
 #
 
-include "std.sun3"
+include "arch/sun3/conf/std.sun3"
 
 # Machines to be supported by this kernel
 options 	HAVECACHE		# Sun3/260 VAC
