@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.11 1993/06/14 15:29:57 mycroft Exp $
+#	$Id: TRINITY,v 1.12 1993/06/14 15:57:07 mycroft Exp $
 #
 
 machine		"i386"
@@ -50,4 +50,3 @@ pseudo-device	pty	32
 pseudo-device	swappager
 pseudo-device	vnodepager
 pseudo-device	devpager
-ager
