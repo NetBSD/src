@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2003/02/25 23:32:03 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 2003/03/14 05:32:27 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -182,7 +182,7 @@ trap(struct trapframe *frame)
 			    sizeof(fb->fb_fixreg));
 			return;
 		}
-		printf("trap: kernel %s DSI @ %#lx by %#lx (DSISR %#x, err"
+		printf("trap: kernel %s DSI trap @ %#lx by %#lx (DSISR %#x, err"
 		    "=%d)\n", (frame->dsisr & DSISR_STORE) ? "write" : "read",
 		    va, frame->srr0, frame->dsisr, rv);
 		goto brain_damage2;
@@ -218,7 +218,7 @@ trap(struct trapframe *frame)
 		}
 		ci->ci_ev_udsi_fatal.ev_count++;
 		if (cpu_printfataltraps) {
-			printf("trap: pid %d.%d (%s): user %s DSI @ %#lx "
+			printf("trap: pid %d.%d (%s): user %s DSI trap @ %#lx "
 			    "by %#lx (DSISR %#x, err=%d)\n",
 			    p->p_pid, l->l_lid, p->p_comm,
 			    (frame->dsisr & DSISR_STORE) ? "write" : "read",
@@ -302,8 +302,8 @@ trap(struct trapframe *frame)
 		if (fix_unaligned(l, frame) != 0) {
 			ci->ci_ev_ali_fatal.ev_count++;
 			if (cpu_printfataltraps) {
-				printf("trap: pid %d.%d (%s): user ALI @ %#lx "
-				    "by %#lx (DSISR %#x)\n",
+				printf("trap: pid %d.%d (%s): user ALI trap @ "
+				    "%#lx by %#lx (DSISR %#x)\n",
 				    p->p_pid, l->l_lid, p->p_comm,
 				    frame->dar, frame->srr0, frame->dsisr);
 			}
@@ -379,11 +379,23 @@ trap(struct trapframe *frame)
 			    sizeof(fb->fb_fixreg));
 			return;
 		}
-		goto brain_damage;
+		printf("trap: pid %d.%d (%s): kernel MCHK trap @"
+		    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+		    p->p_comm, frame->srr0, frame->srr1);
+		goto brain_damage2;
 	}
+	case EXC_ALI:
+		printf("trap: pid %d.%d (%s): kernel ALI trap @ %#lx by %#lx "
+		    "(DSISR %#x)\n", p->p_pid, l->l_lid, p->p_comm,
+		    frame->dar, frame->srr0, frame->dsisr);
+		goto brain_damage2;
+	case EXC_PGM:
+		printf("trap: pid %d.%d (%s): kernel PGM trap @"
+		    " %#lx (SSR1=%#lx)\n", p->p_pid, l->l_lid,
+		    p->p_comm, frame->srr0, frame->srr1);
+		goto brain_damage2;
 
 	default:
-brain_damage:
 		printf("trap type %x at %lx\n", type, frame->srr0);
 brain_damage2:
 #ifdef DDBX
