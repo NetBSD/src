@@ -1,4 +1,4 @@
-.\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
+.\"	$NetBSD: ar.1,v 1.8 1997/01/09 12:40:06 tls Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,9 +34,56 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	@(#)ar.1	8.1 (Berkeley) 6/29/93
+.\"	@(#)ar.1	8.4 (Berkeley) 4/28/95
 .\"
 .Dd June 29, 1993
+.Dt AR 1 
+.Os
+.Sh NAME
+.Nm ar 
+.Nd create and maintain library archives
+.Sh SYNOPSIS
+.Nm ar
+.Fl d 
+.Op Fl \Tv 
+.Ar archive file ...
+.Nm ar
+.Fl m
+.Op Fl \Tv 
+.Ar archive file ...
+.Nm ar
+.Fl m
+.Op Fl abiTv 
+.Ar position archive file ...
+.Nm ar
+.Fl p
+.Op Fl \Tv
+.Ar archive
+.Op Ar file ...
+.Nm ar
+.Fl q
+.Op Fl cTv
+.Ar archive file ...
+.Nm ar
+.Fl r
+.Op Fl cuTv
+.Ar archive file ...
+.Nm ar
+.Fl r
+.Op Fl abciuTv
+.Ar position archive file ...
+.Nm ar
+.Fl t
+.Op Fl \Tv
+.Ar archive
+.Op Ar file ...
+.Nm ar
+.Fl x
+.Op Fl ouTv
+.Ar archive
+.Op Ar file ...
+.Sh DESCRIPTION
+.Dd "April 28, 1995"
 .Dt AR 1 
 .Os
 .Sh NAME
@@ -309,8 +356,8 @@ See
 for more information.
 .Sh STANDARDS
 The
-.Nm ar
-utility is expected to offer a superset of the 
+.I ar
+utility is expected to offer a superset of the
 .St -p1003.2
 functionality.
 .Sh SEE ALSO
