@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
+/*	$NetBSD: time.h,v 1.10 1997/05/26 16:03:58 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -101,6 +101,7 @@ void tzset __P((void));
 #endif /* not ANSI */
 
 #if !defined(_ANSI_SOURCE) && !defined(_POSIX_SOURCE)
+char *strptime __P((const char *, const char *, struct tm *));
 char *timezone __P((int, int));
 void tzsetwall __P((void));
 #endif /* neither ANSI nor POSIX */
