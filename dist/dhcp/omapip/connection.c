@@ -178,8 +178,7 @@ isc_result_t omapi_connect_list (omapi_object_t *c,
 			
 			if (bind (obj -> socket, (struct sockaddr *)&local_sin,
 				  sizeof local_sin) < 0) {
-				omapi_object_dereference ((omapi_object_t **)
-							  &obj, MDL);
+				omapi_object_dereference ((void *) &obj, MDL);
 				if (errno == EADDRINUSE)
 					return ISC_R_ADDRINUSE;
 				if (errno == EADDRNOTAVAIL)

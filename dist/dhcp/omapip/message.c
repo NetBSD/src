@@ -67,7 +67,7 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 	}
 	status = omapi_object_reference (&m -> inner, g, file, line);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, file, line);
+		omapi_object_dereference ((void *)&m, file, line);
 		omapi_object_dereference (&g, file, line);
 		return status;
 	}
@@ -75,7 +75,7 @@ isc_result_t omapi_message_new (omapi_object_t **o, const char *file, int line)
 					 (omapi_object_t *)m, file, line);
 
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, file, line);
+		omapi_object_dereference ((void *)&m, file, line);
 		omapi_object_dereference (&g, file, line);
 		return status;
 	}
@@ -299,10 +299,10 @@ isc_result_t omapi_message_register (omapi_object_t *mo)
 			((omapi_object_t **)&omapi_registered_messages -> prev,
 			 (omapi_object_t *)m, MDL);
 		omapi_object_dereference
-			((omapi_object_t **)&omapi_registered_messages, MDL);
+			((void *)&omapi_registered_messages, MDL);
 	}
 	omapi_object_reference
-		((omapi_object_t **)&omapi_registered_messages,
+		((void *)&omapi_registered_messages,
 		 (omapi_object_t *)m, MDL);
 	return ISC_R_SUCCESS;;
 }
@@ -322,13 +322,13 @@ isc_result_t omapi_message_unregister (omapi_object_t *mo)
 
 	n = (omapi_message_object_t *)0;
 	if (m -> next) {
-		omapi_object_reference ((omapi_object_t **)&n,
+		omapi_object_reference ((void *)&n,
 					(omapi_object_t *)m -> next, MDL);
 		omapi_object_dereference ((omapi_object_t **)&m -> next, MDL);
 	}
 	if (m -> prev) {
 		omapi_message_object_t *tmp = (omapi_message_object_t *)0;
-		omapi_object_reference ((omapi_object_t **)&tmp,
+		omapi_object_reference ((void *)&tmp,
 					(omapi_object_t *)m -> prev, MDL);
 		omapi_object_dereference ((omapi_object_t **)&m -> prev, MDL);
 		if (tmp -> next)
@@ -338,17 +338,17 @@ isc_result_t omapi_message_unregister (omapi_object_t *mo)
 			omapi_object_reference
 				((omapi_object_t **)&tmp -> next,
 				 (omapi_object_t *)n, MDL);
-		omapi_object_dereference ((omapi_object_t **)&tmp, MDL);
+		omapi_object_dereference ((void *)&tmp, MDL);
 	} else {
 		omapi_object_dereference
-			((omapi_object_t **)&omapi_registered_messages, MDL);
+			((void *)&omapi_registered_messages, MDL);
 		if (n)
 			omapi_object_reference
-				((omapi_object_t **)&omapi_registered_messages,
+				((void *)&omapi_registered_messages,
 				 (omapi_object_t *)n, MDL);
 	}
 	if (n)
-		omapi_object_dereference ((omapi_object_t **)&n, MDL);
+		omapi_object_dereference ((void *)&n, MDL);
 	return ISC_R_SUCCESS;
 }
 

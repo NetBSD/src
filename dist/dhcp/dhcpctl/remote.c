@@ -126,7 +126,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 	isc_result_t status;
 
 	m = (dhcpctl_remote_object_t *)0;
-	status = omapi_object_allocate ((omapi_object_t **)&m,
+	status = omapi_object_allocate ((void *)&m,
 					dhcpctl_remote_type, 0, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -139,7 +139,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 	}
 	status = omapi_object_reference (&m -> inner, g, MDL);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
@@ -147,7 +147,7 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 					 (omapi_object_t *)m, MDL);
 
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
@@ -156,13 +156,13 @@ dhcpctl_status dhcpctl_new_object (dhcpctl_handle *h,
 				       omapi_datatype_string,
 				       object_type);
 	if (status != ISC_R_SUCCESS) {
-		omapi_object_dereference ((omapi_object_t **)&m, MDL);
+		omapi_object_dereference ((void *)&m, MDL);
 		omapi_object_dereference (&g, MDL);
 		return status;
 	}
 
 	status = omapi_object_reference (h, (omapi_object_t *)m, MDL);
-	omapi_object_dereference ((omapi_object_t **)&m, MDL);
+	omapi_object_dereference ((void *)&m, MDL);
 	omapi_object_dereference (&g, MDL);
 	if (status != ISC_R_SUCCESS)
 		return status;
