@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6reg.h,v 1.2 1995/03/01 11:34:10 chopps Exp $ */
+/*	$NetBSD: smc90cx6reg.h,v 1.3 1995/03/02 09:12:45 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -33,13 +33,11 @@
 
 /*
  * The A2060/A560 card use the SMC COM90C26 Arcnet chipset.
- * First or last 16k segment, resp., write a fifo which drives the reset
- * line.
+ * First or last 16k segment, resp., write a fifo which drives the reset line.
  * 2nd 16k segment contains the registers.
  * 3rd 16k segment contains the buffer RAM.
  * All are only accessible at even addresses.
  */
-
 
 /* CBM Arcnet board */
 #define MANUFACTURER_1 514
@@ -49,41 +47,38 @@
 #define MANUFACTURER_2 1053
 #define PRODUCT_2         9
 
-typedef struct {
-	u_char volatile kick1;
-	u_char pad1[16383];
-
-	u_char volatile status; /* also intmask */
-
-	u_char pad2;
-	u_char volatile command;
-	u_char pad3[16381];
-	u_char volatile buffers[4096];	/* even bytes only */
+struct a2060 {
+	volatile	u_char	kick1;
+	u_char	pad1[16383];
+	volatile	u_char	status;		/* also intmask */
+	u_char	pad2;
+	volatile	u_char	command;
+	u_char	pad3[16381];
+	volatile	u_char	buffers[4096];	/* even bytes only */
+	u_char	pad4[12228];
+	volatile	u_char	kick2;
+	u_char	pad5[16383];
+};
 
 #define checkbyte	buffers[0]
 #define dipswitches	buffers[2]
 
-	u_char pad4[12228];
-	u_char volatile kick2;
-	u_char pad5[16383];
-} A2060;
-
 /* calculate address for board b, buffer no n and offset o */
 #define BUFPTR(b,n,o) (&(b)->buffers[(n)*512+(o)*2])
 
-#define ARC_TXDIS	 0x01
-#define ARC_RXDIS	 0x02
+#define ARC_TXDIS	0x01
+#define ARC_RXDIS	0x02
 #define ARC_TX(x)	(0x03 | ((x)<<3))
 #define ARC_RX(x)	(0x04 | ((x)<<3))
 #define ARC_RXBC(x)	(0x84 | ((x)<<3))
 
 #define ARC_CONF(x)  	(0x05 | (x))
-#define CLR_POR		 0x08
-#define CLR_RECONFIG	 0x10
+#define CLR_POR		0x08
+#define CLR_RECONFIG	0x10
 
 #define ARC_CLR(x)	(0x06 | (x))
-#define CONF_LONG	 0x08
-#define CONF_SHORT	 0x00
+#define CONF_LONG	0x08
+#define CONF_SHORT	0x00
 
 /* 
  * These are not in the COM90C65 docs. Derived from the arcnet.asm
@@ -91,8 +86,8 @@ typedef struct {
  */
 
 #define ARC_LDTST(x)	(0x07 | (x))
-#define TEST_ON		 0x08
-#define TEST_OFF	 0x00
+#define TEST_ON		0x08
+#define TEST_OFF	0x00
 
 #define ARC_TA		1	/* int mask also */
 #define ARC_TMA		2	
@@ -102,4 +97,3 @@ typedef struct {
 #define ARC_ET1		0x20	/* timeout value bits, normally 1 */
 #define ARC_ET2		0x40	/* timeout value bits, normally 1 */
 #define ARC_RI		0x80	/* int mask also */
-
