@@ -1,4 +1,4 @@
-/* $NetBSD: sysident.h,v 1.8 2001/05/24 17:42:48 christos Exp $ */
+/* $NetBSD: sysident.h,v 1.9 2001/06/19 12:07:21 fvdl Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou
@@ -62,15 +62,15 @@
 #endif
 
 #define	__S(x)	__STRING(x)
-__asm("
-	.section \".note.netbsd.ident\", \"a\"
-	.p2align 2
+__asm(
+	".section \".note.netbsd.ident\", \"a\"\n"
+	"\t.p2align 2\n\n"
 
-	.long	7
-	.long	4
-	.long	" __S(ELF_NOTE_TYPE_NETBSD_TAG) "
-	.ascii \"NetBSD\\0\\0\"	
-	.long	" __S(NetBSD) "
+	"\t.long   7\n"
+	"\t.long   4\n"
+	"\t.long   " __S(ELF_NOTE_TYPE_NETBSD_TAG) "\n"
+	"\t.ascii \"NetBSD\\0\\0\"\n"
+	"\t.long   " __S(NetBSD) "\n\n"
 
-	.p2align 2
-");
+	"\t.p2align 2\n"
+);
