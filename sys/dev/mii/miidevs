@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.21 2001/05/31 03:32:20 thorpej Exp $
+$NetBSD: miidevs,v 1.22 2001/05/31 19:40:33 thorpej Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
+oui MARVELL			0x005043	Marvell Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
 oui PMCSIERRA			0x00e004	PMC-Sierra
@@ -93,9 +94,6 @@ oui xxXAQTI			0xace000	XaQti Corp.
 oui xxDAVICOM			0x000602	Davicom Semiconductor
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
 
-/* Contrived vendor for dcphy */
-oui xxDEC			0x040440	Digital Clone
-
 
 /*
  * List of known models.  Grouped by oui.
@@ -115,12 +113,11 @@ model xxBROADCOM 3C905C		0x0017 Broadcom 3C905C internal PHY
 model xxBROADCOM BCM5201	0x0021 BCM5201 10/100 media interface
 model BROADCOM BCM5221		0x001e BCM5221 10/100 PHY
 model BROADCOM BCM5400		0x0004 BCM5400 1000baseTX PHY
+model BROADCOM BCM5401		0x0005 BCM5401 1000baseTX PHY
+model BROADCOM BCM5411		0x0007 BCM5411 1000baseTX PHY
 
 /* Davicom Semiconductor PHYs */
 model xxDAVICOM DM9101		0x0000 DM9101 10/100 media interface
-
-/* Contrived vendor/model for dcphy */
-model xxDEC xxDC		0x0001 DC
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1890			0x0002 ICS1890 10/100 media interface
@@ -136,12 +133,16 @@ model yyINTEL I82553		0x0035 i82553 10/100 media interface
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
 
+/* Marvell Semiconductor PHYs */
+model MARVELL E1000		0x0000 Marvell 88E1000 Gigabit PHY
+
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface
 
 /* National Semiconductor PHYs */
 model xxNATSEMI DP83840		0x0000 DP83840 10/100 media interface
 model xxNATSEMI DP83843		0x0001 DP83843 10/100 media interface
+model xxNATSEMI DP83815		0x0002 DP83815 10/100 media interface
 model xxNATSEMI DP83891		0x0005 DP83891 1000baseTX PHY
 model xxNATSEMI DP83861		0x0006 DP83861 1000baseTX PHY
 
