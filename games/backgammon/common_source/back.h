@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.6 1997/10/10 08:59:41 lukem Exp $	*/
+/*	$NetBSD: back.h,v 1.7 1997/10/14 00:41:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <termcap.h>
 #include <unistd.h>
 
 #define rnum(r)	(random()%r)
