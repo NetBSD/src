@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.168 1995/08/14 02:27:30 mycroft Exp $	*/
+/*	$NetBSD: machdep.c,v 1.169 1995/08/24 19:16:47 ghudson Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -685,6 +685,7 @@ boot(howto)
 			dumpsys();
 		}
 	}
+	doshutdownhooks();
 	printf("rebooting...\n");
 	cpu_reset();
 	for(;;) ;
@@ -1075,7 +1076,14 @@ extern	IDTVEC(div),     IDTVEC(dbg),     IDTVEC(nmi),     IDTVEC(bpt),
 	IDTVEC(dble),    IDTVEC(fpusegm), IDTVEC(tss),     IDTVEC(missing),
 	IDTVEC(stk),     IDTVEC(prot),    IDTVEC(page),    IDTVEC(rsvd),
 	IDTVEC(fpu),     IDTVEC(align),
-	IDTVEC(syscall), IDTVEC(osyscall);
+	IDTVEC(syscall), IDTVEC(osyscall),IDTVEC(osigreturn);
+
+void
+frobbity()
+{
+
+	printf("iBCS2 sigreturn gate called\n");
+}
 
 void
 sdtossd(sd, ssd)
@@ -1148,6 +1156,8 @@ init386(first_avail)
 
 	/* Set up the old-style call gate descriptor for system calls. */
 	setgate(&ldt[LSYS5CALLS_SEL].gd, &IDTVEC(osyscall), 1, SDT_SYS386CGT,
+	    SEL_UPL);
+	setgate(&ldt[LSYS5SIGR_SEL].gd, &IDTVEC(osigreturn), 1, SDT_SYS386CGT,
 	    SEL_UPL);
 
 	/* exceptions */
