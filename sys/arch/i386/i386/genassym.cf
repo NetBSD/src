@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2001/03/06 14:55:14 fvdl Exp $
+#	$NetBSD: genassym.cf,v 1.26 2001/04/14 13:56:02 augustss Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -228,4 +228,8 @@ define	BIOSCALLREG_EDX		offsetof(struct bioscallregs, EDX)
 define	BIOSCALLREG_ESI		offsetof(struct bioscallregs, ESI)
 define	BIOSCALLREG_EDI		offsetof(struct bioscallregs, EDI)
 define	BIOSCALLREG_EFLAGS	offsetof(struct bioscallregs, EFLAGS)
+endif
+
+if defined(__HAVE_GENERIC_SOFT_INTERRUPTS)
+define	__HAVE_GENERIC_SOFT_INTERRUPTS 1
 endif
