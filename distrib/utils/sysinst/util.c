@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.24 1997/12/26 01:58:49 fvdl Exp $	*/
+/*	$NetBSD: util.c,v 1.25 1998/02/07 09:32:32 jonathan Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -577,7 +577,7 @@ bad:
 /* test flag and pathname to check for after unpacking. */
 struct check_table { const char *testarg; const char *path;} checks[] = {
   { "-f", "/netbsd" },
-  { "-d ""/etc" },
+  { "-d", "/etc" },
   { "-f", "/etc/fstab" },
   { "-f", "/sbin/init" },
   { "-f", "/bin/sh" },
@@ -614,6 +614,10 @@ static int check_for(const char *type, const char *pathname)
 	return found;
 }
 
+/*
+ * Check that all the files in check_table are present in the
+ * target root. Warn if not found.
+ */
 int
 sanity_check()
 {
