@@ -1,3 +1,5 @@
+/*	$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95"; */
-static char rcsid[] = "$NetBSD: sys_term.c,v 1.7 1996/02/24 19:13:37 jtk Exp $";
+#if 0
+static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
+#else
+static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
+#endif
 #endif /* not lint */
 
 #include "telnetd.h"
