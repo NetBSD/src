@@ -1,4 +1,4 @@
-/*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.5 1997/07/25 16:46:35 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,11 +36,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkpar.c	5.3 (Berkeley) 1/20/91";
 #else
-static char rcsid[] = "$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $";
+__RCSID("$NetBSD: mkpar.c,v 1.5 1997/07/25 16:46:35 perry Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,15 +60,26 @@ short final_state;
 static int SRcount;
 static int RRcount;
 
-extern action *parse_actions();
-extern action *get_shifts();
-extern action *add_reductions();
-extern action *add_reduce();
+action *parse_actions __P((int));
+action *get_shifts __P((int));
+action *add_reductions __P((int, action *));
+action *add_reduce __P((action *, int, int));
+
+int sole_reduction __P((int));
+void free_action_row __P((action *));
+
+void make_parser __P((void));
+void find_final_state __P((void));
+void unused_rules __P((void));
+void remove_conflicts __P((void));
+void total_conflicts __P((void));
+void defreds __P((void));
 
 
+void
 make_parser()
 {
-    register int i;
+    int i;
 
     parser = NEW2(nstates, action *);
     for (i = 0; i < nstates; i++)
@@ -83,9 +95,9 @@ make_parser()
 
 action *
 parse_actions(stateno)
-register int stateno;
+int stateno;
 {
-    register action *actions;
+    action *actions;
 
     actions = get_shifts(stateno);
     actions = add_reductions(stateno, actions);
@@ -97,11 +109,11 @@ action *
 get_shifts(stateno)
 int stateno;
 {
-    register action *actions, *temp;
-    register shifts *sp;
-    register short *to_state;
-    register int i, k;
-    register int symbol;
+    action *actions, *temp;
+    shifts *sp;
+    short *to_state;
+    int i, k;
+    int symbol;
 
     actions = 0;
     sp = shift_table[stateno];
@@ -131,11 +143,11 @@ int stateno;
 action *
 add_reductions(stateno, actions)
 int stateno;
-register action *actions;
+action *actions;
 {
-    register int i, j, m, n;
-    register int ruleno, tokensetsize;
-    register unsigned *rowp;
+    int i, j, m, n;
+    int ruleno, tokensetsize;
+    unsigned *rowp;
 
     tokensetsize = WORDSIZE(ntokens);
     m = lookaheads[stateno];
@@ -156,10 +168,10 @@ register action *actions;
 
 action *
 add_reduce(actions, ruleno, symbol)
-register action *actions;
-register int ruleno, symbol;
+action *actions;
+int ruleno, symbol;
 {
-    register action *temp, *prev, *next;
+    action *temp, *prev, *next;
 
     prev = 0;
     for (next = actions; next && next->symbol < symbol; next = next->next)
@@ -195,11 +207,12 @@ register int ruleno, symbol;
 }
 
 
+void
 find_final_state()
 {
-    register int goal, i;
-    register short *to_state;
-    register shifts *p;
+    int goal, i;
+    short *to_state;
+    shifts *p;
 
     p = shift_table[0];
     to_state = p->shift;
@@ -212,10 +225,11 @@ find_final_state()
 }
 
 
+void
 unused_rules()
 {
-    register int i;
-    register action *p;
+    int i;
+    action *p;
 
     rules_used = (short *) MALLOC(nrules*sizeof(short));
     if (rules_used == 0) no_space();
@@ -244,12 +258,14 @@ unused_rules()
 }
 
 
+void
 remove_conflicts()
 {
-    register int i;
-    register int symbol;
-    register action *p, *pref;
+    int i;
+    int symbol;
+    action *p, *pref;
 
+    pref = NULL;
     SRtotal = 0;
     RRtotal = 0;
     SRconflicts = NEW2(nstates, short);
@@ -319,6 +335,7 @@ remove_conflicts()
 }
 
 
+void
 total_conflicts()
 {
     fprintf(stderr, "%s: ", myname);
@@ -343,8 +360,8 @@ int
 sole_reduction(stateno)
 int stateno;
 {
-    register int count, ruleno;
-    register action *p;
+    int count, ruleno;
+    action *p;
 
     count = 0;
     ruleno = 0; 
@@ -368,19 +385,21 @@ int stateno;
 }
 
 
+void
 defreds()
 {
-    register int i;
+    int i;
 
     defred = NEW2(nstates, short);
     for (i = 0; i < nstates; i++)
 	defred[i] = sole_reduction(i);
 }
- 
+
+void 
 free_action_row(p)
-register action *p;
+action *p;
 {
-  register action *q;
+  action *q;
 
   while (p)
     {
@@ -390,9 +409,10 @@ register action *p;
     }
 }
 
+void
 free_parser()
 {
-  register int i;
+  int i;
 
   for (i = 0; i < nstates; i++)
     free_action_row(parser[i]);

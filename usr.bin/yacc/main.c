@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/07/19 19:47:38 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/07/25 16:46:34 perry Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -36,21 +36,23 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1989 The Regents of the University of California.\n"
+"All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	5.5 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/07/19 19:47:38 perry Exp $";
+__RCSID("$NetBSD: main.c,v 1.8 1997/07/25 16:46:34 perry Exp $");
 #endif
 #endif /* not lint */
 
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "defs.h"
 
 char dflag;
@@ -111,10 +113,18 @@ char  *rassoc;
 short **derives;
 char *nullable;
 
-extern char *mktemp();
-extern char *getenv();
+int main __P((int, char *[]));
 
+void onintr __P((int));
+__dead void done __P((int));
+void set_signals __P((void));
+void usage __P((void));
+void getargs __P((int, char *[]));
+char * allocate __P((unsigned));
+void create_file_names __P((void));
+void open_files __P((void));
 
+__dead void
 done(k)
 int k;
 {
@@ -133,6 +143,7 @@ onintr(signo)
 }
 
 
+void
 set_signals()
 {
 #ifdef SIGINT
@@ -150,6 +161,7 @@ set_signals()
 }
 
 
+void
 usage()
 {
     fprintf(stderr, "usage: %s [-dlrtv] [-b file_prefix] [-o outputfile] "
@@ -158,12 +170,13 @@ usage()
 }
 
 
+void
 getargs(argc, argv)
 int argc;
 char *argv[];
 {
-    register int i;
-    register char *s;
+    int i;
+    char *s;
 
     if (argc > 0) myname = argv[0];
     for (i = 1; i < argc; ++i)
@@ -277,7 +290,7 @@ char *
 allocate(n)
 unsigned n;
 {
-    register char *p;
+    char *p;
 
     p = NULL;
     if (n)
@@ -289,6 +302,7 @@ unsigned n;
 }
 
 
+void
 create_file_names()
 {
     int i, len;
@@ -383,6 +397,7 @@ create_file_names()
 }
 
 
+void
 open_files()
 {
     int fd;
@@ -452,4 +467,5 @@ char *argv[];
     output();
     done(0);
     /*NOTREACHED*/
+    exit(0);
 }
