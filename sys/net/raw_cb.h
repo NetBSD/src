@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_cb.h,v 1.11 1996/05/28 23:24:50 pk Exp $	*/
+/*	$NetBSD: raw_cb.h,v 1.12 1998/02/09 17:43:56 perry Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,6 +35,9 @@
  *	@(#)raw_cb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NET_RAW_CB_H_
+#define _NET_RAW_CB_H_
+
 /*
  * Raw protocol interface control block.  Used
  * to tie a socket to the generic raw interface.
@@ -70,3 +73,5 @@ void	raw_setsockaddr __P((struct rawcb *, struct mbuf *));
 void	raw_setpeeraddr __P((struct rawcb *, struct mbuf *));
 
 #endif /* _KERNEL */
+
+#endif /* _NET_RAW_CB_H_ */

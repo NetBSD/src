@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.8 1995/03/26 20:30:13 jtc Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.9 1998/02/09 17:43:48 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -53,6 +53,9 @@
  * expected that all drivers for an interface of a given if_type will agree.
  */
 
+#ifndef _NET_IF_DL_H_
+#define _NET_IF_DL_H_
+
 /*
  * Structure of a Link-Level sockaddr:
  */
@@ -80,3 +83,5 @@ char	*link_ntoa __P((const struct sockaddr_dl *));
 __END_DECLS
 
 #endif /* !_KERNEL */
+
+#endif /* _NET_IF_DL_H_ */

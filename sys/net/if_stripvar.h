@@ -1,10 +1,11 @@
-/*	$NetBSD: if_stripvar.h,v 1.5 1997/11/17 23:35:32 thorpej Exp $	*/
+/*	$NetBSD: if_stripvar.h,v 1.6 1998/02/09 17:43:53 perry Exp $	*/
+
+#ifndef _NET_IF_STRIPVAR_H_
+#define _NET_IF_STRIPVAR_H_
 
 /*
- * Definitions for SLIP interface data structures
+ * Definitions for STRIP interface data structures
  * 
- * (This exists so programs like slstats can get at the definition
- *  of sl_softc.)
  */
 struct strip_softc {
 	struct	ifnet sc_if;		/* network-visible interface */
@@ -60,3 +61,5 @@ int	stripoutput __P((struct ifnet *,
 void	stripstart __P((struct tty *));
 int	striptioctl __P((struct tty *, u_long, caddr_t, int));
 #endif /* _KERNEL */
+
+#endif /* _NET_IF_STRIPVAR_H_ */

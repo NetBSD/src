@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_defs.h,v 1.3 1997/05/17 21:12:08 christos Exp $	*/
+/*	$NetBSD: ppp_defs.h,v 1.4 1998/02/09 17:43:55 perry Exp $	*/
 /*	Id: ppp_defs.h,v 1.11 1997/04/30 05:46:24 paulus Exp 	*/
 
 /*
@@ -28,8 +28,8 @@
  * OR MODIFICATIONS.
  */
 
-#ifndef _PPP_DEFS_H_
-#define _PPP_DEFS_H_
+#ifndef _NET_PPP_DEFS_H_
+#define _NET_PPP_DEFS_H_
 
 /*
  * The basic PPP frame.
@@ -175,4 +175,4 @@ struct ppp_idle {
 #endif
 #endif
 
-#endif /* _PPP_DEFS_H_ */
+#endif /* _NET_PPP_DEFS_H_ */

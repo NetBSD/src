@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.11 1997/05/17 21:12:11 christos Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.12 1998/02/09 17:43:56 perry Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -43,8 +43,8 @@
  *	- Initial distribution.
  */
 
-#ifndef _SLCOMPRESS_H_
-#define _SLCOMPRESS_H_
+#ifndef _NET_SLCOMPRESS_H_
+#define _NET_SLCOMPRESS_H_
 
 #define MAX_STATES 16		/* must be > 2 and < 256 */
 #define MAX_HDR MLEN		/* XXX 4bsd-ism: should really be 128 */
@@ -166,4 +166,4 @@ int	sl_uncompress_tcp __P((u_char **, int, u_int, struct slcompress *));
 int	sl_uncompress_tcp_core __P((u_char *, int, int, u_int,
   	    struct slcompress *, u_char **, u_int *));
 
-#endif /* _SLCOMPRESS_H_ */
+#endif /* _NET_SLCOMPRESS_H_ */
