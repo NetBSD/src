@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.16 1999/02/02 12:59:31 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.17 1999/02/15 18:40:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -595,10 +595,21 @@ again:
 				 * request sense failed ! it's not suppossed
 				 * to be possible
 				 */
-				sc_xfer->error = XS_DRIVER_STUFFUP;
-			} else {
+				if (dma_err < 0)
+					drvp->n_dmaerrs++;
+				sc_xfer->error = XS_RESET;
+				wdc_atapi_reset(chp, xfer);
+				return (1);
+			} else if (xfer->c_bcount <
+			    sizeof(sc_xfer->sense.scsi_sense)) {
 				/* use the sense we just read */
 				sc_xfer->error = XS_SENSE;
+			} else {
+				/*
+				 * command completed, but no data was read.
+				 * use the short sense we saved previsouly.
+				 */
+				sc_xfer->error = XS_SHORTSENSE;
 			}
 		} else {
 			if (chp->ch_status & WDCS_ERR) {
