@@ -1,4 +1,4 @@
-/*	$NetBSD: ixdp425_machdep.c,v 1.11 2003/11/02 21:27:51 scw Exp $ */
+/*	$NetBSD: ixdp425_machdep.c,v 1.12 2003/12/08 14:44:03 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.11 2003/11/02 21:27:51 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixdp425_machdep.c,v 1.12 2003/12/08 14:44:03 scw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -364,6 +364,15 @@ static const struct pmap_devmap ixp425_devmap[] = {
 	PTE_NOCACHE,
     },
 
+	/* SDRAM Controller */
+    {
+	IXP425_MCU_VBASE,
+	IXP425_MCU_HWBASE,
+	IXP425_MCU_SIZE,
+	VM_PROT_READ|VM_PROT_WRITE,
+	PTE_NOCACHE,
+    },
+
 	/* PCI Memory Space */
     {
 	IXP425_PCI_MEM_VBASE,
@@ -408,10 +417,6 @@ initarm(void *arg)
 	u_int l1pagetable;
 	u_int freemempos;
 	pv_addr_t kernel_l1pt;
-#if 0
-	paddr_t memstart;
-	psize_t memsize;
-#endif
 
 	/*
 	 * Since we map v0xf0000000 == p0xc8000000, it's possible for
@@ -433,12 +438,7 @@ initarm(void *arg)
 	/* XXX overwrite bootconfig to hardcoded values */
 	bootconfig.dramblocks = 1;
 	bootconfig.dram[0].address = 0x10000000;
-/* XXX */
-#if EVBARM_BOARDTYPE == zao425
-	bootconfig.dram[0].pages = 0x04000000 / PAGE_SIZE; /* SDRAM 64MB */
-#elif EVBARM_BOARDTYPE == ixdp425
-	bootconfig.dram[0].pages = 0x10000000 / PAGE_SIZE; /* SDRAM 256MB */
-#endif
+	bootconfig.dram[0].pages = ixp425_sdram_size() / PAGE_SIZE;
 
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
