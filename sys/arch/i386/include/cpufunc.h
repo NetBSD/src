@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.17 2000/03/24 19:07:12 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.18 2000/03/28 01:38:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -183,6 +183,24 @@ static __inline void
 wbinvd(void)
 {
 	__asm __volatile("wbinvd");
+}
+
+static __inline u_int64_t
+rdtsc(void)
+{
+	u_int64_t rv;
+
+	__asm __volatile(".byte 0x0f, 0x31" : "=A" (rv));
+	return (rv);
+}
+
+static __inline u_int64_t
+rdpmc(u_int pmc)
+{
+	u_int64_t rv;
+
+	__asm __volatile(".byte 0x0f, 0x33" : "=A" (rv) : "c" (pmc));
+	return (rv);
 }
 
 /* Break into DDB/KGDB. */
