@@ -1,4 +1,4 @@
-/* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
+/* $NetBSD: tgavar.h,v 1.9 2000/04/20 05:25:20 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,9 +29,10 @@
 
 #include <dev/ic/ramdac.h>
 #include <dev/pci/tgareg.h>
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_raster.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/rasops/rasops.h>
 
 struct tga_devconfig;
 struct fbcmap;
@@ -83,8 +84,7 @@ struct tga_devconfig {
 
 	vaddr_t dc_videobase;	/* base of flat frame buffer */
 
-	struct raster	dc_raster;	/* raster description */
-	struct rcons	dc_rcons;	/* raster blitter control info */
+	struct rasops_info dc_rinfo;	/* raster display data */
 
 	int	    dc_blanked;		/* currently had video disabled */
 	void	    *dc_ramdac_private; /* RAMDAC private storage */
