@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.19 2004/03/29 02:30:09 jmc Exp $
+#	$NetBSD: Makefile,v 1.20 2004/03/29 04:40:06 lukem Exp $
+
+NOGCCERROR=	# defined
 
 .include <bsd.own.mk>
 
@@ -7,9 +9,7 @@ SRCS=		ipsend.c ip.c ipsopt.c iplang_y.c iplang_l.c sbpf.c \
 		sock.c 44arp.c
 MAN=		ipsend.1 ipsend.5
 DPADD+=		${LIBL}
-LDADD+=		-ll -lipf
-
-NOGCCERROR=	# defined
+LDADD+=		-ll
 
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/ipsend
 CPPFLAGS+=	-I${NETBSDSRCDIR}/dist/ipf/iplang
@@ -20,10 +20,13 @@ CLEANFILES+=	iplang_l.c
 .PATH:		${NETBSDSRCDIR}/dist/ipf/ipsend \
 		${NETBSDSRCDIR}/dist/ipf/iplang
 
-iplang_y.c iplang_y.h: iplang_y.y
+iplang_y.c: iplang_y.y
+	${_MKTARGET_CREATE}
 	${YACC} -d ${NETBSDSRCDIR}/dist/ipf/iplang/iplang_y.y
-	mv y.tab.c iplang_y.c
-	mv y.tab.h iplang_y.h
+	mv y.tab.c ${.TARGET}
+	mv y.tab.h ${.TARGET:.c=.h}
+
+iplang_y.h: iplang_y.c
 
 iplang_l.l: iplang_y.h
 

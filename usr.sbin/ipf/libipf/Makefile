@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.1 2004/03/28 09:03:38 martti Exp $
+#	$NetBSD: Makefile,v 1.2 2004/03/29 04:40:09 lukem Exp $
 
 USE_SHLIBDIR=	yes
 
-.include <bsd.own.mk>
-
 NOGCCERROR=	# defined
-NOLINT=		# defined
 NOMAN=		# defined
+NOLINT=		# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 LIB=		ipf
 
@@ -33,7 +33,7 @@ SRCS=		addicmp.c addipopt.c addkeep.c bcopywrap.c binprint.c \
 		tcp_flags.c to_interface.c var.c verbose.c v6ionames.c \
 		v6optvalue.c
 
-libinstall:
+libinstall::		# this library is only needed during build
 	@true
 
 .include <bsd.lib.mk>
