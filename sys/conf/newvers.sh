@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.37 2004/01/05 03:33:06 lukem Exp $
+#	$NetBSD: newvers.sh,v 1.38 2004/05/22 22:07:33 christos Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -79,7 +79,6 @@ const char copyright[] =
 ${copyright}
 "\n";
 
-#ifdef notyet
 /*
  * NetBSD identity note.
  */
@@ -94,7 +93,6 @@ __asm(
 	"\t.long\t" _S(__NetBSD_Version__) "\n"
 	"\t.p2align\t2\n"
 );
-#endif
 
 _EOF
 echo $(expr ${v} + 1) > version
