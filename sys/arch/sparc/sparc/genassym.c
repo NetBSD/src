@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.4 1994/02/01 06:01:38 deraadt Exp $
+ * $Id: genassym.c,v 1.5 1994/05/21 08:22:58 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -54,7 +54,6 @@
 #include <sys/msgbuf.h>
 #include <sys/syscall.h>
 #include <sys/user.h>
-#include <sys/vmmeter.h>
 
 #include <machine/pmap.h>
 #include <machine/cpu.h>
