@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.57 2000/11/08 22:41:59 eeh Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.58 2000/11/19 00:54:50 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -288,6 +288,8 @@ struct kinfo_proc {
 #define	KI_WMESGLEN	8
 #define	KI_MAXLOGNAME	24	/* extra for 8 byte alignment */
 
+#define KI_NOCPU	(~(u_int64_t)0)
+
 typedef struct {
 	u_int32_t	__bits[4];
 } ki_sigset_t;
@@ -400,6 +402,7 @@ struct kinfo_proc2 {
 
 	u_int32_t p_uctime_sec;		/* STRUCT TIMEVAL: child u+s time. */
 	u_int32_t p_uctime_usec;	/* STRUCT TIMEVAL: child u+s time. */
+	u_int64_t p_cpuid;		/* LONG: cpu id */
 };
 
 /*
