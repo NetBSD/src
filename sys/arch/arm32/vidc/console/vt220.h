@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.h,v 1.1 1996/01/31 23:19:58 mark Exp $ */
+/* $NetBSD: vt220.h,v 1.2 1996/03/18 19:33:12 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,9 +39,6 @@
  * VT220 emulation header file
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
- *
- *    $Id: vt220.h,v 1.1 1996/01/31 23:19:58 mark Exp $
  */
 
 #define MAXTABSTOPS	132

@@ -1,4 +1,4 @@
-/* $NetBSD: vt220.c,v 1.2 1996/02/01 23:50:20 mark Exp $ */
+/* $NetBSD: vt220.c,v 1.3 1996/03/18 19:33:10 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -39,9 +39,6 @@
  * VT220 emulation functions
  *
  * Created      : 17/09/94
- * Last updated : 15/11/95
- *
- *    $Id: vt220.c,v 1.2 1996/02/01 23:50:20 mark Exp $
  */
 
 #include <sys/cdefs.h>
