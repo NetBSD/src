@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.h,v 1.1 2002/03/16 13:29:42 manu Exp $ */
+/*	$NetBSD: irix_swap.h,v 1.2 2002/03/18 20:34:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,5 +79,20 @@ struct irix_swaptable {
 #define IRIX_ST_IOERR		0x10
 #define IRIX_ST_EACCESS		0x20
 #define IRIX_ST_BOOTSWAP	0x40
+
+struct irix_swapres {
+	char *sr_name;
+	irix_off_t sr_start;
+	irix_off_t sr_length;
+};
+
+struct irix_xswapres {
+	char *sr_name;
+	irix_off_t sr_start;
+	irix_off_t sr_length;
+	irix_off_t sr_maxlength;
+	irix_off_t sr_vlength;
+	signed char sr_pri;
+};
 
 #endif /* _IRIX_SWAPCTL_H_ */
