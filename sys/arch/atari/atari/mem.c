@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.6 1996/04/26 06:59:31 leo Exp $	*/
+/*	$NetBSD: mem.c,v 1.7 1997/02/02 07:29:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -64,7 +64,7 @@ dev_type_mmap(mmmmap);
 dev_type_read(mmrw);
 
 extern u_int lowram;
-caddr_t zeropage;
+static caddr_t devzeropage;
 
 /*ARGSUSED*/
 int
@@ -174,13 +174,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			if (zeropage == NULL) {
-				zeropage = (caddr_t)
+			if (devzeropage == NULL) {
+				devzeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
-				bzero(zeropage, CLBYTES);
+				bzero(devzeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, c, uio);
+			error = uiomove(devzeropage, c, uio);
 			continue;
 
 		default:
