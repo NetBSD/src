@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.6 2003/10/21 16:28:20 tsutsui Exp $
+# $NetBSD: RPC44,v 1.6.2.1 2004/07/15 20:17:19 he Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.6 $"
+#ident		"GENERIC-$Revision: 1.6.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -50,6 +50,7 @@ options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Enable experimental buffer queue strategy for better responsiveness under 
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
