@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.45 2002/06/27 03:10:15 itojun Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.46 2002/11/30 03:10:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.45 2002/06/27 03:10:15 itojun Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.46 2002/11/30 03:10:56 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,7 +77,6 @@ __RCSID("$NetBSD: newsyslog.c,v 1.45 2002/06/27 03:10:15 itojun Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <err.h>
-#include <util.h>
 #include <paths.h>
 
 #include "pathnames.h"

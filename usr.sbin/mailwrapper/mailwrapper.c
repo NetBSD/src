@@ -1,4 +1,4 @@
-/*	$NetBSD: mailwrapper.c,v 1.5 2001/02/19 23:22:44 cgd Exp $	*/
+/*	$NetBSD: mailwrapper.c,v 1.6 2002/11/30 03:10:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -36,7 +36,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <util.h>
 
 #define _PATH_MAILERCONF	"/etc/mailer.conf"
 

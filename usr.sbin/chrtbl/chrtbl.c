@@ -1,4 +1,4 @@
-/*	$NetBSD: chrtbl.c,v 1.6 2001/03/17 20:43:55 christos Exp $	*/
+/*	$NetBSD: chrtbl.c,v 1.7 2002/11/30 03:10:56 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -35,7 +35,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "ctypeio.h"
 

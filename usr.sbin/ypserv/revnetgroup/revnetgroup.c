@@ -1,4 +1,4 @@
-/*	$NetBSD: revnetgroup.c,v 1.10 2002/07/06 01:00:15 wiz Exp $ */
+/*	$NetBSD: revnetgroup.c,v 1.11 2002/11/30 03:10:59 lukem Exp $ */
 
 /*
  * Copyright (c) 1995
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: revnetgroup.c,v 1.10 2002/07/06 01:00:15 wiz Exp $");
+__RCSID("$NetBSD: revnetgroup.c,v 1.11 2002/11/30 03:10:59 lukem Exp $");
 #endif
 
 #include <ctype.h>
@@ -51,7 +51,6 @@ __RCSID("$NetBSD: revnetgroup.c,v 1.10 2002/07/06 01:00:15 wiz Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <util.h>
 
 #include "hash.h"
 #include "protos.h"

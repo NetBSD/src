@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt.c,v 1.2 2002/07/16 10:12:28 agc Exp $	*/
+/*	$NetBSD: getopt.c,v 1.3 2002/11/30 03:10:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,7 +40,6 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <util.h>
 #include <err.h>
 
 #define	WS	"\t\n "
