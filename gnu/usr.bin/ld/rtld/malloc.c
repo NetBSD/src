@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)malloc.c	5.11 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: malloc.c,v 1.2 1994/06/10 15:17:25 pk Exp $";
+static char *rcsid = "$Id: malloc.c,v 1.3 1994/09/19 16:58:18 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -72,8 +72,7 @@ static int findbucket();
 /*
  * Pre-allocate mmap'ed pages
  */
-#define	getpagesize()	NBPG
-#define	NPOOLPAGES	(32*1024/NBPG)
+#define	NPOOLPAGES	(32*1024/pagesz)
 static caddr_t		pagepool_start, pagepool_end;
 static int		morepages();
 
