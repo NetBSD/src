@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.155 2000/01/08 01:02:39 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2000/01/08 01:02:39 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2000/01/09 03:56:01 simonb Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2000/01/08 01:02:39 simonb Exp $")
 #include <machine/bootinfo.h>
 #include <machine/locore.h>
 #include <pmax/pmax/machdep.h>
+#include <pmax/pmax/turbochannel.h>
 
 #ifdef DDB
 #include <sys/exec_aout.h>		/* XXX backwards compatilbity for DDB */
@@ -107,13 +108,12 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 
-int	systype;		/* mother board type */
-char	*bootinfo = NULL;	/* pointer to bootinfo structure */
-int	maxmem;			/* max memory per process */
-int	physmem;		/* max supported memory, changes to actual */
-int	physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
-int	mem_cluster_cnt;
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
+int		systype;		/* mother board type */
+char		*bootinfo = NULL;	/* pointer to bootinfo structure */
+int		physmem;		/* max supported memory, changes to actual */
+int		physmem_boardmax;	/* {model,SIMM}-specific bound on physmem */
+int		mem_cluster_cnt;
+phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait
@@ -126,30 +126,19 @@ int	safepri = MIPS3_PSL_LOWIPL;	/* XXX */
 
 struct splvec	splvec;			/* XXX will go XXX */
 
-void	mach_init __P((int, char *[], int, int, u_int, char *));
-
-/* XXX XXX XXX */
-
 /* Old 4.4bsd/pmax-derived interrupt-enable method */
-
 void (*tc_enable_interrupt) __P((unsigned, int (*)(void *), void *, int));
 
-/*XXXjrs*/
-const	struct callback *callv;	/* pointer to PROM entry points */
-/* XXX XXX XXX */
+void	mach_init __P((int, char *[], int, int, u_int, char *));	/* XXX */
 
-#ifdef DEBUG
-/* stacktrace code violates prototypes to get callee's registers */
-void	stacktrace __P((void)); /*XXX*/
-#endif
 
 /* Motherboard or system-specific initialization vector */
-void	unimpl_bus_reset __P((void));
-void	unimpl_cons_init __P((void));
-void	unimpl_device_register __P((struct device *, void *));
-int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
-int	unimpl_memsize __P((caddr_t));
-unsigned nullwork __P((void));
+static void	unimpl_bus_reset __P((void));
+static void	unimpl_cons_init __P((void));
+static void	unimpl_device_register __P((struct device *, void *));
+static int	unimpl_iointr __P((unsigned, unsigned, unsigned, unsigned));
+static int	unimpl_memsize __P((caddr_t));
+static unsigned	nullwork __P((void));
 
 
 struct platform platform = {
@@ -162,9 +151,9 @@ struct platform platform = {
 	(void *)nullwork,
 };
 
-extern caddr_t esym;
-extern struct user *proc0paddr;
-extern struct consdev promcd;
+extern caddr_t esym;			/* XXX */
+extern struct user *proc0paddr;		/* XXX */
+extern struct consdev promcd;		/* XXX */
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -190,8 +179,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 	struct btinfo_symtab *bi_syms;
 	struct exec *aout;		/* XXX backwards compatilbity for DDB */
 #endif
-	void makebootdev __P((char *));
-	extern char edata[], end[];
+	extern char edata[], end[];	/* XXX */
 
 	/* Set up bootinfo structure.  Note that we can't print messages yet! */
 	if (bim == BOOTINFO_MAGIC) {
@@ -369,8 +357,6 @@ mach_init(argc, argv, code, cv, bim, bip)
 	/* Find out how much memory is available. */
 	physmem = (*platform.memsize)(kernend);
 
-	maxmem = physmem;
-
 	/*
 	 * Now that we know how much memory we have, initialize the
 	 * mem cluster array.
@@ -434,7 +420,7 @@ cpu_startup()
 	vsize_t size;
 	char pbuf[9];
 #ifdef DEBUG
-	extern int pmapdebug;
+	extern int pmapdebug;		/* XXX */
 	int opmapdebug = pmapdebug;
 
 	pmapdebug = 0;
@@ -600,8 +586,6 @@ cpu_reboot(howto, bootstr)
 	volatile int howto;	/* XXX volatile to keep gcc happy */
 	char *bootstr;
 {
-	extern int cold;
-
 	/* take a snap shot before clobbering any registers */
 	if (curproc)
 		savectx((struct user *)curpcb);
@@ -757,19 +741,19 @@ memsize_bitmap(first)
 /*
  *  Ensure all platform vectors are always initialized.
  */
-void
+static void
 unimpl_bus_reset()
 {
 	panic("sysconf.init didnt set bus_reset");
 }
 
-void
+static void
 unimpl_cons_init()
 {
 	panic("sysconf.init didnt set cons_init");
 }
 
-void
+static void
 unimpl_device_register(sc, arg)
 	struct device *sc;
 	void *arg;
@@ -778,7 +762,7 @@ unimpl_device_register(sc, arg)
 
 }
 
-int
+static int
 unimpl_iointr(mask, pc, statusreg, causereg)
 	u_int mask;
 	u_int pc;
@@ -788,14 +772,14 @@ unimpl_iointr(mask, pc, statusreg, causereg)
 	panic("sysconf.init didnt set intr");
 }
 
-int
+static int
 unimpl_memsize(first)
 	caddr_t first;
 {
 	panic("sysconf.init didnt set memsize");
 }
 
-unsigned
+static unsigned
 nullwork()
 {
 	return 0;

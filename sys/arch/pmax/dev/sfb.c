@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.34 2000/01/08 01:02:36 simonb Exp $	*/
+/*	$NetBSD: sfb.c,v 1.35 2000/01/09 03:55:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -109,19 +109,17 @@
 /*
  * These need to be mapped into user space.
  */
-struct fbuaccess sfbu;
-struct pmax_fbtty sfbfb;
+static struct fbuaccess sfbu;
+static struct pmax_fbtty sfbfb;
 
 
 /*
  * Forward references.
  */
 
-int	sfbinit __P((struct fbinfo *fi, caddr_t sfbaddr, int unit, int silent));
-
-int	sfbmatch __P((struct device *, struct cfdata *, void *));
-void	sfbattach __P((struct device *, struct device *, void *));
-int	sfb_intr __P((void *sc));
+static int	sfbmatch __P((struct device *, struct cfdata *, void *));
+static void	sfbattach __P((struct device *, struct device *, void *));
+static int	sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
 	sizeof(struct fbinfo), sfbmatch, sfbattach
@@ -141,7 +139,7 @@ struct fbdriver sfb_driver = {
 
 /* match and attach routines cut-and-pasted from cfb */
 
-int
+static int
 sfbmatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
@@ -168,7 +166,7 @@ sfbmatch(parent, match, aux)
  * Attach a device.  Hand off all the work to sfbinit(),
  * so console-config code can attach sfbs early in boot.
  */
-void
+static void
 sfbattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -321,7 +319,7 @@ sfbinit(fi, base, unit, silent)
  * This function simply dismisses SFB interrupts, or the interrupt
  * request from the card will still be active.
  */
-int
+static int
 sfb_intr(sc)
 	void *sc;
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: dtopvar.h,v 1.2 1997/05/25 04:50:00 jonathan Exp $ */
+/* $NetBSD: dtopvar.h,v 1.3 2000/01/09 03:55:35 simonb Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone.  All rights reserved.
@@ -38,14 +38,10 @@ void	dtopKBDPutc __P((dev_t dev, int c));
  * to in-kernel input-event queue.
  */
 
-/* X11 keyboard input upcall */
-void	(*dtopDivertXInput) __P((int));
-
-/* X11 mouse motion event upcall */
-void	(*dtopMouseEvent) __P((MouseReport *mrp));
-
-/* X11 mouse buttons event upcall */
-void	(*dtopMouseButtons) __P((MouseReport *mrp));
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+extern void	(*dtopDivertXInput) __P((int));
+extern void	(*dtopMouseEvent) __P((void *));
+extern void	(*dtopMouseButtons) __P((void *));
 
 /*
  * Device numbers.
