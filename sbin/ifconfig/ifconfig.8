@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.54 2001/11/16 10:25:45 wiz Exp $
+.\"	$NetBSD: ifconfig.8,v 1.55 2002/06/09 17:47:33 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -354,7 +354,9 @@ Set the receiver sleep duration in milliseconds for 802.11 power saving mode.
 .It Cm tunnel Ar src_addr Ar dest_addr
 (IP tunnel devices only)
 Configure the physical source and destination address for IP tunnel
-interfaces (gif).  The arguments
+interfaces, including
+.Xr gif 4 .
+The arguments
 .Ar src_addr
 and
 .Ar dest_addr
