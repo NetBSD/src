@@ -22,6 +22,19 @@ extern void exit();
 #include "inetcf.h"
 
  /*
+  * Programs that use libwrap directly are not in inetd.conf, and so must
+  * be added here in a similar format. (We pretend we found them in
+  * /etc/inetd.conf.) Each one is a set of three strings that correspond
+  * to fields in /etc/inetd.conf:
+  *    protocol (field 3),  path (field 6), arg0 (field 7)
+  * The last entry should be a NULL.
+  */
+char   *uses_libwrap[] = {
+    "tcp", "/usr/sbin/sendmail", "sendmail",
+    (char *) NULL
+};
+
+ /*
   * Network configuration files may live in unusual places. Here are some
   * guesses. Shorter names follow longer ones.
   */
@@ -59,6 +72,7 @@ char   *conf;
 {
     char    buf[BUFSIZ];
     FILE   *fp;
+    char   **wrapped;
     char   *service;
     char   *protocol;
     char   *user;
@@ -92,6 +106,15 @@ char   *conf;
 	}
 	conf = inet_files[i];
 	check_path(conf, &st);
+    }
+
+    /*
+     * Process the list of programs that use libwrap directly.
+     */
+    wrapped = uses_libwrap;
+    while (*wrapped != NULL)  {
+	inet_chk(wrapped[0], wrapped[1], wrapped[2], "");
+	wrapped += 3;
     }
 
     /*
@@ -262,6 +285,10 @@ char   *arg1;
      */
     if (wrap_status == WR_YES && STR_EQ(protocol, "rpc/tcp"))
 	tcpd_warn("%s: cannot wrap rpc/tcp services", tcpd_proc_name);
+
+    /* NetBSD inetd wraps all programs */
+    if (! STR_EQ(protocol, "rpc/tcp"))
+	wrap_status = WR_YES;
 
     inet_set(tcpd_proc_name, wrap_status);
 }
