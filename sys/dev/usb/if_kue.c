@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.13 2000/03/06 21:02:03 thorpej Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.14 2000/03/08 15:33:38 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -267,6 +267,10 @@ kue_do_request(dev, req, data, flags, lenp)
 	if (lenp != NULL)
 		usbd_get_xfer_status(xfer, NULL, NULL, lenp, NULL);
 	usbd_free_xfer(xfer);
+	
+	if (err) {
+		DPRINTF(("kue_do_request: err=%s\n", usbd_errstr(err)));
+	}
 
 	return (err);
 }
