@@ -1,4 +1,4 @@
-/*	$NetBSD: strstr.c,v 1.1 2002/10/04 18:39:53 junyoung Exp $	*/
+/*	$NetBSD: strstr.c,v 1.2 2002/10/08 21:45:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,13 +41,14 @@
 #if 0
 static char sccsid[] = "@(#)strstr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strstr.c,v 1.1 2002/10/04 18:39:53 junyoung Exp $");
+__RCSID("$NetBSD: strstr.c,v 1.2 2002/10/08 21:45:36 jdolecek Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
+#include <sys/param.h>
 #include <lib/libkern/libkern.h>
 #endif
 
