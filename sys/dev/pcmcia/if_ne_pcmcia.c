@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.104 2003/10/22 00:12:36 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.105 2003/10/25 18:29:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.104 2003/10/22 00:12:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.105 2003/10/25 18:29:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,7 +623,7 @@ ne_pcmcia_attach(parent, self, aux)
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	const struct ne2000dev *ne_dev;
+	const struct ne2000dev *ne_dev = NULL;
 	int i;
 	u_int8_t myea[6], *enaddr;
 	const char *typestr = "";

@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.3 2003/10/24 00:24:15 mycroft Exp $	*/
+/*	$NetBSD: hptide.c,v 1.4 2003/10/25 18:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -98,7 +98,7 @@ static void
 hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 {
 	struct pciide_channel *cp;
-	int i, compatchan, revision;
+	int i, compatchan = -1, revision; /* XXX: gcc */
 	pcireg_t interface;
 	bus_size_t cmdsize, ctlsize;
 

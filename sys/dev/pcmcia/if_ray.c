@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.39 2003/10/22 09:13:17 mjl Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.40 2003/10/25 18:29:40 christos Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.39 2003/10/22 09:13:17 mjl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.40 2003/10/25 18:29:40 christos Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1138,7 +1138,7 @@ ray_intr_start(sc)
 {
 	struct ieee80211_frame *iframe;
 	struct ether_header *eh;
-	size_t len, pktlen, tmplen;
+	size_t len, pktlen = 0, tmplen;
 	bus_size_t bufp, ebufp;
 	struct mbuf *m0, *m;
 	struct ifnet *ifp;
@@ -1231,6 +1231,8 @@ ray_intr_start(sc)
 		} else if (et > ETHERMTU) {
 			/* adjust for LLC/SNAP header */
 			tmplen= sizeof(struct ieee80211_frame) - ETHER_ADDR_LEN;
+		} else {
+			tmplen = 0;
 		}
 		/* now get our space for the 802.11 frame */
 		M_PREPEND(m0, tmplen, M_DONTWAIT);

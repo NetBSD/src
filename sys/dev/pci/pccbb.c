@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.91 2003/10/23 00:04:03 briggs Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.92 2003/10/25 18:31:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.91 2003/10/23 00:04:03 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.92 2003/10/25 18:31:12 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1079,6 +1079,7 @@ pccbbintr_function(sc)
 {
 	int retval = 0, val;
 	struct pccbb_intrhand_list *pil;
+/*###1082 [cc] warning: `s' might be used uninitialized in this function%%%*/
 	int s, splchanged;
 
 	for (pil = LIST_FIRST(&sc->sc_pil); pil != NULL;
@@ -1108,6 +1109,7 @@ pccbbintr_function(sc)
 		} else if (pil->pil_level == IPL_NET) {
 			s = splnet();
 		} else {
+			s = 0; /* XXX: gcc */
 			splchanged = 0;
 			/* XXX: ih lower than IPL_BIO runs w/ IPL_BIO. */
 		}

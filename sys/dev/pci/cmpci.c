@@ -1,4 +1,4 @@
-/*	$NetBSD: cmpci.c,v 1.18 2003/02/01 06:23:38 thorpej Exp $	*/
+/*	$NetBSD: cmpci.c,v 1.19 2003/10/25 18:31:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.18 2003/02/01 06:23:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmpci.c,v 1.19 2003/10/25 18:31:11 christos Exp $");
 
 #if defined(AUDIO_DEBUG) || defined(DEBUG)
 #define DPRINTF(x) if (cmpcidebug) printf x
@@ -655,6 +655,8 @@ cmpci_set_params(handle, setmode, usemode, play, rec)
 			mode = AUMODE_RECORD;
 			p = rec;
 			break;
+		default:
+			return EINVAL;
 		}
 
 		if (!(setmode & mode))
