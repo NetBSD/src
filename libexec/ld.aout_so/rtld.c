@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.39 1995/10/09 00:11:26 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.40 1995/10/09 09:24:59 pk Exp $	*/
 /*
  * Copyright (c) 1993 Paul Kranenburg
  * All rights reserved.
@@ -1367,7 +1367,7 @@ xprintf("%s: %s\n", name, strerror(errno));
 	if (LM_PRIVATE(smp)->spd_refcount++ > 0)
 		return smp;
 
-	if (load_subs(smp) == 0)
+	if (load_subs(smp) != 0)
 		return NULL;
 
 	init_maps(smp);
