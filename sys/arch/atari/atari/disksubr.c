@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.23 2001/09/16 16:34:28 wiz Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.24 2003/01/06 12:46:07 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -307,7 +307,7 @@ writedisklabel(dev, strat, lp, clp)
  * Read bootblock at block `blkno' and check
  * if it contains a valid NetBSD disk label.
  *
- * Returns:  0 if successfull,
+ * Returns:  0 if successful,
  *          -1 if an I/O error occurred,
  *          +1 if no valid label was found.
  */
