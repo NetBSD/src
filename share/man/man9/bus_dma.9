@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.27 2003/02/11 07:02:26 thorpej Exp $
+.\" $NetBSD: bus_dma.9,v 1.28 2003/02/16 16:06:19 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -454,7 +454,7 @@ a consistent view of a range of DMA memory, before and after
 a DMA operation.
 .Pp
 An example of using
-.Fn bus_dmamamp_sync ,
+.Fn bus_dmamap_sync ,
 involving multiple read-write use of a single mapping
 might look like this:
 .Bd -literal
@@ -528,7 +528,7 @@ data structures.
 Arguments are as follows:
 .Bl -tag -width alignment -compact
 .It Fa tag
-The is the bus_dma_tag_t passed down from the parent driver via
+This is the bus_dma_tag_t passed down from the parent driver via
 .Fa \*[Lt]bus\*[Gt]_attach_args .
 .It Fa size
 The amount of memory to allocate.
@@ -681,7 +681,7 @@ function.
 This flag is a
 .Em hint
 to machine-dependent code.
-If possible, map the unchached memory.
+If possible, map the uncached memory.
 This flag may be useful in the case that the memory cache causes unexpected
 behavior of the device.
 .El
