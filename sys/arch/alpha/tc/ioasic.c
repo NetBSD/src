@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.19 1998/05/27 00:18:13 thorpej Exp $ */
+/* $NetBSD: ioasic.c,v 1.20 1999/02/12 01:50:30 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.19 1998/05/27 00:18:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.20 1999/02/12 01:50:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -288,7 +288,7 @@ ioasic_intr_establish(ioa, cookie, level, func, arg)
 #endif
 
 	if (ioasicintrs[dev].iai_func != ioasic_intrnull)
-		panic("ioasic_intr_establish: cookie %d twice", dev);
+		panic("ioasic_intr_establish: cookie %lu twice", dev);
 
 	ioasicintrs[dev].iai_func = func;
 	ioasicintrs[dev].iai_arg = arg;
@@ -317,7 +317,7 @@ ioasic_intr_disestablish(ioa, cookie)
 #endif
 
 	if (ioasicintrs[dev].iai_func == ioasic_intrnull)
-		panic("ioasic_intr_disestablish: cookie %d missing intr", dev);
+		panic("ioasic_intr_disestablish: cookie %lu missing intr", dev);
 
 	/* Enable interrupts for the device. */
 	for (i = 0; i < ioasic_ndevs; i++)

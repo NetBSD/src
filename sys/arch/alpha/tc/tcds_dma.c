@@ -1,4 +1,4 @@
-/* $NetBSD: tcds_dma.c,v 1.26 1998/08/14 16:50:05 thorpej Exp $ */
+/* $NetBSD: tcds_dma.c,v 1.27 1999/02/12 01:49:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.26 1998/08/14 16:50:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcds_dma.c,v 1.27 1999/02/12 01:49:07 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -230,7 +230,7 @@ tcds_dma_intr(sc)
 			if (dud & TCDS_DUD1_VALID11)
 				panic("tcds_dma: dud1 byte 3 valid");
 #endif
-			NCR_DMA(("dud1 at 0x%p dudmask 0x%x\n",
+			NCR_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
 			    pa, dudmask));
 			/* XXX Fix TC_PHYS_TO_UNCACHED() */
 #if defined(__alpha__)
