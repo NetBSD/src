@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2003/02/03 07:16:08 mhitch Exp $
+#	$NetBSD: Makefile,v 1.31 2003/04/01 16:50:52 he Exp $
 
 ### what we need:
 
@@ -32,7 +32,7 @@ OBJS=	$(SOBJS) $(COBJS)
 DEFS = -D_STANDALONE -DINSECURE
 DEFS += -D__INTERNAL_LIBSA_CREAD
 SOBJS += cread.o
-SOBJS += crc32.o inflate.o adler32.o infblock.o infcodes.o inftrees.o # XXX need libz!!!
+SOBJS += crc32.o inflate.o infblock.o infcodes.o inftrees.o # XXX need libz!!!
 SOBJS += inffast.o infutil.o
 #DEFS += -DBOOT_ELF32 -DBOOT_AOUT
 SOBJS += loadfile.o loadfile_aout.o loadfile_elf32.o
