@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.48 2002/03/02 02:09:18 mjl Exp $
+#  $NetBSD: build.sh,v 1.49 2002/03/02 03:51:02 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -73,22 +73,6 @@ _x_:
 	echo \${$1}
 .include <bsd.prog.mk>
 EOF
-}
-
-# Emulate "mkdir -p" for systems that have an Old "mkdir".
-mkdirp () {
-	_d=
-	case "$1" in /*) _d=/;; esac
-
-	oifs=$IFS
-	IFS=/; set -- $@; IFS=$oifs
-
-	for _f in "$@"; do
-		if [ -n "$_f" ]; then
-			[ -d "$_d$_f" ] || $runcmd mkdir "$_d$_f" || return 1
-			_d="$_d$_f/"
-		fi
-	done
 }
 
 resolvepath () {
@@ -296,7 +280,7 @@ fi
 # before continuing as bsd.own.mk will need this to pick up _SRC_TOP_OBJ_
 #
 if [ "$MKOBJDIRS" != "no" ] && [ ! -z "$makeobjdir" ]; then
-	$runcmd mkdirp $makeobjdir
+	$runcmd mkdir -p $makeobjdir
 fi
 
 # Find DESTDIR and TOOLDIR.
@@ -339,7 +323,7 @@ if $do_removedirs; then
 fi
 
 # Recreate $TOOLDIR.
-mkdirp $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
+mkdir -p $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
 
 # Install nbmake if it was built.
 if $do_rebuildmake; then
@@ -365,7 +349,7 @@ fi
 eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.48 2002/03/02 02:09:18 mjl Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.49 2002/03/02 03:51:02 tv Exp $
 #
 
 EOF
