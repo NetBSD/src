@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.47 2000/05/11 12:05:39 blymn Exp $	*/
+/*	$NetBSD: curses.h,v 1.48 2000/05/11 22:50:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -494,6 +494,7 @@ int	 clearok(WINDOW *, bool);
 int	 color_content(short, short *, short *, short *);
 int	 copywin(const WINDOW *, WINDOW *, int, int, int, int, int, int, int);
 int	 curs_set(int);
+int	 delay_output(int);
 int	 def_prog_mode(void);
 int	 def_shell_mode(void);
 int	 delwin(WINDOW *);
@@ -507,6 +508,7 @@ int	 flash(void);
 int	 flushinp(void);
 int	 flushok(WINDOW *, bool);
 char	*fullname(const char *, char *);
+chtype	 getattrs(WINDOW *);
 chtype	 getbkgd(WINDOW *);
 char	*getcap(char *);
 int	 getcury(WINDOW *);
@@ -545,6 +547,7 @@ int	 mvwprintw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__printf__, 4, 5)));
 int	 mvwscanw(WINDOW *, int, int, const char *, ...)
 		__attribute__((__format__(__scanf__, 4, 5)));
+int	 napms(int);
 WINDOW	*newwin(int, int, int, int);
 int	 nl(void);
 int	 nocbreak(void);
