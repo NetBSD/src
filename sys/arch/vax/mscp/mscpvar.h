@@ -1,4 +1,4 @@
-/*	$NetBSD: mscpvar.h,v 1.3 1996/07/11 19:34:10 ragge Exp $	*/
+/*	$NetBSD: mscpvar.h,v 1.4 1997/01/11 11:20:36 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -73,7 +73,7 @@ struct	mscp_ctlr {
 	void	(*mc_ctlrdone)		/* controller operation complete */
 	    __P((struct device *, int));
 	int	(*mc_go)		/* device-specific start routine */
-	    __P((struct device *));
+	    __P((struct device *, struct buf *));
 	void	(*mc_saerror)		/* ctlr error handling */
 	    __P((struct device *, int));
 };
@@ -107,7 +107,6 @@ struct	mscp_device {
 struct	mscp_attach_args {
 	struct	mscp_ctlr *ma_mc;	/* Pointer to ctlr's mscp_ctlr */
 	int	ma_type;		/* disk/tape bus type */
-	struct	buf *ma_cbuf;		/* ctlr's active queue */
 	struct	mscp_pack *ma_uda;	/* comm area virtual */
 	struct	mscp_pack *ma_uuda;	/* comm area on bus */
 	struct	mscp_softc **ma_softc;	/* backpointer to bus softc */
@@ -161,7 +160,6 @@ struct mscp_softc {
 	short	mi_credits;		/* transfer credits */
 	char	mi_wantcmd;		/* waiting for command packet */
 	char	mi_wantcredits;		/* waiting for transfer credits */
-	struct	buf *mi_cbuf;		/* this bus active queue (in ctlr) */
 	struct	buf *mi_actf;		/* Pointer to buffers in */
 	struct	buf *mi_actb;		/*  circular wait queue */
 	struct	mscp_ctlr *mi_mc;	/* Pointer to parent's mscp_ctlr */
@@ -170,7 +168,6 @@ struct mscp_softc {
 	int	mi_driveno;		/* Max physical drive number found */
 	char	mi_ctlrnr;		/* Phys ctlr nr */
 	char	mi_adapnr;		/* Phys adapter nr */
-	struct	mscp *mi_mscp;
 	int	mi_flags;
 	struct	mscp_pack *mi_uda;	/* virtual address */
 	struct	mscp_pack *mi_uuda;	/* (device-specific) address */
@@ -180,6 +177,7 @@ struct mscp_softc {
 	volatile short *mi_ip;        	/* initialisation and polling */
 	volatile short *mi_sa;        	/* status & address (read part) */
 	volatile short *mi_sw;        	/* status & address (write part) */
+	struct	buf *mi_w;		/* While waiting for packets */
 };
 
 /* mi_flags */
@@ -247,7 +245,10 @@ void	mscp_go __P((struct mscp_softc *, struct mscp *, int));
 void	mscp_requeue __P((struct mscp_softc *));
 void	mscp_dorsp __P((struct mscp_softc *));
 int	mscp_decodeerror __P((char *, struct mscp *, struct mscp_softc *));
-int	mscp_print __P((void *, char *));
+int	mscp_print __P((void *, const char *));
 void	mscp_hexdump __P((struct mscp *));
-void	mscp_strategy __P((struct buf *, struct buf *, struct device *));
+void	mscp_strategy __P((struct buf *, struct device *));
 void	mscp_printtype __P((int, int));
+int	mscp_waitstep __P((struct mscp_softc *, int, int));
+void	mscp_dgo __P((struct mscp_softc *, long, long, struct buf *));
+void	mscp_intr __P((struct mscp_softc *));

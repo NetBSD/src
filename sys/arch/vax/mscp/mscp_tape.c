@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_tape.c,v 1.3 1996/10/13 03:35:09 christos Exp $ */
+/*	$NetBSD: mscp_tape.c,v 1.4 1997/01/11 11:20:35 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -59,7 +59,6 @@
  */
 struct mt_softc {
 	struct	device mt_dev;	/* Autoconf struct */
-	struct	buf mt_buf;	/* per-drive buffer */
 	int	mt_state;	/* open/closed state */
 	int	mt_hwunit;	/* Hardware unit number */
 	int	mt_inuse;	/* Locks the tape drive for others */
@@ -148,9 +147,8 @@ mtattach(parent, self, aux)
 
 	mt->mt_hwunit = mp->mscp_unit;
 	mi->mi_dp[mp->mscp_unit] = self;
-	bzero((void *)&mt->mt_buf, sizeof(struct buf));
 
-	mscp_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
+	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
 }
 
 /* 
@@ -258,7 +256,7 @@ mtstrategy(bp)
 		goto bad;
 	}
 
-	mscp_strategy(bp, &mt->mt_buf, mt->mt_dev.dv_parent);
+	mscp_strategy(bp, mt->mt_dev.dv_parent);
 	return;
 
 bad:

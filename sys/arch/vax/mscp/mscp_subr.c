@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_subr.c,v 1.5 1996/10/13 03:35:07 christos Exp $	*/
+/*	$NetBSD: mscp_subr.c,v 1.6 1997/01/11 11:20:34 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -45,6 +45,8 @@
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/buf.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
 
 #include <machine/sid.h>
 
@@ -133,7 +135,6 @@ mscp_attach(parent, self, aux)
 
 	mi->mi_mc = ma->ma_mc;
 	mi->mi_me = NULL;
-	mi->mi_cbuf = ma->ma_cbuf;
 	mi->mi_type = ma->ma_type;
 	mi->mi_uuda = ma->ma_uuda;
 	mi->mi_uda = ma->ma_uda;
@@ -285,7 +286,7 @@ mscp_init(mi)
 	struct	mscp *mp;
 	volatile int i;
 	int	status, count;
-	unsigned int j;
+	unsigned int j = 0;
 
         /*
          * While we are thinking about it, reset the next command
@@ -295,7 +296,10 @@ mscp_init(mi)
 	mi->mi_rsp.mri_next = 0;
 
 	mi->mi_flags |= MSC_IGNOREINTR;
-	*mi->mi_ip = 0;	/* Kick off */
+
+	if ((mi->mi_type & MSCPBUS_KDB) == 0)
+		*mi->mi_ip = 0;	/* Kick off */
+
 	status = mscp_waitstep(mi, MP_STEP1, MP_STEP1);/* Wait to it wakes up */
 	if (status == 0)
 		return 1; /* Init failed */
@@ -315,7 +319,7 @@ mscp_init(mi)
 
 	/* step2 */
 	*mi->mi_sw = (int)&mi->mi_uuda->mp_ca.ca_rspdsc[0] | 
-	    (cpunumber == VAX_780 || cpunumber == VAX_8600 ? MP_PI : 0);
+	    (vax_cputype == VAX_780 || vax_cputype == VAX_8600 ? MP_PI : 0);
 	status = mscp_waitstep(mi, STEP2MASK, STEP2GOOD(mi->mi_ivec >> 2));
         if (status == 0) {
                 (*mi->mi_mc->mc_saerror)(mi->mi_dev.dv_parent, 0);
@@ -425,24 +429,28 @@ mscp_intr(mi)
                 ud->mp_ca.ca_cmdint = 0;
                 MSCP_DOCMD(mi);
         }
+
+	/*
+	 * If there are any not-yet-handled requeset, try them now.
+	 * XXX - We handles them (erroneous) in last-in first-handled order.
+	 * Must we fix this???
+	 */
+	while (mi->mi_w) {
+		struct buf *bp = mi->mi_w;
+
+		mi->mi_w = (void *)bp->b_actb;
+		mscp_strategy(bp, (struct device *)mi);
+		if (mi->mi_w == bp)
+			break;
+	}
 }
 
 int
 mscp_print(aux, name)
 	void *aux;
-	char *name;
+	const char *name;
 {
 	return UNCONF;
-}
-
-void
-mscp_poll(usc)
-	struct device *usc;
-{
-	struct mscp_softc *mi = (void *)usc;
-	volatile int i;
-
-	i = *mi->mi_ip;
 }
 
 /*
@@ -450,24 +458,13 @@ mscp_poll(usc)
  * bp is the current buf, dp is the drive queue.
  */
 void
-mscp_strategy(bp, dp, usc)
-	struct buf *bp, *dp;
+mscp_strategy(bp, usc)
+	struct buf *bp;
 	struct device *usc;
 {
 	struct	mscp_softc *mi = (void *)usc;
 	struct	mscp *mp;
-	int j, s = spl6();
-
-        /*
-         * Append the buffer to the drive queue, and if it is not
-         * already there, the drive to the controller queue.  (However,
-         * if the drive queue is marked to be requeued, we must be
-         * awaiting an on line or get unit status command; in this
-         * case, leave it off the controller queue.)
-         */
-	if (dp->b_actf == 0)
-		MSCP_APPEND(dp, mi->mi_cbuf, b_forw);
-	MSCP_APPEND(bp, dp, b_actf);
+	int s = spl6();
 
 	/*
 	 * Ok; we are ready to try to start a xfer. Get a MSCP packet
@@ -475,60 +472,54 @@ mscp_strategy(bp, dp, usc)
 	 */
 	if ((mp = mscp_getcp(mi, MSCP_DONTWAIT)) == NULL) {
 		if (mi->mi_credits > MSCP_MINCREDITS)
-			printf("%s: command ring too small, can't handle\n",
+			printf("%s: command ring too small\n",
 			    mi->mi_dev.dv_parent->dv_xname);
-			panic("mscp_strategy");
+		/*
+		 * By some (strange) reason we didn't get a MSCP packet.
+		 * Put it on queue and wait for free packets.
+		 */
+		(void *)bp->b_actb = mi->mi_w;
+		mi->mi_w = bp;
+		splx(s);
+		return;
 	}
 
 	/*
-	 * Set up the MSCP packet and go for it!
+	 * Set up the MSCP packet and ask the ctlr to start.
 	 */
 	mp->mscp_opcode = (bp->b_flags & B_READ) ? M_OP_READ : M_OP_WRITE;
 	(*mi->mi_me->me_fillin)(bp, mp);
-	mi->mi_mscp = mp;
-
-	j = (*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent);
-	if (j == 0) {
-		printf("Lacking uba resources, fix mscp driver\n");
-		panic("mscp_strategy");
-	}
-
+	(void *)bp->b_actb = mp; /* b_actb is unused, save mscp packet here */
+	(*mi->mi_mc->mc_go)(mi->mi_dev.dv_parent, bp);
 	splx(s);
 }
 
 void
-mscp_dgo(mi, buffer, info)
+mscp_dgo(mi, buffer, info, bp)
 	struct mscp_softc *mi;
 	long buffer, info;
+	struct buf *bp;
 {
 	volatile int i;
 	struct	mscp *mp;
-	struct buf *bp, *dp;
 
         /*
-         * Fill in the MSCP packet and move the buffer to the
-         * I/O wait queue.  Mark the controller as no longer on
-         * the resource queue, and remember to initiate polling.
+         * Fill in the MSCP packet and move the buffer to the I/O wait queue.
          */
-	mp = mi->mi_mscp;
-	mp->mscp_seq.seq_buffer = buffer;
+	mp = (void *)bp->b_actb;
 
-	dp = mi->mi_cbuf->b_forw; /* Get next drive on queue */
-	bp = dp->b_actf;	  /* Get next buffer to play with. */
-	dp->b_actf = bp->b_actf;  /* Take buffer off drive queue */
-	mi->mi_cbuf->b_forw = dp->b_forw; /* Drive off ctlr queue */
-	if (dp->b_actf) /* If more xfers, put it back on queue */
-		MSCP_APPEND(dp, mi->mi_cbuf, b_forw);
+	mp->mscp_seq.seq_buffer = buffer;
 
 	_insque(&bp->b_actf, &mi->mi_actf);
 
 	bp->b_resid = info;
 	mp->mscp_cmdref = (long) bp;
-
 	*mp->mscp_addr |= MSCP_OWN | MSCP_INT;
+
 	i = *mi->mi_ip;
 }
 
+#ifdef DIAGNOSTIC
 /*
  * Dump the entire contents of an MSCP packet in hex.  Mainly useful
  * for debugging....
@@ -547,7 +538,7 @@ mscp_hexdump(mp)
 		printf("0x%x ", (int)*p++);
 	printf("\n");
 }
-
+#endif
 
 /*
  * MSCP error reporting
@@ -842,18 +833,4 @@ mscp_decodeerror(name, mp, mi)
 	return 0;
 #undef BADCODE
 #undef BADLBN
-}
-
-/*
- * Print out the name of the device; ex. TK50, RA80 etc...
- */
-void
-mscp_printtype(unit, type)
-	int unit, type;
-{
-	printf(" drive %d: %c%c", unit, MSCP_MID_CHAR(2, type),
-	    MSCP_MID_CHAR(1, type));
-	if (MSCP_MID_ECH(0, type))
-		printf("%c", MSCP_MID_CHAR(0, type));
-	printf("%d\n", MSCP_MID_NUM(type));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp.c,v 1.4 1996/10/13 03:35:03 christos Exp $	*/
+/*	$NetBSD: mscp.c,v 1.5 1997/01/11 11:20:31 ragge Exp $	*/
 
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -305,6 +305,7 @@ loop:
 		 * off line (the idiot controller does not tell us until
 		 * it comes back *on* line, or until we try to use it).
 		 */
+#ifdef DIAGNOSTIC
 		if (mp->mscp_cmdref == 0) {
 			/*
 			 * No buffer means there is a bug somewhere!
@@ -314,6 +315,7 @@ loop:
 			mscp_hexdump(mp);
 			break;
 		}
+#endif
 rwend:
 		bp = (struct buf *) mp->mscp_cmdref;
 
@@ -399,7 +401,9 @@ out:
 unknown:
 		printf("%s: unknown opcode 0x%x status 0x%x ignored\n",
 			drive->dv_xname, mp->mscp_opcode, mp->mscp_status);
+#ifdef DIAGNOSTIC
 		mscp_hexdump(mp);
+#endif
 		break;
 	}
 

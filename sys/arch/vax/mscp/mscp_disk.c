@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.6 1996/11/15 03:19:24 thorpej Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.7 1997/01/11 11:20:32 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -69,12 +69,12 @@
 struct ra_softc {
 	struct	device ra_dev;	/* Autoconf struct */
 	struct	disk ra_disk;
-	struct	buf ra_buf;	/* per-drive buffer */
 	int	ra_state;	/* open/closed state */
 	u_long	ra_mediaid;	/* media id */
 	int	ra_hwunit;	/* Hardware unit number */
 	int	ra_havelabel;	/* true if we have a label */
 	int	ra_wlabel;	/* label sector is currently writable */
+	int	ra_isafloppy;	/* unit is a floppy disk */
 };
 
 int	ramatch __P((struct device *, void *, void *));
@@ -177,7 +177,6 @@ raattach(parent, self, aux)
 	ra->ra_hwunit = mp->mscp_unit;
 	mi->mi_dp[mp->mscp_unit] = self;
 	disk_attach((struct disk *)&ra->ra_disk);
-	bzero((void *)&ra->ra_buf, sizeof(struct buf));
 
 	/* Fill in what we know. The actual size is gotten later */
 	dl = ra->ra_disk.dk_label;
@@ -186,8 +185,7 @@ raattach(parent, self, aux)
 	dl->d_nsectors = mp->mscp_guse.guse_nspt;
 	dl->d_ntracks = mp->mscp_guse.guse_ngpc;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
-	
-	mscp_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
+	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
 }
 
 /* 
@@ -222,7 +220,8 @@ ra_putonline(ra)
 
 	if (ra->ra_state == RA_OFFLINE)
 		return MSCP_FAILED;
-
+	if (ra->ra_isafloppy)
+		return MSCP_DONE;
 	dl->d_partitions[0].p_size = dl->d_partitions[2].p_size =
 	    dl->d_secperunit;
 	dl->d_partitions[0].p_offset = dl->d_partitions[2].p_offset = 0;
@@ -271,8 +270,9 @@ raopen(dev, flag, fmt, p)
 			return EIO;
 
 	part = raunit(dev);
-        if (part >= ra->ra_disk.dk_label->d_npartitions)
-                return ENXIO;
+	if (ra->ra_isafloppy == 0)
+	        if (part >= ra->ra_disk.dk_label->d_npartitions)
+			return ENXIO;
 
 	/*
 	 * Wait for the state to settle
@@ -365,7 +365,7 @@ rastrategy(bp)
 	 * If drive is open `raw' or reading label, let it at it.
 	 */
 	if (ra->ra_state < RA_ONLINE) {
-		mscp_strategy(bp, &ra->ra_buf, ra->ra_dev.dv_parent);
+		mscp_strategy(bp, ra->ra_dev.dv_parent);
 		return;
 	}
 	p = rapart(bp->b_dev);
@@ -374,17 +374,24 @@ rastrategy(bp)
 	 * Determine the size of the transfer, and make sure it is
 	 * within the boundaries of the partition.
 	 */
-	if (bounds_check_with_label(bp, ra->ra_disk.dk_label, ra->ra_wlabel)
-	    <= 0) {
-		bp->b_error = ENXIO;
-		goto bad;
-	}
+	if (ra->ra_isafloppy) {
+		if (bp->b_blkno >= ra->ra_disk.dk_label->d_secperunit) {
+			bp->b_resid = bp->b_bcount;
+			goto done;
+		}
+	} else
+		if (bounds_check_with_label(bp, ra->ra_disk.dk_label,
+		    ra->ra_wlabel) <= 0) {
+			bp->b_error = ENXIO;
+			goto bad;
+		}
 
-	mscp_strategy(bp, &ra->ra_buf, ra->ra_dev.dv_parent);
+	mscp_strategy(bp, ra->ra_dev.dv_parent);
 	return;
 
 bad:
 	bp->b_flags |= B_ERROR;
+done:
 	biodone(bp);
 }
 
@@ -411,6 +418,7 @@ raiodone(usc, bp)
 	struct device *usc;
 	struct buf *bp;
 {
+
 	biodone(bp);
 }
 
@@ -486,7 +494,11 @@ raonline(usc, mp)
 	ra->ra_state = RA_WANTOPEN;
 	dl = ra->ra_disk.dk_label;
 	dl->d_secperunit = (daddr_t)mp->mscp_onle.onle_unitsize;
-	dl->d_ncylinders = dl->d_secperunit/dl->d_secpercyl;
+
+	if (dl->d_secpercyl != 0)
+		dl->d_ncylinders = dl->d_secperunit/dl->d_secpercyl;
+	else
+		ra->ra_isafloppy = 1;
 	dl->d_type = DTYPE_MSCP;
 	dl->d_rpm = 3600;
 	dl->d_bbsize = BBSIZE;
