@@ -165,6 +165,7 @@ main(argc, argv, envp)
 	extern void printqueue __P((void));
 	extern void sendtoargv __P((char **, ENVELOPE *));
 	extern void resetlimits __P((void));
+	extern void drop_privileges __P((void));
 
 	/*
 	**  Check to see if we reentered.
@@ -227,6 +228,9 @@ main(argc, argv, envp)
 #endif 
 
 	tTsetup(tTdvect, sizeof tTdvect, "0-99.1");
+
+	/* drop group id privileges (RunAsUser not yet set) */
+	drop_privileges();
 
 	/* Handle any non-getoptable constructions. */
 	obsolete(argv);
@@ -806,10 +810,7 @@ main(argc, argv, envp)
 	if (OpMode != MD_DAEMON && OpMode != MD_FGDAEMON)
 	{
 		/* drop privileges -- daemon mode done after socket/bind */
-		if (RunAsGid != 0)
-			(void) setgid(RunAsGid);
-		if (RunAsUid != 0)
-			(void) setuid(RunAsUid);
+		drop_privileges();
 	}
 
 	/*
@@ -1318,10 +1319,7 @@ main(argc, argv, envp)
 		nullserver = getrequests(CurEnv);
 
 		/* drop privileges */
-		if (RunAsGid != 0)
-			(void) setgid(RunAsGid);
-		if (RunAsUid != 0)
-			(void) setuid(RunAsUid);
+		drop_privileges();
 
 		/* at this point we are in a child: reset state */
 		(void) newenvelope(CurEnv, CurEnv);
@@ -1982,6 +1980,30 @@ sighup()
 		syslog(LOG_ALERT, "could not exec %s: %m", SaveArgv[0]);
 #endif
 	exit(EX_OSFILE);
+}
+/*
+**  DROP_PRIVILEGES -- reduce privileges to those of the RunAsUser option
+**
+**    Parameters:
+**            none.
+**
+**    Returns:
+**            none.
+*/
+void
+drop_privileges()
+{
+#ifdef NGROUPS_MAX
+	/* reset group permissions; these can be set later */
+	GIDSET_T emptygidset[NGROUPS_MAX];
+
+	emptygidset[0] = RunAsGid == 0 ? geteuid() : RunAsGid;
+	(void) setgroups(1, emptygidset);
+#endif
+	if (RunAsGid != 0)
+		(void) setgid(RunAsGid);
+	if (RunAsUid != 0)
+		(void) setuid(RunAsUid);
 }
 /*
 **  TESTMODELINE -- process a test mode input line
