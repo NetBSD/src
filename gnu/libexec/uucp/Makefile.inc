@@ -7,7 +7,7 @@ LIBUUCONF!=cd $(.CURDIR)/../libuuconf; \
 LIBUUCP!=cd $(.CURDIR)/../libuucp; \
 	printf "xxx:\n\techo \$${.OBJDIR}/libuucp.a\n" | ${MAKE} -r -s -f - xxx
 
-VERSION=	1.04
+VERSION=	1.05
 owner=		uucp
 bindir=		/usr/bin
 sbindir=	/usr/libexec/uucp
