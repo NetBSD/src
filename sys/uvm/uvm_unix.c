@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_unix.c,v 1.11 2000/03/26 20:54:47 kleink Exp $	*/
+/*	$NetBSD: uvm_unix.c,v 1.12 2000/03/30 12:31:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -77,10 +77,10 @@ sys_obreak(p, v, retval)
 	struct sys_obreak_args /* {
 		syscallarg(char *) nsize;
 	} */ *uap = v;
-	register struct vmspace *vm = p->p_vmspace;
+	struct vmspace *vm = p->p_vmspace;
 	vaddr_t new, old;
 	int rv;
-	register int diff;
+	int diff;
 
 	old = (vaddr_t)vm->vm_daddr;
 	new = round_page((vaddr_t)SCARG(uap, nsize));
@@ -130,8 +130,8 @@ uvm_grow(p, sp)
 	struct proc *p;
 	vaddr_t sp;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register int si;
+	struct vmspace *vm = p->p_vmspace;
+	int si;
 
 	/*
 	 * For user defined stacks (from sendsig).
@@ -186,9 +186,9 @@ uvm_coredump(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core *chdr;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register vm_map_t map = &vm->vm_map;
-	register vm_map_entry_t entry;
+	struct vmspace *vm = p->p_vmspace;
+	vm_map_t map = &vm->vm_map;
+	vm_map_entry_t entry;
 	vaddr_t start, end;
 	struct coreseg cseg;
 	off_t offset;
@@ -265,9 +265,9 @@ uvm_coredump32(p, vp, cred, chdr)
 	struct ucred *cred;
 	struct core32 *chdr;
 {
-	register struct vmspace *vm = p->p_vmspace;
-	register vm_map_t map = &vm->vm_map;
-	register vm_map_entry_t entry;
+	struct vmspace *vm = p->p_vmspace;
+	vm_map_t map = &vm->vm_map;
+	vm_map_entry_t entry;
 	vaddr_t start, end;
 	struct coreseg32 cseg;
 	off_t offset;
