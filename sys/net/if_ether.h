@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.9 1999/07/01 08:12:48 itojun Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.10 1999/08/04 19:16:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -73,6 +73,11 @@ struct	ether_header {
 #define	ETHERMIN	(ETHER_MIN_LEN - ETHER_HDR_LEN - ETHER_CRC_LEN)
 
 #ifndef _STANDALONE
+
+/*
+ * Ethernet-specific mbuf flags.
+ */
+#define	M_HASCRC	M_LINK0		/* CRC included at end of frame */
 
 #ifdef _KERNEL
 /*
