@@ -1,15 +1,13 @@
-# $NetBSD: md.pmppc,v 1.3 2003/09/24 05:00:16 matt Exp $
+# $NetBSD: md.pmppc,v 1.4 2003/10/24 06:49:37 matt Exp $
 ./usr/include/ieeefp.h			comp-c-include
 ./usr/include/pmppc			comp-c-include
 ./usr/include/pmppc/ansi.h		comp-c-include
 ./usr/include/pmppc/aout_machdep.h	comp-c-include
 ./usr/include/pmppc/asm.h		comp-c-include
+./usr/include/pmppc/atomic.h		comp-c-include
 ./usr/include/pmppc/bswap.h		comp-c-include
-./usr/include/pmppc/bus.h		comp-c-include
 ./usr/include/pmppc/cdefs.h		comp-c-include
 ./usr/include/pmppc/cpu.h		comp-c-include
-./usr/include/pmppc/cpufunc.h		comp-c-include
-./usr/include/pmppc/db_machdep.h	comp-c-include
 ./usr/include/pmppc/disklabel.h		comp-c-include
 ./usr/include/pmppc/elf_machdep.h	comp-c-include
 ./usr/include/pmppc/endian.h		comp-c-include
@@ -25,19 +23,15 @@
 ./usr/include/pmppc/int_mwgwtypes.h	comp-c-include
 ./usr/include/pmppc/int_types.h		comp-c-include
 ./usr/include/pmppc/intr.h		comp-c-include
-./usr/include/pmppc/ipkdb.h		comp-c-include
 ./usr/include/pmppc/kcore.h		comp-c-include
-./usr/include/pmppc/kgdb.h		comp-c-include
 ./usr/include/pmppc/limits.h		comp-c-include
 ./usr/include/pmppc/lock.h		comp-c-include
 ./usr/include/pmppc/math.h		comp-c-include
 ./usr/include/pmppc/mcontext.h		comp-c-include
 ./usr/include/pmppc/param.h		comp-c-include
 ./usr/include/pmppc/pcb.h		comp-c-include
-./usr/include/pmppc/pio.h		comp-c-include
 ./usr/include/pmppc/pmap.h		comp-c-include
 ./usr/include/pmppc/pmc.h		comp-c-include
-./usr/include/pmppc/powerpc.h		comp-c-include
 ./usr/include/pmppc/proc.h		comp-c-include
 ./usr/include/pmppc/profile.h		comp-c-include
 ./usr/include/pmppc/psl.h		comp-c-include
