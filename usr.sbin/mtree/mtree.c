@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.18 2001/10/01 02:30:40 lukem Exp $	*/
+/*	$NetBSD: mtree.c,v 1.19 2001/10/04 04:51:27 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.18 2001/10/01 02:30:40 lukem Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.19 2001/10/04 04:51:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,34 +53,36 @@ __RCSID("$NetBSD: mtree.c,v 1.18 2001/10/01 02:30:40 lukem Exp $");
 #include <errno.h>
 #include <fts.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "mtree.h"
 #include "extern.h"
-
-extern int crc_total;
 
 int	ftsoptions = FTS_PHYSICAL;
 int	cflag, dflag, Dflag, eflag, iflag, lflag, mflag,
     	rflag, sflag, tflag, uflag, Uflag;
 int	keys;
 char	fullpath[MAXPATHLEN];
+char	**excludetags, **includetags;
 
+static	void	addtag(char ***, int *, char *);
 	int	main(int, char **);
+static	void	parsetags(char ***, int *, char *);
 static	void	usage(void);
 
 int
 main(int argc, char **argv)
 {
-	int ch;
-	char *dir, *p;
-	int status;
+	int	ch, status, etagc, itagc;
+	char	*dir, *p;
 
 	setprogname(argv[0]);
 
+	etagc = itagc = 0;
 	dir = NULL;
 	keys = KEYDEFAULT;
-	while ((ch = getopt(argc, argv, "cdDef:iK:k:lmp:rR:s:tUux")) != -1)
+	while ((ch = getopt(argc, argv, "cdDeE:f:I:iK:k:lmp:rR:s:tUux")) != -1)
 		switch((char)ch) {
 		case 'c':
 			cflag = 1;
@@ -91,12 +93,18 @@ main(int argc, char **argv)
 		case 'D':
 			Dflag = 1;
 			break;
+		case 'E':
+			parsetags(&excludetags, &etagc, optarg);
+			break;
 		case 'e':
 			eflag = 1;
 			break;
 		case 'f':
 			if (!(freopen(optarg, "r", stdin)))
 				mtree_err("%s: %s", optarg, strerror(errno));
+			break;
+		case 'I':
+			parsetags(&includetags, &itagc, optarg);
 			break;
 		case 'i':
 			iflag = 1;
@@ -157,6 +165,9 @@ main(int argc, char **argv)
 	if (argc)
 		usage();
 
+	addtag(&excludetags, &etagc, NULL);
+	addtag(&includetags, &itagc, NULL);
+
 	if (dir && chdir(dir))
 		mtree_err("%s: %s", dir, strerror(errno));
 
@@ -186,11 +197,53 @@ main(int argc, char **argv)
 	exit(status);
 }
 
+
+static void
+addtag(char ***list, int *count, char *elem)
+{
+
+#define	TAG_CHUNK 20
+
+	if ((*count % TAG_CHUNK) == 0) {
+		char **new;
+
+		new = (char **)realloc(*list, (*count + TAG_CHUNK)
+		    * sizeof(char *));
+		if (new == NULL)
+			mtree_err("memory allocation error");
+		*list = new;
+	}
+	(*list)[*count] = elem;
+	(*count)++;
+}
+
+static void
+parsetags(char ***list, int *count, char *args)
+{
+	char	*p, *e;
+	int	len;
+
+	if (args == NULL) {
+		addtag(list, count, NULL);
+		return;
+	}
+	while ((p = strsep(&args, ",")) != NULL) {
+		if (*p == '\0')
+			continue;
+		len = strlen(p) + 3;	/* "," + p + ",\0" */
+		if ((e = malloc(len)) == NULL)
+			mtree_err("memory allocation error");
+		snprintf(e, len, ",%s,", p);
+		addtag(list, count, e);
+	}
+}
+
 static void
 usage(void)
 {
 
 	(void)fprintf(stderr, "usage: mtree [-cdDelrUux] [-i|-m] [-f spec]"
-	    " [-k key] [-K key] [-R key] [-p path] [-s seed]\n");
+	    " [-k key] [-K addkey] [-R removekey]\n"
+	    "\t\t[-I inctags] [-E exctags] [-p path] [-s seed]\n");
 	exit(1);
 }
