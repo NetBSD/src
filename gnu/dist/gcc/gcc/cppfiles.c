@@ -242,8 +242,12 @@ open_file (pfile, filename)
      cpp_reader *pfile;
      const char *filename;
 {
+  const char *cpp_restricted;
+
   splay_tree_node nd = find_or_create_entry (pfile, filename);
   struct include_file *file = (struct include_file *) nd->value;
+
+  GET_ENVIRONMENT(cpp_restricted, "CPP_RESTRICTED");
 
   if (file->err_no)
     {
@@ -265,6 +269,9 @@ open_file (pfile, filename)
      controlling terminal by mistake (this can't happen on sane
      systems, but paranoia is a virtue).
 
+     We do, however, use nonblocking mode if CPP_RESTRICTED, since any
+     file which can block will be tossed out after fstat().
+
      Use the three-argument form of open even though we aren't
      specifying O_CREAT, to defend against broken system headers.
 
@@ -285,12 +292,23 @@ open_file (pfile, filename)
 #endif
     }
   else
-    file->fd = open (file->name, O_RDONLY | O_NOCTTY | O_BINARY, 0666);
+    {
+      int mode = O_RDONLY | O_NOCTTY | O_BINARY;
+
+      if (cpp_restricted != NULL)
+	mode |= O_NONBLOCK;
+
+      file->fd = open (file->name, mode, 0666);
+    }
 
   if (file->fd != -1 && fstat (file->fd, &file->st) == 0)
     {
-      if (!S_ISDIR (file->st.st_mode))
-	return file;
+      if ((cpp_restricted != NULL) ? S_ISREG (file->st.st_mode) : !S_ISDIR (file->st.st_mode))
+	{
+	  if (cpp_restricted)
+	    fcntl(file->fd, F_SETFL, fcntl(file->fd, F_GETFL, 0) & ~O_NONBLOCK);
+	  return file;
+        }
 
       /* If it's a directory, we return null and continue the search
 	 as the file we're looking for may appear elsewhere in the
