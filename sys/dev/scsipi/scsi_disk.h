@@ -1,8 +1,11 @@
-/*	$NetBSD: scsi_disk.h,v 1.13 1997/10/03 01:56:52 thorpej Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.14 1998/02/13 04:19:23 enami Exp $	*/
 
 /*
  * SCSI-specific interface description
  */
+
+#ifndef _DEV_SCSIPI_SCSI_DISK_H_
+#define _DEV_SCSIPI_SCSI_DISK_H_
 
 /*
  * Some lines of this file come from a file of the name "scsi.h"
@@ -52,9 +55,6 @@
 /*
  * SCSI command format
  */
-
-#ifndef	_SCSI_SCSI_DISK_H
-#define _SCSI_SCSI_DISK_H 1
 
 /*
  * XXX for now this isn't in the ATAPI specs, but if there are on day
@@ -175,4 +175,4 @@ union scsi_disk_pages {
 	} flex_geometry;
 };
 
-#endif /* _SCSI_SCSI_DISK_H */
+#endif /* _DEV_SCSIPI_SCSI_DISK_H_ */

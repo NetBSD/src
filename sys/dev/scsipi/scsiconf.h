@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.39 1997/10/01 01:19:04 enami Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.40 1998/02/13 04:19:27 enami Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _DEV_SCSIPI_SCSICONF_H_
+#define _DEV_SCSIPI_SCSICONF_H_
+
 /*
  * Originally written by Julian Elischer (julian@tfs.com)
  * for TRW Financial Systems for use under the MACH(2.5) operating system.
@@ -45,9 +48,6 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
-
-#ifndef	SCSI_SCSICONF_H
-#define SCSI_SCSICONF_H 1
 
 #include <dev/scsipi/scsipiconf.h>
 
@@ -89,4 +89,4 @@ int	scsi_scsipi_cmd __P((struct scsipi_link *, struct scsipi_generic *,
 	    int cmdlen, u_char *data_addr, int datalen, int retries,
 	    int timeout, struct buf *bp, int flags));
 
-#endif /* SCSI_SCSICONF_H */
+#endif /* _DEV_SCSIPI_SCSICONF_H_ */

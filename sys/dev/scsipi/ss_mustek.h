@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.h,v 1.3 1997/08/27 11:27:07 bouyer Exp $	*/
+/*	$NetBSD: ss_mustek.h,v 1.4 1998/02/13 04:19:36 enami Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -29,8 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_SS_MUSTEK_H_
-#define _SS_MUSTEK_H_ 1
+#ifndef _DEV_SCSIPI_SS_MUSTEK_H_
+#define _DEV_SCSIPI_SS_MUSTEK_H_
 
 /*
  * support for MUSTEK flatbed SCSI scanners MFS-06000CX and MFS-12000CX
@@ -176,4 +176,4 @@ struct mustek_start_scan_cmd {
 	u_int8_t control;
 };
 
-#endif /* _SS_MUSTEK_H_ */
+#endif /* _DEV_SCSIPI_SS_MUSTEK_H_ */
