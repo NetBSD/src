@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkman,v 1.2 2001/06/24 02:39:14 hubertf Exp $
+#	$NetBSD: mkman,v 1.3 2001/06/30 01:00:47 hubertf Exp $
 
 #
 # Find all manpage sources - run before tocrc
@@ -12,12 +12,17 @@ find ../../.. -name '*.[1-9]' -print	\
 | grep troff				\
 | sed 's/:[ 	]*.*$//'		\
 | fgrep -v -f noman			\
+| grep -v '#'				\
 >/tmp/mkman.$$
 
 for i in 1 2 3 4 5 6 7 8 9
 do
 	echo Creating man$i
-	grep "${i}\$"	</tmp/mkman.$$ >man${i}
+	grep "${i}\$"	</tmp/mkman.$$ 		\
+	| sed 's,\(.*/\)\([^/]*\),\2 \1\2,'	\
+	| sort 					\
+	| sed 's/^.* //'			\
+	>man${i}
 done
 
 rm /tmp/mkman.$$
