@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.34 1997/08/11 22:53:49 scottr Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.35 1997/09/03 06:40:15 scottr Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -87,6 +87,7 @@ extern   signed long	nblen[];
 #define VIDMAPSIZE	btoc(m68k_round_page(vidlen))
 extern u_int32_t	mac68k_vidlog;
 extern u_int32_t	mac68k_vidphys;
+extern u_int32_t	mac68k_vidlen;
 extern u_int32_t	videoaddr;
 extern u_int32_t	videorowbytes;
 extern u_int32_t	videosize;
@@ -128,7 +129,8 @@ pmap_bootstrap(nextpa, firstpa)
 	register st_entry_t protoste, *ste;
 	register pt_entry_t protopte, *pte, *epte;
 
-	vidlen = ((videosize >> 16) & 0xffff) * videorowbytes + PGOFSET;
+	if (vidlen == 0)
+		vidlen = ((videosize >> 16) & 0xffff) * videorowbytes + PGOFSET;
 
 	/*
 	 * Calculate important physical addresses:
@@ -565,7 +567,6 @@ bootstrap_mac68k(tc)
 		printf("Bootstrapping NetBSD/mac68k.\n");
 
 	oldROMBase = ROMBase;
-	mac68k_vidphys = videoaddr;
 
 	if (((tc & 0x80000000) && (mmutype == MMU_68030)) ||
 	    ((tc & 0x8000) && (mmutype == MMU_68040))) {
@@ -574,6 +575,7 @@ bootstrap_mac68k(tc)
 		(void) get_mapping();
 		if (mac68k_machine.do_graybars)
 			printf("Done.\n");
+		vidlen = mac68k_vidlen;
 	} else {
 		/* MMU not enabled.  Fake up ranges. */
 		nbnumranges = 0;
@@ -582,6 +584,7 @@ bootstrap_mac68k(tc)
 		high[0] = mac68k_machine.mach_memsize * (1024 * 1024);
 		if (mac68k_machine.do_graybars)
 			printf("Faked range to byte 0x%lx.\n", high[0]);
+		mac68k_vidphys = videoaddr;
 	}
 	nextpa = load_addr + (((int)esym + NBPG - 1) & PG_FRAME);
 
