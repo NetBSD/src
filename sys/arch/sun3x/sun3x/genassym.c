@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.12 1997/10/23 02:06:36 gwr Exp $	*/
+/*	$NetBSD: genassym.c,v 1.13 1998/01/22 21:35:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -107,12 +107,12 @@ struct nv {
 
 struct nv assyms[] = {
 
+	/* XXX: for copy.s */
+	def("M68030", 1),
+
 	/* bus error stuff */
 	/* def1(BUSERR_REG), XXX */
 	/* def1(BUSERR_MMU), XXX */
-
-	/* XXX: for copy.s */
-	def("M68030", 1),
 
 	/* 68k isms */
 	def1(PSL_LOWIPL),
@@ -127,10 +127,10 @@ struct nv assyms[] = {
 	def1(CACHE_CLR),
 
 	/* sun3 memory map */
-	def1(DVMA_SPACE_START),
+	def1(USRSTACK),
 	def1(MONSTART),
 	def1(PROM_BASE),
-	def1(USRSTACK),
+	def1(MONEND),
 
 	/* kernel-isms */
 	def1(KERNBASE),
