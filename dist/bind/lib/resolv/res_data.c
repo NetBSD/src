@@ -1,4 +1,4 @@
-/*	$NetBSD: res_data.c,v 1.3 2000/03/01 10:50:00 itojun Exp $	*/
+/*	$NetBSD: res_data.c,v 1.4 2000/08/14 11:33:34 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995-1999 by Internet Software Consortium.
@@ -42,7 +42,10 @@ static const char rcsid[] = "Id: res_data.c,v 8.17 1999/10/13 17:11:31 vixie Exp
 #include <unistd.h>
 
 #include "port_after.h"
+/* While libc resolver is bind4; the local resolv.h changes _res */
+#ifndef __NetBSD__
 #undef _res
+#endif
 
 const char *_res_opcodes[] = {
 	"QUERY",
