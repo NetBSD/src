@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.599 2003/08/30 22:00:38 jdolecek Exp $
+# $NetBSD: mi,v 1.600 2003/08/31 16:41:41 wiz Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -1106,6 +1106,7 @@
 ./usr/share/man/cat4/vax/pcl.0			man-sys-catman
 ./usr/share/man/cat4/vax/ps.0			man-sys-catman
 ./usr/share/man/cat4/vax/qe.0			man-sys-catman
+./usr/share/man/cat4/vax/qt.0			man-sys-catman
 ./usr/share/man/cat4/vax/rf.0			man-sys-catman
 ./usr/share/man/cat4/vax/tm.0			man-sys-catman
 ./usr/share/man/cat4/vax/ts.0			man-sys-catman
@@ -2924,6 +2925,7 @@
 ./usr/share/man/man4/vax/pcl.4			man-sys-man
 ./usr/share/man/man4/vax/ps.4			man-sys-man
 ./usr/share/man/man4/vax/qe.4			man-sys-man
+./usr/share/man/man4/vax/qt.4			man-sys-man
 ./usr/share/man/man4/vax/rf.4			man-sys-man
 ./usr/share/man/man4/vax/tm.4			man-sys-man
 ./usr/share/man/man4/vax/ts.4			man-sys-man
