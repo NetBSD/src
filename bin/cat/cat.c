@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.34 2002/06/11 22:05:07 bjh21 Exp $	*/
+/* $NetBSD: cat.c,v 1.35 2002/09/13 18:07:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.34 2002/06/11 22:05:07 bjh21 Exp $");
+__RCSID("$NetBSD: cat.c,v 1.35 2002/09/13 18:07:52 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -294,7 +294,8 @@ raw_cat(int rfd)
 	wfd = fileno(stdout);
 	if (buf == NULL) {
 		if (fstat(wfd, &sbuf) == 0) {
-			bsize = MAX(sbuf.st_blksize, BUFSIZ);
+			bsize = sbuf.st_blksize > BUFSIZ ?
+			    sbuf.st_blksize : BUFSIZ;
 			buf = malloc(bsize);
 		}
 		if (buf == NULL) {
