@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 1997/04/27 20:43:40 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 1997/05/03 08:41:29 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -2272,7 +2272,9 @@ pmap_changebit(pa, bit, setem)
 	pt_entry_t *pte, npte;
 	vm_offset_t va;
 	int s;
+#if !defined(M68K_MMU_HP) && !defined(M68040)
 	boolean_t firstpage = TRUE;
+#endif
 #ifdef PMAPSTATS
 	struct chgstats *chgp;
 #endif
