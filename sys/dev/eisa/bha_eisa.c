@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_eisa.c,v 1.2 1996/09/01 00:20:20 mycroft Exp $	*/
+/*	$NetBSD: bha_eisa.c,v 1.3 1996/10/10 19:54:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996 Charles M. Hannum.  All rights reserved.
@@ -31,6 +31,7 @@
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -108,7 +109,7 @@ bha_eisa_attach(parent, self, aux)
 		model = EISA_PRODUCT_BUS4202;
 	else
 		model = "unknown model!";
-	printf(": %s\n", model);
+	kprintf(": %s\n", model);
 
 	if (bus_io_map(bc, EISA_SLOT_ADDR(ea->ea_slot) + BHA_EISA_SLOT_OFFSET,
 	    BHA_EISA_IOSIZE, &ioh))
@@ -120,7 +121,7 @@ bha_eisa_attach(parent, self, aux)
 		panic("bha_attach: bha_find failed!");
 
 	if (eisa_intr_map(ec, sc->sc_irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
+		kprintf("%s: couldn't map interrupt (%d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_irq);
 		return;
 	}
@@ -128,14 +129,14 @@ bha_eisa_attach(parent, self, aux)
 	sc->sc_ih = eisa_intr_establish(ec, ih, IST_LEVEL, IPL_BIO,
 	    bha_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
+		kprintf("%s: couldn't establish interrupt",
 		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	kprintf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	bha_attach(sc);
 }

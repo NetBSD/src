@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.7 1996/08/28 23:46:18 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.8 1996/10/10 19:54:11 christos Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -170,9 +170,9 @@ aic7770probe(void)
 				irq = 15;
 				break;
 			default:
-				printf("aic7770 at slot %d: illegal "
-				       "irq setting %d\n", e_dev->ioconf.slot,
-					intdef);
+				kprintf("aic7770 at slot %d: illegal "
+				    "irq setting %d\n", e_dev->ioconf.slot,
+				    intdef);
 				continue;
 		}
 		eisa_add_intr(e_dev, irq);
@@ -230,7 +230,7 @@ ahc_eisa_irq(bc, ioh)
 	case 15:
 		break;
 	default:
-		printf("ahc_eisa_irq: illegal irq setting %d\n", intdef);
+		kprintf("ahc_eisa_irq: illegal irq setting %d\n", intdef);
 		return -1;
 	}
 
@@ -312,7 +312,7 @@ ahc_eisa_attach(parent, self, aux)
 			type = AHC_284;
 			break;
 		default: 
-			printf("aic7770_attach: Unknown device type!\n");
+			kprintf("aic7770_attach: Unknown device type!\n");
 			return -1;
 			break;
 	}
@@ -372,12 +372,12 @@ ahc_eisa_attach(parent, self, aux)
 		panic("ahc_eisa_attach: Unknown device type %s\n",
 		      ea->ea_idstring);
 	}
-	printf(": %s\n", model);
+	kprintf(": %s\n", model);
 
 	ahc_construct(ahc, bc, ioh, type, AHC_FNONE);
 	if (eisa_intr_map(ec, irq, &ih)) {
-		printf("%s: couldn't map interrupt (%d)\n",
-		       ahc->sc_dev.dv_xname, irq);
+		kprintf("%s: couldn't map interrupt (%d)\n",
+		    ahc->sc_dev.dv_xname, irq);
 		return;
 	}
 #endif /* defined(__NetBSD__) */
@@ -387,10 +387,9 @@ ahc_eisa_attach(parent, self, aux)
 	 * usefull for debugging irq problems
 	 */
 	if(bootverbose) {
-		printf("%s: Using %s Interrupts\n",
-		       ahc_name(ahc),
-		       ahc->pause & IRQMS ?
-				"Level Sensitive" : "Edge Triggered");
+		kprintf("%s: Using %s Interrupts\n",
+		    ahc_name(ahc),
+		    ahc->pause & IRQMS ?  "Level Sensitive" : "Edge Triggered");
 	}
 
 	/*
@@ -461,7 +460,7 @@ ahc_eisa_attach(parent, self, aux)
 		else
 			id_string = "aic7770 <= Rev C, ";
 
-		printf("%s: %s", ahc_name(ahc), id_string);
+		kprintf("%s: %s", ahc_name(ahc), id_string);
 	}
 
 	/* Setup the FIFO threshold and the bus off time */
@@ -518,16 +517,16 @@ ahc_eisa_attach(parent, self, aux)
 #endif
 	    );
 	if (ahc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       ahc->sc_dev.dv_xname);
+		kprintf("%s: couldn't establish interrupt",
+		    ahc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			kprintf(" at %s", intrstr);
+		kprintf("\n");
 		ahc_free(ahc);
 		return;
 	}
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
+		kprintf("%s: interrupting at %s\n", ahc->sc_dev.dv_xname,
 		       intrstr);
 #endif /* defined(__NetBSD__) */
 
