@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.103 1998/02/10 14:11:38 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.104 1998/02/11 01:50:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1313,7 +1313,7 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	 */
 	mapsize = sizeof(struct sparc_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DEVBUF,
+	if ((mapstore = malloc(mapsize, M_DMAMAP,
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
@@ -1341,7 +1341,7 @@ _bus_dmamap_destroy(t, map)
 	bus_dmamap_t map;
 {
 
-	free(map, M_DEVBUF);
+	free(map, M_DMAMAP);
 }
 
 /*
