@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.12 2000/02/02 23:34:57 thorpej Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.13 2000/02/03 05:38:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -76,8 +76,10 @@ mii_phy_setmedia(sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int bmcr, anar;
 
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		(void) mii_phy_auto(sc, 1);
+		return;
+	}
 
 	/*
 	 * Table index is stored in the media entry.
