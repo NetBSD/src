@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.33 2000/11/13 11:50:46 itojun Exp $	*/
+/*	$NetBSD: extern.h,v 1.34 2000/11/15 02:32:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -157,9 +157,6 @@ void	user(const char *);
 char   *xstrdup(const char *);
 void	yyerror(char *);
 
-typedef long long qdfmt_t;
-typedef unsigned long long qufmt_t;
-
 typedef enum {
 	CLASS_GUEST,
 	CLASS_CHROOT,
@@ -213,20 +210,34 @@ struct ftpclass {
 
 #include <netinet/in.h>
 
-union sockunion {
-	struct sockinet {
-		u_char si_len;
-		u_char si_family;
-		u_short si_port;
-	} su_si;
-	struct sockaddr_in  su_sin;
+#ifdef BSD4_4
+# define HAVE_SOCKADDR_SA_LEN	1
+#endif
+
+struct sockinet {
+	union sockunion {
+		struct sockaddr_in  su_sin;
 #ifdef INET6
-	struct sockaddr_in6 su_sin6;
+		struct sockaddr_in6 su_sin6;
+#endif
+	} si_su;
+#if !HAVE_SOCKADDR_SA_LEN
+	int	si_len;
 #endif
 };
-#define su_len		su_si.si_len
-#define su_family	su_si.si_family
-#define su_port		su_si.si_port
+
+#if !HAVE_SOCKADDR_SA_LEN
+# define su_len		si_len
+#else
+# define su_len		si_su.su_sin.sin_len
+#endif
+#define su_addr		si_su.su_sin.sin_addr
+#define su_family	si_su.su_sin.sin_family
+#define su_port		si_su.su_sin.sin_port
+#ifdef INET6
+# define su_6addr	si_su.su_sin6.sin6_addr
+# define su_scope_id	si_su.su_sin6.sin6_scope_id
+#endif
 
 extern  int		yyparse(void);
 
@@ -235,11 +246,11 @@ extern  int		yyparse(void);
 #endif
 
 
-GLOBAL	union sockunion	ctrl_addr;
-GLOBAL	union sockunion	data_dest;
-GLOBAL	union sockunion	data_source;
-GLOBAL	union sockunion	his_addr;
-GLOBAL	union sockunion	pasv_addr;
+GLOBAL	struct sockinet ctrl_addr;
+GLOBAL	struct sockinet	data_dest;
+GLOBAL	struct sockinet	data_source;
+GLOBAL	struct sockinet	his_addr;
+GLOBAL	struct sockinet	pasv_addr;
 GLOBAL	int		connections;
 GLOBAL	struct ftpclass	curclass;
 GLOBAL	int		debug;
@@ -304,3 +315,25 @@ extern	struct tab	cmdtab[];
 			} while ((W) != NULL && *(W) == '\0')
 #define PLURAL(s)	((s) == 1 ? "" : "s")
 #define REASSIGN(X,Y)	do { if (X) free(X); (X)=(Y); } while (/*CONSTCOND*/0)
+
+#ifndef IPPORT_ANONMAX
+# define IPPORT_ANONMAX	65535
+#endif
+
+#ifdef NO_LONG_LONG
+# define LLF		"%ld"
+# define LLFP(x)	"%" x "ld"
+# define LLT		long
+# define ULLF		"%lu"
+# define ULLFP(x)	"%" x "lu"
+# define ULLT		unsigned long
+# define STRTOLL(x,y,z)	strtol(x,y,z)
+#else
+# define LLF		"%lld"
+# define LLFP(x)	"%" x "lld"
+# define LLT		long long
+# define ULLF		"%llu"
+# define ULLFP(x)	"%" x "llu"
+# define ULLT		unsigned long long
+# define STRTOLL(x,y,z)	strtoll(x,y,z)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.6 2000/07/10 22:41:17 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.7 2000/11/15 02:32:30 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999-2000 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cmds.c,v 1.6 2000/07/10 22:41:17 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.7 2000/11/15 02:32:30 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -451,7 +451,7 @@ sizecmd(const char *filename)
 		if (stat(filename, &stbuf) < 0 || !S_ISREG(stbuf.st_mode))
 			reply(550, "%s: not a plain file.", filename);
 		else
-			reply(213, "%qu", (qufmt_t)stbuf.st_size);
+			reply(213, ULLF, (ULLT)stbuf.st_size);
 		break; }
 	case TYPE_A: {
 		FILE *fin;
@@ -477,7 +477,7 @@ sizecmd(const char *filename)
 		}
 		(void) fclose(fin);
 
-		reply(213, "%qd", (qdfmt_t)count);
+		reply(213, LLF, (LLT)count);
 		break; }
 	default:
 		reply(504, "SIZE not implemented for Type %c.", "?AEIL"[type]);
@@ -705,7 +705,7 @@ fact_size(const char *fact, FILE *fd, factelem *fe)
 {
 
 	if (S_ISREG(fe->stat->st_mode))
-		cprintf(fd, "%s=%lld;", fact, (long long)fe->stat->st_size);
+		cprintf(fd, "%s=" LLF ";", fact, (LLT)fe->stat->st_size);
 }
 
 static void
