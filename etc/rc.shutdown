@@ -1,4 +1,4 @@
-#	$NetBSD: rc.shutdown,v 1.1 1998/10/29 20:24:57 bad Exp $
+#	$NetBSD: rc.shutdown,v 1.2 1999/01/18 20:41:54 tron Exp $
 
 # System shutdown script run by shutdown before halting/rebooting
 # or going single-user.
@@ -32,13 +32,19 @@ fi
 
 # Kill xdm and wait for it to terminate.
 if checkyesno xdm; then
-	XDM_PID=`sed 1q /var/run/xdm-pid`
-	if [ -n "$XDM_PID" ]; then
-		echo -n ' xdm'
-		kill $XDM_PID
-		while kill -0 $XDM_PID; do
-			sleep 1
-		done
+	XDM_PIDFILE=`awk '/DisplayManager.pidFile/ {print $2}' \
+		     /usr/X11R6/lib/X11/xdm/xdm-config`
+	if [ -n "$XDM_PIDFILE" -a -e "$XDM_PIDFILE" ]
+	then
+		XDM_PID=`sed 1q $XDM_PIDFILE`
+		if [ -n "$XDM_PID" ]; then
+			echo -n ' xdm'
+			kill $XDM_PID
+			while kill -0 $XDM_PID 2>/dev/null; do
+				sleep 1
+			done
+			rm -f $XDM_PIDFILE
+		fi
 	fi
 fi
 
