@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/07/24 07:59:28 itojun Exp $
+#	$NetBSD: Makefile,v 1.5 2000/10/18 18:26:00 tv Exp $
 
 PROG=	dhclient
 MKMAN=	no
@@ -32,15 +32,11 @@ all: ${PROG}
 ${MINIOBJS}:
 	${CC} ${CFLAGS} ${CPPFLAGS} -DMINIRES_LIB -c ${.IMPSRC}
 
-OMalloc.c: ${RSRCDIR}/omapip/alloc.c
-	cp ${RSRCDIR}/omapip/alloc.c OMalloc.c
+.SUFFIXES: .OM.c
 
-OMdispatch.c: ${RSRCDIR}/omapip/dispatch.c
-	cp ${RSRCDIR}/omapip/dispatch.c OMdispatch.c
+.c.OM.c:
+	cp ${RSRCDIR}/omapip/$*.c $@
 
-OMsupport.c: ${RSRCDIR}/omapip/support.c
-	cp ${RSRCDIR}/omapip/support.c OMsupport.c
-
-CLEANFILES+= OMalloc.c OMdispatch.c OMsupport.c
+CLEANFILES+= ${SRCS:M*.OM.c}
 
 .include <bsd.prog.mk>
