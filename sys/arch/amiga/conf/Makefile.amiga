@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.56 1997/05/22 22:45:37 veego Exp $
+#	$NetBSD: Makefile.amiga,v 1.57 1997/06/21 22:13:46 is Exp $
 
 # Makefile for NetBSD
 #
@@ -172,7 +172,7 @@ uipc_proto.o vfs_conf.o: Makefile
 machdep.o: Makefile
 
 # depend on CPU configuration 
-amiga_init.o locore.o pmap.o sys_machdep.o bzsc.o flsc.o sbic.o sfas.o: Makefile
+amiga_init.o locore.o pmap.o sys_machdep.o aucc.o bzsc.o flsc.o sbic.o sfas.o: Makefile
 
 
 locore.o: ${AMIGA}/amiga/locore.s assym.h
