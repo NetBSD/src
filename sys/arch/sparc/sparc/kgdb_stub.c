@@ -1,17 +1,21 @@
-/*	$NetBSD: kgdb_stub.c,v 1.3 1996/03/14 21:09:14 christos Exp $ */
+/*	$NetBSD: kgdb_stub.c,v 1.4 1996/03/31 23:38:29 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1995
+ * 	The President and Fellows of Harvard University. All rights reserved.
  *
  * This software was developed by the Computer Systems Engineering group
  * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
  * contributed to Berkeley.
  *
  * All advertising materials mentioning features or use of this software
- * must display the following acknowledgement:
+ * must display the following acknowledgements:
  *	This product includes software developed by the University of
  *	California, Lawrence Berkeley Laboratory.
+ *
+ * 	This product includes software developed by Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,8 +81,16 @@ int kgdb_rate = KGDBRATE;	/* remote debugging baud rate */
 int kgdb_active = 0;		/* remote debugging active if != 0 */
 int kgdb_debug_panic = 0;	/* != 0 waits for remote on panic */
 
-#define	getpte(va)	lda(va, ASI_PTE)
-#define	setpte(va, pte)	sta(va, ASI_PTE, pte)
+#if defined(SUN4M)
+#define getpte4m(va)		lda(((vm_offset_t)va & 0xFFFFF000) | \
+				     ASI_SRMMUFP_L3, ASI_SRMMUFP)
+void	setpte4m __P((vm_offset_t, int));
+#endif
+
+#if defined(SUN4) || defined(SUN4C)
+#define	getpte4(va)		lda(va, ASI_PTE)
+#define	setpte4(va, pte)	sta(va, ASI_PTE, pte)
+#endif
 
 void kgdb_copy __P((char *, char *, int));
 static void kgdb_send __P((u_int, u_char *, int));
@@ -101,6 +113,15 @@ kgdb_copy(src, dst, len)
 
 	while (--len >= 0)
 		*dst++ = *src++;
+}
+
+/* ditto for bzero */
+kgdb_zero(ptr, len)
+	register char *ptr;
+	register int len;
+{
+	while (--len >= 0)
+		*ptr++ = (char) 0;
 }
 
 static int (*kgdb_getc) __P((void *));
@@ -195,7 +216,7 @@ restart:
 			if (escape)
 				c = FRAME_START;
 			break;
-			
+
 		case FRAME_START:
 			goto restart;
 
@@ -231,7 +252,7 @@ restart:
  * (gdb only understands unix signal numbers).
  * XXX should this be done at the other end?
  */
-static int 
+static int
 computeSignal(type)
 	int type;
 {
@@ -278,7 +299,7 @@ computeSignal(type)
 }
 
 /*
- * Trap into kgdb to wait for debugger to connect, 
+ * Trap into kgdb to wait for debugger to connect,
  * noting on the console why nothing else is going on.
  */
 void
@@ -346,7 +367,7 @@ regs_to_gdb(tf, gdb_regs)
 	kgdb_copy((caddr_t)tf->tf_out[6], (caddr_t)&gdb_regs[GDB_L0], 16 * 4);
 
 	/* %f0..%f31 -- fake, kernel does not use FP */
-	bzero((caddr_t)&gdb_regs[GDB_FP0], 32 * 4);
+	kgdb_zero((caddr_t)&gdb_regs[GDB_FP0], 32 * 4);
 
 	/* %y, %psr, %wim, %tbr, %pc, %npc, %fsr, %csr */
 	gdb_regs[GDB_Y] = tf->tf_y;
@@ -381,10 +402,10 @@ static u_char inbuffer[SL_RPCSIZE];
 static u_char outbuffer[SL_RPCSIZE];
 
 /*
- * This function does all command procesing for interfacing to 
+ * This function does all command procesing for interfacing to
  * a remote gdb.
  */
-int 
+int
 kgdb_trap(type, tf)
 	int type;
 	register struct trapframe *tf;
@@ -410,7 +431,7 @@ kgdb_trap(type, tf)
 		/*
 		 * If the packet that woke us up isn't an exec packet,
 		 * ignore it since there is no active debugger.  Also,
-		 * we check that it's not an ack to be sure that the 
+		 * we check that it's not an ack to be sure that the
 		 * remote side doesn't send back a response after the
 		 * local gdb has exited.  Otherwise, the local host
 		 * could trap into gdb if it's running a gdb kernel too.
@@ -431,7 +452,7 @@ kgdb_trap(type, tf)
 			continue;
 		/*
 		 * Do the printf *before* we ack the message.  This way
-		 * we won't drop any inbound characters while we're 
+		 * we won't drop any inbound characters while we're
 		 * doing the polling printf.
 		 */
 		printf("kgdb started from device %x\n", kgdb_dev);
@@ -503,7 +524,7 @@ kgdb_trap(type, tf)
 				}
 			}
 			break;
-			
+
 		case KGDB_REG_W:
 		case KGDB_REG_W | KGDB_DELTA:
 			cp = inbuffer;
@@ -517,7 +538,7 @@ kgdb_trap(type, tf)
 			gdb_to_regs(tf, gdb_regs);
 			outlen = 0;
 			break;
-				
+
 		case KGDB_MEM_R:
 			len = inbuffer[0];
 			kgdb_copy((caddr_t)&inbuffer[1], (caddr_t)&addr, 4);
@@ -557,6 +578,16 @@ kgdb_trap(type, tf)
 			kgdb_send(out, 0, 0);
 			return (1);
 
+		case KGDB_HALT:
+			kgdb_send(out, 0, 0);
+			callrom();
+			/* NOTREACHED */
+
+		case KGDB_BOOT:
+			kgdb_send(out, 0, 0);
+			romboot("");
+			/* NOTREACHED */
+
 		case KGDB_EXEC:
 		default:
 			/* Unknown command.  Ack with a null message. */
@@ -573,6 +604,9 @@ extern char *curproc;				/* XXX! */
 
 /*
  * XXX do kernacc and useracc calls if safe, otherwise use PTE protections.
+ *
+ * Note: kernacc fails currently on the Sun4M port--we use pte bits instead.
+ * Plus this lets us debug kernacc. (%%% XXX)
  */
 int
 kgdb_acc(addr, len, rw, usertoo)
@@ -580,6 +614,15 @@ kgdb_acc(addr, len, rw, usertoo)
 	int len, rw, usertoo;
 {
 	int pte;
+
+#if defined(SUN4M)		/* we just use ptes here...its easier */
+	if (CPU_ISSUN4M) {
+		pte = getpte4m(addr);
+		if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE || rw ==
+		    B_WRITE && (pte & PPROT_WRITE) == 0)
+		        return (0);
+	}
+#endif
 
 	/* XXX icky: valid address but causes timeout */
 	if (addr >= (caddr_t)0xfffff000)
@@ -595,9 +638,17 @@ kgdb_acc(addr, len, rw, usertoo)
 		if (((int)addr >> PG_VSHIFT) != 0 &&
 		    ((int)addr >> PG_VSHIFT) != -1)
 			return (0);
-		pte = getpte(addr);
-		if ((pte & PG_V) == 0 || (rw == B_WRITE && (pte & PG_W) == 0))
-			return (0);
+		if (CPU_ISSUN4M) {
+			pte = getpte4m(addr);
+			if ((pte & SRMMU_TETYPE) != SRMMU_TEPTE ||
+			    (rw == B_WRITE && (pte & PPROT_WRITE) == 0))
+				return (0);
+		} else {
+			pte = getpte4(addr);
+			if ((pte & PG_V) == 0 ||
+			    (rw == B_WRITE && (pte & PG_W) == 0))
+				return (0);
+		}
 	}
 	return (1);
 }
@@ -607,13 +658,17 @@ kdb_mkwrite(addr, len)
 	register caddr_t addr;
 	register int len;
 {
-
-	if (kernel_map != NULL) {
+	if (CPU_ISSUN4OR4C && kernel_map != NULL) {
 		chgkprot(addr, len, B_WRITE);
 		return;
 	}
+
 	addr = (caddr_t)((int)addr & ~PGOFSET);
 	for (; len > 0; len -= NBPG, addr += NBPG)
-		setpte(addr, getpte(addr) | PG_W);
+		if (CPU_ISSUN4M)
+			setpte4m((vm_offset_t)addr,
+				 getpte4m(addr) | PPROT_WRITE);
+		else
+			setpte4(addr, getpte4(addr) | PG_W);
 }
 #endif
