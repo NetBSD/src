@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.12 2000/02/01 22:39:52 chopps Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.13 2000/02/22 16:04:44 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -65,7 +65,7 @@ int	pcic_isa_probe __P((struct device *, struct cfdata *, void *));
 void	pcic_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach pcic_isa_ca = {
-	sizeof(struct pcic_softc), pcic_isa_probe, pcic_isa_attach
+	sizeof(struct pcic_isa_softc), pcic_isa_probe, pcic_isa_attach
 };
 
 static struct pcmcia_chip_functions pcic_isa_functions = {
@@ -166,6 +166,7 @@ pcic_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct pcic_softc *sc = (void *) self;
+	struct pcic_isa_softc *isc = (void *) self;
 	struct isa_attach_args *ia = aux;
 	isa_chipset_tag_t ic = ia->ia_ic;
 	bus_space_tag_t iot = ia->ia_iot;
@@ -188,7 +189,7 @@ pcic_isa_attach(parent, self, aux)
 	sc->membase = ia->ia_maddr;
 	sc->subregionmask = (1 << (ia->ia_msize / PCIC_MEM_PAGESIZE)) - 1;
 
-	sc->intr_est = ic;
+	isc->sc_ic = ic;
 	sc->pct = (pcmcia_chipset_tag_t) & pcic_isa_functions;
 
 	sc->iot = iot;
