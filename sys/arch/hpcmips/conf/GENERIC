@@ -2,7 +2,7 @@
 # Distribution kernel (any  model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.8 1999/11/02 10:36:52 takemura Exp $
+# 	$NetBSD: GENERIC,v 1.9 1999/11/03 14:09:53 enami Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -12,9 +12,9 @@ options 	MIPS3			# R4000/R4400/R4600 CPUs
 
 # Support for specific models of H/PC MIPS
 options 	VR41X1			# NEC VR41x1 series
-options		MIPS3_4100		# VR4100 core
-options		SOFTFLOAT		# No FPU
-options		MIPS3_L2CACHE_ABSENT
+options 	MIPS3_4100		# VR4100 core
+options 	SOFTFLOAT		# No FPU
+options 	MIPS3_L2CACHE_ABSENT
 
 # Standard system options
 options 	DDB			# in-kernel debugger
@@ -24,23 +24,23 @@ options 	DDB			# in-kernel debugger
 options 	KTRACE			# system call tracing support
 options 	NKMEMCLUSTERS=1024	# 4K pages in kernel malloc pool
 
-options 	SCSIVERBOSE	# human readable SCSI error messages
-options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE		# human readable SCSI error messages
+options 	PCMCIAVERBOSE		# verbose PCMCIA configuration messages
 
-options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options	RTC_OFFSET=-540	# JST-9
-#options	RTC_OFFSET=480	# PST8
+options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
+#options 	RTC_OFFSET=-540		# JST-9
+#options 	RTC_OFFSET=480		# PST8
 options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
 
-#options		WINCE_DEFAULT_SETTING # Debugging use
-#options		DUMP_GIU_LEVEL2_INTR  # Debugging use
-#options		DEBUG_FIND_PCIC       # Debugging use XXX harmful don't define until read source.
+#options 	WINCE_DEFAULT_SETTING	# Debugging use
+#options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
+#options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
 
-#options		SYSCALL_DEBUG		# for debug
-#options		HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
-#options		HPCMIPS_FLUSHCACHE_XXX	# for debug
-#options		MIPS_16K_PAGE		# page size is 16KB
+#options 	SYSCALL_DEBUG		# for debug
+#options 	HPCMIPS_L1CACHE_DISABLE	# disable L1 cache for debug
+#options 	HPCMIPS_FLUSHCACHE_XXX	# for debug
+#options 	MIPS_16K_PAGE		# page size is 16KB
 
 # Filesystem options
 file-system 	FFS             # fast filesystem with user and group quotas
@@ -73,7 +73,7 @@ options 	INET		# Internet protocols
 options 	COMPAT_43, COMPAT_13, COMPAT_14
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
-options		NFS_BOOT_DHCP
+options 	NFS_BOOT_DHCP
 
 config		netbsd		root on ? type ?
 config		sdnetbsd	root on sd0a type ffs
@@ -81,9 +81,9 @@ config		nfsnetbsd	root on ? type nfs
 
 # WS console uses SUN or VT100 terminal emulation
 options 	WSEMUL_VT100
-options		WSDISPLAY_DEFAULTSCREENS=4
-#options		FONT_VT220L8x8
-options		FONT_VT220L8x10
+options 	WSDISPLAY_DEFAULTSCREENS=4
+#options 	FONT_VT220L8x8
+options 	FONT_VT220L8x10
 
 # Workstation Console attachments
 fb*		at	mainbus0
@@ -98,7 +98,7 @@ vrbcu*	at vrip? addr 0x0b000000 size 0x20
 vrrtc*	at vrip? addr 0x0b0000c0 size 0x20 intr 2
 
 vrkiu*  at vrip? addr 0x0b000180 size 0x20 intr 7
-options __NO_SOFT_SERIAL_INTERRUPT
+options 	__NO_SOFT_SERIAL_INTERRUPT
 com*	at vrip? addr 0x0c000000 size 0x20 intr 9
 vrgiu*	at vrip? addr 0x0b000100 size 0x20 intr 8
 vrpmu*	at vrip? addr 0x0b0000a0 size 0x20 intr 1 # power switch
@@ -141,7 +141,7 @@ vrisab1 at vrgiu? platform EVEREX_FREESTYLE isaportoffset 0x1000000
 isa1	at vrisab1
 pcic0	at isa1 port 0x3e0 iomem 0x70000 iosiz 0x4000 irq 0x00170003
 
-options PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
+options 	PCIC_ISA_INTR_ALLOC_MASK=0x0008 # IRQ 3 only (MCR/Freestyle)
 #
 # Unknown machines
 #
