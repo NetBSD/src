@@ -1,4 +1,4 @@
-/*	$NetBSD: bzero.S,v 1.2 2001/11/29 00:20:37 mjl Exp $ */
+/*	$NetBSD: bzero.S,v 1.3 2001/11/30 02:25:50 mjl Exp $ */
 
 /*-
  * Copyright (C) 2001	Martin J. Laubach <mjl@netbsd.org>
@@ -326,9 +326,10 @@ sf_bytewise:
 		blr				/* for memset functionality */
 
 /*----------------------------------------------------------------------*/
-
+#ifndef _KERNEL
 		.data
 cache_size:	.long	-1
 cache_sh:	.long	0
 
+#endif
 /*----------------------------------------------------------------------*/
