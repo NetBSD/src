@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.161 1999/10/29 21:30:19 matt Exp $
+$NetBSD: pcidevs,v 1.162 1999/11/01 20:43:12 augustss Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -511,6 +511,7 @@ vendor RISCOM		0x12aa	RISCom
 vendor PICTUREEL	0x12c5	Picture Elements
 vendor NVIDIA_SGS	0x12d2	Nvidia Corporation & SGS Thomson Microelectric
 vendor ADMTEK		0x1317	ADMtek
+vendor FORTEMEDIA	0x1319	Forte Media
 vendor LMC		0x1376	LAN Media Corporation
 vendor NETGEAR		0x1385	Netgear
 vendor SUNDANCETI	0x13f0	Sundance Technology
@@ -884,6 +885,9 @@ product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
 /* FORE products */
 product FORE PCA200	0x0210	ATM PCA-200
 product FORE PCA200E	0x0300	ATM PCA-200e
+
+/* Forte Media products */
+product FORTEMEDIA	FM801	0x0801	Forte Media 801 Sound
 
 /* Fujtsu products */
 product LUCENT LTMODEM		0x0440	K56flex DSVD LTMODEM
