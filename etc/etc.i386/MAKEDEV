@@ -76,7 +76,7 @@ do
 case $i in
 
 all)
-	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0
+	sh MAKEDEV std wt0 fd0 fd1 wd0 wd1 sd0 sd1 sd2 tty0 tty1 pty0 pty1
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 vnd2 vnd3 lpa0 lpa1
 	sh MAKEDEV lpt0 lpt1 lpt2 vga bpf0 bpf1 bpf2 bpf3 speaker lkm
 	sh MAKEDEV mms0 lms0 pms0 audio local
@@ -179,9 +179,6 @@ pty*)
 				    rm -f pty%s%x; mknod pty%s%x c 6 %d; ", \
 				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
 		umask 77
-		if [ $class = 1 ]; then
-			mv ttyqf ttyv0; mv ptyqf ptyv0
-		fi
 		;;
 	esac
 	;;
