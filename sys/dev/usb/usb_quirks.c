@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.42 2003/01/02 04:19:00 imp Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.43 2003/04/17 16:43:44 jdolecek Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.42 2003/01/02 04:19:00 imp Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.43 2003/04/17 16:43:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_TELEX, USB_PRODUCT_TELEX_MIC1,	    0x009, { UQ_AU_NO_FRAC }},
  { USB_VENDOR_SILICONPORTALS, USB_PRODUCT_SILICONPORTALS_YAPPHONE,
    						    0x100, { UQ_AU_INP_ASYNC }},
+ { USB_VENDOR_AVANCELOGIC, USB_PRODUCT_AVANCELOGIC_USBAUDIO,
+   						    0x101, { UQ_AU_INP_ASYNC }},
  { USB_VENDOR_NEODIO, USB_PRODUCT_NEODIO_ND5010,    0x100, { UQ_NO_STRINGS }},
  /* XXX These should have a revision number, but I don't know what they are. */
  { USB_VENDOR_HP, USB_PRODUCT_HP_895C,		    ANY,   { UQ_BROKEN_BIDIR }},
