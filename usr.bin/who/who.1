@@ -1,4 +1,4 @@
-.\"	$NetBSD: who.1,v 1.8 1997/09/09 07:31:15 jtc Exp $
+.\"	$NetBSD: who.1,v 1.9 1997/10/20 03:20:28 lukem Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm who
 .Nd display who is logged in
 .Sh SYNOPSIS
-.Nm who
+.Nm
 .Op Fl mTuH
 .Op Ar file 
-.Nm who
+.Nm ""
 .Ar am i
 .Sh DESCRIPTION
 The 
-.Nm who
+.Nm
 utility displays a list of all users currently logged on, showing for
 each user the login name, tty name, the date and time of login, and
 hostname if not local.
@@ -59,7 +59,7 @@ Available options:
 Only print information about the current terminal.  This is the
 .Tn POSIX
 way of saying
-.Nm who 
+.Nm
 .Ar am i .
 .It Fl T
 Print a character after the user name indicating the state of the
@@ -79,7 +79,7 @@ Write column headings above the regular output.
 Returns the invoker's real user name. 
 .It Ar file
 By default,
-.Nm who
+.Nm
 gathers information from the file
 .Pa /var/run/utmp .
 An alternative
