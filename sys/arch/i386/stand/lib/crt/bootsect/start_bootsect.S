@@ -1,8 +1,9 @@
-/*	$NetBSD: start_bootsect.S,v 1.7 1998/11/11 16:46:38 ws Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.8 1999/01/22 22:43:44 thorpej Exp $	*/
 	
-/* BIOS bootsector startup
- parts from netbsd:sys/arch/i386/boot/start.S
- and freebsd:sys/i386/boot/biosboot/boot2.S
+/*
+ * BIOS bootsector startup
+ * parts from netbsd:sys/arch/i386/boot/start.S
+ * and freebsd:sys/i386/boot/biosboot/boot2.S
  */
 
 /*
@@ -78,7 +79,7 @@ OLDBSDPART	= 	DOSPTYP_386BSD
 BOOTABLE		=	0x80	# value of dp_flag, means bootable partition
 
 	.text
-_boot1:
+_C_LABEL(boot1):
 ENTRY(start)
 
 	/*
@@ -188,21 +189,21 @@ again1:
 
 found:
 /*
-# First we check for int13 extensions.
-# If they work, let's use them.
-# If not, revert to the traditional way of doing things.
-*/
+ * First we check for int13 extensions.
+ * If they work, let's use them.
+ * If not, revert to the traditional way of doing things.
+ */
 
 /*
-# BIOS call "INT 0x13 Function 0x41" to check for int13 extensions.
-#	Call with	%ah = 0x41
-#			%bx = 0x55aa
-#			%dl = drive (0x80 for hard disk)
-#	Return:
-#			%cf = clear on success, set on error
-#			%bx = 0xaa55
-#			%cx = API subset bitmap, &1 -> extended disk access
-*/
+ * BIOS call "INT 0x13 Function 0x41" to check for int13 extensions.
+ *	Call with	%ah = 0x41
+ *			%bx = 0x55aa
+ *			%dl = drive (0x80 for hard disk)
+ *	Return:
+ *			%cf = clear on success, set on error
+ *			%bx = 0xaa55
+ *			%cx = API subset bitmap, &1 -> extended disk access
+ */
 	pushl	%ebx		/* save partition entry */
 	pushl	%edx		/* save drive number */
 	movb	$0x41, %ah
@@ -223,16 +224,16 @@ found:
 	jz	tradint13
 
 /*
-# BIOS call "INT 0x13 Function 0x42", extended read
-#	Call with	%ah = 0x42
-#			%dl = drive (0x80 for hard disk)
-#			%ds:%si = parameter:
-#				0: 0x10 (size of packet)
-#				1: 0
-#				2: number of sectors
-#				4: segment:offset of buffer
-#				8: block number (8 bytes)
-*/
+ * BIOS call "INT 0x13 Function 0x42", extended read
+ *	Call with	%ah = 0x42
+ *			%dl = drive (0x80 for hard disk)
+ *			%ds:%si = parameter:
+ *				0: 0x10 (size of packet)
+ *				1: 0
+ *				2: number of sectors
+ *				4: segment:offset of buffer
+ *				8: block number (8 bytes)
+ */
 	pushl	%ss
 	popl	%ds
 	data32
@@ -260,17 +261,17 @@ found:
 	jmp	to_boot2
 
 /*
-# BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
-#       Call with       %ah = 0x2
-#                       %al = number of sectors
-#                       %ch = cylinder
-#                       %cl = sector
-#                       %dh = head
-#                       %dl = drive (0x80 for hard disk, 0x0 for floppy disk)
-#                       %es:%bx = segment:offset of buffer
-#       Return:
-#                       %al = 0x0 on success; err code on failure
-*/
+ * BIOS call "INT 0x13 Function 0x2" to read sectors from disk into memory
+ *	Call with       %ah = 0x2
+ *			%al = number of sectors
+ *			%ch = cylinder
+ *			%cl = sector
+ *			%dh = head
+ *			%dl = drive (0x80 for hard disk, 0x0 for floppy disk)
+ *			%es:%bx = segment:offset of buffer
+ *	Return:
+ *			%al = 0x0 on success; err code on failure
+ */
 tradint13:
 
 	addr32
@@ -294,10 +295,9 @@ to_boot2:
 	data32
 	ljmp	$BOOTSEG, $_C_LABEL(boot2)
 
-#
-#	read_error
-#
-
+/*
+ * read_error
+ */
 read_error:
 	data32
 	movl	$eread, %esi
@@ -307,18 +307,17 @@ err_stop:
 	cli
 	hlt
 
-#
-#	message: write the error message in %ds:%esi to console
-#
-
+/*
+ * message: write the error message in %ds:%esi to the console
+ */
 message:
 /*
-# BIOS call "INT 10H Function 0Eh" to write character to console
-#	Call with	%ah = 0x0e
-#			%al = character
-#			%bh = page
-#			%bl = foreground color
-*/
+ * BIOS call "INT 10H Function 0Eh" to write character to console
+ *	Call with	%ah = 0x0e
+ *			%al = character
+ *			%bh = page
+ *			%bl = foreground color
+ */
 	data32
 	pushl	%eax
 	data32
@@ -369,8 +368,8 @@ enoboot: .asciz		"No bootable partition\r\n"
 	. = _C_LABEL(boot1) + 0x1fe
 	.short	SIGNATURE
 	. = _C_LABEL(boot1) + 0x200
-	.globl	_disklabel
-_disklabel:
+	.globl	_C_LABEL(disklabel)
+_C_LABEL(disklabel):
 	. = _C_LABEL(boot1) + 0x400
 
 ENTRY(ourseg)
@@ -422,7 +421,7 @@ gdtarg:
 	.word	gdtlen-1		/* limit */
 	.long	0			/* addr, will be inserted */
 
-_boot2:
+_C_LABEL(boot2):
 	data32
 	xorl	%eax, %eax
 	movl	%cs, %ax
