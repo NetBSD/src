@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.13 2002/03/31 22:22:48 christos Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.14 2002/11/27 14:36:12 tron Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.13 2002/03/31 22:22:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.14 2002/11/27 14:36:12 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,7 @@ osf1_cvt_sigaction_from_native(bsa, osa)
 	struct osf1_sigaction *osa;
 {
 
-	osa->sa_handler = bsa->sa_handler;
+	osa->sa_osf1_handler = bsa->sa_handler;
 	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->sa_mask);
 
         /* translate flags */
@@ -537,7 +537,7 @@ osf1_cvt_sigaction_to_native(osa, bsa)
 	struct sigaction *bsa;
 {
 
-	bsa->sa_handler = osa->sa_handler;
+	bsa->sa_handler = osa->sa_osf1_handler;
 	osf1_cvt_sigset_to_native(&osa->sa_mask, &bsa->sa_mask);
 
         /* translate flags */
