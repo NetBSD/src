@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.31 1998/12/15 16:06:15 christos Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.32 1998/12/17 22:26:02 kleink Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -614,13 +614,15 @@ svr4_trap(type, p)
 		break;
 
 	case T_SVR4_GETHRESTIME:
+		/*
+		 * This is used by gettimeofday(3), among other things.
+		 */
 		{
-			/* I assume this is like gettimeofday(3) */
 			struct timeval  tv;
 
 			microtime(&tv);
 			tf->tf_out[0] = tv.tv_sec;
-			tf->tf_out[1] = tv.tv_usec;
+			tf->tf_out[1] = tv.tv_usec * 1000;
 		}
 		break;
 
