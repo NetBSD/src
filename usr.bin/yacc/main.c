@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.3 1993/08/02 17:56:41 mycroft Exp $";
+static char rcsid[] = "$Id: main.c,v 1.4 1993/12/07 17:46:56 mycroft Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -75,6 +75,7 @@ int k;
 }
 
 
+void
 onintr()
 {
     done(1);
