@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $	*/
+/*	$NetBSD: main.c,v 1.4 1997/10/11 01:16:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,29 +33,30 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/03/23 08:32:50 cgd Exp $";
+__RCSID("$NetBSD: main.c,v 1.4 1997/10/11 01:16:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * This game written by Ken Arnold.
  */
-main()
+int
+main(argc, argv)
+	int argc;
+	char *argv[];
 {
-	void die();
-
 	initscr();
 	signal(SIGINT, die);
 	setup();
@@ -66,13 +67,13 @@ main()
 	}
 	/* NOTREACHED */
 }
-
 /*
  * die:
  *	Die properly.
  */
 void
-die()
+die(dummy)
+	int dummy;
 {
 	mvcur(0, COLS - 1, LINES - 1, 0);
 	endwin();

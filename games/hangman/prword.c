@@ -1,4 +1,4 @@
-/*	$NetBSD: prword.c,v 1.3 1995/03/23 08:32:58 cgd Exp $	*/
+/*	$NetBSD: prword.c,v 1.4 1997/10/11 01:16:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1993
@@ -33,20 +33,22 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)prword.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: prword.c,v 1.3 1995/03/23 08:32:58 cgd Exp $";
+__RCSID("$NetBSD: prword.c,v 1.4 1997/10/11 01:16:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
-# include	"hangman.h"
+#include	"hangman.h"
 
 /*
  * prword:
  *	Print out the current state of the word
  */
+void
 prword()
 {
 	move(KNOWNY, KNOWNX + sizeof "Word: ");

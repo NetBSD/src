@@ -1,4 +1,4 @@
-/*	$NetBSD: getguess.c,v 1.6 1997/05/23 23:27:40 jtc Exp $	*/
+/*	$NetBSD: getguess.c,v 1.7 1997/10/11 01:16:29 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)getguess.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: getguess.c,v 1.6 1997/05/23 23:27:40 jtc Exp $";
+__RCSID("$NetBSD: getguess.c,v 1.7 1997/10/11 01:16:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,11 +49,12 @@ static char rcsid[] = "$NetBSD: getguess.c,v 1.6 1997/05/23 23:27:40 jtc Exp $";
  * getguess:
  *	Get another guess
  */
+void
 getguess()
 {
-	register int	i;
-	register int	ch;
-	register bool	correct;
+	int i;
+	int ch;
+	bool correct;
 
 	leaveok(stdscr, FALSE);
 	for (;;) {
@@ -63,15 +65,16 @@ getguess()
 			if (isupper(ch))
 				ch = tolower(ch);
 			if (Guessed[ch - 'a'])
-				mvprintw(MESGY, MESGX, "Already guessed '%c'", ch);
+				mvprintw(MESGY, MESGX, "Already guessed '%c'",
+				    ch);
 			else
 				break;
-		}
-		else if (ch == CTRL('D'))
-			die();
-		else
-			mvprintw(MESGY, MESGX, "Not a valid guess: '%s'",
-				unctrl(ch));
+		} else
+			if (ch == CTRL('D'))
+				die(0);
+			else
+				mvprintw(MESGY, MESGX,
+				    "Not a valid guess: '%s'", unctrl(ch));
 	}
 	leaveok(stdscr, TRUE);
 	move(MESGY, MESGX);
@@ -87,27 +90,25 @@ getguess()
 	if (!correct)
 		Errors++;
 }
-
 /*
  * readch;
  *	Read a character from the input
  */
+int
 readch()
 {
-	register int	cnt, r;
-	auto char	ch;
+	int cnt;
+	char ch;
 
 	cnt = 0;
 	for (;;) {
-		if (read(0, &ch, sizeof ch) <= 0)
-		{
+		if (read(0, &ch, sizeof ch) <= 0) {
 			if (++cnt > 100)
-				die();
-		}
-		else if (ch == CTRL('L')) {
-			wrefresh(curscr);
-		}
-		else
-			return ch;
+				die(0);
+		} else
+			if (ch == CTRL('L')) {
+				wrefresh(curscr);
+			} else
+				return ch;
 	}
 }
