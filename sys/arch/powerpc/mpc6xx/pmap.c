@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.2 2001/06/08 00:16:25 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.3 2001/06/10 07:56:36 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -54,7 +54,13 @@
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
+#if __NetBSD_Version__ > 105010000
 #include <powerpc/mpc6xx/bat.h>
+#else
+#include <powerpc/bat.h>
+#endif
+
+#define	PMAPCHECK
 
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	STATIC
@@ -149,7 +155,12 @@ int pmapcheck = 1;
 #else
 int pmapcheck = 0;
 #endif
+void pmap_pvo_verify(void);
 void pte_print(volatile pte_t *pt);
+void pteg_check(void);
+void pteg_dist(void);
+void print_pte(pmap_t, vaddr_t);
+void print_mmuregs(void);
 STATIC void pmap_pvo_check(const struct pvo_entry *);
 #define	PMAP_PVO_CHECK(pvo)	 		\
 	do {					\
@@ -212,9 +223,12 @@ tlbia(void)
 	
 	SYNC();
 	/* why not use "tlbia"? */
-	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000)
+	for (i = 0; i < (caddr_t)0x00040000; i += 0x00001000) {
 		TLBIE(i);
+		EIEIO();
+	}
 	TLBSYNC();
+	SYNC();
 }
 
 static __inline int
@@ -384,7 +398,9 @@ pte_clear(volatile pte_t *pt, int ptebit)
 {
 	pt->pte_lo &= ~ptebit;
 	TLBIE(pt);
+	EIEIO();
 	TLBSYNC();
+	SYNC();
 }
 
 static __inline void
@@ -442,7 +458,9 @@ pte_unset(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
 	pt->pte_hi &= ~PTE_VALID;
 	SYNC();
 	TLBIE(va);
+	EIEIO();
 	TLBSYNC();
+	SYNC();
 	/*
 	 * Save the ref & chg bits ...
 	 */
@@ -936,6 +954,11 @@ pmap_pvo_find_va(pmap_t pm, vaddr_t va, int *pteidx_p)
 	ptegidx = va_to_pteg(sr, va);
 
 	LIST_FOREACH(pvo, &pvo_table[ptegidx], pvo_olink) {
+#ifdef DIAGNOSTIC
+		if ((uintptr_t) pvo >= SEGMENT_LENGTH)
+			panic("pmap_pvo_find_va: invalid pvo %p on list %#x",
+			    pvo, ptegidx);
+#endif
 		if (pvo->pvo_pmap == pm && pvo->pvo_vaddr == va) {
 			if (pteidx_p)
 				*pteidx_p = pmap_pvo_pte_index(pvo, ptegidx);
@@ -1019,6 +1042,29 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	volatile pte_t *pt;
 	int failed = 0;
 
+	if ((uintptr_t)(pvo+1) >= SEGMENT_LENGTH)
+		panic("pmap_pvo_check: pvo %p: invalid address", pvo);
+
+	if ((uintptr_t)(pvo->pvo_pmap+1) >= SEGMENT_LENGTH) {
+		printf("pmap_pvo_check: pvo %p: invalid pmap address %p\n",
+		    pvo, pvo->pvo_pmap);
+		failed = 1;
+	}
+
+	if ((uintptr_t)pvo->pvo_olink.le_next >= SEGMENT_LENGTH ||
+	    (((uintptr_t)pvo->pvo_olink.le_next) & 0x1f) != 0) {
+		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
+		    pvo, pvo->pvo_olink.le_next);
+		failed = 1;
+	}
+
+	if ((uintptr_t)pvo->pvo_vlink.le_next >= SEGMENT_LENGTH ||
+	    (((uintptr_t)pvo->pvo_vlink.le_next) & 0x1f) != 0) {
+		printf("pmap_pvo_check: pvo %p: invalid ovlink address %p\n",
+		    pvo, pvo->pvo_vlink.le_next);
+		failed = 1;
+	}
+
 	if (pvo->pvo_pte.pte_lo & PTE_M) {
 		pvo_head = pa_to_pvoh(pvo->pvo_pte.pte_lo & PTE_RPGN);
 	} else {
@@ -1040,7 +1086,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 	}
 	if (pvo != pmap_pvo_find_va(pvo->pvo_pmap, pvo->pvo_vaddr, NULL)) {
 		printf("pmap_pvo_check: pvo %p: not present "
-		    "on its olist head %p\n", pvo);
+		    "on its olist head\n", pvo);
 		failed = 1;
 	}
 	pt = pmap_pvo_to_pte(pvo, -1);
@@ -1069,8 +1115,8 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			failed = 1;
 		}
 		if (pte_to_va(pt) != pvo->pvo_vaddr) {
-			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#x"
-			    " doesn't not match PVO's VA %#x\n",
+			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#lx"
+			    " doesn't not match PVO's VA %#lx\n",
 			    pvo, pt, pte_to_va(pt), pvo->pvo_vaddr);
 			failed = 1;
 		}
@@ -1356,9 +1402,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
-#if 0
-	printf("pmap_kenter_pa(%#x,%#x)\n", va, len);
-#endif
+	if (va < VM_MIN_KERNEL_ADDRESS)
+		panic("pmap_kremove: attempt to remove "
+		    "non-kernel address %#lx!", va);
+
+	DPRINTFN(5,("pmap_kremove(%#lx,%#lx)\n", va, len));
 	pmap_remove(pmap_kernel(), va, va + len);
 }
 
@@ -1483,15 +1531,18 @@ void
 pmap_unwire(pmap_t pm, vaddr_t va)
 {
 	struct pvo_entry *pvo;
-	pvo = pmap_pvo_find_va(pm, va, NULL);
-	if (pvo == NULL)
-		return;
+	int s;
 
-	if (pvo->pvo_pte.pte_lo & PTE_WIRED) {
-		pvo->pvo_pte.pte_lo &= ~PTE_WIRED;
-		pm->pm_stats.wired_count--;
+	s = splvm();
+	pvo = pmap_pvo_find_va(pm, va, NULL);
+	if (pvo != NULL) {
+		if (pvo->pvo_pte.pte_lo & PTE_WIRED) {
+			pvo->pvo_pte.pte_lo &= ~PTE_WIRED;
+			pm->pm_stats.wired_count--;
+		}
+		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
-	PMAP_PVO_CHECK(pvo);		/* sanity check */
+	splx(s);
 }
 
 /*
@@ -1608,9 +1659,11 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 {
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
+	int s;
 
 	if (pmap_attr_fetch(pg) & ptebit)
 		return TRUE;
+	s = splvm();
 	LIST_FOREACH(pvo, vm_page_to_pvoh(pg), pvo_vlink) {
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 		/*
@@ -1620,6 +1673,7 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 		if (pvo->pvo_pte.pte_lo & ptebit) {
 			pmap_attr_save(pg, ptebit);
 			PMAP_PVO_CHECK(pvo);		/* sanity check */
+			splx(s);
 			return TRUE;
 		}
 	}
@@ -1642,10 +1696,12 @@ pmap_query_bit(struct vm_page *pg, int ptebit)
 			if (pvo->pvo_pte.pte_lo & ptebit) {
 				pmap_attr_save(pg, ptebit);
 				PMAP_PVO_CHECK(pvo);		/* sanity check */
+				splx(s);
 				return TRUE;
 			}
 		}
 	}
+	splx(s);
 	return FALSE;
 }
 
@@ -1655,7 +1711,9 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 	struct pvo_entry *pvo;
 	volatile pte_t *pt;
 	int rv = 0;
+	int s;
 
+	s = splvm();
 	/*
 	 * Clear the cached value.
 	 */
@@ -1686,6 +1744,7 @@ pmap_clear_bit(struct vm_page *pg, int ptebit)
 		pvo->pvo_pte.pte_lo &= ~ptebit;
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
+	splx(s);
 	return (rv & ptebit) != 0;
 }
 
@@ -1782,7 +1841,7 @@ pte_print(volatile pte_t *pt)
 	printf("0x%06x 0x%02X",
 	    (pt->pte_hi &~ PTE_VALID)>>PTE_VSID_SHFT,
 	    pt->pte_hi & PTE_API);
-	printf(" (va 0x%1x%04x000)] ", pte_to_va(pt));
+	printf(" (va 0x%08lx)] ", pte_to_va(pt));
 	/* Low word: */
 	printf(" 0x%08x: [", pt->pte_lo);
 	printf("0x%05x... ", pt->pte_lo >> 12);
@@ -1927,7 +1986,7 @@ print_pte(pmap_t pm, vaddr_t va)
 	if (pvo != NULL) {
 		pt = pmap_pvo_to_pte(pvo, pteidx);
 		if (pt != NULL) {
-			printf("VA %#x -> %p -> %s %#x, %#x\n",
+			printf("VA %#lx -> %p -> %s %#x, %#x\n",
 				va, pt,
 				pt->pte_hi & PTE_HID ? "(sec)" : "(pri)",
 				pt->pte_hi, pt->pte_lo);
@@ -1972,8 +2031,29 @@ pteg_dist(void)
 		printf("\n");
 	printf("Max depth found was %d\n", max_depth);
 }
-
 #endif /* DEBUG */
+
+#ifdef PMAPCHECK
+void
+pmap_pvo_verify(void)
+{
+	int ptegidx;
+	int s;
+
+	s = splvm();
+	for (ptegidx = 0; ptegidx < pteg_cnt; ptegidx++) {
+		struct pvo_entry *pvo;
+		LIST_FOREACH(pvo, &pvo_table[ptegidx], pvo_olink) {
+			if ((uintptr_t) pvo >= SEGMENT_LENGTH)
+				panic("pmap_pvo_find_va: invalid pvo %p "
+				    "on list %#x", pvo, ptegidx);
+			pmap_pvo_check(pvo);
+		}
+	}
+	splx(s);
+}
+#endif /* PMAPCHECK */
+
 
 void *
 pmap_pool_ualloc(unsigned long size, int flags, int tag)
