@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.25 2000/08/02 19:24:29 thorpej Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.26 2000/08/03 00:47:02 thorpej Exp $	*/
 
 /*
  *
@@ -259,12 +259,12 @@ amap_free(amap)
 		panic("amap_free");
 #endif
 
-	FREE(amap->am_slots, M_UVMAMAP);
-	FREE(amap->am_bckptr, M_UVMAMAP);
-	FREE(amap->am_anon, M_UVMAMAP);
+	free(amap->am_slots, M_UVMAMAP);
+	free(amap->am_bckptr, M_UVMAMAP);
+	free(amap->am_anon, M_UVMAMAP);
 #ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
-		FREE(amap->am_ppref, M_UVMAMAP);
+		free(amap->am_ppref, M_UVMAMAP);
 #endif
 	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
@@ -368,19 +368,18 @@ amap_extend(entry, addsize)
 #ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
-		MALLOC(newppref, int *, slotneed * sizeof(int), M_UVMAMAP,
-		    M_NOWAIT);
+		newppref = malloc(slotneed * sizeof(int), M_UVMAMAP, M_NOWAIT);
 		if (newppref == NULL) {
 			/* give up if malloc fails */
-			FREE(amap->am_ppref, M_UVMAMAP);
-			    amap->am_ppref = PPREF_NONE;
+			free(amap->am_ppref, M_UVMAMAP);
+			amap->am_ppref = PPREF_NONE;
 		}
 	}
 #endif
-	MALLOC(newsl, int *, slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	MALLOC(newbck, int *, slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
-	MALLOC(newover, struct vm_anon **, slotneed * sizeof(struct vm_anon *),
-						   M_UVMAMAP, M_WAITOK);
+	newsl = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newbck = malloc(slotneed * sizeof(int), M_UVMAMAP, M_WAITOK);
+	newover = malloc(slotneed * sizeof(struct vm_anon *),
+	    M_UVMAMAP, M_WAITOK);
 	amap_lock(amap);			/* re-lock! */
 
 #ifdef DIAGNOSTIC
@@ -434,12 +433,12 @@ amap_extend(entry, addsize)
 	amap_unlock(amap);
 
 	/* and free */
-	FREE(oldsl, M_UVMAMAP);
-	FREE(oldbck, M_UVMAMAP);
-	FREE(oldover, M_UVMAMAP);
+	free(oldsl, M_UVMAMAP);
+	free(oldbck, M_UVMAMAP);
+	free(oldover, M_UVMAMAP);
 #ifdef UVM_AMAP_PPREF
 	if (oldppref && oldppref != PPREF_NONE)
-		FREE(oldppref, M_UVMAMAP);
+		free(oldppref, M_UVMAMAP);
 #endif
 	UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%x, slotneed=%d", 
 	    amap, slotneed, 0, 0);
@@ -901,7 +900,7 @@ amap_pp_establish(amap)
 	struct vm_amap *amap;
 {
 
-	MALLOC(amap->am_ppref, int *, sizeof(int) * amap->am_maxslot,
+	amap->am_ppref = malloc(sizeof(int) * amap->am_maxslot,
 	    M_UVMAMAP, M_NOWAIT);
 
 	/*
