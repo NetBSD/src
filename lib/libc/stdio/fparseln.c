@@ -1,4 +1,4 @@
-/*	$NetBSD: fparseln.c,v 1.11 2002/01/21 23:33:36 lukem Exp $	*/
+/*	$NetBSD: fparseln.c,v 1.1 2002/11/30 03:04:45 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,21 +29,22 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if HAVE_CONFIG_H
-#include "config.h"
-#else
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fparseln.c,v 1.11 2002/01/21 23:33:36 lukem Exp $");
-#endif
+__RCSID("$NetBSD: fparseln.c,v 1.1 2002/11/30 03:04:45 lukem Exp $");
+#endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <util.h>
-#endif	/* ! HAVE_CONFIG_H */
+
+#ifdef __weak_alias
+__weak_alias(fparseln,_fparseln)
+#endif
 
 #if ! HAVE_FPARSELN
 

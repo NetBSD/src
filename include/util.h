@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.27 2002/10/12 20:46:57 elric Exp $	*/
+/*	$NetBSD: util.h,v 1.28 2002/11/30 03:04:45 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -48,12 +48,6 @@
 #define	PIDLOCK_NONBLOCK	1
 #define	PIDLOCK_USEHOSTNAME	2
 
-#define	FPARSELN_UNESCESC	0x01
-#define	FPARSELN_UNESCCONT	0x02
-#define	FPARSELN_UNESCCOMM	0x04
-#define	FPARSELN_UNESCREST	0x08
-#define	FPARSELN_UNESCALL	0x0f
-
 #define	HN_DECIMAL		0x01
 #define	HN_NOSPACE		0x02
 #define	HN_B			0x04
@@ -71,7 +65,6 @@ struct utmp;
 struct winsize;
 
 pid_t		forkpty(int *, char *, struct termios *, struct winsize *);
-char	       *fparseln(FILE *, size_t *, size_t *, const char[3], int);
 const char     *getbootfile(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
