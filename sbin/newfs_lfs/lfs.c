@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.3.2.1 1999/06/25 21:02:26 perry Exp $	*/
+/*	$NetBSD: lfs.c,v 1.3.2.2 1999/09/05 14:57:34 he Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.3.2.1 1999/06/25 21:02:26 perry Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.3.2.2 1999/09/05 14:57:34 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -290,6 +290,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_nclean = lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
 
+	if(lfsp->lfs_nseg < MIN_FREE_SEGS + 1)
+		fatal("Could not allocate %d segments; please decrease the segment size\n", MIN_FREE_SEGS+1);
+
 	/* 
 	 * The number of free blocks is set from the number of segments times
 	 * the segment size - MIN_FREE_SEGS (that we never write because we need to make
@@ -324,6 +327,12 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 			break;
 		lfsp->lfs_sboffs[i] = sb_addr;
 	}
+
+	/* We need >= 2 superblocks */
+	if(lfsp->lfs_sboffs[1] == 0x0) {
+		fatal("Could not assign a disk adress for the second superblock.\nPlease decrease the segment size.\n");
+	}
+
 	last_sb_addr = lfsp->lfs_sboffs[i - 1];
 	lfsp->lfs_lastseg = lfsp->lfs_sboffs[0];
 	lfsp->lfs_nextseg = 
