@@ -1,0 +1,119 @@
+.\" $NetBSD: wsmoused.8,v 1.1 2002/06/26 23:13:09 christos Exp $
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julio Merino.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"/
+.Dd June 26, 2002
+.Dt WSMOUSED 8
+.Os
+.Sh NAME
+.Nm wsmoused
+.Nd mouse console daemon
+.Sh SYNOPSIS
+.Nm
+.Op Fl n
+.Op Fl f Ar fifo
+.Op Fl d Ar device
+.Op Fl X Ar number
+.Sh DESCRIPTION
+The
+.Nm
+daemon provides mouse support in console, allowing copying and pasting
+text. The left mouse button is used to select text when hold and you
+use the right button to paste it in the active console.
+.Pp
+Supported options are as follows:
+.Bl -tag -width Ds
+.It Fl n
+do not fork in the background (for debugging purposes).
+.It Fl f Ar fifo
+is used to specify an optional fifo where to redirect all mouse events
+(even if they have been processed). By default, no fifo is used.
+.It Fl d Ar device
+specifies which driver to use as the mouse device. It defaults to
+.Pa /dev/wsmouse .
+.It Fl X Ar number
+tells
+.Nm
+which virtual console holds the X server (if any). The argument
+specifies the console number (the same found in 
+.Pa /dev/ttyE? ,
+where the ? apperes).
+.Nm
+will stop processing events when entering this console and will
+continue its job when you return to any other terminal.
+.El
+.Sh FILES
+.Bl -tag -width /dev/wsmouse0
+.It Pa /dev/ttyE*
+tty devices
+.It Pa /dev/wsmouse0
+mouse control device
+.It Pa /dev/wsdisplay
+wsdisplay status notification device
+.El
+.Sh EXAMPLES
+The following are just a few examples of
+.Nm
+and its functionality.
+.Pp
+.Dl wsmoused -X 4
+.Pp
+Starts the mouse dameon, telling it that ttyE4 holds a X server.
+.Pp
+.Dl wsmoused -d /dev/wsmouse1 -f /tmp/mousefifo
+.Pp
+Uses
+.Pa /dev/wsmouse1
+device as the mouse and
+.Pa /tmp/mousefifo
+as the fifo where all mouse data is redirected.
+.Sh SECURITY CONSIDERATIONS
+Be ABSOLUTELY sure that
+.Pa /dev/ttyE*
+devices have restrictive permissions as the mouse uses some functions
+that could allow terminal snooping if improperly set.
+.Sh NOTES
+The mouse cursor is only visible for a few time. It will disappear
+when you stop moving it to avoid console corruption if there is any
+output while it is visible.
+.Pp
+You need WSDISPLAY_CHARFUNCS in your kernel configuration file in
+order to get mouse console support.
+.Pp
+When you return from the X screen to another terminal there is a small
+time delay until the mouse works again. The delay is needed to allow X
+to close the mouse device properly.
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsdisplay 4 ,
+.Xr wsmouse 4
+.Sh HISTORY
+The
+.Nm
+command first appeared in
+.Nx 1.7 .
