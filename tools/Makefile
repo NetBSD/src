@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/13 06:11:06 jmc Exp $
+#	$NetBSD: Makefile,v 1.8 2001/10/20 06:05:00 jmc Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@
 SUBDIR=		binstall .WAIT gencat mkdep mtree rpcgen tsort \
 		yacc .WAIT lex .WAIT \
 		compile_et config lint lint1 lint2 lorder \
-		toolchain .WAIT texinfo crunchgen msgc menuc
+		toolchain .WAIT texinfo crunchgen msgc menuc mklocale
 
 TARGETS+=	build
 
