@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.9 2003/12/23 04:59:44 uwe Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.10 2004/03/16 22:30:36 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -172,6 +172,7 @@ ElfLoader::symbol_block_size()
 		    TEXT("Can't determine symbol block size."),
 		    TEXT("WARNING"),
 		    MB_ICONWARNING | MB_OK);
+		UpdateWindow(HPC_MENU._root->_window);
 		return (0);
 	}
 
@@ -205,11 +206,13 @@ ElfLoader::symbol_block_size()
 	}
 
 	if (_sym_blk.shstr == NULL || _sym_blk.shsym == NULL) {
-		if (HPC_PREFERENCE.safety_message)
+		if (HPC_PREFERENCE.safety_message) {
 			MessageBox(HPC_MENU._root->_window,
 			    TEXT("No symbol and/or string table in binary.\n(not fatal)"),
 			    TEXT("Information"),
 			    MB_ICONINFORMATION | MB_OK);
+			UpdateWindow(HPC_MENU._root->_window);
+		}
 		free(_sym_blk.header);
 		_sym_blk.header = NULL;
 
