@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_port.h,v 1.8 2002/12/17 18:42:57 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.9 2002/12/17 22:48:33 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -216,18 +216,18 @@ int mach_right_check(struct mach_right *, struct proc *, int);
 
 /* In-kernel Mach port description */
 struct mach_port {
-	struct proc *mp_recv;	/* Receiving process (holding recv. right) */
-	int mp_count;		/* Count of queued messages */			
-	TAILQ_HEAD(mp_msglist,	/* Queue of messages pending delivery */
+	struct mach_right *mp_recv;	/* The receive right on this port */
+	int mp_count;			/* Count of queued messages */
+	TAILQ_HEAD(mp_msglist,		/* Queue pending messages */
 	    mach_message) mp_msglist;
-	struct lock mp_msglock;	/* Lock for the queue */
-	int mp_refcount;	/* Reference count (amount of rights) */
+	struct lock mp_msglock;		/* Lock for the queue */
+	int mp_refcount;		/* Reference count */
 };
 
 extern struct lock mach_right_list_lock;
 
 void mach_port_init(void);
-struct mach_port *mach_port_get(struct proc *);       
+struct mach_port *mach_port_get(void);
 void mach_port_put(struct mach_port *);
 void mach_remove_recvport(struct mach_port *);
 void mach_add_recvport(struct mach_port *, struct proc *);
