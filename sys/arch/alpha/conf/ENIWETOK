@@ -1,13 +1,11 @@
-# $NetBSD: ENIWETOK,v 1.11 1999/07/29 10:37:12 augustss Exp $
-# From: GENERIC,v 1.108 1999/01/06 23:42:27 thorpej Exp
+# $NetBSD: ENIWETOK,v 1.12 1999/11/07 01:04:59 mycroft Exp $
+# From: GENERIC,v 1.127 1999/08/16 22:27:13 augustss Exp
 #
 # Mycroft's AS200.
 
 include	"arch/alpha/conf/std.alpha"
 
 maxusers 32
-
-#makeoptions	DEBUG="-g"
 
 # CPU Support
 #options 	DEC_2000_300	# "Jensen":	2000/300 (DECpc AXP 150)
@@ -25,6 +23,7 @@ options 	DEC_2100_A50	# Avanti etc:	AlphaStation 400, 200, etc.
 #options 	DEC_1000A	# Corelle etc:	Digital AlphaServer 800/1000A
 #options 	DEC_ALPHABOOK1	# AlphaBook1:	Tadpole/DEC AlphaBook
 #options 	DEC_EB66	# EB66:		21066 Evaluation Board
+#options 	DEC_6600	# EV6:		264DP OEM Board
 
 # Standard system options
 options 	KTRACE			# System call tracing support
@@ -40,9 +39,12 @@ file-system	FFS		# Fast file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NFS		# Sun NFS-compatible file system client
+#file-system	NTFS		# Windows/NT file system (experimental)
+#file-system	KERNFS
+#file-system	PROCFS
 
 # File system options
-#options 	NFSSERVER	# Sun NFS-compatible file system server
+options 	NFSSERVER	# Sun NFS-compatible file system server
 #options 	FFS_EI		# FFS Endian Independant support
 
 # Networking options
@@ -59,6 +61,9 @@ options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
 
+# OSF/1 binary compatibility
+options 	COMPAT_OSF1
+  
 # System V-like message queues
 options 	SYSVMSG
 
@@ -88,8 +93,8 @@ options 	UCONSOLE		# users can use TIOCCONS (for xconsole)
 # in case we have NFS root.
 options 	NFS_BOOT_DHCP		# superset of BOOTP
 
-# WS console uses SUN terminal emulation
-options 	WSEMUL_SUN
+# WS console uses SUN or VT100 terminal emulation
+options 	WSEMUL_VT100
 
 # realtime clock compatible to OSF/1
 #options 	CLOCK_COMPAT_OSF1
@@ -116,6 +121,10 @@ cpu*	at	mainbus0
 
 #i2c	at	mcbus?
 
+#EV6 Tsunami Core Logic
+
+#tsc*	at	mainbus0
+
 # TurboChannel host bus adapter support
 #tcasic*	at	mainbus0
 
@@ -141,6 +150,7 @@ apecs*	at	mainbus?
 #lca*	at	mainbus?
 #dwlpx*	at	kft?
 #mcpcia*	at	mcbus? mid ?
+#tsp*	at	tsc?
 
 # PCI bus support
 pci*	at	apecs?
@@ -149,6 +159,7 @@ pci*	at	apecs?
 #pci*	at	ppb?
 #pci*	at	dwlpx?
 #pci*	at	mcpcia?
+#pci*	at	tsp?
 
 # PCI devices
 #adv*	at	pci? dev ? function ?		# AdvanSys SCSI
@@ -157,36 +168,46 @@ pci*	at	apecs?
 #bha*	at	pci? dev ? function ?		# BusLogic 9xx SCSI (untested)
 #cy*	at	pci? dev ? function ?		# Cyclades Cyclom-Y (untested)
 de*	at	pci? dev ? function ?		# 21x4x-based Ethernet
+eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 #en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 #ep*	at	pci? dev ? function ?		# 3COM 3c59x
 #ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
+#ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
 #fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 #le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
+#ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
+#ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 #pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
+pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 #pcscp*	at	pci? dev ? function ?		# AMD Am53c974 PCscsi-PCI
 #ppb*	at	pci? dev ? function ?		# PCI-PCI Bridges
-#pciide*	at	pci? dev ? function ?		# PCI IDE controllers
 sio*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
+sv*	at	pci? dev ? function ?		# S3 SonicVibes
 tga*	at	pci? dev ? function ?		# DEC ZLXp-E[123] Graphics
 #tl*	at	pci? dev ? function ?		# TI ThunderLAN Ethernet
-vga*	at	pci? dev ? function ?		# PCI VGA Graphics
 #uhci*	at	pci? dev ? function ?		# USB Univ. Host Controller
-#ohci*	at	pci? dev ? function ?		# USB Open Host Controller
-eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
-audio*	at	eap?
-sv*	at	pci? dev ? function ?		# S3 SonicVibes
-audio*	at	sv?
-#opl*	at	sv?
+vga*	at	pci? dev ? function ?		# PCI VGA Graphics
+#vr*	at	pci? dev ? function ?		# VIA Rhine Fast Ethernet
 
+audio*	at	eap?
+audio*	at	sv?
+
+#opl*	at	sv?
+  
 # MII/PHY support
-#inphy*	at	mii? phy ?
-#nsphy*	at	mii? phy ?
-#qsphy*	at	mii? phy ? 
-#tlphy*	at	mii? phy ?
+exphy*	at mii? phy ?			# 3Com internal PHYs
+icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
+inphy*	at mii? phy ?			# Intel 82555 PHYs
+lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+nsphy*	at mii? phy ?			# NS83840 PHYs
+qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
+sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
+tlphy*	at mii? phy ?			# ThunderLAN PHYs
+ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # ISA/EISA bus support
 #isa*	at	pceb?
@@ -196,7 +217,7 @@ isapnp*	at	isa?
 
 # ISA devices
 mcclock* at	isa? port 0x70
-pckbc*	at	isa?				# PC keyboard controller
+pckbc0	at	isa?				# PC keyboard controller
 pckbd*	at	pckbc?				# PC keyboard (kbd port)
 pms*	at	pckbc?				# PS/2-style mouse (aux port)
 pcppi*	at	isa?				# PC prog. periph. interface
@@ -207,6 +228,10 @@ com*	at	isa? port 0x3f8 irq 4		# standard serial ports
 com*	at	isa? port 0x2f8 irq 3
 #cs*	at	isa? port 0x300 iomem ? irq ? drq ? # CS8900 Ethernet
 #ep*	at	isa? port ? irq ?		# 3COM 3c509 Ethernet
+ep*	at	isapnp?
+#ix0	at	isa? port 0x300 irq 10		# EtherExpress/16
+#iy0	at	isa? port 0x360 irq ?		# EtherExpress PRO 10 ISA
+fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 #lc0	at	isa? port 0x300 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #lc1	at	isa? port 0x320 iomem ? irq ?	# DEC EtherWORKS III (LEMAC)
 #depca0	at	isa? port 0x300 iomem 0xd0000 iosiz 0x10000 irq 5 	# DEPCA
@@ -217,19 +242,14 @@ lpt*	at	isa? port 0x3bc irq 7		# standard parallel port
 #wdc0	at	isa? port 0x1f0 irq 14		# ST506/ESDI/IDE controllers
 #wdc1	at	isa? port 0x170 irq 15
 wdc*	at	isapnp?
-fdc0	at	isa? port 0x3f0 irq 6 drq 2	# floppy controller
 wss*	at	isa? port 0x530 irq 9 drq 0	# Windows Sound System
 wss*	at	isapnp?
 audio*	at	wss?
 #midi*	at	wss?
 #sb*	at	isa? port 0x220 irq 5 drq 1	# SoundBlaster
-sb*	at	isapnp?				# SoundBlaster-compatible audio
-audio*	at	sb?
-midi*	at	sb?
-opl*	at	sb?
-midi*	at	opl?
-#mpu*	at	isapnp?
-#midi*	at	mpu?
+#sb*	at	isapnp?
+#audio*	at	sb?
+#adv*	at	isa? port ? irq ? drq ?		# AdvanSys APB-514[02]
 #aha*	at	isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
 #aha*	at	isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI
 #bha*	at	isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI (unt.)
@@ -280,11 +300,11 @@ sd*	at	scsibus? target ? lun ?		# SCSI disk drives
 st*	at	scsibus? target ? lun ?		# SCSI tape drives
 
 # ST506/ESDI/IDE devices
-#wd*	at	pciide? channel ?
+wd*	at	pciide? channel ?
 wd*	at	wdc? drive ?
 
 # ATAPI bus support
-#atapibus* at	pciide? channel ?
+atapibus* at	pciide? channel ?
 atapibus* at	wdc?
 
 # ATAPI devices
@@ -298,36 +318,46 @@ fd*	at	fdc? drive ?
 #usb*	at uhci?
 #usb*	at ohci?
 
-# USB hubs
+# USB Hubs
 #uhub*	at usb?
-#uhub*	at uhub? port ?
+#uhub*	at uhub? port ? configuration ? interface ?
 
-# USB mice
-#ums*	at uhub? port ?
-#wsmouse* at ums?
+# USB Mice
+#ums*	at uhub? port ? configuration ? interface ?
+#wsmouse*	at ums? mux 0
 
 # USB Keyboards
-#ukbd*	at uhub? port ?
-#wskbd*	at ukbd? console ?
+#ukbd*	at uhub? port ? configuration ? interface ?
+#wskbd*	at ukbd? console ? mux 1
 
 # USB Generic HID devices
-#uhid*	at uhub? port ?
+#uhid*	at uhub? port ? configuration ? interface ?
 
-# USB Printers
-#ulpt*	at uhub? port ?
+# USB Printer
+#ulpt*	at uhub? port ? configuration ? interface ?
+
+# USB Modem
+#umodem*	at uhub? port ? configuration ?
+
+# USB Mass Storage
+#umass*	at uhub? port ? configuration ? interface ?
+#scsibus* at umass? channel ?
+
+# USB Generic driver
+#ugen*	at uhub? port ?
 
 # Workstation Console attachments
 #wsdisplay*	at	cfb?
 wsdisplay*	at	vga?
 #wsdisplay*	at	sfb?
 wsdisplay*	at	tga?
-wskbd*		at	pckbd?
-wsmouse*	at	pms?
+wskbd*		at	pckbd? mux 1
+wsmouse*	at	pms? mux 0
 
 pseudo-device	bpfilter	16
 #pseudo-device	ccd		4
 #pseudo-device	raid		4		# RAIDframe disk driver
-#pseudo-device	ipfilter	1
+pseudo-device	ipfilter	1
 pseudo-device	loop		1
 #pseudo-device	md		1
 #pseudo-device	ppp		4
@@ -335,6 +365,7 @@ pseudo-device	pty		64
 #pseudo-device	sl		4
 pseudo-device	vnd		4
 #pseudo-device	gre		2	# generic L3 over IP tunnel
+pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 pseudo-device	sequencer	1	# MIDI sequencer
 
 # rnd is EXPERIMENTAL
