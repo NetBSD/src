@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.21 1998/06/30 04:35:37 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.22 1998/07/23 23:48:33 gwr Exp $	*/
 
 /*
  *
@@ -87,6 +87,18 @@
 #include <sun3/dev/xio.h>
 
 #include "locators.h"
+
+/*
+ * Print a complaint when no xd children were specified
+ * in the config file.  Better than a link error...
+ *
+ * XXX: Some folks say this driver should be split in two,
+ * but that seems pointless with ONLY one type of child.
+ */
+#include "xd.h"
+#if NXD == 0
+#error "xdc but no xd?"
+#endif
 
 /*
  * macros
