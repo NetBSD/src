@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.21 2001/02/19 23:22:46 cgd Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.22 2001/08/17 02:18:49 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.21 2001/02/19 23:22:46 cgd Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.22 2001/08/17 02:18:49 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -311,7 +311,7 @@ chkquota(type, fsname, mntpt, v, pid)
 	if (sblock.fs_magic != FS_MAGIC) {
 		if (sblock.fs_magic== bswap32(FS_MAGIC)) {
 			needswap = 1;
-			ffs_sb_swap(&sblock, &sblock, 0);
+			ffs_sb_swap(&sblock, &sblock);
 		} else
 			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
 				fsname, sblock.fs_magic, FS_MAGIC);

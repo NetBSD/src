@@ -1,4 +1,4 @@
-/*      $NetBSD: ffs_inode.c,v 1.6 2001/08/14 05:44:15 lukem Exp $ */
+/*      $NetBSD: ffs_inode.c,v 1.7 2001/08/17 02:18:47 lukem Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: ffs_inode.c,v 1.6 2001/08/14 05:44:15 lukem Exp $");
+__RCSID("$NetBSD: ffs_inode.c,v 1.7 2001/08/17 02:18:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ fs_read_sblock(char *sblock_buf)
 	rawread(SBOFF, (char *) sblock, SBSIZE);
 	if (sblock->fs_magic != FS_MAGIC) {
 		if (sblock->fs_magic == bswap32(FS_MAGIC)) {
-			ffs_sb_swap(sblock, sblock, 0);
+			ffs_sb_swap(sblock, sblock);
 			needswap = 1;
 		} else
 			quit("bad sblock magic number\n");

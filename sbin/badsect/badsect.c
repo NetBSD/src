@@ -1,4 +1,4 @@
-/*	$NetBSD: badsect.c,v 1.19 2001/02/19 22:56:18 cgd Exp $	*/
+/*	$NetBSD: badsect.c,v 1.20 2001/08/17 02:18:46 lukem Exp $	*/
 
 /*
  * Copyright (c) 1981, 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1981, 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)badsect.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: badsect.c,v 1.19 2001/02/19 22:56:18 cgd Exp $");
+__RCSID("$NetBSD: badsect.c,v 1.20 2001/08/17 02:18:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,7 +158,7 @@ main(argc, argv)
 			errx(1, "%s: bad superblock", name);
 	}
 	if (needswap)
-		ffs_sb_swap(fs, fs, 0);
+		ffs_sb_swap(fs, fs);
 	dev_bsize = fs->fs_fsize / fsbtodb(fs, 1);
 	for (argc -= 2, argv += 2; argc > 0; argc--, argv++) {
 		number = atoi(*argv);

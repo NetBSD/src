@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.13 1998/08/25 19:18:13 ross Exp $	*/
+/*	$NetBSD: clri.c,v 1.14 2001/08/17 02:18:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.13 1998/08/25 19:18:13 ross Exp $");
+__RCSID("$NetBSD: clri.c,v 1.14 2001/08/17 02:18:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ main(argc, argv)
 	(void)fsync(fd);
 
 	if (needswap)
-		ffs_sb_swap(sbp, sbp, 0);
+		ffs_sb_swap(sbp, sbp);
 	bsize = sbp->fs_bsize;
 
 	/* remaining arguments are inode numbers. */

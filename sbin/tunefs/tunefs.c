@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.20 2000/06/15 22:37:17 fvdl Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.21 2001/08/17 02:18:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.20 2000/06/15 22:37:17 fvdl Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.21 2001/08/17 02:18:48 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,7 +296,7 @@ again:
 		err(3, "cannot open %s for writing", special);
 	memcpy(buf, (char *)&sblock, SBSIZE);
 	if (needswap)
-		ffs_sb_swap((struct fs*)buf, (struct fs*)buf, 1);
+		ffs_sb_swap((struct fs*)buf, (struct fs*)buf);
 	bwrite((daddr_t)SBOFF / dev_bsize, buf, SBSIZE);
 	if (Aflag)
 		for (i = 0; i < sblock.fs_ncg; i++)
@@ -338,7 +338,7 @@ getsb(fs, file)
 	if (fs->fs_magic != FS_MAGIC) {
 		if (fs->fs_magic == bswap32(FS_MAGIC)) {
 			needswap = 1;
-			ffs_sb_swap(fs, fs, 0);
+			ffs_sb_swap(fs, fs);
 		} else
 			err(5, "%s: bad magic number", file);
 	}

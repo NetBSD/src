@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.26 2001/01/26 17:37:16 thorpej Exp $	*/
+/*	$NetBSD: pass5.c,v 1.27 2001/08/17 02:18:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.26 2001/01/26 17:37:16 thorpej Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.27 2001/08/17 02:18:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -216,8 +216,7 @@ pass5()
 				memmove(altsblock, asblk.b_un.b_fs,
 				    sblock->fs_sbsize);
 				if (needswap)
-					ffs_sb_swap(asblk.b_un.b_fs, altsblock,
-					    needswap);
+					ffs_sb_swap(asblk.b_un.b_fs, altsblock);
 			}
 			if ((asblk.b_errs || cmpsblks(sblock, altsblock)) &&
 			     dofix(&idesc[3],
