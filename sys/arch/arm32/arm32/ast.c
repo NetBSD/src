@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.4 1996/06/12 19:40:48 mark Exp $ */
+/* $NetBSD: ast.c,v 1.5 1996/08/21 19:04:17 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -66,13 +66,11 @@ userret(p, pc, oticks)
 	if (p == NULL)
 		panic("userret: p=0 curproc=%08x", (u_int)curproc);
     
-	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE) {
-		traceback();
+	if ((GetCPSR() & PSR_MODE) != PSR_SVC32_MODE)
 		panic("userret called in non SVC mode !");
-	}
 
 	if (current_spl_level != SPL_0)
-		printf("WARNING: (1) current spl level=%d\n", current_spl_level);
+		printf("userret: spl level=%d on entry\n", current_spl_level);
 #endif
 
 /* take pending signals */
@@ -122,7 +120,7 @@ userret(p, pc, oticks)
 
 #ifdef DIAGNOSTIC
 	if (current_spl_level != SPL_0)
-		printf("WARNING: (2) current spl level=%d\n", current_spl_level);
+		printf("userret: spl level=%d on exit\n", current_spl_level);
 #endif
 }
 
