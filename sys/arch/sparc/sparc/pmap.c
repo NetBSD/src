@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.173 2000/06/29 07:40:11 mrg Exp $ */
+/*	$NetBSD: pmap.c,v 1.174 2000/09/09 10:24:34 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -202,10 +202,9 @@ struct pvlist {
 
 struct pvlist *pv_table;	/* array of entries, one per physical page */
 
-#define pvhead(pa)	(&pv_table[((pa) - vm_first_phys) >> PGSHIFT])
+#define pvhead(pa)	(&pv_table[(pa) >> PGSHIFT])
 
-static vsize_t pv_table_map __P((paddr_t, int));
-static paddr_t pv_physmem;
+static psize_t pv_table_map __P((paddr_t));
 static struct pool pv_pool;
 
 
@@ -2180,7 +2179,7 @@ pv_link4_4c(pv, pm, va, nc)
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
 					va, npv->pv_va,
-					vm_first_phys + (pv-pv_table)*NBPG);
+					(pv-pv_table)*PAGE_SIZE);
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
@@ -2490,7 +2489,7 @@ pv_link4m(pv, pm, va, nc)
 			"pv_link: badalias: pid %d, 0x%lx<=>0x%lx, pa 0x%lx\n",
 					curproc ? curproc->p_pid : -1,
 					va, npv->pv_va,
-					vm_first_phys + (pv-pv_table)*NBPG);
+					(pv-pv_table)*PAGE_SIZE);
 #endif
 				/* Mark list head `uncached due to aliases' */
 				pv->pv_flags |= PV_ANC;
@@ -2547,32 +2546,47 @@ pv_flushcache(pv)
 	splx(s);
 }
 
-vsize_t
-pv_table_map(base, mapit)
+psize_t
+pv_table_map(base)
 	paddr_t base;
-	int mapit;
 {
 	int nmem;
 	struct memarr *mp;
+	int mapit;
 	vsize_t s;
 	vaddr_t sva, va, eva;
 	paddr_t pa;
+	static paddr_t pv_physbase;
 
 	/* 
-	 * Map pv_table[] as a `sparse' array. pv_table_map() is called
-	 * twice: the first time `mapit' is 0, and the number of
-	 * physical pages needed to map the used pieces of pv_table[]
-	 * is computed;  the second time those pages are used to
-	 * actually map pv_table[].
-	 * In both cases, this function returns the amount of physical
-	 * memory needed.
+	 * Map pv_table[] as a `sparse' array. Virtual memory for pv_table
+	 * will cover the entire range of physical memory in the machine,
+	 * i.e. the array is used as pv_table[0..avail_end]. However,
+	 * depending on the configuration and wiring of the machine's
+	 * memory banks, there may be large sections in that index range
+	 * which will not be used. Therefore, we calculate the ranges of
+	 * pv_table[]'s virtual address extent that will get used and
+	 * proceed to only map those extents to actual physical memory.
+	 *
+	 * pv_table_map() is called twice: the first time `base' is the start
+	 * of physical memory that needs to be mapped by pv_table[].
+	 * `base' is also the location from which physical memory is taken
+	 * to map pv_table[] itself. pv_table_map() will return the amount
+	 * of physical memory needed.
+	 *
+	 * The second time pv_table_map() is called, `base' will be zero
+	 * and the phyical memory allocated in the first round will be
+	 * used to actually map pv_table[].
 	 */ 
 
-	if (!mapit)
-		/* Mark physical pages for pv_table[] */
-		pv_physmem = base;
-
-	pa = pv_physmem; /* XXX - always init `pa' to appease gcc */
+	if (base != 0) {
+		/* Mark start of physical pages for pv_table[] */
+		pv_physbase = base;
+		mapit = 0;
+	} else {
+		pa = pv_physbase;
+		mapit = 1;
+	}
 
 	s = 0;
 	sva = eva = 0;
@@ -2581,17 +2595,17 @@ pv_table_map(base, mapit)
 		paddr_t addr;
 
 		len = mp->len;
-		if ((addr = mp->addr) < base) {
+		if ((addr = mp->addr) < pv_physbase) {
 			/*
-			 * pv_table[] covers everything above `avail_start'.
+			 * pv_table[] covers everything above `pv_physbase'.
 			 */
-			addr = base;
-			len -= base;
+			addr = pv_physbase;
+			len -= pv_physbase;
 		}
 
-		/* Calculate stretch of pv_table */
+		/* Calculate stretch of pv_table[] that needs to be mapped */
 		len = sizeof(struct pvlist) * btoc(len);
-		va = (vaddr_t)&pv_table[btoc(addr - base)];
+		va = (vaddr_t)&pv_table[btoc(addr)];
 		sva = trunc_page(va);
 
 		if (sva < eva) {
@@ -2837,7 +2851,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	get_phys_mem();
 
 	/* Allocate physical memory for pv_table[] */
-	p += pv_table_map((paddr_t)p - KERNBASE, 0);
+	p += pv_table_map((paddr_t)p - KERNBASE);
 	avail_start = (paddr_t)p - KERNBASE;
 
 	i = (int)p;
@@ -2848,7 +2862,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 
 	/* Allocate virtual memory for pv_table[]. */
 	pv_table = (struct pvlist *)p;
-	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
+	p += round_page(sizeof(struct pvlist) * atop(avail_end));
 
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -3152,9 +3166,6 @@ pmap_bootstrap4m(void)
 	 */
 	get_phys_mem();
 
-	/* Allocate physical memory for pv_table[] */
-	p += pv_table_map((paddr_t)(p - KERNBASE), 0);
-
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
 	 * alignment restrictions. We allocate in a sequence that
@@ -3198,6 +3209,9 @@ pmap_bootstrap4m(void)
 	/* Round to next page and mark end of pre-wired kernel space */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
+
+	/* Allocate physical memory for pv_table[] */
+	p += pv_table_map((paddr_t)(p - KERNBASE));
 	avail_start = (paddr_t)(p - KERNBASE);
 
 	/*
@@ -3275,7 +3289,7 @@ pmap_bootstrap4m(void)
 
 	/* Allocate virtual memory for pv_table[]. */
 	pv_table = (struct pvlist *)p;
-	p += round_page(sizeof(struct pvlist) * atop(avail_end - avail_start));
+	p += round_page(sizeof(struct pvlist) * atop(avail_end));
 
 	virtual_avail = (vaddr_t)p;
 	virtual_end = VM_MAX_KERNEL_ADDRESS;
@@ -3552,7 +3566,7 @@ pmap_init()
 		panic("pmap_init: CLSIZE!=1");
 
 	/* Map pv_table[] */
-	(void)pv_table_map(avail_start, 1);
+	(void)pv_table_map(0);
 
 	vm_first_phys = avail_start;
 	vm_num_phys = avail_end - avail_start;
