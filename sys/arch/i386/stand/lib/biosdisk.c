@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.11 1999/03/08 00:09:25 fvdl Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.12 1999/08/03 19:46:22 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -285,6 +285,7 @@ out:
 	return (error);
 }
 
+#ifndef LIBSA_NO_FS_CLOSE
 int 
 biosdiskclose(f)
 	struct open_file *f;
@@ -298,6 +299,7 @@ biosdiskclose(f)
 	f->f_devdata = NULL;
 	return (0);
 }
+#endif
 
 int 
 biosdiskioctl(f, cmd, arg)
