@@ -20,55 +20,50 @@ START-INFO-DIR-ENTRY
 * dlltool: (binutils)dlltool.	  Create files needed to build and use DLLs
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000 Free
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
 Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, provided also
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 Indirect:
-binutils.info-1: 1845
-binutils.info-2: 49762
-binutils.info-3: 96952
+binutils.info-1: 1680
+binutils.info-2: 51584
+binutils.info-3: 99084
 
 Tag Table:
 (Indirect)
-Node: Top1845
-Node: ar3096
-Node: ar cmdline5270
-Node: ar scripts13109
-Node: nm18788
-Node: objcopy25758
-Node: objdump38585
-Node: ranlib49013
-Node: size49762
-Node: strings52493
-Node: strip54318
-Node: c++filt57283
-Ref: c++filt-Footnote-160140
-Node: addr2line60246
-Node: nlmconv62652
-Node: windres65256
-Node: dlltool70308
-Node: readelf79649
-Node: Selecting The Target System82799
-Node: Target Selection83816
-Node: Architecture Selection86517
-Node: Linker Emulation Selection87748
-Node: Reporting Bugs88626
-Node: Bug Criteria89377
-Node: Bug Reporting89923
-Node: Index96952
+Node: Top1680
+Node: ar3177
+Node: ar cmdline5351
+Node: ar scripts13479
+Node: nm19158
+Node: objcopy26576
+Node: objdump40217
+Node: ranlib50835
+Node: size51584
+Node: strings54315
+Node: strip56140
+Node: c++filt59105
+Ref: c++filt-Footnote-162042
+Node: addr2line62148
+Node: nlmconv64743
+Node: windres67347
+Node: dlltool72399
+Node: readelf81740
+Node: Selecting The Target System84908
+Node: Target Selection85925
+Node: Architecture Selection88626
+Node: Linker Emulation Selection89857
+Node: Reporting Bugs90735
+Node: Bug Criteria91511
+Node: Bug Reporting92057
+Node: GNU Free Documentation License99084
+Node: Index117512
 
 End Tag Table

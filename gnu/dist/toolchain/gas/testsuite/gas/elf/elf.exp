@@ -8,6 +8,7 @@ if { ([istarget "*-*-elf*"]
       || [istarget "sparc*-*-solaris*"]
       || [istarget "mips*-*-irix6*"])
      && ![istarget *-*-linux*aout*]
+     && ![istarget *-*-linux*coff*]
      && ![istarget *-*-linux*oldld*]
 } then {
     run_dump_test "section0" 

@@ -100,9 +100,10 @@ struct reloc_info_m88k
 #endif
 #define SUB_SEGMENT_ALIGN(SEG)	max (section_alignment[(int) (SEG)], 4)
 
-/* We use a special alignment function to insert the correct nop
-   pattern in .init.  */
-extern int m88k_do_align PARAMS ((int, const char *, int, int));
-#define md_do_align(n,fill,len,max,l) if (m88k_do_align(n,fill,max,len)) goto l
+/* Fill in rs_align_code fragments.  */
+extern void m88k_handle_align PARAMS ((fragS *));
+#define HANDLE_ALIGN(frag)  m88k_handle_align (frag)
+
+#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
 
 #endif /* M88KCOFF */

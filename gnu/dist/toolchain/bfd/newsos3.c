@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define MY(OP) CAT(newsos3_,OP)
 #define TARGETNAME "a.out-newsos3"
 #define ENTRY_CAN_BE_ZERO
-#define N_SHARED_LIB(x) 0 /* Avoids warning when compiled with -Wall. */
+#define N_SHARED_LIB(x) 0 /* Avoids warning when compiled with -Wall.  */
 #define DEFAULT_ARCH bfd_arch_m68k
 #define TARGET_IS_BIG_ENDIAN_P
 #define N_HEADER_IN_TEXT(x) 0

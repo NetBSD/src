@@ -6,21 +6,14 @@ END-INFO-DIR-ENTRY
 
    This file documents the BFD library.
 
-   Copyright (C) 1991 Free Software Foundation, Inc.
+   Copyright (C) 1991, 2000 Free Software Foundation, Inc.
 
-   Permission is granted to make and distribute verbatim copies of this
-manual provided the copyright notice and this permission notice are
-preserved on all copies.
-
-   Permission is granted to copy and distribute modified versions of
-this manual under the conditions for verbatim copying, subject to the
-terms of the GNU General Public License, which includes the provision
-that the entire resulting derived work is distributed under the terms
-of a permission notice identical to this one.
-
-   Permission is granted to copy and distribute translations of this
-manual into another language, under the above conditions for modified
-versions.
+   Permission is granted to copy, distribute and/or modify this document
+     under the terms of the GNU Free Documentation License, Version 1.1
+     or any later version published by the Free Software Foundation;
+   with no Invariant Sections, with no Front-Cover Texts, and with no
+    Back-Cover Texts.  A copy of the license is included in the
+section entitled "GNU Free Documentation License".
 
 
 File: bfd.info,  Node: typedef arelent,  Next: howto manager,  Prev: Relocations,  Up: Relocations
@@ -721,6 +714,16 @@ attributes.
  - : BFD_RELOC_386_GOTPC
      i386/elf relocations
 
+ - : BFD_RELOC_X86_64_GOT32
+ - : BFD_RELOC_X86_64_PLT32
+ - : BFD_RELOC_X86_64_COPY
+ - : BFD_RELOC_X86_64_GLOB_DAT
+ - : BFD_RELOC_X86_64_JUMP_SLOT
+ - : BFD_RELOC_X86_64_RELATIVE
+ - : BFD_RELOC_X86_64_GOTPCREL
+ - : BFD_RELOC_X86_64_32S
+     x86-64/elf relocations
+
  - : BFD_RELOC_NS32K_IMM_8
  - : BFD_RELOC_NS32K_IMM_16
  - : BFD_RELOC_NS32K_IMM_32
@@ -788,6 +791,16 @@ attributes.
      ARM 26 bit pc-relative branch.  The lowest two bits must be zero
      and are not stored in the instruction.
 
+ - : BFD_RELOC_ARM_PCREL_BLX
+     ARM 26 bit pc-relative branch.  The lowest bit must be zero and is
+     not stored in the instruction.  The 2nd lowest bit comes from a 1
+     bit field in the instruction.
+
+ - : BFD_RELOC_THUMB_PCREL_BLX
+     Thumb 22 bit pc-relative branch.  The lowest bit must be zero and
+     is not stored in the instruction.  The 2nd lowest bit comes from a
+     1 bit field in the instruction.
+
  - : BFD_RELOC_ARM_IMMEDIATE
  - : BFD_RELOC_ARM_ADRL_IMMEDIATE
  - : BFD_RELOC_ARM_OFFSET_IMM
@@ -835,6 +848,13 @@ attributes.
  - : BFD_RELOC_SH_CODE
  - : BFD_RELOC_SH_DATA
  - : BFD_RELOC_SH_LABEL
+ - : BFD_RELOC_SH_LOOP_START
+ - : BFD_RELOC_SH_LOOP_END
+ - : BFD_RELOC_SH_COPY
+ - : BFD_RELOC_SH_GLOB_DAT
+ - : BFD_RELOC_SH_JMP_SLOT
+ - : BFD_RELOC_SH_RELATIVE
+ - : BFD_RELOC_SH_GOTPC
      Hitachi SH relocs.  Not all of these appear in object files.
 
  - : BFD_RELOC_THUMB_PCREL_BRANCH9
@@ -844,10 +864,9 @@ attributes.
      be zero and is not stored in the instruction.
 
  - : BFD_RELOC_ARC_B22_PCREL
-     Argonaut RISC Core (ARC) relocs.  ARC 22 bit pc-relative branch.
-     The lowest two bits must be zero and are not stored in the
-     instruction.  The high 20 bits are installed in bits 26 through 7
-     of the instruction.
+     ARC Cores relocs.  ARC 22 bit pc-relative branch.  The lowest two
+     bits must be zero and are not stored in the instruction.  The high
+     20 bits are installed in bits 26 through 7 of the instruction.
 
  - : BFD_RELOC_ARC_B26
      ARC 26 bit absolute branch.  The lowest two bits must be zero and
@@ -1009,6 +1028,28 @@ attributes.
      significant 8 bits of a 24 bit word are placed into the least
      significant 8 bits of the opcode.
 
+ - : BFD_RELOC_TIC54X_PARTLS7
+     This is a 7bit reloc for the tms320c54x, where the least
+     significant 7 bits of a 16 bit word are placed into the least
+     significant 7 bits of the opcode.
+
+ - : BFD_RELOC_TIC54X_PARTMS9
+     This is a 9bit DP reloc for the tms320c54x, where the most
+     significant 9 bits of a 16 bit word are placed into the least
+     significant 9 bits of the opcode.
+
+ - : BFD_RELOC_TIC54X_23
+     This is an extended address 23-bit reloc for the tms320c54x.
+
+ - : BFD_RELOC_TIC54X_16_OF_23
+     This is a 16-bit reloc for the tms320c54x, where the least
+     significant 16 bits of a 23-bit extended address are placed into
+     the opcode.
+
+ - : BFD_RELOC_TIC54X_MS7_OF_23
+     This is a reloc for the tms320c54x, where the most significant 7
+     bits of a 23-bit extended address are placed into the opcode.
+
  - : BFD_RELOC_FR30_48
      This is a 48 bit reloc for the FR30 that stores 32 bits.
 
@@ -1138,6 +1179,125 @@ attributes.
      an offset describes the entry that is being used.  For Rela hosts,
      this offset is stored in the reloc's addend.  For Rel hosts, we
      are forced to put this offset in the reloc's section offset.
+
+ - : BFD_RELOC_IA64_IMM14
+ - : BFD_RELOC_IA64_IMM22
+ - : BFD_RELOC_IA64_IMM64
+ - : BFD_RELOC_IA64_DIR32MSB
+ - : BFD_RELOC_IA64_DIR32LSB
+ - : BFD_RELOC_IA64_DIR64MSB
+ - : BFD_RELOC_IA64_DIR64LSB
+ - : BFD_RELOC_IA64_GPREL22
+ - : BFD_RELOC_IA64_GPREL64I
+ - : BFD_RELOC_IA64_GPREL32MSB
+ - : BFD_RELOC_IA64_GPREL32LSB
+ - : BFD_RELOC_IA64_GPREL64MSB
+ - : BFD_RELOC_IA64_GPREL64LSB
+ - : BFD_RELOC_IA64_LTOFF22
+ - : BFD_RELOC_IA64_LTOFF64I
+ - : BFD_RELOC_IA64_PLTOFF22
+ - : BFD_RELOC_IA64_PLTOFF64I
+ - : BFD_RELOC_IA64_PLTOFF64MSB
+ - : BFD_RELOC_IA64_PLTOFF64LSB
+ - : BFD_RELOC_IA64_FPTR64I
+ - : BFD_RELOC_IA64_FPTR32MSB
+ - : BFD_RELOC_IA64_FPTR32LSB
+ - : BFD_RELOC_IA64_FPTR64MSB
+ - : BFD_RELOC_IA64_FPTR64LSB
+ - : BFD_RELOC_IA64_PCREL21B
+ - : BFD_RELOC_IA64_PCREL21BI
+ - : BFD_RELOC_IA64_PCREL21M
+ - : BFD_RELOC_IA64_PCREL21F
+ - : BFD_RELOC_IA64_PCREL22
+ - : BFD_RELOC_IA64_PCREL60B
+ - : BFD_RELOC_IA64_PCREL64I
+ - : BFD_RELOC_IA64_PCREL32MSB
+ - : BFD_RELOC_IA64_PCREL32LSB
+ - : BFD_RELOC_IA64_PCREL64MSB
+ - : BFD_RELOC_IA64_PCREL64LSB
+ - : BFD_RELOC_IA64_LTOFF_FPTR22
+ - : BFD_RELOC_IA64_LTOFF_FPTR64I
+ - : BFD_RELOC_IA64_LTOFF_FPTR64MSB
+ - : BFD_RELOC_IA64_LTOFF_FPTR64LSB
+ - : BFD_RELOC_IA64_SEGREL32MSB
+ - : BFD_RELOC_IA64_SEGREL32LSB
+ - : BFD_RELOC_IA64_SEGREL64MSB
+ - : BFD_RELOC_IA64_SEGREL64LSB
+ - : BFD_RELOC_IA64_SECREL32MSB
+ - : BFD_RELOC_IA64_SECREL32LSB
+ - : BFD_RELOC_IA64_SECREL64MSB
+ - : BFD_RELOC_IA64_SECREL64LSB
+ - : BFD_RELOC_IA64_REL32MSB
+ - : BFD_RELOC_IA64_REL32LSB
+ - : BFD_RELOC_IA64_REL64MSB
+ - : BFD_RELOC_IA64_REL64LSB
+ - : BFD_RELOC_IA64_LTV32MSB
+ - : BFD_RELOC_IA64_LTV32LSB
+ - : BFD_RELOC_IA64_LTV64MSB
+ - : BFD_RELOC_IA64_LTV64LSB
+ - : BFD_RELOC_IA64_IPLTMSB
+ - : BFD_RELOC_IA64_IPLTLSB
+ - : BFD_RELOC_IA64_COPY
+ - : BFD_RELOC_IA64_TPREL22
+ - : BFD_RELOC_IA64_TPREL64MSB
+ - : BFD_RELOC_IA64_TPREL64LSB
+ - : BFD_RELOC_IA64_LTOFF_TP22
+ - : BFD_RELOC_IA64_LTOFF22X
+ - : BFD_RELOC_IA64_LDXMOV
+     Intel IA64 Relocations.
+
+ - : BFD_RELOC_M68HC11_HI8
+     Motorola 68HC11 reloc.  This is the 8 bits high part of an
+     absolute address.
+
+ - : BFD_RELOC_M68HC11_LO8
+     Motorola 68HC11 reloc.  This is the 8 bits low part of an absolute
+     address.
+
+ - : BFD_RELOC_M68HC11_3B
+     Motorola 68HC11 reloc.  This is the 3 bits of a value.
+
+ - : BFD_RELOC_CRIS_BDISP8
+ - : BFD_RELOC_CRIS_UNSIGNED_5
+ - : BFD_RELOC_CRIS_SIGNED_6
+ - : BFD_RELOC_CRIS_UNSIGNED_6
+ - : BFD_RELOC_CRIS_UNSIGNED_4
+     These relocs are only used within the CRIS assembler.  They are not
+     (at present) written to any object files.
+
+ - : BFD_RELOC_860_COPY
+ - : BFD_RELOC_860_GLOB_DAT
+ - : BFD_RELOC_860_JUMP_SLOT
+ - : BFD_RELOC_860_RELATIVE
+ - : BFD_RELOC_860_PC26
+ - : BFD_RELOC_860_PLT26
+ - : BFD_RELOC_860_PC16
+ - : BFD_RELOC_860_LOW0
+ - : BFD_RELOC_860_SPLIT0
+ - : BFD_RELOC_860_LOW1
+ - : BFD_RELOC_860_SPLIT1
+ - : BFD_RELOC_860_LOW2
+ - : BFD_RELOC_860_SPLIT2
+ - : BFD_RELOC_860_LOW3
+ - : BFD_RELOC_860_LOGOT0
+ - : BFD_RELOC_860_SPGOT0
+ - : BFD_RELOC_860_LOGOT1
+ - : BFD_RELOC_860_SPGOT1
+ - : BFD_RELOC_860_LOGOTOFF0
+ - : BFD_RELOC_860_SPGOTOFF0
+ - : BFD_RELOC_860_LOGOTOFF1
+ - : BFD_RELOC_860_SPGOTOFF1
+ - : BFD_RELOC_860_LOGOTOFF2
+ - : BFD_RELOC_860_LOGOTOFF3
+ - : BFD_RELOC_860_LOPC
+ - : BFD_RELOC_860_HIGHADJ
+ - : BFD_RELOC_860_HAGOT
+ - : BFD_RELOC_860_HAGOTOFF
+ - : BFD_RELOC_860_HAPC
+ - : BFD_RELOC_860_HIGH
+ - : BFD_RELOC_860_HIGOT
+ - : BFD_RELOC_860_HIGOTOFF
+     Intel i860 Relocations.
 
 
      typedef enum bfd_reloc_code_real bfd_reloc_code_real_type;

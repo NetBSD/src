@@ -1,5 +1,5 @@
 /* This file is tc-h8300.h
-   Copyright (C) 1987-1992, 93, 94, 95, 96, 97, 1998
+   Copyright (C) 1987-1992, 93, 94, 95, 96, 97, 98, 2000
    Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -19,7 +19,6 @@
    Software Foundation, 59 Temple Place - Suite 330, Boston, MA
    02111-1307, USA.  */
 
-
 #define TC_H8300
 
 #define TARGET_BYTES_BIG_ENDIAN 1
@@ -31,7 +30,7 @@ struct internal_reloc;
 #define WORKING_DOT_WORD
 
 /* This macro translates between an internal fix and an coff reloc type */
-#define TC_COFF_FIX2RTYPE(fixP) abort();
+#define TC_COFF_FIX2RTYPE(fixP) abort ();
 
 #define BFD_ARCH bfd_arch_h8300
 #define COFF_MAGIC ( Smode ? 0x8302 : Hmode ? 0x8301 : 0x8300)
@@ -54,5 +53,3 @@ extern int Hmode;
 extern int Smode;
 
 #define md_operand(x)
-
-/* end of tc-h8300.h */
