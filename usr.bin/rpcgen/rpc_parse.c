@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_parse.c,v 1.12 2002/02/05 22:02:15 christos Exp $	*/
+/*	$NetBSD: rpc_parse.c,v 1.12.4.1 2004/06/22 07:18:03 tron Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -29,12 +29,16 @@
  * Mountain View, California  94043
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)rpc_parse.c 1.8 89/02/22 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_parse.c,v 1.12 2002/02/05 22:02:15 christos Exp $");
+__RCSID("$NetBSD: rpc_parse.c,v 1.12.4.1 2004/06/22 07:18:03 tron Exp $");
 #endif
 #endif
 
