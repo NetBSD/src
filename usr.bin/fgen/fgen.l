@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.6 1999/06/07 05:08:25 mrg Exp $	*/
+/*	$NetBSD: fgen.l,v 1.7 1999/06/08 12:38:20 tron Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -53,6 +53,7 @@ tail	{white}
 #include <sys/types.h>
 
 #include <assert.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
