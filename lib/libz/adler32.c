@@ -1,11 +1,11 @@
-/*	$NetBSD: adler32.c,v 1.3 1997/05/13 23:06:27 gwr Exp $	*/
+/* $NetBSD: adler32.c,v 1.4 1998/11/01 20:33:25 tron Exp $ */
 
 /* adler32.c -- compute the Adler-32 checksum of a data stream
- * Copyright (C) 1995-1996 Mark Adler
+ * Copyright (C) 1995-1998 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* from: Id: adler32.c,v 1.10 1996/05/22 11:52:18 me Exp */
+/* @(#) Id */
 
 #include "zlib.h"
 
@@ -20,7 +20,7 @@
 #define DO16(buf)   DO8(buf,0); DO8(buf,8);
 
 /* ========================================================================= */
-uLong adler32(adler, buf, len)
+uLong ZEXPORT adler32(adler, buf, len)
     uLong adler;
     const Bytef *buf;
     uInt len;

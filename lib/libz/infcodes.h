@@ -1,7 +1,7 @@
-/*	$NetBSD: infcodes.h,v 1.2 1996/09/13 00:30:28 cgd Exp $	*/
+/* $NetBSD: infcodes.h,v 1.3 1998/11/01 20:33:26 tron Exp $ */
 
 /* infcodes.h -- header to use infcodes.c
- * Copyright (C) 1995-1996 Mark Adler
+ * Copyright (C) 1995-1998 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
