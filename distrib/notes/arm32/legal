@@ -1,5 +1,7 @@
-.\"	$NetBSD: legal,v 1.6 2001/02/27 11:03:45 bjh21 Exp $
+.\"	$NetBSD: legal,v 1.7 2001/02/28 14:11:25 bjh21 Exp $
 .
+.Pp
+This product includes software developed by Advanced Risc Machines Ltd.
 .Pp
 This product includes software developed by Neil Carson.
 .Pp
