@@ -1,6 +1,6 @@
-.\"	$NetBSD: progress.1,v 1.8 2004/03/25 20:29:51 hubertf Exp $
+.\"	$NetBSD: progress.1,v 1.9 2004/04/03 06:19:22 lukem Exp $
 .\"
-.\" Copyright (c) 2003 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2003,2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 5, 2004
+.Dd April 3, 2004
 .Dt PROGRESS 1
 .Os
 .Sh NAME
@@ -73,6 +73,9 @@ instead of standard input.
 Use the specified length for the time estimate, rather than attempting to
 .Xr fstat 2
 the input.
+An optional suffix (per
+.Xr strsuftoll 3 )
+may be given.
 .It Fl p Ar prefix
 Print the given
 .Dq prefix
@@ -90,7 +93,7 @@ is specified, calculate the length using
 exits 0 on success.
 .Sh EXAMPLES
 The command
-.Ic progress -zf file.tar.gz tar xf -
+.Dl progress -zf file.tar.gz tar xf -
 will extract the
 .Pa file.tar.gz
 displaying the progress bar as time passes:
@@ -103,10 +106,22 @@ displaying the progress bar as time passes:
 .Pp
 If it is preferred to monitor the progress of the decompression
 process (unlikely), then
-.Ic progress -f file.tar.gz tar zxf -
+.Dl progress -f file.tar.gz tar zxf -
 could be used.
+.Pp
+The command
+.Dl dd if=/dev/rwd0d ibs=64k | \e
+.Dl progress -l 120g dd of=/dev/rwd1d obs=64k
+will copy the 120 GB disk
+.Sy wd0
+.Pa ( /dev/rwd0d )
+to
+.Sy wd1
+.Pa ( /dev/rwd1d ) ,
+displaying a progress bar during the operation.
 .Sh SEE ALSO
-.Xr ftp 1
+.Xr ftp 1 ,
+.Xr strsuftoll 3
 .Sh HISTORY
 .Nm
 first appeared in
