@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 1998/04/24 05:27:24 scottr Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 1998/04/25 06:48:05 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -255,8 +255,6 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*CLBYTES)
-
-#define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
 
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vm_size_t)2)		/* XXX: SYSPTSIZE */
