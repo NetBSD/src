@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.66 92/12/22$
  *
  *	from: @(#)locore.s	8.6 (Berkeley) 5/27/94
- *	$Id: locore.s,v 1.25 1994/07/03 11:40:35 mycroft Exp $
+ *	$Id: locore.s,v 1.26 1994/07/05 17:08:51 mycroft Exp $
  */
 
 /*
@@ -277,78 +277,13 @@ _fpunsupp:
 	jra	_illinst
 #endif
 
-#ifdef FPSP
-/*
- * Entry points for '040 FP emulator.
- */
-	.globl	real_fline, real_trace, fpsp_done, fpsp_fmt_error
-real_fline:
-	jra	_illinst
-real_trace:
-	/* XXXX */
-fpsp_done:
-	rte
-fpsp_fmt_error:
-	pea	LFP1
-	jbsr	_panic
-LFP1:
-	.asciz	"FPSP format error"
-	.even
-
-	.globl	mem_read, mem_write
-mem_read:
-	btst	#5,a6@(4)
-	jeq	user_read
-super_read:
-	movb	a0@+,a1@+
-	subql	#1,d0
-	jne	super_read
-	rts
-user_read:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyin
-	addw	#12,sp
-	movl	sp@+,d1
-	rts
-mem_write:
-	btst	#5,a6@(4)
-	jeq	user_write
-super_write:
-	movb	a0@+,a1@+
-	subql	#1,d0
-	jne	super_write
-	rts
-user_write:
-	movl	d1,sp@-
-	movl	d0,sp@-		| len
-	movl	a1,sp@-		| to
-	movl	a0,sp@-		| from
-	jsr	_copyout
-	addw	#12,sp
-	movl	sp@+,d1
-	rts
-
-	.globl	real_bsun, real_inex, real_dz, real_unfl, real_operr
-	.globl	real_ovfl, real_snan
-real_bsun:
-real_inex:
-real_dz:
-real_unfl:
-real_operr:
-real_ovfl:
-real_snan:
-	/* Fall through to _fpfault. */
-#endif /* FPSP */
-
 /*
  * Handles all other FP coprocessor exceptions.
  * Note that since some FP exceptions generate mid-instruction frames
  * and may cause signal delivery, we need to test for stack adjustment
  * after the trap call.
  */
+	.globl	_fpfault
 _fpfault:
 #ifdef FPCOPROC
 	clrl	sp@-		| stack adjust count
@@ -763,6 +698,7 @@ _lev7intr:
  */
 	.comm	_ssir,1
 	.globl	_astpending
+	.globl	rei
 rei:
 #ifdef STACKCHECK
 	tstl	_panicstr		| have we paniced?
