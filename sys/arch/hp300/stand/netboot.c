@@ -1,4 +1,4 @@
-/*	$NetBSD: netboot.c,v 1.9 1995/10/04 06:54:48 thorpej Exp $	*/
+/*	$NetBSD: netboot.c,v 1.10 1995/10/04 07:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -34,10 +34,6 @@
  *
  *	@(#)boot.c	8.1 (Berkeley) 6/10/93
  */
-
-#ifndef lint
-static char rcsid[] = "$NetBSD: netboot.c,v 1.9 1995/10/04 06:54:48 thorpej Exp $";
-#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -76,8 +72,9 @@ main()
 	 */
 	bootdev = MAKEBOOTDEV(0, 0, 0, 0, 0);
 
-	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU [%s]\n",
-	       getmachineid(), "$Revision: 1.9 $");
+	printf("\n>> NetBSD NETWORK BOOT HP9000/%s CPU\n",
+	       getmachineid());
+	printf(">> $NetBSD: netboot.c,v 1.10 1995/10/04 07:24:32 thorpej Exp $\n");
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	bdev	= B_TYPE(bootdev);
