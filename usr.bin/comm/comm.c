@@ -1,4 +1,4 @@
-/*	$NetBSD: comm.c,v 1.6 1995/03/26 09:25:52 glass Exp $	*/
+/*	$NetBSD: comm.c,v 1.7 1995/03/26 20:12:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)comm.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: comm.c,v 1.6 1995/03/26 09:25:52 glass Exp $";
+static char rcsid[] = "$NetBSD: comm.c,v 1.7 1995/03/26 20:12:13 jtc Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,7 +137,7 @@ main(argc, argv)
 		if (!(comp = strcoll(line1, line2))) {
 			read1 = read2 = 1;
 			if (col3)
-				if (printf("%s%s", col3, line1) == EOF)
+				if (printf("%s%s", col3, line1) < 0)
 					break;
 			continue;
 		}
@@ -147,13 +147,13 @@ main(argc, argv)
 			read1 = 1;
 			read2 = 0;
 			if (col1)
-				if (printf("%s%s", col1, line1) == EOF)
+				if (printf("%s%s", col1, line1) < 0)
 					break;
 		} else {
 			read1 = 0;
 			read2 = 1;
 			if (col2)
-				if (printf("%s%s", col2, line2) == EOF)
+				if (printf("%s%s", col2, line2) < 0)
 					break;
 		}
 	}
@@ -169,7 +169,7 @@ show(fp, offset, buf)
 	FILE *fp;
 	char *offset, *buf;
 {
-	while (printf("%s%s", offset, buf) != EOF && fgets(buf, MAXLINELEN, fp))
+	while (printf("%s%s", offset, buf) < 0 && fgets(buf, MAXLINELEN, fp))
 		;
 }
 
