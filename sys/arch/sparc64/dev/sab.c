@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.9 2003/01/01 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: sab.c,v 1.10 2003/06/11 22:51:03 petrov Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -367,6 +367,7 @@ sabtty_attach(parent, self, aux)
 	struct sabtty_softc *sc = (struct sabtty_softc *)self;
 	struct sabtty_attach_args *sa = aux;
 	int r;
+	int maj;
 
 	sc->sc_tty = ttymalloc();
 	if (sc->sc_tty == NULL) {
@@ -436,14 +437,16 @@ sabtty_attach(parent, self, aux)
 			sabtty_cons_input = sc;
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
-			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
+			maj = cdevsw_lookup_major(&sabtty_cdevsw);
+			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 			shutdownhook_establish(sabtty_shutdown, sc);
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
 			sabtty_cons_output = sc;
 			cn_tab->cn_putc = sab_cnputc;
-			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
+			maj = cdevsw_lookup_major(&sabtty_cdevsw);
+			cn_tab->cn_dev = makedev(maj, self->dv_unit);
 		}
 		printf(": console %s", acc);
 	} else {
@@ -628,8 +631,6 @@ sabopen(dev, flags, mode, p)
 	tp->t_dev = dev;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
-/* XXX		tp->t_state |= TS_WOPEN; */
-
 		ttychars(tp);
 		tp->t_iflag = TTYDEF_IFLAG;
 		tp->t_oflag = TTYDEF_OFLAG;
@@ -684,12 +685,10 @@ sabopen(dev, flags, mode, p)
 		    (tp->t_state & TS_CARR_ON) == 0) {
 			int error;
 
-/* XXX			tp->t_state |= TS_WOPEN; */
 			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
 			    "sabttycd", 0);
 			if (error != 0) {
 				splx(s);
-/* XXX				tp->t_state &= ~TS_WOPEN; */
 				return (error);
 			}
 		}
