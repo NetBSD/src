@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.14 2001/05/14 07:46:57 mbw Exp $
+.\"	$NetBSD: prep,v 1.15 2001/05/17 07:39:27 mbw Exp $
 .
 .Ss2 Prepare yourself
 .
@@ -618,7 +618,7 @@ another ethernet device on your network.
 (All Open Firmware versions)
 .Pp
 Each version of Open Firmware is capable of booting from a variety of
-media.  To boot the
+media (such as hard drives, CD-ROMs, and ethernet).  To boot the
 .Nx
 kernel, Open Firmware must first open a
 .Sq bootloader
@@ -714,6 +714,11 @@ Such as the boot floppy, or an installed
 partition.
 .
 .It
+.Em "HFS or HFS+ filesystem"
+.Pp
+Only on Open Firmware 2.4 or Open Firmware 3 systems.
+.
+.It
 .Em "ISO 9660 CD-ROM file system"
 .bullet)
 .Pp
@@ -766,11 +771,16 @@ does not yet support it on these systems.
 .Pp
 This method loads 
 .Pa ofwboot.xcf
-from an HFS or HFS+ partition which then loads the kernel from an FFS
-filesystem.  This may be either a complete FFS partition or the boot
-floppy image
+from an HFS or HFS+ partition which then loads the kernel from an acceptable
+source (such as an FFS partition or an HFS or HFS+ partition).  The FFS-based
+kernel may be on the boot floppy image
 .No ( Ns Pa boot.fs No Ns )
-located on an HFS or HFS+ partition.
+located on an HFS or HFS+ partition, or located on a full FFS partition.
+.Pp
+Alternatively, the kernel (compressed
+or non-compressed) may be on an HFS or HFS+ partition.  Due to Open Firmware
+pickiness, it must be on the same partition as
+.Pa ofwboot.xcf No Ns .
 .
 .It
 .Em "MS-DOS file system"
@@ -845,7 +855,87 @@ CD-R
 .bullet)
 .Pp
 .
-.Ss2 Creating the Bootable Media
+.Ss2 Partitioning your hard drive for NetBSD
+.
+.(bullet -offset indent
+.
+.Em "Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x"
+.br
+You must use the 
+.Nx
+installer to partition your disk if you want it to be bootable.
+.br
+Skip forward to
+.Sx Installing the NetBSD System
+.It
+.Em "Open Firmware 2.4"
+.br
+We recommend using the 
+.Nx
+installer to partition your disk, but you will not be able to share it 
+with
+.Tn MacOS .
+.br
+If you'd like to dual-boot with 
+.Tn MacOS
+on a shared drive, read the rest of this section.
+.It
+.Em "Open Firmware 3"
+.br
+.Em "Do not edit your partitions in the installer."
+You must partition your disk in
+.Tn MacOS
+before installing
+.Nx
+on your system.
+.bullet)
+.Pp
+Unfortunately, the partitioning tools for
+.Nx
+are not advanced enough to create HFS or HFS+ file systems or a 
+partition map that can be shared with
+.Tn MacOS .
+You will need to use the 
+.Tn MacOS
+Drive Setup tool (versions 1.8.1 and later are
+known to work) to partition the hard drive you will be using for
+.Nx .
+Drive Setup will erase the contents of your drive -- it does not preserve 
+data from any of your partitions.  Make the following partitions:
+.(tag "A/UX_Rootxxx" -offset indent
+.It Em HFS No or Em HFS+
+Must be large enough to hold the bootloader, over 100 KB.
+.It Em A/UX Root
+Must be at least 20 MB. Alternatively, you may decide to use one partition for
+your entire
+.Nx
+installation, in which case it should be at least 200 MB.
+.It Em A/UX Swap
+Any size. The recommenation is 1.5 times your RAM, although this is not
+strictly necessary for machines with a lot of RAM.
+.It Em A/UX User, A/UX Free1, A/UX Free2, A/UX Free3
+Use these for any additional partitions you may want to use under
+.Nx Ns ,
+such as 
+.Pa /usr No (at least 200 MB), Pa /home No Ns , Pa /usr/local No Ns , or
+.Pa /usr/pkg No Ns .
+.It Em HFS
+Any size.  You may want to leave an additional  partition available to 
+share between
+.Tn MacOS
+and 
+.Nx .
+If you think you'll be doing this often, then see the FAQ entry on sharing 
+files:
+.Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
+.tag)
+.Pp
+If you need further help, there is a partitioning HOW-TO on the
+.Nx
+website:
+.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
+.
+.Ss2 Preparing the Bootable Media
 .
 .
 The purpose of this section is to prepare the media from which your system
@@ -1002,7 +1092,7 @@ menu and pick
 .bullet)
 .Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em "Boot off an HFS or HFS+ partition"
@@ -1021,8 +1111,14 @@ to uncompress the boot floppy image (if it's compressed).
 Get to the Open Firmware prompt. Boot the bootloader, and tell it to look
 for the kernel in the boot floppy image.
 .Pp
+Alternatively, copy a kernel to the same partition as
+.Pa ofwboot.xcf No Ns .
+It may be compressed or uncompressed, it should make no difference.
+Get to the Open Firmware prompt.  Boot the bootloader, and tell it to look
+for the kernel you copied to your HFS or HFS+ partition.
+.Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em Boot off the official NetBSD/\*M-\*V CD-R image
@@ -1076,13 +1172,19 @@ button
 .bullet)
 .Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em "Boot off an ISO 9660 CD-ROM"
 .br
 (Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x, Open 
 Firmware 2.4)
+.Pp
+This section describes how to create your own bootable
+.Nx*M
+CD-R.  We recommend that you use the official
+NetBSD/\*M-\*V
+CD-R image, as described in the section above.
 .Pp
 Place
 .Pa ofwboot.xcf
@@ -1159,12 +1261,18 @@ button
 .bullet)
 .Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em "Boot off a hybrid HFS/ISO 9660 CD-ROM"
 .br
 (Open Firmware 2.4, Open Firmware 3)
+.Pp
+This section describes how to create your own bootable
+.Nx*M
+CD-R.  We recommend that you use the official
+NetBSD/\*M-\*V
+CD-R image, as described two sections above.
 .Pp
 Place
 .Pa ofwboot.xcf
@@ -1266,7 +1374,7 @@ button
 .bullet)
 .Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em "Boot over the ethernet"
@@ -1421,7 +1529,7 @@ Your client will need a kernel to boot (use
 .Dl # Ic "mv netbsd.ram /export/client/root/netbsd"
 .Pp
 Skip forward to
-.Sx Partitioning your hard drive for NetBSD
+.Sx Installing the NetBSD System
 .
 .It
 .Em "Boot the floppy image off a bootable SCSI or IDE drive"
@@ -1516,83 +1624,3 @@ menu and pick
 .enum)
 .bullet)
 .bullet)
-.
-.Ss2 Partitioning your hard drive for NetBSD
-.
-.(bullet -offset indent
-.
-.Em "Open Firmware 1.0.5, Open Firmware 1.1.22, Open Firmware 2.0.x"
-.br
-You must use the 
-.Nx
-installer to partition your disk if you want it to be bootable.
-.br
-Skip forward to
-.Sx Installing the NetBSD System
-.It
-.Em "Open Firmware 2.4"
-.br
-We recommend using the 
-.Nx
-installer to partition your disk, but you will not be able to share it 
-with
-.Tn MacOS .
-.br
-If you'd like to dual-boot with 
-.Tn MacOS
-on a shared drive, read the rest of this section.
-.It
-.Em "Open Firmware 3"
-.br
-.Em "Do not edit your partitions in the installer."
-You must partition your disk in
-.Tn MacOS
-before installing
-.Nx
-on your system.
-.bullet)
-.Pp
-Unfortunately, the partitioning tools for
-.Nx
-are not advanced enough to create HFS or HFS+ file systems or a 
-partition map that can be shared with
-.Tn MacOS .
-You will need to use the 
-.Tn MacOS
-Drive Setup tool (versions 1.8.1 and later are
-known to work) to partition the hard drive you will be using for
-.Nx .
-Drive Setup will erase the contents of your drive -- it does not preserve 
-data from any of your partitions.  Make the following partitions:
-.(tag "A/UX_Rootxxx" -offset indent
-.It Em HFS No or Em HFS+
-Must be large enough to hold the bootloader, over 100 KB.
-.It Em A/UX Root
-Must be at least 20 MB. Alternatively, you may decide to use one partition for
-your entire
-.Nx
-installation, in which case it should be at least 200 MB.
-.It Em A/UX Swap
-Any size. The recommenation is 1.5 times your RAM, although this is not
-strictly necessary for machines with a lot of RAM.
-.It Em A/UX User, A/UX Free1, A/UX Free2, A/UX Free3
-Use these for any additional partitions you may want to use under
-.Nx Ns ,
-such as 
-.Pa /usr No (at least 200 MB), Pa /home No Ns , Pa /usr/local No Ns , or
-.Pa /usr/pkg No Ns .
-.It Em HFS
-Any size.  You may want to leave an additional  partition available to 
-share between
-.Tn MacOS
-and 
-.Nx .
-If you think you'll be doing this often, then see the FAQ entry on sharing 
-files:
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#disk-sharing
-.tag)
-.Pp
-If you need further help, there is a partitioning HOW-TO on the
-.Nx
-website:
-.Lk http://www.netbsd.org/Ports/macppc/partitioning.html
