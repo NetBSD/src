@@ -1,4 +1,4 @@
-/* $NetBSD: kern_kcont.c,v 1.5 2004/03/23 13:22:32 junyoung Exp $ */
+/* $NetBSD: kern_kcont.c,v 1.6 2004/03/24 01:27:57 matt Exp $ */
 
 /*
  * Copyright 2003 Jonathan Stone.
@@ -37,13 +37,14 @@
 /*
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.5 2004/03/23 13:22:32 junyoung Exp $ ");
+__KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.6 2004/03/24 01:27:57 matt Exp $ ");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/proc.h>
 #include <lib/libkern/libkern.h>
@@ -53,9 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_kcont.c,v 1.5 2004/03/23 13:22:32 junyoung Exp 
 
 #include <sys/kcont.h>
 
-
-MALLOC_DECLARE(M_KCONT);
-MALLOC_DEFINE(M_KCONT, "kcont", "Kernel non-process continuations");
 
 /* Accessors for struct kc_queue */
 static __inline struct kc * kc_set(struct kc *,
@@ -81,6 +79,11 @@ static void *kc_si_softnet;
 static void *kc_si_softclock;
 static void *kc_si_softserial;
 #endif /* __HAVE_GENERIC_SOFT_INTERRUPTS */
+
+/*
+ * Pool allocator strcuture.
+ */
+static struct pool kc_pool;
 
 /*
  * Process-context continuation queue.
@@ -165,9 +168,13 @@ kcont_malloc(int malloc_flags,
 	       void *env_arg, int continue_ipl)
 {
 	struct kc *kc;
+	int pool_flags;
 
-	kc = malloc(sizeof (*kc), M_KCONT, malloc_flags);
-	if (kc ==  NULL)
+	pool_flags = (malloc_flags & M_NOWAIT) ? 0 : PR_WAITOK;
+	pool_flags |= (malloc_flags & M_CANFAIL) ? PR_LIMITFAIL : 0;
+
+	kc = pool_get(&kc_pool, pool_flags);
+	if (kc == NULL)
 		return kc;
 	return kc_set(kc, func, env_arg, continue_ipl);
 }
@@ -295,7 +302,7 @@ kcont_run(kcq_t *kcq, void *obj, int status, int curipl)
 			 * to test for auto-free.
 			 */
 			if (saved_flags & KC_AUTOFREE)
-				free(kc, M_KCONT);
+				pool_put(&kc_pool, kc);
 		} else {
 			kcont_defer(kc, obj, status);
 		}
@@ -371,6 +378,8 @@ kcont_init()
 	kc_si_softserial = softintr_establish(IPL_SOFTSERIAL,
 	    kcont_run_softserial, &kcq_softserial);
 #endif	/* __HAVE_GENERIC_SOFT_INTERRUPTS */
+
+	pool_init(&kc_pool, sizeof(struct kc), 0, 0, 0, "kcpl", NULL);
 
 	/*
 	 * Create kc_queue for process-context continuations, and
