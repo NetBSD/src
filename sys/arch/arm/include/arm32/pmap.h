@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3 2001/03/04 07:30:20 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4 2001/03/04 19:05:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -141,6 +141,7 @@ typedef struct {
 extern pv_entry_t	pv_table;	/* Phys to virt mappings, per page. */
 extern pmap_t		kernel_pmap;	/* pmap pointer used for the kernel */
 extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
+extern int		pmap_debug_level; /* Only exists if PMAP_DEBUG */
 
 /*
  * Macros that we need to export
@@ -158,8 +159,18 @@ extern struct pmap	kernel_pmap_store;  /* kernel_pmap points to this */
 extern boolean_t pmap_testbit __P((paddr_t, int));
 extern void pmap_changebit __P((paddr_t, int, int));
 extern vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
-void	pmap_procwr __P((struct proc *, vaddr_t, u_long));
+extern void pmap_procwr __P((struct proc *, vaddr_t, int));
 #define	PMAP_NEED_PROCWR
+
+/*
+ * Functions we use internally
+ */
+extern void pmap_bootstrap __P((pd_entry_t *, pv_addr_t));
+extern void pmap_debug	__P((int));
+extern int pmap_handled_emulation __P((pmap_t, vaddr_t));
+extern int pmap_modified_emulation __P((pmap_t, vaddr_t));
+extern void pmap_postinit __P((void));
+extern pt_entry_t *pmap_pte __P((pmap_t, vaddr_t));
 
 #endif	/* _KERNEL */
 

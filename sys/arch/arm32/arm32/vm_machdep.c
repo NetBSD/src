@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.55 2001/02/28 18:15:44 bjh21 Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.56 2001/03/04 19:05:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -69,17 +69,11 @@
 
 extern pv_addr_t systempage;
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 int process_read_regs	__P((struct proc *p, struct reg *regs));
 int process_read_fpregs	__P((struct proc *p, struct fpreg *regs));
 
 void	switch_exit	__P((struct proc *p, struct proc *proc0));
 extern void proc_trampoline	__P((void));
-
-pt_entry_t *pmap_pte	__P((pmap_t, vm_offset_t));
 
 /*
  * Special compilation symbols:
@@ -310,11 +304,10 @@ extern vm_map_t phys_map;
 void
 vmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t faddr, taddr, off;
+	vaddr_t faddr, taddr, off;
 	pt_entry_t *fpte, *tpte;
-	pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 	int pages;
 
 #ifdef PMAP_DEBUG
@@ -329,7 +322,7 @@ vmapbuf(bp, len)
 	taddr = uvm_km_valloc_wait(phys_map, len);
 
 	faddr = trunc_page((vaddr_t)bp->b_data);
-	off = (vm_offset_t)bp->b_data - faddr;
+	off = (vaddr_t)bp->b_data - faddr;
 	len = round_page(off + len);
 	bp->b_saveaddr = bp->b_data;
 	bp->b_data = (caddr_t)(taddr + off);
@@ -366,9 +359,9 @@ vmapbuf(bp, len)
 void
 vunmapbuf(bp, len)
 	struct buf *bp;
-	vm_size_t len;
+	vsize_t len;
 {
-	vm_offset_t addr, off;
+	vaddr_t addr, off;
 	pt_entry_t *pte;
 	int pages;
 
@@ -386,7 +379,7 @@ vunmapbuf(bp, len)
 	 * pages we had mapped.
 	 */
 	addr = trunc_page((vaddr_t)bp->b_data);
-	off = (vm_offset_t)bp->b_data - addr;
+	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;

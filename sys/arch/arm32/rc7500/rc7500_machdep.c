@@ -1,4 +1,4 @@
-/*	$NetBSD: rc7500_machdep.c,v 1.32 2001/02/27 20:23:12 reinoud Exp $	*/
+/*	$NetBSD: rc7500_machdep.c,v 1.33 2001/03/04 19:05:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -176,7 +176,6 @@ vm_size_t map_chunk	__P((vm_offset_t pd, vm_offset_t pt, vm_offset_t va,
 			     vm_offset_t pa, vm_size_t size, u_int acc,
 			     u_int flg));
 
-void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pv_addr_t kernel_ptpt));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
@@ -186,7 +185,6 @@ void zero_page_readwrite	__P((void));
 static void process_kernel_args	__P((void));
 
 extern void dump_spl_masks	__P((void));
-extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
 extern void console_flush	__P((void));
 extern void vidcrender_reinit	__P((void));
@@ -915,7 +913,7 @@ initarm(prom_id)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap(kernel_l1pt.pv_va, kernel_ptpt);
+	pmap_bootstrap((pd_entry_t *) kernel_l1pt.pv_va, kernel_ptpt);
 	console_flush();
 
 	/* Setup the IRQ system */
