@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.28 1998/07/28 05:31:26 mycroft Exp $	*/
+/*	$NetBSD: mt.c,v 1.29 1998/07/30 00:56:11 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mt.c	8.2 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mt.c,v 1.28 1998/07/28 05:31:26 mycroft Exp $");
+__RCSID("$NetBSD: mt.c,v 1.29 1998/07/30 00:56:11 mjacob Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ const struct commands com[] = {
 	{ "setspos",    MTIOCSLOCATE, 0,          1,  0 },
 	{ "status",	MTIOCGET,     MTNOP,      1,  0 },
 	{ "weof",	MTIOCTOP,     MTWEOF,     0,  1 },
+	{ "eew",	MTIOCTOP,     MTEWARN,    1,  0 },
 	{ NULL }
 };
 
