@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.2 1999/02/13 02:54:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 1999/05/19 04:17:50 gwr Exp $
 
 PROG=	netstat
 SRCS=	if.c inet.c main.c mbuf.c route.c
 
-SRCDIR= ${.CURDIR}/../../../usr.bin/netstat
+SRCDIR= ${BSDSRCDIR}/usr.bin/netstat
 CPPFLAGS+= -DSMALL -I${SRCDIR}
 LDADD=	-lkvm
 DPADD=	${LIBKVM}
