@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.32 1997/05/09 13:25:56 mycroft Exp $
+#	$NetBSD: bsd.man.mk,v 1.33 1997/06/30 19:26:21 phil Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(.MAIN)
@@ -14,14 +14,21 @@ cleandir:	cleanman
 
 MANTARGET?=	cat
 NROFF?=		nroff
+TBL?=		tbl
 
 .SUFFIXES: .1 .2 .3 .4 .5 .6 .7 .8 .9 \
 	   .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3.cat3 .2.cat2 .1.cat1:
+.if !defined(USETBL)
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
 	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || \
 	 (rm -f ${.TARGET}; false)
+.else
+	@echo "${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET}"
+	@${TBL} ${.IMPSRC} | ${NROFF} -mandoc > ${.TARGET} || \
+	 (rm -f ${.TARGET}; false)
+.endif
 
 .if defined(MAN) && !empty(MAN)
 MANPAGES=	${MAN}
