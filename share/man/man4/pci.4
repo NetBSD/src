@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.35 2000/07/26 12:04:44 ad Exp $
+.\"	$NetBSD: pci.4,v 1.36 2000/10/20 11:47:43 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -121,6 +121,8 @@ interfaces.
 Compaq array controllers.
 .It pciide
 IDE disk controllers.
+.It twe
+3Ware Escalade RAID controllers.
 .El
 .Pp
 .Ss Network interfaces
@@ -298,6 +300,7 @@ VGA graphics boards.
 .Xr sv 4 ,
 .Xr tl 4 ,
 .Xr tlp 4 ,
+.Xr twe 4 ,
 .Xr uhci 4 ,
 .Xr vga 4 ,
 .Xr viapm 4 ,
