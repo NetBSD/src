@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.127.2.4 2001/05/01 15:43:36 he Exp $
+# $NetBSD: ALPHA,v 1.127.2.5 2001/10/25 18:05:36 he Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.127.2.4 $"
+ident		"ALPHA-$Revision: 1.127.2.5 $"
 
 maxusers 32
 
@@ -247,6 +247,7 @@ isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
 le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
 #ncr*	at	pci? dev ? function ?		# NCR 53c8xx SCSI
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
+mlx*	at	pci? dev ? function ?		# Mylex DAC960 family
 ne*	at	pci? dev ? function ?		# NE2000-compatible Ethernet
 ohci*	at	pci? dev ? function ?		# USB Open Host Controller
 pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
@@ -406,7 +407,8 @@ cd*	at	atapibus? drive ?		# ATAPI CD-ROM devices
 fd*	at	fdc? drive ?
 
 # Hardware RAID devices
-ca*	at	cac? unit ?
+ld*	at	cac? unit ?
+ld*	at	mlx? unit ?
 
 # USB bus support
 usb*	at uhci?

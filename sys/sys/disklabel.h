@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.60.4.2 2001/05/01 12:26:56 he Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.60.4.3 2001/10/25 18:05:37 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -265,6 +265,7 @@ struct olddisklabel {
 #define	DTYPE_VND		12		/* vnode pseudo-disk */
 #define DTYPE_ATAPI		13		/* ATAPI */
 #define	DTYPE_RAID		14		/* RAIDframe */
+#define DTYPE_LD		15		/* logical disk */
 
 #ifdef DKTYPENAMES
 static const char *const dktypenames[] = {
@@ -283,6 +284,7 @@ static const char *const dktypenames[] = {
 	"vnd",
 	"ATAPI",
 	"RAID",
+	"ld",
 	NULL
 };
 #define DKMAXTYPES	(sizeof(dktypenames) / sizeof(dktypenames[0]) - 1)

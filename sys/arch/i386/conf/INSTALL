@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.148.2.4 2001/04/25 09:06:31 he Exp $
+#	$NetBSD: INSTALL,v 1.148.2.5 2001/10/25 18:05:29 he Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -147,6 +147,7 @@ options 	INET6		# IPv6
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	SCSIVERBOSE	# human readable SCSI error messages
+#options	I2OVERBOSE	# verobse I2O driver messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -282,6 +283,10 @@ com2	at isa? port 0x3e8 irq 5
 #lpt1	at isa? port 0x278
 #lpt2	at isa? port 0x3bc
 
+# I2O devices
+iop*	at pci? dev ? function ?	# I/O processors
+iopsp*	at iop? tid ?			# SCSI ports
+ld*	at iop? tid ?			# block devices
 
 # SCSI Controllers and Devices
 
@@ -337,6 +342,7 @@ scsibus* at ahc?
 scsibus* at aic?
 scsibus* at bha?
 scsibus* at dpt?
+scsibus* at iopsp?
 scsibus* at isp?
 #scsibus* at nca?
 #scsibus* at ncr?
@@ -354,11 +360,15 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-
 # RAID controllers and devices
-cac*	at pci? dev ? function ?	# Compaq PCI array controllers
-ca*	at cac? unit ?			# Compaq array disk devices
+cac*	at eisa? slot ?			# Compaq array controllers
+cac*	at pci? dev ? function ?	# Compaq array controllers
+mlx*	at pci? dev ? function ?	# Mylex DAC960 family
+twe*	at pci? dev ? function ?	# 3ware Escalade family
 
+ld*	at cac? unit ?
+ld*	at mlx? unit ?
+ld*	at twe? unit ?
 
 # IDE and related devices
 # PCI IDE controllers - see pciide(4) for supported hardware.

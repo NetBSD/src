@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.47.2.1 2001/05/01 10:42:41 he Exp $ */
+/* $NetBSD: conf.c,v 1.47.2.2 2001/10/25 18:05:30 he Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.1 2001/05/01 10:42:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.47.2.2 2001/10/25 18:05:30 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,8 +70,8 @@ bdev_decl(raid);
 bdev_decl(ccd);
 #include "md.h"
 bdev_decl(md);
-#include "ca.h"
-bdev_decl(ca);
+#include "ld.h"
+bdev_decl(ld);
 
 struct bdevsw	bdevsw[] =
 {
@@ -92,7 +92,7 @@ struct bdevsw	bdevsw[] =
 	bdev_lkm_dummy(),		/* 14 */
 	bdev_lkm_dummy(),		/* 15 */
 	bdev_disk_init(NRAID,raid),	/* 16: RAIDframe disk driver */
-	bdev_disk_init(NCA,ca),		/* 17: Compaq array */
+	bdev_disk_init(NLD,ld),		/* 17: Compaq array */
 };
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 
@@ -161,6 +161,8 @@ cdev_decl(satlink);
 cdev_decl(midi);
 #include "sequencer.h"
 cdev_decl(music);
+#include "mlx.h"
+cdev_decl(mlx);
 
 #include "a12dc.h"
 #include "scc.h"
@@ -330,9 +332,16 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NWSMUX, wsmux),	/* 56: ws multiplexor */
 	cdev_tty_init(NUCOM, ucom),	/* 57: USB tty */
 	cdev_ses_init(NSES,ses),	/* 58: SCSI SES/SAF-TE */
-	cdev_disk_init(NCA,ca),		/* 59: Compaq array */
+	cdev_disk_init(NLD,ld),		/* 59: Compaq array */
 	cdev_tty_init(NCY,cy),		/* 60: Cyclades Cyclom-Y serial */
 	cdev_tty_init(NCZ,cztty),	/* 61: Cyclades-Z serial */
+	cdev_notdef(),			/* 62: reserved */
+	cdev_notdef(),			/* 63: reserved */
+	cdev_notdef(),			/* 64: reserved */
+	cdev__oci_init(NMLX,mlx),	/* 65: Mylex DAC960 control interface */
+	cdev_notdef(),			/* 66: reserved */
+	cdev_notdef(),			/* 67: reserved */
+	cdev_notdef(),			/* 68: reserved */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
@@ -436,6 +445,13 @@ static int chrtoblktbl[] = {
 	/* 59 */	17,
 	/* 60 */	NODEV,
 	/* 61 */	NODEV,
+	/* 62 */	NODEV,
+	/* 63 */	NODEV,
+	/* 64 */	NODEV,
+	/* 65 */	NODEV,
+	/* 66 */	NODEV,
+	/* 67 */	NODEV,
+	/* 68 */	NODEV,
 };
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.96.2.9 2001/05/06 15:14:14 he Exp $
+#	$NetBSD: files.pci,v 1.96.2.10 2001/10/25 18:05:24 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -37,9 +37,25 @@ file	dev/pci/cy82c693.c		cy82c693
 attach	ahc at pci with ahc_pci: ahc_seeprom, smc93cx6
 file	dev/pci/ahc_pci.c		ahc_pci
 
+# I2O adapters
+attach	iop at pci with iop_pci
+file	dev/pci/iop_pci.c		iop_pci
+
+# 3ware RAID controllers
+device	twe {unit = -1}
+attach	twe at pci
+file	dev/pci/twe.c			twe
+
+attach	ld at twe with ld_twe
+file	dev/pci/ld_twe.c		ld_twe
+
 # Compaq RAID controllers
 attach	cac at pci with cac_pci
 file	dev/pci/cac_pci.c		cac_pci
+
+# Mylex DAC960 RAID controllers
+attach	mlx at pci with mlx_pci
+file	dev/pci/mlx_pci.c		mlx_pci
 
 # DPT EATA SCSI controllers
 attach	dpt at pci with dpt_pci
