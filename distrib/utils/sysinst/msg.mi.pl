@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.10 2002/08/02 04:08:48 grant Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.11 2003/05/16 19:29:19 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -842,6 +842,10 @@ do instalacji. Zrestartuj komputer i sprobuj jeszcze raz.}
 message rootpw
 {Haslo root'a w nowo zainstalowanym systemie nie zostalo jeszcze ustawione,
 i dlatego jest puste. Czy chcesz ustawic haslo dla root'a teraz?}
+
+message rootsh	/* XXX translate */
+{You can now select which shell to use for the root user. The default is
+/bin/csh, but you may prefer another one.}
 
 message label_size_special
 {
