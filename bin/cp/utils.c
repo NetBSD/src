@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.18 2001/07/18 11:01:54 tron Exp $	*/
+/*	$NetBSD: utils.c,v 1.19 2001/08/30 04:45:56 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.18 2001/07/18 11:01:54 tron Exp $");
+__RCSID("$NetBSD: utils.c,v 1.19 2001/08/30 04:45:56 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,9 +83,7 @@ copy_file(entp, dne)
 	static char buf[MAXBSIZE];
 	struct stat to_stat, *fs;
 	int ch, checkch, from_fd, rcount, rval, to_fd, wcount;
-#ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
 	char *p;
-#endif
 	
 	if ((from_fd = open(entp->fts_path, O_RDONLY, 0)) == -1) {
 		warn("%s", entp->fts_path);
@@ -141,33 +139,35 @@ copy_file(entp, dne)
 	 * There's no reason to do anything other than close the file
 	 * now if it's empty, so let's not bother.
 	 */
+
 	if (fs->st_size > 0) {
+
 		/*
-		 * Mmap and write if less than 8M (the limit is so we don't totally
-		 * trash memory on big files).  This is really a minor hack, but it
-		 * wins some CPU back.
+		 * Mmap and write if less than 8M (the limit is so
+		 * we don't totally trash memory on big files).
+		 * This is really a minor hack, but it wins some CPU back.
 		 */
-#ifdef VM_AND_BUFFER_CACHE_SYNCHRONIZED
+
 		if (fs->st_size <= 8 * 1048576) {
-			if ((p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
-			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0)) == (char *)-1) {
-				warn("%s", entp->fts_path);
-				rval = 1;
+			p = mmap(NULL, (size_t)fs->st_size, PROT_READ,
+			    MAP_FILE|MAP_SHARED, from_fd, (off_t)0);
+			if (p == MAP_FAILED) {
+				goto mmap_failed;
 			} else {
-				(void) madvise(p, (size_t)fs->st_size, MADV_SEQUENTIAL);
-				if (write(to_fd, p, fs->st_size) != fs->st_size) {
+				(void) madvise(p, (size_t)fs->st_size,
+				     MADV_SEQUENTIAL);
+				if (write(to_fd, p, fs->st_size) !=
+				    fs->st_size) {
 					warn("%s", to.p_path);
 					rval = 1;
 				}
-				/* Some systems don't unmap on close(2). */
 				if (munmap(p, fs->st_size) < 0) {
 					warn("%s", entp->fts_path);
 					rval = 1;
 				}
 			}
-		} else
-#endif
-		{
+		} else {
+mmap_failed:
 			while ((rcount = read(from_fd, buf, MAXBSIZE)) > 0) {
 				wcount = write(to_fd, buf, rcount);
 				if (rcount != wcount || wcount == -1) {
