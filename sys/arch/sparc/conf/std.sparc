@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc,v 1.15 1999/03/24 06:06:11 mrg Exp $
+#	$NetBSD: std.sparc,v 1.16 1999/06/06 13:00:03 mrg Exp $
 
 #
 # Mandatory NetBSD/sparc kernel options.
@@ -9,4 +9,5 @@ machine		sparc		# Machine architecture; required by config(8)
 #options 	PMAP_NEW	# new pmap(9) interfaces
 
 options 	EXEC_AOUT	# execve(2) support for a.out binaries
+options 	EXEC_ELF32	# execve(2) support for a.out binaries
 options 	EXEC_SCRIPT	# execve(2) support for scripts
