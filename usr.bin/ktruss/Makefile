@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 1999/07/12 04:13:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1999/07/28 01:56:06 enami Exp $
 
 PROG=		ktruss
 SRCS=		ktrace.c dump.c subr.c ioctl.c misc.c
-LDSTATIC?=	-static
 CPPFLAGS+=	-I. -I${.CURDIR}/../ktrace -I${.CURDIR}/../../sys -DKTRUSS
 LDSTATIC?=	-static
 CLEANFILES+=	misc.c misc.h ioctl.c

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.152 1999/07/22 01:17:41 hubertf Exp $
+# $NetBSD: mi,v 1.153 1999/07/28 01:56:04 enami Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -150,6 +150,7 @@
 ./usr/share/man/cat1/kill.0
 ./usr/share/man/cat1/ksh.0
 ./usr/share/man/cat1/ktrace.0
+./usr/share/man/cat1/ktruss.0
 ./usr/share/man/cat1/lam.0
 ./usr/share/man/cat1/last.0
 ./usr/share/man/cat1/lastcomm.0
@@ -1287,6 +1288,7 @@
 ./usr/share/man/man1/kill.1
 ./usr/share/man/man1/ksh.1
 ./usr/share/man/man1/ktrace.1
+./usr/share/man/man1/ktruss.1
 ./usr/share/man/man1/lam.1
 ./usr/share/man/man1/last.1
 ./usr/share/man/man1/lastcomm.1
