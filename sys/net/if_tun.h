@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.7 1998/01/05 05:08:43 perry Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.8 1998/03/18 21:21:48 tv Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,6 +19,7 @@
 #ifndef _NET_IF_TUN_H_
 #define _NET_IF_TUN_H_
 
+#ifdef _KERNEL
 struct tun_softc {
 	u_short	tun_flags;		/* misc flags */
 #define	TUN_OPEN	0x0001
@@ -41,6 +42,7 @@ struct tun_softc {
 	caddr_t		tun_bpf;
 #endif
 };
+#endif	/* _KERNEL */
 
 /* Maximum packet size */
 #define	TUNMTU		1500
