@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.111 2004/03/14 21:08:10 simonb Exp $
+$NetBSD: UPDATING,v 1.112 2004/03/16 14:33:03 keihan Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -29,7 +29,7 @@ Recent changes:
 	to complete the filesystem upgrade.  A message has
 	been added to the kernel which should detect this problem.
 	See the following discussion for more information:
-	http://mail-index.netbsd.org/current-users/2004/01/11/0022.html
+	http://mail-index.NetBSD.org/current-users/2004/01/11/0022.html
 
 20031203:
 	New binutils builds may fail due to old dependencies.
