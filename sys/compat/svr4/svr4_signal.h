@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.h,v 1.7 1995/03/31 03:06:28 christos Exp $	 */
+/*	$NetBSD: svr4_signal.h,v 1.8 1995/08/13 22:57:12 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -118,9 +118,8 @@ typedef struct svr4_sigaltstack {
 #define SVR4_SS_ONSTACK		0x00000001
 #define SVR4_SS_DISABLE		0x00000002
 
-int  bsd_to_svr4_signum __P((int));
-void bsd_to_svr4_sigset_t __P((const sigset_t *, svr4_sigset_t *));
-void svr4_to_bsd_sigset_t __P((const svr4_sigset_t *, sigset_t *));
+void bsd_to_svr4_sigset __P((const sigset_t *, svr4_sigset_t *));
+void svr4_to_bsd_sigset __P((const svr4_sigset_t *, sigset_t *));
 void bsd_to_svr4_sigaltstack __P((const struct sigaltstack *, svr4_stack_t *));
 void svr4_to_bsd_sigaltstack __P((const svr4_stack_t *, struct sigaltstack *));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_signal.c,v 1.12 1995/06/24 20:29:25 christos Exp $	 */
+/*	$NetBSD: svr4_signal.c,v 1.13 1995/08/13 22:57:10 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -40,327 +40,343 @@
 #include <sys/malloc.h>
 
 #include <sys/syscallargs.h>
+
 #include <compat/svr4/svr4_types.h>
-#include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_util.h>
+#include <compat/svr4/svr4_ucontext.h>
 
-static int  svr4_to_bsd_signum __P((int sn));
 static void bsd_to_svr4_sigaction __P((const struct sigaction *bsa, 
 				       struct svr4_sigaction *ssa));
 static void svr4_to_bsd_sigaction __P((const struct svr4_sigaction *ssa,
 				       struct sigaction *bsa));
-static int  svr4_to_bsd_sigaction_flags __P((int flgs));
-static int  bsd_to_svr4_sigaction_flags __P((int flgs));
-static int  svr4_sigismember __P((const svr4_sigset_t *ss, int sn));
-static int  svr4_sigaddset __P((svr4_sigset_t *ss, int sn));
 
-#define SVR4_SSN (sizeof(ss->bits[0]) * 8)
+#define sigemptyset(s)		bzero((s), sizeof(*(s)))
+#define sigismember(s, n)	(*(s) & sigmask(n))
+#define sigaddset(s, n)		(*(s) |= sigmask(n))
 
-#define sigemptyset(bs)	bzero((bs), sizeof(*(bs)))
-#define sigaddset(bs, n)	*(bs) |= sigmask(n)
-#define sigismember(bs, n)	(*(bs) & sigmask(n)) != 0
-#define svr4_sigemptyset(ss)	bzero((ss), sizeof(*(ss)))
+#define	svr4_sigmask(n)		(1 << (((n) - 1) & (32 - 1)))
+#define	svr4_sigword(n)		(((n) - 1) >> 5)
+#define svr4_sigemptyset(s)	bzero((s), sizeof(*(s)))
+#define	svr4_sigismember(s, n)	((s)->bits[svr4_sigword(n)] & svr4_sigmask(n))
+#define	svr4_sigaddset(s, n)	((s)->bits[svr4_sigword(n)] |= svr4_sigmask(n))
 
-static int
-svr4_sigismember(ss, sn)
-	const svr4_sigset_t *ss;
-	int sn;
+static inline int
+svr4_sigfillset(s)
+	svr4_sigset_t *s;
 {
-	int i = sn / SVR4_SSN;
-	if (sn >= SVR4_NSIG || sn < 0)
-		return 0;
-	return (ss->bits[i] & (1 << ((sn - (i * SVR4_SSN)) - 1))) != 0;
 
+	svr4_sigemptyset(s);
+	for (i = 1; i < SVR4_NSIG; i++)
+		svr4_sigaddset(s, i);
 }
 
+int bsd_to_svr4_sig[] = {
+	0,
+	SVR4_SIGHUP,
+	SVR4_SIGINT,
+	SVR4_SIGQUIT,
+	SVR4_SIGILL,
+	SVR4_SIGTRAP,
+	SVR4_SIGABRT,
+	SVR4_SIGEMT,
+	SVR4_SIGFPE,
+	SVR4_SIGKILL,
+	SVR4_SIGBUS,
+	SVR4_SIGSEGV,
+	SVR4_SIGSYS,
+	SVR4_SIGPIPE,
+	SVR4_SIGALRM,
+	SVR4_SIGTERM,
+	SVR4_SIGURG,
+	SVR4_SIGSTOP,
+	SVR4_SIGTSTP,
+	SVR4_SIGCONT,
+	SVR4_SIGCHLD,
+	SVR4_SIGTTIN,
+	SVR4_SIGTTOU,
+	SVR4_SIGIO,
+	SVR4_SIGXCPU,
+	SVR4_SIGXFSZ,
+	SVR4_SIGVTALRM,
+	SVR4_SIGPROF,
+	SVR4_SIGWINCH,
+	0,
+	SVR4_SIGUSR1,
+	SVR4_SIGUSR2,
+};
 
-static int
-svr4_sigaddset(ss, sn)
-	svr4_sigset_t *ss;
-	int sn;
-{
-	int i = sn / SVR4_SSN;
-	if (sn >= SVR4_NSIG || sn < 0)
-		return EINVAL;
-	ss->bits[i] |= (1 << ((sn - (i * SVR4_SSN)) - 1));
-	return 0;
-}
-
-
-static int
-svr4_to_bsd_signum(sn)
-	int	sn;
-{
-	switch (sn) {
-	case SVR4_SIGHUP:
-		return SIGHUP;
-	case SVR4_SIGINT:
-		return SIGINT;
-	case SVR4_SIGQUIT:
-		return SIGQUIT;
-	case SVR4_SIGILL:
-		return SIGILL;
-	case SVR4_SIGTRAP:
-		return SIGTRAP;
-	case SVR4_SIGABRT:
-		return SIGABRT;
-	case SVR4_SIGEMT:
-		return SIGEMT;
-	case SVR4_SIGFPE:
-		return SIGFPE;
-	case SVR4_SIGKILL:
-		return SIGKILL;
-	case SVR4_SIGBUS:
-		return SIGBUS;
-	case SVR4_SIGSEGV:
-		return SIGSEGV;
-	case SVR4_SIGSYS:
-		return SIGSYS;
-	case SVR4_SIGPIPE:
-		return SIGPIPE;
-	case SVR4_SIGALRM:
-		return SIGALRM;
-	case SVR4_SIGTERM:
-		return SIGTERM;
-	case SVR4_SIGUSR1:
-		return SIGUSR1;
-	case SVR4_SIGUSR2:
-		return SIGUSR2;
-	case SVR4_SIGCHLD:
-		return SIGCHLD;
-	case SVR4_SIGPWR:
-		return NSIG;
-	case SVR4_SIGWINCH:
-		return SIGWINCH;
-	case SVR4_SIGURG:
-		return SIGURG;
-	case SVR4_SIGIO:
-		return SIGIO;
-	case SVR4_SIGSTOP:
-		return SIGSTOP;
-	case SVR4_SIGTSTP:
-		return SIGTSTP;
-	case SVR4_SIGCONT:
-		return SIGCONT;
-	case SVR4_SIGTTIN:
-		return SIGTTIN;
-	case SVR4_SIGTTOU:
-		return SIGTTOU;
-	case SVR4_SIGVTALRM:
-		return SIGVTALRM;
-	case SVR4_SIGPROF:
-		return SIGPROF;
-	case SVR4_SIGXCPU:
-		return SIGXCPU;
-	case SVR4_SIGXFSZ:
-		return SIGXFSZ;
-	default:
-		return NSIG;
-	}
-}
-
-int
-bsd_to_svr4_signum(sn)
-	int	sn;
-{
-	switch (sn) {
-	case SIGHUP:
-		return SVR4_SIGHUP;
-	case SIGINT:
-		return SVR4_SIGINT;
-	case SIGQUIT:
-		return SVR4_SIGQUIT;
-	case SIGILL:
-		return SVR4_SIGILL;
-	case SIGTRAP:
-		return SVR4_SIGTRAP;
-	case SIGABRT:
-		return SVR4_SIGABRT;
-	case SIGEMT:
-		return SVR4_SIGEMT;
-	case SIGFPE:
-		return SVR4_SIGFPE;
-	case SIGKILL:
-		return SVR4_SIGKILL;
-	case SIGBUS:
-		return SVR4_SIGBUS;
-	case SIGSEGV:
-		return SVR4_SIGSEGV;
-	case SIGSYS:
-		return SVR4_SIGSYS;
-	case SIGPIPE:
-		return SVR4_SIGPIPE;
-	case SIGALRM:
-		return SVR4_SIGALRM;
-	case SIGTERM:
-		return SVR4_SIGTERM;
-	case SIGURG:
-		return SVR4_SIGURG;
-	case SIGSTOP:
-		return SVR4_SIGSTOP;
-	case SIGTSTP:
-		return SVR4_SIGTSTP;
-	case SIGCONT:
-		return SVR4_SIGCONT;
-	case SIGCHLD:
-		return SVR4_SIGCHLD;
-	case SIGTTIN:
-		return SVR4_SIGTTIN;
-	case SIGTTOU:
-		return SVR4_SIGTTOU;
-	case SIGIO:
-		return SVR4_SIGIO;
-	case SIGXCPU:
-		return SVR4_SIGXCPU;
-	case SIGXFSZ:
-		return SVR4_SIGXFSZ;
-	case SIGVTALRM:
-		return SVR4_SIGVTALRM;
-	case SIGWINCH:
-		return SVR4_SIGWINCH;
-	case SIGINFO:
-		return SVR4_NSIG;
-	case SIGUSR1:
-		return SVR4_SIGUSR1;
-	case SIGUSR2:
-		return SVR4_SIGUSR2;
-	default:
-		return SVR4_NSIG;
-	}
-}
+int svr4_to_bsd_sig[] = {
+	0,
+	SIGHUP,
+	SIGINT,
+	SIGQUIT,
+	SIGILL,
+	SIGTRAP,
+	SIGABRT,
+	SIGEMT,
+	SIGFPE,
+	SIGKILL,
+	SIGBUS,
+	SIGSEGV,
+	SIGSYS,
+	SIGPIPE,
+	SIGALRM,
+	SIGTERM,
+	SIGUSR1,
+	SIGUSR2,
+	SIGCHLD,
+	0,
+	SIGWINCH,
+	SIGURG,
+	SIGIO,
+	SIGSTOP,
+	SIGTSTP,
+	SIGCONT,
+	SIGTTIN,
+	SIGTTOU,
+	SIGVTALRM,
+	SIGPROF,
+	SIGXCPU,
+	SIGXFSZ,
+};
 
 void
-svr4_to_bsd_sigset_t(ss, bs)
-	const svr4_sigset_t 	*ss;
-	sigset_t 		*bs;
+svr4_to_bsd_sigset(sss, bss)
+	const svr4_sigset_t *sss;
+	sigset_t *bss;
 {
-	int i;
-	sigemptyset(bs);
-	for (i = 0; i < SVR4_NSIG; i++)
-		if (svr4_sigismember(ss, i))
-			sigaddset(bs, svr4_to_bsd_signum(i));
+	int i, newsig;
+
+	sigemptyset(bss);
+	for (i = 1; i < SVR4_NSIG; i++) {
+		if (svr4_sigismember(sss, i)) {
+			newsig = svr4_to_bsd_sig[i];
+			if (newsig)
+				sigaddset(bss, newsig);
+		}
+	}
 }
 
 
 void
-bsd_to_svr4_sigset_t(bs, ss)
-	const sigset_t 	*bs;
-	svr4_sigset_t 	*ss;
+bsd_to_svr4_sigset(bss, sss)
+	const sigset_t *bss;
+	svr4_sigset_t *sss;
 {
-	int i;
-	svr4_sigemptyset(ss);
-	for (i = 0; i < NSIG; i++)
-		if (sigismember(bs, i))
-			svr4_sigaddset(ss, bsd_to_svr4_signum(i));
+	int i, newsig;
+
+	svr4_sigemptyset(sss);
+	for (i = 1; i < NSIG; i++) {
+		if (sigismember(bss, i)) {
+			newsig = bsd_to_svr4_sig[i];
+			if (newsig)
+				svr4_sigaddset(sss, newsig);
+		}
+	}
 }
 
 /*
  * XXX: Only a subset of the flags is currently implemented.
  */
-static int
-bsd_to_svr4_sigaction_flags(flgs)
-	int flgs;
-{
-	int rv = 0;
-
-#define SETFLAG(_a)	if (flgs & __CONCAT(SA_,_a)) rv |= __CONCAT(SVR4_SA_,_a)
-	SETFLAG(ONSTACK);
-	SETFLAG(RESTART);
-	SETFLAG(NOCLDSTOP);
-	return rv;
-#undef SETFLAG
-}
-
-
-static int
-svr4_to_bsd_sigaction_flags(flgs)
-	int flgs;
-{
-	int rv = 0;
-
-#define SETFLAG(_a)	if (flgs & __CONCAT(SVR4_SA_,_a)) rv |= __CONCAT(SA_,_a)
-	SETFLAG(ONSTACK);
-	SETFLAG(RESTART);
-	SETFLAG(NOCLDSTOP);
-	return rv;
-#undef SETFLAG
-}
-
-
-static void
-bsd_to_svr4_sigaction(bsa, ssa)
-	const struct sigaction *bsa;
-	struct svr4_sigaction *ssa;
-{
-	ssa->sa_handler = bsa->sa_handler;
-	bsd_to_svr4_sigset_t(&bsa->sa_mask, &ssa->sa_mask);
-	ssa->sa_flags = bsd_to_svr4_sigaction_flags(bsa->sa_flags);
-}
-
-
-static void
+void
 svr4_to_bsd_sigaction(ssa, bsa)
 	const struct svr4_sigaction *ssa;
 	struct sigaction *bsa;
 {
+
 	bsa->sa_handler = ssa->sa_handler;
-	svr4_to_bsd_sigset_t(&ssa->sa_mask, &bsa->sa_mask);
-	bsa->sa_flags = svr4_to_bsd_sigaction_flags(ssa->sa_flags);
+	svr4_to_bsd_sigset(&ssa->sa_mask, &bsa->sa_mask);
+	bsa->sa_flags = 0;
+	if ((ssa->sa_flags & SVR4_SA_ONSTACK) != 0)
+		bsa->sa_flags |= SA_ONSTACK;
+	if ((ssa->sa_flags & SVR4_SA_RESTART) != 0)
+		bsa->sa_flags |= SA_RESTART;
+	if ((ssa->sa_flags & SVR4_SA_RESETHAND) != 0)
+		bsa->sa_flags |= SA_RESETHAND;
+	if ((ssa->sa_flags & SVR4_SA_NOCLDSTOP) != 0)
+		bsa->sa_flags |= SA_NOCLDSTOP;
+	if ((ssa->sa_flags & SVR4_SA_NODEFER) != 0)
+		bsa->sa_flags |= SA_NODEFER;
 }
-
 
 void
-bsd_to_svr4_sigaltstack(bs, ss)
-	const struct sigaltstack *bs;
-	svr4_stack_t *ss;
+bsd_to_svr4_sigaction(bsa, ssa)
+	const struct sigaction *bsa;
+	struct svr4_sigaction *ssa;
 {
-	ss->ss_sp = bs->ss_base;
-	ss->ss_size = bs->ss_size;
-	ss->ss_flags = 0;
 
-	if (bs->ss_flags & SA_DISABLE)
-		ss->ss_flags |= SVR4_SS_DISABLE;
-
-	if (bs->ss_flags & SA_ONSTACK)
-		ss->ss_flags |= SVR4_SS_ONSTACK;
+	ssa->sa_handler = bsa->sa_handler;
+	bsd_to_svr4_sigset(&bsa->sa_mask, &ssa->sa_mask);
+	ssa->sa_flags = 0;
+	if ((bsa->sa_flags & SA_ONSTACK) != 0)
+		ssa->sa_flags |= SA_ONSTACK;
+	if ((bsa->sa_flags & SA_RESETHAND) != 0)
+		ssa->sa_flags |= SA_RESETHAND;
+	if ((bsa->sa_flags & SA_RESTART) != 0)
+		ssa->sa_flags |= SA_RESTART;
+	if ((bsa->sa_flags & SA_NODEFER) != 0)
+		ssa->sa_flags |= SA_NODEFER;
+	if ((bsa->sa_flags & SA_NOCLDSTOP) != 0)
+		ssa->sa_flags |= SA_NOCLDSTOP;
 }
-
 
 void
-svr4_to_bsd_sigaltstack(ss, bs)
-	const svr4_stack_t *ss;
-	struct sigaltstack *bs;
+svr4_to_bsd_sigaltstack(sss, bss)
+	const svr4_stack_t *sss;
+	struct sigaltstack *bss;
 {
-	bs->ss_base = ss->ss_sp;
-	bs->ss_size = ss->ss_size;
-	bs->ss_flags = 0;
 
-	if (ss->ss_flags & SVR4_SS_DISABLE)
-		bs->ss_flags |= SA_DISABLE;
+	bss->ss_base = sss->ss_sp;
+	bss->ss_size = sss->ss_size;
+	bss->ss_flags = 0;
 
-	if (ss->ss_flags & SVR4_SS_ONSTACK)
-		bs->ss_flags |= SA_ONSTACK;
+	if ((sss->ss_flags & SVR4_SS_DISABLE) != 0)
+		bss->ss_flags |= SS_DISABLE;
+	if ((sss->ss_flags & SVR4_SS_ONSTACK) != 0)
+		bss->ss_flags |= SS_ONSTACK;
 }
 
+void
+bsd_to_svr4_sigaltstack(bss, sss)
+	const struct sigaltstack *bss;
+	svr4_stack_t *sss;
+{
+
+	sss->ss_sp = bss->ss_base;
+	sss->ss_size = bss->ss_size;
+	sss->ss_flags = 0;
+
+	if ((bss->ss_flags & SS_DISABLE) != 0)
+		sss->ss_flags |= SVR4_SS_DISABLE;
+	if ((bss->ss_flags & SS_ONSTACK) != 0)
+		sss->ss_flags |= SVR4_SS_ONSTACK;
+}
+
+int
+svr4_sigaction(p, uap, retval)
+	register struct proc *p;
+	struct svr4_sigaction_args /* {
+		syscallarg(int) signum;
+		syscallarg(struct svr4_sigaction *) nsa;
+		syscallarg(struct svr4_sigaction *) osa;
+	} */ *uap;
+	register_t *retval;
+{
+	struct svr4_sigaction *nssa, *ossa, tmpssa;
+	struct sigaction *nbsa, *obsa, tmpbsa;
+	struct sigaction_args sa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+	nssa = SCARG(uap, nsa);
+	ossa = SCARG(uap, osa);
+
+	if (ossa != NULL)
+		obsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+	else
+		obsa = NULL;
+
+	if (nssa != NULL) {
+		nbsa = stackgap_alloc(&sg, sizeof(struct sigaction));
+		if ((error = copyin(nssa, &tmpssa, sizeof(tmpssa))) != 0)
+			return error;
+		svr4_to_bsd_sigaction(&tmpssa, &tmpbsa);
+		if ((error = copyout(&tmpbsa, nbsa, sizeof(tmpbsa))) != 0)
+			return error;
+	} else
+		nbsa = NULL;
+
+	SCARG(&sa, signum) = svr4_to_bsd_sig[SCARG(uap, signum)];
+	SCARG(&sa, nsa) = nbsa;
+	SCARG(&sa, osa) = obsa;
+
+	if ((error = sigaction(p, &sa, retval)) != 0)
+		return error;
+
+	if (ossa != NULL) {
+		if ((error = copyin(obsa, &tmpbsa, sizeof(tmpbsa))) != 0)
+			return error;
+		bsd_to_svr4_sigaction(&tmpbsa, &tmpssa);
+		if ((error = copyout(&tmpssa, ossa, sizeof(tmpssa))) != 0)
+			return error;
+	}
+
+	return 0;
+}
+
+int 
+svr4_sigaltstack(p, uap, retval)
+	register struct proc *p;
+	struct svr4_sigaltstack_args /* {
+		syscallarg(svr4_stack_t *) nss;
+		syscallarg(svr4_stack_t *) oss;
+	} */ *uap;
+	register_t *retval;
+{
+	struct svr4_stack_t *nsss, *osss, tmpsss;
+	struct sigaltstack *nbss, *obss, tmpbss;
+	struct sigaltstack_args sa;
+	caddr_t sg;
+	int error;
+
+	sg = stackgap_init(p->p_emul);
+	nsss = SCARG(uap, nss);
+	osss = SCARG(uap, oss);
+
+	if (osss != NULL)
+		obss = stackgap_alloc(&sg, sizeof(struct sigaltstack));
+	else
+		obss = NULL;
+
+	if (nsss != NULL) {
+		nbss = stackgap_alloc(&sg, sizeof(struct sigaltstack));
+		if ((error = copyin(nsss, &tmpsss, sizeof(tmpsss))) != 0)
+			return error;
+		svr4_to_bsd_sigaltstack(&tmpsss, &tmpbss);
+		if ((error = copyout(&tmpbss, nbss, sizeof(tmpbss))) != 0)
+			return error;
+	} else
+		nbss = NULL;
+
+	SCARG(&sa, nss) = nbss;
+	SCARG(&sa, oss) = obss;
+
+	if ((error = sigaltstack(p, &sa, retval)) != 0)
+		return error;
+
+	if (obss != NULL) {
+		if ((error = copyin(obss, &tmpbss, sizeof(tmpbss))) != 0)
+			return error;
+		bsd_to_svr4_sigaltstack(&tmpbss, &tmpsss);
+		if ((error = copyout(&tmpsss, osss, sizeof(tmpsss))) != 0)
+			return error;
+	}
+
+	return 0;
+}
 
 /*
  * Stolen from the ibcs2 one
  */
 int
 svr4_signal(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_signal_args	*uap;
-	register_t				*retval;
+	register struct proc *p;
+	struct svr4_signal_args	/* {
+		syscallarg(int) signum;
+		syscallarg(svr4_sig_t) handler;
+	} */ *uap;
+	register_t *retval;
 {
-	int	nsig = svr4_to_bsd_signum(SVR4_SIGNO(SCARG(uap, signum)));
-	int	error;
+	int signum = svr4_to_bsd_sig[SVR4_SIGNO(SCARG(uap, signum))];
+	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	if (nsig >= SVR4_NSIG || nsig < 0) {
+	if (signum <= 0 || signum >= SVR4_NSIG) {
 		if (SVR4_SIGCALL(SCARG(uap, signum)) == SVR4_SIGNAL_MASK ||
 		    SVR4_SIGCALL(SCARG(uap, signum)) == SVR4_SIGDEFER_MASK)
-			*retval = (int) SVR4_SIG_ERR;
+			*retval = (int)SVR4_SIG_ERR;
 		return EINVAL;
 	}
 
@@ -375,7 +391,7 @@ svr4_signal(p, uap, retval)
 			struct sigprocmask_args sa;
 
 			SCARG(&sa, how) = SIG_BLOCK;
-			SCARG(&sa, mask) = sigmask(nsig);
+			SCARG(&sa, mask) = sigmask(signum);
 			return sigprocmask(p, &sa, retval);
 		}
 		/* FALLTHROUGH */
@@ -389,7 +405,7 @@ svr4_signal(p, uap, retval)
 						sizeof(struct sigaction));
 			struct sigaction sa;
 
-			SCARG(&sa_args, signum) = nsig;
+			SCARG(&sa_args, signum) = signum;
 			SCARG(&sa_args, nsa) = sap;
 			SCARG(&sa_args, osa) = osap;
 
@@ -397,7 +413,7 @@ svr4_signal(p, uap, retval)
 			sa.sa_mask = (sigset_t) 0;
 			sa.sa_flags = 0;
 #if 0
-			if (nsig != SIGALRM)
+			if (signum != SIGALRM)
 				sa.sa_flags = SA_RESTART;
 #endif
 			error = copyout(&sa, sap, sizeof(sa));
@@ -422,7 +438,7 @@ svr4_signal(p, uap, retval)
 		{
 			struct sigprocmask_args sa;
 			SCARG(&sa, how) = SIG_BLOCK;
-			SCARG(&sa, mask) = sigmask(nsig);
+			SCARG(&sa, mask) = sigmask(signum);
 			return sigprocmask(p, &sa, retval);
 		}
 
@@ -430,7 +446,7 @@ svr4_signal(p, uap, retval)
 		{
 			struct sigprocmask_args sa;
 			SCARG(&sa, how) = SIG_UNBLOCK;
-			SCARG(&sa, mask) = sigmask(nsig);
+			SCARG(&sa, mask) = sigmask(signum);
 			return sigprocmask(p, &sa, retval);
 		}
 
@@ -441,7 +457,7 @@ svr4_signal(p, uap, retval)
 			struct sigaction sa;
 			struct sigaction_args sa_args;
 
-			SCARG(&sa_args, signum) = nsig;
+			SCARG(&sa_args, signum) = signum;
 			SCARG(&sa_args, nsa) = sap;
 			SCARG(&sa_args, osa) = NULL;
 			sa.sa_handler = SIG_IGN;
@@ -461,7 +477,7 @@ svr4_signal(p, uap, retval)
 	case SVR4_SIGPAUSE_MASK:
 		{
 			struct sigsuspend_args sa;
-			SCARG(&sa, mask) = p->p_sigmask & ~sigmask(nsig);
+			SCARG(&sa, mask) = p->p_sigmask & ~sigmask(signum);
 			return sigsuspend(p, &sa, retval);
 		}
 
@@ -470,44 +486,26 @@ svr4_signal(p, uap, retval)
 	}
 }
 
-
-int
-svr4_sigsuspend(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigsuspend_args	*uap;
-	register_t				*retval;
-{
-	svr4_sigset_t ss;
-	sigset_t bs;
-	struct sigsuspend_args sa;
-	int error;
-
-	if ((error = copyin(SCARG(uap, ss), &ss, sizeof(ss))) != 0)
-		return error;
-
-	svr4_to_bsd_sigset_t(&ss, &bs);
-
-	SCARG(&sa, mask) = bs;
-	return sigsuspend(p, &sa, retval);
-}
-
-
 int
 svr4_sigprocmask(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigprocmask_args	*uap;
-	register_t				*retval;
+	register struct proc *p;
+	struct svr4_sigprocmask_args /* {
+		syscallarg(int) how;
+		syscallarg(svr4_sigset_t *) set;
+		syscallarg(svr4_sigset_t *) oset;
+	} */ *uap;
+	register_t *retval;
 {
-	svr4_sigset_t ss;
-	sigset_t bs;
+	svr4_sigset_t sss;
+	sigset_t bss;
 	int error = 0;
 
 	*retval = 0;
 
 	if (SCARG(uap, oset) != NULL) {
 		/* Fix the return value first if needed */
-		bsd_to_svr4_sigset_t(&p->p_sigmask, &ss);
-		if ((error = copyout(&ss, SCARG(uap, oset), sizeof(ss))) != 0)
+		bsd_to_svr4_sigset(&p->p_sigmask, &sss);
+		if ((error = copyout(&sss, SCARG(uap, oset), sizeof(sss))) != 0)
 			return error;
 	}
 
@@ -515,24 +513,24 @@ svr4_sigprocmask(p, uap, retval)
 		/* Just examine */
 		return 0;
 
-	if ((error = copyin(SCARG(uap, set), &ss, sizeof(ss))) != 0)
+	if ((error = copyin(SCARG(uap, set), &sss, sizeof(sss))) != 0)
 		return error;
 
-	svr4_to_bsd_sigset_t(&ss, &bs);
+	svr4_to_bsd_sigset(&sss, &bss);
 
 	(void) splhigh();
 
 	switch (SCARG(uap, how)) {
 	case SVR4_SIG_BLOCK:
-		p->p_sigmask |= bs & ~sigcantmask;
+		p->p_sigmask |= bss & ~sigcantmask;
 		break;
 
 	case SVR4_SIG_UNBLOCK:
-		p->p_sigmask &= ~bs;
+		p->p_sigmask &= ~bss;
 		break;
 
 	case SVR4_SIG_SETMASK:
-		p->p_sigmask = bs & ~sigcantmask;
+		p->p_sigmask = bss & ~sigcantmask;
 		break;
 
 	default:
@@ -545,123 +543,83 @@ svr4_sigprocmask(p, uap, retval)
 	return error;
 }
 
-
 int
 svr4_sigpending(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigpending_args	*uap;
-	register_t				*retval;
+	register struct proc *p;
+	struct svr4_sigpending_args /* {
+		syscallarg(int) what;
+		syscallarg(svr4_sigset_t *) mask;
+	} */ *uap;
+	register_t *retval;
 {
-	svr4_sigset_t ss;
-
-	*retval = 0;
-
+	sigset_t bss;
+	svr4_sigset_t sss;
 
 	switch (SCARG(uap, what)) {
 	case 1:	/* sigpending */
 		if (SCARG(uap, mask) == NULL)
 			return 0;
-		else {
-			sigset_t bs = p->p_siglist & p->p_sigmask;
-
-			bsd_to_svr4_sigset_t(&bs, &ss);
-		}
+		bss = p->p_siglist & p->p_sigmask;
+		bsd_to_svr4_sigset(&bss, &sss);
 		break;
 
 	case 2:	/* sigfillset */
-		{
-			int i;
-
-			svr4_sigemptyset(&ss);
-
-			for (i = 1; i < SVR4_NSIG; i++)
-				svr4_sigaddset(&ss, i);
-		}
+		svr4_sigfillset(&sss);
 		break;
 
 	default:
 		return EINVAL;
 	}
 		
-	return copyout(&ss, SCARG(uap, mask), sizeof(ss));
+	return copyout(&sss, SCARG(uap, mask), sizeof(sss));
 }
-
 
 int
-svr4_sigaction(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigaction_args	*uap;
-	register_t				*retval;
+svr4_sigsuspend(p, uap, retval)
+	register struct proc *p;
+	struct svr4_sigsuspend_args /* {
+		syscallarg(svr4_sigset_t *) sss;
+	} */ *uap;
+	register_t *retval;
 {
-
-	struct sigaction *bosa = NULL;
-	struct sigaction *bnsa = NULL;
-	struct sigaction bsa;
-	struct sigaction_args sa_args;
-	struct svr4_sigaction sa;
-	caddr_t sg = stackgap_init(p->p_emul);
+	svr4_sigset_t sss;
+	sigset_t bss;
+	struct sigsuspend_args sa;
 	int error;
-	int nsig = svr4_to_bsd_signum(SCARG(uap, signum));
 
-	if (SCARG(uap, osa) != NULL)
-		bosa = stackgap_alloc(&sg, sizeof(struct sigaction));
-
-	if (SCARG(uap, nsa) != NULL) {
-		bnsa = stackgap_alloc(&sg, sizeof(struct sigaction));
-		if ((error = copyin(SCARG(uap, nsa), &sa, sizeof(sa))) != 0) {
-			DPRINTF(("copyin 1 %d\n", error));
-			return error;
-		}
-		svr4_to_bsd_sigaction(&sa, &bsa);
-		if ((error = copyout(&bsa, bnsa, sizeof(bsa))) != 0) {
-			DPRINTF(("copyout 1 %d\n", error));
-			return error;
-		}
-	}
-
-	SCARG(&sa_args, signum) = nsig;
-	SCARG(&sa_args, nsa) = bnsa;
-	SCARG(&sa_args, osa) = bosa;
-
-	if ((error = sigaction(p, &sa_args, retval)) != 0) {
-		DPRINTF(("sigaction %d\n", error));
+	if ((error = copyin(SCARG(uap, sss), &sss, sizeof(sss))) != 0)
 		return error;
-	}
 
-	if (SCARG(uap, osa) != NULL) {
-		if ((error = copyin(bosa, &bsa, sizeof(bsa))) != 0) {
-			DPRINTF(("copyout 2 %d\n", error));
-			return error;
-		}
-		bsd_to_svr4_sigaction(&bsa, &sa);
-		if ((error = copyout(&sa, SCARG(uap, osa), sizeof(sa))) != 0) {
-			DPRINTF(("copyout 3 %d\n", error));
-			return error;
-		}
-	}
+	svr4_to_bsd_sigset(&sss, &bss);
 
-	return 0;
+	SCARG(&sa, mask) = bss;
+	return sigsuspend(p, &sa, retval);
 }
-
 
 int
 svr4_kill(p, uap, retval)
-	register struct proc		*p;
-	register struct svr4_kill_args	*uap;
-	register_t			*retval;
+	register struct proc *p;
+	struct svr4_kill_args /* {
+		syscallarg(int) pid;
+		syscallarg(int) signum;
+	} */ *uap;
+	register_t *retval;
 {
-	struct kill_args ki_args;
-	SCARG(&ki_args, pid) = SCARG(uap, pid);
-	SCARG(&ki_args, signum) = svr4_to_bsd_signum(SCARG(uap, signum));
-	return kill(p, &ki_args, retval);
-}
+	struct kill_args ka;
 
+	SCARG(&ka, pid) = SCARG(uap, pid);
+	SCARG(&ka, signum) = svr4_to_bsd_sig[SCARG(uap, signum)];
+	return kill(p, &ka, retval);
+}
 
 int 
 svr4_context(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_context_args	*uap;
-	register_t				*retval;
+	register struct proc *p;
+	struct svr4_context_args /* {
+		syscallarg(int) func;
+		syscallarg(struct svr4_ucontext *) uc;
+	} */ *uap;
+	register_t *retval;
 {
 	struct svr4_ucontext uc;
 	int error;
@@ -684,51 +642,6 @@ svr4_context(p, uap, retval)
 		DPRINTF(("context(%d, %x)\n", SCARG(uap, func),
 			SCARG(uap, uc)));
 		return ENOSYS;
-	}
-	return 0;
-}
-
-
-int 
-svr4_sigaltstack(p, uap, retval)
-	register struct proc			*p;
-	register struct svr4_sigaltstack_args	*uap;
-	register_t				*retval;
-{
-	svr4_stack_t ss;
-	struct sigaltstack bs;
-	struct sigaltstack_args sa;
-	int error;
-	caddr_t sg = stackgap_init(p->p_emul);
-
-	if (SCARG(uap, nss)) {
-		if ((error = copyin(SCARG(uap, nss), &ss, sizeof(ss))) != 0)
-			return error;
-		svr4_to_bsd_sigaltstack(&ss, &bs);
-		SCARG(&sa, nss) = stackgap_alloc(&sg,
-						 sizeof(struct sigaltstack));
-		if ((error = copyout(&bs, SCARG(&sa, nss), sizeof(bs))) != 0)
-			return error;
-	}
-	else
-		SCARG(&sa, nss) = NULL;
-
-	if (SCARG(uap, oss))
-		SCARG(&sa, oss) = stackgap_alloc(&sg,
-						 sizeof(struct sigaltstack));
-	else
-		SCARG(&sa, oss) = NULL;
-
-
-	if ((error = sigaltstack(p, &sa, retval)) != 0)
-		return error;
-
-	if (SCARG(&sa, oss)) {
-		if ((error = copyin(SCARG(&sa, oss), &bs, sizeof(bs))) != 0)
-			return error;
-		bsd_to_svr4_sigaltstack(&bs, &ss);
-		if ((error = copyout(&ss, SCARG(uap, oss), sizeof(ss))) != 0)
-			return error;
 	}
 	return 0;
 }
