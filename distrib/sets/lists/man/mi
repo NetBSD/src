@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672.2.1 2004/04/12 04:06:13 grant Exp $
+# $NetBSD: mi,v 1.672.2.2 2004/04/30 04:05:21 jmc Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -747,6 +747,7 @@
 ./usr/share/man/cat4/ex.0			man-sys-catman		.cat
 ./usr/share/man/cat4/exphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/faith.0			man-sys-catman		.cat
+./usr/share/man/cat4/fast_ipsec.0		man-sys-catman		.cat
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fea.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
@@ -2815,6 +2816,7 @@
 ./usr/share/man/man4/ex.4			man-sys-man		.man
 ./usr/share/man/man4/exphy.4			man-sys-man		.man
 ./usr/share/man/man4/faith.4			man-sys-man		.man
+./usr/share/man/man4/fast_ipsec.4		man-sys-man		.man
 ./usr/share/man/man4/fd.4			man-sys-man		.man
 ./usr/share/man/man4/fea.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
