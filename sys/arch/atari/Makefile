@@ -1,44 +1,32 @@
-#	$NetBSD: Makefile,v 1.2 1996/03/18 21:08:36 leo Exp $
-#
-#	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#
-S=${BSDSRCDIR}/sys
-COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
-	$S/nfs/*.[ch] $S/netns/*.[ch] $S/netiso/*.[ch] \
-	$S/netiso/xebec/*.[ch] $S/netinet/*.[ch] $S/netccitt/*.[ch] \
-	$S/net/*.[ch] $S/miscfs/*/*.[ch] $S/kern/*.[ch] $S/dev/*.[ch] \
-	$S/scsi/*.[ch] $S/lib/libkern/m68k/*.[ch] $S/lib/libkern/*.[ch]
+#	$NetBSD: Makefile,v 1.3 1997/10/11 09:10:26 mycroft Exp $
 
-SUBDIR= stand
+# Makefile for atari tags file and boot blocks
 
-# Makefile for atari tags file
+# Find where m68k source files are for inclusion in tags
+.include <../m68k/Makefile.inc>
 
-TATARI=	$S/arch/atari/tags
-SATARI=	$S/arch/m68k/m68k/*.c $S/arch/m68k/include/*.h \
-	$S/arch/atari/atari/*.[ch] $S/arch/atari/include/*.h \
-	$S/arch/atari/dev/*.[ch]
-AATARI=	$S/arch/m68k/m68k/*.s $S/arch/atari/atari/*.s
+TATARI=	../atari/tags
+SATARI=	../atari/atari/*.[ch] ../atari/include/*.h \
+	../atari/dev/*.[ch]
+AATARI=	../atari/atari/*.s
 
-# Directories in which to place atari tags links
+# Directories in which to place tags links
 DATARI=	atari dev include
 
-TAGS:
-	-etags -dt ${COMM} ${SATARI} ${AATARI}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AATARI} | \
-	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
-	    >> ${TATARI}/tags
+.include "../../kern/Make.tags.inc"
 
 tags:
-	-ctags -dtf ${TATARI} ${COMM} ${SATARI}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AATARI} | \
+	-ctags -wdtf ${TATARI} ${SATARI} ${SM68K} ${COMM}
+	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${AATARI} ${AM68K} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 	    >> ${TATARI}
 	sort -o ${TATARI} ${TATARI}
 
 links:
 	-for i in ${DATARI}; do \
-	    rm -f $$i/tags; rm -f $$i/TAGS ; \
-	    ln -s ../tags $$i/tags; ln -s ../TAGS $$i/TAGS; done
+	    cd $$i && rm -f tags; ln -s ../tags tags; done
+
+
+SUBDIR= stand
 
 .include <bsd.subdir.mk>
-
