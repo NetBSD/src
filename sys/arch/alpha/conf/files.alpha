@@ -1,4 +1,4 @@
-#	$NetBSD: files.alpha,v 1.28 1996/11/11 21:10:58 cgd Exp $
+#	$NetBSD: files.alpha,v 1.29 1996/11/12 05:14:39 cgd Exp $
 #
 # alpha-specific configuration info
 
@@ -247,13 +247,14 @@ file	netns/ns_cksum.c			ns
 file	arch/alpha/alpha/promcons.c
 
 # XXX
-file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50
-file	arch/alpha/alpha/dec_21000.c		dec_21000
-file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300
-file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500
-file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33
-file	arch/alpha/alpha/dec_eb164.c		dec_eb164
-file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa
+file	arch/alpha/alpha/cpuconf.c
+file	arch/alpha/alpha/dec_2100_a50.c		dec_2100_a50	needs-flag
+file	arch/alpha/alpha/dec_21000.c		dec_21000	needs-flag
+file	arch/alpha/alpha/dec_3000_300.c		dec_3000_300	needs-flag
+file	arch/alpha/alpha/dec_3000_500.c		dec_3000_500	needs-flag
+file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33	needs-flag
+file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
+file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"

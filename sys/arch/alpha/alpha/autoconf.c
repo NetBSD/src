@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14 1996/10/13 02:59:23 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15 1996/11/12 05:14:27 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/prom.h>
+#include <machine/cpuconf.h>
 
 extern char		root_device[17];		/* XXX */
 
@@ -596,7 +597,7 @@ device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	extern void (*cpu_device_register) __P((struct device *dev, void *aux));
+	extern const struct cpusw *cpu_fn_switch;
 
 	if (bootdev_data == NULL) {
 		/*
@@ -606,5 +607,5 @@ device_register(dev, aux)
 		return;
 	}
 
-	(*cpu_device_register)(dev, aux);
+	(*cpu_fn_switch->device_register)(dev, aux);
 }
