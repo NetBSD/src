@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.80 1996/01/12 22:43:26 thorpej Exp $	*/
+/*	$NetBSD: cd.c,v 1.81 1996/01/30 18:28:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -837,12 +837,16 @@ cdioctl(dev, cmd, addr, flag, p)
 		return scsi_start(cd->sc_link, SSS_START, 0);
 	case CDIOCSTOP:
 		return scsi_start(cd->sc_link, SSS_STOP, 0);
-	case CDIOCEJECT:
+	case CDIOCEJECT: /* FALLTHROUGH */
+	case DIOCEJECT:
 		return scsi_start(cd->sc_link, SSS_STOP|SSS_LOEJ, 0);
 	case CDIOCALLOW:
 		return scsi_prevent(cd->sc_link, PR_ALLOW, 0);
 	case CDIOCPREVENT:
 		return scsi_prevent(cd->sc_link, PR_PREVENT, 0);
+	case DIOCLOCK:
+		return scsi_prevent(cd->sc_link,
+		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
 	case CDIOCSETDEBUG:
 		cd->sc_link->flags |= (SDEV_DB1 | SDEV_DB2);
 		return 0;
