@@ -1,4 +1,4 @@
-/*	$NetBSD: mq200_pci.c,v 1.1 2002/05/11 14:10:06 takemura Exp $	*/
+/*	$NetBSD: mq200_pci.c,v 1.2 2002/05/11 14:23:51 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.1 2002/05/11 14:10:06 takemura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mq200_pci.c,v 1.2 2002/05/11 14:23:51 takemura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,17 +79,11 @@ mq200_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct mq200_pci_softc *psc = (void *) self;
 	struct mq200_softc *sc = &psc->sc_mq200;
 	struct pci_attach_args *pa = aux;
-//	char devinfo[256];
 	int res;
 
 	psc->sc_pc = pa->pa_pc;
 	psc->sc_pcitag = pa->pa_tag;
 
-#if 0
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
-#endif
 	/* check whether it is disabled by firmware */
 	if (!(pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) &
 	    PCI_COMMAND_MEM_ENABLE)) {
