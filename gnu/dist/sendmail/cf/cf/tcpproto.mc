@@ -27,6 +27,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: tcpproto.mc,v 8.14 2000/08/03 15:26:50 ca Exp')
+VERSIONID(`$NetBSD: tcpproto.mc,v 1.5 2003/06/01 14:06:44 atatat Exp $')
 OSTYPE(`unknown')
 FEATURE(`nouucp', `reject')
 MAILER(`local')

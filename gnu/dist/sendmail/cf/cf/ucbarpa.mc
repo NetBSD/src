@@ -22,6 +22,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: ucbarpa.mc,v 8.12 1999/02/07 07:26:05 gshapiro Exp')
+VERSIONID(`$NetBSD: ucbarpa.mc,v 1.3 2003/06/01 14:06:44 atatat Exp $')
 DOMAIN(CS.Berkeley.EDU)dnl
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl

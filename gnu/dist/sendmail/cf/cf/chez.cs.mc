@@ -25,6 +25,7 @@ divert(-1)
 
 divert(0)dnl
 VERSIONID(`Id: chez.cs.mc,v 8.14 1999/02/07 07:25:59 gshapiro Exp')
+VERSIONID(`$NetBSD: chez.cs.mc,v 1.3 2003/06/01 14:06:42 atatat Exp $')
 OSTYPE(bsd4.4)dnl
 DOMAIN(CS.Berkeley.EDU)dnl
 define(`LOCAL_RELAY', vangogh.CS.Berkeley.EDU)dnl

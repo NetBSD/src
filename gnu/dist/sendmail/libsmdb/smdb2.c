@@ -1,3 +1,9 @@
+/* $NetBSD: smdb2.c,v 1.8 2003/06/01 14:07:01 atatat Exp $ */
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: smdb2.c,v 1.8 2003/06/01 14:07:01 atatat Exp $");
+#endif
+
 /*
 ** Copyright (c) 1999-2003 Sendmail, Inc. and its suppliers.
 **	All rights reserved.

@@ -14,6 +14,7 @@ divert(-1)
 
 divert(0)
 VERSIONID(`Id: limited_masquerade.m4,v 8.9 1999/02/07 07:26:09 gshapiro Exp')
+VERSIONID(`$NetBSD: limited_masquerade.m4,v 1.3 2003/06/01 14:06:46 atatat Exp $')
 divert(-1)
 
 define(`_LIMITED_MASQUERADE_', 1)
