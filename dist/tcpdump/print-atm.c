@@ -1,4 +1,4 @@
-/*	$NetBSD: print-atm.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-atm.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996, 1997
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-atm.c,v 1.20 2000/12/22 22:45:09 guy Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-atm.c,v 1.21 2001/07/05 18:54:14 guy Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-atm.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-atm.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -60,6 +60,7 @@ atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_int length = h->len;
 	u_short ethertype;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < 8) {
@@ -148,4 +149,7 @@ atm_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		default_print(p, caplen);
  out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }

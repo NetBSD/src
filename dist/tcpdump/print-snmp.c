@@ -1,4 +1,4 @@
-/*	$NetBSD: print-snmp.c,v 1.3 2001/09/19 03:37:58 itojun Exp $	*/
+/*	$NetBSD: print-snmp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -62,9 +62,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.49 2001/06/15 21:06:59 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-snmp.c,v 1.50 2001/09/17 22:16:53 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-snmp.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
+__RCSID("$NetBSD: print-snmp.c,v 1.4 2002/02/18 09:37:10 itojun Exp $");
 #endif
 #endif
 

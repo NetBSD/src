@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ether.c,v 1.3 2001/09/19 03:37:58 itojun Exp $	*/
+/*	$NetBSD: print-ether.c,v 1.4 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.64 2001/06/21 17:56:03 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ether.c,v 1.65 2001/07/04 22:03:14 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-ether.c,v 1.3 2001/09/19 03:37:58 itojun Exp $");
+__RCSID("$NetBSD: print-ether.c,v 1.4 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -89,6 +89,7 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 	u_short ether_type;
 	u_short extracted_ethertype;
 
+	++infodelay;
 	ts_print(&h->ts);
 
 	if (caplen < ETHER_HDRLEN) {
@@ -144,6 +145,9 @@ ether_if_print(u_char *user, const struct pcap_pkthdr *h, const u_char *p)
 		default_print(p, caplen);
  out:
 	putchar('\n');
+	--infodelay;
+	if (infoprint)
+		info(0);
 }
 
 /*

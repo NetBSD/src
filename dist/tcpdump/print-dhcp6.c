@@ -1,4 +1,4 @@
-/*	$NetBSD: print-dhcp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-dhcp6.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 and 1999 WIDE Project.
@@ -33,9 +33,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.13 2001/01/28 09:49:49 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-dhcp6.c,v 1.14 2001/09/17 21:57:59 fenner Exp";
 #else
-__RCSID("$NetBSD: print-dhcp6.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-dhcp6.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -68,7 +68,7 @@ static struct dhcp6_opt *dhcp6opttab_byname(char *);
 #endif
 static struct dhcp6_opt *dhcp6opttab_bycode(u_int);
 
-static char tstr[] = " [|dhcp6]";
+static const char tstr[] = " [|dhcp6]";
 
 static struct dhcp6_opt dh6opttab[] = {
 	/* IP Address Extension */

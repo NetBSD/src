@@ -1,4 +1,4 @@
-/*	$NetBSD: print-ipx.c,v 1.3 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-ipx.c,v 1.4 2002/02/18 09:37:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.30 2001/01/15 03:23:59 guy Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-ipx.c,v 1.32 2001/10/08 21:25:20 fenner Exp";
 #else
-__RCSID("$NetBSD: print-ipx.c,v 1.3 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-ipx.c,v 1.4 2002/02/18 09:37:07 itojun Exp $");
 #endif
 #endif
 
@@ -115,7 +115,7 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 	break;
       case IPX_SKT_NETBIOS:
 	(void)printf(" ipx-netbios %d", length);
-#if 0
+#ifdef TCPDUMP_DO_SMB
 	ipx_netbios_print(datap, length);
 #endif
 	break;
@@ -124,7 +124,7 @@ ipx_decode(const struct ipxHdr *ipx, const u_char *datap, u_int length)
 	break;
       case IPX_SKT_NWLINK_DGM:
 	(void)printf(" ipx-nwlink-dgm %d", length);
-#if 0
+#ifdef TCPDUMP_DO_SMB
 	ipx_netbios_print(datap, length);
 #endif
 	break;

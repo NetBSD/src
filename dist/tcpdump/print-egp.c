@@ -1,4 +1,4 @@
-/*	$NetBSD: print-egp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $	*/
+/*	$NetBSD: print-egp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
@@ -24,9 +24,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-egp.c,v 1.27 2001/06/15 22:17:31 fenner Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-egp.c,v 1.28 2001/09/17 21:58:01 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-egp.c,v 1.2 2001/06/25 19:59:58 itojun Exp $");
+__RCSID("$NetBSD: print-egp.c,v 1.3 2002/02/18 09:37:06 itojun Exp $");
 #endif
 #endif
 
@@ -106,7 +106,7 @@ struct egp_packet {
 #define  egp_sourcenet  egp_pands.egpu_sourcenet
 };
 
-char *egp_acquire_codes[] = {
+const char *egp_acquire_codes[] = {
 	"request",
 	"confirm",
 	"refuse",
@@ -114,7 +114,7 @@ char *egp_acquire_codes[] = {
 	"cease_ack"
 };
 
-char *egp_acquire_status[] = {
+const char *egp_acquire_status[] = {
 	"unspecified",
 	"active_mode",
 	"passive_mode",
@@ -125,18 +125,18 @@ char *egp_acquire_status[] = {
 	"protocol_violation"
 };
 
-char *egp_reach_codes[] = {
+const char *egp_reach_codes[] = {
 	"hello",
 	"i-h-u"
 };
 
-char *egp_status_updown[] = {
+const char *egp_status_updown[] = {
 	"indeterminate",
 	"up",
 	"down"
 };
 
-char *egp_reasons[] = {
+const char *egp_reasons[] = {
 	"unspecified",
 	"bad_EGP_header_format",
 	"bad_EGP_data_field_format",

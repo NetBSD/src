@@ -1,4 +1,4 @@
-/*	$NetBSD: print-icmp6.c,v 1.3 2001/06/27 02:46:25 simonb Exp $	*/
+/*	$NetBSD: print-icmp6.c,v 1.4 2002/02/18 09:37:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.55 2001/06/15 22:17:32 fenner Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-icmp6.c,v 1.56 2001/06/27 02:48:43 itojun Exp";
 #else
-__RCSID("$NetBSD: print-icmp6.c,v 1.3 2001/06/27 02:46:25 simonb Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.4 2002/02/18 09:37:07 itojun Exp $");
 #endif
 #endif
 

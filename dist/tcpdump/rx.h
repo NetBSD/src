@@ -1,4 +1,4 @@
-/*	$NetBSD: rx.h,v 1.2 2001/10/22 04:24:24 itojun Exp $	*/
+/*	$NetBSD: rx.h,v 1.3 2002/02/18 09:37:10 itojun Exp $	*/
 
 /*
  * Copyright: (c) 2000 United States Government as represented by the
@@ -25,7 +25,7 @@
 /*
  * Rx protocol format
  *
- * Id: rx.h,v 1.3 2000/10/03 02:55:02 itojun Exp
+ * Id: rx.h,v 1.5 2001/10/22 04:23:37 itojun Exp
  */
 
 #define FS_RX_PORT	7000
@@ -81,6 +81,8 @@ struct rx_header {
 #define RX_LAST_PACKET		4
 #define RX_MORE_PACKETS		8
 #define RX_FREE_PACKET		16
+#define RX_SLOW_START_OK	32
+#define RX_JUMBO_PACKET		32
 	u_int8_t userStatus;
 	u_int8_t securityIndex;
 	u_int16_t spare;		/* How clever: even though the AFS */
@@ -89,7 +91,7 @@ struct rx_header {
 					/* encoded _after_ the spare field */
 					/* I wasted a day figuring that out! */
 
-#define NUM_RX_FLAGS 5
+#define NUM_RX_FLAGS 7
 
 #define RX_MAXACKS 255
 

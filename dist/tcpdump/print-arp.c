@@ -1,4 +1,4 @@
-/*	$NetBSD: print-arp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $	*/
+/*	$NetBSD: print-arp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.50 2001/06/18 09:12:28 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-arp.c,v 1.51 2001/09/17 21:57:54 fenner Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-arp.c,v 1.2 2001/06/25 19:59:57 itojun Exp $");
+__RCSID("$NetBSD: print-arp.c,v 1.3 2002/02/18 09:37:05 itojun Exp $");
 #endif
 #endif
 
@@ -87,10 +87,10 @@ struct	arphdr {
 	u_char	ar_tha[];	/* target hardware address */
 	u_char	ar_tpa[];	/* target protocol address */
 #endif
-#define ar_sha(ap)	(((caddr_t)((ap)+1))+0)
-#define ar_spa(ap)	(((caddr_t)((ap)+1))+  (ap)->ar_hln)
-#define ar_tha(ap)	(((caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
-#define ar_tpa(ap)	(((caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
+#define ar_sha(ap)	(((const caddr_t)((ap)+1))+0)
+#define ar_spa(ap)	(((const caddr_t)((ap)+1))+  (ap)->ar_hln)
+#define ar_tha(ap)	(((const caddr_t)((ap)+1))+  (ap)->ar_hln+(ap)->ar_pln)
+#define ar_tpa(ap)	(((const caddr_t)((ap)+1))+2*(ap)->ar_hln+(ap)->ar_pln)
 };
 
 #define ARP_HDRLEN	8
@@ -113,14 +113,11 @@ arp_print(const u_char *bp, u_int length, u_int caplen)
 	const struct arphdr *ap;
 	u_short pro, hrd, op;
 
-	ap = (struct arphdr *)bp;
-	if ((u_char *)(ap + 1) > snapend)  {
-		printf("[|arp]");
-		return;
-	}
-	if ((u_char *)(ar_tpa(ap) + PLN(ap)) > snapend) {
+	ap = (const struct arphdr *)bp;
+	TCHECK(*ap);
+	if ((const u_char *)(ar_tpa(ap) + PLN(ap)) > snapend) {
 		(void)printf("truncated-arp");
-		default_print((u_char *)ap, length);
+		default_print((const u_char *)ap, length);
 		return;
 	}
 
@@ -139,7 +136,7 @@ arp_print(const u_char *bp, u_int length, u_int caplen)
 
 	case ARPOP_REQUEST:
 		(void)printf("arp who-has %s", ipaddr_string(TPA(ap)));
-		if (memcmp((char *)ezero, (char *)THA(ap), HLN(ap)) != 0)
+		if (memcmp((const char *)ezero, (const char *)THA(ap), HLN(ap)) != 0)
 			(void)printf(" (%s)",
 			    linkaddr_string(THA(ap), HLN(ap)));
 		(void)printf(" tell %s", ipaddr_string(SPA(ap)));
@@ -164,9 +161,12 @@ arp_print(const u_char *bp, u_int length, u_int caplen)
 
 	default:
 		(void)printf("arp-#%d", op);
-		default_print((u_char *)ap, caplen);
+		default_print((const u_char *)ap, caplen);
 		return;
 	}
 	if (hrd != ARPHRD_ETHER)
 		printf(" hardware #%d", hrd);
+	return;
+trunc:
+	(void)printf("[|arp]");
 }

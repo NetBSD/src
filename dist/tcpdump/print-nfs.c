@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.3 2001/07/08 08:17:57 itojun Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.4 2002/02/18 09:37:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,9 +25,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.87 2000/10/07 05:53:12 itojun Exp (LBL)";
+    "@(#) Header: /tcpdump/master/tcpdump/print-nfs.c,v 1.89 2001/07/08 08:01:43 itojun Exp (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.3 2001/07/08 08:17:57 itojun Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.4 2002/02/18 09:37:08 itojun Exp $");
 #endif
 #endif
 
@@ -765,7 +765,7 @@ nfs_printfh(register const u_int32_t *dp, const u_int len)
 	ino_t ino;
 	char *sfsname = NULL;
 
-	Parse_fh((caddr_t*)dp, len, &fsid, &ino, NULL, &sfsname, 0);
+	Parse_fh((caddr_t*)dp, len, &fsid, &ino, NULL, (const char **)&sfsname, 0);
 
 	if (sfsname) {
 		/* file system ID is ASCII, not numeric, for this server OS */

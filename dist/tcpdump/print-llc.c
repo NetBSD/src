@@ -1,4 +1,4 @@
-/*	$NetBSD: print-llc.c,v 1.3 2001/06/25 19:59:59 itojun Exp $	*/
+/*	$NetBSD: print-llc.c,v 1.4 2002/02/18 09:37:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996, 1997
@@ -28,9 +28,9 @@
 #ifndef lint
 #if 0
 static const char rcsid[] =
-    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.39 2001/06/15 07:59:14 itojun Exp";
+    "@(#) Header: /tcpdump/master/tcpdump/print-llc.c,v 1.43 2001/10/08 21:25:22 fenner Exp";
 #else
-__RCSID("$NetBSD: print-llc.c,v 1.3 2001/06/25 19:59:59 itojun Exp $");
+__RCSID("$NetBSD: print-llc.c,v 1.4 2002/02/18 09:37:08 itojun Exp $");
 #endif
 #endif
 
@@ -97,6 +97,11 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		 * the IPX packet starts right after the Ethernet header,
 		 * with a signature of two bytes of 0xFF (which is
 		 * LLCSAP_GLOBAL).
+		 *
+		 * (It might also have been an Ethernet_802.3 IPX at
+		 * one time, but got bridged onto another network,
+		 * such as an 802.11 network; this has appeared in at
+		 * least one capture file.)
 		 */
 		ipx_print(p, length);
 		return (1);
@@ -123,7 +128,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 		return (1);
 	}
 
-#if 0
+#ifdef TCPDUMP_DO_SMB
 	if (llc.ssap == LLCSAP_NETBEUI && llc.dsap == LLCSAP_NETBEUI
 	    && (!(llc.llcu & LLC_S_FMT) || llc.llcu == LLC_U_FMT)) {
 		/*
@@ -235,7 +240,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 	}
 
 	if ((llc.ssap & ~LLC_GSAP) == llc.dsap) {
-		if (eflag)
+		if (eflag || esrc == NULL || edst == NULL)
 			(void)printf("%s ", llcsap_string(llc.dsap));
 		else
 			(void)printf("%s > %s %s ",
@@ -243,7 +248,7 @@ llc_print(const u_char *p, u_int length, u_int caplen,
 					etheraddr_string(edst),
 					llcsap_string(llc.dsap));
 	} else {
-		if (eflag)
+		if (eflag || esrc == NULL || edst == NULL)
 			(void)printf("%s > %s ",
 				llcsap_string(llc.ssap & ~LLC_GSAP),
 				llcsap_string(llc.dsap));
