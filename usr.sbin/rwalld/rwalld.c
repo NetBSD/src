@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/rwalld/Attic/rwalld.c,v 1.1 1993/04/04 19:01:06 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/usr.sbin/rwalld/Attic/rwalld.c,v 1.2 1993/04/10 17:59:30 cgd Exp $";
 #endif
 
 #include <unistd.h>
@@ -108,18 +108,7 @@ main(argc, argv)
 
 void possess()
 {
-	int nfds = getdtablesize();
-	int p = fork();
-
-	if (p < 0) {
-		perror("walld: couldn't fork");
-		exit(1);
-	} else if (p > 0) {
-		exit(0);
-	}
-
-	for (nfds--; nfds >= 0; nfds--)
-		close(nfds);
+	daemon(0, 0);
 }
 
 void killkids()
