@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.52 1998/05/07 01:37:27 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.53 1998/05/07 22:30:23 kml Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -618,9 +618,10 @@ tcp_mtudisc(inp, errno)
 /*
  * Compute the MSS to advertise to the peer.  Called only during
  * the 3-way handshake.  If we are the server (peer initiated
- * connection), we are called with the TCPCB for the listen
- * socket.  If we are the client (we initiated connection), we
- * are called witht he TCPCB for the actual connection.
+ * connection), we are called with a pointer to the interface
+ * on which the SYN packet arrived.  If we are the client (we 
+ * initiated connection), we are called with a pointer to the
+ * interface out which this connection should go.
  */
 u_long
 tcp_mss_to_advertise(ifp)
