@@ -1,4 +1,4 @@
-.\" $NetBSD: modload.8,v 1.18 2002/02/08 01:30:44 ross Exp $
+.\" $NetBSD: modload.8,v 1.19 2002/09/13 15:32:21 gehenna Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -91,8 +91,8 @@ Specify the name of a shell script or program that will
 be executed if the module is successfully loaded. It
 is always passed the module id (in decimal) and module
 type (in hexadecimal) as the first two arguments.
-For loadable drivers, the third argument is
-the block or character major device number.
+For loadable drivers, the third argument is the character major device number
+and the fourth argument is the block major device number.
 For a loadable system call, the third argument is the system
 call number.
 .It Fl o Ar output_file
@@ -128,13 +128,7 @@ to the corresponding command in
 .Sh AUTHORS
 .An Terrence R. Lambert Aq terry@cs.weber.edu
 .Sh BUGS
-.Bl -bullet
-.It
-The loadable device driver framework can
-only reserve either a character or block device entry, not both.
-.It
 Loading the symbol table is expensive in terms of space:
 it presently duplicates all the kernel symbols for each lkm loaded
 with
 .Fl s .
-.El
