@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.15 2002/06/30 13:06:05 lukem Exp $
+.\"	$NetBSD: hardware,v 1.16 2002/08/11 13:42:27 isaki Exp $
 .
 .Nx*M
 \*V runs on the Sharp X68030 series PCs with a
@@ -86,4 +86,6 @@ NS16550 serial
 Neptune-X ethernet
 .It
 Nereid ethernet
+.It
+Nereid USB
 .bullet)
