@@ -1,4 +1,4 @@
-/*	$NetBSD: imc.c,v 1.1 2001/05/11 04:22:55 thorpej Exp $	*/
+/*	$NetBSD: imc.c,v 1.2 2001/07/08 23:59:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -35,6 +35,7 @@
 #include <machine/locore.h>
 #include <machine/autoconf.h>
 #include <machine/bus.h>
+#include <machine/machtype.h>
 
 #include "locators.h"
 
@@ -72,22 +73,18 @@ imc_match(parent, match, aux)
 	struct cfdata *match;
 	void *aux;
 {
-	struct mainbus_attach_args *ma = aux;
 
 	/*
 	 * The IMC is an INDY/INDIGO2 thing.
 	 */
-	switch (ma->ma_arch) {
-	case 22:
-		/* Make sure it's actually there and readable */
-		if (badaddr((void*)MIPS_PHYS_TO_KSEG1(0x1fa0001c), 
-						sizeof(u_int32_t)))
-			return 0;
+	if (mach_type != MACH_SGI_IP22)
+		return (0);
 
-		return 1;
-	default:
-		return 0;
-	}
+	/* Make sure it's actually there and readable */
+	if (badaddr((void*)MIPS_PHYS_TO_KSEG1(0x1fa0001c), sizeof(u_int32_t)))
+		return (0);
+
+	return (1);
 }
 
 static void
