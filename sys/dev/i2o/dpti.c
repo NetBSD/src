@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $	*/
+/*	$NetBSD: dpti.c,v 1.11 2003/02/14 18:29:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.11 2003/02/14 18:29:05 thorpej Exp $");
 
 #include "opt_i2o.h"
 
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/bus.h>
-#ifdef i386
+#ifdef __i386__
 #include <machine/pio.h>
 #endif
 
@@ -101,18 +101,18 @@ __KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.10 2002/12/06 11:22:25 ad Exp $");
 static struct dpt_sig dpti_sig = {
 	{ 'd', 'P', 't', 'S', 'i', 'G'},
 	SIG_VERSION,
-#if defined(i386)
+#if defined(__i386__)
 	PROC_INTEL,
-#elif defined(powerpc)
+#elif defined(__powerpc__)
 	PROC_POWERPC,
-#elif defined(alpha)
+#elif defined(__alpha__)
 	PROC_ALPHA,
 #elif defined(__mips__)
 	PROC_MIPS,
-#elif defined(sparc64)
+#elif defined(__sparc64__)
 	PROC_ULTRASPARC,
 #endif
-#if defined(i386)
+#if defined(__i386__)
 	PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
 #else
 	0,
@@ -349,13 +349,13 @@ dpti_sysinfo(struct dpti_softc *sc, int size, caddr_t data)
 {
 	struct dpt_sysinfo info;
 	int rv;
-#ifdef i386
+#ifdef __i386__
 	int i, j;
 #endif
 
 	memset(&info, 0, sizeof(info));
 
-#ifdef i386
+#ifdef __i386__
 	outb (0x70, 0x12);
 	i = inb(0x71);
 	j = i >> 4;
