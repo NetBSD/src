@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.2 1997/05/26 14:17:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 1997/07/20 20:43:53 christos Exp $
 
+WARNS=	1
 PROG=	rcmd
 SRCS=	rsh.c
 CFLAGS+=-DIN_RCMD
