@@ -1,3 +1,4 @@
+/*	$NetBSD: faketalk.c,v 1.3 1997/10/10 16:33:31 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
@@ -8,18 +9,25 @@
  *  specifies the terms and conditions for redistribution.
  */
 
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: faketalk.c,v 1.3 1997/10/10 16:33:31 lukem Exp $");
+#endif /* not lint */
+
 #include "bsd.h"
 
 #if	defined(TALK_43) || defined(TALK_42)
 
+# include	<sys/time.h>
+# include	<sys/wait.h>
+# include	<ctype.h>
+# include	<netdb.h>
+# include	<signal.h>
 # include	<stdio.h>
 # include	<string.h>
-# include	<netdb.h>
+# include	<unistd.h>
+# include	"hunt.h"
 # include	"talk_ctl.h"
-# include	<ctype.h>
-# include	<signal.h>
-# include	<sys/time.h>
-extern	int	errno;
 
 # define	TRUE		1
 # define	FALSE		0
@@ -36,12 +44,16 @@ extern	int	errno;
 extern	char		*my_machine_name;
 extern	char		*First_arg, *Last_arg;
 
+static	void	do_announce __P((char *));
+SIGNAL_TYPE	exorcise __P((int));
+
 /*
  *	exorcise - disspell zombies
  */
 
 SIGNAL_TYPE
-exorcise()
+exorcise(dummy)
+	int dummy;
 {
 	(void) wait(0);
 }
@@ -51,6 +63,7 @@ exorcise()
  *	and fake a talk request to each address thus found.
  */
 
+void
 faketalk()
 {
 	struct	servent		*sp;
@@ -171,6 +184,7 @@ faketalk()
  * These are used to delete the invitations.
  */
 
+static void
 do_announce(s)
 	char	*s;
 {

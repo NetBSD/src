@@ -1,18 +1,25 @@
+/*	$NetBSD: playit.c,v 1.2 1997/10/10 16:32:43 lukem Exp $	*/
 /*
  *  Hunt
  *  Copyright (c) 1985 Conrad C. Huang, Gregory S. Couch, Kenneth C.R.C. Arnold
  *  San Francisco, California
  */
 
-# if defined(HPUX) || (defined(BSD_RELEASE) && BSD_RELEASE >= 44)
-# include	<termios.h>
-# endif
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: playit.c,v 1.2 1997/10/10 16:32:43 lukem Exp $");
+#endif /* not lint */
+
+# include	<sys/file.h>
+# include	<errno.h>
 # include	<curses.h>
 # include	<ctype.h>
 # include	<signal.h>
-# include	<errno.h>
+# if defined(HPUX) || (defined(BSD_RELEASE) && BSD_RELEASE >= 44)
+# include	<termios.h>
+# include	<unistd.h>
+# endif
 # include	"hunt.h"
-# include	<sys/file.h>
 
 # ifndef FREAD
 # define	FREAD	1
@@ -31,9 +38,7 @@
 # define	put_str		addstr
 # endif
 
-int		input();
 static int	nchar_send;
-static int	in	= FREAD;
 # ifndef USE_CURSES
 char		screen[SCREEN_HEIGHT][SCREEN_WIDTH2], blanks[SCREEN_WIDTH];
 int		cur_row, cur_col;
@@ -55,7 +60,6 @@ static char	otto_face;
  */
 static int		icnt = 0;
 static unsigned char	ibuf[256], *iptr = ibuf;
-static unsigned char	getchr();
 
 #define	GETCHR()	(--icnt < 0 ? getchr() : *iptr++)
 
@@ -63,16 +67,19 @@ static unsigned char	getchr();
 extern int	_putchar();
 #endif
 
+static	unsigned char	getchr __P((void));
+static	void		send_stuff __P((void));
+
 /*
  * playit:
  *	Play a given game, handling all the curses commands from
  *	the driver.
  */
+void
 playit()
 {
-	register int	ch;
-	register int	y, x;
-	extern int	errno;
+	int		ch;
+	int		y, x;
 	long		version;
 
 	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
@@ -206,17 +213,14 @@ out:
  *	When this routine is called by GETCHR, we already know there are
  *	no characters in the input buffer.
  */
-static
-unsigned char
+static unsigned char
 getchr()
 {
-	long	readfds, s_readfds;
-	int	driver_mask, stdin_mask;
+	fd_set	readfds, s_readfds;
 	int	nfds, s_nfds;
 
-	driver_mask = 1L << Socket;
-	stdin_mask = 1L << STDIN;
-	s_readfds = driver_mask | stdin_mask;
+	FD_SET(Socket, &s_readfds);
+	FD_SET(STDIN, &s_readfds);
 	s_nfds = (Socket > STDIN) ? Socket : STDIN;
 	s_nfds++;
 
@@ -228,9 +232,9 @@ one_more_time:
 		nfds = select(nfds, &readfds, NULL, NULL, NULL);
 	} while (nfds <= 0 && errno == EINTR);
 
-	if (readfds & stdin_mask)
+	if (FD_ISSET(STDIN, &readfds))
 		send_stuff();
-	if ((readfds & driver_mask) == 0)
+	if (! FD_ISSET(Socket, &readfds))
 		goto one_more_time;
 	icnt = read(Socket, ibuf, sizeof ibuf);
 	if (icnt < 0) {
@@ -248,10 +252,11 @@ one_more_time:
  * send_stuff:
  *	Send standard input characters to the driver
  */
+static void
 send_stuff()
 {
-	register int	count;
-	register char	*sp, *nsp;
+	int		count;
+	char		*sp, *nsp;
 	static char	inp[sizeof Buf];
 
 	count = read(STDIN, Buf, sizeof Buf);
@@ -270,8 +275,8 @@ send_stuff()
 	Buf[count] = '\0';
 	nsp = inp;
 	for (sp = Buf; *sp != '\0'; sp++)
-		if ((*nsp = map_key[*sp]) == 'q')
-			intr();
+		if ((*nsp = map_key[(int)*sp]) == 'q')
+			intr(0);
 		else
 			nsp++;
 	count = nsp - inp;
@@ -290,11 +295,11 @@ send_stuff()
  * quit:
  *	Handle the end of the game when the player dies
  */
-long
+int
 quit(old_status)
-long	old_status;
+	int	old_status;
 {
-	register int	explain, ch;
+	int	explain, ch;
 
 	if (Last_player)
 		return Q_QUIT;
@@ -468,6 +473,7 @@ get_message:
 }
 
 # ifndef USE_CURSES
+void
 put_ch(ch)
 	char	ch;
 {
@@ -486,6 +492,7 @@ put_ch(ch)
 	}
 }
 
+void
 put_str(s)
 	char	*s;
 {
@@ -494,6 +501,7 @@ put_str(s)
 }
 # endif
 
+void
 clear_the_screen()
 {
 # ifdef USE_CURSES
@@ -501,7 +509,7 @@ clear_the_screen()
 	move(0, 0);
 	refresh();
 # else
-	register int	i;
+	int	i;
 
 	if (blanks[0] == '\0')
 		for (i = 0; i < SCREEN_WIDTH; i++)
@@ -529,6 +537,7 @@ clear_the_screen()
 }
 
 #ifndef USE_CURSES
+void
 clear_eol()
 {
 	if (CE != NULL)
@@ -550,13 +559,14 @@ clear_eol()
 }
 # endif
 
+void
 redraw_screen()
 {
 # ifdef USE_CURSES
 	clearok(stdscr, TRUE);
 	touchwin(stdscr);
 # else
-	register int	i;
+	int		i;
 # ifndef NOCURSES
 	static int	first = 1;
 
@@ -574,7 +584,8 @@ redraw_screen()
 	}
 # if defined(BSD_RELEASE) && BSD_RELEASE >= 44
 	for (i = 0; i < SCREEN_HEIGHT; i++) {
-		register int	j;
+		int	j;
+
 		for (j = 0; j < SCREEN_WIDTH; j++)
 			curscr->lines[i]->line[j].ch = screen[i][j];
 	}
@@ -605,10 +616,10 @@ redraw_screen()
  * do_message:
  *	Send a message to the driver and return
  */
+void
 do_message()
 {
-	extern int	errno;
-	long		version;
+	long	version;
 
 	if (read(Socket, (char *) &version, LONGLEN) != LONGLEN) {
 		bad_con();
