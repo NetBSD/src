@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.101 2003/12/30 20:40:39 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.102 2003/12/31 14:37:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.101 2003/12/30 20:40:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.102 2003/12/31 14:37:17 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1089,6 +1089,7 @@ start:
 		bp->b_dev = NODEV;
 		bp->b_vnbufs.le_next = NOLIST;
 		bp->b_flags = B_BUSY;
+		simple_lock(&bp->b_interlock);
 		return (bp);
 	}
 
