@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.56 1999/03/24 05:51:32 mrg Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,9 +80,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.56 1999/03/24 05:51:32 mrg Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.57 1999/03/31 23:26:08 thorpej Exp $");
 #endif
 #endif /* not lint */
+
+#define	__POOL_EXPOSE
 
 #include <sys/param.h>
 #include <sys/time.h>
