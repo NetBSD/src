@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.13 2001/06/17 12:36:14 kleink Exp $
+.\"	$NetBSD: mbuf.9,v 1.14 2001/06/28 23:02:47 itojun Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,6 +50,7 @@
 .Nm m_cat ,
 .Nm m_dup ,
 .Nm m_prepend ,
+.Nm m_pulldown ,
 .Nm m_pullup ,
 .Nm m_split ,
 .Nm m_adj ,
@@ -97,6 +98,8 @@
 .Fn m_dup "struct mbuf *m" "int off0" "int len" "int wait"
 .Ft struct mbuf *
 .Fn m_prepend "struct mbuf *m" "int len" "int how"
+.Ft struct mbuf *
+.Fn m_pulldown "struct mbuf *n" "int off" "int len" "int *offp"
 .Ft struct mbuf *
 .Fn m_pullup "struct mbuf *n" "int len"
 .Ft struct mbuf *
@@ -361,6 +364,42 @@ The
 parameter is a choice of
 .Dv M_WAIT / M_DONTWAIT
 from caller.
+.It Fn m_pulldown "struct mbuf *n" "int off" "int len" "int *offp"
+Rearranges an mbuf chain so that
+.Fa len
+bytes from offset
+.Fa off
+are contiguous and in the data area of an mbuf.
+The return value points to an mbuf in the middle of the mbuf chain
+.Fa m .
+If we call the return value
+.Fa n ,
+the contiguous data region is available at
+.Li "mtod(n, caddr_t) + *offp" ,
+or 
+.Li "mtod(n, caddr_t)"
+if
+.Fa offp
+is
+.Dv NULL .
+The top of the mbuf chain 
+.Fa m ,
+and mbufs up to
+.Fa off ,
+will not be modified.
+On successful return, it is guaranteed that the mbuf pointed to by
+.Fa n
+does not have a shared external storage,
+therefore it is safe to update the
+.Fa len
+bytes of mbuf content from offset
+.Fa off .
+Returns
+.Dv NULL
+and frees the mbuf chain on failure.
+.Fa len
+must be smaller or equal than
+.Dv MCLBYTES .
 .It Fn m_pullup "struct mbuf *m" "int len"
 Rearranges an mbuf chain so that
 .Fa len
@@ -379,6 +418,9 @@ If there is room, it will add up to
 .Fa len
 extra bytes to the
 contiguous region to possibly avoid being called again.
+.Fa len
+must be smaller or equal than
+.Dv MHLEN .
 .It Fn m_split "struct mbuf *m0" "int len0" "int wait"
 Partitions an mbuf chain in two pieces, returning the tail,
 which is all but the first
@@ -575,6 +617,12 @@ Implemented as a macro.
 .Pa /usr/share/doc/smm/18.net ,
 .Xr netstat 1 ,
 .Xr malloc 9
+.Rs
+.%A Jun-ichiro Hagino
+.%T "Mbuf issues in 4.4BSD IPv6/IPsec support (experiences from KAME IPv6/IPsec implemntation)"
+.%B "Proceedings of the freenix track: 2000 USENIX annual technical conference"
+.%D June 2000
+.Re
 .Sh AUTHORS
 The original mbuf data structures were designed by Rob Gurwitz
 when he did the initial TCP/IP implementation at BBN.
