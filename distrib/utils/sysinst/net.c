@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.74 2001/05/07 11:49:52 itojun Exp $	*/
+/*	$NetBSD: net.c,v 1.75 2001/06/07 12:34:55 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -628,6 +628,11 @@ again:
 		    "/sbin/route -n add default %s",
 			  net_defroute);
 	}
+
+	/*
+	 * wait a couple of seconds for the interface to go live.
+	 */
+	sleep(5);
 
 	/*
 	 * ping should be verbose, so users can see the cause
