@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2000/08/03 14:01:31 tron Exp $
+# $NetBSD: Makefile,v 1.5 2000/08/05 17:41:15 garbled Exp $
 DIST=		${.CURDIR}/../../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/asn1 ${DIST}/heimdal/lib/roken
 
@@ -33,7 +33,7 @@ DPSRCS=	print_version.h
 make-print-version.lo: ${.CURDIR}/../../../include/heimdal/version.h
 
 make-print-version: make-print-version.lo
-	${HOST_CC} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
+	${HOST_CC} ${HOST_LDFLAGS} -o ${.TARGET} ${.ALLSRC}
 
 print_version.h: make-print-version
 	./make-print-version print_version.h
