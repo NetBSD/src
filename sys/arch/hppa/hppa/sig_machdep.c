@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.8 2004/03/26 14:11:01 drochner Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.9 2004/06/11 14:01:02 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8 2004/03/26 14:11:01 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.9 2004/06/11 14:01:02 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -133,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.8 2004/03/26 14:11:01 drochner Exp
 #include <machine/reg.h>
 
 #ifdef DEBUG
-int sigdebug = 0xff;
+int sigdebug = 0;
 int sigpid = 0;
 #define SDB_FOLLOW	0x01
 #define SDB_KSTACK	0x02
