@@ -1,4 +1,4 @@
-.\"	$NetBSD: bus_dma.9,v 1.12 2000/04/19 07:57:50 soren Exp $
+.\"	$NetBSD: bus_dma.9,v 1.13 2000/05/01 23:12:20 fvdl Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -452,10 +452,20 @@ always succeeds.
 .\" XXX: This does not work with all the arguments.
 .It Fn bus_dmamem_alloc "tag" "size" "alignment" "boundary" "segs" "..."
 Allocates memory that is "DMA safe" for the bus corresponding to the
-given tag.  The mapping of this memory is machine-dependent (or
+given tag.
+.Pp
+The mapping of this memory is machine-dependent (or
 "opaque"); machine-independent code is not to assume that the
 addresses returned are valid in kernel virtual address space, or that
-the addresses returned are system physical addresses.
+the addresses returned are system physical addresses. The address value
+returned as part of
+.Fa segs
+can thus not be used to program DMA controller address registers. Only
+the values in the
+.Fa dm_segs
+array of a sucessfully loaded DMA map (using
+.Fn bus_dmamap_load
+) can be used for this purpose.
 .Pp
 Allocations will always be rounded to the hardware page size.  Callers
 may wish to take advantage of this, and cluster allocation of small
