@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.2 2002/04/08 14:08:25 simonb Exp $	*/
+/*	$NetBSD: clock.c,v 1.3 2002/04/19 01:14:17 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.2 2002/04/08 14:08:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.3 2002/04/19 01:14:17 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -164,7 +164,7 @@ inittodr(time_t base)
 
 	(*clockfns->cf_get)(clockdev, base, &ct);
 #ifdef DEBUG
-	printf("readclock: %d/%d/%d/%d/%d/%d", ct.year, ct.mon, ct.day,
+	printf("readclock: %d/%d/%d/%d/%d/%d\n", ct.year, ct.mon, ct.day,
 	       ct.hour, ct.min, ct.sec);
 #endif
 	clockinitted = 1;
