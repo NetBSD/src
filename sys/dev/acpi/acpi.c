@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.53 2003/11/01 20:58:33 mycroft Exp $	*/
+/*	$NetBSD: acpi.c,v 1.54 2003/11/03 06:03:47 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.53 2003/11/01 20:58:33 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.54 2003/11/03 06:03:47 kochi Exp $");
 
 #include "opt_acpi.h"
 
@@ -438,7 +438,7 @@ acpi_build_tree(struct acpi_softc *sc)
 			aa.aa_pciflags = sc->sc_pciflags;
 			aa.aa_ic = sc->sc_ic;
 
-			if (ad->ad_devinfo.Type == ACPI_TYPE_DEVICE) {
+			if (ad->ad_devinfo->Type == ACPI_TYPE_DEVICE) {
 				/*
 				 * XXX We only attach devices which are:
 				 *
@@ -450,9 +450,9 @@ acpi_build_tree(struct acpi_softc *sc)
 				 * so we should claim them, if possible.
 				 * Requires changes to bus_space(9).
 				 */
-				if ((ad->ad_devinfo.Valid & ACPI_VALID_STA) ==
+				if ((ad->ad_devinfo->Valid & ACPI_VALID_STA) ==
 				    ACPI_VALID_STA &&
-				    (ad->ad_devinfo.CurrentStatus &
+				    (ad->ad_devinfo->CurrentStatus &
 				     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
 				      ACPI_STA_DEV_OK)) !=
 				    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
@@ -462,7 +462,7 @@ acpi_build_tree(struct acpi_softc *sc)
 				/*
 				 * XXX Same problem as above...
 				 */
-				if ((ad->ad_devinfo.Valid & ACPI_VALID_HID)
+				if ((ad->ad_devinfo->Valid & ACPI_VALID_HID)
 				    == 0)
 					continue;
 			}
@@ -475,30 +475,34 @@ acpi_build_tree(struct acpi_softc *sc)
 
 #ifdef ACPI_ACTIVATE_DEV
 static void
-acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO *di)
+acpi_activate_device(ACPI_HANDLE handle, ACPI_DEVICE_INFO **di)
 {
 	ACPI_STATUS rv;
-
-#ifdef ACPI_DEBUG
 	ACPI_BUFFER buf;
 
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+#ifdef ACPI_DEBUG
 	printf("acpi_activate_device: %s, old status=%x\n", 
-	       di->HardwareId.Value, di->CurrentStatus);
+	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 
 	rv = acpi_allocate_resources(handle);
 	if (ACPI_FAILURE(rv)) {
-		printf("acpi: activate failed for %s\n", di->HardwareId.Value);
+		printf("acpi: activate failed for %s\n",
+		       (*di)->HardwareId.Value);
 	} else {
-		printf("acpi: activated %s\n", di->HardwareId.Value);
+		printf("acpi: activated %s\n", (*di)->HardwareId.Value);
 	}
 
-#ifdef ACPI_DEBUG
-	buf.Pointer = di;
-	buf.Length = sizeof(*di);
 	(void)AcpiGetObjectInfo(handle, &buf);
+	AcpiOsFree(*di);
+	*di = buf.Pointer;
+
+#ifdef ACPI_DEBUG
 	printf("acpi_activate_device: %s, new status=%x\n", 
-	       di->HardwareId.Value, di->CurrentStatus);
+	       (*di)->HardwareId.Value, (*di)->CurrentStatus);
 #endif
 }
 #endif /* ACPI_ACTIVATE_DEV */
@@ -520,12 +524,12 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 	struct acpi_devnode *ad;
 	ACPI_OBJECT_TYPE type;
 	ACPI_BUFFER buf;
-	ACPI_DEVICE_INFO devinfo;
+	ACPI_DEVICE_INFO *devinfo;
 	ACPI_STATUS rv;
 
 	if (AcpiGetType(handle, &type) == AE_OK) {
-		buf.Pointer = &devinfo;
-		buf.Length = sizeof(devinfo);
+		buf.Pointer = NULL;
+		buf.Length = ACPI_ALLOCATE_BUFFER;
 		rv = AcpiGetObjectInfo(handle, &buf);
 		if (rv != AE_OK) {
 #ifdef ACPI_DEBUG
@@ -535,23 +539,17 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 			goto out; /* XXX why return OK */
 		}
 
+		devinfo = buf.Pointer;
+
 		switch (type) {
 		case ACPI_TYPE_DEVICE:
 #ifdef ACPI_ACTIVATE_DEV
-			if ((devinfo.Valid & (ACPI_VALID_STA|ACPI_VALID_HID)) ==
+			if ((devinfo->Valid & (ACPI_VALID_STA|ACPI_VALID_HID)) ==
 			    (ACPI_VALID_STA|ACPI_VALID_HID) &&
-			    (devinfo.CurrentStatus &
+			    (devinfo->CurrentStatus &
 			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED)) ==
-			    ACPI_STA_DEV_PRESENT) {
+			    ACPI_STA_DEV_PRESENT)
 				acpi_activate_device(handle, &devinfo);
-
-				/* Update devinfo. */
-				buf.Pointer = &devinfo;
-				buf.Length = sizeof(devinfo);
-				rv = AcpiGetObjectInfo(handle, &buf);
-				if (rv != AE_OK)
-					goto out;
-			}
 
 			/* FALLTHROUGH */
 #endif
@@ -571,22 +569,23 @@ acpi_make_devnode(ACPI_HANDLE handle, UINT32 level, void *context,
 
 			TAILQ_INSERT_TAIL(&as->as_devnodes, ad, ad_list);
 
-			if ((ad->ad_devinfo.Valid & ACPI_VALID_HID) == 0)
+			if ((ad->ad_devinfo->Valid & ACPI_VALID_HID) == 0)
 				goto out;
 
 #ifdef ACPI_EXTRA_DEBUG
 			printf("%s: HID %s found in scope %s level %d\n",
-			    sc->sc_dev.dv_xname, ad->ad_devinfo.HardwareId.Value,
+			    sc->sc_dev.dv_xname,
+			    ad->ad_devinfo->HardwareId.Value,
 			    as->as_name, ad->ad_level);
-			if (ad->ad_devinfo.Valid & ACPI_VALID_UID)
+			if (ad->ad_devinfo->Valid & ACPI_VALID_UID)
 				printf("       UID %s\n",
-				    ad->ad_devinfo.UniqueId.Value);
-			if (ad->ad_devinfo.Valid & ACPI_VALID_ADR)
+				    ad->ad_devinfo->UniqueId.Value);
+			if (ad->ad_devinfo->Valid & ACPI_VALID_ADR)
 				printf("       ADR 0x%016qx\n",
-				    ad->ad_devinfo.Address);
-			if (ad->ad_devinfo.Valid & ACPI_VALID_STA)
+				    ad->ad_devinfo->Address);
+			if (ad->ad_devinfo->Valid & ACPI_VALID_STA)
 				printf("       STA 0x%08x\n",
-				    ad->ad_devinfo.CurrentStatus);
+				    ad->ad_devinfo->CurrentStatus);
 #endif
 		}
 	}
@@ -605,8 +604,9 @@ acpi_print(void *aux, const char *pnp)
 	struct acpi_attach_args *aa = aux;
 
 	if (pnp) {
-		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
-			char *pnpstr = aa->aa_node->ad_devinfo.HardwareId.Value;
+		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
+			char *pnpstr =
+			    aa->aa_node->ad_devinfo->HardwareId.Value;
 			char *str;
 
 			aprint_normal("%s ", pnpstr);
@@ -632,17 +632,17 @@ acpi_print(void *aux, const char *pnp)
 #endif
 		} else {
 			aprint_normal("ACPI Object Type '%s' (0x%02x) ",
-			   AcpiUtGetTypeName(aa->aa_node->ad_devinfo.Type),
-			   aa->aa_node->ad_devinfo.Type);
+			   AcpiUtGetTypeName(aa->aa_node->ad_devinfo->Type),
+			   aa->aa_node->ad_devinfo->Type);
 		}
 		aprint_normal("at %s", pnp);
 	} else {
-		if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_HID) {
-			aprint_normal(" (%s", aa->aa_node->ad_devinfo.HardwareId.Value);
-			if (aa->aa_node->ad_devinfo.Valid & ACPI_VALID_UID) {
+		if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_HID) {
+			aprint_normal(" (%s", aa->aa_node->ad_devinfo->HardwareId.Value);
+			if (aa->aa_node->ad_devinfo->Valid & ACPI_VALID_UID) {
 				char *uid;
 
-				uid = aa->aa_node->ad_devinfo.UniqueId.Value;
+				uid = aa->aa_node->ad_devinfo->UniqueId.Value;
 				if (uid[0] == '\0')
 					uid = "<null>";
 				aprint_normal("-%s", uid);
@@ -860,6 +860,34 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	buf->Length = ACPI_ALLOCATE_BUFFER;
 
 	return ((*getit)(handle, buf));
+}
+
+
+/*
+ * acpi_match_hid
+ *
+ *	Match given ids against _HID and _CIDs
+ */
+int
+acpi_match_hid(ACPI_DEVICE_INFO *ad, const char * const *ids)
+{
+	int i;
+
+	while (*ids) {
+		if ((ad->Valid & ACPI_VALID_HID) &&
+		    strcmp(ad->HardwareId.Value, *ids) == 0)
+			return (1);
+
+		if (ad->Valid & ACPI_VALID_CID) {
+			for (i = 0; i < ad->CompatibilityId.Count; i++) {
+				if (strcmp(ad->CompatibilityId.Id[i].Value, *ids) == 0)
+					return (1);
+			}
+		}
+		ids++;
+	}
+
+	return (0);
 }
 
 
