@@ -13,6 +13,5 @@ o look for cause of warning (without consequence, as far as I can
 o split up contents of bktr directory to better places? (also fix
   bktr2netbsd in that case)
 o use NetBSD PCI listings for recognition of cards.
-o write man page
 o remove #ifdef'd FreeBSD/OpenBSD code (?)
 o replace unsigned long by u_int32_t (and similar for int/short?)
