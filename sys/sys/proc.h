@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.174 2003/10/09 14:00:34 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.175 2003/11/04 16:19:52 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -149,6 +149,8 @@ struct emul {
  * are always addressible except for those marked "(PROC ONLY)" below,
  * which might be addressible only on a processor on which the process
  * is running.
+ *
+ * Fields marked 'p:' are protected by the process's own p_lock.
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* List of all processes */
@@ -179,21 +181,21 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* Pointer to list of children. */
 
-	struct simplelock p_lwplock;	/* Lock on LWP-related state. */
+	struct simplelock p_lock;	/* Lock on proc state (p:) */
 
-	LIST_HEAD(, lwp) p_lwps;	/* Pointer to list of LWPs. */
+	LIST_HEAD(, lwp) p_lwps;	/* p: Pointer to list of LWPs. */
 
-	LIST_HEAD(, ras) p_raslist;	/* Pointer to RAS queue */
-	u_int p_nras;			/* number of RASs */
-	struct simplelock p_raslock;	/* Lock for RAS queue */
+	LIST_HEAD(, ras) p_raslist;	/* p: Pointer to RAS queue */
+	u_int		p_nu;		/* unused: was number of RASs */
+	struct simplelock p_nu2;	/* unused: was Lock for RAS queue */
 
 /* The following fields are all zeroed upon creation in fork. */
 #define	p_startzero	p_nlwps
 
-	int 		p_nlwps;	/* Number of LWPs */
-	int 		p_nrlwps;	/* Number of running LWPs */
-	int 		p_nzlwps;	/* Number of zombie LWPs */
-	int 		p_nlwpid;	/* Next LWP ID */
+	int 		p_nlwps;	/* p: Number of LWPs */
+	int 		p_nrlwps;	/* p: Number of running LWPs */
+	int 		p_nzlwps;	/* p: Number of zombie LWPs */
+	int 		p_nlwpid;	/* p: Next LWP ID */
 
 	struct sadata 	*p_sa;		/* Scheduler activation information */
 
