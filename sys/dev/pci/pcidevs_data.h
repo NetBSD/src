@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.206 2000/03/23 11:18:10 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.207 2000/03/23 15:11:26 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.201 2000/03/23 11:17:32 ad Exp 
+ *	NetBSD: pcidevs,v 1.202 2000/03/23 15:10:56 joda Exp 
  */
 
 /*
@@ -2114,6 +2114,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Intel",
 	    "82810-DC100 Graphics Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_MCH,
+	    0,
+	    "Intel",
+	    "82810E Memory Controller Hub",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82810E_GC,
+	    0,
+	    "Intel",
+	    "82810E Graphics Controller",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443LX,
