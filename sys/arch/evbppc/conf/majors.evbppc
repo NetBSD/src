@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbppc,v 1.6 2003/03/16 07:07:18 matt Exp $
+#	$NetBSD: majors.evbppc,v 1.7 2003/04/16 09:41:54 wiz Exp $
 #
 # Device majors for evbppc
 # (When possible, make entries the same as macppc)
@@ -75,4 +75,4 @@ device-major	mlx		char 68			mlx
 #				char 70
 device-major	bktr		char 71			bktr
 device-major	radio		char 72			radio
-device-major	wsfont		char 73			wsmux
+device-major	wsfont		char 73			wsfont
