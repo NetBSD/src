@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1997/10/19 05:03:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,24 +33,24 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1980, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $";
+__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 05:03:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <fcntl.h>
-#include <sys/ioctl.h>
 #include "extern.h"
+
+int	main __P((int, char **));
 
 /*
  * Mail -- a mail program
@@ -65,7 +65,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int i;
+	int i;
 	struct name *to, *cc, *bcc, *smopts;
 	char *subject;
 	char *ef;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
+/*	$NetBSD: cmd3.c,v 1.9 1997/10/19 05:03:05 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $";
+__RCSID("$NetBSD: cmd3.c,v 1.9 1997/10/19 05:03:05 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,8 +107,8 @@ bangexp(str)
 	char *str;
 {
 	char bangbuf[BUFSIZ];
-	register char *cp, *cp2;
-	register int n;
+	char *cp, *cp2;
+	int n;
 	int changed = 0;
 
 	cp = str;
@@ -157,8 +158,8 @@ int
 help(v)
 	void *v;
 {
-	register c;
-	register FILE *f;
+	int c;
+	FILE *f;
 
 	if ((f = Fopen(_PATH_HELP, "r")) == NULL) {
 		perror(_PATH_HELP);
@@ -273,7 +274,7 @@ _respond(msgvec)
  */
 char *
 reedit(subj)
-	register char *subj;
+	char *subj;
 {
 	char *newsubj;
 
@@ -298,8 +299,8 @@ preserve(v)
 	void *v;
 {
 	int *msgvec = v;
-	register struct message *mp;
-	register int *ip, mesg;
+	struct message *mp;
+	int *ip, mesg;
 
 	if (edit) {
 		printf("Cannot \"preserve\" in edit mode\n");
@@ -322,8 +323,8 @@ int
 unread(v)
 	void *v;
 {
-	int	*msgvec = v;
-	register int *ip;
+	int *msgvec = v;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
@@ -341,8 +342,8 @@ messize(v)
 	void *v;
 {
 	int *msgvec = v;
-	register struct message *mp;
-	register int *ip, mesg;
+	struct message *mp;
+	int *ip, mesg;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		mesg = *ip;
@@ -375,8 +376,8 @@ set(v)
 	void *v;
 {
 	char **arglist = v;
-	register struct var *vp;
-	register char *cp, *cp2;
+	struct var *vp;
+	char *cp, *cp2;
 	char varbuf[BUFSIZ], **ap, **p;
 	int errs, h, s;
 
@@ -423,7 +424,7 @@ unset(v)
 	void *v;
 {
 	char **arglist = v;
-	register struct var *vp, *vp2;
+	struct var *vp, *vp2;
 	int errs, h;
 	char **ap;
 
@@ -462,9 +463,9 @@ group(v)
 	void *v;
 {
 	char **argv = v;
-	register struct grouphead *gh;
-	register struct group *gp;
-	register int h;
+	struct grouphead *gh;
+	struct group *gp;
+	int h;
 	int s;
 	char **ap, *gname, **p;
 
@@ -519,7 +520,7 @@ void
 sort(list)
 	char **list;
 {
-	register char **ap;
+	char **ap;
 
 	for (ap = list; *ap != NOSTR; ap++)
 		;
@@ -579,8 +580,8 @@ echo(v)
 	void *v;
 {
 	char **argv = v;
-	register char **ap;
-	register char *cp;
+	char **ap;
+	char *cp;
 
 	for (ap = argv; *ap != NOSTR; ap++) {
 		cp = *ap;
@@ -616,8 +617,8 @@ _Respond(msgvec)
 {
 	struct header head;
 	struct message *mp;
-	register int *ap;
-	register char *cp;
+	int *ap;
+	char *cp;
 
 	head.h_to = NIL;
 	for (ap = msgvec; *ap != 0; ap++) {
@@ -650,7 +651,7 @@ ifcmd(v)
 	void *v;
 {
 	char **argv = v;
-	register char *cp;
+	char *cp;
 
 	if (cond != CANY) {
 		printf("Illegal nested \"if\"\n");
@@ -728,8 +729,8 @@ alternates(v)
 	void *v;
 {
 	char **namelist = v;
-	register int c;
-	register char **ap, **ap2, *cp;
+	int c;
+	char **ap, **ap2, *cp;
 
 	c = argcount(namelist) + 1;
 	if (c == 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $	*/
+/*	$NetBSD: list.c,v 1.8 1997/10/19 05:03:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -33,17 +33,19 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: list.c,v 1.7 1997/07/09 05:23:36 mikel Exp $";
+__RCSID("$NetBSD: list.c,v 1.8 1997/10/19 05:03:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "rcv.h"
-#include <ctype.h>
 #include "extern.h"
+
+int	matchto __P((char *, int));
 
 /*
  * Mail -- a mail program
@@ -62,8 +64,8 @@ getmsglist(buf, vector, flags)
 	char *buf;
 	int *vector, flags;
 {
-	register int *ip;
-	register struct message *mp;
+	int *ip;
+	struct message *mp;
 
 	if (msgCount == 0) {
 		*vector = 0;
@@ -121,9 +123,9 @@ markall(buf, f)
 	char buf[];
 	int f;
 {
-	register char **np;
-	register int i;
-	register struct message *mp;
+	char **np;
+	int i;
+	struct message *mp;
 	char *namelist[NMLSIZE], *bufp;
 	int tok, beg, mc, star, other, valdot, colmod, colresult;
 
@@ -317,7 +319,7 @@ number:
 
 	if (colmod != 0) {
 		for (i = 1; i <= msgCount; i++) {
-			register struct coltab *colp;
+			struct coltab *colp;
 
 			mp = &message[i - 1];
 			for (colp = &coltab[0]; colp->co_char; colp++)
@@ -331,7 +333,7 @@ number:
 			if (mp->m_flag & MMARK)
 				break;
 		if (mp >= &message[msgCount]) {
-			register struct coltab *colp;
+			struct coltab *colp;
 
 			printf("No messages satisfy");
 			for (colp = &coltab[0]; colp->co_char; colp++)
@@ -352,7 +354,7 @@ int
 evalcol(col)
 	int col;
 {
-	register struct coltab *colp;
+	struct coltab *colp;
 
 	if (col == 0)
 		return(lastcolmod);
@@ -371,7 +373,7 @@ int
 check(mesg, f)
 	int mesg, f;
 {
-	register struct message *mp;
+	struct message *mp;
 
 	if (mesg < 1 || mesg > msgCount) {
 		printf("%d: Invalid message number\n", mesg);
@@ -395,7 +397,7 @@ getrawlist(line, argv, argc)
 	char **argv;
 	int  argc;
 {
-	register char c, *cp, *cp2, quotec;
+	char c, *cp, *cp2, quotec;
 	int argn;
 	char linebuf[BUFSIZ];
 
@@ -508,9 +510,9 @@ int
 scan(sp)
 	char **sp;
 {
-	register char *cp, *cp2;
-	register int c;
-	register struct lex *lp;
+	char *cp, *cp2;
+	int c;
+	struct lex *lp;
 	int quotec;
 
 	if (regretp >= 0) {
@@ -611,7 +613,7 @@ regret(token)
 	int token;
 {
 	if (++regretp >= REGDEP)
-		panic("Too many regrets");
+		errx(1, "Too many regrets");
 	regretstack[regretp] = token;
 	lexstring[STRINGLEN-1] = '\0';
 	string_stack[regretp] = savestr(lexstring);
@@ -635,7 +637,7 @@ int
 first(f, m)
 	int f, m;
 {
-	register struct message *mp;
+	struct message *mp;
 
 	if (msgCount == 0)
 		return 0;
@@ -659,7 +661,7 @@ matchsender(str, mesg)
 	char *str;
 	int mesg;
 {
-	register char *cp, *cp2, *backup;
+	char *cp, *cp2, *backup;
 
 	if (!*str)	/* null string matches nothing instead of everything */
 		return 0;
@@ -686,9 +688,10 @@ static char *to_fields[] = { "to", "cc", "bcc", 0 };
 int
 matchto(str, mesg)
 	char *str;
+	int mesg;
 {
-	register struct message *mp;
-	register char *cp, *cp2, *backup, **to;
+	struct message *mp;
+	char *cp, *cp2, *backup, **to;
 
 	str++;
 
@@ -731,8 +734,8 @@ matchsubj(str, mesg)
 	char *str;
 	int mesg;
 {
-	register struct message *mp;
-	register char *cp, *cp2, *backup;
+	struct message *mp;
+	char *cp, *cp2, *backup;
 
 	str++;
 	if (*str == '\0')
@@ -781,11 +784,11 @@ void
 mark(mesg)
 	int mesg;
 {
-	register int i;
+	int i;
 
 	i = mesg;
 	if (i < 1 || i > msgCount)
-		panic("Bad message number to mark");
+		errx(1, "Bad message number to mark");
 	message[i-1].m_flag |= MMARK;
 }
 
@@ -796,11 +799,11 @@ void
 unmark(mesg)
 	int mesg;
 {
-	register int i;
+	int i;
 
 	i = mesg;
 	if (i < 1 || i > msgCount)
-		panic("Bad message number to unmark");
+		errx(1, "Bad message number to unmark");
 	message[i-1].m_flag &= ~MMARK;
 }
 
@@ -811,8 +814,8 @@ int
 metamess(meta, f)
 	int meta, f;
 {
-	register int c, m;
-	register struct message *mp;
+	int c, m;
+	struct message *mp;
 
 	c = meta;
 	switch (c) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.10 1997/10/19 05:03:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $";
+__RCSID("$NetBSD: cmd1.c,v 1.10 1997/10/19 05:03:00 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,8 +63,8 @@ headers(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int n, mesg, flag;
-	register struct message *mp;
+	int n, mesg, flag;
+	struct message *mp;
 	int size;
 
 	size = screensize();
@@ -104,7 +105,7 @@ scroll(v)
 	void *v;
 {
 	char *arg = v;
-	register int s, size;
+	int s, size;
 	int cur[1];
 
 	cur[0] = 0;
@@ -159,7 +160,7 @@ from(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++)
 		printhead(*ip);
@@ -235,8 +236,8 @@ pcmdlist(v)
 	void *v;
 {
 	extern const struct cmd cmdtab[];
-	register const struct cmd *cp;
-	register int cc;
+	const struct cmd *cp;
+	int cc;
 
 	printf("Commands are:\n");
 	for (cc = 0, cp = cmdtab; cp->c_name != NULL; cp++) {
@@ -309,7 +310,7 @@ type1(msgvec, doign, page)
 	int *msgvec;
 	int doign, page;
 {
-	register *ip;
+	int *ip;
 	struct message *mp;
 	char *cp;
 	int nlines;
@@ -383,8 +384,8 @@ top(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
-	register struct message *mp;
+	int *ip;
+	struct message *mp;
 	int c, topl, lines, lineb;
 	char *valtop, linebuf[LINESIZE];
 	FILE *ibuf;
@@ -426,7 +427,7 @@ stouch(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
@@ -444,7 +445,7 @@ mboxit(v)
 	void *v;
 {
 	int *msgvec = v;
-	register int *ip;
+	int *ip;
 
 	for (ip = msgvec; *ip != 0; ip++) {
 		dot = &message[*ip-1];
