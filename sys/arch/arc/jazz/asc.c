@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.1.2.3 2001/01/22 18:23:36 bouyer Exp $	*/
+/*	$NetBSD: asc.c,v 1.1.2.4 2001/04/05 16:52:07 bouyer Exp $	*/
 /*	$OpenBSD: asc.c,v 1.9 1998/03/16 09:38:39 pefo Exp $	*/
 /*	NetBSD: asc.c,v 1.10 1994/12/05 19:11:12 dean Exp 	*/
 
@@ -472,11 +472,11 @@ struct cfattach asc_ca = {
 /*
  *  Glue to the machine dependent scsi
  */
-int asc_scsipi_request __P((struct scsipi_channel *,
+void asc_scsipi_request __P((struct scsipi_channel *,
 				scsipi_adapter_req_t, void *));
 
 static int asc_intr __P((void *));
-static int asc_poll __P((struct asc_softc *, int));
+static void asc_poll __P((struct asc_softc *, int));
 #ifdef DEBUG
 static void asc_DumpLog __P((char *));
 #endif
@@ -624,7 +624,7 @@ ascattach(parent, self, aux)
 	asc->sc_adapter.adapt_request = asc_scsipi_request;
 
 	memset(&asc->sc_channel, 0, sizeof(asc->sc_channel));
-	asc->sc_channel.chan_adapter = &sc->sc_adapter;
+	asc->sc_channel.chan_adapter = &asc->sc_adapter;
 	asc->sc_channel.chan_bustype = &scsi_bustype;
 	asc->sc_channel.chan_channel = 0;
 	asc->sc_channel.chan_ntargets = 8;
@@ -642,7 +642,7 @@ ascattach(parent, self, aux)
  * We maintain information on each device separately since devices can
  * connect/disconnect during an operation.
  */
-int
+void
 asc_scsipi_request(chan, req, arg)
 	struct scsipi_channel *chan;
 	scsipi_adapter_req_t req;
@@ -827,7 +827,7 @@ asc_startcmd(asc, target)
 #endif
 
 	/* check for simple SCSI command with no data transfer */
-	else if (scsicmd->xs_control & XS_CTL_DATA_OUT) {
+	if (scsicmd->xs_control & XS_CTL_DATA_OUT) {
 		asc->script = &asc_scripts[SCRIPT_DATA_OUT];
 		state->flags |= DMA_OUT;
 	}
