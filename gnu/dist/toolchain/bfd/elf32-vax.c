@@ -1292,16 +1292,7 @@ elf_vax_size_dynamic_sections (output_bfd, info)
 	      s->reloc_count = 0;
 	    }
 	}
-      else if (strncmp (name, ".got", 4) == 0)
-	{
-	  if (s->_raw_size == 0)
-	    {
-	      /* Strip this section if we don't need it; see the
-                 comment below.  */
-	      strip = true;
-	    }
-	}
-      else
+      else if (strncmp (name, ".got", 4) != 0)
 	{
 	  /* It's not one of our sections, so don't allocate space.  */
 	  continue;
