@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.7 2002/07/03 10:05:58 itojun Exp $	*/
+/*	$NetBSD: msg.c,v 1.8 2003/04/03 06:21:33 itojun Exp $	*/
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: msg.c,v 1.4 2002/07/01 16:15:25 deraadt Exp $");
+RCSID("$OpenBSD: msg.c,v 1.5 2002/12/19 00:07:02 djm Exp $");
 
 #include "buffer.h"
 #include "getput.h"
@@ -32,12 +32,12 @@ RCSID("$OpenBSD: msg.c,v 1.4 2002/07/01 16:15:25 deraadt Exp $");
 #include "msg.h"
 
 void
-msg_send(int fd, u_char type, Buffer *m)
+ssh_msg_send(int fd, u_char type, Buffer *m)
 {
 	u_char buf[5];
 	u_int mlen = buffer_len(m);
 
-	debug3("msg_send: type %u", (unsigned int)type & 0xff);
+	debug3("ssh_msg_send: type %u", (unsigned int)type & 0xff);
 
 	PUT_32BIT(buf, mlen + 1);
 	buf[4] = type;		/* 1st byte of payload is mesg-type */
@@ -48,27 +48,27 @@ msg_send(int fd, u_char type, Buffer *m)
 }
 
 int
-msg_recv(int fd, Buffer *m)
+ssh_msg_recv(int fd, Buffer *m)
 {
 	u_char buf[4];
 	ssize_t res;
 	u_int msg_len;
 
-	debug3("msg_recv entering");
+	debug3("ssh_msg_recv entering");
 
 	res = atomic_read(fd, buf, sizeof(buf));
 	if (res != sizeof(buf)) {
 		if (res == 0)
 			return -1;
-		fatal("msg_recv: read: header %ld", (long)res);
+		fatal("ssh_msg_recv: read: header %ld", (long)res);
 	}
 	msg_len = GET_32BIT(buf);
 	if (msg_len > 256 * 1024)
-		fatal("msg_recv: read: bad msg_len %u", msg_len);
+		fatal("ssh_msg_recv: read: bad msg_len %u", msg_len);
 	buffer_clear(m);
 	buffer_append_space(m, msg_len);
 	res = atomic_read(fd, buffer_ptr(m), msg_len);
 	if (res != msg_len)
-		fatal("msg_recv: read: %ld != msg_len", (long)res);
+		fatal("ssh_msg_recv: read: %ld != msg_len", (long)res);
 	return 0;
 }

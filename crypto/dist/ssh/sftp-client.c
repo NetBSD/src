@@ -1,6 +1,6 @@
-/*	$NetBSD: sftp-client.c,v 1.19 2002/12/06 03:39:10 thorpej Exp $	*/
+/*	$NetBSD: sftp-client.c,v 1.20 2003/04/03 06:21:34 itojun Exp $	*/
 /*
- * Copyright (c) 2001,2002 Damien Miller.  All rights reserved.
+ * Copyright (c) 2001-2003 Damien Miller.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,7 +29,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-client.c,v 1.35 2002/09/11 22:41:49 djm Exp $");
+RCSID("$OpenBSD: sftp-client.c,v 1.42 2003/03/05 22:33:43 markus Exp $");
 
 #include <sys/queue.h>
 
@@ -39,13 +39,19 @@ RCSID("$OpenBSD: sftp-client.c,v 1.35 2002/09/11 22:41:49 djm Exp $");
 #include "xmalloc.h"
 #include "log.h"
 #include "atomicio.h"
+#include "progressmeter.h"
 
 #include "sftp.h"
 #include "sftp-common.h"
 #include "sftp-client.h"
 
+extern int showprogress;
+
 /* Minimum amount of data to read at at time */
 #define MIN_READ_SIZE	512
+
+/* Maximum packet size */
+#define MAX_MSG_LENGTH	(256 * 1024)
 
 struct sftp_conn {
 	int fd_in;
@@ -59,48 +65,45 @@ struct sftp_conn {
 static void
 send_msg(int fd, Buffer *m)
 {
-	int mlen = buffer_len(m);
-	int len;
-	Buffer oqueue;
+	u_char mlen[4];
 
-	buffer_init(&oqueue);
-	buffer_put_int(&oqueue, mlen);
-	buffer_append(&oqueue, buffer_ptr(m), mlen);
-	buffer_consume(m, mlen);
+	if (buffer_len(m) > MAX_MSG_LENGTH)
+		fatal("Outbound message too long %u", buffer_len(m));
 
-	len = atomic_write(fd, buffer_ptr(&oqueue), buffer_len(&oqueue));
-	if (len <= 0)
+	/* Send length first */
+	PUT_32BIT(mlen, buffer_len(m));
+	if (atomic_write(fd, mlen, sizeof(mlen)) <= 0)
 		fatal("Couldn't send packet: %s", strerror(errno));
 
-	buffer_free(&oqueue);
+	if (atomic_write(fd, buffer_ptr(m), buffer_len(m)) <= 0)
+		fatal("Couldn't send packet: %s", strerror(errno));
+
+	buffer_clear(m);
 }
 
 static void
 get_msg(int fd, Buffer *m)
 {
-	u_int len, msg_len;
-	unsigned char buf[4096];
+	ssize_t len;
+	u_int msg_len;
 
-	len = atomic_read(fd, buf, 4);
+	buffer_append_space(m, 4);
+	len = atomic_read(fd, buffer_ptr(m), 4);
 	if (len == 0)
 		fatal("Connection closed");
 	else if (len == -1)
 		fatal("Couldn't read packet: %s", strerror(errno));
 
-	msg_len = GET_32BIT(buf);
-	if (msg_len > 256 * 1024)
+	msg_len = buffer_get_int(m);
+	if (msg_len > MAX_MSG_LENGTH)
 		fatal("Received message too long %u", msg_len);
 
-	while (msg_len) {
-		len = atomic_read(fd, buf, MIN(msg_len, sizeof(buf)));
-		if (len == 0)
-			fatal("Connection closed");
-		else if (len == -1)
-			fatal("Couldn't read packet: %s", strerror(errno));
-
-		msg_len -= len;
-		buffer_append(m, buf, len);
-	}
+	buffer_append_space(m, msg_len);
+	len = atomic_read(fd, buffer_ptr(m), msg_len);
+	if (len == 0)
+		fatal("Connection closed");
+	else if (len == -1)
+		fatal("Read packet: %s", strerror(errno));
 }
 
 static void
@@ -372,6 +375,7 @@ do_lsreaddir(struct sftp_conn *conn, char *path, int printflag,
 				error("Couldn't read directory: %s",
 				    fx2txt(status));
 				do_close(conn, handle, handle_len);
+				xfree(handle);
 				return(status);
 			}
 		} else if (type != SSH2_FXP_NAME)
@@ -661,7 +665,7 @@ do_symlink(struct sftp_conn *conn, char *oldpath, char *newpath)
 
 	status = get_status(conn->fd_in, id);
 	if (status != SSH2_FX_OK)
-		error("Couldn't rename file \"%s\" to \"%s\": %s", oldpath,
+		error("Couldn't symlink file \"%s\" to \"%s\": %s", oldpath,
 		    newpath, fx2txt(status));
 
 	return(status);
@@ -742,6 +746,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	int read_error, write_errno;
 	u_int64_t offset, size;
 	u_int handle_len, mode, type, id, buflen;
+	off_t progress_counter;
 	struct request {
 		u_int id;
 		u_int len;
@@ -759,13 +764,13 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 
 	/* XXX: should we preserve set[ug]id? */
 	if (a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS)
-		mode = S_IWRITE | (a->perm & 0777);
+		mode = a->perm & 0777;
 	else
 		mode = 0666;
 
 	if ((a->flags & SSH2_FILEXFER_ATTR_PERMISSIONS) &&
-	    (a->perm & S_IFDIR)) {
-		error("Cannot download a directory: %s", remote_path);
+	    (!S_ISREG(a->perm))) {
+		error("Cannot download non-regular file: %s", remote_path);
 		return(-1);
 	}
 
@@ -794,7 +799,8 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		return(-1);
 	}
 
-	local_fd = open(local_path, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	local_fd = open(local_path, O_WRONLY | O_CREAT | O_TRUNC, 
+	    mode | S_IWRITE);
 	if (local_fd == -1) {
 		error("Couldn't open local file \"%s\" for writing: %s",
 		    local_path, strerror(errno));
@@ -806,6 +812,16 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 	/* Read from remote and write to local */
 	write_error = read_error = write_errno = num_req = offset = 0;
 	max_req = 1;
+	progress_counter = 0;
+
+	if (showprogress) {
+		if (size)
+			start_progress_meter(remote_path, size,
+			    &progress_counter);
+		else
+			printf("Fetching %s to %s\n", remote_path, local_path);
+	}
+
 	while (num_req > 0 || max_req > 0) {
 		char *data;
 		u_int len;
@@ -858,14 +874,15 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			    (unsigned long long)req->offset + len - 1);
 			if (len > req->len)
 				fatal("Received more data than asked for "
-				      "%u > %u", len, req->len);
+				    "%u > %u", len, req->len);
 			if ((lseek(local_fd, req->offset, SEEK_SET) == -1 ||
-			     atomic_write(local_fd, data, len) != len) &&
+			    atomic_write(local_fd, data, len) != len) &&
 			    !write_error) {
 				write_errno = errno;
 				write_error = 1;
 				max_req = 0;
 			}
+			progress_counter += len;
 			xfree(data);
 
 			if (len == req->len) {
@@ -908,6 +925,9 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		}
 	}
 
+	if (showprogress && size)
+		stop_progress_meter();
+
 	/* Sanity check */
 	if (TAILQ_FIRST(&requests) != NULL)
 		fatal("Transfer complete, but requests still in queue");
@@ -927,7 +947,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 		/* Override umask and utimes if asked */
 		if (pflag && fchmod(local_fd, mode) == -1)
 			error("Couldn't set mode on \"%s\": %s", local_path,
-			      strerror(errno));
+			    strerror(errno));
 		if (pflag && (a->flags & SSH2_FILEXFER_ATTR_ACMODTIME)) {
 			struct timeval tv[2];
 			tv[0].tv_sec = a->atime;
@@ -935,7 +955,7 @@ do_download(struct sftp_conn *conn, char *remote_path, char *local_path,
 			tv[0].tv_usec = tv[1].tv_usec = 0;
 			if (utimes(local_path, tv) == -1)
 				error("Can't set times on \"%s\": %s",
-				      local_path, strerror(errno));
+				    local_path, strerror(errno));
 		}
 	}
 	close(local_fd);
@@ -980,6 +1000,11 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 		close(local_fd);
 		return(-1);
 	}
+	if (!S_ISREG(sb.st_mode)) {
+		error("%s is not a regular file", local_path);
+		close(local_fd);
+		return(-1);
+	}
 	stat_to_attrib(&sb, &a);
 
 	a.flags &= ~SSH2_FILEXFER_ATTR_SIZE;
@@ -1014,6 +1039,11 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 
 	/* Read from local and write to remote */
 	offset = 0;
+	if (showprogress)
+		start_progress_meter(local_path, sb.st_size, &offset);
+	else
+		printf("Uploading %s to %s\n", local_path, remote_path);
+
 	for (;;) {
 		int len;
 
@@ -1044,7 +1074,7 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 			buffer_put_string(&msg, data, len);
 			send_msg(conn->fd_out, &msg);
 			debug3("Sent message SSH2_FXP_WRITE I:%u O:%llu S:%u",
-			       id, (unsigned long long)offset, len);
+			    id, (unsigned long long)offset, len);
 		} else if (TAILQ_FIRST(&acks) == NULL)
 			break;
 
@@ -1078,9 +1108,11 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 
 			if (status != SSH2_FX_OK) {
 				error("Couldn't write to remote file \"%s\": %s",
-				      remote_path, fx2txt(status));
+				    remote_path, fx2txt(status));
 				do_close(conn, handle, handle_len);
 				close(local_fd);
+				xfree(data);
+				xfree(ack);
 				goto done;
 			}
 			debug3("In write loop, ack for %u %u bytes at %llu",
@@ -1090,6 +1122,8 @@ do_upload(struct sftp_conn *conn, char *local_path, char *remote_path,
 		}
 		offset += len;
 	}
+	if (showprogress)
+		stop_progress_meter();
 	xfree(data);
 
 	if (close(local_fd) == -1) {

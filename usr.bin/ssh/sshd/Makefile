@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2002/07/28 23:43:12 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2003/04/03 06:21:38 itojun Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,10 @@ SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c uidswap.c \
 	auth.c auth1.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c \
-	auth-skey.c auth-bsdauth.c monitor_mm.c monitor.c \
+	auth-skey.c auth-bsdauth.c auth2-hostbased.c auth2-kbdint.c \
 	auth2-none.c auth2-passwd.c auth2-pubkey.c \
-	auth2-hostbased.c auth2-kbdint.c
+	monitor_mm.c monitor.c monitor_wrap.c monitor_fdpass.c \
+	kexdhs.c kexgexs.c
 
 .if (${USE_KERBEROS} != "no")
 CPPFLAGS+=-DKRB5 -DAFS -I${DESTDIR}/usr/include/krb5

@@ -1,4 +1,4 @@
-/*	$NetBSD: clientloop.c,v 1.23 2002/12/06 03:39:08 thorpej Exp $	*/
+/*	$NetBSD: clientloop.c,v 1.24 2003/04/03 06:21:32 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -60,7 +60,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: clientloop.c,v 1.104 2002/08/22 19:38:42 stevesk Exp $");
+RCSID("$OpenBSD: clientloop.c,v 1.108 2003/04/02 09:48:07 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -889,10 +889,16 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 
 	client_init_dispatch();
 
-	/* Set signal handlers to restore non-blocking mode.  */
-	signal(SIGINT, signal_handler);
-	signal(SIGQUIT, signal_handler);
-	signal(SIGTERM, signal_handler);
+	/*
+	 * Set signal handlers, (e.g. to restore non-blocking mode)
+	 * but don't overwrite SIG_IGN, matches behaviour from rsh(1)
+	 */
+	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
+		signal(SIGINT, signal_handler);
+	if (signal(SIGQUIT, SIG_IGN) != SIG_IGN)
+		signal(SIGQUIT, signal_handler);
+	if (signal(SIGTERM, SIG_IGN) != SIG_IGN)
+		signal(SIGTERM, signal_handler);
 	if (have_pty)
 		signal(SIGWINCH, window_change_handler);
 
@@ -963,9 +969,8 @@ client_loop(int have_pty, int escape_char_arg, int ssh2_chan_id)
 		/* Do channel operations unless rekeying in progress. */
 		if (!rekeying) {
 			channel_after_select(readset, writeset);
-
-			if (need_rekeying) {
-				debug("user requests rekeying");
+			if (need_rekeying || packet_need_rekeying()) {
+				debug("need rekeying");
 				xxx_kex->done = 0;
 				kex_send_kexinit(xxx_kex);
 				need_rekeying = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.5 2002/12/06 03:39:09 thorpej Exp $	*/
+/*	$NetBSD: log.c,v 1.6 2003/04/03 06:21:33 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: log.c,v 1.24 2002/07/19 15:43:33 markus Exp $");
+RCSID("$OpenBSD: log.c,v 1.25 2003/01/11 18:29:43 markus Exp $");
 
 #include "log.h"
 #include "xmalloc.h"
@@ -231,6 +231,7 @@ fatal_remove_all_cleanups(void)
 		next_cu = cu->next;
 		xfree(cu);
 	}
+	fatal_cleanups = NULL;
 }
 
 /* Cleanup and exit */
