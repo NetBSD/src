@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k.newconf,v 1.16 1994/10/26 08:45:56 cgd Exp $
+#	$NetBSD: files.mac68k.newconf,v 1.17 1994/11/27 20:07:38 briggs Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -40,23 +40,23 @@ device	ncr96scsi at mainbus: scsi
 file	arch/mac68k/dev/scsi96.c	ncr96scsi
 
 device	scsibus at scsi { target = -1, lun = -1 }
-file	arch/mac68k/scsi/scsiconf.c	scsibus needs-flag
-file	arch/mac68k/scsi/scsi_base.c	scsi
-file	arch/mac68k/scsi/scsi_ioctl.c	scsi
+file	scsi/scsiconf.c		scsibus needs-flag
+file	scsi/scsi_base.c	scsi
+file	scsi/scsi_ioctl.c	scsi
 
 device	cd at scsibus: disk
-file	arch/mac68k/scsi/cd.c		cd needs-flag
+file	scsi/cd.c		cd needs-flag
 major {cd=6}
 device	ch at scsibus: disk
-file	arch/mac68k/scsi/ch.c		ch needs-flag
+file	scsi/ch.c		ch needs-flag
 device	sd at scsibus: disk
-file	arch/mac68k/scsi/sd.c		sd needs-flag
+file	scsi/sd.c		sd needs-flag
 major {sd=4}
 device	st at scsibus: tape
-file	arch/mac68k/scsi/st.c		st needs-flag
+file	scsi/st.c		st needs-flag
 major {st=5}
-file	arch/mac68k/scsi/uk.c		uk needs-flag
-file	arch/mac68k/scsi/su.c		su needs-flag
+file	scsi/uk.c		uk needs-flag
+file	scsi/su.c		su needs-flag
 
 major {vnd=8}
 
