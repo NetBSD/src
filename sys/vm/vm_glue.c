@@ -247,7 +247,7 @@ vm_fork(p1, p2, isvfork)
 	     (caddr_t)&up->u_stats.pstat_startcopy));
 
 #if defined(i386) || defined(pc532)
-	{ u_int addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
+	{ vm_offset_t addr = VM_MAXUSER_ADDRESS; struct vm_map *vp;
 
 	vp = &p2->p_vmspace->vm_map;
 
