@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.690 2005/02/01 18:21:58 abs Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.691 2005/02/02 11:20:40 abs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.691 2005/02/01 18:21:14 abs Exp 
+ *	NetBSD: pcidevs,v 1.692 2005/02/02 11:19:49 abs Exp 
  */
 
 /*
@@ -9500,8 +9500,8 @@ const struct pci_product pci_products[] = {
 	    "VT8237 Integrated SATA Controller",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT642_RAID,
-	    "VT642 SATA RAID Controller",
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT6421_RAID,
+	    "VT6421 Serial RAID Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8235,
