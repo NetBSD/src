@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp.c,v 1.5.2.2 1998/02/07 00:03:54 mellon Exp $	*/
+/*	$NetBSD: if_fxp.c,v 1.5.2.3 1998/02/07 10:26:42 mellon Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -194,6 +194,12 @@ const struct fxp_supported_media fxp_media[] = {
 	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
 	  FXP_MEDIA_STANDARD_DEFMEDIA },
 	{ FXP_PHY_DP83840A, fxp_media_standard,
+	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
+	  FXP_MEDIA_STANDARD_DEFMEDIA },
+	{ FXP_PHY_82553A, fxp_media_standard,
+	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
+	  FXP_MEDIA_STANDARD_DEFMEDIA },
+	{ FXP_PHY_82553C, fxp_media_standard,
 	  sizeof(fxp_media_standard) / sizeof(fxp_media_standard[0]),
 	  FXP_MEDIA_STANDARD_DEFMEDIA },
 	{ FXP_PHY_82555, fxp_media_standard,
@@ -1411,6 +1417,8 @@ fxp_set_media(sc, media)
 		    FXP_DP83840_PCR_F_CONNECT |	/* force link disconnect bypass */
 		    FXP_DP83840_PCR_BIT10);	/* XXX I have no idea */
 		/* fall through */
+	case FXP_PHY_82553A:
+	case FXP_PHY_82553C:			/* XXX untested */
 	case FXP_PHY_82555:
 		if (IFM_SUBTYPE(media) != IFM_AUTO) {
 			int flags;
