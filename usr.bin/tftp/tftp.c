@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $	*/
+/*	$NetBSD: tftp.c,v 1.10 1999/07/12 20:19:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.10 1999/07/12 20:19:20 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: tftp.c,v 1.9 1998/12/19 22:41:21 christos Exp $");
 
 extern	int errno;
 
-extern  struct sockaddr_in peeraddr;	/* filled in by main */
+extern  struct sockaddr_storage peeraddr; /* filled in by main */
 extern  int     f;			/* the opened socket */
 extern  int     trace;
 extern  int     verbose;
@@ -81,7 +81,7 @@ int	timeout;
 jmp_buf	toplevel;
 jmp_buf	timeoutbuf;
 
-static void nak __P((int));
+static void nak __P((int, struct sockaddr *));
 static int makerequest __P((int, const char *, struct tftphdr *, const char *));
 static void printstats __P((const char *, unsigned long));
 static void startclock __P((void));
@@ -103,9 +103,10 @@ sendfile(fd, name, mode)
 	int n;
 	volatile int block, size, convert;
 	volatile unsigned long amount;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 	FILE *file;
+	struct sockaddr_storage peer;
 
 	startclock();		/* start stat's clock */
 	dp = r_init();		/* reset fillbuf/read-ahead code */
@@ -114,6 +115,7 @@ sendfile(fd, name, mode)
 	convert = !strcmp(mode, "netascii");
 	block = 0;
 	amount = 0;
+	memcpy(&peer, &peeraddr, peeraddr.ss_len);
 
 	signal(SIGALRM, timer);
 	do {
@@ -123,7 +125,7 @@ sendfile(fd, name, mode)
 		/*	size = read(fd, dp->th_data, SEGSIZE);	 */
 			size = readit(file, &dp, convert);
 			if (size < 0) {
-				nak(errno + 100);
+				nak(errno + 100, (struct sockaddr *)&peer);
 				break;
 			}
 			dp->th_opcode = htons((u_short)DATA);
@@ -135,7 +137,7 @@ send_data:
 		if (trace)
 			tpacket("sent", dp, size + 4);
 		n = sendto(f, dp, size + 4, 0,
-		    (struct sockaddr *)&peeraddr, sizeof(peeraddr));
+		    (struct sockaddr *)&peer, peer.ss_len);
 		if (n != size + 4) {
 			warn("sendto");
 			goto abort;
@@ -153,7 +155,19 @@ send_data:
 				warn("recvfrom");
 				goto abort;
 			}
-			peeraddr.sin_port = from.sin_port;	/* added */
+			switch (peer.ss_family) {	/* added */
+			case AF_INET:
+				((struct sockaddr_in *)&peer)->sin_port =
+				    ((struct sockaddr_in *)&from)->sin_port;
+				break;
+			case AF_INET6:
+				((struct sockaddr_in6 *)&peer)->sin6_port =
+				    ((struct sockaddr_in6 *)&from)->sin6_port;
+				break;
+			default:
+				/* unsupported */
+				break;
+			}
 			if (trace)
 				tpacket("received", ap, n);
 			/* should verify packet came from server */
@@ -208,10 +222,11 @@ recvfile(fd, name, mode)
 	int n;
 	volatile int block, size, firsttrip;
 	volatile unsigned long amount;
-	struct sockaddr_in from;
+	struct sockaddr_storage from;
 	int fromlen;
 	FILE *file;
 	volatile int convert;		/* true if converting crlf -> lf */
+	struct sockaddr_storage peer;
 
 	startclock();
 	dp = w_init();
@@ -221,6 +236,7 @@ recvfile(fd, name, mode)
 	block = 1;
 	firsttrip = 1;
 	amount = 0;
+	memcpy(&peer, &peeraddr, peeraddr.ss_len);
 
 	signal(SIGALRM, timer);
 	do {
@@ -238,8 +254,8 @@ recvfile(fd, name, mode)
 send_ack:
 		if (trace)
 			tpacket("sent", ap, size);
-		if (sendto(f, ackbuf, size, 0, (struct sockaddr *)&peeraddr,
-		    sizeof(peeraddr)) != size) {
+		if (sendto(f, ackbuf, size, 0, (struct sockaddr *)&peer,
+		    peer.ss_len) != size) {
 			alarm(0);
 			warn("sendto");
 			goto abort;
@@ -257,7 +273,19 @@ send_ack:
 				warn("recvfrom");
 				goto abort;
 			}
-			peeraddr.sin_port = from.sin_port;	/* added */
+			switch (peer.ss_family) {	/* added */
+			case AF_INET:
+				((struct sockaddr_in *)&peer)->sin_port =
+				    ((struct sockaddr_in *)&from)->sin_port;
+				break;
+			case AF_INET6:
+				((struct sockaddr_in6 *)&peer)->sin6_port =
+				    ((struct sockaddr_in6 *)&from)->sin6_port;
+				break;
+			default:
+				/* unsupported */
+				break;
+			}
 			if (trace)
 				tpacket("received", dp, n);
 			/* should verify client address */
@@ -289,7 +317,7 @@ send_ack:
 	/*	size = write(fd, dp->th_data, n - 4); */
 		size = writeit(file, &dp, n - 4, convert);
 		if (size < 0) {
-			nak(errno + 100);
+			nak(errno + 100, (struct sockaddr *)&peer);
 			break;
 		}
 		amount += size;
@@ -297,8 +325,8 @@ send_ack:
 abort:						/* ok to ack, since user */
 	ap->th_opcode = htons((u_short)ACK);	/* has seen err msg */
 	ap->th_block = htons((u_short)block);
-	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peeraddr,
-	    sizeof(peeraddr));
+	(void) sendto(f, ackbuf, 4, 0, (struct sockaddr *)&peer,
+	    peer.ss_len);
 	write_behind(file, convert);		/* flush last buffer */
 	fclose(file);
 	stopclock();
@@ -352,8 +380,9 @@ const struct errmsg {
  * offset by 100.
  */
 static void
-nak(error)
+nak(error, peer)
 	int error;
+	struct sockaddr *peer;
 {
 	const struct errmsg *pe;
 	struct tftphdr *tp;
@@ -374,8 +403,7 @@ nak(error)
 	length = strlen(pe->e_msg) + 4;
 	if (trace)
 		tpacket("sent", tp, length);
-	if (sendto(f, ackbuf, length, 0, (struct sockaddr *)&peeraddr,
-	    sizeof(peeraddr)) != length)
+	if (sendto(f, ackbuf, length, 0, peer, peer->sa_len) != length)
 		warn("nak");
 }
 
