@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1 2002/01/12 20:02:13 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.2 2002/01/13 14:39:13 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,10 +81,11 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.1 2002/01/12 20:02:13 bjh21 Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.2 2002/01/13 14:39:13 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
@@ -106,7 +107,7 @@ __RCSID("$NetBSD: syscall.c,v 1.1 2002/01/12 20:02:13 bjh21 Exp $");
 
 #ifdef CPU_ARM7
 struct evcnt arm700bugcount =
-    EVCNT_INITIALISER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "cpu", "arm700swibug");
 #endif
 
 void
@@ -248,7 +249,7 @@ syscall(trapframe_t *frame)
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, argsize, args);
+		ktrsyscall(p, code, nargs * sizeof(register_t), args);
 #endif
 
 	rval[0] = 0;
