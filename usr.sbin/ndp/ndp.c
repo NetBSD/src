@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.4 1999/12/13 15:30:25 itojun Exp $	*/
+/*	$NetBSD: ndp.c,v 1.5 2000/01/22 10:18:07 tron Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -124,7 +124,6 @@
 	((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
-extern int errno;
 static int pid;
 static int fflag;
 static int nflag;
