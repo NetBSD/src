@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.10 2001/04/18 14:01:06 takemura Exp $ */
+/*	$NetBSD: hpckbdkeymap.h,v 1.11 2001/09/14 17:22:52 uch Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -579,6 +579,35 @@ const int hp620lx_special_keymap[] = {
 	[KEY_SPECIAL_LIGHT]	= 120
 };
 
+/* 
+ * HITACHI PERSONA HPW50PAD
+ */
+/* Japanese */
+const u_int8_t persona_hpw50pad_jp_keytrans[] = {
+/*      0    1    2    3    4    5    6    7 */       
+/* 0 */ SPL, UNK, 61 , 59 , UNK, 60 , 62 , UNK,
+/* 1 */ UNK, UNK, UNK, 29 , UNK, UNK, 123, UNK,
+/* 2 */ UNK, UNK, UNK, 1  , UNK, 56 , 46 , UNK,
+/* 3 */ UNK, UNK, 221, 41 , UNK, 15 , 33 , UNK,
+/* 4 */ 42 , UNK, 58 , 45 , UNK, 44 , 20 , UNK,
+/* 5 */ 54 , UNK, 16 , 30 , UNK, 2  , 6  , UNK,
+/* 6 */ 205, UNK, 4  , 17 , UNK, 3  , 5  , UNK,
+/* 7 */ 14 , UNK, 18 , 31 , UNK, 32 , 19 , UNK,
+/* 8 */ UNK, UNK, 68 , 67 , 66 , 65 , 64 , 63 ,
+/* 9 */ UNK, UNK, 203, 121, 53 , 48 , 49 , 47 ,
+/*10 */ UNK, UNK, 208, 112, 57 , 51 , 50 , 34 ,
+/*11 */ UNK, UNK, 43 , 52 , 39 , 37 , 36 , 35 ,
+/*12 */ UNK, UNK, 27 , 40 , 26 , 38 , 23 , 22 ,
+/*13 */ UNK, UNK, 200, 28 , 115, 24 , 9  , 21 ,
+/*14 */ UNK, UNK, 125, 12 , UNK, 10 , UNK, UNK,
+/*15 */ UNK, UNK, 14 , 13 , 11 , 25 , 8  , 7  ,
+};
+
+const int persona_hpw50pad_special_keymap[] = {
+	[KEY_SPECIAL_OFF]	= 64,
+	[KEY_SPECIAL_LIGHT]	= -1
+};
+
 #endif /* hpcsh */
 
 const struct hpckbd_keymap_table {
@@ -727,6 +756,15 @@ const struct hpckbd_keymap_table {
 	{	&platid_mask_MACH_HP_LX_620JP,
 		hp620lx_jp_keytrans,
 		hp620lx_special_keymap,
+		NULLCMDMAP,
+		KB_JP },
+	/*
+	 * PERSONA HPW50PAD
+	 */
+	/* Japanese */
+	{ 	&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD,
+		persona_hpw50pad_jp_keytrans,
+		persona_hpw50pad_special_keymap,
 		NULLCMDMAP,
 		KB_JP },
 #endif /* hpcsh */
