@@ -1,7 +1,7 @@
-/*	$NetBSD: endian.h,v 1.17 1999/08/21 05:53:51 simonb Exp $	*/
+/*	$NetBSD: endian.h,v 1.18 2000/03/16 15:09:36 mycroft Exp $	*/
 
-#ifndef _MACHINE_ENDIAN_H_
-#define	_MACHINE_ENDIAN_H_
+#ifndef _MIPS_ENDIAN_H_
+#define	_MIPS_ENDIAN_H_
 
 #ifndef _BYTE_ORDER
 # error  Define MIPS target CPU endian-ness in port-specific header file.
@@ -10,23 +10,24 @@
 #include <sys/endian.h>
 
 #ifdef _LOCORE
+
 /*
  *   Endian-independent assembly-code aliases for unaligned memory accesses.
  */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if _BYTE_ORDER == _LITTLE_ENDIAN
 # define LWHI lwr
 # define LWLO lwl
 # define SWHI swr
 # define SWLO swl
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+#endif
 
-#if BYTE_ORDER == BIG_ENDIAN
+#if _BYTE_ORDER == _BIG_ENDIAN
 # define LWHI lwl
 # define LWLO lwr
 # define SWHI swl
 # define SWLO swr
-#endif /* BYTE_ORDER == BIG_ENDIAN */
+#endif
 
 #endif /* LOCORE */
 
-#endif /* !_MACHINE_ENDIAN_H_ */
+#endif /* !_MIPS_ENDIAN_H_ */
