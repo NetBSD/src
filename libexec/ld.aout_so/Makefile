@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 1997/06/23 13:25:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 1997/07/14 02:56:54 christos Exp $
 
 .if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
@@ -8,8 +8,9 @@
 	(${MACHINE_ARCH} == "arm32")
 PROG=	ld.so
 SRCS=	mdprologue.S rtld.c malloc.c shlib.c etc.c md.c vfprintf.c
+CLIB=	${.CURDIR}/../../../../lib/libc
 PICFLAG=-fpic -fno-function-cse
-CFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS
+CFLAGS+=$(PICFLAG) -DRTLD -DLIBC_SCCS -I${CLIB}/include
 ASFLAGS+=-k
 LDFLAGS+=-Bshareable -Bsymbolic -assert nosymbolic
 .if defined(DESTDIR)
@@ -22,7 +23,7 @@ HDRS=	link.h
 INCS=${HDRS}
 INCSDIR=/usr/include
 
-.PATH: ${.CURDIR}/../../../../lib/libc/stdio
+.PATH: ${CLIB}/stdio
 
 $(PROG):
 	$(LD) -o $(PROG) $(LDFLAGS) $(OBJS) $(LDADD)
