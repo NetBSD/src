@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.98 1998/02/05 20:07:15 is Exp $
+#	$NetBSD: GENERIC,v 1.99 1998/02/09 22:14:48 is Exp $
 
 #
 # GENERIC AMIGA
@@ -119,6 +119,10 @@ options 	DIAGNOSTIC	# Extra kernel sanity checks
 #
 # Amiga specific options
 #
+options		LIMITMEM=24	# dont use more than LIMITMEM MB of RAM.
+				# remove this line to use more than 24 MB, and
+				# increase NKMEMCLUSTERS
+
 options 	MACHINE_NONCONTIG # Non-contiguous memory support
 # ATTENTION: There is NO WARRANTY AT ALL that the sync will be complete
 # before the 10 secondinterval ends, or that KBDRESET does work at all.
