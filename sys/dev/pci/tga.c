@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.2 1998/04/16 12:52:42 drochner Exp $ */
+/* $NetBSD: tga.c,v 1.3 1998/04/29 02:23:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -520,7 +520,7 @@ tga_blank(dc)
 
 	if (!dc->dc_blanked) {
 		dc->dc_blanked = 1;
-		dc->dc_regs[TGA_REG_VVVR] |= 0x02;		/* XXX */
+		dc->dc_regs[TGA_REG_VVVR] |= VVR_BLANK;		/* XXX */
 	}
 }
 
@@ -531,7 +531,7 @@ tga_unblank(dc)
 
 	if (dc->dc_blanked) {
 		dc->dc_blanked = 0;
-		dc->dc_regs[TGA_REG_VVVR] &= ~0x02;		/* XXX */
+		dc->dc_regs[TGA_REG_VVVR] &= ~VVR_BLANK;	/* XXX */
 	}
 }
 
