@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_id.c,v 1.6 2003/09/09 11:39:14 itojun Exp $	*/
+/*	$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $	*/
 /*	$KAME: ip6_id.c,v 1.8 2003/09/06 13:41:06 itojun Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.6 2003/09/09 11:39:14 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_id.c,v 1.7 2003/09/13 21:32:59 itojun Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -189,8 +189,9 @@ initid(struct randomtab *p)
 	p->ru_seed2 = arc4random() & (~0U >> (32 - p->ru_bits + 1));
 
 	/* Determine the LCG we use */
-	p->ru_b = arc4random() | 1;
-	p->ru_a = pmod(p->ru_agen, arc4random() & (~1U), p->ru_m);
+	p->ru_b = (arc4random() & (~0U >> (32 - p->ru_bits))) | 1;
+	p->ru_a = pmod(p->ru_agen,
+	    (arc4random() & (~0U >> (32 - p->ru_bits))) & (~1U), p->ru_m);
 	while (p->ru_b % 3 == 0)
 		p->ru_b += 2;
 
