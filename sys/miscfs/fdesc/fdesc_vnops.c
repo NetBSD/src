@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.50 1999/08/03 20:19:19 wrstuden Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.51 1999/08/14 02:17:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -710,6 +710,9 @@ fdesc_readdir(v)
 
 	if (VTOFDESC(ap->a_vp)->fd_type == Froot) {
 		struct fdesc_target *ft;
+
+		if (i >= nfdesc_targets)
+			return EINVAL;
 
 		if (ap->a_ncookies) {
 			ncookies = min(ncookies, (nfdesc_targets - i));
