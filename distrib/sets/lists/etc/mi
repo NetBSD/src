@@ -42,6 +42,7 @@
 ./etc/netstart
 ./etc/networks
 ./etc/newsyslog.conf
+./etc/nsswitch.conf
 ./etc/passwd
 ./etc/phones
 ./etc/printcap
