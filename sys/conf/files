@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.257 1998/11/20 04:12:57 kml Exp $
+#	$NetBSD: files,v 1.258 1998/11/22 21:57:47 pk Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -311,11 +311,8 @@ file	dev/ic/lsi64854.c		lsi64854
 define	rtl80x9
 file	dev/ic/rtl80x9.c		rtl80x9
 
-# XXX THE FOLLOWING BLOCK SHOULD BE UNCOMMENTED, BUT CANNOT
-# XXX BECAUSE NOT ALL PORTS USE THE MI wdc DRIVER YET.
-#
-# device  wdc: ata, atapi, wdc_base
-# # Common code for ESDI/IDE/etc. controllers
+# Common code for ESDI/IDE/etc. controllers
+device  wdc: ata, atapi, wdc_base
 file    dev/ic/wdc.c wdc_base
 
 # Definitions for wscons
