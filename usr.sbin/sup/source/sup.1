@@ -23,6 +23,12 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
 .\" $Log: sup.1,v $
+.\" Revision 1.3  1995/06/03 21:21:53  christos
+.\" Changes to write ascii timestamps in the when files.
+.\" Looked into making it 64 bit clean, but it is hopeless.
+.\" Added little program to convert from the old timestamp files
+.\" into the new ones.
+.\"
 .\" Revision 1.2  1993/08/04 17:46:14  brezak
 .\" Changes from nate for gzip'ed sup
 .\"
@@ -778,10 +784,13 @@ matter.  Blank lines may appear freely in the list file.
 Files on the client machine for
 .IR sup :
 .TP
-.B /usr/cs/lib/supfiles/coll.list
+.B /usr/lib/supfiles/coll.list
 supfile used for -s flag
 .TP
-.B /usr/cs/lib/supservers/coll.host
+.B /usr/lib/supfiles/coll.what
+supfile used for -s flag when -t flag is also specified
+.TP
+.B /usr/lib/supfiles/coll.host
 host name list for system collections
 .TP
 <\fIbase-directory\fR>\fB/sup/\fR<\fIcollection\fR>\fB/last\fR<\fI.release\fR>
@@ -804,7 +813,7 @@ default base directory for file collection
 
 Files needed on each repository machine for the file server:
 .TP
-.B /usr/cs/lib/supservers/coll.dir
+.B /usr/lib/supfiles/coll.dir
 base directory list for system
 collections
 .TP
