@@ -1,4 +1,4 @@
-/*	$NetBSD: locate.code.c,v 1.6 1997/10/19 04:11:54 lukem Exp $	*/
+/*	$NetBSD: locate.code.c,v 1.7 2000/03/20 19:18:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)locate.code.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: locate.code.c,v 1.6 1997/10/19 04:11:54 lukem Exp $");
+__RCSID("$NetBSD: locate.code.c,v 1.7 2000/03/20 19:18:34 jdolecek Exp $");
 #endif /* not lint */
 
 /*
@@ -99,7 +99,7 @@ __RCSID("$NetBSD: locate.code.c,v 1.6 1997/10/19 04:11:54 lukem Exp $");
 
 char buf1[MAXPATHLEN] = " ";	
 char buf2[MAXPATHLEN];
-char bigrams[BGBUFSIZE + 1] = { 0 };
+char *bigrams;
 
 int	bgindex __P((char *));
 int	main __P((int, char **));
@@ -112,7 +112,6 @@ main(argc, argv)
 {
 	char *cp, *oldpath, *path;
 	int ch, code, count, diffcount, oldcount;
-	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "")) != -1)
 		switch(ch) {
@@ -126,14 +125,14 @@ main(argc, argv)
 	if (argc != 1)
 		usage();
 
-	if ((fp = fopen(argv[0], "r")) == NULL)
-		err(1, "%s", argv[0]);
+	bigrams = argv[0];
 
 	/* First copy bigram array to stdout. */
-	(void)fgets(bigrams, BGBUFSIZE + 1, fp);
-	if (fwrite(bigrams, 1, BGBUFSIZE, stdout) != BGBUFSIZE)
+	count = strlen(bigrams);
+	if (fwrite(bigrams, 1, count, stdout) != count)
 		err(1, "stdout");
-	(void)fclose(fp);
+	for(count = BGBUFSIZE - count; count > 0; count--)
+		fputc('\0', stdout);
 
 	oldpath = buf1;
 	path = buf2;
