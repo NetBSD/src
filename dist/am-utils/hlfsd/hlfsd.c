@@ -1,4 +1,4 @@
-/*	$NetBSD: hlfsd.c,v 1.1.1.2 2000/11/19 23:43:50 wiz Exp $	*/
+/*	$NetBSD: hlfsd.c,v 1.2 2000/11/20 03:19:35 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Erez Zadok
@@ -949,7 +949,7 @@ fatal(char *mess)
 		am_get_progname(), lessmess, errno);
     }
   }
-  plog(XLOG_FATAL, mess);
+  plog(XLOG_FATAL, "%s", mess);
 
   hlfsd_going_down(1);
 }
