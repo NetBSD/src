@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.459 2002/08/02 12:44:42 ad Exp $
+$NetBSD: pcidevs,v 1.460 2002/08/02 19:35:43 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1208,11 +1208,12 @@ product ESSTECH2 MAESTRO1	0x0100	Maestro 1 PCI Audio Accelerator
 product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 
 /* O2 Micro Inc */
-product O2MICRO  OZ6729 0x6729	OZ6729 PCI-PCMCIA Bridge
-product O2MICRO  OZ6730 0x673A	OZ6730 PCI-PCMCIA Bridge
-product O2MICRO  OZ6832	0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
-product O2MICRO  OZ6860 0x6836	OZ6860 PCI-Cardbus Bridge
-product O2MICRO  OZ6872 0x6872	OZ6812/OZ6872 PCI-Cardbus Bridge
+product O2MICRO OZ6729		0x6729	OZ6729 PCI-PCMCIA Bridge
+product O2MICRO OZ6730		0x673A	OZ6730 PCI-PCMCIA Bridge
+product O2MICRO OZ6832		0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
+product O2MICRO OZ6860		0x6836	OZ6860 PCI-Cardbus Bridge
+product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-Cardbus Bridge
+product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-Cardbus Bridge
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
