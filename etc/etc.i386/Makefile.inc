@@ -1,14 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.29 2001/09/13 18:08:13 jdolecek Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2001/11/29 22:45:56 thorpej Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
 
-# These are packaged and distributed
-EXTRA_KERNELS+= GENERIC_TINY GENERIC_LAPTOP GENERIC_DIAGNOSTIC GENERIC_PS2TINY
+KERNEL_SETS=	GENERIC GENERIC_TINY GENERIC_LAPTOP GENERIC_DIAGNOSTIC \
+		GENERIC_PS2TINY
 
-# These are for use by the bootfloppy construction tools
-BUILD_KERNELS+= INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP INSTALL_PS2
-EXTRA_KERNEL_SETS=tiny laptop ps2tiny
+BUILD_KERNELS=	INSTALL INSTALL_SMALL INSTALL_TINY INSTALL_LAPTOP INSTALL_PS2
+
 INSTALLATION_DIRS += installation/misc
 
 # mkisofs arguments to generate bootable iso image
@@ -17,12 +16,6 @@ MKISOFS_FLAGS+=	-b installation/floppy/boot-big.fs
 # Tar up extra kernel sets.
 # Build the boot floppies and install them
 snap_md_post:
-.for kernel in ${EXTRA_KERNEL_SETS}
-	uppername=`echo ${kernel} | tr 'a-z' 'A-Z'` && \
-		cd ${KERNOBJDIR}/GENERIC_$$uppername &&     \
-		tar cf - `${GETKERNELAWK} ${KERNCONFDIR}/GENERIC` |\
-		gzip -c -9 > ${RELEASEDIR}/binary/sets/kern-${kernel}.tgz
-.endfor
 .ifndef UPDATE
 	cd ${.CURDIR}/../distrib && ${MAKE} cleandir
 .endif

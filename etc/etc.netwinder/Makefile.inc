@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/08/22 18:34:48 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:57 thorpej Exp $
 #
 #	etc.netwinder/Makefile.inc -- netwinder-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-#BUILD_KERNELS=	INSTALL
+KERNEL_SETS=		GENERIC
+
+#BUILD_KERNELS=		INSTALL
 
 #INSTALLATION_DIRS+=	installation/kernel installation/misc
 

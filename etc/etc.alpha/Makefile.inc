@@ -1,6 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/05/28 18:21:13 he Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/11/29 22:45:54 thorpej Exp $
+
+KERNEL_SETS=		GENERIC
 
 BUILD_KERNELS+=		INSTALL
+
 INSTALLATION_DIRS+=	installation/floppy	\
 			installation/diskimage	\
 			installation/instkernel	\

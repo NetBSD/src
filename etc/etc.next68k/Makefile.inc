@@ -1,11 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.1 2000/07/22 02:33:53 briggs Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:45:58 thorpej Exp $
 #
 #	etc.next68k/Makefile.inc -- next68k-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+=
+KERNEL_SETS=		GENERIC
 
 # Build the release notes and install them
 snap_md_post:

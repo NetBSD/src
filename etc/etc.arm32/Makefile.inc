@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/11/12 00:59:05 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2001/11/29 22:45:55 thorpej Exp $
 #
 #	etc.arm32/Makefile.inc -- arm32-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+= A7000  CATS     EBSA285 RISCPC  SHARK
-BUILD_KERNELS=	A7INST CATSINST         RPCINST SHARKINST
+KERNEL_SETS=		SHARK
+
+BUILD_KERNELS=		SHARKINST
 
 INSTALLATION_DIRS+=	installation/kernel \
 			installation/misc

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.14 2000/09/17 19:04:39 is Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2001/11/29 22:45:54 thorpej Exp $
 #
 #	etc.amiga/Makefile.inc -- amiga-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+=INSTALL INSTWDCPCM
+KERNEL_SETS=		GENERIC
+
+EXTRA_KERNELS=		INSTALL INSTWDCPCM
 
 INSTALLATION_DIRS+=	installation/miniroot \
 			installation/misc

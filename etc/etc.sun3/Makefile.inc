@@ -1,20 +1,15 @@
-#	$NetBSD: Makefile.inc,v 1.11 2001/04/21 17:43:24 he Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2001/11/29 22:46:01 thorpej Exp $
 #
 #	etc.sun3/Makefile.inc -- sun3-specific etc Makefile targets
 #
 
 BIN3+= etc.sun3/ttyaction
 
-# These are put in ${RELEASEDIR} by "make release" in distrib/sun3
-# after it builds and patches in the installation ramdisk image.
-BUILD_KERNELS= \
- RAMDISK RAMDISK3X
+KERNEL_SETS=		GENERIC GENERIC3X DISKLESS DISKLESS3X
 
-# These are just built and copied to the release area.
-EXTRA_KERNELS= \
- GENERIC3X \
- INSTALL INSTALL3X \
- DISKLESS DISKLESS3X
+EXTRA_KERNELS=		INSTALL INSTALL3X
+
+BUILD_KERNELS=		RAMDISK RAMDISK3X
 
 snap_md_post:
 # Build the ramdisk image and patch it into the ramdisk kernels.

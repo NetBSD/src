@@ -1,15 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.7 2000/09/10 22:04:27 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2001/11/29 22:45:59 thorpej Exp $
 #
 #	etc.pmax/Makefile.inc -- pmax-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-#EXTRA_KERNELS+=
+KERNEL_SETS=		GENERIC
 
-# Set this for any kernels beyond GENERIC and ${EXTRA_KERNELS} you
-# need to build to make installation tools/media.
-BUILD_KERNELS+=INSTALL RAMDISK
+BUILD_KERNELS=		INSTALL RAMDISK
 
 # Add any extra release directories to be made
 INSTALLATION_DIRS+=installation/diskimage installation/netboot

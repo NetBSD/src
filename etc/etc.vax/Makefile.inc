@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.9 2000/09/12 05:11:10 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2001/11/29 22:46:02 thorpej Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
 
-# 
-# We need this to build the sysinst kernel.
-BUILD_KERNELS+=INSTALL
+KERNEL_SETS=	GENERIC
+
+BUILD_KERNELS=	INSTALL
 
 distribution: pcs750.bin
 

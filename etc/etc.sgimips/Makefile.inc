@@ -1,15 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.1 2001/11/20 16:41:44 soren Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2001/11/29 22:46:00 thorpej Exp $
 #
 #	etc.sgimips/Makefile.inc -- sgimips-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+=GENERIC_INDY
+KERNEL_SETS=		GENERIC GENERIC_INDY
 
-# Set this for any kernels beyond GENERIC and ${EXTRA_KERNELS} you
-# need to build to make installation tools/media.
-BUILD_KERNELS+=RAMDISK
+BUILD_KERNELS=		RAMDISK
 
 # Add any extra release directories to be made
 INSTALLATION_DIRS+=installation/miniroot installation/netboot

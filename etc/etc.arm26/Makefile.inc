@@ -1,8 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.2 2001/03/12 14:10:03 wiz Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2001/11/29 22:45:54 thorpej Exp $
 #
 #	etc.arm26/Makefile.inc -- arm26-specific etc Makefile targets
 #
 
-# Set this for any kernels beyond GENERIC you want to include
-# in the distribution.
-EXTRA_KERNELS+= FOURMEG
+KERNEL_SETS=		GENERIC FOURMEG
