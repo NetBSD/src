@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.5 2003/10/13 04:25:26 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,10 +35,14 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.5 2003/10/13 04:25:26 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
+
+#ifdef __NetBSD__
+#include "bpfilter.h"
+#endif /* __NetBSD__ */
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -73,7 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung E
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_compat.h>
 
+#if NBPFILTER > 0
 #include <net/bpf.h>
+#endif
 
 #ifdef INET
 #include <netinet/in.h> 
@@ -83,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.4 2003/09/28 02:35:20 dyoung E
 #include <net/if_ether.h>
 #endif
 #endif
+
+static void ieee80211_recv_pspoll(struct ieee80211com *,
+    struct mbuf *, int, u_int32_t);
 
 /*
  * Process a received frame.  The node associated with the sender
@@ -146,7 +155,9 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			else
 				bssid = wh->i_addr1;
 			if (!IEEE80211_ADDR_EQ(bssid, ic->ic_bss->ni_bssid) &&
-			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr)) {
+			    !IEEE80211_ADDR_EQ(bssid, ifp->if_broadcastaddr) &&
+			    (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) !=
+			    IEEE80211_FC0_TYPE_CTL) {
 				/* not interested in */
 				IEEE80211_DPRINTF2(("%s: other bss %s\n",
 					__func__, ether_sprintf(wh->i_addr3)));
@@ -172,6 +183,38 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			goto out;
 		}
 		ni->ni_inact = 0;
+	}
+
+	if (ic->ic_set_tim != NULL &&
+	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT)
+	    && ni->ni_pwrsave == 0) {
+		/* turn on power save mode */
+
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: power save mode on for %s\n",
+			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+
+		ni->ni_pwrsave = IEEE80211_PS_SLEEP;
+	}
+	if (ic->ic_set_tim != NULL &&
+	    (wh->i_fc[1] & IEEE80211_FC1_PWR_MGT) == 0 &&
+	    ni->ni_pwrsave != 0) {
+		/* turn off power save mode, dequeue stored packets */
+
+		ni->ni_pwrsave = 0;
+		if (ic->ic_set_tim) 
+			ic->ic_set_tim(ic, ni->ni_associd, 0);
+
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: power save mode off for %s\n",
+			    ifp->if_xname, ether_sprintf(wh->i_addr2));
+
+		while (!IF_IS_EMPTY(&ni->ni_savedq)) {
+			struct mbuf *m;
+			IF_DEQUEUE(&ni->ni_savedq, m);
+			IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+			(*ifp->if_start)(ifp);
+		}
 	}
 
 	switch (wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) {
@@ -238,9 +281,11 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			} else
 				goto out;
 		}
+#if NBPFILTER > 0
 		/* copy to listener after decrypt */
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
+#endif
 		m = ieee80211_decap(ifp, m);
 		if (m == NULL)
 			goto err;
@@ -279,8 +324,17 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				ifp->if_obytes += len;
 			}
 		}
-		if (m != NULL)
+		if (m != NULL) {
+#if NBPFILTER > 0
+			/*
+			 * If we forward packet into transmitter of the AP,
+			 * we don't need to duplicate for DLT_EN10MB.
+			 */
+			if (ifp->if_bpf && m1 == NULL)
+				bpf_mtap(ifp->if_bpf, m);
+#endif
 			(*ifp->if_input)(ifp, m);
+		}
 		return;
 
 	case IEEE80211_FC0_TYPE_MGT:
@@ -327,13 +381,28 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 				    >> IEEE80211_FC0_SUBTYPE_SHIFT],
 				    ether_sprintf(wh->i_addr2), rssi);
 		}
+#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
+#endif
 		(*ic->ic_recv_mgmt)(ic, m, ni, subtype, rssi, rstamp);
 		m_freem(m);
 		return;
 
 	case IEEE80211_FC0_TYPE_CTL:
+		if (ic->ic_opmode != IEEE80211_M_HOSTAP)
+			goto out;
+		subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+		if (subtype == IEEE80211_FC0_SUBTYPE_PS_POLL) {
+			/* Dump out a single packet from the host */
+			if (ifp->if_flags & IFF_DEBUG)
+				printf("%s: got power save probe from %s\n",
+				    ifp->if_xname,
+				    ether_sprintf(wh->i_addr2));
+			ieee80211_recv_pspoll(ic, m, rssi, rstamp);
+		}
+		goto out;
+
 	default:
 		IEEE80211_DPRINTF(("%s: bad type %x\n", __func__, wh->i_fc[0]));
 		/* should not come here */
@@ -343,8 +412,10 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 	ifp->if_ierrors++;
   out:
 	if (m != NULL) {
+#if NBPFILTER > 0
 		if (ic->ic_rawbpf)
 			bpf_mtap(ic->ic_rawbpf, m);
+#endif
 		m_freem(m);
 	}
 }
@@ -741,7 +812,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    memcmp(ssid + 2, ic->ic_bss->ni_essid, ic->ic_bss->ni_esslen) != 0)) {
 #ifdef IEEE80211_DEBUG
 			if (ieee80211_debug) {
-				printf("%s: ssid unmatch ", __func__);
+				printf("%s: ssid mismatch ", __func__);
 				ieee80211_print_essid(ssid + 2, ssid[1]);
 				printf(" from %s\n", ether_sprintf(wh->i_addr2));
 			}
@@ -909,7 +980,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		    memcmp(ssid + 2, ic->ic_bss->ni_essid, ssid[1]) != 0) {
 #ifdef IEEE80211_DEBUG
 			if (ieee80211_debug) {
-				printf("%s: ssid unmatch ", __func__);
+				printf("%s: ssid mismatch ", __func__);
 				ieee80211_print_essid(ssid + 2, ssid[1]);
 				printf(" from %s\n", ether_sprintf(wh->i_addr2));
 			}
@@ -937,6 +1008,7 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		     IEEE80211_CAPINFO_PRIVACY : 0)) {
 			IEEE80211_DPRINTF(("%s: capability mismatch %x for %s\n",
 				__func__, capinfo, ether_sprintf(wh->i_addr2)));
+			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 			ni->ni_associd = 0;
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_CAPINFO);
@@ -946,8 +1018,9 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 				IEEE80211_F_DOSORT | IEEE80211_F_DOFRATE |
 				IEEE80211_F_DONEGO | IEEE80211_F_DODEL);
 		if (ni->ni_rates.rs_nrates == 0) {
-			IEEE80211_DPRINTF(("%s: rate unmatch for %s\n",
+			IEEE80211_DPRINTF(("%s: rate mismatch for %s\n",
 				__func__, ether_sprintf(wh->i_addr2)));
+			IEEE80211_AID_CLR(ni->ni_associd, ic->ic_aid_bitmap);
 			ni->ni_associd = 0;
 			IEEE80211_SEND_MGMT(ic, ni, resp,
 				IEEE80211_STATUS_BASIC_RATE);
@@ -961,19 +1034,38 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		ni->ni_fhdwell = ic->ic_bss->ni_fhdwell;
 		ni->ni_fhindex = ic->ic_bss->ni_fhindex;
 		if (ni->ni_associd == 0) {
-			/* XXX handle rollover at 2007 */
-			/* XXX guarantee uniqueness */
-			ni->ni_associd = 0xc000 | ic->ic_bss->ni_associd++;
-			newassoc = 1;
+			u_int16_t aid;
+
+			/*
+			 * It would be clever to search the bitmap
+			 * more efficiently, but this will do for now.
+			 */
+			for (aid = 1; aid < ic->ic_max_aid; aid++) {
+				if (!IEEE80211_AID_ISSET(aid,
+				    ic->ic_aid_bitmap))
+					break;
+			}
+
+			if (ic->ic_bss->ni_associd >= ic->ic_max_aid) {
+				IEEE80211_SEND_MGMT(ic, ni, resp,
+				    IEEE80211_REASON_ASSOC_TOOMANY);
+				return;
+			} else {
+				ni->ni_associd = aid | 0xc000;
+				IEEE80211_AID_SET(ni->ni_associd,
+				    ic->ic_aid_bitmap);
+				newassoc = 1;
+			}
 		} else
 			newassoc = 0;
 		/* XXX for 11g must turn off short slot time if long
 	           slot time sta associates */
 		IEEE80211_SEND_MGMT(ic, ni, resp, IEEE80211_STATUS_SUCCESS);
 		if (ifp->if_flags & IFF_DEBUG)
-			if_printf(ifp, "station %s %s associated\n",
+			if_printf(ifp, "station %s %s associated at aid %d\n",
 			    (newassoc ? "newly" : "already"),
-			    ether_sprintf(ni->ni_macaddr));
+			    ether_sprintf(ni->ni_macaddr),
+			    ni->ni_associd & ~0xc000);
 		/* give driver a chance to setup state like ni_txrate */
 		if (ic->ic_newassoc)
 			(*ic->ic_newassoc)(ic, ni, newassoc);
@@ -1084,6 +1176,8 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 					if_printf(ifp, "station %s disassociated"
 					    " by peer (reason %d)\n",
 					    ether_sprintf(ni->ni_macaddr), reason);
+				IEEE80211_AID_CLR(ni->ni_associd,
+				    ic->ic_aid_bitmap);
 				ni->ni_associd = 0;
 				/* XXX node reclaimed how? */
 			}
@@ -1099,6 +1193,77 @@ ieee80211_recv_mgmt(struct ieee80211com *ic, struct mbuf *m0,
 		break;
 	}
 #undef ISPROBE
+}
+
+static void
+ieee80211_recv_pspoll(struct ieee80211com *ic, struct mbuf *m0, int rssi,
+		      u_int32_t rstamp)
+{
+	struct ifnet *ifp = &ic->ic_if;
+	struct ieee80211_frame *wh;
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+	u_int16_t aid;
+
+	if (ic->ic_set_tim == NULL)  /* No powersaving functionality */
+		return;
+
+	wh = mtod(m0, struct ieee80211_frame *);
+
+	if ((ni = ieee80211_find_node(ic, wh->i_addr2)) == NULL) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent bogus power save poll\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2));
+		return;
+	}
+
+	memcpy(&aid, wh->i_dur, sizeof(wh->i_dur));
+	if ((aid & 0xc000) != 0xc000) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent bogus aid %x\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2), aid);
+		return;
+	}
+
+	if (aid != ni->ni_associd) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s aid %x doesn't match pspoll "
+			       "aid %x\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2),
+			       ni->ni_associd, aid);
+		return;
+	}
+
+	/* Okay, take the first queued packet and put it out... */
+
+	IF_DEQUEUE(&ni->ni_savedq, m);
+	if (m == NULL) {
+		if (ifp->if_flags & IFF_DEBUG)
+			printf("%s: station %s sent pspoll, "
+			       "but no packets are saved\n",
+			       ifp->if_xname, ether_sprintf(wh->i_addr2));
+		return;
+	}
+	wh = mtod(m, struct ieee80211_frame *);
+
+	/* 
+	 * If this is the last packet, turn off the TIM fields.
+	 * If there are more packets, set the more packets bit.
+	 */
+
+	if (IF_IS_EMPTY(&ni->ni_savedq)) {
+		if (ic->ic_set_tim) 
+			ic->ic_set_tim(ic, ni->ni_associd, 0);
+	} else {
+		wh->i_fc[1] |= IEEE80211_FC1_MORE_DATA;
+	}
+
+	if (ifp->if_flags & IFF_DEBUG)
+		printf("%s: enqueued power saving packet for station %s\n",
+		       ifp->if_xname, ether_sprintf(ni->ni_macaddr));
+
+	IF_ENQUEUE(&ic->ic_pwrsaveq, m);
+	(*ifp->if_start)(ifp);
 }
 #undef IEEE80211_VERIFY_LENGTH
 #undef IEEE80211_VERIFY_ELEMENT
