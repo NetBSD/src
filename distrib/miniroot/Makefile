@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 1999/05/11 20:46:59 veego Exp $
+#	$NetBSD: Makefile,v 1.22 1999/07/18 07:22:36 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -32,7 +32,7 @@ MTREE=		${.CURDIR}/mtree.conf
 
 .ifndef DESTDIR
 all:
-	@echo setenv DESTDIR before makeing a miniroot!
+	@echo setenv DESTDIR before making a miniroot!
 	@false
 .else
 
