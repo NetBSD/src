@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.20 2000/05/17 16:23:49 jdc Exp $	*/
+/*	$NetBSD: tty.c,v 1.21 2000/05/22 05:54:37 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.6 (Berkeley) 1/10/95";
 #else
-__RCSID("$NetBSD: tty.c,v 1.20 2000/05/17 16:23:49 jdc Exp $");
+__RCSID("$NetBSD: tty.c,v 1.21 2000/05/22 05:54:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -447,19 +447,6 @@ flushinp(void)
 {
 	(void) fpurge(stdin);
 	return (OK);
-}
-
-int
-def_shell_mode(void)
-{
-	return (tcgetattr(STDIN_FILENO, &__orig_termios) ? ERR : OK);
-}
-
-int
-reset_shell_mode(void)
-{
-	return (tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
 }
 
 /*

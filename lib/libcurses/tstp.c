@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.19 2000/05/17 16:23:49 jdc Exp $	*/
+/*	$NetBSD: tstp.c,v 1.20 2000/05/22 05:54:37 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.19 2000/05/17 16:23:49 jdc Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.20 2000/05/22 05:54:37 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -184,6 +184,18 @@ def_prog_mode(void)
 int
 reset_prog_mode(void)
 {
-	return (tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &save_termios) ? ERR : OK);
+	__restartwin();
+	return(OK);
+}
+
+int
+def_shell_mode(void)
+{
+	return (tcgetattr(STDIN_FILENO, &__orig_termios) ? ERR : OK);
+}
+
+int
+reset_shell_mode(void)
+{
+	return (__stopwin());
 }
