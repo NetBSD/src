@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.226 2004/05/26 19:55:46 he Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.227 2004/05/26 19:58:28 he Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -2695,7 +2695,7 @@ sys/net/if_tun.c				1.69
 	Initialize interface type to IFT_TUNNEL.
 	[tron, ticket #325]
 
-usr.sbin/rarpd.c				1.51
+usr.sbin/rarpd/rarpd.c				1.51
 
 	Fix handling of interface aliases if "rarpd" is not invoked
 	with "-a".
@@ -2707,7 +2707,7 @@ xsrc/xfree/xc/programs/xmodmap/xmodmap.man	1.1.1.6 -> 1.2
 	correctly.
 	[tron, ticket #330]
 
-ree/xc/doc/man/general/X.man			1.1.1.3 -> 1.2
+xsrc/xfree/xc/doc/man/general/X.man		1.1.1.3 -> 1.2
 
 	Tweak formatting so that __projectroot__ gets expanded
 	correctly.
