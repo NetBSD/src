@@ -1,13 +1,20 @@
 # $FreeBSD: src/gnu/usr.bin/groff/contrib/mm/Makefile,v 1.6 2002/10/11 08:58:13 ru Exp $
 
-SCRIPTS=	mmroff.pl
-MAN=		mmroff.1
+DIST_SUBDIR=	contrib/mm
 
-TMACDIR?=	${SHAREDIR}/tmac
+# Perl script
+#SCRIPTS=	mmroff.pl
+#MAN=		mmroff.1
+
+#TMACDIR?=	${SHAREDIR}/tmac
+# sync with ../../src/include/config.h
+TMACDIR?=	/usr/share/tmac
 
 FILES=		m.tmac mm.tmac mse.tmac mmse.tmac
-FILESDIR_m.tmac=${TMACDIR}
-FILESDIR_mse.tmac=${TMACDIR}
+FILESNAME_m.tmac=../m.tmac
+FILESNAME_mse.tmac=../mse.tmac
+FILESNAME_mm.tmac=../mm.tmac
+FILESNAME_mmse.tmac=../mmse.tmac
 FILES+=		0.MT 5.MT 4.MT ms.cov se_ms.cov
 FILESDIR=	${TMACDIR}/mm
 LOCALE=		locale se_locale
@@ -15,7 +22,7 @@ LOCALE=		locale se_locale
 MAN+=		groff_mm.7 groff_mmse.7
 MLINKS=		groff_mm.7 mm.7 groff_mmse.7 mmse.7
 
-CLEANFILES+=	${MAN}
+#CLEANFILES+=	${MAN}
 
 .include <bsd.prog.mk>
 

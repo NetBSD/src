@@ -2,5 +2,7 @@
 
 DEV=		koi8-r
 
+DIST_SUBDIR=	font/devkoi8-r
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"

@@ -3,5 +3,7 @@
 DEV=		html
 FONTS=		R I B BI CR CI CB CBI S
 
+DIST_SUBDIR=	font/devhtml
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"
