@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.47 1997/08/28 08:00:15 mikel Exp $
+#	$NetBSD: INSTALL,v 1.48 1997/09/29 15:42:14 perry Exp $
 #
 #	INSTALL -- an installation kernel config.
 #	This kernel should be derived from GENERIC with ramdisk
@@ -68,7 +68,7 @@ options 	COMPAT_12	# NetBSD 1.2,
 options 	LKM		# loadable kernel modules
 
 file-system 	FFS		# UFS
-#file-system 	EXT2FS		# second extended file system (linux)
+file-system 	EXT2FS		# second extended file system (linux)
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
