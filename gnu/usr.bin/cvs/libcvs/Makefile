@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/04 21:46:57 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2000/09/04 22:14:31 christos Exp $
 
+.include "${.CURDIR}/../Makefile.inc"
 LIB=	cvs
 
 DIST=	${IDIST}/lib
