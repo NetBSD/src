@@ -508,11 +508,11 @@ int     dict_changed(void)
     ht_info_list = htable_list(dict_table);
     for (status = 0, ht = ht_info_list; status == 0 && (h = *ht) != 0; ht++) {
 	dict = ((DICT_NODE *) h->value)->dict;
-	if (dict->fd < 0)			/* not file-based */
+	if (dict->stat_fd < 0)			/* not file-based */
 	    continue;
 	if (dict->mtime == 0)			/* not bloody likely */
 	    msg_warn("%s: table %s: null time stamp", myname, h->key);
-	if (fstat(dict->fd, &st) < 0)
+	if (fstat(dict->stat_fd, &st) < 0)
 	    msg_fatal("%s: fstat: %m", myname);
 	status = (st.st_mtime != dict->mtime || st.st_nlink == 0);
     }

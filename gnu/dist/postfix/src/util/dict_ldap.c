@@ -586,7 +586,7 @@ static const char *dict_ldap_lookup(DICT *dict, const char *name)
 	     */
 	    if (*(sub) == '%') {
 		char   *u = vstring_str(escaped_name);
-		char   *p = strchr(u, '@');
+		char   *p = strrchr(u, '@');
 
 		switch (*(sub + 1)) {
 		case 'd':
