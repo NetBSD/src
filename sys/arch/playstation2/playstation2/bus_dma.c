@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.1 2001/10/16 15:38:53 uch Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.1.2.1 2001/11/10 16:26:18 uch Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/proc.h>
+
+#include <mips/cache.h>
 
 #define _PLAYSTATION2_BUS_DMA_PRIVATE
 #include <machine/bus.h>
@@ -455,7 +457,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		    "(0x%lx..0x%lx) ...", i, addr + offset,
 		    addr + offset + minlen - 1);
 #endif
-		MachFlushDCache(addr + offset, minlen);
+		mips_dcache_wbinv_range(addr + offset, minlen);
 
 #ifdef BUS_DMA_DEBUG
 		printf("\n");
