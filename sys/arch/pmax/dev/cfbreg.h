@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)cfbreg.h	7.1 (Berkeley) 3/9/92
+ *	from: @(#)cfbreg.h	8.1 (Berkeley) 6/10/93
+ *      $Id: cfbreg.h,v 1.3 1994/05/27 08:39:20 glass Exp $
  */
 
 /* 
@@ -64,7 +65,7 @@
 
 /*
  * HISTORY
- * Log: bt459.h,v
+ * Log:	bt459.h,v 
  * Revision 2.4  91/02/05  17:39:43  mrt
  * 	Added author notices
  * 	[91/02/04  11:11:57  mrt]

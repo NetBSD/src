@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,10 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tz.c	7.8 (Berkeley) 10/24/92
+ *	from: @(#)tz.c	8.4 (Berkeley) 1/11/94
+ *      $Id: tz.c,v 1.2 1994/05/27 08:40:08 glass Exp $
  *
- * from: $Header: /sprite/src/kernel/dev/RCS/devSCSITape.c,
- *	v 8.14 89/07/31 17:26:13 mendel Exp $ SPRITE (Berkeley)
+ * from: Header: /sprite/src/kernel/dev/RCS/devSCSITape.c,
+ *	v 8.14 89/07/31 17:26:13 mendel Exp  SPRITE (Berkeley)
  */
 
 /*
@@ -100,7 +101,7 @@ struct	tz_softc {
 #define TZ_FIXEDBLK	0x08
 
 #ifdef DEBUG
-int	tzdebug = 1;
+int	tzdebug = 0;
 #endif
 
 /*
@@ -164,7 +165,8 @@ tzprobe(sd)
 	if (i == 5 && inqbuf.version == 1 && inqbuf.qualifier == 0x50) {
 		printf(" TK50\n");
 		sc->sc_tapeid = MT_ISTK50;
-	} else if (i == 5 && inqbuf.version == 1 && inqbuf.qualifier == 0) {
+	} else if (i >= 5 && inqbuf.version == 1 && inqbuf.qualifier == 0 &&
+	    inqbuf.length == 0) {
 		/* assume Emultex MT02 controller */
 		printf(" MT02\n");
 		sc->sc_tapeid = MT_ISMT02;
@@ -441,7 +443,7 @@ tzdone(unit, error, resid, status)
 
 			default:
 			prerr:
-				tprintf(sc->sc_ctty, "tz%d: ", unit);
+				printf("tz%d: ", unit);
 				scsiPrintSense((ScsiClass7Sense *)
 					sc->sc_sense.sense,
 					sizeof(sc->sc_sense.sense) - resid);
@@ -513,7 +515,7 @@ tzopen(dev, flags, type, p)
 	register struct tz_softc *sc = &tz_softc[unit];
 	int error;
 
-	if (unit >= NTZ)
+	if (unit >= NTZ || sc->sc_sd == NULL)
 		return (ENXIO);
 	if (!(sc->sc_flags & TZF_ALIVE)) {
 		/* check again, tape may have been turned off at boot time */

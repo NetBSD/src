@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)machConst.h	7.3 (Berkeley) 11/15/92
+ *	from: @(#)machConst.h	8.1 (Berkeley) 6/10/93
+ *      $Id: machConst.h,v 1.2 1994/05/27 08:40:42 glass Exp $
  *
  * machConst.h --
  *
@@ -48,12 +49,12 @@
  *	without express or implied warranty.
  *
  * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machConst.h,
- *	v 9.2 89/10/21 15:55:22 jhh Exp SPRITE (DECWRL)
+ *	v 9.2 89/10/21 15:55:22 jhh Exp  SPRITE (DECWRL)
  * from: Header: /sprite/src/kernel/mach/ds3100.md/RCS/machAddrs.h,
- *	v 1.2 89/08/15 18:28:21 rab Exp SPRITE (DECWRL)
+ *	v 1.2 89/08/15 18:28:21 rab Exp  SPRITE (DECWRL)
  * from: Header: /sprite/src/kernel/vm/ds3100.md/RCS/vmPmaxConst.h,
- *	v 9.1 89/09/18 17:33:00 shirriff Exp SPRITE (DECWRL)
- * $Id: machConst.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *	v 9.1 89/09/18 17:33:00 shirriff Exp  SPRITE (DECWRL)
+ * $Id: machConst.h,v 1.2 1994/05/27 08:40:42 glass Exp $
  */
 
 #ifndef _MACHCONST

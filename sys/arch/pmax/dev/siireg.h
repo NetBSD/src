@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)siireg.h	7.1 (Berkeley) 1/7/92
+ *	from: @(#)siireg.h	8.1 (Berkeley) 6/10/93
+ *      $Id: siireg.h,v 1.2 1994/05/27 08:40:06 glass Exp $
  *
  * sii.h --
  *
@@ -47,8 +48,8 @@
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
  *
- * from: $Header: /sprite/src/kernel/dev/ds3100.md/RCS/sii.h,
- *	v 1.2 89/08/15 19:53:04 rab Exp $ SPRITE (DECWRL)
+ * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/sii.h,
+ *	v 1.2 89/08/15 19:53:04 rab Exp  SPRITE (DECWRL)
  */
 
 #ifndef _SII

@@ -1,20 +1,28 @@
-# $Id: Makefile,v 1.1.1.1 1993/10/12 03:22:19 deraadt Exp $
-# from:	@(#)Makefile	7.3 (Berkeley) 7/24/92
+#	from: @(#)Makefile	8.1 (Berkeley) 6/16/93
+#	$Id: Makefile,v 1.2 1994/05/27 08:39:00 glass Exp $
 
-# Makefile for pmax tags file
+# Makefile for pmax links, tags file
 
 .include "../kern/Make.tags.inc"
 
 all:
-	@echo "make tags only"
+	@echo "make links or tags only"
 
-PMAX=	/sys/pmax/conf/*.[ch] /sys/pmax/dev/*.[ch] /sys/pmax/include/*.[ch] \
+DIRS=	conf dev dist include pmax ultrix
+
+links::
+	-for i in ${DIRS}; do \
+	    (cd $$i && { rm -f tags; ln -s ${SYSTAGS} tags; }) done
+
+PMAX=	/sys/pmax/dev/*.[ch] /sys/pmax/include/*.[ch] \
 	/sys/pmax/pmax/*.[ch] /sys/pmax/ultrix/*.[ch]
 APMAX=	/sys/pmax/pmax/*.s
 
 tags::
-	-ctags -dt ${COMM} ${PMAX}
-	egrep "^ENTRY(.*)|^ALTENTRY(.*)" ${APMAX} | \
+	-ctags -wdt ${COMM} ${PMAX}
+	egrep "^LEAF(.*)|^[AN]LEAF(.*)|^NON_LEAF(.*)" ${APMAX} | \
 	    sed "s;\([^:]*\):\([^(]*\)(\([^, )]*\)\(.*\);\3 \1 /^\2(\3\4$$/;" \
 		>> tags
 	sort -o tags tags
+	chown bin.wsrc tags
+	chmod 444 tags

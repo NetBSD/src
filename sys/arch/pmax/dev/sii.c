@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,9 +33,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)sii.c	7.7 (Berkeley) 11/15/92
+ *	from: @(#)sii.c	8.2 (Berkeley) 11/30/93
+ *      $Id: sii.c,v 1.2 1994/05/27 08:40:02 glass Exp $
  *
- * from: $Header: /sprite/src/kernel/dev/ds3100.md/RCS/devSII.c,
+ * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devSII.c,
  *	v 9.2 89/09/14 13:37:41 jhh Exp $ SPRITE (DECWRL)";
  */
 
@@ -399,8 +400,8 @@ sii_StartCmd(sc, target)
 			(volatile u_short *)SII_BUF_ADDR, 6);
 		regs->slcsr = target;
 		regs->dmctrl = 0;
-		regs->dmaddrl = ((unsigned)SII_BUF_ADDR >> 1);
-		regs->dmaddrh = ((unsigned)SII_BUF_ADDR >> 17) & 03;
+		regs->dmaddrl = ((u_short)SII_BUF_ADDR >> 1);
+		regs->dmaddrh = ((u_short)SII_BUF_ADDR >> 17) & 03;
 		regs->dmlotc = 6;
 		regs->comm = SII_DMA | SII_INXFER | SII_SELECT | SII_ATN |
 			SII_CON | SII_MSG_OUT_PHASE;
@@ -1484,8 +1485,8 @@ sii_GetByte(regs, phase)
 			regs->cstat, regs->dstat, regs->comm); /* XXX */
 		regs->dstat = SII_DNE;
 	}
-	regs->dmaddrl = ((unsigned)SII_BUF_ADDR >> 1);
-	regs->dmaddrh = ((unsigned)SII_BUF_ADDR >> 17) & 03;
+	regs->dmaddrl = ((u_short)SII_BUF_ADDR >> 1);
+	regs->dmaddrh = ((u_short)SII_BUF_ADDR >> 17) & 03;
 	regs->dmlotc = 1;
 	regs->comm = SII_DMA | SII_INXFER | state | phase;
 	MachEmptyWriteBuffer();
@@ -1496,8 +1497,9 @@ sii_GetByte(regs, phase)
 		SII_WAIT_COUNT, i);
 
 	if ((dstat & (SII_DNE | SII_TCZ | SII_IPE)) != (SII_DNE | SII_TCZ)) {
-		printf("sii_GetByte: ds %x cm %x i %d lotc %d\n",
-			dstat, regs->comm, i, regs->dmlotc); /* XXX */
+		printf("sii_GetByte: cs %x ds %x cm %x i %d lotc %d\n",
+			regs->cstat, dstat, regs->comm, i,
+			regs->dmlotc); /* XXX */
 		sii_DumpLog(); /* XXX */
 		return (-1);
 	}
@@ -1534,8 +1536,8 @@ sii_DoSync(regs, state)
 	sii_buf[2] = SCSI_SYNCHRONOUS_XFER;
 	sii_buf[4] = len;
 	CopyToBuffer((u_short *)sii_buf, (volatile u_short *)SII_BUF_ADDR, 5);
-	regs->dmaddrl = ((unsigned)SII_BUF_ADDR >> 1);
-	regs->dmaddrh = ((unsigned)SII_BUF_ADDR >> 17) & 03;
+	regs->dmaddrl = ((u_short)SII_BUF_ADDR >> 1);
+	regs->dmaddrh = ((u_short)SII_BUF_ADDR >> 17) & 03;
 	regs->dmlotc = 5;
 	regs->comm = SII_DMA | SII_INXFER | SII_ATN |
 		(regs->cstat & SII_STATE_MSK) | SII_MSG_OUT_PHASE;
@@ -1642,15 +1644,13 @@ sii_DumpLog()
 
 	printf("sii: cmd %x bn %d cnt %d\n", sii_debug_cmd, sii_debug_bn,
 		sii_debug_sz);
-	lp = sii_logp + 1;
-	if (lp > &sii_log[NLOG])
-		lp = sii_log;
-	while (lp != sii_logp) {
+	lp = sii_logp;
+	do {
 		printf("target %d cs %x ds %x cm %x msg %x\n",
 			lp->target, lp->cstat, lp->dstat, lp->comm, lp->msg);
 		if (++lp >= &sii_log[NLOG])
 			lp = sii_log;
-	}
+	} while (lp != sii_logp);
 }
 #endif
 #endif

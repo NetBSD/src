@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)fb.c	7.2 (Berkeley) 12/20/92
+ *	from: @(#)fb.c	8.1 (Berkeley) 6/10/93
+ *      $Id: fb.c,v 1.3 1994/05/27 08:39:30 glass Exp $
  */
 
 /* 
@@ -49,8 +50,8 @@
  *	suitability of this software for any purpose.  It is provided "as is"
  *	without express or implied warranty.
  *
- * from: $Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
- *	v 9.2 90/02/13 22:16:24 shirriff Exp $ SPRITE (DECWRL)";
+ * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/devGraphics.c,
+ *	v 9.2 90/02/13 22:16:24 shirriff Exp  SPRITE (DECWRL)";
  */
 
 /*
@@ -67,13 +68,16 @@
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
+#include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/vnode.h>
 #include <sys/errno.h>
 #include <sys/proc.h>
 #include <sys/mman.h>
 #include <sys/syslog.h>
 
 #include <vm/vm.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <machine/machConst.h>
 #include <machine/pmioctl.h>
@@ -1077,5 +1081,50 @@ tb_kbdmouseconfig(fp)
 		printf("Can't configure keyboard/mouse\n");
 		return (1);
 	};
+	return (0);
+}
+
+/*
+ * Use vm_mmap() to map the frame buffer and shared data into the user's
+ * address space.
+ * Return errno if there was an error.
+ */
+fbmmap(fp, dev, data, p)
+	struct pmax_fb *fp;
+	dev_t dev;
+	caddr_t data;
+	struct proc *p;
+{
+	int error;
+	vm_offset_t addr;
+	vm_size_t len;
+	struct vnode vn;
+	struct specinfo si;
+	struct fbuaccess *fbp;
+
+	len = pmax_round_page(((vm_offset_t)fp->fbu & PGOFSET) +
+		sizeof(struct fbuaccess)) + pmax_round_page(fp->fr_size);
+	addr = (vm_offset_t)0x20000000;		/* XXX */
+	vn.v_type = VCHR;			/* XXX */
+	vn.v_specinfo = &si;			/* XXX */
+	vn.v_rdev = dev;			/* XXX */
+	/*
+	 * Map the all the data the user needs access to into
+	 * user space.
+	 */
+	error = vm_mmap(&p->p_vmspace->vm_map, &addr, len,
+		VM_PROT_ALL, VM_PROT_ALL, MAP_SHARED, (caddr_t)&vn,
+		(vm_offset_t)0);
+	if (error)
+		return (error);
+	fbp = (struct fbuaccess *)(addr + ((vm_offset_t)fp->fbu & PGOFSET));
+	*(PM_Info **)data = &fbp->scrInfo;
+	fp->fbu->scrInfo.qe.events = fbp->events;
+	fp->fbu->scrInfo.qe.tcs = fbp->tcs;
+	fp->fbu->scrInfo.planemask = (char *)0;
+	/*
+	 * Map the frame buffer into the user's address space.
+	 */
+	fp->fbu->scrInfo.bitmap = (char *)pmax_round_page(fbp + 1);
 	return (0);
 }

@@ -1,5 +1,5 @@
-# from:	@(#)README	7.1 (Berkeley) 4/20/92
-# $Id: README,v 1.1.1.1 1993/10/12 03:22:48 deraadt Exp $
+#	from: @(#)README	8.1 (Berkeley) 6/10/93
+#	$Id: README,v 1.2 1994/05/27 08:40:16 glass Exp $
 
 The scripts needed to build a boot tape for 4.2 and beyond
 live here.  Before trying anything look at the scripts 

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,8 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)cpu.h	7.7 (Berkeley) 11/15/92
- * $Id: cpu.h,v 1.4 1994/01/15 18:46:00 deraadt Exp $
+ *	from: @(#)cpu.h	8.4 (Berkeley) 1/4/94
+ *      $Id: cpu.h,v 1.5 1994/05/27 08:40:30 glass Exp $
  */
 
 #ifndef _CPU_H_
@@ -52,19 +52,19 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-#define	cpu_exec(p)	(p->p_md.md_ss_addr = 0) /* init single step */
-#define	cpu_wait(p)	/* nothing */
-#define cpu_setstack(p, ap) \
-	(p)->p_md.md_regs[SP] = ap
+#define	cpu_exec(p)		(p->p_md.md_ss_addr = 0) /* init single step */
+#define	cpu_wait(p)		/* nothing */
+#define cpu_setstack(p, ap)	(p)->p_md.md_regs[SP] = ap
+#define cpu_set_init_frame(p, fp) /* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
  * machine state in an opaque clockframe.
  */
-typedef struct clockframe {
+struct clockframe {
 	int	pc;	/* program counter at time of interrupt */
 	int	sr;	/* status register at time of interrupt */
-} clockframe;
+};
 
 #define	CLKF_USERMODE(framep)	((framep)->sr & MACH_SR_KU_PREV)
 #define	CLKF_BASEPRI(framep)	\
@@ -83,7 +83,7 @@ typedef struct clockframe {
  * buffer pages are invalid.  On the PMAX, request an ast to send us
  * through trap, marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	{ (p)->p_flag |= SOWEUPC; aston(); }
+#define	need_proftick(p)	{ (p)->p_flag |= P_OWEUPC; aston(); }
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -115,6 +115,17 @@ union cpuprid {
 #endif
 	} cpu;
 };
+
+/*
+ * CTL_MACHDEP definitions.
+ */
+#define	CPU_CONSDEV		1	/* dev_t: console terminal device */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+#define CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "console_device", CTLTYPE_STRUCT }, \
+}
 
 /*
  * MIPS CPU types (cp_imp).

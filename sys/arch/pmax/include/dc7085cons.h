@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: @(#)dc7085cons.h	7.3 (Berkeley) 11/15/92
+ *	from: @(#)dc7085cons.h	8.1 (Berkeley) 6/10/93
+ *      $Id: dc7085cons.h,v 1.2 1994/05/27 08:40:32 glass Exp $
  *
  * dc7085.h --
  *
@@ -48,8 +49,9 @@
  *	without express or implied warranty.
  *
  * from: Header: /sprite/src/kernel/dev/ds3100.md/RCS/dc7085.h,
- *	v 1.4 89/08/15 19:52:46 rab Exp SPRITE (DECWRL)
- * $Id: dc7085cons.h,v 1.1.1.1 1993/10/12 03:22:40 deraadt Exp $
+ *      
+ *	v 1.4 89/08/15 19:52:46 rab Exp  SPRITE (DECWRL)
+ * $Id: dc7085cons.h,v 1.2 1994/05/27 08:40:32 glass Exp $
  */
 
 #ifndef _DC7085

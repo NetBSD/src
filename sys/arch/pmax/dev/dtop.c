@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dtop.c	7.2 (Berkeley) 12/20/92
+ *	from: @(#)dtop.c	8.2 (Berkeley) 11/30/93
+ *      $Id: dtop.c,v 1.3 1994/05/27 08:39:27 glass Exp $
  */
 
 /* 
@@ -303,18 +304,19 @@ dtopwrite(dev, uio, flag)
 }
 
 /*ARGSUSED*/
-dtopioctl(dev, cmd, data, flag)
+dtopioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	int cmd;
 	caddr_t data;
 	int flag;
+	struct proc *p;
 {
 	register struct tty *tp;
 	register int unit = minor(dev);
 	int error;
 
 	tp = &dtop_tty[unit];
-	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 	error = ttioctl(tp, cmd, data, flag);

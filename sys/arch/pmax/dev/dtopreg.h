@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)dtopreg.h	7.1 (Berkeley) 11/15/92
+ *	from: @(#)dtopreg.h	8.1 (Berkeley) 6/10/93
+ *      $Id: dtopreg.h,v 1.3 1994/05/27 08:39:29 glass Exp $
  */
 
 /* 
@@ -63,7 +64,7 @@
  */
 /*
  * HISTORY
- * Log:	dtop.h,v
+ * Log:	dtop.h,v 
  * Revision 2.3  92/03/05  17:08:17  rpd
  * 	Define how many buttons and coordinates we can take.
  * 	[92/03/05            af]

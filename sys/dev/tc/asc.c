@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1992 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Ralph Campbell and Rick Macklem.
@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)asc.c	7.10 (Berkeley) 3/8/93
+ *	from: @(#)asc.c	8.2 (Berkeley) 1/4/94
+ *      $Id: asc.c,v 1.4 1994/05/27 08:39:14 glass Exp $
  */
 
 /* 
@@ -64,7 +65,7 @@
 
 /*
  * HISTORY
- * Log:	scsi_53C94_hdw.c,v
+ * Log:	scsi_53C94_hdw.c,v 
  * Revision 2.5  91/02/05  17:45:07  mrt
  * 	Added author notices
  * 	[91/02/04  11:18:43  mrt]
@@ -689,15 +690,9 @@ asc_startcmd(asc, target)
 	/*
 	 * Copy command data to the DMA buffer.
 	 */
-	if (asc->dma_start == asic_dma_start) {
-		len = scsicmd->cmdlen;
-		bcopy(scsicmd->cmd, state->dmaBufAddr, len);
-	} else {
-		len = scsicmd->cmdlen + 1;
-		state->dmaBufAddr[0] = SCSI_DIS_REC_IDENTIFY;
-		bcopy(scsicmd->cmd, state->dmaBufAddr + 1, scsicmd->cmdlen);
-	}
+	len = scsicmd->cmdlen;
 	state->dmalen = len;
+	bcopy(scsicmd->cmd, state->dmaBufAddr, len);
 
 	/* check for simple SCSI command with no data transfer */
 	if ((state->buflen = scsicmd->buflen) == 0) {
@@ -737,11 +732,9 @@ asc_startcmd(asc, target)
 		asc_logp = asc_log;
 #endif
 
-	/* For the I/O ASIC, preload the FIFO with the message to be sent */
-	if (asc->dma_start == asic_dma_start) {
-		regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
-		MachEmptyWriteBuffer();
-	}
+	/* preload the FIFO with the message to be sent */
+	regs->asc_fifo = SCSI_DIS_REC_IDENTIFY;
+	MachEmptyWriteBuffer();
 
 	/* initialize the DMA */
 	(*asc->dma_start)(asc, state, state->dmaBufAddr, ASCDMA_WRITE);
@@ -906,9 +899,10 @@ again:
 			readback(regs->asc_cmd);
 			DELAY(2);
 		}
-		if (len) {
+		if (len && (state->flags & DMA_IN_PROGRESS)) {
 			/* save number of bytes still to be sent or received */
 			state->dmaresid = len;
+			state->flags &= ~DMA_IN_PROGRESS;
 #ifdef DEBUG
 			if (asc_logp == asc_log)
 				asc_log[NLOG - 1].resid = len;
@@ -927,7 +921,7 @@ again:
 				 */
 				if (len & 1) {
 					printf("asc_intr: msg in len %d (fifo %d)\n",
-						len, fifo);
+						len, fifo); /* XXX */
 					len = state->dmalen - len;
 					goto do_in;
 				}
@@ -938,49 +932,51 @@ again:
 					&asc_scripts[SCRIPT_RESUME_DMA_OUT];
 			else
 				state->script = asc->script;
-		} else {
+		} else if (state->flags & DMA_IN) {
+			if (len)
+				printf("asc_intr: 1: len %d (fifo %d)\n", len,
+					fifo); /* XXX */
 			/* setup state to resume to */
-			if (state->flags & DMA_IN) {
-				if (state->flags & DMA_IN_PROGRESS) {
-					len = state->dmalen;
-				do_in:
-					state->flags &= ~DMA_IN_PROGRESS;
-					(*asc->dma_end)(asc, state, ASCDMA_READ);
-					bcopy(state->dmaBufAddr, state->buf,
-						len);
-					state->buf += len;
-					state->buflen -= len;
-				}
-				if (state->buflen)
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_IN];
-				else
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
-			} else if (state->flags & DMA_OUT) {
-				/*
-				 * If this is the last chunk, the next expected
-				 * state is to get status.
-				 */
-				if (state->flags & DMA_IN_PROGRESS) {
-					state->flags &= ~DMA_IN_PROGRESS;
-					(*asc->dma_end)(asc, state, ASCDMA_WRITE);
-					len = state->dmalen;
-					state->buf += len;
-					state->buflen -= len;
-				}
-				if (state->buflen)
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_OUT];
-				else
-					state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
-			} else if (asc->script == &asc_scripts[SCRIPT_SIMPLE])
+			if (state->flags & DMA_IN_PROGRESS) {
+				len = state->dmalen;
+				state->flags &= ~DMA_IN_PROGRESS;
+			do_in:
+				(*asc->dma_end)(asc, state, ASCDMA_READ);
+				bcopy(state->dmaBufAddr, state->buf, len);
+				state->buf += len;
+				state->buflen -= len;
+			}
+			if (state->buflen)
 				state->script =
-					    &asc_scripts[SCRIPT_RESUME_NO_DATA];
+				    &asc_scripts[SCRIPT_RESUME_IN];
 			else
-				state->script = asc->script;
-		}
+				state->script =
+				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		} else if (state->flags & DMA_OUT) {
+			if (len)
+				printf("asc_intr: 2: len %d (fifo %d)\n", len,
+					fifo); /* XXX */
+			/*
+			 * If this is the last chunk, the next expected
+			 * state is to get status.
+			 */
+			if (state->flags & DMA_IN_PROGRESS) {
+				state->flags &= ~DMA_IN_PROGRESS;
+				(*asc->dma_end)(asc, state, ASCDMA_WRITE);
+				len = state->dmalen;
+				state->buf += len;
+				state->buflen -= len;
+			}
+			if (state->buflen)
+				state->script =
+				    &asc_scripts[SCRIPT_RESUME_OUT];
+			else
+				state->script =
+				    &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		} else if (asc->script == &asc_scripts[SCRIPT_SIMPLE])
+			state->script = &asc_scripts[SCRIPT_RESUME_NO_DATA];
+		else
+			state->script = asc->script;
 
 		/* setup to receive a message */
 		asc->script = &asc_scripts[SCRIPT_MSG_IN];
