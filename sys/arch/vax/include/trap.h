@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.7 1995/06/05 17:18:00 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.8 1995/06/16 15:17:40 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -59,9 +59,9 @@
 #define	T_ACCFLT	12	/* Access violation fault */
 /* #define	T_TABLEFLT	13	/* page table fault */
 /* #define	T_ALIGNFLT	14	/* alignment fault */
-/* #define	T_KSPNOTVAL	15	/* kernel stack pointer not valid */
+#define	T_KSPNOTVAL	15	/* kernel stack pointer not valid */
 /* #define	T_BUSERR	16	/* bus error */
-/* #define	T_KDBTRAP	17	/* kernel debugger trap */
+#define	T_KDBTRAP	17	/* kernel debugger trap */
 
 /* #define	T_DIVIDE	18	/* integer divide fault */
 /* #define	T_NMI		19	/* non-maskable trap */
