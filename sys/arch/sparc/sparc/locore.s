@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2000/03/21 12:47:02 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 2000/04/30 21:32:44 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4410,7 +4410,7 @@ ENTRY(switchexit)
 	/*
 	 * Change pcb to idle u. area, i.e., set %sp to top of stack
 	 * and %psr to PSR_S|PSR_ET, and set cpcb to point to idle_u.
-	 * Once we have left the old stack, we can call kmem_free to
+	 * Once we have left the old stack, we can call exit2() to
 	 * destroy it.  Call it any sooner and the register windows
 	 * go bye-bye.
 	 */
@@ -4443,7 +4443,7 @@ ENTRY(switchexit)
 
 	/*
 	 * Now fall through to `the last switch'.  %g6 was set to
-	 * %hi(cpcb), but may have been clobbered in kmem_free,
+	 * %hi(cpcb), but may have been clobbered in exit2(),
 	 * so all the registers described below will be set here.
 	 *
 	 * REGISTER USAGE AT THIS POINT:
@@ -4481,7 +4481,41 @@ _ASM_LABEL(idle):
 	tst	%o3
 	bnz,a	Lsw_scan
 	 wr	%g1, PIL_CLOCK << 8, %psr	! (void) splclock();
-	b,a	1b
+
+	! Check uvm.page_idle_zero
+	sethi	%hi(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO), %o3
+	ld	[%o3 + %lo(_C_LABEL(uvm) + UVM_PAGE_IDLE_ZERO)], %o3
+	tst	%o3
+	bz	1b
+	 nop
+
+	/*
+	 * We must preserve several global registers across the call
+	 * to uvm_pageidlezero().  Use the %ix registers for this, but
+	 * since we might still be running in our our caller's frame
+	 * (if we came here from cpu_switch()), we need to setup a
+	 * frame first.
+	 */
+	save	%sp, -CCFSZ, %sp
+	mov	%g1, %i0
+	mov	%g2, %i1
+	mov	%g4, %i2
+	mov	%g6, %i3
+	mov	%g7, %i4
+
+	! zero some pages
+	call	_C_LABEL(uvm_pageidlezero)
+	 nop
+
+	! restore global registers again which are now
+	! clobbered by uvm_pageidlezero()
+	mov	%i0, %g1
+	mov	%i1, %g2
+	mov	%i2, %g4
+	mov	%i3, %g6
+	mov	%i4, %g7
+	b	1b
+	 restore
 
 Lsw_panic_rq:
 	sethi	%hi(1f), %o0
@@ -4696,11 +4730,6 @@ Lsw_load:
 	wr	%g2, PSR_ET, %psr	! %psr = newpsr ^ PSR_ET;
 	/* set new cpcb */
 	st	%g5, [%g6 + %lo(cpcb)]	! cpcb = newpcb;
-#if 0
-	/* XXX update masterpaddr too */
-	sethi	%hi(_C_LABEL(masterpaddr)), %g7
-	st	%g5, [%g7 + %lo(_C_LABEL(masterpaddr))]
-#endif
 	ldd	[%g5 + PCB_SP], %o6	! <sp,pc> = newpcb->pcb_<sp,pc>
 	/* load window */
 	ldd	[%sp + (0*8)], %l0
