@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/02/13 02:54:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/24 17:18:26 drochner Exp $
 
 HAVE_GCC28!=	${CXX} --version | egrep "^(2\.8|egcs)" ; echo
 
@@ -9,7 +9,13 @@ MKPIC=		no
 DIST=		${.CURDIR}/../../dist/gcc
 ARCH=		${.CURDIR}/../../usr.bin/egcs/arch
 
-CPPFLAGS+=	-I${ARCH}/${MACHINE_ARCH} -I${ARCH} \
+.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+ARCHSUBDIR= mips
+.else
+ARCHSUBDIR= ${MACHINE_ARCH}
+.endif
+
+CPPFLAGS+=	-I${ARCH}/${ARCHSUBDIR} -I${ARCH} \
 		-I${DIST}/config -I${DIST}/cp -I${DIST}
 
 LIB2OBJS=	__gcc_bcmp.o _varargs.o __dummy.o _eprintf.o _bb.o _shtab.o \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1999/02/13 02:54:23 lukem Exp $
+#	$NetBSD: Makefile,v 1.6 1999/02/24 17:18:26 drochner Exp $
 
 LIB=		g2c
 
@@ -64,7 +64,13 @@ DPSRCS+=	g2c.h
 
 MKLINT=		no
 
-CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${MACHINE_ARCH} \
+.if (${MACHINE_ARCH} == "mipsel") || (${MACHINE_ARCH} == "mipseb")
+ARCHSUBDIR= mips
+.else
+ARCHSUBDIR= ${MACHINE_ARCH}
+.endif
+
+CPPFLAGS+=	-I. -I${.CURDIR} -I${ARCH} -I${ARCH}/${ARCHSUBDIR} \
 		-I${DIST}/libf2c -I${DIST}/libf2c/libF77 \
 		-I${DIST}/libf2c/libI77 -I${DIST}/libf2c/libU77 \
 		-I${DIST}/gcc/config -I${DIST}/gcc/f -I${DIST}/gcc \
