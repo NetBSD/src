@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)resourcevar.h	7.1 (Berkeley) 5/9/91
- *	$Id: resourcevar.h,v 1.3 1993/05/20 16:22:59 cgd Exp $
+ *	$Id: resourcevar.h,v 1.4 1993/06/22 00:56:37 glass Exp $
  */
 
 #ifndef _SYS_RESOURCEVAR_H_
@@ -60,7 +60,7 @@ struct pstats {
 	struct	timeval p_start;	/* starting time */
 };
 
-void addupc(int, struct uprof *, int);	/* process profiling */ 
+void addupc __P((int, struct uprof *, int));	/* process profiling */ 
 
 /*
  * Kernel shareable process resource limits.  Because this structure
