@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 1999/05/11 20:46:59 veego Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/01/24 17:52:26 mycroft Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -20,7 +20,7 @@ MTREE=		${COMMONDIR}/mtree.conf
 
 DISKTYPE=	floppy3
 
-all: ${AUXTARGETS} ${CBIN} 
+realall: ${AUXTARGETS} ${CBIN} 
 	dd if=/dev/zero of=${IMAGE} count=2880
 	vnconfig -t ${DISKTYPE} -v -c ${VND_CDEV} ${IMAGE}
 	disklabel -rw ${VND_CDEV} ${DISKTYPE}
