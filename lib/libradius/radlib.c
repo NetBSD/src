@@ -1,4 +1,4 @@
-/* $NetBSD: radlib.c,v 1.3 2005/02/20 17:06:16 christos Exp $ */
+/* $NetBSD: radlib.c,v 1.4 2005/02/20 23:59:31 he Exp $ */
 
 /*-
  * Copyright 1998 Juniper Networks, Inc.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/lib/libradius/radlib.c,v 1.12 2004/06/14 20:55:30 stefanf Exp $");
 #else
-__RCSID("$NetBSD: radlib.c,v 1.3 2005/02/20 17:06:16 christos Exp $");
+__RCSID("$NetBSD: radlib.c,v 1.4 2005/02/20 23:59:31 he Exp $");
 #endif
 
 #include <sys/types.h>
@@ -305,7 +305,7 @@ put_password_attr(struct rad_handle *h, int type, const void *value, size_t len)
 	 */
 	clear_password(h);
 	put_raw_attr(h, type, h->pass, padded_len);
-	h->pass_pos = h->req_len - padded_len;
+	h->pass_pos = (int)(h->req_len - padded_len);
 
 	/* Save the cleartext password, padded as necessary */
 	(void)memcpy(h->pass, value, len);
@@ -696,7 +696,7 @@ rad_get_attr(struct rad_handle *h, const void **value, size_t *len)
 		return -1;
 	}
 	*value = &h->response[h->resp_pos];
-	h->resp_pos += *len;
+	h->resp_pos += (int)*len;
 	return type;
 }
 
@@ -901,7 +901,7 @@ rad_put_message_authentic(struct rad_handle *h)
 	}
 
 	if (h->authentic_pos == 0) {
-		h->authentic_pos = h->req_len;
+		h->authentic_pos = (int)h->req_len;
 		(void)memset(md_zero, 0, sizeof(md_zero));
 		return (put_raw_attr(h, RAD_MESSAGE_AUTHENTIC, md_zero,
 		    sizeof(md_zero)));
