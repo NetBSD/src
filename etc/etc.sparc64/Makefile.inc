@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2001/11/29 22:46:01 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2002/03/31 16:07:56 bjh21 Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -96,5 +96,5 @@ snap_md_post:
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	sh $(TOP)/distrib/sets/makesums -t ${RELEASEDIR}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${dir} '*'
 .endfor

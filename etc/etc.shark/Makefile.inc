@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 2002/03/31 03:39:55 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2002/03/31 16:07:56 bjh21 Exp $
 #
 #	etc.shark/Makefile.inc -- shark-specific etc Makefile targets
 #
@@ -18,5 +18,4 @@ snap_md_post:
 	cd ${.CURDIR}/../distrib && ${MAKE} depend && ${MAKE}
 	cd ${.CURDIR}/../distrib/shark && ${MAKE} release
 	cd ${.CURDIR}/../distrib/notes && ${MAKE} release
-	sh ../distrib/sets/makesums -t \
-	    ${RELEASEDIR}/installation/instkernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/installation/instkernel '*.gz'
