@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2003/12/22 14:15:05 rtr Exp $
+# $NetBSD: Makefile,v 1.2 2003/12/23 14:28:20 rtr Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -9,11 +9,7 @@ XMODULEDIR=	${X11USRLIBDIR}/modules
 LIB=	vbe
 
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/${LIB}
-SRCS=	vbe.c vbeModes.c
-
-.if defined(X11FLAGS.LOADABLE)
-SRCS+=	vbe_module.c
-.endif
+SRCS=	vbe.c vbeModes.c vbe_module.c
 
 XSERVERINCDIR!= cd ${NETBSDSRCDIR}/x11/Xserver/include && ${PRINTOBJDIR}
 
