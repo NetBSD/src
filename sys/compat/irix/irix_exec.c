@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.5 2001/12/02 16:16:57 manu Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.6 2001/12/04 22:13:41 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.5 2001/12/02 16:16:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.6 2001/12/04 22:13:41 manu Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -193,6 +193,8 @@ ELFNAME2(irix,probe)(p, epp, eh, itp, pos)
 	*pos = ELF_NO_ADDR;
 #ifdef DEBUG_IRIX
 	printf("irix_probe: returning 0\n");
+	printf("epp->ep_vm_minaddr = 0x%lx\n", epp->ep_vm_minaddr);
 #endif
+	epp->ep_vm_minaddr = epp->ep_vm_minaddr & ~0xfUL;
 	return 0;
 }
