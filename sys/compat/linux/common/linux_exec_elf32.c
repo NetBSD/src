@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.24 1996/10/10 17:51:56 christos Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.25 1996/10/13 18:30:05 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -40,6 +40,7 @@
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 
 #include <sys/mman.h>
