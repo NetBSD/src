@@ -42,13 +42,13 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fold.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: fold.c,v 1.3 1993/08/01 18:15:50 mycroft Exp $";
+static char rcsid[] = "$Id: fold.c,v 1.4 1993/08/28 04:30:02 jtc Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+#include <err.h>
 
 #define	DEFLINEWIDTH	80
 
@@ -67,7 +67,7 @@ main(argc, argv)
 	char *p;
 
 	width = -1;
-	while ((ch = getopt(argc, argv, "0123456789bsw:")) != EOF)
+	while ((ch = getopt(argc, argv, "0123456789bsw:")) != -1)
 		switch (ch) {
 		case 'b':
 			count_bytes = 1;
@@ -94,7 +94,7 @@ main(argc, argv)
 			break;
 		default:
 			(void)fprintf(stderr,
-			    "usage: fold [-w width] [file ...]\n");
+			    "usage: fold [-bs] [-w width] [file ...]\n");
 			exit(1);
 		}
 	argv += optind;
@@ -107,9 +107,8 @@ main(argc, argv)
 		fold(width);
 	else for (; *argv; ++argv)
 		if (!freopen(*argv, "r", stdin)) {
-			(void)fprintf(stderr,
-			    "fold: %s: %s\n", *argv, strerror(errno));
-			exit(1);
+			err (1, "%s", *argv);
+			/* NOTREACHED */
 		} else
 			fold(width);
 	exit(0);
@@ -179,8 +178,8 @@ fold(width)
 			/* Allocate buffer in LINE_MAX increments */
 			buf_max += 2048;
 			if((buf = realloc (buf, buf_max)) == NULL) {
-				(void)fprintf(stderr, "%s\n", strerror(errno));
-				exit(1);
+				err (1, NULL);
+				/* NOTREACHED */
 			}
 		}
 		buf[indx++] = ch;
