@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.40 2001/10/01 08:01:36 lukem Exp $
+#	$NetBSD: special,v 1.41 2001/10/02 00:16:36 lukem Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -133,6 +133,16 @@ security.local	type=file mode=0644 uname=root gname=wheel optional
 services	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 spwd.db		type=file mode=0600 uname=root gname=wheel
+ssh.conf		type=file mode=0644 uname=root gname=wheel optional
+ssh_host_dsa_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_dsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_key		type=file mode=0600 uname=root gname=wheel optional
+ssh_host_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_host_rsa_key	type=file mode=0600 uname=root gname=wheel optional
+ssh_host_rsa_key.pub	type=file mode=0644 uname=root gname=wheel optional
+ssh_known_hosts		type=file mode=0644 uname=root gname=wheel optional
+ssh_known_hosts2	type=file mode=0644 uname=root gname=wheel optional
+sshd.conf		type=file mode=0644 uname=root gname=wheel optional
 sysctl.conf	type=file mode=0644 uname=root gname=wheel
 syslog.conf	type=file mode=0644 uname=root gname=wheel
 ttyaction	type=file mode=0644 uname=root gname=wheel optional
