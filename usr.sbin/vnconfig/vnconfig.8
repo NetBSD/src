@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.10 1997/07/30 22:54:45 jtc Exp $
+.\"	$NetBSD: vnconfig.8,v 1.11 1997/10/01 01:32:59 enami Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,30 +82,34 @@
 .Nm vnconfig Op Fl c
 .Op Fl t Ar typename
 .Op Fl v
-.Ar special_file
+.Ar vnode_disk
 .Ar regular_file
 .Op Ar geomspec
 .Nm vnconfig Fl u
 .Op Fl v
-.Ar special_file
+.Ar vnode_disk
 .Sh DESCRIPTION
 The
 .Nm vnconfig
 command configures vnode pseudo disk devices.
-It will associate the special file 
-.Ar special_file
+It will associate the vnode disk
+.Ar vnode_disk
 with the regular file
 .Ar regular_file
 allowing the latter to be accessed as though it were a disk.
 Hence a regular file within the filesystem can be used for swapping
 or can contain a filesystem that is mounted in the name space.
+The
+.Ar vnode_disk
+is a special file of raw partition or name of vnode disk like
+.Pa vnd0 .
 .Pp
 Options indicate an action to be performed:
 .Bl -tag -width indent
 .It Fl c
 Configures the device.
 If successful, references to
-.Ar special_file
+.Ar vnode_disk
 will access the contents of
 .Ar regular_file .
 If
@@ -152,14 +156,16 @@ is assumed.
 .Sh EXAMPLES
 .Pp
 .Dl vnconfig /dev/vnd0c /tmp/diskimage
+or
+.Dl vnconfig vnd0 /tmp/diskimage
 .Pp
 Configures the vnode disk
-.Pa vnd0c .
+.Pa vnd0 .
 .Pp
 .Dl vnconfig /dev/vnd0c /tmp/floppy.img 512/18/2/80
 .Pp
 Configures the vnode disk
-.Pa vnd0c
+.Pa vnd0
 emulating the geometry of 512 bytes per sector, 18 sectors per track,
 2 tracks per cylinder, and 80 cylinders total.
 .Pp
@@ -167,7 +173,7 @@ emulating the geometry of 512 bytes per sector, 18 sectors per track,
 .Dl vnconfig -t floppy /dev/vnd0c /tmp/floppy.img
 .Pp
 Configures the vnode disk
-.Pa vnd0c
+.Pa vnd0
 using the geometry specified in the
 .Pa floppy
 entry in
@@ -176,12 +182,13 @@ entry in
 .Dl vnconfig -u /dev/vnd0c
 .Pp
 Unconfigures the
-.Pa vnd0c
+.Pa vnd0
 device.
 .Sh BUGS
 This command should really be named
 .Nm vndconfig .
 .Sh SEE ALSO
+.Xr opendisk 3 ,
 .Xr swapctl 8 ,
 .Xr mount 8 ,
 .Xr umount 8 ,
