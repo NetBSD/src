@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.193 2003/11/08 08:09:38 jdolecek Exp $	*/
+/*	$NetBSD: locore.s,v 1.194 2003/11/08 13:21:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4114,10 +4114,9 @@ Lgandul:	nop
 
 	/* Clear `cpuinfo' */
 	sethi	%hi(CPUINFO_VA), %o0		! memset(&cpuinfo, 0, NBPG)
-	mov	0, %o1
-	sethi	%hi(CPUINFO_STRUCTSIZE), %o2
+	set	%hi(CPUINFO_STRUCTSIZE), %o2
 	call	_C_LABEL(memset)
-	 add	%o1, %lo(CPUINFO_STRUCTSIZE), %o1
+	 clr	%o1
 
 	/*
 	 * Initialize `cpuinfo' fields which are needed early.  Note
