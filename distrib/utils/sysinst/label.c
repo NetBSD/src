@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.45 2004/10/16 13:20:11 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.46 2005/01/20 21:59:36 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.45 2004/10/16 13:20:11 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.46 2005/01/20 21:59:36 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -196,11 +196,24 @@ edit_fs_size(menudesc *m, void *arg)
 }
 
 void
-set_ptype(partinfo *p, int fstype, int flag, int bsize)
+set_ptype(partinfo *p, int fstype, int flag)
 {
+	p->pi_flags = p->pi_flags & ~PIF_FFSv2;
+
+	if (p->pi_fstype == fstype)
+		return;
+
 	p->pi_fstype = fstype;
-	p->pi_flags = (p->pi_flags & ~PIF_FFSv2) | flag;
-	set_bsize(p, bsize);
+	if (fstype == FS_BSDFFS || fstype == FS_BSDLFS) {
+		p->pi_frag = 8;
+		/* match newfs defaults for fragments size (2k if >= 1024MB) */
+		p->pi_fsize = p->pi_size > 1024*1024*1024 / 512 ? 2048 : 1024;
+		p->pi_flags |= flag;
+	} else {
+		/* zero - fields not used */
+		p->pi_frag = 0;
+		p->pi_fsize = 0;
+	}
 }
 
 void
@@ -430,7 +443,7 @@ set_ptn_header(menudesc *m, void *arg)
 			 if (t == FS_APPLEUFS && i != PTN_MENU_ISIZE)
 				/* Can only set # inodes for appleufs */
 				continue;
-			 if (t == FS_BSDLFS && i == PTN_MENU_FSIZE)
+			 if (t == FS_BSDLFS && i != PTN_MENU_BSIZE)
 				/* LFS doesn't have fragments */
 				continue;
 		}
