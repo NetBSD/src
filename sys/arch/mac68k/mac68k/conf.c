@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49.2.3 1999/05/16 22:38:10 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.49.2.4 1999/05/22 09:39:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -308,9 +308,16 @@ chrtoblk(dev)
 #define zscnpollc	nullcnpollc
 cons_decl(zs);
 
+#include "akbd.h"
+#include "macfb.h"
+cons_decl(mac);
+
 struct	consdev constab[] = {
 #if NZSTTY > 0
 	cons_init(zs),
+#endif
+#if NAKBD > 0 && NMACFB > 0
+	cons_init(mac),
 #endif
 	{ 0 },
 };
