@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 1998/06/26 22:42:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 1998/07/03 21:32:43 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -496,7 +496,7 @@ cpu_startup()
 #if defined(UVM)
 	printf("avail mem = %ld\n", ptoa(uvmexp.free - bufpages));
 #else
-	printf("avail mem = %ld\n", ptoa(cnt.v_free_count))
+	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 #endif
 	printf("using %d buffers containing %d bytes of memory\n",
 	    nbuf, bufpages * CLBYTES);
