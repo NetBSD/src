@@ -51,10 +51,10 @@ Now, access the web!
 
   % mount_portal /usr/share/examples/mount_portal/rfilter.2.conf `pwd`/portal
 
-  % cksum portal/http://www.netbsd.org/
-  362001418 6920 portal/http://www.netbsd.org/
+  % cksum portal/http://www.NetBSD.org/
+  362001418 6920 portal/http://www.NetBSD.org/
 
-  % more portal/http://www.netbsd.org/
+  % more portal/http://www.NetBSD.org/
   <html>
   <head>
   <!-- Copyright (c) 1996, 1997, 1998, 1999
@@ -63,7 +63,7 @@ Now, access the web!
 
 Similarly, we can access ftp sites via ftp://
 
-  % cat portal/ftp://ftp.netbsd.org/pub/NetBSD/.message
+  % cat portal/ftp://ftp.NetBSD.org/pub/NetBSD/.message
   GIVEN THE NATURE OF THE SOFTWARE MADE AVAILABLE UNDER THIS PROGRAM
   IT IS HEREBY NOTED THAT ALL SOFTWARE, WITH THE EXCEPTION ...
 
@@ -71,9 +71,9 @@ Similarly, we can access ftp sites via ftp://
 The difficulty with the URL format becomes clear if we try to tar
 a file from ftp://...:
 
-  % tar tzf portal/ftp://ftp.netbsd.org/pub/NetBSD-current/tar_files/doc.tar.gz
+  % tar tzf portal/ftp://ftp.NetBSD.org/pub/NetBSD-current/tar_files/doc.tar.gz
   portal/ftp: Unknown host
-  tar (child): can't open archive portal/ftp://ftp.netbsd.org/pub/NetBSD-current/tar_files/doc.tar.gz : Input/output error
+  tar (child): can't open archive portal/ftp://ftp.NetBSD.org/pub/NetBSD-current/tar_files/doc.tar.gz : Input/output error
 
 The problem is, when tar sees a file of the form A:B, it assumes
 A is a hostname.  In this case, A is "portal/ftp", which is
@@ -81,13 +81,13 @@ obviosly not a hostname.
 
 If we want to avoid this problem, there are at least two
 solutions:
-  1.  cat portal/ftp://ftp.netbsd.org/pub/NetBSD-current/tar_files/doc.tar.gz | tar tzf -
+  1.  cat portal/ftp://ftp.NetBSD.org/pub/NetBSD-current/tar_files/doc.tar.gz | tar tzf -
 
   2.  Use ftp%// in the configuration file:
 
   ftp%//		rfilter	ftp%// ftp -Vo - ftp://%s
 
-  % tar tzf portal/ftp%//ftp.netbsd.org/pub/NetBSD-current/tar_files/doc.tar.gz
+  % tar tzf portal/ftp%//ftp.NetBSD.org/pub/NetBSD-current/tar_files/doc.tar.gz
 
 Note that in this case, we strip out ftp%//, and prepend ftp://
 to the path argument to ftp.
