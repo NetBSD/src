@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.22 1999/07/17 06:06:36 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.23 1999/07/22 21:27:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -1102,8 +1102,8 @@ uao_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 				UVMHIST_LOG(pdhist,
 				    "sleeping, ptmp->flags 0x%x\n",
 				    ptmp->flags,0,0,0);
-				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock, 0,
-				    "uao_get", 0);
+				UVM_UNLOCK_AND_WAIT(ptmp, &uobj->vmobjlock,
+				    FALSE, "uao_get", 0);
 				simple_lock(&uobj->vmobjlock);
 				continue;	/* goto top of pps while loop */
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.29 1999/07/18 22:55:30 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.30 1999/07/22 21:27:32 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -724,7 +724,7 @@ uvm_km_alloc1(map, size, zeroit)
 				panic("uvm_km_alloc1: non-released page");
 			pg->flags |= PG_WANTED;
 			UVM_UNLOCK_AND_WAIT(pg, &uvm.kernel_object->vmobjlock,
-			    0, "km_alloc", 0);
+			    FALSE, "km_alloc", 0);
 			continue;   /* retry */
 		}
 		
