@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.10 1999/12/16 06:16:16 jwise Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.11 1999/12/20 03:45:02 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -38,13 +38,65 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cmdtab.c,v 1.10 1999/12/16 06:16:16 jwise Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.11 1999/12/20 03:45:02 jwise Exp $");
 #endif /* not lint */
 
 #include "systat.h"
 #include "extern.h"
 
-struct	mode modes[] = {
+struct	command global_commands[] = {
+	{ "help",	global_help,		"show help"},
+	{ "interval",	global_interval,	"set update interval"},
+	{ "load",	global_load,		"show system load averages"},
+	{ "quit",	global_quit,		"exit systat"},
+	/* until prefix matching works, handle the same special case */
+	{ "q",		global_quit,		"exit systat"},
+	{ "start",	global_interval,	"restart updating display"},
+	{ "stop",	global_stop,		"stop updating display"},
+	{ 0 }
+};
+
+struct command	iostat_commands[] = {
+	{ "bars",	iostat_bars,	"show io stats as a bar graph"},
+	{ "numbers",	iostat_numbers,	"show io stats numerically"},
+	{ "secs",	iostat_secs,	"include time statistics"},
+	/* from disks.c */
+	{ "add",	disks_add,	"add a disk to displayed disks"},
+	{ "show",	disks_add,	"add a disk to displayed disks"},
+	{ "delete",	disks_delete,	"remove a disk from displayed disks"},
+	{ "ignore",	disks_delete,	"remove a disk from displayed disks"},
+	{ "drives",	disks_drives,	"list all disks"},
+	{ 0 }
+};
+
+struct command netstat_commands[] = {
+	{ "all",	netstat_all,	 "include server sockets"},
+	{ "display",	netstat_display, "show specified hosts or ports"},
+	{ "ignore",	netstat_ignore,	 "hide specified hosts or ports"},
+	{ "names",	netstat_names,	 "show names instead of addresses"},
+	{ "numbers",	netstat_numbers, "show addresses instead of names"},
+	{ "reset",	netstat_reset,	 "return to default display"},
+	{ "show",	netstat_show,	"show current display/ignore settings"},
+	{ "tcp",	netstat_tcp,	 "show only tcp connections"},
+	{ "udp",	netstat_udp,	 "show only udp connections"},
+	{ 0 }
+};
+
+struct command	vmstat_commands[] = {
+	{ "boot",	vmstat_boot,	"show total vm stats since boot"},
+	{ "run",	vmstat_run,	"show running total vm stats"},
+	{ "time",	vmstat_time,	"show vm stats for each sample time"},
+	{ "zero",	vmstat_zero,	"re-zero running totals"},
+	/* from disks.c */
+	{ "add",	disks_add,	"add a disk to displayed disks"},
+	{ "show",	disks_add,	"add a disk to displayed disks"},
+	{ "delete",	disks_delete,	"remove a disk from displayed disks"},
+	{ "ignore",	disks_delete,	"remove a disk from displayed disks"},
+	{ "drives",	disks_drives,	"list all disks"},
+	{ 0 }
+};
+
+struct mode modes[] = {
 	/* "pigs" is the default, it must be first. */
 	{ "pigs",	showpigs,	fetchpigs,	labelpigs,
 	  initpigs,	openpigs,	closepigs,	0,
@@ -65,13 +117,13 @@ struct	mode modes[] = {
 	  inittcp,	opentcp,	closetcp,	0,
 	  CF_LOADAV },
 	{ "iostat",	showiostat,	fetchiostat,	labeliostat,
-	  initiostat,	openiostat,	closeiostat,	cmdiostat,
+	  initiostat,	openiostat,	closeiostat,	iostat_commands,
 	  CF_LOADAV },
 	{ "mbufs",	showmbufs,	fetchmbufs,	labelmbufs,
 	  initmbufs,	openmbufs,	closembufs,	0,
 	  CF_LOADAV },
 	{ "netstat",	shownetstat,	fetchnetstat,	labelnetstat,
-	  initnetstat,	opennetstat,	closenetstat,	cmdnetstat,
+	  initnetstat,	opennetstat,	closenetstat,	netstat_commands,
 	  CF_LOADAV },
 	{ "ps",		showps,		fetchpigs,	labelps,
 	  initpigs,	openpigs,	closepigs,	0,
@@ -80,20 +132,8 @@ struct	mode modes[] = {
 	  initswap,	openswap,	closeswap,	0,
 	  CF_LOADAV },
 	{ "vmstat",	showkre,	fetchkre,	labelkre,
-	  initkre,	openkre,	closekre,	cmdkre,
+	  initkre,	openkre,	closekre,	vmstat_commands,
 	  0 },
 	{ 0 }
 };
 struct  mode *curmode = &modes[0];
-
-struct	command global_commands[] = {
-	{ "help",	global_help,		"show help"},
-	{ "interval",	global_interval,	"set update interval"},
-	{ "load",	global_load,		"show system load averages"},
-	{ "quit",	global_quit,		"exit systat"},
-	/* until prefix matching works, handle the same special case */
-	{ "q",		global_quit,		"exit systat"},
-	{ "start",	global_interval,	"restart updating display"},
-	{ "stop",	global_stop,		"stop updating display"},
-	{ 0 }
-};

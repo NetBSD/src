@@ -1,4 +1,4 @@
-/*	$NetBSD: systat.h,v 1.5 1999/12/16 04:49:33 jwise Exp $	*/
+/*	$NetBSD: systat.h,v 1.6 1999/12/20 03:45:03 jwise Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1989, 1992, 1993
@@ -45,7 +45,7 @@ struct  mode {
 	int	(*c_init) __P((void));		/* initialize namelist, etc. */
 	WINDOW	*(*c_open) __P((void));		/* open display */
 	void	(*c_close) __P((WINDOW *));	/* close display */
-	int	(*c_cmd) __P((char *, char *));	/* display command interpreter*/
+	struct	command *c_commands;		/* commands for mode */
 	char	c_flags;			/* see below */
 };
 
