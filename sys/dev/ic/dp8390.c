@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.44 2001/02/12 18:56:26 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.45 2001/07/07 05:35:39 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -1050,7 +1050,7 @@ dp8390_getmcaf(ec, af)
 		af[i] = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.

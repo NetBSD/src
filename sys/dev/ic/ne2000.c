@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.33 2001/06/05 02:31:16 thorpej Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.34 2001/07/07 05:35:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -198,7 +198,7 @@ ne2000_attach(nsc, myea)
 			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
-			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
+			if (memcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
@@ -207,7 +207,7 @@ ne2000_attach(nsc, myea)
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
-				if (bcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0) {
+				if (memcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0) {
 					mstart = x << ED_PAGE_SHIFT;
 					memsize = ED_PAGE_SIZE;
 					break;
@@ -227,7 +227,7 @@ ne2000_attach(nsc, myea)
 			    x << ED_PAGE_SHIFT, ED_PAGE_SIZE, useword, 0);
 			ne2000_readmem(nict, nich, asict, asich,
 			    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE, useword);
-			if (bcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
+			if (memcmp(pbuf0, tbuf, ED_PAGE_SIZE) == 0) {
 				for (i = 0; i < ED_PAGE_SIZE; i++)
 					pbuf[i] = 255 - x;
 				ne2000_writemem(nict, nich, asict, asich,
@@ -236,7 +236,7 @@ ne2000_attach(nsc, myea)
 				ne2000_readmem(nict, nich, asict, asich,
 				    x << ED_PAGE_SHIFT, tbuf, ED_PAGE_SIZE,
 				    useword);
-				if (bcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0)
+				if (memcmp(pbuf, tbuf, ED_PAGE_SIZE) == 0)
 					memsize += ED_PAGE_SIZE;
 				else
 					break;
@@ -430,7 +430,7 @@ ne2000_detect(nict, nich, asict, asich)
 	ne2000_readmem(nict, nich, asict, asich, 8192, test_buffer,
 	    sizeof(test_buffer), 0);
 
-	if (bcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
+	if (memcmp(test_pattern, test_buffer, sizeof(test_pattern))) {
 		/* not an NE1000 - try NE2000 */
 		bus_space_write_1(nict, nich, ED_P0_DCR,
 		    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
@@ -448,7 +448,7 @@ ne2000_detect(nict, nich, asict, asich)
 		ne2000_readmem(nict, nich, asict, asich, 16384, test_buffer,
 		    sizeof(test_buffer), 1);
 
-		if (bcmp(test_pattern, test_buffer, sizeof(test_pattern)))
+		if (memcmp(test_pattern, test_buffer, sizeof(test_pattern)))
 			goto out;	/* not an NE2000 either */
 
 		rv = NE2000_TYPE_NE2000;

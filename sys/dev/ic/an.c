@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.17 2001/06/29 11:24:42 onoe Exp $	*/
+/*	$NetBSD: an.c,v 1.18 2001/07/07 05:35:39 thorpej Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1814,7 +1814,7 @@ void an_cache_store (sc, eh, m, rx_quality)
 	 * . var w_nextitem holds total number of entries already cached
 	 */
 	for(i = 0; i < sc->an_nextitem; i++) {
-		if (! bcmp(eh->ether_shost , sc->an_sigcache[i].macsrc,  6 )) {
+		if (!memcmp(eh->ether_shost , sc->an_sigcache[i].macsrc,  6 )) {
 			/* Match!,
 			 * so we already have this entry,
 			 * update the data

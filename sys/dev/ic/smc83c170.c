@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.45 2001/06/12 22:32:50 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.46 2001/07/07 05:35:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -1272,7 +1272,7 @@ epic_set_mchash(sc)
 
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than

@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.18 2001/06/27 22:22:12 nathanw Exp $	*/
+/*	$NetBSD: wi.c,v 1.19 2001/07/07 05:35:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -178,7 +178,7 @@ wi_attach(sc)
 	 * Is it really enough just checking against null ethernet address?
 	 * Or, check against possible vendor?  XXX.
 	 */
-	if (bcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
+	if (memcmp(sc->sc_macaddr, empty_macaddr, ETHER_ADDR_LEN) == 0) {
 		printf("%s: could not get mac address, attach failed\n",
 		    sc->sc_dev.dv_xname);
 			return 1;
@@ -943,7 +943,7 @@ allmulti:
 	ETHER_FIRST_MULTI(estep, ec, enm);
 	while (enm != NULL) {
 		/* Punt on ranges or too many multicast addresses. */
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0 ||
 		    i >= 16)
 			goto allmulti;

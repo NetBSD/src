@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.46 2001/06/12 14:59:28 wiz Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.47 2001/07/07 05:35:40 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -1570,7 +1570,7 @@ mb86960_getmcaf(ec, af)
 	af[0] = af[1] = af[2] = af[3] = af[4] = af[5] = af[6] = af[7] = 0x00;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
-		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
 			 * We must listen to a range of multicast addresses.

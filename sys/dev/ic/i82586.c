@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.37 2001/04/09 22:31:16 bjh21 Exp $	*/
+/*	$NetBSD: i82586.c,v 1.38 2001/07/07 05:35:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ Mode of operation:
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.37 2001/04/09 22:31:16 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.38 2001/07/07 05:35:39 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/mbuf.h>
@@ -1832,7 +1832,7 @@ again:
 	while (enm) {
 		size += 6;
 		if (sc->mcast_count >= IE_MAXMCAST ||
-		    bcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
+		    memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) != 0) {
 			sc->sc_ethercom.ec_if.if_flags |= IFF_ALLMULTI;
 			i82586_ioctl(&sc->sc_ethercom.ec_if,
 				     SIOCSIFFLAGS, (void *)0);

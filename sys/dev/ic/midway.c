@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.50 2001/07/05 08:38:26 toshii Exp $	*/
+/*	$NetBSD: midway.c,v 1.51 2001/07/07 05:35:40 thorpej Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -1113,10 +1113,10 @@ int wmtry;
     EN_WRITE(sc, MID_MAST_CSR, MID_MCSR_ENDMA);   /* re-enable DMA (only) */
 
     if (wmtry) {
-      return(bcmp(sp, dp, wmtry));  /* wmtry always exits here, no looping */
+      return(memcmp(sp, dp, wmtry));  /* wmtry always exits here, no looping */
     }
   
-    if (bcmp(sp, dp, lcv))
+    if (memcmp(sp, dp, lcv))
       return(retval);		/* failed, use last value */
 
     retval = lcv;
