@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.4 2002/06/29 10:54:14 lukem Exp $
+.\"	$NetBSD: hardware,v 1.5 2002/07/29 22:05:37 thorpej Exp $
 .\"
 .\" Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,5 +107,10 @@ On-board TI 16550 UART
 .Te 2 "Ethernet adapters"
 .(bullet -compact
 Intel i82542, i82543, i85244 Gigabit Ethernet
+.bullet)
+.It
+.Te 2 "i80321 I/O Processor functions"
+.(bullet -compact
+Watchdog timer
 .bullet)
 .bullet)
