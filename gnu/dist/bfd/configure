@@ -1728,7 +1728,7 @@ EOF
 EOF
 
 	;;
-  mips-*-netbsd* | mips*-*-openbsd*)
+  mips*-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.o
 	;;
   mips-dec-*)
