@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.1.2.3 2001/11/25 10:39:35 scw Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.1.2.4 2001/12/02 10:35:13 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -73,14 +73,14 @@ typedef struct {
 	int	__fp_pcr;
 	int	__fp_psr;
 	int	__fp_piaddr;
-	int	__fp_fpregs[8][3];
+	int	__fp_fpregs[8*3];
 } __fpregset_t;
 
 typedef struct {
 	__gregset_t	__gregs;	/* General Register set */
 	__fpregset_t	__fpregs;	/* Floating Point Register set */
 	union {
-		long	__mc_state[202];
+		long	__mc_state[202];	/* Only need 308 bytes... */
 #ifdef _KERNEL
 		struct {
 			/* Rest of the frame. */
