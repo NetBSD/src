@@ -3,7 +3,7 @@
  * Public domain.
  */
 
-/* #include <machine/asm.h> */
+#include <machine/asm.h>
 
 ENTRY(fpgetmask)
 	fmovel fpcr,d0
