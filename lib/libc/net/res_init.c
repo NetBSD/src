@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)res_init.c	6.15 (Berkeley) 2/24/91";*/
-static char *rcsid = "$Id: res_init.c,v 1.5 1994/04/07 07:00:19 deraadt Exp $";
+static char *rcsid = "$Id: res_init.c,v 1.6 1994/10/15 07:59:01 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -48,7 +48,7 @@ static char *rcsid = "$Id: res_init.c,v 1.5 1994/04/07 07:00:19 deraadt Exp $";
 #include <string.h>
 
 static void res_setoptions __P((char *, char *));
-static u_long net_mask __P((struct in_addr));
+static u_int32_t net_mask __P((struct in_addr));
 
 /*
  * Resolver state default settings
@@ -331,11 +331,11 @@ res_setoptions(options, source)
 	}
 }
 
-static u_long
+static u_int32_t
 net_mask(in)		/* XXX - should really use system's version of this */
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
+	register u_int32_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return (htonl(IN_CLASSA_NET));
