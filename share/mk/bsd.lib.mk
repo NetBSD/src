@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.159 1999/09/14 01:31:11 perry Exp $
+#	$NetBSD: bsd.lib.mk,v 1.160 1999/11/28 04:50:42 simonb Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if !target(__initialized__)
@@ -69,15 +69,11 @@ APICFLAGS ?=
 .elif ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
 		# mips-specific shared library flags
 
-# On mips, all libs need to be compiled with ABIcalls, not just sharedlibs.
-CPICFLAGS?=
-APICFLAGS?=
-#CPICFLAGS?= -fpic -DPIC
-#APICFLAGS?= -DPIC
+# On mips, all libs are compiled with ABIcalls, not just sharedlibs.
+MKPICLIB= no
 
-# so turn shlib PIC flags on for ${CPP}, ${CC}, and ${AS} as follows:
-AINC+=-DPIC -DABICALLS
-COPTS+=	-fPIC ${AINC}
+# so turn shlib PIC flags on for ${AS}.
+AINC+=-DABICALLS
 AFLAGS+= -fPIC
 AS+=	-KPIC
 
@@ -101,6 +97,8 @@ CAPICFLAGS?= ${CPPPICFLAGS} ${CPICFLAGS}
 APICFLAGS?= -k
 
 .endif
+
+MKPICLIB?= yes
 
 # Platform-independent linker flags for ELF shared libraries
 .if ${OBJECT_FMT} == "ELF"
@@ -238,8 +236,13 @@ POBJS+=${OBJS:.o=.po}
 .endif
 
 .if ${MKPIC} != "no"
-_LIBS+=lib${LIB}_pic.a
+.if ${MKPICLIB} == "no"
+SOLIB=lib${LIB}.a
+.else
+SOLIB=lib${LIB}_pic.a
+_LIBS+=${SOLIB}
 SOBJS+=${OBJS:.o=.so}
+.endif
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
@@ -281,21 +284,21 @@ lib${LIB}_p.a:: ${POBJS} __archivebuild
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
 
-lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: ${SOLIB} ${DPADD} \
     ${SHLIB_LDSTARTFILE} ${SHLIB_LDENDFILE}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .if defined(DESTDIR)
 	$(LD) -nostdlib -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
-	    --whole-archive lib${LIB}_pic.a \
+	    --whole-archive ${SOLIB} \
 	    -L${DESTDIR}${LIBDIR} -R${LIBDIR} \
 	    --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 .else
 	$(LD) -x -shared ${SHLIB_SHFLAGS} -o ${.TARGET} \
 	    ${SHLIB_LDSTARTFILE} \
-	    --whole-archive lib${LIB}_pic.a --no-whole-archive ${LDADD} \
+	    --whole-archive ${SOLIB} --no-whole-archive ${LDADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
 .if ${OBJECT_FMT} == "ELF"
@@ -359,6 +362,7 @@ ${DESTDIR}${LIBDIR}/lib${LIB}_p.a: lib${LIB}_p.a __archiveinstall
 .endif
 
 .if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
+.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(UPDATE)
 .PHONY: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
@@ -366,9 +370,13 @@ libinstall:: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
 .if !defined(BUILD) && !make(all) && !make(lib${LIB}_pic.a)
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: .MADE
 .endif
-
-.PRECIOUS: ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.if ${MKPICLIB} == "no"
+${DESTDIR}${LIBDIR}/lib${LIB}_pic.a:
+	rm -f ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+	ln -s lib${LIB}.a ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a
+.else
 ${DESTDIR}${LIBDIR}/lib${LIB}_pic.a: lib${LIB}_pic.a __archiveinstall
+.endif
 .endif
 
 .if ${MKPIC} != "no" && defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
