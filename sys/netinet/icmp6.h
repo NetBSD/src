@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.5 2000/02/26 08:39:18 itojun Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.6 2000/02/28 12:08:21 itojun Exp $	*/
 /*	$KAME: icmp6.h,v 1.6 2000/02/24 16:34:46 itojun Exp $	*/
 
 /*
@@ -545,24 +545,6 @@ struct icmp6stat {
 	{ "nd6_useloopback", CTLTYPE_INT }, \
 	{ 0, 0 }, \
 	{ "nodeinfo", CTLTYPE_INT }, \
-}
-
-#define ICMPV6CTL_VARS { \
-	0, \
-	0, \
-	&icmp6_rediraccept,   \
-	&icmp6_redirtimeout,  \
-	0, \
-	0, \
-	&icmp6errratelim, \
-	&nd6_prune,	\
-	0, \
-	&nd6_delay,	\
-	&nd6_umaxtries, \
-	&nd6_mmaxtries,	\
-	&nd6_useloopback, \
-	0, \
-	&icmp6_nodeinfo, \
 }
 
 #define RTF_PROBEMTU	RTF_PROTO1
