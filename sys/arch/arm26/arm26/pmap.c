@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.12 2000/12/27 18:38:50 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.13 2000/12/30 13:31:50 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -86,7 +86,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2000/12/27 18:38:50 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2000/12/30 13:31:50 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -669,7 +669,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	UVMHIST_FUNC("pmap_kenter_pa");
 
 	UVMHIST_CALLED(pmaphist);
-	pmap_enter(pmap_kernel(), va, pa, prot, PMAP_WIRED);
+	pmap_enter(pmap_kernel(), va, pa, prot, prot | PMAP_WIRED);
 }
 
 void
