@@ -4908,6 +4908,18 @@ load_if_names()
 		switch (af)
 		{
 		  case AF_INET6:
+#    ifdef __KAME__
+			/* convert into proper scoped address */
+			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
+			     IN6_IS_ADDR_SITELOCAL(&sa->sin6.sin6_addr)) &&
+			    sa->sin6.sin6_scope_id == 0) {
+				struct in6_addr *ia6p;
+				ia6p = &sa->sin6.sin6_addr;
+				sa->sin6.sin6_scope_id = ntohs(ia6p->s6_addr[3] |
+				     ((unsigned int)ia6p->s6_addr[2] << 8));
+				ia6p->s6_addr[2] = ia6p->s6_addr[3] = 0;
+			}
+#    endif
 			ia6 = sa->sin6.sin6_addr;
 			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
@@ -5091,17 +5103,19 @@ load_if_names()
 
 #   if NETINET6
 		  case AF_INET6:
-			ia6 = sa->sin6.sin6_addr;
 #    ifdef __KAME__
-			/* convert into proper scoped address - */
-			if ((IN6_IS_ADDR_LINKLOCAL(&ia6) ||
-			     IN6_IS_ADDR_SITELOCAL(&ia6)) &&
+			/* convert into proper scoped address */
+			if ((IN6_IS_ADDR_LINKLOCAL(&sa->sin6.sin6_addr) ||
+			     IN6_IS_ADDR_SITELOCAL(&sa->sin6.sin6_addr)) &&
 			    sa->sin6.sin6_scope_id == 0) {
-				sa->sin6.sin6_scope_id = ntohs(ia6.s6_addr[3] |
-				     ((unsigned int)ia6.s6_addr[2] << 8));
-				ia6.s6_addr[2] = ia6.s6_addr[3] = 0;
+				struct in6_addr *ia6p;
+				ia6p = &sa->sin6.sin6_addr;
+				sa->sin6.sin6_scope_id = ntohs(ia6p->s6_addr[3] |
+				     ((unsigned int)ia6p->s6_addr[2] << 8));
+				ia6p->s6_addr[2] = ia6p->s6_addr[3] = 0;
 			}
 #    endif
+			ia6 = sa->sin6.sin6_addr;
 			if (IN6_IS_ADDR_UNSPECIFIED(&ia6))
 			{
 				addr = anynet_ntop(&ia6, buf6, sizeof buf6);
