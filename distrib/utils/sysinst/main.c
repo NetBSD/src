@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.26.2.1 2002/06/06 09:58:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.26.2.2 2002/08/10 00:18:35 lukem Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -148,6 +148,10 @@ main(argc, argv)
 	(void)signal(SIGINT, ttysighandler);
 	(void)signal(SIGQUIT, ttysighandler);
 	(void)signal(SIGHUP, miscsighandler);
+
+	/* redraw screen */
+	touchwin(stdscr);
+	refresh();
 
 	/* Menu processing */
 	process_menu(MENU_netbsd);
