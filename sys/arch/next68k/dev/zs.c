@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.2 1998/07/04 22:18:33 jonathan Exp $	*/
+/*	$NetBSD: zs.c,v 1.3 1998/07/11 07:06:16 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -91,7 +91,11 @@ int zs_major = 12;
 /*
  * The NeXT provides a 3.686400 MHz clock to the ZS chips.
  */
+#if 1
 #define PCLK	(57600*4*16)			/* PCLK pin input clock rate */
+#else
+#define PCLK 10000000
+#endif
 
 #define	ZS_DELAY()		delay(2)
 

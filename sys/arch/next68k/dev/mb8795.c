@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.5 1998/07/05 06:49:07 jonathan Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.6 1998/07/11 07:06:16 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -741,7 +741,12 @@ mb8795_start(ifp)
     u_char txstat;
     txstat = bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_TXSTAT);
     if (!(txstat & XE_TXSTAT_READY)) {
-      panic("%s: transmitter not ready\n", sc->sc_dev.dv_xname);
+			/* @@@ I used to panic here, but then it paniced once.
+			 * Let's see if I can just reset instead. [ dbj 980706.1900 ]
+			 */
+      printf("%s: transmitter not ready\n", sc->sc_dev.dv_xname);
+			mb8795_reset(sc);
+			return;
     }
   }
 #endif
@@ -1044,7 +1049,7 @@ mb8795_rxdma_continue(arg)
 	}
 #if (defined(DIAGNOSTIC))
 	else {
-		panic("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname);
+		printf("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname);
 	}
 #endif
 
