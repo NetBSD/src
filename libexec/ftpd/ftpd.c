@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.49 1998/06/08 07:13:13 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.50 1998/06/19 22:59:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.49 1998/06/08 07:13:13 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.50 1998/06/19 22:59:01 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -1772,7 +1772,7 @@ send_file_list(whichf)
 #endif
 
 	if (strpbrk(whichf, "~{[*?") != NULL) {
-		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+		int flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 
 		memset(&gl, 0, sizeof(gl));
 		freeglob = 1;

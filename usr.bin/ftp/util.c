@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.24 1998/06/04 08:28:36 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.25 1998/06/19 23:01:21 kleink Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.24 1998/06/04 08:28:36 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.25 1998/06/19 23:01:21 kleink Exp $");
 #endif /* not lint */
 
 /*
@@ -457,7 +457,7 @@ globulize(cpp)
 	if (!doglob)
 		return (1);
 
-	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_QUOTE|GLOB_TILDE;
+	flags = GLOB_BRACE|GLOB_NOCHECK|GLOB_TILDE;
 	memset(&gl, 0, sizeof(gl));
 	if (glob(*cpp, flags, NULL, &gl) ||
 	    gl.gl_pathc == 0) {
