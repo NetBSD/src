@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:43 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2000/06/17 16:39:19 matt Exp $
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../include/heimdal
@@ -31,8 +31,8 @@ CPPFLAGS+= -I. \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
 
-make-print-version: make-print-version.o
-	${CC} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
+make-print-version: make-print-version.lo
+	${HOST_CC} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC}
 
 print_version.h: make-print-version
 	./make-print-version print_version.h
