@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 1998/03/04 08:17:20 mikel Exp $
+#	$NetBSD: Makefile,v 1.74 1998/03/27 01:29:47 cgd Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -56,9 +56,9 @@ NLS=	C.msg Pig.msg de.msg es.msg fi.msg fr.msg nl.msg no.msg sv.msg
 
 LIBKERN=	${.CURDIR}/../../sys/lib/libkern
 
-KSRCS=	bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c strncmp.c \
-	strncpy.c htonl.c htons.c ntohl.c ntohs.c md5c.c memcmp.c memset.c \
-	memchr.c index.c rindex.c
+KSRCS=	bcopy.c bcmp.c bzero.c ffs.c strcat.c strcmp.c strcpy.c strlen.c \
+	strncmp.c strncpy.c htonl.c htons.c ntohl.c ntohs.c md5c.c memcmp.c \
+	memset.c memchr.c index.c rindex.c
 .if (${MACHINE_ARCH} != "alpha")
 KSRCS+=	adddi3.c anddi3.c ashldi3.c ashrdi3.c cmpdi2.c divdi3.c iordi3.c \
 	lshldi3.c lshrdi3.c moddi3.c muldi3.c negdi2.c notdi2.c qdivrem.c \
