@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.1 2003/11/04 16:57:57 mycroft Exp $	*/
+/*	$NetBSD: rccide.c,v 1.2 2003/11/07 10:44:42 enami Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.1 2003/11/04 16:57:57 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.2 2003/11/07 10:44:42 enami Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,6 +63,11 @@ const struct pciide_product_desc pciide_serverworks_products[] =  {
 	  "ServerWorks CSB6 RAID/IDE Controller",
 	  serverworks_chip_map,
 	},
+	{ PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
+	  0,
+	  "ServerWorks CSB6 RAID/IDE Controller",
+	  serverworks_chip_map,
+	},
 	{ 0,
 	  0,
 	  NULL,
@@ -75,8 +80,11 @@ rccide_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SERVERWORKS) {
-		if (pciide_lookup_product(pa->pa_id, pciide_serverworks_products))
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SERVERWORKS &&
+	    PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
+	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_IDE) {
+		if (pciide_lookup_product(pa->pa_id,
+		    pciide_serverworks_products))
 			return (2);
 	}
 	return (0);
@@ -129,6 +137,7 @@ serverworks_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	case PCI_PRODUCT_SERVERWORKS_CSB6_IDE:
+	case PCI_PRODUCT_SERVERWORKS_CSB6_RAID:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	}
