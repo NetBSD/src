@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.c,v 1.13 1999/10/29 09:11:49 itohy Exp $	*/
+/*	$NetBSD: ktrace.c,v 1.14 2000/04/10 07:59:22 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ktrace.c,v 1.13 1999/10/29 09:11:49 itohy Exp $");
+__RCSID("$NetBSD: ktrace.c,v 1.14 2000/04/10 07:59:22 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,7 +113,7 @@ main(argc, argv)
 			break;
 #ifdef KTRUSS
 		case 'e':
-			setemul(optarg);
+			setemul(optarg, 0, 0);
 			break;
 		case 'f':
 			infile = optarg;
