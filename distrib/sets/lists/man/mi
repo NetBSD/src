@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.672.2.10.2.1 2005/02/06 07:45:12 jmc Exp $
+# $NetBSD: mi,v 1.672.2.10.2.2 2005/04/02 21:28:26 he Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -1017,6 +1017,7 @@
 ./usr/share/man/cat4/pcppi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcscp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcweasel.0			man-sys-catman		.cat
+./usr/share/man/cat4/pdcsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pdcide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/phy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/piixide.0			man-sys-catman		.cat
@@ -3095,6 +3096,7 @@
 ./usr/share/man/man4/pcppi.4			man-sys-man		.man
 ./usr/share/man/man4/pcscp.4			man-sys-man		.man
 ./usr/share/man/man4/pcweasel.4			man-sys-man		.man
+./usr/share/man/man4/pdcsata.4			man-sys-man		.man
 ./usr/share/man/man4/pdcide.4			man-sys-man		.man
 ./usr/share/man/man4/phy.4			man-sys-man		.man
 ./usr/share/man/man4/piixide.4			man-sys-man		.man
