@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.56 2000/01/21 12:28:22 tsutsui Exp $
+#	$NetBSD: MAKEDEV,v 1.57 2000/01/21 16:46:04 mycroft Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -259,6 +259,7 @@ ccd*|cd*|fd*|raid*|sd*|vnd*|wd*)
 	ccd*)	name=ccd;	unit=${i#ccd};	blk=7; chr=27;;
 	cd*)	name=cd;	unit=${i#cd};	blk=3; chr=13;;
 	fd*)	name=fd;	unit=${i#fd};	blk=0; chr=34;;
+	raid*)	name=raid;	unit=${i#raid};	blk=16; chr=43;;
 	sd*)	name=sd;	unit=${i#sd};	blk=8; chr=8;;
 	vnd*)	name=vnd;	unit=${i#vnd};	blk=9; chr=9;;
 	wd*)	name=wd;	unit=${i#wd};	blk=4; chr=36;;
