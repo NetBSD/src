@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgereg.h,v 1.14 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: if_bgereg.h,v 1.15 2003/12/08 17:09:39 pooka Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -235,6 +235,7 @@
 #define BGE_CHIPID_BCM5703_A0		0x10000000
 #define BGE_CHIPID_BCM5703_A1		0x10010000
 #define BGE_CHIPID_BCM5703_A2		0x10020000
+#define BGE_CHIPID_BCM5703_A3		0x11000000
 #define BGE_CHIPID_BCM5704_A0		0x20000000
 #define BGE_CHIPID_BCM5704_A1		0x20010000
 #define BGE_CHIPID_BCM5704_A2		0x20020000
