@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.26 1997/01/24 17:26:28 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.27 1997/03/01 19:33:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$NetBSD: expand.c,v 1.26 1997/01/24 17:26:28 christos Exp $";
+static char rcsid[] = "$NetBSD: expand.c,v 1.27 1997/03/01 19:33:29 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -727,7 +727,7 @@ varisset(name, nulok)
 	} else if (is_digit(*name)) {
 		int num = atoi(name);
 
-	    	for (ap = shellparam.p; --num >= 0; ap++)
+	    	for (ap = shellparam.p; --num > 0; ap++)
 			if (*ap == NULL)
 				return 0;
 
