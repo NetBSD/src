@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.16 2001/02/04 17:34:11 briggs Exp $
+#	$NetBSD: files.powerpc,v 1.17 2001/02/24 04:30:42 matt Exp $
 defopt	altivec
 defopt	openpic
 
@@ -16,6 +16,7 @@ file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/mem.c
 file	arch/powerpc/powerpc/openpic.c			openpic
 file	arch/powerpc/powerpc/pmap.c
+file	arch/powerpc/powerpc/powerpc_machdep.c
 file	arch/powerpc/powerpc/process_machdep.c
 file	arch/powerpc/powerpc/sig_machdep.c
 file	arch/powerpc/powerpc/sigcode.S
