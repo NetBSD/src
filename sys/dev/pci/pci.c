@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.43 1999/11/04 01:03:34 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.44 1999/11/04 19:03:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -184,14 +184,15 @@ pci_probe_bus(self)
 			pa.pa_id = id;
 			pa.pa_class = class;
 
-			/* set up memory and I/O enable flags as appropriate */
-			pa.pa_flags = 0;
-			if ((sc->sc_flags & PCI_FLAGS_IO_ENABLED) &&
-			    (csr & PCI_COMMAND_IO_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_IO_ENABLED;
-			if ((sc->sc_flags & PCI_FLAGS_MEM_ENABLED) &&
-			    (csr & PCI_COMMAND_MEM_ENABLE))
-				pa.pa_flags |= PCI_FLAGS_MEM_ENABLED;
+			/*
+			 * Set up memory, I/O enable, and PCI command flags
+			 * as appropriate.
+			 */
+			pa.pa_flags = sc->sc_flags;
+			if ((csr & PCI_COMMAND_IO_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_IO_ENABLED;
+			if ((csr & PCI_COMMAND_MEM_ENABLE) == 0)
+				pa.pa_flags &= ~PCI_FLAGS_MEM_ENABLED;
 
 			if (bus == 0) {
 				pa.pa_intrswiz = 0;
