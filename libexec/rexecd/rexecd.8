@@ -1,4 +1,4 @@
-.\"	$NetBSD: rexecd.8,v 1.3 1997/10/07 10:11:30 mrg Exp $
+.\"	$NetBSD: rexecd.8,v 1.4 1997/10/20 02:42:46 enami Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,16 +40,16 @@
 .Nm rexecd
 .Nd remote execution server
 .Sh SYNOPSIS
-.Nm rexecd
+.Nm
 .Sh DESCRIPTION
-.Nm Rexecd
+.Nm
 is the server for the 
 .Xr rexec 3
 routine.  The server provides remote execution facilities
 with authentication based on user names and
 passwords.
 .Pp
-.Nm Rexecd
+.Nm
 listens for service requests at the port indicated in
 the ``exec'' service specification; see
 .Xr services 5 .
@@ -83,7 +83,7 @@ shell is retrieved on the initial socket.  The length of
 the command is limited by the upper bound on the size of
 the system's argument list.  
 .It
-.Nm Rexecd
+.Nm
 then validates the user as is done at login time
 and, if the authentication was successful, changes
 to the user's home directory, and establishes the user
@@ -96,7 +96,7 @@ and the command line is passed to the normal login
 shell of the user.  The
 shell inherits the network connections established
 by
-.Nm rexecd .
+.Nm "" .
 .El
 .Sh DIAGNOSTICS
 Except for the last one listed below,
