@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2000/10/05 02:13:14 cgd Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2001/01/11 18:30:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -148,7 +148,6 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)	MIPS1_CLKF_BASEPRI(framep)
 #endif
 
-
 #if defined(MIPS3) && defined(MIPS1)
 #define CLKF_USERMODE(framep) \
     ((CPUISMIPS3) ? MIPS3_CLKF_USERMODE(framep):  MIPS1_CLKF_USERMODE(framep))
@@ -156,6 +155,11 @@ struct clockframe {
     ((CPUISMIPS3) ? MIPS3_CLKF_BASEPRI(framep):  MIPS1_CLKF_BASEPRI(framep))
 #endif
 
+/*
+ * This is used during profiling to integrate system time.  It can safely
+ * assume that the process is resident.
+ */
+#define	PROC_PC(p)		((p)->p_md.md_regs->f_regs[37])	/* XXX PC */
 
 /*
  * Preempt the current process if in interrupt from user mode,

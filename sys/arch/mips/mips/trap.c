@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.152 2000/12/14 21:24:53 jeffs Exp $	*/
+/*	$NetBSD: trap.c,v 1.153 2001/01/11 18:30:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2000/12/14 21:24:53 jeffs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.153 2001/01/11 18:30:17 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -144,24 +144,8 @@ userret(struct proc *p, unsigned pc, u_quad_t sticks)
 	/* take pending signals */
 	while ((sig = CURSIG(p)) != 0)
 		postsig(sig);
-	p->p_priority = p->p_usrpri;
-	if (want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt(NULL);
-		while ((sig = CURSIG(p)) != 0)
-			postsig(sig);
-	}
-	/*
-	 * If profiling, charge system time to the trapped pc.
-	 */
-	if (p->p_flag & P_PROFIL) {
-		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - sticks) * psratio);
-	}
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority;
+	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = p->p_usrpri;
 }
 
 #define DELAYBRANCH(x) ((int)(x)<0)
@@ -721,10 +705,19 @@ ast(pc)
 
 	uvmexp.softs++;
 	astpending = 0;
+
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
+
+	if (want_resched) {
+		/*
+		 * We are being preempted.
+		 */
+		preempt(NULL);
+	}
+
 	userret(p, pc, p->p_sticks);
 }
 
