@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.16 2002/09/26 13:05:55 itojun Exp $
+#	$NetBSD: Makefile,v 1.17 2002/09/27 07:08:29 itojun Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
 # RCSid:
-#	$Id: Makefile,v 1.16 2002/09/26 13:05:55 itojun Exp $
+#	$Id: Makefile,v 1.17 2002/09/27 07:08:29 itojun Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -38,14 +38,8 @@ SRCS+=	verify.c asn1pars.c req.c dgst.c dh.c dhparam.c enc.c passwd.c gendh.c er
 
 CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC}
 
-# with normal OpenSSL, NO_{RC5,IDEA} changes ABI due to change in struct/union.
-# we nuked all of them in our header files and it is now safe.
-.if ${MKCRYPTO_RC5} == "no"
-CPPFLAGS+= -DNO_RC5
-.else
-LDADD+=	-lcrypto_rc5
-DPADD+=	${LIBCRYPTO_RC5}
-.endif
+# with normal OpenSSL, NO_{IDEA,MDC2,RC5} changes ABI due to change in
+# struct/union.  we nuked all of them in our header files and it is now safe.
 .if ${MKCRYPTO_IDEA} == "no"
 CPPFLAGS+= -DNO_IDEA
 .else
@@ -57,6 +51,12 @@ CPPFLAGS+= -DNO_MDC2
 .else
 LDADD+=	-lcrypto_mdc2
 DPADD+=	${LIBCRYPTO_MDC2}
+.endif
+.if ${MKCRYPTO_RC5} == "no"
+CPPFLAGS+= -DNO_RC5
+.else
+LDADD+=	-lcrypto_rc5
+DPADD+=	${LIBCRYPTO_RC5}
 .endif
 
 # this must be _after_ the libcrypto_rc5/libcrypto_idea entries.
