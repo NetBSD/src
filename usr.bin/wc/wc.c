@@ -1,8 +1,8 @@
-/*	$NetBSD: wc.c,v 1.10 1997/01/09 20:23:20 tls Exp $	*/
+/*	$NetBSD: wc.c,v 1.11 1997/10/18 16:48:39 mrg Exp $	*/
 
 /*
- * Copyright (c) 1980, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1987, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,19 +34,29 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1980, 1987, 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)wc.c	5.7 (Berkeley) 3/2/91";*/
-static char rcsid[] = "$NetBSD: wc.c,v 1.10 1997/01/09 20:23:20 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)wc.c	8.2 (Berkeley) 5/2/95";
+#else
+static char rcsid[] = "$NetBSD: wc.c,v 1.11 1997/10/18 16:48:39 mrg Exp $";
+#endif
 #endif /* not lint */
 
 /* wc line, word and char count */
 
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <fcntl.h>
+#include <unistd.h>
+#include <errno.h>
 #include <stdio.h>
+
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
@@ -58,18 +68,19 @@ static char rcsid[] = "$NetBSD: wc.c,v 1.10 1997/01/09 20:23:20 tls Exp $";
 #include <unistd.h>
 #include <err.h>
 
-static void	print_counts();
-static void	cnt();
-static long	tlinect, twordct, tcharct;
+static ulong	tlinect, twordct, tcharct;
 static int	doline, doword, dochar;
 static int 	rval = 0;
+
+static void	cnt __P((char *));
+static void	print_counts __P((long, long, long, char *));
+static void	usage __P((void));
 
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char *argv[];
 {
-	extern int optind;
 	register int ch;
 
 	setlocale(LC_ALL, "");
@@ -88,23 +99,17 @@ main(argc, argv)
 			break;
 		case '?':
 		default:
-			fprintf(stderr, "usage: wc [-c | -m] [-lw] [file ...]\n");
-			exit(1);
+			usage();
 		}
 	argv += optind;
 	argc -= optind;
 
-	/*
-	 * wc is unusual in that its flags are on by default, so,
-	 * if you don't get any arguments, you have to turn them
-	 * all on.
-	 */
-	if (!doline && !doword && !dochar) {
+	/* Wc's flags are on by default. */
+	if (doline + doword + dochar == 0)
 		doline = doword = dochar = 1;
-	}
 
 	if (!*argv) {
-		cnt((char *)NULL);
+		cnt(NULL);
 	} else {
 		int dototal = (argc > 1);
 
@@ -113,13 +118,12 @@ main(argc, argv)
 		} while(*++argv);
 
 		if (dototal) {
-			print_counts (tlinect, twordct, tcharct, "total"); 
+			print_counts(tlinect, twordct, tcharct, "total"); 
 		}
 	}
 
 	exit(rval);
 }
-
 
 static void
 cnt(file)
@@ -127,16 +131,16 @@ cnt(file)
 {
 	register u_char *C;
 	register short gotsp;
-	register int len;
-	register long linect, wordct, charct;
-	struct stat sbuf;
+	register int ch, len;
+	register u_long linect, wordct, charct;
+	struct stat sb;
 	int fd;
 	u_char buf[MAXBSIZE];
 
 	linect = wordct = charct = 0;
 	if (file) {
 		if ((fd = open(file, O_RDONLY, 0)) < 0) {
-			warn ("%s", file);
+			warn("%s", file);
 			rval = 1;
 			return;
 		}
@@ -151,7 +155,7 @@ cnt(file)
 		 * the word count requires some logic.
 		 */
 		if (doline) {
-			while((len = read(fd, buf, MAXBSIZE)) > 0) {
+			while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 				charct += len;
 				for (C = buf; len--; ++C)
 					if (*C == '\n')
@@ -173,16 +177,16 @@ cnt(file)
 		else if (dochar) {
 			int ifmt;
 
-			if (fstat(fd, &sbuf)) {
-				warn ("%s", file);
+			if (fstat(fd, &sb)) {
+				warn("%s", file);
 				rval = 1;
 			} else {
-				ifmt = sbuf.st_mode & S_IFMT;
+				ifmt = sb.st_mode & S_IFMT;
 				if (ifmt == S_IFREG || ifmt == S_IFLNK
 					|| ifmt == S_IFDIR) {
-					charct = sbuf.st_size;
+					charct = sb.st_size;
 				} else {
-					while((len = read(fd, buf, MAXBSIZE)) > 0)
+					while ((len = read(fd, buf, MAXBSIZE)) > 0)
 						charct += len;
 					if (len == -1) {
 						warn ("%s", file);
@@ -199,7 +203,7 @@ cnt(file)
 		while ((len = read(fd, buf, MAXBSIZE)) > 0) {
 			charct += len;
 			for (C = buf; len--; ++C) {
-				if (isspace (*C)) {
+				if (isspace(*C)) {
 					gotsp = 1;
 					if (*C == '\n') {
 						++linect;
@@ -221,12 +225,12 @@ cnt(file)
 			}
 		}
 		if (len == -1) {
-			warn ("%s", file);
+			warn("%s", file);
 			rval = 1;
 		}
 	}
 
-	print_counts (linect, wordct, charct, file ? file : "");
+	print_counts(linect, wordct, charct, file ? file : "");
 
 	/* don't bother checkint doline, doword, or dochar --- speeds
            up the common case */
@@ -240,9 +244,8 @@ cnt(file)
 	}
 }
 
-
-void
-print_counts (lines, words, chars, name)
+static void
+print_counts(lines, words, chars, name)
 	long lines;
 	long words;
 	long chars;
@@ -256,5 +259,12 @@ print_counts (lines, words, chars, name)
 	if (dochar)
 		printf(" %7ld", chars);
 
-	printf (" %s\n", name);
+	printf(" %s\n", name);
+}
+
+static void
+usage()
+{
+	(void)fprintf(stderr, "usage: wc [-clw] [files]\n");
+	exit(1);
 }
