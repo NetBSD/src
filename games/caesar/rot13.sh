@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: rot13.sh,v 1.4 2000/04/24 15:30:34 perry Exp $
+#	$NetBSD: rot13.sh,v 1.5 2000/04/24 15:37:32 perry Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -35,4 +35,4 @@
 #	@(#)rot13.sh	8.1 (Berkeley) 5/31/93
 #
 
-/usr/games/caesar 13 $*
+/usr/games/caesar 13 "$@"
