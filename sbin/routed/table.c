@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.16 2002/11/30 04:04:24 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.17 2002/12/06 02:18:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.16 2002/11/30 04:04:24 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.17 2002/12/06 02:18:38 thorpej Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1631,7 +1631,7 @@ rtinit(void)
 	/* Initialize the radix trees */
 	max_keylen = sizeof(struct sockaddr_in);
 	rn_init();
-	rn_inithead((void**)&rhead, 32);
+	rn_inithead((void*)&rhead, 32);
 
 	/* mark all of the slots in the table free */
 	ag_avail = ag_slots;
