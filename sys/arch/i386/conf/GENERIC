@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.554 2003/04/10 22:06:57 christos Exp $
+# $NetBSD: GENERIC,v 1.555 2003/04/16 23:36:22 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.554 $"
+#ident 		"GENERIC-$Revision: 1.555 $"
 
 maxusers	32		# estimated number of users
 
@@ -766,7 +766,7 @@ tr*	at mca? slot ?			# IBM Token Ring adapter
 le*	at mca? slot ?			# SKNET Personal/MC2+
 
 # MII/PHY support
-acphy*	at mii? phy ?			# DAltima AC101 and AMD Am79c874 PHYs
+acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 amhphy*	at mii? phy ?			# AMD 79c901 Ethernet PHYs
 bmtphy*	at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 brgphy*	at mii? phy ?			# Broadcom BCM5400-family PHYs
