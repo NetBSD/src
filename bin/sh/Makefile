@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2003/10/21 10:01:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.73 2003/11/16 14:14:18 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -40,7 +40,7 @@ CPPFLAGS+=-DSMALL
 	${NETBSDSRCDIR}/usr.bin/printf \
 	${NETBSDSRCDIR}/bin/kill
 
-CLEANFILES+= mkinit mknodes mksyntax
+CLEANFILES+= mkinit mkinit.lo mknodes mknodes.lo mksyntax mksyntax.lo
 CLEANFILES+= ${GENSRCS} ${GENHDRS} y.tab.h
 CLEANFILES+= trace
 
@@ -79,13 +79,13 @@ COMPATOBJDIR!=	cd ${NETBSDSRCDIR}/tools/compat && ${PRINTOBJDIR}
 NBCOMPATLIB=	-L${COMPATOBJDIR} -lnbcompat
 .endif
 
-mkinit: mkinit.c
+mkinit: mkinit.lo
 	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o mkinit ${.IMPSRC} ${NBCOMPATLIB}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
 
-mknodes: mknodes.c
+mknodes: mknodes.lo
 	${_MKTARGET_LINK}
-	${HOST_LINK.c} -o mknodes ${.IMPSRC} ${NBCOMPATLIB}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
 
 .if	(${MACHINE_ARCH} == "powerpc") || \
 	(${MACHINE_CPU} == "arm")
@@ -94,8 +94,8 @@ TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char"
 TARGET_CHARFLAG?= -DTARGET_CHAR="signed char"
 .endif
 
-mksyntax: mksyntax.c
+mksyntax: mksyntax.lo
 	${_MKTARGET_LINK}
-	${HOST_LINK.c} ${TARGET_CHARFLAG} -o mksyntax ${.IMPSRC} ${NBCOMPATLIB}
+	${HOST_LINK.c} ${TARGET_CHARFLAG} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB}
 
 .include <bsd.prog.mk>

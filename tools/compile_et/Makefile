@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/12/08 20:19:58 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2003/11/16 14:14:18 lukem Exp $
 
 HOSTPROGNAME=	${_TOOL_PREFIX}compile_et
 HOST_SRCDIR=	usr.bin/compile_et
@@ -9,9 +9,14 @@ HOST_CPPFLAGS=	-I${DIST}/heimdal/lib/roken
 .PATH: ${.CURDIR}/../../lib/libc/string
 HOST_SRCS+=	strlcpy.c strlcat.c
 
+make-print-version.lo: ${.CURDIR}/../../include/heimdal/version.h
+make-print-version: make-print-version.lo
+	${_MKTARGET_LINK}
+	${HOST_LINK.c} -o ${.TARGET} ${.ALLSRC}
+
 DPSRCS=	print_version.h
-print_version.h: make-print-version.c ${.CURDIR}/../../include/heimdal/version.h
-	${HOST_LINK.c} -o make-print-version ${>:M*.c}
+print_version.h: make-print-version
+	${_MKTARGET_CREATE}
 	./make-print-version print_version.h
 
 .include "${.CURDIR}/../Makefile.host"
