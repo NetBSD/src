@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $	*/
+/*	$NetBSD: osiop.c,v 1.21 2005/02/17 11:30:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.20 2005/01/02 12:22:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop.c,v 1.21 2005/02/17 11:30:58 tsutsui Exp $");
 
 /* #define OSIOP_DEBUG */
 
@@ -158,6 +158,7 @@ int osiop_reset_delay = 250;	/* delay after reset, in milliseconds */
 #define DEBUG_CMD	0x20
 #define DEBUG_ALL	0xff
 int osiop_debug = 0; /*DEBUG_ALL;*/
+
 int osiopsync_debug = 0;
 int osiopdma_hits = 1;
 int osiopstarts = 0;
@@ -851,6 +852,8 @@ osiop_reset(struct osiop_softc *sc)
 	    | OSIOP_CTEST0_BTD | OSIOP_CTEST0_EAN);
 	osiop_write_1(sc, OSIOP_CTEST7,
 	    osiop_read_1(sc, OSIOP_CTEST7) | sc->sc_ctest7);
+	osiop_write_1(sc, OSIOP_CTEST4,
+	    osiop_read_1(sc, OSIOP_CTEST4) | sc->sc_ctest4);
 
 	/* will need to re-negotiate sync xfers */
 	for (i = 0; i < OSIOP_NTGT; i++) {

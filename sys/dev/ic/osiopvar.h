@@ -1,4 +1,4 @@
-/*	$NetBSD: osiopvar.h,v 1.6 2005/01/02 12:22:19 tsutsui Exp $	*/
+/*	$NetBSD: osiopvar.h,v 1.7 2005/02/17 11:30:58 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -233,6 +233,7 @@ struct osiop_softc {
 	uint8_t sc_sstat1;
 	uint8_t sc_istat;
 	uint8_t sc_dcntl;
+	uint8_t sc_ctest4;
 	uint8_t sc_ctest7;
 	uint8_t sc_sien;
 	uint8_t sc_dien;
