@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.2 1997/06/30 20:13:44 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -450,12 +450,9 @@ ext2fs_remove(v)
 	register struct vnode *dvp = ap->a_dvp;
 	int error;
 
-	if (vp->v_type == VDIR) {
-		error = EISDIR;
-		goto out;
-	}
 	ip = VTOI(vp);
-	if ((ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
+	if (vp->v_type == VDIR ||
+		(ip->i_e2fs_flags & (EXT2_IMMUTABLE | EXT2_APPEND)) ||
 		(VTOI(dvp)->i_e2fs_flags & EXT2_APPEND)) {
 		error = EPERM;
 		goto out;
