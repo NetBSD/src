@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isa.c,v 1.6 1997/10/29 22:48:43 thorpej Exp $	*/
+/*	$NetBSD: i82365_isa.c,v 1.7 1997/11/05 21:41:36 thorpej Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -321,8 +321,22 @@ pcic_isa_attach(parent, self, aux)
 		sc->iobase = 0x300;
 		sc->iosize = 0x0ff;
 	} else {
+#if 0
+		/*
+		 * This is what we'd like to use, but...
+		 */
 		sc->iobase = 0x400;
 		sc->iosize = 0xbff;
+#else
+		/*
+		 * ...the above bus width probe doesn't always work.
+		 * So, experimentation has shown the following range
+		 * to not lose on systems that 0x300-0x3ff loses on
+		 * (e.g. the NEC Versa 6030X).
+		 */
+		sc->iobase = 0x330;
+		sc->iosize = 0x0cf;
+#endif
 	}
 
 	DPRINTF(("%s: bus_space_alloc range 0x%04lx-0x%04lx (probed)\n",
