@@ -1,9 +1,9 @@
-/*	$NetBSD: vrpiu.c,v 1.13 2001/06/14 08:43:41 sato Exp $	*/
+/*	$NetBSD: vrpiu.c,v 1.14 2001/07/19 13:11:27 sato Exp $	*/
 
 /*
- * Copyright (c) 1999 Shin Takemura All rights reserved.
- * Copyright (c) 2000 SATO Kazumi, All rights reserved.
- * Copyright (c) 1999,2000 PocketBSD Project. All rights reserved.
+ * Copyright (c) 1999-2001 Shin Takemura All rights reserved.
+ * Copyright (c) 2000-2001 SATO Kazumi, All rights reserved.
+ * Copyright (c) 1999-2001 PocketBSD Project. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,9 @@
 
 #include <dev/hpc/tpcalibvar.h>
 
+#include <dev/hpc/hpcbatteryvar.h>
+#include <dev/hpc/hpcbatterytable.h>
+
 #include <hpcmips/hpcmips/machdep.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/cmureg.h>
@@ -67,6 +70,10 @@ int	vrpiu_debug = 0;
 #define	DPRINTF(arg)
 #define	VPRINTF(arg) if (bootverbose) printf arg;
 #endif
+
+#ifndef VRPIU_NO_ADHOC_BATTERY_EVENT
+#define VRPIU_ADHOC_BATTERY_EVENT	/* currently... */
+#endif /* VRPIU_NO_ADHOC_BATTERY_EVENT */
 
 #ifndef VRPIU_AD_POLL_INTERVAL
 #define VRPIU_AD_POLL_INTERVAL	60	/* interval is 60 sec */
@@ -109,6 +116,7 @@ int		vrpiu_ad_enable __P((void *));
 void		vrpiu_ad_disable __P((void *));
 static void	vrpiu_start_powerstate __P((void *));
 static void	vrpiu_calc_powerstate __P((struct vrpiu_softc *));
+static void	vrpiu_send_battery_event __P((struct vrpiu_softc *));
 static void	vrpiu_power __P((int, void *));
 static u_int	scan_interval __P((u_int data));
 
@@ -172,6 +180,7 @@ vrpiuattach(parent, self, aux)
 
 	bus_space_tag_t iot = va->va_iot;
 	bus_space_handle_t ioh;
+	struct platid_data *p;
 
 	if (bus_space_map(iot, va->va_addr, 1, 0, &ioh)) {
 	    printf(": can't map bus space\n");
@@ -183,6 +192,10 @@ vrpiuattach(parent, self, aux)
 	sc->sc_vrip = va->va_vc;
 
 	sc->sc_interval = scan_interval(WSMOUSE_RES_DEFAULT);
+	if ((p = platid_search(&platid, hpcbattery_parameters)) == NULL)
+		sc->sc_battery_spec = NULL;
+	else
+		sc->sc_battery_spec  = p->data;
 
 	/*
 	 * disable device until vrpiu_enable called
@@ -211,7 +224,6 @@ vrpiuattach(parent, self, aux)
 		      { 115, 966,   0, 599 },
 		      { 912,  80, 799,   0 },
 		      { 912, 966, 799, 599 } } } },
-
 		{ &platid_mask_MACH_NEC_MCR_700A,
 		  { 0, 0, 799, 599,
 		    4,
@@ -219,7 +231,6 @@ vrpiuattach(parent, self, aux)
 		      { 115, 966,   0, 599 },
 		      { 912,  80, 799,   0 },
 		      { 912, 966, 799, 599 } } } },
-
 		{ &platid_mask_MACH_NEC_MCR_730,
 		  { 0, 0, 799, 599,
 		    4,
@@ -227,7 +238,6 @@ vrpiuattach(parent, self, aux)
 		      { 115, 966,   0, 599 },
 		      { 912,  80, 799,   0 },
 		      { 912, 966, 799, 599 } } } },
-
 		{ NULL,		/* samples got on my MC-R500 */
 		  { 0, 0, 639, 239,
 		    5,
@@ -768,11 +778,7 @@ vrpiu_calc_powerstate(sc)
 		sc->sc_battery.value[1],
 		sc->sc_battery.value[2]));
 	sc->sc_battery.nextpoll = hz*vrpiu_ad_poll_interval;
-#ifdef notyet
-	config_hook_call(CONFIG_HOOK_SET,
-			 CONFIG_HOOK_BATTERYVAL,
-			 (void *)&sc->sc_battery);
-#endif /* notyet */
+	vrpiu_send_battery_event(sc);
 	/*
 	 * restart next A/D polling if change polling timming.
 	 */
@@ -800,6 +806,74 @@ vrpiu_power(why, arg)
 			  vrpiu_start_powerstate, sc);
 	    break;
 	}
+}
+
+static void
+vrpiu_send_battery_event(sc)
+	struct vrpiu_softc *sc;
+{
+#ifdef VRPIU_ADHOC_BATTERY_EVENT
+	static int batteryhigh = 0;
+	static int batterylow = 0;
+	static int critical = 0;
+
+	if (sc->sc_battery_spec == NULL 
+		|| sc->sc_battery_spec->main_port == -1)
+		return;
+
+	if (sc->sc_battery.value[sc->sc_battery_spec->main_port] 
+		<= sc->sc_battery_spec->dc_critical) {
+			batteryhigh = 0;
+			config_hook_call(CONFIG_HOOK_PMEVENT,
+				CONFIG_HOOK_PMEVENT_BATTERY,
+				(void *)CONFIG_HOOK_BATT_CRITICAL);
+			batterylow = 3;
+			if (critical) {
+				config_hook_call(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_SUSPENDREQ,
+					(void *)0);
+				critical = 0;
+				batterylow = 0;
+			}
+			critical++;
+	} else if (sc->sc_battery.value[sc->sc_battery_spec->main_port] 
+		<= sc->sc_battery_spec->dc_20p) {
+			batteryhigh = 0;
+			if (batterylow == 1)
+				config_hook_call(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_BATTERY,
+					(void *)CONFIG_HOOK_BATT_20P);
+			config_hook_call(CONFIG_HOOK_PMEVENT,
+				CONFIG_HOOK_PMEVENT_BATTERY,
+				(void *)CONFIG_HOOK_BATT_LOW);
+			batterylow = 2;
+	} else if (sc->sc_battery.value[sc->sc_battery_spec->main_port] 
+		<= sc->sc_battery_spec->dc_50p) {
+			batteryhigh = 0;
+			if (batterylow == 0) {
+				batterylow = 1;
+				config_hook_call(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_BATTERY,
+					(void *)CONFIG_HOOK_BATT_50P);
+			}
+	} else if (sc->sc_battery.value[sc->sc_battery_spec->main_port] 
+		>= sc->sc_battery_spec->ac_80p) {
+			batterylow = 0;
+			if (batteryhigh == 0) {
+				batteryhigh = 1;
+				config_hook_call(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_BATTERY,
+					(void *)CONFIG_HOOK_BATT_80P);
+				config_hook_call(CONFIG_HOOK_PMEVENT,
+					CONFIG_HOOK_PMEVENT_BATTERY,
+					(void *)CONFIG_HOOK_BATT_HIGH);
+			}
+	} 
+#else /* VRPIU_ADHOC_BATTERY_EVENT */
+	config_hook_call(CONFIG_HOOK_SET,
+			 CONFIG_HOOK_BATTERYVAL,
+			 (void *)&sc->sc_battery);
+#endif /* VRPIU_ADHOC_BATTERY_EVENT */
 }
 
 #ifdef DEBUG
