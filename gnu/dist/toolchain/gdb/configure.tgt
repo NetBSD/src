@@ -276,6 +276,8 @@ sparc64-*-*)		gdb_target=sp64 ;;
 tic80-*-*)		gdb_target=tic80
 			configdirs="${configdirs} gdbserver" ;;
 
+vax-*-netbsd*)		gdb_target=nbsd ;;
+
 vax-*-*)		gdb_target=vax ;;
 
 fr30-*-*)		gdb_target=fr30
