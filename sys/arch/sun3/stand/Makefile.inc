@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 1995/11/17 23:23:44 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.7 1997/02/05 17:31:46 gwr Exp $
 
 .if defined(SA_PROG)
 
@@ -7,7 +7,7 @@
 S=	${.CURDIR}/../../../..
 
 RELOC?= 240000
-DEFS?= -DSTANDALONE
+DEFS?= -Dsun3 -DSTANDALONE
 INCL?= -I${.CURDIR} -I${.CURDIR}/../libsa -I${S}/lib/libsa -I${S}
 COPTS?= -msoft-float ${DEFS} ${DBG} ${INCL}
 
