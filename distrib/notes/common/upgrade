@@ -1,6 +1,6 @@
-.\"	$NetBSD: upgrade,v 1.20.2.2 2004/08/25 21:50:41 he Exp $
+.\"	$NetBSD: upgrade,v 1.20.2.3 2004/08/30 08:14:40 tron Exp $
 .\"
-.\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
