@@ -1,4 +1,4 @@
-/*	$NetBSD: chat.c,v 1.26 2002/12/06 15:17:18 thorpej Exp $	*/
+/*	$NetBSD: chat.c,v 1.27 2003/05/16 18:15:34 itojun Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -93,7 +93,7 @@
 #if 0
 static const char rcsid[] = "Id: chat.c,v 1.26 1999/12/23 01:39:54 paulus Exp ";
 #else
-__RCSID("$NetBSD: chat.c,v 1.26 2002/12/06 15:17:18 thorpej Exp $");
+__RCSID("$NetBSD: chat.c,v 1.27 2003/05/16 18:15:34 itojun Exp $");
 #endif
 #endif
 
@@ -988,11 +988,11 @@ int c;
     c &= 0x7F;
 
     if (c < 32)
-	sprintf(string, "%s^%c", meta, (int)c + '@');
+	snprintf(string, sizeof(string), "%s^%c", meta, (int)c + '@');
     else if (c == 127)
-	sprintf(string, "%s^?", meta);
+	snprintf(string, sizeof(string), "%s^?", meta);
     else
-	sprintf(string, "%s%c", meta, c);
+	snprintf(string, sizeof(string), "%s%c", meta, c);
 
     return (string);
 }
@@ -1410,7 +1410,8 @@ register char *string;
 		    struct tm* tm_now = localtime (&time_now);
 
 		    strftime (report_buffer, 20, "%b %d %H:%M:%S ", tm_now);
-		    strcat (report_buffer, report_string[n]);
+		    strlcat(report_buffer, report_string[n],
+		      sizeof(report_buffer));
 
 		    report_string[n] = (char *) NULL;
 		    report_gathering = 1;
@@ -1456,7 +1457,8 @@ register char *string;
 		alarm(0);
 		alarmed = 0;
 		exit_code = n + 4;
-		strcpy(fail_reason = fail_buffer, abort_string[n]);
+		strlcpy(fail_buffer, abort_string[n], sizeof(fail_buffer));
+		fail_reason = fail_buffer;
 		return (0);
 	    }
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.33 2002/09/13 14:32:12 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.34 2003/05/16 18:15:34 itojun Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -78,7 +78,7 @@
 #if 0
 #define RCSID	"Id: auth.c,v 1.69 2001/03/12 22:50:01 paulus Exp "
 #else
-__RCSID("$NetBSD: auth.c,v 1.33 2002/09/13 14:32:12 itojun Exp $");
+__RCSID("$NetBSD: auth.c,v 1.34 2003/05/16 18:15:34 itojun Exp $");
 #endif
 #endif
 
@@ -1878,7 +1878,7 @@ scan_authfile(f, client, server, secret, addrs, opts, filename)
 	    if (ap == NULL)
 		novm("authorized addresses");
 	    ap->word = (char *) (ap + 1);
-	    strcpy(ap->word, word);
+	    strlcpy(ap->word, word, strlen(word) + 1);
 	    *app = ap;
 	    app = &ap->next;
 	}

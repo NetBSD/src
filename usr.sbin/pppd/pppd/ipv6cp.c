@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.10 2002/05/29 19:06:32 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.11 2003/05/16 18:15:34 itojun Exp $	*/
 
 /*
     ipv6cp.c - PPP IPV6 Control Protocol.
@@ -100,7 +100,7 @@
 #if 0
 #define RCSID	"Id: ipv6cp.c,v 1.15 2001/03/22 00:42:33 paulus Exp "
 #else
-__RCSID("$NetBSD: ipv6cp.c,v 1.10 2002/05/29 19:06:32 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.11 2003/05/16 18:15:34 itojun Exp $");
 #endif
 #endif
 
@@ -371,7 +371,7 @@ llv6_ntoa(ifaceid)
 {
     static char b[64];
 
-    sprintf(b, "fe80::%s", eui64_ntoa(ifaceid));
+    snprintf(b, sizeof(b), "fe80::%s", eui64_ntoa(ifaceid));
     return b;
 }
 
@@ -1373,9 +1373,10 @@ ipv6cp_script(script)
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
 
-    sprintf(strspeed, "%d", baud_rate);
-    strcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid));
-    strcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid));
+    snprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
+    strlcpy(strlocal, llv6_ntoa(ipv6cp_gotoptions[0].ourid), sizeof(strlocal));
+    strlcpy(strremote, llv6_ntoa(ipv6cp_hisoptions[0].hisid),
+      sizeof(strremote));
 
     argv[0] = script;
     argv[1] = ifname;

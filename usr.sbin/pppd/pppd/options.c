@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.38 2002/07/06 18:21:43 itojun Exp $	*/
+/*	$NetBSD: options.c,v 1.39 2003/05/16 18:15:34 itojun Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -47,7 +47,7 @@
 #if 0
 #define RCSID	"Id: options.c,v 1.80 2001/03/12 22:56:12 paulus Exp "
 #else
-__RCSID("$NetBSD: options.c,v 1.38 2002/07/06 18:21:43 itojun Exp $");
+__RCSID("$NetBSD: options.c,v 1.39 2003/05/16 18:15:34 itojun Exp $");
 #endif
 #endif
 
@@ -758,7 +758,7 @@ process_option(opt, cmd, argv)
 
 	    ovp = malloc(sizeof(*ovp) + strlen(*argv));
 	    if (ovp != 0) {
-		strcpy(ovp->value, *argv);
+		strlcpy(ovp->value, *argv, sizeof(ovp->value));
 		ovp->source = option_source;
 		ovp->next = NULL;
 		pp = (struct option_value **) &opt->addr2;
