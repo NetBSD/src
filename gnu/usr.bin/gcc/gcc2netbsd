@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.4 1996/01/08 03:51:38 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -307,43 +307,33 @@ print "Populating the top level directory.\n";
 &copyfiles ($srcdir, $targetdir, "COPYING");
 
 print "Populating the cc directory.\n";
-&copyfiles ($srcdir, "$targetdir/cc", @ccf);
-&copyfiles ($srcdir, "$targetdir/cc", @ccof);
+&copyfiles ($srcdir, "$targetdir/cc", @ccf, @ccof);
 
 print "Populating the cc1 directory.\n";
-&copyfiles ($srcdir, "$targetdir/cc1", @cc1f);
-&copyfiles ($srcdir, "$targetdir/cc1", @cc1of);
+&copyfiles ($srcdir, "$targetdir/cc1", @cc1f, @cc1of);
 
 print "Populating the cc1obj directory.\n";
-&copyfiles ($srcdir, "$targetdir/cc1obj", @cc1objf);
-&copyfiles ($srcdir, "$targetdir/cc1obj", @cc1objof);
+&copyfiles ($srcdir, "$targetdir/cc1obj", @cc1objf, @cc1objof);
 
 print "Populating the cc1plus directory.\n";
-&copyfiles ("$srcdir/cp", "$targetdir/cc1plus", @cc1plusf);
-&copyfiles ("$srcdir/cp", "$targetdir/cc1plus", @cc1plusof);
+&copyfiles ("$srcdir/cp", "$targetdir/cc1plus", @cc1plusf, @cc1plusof);
 
 print "Populating the common directory.\n";
-&copyfiles ($srcdir, "$targetdir/common", @commonf);
-&copyfiles ($srcdir, "$targetdir/common", @commonof);
+&copyfiles ($srcdir, "$targetdir/common", @commonf, @commonof, @genf);
 &copyfiles ("$srcdir/cp", "$targetdir/common", @commonplus);
-&copyfiles ($srcdir, "$targetdir/common", @genf);
 
 print "Populating the cpp directory.\n";
-&copyfiles ($srcdir, "$targetdir/cpp", @cppf);
-&copyfiles ($srcdir, "$targetdir/cpp", @cppof);
+&copyfiles ($srcdir, "$targetdir/cpp", @cppf, @cppof);
 system ("cp $srcdir/cccp.1 $targetdir/cpp/cpp.1");
 
 print "Populating the g++ directory.\n";
-&copyfiles ("$srcdir/cp", "$targetdir/g++", @gplusf);
-&copyfiles ("$srcdir/cp", "$targetdir/g++", @gplusof);
+&copyfiles ("$srcdir/cp", "$targetdir/g++", @gplusf, @gplusof);
 
 print "Populating the libgcc directory.\n";
-&copyfiles ("$srcdir", "$targetdir/libgcc", @libgccf);
-&copyfiles ("$srcdir", "$targetdir/libgcc", @libgccof);
+&copyfiles ("$srcdir", "$targetdir/libgcc", @libgccf, @libgccof);
 
 print "Populating the libobjc directory.\n";
-&copyfiles ("$srcdir/objc", "$targetdir/libobjc", @libobjcf);
-&copyfiles ("$srcdir/objc", "$targetdir/libobjc", @libobjcof);
+&copyfiles ("$srcdir/objc", "$targetdir/libobjc", @libobjcf, @libobjcof);
 
 
 #
@@ -395,6 +385,11 @@ while ($line = <DATA>) {
 		die "Data file must start with a %% file!";
 	    }
 	    &dumpgens;
+	} elsif ($cmd[1] eq "NetBSD") {
+	    if ($first) {
+		die "Data section must start with a %% file!";
+	    }
+	    print ODATA "#	\$"."NetBSD".": \$\n";
 	}
     } else {
 	if ($first) {
@@ -423,13 +418,13 @@ foreach $n (keys(%sedlist)) {
 
 __END__
 %% file Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 SUBDIR=	common cc cpp cc1 cc1plus cc1obj g++ libgcc libobjc
 
 .include <bsd.subdir.mk>
 %% file Makefile.cc1
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 NOMAN=
 
@@ -451,7 +446,7 @@ DPADD+= /usr/lib/libgnumalloc.a
 
 .include <bsd.prog.mk>
 %% file common/Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 LIB=	cc1
 
@@ -481,7 +476,7 @@ install:
 
 %% file cc/Makefile
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=           gcc
 %% srcs cc
@@ -503,7 +498,7 @@ MLINKS=		gcc.1 cc.1
 .include <bsd.prog.mk>
 %% file cc1/Makefile
 #	from: @(#)Makefile	6.2 (Berkeley) 2/2/91
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=		cc1
 
@@ -511,7 +506,7 @@ PROG=		cc1
 
 .include <../Makefile.cc1>
 %% file cc1plus/Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=	cc1plus
 
@@ -519,7 +514,7 @@ PROG=	cc1plus
 
 .include <../Makefile.cc1>
 %% file cc1obj/Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=           cc1obj
 
@@ -530,7 +525,7 @@ PROG=           cc1obj
 .include <../Makefile.cc1>
 %% file cpp/Makefile
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=		cpp
 BINDIR=		/usr/libexec
@@ -558,7 +553,7 @@ afterinstall:
 .include <bsd.prog.mk>
 %% file g++/Makefile
 #	from: @(#)Makefile    6.2 (Berkeley) 3/25/91
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 PROG=           g++
 %% srcs g++
@@ -569,14 +564,14 @@ CFLAGS+=        -I$(.CURDIR) -I$(.CURDIR)/../common \
 LDADD+=		-lgnumalloc
 DPADD+=		/usr/lib/libgnumalloc.a
 
-LINKS+=	${BINDIR}/c++ ${BINDIR}/g++
+LINKS+=	${BINDIR}/g++ ${BINDIR}/c++
 MLINKS=	g++.1 c++.1
 
 .PATH:          $(.CURDIR)/../common 
 
 .include <bsd.prog.mk>
 %% file libgcc/Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 LIB=	gcc
 NOPROFILE=
@@ -629,7 +624,7 @@ ${LIB2SOBJS}: libgcc2.c
 
 .include <bsd.lib.mk>
 %% file libobjc/Makefile
-#	$NetBSD: gcc2netbsd,v 1.3 1996/01/04 05:34:58 phil Exp $
+%% NetBSD
 
 LIB=	objc
 NOPROFILE=
