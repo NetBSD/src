@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_i.h,v 1.1 1998/12/17 14:34:51 pk Exp $	*/
+/*	$NetBSD: ld_i.h,v 1.1.8.1 2000/12/26 01:20:01 jhawk Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -283,15 +283,16 @@ struct file_entry {
 	int	lib_major, lib_minor;	/* Version numbers of a shared object */
 
 	int	flags;
-#define E_IS_LIBRARY		1	/* File is a an archive */
-#define E_HEADER_VALID		2	/* File's header has been read */
-#define E_SEARCH_DIRS		4	/* Search directories for file */
-#define E_SEARCH_DYNAMIC	8	/* Search for shared libs allowed */
-#define E_JUST_SYMS		0x10	/* File is used for incremental load */
-#define E_DYNAMIC		0x20	/* File is a shared object */
-#define E_SCRAPPED		0x40	/* Ignore this file */
-#define E_SYMBOLS_USED		0x80	/* Symbols from this entry were used */
+#define E_IS_LIBRARY		0x001	/* File is a an archive */
+#define E_HEADER_VALID		0x002	/* File's header has been read */
+#define E_SEARCH_DIRS		0x004	/* Search directories for file */
+#define E_SEARCH_DYNAMIC	0x008	/* Search for shared libs allowed */
+#define E_JUST_SYMS		0x010	/* File is used for incremental load */
+#define E_DYNAMIC		0x020	/* File is a shared object */
+#define E_SCRAPPED		0x040	/* Ignore this file */
+#define E_SYMBOLS_USED		0x080	/* Symbols from this entry were used */
 #define E_SECONDCLASS		0x100	/* Shared object is a subsidiary */
+#define	E_FORCE_ARCHIVE		0x200	/* Include all library symbols */
 };
 
 /*
