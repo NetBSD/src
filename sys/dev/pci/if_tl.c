@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.50 2002/03/05 04:12:59 itojun Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.51 2002/03/07 21:42:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.50 2002/03/05 04:12:59 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.51 2002/03/07 21:42:20 christos Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1405,7 +1405,7 @@ tl_mediachange(ifp)
 {
 
 	if (ifp->if_flags & IFF_UP)
-		tl_init(ifp->if_softc);
+		tl_init(ifp);
 	return (0);
 }
 
