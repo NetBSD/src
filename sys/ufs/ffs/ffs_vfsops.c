@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.158 2005/01/02 16:08:31 thorpej Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.159 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.158 2005/01/02 16:08:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.159 2005/01/09 03:11:48 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -144,12 +144,6 @@ ffs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("ffs_mountroot: can't setup bdevvp's");
-
 	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -158,7 +152,6 @@ ffs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -273,10 +266,34 @@ ffs_mount(mp, path, data, ndp, p)
 	}
 
 	if (!update) {
+		int flags;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, flags, FSCRED, p);
+		if (error)
+			goto fail;
 		error = ffs_mountfs(devvp, mp, p);
 		if (error) {
-			vrele(devvp);
-			return (error);
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, flags, NOCRED, p);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
 		}
 
 		ump = VFSTOUFS(mp);
@@ -435,7 +452,11 @@ ffs_mount(mp, path, data, ndp, p)
 		}
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
-	return error;
+	return (error);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 /*
@@ -695,16 +716,8 @@ ffs_mountfs(devvp, mp, p)
 
 	dev = devvp->v_rdev;
 	cred = p ? p->p_ucred : NOCRED;
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
+
+	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, p, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -712,9 +725,6 @@ ffs_mountfs(devvp, mp, p)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, p);
-	if (error)
-		return (error);
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, p) != 0)
 		size = DEV_BSIZE;
 	else
@@ -982,9 +992,6 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, p);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		if (ump->um_oldfscompat)
 			free(ump->um_oldfscompat, M_UFSMNT);

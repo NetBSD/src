@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.159 2005/01/02 16:08:31 thorpej Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.160 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.159 2005/01/02 16:08:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.160 2005/01/09 03:11:48 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -308,13 +308,6 @@ lfs_mountroot()
 
 	if (rootdev == NODEV)
 		return (ENODEV);
-	/*
-	 * Get vnodes for swapdev and rootdev.
-	 */
-	if ((error = bdevvp(rootdev, &rootvp))) {
-		printf("lfs_mountroot: can't setup bdevvp's");
-		return (error);
-	}
 	if ((error = vfs_rootmountalloc(MOUNT_LFS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -323,7 +316,6 @@ lfs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);

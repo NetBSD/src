@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.78 2005/01/02 16:08:30 thorpej Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.79 2005/01/09 03:11:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.78 2005/01/02 16:08:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.79 2005/01/09 03:11:48 mycroft Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -206,12 +206,6 @@ ext2fs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 	
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("ext2fs_mountroot: can't setup bdevvp's");
-
 	if ((error = vfs_rootmountalloc(MOUNT_EXT2FS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -221,7 +215,6 @@ ext2fs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
