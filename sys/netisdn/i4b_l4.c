@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.14 2002/03/25 14:25:07 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.15 2002/03/25 20:28:41 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.14 2002/03/25 14:25:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.15 2002/03/25 20:28:41 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -99,7 +99,6 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
 	memset(new_ctrl, 0, sizeof *new_ctrl);
 	SLIST_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
-	new_ctrl->bri = bri;
 	l = strlen(devname);
 	new_ctrl->devname = malloc(l+1, M_DEVBUF, 0);
 	strcpy(new_ctrl->devname, devname);
@@ -110,6 +109,7 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	new_ctrl->l3driver = l3driver;
 	new_ctrl->l1_token = l1_token;
 	new_ctrl->bri = bri;
+	new_ctrl->tei = -1;
 	new_ctrl->dl_est = DL_DOWN;
 	new_ctrl->bch_state[0] = BCH_ST_FREE;
 	new_ctrl->bch_state[1] = BCH_ST_FREE;
