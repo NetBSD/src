@@ -263,6 +263,7 @@ ERR_STATE *ERR_get_state(void);
 
 LHASH *ERR_get_string_table(void);
 LHASH *ERR_get_err_state_table(void);
+void ERR_release_err_state_table(LHASH **hash);
 
 int ERR_get_next_error_library(void);
 
