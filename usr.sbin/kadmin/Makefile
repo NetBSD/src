@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2001/01/11 13:15:07 enami Exp $
+# $NetBSD: Makefile,v 1.8 2001/02/07 14:07:47 joda Exp $
 
 .include <bsd.own.mk>
 
@@ -42,8 +42,7 @@ CPPFLAGS+= -I.					\
 
 VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
-LDADD=	-lkadm5clnt \
-	-lkadm5srv \
+LDADD=	-lkadm5srv \
 	-lhdb \
 	-lkrb5 \
 	-lcrypto \
