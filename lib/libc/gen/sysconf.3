@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysconf.3,v 1.7 1998/04/28 20:11:35 fair Exp $
+.\"	$NetBSD: sysconf.3,v 1.8 1998/05/24 20:12:25 kleink Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -146,6 +146,10 @@ otherwise \-1.
 .It Li _SC_2_UPE
 Return 1 if the system supports the User Portability Utilities Option,
 otherwise \-1.
+.It Li _SC_PAGESIZE
+The size of a system page in bytes.
+.It Li _SC_FSYNC
+Return 1 if the system supports the File Synchronisation Option, otherwise \-1.
 .El
 .Sh RETURN VALUES
 If the call to
