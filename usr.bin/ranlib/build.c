@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * Hugh Smith at The University of Guelph.
@@ -35,20 +35,22 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)build.c	5.3 (Berkeley) 3/12/91";
+static char sccsid[] = "@(#)build.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+
 #include <a.out.h>
-#include <dirent.h>
-#include <unistd.h>
 #include <ar.h>
+#include <dirent.h>
+#include <fcntl.h>
 #include <ranlib.h>
 #include <stdio.h>
-#include <archive.h>
+#include <unistd.h>
+
+#include "archive.h"
 
 extern CHDR chdr;			/* converted header */
 extern char *archive;			/* archive name */
@@ -63,7 +65,12 @@ typedef struct _rlib {
 RLIB *rhead, **pnext;
 
 FILE *fp;
-static void rexec(), symobj();
+
+long symcnt;				/* symbol count */
+long tsymlen;				/* total string length */
+
+static void rexec __P((int, int));
+static void symobj __P((void));
 
 build()
 {
@@ -79,6 +86,7 @@ build()
 
 	/* Read through the archive, creating list of symbols. */
 	pnext = &rhead;
+	symcnt = tsymlen = 0;
 	while(get_arobj(afd)) {
 		if (!strcmp(chdr.name, RANLIBMAG)) {
 			skip_arobj(afd);
@@ -106,9 +114,6 @@ build()
 	return(0);
 }
 
-long symcnt;				/* symbol count */
-long tsymlen;				/* total string length */
-
 /*
  * rexec
  *	Read the exec structure; ignore any files that don't look
@@ -134,7 +139,7 @@ rexec(rfd, wfd)
 	w_off = lseek(wfd, (off_t)0, SEEK_CUR);
 
 	/* Read in exec structure. */
-	nr = read(rfd, (char *)&ebuf, sizeof(struct exec));
+	nr = read(rfd, &ebuf, sizeof(struct exec));
 	if (nr != sizeof(struct exec))
 		goto badread;
 
@@ -143,17 +148,17 @@ rexec(rfd, wfd)
 		goto bad1;
 
 	/* Seek to string table. */
-	if (lseek(rfd, N_STROFF(ebuf) + r_off, SEEK_SET) == (off_t)-1)
+	if (lseek(rfd, r_off + N_STROFF(ebuf), SEEK_SET) == (off_t)-1)
 		error(archive);
 
 	/* Read in size of the string table. */
-	nr = read(rfd, (char *)&strsize, sizeof(strsize));
+	nr = read(rfd, &strsize, sizeof(strsize));
 	if (nr != sizeof(strsize))
 		goto badread;
 
 	/* Read in the string table. */
 	strsize -= sizeof(strsize);
-	strtab = (char *)emalloc(strsize);
+	strtab = emalloc(strsize);
 	nr = read(rfd, strtab, strsize);
 	if (nr != strsize) {
 badread:	if (nr < 0)
@@ -162,13 +167,13 @@ badread:	if (nr < 0)
 	}
 
 	/* Seek to symbol table. */
-	if (fseek(fp, N_SYMOFF(ebuf) + r_off, SEEK_SET) == (off_t)-1)
+	if (fseek(fp, (long)r_off + N_SYMOFF(ebuf), SEEK_SET))
 		goto bad2;
 
 	/* For each symbol read the nlist entry and save it as necessary. */
 	nsyms = ebuf.a_syms / sizeof(struct nlist);
 	while (nsyms--) {
-		if (!fread((char *)&nl, sizeof(struct nlist), 1, fp)) {
+		if (!fread(&nl, sizeof(struct nlist), 1, fp)) {
 			if (feof(fp))
 				badfmt();
 			error(archive);
@@ -204,7 +209,7 @@ badread:	if (nr < 0)
 	}
 
 bad2:	free(strtab);
-bad1:	(void)lseek(rfd, (off_t)r_off, SEEK_SET);
+bad1:	(void)lseek(rfd, r_off, SEEK_SET);
 }
 
 /*
@@ -217,13 +222,12 @@ symobj()
 {
 	register RLIB *rp;
 	struct ranlib rn;
+	off_t ransize;
+	long size, stroff;
 	char hb[sizeof(struct ar_hdr) + 1], pad;
-	long ransize, size, stroff;
-	gid_t getgid();
-	uid_t getuid();
 
 	/* Rewind the archive, leaving the magic number. */
-	if (fseek(fp, (off_t)SARMAG, SEEK_SET) == (off_t)-1)
+	if (fseek(fp, (long)SARMAG, SEEK_SET))
 		error(archive);
 
 	/* Size of the ranlib archive file, pad if necessary. */
@@ -244,7 +248,7 @@ symobj()
 
 	/* First long is the size of the ranlib structure section. */
 	size = symcnt * sizeof(struct ranlib);
-	if (!fwrite((char *)&size, sizeof(size), 1, fp))
+	if (!fwrite(&size, sizeof(size), 1, fp))
 		error(tname);
 
 	/* Offset of the first archive file. */
@@ -259,12 +263,12 @@ symobj()
 		rn.ran_un.ran_strx = stroff;
 		stroff += rp->symlen;
 		rn.ran_off = size + rp->pos;
-		if (!fwrite((char *)&rn, sizeof(struct ranlib), 1, fp))
+		if (!fwrite(&rn, sizeof(struct ranlib), 1, fp))
 			error(archive);
 	}
 
 	/* Second long is the size of the string table. */
-	if (!fwrite((char *)&tsymlen, sizeof(tsymlen), 1, fp))
+	if (!fwrite(&tsymlen, sizeof(tsymlen), 1, fp))
 		error(tname);
 
 	/* Write out the string table. */
