@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 2001/03/03 18:04:34 bjh21 Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 2001/03/20 15:39:16 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -192,7 +192,8 @@ cdev_decl(i4btrc);
 cdev_decl(i4brbch);
 cdev_decl(i4btel);
 
-#include "vt.h"                                 
+#include "vt.h"
+#include "vidcconsole.h"                                 
 #include "pty.h"
 #define ptstty          ptytty
 #define ptsioctl        ptyioctl
@@ -248,7 +249,7 @@ struct cdevsw cdevsw[] = {
 	cdev_swap_init(1, sw),          /*  1: /dev/drum (swap pseudo-device) */
 	cdev_cn_init(1, cn),            /*  2: virtual console */
 	cdev_ctty_init(1,ctty),         /*  3: controlling terminal */
-#if	(defined(RISCPC) || defined(RC7500))
+#if	(defined(RISCPC) || defined(RC7500)) && (NVIDCCONSOLE>0)
 	cdev_physcon_init(NVT, physcon),/*  4: RPC console */
 #elif	defined(SHARK) && (NPC > 0)
 	cdev_pc_init(1,pc),		/*  4: PC console */
