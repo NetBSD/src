@@ -1,4 +1,4 @@
-/*	$NetBSD: pcnet_pci.c,v 1.2 1997/03/15 22:20:55 perry Exp $	*/
+/*	$NetBSD: pcnet_pci.c,v 1.3 1997/09/17 18:21:44 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -35,14 +35,15 @@
 
 #include <sys/types.h>
 #include <machine/pio.h>
+#include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
+#include <libi386.h>
 #include <pcivar.h>
+#include <bootinfo.h>
 
 #include "etherdrv.h"
 #include "lance.h"
-
-char etherdev[20];
 
 int lance_rap, lance_rdp;
 
@@ -52,6 +53,8 @@ u_char eth_myaddr[6];
 
 extern void am7990_init __P((void));
 extern void am7990_stop __P((void));
+
+static struct btinfo_netif bi_netif;
 
 int EtherInit(myadr)
 char *myadr;
@@ -88,10 +91,15 @@ char *myadr;
   }
 
   for(i=0; i<6; i++)
-    myadr[i] = eth_myaddr[i] = inb(iobase + i);
+	  bi_netif.hw_addr[i] = myadr[i] = eth_myaddr[i] = inb(iobase + i);
 
   am7990_init();
 
-  sprintf(etherdev, "le@pci,0x%x", iobase);
+  strncpy(bi_netif.ifname, "le", sizeof(bi_netif.ifname));
+  bi_netif.bus = BI_BUS_PCI;
+  bi_netif.addr = iobase;
+
+  BI_ADD(&bi_netif, BTINFO_NETIF, sizeof(bi_netif));
+
   return(1);
 }
