@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.57 2004/05/25 20:42:41 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.58 2004/08/01 21:40:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -209,7 +209,8 @@ void	wdccommandext(struct wdc_channel *, u_int8_t, u_int8_t, u_int64_t,
 		      u_int16_t);
 void	wdccommandshort(struct wdc_channel *, int, int);
 void	wdctimeout(void *arg);
-void	wdc_reset_channel(struct ata_drive_datas *, int);
+void	wdc_reset_drive(struct ata_drive_datas *, int);
+void	wdc_reset_channel(struct wdc_channel *, int);
 
 int	wdc_exec_command(struct ata_drive_datas *, struct wdc_command*);
 #define WDC_COMPLETE 0x01

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.58 2004/07/31 21:26:43 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.59 2004/08/01 21:40:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.58 2004/07/31 21:26:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.59 2004/08/01 21:40:41 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -133,7 +133,7 @@ static void	wdc_ata_kill_pending(struct ata_drive_datas *);
 const struct ata_bustype wdc_ata_bustype = {
 	SCSIPI_BUSTYPE_ATA,
 	wdc_ata_bio,
-	wdc_reset_channel,
+	wdc_reset_drive,
 	wdc_exec_command,
 	ata_get_params,
 	wdc_ata_addref,

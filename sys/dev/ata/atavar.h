@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.44 2004/07/31 21:26:43 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.45 2004/08/01 21:40:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -81,6 +81,8 @@ struct ata_queue {
 struct atabus_softc {
 	struct device sc_dev;
 	struct wdc_channel *sc_chan;	/* XXXwdc */
+	int sc_flags;
+#define ATABUSCF_OPEN	0x01
 };
 
 /*
