@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.6 1999/08/01 19:47:07 kleink Exp $	*/
+/*	$NetBSD: ldd.c,v 1.7 1999/11/07 00:30:18 mycroft Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -87,7 +87,7 @@ main(
 	    warn("%s", *argv);
 	    continue;
 	}
-	_rtld_objmain = _rtld_map_object(*argv, fd);
+	_rtld_objmain = _rtld_map_object(*argv, fd, NULL);
 	close(fd);
 	if (_rtld_objmain == NULL) {
 	    warnx("%s", _rtld_error_message);
