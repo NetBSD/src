@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.11 2003/11/11 06:47:00 sekiya Exp $
+# $NetBSD: Makefile.booters,v 1.12 2003/11/17 09:32:58 sekiya Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -13,17 +13,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-.PHONY: machine-links
-beforedepend: machine-links
-# ${MACHINE} then ${MACHINE_ARCH}
-machine-links:
-	-rm -f machine && \
-	    ln -s $S/arch/${MACHINE}/include machine
-	-rm -f mips && \
-	    ln -s $S/arch/mips/include mips
-CLEANFILES+= machine mips
-
-realall: machine-links ${PROG}
+realall: ${PROG}
 
 .PATH:		${.CURDIR}/../common
 AFLAGS+=	-D_LOCORE -D_KERNEL -mno-abicalls
@@ -74,6 +64,15 @@ SAMISCMAKEFLAGS+=SA_USE_LOADFILE=yes SA_USE_CREAD=yes
 SAMISCMAKEFLAGS+=SA_INCLUDE_NET=no
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA=		${SALIB}
+
+.if !make(obj) && !make(clean) && !make(cleandir)
+.BEGIN:
+	@([ -h machine ] || ln -s ${S}/arch/${MACHINE}/include machine)
+	@([ -h mips ] || ln -s ${S}/arch/mips/include mips)
+.NOPATH: machine mips
+.endif
+CLEANFILES+= machine mips
+
 
 LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
