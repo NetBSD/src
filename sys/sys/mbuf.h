@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.26 1997/06/06 17:17:56 cjs Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.27 1997/06/08 05:36:57 mikel Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -48,7 +48,7 @@
 /*
  * Mbufs are of a single size, MSIZE (machine/param.h), which
  * includes overhead.  An mbuf may add a single "mbuf cluster" of size
- * MCLBYTES (also in machine/machparam.h), which has no additional overhead
+ * MCLBYTES (also in machine/param.h), which has no additional overhead
  * and is used instead of the internal data area; this is done when
  * at least MINCLSIZE of data must be stored.
  */
@@ -180,10 +180,10 @@ union mcluster {
  * drivers.
  */
 #define	MBUFLOCK(code) \
-	{ int ms = splimp(); \
+	do { int ms = splimp(); \
 	  { code } \
 	  splx(ms); \
-	}
+	} while (0)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -198,7 +198,7 @@ union mcluster {
  * If 'how' is M_WAIT, these macros (and the corresponding functions)
  * are guaranteed to return successfully.
  */
-#define	MGET(m, how, type) { \
+#define	MGET(m, how, type) do { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;) \
@@ -209,9 +209,9 @@ union mcluster {
 		(m)->m_flags = 0; \
 	} else \
 		(m) = m_retry((how), (type)); \
-}
+} while (0)
 
-#define	MGETHDR(m, how, type) { \
+#define	MGETHDR(m, how, type) do { \
 	MALLOC((m), struct mbuf *, MSIZE, mbtypes[type], (how)); \
 	if (m) { \
 		MBUFLOCK(mbstat.m_mtypes[type]++;) \
@@ -222,7 +222,7 @@ union mcluster {
 		(m)->m_flags = M_PKTHDR; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
-}
+} while (0)
 
 /*
  * Macros for tracking external storage associated with an mbuf.
@@ -280,7 +280,7 @@ union mcluster {
  * MEXTADD adds pre-allocated external storage to
  * a normal mbuf; the flag M_EXT is set upon success.
  */
-#define	MCLGET(m, how) { \
+#define	MCLGET(m, how) do { \
 	MBUFLOCK( \
 		if (mclfree == 0) \
 			(void)m_clalloc(1, (how)); \
@@ -299,9 +299,9 @@ union mcluster {
 		(m)->m_ext.ext_arg = NULL;  \
 		MCLINITREFERENCE(m); \
 	} \
-}
+} while (0)
 
-#define	MEXTMALLOC(m, size, how) { \
+#define	MEXTMALLOC(m, size, how) do { \
 	(m)->m_ext.ext_buf = \
 	    (caddr_t)malloc((size), mbtypes[(m)->m_type], (how)); \
 	if ((m)->m_ext.ext_buf != NULL) { \
@@ -314,9 +314,9 @@ union mcluster {
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type]; \
 		MCLINITREFERENCE(m); \
 	} \
-}
+} while (0)
 
-#define	MEXTADD(m, buf, size, type, free, arg) { \
+#define	MEXTADD(m, buf, size, type, free, arg) do { \
 	(m)->m_data = (m)->m_ext.ext_buf = (caddr_t)(buf); \
 	(m)->m_flags |= M_EXT; \
 	(m)->m_flags &= ~M_CLUSTER; \
@@ -325,9 +325,9 @@ union mcluster {
 	(m)->m_ext.ext_arg = (arg); \
 	(m)->m_ext.ext_type = (type); \
 	MCLINITREFERENCE(m); \
-}
+} while (0)
 
-#define	_MEXTREMOVE(m) { \
+#define	_MEXTREMOVE(m) do { \
 	if (MCLISREFERENCED(m)) { \
 		_MCLDEREFERENCE(m); \
 	} else if ((m)->m_flags & M_CLUSTER) { \
@@ -343,7 +343,7 @@ union mcluster {
 	} \
 	(m)->m_flags &= ~(M_CLUSTER|M_EXT); \
 	(m)->m_ext.ext_size = 0;	/* why ??? */ \
-}
+} while (0)
 
 #define	MEXTREMOVE(m) \
 	MBUFLOCK(_MEXTREMOVE((m)))
@@ -364,27 +364,27 @@ union mcluster {
 	)
 
 /*
- * Copy mbuf pkthdr from from to to.
- * from must have M_PKTHDR set, and to must be empty.
+ * Copy mbuf pkthdr from `from' to `to'.
+ * `from' must have M_PKTHDR set, and `to' must be empty.
  */
-#define	M_COPY_PKTHDR(to, from) { \
+#define	M_COPY_PKTHDR(to, from) do { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
-}
+} while (0)
 
 /*
  * Set the m_data pointer of a newly-allocated mbuf (m_get/MGET) to place
  * an object of the specified size at the end of the mbuf, longword aligned.
  */
 #define	M_ALIGN(m, len) \
-	{ (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); }
+	do { (m)->m_data += (MLEN - (len)) &~ (sizeof(long) - 1); } while (0)
 /*
  * As above, for mbufs allocated with m_gethdr/MGETHDR
  * or initialized by M_COPY_PKTHDR.
  */
 #define	MH_ALIGN(m, len) \
-	{ (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); }
+	do { (m)->m_data += (MHLEN - (len)) &~ (sizeof(long) - 1); } while (0)
 
 /*
  * Compute the amount of space available
@@ -410,7 +410,7 @@ union mcluster {
  * If how is M_DONTWAIT and allocation fails, the original mbuf chain
  * is freed and m is set to NULL.
  */
-#define	M_PREPEND(m, plen, how) { \
+#define	M_PREPEND(m, plen, how) do { \
 	if (M_LEADINGSPACE(m) >= (plen)) { \
 		(m)->m_data -= (plen); \
 		(m)->m_len += (plen); \
@@ -418,13 +418,13 @@ union mcluster {
 		(m) = m_prepend((m), (plen), (how)); \
 	if ((m) && (m)->m_flags & M_PKTHDR) \
 		(m)->m_pkthdr.len += (plen); \
-}
+} while (0)
 
 /* change mbuf to new type */
-#define MCHTYPE(m, t) { \
+#define MCHTYPE(m, t) do { \
 	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;) \
-	(m)->m_type = t;\
-}
+	(m)->m_type = t; \
+} while (0)
 
 /* length to m_copy to copy all */
 #define	M_COPYALL	1000000000
