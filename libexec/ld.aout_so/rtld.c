@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.77 2000/10/29 13:11:38 mycroft Exp $	*/
+/*	$NetBSD: rtld.c,v 1.78 2000/11/28 06:01:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -649,6 +649,10 @@ map_object(sodp, smp)
 	name = (char *)sodp->sod_name;
 	if (smp)
 		name += (long)LM_LDBASE(smp);
+
+#ifdef DEBUG
+	xprintf("map_object: loading %s\n", name);
+#endif
 
 	if (sodp->sod_library) {
 		usehints = 1;
