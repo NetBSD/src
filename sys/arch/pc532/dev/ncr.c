@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.35 1997/03/01 09:50:40 matthias Exp $	*/
+/*	$NetBSD: ncr.c,v 1.36 1997/03/20 12:03:01 matthias Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthias Pfaller.
@@ -51,10 +51,11 @@
  */
 static int ncr_pdma_in __P((struct ncr5380_softc *, int, int, u_char *));
 static int ncr_pdma_out __P((struct ncr5380_softc *, int, int, u_char *));
-static void ncr_minphys __P((struct buf *bp));
 static void ncr_intr __P((void *));
 static void ncr_attach __P((struct device *, struct device *, void *));
 static int ncr_match __P((struct device *, struct cfdata *, void *));
+static int ncr_ready __P((struct ncr5380_softc *sc));
+static void ncr_wait_not_req __P((struct ncr5380_softc *sc));
 
 /*
  * Some constants.
@@ -136,7 +137,7 @@ ncr_attach(parent, self, aux)
 	flags = ca->ca_flags | ncr_default_options;
 
 	if (flags)
-		printf(": flags %d\n");
+		printf(": flags %d\n", flags);
 	else
 		printf("\n");
 
@@ -252,6 +253,21 @@ ncr_ready(sc)
 	return(0);
 }
 
+/* Return zero on success. */
+static __inline void ncr_wait_not_req(sc)
+	struct ncr5380_softc *sc;
+{
+	register int timo;
+	for (timo = TIMEOUT; timo; timo--) {
+		if ((*sc->sci_bus_csr & SCI_BUS_REQ) == 0 ||
+		    (*sc->sci_csr & SCI_CSR_PHASE_MATCH) == 0 ||
+		    SCI_BUSY(sc) == 0) {
+			return;
+		}
+	}
+	printf("%s: pdma not_req timeout\n", sc->sc_dev.dv_xname);
+}
+
 static int
 ncr_pdma_in(sc, phase, datalen, data)
 	struct ncr5380_softc *sc;
@@ -289,6 +305,7 @@ ncr_pdma_in(sc, phase, datalen, data)
 		ei();
 		resid = 0;
 	}
+	ncr_wait_not_req(sc);
 interrupt:
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
@@ -303,7 +320,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 	u_char *data; 
 {
 	volatile u_char *pdma = PDMA_ADDRESS;
-	int i, s, resid, ready = 1;
+	int i, s, resid;
 	u_char icmd;
 
 	s = splbio();
@@ -365,6 +382,7 @@ ncr_pdma_out(sc, phase, datalen, data)
 		printf("%s: timeout waiting for final SCI_DSR_DREQ.\n",
 			sc->sc_dev.dv_xname);
 
+	ncr_wait_not_req(sc);
 interrupt:
 	SCI_CLR_INTR(sc);
 	*sc->sci_mode &= ~SCI_MODE_DMA;
