@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.25 2000/12/18 14:46:36 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.26 2000/12/22 23:41:16 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -626,6 +626,7 @@ linux_ioctl_socket(p, uap, retval)
 	 * so, to avoid unexpected things from happening.
 	 */
 	if (isdev) {
+		dosys = 0;
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
