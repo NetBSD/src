@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43.2.6 2003/08/21 22:13:09 jlam Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.7 2003/08/25 20:17:11 jlam Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -89,13 +89,17 @@
 #define CHGRP_CMD "chgrp"
 #endif
 
-/* Where we put logging information by default, else ${PKG_DBDIR} if set */
+/*
+ * Where we put logging information by default, if PKG_REGISTRY and
+ * PKG_DBDIR are both unset.
+ */
 #ifndef DEF_LOG_DIR
 #define DEF_LOG_DIR		"/var/db/pkg"
 #endif
 
 /* just in case we change the environment variable name */
 #define PKG_DBDIR		"PKG_DBDIR"
+#define PKG_REGISTRY		"PKG_REGISTRY"
 
 /* The names of our "special" files */
 #define CONTENTS_FNAME		"+CONTENTS"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pkg_view.1,v 1.1.2.10 2003/08/22 07:13:20 jlam Exp $
+.\"	$NetBSD: pkg_view.1,v 1.1.2.11 2003/08/25 20:17:12 jlam Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -86,7 +86,11 @@ The following command-line options are supported:
 Set
 .Ar stowdir
 as the directory in which the installed packages can be found.
-The default
+If this option isn't specified, then the
+.Ar stowdir
+is taken from the value of the environment variable
+.Ev DEPOTBASE
+if it's set, otherwise the default
 .Ar stowdir
 is the
 .Pa packages
@@ -99,13 +103,13 @@ to the list of files in
 .Ar package
 that should ignored when adding or removing the package from
 .Ar view .
-.It Fl k Ar pkg_dbdir_dflt
+.It Fl k Ar pkg_dbdir
 Set
-.Ar pkg_dbdir_dflt
+.Ar pkg_dbdir
 as the package database directory for the default (empty) view.
 If this option isn't specified, then the package database directory is
 taken from the value of the environment variable
-.Ev PKG_DBDIR_DFLT ,
+.Ev PKG_DBDIR ,
 otherwise it defaults to
 .Pa /var/db/pkg .
 .It Fl V
@@ -121,7 +125,7 @@ The default
 directory is
 .Pa /usr/pkg
 but may be overridden by the
-.Ev PKG_VIEWBASE
+.Ev LOCALBASE
 environment variable.
 .It Fl w Ar view
 Set
@@ -151,11 +155,29 @@ Delete the listed packages from
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width indent
-.It Ev PKG_DBDIR_DFLT
+.It Ev DEPOTBASE
+This is the location of the
+.Ar stowdir
+directory inside which all depoted packages are kept.
+The default
+.Ar stowdir
+is the
+.Pa packages
+directory under
+.Ar viewbase .
+.It Ev LOCALBASE
+This is the location of the
+.Ar viewbase
+directory in which all the views are managed.
+The default
+.Ar viewbase
+directory is
+.Pa /usr/pkg .
+.It Ev PKG_DBDIR
 If the
 .Fl k
 flag isn't given, then the value of the environment variable
-.Ev PKG_DBDIR_DFLT
+.Ev PKG_DBDIR
 is the package database directory for the default view,
 otherwise it defaults to 
 .Pa /var/db/pkg .
@@ -172,12 +194,6 @@ directory, and it defaults to "info/dir *[~#] *.OLD *.orig *,v".
 .It Ev PKG_VIEW
 The default view can be specified in the
 .Ev PKG_VIEW
-environment variable.
-.It Ev PKG_VIEWBASE
-The standard viewbase directory,
-.Pa /usr/pkg ,
-can be overridden by specifying an alternative directory in the
-.Ev PKG_VIEWBASE
 environment variable.
 .El
 .Sh FILES

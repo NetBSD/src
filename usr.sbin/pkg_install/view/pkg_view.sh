@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: pkg_view.sh,v 1.1.2.26 2003/08/22 07:13:20 jlam Exp $
+# $NetBSD: pkg_view.sh,v 1.1.2.27 2003/08/25 20:17:12 jlam Exp $
 
 #
 # Copyright (c) 2001 Alistair G. Crooks.  All rights reserved.
@@ -65,16 +65,16 @@ checkpkg() {
 	if [ -d "$2/$1" ]; then
 		:
 	else
-		echo "Package \`$1' doesn't exist in \`$2'"
+		echo "pkgview: \`$1' doesn't exist in \`$2'" 1>&2
 		exit 1
 	fi
 }
 
 stowdir=""
-viewbase=${PKG_VIEWBASE:-/usr/pkg}
+viewbase=${LOCALBASE:-/usr/pkg}
 view=${PKG_VIEW:-""}
 ignorefiles=${PLIST_IGNORE_FILES:-"info/dir *[~#] *.OLD *.orig *,v"}
-dflt_pkg_dbdir=${PKG_DBDIR_DFLT:-/var/db/pkg}
+dflt_pkg_dbdir=${PKG_DBDIR:-/var/db/pkg}
 verbose=no
 
 while [ $# -gt 0 ]; do
@@ -110,13 +110,13 @@ delete|rm)	action=delete ;;
 esac
 shift
 
-case "${stowdir}" in
-"")	depot_pkg_dbdir=${viewbase}/packages ;;
-*)	depot_pkg_dbdir=${stowdir} ;;
+# XXX Only support the standard view for now.
+case "$view" in
+"")	;;
+*)	echo "pkg_view: only the standard view is supported" 1>&2
+	exit 1
+	;;
 esac
-
-# XXX Only support the standard view.
-view=""
 
 # if standard view, put package info into ${dflt_pkg_dbdir}
 # if not standard view, put package info into view's pkgdb
@@ -133,11 +133,17 @@ case "$view" in
 	;;
 esac
 
+# Use stowdir if it's given, else fall back to ${DEPOTBASE} or else
+# default to ${viewbase}/packages.
+#
+depot_pkg_dbdir=${stowdir:-${DEPOTBASE:-${viewbase}/packages}}
+
 while [ $# -gt 0 ]; do
 	case $action in
 	add)
 		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
-			echo "Package $1 already exists in $viewstr."
+			echo "pkg_view: \`$1' already exists in $viewstr." 1>&2
+			exit 1
 		else
 			if [ "${verbose}" = "yes" ]; then
 				echo "Adding package $1 to ${targetdir}."
@@ -177,39 +183,41 @@ while [ $# -gt 0 ]; do
 		exit $?
 		;;
 	delete)
-		if [ ! -f ${pkg_dbdir}/$1/+DEPOT ]; then
-			echo "Package $1 does not exist in $viewstr."
+		if [ -f ${pkg_dbdir}/$1/+DEPOT ]; then
+			:
 		else
-			if [ "${verbose}" = "yes" ]; then
-				echo "Deleting package $1 from ${targetdir}."
-			fi
-			if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
-				if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
-					: not really required by another pkg
-				else
-					(echo "pkg_view: package \`\`$1'' is required by other packages:"
-					$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
-					exit 1
-				fi
-			fi
-			if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
-				$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
-				$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
-				ec=$?
-				if [ $ec != 0 ]; then
-					echo "De-install script returned an error."
-					exit $ec
-				fi
-			fi
-			checkpkg $1 ${depot_pkg_dbdir}
-			dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
-			env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
-			temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
-			$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
-			($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
-			$rmprog ${temp}
-			$rmprog -rf ${pkg_dbdir}/$1
+			echo "pkg_view: \`$1' does not exist in $viewstr." 1>&2
+			exit 1
 		fi
+		if [ "${verbose}" = "yes" ]; then
+			echo "Deleting package $1 from ${targetdir}."
+		fi
+		if [ -f ${pkg_dbdir}/$1/+REQUIRED_BY ]; then
+			if $cmpprog -s ${pkg_dbdir}/$1/+REQUIRED_BY /dev/null; then
+				: not really required by another pkg
+			else
+				(echo "pkg_view: package \`$1' is required by other packages:"
+				$sedprog -e 's|^|	|' ${pkg_dbdir}/$1/+REQUIRED_BY) 1>&2
+				exit 1
+			fi
+		fi
+		if [ -f ${pkg_dbdir}/$1/+DEINSTALL ]; then
+			$chmodprog +x ${pkg_dbdir}/$1/+DEINSTALL
+			$envprog -i PKG_PREFIX=${targetdir} ${pkg_dbdir}/$1/+DEINSTALL $1 VIEW-DEINSTALL
+			ec=$?
+			if [ $ec != 0 ]; then
+				echo "pkg_view: de-install script returned an error." 1>&2
+				exit $ec
+			fi
+		fi
+		checkpkg $1 ${depot_pkg_dbdir}
+		dbs=`(cd ${depot_pkg_dbdir}/$1; echo +*)`
+		env PLIST_IGNORE_FILES="${ignorefiles} $dbs" $linkfarmprog -D --target=${targetdir} --dir=${depot_pkg_dbdir} $1
+		temp=${depot_pkg_dbdir}/$1/+VIEWS.$$
+		$cpprog ${depot_pkg_dbdir}/$1/+VIEWS ${temp}
+		($grepprog -v '^'${pkg_dbdir}'$' ${temp} || true) > ${depot_pkg_dbdir}/$1/+VIEWS
+		$rmprog ${temp}
+		$rmprog -rf ${pkg_dbdir}/$1
 		;;
 	esac
 	shift
