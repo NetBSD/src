@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.54 2000/04/03 11:49:25 augustss Exp $	*/
+/*	$NetBSD: socket.h,v 1.55 2000/06/04 08:50:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -74,7 +74,11 @@
 /*
  * Data types.
  */
-typedef	unsigned int	socklen_t;
+#include <sys/ansi.h>
+#ifndef socklen_t
+typedef __socklen_t	socklen_t;
+#define socklen_t	socklen_t
+#endif
 
 /*
  * Socket types.
