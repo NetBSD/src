@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.285 2003/01/01 16:36:20 augustss Exp $
+$NetBSD: usbdevs,v 1.286 2003/01/02 04:01:46 imp Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ vendor MEGATRENDS	0x046b	American Megatrends
 vendor LOGITECH		0x046d	Logitech
 vendor BTC		0x046e	Behavior Tech. Computer
 vendor PHILIPS		0x0471	Philips
+vendor SANYO		0x0474	Sanyo Electric
 vendor CONNECTIX	0x0478	Connectix
 vendor KENSINGTON	0x047d	Kensington
 vendor LUCENT		0x047e	Lucent
@@ -1171,6 +1172,9 @@ product SANDISK SDDR09		0x0200	ImageMate SDDR-09
 
 /* Sanwa Supply products */
 product SANWASUPPLY JYDV9USB	0x9806	JY-DV9USB gamepad
+
+/* Sanyo Electric products */
+product SANYO SCP4900 		0x0701	Sanyo SCP-4900 USB Phone
 
 /* ScanLogic products */
 product SCANLOGIC SL11R		0x0002	SL11R-IDE
