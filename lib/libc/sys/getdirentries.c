@@ -1,4 +1,4 @@
-/*	$NetBSD: getdirentries.c,v 1.2 1998/10/14 11:56:29 kleink Exp $	*/
+/*	$NetBSD: getdirentries.c,v 1.3 1998/11/15 17:23:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -43,6 +43,6 @@ getdirentries(fd, buf, nbytes, basep)
 	char *buf;
 	long *basep;
 {
-	*basep = lseek(fd, 0, SEEK_CUR);
-	return getdents(fd, buf, nbytes);
+	*basep = (long)lseek(fd, (off_t)0, SEEK_CUR);
+	return getdents(fd, buf, (size_t)nbytes);
 }
