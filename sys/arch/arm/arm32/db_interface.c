@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.18 2002/04/05 16:58:04 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.19 2002/04/09 19:37:16 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -219,7 +219,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 			pgva = (vaddr_t)dst & L1_S_FRAME;
 			limit = L1_S_SIZE - ((vaddr_t)dst & L1_S_OFFSET);
 
-			tmppde = oldpde | L1_S_AP(AP_KRW);
+			tmppde = oldpde | L1_S_PROT_W;
 			*pde = tmppde;
 			break;
 
@@ -229,7 +229,7 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 
 			pte = vtopte(pgva);
 			oldpte = *pte;
-			tmppte = oldpte | L2_AP(AP_KRW);
+			tmppte = oldpte | L2_S_PROT_W;
 			*pte = tmppte;
 			break;
 
