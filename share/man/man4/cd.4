@@ -1,4 +1,4 @@
-.\"	$NetBSD: cd.4,v 1.7 1998/06/19 11:01:53 fair Exp $
+.\"	$NetBSD: cd.4,v 1.8 1998/07/13 12:14:24 hpeyerl Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -328,6 +328,9 @@ Not all drives support this feature.
 .It Dv CDIOCEJECT	
 Eject the
 .Tn CD-ROM .
+
+.It Dv CDIOCLOADUNLOAD
+Cause the ATAPI changer to load or unload discs.
 
 .\".It Dv CDIOCCLOSE
 .\"Tell the drive to close its door and load the media.
