@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.31.2.1 2004/07/15 20:21:52 he Exp $
+#	$NetBSD: IQ80321,v 1.31.2.1.2.1 2005/04/02 21:28:42 he Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -174,6 +174,7 @@ artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 
 atabus* 	at ata? channel ?
