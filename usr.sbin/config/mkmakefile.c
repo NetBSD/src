@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.60 2004/06/04 04:38:28 thorpej Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.61 2004/06/04 07:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -515,6 +515,22 @@ emitincludes(FILE *fp)
 	return (0);
 }
 
+static int
+print_condmkopts(const char *name, void *value, void *arg)
+{
+	struct nvlist *nv;
+	FILE *fp = arg;
+
+	if (ht_lookup(selecttab, name) == 0)
+		return (0);
+
+	for (nv = value; nv != NULL; nv = nv->nv_next)
+		if (fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str) < 0)
+			return (1);
+
+	return (0);
+}
+
 /*
  * Emit appending makeoptions.
  */
@@ -526,5 +542,6 @@ emitappmkoptions(FILE *fp)
 	for (nv = appmkoptions; nv != NULL; nv = nv->nv_next)
 		if (fprintf(fp, "%s+=%s\n", nv->nv_name, nv->nv_str) < 0)
 			return (1);
-	return (0);
+
+	return (ht_enumerate(condmkopttab, print_condmkopts, fp));
 }
