@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.4 1999/11/24 23:13:15 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.5 1999/12/05 20:34:40 fvdl Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -1017,9 +1017,9 @@ softdep_setup_blkmapdep(bp, fs, newblkno)
 	 * Add it to the dependency list for the buffer holding
 	 * the cylinder group map from which it was allocated.
 	 */
+	ACQUIRE_LOCK(&lk);
 	if (newblk_lookup(fs, newblkno, DEPALLOC, &newblk) != 0)
 		panic("softdep_setup_blkmapdep: found block");
-	ACQUIRE_LOCK(&lk);
 	newblk->nb_bmsafemap = bmsafemap = bmsafemap_lookup(bp);
 	LIST_INSERT_HEAD(&bmsafemap->sm_newblkhd, newblk, nb_deps);
 	FREE_LOCK(&lk);
@@ -3709,12 +3709,10 @@ softdep_fsync_mountdev(vp)
 {
 	struct buf *bp, *nbp;
 	struct worklist *wk;
-	int s;
 	
 	if (vp->v_type != VBLK)
 		panic("softdep_fsync_mountdev: vnode not VBLK");
 	ACQUIRE_LOCK(&lk);
-	s = splbio();
 	for (bp = vp->v_dirtyblkhd.lh_first; bp; bp = nbp) {
 		nbp = bp->b_vnbufs.le_next;
 		/* 
@@ -3733,18 +3731,15 @@ softdep_fsync_mountdev(vp)
 			continue;
 		bremfree(bp);
 		bp->b_flags |= B_BUSY;
-		splx(s);
 		FREE_LOCK(&lk);
 		(void) bawrite(bp);
 		ACQUIRE_LOCK(&lk);
-		s = splbio();
 		/*
 		 * Since we may have slept during the I/O, we need 
 		 * to start from a known point.
 		 */
 		nbp = vp->v_dirtyblkhd.lh_first;
 	}
-	splx(s);
 	drain_output(vp, 1);
 	FREE_LOCK(&lk);
 }
@@ -4450,27 +4445,20 @@ getdirtybuf(bpp, waitfor)
 	int waitfor;
 {
 	struct buf *bp;
-	int s;
 
-	s = splbio();
 	for (;;) {
-		if ((bp = *bpp) == NULL) {
-			splx(s);
+		if ((bp = *bpp) == NULL)
 			return (0);
-		}
 		if ((bp->b_flags & B_BUSY) == 0)
 			break;
-		if (waitfor != MNT_WAIT) {
-			splx(s);
+		if (waitfor != MNT_WAIT)
 			return (0);
-		}
 		bp->b_flags |= B_WANTED;
 		FREE_LOCK_INTERLOCKED(&lk);
 		sleep((caddr_t)bp, PRIBIO + 1);
 		ACQUIRE_LOCK_INTERLOCKED(&lk);
 	}
 	if ((bp->b_flags & B_DELWRI) == 0) {
-		splx(s);
 		return (0);
 	}
 #if 1
@@ -4479,7 +4467,6 @@ getdirtybuf(bpp, waitfor)
 #else
 	bp->b_flags |= B_BUSY | B_VFLUSH;
 #endif
-	splx(s);
 	return (1);
 }
 
