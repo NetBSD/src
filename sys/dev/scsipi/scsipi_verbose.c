@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_verbose.c,v 1.22 2004/04/23 21:52:17 itojun Exp $	*/
+/*	$NetBSD: scsipi_verbose.c,v 1.23 2004/08/21 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.22 2004/04/23 21:52:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_verbose.c,v 1.23 2004/08/21 21:29:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -604,14 +604,8 @@ static const struct {
 { 0x00, 0x00, NULL }
 };
 
-static __inline void asc2ascii __P((unsigned char, unsigned char, char *,
-	size_t));
-
-static __inline void
-asc2ascii(asc, ascq, result, l)
-	unsigned char asc, ascq;
-	char *result;
-	size_t l;
+static void
+asc2ascii(u_char asc, u_char ascq, char *result, size_t l)
 {
 	int i = 0;
 
@@ -633,9 +627,7 @@ asc2ascii(asc, ascq, result, l)
 }
 
 void
-scsipi_print_sense_data(sense, verbosity)
-	struct scsipi_sense_data *sense;
-	int verbosity;
+scsipi_print_sense_data(struct scsipi_sense_data *sense, int verbosity)
 {
 	int32_t info;
 	int i, j, k;
@@ -752,9 +744,7 @@ scsipi_print_sense_data(sense, verbosity)
 }
 
 char *
-scsipi_decode_sense(sinfo, flag)
-	void *sinfo;
-	int flag;
+scsipi_decode_sense(void *sinfo, int flag)
 {
 	unsigned char *snsbuf;
 	unsigned char skey;
@@ -816,9 +806,7 @@ scsipi_decode_sense(sinfo, flag)
 }
 
 void
-scsipi_print_sense(xs, verbosity)
-	struct scsipi_xfer *xs;
-	int verbosity;
+scsipi_print_sense(struct scsipi_xfer *xs, int verbosity)
 {
 	scsipi_printaddr(xs->xs_periph);
  	printf(" Check Condition on CDB: ");

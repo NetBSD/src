@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_base.c,v 1.78 2004/08/05 19:45:13 bouyer Exp $	*/
+/*	$NetBSD: scsi_base.c,v 1.79 2004/08/21 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.78 2004/08/05 19:45:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.79 2004/08/21 21:29:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsi_base.c,v 1.78 2004/08/05 19:45:13 bouyer Exp $"
  * Do a scsi operation, asking a device to run as SCSI-II if it can.
  */
 int
-scsi_change_def(periph, flags)
-	struct scsipi_periph *periph;
-	int flags;
+scsi_change_def(struct scsipi_periph *periph, int flags)
 {
 	struct scsi_changedef scsipi_cmd;
 
@@ -81,17 +79,9 @@ scsi_change_def(periph, flags)
  * to associate with the transfer, we need that too.
  */
 int
-scsi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
-	retries, timeout, bp, flags)
-	struct scsipi_periph *periph;
-	struct scsipi_generic *scsipi_cmd;
-	int cmdlen;
-	void *data;
-	size_t datalen;
-	int retries;
-	int timeout;
-	struct buf *bp;
-	int flags;
+scsi_scsipi_cmd(struct scsipi_periph *periph, struct scsipi_generic *scsipi_cmd,
+    int cmdlen, void *data, size_t datalen, int retries, int timeout,
+    struct buf *bp, int flags)
 {
 	struct scsipi_xfer *xs;
 	int error, s;
@@ -137,8 +127,7 @@ scsi_scsipi_cmd(periph, scsipi_cmd, cmdlen, data, datalen,
  * Print out the periph's address info.
  */
 void
-scsi_print_addr(periph)
-	struct scsipi_periph *periph;
+scsi_print_addr(struct scsipi_periph *periph)
 {
 	struct scsipi_channel *chan = periph->periph_channel;
 	struct scsipi_adapter *adapt = chan->chan_adapter;
@@ -156,7 +145,6 @@ scsi_print_addr(periph)
  * Must be called at splbio().
  */
 void
-scsi_kill_pending(periph)
-	struct scsipi_periph *periph;
+scsi_kill_pending(struct scsipi_periph *periph)
 {
 }
