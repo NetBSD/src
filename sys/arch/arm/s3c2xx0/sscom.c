@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.2 2003/03/08 10:59:02 he Exp $ */
+/*	$NetBSD: sscom.c,v 1.3 2003/05/13 06:12:45 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -280,13 +280,13 @@ sscom_output_chunk( struct sscom_softc *sc )
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	n = sc->sc_tbc;
-	space = 16 - ((bus_space_read_2(iot, ioh, SSCOM_UFSTAT) & 
+	space = 16 - ((bus_space_read_2(iot, ioh, SSCOM_UFSTAT) &
 	    UFSTAT_TXCOUNT) >> UFSTAT_TXCOUNT_SHIFT);
 
 	if (n > space)
 		n = space;
 
-	if( n > 0 ){
+	if (n > 0) {
 		bus_space_write_multi_1(iot, ioh, SSCOM_UTXH, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
@@ -406,9 +406,9 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/*
 	 * set default for modem control hook
 	 */
-	if( sc->set_modem_control == NULL )
+	if (sc->set_modem_control == NULL)
 		sc->set_modem_control = sscom_set_modem_control;
-	if( sc->read_modem_status == NULL )
+	if (sc->read_modem_status == NULL)
 		sc->read_modem_status = sscom_read_modem_status;
 
 	/* Disable interrupts before configuring the device. */
@@ -419,7 +419,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	 * Allow kgdb to "take over" this port.  If this is
 	 * the kgdb device, it has exclusive use.
 	 */
-	if( unit == sscom_kgdb_unit) {
+	if (unit == sscom_kgdb_unit) {
 		SET(sc->sc_hwflags, SSCOM_HW_KGDB);
 		sc->sc_ucon = UCON_DEBUGPORT;
 	}
@@ -448,7 +448,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	bus_space_write_1(iot, ioh, SSCOM_UCON, sc->sc_ucon);
 
 	printf("%s: ", sc->sc_dev.dv_xname);
-	if( sc->sc_fifolen > 1 ){
+	if (sc->sc_fifolen > 1) {
 		SET(sc->sc_hwflags, SSCOM_HW_FIFO);
 		printf("txfifo length = %d\n", sc->sc_fifolen);
 	}
@@ -457,7 +457,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	}
 
 #ifdef KGDB
-	if( ISSET(sc->sc_hwflags, SSCOM_HW_KGDB) ){
+	if (ISSET(sc->sc_hwflags, SSCOM_HW_KGDB)) {
 		sscom_kgdb_attached = 1;
 		printf("%s: kgdb\n", sc->sc_dev.dv_xname);
 		sscom_enable_debugport(sc);
@@ -507,7 +507,7 @@ sscom_attach_subr(struct sscom_softc *sc)
 	/* if there are no enable/disable functions, assume the device
 	   is always enabled */
 
-	if( ISSET(sc->sc_hwflags, SSCOM_HW_CONSOLE) )
+	if (ISSET(sc->sc_hwflags, SSCOM_HW_CONSOLE))
 		sscom_enable_debugport(sc);
 	else 
 		sscom_disable_txrxint(sc);
@@ -1003,7 +1003,7 @@ cflag2lcr(tcflag_t cflag)
 {
 	u_char lcr = ULCON_PARITY_NONE;
 
-	switch( cflag & (PARENB|PARODD) ){
+	switch (cflag & (PARENB|PARODD)) {
 	case PARENB|PARODD: lcr = ULCON_PARITY_ODD; break;
 	case PARENB: lcr = ULCON_PARITY_EVEN;
 	}
@@ -1322,7 +1322,7 @@ sscomstart(struct tty *tp)
 	sscom_output_chunk(sc);
 
 	/* Enable transmit completion interrupts if necessary. */
-	if( (sc->sc_hwflags & SSCOM_HW_TXINT) == 0 )
+	if ((sc->sc_hwflags & SSCOM_HW_TXINT) == 0)
 		sscom_enable_txint(sc);
 
 	SSCOM_UNLOCK(sc);
@@ -1400,7 +1400,7 @@ sscom_rxsoft(struct sscom_softc *sc, struct tty *tp)
 	while (cc) {
 		code = get[0];
 		rsr = get[1];
-		if (rsr){
+		if (rsr) {
 			if (ISSET(rsr, UERSTAT_OVERRUN)) {
 				sc->sc_overflows++;
 				if (sc->sc_errors++ == 0)
@@ -1604,7 +1604,7 @@ sscomintr(void *arg)
 				put[1] = uerstat;
 				cn_check_magic(sc->sc_tty->t_dev,
 					       put[0], sscom_cnm_state);
-				if( !cn_trapped ){
+				if (!cn_trapped) {
 					put += 2;
 					if (put >= end)
 						put = sc->sc_rbuf;
@@ -1727,7 +1727,7 @@ sscomintr(void *arg)
 		 * If we've delayed a parameter change, do it
 		 * now, and restart * output.
 		 */
-		if( (ufstat & UFSTAT_TXCOUNT) == 0 ){
+		if ((ufstat & UFSTAT_TXCOUNT) == 0) {
 			/* XXX: we should check transmitter empty also */
 
 			if (sc->sc_heldchange) {
@@ -1743,7 +1743,7 @@ sscomintr(void *arg)
 		 * See if data can be transmitted as well. Schedule tx
 		 * done event if no data left and tty was marked busy.
 		 */
-		if ( !ISSET(ufstat,UFSTAT_TXFULL) ){
+		if ( !ISSET(ufstat,UFSTAT_TXFULL)) {
 			/* 
 			 * Output the next chunk of the contiguous
 			 * buffer, if any.
@@ -1756,7 +1756,7 @@ sscomintr(void *arg)
 				 * Disable transmit sscompletion
 				 * interrupts if necessary.
 				 */
-				if( sc->sc_hwflags & SSCOM_HW_TXINT )
+				if (sc->sc_hwflags & SSCOM_HW_TXINT)
 					sscom_disable_txint(sc);
 				if (sc->sc_tx_busy) {
 					sc->sc_tx_busy = 0;
@@ -1886,7 +1886,7 @@ sscomcngetc(dev_t dev)
 	}
 
 	/* block until a character becomes available */
-	while( !sscom_rxrdy(sscomconstag, sscomconsioh) )
+	while (!sscom_rxrdy(sscomconstag, sscomconsioh))
 		;
 
 	c = sscom_getc(sscomconstag, sscomconsioh);
@@ -1914,7 +1914,7 @@ sscomcnputc(dev_t dev, int c)
 
 	int cin, stat;
 	if (sscom_readaheadcount < MAX_READAHEAD && 
-	    sscom_rxrdy(sscomconstag, sscomconsioh) ){
+	    sscom_rxrdy(sscomconstag, sscomconsioh)) {
 	    
 		int cn_trapped = 0;
 		cin = sscom_getc(sscomconstag, sscomconsioh);
@@ -1957,7 +1957,7 @@ sscom_kgdb_attach(bus_space_tag_t iot, const struct sscom_uart_info *config,
 {
 	int res;
 
-	if (iot == sscomconstag && config->unit == sscomconsunit){
+	if (iot == sscomconstag && config->unit == sscomconsunit) {
 		printf( "console==kgdb_port (%d): kgdb disabled\n", sscomconsunit);
 		return EBUSY; /* cannot share with console */
 	}
@@ -1982,7 +1982,7 @@ sscom_kgdb_getc(void *arg)
 	int c, stat;
 
 	/* block until a character becomes available */
-	while( !sscom_rxrdy(sscom_kgdb_iot, sscom_kgdb_ioh) )
+	while (!sscom_rxrdy(sscom_kgdb_iot, sscom_kgdb_ioh))
 		;
 
 	c = sscom_getc(sscom_kgdb_iot, sscom_kgdb_ioh);
