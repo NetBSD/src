@@ -23,8 +23,8 @@ struct p64h2apic_softc
 	pcitag_t sc_tag;
 };
 
-CFATTACH_DECL(p64h2apic, sizeof(struct p64h2apic_softc), p64h2match,
-    p64h2attach, NULL, NULL)
+CFATTACH_DECL(p64h2apic, sizeof(struct p64h2apic_softc),
+    p64h2match, p64h2attach, NULL, NULL);
 
 int	p64h2print __P((void *, const char *pnp));
 
