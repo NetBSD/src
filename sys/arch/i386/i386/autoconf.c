@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.41 1999/09/17 19:59:42 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.42 1999/10/18 19:37:28 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -190,7 +190,7 @@ matchbiosdisks()
 
 			error = VOP_OPEN(tv, FREAD, NOCRED, 0);
 			if (error) {
-				vrele(tv);
+				vput(tv);
 				continue;
 			}
 			error = vn_rdwr(UIO_READ, tv, mbr, DEV_BSIZE, 0,
@@ -227,7 +227,7 @@ matchbiosdisks()
 				}
 			}
 			i386_alldisks->dl_nativedisks[n].ni_nmatches = m;
-			vrele(tv);
+			vput(tv);
 		}
 	}
 }
@@ -287,7 +287,7 @@ match_harddisk(dv, bid)
 #endif
 			printf("findroot: can't open dev %s%c (%d)\n",
 			       dv->dv_xname, 'a' + bid->partition, error);
-		vrele(tmpvn);
+		vput(tmpvn);
 		return(0);
 	}
 	error = VOP_IOCTL(tmpvn, DIOCGDINFO, (caddr_t)&label, FREAD, NOCRED, 0);
@@ -309,8 +309,7 @@ match_harddisk(dv, bid)
 
 closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED, 0);
-	vrele(tmpvn);
-
+	vput(tmpvn);
 	return(found);
 }
 
