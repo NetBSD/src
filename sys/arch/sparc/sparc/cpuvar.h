@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.35 2001/06/08 09:45:50 mrg Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.36 2001/07/07 20:09:15 mrg Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,10 +93,12 @@ struct xpmsg {
 #define	XPMSG_SAVEFPU			1
 #define	XPMSG_PAUSECPU			2
 #define	XPMSG_RESUMECPU			3
+#define	XPMSG_FUNC			4
 #define	XPMSG_DEMAP_TLB_PAGE		10
 #define	XPMSG_DEMAP_TLB_SEGMENT		11
 #define	XPMSG_DEMAP_TLB_REGION		12
 #define	XPMSG_DEMAP_TLB_CONTEXT		13
+#define	XPMSG_DEMAP_TLB_ALL		14
 #define	XPMSG_VCACHE_FLUSH_PAGE		20
 #define	XPMSG_VCACHE_FLUSH_SEGMENT	21
 #define	XPMSG_VCACHE_FLUSH_REGION	22
@@ -104,6 +106,14 @@ struct xpmsg {
 #define	XPMSG_VCACHE_FLUSH_RANGE	24
 
 	union {
+		struct xpmsg_func {
+			int	(*func)(int, int, int, int);
+			int	arg0;
+			int	arg1;
+			int	arg2;
+			int	arg3;
+			int	retval;
+		} xpmsg_func;
 		struct xpmsg_flush_page {
 			int	ctx;
 			int	va;
@@ -127,6 +137,16 @@ struct xpmsg {
 		} xpmsg_flush_range;
 	} u;
 };
+
+/*
+ * This must be locked around all message transactions to ensure only
+ * one CPU is generating them.
+ * XXX deal with different level priority IPI's.
+ */
+extern struct simplelock xpmsg_lock;
+
+#define LOCK_XPMSG()	simple_lock(&xpmsg_lock);
+#define UNLOCK_XPMSG()	simple_unlock(&xpmsg_lock);
 
 /*
  * The cpuinfo structure. This structure maintains information about one
@@ -380,9 +400,9 @@ struct cpu_info {
 #define CPUFLG_SUN4CACHEBUG	0x8	/* trap page can't be cached */
 #define CPUFLG_CACHE_MANDATORY	0x10	/* if cache is on, don't use
 					   uncached access */
-#define CPUFLG_STARTUP		0x2000	/* CPU is waiting for startup */
-#define CPUFLG_PAUSED		0x4000	/* CPU is paused */
-#define CPUFLG_GOTMSG		0x8000	/* CPU got an IPI */
+#define CPUFLG_PAUSED		0x2000	/* CPU is paused */
+#define CPUFLG_GOTMSG		0x4000	/* CPU got an IPI */
+#define CPUFLG_READY		0x8000	/* CPU available for IPI */
 
 
 #define CPU_INFO_ITERATOR		int

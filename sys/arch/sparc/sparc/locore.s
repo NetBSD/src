@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 2001/06/12 21:01:26 uwe Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 2001/07/07 20:09:15 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3942,6 +3942,7 @@ Lgandul:	nop
 	 clr	%o0			! our frame arg is ignored
 	/*NOTREACHED*/
 
+#if defined(MULTIPROCESSOR)
 	/*
 	 * Entry point for non-boot CPUs in MP systems.
 	 */
@@ -3982,19 +3983,16 @@ _C_LABEL(cpu_hatch):
 	call	_C_LABEL(cpu_setup)
 	 ld	[%o0+%lo(_C_LABEL(cpu_hatch_sc))], %o0
 
-	/* Wait for our flags to go non-STARTUP */
-	set	CPUINFO_VA+CPUINFO_FLAGS, %l1
+	/* Wait for go_smp_cpus to go */
+	set	_C_LABEL(go_smp_cpus), %l1
 	ld	[%l1], %l0
-/* XXX hard to include <sparc/sparc/cpuvar.h> */
-#define CPUFLG_STARTUP 0x2000
-	set	CPUFLG_STARTUP, %l2
 1:
-	and	%l0, %l2, %l0
-	cmp	%l0, %l2
+	cmp	%l0, %g0
 	be	1b
 	 ld	[%l1], %l0
 
-#if defined(MULTIPROCESSOR) && 0	/* doesn't quite work yet */
+#if 0	/* doesn't quite work yet */
+
 	set	_C_LABEL(proc0), %g3		! p = proc0
 	sethi	%hi(_C_LABEL(sched_whichqs)), %g2
 	sethi	%hi(cpcb), %g6
@@ -4025,6 +4023,8 @@ _C_LABEL(cpu_hatch):
 	 nop
 	/*NOTREACHED*/
 #endif
+
+#endif /* MULTIPROCESSOR */
 
 #include "sigcode_state.s"
 
