@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.20 2003/04/17 23:00:49 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2003/06/05 14:30:11 dsl Exp $
 
 BOOTMODEL=	big
 IMAGE=		ramdisk-${BOOTMODEL}.fs
-IMAGESIZE=	2300k
+IMAGESIZE=	2400k
 IMAGEDEPENDS= 	disktab.preinstall \
 		${NETBSDSRCDIR}/usr.sbin/dhcp/clientscript/dhclient-script \
 		${DESTDIR}/usr/mdec/biosboot_com0.sym
