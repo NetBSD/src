@@ -1,4 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2002/09/04 06:39:58 junyoung Exp $
+#	$NetBSD: Makefile,v 1.14 2002/09/04 16:57:47 junyoung Exp $
+
+.ifndef HOSTPROG
+.include <bsd.obj.mk>
+.endif
 
 PROG=	makewhatis
 SRCS=	makewhatis.c config.c
