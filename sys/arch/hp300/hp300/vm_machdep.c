@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.7 1994/05/05 10:11:38 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.8 1994/05/19 09:01:55 mycroft Exp $
  */
 
 #include "param.h"
@@ -121,6 +121,26 @@ cpu_exit(p)
 	kmem_free(kernel_map, (vm_offset_t)p->p_addr, ctob(UPAGES));
 	swtch_exit();
 	/* NOTREACHED */
+}
+
+int
+cpu_coredump(p)
+	struct proc *p;
+{
+
+#ifdef COMPAT_HPUX
+	/*
+	 * BLETCH!  If we loaded from an HPUX format binary file
+	 * we have to dump an HPUX style user struct so that the
+	 * HPUX debuggers can grok it.
+	 */
+	if (p->p_addr->u_pcb.pcb_flags & PCB_HPUXBIN)
+		return (hpuxdumpu(vp, cred));
+	else
+#endif
+	return (vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *) NULL,
+	    p));
 }
 
 /*
