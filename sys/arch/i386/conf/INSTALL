@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.135.2.16 2001/12/29 21:09:04 sommerfeld Exp $
+#	$NetBSD: INSTALL,v 1.135.2.17 2002/01/28 04:21:36 sommerfeld Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -69,6 +69,8 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -572,7 +574,7 @@ uhub*	at usb?
 uhub*	at uhub? port ? configuration ? interface ?
 
 # USB HID device
-#uhidev*	at uhub? port ? configuration ? interface ?
+uhidev*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 #ums*	at uhidev? reportid ?

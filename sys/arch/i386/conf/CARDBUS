@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.28.2.8 2001/12/29 21:09:03 sommerfeld Exp $
+#	$NetBSD: CARDBUS,v 1.28.2.9 2002/01/28 04:21:35 sommerfeld Exp $
 #
 #	CARDBUS: GENERIC + CardBus support.  Additionally, some
 #	things typically not found on laptops have been commented out.
@@ -8,7 +8,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident		"CARDBUS-$Revision: 1.28.2.8 $"
+#ident		"CARDBUS-$Revision: 1.28.2.9 $"
 
 maxusers	32		# estimated number of users
 
@@ -45,6 +45,11 @@ options 	MTRR		# memory-type range register syscall support
 #options 	REALBASEMEM=639		# size of base memory (in KB)
 #options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
+# following makes ARMADA M700's happy
+#options 	RBUS_MIN_START=0x20000000
+#options 	RBUS_IO_BASE=0x600
+#options 	RBUS_IO_SIZE=0x100
+
 # Standard system options
 
 options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
@@ -65,6 +70,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -256,6 +263,7 @@ pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 #pcmb*	at pci? dev ? function ?	# PCI-MCA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+ppb*	at cardbus? dev ? function ?	# Cardbus-PCI bridges (www.magma.com)
 # XXX 'puc's aren't really bridges, but there's no better place for them here
 puc*	at pci? dev ? function ?	# PCI "universal" comm. cards
 
@@ -452,8 +460,8 @@ esp*	at pcmcia? function ?		# Qlogic ESP406/FAS408 SCSI
 #wds1	at isa? port 0x358 irq 11 drq 5
 
 # CardBus SCSI cards
-ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 adv*	at cardbus? dev ? function ?	# AdvanSys 1200[A,B], 9xx[U,UA] SCSI
+ahc*	at cardbus? dev ? function ?	# Adaptec ADP-1480
 
 # MCA SCSI cards
 #aha*	at mca? slot ?			# Adaptec AHA-1640
@@ -779,6 +787,7 @@ clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 emuxki*	at pci? dev ? function ?	# Creative SBLive! and PCI512
+esa*	at pci? dev ? function ?	# ESS Allegro-1 / Maestro-3 PCI Audio
 esm*	at pci? dev ? function ?	# ESS Maestro-1/2/2e PCI Audio Accelerator
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
 fms*	at pci? dev ? function ?	# Forte Media FM801
@@ -831,6 +840,7 @@ audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at emuxki?
+audio*	at esa?
 audio*	at esl?
 audio*	at esm?
 audio*	at eso?
