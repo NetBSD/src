@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.10 1997/07/28 17:58:56 mark Exp $ */
+/* $NetBSD: mainbus.c,v 1.10.2.1 1997/10/15 05:41:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -39,7 +39,6 @@
  * mainbus configuration
  *
  * Created      : 15/12/94
- * Last updated : 03/07/95
  */
 
 #include <sys/param.h>
@@ -54,31 +53,55 @@
 #include <arm32/mainbus/mainbus.h>
 #include "locators.h"
 
+/*
+ * mainbus is a root device so we a bus space tag to pass to children
+ *
+ * The tag is provided by mainbus_io.c and mainbus_io_asm.S
+ */
+
 extern struct bus_space mainbus_bs_tag;
 
-int mainbusmatch __P((struct device *, void *, void *));
-void mainbusattach __P((struct device *, struct device *, void *));
-int mainbusprint __P((void *aux, const char *mainbus));
-void mainbusscan __P((struct device *parent, void *match));
+/* Prototypes for functions provided */
+
+static int  mainbusmatch  __P((struct device *, struct cfdata *, void *));
+static void mainbusattach __P((struct device *, struct device *, void *));
+static int  mainbusprint  __P((void *aux, const char *mainbus));
+static int  mainbussearch __P((struct device *, struct cfdata *, void *));
+
+/* attach and device structures for the device */
 
 struct cfattach mainbus_ca = {
 	sizeof(struct device), mainbusmatch, mainbusattach
 };
 
 struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL, 1
+	NULL, "mainbus", DV_DULL, 0
 };
 
-int
-mainbusmatch(parent, match, aux)
+/*
+ * int mainbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+ *
+ * Always match for unit 0
+ */
+
+static int
+mainbusmatch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
 	void *aux;
 {
-	return (1);
+	if (cf->cf_unit == 0)
+		return(1);
+	return (0);
 }
 
-int
+/*
+ * int mainbusprint(void *aux, const char *mainbus)
+ *
+ * print routine used during config of children
+ */
+
+static int
 mainbusprint(aux, mainbus)
 	void *aux;
 	const char *mainbus;
@@ -98,38 +121,53 @@ mainbusprint(aux, mainbus)
 	return (QUIET);
 }
 
+/*
+ * int mainbussearch(struct device *parent, struct device *self, void *aux)
+ *
+ * search routine used during the config of children
+ */
 
-void
-mainbusscan(parent, match)
+static int
+mainbussearch(parent, cf, aux)
 	struct device *parent;
-	void *match;
+	struct cfdata *cf;
+	void *aux;
 {
-	struct device *dev = match;
-	struct cfdata *cf = dev->dv_cfdata;
+	struct mainbus_softc *sc = (struct mainbus_softc *)parent;
 	struct mainbus_attach_args mb;
+	int tryagain;
 
-	if (cf->cf_fstate == FSTATE_STAR)
-		panic("eekkk, I'm stuffed");
+	do {
+		if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
+			mb.mb_iobase = MAINBUSCF_BASE_DEFAULT;
+			mb.mb_iosize = 0;
+			mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
+			mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
+		} else {    
+			mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
+			mb.mb_iosize = 0;
+			mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
+			mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
+		}
+		mb.mb_iot = &mainbus_bs_tag;
 
-	if (cf->cf_loc[MAINBUSCF_BASE] == MAINBUSCF_BASE_DEFAULT) {
-		mb.mb_iobase = MAINBUSCF_BASE_DEFAULT;
-		mb.mb_iosize = 0;
-		mb.mb_drq = MAINBUSCF_DACK_DEFAULT;
-		mb.mb_irq = MAINBUSCF_IRQ_DEFAULT;
-	} else {    
-		mb.mb_iobase = cf->cf_loc[MAINBUSCF_BASE] + IO_CONF_BASE;
-		mb.mb_iosize = 0;
-		mb.mb_drq = cf->cf_loc[MAINBUSCF_DACK];
-		mb.mb_irq = cf->cf_loc[MAINBUSCF_IRQ];
-	}
-	mb.mb_iot = &mainbus_bs_tag;
-	if ((*cf->cf_attach->ca_match)(parent, dev, &mb) > 0)
-		config_attach(parent, dev, &mb, mainbusprint);
-	else
-		free(dev, M_DEVBUF);
+		tryagain = 0;
+		if ((*cf->cf_attach->ca_match)(parent, cf, &mb) > 0) {
+			config_attach(parent, cf, &mb, mainbusprint);
+/*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
+		}
+	} while (tryagain);
+
+	return (0);
 }
 
-void
+/*
+ * void mainbusattach(struct device *parent, struct device *self, void *aux)
+ *
+ * probe and attach all children
+ */
+
+static void
 mainbusattach(parent, self, aux)
 	struct device *parent;
 	struct device *self;
@@ -137,7 +175,7 @@ mainbusattach(parent, self, aux)
 {
 	printf("\n");
 
-	config_scan(mainbusscan, self);
+	config_search(mainbussearch, self, NULL);
 }
 
 /* End of mainbus.c */

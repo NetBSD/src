@@ -1,4 +1,4 @@
-/* $NetBSD: trap.h,v 1.2 1996/10/16 19:32:52 ws Exp $ */
+/*	$NetBSD: trap.h,v 1.2.10.1 1997/10/15 05:38:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -39,14 +39,20 @@
  */
 
 /*
- * Instruction to use as a user space break point.
+ * Instructions used for breakpoints.
  *
- * This is an undefined instruction.
+ * These are an undefined instructions.
  * Technically the userspace breakpoint could be a SWI
  * but we want to keep this the same as IPKDB which
  * needs an undefined instruction as a break point.
+ * Ideally ARM would define several standard instruction
+ * sequences for use as breakpoints.
  */
 
-#define USER_BREAKPOINT	0xe6000011
+#define GDB_BREAKPOINT		0xe6000011	/* Used by GDB */
+#define IPKDB_BREAKPOINT	0xe6000010	/* Used by IPKDB */
+#define KERNEL_BREAKPOINT	0xe7ffffff	/* Used by DDB */
+
+#define USER_BREAKPOINT		GDB_BREAKPOINT
 
 /* End of trap.h */

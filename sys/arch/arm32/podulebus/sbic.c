@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.6.10.2 1997/08/27 22:17:30 thorpej Exp $ */
+/* $NetBSD: sbic.c,v 1.6.10.3 1997/10/15 05:46:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -629,10 +629,10 @@ sbic_scsidone(acb, stat)
 			bzero(ss, sizeof(*ss));
 			ss->opcode = REQUEST_SENSE;
 			ss->byte2 = slp->scsipi_scsi.lun << 5;
-			ss->length = sizeof(struct scsi_sense_data);
+			ss->length = sizeof(struct scsipi_sense_data);
 			acb->clen = sizeof(*ss);
 			acb->sc_kv.dc_addr = (char *)&xs->sense.scsi_sense;
-			acb->sc_kv.dc_count = sizeof(struct scsi_sense_data);
+			acb->sc_kv.dc_count = sizeof(struct scsipi_sense_data);
 
 			acb->flags = ACB_ACTIVE | ACB_CHKSENSE | ACB_DATAIN;
 			bzero(acb->sc_kv.dc_addr, acb->clen);

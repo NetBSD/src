@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.20 1997/07/28 18:07:10 mark Exp $	*/
+/*	$NetBSD: fd.c,v 1.20.2.1 1997/10/15 05:40:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -78,11 +78,11 @@
 #include <machine/cpu.h>
 #include <machine/irqhandler.h>
 #include <machine/conf.h>
-#include <machine/iomd.h>
 #include <machine/io.h>
 #include <machine/katelib.h>
 #include <machine/bus.h>
-#include <arm32/mainbus/mainbus.h>
+#include <arm32/iomd/iomdreg.h>
+#include <arm32/mainbus/piocvar.h>
 #include <arm32/mainbus/fdreg.h>
 
 #include "locators.h"
@@ -137,7 +137,7 @@ struct fdc_softc {
 };
 
 /* controller driver configuration */
-int fdcprobe __P((struct device *, void *, void *));
+int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 #ifdef NEWCONFIG
 void fdcforceintr __P((void *));
@@ -216,7 +216,7 @@ struct fd_softc {
 };
 
 /* floppy driver configuration */
-int fdprobe __P((struct device *, void *, void *));
+int fdprobe __P((struct device *, struct cfdata *, void *));
 void fdattach __P((struct device *, struct device *, void *));
 
 static fiqhandler_t fiqhandler;
@@ -256,24 +256,24 @@ __inline struct fd_type *fd_dev_to_type __P((struct fd_softc *, dev_t));
 int fdformat __P((dev_t, struct ne7_fd_formb *, struct proc *));
 
 int
-fdcprobe(parent, match, aux)
+fdcprobe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
-	register struct mainbus_attach_args *mb = aux;
+	struct pioc_attach_args *pa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int rv;
 
-	/* We need a base address */
-	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+	if (pa->pa_name && strcmp(pa->pa_name, "fdc") != 0)
 		return(0);
 
-	iot = mb->mb_iot;
+	iot = pa->pa_iot;
 	rv = 0;
 
 	/* Map the i/o space. */
-	if (bus_space_map(iot, mb->mb_iobase, FDC_NPORT, 0, &ioh))
+	if (bus_space_map(iot, pa->pa_iobase + pa->pa_offset, FDC_NPORT, 0, &ioh))
 		return 0;
 
 	/* reset */
@@ -288,13 +288,12 @@ fdcprobe(parent, match, aux)
 	out_fdc(iot, ioh, 2);
 
 #ifdef NEWCONFIG
-	/* XXX no IOBASEUNK defined? */
-	if (mb->mb_iobase == IOBASEUNK || mb->mb_drq == DRQUNK)
+	if (pa->pa_iobase == PIOCCF_BASE_DEFAULT || pa->pa_drq == PIOCCF_DACK_DEFAULT)
 		return 0;
 
-	if (mb->mb_irq == IRQUNK) {
-		mb->mb_irq = isa_discoverintr(fdcforceintr, aux);
-		if (mb->mb_irq == IRQNONE)
+	if (pa->pa_irq == PIOCCF_IRQ_DEFAULT) {
+		pa->pa_irq = isa_discoverintr(fdcforceintr, aux);
+		if (pa->pa_irq == IRQNONE)
 			goto out;
 
 		/* reset it again */
@@ -305,7 +304,7 @@ fdcprobe(parent, match, aux)
 #endif
 
 	rv = 1;
-	mb->mb_iosize = FDC_NPORT;
+	pa->pa_iosize = FDC_NPORT;
 
  out:
 	bus_space_unmap(iot, ioh, FDC_NPORT);
@@ -367,20 +366,20 @@ fdcattach(parent, self, aux)
 	struct fdc_softc *fdc = (void *)self;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct mainbus_attach_args *mb = aux;
+	struct pioc_attach_args *pa = aux;
 	struct fdc_attach_args fa;
 	int type;
 
-	iot = mb->mb_iot;
+	iot = pa->pa_iot;
 
 	/* Re-map the I/O space. */
-	if (bus_space_map(iot, mb->mb_iobase, FDC_NPORT, 0, &ioh))
+	if (bus_space_map(iot, pa->pa_iobase + pa->pa_offset, FDC_NPORT, 0, &ioh))
 		panic("fdcattach: couldn't map I/O ports");
 
 	fdc->sc_iot = iot;
 	fdc->sc_ioh = ioh;
 
-	fdc->sc_drq = mb->mb_iobase + mb->mb_drq;
+	fdc->sc_drq = pa->pa_iobase + pa->pa_offset + pa->pa_drq;
 	fdc->sc_state = DEVIDLE;
 	TAILQ_INIT(&fdc->sc_drives);
 
@@ -390,10 +389,10 @@ fdcattach(parent, self, aux)
 	at_setup_dmachan(fdc->sc_drq, FDC_MAXIOSIZE);
 	isa_establish(&fdc->sc_id, &fdc->sc_dev);
 #endif
-	fdc->sc_ih = intr_claim(mb->mb_irq, IPL_BIO, "fdc",
+	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
 	if (!fdc->sc_ih)
-		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, mb->mb_irq);
+		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
 
 #if 0
 	/*
@@ -419,20 +418,20 @@ fdcattach(parent, self, aux)
 }
 
 int
-fdprobe(parent, match, aux)
+fdprobe(parent, cf, aux)
 	struct device *parent;
-	void *match, *aux;
+	struct cfdata *cf;
+	void *aux;
 {
 	struct fdc_softc *fdc = (void *)parent;
-	struct cfdata *cf = match;
 	struct fdc_attach_args *fa = aux;
 	int drive = fa->fa_drive;
 	bus_space_tag_t iot = fdc->sc_iot;
 	bus_space_handle_t ioh = fdc->sc_ioh;
 	int n;
 
-	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT &&
-	    cf->cf_loc[FDCCF_DRIVE] != drive)
+	if (cf->cf_loc[FDCCF_DRIVE] != FDCCF_DRIVE_DEFAULT
+	  && cf->cf_loc[FDCCF_DRIVE] != drive)
 		return 0;
 	/*
 	 * XXX
@@ -1058,7 +1057,7 @@ loop:
 			fiqhandler.fh_func = floppy_read_fiq;
 		else
 			fiqhandler.fh_func = floppy_write_fiq;
-		fiqhandler.fh_r9 = IOMD_FIQRQ;
+		fiqhandler.fh_r9 = IOMD_BASE + (IOMD_FIQRQ << 2);
 		fiqhandler.fh_r10 = fd->sc_nbytes;
 		fiqhandler.fh_r11 = (u_int)(bp->b_data + fd->sc_skip);
 		fiqhandler.fh_r12 = fdc->sc_drq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.15.8.1 1997/08/27 22:17:27 thorpej Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.15.8.2 1997/10/15 05:46:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -58,6 +58,7 @@
 #include <machine/pmap.h>
 #include <machine/io.h>
 #include <machine/irqhandler.h>
+#include <machine/bootconfig.h>
 #include <arm32/podulebus/podulebus.h>
 #include <arm32/podulebus/sfasreg.h>
 #include <arm32/podulebus/sfasvar.h>
@@ -66,7 +67,7 @@
 #include <arm32/podulebus/podules.h>
 
 void ptscattach __P((struct device *, struct device *, void *));
-int  ptscmatch  __P((struct device *, void *, void *));
+int  ptscmatch  __P((struct device *, struct cfdata *, void *));
 int ptsc_scsicmd __P((struct scsipi_xfer *));
 
 struct scsipi_adapter ptsc_scsiswitch = {
@@ -103,9 +104,10 @@ void ptsc_led		 __P((struct sfas_softc *sc, int mode));
  * if we are a Power-tec SCSI-2 card
  */
 int
-ptscmatch(pdp, match, auxp)
+ptscmatch(pdp, cf, auxp)
 	struct device	*pdp;
-	void		*match, *auxp;
+	struct cfdata	*cf;
+	void		*auxp;
 {
 	struct podule_attach_args *pa = (struct podule_attach_args *)auxp;
 
@@ -188,6 +190,10 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_link.openings	    = 1;
 	sc->sc_softc.sc_link.scsipi_scsi.max_target     = 7;
 	sc->sc_softc.sc_link.type = BUS_SCSI;
+
+	/* Provide an override for the host id */
+	(void)get_bootconf_option(boot_args, "ptsc.hostid",
+	    BOOTOPT_TYPE_INT, &sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 
 	printf(" host=%d", sc->sc_softc.sc_link.scsipi_scsi.adapter_target);
 

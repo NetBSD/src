@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide_io_asm.S,v 1.2 1997/03/15 18:09:41 is Exp $	*/
+/*	$NetBSD: rapide_io_asm.S,v 1.2.4.1 1997/10/15 05:46:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -47,12 +47,6 @@ pc	.req	r15
 
 	.global	_rapide_rm_4
 _rapide_rm_4:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 	add	r0, r1, r2
 	mov	r1, r3
 
@@ -121,12 +115,6 @@ rapide_rm_4_m128_loop:
 
 	.global	_rapide_wm_4
 _rapide_wm_4:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
 	add	r0, r1, r2
 	mov	r1, r3
 	ldr	r2, [sp, #0]

@@ -1,4 +1,4 @@
-/* $NetBSD: mouse.h,v 1.3 1996/10/14 22:41:59 mark Exp $ */
+/*	$NetBSD: mouse.h,v 1.3.10.1 1997/10/15 05:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) Mark Brinicombe 1996 All rights reserved

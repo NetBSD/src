@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.9.2.3 1997/10/14 10:24:57 thorpej Exp $	*/
+/*	$NetBSD: if_se.c,v 1.9.2.4 1997/10/15 05:37:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -31,10 +31,14 @@
  */
 
 /*
- * Written by Ian Dall <ian.dall@dsto.defence.gov.au> Feb 3, 1997
- */
-/*
  * Driver for Cabletron EA41x scsi ethernet adaptor.
+ *
+ * Written by Ian Dall <ian.dall@dsto.defence.gov.au> Feb 3, 1997
+ *
+ * Acknowledgement: Thanks are due to Philip L. Budne <budd@cs.bu.edu>
+ * who reverse engineered the the EA41x. In developing this code,
+ * Phil's userland daemon "etherd", was refered to extensively in lieu
+ * of accurate documentation for the device.
  *
  * This is a weird device! It doesn't conform to the scsi spec in much
  * at all. About the only standard command supported in inquiry. Most
@@ -123,19 +127,31 @@
 /* Make this big enough for an ETHERMTU packet in promiscuous mode. */
 #define MAX_SNAP	(ETHERMTU + sizeof(struct ether_header) + \
 			 SE_PREFIX + ETHER_CRC)
-#define RBUF_LEN     (16 * 1024)
 
-/*
- * se_poll and se_poll0 are the normal polling rate and the
- * minimum polling rate respectively. If se_poll0 should be
- * chosen so that at maximum ethernet speed, we will read nearly
- * full buffers. se_poll should be chosen for reasonable maximum
- * latency.
+/* 10 full length packets appears to be the max ever returned. 16k is OK */
+#define RBUF_LEN	(16 * 1024)
+
+/* Tuning parameters: 
+ * The EA41x only returns a maximum of 10 packets (regardless of size).
+ * We will attempt to adapt to polling fast enough to get RDATA_GOAL packets
+ * per read
+ */
+#define RDATA_MAX 10
+#define RDATA_GOAL 8
+
+/* se_poll and se_poll0 are the normal polling rate and the minimum
+ * polling rate respectively. se_poll0 should be chosen so that at
+ * maximum ethernet speed, we will read nearly RDATA_MAX packets. se_poll
+ * should be chosen for reasonable maximum latency.
+ * In practice, if we are being saturated with min length packets, we
+ * can't poll fast enough. Polling with zero delay actually
+ * worsens performance. se_poll0 is enforced to be always at least 1
  */
 #define SE_POLL 40		/* default in milliseconds */
-#define SE_POLL0 20		/* Default in milliseconds */
-int se_poll = 0; /* Delay in ticks set at attach time */
+#define SE_POLL0 10		/* default in milliseconds */
+int se_poll = 0;		/* Delay in ticks set at attach time */
 int se_poll0 = 0;
+int se_max_received = 0;	/* Instrumentation */
 
 #define	PROTOCMD(p, d) \
 	((d) = (p))
@@ -174,6 +190,7 @@ struct se_softc {
 	int sc_debug;
 	int sc_flags;
 #define SE_NEED_RECV 0x1
+	int sc_last_timeout;
 };
 
 cdev_decl(se);
@@ -232,9 +249,9 @@ struct scsipi_device se_switch = {
 
 struct scsipi_inquiry_pattern se_patterns[] = {
 	{T_PROCESSOR, T_FIXED,
-	 "CABLETRN",	     "EA412/14/19",		    ""},
+	 "CABLETRN",         "EA412",                 ""},
 	{T_PROCESSOR, T_FIXED,
-	 "Cabletrn",	     "EA412/",			    ""},
+	 "Cabletrn",         "EA412",                 ""},
 };
 
 /*
@@ -500,28 +517,31 @@ sedone(xs)
 			/* Reschedule after a delay */
 			timeout(se_recv, (void *)sc, se_poll);
 		} else {
-			int n;
+			int n, ntimeo;
 			n = se_read(sc, xs->data, xs->datalen - xs->resid);
-
-			if(n > 0) {
-#ifdef SEDEBUG
-				if (sc->sc_debug)
-					printf("sedone: received %d packets\n",
-					    n);
-#endif
-				if(ifp->if_snd.ifq_head)
-					/* Output is
-					 * pending. Do next
-					 * recv after the next
-					 * send. */
-					sc->sc_flags |= SE_NEED_RECV;
-				else {
-					timeout(se_recv, (void *)sc, se_poll0);
-				}
-			} else {
-				/* Reschedule after a delay */
-				timeout(se_recv, (void *)sc, se_poll);
+			if (n > se_max_received)
+				se_max_received = n;
+			if (n == 0)
+				ntimeo = se_poll;
+			else if (n >= RDATA_MAX)
+				ntimeo = se_poll0;
+			else {
+				ntimeo = sc->sc_last_timeout;
+				ntimeo = (ntimeo * RDATA_GOAL)/n;
+				ntimeo = (ntimeo < se_poll0?
+					  se_poll0: ntimeo);
+				ntimeo = (ntimeo > se_poll?
+					  se_poll: ntimeo);
 			}
+			sc->sc_last_timeout = ntimeo;
+			if (ntimeo == se_poll0  &&
+			    ifp->if_snd.ifq_head)
+				/* Output is pending. Do next recv
+				 * after the next send.  */
+				sc->sc_flags |= SE_NEED_RECV;
+			else {
+				timeout(se_recv, (void *)sc, ntimeo);
+  			}
 		}
 	}
 	splx(s);
