@@ -35,7 +35,7 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
-static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.3 1993/04/08 08:26:55 deraadt Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/sys/dev/isa/isa.c,v 1.4 1993/04/09 13:43:40 cgd Exp $";
 
 /*
  * code to manage AT bus
@@ -172,7 +172,7 @@ config_isadev(isdp, mp)
 		return (1);
 	} else	return(0);
 }
-#else
+#else /* notyet */
 /*
  * Configure all ISA devices
  */
@@ -215,11 +215,18 @@ config_isadev(isdp, mp)
 		isdp->id_alive = (*dp->probe)(isdp);
 		if (isdp->id_alive) {
 			printf("%s%d", dp->name, isdp->id_unit);
-			printf(" at 0x%x ", isdp->id_iobase);
+			printf(" at 0x%x-0x%x ", isdp->id_iobase,
+				isdp->id_iobase + isdp->id_alive);
 			if(isdp->id_irq)
 				printf("irq %d ", ffs(isdp->id_irq)-1);
 			if (isdp->id_drq != -1)
 				printf("drq %d ", isdp->id_drq);
+			if (isdp->id_maddr != 0)
+				printf("maddr 0x%x ", kvtop(isdp->id_maddr));
+			if (isdp->id_msize != 0)
+				printf("msize %d ", isdp->id_msize);
+			if (isdp->id_flags != 0)
+				printf("flags 0x%x ", isdp->id_flags);
 			printf("on isa\n");
 
 			(*dp->attach)(isdp);
@@ -237,7 +244,7 @@ config_isadev(isdp, mp)
 		return (1);
 	} else	return(0);
 }
-#endif
+#endif /* (!) notyet */
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
@@ -501,11 +508,23 @@ isa_nmi(cd) {
  */
 isa_strayintr(d) {
 
-#ifdef notdef
 	/* DON'T BOTHER FOR NOW! */
 	/* for some reason, we get bursts of intr #7, even if not enabled! */
-	log(LOG_ERR,"ISA strayintr %x", d);
-#endif
+	/*
+	 * Well the reason you got bursts of intr #7 is because someone
+	 * raised an interrupt line and dropped it before the 8259 could
+	 * prioritize it.  This is documented in the intel data book.  This
+	 * means you have BAD hardware!  I have changed this so that only
+	 * the first 10 get logged, then it quits logging them, and puts
+	 * out a special message. rgrimes 3/25/1993
+	 */
+	extern u_long isa_stray_intrcnt;
+
+	isa_stray_intrcnt++;
+	if (isa_stray_intrcnt <= 10)
+		log(LOG_ERR,"ISA strayintr %x\n", d);
+	if (isa_stray_intrcnt == 10)
+		log(LOG_CRIT,"Too many ISA strayintr not logging any more\n");
 }
 
 /*
