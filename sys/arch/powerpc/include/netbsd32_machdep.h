@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.1 2003/02/05 07:16:49 matt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.2 2003/04/16 08:58:18 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -73,6 +73,6 @@ extern char netbsd32_esigcode[], netbsd32_sigcode[];
  * Need to plug into get sparc specific ioctl's.
  */
 #define	NETBSD32_MD_IOCTL	/* enable netbsd32_md_ioctl() */
-int netbsd32_md_ioctl (struct file *, netbsd32_u_long, caddr_t, struct proc *);
+int netbsd32_md_ioctl(struct file *, netbsd32_u_long, void *, struct proc *);
 
 #endif /* _MACHINE_NETBSD32_H_ */
