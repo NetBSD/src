@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.19 1999/03/26 23:41:34 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.19.2.1 1999/04/16 16:23:25 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -823,7 +823,7 @@ poalloc()
 		 * Since we cannot use maps for potable allocation,
 		 * we have to steal some memory from the VM system.			XXX
 		 */
-		mem = uvm_pagealloc(NULL, 0, NULL);
+		mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 		po_pcnt++;
 		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
 		pop->pop_pgi.pgi_page = mem;
