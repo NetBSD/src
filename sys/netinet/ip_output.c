@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.68 2000/02/20 00:56:40 darrenr Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.69 2000/03/01 12:49:35 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -183,7 +183,7 @@ ip_output(m0, va_alist)
 	int rv;
 #endif /* PFIL_HOOKS */
 #ifdef IPSEC
-	struct socket *so = (struct socket *)m->m_pkthdr.rcvif;
+	struct socket *so;
 	struct secpolicy *sp = NULL;
 #endif /*IPSEC*/
 
@@ -199,7 +199,8 @@ ip_output(m0, va_alist)
 	va_end(ap);
 
 #ifdef IPSEC
-	m->m_pkthdr.rcvif = NULL;
+	so = ipsec_getsocket(m);
+	ipsec_setsocket(m, NULL);
 #endif /*IPSEC*/
 
 #ifdef	DIAGNOSTIC

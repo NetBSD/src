@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.48 1999/12/13 15:17:24 itojun Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.49 2000/03/01 12:49:27 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ struct m_hdr {
 struct	pkthdr {
 	struct	ifnet *rcvif;		/* rcv interface */
 	int	len;			/* total packet length */
+	struct mbuf *aux;		/* extra data buffer; ipsec/others */
 };
 
 /* description of external storage mapped into mbuf, valid if M_EXT set */
@@ -250,6 +251,7 @@ struct mbuf {
 		(m)->m_nextpkt = (struct mbuf *)NULL; \
 		(m)->m_data = (m)->m_pktdat; \
 		(m)->m_flags = M_PKTHDR; \
+		(m)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	} else \
 		(m) = m_retryhdr((how), (type)); \
 } while (0)
@@ -407,9 +409,11 @@ do {									\
 /*
  * Copy mbuf pkthdr from `from' to `to'.
  * `from' must have M_PKTHDR set, and `to' must be empty.
+ * aux pointer will be moved to `to'.
  */
 #define	M_COPY_PKTHDR(to, from) do { \
 	(to)->m_pkthdr = (from)->m_pkthdr; \
+	(from)->m_pkthdr.aux = (struct mbuf *)NULL; \
 	(to)->m_flags = (from)->m_flags & M_COPYFLAGS; \
 	(to)->m_data = (to)->m_pktdat; \
 } while (0)
@@ -479,6 +483,14 @@ do {									\
  */
 #define	M_GETCTX(m, t)		((t) (m)->m_pkthdr.rcvif + 0)
 #define	M_SETCTX(m, c)		((void) ((m)->m_pkthdr.rcvif = (void *) (c)))
+
+/*
+ * pkthdr.aux type tags.
+ */
+struct mauxtag {
+	int af;
+	int type;
+};
 
 /*
  * Mbuf statistics.
@@ -553,6 +565,10 @@ void	m_copydata __P((struct mbuf *,int,int,caddr_t));
 void	m_freem __P((struct mbuf *));
 void	m_reclaim __P((int));
 void	mbinit __P((void));
+
+struct mbuf *m_aux_add __P((struct mbuf *, int, int));
+struct mbuf *m_aux_find __P((struct mbuf *, int, int));
+void m_aux_delete __P((struct mbuf *, struct mbuf *));
 
 #ifdef MBTYPES
 const int mbtypes[] = {				/* XXX */

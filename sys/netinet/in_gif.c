@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.9 2000/02/07 06:15:16 itojun Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.10 2000/03/01 12:49:31 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -34,7 +34,6 @@
  */
 
 #include "opt_inet.h"
-#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,11 +211,6 @@ in_gif_output(ifp, family, m, rt)
 #endif 
 	}
 	
-#ifdef IPSEC
-#ifndef __OpenBSD__	/*KAME IPSEC*/
-	m->m_pkthdr.rcvif = NULL;
-#endif
-#endif /*IPSEC*/
 #ifndef __OpenBSD__
 	error = ip_output(m, NULL, &sc->gif_ro, 0, NULL);
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.16 2000/02/20 00:56:43 darrenr Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.17 2000/03/01 12:49:46 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -169,8 +169,8 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	struct secpolicy *sp = NULL;
 
 	/* for AH processing. stupid to have "socket" variable in IP layer... */
-	so = (struct socket *)m->m_pkthdr.rcvif;
-	m->m_pkthdr.rcvif = NULL;
+	so = ipsec_getsocket(m);
+	ipsec_setsocket(m, NULL);
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
 
