@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16 2003/09/26 12:02:56 simonb Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.17 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/09/26 12:02:56 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.17 2003/10/05 09:57:47 scw Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,18 +59,25 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16 2003/09/26 12:02:56 simonb Exp 
 /*
  * Send a signal to process
  */
-void
-sendsig(int sig, const sigset_t *returnmask, u_long code)
+static void
+sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *returnmask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
+	struct trapframe *tf = l->l_md.md_regs;
 	struct sigacts *ps = p->p_sigacts;
-	struct sigcontext *scp, ksc;
-	struct trapframe *tf;
-	int onstack, fsize, rndfsize;
+	struct sigframe_siginfo *ssp, kss;
+	int onstack, fsize, sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	tf = l->l_md.md_regs;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 2:
+		break;
+	default:
+		/* Don't know about this trampoline version; kill it. */
+		sigexit(l, SIGILL);
+		/*NOTREACHED*/
+	}
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =
@@ -76,41 +85,25 @@ sendsig(int sig, const sigset_t *returnmask, u_long code)
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
-	fsize = sizeof(ksc);
-	rndfsize = ((fsize + 15) / 16) * 16;
-
+	fsize = sizeof(kss);
 	if (onstack)
-		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+		ssp = (struct sigframe_siginfo *)
+		    ((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
 		    + p->p_sigctx.ps_sigstk.ss_size);
 	else
-		scp = (struct sigcontext *)(intptr_t)tf->tf_caller.r15;
-	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
+		ssp = (struct sigframe_siginfo *)(intptr_t)tf->tf_caller.r15;
+	ssp = (struct sigframe_siginfo *)((caddr_t)ssp - ((fsize + 15) & ~15));
 
 	/* Build stack frame for signal trampoline. */
-	process_read_regs(l, &ksc.sc_regs);
-	ksc.sc_regs.r_regs[24] = 0xACEBABE5ULL;	/* magic number */
+	kss.sf_si._info = *ksi;
+	kss.sf_uc.uc_flags = _UC_SIGMASK;
+	kss.sf_uc.uc_sigmask = *returnmask;
+	kss.sf_uc.uc_link = NULL;
+	kss.sf_uc.uc_flags |= (p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK)
+	    ? _UC_SETSTACK : _UC_CLRSTACK;
+	cpu_getmcontext(l, &kss.sf_uc.uc_mcontext, &kss.sf_uc.uc_flags);
 
-	/* Save FP state if necessary */
-	if ((l->l_md.md_flags & MDP_FPSAVED) == 0) {
-		l->l_md.md_flags |= sh5_fpsave(tf->tf_state.sf_usr,
-		    &l->l_addr->u_pcb);
-	}
-	if ((l->l_md.md_flags & MDP_FPUSED) != 0)
-		process_read_fpregs(l, &ksc.sc_fpregs);
-	else {
-		/* Always copy the FPSCR */
-		ksc.sc_fpregs.r_fpscr =
-		    l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr;
-	}
-	ksc.sc_fpstate = l->l_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
-
-	/* Save signal stack */
-	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
-
-	/* Save signal mask */
-	ksc.sc_mask = *returnmask;
-
-	if (copyout(&ksc, (caddr_t)scp, fsize) != 0) {
+	if (copyout(&kss, (caddr_t)ssp, fsize) != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
 		 * instruction to halt it in its tracks.
@@ -120,112 +113,31 @@ sendsig(int sig, const sigset_t *returnmask, u_long code)
 	}
 
 	/*
-	 * Set up the registers to directly invoke the signal handler.  The
-	 * signal trampoline is then used to return from the signal.  Note
-	 * the trampoline version numbers are coordinated with machine-
-	 * dependent code in libc.
+	 * Set up the registers to invoke the signal handler directly.
 	 */
-	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 1:
-		tf->tf_caller.r18 =
-		    (register_t)(intptr_t)ps->sa_sigdesc[sig].sd_tramp;
-		break;
-
-	default:
-		/* Don't know what trampoline version; kill it. */
-		sigexit(l, SIGILL);
-	}
-
 	tf->tf_state.sf_spc = (register_t)(intptr_t)catcher;
-	tf->tf_caller.r2 = sig;
-	tf->tf_caller.r3 = code;
-	tf->tf_caller.r4 = (register_t)(intptr_t)scp;
-	tf->tf_caller.r15 = (register_t)(intptr_t)scp;
+	tf->tf_caller.r2 = (register_t)sig;
+	tf->tf_caller.r3 = (register_t)(intptr_t)&ssp->sf_si;
+	tf->tf_caller.r4 = tf->tf_callee.r28 = (register_t)(intptr_t)&ssp->sf_uc;
+	tf->tf_caller.r15 = (register_t)(intptr_t)ssp;
+	tf->tf_caller.r18 = (register_t)(intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
-/*
- * System call to cleanup state after a signal
- * has been taken.  Reset signal mask and
- * stack state from context left by sendsig (above).
- * Return to previous pc and psl as specified by
- * context left by sendsig. Check carefully to
- * make sure that the user has not modified the
- * psl to gain improper privileges or to cause
- * a machine fault.
- */
-int
-sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+void
+sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
-	struct sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct sigcontext *scp, ksc;
-	struct trapframe *tf;
-	struct proc *p;
-	int i;
+#ifdef COMPAT_16
+	extern void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 
-	p = l->l_proc;
-	tf = l->l_md.md_regs;
-
-	/*
-	 * The trampoline code hands us the context.
-	 * It is unsafe to keep track of it ourselves, in the event that a
-	 * program jumps out of a signal handler.
-	 */
-	scp = SCARG(uap, sigcntxp);
-	if (ALIGN(scp) != (intptr_t)scp)
-		return (EINVAL);
-
-	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
-		return (EFAULT);
-
-	if (ksc.sc_regs.r_regs[24] != 0xACEBABE5ULL)	/* magic number */
-		return (EINVAL);
-
-	/*
-	 * Validate the branch target registers. If we don't, we risk
-	 * a kernel-mode exception when trying to restore invalid
-	 * values to them just before returning to user-mode.
-	 */
-	for (i = 0; i < 8; i++) {
-		if (!SH5_EFF_IS_VALID(ksc.sc_regs.r_tr[i]) ||
-		    (ksc.sc_regs.r_tr[i] & 0x3) == 0x3)
-			return (EINVAL);
-	}
-
-	/*
-	 * Ditto for the PC
-	 */
-	if (!SH5_EFF_IS_VALID(ksc.sc_regs.r_pc) ||
-	    (ksc.sc_regs.r_pc & 0x3) == 0x3)
-		return (EINVAL);
-
-	/* Restore register context. */
-	process_write_regs(l, &ksc.sc_regs);
-	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
-		process_write_fpregs(l, &ksc.sc_fpregs);
-		sh5_fprestore(tf->tf_state.sf_usr, &l->l_addr->u_pcb);
-	} else {
-		/* Always restore FPSCR */
-		l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr =
-		    ksc.sc_fpregs.r_fpscr;
-	}
-	l->l_md.md_flags = ksc.sc_fpstate & MDP_FPUSED;
-
-	/* Restore signal stack. */
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+		sendsig_sigcontext(ksi, mask);
 	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-	return (EJUSTRETURN);
+#endif
+		sendsig_siginfo(ksi, mask);
 }
 
 void
@@ -326,6 +238,11 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		    mcp->__fpregs.__fp_scr;
 		l->l_md.md_flags &= ~(MDP_FPUSED | MDP_FPSAVED);
 	}
+
+	if (flags & _UC_SETSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	if (flags & _UC_CLRSTACK)
+		l->l_proc->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	return (0);
 }

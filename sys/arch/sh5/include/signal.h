@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.8 2003/04/28 23:16:24 bjh21 Exp $	*/
+/*	$NetBSD: signal.h,v 1.9 2003/10/05 09:57:47 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,6 +52,8 @@ typedef long long	sig_atomic_t;
 typedef long	sig_atomic_t;
 #endif
 
+#define __HAVE_SIGINFO
+
 #if defined(_NETBSD_SOURCE)
 
 #include <machine/reg.h>
@@ -74,37 +76,9 @@ struct sigcontext {
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 
-/*
- * The following macros are used to convert from a ucontext to sigcontext,
- * and vice-versa.  This is for building a sigcontext to deliver to old-style
- * signal handlers, and converting back (in the event the handler modifies
- * the context).
- */
-#define	_MCONTEXT_TO_SIGCONTEXT(uc, sc)					\
-do {									\
-	memcpy(&(sc)->sc_regs, &(uc)->uc_mcontext.__gregs[0],		\
-	    sizeof(struct reg));					\
-	(sc)->sc_regs.r_regs[24] = 0xACEBABE5ULL;			\
-	if ((uc)->uc_flags & _UC_FPU) {					\
-		(sc)->sc_fpstate = 3;					\
-		memcpy(&(sc)->sc_fpregs, &(uc)->uc_mcontext.__fpregs,	\
-		    sizeof(struct fpreg));				\
-	} else {							\
-		(sc)->sc_fpstate = 0;					\
-		(sc)->sc_fpregs.r_fpscr = (uc)->uc_mcontext.__fpregs.__fp_scr;\
-	}								\
-} while (/*CONSTCOND*/0)
+#ifdef _KERNEL
+void sendsig_context(int, const sigset_t *, u_long);
+#endif
 
-#define	_SIGCONTEXT_TO_MCONTEXT(sc, uc)					\
-do {									\
-	memcpy(&(uc)->uc_mcontext.__gregs[0], &(sc)->sc_regs,		\
-	    sizeof(struct reg));					\
-	if ((sc)->sc_fpstate) {						\
-		memcpy(&(uc)->uc_mcontext.__fpregs, &(sc)->sc_fpregs,	\
-		    sizeof(struct fpreg));				\
-		(uc)->uc_flags |= _UC_FPU;				\
-	} else								\
-		(uc)->uc_mcontext.__fpregs.__fp_scr = (sc)->sc_fpregs.r_fpscr;\
-} while (/*CONSTCOND*/0)
 #endif /* _NETBSD_SOURCE */
 #endif /* !_SH5_SIGNAL_H_*/
