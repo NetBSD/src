@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.49 2003/04/26 11:05:06 ragge Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.50 2003/04/26 19:35:03 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -52,10 +52,11 @@
 #include "vidcvideo.h"
 #include "rpckbd.h"
 #include "pckbc.h"
+#include "podulebus.h"
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.49 2003/04/26 11:05:06 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.50 2003/04/26 19:35:03 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -389,7 +390,19 @@ struct l1_sec_map {
 	{ IO_BASE,		IO_HW_BASE,
 	    ONE_MB,		VM_PROT_READ|VM_PROT_WRITE,
 	    PTE_NOCACHE },
+#ifdef ARM32_PMAP_NEW
+#if NPODULEBUS > 0
 
+	/* Map the Fast and Sync simple podule space */
+	{ SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000,
+	    L1_S_SIZE,		VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+	/* Map the EASI podule space */
+	{ EASI_BASE,		EASI_HW_BASE,
+	    MAX_PODULES * EASI_SIZE,	VM_PROT_READ|VM_PROT_WRITE,
+	    PTE_NOCACHE },
+#endif
+#endif
 	{ 0, 0, 0, 0, 0 }
 };
 
@@ -592,10 +605,15 @@ initarm(void *cookie)
 		    && kernel_l1pt.pv_pa == 0) {
 			valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 		} else {
+#ifdef ARM32_PMAP_NEW
+			valloc_pages(kernel_pt_table[loop1],
+					L2_TABLE_SIZE / PAGE_SIZE);
+#else
 			alloc_pages(kernel_pt_table[loop1].pv_pa,
 			    L2_TABLE_SIZE / PAGE_SIZE);
 			kernel_pt_table[loop1].pv_va =
 			    kernel_pt_table[loop1].pv_pa;
+#endif
 			++loop1;
 		}
 	}
@@ -733,13 +751,28 @@ initarm(void *cookie)
 	pmap_map_chunk(l1pagetable, kernelstack.pv_va, kernelstack.pv_pa,
 	    UPAGES * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
+#ifndef ARM32_PMAP_NEW
 	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
 	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#else
+	pmap_map_chunk(l1pagetable, kernel_l1pt.pv_va, kernel_l1pt.pv_pa,
+	    L1_TABLE_SIZE, VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+
+	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
+		pmap_map_chunk(l1pagetable, kernel_pt_table[loop].pv_va,
+		    kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+	}
+#endif
 
 	/* Map the page table that maps the kernel pages */
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
-
+#else
+	pmap_map_entry(l1pagetable, kernel_ptpt.pv_va, kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#endif
 
 	/* Now we fill in the L2 pagetable for the VRAM */
 	/*
@@ -766,10 +799,23 @@ initarm(void *cookie)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+#ifndef ARM32_PMAP_NEW
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE
+#else
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE
+#endif
+			      );	    
+#ifndef ARM32_PMAP_NEW
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
-	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+#else
+	pmap_map_entry(l1pagetable,
+	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
+	    kernel_ptpt.pv_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE);
+#endif	
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (VMEM_VBASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_VMEM].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
@@ -819,6 +865,9 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("switching to new L1 page table\n");
 #endif
+#ifdef ARM32_PMAP_NEW
+	cpu_domains((DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2)) | DOMAIN_CLIENT);
+#endif
 
 	setttb(kernel_l1pt.pv_pa);
 
@@ -833,6 +882,16 @@ initarm(void *cookie)
 	 * this problem will not occur after initarm().
 	 */
 	cpu_idcache_wbinv_all();
+	cpu_tlb_flushID();
+#ifdef ARM32_PMAP_NEW
+	cpu_domains(DOMAIN_CLIENT << (PMAP_DOMAIN_KERNEL*2));
+	/*
+	 * Moved from cpu_startup() as data_abort_handler() references
+	 * this during uvm init
+	 */
+	proc0paddr = (struct user *)kernelstack.pv_va;
+	lwp0.l_addr = proc0paddr;
+#endif
 
 	/* 
 	 * if there is support for a serial console ...we should now
@@ -959,7 +1018,11 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
+#ifndef ARM32_PMAP_NEW
 	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, kernel_ptpt);
+#else
+	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va);
+#endif
 	console_flush();
 
 	/* Setup the IRQ system */
