@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.4 1998/07/13 17:35:55 tsubai Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.5 1999/12/22 18:57:47 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -257,7 +257,8 @@ startup(arg1, arg2, openfirm)
 		mtibatu	3,%0
 		mtibatl	3,%1
 		isync
-	" :: "r"(BATU(0)), "r"(BATL(0, 0)));
+	" :: "r"(BATU(0, BAT_BL_256M, BAT_Vs)),
+	     "r"(BATL(0, 0, BAT_PP_RW)));
 
 	entry_point(0, 0, openfirm);
 	for (;;);			/* just in case */
