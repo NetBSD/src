@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.18 1995/04/13 21:54:55 gwr Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19 1995/04/16 01:52:07 gwr Exp $	*/
 
 /*
  * LANCE Ethernet driver
@@ -56,6 +56,8 @@
 #include "if_lereg.h"
 #include "if_le.h"
 #include "if_le_subr.h"
+
+#define	RMD_BITS "\20\20own\17err\16fram\15oflo\14crc\13rbuf\12stp\11enp"
 
 #define	ETHER_MIN_LEN	64
 #define	ETHER_MAX_LEN	1518
@@ -597,15 +599,16 @@ lerint(sc)
 
 	/* Process all buffers with valid data. */
 	do {
-		if (cdm->flags & (LE_FRAM | LE_OFLO | LE_CRC | LE_RBUFF)) {
-			if ((cdm->flags & (LE_FRAM | LE_OFLO | LE_ENP)) == (LE_FRAM | LE_ENP))
-				printf("%s: framing error\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (LE_OFLO | LE_ENP)) == LE_OFLO)
-				printf("%s: overflow\n", sc->sc_dev.dv_xname);
-			if ((cdm->flags & (LE_CRC | LE_OFLO | LE_ENP)) == (LE_CRC | LE_ENP))
-				printf("%s: crc mismatch\n", sc->sc_dev.dv_xname);
-			if (cdm->flags & LE_RBUFF)
-				printf("%s: receive buffer error\n", sc->sc_dev.dv_xname);
+		if (cdm->flags & LE_ERR) {
+#ifdef	LEDEBUG
+			/*
+			 * XXX - These happen a LOT on the Sun3/50 so
+			 * it is really NOT appropriate to print them.
+			 */
+			printf("%s: error, cdm->flags=%b\n",
+				sc->sc_dev.dv_xname, cdm->flags, RMD_BITS);
+#endif
+			sc->sc_if.if_ierrors++;
 		} else if (cdm->flags & (LE_STP | LE_ENP) != (LE_STP | LE_ENP)) {
 			do {
 				cdm->mcnt = 0;
