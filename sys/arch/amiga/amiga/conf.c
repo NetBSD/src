@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1995/01/25 04:48:11 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1995/03/02 03:33:02 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -496,18 +496,20 @@ dev_type_open(fdopen);
 }
 
 #include "bpfilter.h"
+#include "tun.h"
 cdev_decl(bpf);
+cdev_decl(tun);
 /* open, close, read, write, ioctl, select -- XXX should be generic device */
-#define	cdev_bpf_init(c) { \
-	dev_init(c,bpf,open), \
-	dev_init(c,bpf,close), \
-	dev_init(c,bpf,read), \
-	dev_init(c,bpf,write), \
-	dev_init(c,bpf,ioctl), \
+#define	cdev_bpftun_init(c,n) { \
+	dev_init(c,n,open), \
+	dev_init(c,n,close), \
+	dev_init(c,n,read), \
+	dev_init(c,n,write), \
+	dev_init(c,n,ioctl), \
 	(dev_type_stop((*))) enodev, \
 	(dev_type_reset((*))) enodev, \
 	(struct tty **) NULL, \
-	dev_init(c,bpf,select), \
+	dev_init(c,n,select), \
 	(dev_type_map((*))) enodev, \
 	(dev_type_strategy((*))) NULL \
 }
@@ -581,8 +583,8 @@ struct cdevsw	cdevsw[] =
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_st_init(NST),		/* 20: scsi tape */
 	cdev_fd_init(1),		/* 21: file descriptor pseudo-dev */
-	cdev_bpf_init(NBPFILTER),	/* 22: berkeley packet filter */
-	cdev_notdef(),			/* 23: */
+	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
+	cdev_bpftun_init(NTUN,tun),	/* 23: berkeley packet filter */
 	cdev_lkm_init(NLKM),	/* 24: loadable kernel modules pdev */
 	LKM_CDEV(),			/* 25: Empty slot for LKM */
 	LKM_CDEV(),			/* 26: Empty slot for LKM */
