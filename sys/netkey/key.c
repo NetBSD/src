@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.94 2003/09/09 21:58:26 itojun Exp $	*/
+/*	$NetBSD: key.c,v 1.95 2003/09/12 00:10:25 itojun Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.94 2003/09/09 21:58:26 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.95 2003/09/12 00:10:25 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -6487,7 +6487,6 @@ key_dump(so, m, mhp)
 	u_int8_t satype;
 	u_int8_t state;
 	int cnt;
-	struct sadb_msg *newmsg;
 	struct mbuf *n;
 
 	/* sanity check */
@@ -6521,7 +6520,6 @@ key_dump(so, m, mhp)
 		return key_senderror(so, m, ENOENT);
 
 	/* send this to the userland, one at a time. */
-	newmsg = NULL;
 	LIST_FOREACH(sah, &sahtree, chain) {
 		if (mhp->msg->sadb_msg_satype != SADB_SATYPE_UNSPEC &&
 		    proto != sah->saidx.proto)
