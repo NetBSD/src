@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.8 1994/01/20 23:04:13 jtc Exp $
+#	$Id: Makefile,v 1.9 1994/05/22 04:20:02 jtc Exp $
 
 RPCDIR=		${.CURDIR}/src
 .PATH:		${RPCDIR}
@@ -20,16 +20,14 @@ beforedepend:	${HDRS}
 beforeinstall:
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/rpcsvc
 	@for i in $(HDRS); do \
-		echo install ${COPY} -o bin -g bin -m 444 $$i \
-			${DESTDIR}/usr/include/rpcsvc ; \
-		install ${COPY} -o bin -g bin -m 444 $$i \
-			${DESTDIR}/usr/include/rpcsvc ; \
+	    cmp -s $$i ${DESTDIR}/usr/include/rpcsvc/$$i > /dev/null 2>&1 || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 $$i \
+		${DESTDIR}/usr/include/rpcsvc; \
 	done
 	@for i in $(RPCSRCS); do \
-		echo install -c -o bin -g bin -m 444 ${RPCDIR}/$$i \
-			${DESTDIR}/usr/include/rpcsvc ; \
-		install -c -o bin -g bin -m 444 ${RPCDIR}/$$i \
-			${DESTDIR}/usr/include/rpcsvc ; \
+	    cmp -s ${RPCDIR}/$$i ${DESTDIR}/usr/include/rpcsvc/$$i > /dev/null 2>&1 || \
+		install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${RPCDIR}/$$i \
+		${DESTDIR}/usr/include/rpcsvc; \
 	done
 
 # new suffixes have to go afterwards, because bsd.lib.mk clears them
