@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_isa.c,v 1.13 2002/10/02 04:06:38 thorpej Exp $ */
+/* $NetBSD: mcclock_isa.c,v 1.14 2004/09/14 20:25:51 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.13 2002/10/02 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.14 2004/09/14 20:25:51 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,20 +73,20 @@ mcclock_isa_match(parent, match, aux)
 	bus_space_handle_t ioh;
 
 	if (ia->ia_nio < 1 ||
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x70))
 		return (0);
 
 	if (ia->ia_niomem > 0 &&
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT))
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM))
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT))
+	    (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ))
 		return (0);
 
 	if (ia->ia_ndrq > 0 &&
-	    (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT))
+	    (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ))
 		return (0);
 
 	if (bus_space_map(ia->ia_iot, 0x70, 0x2, 0, &ioh))

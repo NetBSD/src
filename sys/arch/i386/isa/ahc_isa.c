@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_isa.c,v 1.24 2003/12/04 12:42:54 keihan Exp $	*/
+/*	$NetBSD: ahc_isa.c,v 1.25 2004/09/14 20:25:05 drochner Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.24 2003/12/04 12:42:54 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_isa.c,v 1.25 2004/09/14 20:25:05 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ ahc_isa_match(ia, iobase)
 	if (irq < 0)
 		return (0);
 
-	if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+	if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 	    ia->ia_irq[0].ir_irq != irq) {
 		printf("ahc_isa_match: irq mismatch (kernel %d, card %d)\n",
 		    ia->ia_irq[0].ir_irq, irq);
@@ -336,7 +336,7 @@ ahc_isa_probe(parent, match, aux)
 	if (ISA_DIRECT_CONFIG(ia))
 		return (0);
 
-	if (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT)
 		return (ahc_isa_match(ia, ia->ia_io[0].ir_addr));
 
 	/*
