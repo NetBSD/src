@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.23 1994/07/04 23:25:12 glass Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.24 1994/08/22 23:37:17 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles Hannum.  All rights reserved.
@@ -501,6 +501,8 @@ shminit()
 {
 	int i;
 	vm_offset_t garbage1, garbage2;
+
+	shminfo.shmmax *= NBPG;
 
 	/* actually this *should* be pageable.  SHM_{LOCK,UNLOCK} */
 	sysvshm_map = kmem_suballoc(kernel_map, &garbage1, &garbage2,
