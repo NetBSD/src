@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsold.c,v 1.2 1999/09/03 05:14:37 itojun Exp $	*/
+/*	$NetBSD: rtsold.c,v 1.3 1999/12/09 15:08:33 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -37,17 +37,19 @@
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
 
+#include <signal.h>
 #include <unistd.h>
 #include <syslog.h>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <errno.h>
 #include <err.h>
 #include <stdarg.h>
 #include "rtsold.h"
 
 struct ifinfo *iflist;
-static struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
+struct timeval tm_max =	{0x7fffffff, 0x7fffffff};
 int dflag;
 static int log_upto = 999;
 static int fflag = 0;
@@ -74,9 +76,14 @@ static int fflag = 0;
 /* a == b */
 #define TIMEVAL_EQ(a, b) (((a).tv_sec==(b).tv_sec) && ((a).tv_usec==(b).tv_usec))
 
+int main __P((int argc, char *argv[]));
+
 /* static variables and functions */
 static int mobile_node = 0;
-int main __P((int argc, char *argv[]));
+static int do_dump;
+static char *dumpfilename = "/var/tmp/rtsold.dump"; /* XXX: should be configurable */
+static char *pidfilename = "/var/run/rtsold.pid"; /* should be configurable */
+
 static int ifconfig __P((char *ifname));
 static int make_packet __P((struct ifinfo *ifinfo));
 static struct timeval *rtsol_check_timer __P((void));
@@ -84,6 +91,8 @@ static void TIMEVAL_ADD __P((struct timeval *a, struct timeval *b,
 			     struct timeval *result));
 static void TIMEVAL_SUB __P((struct timeval *a, struct timeval *b,
 			     struct timeval *result));
+
+static void rtsold_set_dump_file __P((void));
 static void usage __P((char *progname));
 
 int
@@ -141,7 +150,13 @@ main(argc, argv)
 	if (dflag == 0)
 		log_upto = LOG_NOTICE;
 	if (!fflag) {
-		openlog(argv0, LOG_NDELAY|LOG_PID, LOG_DAEMON);
+		char *ident;
+		ident = strrchr(argv0, '/');
+		if (!ident)
+			ident = argv0;
+		else
+			ident++;
+		openlog(ident, LOG_NDELAY|LOG_PID, LOG_DAEMON);
 		if (log_upto >= 0)
 			setlogmask(LOG_UPTO(log_upto));
 	}
@@ -152,6 +167,10 @@ main(argc, argv)
 	/* warn if accept_rtadv is down */
 	if (!getinet6sysctl(IPV6CTL_ACCEPT_RTADV))
 		warnx("kernel is configured not to accept RAs");
+
+	/* initialization to dump internal status to a file */
+	if (signal(SIGUSR1, (void *)rtsold_set_dump_file) < 0)
+		errx(1, "failed to set signal for dump status");
 
 	/* configuration per interface */
 	if (ifinit())
@@ -173,6 +192,21 @@ main(argc, argv)
 	if (!fflag)
 		daemon(0, 0);		/* act as a daemon */
 
+	/* dump the current pid */
+	if (!once) {
+		pid_t pid = getpid();
+		FILE *fp;
+
+		if ((fp = fopen(pidfilename, "w")) == NULL)
+			warnmsg(LOG_ERR, __FUNCTION__,
+				"failed to open a log file(%s)",
+				pidfilename, strerror(errno));
+		else {
+			fprintf(fp, "%d\n", pid);
+			fclose(fp);
+		}
+	}
+
 	FD_ZERO(&fdset);
 	FD_SET(s, &fdset);
 	while (1) {		/* main loop */
@@ -180,6 +214,11 @@ main(argc, argv)
 		int e;
 		struct fd_set select_fd = fdset;
 
+		if (do_dump) {	/* SIGUSR1 */
+			do_dump = 0;
+			rtsold_dump_file(dumpfilename);
+		}
+			
 		timeout = rtsol_check_timer();
 
 		if (once) {
@@ -189,7 +228,7 @@ main(argc, argv)
 			if (timeout == NULL)
 				break;
 
-			/* if all if have got RA packet, we are done */
+			/* if all interfaces have got RA packet, we are done */
 			for (ifi = iflist; ifi; ifi = ifi->next) {
 				if (ifi->state != IFS_DOWN && ifi->racnt == 0)
 					break;
@@ -199,7 +238,7 @@ main(argc, argv)
 		}
 
 		if ((e = select(s + 1, &select_fd, NULL, NULL, timeout)) < 1) {
-			if (e < 0) {
+			if (e < 0 && errno != EINTR) {
 				warnmsg(LOG_ERR, __FUNCTION__, "select: %s",
 				       strerror(errno));
 			}
@@ -524,7 +563,7 @@ TIMEVAL_ADD(struct timeval *a, struct timeval *b, struct timeval *result)
  * result = a - b
  * XXX: this function assumes that a >= b.
  */
-static void
+void
 TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 {
 	long l;
@@ -537,6 +576,12 @@ TIMEVAL_SUB(struct timeval *a, struct timeval *b, struct timeval *result)
 		result->tv_usec = MILLION + l;
 		result->tv_sec = a->tv_sec - b->tv_sec - 1;
 	}
+}
+
+static void
+rtsold_set_dump_file()
+{
+	do_dump = 1;
 }
 
 static void
