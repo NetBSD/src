@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2003/01/22 20:36:03 dsl Exp $
+#	$NetBSD: Makefile,v 1.64 2003/03/10 17:58:21 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -16,8 +16,13 @@ SRCS=	${SHSRCS} ${GENSRCS}
 LDADD+=	-ll -ledit -ltermcap
 DPADD+=	${LIBL} ${LIBEDIT} ${LIBTERMCAP}
 
-LFLAGS= -8	# 8-bit lex scanner for arithmetic
+LFLAGS=	-8	# 8-bit lex scanner for arithmetic
 YFLAGS=	-d
+
+.ifdef CRUNCHEDPROG
+LFLAGS+=-L
+YFLAGS+=-l
+.endif
 
 CPPFLAGS+=-DSHELL -I. -I${.CURDIR}
 #XXX: For testing only.
