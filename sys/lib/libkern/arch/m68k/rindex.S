@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.3 1998/02/22 08:43:27 mycroft Exp $	*/
+/*	$NetBSD: rindex.S,v 1.1 1998/02/22 08:43:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,51 +35,32 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
  */
 
-#include <sys/syscall.h>
 #include <machine/asm.h>
 
-#ifdef __STDC__
-#define	IMMEDIATE	#
-#define SYSTRAP(x)	movl IMMEDIATE SYS_ ## x ## ,d0; trap IMMEDIATE 0
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+	RCSID("from: @(#)rindex.s	5.1 (Berkeley) 5/12/90")
 #else
-#define SYSTRAP(x)	movl #SYS_/**/x,d0; trap #0
+	RCSID("$NetBSD: rindex.S,v 1.1 1998/02/22 08:43:28 mycroft Exp $")
 #endif
+#endif /* LIBC_SCCS and not lint */
 
-
-#define _SYSCALL_NOERROR(x,y)						\
-	ENTRY(x);							\
-	SYSTRAP(y)
-
-#define _SYSCALL(x,y)							\
-	.even;								\
-	err: jra cerror;						\
-	_SYSCALL_NOERROR(x,y);						\
-	jcs err
-
-#define SYSCALL_NOERROR(x)						\
-	_SYSCALL_NOERROR(x,x)
-
-#define SYSCALL(x)							\
-	_SYSCALL(x,x)
-
-#define PSEUDO_NOERROR(x,y)						\
-	_SYSCALL_NOERROR(x,y);						\
+#ifdef STRRCHR
+ENTRY(strrchr)
+#else
+ENTRY(rindex)
+#endif
+	movl	sp@(4),a0		| string
+	movb	sp@(11),d0		| char to look for
+	subl	a1,a1			| clear rindex pointer
+rixloop:
+	cmpb	a0@,d0			| found our char?
+	jne	rixnope			| no, check for null
+	movl	a0,a1			| yes, remember location
+rixnope:
+	tstb	a0@+			| null?
+	jne	rixloop			| no, keep going
+	movl	a1,d0			| return value
 	rts
-
-#define PSEUDO(x,y)							\
-	_SYSCALL(x,y);							\
-	rts
-
-#define RSYSCALL_NOERROR(x)						\
-	PSEUDO_NOERROR(x,x)
-
-#define RSYSCALL(x)							\
-	PSEUDO(x,x)
-	
-#define	ASMSTR		.asciz
-
-	.globl	cerror

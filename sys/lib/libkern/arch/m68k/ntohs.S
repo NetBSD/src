@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohs.S,v 1.2 1994/10/26 06:39:30 cgd Exp $	*/
+/*	$NetBSD: ntohs.S,v 1.3 1998/02/22 08:43:28 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+
 #if defined(LIBC_SCCS) && !defined(lint)
-	.text
-#ifdef notdef
-	.asciz "@(#)ntohs.s	5.1 (Berkeley) 5/12/90"
+#if 0
+	RCSID("from: @(#)ntohs.s	5.1 (Berkeley) 5/12/90")
+#else
+	RCSID("$NetBSD: ntohs.S,v 1.3 1998/02/22 08:43:28 mycroft Exp $")
 #endif
-	.asciz "$NetBSD: ntohs.S,v 1.2 1994/10/26 06:39:30 cgd Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* hostorder = ntohs(netorder) */
-
-#include "DEFS.h"
 
 ENTRY(ntohs)
 	clrl	d0
