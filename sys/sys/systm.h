@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.118 2000/11/02 21:24:16 tsutsui Exp $	*/
+/*	$NetBSD: systm.h,v 1.119 2000/11/08 14:25:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -170,9 +170,14 @@ int	eopnotsupp __P((void));
 int	lkmenodev __P((void));
 #endif
 
+enum hashtype {
+	HASH_LIST,
+	HASH_TAILQ
+};
+
+void	*hashinit __P((int, enum hashtype, int, int, u_long *));
+void	hashdone __P((void *, int));
 int	seltrue __P((dev_t dev, int events, struct proc *p));
-void	*hashinit __P((int count, int type, int flags, u_long *hashmask));
-void	hashdone __P((void *hashtbl, int type));
 int	sys_nosys __P((struct proc *, void *, register_t *));
 
 
