@@ -1,27 +1,10 @@
-# $NetBSD: Makefile.inc,v 1.24 2003/09/02 07:34:47 jlam Exp $
+# $NetBSD: Makefile.inc,v 1.25 2003/09/23 05:39:41 grant Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
 
 LIBINSTALL != cd ${.CURDIR}/../lib && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../lib ${DEBUG} -DBINDIR='"${BINDIR}"'
-
-# If building for Zoularis on Solaris, some other Makefile should do:
-#LOCALBASE?= /usr/pkg
-#ZOULARISBASE?=  ${LOCALBASE}/bsd
-#BINDIR=${ZOULARISBASE}/bin
-#TAR_CMD?= ${BINDIR}/tar
-#FTP_CMD?= ${BINDIR}/ftp
-#CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DFTP_CMD='"${FTP_CMD}"'
-#CHMOD_CMD?= /usr/bin/chmod
-#CHOWN_CMD?= /usr/bin/chown
-#CHGRP_CMD?= /usr/bin/chgrp
-#WARNS=0
-
-# If building for Zoularis on Linux, some other Makefile should do:
-#CHMOD_CMD?= /bin/chmod
-#CHOWN_CMD?= /bin/chown
-#CHGRP_CMD?= /bin/chgrp
 
 # UNDER NO CIRCUMSTANCES SHOULD THIS MAKEFILE TEST THE OUTPUT OF uname!!
 # DOING SO BREAKS CROSS COMPILING.
