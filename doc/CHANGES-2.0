@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.193 2004/05/09 09:02:27 jdc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.194 2004/05/10 14:49:01 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1968,4 +1968,60 @@ sys/uvm/uvm_map.c				1.170
 	Revert default uvm counters, rename UVMMAP_COUNTERS to
 	UVMMAP_NOCOUNTERS.
 	[petrov, ticket #270]
+
+sys/uvm/uvm_anon.c				1.29
+sys/uvm/uvm_anon.h				1.17
+sys/uvm/uvm_bio.c				1.32
+sys/uvm/uvm_fault.c				1.88
+sys/uvm/uvm_page.c				1.98
+sys/uvm/uvm_pager.c				1.63
+
+	Fix a amap_wirerange deadlock problem by re-introducing
+	PG_RELEASED for anon pages. PR/23171 from Christian Limpach.
+	for details, see discussion filed in the PR database.
+	[yamt, ticket #271]
+
+libexec/tftpd/tftpd.c				1.28
+
+	Make sure we tzset() before chroot(); after passing that point
+	it may no longer be accessible for syslog() to format messages.
+	[kleink, ticket #272]
+
+sys/kern/kern_sysctl.c				1.175
+
+	Add a printf() to the other case in sysctl_createv() where a node did
+	not get attached for what should be an extremely unusual case.
+	[atatat, ticket #273]
+
+sys/dev/pci/aac_pci.c				1.9
+
+	Match Adaptec 2410SA.
+	[jdolecek, ticket #274]
+
+share/man/man4/aac.4				1.6
+
+	Add Adaptec SATA RAID 2410SA to list of supported cards
+	[jdolecek, ticket #275]
+
+usr.bin/gzip/gzip.c				1.43
+
+	Always initialise savename. Fix gzip -c core dump on sparc (and
+	probably others).
+	[bouyer, ticket #276]
+
+sys/arch/sparc/sparc/cpu.c			1.186
+
+	Fixes a possible NULL dereference when running an UP kernel on an MP
+	machine.
+	[pk, ticket #277]
+
+sys/arch/powerpc/include/ptrace.h		1.8
+usr.bin/kdump/kdump.c				1.78
+
+	Allow kdump to print the names for machine dependent ptrace ops.
+	(This requires <machine/ptrace.h> to define PT_MACHDEP_STRINGS
+	which corresponds to the machdep ops).
+	Add PT_MACHDEP_STRINGS so that kdump(1) can print out the
+	PowerPC-specific ptrace requests.
+	[matt, ticket #278]
 
