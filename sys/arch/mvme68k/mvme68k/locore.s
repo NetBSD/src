@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2000/11/21 22:08:04 scw Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2000/11/25 11:25:07 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -419,13 +419,6 @@ Lmemcquery:
 	 * Figure out the size of onboard DRAM by querying
 	 * the memory controller ASIC(s)
 	 */
-	movql	#0x07,d0
-#if 0
-	/*
-	 * We'd like to do it this way, but for some reason which I
-	 * can't quite fathom, accessing a non-existant MEM* controller
-	 * locks the machine up solid...
-	 */
 	lea	0xfff43008,a0		| MEMC040/MEMECC Controller #1
 	bsr	memc040read
 	movl	d0,d1
@@ -433,14 +426,6 @@ Lmemcquery:
 	lea	0xfff43108,a0		| MEMC040/MEMECC Controller #2
 	bsr	memc040read
 	addl	d0,d1
-#else
-	/*
-	 * For now, just assume there's only the one controller
-	 */
-	andb	0xfff43008,d0		| MEMC040/MEMECC Controller #1
-	movl	#0x00400000,d1
-	lsll	d0,d1
-#endif
 
 Lis1xx_common:
 	/* Save our ethernet address */
@@ -638,31 +623,29 @@ Lenab3:
 
 	jra	_C_LABEL(main)		| main()
 
-#if 0
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 /*
  * Probe for a memory controller ASIC (MEMC040 or MEMECC) at the
  * address in a0. If found, return the size in bytes of any RAM
  * controlled by the ASIC in d0. Otherwise return zero.
- *
- * Note: This does not yet work as expected. Accessing a non-existant
- *       ASIC generates something a bit more complex than a Buserr.
  */
 ASLOCAL(memc040read)
-	moveml	#0xC0C0,sp@-		| save scratch regs
+	moveml	d1-d2/a1-a2,sp@-	| save scratch regs
+	movc	vbr,d2			| Save vbr
+	RELOC(vectab,a2)		| Install our own vectab, temporarily
+	movc	a2,vbr
 	ASRELOC(Lmemc040berr,a1)	| get address of bus error handler
-	movl	a1,d1
-	movc	vbr,a1			| Fetch VBR address
-	movl	a1@(8),sp@-		| Save current bus error handler addr
-	movl	d1,a1@(8)		| Install our own handler
-	movl	sp,d1			| Save current stack pointer value
-	movql	#0x07,d0
-	andb	a0@,d0			| Access MEMC040/MEMECC
-	ASRELOC(memc_msiz,a0)
-	movl	a0@(d0:w:4),d0		| Compute how many bytes of RAM
+	movl	a2@(8),sp@-		| Save current bus error handler addr
+	movl	a1,a2@(8)		| Install our own handler
+	movl	sp,d0			| Save current stack pointer value
+	movql	#0x07,d1
+	andb	a0@,d1			| Access MEMC040/MEMECC
+	movl	#0x400000,d0
+	lsll	d1,d0			| Convert to memory size, in bytes
 Lmemc040ret:
-	movl	sp@+,a1@(8)		| Restore original bus error handler
-	moveml  sp@+,#0x0303
+	movc	d2,vbr			| Restore original vbr
+	movl	sp@+,a2@(8)		| Restore original bus error handler
+	moveml  sp@+,d1-d2/a1-a2
 	rts
 /*
  * If the memory controller doesn't exist, we get a bus error trying
@@ -670,11 +653,10 @@ Lmemc040ret:
  * ditch the exception frame and return as normal.
  */
 Lmemc040berr:
+	movl	d0,sp			| Get rid of the exception frame
 	movql	#0,d0			| No ASIC at this location, then!
-	movl	d1,sp			| Get rid of the exception frame
 	bra	Lmemc040ret		| Done
 #endif
-#endif	/* if 0 */
 
 /*
  * proc_trampoline: call function in register a2 with a3 as an arg
