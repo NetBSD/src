@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/08/28 15:31:30 tv Exp $
-
-NOPROG=	yes
+#	$NetBSD: Makefile,v 1.5 1999/02/13 23:53:57 lukem Exp $
 
 INCS=	algorithm deque functional hash_map hash_set iterator list map \
 	memory numeric pthread_alloc queue rope set slist stack utility \
@@ -17,6 +15,8 @@ INCS=	algorithm deque functional hash_map hash_set iterator list map \
 	stl_stack.h stl_tempbuf.h stl_tree.h stl_uninitialized.h stl_vector.h \
 	tempbuf.h tree.h type_traits.h vector.h
 INCSDIR=/usr/include/g++
+
+MKOBJ=	no
 
 .PATH: ${.CURDIR}/../../../dist/libstdc++/stl
 

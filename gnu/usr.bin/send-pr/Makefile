@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1999/02/13 02:54:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 1999/02/13 23:53:58 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -48,7 +48,6 @@ ECHON = bsd
 
 BINDIR=		${bindir}
 LIBDIR=		${datadir}
-NOPROG=	
 MAN=		send-pr.1
 
 CLEANFILES=	send-pr send-pr.1 send-pr.el install-sid

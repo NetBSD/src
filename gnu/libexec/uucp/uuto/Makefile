@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 1997/03/24 22:06:08 christos Exp $
+#	$NetBSD: Makefile,v 1.8 1999/02/13 23:53:57 lukem Exp $
 # Makefile for uuto
 
 BINDIR=		$(bindir)
 
-NOPROG=
 CLEANFILES=	uuto
 
 all:	${CLEANFILES}
