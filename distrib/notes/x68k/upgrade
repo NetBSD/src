@@ -1,4 +1,4 @@
-.\" $NetBSD: upgrade,v 1.7.2.1 1999/04/03 14:18:52 minoura Exp $	
+.\" $NetBSD: upgrade,v 1.7.2.2 1999/04/04 04:30:18 minoura Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,8 @@ or,
 utility and
 .Pa netbsd.INSTALL
 file which can be found in
-.Pa installation/misc in your Human68k disk.
+.Pa installation/misc
+in your Human68k disk.
 You must also have at least the
 .Sy base No and Sy kern
 binary distribution sets available, so that you can upgrade with it,
