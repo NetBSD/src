@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.2 2003/03/02 18:27:15 fvdl Exp $	*/
+/*	$NetBSD: intr.c,v 1.3 2003/03/03 22:16:20 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -87,7 +87,7 @@ intr_default_setup(void)
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
 		idt_allocmap[ICU_OFFSET + i] = 1;
-		setgate(&idt[ICU_OFFSET + i].gd,
+		setgate(&idt[ICU_OFFSET + i],
 		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 	}
@@ -443,7 +443,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 		    &pic->pic_level_stubs[slot] : &pic->pic_edge_stubs[slot];
 		ci->ci_isources[slot]->is_resume = stubp->ist_resume;
 		ci->ci_isources[slot]->is_recurse = stubp->ist_recurse;
-		setgate(&idt[idt_vec].gd, stubp->ist_entry, 0, SDT_SYS386IGT,
+		setgate(&idt[idt_vec], stubp->ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
 	}
 
