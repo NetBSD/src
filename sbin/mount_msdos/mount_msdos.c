@@ -1,4 +1,4 @@
-/* $NetBSD: mount_msdos.c,v 1.30 2003/08/02 11:42:20 jdolecek Exp $ */
+/* $NetBSD: mount_msdos.c,v 1.31 2003/09/07 22:09:11 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.30 2003/08/02 11:42:20 jdolecek Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.31 2003/09/07 22:09:11 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: mount_msdos.c,v 1.30 2003/08/02 11:42:20 jdolecek Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <util.h>
 
@@ -87,13 +88,15 @@ mount_msdos(argc, argv)
 {
 	struct msdosfs_args args;
 	struct stat sb;
-	int c, mntflags, set_gid, set_uid, set_mask, set_dirmask;
+	int c, mntflags, set_gid, set_uid, set_mask, set_dirmask, set_gmtoff;
 	char *dev, *dir, ndir[MAXPATHLEN+1];
+	time_t now;
+	struct tm *tm;
 
-	mntflags = set_gid = set_uid = set_mask = set_dirmask = 0;
+	mntflags = set_gid = set_uid = set_mask = set_dirmask = set_gmtoff = 0;
 	(void)memset(&args, '\0', sizeof(args));
 
-	while ((c = getopt(argc, argv, "Gsl9u:g:m:M:o:")) != -1) {
+	while ((c = getopt(argc, argv, "Gsl9u:g:m:M:o:t:")) != -1) {
 		switch (c) {
 		case 'G':
 			args.flags |= MSDOSFSMNT_GEMDOSFS;
@@ -125,6 +128,10 @@ mount_msdos(argc, argv)
 			break;
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, 0);
+			break;
+		case 't':
+			args.gmtoff = atoi(optarg);
+			set_gmtoff = 1;
 			break;
 		case '?':
 		default:
@@ -174,6 +181,14 @@ mount_msdos(argc, argv)
 			args.mask = args.dirmask =
 				sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 		}
+	}
+
+	if (!set_gmtoff) {
+		/* use user's time zone as default */
+		time(&now);
+		tm = localtime(&now);
+		args.gmtoff = tm->tm_gmtoff;
+
 	}
 	args.flags |= MSDOSFSMNT_VERSIONED;
 	args.version = MSDOSFSMNT_VERSION;
