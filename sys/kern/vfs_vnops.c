@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.16 1994/11/14 06:01:24 christos Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.17 1994/12/13 21:52:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vfs_vnops.c	8.2 (Berkeley) 1/21/94
+ *	@(#)vfs_vnops.c	8.5 (Berkeley) 12/8/94
  */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ vn_open(ndp, fmode, cmode, fp)
 			VATTR_NULL(vap);
 			vap->va_type = VREG;
 			vap->va_mode = cmode;
-			LEASE_CHECK(ndp->ni_dvp, p, cred, LEASE_WRITE);
+			VOP_LEASE(ndp->ni_dvp, p, cred, LEASE_WRITE);
 			if (error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 			    &ndp->ni_cnd, vap))
 				return (error);
@@ -133,7 +133,7 @@ vn_open(ndp, fmode, cmode, fp)
 	}
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp);				/* XXX */
-		LEASE_CHECK(vp, p, cred, LEASE_WRITE);
+		VOP_LEASE(vp, p, cred, LEASE_WRITE);
 		VOP_LOCK(vp);				/* XXX */
 		VATTR_NULL(vap);
 		vap->va_size = 0;
@@ -254,7 +254,7 @@ vn_read(fp, uio, cred)
 	register struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error;
 
-	LEASE_CHECK(vp, uio->uio_procp, cred, LEASE_READ);
+	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_READ);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;
@@ -274,13 +274,13 @@ vn_write(fp, uio, cred)
 	struct ucred *cred;
 {
 	register struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag = 0;
+	int count, error, ioflag = IO_UNIT;
 
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
-	LEASE_CHECK(vp, uio->uio_procp, cred, LEASE_WRITE);
+	VOP_LEASE(vp, uio->uio_procp, cred, LEASE_WRITE);
 	VOP_LOCK(vp);
 	uio->uio_offset = fp->f_offset;
 	count = uio->uio_resid;

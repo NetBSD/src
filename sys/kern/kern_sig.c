@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.36 1994/12/07 21:31:11 cgd Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.37 1994/12/13 21:52:37 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -1184,7 +1184,7 @@ coredump(p)
 	}
 	VATTR_NULL(&vattr);
 	vattr.va_size = 0;
-	LEASE_CHECK(vp, p, cred, LEASE_WRITE);
+	VOP_LEASE(vp, p, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred, p);
 	p->p_acflag |= ACORE;
 	bcopy(p, &p->p_addr->u_kproc.kp_proc, sizeof(struct proc));
