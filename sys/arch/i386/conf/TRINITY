@@ -1,4 +1,4 @@
-#	$NetBSD: TRINITY,v 1.98 2000/07/27 14:34:08 mrg Exp $
+#	$NetBSD: TRINITY,v 1.99 2000/08/21 07:39:44 itohy Exp $
 #	From: GENERIC,v 1.260 1999/09/28 18:07:29 thorpej Exp
 #
 #	TRINITY -- Mycroft's laptop
@@ -333,7 +333,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 #aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI
 #bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 #bha1	at isa? port 0x334 irq ? drq ?
-#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
 #nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 #sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 #uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
@@ -382,7 +382,7 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 # ISA ST506, ESDI, and IDE controllers
 # Use flags 0x01 if you want to try to use 32bits data I/O (the driver will
-# fall back to 16bits I/O if 32bits I/O are not functionnal).
+# fall back to 16bits I/O if 32bits I/O are not functional).
 # Some controllers pass the initial 32bit test, but will fail later.
 wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 #wdc1	at isa? port 0x170 irq 15 flags 0x00
@@ -583,7 +583,7 @@ ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #sb0	at isa? port 0x220 irq 5 drq 1 drq2 5	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
-# OPL[23] FM syntheziers
+# OPL[23] FM synthesizers
 #opl0	at isa? port 0x388	# use only if not attached to sound card
 #opl*	at eso?
 #opl*	at ess?

@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.367 2000/08/15 20:09:26 ross Exp $
+#	$NetBSD: GENERIC,v 1.368 2000/08/21 07:39:42 itohy Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.367 $"
+#ident 		"GENERIC-$Revision: 1.368 $"
 
 maxusers	32		# estimated number of users
 
@@ -82,7 +82,7 @@ options 	COMPAT_SVR4	# binary compatibility with SVR4
 options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options 	COMPAT_LINUX	# binary compatibility with Linux
 options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-#options        COMPAT_PECOFF   # kernel support to run Win32 apps
+#options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 
 # File systems
 file-system 	FFS		# UFS
@@ -144,7 +144,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
-#options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
+#options	PNPBIOSDEBUG	# more fulsome Pnp BIOS debugging messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -415,7 +415,7 @@ bha0	at isa? port 0x330 irq ? drq ?	# BusLogic [457]4X SCSI
 bha1	at isa? port 0x334 irq ? drq ?
 # The "nca" and "dpt" probes might give false hits or hang your machine.
 #dpt0	at isa? port 0x170 irq ? drq ?	# DPT SmartCache/SmartRAID
-#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 contoller
+#nca0	at isa? port 0x360 irq 15	# Port-mapped NCR 53C80 controller
 #nca1	at isa? iomem 0xd8000 irq 5	# Memory-mapped controller (T128, etc.)
 sea0	at isa? iomem 0xc8000 irq 5	# Seagate/Future Domain SCSI
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
