@@ -1,4 +1,4 @@
-/*	$NetBSD: tn3270.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $	*/
+/*	$NetBSD: tn3270.c,v 1.13 2002/09/23 03:29:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,15 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)tn3270.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: tn3270.c,v 1.12 2002/09/18 19:48:59 mycroft Exp $");
+__RCSID("$NetBSD: tn3270.c,v 1.13 2002/09/23 03:29:11 itojun Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
-#include <sys/poll.h>
 #include <arpa/telnet.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include "general.h"
 

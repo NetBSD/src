@@ -1,4 +1,4 @@
-/*	$NetBSD: top.c,v 1.13 2002/09/19 16:45:57 mycroft Exp $	*/
+/*	$NetBSD: top.c,v 1.14 2002/09/23 03:30:19 itojun Exp $	*/
 
 const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 
@@ -52,7 +52,7 @@ const char copyright[] = "Copyright (c) 1984 through 1996, William LeFebvre";
 #include <setjmp.h>
 #include <ctype.h>
 #include <sys/time.h>
-#include <sys/poll.h>
+#include <poll.h>
 
 /* includes specific to top */
 #include "display.h"		/* interface to display package */
