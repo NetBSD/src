@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.7 2000/11/11 22:18:57 christos Exp $	*/
+/*	$NetBSD: el.h,v 1.8 2001/01/06 14:44:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@ typedef struct el_line_t {
 	char	*buffer;		/* Input line			*/
 	char	*cursor;		/* Cursor position		*/
 	char	*lastchar;		/* Last character		*/
-	char	*limit;			/* Max position			*/
+	const char	*limit;			/* Max position			*/
 } el_line_t;
 
 /*
