@@ -7,11 +7,11 @@
 #define _M68K_IEEEFP_H_
 
 typedef int fp_except;
-#define FP_X_IMP	0x08	/* imprecise (loss of precision) */
-#define FP_X_DZ		0x10	/* divide-by-zero exception */
-#define FP_X_UFL	0x20	/* underflow exception */
-#define FP_X_OFL	0x40	/* overflow exception */
-#define FP_X_INV	0x80	/* invalid operation exception */
+#define FP_X_IMP	0x01	/* imprecise (loss of precision) */
+#define FP_X_DZ		0x02	/* divide-by-zero exception */
+#define FP_X_UFL	0x04	/* underflow exception */
+#define FP_X_OFL	0x08	/* overflow exception */
+#define FP_X_INV	0x10	/* invalid operation exception */
 
 typedef enum {
     FP_RN=0,			/* round to nearest representable number */
