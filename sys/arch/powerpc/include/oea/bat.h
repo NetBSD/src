@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.3 2003/02/05 07:35:31 matt Exp $	*/
+/*	$NetBSD: bat.h,v 1.4 2003/02/06 23:02:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct bat {
 #ifdef	_KERNEL
 void oea_batinit(paddr_t, ...);
 void oea_iobat_add(paddr_t, register_t);
+void oea_iobat_remove(paddr_t);
 extern struct bat battable[];
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.2 2003/02/05 07:05:20 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.3 2003/02/06 23:02:34 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -151,7 +151,7 @@ oea_init(void (*handler)(void))
 	/*
 	 * Set up trap vectors.  Don't assume vectors are on 0x100.
 	 */
-	for (exc = EXC_RST; exc <= EXC_LAST; exc += 0x100) {
+	for (exc = 0; exc <= EXC_LAST; exc += 0x100) {
 		switch (exc) {
 		default:
 			size = (size_t)&trapsize;
@@ -370,6 +370,48 @@ oea_iobat_add(paddr_t pa, register_t len)
 		break;
 	default:
 		break;
+	}
+}
+
+void
+oea_iobat_remove(paddr_t pa)
+{
+	register_t batu;
+	int i, n;
+
+	n = pa >> ADDR_SR_SHFT;
+	if (!BAT_VA_MATCH_P(battable[n].batu, pa) ||
+	    !BAT_VALID_P(battable[n].batu, PSL_PR))
+		return;
+	battable[n].batl = 0;
+	battable[n].batu = 0;
+#define	BAT_RESET(n) \
+	__asm __volatile("mtdbatu %0,%1; mtdbatl %0,%1" :: "n"(n), "r"(0))
+#define	BATU_GET(n, r)	__asm __volatile("mfdbatu %0,%1" : "=r"(r) : "n"(n))
+
+	for (i=1 ; i<4 ; i++) {
+		switch (i) {
+		case 1:
+			BATU_GET(1, batu);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				BAT_RESET(1);
+			break;
+		case 2:
+			BATU_GET(2, batu);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				BAT_RESET(2);
+			break;
+		case 3:
+			BATU_GET(3, batu);
+			if (BAT_VA_MATCH_P(batu, pa) &&
+			    BAT_VALID_P(batu, PSL_PR))
+				BAT_RESET(3);
+			break;
+		default:
+			break;
+		}
 	}
 }
 
