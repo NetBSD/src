@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.36 2004/03/20 18:41:02 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.37 2004/03/20 19:48:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.36 2004/03/20 18:41:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.37 2004/03/20 19:48:30 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1116,7 +1116,7 @@ smbfs_advlock(v)
 static int
 smbfs_pathcheck(struct smbmount *smp, const char *name, int nmlen)
 {
-	static const char * const badchars = "*/\[]:<>=;?";
+	static const char * const badchars = "*/\\[]:<>=;?";
 	static const char * const badchars83 = " +|,";
 	const char *cp;
 	int i;
