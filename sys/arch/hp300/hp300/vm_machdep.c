@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.23 1995/05/12 18:24:55 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.24 1995/05/25 01:11:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,11 +73,13 @@ cpu_fork(p1, p2)
 	register struct pcb *pcb = &p2->p_addr->u_pcb;
 	register struct trapframe *tf;
 	register struct switchframe *sf;
+	extern struct pcb *curpcb;
 	extern void proc_trampoline(), child_return();
 
 	p2->p_md.md_flags = p1->p_md.md_flags & ~MDP_HPUXTRACE;
 
-	/* Copy pcb from proc p1 to p2. */
+	/* Sync curpcb (which is presumably p1's PCB) and copy it to p2. */
+	savectx(curpcb);
 	*pcb = p1->p_addr->u_pcb;
 
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, pcb, 0);
