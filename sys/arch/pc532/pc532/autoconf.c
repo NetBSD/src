@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 1997/02/08 09:33:45 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 1997/03/20 12:00:30 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,14 +48,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/disklabel.h>
 #include <sys/conf.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/buf.h>
-#include <sys/malloc.h>
 #include <sys/device.h>
-#include <machine/autoconf.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
 /*
  * The following several variables are related to
@@ -86,8 +82,8 @@ configure()
 	int booted_partition = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	static const char *ipl_names[] = IPL_NAMES;
 
-	/* Start the clocks. */
-	startrtclock();
+	splhigh();
+	safepri = splhigh();
 
 	/* Find out what the hardware configuration looks like! */
 	if (config_rootfound("mainbus", "mainbus") == NULL)
@@ -113,73 +109,4 @@ configure()
 	swapconf();
 	dumpconf();
 	cold = 0;
-}
-
-/* mem bus stuff */
-
-static int mbprobe();
-static void mbattach();
-
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbprobe, mbattach
-};
-
-struct cfdriver mainbus_cd = {
-	NULL, "mainbus", DV_DULL
-};
-
-static int
-mbprobe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
-{
-	return (strcmp(cf->cf_driver->cd_name, "mainbus") == 0);
-}
-
-static int
-mbprint(aux, pnp)
-	void *aux;
-	char *pnp;
-{
-	struct confargs *ca = aux;
-
-	printf(" addr 0x%x", ca->ca_addr);
-	if (ca->ca_irq != -1) {
-		printf(", irq %d", ca->ca_irq & 15);
-		if (ca->ca_irq & 0xf0)
-			printf(", %d", ca->ca_irq >> 4);
-	}
-
-	return(UNCONF);
-}
-
-static int
-mbsearch(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	struct cfdata *cf = match;
-	struct confargs ca;
-
-	ca.ca_addr  = cf->cf_loc[0];
-	ca.ca_irq   = cf->cf_loc[1];
-	ca.ca_flags = cf->cf_flags;
-
-	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
-		config_attach(parent, cf, &ca, mbprint);
-		if (cf->cf_fstate != FSTATE_STAR)
-			break;
-	}
-	return (0);
-}
-
-static void
-mbattach(parent, self, aux)
-	struct device *parent, *self;
- 	void *aux;
-{
-	printf("\n");
-	config_search(mbsearch, self, NULL);
 }
