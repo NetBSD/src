@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.41 2000/06/03 20:47:40 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.42 2000/06/04 03:40:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -128,6 +128,7 @@ struct cpu_info {
 	struct device *ci_dev;		/* pointer to our device */
 	u_long ci_want_resched;		/* preempt current process */
 	u_long ci_astpending;		/* AST is pending */
+	u_long ci_intrdepth;		/* interrupt trap depth */
 #if defined(MULTIPROCESSOR)
 	u_long ci_flags;		/* flags; see below */
 	u_long ci_ipis;			/* interprocessor interrupts pending */
@@ -179,11 +180,13 @@ struct clockframe {
 #define	CLKF_BASEPRI(framep)						\
 	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
+
 /*
- * XXX No way to accurately tell if we were in interrupt mode before taking
- * clock interrupt.
+ * This isn't perfect; if the clock interrupt comes in before the
+ * r/m/w cycle is complete, we won't be counted... but it's not
+ * like this stastic has to be extremely accurate.
  */
-#define	CLKF_INTR(framep)	(0)
+#define	CLKF_INTR(framep)	(curcpu()->ci_intrdepth)
 
 /*
  * Preempt the current process if in interrupt from user mode,
