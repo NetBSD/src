@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.41 2002/05/17 22:40:31 itojun Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.42 2002/05/18 00:07:28 itojun Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.41 2002/05/17 22:40:31 itojun Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.42 2002/05/18 00:07:28 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -685,7 +685,7 @@ gethostbyaddr(addr, len, af)
 	    (IN6_IS_ADDR_LINKLOCAL((const struct in6_addr *)(const void *)uaddr) ||
 	     IN6_IS_ADDR_SITELOCAL((const struct in6_addr *)(const void *)uaddr))) {
 		h_errno = HOST_NOT_FOUND;
-		return NULL;
+		return (NULL);
 	}
 	if (af == AF_INET6 && len == IN6ADDRSZ &&
 	    (IN6_IS_ADDR_V4MAPPED((const struct in6_addr *)(const void *)uaddr) ||
