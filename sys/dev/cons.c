@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.49 2003/08/07 16:30:51 agc Exp $	*/
+/*	$NetBSD: cons.c,v 1.50 2003/10/03 13:15:52 dsl Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.49 2003/08/07 16:30:51 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.50 2003/10/03 13:15:52 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,6 +101,8 @@ dev_type_ioctl(cnioctl);
 dev_type_poll(cnpoll);
 dev_type_kqfilter(cnkqfilter);
 
+static const struct cdevsw *cn_redirect(dev_t *, int, int *);
+
 const struct cdevsw cons_cdevsw = {
 	cnopen, cnclose, cnread, cnwrite, cnioctl,
 	nostop, notty, cnpoll, nommap, cnkqfilter, D_TTY
@@ -108,13 +110,18 @@ const struct cdevsw cons_cdevsw = {
 
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
-struct	vnode *cn_devvp;	/* vnode for underlying device. */
+struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 
 int
 cnopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	const struct cdevsw *cdev;
 	dev_t cndev;
+	int unit;
+
+	unit = minor(dev);
+	if (unit > 1)
+		return ENODEV;
 
 	if (cn_tab == NULL)
 		return (0);
@@ -146,9 +153,9 @@ cnopen(dev_t dev, int flag, int mode, struct proc *p)
 	if (cdev == NULL)
 		return (ENXIO);
 
-	if (cn_devvp == NULLVP) {
+	if (cn_devvp[unit] == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(cndev, &cn_devvp);
+		cdevvp(cndev, &cn_devvp[unit]);
 	}
 	return ((*cdev->d_open)(cndev, flag, mode, p));
 }
@@ -158,6 +165,9 @@ cnclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	const struct cdevsw *cdev;
 	struct vnode *vp;
+	int unit;
+
+	unit = minor(dev);
 
 	if (cn_tab == NULL)
 		return (0);
@@ -171,10 +181,10 @@ cnclose(dev_t dev, int flag, int mode, struct proc *p)
 	cdev = cdevsw_lookup(dev);
 	if (cdev == NULL)
 		return (ENXIO);
-	if (cn_devvp != NULLVP) {
+	if (cn_devvp[unit] != NULLVP) {
 		/* release our reference to real dev's vnode */
-		vrele(cn_devvp);
-		cn_devvp = NULLVP;
+		vrele(cn_devvp[unit]);
+		cn_devvp[unit] = NULLVP;
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
@@ -185,6 +195,7 @@ int
 cnread(dev_t dev, struct uio *uio, int flag)
 {
 	const struct cdevsw *cdev;
+	int error;
 
 	/*
 	 * If we would redirect input, punt.  This will keep strange
@@ -193,15 +204,9 @@ cnread(dev_t dev, struct uio *uio, int flag)
 	 * input (except a shell in single-user mode, but then,
 	 * one wouldn't TIOCCONS then).
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		return 0;
-	else if (cn_tab == NULL)
-		return ENXIO;
-
-	dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
+	cdev = cn_redirect(&dev, 1, &error);
 	if (cdev == NULL)
-		return (ENXIO);
+		return error;
 	return ((*cdev->d_read)(dev, uio, flag));
 }
  
@@ -209,20 +214,13 @@ int
 cnwrite(dev_t dev, struct uio *uio, int flag)
 {
 	const struct cdevsw *cdev;
+	int error;
 
-	/*
-	 * Redirect output, if that's appropriate.
-	 * If there's no real console, return ENXIO.
-	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
-	else if (cn_tab == NULL)
-		return ENXIO;
-	else
-		dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
+	/* Redirect output, if that's appropriate. */
+	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return (ENXIO);
+		return error;
+
 	return ((*cdev->d_write)(dev, uio, flag));
 }
 
@@ -250,15 +248,9 @@ cnioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	 * ioctls on /dev/console, then the console is redirected
 	 * out from under it.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
-	else if (cn_tab == NULL)
-		return ENXIO;
-	else
-		dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
+	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return (ENXIO);
+		return error;
 	return ((*cdev->d_ioctl)(dev, cmd, data, flag, p));
 }
 
@@ -267,21 +259,16 @@ int
 cnpoll(dev_t dev, int events, struct proc *p)
 {
 	const struct cdevsw *cdev;
+	int error;
 
 	/*
 	 * Redirect the poll, if that's appropriate.
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
-	else if (cn_tab == NULL)
-		return ENXIO;
-	else
-		dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
+	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return (ENXIO);
+		return error;
 	return ((*cdev->d_poll)(dev, events, p));
 }
 
@@ -290,21 +277,16 @@ int
 cnkqfilter(dev_t dev, struct knote *kn)
 {
 	const struct cdevsw *cdev;
+	int error;
 
 	/*
 	 * Redirect the kqfilter, if that's appropriate.
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		dev = constty->t_dev;
-	else if (cn_tab == NULL)
-		return ENXIO;
-	else
-		dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
+	cdev = cn_redirect(&dev, 0, &error);
 	if (cdev == NULL)
-		return (ENXIO);
+		return error;
 	return ((*cdev->d_kqfilter)(dev, kn));
 }
 
@@ -420,4 +402,29 @@ cnhalt(void)
 	if (cn_tab == NULL || cn_tab->cn_halt == NULL)
 		return;
 	(*cn_tab->cn_halt)(cn_tab->cn_dev);
+}
+
+static const struct cdevsw *
+cn_redirect(dev_t *devp, int is_read, int *error)
+{
+	dev_t dev = *devp;
+
+	/*
+	 * Redirect output, if that's appropriate.
+	 * If there's no real console, return ENXIO.
+	 */
+	*error = ENXIO;
+	if (constty != NULL && minor(dev) == 0 &&
+	    (cn_tab == NULL || (cn_tab->cn_pri != CN_REMOTE ))) {
+		if (is_read) {
+			*error = 0;
+			return NULL;
+		}
+		dev = constty->t_dev;
+	} else if (cn_tab == NULL)
+		return NULL;
+	else
+		dev = cn_tab->cn_dev;
+	*devp = dev;
+	return cdevsw_lookup(dev);
 }
