@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.34 2002/06/09 17:59:45 itojun Exp $ */
+/*	$NetBSD: if_gre.c,v 1.35 2002/06/09 19:17:43 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.34 2002/06/09 17:59:45 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.35 2002/06/09 19:17:43 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.34 2002/06/09 17:59:45 itojun Exp $");
  * other vendors use.
  */
 #define GREMTU 1476
-#define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
 struct gre_softc_head gre_softc_list;
 int ip_gre_ttl = GRE_TTL;
@@ -153,6 +152,7 @@ gre_clone_create(ifc, unit)
 	sc->sc_if.if_ioctl = gre_ioctl;
 	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
 	sc->g_proto = IPPROTO_GRE;
+	sc->sc_if.if_flags |= IFF_LINK0;
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
@@ -383,19 +383,10 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		if ((sc->g_dst.s_addr == INADDR_ANY) ||
 		    (sc->g_src.s_addr == INADDR_ANY))
 			ifp->if_flags &= ~IFF_UP;
-
-		switch (ifr->ifr_flags & LINK_MASK) {
-			case IFF_LINK0:
-				sc->g_proto = IPPROTO_GRE;
-				ifp->if_flags |= IFF_LINK0;
-				ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
-				break;
-			case IFF_LINK2:
-				sc->g_proto = IPPROTO_MOBILE;
-				ifp->if_flags |= IFF_LINK2;
-				ifp->if_flags &= ~(IFF_LINK0|IFF_LINK1);
-				break;
-		}
+		if ((ifr->ifr_flags & IFF_LINK0) != 0)
+			sc->g_proto = IPPROTO_GRE;
+		else
+			sc->g_proto = IPPROTO_MOBILE;
 		break;
 	case SIOCSIFMTU:
 		if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
@@ -434,14 +425,13 @@ gre_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (sc->g_proto) {
 		case IPPROTO_GRE :
 			ifp->if_flags |= IFF_LINK0;
-			ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
 			break;
 		case IPPROTO_MOBILE :
-			ifp->if_flags |= IFF_LINK2;
-			ifp->if_flags &= ~(IFF_LINK1|IFF_LINK2);
+			ifp->if_flags &= ~IFF_LINK0;
 			break;
 		default:
-			ifp->if_flags &= ~(IFF_LINK0|IFF_LINK1|IFF_LINK2);
+			error = EINVAL;
+			break;
 		}
 		break;
 	case GREGPROTO:
