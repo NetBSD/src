@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.65 2004/08/12 21:34:52 thorpej Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.66 2004/08/12 22:33:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.65 2004/08/12 21:34:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.66 2004/08/12 22:33:46 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -137,7 +137,7 @@ const struct ata_bustype wdc_ata_bustype = {
 	ata_get_params,
 	wdc_ata_addref,
 	wdc_ata_delref,
-	wdc_kill_pending,
+	ata_kill_pending,
 };
 
 /*
