@@ -1,4 +1,4 @@
-/*	$NetBSD: smb.h,v 1.10 2003/03/24 08:42:31 jdolecek Exp $	*/
+/*	$NetBSD: smb.h,v 1.11 2003/03/24 08:56:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -372,7 +372,7 @@ enum smb_dialects {
 #define ERRbadshare	32	/* Share mode can't be granted */
 #define ERRlock		33	/* A lock request conflicts with existing lock */
 #define ERRunsup	50	/* unsupported - Win 95 */
-#define ERRbaddevice	66	/* Bad Device Type */
+#define ERRnoipc	66	/* Bad Device Type */
 #define ERRnosuchshare	67	/* Bad Network Name */	
 #define ERRfilexists	80	/* The file named in the request already exists */
 #define ERRcannotopen	110	/* cannot open the file */
