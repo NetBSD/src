@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.10 2003/11/03 19:04:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.10 2003/11/03 19:04:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,11 +98,14 @@ void	pckbc_acpi_intr_establish(struct pckbc_softc *, pckbc_slot_t);
  */
 
 static const char * const pckbc_acpi_ids[] = {
-	"PNP0303",	/* Standard PC KBD/MS port */
-	"PNP0320",	/* Japanese 106 */
-	"PNP0F13",
+	"PNP03??",	/* Standard PC KBD/MS port */
 	"PNP0F03",
-	"IBM3780",	/* IBM pointing device */
+	"PNP0F0E",
+	"PNP0F12",
+	"PNP0F13",
+	"PNP0F19",
+	"PNP0F1B",
+	"PNP0F1C",
 	NULL
 };
 
