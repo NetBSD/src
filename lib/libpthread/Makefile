@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2003/01/21 02:24:41 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2003/01/24 01:53:27 thorpej Exp $
 #
 
 WARNS=	2
@@ -64,17 +64,6 @@ pthread_switch.S _context_u.S: assym.h
 
 debuglog: debuglog.o
 	$(CC) -o debuglog debuglog.o -lpthread
-
-MAN+=	sem_destroy.3
-MAN+=	sem_getvalue.3
-MAN+=	sem_init.3
-MAN+=	sem_open.3
-MAN+=	sem_post.3
-MAN+=	sem_wait.3
-
-MLINKS+=	sem_open.3 sem_close.3
-MLINKS+=	sem_open.3 sem_unlink.3
-MLINKS+=	sem_wait.3 sem_trywait.3
 
 .include <bsd.lib.mk>
 
