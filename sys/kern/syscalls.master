@@ -1,11 +1,11 @@
- 	$Id: syscalls.master,v 1.5 1993/05/20 02:55:11 cgd Exp $
+ 	$Id: syscalls.master,v 1.6 1993/06/07 19:52:42 cgd Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
 
 ; Columns: number type nargs name altname/comments
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, COMPAT
+;	type	one of STD, OBSOL, UNIMPL, NODEF, COMPAT
 ;	nargs	number of arguments
 ;	name	name of syscall routine
 ;	altname	name of system call if different
@@ -16,6 +16,7 @@
 ;	COMPAT	included on COMPAT #ifdef
 ;	LIBCOMPAT included on COMPAT #ifdef, and placed in syscall.h
 ;	OBSOL	obsolete, not included in system, only specifies name
+;	NODEF	do everything except include in syscall.h
 ;	UNIMPL	not implemented, placeholder only
 
 ; #ifdef's, etc. may be included, and are copied to the output files.
@@ -253,3 +254,38 @@
 188	UNIMPL	0 nosys
 189	UNIMPL	0 nosys
 190	UNIMPL	0 nosys
+191	UNIMPL	0 nosys
+192	UNIMPL	0 nosys
+193	UNIMPL	0 nosys
+194	UNIMPL	0 nosys
+195	UNIMPL	0 nosys
+196	UNIMPL	0 nosys
+197	UNIMPL	0 nosys
+198	UNIMPL	0 nosys
+199	UNIMPL	0 nosys
+;
+; Syscalls 200-109 are reserved for dynamically loaded syscalls
+;
+#ifdef LKM
+200	NODEF	0 lkmnosys
+201	NODEF	0 lkmnosys
+202	NODEF	0 lkmnosys
+203	NODEF	0 lkmnosys
+204	NODEF	0 lkmnosys
+205	NODEF	0 lkmnosys
+206	NODEF	0 lkmnosys
+207	NODEF	0 lkmnosys
+208	NODEF	0 lkmnosys
+209	NODEF	0 lkmnosys
+#else	/* !LKM */
+200	UNIMPL	0 nosys
+201	UNIMPL	0 nosys
+202	UNIMPL	0 nosys
+203	UNIMPL	0 nosys
+204	UNIMPL	0 nosys
+205	UNIMPL	0 nosys
+206	UNIMPL	0 nosys
+207	UNIMPL	0 nosys
+208	UNIMPL	0 nosys
+209	UNIMPL	0 nosys
+#endif	/* !LKM */

@@ -226,4 +226,36 @@ char *syscallnames[] = {
 	"#188",			/* 188 = nosys */
 	"#189",			/* 189 = nosys */
 	"#190",			/* 190 = nosys */
+	"#191",			/* 191 = nosys */
+	"#192",			/* 192 = nosys */
+	"#193",			/* 193 = nosys */
+	"#194",			/* 194 = nosys */
+	"#195",			/* 195 = nosys */
+	"#196",			/* 196 = nosys */
+	"#197",			/* 197 = nosys */
+	"#198",			/* 198 = nosys */
+	"#199",			/* 199 = nosys */
+#ifdef LKM
+	"lkmnosys",			/* 200 = lkmnosys */
+	"lkmnosys",			/* 201 = lkmnosys */
+	"lkmnosys",			/* 202 = lkmnosys */
+	"lkmnosys",			/* 203 = lkmnosys */
+	"lkmnosys",			/* 204 = lkmnosys */
+	"lkmnosys",			/* 205 = lkmnosys */
+	"lkmnosys",			/* 206 = lkmnosys */
+	"lkmnosys",			/* 207 = lkmnosys */
+	"lkmnosys",			/* 208 = lkmnosys */
+	"lkmnosys",			/* 209 = lkmnosys */
+#else	/* !LKM*/
+	"#200",			/* 200 = nosys */
+	"#201",			/* 201 = nosys */
+	"#202",			/* 202 = nosys */
+	"#203",			/* 203 = nosys */
+	"#204",			/* 204 = nosys */
+	"#205",			/* 205 = nosys */
+	"#206",			/* 206 = nosys */
+	"#207",			/* 207 = nosys */
+	"#208",			/* 208 = nosys */
+	"#209",			/* 209 = nosys */
+#endif	/* !LKM*/
 };
