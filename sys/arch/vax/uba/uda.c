@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.7 1995/07/05 08:24:48 ragge Exp $	*/
+/*	$NetBSD: uda.c,v 1.8 1995/08/31 22:24:39 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -108,6 +108,27 @@
 #include "machine/mtpr.h"
 
 extern int cold;
+
+/*
+ * This macro is for delay during init. Some MSCP clone card (Dilog)
+ * can't handle fast read from its registers, and therefore need
+ * a delay between them.
+ */
+#define DELAYTEN 1000
+#define Wait_step( mask, result, status ) {				\
+		status = 1;						\
+		if ((udaddr->udasa & mask) != result) {			\
+			int count = 0;					\
+			while ((udaddr->udasa & mask) != result) {	\
+				DELAY(100);				\
+				count += 1; 				\
+				if (count > DELAYTEN)			\
+					break;				\
+			}						\
+			if (count > DELAYTEN)				\
+				status = 0;				\
+		}							\
+	}
 
 /*
  * UDA communications area and MSCP packet pools, per controller.
@@ -278,7 +299,7 @@ udaprobe(reg, ctlr, um)
 	volatile struct udadevice *udaddr;
 	struct mscp_info *mi;
 	extern int cpu_type;
-	int timeout, tries;
+	int timeout, tries, count;
 #ifdef notyet
 	int s;
 #endif
@@ -350,15 +371,36 @@ udaprobe(reg, ctlr, um)
 	tries = 0;
 again:
 	udaddr->udaip = 0;		/* start initialisation */
-	timeout = todr() + 1000;	/* timeout in 10 seconds */
-	while ((udaddr->udasa & UDA_STEP1) == 0)
-		if (todr() > timeout)
-			goto bad;
+
+	count = 0;
+	while ( count < DELAYTEN ) {
+		if ( (udaddr->udasa & UDA_STEP1) != 0 )
+			break;
+		DELAY(10000);
+		count += 1;
+	}
+
+	/* nothing there */
+	if ( count == DELAYTEN )
+	        return(0);
+
 	udaddr->udasa = UDA_ERR | (NCMDL2 << 11) | (NRSPL2 << 8) | UDA_IE |
 		(sc->sc_ivec >> 2);
-	while ((udaddr->udasa & UDA_STEP2) == 0)
-		if (todr() > timeout)
-			goto bad;
+
+	count = 0;
+	while (count < DELAYTEN) {
+		if ((udaddr->udasa & UDA_STEP2 ) != 0)
+		    break;
+		DELAY(10000);
+		count += 1;
+	}
+
+	if (count == DELAYTEN) {
+		printf("udaprobe: uda%d: init step2 no change.\n",
+		    um->um_ctlr);
+		goto bad;
+	}
+
 	/* should have interrupted by now */
 #ifdef notyet
 	sc->sc_ipl = br = qbgetpri();
@@ -600,7 +642,7 @@ udainit(ctlr)
 	register struct uda_softc *sc;
 	register struct udadevice *udaddr;
 	struct uba_ctlr *um;
-	int timo, ubinfo;
+	int timo, ubinfo, count;
 /* printf("udainit\n"); */
 	sc = &uda_softc[ctlr];
 	um = udaminfo[ctlr];
@@ -635,13 +677,18 @@ udainit(ctlr)
 	sc->sc_state = ST_IDLE;	/* in case init fails */
 	udaddr = (struct udadevice *)um->um_addr;
 	udaddr->udaip = 0;
-	timo = todr() + 1000;
-	while ((udaddr->udasa & STEP0MASK) == 0) {
-		if (todr() > timo) {
-			printf("uda%d: timeout during init\n", ctlr);
-			return (-1);
-		}
+	count = 0;
+	while (count < DELAYTEN) {
+		if ((udaddr->udasa & UDA_STEP1) != 0)
+			break;
+		DELAY(10000);
+		count += 1;
 	}
+	if (count == DELAYTEN) {
+		printf("uda%d: timeout during init\n", ctlr);
+		return (-1);
+	}
+
 	if ((udaddr->udasa & STEP0MASK) != UDA_STEP1) {
 		printf("uda%d: init failed, sa=%b\n", ctlr,
 			udaddr->udasa, udasr_bits);
@@ -1345,7 +1392,7 @@ udaintr(vektor,level,uba,ctlr)
 	volatile struct udadevice *udaddr = (struct udadevice *)um->um_addr;
 	struct uda *ud;
 	struct mscp *mp;
-	volatile int i;
+	volatile int i, wait_status;
 	extern int cpu_type;
 
 #ifdef QBA
@@ -1385,8 +1432,9 @@ udaintr(vektor,level,uba,ctlr)
 		/*
 		 * Begin step two initialisation.
 		 */
-		if ((udaddr->udasa & STEP1MASK) != STEP1GOOD) {
-			i = 1;
+		i = 0;
+		Wait_step(STEP1MASK, STEP1GOOD, wait_status);
+		if (!wait_status) {
 initfailed:
 			printf("uda%d: init step %d failed, sa=%b\n",
 				ctlr, i, udaddr->udasa, udasr_bits);
@@ -1408,10 +1456,11 @@ initfailed:
 		/*
 		 * Begin step 3 initialisation.
 		 */
-		if ((udaddr->udasa & STEP2MASK) != STEP2GOOD) {
-			i = 2;
+		i = 2;
+		Wait_step(STEP2MASK, STEP2GOOD, wait_status);
+		if (!wait_status)
 			goto initfailed;
-		}
+
 		udaddr->udasa = ((int)&sc->sc_uda->uda_ca.ca_rspdsc[0]) >> 16;
 		sc->sc_state = ST_STEP3;
 		return;
@@ -1420,10 +1469,11 @@ initfailed:
 		/*
 		 * Set controller characteristics (finish initialisation).
 		 */
-		if ((udaddr->udasa & STEP3MASK) != STEP3GOOD) {
-			i = 3;
+		i = 3;
+		Wait_step(STEP3MASK, STEP3GOOD, wait_status);
+		if (!wait_status)
 			goto initfailed;
-		}
+
 		i = udaddr->udasa & 0xff;
 		if (i != sc->sc_micro) {
 			sc->sc_micro = i;
