@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 1997/09/30 23:15:41 is Exp $
+#	$NetBSD: Makefile,v 1.8 1997/12/30 23:26:10 cgd Exp $
 
-# missing: bin libexec sbin usr.bin usr.sbin share games gnu
-SUBDIR+= include lib sys
+# missing: bin libexec sbin usr.sbin share games gnu
+SUBDIR+= include lib sys usr.bin
 
 .include <bsd.subdir.mk>
