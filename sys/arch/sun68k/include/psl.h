@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.1 2001/06/14 12:57:11 fredette Exp $	*/
+/*	$NetBSD: psl.h,v 1.2 2001/06/27 02:51:45 fredette Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -102,6 +102,9 @@ _getsr(void)
 /* Intersil or Am9513 clock hardware interrupts (hard-wired at 5) */
 #define splclock()      splraise5()
 #define splstatclock()  splclock()
+
+/* Zilog Serial hardware interrupts (hard-wired at 6) */
+#define splzs()		spl6()
 
 /* Block out all interrupts (except NMI of course). */
 #define splhigh()       spl7()
