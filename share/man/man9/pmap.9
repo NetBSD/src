@@ -1,6 +1,6 @@
-.\"	$NetBSD: pmap.9,v 1.22 2003/04/16 13:35:32 wiz Exp $
+.\"	$NetBSD: pmap.9,v 1.23 2003/05/08 18:16:20 thorpej Exp $
 .\"
-.\" Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -45,10 +45,8 @@
 .In uvm/uvm_extern.h
 .Ft void
 .Fn "pmap_init" "void"
-.Ft void
-.Fn "pmap_virtual_space" "vaddr_t *vstartp" "vaddr_t *vendp"
 .Ft vaddr_t
-.Fn "pmap_steal_memory" "vsize_t size" "vaddr_t *vstartp" "vaddr_t *vendp"
+.Fn "pmap_steal_memory" "vsize_t size"
 .Ft pmap_t
 .Fn "pmap_kernel" "void"
 .Ft pmap_t
@@ -113,6 +111,8 @@
 .Fn "PMAP_MAP_POOLPAGE" "paddr_t pa"
 .Ft paddr_t
 .Fn "PMAP_UNMAP_POOLPAGE" "vaddr_t va"
+.Vt extern vaddr_t virtual_avail;
+.Vt extern vaddr_t virtual_end;
 .Sh DESCRIPTION
 The
 .Nm
@@ -213,6 +213,42 @@ struct pmap_statistics {
         long        wired_count;    /* number of wired pages */
 };
 .Ed
+.Pp
+The
+.Nm
+module is also responsible for defining the boundaries of the managed
+kernel virtual address space.
+The global variables
+.Dv virtual_avail
+and
+.Dv virtual_end
+are provided for this purpose.
+The
+.Nm
+module must initialize
+.Dv virtual_avail
+and
+.Dv virtual_end
+to the first and last kernel virtual addresses that are to be managed by
+.Xr uvm 9 .
+These variables must be initialized during bootstrap, before
+.Fn main
+is called.
+If the
+.Fn pmap_growkernel
+feature is used by a
+.Nm
+implementation, then
+.Dv virtual_end
+should be set to the maximum kernel virtual address allowed by the
+implementation.
+If
+.Fn pmap_growkernel
+is not used, then
+.Dv virtual_end
+.Em must
+be set to the maximum kernel virtual address that can be mapped with
+the resources currently allocated to map the kernel virtual address space.
 .Ss WIRED MAPPINGS
 The
 .Nm
@@ -388,37 +424,6 @@ Return a pointer to the
 structure that maps the kernel virtual address space.
 .Pp
 Note that this function may be provided as a C pre-processor macro.
-.It void Fn "pmap_virtual_space" "vaddr_t *vstartp" "vaddr_t *vendp"
-The
-.Fn pmap_virtual_space
-function is called to determine the initial kernel virtual address
-space beginning and end.
-These values are used to create the kernel's virtual memory map.
-The function must set
-.Fa *vstartp
-to the first kernel virtual address that will be managed by
-.Xr uvm 9 ,
-and must set
-.Fa *vendp
-to the last kernel virtual address that will be managed by
-.Xr uvm 9 .
-.Pp
-If the
-.Fn pmap_growkernel
-feature is used by a
-.Nm
-implementation, then
-.Fa *vendp
-should be set to the maximum kernel virtual address allowed by the
-implementation.
-If
-.Fn pmap_growkernel
-is not used, then
-.Fa *vendp
-.Em must
-be set to the maximum kernel virtual address that can be mapped with
-the resources currently allocated to map the kernel virtual address
-space.
 .It pmap_t Fn "pmap_create" "void"
 Create a physical map and return it to the caller.
 The reference count on the new map is 1.
@@ -862,8 +867,7 @@ This section describes several optional functions in the
 .Nm
 API.
 .Bl -tag -width indent -offset indent
-.It vaddr_t Fn "pmap_steal_memory" "vsize_t size" "vaddr_t *vstartp" \
-    "vaddr_t *vendp"
+.It vaddr_t Fn "pmap_steal_memory" "vsize_t size"
 This function is a bootstrap memory allocator, which may be provided
 as an alternative to the bootstrap memory allocator used within
 .Xr uvm 9
@@ -910,14 +914,16 @@ If the
 function uses address space from the range provided to
 .Xr uvm 9
 by the
-.Fn pmap_virtual_space
-call, then
+.Dv virtual_avail
+and
+.Dv virtual_end
+variables, then
 .Fn pmap_steal_memory
 must adjust
-.Fa *vstartp
+.Dv virtual_avail
 and
-.Fa *vendp
-upon return.
+.Dv virtual_end
+as appropriate.
 .Pp
 The
 .Fn pmap_steal_memory
