@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.h,v 1.1 2004/03/11 21:44:08 cl Exp $	*/
+/*	$NetBSD: xenfunc.h,v 1.2 2004/05/07 14:01:33 cl Exp $	*/
 
 /*
  *
@@ -101,6 +101,22 @@ tlbflush(void)
 {
 	xpq_queue_tlb_flush();
 	xpq_flush_queue();
+}
+
+static __inline u_int
+rdr6(void)
+{
+	u_int val;
+
+	val = HYPERVISOR_get_debugreg(6);
+	return val;
+}
+
+static __inline void
+ldr6(u_int val)
+{
+
+	HYPERVISOR_set_debugreg(6, val);
 }
 
 static __inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2 2004/04/10 23:39:54 cl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.3 2004/05/07 14:01:33 cl Exp $	*/
 /*	NetBSD: cpufunc.h,v 1.28 2004/01/14 11:31:55 yamt Exp 	*/
 
 /*-
@@ -201,6 +201,7 @@ void	setidt(int idx, /*XXX*/caddr_t func, int typ, int dpl);
 /* debug register */
 void dr0(caddr_t, u_int32_t, u_int32_t, u_int32_t);
 
+#if 0
 static __inline u_int
 rdr6(void)
 {
@@ -216,6 +217,7 @@ ldr6(u_int val)
 
 	__asm __volatile("movl %0,%%dr6" : : "r" (val));
 }
+#endif
 
 /* XXXX ought to be in psl.h with spl() functions */
 
