@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 #
 #  Perl script to convert a standard distribution directory for xntp into
 #	a NetBSD source tree.
@@ -251,6 +251,7 @@ SUBDIR= ntpdate ntpq ntptrace xntpd xntpdc
 CFLAGS += -I${.CURDIR}/../include -DHAVE_CONFIG_H
 LDADD += -lntp -lkvm
 DPADD += ${LIBNTP} ${LIBKVM}
+BINDIR = /usr/sbin
 %% file usr.sbin/xntp/xntpd/Makefile
 %% NetBSD
 
@@ -302,7 +303,7 @@ CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}/../../usr.sbin/xntp/include
 .include <bsd.lib.mk>
 %% file domestic/lib/libntp/Makefile
 %% NetBSD
-#	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+#	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 
 LIB=	ntp
 %% srcs libntp
@@ -974,7 +975,7 @@ char * Version = "5.90 3-NetBSD Thu Apr 17 17:15:47 EDT 1997 (1)";
 /* Define if you have the socket library (-lsocket).  */
 /* #undef HAVE_LIBSOCKET */
 %% file usr.sbin/xntp/ntpdate/ntpdate.8
-.\"	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+.\"	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1168,7 +1169,7 @@ and
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntpq/ntpq.8
-.\"	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+.\"	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1540,7 +1541,7 @@ queries to a particular host, but doesn't.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/ntptrace/ntptrace.8
-.\"	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+.\"	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 .\" Converted from HTML to mandoc by Christos Zoulas <christos@netbsd.org>
 .\"
 .Dd April 17, 1997
@@ -1602,7 +1603,7 @@ samples.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/xntpd/xntpd.8
-.\"	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+.\"	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 .\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
 .Dd April 17, 1997
 .Dt XNTPD 8
@@ -1790,7 +1791,7 @@ than a high stratum workstation, in mind.
 .Sh AUTHOR
 David L. Mills (mills@udel.edu)
 %% file usr.sbin/xntp/xntpdc/xntpdc.8
-.\"	$NetBSD: xntp2netbsd,v 1.1 1997/04/18 13:49:37 christos Exp $
+.\"	$NetBSD: xntp2netbsd,v 1.2 1997/04/18 14:06:16 christos Exp $
 .\" Converted from HTML to mandoc by Jason R. Thorpe <thorpej@NetBSD.ORG>
 .Dd April 17, 1997
 .Dt XNTPDC 8
