@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.152 2003/09/14 06:59:14 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.153 2003/09/14 17:39:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.152 2003/09/14 06:59:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.153 2003/09/14 17:39:03 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -166,8 +166,12 @@ ksiginfo_save(struct proc *p, ksiginfo_t *ksi)
 			return;
 		*kpool = *ksi;
 		ksiginfo_put(p, kpool);
-	} else
+	} else {
+		ksiginfo_t *next = ksi->ksi_next, *prev = ksi->ksi_prev;
 		*kpool = *ksi;
+		kpool->ksi_next = next;
+		kpool->ksi_prev = prev;
+	}
 }
 
 /*
@@ -178,7 +182,7 @@ ksiginfo_exithook(struct proc *p, void *v)
 {
 	ksiginfo_t *ksi, *hp = p->p_sigctx.ps_siginfo;
 
-	if (hp == NULL)
+	if ((ksi = hp) == NULL)
 		return;
 	for (;;) {
 		pool_put(&ksiginfo_pool, ksi);
