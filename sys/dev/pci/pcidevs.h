@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.641 2004/08/02 19:10:48 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.642 2004/08/02 19:25:46 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.639 2004/08/02 19:10:35 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.640 2004/08/02 19:25:35 mycroft Exp 
  */
 
 /*
@@ -2887,6 +2887,7 @@
 /* this is the device id `indicating 21143 driver compatibility' */
 #define	PCI_PRODUCT_XIRCOM_X3201_3_21143	0x0003		/* X3201-3 Fast Ethernet Controller (21143) */
 #define	PCI_PRODUCT_XIRCOM_WINGLOBAL	0x000c		/* WinGlobal Modem */
+#define	PCI_PRODUCT_XIRCOM_MODEM56	0x0103		/* 56k Modem */
 
 /* Yamaha products */
 #define	PCI_PRODUCT_YAMAHA_YMF724	0x0004		/* 724 Audio */
