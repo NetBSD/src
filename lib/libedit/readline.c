@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.46 2004/02/27 14:52:18 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.47 2004/09/08 18:15:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.46 2004/02/27 14:52:18 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.47 2004/09/08 18:15:57 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1865,7 +1865,10 @@ rl_complete(int ignore, int invoking_key)
 		rl_initialize();
 
 	if (rl_inhibit_completion) {
-		rl_insert(ignore, invoking_key);
+		char arr[2];
+		arr[0] = (char)invoking_key;
+		arr[1] = '\0';
+		el_insertstr(e, arr);
 		return (CC_REFRESH);
 	} else if (e->el_state.lastcmd == el_rl_complete_cmdnum)
 		return rl_complete_internal('?');
