@@ -1,4 +1,4 @@
-/* $NetBSD: armfpe_glue.S,v 1.3 1996/02/05 16:51:56 mark Exp $ */
+/* $NetBSD: armfpe_glue.S,v 1.4 1996/02/15 22:45:21 mark Exp $ */
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,7 @@
  *
  * Created      : 21/12/95
  *
- *    $Id: armfpe_glue.S,v 1.3 1996/02/05 16:51:56 mark Exp $
+ *    $Id: armfpe_glue.S,v 1.4 1996/02/15 22:45:21 mark Exp $
  */
 
 #include "assym.h"
@@ -407,3 +407,7 @@ _arm_fpe_exception_glue:
 	mov	r0, r0
 	add	sp, sp, #15*4
 	ldmfd	sp!, {pc}^
+
+	.global _fpe_nexthandler
+_fpe_nexthandler:
+	.word	_undefinedinstruction_bounce
