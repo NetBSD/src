@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.3 1999/12/08 04:54:15 itojun Exp $	*/
+/*	$NetBSD: if.c,v 1.4 2000/02/28 09:55:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -167,21 +167,22 @@ if_getmtu(char *name)
 	return(ifr.ifr_mtu);
 #endif
 #ifdef __bsdi__
-	struct ifaddrs *ifa;
+	struct ifaddrs *ifap, *ifa;
 	struct if_data *ifd;
 
-	if (getifaddrs(&ifa) < 0)
+	if (getifaddrs(&ifap) < 0)
 		return(0);
-	while (ifa) {
+	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		if (strcmp(ifa->ifa_name, name) == 0) {
 			ifd = ifa->ifa_data;
+			freeifaddrs(ifap);
 			if (ifd)
 				return ifd->ifi_mtu;
 			else
 				return 0;
 		}
-		ifa = ifa->ifa_next;
 	}
+	freeifaddrs(ifap);
 	return 0;
 #endif
 	/* last resort */
