@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsreg.h,v 1.4 1998/05/25 01:14:38 thorpej Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.5 1998/05/26 22:48:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -50,7 +50,7 @@
 #define	TCDS_CIR_STD		0x00000008	/* Serial transmit disable */
 #define	TCDS_CIR_GPI_0		0x00000010	/* Not used */
 #define	TCDS_CIR_GPI_1		0x00000020	/* Not used */
-#define	TCDS_CIR_GPI_2		0x00000040	/* Not used */
+#define	TCDS_CIR_GPI_2		0x00000040	/* 1 = 25MHz, 0 = 40MHz */
 #define	TCDS_CIR_GPI_3		0x00000080	/* Not used */
 #define TCDS_CIR_SCSI0_DMAENA	0x00000100	/* SCSI 0 DMA enable */
 #define TCDS_CIR_SCSI1_DMAENA	0x00000200	/* SCSI 1 DMA enable */
