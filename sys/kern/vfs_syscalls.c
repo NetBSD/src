@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.158.2.2 2000/12/14 23:36:05 he Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.158.2.3 2002/06/06 19:53:07 he Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -214,7 +214,6 @@ sys_mount(p, v, retval)
 			vput(vp);
 			return (EPERM);
 		}                     
-		VOP_UNLOCK(vp, 0);
 		goto update;
 	} else {
 		if (securelevel >= 2) {
@@ -320,7 +319,6 @@ update:
 	 */
 	error = VFS_MOUNT(mp, SCARG(uap, path), SCARG(uap, data), &nd, p);
 	if (mp->mnt_flag & MNT_UPDATE) {
-		vrele(vp);
 		if (mp->mnt_flag & MNT_WANTRDWR)
 			mp->mnt_flag &= ~MNT_RDONLY;
 		mp->mnt_flag &=~
@@ -335,6 +333,8 @@ update:
 				vfs_deallocate_syncvnode(mp);
 		}
 		vfs_unbusy(mp);
+		VOP_UNLOCK(vp, 0);
+		vrele(vp);
 		return (error);
 	}
 	/*
