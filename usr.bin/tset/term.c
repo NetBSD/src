@@ -128,8 +128,11 @@ askuser(dflt)
 			(void)fprintf(stderr, "Terminal type? ");
 		(void)fflush(stderr);
 
-		if (fgets(answer, sizeof(answer), stdin) == NULL)
+		if (fgets(answer, sizeof(answer), stdin) == NULL) {
+			if (feof(stdin)) 
+				clearerr(stdin);
 			continue;
+		}
 
 		if (p = index(answer, '\n'))
 			*p = '\0';
