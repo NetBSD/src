@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.73 2003/09/06 22:03:10 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.74 2003/09/09 15:16:30 cl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.73 2003/09/06 22:03:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.74 2003/09/09 15:16:30 cl Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -864,6 +864,8 @@ timerupcall(struct lwp *l, void *arg)
 {
 	struct ptimers *pt = (struct ptimers *)arg;
 	unsigned int i, fired, done;
+	extern struct pool siginfo_pool;	/* XXX Ew. */
+
 	KERNEL_PROC_LOCK(l);
 
 	{
@@ -880,14 +882,19 @@ timerupcall(struct lwp *l, void *arg)
 	fired = pt->pts_fired;
 	done = 0;
 	while ((i = ffs(fired)) != 0) {
-		siginfo_t si;
+		siginfo_t *si;
 		int mask = 1 << --i;
+		int f;
 
-		si._info = pt->pts_timers[i]->pt_info;
+		f = l->l_flag & L_SA;
+		l->l_flag &= ~L_SA;
+		si = pool_get(&siginfo_pool, PR_WAITOK);
+		si->_info = pt->pts_timers[i]->pt_info;
 		if (sa_upcall(l, SA_UPCALL_SIGEV | SA_UPCALL_DEFER, NULL, l,
-		    sizeof(si), &si) == 0)
+		    sizeof(*si), si) == 0)
 			done |= mask;
 		fired &= ~mask;
+		l->l_flag |= f;
 	}
 	pt->pts_fired &= ~done;
 	if (pt->pts_fired == 0)

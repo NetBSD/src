@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.21 2003/08/20 13:54:48 yamt Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.22 2003/09/09 15:16:30 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.21 2003/08/20 13:54:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.22 2003/09/09 15:16:30 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,8 @@ sadata_upcall_free(struct sadata_upcall *sau)
 	if (sau->sau_arg) {
 		switch (sau->sau_type) {
 		case SA_UPCALL_SIGNAL:
-			pool_put(&siginfo_pool, sau->sau_arg);
-			break;
 		case SA_UPCALL_SIGEV:
-			/* don't need to deallocate it at all */
+			pool_put(&siginfo_pool, sau->sau_arg);
 			break;
 		default:
 			panic("sadata_free: unknown type of sau_arg: %d",
