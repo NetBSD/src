@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.61 2005/01/15 16:00:59 chs Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.62 2005/02/05 23:50:05 chs Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2005/01/15 16:00:59 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.62 2005/02/05 23:50:05 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -130,6 +130,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	int i;
 	st_entry_t protoste, *ste;
 	pt_entry_t protopte, *pte, *epte;
+	extern char start[];
 
 	vidlen = m68k_round_page(((videosize >> 16) & 0xffff) * videorowbytes +
 	    m68k_page_offset(mac68k_vidphys));
@@ -354,15 +355,18 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		*pte++ = PG_NV;
 
 	/*
-	 * Validate PTEs for kernel text (RO)
+	 * Validate PTEs for kernel text (RO).
+	 * Pages up to "start" must be writable for the ROM.
 	 */
 	pte = &(PA2VA(kptpa, u_int *))[m68k_btop(KERNBASE)];
+	epte = &pte[m68k_btop(m68k_round_page(start))];
+	protopte = firstpa | PG_RW | PG_V;
+	while (pte < epte) {
+		*pte++ = protopte;
+		protopte += PAGE_SIZE;
+	}
 	epte = &pte[m68k_btop(m68k_trunc_page(&etext))];
-#if defined(KGDB) || defined(DDB)
-	protopte = firstpa | PG_RW | PG_V;	/* XXX RW for now */
-#else
-	protopte = firstpa | PG_RO | PG_V;
-#endif
+	protopte = (protopte & ~PG_PROT) | PG_RO;
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
