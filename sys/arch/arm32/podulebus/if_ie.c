@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.30 2001/03/17 20:34:44 bjh21 Exp $ */
+/* $NetBSD: if_ie.c,v 1.31 2001/03/18 18:49:37 rearnsha Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1341,14 +1341,14 @@ ierint(sc)
     int times_thru = 1024;
     struct ie_sys_ctl_block scb;
     int status;
-    int saftey_catch = 0;
+    int safety_catch = 0;
 
     i = sc->rfhead;
     for (;;) {
 
-	if ( (saftey_catch++)>100 )
+	if ( (safety_catch++)>100 )
 	{
-	    printf ( "ie: ierint saftey catch tripped\n" );
+	    printf ( "ie: ierint safety catch tripped\n" );
 	    iereset(sc);
 	    return;
 	}
@@ -1395,8 +1395,8 @@ ieintr(arg)
 {
     struct ie_softc *sc = arg;
     u_short status;
-    int saftey_catch = 0;
-    static int saftey_net = 0;
+    int safety_catch = 0;
+    static int safety_net = 0;
 
     if (in_intr == 1)
 	panic ( "ie: INTERRUPT REENTERED\n" );
@@ -1444,14 +1444,14 @@ loop:
     }
 
     /* This is prehaps a little over cautious */
-    if ( saftey_catch++ > 10 )
+    if ( safety_catch++ > 10 )
     {
 	printf ( "ie: Interrupt couldn't be cleared\n" );
 	delay ( 1000 );
 	ie_cli(sc);
-	if ( saftey_net++ > 50 )
+	if ( safety_net++ > 50 )
 	{
-/*	    printf ( "ie: saftey net catches driver, shutting down\n" );
+/*	    printf ( "ie: safety net catches driver, shutting down\n" );
 	    disable_irq ( IRQ_PODULE );*/
 	}
 	in_intr = 0;
@@ -1506,15 +1506,15 @@ iestart(ifp)
 	u_char *buffer;
 	u_short len;
 	char txbuf[IE_TXBUF_SIZE];
-	int saftey_catch = 0;
+	int safety_catch = 0;
 
 	if ((ifp->if_flags & IFF_OACTIVE) != 0)
 		return;
 
 	for (;;) {
-		if ( (saftey_catch++)>100 )
+		if ( (safety_catch++)>100 )
 		{
-		    printf ( "ie: iestart saftey catch tripped\n" );
+		    printf ( "ie: iestart safety catch tripped\n" );
 		    iereset(sc);
 		    return;
 		}
