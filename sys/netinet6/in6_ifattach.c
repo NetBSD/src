@@ -1,4 +1,5 @@
-/*	$NetBSD: in6_ifattach.c,v 1.19 2000/02/06 12:49:44 itojun Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.20 2000/03/02 07:14:52 itojun Exp $	*/
+/*	$KAME: in6_ifattach.c,v 1.38 2000/03/02 07:11:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -339,7 +340,10 @@ in6_ifattach(ifp, type, laddr, noloop)
 	ia = (struct in6_ifaddr *)malloc(sizeof(*ia), M_IFADDR, M_WAITOK);
 	bzero((caddr_t)ia, sizeof(*ia));
 	ia->ia_ifa.ifa_addr =    (struct sockaddr *)&ia->ia_addr;
-	ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ia->ia_ifa.ifa_dstaddr = (struct sockaddr *)&ia->ia_dstaddr;
+	else
+		ia->ia_ifa.ifa_dstaddr = NULL;
 	ia->ia_ifa.ifa_netmask = (struct sockaddr *)&ia->ia_prefixmask;
 	ia->ia_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
