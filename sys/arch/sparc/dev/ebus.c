@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.17 2004/04/24 15:49:00 kleink Exp $ */ 
+/*	$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $ */ 
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.17 2004/04/24 15:49:00 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.18 2004/07/10 20:37:07 pk Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -83,9 +83,6 @@ struct ebus_softc {
 	int				sc_node;	/* PROM node */
 
 	bus_space_tag_t			sc_bustag;	/* mem tag from pci */
-	bus_dma_tag_t			sc_dmatag;	/* XXX */
-
-	bus_space_tag_t			sc_childbustag;	/* EBus tag */
 
 	/* 
 	 * "reg" contains exactly the info we'd get by processing
@@ -101,8 +98,8 @@ void	ebus_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
     ebus_match, ebus_attach, NULL, NULL);
 
-int	ebus_setup_attach_args(struct ebus_softc *, int,
-			       struct ebus_attach_args *);
+int	ebus_setup_attach_args(struct ebus_softc *, bus_space_tag_t,
+			       bus_dma_tag_t, int, struct ebus_attach_args *);
 void	ebus_destroy_attach_args(struct ebus_attach_args *);
 int	ebus_print(void *, const char *);
 
@@ -115,7 +112,6 @@ static int	_ebus_bus_map(bus_space_tag_t, bus_addr_t,
 static void	*ebus_intr_establish(bus_space_tag_t, int, int,
 				     int (*)(void *), void *, void (*)(void));
 
-static bus_space_tag_t	ebus_alloc_bus_tag(struct ebus_softc *);
 static bus_dma_tag_t	ebus_alloc_dma_tag(struct ebus_softc *, bus_dma_tag_t);
 
 
@@ -243,6 +239,8 @@ ebus_attach(parent, self, aux)
 	struct ebus_softc *sc = (struct ebus_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct ebus_attach_args ea;
+	bus_space_tag_t sbt;
+	bus_dma_tag_t dmatag;
 	int node, error;
 	char devinfo[256];
 
@@ -260,8 +258,15 @@ ebus_attach(parent, self, aux)
 	sc->sc_node = node;
 	sc->sc_parent = parent;	/* XXX: unused so far */
 	sc->sc_bustag = pa->pa_memt; /* EBus only does PCI MEM32 space */
-	sc->sc_childbustag = ebus_alloc_bus_tag(sc);
-	sc->sc_dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
+
+	if ((sbt = bus_space_tag_alloc(sc->sc_bustag, sc)) == NULL)
+		panic("unable to allocate ebus bus tag");
+
+	sbt->sparc_bus_map = _ebus_bus_map;
+	sbt->sparc_bus_mmap = ebus_bus_mmap;
+	sbt->sparc_intr_establish = ebus_intr_establish;
+
+	dmatag = ebus_alloc_dma_tag(sc, pa->pa_dmat);
 
 	/*
 	 * Setup ranges.  The interesting thing is that we use "reg"
@@ -282,7 +287,7 @@ ebus_attach(parent, self, aux)
 	for (node = firstchild(node); node; node = nextsibling(node)) {
 		char *name = prom_getpropstring(node, "name");
 
-		if (ebus_setup_attach_args(sc, node, &ea) != 0) {
+		if (ebus_setup_attach_args(sc, sbt, dmatag, node, &ea) != 0) {
 			printf("ebus_attach: %s: incomplete\n", name);
 			continue;
 		}
@@ -294,8 +299,10 @@ ebus_attach(parent, self, aux)
 }
 
 int
-ebus_setup_attach_args(sc, node, ea)
+ebus_setup_attach_args(sc, bustag, dmatag, node, ea)
 	struct ebus_softc *sc;
+	bus_space_tag_t bustag;
+	bus_dma_tag_t dmatag;
 	int node;
 	struct ebus_attach_args	*ea;
 {
@@ -309,8 +316,8 @@ ebus_setup_attach_args(sc, node, ea)
 	ea->ea_name[n] = '\0';
 
 	ea->ea_node = node;
-	ea->ea_bustag = sc->sc_childbustag;
-	ea->ea_dmatag = sc->sc_dmatag;
+	ea->ea_bustag = bustag;
+	ea->ea_dmatag = dmatag;
 
 	err = prom_getprop(node, "reg", sizeof(struct ebus_regs),
 			   &ea->ea_nreg, &ea->ea_reg);
@@ -394,28 +401,6 @@ ebus_print(aux, p)
 /*
  * bus space and bus DMA methods below here
  */
-
-bus_space_tag_t
-ebus_alloc_bus_tag(sc)
-	struct ebus_softc *sc;
-{
-	bus_space_tag_t bt;
-
-	bt = (bus_space_tag_t)
-		malloc(sizeof(struct sparc_bus_space_tag), M_DEVBUF, M_NOWAIT);
-	if (bt == NULL)
-		panic("unable to allocate ebus bus tag");
-
-	memset(bt, 0, sizeof *bt);
-	bt->cookie = sc;
-	bt->parent = sc->sc_bustag;
-	bt->sparc_bus_map = _ebus_bus_map;
-	bt->sparc_bus_mmap = ebus_bus_mmap;
-	bt->sparc_intr_establish = ebus_intr_establish;
-	return (bt);
-}
-
-
 bus_dma_tag_t
 ebus_alloc_dma_tag(sc, pdt)
 	struct ebus_softc *sc;
@@ -509,7 +494,7 @@ _ebus_bus_map(t, ba, size, flags, va, hp)
 			 (u_int32_t)pciaddr));
 
 		/* pass it onto the pci controller */
-		return (bus_space_map2(sc->sc_bustag, pciaddr, size,
+		return (bus_space_map2(t->parent, pciaddr, size,
 				       flags, va, hp));
 	}
 
@@ -526,7 +511,7 @@ ebus_bus_mmap(t, ba, off, prot, flags)
 	int flags;
 {
 
-	/* XXX: not implemetned yet */
+	/* XXX: not implemented yet */
 	return (-1);
 }
 
