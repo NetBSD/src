@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_tv.c,v 1.7 1999/06/27 14:14:30 minoura Exp $	*/
+/*	$NetBSD: ite_tv.c,v 1.8 2001/10/21 03:46:31 isaki Exp $	*/
 
 /*
  * Copyright (c) 1997 Masaru Oki.
@@ -137,6 +137,22 @@ txrascpy (src, dst, size, mode)
 }
 
 /*
+ * Change glyphs from SRAM switch.
+ */
+void
+ite_set_glyph(void)
+{
+	u_char glyph = IODEVbase->io_sram[0x59];
+	
+	if (glyph & 4)
+		SETGLYPH(0x82, '|');
+	if (glyph & 2)
+		SETGLYPH(0x81, '~');
+	if (glyph & 1)
+		SETGLYPH(0x80, '\\');
+}
+
+/*
  * Initialize
  */
 void
@@ -144,7 +160,6 @@ tv_init(ip)
 	struct ite_softc *ip;
 {
 	short i;
-	u_char glyph = IODEVbase->io_sram[0x59];
 
 	/*
 	 * initialize private variables
@@ -154,13 +169,7 @@ tv_init(ip)
 		tv_row[i] = (void *)&IODEVbase->tvram[ROWOFFSET(i)];
 	/* shadow ANK font */
 	bcopy((void *)&IODEVbase->cgrom0_8x16, kern_font, 256 * FONTHEIGHT);
-	/* glyph */
-	if (glyph & 4)
-		SETGLYPH(0x82, '|');
-	if (glyph & 2)
-		SETGLYPH(0x81, '~');
-	if (glyph & 1)
-		SETGLYPH(0x80, '\\');
+	ite_set_glyph();
 	/* set font address cache */
 	for (i = 0; i < 256; i++)
 		tv_font[i] = &kern_font[i * FONTHEIGHT];
