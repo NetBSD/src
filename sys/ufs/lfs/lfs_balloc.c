@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.33 2002/07/06 01:30:12 perseant Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.34 2002/12/11 13:34:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.33 2002/07/06 01:30:12 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.34 2002/12/11 13:34:14 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -193,6 +193,8 @@ lfs_balloc(void *v)
 			frags = numfrags(fs, nsize);
 			bb = fragstofsb(fs, frags);
 			*ap->a_bpp = bp = getblk(vp, lbn, nsize, 0, 0);
+			if (ap->a_flags & B_CLRBUF)
+				clrbuf(bp);
 			ip->i_lfs_effnblks += bb;
 			ip->i_lfs->lfs_bfree -= bb;
 			ip->i_ffs_db[lbn] = bp->b_blkno = UNWRITTEN;
@@ -289,7 +291,7 @@ lfs_balloc(void *v)
 	 * disk address UNWRITTEN.
 	 */
 	if (daddr == UNASSIGNED) {
-		if (iosize != fs->lfs_bsize)
+		if (ap->a_flags & B_CLRBUF)
 			clrbuf(bp);
 		
 		/* Note the new address */
