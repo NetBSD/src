@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2003/06/13 22:27:05 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2003/07/25 08:26:24 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -87,7 +87,7 @@
  * Default fileystem type for floppy disks.
  * On amiga, that is ados.
  */
-EXTERN	char *fdtype INIT("ados");
+EXTERN	const char *fdtype INIT("ados");
 
  
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.64 2003/07/11 15:28:58 dsl Exp $ */
+/*	$NetBSD: disks.c,v 1.65 2003/07/25 08:26:21 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -93,12 +93,12 @@ static int target_mount_with_error_menu(const char *, char *, const char *);
 #define DISK_NAMES "wd", "sd", "ld"
 #endif
 
-static char *disk_names[] = { DISK_NAMES, "vnd", NULL };
+static const char *disk_names[] = { DISK_NAMES, "vnd", NULL };
 
 static int
 get_disks(struct disk_desc *dd)
 {
-	char **xd;
+	const char **xd;
 	char d_name[SSTRSIZE];
 	struct disklabel l;
 	int i;
@@ -273,8 +273,8 @@ write_disklabel (void)
 static int
 ptn_sort(const void *a, const void *b)
 {
-	return strcmp(bsdlabel[*(int *)a].pi_mount,
-		      bsdlabel[*(int *)b].pi_mount);
+	return strcmp(bsdlabel[*(const int *)a].pi_mount,
+		      bsdlabel[*(const int *)b].pi_mount);
 }
 
 int
@@ -485,7 +485,7 @@ static int
 do_fsck(const char *diskpart)
 {
 	char rraw[SSTRSIZE];
-	char *prog = "/sbin/fsck";
+	const char *prog = "/sbin/fsck";
 	int err;
 
 	/* cons up raw partition name. */
@@ -640,7 +640,7 @@ fsck_disks(void)
 }
 
 int
-set_swap(const char *dev, partinfo *pp)
+set_swap(const char *disk, partinfo *pp)
 {
 	int i;
 	char *cp;
@@ -652,7 +652,7 @@ set_swap(const char *dev, partinfo *pp)
 	for (i = 0; i < MAXPARTITIONS; i++) {
 		if (pp[i].pi_fstype != FS_SWAP)
 			continue;
-		asprintf(&cp, "/dev/%s%c", dev, 'a' + i);
+		asprintf(&cp, "/dev/%s%c", disk, 'a' + i);
 		rval = swapctl(SWAP_ON, cp, 0);
 		free(cp);
 		if (rval != 0)
@@ -663,7 +663,7 @@ set_swap(const char *dev, partinfo *pp)
 }
 
 int
-check_swap(const char *dev, int remove)
+check_swap(const char *disk, int remove_swap)
 {
 	struct swapent *swap;
 	char *cp;
@@ -683,20 +683,20 @@ check_swap(const char *dev, int remove)
 	if (nswap < 0)
 		goto bad_swap;
 
-	l = strlen(dev);
+	l = strlen(disk);
 	while (--nswap >= 0) {
 		/* Should we check the se_dev or se_path? */
 		cp = swap[nswap].se_path;
 		if (memcmp(cp, "/dev/", 5) != 0)
 			continue;
-		if (memcmp(cp + 5, dev, l) != 0)
+		if (memcmp(cp + 5, disk, l) != 0)
 			continue;
 		if (!isalpha(*(unsigned char *)(cp + 5 + l)))
 			continue;
 		if (cp[5 + l + 1] != 0)
 			continue;
 		/* ok path looks like it is for this device */
-		if (!remove) {
+		if (!remove_swap) {
 			/* count active swap areas */
 			rval++;
 			continue;

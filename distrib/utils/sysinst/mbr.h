@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.16 2003/07/07 12:30:20 dsl Exp $	*/
+/*	$NetBSD: mbr.h,v 1.17 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -104,7 +104,7 @@ int	md_bios_info(char *);
 void	set_bios_geom(int, int, int);
 int	otherpart(int);
 int	ourpart(int);
-char	*get_partname(int);
+const char	*get_partname(int);
 void	edit_ptn_bounds(void);
 #ifdef BOOTSEL
 void	disp_bootsel(void);

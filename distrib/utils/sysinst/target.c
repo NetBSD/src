@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.38 2003/07/08 17:38:58 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.39 2003/07/25 08:26:22 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.38 2003/07/08 17:38:58 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.39 2003/07/25 08:26:22 dsl Exp $");
 #endif
 
 /*
@@ -687,7 +687,7 @@ target_mount(const char *fstype, const char *from, const char *on)
 }
 
 int
-target_collect_file(int kind, char **buffer, char *name)
+target_collect_file(int kind, char **buffer, const char *name)
 {
 	const char *realname = target_expand(name);
 
@@ -787,6 +787,7 @@ target_realpath(const char *path, char *resolved)
 	struct stat sb;
 	int fd, n, rootd, serrno, nlnk = 0;
 	char *p, *q, wbuf[MAXPATHLEN];
+	char solidus[] = "/", empty[] = "";
 
 	/* Save the starting point. */
 	if ((fd = open(".", O_RDONLY)) < 0) {
@@ -813,7 +814,7 @@ loop:
 	if (q != NULL) {
 		p = q + 1;
 		if (q == resolved)
-			q = "/";
+			q = solidus;
 		else {
 			do {
 				--q;
@@ -847,7 +848,7 @@ loop:
 		if (S_ISDIR(sb.st_mode)) {
 			if (chdir(p) < 0)
 				goto err1;
-			p = "";
+			p = empty;
 		}
 	}
 
