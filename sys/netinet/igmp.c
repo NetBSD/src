@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.c,v 1.13 1995/06/04 05:58:20 mycroft Exp $	*/
+/*	$NetBSD: igmp.c,v 1.14 1995/08/12 23:59:31 mycroft Exp $	*/
 
 /*
  * Internet Group Management Protocol (IGMP) routines.
@@ -358,7 +358,7 @@ void
 igmp_joingroup(inm)
 	struct in_multi *inm;
 {
-	int s = splnet();
+	int s = splsoftnet();
 
 	inm->inm_state = IGMP_IDLE_MEMBER;
 
@@ -408,7 +408,7 @@ igmp_fasttimo()
 	if (!igmp_timers_are_running)
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 	igmp_timers_are_running = 0;
 	IN_FIRST_MULTI(step, inm);
 	while (inm != NULL) {
@@ -438,7 +438,7 @@ igmp_slowtimo()
 	register struct router_info *rti;
 	int s;
 
-	s = splnet();
+	s = splsoftnet();
 	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
 		if (rti->rti_type == IGMP_v1_ROUTER &&
 		    ++rti->rti_age >= IGMP_AGE_THRESHOLD) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.24 1995/06/12 00:47:29 mycroft Exp $	*/
+/*	$NetBSD: in.c,v 1.25 1995/08/12 23:59:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -466,7 +466,7 @@ in_addmulti(ap, ifp)
 	register struct in_multi *inm;
 	struct ifreq ifr;
 	struct in_ifaddr *ia;
-	int s = splnet();
+	int s = splsoftnet();
 
 	/*
 	 * See if address already in list.
@@ -530,7 +530,7 @@ in_delmulti(inm)
 	register struct in_multi *inm;
 {
 	struct ifreq ifr;
-	int s = splnet();
+	int s = splsoftnet();
 
 	if (--inm->inm_refcount == 0) {
 		/*
