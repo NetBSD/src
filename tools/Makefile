@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2002/05/03 20:35:46 kleink Exp $
+#	$NetBSD: Makefile,v 1.49 2002/05/07 12:12:53 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -30,10 +30,6 @@ SUBDIR+=	autoconf gettext
 
 .if ${MACHINE} == prep
 SUBDIR+=	prep-mkbootimage
-.endif
-
-.if ${MACHINE} == sparc || ${MACHINE} == sparc64
-SUBDIR+=	sparc-installboot
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb")
