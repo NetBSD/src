@@ -1,4 +1,4 @@
-/*	$NetBSD: superio.c,v 1.2 2002/08/26 11:04:45 scw Exp $	*/
+/*	$NetBSD: superio.c,v 1.3 2002/08/29 18:11:07 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -235,8 +235,6 @@ superioattach(struct device *parent, struct device *self, void *args)
 
 	bus_space_map(sc->sc_bust, sa->sa_offset,
 	    SUPERIO_REG_SZ, 0, &sc->sc_bush);
-
-printf("\nsuperioattach: superio at 0x%08x\n", sc->sc_bush);
 
 	superio_cfgmode_enable(sc);
 
@@ -569,7 +567,7 @@ superio_bs_write_stream_2(void *arg, bus_space_handle_t bh, bus_size_t off,
 	} else {
 		off += (bus_size_t)bh;
 
-		bus_space_write_stream_4(sc->sc_bust, sc->sc_bush, off, val);
+		bus_space_write_stream_2(sc->sc_bust, sc->sc_bush, off, val);
 	}
 }
 
