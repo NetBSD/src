@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.112 2002/05/03 06:56:20 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.112 2002/05/03 06:56:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $");
 
 #include "bpfilter.h"
 
@@ -4458,7 +4458,6 @@ int	tlp_2114x_nway_set __P((struct tulip_softc *));
 
 void	tlp_2114x_nway_statchg __P((struct device *));
 int	tlp_2114x_nway_service __P((struct tulip_softc *, int));
-void	tlp_2114x_nway_reset __P((struct tulip_softc *));
 void	tlp_2114x_nway_auto __P((struct tulip_softc *));
 void	tlp_2114x_nway_status __P((struct tulip_softc *));
 
@@ -4962,8 +4961,6 @@ tlp_2114x_isv_tmsw_init(sc)
 		case TULIP_CHIP_MX98715A:
 		case TULIP_CHIP_MX98715AEC_X:
 		case TULIP_CHIP_MX98725:
-
-			tlp_2114x_nway_reset(sc);
 			tm = malloc(sizeof(*tm), M_DEVBUF, M_WAITOK|M_ZERO);
 			tm->tm_name = "auto";
 			tm->tm_get = tlp_2114x_nway_get;
@@ -4999,12 +4996,7 @@ tlp_2114x_nway_get(sc, ifmr)
 	struct tulip_softc *sc;
 	struct ifmediareq *ifmr;
 {
-	struct mii_data *mii = &sc->sc_mii;
 
-	/*tlp_sia_update_link(sc);*/
-
-	mii->mii_media_status = 0;
-	mii->mii_media_active = IFM_NONE;
 	(void) tlp_2114x_nway_service(sc, MII_POLLSTAT);
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 	ifmr->ifm_active = sc->sc_mii.mii_media_active; 
@@ -5014,14 +5006,7 @@ int
 tlp_2114x_nway_set(sc)
 	struct tulip_softc *sc;
 {
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	struct mii_data *mii = &sc->sc_mii;
 
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return (0);
-
-	mii->mii_media_status = 0;
-	mii->mii_media_active = IFM_NONE;
 	return (tlp_2114x_nway_service(sc, MII_MEDIACHG));
 }
 
@@ -5031,11 +5016,9 @@ tlp_2114x_nway_statchg(self)
 {
 	struct tulip_softc *sc = (struct tulip_softc *)self;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
 	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_NONE)
 		return;
-	ife->ifm_data = mii->mii_media_active;
 
 	/* Idle the transmit and receive processes. */
 	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
@@ -5132,7 +5115,11 @@ tlp_2114x_nway_service(sc, cmd)
 		 * Check to see if we have link.  If we do, we don't
 		 * need to restart the autonegotiation process.
 		 */
+#if 0
 		if (mii->mii_media_status & IFM_ACTIVE)
+#else
+		if (sc->sc_flags & TULIPF_LINK_UP)
+#endif
 			break;
 
 		/*
@@ -5144,7 +5131,6 @@ tlp_2114x_nway_service(sc, cmd)
 	restart:
 		sc->sc_nway_ticks = 0;
 		ife->ifm_data = IFM_NONE;
-		tlp_2114x_nway_reset(sc);
 		tlp_2114x_nway_auto(sc);
 		break;
 	}
@@ -5159,6 +5145,7 @@ tlp_2114x_nway_service(sc, cmd)
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO &&
 	    ife->ifm_data != mii->mii_media_active) {
 		(*sc->sc_statchg)(&sc->sc_dev);
+		ife->ifm_data = mii->mii_media_active;
 	}
 	return (0);
 }
@@ -5171,26 +5158,25 @@ tlp_2114x_nway_service(sc, cmd)
 	TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) & ~(x))
 
 void
-tlp_2114x_nway_reset(sc)
-	struct tulip_softc *sc;
-{
-
-	TULIP_WRITE(sc, CSR_SIACONN, 0);
-	delay(1000);
-	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
-}
-
-void
 tlp_2114x_nway_auto(sc)
 	struct tulip_softc *sc;
 {
 	uint32_t siastat;
 
-	TULIP_CLR(sc, CSR_OPMODE, OPMODE_PS);
-	TULIP_SET(sc, CSR_OPMODE, OPMODE_FD);
+	tlp_idle(sc, OPMODE_ST|OPMODE_SR);
+
+	sc->sc_opmode &= ~(OPMODE_PS|OPMODE_PCS|OPMODE_SCR|OPMODE_TTM);
+	sc->sc_opmode |= OPMODE_FD|OPMODE_HBD;
+	TULIP_WRITE(sc, CSR_OPMODE, sc->sc_opmode);
+
+	TULIP_WRITE(sc, CSR_SIACONN, 0);
+	delay(1000);
+	TULIP_WRITE(sc, CSR_SIACONN, SIACONN_SRL);
+
 	TULIP_WRITE(sc, CSR_SIATXRX, 0x3ffff);
+
 	siastat = TULIP_READ(sc, CSR_SIASTAT);
-	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10);
+	siastat &= ~(SIASTAT_ANS|SIASTAT_LPC|SIASTAT_TRA|SIASTAT_ARA|SIASTAT_LS100|SIASTAT_LS10|SIASTAT_MRA);
 	siastat |= SIASTAT_ANS_TXDIS;
 	TULIP_WRITE(sc, CSR_SIASTAT, siastat);
 }
