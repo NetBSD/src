@@ -21,7 +21,7 @@
 /* This thing should be set up to do byteordering correctly.  But... */
 
 #ifndef lint
-static char rcsid[] = "$Id: write.c,v 1.6 1993/10/27 00:14:14 pk Exp $";
+static char rcsid[] = "$Id: write.c,v 1.7 1993/11/20 22:20:57 pk Exp $";
 #endif
 
 #include "as.h"
@@ -1065,6 +1065,11 @@ segT this_segment_type; /* N_TYPE bits for segment. */
 					 */
 					if (!flagseen['k'] ||
 					   (fixP->fx_r_type != RELOC_GLOB_DAT &&
+#ifdef TC_I386
+/* XXX - This must be rationalized */
+					    fixP->fx_r_type != RELOC_GOT &&
+					    fixP->fx_r_type != RELOC_GOTOFF &&
+#endif
 						(fixP->fx_r_type != RELOC_32 ||
 						!S_IS_EXTERNAL(add_symbolP))))
 #endif
