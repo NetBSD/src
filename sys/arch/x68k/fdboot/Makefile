@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.1 1996/05/28 17:15:12 oki Exp $
 
 #G=-g
 #M=-m68020 -fall-bsr
@@ -8,7 +8,7 @@ all: fdboot
 
 fdboot: fdboot.o bootufs.o
 	@echo loading fdboot
-	@ld -n -Bstatic -Ttext 0x3f0000 -o fdboot.x fdboot.o bootufs.o -lc
+	@$(LD) -n -Bstatic -Ttext 0x3f0000 -o fdboot.x fdboot.o bootufs.o -lc
 	@cp fdboot.x s.x
 	@strip s.x
 	@dd bs=1 skip=32 count=8192 if=s.x of=fdboot 2> /dev/null
@@ -16,10 +16,10 @@ fdboot: fdboot.o bootufs.o
 	@size fdboot.x
 
 bootufs.o: bootufs.c fdboot.h
-	$(CC) -o $@ -c -I . $< $(CFLAGS)
+	$(CC) -o $@ -c $< $(CFLAGS)
 
-fdboot.o : fdboot.s
-	$(CC) -o $@ -c $<
+fdboot.o : fdboot.s chkfmt.s
+	$(CPP) ${.CURDIR}/fdboot.s | $(AS) -o $@
 
 .ifndef ID
 installboot: fdboot
@@ -27,7 +27,7 @@ installboot: fdboot
 	@false
 .else
 installboot: fdboot
-	./writefdboot fdboot /dev/rfd${ID}a
+	${.CURDIR}/writefdboot fdboot /dev/rfd${ID}a
 .endif
 
 install: fdboot

@@ -1,4 +1,4 @@
-/*	$NetBSD: bootufs.c,v 1.1.1.1 1996/05/05 12:17:03 oki Exp $	*/
+/*	$NetBSD: bootufs.c,v 1.1.1.1.4.1 1996/05/28 17:15:20 oki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -467,6 +467,7 @@ bootufs()
 	extern long ID;
 #else
 	extern long FDMODE;
+	extern unsigned char FDSECMINMAX[8];	/* or int [2] */
 #endif
 
 	unsigned short SFT;
@@ -638,7 +639,7 @@ memset(esym, 0, 0x003e8000 - (int)esym /* XXX */);
 #if 0	/* sdboot */
 		asm volatile ("movl %0,d6" : : "g" (MAKEBOOTDEV(4, 0, 0, ID & 7, 0)) : "d6");
 #else
-		asm volatile ("movl %0,d6" : : "g" (MAKEBOOTDEV(2, 0, 0, (FDMODE >> 8) & 3, 0)) : "d6");
+		asm volatile ("movl %0,d6" : : "g" (MAKEBOOTDEV(2, 0, 0, (FDMODE >> 8) & 3, (FDSECMINMAX[0] == 3) ? 0 : 2)) : "d6");
 #endif
 		asm volatile ("movl %0,d7" : : "g" (bootflags) : "d7");
 
