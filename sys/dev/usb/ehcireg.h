@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.8 2001/11/16 23:52:10 augustss Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.9 2001/11/18 00:39:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -169,6 +169,9 @@
 
 #define EHCI_FLALIGN_ALIGN	0x1000
 
+/* No data structure may cross a page boundary. */
+#define EHCI_PAGE_SIZE		0x1000
+
 typedef u_int32_t ehci_link_t;
 #define EHCI_LINK_TERMINATE	0x00000001
 #define EHCI_LINK_TYPE(x)	((x) & 0x00000006)
@@ -198,7 +201,8 @@ typedef struct {
 	ehci_link_t	qtd_next;
 	ehci_link_t	qtd_altnext;
 	u_int32_t	qtd_status;
-#define EHCI_QTD_STATUS(x)	(((x) >>  0) & 0xff)
+#define EHCI_QTD_GET_STATUS(x)	(((x) >>  0) & 0xff)
+#define EHCI_QTD_SET_STATUS(x)	((x) << 0)
 #define  EHCI_QTD_ACTIVE	0x80
 #define  EHCI_QTD_HALTED	0x40
 #define  EHCI_QTD_BUFERR	0x20
@@ -207,15 +211,16 @@ typedef struct {
 #define  EHCI_QTD_MISSEDMICRO	0x04
 #define  EHCI_QTD_SPLITXSTATE	0x02
 #define  EHCI_QTD_PINGSTATE	0x01
-#define EHCI_QTD_PID(x)		(((x) >>  8) &  0x3)
+#define EHCI_QTD_GET_PID(x)	(((x) >>  8) & 0x3)
+#define EHCI_QTD_SET_PID(x)	((x) <<  8)
 #define  EHCI_QTD_PID_OUT	0x0
 #define  EHCI_QTD_PID_IN	0x1
 #define  EHCI_QTD_PID_SETUP	0x2
-#define EHCI_QTD_CERR(x)	(((x) >> 10) &  0x3)
-#define EHCI_QTD_C_PAGE(x)	(((x) >> 12) &  0x7)
-#define EHCI_QTD_IOC(x)		(((x) >> 15) &  0x1)
-#define EHCI_QTD_BYTES(x)	(((x) >> 16) &  0x7fff)
-#define EHCI_QTD_TOGGLE(x)	(((x) >> 31) &  0x1)
+#define EHCI_QTD_GET_CERR(x)	(((x) >> 10) &  0x3)
+#define EHCI_QTD_GET_C_PAGE(x)	(((x) >> 12) &  0x7)
+#define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1)
+#define EHCI_QTD_GET_BYTES(x)	(((x) >> 16) &  0x7fff)
+#define EHCI_QTD_GET_TOGGLE(x)	(((x) >> 31) &  0x1)
 	ehci_physaddr_t	qtd_buffer[5];
 #define EHCI_BUFFER_OFFS(x)	((x) & 0x00000fff)
 } ehci_qtd_t;
@@ -225,7 +230,38 @@ typedef struct {
 typedef struct {
 	ehci_link_t	qh_link;
 	u_int32_t	qh_endp;
+#define EHCI_QH_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_QH_SET_ADDR(x)	(x)
+#define EHCI_QH_GET_INACT(x)	(((x) >>  7) & 0x01) /* inactivate on next */
+#define EHCI_QH_INACT		0x00000080
+#define EHCI_QH_GET_ENDPT(x)	(((x) >>  8) & 0x0f) /* endpoint no */
+#define EHCI_QH_SET_ENDPT(x)	((x) <<  8)
+#define EHCI_QH_GET_EPS(x)	(((x) >> 12) & 0x03) /* enspoint speed */
+#define EHCI_QH_SET_EPS(x)	((x) << 12)
+#define  EHCI_QH_SPEED_FULL	0x0
+#define  EHCI_QH_SPEED_LOW	0x1
+#define  EHCI_QH_SPEED_HIGH	0x2
+#define EHCI_QH_GET_DTC(x)	(((x) >> 14) & 0x01) /* data toggle control */
+#define EHCI_QH_DTC		0x00004000
+#define EHCI_QH_GET_HRECL(x)	(((x) >> 15) & 0x01) /* head of reclamation */
+#define EHCI_QH_HRECL		0x00008000
+#define EHCI_QH_GET_MPL(x)	(((x) >> 16) & 0x7ff) /* max packet len */
+#define EHCI_QH_SET_MPL(x)	((x) << 16)
+#define EHCI_QH_GET_CTL(x)	(((x) >> 26) & 0x01) /* control endpoint */
+#define EHCI_QH_CTL		0x08000000
+#define EHCI_QH_GET_NRL(x)	(((x) >> 28) & 0x0f) /* NAK reload */
+#define EHCI_QH_SET_NRL(x)	((x) << 28)
 	u_int32_t	qh_endphub;
+#define EHCI_QH_GET_SMASK(x)	(((x) >>  0) & 0xff) /* intr sched mask */
+#define EHCI_QH_SET_SMASK(x)	((x) <<  0)
+#define EHCI_QH_GET_CMASK(x)	(((x) >>  8) & 0xff) /* split completion mask */
+#define EHCI_QH_SET_CMASK(x)	((x) <<  8)
+#define EHCI_QH_GET_HUBA(x)	(((x) >> 16) & 0x7f) /* hub address */
+#define EHCI_QH_SET_HUBA(x)	((x) << 16)
+#define EHCI_QH_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
+#define EHCI_QH_SET_PORT(x)	((x) << 23)
+#define EHCI_QH_GET_MULT(x)	(((x) >> 30) & 0x03) /* pipe multiplier */
+#define EHCI_QH_SET_MULT(x)	((x) << 30)
 	ehci_link_t	qh_curqtd;
 	ehci_qtd_t	qh_qtd;
 } ehci_qh_t;

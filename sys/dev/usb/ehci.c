@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.8 2001/11/16 23:52:10 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.9 2001/11/18 00:39:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.8 2001/11/16 23:52:10 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.9 2001/11/18 00:39:46 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,10 +142,24 @@ Static void		ehci_pcd_able(ehci_softc_t *, int);
 Static void		ehci_pcd_enable(void *);
 Static void		ehci_disown(ehci_softc_t *, int, int);
 
+Static ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
+Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
+
+Static ehci_soft_qtd_t  *ehci_alloc_sqtd(ehci_softc_t *);
+Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
+
+Static void		ehci_hash_add_qtd(ehci_softc_t *, ehci_soft_qtd_t *);
+Static void		ehci_hash_rem_qtd(ehci_softc_t *, ehci_soft_qtd_t *);
+Static ehci_soft_qtd_t  *ehci_hash_find_qtd(ehci_softc_t *, ehci_physaddr_t);
+
 #ifdef EHCI_DEBUG
 Static void		ehci_dumpregs(ehci_softc_t *);
 Static void		ehci_dump(void);
 Static ehci_softc_t 	*theehci;
+Static void		ehci_dump_link(ehci_link_t);
+Static void		ehci_dump_sqtd(ehci_soft_qtd_t *);
+Static void		ehci_dump_qtd(ehci_qtd_t *);
+Static void		ehci_dump_sqh(ehci_soft_qh_t *);
 #endif
 
 #define EHCI_INTR_ENDPT 1
@@ -256,6 +270,9 @@ ehci_init(ehci_softc_t *sc)
 	
 	sc->sc_bus.usbrev = USBREV_2_0;
 
+	for (i = 0; i < EHCI_HASH_SIZE; i++)
+		LIST_INIT(&sc->sc_hash_qtds[i]);
+
 	/* Reset the controller */
 	DPRINTF(("%s: resetting\n", USBDEVNAME(sc->sc_bus.bdev)));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
@@ -285,8 +302,6 @@ ehci_init(ehci_softc_t *sc)
 		return (err);
 	DPRINTF(("%s: flsize=%d\n", USBDEVNAME(sc->sc_bus.bdev),sc->sc_flsize));
 
-	usb_callout_init(sc->sc_tmo_pcd);
-
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
@@ -295,6 +310,49 @@ ehci_init(ehci_softc_t *sc)
 	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
+
+	/* Allocate dummy QH that starts the bulk list. */
+	sc->sc_bulk_head = ehci_alloc_sqh(sc);
+	if (sc->sc_bulk_head == NULL) {
+		err = USBD_NOMEM;
+		goto bad1;
+	}
+	memset(&sc->sc_bulk_head->qh, 0, sizeof(ehci_qtd_t));
+	sc->sc_bulk_head->qh.qh_qtd.qtd_status =
+	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
+	sc->sc_bulk_head->qh.qh_link =
+	    htole32(EHCI_LINK_TERMINATE); /* XXX no bw reclaimation */
+	sc->sc_bulk_head->next = NULL;
+#ifdef EHCI_DEBUG
+	if (ehcidebug) {
+		ehci_dump_sqh(sc->sc_bulk_head);
+	}
+#endif
+
+	/* Allocate dummy QH that starts the control list. */
+	sc->sc_ctrl_head = ehci_alloc_sqh(sc);
+	if (sc->sc_ctrl_head == NULL) {
+		err = USBD_NOMEM;
+		goto bad2;
+	}
+	memset(&sc->sc_ctrl_head->qh, 0, sizeof(ehci_qtd_t));
+	sc->sc_ctrl_head->qh.qh_qtd.qtd_status =
+	    htole32(EHCI_QTD_SET_STATUS(EHCI_QTD_HALTED));
+	sc->sc_ctrl_head->qh.qh_endp = htole32(EHCI_QH_HRECL);
+	sc->sc_ctrl_head->qh.qh_link =
+	    htole32(sc->sc_bulk_head->physaddr | EHCI_LINK_QH);
+	sc->sc_ctrl_head = sc->sc_bulk_head;
+#ifdef EHCI_DEBUG
+	if (ehcidebug) {
+		ehci_dump_sqh(sc->sc_ctrl_head);
+	}
+#endif
+
+	/* Point to async list */
+	EOWRITE4(sc, EHCI_ASYNCLISTADDR,
+		 sc->sc_ctrl_head->physaddr | EHCI_LINK_QH);
+
+	usb_callout_init(sc->sc_tmo_pcd);
 
 	/* Enable interrupts */
 	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
@@ -322,6 +380,16 @@ ehci_init(ehci_softc_t *sc)
 	}
 
 	return (USBD_NORMAL_COMPLETION);
+
+#if 0
+ bad3:
+	ehci_free_sqh(sc, sc->sc_bulk_head);
+#endif
+ bad2:
+	ehci_free_sqh(sc, sc->sc_ctrl_head);
+ bad1:
+	usb_freemem(&sc->sc_bus, &sc->sc_fldma);
+	return (err);
 }
 
 Static int ehci_intr1(ehci_softc_t *);
@@ -690,6 +758,60 @@ ehci_dump()
 {
 	ehci_dumpregs(theehci);
 }
+
+void
+ehci_dump_link(ehci_link_t link)
+{
+	printf("0x%08x<", link);
+	switch (EHCI_LINK_TYPE(link)) {
+	case EHCI_LINK_ITD: printf("ITD"); break;
+	case EHCI_LINK_QH: printf("QH"); break;
+	case EHCI_LINK_SITD: printf("SITD"); break;
+	case EHCI_LINK_FSTN: printf("FSTN"); break;
+	}
+	if (link & EHCI_LINK_TERMINATE)
+		printf(",T>");
+	else
+		printf(">");
+}
+
+void
+ehci_dump_sqtd(ehci_soft_qtd_t *sqtd)
+{
+	printf("QTD(%p) at 0x%08x:\n", sqtd, sqtd->physaddr);
+	ehci_dump_qtd(&sqtd->qtd);
+}
+
+void
+ehci_dump_qtd(ehci_qtd_t *qtd)
+{
+	u_int32_t s;
+
+	printf("  next="); ehci_dump_link(qtd->qtd_next);
+	printf("altnext="); ehci_dump_link(qtd->qtd_altnext);
+	printf("\n");
+	s = qtd->qtd_status;
+	printf("  status=0x%08x: toggle=%d bytes=0x%x ioc=%d c_page=0x%x\n",
+	       s, EHCI_QTD_GET_TOGGLE(s), EHCI_QTD_GET_BYTES(s),
+	       EHCI_QTD_GET_IOC(s), EHCI_QTD_GET_C_PAGE(s));
+	printf("    cerr=%d pid=%d stat=0x%02x\n", EHCI_QTD_GET_CERR(s),
+	       EHCI_QTD_GET_PID(s), EHCI_QTD_GET_STATUS(s));
+	for (s = 0; s < 5; s++)
+		printf("  buffer[%d]=0x%08x\n", s, qtd->qtd_buffer[s]);
+}
+
+void
+ehci_dump_sqh(ehci_soft_qh_t *sqh)
+{
+	ehci_qh_t *qh = &sqh->qh;
+
+	printf("QH(%p) at 0x%08x:\n", sqh, sqh->physaddr);
+	printf("  link="); ehci_dump_link(qh->qh_link); printf("\n");
+	printf("  endp=0x%08x endphub=0x%08x\n", qh->qh_endp, qh->qh_endphub);
+	printf("  curqtd="); ehci_dump_link(qh->qh_curqtd); printf("\n  ");
+	ehci_dump_qtd(&qh->qh_qtd);
+}
+
 #endif
 
 usbd_status
@@ -702,8 +824,8 @@ ehci_open(usbd_pipe_handle pipe)
 #if 0
 	u_int8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	struct ehci_pipe *epipe = (struct ehci_pipe *)pipe;
-	ehci_soft_ed_t *sed;
-	ehci_soft_td_t *std;
+	ehci_soft_ed_t *sqh;
+	ehci_soft_qtd_t *sqtd;
 	ehci_soft_itd_t *sitd;
 	ehci_physaddr_t tdphys;
 	u_int32_t fmt;
@@ -728,42 +850,31 @@ ehci_open(usbd_pipe_handle pipe)
 		}
 	} else {
 #if 0
-		std = NULL;
-		sed = NULL;
+		sqtd = NULL;
+		sqh = NULL;
 
-		sed = ehci_alloc_sed(sc);
-		if (sed == NULL)
+		sqh = ehci_alloc_sqh(sc);
+		if (sqh == NULL)
 			goto bad0;
-		epipe->sed = sed;
-		if (xfertype == UE_ISOCHRONOUS) {
-			sitd = ehci_alloc_sitd(sc);
-			if (sitd == NULL) {
-				ehci_free_sitd(sc, sitd);
-				goto bad1;
-			}
-			epipe->tail.itd = sitd;
-			tdphys = sitd->physaddr;
-			fmt = EHCI_ED_FORMAT_ISO;
-			if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN)
-				fmt |= EHCI_ED_DIR_IN;
-			else
-				fmt |= EHCI_ED_DIR_OUT;
+		epipe->sqh = sqh;
+		if (xfertype == UE_ISOCHRONOUS || xfertype == UE_INTERRUPT) {
+			return (USBD_IOERROR);
 		} else {
-			std = ehci_alloc_std(sc);
-			if (std == NULL) {
-				ehci_free_std(sc, std);
+			sqtd = ehci_alloc_sqtd(sc);
+			if (sqtd == NULL) {
+				ehci_free_sqtd(sc, sqtd);
 				goto bad1;
 			}
-			epipe->tail.td = std;
-			tdphys = std->physaddr;
+			epipe->tail.qtd = sqtd;
+			tdphys = sqtd->physaddr;
 			fmt = EHCI_ED_FORMAT_GEN | EHCI_ED_DIR_TD;
 		}
-		sed->ed.ed_flags = htole32(
+		sqh->ed.ed_flags = htole32(
 			EHCI_ED_SET_FA(addr) | 
 			EHCI_ED_SET_EN(ed->bEndpointAddress) |
 			(dev->lowspeed ? EHCI_ED_SPEED : 0) | fmt |
 			EHCI_ED_SET_MAXP(UGETW(ed->wMaxPacketSize)));
-		sed->ed.ed_headp = sed->ed.ed_tailp = htole32(tdphys);
+		sqh->ed.ed_headp = sqh->ed.ed_tailp = htole32(tdphys);
 
 		switch (xfertype) {
 		case UE_CONTROL:
@@ -774,7 +885,7 @@ ehci_open(usbd_pipe_handle pipe)
 			if (err)
 				goto bad;
 			s = splusb();
-			ehci_add_ed(sed, sc->sc_ctrl_head);
+			ehci_add_ed(sqh, sc->sc_ctrl_head);
 			splx(s);
 			break;
 		case UE_INTERRUPT:
@@ -789,7 +900,7 @@ ehci_open(usbd_pipe_handle pipe)
 		case UE_BULK:
 			pipe->methods = &ehci_device_bulk_methods;
 			s = splusb();
-			ehci_add_ed(sed, sc->sc_bulk_head);
+			ehci_add_ed(sqh, sc->sc_bulk_head);
 			splx(s);
 			break;
 		}
@@ -801,11 +912,11 @@ ehci_open(usbd_pipe_handle pipe)
 
 #if 0
  bad:
-	if (std != NULL)
-		ehci_free_std(sc, std);
+	if (sqtd != NULL)
+		ehci_free_sqtd(sc, sqtd);
  bad1:
-	if (sed != NULL)
-		ehci_free_sed(sc, sed);
+	if (sqh != NULL)
+		ehci_free_sqh(sc, sqh);
  bad0:
 	return (USBD_NOMEM);
 #endif
@@ -1352,6 +1463,139 @@ void
 ehci_root_ctrl_done(usbd_xfer_handle xfer)
 {
 	xfer->hcpriv = NULL;
+}
+
+/************************/
+
+ehci_soft_qh_t *
+ehci_alloc_sqh(ehci_softc_t *sc)
+{
+	ehci_soft_qh_t *sqh;
+	usbd_status err;
+	int i, offs;
+	usb_dma_t dma;
+
+	if (sc->sc_freeqhs == NULL) {
+		DPRINTFN(2, ("ehci_alloc_sqh: allocating chunk\n"));
+		err = usb_allocmem(&sc->sc_bus, EHCI_SQH_SIZE * EHCI_SQH_CHUNK,
+			  EHCI_PAGE_SIZE, &dma);
+		if (err)
+			return (0);
+		for(i = 0; i < EHCI_SQH_CHUNK; i++) {
+			offs = i * EHCI_SQH_SIZE;
+			sqh = (ehci_soft_qh_t *)((char *)KERNADDR(&dma) +offs);
+			sqh->physaddr = DMAADDR(&dma) + offs;
+			sqh->next = sc->sc_freeqhs;
+			sc->sc_freeqhs = sqh;
+		}
+	}
+	sqh = sc->sc_freeqhs;
+	sc->sc_freeqhs = sqh->next;
+	memset(&sqh->qh, 0, sizeof(ehci_qh_t));
+	sqh->next = 0;
+	return (sqh);
+}
+
+void
+ehci_free_sqh(ehci_softc_t *sc, ehci_soft_qh_t *sqh)
+{
+	sqh->next = sc->sc_freeqhs;
+	sc->sc_freeqhs = sqh;
+}
+
+ehci_soft_qtd_t *
+ehci_alloc_sqtd(ehci_softc_t *sc)
+{
+	ehci_soft_qtd_t *sqtd;
+	usbd_status err;
+	int i, offs;
+	usb_dma_t dma;
+	int s;
+
+	if (sc->sc_freeqtds == NULL) {
+		DPRINTFN(2, ("ehci_alloc_sqtd: allocating chunk\n"));
+		err = usb_allocmem(&sc->sc_bus, EHCI_SQTD_SIZE*EHCI_SQTD_CHUNK,
+			  EHCI_PAGE_SIZE, &dma);
+		if (err)
+			return (NULL);
+		s = splusb();
+		for(i = 0; i < EHCI_SQTD_CHUNK; i++) {
+			offs = i * EHCI_SQTD_SIZE;
+			sqtd = (ehci_soft_qtd_t *)((char *)KERNADDR(&dma)+offs);
+			sqtd->physaddr = DMAADDR(&dma) + offs;
+			sqtd->nextqtd = sc->sc_freeqtds;
+			sc->sc_freeqtds = sqtd;
+		}
+		splx(s);
+	}
+
+	s = splusb();
+	sqtd = sc->sc_freeqtds;
+	sc->sc_freeqtds = sqtd->nextqtd;
+	memset(&sqtd->qtd, 0, sizeof(ehci_qtd_t));
+	sqtd->nextqtd = NULL;
+	sqtd->xfer = NULL;
+	ehci_hash_add_qtd(sc, sqtd);
+	splx(s);
+
+	return (sqtd);
+}
+
+void
+ehci_free_sqtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
+{
+	int s;
+
+	s = splusb();
+	ehci_hash_rem_qtd(sc, sqtd);
+	sqtd->nextqtd = sc->sc_freeqtds;
+	sc->sc_freeqtds = sqtd;
+	splx(s);
+}
+
+/*
+ * When a transfer is completed the TD is added to the done queue by
+ * the host controller.  This queue is the processed by software.
+ * Unfortunately the queue contains the physical address of the TD
+ * and we have no simple way to translate this back to a kernel address.
+ * To make the translation possible (and fast) we use a hash table of
+ * TDs currently in the schedule.  The physical address is used as the
+ * hash value.
+ */
+
+#define HASH(a) (((a) >> 4) % EHCI_HASH_SIZE)
+/* Called at splusb() */
+void
+ehci_hash_add_qtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
+{
+	int h = HASH(sqtd->physaddr);
+
+	SPLUSBCHECK;
+
+	LIST_INSERT_HEAD(&sc->sc_hash_qtds[h], sqtd, hnext);
+}
+
+/* Called at splusb() */
+void
+ehci_hash_rem_qtd(ehci_softc_t *sc, ehci_soft_qtd_t *sqtd)
+{
+	SPLUSBCHECK;
+
+	LIST_REMOVE(sqtd, hnext);
+}
+
+ehci_soft_qtd_t *
+ehci_hash_find_qtd(ehci_softc_t *sc, ehci_physaddr_t a)
+{
+	int h = HASH(a);
+	ehci_soft_qtd_t *sqtd;
+
+	for (sqtd = LIST_FIRST(&sc->sc_hash_qtds[h]); 
+	     sqtd != NULL;
+	     sqtd = LIST_NEXT(sqtd, hnext))
+		if (sqtd->physaddr == a)
+			return (sqtd);
+	return (NULL);
 }
 
 /************************/
