@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.46 2000/01/25 01:16:00 enami Exp $	*/
+/*	$NetBSD: main.c,v 1.47 2000/04/14 06:26:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,6 @@ int	vflag;				/* verbose output */
 
 int	yyparse __P((void));
 
-extern char *optarg;
-extern int optind;
 extern int yydebug;
 
 static struct hashtab *mkopttab;
