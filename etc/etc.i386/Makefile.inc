@@ -1,25 +1,27 @@
+#	$NetBSD: Makefile.inc,v 1.6 1996/04/23 17:39:39 thorpej Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.5 1994/05/01 07:50:20 cgd Exp $
 
 .ifdef DESTDIR
-snap_md: netbsd-aha netbsd-bt
+snap_md: netbsd-adp netbsd-other
 #snap_md: kc_aha.fs kc_bt.fs
 
-netbsd-aha:
-	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICAHA
-	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICAHA && \
+netbsd-adp:
+	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICADP
+	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICADP && \
 	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICAHA/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-aha
+	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICADP/netbsd \
+	    ${DESTDIR}/snapshot/netbsd-adp
 
-netbsd-bt:
-	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICBT
-	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICBT && \
+netbsd-other:
+	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICOTHER
+	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICOTHER && \
 	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICBT/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-bt
+	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICOTHER/netbsd \
+	    ${DESTDIR}/snapshot/netbsd-other
+
+# XXX broken
 
 kc_aha.fs:
 	make -f ${.CURDIR}/etc.i386/Makefile.kc \
