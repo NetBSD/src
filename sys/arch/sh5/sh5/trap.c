@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.8 2002/09/02 14:02:03 scw Exp $	*/
+/*	$NetBSD: trap.c,v 1.9 2002/09/02 14:03:22 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -101,10 +101,6 @@ static void print_a_reg(const char *, register_t, int);
 
 /* Used to trap faults while probing */
 label_t *onfault;
-
-#ifdef DEBUG
-static int trap_debug;
-#endif
 
 void
 userret(struct proc *p)
