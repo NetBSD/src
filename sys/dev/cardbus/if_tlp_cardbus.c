@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_cardbus.c,v 1.15 2000/03/07 00:43:36 mycroft Exp $	*/
+/*	$NetBSD: if_tlp_cardbus.c,v 1.16 2000/03/07 01:08:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -237,7 +237,6 @@ tlp_cardbus_attach(parent, self, aux)
 	case TULIP_CHIP_21142:
 	case TULIP_CHIP_21143:
 	case TULIP_CHIP_X3201_3:
-#if 0
 		/*
 		 * Clear the "sleep mode" bit in the CFDA register.
 		 */
@@ -246,7 +245,6 @@ tlp_cardbus_attach(parent, self, aux)
 			cardbus_conf_write(cc, cf, ca->ca_tag, TULIP_PCI_CFDA,
 			    reg & ~(CFDA_SLEEP|CFDA_SNOOZE));
 		break;
-#endif
 
 	default:
 		/* Nothing. */
