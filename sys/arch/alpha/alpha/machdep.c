@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.48 1996/10/15 23:52:51 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49 1996/10/18 20:35:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -95,12 +95,26 @@
 #include <alpha/alpha/dec_21000.h>
 #endif
 
-#include <net/if.h>
 #include <net/netisr.h>
+#include <net/if.h>
+
+#ifdef INET
 #include <netinet/in.h>
+#include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
-#include <netinet/if_arp.h>
-#include "ether.h"
+#endif
+#ifdef NS
+#include <netns/ns_var.h>
+#endif
+#ifdef ISO
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+#include "ppp.h"
+#if NPPP > 0
+#include <net/ppp_defs.h>
+#include <net/if_ppp.h>
+#endif
 
 #include "le_ioasic.h"			/* for le_iomem creation */
 
@@ -1456,42 +1470,40 @@ setregs(p, pack, stack, retval)
 void
 netintr()
 {
+	int n, s;
+
+	s = splhigh();
+	n = netisr;
+	netisr = 0;
+	splx(s);
+
+#define	DONETISR(bit, fn)						\
+	do {								\
+		if (n & (1 << (bit)))					\
+			fn;						\
+	} while (0)
+
 #ifdef INET
-#if NETHER > 0
-	if (netisr & (1 << NETISR_ARP)) {
-		netisr &= ~(1 << NETISR_ARP);
-		arpintr();
-	}
-#endif
-	if (netisr & (1 << NETISR_IP)) {
-		netisr &= ~(1 << NETISR_IP);
-		ipintr();
-	}
+	DONETISR(NETISR_ARP, arpintr());
+	DONETISR(NETISR_IP, ipintr());
 #endif
 #ifdef NS
-	if (netisr & (1 << NETISR_NS)) {
-		netisr &= ~(1 << NETISR_NS);
-		nsintr();
-	}
+	DONETISR(NETISR_NS, nsintr());
 #endif
 #ifdef ISO
-	if (netisr & (1 << NETISR_ISO)) {
-		netisr &= ~(1 << NETISR_ISO);
-		clnlintr();
-	}
+	DONETISR(NETISR_ISO, clnlintr());
 #endif
 #ifdef CCITT
-	if (netisr & (1 << NETISR_CCITT)) {
-		netisr &= ~(1 << NETISR_CCITT);
-		ccittintr();
-	}
+	DONETISR(NETISR_CCITT, ccittintr());
 #endif
-#ifdef PPP
-	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_PPP);
-		pppintr();
-	}
+#ifdef NATM
+	DONETISR(NETISR_NATM, natmintr());
 #endif
+#if NPPP > 1
+	DONETISR(NETISR_PPP, pppintr());
+#endif
+
+#undef DONETISR
 }
 
 void
