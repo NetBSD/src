@@ -1,4 +1,4 @@
-.\"	$NetBSD: tl.4,v 1.14 2001/09/22 16:36:23 wiz Exp $
+.\"	$NetBSD: tl.4,v 1.15 2003/03/31 03:40:09 perry Exp $
 .\"
 .\" Copyright (c) 1997 Manuel Bouyer
 .\" All rights reserved.
@@ -37,7 +37,8 @@
 .Sh SYNOPSIS
 .Cd "tl* at pci? dev ? function ?"
 .Pp
-Configuration of PHYs are necessary.  See
+Configuration of PHYs are necessary.
+See
 .Xr mii 4 .
 .Sh DESCRIPTION
 The
@@ -49,7 +50,7 @@ Supported cards include:
 .Pp
 .Bl -tag -width xxxxxx -offset indent
 .It Compaq Netelligent
-in baseboard and PCI variants (10bT-only variant untested).
+in baseboard and PCI variants (10baseT-only variant untested).
 .It Compaq NetFlex 3/P
 in baseboard variant only (the PCI variant doesn't use the same chip !).
 .It It Baseboard Compaq Deskpro 4000 5233MMX Ethernet
@@ -58,17 +59,21 @@ in baseboard variant only (the PCI variant doesn't use the same chip !).
 .El
 .Sh MEDIA SELECTION
 The different models of the supported boards come with some subset of RJ-45,
-BNC and AUI connectors.  Media selection is done using
+BNC and AUI connectors.
+Media selection is done using
 .Xr ifconfig 8
 using the standard
 .Xr ifmedia 4
-mechanism.  Refer to those manual pages for more information.
+mechanism.
+Refer to those manual pages for more information.
 .Pp
 The
 .Nm
-driver don't have full automatic media selection. By default it will do an NWay
+driver don't have full automatic media selection.
+By default it will do an NWay
 on the UTP port for negotiation of the speed and duplex mode with the
-link partner. If the AUI or BNC port is used, an explicit medium must be
+link partner.
+If the AUI or BNC port is used, an explicit medium must be
 specified to
 .Xr ifconfig 8
 or in your /etc/ifconfig.tl? file.
