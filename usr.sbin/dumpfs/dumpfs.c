@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.22 2001/01/05 03:27:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.21 2000/01/18 20:24:19 pk Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.22 2001/01/05 03:27:26 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -190,7 +190,7 @@ dumpfs(name)
 	printf("symlinklen %d\ttrackskew %d\tinterleave %d\tcontigsumsize %d\n",
 	    afs.fs_maxsymlinklen, afs.fs_trackskew, afs.fs_interleave,
 	    afs.fs_contigsumsize);
-	printf("maxfilesize 0x%016qx\n",
+	printf("maxfilesize 0x%016llx\n",
 	    (unsigned long long)afs.fs_maxfilesize);
 	printf("nindir\t%d\tinopb\t%d\tnspf\t%d\n",
 	    afs.fs_nindir, afs.fs_inopb, afs.fs_nspf);
@@ -282,7 +282,7 @@ dumpcg(name, fd, c)
 	}
 	if (needswap)
 		swap_cg(&acg);
-	printf("magic\t%x\ttell\t%qx\ttime\t%s",
+	printf("magic\t%x\ttell\t%llx\ttime\t%s",
 	    afs.fs_postblformat == FS_42POSTBLFMT ?
 	    ((struct ocg *)&acg)->cg_magic : acg.cg_magic,
 	    (long long)cur, ctime(&acg.cg_time));

@@ -1,4 +1,4 @@
-/* $NetBSD: usrdb.c,v 1.9 2000/07/29 19:15:40 christos Exp $ */
+/* $NetBSD: usrdb.c,v 1.10 2001/01/05 03:27:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usrdb.c,v 1.9 2000/07/29 19:15:40 christos Exp $");
+__RCSID("$NetBSD: usrdb.c,v 1.10 2001/01/05 03:27:28 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -254,7 +254,7 @@ usracct_print()
 	while (rv == 0) {
 		memcpy(ui, data.data, sizeof(struct userinfo));
 
-		printf("%-8s %9qu ",
+		printf("%-8s %9llu ",
 		    user_from_uid(ui->ui_uid, 0),
 		    (unsigned long long)ui->ui_calls);
 
@@ -267,19 +267,19 @@ usracct_print()
 
 		/* ui->ui_calls is always != 0 */
 		if (dflag)
-			printf("%12qu%s",
+			printf("%12llu%s",
 			    (unsigned long long)(ui->ui_io / ui->ui_calls),
 			    "avio");
 		else
-			printf("%12qu%s",
+			printf("%12llu%s",
 			    (unsigned long long)ui->ui_io, "tio");
 
 		/* t is always >= 0.0001; see above */
 		if (kflag)
-			printf("%12qu%s", (unsigned long long)(ui->ui_mem / t),
+			printf("%12llu%s", (unsigned long long)(ui->ui_mem / t),
 			    "k");
 		else
-			printf("%12qu%s", (unsigned long long)ui->ui_mem,
+			printf("%12llu%s", (unsigned long long)ui->ui_mem,
 			    "k*sec");
 
 		printf("\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: eshconfig.c,v 1.3 2000/04/14 06:26:53 simonb Exp $	*/
+/*	$NetBSD: eshconfig.c,v 1.4 2001/01/05 03:27:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: eshconfig.c,v 1.3 2000/04/14 06:26:53 simonb Exp $");
+__RCSID("$NetBSD: eshconfig.c,v 1.4 2001/01/05 03:27:26 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -720,10 +720,10 @@ esh_stats(int get_stats)
 
 	value = (((long long) stats[0x78 / 4]) << 32) | stats[0x7c / 4];
 	if (get_stats == 1 || value > 0)
-		printf("%12qd bytes sent\n", value);
+		printf("%12lld bytes sent\n", value);
 	value = ((long long) stats[0xb8 / 4] << 32) | stats[0xbc / 4];
 	if (get_stats == 1 || value > 0)
-		printf("%12qd bytes received\n", value);
+		printf("%12lld bytes received\n", value);
 
 	for (offset = 0; stats_values[offset].offset != 0; offset++) {
 		if (get_stats == 1 || stats[stats_values[offset].offset / 4] > 0)

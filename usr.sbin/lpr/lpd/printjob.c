@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.25 2000/10/11 20:23:52 is Exp $	*/
+/*	$NetBSD: printjob.c,v 1.26 2001/01/05 03:27:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.25 2000/10/11 20:23:52 is Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.26 2001/01/05 03:27:27 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,7 +869,7 @@ sendfile(type, file)
 	if (S_ISLNK(stb.st_mode) && fstat(f, &stb) == 0 &&
 	    (stb.st_dev != fdev || stb.st_ino != fino))
 		return(ACCESS);
-	amt = snprintf(buf, sizeof(buf), "%c%qd %s\n", type,
+	amt = snprintf(buf, sizeof(buf), "%c%lld %s\n", type,
 	    (long long)stb.st_size, file);
 	for (i = 0; ; i++) {
 		if (write(pfd, buf, amt) != amt ||

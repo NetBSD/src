@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.12 2000/07/29 19:13:34 christos Exp $ */
+/* $NetBSD: main.c,v 1.13 2001/01/05 03:27:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.12 2000/07/29 19:13:34 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2001/01/05 03:27:28 lukem Exp $");
 #endif
 
 /*
@@ -361,7 +361,7 @@ acct_load(pn, wr)
 			if (sflag || (mflag && !qflag))
 				usracct_add(&ci);
 		} else if (!qflag)
-			printf("%6u %12.2f cpu %12quk mem %12qu io %s\n",
+			printf("%6u %12.2f cpu %12lluk mem %12llu io %s\n",
 			    ci.ci_uid,
 			    (ci.ci_utime + ci.ci_stime) / (double) AHZ,
 			    (unsigned long long)ci.ci_mem,
