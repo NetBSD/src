@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.23 2000/01/22 23:37:14 mycroft Exp $	*/
+/*	$NetBSD: res_send.c,v 1.24 2000/01/23 01:55:17 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.23 2000/01/22 23:37:14 mycroft Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.24 2000/01/23 01:55:17 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -143,8 +143,9 @@ static int af = 0;	/* address family of socket */
 	int save = errno;
 
 	if (_res.options & RES_DEBUG) {
-		getnameinfo(address, address->sa_len, abuf, sizeof(abuf),
-			    pbuf, sizeof(pbuf), NI_NUMERICHOST|NI_NUMERICSERV);
+		getnameinfo(address, (size_t)address->sa_len, abuf,
+		    sizeof(abuf), pbuf, sizeof(pbuf),
+		    NI_NUMERICHOST|NI_NUMERICSERV);
 		fprintf(file, "res_send: %s ([%s].%s): %s\n",
 			string, abuf, pbuf, strerror(error));
 	}
@@ -422,8 +423,8 @@ res_send(buf, buflen, ans, anssiz)
 
 #ifdef INET6
 		Dprint((_res.options & RES_DEBUG) &&
-		       getnameinfo(nsap, nsap->sa_len, abuf, sizeof(abuf),
-				   NULL, 0, NI_NUMERICHOST) == 0,
+		       getnameinfo(nsap, (size_t)nsap->sa_len, abuf,
+			   sizeof(abuf), NULL, 0, NI_NUMERICHOST) == 0,
 		       (stdout, ";; Querying server (# %d) address = %s\n",
 			ns + 1, abuf));
 #else /* INET6 */
