@@ -1,4 +1,4 @@
-/*	$NetBSD: ts102reg.h,v 1.4 1999/12/15 08:12:31 garbled Exp $ */
+/*	$NetBSD: ts102reg.h,v 1.5 2000/03/09 07:04:10 garbled Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -188,14 +188,18 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_RD_EVENT_STATUS=0x0c,	/* none		ack + 2 bytes */
 #define	TS102_EVENT_STATUS_SHUTDOWN_REQUEST			0x0001
 #define	TS102_EVENT_STATUS_LOW_POWER_WARNING			0x0002
+/* Internal Warning Changed 0x0002 */
 #define	TS102_EVENT_STATUS_VERY_LOW_POWER_WARNING		0x0004
+/* Discharge Event 0x0004 */
 #define	TS102_EVENT_STATUS_BATT_CHANGED				0x0008
+/* Internal Status Changed 0x0008 */
 #define	TS102_EVENT_STATUS_EXT_KEYBOARD_STATUS_CHANGE		0x0010
 #define	TS102_EVENT_STATUS_EXT_MOUSE_STATUS_CHANGE		0x0020
 #define	TS102_EVENT_STATUS_EXTERNAL_VGA_STATUS_CHANGE		0x0040
 #define	TS102_EVENT_STATUS_LID_STATUS_CHANGE			0x0080
 #define	TS102_EVENT_STATUS_MICROCONTROLLER_ERROR		0x0100
 #define	TS102_EVENT_STATUS_RESERVED				0x0200
+/* Wakeup 0x0200 */
 #define	TS102_EVENT_STATUS_EXT_BATT_STATUS_CHANGE		0x0400
 #define	TS102_EVENT_STATUS_EXT_BATT_CHARGING_STATUS_CHANGE	0x0800
 #define	TS102_EVENT_STATUS_EXT_BATT_LOW_POWER			0x1000
@@ -242,7 +246,7 @@ enum ts102_opcode {			/* Argument	Returned */
  
     /* Read/Write/Modify Commands
      */
-    TS102_OP_CTL_LCD=0x20,		/* mask		ack + 2 bytes */
+    TS102_OP_CTL_LCD=0x20,		/* 4 byte mask	ack + 4 bytes */
 #define	TS102_LCD_CAPS_LOCK		0x0001
 #define	TS102_LCD_SCROLL_LOCK		0x0002
 #define	TS102_LCD_NUMLOCK		0x0004
@@ -259,7 +263,7 @@ enum ts102_opcode {			/* Argument	Returned */
 #define	TS102_BITPORT_BP_DIS		0x10	/* no bootprom from pcmcia (high) */
 						/* boot from pcmcia (low */
 #define	TS102_BITPORT_ENCSYNC		0x20	/* enab composite sync (low) */
-    TS102_OP_CTL_DEV=0x22,	/* undocumented mask 	ack + 1 byte */
+    TS102_OP_CTL_DEV=0x22,		/* mask 	ack + 1 byte */
 #define TS102_DEVCTL_CHARGE_DISABLE	0x01	/* dis/en charging */
 #define TS102_DEVCTL_POINTER_DISABLE	0x04	/* dis/en pointer */
 #define TS102_DEVCTL_KEYCLICK		0x08	/* keyclick? */
@@ -274,8 +278,8 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_CTL_KBD_TIME_BTWN_RPTS=0x29, /* mask	ack + 1 byte */
     TS102_OP_CTL_TIMEZONE=0x2a,		/* mask		ack + 1 byte */
     TS102_OP_CTL_MARK_SPACE_RATIO=0x2b,	/* mask		ack + 1 byte */
-    TS102_OP_CTL_MOUSE_SENS=0x2c, 	/* no idea */
-    TS102_OP_CTL_MOUSE_SCAN=0x2d,	/* no idea */
+    TS102_OP_CTL_MOUSE_SENS=0x2c, 	/* mask		ack + 1 byte */
+    TS102_OP_CTL_MOUSE_SCAN=0x2d,	/* no idea invalid?*/
     TS102_OP_CTL_DIAGNOSTIC_MODE=0x2e,	/* mask		ack + 1 byte */
 #define	TS102_DIAGNOSTIC_MODE_CMD_DIAG_ON_LCD	0x01
 #define	TS102_DIAGNOSTIC_MODE_KDB_MS_9600	0x02
@@ -300,7 +304,7 @@ enum ts102_opcode {			/* Argument	Returned */
     TS102_OP_BLK_RD_EEPROM=0x40,	/* len off		ack <data> */
     TS102_OP_BLK_WR_EEPROM=0x41,	/* len off <data>	ack */
     TS102_OP_BLK_WR_STATUS=0x42,	/* len off <data>	ack */
-    TS102_OP_BLK_DEF_SPCL_CHAR=0x43,	/* len off <data>	ack */
+    TS102_OP_BLK_DEF_SPCL_CHAR=0x43,	/* len off <8b data>	ack */
 #define	TS102_BLK_OFF_DEF_WAN1			0
 #define	TS102_BLK_OFF_DEF_WAN2			1
 #define	TS102_BLK_OFF_DEF_LAN1			2
