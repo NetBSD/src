@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.2 2001/09/15 20:36:37 chs Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.3 2001/10/31 22:23:18 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -112,7 +112,7 @@ int
 debug_malloc(unsigned long size, int type, int flags, void **addr)
 {
 	struct debug_malloc_entry *md = NULL;
-	int s, wait = flags & M_NOWAIT;
+	int s, wait = !(flags & M_NOWAIT);
 
 	/* Careful not to compare unsigned long to int -1 */
 	if ((type != debug_malloc_type && debug_malloc_type != 0) ||
