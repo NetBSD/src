@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 1997/04/13 18:31:07 veego Exp $
+#	$NetBSD: Makefile,v 1.6 1997/05/25 12:04:53 darrenr Exp $
 
 PROG=	ipf
 SRCS=	ipf.c parse.c opt.c
