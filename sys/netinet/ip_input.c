@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.82.2.2 1999/05/03 22:22:42 perry Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.82.2.3 1999/10/17 23:59:59 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1227,7 +1227,7 @@ ip_forward(m, srcrt)
 		    ntohl(ip->ip_src.s_addr),
 		    ntohl(ip->ip_dst.s_addr), ip->ip_ttl);
 #endif
-	if (m->m_flags & M_BCAST || in_canforward(ip->ip_dst) == 0) {
+	if (m->m_flags & (M_BCAST|M_MCAST) || in_canforward(ip->ip_dst) == 0) {
 		ipstat.ips_cantforward++;
 		m_freem(m);
 		return;
