@@ -1,4 +1,4 @@
-.\" $Header: /cvsroot/src/usr.bin/crontab/Attic/crontab.1,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $
+.\" $Header: /cvsroot/src/usr.bin/crontab/Attic/crontab.1,v 1.2 1993/05/28 08:34:31 cgd Exp $
 .\"
 .\"/* Copyright 1988,1990 by Paul Vixie
 .\" * All rights reserved
@@ -22,7 +22,7 @@
 .SH NAME
 crontab \- maintain crontab files for individual users
 .SH SYNOPSIS
-crontab [ -u user ] { -l | -d | -r file }
+crontab [ -u user ] { -l | -d | -e | -r file }
 .SH DESCRIPTION
 .I Crontab
 is the program used to install, deinstall or list the tables
@@ -73,6 +73,12 @@ option causes the current crontab to be displayed on standard output.
 The
 .I -d
 option causes the current crontab to be deleted.
+.PP
+The
+.I -e
+option allows you to edit the current crontab.  It makes a copy of the
+crontab, starts up your editor via the VISUAL or EDITOR environment
+variables, and then installs your new crontab after your editor exits.
 .PP
 The
 .I -r

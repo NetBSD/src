@@ -1,5 +1,5 @@
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/database.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+static char rcsid[] = "$Header: /cvsroot/src/libexec/crond/Attic/database.c,v 1.2 1993/05/28 08:34:16 cgd Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -48,8 +48,7 @@ load_database(old_db)
 	extern user	*load_user(), *find_user();
 	extern char	*env_get();
 
-	static DIR	*dir = NULL;
-
+	DIR		*dir;
 	struct stat	statbuf;
 	struct direct	*dp;
 	cron_db		new_db;
@@ -83,18 +82,15 @@ load_database(old_db)
 		return;
 	}
 
-	/* make sure the dir is open.  only happens the first time, since
-	 * the DIR is static and we don't close it.  Rewind the dir.
+	/* we used to keep this dir open all the time, for the sake of
+	 * efficiency.  however, we need to close it in every fork, and
+	 * we fork a lot more often than the mtime of the dir changes.
 	 */
-	if (dir == NULL)
+	if (!(dir = opendir(SPOOL_DIR)))
 	{
-		if (!(dir = opendir(SPOOL_DIR)))
-		{
-			log_it("CROND", getpid(), "OPENDIR FAILED", SPOOL_DIR);
-			(void) exit(ERROR_EXIT);
-		}
+		log_it("CROND", getpid(), "OPENDIR FAILED", SPOOL_DIR);
+		(void) exit(ERROR_EXIT);
 	}
-	(void) rewinddir(dir);
 
 	/* something's different.  make a new database, moving unchanged
 	 * elements from the old database, reloading elements that have
@@ -108,7 +104,7 @@ load_database(old_db)
 	{
 		extern struct passwd	*getpwnam();
 		struct passwd		*pw;
-		int			crontab_fd;
+		int			crontab_fd = -1;
 		char			fname[MAXNAMLEN+1],
 					tabname[MAXNAMLEN+1];
 
@@ -193,6 +189,8 @@ next_crontab:
 			close(crontab_fd);
 		}
 	}
+	closedir(dir);
+
 	/* if we don't do this, then when our children eventually call
 	 * getpwnam() in do_command.c's child_process to verify MAILTO=,
 	 * they will screw us up (and v-v).
