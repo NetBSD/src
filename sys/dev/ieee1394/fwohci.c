@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.80 2003/10/26 19:10:42 christos Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.81 2003/10/26 21:03:34 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.80 2003/10/26 19:10:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.81 2003/10/26 21:03:34 fvdl Exp $");
 
 #define FWOHCI_WAIT_DEBUG 1
 
@@ -5014,7 +5014,7 @@ fwohci_ir_read(struct device *dev, ieee1394_ir_tag_t tag, struct uio *uio,
 	struct fwohci_ir_ctx *irc = (struct fwohci_ir_ctx *)tag;
 	int packetnum;
 	int copylen, hdrshim, fwisohdrsiz;
-	struct fwohci_desc *fd, *fdprev;
+	struct fwohci_desc *fd, *fdprev = NULL;	/* XXX fdprev use is suspect */
 	u_int8_t *data;
 	int status = 0;
 	u_int32_t tmpbranch;
