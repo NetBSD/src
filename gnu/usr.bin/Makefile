@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.42 1996/11/03 18:08:48 ws Exp $
+#	$NetBSD: Makefile,v 1.43 1997/04/09 06:23:44 mikel Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
 
-.if	(${MACHINE_ARCH} == "i386") || \
+.if	make(clean) || make(cleandir)
+SUBDIR+=	gas gcc gdb ld
+.elif	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
 	(${MACHINE_ARCH} == "ns32k") || \
 	(${MACHINE_ARCH} == "sparc") || \
@@ -16,7 +18,6 @@ SUBDIR+=	gcc ld
 .elif	(${MACHINE_ARCH} == "mips") 
 SUBDIR+=	gcc
 .endif
-
 
 # XXX alpha still needs the /usr/bin/cpp script.
 .if (${MACHINE_ARCH} == "alpha")
