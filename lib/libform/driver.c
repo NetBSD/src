@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.8 2001/05/11 14:04:48 blymn Exp $	*/
+/*	$NetBSD: driver.c,v 1.9 2001/05/16 11:51:16 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -168,6 +168,12 @@ form_driver(FORM *form, int c)
 					   * return the status.
 					   */
 					return status;
+				else if (status == E_NO_ROOM)
+					  /* we will get this if the line
+					   * wrapping fails.  Deny the
+					   * request.
+					   */
+					return E_REQUEST_DENIED;
 			}
 			while (status != E_OK);
 			update_field = (status == E_OK);
