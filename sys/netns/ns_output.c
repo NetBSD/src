@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_output.c,v 1.8 1996/02/13 22:14:01 christos Exp $	*/
+/*	$NetBSD: ns_output.c,v 1.9 1997/07/18 19:30:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -149,7 +149,7 @@ gotif:
 		}
 	}
 
-	if (htons(idp->idp_len) <= ifp->if_mtu) {
+	if (ntohs(idp->idp_len) <= ifp->if_mtu) {
 		ns_output_cnt++;
 		if (ns_copy_output) {
 			ns_watch_output(m0, ifp);

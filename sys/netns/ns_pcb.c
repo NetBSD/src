@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.11 1996/05/22 13:56:23 mycroft Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.12 1997/07/18 19:30:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -78,7 +78,7 @@ ns_pcbbind(nsp, nam, p)
 	struct proc *p;
 {
 	register struct sockaddr_ns *sns;
-	u_short lport = 0;
+	u_int16_t lport = 0;
 	int error;
 
 	if (nsp->nsp_lport || !ns_nullhost(nsp->nsp_laddr))
@@ -198,7 +198,7 @@ ns_pcbconnect(nsp, nam)
 				if (ia->ia_ifp == ifp)
 					break;
 		if (ia == 0) {
-			u_short fport = sns->sns_addr.x_port;
+			u_int16_t fport = sns->sns_addr.x_port;
 			sns->sns_addr.x_port = 0;
 			ia = (struct ns_ifaddr *)
 				ifa_ifwithdstaddr(snstosa(sns));
@@ -336,12 +336,12 @@ ns_rtchange(nsp)
 struct nspcb *
 ns_pcblookup(faddr, lport, wildp)
 	struct ns_addr *faddr;
-	u_short lport;
+	u_int16_t lport;
 	int wildp;
 {
 	register struct nspcb *nsp, *match = 0;
 	int matchwild = 3, wildcard;
-	u_short fport;
+	u_int16_t fport;
 
 	fport = faddr->x_port;
 	for (nsp = (&nspcb)->nsp_next; nsp != (&nspcb); nsp = nsp->nsp_next) {

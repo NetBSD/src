@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_error.c,v 1.8 1996/10/13 01:59:55 christos Exp $	*/
+/*	$NetBSD: ns_error.c,v 1.9 1997/07/18 19:30:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1988, 1993
@@ -75,8 +75,8 @@ int
 ns_err_x(c)
 	int c;
 {
-	register u_short *w, *lim, *base = ns_errstat.ns_es_codes;
-	u_short x = c;
+	register u_int16_t *w, *lim, *base = ns_errstat.ns_es_codes;
+	u_int16_t x = c;
 
 	/*
 	 * zero is a legit error code, handle specially
@@ -156,12 +156,12 @@ ns_error(om, type, param)
 	if ((u_int)type > NS_ERR_TOO_BIG)
 		panic("ns_err_error");
 	ns_errstat.ns_es_outhist[ns_err_x(type)]++;
-	ep->ns_ep_errp.ns_err_num = htons((u_short)type);
-	ep->ns_ep_errp.ns_err_param = htons((u_short)param);
+	ep->ns_ep_errp.ns_err_num = htons((u_int16_t)type);
+	ep->ns_ep_errp.ns_err_param = htons((u_int16_t)param);
 	bcopy((caddr_t)oip, (caddr_t)&ep->ns_ep_errp.ns_err_idp, 42);
 	nip = &ep->ns_ep_idp;
 	nip->idp_len = sizeof(*ep);
-	nip->idp_len = htons((u_short)nip->idp_len);
+	nip->idp_len = htons((u_int16_t)nip->idp_len);
 	nip->idp_pt = NSPROTO_ERROR;
 	nip->idp_tc = 0;
 	nip->idp_dna = oip->idp_sna;
@@ -299,11 +299,11 @@ freeit:
 }
 
 #ifdef notdef
-u_long
+u_int32_t
 nstime()
 {
 	int s = splclock();
-	u_long t;
+	u_int32_t t;
 
 	t = (time.tv_sec % (24*60*60)) * 1000 + time.tv_usec / 1000;
 	splx(s);
@@ -318,7 +318,7 @@ struct mbuf *m;
 	register struct idp *idp = mtod(m, struct idp *);
 	register struct echo {
 	    struct idp	ec_idp;
-	    u_short		ec_op; /* Operation, 1 = request, 2 = reply */
+	    u_int16_t		ec_op; /* Operation, 1 = request, 2 = reply */
 	} *ec = (struct echo *)idp;
 	struct ns_addr temp;
 

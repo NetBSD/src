@@ -1,4 +1,4 @@
-/*	$NetBSD: idp.h,v 1.5 1994/06/29 06:41:28 cgd Exp $	*/
+/*	$NetBSD: idp.h,v 1.6 1997/07/18 19:30:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -39,10 +39,10 @@
  * Definitions for NS(tm) Internet Datagram Protocol
  */
 struct idp {
-	u_short	idp_sum;	/* Checksum */
-	u_short	idp_len;	/* Length, in bytes, including header */
-	u_char	idp_tc;		/* Transport Crontrol (i.e. hop count) */
-	u_char	idp_pt;		/* Packet Type (i.e. level 2 protocol) */
+	u_int16_t idp_sum;	/* Checksum */
+	u_int16_t idp_len;	/* Length, in bytes, including header */
+	u_int8_t idp_tc;	/* Transport Crontrol (i.e. hop count) */
+	u_int8_t idp_pt;	/* Packet Type (i.e. level 2 protocol) */
 	struct ns_addr	idp_dna;	/* Destination Network Address */
 	struct ns_addr	idp_sna;	/* Source Network Address */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.12 1996/10/13 01:59:55 christos Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.13 1997/07/18 19:30:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -73,7 +73,7 @@ union ns_net	ns_zeronet;
 union ns_net	ns_broadnet;
 struct sockaddr_ns ns_netmask, ns_hostmask;
 
-static u_short allones[] = {-1, -1, -1};
+static u_int16_t allones[] = {-1, -1, -1};
 
 struct nspcb nspcb;
 struct nspcb nsrawpcb;
@@ -285,7 +285,7 @@ idp_ctlinput(cmd, sa, arg)
 		errp = arg;
 		ns = &errp->ns_err_idp.idp_dna;
 		type = errp->ns_err_num;
-		type = ntohs((u_short)type);
+		type = ntohs((u_int16_t)type);
 	}
 	switch (type) {
 
@@ -315,7 +315,7 @@ struct route idp_sroute;
 
 void
 idp_forward(m)
-struct mbuf *m;
+	struct mbuf *m;
 {
 	register struct idp *idp = mtod(m, struct idp *);
 	register int error, type, code;
@@ -383,11 +383,11 @@ struct mbuf *m;
 		}
 	}
 	/* need to adjust checksum */
-	if (idp->idp_sum!=0xffff) {
+	if (idp->idp_sum != 0xffff) {
 		union bytes {
-			u_char c[4];
-			u_short s[2];
-			long l;
+			u_int8_t c[4];
+			u_int16_t s[2];
+			u_int32_t l;
 		} x;
 		register int shift;
 		x.l = 0; x.c[0] = agedelta;
@@ -435,8 +435,8 @@ cleanup:
 
 int
 idp_do_route(src, ro)
-struct ns_addr *src;
-struct route *ro;
+	struct ns_addr *src;
+	struct route *ro;
 {
 	
 	struct sockaddr_ns *dst;
@@ -458,15 +458,15 @@ struct route *ro;
 
 void
 idp_undo_route(ro)
-register struct route *ro;
+	register struct route *ro;
 {
 	if (ro->ro_rt) {RTFREE(ro->ro_rt);}
 }
 
 void
 ns_watch_output(m, ifp)
-struct mbuf *m;
-struct ifnet *ifp;
+	struct mbuf *m;
+	struct ifnet *ifp;
 {
 	register struct nspcb *nsp;
 	register struct ifaddr *ifa;
@@ -492,7 +492,7 @@ struct ifnet *ifp;
 						break;
 					}
 				}
-			idp->idp_len = ntohl(m0->m_pkthdr.len);
+			idp->idp_len = ntohs((u_int16_t)m0->m_pkthdr.len);
 			idp_input(m0, nsp);
 		}
 	}
