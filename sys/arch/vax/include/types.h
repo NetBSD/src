@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 1994/10/26 08:02:32 cgd Exp $	*/
+/*	$NetBSD: types.h,v 1.3 1995/02/13 00:43:33 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,8 +49,23 @@ typedef struct label_t {
 } label_t;
 
 */
-typedef	u_long	vm_offset_t;
-typedef	u_long	vm_size_t;
+typedef	unsigned long	vm_offset_t;
+typedef	unsigned long	vm_size_t;
 
+/*
+ * Basic integral types.  Omit the typedef if
+ * not possible for a machine/compiler combination.
+ */
+#define __BIT_TYPES_DEFINED__
+typedef __signed char              int8_t;
+typedef unsigned char            u_int8_t;
+typedef short                     int16_t;
+typedef unsigned short          u_int16_t;
+typedef int                       int32_t;
+typedef unsigned int            u_int32_t;
+typedef long long                 int64_t;
+typedef unsigned long long      u_int64_t;
+
+typedef int32_t                 register_t;
 
 #endif	/* _MACHTYPES_H_ */

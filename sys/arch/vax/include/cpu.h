@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.4 1994/11/25 19:08:50 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.5 1995/02/13 00:43:20 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -32,44 +32,29 @@
 
  /* All bugs are subject to removal without further notice */
 
-#include "cdefs.h"
+#include "sys/cdefs.h"
 #include "vax/include/mtpr.h"
 
 #define enablertclock()
+#define	cpu_swapin(p)
+#define	cpu_set_init_frame(p,f) {extern u_int scratch;mtpr(scratch,PR_SSP);}
+#define	cpu_wait(p)
 
+
+extern volatile int cpunumber;
+extern struct cpu_dep cpu_calls[];
 
 struct	cpu_dep {
-	int	(*cpu_loinit)();
-	int	(*cpu_clock)();
-	int	(*cpu_mem)();
-	int	(*cpu_config)();
+	int	(*cpu_loinit)(); /* Locore init before everything else */
+	int	(*cpu_clock)();	 /* CPU dependent clock handling */
+	int	(*cpu_mchk)();   /* Machine check handling */
+	int	(*cpu_memerr)(); /* Memory subsystem errors */
+	int	(*cpu_conf)();	 /* Autoconfiguration */
 };
 
 struct clockframe {
         int     pc;
         int     ps;
-};
-
-struct cpuops {
-	int *nisse;
-	int (*cpu_memenable)();
-	int (*cpu_memerr)();
-	int (*cpu_mchk)();
-	int (*cpu_init)();
-};
-
-struct percpu {
-	int pc_cputype;
-	int pc_cpuspeed;
-	int pc_nioa;
-	struct iobus *pc_io;
-	struct cpuops *pc_ops;
-};
-
-struct clockops {
-	int (*p1)();
-	int (*p2)();
-	int (*p3)();
 };
 
 #define todr()		mfpr(PR_TODR)
@@ -94,4 +79,11 @@ struct clockops {
 #define signotify(p)     mtpr(AST_OK,PR_ASTLVL);
 
 extern	int     want_resched;   /* resched() was called */
+
+/*
+ * Give a profiling tick to the current process when the user profiling
+ * buffer pages are invalid.  On the hp300, request an ast to send us
+ * through trap, marking the proc as needing a profiling tick.
+ */
+#define need_proftick(p) {(p)->p_flag |= P_OWEUPC; mtpr(AST_OK,PR_ASTLVL); }
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.3 1994/11/25 19:08:53 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.4 1995/02/13 00:43:24 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -35,6 +35,8 @@
 #ifndef	_VAX_MTPR_H_
 #define	_VAX_MTPR_H_
 
+#include "machine/macros.h"
+
 /******************************************************************************
 
   Processor register numbers in the VAX		/IC
@@ -60,18 +62,27 @@
 #define PR_ASTLVL 19 /* AST Level */
 #define PR_SIRR   20 /* Software Interrupt Request */
 #define PR_SISR   21 /* Software Interrupt Summary */
+#define	PR_IPIR	  22 /* KA820 Interprocessor register */
 #define PR_MCSR   23 /* Machine Check Status Register 11/750 */
 #define PR_ICCS   24 /* Interval Clock Control */
 #define PR_NICR   25 /* Next Interval Count */
 #define PR_ICR    26 /* Interval Count */
 #define PR_TODR   27 /* Time Of Year (optional) */
+#define	PR_CSRS	  28 /* Console Storage R/S */
+#define	PR_CSRD	  29 /* Console Storage R/D */
+#define	PR_CSTS	  30 /* Console Storage T/S */
+#define	PR_CSTD	  31 /* Console Storage T/D */
 #define PR_RXCS   32 /* Console Receiver C/S */
 #define PR_RXDB   33 /* Console Receiver D/B */
 #define PR_TXCS   34 /* Console Transmit C/S */
 #define PR_TXDB   35 /* Console Transmit D/B */
 #define PR_TBDR   36 /* Translation Buffer Group Disable Register 11/750 */
-#define PR_IUR    37 /* Initialize Unibus Register 11/750 */
+#define PR_CADR   37 /* Cache Disable Register 11/750 */
 #define PR_MCESR  38 /* Machiune Check Error Summary Register 11/750 */
+#define PR_CAER   39 /* Cache Error Register 11/750 */
+#define PR_ACCS   40 /* Accelerator control register */
+#define PR_ACCR   41 /* Accelerator Maintenance register */
+#define PR_IUR    55 /* Initialize Unibus Register 11/750 */
 #define PR_MAPEN  56 /* Memory Management Enable */
 #define PR_TBIA   57 /* Trans. Buf. Invalidate All */
 #define PR_TBIS   58 /* Trans. Buf. Invalidate Single */

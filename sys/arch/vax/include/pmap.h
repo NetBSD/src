@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.h,v 1.5 1994/11/25 19:08:56 ragge Exp $     */
+/*      $NetBSD: pmap.h,v 1.6 1995/02/13 00:43:28 ragge Exp $     */
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -81,8 +81,9 @@ typedef struct pv_entry {
   int		         pv_flags;	/* flags */
 } *pv_entry_t;
 
-#define	PV_CI		0x01	        /* all entries must be cache inhibited */
-#define PV_PTPAGE	0x02	        /* entry maps a page table page */
+#define	PV_REF	0x00000001	/* Simulated phys ref bit */
+
+#define PHYS_TO_PV(phys_page) (&pv_table[((phys_page)>>PAGE_SHIFT)])
 
 #ifdef	KERNEL
 pv_entry_t	pv_table;		/* array of entries, 
@@ -93,7 +94,6 @@ pv_entry_t	pv_table;		/* array of entries,
 
 #define	pmap_kernel()			(kernel_pmap)
 
-extern	struct pte *Sysmap;
 extern	char *vmmap;			/* map for mem, dumps, etc. */
 #endif	KERNEL
 
@@ -103,5 +103,6 @@ extern	char *vmmap;			/* map for mem, dumps, etc. */
 #define	pmap_pageable(a,b,c,d)		/* Dont do anything */
 #define	pmap_reference(pmap)	if(pmap) (pmap)->ref_count++
 #define	pmap_pinit(pmap)	(pmap)->ref_count=1;
+#define	pmap_phys_address(phys) ((u_int)(phys)<<PAGE_SIZE)
 
 #endif PMAP_H

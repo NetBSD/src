@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 1994/11/25 19:08:55 ragge Exp $	*/
+/*	$NetBSD: pcb.h,v 1.5 1995/02/13 00:43:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -56,6 +56,9 @@ struct pcb {
 
 	/* Software registers */
 };
+
+#define	AST_MASK 0x07000000
+#define	AST_PCB	 0x04000000
 
 /* Not yet... */
 struct	md_coredump {

@@ -1,4 +1,4 @@
-/*      $NetBSD: trap.h,v 1.3 1994/11/25 19:09:01 ragge Exp $     */
+/*      $NetBSD: trap.h,v 1.4 1995/02/13 00:43:32 ragge Exp $     */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,17 +50,16 @@
 #define	T_SYSCALL	5	/* system call (kcall) */
 #define	T_ARITHFLT	6	/* arithmetic trap */
 #define	T_ASTFLT	7	/* system forced exception */
-#define	T_ACCFLT	8	/* Access control violation fault */
+#define	T_PTELEN	8	/* Page table length exceeded */
 #define	T_TRANSFLT	9	/* translation fault */
-
-#define	T_TRCTRAP	10	/* trace trap */
-#define	T_COMPAT	11	/* compatibility mode fault on VAX */
-#define	T_PAGEFLT	12	/* page fault */
-#define	T_TABLEFLT	13	/* page table fault */
+/* #define	T_TRCTRAP	10	/* trace trap */
+/* #define	T_COMPAT	11	/* compatibility mode fault on VAX */
+#define	T_ACCFLT	12	/* Access violation fault */
+/* #define	T_TABLEFLT	13	/* page table fault */
 /* #define	T_ALIGNFLT	14	/* alignment fault */
 /* #define	T_KSPNOTVAL	15	/* kernel stack pointer not valid */
 /* #define	T_BUSERR	16	/* bus error */
-#define	T_KDBTRAP	17	/* kernel debugger trap */
+/* #define	T_KDBTRAP	17	/* kernel debugger trap */
 
 /* #define	T_DIVIDE	18	/* integer divide fault */
 /* #define	T_NMI		19	/* non-maskable trap */
@@ -74,44 +73,27 @@
 /* #define	T_STKFLT	27	/* stack fault */
 /* #define	T_RESERVED	28	/* reserved fault base */
 
-/* definitions for <sys/signal.h> */
-#define	    ILL_RESAD_FAULT	T_RESADFLT
-#define	    ILL_PRIVIN_FAULT	T_PRIVINFLT
-#define	    ILL_RESOP_FAULT	T_RESOPFLT
-#define	    ILL_ALIGN_FAULT	T_ALIGNFLT
-#define	    ILL_FPOP_FAULT	T_FPOPFLT	/* coprocessor operand fault */
-
-/* codes for SIGFPE/ARITHTRAP */
-#define	    FPE_INTOVF_TRAP	0x1	/* integer overflow */
-#define	    FPE_INTDIV_TRAP	0x2	/* integer divide by zero */
-#define	    FPE_FLTDIV_TRAP	0x3	/* floating/decimal divide by zero */
-#define	    FPE_FLTOVF_TRAP	0x4	/* floating overflow */
-#define	    FPE_FLTUND_TRAP	0x5	/* floating underflow */
-#define	    FPE_FPU_NP_TRAP	0x6	/* floating point unit not present */
-#define	    FPE_SUBRNG_TRAP	0x7	/* subrange out of bounds */
-
-/* codes for SIGBUS */
-#define	    BUS_PAGE_FAULT	T_PAGEFLT	/* page fault protection base */
-#define	    BUS_SEGNP_FAULT	T_SEGNPFLT	/* segment not present */
-#define	    BUS_STK_FAULT	T_STKFLT	/* stack segment */
-#define	    BUS_SEGM_FAULT	T_RESERVED	/* segment protection base */
+/* These gets ORed with the word for page handling routines */
+#define	T_WRITE		0x80
+#define	T_PTEFETCH	0x40
 
 /* Trap's coming from user mode */
 #define	T_USER	0x100
 
 #ifndef ASSEMBLER
 /* If we want to alter USP in some syscall, we do it with mtpr */
-struct	sysc_frame {
+struct	trapframe {
 	int	fp;	/* Stack frame pointer */
         int     ap;     /* Argument pointer on user stack */
-        int     r0;     /* General registers saved upon syscall */
-        int     r1;		/* (shouldn't be necessary) */
+        int     r0;     /* General registers saved upon trap/syscall */
+        int     r1;
         int     r2;
         int     r3;
         int     r4;
         int     r5;
-        int     type;   /* System call number */
-        int     pc;     /* User pc */
-        int     psl;    /* User psl */
+	int	trap;	/* Type of trap */
+        u_int	code;   /* Trap specific code */
+        u_int   pc;     /* User pc */
+        u_int   psl;    /* User psl */
 };
 #endif /* ASSEMBLER */

@@ -1,4 +1,4 @@
-/*      $NetBSD: param.h,v 1.4 1994/11/25 19:08:54 ragge Exp $    */
+/*      $NetBSD: param.h,v 1.5 1995/02/13 00:43:26 ragge Exp $    */
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,6 +43,7 @@
 #ifndef _VAX_PARAM_H_
 #define _VAX_PARAM_H_
 
+#include "machine/macros.h"
 #include "psl.h"
 
 /*
@@ -84,6 +85,7 @@
 #define	SINCR	4		/* increment of stack/NBPG */
 
 #define	UPAGES	16		/* pages of u-area */
+#define USPACE  (NBPG*UPAGES)
 
 /*
  * Constants related to network buffer management.
@@ -169,8 +171,6 @@
 #define vax_btop(x)		((unsigned)(x) >> PGSHIFT)
 #define vax_ptob(x)		((unsigned)(x) << PGSHIFT)
 
-#define DELAY(x)		kern_delay(x)
-
 #define splx(reg)                                       \
 ({                                                      \
         register int val;                               \
@@ -193,5 +193,8 @@
 #define	splstatclock()	splclock()
 
 #define	ovbcopy(x,y,z)	bcopy(x,y,z)	/* This should work i hope... */
+
+#define vmapbuf(p,q)
+#define vunmapbuf(p,q)
 
 #endif /* _VAX_PARAM_H_ */

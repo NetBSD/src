@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 1994/11/25 19:09:02 ragge Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 1995/02/13 00:43:34 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -100,14 +100,15 @@
 
 /*
  * Sizes of the system and user portions of the system page table.
- * We can have at most maxproc userpt on syspt.
- * Ptsizes are in pte:s.
+ * USRPTSIZE is maximum possible user virtual memory to be used.
+ * KALLOCMEM is kernel malloc area size. How much needed for each process?
+ * SYSPTSIZE is total size of statically allocated pte. (in physmem)
+ * Ptsizes are in PTEs.
  */
-/* XXX Text size is already set to a predefined size, why alloc 
-       more page tables for it than needed??? */
 
-#define	USRPTSIZE 	((MAXTSIZ+MAXDSIZ+MAXSSIZ)>>9) /* PTEs */
-#define	SYSPTSIZE 	((((USRPTSIZE>>9)+UPAGES)*maxproc)+120*1024)
+#define	USRPTSIZE 	(((256*1024*1024)>>PG_SHIFT)/4) /* 256MB */
+#define	KALLOCMEM	(((1*1024*1024*maxproc)>>PG_SHIFT)/4)
+#define SYSPTSIZE	((USRPTSIZE>>PG_SHIFT)+UPAGES*maxproc+KALLOCMEM)
 
 /*
  * The time for a process to be blocked before being very swappable.

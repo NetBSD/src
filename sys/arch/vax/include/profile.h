@@ -1,5 +1,4 @@
-/*	$NetBSD: sid.h,v 1.4 1995/02/13 00:43:31 ragge Exp $	*/
-
+/*	$NetBSD: profile.h,v 1.1 1995/02/13 00:43:29 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -34,20 +33,3 @@
 		
 
 
-#define	VAX_780	1
-#define VAX_750	2
-#define	VAX_730	3
-#define VAX_8600 4
-#define VAX_8200 5
-#define VAX_8800 6
-#define VAX_610 7
-#define VAX_630	8
-#define VAX_650 10
-#define	VAX_MAX	10
-
-#define MACHID(x)       ((x>>24)&255)
-
-#define V750UCODE(x)    ((x>>8)&255)
-#define V750HARDW(x)    (cpu_type&255)
-
-extern int cpu_type, cpunumber;
