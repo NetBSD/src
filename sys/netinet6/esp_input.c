@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_input.c,v 1.25 2002/09/11 02:41:23 itojun Exp $	*/
+/*	$NetBSD: esp_input.c,v 1.26 2002/09/11 03:45:45 itojun Exp $	*/
 /*	$KAME: esp_input.c,v 1.60 2001/09/04 08:43:19 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.25 2002/09/11 02:41:23 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_input.c,v 1.26 2002/09/11 03:45:45 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -207,8 +207,8 @@ esp4_input(m, va_alist)
 
 	/* check ICV */
     {
-	u_char sum0[AH_MAXSUMSIZE];
-	u_char sum[AH_MAXSUMSIZE];
+	u_int8_t sum0[AH_MAXSUMSIZE];
+	u_int8_t sum[AH_MAXSUMSIZE];
 	const struct ah_algorithm *sumalgo;
 	size_t siz;
 
@@ -228,7 +228,7 @@ esp4_input(m, va_alist)
 		goto bad;
 	}
 
-	m_copydata(m, m->m_pkthdr.len - siz, siz, &sum0[0]);
+	m_copydata(m, m->m_pkthdr.len - siz, siz, (caddr_t)&sum0[0]);
 
 	if (esp_auth(m, off, m->m_pkthdr.len - off - siz, sav, sum)) {
 		ipseclog((LOG_WARNING, "auth fail in IPv4 ESP input: %s %s\n",
@@ -646,7 +646,7 @@ esp6_input(mp, offp, proto)
 		goto bad;
 	}
 
-	m_copydata(m, m->m_pkthdr.len - siz, siz, &sum0[0]);
+	m_copydata(m, m->m_pkthdr.len - siz, siz, (caddr_t)&sum0[0]);
 
 	if (esp_auth(m, off, m->m_pkthdr.len - off - siz, sav, sum)) {
 		ipseclog((LOG_WARNING, "auth fail in IPv6 ESP input: %s %s\n",
