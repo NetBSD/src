@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)socket.h	7.13 (Berkeley) 4/20/91
- *	$Id: socket.h,v 1.6 1994/05/04 10:59:14 mycroft Exp $
+ *	$Id: socket.h,v 1.7 1994/05/04 11:25:25 mycroft Exp $
  */
 
 #ifndef _SYS_SOCKET_H_
@@ -236,58 +236,7 @@ struct omsghdr {
 	int	msg_accrightslen;
 };
 
-#ifdef	KERNEL
-
-/* structure prototypes */
-struct socket;
-struct sockbuf;
-struct mbuf;
-
-/* function prototypes */
-void	sbappend __P((struct sockbuf *sb, struct mbuf *m));
-int	sbappendaddr __P((struct sockbuf *sb, struct sockaddr *asa,
-	    struct mbuf *m0, struct mbuf *control));
-int	sbappendcontrol __P((struct sockbuf *sb, struct mbuf *m0,
-	    struct mbuf *control));
-void	sbappendrecord __P((struct sockbuf *sb, struct mbuf *m0));
-void	sbcheck __P((struct sockbuf *sb));
-void	sbcompress __P((struct sockbuf *sb, struct mbuf *m, struct mbuf *n));
-void	sbdrop __P((struct sockbuf *sb, int len));
-void	sbdroprecord __P((struct sockbuf *sb));
-void	sbflush __P((struct sockbuf *sb));
-void	sbinsertoob __P((struct sockbuf *sb, struct mbuf *m0));
-void	sbrelease __P((struct sockbuf *sb));
-int	sbreserve __P((struct sockbuf *sb, u_long cc));
-int	sbwait __P((struct sockbuf *sb));
-int	sb_lock __P((struct sockbuf *sb));
-int	soabort __P((struct socket *so));
-int	soaccept __P((struct socket *so, struct mbuf *nam));
-int	sobind __P((struct socket *so, struct mbuf *nam));
-void	socantrcvmore __P((struct socket *so));
-void	socantsendmore __P((struct socket *so));
-int	soclose __P((struct socket *so));
-int	soconnect __P((struct socket *so, struct mbuf *nam));
-int	soconnect2 __P((struct socket *so1, struct socket *so2));
-int	socreate __P((int dom, struct socket **aso, int type, int proto));
-int	sodisconnect __P((struct socket *so));
-int	sofree __P((struct socket *so));
-void	soisconnected __P((struct socket *so));
-void	soisconnecting __P((struct socket *so));
-void	soisdisconnected __P((struct socket *so));
-void	soisdisconnecting __P((struct socket *so));
-int	solisten __P((struct socket *so, int backlog));
-struct socket *
-	sonewconn1 __P((struct socket *head, int connstatus));
-void	soqinsque __P((struct socket *head, struct socket *so, int q));
-int	soqremque __P((struct socket *so, int q));
-int	soreceive __P((struct socket *so, struct mbuf **paddr, struct uio *uio,
-		struct mbuf **mp0, struct mbuf **controlp, int *flagsp));
-int	soreserve __P((struct socket *so, u_long sndcc, u_long rcvcc));
-int	sosend __P((struct socket *so, struct mbuf *addr, struct uio *uio,
-		struct mbuf *top, struct mbuf *control, int flags));
-void	sowakeup __P((struct socket *so, struct sockbuf *sb));
-
-#else	/* !KERNEL */
+#ifndef	KERNEL
 
 #include <sys/cdefs.h>
 
