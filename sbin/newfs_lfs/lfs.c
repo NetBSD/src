@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.11 2000/05/18 19:45:46 perseant Exp $	*/
+/*	$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.11 2000/05/18 19:45:46 perseant Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.12 2000/05/23 18:17:20 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -506,8 +506,10 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	/* Now, write the segment */
 
 	/* Adjust blocks_used to take indirect block into account */
-	if(ifib)
+	if(ifib) {
 		++blocks_used;
+		segtable[0].su_nbytes += lfsp->lfs_bsize;
+	}
 
 	/* Compute a checksum across all the data you're writing */
 	dp = datasump = malloc (blocks_used * sizeof(u_long));
