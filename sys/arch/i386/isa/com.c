@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.9 1993/10/15 09:51:56 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.10 1993/10/15 09:57:45 mycroft Exp $
  */
 
 /*
@@ -675,15 +675,13 @@ comintr(sc)
 		    case IIR_TXRDY:
 			tp = com_tty[sc->sc_dev.dv_unit];
 			tp->t_state &=~ TS_BUSY;
-			if (tp->t_state & TS_FLUSH) {
+			if (tp->t_state & TS_FLUSH)
 				tp->t_state &=~ TS_FLUSH;
-				wakeup((caddr_t)&tp->t_rawq);
-			} else {
+			else
 				if (tp->t_line)
 					(*linesw[tp->t_line].l_start)(tp);
 				else
 					comstart(tp);
-			}
 			break;
 		    case IIR_RLS:
 			comeint(sc, inb(iobase + com_lsr));
