@@ -1,4 +1,4 @@
-/* $NetBSD: zalloc.c,v 1.2 1999/11/12 12:12:13 simonb Exp $ */
+/* $NetBSD: zalloc.c,v 1.3 1999/11/13 21:35:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 
 #include "zutil.h"
+#include <lib/libsa/stand.h>
 
 /*
  * A simple implementation of zcalloc and zcfree in terms of the libsa

@@ -1,4 +1,4 @@
-/* $NetBSD: dev_net.c,v 1.9 1999/11/12 13:11:41 simonb Exp $ */
+/* $NetBSD: dev_net.c,v 1.10 1999/11/13 21:38:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -60,6 +60,8 @@
 #include <lib/libsa/netif.h>
 #include <lib/libsa/bootparam.h>
 #include <lib/libsa/nfs.h>
+
+#include <lib/libkern/libkern.h>
 
 #include "dev_net.h"
 
