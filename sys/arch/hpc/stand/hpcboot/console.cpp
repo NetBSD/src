@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: console.cpp,v 1.2 2001/03/22 18:19:09 uch Exp $ */
+/* -*-C++-*-	$NetBSD: console.cpp,v 1.3 2001/03/25 17:13:16 uch Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -84,8 +84,11 @@ SerialConsole::setupBuffer()
 }
 
 BOOL
-SerialConsole::openCOM1(void)
+SerialConsole::openCOM1()
 {
+	HpcMenuInterface &menu = HpcMenuInterface::Instance();
+	int speed = menu._pref.serial_speed;
+
 	if (_handle == INVALID_HANDLE_VALUE) {
 		_handle = CreateFile(TEXT("COM1:"),
 				     GENERIC_READ | GENERIC_WRITE,
@@ -101,9 +104,10 @@ SerialConsole::openCOM1(void)
 			goto bad;
 		}
       
-		dcb.BaudRate = CBR_19200;
+		dcb.BaudRate = speed;
 		if (!SetCommState(_handle, &dcb)) {
-			Console::print(TEXT("couldn't set baud rate to 19200.\n"));
+			Console::print(TEXT("couldn't set baud rate to %s.\n"),
+				       speed);
 			goto bad;
 		}
 

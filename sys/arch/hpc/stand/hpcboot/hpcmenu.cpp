@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.4 2001/03/22 18:26:45 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: hpcmenu.cpp,v 1.5 2001/03/25 17:13:16 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,6 +54,7 @@ class MainTabWindow : public TabWindow
 {
 private:
 	HWND _edit_md_root;
+	HWND _combobox_serial_speed;
 
 	int _item_idx;
 	void _insert_item(HWND w, TCHAR *name, int id) {
@@ -110,6 +111,21 @@ public:
 		_set_check(IDC_MAIN_OPTION_S, pref->boot_single_user);
 		_set_check(IDC_MAIN_OPTION_V, pref->boot_verbose);
 		_set_check(IDC_MAIN_OPTION_H, pref->boot_serial);
+
+		// serial console speed.
+		TCHAR *speed_tab[] = { L"9600", L"19200", L"115200", 0 };
+		int sel = 0;
+		i = 0;
+		for (TCHAR **speed = speed_tab; *speed; speed++, i++) {
+			_insert_item(w, *speed, IDC_MAIN_OPTION_H_SPEED);
+			if (_wtoi(*speed) == pref->serial_speed)
+				sel = i;
+		}
+		_combobox_serial_speed = GetDlgItem(_window,
+						    IDC_MAIN_OPTION_H_SPEED);
+		SendDlgItemMessage(w, IDC_MAIN_OPTION_H_SPEED, CB_SETCURSEL,
+				   sel, 0);
+		EnableWindow(_combobox_serial_speed, pref->boot_serial);
 	}
 
 	void get(void) {
@@ -142,11 +158,28 @@ public:
 		pref->boot_single_user	= _is_checked(IDC_MAIN_OPTION_S);
 		pref->boot_serial	= _is_checked(IDC_MAIN_OPTION_H);
 		Edit_GetText(_edit_md_root, pref->rootfs_file, MAX_PATH);
+
+		TCHAR tmpbuf[8];
+		ComboBox_GetText(_combobox_serial_speed, tmpbuf, 8);
+		pref->serial_speed = _wtoi(tmpbuf);
 	}
 
 	virtual void command(int id, int msg) {
-		EnableWindow(_edit_md_root,
-			     _is_checked(IDC_MAIN_ROOT_MD) ? TRUE : FALSE);
+		switch (id) {
+		case IDC_MAIN_OPTION_H:
+			EnableWindow(_combobox_serial_speed,
+				     _is_checked(IDC_MAIN_OPTION_H));
+			break;
+		case IDC_MAIN_ROOT_WD:
+			/* FALLTHROUGH */
+		case IDC_MAIN_ROOT_SD:
+			/* FALLTHROUGH */
+		case IDC_MAIN_ROOT_MD:
+			/* FALLTHROUGH */
+		case IDC_MAIN_ROOT_NFS:
+			EnableWindow(_edit_md_root,
+				     _is_checked(IDC_MAIN_ROOT_MD));
+		}
 	}
 };
 
@@ -200,7 +233,7 @@ public:
 	}
 
 	virtual void command(int id, int msg) {
-		switch(id) {
+		switch (id) {
 		case IDC_OPT_AUTO:
 			if (IS_CHECKED(AUTO)) {
 				EnableWindow(_spin_edit, TRUE);
@@ -281,7 +314,6 @@ ConsoleTabWindow::print(TCHAR *buf, BOOL force_display)
 			c = *buf & 0x7f;
 			WriteFile(_logfile, &c, 1, &cnt, 0);
 		}
-
 		FlushFileBuffers(_logfile);
 		return;
 	}
@@ -395,8 +427,11 @@ ConsoleTabWindow::_open_log_file()
 	TCHAR filename[MAX_PATH];
 	TCHAR filepath[MAX_PATH];
 	
-	if (!_find_pref_dir(path))
+	if (!_find_pref_dir(path)) {
 		print(L"couldn't find temporary directory.\n", TRUE);
+		return FALSE;
+	}
+
 	Edit_GetText(_filename_edit, filename, MAX_PATH);
 	wsprintf(filepath, TEXT("\\%s\\%s"), path, filename);
 	_logfile = CreateFile(filepath, GENERIC_WRITE, 0, 0,
@@ -404,6 +439,7 @@ ConsoleTabWindow::_open_log_file()
 			      0);
 	if (_logfile == INVALID_HANDLE_VALUE)
 		return FALSE;
+
 	wsprintf(path, TEXT("log file is %s\n"), filepath);
 	print(path, TRUE);
 	
