@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.44 1999/08/16 22:27:15 augustss Exp $	*/
+/*	$NetBSD: pms.c,v 1.45 1999/08/19 15:33:16 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1997 Charles M. Hannum.
@@ -580,8 +580,7 @@ pmsioctl(dev, cmd, addr, flag, p)
 #define PS2LBUTMASK 0x01
 #define PS2RBUTMASK 0x02
 #define PS2MBUTMASK 0x04
-#define PS2BUTMASK 0x0f
- 
+
 void
 opmsinput(arg, data)
 	void *arg;
@@ -602,17 +601,7 @@ opmsinput(arg, data)
 	switch (state) {
 
 	case 0:
-		/* Re-enable if mouse is disconnected and reconnected. */
-		if (buttons == 0xaa) {
-			pms_dev_cmd(PMS_DEV_ENABLE);
-			break;
-		}
-
-		/* For GlidePoint tapping feature. treat as LBUTTON */
-		if ((buttons & PS2BUTMASK) == 0)
-			buttons |= PS2LBUTMASK;
-
- 		buttons = data;
+		buttons = data;
 		if ((buttons & 0xc0) == 0)
 			++state;
 		break;
