@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$Id: strip.c,v 1.9 1993/11/19 02:40:46 mycroft Exp $";
+static char rcsid[] = "$Id: strip.c,v 1.10 1993/12/11 03:53:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,7 +146,7 @@ s_sym(fn, fd, ep, sp)
 	if (!ep->a_syms && !ep->a_trsize && !ep->a_drsize) {
 		if (!zmagic)
 			return 0;
-		if (sp->st_size < N_RELOFF(*ep))
+		if (sp->st_size < N_TRELOFF(*ep))
 			return 0;
 	}
 
@@ -155,7 +155,7 @@ s_sym(fn, fd, ep, sp)
 	 * and NMAGIC formats have the text/data immediately following the
 	 * header.  ZMAGIC format wastes the rest of of header page.
 	 */
-	neweof = (char *)ep + N_RELOFF(*ep);
+	neweof = (char *)ep + N_TRELOFF(*ep);
 
 	if (zmagic) {
 		/*
