@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165.2.11 2002/07/02 21:25:12 gmcgarry Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.12 2002/07/02 22:13:25 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.11 2002/07/02 21:25:12 gmcgarry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.12 2002/07/02 22:13:25 nathanw Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ktrace.h"
@@ -1013,9 +1013,8 @@ done:
 		}
 	} else {
 finish:
-		if (curlwp != NULL && curproc != NULL)
-			(*printfn)("User-level: pid %d\n",
-			    	curproc->p_pid);
+		if (curproc)
+			(*printfn)("User-level: pid %d\n", curproc->p_pid);
 		else
 			(*printfn)("User-level: curlwp NULL\n");
 	}
