@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: fsplit.c,v 1.8 2000/07/03 02:51:16 matt Exp $");
+__RCSID("$NetBSD: fsplit.c,v 1.9 2003/07/14 11:59:07 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ int	getline __P((void));
 void	get_name __P((char *, int));
 int	main __P((int, char **));
 int	lend __P((void));
-int	lname __P((char *));
+int	lname __P((char *, size_t));
 char   *look __P((char *, char *));
 int	saveit __P((char *));
 int	scan_name __P((char *, char *));
@@ -165,7 +165,7 @@ main(argc, argv)
 		if (lend())		/* look for an 'end' statement */
 			break;
 		if (nflag == 0)		/* if no name yet, try and find one */
-			nflag = lname(name);
+			nflag = lname(name, sizeof(name));
 	}
 	fclose(ofp);
 	if (rv == 0) {			/* no lines in file, forget the file */
@@ -299,8 +299,9 @@ lend()
 		block datas and main programs.		*/
 
 int
-lname(s)
+lname(s, l)
 	char *s;
+	size_t l;
 {
 #	define LINESIZE 80 
 	char *ptr, *p;
@@ -331,21 +332,21 @@ lname(s)
 	    (ptr = look(line, "function")) != 0 ||
 	    (ptr = functs(line)) != 0) {
 		if(scan_name(s, ptr)) return(1);
-		strcpy( s, x);
+		strlcpy(s, x, l);
 	} else if((ptr = look(line, "program")) != 0) {
 		if(scan_name(s, ptr)) return(1);
-		get_name( mainp, 4);
-		strcpy( s, mainp);
+		get_name(mainp, 4);
+		strlcpy(s, mainp, l);
 	} else if((ptr = look(line, "blockdata")) != 0) {
 		if(scan_name(s, ptr)) return(1);
 		get_name( blkp, 6);
-		strcpy( s, blkp);
+		strlcpy(s, blkp, l);
 	} else if((ptr = functs(line)) != 0) {
 		if(scan_name(s, ptr)) return(1);
-		strcpy( s, x);
+		strlcpy(s, x, l);
 	} else {
-		get_name( mainp, 4);
-		strcpy( s, mainp);
+		get_name(mainp, 4);
+		strlcpy(s, mainp, l);
 	}
 	return(1);
 }
