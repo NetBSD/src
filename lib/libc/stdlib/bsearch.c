@@ -1,4 +1,4 @@
-/*	$NetBSD: bsearch.c,v 1.7 1998/01/30 23:37:50 perry Exp $	*/
+/*	$NetBSD: bsearch.c,v 1.8 1998/02/03 18:44:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)bsearch.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bsearch.c,v 1.7 1998/01/30 23:37:50 perry Exp $");
+__RCSID("$NetBSD: bsearch.c,v 1.8 1998/02/03 18:44:13 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,16 +62,16 @@ __RCSID("$NetBSD: bsearch.c,v 1.7 1998/01/30 23:37:50 perry Exp $");
  */
 void *
 bsearch(key, base0, nmemb, size, compar)
-	register const void *key;
+	const void *key;
 	const void *base0;
 	size_t nmemb;
-	register size_t size;
-	register int (*compar) __P((const void *, const void *));
+	size_t size;
+	int (*compar) __P((const void *, const void *));
 {
-	register const char *base = base0;
-	register size_t lim;
-	register int cmp;
-	register const void *p;
+	const char *base = base0;
+	size_t lim;
+	int cmp;
+	const void *p;
 
 	for (lim = nmemb; lim != 0; lim >>= 1) {
 		p = base + (lim >> 1) * size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftell.c,v 1.9 1998/02/02 03:32:51 perry Exp $	*/
+/*	$NetBSD: ftell.c,v 1.10 1998/02/03 18:41:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)ftell.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: ftell.c,v 1.9 1998/02/02 03:32:51 perry Exp $");
+__RCSID("$NetBSD: ftell.c,v 1.10 1998/02/03 18:41:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,9 +55,9 @@ __RCSID("$NetBSD: ftell.c,v 1.9 1998/02/02 03:32:51 perry Exp $");
  */
 long
 ftell(fp)
-	register FILE *fp;
+	FILE *fp;
 {
-	register fpos_t pos;
+	fpos_t pos;
 
 	FLOCKFILE(fp);
 

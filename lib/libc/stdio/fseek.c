@@ -1,4 +1,4 @@
-/*	$NetBSD: fseek.c,v 1.13 1998/02/03 01:40:49 mycroft Exp $	*/
+/*	$NetBSD: fseek.c,v 1.14 1998/02/03 18:41:14 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fseek.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: fseek.c,v 1.13 1998/02/03 01:40:49 mycroft Exp $");
+__RCSID("$NetBSD: fseek.c,v 1.14 1998/02/03 18:41:14 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,11 +62,11 @@ __RCSID("$NetBSD: fseek.c,v 1.13 1998/02/03 01:40:49 mycroft Exp $");
  */
 int
 fseek(fp, offset, whence)
-	register FILE *fp;
+	FILE *fp;
 	long offset;
 	int whence;
 {
-	register fpos_t (*seekfn) __P((void *, fpos_t, int));
+	fpos_t (*seekfn) __P((void *, fpos_t, int));
 	fpos_t target, curoff;
 	size_t n;
 	struct stat st;
@@ -210,7 +210,7 @@ fseek(fp, offset, whence)
 	 */
 	if ((fp->_flags & __SMOD) == 0 &&
 	    target >= curoff && target < curoff + n) {
-		register int o = target - curoff;
+		int o = target - curoff;
 
 		fp->_p = fp->_bf._base + o;
 		fp->_r = n - o;

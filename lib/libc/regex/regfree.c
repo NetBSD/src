@@ -1,4 +1,4 @@
-/*	$NetBSD: regfree.c,v 1.6 1997/07/21 14:08:18 jtc Exp $	*/
+/*	$NetBSD: regfree.c,v 1.7 1998/02/03 18:38:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,7 +44,7 @@
 #if 0
 static char sccsid[] = "@(#)regfree.c	8.3 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regfree.c,v 1.6 1997/07/21 14:08:18 jtc Exp $");
+__RCSID("$NetBSD: regfree.c,v 1.7 1998/02/03 18:38:15 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -69,7 +69,7 @@ void
 regfree(preg)
 regex_t *preg;
 {
-	register struct re_guts *g;
+	struct re_guts *g;
 
 	if (preg->re_magic != MAGIC1)	/* oops */
 		return;			/* nice to complain, but hard */

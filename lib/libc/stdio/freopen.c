@@ -1,4 +1,4 @@
-/*	$NetBSD: freopen.c,v 1.6 1997/07/13 20:15:04 christos Exp $	*/
+/*	$NetBSD: freopen.c,v 1.7 1998/02/03 18:41:13 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)freopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: freopen.c,v 1.6 1997/07/13 20:15:04 christos Exp $");
+__RCSID("$NetBSD: freopen.c,v 1.7 1998/02/03 18:41:13 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,9 +62,9 @@ __RCSID("$NetBSD: freopen.c,v 1.6 1997/07/13 20:15:04 christos Exp $");
 FILE *
 freopen(file, mode, fp)
 	const char *file, *mode;
-	register FILE *fp;
+	FILE *fp;
 {
-	register int f;
+	int f;
 	int flags, isopen, oflags, sverrno, wantfd;
 
 	if ((flags = __sflags(mode, &oflags)) == 0) {

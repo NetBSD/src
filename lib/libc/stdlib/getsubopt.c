@@ -1,4 +1,4 @@
-/*	$NetBSD: getsubopt.c,v 1.3 1998/01/31 20:43:48 thorpej Exp $	*/
+/*	$NetBSD: getsubopt.c,v 1.4 1998/02/03 18:44:15 perry Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getsubopt.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getsubopt.c,v 1.3 1998/01/31 20:43:48 thorpej Exp $");
+__RCSID("$NetBSD: getsubopt.c,v 1.4 1998/02/03 18:44:15 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,11 +56,11 @@ char *suboptarg;
 
 int
 getsubopt(optionp, tokens, valuep)
-	register char **optionp, **valuep;
-	register char * const *tokens;
+	char **optionp, **valuep;
+	char * const *tokens;
 {
-	register int cnt;
-	register char *p;
+	int cnt;
+	char *p;
 
 	suboptarg = *valuep = NULL;
 
