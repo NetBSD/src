@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.29 2000/06/10 21:44:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.29 2000/06/10 21:44:09 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.28 2000/01/22 19:28:11 mycroft Exp $");
+__RCSID("$NetBSD: suff.c,v 1.29 2000/06/10 21:44:09 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1680,15 +1680,12 @@ SuffApplyTransform(tGn, sGn, t, s)
     char    	*tname;	    /* Name of transformation rule */
     GNode   	*gn;	    /* Node for same */
 
-    if (Lst_Member(tGn->children, (ClientData)sGn) == NILLNODE) {
-	/*
-	 * Not already linked, so form the proper links between the
-	 * target and source.
-	 */
-	(void)Lst_AtEnd(tGn->children, (ClientData)sGn);
-	(void)Lst_AtEnd(sGn->parents, (ClientData)tGn);
-	tGn->unmade += 1;
-    }
+    /*
+     * Form the proper links between the target and source.
+     */
+    (void)Lst_AtEnd(tGn->children, (ClientData)sGn);
+    (void)Lst_AtEnd(sGn->parents, (ClientData)tGn);
+    tGn->unmade += 1;
 
     /*
      * Locate the transformation rule itself
@@ -1800,11 +1797,9 @@ SuffFindArchiveDeps(gn, slst)
     /*
      * Create the link between the two nodes right off
      */
-    if (Lst_Member(gn->children, (ClientData)mem) == NILLNODE) {
-	(void)Lst_AtEnd(gn->children, (ClientData)mem);
-	(void)Lst_AtEnd(mem->parents, (ClientData)gn);
-	gn->unmade += 1;
-    }
+    (void)Lst_AtEnd(gn->children, (ClientData)mem);
+    (void)Lst_AtEnd(mem->parents, (ClientData)gn);
+    gn->unmade += 1;
 
     /*
      * Copy in the variables from the member node to this one.
