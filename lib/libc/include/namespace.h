@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.60.2.6 2002/04/25 04:01:43 nathanw Exp $	*/
+/*	$NetBSD: namespace.h,v 1.60.2.7 2002/08/02 21:31:06 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
@@ -478,7 +478,7 @@
 #define svcudp_create		_svcudp_create
 #define svcudp_enablecache	_svcudp_enablecache
 #define svis			_svis
-#define sysarch			_syscall_sysarch
+#define sysarch			_sys_sysarch
 #define sysctl			_sysctl
 #define syslog			_syslog
 #define tcdrain			_tcdrain
