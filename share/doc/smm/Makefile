@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	$Id: Makefile,v 1.9 1996/04/05 01:52:24 cgd Exp $
+#	$Id: Makefile,v 1.10 1996/10/18 05:54:06 thorpej Exp $
 
 # The following modules do not build/install:
 # 10.named, 13.amd
@@ -33,7 +33,7 @@ contents.ps: ${FILES}
 	groff -ms 00.contents > ${.TARGET}
 
 beforeinstall:
-	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
+	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 ${FILES} \
 	    ${DESTDIR}${BINDIR}
 
 .include <bsd.subdir.mk>
