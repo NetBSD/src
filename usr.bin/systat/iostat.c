@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.2 1995/01/20 08:51:57 jtc Exp $	*/
+/*	$NetBSD: iostat.c,v 1.3 1995/05/17 15:51:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: iostat.c,v 1.2 1995/01/20 08:51:57 jtc Exp $";
+static char rcsid[] = "$NetBSD: iostat.c,v 1.3 1995/05/17 15:51:47 mycroft Exp $";
 #endif not lint
 
 #include <sys/param.h>
@@ -174,6 +174,7 @@ labeliostat()
 	mvwaddstr(wnd, row++, 0, "cpu  user|");
 	mvwaddstr(wnd, row++, 0, "     nice|");
 	mvwaddstr(wnd, row++, 0, "   system|");
+	mvwaddstr(wnd, row++, 0, "interrupt|");
 	mvwaddstr(wnd, row++, 0, "     idle|");
 	if (numbers)
 		row = numlabels(row + 1);
@@ -265,9 +266,9 @@ showiostat()
 	row = 1;
 
 	/*
-	 * Last CPU state not calculated yet.
+	 * Interrupt CPU state not calculated yet.
 	 */ 
-	for (i = 0; i < CPUSTATES - 1; i++)
+	for (i = 0; i < CPUSTATES; i++)
 		stat1(row++, i);
 	if (!numbers) {
 		row += 2;
