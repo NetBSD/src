@@ -53,6 +53,7 @@ typedef	unsigned long	vm_size_t;
  * Basic integral types.  Omit the typedef if
  * not possible for a machine/compiler combination.
  */
+#define	__BIT_TYPES_DEFINED__
 typedef	__signed char		   int8_t;
 typedef	unsigned char		 u_int8_t;
 typedef	short			  int16_t;
