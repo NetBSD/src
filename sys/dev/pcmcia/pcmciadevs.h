@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.2 1998/07/19 17:30:02 christos Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.3 1998/07/20 07:34:11 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.1 1998/07/19 17:28:17 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.2 1998/07/20 07:33:54 christos Exp 
  */
 
 /*
@@ -153,9 +153,6 @@
 #define	PCMCIA_CIS_ACCTON_EN2212	{ "ACCTON", "EN2212", NULL, NULL }
 #define	PCMCIA_PRODUCT_ACCTON_EN2212	-1
 #define	PCMCIA_STR_ACCTON_EN2212	"Accton EN2212"
-#define	PCMCIA_CIS_DIGITAL_DEPCMBA	{ "DIGITAL", "DEPCM-XX", NULL, NULL }
-#define	PCMCIA_PRODUCT_DIGITAL_DEPCMBA	-1
-#define	PCMCIA_STR_DIGITAL_DEPCMBA	"Digital DEPCM-BA"
 #define	PCMCIA_CIS_YEDATA_EXTERNAL_FDD	{ "Y-E DATA", "External FDD", NULL, NULL }
 #define	PCMCIA_PRODUCT_YEDATA_EXTERNAL_FDD	-1
 #define	PCMCIA_STR_YEDATA_EXTERNAL_FDD	"Y-E DATA External FDD"

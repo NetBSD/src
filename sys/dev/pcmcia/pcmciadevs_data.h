@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.2 1998/07/19 17:30:02 christos Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.3 1998/07/20 07:34:11 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.1 1998/07/19 17:28:17 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.2 1998/07/20 07:33:54 christos Exp 
  */
 
 /*
@@ -206,13 +206,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "",
 	    "Accton EN2212"	},
-	},
-	{
-	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DIGITAL_DEPCMBA,
-	    PCMCIA_CIS_DIGITAL_DEPCMBA,
-	    0,
-	    "",
-	    "Digital DEPCM-BA"	},
 	},
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_YEDATA_EXTERNAL_FDD,
