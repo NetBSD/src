@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.2 2003/09/29 22:24:53 matt Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.3 2003/09/30 21:45:09 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.2 2003/09/29 22:24:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.3 2003/09/30 21:45:09 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -204,45 +204,6 @@ compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
 	scf->psl = ksc.sc_ps;
 	return (EJUSTRETURN);
 }
-#endif
-
-#ifdef COMPAT_16
-int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
-{
-	struct compat_16_sys___sigreturn14_args /* {
-		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
-	struct proc *p = l->l_proc;
-	struct trapframe *scf;
-	struct sigcontext *ucntx;
-	struct sigcontext ksc;
-
-	scf = l->l_addr->u_pcb.framep;
-	ucntx = SCARG(uap, sigcntxp);
-
-	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
-		return EINVAL;
-	/* Compatibility mode? */
-	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
-	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
-	    (ksc.sc_ps & PSL_CM)) {
-		return (EINVAL);
-	}
-	if (ksc.sc_onstack & SS_ONSTACK)
-		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
-	else
-		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
-	/* Restore signal mask. */
-	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
-
-	scf->fp = ksc.sc_fp;
-	scf->ap = ksc.sc_ap;
-	scf->pc = ksc.sc_pc;
-	scf->sp = ksc.sc_sp;
-	scf->psl = ksc.sc_ps;
-	return (EJUSTRETURN);
-}
 
 struct otrampframe {
 	unsigned sig;	/* Signal number */
@@ -293,7 +254,45 @@ setupstack_oldsigcontext(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 
 	return sp;
 }
-#endif /* COMPAT_16 */
+#endif /* COMPAT_13 || COMPAT_ULTRIX || COMPAT_IBCS2 */
+
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX)
+int
+compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+{
+	struct compat_16_sys___sigreturn14_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct proc *p = l->l_proc;
+	struct trapframe *scf;
+	struct sigcontext *ucntx;
+	struct sigcontext ksc;
+
+	scf = l->l_addr->u_pcb.framep;
+	ucntx = SCARG(uap, sigcntxp);
+
+	if (copyin((caddr_t)ucntx, (caddr_t)&ksc, sizeof(struct sigcontext)))
+		return EINVAL;
+	/* Compatibility mode? */
+	if ((ksc.sc_ps & (PSL_IPL | PSL_IS)) ||
+	    ((ksc.sc_ps & (PSL_U | PSL_PREVU)) != (PSL_U | PSL_PREVU)) ||
+	    (ksc.sc_ps & PSL_CM)) {
+		return (EINVAL);
+	}
+	if (ksc.sc_onstack & SS_ONSTACK)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+
+	scf->fp = ksc.sc_fp;
+	scf->ap = ksc.sc_ap;
+	scf->pc = ksc.sc_pc;
+	scf->sp = ksc.sc_sp;
+	scf->psl = ksc.sc_ps;
+	return (EJUSTRETURN);
+}
 
 /*
  * Brief description of how sendsig() works:
@@ -354,6 +353,7 @@ setupstack_sigcontext2(const ksiginfo_t *ksi, const sigset_t *mask, int vers,
 	/* return updated stack pointer */
 	return sp;
 }
+#endif	/* COMPAT_16 || COMPAT_ULTRIX */
 
 /*
  * Brief description of how sendsig() works:
