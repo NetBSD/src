@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.10 1996/04/26 06:59:24 leo Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.11 1996/05/14 10:23:29 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -62,12 +62,11 @@ static u_int ahdi_getparts __P((dev_t, void (*)(struct buf *), u_int,
 /*
  * XXX unknown function but needed for /sys/scsi to link
  */
-int
+void
 dk_establish(disk, device)
 	struct disk	*disk;
 	struct device	*device;
 {
-	return(-1);
 }
 
 /*
