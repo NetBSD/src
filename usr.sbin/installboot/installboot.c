@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.2 2002/04/04 03:27:53 simonb Exp $	*/
+/*	$NetBSD: installboot.c,v 1.3 2002/04/11 07:56:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.2 2002/04/04 03:27:53 simonb Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.3 2002/04/11 07:56:13 lukem Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -220,6 +220,35 @@ parseoptionflag(ib_params *params, const char *option, ib_flags wantflags)
 			return (1);
 		}
 	}
+	return (0);
+}
+
+int
+no_parseopt(ib_params *params, const char *option)
+{
+
+		/* all options are unsupported */
+	warnx("Unsupported -o option `%s'", option);
+	return (0);
+}
+
+int
+no_setboot(ib_params *params)
+{
+
+		/* boot block installation is not supported */
+	warnx("%s: boot block installation is not supported",
+	    params->machine->name);
+	return (0);
+}
+
+int
+no_clearboot(ib_params *params)
+{
+
+		/* boot block removal is not supported */
+	warnx("%s: boot block removal is not supported",
+	    params->machine->name);
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.2 2002/04/04 17:53:04 bjh21 Exp $	*/
+/*	$NetBSD: installboot.h,v 1.3 2002/04/11 07:56:13 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -80,5 +80,9 @@ extern struct ib_mach machines[];
 int		parseoptionflag(ib_params *, const char *, ib_flags);
 u_int16_t	compute_sunsum(const u_int16_t *);
 int		set_sunsum(ib_params *, u_int16_t *, u_int16_t);
+
+int		no_parseopt(ib_params *, const char *);
+int		no_setboot(ib_params *);
+int		no_clearboot(ib_params *);
 
 #endif	/* _INSTALLBOOT_H */
