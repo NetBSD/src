@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.7 2002/03/29 09:06:54 manu Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.7.6.1 2004/12/16 05:11:26 jmc Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.7 2002/03/29 09:06:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.7.6.1 2004/12/16 05:11:26 jmc Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h> 
@@ -224,6 +224,7 @@ bad:
 	default:
 		printf("irix_sys_swapctl(): unsupported command %d\n", 
 		    SCARG(uap, cmd));
+		return EINVAL;
 		break;
 	}
 	return 0;

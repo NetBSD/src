@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.2 2001/11/13 02:09:28 lukem Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.2.10.1 2004/12/16 05:11:38 jmc Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.2 2001/11/13 02:09:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.2.10.1 2004/12/16 05:11:38 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,6 +83,8 @@ svr4_32_fil_ioctl(fp, p, retval, fd, cmd, data)
 
 	*retval = 0;
 
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return EBADF;
 	switch (cmd) {
 	case SVR4_FIOCLEX:
 		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
