@@ -674,21 +674,20 @@ cgetnext(bp, db_array)
 					} else
 						continue;
 				}
-			} else
-				line[len - 1] = '\0';
-			if (len == 1) {
+			}
+			if (len == 0) {
 				slash = 0;
 				continue;
 			}
 			if (isspace(*line) ||
 			    *line == ':' || *line == '#' || slash) {
-				if (line[len - 2] == '\\')
+				if (line[len - 1] == '\\')
 					slash = 1;
 				else
 					slash = 0;
 				continue;
 			}
-			if (line[len - 2] == '\\')
+			if (line[len - 1] == '\\')
 				slash = 1;
 			else
 				slash = 0;
@@ -723,8 +722,7 @@ cgetnext(bp, db_array)
 						(void)cgetclose();
 						return (-1);
 					}
-				} else
-					line[len - 1] = '\0';
+				}
 			}
 		}
 		rp = buf;
