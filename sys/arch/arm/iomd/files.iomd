@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.12 2004/03/13 18:29:34 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.13 2004/03/13 19:20:50 bjh21 Exp $
 #
 # IOMD-specific configuration data
 #
@@ -29,11 +29,9 @@ file	arch/arm/iomd/iomd_clock.c		iomd
 #
 
 # wscons quadmouse device
-device	wsqms : wsmousedev
-file	arch/arm/iomd/wsqms.c			wsqms		needs-flag
-
-attach wsqms at iomd with wsqms_iomd
-file	arch/arm/iomd/wsqms_iomd.c		wsqms_iomd
+device	qms: wsmousedev
+attach	qms at iomd
+file	arch/arm/iomd/qms.c			qms
 
 device	iomdkbc: pckbport
 attach	iomdkbc at iomd
@@ -42,7 +40,7 @@ file	arch/arm/iomd/iomdkbc.c			iomdkbc		needs-flag
 # RPC wscons keyboard driver
 device	rpckbd : wskbddev
 file	arch/arm/iomd/rpckbd.c			rpckbd		needs-flag
-file	arch/acorn32/dev/wskbdmap_mfii.c	rpckbd
+file	arch/acorn32/dev/wskbdmap_mfii_rpc.c	rpckbd
 
 attach rpckbd at iomd with rpckbd_iomd
 file	arch/arm/iomd/rpckbd_iomd.c		rpckbd_iomd
