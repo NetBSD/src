@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.25 2003/02/02 20:43:24 matt Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.26 2003/02/03 17:10:11 matt Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /* 
@@ -112,7 +112,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	boolean_t kernel_only = TRUE;
 	boolean_t trace_thread = FALSE;
 	extern int trapexit[];
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 	extern int end[];
 #endif
 	boolean_t full = FALSE;
@@ -159,7 +159,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	for (;;) {
 		if (frame < NBPG)
 			break;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 		if (kernel_only && !cold &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
@@ -171,7 +171,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		args = (db_addr_t *)(frame + 8);
 		if (frame < NBPG)
 			break;
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 		if (kernel_only && !cold &&
 		    ((frame > (db_addr_t) end &&
 		      frame < VM_MIN_KERNEL_ADDRESS) ||
@@ -200,7 +200,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			(*pr)("%s ", tf->srr1 & PSL_PR ? "user" : "kernel");
 			switch (tf->exc) {
 			case EXC_DSI:
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 				(*pr)("DSI %s trap @ %#x by ",
 				    tf->dsisr & DSISR_STORE ? "write" : "read",
 				    tf->dar);
@@ -250,7 +250,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 			(*pr)("%-10s  r1=%#x cr=%#x xer=%#x ctr=%#x",
 			    "", tf->fixreg[1], tf->cr, tf->xer, tf->ctr);
-#ifdef PPC_MPC6XX
+#ifdef PPC_OEA
 			if (tf->exc == EXC_DSI)
 				(*pr)(" dsisr=%#x", tf->dsisr);
 			if ((mfpvr() >> 16) == MPC601)

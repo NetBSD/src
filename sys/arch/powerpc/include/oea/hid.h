@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.2 2001/08/22 21:05:25 matt Exp $	*/
+/*	$NetBSD: hid.h,v 1.1 2003/02/03 17:10:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -26,8 +26,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _MPC6XX_HID_H_
-#define _MPC6XX_HID_H_
+#ifndef _POWERPC_OEA_HID_H_
+#define _POWERPC_OEA_HID_H_
 
 /* Hardware Implementation Dependent registers for the PowerPC */
 
@@ -123,4 +123,4 @@
  * 7450: FOLD = Branch folding enable
  */
 
-#endif /* _MPC6XX_HID_H_ */
+#endif /* _POWERPC_OEA_HID_H_ */

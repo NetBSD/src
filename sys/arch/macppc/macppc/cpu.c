@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.30 2002/10/02 05:30:45 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.31 2003/02/03 17:09:56 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -42,7 +42,7 @@
 
 #include <uvm/uvm_extern.h>
 #include <dev/ofw/openfirm.h>
-#include <powerpc/mpc6xx/hid.h>
+#include <powerpc/oea/hid.h>
 #include <powerpc/openpic.h>
 #include <powerpc/atomic.h>
 #include <powerpc/spr.h>

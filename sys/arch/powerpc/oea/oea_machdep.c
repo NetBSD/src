@@ -1,4 +1,4 @@
-/*	$NetBSD: mpc6xx_machdep.c,v 1.14 2003/02/02 20:43:23 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.1 2003/02/03 17:10:10 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -73,8 +73,8 @@
 #include <ipkdb/ipkdb.h>
 #endif
 
-#include <powerpc/mpc6xx/bat.h>
-#include <powerpc/mpc6xx/sr_601.h>
+#include <powerpc/oea/bat.h>
+#include <powerpc/oea/sr_601.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
@@ -99,7 +99,7 @@ sr_t iosrtable[16];	/* I/O segments, for kernel_pmap setup */
 paddr_t msgbuf_paddr;
 
 void
-mpc6xx_init(void (*handler)(void))
+oea_init(void (*handler)(void))
 {
 	extern int trapstart[], trapend[];
 	extern int trapcode, trapsize;
@@ -306,7 +306,7 @@ mpc6xx_init(void (*handler)(void))
 	 * external interrupt handler install
 	 */
 	if (handler)
-		mpc6xx_install_extint(handler);
+		oea_install_extint(handler);
 
 	__syncicache(0, EXC_LAST + 0x100);
 
@@ -339,7 +339,7 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 }
 
 void
-mpc6xx_iobat_add(paddr_t pa, register_t len)
+oea_iobat_add(paddr_t pa, register_t len)
 {
 	static int n = 1;
 	const u_int i = pa >> 28;
@@ -374,7 +374,7 @@ mpc6xx_iobat_add(paddr_t pa, register_t len)
 }
 
 void
-mpc6xx_batinit(paddr_t pa, ...)
+oea_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
 	int i;
@@ -472,7 +472,7 @@ mpc6xx_batinit(paddr_t pa, ...)
 	} else {
 		while (pa != 0) {
 			register_t len = va_arg(ap, register_t);
-			mpc6xx_iobat_add(pa, len);
+			oea_iobat_add(pa, len);
 			pa = va_arg(ap, paddr_t);
 		}
 	}
@@ -518,7 +518,7 @@ mpc6xx_batinit(paddr_t pa, ...)
 }
 
 void
-mpc6xx_install_extint(void (*handler)(void))
+oea_install_extint(void (*handler)(void))
 {
 	extern int extint, extsize;
 	extern int extint_call;
@@ -544,7 +544,7 @@ mpc6xx_install_extint(void (*handler)(void))
  * Machine dependent startup code.
  */
 void
-mpc6xx_startup(const char *model)
+oea_startup(const char *model)
 {
 	uintptr_t sz;
 	u_int i;
@@ -649,7 +649,7 @@ mpc6xx_startup(const char *model)
 	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,  
 			UVM_ADV_NORMAL, UVM_FLAG_FIXED));
 	if (error != 0 || minaddr != 0xDEAC0000) {
-		printf("mpc6xx_startup: failed to allocate DEAD "
+		printf("oea_startup: failed to allocate DEAD "
 		    "ZONE: error=%d\n", error);
 		minaddr = 0;
 	}
@@ -699,7 +699,7 @@ mpc6xx_startup(const char *model)
  */
 
 void
-mpc6xx_dumpsys(void)
+oea_dumpsys(void)
 {
 	printf("dumpsys: TBD\n");
 }
