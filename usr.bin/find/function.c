@@ -1,4 +1,4 @@
-/*	$NetBSD: function.c,v 1.43 2003/01/30 10:49:05 jhawk Exp $	*/
+/*	$NetBSD: function.c,v 1.44 2003/07/12 13:57:49 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "from: @(#)function.c	8.10 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: function.c,v 1.43 2003/01/30 10:49:05 jhawk Exp $");
+__RCSID("$NetBSD: function.c,v 1.44 2003/07/12 13:57:49 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -765,7 +765,7 @@ f_fstype(plan, entry)
 		 * always copy both of them.
 		 */
 		val = sb.f_flags;
-		strncpy(fstype, sb.f_fstypename, MFSNAMELEN);
+		strlcpy(fstype, sb.f_fstypename, sizeof(fstype));
 	}
 	switch (plan->flags) {
 	case F_MTFLAG:
