@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.14 1997/07/17 05:51:18 mikel Exp $	*/
+/*	$NetBSD: printjob.c,v 1.15 1997/10/05 11:52:33 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,9 +43,9 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
+static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.14 1997/07/17 05:51:18 mikel Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.15 1997/10/05 11:52:33 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: printjob.c,v 1.14 1997/07/17 05:51:18 mikel Exp $");
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/file.h>
 
 #include <pwd.h>
 #include <unistd.h>
@@ -102,7 +103,6 @@ static int	 ofilter;	/* id of output filter, if any */
 static int	 pfd;		/* prstatic inter file descriptor */
 static int	 pid;		/* pid of lpd process */
 static int	 prchild;	/* id of pr process */
-static int	 remote;	/* true if sending files to remote */
 static char	 title[80];	/* ``pr'' title */
 static int	 tof;		/* true if at top of form */
 
@@ -124,6 +124,9 @@ static int        dofork __P((int));
 static int        dropit __P((int));
 static void       init __P((void));
 static void       openpr __P((void));
+static void       opennet __P((char *));
+static void       opentty __P((void));
+static void       openrem __P((void));
 static int        print __P((int, char *));
 static int        printit __P((char *));
 static void       pstatus __P((const char *, ...));
@@ -142,8 +145,8 @@ printjob()
 	register struct queue *q, **qp;
 	struct queue **queue;
 	register int i, nitems;
-	long pidoff;
-	int count = 0;
+	off_t pidoff;
+	int errcnt, count = 0;
 
 	init();					/* set up capabilities */
 	(void)write(1, "", 1);			/* ack that daemon is started */
@@ -215,8 +218,9 @@ again:
 		q = *qp++;
 		if (stat(q->q_name, &stb) < 0)
 			continue;
+		errcnt = 0;
 	restart:
-		(void)lseek(lfd, (off_t)pidoff, 0);
+		(void)lseek(lfd, pidoff, 0);
 		i = snprintf(line, sizeof(line), "%s\n", q->q_name);
 		if (write(lfd, line, i) != i)
 			syslog(LOG_ERR, "%s: %s: %m", printer, LO);
@@ -244,12 +248,13 @@ again:
 		}
 		if (i == OK)		/* file ok and printed */
 			count++;
-		else if (i == REPRINT) { /* try reprinting the job */
+		else if (i == REPRINT && ++errcnt < 5) {
+			/* try reprinting the job */
 			syslog(LOG_INFO, "restarting %s", printer);
 			if (ofilter > 0) {
 				kill(ofilter, SIGCONT);	/* to be sure */
 				(void)close(ofd);
-				while ((i = wait(0)) > 0 && i != ofilter)
+				while ((i = wait(NULL)) > 0 && i != ofilter)
 					;
 				ofilter = 0;
 			}
@@ -258,6 +263,17 @@ again:
 				syslog(LOG_WARNING, "%s: %s: %m", printer, LO);
 			openpr();		/* try to reopen printer */
 			goto restart;
+		} else {
+			syslog(LOG_WARNING, "%s: job could not be %s (%s)", printer,
+				remote ? "sent to remote host" : "printed", q->q_name);
+			if (i == REPRINT) {
+				/* insure we don't attempt this job again */
+				(void) unlink(q->q_name);
+				q->q_name[0] = 'd';
+				(void) unlink(q->q_name);
+				if (logname[0])
+					sendmail(logname, FATALERR);
+			}
 		}
 	}
 	free((char *) queue);
@@ -335,6 +351,7 @@ printit(file)
 	 *		H -- "host name" of machine where lpr was done
 	 *              P -- "person" user's login name
 	 *              I -- "indent" amount to indent output
+	 *		R -- laser dpi "resolution"
 	 *              f -- "file name" name of text file to print
 	 *		l -- "file name" text file with control chars
 	 *		p -- "file name" text file to print with pr(1)
@@ -451,6 +468,7 @@ printit(file)
 		case 'N':
 		case 'U':
 		case 'M':
+		case 'R':
 			continue;
 		}
 
@@ -546,6 +564,7 @@ print(format, file)
 		if ((prchild = dofork(DORETURN)) == 0) {	/* child */
 			dup2(fi, 0);		/* file is stdin */
 			dup2(p[1], 1);		/* pipe is stdout */
+			closelog();
 			for (n = 3; n < NOFILE; n++)
 				(void)close(n);
 			execl(_PATH_PR, "pr", width, length,
@@ -628,6 +647,13 @@ print(format, file)
 			printer, format);
 		return(ERROR);
 	}
+	if (prog == NULL) {
+		(void) close(fi);
+		syslog(LOG_ERR,
+		   "%s: no filter found in printcap for format character '%c'",
+		   printer, format);
+		return(ERROR);
+	}
 	if ((av[0] = rindex(prog, '/')) != NULL)
 		av[0]++;
 	else
@@ -646,8 +672,9 @@ print(format, file)
 			;
 		if (status.w_stopval != WSTOPPED) {
 			(void)close(fi);
-			syslog(LOG_WARNING, "%s: output filter died (%d)",
-				printer, status.w_retcode);
+			syslog(LOG_WARNING,
+				"%s: output filter died (retcode=%d termsig=%d)",
+				printer, status.w_retcode, status.w_termsig);
 			return(REPRINT);
 		}
 		stopped++;
@@ -660,6 +687,7 @@ start:
 		n = open(tempfile, O_WRONLY|O_CREAT|O_TRUNC|O_EXCL, 0664);
 		if (n >= 0)
 			dup2(n, 2);
+		closelog();
 		for (n = 3; n < NOFILE; n++)
 			(void)close(n);
 		execv(prog, av);
@@ -690,7 +718,7 @@ start:
 	}
 
 	if (!WIFEXITED(status)) {
-		syslog(LOG_WARNING, "%s: Daemon filter '%c' terminated (%d)",
+		syslog(LOG_WARNING, "%s: filter '%c' terminated (termsig=%d)",
 			printer, format, status.w_termsig);
 		return(ERROR);
 	}
@@ -700,11 +728,12 @@ start:
 		return(OK);
 	case 1:
 		return(REPRINT);
-	default:
-		syslog(LOG_WARNING, "%s: Daemon filter '%c' exited (%d)",
-			printer, format, status.w_retcode);
 	case 2:
 		return(ERROR);
+	default:
+		syslog(LOG_WARNING, "%s: filter '%c' exited (retcode=%d)",
+			printer, format, status.w_retcode);
+		return(FILTERERR);
 	}
 }
 
@@ -1017,6 +1046,7 @@ sendmail(user, bombed)
 	pipe(p);
 	if ((s = dofork(DORETURN)) == 0) {		/* child */
 		dup2(p[0], 0);
+		closelog();
 		for (i = 3; i < NOFILE; i++)
 			(void)close(i);
 		if ((cp = rindex(_PATH_SENDMAIL, '/')) != NULL)
@@ -1029,41 +1059,50 @@ sendmail(user, bombed)
 	} else if (s > 0) {				/* parent */
 		dup2(p[1], 1);
 		printf("To: %s@%s\n", user, fromhost);
-		printf("Subject: printer job\n\n");
+		printf("Subject: %s printer job \"%s\"\n", printer,
+			*jobname ? jobname : "<unknown>");
+		printf("Reply-To: root@%s\n\n", host);
 		printf("Your printer job ");
 		if (*jobname)
 			printf("(%s) ", jobname);
 		switch (bombed) {
 		case OK:
 			printf("\ncompleted successfully\n");
+			cp = "OK";
 			break;
 		default:
 		case FATALERR:
 			printf("\ncould not be printed\n");
+			cp = "FATALERR";
 			break;
 		case NOACCT:
 			printf("\ncould not be printed without an account on %s\n", host);
+			cp = "NOACCT";
 			break;
 		case FILTERERR:
 			if (stat(tempfile, &stb) < 0 || stb.st_size == 0 ||
 			    (fp = fopen(tempfile, "r")) == NULL) {
-				printf("\nwas printed but had some errors\n");
+				printf("\nhad some errors and may not have printed\n");
 				break;
 			}
-			printf("\nwas printed but had the following errors:\n");
+			printf("\nhad the following errors and may not have printed:\n");
 			while ((i = getc(fp)) != EOF)
 				putchar(i);
 			(void)fclose(fp);
+			cp = "FILTERERR";
 			break;
 		case ACCESS:
 			printf("\nwas not printed because it was not linked to the original file\n");
+			cp = "ACCESS";
 		}
 		fflush(stdout);
 		(void)close(1);
 	}
 	(void)close(p[0]);
 	(void)close(p[1]);
-	wait(&s);
+	wait(NULL);
+	syslog(LOG_INFO, "mail sent to user %s about job %s on printer %s (%s)",
+		user, *jobname ? jobname : "<unknown>", printer, cp);
 }
 
 /*
@@ -1213,64 +1252,33 @@ init()
 static void
 openpr()
 {
-	register int i, n;
-	int resp;
+	register int i;
+	char *cp;
 
-	if (!sendtorem && *LP) {
-		for (i = 1; ; i = i < 32 ? i << 1 : i) {
-			pfd = open(LP, RW ? O_RDWR : O_WRONLY);
-			if (pfd >= 0)
-				break;
-			if (errno == ENOENT) {
-				syslog(LOG_ERR, "%s: %m", LP);
-				exit(1);
-			}
-			if (i == 1)
-				pstatus("waiting for %s to become ready (offline ?)", printer);
-			sleep(i);
-		}
-		if (isatty(pfd))
-			setty();
-		pstatus("%s is ready and printing", printer);
-	} else if (RM != NULL) {
-		for (i = 1; ; i = i < 256 ? i << 1 : i) {
-			resp = -1;
-			pfd = getport(RM);
-			if (pfd >= 0) {
-				n = snprintf(line, sizeof(line), "\2%s\n", RP);
-				if (write(pfd, line, n) == n &&
-				    (resp = response()) == '\0')
-					break;
-				(void)close(pfd);
-			}
-			if (i == 1) {
-				if (resp < 0)
-					pstatus("waiting for %s to come up", RM);
-				else {
-					pstatus("waiting for queue to be enabled on %s", RM);
-					i = 256;
-				}
-			}
-			sleep(i);
-		}
-		pstatus("sending to %s", RM);
-		remote = 1;
+	if (!remote && *LP) {
+		if (cp = strchr(LP, '@'))
+			opennet(cp);
+		else
+			opentty();
+	} else if (remote) {
+		openrem();
 	} else {
 		syslog(LOG_ERR, "%s: no line printer device or host name",
 			printer);
 		exit(1);
 	}
+
 	/*
 	 * Start up an output filter, if needed.
 	 */
 	if (!remote && OF) {
 		int p[2];
-		char *cp;
 
 		pipe(p);
 		if ((ofilter = dofork(DOABORT)) == 0) {	/* child */
 			dup2(p[0], 0);		/* pipe is std in */
 			dup2(pfd, 1);		/* printer is std out */
+			closelog();
 			for (i = 3; i < NOFILE; i++)
 				(void)close(i);
 			if ((cp = rindex(OF, '/')) == NULL)
@@ -1287,6 +1295,114 @@ openpr()
 		ofd = pfd;
 		ofilter = 0;
 	}
+}
+
+/*
+ * Printer connected directly to the network
+ * or to a terminal server on the net
+ */
+static void
+opennet(cp)
+	char *cp;
+{
+	register int i;
+	int resp, port;
+	char save_ch;
+
+	save_ch = *cp;
+	*cp = '\0';
+	port = atoi(LP);
+	if (port <= 0) {
+		syslog(LOG_ERR, "%s: bad port number: %s", printer, LP);
+		exit(1);
+	}
+	*cp++ = save_ch;
+
+	for (i = 1; ; i = i < 256 ? i << 1 : i) {
+		resp = -1;
+		pfd = getport(cp, port);
+		if (pfd < 0 && errno == ECONNREFUSED)
+			resp = 1;
+		else if (pfd >= 0) {
+			/*
+			 * need to delay a bit for rs232 lines
+			 * to stabilize in case printer is
+			 * connected via a terminal server
+			 */
+			delay(500);
+			break;
+		}
+		if (i == 1) {
+		   if (resp < 0)
+			pstatus("waiting for %s to come up", LP);
+		   else
+			pstatus("waiting for access to printer on %s", LP);
+		}
+		sleep(i);
+	}
+	pstatus("sending to %s port %d", cp, port);
+}
+
+/*
+ * Printer is connected to an RS232 port on this host
+ */
+static void
+opentty()
+{
+	register int i;
+	int resp, port;
+
+	for (i = 1; ; i = i < 32 ? i << 1 : i) {
+		pfd = open(LP, RW ? O_RDWR : O_WRONLY);
+		if (pfd >= 0) {
+			delay(500);
+			break;
+		}
+		if (errno == ENOENT) {
+			syslog(LOG_ERR, "%s: %m", LP);
+			exit(1);
+		}
+		if (i == 1)
+			pstatus("waiting for %s to become ready (offline ?)",
+				printer);
+		sleep(i);
+	}
+	if (isatty(pfd))
+		setty();
+	pstatus("%s is ready and printing", printer);
+}
+
+/*
+ * Printer is on a remote host
+ */
+static void
+openrem()
+{
+	register int i, n;
+	int resp, port;
+
+	for (i = 1; ; i = i < 256 ? i << 1 : i) {
+		resp = -1;
+		pfd = getport(RM, 0);
+		if (pfd >= 0) {
+			n = snprintf(line, sizeof(line), "\2%s\n", RP);
+			if (write(pfd, line, n) == n &&
+			    (resp = response()) == '\0')
+				break;
+			(void) close(pfd);
+		}
+		if (i == 1) {
+			if (resp < 0)
+				pstatus("waiting for %s to come up", RM);
+			else {
+				pstatus("waiting for queue to be enabled on %s",
+					RM);
+				i = 256;
+			}
+		}
+		sleep(i);
+	}
+	pstatus("sending to %s", RM);
 }
 
 #if !defined(__NetBSD__)
@@ -1410,7 +1526,7 @@ setty()
 #include <varargs.h>
 #endif
 
-void
+static void
 #if __STDC__
 pstatus(const char *msg, ...)
 #else

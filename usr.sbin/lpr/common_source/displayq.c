@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.10 1997/07/10 06:19:53 mikel Exp $	*/
+/*	$NetBSD: displayq.c,v 1.11 1997/10/05 11:52:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,14 +35,15 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)displayq.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: displayq.c,v 1.10 1997/07/10 06:19:53 mikel Exp $";
+static char rcsid[] = "$NetBSD: displayq.c,v 1.11 1997/10/05 11:52:19 mrg Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -137,7 +138,7 @@ displayq(format)
 	seteuid(uid);
 	if (ret >= 0) {
 		if (statb.st_mode & 0100) {
-			if (sendtorem)
+			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
 			seteuid(euid);
@@ -152,7 +153,7 @@ displayq(format)
 				putchar('\n');
 		}
 		if (statb.st_mode & 010) {
-			if (sendtorem)
+			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s queue is turned off\n", printer);
 		}
@@ -190,7 +191,7 @@ displayq(format)
 				/*
 				 * Print the status file.
 				 */
-				if (sendtorem)
+				if (remote)
 					printf("%s: ", host);
 				seteuid(euid);
 				fd = open(ST, O_RDONLY);
@@ -218,7 +219,7 @@ displayq(format)
 		}
 		free(queue);
 	}
-	if (!sendtorem) {
+	if (!remote) {
 		if (nitems == 0)
 			puts("no entries");
 		return;
@@ -244,7 +245,7 @@ displayq(format)
 		(void)strncpy(cp, user[i], line - cp - 1);
 	}
 	(void)strncat(line, "\n", sizeof(line) - strlen(line) - 1);
-	fd = getport(RM);
+	fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
 			printf("%s: ", host);
@@ -266,7 +267,7 @@ displayq(format)
 void
 warn()
 {
-	if (sendtorem)
+	if (remote)
 		printf("\n%s: ", host);
 	puts("Warning: no daemon present");
 	current[0] = '\0';
@@ -302,7 +303,7 @@ inform(cf)
 
 	if (rank < 0)
 		rank = 0;
-	if (sendtorem || garbage || strcmp(cf, current))
+	if (remote || garbage || strcmp(cf, current))
 		rank++;
 	j = 0;
 	while (getline(cfp)) {
@@ -449,7 +450,7 @@ ldump(nfile, file, copies)
 	else
 		printf("%-32s", nfile);
 	if (*file && !stat(file, &lbuf))
-		printf(" %qd bytes", lbuf.st_size);
+		printf(" %ld bytes", (long)lbuf.st_size);
 	else
 		printf(" ??? bytes");
 	putchar('\n');

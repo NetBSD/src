@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.13 1996/12/09 09:57:48 mrg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.14 1997/10/05 11:52:40 mrg Exp $	*/
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -45,7 +45,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)lpr.c	8.3 (Berkeley) 3/30/94";
+static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ static char sccsid[] = "@(#)lpr.c	8.3 (Berkeley) 3/30/94";
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include <dirent.h>
 #include <fcntl.h>
