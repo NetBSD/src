@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.118 2003/08/23 01:41:10 itojun Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.119 2003/08/27 02:09:59 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.118 2003/08/23 01:41:10 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.119 2003/08/27 02:09:59 itojun Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_ipsec.h"
@@ -804,7 +804,7 @@ spd_done:
 	if (error == EMSGSIZE)
 		goto bad;
 
-	for (m = m0; m; m = m0) {
+	for (; m; m = m0) {
 		m0 = m->m_nextpkt;
 		m->m_nextpkt = 0;
 		if (error == 0) {
