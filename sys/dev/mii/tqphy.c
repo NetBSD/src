@@ -1,4 +1,4 @@
-/*	$NetBSD: tqphy.c,v 1.7 2000/02/02 17:09:45 thorpej Exp $	*/
+/*	$NetBSD: tqphy.c,v 1.8 2000/02/02 17:50:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -132,6 +132,7 @@ tqphyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = tqphy_service;
+	sc->mii_status = tqphy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -251,7 +252,7 @@ tqphy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	tqphy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {

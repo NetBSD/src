@@ -1,4 +1,4 @@
-/*	$NetBSD: iophy.c,v 1.6 2000/02/02 17:09:44 thorpej Exp $	*/
+/*	$NetBSD: iophy.c,v 1.7 2000/02/02 17:50:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ iophyattach(parent, self, aux)
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
 	sc->mii_service = iophy_service;
+	sc->mii_status = iophy_status;
 	sc->mii_pdata = mii;
 	sc->mii_flags = mii->mii_flags;
 
@@ -245,7 +246,7 @@ iophy_service(sc, mii, cmd)
 	}
 
 	/* Update the media status. */
-	iophy_status(sc);
+	mii_phy_status(sc);
 
 	/* Callback if something changed. */
 	if (sc->mii_active != mii->mii_media_active || cmd == MII_MEDIACHG) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.23 2000/02/02 17:09:45 thorpej Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.24 2000/02/02 17:50:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ struct cfattach tlphy_ca = {
 int	tlphy_service __P((struct mii_softc *, struct mii_data *, int));
 int	tlphy_auto __P((struct tlphy_softc *, int));
 void	tlphy_acomp __P((struct tlphy_softc *));
-void	tlphy_status __P((struct tlphy_softc *));
+void	tlphy_status __P((struct mii_softc *));
 
 int
 tlphymatch(parent, match, aux)
@@ -147,6 +147,7 @@ tlphyattach(parent, self, aux)
 	sc->sc_mii.mii_inst = mii->mii_instance;
 	sc->sc_mii.mii_phy = ma->mii_phyno;
 	sc->sc_mii.mii_service = tlphy_service;
+	sc->sc_mii.mii_status = tlphy_status;
 	sc->sc_mii.mii_pdata = mii;
 	sc->sc_mii.mii_flags = mii->mii_flags;
 
@@ -306,7 +307,7 @@ tlphy_service(self, mii, cmd)
 	}
 
 	/* Update the media status. */
-	tlphy_status(sc);
+	mii_phy_status(&sc->sc_mii);
 
 	/* Callback if something changed. */
 	if (sc->sc_mii.mii_active != mii->mii_media_active ||
@@ -318,9 +319,10 @@ tlphy_service(self, mii, cmd)
 }
 
 void
-tlphy_status(sc)
-	struct tlphy_softc *sc;
+tlphy_status(physc)
+	struct mii_softc *physc;
 {
+	struct tlphy_softc *sc = (void *) physc;
 	struct mii_data *mii = sc->sc_mii.mii_pdata;
 	struct tl_softc *tlsc = (struct tl_softc *)sc->sc_mii.mii_dev.dv_parent;
 	int bmsr, bmcr, tlctrl;
