@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile.inc,v 1.95 1999/07/04 15:46:10 sommerfeld Exp $
+#	$NetBSD: Makefile.inc,v 1.96 1999/08/25 05:09:32 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
 .PATH: ${ARCHDIR}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S pipe.S ptrace.S sbrk.S \
-	setlogin.S sigaction.S sigpending.S sigprocmask.S sigreturn.S \
-	__sigreturn14.S sigsuspend.S syscall.S
+SRCS+=	Ovfork.S __vfork14.S brk.S exect.S fork.S msgctl.S pipe.S ptrace.S \
+	sbrk.S __semctl.S setlogin.S shmctl.S sigaction.S sigpending.S \
+	sigprocmask.S sigreturn.S __sigreturn14.S sigsuspend.S syscall.S
 SRCS+=	cerror.S
 
 LSRCS+=	Lint_Ovfork.c Lint___vfork14.c Lint_brk.c Lint_exect.c Lint_fork.c \
@@ -44,21 +44,21 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o \
 	lchmod.o lchown.o __lstat13.o lfs_bmapv.o lfs_markv.o \
 	lfs_segclean.o lfs_segwait.o link.o listen.o lutimes.o \
 	madvise.o mincore.o minherit.o mkdir.o mkfifo.o mknod.o \
-	mlock.o mlockall.o mount.o mprotect.o msgctl.o msgget.o msgrcv.o \
+	mlock.o mlockall.o mount.o mprotect.o __msgctl13.o msgget.o msgrcv.o \
 	msgsnd.o __msync13.o munlock.o munlockall.o munmap.o nanosleep.o \
 	nfssvc.o ntp_adjtime.o ntp_gettime.o open.o pathconf.o \
 	poll.o profil.o quotactl.o read.o \
 	readlink.o readv.o reboot.o recvfrom.o recvmsg.o rename.o revoke.o \
-	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
-	setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
+	rmdir.o select.o semconfig.o semget.o semop.o __semctl13.o sendmsg.o \
+	sendto.o setegid.o seteuid.o setgid.o setgroups.o setitimer.o \
 	setpgid.o setpriority.o setregid.o setreuid.o setrlimit.o \
 	setsid.o setsockopt.o settimeofday.o setuid.o shmat.o \
-	shmctl.o shmdt.o shmget.o shutdown.o __sigaction14.o \
+	__shmctl13.o shmdt.o shmget.o shutdown.o __sigaction14.o \
 	__sigaltstack14.o __sigpending14.o __sigprocmask14.o __sigsuspend14.o \
 	socket.o socketpair.o __stat13.o statfs.o \
 	swapctl.o symlink.o sysarch.o umask.o undelete.o unlink.o \
 	unmount.o utimes.o vadvise.o wait4.o write.o writev.o \
-	__semctl.o __syscall.o __sysctl.o \
+	__syscall.o __sysctl.o \
 	__posix_chown.o __posix_fchown.o __posix_lchown.o __posix_rename.o
 
 PASM=	${ASM:.o=.po}
