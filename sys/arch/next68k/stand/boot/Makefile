@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/03/26 06:54:40 dbj Exp $
+#	$NetBSD: Makefile,v 1.8 2000/07/21 22:26:19 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -33,9 +33,11 @@ CFLAGS+=	 -nostdinc ${INCLUDES} ${DEFS}
 LIBCRT0=
 
 PROG=	boot
-SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c
+SRCS=   boot.c machdep.c conf.c devopen.c rtc.c sd.c scsi.c en.c vers.c build.c
 # @@@ dev_net.c should really be in libsa, but it doesn't
 # declare ip_convertaddr correctly, so I put it here _temporarily_.
+
+CLEANFILES+= vers.c build.c build	# generated dynamically
 
 MKMAN=	no
 BINDIR=	/usr/mdec
@@ -44,7 +46,7 @@ LIBS=	${SALIB} ${KERNLIB}
 
 OBJS+=	dev_net.o
 
-${PROG}: links srt0.o ${OBJS} vers.o ${LIBS}
+${PROG}: links srt0.o ${OBJS} ${LIBS}
 	${LD} -N -Ttext ${RELOC} -e start srt0.o ${OBJS} ${LIBS} vers.o -o $@
 	@${SIZE} $@
 
@@ -58,10 +60,12 @@ dev_net.o : ${S}/lib/libsa/dev_net.c
 srt0.o: ${.CURDIR}/srt0.s
 	${CC} -m68040 ${INCPATH} ${DEFS} -c ${.CURDIR}/srt0.s
 
-vers.c: newvers
-newvers:
+.PHONY: build.c
+build.c:
 	sh ${.CURDIR}/newvers.sh
-	${CC} ${CFLAGS} -c vers.c
+
+vers.c: version
+	sh ${S}/conf/newvers_stand.sh -MD ${.CURDIR}/version "next68k"
 
 #installboot: ${.CURDIR}/installboot.sh
 #	@rm -f installboot
