@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.46 2000/11/21 06:30:05 chs Exp $	*/
+/*	$NetBSD: fault.c,v 1.47 2000/12/12 05:21:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -143,7 +143,6 @@ data_abort_handler(frame)
 	u_int fault_instruction;
 	int fault_code;
 	int user;
-	u_quad_t sticks = 0;
 	int error;
 	void *onfault;
 
@@ -233,8 +232,6 @@ copyfault:
 
 	/* Were we in user mode when the abort occurred ? */
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		sticks = p->p_sticks;
-        
 		/*
 		 * Note that the fault was from USR mode.
 		 */
@@ -360,7 +357,7 @@ copyfault:
 				 * priveledged mode but uses USR mode
 				 * permissions for its accesses.
 				 */
-				userret(p, frame->tf_pc, p->p_sticks);
+				userret(p);
 				return;
 			}
 			map = kernel_map;
@@ -452,7 +449,7 @@ copyfault:
 out:
 	/* Call userret() if it was a USR mode fault */
 	if (user)
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 }
 
 
@@ -478,7 +475,6 @@ prefetch_abort_handler(frame)
 	register struct proc *p;
 	register struct pcb *pcb;
 	u_int fault_instruction;
-	u_quad_t sticks;
 	pt_entry_t *pte;
 	int error;
 
@@ -539,7 +535,6 @@ prefetch_abort_handler(frame)
 	/* Was the prefectch abort from USR32 mode ? */
 
 	if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE) {
-		sticks = p->p_sticks;
 		p->p_md.md_regs = frame;
 	} else {
 		/*
@@ -563,7 +558,7 @@ prefetch_abort_handler(frame)
 		    fault_pc);
 #endif
 		trapsignal(p, SIGSEGV, fault_pc);
-		userret(p, frame->tf_pc, sticks);
+		userret(p);
 		return;
 	}
 
@@ -614,7 +609,7 @@ prefetch_abort_handler(frame)
 #endif	/* DIAGNOSTIC */
 	}
 
-	userret(p, frame->tf_pc, sticks);
+	userret(p);
 }
 
 int
