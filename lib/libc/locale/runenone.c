@@ -1,4 +1,4 @@
-/*	$NetBSD: runenone.c,v 1.4 2000/12/28 05:22:27 itojun Exp $	*/
+/*	$NetBSD: runenone.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)none.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: runenone.c,v 1.4 2000/12/28 05:22:27 itojun Exp $");
+__RCSID("$NetBSD: runenone.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include "rune.h"
@@ -69,6 +70,9 @@ int
 _none_init(rl)
 	_RuneLocale *rl;
 {
+
+	_DIAGASSERT(rl != NULL);
+
 	rl->__rune_mbrtowc = _none_mbrtowc;
 	rl->__rune_wcrtomb = _none_wcrtomb;
 
@@ -87,6 +91,11 @@ _none_mbrtowc(rl, pwcs, s, n, state)
 	size_t n;
 	void *state;
 {
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
 
 	if (n < 1)
 		return (size_t)-2;
@@ -107,6 +116,10 @@ _none_wcrtomb(rl, s, n, wc, state)
         const rune_t wc;
         void *state;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
 
 	if (wc & ~0xff) {
 		errno = EILSEQ;

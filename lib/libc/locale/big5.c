@@ -1,4 +1,4 @@
-/*	$NetBSD: big5.c,v 1.4 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: big5.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,10 +41,11 @@
 #if 0
 static char sccsid[] = "@(#)big5.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: big5.c,v 1.4 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: big5.c,v 1.5 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -85,6 +86,8 @@ int
 _BIG5_init(rl)
 	_RuneLocale *rl;
 {
+
+	_DIAGASSERT(rl != NULL);
 
 	/* sanity check to avoid overruns */
 	if (sizeof(_BIG5State) > sizeof(mbstate_t))
@@ -130,6 +133,11 @@ _BIG5_mbrtowc(rl, pwcs, s, n, state)
 	_BIG5State *ps;
 	rune_t rune;
 	int c;
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	ps = state;
 
@@ -198,6 +206,10 @@ _BIG5_wcrtomb(rl, s, n, wc, state)
 {
 	int l;
 
+	/* rl appears to be unused */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
+
 	/* check invalid sequence */
 	if (wc & ~0xffff) {
 		errno = EILSEQ;
@@ -239,6 +251,7 @@ _BIG5_initstate(rl, s)
 {
 	_BIG5State *state;
 
+	/* rl appears to be unused */
 	if (!s)
 		return;
 	state = s;
@@ -252,6 +265,10 @@ _BIG5_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_BIG5State));
 	return;
 }
@@ -262,6 +279,10 @@ _BIG5_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_BIG5State));
 	return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: euctw.c,v 1.6 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: euctw.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -30,11 +30,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: euctw.c,v 1.6 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: euctw.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -73,6 +74,8 @@ int
 _EUCTW_init(rl)
 	_RuneLocale *rl;
 {
+
+	_DIAGASSERT(rl != NULL);
 
 	/* sanity check to avoid overruns */
 	if (sizeof(_EUCTWState) > sizeof(mbstate_t))
@@ -129,6 +132,11 @@ _EUCTW_mbrtowc(rl, pwcs, s, n, state)
 	_EUCTWState *ps;
 	rune_t rune;
 	int c, set;
+
+	/* rl appears to be unused */
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
 
 	ps = state;
 
@@ -211,6 +219,10 @@ _EUCTW_wcrtomb(rl, s, n, wc, state)
 	rune_t v;
 	int i, len, clen;
 
+	/* rl appears to be unused */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
+
 	clen = 1;
 	if (wc & 0x00007f00)
 		clen = 2;
@@ -270,6 +282,7 @@ _EUCTW_initstate(rl, s)
 {
 	_EUCTWState *state;
 
+	/* rl appears to be unused */
 	if (!s)
 		return;
 	state = s;
@@ -283,6 +296,10 @@ _EUCTW_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCTWState));
 	return;
 }
@@ -293,6 +310,10 @@ _EUCTW_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCTWState));
 	return;

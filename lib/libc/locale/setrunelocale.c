@@ -1,4 +1,4 @@
-/*	$NetBSD: setrunelocale.c,v 1.6 2000/12/30 05:05:25 itojun Exp $	*/
+/*	$NetBSD: setrunelocale.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -100,10 +100,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setrunelocale.c,v 1.6 2000/12/30 05:05:25 itojun Exp $");
+__RCSID("$NetBSD: setrunelocale.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "rune.h"
+#include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
@@ -160,6 +161,9 @@ char	*cp;
 {
 	int	i, n;
 
+	_DIAGASSERT(dewey != NULL);
+	_DIAGASSERT(cp != NULL);
+
 	for (n = 0, i = 0; i < MAXDEWEY; i++) {
 		if (*cp == '\0')
 			break;
@@ -186,6 +190,9 @@ int	d1[], d2[];
 int	n1, n2;
 {
 	register int	i;
+
+	_DIAGASSERT(d1 != NULL);
+	_DIAGASSERT(d2 != NULL);
 
 	for (i = 0; i < n1 && i < n2; i++) {
 		if (d1[i] < d2[i])
@@ -219,10 +226,16 @@ int	*majorp, *minorp;
 	int		len;
 	char		*lname;
 	static char	path[PATH_MAX];
-	int		major = *majorp, minor = *minorp;
+	int		major, minor;
 	const char	*search_dirs[1];
 	const int	n_search_dirs = 1;
 
+	_DIAGASSERT(name != NULL);
+	_DIAGASSERT(majorp != NULL);
+	_DIAGASSERT(minorp != NULL);
+
+	major = *majorp;
+	minor = *minorp;
 	path[0] = '\0';
 	search_dirs[0] = _PathModule;
 	len = strlen(name);
@@ -306,6 +319,9 @@ findfunc(handle, sym)
 	char name[PATH_MAX];
 	void *p;
 
+	_DIAGASSERT(handle != NULL);
+	_DIAGASSERT(sym != NULL);
+
 	p = dlsym(handle, sym);
 	if (!p) {
 		/* a.out case */
@@ -324,6 +340,9 @@ loadrunemodule(_RuneLocale *rl, void **rhandle)
 	int ret;
         int (*init) __P((_RuneLocale *));
         int (*initstream) __P((_RuneLocale *));
+
+	_DIAGASSERT(rl != NULL);
+	_DIAGASSERT(rhandle != NULL);
 
 	if (_PathModule == NULL) {
 		/* "/libencoding.so.###" */
@@ -382,6 +401,8 @@ _findrunelocale(path)
 {
 	struct localetable *lt;
 
+	_DIAGASSERT(path != NULL);
+
 	/* ones which we have seen already */
 	for (lt = localetable.next; lt; lt = lt->next)
 		if (strcmp(path, lt->path) == 0)
@@ -398,6 +419,8 @@ _newrunelocale(path)
 	FILE *fp;
 	_RuneLocale *rl;
         int ret;
+
+	/* path may be NULL (actually, it's checked below) */
 
 	ret = 0;
 
@@ -496,6 +519,8 @@ delrunelocale(path)
 	struct localetable *lt, *prev;
 	_RuneLocale *rl;
 
+	_DIAGASSERT(path != NULL);
+
 	prev = NULL;
 	for (lt = localetable.next; lt; prev = lt, lt = prev->next)
 		if (strcmp(path, lt->path) == 0)
@@ -528,6 +553,8 @@ _xpg4_setrunelocale(encoding)
 	char path[PATH_MAX];
 	_RuneLocale *rl;
 	int error;
+
+	_DIAGASSERT(encoding != NULL);
 
 	if (!strcmp(encoding, "C") || !strcmp(encoding, "POSIX")) {
 		rl = &_DefaultRuneLocale;

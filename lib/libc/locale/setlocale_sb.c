@@ -1,4 +1,4 @@
-/*	$NetBSD: setlocale_sb.c,v 1.4 2000/12/21 11:29:48 itojun Exp $	*/
+/*	$NetBSD: setlocale_sb.c,v 1.5 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -47,6 +47,8 @@ setlocale(category, locale)
 	int category;
 	const char *locale;
 {
+
+	/* locale may be NULL */
 
 	__mb_len_max_runtime = 1;
 	return __setlocale(category, locale);

@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte.c,v 1.6 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,15 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)ansi.c	8.1 (Berkeley) 6/27/93";
 #else
-__RCSID("$NetBSD: multibyte.c,v 1.6 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: multibyte.c,v 1.7 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#include <stdlib.h>
+#include "rune.h"
+#include <assert.h>
+#include <errno.h>
 #include <limits.h>
 #include <stddef.h>
-#include <errno.h>
-#include "rune.h"
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
 #include "rune_local.h"
@@ -105,6 +106,8 @@ _mbstate_get_locale(ps)
 {
 	_RuneLocale *rl;
 
+	_DIAGASSERT(ps != NULL);
+
 	rl = *(_RuneLocale **)ps;
 	if (!rl)
 		rl = _CurrentRuneLocale;
@@ -117,6 +120,9 @@ _mbstate_set_locale(ps, rl)
 	const _RuneLocale *rl;
 {
 
+	_DIAGASSERT(ps != NULL);
+	/* XXX: can rl be NULL ? */
+
 	*(const _RuneLocale **)ps = rl;
 }
 
@@ -125,6 +131,9 @@ _mbstate_init_locale(ps, rl)
 	mbstate_t *ps;
 	const _RuneLocale *rl;
 {
+
+	_DIAGASSERT(ps != NULL);
+	/* rl may be NULL */
 
 	if (!rl)
 		rl = _CurrentRuneLocale;
@@ -145,6 +154,8 @@ mbsinit(ps)
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
 	int r = 1;
+
+	/* ps may be NULL */
 
 	if (!ps)
 		return r;
@@ -174,6 +185,9 @@ mbrlen(s, n, ps)
 {
 	static mbstate_t ls;
 
+	/* XXX: s may be NULL ? */
+	/* ps may be NULL */
+
 	if (!ps) {
 		_mbstate_init_locale(&ls, NULL);
 		ps = &ls;
@@ -187,6 +201,8 @@ mblen(s, n)
 	size_t n;
 {
 	static mbstate_t ls;
+
+	/* XXX: s may be NULL ? */
 
 	_mbstate_init_locale(&ls, NULL);
 	return mbrlen(s, n, &ls);
@@ -205,6 +221,10 @@ mbrtowc(pwc, s, n, ps)
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
 	size_t siz;
+
+	/* pwc may be NULL */
+	/* s may be NULL */
+	/* ps may be NULL */
 
 	if (!ps) {
 		_mbstate_init_locale(&ls, NULL);
@@ -238,6 +258,9 @@ mbtowc(pwc, s, n)
 {
 	static mbstate_t ls;
 
+	/* pwc may be NULL */
+	/* s may be NULL */
+
 	_mbstate_init_locale(&ls, NULL);
 	return mbrtowc(pwc, s, n, &ls);
 }
@@ -255,6 +278,9 @@ wcrtomb(s, wchar, ps)
 	void *state = NULL;
 	char buf[MB_LEN_MAX];
 	size_t siz;
+
+	/* s may be NULL */
+	/* ps may be NULL */
 
 	if (!ps) {
 		_mbstate_init_locale(&ls, NULL);
@@ -286,6 +312,8 @@ wctomb(s, wchar)
 {
 	static mbstate_t ls;
 
+	/* s may be NULL */
+
 	_mbstate_init_locale(&ls, NULL);
 	return wcrtomb(s, wchar, &ls);
 }
@@ -304,6 +332,10 @@ mbsrtowcs(pwcs, s, n, ps)
 	static _RuneLocale *rl0 = NULL;
 	void *state = NULL;
 	size_t siz;
+
+	/* pwcs may be NULL */
+	/* s may be NULL */
+	/* ps may be NULL */
 
 	if (!ps) {
 		_mbstate_init_locale(&ls, NULL);
@@ -373,6 +405,9 @@ mbstowcs(pwcs, s, n)
 {
 	static mbstate_t ls;
 
+	/* pwcs may be NULL */
+	/* s may be NULL */
+
 	_mbstate_init_locale(&ls, NULL);
 	return mbsrtowcs(pwcs, &s, n, &ls);
 }
@@ -392,6 +427,10 @@ wcsrtombs(s, pwcs, n, ps)
 	void *state = NULL;
 	char buf[MB_LEN_MAX];
 	size_t siz;
+
+	/* s may be NULL */
+	/* pwcs may be NULL */
+	/* ps may be NULL */
 
 	if (!ps) {
 		_mbstate_init_locale(&ls, NULL);
@@ -451,6 +490,9 @@ wcstombs(s, pwcs, n)
 	size_t n;
 {
 	static mbstate_t ls;
+
+	/* s may be NULL */
+	/* pwcs may be NULL */
 
 	_mbstate_init_locale(&ls, NULL);
 	return wcsrtombs(s, &pwcs, n, &ls);

@@ -1,4 +1,4 @@
-/*	$NetBSD: multibyte_sb.c,v 1.1 2000/12/25 23:30:58 itojun Exp $	*/
+/*	$NetBSD: multibyte_sb.c,v 1.2 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char *sccsid = "from: @(#)multibyte.c	5.1 (Berkeley) 2/18/91";
 #else
-__RCSID("$NetBSD: multibyte_sb.c,v 1.1 2000/12/25 23:30:58 itojun Exp $");
+__RCSID("$NetBSD: multibyte_sb.c,v 1.2 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -70,6 +70,8 @@ mbrlen(s, n, ps)
 	mbstate_t *ps;
 {
 
+	/* ps appears to be unused */
+
 	if (s == NULL || *s == '\0')
 		return 0;
 	if (n == 0)
@@ -83,6 +85,8 @@ mblen(s, n)
 	size_t n;
 {
 
+	/* s may be NULL */
+
 	return mbrlen(s, n, NULL);
 }
 
@@ -94,6 +98,10 @@ mbrtowc(pwc, s, n, ps)
 	size_t n;
 	mbstate_t *ps;
 {
+
+	/* pwc may be NULL */
+	/* s may be NULL */
+	/* ps appears to be unused */
 
 	if (s == NULL)
 		return 0;
@@ -111,6 +119,9 @@ mbtowc(pwc, s, n)
 	size_t n;
 {
 
+	/* pwc may be NULL */
+	/* s may be NULL */
+
 	return mbrtowc(pwc, s, n, NULL);
 }
 
@@ -121,6 +132,9 @@ wcrtomb(s, wchar, ps)
 	wchar_t wchar;
 	mbstate_t *ps;
 {
+
+	/* s may be NULL */
+	/* ps appears to be unused */
 
 	if (s == NULL)
 		return 0;
@@ -135,6 +149,8 @@ wctomb(s, wchar)
 	wchar_t wchar;
 {
 
+	/* s may be NULL */
+
 	return wcrtomb(s, wchar, NULL);
 }
 
@@ -147,6 +163,10 @@ mbsrtowcs(pwcs, s, n, ps)
 	mbstate_t *ps;
 {
 	int count = 0;
+
+	/* pwcs may be NULL */
+	/* s may be NULL */
+	/* ps appears to be unused */
 
 	if (!s || !*s)
 		return 0;
@@ -177,6 +197,9 @@ mbstowcs(pwcs, s, n)
 	size_t n;
 {
 
+	/* pwcs may be NULL */
+	/* s may be NULL */
+
 	return mbsrtowcs(pwcs, &s, n, NULL);
 }
 
@@ -190,7 +213,10 @@ wcsrtombs(s, pwcs, n, ps)
 {
 	int count = 0;
 
-	_DIAGASSERT(pwcs != NULL);
+	/* s may be NULL */
+	/* pwcs may be NULL */
+	/* ps appears to be unused */
+
 	if (pwcs == NULL || *pwcs == NULL)
 		return (0);
 
@@ -217,6 +243,9 @@ wcstombs(s, pwcs, n)
 	const wchar_t *pwcs;
 	size_t n;
 {
+
+	/* s may be NULL */
+	/* pwcs may be NULL */
 
 	return wcsrtombs(s, &pwcs, n, NULL);
 }

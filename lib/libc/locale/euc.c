@@ -1,4 +1,4 @@
-/*	$NetBSD: euc.c,v 1.5 2000/12/30 05:05:57 itojun Exp $	*/
+/*	$NetBSD: euc.c,v 1.6 2001/01/03 15:23:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)euc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: euc.c,v 1.5 2000/12/30 05:05:57 itojun Exp $");
+__RCSID("$NetBSD: euc.c,v 1.6 2001/01/03 15:23:26 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 
+#include <assert.h>
 #include <errno.h>
 #include "rune.h"
 #include <stddef.h>
@@ -94,6 +95,8 @@ _EUC_init(rl)
 	_EucInfo *ei;
 	int x;
 	char *v, *e;
+
+	_DIAGASSERT(rl != NULL);
 
 	/* sanity check to avoid overruns */
 	if (sizeof(_EUCState) > sizeof(mbstate_t))
@@ -173,6 +176,11 @@ _EUC_mbrtowc(rl, pwcs, s, n, state)
 	rune_t rune;
 	int c, set, len;
 
+	_DIAGASSERT(rl != NULL);
+	/* pwcs may be NULL */
+	_DIAGASSERT(s != NULL);
+	_DIAGASSERT(state != NULL);
+
 	ps = state;
 
 	/* make sure we have the first byte in the buffer */
@@ -243,9 +251,16 @@ _EUC_wcrtomb(rl, s, n, wc, state)
         const rune_t wc;
         void *state;
 {
-	rune_t m = wc & CEI(rl)->mask;
-	rune_t nm = wc & ~m;
+	rune_t m, nm;
 	int set, i, len;
+
+	_DIAGASSERT(rl != NULL);
+	/* pwcs appears to be unused */
+	_DIAGASSERT(s != NULL);
+	/* state appears to be unused */
+
+	m = wc & CEI(rl)->mask;
+	nm = wc & ~m;
 
 	for (set = 0;
 	     set < sizeof(CEI(rl)->count)/sizeof(CEI(rl)->count[0]);
@@ -292,6 +307,7 @@ _EUC_initstate(rl, s)
 {
 	_EUCState *state;
 
+	/* rl appears to be unused */
 	if (!s)
 		return;
 	state = s;
@@ -305,6 +321,10 @@ _EUC_packstate(rl, dst, src)
 	void* src;
 {
 
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
+
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCState));
 	return;
 }
@@ -315,6 +335,10 @@ _EUC_unpackstate(rl, dst, src)
 	void* dst;
 	const mbstate_t *src;
 {
+
+	/* rl appears to be unused */
+	_DIAGASSERT(dst != NULL);
+	_DIAGASSERT(src != NULL);
 
 	memcpy((caddr_t)dst, (caddr_t)src, sizeof(_EUCState));
 	return;
