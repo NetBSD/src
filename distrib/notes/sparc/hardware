@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.29 2003/12/14 03:25:46 uwe Exp $
+.\"	$NetBSD: hardware,v 1.30 2004/05/23 17:23:33 mbw Exp $
 .
 .Pp
 The minimum configuration requires 4 MB of RAM and 60 MB of disk space.
@@ -206,6 +206,15 @@ emulation
 ZX and TZX 24 bpp accelerated framebuffer.
 .br
 Sbus card (leo)
+.br
+limited to text console (no X)
+.It
+.Em igsfb ;
+24 bpp IGS C1682 accelerated framebuffer.
+.br
+On-board JavaStation-NC
+.br
+limited to text console (no X)
 .bullet)
 .It
 sun4 video; VME card, on-board, or P4 (supported only on 4/100 and 4/300 
@@ -232,7 +241,7 @@ LEGO 8 bpp accelerated framebuffer.
 P4
 .It
 .Em cgeight ;
-24 bpp framebuffer with overlay.
+TC 24 bpp framebuffer with overlay.
 .br
 P4 (not well tested)
 .bullet)
@@ -256,7 +265,7 @@ Sbus card
 .Dq Happy Meal
 ethernet.
 .br
-Sbus card
+On-board (JavaStation-NC) and Sbus card
 .It
 .Em ie ;
 10 Mbps Intel 82586 ethernet.
@@ -278,7 +287,7 @@ four 100 Mbps full-duplex
 .Dq Happy Meal
 ethernet interfaces.
 .br
-Sbus card (not well tested)
+Sbus card
 .It
 misc: various ethernet interfaces are found on multi-function Sbus cards
 (e.g. along with SCSI), the ethernet interfaces work even if the other
@@ -392,7 +401,7 @@ Zilog 85C30 serial ports (ns16550a)
 .br
 On-board Tadpole SPARCbook 3GS and 3GX (internal 14.4 kbps modem, use
 .Pa /dev/ttyC0 )
-and JavaStation-1
+JavaStation-1, and JavaStation-NC
 .bullet)
 .It
 Input devices
@@ -402,6 +411,8 @@ Sun keyboard and mouse
 SPARCbook 3 keyboard and joystick
 .It
 Third-party keyboards, mice, and trackballs
+.It
+PS/2 keyboards and mice on JavaStation models
 .bullet)
 .It
 Audio interfaces
