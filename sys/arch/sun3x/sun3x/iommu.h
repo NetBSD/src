@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.h,v 1.2 1997/01/16 06:38:26 jeremy Exp $	*/
+/*	$NetBSD: iommu.h,v 1.3 1997/02/22 04:01:04 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -120,6 +120,7 @@ struct iommu_pde_struct {
 typedef struct iommu_pde_struct iommu_pde_t;
 
 /* Constants */
+#define IOMMU_PAGE_SIZE		(8 * 1024)
 #define	IOMMU_PAGE_SHIFT	13
 
 /* Useful macros */
