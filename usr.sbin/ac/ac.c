@@ -1,4 +1,4 @@
-/* $NetBSD: ac.c,v 1.14 2001/02/19 23:22:40 cgd Exp $ */
+/* $NetBSD: ac.c,v 1.15 2003/05/17 18:55:18 itojun Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ac.c,v 1.14 2001/02/19 23:22:40 cgd Exp $");
+__RCSID("$NetBSD: ac.c,v 1.15 2003/05/17 18:55:18 itojun Exp $");
 #endif
 
 #include <sys/types.h>
@@ -174,8 +174,7 @@ add_tty(name)
 		tp->ret = 0;
 		name++;
 	}
-	(void)strncpy(tp->name, name, sizeof (tp->name) - 1);
-	tp->name[sizeof (tp->name) - 1] = '\0';
+	(void)strlcpy(tp->name, name, sizeof (tp->name));
 	if ((rcp = strchr(tp->name, '*')) != NULL) {	/* wild card */
 		*rcp = '\0';
 		tp->len = strlen(tp->name);	/* match len bytes only */
@@ -288,8 +287,7 @@ update_user(head, name, secs)
 	if ((up = NEW(struct user_list)) == NULL)
 		err(1, "malloc");
 	up->next = head;
-	(void)strncpy(up->name, name, sizeof (up->name) - 1);
-	up->name[sizeof (up->name) - 1] = '\0';	/* paranoid! */
+	(void)strlcpy(up->name, name, sizeof (up->name));
 	up->secs = secs;
 	Total += secs;
 	return up;
