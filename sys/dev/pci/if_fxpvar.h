@@ -1,12 +1,46 @@
-/*	$NetBSD: if_fxpvar.h,v 1.4 1998/01/22 08:32:35 thorpej Exp $	*/
+/*	$NetBSD: if_fxpvar.h,v 1.5 1998/01/28 07:26:44 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*                  
  * Copyright (c) 1995, David Greenman
  * All rights reserved.
  *              
- * Modifications to support NetBSD:
- * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
- *                  
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:             
@@ -37,29 +71,104 @@
  * Ethernet driver
  */
 
+/*
+ * Number of transmit control blocks.  This determines the number
+ * of transmit buffers that can be chained in the CB list.  This
+ * must be a power of two.
+ */
+#define	FXP_NTXCB	128
+
+/*
+ * TxCB list index mask.  This is used to do list wrap-around.
+ */
+#define	FXP_TXCB_MASK	(FXP_NTXCB - 1)
+
+/*
+ * Number of receive frame area buffers.  These are large, so
+ * choose wisely.
+ */
+#define	FXP_NRFABUFS	64
+
+/*
+ * Maximum number of seconds that the reciever can be idle before we
+ * assume it's dead and attempt to reset it by reprogramming the
+ * multicast filter.  This is part of a work-around for a bug in the
+ * NIC.  See fxp_stats_update().
+ */
+#define	FXP_MAX_RX_IDLE	15
+
+/*
+ * Misc. DMA'd data structures are allocated in a single clump, that
+ * maps to a single DMA segment, to make several things easier (computing
+ * offsets, setting up DMA maps, etc.)
+ */
+struct fxp_control_data {
+	/*
+	 * The transmit control blocks.  The first if these
+	 * is also used as the config CB.
+	 */
+	struct fxp_cb_tx fcd_txcbs[FXP_NTXCB];
+
+	/*
+	 * The multicast setup CB.
+	 */
+	struct fxp_cb_mcs fcd_mcscb;
+
+	/*
+	 * The NIC statistics.
+	 */
+	struct fxp_stats fcd_stats;
+};
+
+#define	FXP_CDOFF(x)	offsetof(struct fxp_control_data, x)
+
+/*
+ * Receive buffer descriptor (software only).  This is the analog of
+ * the software portion of the fxp_cb_tx.
+ */
+struct fxp_rxdesc {
+	struct fxp_rxdesc *fr_next;	/* next in the chain */
+	struct mbuf *fr_mbhead;		/* pointer to mbuf chain */
+	bus_dmamap_t fr_dmamap;		/* our DMA map */
+};
+
 struct fxp_softc {
-#if defined(__NetBSD__)
 	struct device sc_dev;		/* generic device structures */
 	void *sc_ih;			/* interrupt handler cookie */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct ethercom sc_ethercom;	/* ethernet common part */
-#else
-	struct arpcom arpcom;		/* per-interface network data */
-	caddr_t csr;			/* control/status registers */
-	struct callout_handle stat_ch;	/* Handle for canceling our stat timeout */
-#endif /* __NetBSD__ */
+#define	sc_if		sc_ethercom.ec_if
+
+	/*
+	 * We create a single DMA map that maps all data structure
+	 * overhead, except for RFAs, which are mapped by the
+	 * fxp_rxdesc DMA map on a per-mbuf basis.
+	 */
+	bus_dmamap_t sc_dmamap;
+#define	sc_cddma	sc_dmamap->dm_segs[0].ds_addr
+
+	/*
+	 * These DMA maps map transmit and recieve buffers.
+	 */
+	bus_dmamap_t sc_tx_dmamaps[FXP_NTXCB];
+	bus_dmamap_t sc_rx_dmamaps[FXP_NRFABUFS];
+
+	/*
+	 * Control data - TxCBs, stats, etc.
+	 */
+	struct fxp_control_data *control_data;
+
+	struct fxp_rxdesc *sc_rxdescs;	/* receive buffer descriptors */
 	struct ifmedia sc_media;	/* media information */
-	struct fxp_cb_tx *cbl_base;	/* base of TxCB list */
 	struct fxp_cb_tx *cbl_first;	/* first active TxCB in list */
 	struct fxp_cb_tx *cbl_last;	/* last active TxCB in list */
 	int tx_queued;			/* # of active TxCB's */
 	int need_mcsetup;		/* multicast filter needs programming */
-	struct mbuf *rfa_headm;		/* first mbuf in receive frame area */
-	struct mbuf *rfa_tailm;		/* last mbuf in receive frame area */
-	struct fxp_stats *fxp_stats;	/* Pointer to interface stats */
+	struct fxp_rxdesc *rfa_head;	/* first mbuf in receive frame area */
+	struct fxp_rxdesc *rfa_tail;	/* last mbuf in receive frame area */
 	int rx_idle_secs;		/* # of seconds RX has been idle */
-	struct fxp_cb_mcs *mcsp;	/* Pointer to mcast setup descriptor */
 	int all_mcasts;			/* receive all multicasts */
 	int promisc_mode;		/* promiscuous mode enabled */
 	int phy_primary_addr;		/* address of primary PHY */
@@ -68,7 +177,6 @@ struct fxp_softc {
 };
 
 /* Macros to ease CSR access. */
-#if defined(__NetBSD__)
 #define	CSR_READ_1(sc, reg)						\
 	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, (reg))
 #define	CSR_READ_2(sc, reg)						\
@@ -81,40 +189,3 @@ struct fxp_softc {
 	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 #define	CSR_WRITE_4(sc, reg, val)					\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
-#else
-#define	CSR_READ_1(sc, reg)						\
-	(*((u_int8_t *)((sc)->csr + (reg))))
-#define	CSR_READ_2(sc, reg)						\
-	(*((u_int16_t *)((sc)->csr + (reg))))
-#define	CSR_READ_4(sc, reg)						\
-	(*((u_int32_t *)((sc)->csr + (reg))))
-#define	CSR_WRITE_1(sc, reg, val)					\
-	(*((u_int8_t *)((sc)->csr + (reg)))) = (val)
-#define	CSR_WRITE_2(sc, reg, val)					\
-	(*((u_int16_t *)((sc)->csr + (reg)))) = (val)
-#define	CSR_WRITE_4(sc, reg, val)					\
-	(*((u_int32_t *)((sc)->csr + (reg)))) = (val)
-#endif /* __NetBSD__ */
-
-/* Deal with slight differences in software interfaces. */
-#if defined(__NetBSD__)
-#define	sc_if			sc_ethercom.ec_if
-#define	FXP_FORMAT		"%s"
-#define	FXP_ARGS(sc)		(sc)->sc_dev.dv_xname
-#define	FXP_INTR_TYPE		int
-#define	FXP_IOCTLCMD_TYPE	u_long
-#define	FXP_BPFTAP_ARG(ifp)	(ifp)->if_bpf
-#define	FXP_TIMEOUT(sc, func, hz)					\
-				timeout((func), (sc), (hz))
-#define	FXP_UNTIMEOUT(sc, func)	untimeout((func), (sc))
-#else /* __FreeBSD__ */
-#define	sc_if			arpcom.ac_if
-#define	FXP_FORMAT		"fxp%d"
-#define	FXP_ARGS(sc)		(sc)->arpcom.ac_if.if_unit
-#define	FXP_INTR_TYPE		void
-#define	FXP_IOCTLCMD_TYPE	int
-#define	FXP_BPFTAP_ARG(ifp)	ifp
-#define	FXP_TIMEOUT(sc, func, hz)					\
-				(sc)->stat_ch = timeout((func), (sc), (hz))
-#define	FXP_UNTIMEOUT(sc, func)	untimeout((func), (sc), (sc)->stat_ch)
-#endif /* __NetBSD__ */
