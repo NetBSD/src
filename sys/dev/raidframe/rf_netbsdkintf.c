@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.40 2000/01/07 13:57:20 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.41 2000/01/08 01:37:37 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -662,6 +662,9 @@ raidioctl(dev, cmd, data, flag, p)
 	int     part, pmask;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
+	RF_Raid_t *raid;
+	RF_AccTotals_t *totals;
+	RF_DeviceConfig_t *d_cfg, **ucfgp;
 	u_char *specific_buf;
 	int retcode = 0;
 	int row;
@@ -673,6 +676,7 @@ raidioctl(dev, cmd, data, flag, p)
 	RF_SingleComponent_t *sparePtr,*componentPtr;
 	RF_SingleComponent_t hot_spare;
 	RF_SingleComponent_t component;
+	int i, j, d;
 
 	if (unit >= numraid)
 		return (ENXIO);
@@ -1024,80 +1028,63 @@ raidioctl(dev, cmd, data, flag, p)
 		return(retcode);
 
 	case RAIDFRAME_GET_INFO:
-		{
-			RF_Raid_t *raid = raidPtrs[unit];
-			RF_DeviceConfig_t *cfg, **ucfgp;
-			int     i, j, d;
+		raid = raidPtrs[unit];
 
-			if (!raid->valid)
-				return (ENODEV);
-			ucfgp = (RF_DeviceConfig_t **) data;
-			RF_Malloc(cfg, sizeof(RF_DeviceConfig_t),
-				  (RF_DeviceConfig_t *));
-			if (cfg == NULL)
-				return (ENOMEM);
-			bzero((char *) cfg, sizeof(RF_DeviceConfig_t));
-			cfg->rows = raid->numRow;
-			cfg->cols = raid->numCol;
-			cfg->ndevs = raid->numRow * raid->numCol;
-			if (cfg->ndevs >= RF_MAX_DISKS) {
-				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
-				return (ENOMEM);
-			}
-			cfg->nspares = raid->numSpare;
-			if (cfg->nspares >= RF_MAX_DISKS) {
-				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
-				return (ENOMEM);
-			}
-			cfg->maxqdepth = raid->maxQueueDepth;
-			d = 0;
-			for (i = 0; i < cfg->rows; i++) {
-				for (j = 0; j < cfg->cols; j++) {
-					cfg->devs[d] = raid->Disks[i][j];
-					d++;
-				}
-			}
-			for (j = cfg->cols, i = 0; i < cfg->nspares; i++, j++) {
-				cfg->spares[i] = raid->Disks[0][j];
-			}
-			retcode = copyout((caddr_t) cfg, (caddr_t) * ucfgp,
-					  sizeof(RF_DeviceConfig_t));
-			RF_Free(cfg, sizeof(RF_DeviceConfig_t));
-
-			return (retcode);
+		if (!raid->valid)
+			return (ENODEV);
+		ucfgp = (RF_DeviceConfig_t **) data;
+		RF_Malloc(d_cfg, sizeof(RF_DeviceConfig_t),
+			  (RF_DeviceConfig_t *));
+		if (d_cfg == NULL)
+			return (ENOMEM);
+		bzero((char *) d_cfg, sizeof(RF_DeviceConfig_t));
+		d_cfg->rows = raid->numRow;
+		d_cfg->cols = raid->numCol;
+		d_cfg->ndevs = raid->numRow * raid->numCol;
+		if (d_cfg->ndevs >= RF_MAX_DISKS) {
+			RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
+			return (ENOMEM);
 		}
-		break;
+		d_cfg->nspares = raid->numSpare;
+		if (d_cfg->nspares >= RF_MAX_DISKS) {
+			RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
+			return (ENOMEM);
+		}
+		d_cfg->maxqdepth = raid->maxQueueDepth;
+		d = 0;
+		for (i = 0; i < d_cfg->rows; i++) {
+			for (j = 0; j < d_cfg->cols; j++) {
+				d_cfg->devs[d] = raid->Disks[i][j];
+				d++;
+			}
+		}
+		for (j = d_cfg->cols, i = 0; i < d_cfg->nspares; i++, j++) {
+			d_cfg->spares[i] = raid->Disks[0][j];
+		}
+		retcode = copyout((caddr_t) d_cfg, (caddr_t) * ucfgp,
+				  sizeof(RF_DeviceConfig_t));
+		RF_Free(d_cfg, sizeof(RF_DeviceConfig_t));
+
+		return (retcode);
+
 	case RAIDFRAME_CHECK_PARITY:
 		*(int *) data = raidPtrs[unit]->parity_good;
 		return (0);
-	case RAIDFRAME_RESET_ACCTOTALS:
-		{
-			RF_Raid_t *raid = raidPtrs[unit];
 
-			bzero(&raid->acc_totals, sizeof(raid->acc_totals));
-			return (0);
-		}
-		break;
+	case RAIDFRAME_RESET_ACCTOTALS:
+		raid = raidPtrs[unit];
+		bzero(&raid->acc_totals, sizeof(raid->acc_totals));
+		return (0);
 
 	case RAIDFRAME_GET_ACCTOTALS:
-		{
-			RF_AccTotals_t *totals = (RF_AccTotals_t *) data;
-			RF_Raid_t *raid = raidPtrs[unit];
-
-			*totals = raid->acc_totals;
-			return (0);
-		}
-		break;
+		totals = (RF_AccTotals_t *) data;
+		raid = raidPtrs[unit];
+		*totals = raid->acc_totals;
+		return (0);
 
 	case RAIDFRAME_KEEP_ACCTOTALS:
-		{
-			RF_Raid_t *raid = raidPtrs[unit];
-			int    *keep = (int *) data;
-
-			raid->keep_acc_totals = *keep;
-			return (0);
-		}
-		break;
+		raidPtrs[unit]->keep_acc_totals = *(int *)data;
+		return (0);
 
 	case RAIDFRAME_GET_SIZE:
 		*(int *) data = raidPtrs[unit]->totalSectors;
