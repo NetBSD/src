@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.26 1997/10/17 11:24:02 ws Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.27 1997/11/16 21:47:29 christos Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -336,7 +336,7 @@ updatefats(pmp, bp, fatbn)
 	struct buf *bpn;
 
 #ifdef MSDOSFS_DEBUG
-	printf("updatefats(pmp %08x, bp %08x, fatbn %d)\n",
+	printf("updatefats(pmp %p, bp %p, fatbn %ld)\n",
 	    pmp, bp, fatbn);
 #endif
 
@@ -510,8 +510,8 @@ fatentry(function, pmp, cn, oldcontents, newcontents)
 	struct buf *bp;
 
 #ifdef	MSDOSFS_DEBUG
-	printf("fatentry(func %d, pmp %08x, clust %d, oldcon %08x, newcon %d)\n",
-	     function, pmp, cluster, oldcontents, newcontents);
+	printf("fatentry(func %d, pmp %p, clust %ld, oldcon %p, newcon %ld)\n",
+	     function, pmp, cn, oldcontents, newcontents);
 #endif
 
 #ifdef DIAGNOSTIC
@@ -615,7 +615,7 @@ fatchain(pmp, start, count, fillwith)
 	struct buf *bp;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("fatchain(pmp %08x, start %d, count %d, fillwith %d)\n",
+	printf("fatchain(pmp %p, start %ld, count %ld, fillwith %ld)\n",
 	    pmp, start, count, fillwith);
 #endif
 	/*
@@ -740,7 +740,7 @@ chainalloc(pmp, start, count, fillwith, retcluster, got)
 	if ((error = fatchain(pmp, start, count, fillwith)) != 0)
 		return (error);
 #ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): allocated cluster chain at %d (%d clusters)\n",
+	printf("clusteralloc(): allocated cluster chain at %ld (%ld clusters)\n",
 	    start, count);
 #endif
 	if (retcluster)
@@ -776,7 +776,7 @@ clusteralloc(pmp, start, count, fillwith, retcluster, got)
 	u_int map;
 	
 #ifdef MSDOSFS_DEBUG
-	printf("clusteralloc(): find %d clusters\n",count);
+	printf("clusteralloc(): find %ld clusters\n",count);
 #endif
 	if (start) {
 		if ((len = chainlength(pmp, start, count)) >= count)
