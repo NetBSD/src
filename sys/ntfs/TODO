@@ -28,8 +28,6 @@ NTFS - list of things to do in no particular order:
 - working VOP_BALLOC()
 	(from Chuq)
 
-- make ntfs nfs exportable, for the completeness sake
-
 - mountroot support
 
 - implement writing into resident attributes, so it would be possible
