@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.sh,v 1.3 1997/01/31 21:56:28 pk Exp $
+#	$NetBSD: genassym.sh,v 1.4 1997/02/06 22:16:12 pk Exp $
 
 #
 # Copyright (c) 1997 Matthias Pfaller.
@@ -33,6 +33,8 @@
 # If first argument is -c, create a temporary C file,
 # compile it and execute the result.
 
+AWK=awk
+
 if [ $1 = '-c' ] ; then
 	shift
 	ccode=1
@@ -41,9 +43,39 @@ else
 fi
 
 trap "rm -f /tmp/$$.c /tmp/genassym.$$" 0 1 2 3 15
-awk -v ccode=$ccode '
-function defstart()
-{
+
+$AWK '
+BEGIN {
+	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
+	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
+	defining = 0;
+}
+
+$0 ~ /^[ \t]*#.*/ || $0 ~ /^[ \t]*$/ {
+	# Just ignore comments and empty lines
+	next;
+}
+
+/^include[ \t]/ {
+	if (defining != 0) {
+		defining = 0;
+		printf("}\n");
+	}
+	printf("#%s\n", $0);
+	next;
+}
+
+$0 ~ /^if[ \t]/ ||
+$0 ~ /^ifdef[ \t]/ ||
+$0 ~ /^ifndef[ \t]/ ||
+$0 ~ /^else/ ||
+$0 ~ /^elif[ \t]/ ||
+$0 ~ /^endif/ {
+	printf("#%s\n", $0);
+	next;
+}
+
+/^define[ \t]/ {
 	if (defining == 0) {
 		defining = 1;
 		printf("void f" FNR "(void);\n");
@@ -52,45 +84,6 @@ function defstart()
 			call[FNR] = "f" FNR;
 		defining = 1;
 	}
-}
-
-function defend()
-{
-	if (defining != 0) {
-		defining = 0;
-		printf("}\n");
-	}
-}
-
-BEGIN {
-	printf("#ifndef _KERNEL\n#define _KERNEL\n#endif\n");
-	printf("#define	offsetof(type, member) ((size_t)(&((type *)0)->member))\n");
-	defining = 0;
-}
-
-/^[ \t]*#.*/ || /^[ \t]*$/ {
-	# Just ignore comments and empty lines
-	next;
-}
-
-/^include[ \t]/ {
-	defend();
-	printf("#%s\n", $0);
-	next;
-}
-
-/^if[ \t]/ ||
-/^ifdef[ \t]/ ||
-/^ifndef[ \t]/ ||
-/^else/ ||
-/^elif[ \t]/ ||
-/^endif/ {
-	printf("#%s\n", $0);
-	next;
-}
-
-/^define[ \t]/ {
-	defstart();
 	value = $0
 	gsub("^define[ \t]+[A-Za-z_][A-Za-z_0-9]*[ \t]+", "", value)
 	if (ccode)
@@ -110,8 +103,12 @@ BEGIN {
 	printf("syntax error in line %d\n", FNR) >"/dev/stderr";
 	exit(1);
 }
+
 END {
-	defend();
+	if (defining != 0) {
+		defining = 0;
+		printf("}\n");
+	}
 	if (ccode) {
 		printf("int main(int argc, char **argv) {");
 		for (i in call)
@@ -119,7 +116,8 @@ END {
 		printf("return(0); }\n");
 	}
 }
-' >/tmp/$$.c || exit 1
+' ccode=$ccode > /tmp/$$.c || exit 1
+
 if [ $ccode = 1 ] ; then
 	"$@" /tmp/$$.c -o /tmp/genassym.$$ && /tmp/genassym.$$
 else
