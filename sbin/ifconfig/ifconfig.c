@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.92 2000/12/12 04:08:40 thorpej Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.93 2000/12/12 20:27:42 onoe Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.92 2000/12/12 04:08:40 thorpej Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.93 2000/12/12 20:27:42 onoe Exp $");
 #endif
 #endif /* not lint */
 
@@ -2894,17 +2894,13 @@ usage()
 		"interface\n"
 		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] "
 		"[ netmask mask ] ]\n"
-		"\t[ metric n ]\n"
-		"\t[ mtu n ]\n"
-		"\t[ nwid network_id ]\n"
-		"\t[ nwkey network_key | -nwkey ]\n"
-		"\t[ [ af ] tunnel src_addr dest_addr ]\n"
-		"\t[ deletetunnel ]\n"
+		"\t[ metric n ] [ mtu n ]\n"
+		"\t[ nwid network_id ] [ nwkey network_key | -nwkey ]\n"
+		"\t[ powersave | -powersave ] [ powersavesleep duration ]\n"
+		"\t[ [ af ] tunnel src_addr dest_addr ] [ deletetunnel ]\n"
 		"\t[ arp | -arp ]\n"
-		"\t[ media mtype ]\n"
-		"\t[ mediaopt mopts ]\n"
-		"\t[ -mediaopt mopts ]\n"
-		"\t[ instance minst ]\n"
+		"\t[ media type ] [ mediaopt opts ] [ -mediaopt opts ] "
+		"[ instance minst ]\n"
 		"\t[ vlan n vlanif i ]\n"
 		"\t[ link0 | -link0 ] [ link1 | -link1 ] [ link2 | -link2 ]\n"
 		"       %s -a [ -A ] [ -m ] [ -d ] [ -u ] [ af ]\n"
