@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.1 2003/05/18 22:11:32 martin Exp $ */
+/*	$NetBSD: kgdb_machdep.c,v 1.2 2003/06/19 14:08:54 agc Exp $ */
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -321,7 +321,7 @@ kgdb_getregs(regs, gdb_regs)
 	kgdb_copy((caddr_t)&tf->tf_global[1], (caddr_t)&gdb_regs[1], 15 * 8);
 
 	/* %l0..%l7 and %i0..%i7: from stack */
-	kgdb_copy((caddr_t)tf->tf_out[6], (caddr_t)&gdb_regs[GDB_L0], 16 * 8);
+	kgdb_copy((caddr_t)(long)tf->tf_out[6], (caddr_t)&gdb_regs[GDB_L0], 16 * 8);
 
 	/* %f0..%f31 -- fake, kernel does not use FP */
 	kgdb_zero((caddr_t)&gdb_regs[GDB_FP0], 32 * 8);
@@ -342,7 +342,7 @@ kgdb_setregs(regs, gdb_regs)
 	struct trapframe64 *tf = &regs->ddb_tf;
 
 	kgdb_copy((caddr_t)&gdb_regs[1], (caddr_t)&tf->tf_global[1], 15 * 8);
-	kgdb_copy((caddr_t)&gdb_regs[GDB_L0], (caddr_t)tf->tf_out[6], 16 * 8);
+	kgdb_copy((caddr_t)&gdb_regs[GDB_L0], (caddr_t)(long)tf->tf_out[6], 16 * 8);
 	tf->tf_pc = gdb_regs[GDB_PC];
 	tf->tf_npc = gdb_regs[GDB_NPC];
 }
