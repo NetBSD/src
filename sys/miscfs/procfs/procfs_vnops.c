@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.84 2001/11/06 07:20:37 simonb Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.85 2001/11/10 13:33:44 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -42,6 +42,9 @@
 /*
  * procfs vnode interface
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.85 2001/11/10 13:33:44 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
