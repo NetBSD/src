@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.220 2003/03/05 16:47:03 tron Exp $
+#	$NetBSD: NetBSD.dist,v 1.221 2003/03/24 15:21:18 atatat Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -836,6 +836,7 @@
 ./var/run
 ./var/rwho
 ./var/spool
+./var/spool/clientmqueue	uname=smmsp gname=smmsp mode=0770
 ./var/spool/ftp
 ./var/spool/ftp/bin
 ./var/spool/ftp/etc

@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.68 2003/01/08 15:34:18 perry Exp $
+#	$NetBSD: special,v 1.69 2003/03/24 15:21:18 atatat Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # Hand-crafted mtree specification for the dangerous files.
@@ -304,6 +304,7 @@
 ./var/run/utmp			type=file mode=0664 gname=utmp tags=exclude
 ./var/run/utmpx			type=file mode=0664 gname=utmp tags=exclude
 ./var/spool			type=dir  mode=0755
+./var/spool/clientmqueue	type=dir  mode=0770 uname=smmsp gname=smmsp
 ./var/spool/ftp			type=dir  mode=0755 optional
 ./var/spool/ftp/bin		type=dir  mode=0755 optional
 ./var/spool/ftp/bin/ls		type=file mode=0555 optional
