@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 1999/02/24 02:58:42 itohy Exp $
+#	$NetBSD: Makefile,v 1.27 1999/02/24 17:48:42 drochner Exp $
 
 MKLINKLIB=no
 MKMAN=	no
@@ -11,8 +11,8 @@ LIB=	cc1
 YHEADER=1
 
 # GNU (gcc,gas) uses "mips" as arch-dependent filename for mipsel and mipseb
-.if (${MACHINE_ARCH} == "mips")
-GCC_ARCH?=	${MACHINE_ARCH}
+.if ${MACHINE_ARCH} == "mipsel" || ${MACHINE_ARCH} == "mipseb"
+GCC_ARCH?=	mips
 .elif (${MACHINE_ARCH} == "sparc64")
 GCC_ARCH?=	sparc
 .else
