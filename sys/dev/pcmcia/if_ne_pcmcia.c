@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.129 2004/08/10 05:24:56 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.130 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.129 2004/08/10 05:24:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.130 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -586,11 +586,8 @@ ne_pcmcia_attach(parent, self, aux)
 	}
 
 	error = ne_pcmcia_enable(dsc);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	/* Set up power management hooks. */
 	dsc->sc_enable = ne_pcmcia_enable;
@@ -749,11 +746,8 @@ ne_pcmcia_enable(dsc)
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
 	    dsc);
-	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt\n",
-		    dsc->sc_dev.dv_xname);
+	if (!psc->sc_ih)
 		goto fail_1;
-	}
 
 	if (pcmcia_function_enable(psc->sc_pf))
 		goto fail_2;

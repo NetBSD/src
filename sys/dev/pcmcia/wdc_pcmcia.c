@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.78 2004/08/10 06:10:38 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.79 2004/08/10 15:29:56 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.78 2004/08/10 06:10:38 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.79 2004/08/10 15:29:56 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -293,11 +293,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	error = wdc_pcmcia_enable(self, 1);
-	if (error) {
-		aprint_error("%s: enable failed, error=%d\n", self->dv_xname,
-		    error);
+	if (error)
 		goto fail;
-	}
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
 		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
@@ -362,6 +359,7 @@ wdc_pcmcia_enable(self, onoff)
 	int onoff;
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
+	int error;
 
 	if (onoff) {
 		/*
@@ -377,17 +375,13 @@ wdc_pcmcia_enable(self, onoff)
 			/* Establish the interrupt handler. */
 			sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 			    wdcintr, &sc->wdc_channel);
-			if (sc->sc_ih == NULL) {
-				printf("%s: couldn't establish interrupt handler\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
+			if (!sc->sc_ih)
 				return (EIO);
-			}
 
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
+			error = pcmcia_function_enable(sc->sc_pf);
+			if (error) {
 				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
+				return (error);
 			}
 		}
 	} else {

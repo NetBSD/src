@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.24 2004/08/10 08:56:08 mycroft Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.25 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.24 2004/08/10 08:56:08 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.25 2004/08/10 15:29:56 mycroft Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -204,6 +204,7 @@ mhzc_attach(parent, self, aux)
 	struct mhzc_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
+	int error;
 
 	aprint_normal("\n");
 	sc->sc_pf = pa->pf;
@@ -272,10 +273,9 @@ mhzc_attach(parent, self, aux)
 	}
 	sc->sc_flags |= MHZC_ETHERNET_MAPPED;
 
-	if (mhzc_enable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED)) {
-		aprint_error("%s: enable failed\n", self->dv_xname);
+	error = mhzc_enable(sc, MHZC_MODEM_ENABLED|MHZC_ETHERNET_ENABLED);
+	if (error)
 		goto fail;
-	}
 
 	sc->sc_modem = config_found(self, "com", mhzc_print);
 	sc->sc_ethernet = config_found(self, "sm", mhzc_print);
@@ -454,6 +454,7 @@ mhzc_enable(sc, flag)
 	struct mhzc_softc *sc;
 	int flag;
 {
+	int error;
 
 	if ((sc->sc_flags & flag) == flag) {
 		printf("%s: already enabled\n", sc->sc_dev.dv_xname);
@@ -477,15 +478,13 @@ mhzc_enable(sc, flag)
 	 */
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_NET,
 	    mhzc_intr, sc);
-	if (sc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
-		return (1);
-	}
+	if (!sc->sc_ih)
+		return (EIO);
 
-	if (pcmcia_function_enable(sc->sc_pf)) {
+	error = pcmcia_function_enable(sc->sc_pf);
+	if (error) {
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-		return (1);
+		return (error);
 	}
 
 	/*
@@ -519,6 +518,7 @@ mhzc_disable(sc, flag)
 
 	pcmcia_function_disable(sc->sc_pf);
 	pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+	sc->sc_ih = 0;
 }
 
 /*****************************************************************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.54 2004/08/10 05:21:59 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.55 2004/08/10 15:29:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.54 2004/08/10 05:21:59 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.55 2004/08/10 15:29:56 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -441,6 +441,7 @@ pcmcia_function_enable(pf)
 	struct pcmcia_softc *sc = pf->sc;
 	struct pcmcia_function *tmp;
 	int reg;
+	int error;
 
 	if (pf->cfe == NULL)
 		panic("pcmcia_function_enable: function not initialized");
@@ -489,12 +490,14 @@ pcmcia_function_enable(pf)
 	}
 
 	if (tmp == NULL) {
-		if (pcmcia_mem_alloc(pf, PCMCIA_CCR_SIZE, &pf->pf_pcmh))
+		error = pcmcia_mem_alloc(pf, PCMCIA_CCR_SIZE, &pf->pf_pcmh);
+		if (error)
 			goto bad;
 
-		if (pcmcia_mem_map(pf, PCMCIA_MEM_ATTR, pf->ccr_base,
+		error = pcmcia_mem_map(pf, PCMCIA_MEM_ATTR, pf->ccr_base,
 		    PCMCIA_CCR_SIZE, &pf->pf_pcmh, &pf->pf_ccr_offset,
-		    &pf->pf_ccr_window)) {
+		    &pf->pf_ccr_window);
+		if (error) {
 			pcmcia_mem_free(pf, &pf->pf_pcmh);
 			goto bad;
 		}
@@ -563,7 +566,7 @@ pcmcia_function_enable(pf)
 #endif
 	return (0);
 
- bad:
+bad:
 	/*
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
@@ -572,8 +575,9 @@ pcmcia_function_enable(pf)
 		pcmcia_chip_socket_disable(sc->pct, sc->pch);
 	DPRINTF(("%s: --enabled_count = %d\n", sc->dev.dv_xname,
 		 sc->sc_enabled_count));
+	printf("%s: couldn't map the CCR\n", pf->child->dv_xname);
 
-	return (1);
+	return (error);
 }
 
 /* Disable PCMCIA function. */
@@ -712,6 +716,8 @@ pcmcia_intr_establish(pf, ipl, ih_fct, ih_arg)
 
 	pf->pf_ih = pcmcia_chip_intr_establish(pf->sc->pct, pf->sc->pch,
 	    pf, ipl, ih_fct, ih_arg);
+	if (!pf->pf_ih)
+		printf("%s: interrupt establish failed\n", pf->child->dv_xname);
 	return (pf->pf_ih);
 }
 
