@@ -38,7 +38,7 @@
  * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
  *	@(#)locore.s	7.11 (Berkeley) 5/9/91
- *	$Id: locore.s,v 1.33 1994/07/06 04:33:31 chopps Exp $
+ *	$Id: locore.s,v 1.34 1994/07/07 16:56:21 chopps Exp $
  *
  * Original (hp300) Author: unknown, maybe Mike Hibler?
  * Amiga author: Markus Wild
@@ -673,7 +673,7 @@ start:
 
 	| save the passed parameters. `prepass' them on the stack for
 	| later catch by _start_c
-	movl	d3,sp@			| pass AGA mode
+	movl	d3,sp@-			| pass AGA mode
 	movl	a4,sp@-			| pass address of _esym
 	movl	d1,sp@-			| pass chipmem-size
 	movl	d0,sp@-			| pass fastmem-size
