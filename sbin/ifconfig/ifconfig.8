@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ifconfig.8	6.13 (Berkeley) 3/16/91
-.\"	$Id: ifconfig.8,v 1.7 1994/01/14 02:05:58 jtc Exp $
+.\"	$Id: ifconfig.8,v 1.8 1994/01/22 00:29:20 cgd Exp $
 .\"
 .Dd March 16, 1991
 .Dt IFCONFIG 8
@@ -236,7 +236,7 @@ hosts that have made such requests.
 Currently used by Internet protocols only.
 .It Fl trailers
 Disable the use of a ``trailer'' link level encapsulation.
-.It Fl link[0-2]
+.It Cm link[0-2]
 Enable special processing of the link level of the interface.
 These three options are interface specific in actual effect,
 however, they are in general used to select special modes
@@ -244,7 +244,7 @@ of operation. An example of this is to enable SLIP
 compression or to select BNC (thin-net) or the
 AUI port on certain ethernet cards.  Refer to the man
 page for the specific driver for more information.
-.It Fl -link[0-2]
+.It Fl link[0-2]
 Disables special processing at the link level with the
 specified interface.
 .It Cm up
