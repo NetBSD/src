@@ -54,7 +54,6 @@ main()
 	struct trapframe *tf = 0;
 	struct sigframe *sigf = 0;
 	struct uprof *uprof = 0;
-	register unsigned i;
 
 #define	def(N,V)	printf("#define\t%s %d\n", N, V)
 
