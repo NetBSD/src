@@ -1,4 +1,5 @@
 '\" t
+.\" $NetBSD: ksh.Man,v 1.2 2001/04/09 12:33:22 wiz Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -12,8 +13,8 @@
 .\"	  name in built-in commands section?)
 .\"	- need to be consistent about notation for `See section-name', `
 .\"	  See description of foobar command', `See section section-name', etc.
-.\"	- need to use the term `external command' meaning `a command that is 
-.\"       executed using execve(2)' (as opposed to a built-in command or 
+.\"	- need to use the term `external command' meaning `a command that is
+.\"       executed using execve(2)' (as opposed to a built-in command or
 .\"       function) for more clear description.
 .\"}}}
 .\"{{{  Title
@@ -48,7 +49,7 @@ sh \- Public domain Bourne shell
 .\"{{{  Description
 .SH DESCRIPTION
 .ksh(
-\fBksh\fP is a command interpreter that is intended for both 
+\fBksh\fP is a command interpreter that is intended for both
 interactive and shell script use.  Its command language is a superset
 of the \fIsh\fP(1) shell language.
 .ksh)
@@ -550,7 +551,7 @@ and arithmetic substitutions take the form \fB$((\fP\fIexpression\fP\fB))\fP.
 If a substitution appears outside of double quotes, the results of the
 substitution are generally subject to word or field splitting according to
 the current value of the \fBIFS\fP parameter.
-The \fBIFS\fP parameter specifies a list of characters which 
+The \fBIFS\fP parameter specifies a list of characters which
 are used to break a string up into several words;
 any characters from the set space, tab and newline that appear in the
 IFS characters are called \fIIFS white space\fP.
@@ -639,7 +640,7 @@ of parameter substitution (see below).
 .\"{{{  environment
 Parameters with the export attribute (set using the \fBexport\fP or
 \fBtypeset \-x\fP commands, or by parameter assignments followed by simple
-commands) are put in the environment (see \fIenviron\fP(5)) of commands
+commands) are put in the environment (see \fIenviron\fP(7)) of commands
 run by the shell as \fIname\fP\fB=\fP\fIvalue\fP pairs.
 The order in which parameters appear in the environment of a command
 is unspecified.
@@ -742,7 +743,7 @@ Further positional parameters may be accessed using
 .\"}}}
 .\"{{{  *
 .IP \fB*\fP
-All positional parameters (except parameter 0), 
+All positional parameters (except parameter 0),
 \fIi.e.\fP, \fB$1 $2 $3\fP....
 If used outside of double quotes, parameters are separate words
 (which are subjected to word splitting); if used within double quotes,
@@ -1361,7 +1362,7 @@ using \fB>&p\fP and \fB<&p\fP redirections, respectively.
 Once a co-process has been started, another can't be started until
 the co-process exits, or until the co-process input has been redirected using
 an \fBexec \fP\fIn\fP\fB>&p\fP redirection.
-If a co-process's input is redirected in this way, the next 
+If a co-process's input is redirected in this way, the next
 co-process to be started will share the output with the first co-process,
 unless the output of the initial co-process has been redirected using an
 \fBexec \fP\fIn\fP\fB<&p\fP redirection.
@@ -1572,7 +1573,7 @@ assignments, the type of command is determined: a special built-in,
 a function, a regular built-in or the name of a file to execute found
 using the \fBPATH\fP parameter.
 The checks are made in the above order.
-Special built-in commands differ from other commands in that 
+Special built-in commands differ from other commands in that
 the \fBPATH\fP parameter is not used to find them, an error
 during their execution can cause a non-interactive shell to exit and
 parameter assignments that are specified before the command are
@@ -1596,12 +1597,12 @@ break	exec	readonly	shift
 .IP "Additional ksh special commands"
 .TS
 lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB .
-builtin	times	typeset		
+builtin	times	typeset
 .TE
 .IP "Very special commands (non-posix mode)"
 .TS
 lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB .
-alias	readonly	set	typeset	
+alias	readonly	set	typeset
 .TE
 .IP "POSIX regular commands"
 .TS
@@ -1613,8 +1614,8 @@ cd	fc	jobs	true	wait
 .IP "Additional ksh regular commands"
 .TS
 lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB lw(8m)fB .
-[	let	pwd	ulimit	
-echo	print	test	whence	
+[	let	pwd	ulimit
+echo	print	test	whence
 .TE
 .PP
 In the future, the additional ksh special and regular commands may
@@ -1644,9 +1645,9 @@ Without arguments, \fBalias\fP lists all aliases.
 For any name without a value, the existing alias is listed.
 Any name with a value defines an alias (see Aliases above).
 .sp
-When listing aliases, one of two formats is used: 
+When listing aliases, one of two formats is used:
 normally, aliases are listed as \fIname\fP\fB=\fP\fIvalue\fP, where
-\fIvalue\fP is quoted; if options were preceded with \fB+\fP 
+\fIvalue\fP is quoted; if options were preceded with \fB+\fP
 or a lone \fB+\fP is given on the command line, only \fIname\fP
 is printed.
 In addition, if the \fB\-p\fP option is used, each alias
@@ -2284,11 +2285,11 @@ is negated; the test always fails if option doesn't exist (thus
 returns true if and only if option \fIfoo\fP exists).
 T}
 \fIfile\fP \-nt \fIfile\fP	T{
-first \fIfile\fP is newer than second \fIfile\fP or first 
+first \fIfile\fP is newer than second \fIfile\fP or first
 \fIfile\fP exists and the second \fIfile\fP does not.
 T}
 \fIfile\fP \-ot \fIfile\fP	T{
-first \fIfile\fP is older than second \fIfile\fP or second \fIfile\fP 
+first \fIfile\fP is older than second \fIfile\fP or second \fIfile\fP
 exists and the first \fIfile\fP does not.
 T}
 \fIfile\fP \-ef \fIfile\fP	T{
@@ -2801,7 +2802,7 @@ jobs are sent a \fBHUP\fP signal and the shell exits.
 .SS "Interactive Input Line Editing"
 The shell supports three modes of reading command lines from a tty
 in an interactive session.
-Which is used is controlled by the \fBemacs\fP, \fBgmacs\fP and \fBvi\fP 
+Which is used is controlled by the \fBemacs\fP, \fBgmacs\fP and \fBvi\fP
 \fBset\fP options (at most one of these can be set at once).
 If none of these options is enabled, the shell simply reads lines
 using the normal tty driver.
@@ -3121,7 +3122,7 @@ Acts like \fBstuff\fP, then aborts input the same as an interrupt.
 .\"}}}
 .\"{{{  transport-chars ^T
 .IP "\fBtranspose-chars ^T\fP"
-If at the end of line, or if the \fBgmacs\fP option is set, 
+If at the end of line, or if the \fBgmacs\fP option is set,
 this exchanges the two previous characters; otherwise, it
 exchanges the previous and current characters and moves the cursor
 one character to the right.
@@ -3249,10 +3250,10 @@ specified, the last word is inserted.
 insert the comment character (\fB#\fP) at the start of the current line and
 return the line to the shell (equivalent to \fBI#^J\fP).
 .IP "\fIn\fP\fBg\fP"
-like \fBG\fP, except if \fIn\fP is not specified, it goes to the most recent 
+like \fBG\fP, except if \fIn\fP is not specified, it goes to the most recent
 remembered line.
 .IP "\fIn\fP\fBv\fP"
-edit line \fIn\fP using the vi editor; 
+edit line \fIn\fP using the vi editor;
 if \fIn\fP is not specified, the current line is edited.
 The actual command executed is
 `\fBfc \-e ${VISUAL:-${EDITOR:-vi}}\fP \fIn\fP'.
@@ -3272,7 +3273,7 @@ current directory.
 After expansion, the cursor is placed just past the last word and the editor
 is in insert mode.
 .IP "\fIn\fP\fB\e\fP, \fIn\fP\fB^F\fP, \fIn\fP\fB<tab>\fP and \fIn\fP\fB<esc>\fP"
-command/file name completion: 
+command/file name completion:
 replace the current big-word with the longest unique
 match obtained after performing command/file name expansion.
 \fB<tab>\fP is only recognized if the \fBvi-tabcomplete\fP option is set,
@@ -3348,7 +3349,7 @@ move to the \fIn\fPth previous line in the history.
 move to line \fIn\fP in the history; if \fIn\fP is not specified, the
 number first remembered line is used.
 .IP "\fIn\fP\fBg\fP"
-like \fBG\fP, except if \fIn\fP is not specified, it goes to the most recent 
+like \fBG\fP, except if \fIn\fP is not specified, it goes to the most recent
 remembered line.
 .IP "\fIn\fP\fB/\fP\fIstring\fP"
 search backward through the history for the \fIn\fPth line containing
@@ -3449,7 +3450,7 @@ be deleted and a new prompt to be printed.
 .\"Has all vi commands except:
 .\"    movement: { } [[ ]] ^E ^Y ^U ^D ^F ^B H L M ()
 .\"    tag commands: ^T ^]
-.\"    mark commands: m ` ' 
+.\"    mark commands: m ` '
 .\"    named-buffer commands: " @
 .\"    file/shell/ex-commands: Q ZZ ^^ : ! &
 .\"    multi-line change commands: o O J
@@ -3508,7 +3509,7 @@ list of people and their part in the shell's development.
 .\"}}}
 .\"{{{  See also
 .SH "SEE ALSO"
-awk(1), 
+awk(1),
 .ksh(
 sh(1),
 .ksh)
@@ -3518,7 +3519,7 @@ ksh(1),
 csh(1), ed(1), getconf(1), getopt(1), sed(1), stty(1), vi(1),
 dup(2), execve(2), getgid(2), getuid(2), open(2), pipe(2), wait(2),
 getopt(3), rand(3), signal(3), system(3),
-environ(5)
+environ(7)
 .PP
 .IR "The KornShell Command and Programming Language" ,
 Morris Bolsky and David Korn, 1989, ISBN 0-13-516972-0.
