@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2002/03/26 23:10:58 fredette Exp $
+#	$NetBSD: Makefile,v 1.41 2002/03/28 09:58:09 jmc Exp $
 
 REQUIRETOOLS=	yes
 
@@ -21,10 +21,6 @@ GCCARCH=	${TOP}/usr.bin/gcc/arch/${MACHINE_ARCH}
 GCPPFLAGS=	${G_LIBGCC2_CFLAGS} ${G_MAYBE_USE_COLLECT2} ${G_INCLUDES}
 CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-I${DIST}/gcc/cp
-
-.if (${MACHINE_ARCH} == "sparc64")
-CFLAGS+=        -msoft-quad-float
-.endif
 
 LIB2FUNCS=	${G_LIB2FUNCS:=.c}
 .if defined(G_LIB2FUNCS_EH)
