@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.172 2000/05/03 19:19:04 thorpej Exp $	*/
+/*	$NetBSD: com.c,v 1.173 2000/07/06 01:47:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -744,16 +744,13 @@ comopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	int unit = COMUNIT(dev);
 	struct com_softc *sc;
 	struct tty *tp;
 	int s, s2;
 	int error;
- 
-	if (unit >= com_cd.cd_ndevs)
-		return (ENXIO);
-	sc = com_cd.cd_devs[unit];
-	if (sc == 0 || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
+
+	sc = device_lookup(&com_cd, COMUNIT(dev));
+	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 	    sc->sc_rbuf == NULL)
 		return (ENXIO);
 
@@ -895,7 +892,7 @@ comclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	/* XXX This is for cons.c. */
@@ -926,7 +923,7 @@ comread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -941,7 +938,7 @@ comwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -954,7 +951,7 @@ struct tty *
 comtty(dev)
 	dev_t dev;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 
 	return (tp);
@@ -968,7 +965,7 @@ comioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
 	struct tty *tp = sc->sc_tty;
 	int error;
 	int s;
@@ -1308,7 +1305,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 	int ospeed = comspeed(t->c_ospeed, sc->sc_frequency);
 	u_char lcr;
 	int s;
@@ -1535,7 +1532,7 @@ comhwiflow(tp, block)
 	struct tty *tp;
 	int block;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	if (COM_ISALIVE(sc) == 0)
@@ -1592,7 +1589,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int s;
@@ -1663,7 +1660,7 @@ comstop(tp, flag)
 	struct tty *tp;
 	int flag;
 {
-	struct com_softc *sc = com_cd.cd_devs[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(tp->t_dev));
 	int s;
 
 	s = splserial();
@@ -1874,7 +1871,7 @@ comsoft(arg)
 #endif
 
 	for (unit = 0; unit < com_cd.cd_ndevs; unit++) {
-		sc = com_cd.cd_devs[unit];
+		sc = device_lookup(&com_cd, unit);
 		if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK))
 			continue;
 

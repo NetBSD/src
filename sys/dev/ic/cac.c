@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.6 2000/06/13 13:36:46 ad Exp $	*/
+/*	$NetBSD: cac.c,v 1.7 2000/07/06 01:47:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.6 2000/06/13 13:36:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.7 2000/07/06 01:47:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ cac_shutdown(cookie)
 	printf("shutting down cac devices...");
 
 	for (i = 0; i < cac_cd.cd_ndevs; i++) {
-		if ((sc = cac_cd.cd_devs[i]) == NULL)
+		if ((sc = device_lookup(&cac_cd, i)) == NULL)
 			continue; 
 		/* XXX documentation on this is a bit fuzzy. */
 		memset(buf, 0, sizeof (buf));

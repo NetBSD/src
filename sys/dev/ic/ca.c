@@ -1,4 +1,4 @@
-/*	$NetBSD: ca.c,v 1.8 2000/06/20 15:04:50 ad Exp $	*/
+/*	$NetBSD: ca.c,v 1.9 2000/07/06 01:47:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.8 2000/06/20 15:04:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ca.c,v 1.9 2000/07/06 01:47:34 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -224,12 +224,10 @@ caopen(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ca_softc *sc;
-	int unit, part;
+	int part;
 
-	unit = CAUNIT(dev);
-	if (unit >= ca_cd.cd_ndevs)
-		return (ENXIO);
-	if ((sc = ca_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&ca_cd, CAUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & CAF_ENABLED) == 0)
 		return (ENODEV);
@@ -270,11 +268,10 @@ caclose(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ca_softc *sc;
-	int part, unit;
+	int part;
 
-	unit = CAUNIT(dev);
+	sc = device_lookup(&ca_cd, CAUNIT(dev));
 	part = CAPART(dev);
-	sc = ca_cd.cd_devs[unit];
 	calock(sc);
 	
 	switch (fmt) {
@@ -321,11 +318,10 @@ caioctl(dev, cmd, addr, flag, p)
 	struct proc *p;
 {
 	struct ca_softc *sc;
-	int part, unit, error;
+	int part, error;
 
-	unit = CAUNIT(dev);
+	sc = device_lookup(&ca_cd, CAUNIT(dev));
 	part = CAPART(dev);
-	sc = ca_cd.cd_devs[unit];
 	error = 0;
 
 	switch (cmd) {
@@ -394,11 +390,10 @@ castrategy(bp)
 	struct cac_context cc;
 	struct disklabel *lp;
 	struct ca_softc *sc;
-	int part, unit, blkno, flg, cmd;
+	int part, blkno, flg, cmd;
 
-	unit = CAUNIT(bp->b_dev);
+	sc = device_lookup(&ca_cd, CAUNIT(bp->b_dev));
 	part = CAPART(bp->b_dev);
-	sc = ca_cd.cd_devs[unit];
 
 	lp = sc->sc_dk.dk_label;
 
@@ -506,12 +501,10 @@ casize(dev)
 	dev_t dev;
 {
 	struct ca_softc *sc;
-	int part, unit, omask, size;
+	int part, omask, size;
 
-	unit = CAUNIT(dev);
-	if (unit >= ca_cd.cd_ndevs)
-		return (ENXIO);
-	if ((sc = ca_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&ca_cd, CAUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & CAF_ENABLED) == 0)
 		return (ENODEV);
@@ -642,7 +635,7 @@ cadump(dev, blkno, va, size)
 {
 	struct ca_softc *sc;
 	struct disklabel *lp;
-	int unit, part, nsects, sectoff, totwrt, nwrt;
+	int part, nsects, sectoff, totwrt, nwrt;
 	static int dumping;
 
 	/* Check if recursive dump; if so, punt. */
@@ -650,10 +643,8 @@ cadump(dev, blkno, va, size)
 		return (EFAULT);
 	dumping = 1;
 
-	unit = CAUNIT(dev);
-	if (unit >= ca_cd.cd_ndevs)
-		return (ENXIO);
-	if ((sc = ca_cd.cd_devs[unit]) == NULL)
+	sc = device_lookup(&ca_cd, CAUNIT(dev));
+	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_flags & CAF_ENABLED) == 0)
 		return (ENODEV);
