@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.10 1998/08/10 02:43:09 perry Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.11 1998/10/14 12:05:14 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -35,6 +35,7 @@
 #define	ELFSIZE		32
 #endif
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
