@@ -1,6 +1,6 @@
-.\" $NetBSD: mca.4,v 1.8 2001/04/19 08:16:06 jdolecek Exp $
+.\" $NetBSD: dasd.4,v 1.1 2001/04/19 08:16:06 jdolecek Exp $
 .\"
-.\" Copyright (c) 2000 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,76 +31,38 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 28, 2000
-.Dt MCA 4
+.Dd April 19, 2001
+.Dt DASD 4
 .Os
 .Sh NAME
-.Nm mca
-.Nd introduction to machine-independent MCA bus support and drivers
+.Nm dasd
+.Nd
+.Tn IBM
+DASD Storage Interface
+ESDI disk driver
 .Sh SYNOPSIS
-.Cd "mca0 at mainbus?"
+.Cd "dasd* at mca? slot ?"
+.Cd "ed* at dasd?"
+.Sh DESCRIPTION
+The
+.Nm
+driver supports
+.Tn IBM
+.Tn MCA
+ESDI disk controllers and disks, most commonly
+found in
+.Tn IBM
+.Tn PS/2
+machines.
+Supported boards include:
 .Pp
-Machine-dependant; depends on the bus topology and
-.Tn MCA
-bus interface of your system. Typical
-.Tn MCA
-buses are connected directly to the main system bus.
-.Sh INTRODUCTION
-.Nx
-includes a machine-independent
-.Tn MCA
-bus subsystem and several machine-independent
-.Tn MCA
-device drivers.
-.Pp
-.Sh SUPPORTED DEVICES
-.Nx
-includes machine-independent
-.Tn MCA
-drivers, sorted by device type and driver name:
-.Pp
-.\"
-.Ss SCSI controllers
-.Bl -tag -width speaker -offset indent
-.It aha
-Adaptec AHA-1640
-.Tn SCSI
-interface.
+.Bl -tag -width xxxx -offset indent
+.It Tn IBM ESDI Fixed Disk Controller
+.It Tn IBM Integrated ESDI Fixed Disk & Controller
 .El
-.\"
-.Ss Disk and tape controllers
-.Bl -tag -width speaker -offset indent
-.It dasd
-IBM ESDI Fixed Disk Controller
-.El
-.\"
-.Ss Network interfaces
-.Bl -tag -width speaker -offset indent
-.It tr
-TROPIC based token ring interfaces
-.It ate
-Allied-Telesis 1720 ethernet interface cards
-.Pq Em recommended
-.It we
-WD/SMC WD80x3x ethernet interface cards and clones
-.Pq Em recommended
-.It elmc
-3Com EtherLink/MC (3c523) ethernet interface
-.It ep
-3Com EtherLink III 3c529 ethernet interface
-.El
-.\"
 .Sh SEE ALSO
-.Xr aha 4 ,
-.Xr ate 4 ,
-.Xr dasd 4 ,
-.Xr elmc 4 ,
-.Xr ep 4 ,
-.Xr tr 4 ,
-.Xr we 4
-.\"
-.Sh HISTORY
-The machine-independent
-.Tn MCA
-subsystem appeared in
-.Nx 1.5 .
+.Xr intro 4 ,
+.Xr mca 4
+.Sh AUTHOR
+The driver was written by
+.An Jaromir Dolecek Aq jdolecek@NetBSD.org .
