@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.66 1994/11/04 18:35:13 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.67 1994/11/14 23:58:56 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.  All rights reserved.
@@ -100,6 +100,8 @@ isascan(parent, match)
 	ia.ia_iosize = 0x666;
 	ia.ia_maddr = cf->cf_loc[2] - 0xa0000 + atdevbase;
 	ia.ia_msize = cf->cf_loc[3];
+	if (cf->cf_loc[4] == 2)
+		cf->cf_loc[4] = 9;
 	ia.ia_irq = cf->cf_loc[4];
 	ia.ia_drq = cf->cf_loc[5];
 
