@@ -1,4 +1,4 @@
-#	$NetBSD: VOYAGER,v 1.41 1998/09/06 02:37:47 mark Exp $
+#	$NetBSD: VOYAGER,v 1.42 1998/10/05 00:49:14 mark Exp $
 #
 #	VOYAGER - Mark's development kernel
 #
@@ -199,6 +199,9 @@ beep0	at vidc?
 # Audio device
 vidcaudio0	at vidc?
 audio*		at vidcaudio0
+
+# System beep
+sysbeep0	at vidc?
 
 # Podule bus device
 podulebus0	at root
