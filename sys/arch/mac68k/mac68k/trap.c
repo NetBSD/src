@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.71 1999/03/26 23:41:31 mycroft Exp $	*/
+/*	$NetBSD: trap.c,v 1.72 1999/03/27 05:21:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -511,12 +511,14 @@ copyfault:
 
 	case T_SSIR:		/* Software interrupt */
 	case T_SSIR|T_USER:
+#if NZSC > 0
 		if (ssir & SIR_SERIAL) {
 			void zssoft __P((int));
 			siroff(SIR_SERIAL);
 			uvmexp.softs++;
 			zssoft(0);
 		}
+#endif
 		if (ssir & SIR_NET) {
 			void netintr __P((void));
 			siroff(SIR_NET);
