@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.h,v 1.8 2002/09/23 02:35:24 oster Exp $	*/
+/*	$NetBSD: rf_layout.h,v 1.9 2002/09/23 02:40:07 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -69,7 +69,6 @@ struct RF_RaidLayout_s {
 					 * array */
 	RF_SectorCount_t dataSectorsPerStripe;
 	RF_StripeCount_t dataStripeUnitsPerDisk;
-	u_int   bytesPerStripeUnit;
 	RF_StripeCount_t numDataCol;	/* number of SUs of data per stripe
 					 * (name here is a la RAID4) */
 	RF_StripeCount_t numParityCol;	/* number of SUs of parity per stripe.

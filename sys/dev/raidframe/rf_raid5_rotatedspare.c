@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.6 2001/11/13 07:11:16 lukem Exp $	*/
+/*	$NetBSD: rf_raid5_rotatedspare.c,v 1.7 2002/09/23 02:40:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.6 2001/11/13 07:11:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid5_rotatedspare.c,v 1.7 2002/09/23 02:40:09 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -88,7 +88,6 @@ rf_ConfigureRAID5_RS(
 
 	/* fill in the remaining layout parameters */
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = raidPtr->numCol - 2;
 	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numParityCol = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid0.c,v 1.6 2001/11/13 07:11:16 lukem Exp $	*/
+/*	$NetBSD: rf_raid0.c,v 1.7 2002/09/23 02:40:09 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ***************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.6 2001/11/13 07:11:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_raid0.c,v 1.7 2002/09/23 02:40:09 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -77,7 +77,6 @@ rf_ConfigureRAID0(
 	raidPtr->totalSectors = layoutPtr->stripeUnitsPerDisk * raidPtr->numCol * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
 	layoutPtr->dataSectorsPerStripe = raidPtr->numCol * layoutPtr->sectorsPerStripeUnit;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = raidPtr->numCol;
 	layoutPtr->numParityCol = 0;
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.c,v 1.13 2002/09/14 17:53:58 oster Exp $	*/
+/*	$NetBSD: rf_paritylogging.c,v 1.14 2002/09/23 02:40:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.13 2002/09/14 17:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogging.c,v 1.14 2002/09/23 02:40:08 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -126,8 +126,6 @@ rf_ConfigureParityLogging(
 
 	/* fill in the remaining layout parameters */
 	layoutPtr->numStripe = layoutPtr->stripeUnitsPerDisk;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << 
-		raidPtr->logBytesPerSector;
 	layoutPtr->numParityCol = 1;
 	layoutPtr->numParityLogCol = 1;
 	layoutPtr->numDataCol = raidPtr->numCol - layoutPtr->numParityCol - 

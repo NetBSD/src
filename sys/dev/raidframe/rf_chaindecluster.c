@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_chaindecluster.c,v 1.8 2001/11/13 07:11:12 lukem Exp $	*/
+/*	$NetBSD: rf_chaindecluster.c,v 1.9 2002/09/23 02:40:08 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.8 2001/11/13 07:11:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_chaindecluster.c,v 1.9 2002/09/23 02:40:08 oster Exp $");
 
 #include "rf_archs.h"
 
@@ -95,7 +95,6 @@ rf_ConfigureChainDecluster(
 	info->stripeUnitsPerSparingRegion = raidPtr->numCol * (raidPtr->numCol - 1);
 	info->mirrorStripeOffset = info->numSparingRegions * (raidPtr->numCol - 1);
 	layoutPtr->numStripe = info->numSparingRegions * info->stripeUnitsPerSparingRegion;
-	layoutPtr->bytesPerStripeUnit = layoutPtr->sectorsPerStripeUnit << raidPtr->logBytesPerSector;
 	layoutPtr->numDataCol = 1;
 	layoutPtr->dataSectorsPerStripe = layoutPtr->numDataCol * layoutPtr->sectorsPerStripeUnit;
 	layoutPtr->numParityCol = 1;
