@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.49 1996/02/16 18:06:19 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.50 1996/02/20 22:05:38 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -489,9 +489,11 @@ void sun3_vm_init(kehp)
 
 	/*
 	 * Clear-out pmegs left in DVMA space by the PROM.
+	 * DO NOT kill the last one! (owned by the PROM!)
 	 */
-	va = sun3_trunc_seg(DVMA_SEGMAP_BASE);
-	while (va < DVMA_SEGMAP_END) {
+	va  = sun3_trunc_seg(DVMA_SPACE_START);
+	eva = sun3_trunc_seg(DVMA_SPACE_END);  /* Yes trunc! */
+	while (va < eva) {
 		set_segmap(va, SEGINV);
 		va += NBSG;
 	}

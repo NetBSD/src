@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.69 1996/02/13 19:40:22 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70 1996/02/20 22:05:34 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -220,19 +220,20 @@ allocsys(v)
  * kernel memory allocator is ready for use, but before
  * the creation of processes 1,2, and mountroot, etc.
  */
-void cpu_startup()
+void
+cpu_startup()
 {
 	caddr_t v;
 	int sz, i;
 	vm_size_t size;	
 	int base, residual;
 	vm_offset_t minaddr, maxaddr;
-	
+
 	/*
 	 * The msgbuf was set up earlier (in sun3_startup.c)
 	 * just because it was more convenient to do there.
 	 */
-	
+
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -292,10 +293,11 @@ void cpu_startup()
 				 16*NCARGS, TRUE);
 
 	/*
-	 * Allocate a submap for physio
+	 * We don't use a submap for physio, and use a separate map
+	 * for DVMA allocations.  Our vmapbuf just maps pages into
+	 * the kernel map (any kernel mapping is OK) and then the
+	 * device drivers clone the kernel mappings into DVMA space.
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
 
 	/*
 	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
