@@ -1,4 +1,4 @@
-/* $NetBSD: swapgeneric.c,v 1.2 1996/03/27 22:42:30 mark Exp $ */
+/* $NetBSD: swapgeneric.c,v 1.3 1996/08/29 22:03:53 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -46,8 +46,6 @@
 #include <sys/device.h>
 
 dev_t   rootdev = NODEV;
-dev_t   swapdev = NODEV;
-dev_t   argdev = NODEV;
 dev_t   dumpdev = NODEV;
 int     nswap;
 struct  swdevt swdevt[] = {
