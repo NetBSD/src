@@ -1,20 +1,9 @@
-# $NetBSD: Makefile,v 1.11 1999/04/05 03:02:00 cgd Exp $
+# $NetBSD: Makefile,v 1.12 1999/04/05 05:07:04 cgd Exp $
 
-.include <bsd.own.mk>
-
-PROG=	installboot
-BINDIR=	/usr/mdec
-
-WARNS?=	1
+PROG=	installboot.old
 
 .PATH:	${.CURDIR}/../../../../../sbin/disklabel
-
 SRCS=	installboot.c cd9660.c dkcksum.c
-
-MKMAN=	no
-
-CFLAGS+= -g -I${.CURDIR}/../..
-LDSTATIC?=-static
 
 LDADD+=	-lutil
 DPADD+= ${LIBUTIL}
