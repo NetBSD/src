@@ -1,5 +1,7 @@
 # $FreeBSD: src/gnu/usr.bin/groff/font/devlj4/Makefile,v 1.1 2001/04/17 12:36:48 ru Exp $
 
+DIST_SUBDIR=	font/devlj4
+
 DEV=		lj4
 LJ4RES=		600
 LJ4PRINT=	${PSPRINT}

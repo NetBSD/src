@@ -2,6 +2,7 @@
 
 BINDIR?=	/usr/bin
 SHELL=		/bin/sh
+ECHO=		echo
 
 # Define `page' to be letter if your PostScript printer uses 8.5x11
 # paper (USA) and define it to be A4, if it uses A4 paper (rest of the
@@ -65,19 +66,20 @@ indexname=Ind
 ########################################################################
 # Libraries
 
-# Bad assumption, if one exists they all exist
-.if exists(${.OBJDIR}/${TOPREL}/src/libs/libgroff)
-LIBGROFF=	${.OBJDIR}/${TOPREL}/src/libs/libgroff/libgroff.a
-LIBDRIVER=	${.OBJDIR}/${TOPREL}/src/libs/libdriver/libdriver.a
-LIBBIB=		${.OBJDIR}/${TOPREL}/src/libs/libbib/libbib.a
-.else
-LIBGROFF=	${.CURDIR}/${TOPREL}/src/libs/libgroff/libgroff.a
-LIBDRIVER=	${.CURDIR}/${TOPREL}/src/libs/libdriver/libdriver.a
-LIBBIB=		${.CURDIR}/${TOPREL}/src/libs/libbib/libbib.a
+.include <bsd.own.mk>
+
+.ifndef LIBGROFF
+LIBGROFFDIR!=cd ${NETBSDSRCDIR}/gnu/usr.bin/groff/src/libs/libgroff && ${PRINTOBJDIR}
+LIBDRIVERDIR!=cd ${NETBSDSRCDIR}/gnu/usr.bin/groff/src/libs/libdriver && ${PRINTOBJDIR}
+LIBBIBDIR!=cd ${NETBSDSRCDIR}/gnu/usr.bin/groff/src/libs/libbib && ${PRINTOBJDIR}
+
+LIBGROFF=       ${LIBGROFFDIR}/libgroff.a
+LIBDRIVER=      ${LIBDRIVERDIR}/libdriver.a
+LIBBIB=         ${LIBBIBDIR}/libbib.a
 .endif
 
 CFLAGS+=	-DHAVE_CONFIG_H
-CFLAGS+=	-I${GROFF_DIST}/src/include -I${.CURDIR}/${TOPREL}/src/include
+CFLAGS+=	-I${GROFF_DIST}/src/include -I${NETBSDSRCDIR}/gnu/usr.bin/groff/src/include
 CXXFLAGS+=	-fno-rtti -fno-exceptions
 
 .y.o:
@@ -139,8 +141,7 @@ revision=`sed -e 's/^0$$//' -e 's/^[1-9].*$$/.&/' $(GROFF_DIST)/REVISION`
 	     -e "s|@g@|$(g)|g" \
 	     ${.IMPSRC} >${.TARGET}
 
-TOPREL?=	..
-GROFF_DIST=	${.CURDIR}/${TOPREL}/../../../contrib/groff
+GROFF_DIST=	${NETBSDSRCDIR}/gnu/dist/groff
 DIST_SUBDIR?=	${.CURDIR:T}
 DIST_DIR=	${GROFF_DIST}/${DIST_SUBDIR}
 .PATH: ${DIST_DIR}
