@@ -191,9 +191,9 @@ changequote([,])dnl
       i386-*-beospe*)       fmt=coff em=pe bfd_gas=yes ;;
       i386-*-beoself* | i386-*-beos*) fmt=elf bfd_gas=yes ;;
       i386-*-bsd*)          fmt=aout em=386bsd ;;
-      i386-*-netbsd0.8)     fmt=aout em=386bsd ;;
       i386-*-netbsdelf*)    fmt=elf em=nbsd bfd_gas=yes ;;
-      i386-*-netbsd* | i386-*-openbsd*) fmt=aout em=nbsd bfd_gas=yes ;;
+      i386-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
+      i386-*-openbsd*)      fmt=aout em=nbsd bfd_gas=yes;;
       i386-*-linux*aout* | i386-*-linuxoldld)   fmt=aout em=linux ;;
       i386-*-linux*coff*)   fmt=coff em=linux ;;
       i386-*-linux-gnu*)    fmt=elf em=linux bfd_gas=yes ;;
@@ -264,7 +264,8 @@ changequote([,])dnl
       m68k-*-gnu*)	    fmt=elf ;;
       m68k-*-lynxos*)       fmt=coff em=lynx ;;
       m68k-*-netbsdelf*)    fmt=elf em=nbsd bfd_gas=yes ;;
-      m68k-*-netbsd* | m68k-*-openbsd*) fmt=aout em=nbsd bfd_gas=yes ;;
+      m68k-*-netbsd*)       fmt=aout em=nbsd bfd_gas=yes ;;
+      m68k-*-openbsd*)      fmt=aout em=nbsd bfd_gas=yes ;;
       m68k-apple-aux*)      fmt=coff em=aux ;;
       m68k-*-psos*)         fmt=elf em=psos;;
 
@@ -275,8 +276,7 @@ changequote([,])dnl
       mcore-*-pe)	    fmt=coff em=pe bfd_gas=yes ;;
 
       # don't change em like *-*-bsd does
-      mipseb-*-netbsd*)	    fmt=elf endian=big ;;
-      mipsel-*-netbsd*)	    fmt=elf endian=little ;;
+      mips-*-netbsd*)       fmt=elf ;;
       mips-dec-openbsd*)    fmt=elf endian=little ;;
       mips-dec-bsd*)        fmt=aout endian=little ;;
       mips-sony-bsd*)       fmt=ecoff ;;
@@ -305,6 +305,7 @@ changequote([,])dnl
 		            fmt=coff em=pe ;;
       ppc-*-aix*)           fmt=coff ;;
       ppc-*-beos*)          fmt=coff ;;
+      ppc-*-netbsd*)        fmt=elf em=nbsd ;;
       ppc-*-*bsd* | ppc-*-elf* | ppc-*-eabi* | ppc-*-sysv4*)
 			    fmt=elf ;;
       ppc-*-linux-gnu*)	    fmt=elf
@@ -336,7 +337,8 @@ changequote([,])dnl
       sh-*-rtems*)          fmt=coff ;;
 
       ns32k-pc532-mach* | ns32k-pc532-ux*)    fmt=aout em=pc532mach ;;
-      ns32k-pc532-netbsd* | ns32k-pc532-lites*)  fmt=aout em=nbsd532 ;;
+      ns32k-pc532-lites*)   fmt=aout em=nbsd532 ;;
+      ns32k-*-netbsd*)      fmt=aout em=nbsd532 ;;
       ns32k-pc532-openbsd*) fmt=aout em=nbsd532 ;;
 
       sparc-*-rtemsaout*)   fmt=aout ;;
@@ -354,8 +356,8 @@ changequote([,])dnl
 			    fmt=elf ;;
       sparc-*-netbsdelf*)   fmt=elf em=nbsd bfd_gas=yes ;;
       sparc-*-netbsd*)      case ${cpu} in
-                            sparc) fmt=aout ;;
-                            sparc64) fmt=elf ;;
+                                sparc) fmt=aout ;;
+                                sparc64) fmt=elf ;;
                             esac
                             em=nbsd bfd_gas=yes ;;
       sparc-*-openbsd*)     fmt=aout em=nbsd ;;
@@ -371,8 +373,7 @@ changequote([,])dnl
       v850e-*-*)	    fmt=elf bfd_gas=yes ;;
       v850ea-*-*)	    fmt=elf bfd_gas=yes ;;
 
-      vax-*-netbsd*)
-			    fmt=aout em=nbsd ;;
+      vax-*-netbsd*)        fmt=aout em=nbsd ;;
       vax-*-bsd* | vax-*-ultrix*)
 			    fmt=aout ;;
       vax-*-vms)            fmt=vms ;;
