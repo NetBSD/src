@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.6.10.1 1997/05/13 02:56:04 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.6.10.2 1997/05/18 23:40:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@ void	isa_intr_disestablish __P((isa_chipset_tag_t ic, void *handler));
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
  * BY PORTABLE CODE.
  */
+
+extern struct i386_bus_dma_tag isa_bus_dma_tag;
 
 /*
  * Cookie used by ISA dma.  A pointer to one of these it stashed in
