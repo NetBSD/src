@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,20 +32,19 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)setup.c	5.33 (Berkeley) 2/22/91";*/
-static char rcsid[] = "$Id: setup.c,v 1.9 1994/04/25 18:33:42 cgd Exp $";
+/*static char sccsid[] = "from: @(#)setup.c	8.2 (Berkeley) 2/21/94";*/
+static char *rcsid = "$Id: setup.c,v 1.10 1994/06/08 19:00:32 mycroft Exp $";
 #endif /* not lint */
 
 #define DKTYPENAMES
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/file.h>
-#include <sys/mount.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,22 +55,7 @@ struct bufarea asblk;
 #define altsblock (*asblk.b_un.b_fs)
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
-/*
- * The size of a cylinder group is calculated by CGSIZE. The maximum size
- * is limited by the fact that cylinder groups are at most one block.
- * Its size is derived from the size of the maps maintained in the 
- * cylinder group and the (struct cg) size.
- */
-#define CGSIZE(fs) \
-    /* base cg */	(sizeof(struct cg) + \
-    /* blktot size */	(fs)->fs_cpg * sizeof(long) + \
-    /* blks size */	(fs)->fs_cpg * (fs)->fs_nrpos * sizeof(short) + \
-    /* inode map */	howmany((fs)->fs_ipg, NBBY) + \
-    /* block map */	howmany((fs)->fs_cpg * (fs)->fs_spc / NSPF(fs), NBBY))
-
-char	*index();
 struct	disklabel *getdisklabel();
-char	*getmntdev();
 
 setup(dev)
 	char *dev;
@@ -79,47 +63,17 @@ setup(dev)
 	long cg, size, asked, i, j;
 	long bmapsize;
 	struct disklabel *lp;
-	struct stat statb, statb2;
+	off_t sizepb;
+	struct stat statb;
 	struct fs proto;
-	char path2[MAXPATHLEN];
-	char *dev2;
 
 	havesb = 0;
+	fswritefd = -1;
 	if (stat(dev, &statb) < 0) {
 		printf("Can't stat %s: %s\n", dev, strerror(errno));
 		return (0);
 	}
-	switch (statb.st_mode & S_IFMT) {
-	case S_IFCHR:
-		break;
-	case S_IFDIR:
-		dev2 = getmntdev(dev);
-		if (dev2 != NULL && !strncmp(dev2, "/dev/", 5)) {
-			snprintf(path2, sizeof(path2), "/dev/r%s", dev2 + 5);
-			if (stat(path2, &statb2) == 0 &&
-			    (statb2.st_mode & S_IFMT) == S_IFCHR) {
-				dev = path2;
-				statb = statb2;
-				break;
-			}
-		}
-		pfatal("%s is not a character device", dev);
-		if (reply("CONTINUE") == 0)
-			return (0);
-		break;
-	case S_IFBLK:
-		if (!strncmp(dev, "/dev/", 5)) {
-			sprintf(path2, "/dev/r%s", dev + 5);
-			if (stat(path2, &statb2) == 0 &&
-			    (statb2.st_mode & S_IFMT) == S_IFCHR &&
-			    minor(statb2.st_rdev) == minor(statb.st_rdev)) {
-				dev = path2;
-				statb = statb2;
-				break;
-			}
-		}
-		/* fall through */
-	default:
+	if ((statb.st_mode & S_IFMT) != S_IFCHR) {
 		pfatal("%s is not a character device", dev);
 		if (reply("CONTINUE") == 0)
 			return (0);
@@ -150,14 +104,6 @@ setup(dev)
 		dev_bsize = secsize = lp->d_secsize;
 	else
 		dev_bsize = secsize = DEV_BSIZE;
-#ifdef tahoe
-	/*
-	 * On the tahoe, the disk label and the disk driver disagree.
-	 * The label knows that sectors are 512 bytes, but the disk
-	 * drivers will only transfer in 1024 sized pieces.
-	 */
-	secsize = 1024;
-#endif
 	/*
 	 * Read in the superblock, looking for alternates if necessary
 	 */
@@ -227,64 +173,55 @@ setup(dev)
 			dirty(&asblk);
 		}
 	}
-	if (cvtflag) {
-		if (sblock.fs_postblformat == FS_42POSTBLFMT) {
-			/*
-			 * Requested to convert from old format to new format
-			 */
-			if (preen)
-				pwarn("CONVERTING TO NEW FILE SYSTEM FORMAT\n");
-			else if (!reply("CONVERT TO NEW FILE SYSTEM FORMAT"))
-				return(0);
-			sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
-			sblock.fs_nrpos = 8;
-			sblock.fs_postbloff =
-			    (char *)(&sblock.fs_opostbl[0][0]) -
-			    (char *)(&sblock.fs_link);
-			sblock.fs_rotbloff = &sblock.fs_space[0] -
-			    (u_char *)(&sblock.fs_link);
-			sblock.fs_cgsize =
-				fragroundup(&sblock, CGSIZE(&sblock));
-			/*
-			 * Planning now for future expansion.
-			 */
-#			if (BYTE_ORDER == BIG_ENDIAN)
-				sblock.fs_qbmask.val[0] = 0;
-				sblock.fs_qbmask.val[1] = ~sblock.fs_bmask;
-				sblock.fs_qfmask.val[0] = 0;
-				sblock.fs_qfmask.val[1] = ~sblock.fs_fmask;
-#			endif /* BIG_ENDIAN */
-#			if (BYTE_ORDER == LITTLE_ENDIAN)
-				sblock.fs_qbmask.val[0] = ~sblock.fs_bmask;
-				sblock.fs_qbmask.val[1] = 0;
-				sblock.fs_qfmask.val[0] = ~sblock.fs_fmask;
-				sblock.fs_qfmask.val[1] = 0;
-#			endif /* LITTLE_ENDIAN */
-			sbdirty();
-			dirty(&asblk);
-		} else if (sblock.fs_postblformat == FS_DYNAMICPOSTBLFMT) {
-			/*
-			 * Requested to convert from new format to old format
-			 */
-			if (sblock.fs_nrpos != 8 || sblock.fs_ipg > 2048 ||
-			    sblock.fs_cpg > 32 || sblock.fs_cpc > 16) {
-				printf(
-				"PARAMETERS OF CURRENT FILE SYSTEM DO NOT\n\t");
-				errexit(
-				"ALLOW CONVERSION TO OLD FILE SYSTEM FORMAT\n");
-			}
-			if (preen)
-				pwarn("CONVERTING TO OLD FILE SYSTEM FORMAT\n");
-			else if (!reply("CONVERT TO OLD FILE SYSTEM FORMAT"))
-				return(0);
-			sblock.fs_postblformat = FS_42POSTBLFMT;
-			sblock.fs_cgsize = fragroundup(&sblock,
-			    sizeof(struct ocg) + howmany(sblock.fs_fpg, NBBY));
-			sbdirty();
-			dirty(&asblk);
-		} else {
-			errexit("UNKNOWN FILE SYSTEM FORMAT\n");
+	if (sblock.fs_inodefmt >= FS_44INODEFMT) {
+		newinofmt = 1;
+	} else {
+		sblock.fs_qbmask = ~sblock.fs_bmask;
+		sblock.fs_qfmask = ~sblock.fs_fmask;
+		newinofmt = 0;
+	}
+	/*
+	 * Convert to new inode format.
+	 */
+	if (cvtlevel >= 2 && sblock.fs_inodefmt < FS_44INODEFMT) {
+		if (preen)
+			pwarn("CONVERTING TO NEW INODE FORMAT\n");
+		else if (!reply("CONVERT TO NEW INODE FORMAT"))
+			return(0);
+		doinglevel2++;
+		sblock.fs_inodefmt = FS_44INODEFMT;
+		sizepb = sblock.fs_bsize;
+		sblock.fs_maxfilesize = sblock.fs_bsize * NDADDR - 1;
+		for (i = 0; i < NIADDR; i++) {
+			sizepb *= NINDIR(&sblock);
+			sblock.fs_maxfilesize += sizepb;
 		}
+		sblock.fs_maxsymlinklen = MAXSYMLINKLEN;
+		sblock.fs_qbmask = ~sblock.fs_bmask;
+		sblock.fs_qfmask = ~sblock.fs_fmask;
+		sbdirty();
+		dirty(&asblk);
+	}
+	/*
+	 * Convert to new cylinder group format.
+	 */
+	if (cvtlevel >= 1 && sblock.fs_postblformat == FS_42POSTBLFMT) {
+		if (preen)
+			pwarn("CONVERTING TO NEW CYLINDER GROUP FORMAT\n");
+		else if (!reply("CONVERT TO NEW CYLINDER GROUP FORMAT"))
+			return(0);
+		doinglevel1++;
+		sblock.fs_postblformat = FS_DYNAMICPOSTBLFMT;
+		sblock.fs_nrpos = 8;
+		sblock.fs_postbloff =
+		    (char *)(&sblock.fs_opostbl[0][0]) -
+		    (char *)(&sblock.fs_link);
+		sblock.fs_rotbloff = &sblock.fs_space[0] -
+		    (u_char *)(&sblock.fs_link);
+		sblock.fs_cgsize =
+			fragroundup(&sblock, CGSIZE(&sblock));
+		sbdirty();
+		dirty(&asblk);
 	}
 	if (asblk.b_dirty) {
 		bcopy((char *)&sblock, (char *)&altsblock,
@@ -321,6 +258,12 @@ setup(dev)
 	statemap = calloc((unsigned)(maxino + 1), sizeof(char));
 	if (statemap == NULL) {
 		printf("cannot alloc %u bytes for statemap\n",
+		    (unsigned)(maxino + 1));
+		goto badsb;
+	}
+	typemap = calloc((unsigned)(maxino + 1), sizeof(char));
+	if (typemap == NULL) {
+		printf("cannot alloc %u bytes for typemap\n",
 		    (unsigned)(maxino + 1));
 		goto badsb;
 	}
@@ -384,6 +327,10 @@ readsb(listerr)
 	super *= dev_bsize;
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	sblk.b_bno = super / dev_bsize;
+	if (bflag) {
+		havesb = 1;
+		return (1);
+	}
 	/*
 	 * Set all possible fields that could differ, then do check
 	 * of whole super block against an alternate super block.
@@ -392,10 +339,6 @@ readsb(listerr)
 	getblk(&asblk, cgsblock(&sblock, sblock.fs_ncg - 1), sblock.fs_sbsize);
 	if (asblk.b_errs)
 		return (0);
-	if (bflag) {
-		havesb = 1;
-		return (1);
-	}
 	altsblock.fs_link = sblock.fs_link;
 	altsblock.fs_rlink = sblock.fs_rlink;
 	altsblock.fs_time = sblock.fs_time;
@@ -403,7 +346,6 @@ readsb(listerr)
 	altsblock.fs_cgrotor = sblock.fs_cgrotor;
 	altsblock.fs_fmod = sblock.fs_fmod;
 	altsblock.fs_clean = sblock.fs_clean;
-	altsblock.fs_state = sblock.fs_state;
 	altsblock.fs_ronly = sblock.fs_ronly;
 	altsblock.fs_flags = sblock.fs_flags;
 	altsblock.fs_maxcontig = sblock.fs_maxcontig;
@@ -424,6 +366,10 @@ readsb(listerr)
 	altsblock.fs_interleave = sblock.fs_interleave;
 	altsblock.fs_npsect = sblock.fs_npsect;
 	altsblock.fs_nrpos = sblock.fs_nrpos;
+	altsblock.fs_qbmask = sblock.fs_qbmask;
+	altsblock.fs_qfmask = sblock.fs_qfmask;
+	altsblock.fs_state = sblock.fs_state;
+	altsblock.fs_maxfilesize = sblock.fs_maxfilesize;
 	if (bcmp((char *)&sblock, (char *)&altsblock, (int)sblock.fs_sbsize)) {
 		badsb(listerr,
 		"VALUES IN SUPER BLOCK DISAGREE WITH THOSE IN FIRST ALTERNATE");
@@ -441,7 +387,7 @@ badsb(listerr, s)
 	if (!listerr)
 		return;
 	if (preen)
-		printf("%s: ", devname);
+		printf("%s: ", cdevname);
 	pfatal("BAD SUPER BLOCK: %s\n", s);
 }
 
@@ -518,21 +464,4 @@ getdisklabel(s, fd)
 		errexit("%s: can't read disk label\n", s);
 	}
 	return (&lab);
-}
-
-char *
-getmntdev(name)
-	char *name;
-{
-	long mntsize;
-	register long i;
-	struct statfs *mntbuf;
-	
-	mntsize = getmntinfo(&mntbuf, MNT_NOWAIT);
-	for (i = 0; i < mntsize; i++) {
-		if (!strncmp(mntbuf[i].f_fstypename, MOUNT_UFS, MFSNAMELEN) &&
-		    !strcmp(mntbuf[i].f_mntonname, name))
-			return (mntbuf[i].f_mntfromname);
-	}
-	return ((char *)0);
 }

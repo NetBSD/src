@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.16 (Berkeley) 7/15/92
-#	$Id: Makefile,v 1.13 1993/12/22 10:24:34 cgd Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/5/93
+#	$Id: Makefile,v 1.14 1994/06/08 18:57:30 mycroft Exp $
 
 #	dump.h			header file
 #	itime.c			reads /etc/dumpdates

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,34 +32,39 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)tape.c	5.25 (Berkeley) 7/16/92"; */
-static char *rcsid = "$Id: tape.c,v 1.2 1994/03/09 01:14:43 cgd Exp $";
+/*static char sccsid[] = "from: @(#)tape.c	8.2 (Berkeley) 3/17/94";*/
+static char *rcsid = "$Id: tape.c,v 1.3 1994/06/08 18:57:40 mycroft Exp $";
 #endif /* not lint */
 
-#ifdef sunos
 #include <sys/param.h>
-#include <stdio.h>
-#include <ctype.h>
-#include <sys/stat.h>
-#include <ufs/fs.h>
-#else
-#include <sys/param.h>
-#include <sys/wait.h>
-#include <ufs/fs.h>
-#endif
+#include <sys/socket.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <signal.h>
-#include <fcntl.h>
+#include <sys/wait.h>
+#ifdef sunos
+#include <sys/vnode.h>
+
+#include <ufs/fs.h>
+#include <ufs/inode.h>
+#else
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
+#endif
+
 #include <protocols/dumprestore.h>
+
 #include <errno.h>
+#include <fcntl.h>
 #include <setjmp.h>
+#include <signal.h>
+#include <stdio.h>
 #ifdef __STDC__
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#else
+int	write(), read();
 #endif
-#include <sys/socket.h>
+
 #include "dump.h"
 #include "pathnames.h"
 
@@ -72,13 +77,13 @@ extern	int ntrec;		/* blocking factor on tape */
 extern	int cartridge;
 extern	char *host;
 char	*nexttape;
-#ifdef RDUMP
-int	rmtopen(), rmtwrite();
-void	rmtclose();
-#endif
-void	rollforward();
-int	atomic();
-void	doslave(), enslave(), flushtape(), killall();
+
+static	int atomic __P((int (*)(), int, char *, int));
+static	void doslave __P((int, int));
+static	void enslave __P((void));
+static	void flushtape __P((void));
+static	void killall __P((void));
+static	void rollforward __P((void));
 
 /*
  * Concurrent dump mods (Caltech) - disk block reading and tape writing
@@ -229,14 +234,11 @@ sigpipe(signo)
 	quit("Broken pipe\n");
 }
 
-void
+static void
 flushtape()
 {
 	int i, blks, got;
 	long lastfirstrec;
-#ifndef __STDC__
-	int write(), read();
-#endif
 
 	int siz = (char *)nextblock - (char *)slp->req;
 
@@ -403,6 +405,7 @@ rollforward()
 		 * For each request in the current slave, copy it to tslp. 
 		 */
 
+		prev = NULL;
 		for (p = slp->req; p->count > 0; p += p->count) {
 			*q = *p;
 			if (p->dblk == 0)
@@ -410,6 +413,8 @@ rollforward()
 			prev = q;
 			q += q->count;
 		}
+		if (prev == NULL)
+			quit("rollforward: protocol botch");
 		if (prev->dblk != 0)
 			prev->count -= 1;
 		else
@@ -502,7 +507,6 @@ startnewtape(top)
 	char	*p;
 #ifdef sunos
 	void	(*interrupt_save)();
-	char	*index();
 #else
 	sig_t	interrupt_save;
 #endif
@@ -510,7 +514,7 @@ startnewtape(top)
 	interrupt_save = signal(SIGINT, SIG_IGN);
 	parentpid = getpid();
 
-    restore_check_point:
+restore_check_point:
 	(void)signal(SIGINT, interrupt_save);
 	/*
 	 *	All signals are inherited...
@@ -531,7 +535,7 @@ startnewtape(top)
 #ifdef TDEBUG
 		msg("Tape: %d; parent process: %d child process %d\n",
 			tapeno+1, parentpid, childpid);
-#endif TDEBUG
+#endif /* TDEBUG */
 		while ((waitpid = wait(&status)) != childpid)
 			msg("Parent %d waiting for child %d has another child %d return\n",
 				parentpid, childpid, waitpid);
@@ -556,7 +560,7 @@ startnewtape(top)
 					childpid, status);
 				break;
 		}
-#endif TDEBUG
+#endif /* TDEBUG */
 		switch(status) {
 			case X_FINOK:
 				Exit(X_FINOK);
@@ -574,7 +578,7 @@ startnewtape(top)
 		sleep(4);	/* allow time for parent's message to get out */
 		msg("Child on Tape %d has parent %d, my pid = %d\n",
 			tapeno+1, parentpid, getpid());
-#endif TDEBUG
+#endif /* TDEBUG */
 		/*
 		 * If we have a name like "/dev/rmt0,/dev/rmt1",
 		 * use the name before the comma first, and save
@@ -584,7 +588,7 @@ startnewtape(top)
 		if (nexttape || index(tape, ',')) {
 			if (nexttape && *nexttape)
 				tape = nexttape;
-			if (p = index(tape, ',')) {
+			if ((p = index(tape, ',')) != NULL) {
 				*p = '\0';
 				nexttape = p + 1;
 			} else
@@ -645,15 +649,15 @@ dumpabort(signo)
 	Exit(X_ABORT);
 }
 
-void
+__dead void
 Exit(status)
 	int status;
 {
 
 #ifdef TDEBUG
 	msg("pid = %d exits with status %d\n", getpid(), status);
-#endif TDEBUG
-	(void) exit(status);
+#endif /* TDEBUG */
+	exit(status);
 }
 
 /*
@@ -730,16 +734,13 @@ killall()
  * file, allowing the following process to lock it and proceed. We
  * get the lock back for the next cycle by swapping descriptors.
  */
-void
+static void
 doslave(cmd, slave_number)
 	register int cmd;
         int slave_number;
 {
 	register int nread;
 	int nextslave, size, wrote, eot_count;
-#ifndef __STDC__
-	int read();
-#endif
 
 	/*
 	 * Need our own seek pointer.
@@ -845,10 +846,11 @@ doslave(cmd, slave_number)
  * or a write may not write all we ask if we get a signal,
  * loop until the count is satisfied (or error).
  */
-int
+static int
 atomic(func, fd, buf, count)
-	int (*func)(), fd, count;
+	int (*func)(), fd;
 	char *buf;
+	int count;
 {
 	int got, need = count;
 

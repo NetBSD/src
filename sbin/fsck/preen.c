@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +32,12 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)preen.c	5.7 (Berkeley) 3/19/91";*/
-static char rcsid[] = "$Id: preen.c,v 1.5 1994/04/25 18:29:01 cgd Exp $";
+/*static char sccsid[] = "from: @(#)preen.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: preen.c,v 1.6 1994/06/08 19:00:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
-#include <sys/time.h>
 #include <sys/wait.h>
 #include <fstab.h>
 #include <string.h>

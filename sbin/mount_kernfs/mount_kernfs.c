@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
- * Copyright (c) 1992, 1993
+ * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -33,21 +33,36 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	from: @(#)mount_kernfs.c	8.1 (Berkeley) 6/5/93
- *	$Id: mount_kernfs.c,v 1.4 1994/01/12 19:11:10 cgd Exp $
  */
+
+#ifndef lint
+char copyright[] =
+"@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n";
+#endif /* not lint */
+
+#ifndef lint
+/*static char sccsid[] = "from: @(#)mount_kernfs.c	8.2 (Berkeley) 3/27/94";*/
+static char *rcsid = "$Id: mount_kernfs.c,v 1.5 1994/06/08 19:15:27 mycroft Exp $";
+#endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mount.h>
 
-#include <errno.h>
+#include <err.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-void usage __P((void));
+#include "mntopts.h"
+
+struct mntopt mopts[] = {
+	MOPT_STDOPTS,
+	{ NULL }
+};
+
+void	usage __P((void));
 
 int
 main(argc, argv)
@@ -57,10 +72,10 @@ main(argc, argv)
 	int ch, mntflags;
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "F:")) != EOF)
-		switch(ch) {
-		case 'F':
-			mntflags = atoi(optarg);
+	while ((ch = getopt(argc, argv, "o:")) != EOF)
+		switch (ch) {
+		case 'o':
+			getmntopts(optarg, mopts, &mntflags);
 			break;
 		case '?':
 		default:
@@ -72,10 +87,8 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL)) {
-		(void)fprintf(stderr, "mount_kernfs: %s\n", strerror(errno));
-		exit(1);
-	}
+	if (mount(MOUNT_KERNFS, argv[1], mntflags, NULL))
+		err(1, NULL);
 	exit(0);
 }
 
@@ -83,6 +96,6 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: mount_kernfs [ -F fsoptions ] /kern mount_point\n");
+		"usage: mount_kernfs [-o options] /kern mount_point\n");
 	exit(1);
 }

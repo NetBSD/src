@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980, 1988 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,42 +32,39 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)optr.c	5.14 (Berkeley) 7/16/92"; */
-static char *rcsid = "$Id: optr.c,v 1.1 1993/12/22 10:24:50 cgd Exp $";
+/*static char sccsid[] = "from: @(#)optr.c	8.2 (Berkeley) 1/6/94";*/
+static char *rcsid = "$Id: optr.c,v 1.2 1994/06/08 18:57:37 mycroft Exp $";
 #endif /* not lint */
 
-#ifdef sunos
-#include <stdio.h>
-#include <ctype.h>
 #include <sys/param.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 #include <sys/time.h>
-#else
-#include <sys/param.h>
-#include <sys/wait.h>
-#include <stdio.h>
-#endif
-#include <signal.h>
-#include <time.h>
+
+#include <errno.h>
 #include <fstab.h>
 #include <grp.h>
-#include <utmp.h>
-#include <tzfile.h>
-#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
 #ifdef __STDC__
-#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#else
+#endif
+#include <tzfile.h>
+#ifdef __STDC__
+#include <unistd.h>
+#endif
+#include <utmp.h>
+#ifndef __STDC__
 #include <varargs.h>
 #endif
+
 #include "dump.h"
 #include "pathnames.h"
 
-static void alarmcatch();
-static void sendmes();
+void	alarmcatch __P((/* int, int */));
+int	datesort __P((const void *, const void *));
+static	void sendmes __P((char *, char *));
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -80,8 +77,8 @@ static void sendmes();
  *	Every 2 minutes we reprint the message, alerting others
  *	that dump needs attention.
  */
-int	timeout;
-char	*attnmessage;		/* attention message */
+static	int timeout;
+static	char *attnmessage;		/* attention message */
 
 int
 query(question)
@@ -131,7 +128,7 @@ char lastmsg[100];
  *	Alert the console operator, and enable the alarm clock to
  *	sleep for 2 minutes in case nobody comes to satisfy dump
  */
-static void
+void
 alarmcatch()
 {
 	if (notify == 0) {
@@ -190,7 +187,6 @@ set_operators()
 	}
 }
 
-struct tm *localtime();
 struct tm *localclock;
 
 /*
@@ -428,7 +424,7 @@ getfstab()
 		    _PATH_FSTAB, strerror(errno));
 		return;
 	}
-	while (fs = getfsent()) {
+	while ((fs = getfsent()) != NULL) {
 		if (strcmp(fs->fs_type, FSTAB_RW) &&
 		    strcmp(fs->fs_type, FSTAB_RO) &&
 		    strcmp(fs->fs_type, FSTAB_RQ))
@@ -460,7 +456,7 @@ fstabsearch(key)
 {
 	register struct pfstab *pf;
 	register struct fstab *fs;
-	char *rn, *rawname();
+	char *rn;
 
 	for (pf = table; pf != NULL; pf = pf->pf_next) {
 		fs = pf->pf_fstab;
@@ -493,7 +489,7 @@ lastdump(arg)
 	register struct fstab *dt;
 	register struct dumpdates *dtwalk;
 	char *lastname, *date;
-	int dumpme, datesort();
+	int dumpme;
 	time_t tnow;
 
 	(void) time(&tnow);
@@ -530,7 +526,7 @@ lastdump(arg)
 
 int
 datesort(a1, a2)
-	void *a1, *a2;
+	const void *a1, *a2;
 {
 	struct dumpdates *d1 = *(struct dumpdates **)a1;
 	struct dumpdates *d2 = *(struct dumpdates **)a2;
@@ -541,4 +537,3 @@ datesort(a1, a2)
 		return (d2->dd_ddate - d1->dd_ddate);
 	return (diff);
 }
-

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1980 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,21 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)unctime.c	5.5 (Berkeley) 6/18/92"; */
-static char *rcsid = "$Id: unctime.c,v 1.6 1993/12/24 01:16:59 jtc Exp $";
+/*static char sccsid[] = "from: @(#)unctime.c	8.1 (Berkeley) 6/5/93";*/
+static char *rcsid = "$Id: unctime.c,v 1.7 1994/06/08 18:57:43 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
-#include <time.h>
+
 #include <stdio.h>
+#include <time.h>
 #ifdef __STDC__
 #include <stdlib.h>
 #include <string.h>
+#endif
+
+#ifndef __P
+#include <sys/cdefs.h>
 #endif
 
 /*
@@ -62,19 +67,19 @@ static char *rcsid = "$Id: unctime.c,v 1.6 1993/12/24 01:16:59 jtc Exp $";
 #define	E_SECOND	17
 #define	E_YEAR		20
 
-static int lookup();
+static	int lookup __P((char *));
+
 
 time_t
 unctime(str)
 	char *str;
 {
 	struct tm then;
-	char dbuf[30];
+	char dbuf[26];
 
-	if (strlen(str) != 25)
-		str[25] = 0;
-	(void) strcpy(dbuf, str);
-	dbuf[E_MONTH+3] = 0;
+	(void) strncpy(dbuf, str, sizeof(dbuf) - 1);
+	dbuf[sizeof(dbuf) - 1] = '\0';
+	dbuf[E_MONTH+3] = '\0';
 	if ((then.tm_mon = lookup(&dbuf[E_MONTH])) < 0)
 		return (-1);
 	then.tm_mday = atoi(&dbuf[E_DAY]);
@@ -95,7 +100,7 @@ lookup(str)
 {
 	register char *cp, *cp2;
 
-	for (cp = months, cp2 = str; *cp != 0; cp += 3)
+	for (cp = months, cp2 = str; *cp != '\0'; cp += 3)
 		if (strncmp(cp, cp2, 3) == 0)
 			return((cp-months) / 3);
 	return(-1);

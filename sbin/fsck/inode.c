@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,15 +32,15 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)inode.c	5.18 (Berkeley) 3/19/91";*/
-static char rcsid[] = "$Id: inode.c,v 1.8 1994/05/02 10:18:23 pk Exp $";
+/*static char sccsid[] = "from: @(#)inode.c	8.4 (Berkeley) 4/18/94";*/
+static char *rcsid = "$Id: inode.c,v 1.9 1994/06/08 19:00:23 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
-#include <ufs/dir.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
+#include <ufs/ffs/fs.h>
 #ifndef SMALL
 #include <pwd.h>
 #endif
@@ -50,7 +50,6 @@ static char rcsid[] = "$Id: inode.c,v 1.8 1994/05/02 10:18:23 pk Exp $";
 
 static ino_t startinum;
 
-int
 ckinode(dp, idesc)
 	struct dinode *dp;
 	register struct inodesc *idesc;
@@ -58,13 +57,17 @@ ckinode(dp, idesc)
 	register daddr_t *ap;
 	long ret, n, ndb, offset;
 	struct dinode dino;
+	quad_t remsize, sizepb;
+	mode_t mode;
 
 	if (idesc->id_fix != IGNORE)
 		idesc->id_fix = DONTKNOW;
 	idesc->id_entryno = 0;
 	idesc->id_filesize = dp->di_size;
-	if ((dp->di_mode & IFMT) == IFBLK || (dp->di_mode & IFMT) == IFCHR ||
-		DFASTLINK(*dp))
+	mode = dp->di_mode & IFMT;
+	if (mode == IFBLK || mode == IFCHR || (mode == IFLNK &&
+	    (dp->di_size < sblock.fs_maxsymlinklen ||
+	     (sblock.fs_maxsymlinklen == 0 && OLDFASTLINK(dp)))))
 		return (KEEPON);
 	dino = *dp;
 	ndb = howmany(dino.di_size, sblock.fs_bsize);
@@ -85,28 +88,31 @@ ckinode(dp, idesc)
 			return (ret);
 	}
 	idesc->id_numfrags = sblock.fs_frag;
+	remsize = dino.di_size - sblock.fs_bsize * NDADDR;
+	sizepb = sblock.fs_bsize;
 	for (ap = &dino.di_ib[0], n = 1; n <= NIADDR; ap++, n++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
-			ret = iblock(idesc, n,
-				dino.di_size - sblock.fs_bsize * NDADDR);
+			ret = iblock(idesc, n, remsize);
 			if (ret & STOP)
 				return (ret);
 		}
+		sizepb *= NINDIR(&sblock);
+		remsize -= sizepb;
 	}
 	return (KEEPON);
 }
 
-int
 iblock(idesc, ilevel, isize)
 	struct inodesc *idesc;
-	register long ilevel;
-	u_long isize;
+	long ilevel;
+	quad_t isize;
 {
 	register daddr_t *ap;
 	register daddr_t *aplim;
-	int i, n, (*func)(), nif, sizepb;
 	register struct bufarea *bp;
+	int i, n, (*func)(), nif;
+	quad_t sizepb;
 	char buf[BUFSIZ];
 	extern int dirscan(), pass1check();
 
@@ -122,7 +128,7 @@ iblock(idesc, ilevel, isize)
 	ilevel--;
 	for (sizepb = sblock.fs_bsize, i = 0; i < ilevel; i++)
 		sizepb *= NINDIR(&sblock);
-	nif = isize / sizepb + 1;
+	nif = howmany(isize , sizepb);
 	if (nif > NINDIR(&sblock))
 		nif = NINDIR(&sblock);
 	if (idesc->id_func == pass1check && nif < NINDIR(&sblock)) {
@@ -140,18 +146,19 @@ iblock(idesc, ilevel, isize)
 		flush(fswritefd, bp);
 	}
 	aplim = &bp->b_un.b_indir[nif];
-	for (ap = bp->b_un.b_indir, i = 1; ap < aplim; ap++, i++) {
+	for (ap = bp->b_un.b_indir; ap < aplim; ap++) {
 		if (*ap) {
 			idesc->id_blkno = *ap;
-			if (ilevel > 0)
-				n = iblock(idesc, ilevel, isize - i * sizepb);
-			else
+			if (ilevel == 0)
 				n = (*func)(idesc);
+			else
+				n = iblock(idesc, ilevel, isize);
 			if (n & STOP) {
 				bp->b_flags &= ~B_INUSE;
 				return (n);
 			}
 		}
+		isize -= sizepb;
 	}
 	bp->b_flags &= ~B_INUSE;
 	return (KEEPON);
@@ -161,7 +168,6 @@ iblock(idesc, ilevel, isize)
  * Check that a block in a legal block number.
  * Return 0 if in range, 1 if out of range.
  */
-int
 chkrange(blk, cnt)
 	daddr_t blk;
 	int cnt;
@@ -208,7 +214,7 @@ ginode(inumber)
 		errexit("bad inode number %d to ginode\n", inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + INOPB(&sblock)) {
-		iblk = itod(&sblock, inumber);
+		iblk = ino_to_fsba(&sblock, inumber);
 		if (pbp != 0)
 			pbp->b_flags &= ~B_INUSE;
 		pbp = getdatablk(iblk, sblock.fs_bsize);
@@ -237,7 +243,7 @@ getnextinode(inumber)
 		errexit("bad inode number %d to nextinode\n", inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
-		dblk = fsbtodb(&sblock, itod(&sblock, lastinum));
+		dblk = fsbtodb(&sblock, ino_to_fsba(&sblock, lastinum));
 		if (readcnt % readpercg == 0) {
 			size = partialsize;
 			lastinum += partialcnt;
@@ -251,7 +257,6 @@ getnextinode(inumber)
 	return (dp++);
 }
 
-void
 resetinodebuf()
 {
 
@@ -277,7 +282,6 @@ resetinodebuf()
 		(void)getnextinode(nextino);
 }
 
-void
 freeinodebuf()
 {
 
@@ -293,7 +297,6 @@ freeinodebuf()
  *
  * Enter inodes into the cache.
  */
-void
 cacheino(dp, inumber)
 	register struct dinode *dp;
 	ino_t inumber;
@@ -350,7 +353,6 @@ getinoinfo(inumber)
 /*
  * Clean up all the inode cache structure.
  */
-void
 inocleanup()
 {
 	register struct inoinfo **inpp;
@@ -363,15 +365,13 @@ inocleanup()
 	free((char *)inpsort);
 	inphead = inpsort = NULL;
 }
-
-void
+	
 inodirty()
 {
 	
 	dirty(pbp);
 }
 
-void
 clri(idesc, type, flag)
 	register struct inodesc *idesc;
 	char *type;
@@ -396,7 +396,6 @@ clri(idesc, type, flag)
 	}
 }
 
-int
 findname(idesc)
 	struct inodesc *idesc;
 {
@@ -408,7 +407,6 @@ findname(idesc)
 	return (STOP|FOUND);
 }
 
-int
 findino(idesc)
 	struct inodesc *idesc;
 {
@@ -424,7 +422,6 @@ findino(idesc)
 	return (KEEPON);
 }
 
-void
 pinode(ino)
 	ino_t ino;
 {
@@ -446,13 +443,12 @@ pinode(ino)
 		printf("%u ", (unsigned)dp->di_uid);
 	printf("MODE=%o\n", dp->di_mode);
 	if (preen)
-		printf("%s: ", devname);
-	printf("SIZE=%lu ", dp->di_size);
-	p = ctime(&dp->di_mtime);
+		printf("%s: ", cdevname);
+	printf("SIZE=%qu ", dp->di_size);
+	p = ctime(&dp->di_mtime.ts_sec);
 	printf("MTIME=%12.12s %4.4s ", &p[4], &p[20]);
 }
 
-void
 blkerror(ino, type, blk)
 	ino_t ino;
 	char *type;
@@ -520,19 +516,19 @@ allocino(request, type)
 	}
 	dp->di_mode = type;
 	(void)time(&dp->di_atime.ts_sec);
-	dp->di_atime.ts_nsec = 0;
 	dp->di_mtime = dp->di_ctime = dp->di_atime;
 	dp->di_size = sblock.fs_fsize;
 	dp->di_blocks = btodb(sblock.fs_fsize);
 	n_files++;
 	inodirty();
+	if (newinofmt)
+		typemap[ino] = IFTODT(type);
 	return (ino);
 }
 
 /*
  * deallocate an inode
  */
-void
 freeino(ino)
 	ino_t ino;
 {

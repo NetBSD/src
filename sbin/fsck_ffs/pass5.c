@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1980, 1986 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1986, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +32,14 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)pass5.c	5.13 (Berkeley) 7/20/90";*/
-static char rcsid[] = "$Id: pass5.c,v 1.5 1994/04/25 18:28:57 cgd Exp $";
+/*static char sccsid[] = "from: @(#)pass5.c	8.2 (Berkeley) 2/2/94";*/
+static char *rcsid = "$Id: pass5.c,v 1.6 1994/06/08 19:00:30 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/dinode.h>
-#include <ufs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ffs/fs.h>
 #include <string.h>
 #include "fsck.h"
 
@@ -52,7 +52,6 @@ pass5()
 	register daddr_t d;
 	register long i, j;
 	struct csum *cs;
-	time_t now;
 	struct csum cstotal;
 	struct inodesc idesc[3];
 	char buf[MAXBSIZE];
@@ -61,6 +60,45 @@ pass5()
 
 	bzero((char *)newcg, (size_t)fs->fs_cgsize);
 	newcg->cg_niblk = fs->fs_ipg;
+	if (cvtlevel > 3) {
+		if (fs->fs_maxcontig < 2 && fs->fs_contigsumsize > 0) {
+			if (preen)
+				pwarn("DELETING CLUSTERING MAPS\n");
+			if (preen || reply("DELETE CLUSTERING MAPS")) {
+				fs->fs_contigsumsize = 0;
+				doinglevel1 = 1;
+				sbdirty();
+			}
+		}
+		if (fs->fs_maxcontig > 1) {
+			char *doit = 0;
+
+			if (fs->fs_contigsumsize < 1) {
+				doit = "CREAT";
+			} else if (fs->fs_contigsumsize < fs->fs_maxcontig &&
+				   fs->fs_contigsumsize < FS_MAXCONTIG) {
+				doit = "EXPAND";
+			}
+			if (doit) {
+				i = fs->fs_contigsumsize;
+				fs->fs_contigsumsize =
+				    MIN(fs->fs_maxcontig, FS_MAXCONTIG);
+				if (CGSIZE(fs) > fs->fs_bsize) {
+					pwarn("CANNOT %s CLUSTER MAPS\n", doit);
+					fs->fs_contigsumsize = i;
+				} else if (preen ||
+				    reply("CREATE CLUSTER MAPS")) {
+					if (preen)
+						pwarn("%sING CLUSTER MAPS\n",
+						    doit);
+					fs->fs_cgsize =
+					    fragroundup(fs, CGSIZE(fs));
+					doinglevel1 = 1;
+					sbdirty();
+				}
+			}
+		}
+	}
 	switch ((int)fs->fs_postblformat) {
 
 	case FS_42POSTBLFMT:
@@ -75,16 +113,27 @@ pass5()
 
 	case FS_DYNAMICPOSTBLFMT:
 		newcg->cg_btotoff =
-		 	&newcg->cg_space[0] - (u_char *)(&newcg->cg_link);
+		     &newcg->cg_space[0] - (u_char *)(&newcg->cg_link);
 		newcg->cg_boff =
-			newcg->cg_btotoff + fs->fs_cpg * sizeof(long);
+		    newcg->cg_btotoff + fs->fs_cpg * sizeof(long);
 		newcg->cg_iusedoff = newcg->cg_boff + 
-			fs->fs_cpg * fs->fs_nrpos * sizeof(short);
+		    fs->fs_cpg * fs->fs_nrpos * sizeof(short);
 		newcg->cg_freeoff =
-			newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
-		newcg->cg_nextfreeoff = newcg->cg_freeoff +
-			howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs),
-				NBBY);
+		    newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
+		if (fs->fs_contigsumsize <= 0) {
+			newcg->cg_nextfreeoff = newcg->cg_freeoff +
+			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
+		} else {
+			newcg->cg_clustersumoff = newcg->cg_freeoff +
+			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY) -
+			    sizeof(long);
+			newcg->cg_clustersumoff =
+			    roundup(newcg->cg_clustersumoff, sizeof(long));
+			newcg->cg_clusteroff = newcg->cg_clustersumoff +
+			    (fs->fs_contigsumsize + 1) * sizeof(long);
+			newcg->cg_nextfreeoff = newcg->cg_clusteroff +
+			    howmany(fs->fs_cpg * fs->fs_spc / NSPB(fs), NBBY);
+		}
 		newcg->cg_magic = CG_MAGIC;
 		basesize = &newcg->cg_space[0] - (u_char *)(&newcg->cg_link);
 		sumsize = newcg->cg_iusedoff - newcg->cg_btotoff;
@@ -96,10 +145,12 @@ pass5()
 			fs->fs_postblformat);
 	}
 	bzero((char *)&idesc[0], sizeof idesc);
-	for (i = 0; i < 3; i++)
+	for (i = 0; i < 3; i++) {
 		idesc[i].id_type = ADDR;
+		if (doinglevel2)
+			idesc[i].id_fix = FIX;
+	}
 	bzero((char *)&cstotal, sizeof(struct csum));
-	(void)time(&now);
 	j = blknum(fs, fs->fs_size + fs->fs_frag - 1);
 	for (i = fs->fs_size; i < j; i++)
 		setbmap(i);
@@ -111,16 +162,15 @@ pass5()
 		dmax = dbase + fs->fs_fpg;
 		if (dmax > fs->fs_size)
 			dmax = fs->fs_size;
-		if (now > cg->cg_time)
-			newcg->cg_time = cg->cg_time;
-		else
-			newcg->cg_time = now;
+		newcg->cg_time = cg->cg_time;
 		newcg->cg_cgx = c;
 		if (c == fs->fs_ncg - 1)
 			newcg->cg_ncyl = fs->fs_ncyl % fs->fs_cpg;
 		else
 			newcg->cg_ncyl = fs->fs_cpg;
 		newcg->cg_ndblk = dmax - dbase;
+		if (fs->fs_contigsumsize > 0)
+			newcg->cg_nclusterblks = newcg->cg_ndblk / fs->fs_frag;
 		newcg->cg_cs.cs_ndir = 0;
 		newcg->cg_cs.cs_nffree = 0;
 		newcg->cg_cs.cs_nbfree = 0;
@@ -188,10 +238,42 @@ pass5()
 				j = cbtocylno(fs, i);
 				cg_blktot(newcg)[j]++;
 				cg_blks(fs, newcg, j)[cbtorpos(fs, i)]++;
+				if (fs->fs_contigsumsize > 0)
+					setbit(cg_clustersfree(newcg),
+					    i / fs->fs_frag);
 			} else if (frags > 0) {
 				newcg->cg_cs.cs_nffree += frags;
 				blk = blkmap(fs, cg_blksfree(newcg), i);
-				fragacct(fs, blk, newcg->cg_frsum, 1);
+				ffs_fragacct(fs, blk, newcg->cg_frsum, 1);
+			}
+		}
+		if (fs->fs_contigsumsize > 0) {
+			long *sump = cg_clustersum(newcg);
+			u_char *mapp = cg_clustersfree(newcg);
+			int map = *mapp++;
+			int bit = 1;
+			int run = 0;
+
+			for (i = 0; i < newcg->cg_nclusterblks; i++) {
+				if ((map & bit) != 0) {
+					run++;
+				} else if (run != 0) {
+					if (run > fs->fs_contigsumsize)
+						run = fs->fs_contigsumsize;
+					sump[run]++;
+					run = 0;
+				}
+				if ((i & (NBBY - 1)) != (NBBY - 1)) {
+					bit <<= 1;
+				} else {
+					map = *mapp++;
+					bit = 1;
+				}
+			}
+			if (run != 0) {
+				if (run > fs->fs_contigsumsize)
+					run = fs->fs_contigsumsize;
+				sump[run]++;
 			}
 		}
 		cstotal.cs_nffree += newcg->cg_cs.cs_nffree;
@@ -204,7 +286,7 @@ pass5()
 			bcopy((char *)&newcg->cg_cs, (char *)cs, sizeof *cs);
 			sbdirty();
 		}
-		if (cvtflag) {
+		if (doinglevel1) {
 			bcopy((char *)newcg, (char *)cg, (size_t)fs->fs_cgsize);
 			cgdirty();
 			continue;

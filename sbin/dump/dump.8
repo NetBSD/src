@@ -1,4 +1,5 @@
-.\" Copyright (c) 1980, 1991 Regents of the University of California.
+.\" Copyright (c) 1980, 1991, 1993
+.\"	 Regents of the University of California.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -29,10 +30,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)dump.8	6.10 (Berkeley) 6/20/92
-.\"	$Id: dump.8,v 1.8 1994/01/28 20:07:07 jtc Exp $
+.\"     from: @(#)dump.8	8.1 (Berkeley) 6/16/93
+.\"	$Id: dump.8,v 1.9 1994/06/08 18:57:31 mycroft Exp $
 .\"
-.Dd June 20, 1992
+.Dd June 16, 1993
 .Dt DUMP 8
 .Os BSD 4
 .Sh NAME
@@ -40,7 +41,7 @@
 .Nd filesystem backup
 .Sh SYNOPSIS
 .Nm dump
-.Op Cm 0123456789fusTdWn Op Ar argument ...
+.Op Cm 0123456789BbhfusTdWn Op Ar argument ...
 .Op Ar filesystem
 .Sh DESCRIPTION
 .Nm Dump
@@ -70,14 +71,33 @@ The following options are supported by
 .It Cm 0\-9
 Dump levels.
 A level 0, full backup,
-guarantees the entire file system is copied.
+guarantees the entire file system is copied
+(but see also the
+.Cm h
+option below).
 A level number above 0,
 incremental backup,
 tells dump to
 copy all files new or modified since the
 last dump of the same or lower level. The default
 level is 9.
-.It Cm f Op Ar file
+.It Cm B Ar records
+The number of dump records per volume.
+This option overrides the calculation of tape size
+based on length and density.
+.It Cm b Ar blocksize
+The number of kilobytes per dump record.
+.It Cm h Ar level
+Honor the user
+.Dq nodump
+flag
+.Dp Dv UF_NODUMP
+only for dumps at or above the given
+.Ar level .
+The default honor level is 1,
+so that incremental backups omit such files
+but full backups retain them.
+.It Cm f Ar file
 Write the backup to
 .Ar file ;
 .Ar file
@@ -98,6 +118,8 @@ the last file name will used for all remaining volumes after prompting
 for media changes.
 If the name of the file is of the form
 .Dq host:file ,
+or
+.Dq user@host:file ,
 .Nm dump
 writes to the named file on the remote host using
 .Xr rmt 8 .
@@ -121,9 +143,6 @@ If this amount is exceeded,
 prompts for a new tape.
 It is recommended to be a bit conservative on this option.
 The default tape length is 2300 feet.
-.It Cm B Ar blocks
-Set the size of the dump file to the specified number of 1024-byte blocks,
-superseding the tape size and density.
 .It Cm u
 Update the file
 .Pa /etc/dumpdates

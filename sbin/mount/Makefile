@@ -1,9 +1,9 @@
-#	from: @(#)Makefile	5.5 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.6 1993/10/08 00:51:12 cgd Exp $
+#	from: @(#)Makefile	8.5 (Berkeley) 3/27/94
+#	$Id: Makefile,v 1.7 1994/06/08 19:02:36 mycroft Exp $
 
 PROG=	mount
-CFLAGS+=-DNFS -DNFSCLIENT
+SRCS=	mount.c mount_ufs.c getmntopts.c
 MAN8=	mount.0
-MLINKS=	mount.8 umount.8
+# We do NOT install the getmntopts.3 man page.
 
 .include <bsd.prog.mk>
