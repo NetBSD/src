@@ -16,7 +16,7 @@ You should have received a copy of the GNU Library General Public
 License along with this library; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: Fix24.h,v 1.2 1993/08/02 17:23:13 mycroft Exp $
+	$Id: Fix24.h,v 1.3 1995/12/30 03:32:28 chopps Exp $
 */
 
 #ifndef _Fix24_h
@@ -199,6 +199,15 @@ public:
   void                 range_error(twolongs& i) const;
 };
 
+/* Fix24 operator*() creates and copies Fix48 so this needs to precede that */
+
+inline Fix48::~Fix48() {}
+
+inline Fix48::Fix48(const Fix48& f)		
+{ 
+  m = f.m;
+}
+
 
 // active error handler declarations
 
@@ -355,7 +364,7 @@ inline Fix24 operator<<(const Fix24& a, int b)
 
 inline Fix24 operator>>(const Fix24& a, int b) 	
 { 
-  return (a.m >> b) & 0xffffff00L; 
+  return (long)((a.m >> b) & ~0xffL); 
 }
 
 inline  Fix24&  Fix24:: operator+=(const Fix24&  f)
@@ -436,8 +445,6 @@ inline ostream&  operator<<(ostream& s, const Fix24&  f)
   return s << double(f);
 }
 
-inline Fix48::~Fix48() {}
-
 inline Fix48::Fix48(twolongs i)		
 { 
   m = i;
@@ -458,11 +465,6 @@ inline Fix48::Fix48()
 { 
   m.u = 0;
   m.l = 0;
-}
-
-inline Fix48::Fix48(const Fix48& f)		
-{ 
-  m = f.m;
 }
 
 inline Fix48::Fix48(const Fix24&  f)    
