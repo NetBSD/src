@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 1998/02/21 19:03:25 scw Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 1998/03/18 07:07:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -239,7 +239,6 @@
 /* Use new VM page bootstrap interface. */
 #define MACHINE_NEW_NONCONTIG
 
-#ifdef MACHINE_NEW_NONCONTIG
 /*
  * Constants which control the way the VM system deals with memory segments.
  * The mvme68k port has two physical memory segments: 1 for onboard RAM
@@ -256,6 +255,5 @@ struct pmap_physseg {
 	struct pv_entry *pvent;		/* pv table for this seg */
 	char *attrs;			/* page attributes for this seg */
 };
-#endif
 
 #endif /* _MVME68K_VMPARAM_H_ */
