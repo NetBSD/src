@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.92 2005/03/08 14:09:25 lukem Exp $
+# $NetBSD: postinstall,v 1.93 2005/03/12 00:50:23 tron Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -188,7 +188,7 @@ populate_dir()
 		if [ ! -f "${fd}" ]; then
 			_error="${fd} does not exist"
 		elif ! cmp -s ${fs} ${fd} ; then
-			if $only_new; then	# leave existing ${fd} alone
+			if $_only_new; then	# leave existing ${fd} alone
 				continue;
 			fi
 			_error="${fs} != ${fd}"
