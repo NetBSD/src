@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.11 1993/10/01 23:07:27 mycroft Exp $
+ *	$Id: if_ne.c,v 1.12 1993/10/01 23:12:04 mycroft Exp $
  */
 
 /*
@@ -643,8 +643,8 @@ loop:
 
 	/* Receiver ovverun? */
 	if (isr & DSIS_ROVRN) {
-		log(LOG_ERR, "ne%d: error: isr %x\n", ns-ne_softc, isr
-			/*, DSIS_BITS*/);
+		log(LOG_ERR, "ne%d: ring buffer overflow; isr=%x\n",
+		    ns-ne_softc, isr/*, DSIS_BITS*/);
 		outb(nec+ds0_rbcr0, 0);
 		outb(nec+ds0_rbcr1, 0);
 		outb(nec+ds0_tcr, DSTC_LB0);
