@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.39 1999/05/12 11:16:44 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.40 1999/06/02 02:03:57 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd May 12, 1999
+.Dd June 2, 1999
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1530,6 +1530,8 @@ file, if one exists.
 Used by
 .Ic page
 to display files.
+(Defaults to
+.Xr more 1 ).
 .It Ev SHELL
 For default shell.
 .It Ev ftp_proxy
