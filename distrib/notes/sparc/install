@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.26 2000/09/04 16:08:50 abs Exp $	
+.\"	$NetBSD: install,v 1.27 2000/09/04 16:54:40 abs Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -215,14 +215,14 @@ script based install.
 Follow this section and skip the next if you wish to use the easier 'sysinst'
 installation method.
 .Pp
-Copy the installation/netboot/netbsd.ram.gz image into the exported
+Copy the installation/netboot/netbsd.syram.gz image into the exported
 root directory for your machine, then boot your workstation from the
 server by entering the appropriate `boot' command at the monitor prompt.
 Depending on the PROM version in your machine, this command takes one of
 the following forms:
-.Dl "\*> b le()netbsd.ram.gz             # for sun4 monitors
-.Dl "ok boot le()netbsd.ram.gz           # for version 1 OpenBOOT ROMs
-.Dl "ok boot net netbsd.ram.gz           # for version 2 OpenBOOT ROMs
+.Dl "\*> b le()netbsd.syram.gz             # for sun4 monitors
+.Dl "ok boot le()netbsd.syram.gz           # for version 1 OpenBOOT ROMs
+.Dl "ok boot net netbsd.syram.gz           # for version 2 OpenBOOT ROMs
 .Pp
 This will boot the
 .Nx
