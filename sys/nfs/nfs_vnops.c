@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.163 2003/04/09 14:22:33 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.164 2003/04/09 14:30:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.163 2003/04/09 14:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.164 2003/04/09 14:30:30 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -1196,10 +1196,10 @@ nfsmout:
  * nfs write call
  */
 int
-nfs_writerpc(vp, uiop, iomode, must_commit)
+nfs_writerpc(vp, uiop, iomode, stalewriteverf)
 	struct vnode *vp;
 	struct uio *uiop;
-	int *iomode, *must_commit;
+	int *iomode, *stalewriteverf;
 {
 	u_int32_t *tl;
 	caddr_t cp;
@@ -1219,7 +1219,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 	if (uiop->uio_iovcnt != 1)
 		panic("nfs: writerpc iovcnt > 1");
 #endif
-	*must_commit = 0;
+	*stalewriteverf = 0;
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
@@ -1290,7 +1290,7 @@ nfs_writerpc(vp, uiop, iomode, must_commit)
 				    nmp->nm_iflag |= NFSMNT_HASWRITEVERF;
 				} else if (memcmp((caddr_t)tl,
 				    (caddr_t)nmp->nm_writeverf, NFSX_V3WRITEVERF)) {
-				    *must_commit = 1;
+				    *stalewriteverf = 1;
 				    memcpy((caddr_t)nmp->nm_writeverf, (caddr_t)tl,
 					NFSX_V3WRITEVERF);
 				}
