@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.26 2002/02/25 19:09:43 kleink Exp $
+#	$NetBSD: files.prep,v 1.27 2002/02/26 16:09:14 kleink Exp $
 #
 # prep-specific configuration info
 #
@@ -10,6 +10,10 @@ maxusers 2 8 64
 file	arch/prep/prep/ibm_machdep.c
 file	arch/prep/prep/ibm_6050.c
 file	arch/prep/prep/ibm_7248.c
+
+# Motorola
+file	arch/prep/prep/mot_machdep.c
+file	arch/prep/prep/mot_ulmb60xa.c
 
 file	arch/prep/prep/platform.c
 
