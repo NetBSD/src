@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2.14.1 2001/11/28 10:04:34 wdk Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.14.2 2001/11/29 11:12:18 wdk Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -91,6 +91,7 @@ __cpu_simple_lock(__cpu_simple_lock_t *lp)
 		"	nop	       # BDslot	\n"
 		"	sync			\n"
 		"	j	3f		\n"
+		"	nop			\n"
 		"2:	bnez	%0, 2b		\n"
 		"	lw	%0, %3 # BDslot	\n"
 		"	j	1b		\n"
@@ -116,10 +117,10 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *lp)
 		"	li	%0, %3		\n"
 		"	sc	%0, %2		\n"
 		"	beqz	%0, 2f		\n"
-		"	nop			\n"
+		"	li	%1, 1		\n"
 		"	sync			\n"
 		"	j	3f		\n"
-		"	li	%1, 1		\n"
+		"	nop			\n"
 		"2:	li	%1, 0		\n"
 		"3:				\n"
 		"	.set pop		\n"
