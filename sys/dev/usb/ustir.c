@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.5 2002/11/06 10:56:22 dsainty Exp $	*/
+/*	$NetBSD: ustir.c,v 1.6 2002/11/26 18:49:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.5 2002/11/06 10:56:22 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.6 2002/11/26 18:49:50 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1187,7 +1187,7 @@ filt_ustirrdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_rd_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_rd_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1207,7 +1207,7 @@ filt_ustirwdetach(struct knote *kn)
 	int s;
 
 	s = splusb();
-	SLIST_REMOVE(&sc->sc_wr_sel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->sc_wr_sel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -1234,11 +1234,11 @@ ustir_kqfilter(void *h, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->sc_rd_sel.si_klist;
+		klist = &sc->sc_rd_sel.sel_klist;
 		kn->kn_fop = &ustirread_filtops;
 		break;
 	case EVFILT_WRITE:
-		klist = &sc->sc_wr_sel.si_klist;
+		klist = &sc->sc_wr_sel.sel_klist;
 		kn->kn_fop = &ustirwrite_filtops;
 		break;
 	default:
