@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.1 2002/07/13 08:28:42 scw Exp $	*/
+/*	$NetBSD: proc.h,v 1.2 2002/07/13 12:30:11 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,6 +37,9 @@
 
 #ifndef _M68K_PROC_H
 #define _M68K_PROC_H
+
+#include <machine/frame.h>
+struct proc;
 
 /*
  * Machine-dependent part of the proc structure for m68k-based ports.
