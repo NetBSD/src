@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cs_isa.c,v 1.9 1998/07/21 00:11:03 thorpej Exp $	*/
+/*	$NetBSD: if_cs_isa.c,v 1.10 1998/07/21 00:18:35 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -767,11 +767,9 @@ int
 csGetEthernetAddr(sc)
 	struct cs_softc *sc;
 {
-	u_int16_t selfStatus;
-	pia pIA;
+	u_int16_t selfStatus, *myea;
 
-	/* Setup pointer of where to store the Ethernet address */
-	pIA = (pia) sc->sc_enaddr;
+	myea = (u_int16_t *)sc->sc_enaddr;
 
 	/* Verify that the EEPROM is present and OK */
 	selfStatus = CS_READ_PACKET_PAGE(sc, PKTPG_SELF_ST);
@@ -783,11 +781,11 @@ csGetEthernetAddr(sc)
 
 	/* Get Ethernet address from the EEPROM */
 	/* XXX this will likely lose on a big-endian machine. -- cgd */
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_H, &pIA->word[0]) == CS_ERROR)
+	if (csReadEEPROM(sc, EEPROM_IND_ADDR_H, &myea[0]) == CS_ERROR)
 		return CS_ERROR;
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_M, &pIA->word[1]) == CS_ERROR)
+	if (csReadEEPROM(sc, EEPROM_IND_ADDR_M, &myea[1]) == CS_ERROR)
 		return CS_ERROR;
-	if (csReadEEPROM(sc, EEPROM_IND_ADDR_L, &pIA->word[2]) == CS_ERROR)
+	if (csReadEEPROM(sc, EEPROM_IND_ADDR_L, &myea[2]) == CS_ERROR)
 		return CS_ERROR;
 
 	return CS_OK;
@@ -904,7 +902,7 @@ csInitChip(sc)
 {
 	u_int16_t busCtl;
 	u_int16_t selfCtl;
-	pia pIA;
+	u_int16_t *myea;
 	u_int16_t isaId;
 
 	/* Disable reception and transmission of frames */
@@ -1099,10 +1097,10 @@ csInitChip(sc)
 	}
 
 	/* Put Ethernet address into the Individual Address register */
-	pIA = (pia) sc->sc_enaddr;
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR, pIA->word[0]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, pIA->word[1]);
-	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, pIA->word[2]);
+	myea = (u_int16_t *)sc->sc_enaddr;
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR, myea[0]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 2, myea[1]);
+	CS_WRITE_PACKET_PAGE(sc, PKTPG_IND_ADDR + 4, myea[2]);
 
 	/* Set the interrupt level in the chip */
 	if (sc->sc_int == 5) {
