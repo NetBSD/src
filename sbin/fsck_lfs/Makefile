@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.7 2005/01/19 19:41:59 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.8 2005/01/20 16:39:23 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
 
-WARNS=	2
 PROG=	fsck_lfs
 MAN=	fsck_lfs.8
 SRCS=	bufcache.c dir.c fsutil.c inode.c lfs.c lfs_cksum.c main.c

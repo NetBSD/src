@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/04 16:03:05 oster Exp $
+#	$NetBSD: Makefile,v 1.10 2005/01/20 16:39:23 xtraeme Exp $
+
 PROG=	raidctl 
 SRCS=	rf_configure.c raidctl.c
 MAN=	raidctl.8
-
-WARNS=2
 
 DPADD=  ${LIBUTIL}
 LDADD=  -lutil

@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.13 2005/01/19 20:43:06 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.14 2005/01/20 16:39:23 xtraeme Exp $
 #	@(#)Makefile	8.4 (Berkeley) 6/22/95
 
 .include <bsd.own.mk>
 
-WARNS=	2
 PROG=	umount
 SRCS=	umount.c vfslist.c
 MAN=	umount.8

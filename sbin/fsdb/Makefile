@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.16 2005/01/19 20:19:04 xtraeme Exp $
+#	$NetBSD: Makefile,v 1.17 2005/01/20 16:39:23 xtraeme Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
 
-WARNS=	2
 PROG=	fsdb
 MAN=	fsdb.8
 SRCS=	fsdb.c fsdbutil.c
