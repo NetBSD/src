@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.3.6.2 2001/05/01 11:45:46 he Exp $	*/
+/*	$NetBSD: yds.c,v 1.3.6.3 2001/05/26 17:13:55 he Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -1450,6 +1450,7 @@ yds_trigger_output(addr, start, end, blksize, intr, arg, param)
 			if (i == 0) {
 				psb->lchgain = psb->lchgainend = gain;
 			} else {
+				psb->lchgain = psb->lchgainend = 0;
 				psb->rchgain = psb->rchgainend = gain;
 				psb->format |= PSLT_FORMAT_RCH;
 			}
