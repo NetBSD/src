@@ -1,5 +1,5 @@
 /*
- * auth.c - PPP authentication and phase control.
+ * demand.c - PPP authentication and phase control.
  *
  * Copyright (c) 1993 The Australian National University.
  * All rights reserved.
@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: demand.c,v 1.1 1996/03/15 03:09:09 paulus Exp $";
+static char rcsid[] = "$Id: demand.c,v 1.2 1996/08/10 20:39:35 explorer Exp $";
 #endif
 
 #include <stdio.h>

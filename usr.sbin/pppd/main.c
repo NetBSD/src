@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: main.c,v 1.18 1996/03/21 18:25:57 jtc Exp $";
+static char rcsid[] = "$Id: main.c,v 1.19 1996/08/10 20:39:36 explorer Exp $";
 #endif
 
 #include <stdio.h>
@@ -502,7 +502,7 @@ main(argc, argv)
 	    locked = 0;
 	}
 
-	if (!demand) {
+	if (!demand && pidfilename[0] != 0) {
 	    if (unlink(pidfilename) < 0 && errno != ENOENT) 
 		syslog(LOG_WARNING, "unable to delete pid file: %m");
 	    pidfilename[0] = 0;
