@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.111.2.6 1994/08/25 00:11:03 mycroft Exp $
+ *	$Id: machdep.c,v 1.111.2.7 1994/10/06 03:40:15 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -387,6 +387,18 @@ identifycpu()
 	default:
 		break;
 	}
+
+	if (cpu == CPU_486DLC) {
+#ifndef CYRIX_CACHE_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE UNCHANGED.\n");
+#else
+#ifndef CYRIX_CACHE_REALLY_WORKS
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED IN HOLD-FLUSH MODE.\n");
+#else
+		printf("WARNING: CYRIX 486DLC CACHE ENABLED.\n");
+#endif
+#endif
+	}
 }
 
 /*  
@@ -477,7 +489,16 @@ sendsig(catcher, sig, mask, code)
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	frame.sf_signum = sig;
+	switch (p->p_emul) {
+#ifdef COMPAT_IBCS2
+	case EMUL_IBCS2_COFF:
+		frame.sf_signum = bsd2ibcs_sig(sig);
+		break;
+#endif
+	default:
+		frame.sf_signum = sig;
+		break;
+	}
 	frame.sf_code = code;
 	frame.sf_scp = &fp->sf_sc;
 	frame.sf_handler = catcher;
@@ -1402,7 +1423,7 @@ pmap_next_page(addrp)
 	return TRUE;
 }
 
-unsigned int
+u_int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
