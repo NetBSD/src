@@ -8,7 +8,7 @@
 # the sendmail distribution.
 #
 #
-#       Id: find_m4.sh,v 8.7 1999/02/07 07:25:58 gshapiro Exp
+#       Id: find_m4.sh,v 8.7.24.1 2000/09/22 02:11:40 gshapiro Exp
 #
 
 # Try to find a working M4 program.
@@ -24,7 +24,7 @@ ifdef(\`BadNumber', \`', \`errprint(\`This version of m4 is broken')')"
 
 if [ "$M4" ]
 then
-	err=`(echo "$test" | $M4) 2>&1 >/dev/null`
+	err=`(echo "$test" | $M4) >/dev/null 2>&1`
 	code=$?
 else
 	firstfound=
@@ -36,7 +36,7 @@ else
 			[ -z "$dir" ] && dir=.
 			if [ -f $dir/$m4 ]
 			then
-				err=`(echo "$test" | $dir/$m4) 2>&1 >/dev/null`
+				err=`(echo "$test" | $dir/$m4) >/dev/null 2>&1`
 				ret=$?
 				if [ $ret -eq 0 -a "X$err" = "X" ]
 				then
