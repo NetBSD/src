@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io_asm.S,v 1.1 2001/02/23 03:48:21 ichiro Exp $	*/
+/*	$NetBSD: sa11x0_io_asm.S,v 1.2 2001/03/10 13:29:38 toshii Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -44,17 +44,15 @@
  */
 
 ENTRY(sa11x0_bs_r_1)
-	ldrb	r0, [r1, r2, lsl #2]
+	ldrb	r0, [r1, r2]
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_r_2)
-	ldr	r0, [r1, r2, lsl #2]
-	bic	r0, r0, #0xff000000
-	bic	r0, r0, #0x00ff0000
+	ldrh	r0, [r1, r2]
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_r_4)
-	ldr	r0, [r1, r2, lsl #2]
+	ldr	r0, [r1, r2]
 	mov	pc, lr
 
 /*
@@ -62,17 +60,15 @@ ENTRY(sa11x0_bs_r_4)
  */
 
 ENTRY(sa11x0_bs_w_1)
-	strb	r3, [r1, r2, lsl #2]
+	strb	r3, [r1, r2]
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_w_2)
-	mov	r3, r3, lsl #16
-	orr	r3, r3, r3, lsr #16
-	str	r3, [r1, r2, lsl #2]
+	strh	r3, [r1, r2]
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_w_4)
-	str	r3, [r1, r2, lsl #2]
+	str	r3, [r1, r2]
 	mov	pc, lr
 
 
@@ -81,7 +77,7 @@ ENTRY(sa11x0_bs_w_4)
  */
 
 ENTRY(sa11x0_bs_rm_1)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp     r2, #0x00000000
 	movle   pc, lr
@@ -95,7 +91,7 @@ sa11x0_bs_rm_1_loop:
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_rm_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -109,7 +105,7 @@ sa11x0_bs_rm_2_loop:
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_rm_4)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -127,7 +123,7 @@ sa11x0_bs_rm_4_loop:
  */
 
 ENTRY(sa11x0_bs_wm_1)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -141,7 +137,7 @@ sa11x0_wm_1_loop:
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_wm_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -155,7 +151,7 @@ sa11x0_bs_wm_2_loop:
 	mov	pc, lr
 
 ENTRY(sa11x0_bs_wm_4)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -173,7 +169,7 @@ sa11x0_bs_wm_4_loop:
  */
 
 ENTRY(sa11x0_bs_rr_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -191,7 +187,7 @@ sa11x0_bs_rr_2_loop:
  */
 
 ENTRY(sa11x0_bs_wr_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000  
 	movle	pc, lr
@@ -209,7 +205,7 @@ sa11x0_bs_wr_2_loop:
  */
 
 ENTRY(sa11x0_bs_sr_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -226,9 +222,9 @@ sa11x0_bs_sr_2_loop:
  */
 
 ENTRY(sa11x0_bs_c_2)
-	add	r0, r1, r2, lsl #2
+	add	r0, r1, r2
 	ldr	r2, [sp, #0]
-	add	r1, r2, r3, lsl #2
+	add	r1, r2, r3
 	ldr	r2, [sp, #4]
 	cmp	r2, #0x00000000
 	movle	pc, lr
