@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.71 1997/04/08 20:08:53 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.72 1997/05/24 20:17:04 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -821,10 +821,10 @@ configure()
 		if (memregcf==NULL)
 			panic("configure: no memreg found!");
 
-		rr.rr_iospace = BUS_OBIO;
+		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_paddr = (void *)memregcf->cf_loc[0];
 		rr.rr_len = NBPG;
-		par_err_reg = (u_int *)bus_map(&rr, NBPG, BUS_OBIO);
+		par_err_reg = (u_int *)bus_map(&rr, NBPG);
 		if (par_err_reg == NULL)
 			panic("configure: ROM hasn't mapped memreg!");
 	}
@@ -1296,9 +1296,9 @@ findzs(zs)
 			panic("findzs: unknown zs device %d", zs);
 		}
 
-		rr.rr_iospace = BUS_OBIO;
+		rr.rr_iospace = PMAP_OBIO;
 		rr.rr_len = NBPG;
-		vaddr = bus_map(&rr, NBPG, BUS_OBIO);
+		vaddr = bus_map(&rr, NBPG);
 		if (vaddr)
 			return (vaddr);
 	}
