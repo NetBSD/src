@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.14 1997/01/09 20:20:49 tls Exp $	*/
+/*	$NetBSD: printf.c,v 1.15 1997/01/14 19:20:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -43,7 +43,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: printf.c,v 1.14 1997/01/09 20:20:49 tls Exp $";
+static char rcsid[] = "$NetBSD: printf.c,v 1.15 1997/01/14 19:20:09 cgd Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -56,7 +56,7 @@ static char rcsid[] = "$NetBSD: printf.c,v 1.14 1997/01/09 20:20:49 tls Exp $";
 #include <err.h>
 
 static int	 print_escape_str __P((const char *));
-static int	 print_escape __P((const char *));
+static size_t	 print_escape __P((const char *));
 
 static int	 getchr __P((void));
 static double	 getdouble __P((void));
@@ -138,7 +138,7 @@ main(argc, argv)
 	int ch;
 
 #if !defined(SHELL) && !defined(BUILTIN)
-	setlocale (LC_ALL, "");
+	(void)setlocale (LC_ALL, "");
 #endif
 
 	while ((ch = getopt(argc, argv, "")) != -1) {
@@ -179,7 +179,7 @@ main(argc, argv)
 				start = fmt++;
 
 				if (*fmt == '%') {
-					putchar ('%');
+					(void)putchar('%');
 					break;
 				} else if (*fmt == 'b') {
 					char *p = getstr();
@@ -256,7 +256,7 @@ main(argc, argv)
 				break;
 
 			default:
-				putchar (*fmt);
+				(void)putchar(*fmt);
 				break;
 			}
 		}
@@ -291,7 +291,7 @@ print_escape_str(str)
 					value <<= 3;
 					value += octtobin(*str);
 				}
-				putchar (value);
+				(void)putchar(value);
 				str--;
 			} else if (*str == 'c') {
 				return 1;
@@ -300,7 +300,7 @@ print_escape_str(str)
 				str += print_escape(str);
 			}
 		} else {
-			putchar (*str);
+			(void)putchar(*str);
 		}
 		str++;
 	}
@@ -311,7 +311,7 @@ print_escape_str(str)
 /*
  * Print "standard" escape characters 
  */
-static int
+static size_t
 print_escape(str)
 	register const char *str;
 {
@@ -328,7 +328,7 @@ print_escape(str)
 			value <<= 3;
 			value += octtobin(*str);
 		}
-		putchar(value);
+		(void)putchar(value);
 		return str - start - 1;
 		/* NOTREACHED */
 
@@ -342,66 +342,67 @@ print_escape(str)
 			warnx ("escape sequence out of range for character");
 			rval = 1;
 		}
-		putchar (value);
+		(void)putchar (value);
 		return str - start - 1;
 		/* NOTREACHED */
 
 	case '\\':			/* backslash */
-		putchar('\\');
+		(void)putchar('\\');
 		break;
 
 	case '\'':			/* single quote */
-		putchar('\'');
+		(void)putchar('\'');
 		break;
 
 	case '"':			/* double quote */
-		putchar('"');
+		(void)putchar('"');
 		break;
 
 	case 'a':			/* alert */
 #ifdef __STDC__
-		putchar('\a');
+		(void)putchar('\a');
 #else
-		putchar(007);
+		(void)putchar(007);
 #endif
 		break;
 
 	case 'b':			/* backspace */
-		putchar('\b');
+		(void)putchar('\b');
 		break;
 
 	case 'e':			/* escape */
 #ifdef __GNUC__
-		putchar('\e');
+		(void)putchar('\e');
 #else
-		putchar(033);
+		(void)putchar(033);
 #endif
 		break;
 
 	case 'f':			/* form-feed */
-		putchar('\f');
+		(void)putchar('\f');
 		break;
 
 	case 'n':			/* newline */
-		putchar('\n');
+		(void)putchar('\n');
 		break;
 
 	case 'r':			/* carriage-return */
-		putchar('\r');
+		(void)putchar('\r');
 		break;
 
 	case 't':			/* tab */
-		putchar('\t');
+		(void)putchar('\t');
 		break;
 
 	case 'v':			/* vertical-tab */
-		putchar('\v');
+		(void)putchar('\v');
 		break;
 
 	default:
-		putchar(*str);
+		(void)putchar(*str);
 		warnx("unknown escape sequence `\\%c'", *str);
 		rval = 1;
+		break;
 	}
 
 	return 1;
@@ -413,10 +414,10 @@ mklong(str, ch)
 	char ch;
 {
 	static char copy[64];
-	int len;	
+	size_t len;	
 
 	len = strlen(str) + 2;
-	(void) memmove(copy, str, len - 3);
+	(void)memmove(copy, str, len - 3);
 	copy[len - 3] = 'l';
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
