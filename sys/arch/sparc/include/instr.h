@@ -1,4 +1,4 @@
-/*	$NetBSD: instr.h,v 1.5 2000/08/16 11:33:27 pk Exp $ */
+/*	$NetBSD: instr.h,v 1.6 2003/07/14 06:53:44 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -247,6 +247,7 @@ union instr {
 		u_int	:2;		/* 11 only */
 		u_int	i_rd:5;		/* destination register */
 		u_int	i_op3:6;	/* second-level decode (see IOP3_mem) */
+		u_int	i_rs1:5;	/* source register 1 */
 		u_int	i_i:1;		/* immediate vs asi */
 		u_int	i_low13:13;	/* depend on i bit */
 	} i_loadstore;
