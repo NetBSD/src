@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsvar.h,v 1.13 2000/06/05 21:47:33 thorpej Exp $ */
+/* $NetBSD: tcdsvar.h,v 1.1 2000/07/04 02:22:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,8 +36,6 @@ struct tcds_slotconfig {
 	bus_space_tag_t sc_bst;			/* to frob TCDS regs */
 	bus_space_handle_t sc_bsh;
 
-	struct asc_tcds_softc *sc_asc;		/* to frob child's regs */
-
 	int	(*sc_intrhand) __P((void *));	/* intr. handler */
 	void	*sc_intrarg;			/* intr. handler arg. */
 	struct evcnt sc_evcnt;			/* intr. count */
@@ -59,22 +57,12 @@ struct tcds_slotconfig {
 	bus_size_t sc_dic;
 	bus_size_t sc_dud0;
 	bus_size_t sc_dud1;
-
-	/*
-	 * DMA bookkeeping information.
-	 */
-	bus_dma_tag_t sc_dmat;
-	bus_dmamap_t sc_dmamap;
-	int	sc_active;                      /* DMA active ? */
-	int	sc_ispullup;			/* DMA into main memory? */
-	size_t	sc_dmasize;
-	caddr_t	*sc_dmaaddr;
-	size_t	*sc_dmalen;
 };
 
 struct tcdsdev_attach_args {
 	bus_space_tag_t tcdsda_bst;		/* bus space tag */
 	bus_space_handle_t tcdsda_bsh;		/* bus space handle */
+	bus_dma_tag_t tcdsda_dmat;		/* bus dma tag */
 	struct tcds_slotconfig *tcdsda_sc;	/* slot configuration */
 	int	tcdsda_chip;			/* chip number */
 	int	tcdsda_id;			/* SCSI ID */
@@ -95,19 +83,3 @@ void	tcds_scsi_enable __P((struct tcds_slotconfig *, int));
 int	tcds_scsi_iserr __P((struct tcds_slotconfig *));
 int	tcds_scsi_isintr __P((struct tcds_slotconfig *, int));
 void	tcds_scsi_reset __P((struct tcds_slotconfig *));
-
-/*
- * TCDS DMA functions (used by the 53c94 driver)
- */
-int	tcds_dma_isintr	__P((struct tcds_slotconfig *));
-void	tcds_dma_reset __P((struct tcds_slotconfig *));
-int	tcds_dma_intr __P((struct tcds_slotconfig *));
-int	tcds_dma_setup __P((struct tcds_slotconfig *, caddr_t *, size_t *,
-	    int, size_t *));
-void	tcds_dma_go __P((struct tcds_slotconfig *));
-int	tcds_dma_isactive __P((struct tcds_slotconfig *));
-
-/*
- * TCDS DMA functions (private to TCDS)
- */
-int	tcds_dma_init __P((struct tcds_slotconfig *));
