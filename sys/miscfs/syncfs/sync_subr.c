@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.10 2001/11/10 13:33:44 lukem Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.11 2001/12/06 04:29:55 chs Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.10 2001/11/10 13:33:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.11 2001/12/06 04:29:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,6 +146,7 @@ vn_syncer_remove_from_worklist(vp)
 	s = splbio();
 
 	if (vp->v_flag & VONWORKLST) {
+		vp->v_flag &= ~VONWORKLST;
 		LIST_REMOVE(vp, v_synclist);
 	}
 
