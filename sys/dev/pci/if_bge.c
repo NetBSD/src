@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.39 2003/05/03 18:11:34 wiz Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.40 2003/06/01 20:26:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1157,7 +1157,9 @@ bge_chipinit(sc)
 		 * the low-order MINDMA bits.  In addition, the 5704
 		 * uses a different encoding of read/write watermarks.
 		 */
-		if (sc->bge_asicrev == BGE_ASICREV_BCM5704_A0) {
+		if (sc->bge_asicrev == BGE_ASICREV_BCM5704_A0 ||
+		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A1 ||
+		    sc->bge_asicrev == BGE_ASICREV_BCM5704_A2) {
 			dma_rw_ctl = BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD |
 			  /* should be 0x1f0000 */
 			  (0x7 << BGE_PCIDMARWCTL_RD_WAT_SHIFT) |
@@ -1686,6 +1688,14 @@ static const struct bge_revision {
 	{ BGE_ASICREV_BCM5704_A0,
   	  BGE_QUIRK_ONLY_PHY_1,
 	  "BCM5704 A0" },
+
+	{ BGE_ASICREV_BCM5704_A1,
+  	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5704 A1" },
+
+	{ BGE_ASICREV_BCM5704_A2,
+  	  BGE_QUIRK_ONLY_PHY_1,
+	  "BCM5704 A2" },
 
 	{ 0, 0, NULL }
 };
