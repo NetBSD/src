@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eg.c,v 1.14 1995/07/23 19:45:42 mycroft Exp $	*/
+/*	$NetBSD: if_eg.c,v 1.15 1995/07/23 20:27:48 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Dean Huxley <dean@fsa.ca>
@@ -108,7 +108,7 @@ struct eg_softc {
 	u_char	eg_pcb[64];		/* Primary Command Block buffer */
 	u_char  eg_incount;		/* Number of buffers currently used */
 	u_char  *eg_inbuf;		/* Incoming packet buffer */
-	u_char  *eg_outbuf;		/* Outgoing packet buffer */
+	u_char	*eg_outbuf;		/* Outgoing packet buffer */
 };
 
 int egprobe __P((struct device *, void *, void *));
@@ -443,7 +443,7 @@ eginit(sc)
 
 	if (sc->eg_outbuf == NULL)
 		sc->eg_outbuf = malloc(EG_BUFLEN, M_TEMP, M_NOWAIT);
-	
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -465,8 +465,8 @@ egrecv(sc)
 		sc->eg_pcb[3] = 0;
 		sc->eg_pcb[4] = 0;
 		sc->eg_pcb[5] = 0;
-		sc->eg_pcb[6] = EG_BUFLEN & 0xff; /* our buffer size */
-		sc->eg_pcb[7] = (EG_BUFLEN >> 8) & 0xff;
+		sc->eg_pcb[6] = EG_BUFLEN; /* our buffer size */
+		sc->eg_pcb[7] = EG_BUFLEN >> 8;
 		sc->eg_pcb[8] = 0; /* timeout, 0 == none */
 		sc->eg_pcb[9] = 0;
 		if (egwritePCB(sc) == 0)
@@ -482,43 +482,31 @@ egstart(ifp)
 {
 	register struct eg_softc *sc = egcd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
+	caddr_t buffer;
 	int len;
-	short *ptr;
+	u_short *ptr;
 
 	/* Don't transmit if interface is busy or not running */
-	if ((sc->sc_arpcom.ac_if.if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
+	if ((ifp->if_flags & (IFF_RUNNING|IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
+loop:
 	/* Dequeue the next datagram. */
-	IF_DEQUEUE(&sc->sc_arpcom.ac_if.if_snd, m0);
-	if (m0 == NULL)
+	IF_DEQUEUE(&ifp->if_snd, m0);
+	if (m0 == 0)
 		return;
 	
-	sc->sc_arpcom.ac_if.if_flags |= IFF_OACTIVE;
+	ifp->if_flags |= IFF_OACTIVE;
 
-	/* Copy the datagram to the buffer. */
-	len = 0;
-	for (m = m0; m; m = m->m_next) {
-		if (m->m_len == 0)
-			continue;
-		if (len + m->m_len > EG_BUFLEN) {
-			dprintf(("Packet too large to send\n"));
-			m_freem(m0);
-			sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
-			sc->sc_arpcom.ac_if.if_oerrors++;
-			return;
-		}
-		bcopy(mtod(m, caddr_t), sc->eg_outbuf + len, m->m_len);
-		len += m->m_len;
-	}
+	/* We need to use m->m_pkthdr.len, so require the header */
+	if ((m0->m_flags & M_PKTHDR) == 0)
+		panic("ed_start: no header mbuf");
+	len = max(m0->m_pkthdr.len, ETHER_MIN_LEN);
+
 #if NBPFILTER > 0
-	if (sc->sc_arpcom.ac_if.if_bpf)
-		bpf_mtap(sc->sc_arpcom.ac_if.if_bpf, m0);
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m0);
 #endif
-	m_freem(m0);
-	
-	/* length must be a minimum of ETHER_MIN_LEN bytes */
-	len = max(len, ETHER_MIN_LEN);
 
 	/* set direction bit: host -> adapter */
 	outb(sc->eg_ctl, inb(sc->eg_ctl) & ~EG_CTL_DIR); 
@@ -529,19 +517,28 @@ egstart(ifp)
 	sc->eg_pcb[3] = 0;
 	sc->eg_pcb[4] = 0;
 	sc->eg_pcb[5] = 0;
-	sc->eg_pcb[6] = len & 0xff; /* length of packet */
-	sc->eg_pcb[7] = (len >> 8) & 0xff;
-	if (egwritePCB(sc) == 0) {
-		for (ptr = (short *) sc->eg_outbuf; len > 0; len -= 2) {
-			outw(sc->eg_data, *ptr++);
-			while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
-				; /* XXX need timeout here */
-		}
-	} else {
+	sc->eg_pcb[6] = len; /* length of packet */
+	sc->eg_pcb[7] = len >> 8;
+	if (egwritePCB(sc) != 0) {
 		dprintf(("egwritePCB in egstart failed\n"));
-		sc->sc_arpcom.ac_if.if_oerrors++;
-		sc->sc_arpcom.ac_if.if_flags &= ~IFF_OACTIVE;
+		ifp->if_oerrors++;
+		ifp->if_flags &= ~IFF_OACTIVE;
+		goto loop;
 	}
+
+	buffer = sc->eg_outbuf;
+	for (m = m0; m != 0; m = m->m_next) {
+		bcopy(mtod(m, caddr_t), buffer, m->m_len);
+		buffer += m->m_len;
+	}
+
+	for (ptr = (u_short *) sc->eg_outbuf; len > 0; len -= 2) {
+		outw(sc->eg_data, *ptr++);
+		while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
+			; /* XXX need timeout here */
+	}
+	
+	m_freem(m0);
 	
 	/* Set direction bit : Adapter -> host */
 	outb(sc->eg_ctl, inb(sc->eg_ctl) | EG_CTL_DIR); 
@@ -553,14 +550,14 @@ egintr(arg)
 {
 	register struct eg_softc *sc = arg;
 	int i, len;
-	short *ptr;
+	u_short *ptr;
 
 	while (inb(sc->eg_stat) & EG_STAT_ACRF) {
 		egreadPCB(sc);
 		switch (sc->eg_pcb[0]) {
 		case EG_RSP_RECVPACKET:
 			len = sc->eg_pcb[6] | (sc->eg_pcb[7] << 8);
-			for (ptr = (short *) sc->eg_inbuf; len > 0; len -= 2) {
+			for (ptr = (u_short *) sc->eg_inbuf; len > 0; len -= 2) {
 				while (!(inb(sc->eg_stat) & EG_STAT_HRDY))
 					;
 				*ptr++ = inw(sc->eg_data);
