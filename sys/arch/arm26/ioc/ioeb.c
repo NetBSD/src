@@ -1,4 +1,4 @@
-/* $NetBSD: ioeb.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $ */
+/* $NetBSD: ioeb.c,v 1.5 2001/02/08 22:21:24 bjh21 Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -30,7 +30,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.4 2001/01/23 23:58:32 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioeb.c,v 1.5 2001/02/08 22:21:24 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -87,9 +87,9 @@ ioeb_attach(struct device *parent, struct device *self, void *aux)
 }
 
 void
-ioeb_irq_clear(struct device *self, int mask)
+ioeb_irq_clear(int mask)
 {
-	struct ioeb_softc *sc = (void *)self;
+	struct ioeb_softc *sc = (void *)the_ioeb;
 
 	/* The IOEB only controls interrupt 0 */
 	if (mask & IOEB_IRQ_CLEARABLE_MASK)
