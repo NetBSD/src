@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.65 2001/06/17 21:01:38 sommerfeld Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.66 2001/07/15 20:02:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -150,12 +150,21 @@ linux_sendsig(catcher, sig, mask, code)
 	struct proc *p = curproc;
 	struct trapframe *tf;
 	struct linux_sigframe *fp, frame;
+	int onstack;
 
 	tf = p->p_md.md_regs;
 
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
 	/* Allocate space for the signal handler context. */
-	/* XXX Linux doesn't support the signal stack. */
-	fp = (struct linux_sigframe *)tf->tf_esp;
+	if (onstack)
+		fp = (struct linux_sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
+					  p->p_sigctx.ps_sigstk.ss_size);
+	else
+		fp = (struct linux_sigframe *)tf->tf_esp;
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
@@ -194,7 +203,7 @@ linux_sendsig(catcher, sig, mask, code)
 	frame.sf_sc.sc_trapno = tf->tf_trapno;
 
 	/* Save signal stack. */
-	/* XXX Linux doesn't support the signal stack. */
+	/* Linux doesn't save the onstack flag in sigframe */
 
 	/* Save signal mask. */
 	native_to_linux_old_sigset(mask, &frame.sf_sc.sc_mask);
@@ -220,7 +229,8 @@ linux_sendsig(catcher, sig, mask, code)
 	tf->tf_ss = GSEL(GUDATA_SEL, SEL_UPL);
 
 	/* Remember that we're now on the signal stack. */
-	/* XXX Linux doesn't support the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -255,6 +265,7 @@ linux_sys_sigreturn(p, v, retval)
 	struct linux_sigcontext *scp, context;
 	struct trapframe *tf;
 	sigset_t mask;
+	ssize_t ss_gap;
 
 	/*
 	 * The trampoline code hands us the context.
@@ -305,7 +316,16 @@ linux_sys_sigreturn(p, v, retval)
 	tf->tf_ss = context.sc_ss;
 
 	/* Restore signal stack. */
-	p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	/*
+	 * Linux really does it this way; it doesn't have space in sigframe
+	 * to save the onstack flag.
+	 */
+	ss_gap = (ssize_t)
+	    ((caddr_t) context.sc_esp_at_signal - (caddr_t) p->p_sigctx.ps_sigstk.ss_sp);
+	if (ss_gap >= 0  && ss_gap < p->p_sigctx.ps_sigstk.ss_size)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
 
 	/* Restore signal mask. */
 	linux_old_to_native_sigset(&context.sc_mask, &mask);
