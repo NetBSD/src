@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.6 2004/05/25 14:54:56 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.7 2004/10/29 15:39:38 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@ struct fss_get {
 #define FSSIOCCLR	_IO('F', 2)			/* Unconfigure */
 
 #ifdef _KERNEL
+
+#include <sys/bufq.h>
 
 #define FSS_CLUSTER_MAX	(1<<24)		/* Upper bound of clusters. The
 					   sc_copied map uses up to
