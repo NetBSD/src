@@ -1,4 +1,4 @@
-/*	$NetBSD: spc.c,v 1.19.4.2 1999/02/13 17:59:32 minoura Exp $	*/
+/*	$NetBSD: spc.c,v 1.19.4.3 1999/03/12 15:17:01 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -167,6 +167,10 @@ spc_intio_attach(parent, self, aux)
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	sc->sc_initiator = IODEVbase->io_sram[0x70] & 0x7; /* XXX */
+	if (!spc_find(iot, ioh, sc->sc_initiator)) {
+		printf("%s: spc_find failed", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	if (intio_intr_establish(ia->ia_intr, "spc", spcintr, sc))
 		panic ("spcattach: interrupt vector busy");
