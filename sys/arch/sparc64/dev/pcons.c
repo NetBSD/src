@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.17 2003/07/15 03:36:06 lukem Exp $	*/
+/*	$NetBSD: pcons.c,v 1.18 2004/03/21 15:08:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.17 2003/07/15 03:36:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.18 2004/03/21 15:08:24 pk Exp $");
 
 #include "opt_ddb.h"
 
@@ -258,7 +258,7 @@ pconsstart(tp)
 	splx(s);
 	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, OFBURSTLEN);
-	OF_write(stdout, buf, len);
+	prom_write(prom_stdout(), buf, len);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
 	if (cl->c_cc) {
@@ -294,7 +294,7 @@ pcons_poll(aux)
 	struct tty *tp = sc->of_tty;
 	char ch;
 	
-	while (OF_read(stdin, &ch, 1) > 0) {
+	while (prom_read(prom_stdin(), &ch, 1) > 0) {
 		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
@@ -305,10 +305,8 @@ pcons_poll(aux)
 int
 pconsprobe()
 {
-	if (!stdin) stdin = OF_stdin();
-	if (!stdout) stdout = OF_stdout();
 
-	return (stdin && stdout);
+	return (prom_stdin() && prom_stdout());
 }
 
 void
