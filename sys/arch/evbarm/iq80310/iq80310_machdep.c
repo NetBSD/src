@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.32 2002/03/03 11:23:00 chris Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.33 2002/03/03 21:22:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -389,57 +389,11 @@ initarm(void *arg)
 	}
 
 	/*
-	 * Okay, RedBoot has provided us with the following memory map:
-	 *
-	 * Physical Address Range     Description 
-	 * -----------------------    ---------------------------------- 
-	 * 0x00000000 - 0x00000fff    flash Memory 
-	 * 0x00001000 - 0x00001fff    80312 Internal Registers 
-	 * 0x00002000 - 0x007fffff    flash Memory 
-	 * 0x00800000 - 0x7fffffff    PCI ATU Outbound Direct Window 
-	 * 0x80000000 - 0x83ffffff    Primary PCI 32-bit Memory 
-	 * 0x84000000 - 0x87ffffff    Primary PCI 64-bit Memory 
-	 * 0x88000000 - 0x8bffffff    Secondary PCI 32-bit Memory 
-	 * 0x8c000000 - 0x8fffffff    Secondary PCI 64-bit Memory 
-	 * 0x90000000 - 0x9000ffff    Primary PCI IO Space 
-	 * 0x90010000 - 0x9001ffff    Secondary PCI IO Space 
-	 * 0x90020000 - 0x9fffffff    Unused 
-	 * 0xa0000000 - 0xbfffffff    SDRAM 
-	 * 0xc0000000 - 0xefffffff    Unused 
-	 * 0xf0000000 - 0xffffffff    80200 Internal Registers
-	 *
-	 *
-	 * Virtual Address Range    C B  Description 
-	 * -----------------------  - -  ---------------------------------- 
-	 * 0x00000000 - 0x00000fff  Y Y  SDRAM 
-	 * 0x00001000 - 0x00001fff  N N  80312 Internal Registers 
-	 * 0x00002000 - 0x007fffff  Y N  flash Memory 
-	 * 0x00800000 - 0x7fffffff  N N  PCI ATU Outbound Direct Window 
-	 * 0x80000000 - 0x83ffffff  N N  Primary PCI 32-bit Memory 
-	 * 0x84000000 - 0x87ffffff  N N  Primary PCI 64-bit Memory 
-	 * 0x88000000 - 0x8bffffff  N N  Secondary PCI 32-bit Memory 
-	 * 0x8c000000 - 0x8fffffff  N N  Secondary PCI 64-bit Memory 
-	 * 0x90000000 - 0x9000ffff  N N  Primary PCI IO Space 
-	 * 0x90010000 - 0x9001ffff  N N  Secondary PCI IO Space 
-	 * 0xa0000000 - 0xa0000fff  Y N  flash 
-	 * 0xa0001000 - 0xbfffffff  Y Y  SDRAM 
-	 * 0xc0000000 - 0xcfffffff  Y Y  Cache Flush Region 
-	 * 0xf0000000 - 0xffffffff  N N  80200 Internal Registers 
-	 *
-	 * The first level page table is at 0xa0004000.  There are also
-	 * 2 second-level tables at 0xa0008000 and 0xa0008400.
-	 *
-	 * This corresponds roughly to the physical memory map, i.e.
-	 * we are quite nearly running VA==PA.
+	 * We are currently running with the MMU enabled and the
+	 * entire address space mapped VA==PA, except for the
+	 * first 64M of RAM is also double-mapped at 0xc0000000.
+	 * There is an L1 page table at 0xa0004000.
 	 */
-
-	/*
-	 * Examine the boot args string for options we need to know about
-	 * now.
-	 */
-#if 0
-	process_kernel_args((char *)nwbootinfo.bt_args);
-#endif
 
 	/*
 	 * Fetch the SDRAM start/size from the i80312 SDRAM configration
@@ -461,9 +415,9 @@ initarm(void *arg)
 	 * physical memory.  For now, we're going to set
 	 * physical_freestart to 0xa0200000 (where the kernel
 	 * was loaded), and allocate the memory we need downwards.
-	 * If we get too close to the page tables that RedBoot
-	 * set up, we will panic.  We will update physical_freestart
-	 * and physical_freeend later to reflect what pmap_bootstrap()
+	 * If we get too close to the L1 table that we set up, we
+	 * will panic.  We will update physical_freestart and
+	 * physical_freeend later to reflect what pmap_bootstrap()
 	 * wants to see.
 	 *
 	 * XXX pmap_bootstrap() needs an enema.
@@ -610,14 +564,14 @@ initarm(void *arg)
 	pmap_link_l2pt(l1pagetable, PROCESS_PAGE_TBLS_BASE, &kernel_ptpt);
 
 	/* update the top of the kernel VM */
-	pmap_curmaxkvaddr = KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
+	pmap_curmaxkvaddr =
+	    KERNEL_VM_BASE + ((KERNEL_PT_VMDATA_NUM) * 0x00400000) - 1;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Mapping kernel\n");
 #endif
 
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
-
 	{
 		extern char etext[], _end[];
 		size_t textsize = (uintptr_t) etext - KERNEL_TEXT_BASE;
@@ -629,22 +583,12 @@ initarm(void *arg)
 		
 		logical = 0x00200000;	/* offset of kernel in RAM */
 
-		/*
-		 * This maps the kernel text/data/bss VA==PA.
-		 */
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-
-#if 0 /* XXX No symbols yet. */
-		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
-		    physical_start + logical, kernexec->a_syms + sizeof(int)
-		    + *(u_int *)((int)end + kernexec->a_syms + sizeof(int)),
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
-#endif
 	}
 
 #ifdef VERBOSE_INIT_ARM
@@ -780,7 +724,9 @@ initarm(void *arg)
 	{
 		extern char _end[];
 
-		physical_freestart = (((uintptr_t) _end) + PGOFSET) & ~PGOFSET;
+		physical_freestart = physical_start +
+		    (((((uintptr_t) _end) + PGOFSET) & ~PGOFSET) -
+		     KERNEL_BASE);
 		physical_freeend = physical_end;
 		free_pages = (physical_freeend - physical_freestart) / NBPG;
 	}
@@ -793,14 +739,6 @@ initarm(void *arg)
 #endif
 	setttb(kernel_l1pt.pv_pa);
 	cpu_tlb_flushID();
-	{ u_int tmp;
-	__asm __volatile("mrc p15, 0, %0, c1, c0, 0"
-		: "=r" (tmp));
-	tmp |= CPU_CONTROL_MMU_ENABLE;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 0; nop; nop; nop"
-		:
-		: "r" (tmp));
-	}
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");
@@ -844,14 +782,6 @@ initarm(void *arg)
 	prefetch_abort_handler_address = (u_int)prefetch_abort_handler;
 	undefined_handler_address = (u_int)undefinedinstruction_bounce;
 
-	/* At last !
-	 * We now have the kernel in physical memory from the bottom upwards.
-	 * Kernel page tables are physically above this.
-	 * The kernel is mapped to KERNEL_TEXT_BASE
-	 * The kernel data PTs will handle the mapping of 0xf1000000-0xf3ffffff
-	 * The page tables are mapped to 0xefc00000
-	 */
-
 	/* Initialise the undefined instruction handlers */
 	printf("undefined ");
 	undefined_init();
@@ -885,39 +815,6 @@ initarm(void *arg)
 	/* We return the new stack pointer address */
 	return(kernelstack.pv_va + USPACE_SVC_STACK_TOP);
 }
-
-#if 0
-void
-process_kernel_args(char *args)
-{
-	static char bootargs[MAX_BOOT_STRING + 1];
-
-	boothowto = 0;
-
-	/* Make a local copy of the bootargs */
-	strncpy(bootargs, args, MAX_BOOT_STRING);
-
-	args = bootargs;
-	boot_file = bootargs;
-
-	/* Skip the kernel image filename */
-	while (*args != ' ' && *args != 0)
-		++args;
-
-	if (*args != 0)
-		*args++ = 0;
-
-	while (*args == ' ')
-		++args;
-
-	boot_args = args;
-
-	printf("bootfile: %s\n", boot_file);
-	printf("bootargs: %s\n", boot_args);
-
-	parse_mi_bootargs(boot_args);
-}
-#endif
 
 void
 consinit(void)
