@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.7 2002/09/06 15:41:07 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.8 2002/09/10 12:11:03 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -61,7 +61,31 @@ Lsh5_init_env:
 	 */
 	LEA(_C_LABEL(sh5_vector_table), r0)
 	putcon  r0, vbr
-	putcon  r0, resvec
+
+	/*
+	 * If we have an FPU, ensure it's quiescent
+	 */
+	getcon	sr, r0
+	pta/u	1f, tr0
+	shlri   r0, SH5_CONREG_SR_FD_SHIFT, r0
+	andi	r0, 1, r0
+	bne/u	r0, r63, tr0		/* No FPU or FPU disabled. Jump */
+	LDC32(0x20000, r0)
+	fmov.ls	r0, fr0			/* Set FPSCR.DN bit */
+	fputscr	fr0
+	fmov.qd	r63, dr0		/* Binary "Zero" to all FPU registers */
+	fmov.qd	r63, dr2;  fmov.qd r63, dr4;  fmov.qd r63, dr6
+	fmov.qd r63, dr8;  fmov.qd r63, dr10; fmov.qd r63, dr12
+	fmov.qd	r63, dr14; fmov.qd r63, dr16; fmov.qd r63, dr18
+	fmov.qd	r63, dr20; fmov.qd r63, dr22; fmov.qd r63, dr24
+	fmov.qd	r63, dr26; fmov.qd r63, dr28; fmov.qd r63, dr30
+	fmov.qd	r63, dr32; fmov.qd r63, dr34; fmov.qd r63, dr36
+	fmov.qd	r63, dr38; fmov.qd r63, dr40; fmov.qd r63, dr42
+	fmov.qd	r63, dr44; fmov.qd r63, dr46; fmov.qd r63, dr48
+	fmov.qd	r63, dr50; fmov.qd r63, dr52; fmov.qd r63, dr54
+	fmov.qd	r63, dr56; fmov.qd r63, dr58; fmov.qd r63, dr60
+	fmov.qd	r63, dr62
+1:
 
 	/*
 	 * Set up proc0's pcb.
@@ -108,6 +132,22 @@ Lsh5_init_env:
 	ptabs/l	r18, tr0
 	blink	tr0, r63
 
+
+/******************************************************************************
+ *
+ * void delay(u_int usecs);
+ */
+ENTRY(delay)
+	ptabs/u	r18, tr1
+	addz.l	r2, r63, r2
+	beq/u	r2, r63, tr1
+	pt/l	1f, tr0
+	LEA(_C_LABEL(_sh5_delay_constant), r0)
+	ld.l	r0, 0, r0
+	mulu.l	r2, r0, r0
+1:	addi	r0, -1, r0
+	bgt/l	r0, r63, tr0
+	blink	tr1, r63
 
 
 /******************************************************************************
@@ -213,7 +253,7 @@ ENTRY_NOPROFILE(_cpu_intr_suspend)
 	getcon	sr, r3
 	ptabs/l	r18, tr0
 	andi	r3, SH5_CONREG_SR_IMASK_ALL, r2
-	ori	r3, SH5_CONREG_SR_IMASK_IPL15, r3
+	ori	r3, SH5_CONREG_SR_IMASK_ALL, r3
 	shlri	r2, SH5_CONREG_SR_IMASK_SHIFT, r2
 	putcon	r3, sr
 	blink	tr0, r63
@@ -245,13 +285,13 @@ ENTRY_NOPROFILE(_cpu_intr_set)
 ENTRY_NOPROFILE(splx)
 	ptabs/l	r18, tr0
 	pta/u	Lcheck_softint_lower, tr1
-	getcon	sr, r4
+	getcon	sr, r4			/* Fetch current interrupt mask */
 	LEA(_C_LABEL(ssir), r0)		/* Get bitmap of pending soft ints */
 	movi	SH5_CONREG_SR_IMASK_ALL, r3
 	shlli	r2, SH5_CONREG_SR_IMASK_SHIFT, r2
-	andc	r4, r3, r4
-	and	r2, r3, r2
-	or	r4, r2, r2
+	andc	r4, r3, r4		/* Clear out current mask */
+	and	r2, r3, r2		/* Ensure supplied mask is valid */
+	or	r4, r2, r2		/* r2 == new mask */
 	ld.l	r0, 0, r1
 	bne/u	r1, r63, tr1		/* Go deal with them if any pending */
 	putcon	r2, sr			/* Restore interrupt level */
@@ -265,9 +305,9 @@ ENTRY_NOPROFILE(splx)
 ENTRY_NOPROFILE(splraise)
 	ptabs/l	r18, tr0
 	movi	SH5_CONREG_SR_IMASK_ALL, r1
-	getcon	sr, r3
+	getcon	sr, r3			/* Fetch current mask */
 	andi	r2, 15, r0		/* Ensure "ipl" is within range */
-	and	r1, r3, r2		/* Get old mask to r2 */
+	and	r1, r3, r2		/* Get current mask to r2 */
 	shlri	r2, SH5_CONREG_SR_IMASK_SHIFT, r2	/* Shift to low bits */
 	bge/u	r2, r0, tr0		/* Return if current mask >= ipl */
 	shlli	r0, SH5_CONREG_SR_IMASK_SHIFT, r0	/* Create new mask */
