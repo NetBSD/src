@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.82 2000/08/01 04:57:30 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.83 2000/08/12 22:26:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -370,8 +370,8 @@ reaper(void)
 		p = LIST_FIRST(&deadproc);
 		if (p == NULL) {
 			/* No work for us; go to sleep until someone exits. */
-			simple_unlock(&deadproc_slock);
-			(void) tsleep(&deadproc, PVM, "reaper", 0);
+			(void) ltsleep(&deadproc, PVM|PNORELOCK,
+			    "reaper", 0, &deadproc_slock);
 			continue;
 		}
 
