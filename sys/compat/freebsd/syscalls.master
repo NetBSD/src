@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.22 1999/02/09 20:19:13 christos Exp $
+	$NetBSD: syscalls.master,v 1.23 1999/06/09 12:33:18 drochner Exp $
 
 ;	from: @(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -357,12 +357,12 @@
 182	NOARGS		{ int sys_setegid(gid_t egid); }
 183	NOARGS		{ int sys_seteuid(uid_t euid); }
 #ifdef LFS
-184	NOARGS		{ int lfs_bmapv(fsid_t *fsidp, \
+184	NOARGS		{ int sys_lfs_bmapv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-185	NOARGS		{ int lfs_markv(fsid_t *fsidp, \
+185	NOARGS		{ int sys_lfs_markv(fsid_t *fsidp, \
 			    struct block_info *blkiov, int blkcnt); }
-186	NOARGS		{ int lfs_segclean(fsid_t *fsidp, u_long segment); }
-187	NOARGS		{ int lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
+186	NOARGS		{ int sys_lfs_segclean(fsid_t *fsidp, u_long segment); }
+187	NOARGS		{ int sys_lfs_segwait(fsid_t *fsidp, struct timeval *tv); }
 #else
 184	UNIMPL
 185	UNIMPL
