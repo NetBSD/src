@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.7 2000/05/30 04:33:15 perseant Exp $	 */
+/* $NetBSD: pass1.c,v 1.8 2000/06/14 18:43:59 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -57,18 +57,6 @@ static daddr_t  badblk;
 static daddr_t  dupblk;
 static void     checkinode(ino_t, struct inodesc *);
 static int      i_d_cmp(const void *, const void *);
-
-static void
-bmapcheck(void)
-{
-	int             i;
-
-	if (testbmap(0))
-		raise(1);
-	for (i = 0; i < maxfsblock; i++)
-		if (testbmap(i) > maxino)
-			raise(1);
-}
 
 struct ino_daddr {
 	ino_t           ino;
@@ -132,19 +120,19 @@ pass1()
 	if (debug)
 		printf("creating inode address table...\n");
 	/* Sort by daddr */
-	dins = (struct ino_daddr **)malloc((maxino + 1) * sizeof(*dins));
-	for (i = 0; i <= maxino; i++) {
+	dins = (struct ino_daddr **)malloc(maxino * sizeof(*dins));
+	for (i = 0; i < maxino; i++) {
 		dins[i] = malloc(sizeof(**dins));
 		dins[i]->ino = i;
 		dins[i]->daddr = lfs_ino_daddr(i);
 	}
-	qsort(dins, maxino + 1, sizeof(*dins), i_d_cmp);
+	qsort(dins, maxino, sizeof(*dins), i_d_cmp);
 
 	/* find a value for numdirs, fill in din_table */
 	if (debug)
 		printf("counting dirs...\n");
 	numdirs = 0;
-	for (i = 0; i <= maxino; i++) {
+	for (i = 0; i < maxino; i++) {
 		inumber = dins[i]->ino;
 		if (inumber == 0 || dins[i]->daddr == 0)
 			continue;
@@ -168,7 +156,7 @@ pass1()
 	/* resetinodebuf(); */
 	if (debug)
 		printf("counting blocks...\n");
-	for (i = 0; i <= maxino; i++) {
+	for (i = 0; i < maxino; i++) {
 		inumber = dins[i]->ino;
 		if (inumber == 0 || dins[i]->daddr == 0) {
 			statemap[inumber] = USTATE;
@@ -186,7 +174,6 @@ pass1()
 	}
 	free(dins);
 
-	bmapcheck();
 	/* freeinodebuf(); */
 }
 
@@ -375,9 +362,6 @@ pass1check(struct inodesc * idesc)
 	register struct dups *dlp;
 	struct dups    *new;
 
-	if (!testbmap(blkno)) {
-		seg_table[datosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
-	}
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
 		if (badblk++ >= MAXBAD) {
@@ -389,6 +373,8 @@ pass1check(struct inodesc * idesc)
 				errexit("%s", "");
 			return (STOP);
 		}
+	} else if (!testbmap(blkno)) {
+		seg_table[datosn(&sblock, blkno)].su_nbytes += idesc->id_numfrags * sblock.lfs_fsize;
 	}
 	for (nfrags = idesc->id_numfrags; nfrags > 0; blkno++, nfrags--) {
 		if (anyout && chkrange(blkno, 1)) {
