@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.41 1997/09/16 02:43:59 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.42 1997/09/25 05:13:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.41 1997/09/16 02:43:59 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.42 1997/09/25 05:13:02 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: disklabel.c,v 1.41 1997/09/16 02:43:59 lukem Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "pathnames.h"
 #include "extern.h"
@@ -84,10 +85,6 @@ __RCSID("$NetBSD: disklabel.c,v 1.41 1997/09/16 02:43:59 lukem Exp $");
  * The bootstrap source must leave space at the proper offset
  * for the label on such machines.
  */
-
-#ifndef RAWPARTITION
-#define RAWPARTITION	'c'
-#endif
 
 #ifndef BBSIZE
 #define	BBSIZE	8192			/* size of boot area, with label */
@@ -254,18 +251,9 @@ main(argc, argv)
 		usage();
 
 	dkname = argv[0];
-	if (dkname[0] != '/') {
-		(void)sprintf(np, "%sr%s%c", _PATH_DEV, dkname, RAWPARTITION);
-		specname = np;
-		np += strlen(specname) + 1;
-	} else
-		specname = dkname;
-	f = open(specname, op == READ ? O_RDONLY : O_RDWR);
-	if (f < 0 && errno == ENOENT && dkname[0] != '/') {
-		(void)sprintf(specname, "%sr%s", _PATH_DEV, dkname);
-		np = namebuf + strlen(specname) + 1;
-		f = open(specname, op == READ ? O_RDONLY : O_RDWR);
-	}
+	f = opendisk(dkname, op == READ ? O_RDONLY : O_RDWR, np, MAXPATHLEN, 0);
+	specname = np;
+	np += strlen(specname) + 1;
 	if (f < 0)
 		err(4, "%s", specname);
 
