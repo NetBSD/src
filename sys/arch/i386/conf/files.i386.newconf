@@ -1,0 +1,151 @@
+#
+# new style config file for i386 architecture
+#
+
+maxusers 2 16 64
+
+
+device	isa at root {[port = -1], [size = 0],
+		     [iomem = -1], [iosiz = 0],
+		     [irq = -1], [drq = -1]}
+file	arch/i386/isa/isa.c		isa needs-flag
+file	arch/i386/isa/intr.c		isa
+
+define	dma {}
+file	arch/i386/isa/dma.c		dma needs-flag
+
+define	audio {}
+file	arch/i386/isa/bsd_audio.c	audio
+
+#device	eisa at root ...
+
+#device	mca at root ...
+
+
+device	timer at isa
+device	clock at isa
+file	arch/i386/isa/clock.c		clock timer
+
+device	npx at isa
+file	arch/i386/isa/npx.c		npx needs-flag
+
+
+device	com at isa: tty
+file	arch/i386/isa/com.c		com needs-count
+device	pc at isa: tty
+file	arch/i386/isa/pccons.c		pc needs-count
+device	cy at isa: tty
+file	arch/i386/isa/cy.c		cy needs-count
+
+
+device	spkr at isa: tty
+file	arch/i386/isa/spkr.c		speaker needs-flag
+device	sb at isa: audio
+file	arch/i386/isa/sb.c		sb needs-flag
+
+
+device	ed at isa: ether, ifnet
+file	arch/i386/isa/if_ed.c		ed needs-count
+device	eg at isa: ether, ifnet
+file	arch/i386/isa/if_eg.c		eg
+device	ep at isa: ether, ifnet
+file	arch/i386/isa/if_ep.c		ep needs-count
+#device	hp at isa: ether, ifnet
+#file	arch/i386/isa/if_hp.c		hp
+device	ie at isa: ether, ifnet
+file	arch/i386/isa/if_ie.c		ie
+device	is at isa: ether, ifnet, dma
+file	arch/i386/isa/if_is.c		is
+device	ix at isa: ether, ifnet
+file	arch/i386/isa/if_ix.c		ix
+
+
+device	lms at isa
+file	arch/i386/isa/lms.c		lms needs-flag
+device	mms at isa
+file	arch/i386/isa/mms.c		mms needs-flag
+device	pms at isa
+file	arch/i386/isa/pms.c		pms needs-flag
+
+
+device	lpt at isa
+file	arch/i386/isa/lpt.c		lpt needs-flag
+
+
+device	fdc at isa {drive = -1}
+device	fd at fdc: disk, dma
+file	arch/i386/isa/fd.c		fdc needs-flag
+major	{fd = 2}
+
+device	wdc at isa {drive = -1}
+device	wd at wdc: disk
+file	arch/i386/isa/wd.c		wdc needs-flag
+major	{wd = 0}
+
+device	wt at isa: tape, dma
+file	arch/i386/isa/wt.c		wt needs-flag
+major	{wt = 3}
+
+device	mcd at isa: disk, dma
+file	arch/i386/isa/mcd.c		mcd needs-count
+major	{mcd = 7}
+
+
+define	scsi {}
+
+device	aha at isa: scsi, dma
+file	arch/i386/isa/aha1542.c		aha needs-count
+device	ahb at isa: scsi, dma
+file	arch/i386/isa/aha1742.c		ahb needs-count
+device	bt at isa: scsi, dma
+file	arch/i386/isa/bt742a.c		bt needs-count
+device	uha at isa: scsi, dma
+file	arch/i386/isa/ultra14f.c	uha needs-count
+device	wds at isa: scsi, dma
+file	arch/i386/isa/wd7000.c		wds needs-count
+
+device	scsibus at scsi {target = -1, lun = -1}
+
+device	cd at scsibus: disk
+file	scsi/cd.c			cd needs-flag
+major	{cd = 6}
+device	sd at scsibus: disk
+file	scsi/sd.c			sd needs-flag
+major	{sd = 4}
+device	st at scsibus: tape
+file	scsi/st.c			st needs-flag
+major	{st = 5}
+device	ch at scsibus: disk
+file	scsi/ch.c			ch needs-flag
+device	uk at scsibus: disk
+file	scsi/uk.c			uk needs-flag
+device	su at scsibus: disk
+file	scsi/su.c			su needs-flag
+
+
+pseudo-device	fpe
+file	arch/i386/i386/math_emulate.c	fpe needs-flag
+
+
+file	arch/i386/i386/autoconf.c
+file	arch/i386/i386/conf.c
+file	arch/i386/i386/db_disasm.c	ddb
+file	arch/i386/i386/db_interface.c	ddb
+file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/disksubr.c	disk
+file	arch/i386/i386/in_cksum.c	inet
+file	arch/i386/i386/machdep.c
+file	arch/i386/i386/mem.c
+file	arch/i386/i386/microtime.s
+file	arch/i386/i386/ns_cksum.c	ns
+#file	arch/i386/i386/oc_cksum.c	inet
+file	arch/i386/i386/pmap.c
+file	arch/i386/i386/process_machdep.c
+file	arch/i386/i386/random.s
+file	arch/i386/i386/sys_machdep.c
+file	arch/i386/i386/trap.c
+file	arch/i386/i386/vm_machdep.c
+file	dev/cons.c
+file	scsi/scsi_base.c		scsi
+file	scsi/scsi_ioctl.c		scsi
+file	scsi/scsiconf.c			scsi
