@@ -1,5 +1,37 @@
-/*	$NetBSD: null_vnops.c,v 1.15 1999/03/25 13:05:41 bouyer Exp $	*/
+/*	$NetBSD: null_vnops.c,v 1.16 1999/07/08 01:19:05 wrstuden Exp $	*/
 
+/*
+ * Copyright (c) 1999 National Aeronautics & Space Administration
+ * All rights reserved.
+ *
+ * This software was written by William Studenmund of the
+ * Numerical Aerospace Similation Facility, NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the the name of the National Aeronautics & Space Administration
+ *    nor the names of its contributors may be used to endorse or promote
+ *    products derived from this software without specific prior written
+ *    permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NATIONAL AERONAUTICS & SPACE ADMINISTRATION
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE ADMINISTRATION OR CONTRIB-
+ * UTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +71,7 @@
  *
  * Ancestors:
  *	@(#)lofs_vnops.c	1.2 (Berkeley) 6/18/92
- *	$Id: null_vnops.c,v 1.15 1999/03/25 13:05:41 bouyer Exp $
+ *	$Id: null_vnops.c,v 1.16 1999/07/08 01:19:05 wrstuden Exp $
  *	...and...
  *	@(#)null_vnodeops.c 1.20 92/07/07 UCLA Ficus project
  */
@@ -184,539 +216,34 @@
 #include <sys/namei.h>
 #include <sys/malloc.h>
 #include <sys/buf.h>
-#include <miscfs/nullfs/null.h>
 #include <miscfs/genfs/genfs.h>
-
-
-int null_bug_bypass = 0;   /* for debugging: enables bypass printf'ing */
-
-int	null_bypass __P((void *));
-int	null_getattr __P((void *));
-int	null_inactive __P((void *));
-int	null_reclaim __P((void *));
-int	null_print __P((void *));
-int	null_strategy __P((void *));
-int	null_bwrite __P((void *));
-int	null_lock __P((void *));
-int	null_unlock __P((void *));
-int	null_fsync __P((void *));
-int	null_lookup __P((void *));
-int	null_setattr __P((void *));
-int	null_access __P((void *));
-int	null_open __P((void *));
-
-
-/*
- * This is the 10-Apr-92 bypass routine.
- *    This version has been optimized for speed, throwing away some
- * safety checks.  It should still always work, but it's not as
- * robust to programmer errors.
- *    Define SAFETY to include some error checking code.
- *
- * In general, we map all vnodes going down and unmap them on the way back.
- * As an exception to this, vnodes can be marked "unmapped" by setting
- * the Nth bit in operation's vdesc_flags.
- *
- * Also, some BSD vnode operations have the side effect of vrele'ing
- * their arguments.  With stacking, the reference counts are held
- * by the upper node, not the lower one, so we must handle these
- * side-effects here.  This is not of concern in Sun-derived systems
- * since there are no such side-effects.
- *
- * This makes the following assumptions:
- * - only one returned vpp
- * - no INOUT vpp's (Sun's vop_open has one of these)
- * - the vnode operation vector of the first vnode should be used
- *   to determine what implementation of the op should be invoked
- * - all mapped vnodes are of our vnode-type (NEEDSWORK:
- *   problems on rmdir'ing mount points and renaming?)
- */ 
-int
-null_bypass(v)
-	void *v;
-{
-	struct vop_generic_args /* {
-		struct vnodeop_desc *a_desc;
-		<other random data follows, presumably>
-	} */ *ap = v;
-	extern int (**null_vnodeop_p) __P((void *)); 
-	register struct vnode **this_vp_p;
-	int error;
-	struct vnode *old_vps[VDESC_MAX_VPS];
-	struct vnode **vps_p[VDESC_MAX_VPS];
-	struct vnode ***vppp;
-	struct vnodeop_desc *descp = ap->a_desc;
-	int reles, i;
-
-	if (null_bug_bypass)
-		printf ("null_bypass: %s\n", descp->vdesc_name);
-
-#ifdef SAFETY
-	/*
-	 * We require at least one vp.
-	 */
-	if (descp->vdesc_vp_offsets == NULL ||
-	    descp->vdesc_vp_offsets[0] == VDESC_NO_OFFSET)
-		panic ("null_bypass: no vp's in map.\n");
-#endif
-
-	/*
-	 * Map the vnodes going in.
-	 * Later, we'll invoke the operation based on
-	 * the first mapped vnode's operation vector.
-	 */
-	reles = descp->vdesc_flags;
-	for (i = 0; i < VDESC_MAX_VPS; reles >>= 1, i++) {
-		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
-			break;   /* bail out at end of list */
-		vps_p[i] = this_vp_p = 
-			VOPARG_OFFSETTO(struct vnode**,descp->vdesc_vp_offsets[i],ap);
-		/*
-		 * We're not guaranteed that any but the first vnode
-		 * are of our type.  Check for and don't map any
-		 * that aren't.  (We must always map first vp or vclean fails.)
-		 */
-		if (i && (*this_vp_p == NULL ||
-		    (*this_vp_p)->v_op != null_vnodeop_p)) {
-			old_vps[i] = NULL;
-		} else {
-			old_vps[i] = *this_vp_p;
-			*(vps_p[i]) = NULLVPTOLOWERVP(*this_vp_p);
-			/*
-			 * XXX - Several operations have the side effect
-			 * of vrele'ing their vp's.  We must account for
-			 * that.  (This should go away in the future.)
-			 */
-			if (reles & 1)
-				VREF(*this_vp_p);
-		}
-			
-	}
-
-	/*
-	 * Call the operation on the lower layer
-	 * with the modified argument structure.
-	 */
-	error = VCALL(*(vps_p[0]), descp->vdesc_offset, ap);
-
-	/*
-	 * Maintain the illusion of call-by-value
-	 * by restoring vnodes in the argument structure
-	 * to their original value.
-	 */
-	reles = descp->vdesc_flags;
-	for (i = 0; i < VDESC_MAX_VPS; reles >>= 1, i++) {
-		if (descp->vdesc_vp_offsets[i] == VDESC_NO_OFFSET)
-			break;   /* bail out at end of list */
-		if (old_vps[i]) {
-			*(vps_p[i]) = old_vps[i];
-			if (reles & 1)
-				vrele(*(vps_p[i]));
-		}
-	}
-
-	/*
-	 * Map the possible out-going vpp
-	 * (Assumes that the lower layer always returns
-	 * a VREF'ed vpp unless it gets an error.)
-	 */
-	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
-	    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
-	    !error) {
-		/*
-		 * XXX - even though some ops have vpp returned vp's,
-		 * several ops actually vrele this before returning.
-		 * We must avoid these ops.
-		 * (This should go away when these ops are regularized.)
-		 */
-		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
-			goto out;
-		vppp = VOPARG_OFFSETTO(struct vnode***,
-				 descp->vdesc_vpp_offset,ap);
-		error = null_node_create(old_vps[0]->v_mount, **vppp, *vppp,
-					 descp == &vop_lookup_desc ? 0 : 1);
-	}
-
- out:
-	return (error);
-}
-
-/*
- * We have to carry on the locking protocol on the null layer vnodes
- * as we progress through the tree. We also have to enforce read-only
- * if this layer is mounted read-only.
- */
-int
-null_lookup(v)
-	void *v;
-{
-	struct vop_lookup_args /* {
-		struct vnode * a_dvp;
-		struct vnode ** a_vpp;
-		struct componentname * a_cnp;
-	} */ *ap = v;
-	struct componentname *cnp = ap->a_cnp;
-	int flags = cnp->cn_flags;
-	struct vop_lock_args lockargs;
-	struct vop_unlock_args unlockargs;
-	struct vnode *dvp, *vp;
-	int error;
-
-	if ((flags & ISLASTCN) && (ap->a_dvp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
-		return (EROFS);
-	error = null_bypass(ap);
-	if (error == EJUSTRETURN && (flags & ISLASTCN) &&
-	    (ap->a_dvp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME))
-		error = EROFS;
-	/*
-	 * We must do the same locking and unlocking at this layer as 
-	 * is done in the layers below us. We could figure this out 
-	 * based on the error return and the LASTCN, LOCKPARENT, and
-	 * LOCKLEAF flags. However, it is more expidient to just find 
-	 * out the state of the lower level vnodes and set ours to the
-	 * same state.
-	 */
-	dvp = ap->a_dvp;
-	vp = *ap->a_vpp;
-	if (dvp == vp)
-		return (error);
-	if (!VOP_ISLOCKED(dvp)) {
-		unlockargs.a_vp = dvp;
-		unlockargs.a_flags = 0;
-		genfs_nounlock(&unlockargs);
-	}
-	if (vp != NULL && VOP_ISLOCKED(vp)) {
-		lockargs.a_vp = vp;
-		lockargs.a_flags = LK_SHARED;
-		genfs_nolock(&lockargs);
-	}
-	return (error);
-}
-
-/*
- * Setattr call. Disallow write attempts if the layer is mounted read-only.
- */
-int
-null_setattr(v)
-	void *v;
-{
-	struct vop_setattr_args /* {
-		struct vnodeop_desc *a_desc;
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct vattr *vap = ap->a_vap;
-
-  	if ((vap->va_flags != VNOVAL || vap->va_uid != (uid_t)VNOVAL ||
-	    vap->va_gid != (gid_t)VNOVAL || vap->va_atime.tv_sec != VNOVAL ||
-	    vap->va_mtime.tv_sec != VNOVAL || vap->va_mode != (mode_t)VNOVAL) &&
-	    (vp->v_mount->mnt_flag & MNT_RDONLY))
-		return (EROFS);
-	if (vap->va_size != VNOVAL) {
- 		switch (vp->v_type) {
- 		case VDIR:
- 			return (EISDIR);
- 		case VCHR:
- 		case VBLK:
- 		case VSOCK:
- 		case VFIFO:
-			return (0);
-		case VREG:
-		case VLNK:
- 		default:
-			/*
-			 * Disallow write attempts if the filesystem is
-			 * mounted read-only.
-			 */
-			if (vp->v_mount->mnt_flag & MNT_RDONLY)
-				return (EROFS);
-		}
-	}
-	return (null_bypass(ap));
-}
-
-/*
- *  We handle getattr only to change the fsid.
- */
-int
-null_getattr(v)
-	void *v;
-{
-	struct vop_getattr_args /* {
-		struct vnode *a_vp;
-		struct vattr *a_vap;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	int error;
-
-	if ((error = null_bypass(ap)) != 0)
-		return (error);
-	/* Requires that arguments be restored. */
-	ap->a_vap->va_fsid = ap->a_vp->v_mount->mnt_stat.f_fsid.val[0];
-	return (0);
-}
-
-int
-null_access(v)
-	void *v;
-{
-	struct vop_access_args /* {
-		struct vnode *a_vp;
-		int  a_mode;
-		struct ucred *a_cred;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	mode_t mode = ap->a_mode;
-
-	/*
-	 * Disallow write attempts on read-only layers;
-	 * unless the file is a socket, fifo, or a block or
-	 * character device resident on the file system.
-	 */
-	if (mode & VWRITE) {
-		switch (vp->v_type) {
-		case VDIR:
-		case VLNK:
-		case VREG:
-			if (vp->v_mount->mnt_flag & MNT_RDONLY)
-				return (EROFS);
-			break;
-		default:
-			break;
-		}
-	}
-	return (null_bypass(ap));
-}
-
-/*
- * We must handle open to be able to catch MNT_NODEV and friends.
- */
-int
-null_open(v)
-	void *v;
-{
-	struct vop_open_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-	enum vtype lower_type = NULLVPTOLOWERVP(vp)->v_type;
-
-	if (((lower_type == VBLK) || (lower_type == VCHR)) &&
-	    (vp->v_mount->mnt_flag & MNT_NODEV))
-		return ENXIO;
-
-	return null_bypass(ap);
-}
-
-/*
- * We need to process our own vnode lock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
-int
-null_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	genfs_nolock(ap);
-	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
-		return (0);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
-}
-
-/*
- * We need to process our own vnode unlock and then clear the
- * interlock flag as it applies only to our vnode, not the
- * vnodes below us on the stack.
- */
-int
-null_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	genfs_nounlock(ap);
-	ap->a_flags &= ~LK_INTERLOCK;
-	return (null_bypass(ap));
-}
-
-/*
- * If vinvalbuf is calling us, it's a "shallow fsync" -- don't bother
- * syncing the underlying vnodes, since (a) they'll be fsync'ed when
- * reclaimed and (b) we could deadlock if they're locked; otherwise,
- * pass it through to the underlying layer.
- */
-
-int
-null_fsync(v)
-	void *v;
-{
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		struct ucred *a_cred;
-		int  a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	if (ap->a_flags & FSYNC_RECLAIM) {
-		return 0;
-	}
-
-	return (null_bypass(ap));
-}
-
-
-int
-null_inactive(v)
-	void *v;
-{
-	struct vop_inactive_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	/*
-	 * Do nothing (and _don't_ bypass).
-	 * Wait to vrele lowervp until reclaim,
-	 * so that until then our null_node is in the
-	 * cache and reusable.
-	 *
-	 * NEEDSWORK: Someday, consider inactive'ing
-	 * the lowervp and then trying to reactivate it
-	 * with capabilities (v_id)
-	 * like they do in the name lookup cache code.
-	 * That's too much work for now.
-	 */
-	VOP_UNLOCK(ap->a_vp, 0);
-	return (0);
-}
-
-int
-null_reclaim(v)
-	void *v;
-{
-	struct vop_reclaim_args /* {
-		struct vnode *a_vp;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct null_node *xp = VTONULL(vp);
-	struct vnode *lowervp = xp->null_lowervp;
-
-	/*
-	 * Note: in vop_reclaim, vp->v_op == dead_vnodeop_p,
-	 * so we can't call VOPs on ourself.
-	 */
-	/* After this assignment, this node will not be re-used. */
-	xp->null_lowervp = NULL;
-	LIST_REMOVE(xp, null_hash);
-	FREE(vp->v_data, M_TEMP);
-	vp->v_data = NULL;
-	vrele (lowervp);
-	return (0);
-}
-
-int
-null_print(v)
-	void *v;
-{
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-	printf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
-	return (0);
-}
-
-/*
- * XXX - vop_strategy must be hand coded because it has no
- * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
- */
-int
-null_strategy(v)
-	void *v;
-{
-	struct vop_strategy_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = NULLVPTOLOWERVP(bp->b_vp);
-
-	error = VOP_STRATEGY(bp);
-
-	bp->b_vp = savedvp;
-
-	return (error);
-}
-
-/*
- * XXX - like vop_strategy, vop_bwrite must be hand coded because it has no
- * vnode in its arguments.
- * This goes away with a merged VM/buffer cache.
- */
-int
-null_bwrite(v)
-	void *v;
-{
-	struct vop_bwrite_args /* {
-		struct buf *a_bp;
-	} */ *ap = v;
-	struct buf *bp = ap->a_bp;
-	int error;
-	struct vnode *savedvp;
-
-	savedvp = bp->b_vp;
-	bp->b_vp = NULLVPTOLOWERVP(bp->b_vp);
-
-	error = VOP_BWRITE(bp);
-
-	bp->b_vp = savedvp;
-
-	return (error);
-}
+#include <miscfs/nullfs/null.h>
+#include <miscfs/genfs/layer_extern.h>
 
 /*
  * Global vfs data structures
  */
 int (**null_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc null_vnodeop_entries[] = {
-	{ &vop_default_desc,  null_bypass },
+	{ &vop_default_desc,  layer_bypass },
 
-	{ &vop_lookup_desc,   null_lookup },
-	{ &vop_setattr_desc,  null_setattr },
-	{ &vop_getattr_desc,  null_getattr },
-	{ &vop_access_desc,   null_access },
-	{ &vop_lock_desc,     null_lock },
-	{ &vop_unlock_desc,   null_unlock },
-	{ &vop_fsync_desc,    null_fsync },
-	{ &vop_inactive_desc, null_inactive },
-	{ &vop_reclaim_desc,  null_reclaim },
-	{ &vop_print_desc,    null_print },
+	{ &vop_lookup_desc,   layer_lookup },
+	{ &vop_setattr_desc,  layer_setattr },
+	{ &vop_getattr_desc,  layer_getattr },
+	{ &vop_access_desc,   layer_access },
+	{ &vop_lock_desc,     layer_lock },
+	{ &vop_unlock_desc,   layer_unlock },
+	{ &vop_islocked_desc, layer_islocked },
+	{ &vop_fsync_desc,    layer_fsync },
+	{ &vop_inactive_desc, layer_inactive },
+	{ &vop_reclaim_desc,  layer_reclaim },
+	{ &vop_print_desc,    layer_print },
 
-	{ &vop_open_desc,     null_open },	/* mount option handling */
+	{ &vop_open_desc,     layer_open },	/* mount option handling */
 
-	{ &vop_strategy_desc, null_strategy },
-	{ &vop_bwrite_desc,   null_bwrite },
+	{ &vop_strategy_desc, layer_strategy },
+	{ &vop_bwrite_desc,   layer_bwrite },
+	{ &vop_bmap_desc,     layer_bmap },
 
 	{ (struct vnodeop_desc*)NULL, (int(*)__P((void *)))NULL }
 };
