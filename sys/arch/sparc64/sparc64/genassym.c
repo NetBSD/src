@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.8 1998/10/08 02:31:40 eeh Exp $ */
+/*	$NetBSD: genassym.c,v 1.9 1999/02/28 00:26:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -156,6 +156,8 @@ main()
 	siz("FS_SIZE", struct fpstate);
 	def("FSR_QNE", FSR_QNE);
 	def("FPRS_FEF",FPRS_FEF);
+	def("FPRS_DU",FPRS_DU);
+	def("FPRS_DL",FPRS_DL);
 
 	/* system calls */
 	def("SYS___sigreturn14", SYS___sigreturn14);

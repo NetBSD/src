@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.22 1999/01/31 09:21:19 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.23 1999/02/28 00:26:46 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -176,6 +176,7 @@ int	trapdebug = 0/*|TDB_SYSCALL|TDB_STOPSIG|TDB_STOPCPIO|TDB_ADDFLT|TDB_FOLLOW*/
  * set, no matter how it is interpreted.  Appendix N of the Sparc V8 document
  * seems to imply that we should do this, and it does make sense.
  */
+__asm(".align 64");
 struct	fpstate initfpstate = {
 	{ ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0,
 	  ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0 }
@@ -574,24 +575,23 @@ trap(type, tstate, pc, tf)
 			}
 		}
 #endif
-#ifdef DIAGNOSTIC
 		/*
-		 * Currently, we allow DIAGNOSTIC kernel code to
-		 * flush the windows to record stack traces.
+		 * The kernel needs to use FPU registers for block
+		 * load/store.  If we trap in priviliged code, save
+		 * the FPU state if there is any and enable the FPU.
+		 *
+		 * We rely on the kernel code properly enabling the FPU
+		 * in %fprs, otherwise we'll hang here trying to enable
+		 * the FPU.
 		 */
-		if (type == T_FLUSHWIN) {
-			write_all_windows();
-			ADVANCE;
-			return;
-		}
-#endif
-		/*
-		 * Storing %fsr in cpu_attach will cause this trap
-		 * even though the fpu has been enabled, if and only
-		 * if there is no FPU.
-		 */
-		if (type == T_FPDISABLED && cold) {
-			ADVANCE;
+		if (type == T_FPDISABLED) {
+			if (fpproc != NULL) {	/* someone else had it */
+				savefpstate(fpproc->p_md.md_fpstate);
+				fpproc = NULL;
+				/* Enable the FPU */
+/*				loadfpstate(initfpstate);*/
+			}
+			tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 			return;
 		}
 		goto dopanic;
@@ -669,6 +669,8 @@ badtrap:
 		}
 		/*
 		 * If we have not found an FPU, we have to emulate it.
+		 *
+		 * Since All UltraSPARC CPUs have an FPU how can this happen?
 		 */
 		if (!foundfpu) {
 #ifdef notyet
@@ -694,9 +696,6 @@ badtrap:
 			loadfpstate(fs);
 			fpproc = p;		/* now we do have it */
 		}
-#ifdef NOT_DEBUG
-		printf("Enabling floating point in tstate\n");
-#endif
 		tf->tf_tstate |= (PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 		break;
 	}
