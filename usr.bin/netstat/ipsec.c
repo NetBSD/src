@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.3 2000/10/02 17:46:42 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.4 2001/08/06 10:25:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -68,7 +68,7 @@
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
 #ifdef __NetBSD__
-__RCSID("$NetBSD: ipsec.c,v 1.3 2000/10/02 17:46:42 itojun Exp $");
+__RCSID("$NetBSD: ipsec.c,v 1.4 2001/08/06 10:25:54 itojun Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: ipsec.c,v 1.3 2000/10/02 17:46:42 itojun Exp $");
  */
 #ifdef __bsdi__
 #define plural(x)	PLURAL(x)
+#define plurales(x)	PLURALES(x)
 #endif
 /*
  * XXX see PORTABILITY for the twist
@@ -212,6 +213,8 @@ print_ipsecstats()
 {
 #define	p(f, m) if (ipsecstat.f || sflag <= 1) \
     printf(m, (CAST)ipsecstat.f, plural(ipsecstat.f))
+#define	pes(f, m) if (ipsecstat.f || sflag <= 1) \
+    printf(m, (CAST)ipsecstat.f, plurales(ipsecstat.f))
 #define hist(f, n, t) \
     ipsec_hist((f), sizeof(f)/sizeof(f[0]), (n), sizeof(n)/sizeof(n[0]), (t));
 
@@ -240,7 +243,10 @@ print_ipsecstats()
 	hist(ipsecstat.out_ahhist, ipsec_ahnames, "AH output");
 	hist(ipsecstat.out_esphist, ipsec_espnames, "ESP output");
 	hist(ipsecstat.out_comphist, ipsec_compnames, "IPComp output");
+	p(spdcachelookup, "\t" LLU " SPD cache lookup%s\n");
+	pes(spdcachemiss, "\t" LLU " SPD cache miss%s\n");
 #undef p
+#undef pes
 #undef hist
 }
 
