@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: cy.c,v 1.3 1993/12/20 09:05:35 mycroft Exp $
+ *	$Id: cy.c,v 1.4 1994/02/09 21:13:43 mycroft Exp $
  */
 
 /*
@@ -1066,10 +1066,10 @@ cyioctl(dev_t dev, int cmd, caddr_t data, int flag, struct proc *p)
 	struct tty	*tp = infop->tty;
 	int		error;
 
-	error = (*linesw[(u_char)tp->t_line].l_ioctl)(tp, cmd, data, flag);
+	error = (*linesw[(u_char)tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
-	error = ttioctl(tp, cmd, data, flag);
+	error = ttioctl(tp, cmd, data, flag, p);
 	if (error >= 0)
 		return (error);
 
