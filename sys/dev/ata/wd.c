@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.189 1998/12/16 13:00:02 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.190 1999/01/18 20:06:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -201,6 +201,8 @@ void  wdstart	__P((void *));
 void  __wdstart	__P((struct wd_softc*, struct buf *));
 void  wdrestart __P((void*));
 int   wd_get_params __P((struct wd_softc *, u_int8_t, struct ataparams *));
+void  wd_flushcache __P((struct wd_softc *, int));
+void  wd_shutdown __P((void*));
 
 struct dkdriver wddkdriver = { wdstrategy };
 
@@ -213,7 +215,6 @@ static void bad144intern __P((struct wd_softc *));
 #endif
 int	wdlock	__P((struct wd_softc *));
 void	wdunlock	__P((struct wd_softc *));
-void print_wderror __P((int, char*));
 
 int
 wdprobe(parent, match, aux)
@@ -338,7 +339,9 @@ wdattach(parent, self, aux)
 	wd->sc_dk.dk_name = wd->sc_dev.dv_xname;
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-
+	if (shutdownhook_establish(wd_shutdown, wd) == NULL)
+		printf("%s: WARNING: unable to establish shutdown hook\n",
+		    wd->sc_dev.dv_xname); 
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname, RND_TYPE_DISK);
 #endif
@@ -500,7 +503,7 @@ wddone(v)
 		if (wd->sc_wdc_bio.r_error != 0 &&
 		    (wd->sc_wdc_bio.r_error & ~(WDCE_MC | WDCE_MCR)) == 0)
 			goto noerror;
-		print_wderror(wd->sc_wdc_bio.r_error, errbuf);
+		ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
 retry:		/* Just reset and retry. Can we do more ? */
 		wdc_reset_channel(wd->drvp);
 		diskerr(bp, "wd", errbuf, LOG_PRINTF,
@@ -725,6 +728,7 @@ wdclose(dev, flag, fmt, p)
 	    wd->sc_dk.dk_copenmask | wd->sc_dk.dk_bopenmask;
 
 	if (wd->sc_dk.dk_openmask == 0) {
+		wd_flushcache(wd,0);
 		/* XXXX Must wait for I/O to complete! */
 
 		wdc_ata_delref(wd->drvp);
@@ -1124,7 +1128,7 @@ again:
 			break;
 		case ERROR:
 			errbuf[0] = '\0';
-			print_wderror(wd->sc_wdc_bio.r_error, errbuf);
+			ata_perror(wd->drvp, wd->sc_wdc_bio.r_error, errbuf);
 			printf("wddump: %s", errbuf);
 			err = EIO;
 			break;
@@ -1202,29 +1206,6 @@ bad144intern(wd)
 }
 #endif
 
-void
-print_wderror(errno, buf)
-	int errno;
-	char *buf;
-{
-	static char *errstr[] = {"address mark not found", "track 0 not found",
-	"aborted command", "media change requested", "id not found",
-	"media changed", "uncorrectable data error", "bad block detected"};
-	int i;
-	char *sep = "";
-
-	if (errno == 0) {
-		sprintf(buf, "error not notified");
-	}
-
-	for (i = 0; i < 8; i++) {
-		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s %s", sep, errstr[i]);
-			sep = ",";
-		}
-	}
-}
-
 int
 wd_get_params(wd, flags, params)
 	struct wd_softc *wd;
@@ -1248,6 +1229,7 @@ wd_get_params(wd, flags, params)
 		params->atap_sectors = 17;
 		params->atap_multi = 1;
 		params->atap_capabilities1 = params->atap_capabilities2 = 0;
+		wd->drvp->ata_vers = -1; /* Mark it as pre-ATA */
 		return 0;
 	case CMD_OK:
 		return 0;
@@ -1255,6 +1237,48 @@ wd_get_params(wd, flags, params)
 		panic("wd_get_params: bad return code from ata_get_params");
 		/* NOTREACHED */
 	}
+}
+
+void
+wd_flushcache(wd, flags)
+	struct wd_softc *wd;
+	int flags;
+{
+	struct wdc_command wdc_c;
+
+	if (wd->drvp->ata_vers < 4) /* WDCC_FLUSHCACHE is here since ATA-4 */
+		return;
+	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	wdc_c.r_command = WDCC_FLUSHCACHE;
+	wdc_c.r_st_bmask = WDCS_DRDY;
+	wdc_c.r_st_pmask = WDCS_DRDY;
+	wdc_c.flags = flags | AT_WAIT;
+	wdc_c.timeout = 30000; /* 30s timeout */
+	if (wdc_exec_command(wd->drvp, &wdc_c) != WDC_COMPLETE) {
+		printf("%s: flush cache command didn't complete\n",
+		    wd->sc_dev.dv_xname);
+	}
+	if (wdc_c.flags & AT_TIMEOU) {
+		printf("%s: flush cache command timeout\n",
+		    wd->sc_dev.dv_xname);
+	}
+	if (wdc_c.flags & AT_DF) {
+		printf("%s: flush cache command: drive fault\n",
+		    wd->sc_dev.dv_xname);
+	}
+	/*
+	 * Ignore error register, it shouldn't report anything else
+	 * than COMMAND ABORTED, which means the device doesn't support
+	 * flush cache
+	 */
+}
+
+void
+wd_shutdown(arg)
+	void *arg;
+{
+	struct wd_softc *wd = arg;
+	wd_flushcache(wd, ATA_POLL);
 }
 
 /*

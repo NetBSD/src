@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcreg.h,v 1.20 1998/11/23 23:02:11 kenh Exp $	*/
+/*	$NetBSD: wdcreg.h,v 1.21 1999/01/18 20:06:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -118,8 +118,9 @@
 #define	WDCC_LOCK	0xde	/* lock drawer */
 #define	WDCC_UNLOCK	0xdf	/* unlock drawer */
 
+#define	WDCC_FLUSHCACHE	0xe7	/* Flush cache */
 #define	WDCC_IDENTIFY	0xec	/* read parameters from controller */
-#define SET_FEATURES	0xef	/* set features */
+#define	SET_FEATURES	0xef	/* set features */
 
 #define WDCC_IDLE	0xe3	/* set idle timer & enter idle mode */
 #define WDCC_IDLE_IMMED	0xe1	/* enter idle mode */

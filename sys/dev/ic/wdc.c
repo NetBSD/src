@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.54 1998/12/16 13:02:03 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.55 1999/01/18 20:06:25 bouyer Exp $ */
 
 
 /*
@@ -744,9 +744,26 @@ wdc_probe_caps(drvp)
 			/* Not good. fall back to 16bits */
 			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
-			printf("%s: 32-bits data port\n", drv_dev->dv_xname);
+			printf("%s: 32-bits data port", drv_dev->dv_xname);
 		}
 	}
+#if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
+	if (params.atap_ata_major > 0x01 && 
+	    params.atap_ata_major != 0xffff) {
+		for (i = 14; i > 0; i--) {
+			if (params.atap_ata_major & (1 << i)) {
+				if ((drvp->drive_flags & DRIVE_CAP32) == 0)
+					printf("%s: ", drv_dev->dv_xname);
+				else
+					printf(", ");
+				printf("ATA version %d\n", i);
+				drvp->ata_vers = i;
+				break;
+			}
+		}
+	} else if (drvp->drive_flags & DRIVE_CAP32)
+#endif
+		printf("\n");
 
 	/* An ATAPI device is at last PIO mode 3 */
 	if (drvp->drive_flags & DRIVE_ATAPI)
@@ -853,6 +870,14 @@ wdc_probe_caps(drvp)
 			}
 		}
 		printf("\n");
+	}
+
+	/* Try to guess ATA version here, if it didn't get reported */
+	if (drvp->ata_vers == 0) {
+		if (drvp->drive_flags & DRIVE_UDMA)
+			drvp->ata_vers = 4; /* should be at last ATA-4 */
+		else if (drvp->PIO_cap > 2)
+			drvp->ata_vers = 2; /* should be at last ATA-2 */
 	}
 	cf_flags = drv_dev->dv_cfdata->cf_flags;
 	if (cf_flags & ATA_CONFIG_PIO_SET) {

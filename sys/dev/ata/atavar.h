@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.9 1998/12/16 13:02:03 bouyer Exp $	*/
+/*	$NetBSD: atavar.h,v 1.10 1999/01/18 20:06:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -38,6 +38,7 @@
 /* Datas common to drives and controller drivers */
 struct ata_drive_datas {
     u_int8_t drive; /* drive number */
+    int8_t ata_vers; /* ATA version supported */
     u_int16_t drive_flags; /* bitmask for drives present/absent and cap */
 #define DRIVE_ATA   0x01
 #define DRIVE_ATAPI 0x02
@@ -159,3 +160,5 @@ int ata_set_mode __P((struct ata_drive_datas*, u_int8_t, u_int8_t));
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
+
+void ata_perror __P((struct ata_drive_datas *, int, char *));
