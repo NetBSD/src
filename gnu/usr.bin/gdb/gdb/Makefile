@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2003/03/01 13:09:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 2003/09/26 20:01:28 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SRCS=		${G_LIBGDB_OBS:.o=.c} ${G_OBJECTS:Nxmalloc.o:.o=.c} ${G_SIM_OBS:.o=.c} ma
 CPPFLAGS=	-I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		${G_INTERNAL_CFLAGS:M-[ID]*:N*readline*:N*intl*:N-I.*} \
 		${G_CCFLAGS:M-DRL_*} \
+		-I${DIST} \
 		-I${TOP}/lib/libbfd/arch/${MACHINE_ARCH}
 
 LDADD=		-ltermcap -lintl -lm -lkvm
