@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.3 1995/04/24 12:22:41 cgd Exp $	*/
+/*	$NetBSD: mach.c,v 1.4 1995/04/27 22:06:04 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mach.c,v 1.3 1995/04/24 12:22:41 cgd Exp $";
+static char rcsid[] = "$NetBSD: mach.c,v 1.4 1995/04/27 22:06:04 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -590,9 +590,9 @@ tty_setup()
 	lastline = nlines - 1;
 	ncols = COLS;
 
-	(void) signal(SIGTSTP, stop_catcher);
-	(void) signal(SIGCONT, cont_catcher);
-	(void) signal(SIGWINCH, winch_catcher);
+	signal(SIGTSTP, stop_catcher);
+	signal(SIGCONT, cont_catcher);
+	signal(SIGWINCH, winch_catcher);
 	return(0);
 }
 
@@ -600,23 +600,27 @@ static void
 stop_catcher(signo)
 	int signo;
 {
+	sigset_t sigset, osigset;
+
 	stoptime();
 	noraw();
 	echo();
 	move(nlines - 1, 0);
 	refresh();
 
-	(void) signal(SIGTSTP, SIG_DFL);
-	(void) sigsetmask(sigblock(0) & ~(1 << (SIGTSTP-1)));
-	(void) kill(0, SIGTSTP);
-	(void) signal(SIGTSTP, stop_catcher);
+	signal(SIGTSTP, SIG_DFL);
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGTSTP);
+	sigprocmask(SIG_UNBLOCK, &sigset, &osigset);
+	kill(0, SIGTSTP);
+	sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
+	signal(SIGTSTP, stop_catcher);
 }
  
 static void
 cont_catcher(signo)
 	int signo;
 {
-	(void) signal(SIGCONT, cont_catcher);
 	noecho();
 	raw();
 	clearok(stdscr, 1);
