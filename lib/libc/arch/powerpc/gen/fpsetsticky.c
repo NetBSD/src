@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.3 2002/01/13 21:45:48 thorpej Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.4 2004/04/02 22:55:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,21 +42,24 @@
 
 #include <sys/types.h>
 #include <ieeefp.h>
+#include <powerpc/fpu.h>
+
+#define	STICKYBITS	(FPSCR_XX|FPSCR_ZX|FPSCR_UX|FPSCR_OX|FPSCR_VX)
+#define	STICKYSHFT	25
 
 #ifdef __weak_alias
 __weak_alias(fpsetsticky,_fpsetsticky)
 #endif
 
 fp_except
-fpsetsticky(mask)
-	fp_except mask;
+fpsetsticky(fp_except mask)
 {
 	u_int64_t fpscr;
-	fp_rnd old;
+	fp_except old;
 
 	__asm__ __volatile("mffs %0" : "=f"(fpscr));
-	old = (fp_except)((fpscr >> 25) & 0x1f);
-	fpscr = (fpscr & 0xc1ffffff) | (mask << 25);
+	old = ((fp_except)fpscr & STICKYBITS) >> STICKYSHFT;
+	fpscr = (fpscr & ~STICKYBITS) | ((mask << STICKYSHFT) & STICKYBITS);
 	__asm__ __volatile("mtfsf 0xff,%0" :: "f"(fpscr));
 	return (old);
 }
