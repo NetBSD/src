@@ -18,7 +18,7 @@ with groff; see the file COPYING.  If not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$Id: pipeline.c,v 1.2 1993/08/02 17:43:03 mycroft Exp $";
+static char rcsid[] = "$Id: pipeline.c,v 1.3 1993/12/04 03:12:19 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -235,9 +235,8 @@ static char *strsignal(n)
 {
   static char buf[sizeof("Signal ") + 1 + sizeof(int)*3];
 #ifdef HAVE_SYS_SIGLIST
-  extern char *sys_siglist[];
   if (n >= 0 && n < NSIG && sys_siglist[n] != 0)
-    return sys_siglist[n];
+    return (char *) sys_siglist[n];
 #endif /* HAVE_SYS_SIGLIST */
   sprintf(buf, "Signal %d", n);
   return buf;

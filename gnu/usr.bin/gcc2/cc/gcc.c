@@ -21,7 +21,7 @@ This paragraph is here to try to keep Sun CC from dying.
 The number of chars here seems crucial!!!!  */
 
 #ifndef lint
-static char rcsid[] = "$Id: gcc.c,v 1.4 1993/09/02 18:48:31 mycroft Exp $";
+static char rcsid[] = "$Id: gcc.c,v 1.5 1993/12/04 03:09:40 cgd Exp $";
 #endif /* not lint */
 
 /* This program is the user interface to the C compiler and possibly to
@@ -107,8 +107,7 @@ compilation is specified by a string called a "spec".  */
 extern void free ();
 extern char *getenv ();
 
-extern int errno, sys_nerr;
-extern char *sys_errlist[];
+extern int errno;
 
 extern int execv (), execvp ();
 

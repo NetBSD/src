@@ -22,7 +22,7 @@ Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
  what you give them.   Help stamp out software-hoarding!  */
 
 #ifndef lint
-static char rcsid[] = "$Id: cccp.c,v 1.2 1993/08/02 17:36:33 mycroft Exp $";
+static char rcsid[] = "$Id: cccp.c,v 1.3 1993/12/04 03:11:02 cgd Exp $";
 #endif /* not lint */
 
 typedef unsigned char U_CHAR;
@@ -190,8 +190,6 @@ extern char *getenv ();
 extern FILE *fdopen ();
 extern char *version_string;
 extern struct tm *localtime ();
-extern int sys_nerr;
-extern char *sys_errlist[];
 
 #ifndef errno
 extern int errno;
