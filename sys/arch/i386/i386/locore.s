@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 1995/02/11 21:51:12 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 1995/02/11 21:57:39 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -926,7 +926,7 @@ ENTRY(copy_fault)
 	ret
 
 /*
- * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copyoutstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, into the
  * user's address space.  Return the number of characters copied (including the
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
@@ -1042,7 +1042,7 @@ ENTRY(copyoutstr)
 #endif /* I486_CPU || I586_CPU */
 
 /*
- * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copyinstr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long, from the
  * user's address space.  Return the number of characters copied (including the
  * NUL) in *lencopied.  If the string is too long, return ENAMETOOLONG; else
@@ -1108,7 +1108,7 @@ copystr_return:
 	ret
 
 /*
- * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t int *lencopied);
+ * copystr(caddr_t from, caddr_t to, size_t maxlen, size_t *lencopied);
  * Copy a NUL-terminated string, at most maxlen characters long.  Return the
  * number of characters copied (including the NUL) in *lencopied.  If the
  * string is too long, return ENAMETOOLONG; else return 0.
