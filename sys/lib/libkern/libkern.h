@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.37 2001/07/07 17:22:25 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.38 2001/12/23 22:48:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -254,31 +254,49 @@ tolower(ch)
 int	 bcmp __P((const void *, const void *, size_t));
 void	 bzero __P((void *, size_t));
 /* #endif */
+
+/* Prototypes for which GCC built-ins exist. */
+void	*memcpy __P((void *, const void *, size_t));
+int	 memcmp __P((const void *, const void *, size_t));
+void	*memset __P((void *, int, size_t));
+#if __GNUC_PREREQ__(2, 95)
+#define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
+#define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
+#define	memset(d, v, l)		__builtin_memset(d, v, l)
+#endif
+
+char	*strcpy __P((char *, const char *));
+int	 strcmp __P((const char *, const char *));
+size_t	 strlen __P((const char *));
+#if __GNUC_PREREQ__(2, 95)
+#define	strcpy(d, s)		__builtin_strcpy(d, s)
+#define	strcmp(a, b)		__builtin_strcmp(a, b)
+#define	strlen(a)		__builtin_strlen(a)
+#endif
+
+/* These exist in GCC 3.x, but we don't bother. */
+char	*strcat __P((char *, const char *));
+char	*strncpy __P((char *, const char *, size_t));
+int	 strncmp __P((const char *, const char *, size_t));
+char	*strchr __P((const char *, int));
+char	*strrchr __P((const char *, int));
+
+/* This exists in GCC 3.x, but we don't bother (yet). */
+int	 ffs __P((int));
+
 void	 __assert __P((const char *, const char *, int, const char *))
 	    __attribute__((__noreturn__));
-int	 ffs __P((int));
 u_int32_t
 	 inet_addr __P((const char *));
 char	*intoa __P((u_int32_t));
 #define inet_ntoa(a) intoa((a).s_addr)
 void	*memchr __P((const void *, int, size_t));
-int	 memcmp __P((const void *, const void *, size_t));
-void	*memcpy __P((void *, const void *, size_t));
 void	*memmove __P((void *, const void *, size_t));
-void	*memset __P((void *, int, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
 u_long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
-char	*strcat __P((char *, const char *));
-char	*strchr __P((const char *, int));
-int	 strcmp __P((const char *, const char *));
 int	 strcasecmp __P((const char *, const char *));
-char	*strcpy __P((char *, const char *));
-size_t	 strlen __P((const char *));
 int	 strncasecmp __P((const char *, const char *, size_t));
-int	 strncmp __P((const char *, const char *, size_t));
-char	*strncpy __P((char *, const char *, size_t));
-char	*strrchr __P((const char *, int));
 u_long	 strtoul __P((const char *, char **, int));
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
