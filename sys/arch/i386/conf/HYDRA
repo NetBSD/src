@@ -1,4 +1,4 @@
-#	$NetBSD: HYDRA,v 1.1.2.2 2000/02/27 20:24:19 sommerfeld Exp $
+#	$NetBSD: HYDRA,v 1.1.2.3 2000/04/22 16:26:14 sommerfeld Exp $
 #
 #	HYDRA -- ABIT BP6-based system used for MP development.
 #
@@ -209,22 +209,22 @@ isa*	at pceb?
 isa*	at pcib?
 
 # PCMCIA bus support
-##pcmcia*	at pcic? controller ? socket ?
-##pcmcia*	at tcic? controller ? socket ?
+pcmcia*	at pcic? controller ? socket ?
+#pcmcia*	at tcic? controller ? socket ?
 
 # ISA PCMCIA controllers
-#pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-#pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 #tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x4000
 
 # PCI PCMCIA controllers
 #pcic0	at pci? dev? function ?
 
 # ISA Plug-and-Play bus support
-#isapnp0	at isa?
+isapnp0	at isa?
 
 # ISA Plug-and-Play PCMCIA controllers
-#pcic*	at isapnp?
+pcic*	at isapnp?
 
 # Coprocessor Support
 
@@ -452,7 +452,7 @@ ex*	at pci? dev ? function ?	# 3Com 90x[B]
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 #vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 #lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
-rl*	at pci? dev ? function ?	# Realtek 8129/8139
+rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 tlp*	at pci? dev ? function ?	# Tulip driver
 
 # EISA network interfaces
@@ -465,9 +465,12 @@ tlp*	at pci? dev ? function ?	# Tulip driver
 #tr*	at isapnp?			# IBM/3COM TROPIC Token-Ring
 
 # PCMCIA network interfaces
+awi*	at pcmcia? function ?		# BayStack 650 (802.11FH)
+#cnw*	at pcmcia? function ?		# Xircom/Netwave AirSurfer
 #ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
 #mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
 #wi*	at pcmcia? function ?		# Lucent WaveLan IEEE (802.11)
 
