@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.15 2003/08/25 17:50:30 uwe Exp $ */
+/*	$NetBSD: fb.c,v 1.16 2004/03/16 22:47:10 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.15 2003/08/25 17:50:30 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fb.c,v 1.16 2004/03/16 22:47:10 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,24 +346,6 @@ fb_setsize_eeprom(fb, depth, def_width, def_height)
 
 static void fb_bell __P((int));
 
-#if !defined(RASTERCONS_FULLSCREEN)
-static int a2int __P((char *, int));
-
-static int
-a2int(cp, deflt)
-	register char *cp;
-	register int deflt;
-{
-	register int i = 0;
-
-	if (*cp == '\0')
-		return (deflt);
-	while (*cp != '\0')
-		i = i * 10 + *cp++ - '0';
-	return (i);
-}
-#endif
-
 static void
 fb_bell(on)
 	int on;
@@ -409,10 +391,13 @@ fbrcons_init(fb)
 	}
 #endif /* !SUN4U */
 	if (!CPU_ISSUN4) {
-		maxcol =
-		    a2int(PROM_getpropstring(optionsnode, "screen-#columns"), 80);
-		maxrow =
-		    a2int(PROM_getpropstring(optionsnode, "screen-#rows"), 34);
+		char buf[6+1];	/* Enough for six digits */
+		if (prom_getoption("screen-#columns", buf, sizeof buf) != 0)
+			maxcol = 80;
+		maxcol = strtoul(buf, NULL, 10);
+		if (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
+			maxrow = 34;
+		maxrow = strtoul(buf, NULL, 10);
 	}
 #endif /* !RASTERCONS_FULLSCREEN */
 	/*
