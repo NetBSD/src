@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.33 2001/10/17 01:19:17 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.34 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.33 2001/10/17 01:19:17 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.34 2001/10/22 07:07:46 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,7 @@ __RCSID("$NetBSD: spec.c,v 1.33 2001/10/17 01:19:17 lukem Exp $");
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <util.h>
@@ -103,7 +104,7 @@ static void	 set(char *, NODE *);
 static void	 unset(char *, NODE *);
 
 NODE *
-spec(void)
+spec(FILE *fp)
 {
 	NODE *centry, *last, *pathparent, *cur;
 	char *p, *e, *next;
@@ -117,7 +118,7 @@ spec(void)
 	tnamelen = 0;
 	memset(&ginfo, 0, sizeof(ginfo));
 	for (lineno = 0;
-	    (buf = fparseln(stdin, NULL, &lineno, NULL,
+	    (buf = fparseln(fp, NULL, &lineno, NULL,
 		FPARSELN_UNESCCOMM | FPARSELN_UNESCCONT | FPARSELN_UNESCESC));
 	    free(buf)) {
 		/* Skip leading whitespace. */
@@ -212,6 +213,9 @@ noparent:		mtree_err("no parent node");
 		set(next, centry);
 
 		if (root == NULL) {
+			if (strcmp(centry->name, ".") || centry->type != F_DIR)
+				mtree_err(
+				    "root node must be the directory `.'");
 			last = root = centry;
 			root->parent = root;
 		} else if (pathparent != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.17 2001/10/18 04:37:56 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.18 2001/10/22 07:07:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,15 +37,18 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.17 2001/10/18 04:37:56 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.18 2001/10/22 07:07:46 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#include <err.h>
 #include <fts.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "mtree.h"
 #include "extern.h"
@@ -88,6 +91,10 @@ static KEY typelist[] = {
 	{"link",	F_LINK,		},
 	{"socket",	F_SOCK,		},
 };
+
+slist_t	excludetags, includetags;
+int	keys = KEYDEFAULT;
+
 
 int keycompare(const void *, const void *);
 
@@ -144,13 +151,10 @@ mtree_err(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void)fprintf(stderr, "mtree: ");
-	(void)vfprintf(stderr, fmt, ap);
+	vwarnx(fmt, ap);
 	va_end(ap);
-	(void)fprintf(stderr, "\n");
 	if (lineno)
-		(void)fprintf(stderr,
-		    "mtree: failed at line %lu of the specification\n",
+		warnx("failed at line %lu of the specification",
 		    (u_long) lineno);
 	exit(1);
 	/* NOTREACHED */
@@ -223,4 +227,70 @@ matchtags(NODE *node)
 		return (0);
 	}
 	return (1);
+}
+
+u_int
+nodetoino(u_int type)
+{
+
+	switch (type) {
+	case F_BLOCK:
+		return S_IFBLK;
+	case F_CHAR:
+		return S_IFCHR;
+	case F_DIR:
+		return S_IFDIR;
+	case F_FIFO:
+		return S_IFIFO;
+	case F_FILE:
+		return S_IFREG;
+	case F_LINK:
+		return S_IFLNK;
+	case F_SOCK:
+		return S_IFSOCK;
+	default:
+		printf("unknown type %d", type);
+		abort();
+	}
+	/* NOTREACHED */
+}
+
+const char *
+nodetype(u_int type)
+{
+
+	return (inotype(nodetoino(type)));
+}
+
+
+const char *
+inotype(u_int type)
+{
+
+	switch (type & S_IFMT) {
+	case F_BLOCK:
+	case S_IFBLK:
+		return ("block");
+	case F_CHAR:
+	case S_IFCHR:
+		return ("char");
+	case F_DIR:
+	case S_IFDIR:
+		return ("dir");
+	case F_FIFO:
+	case S_IFIFO:
+		return ("fifo");
+	case F_FILE:
+	case S_IFREG:
+		return ("file");
+	case F_LINK:
+	case S_IFLNK:
+		return ("link");
+	case F_SOCK:
+	case S_IFSOCK:
+		return ("socket");
+	default:
+		return ("unknown");
+	}
+	/* NOTREACHED */
 }
