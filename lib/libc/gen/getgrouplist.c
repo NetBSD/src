@@ -76,13 +76,14 @@ getgrouplist(uname, agroup, groups, grpcnt)
 			if (!strcmp(grp->gr_mem[i], uname)) {
 				if (ngroups >= maxgroups) {
 					ret = -1;
-					break;
+					goto out;
 				}
 				groups[ngroups++] = grp->gr_gid;
 				break;
 			}
 		}
 	}
+out:
 	endgrent();
 	*grpcnt = ngroups;
 	return (ret);
