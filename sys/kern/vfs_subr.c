@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.184 2003/01/18 10:06:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.185 2003/01/20 23:59:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.184 2003/01/18 10:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.185 2003/01/20 23:59:14 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2463,12 +2463,12 @@ vfs_shutdown()
 	struct buf *bp;
 	int iter, nbusy, nbusy_prev = 0, dcount, s;
 	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct proc *p;
 
 	/* XXX we're certainly not running in proc0's context! */
-	if (p == NULL)
+	if (l == NULL || (p = l->l_proc) == NULL)
 		p = &proc0;
-	
+
 	printf("syncing disks... ");
 
 	/* remove user process from run queue */
