@@ -1,5 +1,5 @@
 # Country Code : City Code : City : Country
-#	$NetBSD: inter.phone,v 1.20 2002/04/02 20:21:59 ragge Exp $
+#	$NetBSD: inter.phone,v 1.21 2003/03/27 22:44:02 agc Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 20:2:Cairo:Egypt, Arab Rep. of
 20:3:Alexandria:Egypt, Arab Rep. of
@@ -102,28 +102,30 @@
 43:512:Innsbruck:Austria
 43:662:Salzburg:Austria
 43:732:Linz:Austria
-44:207:Inner-London, Eng.:United Kingdom
-44:208:Outer-London, Eng.:United Kingdom
+44:113:Leeds, Eng.:United Kingdom
+44:114:Sheffield, Eng.:United Kingdom
+44:115:Nottingham, Eng.:United Kingdom
+44:116:Leicester, Eng.:United Kingdom
+44:117:Bristol, Eng.:United Kingdom
+44:118:Reading, Eng.:United Kingdom
 44:1203:Coventry, Eng.:United Kingdom
 44:121:Birmingham, Eng.:United Kingdom
 44:1222:Cardiff, Wales:United Kingdom
 44:1232:Belfast, N. Ire.:United Kingdom
-44:117:Bristol, Eng.:United Kingdom
 44:1274:Bradford, Eng.:United Kingdom
 44:131:Edinburgh, Scot.:United Kingdom
+44:1344:Bracknell, Eng.:United Kingdom
 44:141:Glasgow, Scot.:United Kingdom
 44:1484:Huddersfield, Eng.:United Kingdom
 44:1485:Hillington, Eng.:United Kingdom
 44:151:Liverpool, Eng.:United Kingdom
-44:113:Leeds, Eng.:United Kingdom
-44:117:Leicester, Eng.:United Kingdom
-44:115:Nottingham, Eng.:United Kingdom
 44:161:Manchester, Eng.:United Kingdom
-44:191:Newcastle-upon-Tyne, Eng.:United Kingdom
-44:114:Sheffield, Eng.:United Kingdom
 44:1752:Plymouth, Eng.:United Kingdom
 44:1782:Stoke-on-Trent, Eng.:United Kingdom
 44:1902:Wolverhampton, Eng.:United Kingdom
+44:191:Newcastle-upon-Tyne, Eng.:United Kingdom
+44:207:Inner-London, Eng.:United Kingdom
+44:208:Outer-London, Eng.:United Kingdom
 45:::Denmark
 46:18:Uppsala:Sweden
 46:21:Vasteras:Sweden
