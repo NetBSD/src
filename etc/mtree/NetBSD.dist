@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.176 2002/01/11 01:36:28 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.177 2002/01/18 10:52:24 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -671,6 +671,11 @@
 ./var/chroot/named/var
 ./var/chroot/named/var/run	mode=0775 gname=named
 ./var/chroot/named/var/tmp	mode=01775 gname=named
+./var/chroot/ntpd
+./var/chroot/ntpd/dev
+./var/chroot/ntpd/var
+./var/chroot/ntpd/var/db	mode=0775 gname=ntpd
+./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
 ./var/crash			mode=0770
 ./var/cron
 ./var/cron/tabs			mode=0700
