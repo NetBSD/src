@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	6.4 (Berkeley) 2/21/91
-#	$Id: Makefile,v 1.8 1993/10/07 07:24:33 cgd Exp $
+#	$Id: Makefile,v 1.9 1993/12/05 00:51:34 cgd Exp $
 
 PROG=		cpp
 BINDIR=		/usr/libexec
 SRCS=		cccp.c cexp.y version.c
 MAN1=		cpp.0
 CFLAGS+=	-I. -I$(.CURDIR) -I$(.CURDIR)/../common \
-                -I$(.CURDIR)/../arch/$(MACHINE) -I$(.CURDIR)/../arch \
+                -I$(.CURDIR)/../arch/$(MACHINE_ARCH) -I$(.CURDIR)/../arch \
 		-DGCC_INCLUDE_DIR=\"\" \
 		-DGPLUSPLUS_INCLUDE_DIR=\"/usr/include/g++\"
 LDADD+=		-lgnumalloc

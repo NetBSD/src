@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.6 1993/10/03 14:07:18 pk Exp $
+#	$Id: Makefile,v 1.7 1993/12/05 00:51:51 cgd Exp $
 
 LIB=	gcc
 NOPROFILE=
 
 CFLAGS+=-I${.CURDIR}/../common -I${.CURDIR}/../arch \
-	-I${.CURDIR}/../arch/${MACHINE}
+	-I${.CURDIR}/../arch/${MACHINE_ARCH}
 
 LIB1OBJS= _mulsi3.o _udivsi3.o _divsi3.o _umodsi3.o _modsi3.o _lshrsi3.o \
 	  _lshlsi3.o _ashrsi3.o _ashlsi3.o _divdf3.o _muldf3.o _negdf2.o \
