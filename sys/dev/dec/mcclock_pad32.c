@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pad32.c,v 1.8 1997/09/02 13:20:14 thorpej Exp $ */
+/*	$NetBSD: mcclock_pad32.c,v 1.9 1998/04/19 07:50:25 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,89 +29,59 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.8 1997/09/02 13:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pad32.c,v 1.9 1998/04/19 07:50:25 jonathan Exp $");
+
+
+/*
+ * mc1461818 (or compatible) clock chip driver,  for machines where each
+ * byte-wide mcclock chip register is  mapped 
+ * into the low-order byte of a little-endian 32-bit word.
+ * 
+ *  DECstation 2100/3100
+ *  DECstation 5100
+ *  DECstation 5000/200 baseboard
+ *  IOCTL asic machines (Alpha  3000 series, Decstation 5000 series)
+ *
+ * bus-specific frontends should just declare an attach and match
+ * entry, and set up a initializea switch to call the functions below. 
+ */
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <machine/autoconf.h>
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
-#include <dev/tc/tcreg.h>
-#include <dev/tc/tcvar.h> 
-#include <dev/tc/ioasicvar.h>                   /* XXX */
 
-struct mcclock_ioasic_clockdatum {
-	u_char	datum;
-	char	pad[3];
+#include <dev/dec/mcclock_pad32.h>
+
+
+void	mcclock_pad32_write __P((struct mcclock_softc *, u_int, u_int));
+u_int	mcclock_pad32_read __P((struct mcclock_softc *, u_int));
+
+const struct mcclock_busfns mcclock_pad32_busfns = {
+	mcclock_pad32_write, mcclock_pad32_read,
 };
-
-struct mcclock_ioasic_softc {
-	struct mcclock_softc	sc_mcclock;
-
-	struct mcclock_ioasic_clockdatum *sc_dp;
-};
-
-int	mcclock_ioasic_match __P((struct device *, struct cfdata *, void *));
-void	mcclock_ioasic_attach __P((struct device *, struct device *, void *));
-
-struct cfattach mcclock_ioasic_ca = {
-	sizeof (struct mcclock_ioasic_softc), mcclock_ioasic_match,
-	    mcclock_ioasic_attach, 
-};
-
-void	mcclock_ioasic_write __P((struct mcclock_softc *, u_int, u_int));
-u_int	mcclock_ioasic_read __P((struct mcclock_softc *, u_int));
-
-const struct mcclock_busfns mcclock_ioasic_busfns = {
-	mcclock_ioasic_write, mcclock_ioasic_read,
-};
-
-int
-mcclock_ioasic_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct ioasicdev_attach_args *d = aux;
-
-	if (strncmp("TOY_RTC ", d->iada_modname, TC_ROM_LLEN))
-		return (0);
-
-	return (1);
-}
 
 void
-mcclock_ioasic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct ioasicdev_attach_args *ioasicdev = aux;
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)self;
-
-	sc->sc_dp = (struct mcclock_ioasic_clockdatum *)ioasicdev->iada_addr;
-
-	mcclock_attach(&sc->sc_mcclock, &mcclock_ioasic_busfns);
-}
-
-void
-mcclock_ioasic_write(dev, reg, datum)
+mcclock_pad32_write(dev, reg, datum)
 	struct mcclock_softc *dev;
 	u_int reg, datum;
 {
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
+	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)dev;
 
 	sc->sc_dp[reg].datum = datum;
 }
 
 u_int
-mcclock_ioasic_read(dev, reg)
+mcclock_pad32_read(dev, reg)
 	struct mcclock_softc *dev;
 	u_int reg;
 {
-	struct mcclock_ioasic_softc *sc = (struct mcclock_ioasic_softc *)dev;
+	struct mcclock_pad32_softc *sc = (struct mcclock_pad32_softc *)dev;
 
 	return (sc->sc_dp[reg].datum);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.10 1998/01/12 10:21:04 thorpej Exp $ */
+/* $NetBSD: mcclock.c,v 1.11 1998/04/19 07:50:25 jonathan Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.10 1998/01/12 10:21:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.11 1998/04/19 07:50:25 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -39,6 +39,16 @@ __KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.10 1998/01/12 10:21:04 thorpej Exp $")
 #include <dev/dec/clockvar.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/ic/mc146818reg.h>
+
+/*
+ * XXX rate is machine-dependent.
+ */#ifdef __alpha__
+#define MC_DFEAULTRATE MC_RATE_1024_Hz
+#endif
+#ifdef __pmax__
+#define MC_DEFAULTRATE MC_RATE_256_Hz
+#endif
+
 
 void	mcclock_init __P((struct device *));
 void	mcclock_get __P((struct device *, time_t, struct clocktime *));
@@ -75,7 +85,7 @@ mcclock_init(dev)
 {
 	struct mcclock_softc *sc = (struct mcclock_softc *)dev;
 
-	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_1024_Hz);
+	mc146818_write(sc, MC_REGA, MC_BASE_32_KHz | MC_DEFAULTRATE);
 	mc146818_write(sc, MC_REGB,
 	    MC_REGB_PIE | MC_REGB_SQWE | MC_REGB_BINARY | MC_REGB_24HR);
 }
