@@ -38,10 +38,11 @@
 	.asciz "@(#)bzero.s	5.1 (Berkeley) 4/23/90"
 #endif /* LIBC_SCCS and not lint */
 
+#include <sys/asm.h>
+
 /* bzero (base,cnt) */
 
-	.globl _bzero
-_bzero:
+ENTRY(bzero)
 	pushl	%edi
 	movl	8(%esp),%edi
 	movl	12(%esp),%ecx
