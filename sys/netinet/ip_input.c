@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.17 1995/05/15 02:09:58 cgd Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.18 1995/06/01 21:36:27 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -248,10 +248,8 @@ next:
 		    ia->ia_ifp == m->m_pkthdr.rcvif &&
 #endif
 		    (ia->ia_ifp->if_flags & IFF_BROADCAST)) {
-			u_int32_t t;
-
-			if (satosin(&ia->ia_broadaddr)->sin_addr.s_addr ==
-			    ip->ip_dst.s_addr)
+			if (ip->ip_dst.s_addr ==
+			    satosin(&ia->ia_broadaddr)->sin_addr.s_addr)
 				goto ours;
 			if (ip->ip_dst.s_addr == ia->ia_netbroadcast.s_addr)
 				goto ours;
@@ -259,14 +257,12 @@ next:
 			 * Look for all-0's host part (old broadcast addr),
 			 * either for subnet or net.
 			 */
-			t = ntohl(ip->ip_dst.s_addr);
-			if (t == ia->ia_subnet)
-				goto ours;
-			if (t == ia->ia_net)
+			if (ip->ip_dst.s_addr == ia->ia_subnet ||
+			    ip->ip_dst.s_addr == ia->ia_net)
 				goto ours;
 		}
 	}
-	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
 #ifdef MROUTING
 		extern struct socket *ip_mrouter;
@@ -322,7 +318,7 @@ next:
 		}
 		goto ours;
 	}
-	if (ip->ip_dst.s_addr == (u_int32_t)INADDR_BROADCAST)
+	if (ip->ip_dst.s_addr == INADDR_BROADCAST)
 		goto ours;
 	if (ip->ip_dst.s_addr == INADDR_ANY)
 		goto ours;
@@ -746,7 +742,7 @@ ip_dooptions(m)
 			/*
 			 * Let ip_intr's mcast routing check handle mcast pkts
 			 */
-			forward = !IN_MULTICAST(ntohl(ip->ip_dst.s_addr));
+			forward = !IN_MULTICAST(ip->ip_dst.s_addr);
 			break;
 
 		case IPOPT_RR:
@@ -1083,10 +1079,9 @@ ip_forward(m, srcrt)
 	    satosin(rt_key(rt))->sin_addr.s_addr != 0 &&
 	    ipsendredirects && !srcrt) {
 #define	RTA(rt)	((struct in_ifaddr *)(rt->rt_ifa))
-		u_int32_t src = ntohl(ip->ip_src.s_addr);
-
 		if (RTA(rt) &&
-		    (src & RTA(rt)->ia_subnetmask) == RTA(rt)->ia_subnet) {
+		    (ip->ip_src.s_addr & RTA(rt)->ia_subnetmask) ==
+		    RTA(rt)->ia_subnet) {
 		    if (rt->rt_flags & RTF_GATEWAY)
 			dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
 		    else

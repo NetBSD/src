@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.13 1995/04/13 06:28:21 cgd Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.14 1995/06/01 21:36:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -111,7 +111,7 @@ in_pcbbind(inp, nam)
 			return (EAFNOSUPPORT);
 #endif
 		lport = sin->sin_port;
-		if (IN_MULTICAST(ntohl(sin->sin_addr.s_addr))) {
+		if (IN_MULTICAST(sin->sin_addr.s_addr)) {
 			/*
 			 * Treat SO_REUSEADDR as SO_REUSEPORT for multicast;
 			 * allow complete duplication of binding if
@@ -186,7 +186,7 @@ in_pcbconnect(inp, nam)
 #define ifatoia(ifa)	((struct in_ifaddr *)(ifa))
 		if (sin->sin_addr.s_addr == INADDR_ANY)
 		    sin->sin_addr = IA_SIN(in_ifaddr)->sin_addr;
-		else if (sin->sin_addr.s_addr == (u_int32_t)INADDR_BROADCAST &&
+		else if (sin->sin_addr.s_addr == INADDR_BROADCAST &&
 		  (in_ifaddr->ia_ifp->if_flags & IFF_BROADCAST))
 		    sin->sin_addr = satosin(&in_ifaddr->ia_broadaddr)->sin_addr;
 	}
@@ -242,7 +242,7 @@ in_pcbconnect(inp, nam)
 		 * interface has been set as a multicast option, use the
 		 * address of that interface as our source address.
 		 */
-		if (IN_MULTICAST(ntohl(sin->sin_addr.s_addr)) &&
+		if (IN_MULTICAST(sin->sin_addr.s_addr) &&
 		    inp->inp_moptions != NULL) {
 			struct ip_moptions *imo;
 			struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.22 1995/05/15 01:24:53 cgd Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.23 1995/06/01 21:36:40 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -157,7 +157,7 @@ ip_output(m0, opt, ro, flags, imo)
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst = (struct sockaddr_in *)ro->ro_rt->rt_gateway;
 	}
-	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr))) {
+	if (IN_MULTICAST(ip->ip_dst.s_addr)) {
 		struct in_multi *inm;
 
 		m->m_flags |= M_MCAST;
@@ -833,7 +833,7 @@ ip_setmoptions(optname, imop, m)
 			break;
 		}
 		mreq = mtod(m, struct ip_mreq *);
-		if (!IN_MULTICAST(ntohl(mreq->imr_multiaddr.s_addr))) {
+		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
 		}
@@ -854,8 +854,7 @@ ip_setmoptions(optname, imop, m)
 			}
 			ifp = ro.ro_rt->rt_ifp;
 			rtfree(ro.ro_rt);
-		}
-		else {
+		} else {
 			INADDR_TO_IFP(mreq->imr_interface, ifp);
 		}
 		/*
@@ -906,7 +905,7 @@ ip_setmoptions(optname, imop, m)
 			break;
 		}
 		mreq = mtod(m, struct ip_mreq *);
-		if (!IN_MULTICAST(ntohl(mreq->imr_multiaddr.s_addr))) {
+		if (!IN_MULTICAST(mreq->imr_multiaddr.s_addr)) {
 			error = EINVAL;
 			break;
 		}

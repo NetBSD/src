@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.15 1995/04/13 06:37:18 cgd Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.16 1995/06/01 21:36:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -152,7 +152,7 @@ udp_input(m, iphlen)
 		}
 	}
 
-	if (IN_MULTICAST(ntohl(ip->ip_dst.s_addr)) ||
+	if (IN_MULTICAST(ip->ip_dst.s_addr) ||
 	    in_broadcast(ip->ip_dst, m->m_pkthdr.rcvif)) {
 		struct socket *last;
 		/*
