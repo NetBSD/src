@@ -1,4 +1,4 @@
-/*	$NetBSD: refill.c,v 1.7 1997/07/13 20:15:22 christos Exp $	*/
+/*	$NetBSD: refill.c,v 1.8 1998/01/22 08:21:48 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)refill.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refill.c,v 1.7 1997/07/13 20:15:22 christos Exp $");
+__RCSID("$NetBSD: refill.c,v 1.8 1998/01/22 08:21:48 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,11 @@ __RCSID("$NetBSD: refill.c,v 1.7 1997/07/13 20:15:22 christos Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include "local.h"
+#include "reentrant.h"
+
+#ifdef _REENT
+extern rwlock_t __sfp_lock;
+#endif
 
 static int lflush __P((FILE *));
 
@@ -56,7 +61,6 @@ static int
 lflush(fp)
 	FILE *fp;
 {
-
 	if ((fp->_flags & (__SLBF|__SWR)) == (__SLBF|__SWR))
 		return (__sflush(fp));
 	return (0);
@@ -120,8 +124,11 @@ __srefill(fp)
 	 * flush all line buffered output files, per the ANSI C
 	 * standard.
 	 */
-	if (fp->_flags & (__SLBF|__SNBF))
+	if (fp->_flags & (__SLBF|__SNBF)) {
+		rwlock_rdlock(&__sfp_lock);
 		(void) _fwalk(lflush);
+		rwlock_unlock(&__sfp_lock);
+	}
 	fp->_p = fp->_bf._base;
 	fp->_r = (*fp->_read)(fp->_cookie, (char *)fp->_p, fp->_bf._size);
 	fp->_flags &= ~__SMOD;	/* buffer contents are again pristine */
