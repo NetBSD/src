@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_eisa.c,v 1.13 1997/04/18 00:50:33 cgd Exp $	*/
+/*	$NetBSD: if_ep_eisa.c,v 1.14 1997/10/14 21:30:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -205,5 +205,9 @@ ep_eisa_attach(parent, self, aux)
 		printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname,
 		    intrstr);
 
-	epconfig(sc, chipset);
+	sc->enable = NULL;
+	sc->disable = NULL;
+	sc->enabled = 1;
+
+	epconfig(sc, chipset, NULL);
 }
