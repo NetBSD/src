@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.5 2000/11/12 19:48:55 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2001/01/11 13:15:06 enami Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=1
+
+.include <bsd.own.mk>
 
 NTPDOCDIR?=	${HTMLDOCDIR}/ntp
 
@@ -19,7 +21,7 @@ CFLAGS+=        -msoft-quad-float
 .endif
 
 .if defined(PROG)
-LIBNTP!=	cd ${.CURDIR}/../libntp; ${MAKE} print-objdir
+LIBNTP!=	cd ${.CURDIR}/../libntp && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNTP} -lntp
 DPADD+=		${LIBNTP}/libntp.a
 

@@ -1,4 +1,7 @@
-# $NetBSD: Makefile,v 1.6 2000/12/19 21:18:32 nathanw Exp $
+# $NetBSD: Makefile,v 1.7 2001/01/11 13:15:07 enami Exp $
+
+.include <bsd.own.mk>
+
 DIST=		${.CURDIR}/../../crypto/dist
 .PATH: ${DIST}/heimdal/admin
 
@@ -27,7 +30,7 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/openssl	\
 	-DHAVE_CONFIG_H
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${MAKE} print-objdir
+VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
 LDADD=	-lkadm5srv \
 	-lhdb \
