@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.24 1997/10/29 00:30:00 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.25 1997/11/04 06:16:13 thorpej Exp $	*/
 
 #undef WDSDIAG
 #ifdef DDB
@@ -162,6 +162,9 @@ struct wds_softc {
 	int sc_numscbs, sc_mbofull;
 	struct scsipi_link sc_link;	/* prototype for subdevs */
 
+	LIST_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_xfer *sc_queuelast;
+
 	int sc_revision;
 	int sc_maxsegs;
 };
@@ -198,6 +201,8 @@ int	wds_poll __P((struct wds_softc *, struct scsipi_xfer *, int));
 int	wds_ipoll __P((struct wds_softc *, struct wds_scb *, int));
 void	wds_timeout __P((void *));
 int	wds_create_scbs __P((struct wds_softc *, void *, size_t));
+void	wds_enqueue __P((struct wds_softc *, struct scsipi_xfer *, int));
+struct scsipi_xfer *wds_dequeue __P((struct wds_softc *));
 
 struct scsipi_adapter wds_switch = {
 	wds_scsi_cmd,
@@ -229,6 +234,47 @@ struct cfdriver wds_cd = {
 
 /* XXX Should put this in a better place. */ 
 #define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+
+/*
+ * Insert a scsipi_xfer into the software queue.  We overload xs->free_list
+ * to avoid having to allocate additional resources (since we're used
+ * only during resource shortages anyhow.
+ */
+void
+wds_enqueue(sc, xs, infront)
+	struct wds_softc *sc;
+	struct scsipi_xfer *xs;
+	int infront;
+{
+
+	if (infront || sc->sc_queue.lh_first == NULL) {
+		if (sc->sc_queue.lh_first == NULL)
+			sc->sc_queuelast = xs;
+		LIST_INSERT_HEAD(&sc->sc_queue, xs, free_list);
+		return;
+	}
+
+	LIST_INSERT_AFTER(sc->sc_queuelast, xs, free_list);
+	sc->sc_queuelast = xs;
+}
+
+/*
+ * Pull a scsipi_xfer off the front of the software queue.
+ */
+struct scsipi_xfer *
+wds_dequeue(sc)
+	struct wds_softc *sc;
+{
+	struct scsipi_xfer *xs;
+
+	xs = sc->sc_queue.lh_first;
+	LIST_REMOVE(xs, free_list);
+
+	if (sc->sc_queue.lh_first == NULL)
+		sc->sc_queuelast = NULL;
+
+	return (xs);
+}
 
 integrate void
 wds_wait(iot, ioh, port, mask, val)
@@ -373,6 +419,7 @@ wds_attach(sc, wpd)
 
 	TAILQ_INIT(&sc->sc_free_scb);
 	TAILQ_INIT(&sc->sc_waiting_scb);
+	LIST_INIT(&sc->sc_queue);
 
 	wds_init(sc, 0);
 	wds_inquire_setup_information(sc);
@@ -936,6 +983,17 @@ wds_done(sc, scb, stat)
 	wds_free_scb(sc, scb);
 	xs->flags |= ITSDONE;
 	scsipi_done(xs);
+
+	/*
+	 * If there are queue entries in the software queue, try to
+	 * run the first one.  We should be more or less guaranteed
+	 * to succeed, since we just freed a CCB.
+	 *
+	 * NOTE: wds_scsi_cmd() relies on our calling it with
+	 * the first entry in the queue.
+	 */
+	if ((xs = sc->sc_queue.lh_first) != NULL)
+		(void) wds_scsi_cmd(xs);
 }
 
 int
@@ -1150,6 +1208,7 @@ wds_scsi_cmd(xs)
 	struct wds_scb *scb;
 	struct wds_scat_gath *sg;
 	int error, seg, flags, s;
+	int fromqueue = 0, dontqueue = 0;
 #ifdef TFS
 	struct iovec *iovp;
 #endif
@@ -1161,11 +1220,66 @@ wds_scsi_cmd(xs)
 		return COMPLETE;
 	}
 
+	s = splbio();		/* protect the queue */
+
+	/*
+	 * If we're running the queue from wds_done(), we've been
+	 * called with the first queue entry as our argument.
+	 */
+	if (xs == sc->sc_queue.lh_first) {
+		xs = wds_dequeue(sc);
+		fromqueue = 1;
+		goto get_scb;
+	}
+
+	/* Polled requests can't be queued for later. */
+	dontqueue = xs->flags & SCSI_POLL;
+
+	/*
+	 * If there are jobs in the queue, run them first.
+	 */
+	if (sc->sc_queue.lh_first != NULL) {
+		/*
+		 * If we can't queue, we have to abort, since
+		 * we have to preserve order.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Swap with the first queue entry.
+		 */
+		wds_enqueue(sc, xs, 0);
+		xs = wds_dequeue(sc);
+		fromqueue = 1;
+	}
+
+ get_scb:
 	flags = xs->flags;
 	if ((scb = wds_get_scb(sc, flags)) == NULL) {
-		xs->error = XS_DRIVER_STUFFUP;
-		return TRY_AGAIN_LATER;
+		/*
+		 * If we can't queue, we lose.
+		 */
+		if (dontqueue) {
+			splx(s);
+			xs->error = XS_DRIVER_STUFFUP;
+			return (TRY_AGAIN_LATER);
+		}
+
+		/*
+		 * Stuff ourselves into the queue, in front
+		 * if we came off in the first place.
+		 */
+		wds_enqueue(sc, xs, fromqueue);
+		splx(s);
+		return (SUCCESSFULLY_QUEUED);
 	}
+
+	splx(s);		/* done playing with the queue */
+
 	scb->xs = xs;
 	scb->timeout = xs->timeout;
 

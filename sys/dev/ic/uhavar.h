@@ -1,4 +1,4 @@
-/*	$NetBSD: uhavar.h,v 1.6 1997/08/27 11:25:03 bouyer Exp $	*/
+/*	$NetBSD: uhavar.h,v 1.7 1997/11/04 05:58:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,8 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/queue.h>
+
 #define UHA_MSCP_MAX	32	/* store up to 32 MSCPs at one time */
 #define	MSCP_HASH_SIZE	32	/* hash table size for phystokv */
 #define	MSCP_HASH_SHIFT	9
@@ -52,6 +54,9 @@ struct uha_softc {
 	TAILQ_HEAD(, uha_mscp) sc_free_mscp;
 	int sc_nummscps;
 	struct scsipi_link sc_link;
+
+	LIST_HEAD(, scsipi_xfer) sc_queue;
+	struct scsipi_xfer *sc_queuelast;
 };
 
 struct uha_probe_data {
