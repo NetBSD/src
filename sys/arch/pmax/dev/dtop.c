@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.26.6.2 1997/11/20 03:15:31 mellon Exp $	*/
+/*	$NetBSD: dtop.c,v 1.26.6.3 1997/11/24 00:06:51 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.2 1997/11/20 03:15:31 mellon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.26.6.3 1997/11/24 00:06:51 mellon Exp $");
 
 #include "rasterconsole.h"
 
@@ -893,6 +893,12 @@ dtop_keyboard_handler(dev, msg, event, outc)
 	for ( ; ns >= ne; ns--)
 	    if (*ns) {
 		c = kbdMapChar(*ns);
+#ifdef DDB
+		if (*ns == LK_DO) {
+			spl0();
+			Debugger();
+		}
+#endif
 		if (outc == 0) {
 		    if (dtopDivertXInput) {
 			(*dtopDivertXInput)(*ns);
