@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.84 1998/04/26 18:58:54 thorpej Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.85 1998/04/26 19:10:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -1957,6 +1957,18 @@ vfs_unmountall()
 	register struct mount *mp, *nmp;
 	int allerror, error;
 	struct proc *p = curproc;	/* XXX */
+
+	/*
+	 * Unmounting a file system blocks the requesting process.
+	 * However, it's possible for this routine to be called when
+	 * curproc is NULL (e.g. panic situation, or via the debugger).
+	 * If we get stuck in this situation, just abort, since any
+	 * attempts to sleep will fault.
+	 */
+	if (p == NULL) {
+		printf("vfs_unmountall: no context, aborting\n");
+		return;
+	}
 
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
