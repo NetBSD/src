@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1 2002/03/13 00:38:17 eeh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2 2002/03/15 21:12:07 eeh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,9 +38,11 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/properties.h>
 
 #include <machine/autoconf.h>
 #include <machine/dcr.h>
+#include <machine/cpu.h>
 
 struct cputab {
 	int version;
@@ -99,6 +101,11 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	int pvr, cpu;
 	int own, pcf, cas, pcl, aid;
 	struct cputab *cp = models;
+	unsigned int processor_freq;
+
+	if (board_info_get("processor-frequency", 
+		&processor_freq, sizeof(processor_freq)) == -1)
+		panic("no processor-frequency");
 
 	cpufound++;
 	ncpus++;
@@ -126,7 +133,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 		(pvr >> 8) & 0xff, pvr & 0xff);
 
 #if 1
-	printf(": %dMHz %s\n", board_data.processor_speed / 1000 / 1000,
+	printf(": %dMHz %s\n", processor_freq / 1000 / 1000,
 	    cpu_model);
 #endif
 
@@ -150,7 +157,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 
 	printf("Enabling ecc handler\n");
 	intr_ecc_tb = 0;
-	intr_ecc_iv = board_data.processor_speed; /* Set interval */
+	intr_ecc_iv = processor_freq; /* Set interval */
 	intr_ecc_cnt = 0;
 
 	intr_establish(16, IST_LEVEL, IPL_SERIAL, intr_ecc, NULL);
@@ -307,6 +314,10 @@ intr_ecc(void * arg)
 	int			ce, ue;
 	u_quad_t		tb;
 	u_long			tmp, msr, dat;
+	unsigned int		memsiz;
+
+	if (board_info_get("mem-size", &memsiz, sizeof(memsiz)) == -1)
+		panic("no mem-size");
 	
 	/* This code needs to be improved to handle double-bit errors */
 	/* in some intelligent fashion. */
@@ -361,7 +372,7 @@ intr_ecc(void * arg)
 
 	if (intr_ecc_cnt > 1000) {
 		printf("ECC: Too many errors, recycling entire "
-			"SDRAM (size = %d).\n", board_data.mem_size);
+			"SDRAM (size = %d).\n", memsiz);
 
 		/* Can this code be changed to run without disabling data MMU and disabling intrs? */
 		/* Does kernel always map all of physical RAM VA=PA? If so, just loop over lowmem. */
@@ -388,7 +399,7 @@ intr_ecc(void * arg)
 			"mtmsr %0;"
 			"sync;isync;"
 		: "=&r" (msr), "=&r" (tmp), "=&r" (dat)
-		: "r" (board_data.mem_size) : "0" );
+		: "r" (memsiz) : "0" );
 
 		mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
 		esr = mfdcr(DCR_SDRAM0_CFGDATA);
@@ -423,7 +434,7 @@ intr_ecc(void * arg)
 			"mtmsr %0;"
 			"sync;isync;"
 		: "=&r" (msr), "=&r" (tmp), "=&r" (dat)
-		: "r" (board_data.mem_size) : "0" );
+		: "r" (memsiz) : "0" );
 
 		mtdcr(DCR_SDRAM0_CFGADDR, DCR_SDRAM0_ECCESR);
 		esr = mfdcr(DCR_SDRAM0_CFGDATA);

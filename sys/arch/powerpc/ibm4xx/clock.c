@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.1 2002/03/13 23:12:11 eeh Exp $	*/
+/*	$NetBSD: clock.c,v 1.2 2002/03/15 21:12:07 eeh Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -35,6 +35,7 @@
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/properties.h>
 
 #include <machine/walnut.h>
 #include <machine/dcr.h>
@@ -142,8 +143,13 @@ cpu_initclocks(void)
 void
 calc_delayconst(void)
 {
+	unsigned int processor_freq;
 
-	ticks_per_sec = board_data.processor_speed;
+	if (board_info_get("processor-frequency", 
+		&processor_freq, sizeof(processor_freq)) == -1)
+		panic("no processor-frequency");
+
+	ticks_per_sec = processor_freq;
 	ns_per_tick = 1000000000 / ticks_per_sec;
 
 	/* Make sure that timers run at CPU frequency */
