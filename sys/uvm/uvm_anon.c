@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.5.4.1 2000/08/06 17:08:58 thorpej Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.5.4.2 2000/08/06 17:09:58 thorpej Exp $	*/
 
 /*
  *
@@ -506,9 +506,11 @@ anon_pagein(anon)
 
 		return FALSE;
 
-#ifdef DIAGNOSTIC
 	default:
+#ifdef DIAGNOSTIC
 		panic("anon_pagein: uvmfault_anonget -> %d", rv);
+#else
+		return FALSE;
 #endif
 	}
 
