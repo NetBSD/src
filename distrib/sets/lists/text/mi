@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2004/01/11 15:09:51 lukem Exp $
+# $NetBSD: mi,v 1.18 2004/01/12 03:08:06 lukem Exp $
 ./usr/bin/addftinfo				text-groff-bin
 ./usr/bin/checknr				text-groff-bin
 ./usr/bin/eqn					text-groff-bin
@@ -34,332 +34,332 @@
 ./usr/bin/troff					text-groff-bin
 ./usr/bin/vgrind				text-groff-bin
 ./usr/libexec/vfontedpr				text-groff-bin
-./usr/share/groff_font/devX100-12/CB		text-groff-font
-./usr/share/groff_font/devX100-12/CBI		text-groff-font
-./usr/share/groff_font/devX100-12/CI		text-groff-font
-./usr/share/groff_font/devX100-12/CR		text-groff-font
-./usr/share/groff_font/devX100-12/DESC		text-groff-font
-./usr/share/groff_font/devX100-12/HB		text-groff-font
-./usr/share/groff_font/devX100-12/HBI		text-groff-font
-./usr/share/groff_font/devX100-12/HI		text-groff-font
-./usr/share/groff_font/devX100-12/HR		text-groff-font
-./usr/share/groff_font/devX100-12/NB		text-groff-font
-./usr/share/groff_font/devX100-12/NBI		text-groff-font
-./usr/share/groff_font/devX100-12/NI		text-groff-font
-./usr/share/groff_font/devX100-12/NR		text-groff-font
-./usr/share/groff_font/devX100-12/S		text-groff-font
-./usr/share/groff_font/devX100-12/TB		text-groff-font
-./usr/share/groff_font/devX100-12/TBI		text-groff-font
-./usr/share/groff_font/devX100-12/TI		text-groff-font
-./usr/share/groff_font/devX100-12/TR		text-groff-font
-./usr/share/groff_font/devX100/CB		text-groff-font
-./usr/share/groff_font/devX100/CBI		text-groff-font
-./usr/share/groff_font/devX100/CI		text-groff-font
-./usr/share/groff_font/devX100/CR		text-groff-font
-./usr/share/groff_font/devX100/DESC		text-groff-font
-./usr/share/groff_font/devX100/HB		text-groff-font
-./usr/share/groff_font/devX100/HBI		text-groff-font
-./usr/share/groff_font/devX100/HI		text-groff-font
-./usr/share/groff_font/devX100/HR		text-groff-font
-./usr/share/groff_font/devX100/NB		text-groff-font
-./usr/share/groff_font/devX100/NBI		text-groff-font
-./usr/share/groff_font/devX100/NI		text-groff-font
-./usr/share/groff_font/devX100/NR		text-groff-font
-./usr/share/groff_font/devX100/S		text-groff-font
-./usr/share/groff_font/devX100/TB		text-groff-font
-./usr/share/groff_font/devX100/TBI		text-groff-font
-./usr/share/groff_font/devX100/TI		text-groff-font
-./usr/share/groff_font/devX100/TR		text-groff-font
-./usr/share/groff_font/devX75-12/CB		text-groff-font
-./usr/share/groff_font/devX75-12/CBI		text-groff-font
-./usr/share/groff_font/devX75-12/CI		text-groff-font
-./usr/share/groff_font/devX75-12/CR		text-groff-font
-./usr/share/groff_font/devX75-12/DESC		text-groff-font
-./usr/share/groff_font/devX75-12/HB		text-groff-font
-./usr/share/groff_font/devX75-12/HBI		text-groff-font
-./usr/share/groff_font/devX75-12/HI		text-groff-font
-./usr/share/groff_font/devX75-12/HR		text-groff-font
-./usr/share/groff_font/devX75-12/NB		text-groff-font
-./usr/share/groff_font/devX75-12/NBI		text-groff-font
-./usr/share/groff_font/devX75-12/NI		text-groff-font
-./usr/share/groff_font/devX75-12/NR		text-groff-font
-./usr/share/groff_font/devX75-12/S		text-groff-font
-./usr/share/groff_font/devX75-12/TB		text-groff-font
-./usr/share/groff_font/devX75-12/TBI		text-groff-font
-./usr/share/groff_font/devX75-12/TI		text-groff-font
-./usr/share/groff_font/devX75-12/TR		text-groff-font
-./usr/share/groff_font/devX75/CB		text-groff-font
-./usr/share/groff_font/devX75/CBI		text-groff-font
-./usr/share/groff_font/devX75/CI		text-groff-font
-./usr/share/groff_font/devX75/CR		text-groff-font
-./usr/share/groff_font/devX75/DESC		text-groff-font
-./usr/share/groff_font/devX75/HB		text-groff-font
-./usr/share/groff_font/devX75/HBI		text-groff-font
-./usr/share/groff_font/devX75/HI		text-groff-font
-./usr/share/groff_font/devX75/HR		text-groff-font
-./usr/share/groff_font/devX75/NB		text-groff-font
-./usr/share/groff_font/devX75/NBI		text-groff-font
-./usr/share/groff_font/devX75/NI		text-groff-font
-./usr/share/groff_font/devX75/NR		text-groff-font
-./usr/share/groff_font/devX75/S			text-groff-font
-./usr/share/groff_font/devX75/TB		text-groff-font
-./usr/share/groff_font/devX75/TBI		text-groff-font
-./usr/share/groff_font/devX75/TI		text-groff-font
-./usr/share/groff_font/devX75/TR		text-groff-font
-./usr/share/groff_font/devascii/B		text-groff-font
-./usr/share/groff_font/devascii/BI		text-groff-font
-./usr/share/groff_font/devascii/CW		text-groff-font
-./usr/share/groff_font/devascii/DESC		text-groff-font
-./usr/share/groff_font/devascii/I		text-groff-font
-./usr/share/groff_font/devascii/L		text-groff-font
-./usr/share/groff_font/devascii/R		text-groff-font
-./usr/share/groff_font/devascii/S		text-groff-font
-./usr/share/groff_font/devcp1047/B		text-groff-font
-./usr/share/groff_font/devcp1047/BI		text-groff-font
-./usr/share/groff_font/devcp1047/CW		text-groff-font
-./usr/share/groff_font/devcp1047/DESC		text-groff-font
-./usr/share/groff_font/devcp1047/I		text-groff-font
-./usr/share/groff_font/devcp1047/L		text-groff-font
-./usr/share/groff_font/devcp1047/R		text-groff-font
-./usr/share/groff_font/devcp1047/S		text-groff-font
+./usr/share/groff_font/devX100-12/CB		text-groff-font		share
+./usr/share/groff_font/devX100-12/CBI		text-groff-font		share
+./usr/share/groff_font/devX100-12/CI		text-groff-font		share
+./usr/share/groff_font/devX100-12/CR		text-groff-font		share
+./usr/share/groff_font/devX100-12/DESC		text-groff-font		share
+./usr/share/groff_font/devX100-12/HB		text-groff-font		share
+./usr/share/groff_font/devX100-12/HBI		text-groff-font		share
+./usr/share/groff_font/devX100-12/HI		text-groff-font		share
+./usr/share/groff_font/devX100-12/HR		text-groff-font		share
+./usr/share/groff_font/devX100-12/NB		text-groff-font		share
+./usr/share/groff_font/devX100-12/NBI		text-groff-font		share
+./usr/share/groff_font/devX100-12/NI		text-groff-font		share
+./usr/share/groff_font/devX100-12/NR		text-groff-font		share
+./usr/share/groff_font/devX100-12/S		text-groff-font		share
+./usr/share/groff_font/devX100-12/TB		text-groff-font		share
+./usr/share/groff_font/devX100-12/TBI		text-groff-font		share
+./usr/share/groff_font/devX100-12/TI		text-groff-font		share
+./usr/share/groff_font/devX100-12/TR		text-groff-font		share
+./usr/share/groff_font/devX100/CB		text-groff-font		share
+./usr/share/groff_font/devX100/CBI		text-groff-font		share
+./usr/share/groff_font/devX100/CI		text-groff-font		share
+./usr/share/groff_font/devX100/CR		text-groff-font		share
+./usr/share/groff_font/devX100/DESC		text-groff-font		share
+./usr/share/groff_font/devX100/HB		text-groff-font		share
+./usr/share/groff_font/devX100/HBI		text-groff-font		share
+./usr/share/groff_font/devX100/HI		text-groff-font		share
+./usr/share/groff_font/devX100/HR		text-groff-font		share
+./usr/share/groff_font/devX100/NB		text-groff-font		share
+./usr/share/groff_font/devX100/NBI		text-groff-font		share
+./usr/share/groff_font/devX100/NI		text-groff-font		share
+./usr/share/groff_font/devX100/NR		text-groff-font		share
+./usr/share/groff_font/devX100/S		text-groff-font		share
+./usr/share/groff_font/devX100/TB		text-groff-font		share
+./usr/share/groff_font/devX100/TBI		text-groff-font		share
+./usr/share/groff_font/devX100/TI		text-groff-font		share
+./usr/share/groff_font/devX100/TR		text-groff-font		share
+./usr/share/groff_font/devX75-12/CB		text-groff-font		share
+./usr/share/groff_font/devX75-12/CBI		text-groff-font		share
+./usr/share/groff_font/devX75-12/CI		text-groff-font		share
+./usr/share/groff_font/devX75-12/CR		text-groff-font		share
+./usr/share/groff_font/devX75-12/DESC		text-groff-font		share
+./usr/share/groff_font/devX75-12/HB		text-groff-font		share
+./usr/share/groff_font/devX75-12/HBI		text-groff-font		share
+./usr/share/groff_font/devX75-12/HI		text-groff-font		share
+./usr/share/groff_font/devX75-12/HR		text-groff-font		share
+./usr/share/groff_font/devX75-12/NB		text-groff-font		share
+./usr/share/groff_font/devX75-12/NBI		text-groff-font		share
+./usr/share/groff_font/devX75-12/NI		text-groff-font		share
+./usr/share/groff_font/devX75-12/NR		text-groff-font		share
+./usr/share/groff_font/devX75-12/S		text-groff-font		share
+./usr/share/groff_font/devX75-12/TB		text-groff-font		share
+./usr/share/groff_font/devX75-12/TBI		text-groff-font		share
+./usr/share/groff_font/devX75-12/TI		text-groff-font		share
+./usr/share/groff_font/devX75-12/TR		text-groff-font		share
+./usr/share/groff_font/devX75/CB		text-groff-font		share
+./usr/share/groff_font/devX75/CBI		text-groff-font		share
+./usr/share/groff_font/devX75/CI		text-groff-font		share
+./usr/share/groff_font/devX75/CR		text-groff-font		share
+./usr/share/groff_font/devX75/DESC		text-groff-font		share
+./usr/share/groff_font/devX75/HB		text-groff-font		share
+./usr/share/groff_font/devX75/HBI		text-groff-font		share
+./usr/share/groff_font/devX75/HI		text-groff-font		share
+./usr/share/groff_font/devX75/HR		text-groff-font		share
+./usr/share/groff_font/devX75/NB		text-groff-font		share
+./usr/share/groff_font/devX75/NBI		text-groff-font		share
+./usr/share/groff_font/devX75/NI		text-groff-font		share
+./usr/share/groff_font/devX75/NR		text-groff-font		share
+./usr/share/groff_font/devX75/S			text-groff-font		share
+./usr/share/groff_font/devX75/TB		text-groff-font		share
+./usr/share/groff_font/devX75/TBI		text-groff-font		share
+./usr/share/groff_font/devX75/TI		text-groff-font		share
+./usr/share/groff_font/devX75/TR		text-groff-font		share
+./usr/share/groff_font/devascii/B		text-groff-font		share
+./usr/share/groff_font/devascii/BI		text-groff-font		share
+./usr/share/groff_font/devascii/CW		text-groff-font		share
+./usr/share/groff_font/devascii/DESC		text-groff-font		share
+./usr/share/groff_font/devascii/I		text-groff-font		share
+./usr/share/groff_font/devascii/L		text-groff-font		share
+./usr/share/groff_font/devascii/R		text-groff-font		share
+./usr/share/groff_font/devascii/S		text-groff-font		share
+./usr/share/groff_font/devcp1047/B		text-groff-font		share
+./usr/share/groff_font/devcp1047/BI		text-groff-font		share
+./usr/share/groff_font/devcp1047/CW		text-groff-font		share
+./usr/share/groff_font/devcp1047/DESC		text-groff-font		share
+./usr/share/groff_font/devcp1047/I		text-groff-font		share
+./usr/share/groff_font/devcp1047/L		text-groff-font		share
+./usr/share/groff_font/devcp1047/R		text-groff-font		share
+./usr/share/groff_font/devcp1047/S		text-groff-font		share
 ./usr/share/groff_font/devdvi/B			text-groff-font		obsolete
 ./usr/share/groff_font/devdvi/BI		text-groff-font		obsolete
-./usr/share/groff_font/devdvi/CW		text-groff-font
-./usr/share/groff_font/devdvi/CWEC		text-groff-font
-./usr/share/groff_font/devdvi/CWI		text-groff-font
-./usr/share/groff_font/devdvi/CWIEC		text-groff-font
-./usr/share/groff_font/devdvi/CWITC		text-groff-font
-./usr/share/groff_font/devdvi/CWTC		text-groff-font
-./usr/share/groff_font/devdvi/CompileFonts	text-groff-font
-./usr/share/groff_font/devdvi/DESC		text-groff-font
-./usr/share/groff_font/devdvi/EX		text-groff-font
+./usr/share/groff_font/devdvi/CW		text-groff-font		share
+./usr/share/groff_font/devdvi/CWEC		text-groff-font		share
+./usr/share/groff_font/devdvi/CWI		text-groff-font		share
+./usr/share/groff_font/devdvi/CWIEC		text-groff-font		share
+./usr/share/groff_font/devdvi/CWITC		text-groff-font		share
+./usr/share/groff_font/devdvi/CWTC		text-groff-font		share
+./usr/share/groff_font/devdvi/CompileFonts	text-groff-font		share
+./usr/share/groff_font/devdvi/DESC		text-groff-font		share
+./usr/share/groff_font/devdvi/EX		text-groff-font		share
 ./usr/share/groff_font/devdvi/H			text-groff-font		obsolete
-./usr/share/groff_font/devdvi/HB		text-groff-font
-./usr/share/groff_font/devdvi/HBEC		text-groff-font
-./usr/share/groff_font/devdvi/HBI		text-groff-font
-./usr/share/groff_font/devdvi/HBIEC		text-groff-font
-./usr/share/groff_font/devdvi/HBITC		text-groff-font
-./usr/share/groff_font/devdvi/HBTC		text-groff-font
-./usr/share/groff_font/devdvi/HI		text-groff-font
-./usr/share/groff_font/devdvi/HIEC		text-groff-font
-./usr/share/groff_font/devdvi/HITC		text-groff-font
-./usr/share/groff_font/devdvi/HR		text-groff-font
-./usr/share/groff_font/devdvi/HREC		text-groff-font
-./usr/share/groff_font/devdvi/HRTC		text-groff-font
+./usr/share/groff_font/devdvi/HB		text-groff-font		share
+./usr/share/groff_font/devdvi/HBEC		text-groff-font		share
+./usr/share/groff_font/devdvi/HBI		text-groff-font		share
+./usr/share/groff_font/devdvi/HBIEC		text-groff-font		share
+./usr/share/groff_font/devdvi/HBITC		text-groff-font		share
+./usr/share/groff_font/devdvi/HBTC		text-groff-font		share
+./usr/share/groff_font/devdvi/HI		text-groff-font		share
+./usr/share/groff_font/devdvi/HIEC		text-groff-font		share
+./usr/share/groff_font/devdvi/HITC		text-groff-font		share
+./usr/share/groff_font/devdvi/HR		text-groff-font		share
+./usr/share/groff_font/devdvi/HREC		text-groff-font		share
+./usr/share/groff_font/devdvi/HRTC		text-groff-font		share
 ./usr/share/groff_font/devdvi/I			text-groff-font		obsolete
-./usr/share/groff_font/devdvi/MI		text-groff-font
-./usr/share/groff_font/devdvi/Makefile		text-groff-font
+./usr/share/groff_font/devdvi/MI		text-groff-font		share
+./usr/share/groff_font/devdvi/Makefile		text-groff-font		share
 ./usr/share/groff_font/devdvi/R			text-groff-font		obsolete
-./usr/share/groff_font/devdvi/S			text-groff-font
-./usr/share/groff_font/devdvi/SA		text-groff-font
-./usr/share/groff_font/devdvi/SB		text-groff-font
-./usr/share/groff_font/devdvi/SC		text-groff-font
-./usr/share/groff_font/devdvi/TB		text-groff-font
-./usr/share/groff_font/devdvi/TBEC		text-groff-font
-./usr/share/groff_font/devdvi/TBI		text-groff-font
-./usr/share/groff_font/devdvi/TBIEC		text-groff-font
-./usr/share/groff_font/devdvi/TBITC		text-groff-font
-./usr/share/groff_font/devdvi/TBTC		text-groff-font
-./usr/share/groff_font/devdvi/TI		text-groff-font
-./usr/share/groff_font/devdvi/TIEC		text-groff-font
-./usr/share/groff_font/devdvi/TITC		text-groff-font
-./usr/share/groff_font/devdvi/TR		text-groff-font
-./usr/share/groff_font/devdvi/TREC		text-groff-font
-./usr/share/groff_font/devdvi/TRTC		text-groff-font
-./usr/share/groff_font/devdvi/ec.map		text-groff-font
-./usr/share/groff_font/devdvi/generate/CompileFonts	text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/Makefile		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/msam.map		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/msbm.map		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texb.map		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texex.map	text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texi.map		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texmi.map	text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texr.map		text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/texsy.map	text-groff-font	obsolete
-./usr/share/groff_font/devdvi/generate/textt.map	text-groff-font	obsolete
-./usr/share/groff_font/devdvi/msam.map		text-groff-font
-./usr/share/groff_font/devdvi/msbm.map		text-groff-font
-./usr/share/groff_font/devdvi/tc.map		text-groff-font
-./usr/share/groff_font/devdvi/texb.map		text-groff-font
-./usr/share/groff_font/devdvi/texex.map		text-groff-font
-./usr/share/groff_font/devdvi/texi.map		text-groff-font
-./usr/share/groff_font/devdvi/texmi.map		text-groff-font
-./usr/share/groff_font/devdvi/texr.map		text-groff-font
-./usr/share/groff_font/devdvi/texsy.map		text-groff-font
-./usr/share/groff_font/devdvi/textex.map	text-groff-font
-./usr/share/groff_font/devdvi/textt.map		text-groff-font
-./usr/share/groff_font/devhtml/B		text-groff-font
-./usr/share/groff_font/devhtml/BI		text-groff-font
-./usr/share/groff_font/devhtml/CB		text-groff-font
-./usr/share/groff_font/devhtml/CBI		text-groff-font
-./usr/share/groff_font/devhtml/CI		text-groff-font
-./usr/share/groff_font/devhtml/CR		text-groff-font
-./usr/share/groff_font/devhtml/DESC		text-groff-font
+./usr/share/groff_font/devdvi/S			text-groff-font		share
+./usr/share/groff_font/devdvi/SA		text-groff-font		share
+./usr/share/groff_font/devdvi/SB		text-groff-font		share
+./usr/share/groff_font/devdvi/SC		text-groff-font		share
+./usr/share/groff_font/devdvi/TB		text-groff-font		share
+./usr/share/groff_font/devdvi/TBEC		text-groff-font		share
+./usr/share/groff_font/devdvi/TBI		text-groff-font		share
+./usr/share/groff_font/devdvi/TBIEC		text-groff-font		share
+./usr/share/groff_font/devdvi/TBITC		text-groff-font		share
+./usr/share/groff_font/devdvi/TBTC		text-groff-font		share
+./usr/share/groff_font/devdvi/TI		text-groff-font		share
+./usr/share/groff_font/devdvi/TIEC		text-groff-font		share
+./usr/share/groff_font/devdvi/TITC		text-groff-font		share
+./usr/share/groff_font/devdvi/TR		text-groff-font		share
+./usr/share/groff_font/devdvi/TREC		text-groff-font		share
+./usr/share/groff_font/devdvi/TRTC		text-groff-font		share
+./usr/share/groff_font/devdvi/ec.map		text-groff-font		share
+./usr/share/groff_font/devdvi/generate/CompileFonts	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/Makefile	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/msam.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/msbm.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texb.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texex.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texi.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texmi.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texr.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/texsy.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/generate/textt.map	text-groff-font		obsolete
+./usr/share/groff_font/devdvi/msam.map		text-groff-font		share
+./usr/share/groff_font/devdvi/msbm.map		text-groff-font		share
+./usr/share/groff_font/devdvi/tc.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texb.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texex.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texi.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texmi.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texr.map		text-groff-font		share
+./usr/share/groff_font/devdvi/texsy.map		text-groff-font		share
+./usr/share/groff_font/devdvi/textex.map	text-groff-font		share
+./usr/share/groff_font/devdvi/textt.map		text-groff-font		share
+./usr/share/groff_font/devhtml/B		text-groff-font		share
+./usr/share/groff_font/devhtml/BI		text-groff-font		share
+./usr/share/groff_font/devhtml/CB		text-groff-font		share
+./usr/share/groff_font/devhtml/CBI		text-groff-font		share
+./usr/share/groff_font/devhtml/CI		text-groff-font		share
+./usr/share/groff_font/devhtml/CR		text-groff-font		share
+./usr/share/groff_font/devhtml/DESC		text-groff-font		share
 ./usr/share/groff_font/devhtml/HB		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/HBI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/HI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/HR		text-groff-font		obsolete
-./usr/share/groff_font/devhtml/I		text-groff-font
+./usr/share/groff_font/devhtml/I		text-groff-font		share
 ./usr/share/groff_font/devhtml/NB		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/NBI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/NI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/NR		text-groff-font		obsolete
-./usr/share/groff_font/devhtml/R		text-groff-font
-./usr/share/groff_font/devhtml/S		text-groff-font
+./usr/share/groff_font/devhtml/R		text-groff-font		share
+./usr/share/groff_font/devhtml/S		text-groff-font		share
 ./usr/share/groff_font/devhtml/TB		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/TBI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/TI		text-groff-font		obsolete
 ./usr/share/groff_font/devhtml/TR		text-groff-font		obsolete
-./usr/share/groff_font/devkoi8-r/B		text-groff-font
-./usr/share/groff_font/devkoi8-r/BI		text-groff-font
-./usr/share/groff_font/devkoi8-r/CW		text-groff-font
-./usr/share/groff_font/devkoi8-r/DESC		text-groff-font
-./usr/share/groff_font/devkoi8-r/I		text-groff-font
-./usr/share/groff_font/devkoi8-r/L		text-groff-font
-./usr/share/groff_font/devkoi8-r/R		text-groff-font
-./usr/share/groff_font/devkoi8-r/S		text-groff-font
-./usr/share/groff_font/devlatin1/B		text-groff-font
-./usr/share/groff_font/devlatin1/BI		text-groff-font
-./usr/share/groff_font/devlatin1/CW		text-groff-font
-./usr/share/groff_font/devlatin1/DESC		text-groff-font
-./usr/share/groff_font/devlatin1/I		text-groff-font
-./usr/share/groff_font/devlatin1/L		text-groff-font
-./usr/share/groff_font/devlatin1/R		text-groff-font
-./usr/share/groff_font/devlatin1/S		text-groff-font
-./usr/share/groff_font/devlbp/CB		text-groff-font
-./usr/share/groff_font/devlbp/CI		text-groff-font
-./usr/share/groff_font/devlbp/CR		text-groff-font
-./usr/share/groff_font/devlbp/DESC		text-groff-font
-./usr/share/groff_font/devlbp/EB		text-groff-font
-./usr/share/groff_font/devlbp/EI		text-groff-font
-./usr/share/groff_font/devlbp/ER		text-groff-font
-./usr/share/groff_font/devlbp/HB		text-groff-font
-./usr/share/groff_font/devlbp/HBI		text-groff-font
-./usr/share/groff_font/devlbp/HI		text-groff-font
-./usr/share/groff_font/devlbp/HNB		text-groff-font
-./usr/share/groff_font/devlbp/HNBI		text-groff-font
-./usr/share/groff_font/devlbp/HNI		text-groff-font
-./usr/share/groff_font/devlbp/HNR		text-groff-font
-./usr/share/groff_font/devlbp/HR		text-groff-font
-./usr/share/groff_font/devlbp/TB		text-groff-font
-./usr/share/groff_font/devlbp/TBI		text-groff-font
-./usr/share/groff_font/devlbp/TI		text-groff-font
-./usr/share/groff_font/devlbp/TR		text-groff-font
-./usr/share/groff_font/devlj4/ALBB		text-groff-font
-./usr/share/groff_font/devlj4/ALBR		text-groff-font
-./usr/share/groff_font/devlj4/AOB		text-groff-font
-./usr/share/groff_font/devlj4/AOI		text-groff-font
-./usr/share/groff_font/devlj4/AOR		text-groff-font
-./usr/share/groff_font/devlj4/CB		text-groff-font
-./usr/share/groff_font/devlj4/CBI		text-groff-font
-./usr/share/groff_font/devlj4/CI		text-groff-font
-./usr/share/groff_font/devlj4/CLARENDON		text-groff-font
-./usr/share/groff_font/devlj4/CORONET		text-groff-font
-./usr/share/groff_font/devlj4/CR		text-groff-font
-./usr/share/groff_font/devlj4/DESC		text-groff-font
-./usr/share/groff_font/devlj4/GB		text-groff-font
-./usr/share/groff_font/devlj4/GBI		text-groff-font
-./usr/share/groff_font/devlj4/GI		text-groff-font
-./usr/share/groff_font/devlj4/GR		text-groff-font
-./usr/share/groff_font/devlj4/LGB		text-groff-font
-./usr/share/groff_font/devlj4/LGI		text-groff-font
-./usr/share/groff_font/devlj4/LGR		text-groff-font
-./usr/share/groff_font/devlj4/MARIGOLD		text-groff-font
-./usr/share/groff_font/devlj4/Makefile		text-groff-font
-./usr/share/groff_font/devlj4/OB		text-groff-font
-./usr/share/groff_font/devlj4/OBI		text-groff-font
-./usr/share/groff_font/devlj4/OI		text-groff-font
-./usr/share/groff_font/devlj4/OR		text-groff-font
-./usr/share/groff_font/devlj4/S			text-groff-font
-./usr/share/groff_font/devlj4/TB		text-groff-font
-./usr/share/groff_font/devlj4/TBI		text-groff-font
-./usr/share/groff_font/devlj4/TI		text-groff-font
-./usr/share/groff_font/devlj4/TR		text-groff-font
-./usr/share/groff_font/devlj4/UB		text-groff-font
-./usr/share/groff_font/devlj4/UBI		text-groff-font
-./usr/share/groff_font/devlj4/UCB		text-groff-font
-./usr/share/groff_font/devlj4/UCBI		text-groff-font
-./usr/share/groff_font/devlj4/UCI		text-groff-font
-./usr/share/groff_font/devlj4/UCR		text-groff-font
-./usr/share/groff_font/devlj4/UI		text-groff-font
-./usr/share/groff_font/devlj4/UR		text-groff-font
-./usr/share/groff_font/devlj4/generate/Makefile		text-groff-font	obsolete
-./usr/share/groff_font/devlj4/generate/special.map	text-groff-font	obsolete
-./usr/share/groff_font/devlj4/generate/text.map		text-groff-font	obsolete
-./usr/share/groff_font/devlj4/special.map	text-groff-font
-./usr/share/groff_font/devlj4/text.map		text-groff-font
-./usr/share/groff_font/devps/AB			text-groff-font
-./usr/share/groff_font/devps/ABI		text-groff-font
-./usr/share/groff_font/devps/AI			text-groff-font
-./usr/share/groff_font/devps/AR			text-groff-font
-./usr/share/groff_font/devps/BMB		text-groff-font
-./usr/share/groff_font/devps/BMBI		text-groff-font
-./usr/share/groff_font/devps/BMI		text-groff-font
-./usr/share/groff_font/devps/BMR		text-groff-font
-./usr/share/groff_font/devps/CB			text-groff-font
-./usr/share/groff_font/devps/CBI		text-groff-font
-./usr/share/groff_font/devps/CI			text-groff-font
-./usr/share/groff_font/devps/CR			text-groff-font
-./usr/share/groff_font/devps/DESC		text-groff-font
-./usr/share/groff_font/devps/EURO		text-groff-font
-./usr/share/groff_font/devps/HB			text-groff-font
-./usr/share/groff_font/devps/HBI		text-groff-font
-./usr/share/groff_font/devps/HI			text-groff-font
-./usr/share/groff_font/devps/HNB		text-groff-font
-./usr/share/groff_font/devps/HNBI		text-groff-font
-./usr/share/groff_font/devps/HNI		text-groff-font
-./usr/share/groff_font/devps/HNR		text-groff-font
-./usr/share/groff_font/devps/HR			text-groff-font
-./usr/share/groff_font/devps/Makefile		text-groff-font
-./usr/share/groff_font/devps/NB			text-groff-font
-./usr/share/groff_font/devps/NBI		text-groff-font
-./usr/share/groff_font/devps/NI			text-groff-font
-./usr/share/groff_font/devps/NR			text-groff-font
-./usr/share/groff_font/devps/PB			text-groff-font
-./usr/share/groff_font/devps/PBI		text-groff-font
-./usr/share/groff_font/devps/PI			text-groff-font
-./usr/share/groff_font/devps/PR			text-groff-font
-./usr/share/groff_font/devps/S			text-groff-font
-./usr/share/groff_font/devps/SS			text-groff-font
-./usr/share/groff_font/devps/TB			text-groff-font
-./usr/share/groff_font/devps/TBI		text-groff-font
-./usr/share/groff_font/devps/TI			text-groff-font
-./usr/share/groff_font/devps/TR			text-groff-font
-./usr/share/groff_font/devps/ZCMI		text-groff-font
-./usr/share/groff_font/devps/ZD			text-groff-font
-./usr/share/groff_font/devps/ZDR		text-groff-font
-./usr/share/groff_font/devps/afmname		text-groff-font
-./usr/share/groff_font/devps/dingbats.map	text-groff-font
-./usr/share/groff_font/devps/dingbats.rmap	text-groff-font
-./usr/share/groff_font/devps/download		text-groff-font
-./usr/share/groff_font/devps/freeeuro.pfa	text-groff-font
-./usr/share/groff_font/devps/generate/Makefile		text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/afmname		text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/dingbatsmap	text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/dingbatsrmap	text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/lgreekmap		text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/symbol.sed	text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/symbolchars	text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/symbolsl.afm	text-groff-font	obsolete
-./usr/share/groff_font/devps/generate/textmap		text-groff-font	obsolete
-./usr/share/groff_font/devps/lgreekmap		text-groff-font
-./usr/share/groff_font/devps/prologue		text-groff-font
-./usr/share/groff_font/devps/symbol		text-groff-font
-./usr/share/groff_font/devps/symbolchars	text-groff-font
-./usr/share/groff_font/devps/symbolsl.afm	text-groff-font
-./usr/share/groff_font/devps/symbolsl.pfa	text-groff-font
-./usr/share/groff_font/devps/text.enc		text-groff-font
-./usr/share/groff_font/devps/textmap		text-groff-font
-./usr/share/groff_font/devps/zapfdr.pfa		text-groff-font
-./usr/share/groff_font/devutf8/B		text-groff-font
-./usr/share/groff_font/devutf8/BI		text-groff-font
-./usr/share/groff_font/devutf8/CW		text-groff-font
-./usr/share/groff_font/devutf8/DESC		text-groff-font
-./usr/share/groff_font/devutf8/I		text-groff-font
-./usr/share/groff_font/devutf8/L		text-groff-font
-./usr/share/groff_font/devutf8/R		text-groff-font
-./usr/share/groff_font/devutf8/S		text-groff-font
+./usr/share/groff_font/devkoi8-r/B		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/BI		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/CW		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/DESC		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/I		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/L		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/R		text-groff-font		share
+./usr/share/groff_font/devkoi8-r/S		text-groff-font		share
+./usr/share/groff_font/devlatin1/B		text-groff-font		share
+./usr/share/groff_font/devlatin1/BI		text-groff-font		share
+./usr/share/groff_font/devlatin1/CW		text-groff-font		share
+./usr/share/groff_font/devlatin1/DESC		text-groff-font		share
+./usr/share/groff_font/devlatin1/I		text-groff-font		share
+./usr/share/groff_font/devlatin1/L		text-groff-font		share
+./usr/share/groff_font/devlatin1/R		text-groff-font		share
+./usr/share/groff_font/devlatin1/S		text-groff-font		share
+./usr/share/groff_font/devlbp/CB		text-groff-font		share
+./usr/share/groff_font/devlbp/CI		text-groff-font		share
+./usr/share/groff_font/devlbp/CR		text-groff-font		share
+./usr/share/groff_font/devlbp/DESC		text-groff-font		share
+./usr/share/groff_font/devlbp/EB		text-groff-font		share
+./usr/share/groff_font/devlbp/EI		text-groff-font		share
+./usr/share/groff_font/devlbp/ER		text-groff-font		share
+./usr/share/groff_font/devlbp/HB		text-groff-font		share
+./usr/share/groff_font/devlbp/HBI		text-groff-font		share
+./usr/share/groff_font/devlbp/HI		text-groff-font		share
+./usr/share/groff_font/devlbp/HNB		text-groff-font		share
+./usr/share/groff_font/devlbp/HNBI		text-groff-font		share
+./usr/share/groff_font/devlbp/HNI		text-groff-font		share
+./usr/share/groff_font/devlbp/HNR		text-groff-font		share
+./usr/share/groff_font/devlbp/HR		text-groff-font		share
+./usr/share/groff_font/devlbp/TB		text-groff-font		share
+./usr/share/groff_font/devlbp/TBI		text-groff-font		share
+./usr/share/groff_font/devlbp/TI		text-groff-font		share
+./usr/share/groff_font/devlbp/TR		text-groff-font		share
+./usr/share/groff_font/devlj4/ALBB		text-groff-font		share
+./usr/share/groff_font/devlj4/ALBR		text-groff-font		share
+./usr/share/groff_font/devlj4/AOB		text-groff-font		share
+./usr/share/groff_font/devlj4/AOI		text-groff-font		share
+./usr/share/groff_font/devlj4/AOR		text-groff-font		share
+./usr/share/groff_font/devlj4/CB		text-groff-font		share
+./usr/share/groff_font/devlj4/CBI		text-groff-font		share
+./usr/share/groff_font/devlj4/CI		text-groff-font		share
+./usr/share/groff_font/devlj4/CLARENDON		text-groff-font		share
+./usr/share/groff_font/devlj4/CORONET		text-groff-font		share
+./usr/share/groff_font/devlj4/CR		text-groff-font		share
+./usr/share/groff_font/devlj4/DESC		text-groff-font		share
+./usr/share/groff_font/devlj4/GB		text-groff-font		share
+./usr/share/groff_font/devlj4/GBI		text-groff-font		share
+./usr/share/groff_font/devlj4/GI		text-groff-font		share
+./usr/share/groff_font/devlj4/GR		text-groff-font		share
+./usr/share/groff_font/devlj4/LGB		text-groff-font		share
+./usr/share/groff_font/devlj4/LGI		text-groff-font		share
+./usr/share/groff_font/devlj4/LGR		text-groff-font		share
+./usr/share/groff_font/devlj4/MARIGOLD		text-groff-font		share
+./usr/share/groff_font/devlj4/Makefile		text-groff-font		share
+./usr/share/groff_font/devlj4/OB		text-groff-font		share
+./usr/share/groff_font/devlj4/OBI		text-groff-font		share
+./usr/share/groff_font/devlj4/OI		text-groff-font		share
+./usr/share/groff_font/devlj4/OR		text-groff-font		share
+./usr/share/groff_font/devlj4/S			text-groff-font		share
+./usr/share/groff_font/devlj4/TB		text-groff-font		share
+./usr/share/groff_font/devlj4/TBI		text-groff-font		share
+./usr/share/groff_font/devlj4/TI		text-groff-font		share
+./usr/share/groff_font/devlj4/TR		text-groff-font		share
+./usr/share/groff_font/devlj4/UB		text-groff-font		share
+./usr/share/groff_font/devlj4/UBI		text-groff-font		share
+./usr/share/groff_font/devlj4/UCB		text-groff-font		share
+./usr/share/groff_font/devlj4/UCBI		text-groff-font		share
+./usr/share/groff_font/devlj4/UCI		text-groff-font		share
+./usr/share/groff_font/devlj4/UCR		text-groff-font		share
+./usr/share/groff_font/devlj4/UI		text-groff-font		share
+./usr/share/groff_font/devlj4/UR		text-groff-font		share
+./usr/share/groff_font/devlj4/generate/Makefile	text-groff-font		obsolete
+./usr/share/groff_font/devlj4/generate/special.map	text-groff-font		obsolete
+./usr/share/groff_font/devlj4/generate/text.map	text-groff-font		obsolete
+./usr/share/groff_font/devlj4/special.map	text-groff-font		share
+./usr/share/groff_font/devlj4/text.map		text-groff-font		share
+./usr/share/groff_font/devps/AB			text-groff-font		share
+./usr/share/groff_font/devps/ABI		text-groff-font		share
+./usr/share/groff_font/devps/AI			text-groff-font		share
+./usr/share/groff_font/devps/AR			text-groff-font		share
+./usr/share/groff_font/devps/BMB		text-groff-font		share
+./usr/share/groff_font/devps/BMBI		text-groff-font		share
+./usr/share/groff_font/devps/BMI		text-groff-font		share
+./usr/share/groff_font/devps/BMR		text-groff-font		share
+./usr/share/groff_font/devps/CB			text-groff-font		share
+./usr/share/groff_font/devps/CBI		text-groff-font		share
+./usr/share/groff_font/devps/CI			text-groff-font		share
+./usr/share/groff_font/devps/CR			text-groff-font		share
+./usr/share/groff_font/devps/DESC		text-groff-font		share
+./usr/share/groff_font/devps/EURO		text-groff-font		share
+./usr/share/groff_font/devps/HB			text-groff-font		share
+./usr/share/groff_font/devps/HBI		text-groff-font		share
+./usr/share/groff_font/devps/HI			text-groff-font		share
+./usr/share/groff_font/devps/HNB		text-groff-font		share
+./usr/share/groff_font/devps/HNBI		text-groff-font		share
+./usr/share/groff_font/devps/HNI		text-groff-font		share
+./usr/share/groff_font/devps/HNR		text-groff-font		share
+./usr/share/groff_font/devps/HR			text-groff-font		share
+./usr/share/groff_font/devps/Makefile		text-groff-font		share
+./usr/share/groff_font/devps/NB			text-groff-font		share
+./usr/share/groff_font/devps/NBI		text-groff-font		share
+./usr/share/groff_font/devps/NI			text-groff-font		share
+./usr/share/groff_font/devps/NR			text-groff-font		share
+./usr/share/groff_font/devps/PB			text-groff-font		share
+./usr/share/groff_font/devps/PBI		text-groff-font		share
+./usr/share/groff_font/devps/PI			text-groff-font		share
+./usr/share/groff_font/devps/PR			text-groff-font		share
+./usr/share/groff_font/devps/S			text-groff-font		share
+./usr/share/groff_font/devps/SS			text-groff-font		share
+./usr/share/groff_font/devps/TB			text-groff-font		share
+./usr/share/groff_font/devps/TBI		text-groff-font		share
+./usr/share/groff_font/devps/TI			text-groff-font		share
+./usr/share/groff_font/devps/TR			text-groff-font		share
+./usr/share/groff_font/devps/ZCMI		text-groff-font		share
+./usr/share/groff_font/devps/ZD			text-groff-font		share
+./usr/share/groff_font/devps/ZDR		text-groff-font		share
+./usr/share/groff_font/devps/afmname		text-groff-font		share
+./usr/share/groff_font/devps/dingbats.map	text-groff-font		share
+./usr/share/groff_font/devps/dingbats.rmap	text-groff-font		share
+./usr/share/groff_font/devps/download		text-groff-font		share
+./usr/share/groff_font/devps/freeeuro.pfa	text-groff-font		share
+./usr/share/groff_font/devps/generate/Makefile	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/afmname	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/dingbatsmap	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/dingbatsrmap	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/lgreekmap	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/symbol.sed	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/symbolchars	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/symbolsl.afm	text-groff-font		obsolete
+./usr/share/groff_font/devps/generate/textmap	text-groff-font		obsolete
+./usr/share/groff_font/devps/lgreekmap		text-groff-font		share
+./usr/share/groff_font/devps/prologue		text-groff-font		share
+./usr/share/groff_font/devps/symbol		text-groff-font		share
+./usr/share/groff_font/devps/symbolchars	text-groff-font		share
+./usr/share/groff_font/devps/symbolsl.afm	text-groff-font		share
+./usr/share/groff_font/devps/symbolsl.pfa	text-groff-font		share
+./usr/share/groff_font/devps/text.enc		text-groff-font		share
+./usr/share/groff_font/devps/textmap		text-groff-font		share
+./usr/share/groff_font/devps/zapfdr.pfa		text-groff-font		share
+./usr/share/groff_font/devutf8/B		text-groff-font		share
+./usr/share/groff_font/devutf8/BI		text-groff-font		share
+./usr/share/groff_font/devutf8/CW		text-groff-font		share
+./usr/share/groff_font/devutf8/DESC		text-groff-font		share
+./usr/share/groff_font/devutf8/I		text-groff-font		share
+./usr/share/groff_font/devutf8/L		text-groff-font		share
+./usr/share/groff_font/devutf8/R		text-groff-font		share
+./usr/share/groff_font/devutf8/S		text-groff-font		share
 ./usr/share/man/cat1/addftinfo.0		text-groff-catman	.cat
 ./usr/share/man/cat1/checknr.0			text-groff-catman	.cat
 ./usr/share/man/cat1/eqn.0			text-groff-catman	.cat
@@ -464,85 +464,85 @@
 ./usr/share/man/man7/mmse.7			text-groff-man		.man
 ./usr/share/man/man7/ms.7			text-groff-man		.man
 ./usr/share/man/man7/roff.7			text-groff-man		.man
-./usr/share/me/acm.me				text-groff-share
-./usr/share/me/chars.me				text-groff-share
-./usr/share/me/deltext.me			text-groff-share
-./usr/share/me/eqn.me				text-groff-share
-./usr/share/me/float.me				text-groff-share
-./usr/share/me/footnote.me			text-groff-share
-./usr/share/me/index.me				text-groff-share
-./usr/share/me/letterhead.me			text-groff-share
-./usr/share/me/local.me				text-groff-share
-./usr/share/me/null.me				text-groff-share
-./usr/share/me/refer.me				text-groff-share
-./usr/share/me/revisions			text-groff-share
-./usr/share/me/sh.me				text-groff-share
-./usr/share/me/tbl.me				text-groff-share
-./usr/share/me/thesis.me			text-groff-share
-./usr/share/misc/epsf.tex			text-texinfo-share
-./usr/share/misc/eqnchar			text-groff-share
-./usr/share/misc/man.template			text-groff-share
-./usr/share/misc/mdoc.template			text-groff-share
-./usr/share/misc/texinfo.dtd			text-texinfo-share
-./usr/share/misc/texinfo.tex			text-texinfo-share
-./usr/share/misc/texinfo.xsl			text-texinfo-share
-./usr/share/misc/vgrindefs			text-groff-share
-./usr/share/tmac/X.tmac				text-groff-share
-./usr/share/tmac/Xps.tmac			text-groff-share
-./usr/share/tmac/a4.tmac			text-groff-share
-./usr/share/tmac/an-old.tmac			text-groff-share
-./usr/share/tmac/an.tmac			text-groff-share
-./usr/share/tmac/andoc.tmac			text-groff-share
-./usr/share/tmac/composite.tmac			text-groff-share
-./usr/share/tmac/cp1047.tmac			text-groff-share
-./usr/share/tmac/doc.tmac			text-groff-share
-./usr/share/tmac/doc2html.tmac			text-groff-share
-./usr/share/tmac/dvi.tmac			text-groff-share
-./usr/share/tmac/e.tmac				text-groff-share
-./usr/share/tmac/ec.tmac			text-groff-share
-./usr/share/tmac/eqnrc				text-groff-share
-./usr/share/tmac/europs.tmac			text-groff-share
-./usr/share/tmac/html-end.tmac			text-groff-share
-./usr/share/tmac/html.tmac			text-groff-share
-./usr/share/tmac/hyphen.us			text-groff-share
-./usr/share/tmac/hyphenex.us			text-groff-share
-./usr/share/tmac/latin1.tmac			text-groff-share
-./usr/share/tmac/latin2.tmac			text-groff-share
-./usr/share/tmac/latin9.tmac			text-groff-share
-./usr/share/tmac/lbp.tmac			text-groff-share
-./usr/share/tmac/lj4.tmac			text-groff-share
-./usr/share/tmac/m.tmac				text-groff-share
-./usr/share/tmac/man.local			text-groff-share
-./usr/share/tmac/man.tmac			text-groff-share
-./usr/share/tmac/mandoc.tmac			text-groff-share
-./usr/share/tmac/mdoc.local			text-groff-share
-./usr/share/tmac/mdoc.tmac			text-groff-share
-./usr/share/tmac/mdoc/doc-common		text-groff-share
-./usr/share/tmac/mdoc/doc-ditroff		text-groff-share
-./usr/share/tmac/mdoc/doc-nroff			text-groff-share
-./usr/share/tmac/mdoc/doc-syms			text-groff-share
-./usr/share/tmac/mdoc/fr.ISO8859-1		text-groff-share
-./usr/share/tmac/mdoc/ru.KOI8-R			text-groff-share
-./usr/share/tmac/me.tmac			text-groff-share
-./usr/share/tmac/mm.tmac			text-groff-share
-./usr/share/tmac/mm/0.MT			text-groff-share
-./usr/share/tmac/mm/4.MT			text-groff-share
-./usr/share/tmac/mm/5.MT			text-groff-share
-./usr/share/tmac/mm/locale			text-groff-share
-./usr/share/tmac/mm/ms.cov			text-groff-share
-./usr/share/tmac/mm/se_locale			text-groff-share
-./usr/share/tmac/mm/se_ms.cov			text-groff-share
-./usr/share/tmac/mmse.tmac			text-groff-share
-./usr/share/tmac/ms.tmac			text-groff-share
-./usr/share/tmac/mse.tmac			text-groff-share
-./usr/share/tmac/papersize.tmac			text-groff-share
-./usr/share/tmac/pic.tmac			text-groff-share
-./usr/share/tmac/ps.tmac			text-groff-share
-./usr/share/tmac/psatk.tmac			text-groff-share
-./usr/share/tmac/psold.tmac			text-groff-share
-./usr/share/tmac/pspic.tmac			text-groff-share
-./usr/share/tmac/s.tmac				text-groff-share
-./usr/share/tmac/safer.tmac			text-groff-share
+./usr/share/me/acm.me				text-groff-share	share
+./usr/share/me/chars.me				text-groff-share	share
+./usr/share/me/deltext.me			text-groff-share	share
+./usr/share/me/eqn.me				text-groff-share	share
+./usr/share/me/float.me				text-groff-share	share
+./usr/share/me/footnote.me			text-groff-share	share
+./usr/share/me/index.me				text-groff-share	share
+./usr/share/me/letterhead.me			text-groff-share	share
+./usr/share/me/local.me				text-groff-share	share
+./usr/share/me/null.me				text-groff-share	share
+./usr/share/me/refer.me				text-groff-share	share
+./usr/share/me/revisions			text-groff-share	share
+./usr/share/me/sh.me				text-groff-share	share
+./usr/share/me/tbl.me				text-groff-share	share
+./usr/share/me/thesis.me			text-groff-share	share
+./usr/share/misc/epsf.tex			text-texinfo-share	share
+./usr/share/misc/eqnchar			text-groff-share	share
+./usr/share/misc/man.template			text-groff-share	share
+./usr/share/misc/mdoc.template			text-groff-share	share
+./usr/share/misc/texinfo.dtd			text-texinfo-share	share
+./usr/share/misc/texinfo.tex			text-texinfo-share	share
+./usr/share/misc/texinfo.xsl			text-texinfo-share	share
+./usr/share/misc/vgrindefs			text-groff-share	share
+./usr/share/tmac/X.tmac				text-groff-share	share
+./usr/share/tmac/Xps.tmac			text-groff-share	share
+./usr/share/tmac/a4.tmac			text-groff-share	share
+./usr/share/tmac/an-old.tmac			text-groff-share	share
+./usr/share/tmac/an.tmac			text-groff-share	share
+./usr/share/tmac/andoc.tmac			text-groff-share	share
+./usr/share/tmac/composite.tmac			text-groff-share	share
+./usr/share/tmac/cp1047.tmac			text-groff-share	share
+./usr/share/tmac/doc.tmac			text-groff-share	share
+./usr/share/tmac/doc2html.tmac			text-groff-share	share
+./usr/share/tmac/dvi.tmac			text-groff-share	share
+./usr/share/tmac/e.tmac				text-groff-share	share
+./usr/share/tmac/ec.tmac			text-groff-share	share
+./usr/share/tmac/eqnrc				text-groff-share	share
+./usr/share/tmac/europs.tmac			text-groff-share	share
+./usr/share/tmac/html-end.tmac			text-groff-share	share
+./usr/share/tmac/html.tmac			text-groff-share	share
+./usr/share/tmac/hyphen.us			text-groff-share	share
+./usr/share/tmac/hyphenex.us			text-groff-share	share
+./usr/share/tmac/latin1.tmac			text-groff-share	share
+./usr/share/tmac/latin2.tmac			text-groff-share	share
+./usr/share/tmac/latin9.tmac			text-groff-share	share
+./usr/share/tmac/lbp.tmac			text-groff-share	share
+./usr/share/tmac/lj4.tmac			text-groff-share	share
+./usr/share/tmac/m.tmac				text-groff-share	share
+./usr/share/tmac/man.local			text-groff-share	share
+./usr/share/tmac/man.tmac			text-groff-share	share
+./usr/share/tmac/mandoc.tmac			text-groff-share	share
+./usr/share/tmac/mdoc.local			text-groff-share	share
+./usr/share/tmac/mdoc.tmac			text-groff-share	share
+./usr/share/tmac/mdoc/doc-common		text-groff-share	share
+./usr/share/tmac/mdoc/doc-ditroff		text-groff-share	share
+./usr/share/tmac/mdoc/doc-nroff			text-groff-share	share
+./usr/share/tmac/mdoc/doc-syms			text-groff-share	share
+./usr/share/tmac/mdoc/fr.ISO8859-1		text-groff-share	share
+./usr/share/tmac/mdoc/ru.KOI8-R			text-groff-share	share
+./usr/share/tmac/me.tmac			text-groff-share	share
+./usr/share/tmac/mm.tmac			text-groff-share	share
+./usr/share/tmac/mm/0.MT			text-groff-share	share
+./usr/share/tmac/mm/4.MT			text-groff-share	share
+./usr/share/tmac/mm/5.MT			text-groff-share	share
+./usr/share/tmac/mm/locale			text-groff-share	share
+./usr/share/tmac/mm/ms.cov			text-groff-share	share
+./usr/share/tmac/mm/se_locale			text-groff-share	share
+./usr/share/tmac/mm/se_ms.cov			text-groff-share	share
+./usr/share/tmac/mmse.tmac			text-groff-share	share
+./usr/share/tmac/ms.tmac			text-groff-share	share
+./usr/share/tmac/mse.tmac			text-groff-share	share
+./usr/share/tmac/papersize.tmac			text-groff-share	share
+./usr/share/tmac/pic.tmac			text-groff-share	share
+./usr/share/tmac/ps.tmac			text-groff-share	share
+./usr/share/tmac/psatk.tmac			text-groff-share	share
+./usr/share/tmac/psold.tmac			text-groff-share	share
+./usr/share/tmac/pspic.tmac			text-groff-share	share
+./usr/share/tmac/s.tmac				text-groff-share	share
+./usr/share/tmac/safer.tmac			text-groff-share	share
 ./usr/share/tmac/tmac.X				text-groff-share	obsolete
 ./usr/share/tmac/tmac.Xps			text-groff-share	obsolete
 ./usr/share/tmac/tmac.a4			text-groff-share	obsolete
@@ -575,10 +575,10 @@
 ./usr/share/tmac/tmac.tty			text-groff-share	obsolete
 ./usr/share/tmac/tmac.tty-char			text-groff-share	obsolete
 ./usr/share/tmac/tmac.vgrind			text-groff-share	obsolete
-./usr/share/tmac/trace.tmac			text-groff-share
-./usr/share/tmac/troffrc			text-groff-share
-./usr/share/tmac/troffrc-end			text-groff-share
-./usr/share/tmac/tty-char.tmac			text-groff-share
-./usr/share/tmac/tty.tmac			text-groff-share
-./usr/share/tmac/vgrind.tmac			text-groff-share
-./usr/share/tmac/www.tmac			text-groff-share
+./usr/share/tmac/trace.tmac			text-groff-share	share
+./usr/share/tmac/troffrc			text-groff-share	share
+./usr/share/tmac/troffrc-end			text-groff-share	share
+./usr/share/tmac/tty-char.tmac			text-groff-share	share
+./usr/share/tmac/tty.tmac			text-groff-share	share
+./usr/share/tmac/vgrind.tmac			text-groff-share	share
+./usr/share/tmac/www.tmac			text-groff-share	share
