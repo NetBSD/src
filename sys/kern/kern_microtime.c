@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_microtime.c,v 1.4 2003/06/28 15:02:24 simonb Exp $	*/
+/*	$NetBSD: kern_microtime.c,v 1.5 2004/05/18 16:09:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.4 2003/06/28 15:02:24 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_microtime.c,v 1.5 2004/05/18 16:09:07 nathanw Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -137,7 +137,7 @@ cc_microtime(struct timeval *tvp)
 		usec += 1000000;
 		sec--;
 	}
-	if (sec == 0) {
+	if (sec == 0 && usec > 0)  {
 		t.tv_usec += usec + 1;
 		if (t.tv_usec >= 1000000) {
 			t.tv_usec -= 1000000;
