@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.11 1997/06/08 19:47:13 thorpej Exp $	*/
+/*	$NetBSD: pdq.c,v 1.12 1998/04/07 13:32:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -716,8 +716,8 @@ pdq_process_received_data(
 
 	dataptr = PDQ_OS_DATABUF_PTR(fpdu);
 	status = *(pdq_rxstatus_t *) dataptr;
-	if ((status.rxs_status & 0x200000) == 0) {
-	    datalen = status.rxs_status & 0x1FFF;
+	if (status.rxs_rcc_badpdu == 0) {
+	    datalen = status.rxs_len;
 	    fc = dataptr[PDQ_RX_FC_OFFSET];
 	    switch (fc & (PDQ_FDDIFC_C|PDQ_FDDIFC_L|PDQ_FDDIFC_F)) {
 		case PDQ_FDDI_LLC_ASYNC:
@@ -775,7 +775,11 @@ pdq_process_received_data(
 	    } else {
 		PDQ_OS_DATABUF_LEN_SET(lpdu, pdulen + PDQ_RX_FC_OFFSET - (segcnt - 1) * PDQ_OS_DATABUF_SIZE);
 	    }
-	    pdq_os_receive_pdu(pdq, fpdu, pdulen);
+	    /*
+	     * Do not pass to protocol if packet was received promiscuously
+	     */
+	    pdq_os_receive_pdu(pdq, fpdu, pdulen,
+			       status.rxs_rcc_dd < PDQ_RXS_RCC_DD_CAM_MATCH);
 	    rx->rx_free += PDQ_RX_SEGCNT;
 	    PDQ_ADVANCE(producer, PDQ_RX_SEGCNT, ring_mask);
 	    PDQ_ADVANCE(completion, PDQ_RX_SEGCNT, ring_mask);
