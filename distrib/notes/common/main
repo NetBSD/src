@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.23 2001/05/02 22:31:35 he Exp $
+.\"	$NetBSD: main,v 1.61.2.24 2001/05/06 21:19:33 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -254,8 +254,9 @@ A vulnerability on i386 related to USER_LDT has been fixed (SA2001-002).
 The Linux emulation has been enhanced to prepare for the
 support of using the Linux version of VMware.
 .It
-IP checksumming speed has been improved on i386 compared to 1.5 by
-about 10%.
+IP checksumming speed has been improved on i386 compared to
+.Nx 1.5
+by about 10%.
 .It
 Support for the Socket Communications LP-E Type II PCMCIA NE2000
 clone card has been added to
@@ -290,6 +291,14 @@ been added, see
 .It
 The maximum number of BSD disklabel partitions on the i386 port
 has been increased from 8 to 16.
+.It
+Drivers for the AC'97 based audio sound chips
+ESS Technology Maestro 1, 2, and 2E (see
+.Xr esm 4 ),
+NeoMagic 256 (see
+.Xr neo 4 ),
+and Cirrus Logic CrystalClear PCI Audio CS4281 (see
+.Xr clct 4 ) have been added.
 .El
 .Pp
 In addition, many bugs have been fixed -- more than 95 problems
