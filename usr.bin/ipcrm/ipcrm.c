@@ -1,214 +1,156 @@
 /*
- *	Implement the SYSV ipcrm command.
+ * Copyright (c) 1994 Adam Glass
+ * All rights reserved.
  *
- *	$Id: ipcrm.c,v 1.1 1993/11/14 16:28:00 cgd Exp $
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. The name of the Author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY Adam Glass ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL Adam Glass BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * $Id: ipcrm.c,v 1.2 1994/03/21 15:46:43 glass Exp $
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
+#include <unistd.h>
+#include <err.h>
+#include <signal.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>
 #include <sys/msg.h>
+#include <sys/sem.h>
 #include <sys/shm.h>
-#include <errno.h>
 
-#define OMIT_SHM		/* don't handle shm stuff; untested */
+#define IPC_TO_STR(x) (x == 'Q' ? "msq" : (x == 'M' ? "shm" : "sem"))
+#define IPC_TO_STRING(x) (x == 'Q' ? "message queue" : \
+	(x == 'M' ? "shared memory segment" : "semaphore"))
 
-int
-getnumber(char *num, long *lptr)
+int signaled;
+
+int msgrm(key, id)
+    key_t key;
+    int id;
 {
-	char *end;
-
-	if (num == NULL) {
-		fprintf(stderr, "ipcrm:  missing numeric parameter\n");
-		return (0);
-	}
-
-	*lptr = strtol(num, &end, 0);
-	if (*num == '\0' || *end != '\0') {
-		fprintf(stderr, "ipcrm:  can't convert \"%s\" to an integer\n",
-		    num);
-		return (0);
-	}
-	if (*lptr == LONG_MAX || *lptr == LONG_MIN) {
-		fprintf(stderr, "ipcrm:  absurd numeric parameter \"%s\"\n",
-		    num);
-		return (0);
-	}
-	return (1);
+    if (key) {
+	id = msgget(key, 0);
+	if (id == -1)
+	    return -1;
+    }
+    return msgctl(id, IPC_RMID, NULL);    
 }
 
-main(int argc, char **argv)
+int shmrm(key, id)
+    key_t key;
+    int id;
 {
-	char *parm;
-	char tbuf[10000];
-	int errcnt = 0;
-	long id;
-	long key;
-
-	while ((parm = *++argv) != NULL) {
-
-		if (strcmp(parm, "-q") == 0) {
-			if (getnumber(*++argv, &id)) {
-				if (msgctl(id, IPC_RMID, NULL) == 0) {
-					printf("msqid %s deleted\n", *argv);
-				} else if (errno == ENOSYS) {
-					fprintf(stderr, "ipcrm:  SYSV message passing not configured in kernel\n");
-					errcnt += 1;
-				} else {
-					strcpy(tbuf, "can't remove msqid ");
-					strcat(tbuf, *argv);
-					perror(tbuf);
-					errcnt += 1;
-				}
-			} else {
-				errcnt += 1;
-			}
-		} else if (strcmp(parm, "-m") == 0) {
-			if (getnumber(*++argv, &id)) {
-#ifndef OMIT_SHM
-				%%%untested %%%
-				    if (shmctl(id, IPC_RMID, NULL) == 0) {
-					printf("shmid %s deleted\n", *argv);
-				} else if (errno == ENOSYS) {
-					fprintf(stderr, "ipcrm:  SYSV shared memory not configured in kernel\n");
-					errcnt += 1;
-				} else {
-					strcpy(tbuf, "can't remove shmid ");
-					strcat(tbuf, *argv);
-					perror(tbuf);
-					errcnt += 1;
-				}
-#else
-				fprintf(stderr, "ipcrm:  sorry, this version of ipcrm doesn't support shared memory\n");
-				errcnt += 1;
-#endif
-			} else {
-				errcnt += 1;
-			}
-		} else if (strcmp(parm, "-s") == 0) {
-			if (getnumber(*++argv, &id)) {
-				union semun junk;
-
-				if (semctl(id, 0, IPC_RMID, junk) == 0) {
-					printf("semid %s deleted\n", *argv);
-				} else if (errno == ENOSYS) {
-					fprintf(stderr, "ipcrm:  SYSV semaphores not configured in kernel\n");
-					errcnt += 1;
-				} else {
-					strcpy(tbuf, "can't remove semid ");
-					strcat(tbuf, *argv);
-					perror(tbuf);
-					errcnt += 1;
-				}
-			} else {
-				errcnt += 1;
-			}
-		} else if (strcmp(parm, "-Q") == 0) {
-			if (getnumber(*++argv, &key)) {
-				if (key == IPC_PRIVATE) {
-					fprintf(stderr, "ipcrm:  can't remove private message queues\n");
-				} else {
-					strcpy(tbuf, "can't access msq key ");
-					strcat(tbuf, *argv);
-					if ((id = msgget(key, 0000)) >= 0) {
-						strcpy(tbuf,
-						    "can't remove msq key ");
-						strcat(tbuf, *argv);
-						if (msgctl(id, IPC_RMID, NULL)
-						    == 0) {
-							printf("msq key %s deleted\n",
-							    *argv);
-						} else {
-							perror(tbuf);
-							errcnt += 1;
-						}
-					} else if (errno == ENOSYS) {
-						fprintf(stderr, "ipcrm:  SYSV message passing not configured in kernel\n");
-						errcnt += 1;
-					} else {
-						perror(tbuf);
-						errcnt += 1;
-					}
-				}
-			} else {
-				errcnt += 1;
-			}
-		} else if (strcmp(parm, "-M") == 0) {
-			if (getnumber(*++argv, &key)) {
-#ifndef OMIT_SHM
-				%%%untested %%%
-				    if (key == IPC_PRIVATE) {
-					fprintf(stderr, "ipcrm:  can't remove private shared memory segments\n");
-				} else {
-					strcpy(tbuf, "can't access shm key ");
-					strcat(tbuf, *argv);
-					if ((id = shmget(key, 0, 0000)) >= 0) {
-						strcpy(tbuf, "can't remove shm key ");
-						strcat(tbuf, *argv);
-						if (shmctl(id, IPC_RMID, NULL) == 0) {
-							printf("shm key %s deleted\n",
-							    *argv);
-						} else {
-							perror(tbuf);
-							errcnt += 1;
-						}
-					} else if (errno == ENOSYS) {
-						fprintf(stderr, "ipcrm:  SYSV shared memory not configured in kernel\n");
-						errcnt += 1;
-					} else {
-						perror(tbuf);
-						errcnt += 1;
-					}
-				}
-#else
-				fprintf(stderr, "ipcrm:  sorry, this version of ipcrm doesn't support shared memory\n");
-				errcnt += 1;
-#endif
-			} else {
-				errcnt += 1;
-			}
-		} else if (strcmp(parm, "-S") == 0) {
-			if (getnumber(*++argv, &key)) {
-				if (key == IPC_PRIVATE) {
-					fprintf(stderr, "ipcrm:  can't remove private semaphores\n");
-				} else {
-					strcpy(tbuf, "can't access sem key ");
-					strcat(tbuf, *argv);
-					if ((id = semget(key, 0, 0000)) >= 0) {
-						union semun junk;
-
-						strcpy(tbuf, "can't remove sem key ");
-						strcat(tbuf, *argv);
-						if (semctl(id, 0, IPC_RMID, junk) == 0) {
-							printf("sem key %s deleted\n", *argv);
-						} else {
-							perror(tbuf);
-							errcnt += 1;
-						}
-					} else if (errno == ENOSYS) {
-						fprintf(stderr, "ipcrm:  SYSV semaphores not configured in kernel\n");
-						errcnt += 1;
-					} else {
-						perror(tbuf);
-						errcnt += 1;
-					}
-				}
-			} else {
-				errcnt += 1;
-			}
-		} else {
-			fprintf(stderr, "ipcrm:  illegal parameter \"%s\" - bye!\n", parm);
-			exit(1);
-		}
-
-	}
-
-	if (errcnt == 0) {
-		exit(0);
-	} else {
-		exit(1);
-	}
+    if (key) {
+	id = shmget(key, 0, 0);
+	if (id == -1)
+	    return -1;
+    }
+    return shmctl(id, IPC_RMID, NULL);
 }
+
+int semrm(key, id)
+    key_t key;
+    int id;
+{
+    union semun arg;
+
+    if (key) {
+	id = semget(key, 0, 0);
+	if (id == -1)
+	    return -1;
+    }
+    return semctl(id, 0, IPC_RMID, arg);
+}
+
+void not_configured()
+{
+    signaled++;
+}
+    
+int main(argc, argv)
+    int argc;
+    char *argv[];
+
+{
+    int c, result, errflg, target_id;
+    key_t target_key;
+
+    errflg = 0;
+    signal(SIGSYS, not_configured);
+    while ((c = getopt(argc, argv, ":q:m:s:Q:M:S:")) != -1) {
+
+	signaled = 0;
+	switch (c) {
+	case 'q':
+	case 'm':
+	case 's':
+	    target_id = atoi(optarg);
+	    if (c == 'q')
+		result = msgrm(0, target_id);
+	    else if (c == 'm')
+		result = shmrm(0, target_id);
+	    else
+		result = semrm(0, target_id);
+	    if (result < 0) {
+		errflg++;
+		if (!signaled)
+		    warn("%sid(%d): ", IPC_TO_STR(toupper(c)), target_id);
+		else
+		    warnx("%ss are not configured in the running kernel",
+			  IPC_TO_STRING(toupper(c)));
+	    }
+	    break;
+	case 'Q':
+	case 'M':
+	case 'S':
+	    target_key = atol(optarg);
+	    if (target_key == IPC_PRIVATE) {
+		warnx("can't remove private %ss", IPC_TO_STRING(c));
+		continue;
+	    }
+	    if (c == 'Q')
+		result = msgrm(target_key, 0);
+	    else if (c == 'M')
+		result = shmrm(target_key, 0);
+	    else
+		result = semrm(target_key, 0);
+	    if (result < 0) {
+		errflg++;
+		if (!signaled)
+		    warn("%key(%ld): ", IPC_TO_STR(c), target_key);
+		else
+		    warnx("%ss are not configured in the running kernel",
+			  IPC_TO_STRING(c));
+	    }
+	    break;
+	case ':':
+	    errx(1, "option -%c requires an argument", optopt);
+	case '?':
+	    errx(1, "unrecognized option: -%c", optopt);
+	}
+    }
+    if (optind != argc) {
+	fprintf(stderr, "usage: ipcrm [ [-q msqid] [-m shmid] [-s semid]\n");
+	fprintf(stderr, "        [-Q msgkey] [-M shmkey] [-S semkey] ...]\n");
+	exit(1);
+    }
+    exit(errflg);
+}
+    
