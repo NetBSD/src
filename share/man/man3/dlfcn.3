@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.16 2003/04/16 13:35:16 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.17 2004/11/10 16:37:19 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,6 +41,7 @@
 .Nm dlopen ,
 .Nm dlclose ,
 .Nm dlsym ,
+.Nm dladdr ,
 .Nm dlctl ,
 .Nm dlerror
 .Nd dynamic link interface
@@ -151,7 +152,7 @@ typedef struct {
 	const char  *dli_fname;     /* File defining the symbol */
 	void	    *dli_fbase;     /* Base address */
 	const char  *dli_sname;     /* Symbol name */
-	void	    *dli_saddr;     /* Symbol address */
+	const void  *dli_saddr;     /* Symbol address */
 } Dl_info;
 .Ed
 .Pp
