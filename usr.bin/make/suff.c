@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.31 2000/06/11 07:39:53 mycroft Exp $	*/
+/*	$NetBSD: suff.c,v 1.32 2001/05/08 15:15:53 aymeric Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: suff.c,v 1.31 2000/06/11 07:39:53 mycroft Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.32 2001/05/08 15:15:53 aymeric Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.31 2000/06/11 07:39:53 mycroft Exp $");
+__RCSID("$NetBSD: suff.c,v 1.32 2001/05/08 15:15:53 aymeric Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -712,34 +712,39 @@ Suff_EndTransform(gnp, dummy)
 	Lst_IsEmpty(gn->children))
     {
 	Suff	*s, *t;
-	Lst	 p;
 
-	(void)SuffParseTransform(gn->name, &s, &t);
+	/*
+	 * SuffParseTransform() may fail for special rules which are not
+	 * actual transformation rules. (e.g. .DEFAULT)
+	 */
+	if (SuffParseTransform(gn->name, &s, &t)) {
+	    Lst	 p;
 
-	if (DEBUG(SUFF)) {
-	    printf("deleting transformation from `%s' to `%s'\n",
-		    s->name, t->name);
+	    if (DEBUG(SUFF)) {
+		printf("deleting transformation from `%s' to `%s'\n",
+		s->name, t->name);
+	    }
+
+	    /*
+	     * Store s->parents because s could be deleted in SuffRemove
+	     */
+	    p = s->parents;
+
+	    /*
+	     * Remove the source from the target's children list. We check for a
+	     * nil return to handle a beanhead saying something like
+	     *  .c.o .c.o:
+	     *
+	     * We'll be called twice when the next target is seen, but .c and .o
+	     * are only linked once...
+	     */
+	    SuffRemove(t->children, s);
+
+	    /*
+	     * Remove the target from the source's parents list
+	     */
+	    SuffRemove(p, t);
 	}
-
-	/*
-	 * Store s->parents because s could be deleted in SuffRemove
-	 */
-	p = s->parents;
-
-	/*
-	 * Remove the source from the target's children list. We check for a
-	 * nil return to handle a beanhead saying something like
-	 *  .c.o .c.o:
-	 *
-	 * We'll be called twice when the next target is seen, but .c and .o
-	 * are only linked once...
-	 */
-	SuffRemove(t->children, s);
-
-	/*
-	 * Remove the target from the source's parents list
-	 */
-	SuffRemove(p, t);
     } else if ((gn->type & OP_TRANSFORM) && DEBUG(SUFF)) {
 	printf("transformation %s complete\n", gn->name);
     }
