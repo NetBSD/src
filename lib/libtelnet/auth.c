@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.10 2000/02/01 22:29:27 thorpej Exp $	*/
+/*	$NetBSD: auth.c,v 1.11 2000/06/22 06:47:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.10 2000/02/01 22:29:27 thorpej Exp $");
+__RCSID("$NetBSD: auth.c,v 1.11 2000/06/22 06:47:42 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ __RCSID("$NetBSD: auth.c,v 1.10 2000/02/01 22:29:27 thorpej Exp $");
 #include <arpa/telnet.h>
 #ifdef	__STDC__
 #include <stdlib.h>
+#include <unistd.h>
 #endif
 #ifdef	NO_STRING_H
 #include <strings.h>
@@ -113,6 +114,8 @@ static	unsigned char	_auth_send_data[256];
 static	unsigned char	*auth_send_data;
 static	int	auth_send_cnt = 0;
 
+static void auth_intr P((int));
+
 /*
  * Authentication types supported.  Plese note that these are stored
  * in priority order, i.e. try the first one first.
@@ -135,6 +138,15 @@ Authenticator authenticators[] = {
 				spx_printsub },
 #endif
 #ifdef	KRB5
+# ifdef	ENCRYPTION
+	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+				kerberos5_init,
+				kerberos5_send,
+				kerberos5_is,
+				kerberos5_reply,
+				kerberos5_status,
+				kerberos5_printsub },
+# endif	/* ENCRYPTION */
 	{ AUTHTYPE_KERBEROS_V5, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
 				kerberos5_init,
 				kerberos5_send,
@@ -144,6 +156,15 @@ Authenticator authenticators[] = {
 				kerberos5_printsub },
 #endif
 #ifdef	KRB4
+# ifdef	ENCRYPTION
+	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_MUTUAL,
+				kerberos4_init,
+				kerberos4_send,
+				kerberos4_is,
+				kerberos4_reply,
+				kerberos4_status,
+				kerberos4_printsub },
+# endif	/* ENCRYPTION */
 	{ AUTHTYPE_KERBEROS_V4, AUTH_WHO_CLIENT|AUTH_HOW_ONE_WAY,
 				kerberos4_init,
 				kerberos4_send,
@@ -312,7 +333,8 @@ auth_togdebug(on)
 }
 
 	int
-auth_status()
+auth_status(s)
+	char *s;
 {
 	Authenticator *ap;
 	int i, mask;
@@ -489,7 +511,7 @@ auth_is(data, cnt)
 		return;
 	}
 
-	if (ap = findauthenticator(data[0], data[1])) {
+	if ((ap = findauthenticator(data[0], data[1])) != NULL) {
 		if (ap->is)
 			(*ap->is)(ap, data+2, cnt-2);
 	} else if (auth_debug_mode)
@@ -507,7 +529,7 @@ auth_reply(data, cnt)
 	if (cnt < 2)
 		return;
 
-	if (ap = findauthenticator(data[0], data[1])) {
+	if ((ap = findauthenticator(data[0], data[1])) != NULL) {
 		if (ap->reply)
 			(*ap->reply)(ap, data+2, cnt-2);
 	} else if (auth_debug_mode)
@@ -520,7 +542,6 @@ auth_name(data, cnt)
 	unsigned char *data;
 	int cnt;
 {
-	Authenticator *ap;
 	unsigned char savename[256];
 
 	if (cnt < 1) {

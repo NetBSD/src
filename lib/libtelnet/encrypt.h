@@ -1,4 +1,4 @@
-/*	$NetBSD: encrypt.h,v 1.5 1998/02/27 10:33:46 christos Exp $	*/
+/*	$NetBSD: encrypt.h,v 1.6 2000/06/22 06:47:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -55,3 +55,52 @@
  * or implied warranty.
  */
 
+#ifdef	ENCRYPTION
+#include <sys/cdefs.h>
+#define P __P
+
+# ifndef __ENCRYPTION__
+# define __ENCRYPTION__
+
+#define	DIR_DECRYPT		1
+#define	DIR_ENCRYPT		2
+
+#define Block des_cblock
+typedef unsigned char *BlockT;
+#define Schedule des_key_schedule
+
+#define	VALIDKEY(key)	( key[0] | key[1] | key[2] | key[3] | \
+			  key[4] | key[5] | key[6] | key[7])
+
+#define	SAMEKEY(k1, k2)	(!bcmp((void *)k1, (void *)k2, sizeof(Block)))
+
+typedef	struct {
+	short		type;
+	int		length;
+	unsigned char	*data;
+} Session_Key;
+
+
+typedef struct {
+	char	*name;
+	int	type;
+	void	(*output) P((unsigned char *, int));
+	int	(*input) P((int));
+	void	(*init) P((int));
+	int	(*start) P((int, int));
+	int	(*is) P((unsigned char *, int));
+	int	(*reply) P((unsigned char *, int));
+	void	(*session) P((Session_Key *, int));
+	int	(*keyid) P((int, unsigned char *, int *));
+	void	(*printsub) P((unsigned char *, int, unsigned char *, int));
+} Encryptions;
+
+#define	SK_DES		1	/* Matched Kerberos v5 KEYTYPE_DES */
+
+#include "enc-proto.h"
+
+extern int encrypt_debug_mode;
+extern int (*decrypt_input) P((int));
+extern void (*encrypt_output) P((unsigned char *, int));
+# endif /* __ENCRYPTION__ */
+#endif /* ENCRYPTION */

@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.6 1997/10/08 08:45:14 mrg Exp $	*/
+/*	$NetBSD: termstat.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,11 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.6 1997/10/08 08:45:14 mrg Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.7 2000/06/22 06:47:49 thorpej Exp $");
 #endif
 #endif /* not lint */
 
 #include "telnetd.h"
+
+#if defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
+#endif
 
 /*
  * local variables
@@ -187,6 +191,25 @@ localstat()
 		tty_setlinemode(uselinemode);
 	}
 
+#ifdef	ENCRYPTION
+	/*
+	 * If the terminal is not echoing, but editing is enabled,
+	 * something like password input is going to happen, so
+	 * if we the other side is not currently sending encrypted
+	 * data, ask the other side to start encrypting.
+	 */
+	if (his_state_is_will(TELOPT_ENCRYPT)) {
+		static int enc_passwd = 0;
+		if (uselinemode && !tty_isecho() && tty_isediting()
+		    && (enc_passwd == 0) && !decrypt_input) {
+			encrypt_send_request_start();
+			enc_passwd = 1;
+		} else if (enc_passwd) {
+			encrypt_send_request_end();
+			enc_passwd = 0;
+		}
+	}
+#endif	/* ENCRYPTION */
 
 	/*
 	 * Do echo mode handling as soon as we know what the

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2000/06/20 06:00:38 thorpej Exp $
+#	$NetBSD: Makefile,v 1.21 2000/06/22 06:47:48 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -34,12 +34,6 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 
-DIST=	${.CURDIR}/../../crypto/dist
-.PATH:	${DIST}/heimdal/appl/telnet/telnet .DOTLAST
-
-# XXX XXX XXX
-WARNS=0
-
 PROG=	telnet
 
 CPPFLAGS+=-DTERMCAP -DKLUDGELINEMODE -DUSE_TERMIO -Dunix
@@ -50,21 +44,19 @@ LDADD+= -ltermcap -ltelnet
 DPADD+=	${LIBTERMCAP} ${LIBTELNET}
 
 SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
-	terminal.c utilities.c
+	terminal.c tn3270.c utilities.c
 
-CPPFLAGS+= -I${DIST}/heimdal/appl/telnet
-CPPFLAGS+= -I${DIST}/heimdal/appl/telnet/telnet
-CPPFLAGS+= -I${.CURDIR}/../../include/heimdal
-CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
-CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
-CPPFLAGS+= -I${DESTDIR}/usr/include/openssl
-CPPFLAGS+= -DHAVE_CONFIG_H
+CPPFLAGS+=-I${.CURDIR}/../../lib
 
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
 CPPFLAGS+=-DINET6
 
+CPPFLAGS+=-DAUTHENTICATION -DENCRYPTION -DKRB4
+CPPFLAGS+=-DKRB5 -DFORWARD
+
 LDADD+= -lkrb5 -lkrb -lcrypto -lasn1 -lcom_err -lroken
+DPADD+=	${LIBKRB5} ${LIBKRB} ${LIBCRYPTO} ${LIBASN1} ${LIBCOM_ERR} ${LIBROKEN}
 
 .include <bsd.prog.mk>
