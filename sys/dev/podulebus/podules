@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.3 2001/05/20 21:07:06 bjh21 Exp $
+$NetBSD: podules,v 1.4 2001/05/26 21:47:09 bjh21 Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -49,6 +49,7 @@ manufacturer	IRLAM		0x001f	Irlam Instruments
 manufacturer	OAK		0x0021	Oak Solutions
 manufacturer	SJ		0x0029	SJ Research
 manufacturer	MORLEY		0x002b	Morley
+manufacterer	HCCS2		0x002d	HCCS
 manufacturer	VTI		0x0035	Vertical Twist
 manufacturer	CUMANA		0x003a	Cumana
 manufacturer	ICS		0x003c	ICS
@@ -77,6 +78,7 @@ podule	ACORN		RAMROM		0x0005	RAM/ROM podule
 podule	ACORN		BBCIO		0x0006	BBC IO interface
 podule	ACORN		ST506		0x000b	ST506 HD interface
 podule	ACORN		MIDI		0x0013	MIDI interface
+podule	ACORN		USERMIDI	0x003F	User Port/MIDI interface
 podule	ACORN		ETHER2		0x0061	ether 2 interface
 podule	ACORN		ETHERI		0x0139	EtherI interface
 
@@ -95,6 +97,7 @@ podule	WILDVISION	LARKA16		0x00ce	lark A16
 podule	WILDVISION	MIDIMAX		0x0200	MIDI max
 
 podule	HCCS		IDESCSI		0x0022	IDE or SCSI interface
+podule	HCCS		ULTIMATE	0x0063	Ultimate micropodule carrier
 
 podule	ATOMWIDE	ETHER3		0x00A4	ether 3/5 interface
 
@@ -111,9 +114,12 @@ podule	IRLAM		ETHERN		0x5678	EtherN interface
 
 podule	OAK		SCSI		0x0058	16 bit SCSI interface
 
-podule	SJ		NEXUS		0x0064	Nexus interface
+podule	SJ		NEXUS		0x0064	Nexus interface (Podule)
+podule	SJ		NEXUSNS		0x008F	Nexus interface (A3020 netslot)
 
 podule	MORLEY		SCSI		0x0067	SCSI interface
+
+podule	HCCS2		USERANALOGUE	0x006e	User and Analogue ports
 
 podule	VTI		SCSI		0x008d	SCSI interface
 
