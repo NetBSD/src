@@ -38,7 +38,7 @@
  * from: Utah $Hdr: machdep.c 1.63 91/04/24$
  *
  *	@(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.22 1994/05/08 05:52:24 chopps Exp $
+ *	$Id: machdep.c,v 1.23 1994/05/09 06:37:56 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -59,29 +59,19 @@
 #include <sys/user.h>
 #include <sys/exec.h>            /* for PS_STRINGS */
 #include <sys/exec_aout.h>
-
+#include <sys/vnode.h>
+#include <sys/queue.h>
+#include <sys/sysctl.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
-
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
-
 #ifdef SYSVSEM
 #include <sys/sem.h>
 #endif
-
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <amiga/amiga/isr.h>
-#include <machine/pte.h>
 #include <net/netisr.h>
-#include <sys/exec.h>
-#include <sys/vnode.h>
-#include <sys/queue.h>
-
 #define	MAXMEM	64*1024*CLSIZE	/* XXX - from cmap.h */
 #include <vm/vm_param.h>
 #include <vm/pmap.h>
@@ -89,7 +79,12 @@
 #include <vm/vm_object.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
-
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/psl.h>
+#include <machine/pte.h>
+#include <dev/cons.h>
+#include <amiga/amiga/isr.h>
 #include <amiga/amiga/custom.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
@@ -142,7 +137,9 @@ extern	u_int lowram;
 
 /* used in init_main.c */
 char *cpu_type = "m68k";
-
+/* the following is used externally (sysctl_hw) */
+char machine[] = "amiga";
+ 
 extern struct Mem_List *mem_list;
 
 #ifdef COMPAT_SUNOS
@@ -421,73 +418,68 @@ setregs(p, entry, stack, retval)
 #endif
 }
 
+/*
+ * Info for CTL_HW
+ */
+char cpu_model[120];
+extern char version[];
+ 
 identifycpu()
 {
         /* there's alot of XXX in here... */
+	char *mach, *mmu;
 
-	printf ("AMIGA/");
-
-	if (is_a4000 ())
-	  printf ("A4000");	/* XXX XXX */
-	if (is_a3000 ())
-	  printf ("A3000");	/* XXX */
+	if (is_a4000())
+		mach = "Amiga 4000";
+	else if (is_a3000())
+		mach = "Amiga 3000";
 	else
-	  printf ("A2000");
+		mach = "Amiga 500/2000";
 
 	if (cpu040) {
 		cpu_type = "m68040";
-
-		printf (" MC68040 CPU");
+		mmu = "/MMU";
+	} else if (mmutype == MMU_68030) {
+		cpu_type = "m68030";	/* XXX */
+		mmu = "/MMU";
+	} else {
+		cpu_type = "m68020";
+		mmu = " m68851 MMU";
 	}
-	else {
-		if (mmutype == MMU_68030)
-		  cpu_type = "m68030";	/* XXX */
-		else
-		  cpu_type = "m68020";
+	sprintf(cpu_model, "%s (%s CPU%s)", mach, cpu_type, mmu);
+	printf("%s\n", cpu_model);
+}
 
-		printf(" MC680%s CPU", mmutype == MMU_68030 ? "30" : "20");
-		switch (mmutype) {
-		case MMU_68030:
-			printf("+MMU");
-			break;
-		case MMU_68851:
-			printf(", MC68851 MMU");
-			break;
-		default:
-			printf("\nunknown MMU type %d\n", mmutype);
-			panic("startup");
-		}
-		/* XXX */
-		if (mmutype == MMU_68030)
-			printf(", %sMHz MC68882 FPU", "25");
+/*
+ * machine dependent system variables.
+ */
+cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	dev_t consdev;
+
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return(ENOTDIR);               /* overloaded */
+
+	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
 		else
-			printf(", %sMHz MC68881 FPU", "16.67");
-	}
-	printf("\n");
-	/*
-	 * Now that we have told the user what they have,
-	 * let them know if that machine type isn't configured.
-	 */
-#if 0
-	switch (machineid) {
-	case -1:		/* keep compilers happy */
-#if !defined(HP320) && !defined(HP350)
-	case HP_320:
-	case HP_350:
-#endif
-#ifndef HP330
-	case HP_330:
-#endif
-#if !defined(HP360) && !defined(HP370)
-	case HP_340:
-	case HP_360:
-	case HP_370:
-#endif
-		panic("CPU type not configured");
+			consdev = NODEV;
+		return(sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof(consdev)));
 	default:
-		break;
+		return(EOPNOTSUPP);
 	}
-#endif
+	/* NOTREACHED */
 }
 
 #define SS_RTEFRAME	1
@@ -532,7 +524,7 @@ struct sun_sigframe {
 					   comes here */
 };
 #endif	
-
+ 
 #ifdef DEBUG
 int sigdebug = 0x0;
 int sigpid = 0;
@@ -553,9 +545,9 @@ sendsig(catcher, sig, mask, code)
 	register struct proc *p = curproc;
 	register struct sigframe *fp, *kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
-	int oonstack, fsize;
+	int oonstack;
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
@@ -564,37 +556,17 @@ sendsig(catcher, sig, mask, code)
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 
 #ifdef COMPAT_SUNOS
-	if (p->p_emul == EMUL_SUNOS)
-	  {
-#if 0
-	    /* SunOS doesn't seem to make any distinction between
-	       hardware faults and normal signals.. */
-
-	    /* if this is a hardware fault (ft >= FMT9), sun_sendsig
-	       can't currently handle it. Reset signal actions and
-	       have the process die unconditionally. */
-	    if (ft >= FMT9)
-	      {
-		SIGACTION(p, sig) = SIG_DFL;
-		mask = sigmask(sig);
-		p->p_sigignore &= ~sig;
-		p->p_sigcatch &= ~sig;
-		p->p_sigmask &= ~sig;
-		psignal(p, sig);
+	if (p->p_emul == EMUL_SUNOS) {
+		/*
+		 * build the short SunOS frame instead
+		 */
+		sun_sendsig(catcher, sig, mask, code);
 		return;
-	      }
+	}
 #endif
-
-	    /* else build the short SunOS frame instead */
-	    sun_sendsig (catcher, sig, mask, code);
-	    return;
-	  }
-#endif
-
- 
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -602,12 +574,13 @@ sendsig(catcher, sig, mask, code)
 	 * will fail if the process has not already allocated
 	 * the space with a `brk'.
 	 */
-	fsize = sizeof(struct sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - sizeof(struct sigframe));
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
+		fp = (struct sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
@@ -615,7 +588,7 @@ sendsig(catcher, sig, mask, code)
 		printf("sendsig(%d): sig %d ssp %x usp %x scp %x ft %d\n",
 		       p->p_pid, sig, &oonstack, fp, &fp->sf_sc, ft);
 #endif
-	if (useracc((caddr_t)fp, fsize, B_WRITE) == 0) {
+	if (useracc((caddr_t)fp, sizeof(struct sigframe), B_WRITE) == 0) {
 #ifdef DEBUG
 		if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 			printf("sendsig(%d): useracc failed on sig %d\n",
@@ -633,11 +606,7 @@ sendsig(catcher, sig, mask, code)
 		psignal(p, SIGILL);
 		return;
 	}
-#ifdef DEBUG
-	if (fsize != sizeof (struct sigframe))
-	  panic ("YUCK! sendsig");
-#endif
-	kfp = (struct sigframe *)malloc((u_long)fsize, M_TEMP, M_WAITOK);
+	kfp = malloc(sizeof(struct sigframe), M_TEMP, M_WAITOK);
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
@@ -702,7 +671,7 @@ sendsig(catcher, sig, mask, code)
 	kfp->sf_sc.sc_ap = (int)&fp->sf_state;
 	kfp->sf_sc.sc_pc = frame->f_pc;
 	kfp->sf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)kfp, (caddr_t)fp, fsize);
+	(void) copyout((caddr_t)kfp, (caddr_t)fp, sizeof(struct sigframe));
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -713,7 +682,7 @@ sendsig(catcher, sig, mask, code)
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	  frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
+	frame->f_pc = (int)(((char *)PS_STRINGS) - (esigcode - sigcode));
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d returns\n",
@@ -738,13 +707,13 @@ sun_sendsig(catcher, sig, mask, code)
 	register struct sun_sigframe *fp;
 	struct sun_sigframe kfp;
 	register struct frame *frame;
-	register struct sigacts *ps = p->p_sigacts;
+	register struct sigacts *psp = p->p_sigacts;
 	register short ft;
 	int oonstack, fsize;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_sigstk.ss_onstack;
+	oonstack = psp->ps_sigstk.ss_flags & SA_ONSTACK;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -753,11 +722,13 @@ sun_sendsig(catcher, sig, mask, code)
 	 * the space with a `brk'.
 	 */
 	fsize = sizeof(struct sun_sigframe);
-	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sun_sigframe *)(ps->ps_sigstk.ss_sp - fsize);
-		ps->ps_sigstk.ss_onstack = 1;
+	if ((psp->ps_flags & SAS_ALTSTACK) && oonstack == 0 &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sun_sigframe *)(psp->ps_sigstk.ss_base +
+		    psp->ps_sigstk.ss_size - sizeof(struct sun_sigframe));
+		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sun_sigframe *)(frame->f_regs[SP] - fsize);
+		fp = (struct sun_sigframe *)frame->f_regs[SP] - 1;
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
@@ -799,7 +770,7 @@ sun_sendsig(catcher, sig, mask, code)
 	kfp.ssf_sc.sc_sp = frame->f_regs[SP];
 	kfp.ssf_sc.sc_pc = frame->f_pc;
 	kfp.ssf_sc.sc_ps = frame->f_sr;
-	(void) copyout((caddr_t)&kfp, (caddr_t)fp, fsize);
+	(void) copyout(&kfp, fp, fsize);
 	frame->f_regs[SP] = (int)fp;
 #ifdef DEBUG
 	if (sigdebug & SDB_FOLLOW)
@@ -832,27 +803,25 @@ sun_sendsig(catcher, sig, mask, code)
  */
 
 struct sigreturn_args {
-  struct sigcontext *sigcntxp;
+	struct sigcontext *sigcntxp;
 };
 
 
 /* ARGSUSED */
 sigreturn(p, uap, retval)
-     struct proc *p;
-     struct sigreturn_args *uap;
-     int *retval;
+	struct proc *p;
+	struct sigreturn_args *uap;
+	int *retval;
 {
-	register struct sigcontext *scp;
-	register struct frame *frame;
-	register int rf;
-	struct sigcontext tsigc;
+	struct sigcontext *scp, context;
+	struct frame *frame;
+	int rf, flags;
 	struct sigstate tstate;
-	int flags;
 	extern short exframesize[];
 
 #ifdef COMPAT_SUNOS
 	if (p->p_emul == EMUL_SUNOS)
-	  return sun_sigreturn (p, uap, retval);
+		return(sun_sigreturn(p, uap, retval));
 #endif
 
 	scp = uap->sigcntxp;
@@ -861,21 +830,24 @@ sigreturn(p, uap, retval)
 		printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 #endif
 	if ((int)scp & 1)
-		return (EINVAL);
+		return(EINVAL);
 	/*
 	 * Test and fetch the context structure.
 	 * We grab it all at once for speed.
 	 */
-	if (useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc))
-		return (EINVAL);
-	scp = &tsigc;
+	if (useracc((caddr_t)scp, sizeof(*scp), B_WRITE) == 0 ||
+	    copyin(scp, &context, sizeof(context)))
+		return(EINVAL);
+	scp = &context;
 	if ((scp->sc_ps & (PSL_MBZ|PSL_IPL|PSL_S)) != 0)
-		return (EINVAL);
+		return(EINVAL);
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 1)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else 
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
@@ -1002,7 +974,10 @@ sun_sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
+	if (scp->sc_onstack & 1)
+		p->p_sigacts->ps_sigstk.ss_flags |= SA_ONSTACK;
+	else 
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
 	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
