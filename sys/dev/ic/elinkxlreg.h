@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxlreg.h,v 1.5 2001/05/03 17:59:24 fvdl Exp $	*/
+/*	$NetBSD: elinkxlreg.h,v 1.6 2001/05/23 00:56:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -304,6 +304,8 @@ struct ex_txdesc {
 
 /*
  * upd_pktstatus bitfields.
+ * The *CKSUMERR fields are only valid if the matching *CHECKED field
+ * is set.
  */
 #define EX_UPD_PKTLENMASK	0x00001fff	/* 12:0 -> packet length */
 #define EX_UPD_ERROR		0x00004000	/* rcv error */
@@ -318,6 +320,9 @@ struct ex_txdesc {
 #define EX_UPD_IPCKSUMERR	0x02000000	/* IP cksum error (90xB) */
 #define EX_UPD_TCPCKSUMERR	0x04000000	/* TCP cksum error (90xB) */
 #define EX_UPD_UDPCKSUMERR	0x08000000	/* UDP cksum error (90xB) */
+#define EX_UPD_IPCHECKED	0x20000000	/* IP cksum done */
+#define EX_UPD_TCPCHECKED	0x40000000	/* TCP cksum done */
+#define EX_UPD_UDPCHECKED	0x80000000	/* UDP cksum done */
 
 #define EX_UPD_ERR		0x001f4000	/* Errors we check for */
 #define EX_UPD_ERR_VLAN		0x000f0000	/* same for 802.1q */
