@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.4 1998/08/26 10:31:36 mrg Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.5 1998/09/02 05:51:35 eeh Exp $
 
 # Makefile for NetBSD
 #
@@ -21,12 +21,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
+.include "/etc/mk.conf"
+
 CC?=	cc
 LD?=	/usr/ccs/bin/ld #Need to use Solaris ld to use the solaris loader
 MKDEP?=	mkdep
 STRIP?=	strip
 SIZE?=	size
 COPTS?= 	-O2
+#### Stuff for cross compiling
+STRIPFLAGS=	-S
+NM?=nm
+LORDER?=lorder
+TSORT?=tsort
+
 
 # deal with Solaris vs. NetBSD build environments for now ..
 OS!=uname -s
@@ -52,12 +60,6 @@ CFLAGS=		${DEBUG} ${CWARNFLAGS} -O2 -Wa,-Av9a -mno-fpu
 AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
 LINKFLAGS=	-N -p -Ttext f8000000 -e start >lderr
 #STRIPFLAGS=	-d
-
-#### Stuff for cross compiling
-STRIPFLAGS=	-S
-NM=nm
-LORDER=lorder
-TSORT=tsort
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"

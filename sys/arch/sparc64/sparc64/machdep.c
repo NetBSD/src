@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 1998/08/30 15:32:19 eeh Exp $ */
+/*	$NetBSD: machdep.c,v 1.8 1998/09/02 05:51:39 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -215,7 +215,7 @@ cpu_startup()
 #if !defined(MACHINE_NEW_NONCONTIG) && !defined(MACHINE_NONCONTIG)
 	physmem = btoc(avail_end);
 #endif
-	printf("real mem = %d\n", ctob(physmem));
+	printf("real mem = %ld\n", (long)ctob(physmem));
 
 #if defined(UVM)
         /*
@@ -371,8 +371,8 @@ cpu_startup()
 #else
 	printf("avail mem = %ld\n", ptoa(cnt.v_free_count));
 #endif
-	printf("using %d buffers containing %d bytes of memory\n",
-		nbuf, bufpages * CLBYTES);
+	printf("using %ld buffers containing %ld bytes of memory\n",
+		(long)nbuf, (long)bufpages * CLBYTES);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.9 1998/08/30 15:32:19 eeh Exp $ */
+/*	$NetBSD: trap.c,v 1.10 1998/09/02 05:51:40 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -155,7 +155,7 @@ int	rwindow_debug = RW_64|RW_ERR;
 #define TDB_STOPCALL	0x200
 #define TDB_STOPCPIO	0x400
 #define TDB_SYSTOP	0x800
-int	trapdebug = /*TDB_FOLLOW|TDB_STOPSIG|TDB_STOPCPIO*/0;
+int	trapdebug = 0|TDB_FOLLOW|TDB_STOPSIG|TDB_STOPCPIO;
 /* #define __inline */
 #endif
 
@@ -501,9 +501,9 @@ trap(type, tstate, pc, tf)
 
 #ifdef DEBUG
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_FOLLOW|TDB_TRAP)) {
-		printf("trap: type 0x%x: pc=%x &tf=%x",
+		printf("trap: type 0x%x: pc=%lx &tf=%lx\n",
 		       type, pc, tf); 
-		printf(" npc=%x pstate=%b %s\n",
+		printf(" npc=%lx pstate=%b %s\n",
 		       (long)tf->tf_npc, pstate, PSTATE_BITS, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
 		       ((type == T_AST) ? "ast" : 
@@ -525,9 +525,9 @@ trap(type, tstate, pc, tf)
 	if ((trapdebug & TDB_TL) && tl()) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
-		printf("trap: type 0x%x: lvl=%d pc=%x &tf=%x",
-		       type, tl(), pc, tf); 
-		printf(" npc=%x pstate=%b %s\n",
+		printf("trap: type 0x%x: lvl=%d pc=%lx &tf=%lx",
+		       type, (int)tl(), pc, tf); 
+		printf(" npc=%lx pstate=%b %s\n",
 		       (long)tf->tf_npc, pstate, PSTATE_BITS, 
 		       type < N_TRAP_TYPES ? trap_type[type] : 
 		       ((type == T_AST) ? "ast" : 
@@ -582,9 +582,9 @@ trap(type, tstate, pc, tf)
 	default:
 		if (type < 0x100) {
 dopanic:
-			printf("trap type 0x%x: pc=%x",
+			printf("trap type 0x%x: pc=%lx",
 			       type, pc); 
-			printf(" npc=%x pstate=%b\n",
+			printf(" npc=%lx pstate=%b\n",
 			       (long)tf->tf_npc, pstate, PSTATE_BITS);
 			DEBUGGER(type, tf);
 			panic(type < N_TRAP_TYPES ? trap_type[type] : T);
@@ -693,7 +693,7 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug&RW_FOLLOW)
-			printf("%s[%d]: rwindow: pcb<-stack: %x\n",
+			printf("%s[%d]: rwindow: pcb<-stack: %lx\n",
 				p->p_comm, p->p_pid, tf->tf_out[6]);
 		printf("trap: T_RWRET sent!?!\n");
 /* I don't think this is ever used */
@@ -988,26 +988,26 @@ data_access_fault(type, addr, pc, tf)
 	if (protmmu || missmmu) {
 		extern int trap_trace_dis;
 		trap_trace_dis = 1;
-		printf("%d: data_access_fault(%x, %x, %x, %x) %s=%d\n",
-		       curproc?curproc->p_pid:-1, type, addr, pc, tf, 
+		printf("%ld: data_access_fault(%x, %lx, %lx, %lx) %s=%d\n",
+		       (long)(curproc?curproc->p_pid:-1), type, addr, pc, tf, 
 		       (protmmu)?"protmmu":"missmmu", (protmmu)?protmmu:missmmu);
 		Debugger();
 	}
 	write_user_windows();
 /*	if (cpcb->pcb_nsaved > 6) trapdebug |= TDB_NSAVED; */
 	if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved) || trapdebug&(TDB_ADDFLT|TDB_FOLLOW)) {
-		printf("%d: data_access_fault(%x, %x, %x, %x) nsaved=%d\n",
-		       curproc?curproc->p_pid:-1, type, addr, pc, tf, 
-		       cpcb->pcb_nsaved);
+		printf("%ld: data_access_fault(%lx, %p, %p, %p) nsaved=%d\n",
+		       (long)(curproc?curproc->p_pid:-1), (long)type, (void*)addr, (void*)pc, (void*)tf, 
+		       (int)cpcb->pcb_nsaved);
 		if ((trapdebug&TDB_NSAVED && cpcb->pcb_nsaved)) Debugger();
 	}
 	if (trapdebug & TDB_FRAME) {
 		print_trapframe(tf);
 	}
 	if ((trapdebug & TDB_TL) && tl()) {
-		printf("%d: tl %d data_access_fault(%x, %x, %x, %x) nsaved=%d\n",
-		       curproc?curproc->p_pid:-1, tl(), type, addr, pc, tf, 
-		       cpcb->pcb_nsaved);
+		printf("%d: tl %d data_access_fault(%x, %p, %p, %p) nsaved=%d\n",
+		       (int)(curproc?curproc->p_pid:-1), (int)tl(), (int)type, 
+		       (void*)addr, (void*)pc, (void*)tf, (int)cpcb->pcb_nsaved);
 		Debugger();
 	}
 	if (trapdebug&TDB_STOPCALL) { 
