@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.19 2003/11/10 18:43:15 dsl Exp $ */
+/* $NetBSD: mkdep.c,v 1.20 2003/11/11 10:55:24 dsl Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 	All rights reserved.\n");
-__RCSID("$NetBSD: mkdep.c,v 1.19 2003/11/10 18:43:15 dsl Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.20 2003/11/11 10:55:24 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/mman.h>
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	int 	aflag, dflag, oflag, qflag;
 	const char *filename;
 	int	dependfile;
-	char	*buf, *ptr, *line, *suf, *colon, *eol;
+	char	*buf, *lim, *ptr, *line, *suf, *colon, *eol;
 	int	ok_ind, ch;
 	int	sz;
 	int	fd;
@@ -163,9 +163,13 @@ main(int argc, char **argv)
 	dependfile = -1;
 
 	opterr = 0;	/* stop getopt() bleating about errors. */
-	ok_ind = 1;
-	for (; (ch = getopt(argc, argv, "adf:opqs:")) != -1; ok_ind = optind) {
+	for (;;) {
+		ok_ind = optind;
+		ch = getopt(argc, argv, "adf:opqs:");
 		switch (ch) {
+		case -1:
+			ok_ind = optind;
+			break;
 		case 'a':	/* Append to output file */
 			aflag &= ~O_TRUNC;
 			continue;
@@ -231,21 +235,21 @@ main(int argc, char **argv)
 		close(fd);
 
 		if (buf == MAP_FAILED)
-			err(EXIT_FAILURE, "unable to mmap file %s",
-			    *argv);
+			err(EXIT_FAILURE, "unable to mmap file %s", *argv);
+		lim = buf + sz - 1;
 
 		/* Remove leading "./" from filenames */
-		for (ptr = buf; (ptr = strstr(ptr, "./")) != NULL; ptr += 2) {
-			if (ptr == buf)
+		for (ptr = buf; ptr < lim; ptr++) {
+			if (ptr[1] != '.' || ptr[2] != '/'
+			    || !isspace((unsigned char)ptr[0]))
 				continue;
-			if (!isspace((unsigned char)ptr[-1]))
-				continue;
-			ptr[0] = ' ';
 			ptr[1] = ' ';
+			ptr[2] = ' ';
 		}
 
-		for (line = eol = buf; (eol = strchr(eol, '\n')) != NULL;) {
-			eol++;
+		for (line = eol = buf; eol <= lim;) {
+			while (eol <= lim && *eol++ != '\n')
+				continue;
 			if (line == eol - 1) {
 				/* empty line - ignore */
 				line = eol;
@@ -254,9 +258,12 @@ main(int argc, char **argv)
 			if (eol[-2] == '\\')
 				/* Assemble continuation lines */
 				continue;
-			colon = strchr(line, ':');
-			if (colon > eol)
-				colon = NULL;
+			for (colon = line; *colon != ':'; colon++) {
+				if (colon >= eol) {
+					colon = NULL;
+					break;
+				}
+			}
 			if (colon != NULL && suffixes != NULL) {
 				/* Find the .o: */
 				for (suf = colon - 2; ; suf--) {
