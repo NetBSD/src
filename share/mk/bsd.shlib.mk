@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.shlib.mk,v 1.2 2003/07/28 02:38:33 lukem Exp $
+#	$NetBSD: bsd.shlib.mk,v 1.3 2004/01/02 16:12:36 lukem Exp $
 
 .if !defined(_BSD_SHLIB_MK_)
 _BSD_SHLIB_MK_=1
@@ -16,7 +16,7 @@ SHLIBDIR?=	/usr/lib
 SHLIBDIR?=	/lib
 .endif
 
-.if ${USE_SHLIBDIR:Uno} == "yes"
+.if ${USE_SHLIBDIR:Uno} != "no"
 _LIBSODIR?=	${SHLIBINSTALLDIR}
 .else
 _LIBSODIR?=	${LIBDIR}
