@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.62.2.2 2000/07/04 00:57:24 thorpej Exp $	*/
+/*	$NetBSD: inetd.c,v 1.62.2.3 2000/07/13 05:53:23 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.62.2.2 2000/07/04 00:57:24 thorpej Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.62.2.3 2000/07/13 05:53:23 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,14 +869,27 @@ config(signo)
 			struct addrinfo hints, *res;
 			char *host, *port;
 			int error;
+			int s;
+
+			/* check if the family is supported */
+			s = socket(sep->se_family, SOCK_DGRAM, 0);
+			if (s < 0) {
+				syslog(LOG_WARNING,
+"%s/%s: %s: the address family is not supported by the kernel",
+				    sep->se_service, sep->se_proto,
+				    sep->se_hostaddr);
+				sep->se_checked = 0;
+				continue;
+			}
+			close(s);
 
 			memset(&hints, 0, sizeof(hints));
 			hints.ai_family = sep->se_family;
 			hints.ai_socktype = sep->se_socktype;
-			if (!strcmp(sep->se_hostaddr, "*")) {
-				hints.ai_flags = AI_PASSIVE;
+			hints.ai_flags = AI_PASSIVE;
+			if (!strcmp(sep->se_hostaddr, "*"))
 				host = NULL;
-			} else
+			else
 				host = sep->se_hostaddr;
 			if (isrpcservice(sep) || ISMUX(sep))
 				port = "0";
@@ -884,12 +897,11 @@ config(signo)
 				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
-				if (host == NULL) {
-					syslog(LOG_WARNING, "%s/%s: %s: "
-					    "the address family is not "
-					    "supported by the kernel",
-					    sep->se_service, sep->se_proto,
-					    sep->se_hostaddr);
+				if (error == EAI_SERVICE) {
+					/* gai_strerror not friendly enough */
+					syslog(LOG_WARNING, "%s/%s: "
+					    "unknown service",
+					    sep->se_service, sep->se_proto);
 				} else {
 					syslog(LOG_ERR, "%s/%s: %s: %s",
 					    sep->se_service, sep->se_proto,
@@ -1063,8 +1075,8 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
 		    sep->se_rcvbuf);
 #ifdef IPSEC
-	if (ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy) < 0
-	 && sep->se_policy) {
+	if (ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy) < 0 &&
+	    sep->se_policy) {
 		syslog(LOG_ERR, "%s/%s: ipsec setup failed",
 		    sep->se_service, sep->se_proto);
 		(void)close(sep->se_fd);
