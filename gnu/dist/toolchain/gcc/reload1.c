@@ -1277,7 +1277,7 @@ maybe_fix_stack_asms ()
 
       /* Get the operand values and constraints out of the insn.  */
       decode_asm_operands (pat, recog_operand, recog_operand_loc,
-			   constraints, operand_mode);
+			   (const char **)constraints, operand_mode);
 
       /* For every operand, see what registers are allowed.  */
       for (i = 0; i < noperands; i++)
