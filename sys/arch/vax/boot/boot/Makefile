@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/04/01 20:40:07 ragge Exp $
+#	$NetBSD: Makefile,v 1.4 1999/05/23 21:58:19 ragge Exp $
 
 S=	${.CURDIR}/../../../../
 
@@ -6,7 +6,7 @@ PROG=	boot
 NOMAN=	1
 DEVS=	hp.c ctu.c ra.c tmscp.c mfm.c if_qe.c if_le.c if_ze.c
 SRCS=	srt0.s boot.c devopen.c conf.c autoconf.c netio.c rom.c romread.s \
-	urem.s udiv.s consio.c str.s ${DEVS}
+	urem.s udiv.s consio.c str.s ${DEVS} findcpu.c
 
 CLEANFILES+=${PROG} ${PROG}.mop
 CPPFLAGS+=-DSUPPORT_BOOTPARAMS -DSUPPORT_BOOTP -DSUPPORT_DHCP -D_STANDALONE
@@ -23,10 +23,13 @@ Z_AS=	library
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=	${ZLIB}
 
+KERN_AS=library
+.include "${S}/lib/libkern/Makefile.inc"
+LIBKERN=${KERNLIB}
 
-${PROG}: ${OBJS} ${LIBSA} ${LIBZ}
+${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	ld -N -Ttext ${RELOC} -e nisse -o ${PROG} ${OBJS} \
-	    ${LIBSA} ${LIBZ} ${LIBSA}
+	    ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 	/usr/sbin/mopa.out ${PROG} ${PROG}.mop
 	strip ${PROG}
 	size ${PROG}

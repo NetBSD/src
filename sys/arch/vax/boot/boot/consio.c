@@ -1,4 +1,4 @@
-/*	$NetBSD: consio.c,v 1.3 1999/04/14 16:19:03 ragge Exp $ */
+/*	$NetBSD: consio.c,v 1.4 1999/05/23 21:58:19 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -44,12 +44,6 @@
 #include "data.h"
 
 void setup __P((void));
-
-int	vax_cputype;
-int	vax_boardtype;
-
-int	is_750;
-int	is_mvax;
 
 unsigned       *bootregs;
 struct rpb     *rpb;
@@ -121,30 +115,13 @@ testkey()
  * initializes data which are globally used and is called before main().
  */
 void 
-setup()
+consinit()
 {
-	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
-
 	put_fp = pr_putchar; /* Default */
 	get_fp = pr_getchar;
 	test_fp = pr_testchar;
-	/*
-	 * according to vax_cputype we initialize vax_boardtype.
-	 */
-        switch (vax_cputype) {
 
-	case VAX_TYP_UV2:
-	case VAX_TYP_CVAX:
-	case VAX_TYP_RIGEL:
-	case VAX_TYP_MARIAH:
-	case VAX_TYP_NVAX:
-	case VAX_TYP_SOC:
-		is_mvax = 1;
-		vax_boardtype = (vax_cputype << 24) |
-		    ((*(int*)0x20040004 >> 24) & 0377);
-		rpb = (struct rpb *)bootregs[11];	/* bertram: ??? */
-		break;
-        }
+	rpb = (struct rpb *)bootregs[11];	/* bertram: ??? */
 
 	/*
 	 * According to the vax_boardtype (vax_cputype is not specific

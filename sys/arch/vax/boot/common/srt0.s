@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.1 1999/03/06 16:36:06 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.2 1999/05/23 21:58:19 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -70,11 +70,12 @@ relocated:	                   # now relocation is done !!!
 	movl	r10,_bootdev	# Save bootdev early
 	movl	r11,_howto	# howto also...
 	movl	sp, _bootregs
-	calls	$0, _setup
 	calls	$0, _Xmain	# Were here!
 	halt			# no return
 
 ENTRY(machdep_start, 0)
+	mtpr	$0x1f,$0x12	# Block all interrupts
+	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6
 	movl	_howto, r11
 	movl	_opendev, r10
