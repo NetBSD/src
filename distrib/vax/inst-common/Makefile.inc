@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.9 2000/11/01 07:58:01 garbled Exp $
+#	$NetBSD: Makefile.inc,v 1.10 2001/04/11 17:31:44 wiz Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -48,7 +48,7 @@ bootroot: edlabel copy xxboot boot
 	vnconfig -u ${VND_DEV}
 
 edlabel copy xxboot boot:
-	(cd /sys/arch/vax/boot;make)
+	(cd /sys/arch/vax/boot; ${MAKE})
 	cp /sys/arch/vax/boot/edlabel .
 	cp /sys/arch/vax/boot/copy .
 	cp /sys/arch/vax/boot/xxboot .
