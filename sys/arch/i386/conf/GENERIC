@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.111 1997/10/19 00:00:18 perry Exp $
+#	$NetBSD: GENERIC,v 1.112 1997/10/19 20:14:21 perry Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -17,7 +17,8 @@ options 	I686_CPU
 options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
-#options 	DUMMY_NOPS	# speed hack; recommended
+# eliminate delay no-ops in I/O; recommended on all but very old machines
+#options 	DUMMY_NOPS
 
 # Misc. i386-specific options
 options 	XSERVER		# X server support in console drivers
@@ -116,13 +117,12 @@ options 	NETATALK	# AppleTalk networking protocols
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
 #options 	TCP_COMPAT_42
 
-# These options enable verbose messages for autoconfiguration of
-# the corresponding bus.  Warning, these may compile large string
-# tables into the kernel!
-options 	EISAVERBOSE	# verbose EISA device messages
-options 	PCIVERBOSE	# verbose PCI device messages
-options 	SCSIVERBOSE	# verbose SCSI error messages
+# These options enable verbose messages for several subsystems.
+# Warning, these may compile large string tables into the kernel!
+options 	EISAVERBOSE	# verbose EISA device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
+options 	SCSIVERBOSE	# human readable SCSI error messages
 
 # Kernel root file system and dump configuration.
 config		netbsd	root on ? type ?
@@ -137,61 +137,100 @@ mainbus0 at root
 
 #apm0	at mainbus0			# Advanced power management
 
+
+# Basic Bus Support
+
 # PCI bus support
 pci*	at mainbus? bus ?
 pci*	at pchb? bus ?
 pci*	at ppb? bus ?
 
-# PCI devices
-ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
-bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
-cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
-de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
-en*	at pci? dev ? function ?	# ENI/Adaptec ATM
-ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
-fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
-isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
-ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
-ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+# PCI bridges
 pchb*	at pci? dev ? function ?	# PCI-Host bridges
 pcib*	at pci? dev ? function ?	# PCI-ISA bridges
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
-tl*	at pci? dev ? function ?	# Thunderland-based Ethernet
 
 # EISA bus support
 eisa*	at mainbus?
-
-# EISA devices
-ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
-ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
-bha*	at eisa? slot ?			# BusLogic 7xx SCSI
-ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
-fea*	at eisa? slot ?			# DEC DEFEA FDDI
-uha*	at eisa? slot ?			# UltraStor 24f SCSI
 
 # ISA bus support
 isa*	at mainbus?
 isa*	at pcib?
 
-# ISA devices
+# PCMCIA bus support
+pcmcia*	at pcic? controller ? socket ?
 
-# ISA floppy, IDE, CD-ROM, and tape devices
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
-#fdc1	at isa? port 0x370 irq ? drq ?
-fd*	at fdc? drive ?			# the drives themselves
+# ISA PCMCIA controllers
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
+pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?			# the drives themsevles
+# ISA Plug-and-Play bus support
+isapnp0	at isa?
 
-#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-# note: the wt driver conflicts unpleasantly with ed devices at the
-# same I/O address. The probe reprograms their eeproms. Don't
-# uncomment it unless you are actually using it.
-#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+# Coprocessor Support
+
+# Math Coprocessor support
+npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
+
+
+# Console Devices
+
+# ISA console.  You can only configure one of these!
+pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
+#vt0	at isa? port 0x60 irq 1		# PCVT console driver
+
+
+# Serial Devices
+
+# PCI serial interfaces
+cy*	at pci? dev ? function ?	# Cyclades Cyclom-Y serial boards
+
+# ISA Plug-and-Play serial interfaces
+com*	at isapnp?			# Modems and serial boards
+
+# PCMCIA serial interfaces
+com*	at pcmcia? function ?		# Modems and serial cards
+
+# ISA serial interfaces
+#options 	COM_HAYESP		# adds Hayes ESP serial board support
+com0	at isa? port 0x3f8 irq 4	# Standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9
+#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
+#com*	at ast? slave ?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca? slave ?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#com*	at rtfps? slave ?
+#cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
+
+
+# Parallel Printer Interfaces
+
+# ISA parallel printer interfaces
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
+
+
+# SCSI Controllers and Devices
+
+# PCI SCSI controllers
+ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
+bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI
+isp*	at pci? dev ? function ?	# Qlogic ISP [12]0x0 SCSI/FibreChannel
+ncr*	at pci? dev ? function ?	# NCR 53c8xx SCSI
+
+# EISA SCSI controllers
+ahb*	at eisa? slot ?			# Adaptec 174[02] SCSI
+ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI
+bha*	at eisa? slot ?			# BusLogic 7xx SCSI
+uha*	at eisa? slot ?			# UltraStor 24f SCSI
+
+# PCMCIA SCSI controllers
+aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
 
 # ISA SCSI controllers
 aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI
@@ -205,103 +244,6 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI
 uha1	at isa? port 0x334 irq ? drq ?
 wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 wds1	at isa? port 0x358 irq 11 drq 5
-
-# ISA serial interfaces
-#options 	COM_HAYESP		# adds Hayes ESP serial board support
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial cards
-#com*	at ast? slave ?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps? slave ?
-#cy0	at isa? iomem 0xd4000 irq 12	# Cyclades serial cards
-
-# ISA console.  You can only configure one of these!
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-#vt0	at isa? port 0x60 irq 1		# PCVT console driver
-
-# ISA mice
-lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-lms1	at isa? port 0x238 irq 5
-mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-mms1	at isa? port 0x238 irq 5
-#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
-
-# ISA audio devices
-gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
-pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
-pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
-sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
-sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
-wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
-
-# ISA network interfaces
-ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
-ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
-ed2	at isa? port 0x300 iomem 0xcc000 irq 10
-#eg0	at isa? ...				# 3C505 ethernet cards
-el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-fe0	at isa? port 0x2a0 irq ?		# AT1700
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
-ie1	at isa? port 0x300 irq 10		# EtherExpress
-iy0	at isa? port ? irq ?			# EtherExpress PRO 10 ISA
-lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
-#le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
-ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
-ne1	at isa? port 0x300 irq 10
-
-# ISA PCMCIA controllers
-pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x4000
-pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
-
-# ISA misc. devices
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
-
-# Planetconnect Satellite receiver driver.
-#satlink0 at isa? port 0x300 drq 1
-
-# Joystick driver. Probe is a little strange; add only if you have one.
-#joy0	at isa? port 0x201
-
-#spkr0	at pckbd? port 0x61		# PC speaker
-
-npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
-
-# ISA Plug-and-Play support
-isapnp0	at isa?
-
-# ISA Plug-and-Play devices
-com*	at isapnp?			# Modems and serial boards
-ep*	at isapnp?			# 3Com 3c509 Ethernet
-guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
-joy*	at isapnp?			# Game ports (usually on audio cards)
-ne*	at isapnp?			# NE2000-compatible Ethernet
-sb*	at isapnp?			# SoundBlaster-compatible audio
-
-# PCMCIA bus support
-pcmcia*	at pcic? controller ? socket ?
-
-# PCMCIA devices
-aic*	at pcmcia? function ?		# Adaptec APA-1460 SCSI
-com*	at pcmcia? function ?		# Modems and serial cards
-ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
-ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
-sm*	at pcmcia? function ?		# Megahertz Ethernet
-
-# Audio support
-audio*	at gus?
-audio*	at guspnp?
-audio*	at pas?
-audio*	at sb?
-audio*	at sp?
-audio*	at wss?
 
 # SCSI bus support
 scsibus* at aha?
@@ -323,33 +265,163 @@ ch*	at scsibus? target ? lun ?	# SCSI autochangers
 ss*	at scsibus? target ? lun ?	# SCSI scanners
 uk*	at scsibus? target ? lun ?	# SCSI unknown
 
+
+# IDE and Related Devices
+
+# ISA IDE controllers
+wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+wdc1	at isa? port 0x170 irq 15
+
+# IDE drives
+wd*	at wdc? drive ?			# the drives themsevles
+
 # ATAPI bus support
 atapibus* at wdc?
 
 # ATAPI devices
 cd*	at atapibus? drive ?		# ATAPI CD-ROM drives
 
+
+# Miscellaneous mass storage devices
+
+# ISA floppy
+fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc1	at isa? port 0x370 irq ? drq ?
+fd*	at fdc? drive ?			# the drives themselves
+# some machines need you to do this instead of fd*
+#fd0	at fdc0 drive 0
+
+# ISA CD-ROM devices
+#mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
+
+# ISA tape devices
+# note: the wt driver conflicts unpleasantly with ed devices at the
+# same I/O address. The probe reprograms their eeproms. Don't
+# uncomment it unless you are actually using it.
+#wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
+
+
+# Network Interfaces
+
+# PCI network interfaces
+de*	at pci? dev ? function ?	# DEC 21x4x-based Ethernet
+en*	at pci? dev ? function ?	# ENI/Adaptec ATM
+ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
+fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
+fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
+le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
+ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
+tl*	at pci? dev ? function ?	# Thunderland-based Ethernet
+
+# EISA network interfaces
+ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
+fea*	at eisa? slot ?			# DEC DEFEA FDDI
+
+# ISA Plug-and-Play network interfaces
+ep*	at isapnp?			# 3Com 3c509 Ethernet
+ne*	at isapnp?			# NE2000-compatible Ethernet
+
+# PCMCIA network interfaces
+ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
+sm*	at pcmcia? function ?		# Megahertz Ethernet
+
+# ISA network interfaces
+ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC and 3C503
+ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+ed2	at isa? port 0x300 iomem 0xcc000 irq 10
+#eg0	at isa? ...				# 3C505 ethernet cards
+el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
+ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+fe0	at isa? port 0x2a0 irq ?		# AT1700
+ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+ie1	at isa? port 0x300 irq 10		# EtherExpress
+iy0	at isa? port ? irq ?			# EtherExpress PRO 10 ISA
+lc0	at isa? port ? iomem ? irq ?		# DEC EtherWORKS III (LEMAC)
+#le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+ne0	at isa? port 0x280 irq 9		# NE[12]000 ethernet cards
+ne1	at isa? port 0x300 irq 10
+
 # MII bus support
 mii*	at tl?
 
-# MII PHY devices
+# MII PHY network interfaces
 tlphy*	at mii? dev ?			# Thunderland PHYs
 nsphy*	at mii? dev ?			# NS and compatible PHYs
+
+
+# Audio Devices
+
+# ISA Plug-and-Play audio devices
+guspnp*	at isapnp?			# Gravis Ultra Sound PnP audio
+sb*	at isapnp?			# SoundBlaster-compatible audio
+
+# ISA audio devices
+gus0	at isa? port 0x220 irq 7 drq 1 drq2 6	# Gravis Ultra Sound
+pas0	at isa? port 0x220 irq 7 drq 1		# ProAudio Spectrum
+pss0	at isa? port 0x220 irq 7 drq 6  	# Personal Sound System
+sp0	at pss0 port 0x530 irq 10 drq 0		# 	sound port driver
+sb0	at isa? port 0x220 irq 7 drq 1 drq2 5	# SoundBlaster
+wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
+
+# Audio support
+audio*	at gus?
+audio*	at guspnp?
+audio*	at pas?
+audio*	at sb?
+audio*	at sp?
+audio*	at wss?
+
+# The spkr driver provides a simple tone interface to the built in speaker.
+#spkr0	at pckbd? port 0x61		# PC speaker
+
+
+# Mice
+
+# ISA busmice
+lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
+lms1	at isa? port 0x238 irq 5
+mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
+mms1	at isa? port 0x238 irq 5
+#pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
+
+
+# Joysticks
+
+# ISA Plug-and-Play joysticks
+joy*	at isapnp?			# Game ports (usually on audio cards)
+
+# ISA joysticks. Probe is a little strange; add only if you have one.
+#joy0	at isa? port 0x201
+
+
+# Miscellaneous Devices
+
+# Planetconnect Satellite receiver driver.
+#satlink0 at isa? port 0x300 drq 1
+
 
 # Pull in optional local configuration
 include	"arch/i386/conf/GENERIC.local"
 
-# Pseudo devices
-pseudo-device	bpfilter	8	# Berkeley packet filter
+
+# Pseudo-Devices
+
+# disk/mass storage pseudo-devices
 pseudo-device	ccd		4	# concatenated/striped disk devices
+pseudo-device	md		1	# memory disk device (ramdisk)
+pseudo-device	vnd		4	# disk-like interface to files
+
+# network pseudo-devices
+pseudo-device	bpfilter	8	# Berkeley packet filter
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 pseudo-device	loop			# network loopback
-pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	ppp		2	# Point-to-Point Protocol
-pseudo-device	pty		64	# pseudo-terminals
-#pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	sl		2	# Serial Line IP
 pseudo-device	strip		2	# Starmode Radio IP (Metricom)
-pseudo-device	tb		1	# tablet line discipline
 pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	vnd		4	# disk-like interface to files
+
+# miscellaneous pseudo-devices
+pseudo-device	pty		64	# pseudo-terminals
+#pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	tb		1	# tablet line discipline
