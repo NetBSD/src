@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.6.2.6 1998/10/02 19:37:21 bouyer Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.6.2.7 1998/10/04 15:01:56 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -158,9 +158,9 @@ wdc_isa_attach(parent, self, aux)
 	sc->wdc_channel.ch_queue = malloc(sizeof(struct channel_queue),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc->wdc_channel.ch_queue == NULL) {
-	    printf("%s: can't allocate memory for command queue",
+		printf("%s: can't allocate memory for command queue",
 		sc->sc_wdcdev.sc_dev.dv_xname);
-	    return;
+		return;
 	}
 	wdcattach(&sc->wdc_channel);
 }

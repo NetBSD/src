@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.175.2.12 1998/09/20 19:00:15 bouyer Exp $ */
+/*	$NetBSD: wd.c,v 1.175.2.13 1998/10/04 15:01:54 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -232,7 +232,7 @@ wdattach(parent, self, aux)
 	wd->drvp = aa_link->aa_drv_data;;
 	wd->wdc_softc = parent;
 	/* give back our softc to our caller */
-	wd->drvp->drv_softc = wd;
+	wd->drvp->drv_softc = &wd->sc_dev;
 
 	/* read our drive info */
 	if (wd_get_params(wd, AT_POLL, &wd->sc_params) != 0) {
@@ -282,7 +282,8 @@ wdattach(parent, self, aux)
 		wd->sc_capacity =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
-		printf("%s %dMB, %d cyl, %d head, %d sec, %d bytes/sect x %d sectors\n",
+		printf("%s: %dMB, %d cyl, %d head, %d sec, "
+		    "%d bytes/sect x %d sectors\n",
 		    self->dv_xname,
 		    wd->sc_capacity / (1048576 / DEV_BSIZE),
 		    wd->sc_params.atap_cylinders,
@@ -305,8 +306,8 @@ wdattach(parent, self, aux)
 		    DEV_BSIZE,
 		    wd->sc_capacity);
 	}
-	WDCDEBUG_PRINT(("atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
-	    wd->sc_params.atap_dmatiming_mimi,
+	WDCDEBUG_PRINT(("%s: atap_dmatiming_mimi=%d, atap_dmatiming_recom=%d\n",
+	    self->dv_xname, wd->sc_params.atap_dmatiming_mimi,
 	    wd->sc_params.atap_dmatiming_recom), DEBUG_PROBE);
 	/*
 	 * Initialize and attach the disk structure.
