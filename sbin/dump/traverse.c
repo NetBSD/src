@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)traverse.c	5.21 (Berkeley) 7/19/92"; */
-static char *rcsid = "$Id: traverse.c,v 1.2 1994/01/14 21:29:51 cgd Exp $";
+static char *rcsid = "$Id: traverse.c,v 1.3 1994/04/25 18:22:50 cgd Exp $";
 #endif /* not lint */
 
 #ifdef sunos
@@ -123,15 +123,12 @@ mapfiles(maxino, tapesize)
 		SETINO(ino, usedinomap);
 		if (mode == IFDIR)
 			SETINO(ino, dumpdirmap);
-#ifdef BSD44
 		if ((dp->di_mtime.ts_sec >= spcl.c_ddate ||
 		    dp->di_ctime.ts_sec >= spcl.c_ddate)
+#ifdef BSD44
 #    ifndef sunos
 		    && (dp->di_flags & NODUMP) != NODUMP
 #    endif /* sunos */
-#else
-		if ((dp->di_mtime >= spcl.c_ddate ||
-		    dp->di_ctime >= spcl.c_ddate)
 #endif /* BSD44 */
 		    ) {
 			SETINO(ino, dumpinomap);
