@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.418 2003/07/04 05:41:50 tshiozak Exp $
+# $NetBSD: mi,v 1.419 2003/07/16 08:25:18 itojun Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1308,6 +1308,7 @@
 ./usr/share/i18n/esdb/ISO646/ISO646-YU.esdb	base-sysutil-share
 ./usr/share/i18n/esdb/MISC			base-sysutil-share
 ./usr/share/i18n/esdb/MISC/Big5.esdb		base-sysutil-share
+./usr/share/i18n/esdb/MISC/CTEXT.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/MISC/GB18030.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/MISC/KOI8-R.esdb		base-sysutil-share
 ./usr/share/i18n/esdb/MISC/Shift_JIS.esdb	base-sysutil-share
