@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1995/01/11 21:21:14 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.30 1995/01/12 07:31:47 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,8 +267,8 @@ struct pmap	kernel_pmap_store;	/* the kernel's pmap */
 struct ksegmap	kernel_segmap_store;	/* the kernel's segmap */
 pmap_t		kernel_pmap;
 
-#ifdef MACHINE_NONCONTIG
 #define	MA_SIZE	32		/* size of memory descriptor arrays */
+#ifdef MACHINE_NONCONTIG
 struct	memarr pmemarr[MA_SIZE];/* physical memory regions */
 int	npmemarr;		/* number of entries in pmemarr */
 int	cpmemarr;		/* pmap_next_page() state */
@@ -530,16 +530,13 @@ pmap_next_page(paddr)
 	if (avail_next == pmemarr[cpmemarr].addr + pmemarr[cpmemarr].len) {
 		if (++cpmemarr == npmemarr)
 			return FALSE;
-		printf("HOLE %d: skipping to addr %x\n",
-				cpmemarr-1, pmemarr[cpmemarr].addr);
 		avail_next = pmemarr[cpmemarr].addr;
 	}
 
 #ifdef DIAGNOSTIC
         /* Any available memory remaining? */
         if (avail_next >= avail_end) {
-		printf("pmap_next_page: too much memory?!\n");
-		callrom();
+		panic("pmap_next_page: too much memory?!\n");
 	}
 #endif
 
@@ -1561,8 +1558,10 @@ pmap_bootstrap(nmmu, nctx)
 	 */
 	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
 	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0)
-		panic("pmap_bootstrap: no kernel memory?!\n");
+	if (pmemarr[0].addr != 0) {
+		printf("pmap_bootstrap: no kernel memory?!\n");
+		callrom();
+	}
 
 	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
 	avail_next = avail_start;
