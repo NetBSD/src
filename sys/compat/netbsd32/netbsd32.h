@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.6 1999/03/25 16:58:39 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.7 1999/03/25 17:57:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -416,17 +416,20 @@ typedef u_int32_t netbsd32_outsnamep_t;
 /*
  * machine depedant section; must define:
  *	struct netbsd32_sigcontext
- *		- 32bit compatibility sigcontext for this arch.
+ *		- 32bit compatibility sigcontext structure for this arch.
  *	netbsd32_sigcontextp_t
  *		- type of pointer to above, normally u_int32_t
  *	void netbsd32_setregs(struct proc *p, struct exec_package *pack,
- *	    u_long stack /* XXX */);
+ *	    u_long stack);
  *	int compat_netbsd32_sigreturn(struct proc *p, void *v,
  *	    register_t *retval);
  *	void netbsd32_sendsig(sig_t catcher, int sig, int mask, u_long code);
- *		- the above are
+ *	char netbsd32_esigcode[], netbsd32_sigcode[]
+ *		- the above are abvious
+ *
+ * pull in the netbsd32 machine dependant header, that may help with the
+ * above, or it may be provided via the MD layer itself.
  */
-
 #include <machine/netbsd32_machdep.h>
 
 /*

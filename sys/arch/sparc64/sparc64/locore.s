@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.34 1999/03/24 05:51:13 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.35 1999/03/25 17:49:43 mrg Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -65,7 +65,7 @@
 	
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
-#include "opt_compat_sparc32.h"
+#include "opt_compat_netbsd32.h"
 
 #include "assym.h"
 #include <machine/param.h>
@@ -85,8 +85,8 @@
 #ifdef COMPAT_SVR4
 #include <compat/svr4/svr4_syscall.h>
 #endif
-#ifdef COMPAT_SPARC32
-#include <compat/sparc32/sparc32_syscall.h>
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32_syscall.h>
 #endif
 #include <machine/asm.h>
 
@@ -5603,9 +5603,9 @@ _C_LABEL(esigcode):
  * work out.
  */
 #ifdef _LP64
-	.globl	_C_LABEL(sparc32_sigcode)
-	.globl	_C_LABEL(sparc32_esigcode)
-_C_LABEL(sparc32_sigcode):
+	.globl	_C_LABEL(netbsd32_sigcode)
+	.globl	_C_LABEL(netbsd32_esigcode)
+_C_LABEL(netbsd32_sigcode):
 #else
 	.globl	_C_LABEL(sigcode)
 	.globl	_C_LABEL(esigcode)
@@ -5694,13 +5694,13 @@ _C_LABEL(sigcode):
 	mov	%l7, %g7
 
 #ifdef _LP64
-	restore	%g0, sparc32_SYS_compat_sparc32_sigreturn, %g1	! get registers back & set syscall #
+	restore	%g0, netbsd32_SYS_compat_netbsd32_sigreturn, %g1	! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
 	t	ST_SYSCALL		! sigreturn(scp)
 	! sigreturn does not return unless it fails
-	mov	sparc32_SYS_compat_sparc32_exit, %g1		! exit(errno)
+	mov	netbsd32_SYS_compat_netbsd32_exit, %g1		! exit(errno)
 	t	ST_SYSCALL
-_C_LABEL(sparc32_esigcode):
+_C_LABEL(netbsd32_esigcode):
 #else
 	restore	%g0, SYS___sigreturn14, %g1 ! get registers back & set syscall #
 	add	%sp, 64 + 16, %o0	! compute scp
