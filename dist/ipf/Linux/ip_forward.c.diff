@@ -1,0 +1,48 @@
+*** ip_forward.c.dist	Wed Dec 10 21:13:49 1997
+--- ip_forward.c	Wed May 20 13:58:58 1998
+***************
+*** 47,52 ****
+--- 47,59 ----
+  int sysctl_ip_forward = 0; 
+  #endif
+  
++ #if !defined(CONFIG_FIREWALL_IPFILTER) && defined(CONFIG_FIREWALL_IPFILTER_MODULE)
++ # define CONFIG_FIREWALL_IPFILTER
++ #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ extern int (*fr_checkp)(struct iphdr *, struct device *, int, struct sk_buff **);
++ #endif
++ 
+  #ifdef CONFIG_IP_MROUTE
+  
+  /*
+***************
+*** 312,317 ****
+--- 319,328 ----
+  #endif		
+  	}
+  #endif
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 	if (fr_checkp && ((*fr_checkp)(iph, dev2, 1, &skb) || !skb))
++ 		return -1;
++ #endif
+  
+  	/*
+  	 * We now may allocate a new buffer, and copy the datagram into it.
+***************
+*** 481,486 ****
+--- 492,505 ----
+  			}				
+  #endif			
+  		}
++ #ifdef CONFIG_FIREWALL_IPFILTER
++ 		if (fr_checkp && ((*fr_checkp)(iph, skb2->dev, 1, &skb2) || !skb))
++ 		{
++ 			if (skb != skb2)
++ 				kfree_skb(skb2,FREE_WRITE);
++ 			return -1;
++ 		}
++ #endif
+  #ifdef CONFIG_FIREWALL
+  		if((fw_res = call_out_firewall(PF_INET, skb2->dev, iph, NULL)) < FW_ACCEPT)
+  		{
