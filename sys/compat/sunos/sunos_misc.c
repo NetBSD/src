@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.117 2003/01/18 08:36:15 thorpej Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.118 2003/01/28 21:57:44 atatat Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.117 2003/01/18 08:36:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.118 2003/01/28 21:57:44 atatat Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -614,9 +614,6 @@ sunos_sys_mmap(l, v, retval)
 	struct sunos_sys_mmap_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_mmap_args ouap;
-	struct filedesc *fdp;
-	struct file *fp;
-	struct vnode *vp;
 
 	/*
 	 * Verify the arguments.
@@ -629,28 +626,10 @@ sunos_sys_mmap(l, v, retval)
 
 	SCARG(&ouap, flags) = SCARG(uap, flags) & ~SUNOS__MAP_NEW;
 	SCARG(&ouap, addr) = SCARG(uap, addr);
-
-	if ((SCARG(&ouap, flags) & MAP_FIXED) == 0 &&
-	    SCARG(&ouap, addr) != 0 &&
-	    SCARG(&ouap, addr) < (void *)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ))
-		SCARG(&ouap, addr) = (caddr_t)round_page((vaddr_t)p->p_vmspace->vm_daddr+MAXDSIZ);
-
 	SCARG(&ouap, len) = SCARG(uap, len);
 	SCARG(&ouap, prot) = SCARG(uap, prot);
 	SCARG(&ouap, fd) = SCARG(uap, fd);
 	SCARG(&ouap, pos) = SCARG(uap, pos);
-
-	/*
-	 * Special case: if fd refers to /dev/zero, map as MAP_ANON.  (XXX)
-	 */
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(&ouap, fd))) != NULL &&		/*XXX*/
-	    fp->f_type == DTYPE_VNODE &&				/*XXX*/
-	    (vp = (struct vnode *)fp->f_data)->v_type == VCHR &&	/*XXX*/
-	    vp->v_rdev == zerodev) {					/*XXX*/
-		SCARG(&ouap, flags) |= MAP_ANON;
-		SCARG(&ouap, fd) = -1;
-	}
 
 	return (sys_mmap(l, &ouap, retval));
 }
