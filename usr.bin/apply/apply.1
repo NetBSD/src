@@ -1,4 +1,4 @@
-.\"	$NetBSD: apply.1,v 1.5 1996/11/07 07:24:08 mikel Exp $
+.\"	$NetBSD: apply.1,v 1.6 1997/10/18 11:47:18 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,12 +40,12 @@
 .Nm apply
 .Nd apply a command to a set of arguments
 .Sh SYNOPSIS
-.Nm apply
+.Nm
 .Op Fl a Ns Ar c
 .Op Fl Ns Ar #
 .Ar command argument ...
 .Sh DESCRIPTION
-.Nm Apply
+.Nm
 runs the named
 .Ar command
 on each
@@ -93,7 +93,7 @@ option.
 .El
 .Sh ENVIRONMENT VARIABLES
 The following environment variable affects the execution of
-.Nm apply :
+.Nm "" :
 .Bl -tag -width SHELL
 .It Ev SHELL
 Pathname of shell to use.
