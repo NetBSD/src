@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2000/01/10 03:24:40 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26 2000/01/18 19:48:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -43,8 +43,6 @@
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 
-#define	b_cylin	b_resid
-
 #ifdef COMPAT_ULTRIX
 #include <machine/dec_boot.h>
 
@@ -84,7 +82,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = LABELSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
 		msg = "I/O error";
@@ -129,7 +127,7 @@ compat_label(dev, strat, lp, osdep)
 	bp->b_blkno = DEC_LABEL_SECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = DEC_LABEL_SECTOR / lp->d_secpercyl;
+	bp->b_cylinder = DEC_LABEL_SECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if (biowait(bp)) {
