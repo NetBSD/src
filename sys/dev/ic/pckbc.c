@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.23 2002/11/01 21:39:31 jdolecek Exp $ */
+/* $NetBSD: pckbc.c,v 1.24 2003/01/01 00:20:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.23 2002/11/01 21:39:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.24 2003/01/01 00:20:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -440,7 +440,7 @@ pckbcprint(aux, pnp)
 	struct pckbc_attach_args *pa = aux;
 
 	if (!pnp)
-		printf(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
+		aprint_normal(" (%s slot)", pckbc_slot_names[pa->pa_slot]);
 	return (QUIET);
 }
 
