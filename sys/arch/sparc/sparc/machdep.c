@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 1998/04/01 14:03:26 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.112 1998/04/07 19:57:37 pk Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -143,8 +143,8 @@ vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
 vm_map_t phys_map = NULL;
 #else
-vm_map_t buffer_map; 
-#endif 
+vm_map_t buffer_map;
+#endif
 extern vm_offset_t avail_end;
 
 /*
@@ -821,7 +821,7 @@ cpu_reboot(howto, user_boot_string)
 		i = 1;
 		str[0] = '\0';
 	}
-			
+
 	if (howto & RB_SINGLE)
 		str[i++] = 's';
 	if (howto & RB_KDB)
@@ -1011,55 +1011,6 @@ stackdump()
 	}
 }
 
-/*
- * Map an I/O device given physical address and size in bytes, e.g.,
- *
- *	mydev = (struct mydev *)mapdev(myioaddr, 0,
- *				       0, sizeof(struct mydev));
- *
- * See also machine/autoconf.h.
- */
-static vm_offset_t iobase;
-
-void *
-mapdev(phys, virt, offset, size)
-	register struct rom_reg *phys;
-	register int offset, virt, size;
-{
-	register vm_offset_t v;
-	register vm_offset_t pa;
-	register void *ret;
-	unsigned int pmtype;
-
-	if (iobase == NULL)
-		iobase = IODEV_BASE;
-
-	size = round_page(size);
-	if (size == 0) panic("mapdev: zero size");
-
-	if (virt)
-		v = trunc_page(virt);
-	else {
-		v = iobase;
-		iobase += size;
-		if (iobase > IODEV_END)	/* unlikely */
-			panic("mapiodev");
-	}
-	ret = (void *)(v | (((u_long)phys->rr_paddr + offset) & PGOFSET));
-			/* note: preserve page offset */
-
-	pa = trunc_page(phys->rr_paddr + offset);
-	pmtype = PMAP_IOENC(phys->rr_iospace);
-
-	do {
-		pmap_enter(pmap_kernel(), v, pa | pmtype | PMAP_NC,
-			   VM_PROT_READ | VM_PROT_WRITE, 1);
-		v += PAGE_SIZE;
-		pa += PAGE_SIZE;
-	} while ((size -= PAGE_SIZE) > 0);
-	return (ret);
-}
-
 int
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
@@ -1083,7 +1034,7 @@ oldmon_w_trace(va)
 
 #if defined(UVM)
 	printf("uvm: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
-	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs, 
+	    uvmexp.swtch, uvmexp.traps, uvmexp.syscalls, uvmexp.intrs,
 		uvmexp.softs, uvmexp.faults);
 #else
 	printf("cnt: swtch %d, trap %d, sys %d, intr %d, soft %d, faults %d\n",
@@ -1255,8 +1206,8 @@ dvmamap_alloc(size, flags)
 			(void)tsleep(dvmamap, PRIBIO+1, "dvma", 0);
 			continue;
 		}
-		splx(s); 
-		return ((bus_addr_t)-1); 
+		splx(s);
+		return ((bus_addr_t)-1);
 	}
 	splx(s);
 
@@ -1276,7 +1227,7 @@ dvmamap_free (addr, size)
 	pn = vtorc(addr);
 	s = splimp();
 	rmfree(dvmamap, npf, pn);
-	wakeup(dvmamap); 
+	wakeup(dvmamap);
 	splx(s);
 }
 
@@ -1404,7 +1355,7 @@ _bus_dmamap_load(t, map, buf, buflen, p, flags)
 		if (buflen < sgsize)
 			sgsize = buflen;
 
-#if defined(SUN4M) 
+#if defined(SUN4M)
 		if (CPU_ISSUN4M) {
 			iommu_enter(dvmaddr, curaddr & ~(NBPG-1));
 		} else
@@ -1495,7 +1446,7 @@ _bus_dmamap_unload(t, map)
 	if (CPU_ISSUN4M)
 		iommu_remove(addr, len);
 	else
-#endif          
+#endif
 		pmap_remove(pmap_kernel(), addr, addr + len);
 
 	dvmamap_free(addr, len);
@@ -1591,7 +1542,7 @@ _bus_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 	for (m = mlist->tqh_first; m != NULL; m = m->pageq.tqe_next) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 
-#if defined(SUN4M) 
+#if defined(SUN4M)
 		if (CPU_ISSUN4M) {
 			iommu_enter(dvmaddr, curaddr);
 		} else
@@ -1639,7 +1590,7 @@ _bus_dmamem_free(t, segs, nsegs)
 	if (CPU_ISSUN4M)
 		iommu_remove(addr, len);
 	else
-#endif          
+#endif
 		pmap_remove(pmap_kernel(), addr, addr + len);
 
 	/*
@@ -1808,24 +1759,34 @@ struct sparc_bus_dma_tag mainbus_dma_tag = {
 /*
  * Base bus space handlers.
  */
-static int	sparc_bus_unmap __P((void *, bus_space_handle_t, bus_size_t));
-static int	sparc_bus_mmap __P((void *, bus_type_t, bus_addr_t, int));
-static void	*sparc_mainbus_intr_establish __P((void *, int, int,
+static int	sparc_bus_map __P(( bus_space_tag_t, bus_type_t, bus_addr_t,
+				    bus_size_t, int, vm_offset_t,
+				    bus_space_handle_t *));
+static int	sparc_bus_unmap __P((bus_space_tag_t, bus_space_handle_t,
+				     bus_size_t));
+static int	sparc_bus_mmap __P((bus_space_tag_t, bus_type_t,
+				    bus_addr_t, int, bus_space_handle_t *));
+static void	*sparc_mainbus_intr_establish __P((bus_space_tag_t, int, int,
 						   int (*) __P((void *)),
 						   void *));
+static void     sparc_bus_barrier __P(( bus_space_tag_t, bus_space_handle_t,
+					bus_size_t, bus_size_t, int));
+
 
 int
-sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
-	void		*cookie;	/* not used */
+sparc_bus_map(t, iospace, addr, size, flags, vaddr, hp)
+	bus_space_tag_t t;
 	bus_type_t	iospace;
 	bus_addr_t	addr;
 	bus_size_t	size;
-	vm_offset_t	virt;
+	vm_offset_t	vaddr;
 	bus_space_handle_t *hp;
 {
 	vm_offset_t v;
 	vm_offset_t pa;
 	unsigned int pmtype;
+static	vm_offset_t iobase;
+
 
 	if (iobase == NULL)
 		iobase = IODEV_BASE;
@@ -1836,8 +1797,8 @@ sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
 		return (EINVAL);
 	}
 
-	if (virt)
-		v = trunc_page(virt);
+	if (vaddr)
+		v = trunc_page(vaddr);
 	else {
 		v = iobase;
 		iobase += size;
@@ -1860,9 +1821,9 @@ sparc_bus_map(cookie, iospace, addr, size, flags, virt, hp)
 	return (0);
 }
 
-int     
-sparc_bus_unmap(cookie, bh, size)
-	void		*cookie;	/* not used */
+int
+sparc_bus_unmap(t, bh, size)
+	bus_space_tag_t t;
 	bus_size_t	size;
 	bus_space_handle_t bh;
 {
@@ -1873,14 +1834,16 @@ sparc_bus_unmap(cookie, bh, size)
 	return (0);
 }
 
-int     
-sparc_bus_mmap(cookie, iospace, paddr, flags)
-	void		*cookie;	/* not used */
+int
+sparc_bus_mmap(t, iospace, paddr, flags, hp)
+	bus_space_tag_t t;
 	bus_type_t	iospace;
 	bus_addr_t	paddr;
 	int		flags;
+	bus_space_handle_t *hp;
 {
-	return (paddr | PMAP_IOENC(iospace) | PMAP_NC);
+	*hp = (bus_space_handle_t)(paddr | PMAP_IOENC(iospace) | PMAP_NC);
+	return (0);
 }
 
 /*
@@ -1914,8 +1877,8 @@ bus_space_probe(tag, btype, paddr, size, offset, flags, callback, arg)
 
 
 void *
-sparc_mainbus_intr_establish(cookie, level, flags, handler, arg)
-	void	*cookie;	/* not used */
+sparc_mainbus_intr_establish(t, level, flags, handler, arg)
+	bus_space_tag_t t;
 	int	level;
 	int	flags;
 	int	(*handler)__P((void *));
@@ -1937,12 +1900,24 @@ sparc_mainbus_intr_establish(cookie, level, flags, handler, arg)
 	return (ih);
 }
 
+void sparc_bus_barrier (t, h, offset, size, flags)
+	bus_space_tag_t	t;
+	bus_space_handle_t h;
+	bus_size_t	offset;
+	bus_size_t	size;
+	int		flags;
+{
+	/* No default barrier action defined */
+	return;
+}
+
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
+	NULL,				/* parent bus tag */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */
-	NULL,				/* bus_space_barrier */
+	sparc_bus_barrier,		/* bus_space_barrier */
 	sparc_bus_mmap,			/* bus_space_mmap */
 	sparc_mainbus_intr_establish	/* bus_intr_establish */
 };
