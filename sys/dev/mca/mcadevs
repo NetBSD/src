@@ -1,4 +1,4 @@
-$NetBSD: mcadevs,v 1.9 2001/04/19 18:38:23 jdolecek Exp $
+$NetBSD: mcadevs,v 1.10 2001/04/20 07:10:12 jdolecek Exp $
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ $NetBSD: mcadevs,v 1.9 2001/04/19 18:38:23 jdolecek Exp $
  * [9] ftp://ftp.computone.com/pub/Products/legacy/ALC/opt_205.exe
  * [10] IBM PS/2 MicroChannel POSID - ADF files
  *	http://members.aol.com/mcapage1/adflist1.htm
+ * [11] http://www.geocities.com/SiliconValley/Lab/6370/adapters.html
  */
 
 /*
@@ -158,6 +159,7 @@ product 0x62DB 3C529_TM "3Com 3C529 Ethernet Adapter (test mode)"	[2]
 product 0x62F0 "Plexus AIP2 Card"					[6]
 product 0x62F6 3C529_2T "3Com 3C529 Ethernet Adapter (10base2/T)"	[2]
 product 0x62F7 3C529_T "3Com 3C529 Ethernet Adapter (10baseT)"		[2]
+product 0x6354 "Arco Electronics AE/2 Ethernet Adapter"			[11]
 product 0x6361 "Arnet Smartport/2 Communications Adapter"		[6]
 product 0x63B3 "CH GameCard III-Automatic/MCA Adapter"			[5]
 product 0x63CA "HP 27246 Ethernet Adapter"				[1]
@@ -285,6 +287,7 @@ product 0x708F KINGRAM8 "Kingston KTM-8000/386 Memory Expansion"	[5]
 product 0x70B0 "Intel AboveBoard MC32"					[6]
 product 0x70D0 KINGRAM16 "Kingston KTM-16000/386 Memory Expansion"	[6]
 product 0x70D4 KINGRAM609 "Kingston KTM-609/16 Memory Expansion"	[4]
+product 0x70DE "COMPEX INC. PS/2 ENET16-MC/P Microchannel Ad."		[10]
 product 0x7151 "Novell NE/2-32 Ethernet Adapter"			[6]
 product 0x7154 "Novell NE/2 Ethernet Adapter"				[1]
 product 0x7188 "Mountain QIC-02 Tape Adapter"				[6]
