@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.55 2000/06/04 08:50:28 itojun Exp $	*/
+/*	$NetBSD: socket.h,v 1.56 2000/06/26 15:48:21 kleink Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -75,6 +75,12 @@
  * Data types.
  */
 #include <sys/ansi.h>
+
+#ifndef sa_family_t
+typedef __sa_family_t	sa_family_t;
+#define sa_family_t	sa_family_t
+#endif
+
 #ifndef socklen_t
 typedef __socklen_t	socklen_t;
 #define socklen_t	socklen_t
@@ -183,9 +189,9 @@ struct	linger {
  * addresses.
  */
 struct sockaddr {
-	u_char	sa_len;			/* total length */
-	u_char	sa_family;		/* address family */
-	char	sa_data[14];		/* actually longer; address value */
+	u_char		sa_len;		/* total length */
+	sa_family_t	sa_family;	/* address family */
+	char		sa_data[14];	/* actually longer; address value */
 };
 
 #if defined(_KERNEL)
@@ -211,11 +217,11 @@ struct sockproto {
 
 #if !defined(_XOPEN_SOURCE) || (_XOPEN_SOURCE - 0) >= 500
 struct sockaddr_storage {
-	u_char	ss_len;		/* address length */
-	u_char	ss_family;	/* address family */
-	char	__ss_pad1[_SS_PAD1SIZE];
-	int64_t	__ss_align;	/* force desired structure storage alignment */
-	char	__ss_pad2[_SS_PAD2SIZE];
+	u_char		ss_len;		/* address length */
+	sa_family_t	ss_family;	/* address family */
+	char		__ss_pad1[_SS_PAD1SIZE];
+	int64_t      __ss_align;/* force desired structure storage alignment */
+	char		__ss_pad2[_SS_PAD2SIZE];
 };
 #endif /* !_XOPEN_SOURCE || ... */
 #endif /* 1 */
