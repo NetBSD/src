@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1.2.11 2000/08/18 13:29:40 sommerfeld Exp $ */
+/* $NetBSD: cpu.c,v 1.1.2.12 2000/08/21 00:27:53 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -409,29 +409,34 @@ cpu_hatch(void *v)
 	splx(s);
 }
 
-extern void cpu_debug_dump(void);
+#if defined(DDB)
 
+#include <ddb/db_output.h>
+#include <machine/db_machdep.h>
+
+/*
+ * Dump cpu information from ddb.
+ */
 void
 cpu_debug_dump(void)
 {
 	int i;
 	struct cpu_info *ci;
 	
-	printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
+	db_printf("addr		dev	id	flags	ipis	curproc		fpcurproc\n");
 	for (i=0; i < I386_MAXPROCS; i++) {
 		ci = cpu_info[i];
 		if (ci == NULL)
 			continue;
-		printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
 		    ci,
 		    ci->ci_dev.dv_xname, ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
 		    ci->ci_curproc,
 		    ci->ci_fpcurproc);
 	}
-	
 }
-
+#endif
 
 static void
 cpu_copy_trampoline()
