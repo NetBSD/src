@@ -33,10 +33,21 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a Berkeley-specific configuration file for a specific
+#  machine in the Computer Science Division at Berkeley, and should
+#  not be used elsewhere.   It is provided on the sendmail distribution
+#  as a sample only.
 #
-divert(-1)
+#  This file is for the BSD development machine; it has some parameters
+#  set up (to stress sendmail) and accepts mail for some other machines.
+#
+
+VERSIONID(`@(#)vangogh.cs.mc	8.4 (Berkeley) 8/6/95')
+DOMAIN(CS.Berkeley.EDU)dnl
+OSTYPE(bsd4.4)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+define(`MCI_CACHE_SIZE', 5)
+Cw okeeffe.CS.Berkeley.EDU
+Cw python.CS.Berkeley.EDU

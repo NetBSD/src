@@ -33,10 +33,25 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a Berkeley-specific configuration file for a specific
+#  machine in the Computer Science Division at Berkeley, and should
+#  not be used elsewhere.   It is provided on the sendmail distribution
+#  as a sample only.
 #
-divert(-1)
+#  This file is for our mail spool machine.  For a while we were using
+#  "root.machinename" instead of "root+machinename", so this is included
+#  for back compatibility.
+#
+
+VERSIONID(`@(#)mailspool.cs.mc	8.3 (Berkeley) 8/6/95')
+OSTYPE(sunos4.1)dnl
+DOMAIN(CS.Berkeley.EDU)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl
+
+LOCAL_CONFIG
+CDroot sys-custodian
+
+LOCAL_RULE_3
+R$=D . $+		$1 + $2

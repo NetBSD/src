@@ -34,9 +34,13 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)use_ct_file.m4	8.1 (Berkeley) 9/17/95')
 divert(-1)
+
+# if defined, the sendmail.cf will read the /etc/sendmail.ct file
+# to find the names of trusted users.  There should only be a few
+# of these, and normally this is done directly in the .cf file.
+
+define(`_USE_CT_FILE_', `')
+
+divert(0)

@@ -1,10 +1,13 @@
 /*
-**  This program checks to see if your version of setreuid works.
+**  This program checks to see if your version of seteuid works.
 **  Compile it, make it setuid root, and run it as yourself (NOT as
 **  root).  If it won't compile or outputs any MAYDAY messages, don't
-**  define HASSETREUID in conf.h.
+**  define USESETEUID in conf.h.
 **
-**  Compilation is trivial -- just "cc t_setreuid.c".  Make it setuid,
+**	NOTE:  It is not sufficient to have seteuid in your library.
+**	You must also have saved uids that function properly.
+**
+**  Compilation is trivial -- just "cc t_seteuid.c".  Make it setuid,
 **  root and then execute it as a non-root user.
 */
 
@@ -13,7 +16,7 @@
 #include <stdio.h>
 
 #ifdef __hpux
-#define setreuid(r, e)	setresuid(r, e, -1)
+#define seteuid(e)	setresuid(-1, e, -1)
 #endif
 
 main()
@@ -35,12 +38,9 @@ main()
 		exit(1);
 	}
 
-	if (setreuid(0, 1) < 0)
-	{
-		fail++;
-		printf("setreuid(0, 1) failure\n");
-	}
-	printuids("after setreuid(0, 1)", 0, 1);
+	if (seteuid(1) < 0)
+		printf("seteuid(1) failure\n");
+	printuids("after seteuid(1)", realuid, 1);
 
 	if (geteuid() != 1)
 	{
@@ -50,18 +50,12 @@ main()
 
 	/* do activity here */
 
-	if (setreuid(-1, 0) < 0)
+	if (seteuid(0) < 0)
 	{
 		fail++;
-		printf("setreuid(-1, 0) failure\n");
+		printf("seteuid(0) failure\n");
 	}
-	printuids("after setreuid(-1, 0)", 0, 0);
-	if (setreuid(realuid, 0) < 0)
-	{
-		fail++;
-		printf("setreuid(%d, 0) failure\n", realuid);
-	}
-	printuids("after setreuid(realuid, 0)", realuid, 0);
+	printuids("after seteuid(0)", realuid, 0);
 
 	if (geteuid() != 0)
 	{
@@ -75,12 +69,12 @@ main()
 	}
 	printf("\n");
 
-	if (setreuid(0, 2) < 0)
+	if (seteuid(2) < 0)
 	{
 		fail++;
-		printf("setreuid(0, 2) failure\n");
+		printf("seteuid(2) failure\n");
 	}
-	printuids("after setreuid(0, 2)", 0, 2);
+	printuids("after seteuid(2)", realuid, 2);
 
 	if (geteuid() != 2)
 	{
@@ -90,18 +84,12 @@ main()
 
 	/* do activity here */
 
-	if (setreuid(-1, 0) < 0)
+	if (seteuid(0) < 0)
 	{
 		fail++;
-		printf("setreuid(-1, 0) failure\n");
+		printf("seteuid(0) failure\n");
 	}
-	printuids("after setreuid(-1, 0)", 0, 0);
-	if (setreuid(realuid, 0) < 0)
-	{
-		fail++;
-		printf("setreuid(%d, 0) failure\n", realuid);
-	}
-	printuids("after setreuid(realuid, 0)", realuid, 0);
+	printuids("after seteuid(0)", realuid, 0);
 
 	if (geteuid() != 0)
 	{
@@ -116,7 +104,7 @@ main()
 
 	if (fail)
 	{
-		printf("\nThis system cannot use setreuid\n");
+		printf("\nThis system cannot use seteuid\n");
 		exit(1);
 	}
 
