@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.13.8.1 1997/08/23 07:07:38 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.13.8.2 1997/10/15 05:24:53 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -56,6 +56,9 @@
 static int nil;
 
 int db_access_svc_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_und_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_abt_sp __P((struct db_variable *, db_expr_t *, int));
+int db_access_irq_sp __P((struct db_variable *, db_expr_t *, int));
 
 struct db_variable db_regs[] = {
 	{ "spsr", (long *)&DDB_TF->tf_spsr, FCN_NULL, },
@@ -73,6 +76,9 @@ struct db_variable db_regs[] = {
 	{ "r11", (long *)&DDB_TF->tf_r11, FCN_NULL, },
 	{ "r12", (long *)&DDB_TF->tf_r12, FCN_NULL, },
 	{ "usr_sp", (long *)&DDB_TF->tf_usr_sp, FCN_NULL, },
+	{ "und_sp", (long *)&nil, db_access_und_sp, },
+	{ "abt_sp", (long *)&nil, db_access_abt_sp, },
+	{ "irq_sp", (long *)&nil, db_access_irq_sp, },
 	{ "svc_sp", (long *)&nil, db_access_svc_sp, },
 	{ "usr_lr", (long *)&DDB_TF->tf_usr_lr, FCN_NULL, },
 	{ "svc_lr", (long *)&DDB_TF->tf_svc_lr, FCN_NULL, },
@@ -90,11 +96,40 @@ int db_access_svc_sp(vp, valp, rw)
 	db_expr_t *valp;
 	int rw;
 {
-	if(rw == DB_VAR_GET)
+	if (rw == DB_VAR_GET)
 		*valp = get_stackptr(PSR_SVC32_MODE);
 	return(0);
 }
 
+int db_access_und_sp(vp, valp, rw)
+	struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_UND32_MODE);
+	return(0);
+}
+
+int db_access_abt_sp(vp, valp, rw)
+	struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_ABT32_MODE);
+	return(0);
+}
+
+int db_access_irq_sp(vp, valp, rw)
+	struct db_variable *vp;
+	db_expr_t *valp;
+	int rw;
+{
+	if (rw == DB_VAR_GET)
+		*valp = get_stackptr(PSR_IRQ32_MODE);
+	return(0);
+}
 
 /*
  *  kdb_trap - field a TRACE or BPT trap
@@ -104,11 +139,6 @@ kdb_trap(type, tf)
 	int	type;
 	register struct trapframe *tf;
 {
-
-#if 0
-	fb_unblank();
-#endif
-
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
 	case -1:		/* keyboard interrupt */
@@ -124,7 +154,7 @@ kdb_trap(type, tf)
 	/* Should switch to kdb`s own stack here. */
 
 	ddb_regs.ddb_tf = *tf;
-	ddb_regs.ddb_tf.tf_pc -= 4;
+	ddb_regs.ddb_tf.tf_pc -= INSN_SIZE;
 
 	db_active++;
 	cnpollc(TRUE);
@@ -184,19 +214,15 @@ db_write_text(dst, ch)
 	ptep = vtopte(va);
 
 	if ((*ptep & L2_MASK) == L2_INVAL) { 
-		db_printf(" address 0x%08x not a valid page\n", (u_int)dst);
-		splx(s);
+		db_printf(" address %p not a valid page\n", dst);
+		(void)splx(s);
 		return;
 	}
-
-	/*
-	 * This code should purge the TLB and sync a single cache line
-	 */
 
 	pteo = ReadWord(ptep);
 	pte = pteo | PT_AP(AP_KRW);
 	WriteWord(ptep, pte);
-	tlb_flush();
+	tlb_flush();		/* XXX should be purge */
 
 	*dst = (unsigned char)ch;
 
@@ -204,8 +230,8 @@ db_write_text(dst, ch)
 	cpu_cache_syncI_rng((u_int)dst, 4);
 
 	WriteWord(ptep, pteo);
-	tlb_flush();
-	splx(s);
+	tlb_flush();		/* XXX should be purge */
+	(void)splx(s);
 }
 
 /*
@@ -265,10 +291,11 @@ db_trapper(addr, inst, frame, fault_code)
 	int		fault_code;
 {
 	if (fault_code == 0) {
-		if (inst == BKPT_INST)
-			kdb_trap(1, frame);
+		if ((inst & ~INSN_COND_MASK) == (BKPT_INST & ~INSN_COND_MASK))
+			kdb_trap(T_BREAKPOINT, frame);
 		else
-			panic("Undefined instruction 0x%08x @ 0x%08x in kernel\n", inst, addr);
+			panic("Undefined instruction 0x%08x @ 0x%08x in kernel\n",
+			    inst, addr);
 	} else
 		return(1);
 	return(0);
@@ -283,9 +310,10 @@ db_machine_init()
 	struct exec *kernexec = (struct exec *)KERNEL_BASE;
 	int len;
 
-/*
- * The boot loader currently loads the kernel with the a.out header still attached.
- */
+	/*
+	 * The boot loader currently loads the kernel with the a.out
+	 * header still attached.
+	 */
 
 	if (kernexec->a_syms == 0) {
 		printf("[No symbol table]\n");

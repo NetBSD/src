@@ -1,4 +1,4 @@
-/* $NetBSD: fusu.S,v 1.3 1997/02/18 03:15:06 mark Exp $ */
+/*	$NetBSD: fusu.S,v 1.3.4.1 1997/10/15 05:25:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -33,6 +33,7 @@
  */
 
 #include "assym.h"
+#include <machine/asm.h>
 
 ip	.req	r12
 lr	.req	r14
@@ -56,15 +57,7 @@ pc	.req	r15
  *  r1 - address to store result
  */
 
-        .global _fetchuserword
-
-_fetchuserword:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(fetchuserword)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -105,15 +98,8 @@ Lvm_maxkern_address:
  * fuword(caddr_t uaddr);
  * Fetch an int from the user's address space.
  */
-	.global	_fuword
 
-_fuword:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(fuword)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -142,15 +128,8 @@ _fuword:
  * fusword(caddr_t uaddr);
  * Fetch a short from the user's address space.
  */
-	.global	_fusword
 
-_fusword:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(fusword)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -183,15 +162,7 @@ _fusword:
  * interrupt.
  */
 
-	.global	_fuswintr
-
-_fuswintr:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(fuswintr)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -223,15 +194,7 @@ _fuswintr:
  * Fetch a byte from the user's address space.
  */
 
-	.global	_fubyte
-
-_fubyte:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(fubyte)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -272,8 +235,8 @@ fusufault:
  * than trying to page fault.
  */
 
+/* label must be global as fault.c references it */
 	.global	_fusubailout
-
 _fusubailout:
 	mov	r0, #0x00000000
 	str	r0, [r2, #PCB_ONFAULT]
@@ -308,15 +271,7 @@ fusupcbfaulttext:
  * Store an int in the user's address space.
  */
 
-	.global	_suword
-
-_suword:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(suword)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -347,15 +302,7 @@ _suword:
  * interrupt.
  */
 
-	.global	_suswintr
-
-_suswintr:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(suswintr)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -387,15 +334,7 @@ _suswintr:
  * Store a short in the user's address space.
  */
 
-	.global	_susword
-
-_susword:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(susword)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault
@@ -427,15 +366,7 @@ _susword:
  * Store a byte in the user's address space.
  */
 
-	.global	_subyte
-
-_subyte:
-#if defined(GPROF) && defined(PROFILE_ASM)
-	stmfd	sp!, {lr}
-	mov	ip, lr
-	bl	mcount
-	ldmfd	sp!, {lr}
-#endif
+ENTRY(subyte)
 	ldr	r2, Lvm_min_address
 	cmp	r0, r2
 	bcc	fusuaddrfault

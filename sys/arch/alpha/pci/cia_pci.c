@@ -1,4 +1,4 @@
-/* $NetBSD: cia_pci.c,v 1.11.2.4 1997/09/22 06:30:18 thorpej Exp $ */
+/* $NetBSD: cia_pci.c,v 1.11.2.5 1997/10/15 05:16:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.4 1997/09/22 06:30:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cia_pci.c,v 1.11.2.5 1997/10/15 05:16:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,7 @@ cia_conf_read(cpv, tag, offset)
 	int32_t old_haxr2;					/* XXX */
 	u_int32_t errbits;
 
-#ifdef DIAGNOSTIC
+#ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 #endif
@@ -197,7 +197,7 @@ cia_conf_write(cpv, tag, offset, data)
 	int s, secondary;
 	int32_t old_haxr2;					/* XXX */
 
-#ifdef DIAGNOSTIC
+#ifdef __GNUC__
 	s = 0;					/* XXX gcc -Wuninitialized */
 	old_haxr2 = 0;				/* XXX gcc -Wuninitialized */
 #endif

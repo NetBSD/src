@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.10 1997/02/10 03:50:54 mark Exp $	*/
+/*	$NetBSD: exception.S,v 1.10.6.1 1997/10/15 05:25:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -82,7 +82,7 @@ exception_exit:
 
 	ldr	r5, Lastpending		/* Get address of astpending */
 
-exception_exit_loop:
+Lexception_exit_loop:
 	orr     r0, r4, #(I32_bit)	/* Block IRQs */
 	msr     cpsr_all, r0
 
@@ -100,7 +100,7 @@ do_ast:
 
 	mov	r0, sp			/* arg 0 = trap frame */
 	bl	_ast			/* call the AST handler */
-	b	exception_exit_loop	/* Try and exit again */
+	b	Lexception_exit_loop	/* Try and exit again */
 
 do_exit:
 	orr     r0, r4, #(I32_bit)	/* Disable interupts */
@@ -112,7 +112,6 @@ do_exit:
 /* entry point for CPU data abort */
 
 	.global	data_abort_entry
-
 data_abort_entry:
         sub     lr, lr, #0x00000008     /* Adjust the lr */
 
@@ -134,7 +133,6 @@ Ldata_abort_handler_address:
 
 	.data
 	.global	_data_abort_handler_address
-
 _data_abort_handler_address:
 	.word	abortdata
 
@@ -149,7 +147,6 @@ abortdatamsg:
 
 
 	.global	prefetch_abort_entry
-
 prefetch_abort_entry:
         sub     lr, lr, #0x00000004     /* Adjust the lr */
 
@@ -267,7 +264,7 @@ undefined_entry:
  * Switch to previous mode to get r8-r13.
  */
 Lprenotuser_push:
-	orr	r0, r0, #(F32_bit|I32_bit) /* disable interrupts */
+	orr	r0, r0, #(I32_bit) /* disable interrupts */
 	msr	cpsr_all, r0
 	mov	r1, r8
 	mov	r2, r9
@@ -318,7 +315,7 @@ Lprenotuser_pull:
  */
 	ldr	r1, [sp, #(17*4)]		/* spsr */
 	ldr	r2, [sp, #(14*4)]		/* r14 */
-	orr	r0, r0, #(F32_bit|I32_bit)
+	orr	r0, r0, #(I32_bit)
 	msr	cpsr_all, r0			/* switch to previous mode */
 	msr	spsr_all, r1
 	mov	r14, r2

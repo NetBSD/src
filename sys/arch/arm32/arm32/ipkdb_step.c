@@ -1,4 +1,4 @@
-/*	$NetBSD: ipkdb_step.c,v 1.1 1996/10/16 19:38:50 ws Exp $	*/
+/*	$NetBSD: ipkdb_step.c,v 1.1.10.1 1997/10/15 05:26:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -36,6 +36,7 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/ipkdb.h>
+#include <machine/trap.h>
 
 /*
  * Faults during instruction fetch? XXX
@@ -52,7 +53,7 @@ fetchinst(pc)
 		inst <<= 8;
 		byte = ipkdbfbyte(--pc);
 		if (byte < 0)
-			return 0xe7ffffff; /* special hack! */
+			return KERNEL_BREAKPOINT; /* special hack! */
 		inst |= byte;
 	}
 	return inst;

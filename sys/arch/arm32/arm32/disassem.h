@@ -1,8 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.10.10.1 1997/10/15 05:24:47 thorpej Exp $	*/
+/*	$NetBSD: disassem.h,v 1.1.2.2 1997/10/15 05:25:27 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1996 Mark Brinicombe.
- * Copyright (c) 1996 Brini.
+ * Copyright (c) 1997 Mark Brinicombe.
+ * Copyright (c) 1997 Causality Limited.
  *
  * All rights reserved.
  *
@@ -16,15 +16,15 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Brini.
+ *	This product includes software developed by Mark Brinicombe.
  * 4. The name of the company nor the name of the author may be used to
  *    endorse or promote products derived from this software without specific
  *    prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY BRINI ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL BRINI OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
  * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
  * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -33,58 +33,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * RiscBSD kernel project
- *
- * db_disasm.c
- *
- * Kernel disassembler
- *
- * Created      : 10/02/96
- *
- * Structured after the sparc/sparc/db_disasm.c by David S. Miller &
- * Paul Kranenburg
- *
- * This code is not complete. Not all instructions are disassembled.
- * Current LDF, STF and CDT are not supported but these are low priority
- * as FP is not used in the kernel.
+ * Define the interface structure required by the disassembler.
  */
 
-#include <sys/param.h>
-#include <machine/db_machdep.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
-#include <ddb/db_access.h>
-
-#include <arm32/arm32/disassem.h>
-
-/* Glue code to interface db_disasm to the generic ARM disassembler */
-
-static u_int
-db_disasm_read_word(address)
-	u_int address;
-{
-	return(db_get_value(address, 4, 0));
-}
-
-static void
-db_disasm_printaddr(address)
-	u_int address;
-{
-	db_printsym((db_addr_t)address, DB_STGY_ANY);
-}
-
-vm_offset_t
-db_disasm(loc, altfmt)
-	vm_offset_t loc;
-	boolean_t altfmt;
-{
-	disasm_interface_t di;
-
-	di.di_readword = db_disasm_read_word;
-	di.di_printaddr = db_disasm_printaddr;
-	di.di_printf = db_printf;
-
-	return(disasm(&di, loc, altfmt));
-}
-
-/* End of db_disasm.c */
+typedef struct {
+	u_int	(*di_readword) __P((u_int));
+	void	(*di_printaddr) __P((u_int));	
+	void	(*di_printf) __P((const char *, ...))
+		    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+} disasm_interface_t;

@@ -1,11 +1,10 @@
-/* $NetBSD: disassem.c,v 1.6 1996/10/13 03:05:49 christos Exp $ */
+/*	$NetBSD: disassem.c,v 1.6.10.1 1997/10/15 05:25:20 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
- * Copyright (c) 1994 Brini.
- * All rights reserved.
+ * Copyright (c) 1996 Mark Brinicombe.
+ * Copyright (c) 1996 Brini.
  *
- * This code is derived from software written for Brini by Mark Brinicombe
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,682 +35,586 @@
  *
  * RiscBSD kernel project
  *
- * disassem.c
+ * db_disasm.c
  *
- * Debug / Monitor disassembler
+ * Kernel disassembler
  *
- * Created      : 09/10/94
+ * Created      : 10/02/96
+ *
+ * Structured after the sparc/sparc/db_disasm.c by David S. Miller &
+ * Paul Kranenburg
+ *
+ * This code is not complete. Not all instructions are disassembled.
+ * Current LDF, STF and CDT are not supported but these are low priority
+ * as FP is not used in the kernel.
  */
-
-/* Special compilation symbols
- *
- * DISASSEM_COLOUR - Use colour in dissassembly
- */
-/*#define DISASSEM_COLOUR */
-
-/* Include standard header files */
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <arm32/arm32/disassem.h>
 
-/* Local header files */
+/*
+ * General instruction format
+ *
+ *	insn[cc][mod]	[operands]
+ *
+ * Those fields with an uppercase format code indicate that the field
+ * follows directly after the instruction before the separator i.e.
+ * they modify the instruction rather than just being an operand to
+ * the instruction. The only exception is the writeback flag which
+ * follows a operand.
+ *
+ *
+ * 2 - print Operand 2 of a data processing instruction
+ * d - destination register (bits 12-15)
+ * n - n register (bits 16-19)
+ * s - s register (bits 8-11)
+ * o - indirect register rn (bits 16-19) (used by swap)
+ * m - m register (bits 0-4)
+ * a - address operand of ldr/str instruction
+ * l - register list for ldm/stm instruction
+ * f - 1st fp operand (register) (bits 12-14)
+ * g - 2nd fp operand (register) (bits 16-18)
+ * h - 3rd fp operand (register/immediate) (bits 0-4)
+ * b - branch address
+ * X - block transfer type
+ * Y - block transfer type (r13 base)
+ * c - comment field bits(0-23)
+ * p - saved or current status register
+ * F - PSR transfer fields
+ * B - byte transfer flag
+ * L - co-processor transfer size
+ * S - set status flag
+ * T - user mode transfer
+ * P - fp precision
+ * Q - fp precision (for ldf/stf)
+ * R - fp rounding
+ * v - co-processor data transfer registers + addressing mode
+ * W - writeback flag
+ * x - instruction in hex
+ * # - co-processor number
+ * y - co-processor data processing registers
+ * z - co-processor register transfer registers
+ */
 
-#include <machine/katelib.h>
-
-typedef u_int (*instruction_decoder) (u_int addr, u_int word);
-
-typedef struct _opcodes {
+struct arm32_insn {
 	u_int mask;
 	u_int pattern;
-	u_int colour;
-	instruction_decoder decoder;
-} opcodes_struct;
-
-static u_int instruction_swi		__P((u_int addr, u_int word));
-static u_int instruction_branch		__P((u_int addr, u_int word));
-static u_int instruction_mul		__P((u_int addr, u_int word));
-static u_int instruction_mla		__P((u_int addr, u_int word));
-static u_int instruction_ldrstr		__P((u_int addr, u_int word));
-static u_int instruction_ldmstm		__P((u_int addr, u_int word));
-static u_int instruction_dataproc	__P((u_int addr, u_int word));
-static u_int instruction_swap		__P((u_int addr, u_int word));
-static u_int instruction_mrs		__P((u_int addr, u_int word));
-static u_int instruction_msr		__P((u_int addr, u_int word));
-static u_int instruction_msrf		__P((u_int addr, u_int word));
-static u_int instruction_mrcmcr		__P((u_int addr, u_int word));
-static u_int instruction_cdp		__P((u_int addr, u_int word));
-static u_int instruction_cdt		__P((u_int addr, u_int word));
-static u_int instruction_fpabinop	__P((u_int addr, u_int word));
-static u_int instruction_fpaunop	__P((u_int addr, u_int word));
-static u_int instruction_ldfstf		__P((u_int addr, u_int word));
-
-/* Declare global variables */
-
-opcodes_struct opcodes[] = {
-    { 0x0f000000, 0x0f000000, 7, instruction_swi },
-    { 0x0e000000, 0x0a000000, 7, instruction_branch },
-    { 0x0fe000f0, 0x00000090, 7, instruction_mul },
-    { 0x0fe000f0, 0x00200090, 7, instruction_mla },
-    { 0x0e000000, 0x04000000, 7, instruction_ldrstr },
-    { 0x0c000010, 0x04000000, 7, instruction_ldrstr },
-    { 0x0e000000, 0x08000000, 6, instruction_ldmstm },
-    { 0x0FB00FF0, 0x01000090, 7, instruction_swap },
-    { 0x0FBF0FFF, 0x010F0000, 1, instruction_mrs },
-    { 0x0DBFFFF0, 0x0129F000, 1, instruction_msr },
-    { 0x0DBFFFF0, 0x0128F000, 1, instruction_msrf },
-    { 0x0C000000, 0x00000000, 7, instruction_dataproc },
-    { 0x0F008F10, 0x0E000100, 3, instruction_fpabinop },
-    { 0x0F008F10, 0x0E008100, 3, instruction_fpaunop },
-    { 0x0E000F00, 0x0C000100, 3, instruction_ldfstf },
-    { 0x0F000010, 0x0E000010, 2, instruction_mrcmcr },
-    { 0x0F000010, 0x0E000000, 2, instruction_cdp },
-    { 0x0E000000, 0x0C000000, 2, instruction_cdt },
-    { 0x00000000, 0x00000000, 0, NULL }
+	char* name;
+	char* format;
 };
 
-char *opcode_conditions[] = {
-    "EQ",
-    "NE",
-    "CS",
-    "CC",
-    "MI",
-    "PL",
-    "VS",
-    "VC",
-    "HI",
-    "LS",
-    "GE",
-    "LT",
-    "GT",
-    "LE",
-    "",
-    "NV"
+static struct arm32_insn arm32_i[] = {
+    { 0x0fffffff, 0x0ff00000, "imb",	"c" },		/* Before swi */
+    { 0x0fffffff, 0x0ff00001, "imbrange",	"c" },	/* Before swi */
+    { 0x0f000000, 0x0f000000, "swi",	"c" },
+    { 0x0f000000, 0x0a000000, "b",	"b" },
+    { 0x0f000000, 0x0b000000, "bl",	"b" },
+    { 0x0fe000f0, 0x00000090, "mul",	"Snms" },
+    { 0x0fe000f0, 0x00200090, "mla",	"Snmsd" },
+    { 0x0fe000f0, 0x00800090, "umull",	"Sdnms" },
+    { 0x0fe000f0, 0x00c00090, "smull",	"Sdnms" },
+    { 0x0fe000f0, 0x00a00090, "umlal",	"Sdnms" },
+    { 0x0fe000f0, 0x00e00090, "smlal",	"Sdnms" },
+    { 0x0e100000, 0x04000000, "str",	"BTdaW" },
+    { 0x0e100000, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0c100010, 0x04000000, "str",	"BTdaW" },
+    { 0x0c100010, 0x04100000, "ldr",	"BTdaW" },
+    { 0x0e1f0000, 0x080d0000, "stm",	"YnWl" },	/* separate out r13 base */
+    { 0x0e1f0000, 0x081d0000, "ldm",	"YnWl" },	/* separate out r13 base */    
+    { 0x0e100000, 0x08000000, "stm",	"XnWl" },
+    { 0x0e100000, 0x08100000, "ldm",	"XnWl" },    
+    { 0x0e500ff0, 0x001000b0, "ldrh",	"daW" },
+    { 0x0e500ff0, 0x000000b0, "strh",	"daW" },
+    { 0x0e500ff0, 0x001000d0, "ldrsb",	"daW" },
+    { 0x0e500ff0, 0x001000f0, "ldrsh",	"daW" },
+    { 0x0f200090, 0x00200090, "und",	"x" },	/* Before data processing */
+    { 0x0e1000d0, 0x000000d0, "und",	"x" },	/* Before data processing */
+    { 0x0fb00ff0, 0x01000090, "swap",	"Bdmo" },
+    { 0x0fbf0fff, 0x010f0000, "mrs",	"dp" },		/* Before data processing */
+    { 0x0fb0fff0, 0x0120f000, "msr",	"pFm" },	/* Before data processing */
+    { 0x0fb0f000, 0x0320f000, "msr",	"pF2" },	/* Before data processing */
+    { 0x0de00000, 0x00000000, "and",	"Sdn2" },
+    { 0x0de00000, 0x00200000, "eor",	"Sdn2" },
+    { 0x0de00000, 0x00400000, "sub",	"Sdn2" },
+    { 0x0de00000, 0x00600000, "rsb",	"Sdn2" },
+    { 0x0de00000, 0x00800000, "add",	"Sdn2" },
+    { 0x0de00000, 0x00a00000, "adc",	"Sdn2" },
+    { 0x0de00000, 0x00c00000, "sbc",	"Sdn2" },
+    { 0x0de00000, 0x00e00000, "rsc",	"Sdn2" },
+    { 0x0df00000, 0x01100000, "tst",	"Sn2" },
+    { 0x0df00000, 0x01300000, "teq",	"Sn2" },
+    { 0x0de00000, 0x01400000, "cmp",	"Sn2" },
+    { 0x0de00000, 0x01600000, "cmn",	"Sn2" },
+    { 0x0de00000, 0x01800000, "orr",	"Sdn2" },
+    { 0x0de00000, 0x01a00000, "mov",	"Sd2" },
+    { 0x0de00000, 0x01c00000, "bic",	"Sdn2" },
+    { 0x0de00000, 0x01e00000, "mvn",	"Sd2" },
+    { 0x0ff08f10, 0x0e000100, "adf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e100100, "muf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e200100, "suf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e300100, "rsf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e400100, "dvf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e500100, "rdf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e600100, "pow",	"PRfgh" },
+    { 0x0ff08f10, 0x0e700100, "rpw",	"PRfgh" },
+    { 0x0ff08f10, 0x0e800100, "rmf",	"PRfgh" },
+    { 0x0ff08f10, 0x0e900100, "fml",	"PRfgh" },
+    { 0x0ff08f10, 0x0ea00100, "fdv",	"PRfgh" },
+    { 0x0ff08f10, 0x0eb00100, "frd",	"PRfgh" },
+    { 0x0ff08f10, 0x0ec00100, "pol",	"PRfgh" },
+    { 0x0f008f10, 0x0e000100, "fpbop",	"PRfgh" },
+    { 0x0ff08f10, 0x0e008100, "mvf",	"PRfh" },
+    { 0x0ff08f10, 0x0e108100, "mnf",	"PRfh" },
+    { 0x0ff08f10, 0x0e208100, "abs",	"PRfh" },
+    { 0x0ff08f10, 0x0e308100, "rnd",	"PRfh" },
+    { 0x0ff08f10, 0x0e408100, "sqt",	"PRfh" },
+    { 0x0ff08f10, 0x0e508100, "log",	"PRfh" },
+    { 0x0ff08f10, 0x0e608100, "lgn",	"PRfh" },
+    { 0x0ff08f10, 0x0e708100, "exp",	"PRfh" },
+    { 0x0ff08f10, 0x0e808100, "sin",	"PRfh" },
+    { 0x0ff08f10, 0x0e908100, "cos",	"PRfh" },
+    { 0x0ff08f10, 0x0ea08100, "tan",	"PRfh" },
+    { 0x0ff08f10, 0x0eb08100, "asn",	"PRfh" },
+    { 0x0ff08f10, 0x0ec08100, "acs",	"PRfh" },
+    { 0x0ff08f10, 0x0ed08100, "atn",	"PRfh" },
+    { 0x0f008f10, 0x0e008100, "fpuop",	"PRfh" },
+    { 0x0e100f00, 0x0c000100, "stf",	"QLv" },
+    { 0x0e100f00, 0x0c100100, "ldf",	"QLv" },
+    { 0x0ff00f10, 0x0e000110, "flt",	"PRgd" },
+    { 0x0ff00f10, 0x0e100110, "fix",	"PRdh" },
+    { 0x0ff00f10, 0x0e200110, "wfs",	"d" },
+    { 0x0ff00f10, 0x0e300110, "rfs",	"d" },
+    { 0x0ff00f10, 0x0e400110, "wfc",	"d" },
+    { 0x0ff00f10, 0x0e500110, "rfc",	"d" },
+    { 0x0ff0ff10, 0x0e90f110, "cmf",	"PRgh" },
+    { 0x0ff0ff10, 0x0eb0f110, "cnf",	"PRgh" },
+    { 0x0ff0ff10, 0x0ed0f110, "cmfe",	"PRgh" },
+    { 0x0ff0ff10, 0x0ef0f110, "cnfe",	"PRgh" },
+    { 0x0f100010, 0x0e000010, "mcr",	"#z" },
+    { 0x0f100010, 0x0e100010, "mrc",	"#z" },
+    { 0x0f000010, 0x0e000000, "cdp",	"#y" },
+    { 0x0e100090, 0x0c100000, "ldc",	"L#v" },
+    { 0x0e100090, 0x0c000000, "stc",	"L#v" },
+    { 0x00000000, 0x00000000, NULL,	NULL }
 };
 
-char *opcode_data_procs[] = {
-    "AND",
-    "EOR",
-    "SUB",
-    "RSB",
-    "ADD",
-    "ADC",
-    "SBC",
-    "RSC",
-    "TST",
-    "TEQ",
-    "CMP",
-    "CMN",
-    "ORR",
-    "MOV",
-    "BIC",
-    "MVN"
+static char *arm32_insn_conditions[] = {
+	"eq", "ne", "cs", "cc",
+	"mi", "pl", "vs", "vc",
+	"hi", "ls", "ge", "lt",
+	"gt", "le", "",   "nv"
 };
 
-char *opcode_shifts[] = {
-    "LSL",
-    "LSR",
-    "ASR",
-    "ROR"
+static char *insn_block_transfers[] = {
+	"da", "ia", "db", "ib"
 };
 
-char *opcode_block_transfers[] = {
-    "DA",
-    "IA",
-    "DB",
-    "IB"
+static char *insn_stack_block_transfers[] = {
+	"fa", "ea", "fd", "fa"
 };
 
-char *opcode_stack_block_transfers[] = {
-    "FA",
-    "EA",
-    "FD",
-    "FA"
+static char *op_shifts[] = {
+	"lsl", "lsr", "asr", "ror"
 };
 
-char *opcode_fpabinops[] = {
-    "ADF",
-    "MUF",
-    "SUF",
-    "RSF",
-    "DVF",
-    "RDF",
-    "POW",
-    "RPW",
-    "RMF",
-    "FML",
-    "FDV",
-    "FRD",
-    "POL",
-    "???",
-    "???",
-    "???",
-    "???"
+static char *insn_fpa_rounding[] = {
+	"", "p", "m", "z"
 };
 
-char *opcode_fpaunops[] = {
-    "MVF",
-    "MNF",
-    "ABS",
-    "RND",
-    "SQT",
-    "LOG",
-    "LGN",
-    "EXP",
-    "SIN",
-    "COS",
-    "TAN",
-    "ASN",
-    "ACS",
-    "ATN",
-    "???",
-    "???",
-    "???"
+static char *insn_fpa_precision[] = {
+	"s", "d", "e", "p"
 };
 
-char *opcode_fpaconstants[] = {
-    "0.0",
-    "1.0",
-    "2.0",
-    "3.0",
-    "4.0",
-    "5.0",
-    "0.5",
-    "10.0"
+static char *insn_fpaconstants[] = {
+	"0.0", "1.0", "2.0", "3.0",
+	"4.0", "5.0", "0.5", "10.0"
 };
 
-char *opcode_fpa_rounding[] = {
-    "",
-    "P",
-    "M",
-    "Z"
-};
+#define insn_condition(x)	arm32_insn_conditions[(x >> 28) & 0x0f]
+#define insn_blktrans(x)	insn_block_transfers[(x >> 23) & 3]
+#define insn_stkblktrans(x)	insn_stack_block_transfers[(x >> 23) & 3]
+#define op2_shift(x)		op_shifts[(x >> 5) & 3]
+#define insn_fparnd(x)		insn_fpa_rounding[(x >> 5) & 0x03]
+#define insn_fpaprec(x)		insn_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 1]
+#define insn_fpaprect(x)	insn_fpa_precision[(((x >> 21) & 2)|(x >> 15)) & 1]
+#define insn_fpaimm(x)		insn_fpaconstants[x & 0x07]
 
-char *opcode_fpa_precision[] = {
-    "S",
-    "D",
-    "E",
-    "P"
-};
+/* Local prototypes */
+static void disasm_register_shift __P((disasm_interface_t *di, u_int insn));
+static void disasm_print_reglist  __P((disasm_interface_t *di, u_int insn));
+static void disasm_insn_ldrstr    __P((disasm_interface_t *di, u_int insn, u_int loc));
+static void disasm_insn_cdt	  __P((disasm_interface_t *di, u_int insn, u_int loc));
 
-#define opcode_condition(x) opcode_conditions[x >> 28]
 
-#define opcode_s(x) ((x & 0x00100000) ? "S" : "")
-
-#define opcode_b(x) ((x & 0x00400000) ? "B" : "")
-
-#define opcode_t(x) ((x & 0x01200000) == 0x00200000 ? "T" : "")
-
-#define opcode_dataproc(x) opcode_data_procs[(x >> 21) & 0x0f]
-
-#define opcode_shift(x) opcode_shifts[(x >> 5) & 3]
-
-#define opcode_blktrans(x) opcode_block_transfers[(x >> 23) & 3]
-
-#define opcode_stkblktrans(x) opcode_stack_block_transfers[(x >> 23) & 3]
-
-#define opcode_fpabinop(x) opcode_fpabinops[(x >> 20) & 0x0f]
-
-#define opcode_fpaunop(x) opcode_fpaunops[(x >> 20) & 0x0f]
-
-#define opcode_fpaimm(x) opcode_fpaconstants[x & 0x07]
-
-#define opcode_fparnd(x) opcode_fpa_rounding[(x >> 5) & 0x03]
-
-#define opcode_fpaprec(x) opcode_fpa_precision[(((x >> 18) & 2)|(x >> 7)) & 3]
-
-/* Declare external variables */
-
-extern caddr_t shell_ident;
-
-/* Local function prototypes */
-
-u_int disassemble	__P((u_char *addr));
-
-/* Now for the main code */
-
-static void
-printascii(byte)
-	int byte;
+vm_offset_t
+disasm(di, loc, altfmt)
+	disasm_interface_t *di;
+	vm_offset_t loc;
+	int altfmt;
 {
-	byte &= 0x7f;
-	if (byte < 0x20)
-#ifdef DISASSEM_COLOUR
-		printf("\x1b[31m%c\x1b[0m", byte + '@');
-#else
-		printf("%c", byte + '@');
-#endif
-	else if (byte == 0x7f)
-#ifdef DISASSEM_COLOUR
-		printf("\x1b[31m?\x1b[0m");
-#else
-		printf("?");
-#endif
-	else
-		printf("%c", byte);
-}
+	struct arm32_insn *i_ptr = (struct arm32_insn *)&arm32_i;
 
+	u_int insn;
+	int matchp;
+	int branch;
+	char* f_ptr;
+	int fmt;
 
-u_int
-disassemble(addr)
-	u_char *addr;
-{
-	int loop;
-	u_int word;
-	u_int result = 0;
+	fmt = 0;
+	matchp = 0;
+	insn = di->di_readword(loc);
 
-	printf("%08x : ", (u_int)addr);
+/*	di->di_printf("loc=%08x insn=%08x : ", loc, insn);*/
 
-	word = *((u_int *)addr);
-
-	for (loop = 0; loop < 4; ++loop)
-		printascii(addr[loop]);
-
-	printf(" : %08x :    ", word);
-
-	loop = 0;
-
-	while (opcodes[loop].mask != 0) {
-		if ((word & opcodes[loop].mask) == opcodes[loop].pattern) {
-#ifdef DISASSEM_COLOUR
-			printf("\x1b[3%dm", opcodes[loop].colour);
-#endif
-			result = (*opcodes[loop].decoder)((u_int )addr, word);
-#ifdef DISASSEM_COLOUR
-			printf("\x1b[0m");
-#endif
+	while (i_ptr->name) {
+		if ((insn & i_ptr->mask) ==  i_ptr->pattern) {
+			matchp = 1;
 			break;
 		}
-		++loop;
+		i_ptr++;
 	}
 
-	if (opcodes[loop].mask == 0)
-		printf("Undefined instruction");
+	if (!matchp) {
+		di->di_printf("und%s\t%08x\n", insn_condition(insn), insn);
+		return(loc + INSN_SIZE);
+	}
 
-	printf("\n\r");
-	return(result);
-}
+	di->di_printf("%s%s", i_ptr->name, insn_condition(insn));
 
+	f_ptr = i_ptr->format;
 
-static u_int
-instruction_swi(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("SWI%s\t0x%08x", opcode_condition(word), (word & 0x00ffffff));
-	return(addr);
-}
+	/* Insert tab if there are no instruction modifiers */
 
+	if (*(f_ptr) < 'A' || *(f_ptr) > 'Z') {
+		++fmt;
+		di->di_printf("\t");
+	}
 
-static u_int
-instruction_branch(addr, word)
-	u_int addr;
-	u_int word;
-{
-	u_int branch;
+	while (*f_ptr) {
+		switch (*f_ptr) {
+		/* 2 - print Operand 2 of a data processing instruction */
+		case '2':
+			if (insn & 0x02000000) {
+				int shift = ((insn >> 7) & 0x1e);
 
-	branch = ((word << 2) & 0x03ffffff);
-	if (branch & 0x02000000)
-		branch |= 0xfc000000;
+				if (shift == 0)
+					di->di_printf("#0x%08x",
+					    (insn & 0xff));
+				else
+					di->di_printf("#0x%08x",
+					    ((insn & 0xff) << (32 - shift)));
+			} else {  
+				disasm_register_shift(di, insn);
+			}
+			break;
+		/* d - destination register (bits 12-15) */
+		case 'd':
+			di->di_printf("r%d", ((insn >> 12) & 0x0f));
+			break;
+		/* n - n register (bits 16-19) */
+		case 'n':
+			di->di_printf("r%d", ((insn >> 16) & 0x0f));
+			break;
+		/* s - s register (bits 8-11) */
+		case 's':
+			di->di_printf("r%d", ((insn >> 8) & 0x0f));
+			break;
+		/* o - indirect register rn (bits 16-19) (used by swap) */
+		case 'o':
+			di->di_printf("[r%d]", ((insn >> 16) & 0x0f));
+			break;
+		/* m - m register (bits 0-4) */
+		case 'm':
+			di->di_printf("r%d", ((insn >> 0) & 0x0f));
+			break;
+		/* a - address operand of ldr/str instruction */
+		case 'a':
+			disasm_insn_ldrstr(di, insn, loc);
+			break;
+		/* l - register list for ldm/stm instruction */
+		case 'l':
+			disasm_print_reglist(di, insn);
+			break;
+		/* f - 1st fp operand (register) (bits 12-14) */
+		case 'f':
+			di->di_printf("f%d", (insn >> 12) & 7);
+			break;
+		/* g - 2nd fp operand (register) (bits 16-18) */
+		case 'g':
+			di->di_printf("f%d", (insn >> 16) & 7);
+			break;
+		/* h - 3rd fp operand (register/immediate) (bits 0-4) */
+		case 'h':
+			if (insn & (1 << 3))
+				di->di_printf("#%s", insn_fpaimm(insn));
+			else
+				di->di_printf("f%d", insn & 7);
+			break;
+		/* b - branch address */
+		case 'b':
+			branch = ((insn << 2) & 0x03ffffff);
+			if (branch & 0x02000000)
+				branch |= 0xfc000000;
+			di->di_printaddr(loc + 8 + branch);
+			break;
+		/* X - block transfer type */
+		case 'X':
+			di->di_printf("%s", insn_blktrans(insn));
+			break;
+		/* Y - block transfer type (r13 base) */
+		case 'Y':
+			di->di_printf("%s", insn_stkblktrans(insn));
+			break;
+		/* c - comment field bits(0-23) */
+		case 'c':
+			di->di_printf("0x%08x", (insn & 0x00ffffff));
+			break;
+		/* p - saved or current status register */
+		case 'p':
+			if (insn & 0x00400000)
+				di->di_printf("spsr");
+			else
+				di->di_printf("cpsr");
+			break;
+		/* F - PSR transfer fields */
+		case 'F':
+			di->di_printf("_");
+			if (insn & (1 << 16))
+				di->di_printf("c");
+			if (insn & (1 << 17))
+				di->di_printf("x");
+			if (insn & (1 << 18))
+				di->di_printf("s");
+			if (insn & (1 << 19))
+				di->di_printf("f");
+			break;
+		/* B - byte transfer flag */
+		case 'B':
+			if (insn & 0x00400000)
+				di->di_printf("b");
+			break;
+		/* L - co-processor transfer size */
+		case 'L':
+			if (insn & (1 << 22))
+				di->di_printf("l");
+			break;
+		/* S - set status flag */
+		case 'S':
+			if (insn & 0x00100000)
+				di->di_printf("s");
+			break;
+		/* T - user mode transfer */
+		case 'T':
+			if ((insn & 0x01200000) == 0x00200000)
+				di->di_printf("t");
+			break;
+		case 'P':
+		/* P - fp precision */
+			di->di_printf("%s", insn_fpaprec(insn));
+			break;
+		/* Q - fp precision (for ldf/stf) */
+		case 'Q':
+			break;
+		/* R - fp rounding */
+		case 'R':
+			di->di_printf("%s", insn_fparnd(insn));
+			break;
+		/* W - writeback flag */
+		case 'W':
+			if (insn & (1 << 21))
+				di->di_printf("!");
+			break;
+		/* # - co-processor number */
+		case '#':
+			di->di_printf("p%d", (insn >> 8) & 0x0f);
+			break;
+		/* v - co-processor data transfer registers+addressing mode */
+		case 'v':
+			break;
+		/* x - instruction in hex */
+		case 'x':
+			db_printf("0x%08x", insn);
+			break;
+		/* y - co-processor data processing registers */
+		case 'y':
+			di->di_printf("%d, ", (insn >> 20) & 0x0f);
 
-	branch += addr + 8;
+			di->di_printf("c%d, c%d, c%d", (insn >> 12) & 0x0f,
+			    (insn >> 16) & 0x0f, insn & 0x0f);
 
-	if (word & 0x01000000)
-		printf("BL%s\t0x%08x", opcode_condition(word), branch);
-	else
-		printf("B%s\t0x%08x", opcode_condition(word), branch);
+			di->di_printf(", %d", (insn >> 5) & 0x07);
+			break;
+		/* z - co-processor register transfer registers */
+		case 'z':
+			di->di_printf("%d, ", (insn >> 21) & 0x07);
+			di->di_printf("r%d, c%d, c%d, %d",
+			    (insn >> 12) & 0x0f, (insn >> 16) & 0x0f,
+			    insn & 0x0f, (insn >> 5) & 0x07);
 
-	return(branch);
-}
+/*			if (((insn >> 5) & 0x07) != 0)
+				di->di_printf(", %d", (insn >> 5) & 0x07);*/
+			break;
+		default:
+			di->di_printf("[%c - unknown]", *f_ptr);
+			break;
+		}
+		if (*(f_ptr+1) >= 'A' && *(f_ptr+1) <= 'Z')
+			++f_ptr;
+		else if (*(++f_ptr)) {
+			++fmt;
+			if (fmt == 1)
+				di->di_printf("\t");
+			else
+				di->di_printf(", ");
+		}
+	};
 
+	di->di_printf("\n");
 
-static u_int
-instruction_mul(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("MUL%s%s\t", opcode_condition(word), opcode_s(word));
-
-	printf("r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
-		(word >> 8) & 0x0f);
-	return(addr);
-}
-
-
-static u_int
-instruction_mla(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("MLA%s%s\t", opcode_condition(word), opcode_s(word));
-
-	printf("r%d, r%d, r%d, r%d", (word >> 16) & 0x0f, word & 0x0f,
-		(word >> 8) & 0x0f, (word >> 12) & 0x0f);
-	return(addr);
+	return(loc + INSN_SIZE);
 }
 
 
 static void
-register_shift(word)
-	u_int word;
+disasm_register_shift(di, insn)
+	disasm_interface_t *di;
+	u_int insn;
 {
-	printf("r%d", (word & 0x0f));
-	if ((word & 0x00000ff0) == 0)
+	di->di_printf("r%d", (insn & 0x0f));
+	if ((insn & 0x00000ff0) == 0)
 		;
-	else if ((word & 0x00000ff0) == 0x00000060)
- 		printf(", RRX");
+	else if ((insn & 0x00000ff0) == 0x00000060)
+		di->di_printf(", rrx");
 	else {
-		if (word & 0x10)
-			printf(", %s r%d", opcode_shift(word), (word >> 8) & 0x0f);
+		if (insn & 0x10)
+			di->di_printf(", %s r%d", op2_shift(insn),
+			    (insn >> 8) & 0x0f);
 		else
-			printf(", %s #%d", opcode_shift(word), (word >> 7) & 0x1f);
+			di->di_printf(", %s #%d", op2_shift(insn),
+			    (insn >> 7) & 0x1f);
 	}
 }
 
 
-static u_int
-instruction_ldrstr(addr, word)
-	u_int addr;
-	u_int word;
+static void
+disasm_print_reglist(di, insn)
+	disasm_interface_t *di;
+	u_int insn;
 {
-    printf("%s%s%s%s\t", (word & 0x00100000) ? "LDR" : "STR",
-      opcode_condition(word), opcode_b(word), opcode_t(word));
+	int loop;
+	int start;
+	int comma;
 
-    printf("r%d, ", (word >> 12) & 0x0f);
+	di->di_printf("{");
+	start = -1;
+	comma = 0;
 
-    if (((word >> 16) & 0x0f) == 16)
-      {
-/*        u_int location;
+	for (loop = 0; loop < 17; ++loop) {
+		if (start != -1) {
+			if (loop == 16 || !(insn & (1 << loop))) {
+				if (comma)
+					di->di_printf(", ");
+				else
+					comma = 1;
+        			if (start == loop - 1)
+        				di->di_printf("r%d", start);
+        			else
+        				di->di_printf("r%d-r%d", start, loop - 1);
+        			start = -1;
+        		}
+        	} else {
+        		if (insn & (1 << loop))
+        			start = loop;
+        	}
+        }
+	di->di_printf("}");
 
-        location = addr + 8;
+	if (insn & (1 << 22))
+		di->di_printf("^");
+}
 
-        addr = */
-      }
-    else
-      {
-        printf("[r%d", (word >> 16) & 0x0f);
+static void
+disasm_insn_ldrstr(di, insn, loc)
+	disasm_interface_t *di;
+	u_int insn;
+	u_int loc;
+{
+	if ((((insn >> 16) & 0x0f) == 15) && ((insn & (1 << 21)) == 0)
+	    && ((insn & (1 << 24)) != 0) && ((insn & (1 << 25)) == 0)) {
+		if (insn & 0x00800000)
+			loc += (insn & 0xfff);
+		else
+			loc -= (insn & 0xfff);
+		di->di_printaddr(loc + 8);
+ 	} else {
+		di->di_printf("[r%d", (insn >> 16) & 0x0f);
+		di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
 
-        printf("%s, ", (word & (1 << 24)) ? "" : "]");
-
-        if (!(word & 0x00800000))
-          printf("-");
-
-        if (word & (1 << 25))
-          register_shift(word);
-        else
-          printf("#0x%04x", word & 0xfff);
-
-        if (word & (1 << 24))
-          printf("]");
-
-        if (word & (1 << 21))
-          printf("!");
-      }
-
-    return(addr);
+		if (!(insn & 0x00800000))
+			di->di_printf("-");
+		if (insn & (1 << 25))
+			disasm_register_shift(di, insn);
+		else
+			di->di_printf("#0x%04x", insn & 0xfff);
+		if (insn & (1 << 24))
+			di->di_printf("]");
+	}
 }
 
 
-static u_int
-instruction_ldmstm(addr, word)
-	u_int addr;
-	u_int word;
+static void
+disasm_insn_ldcstc(di, insn, loc)
+	disasm_interface_t *di;
+	u_int insn;
+	u_int loc;
 {
-    int loop;
-    int start;
-
-    printf("%s%s%s\t", (word & 0x00100000) ? "LDM" : "STM",
-      opcode_condition(word), opcode_blktrans(word));
-
-    printf("r%d", (word >> 16) & 0x0f);
-
-    if (word & (1 << 21))
-      printf("!");
-
-    printf(", {");
-
-    start = -1;
-
-    for (loop = 0; loop < 17; ++loop)
-      {
-        if (start != -1)
-          {
-            if (!(word & (1 << loop)) || loop == 16)
-              {
-                if (start == loop - 1)
-                  printf("r%d, ", start);
-                else
-                  printf("r%d-r%d, ", start, loop - 1);
-                start = -1;
-              }
-          }
-        else
-          {
-            if (word & (1 << loop))
-              start = loop;
-          }
-
-      }
-    printf("\x7f\x7f}");
-
-    if (word & (1 << 22))
-      printf("^");
-    return(addr);
-}
-
-
-static u_int
-instruction_dataproc(addr, word)
-	u_int addr;
-	u_int word;
-{
-    if ((word & 0x01800000) == 0x01000000)
-      word = word & ~(1<<20);
-
-    printf("%s%s%s\t", opcode_dataproc(word), opcode_condition(word),
-      opcode_s(word));
-
-    if ((word & 0x01800000) != 0x01000000)
-      printf("r%d, ", (word >> 12) & 0x0f);
-
-    if ((word & 0x01a00000) != 0x01a00000)
-      printf("r%d, ", (word >> 16) & 0x0f);
-
-    if (word & 0x02000000)
-      {
-        printf("#&%08x", (word & 0xff) << (((word >> 7) & 0x1e)));
-      }
-    else
-      {
-        register_shift(word);
-      }
-    return(addr);
-}
-
-
-static u_int
-instruction_swap(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("SWP%s%s\t", opcode_condition(word), opcode_b(word));
-
-	printf("r%d, r%d, [r%d]", (word >> 12) & 0x0f, (word & 0x0f),
-		(word >> 16) & 0x0f);
-	return(addr);
-}
-
-
-static u_int
-instruction_mrs(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("MRS%s\tr%d, ", opcode_condition(word), (word >> 12) & 0x0f);
-
-	printf("%s", (word & 0x00400000) ? "SPSR" : "CPSR");
-	return(addr);
-}
-
-
-static u_int
-instruction_msr(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("MSR%s\t", opcode_condition(word));
-
-	printf("%s, r%d", (word & 0x00400000) ? "SPSR" : "CPSR", word & 0x0f);
-
-	return(addr);
-}
-
-
-static u_int
-instruction_msrf(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("MSR%s\t", opcode_condition(word));
-
-	printf("%s_flg, ", (word & 0x00400000) ? "SPSR" : "CPSR");
-
-	if (word & 0x02000000)
-		printf("#0x%08x", (word & 0xff) << (32 - ((word >> 7) & 0x1e)));
+	if (((insn >> 8) & 0xf) == 1)
+		di->di_printf("f%d, ", (insn >> 12) & 0x07);
 	else
-		printf("r%d", word &0x0f);
-	return(addr);
+		di->di_printf("c%d, ", (insn >> 12) & 0x0f);
+
+	di->di_printf("[r%d", (insn >> 16) & 0x0f);
+
+	di->di_printf("%s, ", (insn & (1 << 24)) ? "" : "]");
+
+	if (!(insn & (1 << 23)))
+		di->di_printf("-");
+
+	di->di_printf("#0x%03x", (insn & 0xff) << 2);
+
+	if (insn & (1 << 24))
+		di->di_printf("]");
+
+	if (insn & (1 << 21))
+		di->di_printf("!");
 }
 
-
 static u_int
-instruction_mrcmcr(addr, word)
-	u_int addr;
-	u_int word;
+disassemble_readword(address)
+	u_int address;
 {
-	printf("%s%s\t", (word & (1 << 20)) ? "MRC" : "MCR",
-		opcode_condition(word));
-
-	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 21) & 0x07);
-
-	printf("r%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
-		word & 0x0f);
-
-	if (((word >> 5) & 0x07) != 0)
-		printf(", %d", (word >> 5) & 0x07);
-
-	return(addr);
+	return(*((u_int *)address));
 }
 
-
-static u_int
-instruction_cdp(addr, word)
-	u_int addr;
-	u_int word;
+static void
+disassemble_printaddr(address)
+	u_int address;
 {
-	printf("CDP%s\t", opcode_condition(word));
-
-	printf("CP #%d, %d, ", (word >> 8) & 0x0f, (word >> 20) & 0x0f);
-
-	printf("cr%d, cr%d, cr%d", (word >> 12) & 0x0f, (word >> 16) & 0x0f,
-		word & 0x0f);
-
-	printf(", %d", (word >> 5) & 0x07);
-
-	return(addr);
+	printf("0x%08x", address);
 }
 
-
-static u_int
-instruction_cdt(addr, word)
-	u_int addr;
-	u_int word;
+void
+disassemble(address)
+	u_int address;
 {
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDC" : "STC",
-      opcode_condition(word), (word & (1 << 22)) ? "L" : "");
+	disasm_interface_t di;
 
-    printf("CP #%d, cr%d, ", (word >> 8) & 0x0f, (word >> 12) & 0x0f);
+	di.di_readword = disassemble_readword;
+	di.di_printaddr = disassemble_printaddr;
+	di.di_printf = printf;
 
-    printf("[r%d", (word >> 16) & 0x0f);
-
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
-
-    if (!(word & (1 << 23)))
-      printf("-");
-
-    printf("#0x%02x", word & 0xff);
-
-    if (word & (1 << 24))
-      printf("]");
-
-    if (word & (1 << 21))
-      printf("!");
-
-    return(addr);
-}
-
-
-static u_int
-instruction_fpabinop(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("%s%s%s%s\t", opcode_fpabinop(word), opcode_condition(word),
-		opcode_fpaprec(word), opcode_fparnd(word));
-
-	printf("f%d, f%d, ", (word >> 12) & 0x07, (word >> 16) & 0x07);
-
-	if (word & (1 << 3))
-		printf("#%s", opcode_fpaimm(word));
-	else
-		printf("f%d", word & 0x07);
-
-	return(addr);
-}
-
-
-static u_int
-instruction_fpaunop(addr, word)
-	u_int addr;
-	u_int word;
-{
-	printf("%s%s%s%s\t", opcode_fpaunop(word), opcode_condition(word),
-		opcode_fpaprec(word), opcode_fparnd(word));
-
-	printf("f%d, ", (word >> 12) & 0x07);
-
-	if (word & (1 << 3))
-		printf("#%s", opcode_fpaimm(word));
-	else
-		printf("f%d", word & 0x07);
-
-	return(addr);
-}
-
-
-static u_int
-instruction_ldfstf(addr, word)
-	u_int addr;
-	u_int word;
-{
-    printf("%s%s%s\t", (word & (1 << 20)) ? "LDF" : "STF",
-      opcode_condition(word), (word & (1 << 22)) ? "L" : "");
-
-    printf("f%d, [r%d", (word >> 12) & 0x07, (word >> 16) & 0x0f);
-
-    printf("%s, ", (word & (1 << 24)) ? "" : "]");
-
-    if (!(word & (1 << 23)))
-      printf("-");
-
-    printf("#0x%03x", (word & 0xff) << 2);
-
-    if (word & (1 << 24))
-      printf("]");
-
-    if (word & (1 << 21))
-      printf("!");
-
-    return(addr);
+	(void)disasm(&di, address, 0);
 }
 
 /* End of disassem.c */

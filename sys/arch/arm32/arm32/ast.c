@@ -1,4 +1,4 @@
-/* $NetBSD: ast.c,v 1.8 1996/10/15 01:04:27 mark Exp $ */
+/*	$NetBSD: ast.c,v 1.8.10.1 1997/10/15 05:23:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -160,15 +160,8 @@ ast(frame)
 		p->p_flag &= ~P_OWEUPC;
 		ADDUPROF(p);
 	}
-#ifdef VALIDATE_TRAPFRAME
-	validate_trapframe(frame, 3);
-#endif	/* VALIDATE_TRAPFRAME */
 
 	userret(p, frame->tf_pc, p->p_sticks);
-
-#ifdef VALIDATE_TRAPFRAME
-	validate_trapframe(frame, 3);
-#endif	/* VALIDATE_TRAPFRAME */
 }
 
 /* End of ast.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 1997/07/29 01:20:34 mark Exp $	*/
+/*	$NetBSD: locore.S,v 1.20.2.1 1997/10/15 05:26:32 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -213,8 +213,7 @@ Wfiq:
 Lcpufuncs:	
 	.word	_cpufuncs
 
-	.global	_boot0
-_boot0:
+ENTRY(boot0)
 	mrs     r2, cpsr_all
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
@@ -238,9 +237,7 @@ Lboot_cache_purged:
 
 /* Debug routine to print trace back information from stack */
 
-	.global	_traceback
-
-_traceback:
+ENTRY(traceback)
 	stmfd	sp!, {r4, r5, r6, lr}
 	mov	r4, r11
 	ldr	r5, Ltracebackmin
@@ -253,13 +250,10 @@ tbloop:
 	add	r0, pc, #Ltb1 - .  - 8
 	bl	_printf
 
-/*	ldr	r1, [r4, #-4]
+	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf*/
-	ldr	r0, [r4, #-4]
-	ldr	r1, [r4]
-	bl	_traceback_sym
+	bl	_printf
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
@@ -277,10 +271,10 @@ tbexit:
         ldmfd	sp!, {r4, r5, r6, pc}
 
 Ltracebackmin:
-	.word	0xefbfe000
+	.word	0xf0000000
 
 Ltracebackmax:
-	.word	0xefc00000
+	.word	0xf4000000
 
 Ltb1:
 	.asciz	"traceback: fp=%08x fp->fp=%08x fp->sp=%08x "
@@ -292,22 +286,17 @@ Ltb2:
 
 /* Debug routine to print trace back information from stack */
 
-	.global	_simpletraceback
-
-_simpletraceback:
+ENTRY(simpletraceback)
 	stmfd	sp!, {r4, r5, r6, lr}
 	mov	r4, r11
 	ldr	r5, Ltracebackmin
 	ldr	r6, Ltracebackmax
 
 stbloop:
-/*	ldr	r1, [r4, #-4]
+	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf*/
-	ldr	r0, [r4, #-4]
-	ldr	r1, [r4]
-	bl	_traceback_sym
+	bl	_printf
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
@@ -327,9 +316,7 @@ stbexit:
 
 /* Debug routine to print trace back information from stack */
 
-	.global	_irqtraceback
-
-_irqtraceback:
+ENTRY(irqtraceback)
 	stmfd	sp!, {r4, r5, r6, lr}
 	mov	r4, r0
 	mov	r5, r1
@@ -342,13 +329,10 @@ itbloop:
 	add	r0, pc, #Ltb1 - .  - 8
 	bl	_printf
 
-/*	ldr	r1, [r4, #-4]
+	ldr	r1, [r4, #-4]
 	ldr	r2, [r4]
 	add	r0, pc, #Ltb2 - .  - 8
-	bl	_printf*/
-	ldr	r0, [r4, #-4]
-	ldr	r1, [r4]
-	bl	_traceback_sym
+	bl	_printf
 
 	mov	r3, r4
 	ldr	r4, [r4, #-12]
@@ -366,9 +350,7 @@ itbexit:
         ldmfd	sp!, {r4, r5, r6, pc}
 
 
-	.global	_user_traceback
-
-_user_traceback:
+ENTRY(user_traceback)
 	stmfd	sp!, {r4, r5, r6, lr}
 	mov	r4, r0
 	ldr	r5, Lusertracebackmin
@@ -420,7 +402,8 @@ Lusertb2:
 /*
  * Signal trampoline; copied to top of user stack.
  */
-ENTRY(sigcode)
+	.global	_sigcode
+_sigcode:
 /*
  * r0-r2 are our signal handler parameters
  * r3 is the handler address
@@ -438,15 +421,11 @@ ENTRY(sigcode)
 
 /* Well if that failed we better exit quick ! */
 
-	add	r0, pc, #Lsigerr - . - 8
-	swi	0x1002
-
 	swi	SYS_exit
+	b	. - 8
 
-Lsigerr:
-	.asciz "sigreturn syscall failed\n"
 	.align	0
-        .globl  _esigcode
+        .global _esigcode
 _esigcode:
 
 #if	NIPKDB > 0
@@ -494,8 +473,7 @@ ipkdbfault:
  *
  * Move the instruction onto the stack and jump to it.
  */
-	.global	_Execute
-_Execute:
+ENTRY(Execute)
 	mov	ip, sp
 	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
 	sub	fp, ip, #4
@@ -536,9 +514,11 @@ ENTRY(longjmp)
 	mov	r0, #0x00000001
 	mov	r15, r14
 
+	.data
 	.global _esym
 _esym:	.word	_end
 
+	.text
 	.global	_abort
 _abort:
 	b	_abort
@@ -548,8 +528,7 @@ _abort:
  * Atomic bit set and clear functions
  */
 
-	.global	_atomic_set_bit
-_atomic_set_bit:
+ENTRY(atomic_set_bit)
 	mrs	r2, cpsr_all
 	orr	r3, r2, #(I32_bit)
 	msr	cpsr_all, r3
@@ -562,8 +541,7 @@ _atomic_set_bit:
 	mov	pc, lr
 
 
-	.global	_atomic_clear_bit
-_atomic_clear_bit:
+ENTRY(atomic_clear_bit)
 	mrs	r2, cpsr_all
 	orr	r3, r2, #(I32_bit)
 	msr	cpsr_all, r3
