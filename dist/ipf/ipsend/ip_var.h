@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.1.1.1 1999/12/11 22:24:08 veego Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.1.1.2 2002/09/19 07:56:44 martti Exp $	*/
 
 /*	@(#)ip_var.h 1.11 88/08/19 SMI; from UCB 7.1 6/5/86	*/
 
@@ -46,7 +46,7 @@ struct ipq {
  * Note: ipf_next must be at same offset as ipq_next above
  */
 struct	ipasfrag {
-#if defined(vax) || defined(i386)
+#if defined(vax) || defined(i386) || defined(__i386__)
 	u_char	ip_hl:4,
 		ip_v:4;
 #endif
