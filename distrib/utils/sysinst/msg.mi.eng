@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.7.2.14 1997/12/26 02:39:47 perry Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.7.2.15 1998/05/29 20:48:51 mycroft Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -285,8 +285,8 @@ message instcomplete
 should boot from hard disk.  Follow the instructions in the INSTALL
 document about final configuration of your system.
 
-At a minimum, you must edit rc.conf for your local environmment and change
-rc_configured=NO to rc_configured=YES or reboots will stop at single-user.
+At a minimum, you should set a root password and edit /etc/rc.conf to
+match your needs.
 }
 
 message unpackcomplete
