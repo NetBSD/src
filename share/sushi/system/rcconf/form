@@ -1,4 +1,4 @@
-# $NetBSD: form,v 1.13 2005/01/11 22:16:24 peter Exp $
+# $NetBSD: form,v 1.14 2005/01/11 23:00:59 peter Exp $
 escript:30,script2,rc_rcorder_flags	Flags to rcorder at boot
 script:script1,do_rcshutdown	Run /etc/rc.shutdown?
 escript:30,script2,rcshutdown_rcorder_flags	Flags to rcorder at shutdown
@@ -13,7 +13,7 @@ script:script1,swapoff		Remove block-type swap partitions upon shutdown?
 script:script1,ccd		Concatenated disk driver?
 script:script1,raidframe	RAIDframe driver (manually configured devices)?
 script:script1,cgd		Crypto file system?
-script:script1,lkm		Run /etc/rc.lkm
+script:script1,lkm		Run /etc/rc.lkm?
 script:script1,savecore		Run savecore at boot?
 escript:30,script2,savecore_flags	Flags to pass to savecore
 script:script1,clear_tmp	Clear /tmp on boot?
@@ -24,33 +24,36 @@ script:script1,accounting	Start accounting?
 script:script1,newsyslog	Run newsyslog?
 escript:30,script2,newsyslog_flags	Flags to pass newsyslog
 script:script1,rtclocaltime	Adjust RTC at boot?
+script:script1,fixsb		Check for and repair botched superblock problem?
 escript:30,script2,fsck_flags	File system check flags
 escript:1,script2,securelevel	If non-blank, set securelevel early in boot
-script:script1,ipfilter		Start ipfiltering?
-script:script1,ipnat		Start ipnat NAT daemon?
-script:script1,ipfs		Save and load ipf/ipnat state at boot?
-escript:30,script2,ipfs_flags	Flags to pass ipfs
-script:script1,ipsec		Start ipsec security daemon?
-script:script1,ipmon		Write ipfilter messages to syslog?
+script:script1,ipfilter		Enable IP Filter?
+script:script1,ipnat		Enable IP Filter for NAT?
+script:script1,ipfs		Save and load ipf/ipnat states at boot?
+escript:30,script2,ipfs_flags	Flags to pass to ipfs
+script:script1,ipsec		Enable the IPsec keys/policies?
+script:script1,ipmon		Start the IP Filter log daemon (ipmon)?
 escript:30,script2,ipmon_flags	Flags to pass to ipmon
-script:script1,racoon		Start IKE daemon?
+script:script1,pf		Enable pf?
+script:script1,pflogd		Start the pf log daemon (pflogd)?
+script:script1,racoon		Start the racoon IKE daemon?
 script:script1,auto_ifconfig	Automatically configure all available interfaces?
 escript:30,script2,net_interfaces	If above is NO, configure which interfaces?
 script:script1,flushroutes	Flush routes in netstart?
 script:script1,dhclient		Behave as a DHCP client?
 escript:30,script2,dhclient_flags	Flags for DHCP, if blank, config all interfaces
 script:script1,ntpdate		Run ntpdate at boot?
-escript:30,script2,ntpdate_flags	Flags for ntpdate.
+escript:30,script2,ntpdate_flags	Flags for ntpdate
 escript:30,script2,ppp_peers	/etc/ppp/peers to call
 script:script4,ip6mode		IPv6 mode
 script:script1,ip6sitelocal	IPv6 sitelocal addresses
-script:script1,rtsol		IPv6 autoconfig on non routers
+script:script1,rtsol		IPv6 autoconfig on non routers (rtsol)
 escript:30,script2,rtsol_flags	Flags to pass to rtsol
 script:script1,ifwatchd		Run ifwatchd daemon?
 escript:50,script2,ifwatchd_flags	Flags for ifwatchd
 script:script1,altqd		Run ALTQ configuration/monitoring daemon?
 escript:30,script2,altqd_flags	Flags to pass altqd
-script:script1,inetd		Run inetd?
+script:script1,inetd		Run internet 'super-server' (inetd)?
 escript:30,script2,inetd_flags	Flags for inetd
 script:script1,identd		Run identd?
 escript:30,script2,identd_flags	Flags for identd
@@ -59,16 +62,16 @@ escript:30,script2,rpcbind_flags	Flags for rpcbind
 script:script1,syslogd		Run syslogd?
 escript:30,script2,syslogd_flags	Flags for syslogd
 script:script1,cron		Run cron?
-script:script1,named		Run named?
+script:script1,named		Run domain name server (named)?
 escript:30,script2,named_flags	Flags for named
-script:script1,timed		Run timed?
+script:script1,timed		Run time server daemon (timed)?
 escript:30,script2,timed_flags	Flags for timed
-script:script1,ntpd		Run ntpd?
+script:script1,ntpd		Run network time protocol daemon (ntpd)?
 escript:40,script2,ntpd_flags	Flags for ntpd
 script:script1,postfix		Run postfix?
-script:script1,lpd		Run lpd?
+script:script1,lpd		Run line printer spooler daemon (lpd)?
 escript:30,script2,lpd_flags	Flags for lpd
-script:script1,sshd		Run sshd?
+script:script1,sshd		Run OpenSSH SSH daemon (sshd)?
 escript:30,script2,sshd_flags	Flags for sshd
 escript:30,script2,ssh_keygen_flags	Flags for ssh-keygen
 script:script1,sendmail		Run sendmail?
@@ -99,7 +102,7 @@ script:script1,mopd		Run mopd?
 escript:30,script2,mopd_flags	Flags for mopd
 script:script1,ndbootd		Run ndbootd?
 escript:30,script2,ndbootd_flags	Flags for ndbootd
-script:script1,rtadvd		Run rtadvd?
+script:script1,rtadvd		Run router advertisement daemon (rtadvd)?
 escript:30,script2,rtadvd_flags	Flags for rtadvd
 script:script1,xfs		Run X11 Font Server (xfs)?
 escript:30,script2,xfs_flags	Flags for xfs
@@ -111,14 +114,14 @@ script:script1,ypserv		Run ypserv (NIS)?
 escript:30,script2,ypserv_flags	Flags for ypserv
 script:script1,yppasswdd	Run yppasswdd (NIS)?
 escript:30,script2,yppasswdd_flags	Flags for yppasswdd
-script:script1,mountd		Run NFS mount requests daemon?
+script:script1,mountd		Run NFS mount requests daemon (mountd)?
 escript:30,script2,mountd_flags	Flags for mountd
-script:script1,nfs_client	Run NFS client daemons?
-script:script1,nfs_server	Run NFS server daemons?
+script:script1,nfs_client	Enable NFS client daemons?
+script:script1,nfs_server	Enable NFS server daemons?
 escript:30,script2,nfsd_flags	Flags for nfsd
-script:script1,lockd		Run lockd?
+script:script1,lockd		Run NFS file locking daemon (lockd)?
 escript:30,script2,lockd_flags	Flags for lockd
-script:script1,statd		Run statd?
+script:script1,statd		Run RPC host status daemon (statd)?
 escript:30,script2,statd_flags	Flags for statd
 script:script1,amd		Run automounter (amd)?
 escript:40,script2,amd_flags	Flags for amd
@@ -136,9 +139,9 @@ script:script1,powerd		Run powerd?
 escript:30,script2,powerd_flags	Flags for powerd
 script:script1,screenblank	Run screenblank (i386/sparc only)?
 escript:30,script2,screenblank_flags	Flags for screenblank
-script:script1,moused		Configure moused?
+script:script1,moused		Configure serial mouse handler (moused)?
 escript:30,script2,moused_flags	Flags for moused
-script:script1,wdogctl		Run wdogctl?
+script:script1,wdogctl		Run watchdog timer control (wdogctl)?
 script:script1,wscons		Configure wscons?
 escript:30,script2,wscons_flags	Flags to pass to /etc/rc.wscons
 script:script1,wsmoused		Run wsmoused?
