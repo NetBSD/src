@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.11 1999/03/25 23:18:32 thorpej Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.12 1999/08/23 12:12:43 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  * This sun version based on i386 version 1.30.
  */
 
-#define I82586_DEBUG 1
+#define I82586_DEBUG 0
 
 /* Debug elements */
 #define	IED_RINT	0x01
@@ -251,7 +251,7 @@ struct ie_softc {
 	int	async_cmd_inprogress;	/* we didn't wait for 586 to accept
 					   a command */
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	int	sc_debug;
 #endif
 };

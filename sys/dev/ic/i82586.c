@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.24 1999/08/23 12:00:11 pk Exp $	*/
+/*	$NetBSD: i82586.c,v 1.25 1999/08/23 12:12:42 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -233,7 +233,7 @@ static int 	i82586_start_cmd 	__P((struct ie_softc *,
 					    int, int, int, int));
 static int	i82586_cmd_wait		__P((struct ie_softc *));
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 void 		print_rbd 	__P((struct ie_softc *, int));
 #endif
 
@@ -640,7 +640,7 @@ loop:
 		if (i82586_tint(sc, status) != 0)
 			goto reset;
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if ((status & IE_ST_CNA) && (sc->sc_debug & IED_CNA))
 		printf("%s: cna; status=0x%x\n", sc->sc_dev.dv_xname, status);
 #endif
@@ -681,7 +681,7 @@ i82586_rint(sc, scbstatus)
 static	int timesthru = 1024;
 	int i, status, off;
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if (sc->sc_debug & IED_RINT)
 		printf("%s: rint: status 0x%x\n",
 			sc->sc_dev.dv_xname, scbstatus);
@@ -696,7 +696,7 @@ static	int timesthru = 1024;
 				  BUS_SPACE_BARRIER_READ);
 		status = sc->ie_bus_read16(sc, off);
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 		if (sc->sc_debug & IED_RINT)
 			printf("%s: rint: frame(%d) status 0x%x\n",
 				sc->sc_dev.dv_xname, i, status);
@@ -724,7 +724,7 @@ static	int timesthru = 1024;
 			drop = 1;
 		}
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 		if ((status & IE_FD_BUSY) != 0)
 			printf("%s: rint: frame(%d) busy; status=0x%x\n",
 				sc->sc_dev.dv_xname, i, status);
@@ -840,7 +840,7 @@ i82586_tint(sc, scbstatus)
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if (sc->xmit_busy <= 0) {
 	    printf("i82586_tint: WEIRD: xmit_busy=%d, xctail=%d, xchead=%d\n",
 		   sc->xmit_busy, sc->xctail, sc->xchead);
@@ -851,7 +851,7 @@ i82586_tint(sc, scbstatus)
 	status = sc->ie_bus_read16(sc, IE_CMD_XMIT_STATUS(sc->xmit_cmds,
 							  sc->xctail));
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if (sc->sc_debug & IED_TINT)
 		printf("%s: tint: SCB status 0x%x; xmit status 0x%x\n",
 			sc->sc_dev.dv_xname, scbstatus, status);
@@ -936,7 +936,7 @@ i82586_get_rbd_list(sc, start, end, pktlen)
 			 * This means we are somehow out of sync.  So, we
 			 * reset the adapter.
 			 */
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 			print_rbd(sc, rbindex);
 #endif
 			log(LOG_ERR,
@@ -1228,7 +1228,7 @@ ie_readframe(sc, num)
 		return (0);
 	}
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if (sc->sc_debug & IED_READFRAME) {
 		struct ether_header *eh = mtod(m, struct ether_header *);
 
@@ -1288,7 +1288,7 @@ iexmit(sc)
 
 	cur = sc->xctail;
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	if (sc->sc_debug & IED_XMIT)
 		printf("%s: xmit buffer %d\n", sc->sc_dev.dv_xname, cur);
 #endif
@@ -1392,7 +1392,7 @@ i82586_start(ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 		if (sc->sc_debug & IED_ENQ)
 			printf("%s: fill buffer %d\n", sc->sc_dev.dv_xname,
 				sc->xchead);
@@ -1642,7 +1642,7 @@ i82586_setup_bufs(sc)
 	sc->rbufs = ptr;
 	ptr += sc->nrxbuf * IE_RBUF_SIZE;
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	printf("%s: %d frames %d bufs\n", sc->sc_dev.dv_xname, sc->nframes,
 		sc->nrxbuf);
 #endif
@@ -1729,7 +1729,7 @@ i82586_setup_bufs(sc)
 	sc->rbtail = sc->nrxbuf - 1;
 
 /* link in recv frames * and buffer into the scb. */
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 	printf("%s: reserved %d bytes\n",
 		sc->sc_dev.dv_xname, ptr - sc->buf_area);
 #endif
@@ -2040,7 +2040,7 @@ i82586_ioctl(ifp, cmd, data)
 			iestop(sc);
 			i82586_init(sc);
 		}
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 		if (ifp->if_flags & IFF_DEBUG)
 			sc->sc_debug = IED_ALL;
 		else
@@ -2155,7 +2155,7 @@ i82586_mediastatus(ifp, ifmr)
                 (*sc->sc_mediastatus)(sc, ifmr);
 }
 
-#ifdef I82586_DEBUG
+#if I82586_DEBUG
 void
 print_rbd(sc, n)
 	struct ie_softc *sc;
