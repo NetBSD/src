@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.12 1999/08/10 18:16:07 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.13 1999/11/19 20:41:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,7 +54,7 @@
  */
 struct ether_addr {
 	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
-};
+} __attribute__((__packed__));
 
 /*
  * Structure of a 10Mb/s Ethernet header.
@@ -63,7 +63,7 @@ struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
 	u_int16_t ether_type;
-};
+} __attribute__((__packed__));
 
 #include <net/ethertypes.h>
 
