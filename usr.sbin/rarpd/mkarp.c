@@ -1,4 +1,4 @@
-/*	$NetBSD: mkarp.c,v 1.3 2000/02/11 11:27:20 abs Exp $ */
+/*	$NetBSD: mkarp.c,v 1.4 2002/07/14 00:58:30 wiz Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: mkarp.c,v 1.3 2000/02/11 11:27:20 abs Exp $");
+__RCSID("$NetBSD: mkarp.c,v 1.4 2002/07/14 00:58:30 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,8 @@ __RCSID("$NetBSD: mkarp.c,v 1.3 2000/02/11 11:27:20 abs Exp $");
 
 #include "mkarp.h"
 
-int	rtmsg __P((int, int, struct rt_msghdr *, struct sockaddr_inarp *, 
-		   struct sockaddr_dl *));
+int	rtmsg(int, int, struct rt_msghdr *, struct sockaddr_inarp *, 
+	      struct sockaddr_dl *);
 struct	{
 	struct	rt_msghdr m_rtm;
 	char	m_space[512];
@@ -91,9 +91,7 @@ struct	{
  * Set an individual arp entry 
  */
 int
-mkarp(haddr, ipaddr)
-	u_char *haddr;
-	u_int32_t ipaddr;
+mkarp(u_char *haddr, u_int32_t ipaddr)
 {
 	static struct sockaddr_inarp blank_sin = {sizeof(blank_sin), AF_INET };
 	static struct sockaddr_dl blank_sdl = {sizeof(blank_sdl), AF_LINK };
@@ -177,12 +175,8 @@ overwrite:
 }
 
 int
-rtmsg(cmd, s, rtm, sin_m, sdl_m)
-	int cmd;
-	int s;
-	struct rt_msghdr *rtm;
-	struct sockaddr_inarp *sin_m;
-	struct sockaddr_dl *sdl_m;
+rtmsg(int cmd, int s, struct rt_msghdr *rtm, struct sockaddr_inarp *sin_m,
+      struct sockaddr_dl *sdl_m)
 {
 	static int seq;
 	int rlen;

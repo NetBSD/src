@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.44 2002/01/11 05:33:22 itojun Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.45 2002/07/14 00:58:30 wiz Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -28,7 +28,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.44 2002/01/11 05:33:22 itojun Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.45 2002/07/14 00:58:30 wiz Exp $");
 #endif
 
 
@@ -95,36 +95,36 @@ struct if_info {
  */
 struct if_info *iflist;
 
-u_int32_t choose_ipaddr __P((u_int32_t **, u_int32_t, u_int32_t));
-void	debug __P((const char *,...))
+u_int32_t choose_ipaddr(u_int32_t **, u_int32_t, u_int32_t);
+void	debug(const char *,...)
 	__attribute__((__format__(__printf__, 1, 2)));
-void	init_all __P((void));
-void	init_one __P((char *, u_int32_t));
-u_int32_t	ipaddrtonetmask __P((u_int32_t));
-void	lookup_eaddr __P((char *, u_char *));
-void	lookup_ipaddr __P((char *, u_int32_t *, u_int32_t *));
-int	main __P((int, char **));
-void	rarp_loop __P((void));
-int	rarp_open __P((char *));
-void	rarp_process __P((struct if_info *, u_char *));
-void	rarp_reply __P((struct if_info *, struct ether_header *, u_int32_t,
-			struct hostent *));
-void	rarperr __P((int, const char *,...))
+void	init_all(void);
+void	init_one(char *, u_int32_t);
+u_int32_t	ipaddrtonetmask(u_int32_t);
+void	lookup_eaddr(char *, u_char *);
+void	lookup_ipaddr(char *, u_int32_t *, u_int32_t *);
+int	main(int, char **);
+void	rarp_loop(void);
+int	rarp_open(char *);
+void	rarp_process(struct if_info *, u_char *);
+void	rarp_reply(struct if_info *, struct ether_header *, u_int32_t,
+		   struct hostent *);
+void	rarperr(int, const char *,...)
 	__attribute__((__format__(__printf__, 2, 3)));
 
 #if defined(__NetBSD__)
 #include "mkarp.h"
 #else
-void	update_arptab __P((u_char *, u_int32_t));
+void	update_arptab(u_char *, u_int32_t);
 #endif
 
-void	usage __P((void));
+void	usage(void);
 
-static int	bpf_open __P((void));
-static int	rarp_check __P((u_char *, int));
+static int	bpf_open(void);
+static int	rarp_check(u_char *, int);
 
 #ifdef REQUIRE_TFTPBOOT
-int	rarp_bootable __P((u_int32_t));
+int	rarp_bootable(u_int32_t);
 #endif
 
 int     aflag = 0;		/* listen on "all" interfaces  */
@@ -133,9 +133,7 @@ int     fflag = 0;		/* don't fork */
 int	lflag = 0;		/* log all replies */
 
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char **argv)
 {
 	int     op;
 	char   *ifname, *hostname;
@@ -193,9 +191,7 @@ main(argc, argv)
  * mask and Ethernet address, and open a BPF file for it.
  */
 void
-init_one(ifname, ipaddr)
-	char   *ifname;
-	u_int32_t ipaddr;
+init_one(char *ifname, u_int32_t ipaddr)
 {
 	struct if_info *h;
 	struct if_info *p;
@@ -243,7 +239,7 @@ init_one(ifname, ipaddr)
  * point to point.
  */
 void
-init_all()
+init_all(void)
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa, *p;
@@ -318,7 +314,7 @@ init_all()
 }
 
 void
-usage()
+usage(void)
 {
 	(void) fprintf(stderr, "usage: rarpd -a [-d|-f] [-l]\n");
 	(void) fprintf(stderr, "       rarpd [-d|-f] [-l] interface\n");
@@ -326,7 +322,7 @@ usage()
 }
 
 static int
-bpf_open()
+bpf_open(void)
 {
 	int     fd;
 	int     n = 0;
@@ -349,8 +345,7 @@ bpf_open()
  * Set immediate mode, and set a filter that accepts only RARP requests.
  */
 int
-rarp_open(device)
-	char   *device;
+rarp_open(char *device)
 {
 	int     fd;
 	struct ifreq ifr;
@@ -417,9 +412,7 @@ rarp_open(device)
  * false on failure and log the reason.
  */
 static int
-rarp_check(p, len)
-	u_char *p;
-	int     len;
+rarp_check(u_char *p, int len)
 {
 	struct ether_header *ep = (struct ether_header *) p;
 #ifdef __NetBSD__
@@ -484,7 +477,7 @@ rarp_check(p, len)
  * interfaces in 'iflist'.
  */
 void
-rarp_loop()
+rarp_loop(void)
 {
 	u_char *buf, *bp, *ep;
 	int     cc, fd;
@@ -548,7 +541,7 @@ rarp_loop()
 			bp = buf;
 			ep = bp + cc;
 			while (bp < ep) {
-				register int caplen, hdrlen;
+				int caplen, hdrlen;
 
 				caplen = bhp->bh_caplen;
 				hdrlen = bhp->bh_hdrlen;
@@ -574,11 +567,10 @@ rarp_loop()
  * configuration file.
  */
 int
-rarp_bootable(addr)
-	u_int32_t  addr;
+rarp_bootable(u_int32_t addr)
 {
-	register struct dirent *dent;
-	register DIR *d;
+	struct dirent *dent;
+	DIR *d;
 	char    ipname[9];
 	static DIR *dd = 0;
 
@@ -611,10 +603,7 @@ rarp_bootable(addr)
  * of the address.
  */
 u_int32_t
-choose_ipaddr(alist, net, netmask)
-	u_int32_t **alist;
-	u_int32_t net;
-	u_int32_t netmask;
+choose_ipaddr(u_int32_t **alist, u_int32_t net, u_int32_t netmask)
 {
 
 	for (; *alist; ++alist) {
@@ -628,9 +617,7 @@ choose_ipaddr(alist, net, netmask)
  * already been checked for validity.  The reply is overlaid on the request.
  */
 void
-rarp_process(ii, pkt)
-	struct if_info *ii;
-	u_char *pkt;
+rarp_process(struct if_info *ii, u_char *pkt)
 {
 	struct ether_header *ep;
 	struct hostent *hp;
@@ -687,9 +674,7 @@ rarp_process(ii, pkt)
  * file descriptor 'fd'; return it in 'eaddr'.
  */
 void
-lookup_eaddr(ifname, eaddr)
-	char *ifname;
-	u_char *eaddr;
+lookup_eaddr(char *ifname, u_char *eaddr)
 {
 #ifdef HAVE_IFADDRS_H
 	struct ifaddrs *ifap, *ifa;
@@ -765,10 +750,7 @@ lookup_eaddr(ifname, eaddr)
  * Lookup the IP address and network mask of the interface named 'ifname'.
  */
 void
-lookup_ipaddr(ifname, addrp, netmaskp)
-	char   *ifname;
-	u_int32_t *addrp;
-	u_int32_t *netmaskp;
+lookup_ipaddr(char *ifname, u_int32_t *addrp, u_int32_t *netmaskp)
 {
 	int     fd;
 
@@ -819,9 +801,7 @@ lookup_ipaddr(ifname, addrp, netmaskp)
  */
 #ifndef __NetBSD__
 void
-update_arptab(ep, ipaddr)
-	u_char *ep;
-	u_int32_t  ipaddr;
+update_arptab(u_char *ep, u_int32_t ipaddr)
 {
 	struct arpreq request;
 	struct sockaddr_in *sin;
@@ -881,11 +861,8 @@ update_arptab(ep, ipaddr)
  * ARP request.
  */
 void
-rarp_reply(ii, ep, ipaddr, hp)
-	struct if_info *ii;
-	struct ether_header *ep;
-	u_int32_t  ipaddr;
-	struct hostent *hp;
+rarp_reply(struct if_info *ii, struct ether_header *ep, u_int32_t ipaddr,
+	   struct hostent *hp)
 {
 	int     n;
 #ifdef __NetBSD__
@@ -955,8 +932,7 @@ rarp_reply(ii, ep, ipaddr, hp)
  * SIOCGIFNETMASK doesn't work.
  */
 u_int32_t
-ipaddrtonetmask(addr)
-	u_int32_t  addr;
+ipaddrtonetmask(u_int32_t addr)
 {
 
 	if (IN_CLASSA(addr))
@@ -970,29 +946,14 @@ ipaddrtonetmask(addr)
 	return(-1);
 }
 
-#if __STDC__
 #include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
 
 void
-#if __STDC__
 rarperr(int fatal, const char *fmt,...)
-#else
-rarperr(fmt, va_alist)
-	int     fatal;
-	char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (dflag) {
 		if (fatal)
 			(void)fprintf(stderr, "rarpd: error: ");
@@ -1000,11 +961,7 @@ va_dcl
 			(void)fprintf(stderr, "rarpd: warning: ");
 		(void)vfprintf(stderr, fmt, ap);
 		va_end(ap);
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_ERR, fmt, ap);
@@ -1015,30 +972,16 @@ va_dcl
 }
 
 void
-#if __STDC__
 debug(const char *fmt,...)
-#else
-debug(fmt, va_alist)
-	char   *fmt;
-va_dcl
-#endif
 {
 	va_list ap;
 
-#if __STDC__
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	if (dflag) {
 		(void)fprintf(stderr, "rarpd: ");
 		(void)vfprintf(stderr, fmt, ap);
 		va_end(ap);
-#if __STDC__
 		va_start(ap, fmt);
-#else
-		va_start(ap);
-#endif
 		(void)fprintf(stderr, "\n");
 	}
 	vsyslog(LOG_WARNING, fmt, ap);
