@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.109 2002/11/02 20:26:40 chs Exp $
+#	$NetBSD: files.mac68k,v 1.110 2002/11/03 01:12:01 chs Exp $
 
 # mac68k-specific configuration info
 
@@ -163,7 +163,6 @@ file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
 file	arch/mac68k/mac68k/intr.c
 file	arch/mac68k/mac68k/iop.c
-file	arch/mac68k/mac68k/kgdb_machdep.c	kgdb
 file	arch/mac68k/mac68k/machdep.c
 file	arch/mac68k/mac68k/macrom.c
 file	arch/mac68k/mac68k/macromasm.s
@@ -181,6 +180,7 @@ file	arch/mac68k/mac68k/via.c
 file	arch/m68k/m68k/bus_dma.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/vm_machdep.c
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun68k,v 1.1 2001/06/27 02:55:30 fredette Exp $
+#	$NetBSD: files.sun68k,v 1.2 2002/11/03 01:12:04 chs Exp $
 
 #
 # common sun68k configuration info
@@ -10,9 +10,10 @@ file arch/sun68k/sun68k/bus.c
 file arch/sun68k/sun68k/ctrlsp.S
 file arch/sun68k/sun68k/disksubr.c
 file arch/sun68k/sun68k/isr.c
-file arch/sun68k/sun68k/kgdb_machdep.c 		kgdb
 file arch/sun68k/sun68k/stub.c
 file arch/sun68k/sun68k/vector.c
+
+file arch/m68k/m68k/kgdb_machdep.c 		kgdb
 
 #
 # Bus types
@@ -26,4 +27,3 @@ include "dev/vme/files.vme"
 device sun68kvme: vmebus
 attach sun68kvme at mainbus
 file arch/sun68k/sun68k/vme_sun68k.c		sun68kvme
-

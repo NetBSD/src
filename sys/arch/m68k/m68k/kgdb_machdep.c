@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.4 2000/06/29 08:15:12 mrg Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.1 2002/11/03 01:12:00 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -52,38 +52,16 @@
 #include <sys/systm.h>
 #include <sys/kgdb.h>
 
-#include <uvm/uvm_extern.h>
-
-#include <machine/db_machdep.h>
-#include <machine/pmap.h>
-#include <machine/pte.h>
-
-#define	INVOKE_KGDB()	__asm __volatile("trap	#15")
+#define INVOKE_KGDB()   __asm __volatile("trap  #15")
 
 /*
  * Determine if the memory at va..(va+len) is valid.
  */
 int
-kgdb_acc(va, ulen)
-	vaddr_t va;
-	size_t ulen;
+kgdb_acc(vaddr_t va, size_t ulen)
 {
-	int len, pgoff;
-	pt_entry_t *pte;
 
-	len = (int)ulen;
-	pgoff = m68k_page_offset(va);
-	va  -= pgoff;
-	len += pgoff;
-
-	while (len > 0) {
-		pte = kvtopte(va);
-		if ((*pte & PG_V) == 0)
-			return (0);
-		va  += NBPG;
-		len -= NBPG;
-	}
-
+	/* Just let the trap handler deal with it. */
 	return (1);
 }
 
@@ -92,9 +70,9 @@ kgdb_acc(va, ulen)
  * noting on the console why nothing else is going on.
  */
 void
-kgdb_connect(verbose)
-	int verbose;
+kgdb_connect(int verbose)
 {
+
 	if (kgdb_dev < 0)
 		return;
 
@@ -113,10 +91,10 @@ kgdb_connect(verbose)
  * Decide what to do on panic.
  */
 void
-kgdb_panic()
+kgdb_panic(void)
 {
 	if (kgdb_dev >= 0 && kgdb_debug_panic) {
 		printf("entering kgdb\n");
-		INVOKE_KGDB();
+		kgdb_connect(kgdb_active == 0);
 	}
 }
