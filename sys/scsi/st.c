@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.40 1994/11/21 10:39:30 mycroft Exp $	*/
+/*	$NetBSD: st.c,v 1.41 1994/11/21 11:28:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -271,23 +271,22 @@ struct scsi_device st_switch = {
 	0
 };
 
-#define	ST_INFO_VALID	0x02
-#define ST_OPEN		0x04
-#define	ST_BLOCK_SET	0x08	/* block size, mode set by ioctl      */
-#define	ST_WRITTEN	0x10	/* data have been written, EOD needed */
-#define	ST_FIXEDBLOCKS	0x20
-#define	ST_AT_FILEMARK	0x40
-#define	ST_EIO_PENDING	0x80	/* we couldn't report it then (had data) */
-#define	ST_NEW_MOUNT	0x100	/* still need to decide mode              */
-#define	ST_READONLY	0x200	/* st_mode_sense says write protected */
-#define	ST_FM_WRITTEN	0x400	/*
+#define	ST_INFO_VALID	0x0001
+#define	ST_BLOCK_SET	0x0002	/* block size, mode set by ioctl      */
+#define	ST_WRITTEN	0x0004	/* data have been written, EOD needed */
+#define	ST_FIXEDBLOCKS	0x0008
+#define	ST_AT_FILEMARK	0x0010
+#define	ST_EIO_PENDING	0x0020	/* we couldn't report it then (had data) */
+#define	ST_NEW_MOUNT	0x0040	/* still need to decide mode              */
+#define	ST_READONLY	0x0080	/* st_mode_sense says write protected */
+#define	ST_FM_WRITTEN	0x0100	/*
 				 * EOF file mark written  -- used with
 				 * ~ST_WRITTEN to indicate that multiple file
 				 * marks have been written
 				 */
-#define	ST_BLANK_READ	0x800	/* BLANK CHECK encountered already */
-#define	ST_2FM_AT_EOD	0x1000	/* write 2 file marks at EOD */
-#define	ST_MOUNTED	0x2000	/* Device is presently mounted */
+#define	ST_BLANK_READ	0x0200	/* BLANK CHECK encountered already */
+#define	ST_2FM_AT_EOD	0x0400	/* write 2 file marks at EOD */
+#define	ST_MOUNTED	0x0800	/* Device is presently mounted */
 
 #define	ST_PER_ACTION	(ST_AT_FILEMARK | ST_EIO_PENDING | ST_BLANK_READ)
 #define	ST_PER_MOUNT	(ST_INFO_VALID | ST_BLOCK_SET | ST_WRITTEN | \
@@ -480,30 +479,34 @@ stopen(dev, flags)
 	struct scsi_link *sc_link;
 
 	unit = STUNIT(dev);
-	mode = STMODE(dev);
-	dsty = STDSTY(dev);
-
 	if (unit >= stcd.cd_ndevs)
 		return ENXIO;
 	st = stcd.cd_devs[unit];
 	if (!st)
 		return ENXIO;
 
+	mode = STMODE(dev);
+	dsty = STDSTY(dev);
 	sc_link = st->sc_link;
+
 	SC_DEBUG(sc_link, SDEV_DB1, ("open: dev=0x%x (unit %d (of %d))\n", dev,
 	    unit, stcd.cd_ndevs));
 
-	if (st->flags & ST_OPEN)
+	/*
+	 * Only allow one at a time
+	 */
+	if (sc_link->flags & SDEV_OPEN) {
+		printf("%s: already open\n", st->sc_dev.dv_xname);
 		return EBUSY;
+	}
 
 	/*
-	 * Throw out a dummy instruction to catch 'Unit attention
-	 * errors (the error handling will invalidate all our
-	 * device info if we get one, but otherwise, ignore it)
+	 * Catch any unit attention errors.
 	 */
 	scsi_test_unit_ready(sc_link, SCSI_SILENT);
 
 	sc_link->flags |= SDEV_OPEN;	/* unit attn are now errors */
+
 	/*
 	 * If the mode is 3 (e.g. minor = 3,7,11,15)
 	 * then the device has been openned to set defaults
@@ -516,10 +519,11 @@ stopen(dev, flags)
 	 * Check that the device is ready to use (media loaded?)
 	 * This time take notice of the return result
 	 */
-	if (error = (scsi_test_unit_ready(sc_link, 0))) {
-		printf("%s: not ready\n", st->sc_dev.dv_xname);
+	if (scsi_test_unit_ready(sc_link, 0)) {
+		SC_DEBUG(sc_link, SDEV_DB3, ("device not responding\n"));
 		st_unmount(st, NOEJECT);
-		return error;
+		error = ENXIO;
+		goto bad;
 	}
 
 	/*
@@ -547,10 +551,12 @@ stopen(dev, flags)
 	if ((flags & O_ACCMODE) == FWRITE)
 		st->flags |= ST_WRITTEN;
 
-	SC_DEBUG(sc_link, SDEV_DB2, ("Open complete\n"));
-
-	st->flags |= ST_OPEN;
+	SC_DEBUG(sc_link, SDEV_DB2, ("open complete\n"));
 	return 0;
+
+bad:
+	sc_link->flags &= ~SDEV_OPEN;
+	return error;
 }
 
 /*
@@ -561,34 +567,27 @@ int
 stclose(dev)
 	dev_t dev;
 {
-	int unit, mode;
-	struct st_data *st;
-	struct scsi_link *sc_link;
+	struct st_data *st = stcd.cd_devs[STUNIT(dev)];
 
-	unit = STUNIT(dev);
-	mode = STMODE(dev);
-	st = stcd.cd_devs[unit];
-	sc_link = st->sc_link;
-
-	SC_DEBUG(sc_link, SDEV_DB1, ("closing\n"));
+	SC_DEBUG(st->sc_link, SDEV_DB1, ("closing\n"));
 	if ((st->flags & (ST_WRITTEN | ST_FM_WRITTEN)) == ST_WRITTEN)
 		st_write_filemarks(st, 1, 0);
-	switch (mode & 0x3) {
+	switch (STMODE(dev)) {
 	case 0:
 	case 3:		/* for now */
 		st_unmount(st, NOEJECT);
 		break;
 	case 1:
 		/* leave mounted unless media seems to have been removed */
-		if (!(sc_link->flags & SDEV_MEDIA_LOADED))
+		if (!(st->sc_link->flags & SDEV_MEDIA_LOADED))
 			st_unmount(st, NOEJECT);
 		break;
 	case 2:
 		st_unmount(st, EJECT);
 		break;
 	}
-	sc_link->flags &= ~SDEV_OPEN;
-	st->flags &= ~ST_OPEN;
+	st->sc_link->flags &= ~SDEV_OPEN;
+
 	return 0;
 }
 
