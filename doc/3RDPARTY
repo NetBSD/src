@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.51 2003/02/07 18:40:30 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.52 2003/02/13 08:07:39 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -55,7 +55,7 @@ Current Vers:	6.1b2
 Maintainer:	Erez Zadok <ezk@cs.columbia.edu>
 Archive Site:	ftp://shekel.mcl.cs.columbia.edu/pub/am-utils/
 Mailing List:	amd-dev
-Responsible:	christos, wiz
+Responsible:	christos
 Notes:
 Amd2netbsd script to convert to BSD make system and remove unneeded files.
 
@@ -299,7 +299,7 @@ we use BSD-licensed implementation from Citrus project (see entry for
 "Citrus XPG4DL").  We hope to replace userland tools with BSD-licensed one.
 
 Package:	grep
-Version:	2.5
+Version:	2.5.1
 Current Vers:	2.5.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
