@@ -814,7 +814,6 @@
 ./usr/share/man/cat8/spray.0
 ./usr/share/man/cat8/sprayd.0
 ./usr/share/man/cat8/statd.0
-./usr/share/man/cat8/statmsg.0
 ./usr/share/man/cat8/stdethers.0
 ./usr/share/man/cat8/stdhosts.0
 ./usr/share/man/cat8/sticky.0
@@ -825,7 +824,6 @@
 ./usr/share/man/cat8/swapctl.0
 ./usr/share/man/cat8/swapon.0
 ./usr/share/man/cat8/sync.0
-./usr/share/man/cat8/sysconfd.0
 ./usr/share/man/cat8/sysctl.0
 ./usr/share/man/cat8/syslogd.0
 ./usr/share/man/cat8/talkd.0
@@ -1948,7 +1946,6 @@
 ./usr/share/man/man8/spray.8
 ./usr/share/man/man8/sprayd.8
 ./usr/share/man/man8/statd.8
-./usr/share/man/man8/statmsg.8
 ./usr/share/man/man8/stdethers.8
 ./usr/share/man/man8/stdhosts.8
 ./usr/share/man/man8/sticky.8
@@ -1959,7 +1956,6 @@
 ./usr/share/man/man8/swapctl.8
 ./usr/share/man/man8/swapon.8
 ./usr/share/man/man8/sync.8
-./usr/share/man/man8/sysconfd.8
 ./usr/share/man/man8/sysctl.8
 ./usr/share/man/man8/syslogd.8
 ./usr/share/man/man8/talkd.8
