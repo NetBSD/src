@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.198 1998/05/24 19:32:43 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 1998/06/09 01:57:44 tv Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -338,7 +338,12 @@ consinit(void)
 		/*
 		 * Initialize kernel debugger, if compiled in.
 		 */
-		ddb_init();
+		{
+			extern int end;
+			extern int *esym;
+
+			ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
+		}
 #endif
 
 		if (boothowto & RB_KDB) {
