@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.75 2004/04/09 18:24:58 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.76 2004/04/12 04:51:30 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -521,3 +521,23 @@ sbin/raidctl/raidctl.8				patch
 
 	Add a couple little warnings about swapping to RAID 5 sets.
 	[oster, ticket #1555]
+
+etc/etc.acorn32/MAKEDEV				patch
+etc/etc.algor/MAKEDEV				patch
+etc/etc.alpha/MAKEDEV				patch
+etc/etc.cats/MAKEDEV				patch
+etc/etc.evbarm/MAKEDEV				patch
+etc/etc.evbmips/MAKEDEV				patch
+etc/etc.hpcarm/MAKEDEV				patch
+etc/etc.hpcmips/MAKEDEV				patch
+etc/etc.i386/MAKEDEV				patch
+etc/etc.macppc/MAKEDEV				patch
+etc/etc.netwinder/MAKEDEV			patch
+etc/etc.playstation2/MAKEDEV			patch
+etc/etc.sbmips/MAKEDEV				patch
+etc/etc.shark/MAKEDEV				patch
+etc/etc.sparc64/MAKEDEV				patch
+
+	Fix ugen issue from latest shell changes that treat numeric constants
+	differently depending on their prefix.
+	[taca, ticket #1664]
