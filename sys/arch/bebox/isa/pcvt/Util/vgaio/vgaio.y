@@ -34,7 +34,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$Header: /cvsroot/src/sys/arch/bebox/isa/pcvt/Util/vgaio/Attic/vgaio.y,v 1.2 1997/11/01 06:49:34 lukem Exp $"
+#ident "$NetBSD: vgaio.y,v 1.3 1998/01/05 05:05:54 perry Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -20,7 +20,7 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  *
- * $Header: /cvsroot/src/sys/arch/bebox/isa/pcvt/Util/set2061/Attic/compiler.h,v 1.1 1997/10/14 06:51:17 sakamoto Exp $
+ * $NetBSD: compiler.h,v 1.2 1998/01/05 05:05:51 perry Exp $
  */
 
 

@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ident "$Header: /cvsroot/src/sys/arch/bebox/isa/pcvt/Util/vgaio/Attic/lex.l,v 1.1 1997/10/14 06:51:25 sakamoto Exp $"
+#ident "$NetBSD: lex.l,v 1.2 1998/01/05 05:05:52 perry Exp $"
 
 #include <stdio.h>
 #include <stdlib.h>
