@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.3 2003/01/29 16:50:37 thorpej Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.4 2003/02/25 20:35:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -231,6 +231,7 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp = CBUF_GET();
 	if (cbp == NULL)
 		return (NULL);
+	BUF_INIT(&cbp->cb_buf);
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
@@ -238,7 +239,6 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp->cb_buf.b_dev = sc->sc_vnodes[comp]->v_rdev;
 	cbp->cb_buf.b_blkno = bn + sc->sc_aai->aai_offset;
 	cbp->cb_buf.b_data = addr;
-	LIST_INIT(&cbp->cb_buf.b_dep);
 	cbp->cb_buf.b_bcount = bcount;
 
 	/* Context for iodone */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.82 2003/02/05 21:38:39 pk Exp $	*/
+/*	$NetBSD: ccd.c,v 1.83 2003/02/25 20:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.82 2003/02/05 21:38:39 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.83 2003/02/25 20:35:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -802,7 +802,7 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp = CCD_GETBUF();
 	if (cbp == NULL)
 		return (NULL);
-	simple_lock_init(&cbp->cb_buf.b_interlock);
+	BUF_INIT(&cbp->cb_buf);
 	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
 	cbp->cb_buf.b_iodone = ccdiodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
@@ -810,7 +810,6 @@ ccdbuffer(cs, bp, bn, addr, bcount)
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
-	LIST_INIT(&cbp->cb_buf.b_dep);
 	if (cs->sc_ileave == 0)
 		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else
