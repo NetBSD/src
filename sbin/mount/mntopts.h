@@ -1,4 +1,4 @@
-/*	$NetBSD: mntopts.h,v 1.3 1995/03/18 14:56:59 cgd Exp $	*/
+/*	$NetBSD: mntopts.h,v 1.4 1996/10/23 22:51:08 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -43,6 +43,7 @@ struct mntopt {
 
 /* User-visible MNT_ flags. */
 #define MOPT_ASYNC		{ "async",	0, MNT_ASYNC }
+#define MOPT_NOCOREDUMP		{ "coredump",	1, MNT_NOCOREDUMP }
 #define MOPT_NODEV		{ "dev",	1, MNT_NODEV }
 #define MOPT_NOEXEC		{ "exec",	1, MNT_NOEXEC }
 #define MOPT_NOSUID		{ "suid",	1, MNT_NOSUID }
@@ -74,6 +75,7 @@ struct mntopt {
 	MOPT_USERQUOTA,							\
 	MOPT_GROUPQUOTA,						\
 	MOPT_FSTAB_COMPAT,						\
+	MOPT_NOCOREDUMP,						\
 	MOPT_NODEV,							\
 	MOPT_NOEXEC,							\
 	MOPT_NOSUID,							\
