@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2002/09/18 06:38:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2002/11/23 23:45:52 fvdl Exp $
 
 NOMAN=	# defined
 STRIPFLAG=
@@ -16,6 +16,12 @@ LDFLAGS+= -e start
 .else
 LDFLAGS+= -e _start -N
 .endif
+
+.if ${MACHINE} == "x86_64"
+LDFLAGS+=  -m elf_i386
+AFLAGS+=   -m32
+.endif
+
 
 ${PROG}: ${OBJS}
 	${LD} -o ${PROG}.tmp ${LDFLAGS} -Ttext 0x600 ${OBJS}
