@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.8 1997/04/07 00:19:19 cgd Exp $ */
+/* $NetBSD: process_machdep.c,v 1.9 1997/04/07 23:40:03 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -52,7 +52,10 @@
  *	Set the process's program counter.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.9 1997/04/07 23:40:03 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

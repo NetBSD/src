@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_300.c,v 1.14 1997/04/07 06:24:27 cgd Exp $ */
+/* $NetBSD: dec_3000_300.c,v 1.15 1997/04/07 23:39:45 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_300.c,v 1.15 1997/04/07 23:39:45 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

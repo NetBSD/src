@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.4 1997/04/06 22:56:00 cgd Exp $ */
+/* $NetBSD: vga.c,v 1.5 1997/04/07 23:40:13 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.5 1997/04/07 23:40:13 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

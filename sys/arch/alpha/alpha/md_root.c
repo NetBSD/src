@@ -1,4 +1,4 @@
-/* $NetBSD: md_root.c,v 1.8 1997/04/07 00:19:16 cgd Exp $ */
+/* $NetBSD: md_root.c,v 1.9 1997/04/07 23:39:57 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -28,7 +28,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.9 1997/04/07 23:39:57 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

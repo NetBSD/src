@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.20 1997/04/07 00:19:12 cgd Exp $ */
+/* $NetBSD: cpu.c,v 1.21 1997/04/07 23:39:41 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 1997/04/07 23:39:41 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

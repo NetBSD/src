@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn8ae.c,v 1.3 1997/04/07 02:01:26 cgd Exp $ */
+/* $NetBSD: pci_kn8ae.c,v 1.4 1997/04/07 23:40:44 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -30,7 +30,10 @@
  * SUCH DAMAGE.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pci_kn8ae.c,v 1.4 1997/04/07 23:40:44 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

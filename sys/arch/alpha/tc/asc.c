@@ -1,4 +1,4 @@
-/* $NetBSD: asc.c,v 1.3 1997/04/06 22:31:45 cgd Exp $ */
+/* $NetBSD: asc.c,v 1.4 1997/04/07 23:40:52 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -100,7 +100,10 @@
  * Charles Hannum (mycroft@duality.gnu.ai.mit.edu).  Thanks a million!
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.4 1997/04/07 23:40:52 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

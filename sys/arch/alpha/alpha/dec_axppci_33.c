@@ -1,4 +1,4 @@
-/* $NetBSD: dec_axppci_33.c,v 1.23 1997/04/07 06:24:29 cgd Exp $ */
+/* $NetBSD: dec_axppci_33.c,v 1.24 1997/04/07 23:39:48 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dec_axppci_33.c,v 1.24 1997/04/07 23:39:48 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

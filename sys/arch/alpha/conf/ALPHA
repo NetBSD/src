@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.46 1997/04/06 23:11:22 cgd Exp $
+# $NetBSD: ALPHA,v 1.47 1997/04/07 23:40:15 cgd Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -98,6 +98,7 @@ options		LKM
 options		EISAVERBOSE		# recognize "unknown" EISA devices
 #options	EXTENT_DEBUG		# extent alloc/dealloc code debugging
 options		FIX_UNALIGNED_VAX_FP	# fix unaligned VAX FP loads & stores
+#options	NO_KERNEL_RCSIDS	# don't include kernel file RCS IDs
 options		PCIVERBOSE		# recognize "unknown" PCI devices
 options		TCVERBOSE		# recognize "unknown" TC devices
 options		UCONSOLE		# users can use TIOCCONS (for xconsole)

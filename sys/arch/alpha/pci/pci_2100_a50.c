@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.13 1997/04/07 02:01:20 cgd Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.14 1997/04/07 23:40:40 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -27,7 +27,10 @@
  * rights to redistribute these changes.
  */
 
-#include <machine/options.h>		/* Pull in config options headers */
+#include <machine/options.h>		/* Config options headers */
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.14 1997/04/07 23:40:40 cgd Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
