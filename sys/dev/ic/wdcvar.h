@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.47 2003/12/30 16:28:37 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.48 2003/12/30 17:18:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -93,7 +93,8 @@ struct channel_softc { /* Per channel data */
 	 * are not independent.
 	 */
 	struct channel_queue *ch_queue;
-	/* the channel kenrel thread */
+
+	/* the channel kernel thread */
 	struct proc *thread;
 };
 
@@ -116,7 +117,6 @@ struct wdc_softc { /* Per controller state */
 #define WDC_CAPABILITY_NOIRQ  0x1000	/* Controller never interrupts */
 #define WDC_CAPABILITY_SELECT  0x2000	/* Controller selects target */
 #define	WDC_CAPABILITY_RAID   0x4000	/* Controller "supports" RAID */
-#define	WDC_CAPABILITY_DRVPROBE 0x8000	/* Controller has smart drive probe */
 	u_int8_t      PIO_cap; /* highest PIO mode supported */
 	u_int8_t      DMA_cap; /* highest DMA mode supported */
 	u_int8_t      UDMA_cap; /* highest UDMA mode supported */
@@ -127,6 +127,9 @@ struct wdc_softc { /* Per controller state */
 	 * The reference count here is used for both IDE and ATAPI devices.
 	 */
 	struct atapi_adapter sc_atapi_adapter;
+
+	/* Function used to probe for drives. */
+	void		(*drv_probe) __P((struct channel_softc *));
 
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
 	void            *dma_arg;
@@ -155,9 +158,6 @@ struct wdc_softc { /* Per controller state */
 
 	/* if WDC_CAPABILITY_IRQACK set in 'cap' */
 	void		(*irqack) __P((struct channel_softc *));
-
-	/* if WDC_CAPABILITY_DRVPROBE is set in 'cap' */
-	int		(*drv_probe) __P((struct channel_softc *));
 };
 
  /*
