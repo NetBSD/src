@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.18 2000/05/16 05:45:46 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.19 2000/11/20 08:24:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -269,7 +269,7 @@ writedisklabel(dev, strat, lp, clp)
 
 	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
-	bp->b_flags    = B_BUSY | B_READ;
+	bp->b_flags    |= B_READ;
 	bp->b_bcount   = BBMINSIZE;
 	bp->b_blkno    = blk;
 	bp->b_cylinder = blk / lp->d_secpercyl;
@@ -289,14 +289,14 @@ writedisklabel(dev, strat, lp, clp)
 		bb->bb_magic = (blk == 0) ? NBDAMAGIC : AHDIMAGIC;
 		BBSETLABEL(bb, lp);
 
-		bp->b_flags    = B_BUSY | B_WRITE;
+		bp->b_flags    &= ~(B_READ|B_DONE);
+		bp->b_flags    |= B_WRITE;
 		bp->b_bcount   = BBMINSIZE;
 		bp->b_blkno    = blk;
 		bp->b_cylinder = blk / lp->d_secpercyl;
 		(*strat)(bp);
 		rv = biowait(bp);
 	}
-	bp->b_flags |= B_INVAL | B_AGE;
 	brelse(bp);
 	return(rv);
 }
@@ -322,7 +322,7 @@ bsd_label(dev, strat, label, blkno, offset)
 
 	bp = geteblk(BBMINSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
-	bp->b_flags    = B_BUSY | B_READ;
+	bp->b_flags    |= B_READ;
 	bp->b_bcount   = BBMINSIZE;
 	bp->b_blkno    = blkno;
 	bp->b_cylinder = blkno / label->d_secpercyl;
@@ -361,8 +361,6 @@ bsd_label(dev, strat, label, blkno, offset)
 			}
 		}
 	}
-
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(rv);
 }
@@ -619,7 +617,7 @@ ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
 
 	bp = geteblk(AHDI_BSIZE);
 	bp->b_dev      = MAKEDISKDEV(major(dev), DISKUNIT(dev), RAW_PART);
-	bp->b_flags    = B_BUSY | B_READ;
+	bp->b_flags    |= B_READ;
 	bp->b_bcount   = AHDI_BSIZE;
 	bp->b_blkno    = rsec;
 	bp->b_cylinder = rsec / secpercyl;
@@ -661,7 +659,6 @@ ahdi_getparts(dev, strat, secpercyl, rsec, esec, apt)
 	apt->at_bslend = root->ar_bslst + root->ar_bslsize - 1;
 	rv = 0;
 done:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 	return(rv);
 }

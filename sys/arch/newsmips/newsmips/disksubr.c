@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.7 2000/05/19 18:54:26 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 2000/11/20 08:24:18 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -72,7 +72,7 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_dev = dev;
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = LABELSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 	if (biowait(bp)) {
@@ -92,7 +92,6 @@ readdisklabel(dev, strat, lp, osdep)
 			break;
 		}
 	}
-	bp->b_flags = B_INVAL | B_AGE;
 	brelse(bp);
 	return (msg);
 }
@@ -164,7 +163,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_dev = makedev(major(dev), DISKMINOR(DISKUNIT(dev), labelpart));
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -175,7 +174,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags = B_WRITE;
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;

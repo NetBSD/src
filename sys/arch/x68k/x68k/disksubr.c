@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.13 2000/05/19 18:54:29 thorpej Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14 2000/11/20 08:24:23 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -97,7 +97,7 @@ readdisklabel(dev, strat, lp, osdep)
 	if (dp) {
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -113,7 +113,8 @@ readdisklabel(dev, strat, lp, osdep)
 		/* read partition record */
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -174,7 +175,8 @@ readdisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags &= ~(B_DONE);
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -208,7 +210,8 @@ readdisklabel(dev, strat, lp, osdep)
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags = B_BUSY | B_READ;
+			bp->b_flags &= ~(B_DONE);
+			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
@@ -237,7 +240,6 @@ readdisklabel(dev, strat, lp, osdep)
 	}
 
 done:
-	bp->b_flags = B_INVAL;
 	brelse(bp);
 	return (msg);
 }
@@ -325,7 +327,7 @@ writedisklabel(dev, strat, lp, osdep)
 		/* read master boot record */
 		bp->b_blkno = DOSBBSECTOR;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSBBSECTOR / lp->d_secpercyl;
 		(*strat)(bp);
 		if (biowait(bp))
@@ -340,7 +342,8 @@ writedisklabel(dev, strat, lp, osdep)
 		/* read partition record */
 		bp->b_blkno = DOSPARTOFF;
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_BUSY | B_READ;
+		bp->b_flags &= ~(B_DONE);
+		bp->b_flags |= B_READ;
 		bp->b_cylinder = DOSPARTOFF / lp->d_secpercyl;
 		(*strat)(bp);
 
@@ -399,7 +402,8 @@ writedisklabel(dev, strat, lp, osdep)
 				dp->dp_start = start;
 				dp->dp_size = size;
 			}
-			bp->b_flags = B_BUSY | B_WRITE;
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 		}
@@ -419,7 +423,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_READ;
+	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -432,7 +436,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags = B_BUSY | B_WRITE;
+			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;
@@ -440,7 +445,6 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 	error = ESRCH;
 done:
-	bp->b_flags |= B_INVAL;
 	brelse(bp);
 	return (error);
 }

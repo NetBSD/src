@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.45 2000/03/23 06:33:10 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.46 2000/11/20 08:24:09 chs Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -825,7 +825,7 @@ fdgetdisklabel(sc, dev)
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	fdstrategy(bp);
 	if ((error = biowait(bp)) != 0)
 		goto nolabel;
@@ -930,12 +930,12 @@ fdputdisklabel(sc, dev)
 	 * get buf and read in sector 0
 	 */
 	lp = sc->dkdev.dk_label;
-	bp = (void *)geteblk((int)lp->d_secsize);
+	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = FDMAKEDEV(major(dev), FDUNIT(dev), RAW_PART);
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
 	bp->b_bcount = FDSECSIZE;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	fdstrategy(bp);
 	if ((error = biowait(bp)) != 0)
 		goto done;
@@ -946,7 +946,8 @@ fdputdisklabel(sc, dev)
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
-	bp->b_flags = B_WRITE;
+	bp->b_flags &= ~(B_READ|B_DONE)
+	bp->b_flags |= B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);
 done:

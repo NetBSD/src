@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2000/07/25 20:52:31 scw Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 2000/11/20 08:24:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -84,7 +84,7 @@ readdisklabel(dev, strat, lp, clp)
 	bp->b_dev = dev;
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
@@ -94,7 +94,6 @@ readdisklabel(dev, strat, lp, clp)
 		bcopy(bp->b_data, clp, sizeof (struct cpu_disklabel));
 	}
 
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 
 	if (msg || clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
@@ -206,7 +205,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_dev = dev;
 	bp->b_blkno = 0; /* contained in block 0 */
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = 0; /* contained in block 0 */
 	(*strat)(bp);
 
@@ -216,7 +215,6 @@ writedisklabel(dev, strat, lp, clp)
 		bcopy(bp->b_data, clp, sizeof(struct cpu_disklabel));
 	}
 
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
 	brelse(bp);
 
 	if (error) {
@@ -242,13 +240,12 @@ writedisklabel(dev, strat, lp, clp)
 		bp->b_dev = dev;
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
-		bp->b_flags = B_WRITE;
+		bp->b_flags |= B_WRITE;
 		bp->b_cylinder = 0; /* contained in block 0 */
 		(*strat)(bp);
 
 		error = biowait(bp);
 
-		bp->b_flags = B_INVAL | B_AGE | B_READ;
 		brelse(bp);
 	}
 	return (error); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.4 2000/01/18 19:36:24 thorpej Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.5 2000/11/20 08:24:12 chs Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -116,7 +116,7 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -196,7 +196,6 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	*netbsd_label_offp = mbrpartoff;
 	*msgp = NULL;
 out:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
         brelse(bp);
 	return (rv);
 }
@@ -228,7 +227,7 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_flags |= B_READ;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -272,7 +271,6 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	*cylp = cyl;
 	*netbsd_label_offp = mbrpartoff;
 out:
-	bp->b_flags = B_INVAL | B_AGE | B_READ;
         brelse(bp);
 	return (rv);
 }
