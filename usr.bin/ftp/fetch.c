@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.154 2004/12/10 06:44:15 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.155 2005/01/12 22:37:41 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.154 2004/12/10 06:44:15 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.155 2005/01/12 22:37:41 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1596,7 +1596,10 @@ fetch_ftp(const char *url)
 
 		ointeractive = interactive;
 		interactive = 0;
-		xargv[0] = "mget";
+		if (restartautofetch)
+			xargv[0] = "mreget";
+		else
+			xargv[0] = "mget";
 		mget(xargc, xargv);
 		interactive = ointeractive;
 	} else {
