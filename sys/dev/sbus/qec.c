@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.8 1999/01/17 20:47:50 pk Exp $ */
+/*	$NetBSD: qec.c,v 1.9 1999/06/24 19:56:51 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -298,7 +298,17 @@ qec_init(sc)
 {
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t qr = sc->sc_regs;
-	u_int32_t v, burst = 0;
+	u_int32_t v, burst = 0, psize;
+	int i;
+
+	/* First, reset the controller */
+	bus_space_write_4(t, qr, QEC_QRI_CTRL, QEC_CTRL_RESET);
+	for (i = 0; i < 1000; i++) {
+		DELAY(100);
+		v = bus_space_read_4(t, qr, QEC_QRI_CTRL);
+		if ((v & QEC_CTRL_RESET) == 0)
+			break;
+	}
 
 	/*
 	 * Cut available buffer size into receive and transmit buffers.
@@ -311,7 +321,8 @@ qec_init(sc)
 	bus_space_write_4(t, qr, QEC_QRI_RSIZE, v);
 	bus_space_write_4(t, qr, QEC_QRI_TSIZE, v);
 
-	bus_space_write_4(t, qr, QEC_QRI_PSIZE, QEC_PSIZE_2048);
+	psize = sc->sc_nchannels == 1 ? QEC_PSIZE_2048 : 0;
+	bus_space_write_4(t, qr, QEC_QRI_PSIZE, psize);
 
 	if (sc->sc_burst & SBUS_BURST_64)
 		burst = QEC_CTRL_B64;
