@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.84 2000/03/16 18:27:21 uch Exp $
+$NetBSD: usbdevs,v 1.85 2000/03/16 21:51:23 augustss Exp $
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -168,6 +168,7 @@ product ELECOM MOUSE29UO	0x0002	mouse 29UO
 product AKS USBHASP		0x0001	USB-HASP 0.06
 
 /* Altec Lansing products */
+product ALTEC ADA70		0x0070	ADA70 Speakers
 product ALTEC ASC495		0xff05	ASC495 Speakers
 
 /* American Power Conversion products */
