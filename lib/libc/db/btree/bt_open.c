@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.9 1997/07/13 18:51:53 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.10 1997/07/21 14:06:32 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_open.c	8.10 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_open.c,v 1.9 1997/07/13 18:51:53 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.10 1997/07/21 14:06:32 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: bt_open.c,v 1.9 1997/07/13 18:51:53 christos Exp $");
  * is wholly independent of the Postgres code.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 

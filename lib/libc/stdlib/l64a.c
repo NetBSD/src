@@ -5,10 +5,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: l64a.c,v 1.5 1997/07/13 20:16:44 christos Exp $");
+__RCSID("$NetBSD: l64a.c,v 1.6 1997/07/21 14:08:53 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(l64a,_l64a);
+#endif
 
 char *
 l64a (value)

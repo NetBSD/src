@@ -1,4 +1,4 @@
-/*	$NetBSD: bm.c,v 1.5 1997/07/13 20:24:13 christos Exp $	*/
+/*	$NetBSD: bm.c,v 1.6 1997/07/21 14:09:07 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -41,16 +41,23 @@
 #if 0
 static char sccsid[] = "@(#)bm.c	8.7 (Berkeley) 6/21/94";
 #else
-__RCSID("$NetBSD: bm.c,v 1.5 1997/07/13 20:24:13 christos Exp $");
+__RCSID("$NetBSD: bm.c,v 1.6 1997/07/21 14:09:07 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS && not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 
 #include <bm.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(bm_comp,_bm_comp);
+__weak_alias(bm_exec,_bm_exec);
+__weak_alias(bm_free,_bm_free);
+#endif
 
 /* 
  * XXX

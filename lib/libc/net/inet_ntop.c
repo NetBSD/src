@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.4 1997/07/20 13:33:26 mrg Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.5 1997/07/21 14:08:08 jtc Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -21,10 +21,11 @@
 #if 0
 static char rcsid[] = "$Id: inet_ntop.c,v 8.7 1996/08/05 08:41:18 vixie Exp ";
 #else
-__RCSID("$NetBSD: inet_ntop.c,v 1.4 1997/07/20 13:33:26 mrg Exp $");
+__RCSID("$NetBSD: inet_ntop.c,v 1.5 1997/07/21 14:08:08 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -35,6 +36,10 @@ __RCSID("$NetBSD: inet_ntop.c,v 1.4 1997/07/20 13:33:26 mrg Exp $");
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(inet_ntop,_inet_ntop);
+#endif
 
 #ifdef SPRINTF_CHAR
 # define SPRINTF(x) strlen(sprintf/**/x)

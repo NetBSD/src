@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.12 1997/07/13 18:57:26 christos Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.13 1997/07/21 14:06:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fnmatch.c,v 1.12 1997/07/13 18:57:26 christos Exp $");
+__RCSID("$NetBSD: fnmatch.c,v 1.13 1997/07/21 14:06:58 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,13 @@ __RCSID("$NetBSD: fnmatch.c,v 1.12 1997/07/13 18:57:26 christos Exp $");
  * Compares a filename or pathname to a pattern.
  */
 
+#include "namespace.h"
 #include <fnmatch.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(fnmatch,_fnmatch);
+#endif
 
 #define	EOS	'\0'
 

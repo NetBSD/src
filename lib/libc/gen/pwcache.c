@@ -1,4 +1,4 @@
-/*	$NetBSD: pwcache.c,v 1.7 1997/07/13 19:17:13 christos Exp $	*/
+/*	$NetBSD: pwcache.c,v 1.8 1997/07/21 14:07:25 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)pwcache.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: pwcache.c,v 1.7 1997/07/13 19:17:13 christos Exp $");
+__RCSID("$NetBSD: pwcache.c,v 1.8 1997/07/21 14:07:25 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <sys/param.h>
 
@@ -50,6 +51,11 @@ __RCSID("$NetBSD: pwcache.c,v 1.7 1997/07/13 19:17:13 christos Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <utmp.h>
+
+#ifdef __weak_alias
+__weak_alias(user_from_uid,_user_from_uid);
+__weak_alias(group_from_gid,_group_from_gid);
+#endif
 
 #define	NCACHE	64			/* power of 2 */
 #define	MASK	(NCACHE - 1)		/* bits to store with */

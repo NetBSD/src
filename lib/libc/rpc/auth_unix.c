@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.6 1997/07/21 14:08:20 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $");
+__RCSID("$NetBSD: auth_unix.c,v 1.6 1997/07/21 14:08:20 jtc Exp $");
 #endif
 #endif
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $");
  *
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,6 +61,11 @@ __RCSID("$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $");
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
 #include <rpc/auth_unix.h>
+
+#ifdef __weak_alias
+__weak_alias(authunix_create,_authunix_create);
+__weak_alias(authunix_create_default,_authunix_create_default);
+#endif
 
 
 /* auth_unix.c */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sethostid.c,v 1.3 1997/07/13 18:50:10 christos Exp $	*/
+/*	$NetBSD: sethostid.c,v 1.4 1997/07/21 14:06:29 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)sethostid.c	8.1 (Berkeley) 6/2/93";
 #else
-__RCSID("$NetBSD: sethostid.c,v 1.3 1997/07/13 18:50:10 christos Exp $");
+__RCSID("$NetBSD: sethostid.c,v 1.4 1997/07/21 14:06:29 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <unistd.h>

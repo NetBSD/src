@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.7 1997/07/13 20:04:32 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.8 1997/07/21 14:08:15 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -44,10 +44,11 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.7 1997/07/13 20:04:32 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.8 1997/07/21 14:08:15 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -55,6 +56,10 @@ __RCSID("$NetBSD: regcomp.c,v 1.7 1997/07/13 20:04:32 christos Exp $");
 #include <limits.h>
 #include <stdlib.h>
 #include <regex.h>
+
+#ifdef __weak_alias
+__weak_alias(regcomp,_regcomp);
+#endif
 
 #include "utils.h"
 #include "regex2.h"

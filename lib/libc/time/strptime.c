@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.6 1997/07/13 20:26:53 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,14 +37,19 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.6 1997/07/13 20:26:53 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.7 1997/07/21 14:09:22 jtc Exp $");
 #endif
 
+#include "namespace.h"
 #include <sys/localedef.h>
 #include <ctype.h>
 #include <locale.h>
 #include <string.h>
 #include <time.h>
+
+#ifdef __weak_alias
+__weak_alias(strptime,_strptime);
+#endif
 
 #define	_ctloc(x)		__CONCAT(_CurrentTimeLocale->,x)
 

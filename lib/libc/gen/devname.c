@@ -1,4 +1,4 @@
-/*	$NetBSD: devname.c,v 1.5 1997/07/13 18:54:19 christos Exp $	*/
+/*	$NetBSD: devname.c,v 1.6 1997/07/21 14:06:52 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)devname.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: devname.c,v 1.5 1997/07/13 18:54:19 christos Exp $");
+__RCSID("$NetBSD: devname.c,v 1.6 1997/07/21 14:06:52 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,10 @@ __RCSID("$NetBSD: devname.c,v 1.5 1997/07/13 18:54:19 christos Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <err.h>
+
+#ifdef __weak_alias
+__weak_alias(devname,_devname);
+#endif
 
 char *
 devname(dev, type)

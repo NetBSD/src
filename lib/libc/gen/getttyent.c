@@ -1,4 +1,4 @@
-/*	$NetBSD: getttyent.c,v 1.10 1997/07/13 19:14:35 christos Exp $	*/
+/*	$NetBSD: getttyent.c,v 1.11 1997/07/21 14:07:16 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,14 +38,22 @@
 #if 0
 static char sccsid[] = "@(#)getttyent.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getttyent.c,v 1.10 1997/07/13 19:14:35 christos Exp $");
+__RCSID("$NetBSD: getttyent.c,v 1.11 1997/07/21 14:07:16 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <ttyent.h>
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(endttyent,_endttyent);
+__weak_alias(getttyent,_getttyent);
+__weak_alias(getttynam,_getttynam);
+__weak_alias(setttyent,_setttyent);
+#endif
 
 static char zapchar;
 static FILE *tf;

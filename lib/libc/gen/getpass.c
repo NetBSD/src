@@ -1,4 +1,4 @@
-/*	$NetBSD: getpass.c,v 1.10 1997/07/13 19:13:01 christos Exp $	*/
+/*	$NetBSD: getpass.c,v 1.11 1997/07/21 14:07:12 jtc Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -38,10 +38,11 @@
 #if 0
 static char sccsid[] = "@(#)getpass.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getpass.c,v 1.10 1997/07/13 19:13:01 christos Exp $");
+__RCSID("$NetBSD: getpass.c,v 1.11 1997/07/21 14:07:12 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <termios.h>
 #include <signal.h>
 
@@ -49,6 +50,10 @@ __RCSID("$NetBSD: getpass.c,v 1.10 1997/07/13 19:13:01 christos Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <unistd.h>
+
+#ifdef __weak_alias
+__weak_alias(getpass,_getpass);
+#endif
 
 char *
 getpass(prompt)
