@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.141 2002/12/19 11:20:30 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.142 2002/12/21 11:48:55 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -506,7 +506,7 @@ cpu_setup(sc)
 	cpu_hatched = 1;
 #if 0
 	/* Flush cache line */
-	cpuinfo.cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
+	cpuinfo.sp_cache_flush((caddr_t)&cpu_hatched, sizeof(cpu_hatched), 0);
 #endif
 }
 
@@ -626,6 +626,12 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 	done = 0;
 	i = 100000;	/* time-out */
 	while (!done) {
+		if (--i < 0) {
+			printf("xcall(cpu%d,%p): couldn't ping cpus:",
+			    cpuinfo.ci_cpuid, func);
+			break;
+		}
+
 		done = 1;
 		for (n = 0; n < ncpu; n++) {
 			struct cpu_info *cpi = cpus[n];
@@ -633,13 +639,10 @@ xcall(func, arg0, arg1, arg2, arg3, cpuset)
 			if (CPU_READY(cpi))
 				continue;
 
-			if ((cpi->flags & CPUFLG_GOTMSG) == 0)
+			if ((cpi->flags & CPUFLG_GOTMSG) == 0) {
 				done = 0;
-		}
-		if (!done && i-- < 0) {
-			printf("xcall(cpu%d,%p): couldn't ping cpus:",
-			    cpuinfo.ci_cpuid, func);
-			break;
+				break;
+			}
 		}
 	}
 	for (n = 0; n < ncpu; n++) {
@@ -1150,9 +1153,11 @@ getcacheinfo_obp(sc, node)
 		if ((1 << i) != l && l)
 			panic("bad cache line size %d", l);
 		ci->c_l2linesize = i;
-		ci->c_totalsize = l *
-			ci->c_nlines *
+		ci->c_associativity =
 			PROM_getpropint(node, "cache-associativity", 1);
+		ci->dc_associativity = ci->ic_associativity =
+			ci->c_associativity;
+		ci->c_totalsize = l * ci->c_nlines * ci->c_associativity;
 	}
 	
 	if (node_has_property(node, "ecache-nlines")) {
