@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.4 2000/12/13 11:07:16 enami Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.5 2000/12/13 12:34:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.4 2000/12/13 11:07:16 enami Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.5 2000/12/13 12:34:02 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -213,8 +213,6 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 	req.oat.operation = htole16(I2O_PARAMS_OP_FIELD_GET);
 	req.oat.fieldcount = htole16(0xffff);
 	req.oat.group = htole16(group);
-
-	printf("%ld\n", (long)sizeof(mb));
 
 	pt.pt_msg = &mb;
 	pt.pt_msglen = sizeof(mb);
