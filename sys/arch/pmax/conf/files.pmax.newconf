@@ -1,0 +1,113 @@
+#	$NetBSD: files.pmax.newconf,v 1.1 1995/04/28 23:34:39 jonathan Exp $
+maxpartitions 8
+maxusers 2 8 64
+
+device mainbus at root { }		# no locators
+device cpu at mainbus			# not optional
+#file arch/pmax/pmax/cpu.c		cpu
+
+device clock at mainbus
+file	arch/pmax/pmax/clock.c		clock
+
+device tc at mainbus { slot = -1, offset = -1 }
+
+#device sfb at tc
+# no sfb code yet
+
+# Config for  Ted Lemon's changes to console driver:
+# use some bogus device till changes to framebuffer code are committed.
+device	fb at mainbus
+file	arch/pmax/dev/foo.c		fb needs-count
+
+define	scsi {}
+#file	arch/alpha/tc/esp.c		esp needs-count
+#file	arch/alpha/tc/dma.c		esp
+
+major	{ rz = 21 }
+
+
+device scsibus at scsi	{target = -1, drive = -1}
+
+device asc at mainbus: scsi
+file	arch/pmax/dev/asc.c			asc needs-count
+
+device sii at mainbus: scsi
+file	arch/pmax/dev/sii.c		sii needs-count
+
+
+device	tz at scsibus: tape
+file	arch/pmax/dev/tz.c		tz needs-count
+
+device	rz at scsibus: disk
+file	arch/pmax/dev/rz.c		rz needs-count
+
+# optional device-drivers
+
+
+device dc at mainbus
+file	arch/pmax/dev/dc.c			dc needs-count
+
+# what is this anyway?  An xine/3min `desktop' bus?
+device dtop at mainbus
+file	arch/pmax/dev/dtop.c			dtop needs-count
+
+
+device le at tc: ifnet, ether
+file	arch/pmax/dev/if_le.c		le	needs-count
+
+device pm at tc
+file	arch/pmax/dev/pm.c		pm needs-count
+
+device cfb at tc
+file	arch/pmax/dev/cfb.c		cfb needs-count
+
+device mfb at tc
+file	arch/pmax/dev/mfb.c		mfb needs-count
+
+device scc at tc #asic?
+file	arch/pmax/dev/scc.c		scc	needs-count
+
+# 3100 cfb
+device	xcfb at mainbus
+file	arch/pmax/dev/xcfb.c 		xcfb needs-count
+
+device	tt at tc
+file	arch/pmax/dev/if_tt.c		tt needs-count
+
+## bogus pmax-specific SCSI code. Leave in until new-style config done.
+file	arch/pmax/dev/scsi.c
+
+file	arch/pmax/pmax/autoconf.c
+file	arch/pmax/pmax/conf.c
+#file	arch/pmax/pmax/kadb.c			optional kadb
+#file	arch/pmax/pmax/machdep.c		standard config-dependent
+file	arch/pmax/pmax/machdep.c
+file	arch/pmax/pmax/cpu_exec.c
+file	arch/pmax/pmax/mem.c
+file	arch/pmax/pmax/pmap.c
+file	arch/pmax/pmax/process_machdep.c
+file	arch/pmax/pmax/sys_machdep.c
+file	arch/pmax/pmax/trap.c
+file	arch/pmax/pmax/vm_machdep.c
+file	arch/pmax/pmax/disksubr.c
+file	arch/pmax/stand/libsa/callvec.c
+file	arch/pmax/pmax/elf.c
+# standard for now, till Ted Lemon is done
+file	arch/pmax/dev/fb.c
+# This is a dummy - don't try to use it:
+
+
+file	arch/pmax/pmax/cons.c
+file	arch/pmax/pmax/cpu_cons.c
+file	netinet/in_cksum.c
+file	netns/ns_cksum.c			ns
+
+file	compat/ultrix/ultrix_misc.c		compat_ultrix
+file	compat/ultrix/ultrix_syscalls.c		compat_ultrix
+file	compat/ultrix/ultrix_sysent.c		compat_ultrix
+
+# Ted Lemon's changes to console driver: redirectabe FB console
+device	rcons	at mainbus
+file	arch/pmax/dev/rcons.c			rcons	needs-count
+
+# Configs

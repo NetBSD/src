@@ -1,0 +1,105 @@
+#
+# GENERIC DECstation (3100 or 5000/xxx)
+#
+#	first cut at new-style configu
+# 	$NetBSD: NEWCONF,v 1.1 1995/04/28 23:34:45 jonathan Exp $
+#
+include		"std.pmax"
+
+maxusers	8
+
+#cpu		"DS3100"
+#cpu		"DS5000"
+
+# does not really do anything anymore, but this replaces "ident GENERIC"
+options		GENERIC
+
+
+# Need to set locally
+options		TIMEZONE="8*60"		# minutes west of GMT (for)
+options		DST=1			# use daylight savings rules
+
+
+# Standard system options
+options		SWAPPAGER		# swap pager (anonymous and swap space)
+options		VNODEPAGER		# vnode pager (mapped files)
+options		DEVPAGER		# device pager (mapped devices)
+#options	DIAGNOSTIC		# extra kernel debugging checks
+options		DEBUG			# extra kernel debugging support
+options		"COMPAT_43"		# compatibility with 4.3BSD binaries
+#options	KTRACE			# system call tracing support
+options		"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
+#options	KGDB			# support for kernel gdb
+#options	"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
+#options	"KGDBDEV=15*256+0"	# device for kernel gdb
+
+# Filesystem options
+options		FIFO		# POSIX fifo support (in all filesystems)
+options		FFS,QUOTA	# fast filesystem with user and group quotas
+options		MFS		# memory-based filesystem
+options		NFSCLIENT	# Sun NFS-compatible filesystem (client)
+options		NFSSERVER	# Sun NFS-compatible filesystem (server)
+options		LOFS		# Loop-back filesystem
+options		KERNFS		# kernel data-structure filesystem
+#options		FDESC		# user file descriptor filesystem
+#options	UMAPFS		# uid/gid remapping filesystem
+#options	NULLFS		# null layer filesystem
+#options	LFS		# Log-based filesystem (still experimental)
+#options	PORTAL		# portal filesystem (still experimental)
+
+# Networking options
+options		INET		# Internet protocols
+options		"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
+options		GATEWAY		# IP packet forwarding
+#options	MULTICAST	# Multicast support
+#options	MROUTING	# Multicast routing support
+#options	ISO		# OSI networking
+#options	TPIP
+#options	EON
+
+# pmax specific
+options		COMPAT_ULTRIX	# ultrix compatibility
+
+config		netbsd root on rz1a swap on rz0b and rz1b dumps on rz1b
+
+tc*		at	 mainbus0
+clock0		at	mainbus0
+dtop0	at mainbus0
+dc0	at mainbus0
+xcfb0	at mainbus0
+cfb0	at tc? slot? offset ?
+mfb0	at tc? slot? offset ?
+pm0	at tc? slot? offset ?
+#scc0	at mainbus0
+#scc1	at mainbus0  offset ?
+le0	at tc? slot ?  offset ?
+tt0	at tc? slot? offset ?
+
+sii0	at mainbus0
+asc0	at mainbus0
+
+scsibus*	at sii?
+scsibus*	at asc?
+
+# commented out till pmax scsidriver is fixed
+#rz*	at	scsibus?	target ? drive ?
+#tz*	at	scsibus?	target ? drive ?
+
+rz0	at	scsibus?	target ? drive ?
+rz1	at	scsibus?	target ? drive ?
+rz2	at	scsibus?	target ? drive ?
+rz3	at	scsibus?	target ? drive ?
+rz4	at	scsibus?	target ? drive ?
+rz4	at	scsibus?	target ? drive ?
+tz0	at	scsibus?	target?  drive ?
+tz1	at	scsibus?	target?  drive ?
+
+pseudo-device	sl		 4	# serial-line IP ports
+pseudo-device	pty		64	# pseudo ptys
+pseudo-device	bpfilter	16	# packet filter ports
+pseudo-device	loop
+#pseudo-device	ether
+# rcons is not yet merged in
+#pseudo-device	rcons
+# until rcons is finished
+#pseudo-device	fb
