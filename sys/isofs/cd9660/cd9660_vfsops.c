@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.15 1995/01/18 09:23:18 mycroft Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.16 1995/01/18 09:26:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -123,9 +123,9 @@ cd9660_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mp->mnt_vnodecovered = NULLVP;
 	imp = VFSTOISOFS(mp);
-	(void) copystr("/", mp->mnt_stat.f_mnttoname, MNAMELEN - 1,
+	(void) copystr("/", mp->mnt_stat.f_mntonname, MNAMELEN - 1,
 	    &size);
-	bzero(mp->mnt_stat.f_mnttoname + size, MNAMELEN - size);
+	bzero(mp->mnt_stat.f_mntonname + size, MNAMELEN - size);
 	(void) copystr(ROOTNAME, mp->mnt_stat.f_mntfromname, MNAMELEN - 1,
 	    &size);
 	bzero(mp->mnt_stat.f_mntfromname + size, MNAMELEN - size);
