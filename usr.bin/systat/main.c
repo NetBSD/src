@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2003/08/07 11:15:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2004/07/03 18:31:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.35 2003/08/07 11:15:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2004/07/03 18:31:36 mycroft Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -192,7 +192,6 @@ main(int argc, char **argv)
 	signal(SIGINT, die);
 	signal(SIGQUIT, die);
 	signal(SIGTERM, die);
-	signal(SIGWINCH, redraw);
 	sv_stop_handler = signal(SIGTSTP, stop);
 
 	/*
@@ -320,18 +319,14 @@ void
 redraw(int signo)
 {
 	sigset_t set;
-	struct winsize win;
 
 	sigemptyset(&set);
 	sigaddset(&set, SIGALRM);
 	sigprocmask(SIG_BLOCK, &set, NULL);
 
-	if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &win) != -1 &&
-	    (win.ws_row != LINES || win.ws_col != COLS)) {
-		resizeterm(win.ws_row, win.ws_col);
-		CMDLINE = LINES - 1;
-		labels();
-	}
+	resizeterm(LINES, COLS);
+	CMDLINE = LINES - 1;
+	labels();
 
 	sigprocmask(SIG_UNBLOCK, &set, NULL);
 	display(0);
