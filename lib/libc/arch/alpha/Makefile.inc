@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.8 1998/02/22 06:46:55 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.9 1998/08/04 01:26:20 perry Exp $
 
 KMINCLUDES=
 KMSRCS=	divrem.m4 \
 	bcopy.S bzero.S ffs.S \
-	memcpy.S \
+	memcpy.S memmove.S \
 	htonl.S htons.S ntohl.S ntohs.S \
 	byte_swap_2.S byte_swap_4.S
 #KMSRCS=	bcmp.S strcat.S strcmp.S strcpy.S strlen.S
