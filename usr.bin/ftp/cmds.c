@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.59 1999/09/24 00:48:24 lukem Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.58 1999/09/22 07:18:31 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.59 1999/09/24 00:48:24 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -966,25 +966,8 @@ setgate(argc, argv)
 		else if (argc == 2 && strcasecmp(argv[1], "off") == 0)
 			gatemode = 0;
 		else {
-			if (argc == 3) {
-#if 0
-				char *ep;
-				long port;
-
-				port = strtol(argv[2], &ep, 10);
-				if (port < 0 || port > MAX_IN_PORT_T ||
-				    *ep != '\0') {
-					fprintf(ttyout,
-					    "%s: bad gateport value.\n",
-					    argv[2]);
-					code = -1;
-					return;
-				}
-				gateport = htons(port);
-#else
+			if (argc == 3)
 				gateport = strdup(argv[2]);
-#endif
-			}
 			strncpy(gsbuf, argv[1], sizeof(gsbuf) - 1);
 			gsbuf[sizeof(gsbuf) - 1] = '\0';
 			gateserver = gsbuf;
