@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_pci.c,v 1.12 2001/11/13 07:48:42 lukem Exp $	*/
+/*	$NetBSD: i82365_pci.c,v 1.13 2001/11/15 09:48:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -34,9 +34,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.12 2001/11/13 07:48:42 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_pci.c,v 1.13 2001/11/15 09:48:12 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>

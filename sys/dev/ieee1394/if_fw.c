@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.11 2001/11/13 12:24:12 lukem Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.12 2001/11/15 09:48:08 lukem Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,14 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.11 2001/11/13 12:24:12 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.12 2001/11/15 09:48:08 lukem Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
 #include <sys/kernel.h>

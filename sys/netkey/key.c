@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.54 2001/11/13 01:39:21 lukem Exp $	*/
+/*	$NetBSD: key.c,v 1.55 2001/11/15 09:48:28 lukem Exp $	*/
 /*	$KAME: key.c,v 1.203 2001/07/28 03:12:18 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.54 2001/11/13 01:39:21 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.55 2001/11/15 09:48:28 lukem Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.54 2001/11/13 01:39:21 lukem Exp $");
 #define ss_len		__ss_len
 #define ss_family	__ss_family
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/callout.h>

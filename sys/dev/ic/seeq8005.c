@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.31 2001/11/13 13:14:43 lukem Exp $ */
+/* $NetBSD: seeq8005.c,v 1.32 2001/11/15 09:48:07 lukem Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,9 +61,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.31 2001/11/13 13:14:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.32 2001/11/15 09:48:07 lukem Exp $");
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/endian.h>
