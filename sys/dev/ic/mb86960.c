@@ -1004,7 +1004,8 @@ feattach(parent, self, aux)
 	ifp->if_start = fe_start;
 	ifp->if_ioctl = fe_ioctl;
 	ifp->if_watchdog = fe_watchdog;
-	ifp->if_flags = IFF_BROADCAST | IFF_NOTRAILERS | IFF_MULTICAST;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 
 	/*
 	 * Set maximum size of output queue, if it has not been set.
@@ -1218,6 +1219,17 @@ fe_watchdog(unit)
 }
 
 /*
+ * Drop (skip) a packet from receive buffer in 86960 memory.
+ */
+static inline void
+fe_droppacket(sc)
+	struct fe_softc *sc;
+{
+
+	outb(sc->sc_iobase + FE_BMPR14, FE_B14_FILTER | FE_B14_SKIP);
+}
+
+/*
  * Initialize device.
  */
 void
@@ -1280,7 +1292,7 @@ fe_init(sc)
 	outb(sc->sc_iobase + FE_BMPR11, FE_B11_CTRL_SKIP);
 	outb(sc->sc_iobase + FE_BMPR12, 0x00);
 	outb(sc->sc_iobase + FE_BMPR13, sc->proto_bmpr13);
-	outb(sc->sc_iobase + FE_BMPR14, 0x00);
+	outb(sc->sc_iobase + FE_BMPR14, FE_B14_FILTER);
 	outb(sc->sc_iobase + FE_BMPR15, 0x00);
 
 #if FE_DEBUG >= 3
@@ -1318,7 +1330,7 @@ fe_init(sc)
 	for (i = 0; i < FE_MAX_RECV_COUNT; i++) {
 		if (inb(sc->sc_iobase + FE_DLCR5) & FE_D5_BUFEMP)
 			break;
-		outb(sc->sc_iobase + FE_BMPR14, FE_B14_SKIP);
+		fe_droppacket(sc);
 	}
 #if FE_DEBUG >= 1
 	if (i >= FE_MAX_RECV_COUNT) {
@@ -1514,27 +1526,23 @@ fe_start(ifp)
 			goto indicate_inactive;
 		}
 
+#if NBPFILTER > 0
+		/* Tap off here if there is a BPF listener. */
+		if (ifp->if_bpf)
+			bpf_mtap(ifp->if_bpf, m);
+#endif
+
 		/*
 		 * Copy the mbuf chain into the transmission buffer.
 		 * txb_* variables are updated as necessary.
 		 */
 		fe_write_mbufs(sc, m);
 
+		m_freem(m);
+
 		/* Start transmitter if it's idle. */
 		if (sc->txb_sched == 0)
 			fe_xmit(sc);
-
-#if 0 /* Turned of, since our interface is now duplex. */
-		/*
-		 * Tap off here if there is a bpf listener.
-		 */
-#if NBPFILTER > 0
-		if (ifp->if_bpf)
-			bpf_mtap(ifp->if_bpf, m);
-#endif
-#endif
-
-		m_freem(m);
 	}
 
 indicate_inactive:
@@ -1557,15 +1565,6 @@ indicate_active:
 	 */
 	ifp->if_flags |= IFF_OACTIVE;
 	return;
-}
-
-/*
- * Drop (skip) a packet from receive buffer in 86960 memory.
- */
-static inline void
-fe_droppacket (struct fe_softc * sc)
-{
-	outb(sc->sc_iobase + FE_BMPR14, FE_B14_SKIP);
 }
 
 /*
@@ -2055,27 +2054,12 @@ fe_get_packet(sc, len)
 #define	EROUND	((sizeof(struct ether_header) + 3) & ~3)
 #define	EOFF	(EROUND - sizeof(struct ether_header))
 
-#if 0
-	/*
-	 * This function assumes that an Ethernet packet fits in an
-	 * mbuf (with a cluster attached when necessary.)  On FreeBSD
-	 * 2.0 for x86, which is the primary target of this driver, an
-	 * mbuf cluster has 4096 bytes, and we are happy.  On ancient
-	 * BSDs, such as vanilla 4.3 for 386, a cluster size was 1024,
-	 * however.  If the following #error message were printed upon
-	 * compile, you need to rewrite this function.
-	 */
-#if (MCLBYTES < ETHER_MAX_LEN + EOFF)
-#error "Too small MCLBYTES to use fe driver."
-#endif
-#endif
-
 	/*
 	 * Our strategy has one more problem.  There is a policy on
 	 * mbuf cluster allocation.  It says that we must have at
-	 * least MINCLSIZE (208 bytes on FreeBSD 2.0 for x86) to
-	 * allocate a cluster.  For a packet of a size between
-	 * (MHLEN - 2) to (MINCLSIZE - 2), our code violates the rule...
+	 * least MINCLSIZE (208 bytes) to allocate a cluster.  For a
+	 * packet of a size between (MHLEN - 2) to (MINCLSIZE - 2),
+	 * our code violates the rule...
 	 * On the other hand, the current code is short, simle,
 	 * and fast, however.  It does no harmful thing, just waists
 	 * some memory.  Any comments?  FIXME.
@@ -2381,10 +2365,9 @@ fe_setmode(sc)
 		 * Multicast filter stored in MARs are ignored
 		 * under this setting, so we don't need to update it.
 		 *
-		 * Promiscuous mode in FreeBSD 2 is used solely by
-		 * BPF, and BPF only listens to valid (no error) packets.
-		 * So, we ignore errornous ones even in this mode.
-		 * (Older versions of fe driver mistook the point.)
+		 * Promiscuous mode is used solely by BPF, and BPF only
+		 * listens to valid (no error) packets.  So, we ignore
+		 * errornous ones even in this mode.
 		 */
 		outb(sc->sc_iobase + FE_DLCR5,
 		    sc->proto_dlcr5 | FE_D5_AFM0 | FE_D5_AFM1);
