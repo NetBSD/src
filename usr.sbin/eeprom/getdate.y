@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: getdate.y,v 1.2 1997/07/23 20:58:39 thorpej Exp $	*/
+/*	$NetBSD: getdate.y,v 1.3 1997/07/23 21:02:39 thorpej Exp $	*/
 
 /*
 **
@@ -16,93 +16,20 @@
 /* SUPPRESS 287 on yaccpar_sccsid *//* Unusd static variable */
 /* SUPPRESS 288 on yyerrlab *//* Label unused */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: getdate.y,v 1.3 1997/07/23 21:02:39 thorpej Exp $");
 #endif
-
-#ifdef __GNUC__
-#define alloca __builtin_alloca
-#else
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#else
-#ifdef _AIX /* for Bison */
- #pragma alloca
-#else
-char *alloca ();
-#endif
-#endif
-#endif
-
-#include <stdio.h>
-#include <ctype.h>
-
-/* The code at the top of get_date which figures out the offset of the
-   current time zone checks various CPP symbols to see if special
-   tricks are need, but defaults to using the gettimeofday system call.
-   Include <sys/time.h> if that will be used.  */
-
-#if !defined (USG) && !defined (sgi) && !defined (__NetBSD__)
-#include <sys/time.h>
-#endif
-
-#if	defined(vms)
-
-#include <types.h>
-#include <time.h>
-
-#else
 
 #include <sys/types.h>
-
-#if	defined(USG) || !defined(HAVE_FTIME)
-/*
-**  If you need to do a tzset() call to set the
-**  timezone, and don't have ftime().
-*/
-struct timeb {
-    time_t		time;		/* Seconds since the epoch	*/
-    unsigned short	millitm;	/* Field not used		*/
-    short		timezone;
-    short		dstflag;	/* Field not used		*/
-};
-
-#else
-
 #include <sys/timeb.h>
-
-#endif	/* defined(USG) && !defined(HAVE_FTIME) */
-
-#if	defined(BSD4_2) || defined(BSD4_1C) || (defined (hp9000) && !defined (hpux))
-#include <sys/time.h>
-#else
-#if defined(_AIX)
-#include <sys/time.h>
-#endif
-#include <time.h>
-#endif	/* defined(BSD4_2) */
-
-#endif	/* defined(vms) */
-
-#if defined (STDC_HEADERS) || defined (USG)
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#endif
+#include <time.h>
 
-#if sgi
-#undef timezone
-#endif
-
-extern struct tm	*localtime();
-
-#define yyparse getdate_yyparse
-#define yylex getdate_yylex
-#define yyerror getdate_yyerror
-
-#if	!defined(lint) && !defined(SABER)
-static char RCS[] =
-	"$Header: /cvsroot/src/usr.sbin/eeprom/Attic/getdate.y,v 1.2 1997/07/23 20:58:39 thorpej Exp $";
-#endif	/* !defined(lint) && !defined(SABER) */
-
+#include "defs.h"
 
 #define EPOCH		1970
 #define HOUR(x)		((time_t)(x) * 60)
