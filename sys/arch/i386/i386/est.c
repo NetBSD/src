@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.3 2004/05/03 16:38:28 lukem Exp $	*/
+/*	$NetBSD: est.c,v 1.4 2004/07/10 18:51:01 cube Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.3 2004/05/03 16:38:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.4 2004/07/10 18:51:01 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,12 @@ __KERNEL_RCSID(0, "$NetBSD: est.c,v 1.3 2004/05/03 16:38:28 lukem Exp $");
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
 
+#include "opt_est.h"
+#ifdef EST_FREQ_USERWRITE
+#define	EST_TARGET_CTLFLAG	(CTLFLAG_READWRITE | CTLFLAG_ANYWRITE)
+#else
+#define	EST_TARGET_CTLFLAG	CTLFLAG_READWRITE
+#endif
 
 struct fq_info {
 	int mhz;
@@ -364,7 +370,7 @@ est_init(struct cpu_info *ci)
 		goto err;
 
 	if ((rc = sysctl_createv(NULL, 0, &freqnode, &node,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
+	    EST_TARGET_CTLFLAG, CTLTYPE_INT, "target", NULL,
 	    est_sysctl_helper, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 	est_node_target = node->sysctl_num;

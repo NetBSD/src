@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.620 2004/07/09 18:38:40 bouyer Exp $
+# $NetBSD: GENERIC,v 1.621 2004/07/10 18:51:01 cube Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.620 $"
+#ident 		"GENERIC-$Revision: 1.621 $"
 
 maxusers	32		# estimated number of users
 
@@ -41,6 +41,7 @@ options 	USER_LDT	# user-settable LDT; used by WINE
 
 # Enhanced SpeedStep Technology in the Pentium M
 options 	ENHANCED_SPEEDSTEP
+#options 	EST_FREQ_USERWRITE	# any user can set frequency
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
