@@ -1,4 +1,4 @@
-/* $NetBSD: isp_inline.h,v 1.5 2000/02/19 01:51:43 mjacob Exp $ */
+/* $NetBSD: isp_inline.h,v 1.6 2000/07/05 22:21:44 mjacob Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -41,8 +41,56 @@ static INLINE void
 isp_prtstst(sp)
 	ispstatusreq_t *sp;
 {
-	sp = sp;
-	PRINTF("The Charles Hannum memorial function has been called\n");
+	char buf[172];
+	buf[0] = 0;
+	STRNCAT(buf, "states=>", sizeof buf);
+	if (sp->req_state_flags & RQSF_GOT_BUS) {
+		STRNCAT(buf, " GOT_BUS", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_GOT_TARGET) {
+		STRNCAT(buf, " GOT_TGT", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_SENT_CDB) {
+		STRNCAT(buf, " SENT_CDB", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_XFRD_DATA) {
+		STRNCAT(buf, " XFRD_DATA", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_GOT_STATUS) {
+		STRNCAT(buf, " GOT_STS", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_GOT_SENSE) {
+		STRNCAT(buf, " GOT_SNS", sizeof buf);
+	}
+	if (sp->req_state_flags & RQSF_XFER_COMPLETE) {
+		STRNCAT(buf, " XFR_CMPLT", sizeof buf);
+	}
+	STRNCAT(buf, "\nstatus=>", sizeof buf);
+	if (sp->req_status_flags & RQSTF_DISCONNECT) {
+		STRNCAT(buf, " Disconnect", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_SYNCHRONOUS) {
+		STRNCAT(buf, " Sync_xfr", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_PARITY_ERROR) {
+		STRNCAT(buf, " Parity", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_BUS_RESET) {
+		STRNCAT(buf, " Bus_Reset", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_DEVICE_RESET) {
+		STRNCAT(buf, " Device_Reset", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_ABORTED) {
+		STRNCAT(buf, " Aborted", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_TIMEOUT) {
+		STRNCAT(buf, " Timeout", sizeof buf);
+	}
+	if (sp->req_status_flags & RQSTF_NEGOTIATION) {
+		STRNCAT(buf, " Negotiation", sizeof buf);
+	}
+	PRINTF(buf, "%s\n", buf);
 }
 
 static INLINE char *
@@ -102,6 +150,9 @@ isp_find_xs __P((struct ispsoftc *, u_int32_t));
 
 static INLINE u_int32_t
 isp_find_handle __P((struct ispsoftc *, ISP_SCSI_XFER_T *));
+
+static INLINE int
+isp_handle_index __P((u_int32_t));
 
 static INLINE void
 isp_destroy_handle __P((struct ispsoftc *, u_int32_t));
@@ -164,13 +215,20 @@ isp_find_handle(isp, xs)
 	return (0);
 }
 
+static INLINE int
+isp_handle_index(handle)
+	u_int32_t handle;
+{
+	return (handle-1);
+}
+
 static INLINE void
 isp_destroy_handle(isp, handle)
 	struct ispsoftc *isp;
 	u_int32_t handle;
 {
 	if (handle > 0 && handle <= (u_int32_t) isp->isp_maxcmds) {
-		isp->isp_xflist[handle - 1] = NULL;
+		isp->isp_xflist[isp_handle_index(handle)] = NULL;
 	}
 }
 
@@ -201,8 +259,10 @@ isp_getrqentry(isp, iptrp, optrp, resultp)
 	if (iptr == optr) {
 		return (1);
 	}
-	*optrp = optr;
-	*iptrp = iptr;
+	if (optrp)
+		*optrp = optr;
+	if (iptrp)
+		*iptrp = iptr;
 	return (0);
 }
 
