@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)dkio.h	5.2 (Berkeley) 1/18/91
- *	$Id: dkio.h,v 1.2 1993/05/22 08:00:13 cgd Exp $
+ *	$Id: dkio.h,v 1.3 1993/06/17 04:07:41 mycroft Exp $
  */
 
 /*
@@ -46,4 +46,4 @@
  */
 
 /* disk io control commands */
-#define DKIOCHDR	_IO(d, 1)	/* next I/O will read/write header */
+#define DKIOCHDR	_IO('d', 1)	/* next I/O will read/write header */
