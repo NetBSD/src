@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2001/02/25 03:36:20 wdk Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/05 05:07:45 wdk Exp $
 
 TOP?=		${.CURDIR}/..
 ARCHDIR?=	${.CURDIR}/../miniroot
@@ -16,12 +16,9 @@ DISKTAB=	${.CURDIR}/disktab.ramdisk
 DISKTYPE=	install-ramdisk
 MOUNT_POINT?=	/mnt
 
-# DEV/RDEV file system device, CDEV/RDEV vnconfig device
 VND?=		vnd0
 VND_DEV=	/dev/${VND}c
 VND_RDEV=	/dev/r${VND}c
-VND_CDEV=	/dev/${VND}c
-VND_CRDEV=	/dev/r${VND}c
 
 CLEANFILES=	${IMAGE} ${DISKIMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache
 
@@ -34,8 +31,8 @@ realall: ${IMAGE}
 ${IMAGE}: ${CBIN}
 	dd if=/dev/zero of=${IMAGE} count=${CSIZE}
 	vnconfig -v -c ${VND} ${IMAGE}
-	disklabel -rw -f ${DISKTAB} ${VND_CDEV} ${DISKTYPE}
-	newfs -B be -m 0 -o space -i 5120 ${VND_DEV}
+	disklabel -rw -f ${DISKTAB} ${VND} ${DISKTYPE}
+	newfs -B be -m 0 -o space -i 5120 ${VND_RDEV}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} ARCHDIR=${ARCHDIR} \
@@ -64,10 +61,18 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 echoimage:
 	@echo ${.OBJDIR}/${IMAGE}
 
-realinstall release:
+.if !defined(RELEASEDIR)
+release: .USE
+	@echo setenv RELEASEDIR first!
+	@false
+.else
+release: ${DISKIMAGE}
 	-mkdir -p ${NETBOOTDIR}
 	${INSTALL} ${RENAME} ${PRESERVE} ${COPY} -o root -g wheel \
 		-m ${NONBINMODE} ${DISKIMAGE} ${NETBOOTDIR}
+.endif # !defined(RELEASEDIR)
+
+realinstall: release
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${CLEANFILES} *.o *.cro *.c
