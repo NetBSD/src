@@ -1,4 +1,4 @@
-/*	$NetBSD: wstsc.c,v 1.11 1996/04/21 21:12:43 veego Exp $	*/
+/*	$NetBSD: wstsc.c,v 1.12 1996/04/28 06:49:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -152,8 +152,8 @@ wstscattach(pdp, dp, auxp)
 	sc->sci_irecv = rp + 14;
 
 	if (supradma_pseudo == 2) {
-		sc->dma_xfer_in = wstsc_dma_xfer_in2;
-		sc->dma_xfer_out = wstsc_dma_xfer_out2;
+		sc->dma_xfer_in = (int(*)(struct sci_softc *, int, u_char *, int))wstsc_dma_xfer_in2;
+		sc->dma_xfer_out = (int(*)(struct sci_softc *, int, u_char *, int))wstsc_dma_xfer_out2;
 	}
 	else if (supradma_pseudo == 1) {
 		sc->dma_xfer_in = wstsc_dma_xfer_in;
