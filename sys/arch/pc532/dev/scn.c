@@ -1,4 +1,4 @@
-/*	$NetBSD: scn.c,v 1.38 1997/04/01 16:31:53 matthias Exp $ */
+/*	$NetBSD: scn.c,v 1.39 1997/04/21 16:16:16 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Philip L. Budne.
@@ -74,7 +74,6 @@
 #include "scnreg.h"
 #include "scnvar.h"
 
-int scn_soft_rts = 1;
 static const char scnints[4] = {IR_TTY0, IR_TTY1, IR_TTY2, IR_TTY3};
 static const char rxints[4] = {IR_TTY0RDY, IR_TTY1RDY, IR_TTY2RDY, IR_TTY3RDY};
 
@@ -328,15 +327,16 @@ scn_setchip(sc)
 	if (dp->type == SC26C92) {
 		u_char nmr0a, mr0a;
 
-#if 0
-		/* input rate high enough so 64 bit time watchdog not onerous? */
+		/* input rate high enough so 64 bit time watchdog not
+		 * onerous? */
 		if (dp->chan[chan].ispeed >= 1200) {
-			/* set FIFO threshold at 6 */
+			/* set FIFO threshold at 6 for other
+			 * thresholds we could have to set MR1_FFULL
+			 */
 			dp->chan[chan].mr0 |= MR0_RXWD | MR0_RXINT;
 		} else {
 			dp->chan[chan].mr0 &= ~(MR0_RXWD | MR0_RXINT);
 		}
-#endif
 
 		/* select BRG mode (MR0A only) */
 		nmr0a = dp->chan[0].mr0 | (dp->mode & MR0_MODE);
@@ -1441,12 +1441,10 @@ scn_rxintr(sc, line)
 	n = i - sc->sc_rbget;
 	if (sc->sc_rbhiwat && (n > sc->sc_rbhiwat)) {
 		/* If not CRTSCTS sc_rbhiwat is such that this
-		 *  never happens
+		 *  never happens.
+		 * Clear RTS
 		 */
-		if (scn_soft_rts)
-			SCN_OP_BIC(sc, sc->sc_op_rts);
-		else
-			scn_rxdisable(sc);
+		SCN_OP_BIC(sc, sc->sc_op_rts);
 		sc->sc_rx_blocked = 1;
 	}
 	sc->sc_rbput = i;
@@ -1464,15 +1462,8 @@ scnrxintr(arg)
 	register struct scn_softc *sc0 = SOFTC(line0);
 	register struct scn_softc *sc1 = SOFTC(line1);
 
-	if (scn_soft_rts || !sc0->sc_rx_blocked)
-		work = scn_rxintr(sc0, line0);
-	if ((scn_soft_rts || !sc1->sc_rx_blocked)
-#ifdef KGDB
-	    && line1 < scn_cd.cd_ndevs
-#endif
-	    )
-		work += scn_rxintr(sc1, (int)line1);
-
+	work = scn_rxintr(sc0, line0);
+	work += scn_rxintr(sc1, (int)line1);
 	if (work > 0) {
 		setsoftscn();	/* trigger s/w intr */
 #ifdef SCN_TIMING
@@ -1598,12 +1589,9 @@ scnsoft(arg)
 				(*linesw[tp->t_line].l_rint) (c, tp);
 
 				if (sc->sc_rx_blocked && n < SCN_RING_THRESH) {
-					int	s = splrtty();
+					int s = splrtty();
 					sc->sc_rx_blocked = 0;
-					if (scn_soft_rts)
-						SCN_OP_BIS(sc, sc->sc_op_rts);
-					else
-						scn_rxenable(sc);
+					SCN_OP_BIS(sc, sc->sc_op_rts);
 					splx(s);
 				}
 					
@@ -1818,8 +1806,7 @@ scnparam(tp, t)
 		mr2 |= MR2_TXCTS;
 
 	if (cflag & CRTS_IFLOW) {
-		if(!scn_soft_rts)
-			mr1 |= MR1_RXRTS;
+		mr1 |= MR1_RXRTS;
 		sc->sc_rbhiwat = SCN_RING_HIWAT;
 	} else {
 		sc->sc_rbhiwat = 0;
@@ -1858,14 +1845,14 @@ scnstart(tp)
 		selwakeup(&tp->t_wsel);
 	}
 	tp->t_state |= TS_BUSY;
-	if (sc->sc_chbase[CH_SR] & SR_TX_RDY) {
-		/* XXX load multiple characters if 26c92? -plb */
-		c = getc(&tp->t_outq);
-		sc->sc_chbase[CH_DAT] = c;
 
-		/* Enable transmit interrupts. */
-		sc->sc_duart->base[DU_IMR] = (sc->sc_duart->imr |= sc->sc_tx_int);
+	while (sc->sc_chbase[CH_SR] & SR_TX_RDY) {
+		if ((c = getc(&tp->t_outq)) == -1)
+			break;
+		sc->sc_chbase[CH_DAT] = c;
 	}
+	sc->sc_duart->base[DU_IMR] = (sc->sc_duart->imr |= sc->sc_tx_int);
+
 out:
 	splx(s);
 }
