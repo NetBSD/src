@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax.c,v 1.5 2002/04/25 18:11:54 tv Exp $	*/
+/*	$NetBSD: pmax.c,v 1.6 2002/04/30 14:24:33 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: pmax.c,v 1.5 2002/04/25 18:11:54 tv Exp $");
+__RCSID("$NetBSD: pmax.c,v 1.6 2002/04/30 14:24:33 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -291,9 +291,9 @@ pmax_setboot(ib_params *params)
 	}
 
 	if (params->flags & IB_VERBOSE) {
-		printf("Bootstrap start sector: %#x\n",
+		printf("Bootstrap start sector: %u\n",
 		    le32toh(bb.map[0].start_block));
-		printf("Bootstrap sector count: %#x\n",
+		printf("Bootstrap sector count: %u\n",
 		    le32toh(bb.map[0].num_blocks));
 		printf("Bootstrap load address: %#x\n",
 		    le32toh(bb.load_addr));
