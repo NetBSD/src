@@ -1,3 +1,21 @@
+From: "Michael S. Muegel" <mmuegel@cssun6.corp.mot.com>
+Message-Id: <199307280818.AA08111@cssun6.corp.mot.com>
+Subject: Re: contributed software
+To: eric@cs.berkeley.edu (Eric Allman)
+Date: Wed, 28 Jul 1993 03:18:02 -0500 (CDT)
+In-Reply-To: <199307221853.LAA04266@mastodon.CS.Berkeley.EDU> from "Eric Allman" at Jul 22, 93 11:53:47 am
+X-Mailer: ELM [version 2.4 PL22]
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Content-Length: 69132     
+
+OK. Here is a new shell archive.
+
+Cheers,
+-Mike
+
+---- Cut Here and feed the following to sh ----
 #!/bin/sh
 # This is a shell archive (produced by shar 3.49)
 # To extract the files from this archive, save it to a file, remove
