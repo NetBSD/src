@@ -1,6 +1,6 @@
-.\"	$NetBSD: vslock.9,v 1.4 1998/04/22 07:14:33 ross Exp $
+.\"	$NetBSD: vslock.9,v 1.5 1998/04/30 06:32:39 thorpej Exp $
 .\"
-.\" Copyright (c) 1996 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -43,9 +43,9 @@
 .Nd lock/unlock user space addresses in memory
 .Sh SYNOPSIS
 .Ft void
-.Fn vslock "caddr_t addr" "u_int len"
+.Fn vslock "struct proc *p" "caddr_t addr" "u_int len"
 .Ft void
-.Fn vsunlock "caddr_t addr" "u_int len"
+.Fn vsunlock "struct proc *p" "caddr_t addr" "u_int len"
 .Sh DESCRIPTION
 The
 .Fn vslock
@@ -60,12 +60,8 @@ to the nearest preceding page boundary, and by rounding up
 .Fa addr +
 .Fa len
 to the next page boundary.
-The process context to use for this operation is taken from the
-global variable
-.Va curproc .
+The process context to use for this operation is taken from
+.Fa p .
 .Pp
 .Sh SEE ALSO
 .Xr physio 9
-.Pp
-.Sh BUGS
-The process pointer should be passed in as an argument.
