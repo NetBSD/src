@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.2 1999/12/03 01:13:17 thorpej Exp $ */
+/* $NetBSD: atomic.h,v 1.3 2000/03/05 18:46:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,9 +64,7 @@ static __inline unsigned long alpha_atomic_loadlatch_q
  *	Atomically set bits in a quadword.
  */
 static __inline void
-alpha_atomic_setbits_q(ulp, v)
-	__volatile unsigned long *ulp;
-	unsigned long v;
+alpha_atomic_setbits_q(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
@@ -91,9 +89,7 @@ alpha_atomic_setbits_q(ulp, v)
  *	Atomically clear bits in a quadword.
  */
 static __inline void
-alpha_atomic_clearbits_q(ulp, v)
-	__volatile unsigned long *ulp;
-	unsigned long v;
+alpha_atomic_clearbits_q(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
@@ -118,9 +114,7 @@ alpha_atomic_clearbits_q(ulp, v)
  *	Atomically add a value to a quadword.
  */
 static __inline void
-alpha_atomic_add_q(ulp, v)
-	__volatile unsigned long *ulp;
-	unsigned long v;
+alpha_atomic_add_q(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
@@ -145,9 +139,7 @@ alpha_atomic_add_q(ulp, v)
  *	Atomically subtract a value from a quadword.
  */
 static __inline void
-alpha_atomic_sub_q(ulp, v)
-	__volatile unsigned long *ulp;
-	unsigned long v;
+alpha_atomic_sub_q(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0;
 
@@ -172,9 +164,7 @@ alpha_atomic_sub_q(ulp, v)
  *	Atomically load and latch a quadword value.
  */
 static __inline unsigned long
-alpha_atomic_loadlatch_q(ulp, v)
-	__volatile unsigned long *ulp;
-	unsigned long v;
+alpha_atomic_loadlatch_q(__volatile unsigned long *ulp, unsigned long v)
 {
 	unsigned long t0, v0;
 
