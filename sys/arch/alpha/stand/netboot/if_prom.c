@@ -1,4 +1,4 @@
-/* $NetBSD: if_prom.c,v 1.12 1999/04/02 03:19:09 cgd Exp $ */
+/* $NetBSD: if_prom.c,v 1.13 1999/05/26 06:22:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -231,7 +231,7 @@ punt:
 	printf("\n");
 	printf("Boot device name was: \"%s\"\n", booted_dev_name);
 	printf("\n");
-	printf("Your firmware may be too old to network-boot NetBSD/Alpha,\n");
+	printf("Your firmware may be too old to network-boot NetBSD/alpha,\n");
 	printf("or you might have to hard-code an ethernet address into\n");
 	printf("your network boot block with setnetbootinfo(8).\n");
 

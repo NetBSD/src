@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.3 1999/04/05 22:03:56 cgd Exp $ */
+/* $NetBSD: bootxx.c,v 1.4 1999/05/26 06:22:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -95,7 +95,7 @@ main(void)
 	/* Init prom callback vector. */
 	init_prom_calls();
 
-        putstr("\nNetBSD/Alpha " NETBSD_VERS " " BOOTXX_FS_NAME " Primary Bootstrap\n");
+        putstr("\nNetBSD/alpha " NETBSD_VERS " " BOOTXX_FS_NAME " Primary Bootstrap\n");
 
         if (!booted_dev_open()) {
 		reason = "Can't open boot device.";
