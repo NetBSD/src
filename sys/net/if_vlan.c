@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.2 2000/09/28 06:13:35 enami Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.3 2000/09/28 07:00:53 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -145,8 +145,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	u_int8_t eaddr[6];
 
 	ifv = malloc(sizeof(struct ifvlan), M_DEVBUF, M_WAIT);
-	if (ifv == NULL)
-		return (ENOMEM);
 	memset(ifv, 0, sizeof(struct ifvlan));
 	ifp = &ifv->ifv_ec.ec_if;
 	SLIST_INIT(&ifv->ifv_mc_listhead);
