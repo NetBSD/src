@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.1 2000/10/25 01:49:55 thorpej Exp $	*/
+/*	$NetBSD: udp.c,v 1.2 2002/04/23 09:16:09 ragge Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -96,7 +96,7 @@ sendudp(d, pkt, len)
 	ip->ip_hl = sizeof(*ip) >> 2;		/* half-char */
 	ip->ip_len = htons(len);
 	ip->ip_p = IPPROTO_UDP;			/* char */
-	ip->ip_ttl = IP_TTL;			/* char */
+	ip->ip_ttl = IPDEFTTL;			/* char */
 	ip->ip_src = d->myip;
 	ip->ip_dst = d->destip;
 	ip->ip_sum = in_cksum(ip, sizeof(*ip));	 /* short, but special */
