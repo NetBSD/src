@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_all.h,v 1.7 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: scsi_all.h,v 1.7.4.1 1996/07/18 00:24:41 jtc Exp $	*/
 
 /*
  * SCSI general  interface description
@@ -287,5 +287,6 @@ struct scsi_mode_header_big {
 #define	SCSI_CHECK	0x02
 #define	SCSI_BUSY	0x08	
 #define SCSI_INTERM	0x10
+#define SCSI_QUEUE_FULL		0x28
 
 #endif /* _SCSI_SCSI_ALL_H */
