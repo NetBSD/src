@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euctw.c,v 1.5 2002/03/28 10:53:48 yamt Exp $	*/
+/*	$NetBSD: citrus_euctw.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -56,7 +56,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euctw.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
+__RCSID("$NetBSD: citrus_euctw.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -69,8 +69,12 @@ __RCSID("$NetBSD: citrus_euctw.c,v 1.5 2002/03/28 10:53:48 yamt Exp $");
 #include <wchar.h>
 #include <sys/types.h>
 #include <limits.h>
+
+#include "citrus_namespace.h"
+#include "citrus_types.h"
 #include "citrus_module.h"
 #include "citrus_ctype.h"
+#include "citrus_stdenc.h"
 #include "citrus_euctw.h"
 
 
@@ -168,8 +172,8 @@ _citrus_EUCTW_unpack_state(_EUCTWEncodingInfo * __restrict ei,
 
 static int
 /*ARGSUSED*/
-_citrus_EUCTW_stdencoding_init(_EUCTWEncodingInfo * __restrict ei,
-			       const void * __restrict var, size_t lenvar)
+_citrus_EUCTW_encoding_module_init(_EUCTWEncodingInfo * __restrict ei,
+				   const void * __restrict var, size_t lenvar)
 {
 
 	_DIAGASSERT(ei != NULL);
@@ -181,7 +185,7 @@ _citrus_EUCTW_stdencoding_init(_EUCTWEncodingInfo * __restrict ei,
 
 static void
 /*ARGSUSED*/
-_citrus_EUCTW_stdencoding_uninit(_EUCTWEncodingInfo *ei)
+_citrus_EUCTW_encoding_module_uninit(_EUCTWEncodingInfo *ei)
 {
 }
 
@@ -295,11 +299,17 @@ _citrus_EUCTW_wcrtomb_priv(_EUCTWEncodingInfo * __restrict ei,
 {
 	wchar_t cs = wc & 0x7f000080;
 	wchar_t v;
-	int i, len, clen;
+	int i, len, clen, ret;
 
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
+
+	/* reset state */
+	if (wc == 0) {
+		*nresult = 0; /* stateless */
+		return 0;
+	}
 
 	clen = 1;
 	if (wc & 0x00007f00)
@@ -310,38 +320,86 @@ _citrus_EUCTW_wcrtomb_priv(_EUCTWEncodingInfo * __restrict ei,
 	if (clen == 1 && cs == 0x00000000) {
 		/* ASCII */
 		len = 1;
-		if (n < len)
-			goto ilseq;
+		if (n < len) {
+			ret = E2BIG;
+			goto err;
+		}
 		v = wc & 0x0000007f;
 	} else if (clen == 2 && cs == ('G' << 24)) {
 		/* CNS-11643-1 */
 		len = 2;
-		if (n < len)
-			goto ilseq;
+		if (n < len) {
+			ret = E2BIG;
+			goto err;
+		}
 		v = wc & 0x00007f7f;
 		v |= 0x00008080;
 	} else if (clen == 2 && 'H' <= (cs >> 24) && (cs >> 24) <= 'M') {
 		/* CNS-11643-[2-7] */
 		len = 4;
-		if (n < len)
-			goto ilseq;
+		if (n < len) {
+			ret = E2BIG;
+			goto err;
+		}
 		*s++ = _SS2;
 		*s++ = (cs >> 24) - 'H' + 0xa2;
 		v = wc & 0x00007f7f;
 		v |= 0x00008080;
-	} else
-		goto ilseq;
+	} else {
+		ret = EILSEQ;
+		goto err;
+	}
 
 	i = clen;
 	while (i-- > 0)
 		*s++ = (v >> (i << 3)) & 0xff;
 
 	*nresult = len;
-	return (0);
+	return 0;
 
-ilseq:
+err:
 	*nresult = (size_t)-1;
-	return (EILSEQ);
+	return ret;
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUCTW_stdenc_wctocs(_EUCTWEncodingInfo * __restrict ei,
+			    _csid_t * __restrict csid,
+			    _index_t * __restrict idx, wchar_t wc)
+{
+
+	_DIAGASSERT(ei != NULL && csid != NULL && idx != NULL);
+
+	*csid = (_csid_t)(wc >> 24) & 0xFF;
+	*idx  = (_index_t)(wc & 0x7F7F);
+
+	return (0);
+}
+
+static __inline int
+/*ARGSUSED*/
+_citrus_EUCTW_stdenc_cstowc(_EUCTWEncodingInfo * __restrict ei,
+			    wchar_t * __restrict wc,
+			    _csid_t csid, _index_t idx)
+{
+
+	_DIAGASSERT(ei != NULL && wc != NULL);
+
+	if (csid > 7 || (idx & ~0x7F7F) != 0)
+		return (EINVAL);
+
+	if (csid==0) {
+		if ((idx & ~0x7F) != 0)
+			return (EINVAL);
+		*wc = (wchar_t)idx;
+	} else {
+		if ((idx & ~0x7F7F) != 0)
+			return (EINVAL);
+		*wc = (wchar_t)idx | ((wchar_t)csid<<24);
+	}
+
+	return (0);
 }
 
 /* ----------------------------------------------------------------------
@@ -352,3 +410,12 @@ _CITRUS_CTYPE_DECLS(EUCTW);
 _CITRUS_CTYPE_DEF_OPS(EUCTW);
 
 #include "citrus_ctype_template.h"
+
+/* ----------------------------------------------------------------------
+ * public interface for stdenc
+ */
+
+_CITRUS_STDENC_DECLS(EUCTW);
+_CITRUS_STDENC_DEF_OPS(EUCTW);
+
+#include "citrus_stdenc_template.h"
