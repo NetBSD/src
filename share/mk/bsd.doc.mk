@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.36 1997/12/21 15:40:37 christos Exp $
+#	$NetBSD: bsd.doc.mk,v 1.37 1998/08/09 14:46:19 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .if !target(__initialized__)
@@ -12,7 +12,7 @@ __initialized__:
 
 .PHONY:		cleandoc docinstall print spell
 realinstall:	docinstall
-clean cleandir:	cleandoc
+clean cleandir distclean: cleandoc
 
 BIB?=		bib
 EQN?=		eqn

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.nls.mk,v 1.11 1998/04/03 04:40:42 enami Exp $
+#	$NetBSD: bsd.nls.mk,v 1.12 1998/08/09 14:46:20 lukem Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -12,7 +12,7 @@ __initialized__:
 .if !defined(NONLS)
 realinstall:	nlsinstall
 .endif
-cleandir:	cleannls
+cleandir distclean: cleannls
 
 .SUFFIXES: .cat .msg
 

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.41 1998/07/27 00:58:05 tv Exp $
+#	$NetBSD: bsd.README,v 1.42 1998/08/09 14:46:19 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new make "include" files for the BSD
@@ -243,6 +243,7 @@ It has eight targets:
 	cleandir:
 		remove all of the files removed by the target clean, as
 		well as .depend, tags, and any manual pages.
+		`distclean' is a synonym for `cleandir'.
 	depend:
 		make the dependencies for the source files, and store
 		them in the file .depend.

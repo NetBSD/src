@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.76 1998/08/07 20:31:56 frueauf Exp $
+#	$NetBSD: bsd.own.mk,v 1.77 1998/08/09 14:46:20 lukem Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -131,11 +131,11 @@ GNU_ARCH.vax=vax
 GNU_ARCH.mips=mipsel
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}}
 
-TARGETS+=	all clean cleandir depend includes install lint obj regress \
-		tags
-.PHONY:		all clean cleandir depend includes install lint obj regress \
-		tags beforedepend afterdepend beforeinstall afterinstall \
-		realinstall
+TARGETS+=	all clean cleandir depend distclean includes install lint obj \
+		regress tags
+.PHONY:		all clean cleandir depend distclean includes install lint obj \
+		regress tags beforedepend afterdepend beforeinstall \
+		afterinstall realinstall
 
 # set NEED_OWN_INSTALL_TARGET, if it's not already set, to yes
 # this is used by bsd.port.mk to stop "install" being defined

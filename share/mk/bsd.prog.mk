@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.93 1998/04/09 00:32:36 tv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.94 1998/08/09 14:46:20 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if !target(__initialized__)
@@ -13,7 +13,7 @@ __initialized__:
 
 .PHONY:		cleanprog proginstall scriptsinstall
 realinstall:	proginstall scriptsinstall
-clean cleandir:	cleanprog
+clean cleandir distclean: cleanprog
 
 CFLAGS+=	${COPTS}
 
