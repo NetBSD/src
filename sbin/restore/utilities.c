@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $	*/
+/*	$NetBSD: utilities.c,v 1.12 1997/09/15 08:04:41 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.4 (Berkeley) 10/18/94";
 #else
-static char rcsid[] = "$NetBSD: utilities.c,v 1.11 1997/03/19 08:42:56 lukem Exp $";
+__RCSID("$NetBSD: utilities.c,v 1.12 1997/09/15 08:04:41 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +121,8 @@ gentempname(ep)
 		i++;
 	if (np == NULL)
 		badentry(ep, "not on ino list");
-	(void) snprintf(name, sizeof(name), "%s%d%d", TMPHDR, i, ep->e_ino);
+	(void) snprintf(name, sizeof(name), "%s%ld%d", TMPHDR, (long) i,
+	    ep->e_ino);
 	return (name);
 }
 
@@ -335,7 +337,7 @@ badentry(ep, msg)
 		    "next hashchain name: %s\n", myname(ep->e_next));
 	fprintf(stderr, "entry type: %s\n",
 		ep->e_type == NODE ? "NODE" : "LEAF");
-	fprintf(stderr, "inode number: %ld\n", ep->e_ino);
+	fprintf(stderr, "inode number: %ld\n", (long)ep->e_ino);
 	panic("flags: %s\n", flagvalues(ep));
 }
 

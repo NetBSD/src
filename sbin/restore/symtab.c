@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $	*/
+/*	$NetBSD: symtab.c,v 1.11 1997/09/15 08:04:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)symtab.c	8.2 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$NetBSD: symtab.c,v 1.10 1997/03/19 08:42:54 lukem Exp $";
+__RCSID("$NetBSD: symtab.c,v 1.11 1997/09/15 08:04:38 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -454,7 +455,7 @@ struct symtableheader {
 void
 dumpsymtable(filename, checkpt)
 	char *filename;
-	long checkpt;
+	int32_t checkpt;
 {
 	struct entry *ep, *tep;
 	ino_t i;
