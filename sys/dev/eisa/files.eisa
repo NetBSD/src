@@ -1,9 +1,10 @@
-#	$NetBSD: files.eisa,v 1.4 1996/02/27 22:00:25 cgd Exp $
+#	$NetBSD: files.eisa,v 1.5 1996/02/27 22:39:28 cgd Exp $
 #
 # Config.new file and device description for machine-independent EISA code.
 # Included by ports that need it.  Requires that the SCSI files be
 # defined first.
 
+# XXX should not attach to root
 device	eisa at eisabus, root {[slot = -1]}
 file	dev/eisa/eisa.c			eisa	needs-flag
 
