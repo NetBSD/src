@@ -1,7 +1,7 @@
-#	$NetBSD: bsd.files.mk,v 1.4 1997/05/07 15:53:28 mycroft Exp $
+#	$NetBSD: bsd.files.mk,v 1.5 1997/05/09 13:25:49 mycroft Exp $
 
 .PHONY:		filesinstall
-install:	filesinstall
+realinstall:	filesinstall
 
 .if defined(FILES)
 FILESDIR?=${BINDIR}

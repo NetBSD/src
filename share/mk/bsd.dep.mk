@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.19 1997/05/09 07:56:00 mycroft Exp $
+#	$NetBSD: bsd.dep.mk,v 1.20 1997/05/09 13:25:46 mycroft Exp $
 
 .PHONY:		cleandepend
 cleandir:	cleandepend
@@ -10,7 +10,7 @@ depend: beforedepend
 .if defined(SRCS)
 depend: .depend
 .NOPATH: .depend
-.depend: ${SRCS}
+.depend: ${SRCS} ${DPSRCS}
 	@rm -f .depend
 	@files="${.ALLSRC:M*.s} ${.ALLSRC:M*.S}"; \
 	if [ "$$files" != " " ]; then \

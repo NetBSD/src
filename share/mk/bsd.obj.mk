@@ -1,6 +1,5 @@
-#	$NetBSD: bsd.obj.mk,v 1.12 1997/05/07 17:06:24 mycroft Exp $
+#	$NetBSD: bsd.obj.mk,v 1.13 1997/05/09 13:25:59 mycroft Exp $
 
-.if !target(obj)
 .if defined(NOOBJ)
 obj:
 .else
@@ -44,5 +43,4 @@ obj:
 			mkdir $$dest; \
 		fi ; \
 	fi;
-.endif
 .endif

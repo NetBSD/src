@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.102 1997/05/09 07:56:02 mycroft Exp $
+#	$NetBSD: bsd.lib.mk,v 1.103 1997/05/09 13:25:53 mycroft Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -9,7 +9,7 @@
 
 .MAIN:		all
 .PHONY:		cleanlib libinstall
-install:	libinstall
+realinstall:	libinstall
 clean cleandir:	cleanlib
 
 .if exists(${.CURDIR}/shlib_version)
@@ -157,8 +157,6 @@ _LIBS+=llib-l${LIB}.ln
 
 all: ${SRCS} ${_LIBS}
 
-OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
-
 __archivebuild: .USE
 	@rm -f ${.TARGET}
 	@${AR} cq ${.TARGET} `NM=${NM} lorder ${.ALLSRC} | tsort -q`
@@ -170,14 +168,18 @@ __archiveinstall: .USE
 	${RANLIB} -t ${.TARGET}
 	chmod ${LIBMODE} ${.TARGET}
 
+DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+CLEANFILES+=	${DPSRCS}
+
+OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 lib${LIB}.a:: ${OBJS} __archivebuild
 	@echo building standard ${LIB} library
 
-POBJS+=	${OBJS:.o=.po}
+POBJS+=		${OBJS:.o=.po}
 lib${LIB}_p.a:: ${POBJS} __archivebuild
 	@echo building profiled ${LIB} library
 
-SOBJS+=	${OBJS:.o=.so}
+SOBJS+=		${OBJS:.o=.so}
 lib${LIB}_pic.a:: ${SOBJS} __archivebuild
 	@echo building shared object ${LIB} library
 
@@ -195,8 +197,8 @@ lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD} \
 	    ${SHLIB_LDENDFILE}
 .endif
 
-LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-LLIBS?=	-lc
+LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+LLIBS?=		-lc
 llib-l${LIB}.ln: ${LOBJS}
 	@echo building llib-l${LIB}.ln
 	@rm -f llib-l${LIB}.ln

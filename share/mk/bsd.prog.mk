@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.79 1997/05/09 07:56:03 mycroft Exp $
+#	$NetBSD: bsd.prog.mk,v 1.80 1997/05/09 13:26:01 mycroft Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .if exists(${.CURDIR}/../Makefile.inc)
@@ -9,7 +9,7 @@
 
 .MAIN:		all
 .PHONY:		cleanprog proginstall scriptsinstall
-install:	proginstall scriptsinstall
+realinstall:	proginstall scriptsinstall
 clean cleandir:	cleanprog
 
 .SUFFIXES: .out .o .c .cc .C .y .l .s .8 .7 .6 .5 .4 .3 .2 .1 .0
@@ -79,22 +79,26 @@ CLEANFILES+=strings
 
 
 .if defined(PROG)
-SRCS?=	${PROG}.c
+SRCS?=		${PROG}.c
+
+DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+CLEANFILES+=	${DPSRCS}
+
 .if !empty(SRCS:N*.h:N*.sh)
-OBJS+=	${SRCS:N*.h:N*.sh:R:S/$/.o/g}
-LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
+OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
+LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 .endif
 
 .if defined(OBJS) && !empty(OBJS)
 .NOPATH: ${OBJS}
 .if defined(DESTDIR)
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} -nostdlib -L${DESTDIR}/usr/lib ${LIBCRT0} ${LIBCRTBEGIN} ${OBJS} ${LDADD} -lgcc -lc -lgcc ${LIBCRTEND}
 
 .else
 
-${PROG}: ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+${PROG}: ${LIBCRT0} ${DPSRCS} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
 	${CC} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .endif	# defined(DESTDIR)
@@ -105,7 +109,7 @@ MAN=	${PROG}.1
 .endif	# !defined(MAN)
 .endif	# defined(PROG)
 
-all: ${SRCS} ${PROG}
+all: ${PROG}
 
 cleanprog:
 	rm -f a.out [Ee]rrs mklog core *.core \

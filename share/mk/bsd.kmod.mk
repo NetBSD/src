@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.18 1997/05/09 07:56:01 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.19 1997/05/09 13:25:50 mycroft Exp $
 
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
@@ -8,7 +8,7 @@
 
 .MAIN:		all
 .PHONY:		cleankmod kmodinstall load unload
-install:	kmodinstall
+realinstall:	kmodinstall
 clean cleandir:	cleankmod
 
 S?=		/sys
@@ -18,10 +18,10 @@ KERN=		$S/kern
 
 CFLAGS+=	${COPTS} -D_KERNEL -D_LKM -I. -I${.CURDIR} -I$S -I$S/arch
 
-CLEANFILES+=	machine ${MACHINE_ARCH}
+DPSRCS+=	${SRCS:M*.[ly]:.l=.c:.y=.c}
+CLEANFILES+=	${DPSRCS}
 
-DPSRCS+= ${SRCS:M*.h}
-OBJS+=	${SRCS:N*.h:R:S/$/.o/g}
+OBJS+=		${SRCS:N*.h:N*.sh:R:S/$/.o/g}
 
 .if !defined(PROG)
 PROG=	${KMOD}.o
@@ -44,6 +44,7 @@ machine-links:
 	    ln -s $S/arch/${MACHINE}/include machine
 	-rm -f ${MACHINE_ARCH} && \
 	    ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
+CLEANFILES+=machine ${MACHINE_ARCH}
 
 cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
