@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.3 1997/03/22 04:15:51 thorpej Exp $	 */
+/*	$NetBSD: exec.c,v 1.4 1997/09/17 18:02:11 drochner Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -51,7 +51,9 @@
 #endif
 
 #include <lib/libsa/stand.h>
+
 #include "libi386.h"
+#include "bootinfo.h"
 
 #ifdef COMPAT_OLDBOOT
 static int
@@ -72,12 +74,13 @@ dev2major(devname, major)
 }
 #endif
 
+extern struct btinfo_console btinfo_console;
+
 int 
-exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
+exec_netbsd(file, loadaddr, boothowto)
 	const char     *file;
 	physaddr_t      loadaddr;
 	int             boothowto;
-	char           *bootdev, *consdev;	/* passed to kernel */
 {
 	register int    io;
 	struct exec     x;
@@ -91,16 +94,19 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 	int             unit, part;
 	const char     *filename;
 	int             bootdevnr;
-#else
-	u_long          xbootinfo[2];
 #endif
 
 #ifdef	DEBUG
 	printf("exec: file=%s loadaddr=0x%lx\n", file, loadaddr);
 #endif
+
+	BI_ALLOC(5); /* ??? */
+
+	BI_ADD(&btinfo_console, BTINFO_CONSOLE, sizeof(struct btinfo_console));
+
 	io = open(file, 0);
 	if (io < 0)
-		return (-1);
+		goto out;
 
 	/*
 	 * Read in the exec header, and validate it.
@@ -111,7 +117,7 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 
 	if ((magic != ZMAGIC) || (N_GETMID(x) != MID_MACHINE)) {
 #ifdef DEBUG
-		printf("invalid NetBSD kernel (%o/%ld)\n", magic, N_GETMID(x));
+		printf("invalid NetBSD kernel (%o/%d)\n", magic, N_GETMID(x));
 #endif
 		errno = EFTYPE;
 		goto closeout;
@@ -239,10 +245,11 @@ exec_netbsd(file, loadaddr, boothowto, bootdev, consdev)
 	boot_argv[1] = bootdevnr;
 	boot_argv[2] = 0;	/* cyl offset, unused */
 #else				/* XXX to be specified */
-	xbootinfo[0] = vtophys(bootdev);
-	xbootinfo[1] = vtophys(consdev);
+#ifdef PASS_BIOSGEOM
+	bi_getbiosgeom();
+#endif
 	boot_argv[1] = 0;
-	boot_argv[2] = vtophys(xbootinfo);	/* XXX cyl offset */
+	boot_argv[2] = vtophys(bootinfo);	/* cyl offset */
 #endif
 	/*
 	 * boot_argv[3] = end (set above)
@@ -264,5 +271,8 @@ shread:
 	errno = EIO;
 closeout:
 	close(io);
+out:
+	BI_FREE();
+	bootinfo = 0;
 	return (-1);
 }
