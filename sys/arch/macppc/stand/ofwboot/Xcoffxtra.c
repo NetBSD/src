@@ -1,4 +1,4 @@
-/*	$NetBSD: Xcoffxtra.c,v 1.1 1999/11/23 01:35:37 wrstuden Exp $	*/
+/*	$NetBSD: Xcoffxtra.c,v 1.2 2002/10/31 21:31:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,9 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-asm("
-	.text
-	.globl	_entry
-_entry:
-	.long	_start,0,0
-");
+asm(
+"	 .text			\n"
+"	.globl	_entry		\n"
+"_entry:			\n"
+"	.long	_start,0,0	\n"
+);

@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.11 2002/09/27 00:32:17 wrstuden Exp $	*/
+/*	$NetBSD: Locore.c,v 1.12 2002/10/31 21:31:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -46,52 +46,51 @@ static void setup __P((void));
 static int stack[8192/4 + 4];
 
 #ifdef XCOFF_GLUE
-asm("
-	.text
-	.globl	_entry
-_entry:
-	.long	_start,0,0
-");
+asm(
+"	.text			\n"
+"	.globl	_entry		\n"
+"_entry:			\n"
+"	.long	_start,0,0	\n"
+);
 #endif
 
-asm("
-	.text
-	.globl	_start
-_start:
-	sync
-	isync
-
-	lis	1,stack@ha
-	addi	1,1,stack@l
-	addi	1,1,8192
-
-	mfmsr	8
-	li	0,0
-	mtmsr	0
-	isync
-
-	mtibatu	0,0
-	mtibatu	1,0
-	mtibatu	2,0
-	mtibatu	3,0
-	mtdbatu	0,0
-	mtdbatu	1,0
-	mtdbatu	2,0
-	mtdbatu	3,0
-
-	li	9,0x12		/* BATL(0, BAT_M, BAT_PP_RW) */
-	mtibatl	0,9
-	mtdbatl	0,9
-	li	9,0x1ffe	/* BATU(0, BAT_BL_256M, BAT_Vs) */
-	mtibatu	0,9
-	mtdbatu	0,9
-	isync
-
-	mtmsr	8
-	isync
-
-	b	startup
-");
+asm(
+"	.text			\n"
+"	.globl	_start		\n"
+"_start:			\n"
+"	sync			\n"
+"	isync			\n"
+"	lis	%r1,stack@ha	\n"
+"	addi	%r1,%r1,stack@l	\n"
+"	addi	%r1,%r1,8192	\n"
+"				\n"
+"	mfmsr	%r8		\n"
+"	li	%r0,0		\n"
+"	mtmsr	%r0		\n"
+"	isync			\n"
+"				\n"
+"	mtibatu	0,%r0		\n"
+"	mtibatu	1,%r0		\n"
+"	mtibatu	2,%r0		\n"
+"	mtibatu	3,%r0		\n"
+"	mtdbatu	0,%r0		\n"
+"	mtdbatu	1,%r0		\n"
+"	mtdbatu	2,%r0		\n"
+"	mtdbatu	3,%r0		\n"
+"				\n"
+"	li	%r9,0x12	\n" 	/* BATL(0, BAT_M, BAT_PP_RW) */
+"	mtibatl	0,%r9		\n"
+"	mtdbatl	0,%r9		\n"
+"	li	%r9,0x1ffe	\n"	/* BATU(0, BAT_BL_256M, BAT_Vs) */
+"	mtibatu	0,%r9		\n"
+"	mtdbatu	0,%r9		\n"
+"	isync			\n"
+"				\n"
+"	mtmsr	%r8		\n"
+"	isync			\n"
+"				\n"
+"	b	startup		\n"
+);
 
 #if 0
 static int
