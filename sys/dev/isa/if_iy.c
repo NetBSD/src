@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.13 1997/04/28 18:30:20 mycroft Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.14 1997/10/15 06:00:26 explorer Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 /*-
@@ -34,6 +34,7 @@
  */
 
 #include "bpfilter.h"
+#include "rnd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +46,9 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#if NRND > 0
+#include <sys/rnd.h>
+#endif
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -108,6 +112,10 @@ struct iy_softc {
 
 #ifdef IYDEBUG
 	int sc_debug;
+#endif
+
+#if NRND > 0
+	rndsource_element_t rnd_source;
 #endif
 };
 
@@ -326,6 +334,10 @@ iyattach(parent, self, aux)
 
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE, 
 	    IPL_NET, iyintr, sc);
+
+#if NRND > 0
+	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname, RND_TYPE_NET);
+#endif
 
 	temp = bus_space_read_1(iot, ioh, INT_NO_REG);
 	bus_space_write_1(iot, ioh, INT_NO_REG, (temp & 0xf8) | sc->mappedirq);
@@ -826,6 +838,11 @@ iyintr(arg)
 		iy_intr_tx(sc);
 		bus_space_write_1(iot, ioh, STATUS_REG, TX_INT);
 	}
+
+#if NRND > 0
+	rnd_add_uint32(&sc->rnd_source, status);
+#endif
+
 	return 1;
 }
 
