@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.10 2003/10/05 19:44:58 matt Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.11 2004/02/24 15:12:51 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.10 2003/10/05 19:44:58 matt Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.11 2004/02/24 15:12:51 wiz Exp $");
 
 #include "opt_irqstats.h"
 
@@ -448,7 +448,7 @@ footbridge_intr_dispatch(struct clockframe *frame)
 		intr_enabled |= ibit;
 		footbridge_set_intrmask();
 
-		/* also check for any new interrupts that may have occured,
+		/* also check for any new interrupts that may have occurred,
 		 * that we can handle at this spl level */
 		hwpend |= (footbridge_ipending & ICU_INT_HWMASK) & ~pcpl;
 	}

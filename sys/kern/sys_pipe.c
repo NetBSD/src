@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.48 2004/02/22 17:51:25 jdolecek Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.49 2004/02/24 15:12:52 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.48 2004/02/22 17:51:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.49 2004/02/24 15:12:52 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,7 +938,7 @@ retry:
 			error = pipe_direct_write(fp, wpipe, uio);
 
 			/*
-			 * Break out if error occured, unless it's ENOMEM.
+			 * Break out if error occurred, unless it's ENOMEM.
 			 * ENOMEM means we failed to allocate some resources
 			 * for direct write, so we just fallback to ordinary
 			 * write. If the direct write was successful,

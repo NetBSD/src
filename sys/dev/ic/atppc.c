@@ -1,4 +1,4 @@
-/* $NetBSD: atppc.c,v 1.13 2004/02/10 21:55:38 jdolecek Exp $ */
+/* $NetBSD: atppc.c,v 1.14 2004/02/24 15:12:52 wiz Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.13 2004/02/10 21:55:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc.c,v 1.14 2004/02/24 15:12:52 wiz Exp $");
 
 #include "opt_atppc.h"
 
@@ -684,7 +684,7 @@ atppcintr(void *arg)
 					claim = 0;
 			}
 		}
-		/* Determine if nFault has occured */
+		/* Determine if nFault has occurred */
 		if ((atppc->sc_mode & ATPPC_MODE_ECP) &&
 			(atppc->sc_ecr_intr & ATPPC_nFAULT_INTR) &&
 			!(atppc->sc_str_intr & nFAULT)) {
