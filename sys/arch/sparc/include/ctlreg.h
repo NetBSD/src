@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.14 1997/07/06 22:21:11 pk Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.15 1997/07/20 18:55:03 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,11 +91,11 @@
 #define ASI_ICACHEDATA	0x0d	/* [4m] instruction cache data */
 #define ASI_DCACHETAG	0x0e	/* [4m] data cache tag */
 #define ASI_DCACHEDATA	0x0f	/* [4m] data cache data */
-#define ASI_IDCACHELFP	0x10	/* [4m] ms2 only: flush i&d cache line (page) */
-#define ASI_IDCACHELFS	0x11	/* [4m] ms2 only: flush i&d cache line (seg) */
-#define ASI_IDCACHELFR	0x12	/* [4m] ms2 only: flush i&d cache line (reg) */
-#define ASI_IDCACHELFC	0x13	/* [4m] ms2 only: flush i&d cache line (ctxt) */
-#define ASI_IDCACHELFU	0x14	/* [4m] ms2 only: flush i&d cache line (user) */
+#define ASI_IDCACHELFP	0x10	/* [4m] flush i&d cache line (page) */
+#define ASI_IDCACHELFS	0x11	/* [4m] flush i&d cache line (seg) */
+#define ASI_IDCACHELFR	0x12	/* [4m] flush i&d cache line (reg) */
+#define ASI_IDCACHELFC	0x13	/* [4m] flush i&d cache line (ctxt) */
+#define ASI_IDCACHELFU	0x14	/* [4m] flush i&d cache line (user) */
 #define ASI_BYPASS	0x20	/* [4m] sun ref mmu bypass,
 				        ie. direct phys access */
 #define ASI_ICACHECLR	0x36	/* [4m] ms1 only: I-cache flash clear */
