@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.22 2000/06/03 21:03:25 thorpej Exp $	*/
+/*	$NetBSD: iostat.c,v 1.23 2000/11/30 23:59:04 simonb Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.22 2000/06/03 21:03:25 thorpej Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.23 2000/11/30 23:59:04 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -113,24 +113,22 @@ static int	todo = 0;
 #define SHOW_TOTALS	1<<7
 #define SHOW_STATS_ALL	(SHOW_STATS_1 | SHOW_STATS_2 | SHOW_STATS_X)
 
-static void cpustats __P((void));
-static void disk_stats __P((double));
-static void disk_stats2 __P((double));
-static void disk_statsx __P((double));
-static void header __P((int));
-static void usage __P((void));
-static void display __P((void));
-static void selectdrives __P((int, char **));
+static void cpustats(void);
+static void disk_stats(double);
+static void disk_stats2(double);
+static void disk_statsx(double);
+static void header(int);
+static void usage(void);
+static void display(void);
+static void selectdrives(int, char **);
 
-void dkswap __P((void));
-void dkreadstats __P((void));
-int dkinit __P((int, gid_t));
-int main __P((int, char **));
+void dkswap(void);
+void dkreadstats(void);
+int dkinit(int, gid_t);
+int main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, hdrcnt;
 	struct timeval	tv;
@@ -224,8 +222,7 @@ main(argc, argv)
 }
 
 static void
-header(signo)
-	int signo;
+header(int signo)
 {
 	int i;
 
@@ -278,8 +275,7 @@ header(signo)
 }
 
 static void
-disk_stats(etime)
-	double etime;
+disk_stats(double etime)
 {
 	int dn;
 	double atime, mbps;
@@ -312,8 +308,7 @@ disk_stats(etime)
 }
 
 static void
-disk_stats2(etime)
-	double etime;
+disk_stats2(double etime)
 {
 	int dn;
 	double atime;
@@ -336,8 +331,7 @@ disk_stats2(etime)
 }
 
 static void
-disk_statsx(etime)
-	double etime;
+disk_statsx(double etime)
 {
 	int dn;
 	double atime, kbps;
@@ -374,7 +368,7 @@ disk_statsx(etime)
 }
 
 static void
-cpustats()
+cpustats(void)
 {
 	int state;
 	double time;
@@ -390,7 +384,7 @@ cpustats()
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr, "usage: iostat [-CdDITx] [-c count] [-M core] \
@@ -399,7 +393,7 @@ usage()
 }
 
 static void
-display()
+display(void)
 {
 	int	i;
 	double	etime;
@@ -440,9 +434,7 @@ display()
 }
 
 static void
-selectdrives(argc, argv)
-	int	argc;
-	char	*argv[];
+selectdrives(int argc, char *argv[])
 {
 	int	i, ndrives;
 
@@ -498,4 +490,3 @@ selectdrives(argc, argv)
 			++ndrives;
 		}
 }
-
