@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2001/03/31 11:37:44 aymeric Exp $
+#	$NetBSD: Makefile,v 1.5 2001/03/31 12:13:34 aymeric Exp $
 #
 #	@(#)Makefile	8.29 (Berkeley) 10/19/96
 
 CAT=		dutch english french german ru_RU.KOI8-R spanish swedish
 VI_FILES=	../cl/*.c ../common/*.c ../ex/*.c ../vi/*.c
+FILES=		${CAT}
+FILESDIR=	/usr/share/vi/catalog
 
 HOSTPROG=	dump
 SRCS=		dump.c
