@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.30 2003/11/18 01:40:18 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.31 2003/11/25 21:59:31 christos Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.30 2003/11/18 01:40:18 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.31 2003/11/25 21:59:31 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -119,7 +119,7 @@ mach_sys_msg_overwrite_trap(l, v, retval)
 		struct mach_service *srv;
 		mach_port_t ln;
 		mach_port_t rn;
-		struct mach_right *lr;
+		struct mach_right *lr = NULL;
 		struct mach_right *rr;
 		int bits, rights;
 
