@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.2 1995/02/25 03:01:49 cgd Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.2.4.1 1996/09/16 23:44:29 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_getport.c,v 1.2 1995/02/25 03:01:49 cgd Exp $";
+static char *rcsid = "$NetBSD: pmap_getport.c,v 1.2.4.1 1996/09/16 23:44:29 jtc Exp $";
 #endif
 
 /*
@@ -42,11 +42,16 @@ static char *rcsid = "$NetBSD: pmap_getport.c,v 1.2 1995/02/25 03:01:49 cgd Exp 
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
 #include <sys/socket.h>
 #include <net/if.h>
+
+#ifdef __weak_alias
+__weak_alias(pmap_getport,_pmap_getport);
+#endif
 
 static struct timeval timeout = { 5, 0 };
 static struct timeval tottimeout = { 60, 0 };

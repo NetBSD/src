@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.3 1995/02/25 03:01:59 cgd Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.3.4.1 1996/09/16 23:44:38 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_raw.c 1.15 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_raw.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_raw.c,v 1.3 1995/02/25 03:01:59 cgd Exp $";
+static char *rcsid = "$NetBSD: svc_raw.c,v 1.3.4.1 1996/09/16 23:44:38 jtc Exp $";
 #endif
 
 /*
@@ -44,8 +44,13 @@ static char *rcsid = "$NetBSD: svc_raw.c,v 1.3 1995/02/25 03:01:59 cgd Exp $";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <rpc/rpc.h>
+
+#ifdef __weak_alias
+__weak_alias(svcraw_create,_svcraw_create);
+#endif
 
 
 /*

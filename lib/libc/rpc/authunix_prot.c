@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.2 1995/02/25 03:01:36 cgd Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.2.4.1 1996/09/16 23:44:18 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: authunix_prot.c,v 1.2 1995/02/25 03:01:36 cgd Exp $";
+static char *rcsid = "$NetBSD: authunix_prot.c,v 1.2.4.1 1996/09/16 23:44:18 jtc Exp $";
 #endif
 
 /*
@@ -42,11 +42,15 @@ static char *rcsid = "$NetBSD: authunix_prot.c,v 1.2 1995/02/25 03:01:36 cgd Exp
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
-
+#include "namespace.h"
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
 #include <rpc/auth_unix.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_authunix_parms,_xdr_authunix_parms);
+#endif
 
 /*
  * XDR for unix authentication parameters.
@@ -67,4 +71,3 @@ xdr_authunix_parms(xdrs, p)
 	}
 	return (FALSE);
 }
-

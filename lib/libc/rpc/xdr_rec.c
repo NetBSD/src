@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.5.4.1 1996/09/16 23:44:47 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #if defined(LIBC_SCCS) && !defined(lint) 
 /*static char *sccsid = "from: @(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
+static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5.4.1 1996/09/16 23:44:47 jtc Exp $";
 #endif
 
 /*
@@ -51,11 +51,19 @@ static char *rcsid = "$NetBSD: xdr_rec.c,v 1.5 1995/02/25 03:02:08 cgd Exp $";
  * The other 31 bits encode the byte length of the fragment.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <netinet/in.h>
+
+#ifdef __weak_alias
+__weak_alias(xdrrec_create,_xdrrec_create);
+__weak_alias(xdrrec_endofrecord,_xdrrec_endofrecord);
+__weak_alias(xdrrec_eof,_xdrrec_eof);
+__weak_alias(xdrrec_skiprecord,_xdrrec_skiprecord);
+#endif
 
 static u_int	fix_buf_size();
 static bool_t	flush_out();

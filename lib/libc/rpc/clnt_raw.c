@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.3.4.1 1996/09/16 23:44:21 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $";
+static char *rcsid = "$NetBSD: clnt_raw.c,v 1.3.4.1 1996/09/16 23:44:21 jtc Exp $";
 #endif
 
 /*
@@ -46,8 +46,13 @@ static char *rcsid = "$NetBSD: clnt_raw.c,v 1.3 1995/02/25 03:01:40 cgd Exp $";
  * any interference from the kernal.
  */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <rpc/rpc.h>
+
+#ifdef __weak_alias
+__weak_alias(clntraw_create,_clntraw_create);
+#endif
 
 #define MCALL_MSG_SIZE 24
 

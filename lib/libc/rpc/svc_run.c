@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.6 1995/02/25 03:02:00 cgd Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.6.4.1 1996/09/16 23:44:39 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,15 +32,20 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_run.c,v 1.6 1995/02/25 03:02:00 cgd Exp $";
+static char *rcsid = "$NetBSD: svc_run.c,v 1.6.4.1 1996/09/16 23:44:39 jtc Exp $";
 #endif
 
 /*
  * This is the rpc server side idle loop
  * Wait for input, call server program.
  */
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <sys/errno.h>
+
+#ifdef __weak_alias
+__weak_alias(svc_run,_svc_run);
+#endif
 
 void
 svc_run()

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $	*/
+/*	$NetBSD: rpc_prot.c,v 1.3.4.1 1996/09/16 23:44:35 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_prot.c 1.36 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_prot.c	2.3 88/08/07 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $";
+static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3.4.1 1996/09/16 23:44:35 jtc Exp $";
 #endif
 
 /*
@@ -48,9 +48,18 @@ static char *rcsid = "$NetBSD: rpc_prot.c,v 1.3 1995/04/29 05:26:35 cgd Exp $";
  * routines are also in this program.
  */
 
+#include "namespace.h"
 #include <sys/param.h>
-
 #include <rpc/rpc.h>
+
+#ifdef __weak_alias
+__weak_alias(xdr_accepted_reply,_xdr_accepted_reply);
+__weak_alias(xdr_callhdr,_xdr_callhdr);
+__weak_alias(xdr_des_block,_xdr_des_block);
+__weak_alias(xdr_opaque_auth,_xdr_opaque_auth);
+__weak_alias(xdr_rejected_reply,_xdr_rejected_reply);
+__weak_alias(xdr_replymsg,_xdr_replymsg);
+#endif
 
 /* * * * * * * * * * * * * * XDR Authentication * * * * * * * * * * * */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.6.4.1 1996/09/16 23:44:40 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $";
+static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6.4.1 1996/09/16 23:44:40 jtc Exp $";
 #endif
 
 /*
@@ -45,12 +45,18 @@ static char *rcsid = "$NetBSD: svc_tcp.c,v 1.6 1995/06/03 22:37:27 mycroft Exp $
  * and a record/tcp stream.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <rpc/rpc.h>
 #include <sys/socket.h>
 #include <errno.h>
+
+#ifdef __weak_alias
+__weak_alias(svcfd_create,_svcfd_create);
+__weak_alias(svctcp_create,_svctcp_create);
+#endif
 
 /*
  * Ops vector for TCP/IP based rpc service handle

@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $	*/
+/*	$NetBSD: svc_udp.c,v 1.7.2.1 1996/09/16 23:44:41 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)svc_udp.c 1.24 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)svc_udp.c	2.2 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
+static char *rcsid = "$NetBSD: svc_udp.c,v 1.7.2.1 1996/09/16 23:44:41 jtc Exp $";
 #endif
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,6 +51,11 @@ static char *rcsid = "$NetBSD: svc_udp.c,v 1.7 1996/03/29 23:00:57 jtc Exp $";
 #include <sys/socket.h>
 #include <errno.h>
 
+#ifdef __weak_alias
+__weak_alias(svcudp_bufcreate,_svcudp_bufcreate);
+__weak_alias(svcudp_create,_svcudp_create);
+__weak_alias(svcudp_enablecache,_svcudp_enablecache);
+#endif
 
 #define rpc_buffer(xprt) ((xprt)->xp_p1)
 #define MAX(a, b)     ((a > b) ? a : b)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp $	*/
+/*	$NetBSD: pmap_getmaps.c,v 1.3.4.1 1996/09/16 23:44:28 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,7 +32,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)pmap_getmaps.c 1.10 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)pmap_getmaps.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp $";
+static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3.4.1 1996/09/16 23:44:28 jtc Exp $";
 #endif
 
 /*
@@ -43,6 +43,7 @@ static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp 
  * Copyright (C) 1984, Sun Microsystems, Inc.
  */
 
+#include "namespace.h"
 #include <rpc/rpc.h>
 #include <rpc/pmap_prot.h>
 #include <rpc/pmap_clnt.h>
@@ -52,6 +53,11 @@ static char *rcsid = "$NetBSD: pmap_getmaps.c,v 1.3 1995/02/25 03:01:48 cgd Exp 
 #include <errno.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
+
+#ifdef __weak_alias
+__weak_alias(pmap_getmaps,_pmap_getmaps);
+#endif
+
 #define NAMELEN 255
 #define MAX_BROADCAST_SIZE 1400
 

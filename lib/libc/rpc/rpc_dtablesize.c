@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_dtablesize.c,v 1.4 1996/03/29 23:00:54 jtc Exp $	*/
+/*	$NetBSD: rpc_dtablesize.c,v 1.4.2.1 1996/09/16 23:44:34 jtc Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -32,9 +32,10 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c 1.2 87/08/11 Copyr 1987 Sun Micro";*/
 /*static char *sccsid = "from: @(#)rpc_dtablesize.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.4 1996/03/29 23:00:54 jtc Exp $";
+static char *rcsid = "$NetBSD: rpc_dtablesize.c,v 1.4.2.1 1996/09/16 23:44:34 jtc Exp $";
 #endif
 
+#include "namespace.h"
 #include <sys/types.h>
 
 /*
