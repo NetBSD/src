@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14 1994/12/14 15:17:22 mycroft Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.15 1995/01/13 06:51:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -352,55 +352,55 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(struct buf *bp, struct disklabel *lp, int wlabel)
+bounds_check_with_label(bp, lp, wlabel)
+	struct buf *bp;
+	struct disklabel *lp;
+	int wlabel;
 {
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);
-	int labelsect = lp->d_partitions[0].p_offset;
-	int maxsz = p->p_size,
-		sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
+	int labelsect = lp->d_partitions[2].p_offset + LABELSECTOR;
+	int sz;
 
-	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */
-        if (bp->b_blkno + p->p_offset <= LABELSECTOR + labelsect &&
+	if (bp->b_bcount < lp->d_secsize) {
+		/* No whole sectors requested. */
+		bp->b_error = EINVAL;
+		goto bad;
+	}
+
+	sz = (bp->b_bcount + lp->d_secsize - 1) / lp->d_secsize;
+
+	/* Overwriting disk label? */
+	/* XXX Also protect MBR and boot program? */
+	if (bp->b_blkno + p->p_offset <= labelsect &&
 #if LABELSECTOR != 0
-            bp->b_blkno + p->p_offset + sz > LABELSECTOR + labelsect &&
+	    bp->b_blkno + p->p_offset + sz > labelsect &&
 #endif
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
+	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
+		bp->b_error = EROFS;
+		goto bad;
+	}
 
-#if	defined(DOSBBSECTOR) && defined(notyet)
-	/* overwriting master boot record? */
-        if (bp->b_blkno + p->p_offset <= DOSBBSECTOR &&
-            (bp->b_flags & B_READ) == 0 && wlabel == 0) {
-                bp->b_error = EROFS;
-                goto bad;
-        }
-#endif
-
-	/* beyond partition? */
-        if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
-                /* if exactly at end of disk, return an EOF */
-                if (bp->b_blkno == maxsz) {
-                        bp->b_resid = bp->b_bcount;
-                        return(0);
-                }
-                /* or truncate if part of it fits */
-                sz = maxsz - bp->b_blkno;
-                if (sz <= 0) {
+	if (bp->b_blkno + sz > p->p_size) {
+		sz = p->p_size - bp->b_blkno;
+		if (sz == 0) {
+			/* If exactly at end of disk, return EOF. */
+			bp->b_resid = bp->b_bcount;
+			return (0);
+		if (sz < 0) {
+			/* If past end of disk, return EINVAL. */
 			bp->b_error = EINVAL;
-                        goto bad;
+			goto bad;
 		}
-                bp->b_bcount = sz << DEV_BSHIFT;
-        }
+		/* Otherwise, truncate request. */
+		bp->b_bcount = sz << DEV_BSHIFT;
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
-        bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
-	return(1);
+	bp->b_cylin = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;
+	return (1);
 
 bad:
 	bp->b_flags |= B_ERROR;
-	return(-1);
+	return (-1);
 }
 
