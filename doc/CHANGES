@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.83 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.84 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -246,12 +246,14 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	ex(4): Added support for 3c905CX-TX.  [gendalia 20030116]
 	texinfo(1): upgraded to 4.3 [wiz 20030117]
 	pthreads: Merge nathanw_sa branch, implementing p1003.1 POSIX thread
-		and Scheduler Activation thread interface [thorpej 20030117]
-	cpio(1): removed GNU cpio (replaced by pax frontend) [wiz 20030118]
-	tar(1): removed GNU tar (replaced by pax frontend) [wiz 20030118]
-	semaphores: Added p1003.1b semaphores from freebsd [christos 20030120]
-	cvs(1): upgraded to 1.11.5 [wiz 20030121]
+		and Scheduler Activation thread interface.  [thorpej 20030117]
+	cpio(1): removed GNU cpio (replaced by pax frontend).  [wiz 20030118]
+	tar(1): removed GNU tar (replaced by pax frontend).  [wiz 20030118]
+	semaphores: Added p1003.1b semaphores from freebsd.  [christos 20030120]
+	cvs(1): upgraded to 1.11.5.  [wiz 20030121]
 	progress(1): New standalone progress bar program factored out
-		from ftp(1) [jhawk 20030122]
+		from ftp(1).  [jhawk 20030122]
 	sysinst: Leverage progress(1) for reasonable-looking file extraction
-		displays. [jhawk 20030122]
+		displays.  [jhawk 20030122]
+	build.sh: Rework command line into command line options followed
+		by a list of operations to perform.  [lukem 20020123]
