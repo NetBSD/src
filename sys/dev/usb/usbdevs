@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.344 2003/10/02 19:09:28 augustss Exp $
+$NetBSD: usbdevs,v 1.345 2003/10/11 12:11:13 wiz Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -334,6 +334,7 @@ vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
+vendor ACER2		0x0b7a	Acer
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
 vendor ASIX		0x0b95	ASIX Electronics
 vendor GREENHOUSE2	0x0bda	GREENHOUSE
@@ -415,6 +416,9 @@ product ABOCOM XX10		0xabc1	XX10
 /* Accton products */
 product ACCTON USB320_EC	0x1046	USB320-EC Ethernet Adapter
 product ACCTON SS1001		0x5046	SpeedStream Ethernet Adapter
+
+/* Acer products */
+product ACER2 BLUETOOTH		0x07d0	BT-500 Bluetooth USB Adapter
 
 /* Acer Peripherals, Inc. products */
 product ACERP ACERSCAN_C310U	0x12a6	Acerscan C310U
