@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.1 2000/10/02 15:22:32 tsutsui Exp $	*/
+/*	$NetBSD: md_root.c,v 1.2 2001/07/02 17:17:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -36,20 +36,25 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_md.h"
+#include "opt_mdsize.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
 
 #include <dev/md.h>
 
-#include "opt_mdsize.h"
-
 extern int boothowto;
+
+#if MEMORY_DISK_DYNAMIC
+size_t md_root_size;
+char *md_root_image;
+#else /* MEMORY_DISK_DYNAMIC */
 
 #ifndef MINIROOTSIZE
 #define MINIROOTSIZE 512
 #endif
-
 #define ROOTBYTES (MINIROOTSIZE << DEV_BSHIFT)
 
 /*
@@ -58,14 +63,22 @@ extern int boothowto;
  */
 u_int32_t md_root_size = ROOTBYTES;
 char md_root_image[ROOTBYTES] = "|This is the root ramdisk!\n";
+#endif /* MEMORY_DISK_DYNAMIC */
+
+#if MEMORY_DISK_DYNAMIC
+void
+md_root_setconf(char *addr, size_t size)
+{
+	md_root_image = addr;
+	md_root_size = size;
+}
+#endif /* MEMORY_DISK_DYNAMIC */
 
 /*
  * This is called during pseudo-device attachment.
  */
 void
-md_attach_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_attach_hook(int unit, struct md_conf *md)
 {
 	char pbuf[9];
 
@@ -74,7 +87,7 @@ md_attach_hook(unit, md)
 		md->md_addr = (caddr_t)md_root_image;
 		md->md_size = (size_t)md_root_size;
 		md->md_type = MD_KMEM_FIXED;
-		format_bytes(pbuf, sizeof(pbuf), ROOTBYTES);
+		format_bytes(pbuf, sizeof(pbuf), md->md_size);
 		printf("md%d: internal %s image area\n", unit, pbuf);
 	}
 }
@@ -83,9 +96,7 @@ md_attach_hook(unit, md)
  * This is called during open (i.e. mountroot)
  */
 void
-md_open_hook(unit, md)
-	int unit;
-	struct md_conf *md;
+md_open_hook(int unit, struct md_conf *md)
 {
 
 	if (unit == 0) {
