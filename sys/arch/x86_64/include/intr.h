@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1 2001/06/19 00:20:11 fvdl Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 2002/11/23 12:53:51 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,6 +71,10 @@
 
 /* Hack for CLKF_INTR(). */
 #define	IPL_TAGINTR	28
+
+#define NUM_LEGACY_IRQS	16
+#define ICU_OFFSET	32
+#define	IRQ_SLAVE	2
 
 #ifndef _LOCORE
 

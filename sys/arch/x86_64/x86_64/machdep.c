@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2002/09/25 22:21:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2002/11/23 12:53:52 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -832,7 +832,6 @@ cpu_dumpconf()
 {
 	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
