@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.5 1996/02/23 17:29:01 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.6 1996/02/24 21:22:54 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -65,7 +65,8 @@ struct	hp_softc {
 	struct	device	sc_dev;
 	struct	disk sc_disk;
 	struct	mba_device sc_md;	/* Common struct used by mbaqueue. */
-	int	sc_wlabel;
+	int	sc_wlabel;		/* Disklabel area is writable */
+	int	sc_physnr;		/* Physical disk number */
 };
 
 int     hpmatch __P((struct device *, void *, void *));
@@ -132,6 +133,7 @@ hpattach(parent, self, aux)
 
 	ms->sc_md[ma->unit] = &sc->sc_md;	/* Per-unit backpointer */
 
+	sc->sc_physnr = ma->unit;
 	/*
 	 * Init and attach the disk structure.
 	 */
@@ -329,11 +331,17 @@ hpioctl(dev, cmd, addr, flag, p)
 			sc->sc_wlabel = 0;
 		}
 		return error;
+	case	DIOCWLABEL:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		sc->sc_wlabel = 1;
+		break;
 
 	default:
-		printf("hpioctl: command %d\n", cmd);
+		printf("hpioctl: command %x\n", cmd);
 		return ENOTTY;
 	}
+	return 0;
 }
 
 /*
@@ -451,5 +459,28 @@ hpwrite(dev, uio)
 	struct uio *uio;
 {
 	return (physio(hpstrategy, NULL, dev, B_WRITE, minphys, uio));
+}
+
+/*
+ * Convert physical adapternr and unit to the unit number used by kernel.
+ */
+int
+hp_getdev(mbanr, unit)
+	int	mbanr, unit;
+{
+	struct	mba_softc *ms;
+	struct	hp_softc *sc;
+	int i;
+
+	for (i = 0; i < hpcd.cd_ndevs; i++) {
+		if (hpcd.cd_devs[i] == 0)
+			continue;
+
+		sc = hpcd.cd_devs[i];
+		ms = (void *)sc->sc_dev.dv_parent;
+		if (ms->sc_physnr == mbanr && sc->sc_physnr == unit)
+			return i;
+	}
+	return -1;
 }
 

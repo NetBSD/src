@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.3 1996/02/11 13:19:36 ragge Exp $ */
+/*	$NetBSD: mba.c,v 1.4 1996/02/24 21:22:58 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include <machine/nexus.h>
 #include <machine/pte.h>
 #include <machine/pcb.h>
+#include <machine/sid.h>
 
 #include <vax/mba/mbareg.h>
 #include <vax/mba/mbavar.h>
@@ -126,6 +127,11 @@ mbaattach(parent, self, aux)
 	sc->sc_dsp.pushlarg = sc->sc_dev.dv_unit;
 	sc->sc_dsp.hoppaddr = mbaintr;
 
+	sc->sc_physnr = sa->nexnum - 8; /* MBA's have TR between 8 - 11... */
+#ifdef VAX750
+	if (cpunumber == VAX_750)
+		sc->sc_physnr += 4;	/* ...but not on 11/750 */
+#endif
 	sc->sc_first = 0;
 	sc->sc_last = (void *)&sc->sc_first;
 	sc->sc_mbareg = (struct mba_regs *)mbar;
