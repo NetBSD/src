@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.79 2001/08/03 01:11:49 thorpej Exp $	*/
+/*	$NetBSD: npx.c,v 1.80 2001/08/03 01:46:09 thorpej Exp $	*/
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -348,9 +348,13 @@ npxintr(void *arg)
 	/*
 	 * Restore control word (was clobbered by fpu_save).
 	 */
-	if (i386_use_fxsave)
+	if (i386_use_fxsave) {
 		fldcw(&addr->sv_xmm.sv_env.en_cw);
-	else
+		/*
+		 * FNINIT doesn't affect MXCSR or the XMM registers;
+		 * no need to re-load MXCSR here.
+		 */
+	} else
 		fldcw(&addr->sv_87.sv_env.en_cw);
 	fwait();
 	/*
@@ -364,7 +368,6 @@ npxintr(void *arg)
 	if (i386_use_fxsave) {
 		addr->sv_xmm.sv_ex_sw = addr->sv_xmm.sv_env.en_sw;
 		addr->sv_xmm.sv_ex_tw = addr->sv_xmm.sv_env.en_tw;
-		addr->sv_xmm.sv_ex_mxcsr = addr->sv_xmm.sv_env.en_mxcsr;
 	} else {
 		addr->sv_87.sv_ex_sw = addr->sv_87.sv_env.en_sw;
 		addr->sv_87.sv_ex_tw = addr->sv_87.sv_env.en_tw;
