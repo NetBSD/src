@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.54 2003/03/27 12:19:44 ichiro Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.55 2003/03/30 02:06:29 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.54 2003/03/27 12:19:44 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55 2003/03/30 02:06:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -418,9 +418,6 @@ wdc_pcmcia_detach(self, flags)
 
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
-
-	if (sc->wdc_channel.ch_queue != NULL)
-		free(sc->wdc_channel.ch_queue, M_DEVBUF);
 
 	/* Unmap our i/o window and i/o space. */
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
