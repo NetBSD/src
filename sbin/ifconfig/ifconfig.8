@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.48 2001/04/27 09:08:44 itojun Exp $
+.\"	$NetBSD: ifconfig.8,v 1.49 2001/04/28 04:11:10 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,13 +48,11 @@
 .Oc
 .Op Ar parameters
 .Nm ""
-.Op Fl A
 .Op Fl mL
 .Ar interface
 .Op Ar protocol_family
 .Nm ""
 .Fl a
-.Op Fl A
 .Op Fl mL
 .Op Fl b
 .Op Fl d
@@ -482,11 +480,6 @@ limits this to interfaces that are up,
 limits this to broadcast interfaces, and
 .Fl s
 omits interfaces which appear not to be connected to a network.
-.Pp
-If the
-.Fl A
-flag is also specified, any relevant interface alias information is also
-displayed.
 .Pp
 The
 .Fl l
