@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.11 1997/10/17 05:06:40 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.12 1997/10/17 09:03:57 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -65,17 +65,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1986, 1991, 1993\n\
-        The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
+        The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-static char *rcsid = "$NetBSD: iostat.c,v 1.11 1997/10/17 05:06:40 mrg Exp $";
+__RCSID("$NetBSD: iostat.c,v 1.12 1997/10/17 09:03:57 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ static void selectdrives __P((int, char **));
 void dkswap __P((void));
 void dkreadstats __P((void));
 int dkinit __P((int));
+int main __P((int, char **));
 
 int
 main(argc, argv)
@@ -130,7 +131,7 @@ main(argc, argv)
 	int ch, hdrcnt;
 	struct timeval	tv;
 
-	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != EOF)
+	while ((ch = getopt(argc, argv, "Cc:dDIM:N:Tw:")) != -1)
 		switch(ch) {
 		case 'c':
 			if ((reps = atoi(optarg)) <= 0)
@@ -210,7 +211,7 @@ static void
 header(signo)
 	int signo;
 {
-	register int i;
+	int i;
 
 	/* Main Headers. */
 	if (ISSET(todo, SHOW_TTY))
@@ -256,7 +257,7 @@ static void
 disk_stats(etime)
 double etime;
 {
-	register int dn;
+	int dn;
 	double atime, mbps;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {
@@ -290,7 +291,7 @@ static void
 disk_stats2(etime)
 double etime;
 {
-	register int dn;
+	int dn;
 	double atime;
 
 	for (dn = 0; dn < dk_ndrive; ++dn) {
@@ -313,7 +314,7 @@ double etime;
 static void
 cpustats()
 {
-	register int state;
+	int state;
 	double time;
 
 	time = 0;
