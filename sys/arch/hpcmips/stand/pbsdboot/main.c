@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1999/10/23 03:26:20 takemura Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/10/30 11:03:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -166,6 +166,12 @@ struct fb_setting fb_settings[] = {
 	{ TEXT("Compaq C-series 2015c"), BIFB_D8_FF,
 		640, 240, 0, 0,
 		PLATID_CPU_MIPS_TX_3912, PLATID_MACH_COMPAQ_C_2015 },
+	{ TEXT("Victor InterLink MP-C101"), BIFB_D16_0000,
+		640, 480, 0, 0,
+		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_VICTOR_INTERLINK_MPC101},
+	{ TEXT("Sharp Telios HC-AJ1"), BIFB_D16_0000,
+		800, 600, 0, 0,
+		PLATID_CPU_MIPS_TX_3922, PLATID_MACH_SHARP_TELIOS_HCAJ1},
 };
 
 #define ARRAYSIZEOF(a)	(sizeof(a)/sizeof(*(a)))
@@ -401,7 +407,7 @@ BOOL CALLBACK DlgProc2(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_INITDIALOG:
 		SetDlgItemText(hWnd, IDC_ABOUT_EDIT,
 			       TEXT("PocketBSD boot loader\r\n")
-			       TEXT("Version 1.7.1 1999.10.23\r\n")
+			       TEXT("Version 1.7.2 1999.10.30\r\n")
 			       TEXT("\r\n")
 			       TEXT("Copyright(C) 1999 Shin Takemura,\r\n")
 			       TEXT("All rights reserved.\r\n")
