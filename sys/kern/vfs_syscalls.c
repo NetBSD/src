@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.81 1997/04/04 13:57:06 kleink Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.82 1997/04/07 00:04:16 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1788,13 +1788,6 @@ sys_rename(p, v, retval)
 	}
 	tdvp = tond.ni_dvp;
 	tvp = tond.ni_vp;
-	/*
-	 * If source and destination refer to the same object, do nothing.
-	 */
-	if (fvp == tvp) {
-		error = -1;
-		goto out;
-	}
 	if (tvp != NULL) {
 		if (fvp->v_type == VDIR && tvp->v_type != VDIR) {
 			error = ENOTDIR;
@@ -1806,6 +1799,16 @@ sys_rename(p, v, retval)
 	}
 	if (fvp == tdvp)
 		error = EINVAL;
+	/*
+	 * If source is the same as the destination (that is the
+	 * same inode number with the same name in the same directory),
+	 * then there is nothing to do.
+	 */
+	if (fvp == tvp && fromnd.ni_dvp == tdvp &&
+	    fromnd.ni_cnd.cn_namelen == tond.ni_cnd.cn_namelen &&
+	    !bcmp(fromnd.ni_cnd.cn_nameptr, tond.ni_cnd.cn_nameptr,
+	      fromnd.ni_cnd.cn_namelen))
+		error = -1;
 out:
 	if (!error) {
 		VOP_LEASE(tdvp, p, p->p_ucred, LEASE_WRITE);
