@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.3 2001/05/07 08:32:20 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,13 +38,13 @@
 #if 0
 static char sccsid[] = "from: @(#)strtoq.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: strtoll.c,v 1.2 2000/03/07 20:02:00 kleink Exp $");
+__RCSID("$NetBSD: strtoll.c,v 1.3 2001/05/07 08:32:20 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
-#include <sys/types.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -72,6 +72,9 @@ _strtoll(nptr, endptr, base)
 	long long int acc, cutoff;
 	int c;
 	int neg, any, cutlim;
+
+	_DIAGASSERT(nptr != NULL);
+	/* endptr may be NULL */
 
 #ifdef __GNUC__
 	/* This outrageous construct just to shut up a GCC warning. */
