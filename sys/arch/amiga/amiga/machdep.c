@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 1999/06/28 08:20:42 itojun Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 1999/07/01 20:14:42 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -373,7 +373,7 @@ cpu_startup()
 	 */
 	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
 		for (i = 0; i < memlist->m_nseg; i++)
-			printf("memory segment %d at %x size %x\n", i,
+			printf("memory segment %d at %08x size %08x\n", i,
 			    memlist->m_seg[i].ms_start, 
 			    memlist->m_seg[i].ms_size);
 
