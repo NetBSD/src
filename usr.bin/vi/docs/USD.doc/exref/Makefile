@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/08/13 20:10:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/10 10:34:46 lukem Exp $
 #
 # @(#)Makefile	8.8 (Berkeley) 10/10/96
 
@@ -10,9 +10,9 @@ CLEANFILES=	summary.ps
 all: paper.ps summary.ps
 
 paper.ps: ex.rm
-	${TBL} ex.rm | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_TBL} ex.rm | ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 summary.ps: ex.summary
-	${TBL} ex.summary | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_TBL} ex.summary | ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

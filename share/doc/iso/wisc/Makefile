@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2000/10/26 06:17:41 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:25 lukem Exp $
 #
 #	Makefile for the tp documents:
 #   design: TP design/source guide
@@ -8,7 +8,7 @@
 PRINTER = 3a
 TAGS	= ../../sys/tags
 SRCS	= ../../sys/netargo/tp_*.c ../../sys/netargo/tp_*.h ../../sys/netargo/tp*.trans
-TROFF = /usr/local/lib/troff
+TROFF = groff -Z
 
 #
 #	Print via speedy for cycles sake...

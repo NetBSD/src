@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.doc.mk,v 1.58 2002/10/22 18:48:27 perry Exp $
+#	$NetBSD: bsd.doc.mk,v 1.59 2003/07/10 10:34:35 lukem Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
 .include <bsd.init.mk>
@@ -8,21 +8,10 @@
 clean:		cleandoc
 realinstall:	docinstall
 
-##### Default values
-EQN?=		eqn
-GREMLIN?=	grn
-GRIND?=		vgrind -f
-INDXBIB?=	indxbib
-PIC?=		pic
-REFER?=		refer
-ROFF?=		${GROFF} -Tps
-SOELIM?=	soelim
-TBL?=		tbl
-
 ##### Build rules
 .if !target(paper.ps)
 paper.ps: ${SRCS}
-	${ROFF} ${MACROS} ${PAGES} ${.ALLSRC} > ${.TARGET}
+	${TOOL_ROFF_PS} ${MACROS} ${PAGES} ${.ALLSRC} > ${.TARGET}
 .endif
 
 .if ${MKSHARE} != "no"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.34 2003/05/30 18:43:23 thorpej Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.35 2003/07/10 10:34:42 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -199,7 +199,7 @@ config_time.h: Makefile
 
 .if defined(MEMORY_DISK_IMAGE)
 md_root_image.h: ${MEMORY_DISK_IMAGE}
-	${HEXDUMP} -v -e '"\t" 8/1 "0x%02x, " "\n"' ${.ALLSRC} > ${.TARGET}
+	${TOOL_HEXDUMP} -v -e '"\t" 8/1 "0x%02x, " "\n"' ${.ALLSRC} > ${.TARGET}
 
 # XXX This is only needed when building md_root.o
 CPPFLAGS+=	-DMEMORY_DISK_IMAGE

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/08/13 20:10:55 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/10 10:34:47 lukem Exp $
 #
 #	@(#)Makefile	8.7 (Berkeley) 8/18/96
 
@@ -10,15 +10,15 @@ CLEANFILES+=	vitut.ps summary.ps viapwh.ps
 all: vitut.ps summary.ps viapwh.ps
 
 vitut.ps: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} ${MACROS} > $@
+	${TOOL_TBL} ${SRCS} | ${TOOL_ROFF_PS} ${MACROS} > $@
 	chmod 444 $@
 
 summary.ps: vi.summary
-	${TBL} vi.summary | ${ROFF} ${MACROS} > $@
+	${TOOL_TBL} vi.summary | ${TOOL_ROFF_PS} ${MACROS} > $@
 	chmod 444 $@
 
 viapwh.ps: vi.apwh.ms
-	${TBL} vi.apwh.ms | ${ROFF} ${MACROS} > $@
+	${TOOL_TBL} vi.apwh.ms | ${TOOL_ROFF_PS} ${MACROS} > $@
 	chmod 444 $@
 
 .include <bsd.doc.mk>

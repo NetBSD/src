@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.rpc.mk,v 1.3 2003/05/19 07:19:10 lukem Exp $
+#	$NetBSD: bsd.rpc.mk,v 1.4 2003/07/10 10:34:37 lukem Exp $
 
 RPC_XDIR?=	${.CURDIR}/
 
@@ -9,7 +9,7 @@ RPC_XDIR?=	${.CURDIR}/
 
 .for I in ${RPC_INCS}
 ${I}: ${I:.h=.x}
-	${RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
+	${TOOL_RPCGEN} -C -h ${RPC_XDIR}${I:.h=.x} -o ${.TARGET}
 .endfor
 
 CLEANFILES += ${RPC_INCS}
@@ -22,7 +22,7 @@ CLEANFILES += ${RPC_INCS}
 
 .for I in ${RPC_XDRFILES}
 ${I}: ${RPC_XDIR}${I:_xdr.c=.x}
-	${RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
+	${TOOL_RPCGEN} -C -c ${RPC_XDIR}${I:_xdr.c=.x} -o ${.TARGET}
 .endfor
 
 CLEANFILES += ${RPC_XDRFILES}
@@ -40,7 +40,7 @@ _RPCS += -s ${I}
 .for I in ${RPC_SVCFILES}
 
 ${I}: ${RPC_XDIR}${I:_svc.c=.x}
-	${RPCGEN} -C ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
+	${TOOL_RPCGEN} -C ${_RPCS} ${RPC_SVCFLAGS} ${RPC_XDIR}${I:_svc.c=.x} \
 		-o ${.TARGET}
 .endfor
 

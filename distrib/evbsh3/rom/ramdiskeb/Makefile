@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2002/04/06 18:16:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.8 2003/07/10 10:34:06 lukem Exp $
 
 TOP=		${.CURDIR}/..
 WARNS=1
@@ -19,18 +19,11 @@ VND_CRDEV=	/dev/r${VND}d
 IMAGE?=		xxx.fs
 MDEC=		${DESTDIR}/usr/mdec
 
-#CRUNCHGEN?=	sh-crunchgen
-
-# for cross compile
-#CRUNCHIDE?=	sh-crunchide
-
-SUDO?=		sudo
-DISKLABEL?=	${SUDO} disklabel
-MOUNT?=		${SUDO} mount
-MTREE?=		${SUDO} mtree
-NEWFS?=		${SUDO} newfs
-UMOUNT?=	${SUDO} umount
-VNCONFIG?=	${SUDO} vnconfig
+DISKLABEL?=	disklabel
+MOUNT?=		mount
+NEWFS?=		newfs
+UMOUNT?=	umount
+VNCONFIG?=	vnconfig
 
 LISTS=		../ramdiskcommon/list
 CRUNCHCONF=	../ramdiskcommon/${CBIN}.conf
@@ -51,9 +44,9 @@ ${IMAGE}: ${CBIN} ${MTREECONF} ${LISTS}
 	${DISKLABEL} -r -R ${VND_CDEV} tmplabel
 	${NEWFS} -B be -m 0 -o space ${VND_RDEV} 
 	${MOUNT} ${VND_DEV} ${MOUNT_POINT}
-	${MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
+	${TOOL_MTREE} -def ${.CURDIR}/${MTREECONF} -p ${MOUNT_POINT}/ -U
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
-		TARGDIR=${MOUNT_POINT} ${SUDO} sh ${TOP}/runlist.sh \
+		TARGDIR=${MOUNT_POINT} ${HOST_SH} ${TOP}/runlist.sh \
 		${.CURDIR}/${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
@@ -68,7 +61,7 @@ unconfig:
 	-/bin/rm -f ${IMAGE}.tmp
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${TOP}/../../.. -L ${.CURDIR} ${.ALLSRC}
+	${TOOL_CRUNCHGEN} -D ${TOP}/../../.. -L ${.CURDIR} ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 1999/02/14 09:47:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2003/07/10 10:34:31 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/10/94
 
 .include <bsd.own.mk>
@@ -34,10 +34,10 @@ SUBDIR+= 09.sendmail
 #	15.uucpnet 16.security 17.password 18.net 19.perl
 
 Title.ps: ${FILES}
-	groff -ms Title > ${.TARGET}
+	${TOOL_ROFF_PS} -ms Title > ${.TARGET}
 
 contents.ps: ${FILES}
-	groff -ms 00.contents > ${.TARGET}
+	${TOOL_ROFF_PS} -ms 00.contents > ${.TARGET}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

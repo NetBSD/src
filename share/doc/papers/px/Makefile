@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2002/06/02 17:40:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.7 2003/07/10 10:34:28 lukem Exp $
 #
 #	@(#)Makefile	5.4 (Berkeley) 10/9/94
 
@@ -10,7 +10,8 @@ EXTRA=	fig1.1.n fig1.2.n fig1.3.n fig2.3.raw fig2.4.n fig3.2.n \
 CLEANFILES+=fig2.3.n
 
 paper.ps: ${SRCS} fig2.3.n
-	${SOELIM} ${SRCS} | ${TBL} | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_SOELIM} ${SRCS} | ${TOOL_TBL} | \
+	    ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 fig2.3.n: fig2.3.raw
 	sort fig2.3.raw >fig2.3.n

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2003/03/08 00:22:30 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2003/07/10 10:34:18 lukem Exp $
 #
 #	etc.sparc/Makefile.inc -- sparc-specific etc Makefile targets
 #
@@ -45,5 +45,6 @@ CDBOOTIMAGEDIR!= cd ${NETBSDSRCDIR}/distrib/sparc/bootfs && ${PRINTOBJDIR}
 CDBOOTIMAGE=	${CDBOOTIMAGEDIR}/boot.fs
 
 iso-image-md-post:
-	SUNLABEL=${SUNLABEL:Q} sh ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
-		${CDROM.image} ${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}
+	SUNLABEL=${TOOL_SUNLABEL:Q} \
+	    ${HOST_SH} ${NETBSDSRCDIR}/distrib/common/sunbootcd.sh \
+	    ${CDROM.image} ${CDBOOTIMAGE} ${CDBOOTIMAGE} ${CDBOOTIMAGE}

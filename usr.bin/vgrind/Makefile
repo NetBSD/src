@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/06/30 19:08:37 wiz Exp $
+#	$NetBSD: Makefile,v 1.17 2003/07/10 10:34:45 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/9/93
 
 .include <bsd.own.mk>
@@ -21,8 +21,6 @@ FILESNAME_tmac.vgrind=		vgrind.tmac
 SCRIPTS=	vgrind.sh
 SCRIPTSDIR=	/usr/bin
 
-CAP_MKDB?=	cap_mkdb
-
 realall: vfontedpr vgrindefs.src.db
 
 .include <bsd.endian.mk>
@@ -36,7 +34,7 @@ CAP_MKDB_ENDIAN=
 
 .if ${MKSHARE} != "no"
 vgrindefs.src.db: vgrindefs.src
-	${CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src \
+	${TOOL_CAP_MKDB} ${CAP_MKDB_ENDIAN} -f vgrindefs.src \
 	    ${.CURDIR}/vgrindefs.src
 .else
 vgrindefs.src.db:

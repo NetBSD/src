@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2003/01/03 15:34:34 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2003/07/10 10:34:11 lukem Exp $
 #
 
 # Ross Harvey <ross@netbsd.org>
@@ -50,19 +50,19 @@ TOC.more=	${TOCS:M*.more.*}
 
 
 ${TARG}.ps: ${SRCS} ${TOC.ps}
-	${GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_PS}   -mdoc      ${MAIN} > $@
 
 ${TARG}.pdf: ${TARG}.ps
 	ps2pdf ${TARG}.ps $@
 
 ${TARG}.txt: ${SRCS} ${TOC.txt}
-	${GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_TXT}  -mdoc      ${MAIN} > $@
 
 ${TARG}.html: ${SRCS} ${TOC.html}
-	${GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_HTML} -mdoc2html ${MAIN} > $@
 
 ${TARG}.more: ${SRCS} ${TOC.more}
-	${GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
+	${TOOL_GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 
 # Rules to build the table of contents (.toc) files.
@@ -74,27 +74,27 @@ TOCPROC=	   2>&1 >/dev/null |\
            sed -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
 
 ${TARG}.PostScript.toc: ${SRCS}
-	${GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	${GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.ASCII.toc: ${SRCS}
-	${GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	${GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	${GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
-	${GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
 

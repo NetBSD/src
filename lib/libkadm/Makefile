@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2002/08/29 01:31:29 itojun Exp $
+# $NetBSD: Makefile,v 1.14 2003/07/10 10:34:23 lukem Exp $
 
 NOLINT=		# defined
 
@@ -12,12 +12,12 @@ WARNS?=		1
 LIB=		kadm
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
-COMPILE_ET=	${COMPILEETOBJ}/compile_et
+COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
+TOOL_COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
-kadm_err.c kadm_err.h: kadm_err.et
-	${COMPILE_ET} ${DIST}/krb4/lib/kadm/kadm_err.et
+kadm_err.c kadm_err.h: kadm_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/krb4/lib/kadm/kadm_err.et
 
 ERR_FILES=	kadm_err.c
 DPSRCS=		kadm_err.h

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2002/09/12 15:28:22 joda Exp $
+# $NetBSD: Makefile,v 1.24 2003/07/10 10:34:24 lukem Exp $
 
 NOLINT=		# defined
 
@@ -25,12 +25,12 @@ WARNS?=		1
 LIB=		krb
 
 .if ${USETOOLS} != "yes"
-COMPILEETOBJ!=	cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
-COMPILE_ET=	${COMPILEETOBJ}/compile_et
+COMPILEETOBJ!=		cd ${NETBSDSRCDIR}/lib/libcom_err/compile_et && ${PRINTOBJDIR}
+TOOL_COMPILE_ET=	${COMPILEETOBJ}/compile_et
 .endif
 
-krb_err.c krb_err.h: krb_err.et
-	${COMPILE_ET} ${DIST}/krb4/lib/krb/krb_err.et
+krb_err.c krb_err.h: krb_err.et ${TOOL_COMPILE_ET}
+	${TOOL_COMPILE_ET} ${DIST}/krb4/lib/krb/krb_err.et
 
 ERR_FILES=	krb_err.c
 

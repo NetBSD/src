@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2002/09/18 03:54:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2003/07/10 10:34:47 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,6 @@ all: bog.ps
 
 bog.ps: ${SRCS}
 	${RM} ${.TARGET}
-	${TBL} ${.ALLSRC} | ${ROFF} ${MACROS} >${.TARGET}
+	${TOOL_TBL} ${.ALLSRC} | ${TOOL_ROFF_PS} ${MACROS} >${.TARGET}
 
 .include <bsd.doc.mk>

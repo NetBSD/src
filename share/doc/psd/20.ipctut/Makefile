@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2002/06/02 17:40:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/10 10:34:30 lukem Exp $
 #
 #	@(#)Makefile	8.1 (Berkeley) 8/14/93
 
@@ -10,7 +10,7 @@ EXTRA=	dgramread.c dgramsend.c fig2.pic fig3.pic fig8.pic pipe.c \
 	udgramread.c udgramsend.c ustreamread.c ustreamwrite.c
 
 paper.ps: ${SRCS} ${EXTRA}
-	${SOELIM} -I${.CURDIR} ${.ALLSRC:M*.me} | ${PIC} | ${TBL} | \
-	    ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_SOELIM} -I${.CURDIR} ${.ALLSRC:M*.me} | ${TOOL_PIC} | \
+	    ${TOOL_TBL} | ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

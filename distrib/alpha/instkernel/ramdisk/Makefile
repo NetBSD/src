@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2002/06/15 02:15:15 lukem Exp $
+#	$NetBSD: Makefile,v 1.22 2003/07/10 10:34:02 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -28,7 +28,7 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 INSTNOTESDIR!=	cd ${DISTRIBDIR}/notes/alpha && ${PRINTOBJDIR}
 INSTALLNOTES=	${INSTNOTESDIR}/INSTALL.more
 IMAGEDEPENDS+=	${INSTALLNOTES}
-PARSELISTENV=	INSTALLNOTES=${INSTALLNOTES:Q} PWD_MKDB=${PWD_MKDB:Q}
+PARSELISTENV=	INSTALLNOTES=${INSTALLNOTES:Q} TOOL_PWD_MKDB=${TOOL_PWD_MKDB:Q}
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.makedev"

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2003/05/26 15:48:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.15 2003/07/10 10:34:05 lukem Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -51,7 +51,7 @@ gzimg_${I}_flash_${R}: .NOTMAIN ${GZB${G}} ${KERNOBJDIR}/${K}/${W}.bin
 	@echo "Populating ${.TARGET}"
 	-rm -f ${.TARGET}.kern.gz
 	gzip -9c ${KERNOBJDIR}/${K}/${W}.bin > ${.TARGET}.kern.gz
-	${CAT} ${GZB${G}} ${.TARGET}.kern.gz > ${.TARGET}
+	${TOOL_CAT} ${GZB${G}} ${.TARGET}.kern.gz > ${.TARGET}
 
 gzimg_${I}_flash_${R}.gz: .NOTMAIN gzimg_${I}_flash_${R}
 	-rm -f ${.TARGET}

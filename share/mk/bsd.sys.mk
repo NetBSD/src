@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.88 2003/06/26 06:30:09 tshiozak Exp $
+#	$NetBSD: bsd.sys.mk,v 1.89 2003/07/10 10:34:37 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -76,29 +76,58 @@ HOST_SH?=	/usr/bin/bash
 HOST_SH?=	sh
 .endif
 
-CAP_MKDB?=	cap_mkdb
-CAT?=		cat
-CKSUM?=		cksum
-CONFIG?=	config
-CRUNCHGEN?=	crunchgen
-TOOL_DB?=	db
 ELF2ECOFF?=	elf2ecoff
-FGEN?=		fgen
-GROFF?=		groff
-INSTALLBOOT?=	installboot
-MAKEFS?=	makefs
-MDSETIMAGE?=	mdsetimage
-MKCSMAPPER?=	mkcsmapper
 MKDEP?=		mkdep
-MKESDB?=	mkesdb
-MKLOCALE?=	mklocale
-MTREE?=		mtree
 OBJCOPY?=	objcopy
-PAX?=		pax
-PWD_MKDB?=	pwd_mkdb
-RPCGEN?=	rpcgen
 STRIP?=		strip
-SUNLABEL?=	sunlabel
+
+TOOL_ASN1_COMPILE?=	asn1_compile
+TOOL_CAP_MKDB?=		cap_mkdb
+TOOL_CAT?=		cat
+TOOL_CKSUM?=		cksum
+TOOL_COMPILE_ET?=	compile_et
+TOOL_CONFIG?=		config
+TOOL_CRUNCHGEN?=	crunchgen
+TOOL_CTAGS?=		ctags
+TOOL_DB?=		db
+TOOL_EQN?=		eqn
+TOOL_FGEN?=		fgen
+TOOL_GENCAT?=		gencat
+TOOL_GROFF?=		groff
+TOOL_HEXDUMP?=		hexdump
+TOOL_INDXBIB?=		indxbib
+TOOL_INSTALLBOOT?=	installboot
+TOOL_INSTALL_INFO?=	install-info
+TOOL_M4?=		m4
+TOOL_MAKEFS?=		makefs
+TOOL_MAKEINFO?=		makeinfo
+TOOL_MAKEWHATIS?=	makewhatis
+TOOL_MDSETIMAGE?=	mdsetimage
+TOOL_MENUC?=		menuc
+TOOL_MKCSMAPPER?=	mkcsmapper
+TOOL_MKESDB?=		mkesdb
+TOOL_MKLOCALE?=		mklocale
+TOOL_MKMAGIC?=		file
+TOOL_MKTEMP?=		mktemp
+TOOL_MSGC?=		msgc
+TOOL_MTREE?=		mtree
+TOOL_PAX?=		pax
+TOOL_PIC?=		pic
+TOOL_PREPMKBOOTIMAGE?=	prep-mkbootimage
+TOOL_PWD_MKDB?=		pwd_mkdb
+TOOL_REFER?=		refer
+TOOL_ROFF_ASCII?=	nroff
+TOOL_ROFF_DVI?=		${TOOL_GROFF} -Tdvi
+TOOL_ROFF_HTML?=	${TOOL_GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
+TOOL_ROFF_PS?=		${TOOL_GROFF} -Tps
+TOOL_ROFF_RAW?=		${TOOL_GROFF} -Z
+TOOL_RPCGEN?=		rpcgen
+TOOL_SOELIM?=		soelim
+TOOL_SUNLABEL?=		sunlabel
+TOOL_TBL?=		tbl
+TOOL_UUDECODE?=		uudecode
+TOOL_VGRIND?=		vgrind -f
+TOOL_ZIC?=		zic
 
 .SUFFIXES:	.m .o .ln .lo
 

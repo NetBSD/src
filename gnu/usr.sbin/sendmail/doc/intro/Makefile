@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2003/01/05 12:28:48 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2003/07/10 10:34:21 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -14,6 +14,6 @@ all: intro.ps
 
 intro.ps: ${SRCS}
 	${RM} ${.TARGET}
-	${PIC} ${.ALLSRC} | ${ROFF} ${MACROS} > ${.TARGET}
+	${TOOL_PIC} ${.ALLSRC} | ${TOOL_ROFF_PS} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

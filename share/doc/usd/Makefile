@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 1999/02/14 09:47:46 lukem Exp $
+#	$NetBSD: Makefile,v 1.20 2003/07/10 10:34:33 lukem Exp $
 #
 #	@(#)Makefile	8.3 (Berkeley) 5/16/94
 
@@ -27,10 +27,10 @@ SUBDIR=	18.msdiffs 19.memacros 20.meref
 #	31.trek
 
 Title.ps: ${FILES}
-	groff -ms Title > ${.TARGET}
+	${TOOL_ROFF_PS} -ms Title > ${.TARGET}
 
 contents.ps: ${FILES}
-	groff -ms 00.contents > ${.TARGET}
+	${TOOL_ROFF_PS} -ms 00.contents > ${.TARGET}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

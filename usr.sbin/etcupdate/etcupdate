@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.17 2003/04/02 22:32:19 atatat Exp $
+# $NetBSD: etcupdate,v 1.18 2003/07/10 10:34:48 lukem Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -412,7 +412,7 @@ if [ -z "${CONTINUE}" ]; then
 		MAKE_ENV=" 			\
 			DESTDIR=${TEMPROOT}	\
 			MAKE=make		\
-			MTREE=mtree		\
+			TOOL_MTREE=mtree	\
 			INSTALL_DONE=1		\
 			USETOOLS=never"
 		echo "*** Populating ${TEMPROOT} from ${SRCDIR}"

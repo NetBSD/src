@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.info.mk,v 1.28 2003/06/24 09:49:07 tron Exp $
+#	$NetBSD: bsd.info.mk,v 1.29 2003/07/10 10:34:35 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -8,9 +8,7 @@ cleandir:	cleaninfo
 realinstall:	infoinstall
 
 ##### Default values
-MAKEINFO?=	makeinfo
 INFOFLAGS?=
-INSTALL_INFO?=	install-info
 
 INFOFILES?=
 
@@ -25,7 +23,7 @@ realall:	${INFOFILES}
 .SUFFIXES: .txi .texi .texinfo .info
 
 .txi.info .texi.info .texinfo.info:
-	${MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
+	${TOOL_MAKEINFO} ${INFOFLAGS} --no-split -o $@ $<
 
 .endif # ${MKINFO} != "no"
 
@@ -45,8 +43,8 @@ __infoinstall: .USE
 	@[ -f ${INFODIRFILE} ] &&					\
 	while ! ln ${INFODIRFILE} ${INFODIRFILE}.lock 2> /dev/null;	\
 		do sleep 1; done;					\
-	${INSTALL_INFO} -d ${INFODIRFILE} -r ${.TARGET} 2> /dev/null;	\
-	${INSTALL_INFO} -d ${INFODIRFILE} ${.TARGET};			\
+	${TOOL_INSTALL_INFO} -d ${INFODIRFILE} -r ${.TARGET} 2> /dev/null; \
+	${TOOL_INSTALL_INFO} -d ${INFODIRFILE} ${.TARGET};		\
 	rm -f ${INFODIRFILE}.lock
 
 

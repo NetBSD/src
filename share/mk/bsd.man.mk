@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.80 2003/06/30 18:49:05 wiz Exp $
+#	$NetBSD: bsd.man.mk,v 1.81 2003/07/10 10:34:36 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -24,10 +24,6 @@ CATDEPS?=	${TMACDEPDIR}/andoc.tmac \
 		${TMACDEPDIR}/mdoc/doc-syms
 HTMLDEPS?=	${TMACDEPDIR}/doc2html.tmac
 MANTARGET?=	cat
-
-GROFF_HTML?=	${GROFF} -Tlatin1 -mdoc2html -P-b -P-o -P-u
-NROFF?=		${GROFF} -Tascii -mtty-char
-TBL?=		tbl
 
 MAN?=
 MLINKS?=
@@ -117,9 +113,11 @@ realall:	${CATPAGES}
 
 ${_MNUMBERS:@N@.$N.cat$N${MANSUFFIX}@}: ${CATDEPS}	# build rule
 .if defined(USETBL)
-	${TBL} ${.IMPSRC} | ${NROFF} -mandoc ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	${TOOL_TBL} ${.IMPSRC} | ${TOOL_ROFF_ASCII} -mandoc ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .else
-	${NROFF} -mandoc ${.IMPSRC} ${MANCOMPRESS} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	${TOOL_ROFF_ASCII} -mandoc ${.IMPSRC} ${MANCOMPRESS} \
+	    > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
 .endif
 
 .for F in ${CATPAGES:S/${MANSUFFIX}$//:O:u}
@@ -171,7 +169,8 @@ html:		${HTMLPAGES}
 .SUFFIXES:	${_MNUMBERS:@N@.html$N@}
 
 ${_MNUMBERS:@N@.$N.html$N@}: ${HTMLDEPS}			# build rule
-	${GROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && mv ${.TARGET}.tmp ${.TARGET}
+	${TOOL_ROFF_HTML} ${.IMPSRC} > ${.TARGET}.tmp && \
+	    mv ${.TARGET}.tmp ${.TARGET}
 
 .for F in ${HTMLPAGES:O:u}
 # construct installed path
