@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.12 1999/10/07 23:50:58 soren Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.13 2001/05/02 12:18:45 fvdl Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -294,6 +294,44 @@ by using a line like:
 .Pp
 .Dl "remotehost:/home /home nfs rw 0 0
 .Pp
+.Sh PERFORMANCE
+As can be derived from the comments accompanying the options, performance
+tuning of NFS can be a non-trivial task. Here are some common points
+to watch:
+.Bl -bullet -offset indent
+.It
+Increasing the read and write size with the
+.Fl r
+and
+.Fl w
+options respectively will increase throughput if the hardware can handle
+the larger packet sizes. The default size for version 2 is 8k when
+using UDP, 64k when using TCP. The default size for v3 is platform dependent:
+on i386, the default is 32k, for other platforms it is 8k. Values over
+32k are only supported for TCP, where 64k is the maximum. Any value
+over 32k is unlikely to get you more performance, unless you have
+a very fast network.
+.It
+If the hardware can not handle larger packet sizes, you may see low
+performance figures or even temporary hangups during NFS activity.
+This can especially happen with older ethernet cards. What happens
+is that either the buffer on the card on the client side is overflowing,
+or that similar events occur on the server, leading to a lot
+of dropped packets. In this case, decreasing the read and write size,
+using TCP, or a combination of both will usually lead to better throughput.
+Should you need to decrease the read and write size for all your NFS mounts
+because of a slow ethernet card, you can use
+.Bl -ohang -compact
+.It Cd options NFS_RSIZE=value
+.It Cd options NFS_WSIZE=value
+.El
+in your kernel config file to avoid having do specify the
+sizes for all mounts.
+.It
+For connections that are not on the same LAN, and/or may experience
+packet loss, using TCP is strongly recommended.
+.El
+.Pp
 .Sh ERRORS
 Some common problems with
 .Nm
@@ -351,13 +389,3 @@ indicates that mount_nfs cannot resolve the name of the remote host.
 .Xr mount 8 ,
 .Xr mountd 8 ,
 .Xr rpcinfo 8
-.Sh BUGS
-Due to the way that Sun RPC is implemented on top of UDP (unreliable datagram)
-transport, tuning such mounts is really a black art that can only be expected
-to have limited success.
-For clients mounting servers that are not on the same
-LAN cable or that tend to be overloaded,
-TCP transport is strongly recommended,
-but unfortunately this is restricted to mostly
-.Bx 4.4
-derived servers.
