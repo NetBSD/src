@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.14 1998/06/07 14:40:29 lukem Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.15 1998/06/08 03:23:07 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -211,9 +211,12 @@ main(argc, argv)
 		 */
 		if (pwd.pw_name[0] == '+') {
 			if ((flags & _PASSWORD_NOUID) == 0 && pwd.pw_uid == 0)
-				warnx("line %d: superuser override in YP inclusion", cnt);
+				warnx(
+				"line %d: superuser override in YP inclusion",
+				    cnt);
 			if ((flags & _PASSWORD_NOGID) == 0 && pwd.pw_gid == 0)
-				warnx("line %d: wheel override in YP inclusion", cnt);
+				warnx("line %d: wheel override in YP inclusion",
+				    cnt);
 		}
 
 		/* Create insecure data. */
@@ -424,6 +427,8 @@ scan(fp, pw, flags)
 
 	}
 	*p = '\0';
+	if (strcmp(line, "+") == 0)
+		strcpy(line, "+:::::::::");	/* pw_scan() can't handle "+" */
 	*flags = 0;
 	if (!pw_scan(line, pw, flags)) {
 		warnx("at line #%d", lcnt);
