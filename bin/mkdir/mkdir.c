@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdir.c,v 1.24 2000/10/10 14:30:40 enami Exp $	*/
+/* $NetBSD: mkdir.c,v 1.25 2001/09/16 22:07:14 wiz Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.24 2000/10/10 14:30:40 enami Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.25 2001/09/16 22:07:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,19 +58,18 @@ __RCSID("$NetBSD: mkdir.c,v 1.24 2000/10/10 14:30:40 enami Exp $");
 #include <string.h>
 #include <unistd.h>
 
-int	mkpath __P((char *, mode_t, mode_t));
-void	usage __P((void));
-int	main __P((int, char *[]));
+int	mkpath(char *, mode_t, mode_t);
+void	usage(void);
+int	main(int, char *[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int ch, exitval, pflag;
 	void *set;
 	mode_t mode, dir_mode;
 
+	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	/*
@@ -145,15 +144,13 @@ main(argc, argv)
  *	dir_mode - file mode of intermediate directories
  */
 int
-mkpath(path, mode, dir_mode)
-	char *path;
-	mode_t mode;
-	mode_t dir_mode;
+mkpath(char *path, mode_t mode, mode_t dir_mode)
 {
 	struct stat sb;
 	char *slash;
-	int done = 0;
+	int done;
 
+	done = 0;
 	slash = path;
 
 	while (!done) {
@@ -192,10 +189,9 @@ mkpath(path, mode, dir_mode)
 }
 
 void
-usage()
+usage(void)
 {
-
-	(void)fprintf(stderr, "usage: mkdir [-p] [-m mode] dirname ...\n");
+	(void)fprintf(stderr, "usage: %s [-p] [-m mode] dirname ...\n", getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
