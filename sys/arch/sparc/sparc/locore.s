@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2002/07/17 02:57:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 2002/07/17 16:59:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -3576,7 +3576,7 @@ is_sun4m:
 #endif
 is_sun4d:
 #if defined(SUN4D)
-	set	trapbase_sun4d, %g6
+	set	trapbase_sun4m, %g6	/* XXXJRT trapbase_sun4d */
 	mov	SUN4CM_PGSHIFT, %g5
 	b	start_havetype
 	 mov	CPU_SUN4D, %g4
@@ -3727,10 +3727,14 @@ no_3mmu:
 2:
 #endif /* SUN4 */
 
-#if defined(SUN4M)
-	cmp	%g4, CPU_SUN4M		! skip for sun4m!
-	bne	3f
+#if defined(SUN4M) || defined(SUN4D)
+	cmp	%g4, CPU_SUN4M
+	beq	3f
+	 nop
+	cmp	%g4, CPU_SUN4D
+	bne	4f
 
+3:
 	/*
 	 * The OBP guarantees us a 16MB mapping using a level 1 PTE at
 	 * the start of the memory bank in which we were loaded. All we
@@ -3798,8 +3802,8 @@ remap_notvik:
 	sta	%l4, [%o1] ASI_BYPASS
 	!b,a	startmap_done
 
-3:
-#endif /* SUN4M */
+4:
+#endif /* SUN4M || SUN4D */
 	! botch! We should blow up.
 
 startmap_done:
@@ -3902,7 +3906,7 @@ noplab:	 nop
 1:
 #endif
 
-#if ((defined(SUN4) || defined(SUN4C)) && defined(SUN4M))
+#if (defined(SUN4) || defined(SUN4C)) && (defined(SUN4M) || defined(SUN4D))
 
 	/*
 	 * Patch instructions at specified labels that start
@@ -3918,10 +3922,14 @@ Lgandul:	nop
 	ld	[%o0 + %lo(Lgandul)], %l0	! %l0 = NOP
 
 	cmp	%g4, CPU_SUN4M
+	beq,a	2f
+	 nop
+
+	cmp	%g4, CPU_SUN4D
 	bne,a	1f
 	 nop
 
-	! this should be automated!
+2:	! this should be automated!
 	MUNGE(NOP_ON_4M_1)
 	MUNGE(NOP_ON_4M_2)
 	MUNGE(NOP_ON_4M_3)
