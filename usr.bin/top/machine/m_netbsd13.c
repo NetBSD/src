@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd13.c,v 1.6 1999/07/22 18:23:01 thorpej Exp $	*/
+/*	$NetBSD: m_netbsd13.c,v 1.7 1999/07/23 09:01:09 veego Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -34,7 +34,7 @@
  *		matthew green <mrg@eterna.com.au>
  *
  *
- * $Id: m_netbsd13.c,v 1.6 1999/07/22 18:23:01 thorpej Exp $
+ * $Id: m_netbsd13.c,v 1.7 1999/07/23 09:01:09 veego Exp $
  */
 #define UVM
 
@@ -139,7 +139,7 @@ static char header[] =
 
 char *state_abbrev[] =
 {
-    "", "start", "run\0\0\0", "sleep", "stop", "zomb"
+    "", "start", "run\0\0\0", "sleep", "stop", "dying", "zomb"
 };
 
 
@@ -479,7 +479,7 @@ get_process_info(si, sel, compare)
 	{
 	    total_procs++;
 	    process_states[(unsigned char) PP(pp, p_stat)]++;
-	    if ((PP(pp, p_stat) != SZOMB && PP(pp, p_stat) != SDYING) &&
+	    if ((PP(pp, p_stat) != SZOMB && PP(pp, p_stat) != SDEAD) &&
 		(show_idle || (PP(pp, p_pctcpu) != 0) || 
 		 (PP(pp, p_stat) == SRUN)) &&
 		(!show_uid || EP(pp, e_pcred.p_ruid) == (uid_t)sel->uid))
@@ -694,7 +694,7 @@ static int sorted_state[] = {
     4,	/* "run"	SRUN	*/
     3,	/* "sleep"	SSLEEP	*/
     3,	/* "stop"	SSTOP	*/
-    2,	/* "dying"	SDYING	*/
+    2,	/* "dying"	SDEAD	*/
     1,	/* "zomb"	SZOMB	*/
 };
 
