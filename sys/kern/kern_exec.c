@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.151 2002/04/02 20:18:07 jdolecek Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.152 2002/04/23 15:11:25 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.151 2002/04/02 20:18:07 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.152 2002/04/23 15:11:25 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -624,6 +624,10 @@ sys_execve(struct proc *p, void *v, register_t *retval)
 		 * anything that might block.
 		 */
 		p_sugid(p);
+
+		/* Make sure file descriptors 0..2 are in use. */
+		if ((error = fdcheckstd(p)) != 0)
+			goto exec_abort;
 
 		p->p_ucred = crcopy(cred);
 #ifdef KTRACE

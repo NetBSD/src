@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.85 2002/03/08 20:48:40 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.86 2002/04/23 15:11:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.85 2002/03/08 20:48:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.86 2002/04/23 15:11:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.85 2002/03/08 20:48:40 thorpej Ex
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/namei.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
@@ -1373,4 +1374,64 @@ fdcloseexec(struct proc *p)
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
 		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
 			(void) fdrelease(p, fd);
+}
+
+/*
+ * It is unsafe for set[ug]id processes to be started with file
+ * descriptors 0..2 closed, as these descriptors are given implicit
+ * significance in the Standard C library.  fdcheckstd() will create a
+ * descriptor referencing /dev/null for each of stdin, stdout, and
+ * stderr that is not already open.
+ */
+int
+fdcheckstd(p)
+	struct proc *p;
+{
+	struct nameidata nd;
+	struct filedesc *fdp;
+	struct file *fp;
+	register_t retval;
+	int fd, i, error = 0, flags = FREAD|FWRITE, devnull = -1, logged = 0;
+
+	if ((fdp = p->p_fd) == NULL)
+	       return 0;
+	for (i = 0; i < 3; i++) {
+		if (fdp->fd_ofiles[i] != NULL)
+			continue;
+		if (!logged) {
+			log(LOG_WARNING, "set{u,g}id pid %d (%s) was invoked "
+			    "with fd 0, 1, or 2 closed\n", p->p_pid, p->p_comm);
+			logged++;
+		}
+		if (devnull < 0) {
+			if ((error = falloc(p, &fp, &fd)) != 0)
+				return error;
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
+			    p);
+			if ((error = vn_open(&nd, flags, 0)) != 0) {
+				FILE_UNUSE(fp, p);
+				ffree(fp);
+				fdremove(p->p_fd, fd);
+				return error;
+			}
+			fp->f_data = (caddr_t)nd.ni_vp;
+			fp->f_flag = flags;
+			fp->f_ops = &vnops;
+			fp->f_type = DTYPE_VNODE;
+			VOP_UNLOCK(nd.ni_vp, 0);
+			devnull = fd;
+		} else {
+restart:
+			if ((error = fdalloc(p, 0, &fd)) != 0) {
+				if (error == ENOSPC) {
+					fdexpand(p);
+					goto restart;
+				}
+				return error;
+			}
+			if ((error = finishdup(p, devnull, fd, &retval)) != 0)
+				return error;
+		}
+	}
+	return error;
 }
