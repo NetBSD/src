@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	5.19 (Berkeley) 4/11/91";*/
-static char rcsid[] = "$Id: bad144.c,v 1.3 1993/12/03 10:04:50 mycroft Exp $";
+static char rcsid[] = "$Id: bad144.c,v 1.4 1993/12/06 09:28:52 cgd Exp $";
 #endif not lint
 
 /*
@@ -67,7 +67,7 @@ static char rcsid[] = "$Id: bad144.c,v 1.3 1993/12/03 10:04:50 mycroft Exp $";
 #include <paths.h>
 
 #define RETRIES	10		/* number of retries on reading old sectors */
-#ifdef __386BSD__
+#ifdef i386 /* XXX */
 #define	RAWPART	"d"		/* disk partition containing badsector tables */
 #else
 #define	RAWPART	"c"		/* disk partition containing badsector tables */
@@ -176,7 +176,7 @@ usage:
 			dp->d_secsize);
 		exit(7);
 	}
-#ifdef __386BSD__
+#ifdef i386
 	if (dp->d_type == DTYPE_SCSI) {
 		fprintf(stderr, "SCSI disks don't use bad144!\n");
 		exit(1);
