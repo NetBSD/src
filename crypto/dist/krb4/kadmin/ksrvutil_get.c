@@ -34,7 +34,7 @@
 #include "kadm_locl.h"
 #include "ksrvutil.h"
 
-RCSID("$Id: ksrvutil_get.c,v 1.1.1.3 2001/09/17 12:09:52 assar Exp $");
+RCSID("$Id: ksrvutil_get.c,v 1.2 2002/07/20 08:36:22 grant Exp $");
 
 #define BAD_PW 1
 #define GOOD_PW 0
@@ -251,7 +251,7 @@ get_srvtab_ent(int unique_filename, int fd, char *filename,
     
     if(ret != KSUCCESS) {
 	memset(&newkey, 0, sizeof(newkey));
-	warnx ("Could not get a ticket for %s: %s\n",
+	warnx ("Could not get a ticket for %s: %s",
 	       krb_unparse_name_long(name, inst, realm),
 	       krb_get_err_text(ret));
 	return;
@@ -383,7 +383,7 @@ ksrvutil_get(int unique_filename, int fd, char *filename, int argc, char **argv)
       strlcpy (p->realm, u_realm, sizeof(p->realm));
       if (kname_parse (p->name, p->inst, p->realm, argv[i]) !=
 	  KSUCCESS) {
-	warnx ("parse error on '%s'\n", argv[i]);
+	warnx ("parse error on '%s'", argv[i]);
 	free(p);
 	continue;
       }

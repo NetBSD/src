@@ -36,7 +36,7 @@
 #include <sys/wait.h>
 #endif
 
-RCSID("$Id: kadm_conn.c,v 1.6 2001/06/19 22:39:55 assar Exp $");
+RCSID("$Id: kadm_conn.c,v 1.7 2002/07/20 08:36:20 grant Exp $");
 
 struct kadm_port {
     char *port;
@@ -50,7 +50,7 @@ add_kadm_port(krb5_context context, const char *service, unsigned int port)
     struct kadm_port *p;
     p = malloc(sizeof(*p));
     if(p == NULL) {
-	krb5_warnx(context, "failed to allocate %lu bytes\n", 
+	krb5_warnx(context, "failed to allocate %lu bytes", 
 		   (unsigned long)sizeof(*p));
 	return;
     }
