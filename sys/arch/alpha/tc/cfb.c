@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.6.2.1 1996/12/07 02:09:19 cgd Exp $	*/
+/*	$NetBSD: cfb.c,v 1.6.2.2 1996/12/08 00:31:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -54,11 +54,7 @@
 #include <machine/autoconf.h>
 #include <machine/pte.h>
 
-#ifdef __BROKEN_INDIRECT_CONFIG
-int	cfbmatch __P((struct device *, void *, void *));
-#else
 int	cfbmatch __P((struct device *, struct cfdata *, void *));
-#endif
 void	cfbattach __P((struct device *, struct device *, void *));
 int	cfbprint __P((void *, const char *));
 
@@ -90,11 +86,7 @@ int	cfbintr __P((void *));
 int
 cfbmatch(parent, match, aux)
 	struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
-	void *match;
-#else
 	struct cfdata *match;
-#endif
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
