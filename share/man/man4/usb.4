@@ -1,4 +1,4 @@
-.\" $NetBSD: usb.4,v 1.19 1999/11/14 22:52:10 augustss Exp $
+.\" $NetBSD: usb.4,v 1.20 1999/11/23 01:46:32 augustss Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,6 +89,31 @@ hubs and must always be present since there is at least a root hub in any
 .Tn USB
 system.
 .Pp
+
+.Sh SUPPORTED DEVICES
+.Nx
+includes machine-independent
+.Tn USB
+drivers, sorted by driver name:
+.Bl -tag -width speaker -offset indent
+.It uaudio
+driver for audio devices.
+.It ugen
+generic driver for
+.Tn USB
+devices.
+.It uhid
+generic driver for Human Interface Devices.
+.It ukbd
+keyboard driver
+.It ulpt
+printer driver.
+.It umass
+driver for mass storage devices, such as disks.
+.It ums
+mouse driver
+.El
+
 .Sh INTRODUCTION TO USB
 The
 .Tn USB
@@ -324,7 +349,6 @@ specifications can be found at
 .Xr umass 4 ,
 .Xr ums 4 ,
 .Xr usb 3 ,
-.Xr usbd 8 ,
 .Xr usbdevs 8
 .Sh HISTORY
 The
