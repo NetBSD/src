@@ -1,4 +1,5 @@
-/*	$NetBSD: dec_maxine.c,v 1.6.4.13 1999/08/13 09:01:51 nisimura Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.6.4.14 1999/11/12 11:07:20 nisimura Exp $ */
+
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
  *
@@ -72,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.13 1999/08/13 09:01:51 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.14 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +84,9 @@ __KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.6.4.13 1999/08/13 09:01:51 nisimura
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
 
-#include <pmax/pmax/pmaxtype.h>
-#include <pmax/pmax/maxine.h>		/* baseboard addresses (constants) */
-#include <pmax/pmax/memc.h>		/* memory errors */
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
+#include <pmax/pmax/maxine.h>
+#include <pmax/pmax/memc.h>
+#include <mips/mips/mips_mcclock.h>
 
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
@@ -107,16 +107,16 @@ void dec_maxine_device_register __P((struct device *, void *));
 void dec_maxine_cons_init __P((void));
 int  dec_maxine_intr __P((unsigned, unsigned, unsigned, unsigned));
 void kn02ca_wbflush __P((void));
-unsigned kn02ca_clkread __P((void));
 
-extern unsigned (*clkread) __P((void));
+static unsigned kn02ca_clkread __P((void));
+static unsigned latched_cycle_cnt;	/* high resolution timer counter */
+
 extern void prom_haltbutton __P((void));
 extern void prom_findcons __P((int *, int *, int *));
 extern int xcfb_cnattach __P((tc_addr_t));
 extern int tc_fb_cnattach __P((int));
 extern void dtop_cnattach __P((tc_addr_t));
 
-static unsigned latched_cycle_cnt;	/* high resolution timer counter */
 extern char cpu_model[];
 extern int zs_major;
 
@@ -133,11 +133,7 @@ struct splsw spl_maxine = {
 	{ _splrestore_ioasic,	0 },
 };
 
-extern volatile struct chiptime *mcclock_addr; /* XXX */
 
-/*
- * Fill in platform struct.
- */
 void
 dec_maxine_init()
 {
@@ -145,17 +141,16 @@ dec_maxine_init()
 	platform.bus_reset = dec_maxine_bus_reset;
 	platform.cons_init = dec_maxine_cons_init;
 	platform.device_register = dec_maxine_device_register;
+	platform.iointr = dec_maxine_intr;
+	platform.clkread = kn02ca_clkread;
+	/* MAXINE has 1 microsec. free-running high resolution timer */
 
-	/* clear any memory errors from probes */
+	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(XINE_REG_TIMEOUT) = 0;
 	kn02ca_wbflush();
 
 	ioasic_base = MIPS_PHYS_TO_KSEG1(XINE_SYS_ASIC);
-	mcclock_addr = (void *)(ioasic_base + IOASIC_SLOT_8_START);
 	mips_hardware_intr = dec_maxine_intr;
-
-	/* MAXINE has 1 microsec. free-running high resolution timer */
-	clkread = kn02ca_clkread;
 
 	/*
 	 * MAXINE IOASIC interrupts come through INT 3, while
@@ -172,7 +167,9 @@ dec_maxine_init()
 	splvec.splclock = MIPS_SPL_0_1_3;
 	splvec.splstatclock = MIPS_SPL_0_1_3;
 #endif
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_1);
+
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed((void *)(ioasic_base+IOASIC_SLOT_8_START), MIPS_INT_MASK_1);
 
 	*(u_int32_t *)(ioasic_base + IOASIC_LANCE_DECODE) = 0x3;
 	*(u_int32_t *)(ioasic_base + IOASIC_SCSI_DECODE) = 0xe;
@@ -182,9 +179,8 @@ dec_maxine_init()
 	*(u_int32_t *)(ioasic_base + IOASIC_FLOPPY_DECODE) = 13;
 	*(u_int32_t *)(ioasic_base + IOASIC_CSR) = 0x00001fc1;
 #endif
-	/*
-	 * Initialize interrupts.
-	 */
+
+	/* sanitize interrupt mask */
 	*(u_int32_t *)(ioasic_base + IOASIC_INTR) = 0;
 	*(u_int32_t *)(ioasic_base + IOASIC_IMSK) = 0;
 	kn02ca_wbflush();
@@ -192,9 +188,6 @@ dec_maxine_init()
 	sprintf(cpu_model, "Personal DECstation 5000/%d (MAXINE)", cpu_mhz);
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_maxine_bus_reset()
 {
@@ -321,6 +314,15 @@ dec_maxine_intr(cpumask, pc, status, cause)
 
 #define	ERRORS	(IOASIC_INTR_ISDN_OVRUN|IOASIC_INTR_ISDN_READ_E|IOASIC_INTR_SCSI_OVRUN|IOASIC_INTR_SCSI_READ_E|IOASIC_INTR_LANCE_READ_E)
 #define	PTRLOAD	(IOASIC_INTR_ISDN_PTR_LOAD|IOASIC_INTR_SCSI_PTR_LOAD)
+
+#if 0
+	if (can_serve & IOASIC_INTR_SCSI_PTR_LOAD) {
+		extern void asc_ptr_load __P((void *));
+		ifound = 1;
+		asc_ptr_load(intrtab[SYS_DEV_SCSI].ih_arg);
+	}
+#endif
+
 	/*
 	 * XXX future project is here XXX
 	 * IOASIC DMA completion interrupt (PTR_LOAD) should be checked

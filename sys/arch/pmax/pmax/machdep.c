@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.120.2.17 1999/10/26 03:45:44 nisimura Exp $ */
+/* $NetBSD: machdep.c,v 1.120.2.18 1999/11/12 11:07:21 nisimura Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.17 1999/10/26 03:45:44 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120.2.18 1999/11/12 11:07:21 nisimura Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -130,13 +130,6 @@ struct splvec	splvec;			/* XXX will go XXX */
 
 void	mach_init __P((int, char *[], int, int, u_int, char *));
 
-unsigned (*clkread) __P((void)); /* high resolution timer if available */
-unsigned nullclkread __P((void));
-
-/* XXX should go XXX */
-volatile struct chiptime *mcclock_addr;
-/* XXX XXX XXX */
-
 /*XXXjrs*/
 const	struct callback *callv;	/* pointer to PROM entry points */
 
@@ -150,8 +143,8 @@ void	unimpl_bus_reset __P((void));
 int	unimpl_intr __P((unsigned, unsigned, unsigned, unsigned));
 void	unimpl_cons_init __P((void));
 void	unimpl_device_register __P((struct device *, void *));
-void 	unimpl_iointr __P ((void *, u_long));
-void	unimpl_clockintr __P ((void *));
+int 	unimpl_iointr __P ((unsigned, unsigned, unsigned, unsigned));
+unsigned nullwork __P((void));
 
 struct platform platform = {
 	"iobus not set",
@@ -159,7 +152,7 @@ struct platform platform = {
 	unimpl_cons_init,
 	unimpl_device_register,
 	unimpl_iointr,
-	unimpl_clockintr
+	nullwork,
 };
 
 extern caddr_t esym;
@@ -391,9 +384,9 @@ mach_init(argc, argv, code, cv, bim, bip)
 		cp += NBPG;
 		physmem++;
 	}
-#if 1
+	/* clear any memory error conditions possibley caused by probe */
 	(*platform.bus_reset)();
-#endif
+
 	maxmem = physmem;
 
 	/*
@@ -448,7 +441,7 @@ mach_init(argc, argv, code, cv, bim, bip)
 
 /*
  * Machine-dependent startup code.
- * allocate memory for variable-sized tables, initialize cpu.
+ * allocate memory for variable-sized tables.
  */
 void
 cpu_startup()
@@ -705,7 +698,7 @@ microtime(tvp)
 
 	*tvp = time;
 #if (DEC_3MIN + DEC_MAXINE + DEC_3MAXPLUS) > 0
-	tvp->tv_usec += (*clkread)();
+	tvp->tv_usec += (*platform.clkread)();
 #endif
 	if (tvp->tv_usec >= 1000000) {
 		tvp->tv_usec -= 1000000;
@@ -752,34 +745,18 @@ unimpl_device_register(sc, arg)
 	panic("sysconf.init didnt set device_register");
 }
 
-void
-unimpl_iointr(arg, arg2)
-	void *arg;
-	u_long arg2;
+int
+unimpl_iointr(mask, pc, statusreg, causereg)
+	unsigned mask;
+	unsigned pc;
+	unsigned statusreg;
+	unsigned causereg;
 {
 	panic("sysconf.init didnt set iointr");
 }
 
-void
-unimpl_clockintr(arg)
-	void *arg;
-{
-	panic("sysconf.init didnt set clockintr");
-}
-
-int
-unimpl_intr(mask, pc, statusreg, causereg)
-	u_int mask;
-	u_int pc;
-	u_int statusreg;
-	u_int causereg;
-{
-	panic("sysconf.init didnt set intr");
-}
-
-
 unsigned
-nullclkread()
+nullwork()
 {
 	return 0;
 }

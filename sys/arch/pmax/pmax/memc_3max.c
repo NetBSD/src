@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_3max.c,v 1.7.2.2 1999/05/21 01:17:31 nisimura Exp $	*/
+/* $NetBSD: memc_3max.c,v 1.7.2.3 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -32,10 +32,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.7.2.2 1999/05/21 01:17:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.7.2.3 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
+#include <sys/param.h>
 
 #include <machine/locore.h>		/* wbflush() */
 
@@ -49,10 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: memc_3max.c,v 1.7.2.2 1999/05/21 01:17:31 nisimura E
 
 
 void
-dec_mtasic_err(erradr, errsyn)
-	u_int erradr, errsyn;
+dec_mtasic_err(erradr, errsyn, bnk32m)
+	u_int32_t erradr, errsyn, bnk32m;
 {
-	u_int physadr;
+	u_int32_t physadr;
+	int module;
+	extern int physmem;
 
 	if (!(erradr & KN02_ERR_VALID))
 		return;
@@ -61,14 +64,26 @@ dec_mtasic_err(erradr, errsyn)
 	if (!(erradr & KN02_ERR_WRITE))
 		physadr = (physadr & ~0xfff) | ((physadr & 0xfff) - 5);
 	physadr <<= 2;
-	printf("%s memory %s %s error at 0x%08x\n",
+	printf("%s memory %s %s error at 0x%08x",
 		(erradr & KN02_ERR_CPU) ? "CPU" : "DMA",
 		(erradr & KN02_ERR_WRITE) ? "write" : "read",
 		(erradr & KN02_ERR_ECCERR) ? "ECC" : "timeout",
 		physadr);
+	if (physadr <= ctob(physmem)) {
+		if (bnk32m != 0)	/* 32MB modules? */
+			module = physadr / ( 32 * 1024 * 1024);
+		else
+			module = physadr / (  8 * 1024 * 1024);
+		printf(" module %d", module);
+	}
+	else {
+		/* ECC error didn't occur in RAM */
+		printf(" (no RAM)");
+	}
+	printf("\n");
 	if (erradr & KN02_ERR_ECCERR) {
-		u_int errsyn_value = *(u_int *)errsyn;
-		*(u_int *)errsyn = 0;
+		u_int32_t errsyn_value = *(u_int32_t *)errsyn;
+		*(u_int32_t *)errsyn = 0;
 		wbflush();
 		printf("   ECC 0x%08x\n", errsyn_value);
 

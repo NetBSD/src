@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3100.c,v 1.6.2.9 1999/06/11 00:53:34 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.6.2.10 1999/11/12 11:07:20 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -72,22 +72,22 @@
  */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.9 1999/06/11 00:53:34 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3100.c,v 1.6.2.10 1999/11/12 11:07:20 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <dev/cons.h>
+#include <sys/termios.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/sysconf.h>
 
-#include <mips/mips/mips_mcclock.h>	/* mcclock CPU speed estimation */
-#include <pmax/pmax/clockreg.h>
-#include <pmax/pmax/pmaxtype.h>
+#include <pmax/pmax/kn01.h>
+#include <mips/mips/mips_mcclock.h>
 
-#include <pmax/pmax/kn01.h>		/* common definitions */
-
+#include <machine/bus.h>
 #include <pmax/ibus/ibusvar.h>
 
 #include "wsdisplay.h"
@@ -104,11 +104,10 @@ void dec_3100_intr_disestablish __P((struct device *, void *));
 static void dec_3100_memerr __P((void));
 
 extern void kn01_wbflush __P((void));
-extern unsigned nullclkread __P((void));
-extern unsigned (*clkread) __P((void));
-
-extern volatile struct chiptime *mcclock_addr;	/* XXX */
-extern char cpu_model[];
+extern void prom_findcons __P((int *, int *, int *));
+extern int pm_cnattach __P((u_int32_t));
+extern int dc_cnattach __P((paddr_t, int, int, int));
+extern void dckbd_cnattach __P((paddr_t));
 
 struct splsw spl_3100 = {
 	{ _spllower,	0 },
@@ -120,26 +119,20 @@ struct splsw spl_3100 = {
 	{ _splset,	0 },
 };
 
-/*
- * Fill in platform struct. 
- */
+
 void
 dec_3100_init()
 {
-	platform.iobus = "baseboard";
+	extern char cpu_model[];
 
+	platform.iobus = "baseboard";
 	platform.bus_reset = dec_3100_bus_reset;
 	platform.cons_init = dec_3100_cons_init;
 	platform.device_register = dec_3100_device_register;
+	platform.iointr = dec_3100_intr;
+	/* no high resolution timer available */
 
-	/*
-	 * Set up interrupt handling and I/O addresses.
-	 */
 	mips_hardware_intr = dec_3100_intr;
-	mcclock_addr = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-
-	/* no high resolution timer circuit; possibly never called */
-	clkread = nullclkread;
 
 #ifdef NEWSPL
 	__spl = &spl_3100;
@@ -151,28 +144,20 @@ dec_3100_init()
 	splvec.splclock = MIPS_SPL_0_1_2_3;
 	splvec.splstatclock = MIPS_SPL_0_1_2_3;
 #endif
-	mc_cpuspeed(mcclock_addr, MIPS_INT_MASK_3);
+
+	/* calibrate cpu_mhz value */
+	mc_cpuspeed(
+	    (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK), MIPS_INT_MASK_3);
 
 	sprintf(cpu_model, "DECstation %d100 (PMAX)", cpu_mhz < 15 ? 3 : 2);
 }
 
-/*
- * Initalize the memory system and I/O buses.
- */
 void
 dec_3100_bus_reset()
 {
 	/* nothing to do */
 	kn01_wbflush();
 }
-
-#include <dev/cons.h>
-#include <sys/termios.h>
-
-extern void prom_findcons __P((int *, int *, int *));
-extern int pm_cnattach __P((u_int32_t));
-extern int dc_cnattach __P((paddr_t, int, int, int));
-extern void dckbd_cnattach __P((paddr_t));
 
 void
 dec_3100_cons_init()
@@ -256,12 +241,9 @@ dec_3100_intr(cpumask, pc, status, cause)
 	/* handle clock interrupts ASAP */
 	if (cpumask & MIPS_INT_MASK_3) {
 		struct clockframe cf;
-		struct chiptime *clk;
-		volatile int temp;
 
-		clk = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK);
-		temp = clk->regc;	/* XXX clear interrupt bits */
- 
+		__asm __volatile("lbu $0,48(%0)" ::
+			"r"(MIPS_PHYS_TO_KSEG1(KN01_SYS_CLOCK)));
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kn01.h,v 1.4.22.1 1999/05/07 02:33:30 nisimura Exp $	*/
+/* $NetBSD: kn01.h,v 1.4.22.2 1999/11/12 11:07:19 nisimura Exp $ */
 
 /*-
  * Copyright (c) 1992, 1993
@@ -68,34 +68,34 @@
  * HISTORY
  * Log:	kn01.h,v
  * Revision 2.5  91/05/14  17:23:14  mrt
- * 	Correcting copyright
+ *	Correcting copyright
  * 
  * Revision 2.4  91/02/05  17:41:54  mrt
- * 	Added author notices
- * 	[91/02/04  11:14:12  mrt]
+ *	Added author notices
+ *	[91/02/04  11:14:12  mrt]
  * 
- * 	Changed to use new Mach copyright
- * 	[91/02/02  12:12:45  mrt]
+ *	Changed to use new Mach copyright
+ *	[91/02/02  12:12:45  mrt]
  * 
  * Revision 2.3  90/12/05  23:31:50  af
- * 	Cleanups.
- * 	[90/12/04  16:38:21  af]
+ *	Cleanups.
+ *	[90/12/04  16:38:21  af]
  * 
- * 	Created, from the DEC specs:
- * 	"DECstation 3100 Desktop Workstation Functional Specification"
- * 	Workstation Systems Engineering, Palo Alto, CA. Aug 28, 1990.
- * 	[90/09/03            af]
+ *	Created, from the DEC specs:
+ *	"DECstation 3100 Desktop Workstation Functional Specification"
+ *	Workstation Systems Engineering, Palo Alto, CA. Aug 28, 1990.
+ *	[90/09/03            af]
  */
 /*
  *	File: kn01.h
- * 	Author: Alessandro Forin, Carnegie Mellon University
+ *	Author: Alessandro Forin, Carnegie Mellon University
  *	Date:	9/90
  *
  *	Definitions specific to the KN01 processor (pmax)
  */
 
 #ifndef MIPS_KN01_H
-#define MIPS_KN01_H	1
+#define MIPS_KN01_H 1
 
 /*
  * KN01's Physical address space
