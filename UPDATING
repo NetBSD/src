@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.67 2002/09/21 04:12:35 lukem Exp $
+$NetBSD: UPDATING,v 1.68 2002/09/24 14:43:39 lukem Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -7,6 +7,16 @@ For a more detailed description see Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20020922:
+	MKDYNAMICROOT=yes enabled by default, which means that
+	certain shared libraries are installed into /lib, the shared
+	linker is installed into /libexec, and all programs in /bin
+	and /sbin are dynamically linked.
+	If you do not use "make build", you should ensure that
+	you have the libraries and shared linker in the new locations,
+	with:
+		make do-lib-csu do-lib-libc do-lib do-gnu-lib do-ld.elf_so
 
 20020917:
 	USE_NEW_TOOLCHAIN has been replaced with:
