@@ -64,10 +64,7 @@
 
 /*
  * HISTORY
- * $Log: cfbreg.h,v $
- * Revision 1.1.1.1  1993/10/12 03:22:24  deraadt
- * pmax code from <ralphc@pyramid.com> & <rick@snowhite.cis.uoguelph.ca>
- *
+ * Log: bt459.h,v
  * Revision 2.4  91/02/05  17:39:43  mrt
  * 	Added author notices
  * 	[91/02/04  11:11:57  mrt]
