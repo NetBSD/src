@@ -1,4 +1,4 @@
-.\" $NetBSD: ray.4,v 1.1 2000/01/24 15:13:11 augustss Exp $
+.\" $NetBSD: ray.4,v 1.2 2000/01/24 15:30:03 augustss Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,6 +46,14 @@
 .Sh INTRODUCTION
 .Nx
 provides support for the Raytheon Raylink and WebGear Aviator2.4 cards.
+.Sh NOTES
+The
+.Nm
+driver requires 64K memory space, so the
+.Va iosiz
+locator for the
+.Va pcic
+driver may have to be increased for the driver to work.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifconfig 4 ,
