@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.24 1999/05/21 21:31:37 thorpej Exp $ */
+/* $NetBSD: if_ie.c,v 1.25 1999/09/13 20:17:35 tron Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -1327,7 +1327,7 @@ ie_read_frame(sc, num)
 	return;
     }
 
-#if NBFILTER > 0
+#if NBPFILTER > 0
     if ( ifp->if_bpf ) {
 	bpf_mtap(ifp->if_bpf, m );
     };
