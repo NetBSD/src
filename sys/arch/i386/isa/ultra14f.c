@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.18 1994/01/21 06:26:00 glass Exp $
+ *	$Id: ultra14f.c,v 1.19 1994/03/08 12:21:29 mycroft Exp $
  */
  
 #include <sys/types.h>
@@ -51,6 +51,7 @@
 #define dev_unit id_unit
 #define dev_addr id_iobase
 
+#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <i386/isa/isa_device.h>
 #include <scsi/scsi_all.h>
