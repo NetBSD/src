@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	8.1 (Berkeley) 6/5/93
-.\"	$NetBSD: MAKEDEV.8,v 1.5 1999/09/18 00:31:04 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.6 2000/05/02 00:31:02 hubertf Exp $
 .\"
 .Dd July 23, 1997
 .Dt MAKEDEV 8 x68k
@@ -114,6 +114,9 @@ Concatenated disk driver, see
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr raid 4 
+. It Ar md#
+Memory pseudo-disk devices, see
+.Xr md 4 
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
@@ -146,9 +149,6 @@ Motherboard parallel port
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
-. It Ar md
-Memory pseudo-disk, see
-.Xr md 4 
 . It Ar grf#
 Builtin video
 . It Ar kbd

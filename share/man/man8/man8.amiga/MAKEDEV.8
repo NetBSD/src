@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.7 1999/09/18 00:31:01 hubertf Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/05/02 00:30:56 hubertf Exp $
 .\"
 .\" Copyright (c) 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -101,6 +101,9 @@ SCSI tapes, see
 . It Ar fd#
 Floppy disks, see
 .Xr fdc 4 
+. It Ar wd#
+IDE disks, see
+.Xr wd 4 
 . It Ar sd#
 SCSI disks, includes flopticals, see
 .Xr sd 4 
@@ -116,6 +119,9 @@ Concatenated disk driver, see
 . It Ar raid#
 RAIDframe disk driver, see
 .Xr raid 4 
+. It Ar md#
+Memory pseudo-disk devices, see
+.Xr md 4 
 . El
 .It Console ports:
 . Bl -tag -width 0123456789 -compact
