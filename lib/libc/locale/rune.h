@@ -1,8 +1,11 @@
-/*	$NetBSD: locale.h,v 1.11 2000/12/21 11:29:48 itojun Exp $	*/
+/*	$NetBSD: rune.h,v 1.2 2000/12/21 11:29:47 itojun Exp $	*/
 
-/*
- * Copyright (c) 1991, 1993
+/*-
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Paul Borman at Krystal Technologies.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,56 +35,39 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)locale.h	8.1 (Berkeley) 6/2/93
+ *	@(#)rune.h	8.1 (Berkeley) 6/27/93
  */
 
-#ifndef _LOCALE_H_
-#define _LOCALE_H_
+#ifndef	_RUNE_H_
+#define	_RUNE_H_
 
-struct lconv {
-	char	*decimal_point;
-	char	*thousands_sep;
-	char	*grouping;
-	char	*int_curr_symbol;
-	char	*currency_symbol;
-	char	*mon_decimal_point;
-	char	*mon_thousands_sep;
-	char	*mon_grouping;
-	char	*positive_sign;
-	char	*negative_sign;
-	char	int_frac_digits;
-	char	frac_digits;
-	char	p_cs_precedes;
-	char	p_sep_by_space;
-	char	n_cs_precedes;
-	char	n_sep_by_space;
-	char	p_sign_posn;
-	char	n_sign_posn;
-};
+#include "runetype.h"
+#include <stdio.h>
 
-#include <sys/null.h>
+/* note the tree underlines! */
+#define ___INVALID_RUNE(rl)	(rl)->__invalid_rune
+#define ___sgetrune(rl)		(rl)->__rune_sgetrune
+#define ___sputrune(rl)		(rl)->__rune_sputrune
+#define ___CurrentRuneState(rl)	(rl)->__rune_RuneState
+#define ___rune_initstate(rl)	___CurrentRuneState(rl)->__initstate
+#define ___rune_sizestate(rl)	___CurrentRuneState(rl)->__sizestate
+#define ___rune_packstate(rl)	___CurrentRuneState(rl)->__packstate
+#define ___rune_unpackstate(rl)	___CurrentRuneState(rl)->__unpackstate
 
-#define	LC_ALL		0
-#define	LC_COLLATE	1
-#define	LC_CTYPE	2
-#define	LC_MONETARY	3
-#define	LC_NUMERIC	4
-#define	LC_TIME		5
-#define LC_MESSAGES	6
+#define _INVALID_RUNE   	___INVALID_RUNE(_CurrentRuneLocale)
+#define __sgetrune		___sgetrune(_CurrentRuneLocale)
+#define __sputrune		___sputrune(_CurrentRuneLocale)
+#define _CurrentRuneState	___CurrentRuneState(_CurrentRuneLocale)
+#define __rune_initstate	___rune_initstate(_CurrentRuneLocale)
+#define __rune_sizestate	___rune_sizestate(_CurrentRuneLocale)
+#define __rune_packstate	___rune_packstate(_CurrentRuneLocale)
+#define __rune_unpackstate	___rune_unpackstate(_CurrentRuneLocale)
 
-#define	_LC_LAST	7		/* marks end */
+#define sgetrune(s, n, r, st) \
+	(*___sgetrune(_CurrentRuneLocale))(_CurrentRuneLocale, (s), (n), \
+		(r), (st))
+#define sputrune(c, s, n, r, st) \
+	(*___sputrune(_CurrentRuneLocale))(_CurrentRuneLocale, (c), (s), \
+		(n), (r), (st))
 
-#include <sys/cdefs.h>
-
-__BEGIN_DECLS
-struct lconv	*localeconv __P((void));
-#ifdef __SETLOCALE_SOURCE__
-char		*setlocale __P((int, const char *));
-char		*__setlocale_mb_len_max_32 __P((int, const char *));
-char		*__setlocale __P((int, const char *));
-#else /* !__SETLOCALE_SOURCE__ */
-char		*setlocale __P((int, const char *)) __RENAME(__setlocale_mb_len_max_32);
-#endif /* !__SETLOCALE_SOURCE__ */
-__END_DECLS
-
-#endif /* _LOCALE_H_ */
+#endif	/*! _RUNE_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: wchar.h,v 1.5 2000/12/21 08:30:52 itojun Exp $	*/
+/*	$NetBSD: wchar.h,v 1.6 2000/12/21 11:29:48 itojun Exp $	*/
 
 /*-
  * Copyright (c)1999 Citrus Project,
@@ -94,6 +94,11 @@ typedef	_BSD_SIZE_T_	size_t;
 #endif
 
 __BEGIN_DECLS
+size_t	mbrlen __P((const char *, size_t, mbstate_t *));
+size_t	mbrtowc __P((wchar_t *, const char *, size_t, mbstate_t *));
+int	mbsinit __P((const mbstate_t *));
+size_t	mbsrtowcs __P((wchar_t *, const char **, size_t, mbstate_t *));
+size_t	wcrtomb __P((char *, wchar_t, mbstate_t *));
 wchar_t	*wcscat __P((wchar_t *, const wchar_t *));
 wchar_t	*wcschr __P((const wchar_t *, wchar_t));
 int	wcscmp __P((const wchar_t *, const wchar_t *));
@@ -105,6 +110,7 @@ int	wcsncmp __P((const wchar_t *, const wchar_t *, size_t));
 wchar_t	*wcsncpy __P((wchar_t *, const wchar_t *, size_t));
 wchar_t	*wcspbrk __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsrchr __P((const wchar_t *, wchar_t));
+size_t	wcsrtombs __P((char *, const wchar_t **, size_t, mbstate_t *));
 size_t	wcsspn __P((const wchar_t *, const wchar_t *));
 wchar_t	*wcsstr __P((const wchar_t *, const wchar_t *));
 int	wcswidth __P((const wchar_t *, size_t));
