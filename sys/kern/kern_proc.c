@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.17 1997/05/07 18:48:15 gwr Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.18 1997/05/08 17:22:05 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -383,9 +383,12 @@ pgrpdump()
 #ifdef DDB
 #include <machine/db_machdep.h>
 
+#include <ddb/db_command.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
+#include <ddb/db_sym.h>
+#include <ddb/db_extern.h>
 
 void
 db_kill_proc(addr, haddr, count, modif)
