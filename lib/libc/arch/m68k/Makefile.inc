@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 1996/06/01 01:08:02 jtc Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1998/02/22 08:40:37 mycroft Exp $
 
 KMINCLUDES=	arch/m68k/DEFS.h arch/m68k/SYS.h
-KMSRCS=	bcmp.S bzero.S ffs.S strcat.S strcmp.S strcpy.S strlen.S strncmp.S \
-	strncpy.S htonl.S htons.S ntohl.S ntohs.S \
+KMSRCS=	bcmp.S bcopy.S bzero.S ffs.S index.S rindex.S \
+	memcpy.S memset.S \
+	strcat.S strchr.S strcmp.S strcpy.S strlen.S strrchr.S strncmp.S strncpy.S \
+	htonl.S htons.S ntohl.S ntohs.S \
 	ashldi3.S ashrdi3.S lshrdi3.S
