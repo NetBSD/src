@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.19 1999/02/13 09:44:50 dbj Exp $	*/
+/*	$NetBSD: esp.c,v 1.20 1999/02/14 10:19:51 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@
 #include "espreg.h"
 #include "espvar.h"
 
-#if 1
+#ifdef DEBUG
 #define ESP_DEBUG
 #endif
 
@@ -132,6 +132,14 @@ int	espmatch_intio	__P((struct device *, struct cfdata *, void *));
 bus_dmamap_t esp_dmacb_continue __P((void *arg));
 void esp_dmacb_completed __P((bus_dmamap_t map, void *arg));
 void esp_dmacb_shutdown __P((void *arg));
+
+#ifdef ESP_DEBUG
+char esp_dma_dump[5*1024] = "";
+struct ncr53c9x_softc *esp_debug_sc = 0;
+void esp_dma_store __P((struct ncr53c9x_softc *sc));
+void esp_dma_print __P((struct ncr53c9x_softc *sc));
+#endif
+
 
 /* Linkup to the rest of the kernel */
 struct cfattach esp_ca = {
@@ -213,6 +221,10 @@ espattach_intio(parent, self, aux)
 {
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
+
+#ifdef ESP_DEBUG
+	esp_debug_sc = sc;
+#endif
 
 	esc->sc_bst = NEXT68K_INTIO_BUS_SPACE;
 	if (bus_space_map(esc->sc_bst, NEXT_P_SCSI, 
@@ -342,7 +354,7 @@ espattach_intio(parent, self, aux)
 		esc->sc_datain = -1;
 		esc->sc_dmaaddr = 0;
 		esc->sc_dmalen  = 0;
-		esc->sc_dmasize = -1;
+		esc->sc_dmasize = 0;
 
 		esc->sc_loaded = 0;
 
@@ -378,7 +390,7 @@ espattach_intio(parent, self, aux)
 
 	/* Establish interrupt channel */
 	isrlink_autovec((int(*)__P((void*)))ncr53c9x_intr, sc,
-			NEXT_I_IPL(NEXT_I_SCSI), -1);
+			NEXT_I_IPL(NEXT_I_SCSI), 0);
 	INTR_ENABLE(NEXT_I_SCSI);
 
 	/* register interrupt stats */
@@ -424,35 +436,50 @@ esp_dma_isintr(sc)
 	int r = (INTR_OCCURRED(NEXT_I_SCSI));
 
 	if (r) {
-		DPRINTF(("esp_dma_isintr = 0x%b\n",
-				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
 
-		while (esp_dma_isactive(sc)) {
+		{
+			int s;
+			s = spldma();
+
+			DPRINTF(("esp_dma_isintr = 0x%b\n",
+					(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS));
+
+			while (esp_dma_isactive(sc)) {
 
 #ifdef DIAGNOSTIC
-			r = (INTR_OCCURRED(NEXT_I_SCSI));
-			if (!r) panic("esp dma enabled but failed to flush");
+				r = (INTR_OCCURRED(NEXT_I_SCSI));
+				if (!r) panic("esp intr enabled but dma failed to flush");
 #endif
 
-			if (esc->sc_datain) {
-				NCR_WRITE_REG(sc, ESP_DCTL, 
-						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD | ESPDCTL_FLUSH);
-				NCR_WRITE_REG(sc, ESP_DCTL, 
-						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
-			} else {
-				NCR_WRITE_REG(sc, ESP_DCTL, 
-						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH);
-				NCR_WRITE_REG(sc, ESP_DCTL, 
-						ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
-			}
-			{
-				int nr;
-				nr = nextdma_intr(&esc->sc_scsi_dma);
-				if (nr) {
-					DPRINTF(("nextma_intr = %d\n",nr));
+				if (esc->sc_datain) {
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD | ESPDCTL_FLUSH);
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_DMARD);
+				} else {
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD | ESPDCTL_FLUSH);
+					NCR_WRITE_REG(sc, ESP_DCTL, 
+							ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD);
+				}
+
+				/* Really this code should only be used in polled mode */
+				{
+					int nr;
+					nr = nextdma_intr(&esc->sc_scsi_dma);
+					if (nr) {
+						DPRINTF(("nextma_intr = %d\n",nr));
+					}
 				}
 			}
+
+			splx(s);
 		}
+
+#ifdef DIAGNOSTIC
+		r = (INTR_OCCURRED(NEXT_I_SCSI));
+		if (!r) panic("esp intr not enabled after dma flush");
+#endif
 
 		/* Clear the DMAMOD bit in the DCTL register, since if this
 		 * routine returns true, then the ncr53c9x_intr handler will
@@ -497,7 +524,7 @@ esp_dma_reset(sc)
 	esc->sc_datain = -1;
 	esc->sc_dmaaddr = 0;
 	esc->sc_dmalen  = 0;
-	esc->sc_dmasize = -1;
+	esc->sc_dmasize = 0;
 
 	esc->sc_loaded = 0;
 
@@ -547,6 +574,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
 #ifdef DIAGNOSTIC
+#ifdef ESP_DEBUG
 	/* if this is a read DMA, pre-fill the buffer with 0xdeadbeef
 	 * to identify bogus reads
 	 */
@@ -557,7 +585,7 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 		v = (int *)(&(esc->sc_tailbuf[0]));
 		for(i=0;i<((sizeof(esc->sc_tailbuf)/4));i++) v[i] = 0xdeaffeed;
 	}
-
+#endif
 #endif
 
 	DPRINTF(("esp_dma_setup(0x%08lx,0x%08lx,0x%08lx)\n",*addr,*len,*dmasize));
@@ -573,13 +601,21 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain != -1) ||
 			(esc->sc_main_dmamap->dm_mapsize != 0) ||
-			(esc->sc_tail_dmamap->dm_mapsize != 0)) {
+			(esc->sc_tail_dmamap->dm_mapsize != 0) ||
+			(esc->sc_dmasize != 0)) {			
 		panic("%s: map already loaded in esp_dma_setup\n"
-				"\tdatain = %d\n\tmain_mapsize=%d\n\tail_mapsize=%d",
+				"\tdatain = %d\n\tmain_mapsize=%d\n\tail_mapsize=%d\n\tdmasize = %d",
 				sc->sc_dev.dv_xname, esc->sc_datain,
-				esc->sc_main_dmamap->dm_mapsize,esc->sc_tail_dmamap->dm_mapsize);
+				esc->sc_main_dmamap->dm_mapsize,
+				esc->sc_tail_dmamap->dm_mapsize,
+				esc->sc_dmasize);
 	}
 #endif
+
+	/* we are sometimes asked to dma zero  bytes, that's easy */
+	if (*len <= 0) {
+		return(0);
+	}
 
 	/* Save these in case we have to abort DMA */
 	esc->sc_datain   = datain;
@@ -602,18 +638,12 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			slop_end_size = (end % DMA_ENDALIGNMENT);
 		}
 
-		/* Force a minimum slop end size to guarantee correct use of tailbuf
-		 * and provide for dma overrun
-		 */
-		slop_end_size += ESP_DMA_MAXTAIL;
-
-
 		/* Check to make sure we haven't counted extra slop
 		 * as would happen for a very short dma buffer, also
 		 * for short buffers, just stuff the entire thing in the tail
 		 */
 		if ((slop_bgn_size+slop_end_size >= esc->sc_dmasize)
-#if 1
+#if 0
 				|| (esc->sc_dmasize <= ESP_DMA_MAXTAIL)
 #endif
 				)
@@ -665,8 +695,10 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 			esc->sc_tail_size = DMA_ENDALIGN(caddr_t,esc->sc_tail+slop_end_size)-esc->sc_tail;
 
 			/* @@@ next dma overrun lossage */
-			if (!esc->sc_datain) esc->sc_tail_size += ESP_DMA_OVERRUN;
-		
+			if (!esc->sc_datain) {
+				esc->sc_tail_size += 2*ESP_DMA_OVERRUN;
+			}
+
 			{
 				int error;
 				error = bus_dmamap_load(esc->sc_scsi_dma.nd_dmat,
@@ -687,60 +719,102 @@ esp_dma_setup(sc, addr, len, datain, dmasize)
 	return (0);
 }
 
+#ifdef ESP_DEBUG
+/* For debugging */
+void
+esp_dma_store(sc)
+	struct ncr53c9x_softc *sc;
+{
+	struct esp_softc *esc = (struct esp_softc *)sc;
+	char *p = &esp_dma_dump[0];
+	
+	p += sprintf(p,"%s: sc_datain=%d\n",sc->sc_dev.dv_xname,esc->sc_datain);
+	p += sprintf(p,"%s: sc_loaded=0x%08x\n",sc->sc_dev.dv_xname,esc->sc_loaded);
+
+	if (esc->sc_dmaaddr) {
+		p += sprintf(p,"%s: sc_dmaaddr=0x%08lx\n",sc->sc_dev.dv_xname,*esc->sc_dmaaddr);
+	} else {
+		p += sprintf(p,"%s: sc_dmaaddr=NULL\n",sc->sc_dev.dv_xname);
+	}
+	if (esc->sc_dmalen) {
+		p += sprintf(p,"%s: sc_dmalen=0x%08lx\n",sc->sc_dev.dv_xname,*esc->sc_dmalen);
+	} else {
+		p += sprintf(p,"%s: sc_dmalen=NULL\n",sc->sc_dev.dv_xname);
+	}
+	p += sprintf(p,"%s: sc_dmasize=0x%08x\n",sc->sc_dev.dv_xname,esc->sc_dmasize);
+
+	p += sprintf(p,"%s: sc_begin = 0x%08x, sc_begin_size = 0x%08x\n",
+			sc->sc_dev.dv_xname, esc->sc_begin, esc->sc_begin_size);
+	p += sprintf(p,"%s: sc_main = 0x%08x, sc_main_size = 0x%08x\n",
+			sc->sc_dev.dv_xname, esc->sc_main, esc->sc_main_size);
+	{
+		int i;
+		bus_dmamap_t map = esc->sc_main_dmamap;
+		p += sprintf(p,"%s: sc_main_dmamap. mapsize = 0x%08x, nsegs = %d\n",
+				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
+		for(i=0;i<map->dm_nsegs;i++) {
+			p += sprintf(p,"%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
+		}
+	}
+	p += sprintf(p,"%s: sc_tail = 0x%08x, sc_tail_size = 0x%08x\n",
+			sc->sc_dev.dv_xname, esc->sc_tail, esc->sc_tail_size);
+	{
+		int i;
+		bus_dmamap_t map = esc->sc_tail_dmamap;
+		p += sprintf(p,"%s: sc_tail_dmamap. mapsize = 0x%08x, nsegs = %d\n",
+				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs);
+		for(i=0;i<map->dm_nsegs;i++) {
+			p += sprintf(p,"%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
+			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len);
+		}
+	}
+}
+
+void
+esp_dma_print(sc)
+	struct ncr53c9x_softc *sc;
+{
+	esp_dma_store(sc);
+	printf("%s",esp_dma_dump);
+}
+#endif
+
 void
 esp_dma_go(sc)
 	struct ncr53c9x_softc *sc;
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-#ifdef DEBUG
-
 	DPRINTF(("%s: esp_dma_go(datain = %d)\n",
 			sc->sc_dev.dv_xname, esc->sc_datain));
 
-	DPRINTF(("%s: dma_shutdown: addr=0x%08lx,len=0x%08lx,size=0x%08lx\n",
-			sc->sc_dev.dv_xname,
-				*esc->sc_dmaaddr, *esc->sc_dmalen, esc->sc_dmasize));
-
-	DPRINTF(("%s: begin = 0x%08x, size = 0x%08x\n",
-			sc->sc_dev.dv_xname, esc->sc_begin, esc->sc_begin_size));
-	DPRINTF(("%s: main = 0x%08x, size = 0x%08x\n",
-			sc->sc_dev.dv_xname, esc->sc_main, esc->sc_main_size));
-	{
-		int i;
-		bus_dmamap_t map = esc->sc_main_dmamap;
-		DPRINTF(("%s: main map. mapsize = 0x%08x, nsegs = %d\n",
-				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs));
-		for(i=0;i<map->dm_nsegs;i++) {
-			DPRINTF(("%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
-			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
-		}
-	}
-	DPRINTF(("%s: tail = 0x%08x, size = 0x%08x\n",
-			sc->sc_dev.dv_xname, esc->sc_tail, esc->sc_tail_size));
-	{
-		int i;
-		bus_dmamap_t map = esc->sc_tail_dmamap;
-		DPRINTF(("%s: tail map. mapsize = 0x%08x, nsegs = %d\n",
-				sc->sc_dev.dv_xname, map->dm_mapsize, map->dm_nsegs));
-		for(i=0;i<map->dm_nsegs;i++) {
-			DPRINTF(("%s: map->dm_segs[%d]->ds_addr = 0x%08x, len = 0x%08x\n",
-			sc->sc_dev.dv_xname, i, map->dm_segs[i].ds_addr, map->dm_segs[i].ds_len));
-		}
-	}
+#ifdef ESP_DEBUG
+	if (esp_debug) esp_dma_print(sc);
+	else esp_dma_store(sc);
 #endif
 
-#ifdef DIAGNOSTIC
+#ifdef ESP_DEBUG
 	{
 		int n = NCR_READ_REG(sc, NCR_FFLAG);
-		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
+		DPRINTF(("%s: fifo size = %d, seq = 0x%x\n",
+				sc->sc_dev.dv_xname,
+				n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
 	}
 #endif
+
+	/* zero length dma transfers are boring, dmasize is probably -1 in those cases
+	 * because it was never set up by esp_dma_setup
+	 */
+	if (esc->sc_dmasize == 0) {
+		return;
+	}
 
 #if defined(DIAGNOSTIC)
   if ((esc->sc_begin_size == 0) &&
 			(esc->sc_main_dmamap->dm_mapsize == 0) &&
 			(esc->sc_tail_dmamap->dm_mapsize == 0)) {
+		esp_dma_print(sc);
 		panic("%s: No DMA requested!",sc->sc_dev.dv_xname);
 	}
 #endif
@@ -851,7 +925,7 @@ esp_dmacb_completed(map, arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	DPRINTF(("esp dma completed\n"));
+	DPRINTF(("%s: dma completed\n",sc->sc_dev.dv_xname));
 
 #ifdef DIAGNOSTIC
 	if ((esc->sc_datain < 0) || (esc->sc_datain > 1)) {
@@ -878,7 +952,7 @@ esp_dmacb_shutdown(arg)
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
 	struct esp_softc *esc = (struct esp_softc *)sc;
 
-	DPRINTF(("esp dma shutdown\n"));
+	DPRINTF(("%s: dma shutdown\n",sc->sc_dev.dv_xname));
 
 	/* Stuff the end slop into fifo */
 
@@ -886,9 +960,11 @@ esp_dmacb_shutdown(arg)
 	if (esp_debug) {
 		
 		int n = NCR_READ_REG(sc, NCR_FFLAG);
-		DPRINTF(("esp fifo size = %d, seq = 0x%x\n",n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
+		DPRINTF(("%s: fifo size = %d, seq = 0x%x\n",
+				sc->sc_dev.dv_xname,n & NCRFIFO_FF, (n & NCRFIFO_SS)>>5));
 
-		NCR_DMA(("dmaintr: tcl=%d, tcm=%d, tch=%d\n",
+		NCR_DMA(("%s:dmaintr: tcl=%d, tcm=%d, tch=%d\n",
+				sc->sc_dev.dv_xname,
 				NCR_READ_REG(sc, NCR_TCL),
 				NCR_READ_REG(sc, NCR_TCM),
 				(sc->sc_cfg2 & NCRCFG2_FE)
@@ -940,11 +1016,20 @@ esp_dmacb_shutdown(arg)
 	esc->sc_datain = -1;
 	esc->sc_dmaaddr = 0;
 	esc->sc_dmalen  = 0;
-	esc->sc_dmasize = -1;
+	esc->sc_dmasize = 0;
 
 	esc->sc_loaded = 0;
 
 	esc->sc_begin = 0;
 	esc->sc_begin_size = 0;
+
+#ifdef ESP_DEBUG
+	if (esp_debug) {
+		printf("  *intrstat = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRSTAT)),NEXT_INTR_BITS);
+		printf("  *intrmask = 0x%b\n",
+				(*(volatile u_long *)IIOV(NEXT_P_INTRMASK)),NEXT_INTR_BITS);
+	}
+#endif
 
 }
