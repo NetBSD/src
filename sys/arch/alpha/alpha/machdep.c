@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.180 1999/08/16 02:59:22 simonb Exp $ */
+/* $NetBSD: machdep.c,v 1.181 1999/08/19 21:31:43 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 1999/08/16 02:59:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 1999/08/19 21:31:43 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,53 +628,7 @@ nobootinfo:
 
 	if (totalphysmem == 0)
 		panic("can't happen: system seems to have no memory!");
-
-#ifdef LIMITMEM
-	/*
-	 * XXX Kludge so we can run on machines with memory larger
-	 * XXX than 1G until all device drivers are converted to
-	 * XXX use bus_dma.  (Relies on the fact that vm_physmem
-	 * XXX sorted in order of increasing addresses.)
-	 */
-	if (vm_physmem[vm_nphysseg - 1].end > atop(LIMITMEM * 1024 * 1024)) {
-
-		printf("******** LIMITING MEMORY TO %dMB **********\n",
-		    LIMITMEM);
-
-		do {
-			u_long ovf;
-
-			vps = &vm_physmem[vm_nphysseg - 1];
-
-			if (vps->start >= atop(LIMITMEM * 1024 * 1024)) {
-				/*
-				 * If the start is too high, just drop
-				 * the whole segment.
-				 *
-				 * XXX can start != avail_start in this
-				 * XXX case?  wouldn't that mean that
-				 * XXX some memory was stolen above the
-				 * XXX limit?  What to do?
-				 */
-				ovf = vps->end - vps->start;
-				vm_nphysseg--;
-			} else {
-				/*
-				 * If the start is OK, calculate how much
-				 * to drop and drop it.
-				 */
-				ovf = vps->end - atop(LIMITMEM * 1024 * 1024);
-				vps->end -= ovf;
-				vps->avail_end -= ovf;
-			}
-			physmem -= ovf;
-			unusedmem += ovf;
-		} while (vps->end > atop(LIMITMEM * 1024 * 1024));
-	}
-#endif /* LIMITMEM */
-
 	maxmem = physmem;
-
 #if 0
 	printf("totalphysmem = %d\n", totalphysmem);
 	printf("physmem = %d\n", physmem);
