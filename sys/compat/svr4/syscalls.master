@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.34 1998/09/11 12:50:09 mycroft Exp $
+	$NetBSD: syscalls.master,v 1.35 1998/09/12 00:10:06 mycroft Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -62,7 +62,8 @@
 13	STD		{ int svr4_sys_time(svr4_time_t *t); }
 14	STD		{ int svr4_sys_mknod(char* path, int mode, int dev); }
 15	NOARGS		{ int sys_chmod(char *path, int mode); }
-16	NOARGS		{ int sys___posix_chown(char *path, int uid, int gid); }
+16	NOARGS		{ int sys___posix_chown(char *path, int uid, \
+			    int gid); } chown
 17	STD		{ int svr4_sys_break(caddr_t nsize); }
 18	STD		{ int svr4_sys_stat(char* path, struct svr4_stat* ub); }
 19	NOARGS		{ long compat_43_sys_lseek(int fd, long offset, \
@@ -165,7 +166,8 @@
 91	NOARGS		{ int sys_getgroups(u_int gidsetsize, gid_t *gidset); }
 92	NOARGS		{ int sys_setgroups(u_int gidsetsize, gid_t *gidset); }
 93	NOARGS		{ int sys_fchmod(int fd, int mode); }
-94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); }
+94	NOARGS		{ int sys___posix_fchown(int fd, int uid, int gid); } \
+			    fchown
 95	STD		{ int svr4_sys_sigprocmask(int how, \
 			    const svr4_sigset_t *set, \
 			    svr4_sigset_t *oset); }
@@ -224,13 +226,14 @@
 129	STD		{ int svr4_sys_getrlimit(int which, \
 			    struct orlimit *rlp); }
 130	NOARGS		{ int sys___posix_lchown(char *path, int uid, \
-			    int gid); }
+			    int gid); } lchown
 131	STD		{ int svr4_sys_memcntl(void * addr, \
 			    svr4_size_t len, int cmd, void * arg, \
 			    int attr, int mask); }
 132	UNIMPL		getpmsg
 133	UNIMPL		putpmsg
-134	NOARGS		{ int sys___posix_rename(char *from, char *to); }
+134	NOARGS		{ int sys___posix_rename(char *from, char *to); } \
+			    rename
 135	STD		{ int svr4_sys_uname(struct svr4_utsname* name, \
 			    int dummy); }
 136	NOARGS		{ int sys_setegid(gid_t egid); }
