@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2002/03/24 05:28:46 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 2002/03/24 05:39:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2002/03/24 05:28:46 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.61 2002/03/24 05:39:53 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3365,37 +3365,38 @@ pmap_modified_emulation(pmap, va)
 	struct pmap *pmap;
 	vaddr_t va;
 {
-	pt_entry_t *pte;
-	paddr_t pa;
+	pt_entry_t *ptes;
 	struct vm_page *pg;
+	paddr_t pa;
 	u_int flags;
+	int rv = 0;
 
 	PDEBUG(2, printf("pmap_modified_emulation\n"));
 
-	/* Get the pte */
-	pte = pmap_pte(pmap, va);
-	if (!pte) {
-		PDEBUG(2, printf("no pte\n"));
-		return(0);
+	PMAP_MAP_TO_HEAD_LOCK();
+	ptes = pmap_map_ptes(pmap);			/* locks pmap */
+
+	if (pmap_pde_v(pmap_pde(pmap, va)) == 0) {
+		PDEBUG(2, printf("L1 PTE invalid\n"));
+		goto out;
 	}
 
-	PDEBUG(1, printf("*pte=%08x\n", *pte));
+	PDEBUG(1, printf("pte=%08x\n", ptes[arm_btop(va)]));
 
-	/* Check for a zero pte */
-	if (*pte == 0)
-		return(0);
+	/* Check for a invalid pte */
+	if (l2pte_valid(ptes[arm_btop(va)]) == 0)
+		goto out;
 
 	/* This can happen if user code tries to access kernel memory. */
-	if ((*pte & PT_AP(AP_W)) != 0)
-		return (0);
+	if ((ptes[arm_btop(va)] & PT_AP(AP_W)) != 0)
+		goto out;
 
 	/* Extract the physical address of the page */
-	pa = pmap_pte_pa(pte);
+	pa = l2pte_pa(ptes[arm_btop(va)]);
 	if ((pg = PHYS_TO_VM_PAGE(pa)) == NULL)
-		return(0);
+		goto out;
 
 	/* Get the current flags for this page. */
-	PMAP_HEAD_TO_MAP_LOCK();
 	simple_lock(&pg->mdpage.pvh_slock);
 	
 	flags = pmap_modify_pv(pmap, va, pg, 0, 0);
@@ -3410,12 +3411,12 @@ pmap_modified_emulation(pmap, va)
 	 */
 	if (~flags & PT_Wr) {
 	    	simple_unlock(&pg->mdpage.pvh_slock);
-		PMAP_HEAD_TO_MAP_UNLOCK();
-		return(0);
+		goto out;
 	}
 
-	PDEBUG(0, printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %p (%08x)\n",
-	    va, pte, *pte));
+	PDEBUG(0,
+	    printf("pmap_modified_emulation: Got a hit va=%08lx, pte = %08x\n",
+	    va, ptes[arm_btop(va)]));
 	pg->mdpage.pvh_attrs |= PT_H | PT_M;
 
 	/* 
@@ -3425,15 +3426,19 @@ pmap_modified_emulation(pmap, va)
 	 * already set the cacheable bits based on the assumption that we
 	 * can write to this page.
 	 */
-	*pte = (*pte & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
-	PDEBUG(0, printf("->(%08x)\n", *pte));
+	ptes[arm_btop(va)] =
+	    (ptes[arm_btop(va)] & ~L2_MASK) | L2_SPAGE | PT_AP(AP_W);
+	PDEBUG(0, printf("->(%08x)\n", ptes[arm_btop(va)]));
 
 	simple_unlock(&pg->mdpage.pvh_slock);
-	PMAP_HEAD_TO_MAP_UNLOCK();
-	/* Return, indicating the problem has been dealt with */
+
 	cpu_tlb_flushID_SE(va);
 	cpu_cpwait();
-	return(1);
+	rv = 1;
+ out:
+	pmap_unmap_ptes(pmap);			/* unlocks pmap */
+	PMAP_MAP_TO_HEAD_UNLOCK();
+	return (rv);
 }
 
 
