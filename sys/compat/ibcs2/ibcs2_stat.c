@@ -1,6 +1,6 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.7 1997/10/20 22:05:21 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.7.2.1 1998/05/05 09:39:22 mycroft Exp $	*/
 /*
- * Copyright (c) 1995 Scott Bartram
+ * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,7 @@
 
 static void bsd_stat2ibcs_stat __P((struct stat *, struct ibcs2_stat *));
 static int cvt_statfs __P((struct statfs *, caddr_t, int));
+static int cvt_statvfs __P((struct statfs *, caddr_t, int));
 
 static void
 bsd_stat2ibcs_stat(st, st4)
@@ -96,6 +97,30 @@ cvt_statfs(sp, buf, len)
 	ssfs.f_fname[0] = 0;
 	ssfs.f_fpack[0] = 0;
 	return copyout((caddr_t)&ssfs, buf, len);
+}	
+
+static int
+cvt_statvfs(sp, buf, len)
+	struct statfs *sp;
+	caddr_t buf;
+	int len;
+{
+	struct ibcs2_statvfs ssvfs;
+
+	bzero(&ssvfs, sizeof ssvfs);
+	ssvfs.f_frsize = ssvfs.f_bsize = sp->f_bsize;
+	ssvfs.f_blocks = sp->f_blocks;
+	ssvfs.f_bfree = sp->f_bfree;
+	ssvfs.f_bavail = sp->f_bavail;
+	ssvfs.f_files = sp->f_files;
+	ssvfs.f_ffree = sp->f_ffree;
+	ssvfs.f_favail = sp->f_ffree;
+	ssvfs.f_fsid = sp->f_fsid.val[0];
+	strncpy(ssvfs.f_basetype, sp->f_fstypename, 15);
+	ssvfs.f_flag = 0;
+	ssvfs.f_namemax = PATH_MAX;
+	ssvfs.f_fstr[0] = 0;
+	return copyout((caddr_t)&ssvfs, buf, len);
 }	
 
 int
@@ -154,6 +179,62 @@ ibcs2_sys_fstatfs(p, v, retval)
 		return (error);
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
 	return cvt_statfs(sp, (caddr_t)SCARG(uap, buf), SCARG(uap, len));
+}
+
+int
+ibcs2_sys_statvfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_statvfs_args /* {
+		syscallarg(char *) path;
+		syscallarg(struct ibcs2_statvfs *) buf;
+	} */ *uap = v;
+	register struct mount *mp;
+	register struct statfs *sp;
+	int error;
+	struct nameidata nd;
+	caddr_t sg = stackgap_init(p->p_emul);
+
+	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)) != 0)
+		return (error);
+	mp = nd.ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(nd.ni_vp);
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
+			   sizeof(struct ibcs2_statvfs));
+}
+
+int
+ibcs2_sys_fstatvfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct ibcs2_sys_fstatvfs_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct ibcs2_statvfs *) buf;
+	} */ *uap = v;
+	struct file *fp;
+	struct mount *mp;
+	register struct statfs *sp;
+	int error;
+
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	mp = ((struct vnode *)fp->f_data)->v_mount;
+	sp = &mp->mnt_stat;
+	if ((error = VFS_STATFS(mp, sp, p)) != 0)
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	return cvt_statvfs(sp, (caddr_t)SCARG(uap, buf),
+			   sizeof(struct ibcs2_statvfs));
 }
 
 int
@@ -252,7 +333,7 @@ ibcs2_sys_utssys(p, v, retval)
 	} */ *uap = v;
 
 	switch (SCARG(uap, flag)) {
-	case 0:			/* uname(2) */
+	case 0:			/* uname(struct utsname *) */
 	{
 		struct ibcs2_utsname sut;
 		extern char ostype[], machine[], osrelease[];
@@ -269,9 +350,16 @@ ibcs2_sys_utssys(p, v, retval)
 			       ibcs2_utsname_len);
 	}
 
-	case 2:			/* ustat(2) */
+	case 2:			/* ustat(dev_t, struct ustat *) */
 	{
-		return ENOSYS;	/* XXX - TODO */
+		struct ibcs2_ustat xu;
+
+		xu.f_tfree = 20000; /* XXX fixme */
+		xu.f_tinode = 32000;
+		xu.f_fname[0] = 0;
+		xu.f_fpack[0] = 0;
+		return copyout((caddr_t)&xu, (caddr_t)SCARG(uap, a2),
+                               ibcs2_ustat_len);
 	}
 
 	default:
