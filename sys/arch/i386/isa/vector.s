@@ -1,4 +1,33 @@
-/*	$Id: vector.s,v 1.10.2.3 1993/10/12 23:36:36 mycroft Exp $ */
+/*-
+ * Copyright (c) 1993 Charles Hannum.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *	notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *	notice, this list of conditions and the following disclaimer in the
+ *	documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *	must display the following acknowledgement:
+ *	This product includes software developed by Charles Hannum.
+ * 4. The name of the author may not be used to endorse or promote products
+ *	derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ *	$Id: vector.s,v 1.10.2.4 1993/10/13 01:20:17 mycroft Exp $
+ */
 
 #include "i386/isa/icu.h"
 #include "i386/isa/isa.h"
@@ -9,7 +38,6 @@
 #ifndef AUTO_EOI_1
 #define	ENABLE_ICU1 \
 	movb	$ICU_EOI,%al ;	/* as soon as possible send EOI ... */ \
-	FASTER_NOP ;		/* ... ASAP ... */ \
 	outb	%al,$IO_ICU1	/* ... to clear in service bit */
 #else /* AUTO_EOI_1 */
 #define	ENABLE_ICU1		/* we now use auto-EOI to reduce i/o */
@@ -18,7 +46,6 @@
 #ifndef AUTO_EOI_2
 #define	ENABLE_ICU1_AND_2 \
 	movb	$ICU_EOI,%al ;	/* as above */ \
-	FASTER_NOP ; \
 	outb	%al,$IO_ICU2 ;	/* but do second icu first */ \
 	FASTER_NOP ; \
 	outb	%al,$IO_ICU1	/* then first icu */
@@ -31,10 +58,9 @@
  * Macros for interrupt interrupt entry, call to handler, and exit.
  *
  * XXX - the interrupt frame is set up to look like a trap frame.  This is
- * usually a waste of time.  The only interrupt handlers that want a frame
- * are the clock handler (it wants a clock frame), the npx handler (it's
- * easier to do right all in assembler).  The interrupt return routine
- * needs a trap frame for rare AST's (it could easily convert the frame).
+ * usually a waste of time.  The only interrupt handler that wants a frame
+ * is the clock handler (it wants a clock frame).  The interrupt return
+ * routine needs a trap frame for AST's (it could easily convert the frame).
  * The direct costs of setting up a trap frame are two pushl's (error
  * code and trap number), an addl to get rid of these, and pushing and
  * popping the call-saved regs %esi, %edi and %ebp twice,  The indirect
@@ -48,6 +74,10 @@
  * XXX - should we do a cld on every system entry to avoid the requirement
  * for scattered cld's?
  */
+
+/*
+ * First-stage interrupt service routines
+ */	
 
 	.globl	_isa_strayintr
 
@@ -71,12 +101,12 @@ IDTVEC(irq_num) ; \
 	enable_icus ; 		/* reenable hw interrupts */ \
 Vresume/**/irq_num: ; \
 	incl	_cnt+V_INTR ; 	/* increment statistical counters */ \
-	COUNT_INTR(_intrcnt_actv, irq_num) ; \
+	incl	_intrcnt + 4*irq_num ; \
 	movl	_cpl,%eax ; 	/* finish interrupt frame */ \
-	pushl	%eax ; \
+	pushl	%eax ; 		/* old spl level for intrframe */ \
 	orl	_intrmask + 4*irq_num,%eax ; /* add interrupt's spl mask */ \
-	movl	%eax,_cpl ; \
-	sti ; \
+	movl	%eax,_cpl ; 	/* mask interrupt's spl level */ \
+	sti ; 			/* enable interrupts */ \
 	movl	_intrhand + 4*irq_num,%ebx ; /* head of handler chain */ \
 	testl	%ebx,%ebx ; 	/* exit loop if no handlers */ \
 	jz	6f ; \
@@ -113,6 +143,8 @@ Vresume/**/irq_num: ; \
 2: ; \
 	pushl	%eax ; \
 	ss ; \
+	incl	_intrcnt_pend + 4*irq_num ; \
+	ss ; \
 	movb	_imen + IRQ_BYTE(irq_num),%al ; /* mask interrupt in hw */ \
 	orb	$IRQ_BIT(irq_num),%al ; \
 	ss ; \
@@ -142,12 +174,7 @@ INTR(14, IO_ICU2, ENABLE_ICU1_AND_2)
 INTR(15, IO_ICU2, ENABLE_ICU1_AND_2)
 
 /*
- * These are the interrupt counters, I moved them here from icu.s so that
- * they are with the name table.  rgrimes
- *
- * There are now lots of counters, this has been redone to work with
- * Bruce Evans intr-0.1 code, which I modified some more to make it all
- * work with vmstat.
+ * Interrupt counters
  */
 	ALIGN_TEXT
 Vresume:			/* where to resume intr handler after unpend */
@@ -158,10 +185,12 @@ Vresume:			/* where to resume intr handler after unpend */
 	.data
 	.globl	_intrcnt
 _intrcnt:			/* used by vmstat to calc size of table */
+	.globl	_intrcnt
+_intrcnt:	.space	16 * 4	/* total interrupts */
+	.globl	_intrcnt_pend
+_intrcnt_pend:	.space	16 * 4	/* masked interrupts */
 	.globl	_intrcnt_stray
 _intrcnt_stray:	.space	4	/* total count of stray interrupts */
-	.globl	_intrcnt_actv
-_intrcnt_actv:	.space	16 * 4	/* active interrupts */
 	.globl	_eintrcnt
 _eintrcnt:			/* used by vmstat to calc size of table */
 
@@ -185,4 +214,20 @@ _intrnames:
 	.asciz	"irq13"
 	.asciz	"irq14"
 	.asciz	"irq15"
+	.asciz	"irq0 pend"
+	.asciz	"irq1 pend"
+	.asciz	"irq2 pend"
+	.asciz	"irq3 pend"
+	.asciz	"irq4 pend"
+	.asciz	"irq5 pend"
+	.asciz	"irq6 pend"
+	.asciz	"irq7 pend"
+	.asciz	"irq8 pend"
+	.asciz	"irq9 pend"
+	.asciz	"irq10 pend"
+	.asciz	"irq11 pend"
+	.asciz	"irq12 pend"
+	.asciz	"irq13 pend"
+	.asciz	"irq14 pend"
+	.asciz	"irq15 pend"
 _eintrnames:
