@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.29 2001/03/17 20:34:44 bjh21 Exp $ */
+/* $NetBSD: if_eb.c,v 1.30 2001/04/05 20:31:51 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -162,7 +162,7 @@ void ebattach __P((struct device *, struct device *, void *));
 
 /* driver structure for autoconf */
 
-struct cfattach eb_ca = {
+struct cfattach oeb_ca = {
 	sizeof(struct eb_softc), ebprobe, ebattach
 };
 
