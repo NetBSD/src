@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.23 1996/04/01 17:29:49 christos Exp $	*/
+/*	$NetBSD: xd.c,v 1.24 1996/04/10 20:46:12 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.23 1996/04/01 17:29:49 christos Exp $
+ * id: $NetBSD: xd.c,v 1.24 1996/04/10 20:46:12 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -720,7 +720,7 @@ xdattach(parent, self, aux)
 		bp = bootpath_store(0, NULL);
 		if (bp && strcmp("xd", bp->name) == 0 &&
 						xd->xd_drive == bp->val[0])
-			bootdv = &xd->sc_dev;
+			bp->dev = &xd->sc_dev;
 	}
 
 	dk_establish(&xd->sc_dk, &xd->sc_dev);		/* XXX */

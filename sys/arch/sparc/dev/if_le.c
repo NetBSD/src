@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.27 1996/03/31 22:22:52 pk Exp $	*/
+/*	$NetBSD: if_le.c,v 1.28 1996/04/10 20:46:08 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -221,14 +221,14 @@ leattach(parent, self, aux)
 
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
 		    SAME_LANCE(bp, ca))
-			bootdv = &sc->sc_dev;
+			bp->dev = &sc->sc_dev;
 		break;
 #endif /* SUN4C || SUN4M */
 
 	default:
 		if (bp != NULL && strcmp(bp->name, le_cd.cd_name) == 0 &&
 		    sc->sc_dev.dv_unit == bp->val[1])
-			bootdv = &sc->sc_dev;
+			bp->dev = &sc->sc_dev;
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30 1996/04/01 17:33:10 christos Exp $	*/
+/*	$NetBSD: fd.c,v 1.31 1996/04/10 20:46:05 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -296,7 +296,7 @@ fdcmatch(parent, match, aux)
  */
 struct fdc_attach_args {
 	int fa_drive;
-	int fa_bootdev;
+	struct bootpath *fa_bootpath;
 	struct fd_type *fa_deftype;
 };
 
@@ -435,7 +435,7 @@ fdcattach(parent, self, aux)
 	 * Controller and drives are represented by one and the same
 	 * Openprom node, so we can as well check for the floppy boots here.
 	 */
-	fa.fa_bootdev = 0;
+	fa.fa_bootpath = 0;
 	if ((bp = ca->ca_ra.ra_bp) && strcmp(bp->name, OBP_FDNAME) == 0) {
 		/*
 		 * WOAH THERE!  It looks like we can get the bootpath
@@ -453,14 +453,14 @@ fdcattach(parent, self, aux)
 			     (bp->val[1] == 0)) ||
 			    ((bp->val[0] == -1) &&	/* /fd0 */
 			     (bp->val[1] == 0)))
-				fa.fa_bootdev = 1;
+				fa.fa_bootpath = bp;
 			break;
 
 		case BUS_OBIO:
 			/* /obio0/SUNW,fdtwo@0,700000 */
 			if ((bp->val[0] == ca->ca_slot) &&
 			    (bp->val[1] == ca->ca_offset))
-				fa.fa_bootdev = 1;
+				fa.fa_bootpath = bp;
 			break;
 		}
 
@@ -579,8 +579,8 @@ fdattach(parent, self, aux)
 	/*
 	 * We're told if we're the boot device in fdcattach().
 	 */
-	if (fa->fa_bootdev)
-		bootdv = &fd->sc_dv;
+	if (fa->fa_bootpath)
+		fa->fa_bootpath->dev = &fd->sc_dv;
 
 	/*
 	 * Establish a mountroot_hook anyway in case we booted
