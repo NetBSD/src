@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.11 1998/05/27 00:59:14 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.12 1999/01/27 10:41:00 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -250,6 +250,7 @@ void
 rndattach(num)
 	int num;
 {
+
 	rnd_init();
 }
 
@@ -259,6 +260,7 @@ rndopen(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
+
 	if (rnd_ready == 0)
 		return (ENXIO);
 
@@ -274,6 +276,7 @@ rndclose(dev, flags, ifmt, p)
 	int flags, ifmt;
 	struct proc *p;
 {
+
 	return (0);
 }
 
@@ -624,7 +627,7 @@ rndpoll(dev, events, p)
 	u_int32_t entcnt;
 
 	/*
-	 *  we are always writable
+	 * we are always writable
 	 */
 	revents = events & (POLLOUT | POLLWRNORM);
 
@@ -938,4 +941,3 @@ rnd_extract_data(p, len, flags)
 
 	return retval;
 }
-
