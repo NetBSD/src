@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.67 1995/01/13 08:29:25 mycroft Exp $	*/
+/*	$NetBSD: fd.c,v 1.68 1995/01/13 08:37:25 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -178,7 +178,7 @@ struct cfdriver fdcd = {
 };
 
 void fdgetdisklabel __P((struct fd_softc *));
-int fd_get_parms __P((struct wd_softc *));
+int fd_get_parms __P((struct fd_softc *));
 void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 
@@ -677,8 +677,9 @@ Fdopen(dev, flags)
 	dev_t dev;
 	int flags;
 {
- 	int unit, type;
+ 	int unit;
 	struct fd_softc *fd;
+	struct fd_type *type;
 
 	unit = FDUNIT(dev);
 	if (unit >= fdcd.cd_ndevs)
@@ -686,7 +687,7 @@ Fdopen(dev, flags)
 	fd = fdcd.cd_devs[unit];
 	if (fd == 0)
 		return ENXIO;
-	type = fd_dev_to_type(fd, bp->b_dev);
+	type = fd_dev_to_type(fd, dev);
 	if (type == NULL)
 		return ENXIO;
 
@@ -774,7 +775,7 @@ fdctimeout(arg)
 	void *arg;
 {
 	struct fdc_softc *fdc = arg;
-	struct fd_softc *fd = fdc->sc_drive.tqh_first;
+	struct fd_softc *fd = fdc->sc_drives.tqh_first;
 	int s;
 
 	s = splbio();
@@ -815,7 +816,7 @@ fdcintr(fdc)
 	struct fd_type *type;
 
 loop:
-	* Is there a drive for the controller to do a transfer with? */
+	/* Is there a drive for the controller to do a transfer with? */
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
@@ -1136,7 +1137,7 @@ fdioctl(dev, cmd, addr, flag)
 	case DIOCGDINFO:
 		bzero(&buffer, sizeof(buffer));
 		
-		buffer.d_secpercyl = fs->sc_type->seccyl;
+		buffer.d_secpercyl = fd->sc_type->seccyl;
 		buffer.d_type = DTYPE_FLOPPY;
 		buffer.d_secsize = FDC_BSIZE;
 
