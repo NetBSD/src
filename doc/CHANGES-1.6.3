@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.99 2004/05/27 09:08:28 tron Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.100 2004/05/28 09:04:44 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -794,4 +794,75 @@ sys/compat/linux/arch/m68k/syscalls.master	patch
 	Correct incorrect definition of system call 194 (linux_sys_ftruncate64)
 	caused by the patch for ticket #1686.
 	[skrll, ticket #1701]
+
+include/dlfcn.h					1.15-1.16
+lib/csu/common_elf/common.c			1.13
+lib/csu/common_elf/common.h			1.9
+lib/libc/dlfcn/dlfcn_elf.c			1.3-1.4
+lib/libc/dlfcn/dlfcn_stubs.c			delete
+libexec/ld.elf_so/Makefile			patch
+libexec/ld.elf_so/README			patch
+libexec/ld.elf_so/TODO				new file
+libexec/ld.elf_so/arch/alpha/Makefile.inc	patch
+libexec/ld.elf_so/arch/alpha/alpha_reloc.c	patch
+libexec/ld.elf_so/arch/alpha/ld.so.script	delete
+libexec/ld.elf_so/arch/alpha/rtld_start.S	patch
+libexec/ld.elf_so/arch/arm/Makefile.inc		patch
+libexec/ld.elf_so/arch/arm/mdreloc.c		new file
+libexec/ld.elf_so/arch/arm/rtld_start.S		patch
+libexec/ld.elf_so/arch/i386/Makefile.inc	patch
+libexec/ld.elf_so/arch/i386/mdreloc.c		new file
+libexec/ld.elf_so/arch/i386/rtld_start.S	patch
+libexec/ld.elf_so/arch/m68k/Makefile.inc	patch
+libexec/ld.elf_so/arch/m68k/mdreloc.c		new file
+libexec/ld.elf_so/arch/m68k/rtld_start.S	patch
+libexec/ld.elf_so/arch/mips/Makefile.inc	patch
+libexec/ld.elf_so/arch/mips/ld.so.script	delete
+libexec/ld.elf_so/arch/mips/mips_reloc.c	patch
+libexec/ld.elf_so/arch/mips/rtld_start.S	patch
+libexec/ld.elf_so/arch/powerpc/Makefile.inc	patch
+libexec/ld.elf_so/arch/powerpc/ld.so.script	patch
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	patch
+libexec/ld.elf_so/arch/powerpc/rtld_start.S	patch
+libexec/ld.elf_so/arch/sh3/Makefile.inc		patch
+libexec/ld.elf_so/arch/sh3/mdreloc.c		new file
+libexec/ld.elf_so/arch/sh3/rtld_start.S		patch
+libexec/ld.elf_so/arch/sparc/Makefile.inc	patch
+libexec/ld.elf_so/arch/sparc/mdreloc.c		patch
+libexec/ld.elf_so/arch/sparc/rtld_start.S	patch
+libexec/ld.elf_so/arch/sparc64/Makefile.inc	patch
+libexec/ld.elf_so/arch/sparc64/mdreloc.c 	patch
+libexec/ld.elf_so/arch/sparc64/rtld_start.S	patch
+libexec/ld.elf_so/arch/vax/Makefile.inc		patch
+libexec/ld.elf_so/arch/vax/mdreloc.c		new file
+libexec/ld.elf_so/arch/vax/rtld_start.S  	patch
+libexec/ld.elf_so/arch/x86_64/Makefile.inc	patch
+libexec/ld.elf_so/arch/x86_64/mdreloc.c  	patch
+libexec/ld.elf_so/arch/x86_64/rtld_start.S	patch
+libexec/ld.elf_so/debug.c			patch
+libexec/ld.elf_so/debug.h			patch
+libexec/ld.elf_so/headers.c			patch
+libexec/ld.elf_so/ld.elf_so.1			patch
+libexec/ld.elf_so/load.c			patch
+libexec/ld.elf_so/malloc.c			patch
+libexec/ld.elf_so/map_object.c			patch
+libexec/ld.elf_so/paths.c			patch
+libexec/ld.elf_so/reloc.c			patch
+libexec/ld.elf_so/rtld.c			patch
+libexec/ld.elf_so/rtld.h			patch
+libexec/ld.elf_so/rtldenv.h			patch
+libexec/ld.elf_so/search.c			patch
+libexec/ld.elf_so/symbol.c			patch
+libexec/ld.elf_so/sysident.h			patch
+libexec/ld.elf_so/xmalloc.c			patch
+libexec/ld.elf_so/xprintf.c			patch
+usr.bin/ldd/ldd_elf/ldd.c			patch
+
+	Apply patch (request by skrll in ticket #1702):
+	Bring "ld.elf_so" (mostly) in sync with NetBSD-current:
+	- MI and MD (e.g. under NetBSD-alpha) performance improvements
+	- RTLD_SELF, RTLD_NEXT, RTLD_DEFAULT support
+	- much better structured code
+	- closes PR bin/25464
+	[skrll, ticket #1702]
 
