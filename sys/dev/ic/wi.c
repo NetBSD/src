@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.93 2002/10/01 03:27:03 onoe Exp $	*/
+/*	$NetBSD: wi.c,v 1.94 2002/10/01 09:48:02 onoe Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.93 2002/10/01 03:27:03 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.94 2002/10/01 09:48:02 onoe Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1179,8 +1179,9 @@ wi_info_intr(struct wi_softc *sc)
 				break;
 			/* FALLTHROUGH */
 		case AP_CHANGE:
-		case AP_IN_RANGE:
 			ieee80211_new_state(ifp, IEEE80211_S_RUN, -1);
+			break;
+		case AP_IN_RANGE:
 			break;
 		case AP_OUT_OF_RANGE:
 			if (sc->sc_firmware_type == WI_SYMBOL &&
