@@ -1,12 +1,10 @@
 #
-#	$NetBSD: BOOT,v 1.9 1996/05/15 12:57:32 leo Exp $
+#	$NetBSD: BOOTX,v 1.1 1996/05/15 12:57:33 leo Exp $
 #
-# BOOT
+# BOOTX
 #
-# This configuration file is for a BOOT kernel. This kernel is supplied
-# on the boot-floppy and in the 'arch/atari/kernels' directory. It supports
-# both Falcons and TT's and should be small enough to allow installation
-# on 4Mb machines.
+# This configuration file is and extension of the BOOT config. It suits
+# more people than the bare BOOT kernel.
 #
 
 include "std.atari"
@@ -86,7 +84,8 @@ options		DISKLABEL_AHDI		# NetBSD/AHDI disklabels
 #
 config		netbsd swap on generic
 
-pseudo-device	view	1	# View (graphics mapping)
+pseudo-device	mouse	1	# mouse
+pseudo-device	view	4	# View (graphics mapping)
 pseudo-device	sl		# Slip
 pseudo-device	ppp		# ppp
 pseudo-device	pty	16	# Pseudo-tty support
@@ -98,4 +97,9 @@ pseudo-device	rd	1	# Boot ramdisk
 #The following sections describe various hardware options.
 #
 zs0	at mainbus0		# Serial support through 8530
+grf1	at grfbus0		# second graphics driver
+ite1	at grf1			# second tty
+grf2	at grfbus0		# third graphics driver
+ite2	at grf2			# third tty
 nvr0	at mainbus0		# nvram driver
+lpt0	at mainbus0		# centronics printer
