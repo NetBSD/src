@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.281 2002/11/14 11:30:26 dsainty Exp $
+$NetBSD: usbdevs,v 1.282 2002/11/28 10:04:39 gehenna Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -333,6 +333,7 @@ vendor DMI		0x0c0b	DMI
 vendor EASYDISK		0x0c76	EasyDisk
 vendor TANGTOP		0x0d3d	Tangtop
 vendor PEN		0x0d7d	Pen Drive
+vendor OTI		0x0ea0	Ours Technology Inc.
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
 vendor PLX		0x10b5	PLX
@@ -1043,6 +1044,9 @@ product ONSPEC PNYCFSM		0xa005	PNY/Datafab CF+SM Reader
 product ONSPEC STECHCFSM	0xa006	Simple Tech/Datafab CF+SM Reader
 product ONSPEC LC1		0xa109	CF + SM Combo (LC1)
 product ONSPEC MD1II		0xb006	Datafab MD1-II PC-Card Reader
+
+/* Ours Technology Inc. */
+product OTI SOLID		0x6803	Solid state disk
 
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
