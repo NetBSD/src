@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.24 1998/10/09 18:50:35 is Exp $	*/
+/*	$NetBSD: reboot.c,v 1.25 2000/03/07 20:02:59 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.24 1998/10/09 18:50:35 is Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.25 2000/03/07 20:02:59 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,10 @@ main(argc, argv)
 	(void)signal(SIGINT,  SIG_IGN);
 	(void)signal(SIGQUIT, SIG_IGN);
 	(void)signal(SIGTERM, SIG_IGN);
+
+	/* If we're running in a pipeline, we don't want to die
+	 * after killing whatever we're writing to. */
+	(void)signal(SIGPIPE, SIG_IGN);
 
 	/* Send a SIGTERM first, a chance to save the buffers. */
 	if (kill(-1, SIGTERM) == -1) {
