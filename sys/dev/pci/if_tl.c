@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.43 2001/08/03 16:53:08 bouyer Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.44 2001/08/06 19:20:26 bouyer Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -252,9 +252,6 @@ tl_lookup_product(id)
 
 	return (tp);
 }
-
-static char *nullbuf = NULL;
-static bus_dmamap_t nullbuf_dmamap = NULL;
 
 static int
 tl_pci_match(parent, match, aux)
@@ -516,17 +513,19 @@ static void tl_shutdown(v)
 				    sc->Rx_list[i].m_dmamap);
 				m_freem(sc->Rx_list[i].m);
 			}
+			bus_dmamap_destroy(sc->tl_dmatag, 
+			    sc->Rx_list[i].m_dmamap);
 			sc->Rx_list[i].m = NULL;
 		}
 		free(sc->Rx_list, M_DEVBUF);
 		sc->Rx_list = NULL;
 		bus_dmamap_unload(sc->tl_dmatag, sc->Rx_dmamap);
-		bus_dmamem_free(sc->tl_dmatag, sc->Rx_dmamap->dm_segs,
-		    sc->Rx_dmamap->dm_nsegs);
+		bus_dmamap_destroy(sc->tl_dmatag, sc->Rx_dmamap);
 		sc->hw_Rx_list = NULL;
 		while ((Tx = sc->active_Tx) != NULL) {
 			Tx->hw_list->stat = 0;
 			bus_dmamap_unload(sc->tl_dmatag, Tx->m_dmamap);
+			bus_dmamap_destroy(sc->tl_dmatag, Tx->m_dmamap);
 			m_freem(Tx->m);
 			sc->active_Tx = Tx->next;
 			Tx->next = sc->Free_Tx;
@@ -535,9 +534,9 @@ static void tl_shutdown(v)
 		sc->last_Tx = NULL;
 		free(sc->Tx_list, M_DEVBUF);
 		sc->Tx_list = NULL;
-		bus_dmamem_free(sc->tl_dmatag, sc->Tx_dmamap->dm_segs,
-		    sc->Tx_dmamap->dm_nsegs);
 		bus_dmamap_unload(sc->tl_dmatag, sc->Tx_dmamap);
+		bus_dmamap_destroy(sc->tl_dmatag, sc->Tx_dmamap);
+		bus_dmamem_free(sc->tl_dmatag, &sc->ctrl_segs, sc->ctrl_nsegs);
 		sc->hw_Tx_list = NULL;
 	}
 	sc->tl_if.if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -555,9 +554,9 @@ static int tl_init(sc)
 {
 	struct ifnet *ifp = &sc->tl_if;
 	int i, s, error;
-	bus_dma_segment_t segs;
-	int nsegs;
 	char *errstring;
+	char *ctrl;
+	char *nullbuf;
 
 	s = splnet();
 	/* cancel any pending IO */
@@ -609,41 +608,44 @@ static int tl_init(sc)
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 1,
 		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, BUS_DMA_WAITOK,
 		    &sc->Tx_dmamap);
+	if (error == 0) 
+		error = bus_dmamap_create(sc->tl_dmatag, ETHER_MIN_TX, 1,
+		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
+		    &sc->null_dmamap);
 	if (error) {
 		errstring = "can't allocate DMA maps for lists";
 		goto bad;
 	}
 	error = bus_dmamem_alloc(sc->tl_dmatag,
-	    sizeof(struct tl_Rx_list) * TL_NBUF, 0, PAGE_SIZE,
-	    &segs, 1, &nsegs, BUS_DMA_NOWAIT);
+	    PAGE_SIZE, 0, PAGE_SIZE,
+	    &sc->ctrl_segs, 1, &sc->ctrl_nsegs, BUS_DMA_NOWAIT);
 	if (error == 0)
-		error = bus_dmamem_map(sc->tl_dmatag, &segs,  nsegs, 
-		    sizeof(struct tl_Rx_list) * TL_NBUF,
-		    (caddr_t*)&sc->hw_Rx_list,
+		error = bus_dmamem_map(sc->tl_dmatag, &sc->ctrl_segs,
+		    sc->ctrl_nsegs, PAGE_SIZE, (caddr_t*)&ctrl,
 		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-	if (error == 0)
-		error = bus_dmamap_load(sc->tl_dmatag, sc->Rx_dmamap,
-		    sc->hw_Rx_list, sizeof(struct tl_Rx_list) * TL_NBUF, NULL,
-		    BUS_DMA_WAITOK);
-	if (error == 0)
-		error = bus_dmamem_alloc(sc->tl_dmatag,
-		    sizeof(struct tl_Tx_list) * TL_NBUF, 0, PAGE_SIZE,
-		    &segs, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error == 0)
-		error = bus_dmamem_map(sc->tl_dmatag, &segs, nsegs, 
-		    sizeof(struct tl_Tx_list) * TL_NBUF,
-		    (caddr_t*)&sc->hw_Tx_list,
-		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-	if (error == 0)
-		error = bus_dmamap_load(sc->tl_dmatag, sc->Tx_dmamap,
-		    sc->hw_Tx_list, sizeof(struct tl_Tx_list) * TL_NBUF, NULL,
-		    BUS_DMA_WAITOK);
 	if (error) {
 		errstring = "can't allocate DMA memory for lists";
 		goto bad;
 	}
-	memset(sc->hw_Rx_list, 0, sizeof(struct tl_Rx_list) * TL_NBUF);
-	memset(sc->hw_Tx_list, 0, sizeof(struct tl_Tx_list) * TL_NBUF);
+	memset(ctrl, 0, PAGE_SIZE);
+	sc->hw_Rx_list = (void*)ctrl;
+	sc->hw_Tx_list = (void*)(ctrl + sizeof(struct tl_Rx_list) * TL_NBUF);
+	nullbuf = ctrl + sizeof(struct tl_Rx_list) * TL_NBUF +
+	    sizeof(struct tl_Tx_list) * TL_NBUF;
+	error = bus_dmamap_load(sc->tl_dmatag, sc->Rx_dmamap,
+	    sc->hw_Rx_list, sizeof(struct tl_Rx_list) * TL_NBUF, NULL,
+	    BUS_DMA_WAITOK);
+	if (error == 0)
+		error = bus_dmamap_load(sc->tl_dmatag, sc->Tx_dmamap,
+		    sc->hw_Tx_list, sizeof(struct tl_Tx_list) * TL_NBUF, NULL,
+		    BUS_DMA_WAITOK);
+	if (error == 0)
+		error = bus_dmamap_load(sc->tl_dmatag, sc->null_dmamap,
+		    nullbuf, ETHER_MIN_TX, NULL, BUS_DMA_WAITOK);
+	if (error) {
+		errstring = "can't DMA map DMA memory for lists";
+		goto bad;
+	}
 	for (i=0; i< TL_NBUF; i++) {
 		error = bus_dmamap_create(sc->tl_dmatag, MCLBYTES,
 		    1, MCLBYTES, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
@@ -691,28 +693,7 @@ static int tl_init(sc)
 	bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
 	    sizeof(struct tl_Tx_list) * TL_NBUF,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
-	if (nullbuf == NULL) {
-		error = bus_dmamap_create(sc->tl_dmatag,
-		    ETHER_MIN_TX, 1,
-		    ETHER_MIN_TX, 0, BUS_DMA_WAITOK,
-		    &nullbuf_dmamap);
-		if (error == 0)
-			error = bus_dmamem_alloc(sc->tl_dmatag, ETHER_MIN_TX, 0,
-			    PAGE_SIZE, &segs, 1, &nsegs, BUS_DMA_WAITOK);
-		if (error == 0)
-			error = bus_dmamem_map(sc->tl_dmatag, &segs, nsegs, 
-			    ETHER_MIN_TX, (caddr_t*)&nullbuf, BUS_DMA_WAITOK);
-		if (error == 0)
-			error = bus_dmamap_load(sc->tl_dmatag, nullbuf_dmamap,
-			    nullbuf, ETHER_MIN_TX, NULL, BUS_DMA_WAITOK);
-	}
-	if (error) {
-		errstring = "can't allocate space for pad buffer";
-		goto bad;
-	}
-	memset(nullbuf, 0, ETHER_MIN_TX);
-	bus_dmamap_sync(sc->tl_dmatag, nullbuf_dmamap, 0, ETHER_MIN_TX,
+	bus_dmamap_sync(sc->tl_dmatag, sc->null_dmamap, 0, ETHER_MIN_TX,
 	    BUS_DMASYNC_PREWRITE);
 
 	/* set media */
@@ -1098,8 +1079,8 @@ tl_intr(v)
 				break;
 			ack++;
 #ifdef TLDEBUG_TX
-			printf("TL_INTR_TxEOC: list 0x%xp done\n",
-			    Tx->hw_listaddr);
+			printf("TL_INTR_TxEOC: list 0x%x done\n",
+			    (int)Tx->hw_listaddr);
 #endif
 			Tx->hw_list->stat = 0;
 			bus_dmamap_sync(sc->tl_dmatag, Tx->m_dmamap, 0,
@@ -1422,9 +1403,9 @@ tbdinit:
 	 	 */
 		Tx->hw_list->seg[segment].data_count =
 		    htole32(ETHER_MIN_TX - size);
-		size = ETHER_MIN_TX;
 		Tx->hw_list->seg[segment].data_addr =
-		    htole32(nullbuf_dmamap->dm_segs[0].ds_addr);
+		    htole32(sc->null_dmamap->dm_segs[0].ds_addr);
+		size = ETHER_MIN_TX;
 		segment++;
 	}
 	/* The list is done, finish the list init */
@@ -1446,8 +1427,8 @@ tbdinit:
 	if (sc->active_Tx == NULL) {
 		sc->active_Tx = sc->last_Tx = Tx;
 #ifdef TLDEBUG_TX
-		printf("%s: Tx GO, addr=0x%x\n", sc->sc_dev.dv_xname,
-		    Tx->hw_listaddr));
+		printf("%s: Tx GO, addr=0x%ux\n", sc->sc_dev.dv_xname,
+		    (int)Tx->hw_listaddr);
 #endif
 		bus_dmamap_sync(sc->tl_dmatag, sc->Tx_dmamap, 0,
 		    sizeof(struct tl_Tx_list) * TL_NBUF,
@@ -1456,8 +1437,8 @@ tbdinit:
 		TL_HR_WRITE(sc, TL_HOST_CMD, HOST_CMD_GO);
 	} else {
 #ifdef TLDEBUG_TX
-		printf("%s: Tx addr=0x%x queued\n", sc->sc_dev.dv_xname,
-		    Tx->hw_listaddr));
+		printf("%s: Tx addr=0x%ux queued\n", sc->sc_dev.dv_xname,
+		    (int)Tx->hw_listaddr);
 #endif
 		sc->last_Tx->hw_list->fwd = htole32(Tx->hw_listaddr);
 		sc->last_Tx->next = Tx;
