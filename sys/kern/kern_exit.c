@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.137 2004/03/02 09:15:26 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.138 2004/03/05 07:27:22 dbj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.137 2004/03/02 09:15:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.138 2004/03/05 07:27:22 dbj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -272,6 +272,7 @@ exit1(struct lwp *l, int rv)
 		struct tty *tp;
 
 		if (sp->s_ttyvp) {
+			int s;
 			/*
 			 * Controlling process.
 			 * Signal foreground pgrp,
@@ -279,6 +280,7 @@ exit1(struct lwp *l, int rv)
 			 * and revoke access to controlling terminal.
 			 */
 			tp = sp->s_ttyp;
+			s = spltty();
 			TTY_LOCK(tp);
 			if (tp->t_session == sp) {
 				if (tp->t_pgrp)
@@ -287,6 +289,7 @@ exit1(struct lwp *l, int rv)
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
 				TTY_UNLOCK(tp);
+				splx(s);
 				SESSRELE(sp);
 				(void) ttywait(tp);
 				/*
@@ -295,8 +298,10 @@ exit1(struct lwp *l, int rv)
 				 */
 				if (sp->s_ttyvp)
 					VOP_REVOKE(sp->s_ttyvp, REVOKEALL);
-			} else
+			} else {
 				TTY_UNLOCK(tp);
+				splx(s);
+			}
 			if (sp->s_ttyvp)
 				vrele(sp->s_ttyvp);
 			sp->s_ttyvp = NULL;
