@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.16 1999/06/17 21:09:47 thorpej Exp $	*/
+/*	$NetBSD: common.c,v 1.17 2000/02/09 22:41:54 kristerw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ dlerror()
 
 int
 dladdr(addr, dli)
-	void	*addr;
+	const void	*addr;
 	Dl_info	*dli;
 {
 	if ((*ld_entry) == NULL || (*ld_entry)->dladdr == NULL)
