@@ -1,4 +1,4 @@
-/*	$NetBSD: mappedcopy.c,v 1.19 2003/12/04 13:05:16 keihan Exp $	*/
+/*	$NetBSD: mappedcopy.c,v 1.19.10.1 2005/01/26 12:10:35 yamt Exp $	*/
 
 /*
  * XXX This doesn't work yet.  Soon.  --thorpej@NetBSD.org
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.19 2003/12/04 13:05:16 keihan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mappedcopy.c,v 1.19.10.1 2005/01/26 12:10:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,8 @@ mappedcopyin(f, t, count)
 #endif
 
 	if (CADDR1 == 0)
-		CADDR1 = (caddr_t) uvm_km_valloc(kernel_map, PAGE_SIZE);
+		CADDR1 = (caddr_t) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
 
 	kva = (vaddr_t)CADDR1;
 	off = (int)((u_long)fromp & PAGE_MASK);
@@ -188,7 +189,8 @@ mappedcopyout(f, t, count)
 #endif
 
 	if (CADDR2 == 0)
-		CADDR2 = (caddr_t) uvm_km_valloc(kernel_map, PAGE_SIZE);
+		CADDR2 = (caddr_t) uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+		    UVM_KMF_VAONLY);
 
 	kva = (vaddr_t) CADDR2;
 	off = (int)((u_long)top & PAGE_MASK);
