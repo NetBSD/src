@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.15 2002/11/28 13:32:22 tron Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.16 2002/12/12 23:31:19 he Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD
+ *	NetBSD: pcidevs,v 1.428.2.18 2002/12/12 23:29:46 he Exp 
  */
 
 /*
@@ -1160,6 +1160,7 @@
 #define	PCI_PRODUCT_DPT_SC_RAID	0xa400		/* SmartCache/SmartRAID (EATA) */
 #define	PCI_PRODUCT_DPT_I960_PPB	0xa500		/* PCI-PCI Bridge */
 #define	PCI_PRODUCT_DPT_RAID_I2O	0xa501		/* SmartRAID (I2O) */
+#define	PCI_PRODUCT_DPT_RAID_2005S	0xa511		/* Zero Channel SmartRAID (I2O) */
 #define	PCI_PRODUCT_DPT_MEMCTLR	0x1012		/* Memory Controller */
 
 /* Dolphin products */
