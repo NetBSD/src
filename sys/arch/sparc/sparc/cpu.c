@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.32 1997/03/21 01:32:18 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.33 1997/03/21 01:47:15 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -791,8 +791,8 @@ viking_hotfix(sc)
 		sc->mxcc = 1;
 		sc->flags |= CPUFLG_CACHEPAGETABLES;
 		sc->flags |= CPUFLG_CACHE_MANDATORY;
+	} else {
 		sc->pcache_flush_line = viking_pcache_flush_line;
-		sc->cacheinfo.dc_associativity = 5; /* need this early */
 	}
 
 	/* XXX! */
