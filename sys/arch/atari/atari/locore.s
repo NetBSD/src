@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 1997/07/09 14:32:09 leo Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 1997/07/30 15:37:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,14 +158,10 @@ Lbe1stpg:
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 #endif /* defined(M68040) */
 
-	/*
-	 * This is where the default vectors end-up!
-	 */
-_buserr:
-_addrerr:
-#if !(defined(M68020) || defined(M68030))
-	jra	_badtrap
-#else
+#if defined(M68020) || defined(M68030)
+	.globl	_buserr2030, _addrerr2030
+_buserr2030:
+_addrerr2030:
 	clrl	sp@-			| stack adjust count
 	moveml	#0xFFFF,sp@-		| save user registers
 	movl	usp,a0			| save the user SP
@@ -255,6 +251,23 @@ Lisberr:				| also used by M68040/60
 LberrIsProbe:
 	movl	#T_BUSERR,sp@-		| mark bus error
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
+
+	/*
+	 * This is where the default vectors end-up!
+	 * At the time of the 'machine-type' probes, it seems necessary
+	 * that the 'nofault' test is done first. Because the MMU is not
+	 * yet setup at this point, the real fault handlers sometimes
+	 * misinterpret the cause of the fault.
+	 */
+_buserr:
+_addrerr:
+	tstl	_nofault		| device probe?
+	jeq	1f			| no, halt...
+	movl	_nofault,sp@-		| yes,
+	jbsr	_longjmp		|  longjmp(nofault)
+	/* NOTREACHED */
+1:
+	jra	_badtrap		| only catch probes!
 
 /*
  * FP exceptions.
