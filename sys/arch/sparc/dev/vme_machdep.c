@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.28 2000/06/27 09:05:23 pk Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.29 2000/06/29 07:40:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -47,13 +47,12 @@
 #include <sys/user.h>
 #include <sys/syslog.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #define _SPARC_BUS_DMA_PRIVATE
 #include <machine/bus.h>
 #include <sparc/sparc/iommuvar.h>
 #include <machine/autoconf.h>
-#include <machine/pmap.h>
 #include <machine/oldmon.h>
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>

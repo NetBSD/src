@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.45 2000/05/09 20:29:28 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.46 2000/06/29 07:40:10 mrg Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
 #include <sys/kernel.h>
 #include <sys/socket.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
