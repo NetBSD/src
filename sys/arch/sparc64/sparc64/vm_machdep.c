@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.42 2002/05/14 02:34:15 eeh Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.42.4.1 2002/09/04 13:57:34 lukem Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -68,11 +68,6 @@
 #include <machine/bus.h>
 
 #include <sparc64/sparc64/cache.h>
-
-/* XXX These are in sbusvar.h, but including that would be problematical */
-struct sbus_softc *sbus0;
-void    sbus_enter __P((struct sbus_softc *, vaddr_t va, int64_t pa, int flags));
-void    sbus_remove __P((struct sbus_softc *, vaddr_t va, int len));
 
 /*
  * Move pages from one kernel virtual address to another.
@@ -245,9 +240,6 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	 * the FPU user, we must save the FPU state first.
 	 */
 
-#ifdef NOTDEF_DEBUG
-	printf("cpu_fork()\n");
-#endif
 	if (p1 == curproc) {
 		write_user_windows();
 
@@ -323,11 +315,13 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 	npcb->pcb_pc = (long)proc_trampoline - 8;
 	npcb->pcb_sp = (long)rp - STACK_OFFSET;
+
 	/* Need to create a %tstate if we're forking from proc0 */
 	if (p1 == &proc0)
 		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
 			((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
-
+	else
+		tf2->tf_tstate &= ~(PSTATE_PEF<<TSTATE_PSTATE_SHIFT);
 
 #ifdef NOTDEF_DEBUG
 	printf("cpu_fork: Copying over trapframe: otf=%p ntf=%p sp=%p opcb=%p npcb=%p\n", 
