@@ -1,4 +1,4 @@
-/*	$NetBSD: tcdevs.h,v 1.10 1998/01/30 02:25:28 thorpej Exp $	*/
+/*	$NetBSD: tcdevs.h,v 1.11 1998/05/27 02:51:02 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -109,3 +109,6 @@
 
 #define	TC_DEVICE_T3PKT	"tt"
 #define	TC_DESCRIPTION_T3PKT	"DECWRL Turbochannel T3"
+
+#define	TC_DEVICE_PMAT_AA	"tra"
+#define	TC_DESCRIPTION_PMAT_AA	"DEC TurboChannel Token Ring Controller"
