@@ -1,4 +1,4 @@
-/*	$Id: hd64570.c,v 1.2 1998/08/08 23:51:40 mycroft Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.3 1998/10/28 16:26:01 kleink Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
