@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_mcpair.c,v 1.3 1999/02/05 00:06:13 oster Exp $	*/
+/*	$NetBSD: rf_mcpair.c,v 1.4 2000/09/11 02:23:14 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -135,13 +135,6 @@ rf_MCPairWakeupFunc(mcpair)
 {
 	RF_LOCK_MUTEX(mcpair->mutex);
 	mcpair->flag = 1;
-#if 0
-	printf("MCPairWakeupFunc called!\n");
-#endif
-	wakeup(&(mcpair->flag));/* XXX Does this do anything useful!! GO */
-	/* XXX Looks like the following is needed to truly get the
-	 * functionality they were looking for here... This could be a
-	 * side-effect of my using a tsleep in the NetBSD port though... XXX */
-	wakeup(&(mcpair->cond));/* XXX XXX XXX GO */
+	wakeup(&(mcpair->cond));
 	RF_UNLOCK_MUTEX(mcpair->mutex);
 }
