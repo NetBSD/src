@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.18 2003/07/15 02:29:37 lukem Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.19 2003/08/02 22:39:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.18 2003/07/15 02:29:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461video.c,v 1.19 2003/08/02 22:39:13 uwe Exp $");
 
 #include "debug_hpcsh.h"
 // #define HD64461VIDEO_HWACCEL
@@ -93,18 +93,19 @@ struct hd64461video_softc {
 	struct hd64461video_font sc_font;
 };
 
+enum hd64461video_display_mode {
+	LCD256_C,
+	LCD64K_C,
+	LCD64_MONO,
+	LCD16_MONO,
+	LCD4_MONO,
+	LCD2_MONO,
+	CRT256_C,
+	LCDCRT
+};
+
 STATIC struct hd64461video_chip {
 	struct video_chip vc;
-	enum hd64461video_display_mode {
-		LCD256_C,
-		LCD64K_C,
-		LCD64_MONO,
-		LCD16_MONO,
-		LCD4_MONO,
-		LCD2_MONO,
-		CRT256_C,
-		LCDCRT
-	};
 	enum hd64461video_display_mode mode;
 	struct hpcfb_dspconf hd;
 	struct hpcfb_fbconf hf;
