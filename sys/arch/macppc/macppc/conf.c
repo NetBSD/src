@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 2001/10/28 17:11:56 manu Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 2002/03/03 07:02:54 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -76,6 +76,9 @@ struct bdevsw bdevsw[] = {
 	bdev_disk_init(NLD,ld),		/* 13: logical disk */
 };
 int nblkdev = sizeof bdevsw / sizeof bdevsw[0];
+
+#include <dev/sysmon/sysmonconf.h>
+cdev_decl(sysmon);
 
 cdev_decl(cn);
 cdev_decl(ctty);
@@ -239,6 +242,7 @@ struct cdevsw cdevsw[] = {
 	cdev_disk_init(NLD,ld),		/* 59: logical disk driver */
 	cdev_pci_init(NPCI,pci),	/* 60: PCI bus access device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */
+	cdev_sysmon_init(NSYSMON, sysmon),	/* 62: System Monitor */
 };
 int nchrdev = sizeof cdevsw / sizeof cdevsw[0];
 
