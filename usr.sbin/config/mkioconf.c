@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.48 1998/02/18 07:00:27 thorpej Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.49 1998/02/19 06:13:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -397,7 +397,7 @@ emitvfslist(fp)
 
 	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
 		if (fprintf(fp, "extern struct vfsops %s_vfsops;\n",
-		    nv->nv_name) < 0)
+		    nv->nv_str) < 0)
 			return (1);
 	}
 
@@ -405,7 +405,7 @@ emitvfslist(fp)
 		return (1);
 
 	for (nv = fsoptions; nv != NULL; nv = nv->nv_next) {
-		if (fprintf(fp, "\t&%s_vfsops,\n", nv->nv_name) < 0)
+		if (fprintf(fp, "\t&%s_vfsops,\n", nv->nv_str) < 0)
 			return (1);
 	}
 
