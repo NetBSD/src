@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.21 1999/08/27 17:49:42 ragge Exp $	*/
+/*	$NetBSD: ncr.c,v 1.22 1999/09/21 18:07:54 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,6 @@ struct si_dma_handle {
 
 struct si_softc {
 	struct ncr5380_softc	ncr_sc;
-	caddr_t sca_regs;
 };
 
 /* This is copied from julian's bt driver */
@@ -149,7 +148,6 @@ si_attach(parent, self, aux)
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 
 	printf("\n");
-	sc->sca_regs = (caddr_t)vax_map_physmem(va->va_paddr, 1);
 	/*
 	 * MD function pointers used by the MI code.
 	 */
@@ -190,14 +188,18 @@ si_attach(parent, self, aux)
 	/*
 	 * Initialize fields used by the MI code.
 	 */
-	ncr_sc->sci_r0 = sc->sca_regs; /* CUR_DATA/OUT_DATA (rw) */
-	ncr_sc->sci_r1 = sc->sca_regs + 4; /* INI_CMD           (rw) */
-	ncr_sc->sci_r2 = sc->sca_regs + 8; /* MODE              (rw) */
-	ncr_sc->sci_r3 = sc->sca_regs + 12; /* TAR_CMD           (rw) */
-	ncr_sc->sci_r4 = sc->sca_regs + 16; /* CUR_STAT/SEL_ENA  (rw) */
-	ncr_sc->sci_r5 = sc->sca_regs + 20; /* STATUS/DMA_SEND   (rw) */
-	ncr_sc->sci_r6 = sc->sca_regs + 24; /* IN_DATA/DMA_TRCV  (rw) */
-	ncr_sc->sci_r7 = sc->sca_regs + 28; /* RESET/DMA_IRCV    (rw) */
+/*	ncr_sc->sc_regt =  Unused on VAX */
+	ncr_sc->sc_regh = vax_map_physmem(va->va_paddr, 1);
+
+	/* Register offsets */
+	ncr_sc->sci_r0 = 0;
+	ncr_sc->sci_r1 = 4;
+	ncr_sc->sci_r2 = 8;
+	ncr_sc->sci_r3 = 12;
+	ncr_sc->sci_r4 = 16;
+	ncr_sc->sci_r5 = 20;
+	ncr_sc->sci_r6 = 24;
+	ncr_sc->sci_r7 = 28;
 
 	ncr_sc->sc_no_disconnect = 0xff;
 	/*
@@ -209,14 +211,16 @@ si_attach(parent, self, aux)
 	config_found(&(ncr_sc->sc_dev), &(ncr_sc->sc_link), scsiprint);
 }
 
+/*
+ * Adjust the max transfer size. The DMA buffer is only 16k on VS2000.
+ */
 static void
 si_minphys(struct buf *bp)
 {
-#if 0
-	printf("minphys: blkno=%d, bcount=%d, data=0x%x, flags=%x\n",
-			bp->b_blkno, (int) bp->b_bcount,
-			(unsigned) bp->b_data, (unsigned) bp->b_flags);
-#endif
+	if ((vax_boardtype == VAX_BTYP_410) && (bp->b_bcount > (16*1024)))
+		bp->b_bcount = (16*1024);
+	else if (bp->b_bcount > MAXPHYS)
+		bp->b_bcount = MAXPHYS;
 }
 
 static void
@@ -224,4 +228,3 @@ si_intr(int arg)
 {
 	ncr5380_intr(ncr_cd.cd_devs[arg]);
 }
-
