@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.10 2004/03/16 22:48:29 jonathan Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.11 2004/03/16 22:58:54 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.10 2004/03/16 22:48:29 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.11 2004/03/16 22:58:54 jonathan Exp $");
 
 /*
  * IPsec output processing.
@@ -710,7 +710,7 @@ ipsec6_output_tunnel(struct ipsec_output_state *state, struct secpolicy *sp, int
 		if (isr->sav->sah->saidx.src.sa.sa_family != AF_INET6) {
 			ipseclog((LOG_ERR, "ipsec6_output_tunnel: "
 			    "family mismatched between inner and outer, spi=%lu\n",
-			    ntohl(isr->sav->spi)));
+			    (u_long)ntohl(isr->sav->spi)));
 			newipsecstat.ips_out_inval++;
 			error = EAFNOSUPPORT;
 			goto bad;
