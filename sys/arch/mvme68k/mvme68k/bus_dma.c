@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.24 2004/05/16 15:44:10 wiz Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.25 2004/09/16 03:57:10 rumble Exp $	*/
 
 /*
  * This file was taken from from next68k/dev/bus_dma.c, which was originally
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.24 2004/05/16 15:44:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.25 2004/09/16 03:57:10 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,12 @@ _bus_dmamap_create(t, size, nsegments, maxsegsz, boundary, flags, dmamp)
 	size_t mapsize;
 
 	/*
-	 * Allcoate and initialize the DMA map.  The end of the map
+	 * Allocate and initialize the DMA map.  The end of the map
 	 * is a variable-sized array of segments, so we allocate enough
 	 * room for them in one shot.
 	 *
 	 * Note we don't preserve the WAITOK or NOWAIT flags.  Preservation
-	 * of ALLOCNOW notifes others that we've reserved these resources,
+	 * of ALLOCNOW notifies others that we've reserved these resources,
 	 * and they are not to be freed.
 	 *
 	 * The bus_dmamap_t includes one bus_dma_segment_t, hence
