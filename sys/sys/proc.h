@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.191 2004/03/26 15:01:16 drochner Exp $	*/
+/*	$NetBSD: proc.h,v 1.191.2.1 2004/08/15 13:54:20 tron Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -115,7 +115,7 @@ struct emul {
 					/* Per-process hooks */
 	void		(*e_proc_exec) __P((struct proc *,
 					    struct exec_package *));
-	void		(*e_proc_fork) __P((struct proc *, struct proc *));
+	void		(*e_proc_fork) __P((struct proc *, struct proc *, int));
 	void		(*e_proc_exit) __P((struct proc *));
 	void		(*e_lwp_fork)  __P((struct lwp *, struct lwp *));
 	void		(*e_lwp_exit)  __P((struct lwp *));
