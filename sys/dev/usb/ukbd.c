@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.78 2001/12/30 19:22:28 augustss Exp $        */
+/*      $NetBSD: ukbd.c,v 1.79 2001/12/30 19:37:43 augustss Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.78 2001/12/30 19:22:28 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.79 2001/12/30 19:37:43 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -594,7 +594,7 @@ ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
 	}
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
-		char cbuf[MAXKEYS * 2];
+		u_char cbuf[MAXKEYS * 2];
 		int c;
 		int npress;
 
@@ -800,8 +800,9 @@ ukbd_parse_desc(struct ukbd_softc *sc)
 		    HID_GET_USAGE_PAGE(h.usage) != HUP_KEYBOARD ||
 		    h.report_ID != sc->sc_hdev.sc_report_id)
 			continue;
-		DPRINTF(("ukbd: usage=0x%x flags=0x%x pos=%d size=%d cnt=%d\n",
-		       h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
+		DPRINTF(("ukbd: imod=%d usage=0x%x flags=0x%x pos=%d size=%d "
+			 "cnt=%d\n", imod,
+			 h.usage, h.flags, h.loc.pos, h.loc.size, h.loc.count));
 		if (h.flags & HIO_VARIABLE) {
 			/* Single item */
 			if (imod < MAXMOD) {
