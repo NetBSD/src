@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.145.4.4 1997/03/13 01:52:55 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.145.4.5 1997/03/14 19:57:30 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -348,16 +348,6 @@ try586:	/* Use the `cpuid' instruction. */
 #define	PROC0STACK	((1)              * NBPG)
 #define	SYSMAP		((1+UPAGES)       * NBPG)
 #define	TABLESIZE	((1+UPAGES+NKPDE) * NBPG)
-
-	/* Clear the BSS. */
-	movl	$RELOC(_edata),%edi
-	movl	$(RELOC(_end)+3),%ecx
-	subl	%edi,%ecx
-	shrl	$2,%ecx
-	xorl	%eax,%eax
-	cld
-	rep
-	stosl
 
 	/* Find end of kernel image. */
 	movl	$RELOC(_end),%edi
