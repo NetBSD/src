@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_user.h	7.2 (Berkeley) 4/21/91
- *	$Id: vm_user.h,v 1.3 1993/05/20 03:59:52 cgd Exp $
+ *	$Id: vm_user.h,v 1.4 1994/01/08 04:17:49 mycroft Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -69,11 +69,10 @@
 /*
  *	Kernel memory management definitions.
  */
-
-int	vm_allocate();
-int	vm_deallocate();
-int	vm_inherit();
-int	vm_protect();
-int	vm_statistics();
+int	vm_allocate __P((vm_map_t, vm_offset_t *, vm_size_t, boolean_t));
+int	vm_deallocate __P((vm_map_t, vm_offset_t, vm_size_t));
+int	vm_inherit __P((vm_map_t, vm_offset_t, vm_size_t, vm_inherit_t));
+int	vm_protect
+	   __P((vm_map_t, vm_offset_t, vm_size_t, boolean_t, vm_prot_t));
 
 #endif /* !_VM_VM_USER_H_ */
