@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.10 1994/06/29 06:38:52 cgd Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.11 1994/10/13 14:26:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -414,8 +414,14 @@ tcp_ctloutput(op, so, level, optname, mp)
 	return (error);
 }
 
-u_long	tcp_sendspace = 1024*8;
-u_long	tcp_recvspace = 1024*8;
+#ifndef TCP_SENDSPACE
+#define	TCP_SENDSPACE	1024*16;
+#endif
+u_long	tcp_sendspace = TCP_SENDSPACE;
+#ifndef TCP_RECVSPACE
+#define	TCP_RECVSPACE	1024*16;
+#endif
+u_long	tcp_recvspace = TCP_RECVSPACE;
 
 /*
  * Attach TCP protocol to socket, allocating
