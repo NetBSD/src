@@ -1,4 +1,4 @@
-.\" $NetBSD: xcu5,v 1.6 1999/06/01 19:53:51 jwise Exp $
+.\" $NetBSD: xcu5,v 1.7 1999/07/09 16:13:53 jwise Exp $
 .\"
 .\" Copyright (c) 1999 Jim Wise
 .\" All rights reserved.
@@ -194,7 +194,10 @@ In addition, the time grammar of
 is not completely compatible with that of
 .xopen
 .Nm at ,
-including lack of support for timezone specifications.
+including lack of support for specifying a time zone either in a time
+specification or through the
+.Ev TZ
+environment variable.
 As a compatible extension to the
 .xopen
 specification time grammar for
