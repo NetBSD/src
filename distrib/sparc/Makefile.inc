@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.5 2000/05/03 00:10:34 sjg Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2000/05/31 20:28:27 matt Exp $
 
 .include "../../Makefile.inc"
+.include <bsd.own.mk>
 
 # REV is revision without dots, as in "12C"
 # VER is revision with dots, as in "1.2C"
