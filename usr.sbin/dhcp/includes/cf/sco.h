@@ -67,7 +67,11 @@ typedef unsigned long u_int32_t;
 extern int h_errno;
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/if_arp.h>
+#include <netinet/tcp.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
 
 /* XXX dunno if this is required for SCO... */
 /*
@@ -79,15 +83,25 @@ extern int h_errno;
 /*      IPTOS_LOWCOST           0x02 XXX */
 
 /* SCO doesn't have /var/run. */
+#ifndef _PATH_DHCPD_CONF
+#define _PATH_DHCPD_CONF	"/etc/dhcpd.conf"
+#endif
 #ifndef _PATH_DHCPD_PID
-#define _PATH_DHCPD_PID	"/etc/dhcpd.pid"
+#define _PATH_DHCPD_PID 	"/etc/dhcpd.pid"
 #endif
 #ifndef _PATH_DHCLIENT_PID
-#define _PATH_DHCLIENT_PID "/etc/dhclient.pid"
+#define _PATH_DHCLIENT_PID  "/etc/dhclient.pid"
 #endif
 #ifndef _PATH_DHCRELAY_PID
-#define _PATH_DHCRELAY_PID "/etc/dhcrelay.pid"
+#define _PATH_DHCRELAY_PID  "/etc/dhcrelay.pid"
 #endif
+#ifndef _PATH_DHCPD_DB
+#define _PATH_DHCPD_DB      "/etc/dhcpd.leases"
+#endif
+#ifndef _PATH_DHCLIENT_DB
+#define _PATH_DHCLIENT_DB   "/etc/dhclient.leases"
+#endif
+
 
 #if !defined (INADDR_LOOPBACK)
 #define INADDR_LOOPBACK	((u_int32_t)0x7f000001)
@@ -113,6 +127,9 @@ extern int h_errno;
 #define EOL	'\n'
 #define VOIDPTR	void *
 
+/* socklen_t */
+typedef int socklen_t;
+
 /*
  * Time stuff...
  *
@@ -121,6 +138,7 @@ extern int h_errno;
  */
 
 #include <time.h>
+#include <sys/time.h>
 
 #define TIME time_t
 #define GET_TIME(x)	time ((x))

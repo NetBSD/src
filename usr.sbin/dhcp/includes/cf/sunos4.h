@@ -55,6 +55,10 @@
 
 #define SOCKLEN_T	int
 
+#define fpos_t		long
+#define fgetpos(f, p)	((*pos = ftell (f)) == -1 ? -1 : 0)
+#define fsetpos(f, p)	(fseek (f, p, SEEK_SET))
+
 /* No endian.h either. */
 /*
  * Definitions for byte order, according to byte significance from low

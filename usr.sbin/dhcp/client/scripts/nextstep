@@ -31,13 +31,16 @@ if [ x$reason = xBOUND ] || [ x$reason = xRENEW ] || \
       route add default $router 1 >/dev/null 2>&1
     done
   fi
-  echo search $new_domain_name >/etc/resolv.conf
-  for nameserver in $new_domain_name_servers; do
-    echo nameserver $nameserver >>/etc/resolv.conf
-  done
+  if [ "x$new_domain_name" != x ] && [ x"$new_domain_name_servers" != x ]; then
+    echo search $new_domain_name >/etc/resolv.conf
+    for nameserver in $new_domain_name_servers; do
+      echo nameserver $nameserver >>/etc/resolv.conf
+    done
+  fi
   exit 0
 fi
-if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ]; then
+if [ x$reason = xEXPIRE ] || [ x$reason = xFAIL ] || [ x$reason = xRELEASE ] \
+   || [ x$reason = xSTOP ]; then
   if [ x$old_ip_address != x ]; then
     route delete $old_ip_address 127.1 >/dev/null 2>&1
     for $router in $old_routers ; do

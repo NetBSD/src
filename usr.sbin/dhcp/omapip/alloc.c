@@ -124,7 +124,9 @@ VOIDPTR dmalloc (size, file, line)
 	}
 #endif
 #endif
+#ifdef DEBUG_REFCNT_DMALLOC_FREE
 	rc_register (file, line, 0, foo + DMDOFFSET, 1);
+#endif
 	return bar;
 }
 
@@ -185,7 +187,9 @@ void dfree (ptr, file, line)
 		ptr = bar;
 	}
 #endif
+#ifdef DEBUG_REFCNT_DMALLOC_FREE
 	rc_register (file, line, 0, (unsigned char *)ptr + DMDOFFSET, 0);
+#endif
 	free (ptr);
 }
 
@@ -289,35 +293,34 @@ void dmalloc_dump_outstanding ()
                    somewhere. */
 		if (dp -> file) {
 #if defined (DEBUG_RC_HISTORY)
+			int i, count, inhistory = 0, noted = 0;
+
 			/* If we have the info, see if this is actually
 			   new garbage. */
 			if (rc_history_count < RC_HISTORY_MAX) {
-				int i, printit = 0, inhistory = 0, prefcnt = 0;
-				i = rc_history_index - rc_history_count;
-				if (i < 0)
-					i += RC_HISTORY_MAX;
-				do {
-				    if (rc_history [i].addr == dp + 1) {
-					if (rc_history [i].refcnt == 1 &&
-					    prefcnt == 0 && !printit) {
-						printit = 1;
-						inhistory = 1;
-						log_info ("  %s(%d): %d",
-							  dp -> file,
-							  dp -> line,
-							  dp -> size);
-					}
-					prefcnt = rc_history [i].refcnt;
-					if (printit)
-						print_rc_hist_entry (i);
-				    }
-				    if (++i == RC_HISTORY_MAX)
-					    i = 0;
-				} while (i != rc_history_index);
-				if (!inhistory)
-					log_info ("  %s(%d): %d", dp -> file,
-						  dp -> line, dp -> size);
+			    count = rc_history_count;
 			} else
+			    count = RC_HISTORY_MAX;
+			i = rc_history_index - 1;
+			if (i < 0)
+				i += RC_HISTORY_MAX;
+
+			do {
+			    if (rc_history [i].addr == dp + 1) {
+				inhistory = 1;
+				if (!noted) {
+				    log_info ("  %s(%d): %d", dp -> file,
+					      dp -> line, dp -> size);
+				    noted = 1;
+				}
+				print_rc_hist_entry (i);
+				if (!rc_history [i].refcnt)
+				    break;
+			    }
+			    if (--i < 0)
+				i = RC_HISTORY_MAX - 1;
+			} while (count--);
+			if (!inhistory)
 #endif
 				log_info ("  %s(%d): %d",
 					  dp -> file, dp -> line, dp -> size);
@@ -512,16 +515,20 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 			extra_references = 0;
 			for (p = (*h) -> inner;
 			     p && !extra_references; p = p -> inner) {
-				extra_references += p -> refcnt - 1;
-				if (p -> inner)
+				extra_references += p -> refcnt;
+				if (p -> inner && p -> inner -> outer == p)
+					--extra_references;
+				if (p -> outer)
 					--extra_references;
 				if (p -> handle)
 					--extra_references;
 			}
 			for (p = (*h) -> outer;
 			     p && !extra_references; p = p -> outer) {
-				extra_references += p -> refcnt - 1;
-				if (p -> outer)
+				extra_references += p -> refcnt;
+				if (p -> outer && p -> outer -> inner == p)
+					--extra_references;
+				if (p -> inner)
 					--extra_references;
 				if (p -> handle)
 					--extra_references;
@@ -545,6 +552,11 @@ isc_result_t omapi_object_dereference (omapi_object_t **h,
 				((*h) -> type -> freer (*h, file, line));
 			else
 				dfree (*h, file, line);
+		} else {
+			(*h) -> refcnt--;
+			if (!(*h) -> type -> freer)
+				rc_register (file, line,
+					     h, *h, (*h) -> refcnt);
 		}
 	} else {
 		(*h) -> refcnt--;
