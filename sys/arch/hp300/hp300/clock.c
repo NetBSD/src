@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.12 1994/10/26 07:25:23 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1994/12/29 03:48:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,6 +222,7 @@ statintr(fp)
 /*
  * Return the best possible estimate of the current time.
  */
+void
 microtime(tvp)
 	register struct timeval *tvp;
 {
