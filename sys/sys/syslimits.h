@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)syslimits.h	7.4 (Berkeley) 2/4/91
- *	$Id: syslimits.h,v 1.7 1994/01/16 03:04:05 cgd Exp $
+ *	$Id: syslimits.h,v 1.8 1994/03/24 01:31:37 jtc Exp $
  */
 
 #ifndef _SYS_SYSLIMITS_H_
@@ -50,10 +50,10 @@
 #define	PIPE_BUF	512	/* max number of bytes for atomic pipe writes */
 #define SSIZE_MAX	INT_MAX /* max number ssize can return */
 
-#define	BC_BASE_MAX	99	/* max ibase/obase values allowed by bc(1) */
-#define	BC_DIM_MAX	2048	/* max array elements allowed by bc(1) */
-#define	BC_SCALE_MAX	99	/* max scale value allowed by bc(1) */
-#define	BC_STRING_MAX	1000	/* max const string length allowed by bc(1) */
+#define	BC_BASE_MAX	INT_MAX	/* max ibase/obase values allowed by bc(1) */
+#define	BC_DIM_MAX	65535	/* max array elements allowed by bc(1) */
+#define	BC_SCALE_MAX	INT_MAX	/* max scale value allowed by bc(1) */
+#define	BC_STRING_MAX	INT_MAX	/* max const string length allowed by bc(1) */
 #define	COLL_WEIGHTS_MAX 2	/* max weights for order keyword; see locale */
 #define	EXPR_NEST_MAX	32	/* max expressions nested in expr(1) */
 #define	LINE_MAX	2048	/* max length in bytes of an input line */
