@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.4 1998/05/18 17:08:56 matt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.5 1998/06/02 15:48:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,10 +64,27 @@
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
 
+LIST_HEAD(ipflowhead, ipflow);
+
 #define	IPFLOW_TIMER		(5 * PR_SLOWHZ)
 #define	IPFLOW_HASHSIZE		(1 << IPFLOW_HASHBITS)
-static LIST_HEAD(ipflowhead, ipflow) ipflows[IPFLOW_HASHSIZE];
+
+static struct ipflowhead ipflowtable[IPFLOW_HASHSIZE];
+static struct ipflowhead ipflowlist;
 static int ipflow_inuse;
+
+#define	IPFLOW_INSERT(bucket, ipf) \
+do { \
+	LIST_INSERT_HEAD((bucket), (ipf), ipf_hash); \
+	LIST_INSERT_HEAD(&ipflowlist, (ipf), ipf_list); \
+} while (0)
+
+#define	IPFLOW_REMOVE(ipf) \
+do { \
+	LIST_REMOVE((ipf), ipf_hash); \
+	LIST_REMOVE((ipf), ipf_list); \
+} while (0)
+
 #ifndef IPFLOW_MAX
 #define	IPFLOW_MAX		256
 #endif
@@ -95,13 +112,13 @@ ipflow_lookup(
 
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
 
-	ipf = LIST_FIRST(&ipflows[hash]);
+	ipf = LIST_FIRST(&ipflowtable[hash]);
 	while (ipf != NULL) {
 		if (ip->ip_dst.s_addr == ipf->ipf_dst.s_addr
 		    && ip->ip_src.s_addr == ipf->ipf_src.s_addr
 		    && ip->ip_tos == ipf->ipf_tos)
 			break;
-		ipf = LIST_NEXT(ipf, ipf_next);
+		ipf = LIST_NEXT(ipf, ipf_hash);
 	}
 	return ipf;
 }
@@ -124,8 +141,8 @@ ipflow_fastforward(
 	 * IP header with no option and valid version and length
 	 */
 	ip = mtod(m, struct ip *);
-	if (ip->ip_v != IPVERSION || ip->ip_hl != (sizeof(struct ip) >> 2)
-	    || ntohs(ip->ip_len) > m->m_pkthdr.len)
+	if (ip->ip_v != IPVERSION || ip->ip_hl != (sizeof(struct ip) >> 2) ||
+	    ntohs(ip->ip_len) > m->m_pkthdr.len)
 		return 0;
 	/*
 	 * Find a flow.
@@ -143,7 +160,8 @@ ipflow_fastforward(
 	 * Route and interface still up?
 	 */
 	rt = ipf->ipf_ro.ro_rt;
-	if ((rt->rt_flags & RTF_UP) == 0 || (rt->rt_ifp->if_flags & IFF_UP) == 0)
+	if ((rt->rt_flags & RTF_UP) == 0 ||
+	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
 	/*
@@ -172,8 +190,9 @@ ipflow_fastforward(
 	 * Send the packet on it's way.  All we can get back is ENOBUFS
 	 */
 	ipf->ipf_uses++;
-	ipf->ipf_timer = IPFLOW_TIMER;
-	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m, &ipf->ipf_ro.ro_dst, rt)) != 0) {
+	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
+	if ((error = (*rt->rt_ifp->if_output)(rt->rt_ifp, m,
+	    &ipf->ipf_ro.ro_dst, rt)) != 0) {
 		if (error == ENOBUFS)
 			ipf->ipf_dropped++;
 		else
@@ -203,7 +222,7 @@ ipflow_free(
 	 * network IPL.
 	 */
 	s = splimp();
-	LIST_REMOVE(ipf, ipf_next);
+	IPFLOW_REMOVE(ipf);
 	splx(s);
 	ipflow_addstats(ipf);
 	RTFREE(ipf->ipf_ro.ro_rt);
@@ -217,32 +236,29 @@ ipflow_reap(
 {
 	while (just_one || ipflow_inuse > ip_maxflows) {
 		struct ipflow *ipf, *maybe_ipf = NULL;
-		int idx;
 		int s;
 
-		for (idx = 0; idx < IPFLOW_HASHSIZE; idx++) {
-			ipf = LIST_FIRST(&ipflows[idx]);
-			while (ipf != NULL) {
-				/*
-				 * If this no longer points to a valid route
-				 * reclaim it.
-				 */
-				if ((ipf->ipf_ro.ro_rt->rt_flags & RTF_UP) == 0)
-					goto done;
-				/*
-				 * choose the one that's been least recently
-				 * used or has had the least uses in the
-				 * last 1.5 intervals.
-				 */
-				if (maybe_ipf == NULL
-				    || ipf->ipf_timer < maybe_ipf->ipf_timer
-				    || (ipf->ipf_timer == maybe_ipf->ipf_timer
-					&& ipf->ipf_last_uses + ipf->ipf_uses <
-					      maybe_ipf->ipf_last_uses +
-						maybe_ipf->ipf_uses))
-					maybe_ipf = ipf;
-				ipf = LIST_NEXT(ipf, ipf_next);
-			}
+		ipf = LIST_FIRST(&ipflowlist);
+		while (ipf != NULL) {
+			/*
+			 * If this no longer points to a valid route
+			 * reclaim it.
+			 */
+			if ((ipf->ipf_ro.ro_rt->rt_flags & RTF_UP) == 0)
+				goto done;
+			/*
+			 * choose the one that's been least recently
+			 * used or has had the least uses in the
+			 * last 1.5 intervals.
+			 */
+			if (maybe_ipf == NULL ||
+			    ipf->ipf_timer < maybe_ipf->ipf_timer ||
+			    (ipf->ipf_timer == maybe_ipf->ipf_timer &&
+			     ipf->ipf_last_uses + ipf->ipf_uses <
+			         maybe_ipf->ipf_last_uses +
+			         maybe_ipf->ipf_uses))
+				maybe_ipf = ipf;
+			ipf = LIST_NEXT(ipf, ipf_list);
 		}
 		ipf = maybe_ipf;
 	    done:
@@ -250,7 +266,7 @@ ipflow_reap(
 		 * Remove the entry from the flow table.
 		 */
 		s = splimp();
-		LIST_REMOVE(ipf, ipf_next);
+		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
 		RTFREE(ipf->ipf_ro.ro_rt);
@@ -266,29 +282,21 @@ void
 ipflow_slowtimo(
 	void)
 {
-	struct ipflow *ipf;
-	int idx;
-	int inuse = ipflow_inuse;
+	struct ipflow *ipf, *next_ipf;
 
-	/*
-	 * Save ourselves some work if we know there aren't any flows.
-	 */
-	for (idx = 0; inuse > 0 && idx < IPFLOW_HASHSIZE; idx++) {
-		ipf = LIST_FIRST(&ipflows[idx]);
-		while (ipf != NULL) {
-			struct ipflow *next_ipf = LIST_NEXT(ipf, ipf_next);
-			inuse--;
-			if (--ipf->ipf_timer == 0) {
-				ipflow_free(ipf);
-			} else {
-				ipf->ipf_last_uses = ipf->ipf_uses;
-				ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
-				ipstat.ips_forward += ipf->ipf_uses;
-				ipstat.ips_fastforward += ipf->ipf_uses;
-				ipf->ipf_uses = 0;
-			}
-			ipf = next_ipf;
+	ipf = LIST_FIRST(&ipflowlist);
+	while (ipf != NULL) {
+		next_ipf = LIST_NEXT(ipf, ipf_list);
+		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer)) {
+			ipflow_free(ipf);
+		} else {
+			ipf->ipf_last_uses = ipf->ipf_uses;
+			ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+			ipstat.ips_forward += ipf->ipf_uses;
+			ipstat.ips_fastforward += ipf->ipf_uses;
+			ipf->ipf_uses = 0;
 		}
+		ipf = next_ipf;
 	}
 }
 
@@ -326,7 +334,7 @@ ipflow_create(
 		bzero((caddr_t) ipf, sizeof(*ipf));
 	} else {
 		s = splimp();
-		LIST_REMOVE(ipf, ipf_next);
+		IPFLOW_REMOVE(ipf);
 		splx(s);
 		ipflow_addstats(ipf);
 		RTFREE(ipf->ipf_ro.ro_rt);
@@ -342,13 +350,13 @@ ipflow_create(
 	ipf->ipf_dst = ip->ip_dst;
 	ipf->ipf_src = ip->ip_src;
 	ipf->ipf_tos = ip->ip_tos;
-	ipf->ipf_timer = IPFLOW_TIMER;
+	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
 	ipf->ipf_start = time.tv_sec;
 	/*
 	 * Insert into the approriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip->ip_dst, ip->ip_src, ip->ip_tos);
 	s = splimp();
-	LIST_INSERT_HEAD(&ipflows[hash], ipf, ipf_next);
+	IPFLOW_INSERT(&ipflowtable[hash], ipf);
 	splx(s);
 }
