@@ -1,4 +1,4 @@
-/*	$NetBSD: dumprmt.c,v 1.13 1997/04/21 11:31:18 mrg Exp $	*/
+/*	$NetBSD: dumprmt.c,v 1.14 1997/05/26 15:18:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dumprmt.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$NetBSD: dumprmt.c,v 1.13 1997/04/21 11:31:18 mrg Exp $";
+static char rcsid[] = "$NetBSD: dumprmt.c,v 1.14 1997/05/26 15:18:25 mrg Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,7 +149,7 @@ rmtgetconn()
 		tuser = pwd->pw_name;
 
 	(void) seteuid(euid);
-	rmtape = rcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
+	rmtape = orcmd(&rmtpeer, (u_short)sp->s_port, pwd->pw_name, tuser,
 	    _PATH_RMT, (int *)0);
 	(void) setuid(uid);	/* Just to be Really Really safe */
 	if (rmtape < 0)
