@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.36 2003/08/07 09:05:19 agc Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.37 2003/09/18 09:18:24 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.36 2003/08/07 09:05:19 agc Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.37 2003/09/18 09:18:24 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,6 +383,8 @@ ar_open(const char *name)
 void
 ar_close(void)
 {
+	int status;
+
 	if (arfd < 0) {
 		did_io = io_ok = flcnt = 0;
 		return;
@@ -418,11 +420,8 @@ ar_close(void)
 	 * for a quick extract/list, pax frequently exits before the child
 	 * process is done
 	 */
-	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0) {
-		int status;
+	if ((act == LIST || act == EXTRACT) && nflag && zpid > 0)
 		kill(zpid, SIGINT);
-		waitpid(zpid, &status, 0);
-	}
 
 #ifdef SUPPORT_RMT
 	if (artyp == ISRMT)
@@ -430,6 +429,10 @@ ar_close(void)
 	else
 #endif /* SUPPORT_RMT */
 		(void)close(arfd);
+
+	/* Do not exit before child to ensure data integrity */
+	if (zpid > 0)
+		waitpid(zpid, &status, 0);
 
 	if (vflag && (artyp == ISTAPE)) {
 		(void)fputs("done.\n", listf);
