@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.32 2005/01/20 21:59:35 dsl Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.33 2005/01/21 17:02:40 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -258,6 +258,7 @@ set_ptn_size(menudesc *m, void *arg)
 			if (!pi->ptn_sizes[0].changed) {
 				pi->ptn_sizes[0].size -= p->dflt_size;
 				pi->free_space += p->dflt_size;
+				pi->ptn_sizes[0].changed = 1;
 			}
 			/* hack to add free space to default sized /usr */
 			if (!strcmp(answer, dflt)) {
