@@ -1,4 +1,4 @@
-/* $NetBSD: bootxx.c,v 1.12 2000/11/02 17:01:47 matt Exp $ */
+/* $NetBSD: bootxx.c,v 1.13 2000/11/03 00:30:34 simonb Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -63,6 +63,8 @@
 #include "dev/mscp/mscpreg.h"
 
 #include "../boot/data.h"
+
+#define	RF_PROTECTED_SECTORS	64	/* XXX refer to <.../rf_optnames.h> */
 
 void	Xmain(void);
 void	hoppabort(int);
@@ -281,7 +283,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 		if (romlabel.d_npartitions > 1) {
 			block += romlabel.d_partitions[0].p_offset;
 			if (romlabel.d_partitions[0].p_type == FS_RAID) {
-				block += 64; /* XXX */
+				block += RF_PROTECTED_SECTORS;
 			}
 		}
 	}
