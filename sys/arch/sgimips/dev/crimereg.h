@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.5 2002/12/28 16:40:48 pooka Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.6 2003/01/10 20:39:22 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -41,7 +41,7 @@
 /* Offset 0x00 -- revision register */
 #define CRIME_REV         (CRIME_BASE+0x000)
 #define CRIME_ID_IDBITS   0xf0
-#define CRIME_ID_IDVALUE  0xa0
+#define CRIME_ID_IDSHIFT  4
 #define CRIME_ID_REV      0x0f
 #define CRIME_REV_PETTY   0x0
 #define CRIME_REV_11      0x11
