@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.4 1994/11/20 20:52:25 deraadt Exp $ */
+/*	$NetBSD: sbus.c,v 1.5 1994/11/23 07:02:19 deraadt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
 
 /* autoconfiguration driver */
 void	sbus_attach __P((struct device *, struct device *, void *));
-int	sbus_match __P((struct device *, struct cfdata *, void *));
+int	sbus_match __P((struct device *, void *, void *));
 struct cfdriver sbuscd = {
 	NULL, "sbus", sbus_match, sbus_attach,
 	DV_DULL, sizeof(struct sbus_softc)
@@ -84,11 +84,11 @@ sbus_print(args, sbus)
 }
 
 int
-sbus_match(parent, cf, aux)
+sbus_match(parent, vcf, aux)
 	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+	void *vcf, *aux;
 {
+	struct cfdata *cf = vcf;
 	register struct confargs *ca = aux;
 	register struct romaux *ra = &ca->ca_ra;
 
