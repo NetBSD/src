@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.9,v 1.10 2004/01/08 09:14:35 wiz Exp $
+.\"	$NetBSD: signal.9,v 1.11 2004/12/15 15:37:01 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,7 +288,7 @@ Sends the signal
 caused by a hardware trap to the process
 .Fa p .
 This function is meant to be called by machine-dependent trap handling
-code, through the 
+code, through the
 .Dv p->p_emul->e_trapsignal
 function pointer because some emulations define their own trapsignal
 functions that remap the signal information to what the emulation

@@ -1,4 +1,4 @@
-.\"	$NetBSD: mbuf.9,v 1.31 2004/12/12 21:04:16 spz Exp $
+.\"	$NetBSD: mbuf.9,v 1.32 2004/12/15 15:37:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -512,32 +512,32 @@ This function does not move data in any way, but is used to manipulate the
 data area pointer and data length variable of the mbuf in a non-clobbering
 way.
 .It Fn m_apply "struct mbuf *m" "int off" "int len" "int (*f)(void *, caddr_t, unsigned int)" "void *arg"
-Apply function 
-.Fa f 
-to the data in an mbuf chain starting 
-.Fa off 
-bytes from the beginning, continuing for 
-.Fa len 
+Apply function
+.Fa f
+to the data in an mbuf chain starting
+.Fa off
+bytes from the beginning, continuing for
+.Fa len
 bytes. Neither
-.Fa off 
+.Fa off
 nor
-.Fa len 
-may be negative. 
-.Fa arg 
+.Fa len
+may be negative.
+.Fa arg
 will be supplied as first argument for
 .Fa f ,
 the second argument will be the pointer to the data buffer of a
-packet (starting after 
+packet (starting after
 .Fa off
-bytes in the stream), and the third argument is the amount 
+bytes in the stream), and the third argument is the amount
 of data in bytes in this call. If
-.Fa f 
-returns something not equal to 
-.Dv zero 
-.Fn m_apply 
+.Fa f
+returns something not equal to
+.Dv zero
+.Fn m_apply
 will bail out, returning the return code of
 .Fa f .
-Upon successful completion it will return 
+Upon successful completion it will return
 .Dv zero .
 .It Fn m_free "struct mbuf *m"
 Frees mbuf
