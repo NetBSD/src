@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.86 2003/10/25 18:29:12 christos Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.87 2003/10/28 20:15:19 mycroft Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.86 2003/10/25 18:29:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.87 2003/10/28 20:15:19 mycroft Exp $");
 
 #include "ppp.h"
 
@@ -633,8 +633,7 @@ pppioctl(sc, cmd, data, flag, p)
 	    bp = &sc->sc_active_filt_out;
 	    break;
 	default:
-	    return EINVAL;
-	    break;
+	    return (EPASSTHROUGH);
 	}
 	oldcode = bp->bf_insns;
 	s = splnet();
