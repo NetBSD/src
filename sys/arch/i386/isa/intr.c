@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.8 1993/10/27 17:45:40 mycroft Exp $
+ *	$Id: intr.c,v 1.9 1993/10/31 18:36:21 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -176,14 +176,14 @@ isa_defaultirq()
 {
 	int i;
 
+	/* out of range vectors */
+	for (i = NRSVIDT; i < NIDT; i++)
+		setidt(i, &IDTVEC(wild), SDT_SYS386IGT, SEL_KPL);
+
 	/* icu vectors */
 	for (i = 0; i < ICU_LEN ; i++)
 		setidt(i + ICU_OFFSET, IDTVEC(intr)[i],  SDT_SYS386IGT, SEL_KPL);
   
-	/* out of range vectors */
-	for (i += ICU_OFFSET; i < NIDT; i++)
-		setidt(i, &IDTVEC(wild), SDT_SYS386IGT, SEL_KPL);
-
 	/* initialize 8259's */
 	outb(IO_ICU1, 0x11);		/* reset; program device, four bytes */
 	outb(IO_ICU1+1, ICU_OFFSET);	/* starting at this vector index */
