@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.1 1996/07/20 17:33:06 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.2 1996/10/11 01:51:23 christos Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -86,7 +86,7 @@ hant(arg)
 	int arg;
 {
 	if (cold == 0)
-		printf("stray interrupt from vaxbi bus\n");
+		kprintf("stray interrupt from vaxbi bus\n");
 }
 
 void
@@ -161,7 +161,7 @@ ka820_attach(parent, self, aux)
 
 	strcpy(cpu_model,"VAX 8200");
 	cpu_model[6] = rev & 0x8000 ? '5' : '0';
-	printf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
+	kprintf(": ka82%c (%s) cpu rev %d, u patch rev %d, sec patch %d\n",
 	    cpu_model[6], mastercpu == ba->ba_nodenr ? "master" : "slave",
 	    ((rev >> 11) & 15), ((rev >> 1) &1023), rev & 1);
 
@@ -186,11 +186,11 @@ ka820_clkread(base)
 	rv = CLKREAD_OK;
 	/* I wish I knew the differences between these */
 	if ((ka820clock_ptr->csr3 & KA820CLK_3_VALID) == 0) {
-		printf("WARNING: TOY clock not marked valid\n");
+		kprintf("WARNING: TOY clock not marked valid\n");
 		rv = CLKREAD_WARN;
 	}
 	if ((ka820clock_ptr->csr1 & KA820CLK_1_GO) != KA820CLK_1_GO) {
-		printf("WARNING: TOY clock stopped\n");
+		kprintf("WARNING: TOY clock stopped\n");
 		rv = CLKREAD_WARN;
 	}
 	/* THIS IS NOT RIGHT (clock may change on us) */
@@ -333,9 +333,9 @@ ms820_attach(parent, self, aux)
 	ms->mem_regs = (void *)ba->ba_node;
 
 	if ((ms->mem_regs->biic.bi_csr & BICSR_STS) == 0)
-		printf(": failed self test\n");
+		kprintf(": failed self test\n");
 	else
-		printf(": size %dMB, %s chips\n", ((ms->mem_regs->ms_csr1 & 
+		kprintf(": size %dMB, %s chips\n", ((ms->mem_regs->ms_csr1 & 
 		    MS1_MSIZEMASK) >> 20), (ms->mem_regs->ms_csr1&MS1_RAMTYMASK
 		    ?ms->mem_regs->ms_csr1 & MS1_RAMTY256K?"256K":"1M":"64K"));
 
@@ -364,7 +364,7 @@ static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 		if (mc == NULL)
 			continue;
 		mcr = mc->mem_regs;
-		printf("%s: csr1=%b csr2=%b\n", mc->mem_dev.dv_xname,
+		kprintf("%s: csr1=%b csr2=%b\n", mc->mem_dev.dv_xname,
 		    mcr->ms_csr1, b1, mcr->ms_csr2, b2);
 		if ((mcr->ms_csr1 & MS1_ERRSUM) == 0)
 			continue;
@@ -382,7 +382,7 @@ static char b2[] = "\20\40RDS\37HIERR\36CRD\35ADRS";
 			type = "";
 		} else
 			type = "mysterious error";
-		printf("%s: %s%s%s addr %x bank %x syn %x\n",
+		kprintf("%s: %s%s%s addr %x bank %x syn %x\n",
 		    mc->mem_dev.dv_xname,
 		    hard ? "hard error: " : "soft ecc",
 		    type, mcr->ms_csr2 & MS2_HIERR ?
@@ -441,12 +441,12 @@ ka820_mchk(cmcf)
 	 * SOME ERRORS ARE RECOVERABLE
 	 * do it later
 	 */
-	printf("machine check %x: ", type);
+	kprintf("machine check %x: ", type);
 	for (i = 0; i < sizeof (mc8200) / sizeof (mc8200[0]); i++)
 		if (type & (1 << i))
-			printf(" %s,", mc8200[i]);
-	printf(" param1 %x\n", mcf->mc82_param1);
-	printf(
+			kprintf(" %s,", mc8200[i]);
+	kprintf(" param1 %x\n", mcf->mc82_param1);
+	kprintf(
 "\tva %x va' %x ma %x pc %x psl %x\n\tstatus %x errpc %x upc %x\n",
 		mcf->mc82_va, mcf->mc82_vap, mcf->mc82_ma,
 		mcf->mc82_pc, mcf->mc82_psl,
@@ -462,5 +462,5 @@ rxcdintr()
 	register int c = mfpr(PR_RXCD);
 
 	/* not sure what (if anything) to do with these */
-	printf("rxcd node %x c=0x%x\n", (c >> 8) & 0xf, c & 0xff);
+	kprintf("rxcd node %x c=0x%x\n", (c >> 8) & 0xf, c & 0xff);
 }

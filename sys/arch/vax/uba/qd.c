@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.2 1996/09/02 06:44:25 mycroft Exp $	*/
+/*	$NetBSD: qd.c,v 1.3 1996/10/11 01:50:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -428,7 +428,7 @@ qdcons_init()
 	 * init the QDSS  
 	 */
 	/* 
-	printf("qdbase[0] = %x, qdmap[0].memcsr = %x\n",
+	kprintf("qdbase[0] = %x, qdmap[0].memcsr = %x\n",
 		(char *)qdbase[0], qdmap[0].memcsr);
 	*/
 
@@ -506,7 +506,7 @@ qdprobe(reg)
 	/* if this QDSS is NOT the console, then do init here.. */
 
 	if (unit != 0) {
-		printf("qd: can't support two qdss's (yet)\n");
+		kprintf("qd: can't support two qdss's (yet)\n");
 #ifdef notdef	/* can't test */
 		if (v_consputc != qdputc  ||  unit != 0) {
 
@@ -1103,7 +1103,7 @@ qdioctl(dev, cmd, datap, flags)
 		DMAheader[unit]->QBAreg =
 		    uballoc(0, (caddr_t)DMAheader[unit], DMAbuf_size, 0);
 		if (DMAheader[unit]->QBAreg == 0)
-		    printf("qd%d: qdioctl: QBA setup error\n", unit);
+		    kprintf("qd%d: qdioctl: QBA setup error\n", unit);
 		Qbus_unmap[unit] = DMAheader[unit]->QBAreg;
 		DMAheader[unit]->QBAreg &= 0x3FFFF;
 		/*
@@ -1227,7 +1227,7 @@ qdioctl(dev, cmd, datap, flags)
 			}
 		}
 		if (i == 0) {
-			printf("qd%d: qdioctl: timeout on XMT_RDY [1]\n", unit);
+			kprintf("qd%d: qdioctl: timeout on XMT_RDY [1]\n", unit);
 			break;
 		}
 		/*
@@ -1242,7 +1242,7 @@ qdioctl(dev, cmd, datap, flags)
 			}
 		}
 		if (i == 0) {
-			printf("qd%d: qdioctl: timeout on XMT_RDY [2]\n", unit);
+			kprintf("qd%d: qdioctl: timeout on XMT_RDY [2]\n", unit);
 			break;
 		}
 		/*
@@ -1257,7 +1257,7 @@ qdioctl(dev, cmd, datap, flags)
 			}
 		}
 		if (i == 0) {
-			printf("qd%d: qdioctl: timeout on XMT_RDY [3]\n", unit);
+			kprintf("qd%d: qdioctl: timeout on XMT_RDY [3]\n", unit);
 			break;
 		}
 		break;
@@ -1274,7 +1274,7 @@ qdioctl(dev, cmd, datap, flags)
 			}
 		}
 		if (i == 0) {
-			printf("qd%d: qdioctl: timeout on XMT_RDY [4]\n", unit);
+			kprintf("qd%d: qdioctl: timeout on XMT_RDY [4]\n", unit);
 		}
 		break;
 
@@ -1305,7 +1305,7 @@ qdioctl(dev, cmd, datap, flags)
 			}
 		}
 		if (i == 0) {
-			printf("qd%d: qdioctl: timeout on XMT_RDY [5]\n", unit);
+			kprintf("qd%d: qdioctl: timeout on XMT_RDY [5]\n", unit);
 		}
 		break;
 
@@ -1486,7 +1486,7 @@ qd_strategy(bp)
 	* init pointers 
 	*/
 	if ((QBAreg = ubasetup(0, bp, 0)) == 0) {
-		printf("qd%d: qd_strategy: QBA setup error\n", unit);
+		kprintf("qd%d: qd_strategy: QBA setup error\n", unit);
 		goto STRAT_ERR;
 	}
 	dga = (struct dga *) qdmap[unit].dga;
@@ -1773,7 +1773,7 @@ blitc(unit, chr)
 	 * load SOURCE origin and vectors  
 	 */
 	if ((chr - ' ') > (CHARS - 1))  {
-		printf("Invalid character (x)%x in blitc\n",chr);
+		kprintf("Invalid character (x)%x in blitc\n",chr);
 		chr = ' ';
 	}
 	/*
@@ -1844,10 +1844,10 @@ qddint(qd)
 	if (dga->csr & DMA_ERR) {
 
 		if (dga->csr & PARITY_ERR)
-		    printf("qd%d: qddint: DMA hardware parity fault.\n", qd);
+		    kprintf("qd%d: qddint: DMA hardware parity fault.\n", qd);
 
 		if (dga->csr & BUS_ERR)
-		    printf("qd%d: qddint: DMA hardware bus error.\n", qd);
+		    kprintf("qd%d: qddint: DMA hardware bus error.\n", qd);
 	}
 
 	/*
@@ -1967,7 +1967,7 @@ qddint(qd)
 		}
 		break;
 	default:
-		printf("qd%d: qddint: illegal DMAtype parameter.\n", qd);
+		kprintf("qd%d: qddint: illegal DMAtype parameter.\n", qd);
 		DMA_CLRACTIVE(header);	/* flag DMA done */
 		return;
 	}
@@ -2053,7 +2053,7 @@ qdaint(qd)
 			      ;
 
 			if (i == 0) {
-			    printf("qd%d: qdaint: timeout on ID_SCROLL_READY\n",
+			    kprintf("qd%d: qdaint: timeout on ID_SCROLL_READY\n",
 				qd);
 				return;
 			}
@@ -2131,7 +2131,7 @@ qdiint(qd)
 				/* event queue full now? (overflow condition) */
 
 				if (ISFULL(eqh) == TRUE) {
-					printf(
+					kprintf(
 					 "qd%d: qdiint: event queue overflow\n",
 					   qd);
 					break;
@@ -2146,7 +2146,7 @@ qdiint(qd)
 				    key==LK_KDOWN_ERROR ||
 				    key == LK_INPUT_ERROR || 
 				    key == LK_OUTPUT_ERROR) {
-					printf(
+					kprintf(
 				    "qd%d: qdiint: keyboard error, code = %x\n",
 					qd,key);
 					return;
@@ -2184,7 +2184,7 @@ qdiint(qd)
 				/* event queue full now? (overflow condition) */
 
 				if (ISFULL(eqh) == TRUE) {
-					printf(
+					kprintf(
 					"qd%d: qdiint: event queue overflow\n",
 					     qd);
 					break;
@@ -2319,7 +2319,7 @@ GET_MBUTTON:
 							/* event queue full? (overflow condition) */
 
 							if (ISFULL(eqh) == TRUE) {
-								printf("qd%d: qdiint: event queue overflow\n", qd);
+								kprintf("qd%d: qdiint: event queue overflow\n", qd);
 								break;
 							}
 
@@ -2371,7 +2371,7 @@ GET_MBUTTON:
 				 * event queue full now? (overflow condition) 
 				 */
 				if (ISFULL(eqh) == TRUE) {
-					printf("qd%d: qdiint: event queue overflow\n", qd);
+					kprintf("qd%d: qdiint: event queue overflow\n", qd);
 					break;
 				}
 
@@ -2493,7 +2493,7 @@ GET_TBUTTON:
 						/* event queue full now? (overflow condition) */
 
 						if (ISFULL(eqh) == TRUE) {
-							printf("qd%d: qdiint: event queue overflow\n",qd);
+							kprintf("qd%d: qdiint: event queue overflow\n",qd);
 							break;
 						}
 
@@ -2574,7 +2574,7 @@ GET_TBUTTON:
 			*/
 			if (key == LK_POWER_ERROR || key == LK_KDOWN_ERROR ||
 			    key == LK_INPUT_ERROR || key == LK_OUTPUT_ERROR) {
-				printf("qd%d: qdiint: Keyboard error, code = %x\n",qd,key);
+				kprintf("qd%d: qdiint: Keyboard error, code = %x\n",qd,key);
 				return;
 			}
 
@@ -2911,7 +2911,7 @@ LOOP:
 
 	if (key == LK_POWER_ERROR || key == LK_KDOWN_ERROR ||
 	    key == LK_INPUT_ERROR || key == LK_OUTPUT_ERROR) {
-		printf("Keyboard error, code = %x\n", key);
+		kprintf("Keyboard error, code = %x\n", key);
 		return(0);
 	}
 
@@ -3294,7 +3294,7 @@ setup_dragon(unit)
 	     i > 0 && !(adder->status&ADDRESS_COMPLETE); --i)
 		;
 	if (i == 0)
-	    printf("qd%d: setup_dragon: timeout on ADDRESS_COMPLETE\n",unit);
+	    kprintf("qd%d: setup_dragon: timeout on ADDRESS_COMPLETE\n",unit);
 	top = 0;
 	bottom = 2048;
 	left = 0;
@@ -3320,7 +3320,7 @@ setup_dragon(unit)
 	     !(adder->status&ADDRESS_COMPLETE) ; --i)
 		;
 	if (i == 0)
-	       printf("qd%d: setup_dragon: timeout on ADDRESS_COMPLETE\n",unit);
+	       kprintf("qd%d: setup_dragon: timeout on ADDRESS_COMPLETE\n",unit);
 
 	write_ID(adder, LEFT_SCROLL_MASK, 0x0000);
 	write_ID(adder, RIGHT_SCROLL_MASK, 0x0000);
@@ -3356,7 +3356,7 @@ setup_dragon(unit)
 		;
 
 	if (i == 0)
-		printf("qd%d: setup_dragon: timeout on VSYNC\n", unit);
+		kprintf("qd%d: setup_dragon: timeout on VSYNC\n", unit);
 
 	red = (short *) qdmap[unit].red;
 	green = (short *) qdmap[unit].green;
@@ -3470,7 +3470,7 @@ setup_input(unit)
 	}
 
 	if (i == 0) {
-		printf("qd[%d]: setup_input: timeout on 1st byte of self test\n"
+		kprintf("qd[%d]: setup_input: timeout on 1st byte of self test\n"
 		       ,unit);
 		goto OUT;
 	}
@@ -3488,7 +3488,7 @@ setup_input(unit)
 	}
 
 	if (i == 0) {
-		printf("qd[%d]: setup_input: timeout on 2nd byte of self test\n", unit);
+		kprintf("qd[%d]: setup_input: timeout on 2nd byte of self test\n", unit);
 		goto OUT;
 	}
 
@@ -3505,7 +3505,7 @@ setup_input(unit)
 		}
 	}
 	if (i == 0) {
-		printf("qd[%d]: setup_input: timeout on 3rd byte of self test\n", unit);
+		kprintf("qd[%d]: setup_input: timeout on 3rd byte of self test\n", unit);
 		goto OUT;
 	}
 	for (i = 100000; i > 0; --i) {
@@ -3516,7 +3516,7 @@ setup_input(unit)
 		}
 	}
 	if (i == 0) {
-		printf("qd[%d]: setup_input: timeout on 4th byte of self test\n", unit);
+		kprintf("qd[%d]: setup_input: timeout on 4th byte of self test\n", unit);
 		goto OUT;
 	}
 	/*
@@ -3568,7 +3568,7 @@ wait_status(adder, mask)
 		;
 
 	if (i == 0) {
-		printf("wait_status: timeout polling for 0x%x in adder->status\n", mask);
+		kprintf("wait_status: timeout polling for 0x%x in adder->status\n", mask);
 		return(BAD);
 	}
 
@@ -3604,7 +3604,7 @@ write_ID(adder, adrs, data)
 	}
 
 ERR:
-	printf("write_ID: timeout trying to write to VIPER\n");
+	kprintf("write_ID: timeout trying to write to VIPER\n");
 	return ;
 
 } /* write_ID */
