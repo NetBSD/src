@@ -1,4 +1,4 @@
-/* $NetBSD: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $ */
+/* $NetBSD: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $ */
 
 /* trees.c -- output deflated data using Huffman coding
  * Copyright (C) 1995-2002 Jean-loup Gailly
@@ -31,10 +31,10 @@
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $ */
+/* @(#) $Id: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $ */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trees.c,v 1.11 2003/03/18 19:53:16 mycroft Exp $");
+__RCSID("$NetBSD: trees.c,v 1.12 2003/03/18 20:37:33 jdolecek Exp $");
 
 /* #define GEN_TREES_H */
 
@@ -155,8 +155,8 @@ local void send_tree      __P((deflate_state *s, ct_data *tree, int max_code));
 local int  build_bl_tree  __P((deflate_state *s));
 local void send_all_trees __P((deflate_state *s, int lcodes, int dcodes,
                               int blcodes));
-local void compress_block __P((deflate_state *s, ct_data *ltree,
-                              ct_data *dtree));
+local void compress_block __P((deflate_state *s, const ct_data *ltree,
+                              const ct_data *dtree));
 local void set_data_type  __P((deflate_state *s));
 local unsigned bi_reverse __P((unsigned value, int length));
 local void bi_windup      __P((deflate_state *s));
@@ -1003,7 +1003,7 @@ void _tr_flush_block(s, buf, stored_len, eof)
     } else if (static_lenb == opt_lenb) {
 #endif
         send_bits(s, (STATIC_TREES<<1)+eof, 3);
-        compress_block(s, (ct_data *)static_ltree, (ct_data *)static_dtree);
+        compress_block(s, static_ltree, static_dtree);
 #ifdef DEBUG
         s->compressed_len += 3 + s->static_len;
 #endif
@@ -1011,7 +1011,7 @@ void _tr_flush_block(s, buf, stored_len, eof)
         send_bits(s, (DYN_TREES<<1)+eof, 3);
         send_all_trees(s, s->l_desc.max_code+1, s->d_desc.max_code+1,
                        max_blindex+1);
-        compress_block(s, (ct_data *)s->dyn_ltree, (ct_data *)s->dyn_dtree);
+        compress_block(s, s->dyn_ltree, s->dyn_dtree);
 #ifdef DEBUG
         s->compressed_len += 3 + s->opt_len;
 #endif
@@ -1088,8 +1088,8 @@ int _tr_tally (s, dist, lc)
  */
 local void compress_block(s, ltree, dtree)
     deflate_state *s;
-    ct_data *ltree; /* literal tree */
-    ct_data *dtree; /* distance tree */
+    const ct_data *ltree; /* literal tree */
+    const ct_data *dtree; /* distance tree */
 {
     unsigned dist;      /* distance of matched string */
     int lc;             /* match length or unmatched char (if dist == 0) */
