@@ -1,10 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2001/10/31 15:57:56 tv Exp $
+# $NetBSD: Makefile,v 1.3 2001/11/14 00:41:52 tv Exp $
 
 MKMAN=  no
 
 PROG=	dlopen
-
-TESTLIBDIR!=	cd ${.CURDIR}/../testlib; make print-objdir
 
 regress:
 	if [ -f ${TESTLIBDIR}/testlib.so ]; then \
@@ -15,3 +13,5 @@ regress:
 CLEANFILES+=	dlopen.out
 
 .include <bsd.prog.mk>
+
+TESTLIBDIR!=	cd ${.CURDIR}/../testlib && ${PRINTOBJDIR}
