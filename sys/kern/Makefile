@@ -7,11 +7,12 @@ ARCH=	hp300 i386 luna68k news3400 pmax sparc tahoe vax
 all:
 	@echo "make tags, make links or init_sysent.c only"
 
-init_sysent.c syscalls.c ../sys/syscall.h: makesyscalls.sh syscalls.master
+SYSCALLSRC = makesyscalls.sh syscalls.conf syscalls.master
+init_sysent.c syscalls.c ../sys/syscall.h: ${SYSCALLSRC}
 	-mv -f init_sysent.c init_sysent.c.bak
 	-mv -f syscalls.c syscalls.c.bak
 	-mv -f ../sys/syscall.h ../sys/syscall.h.bak
-	sh makesyscalls.sh syscalls.master
+	sh makesyscalls.sh syscalls.conf syscalls.master
 
 # Kernel tags:
 # Tags files are built in the top-level directory for each architecture,
