@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.26 1999/03/24 05:51:14 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.27 1999/03/28 16:01:19 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1056,6 +1056,8 @@ data_access_fault(type, addr, pc, tf)
 #endif
 				return;
 			}
+#if 0
+/* XXXX Like, why are we doing this twice? */
 			if ((rv=uvm_fault(kernel_map, va, ftype, 0)) == KERN_SUCCESS) {
 #ifdef DEBUG
 				if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
@@ -1064,6 +1066,7 @@ data_access_fault(type, addr, pc, tf)
 #endif
 				return;
 			}
+#endif
 #ifdef DEBUG
 			if (trapdebug&(TDB_ADDFLT|TDB_FOLLOW))
 				printf("data_access_fault: kernel uvm_fault(%x, %x, %x, 0) sez %x -- failure\n",

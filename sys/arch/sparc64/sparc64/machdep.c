@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 1999/03/26 23:41:36 mycroft Exp $ */
+/*	$NetBSD: machdep.c,v 1.34 1999/03/28 16:01:19 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1732,7 +1732,7 @@ static	vaddr_t iobase = IODEV_BASE;
 #endif
 		pmap_enter_phys(pmap_kernel(), v, pa | pm_flags, NBPG,
 				(flags&BUS_SPACE_MAP_READONLY) ? VM_PROT_READ
-				: VM_PROT_READ | VM_PROT_WRITE, 1, 0);
+				: VM_PROT_READ | VM_PROT_WRITE, 1/*, 0*/);
 		v += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	} while ((size -= PAGE_SIZE) > 0);

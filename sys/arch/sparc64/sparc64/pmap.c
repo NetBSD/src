@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 1999/03/26 23:41:36 mycroft Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 1999/03/28 16:01:19 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1842,9 +1842,29 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 							Debugger();
 							/* panic? */
 						}
+#if 0	/* This breaks refcounting */
 						/* This may cause us to enter the same mapping twice. */
 						tsb_enter(npv->pv_pmap->pm_ctx,(npv->pv_va&PV_VAMASK),
 							  pseg_get(npv->pv_pmap, va));
+#else
+						if (tsb[i].tag.tag > 0 && tsb[i].tag.tag == 
+						    TSB_TAG(0,pm->pm_ctx,va)) {
+							/* 
+							 * Invalidate the TSB 
+							 * 
+							 * While we can invalidate it by clearing the
+							 * valid bit:
+							 *
+							 * ptp->data.data_v = 0;
+							 *
+							 * it's faster to do store 1 doubleword.
+							 */
+							tsb[i].data.data = 0LL; 
+							ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+						}
+						/* Force reload -- protections may be changed */
+						tlb_flush_pte(va, pm->pm_ctx);	
+#endif
 #if 0
 						/* XXXXXX We should now flush the DCACHE to make sure */
 						dcache_flush_page((pv->pv_va&PV_VAMASK));
@@ -1876,7 +1896,26 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 			    i, &tsb[i]);
 	}
 #endif
+#if 0 /* This breaks refcounts */
 	tsb_enter(pm->pm_ctx, va, tte.data.data);
+#else
+	if (tsb[i].tag.tag > 0 && tsb[i].tag.tag == TSB_TAG(0,pm->pm_ctx,va)) {
+		/* 
+		 * Invalidate the TSB 
+		 * 
+		 * While we can invalidate it by clearing the
+		 * valid bit:
+		 *
+		 * ptp->data.data_v = 0;
+		 *
+		 * it's faster to do store 1 doubleword.
+		 */
+		tsb[i].data.data = 0LL; 
+		ASSERT((tsb[i].data.data & TLB_NFO) == 0);
+	}
+	/* Force reload -- protections may be changed */
+	tlb_flush_pte(va, pm->pm_ctx);	
+#endif
 	ASSERT((tsb[i].data.data & TLB_NFO) == 0);
 #if 1
 #if 0
