@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 1999/12/17 08:10:59 jeremy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52.4.1 2000/10/21 18:10:16 tv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -364,9 +364,11 @@ unsigned int	NUM_A_TABLES, NUM_B_TABLES, NUM_C_TABLES;
 #define	NUM_KERN_PTES	(KVAS_SIZE >> MMU_TIC_SHIFT)
 
 /*************************** MISCELANEOUS MACROS *************************/
-#define PMAP_LOCK()	;	/* Nothing, for now */
-#define PMAP_UNLOCK()	;	/* same. */
-#define	NULL 0
+#define pmap_lock(pmap) simple_lock(&pmap->pm_lock)
+#define pmap_unlock(pmap) simple_unlock(&pmap->pm_lock)
+#define pmap_add_ref(pmap) ++pmap->pm_refcount
+#define pmap_del_ref(pmap) --pmap->pm_refcount
+#define pmap_refcount(pmap) pmap->pm_refcount
 
 static INLINE void *      mmu_ptov __P((vm_offset_t pa));
 static INLINE vm_offset_t mmu_vtop __P((void * va));
@@ -829,6 +831,7 @@ pmap_bootstrap(nextva)
 	kernel_pmap.pm_a_tmgr = NULL;
 	kernel_pmap.pm_a_phys = kernAphys;
 	kernel_pmap.pm_refcount = 1; /* always in use */
+	simple_lock_init(&kernel_pmap.pm_lock);
 
 	kernel_crp.rp_attr = MMU_LONG_DTE_LU | MMU_DT_LONG;
 	kernel_crp.rp_addr = kernAphys;
@@ -2571,6 +2574,8 @@ pmap_pinit(pmap)
 	bzero(pmap, sizeof(struct pmap));
 	pmap->pm_a_tmgr = NULL;
 	pmap->pm_a_phys = kernAphys;
+	pmap->pm_refcount = 1;
+	simple_lock_init(&pmap->pm_lock);
 }
 
 /* pmap_release				INTERFACE
@@ -2633,9 +2638,9 @@ pmap_reference(pmap)
 	if (pmap == NULL)
 		return;
 
-	/* pmap_lock(pmap); */
-	pmap->pm_refcount++;
-	/* pmap_unlock(pmap); */
+	pmap_lock(pmap);
+	pmap_add_ref(pmap);
+	pmap_unlock(pmap);
 }
 
 /* pmap_dereference			INTERNAL
@@ -2652,9 +2657,9 @@ pmap_dereference(pmap)
 	if (pmap == NULL)
 		return 0;
 
-	/* pmap_lock(pmap); */
-	rtn = --pmap->pm_refcount;
-	/* pmap_unlock(pmap); */
+	pmap_lock(pmap);
+	rtn = pmap_del_ref(pmap);
+	pmap_unlock(pmap);
 
 	return rtn;
 }
