@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2000/05/06 16:07:43 he Exp $
+#	$NetBSD: Makefile,v 1.9.4.1 2000/08/26 00:56:06 mrg Exp $
 
 LIB=bind
 
@@ -27,7 +27,7 @@ SRCS+=	tree.c base64.c bitncmp.c assertions.c memcluster.c \
 	eventlib.c ev_connects.c ev_files.c ev_timers.c \
 	ev_streams.c ev_waits.c
 # ${BIND_DIST_DIR}/lib/inet
-SRCS+=	nsap_addr.c inet_addr.c inet_ntop.c inet_pton.c \
+SRCS+=	nsap_addr.c inet_ntop.c inet_pton.c \
 	inet_ntoa.c inet_neta.c inet_net_ntop.c inet_net_pton.c \
 	inet_cidr_ntop.c inet_cidr_pton.c \
 	inet_lnaof.c inet_makeaddr.c inet_netof.c inet_network.c
