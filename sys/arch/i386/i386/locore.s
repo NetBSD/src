@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.96 1994/11/07 05:26:08 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.97 1994/11/07 05:32:50 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1989,14 +1989,14 @@ IDTVEC(osyscall)
 	pushfl
 	andb	$~(PSL_T>>8),1(%esp)
 	popfl
-	pushl	$7
+	pushl	$7		# size of instruction for restart
 	jmp	syscall1
 
 /*
  * Trap gate entry for syscall
  */
 IDTVEC(syscall)
-	pushl	$2		# dummy error code
+	pushl	$2		# size of instruction for restart
 syscall1:
 	pushl	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
