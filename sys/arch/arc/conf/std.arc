@@ -1,4 +1,4 @@
-#	$NetBSD: std.arc,v 1.13 2002/12/09 22:54:09 simonb Exp $
+#	$NetBSD: std.arc,v 1.14 2003/04/28 05:03:44 tsutsui Exp $
 # standard arc info
 
 machine arc mips
@@ -16,7 +16,6 @@ options 	MIPS3			# R4000/R4400 support
 options 	EXEC_ELF32		# native exec format
 options 	EXEC_SCRIPT		# may be unsafe
 
-options 	MIPS3_L2CACHE_PRESENT	# may have L2 cache
 options 	MIPS3_L2CACHE_ABSENT	# may not have L2 cache
 
 options 	__NO_SOFT_SERIAL_INTERRUPT	# for "com" driver
