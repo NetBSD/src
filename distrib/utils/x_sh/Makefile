@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile,v 1.8 1999/02/13 02:54:19 lukem Exp $
+# 	$NetBSD: Makefile,v 1.8.2.1 2000/07/01 17:48:21 he Exp $
 # Build a smaller sh (e.g. for boot media)
 #
 # Be very careful before attempting to "clean up" the ugly location
@@ -27,6 +27,7 @@ SRCDIR?= ${BSDSRCDIR}/bin/sh
 
 CPPFLAGS+= -I${SRCDIR} -DSMALL
 
-.PATH: ${SRCDIR} ${SRCDIR}/bltin ${SRCDIR}/../../usr.bin/printf
+.PATH: ${SRCDIR} ${SRCDIR}/bltin ${SRCDIR}/../../usr.bin/printf \
+	${SRCDIR}/../test
 
 .include "${SRCDIR}/Makefile"
