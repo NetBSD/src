@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.67 2001/12/06 04:27:41 chs Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.68 2002/04/02 10:34:54 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.67 2001/12/06 04:27:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.68 2002/04/02 10:34:54 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -644,11 +644,14 @@ fdesc_setattr(v)
 		return (EBADF);
 
 	/*
-	 * Can setattr the underlying vnode, but not sockets!
+	 * XXX: Can't reasonably set the attr's on any types currently.
+	 *      On vnode's this will cause truncation and socket/pipes make
+	 *      no sense.
 	 */
 	switch (fp->f_type) {
 	case DTYPE_VNODE:
 	case DTYPE_SOCKET:
+	case DTYPE_PIPE:
 		error = 0;
 		break;
 
