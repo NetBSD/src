@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa_machdep.c,v 1.2 1998/05/01 21:13:54 cgd Exp $	*/
+/*	$NetBSD: lpt_ofisa_machdep.c,v 1.3 1998/10/28 04:21:57 mark Exp $	*/
 
 /*
  * Copyright 1998
@@ -53,8 +53,8 @@ lpt_ofisa_md_match(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	char type[8];
-	char name[8];
+	char type[9];
+	char name[9];
 	int rv;
 
 	rv = 0;
