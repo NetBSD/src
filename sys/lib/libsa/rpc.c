@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.9 1995/09/18 21:19:42 pk Exp $	*/
+/*	$NetBSD: rpc.c,v 1.10 1995/09/23 03:36:11 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -126,7 +126,7 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 	char *send_head, *send_tail;
 	char *recv_head, *recv_tail;
 	n_long x;
-	int p;
+	int port;	/* host order */
 
 #ifdef RPC_DEBUG
 	if (debug)
@@ -134,11 +134,11 @@ rpc_call(d, prog, vers, proc, sdata, slen, rdata, rlen)
 			prog, vers, proc);
 #endif
 
-	p = rpc_getport(d, prog, vers);
-	if (p == htonl(-1))
+	port = rpc_getport(d, prog, vers);
+	if (port == -1)
 		return (-1);
 
-	d->destport = htons((short)ntohl(p));
+	d->destport = htons(port);
 
 	/*
 	 * Prepend authorization stuff and headers.
@@ -324,11 +324,10 @@ struct pmap_list {
 	struct in_addr	addr;	/* server, net order */
 	u_long	prog;		/* host order */
 	u_long	vers;		/* host order */
-	n_short	port;		/* net order */
-	u_short _pad;
+	int 	port;		/* host order */
 } rpc_pmap_list[PMAP_NUM];
 
-/* return port number in net order */
+/* return port number in host order, or -1 */
 int
 rpc_pmap_getcache(addr, prog, vers)
 	struct in_addr	addr;	/* server, net order */
@@ -337,11 +336,14 @@ rpc_pmap_getcache(addr, prog, vers)
 {
 	struct pmap_list *pl;
 
-	for (pl = rpc_pmap_list; pl < &rpc_pmap_list[rpc_pmap_num]; pl++)
-		if (pl->addr.s_addr == addr.s_addr && pl->prog == prog &&
-		    pl->vers == vers)
-			return ((int) pl->port);
-	return (htonl(-1));
+	for (pl = rpc_pmap_list; pl < &rpc_pmap_list[rpc_pmap_num]; pl++) {
+		if (pl->addr.s_addr == addr.s_addr &&
+			pl->prog == prog && pl->vers == vers )
+		{
+			return (pl->port);
+		}
+	}
+	return (-1);
 }
 
 void
@@ -349,7 +351,7 @@ rpc_pmap_putcache(addr, prog, vers, port)
 	struct in_addr	addr;	/* server, net order */
 	u_long		prog;	/* host order */
 	u_long		vers;	/* host order */
-	n_long		port;	/* net order */
+	int 		port;	/* host order */
 {
 	struct pmap_list *pl;
 
@@ -375,7 +377,7 @@ rpc_pmap_putcache(addr, prog, vers, port)
 
 /*
  * Request a port number from the port mapper.
- * Returns the port in network order.
+ * Returns the port in host order.
  */
 int
 rpc_getport(d, prog, vers)
@@ -402,7 +404,7 @@ rpc_getport(d, prog, vers)
 		n_long  pad;
 	} rdata;
 	ssize_t cc;
-	n_long port;
+	int port;
 
 #ifdef RPC_DEBUG
 	if (debug)
@@ -411,11 +413,11 @@ rpc_getport(d, prog, vers)
 
 	/* This one is fixed forever. */
 	if (prog == PMAPPROG)
-		return (htons(PMAPPORT));
+		return (PMAPPORT);
 
 	/* Try for cached answer first */
 	port = rpc_pmap_getcache(d->destip, prog, vers);
-	if (port != htonl(-1))
+	if (port != -1)
 		return (port);
 
 	args = &sdata.d;
@@ -430,9 +432,9 @@ rpc_getport(d, prog, vers)
 	if (cc < sizeof(*res)) {
 		printf("getport: %s", strerror(errno));
 		errno = EBADRPC;
-		return (htonl(-1));
+		return (-1);
 	}
-	port = res->port;
+	port = (int)ntohl(res->port);
 
 	rpc_pmap_putcache(d->destip, prog, vers, port);
 

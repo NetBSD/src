@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.10 1995/09/18 21:19:18 pk Exp $	*/
+/*	$NetBSD: arp.c,v 1.11 1995/09/23 03:36:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -128,7 +128,14 @@ arpwhohas(d, addr)
 	    arprecv, &rbuf.data, sizeof(rbuf.data));
 
 	/* Store ethernet address in cache */
-	MACPY(rbuf.data.arp.arp_sha, al->ea);
+	ah = &rbuf.data.arp;
+#ifdef ARP_DEBUG
+ 	if (debug)
+		printf("arp: cacheing %s --> %s\n",
+			   intoa(ah->arp_spa),
+			   ether_sprintf(ah->arp_sha));
+#endif
+	MACPY(ah->arp_sha, al->ea);
 	++arp_num;
 
 	return (al->ea);
@@ -149,7 +156,10 @@ arpsend(d, pkt, len)
 	return (sendether(d, pkt, len, bcea, ETHERTYPE_ARP));
 }
 
-/* Returns 0 if this is the packet we're waiting for else -1 (and errno == 0) */
+/*
+ * Returns 0 if this is the packet we're waiting for
+ * else -1 (and errno == 0)
+ */
 static ssize_t
 arprecv(d, pkt, len, tleft)
 	register struct iodesc *d;
@@ -167,12 +177,13 @@ arprecv(d, pkt, len, tleft)
 #endif
 
 	n = readether(d, pkt, len, tleft, &etype);
+	errno = 0;	/* XXX */
 	if (n == -1 || n < sizeof(struct ether_arp)) {
 #ifdef ARP_DEBUG
 		if (debug)
 			printf("bad len=%d\n", n);
 #endif
-		goto bad;
+		return (-1);
 	}
 
 	if (etype != ETHERTYPE_ARP) {
@@ -180,7 +191,7 @@ arprecv(d, pkt, len, tleft)
 		if (debug)
 			printf("not arp type=%d\n", etype);
 #endif
-		goto bad;
+		return (-1);
 	}
 
 	/* Ethernet address now checked in readether() */
@@ -195,12 +206,16 @@ arprecv(d, pkt, len, tleft)
 		if (debug)
 			printf("bad hrd/pro/hln/pln\n")
 #endif
-		goto bad;
+		return (-1);
 	}
 
 	if (ah->arp_op == htons(ARPOP_REQUEST)) {
+#ifdef ARP_DEBUG
+		if (debug)
+			printf("is request\n")
+#endif
 		arp_reply(d, ah);
-		goto bad;
+		return (-1);
 	}
 
 	if (ah->arp_op != htons(ARPOP_REPLY)) {
@@ -208,29 +223,27 @@ arprecv(d, pkt, len, tleft)
 		if (debug)
 			printf("not ARP reply\n");
 #endif
-		goto bad;
+		return (-1);
 	}
 
-	if (bcmp(&arp_list[arp_num].addr, ah->arp_spa, sizeof(long)) != 0 ||
-	    bcmp(&d->myip, ah->arp_tpa, sizeof(d->myip)) != 0) {
+	/* Is the reply from the source we want? */
+	if (bcmp(&arp_list[arp_num].addr,
+			 ah->arp_spa, sizeof(ah->arp_spa)))
+	{
 #ifdef ARP_DEBUG
 		if (debug)
-			printf("already cached??\n");
+			printf("unwanted address\n");
 #endif
-		goto bad;
+		return (-1);
 	}
+	/* We don't care who the reply was sent to. */
 
+	/* We have our answer. */
 #ifdef ARP_DEBUG
  	if (debug)
-		printf("cacheing %s --> %s\n",
-			   intoa(ah->arp_spa),
-			   ether_sprintf(ah->arp_sha));
+		printf("got it\n");
 #endif
 	return (n);
-
-bad:
-	errno = 0;
-	return (-1);
 }
 
 /*
