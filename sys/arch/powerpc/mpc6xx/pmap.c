@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.22 2001/08/22 22:17:57 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.23 2001/08/30 22:06:44 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -223,6 +223,7 @@ STATIC void pmap_pvo_check(const struct pvo_entry *);
 #else
 #define	PMAP_PVO_CHECK(pvo)	do { } while (/*CONSTCOND*/0)
 #endif
+STATIC int pmap_pte_insert(int, pte_t *);
 STATIC int pmap_pvo_enter(pmap_t, struct pool *, struct pvo_head *,
 	vaddr_t, paddr_t, u_int, int);
 STATIC void pmap_pvo_remove(struct pvo_entry *, int, int);
@@ -580,7 +581,7 @@ pmap_pte_change(volatile pte_t *pt, pte_t *pvo_pt, vaddr_t va)
  *
  * Note: both the destination and source PTEs must not have PTE_VALID set.
  */
-static int
+STATIC int
 pmap_pte_insert(int ptegidx, pte_t *pvo_pt)
 {
 	volatile pte_t *pt;
