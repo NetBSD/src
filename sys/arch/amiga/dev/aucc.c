@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.7 1997/06/23 23:46:25 is Exp $	*/
+/*	$NetBSD: aucc.c,v 1.8 1997/07/04 21:00:15 is Exp $	*/
 #undef AUDIO_DEBUG
 /*
  * Copyright (c) 1997 Stephan Thesing
@@ -170,11 +170,8 @@ int	aucc_open __P((dev_t, int));
 void	aucc_close __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
-int	aucc_set_encoding __P((void *, u_int));
 int	aucc_get_encoding __P((void *));
-int	aucc_set_precision __P((void *, u_int));
 int	aucc_get_precision __P((void *));
-int	aucc_set_channels __P((void *, int));
 int	aucc_get_channels __P((void *));
 int	aucc_round_blocksize __P((void *, int));
 int	aucc_set_out_port __P((void *, int));
@@ -195,7 +192,7 @@ int	aucc_setfd __P((void *, int));
 int	aucc_set_port __P((void *, mixer_ctrl_t *));
 int	aucc_get_port __P((void *, mixer_ctrl_t *));
 int	aucc_query_devinfo __P((void *, mixer_devinfo_t *));
-void	aucc_encode __P((int, u_char *, char *, int));
+void	aucc_encode __P((int, int, int, u_char *, u_short **));
 int	aucc_set_params __P((void *, int, struct audio_params *,
 	    struct audio_params *));
 
@@ -287,6 +284,7 @@ init_aucc(sc)
 		sc->sc_channel[i].nd_volume=64; 
 		sc->sc_channel[i].nd_intr=NULL;
 		sc->sc_channel[i].nd_intrdata=NULL;
+		sc->sc_channel[i].nd_doublebuf=0;
 		DPRINTF(("dma buffer for channel %d is %p\n", i,
 		    sc->sc_channel[i].nd_dma));
 		        
@@ -298,7 +296,7 @@ init_aucc(sc)
 				free_chipmem(sc->sc_channel[i].nd_dma);
 	}
 
-	sc->sc_channels=4;
+	sc->sc_channels=1;
 	sc->sc_channelmask=0xf;
 
 	/* clear interrupts and dma: */
@@ -334,8 +332,6 @@ aucc_open(dev, flags)
 		sc->sc_channel[i].nd_intrdata=NULL;
 	}
 	aucc=sc;
-
-	sc->sc_channels=4;
 	sc->sc_channelmask=0xf;
 
 	DPRINTF(("saopen: ok -> sc=0x%p\n",sc));
@@ -420,14 +416,25 @@ aucc_set_params(addr, mode, p, q)
 	int mode;
 	struct  audio_params *p, *q;
 {
-	if (mode == AUMODE_RECORD)
-		return 0 /*ENXIO*/;
+	struct aucc_softc *sc;
+
+	sc = addr;
+
+	/* if (mode == AUMODE_RECORD)
+		return 0 ENXIO*/;
+
+	printf("aucc_set_params(mode %x, enc %d, bits %d, chn %d, sr %ld)\n",
+	    mode, p->encoding, p->precision, p->channels, p->sample_rate);
 
 	switch (p->encoding) {
 	case AUDIO_ENCODING_ULAW:
 	case AUDIO_ENCODING_LINEAR:
-	case AUDIO_ENCODING_ULINEAR:
+	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_LINEAR_LE:
+	case AUDIO_ENCODING_ULINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
 		break;		
+
 	default:
 		return EINVAL;
 		/* NOTREADCHED */
@@ -439,12 +446,15 @@ aucc_set_params(addr, mode, p, q)
 	if ((p->channels<1) || (p->channels>4))
 		return(EINVAL);
 
+	sc->sc_channels = p->channels;
+	sc->sc_encoding = p->encoding;
+
 	q->encoding = p->encoding;
 	q->precision = p->precision;
 	q->channels = p->channels;
+	q->sample_rate = p->sample_rate;
 	
-	aucc_set_out_sr(addr, p->sample_rate);
-	return 0;
+	return aucc_set_out_sr(addr, p->sample_rate);
 }
 
 int
@@ -549,14 +559,17 @@ aucc_start_output(addr, p, cc, intr, arg)
 	void (*intr) __P((void *));
 	void *arg;
 {
-	register struct aucc_softc *sc = addr;
-	register int mask=sc->sc_channelmask;
-	register int i,j=0;
-	register u_short *dmap;
-	register u_char *pp, *to;
+	struct aucc_softc *sc;
+	int mask;
+	int i,j,k;
+	u_short *dmap[4];
+	u_char *pp;
 
 
-	dmap=NULL;
+	sc = addr;
+	mask = sc->sc_channelmask;
+
+	dmap[0] = dmap[1] = dmap[2] = dmap[3] = NULL;
 
 	DPRINTF(("sa_start_output: cc=%d %p (%p)\n", cc, intr, arg));
 
@@ -572,37 +585,55 @@ aucc_start_output(addr, p, cc, intr, arg)
 	}
 
 	/* enable interrupt on 1st channel */
-	for (i=0;i<AUCC_MAXINT;i++) {
+	for (i=j=0;i<AUCC_MAXINT;i++) {
 		if (masks2[i]&mask) {
 			DPRINTF(("first channel is %d\n",i));
 			j=i;
 			sc->sc_channel[i].nd_intr=intr;
 			sc->sc_channel[i].nd_intrdata=arg;
-			dmap=sc->sc_channel[i].nd_dma;
 			break;
 		}
 	}
 
-	DPRINTF(("dmap is %p, mask=0x%x\n",dmap,mask));
+	DPRINTF(("dmap is %p %p %p %p, mask=0x%x\n", dmap[0], dmap[1],
+		dmap[2], dmap[3], mask));
+
+	/* disable ints, dma for channels, until all parameters set */
+	/* XXX dont disable DMA! custom.dmacon=mask;*/
+	custom.intreq=mask<<INTB_AUD0;
+	custom.intena=mask<<INTB_AUD0;
 
 	/* copy data to dma buffer */
 		
  
-	to=(u_char *)dmap;
 	pp=(u_char *)p;
-	aucc_encode(sc->sc_encoding, pp, to, cc);
-	
 
-	/* disable ints, dma for channels, until all parameters set */
-	/* XXX custom.dmacon=mask;*/
-	custom.intreq=mask<<INTB_AUD0;
-	custom.intena=mask<<INTB_AUD0;
+	if (sc->sc_channels == 1) {
+		dmap[0] =
+		dmap[1] =
+		dmap[2] =
+		dmap[3] = sc->sc_channel[j].nd_dma;
+	} else {
+		for (k=0; k<4; k++) {
+			if (masks2[k+j]&mask)
+				dmap[k]=sc->sc_channel[k+j].nd_dma;
+		}
+	}
 
+	sc->sc_channel[j].nd_doublebuf ^= 1;
+	if (sc->sc_channel[j].nd_doublebuf) {
+		dmap[0] += AUDIO_BUF_SIZE/sizeof(u_short);
+		dmap[1] += AUDIO_BUF_SIZE/sizeof(u_short);
+		dmap[2] += AUDIO_BUF_SIZE/sizeof(u_short);
+		dmap[3] += AUDIO_BUF_SIZE/sizeof(u_short);
+	}
+
+	aucc_encode(sc->sc_encoding, sc->sc_channels, cc, pp, dmap);
 
 	/* dma buffers: we use same buffer 4 all channels */
 	/* write dma location and length */
-	for (i=0;i<4;i++) {
-		if (masks2[i]&mask) {
+	for (i=k=0; i<4; i++) {
+		if (masks2[i] & mask) {
 			DPRINTF(("turning channel %d on\n",i));
 			/*  sc->sc_channel[i].nd_busy=1;*/
 			channel[i].isaudio=1;
@@ -610,16 +641,12 @@ aucc_start_output(addr, p, cc, intr, arg)
 			channel[i].handler=NULL;
 			custom.aud[i].per=sc->sc_channel[i].nd_per;
 			custom.aud[i].vol=sc->sc_channel[i].nd_volume;
-			if (custom.aud[i].lc==PREP_DMA_MEM(dmap))
-				custom.aud[i].lc =
-				    PREP_DMA_MEM(dmap+AUDIO_BUF_SIZE);
-			else
-				custom.aud[i].lc = PREP_DMA_MEM(dmap);
-
+			custom.aud[i].lc = PREP_DMA_MEM(dmap[k++]);
 			custom.aud[i].len=cc>>1;
 			sc->sc_channel[i].nd_mask=mask;
 			DPRINTF(("per is %d, vol is %d, len is %d\n",\
-sc->sc_channel[i].nd_per, sc->sc_channel[i].nd_volume, cc>>1));
+			    sc->sc_channel[i].nd_per,
+			    sc->sc_channel[i].nd_volume, cc>>1));
 			
 		}
 	}
@@ -901,36 +928,64 @@ pertofreq(u_int per)
 
 
 void
-aucc_encode(enc, p, q, i)
-	int enc;
+aucc_encode(enc, channels, i, p, dmap)
+	int enc, channels, i;
 	u_char *p;
-	char *q;
-	int i;
+	u_short **dmap;
 {
-	int off=0;
-	u_char *tab=NULL;
+	char *q, *r, *s, *t;
+	int off;
+	u_char *tab;
 
+	static int debctl = 6;
 
+	off = 0;
+	tab = NULL;
+
+	if (--debctl >= 0)
+		printf("Enc: enc %d, chan %d, dmap %p %p %p %p\n",
+		    enc, channels, dmap[0], dmap[1], dmap[2], dmap[3]);
 
 	switch (enc) {
 	case AUDIO_ENCODING_ULAW:
 		tab=ulaw_to_lin;
 		break;
 	case AUDIO_ENCODING_ULINEAR:
+	case AUDIO_ENCODING_ULINEAR_BE:
+	case AUDIO_ENCODING_ULINEAR_LE:
 		off=-128;
-		/* FALLTHROUGH */
+		break;
 	case AUDIO_ENCODING_LINEAR:
+	case AUDIO_ENCODING_LINEAR_BE:
+	case AUDIO_ENCODING_LINEAR_LE:
 		break;
 	default:
 		return;
 	}
 
+	q = (char *)dmap[0];
+	r = (char *)dmap[1];
+	s = (char *)dmap[2];
+	t = (char *)dmap[3];
+
 	if (tab)
-		while (i--)
-			*q++ = tab[*p++];
+		while (i--) {
+			switch (channels) {
+			case 4: *t++ = tab[*p++];
+			case 3: *s++ = tab[*p++];
+			case 2: *r++ = tab[*p++];
+			case 1: *q++ = tab[*p++];
+			}
+		}
 	else
-		while (i--)
-			*q++ = *p++ + off;
+		while (i--) {
+			switch (channels) {
+			case 4: *t++ = *p++ + off;
+			case 3: *s++ = *p++ + off;
+			case 2: *r++ = *p++ + off;
+			case 1: *q++ = *p++ + off;
+			}
+		}
 	
 }
 
