@@ -1,16 +1,16 @@
-# $NetBSD: Makefile,v 1.7 2001/09/17 12:34:43 assar Exp $
+# $NetBSD: Makefile,v 1.8 2001/12/12 00:51:06 tv Exp $
+
+NOLINT=		# defined
 
 .include <bsd.own.mk>
 
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/kdc
+.PATH:		${DIST}/heimdal/kdc
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
 
-PROG= hpropd
-
-SRCS= 	hpropd.c
+PROG=		hpropd
+MAN=		hpropd.8
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kdc			\
@@ -21,19 +21,9 @@ CPPFLAGS+= -I.					\
 	-I${DESTDIR}/usr/include/krb5		\
 	-DHAVE_CONFIG_H
 
-VERS!=	cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
+VERS!=		cd ${.CURDIR}/../../lib/libvers && ${PRINTOBJDIR}
 
-LDADD=	-lhdb					\
-	-lkrb5					\
-	-lkdb					\
-	-lkrb					\
-	-lcrypto				\
-	-lasn1					\
-	-lcom_err				\
-	-L${VERS} -lvers			\
-	-lroken					\
-	-lcrypt
-
-MAN=	hpropd.8
+LDADD=		-lhdb -lkrb5 -lkdb -lkrb -lcrypto -lasn1 \
+		-lcom_err -L${VERS} -lvers -lroken -lcrypt
 
 .include <bsd.prog.mk>

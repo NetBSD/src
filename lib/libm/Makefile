@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.54 2001/11/05 15:22:23 lukem Exp $
+#  $NetBSD: Makefile,v 1.55 2001/12/12 00:51:05 tv Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -42,10 +42,13 @@
 #					    default standard
 #
 
+# XXX lint buts on some archs and needs stubs
+NOLINT=		# defined
+
 # require this for the value of I387_LIBM from mk.conf, if set.
 .include <bsd.own.mk>
 
-WARNS?=1
+WARNS?=		1
 
 .if (${MACHINE_ARCH} == "alpha")
 .PATH: ${.CURDIR}/arch/alpha
@@ -160,9 +163,6 @@ SRCS+= ${ARCH_ADDS}
 SRCS:=${SRCS} n_sqrt.S n_argred.S n_infnan.S n_atan2.S n_cabs.S n_cbrt.S \
 	n_support.S
 .endif
-
-# XXX lint buts on some archs and needs stubs
-MKLINT=no
 
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \

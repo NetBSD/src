@@ -1,17 +1,15 @@
-# $NetBSD: Makefile,v 1.2 2000/06/16 22:46:45 thorpej Exp $
+# $NetBSD: Makefile,v 1.3 2001/12/12 00:51:02 tv Exp $
+
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/sl
+.PATH:		${DIST}/heimdal/lib/sl
 
-WARNS?=  1
-MKLINT= no
+WARNS?=		1
+NOLINT=		# defined
 
-LIB=	ss
-
-SRCS=	sl.c ss.c
-
-INCS=	ss.h
-
-INCSDIR= /usr/include/krb5
+LIB=		ss
+SRCS=		sl.c ss.c
+INCS=		ss.h
+INCSDIR=	/usr/include/krb5
 
 CPPFLAGS+= -I. \
 	 -I${DIST}/heimdal/lib/sl		\

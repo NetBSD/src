@@ -1,29 +1,27 @@
-# $NetBSD: Makefile,v 1.3 2001/11/05 15:24:49 lukem Exp $
+# $NetBSD: Makefile,v 1.4 2001/12/12 00:51:06 tv Exp $
+
 DIST=		${.CURDIR}/../../crypto/dist
-.PATH: ${DIST}/heimdal/lib/vers
+.PATH:		${DIST}/heimdal/lib/vers
 
-MKLINT= no
+MKLINT=		# defined
 
-LIB=	vers
+LIB=		vers
 
-NOPROFILE=	noprofile
-NOPIC=		nopic
-
-# not installed, only linked against in source tree
-libinstall::
+NOLINKLIB=	# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
 includes: print_version.h
 
-SRCS=	print_version.c
-
-DPSRCS=	print_version.h
+SRCS=		print_version.c
+DPSRCS=		print_version.h
 
 CPPFLAGS+= -I. \
 	-I${.CURDIR}/../../include/heimdal \
 	-I${DIST}/heimdal/lib/roken \
 	-DHAVE_CONFIG_H
  
-HOST_CPPFLAGS+= -I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
+HOST_CPPFLAGS+=	-I${.CURDIR}/../../include/heimdal -DHAVE_CONFIG_H
 
 make-print-version.lo: ${.CURDIR}/../../include/heimdal/version.h
 
@@ -33,8 +31,8 @@ make-print-version: make-print-version.lo
 print_version.h: make-print-version
 	./make-print-version print_version.h
 
-print_version.o print_version.so print_version.po print_version.So print_version.ln: print_version.h
+print_version.o print_version.ln: print_version.h
 
-CLEANFILES+= print_version.h make-print-version make-print-version.lo
+CLEANFILES+=	print_version.h make-print-version make-print-version.lo
  
 .include <bsd.lib.mk>
