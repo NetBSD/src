@@ -1,5 +1,5 @@
-.\" Copyright (c) 1991 Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -29,44 +29,46 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	from: @(#)msync.2	6.1 (Berkeley) 5/27/91
-.\"	$Id: msync.2,v 1.4 1993/12/15 18:08:17 jtc Exp $
+.\"	from: @(#)msync.2	8.1 (Berkeley) 6/9/93
+.\"	$Id: msync.2,v 1.5 1994/06/21 04:24:53 cgd Exp $
 .\"
-.Dd May 27, 1991
+.Dd June 9, 1993
 .Dt MSYNC 2
 .Os
 .Sh NAME
-.Nm msync 
+.Nm msync
 .Nd synchronize a mapped region
 .Sh SYNOPSIS
-.Fd #include <sys/types.h>
-.Fd #include <sys/mman.h>
-.Ft int
 .Fn msync "caddr_t addr" "int len"
 .Sh DESCRIPTION
-The 
+The
 .Fn msync
-system call writes any modified pages back to the filesystem and updates
+system call
+writes any modified pages back to the filesystem and updates
 the file modification time.
-If 
+If
 .Fa len
-is 0, all modified pages within the region containing 
+is 0, all modified pages within the region containing
 .Fa addr
 will be flushed;
-if 
+if
 .Fa len
-is non-zero, only the pages containing 
+is non-zero, only the pages containing
 .Fa addr
-and 
+and
 .Fa len
 succeeding locations will be examined.
 Any required synchronization of memory caches
 will also take place at this time.
 Filesystem operations on a file that is mapped for shared modifications
-are unpredictable except after an 
+are unpredictable except after an
 .Fn msync .
 .Sh SEE ALSO
 .Xr madvise 2 ,
-.Xr mincore 2 ,
+.Xr munmap 2 ,
 .Xr mprotect 2 ,
-.Xr munmap 2
+.Xr mincore 2
+.Sh HISTORY
+The
+.Fn msync
+function first appeared in 4.4BSD.
