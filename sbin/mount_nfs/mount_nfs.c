@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mount_nfs.c	8.3 (Berkeley) 3/27/94";*/
-static char *rcsid = "$Id: mount_nfs.c,v 1.3 1994/07/27 03:16:06 brezak Exp $";
+static char *rcsid = "$Id: mount_nfs.c,v 1.4 1994/09/05 02:21:06 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -503,6 +503,7 @@ getnfsargs(spec, nfsargsp)
 	if (nfhret.stat) {
 		if (opflags & ISBGRND)
 			exit(1);
+		errno = nfhret.stat;
 		warn("can't access %s", spec);
 		return (0);
 	}
