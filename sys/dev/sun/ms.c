@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.7 1996/10/09 00:50:56 mrg Exp $	*/
+/*	$NetBSD: ms.c,v 1.8 1996/10/10 21:11:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -193,7 +193,7 @@ ms_attach(parent, self, aux)
 	cs->cs_ops = &zsops_ms;
 	ms->ms_cs = cs;
 
-	printf("\n");
+	kprintf("\n");
 
 	/* Initialize the speed, etc. */
 	tconst = BPS_TO_TCONST(cs->cs_brg_clk, MS_BPS);

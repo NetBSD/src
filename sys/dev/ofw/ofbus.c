@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.1 1996/09/30 16:35:06 ws Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.2 1996/10/10 21:20:31 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -72,9 +72,9 @@ ofbprint(aux, name)
 	child[l] = 0;
 	
 	if (name)
-		printf("%s at %s", child, name);
+		kprintf("%s at %s", child, name);
 	else
-		printf(" (%s)", child);
+		kprintf(" (%s)", child);
 	return UNCONF;
 }
 
@@ -104,7 +104,7 @@ ofbattach(parent, dev, aux)
 	if (!parent)
 		ofbprint(aux, 0);
 		
-	printf("\n");
+	kprintf("\n");
 
 	/*
 	 * This is a hack to make the probe work on the scsi (and ide) bus.

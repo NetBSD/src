@@ -1,4 +1,4 @@
-/*	$NetBSD: ofcons.c,v 1.1 1996/09/30 16:35:07 ws Exp $	*/
+/*	$NetBSD: ofcons.c,v 1.2 1996/10/10 21:20:34 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -85,7 +85,7 @@ ofcattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	printf("\n");
+	kprintf("\n");
 }
 
 static void ofcstart __P((struct tty *));

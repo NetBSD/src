@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.1 1996/09/30 16:35:08 ws Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.2 1996/10/10 21:20:36 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -141,7 +141,7 @@ ofnattach(parent, self, aux)
 		       of->sc_arpcom.ac_enaddr, sizeof of->sc_arpcom.ac_enaddr)
 	    < 0)
 		panic("ofnattach: no max-address");
-	printf(": address %s\n", ether_sprintf(of->sc_arpcom.ac_enaddr));
+	kprintf(": address %s\n", ether_sprintf(of->sc_arpcom.ac_enaddr));
 	
 	bcopy(of->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = of;

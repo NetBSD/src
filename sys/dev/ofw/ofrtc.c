@@ -1,4 +1,4 @@
-/*	$NetBSD: ofrtc.c,v 1.1 1996/09/30 16:35:09 ws Exp $	*/
+/*	$NetBSD: ofrtc.c,v 1.2 1996/10/10 21:20:37 christos Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -87,7 +87,7 @@ ofrtcattach(parent, self, aux)
 	if (l >= sizeof name)
 		l = sizeof name - 1;
 	name[l] = 0;
-	printf(": %s\n", name);
+	kprintf(": %s\n", name);
 }
 
 int
