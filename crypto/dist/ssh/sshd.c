@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.31 2003/07/23 03:52:23 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.32 2003/07/23 21:03:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
 
 #include "includes.h"
 RCSID("$OpenBSD: sshd.c,v 1.274 2003/07/22 13:35:22 markus Exp $");
-__RCSID("$NetBSD: sshd.c,v 1.31 2003/07/23 03:52:23 itojun Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.32 2003/07/23 21:03:03 itojun Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -1424,7 +1424,7 @@ main(int ac, char **av)
 		    "originating port %d not trusted.", remote_port);
 		options.rhosts_authentication = 0;
 	}
-#ifdef KRB5
+#ifndef KRB5
 	if (!packet_connection_is_ipv4() &&
 	    options.kerberos_authentication) {
 		debug("Kerberos Authentication disabled, only available for IPv4.");
