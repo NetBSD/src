@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.15 1994/06/26 12:53:36 briggs Exp $
+#     $Id: GENERIC,v 1.16 1994/07/09 06:26:24 briggs Exp $
 
 include	"std.mac68k"
 
@@ -77,5 +77,3 @@ pseudo-device	loop
 pseudo-device	pty	16
 pseudo-device	sl
 pseudo-device	ppp
-
-pseudo-device	con	6
