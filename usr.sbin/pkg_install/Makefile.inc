@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.16 2001/04/08 14:11:48 hubertf Exp $
+# $NetBSD: Makefile.inc,v 1.16.2.1 2002/06/28 12:41:56 lukem Exp $
 # Original from FreeBSD, no rcs id.
 
 .include <bsd.own.mk>
@@ -20,12 +20,16 @@ OPSYS="unknown"
 CHMOD?= /bin/chmod
 CHOWN?= /usr/sbin/chown
 CHGRP?= /usr/bin/chgrp
+WARNS=2
 .elif ${OPSYS} == "SunOS"
-LOCALBASE?= /usr/local
+LOCALBASE?= /usr/pkg
 TAR_CMD?= tar
+FTP_CMD?= tar
 ZOULARISBASE?=	${LOCALBASE}/bsd
 TAR_FULLPATHNAME?= ${ZOULARISBASE}/bin/${TAR_CMD}
+FTP_FULLPATHNAME?= ${ZOULARISBASE}/bin/${FTP_CMD}
 CPPFLAGS+=-DTAR_CMD='"${TAR_CMD}"' -DTAR_FULLPATHNAME='"${TAR_FULLPATHNAME}"'
+CPPFLAGS+=-DFTP_CMD='"${FTP_CMD}"' -DFTP_FULLPATHNAME='"${FTP_FULLPATHNAME}"'
 BINDIR=${ZOULARISBASE}/bin
 CHMOD?= /usr/bin/chmod
 CHOWN?= /usr/bin/chown
