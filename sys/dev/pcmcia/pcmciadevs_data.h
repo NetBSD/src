@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.29 1998/12/20 03:53:03 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.30 1998/12/24 03:55:54 marc Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.26 1998/12/19 23:47:51 nathanw Exp 
+ *	NetBSD: pcmciadevs,v 1.27 1998/12/20 03:52:40 nathanw Exp 
  */
 
 /*-
@@ -78,6 +78,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "3Com Corporation",
 	    "3Com 3c574-TX 10/100Mbps Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_3COM, PCMCIA_PRODUCT_3COM_3CXEM556,
+	    PCMCIA_CIS_3COM_3CXEM556,
+	    0,
+	    "3Com Corporation",
+	    "3Com/Megahertz 3CXEM556 Ethernet/Modem"	},
 	},
 	{
 	    PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
