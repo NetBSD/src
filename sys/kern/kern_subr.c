@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.58 2000/02/20 19:32:30 sommerfeld Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.59 2000/03/01 03:50:04 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -158,7 +158,7 @@ uiomove(buf, n, uio)
 			else
 				error = kcopy(iov->iov_base, cp, cnt);
 			if (error)
-				return(error);
+				return (error);
 			break;
 		}
 		iov->iov_base = (caddr_t)iov->iov_base + cnt;
@@ -258,7 +258,7 @@ shutdownhook_establish(fn, arg)
 	ndp = (struct shutdownhook_desc *)
 	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
-		return NULL;
+		return (NULL);
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
@@ -337,7 +337,7 @@ powerhook_establish(fn, arg)
 	ndp = (struct powerhook_desc *)
 	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
-		return NULL;
+		return (NULL);
 
 	ndp->sfd_fn = fn;
 	ndp->sfd_arg = arg;
@@ -478,7 +478,7 @@ exechook_establish(fn, arg)
 	edp = (struct exechook_desc *)
 	    malloc(sizeof(*edp), M_DEVBUF, M_NOWAIT);
 	if (edp == NULL)
-		return NULL;
+		return (NULL);
 
 	edp->ehk_fn = fn;
 	edp->ehk_arg = arg;
@@ -901,7 +901,7 @@ finddevice(name)
 	for (j = 0; j < numraid; j++) {
 		if (strcmp(name, raidrootdev[j].dv_xname) == 0) {
 			dv = &raidrootdev[j];
-			return(dv);
+			return (dv);
 		}
 	}
 #endif;
@@ -939,9 +939,8 @@ getdisk(str, len, defpart, devp, isdump)
 #ifdef BOOT_FROM_RAID_HOOKS
 		if (isdump == 0)
 			for (j = 0; j < numraid; j++)
-				printf(" %s[a-%c]", 
-				       raidrootdev[j].dv_xname,
-				       'a' + MAXPARTITIONS - 1);
+				printf(" %s[a-%c]", raidrootdev[j].dv_xname,
+				    'a' + MAXPARTITIONS - 1);
 #endif
 		for (dv = alldevs.tqh_first; dv != NULL;
 		    dv = dv->dv_list.tqe_next) {
