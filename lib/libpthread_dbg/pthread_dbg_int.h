@@ -8,6 +8,9 @@ struct td_proc_st {
 
 	caddr_t dbgaddr;
 	caddr_t allqaddr;
+	caddr_t runqaddr;	
+	caddr_t idleqaddr;
+	caddr_t suspqaddr;
 	caddr_t maxlwpsaddr;
 	caddr_t tsdallocaddr;
 	caddr_t tsddestaddr;
