@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2 2002/09/07 20:43:33 scw Exp $	*/
+/*	$NetBSD: intr.h,v 1.3 2002/09/22 20:48:09 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -103,6 +103,10 @@ extern void	sh5_intr_init(int, void (*)(void *, u_int, int, int),
 extern struct evcnt _sh5_intr_events[];
 extern void	_cpu_intr_set(u_int);
 extern void	_cpu_intr_resume(u_int);
+
+
+/* Supplied by board-specific code to clear down an NMI source */
+extern void	sh5_nmi_clear(void);
 
 #endif /* !_LOCORE */
 
