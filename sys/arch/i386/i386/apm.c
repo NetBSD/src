@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.38 1999/03/19 04:58:46 cgd Exp $ */
+/*	$NetBSD: apm.c,v 1.38.2.1 2000/06/27 14:28:16 he Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ static void	apm_set_ver __P((struct apm_softc *));
 static void	apm_standby __P((void));
 static const char *apm_strerror __P((int));
 static void	apm_suspend __P((void));
+static void apm_resume __P((struct apm_softc *, struct bioscallregs *));
 
 cdev_decl(apm);
 
@@ -361,6 +362,21 @@ apm_standby()
 	(void)apm_set_powstate(APM_DEV_ALLDEVS, APM_SYS_STANDBY);
 }
 
+static void
+apm_resume(sc, regs)
+	struct apm_softc *sc;
+	struct bioscallregs *regs;
+{
+
+	/*
+	 * Some system requires its clock to be initialized after hybernation.
+	 */
+	initrtclock();
+
+	inittodr(time.tv_sec);
+	apm_record_event(sc, regs->BX);
+}
+
 /*
  * return 0 if the user will notice and handle the event,
  * return 1 if the kernel driver should do so.
@@ -467,26 +483,22 @@ apm_event_handle(sc, regs)
 
 	case APM_NORMAL_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: resume system\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->BX);
+		apm_resume(sc, regs);
 		break;
 
 	case APM_CRIT_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: critical resume system"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->BX);
+		apm_resume(sc, regs);
 		break;
 
 	case APM_SYS_STANDBY_RESUME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: system standby resume\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->BX);
+		apm_resume(sc, regs);
 		break;
 
 	case APM_UPDATE_TIME:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: update time\n"));
-		inittodr(time.tv_sec);
-		apm_record_event(sc, regs->BX);
+		apm_resume(sc, regs);
 		break;
 
 	case APM_CRIT_SUSPEND_REQ:
