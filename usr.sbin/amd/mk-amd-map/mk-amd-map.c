@@ -1,4 +1,4 @@
-/*	$NetBSD: mk-amd-map.c,v 1.10 1999/02/01 19:05:13 christos Exp $	*/
+/*	$NetBSD: mk-amd-map.c,v 1.10.2.1 1999/09/21 04:58:40 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Erez Zadok
@@ -40,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: mk-amd-map.c,v 1.3 1999/01/10 21:54:42 ezk Exp 
+ * Id: mk-amd-map.c,v 1.4 1999/02/04 07:24:50 ezk Exp 
  */
 
 /*
@@ -51,16 +51,6 @@
 # include <config.h>
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
-
-/* dummy variables */
-#if 0
-char *progname;
-pid_t mypid;
-serv_state amd_state;
-int foreground, orig_umask;
-int debug_flags;
-#endif
-char hostname[MAXHOSTNAMELEN];
 
 /* (libdb version 2) uses .db extensions but an old dbm API */
 /* check for libgdbm to distinguish it from linux systems */
