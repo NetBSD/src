@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2003/07/30 18:55:46 bsh Exp $
+#	$NetBSD: Makefile,v 1.17 2004/12/24 10:56:23 joff Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -32,6 +32,9 @@ TARGETS=	ADI_BRH		ADI_BRH		ADI_BRH_sd0	\
 								\
 		TEAMASA_NPWR	IQ80310		TEAMASA_NPWR_sd0 \
 		0x00080000	netbsd-sd0			\
+								\
+		TS7200		TS7200		TS7200_wd0	\
+		0x60660000	netbsd-wd0			\
 								\
 		SMDK2800	SMDK2800	SMDK2800	\
 		0x00000000	netbsd
