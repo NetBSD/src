@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.98 1997/10/09 12:59:56 mycroft Exp $	*/
+/*	$NetBSD: tty.c,v 1.99 1997/10/19 20:35:21 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -587,12 +587,10 @@ ttyoutput(c, tp)
 
 	oflag = tp->t_oflag;
 	if (!ISSET(oflag, OPOST)) {
-		if (ISSET(tp->t_lflag, FLUSHO))
-			return (-1);
-		if (putc(c, &tp->t_outq))
-			return (c);
 		tk_nout++;
 		tp->t_outcc++;
+		if (!ISSET(tp->t_lflag, FLUSHO) && putc(c, &tp->t_outq))
+			return (c);
 		return (-1);
 	}
 	/*
@@ -628,7 +626,7 @@ ttyoutput(c, tp)
 	if (c == '\n' && ISSET(tp->t_oflag, ONLCR)) {
 		tk_nout++;
 		tp->t_outcc++;
-		if (putc('\r', &tp->t_outq))
+		if (!ISSET(tp->t_lflag, FLUSHO) && putc('\r', &tp->t_outq))
 			return (c);
 	}
 	/*
