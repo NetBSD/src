@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.45 1998/12/01 23:20:43 kenh Exp $	*/
+/*	$NetBSD: mount.c,v 1.45.2.1 2000/10/10 22:23:25 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.45 1998/12/01 23:20:43 kenh Exp $");
+__RCSID("$NetBSD: mount.c,v 1.45.2.1 2000/10/10 22:23:25 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -479,7 +479,7 @@ prmount(sfp)
 		else
 			(void)printf("%d", sfp->f_owner);
 	}
-	(void)printf(f ? ")\n" : "\n");
+	(void)printf("%s", f ? ")\n" : "\n");
 }
 
 struct statfs *
