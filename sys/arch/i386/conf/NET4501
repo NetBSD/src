@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.6 2002/04/25 15:06:30 atatat Exp $
+# $NetBSD: NET4501,v 1.6.6.1 2002/06/10 17:14:46 tv Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.6 $"
+#ident 		"NET4501-$Revision: 1.6.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -31,6 +31,7 @@ options 	VNODE_OP_NOINLINE
 options 	DUMMY_NOPS
 
 #options 	MTRR		# memory-type range register syscall support
+#options 	PERFCTRS	# performance-monitoring counters support
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
