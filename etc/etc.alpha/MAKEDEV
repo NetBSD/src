@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.23 1997/08/22 10:46:27 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.24 1997/08/22 12:04:03 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -171,9 +171,7 @@ pty*)
 	3)      name=s;;
 	4)      name=t;;
 	5)      name=u;;
-	6)      name=v
-		echo "$0: $i: pty unit conflicts with another use."
-		continue;;
+	6)      name=v;;
 	7)      name=w;;
 	8)      name=x;;
 	9)      name=y;;
@@ -204,9 +202,6 @@ pty*)
 	done
         chgrp wheel tty$name? pty$name?
         chmod 666 tty$name? pty$name?
-	if [ $class = 1 ]; then
-		mv ttyqf ttyv0; mv ptyqf ptyv0
-	fi
 	;;
 
 st*)
