@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 1/25/94
-#	$Id: Makefile,v 1.4 1994/06/29 05:09:04 deraadt Exp $
+#	$Id: Makefile,v 1.4.2.1 1994/08/13 09:56:51 mycroft Exp $
 
 PROG=	mail
 CFLAGS+=-R -DUSE_OLD_TTY
@@ -16,5 +16,9 @@ beforeinstall:
 	    -m 444 ${SFILES} ${DESTDIR}/usr/share/misc
 	cd ${.CURDIR}/misc; install -c -o root -g wheel \
 	    -m 644 ${EFILES} ${DESTDIR}/etc
+
+.if make(install)
+SUBDIR+= USD.doc
+.endif
 
 .include <bsd.prog.mk>
