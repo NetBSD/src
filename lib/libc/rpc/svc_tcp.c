@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_tcp.c,v 1.14 1998/02/11 11:52:57 lukem Exp $	*/
+/*	$NetBSD: svc_tcp.c,v 1.15 1998/02/12 01:57:50 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_tcp.c,v 1.14 1998/02/11 11:52:57 lukem Exp $");
+__RCSID("$NetBSD: svc_tcp.c,v 1.15 1998/02/12 01:57:50 lukem Exp $");
 #endif
 #endif
 
@@ -45,24 +45,21 @@ __RCSID("$NetBSD: svc_tcp.c,v 1.14 1998/02/11 11:52:57 lukem Exp $");
  * Copyright (C) 1984, Sun Microsystems, Inc.
  *
  * Actually implements two flavors of transporter -
- * a tcp rendezvouser (a listener and connection establisher)
+ * a tcp rendezvouser (a listner and connection establisher)
  * and a record/tcp stream.
  */
 
 #include "namespace.h"
-
 #include <sys/types.h>
 #include <sys/poll.h>
-#include <sys/socket.h>
 
-#include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include <rpc/rpc.h>
+#include <sys/socket.h>
+#include <errno.h>
 
 #ifdef __weak_alias
 __weak_alias(svcfd_create,_svcfd_create);
@@ -73,12 +70,12 @@ __weak_alias(svctcp_create,_svctcp_create);
  * Ops vector for TCP/IP based rpc service handle
  */
 
-static SVCXPRT *makefd_xprt __P((int, u_int32_t, u_int32_t));
+static SVCXPRT *makefd_xprt __P((int, u_int, u_int));
 static bool_t rendezvous_request __P((SVCXPRT *, struct rpc_msg *));
 static enum xprt_stat rendezvous_stat __P((SVCXPRT *));
 static void svctcp_destroy __P((SVCXPRT *));
-static int readtcp __P((caddr_t, caddr_t, u_int32_t));
-static int writetcp __P((caddr_t, caddr_t, u_int32_t));
+static int readtcp __P((caddr_t, caddr_t, int));
+static int writetcp __P((caddr_t, caddr_t, int));
 static enum xprt_stat svctcp_stat __P((SVCXPRT *));
 static bool_t svctcp_recv __P((SVCXPRT *, struct rpc_msg *));
 static bool_t svctcp_getargs __P((SVCXPRT *, xdrproc_t, caddr_t));
@@ -108,13 +105,13 @@ static struct xp_ops svctcp_rendezvous_op = {
 };
 
 struct tcp_rendezvous { /* kept in xprt->xp_p1 */
-	u_int32_t sendsize;
-	u_int32_t recvsize;
+	u_int sendsize;
+	u_int recvsize;
 };
 
 struct tcp_conn {  /* kept in xprt->xp_p1 */
 	enum xprt_stat strm_stat;
-	u_int32_t x_id;
+	u_long x_id;
 	XDR xdrs;
 	char verf_body[MAX_AUTH_BYTES];
 };
@@ -141,19 +138,19 @@ struct tcp_conn {  /* kept in xprt->xp_p1 */
  */
 SVCXPRT *
 svctcp_create(sock, sendsize, recvsize)
-	int sock;
-	u_int32_t sendsize;
-	u_int32_t recvsize;
+	register int sock;
+	u_int sendsize;
+	u_int recvsize;
 {
 	bool_t madesock = FALSE;
-	SVCXPRT *xprt;
-	struct tcp_rendezvous *r;
+	register SVCXPRT *xprt;
+	register struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
 	int len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-			perror("svctcp_create - udp socket creation problem");
+			perror("svctcp_.c - udp socket creation problem");
 			return ((SVCXPRT *)NULL);
 		}
 		madesock = TRUE;
@@ -167,21 +164,21 @@ svctcp_create(sock, sendsize, recvsize)
 	}
 	if ((getsockname(sock, (struct sockaddr *)&addr, &len) != 0)  ||
 	    (listen(sock, 2) != 0)) {
-		perror("svctcp_create - cannot getsockname or listen");
+		perror("svctcp_.c - cannot getsockname or listen");
 		if (madesock)
 		       (void)close(sock);
 		return ((SVCXPRT *)NULL);
 	}
 	r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
-		warnx("svctcp_create: out of memory");
+		(void) fprintf(stderr, "svctcp_create: out of memory\n");
 		return (NULL);
 	}
 	r->sendsize = sendsize;
 	r->recvsize = recvsize;
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
-		warnx("svctcp_create: out of memory");
+		(void) fprintf(stderr, "svctcp_create: out of memory\n");
 		return (NULL);
 	}
 	xprt->xp_p2 = NULL;
@@ -201,8 +198,8 @@ svctcp_create(sock, sendsize, recvsize)
 SVCXPRT *
 svcfd_create(fd, sendsize, recvsize)
 	int fd;
-	u_int32_t sendsize;
-	u_int32_t recvsize;
+	u_int sendsize;
+	u_int recvsize;
 {
 
 	return (makefd_xprt(fd, sendsize, recvsize));
@@ -211,21 +208,21 @@ svcfd_create(fd, sendsize, recvsize)
 static SVCXPRT *
 makefd_xprt(fd, sendsize, recvsize)
 	int fd;
-	u_int32_t sendsize;
-	u_int32_t recvsize;
+	u_int sendsize;
+	u_int recvsize;
 {
-	SVCXPRT *xprt;
-	struct tcp_conn *cd;
+	register SVCXPRT *xprt;
+	register struct tcp_conn *cd;
  
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == (SVCXPRT *)NULL) {
-		warnx("svc_tcp: makefd_xprt: out of memory");
+		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
 		goto done;
 	}
 	cd = (struct tcp_conn *)mem_alloc(sizeof(struct tcp_conn));
 	if (cd == (struct tcp_conn *)NULL) {
-		warnx("svc_tcp: makefd_xprt: out of memory");
-		mem_free(xprt, sizeof(SVCXPRT));
+		(void) fprintf(stderr, "svc_tcp: makefd_xprt: out of memory\n");
+		mem_free((char *) xprt, sizeof(SVCXPRT));
 		xprt = (SVCXPRT *)NULL;
 		goto done;
 	}
@@ -247,7 +244,7 @@ makefd_xprt(fd, sendsize, recvsize)
 /*ARGSUSED*/
 static bool_t
 rendezvous_request(xprt, msg)
-	SVCXPRT *xprt;
+	register SVCXPRT *xprt;
 	struct rpc_msg *msg;
 {
 	int sock;
@@ -276,7 +273,7 @@ rendezvous_request(xprt, msg)
 /*ARGSUSED*/
 static enum xprt_stat
 rendezvous_stat(xprt)
-	SVCXPRT *xprt;
+	register SVCXPRT *xprt;
 {
 
 	return (XPRT_IDLE);
@@ -284,9 +281,9 @@ rendezvous_stat(xprt)
 
 static void
 svctcp_destroy(xprt)
-	SVCXPRT *xprt;
+	register SVCXPRT *xprt;
 {
-	struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
+	register struct tcp_conn *cd = (struct tcp_conn *)xprt->xp_p1;
 
 	xprt_unregister(xprt);
 	(void)close(xprt->xp_sock);
@@ -297,8 +294,8 @@ svctcp_destroy(xprt)
 		/* an actual connection socket */
 		XDR_DESTROY(&(cd->xdrs));
 	}
-	mem_free(cd, sizeof(struct tcp_conn));
-	mem_free(xprt, sizeof(SVCXPRT));
+	mem_free((caddr_t)cd, sizeof(struct tcp_conn));
+	mem_free((caddr_t)xprt, sizeof(SVCXPRT));
 }
 
 
@@ -313,10 +310,10 @@ static int
 readtcp(xprtp, buf, len)
 	caddr_t xprtp;
 	caddr_t buf;
-	u_int32_t len;
+	register int len;
 {
-	SVCXPRT *xprt = (SVCXPRT *) xprtp;
-	int sock = xprt->xp_sock;
+	register SVCXPRT *xprt = (SVCXPRT *) xprtp;
+	register int sock = xprt->xp_sock;
 	int milliseconds = 35 * 1000;
 	struct pollfd pollfd;
 
@@ -354,14 +351,13 @@ static int
 writetcp(xprtp, buf, len)
 	caddr_t xprtp;
 	caddr_t buf;
-	u_int32_t len;
+	int len;
 {
-	SVCXPRT *xprt = (SVCXPRT *) xprtp;
-	u_int32_t i, cnt;
-	char *p;
+	register SVCXPRT *xprt = (SVCXPRT *) xprtp;
+	register int i, cnt;
 
-	for (p = buf, i = 0, cnt = len; cnt > 0; cnt -= i, p += i) {
-		if ((i = write(xprt->xp_sock, p, cnt)) < 0) {
+	for (cnt = len; cnt > 0; cnt -= i, buf += i) {
+		if ((i = write(xprt->xp_sock, buf, cnt)) < 0) {
 			((struct tcp_conn *)(xprt->xp_p1))->strm_stat =
 			    XPRT_DIED;
 			return (-1);
@@ -374,7 +370,7 @@ static enum xprt_stat
 svctcp_stat(xprt)
 	SVCXPRT *xprt;
 {
-	struct tcp_conn *cd =
+	register struct tcp_conn *cd =
 	    (struct tcp_conn *)(xprt->xp_p1);
 
 	if (cd->strm_stat == XPRT_DIED)
@@ -387,11 +383,11 @@ svctcp_stat(xprt)
 static bool_t
 svctcp_recv(xprt, msg)
 	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+	register struct rpc_msg *msg;
 {
-	struct tcp_conn *cd =
+	register struct tcp_conn *cd =
 	    (struct tcp_conn *)(xprt->xp_p1);
-	XDR *xdrs = &(cd->xdrs);
+	register XDR *xdrs = &(cd->xdrs);
 
 	xdrs->x_op = XDR_DECODE;
 	(void)xdrrec_skiprecord(xdrs);
@@ -409,8 +405,7 @@ svctcp_getargs(xprt, xdr_args, args_ptr)
 	caddr_t args_ptr;
 {
 
-	return ((*xdr_args)(&(((struct tcp_conn *)(xprt->xp_p1))->xdrs),
-		args_ptr));
+	return ((*xdr_args)(&(((struct tcp_conn *)(xprt->xp_p1))->xdrs), args_ptr));
 }
 
 static bool_t
@@ -419,7 +414,7 @@ svctcp_freeargs(xprt, xdr_args, args_ptr)
 	xdrproc_t xdr_args;
 	caddr_t args_ptr;
 {
-	XDR *xdrs =
+	register XDR *xdrs =
 	    &(((struct tcp_conn *)(xprt->xp_p1))->xdrs);
 
 	xdrs->x_op = XDR_FREE;
@@ -429,12 +424,12 @@ svctcp_freeargs(xprt, xdr_args, args_ptr)
 static bool_t
 svctcp_reply(xprt, msg)
 	SVCXPRT *xprt;
-	struct rpc_msg *msg;
+	register struct rpc_msg *msg;
 {
-	struct tcp_conn *cd =
+	register struct tcp_conn *cd =
 	    (struct tcp_conn *)(xprt->xp_p1);
-	XDR *xdrs = &(cd->xdrs);
-	bool_t stat;
+	register XDR *xdrs = &(cd->xdrs);
+	register bool_t stat;
 
 	xdrs->x_op = XDR_ENCODE;
 	msg->rm_xid = cd->x_id;

@@ -1,4 +1,4 @@
-/*	$NetBSD: authunix_prot.c,v 1.5 1998/02/10 04:54:25 lukem Exp $	*/
+/*	$NetBSD: authunix_prot.c,v 1.6 1998/02/12 01:57:28 lukem Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)authunix_prot.c 1.15 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)authunix_prot.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: authunix_prot.c,v 1.5 1998/02/10 04:54:25 lukem Exp $");
+__RCSID("$NetBSD: authunix_prot.c,v 1.6 1998/02/12 01:57:28 lukem Exp $");
 #endif
 #endif
 
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: authunix_prot.c,v 1.5 1998/02/10 04:54:25 lukem Exp $");
  */
 
 #include "namespace.h"
-
 #include <rpc/types.h>
 #include <rpc/xdr.h>
 #include <rpc/auth.h>
@@ -62,8 +61,8 @@ __weak_alias(xdr_authunix_parms,_xdr_authunix_parms);
  */
 bool_t
 xdr_authunix_parms(xdrs, p)
-	XDR *xdrs;
-	struct authunix_parms *p;
+	register XDR *xdrs;
+	register struct authunix_parms *p;
 {
 
 	if (xdr_u_long(xdrs, &(p->aup_time))
