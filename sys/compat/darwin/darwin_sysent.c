@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.28 2003/09/02 21:48:50 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.29 2003/09/03 07:28:39 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.28 2003/09/02 21:48:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.29 2003/09/03 07:28:39 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -156,8 +156,8 @@ struct sysent darwin_sysent[] = {
 	    compat_13_sys_sigpending },		/* 52 = sigpending13 */
 	{ 2, s(struct compat_13_sys_sigaltstack_args), 0,
 	    compat_13_sys_sigaltstack },	/* 53 = sigaltstack13 */
-	{ 3, s(struct sys_ioctl_args), 0,
-	    sys_ioctl },			/* 54 = ioctl */
+	{ 3, s(struct darwin_sys_ioctl_args), 0,
+	    darwin_sys_ioctl },			/* 54 = ioctl */
 	{ 1, s(struct sys_reboot_args), 0,
 	    sys_reboot },			/* 55 = oreboot */
 	{ 1, s(struct bsd_sys_revoke_args), 0,
