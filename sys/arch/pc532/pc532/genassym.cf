@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 1998/04/25 19:58:11 matthias Exp $
+#	$NetBSD: genassym.cf,v 1.5 1999/03/25 00:41:47 mrg Exp $
 
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -40,7 +40,6 @@
 
 config long n c
 
-include "opt_uvm.h"
 include "opt_pmap_new.h"
 
 include <sys/param.h>
@@ -51,9 +50,7 @@ include <sys/user.h>
 
 include <vm/vm.h>
 
-ifdef UVM
 include <uvm/uvm_extern.h>
-endif
 
 include <machine/trap.h>
 include <machine/pmap.h>
@@ -87,11 +84,7 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_PID			offsetof(struct proc, p_pid)
 
-ifdef UVM
 define	V_INTR			offsetof(struct uvmexp, intrs)
-else
-define	V_INTR			offsetof(struct vmmeter, v_intr)
-endif
 
 define	PCB_ONSTACK		offsetof(struct pcb, pcb_onstack)
 define	PCB_FSR 		offsetof(struct pcb, pcb_fsr)
