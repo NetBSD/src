@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.14 2000/10/12 03:28:49 oster Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.15 2000/10/20 02:24:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -201,7 +201,13 @@ rf_State_LastState(RF_RaidAccessDesc_t * desc)
 	 */
 	if (desc->async_flag == 0)
 		wakeup(desc->bp);
-	
+
+	/*
+	 * That's all the IO for this one... unbusy the 'disk'.
+	 */
+
+	rf_disk_unbusy(desc);
+
 	/* 
 	 * Wakeup any requests waiting to go.
 	 */
