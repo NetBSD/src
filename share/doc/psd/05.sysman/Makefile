@@ -1,3 +1,5 @@
+#	$NetBSD: Makefile,v 1.3 1998/01/09 06:54:54 perry Exp $
+#
 #	@(#)Makefile	8.2 (Berkeley) 6/1/94
 
 DIR=	psd/05.sysman
