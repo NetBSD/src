@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.30 1994/08/14 03:35:27 gwr Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.31 1994/08/18 22:48:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -496,8 +496,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp)
 	nmp->nm_readahead = NFS_DEFRAHEAD;
 	nmp->nm_leaseterm = NQ_DEFLEASE;
 	nmp->nm_deadthresh = NQ_DEADTHRESH;
-	nmp->nm_tnext = (struct nfsnode *)nmp;
-	nmp->nm_tprev = (struct nfsnode *)nmp;
+	CIRCLEQ_INIT(&nmp->nm_timerhead);
 	nmp->nm_inprog = NULLVP;
 	bcopy((caddr_t)argp->fh, (caddr_t)&nmp->nm_fh, sizeof(nfsv2fh_t));
 #ifdef COMPAT_09
