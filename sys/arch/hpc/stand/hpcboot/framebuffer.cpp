@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.2 2001/02/21 16:01:53 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: framebuffer.cpp,v 1.3 2001/03/04 16:52:44 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,6 +64,7 @@ FrameBufferInfo::_table[] =
 	{ PLATID_CPU_MIPS_VR_4111, PLATID_MACH_SHARP_TRIPAD_PV6000         ,        8,      640,      480,      640, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E100      ,       16,      240,      320,      512, 0xaa200000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_CASSIOPEIAE_E500      ,       16,      240,      320,      512, 0xaa200000 },
+	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_CASIO_POCKETPOSTPET_POCKETPOSTPET,  16,      320,      240,     1024, 0xaa200000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300      ,        8,      640,      480,      640, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT300      ,       16,      640,      480,     1280, 0xaa000000 },
 	{ PLATID_CPU_MIPS_VR_4121, PLATID_MACH_FUJITSU_INTERTOP_IT310      ,        8,      640,      480,      640, 0xaa000000 },
