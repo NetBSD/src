@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.17 2003/04/03 17:15:22 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.17.4.1 2005/02/06 08:24:06 jmc Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -629,7 +629,6 @@ matchhost(char *name)
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;	/* dummy */
-	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(name, "0", &hints, &res0) != 0)
 		return (0);
 	for (res = res0; res; res = res->ai_next) {
