@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.18 2004/03/15 04:38:16 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.19 2004/03/15 04:42:48 jmc Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -104,3 +104,11 @@ sys/dev/usb/uhub.c			1.65
 	Use the correct wValue to get hub desriptors.
 	Also, make wValue checks of root hub codes less strict.
 	[toshii, ticket #1599]
+
+lib/libc/net/nslexer.l			1.7
+lib/libc/net/nsparser.y			1.9
+
+	Use syslog(3) instead of err(3) to log errors.
+	Add '0ption never-interactive' to nslexer.l, to prevent isatty() from
+	being called unnecessarily.
+	[lukem, ticket #1601]
