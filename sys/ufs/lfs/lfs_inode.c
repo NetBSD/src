@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.25 1999/06/01 03:00:40 perseant Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.26 1999/06/15 22:25:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -185,8 +185,9 @@ lfs_update(v)
 	if (lastseg != -1) { \
 		LFS_SEGENTRY(sup, fs, lastseg, sup_bp); \
 		if (num > sup->su_nbytes) { \
-			panic("lfs_truncate: negative bytes in segment %d\n", \
-			      lastseg); \
+			printf("lfs_truncate: negative bytes: segment %d short by %d\n", \
+			      lastseg, num - sup->su_nbytes); \
+			panic("lfs_truncate: negative bytes"); \
 		      sup->su_nbytes = 0; \
 		} else \
 		sup->su_nbytes -= num; \
