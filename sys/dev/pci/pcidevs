@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.428.2.13 2002/11/16 09:44:54 he Exp $
+$NetBSD: pcidevs,v 1.428.2.14 2002/11/21 18:35:27 tron Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1313,7 +1313,7 @@ product INTEL GDT_RAID1		0x0600	GDT RAID
 product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
-product INTEL 82542		0x1000	i82452 Gigabit Ethernet
+product INTEL 82542		0x1000	i82542 Gigabit Ethernet
 product INTEL 82543GC_FIBER	0x1001	i82453GC Gigabit Ethernet (1000BASE-X)
 product INTEL 82543GC_COPPER	0x1004	i82543GC Gigabit Ethernet (1000BASE-T)
 product INTEL 82544EI_COPPER	0x1008	i82544EI Gigabit Ethernet (1000BASE-T)
