@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.125.2.17 2002/09/17 21:23:57 nathanw Exp $	*/
+/*	$NetBSD: systm.h,v 1.125.2.18 2002/10/18 05:11:41 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -417,8 +417,8 @@ void scdebug_ret __P((struct lwp *, register_t, int, register_t[]));
 void	_kernel_lock_init(void);
 void	_kernel_lock(int);
 void	_kernel_unlock(void);
-void	_kernel_proc_lock(struct proc *);
-void	_kernel_proc_unlock(struct proc *);
+void	_kernel_proc_lock(struct lwp *);
+void	_kernel_proc_unlock(struct lwp *);
 
 #define	KERNEL_LOCK_INIT()		_kernel_lock_init()
 #define	KERNEL_LOCK(flag)		_kernel_lock((flag))
