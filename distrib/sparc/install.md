@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.14 2000/10/20 16:48:33 pk Exp $
+#	$NetBSD: install.md,v 1.15 2000/10/31 21:11:20 pk Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -188,9 +188,14 @@ __md_prep_disklabel_1
 
 md_copy_kernel() {
 	if [ ! -f /mnt/netbsd ]; then
-		echo -n "No kernel installed; copying miniroot kernel... "
-		cp -p /netbsd /mnt/netbsd
-		echo "done."
+		echo -n "WARNING: No kernel installed; "
+		if [ -f /netbsd ]; then
+			echo -n "copying miniroot kernel... "
+			cp -p /netbsd /mnt/netbsd
+			echo "done."
+		else
+			echo -n "install a kernel manually."
+		fi
 	fi
 }
 
