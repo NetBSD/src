@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.42 2002/04/07 15:45:01 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.43 2002/04/08 19:18:18 wiz Exp $
 /bin/rcorder
 /dev/i4b
 /dev/i4bctl
@@ -130,6 +130,7 @@
 /usr/share/man/html4/arm26
 /usr/share/man/html8/arm26
 /usr/share/man/html8/arm32
+/usr/share/man/html8/playstation
 /usr/share/man/html9/arm26
 /usr/share/misc/getopt
 /usr/share/misc/more.help
