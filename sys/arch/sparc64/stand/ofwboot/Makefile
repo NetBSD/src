@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/08/13 02:10:48 eeh Exp $
+#	$NetBSD: Makefile,v 1.3 1998/08/16 23:30:00 eeh Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -9,12 +9,17 @@ S=	${CURDIR}/../../../..
 #MACHINE=sparc64
 #MACHINE_ARCH=sparc64
 LD?=	/usr/ccs/bin/ld	
+LORDER=lorder 
+TSORT=tsort 
+NM=nm
+
 
 PROG=		ofwboot
 SRCS=		srt0.s Locore.c boot.c ofdev.c alloc.c #net.c netif_of.c 
 .PATH:		${S}/arch/sparc64/sparc64
 #SRCS+=		ofwmagic.S
-CFLAGS+=	-DDEBUG -DNETIF_DEBUG -D__ELF__ -nostdinc
+CFLAGS+=	-DNETIF_DEBUG -D__ELF__ -nostdinc
+#	NB: For some stupid reason libz cannot be compiled w/-DDEBUG
 NOMAN=
 STRIPFLAG=
 BINMODE=	444
@@ -69,7 +74,7 @@ ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 
 .include <bsd.prog.mk>
 
-AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE
+AFLAGS=		-x assembler-with-cpp -Wa,-Av9a -traditional-cpp -D_LOCORE -D__ELF__
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
