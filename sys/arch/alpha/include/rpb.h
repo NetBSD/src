@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.10 1996/11/13 22:21:05 cgd Exp $	*/
+/*	$NetBSD: rpb.h,v 1.11 1996/11/13 22:26:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -212,20 +212,21 @@ struct pcs {
 
 #define	PCS_PROC_MAJOR		0x00000000ffffffff
 #define	PCS_PROC_MAJORSHIFT	0
+
 #define	PCS_PROC_EV3		1			/* EV3 */
 #define	PCS_PROC_EV4		2			/* EV4: 21064 */
-#define	PCS_PROC_SIMULATOR	3			/* simulator? */
+#define	PCS_PROC_SIMULATION	3			/* Simulation */
 #define	PCS_PROC_LCA4		4			/* LCA4: 2106[68] */
 #define	PCS_PROC_EV5		5			/* EV5: 21164 */
-#define	PCS_PROC_EV45		6			/* EV4.5: 21064A */
-#define	PCS_PROC_EV56		7			/* EV5.6: 21164A */
+#define	PCS_PROC_EV45		6			/* EV45: 21064A */
+#define	PCS_PROC_EV56		7			/* EV56: 21164A */
+#define	PCS_PROC_EV6		8			/* EV6: 21264 */
+#define	PCS_PROC_PCA56		9			/* PCA256: 21164PC */
 
 #define	PCS_PROC_MINOR		0xffffffff00000000
 #define	PCS_PROC_MINORSHIFT	32
-#define	PCS_PROC_PASS2		0			/* pass 2 or 2.1 */
-#define	PCS_PROC_PASS3		1			/* pass 3 */
-				/* 4 == ev4s?  or 1 == ... ? */
-	/* minor on the LCA appears to be pass number */
+
+	/* Minor number interpretation is processor specific.  See cpu.c. */
 
 	u_int64_t	pcs_proc_var;		/* B8: processor variation. */
 
