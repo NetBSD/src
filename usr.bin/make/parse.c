@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.49 2000/06/10 13:48:48 mycroft Exp $	*/
+/*	$NetBSD: parse.c,v 1.50 2000/06/10 21:44:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.49 2000/06/10 13:48:48 mycroft Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.50 2000/06/10 21:44:08 mycroft Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.49 2000/06/10 13:48:48 mycroft Exp $");
+__RCSID("$NetBSD: parse.c,v 1.50 2000/06/10 21:44:08 mycroft Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -443,19 +443,13 @@ ParseLinkSrc (pgnp, cgnp)
 {
     GNode          *pgn = (GNode *) pgnp;
     GNode          *cgn = (GNode *) cgnp;
+
     if ((pgn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (pgn->cohorts))
 	pgn = (GNode *) Lst_Datum (Lst_Last (pgn->cohorts));
-#if 0
-    if (Lst_Member (pgn->children, (ClientData)cgn) == NILLNODE) {
-#else
-    if (1) {
-#endif
-	(void)Lst_AtEnd (pgn->children, (ClientData)cgn);
-	if (specType == Not) {
+    (void)Lst_AtEnd (pgn->children, (ClientData)cgn);
+    if (specType == Not)
 	    (void)Lst_AtEnd (cgn->parents, (ClientData)pgn);
-	}
-	pgn->unmade += 1;
-    }
+    pgn->unmade += 1;
     return (0);
 }
 
