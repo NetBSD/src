@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.51 1998/09/24 23:28:18 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.52 1998/09/29 07:01:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.51 1998/09/24 23:28:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.52 1998/09/29 07:01:16 thorpej Exp $");
 
 #ifndef EVCNT_COUNTERS
 #include <machine/intrcnt.h>
@@ -245,6 +245,20 @@ IMPORT(astpending, 8)
 LEAF(exception_return, 1)			/* XXX should be NESTED */
 	br	pv, Ler1
 Ler1:	LDGP(pv)
+
+#if defined(MULTIPROCESSOR)
+	/* XXX XXX XXX */
+	/*
+	 * Check the current processor ID.  If we're not the primary
+	 * CPU, then just restore registers and bail out.
+	 */
+	call_pal PAL_OSF1_whami
+	lda	t0, hwrpb
+	ldq	t0, 0(t0)
+	ldq	t1, RPB_PRIMARY_CPU_ID(t0)
+	cmpeq	t1, v0, t0
+	beq	t0, Lrestoreregs		/* == 0: bail out now */
+#endif
 
 	ldq	s1, (FRAME_PS * 8)(sp)		/* get the saved PS */
 	and	s1, ALPHA_PSL_IPL_MASK, t0	/* look at the saved IPL */
