@@ -171,9 +171,9 @@ fi
 test -n "$verbose" && echo "	setting PASSWD to ${PASSWD}"
 
 
-GNATS_SITE=sun-lamp
-SUBMITTER=net
+GNATS_SITE=netbsd
 GNATS_ADDR=gnats-bugs@NetBSD.ORG
+SUBMITTER=net
 DEFAULT_ORGANIZATION=
 DEFAULT_RELEASE=
 

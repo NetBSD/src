@@ -24,7 +24,7 @@ DEFAULT_RELEASE =
 DEFAULT_ORGANIZATION =
 
 # The default GNATS site for send-pr.
-GNATS_SITE = sun-lamp
+GNATS_SITE = netbsd
 
 # The submitter-id for your site.
 SUBMITTER = net
