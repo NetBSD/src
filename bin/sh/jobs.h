@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.7 1995/03/21 09:09:19 cgd Exp $	*/
+/*	$NetBSD: jobs.h,v 1.8 1995/05/11 21:29:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,7 +35,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)jobs.h	8.1 (Berkeley) 5/31/93
+ *	@(#)jobs.h	8.2 (Berkeley) 5/4/95
  */
 
 /* Mode argument to forkshell.  Don't change FORK_FG or FORK_BG. */
@@ -79,22 +79,18 @@ struct job {
 extern short backgndpid;	/* pid of last background process */
 extern int job_warning;		/* user was warned about stopped jobs */
 
-
-#ifdef __STDC__
-void setjobctl(int);
-void showjobs(int);
-struct job *makejob(union node *, int);
-int forkshell(struct job *, union node *, int);
-int waitforjob(struct job *);
-char *commandtext(union node *);
-#else
-void setjobctl();
-void showjobs();
-struct job *makejob();
-int forkshell();
-int waitforjob();
-char *commandtext();
-#endif
+void setjobctl __P((int));
+int fgcmd __P((int, char **));
+int bgcmd __P((int, char **));
+int jobscmd __P((int, char **));
+void showjobs __P((int));
+int waitcmd __P((int, char **));
+int jobidcmd __P((int, char **));
+struct job *makejob __P((union node *, int));
+int forkshell __P((struct job *, union node *, int));
+int waitforjob __P((struct job *));
+int stoppedjobs __P((void));
+char *commandtext __P((union node *));
 
 #if ! JOBS
 #define setjobctl(on)	/* do nothing */

@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.12 1995/03/21 09:10:35 cgd Exp $	*/
+/*	$NetBSD: var.c,v 1.13 1995/05/11 21:30:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,17 +38,18 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)var.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.12 1995/03/21 09:10:35 cgd Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.13 1995/05/11 21:30:39 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <unistd.h>
+#include <stdlib.h>
 
 /*
  * Shell variables.
  */
-
-#include <unistd.h>
 
 #include "shell.h"
 #include "output.h"
@@ -63,7 +64,9 @@ static char rcsid[] = "$NetBSD: var.c,v 1.12 1995/03/21 09:10:35 cgd Exp $";
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
-#include "extern.h"
+#ifndef NO_HISTORY
+#include "myhistedit.h"
+#endif
 
 
 #define VTABSIZE 39
@@ -332,8 +335,8 @@ bltinlookup(name, doall)
 	}
 	for (v = *hashvar(name) ; v ; v = v->next) {
 		if (varequal(v->text, name)) {
-			if (v->flags & VUNSET
-			 || ! doall && (v->flags & VEXPORT) == 0)
+			if ((v->flags & VUNSET)
+			 || (!doall && (v->flags & VEXPORT) == 0))
 				return NULL;
 			return strchr(v->text, '=') + 1;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.24 1995/03/21 09:09:59 cgd Exp $	*/
+/*	$NetBSD: parser.c,v 1.25 1995/05/11 21:29:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,11 +38,13 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)parser.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)parser.c	8.6 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: parser.c,v 1.24 1995/03/21 09:09:59 cgd Exp $";
+static char rcsid[] = "$NetBSD: parser.c,v 1.25 1995/05/11 21:29:55 christos Exp $";
 #endif
 #endif /* not lint */
+
+#include <stdlib.h>
 
 #include "shell.h"
 #include "parser.h"
@@ -58,6 +60,7 @@ static char rcsid[] = "$NetBSD: parser.c,v 1.24 1995/03/21 09:09:59 cgd Exp $";
 #include "memalloc.h"
 #include "mystring.h"
 #include "alias.h"
+#include "show.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
@@ -112,14 +115,14 @@ STATIC union node *simplecmd __P((union node **, union node *));
 STATIC union node *makename __P((void));
 STATIC void parsefname __P((void));
 STATIC void parseheredoc __P((void));
-STATIC int readtoken __P((void));
-STATIC int readtoken1 __P((int, char const *, char *, int));
-STATIC void attyline __P((void));
-STATIC int noexpand __P((char *));
 STATIC int peektoken __P((void));
+STATIC int readtoken __P((void));
+STATIC int xxreadtoken __P((void));
+STATIC int readtoken1 __P((int, char const *, char *, int));
+STATIC int noexpand __P((char *));
 STATIC void synexpect __P((int));
 STATIC void synerror __P((char *));
-STATIC void setprompt __P((int));
+STATIC void setprompt __P((int)); 
 
 
 /*
@@ -296,7 +299,8 @@ command() {
 	int t;
 
 	checkkwd = 2;
-	redir = 0;
+	redir = NULL;
+	n1 = NULL;
 	rpp = &redir;
 	/* Check for redirection which may precede command */
 	while (readtoken() == TREDIR) {
@@ -710,7 +714,7 @@ readtoken() {
 					goto out;
 				}
 			}
-			if (ap = lookupalias(wordtext, 1)) {
+			if ((ap = lookupalias(wordtext, 1)) != NULL) {
 				pushstring(ap->val, strlen(ap->val), ap);
 				checkkwd = savecheckkwd;
 				goto top;
@@ -846,8 +850,8 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 	char *eofmark;
 	int striptabs;
 	{
-	register c = firstc;
-	register char *out;
+	int c = firstc;
+	char *out;
 	int len;
 	char line[EOFMARKLEN + 1];
 	struct nodelist *bqlist;
@@ -858,6 +862,18 @@ readtoken1(firstc, syntax, eofmark, striptabs)
 	int parenlevel;	/* levels of parens in arithmetic */
 	int oldstyle;
 	char const *prevsyntax;	/* syntax before arithmetic */
+#if __GNUC__
+	/* Avoid longjmp clobbering */
+	(void) &out;
+	(void) &quotef;
+	(void) &dblquote;
+	(void) &varnest;
+	(void) &arinest;
+	(void) &parenlevel;
+	(void) &oldstyle;
+	(void) &prevsyntax;
+	(void) &syntax;
+#endif
 
 	startlinno = plinno;
 	dblquote = 0;
@@ -1258,8 +1274,8 @@ parsebackq: {
                 if (savelen > 0) {
                         str = ckmalloc(savelen);
                         memcpy(str, stackblock(), savelen);
+			setinputstring(str, 1);
                 }
-                setinputstring(str, 1);
         }
 	nlpp = &bqlist;
 	while (*nlpp)

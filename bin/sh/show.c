@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.10 1995/03/21 09:10:22 cgd Exp $	*/
+/*	$NetBSD: show.c,v 1.11 1995/05/11 21:30:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,26 +38,35 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)show.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: show.c,v 1.10 1995/03/21 09:10:22 cgd Exp $";
+static char rcsid[] = "$NetBSD: show.c,v 1.11 1995/05/11 21:30:24 christos Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#if __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+
 #include "shell.h"
 #include "parser.h"
 #include "nodes.h"
 #include "mystring.h"
-#include "extern.h"
+#include "show.h"
 
 
 #ifdef DEBUG
-static void shtree(), shcmd(), sharg(), indent();
+static void shtree __P((union node *, int, char *, FILE*));
+static void shcmd __P((union node *, FILE *));
+static void sharg __P((union node *, FILE *));
+static void indent __P((int, char *, FILE *));
 static void trstring __P((char *));
 
 
-int
+void
 showtree(n)
 	union node *n;
 {
@@ -125,7 +134,7 @@ static void
 shcmd(cmd, fp)
 	union node *cmd;
 	FILE *fp;
-	{
+{
 	union node *np;
 	int first;
 	char *s;
@@ -147,6 +156,7 @@ shcmd(cmd, fp)
 			case NTOFD:	s = ">&"; dftfd = 1; break;
 			case NFROM:	s = "<";  dftfd = 0; break;
 			case NFROMFD:	s = "<&"; dftfd = 0; break;
+			default:  	s = "*error*"; dftfd = 0; break;
 		}
 		if (np->nfile.fd != dftfd)
 			fprintf(fp, "%d", np->nfile.fd);
@@ -294,16 +304,29 @@ trputc(c)
 #endif
 }
 
-
-trace(fmt, a1, a2, a3, a4, a5, a6, a7, a8)
-	char *fmt;
-	{
+void
+#if __STDC__
+trace(const char *fmt, ...)
+#else
+trace(va_alist)
+	va_dcl
+#endif
+{
 #ifdef DEBUG
-	if (tracefile == NULL)
-		return;
-	fprintf(tracefile, fmt, a1, a2, a3, a4, a5, a6, a7, a8);
-	if (strchr(fmt, '\n'))
-		fflush(tracefile);
+	va_list va;
+#if __STDC__
+	va_start(va, fmt);
+#else
+	char *fmt;
+	va_start(va);
+	fmt = va_arg(va, char *);
+#endif
+	if (tracefile != NULL) {
+		(void) vfprintf(tracefile, fmt, va);
+		if (strchr(fmt, '\n'))
+			(void) fflush(tracefile);
+	}
+	va_end(va);
 #endif
 }
 
@@ -387,22 +410,26 @@ trargs(ap)
 void
 opentrace() {
 	char s[100];
-	char *p;
 	char *getenv();
+#ifdef O_APPEND
 	int flags;
+#endif
 
 #ifdef DEBUG
 	if (!debug)
 		return;
 #ifdef not_this_way
-	if ((p = getenv("HOME")) == NULL) {
-		if (geteuid() == 0)
-			p = "/";
-		else
-			p = "/tmp";
+	{
+		char *p;
+		if ((p = getenv("HOME")) == NULL) {
+			if (geteuid() == 0)
+				p = "/";
+			else
+				p = "/tmp";
+		}
+		scopy(p, s);
+		strcat(s, "/trace");
 	}
-	scopy(p, s);
-	strcat(s, "/trace");
 #else
 	scopy("./trace", s);
 #endif /* not_this_way */
