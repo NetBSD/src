@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.179 2002/12/29 12:06:34 jdc Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.180 2003/01/16 15:20:19 kanaoka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -856,6 +856,9 @@
 #define	PCMCIA_CIS_SMC_2632W	{ "SMC", "SMC2632W", "Version 01.02", NULL }
 #define	PCMCIA_PRODUCT_SMC_2632W	-1
 #define	PCMCIA_STR_SMC_2632W	"SMC 2632 EZ Connect Wireless PC Card"
+#define	PCMCIA_CIS_SMC_8041	{ "SMC", "8041TX-10/100-PC-Card-V2", NULL, NULL }
+#define	PCMCIA_PRODUCT_SMC_8041	-1
+#define	PCMCIA_STR_SMC_8041	"SMC 8041TX 10/100 PC Card"
 #define	PCMCIA_CIS_SVEC_COMBOCARD	{ "Ethernet", "Adapter", NULL, NULL }
 #define	PCMCIA_PRODUCT_SVEC_COMBOCARD	-1
 #define	PCMCIA_STR_SVEC_COMBOCARD	"SVEC/Hawking Tech. Combo Card"
