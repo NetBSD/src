@@ -1,4 +1,0 @@
-@set UPDATED 2 May 2001
-@c $NetBSD: version.texi,v 1.1.1.4 2001/05/13 17:50:24 veego Exp $
-@set EDITION 6.0.6
-@set VERSION 6.0.6

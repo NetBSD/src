@@ -1,5 +1,0 @@
-# $NetBSD: ad.arm,v 1.4 2002/03/30 06:28:58 thorpej Exp $
-./sbin/ldconfig			base-sysutil-root
-./usr/lib/libarm.so.0		base-sys-shlib
-./usr/lib/libarm.so.0.0		base-sys-shlib
-./usr/libexec/ld.so		base-sys-shlib

@@ -1,6 +1,0 @@
-You may modify your system's hostname using this form.  Setting it for
-boot time, will only modify the /etc/myname file, and take effect on your
-next reboot.  Setting it now, will only modify the running hostname.  By
-selecting both, you can permanently change your hostname, immediately.
-
-$NetBSD: help,v 1.1 2001/04/25 03:43:29 garbled Exp $

@@ -1,3 +1,0 @@
-# $NetBSD: stl.elf,v 1.1 2002/03/26 22:58:18 fredette Exp $
-./usr/lib/crtbegin.o		comp-c-lib
-./usr/lib/crtend.o		comp-c-lib

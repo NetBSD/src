@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $	*/
+/*	$NetBSD: perform.c,v 1.36.2.1 2002/07/22 16:47:33 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.36 2002/06/10 09:14:27 yamt Exp $");
+__RCSID("$NetBSD: perform.c,v 1.36.2.1 2002/07/22 16:47:33 agc Exp $");
 #endif
 #endif
 
@@ -512,10 +512,13 @@ require_print(void)
 static int
 pkg_do(char *pkg)
 {
-	FILE   *cfile;
-	char    home[FILENAME_MAX];
-	plist_t *p;
-	char   *tmp;
+	plist_t	       *p;
+	FILE	       *cfile;
+	FILE	       *fp;
+	char    	home[FILENAME_MAX];
+	char    	view[FILENAME_MAX];
+	char	       *tmp;
+	int		cc;
 
 	/* Reset some state */
 	if (Plist.head)
@@ -567,6 +570,28 @@ pkg_do(char *pkg)
 				return 1;
 		} else
 			require_delete(home, 0);
+	}
+	if (!isemptyfile(VIEWS_FNAME)) {
+		/* This package has instances in other views */
+		/* Delete them from the views */
+		if ((fp = fopen(VIEWS_FNAME, "r")) == NULL) {
+			warnx("unable to open '%s' file", VIEWS_FNAME);
+			return 1;
+		}
+		while (fgets(view, sizeof(view), fp) != NULL) {
+			if (view[cc = strlen(view) - 1] == '\n') {
+				view[cc] = 0;
+			}
+			if (Verbose) {
+				printf("Deleting package %s instance from `%s' view\n", pkg, view);
+			}
+			if (vsystem("env PKG_DBDIR=%s pkg_delete %s", view, pkg) != 0) {
+				warnx("unable to delete package %s from view %s", pkg, view);
+				(void) fclose(fp);
+				return 1;
+			}
+		}
+		(void) fclose(fp);
 	}
 	sanity_check(LogDir);
 	cfile = fopen(CONTENTS_FNAME, "r");

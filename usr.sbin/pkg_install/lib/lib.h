@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.43 2002/07/19 19:04:40 yamt Exp $ */
+/* $NetBSD: lib.h,v 1.43.2.1 2002/07/22 16:47:34 agc Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -100,6 +100,7 @@
 #define BUILD_INFO_FNAME	"+BUILD_INFO"
 #define SIZE_PKG_FNAME		"+SIZE_PKG"
 #define SIZE_ALL_FNAME		"+SIZE_ALL"
+#define VIEWS_FNAME		"+VIEWS"
 
 #define CMD_CHAR		'@'	/* prefix for extended PLIST cmd */
 
