@@ -1,7 +1,7 @@
-/*	$NetBSD: ftpd.c,v 1.81 1999/12/21 12:56:15 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.82 2000/01/08 11:09:56 lukem Exp $	*/
 
 /*
- * Copyright (c) 1997-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.81 1999/12/21 12:56:15 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.82 2000/01/08 11:09:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -181,6 +181,7 @@ union sockunion  pasv_addr;
 int	data;
 jmp_buf	errcatch, urgcatch;
 int	logged_in;
+int	connections = 1;
 struct	passwd *pw;
 int	debug;
 int	sflag;
@@ -459,6 +460,10 @@ main(argc, argv)
 	}
 #endif /* KERBEROS5 */
 
+	init_curclass();
+	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
+	curclass.type = CLASS_REAL;
+
 	/* If logins are disabled, print out the message. */
 	if (format_file(_PATH_NOLOGIN, 530)) {
 		reply(530, "System not available.");
@@ -467,9 +472,6 @@ main(argc, argv)
 	(void)format_file(conffilename(_PATH_FTPWELCOME), 220);
 		/* reply(220,) must follow */
 	reply(220, "%s FTP server (%s) ready.", hostname, version);
-
-	curclass.timeout = 300;		/* 5 minutes, as per login(1) */
-	curclass.type = CLASS_REAL;
 
 	(void) setjmp(errcatch);
 	for (;;)
@@ -562,7 +564,7 @@ user(name)
 			/* need `pw' setup for checkaccess() and checkuser () */
 		if ((pw = sgetpwnam("ftp")) == NULL)
 			reply(530, "User %s unknown.", name);
-		else if (! checkaccess("ftp") && ! checkaccess("anonymous"))
+		else if (! checkaccess("ftp") || ! checkaccess("anonymous"))
 			reply(530, "User %s access denied.", name);
 		else {
 			curclass.type = CLASS_GUEST;
@@ -859,8 +861,7 @@ skip:
 		if (logging)
 			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
 			    remotehost, pw->pw_name);
-		pw = (struct passwd *) NULL;
-		goto cleanuppass;
+		goto bad;
 	}
 	/* check for valid shell, if not guest user */
 	if ((shell = pw->pw_shell) == NULL || *shell == 0)
@@ -874,14 +875,13 @@ skip:
 		if (logging)
 			syslog(LOG_NOTICE, "FTP LOGIN REFUSED FROM %s, %s",
 			    remotehost, pw->pw_name);
-		pw = (struct passwd *) NULL;
-		goto cleanuppass;
+		goto bad;
 	}
 
 	login_attempts = 0;		/* this time successful */
 	if (setegid((gid_t)pw->pw_gid) < 0) {
 		reply(550, "Can't set gid.");
-		goto cleanuppass;
+		goto bad;
 	}
 	(void) initgroups(pw->pw_name, pw->pw_gid);
 
@@ -928,6 +928,18 @@ skip:
 
 	/* parse ftpd.conf, setting up various parameters */
 	parse_conf(class);
+	count_users();
+	if (curclass.limit != -1 && connections > curclass.limit) {
+		if (! EMPTYSTR(curclass.limitfile))
+			(void)format_file(conffilename(curclass.limitfile),530);
+		reply(530,
+		    "User %s access denied, connection limit of %d reached",
+		    pw->pw_name, curclass.limit);
+		syslog(LOG_NOTICE,
+	"Maximum connection limit of %d for class %s reached, login refused",
+		    curclass.limit, curclass.classname);
+		goto bad;
+	}
 
 	home = "/";
 	switch (curclass.type) {
@@ -1042,7 +1054,7 @@ retrieve(argv, name)
 		}
 	}
 	if (argv != NULL) {
-		char temp[MAXPATHLEN + 1];
+		char temp[MAXPATHLEN];
 
 		if (strcmp(argv[0], INTERNAL_LS) == 0) {
 			isls = 1;
@@ -1904,6 +1916,14 @@ epsvonly:;
 			lreply(0, "Notify fileglob: %s", curclass.notify);
 		lreply(0, "Idle timeout: %d, maximum timeout: %d",
 		    curclass.timeout, curclass.maxtimeout);
+		lreply(0, "Current connections: %d", connections);
+		if (curclass.limit == -1)
+			lreply(0, "Maximum connections: unlimited");
+		else
+			lreply(0, "Maximum connections: %d", curclass.limit);
+		if (curclass.limitfile)
+			lreply(0, "Connection limit exceeded file: %s",
+			    curclass.limitfile);
 		if (curclass.motd != NULL)
 			lreply(0, "MotD file: %s", curclass.motd);
 		lreply(0,
@@ -2054,7 +2074,7 @@ static void
 replydirname(name, message)
 	const char *name, *message;
 {
-	char npath[MAXPATHLEN + 1];
+	char npath[MAXPATHLEN];
 	int i;
 
 	for (i = 0; *name != '\0' && i < sizeof(npath) - 1; i++, name++) {
@@ -2097,7 +2117,7 @@ removedir(name)
 void
 pwd()
 {
-	char path[MAXPATHLEN + 1];
+	char path[MAXPATHLEN];
 
 	if (getcwd(path, sizeof(path) - 1) == NULL)
 		reply(550, "Can't get the current directory: %s.",
@@ -2368,7 +2388,7 @@ static char *
 gunique(local)
 	const char *local;
 {
-	static char new[MAXPATHLEN + 1];
+	static char new[MAXPATHLEN];
 	struct stat st;
 	char *cp;
 	int count;
@@ -2509,7 +2529,7 @@ send_file_list(whichf)
 			continue;
 
 		while ((dir = readdir(dirp)) != NULL) {
-			char nbuf[MAXPATHLEN + 1];
+			char nbuf[MAXPATHLEN];
 
 			if (dir->d_name[0] == '.' && dir->d_namlen == 1)
 				continue;
@@ -2574,7 +2594,7 @@ char *
 conffilename(s)
 	const char *s;
 {
-	static char filename[MAXPATHLEN + 1];
+	static char filename[MAXPATHLEN];
 
 	if (*s == '/')
 		strlcpy(filename, s, sizeof(filename));
@@ -2602,7 +2622,7 @@ logcmd(command, bytes, file1, file2, elapsed, error)
 	const struct timeval	*elapsed;
 	const char		*error;
 {
-	char	buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN + 1];
+	char	buf[MAXPATHLEN * 2 + 100], realfile[MAXPATHLEN];
 	const char *p;
 	size_t	len;
 
