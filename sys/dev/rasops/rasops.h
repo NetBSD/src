@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.8 1999/10/23 23:14:13 ad Exp $ */
+/* 	$NetBSD: rasops.h,v 1.9 1999/12/02 22:57:13 drochner Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -104,6 +104,8 @@ struct rasops_info {
 	
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor) __P((struct rasops_info *));
+
+	void	*ri_hw;		/* for driver use, ignored by rasops */
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((caddr_t)(p) + (d)))
@@ -138,7 +140,7 @@ void	rasops_eraserows __P((void *, int, int, long));
 void	rasops_erasecols __P((void *, int, int, int, long));
 void	rasops_copycols __P((void *, int, int, int, int));
 
-extern u_char	rasops_isgray[16];
-extern u_char	rasops_cmap[256*3];
+extern const u_char	rasops_isgray[16];
+extern const u_char	rasops_cmap[256*3];
 
 #endif /* _RASOPS_H_ */

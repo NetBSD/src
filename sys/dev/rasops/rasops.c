@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.22 1999/11/06 01:01:20 enami Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.23 1999/12/02 22:57:13 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.22 1999/11/06 01:01:20 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.23 1999/12/02 22:57:13 drochner Exp $");
 
 #include "opt_rasops.h"
 #include "rasops_glue.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.22 1999/11/06 01:01:20 enami Exp $");
 #endif
 
 /* ANSI colormap (R,G,B). Upper 8 are high-intensity */
-u_char rasops_cmap[256*3] = {
+const u_char rasops_cmap[256*3] = {
 	0x00, 0x00, 0x00, /* black */
 	0x7f, 0x00, 0x00, /* red */
 	0x00, 0x7f, 0x00, /* green */
@@ -78,10 +78,26 @@ u_char rasops_cmap[256*3] = {
 	0xff, 0x00, 0xff, /* magenta */
 	0x00, 0xff, 0xff, /* cyan */
 	0xff, 0xff, 0xff, /* white */
+
+	/*
+	 * For the cursor, we need at least the last (255th)
+	 * color to be white. Fill up white completely for
+	 * simplicity.
+	 */
+#define _CMWHITE 0xff, 0xff, 0xff,
+#define _CMWHITE16	_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE \
+			_CMWHITE _CMWHITE _CMWHITE _CMWHITE
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+	_CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16 _CMWHITE16
+#undef _CMWHITE16
+#undef _CMWHITE
 };
 
 /* True if color is gray */
-u_char rasops_isgray[16] = { 
+const u_char rasops_isgray[16] = { 
 	1, 0, 0, 0, 
 	0, 0, 0, 1,
 	1, 0, 0, 0,
@@ -145,11 +161,6 @@ rasops_init(ri, wantrows, wantcols)
 	}
 #endif
 
-	/* Fix colormap. We need this for the cursor to work. */
-	rasops_cmap[255*3+0] = 0xff;
-	rasops_cmap[255*3+1] = 0xff;
-	rasops_cmap[255*3+2] = 0xff;
-	
 	if (rasops_reconfig(ri, wantrows, wantcols))
 		return (-1);
  	
@@ -347,7 +358,12 @@ rasops_alloc_cattr(cookie, fg, bg, flg, attr)
 #endif
 	if ((flg & WSATTR_BLINK) != 0)
 		return (EINVAL);
-		
+
+	if ((flg & WSATTR_WSCOLORS) == 0) {
+		fg = WSCOL_WHITE;
+		bg = WSCOL_BLACK;
+	}
+
 	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
@@ -380,12 +396,12 @@ rasops_alloc_mattr(cookie, fg, bg, flg, attr)
 {
 	int swap;
 
-	fg = (fg == WSCOL_BLACK ? 0 : 1);
-	bg = (bg == WSCOL_BLACK ? 0 : 1);
-	
-	if ((flg & (WSATTR_BLINK | WSATTR_HILIT)) != 0)
+	if ((flg & (WSATTR_BLINK | WSATTR_HILIT | WSATTR_WSCOLORS)) != 0)
 		return (EINVAL);
-		
+
+	fg = 1;
+	bg = 0;
+
 	if ((flg & WSATTR_REVERSE) != 0) {
 		swap = fg;
 		fg = bg;
@@ -581,7 +597,7 @@ static void
 rasops_init_devcmap(ri)
 	struct rasops_info *ri;
 {
-	u_char *p;
+	const u_char *p;
 	int i, c;
 	
 	switch (ri->ri_depth) {
