@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.29.2.23 2004/07/19 09:48:19 tron Exp $	*/
+/*	$NetBSD: gzip.c,v 1.29.2.24 2004/07/19 09:49:16 tron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.29.2.23 2004/07/19 09:48:19 tron Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.29.2.24 2004/07/19 09:49:16 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -777,14 +777,13 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 			error = inflate(&z, Z_FINISH);
 			/* Z_BUF_ERROR goes with Z_FINISH... */
 			if (error == Z_STREAM_END || error == Z_BUF_ERROR) {
-				size_t wr = BUFLEN - z.avail_out;
+				ssize_t wr = BUFLEN - z.avail_out;
 
 				/* Nothing left? */
 				if (wr == 0)
 					goto stop;
 
-				crc = crc32(crc, outbuf, wr);
-
+				crc = crc32(crc, (const Bytef *)outbuf, (unsigned)wr);
 				if (
 #ifndef SMALL
 				    /* don't write anything with -t */
@@ -818,16 +817,20 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 					if (!done_reading && empty_buffer++ < 4)
 						continue;
 					maybe_warnx("truncated input");
+					out_tot = -1;
 					goto stop;
 				}
 				empty_buffer = 0;
-				origcrc = z.next_in[0] |
-					z.next_in[1] << 8 |
-					z.next_in[2] << 16 |
-					z.next_in[3] << 24;
-				if (origcrc != crc)
+				origcrc = ((unsigned)z.next_in[0] & 0xff) |
+					((unsigned)z.next_in[1] & 0xff) << 8 |
+					((unsigned)z.next_in[2] & 0xff) << 16 |
+					((unsigned)z.next_in[3] & 0xff) << 24;
+				if (origcrc != crc) {
 					maybe_warnx("invalid compressed"
 					     " data--crc error");
+					out_tot = -1;
+					goto stop;
+				}
 			}
 
 			z.avail_in -= 4;
@@ -846,17 +849,21 @@ gz_uncompress(int in, int out, char *pre, size_t prelen, off_t *gsizep,
 					if (!done_reading && empty_buffer++ < 4)
 						continue;
 					maybe_warnx("truncated input");
+					out_tot = -1;
 					goto stop;
 				}
 				empty_buffer = 0;
-				origlen = z.next_in[0] |
-					z.next_in[1] << 8 |
-					z.next_in[2] << 16 |
-					z.next_in[3] << 24;
+				origlen = ((unsigned)z.next_in[0] & 0xff) |
+					((unsigned)z.next_in[1] & 0xff) << 8 |
+					((unsigned)z.next_in[2] & 0xff) << 16 |
+					((unsigned)z.next_in[3] & 0xff) << 24;
 
-				if (origlen != out_sub_tot)
+				if (origlen != out_sub_tot) {
 					maybe_warnx("invalid compressed"
 					     " data--length error");
+					out_tot = -1;
+					goto stop;
+				}
 			}
 				
 			z.avail_in -= 4;
@@ -989,6 +996,9 @@ check_suffix(char *file)
 
 	for (s = suffixes; *s; s++) {
 		slen = strlen(*s);
+		/* if it doesn't fit in "a.suf", don't bother */
+		if (slen + 1 > len)
+			continue;
 		if (strcmp(*s, file + len - slen) == 0)
 			return *s;
 	}
@@ -1110,7 +1120,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	struct stat isb, osb;
 	char *s;
 	off_t size;
-	ssize_t len = strlen(file);
+	ssize_t rbytes, len = strlen(file);
 	unsigned char header1[4], name[PATH_MAX + 1];
 	enum filetype method;
 	int fd, zfd;
@@ -1125,13 +1135,17 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		maybe_warn("can't open %s", file);
 		goto lose;
 	}
-	if (read(fd, header1, sizeof header1) != sizeof header1) {
+	rbytes = read(fd, header1, sizeof header1);
+	if (rbytes != sizeof header1) {
 		/* we don't want to fail here. */
 #ifndef SMALL
 		if (fflag)
 			goto lose_close_it;
 #endif
-		maybe_warn("can't read %s", file);
+		if (rbytes == -1)
+			maybe_warn("can't read %s", file);
+		else
+			maybe_warnx("%s: unexpected end of file", file);
 		goto lose;
 	}
 
@@ -1157,12 +1171,14 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 #endif
 
 	if (cflag == 0 || lflag) {
-		s = &file[len - suffix_len + 1];
-		if (strncmp(s, suffix, suffix_len) == 0) {
+		s = 0;
+		if (len - suffix_len + 1 > 0 &&
+		    (s = &file[len - suffix_len + 1]) &&
+		    strncmp(s, suffix, suffix_len) == 0) {
 			(void)strncpy(outfile, file, len - suffix_len + 1);
 			outfile[len - suffix_len + 1] = '\0';
 		} else if (lflag == 0) {
-			maybe_warnx("unknown suffix %s", s);
+			maybe_warnx("%s: unknown suffix -- ignored", file);
 			goto lose_close_it;
 		}
 	}
@@ -1193,7 +1209,6 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 #endif
 
 		if (header1[3] & ORIG_NAME) {
-			size_t rbytes;
 			int i;
 
 			if (lseek(fd, GZIP_ORIGNAME, SEEK_SET) == -1) {
