@@ -1,4 +1,4 @@
-/*	$NetBSD: sii.c,v 1.21 1997/04/29 01:58:38 jonathan Exp $	*/
+/*	$NetBSD: sii.c,v 1.22 1997/05/22 03:26:16 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -1061,7 +1061,7 @@ again:
 			 * Note that the SII DMA address is not incremented
 			 * as DMA proceeds.
 			 */
-			if (state->dmaCurPhase > 0) {
+			if (state->dmaCurPhase >= 0) {
 				/* save dma registers */
 				state->dmaPrevPhase = state->dmaCurPhase;
 				state->dmaCurPhase = -1;
