@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.h,v 1.1 1997/10/14 09:35:34 mark Exp $	*/
+/*	$NetBSD: disassem.h,v 1.2 1998/01/21 22:33:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,6 +39,5 @@
 typedef struct {
 	u_int	(*di_readword) __P((u_int));
 	void	(*di_printaddr) __P((u_int));	
-	void	(*di_printf) __P((const char *, ...))
-		    __kprintf_attribute__((__format__(__kprintf__,1,2)));
+	void	(*di_printf) __P((const char *, ...));
 } disasm_interface_t;
