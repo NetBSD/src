@@ -1,11 +1,13 @@
-.\"	$NetBSD: hardware,v 1.8 2000/10/29 14:08:09 lukem Exp $
+.\"	$NetBSD: hardware,v 1.9 2002/06/30 12:15:13 lukem Exp $
 .
 .Nx*M
 \*V runs on a
 .Tn PC532
-computer. It supports a subset of the
+computer.
+It supports a subset of the
 .Dq standard
-hardware to date. This is defined as:
+hardware to date.
+This is defined as:
 .(bullet -offset indent
 4 MB of memory
 .It
@@ -26,7 +28,8 @@ The Matthias Pfaller Parallel Port.
 .Nx*M
 currently expects the ROM monitor to be the
 .Dq autoboot monitor
-of Oct/Nov 1991. It includes support to set up auto booting of
+of Oct/Nov 1991.
+It includes support to set up auto booting of
 .Nx ,
 including a secondary boot program that the autoboot monitor
 will load that in turn loads the
@@ -39,6 +42,5 @@ Source and ROM images of the autoboot monitor are located at
 .Pp
 Most of the \*M specific development of
 .Nx*M
-was done on a
-machine with 8 MB of memory. It should run with 4 MB of memory
-although it may be slower.
+was done on a machine with 8 MB of memory.
+It should run with 4 MB of memory although it may be slower.

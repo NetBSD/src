@@ -1,10 +1,11 @@
-.\"	$NetBSD: hardware,v 1.5 2002/05/03 03:59:30 mbw Exp $
+.\"	$NetBSD: hardware,v 1.6 2002/06/30 12:07:35 lukem Exp $
 .
 .Nx*M
 \*V will run on the 25 MHz 68040-based
 .Tn NeXT
-workstations.  The Turbo (33 MHz) models are not supported.  The 68030
-model is not supported.
+workstations.
+The Turbo (33 MHz) models are not supported.
+The 68030 model is not supported.
 .Nx*M
 \*V does not
 have any local disk support, so you must netboot and run diskless.
@@ -12,8 +13,8 @@ have any local disk support, so you must netboot and run diskless.
 The minimum configuration requires 4 MB of RAM and a network server
 capable of netbooting
 .Nx*M .
-Serial consoles are poorly supported by the hardware, see the FAQ for
-help.  Typically it is just easier to use the NeXT monitor and keyboard.
+Serial consoles are poorly supported by the hardware, see the FAQ for help.
+Typically it is just easier to use the NeXT monitor and keyboard.
 .Lk http://www.netbsd.org/Ports/next68k/faq.html
 .
 .Ss2 Supported hardware
