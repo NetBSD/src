@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.1 1997/02/07 17:37:29 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.2 1997/02/26 04:52:13 sommerfe Exp $	*/
 
 #undef AHADIAG
 #ifdef DDB
@@ -985,7 +985,9 @@ aha_inquire_setup_information(sc)
 	*p = '\0';
 
 noinquire:
-	printf(": model AHA-%s, firmware %s\n", sc->sc_model, sc->sc_firmware);
+	printf("%s: model AHA-%s, firmware %s\n",
+	       sc->sc_dev.dv_xname,
+	       sc->sc_model, sc->sc_firmware);
 }
 
 void
