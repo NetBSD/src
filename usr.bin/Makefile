@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 1999/02/15 03:11:08 simonb Exp $
+#	$NetBSD: Makefile,v 1.98 1999/02/15 15:07:14 kleink Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -14,7 +14,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
 	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
-	msgc msgs netstat newsyslog nfsstat nice nohup pagesize \
+	msgc msgs netstat newsyslog nfsstat nice nl nohup pagesize \
 	passwd paste patch pr printenv printf quota rdist \
 	renice rev rlogin rpcgen rpcinfo rs rsh rup \
 	ruptime rusers rwall rwho script sed shar shlock \
