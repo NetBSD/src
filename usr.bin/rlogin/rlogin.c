@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.20 1997/10/19 14:10:38 lukem Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.21 1998/07/11 07:17:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.20 1997/10/19 14:10:38 lukem Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.21 1998/07/11 07:17:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,6 @@ Key_schedule schedule;
 MSG_DAT msg_data;
 struct sockaddr_in local, foreign;
 int use_kerberos = 1, doencrypt;
-char dest_realm[REALM_SZ];
 kstream krem;
 #endif
 
@@ -130,7 +129,7 @@ void		catch_child __P((int));
 void		copytochild __P((int));
 void		doit __P((sigset_t *));
 void		done __P((int));
-void		echo __P((char));
+void		echo __P((int));
 u_int		getescape __P((char *));
 void		lostpeer __P((int));
 int		main __P((int, char **));
@@ -179,6 +178,7 @@ main(argc, argv)
 	int through_once = 0;
 	char *cp = (char *) NULL;
 	extern int _kstream_des_debug_OOB;
+	char *dest_realm;
 #endif
 
 	argoff = dflag = 0;
@@ -207,11 +207,11 @@ main(argc, argv)
 		case 'E':
 			noescape = 1;
 			break;
-		case 'K':
 #ifdef KERBEROS
+		case 'K':
 			use_kerberos = 0;
-#endif
 			break;
+#endif
 		case 'd':
 #ifdef KERBEROS
 			_kstream_des_debug_OOB = 1;
@@ -224,7 +224,7 @@ main(argc, argv)
 			break;
 #ifdef KERBEROS
 		case 'k':
-			(void)strncpy(dest_realm, optarg, REALM_SZ);
+			dest_realm = optarg;
 			break;
 #endif
 		case 'l':
@@ -269,8 +269,8 @@ main(argc, argv)
 	if (!user)
 		user = name;
 
-	sp = NULL;
 #ifdef KERBEROS
+	sp = NULL;
 	if (use_kerberos) {
 		sp = getservbyname((doencrypt ? "eklogin" : "klogin"), "tcp");
 		if (sp == NULL) {
@@ -279,8 +279,8 @@ main(argc, argv)
 			    doencrypt ? "eklogin" : "klogin");
 		}
 	}
-#endif
 	if (sp == NULL)
+#endif
 		sp = getservbyname("login", "tcp");
 	if (sp == NULL)
 		errx(1, "login/tcp: unknown service.");
@@ -304,7 +304,7 @@ main(argc, argv)
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = lostpeer;
-	(void)sigaction(SIGPIPE, &sa, (struct sigaction *) 0);
+	(void)sigaction(SIGPIPE, &sa, (struct sigaction *)0);
 	/* will use SIGUSR1 for window size hack, so hold it off */
 	sigemptyset(&smask);
 	sigaddset(&smask, SIGURG);
@@ -313,7 +313,7 @@ main(argc, argv)
 	/*
 	 * We set SIGURG and SIGUSR1 below so that an
 	 * incoming signal will be held pending rather than being
-	 * discarded. Note that these routines will be ready to get;
+	 * discarded. Note that these routines will be ready to get
 	 * a signal by the time that they are unblocked below.;
 	 */
 	sa.sa_handler = copytochild;
@@ -345,15 +345,15 @@ try_connect:
 #endif /* CRYPT */
 			authopts = 0L;
 
-		/* default this now, once. */
-		if (!(cp = krb_realmofhost (host))) {
-			warnx("Unknown realm for host %s.", host);
-			use_kerberos = 0;
-			sp = getservbyname("login", "tcp");
-			goto try_connect;
+		if (dest_realm == NULL) {
+			/* default this now, once. */
+			if (!(dest_realm = krb_realmofhost (host))) {
+				warnx("Unknown realm for host %s.", host);
+				use_kerberos = 0;
+				sp = getservbyname("login", "tcp");
+				goto try_connect;
+			}
 		}
-
-		strncpy(dest_realm, cp, REALM_SZ);
 
 		rem = kcmd(&sock, &host, sp->s_port, name, user, 
 			   term, 0, &ticket, "rcmd", dest_realm,
@@ -427,7 +427,6 @@ try_connect:
 	return (0);
 }
 
-#if BSD >= 198810
 int
 speed(fd)
 	int fd;
@@ -436,27 +435,8 @@ speed(fd)
 
 	(void)tcgetattr(fd, &tt);
 
-	return ((int) cfgetispeed(&tt));
+	return ((int)cfgetispeed(&tt));
 }
-#else
-int    speeds[] = {	/* for older systems, B0 .. EXTB */
-	0, 50, 75, 110,
-	134, 150, 200, 300,
-	600, 1200, 1800, 2400,
-	4800, 9600, 19200, 38400
-};
-
-int
-speed(fd)
-	int fd;
-{
-	struct termios tt;
-
-	(void)tcgetattr(fd, &tt);
-
-	return (speeds[(int)cfgetispeed(&tt)]);
-}
-#endif
 
 pid_t child;
 struct termios deftt;
@@ -633,18 +613,18 @@ writer()
 		} else if (local) {
 			local = 0;
 			if (c == '.' || CCEQ(deftty.c_cc[VEOF], c)) {
-				echo(c);
+				echo((int)c);
 				break;
 			}
 			if (CCEQ(deftty.c_cc[VSUSP], c)) {
 				bol = 1;
-				echo(c);
+				echo((int)c);
 				stop(1);
 				continue;
 			}
 			if (CCEQ(deftty.c_cc[VDSUSP], c)) {
 				bol = 1;
-				echo(c);
+				echo((int)c);
 				stop(0);
 				continue;
 			}
@@ -682,13 +662,10 @@ writer()
 }
 
 void
-#if __STDC__
-echo(char c)
-#else
-echo(c)
-	char c;
-#endif
+echo(i)
+	int i;
 {
+	char c = (char)i;
 	char *p;
 	char buf[8];
 
@@ -868,11 +845,7 @@ reader(smask)
 	char *bufp;
 	struct sigaction sa;
 
-#if BSD >= 43 || defined(SUNOS4)
 	pid = getpid();		/* modern systems use positives for pid */
-#else
-	pid = -getpid();	/* old broken systems use negatives */
-#endif
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
@@ -1010,12 +983,12 @@ usage()
 	    "usage: rlogin [ -%s]%s[-e char] [ -l username ] [username@]host\n",
 #ifdef KERBEROS
 #ifdef CRYPT
-	    "8EKLx", " [-k realm] ");
+	    "8EKLdx", " [-k realm] ");
 #else
-	    "8EKL", " [-k realm] ");
+	    "8EKLd", " [-k realm] ");
 #endif
 #else
-	    "8EL", " ");
+	    "8ELd", " ");
 #endif
 	exit(1);
 }
