@@ -90,6 +90,10 @@
 ./usr/include/mips/varargs.h
 ./usr/include/mips/vmparam.h
 ./usr/lib/c++rt0.o
+./usr/lib/crtbegin.o
+./usr/lib/crtbeginS.o
+./usr/lib/crtend.o
+./usr/lib/crtendS.o
 ./usr/lib/libamu.so
 ./usr/lib/libamu_pic.a
 ./usr/lib/libbfd.so
