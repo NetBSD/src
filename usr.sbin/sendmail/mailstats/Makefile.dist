@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.4 (Berkeley) 9/1/95
+#	@(#)Makefile.dist	8.1 (Berkeley) 7/1/95
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -13,13 +13,6 @@ O=	-O
 
 # location of sendmail source directory
 SRCDIR=	../src
-
-# define the database mechanisms available for map & alias lookups:
-#	-DNDBM -- use new DBM
-#	-DNEWDB -- use new Berkeley DB
-# The really old (V7) DBM library is no longer supported.
-#
-DBMDEF=	-DNDBM -DNEWDB
 
 # environment definitions (e.g., -D_AIX3)
 ENVDEF=
@@ -36,9 +29,9 @@ LDOPTS=
 LIBDIRS=-L/usr/sww/lib
 
 # libraries required on your system
-LIBS=	-ldb -ldbm
+LIBS=
 
-# location of makemap binary (usually /usr/sbin or /usr/etc)
+# location of mailstats binary (usually /usr/sbin or /usr/etc)
 BINDIR=	${DESTDIR}/usr/sbin
 
 # additional .o files needed
@@ -46,40 +39,30 @@ OBJADD=
 
 ###################  end of user configuration flags  ######################
 
-CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
+CFLAGS=	-I. $O ${INCDIRS} ${ENVDEF}
 
-OBJS=	makemap.o ${OBJADD}
+OBJS=	mailstats.o ${OBJADD}
 
 LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	bin
 BINGRP=	bin
 BINMODE=555
 
-ALL=	makemap makemap.0
+ALL=	mailstats
 
 all: ${ALL}
 
-makemap: ${BEFORE} ${OBJS}
-	${CC} -o makemap ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+mailstats: ${BEFORE} ${OBJS}
+	${CC} -o mailstats ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
-#NROFF= nroff -h
-NROFF=  groff -Tascii
-MANDOC= -mandoc
+install: install-mailstats
 
-makemap.0: makemap.8
-	${NROFF} ${MANDOC} makemap.8 > makemap.0
-
-install: install-makemap install-docs
-
-install-makemap: makemap
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} makemap ${BINDIR}
-
-# doesn't actually install them -- you may want to install pre-nroff versions
-install-docs: makemap.0
+install-mailstats: mailstats
+	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} mailstats ${BINDIR}
 
 clean:
-	rm -f ${OBJS} makemap makemap.0
+	rm -f ${OBJS} mailstats
 
 # dependencies
 #   gross overkill, and yet still not quite enough....
-${OBJS}: ${SRCDIR}/conf.h
+${OBJS}: ${SRCDIR}/sendmail.h ${SRCDIR}/mailstats.h ${SRCDIR}/conf.h

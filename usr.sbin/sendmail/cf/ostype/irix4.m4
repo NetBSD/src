@@ -34,9 +34,8 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)irix4.m4	8.5 (Berkeley) 11/13/95')
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', Ehm)')dnl
+ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
+ifdef(`ALIAS_FILE',, `define(`ALIAS_FILE', /usr/lib/aliases)')dnl
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/lib/sendmail.st)')dnl

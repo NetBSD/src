@@ -32,11 +32,17 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+#
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)isc4.1.m4	8.2 (Berkeley) 11/13/95')
+ifdef(`ALIAS_FILE',, `define(`ALIAS_FILE', /usr/lib/aliases)')dnl
+ifdef(`HELP_FILE',, `define(`HELP_FILE', /usr/lib/sendmail.hf)')dnl
+ifdef(`LOCAL_MAILER_ARGS',, `define(`LOCAL_MAILER_ARGS', `lmail -s $u')')dnl
+ifdef(`LOCAL_MAILER_FLAGS',, `define(`LOCAL_MAILER_FLAGS', `humS')')dnl
+ifdef(`LOCAL_MAILER_PATH',, `define(`LOCAL_MAILER_PATH', /bin/lmail)')dnl
+ifdef(`QUEUE_DIR',, `define(`QUEUE_DIR', /usr/spool/mqueue)')dnl
+ifdef(`STATUS_FILE',, `define(`STATUS_FILE', /usr/lib/sendmail.st)')dnl
+ifdef(`UUCP_MAILER_ARGS',, `define(`UUCP_MAILER_ARGS', `uux - -r -gC $h!rmail ($u)')')dnl
+ifdef(`UUCP_MAILER_PATH',, `define(`UUCP_MAILER_PATH', /usr/bin/uux)')dnl
+define(`confTIME_ZONE', `USE_TZ')dnl

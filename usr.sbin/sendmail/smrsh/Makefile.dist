@@ -5,7 +5,7 @@
 #  old make program (I recommend that you get and port the new make if you
 #  are going to be doing any signficant work on sendmail).
 #
-#	@(#)Makefile.dist	8.4 (Berkeley) 9/1/95
+#	@(#)Makefile.dist	8.1 (Berkeley) 7/2/95
 #
 
 # use O=-O (usual) or O=-g (debugging)
@@ -14,17 +14,8 @@ O=	-O
 # location of sendmail source directory
 SRCDIR=	../src
 
-# define the database mechanisms available for map & alias lookups:
-#	-DNDBM -- use new DBM
-#	-DNEWDB -- use new Berkeley DB
-# The really old (V7) DBM library is no longer supported.
-#
-DBMDEF=	-DNDBM -DNEWDB
-
 # environment definitions (e.g., -D_AIX3)
 ENVDEF=
-
-# see also conf.h for additional compilation flags
 
 # include directories
 INCDIRS=-I${SRCDIR} -I/usr/sww/include
@@ -36,49 +27,44 @@ LDOPTS=
 LIBDIRS=-L/usr/sww/lib
 
 # libraries required on your system
-LIBS=	-ldb -ldbm
+LIBS=	
 
-# location of makemap binary (usually /usr/sbin or /usr/etc)
-BINDIR=	${DESTDIR}/usr/sbin
+# location of smrsh binary (usually /usr/libexec or /usr/etc)
+BINDIR=	${DESTDIR}/usr/libexec
 
 # additional .o files needed
 OBJADD=
 
 ###################  end of user configuration flags  ######################
 
-CFLAGS=	-I. $O ${INCDIRS} ${DBMDEF} ${ENVDEF}
+CFLAGS=	-I. $O ${INCDIRS} ${ENVDEF}
 
-OBJS=	makemap.o ${OBJADD}
+OBJS=	smrsh.o ${OBJADD}
 
-LINKS=	${DESTDIR}/usr/ucb/newaliases ${DESTDIR}/usr/ucb/mailq
 BINOWN=	bin
 BINGRP=	bin
 BINMODE=555
 
-ALL=	makemap makemap.0
+ALL=	smrsh smrsh.0
 
 all: ${ALL}
 
-makemap: ${BEFORE} ${OBJS}
-	${CC} -o makemap ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
+smrsh: ${BEFORE} ${OBJS}
+	${CC} -o smrsh ${LDOPTS} ${OBJS} ${LIBDIRS} ${LIBS}
 
-#NROFF= nroff -h
-NROFF=  groff -Tascii
-MANDOC= -mandoc
+smrsh.0: smrsh.8
+	nroff -h -mandoc smrsh.8 > smrsh.0
 
-makemap.0: makemap.8
-	${NROFF} ${MANDOC} makemap.8 > makemap.0
+install: install-smrsh install-docs
 
-install: install-makemap install-docs
-
-install-makemap: makemap
-	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} makemap ${BINDIR}
+install-smrsh: smrsh
+	install -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} smrsh ${BINDIR}
 
 # doesn't actually install them -- you may want to install pre-nroff versions
-install-docs: makemap.0
+install-docs: smrsh.0
 
 clean:
-	rm -f ${OBJS} makemap makemap.0
+	rm -f ${OBJS} smrsh smrsh.0
 
 # dependencies
 #   gross overkill, and yet still not quite enough....

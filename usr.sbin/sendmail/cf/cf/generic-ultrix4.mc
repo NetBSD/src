@@ -33,10 +33,15 @@ divert(-1)
 # SUCH DAMAGE.
 #
 
-divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
 #
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
+#  This is a generic configuration file for Ultrix 4.x.
+#  It has support for local and SMTP mail only.  If you want to
+#  customize it, copy it to a name appropriate for your environment
+#  and do the modifications there.
 #
-divert(-1)
+
+VERSIONID(`@(#)generic-ultrix4.mc	8.2 (Berkeley) 8/6/95')
+OSTYPE(ultrix4)dnl
+DOMAIN(generic)dnl
+MAILER(local)dnl
+MAILER(smtp)dnl

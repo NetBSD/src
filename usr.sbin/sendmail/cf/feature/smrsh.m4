@@ -34,9 +34,9 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
+VERSIONID(`@(#)smrsh.m4	8.2 (Berkeley) 11/11/95')
 divert(-1)
+
+ifdef(`_MAILER_local_',
+	`errprint(`*** FEATURE(smrsh) must occur before MAILER(local)')')dnl
+define(`LOCAL_SHELL_PATH', ifelse(_ARG_, `', `/usr/local/etc/smrsh', _ARG_))

@@ -32,11 +32,14 @@ divert(-1)
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
 divert(0)
-VERSIONID(`@(#)notsticky.m4	8.3 (Berkeley) 5/29/95')
-#
-#  This is now the default.  Use ``FEATURE(stickyhost)'' if you want
-#  the old default behaviour.
-#
-divert(-1)
+VERSIONID(`@(#)Berkeley.EDU.m4	8.9 (Berkeley) 10/5/95')
+DOMAIN(berkeley-only)dnl
+define(`BITNET_RELAY', `bitnet-relay.Berkeley.EDU')dnl
+define(`UUCP_RELAY', `uucp-relay.Berkeley.EDU')dnl
+define(`confFORWARD_PATH', `$z/.forward.$w:$z/.forward')dnl
+define(`confCW_FILE', `-o /etc/sendmail.cw')dnl
+define(`confDONT_INIT_GROUPS', True)dnl
+FEATURE(redirect)dnl
+FEATURE(use_cw_file)dnl
+FEATURE(stickyhost)dnl
