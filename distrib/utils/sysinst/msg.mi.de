@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.3 2004/03/04 23:44:16 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.4 2004/03/05 05:35:16 jmc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -303,7 +303,7 @@ message fsize_fmt
 {Fragmentgrösse: %9d bytes}
 
 message isize_fmt
-{ Durschschnittliche Dateigrösse: %d Bytes (zur Inode Bestimmung)
+{ Durschschnittliche Dateigrösse: %d Bytes (zur Inode Bestimmung) }
 message isize_fmt_dflt
 {  Durchschnittliche Dateigrösse:  4 Fragmente}
 
