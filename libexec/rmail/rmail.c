@@ -1,4 +1,4 @@
-/*	$NetBSD: rmail.c,v 1.10 1997/10/08 01:05:35 enami Exp $	*/
+/*	$NetBSD: rmail.c,v 1.11 1997/10/20 02:08:30 enami Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rmail.c	8.3 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: rmail.c,v 1.10 1997/10/08 01:05:35 enami Exp $");
+__RCSID("$NetBSD: rmail.c,v 1.11 1997/10/20 02:08:30 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ __RCSID("$NetBSD: rmail.c,v 1.10 1997/10/08 01:05:35 enami Exp $");
  * The err(3) routine is included here deliberately to make this code
  * a bit more portable.
  */
+#include <sys/errno.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -94,8 +95,6 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern char *optarg;
-	extern int errno, optind;
 	FILE *fp;
 	struct stat sb;
 	size_t fplen, fptlen, len;
