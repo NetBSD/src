@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.62 2000/04/21 15:16:39 matt Exp $
+#	$NetBSD: GENERIC,v 1.63 2000/04/22 16:48:53 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.62 $"
+#ident 		"GENERIC-$Revision: 1.63 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -173,6 +173,8 @@ qe0		at uba? csr 0174440	# DEQNA/DELQA
 dhu0		at uba? csr 0160440	# DHU-11
 dz0		at uba? csr 0160100	# DZ-11
 dl0		at uba? csr 0176500	# DL-11
+rlc0		at uba? csr 0174400	# RL11/RLV11 controller
+rl*		at rlc? drive?		# RL01/RL02 disk drive
 
 # MSCP devices
 mscpbus*	at uda?

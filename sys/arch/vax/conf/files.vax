@@ -1,4 +1,4 @@
-#       $NetBSD: files.vax,v 1.66 2000/03/14 15:56:59 oster Exp $
+#       $NetBSD: files.vax,v 1.67 2000/04/22 16:48:54 ragge Exp $
 #
 # new style config file for vax architecture
 #
@@ -111,6 +111,9 @@ attach	uba at sbi with uba_sbi
 file	arch/vax/uba/uba_sbi.c		uba_sbi
 attach	uba at cmi with uba_cmi
 file	arch/vax/uba/uba_cmi.c		uba_cmi
+
+# Unibus disks
+major	{rl = 14}
 
 # BI bus definitions
 include "dev/bi/files.bi"
@@ -238,13 +241,6 @@ file	arch/vax/uba/lpa.c		lpa needs-flag
 device	ps
 attach	ps at uba
 file	arch/vax/uba/ps.c		ps needs-flag
-
-# RL02/RL11 at UBA
-device	hl { drive=-1 }
-attach	hl at uba
-device	rl: disk
-attach	rl at hl
-file	arch/vax/uba/rl.c		rl needs-flag
 
 # SC-21/SC-31 at UBA
 device	sc { drive=-1 }
