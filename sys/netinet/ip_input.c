@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.202 2004/05/02 05:02:53 darrenr Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.203 2004/05/25 04:34:00 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.202 2004/05/02 05:02:53 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.203 2004/05/25 04:34:00 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -2154,107 +2154,126 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 		       CTL_NET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "inet", NULL,
+		       CTLTYPE_NODE, "inet",
+		       SYSCTL_DESCR("PF_INET related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "ip", NULL,
+		       CTLTYPE_NODE, "ip",
+		       SYSCTL_DESCR("IPv4 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP, CTL_EOL);
 	
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "forwarding", NULL,
+		       CTLTYPE_INT, "forwarding",
+		       SYSCTL_DESCR("Enable forwarding of INET datagrams"),
 		       NULL, 0, &ipforwarding, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWARDING, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "redirect", NULL,
+		       CTLTYPE_INT, "redirect",
+		       SYSCTL_DESCR("Enable sending of ICMP redirect messages"),
 		       NULL, 0, &ipsendredirects, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_SENDREDIRECTS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "ttl", NULL,
+		       CTLTYPE_INT, "ttl",
+		       SYSCTL_DESCR("Default TTL for an INET datagram"),
 		       NULL, 0, &ip_defttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DEFTTL, CTL_EOL);
 #ifdef IPCTL_DEFMTU
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT /* |CTLFLAG_READWRITE? */,
-		       CTLTYPE_INT, "mtu", NULL,
+		       CTLTYPE_INT, "mtu",
+		       SYSCTL_DESCR("Default MTA for an INET route"),
 		       NULL, 0, &ip_mtu, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DEFMTU, CTL_EOL);
 #endif /* IPCTL_DEFMTU */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY1,
-		       CTLTYPE_INT, "forwsrcrt", NULL,
+		       CTLTYPE_INT, "forwsrcrt",
+		       SYSCTL_DESCR("Enable forwarding of source-routed "
+				    "datagrams"),
 		       NULL, 0, &ip_forwsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_FORWSRCRT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "directed-broadcast", NULL,
+		       CTLTYPE_INT, "directed-broadcast",
+		       SYSCTL_DESCR("Enable forwarding of broadcast datagrams"),
 		       NULL, 0, &ip_directedbcast, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_DIRECTEDBCAST, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "allowsrcrt", NULL,
+		       CTLTYPE_INT, "allowsrcrt",
+		       SYSCTL_DESCR("Accept source-routed datagrams"),
 		       NULL, 0, &ip_allowsrcrt, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ALLOWSRCRT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "subnetsarelocal", NULL,
+		       CTLTYPE_INT, "subnetsarelocal",
+		       SYSCTL_DESCR("Whether logical subnets are considered "
+				    "local"),
 		       NULL, 0, &subnetsarelocal, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_SUBNETSARELOCAL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mtudisc", NULL,
+		       CTLTYPE_INT, "mtudisc",
+		       SYSCTL_DESCR("Use RFC1191 Path MTU Discovery"),
 		       NULL, 0, &ip_mtudisc, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISC, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonportmin", NULL,
+		       CTLTYPE_INT, "anonportmin",
+		       SYSCTL_DESCR("Lowest ephemeral port number to assign"),
 		       sysctl_net_inet_ip_ports, 0, &anonportmin, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ANONPORTMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "anonportmax", NULL,
+		       CTLTYPE_INT, "anonportmax",
+		       SYSCTL_DESCR("Highest ephemeral port number to assign"),
 		       sysctl_net_inet_ip_ports, 0, &anonportmax, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_ANONPORTMAX, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mtudisctimeout", NULL,
+		       CTLTYPE_INT, "mtudisctimeout",
+		       SYSCTL_DESCR("Lifetime of a Path MTU Discovered route"),
 		       sysctl_net_inet_ip_pmtudto, 0, &ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
 #ifdef GATEWAY
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxflows", NULL,
+		       CTLTYPE_INT, "maxflows",
+		       SYSCTL_DESCR("Number of flows for fast forwarding"),
 		       sysctl_net_inet_ip_maxflows, 0, &ip_maxflows, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFLOWS, CTL_EOL);
 #endif /* GATEWAY */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "hostzerobroadcast", NULL,
+		       CTLTYPE_INT, "hostzerobroadcast",
+		       SYSCTL_DESCR("All zeroes address is broadcast address"),
 		       NULL, 0, &hostzeroisbroadcast, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
 #if NGIF > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "gifttl", NULL,
+		       CTLTYPE_INT, "gifttl",
+		       SYSCTL_DESCR("Default TTL for a gif tunnel datagram"),
 		       NULL, 0, &ip_gif_ttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_GIF_TTL, CTL_EOL);
@@ -2262,40 +2281,50 @@ SYSCTL_SETUP(sysctl_net_inet_ip_setup, "sysctl net.inet.ip subtree setup")
 #ifndef IPNOPRIVPORTS
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "lowportmin", NULL,
+		       CTLTYPE_INT, "lowportmin",
+		       SYSCTL_DESCR("Lowest privileged ephemeral port number "
+				    "to assign"),
 		       sysctl_net_inet_ip_ports, 0, &lowportmin, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOWPORTMIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "lowportmax", NULL,
+		       CTLTYPE_INT, "lowportmax",
+		       SYSCTL_DESCR("Highest privileged ephemeral port number "
+				    "to assign"),
 		       sysctl_net_inet_ip_ports, 0, &lowportmax, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_LOWPORTMAX, CTL_EOL);
 #endif /* IPNOPRIVPORTS */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "maxfragpackets", NULL,
+		       CTLTYPE_INT, "maxfragpackets",
+		       SYSCTL_DESCR("Maximum number of fragments to retain for "
+				    "possible reassembly"),
 		       NULL, 0, &ip_maxfragpackets, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MAXFRAGPACKETS, CTL_EOL);
 #if NGRE > 0
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "grettl", NULL,
+		       CTLTYPE_INT, "grettl",
+		       SYSCTL_DESCR("Default TTL for a gre tunnel datagram"),
 		       NULL, 0, &ip_gre_ttl, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_GRE_TTL, CTL_EOL);
 #endif /* NGRE */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "checkinterface", NULL,
+		       CTLTYPE_INT, "checkinterface",
+		       SYSCTL_DESCR("Enable receive side of Strong ES model "
+				    "from RFC1122"),
 		       NULL, 0, &ip_checkinterface, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_CHECKINTERFACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "random_id", NULL,
+		       CTLTYPE_INT, "random_id",
+		       SYSCTL_DESCR("Assign random ip_id values"),
 		       NULL, 0, &ip_do_randomid, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_RANDOMID, CTL_EOL);

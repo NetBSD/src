@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.91 2004/05/18 14:44:16 itojun Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.92 2004/05/25 04:34:00 atatat Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.91 2004/05/18 14:44:16 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_usrreq.c,v 1.92 2004/05/25 04:34:00 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1207,124 +1207,155 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 		       CTL_NET, pf, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, tcpname, NULL,
+		       CTLTYPE_NODE, tcpname,
+		       SYSCTL_DESCR("TCP related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "rfc1323", NULL,
+		       CTLTYPE_INT, "rfc1323",
+		       SYSCTL_DESCR("Enable RFC1323 TCP extensions"),
 		       NULL, 0, &tcp_do_rfc1323, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RFC1323, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sendspace", NULL,
+		       CTLTYPE_INT, "sendspace",
+		       SYSCTL_DESCR("Default TCP send buffer size"),
 		       NULL, 0, &tcp_sendspace, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SENDSPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "recvspace", NULL,
+		       CTLTYPE_INT, "recvspace",
+		       SYSCTL_DESCR("Default TCP receive buffer size"),
 		       NULL, 0, &tcp_recvspace, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RECVSPACE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mssdflt", NULL,
+		       CTLTYPE_INT, "mssdflt",
+		       SYSCTL_DESCR("Default maximum segment size"),
 		       sysctl_net_inet_tcp_mssdflt, 0, &tcp_mssdflt, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSSDFLT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "syn_cache_limit", NULL,
+		       CTLTYPE_INT, "syn_cache_limit",
+		       SYSCTL_DESCR("Maximum number of entries in the TCP "
+				    "compressed state engine"),
 		       NULL, 0, &tcp_syn_cache_limit, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_CACHE_LIMIT,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "syn_bucket_limit", NULL,
+		       CTLTYPE_INT, "syn_bucket_limit",
+		       SYSCTL_DESCR("Maximum number of entries per hash "
+				    "bucket in the TCP compressed state "
+				    "engine"),
 		       NULL, 0, &tcp_syn_bucket_limit, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_BUCKET_LIMIT,
 		       CTL_EOL);
 #if 0 /* obsoleted */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "syn_cache_interval", NULL,
+		       CTLTYPE_INT, "syn_cache_interval",
+		       SYSCTL_DESCR("TCP compressed state engine's timer interval"),
 		       NULL, 0, &tcp_syn_cache_interval, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SYN_CACHE_INTER,
 		       CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "init_win", NULL,
+		       CTLTYPE_INT, "init_win",
+		       SYSCTL_DESCR("Initial TCP congestion window"),
 		       NULL, 0, &tcp_init_win, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mss_ifmtu", NULL,
+		       CTLTYPE_INT, "mss_ifmtu",
+		       SYSCTL_DESCR("Use interface MTU for calculating MSS"),
 		       NULL, 0, &tcp_mss_ifmtu, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_MSS_IFMTU, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "sack", NULL,
+		       CTLTYPE_INT, "sack",
+		       SYSCTL_DESCR("Enable RFC2018 Selection ACKnowledgement "
+				    "(not implemented)"),
 		       NULL, 0, &tcp_do_sack, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SACK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "win_scale", NULL,
+		       CTLTYPE_INT, "win_scale",
+		       SYSCTL_DESCR("Use RFC1323 window scale options"),
 		       NULL, 0, &tcp_do_win_scale, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_WSCALE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "timestamps", NULL,
+		       CTLTYPE_INT, "timestamps",
+		       SYSCTL_DESCR("Use RFC1323 time stamp options"),
 		       NULL, 0, &tcp_do_timestamps, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_TSTAMP, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "compat_42", NULL,
+		       CTLTYPE_INT, "compat_42",
+		       SYSCTL_DESCR("Enable workarounds for 4.2BSD TCP bugs"),
 		       NULL, 0, &tcp_compat_42, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_COMPAT_42, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "cwm", NULL,
+		       CTLTYPE_INT, "cwm",
+		       SYSCTL_DESCR("Hughes/Touch/Heidemann Congestion Window "
+				    "Monitoring"),
 		       NULL, 0, &tcp_cwm, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_CWM, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "cwm_burstsize", NULL,
+		       CTLTYPE_INT, "cwm_burstsize",
+		       SYSCTL_DESCR("Congestion Window Monitoring allowed "
+				    "burst count in packets"),
 		       NULL, 0, &tcp_cwm_burstsize, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_CWM_BURSTSIZE,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "ack_on_push", NULL,
+		       CTLTYPE_INT, "ack_on_push",
+		       SYSCTL_DESCR("Immediately return ACK when PSH is "
+				    "received"),
 		       NULL, 0, &tcp_ack_on_push, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_ACK_ON_PUSH, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "keepidle", NULL,
+		       CTLTYPE_INT, "keepidle",
+		       SYSCTL_DESCR("Allowed connection idle ticks before a "
+				    "keepalive probe is sent"),
 		       NULL, 0, &tcp_keepidle, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPIDLE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "keepintvl", NULL,
+		       CTLTYPE_INT, "keepintvl",
+		       SYSCTL_DESCR("Ticks before next keepalive probe is sent"),
 		       NULL, 0, &tcp_keepintvl, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPINTVL, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "keepcnt", NULL,
+		       CTLTYPE_INT, "keepcnt",
+		       SYSCTL_DESCR("Number of keepalive probes to send"),
 		       NULL, 0, &tcp_keepcnt, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_KEEPCNT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-		       CTLTYPE_INT, "slowhz", NULL,
+		       CTLTYPE_INT, "slowhz",
+		       SYSCTL_DESCR("Keepalive ticks per second"),
 		       NULL, PR_SLOWHZ, NULL, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_SLOWHZ, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "newreno", NULL,
+		       CTLTYPE_INT, "newreno",
+		       SYSCTL_DESCR("NewReno congestion control algorithm"),
 		       NULL, 0, &tcp_do_newreno, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_NEWRENO, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "log_refused", NULL,
+		       CTLTYPE_INT, "log_refused",
+		       SYSCTL_DESCR("Log refused TCP connections"),
 		       NULL, 0, &tcp_log_refused, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_LOG_REFUSED, CTL_EOL);
 #if 0 /* obsoleted */
@@ -1336,23 +1367,28 @@ sysctl_net_inet_tcp_setup2(struct sysctllog **clog, int pf, const char *pfname,
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "rstppslimit", NULL,
+		       CTLTYPE_INT, "rstppslimit",
+		       SYSCTL_DESCR("Maximum number of RST packets to send "
+				    "per second"),
 		       NULL, 0, &tcp_rst_ppslim, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_RSTPPSLIMIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "delack_ticks", NULL,
+		       CTLTYPE_INT, "delack_ticks",
+		       SYSCTL_DESCR("Number of ticks to delay sending an ACK"),
 		       NULL, 0, &tcp_delack_ticks, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_DELACK_TICKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "init_win_local", NULL,
+		       CTLTYPE_INT, "init_win_local",
+		       SYSCTL_DESCR("Initial TCP window size (in segments)"),
 		       NULL, 0, &tcp_init_win_local, 0,
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_INIT_WIN_LOCAL,
 		       CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_STRUCT, "ident", NULL,
+		       CTLTYPE_STRUCT, "ident",
+		       SYSCTL_DESCR("RFC1413 Identification Protocol lookups"),
 		       sysctl_net_inet_tcp_ident, 0, NULL, sizeof(uid_t),
 		       CTL_NET, pf, IPPROTO_TCP, TCPCTL_IDENT, CTL_EOL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.97 2004/04/28 14:09:36 ragge Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.98 2004/05/25 04:33:59 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.97 2004/04/28 14:09:36 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.98 2004/05/25 04:33:59 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1523,31 +1523,36 @@ SYSCTL_SETUP(sysctl_net_inet_arp_setup, "sysctl net.inet.arp subtree setup")
 			CTL_NET, PF_INET, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, &node,
 			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "arp", NULL,
+			CTLTYPE_NODE, "arp",
+			SYSCTL_DESCR("Address Resolution Protocol"),
 			NULL, 0, NULL, 0,
 			CTL_NET, PF_INET, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "prune", NULL,
+			CTLTYPE_INT, "prune",
+			SYSCTL_DESCR("ARP cache pruning interval"),
 			NULL, 0, &arpt_prune, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "keep", NULL,
+			CTLTYPE_INT, "keep",
+			SYSCTL_DESCR("Valid ARP entry lifetime"),
 			NULL, 0, &arpt_keep, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "down", NULL,
+			CTLTYPE_INT, "down",
+			SYSCTL_DESCR("Failed ARP entry lifetime"),
 			NULL, 0, &arpt_down, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-			CTLTYPE_INT, "refresh", NULL,
+			CTLTYPE_INT, "refresh",
+			SYSCTL_DESCR("ARP entry refresh interval"),
 			NULL, 0, &arpt_refresh, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }

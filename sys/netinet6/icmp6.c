@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.106 2004/03/26 03:35:02 itojun Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.107 2004/05/25 04:34:00 atatat Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.106 2004/03/26 03:35:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.107 2004/05/25 04:34:00 atatat Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2867,25 +2867,29 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 		       CTL_NET, PF_INET6, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "icmp6", NULL,
+		       CTLTYPE_NODE, "icmp6",
+		       SYSCTL_DESCR("ICMPv6 related settings"),
 		       NULL, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6, CTL_EOL);
 
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "stats", NULL,
+		       CTLTYPE_STRUCT, "stats",
+		       SYSCTL_DESCR("ICMPv6 transmission statistics"),
 		       NULL, 0, &icmp6stat, sizeof(icmp6stat),
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_STATS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "rediraccept", NULL,
+		       CTLTYPE_INT, "rediraccept",
+		       SYSCTL_DESCR("Accept and process redirect messages"),
 		       NULL, 0, &icmp6_rediraccept, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_REDIRACCEPT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "redirtimeout", NULL,
+		       CTLTYPE_INT, "redirtimeout",
+		       SYSCTL_DESCR("Redirect generated route lifetime"),
 		       NULL, 0, &icmp6_redirtimeout, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_REDIRTIMEOUT, CTL_EOL);
@@ -2899,31 +2903,36 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_prune", NULL,
+		       CTLTYPE_INT, "nd6_prune",
+		       SYSCTL_DESCR("Neighbor discovery prune interval"),
 		       NULL, 0, &nd6_prune, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_PRUNE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_delay", NULL,
+		       CTLTYPE_INT, "nd6_delay",
+		       SYSCTL_DESCR("First probe delay time"),
 		       NULL, 0, &nd6_delay, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_DELAY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_umaxtries", NULL,
+		       CTLTYPE_INT, "nd6_umaxtries",
+		       SYSCTL_DESCR("Number of unicast discovery attempts"),
 		       NULL, 0, &nd6_umaxtries, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_UMAXTRIES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_mmaxtries", NULL,
+		       CTLTYPE_INT, "nd6_mmaxtries",
+		       SYSCTL_DESCR("Number of multicast discovery attempts"),
 		       NULL, 0, &nd6_mmaxtries, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_MMAXTRIES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_useloopback", NULL,
+		       CTLTYPE_INT, "nd6_useloopback",
+		       SYSCTL_DESCR("Use loopback interface for local traffic"),
 		       NULL, 0, &nd6_useloopback, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_USELOOPBACK, CTL_EOL);
@@ -2937,49 +2946,57 @@ SYSCTL_SETUP(sysctl_net_inet6_icmp6_setup,
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nodeinfo", NULL,
+		       CTLTYPE_INT, "nodeinfo",
+		       SYSCTL_DESCR("Respond to node information requests"),
 		       NULL, 0, &icmp6_nodeinfo, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_NODEINFO, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "errppslimit", NULL,
+		       CTLTYPE_INT, "errppslimit",
+		       SYSCTL_DESCR("Maximum ICMP errors sent per second"),
 		       NULL, 0, &icmp6errppslim, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ERRPPSLIMIT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_maxnudhint", NULL,
+		       CTLTYPE_INT, "nd6_maxnudhint",
+		       SYSCTL_DESCR("Maximum neighbor unreachable hint count"),
 		       NULL, 0, &nd6_maxnudhint, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_MAXNUDHINT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mtudisc_hiwat", NULL,
+		       CTLTYPE_INT, "mtudisc_hiwat",
+		       SYSCTL_DESCR("Low mark on MTU Discovery route timers"),
 		       NULL, 0, &icmp6_mtudisc_hiwat, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_MTUDISC_HIWAT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "mtudisc_lowat", NULL,
+		       CTLTYPE_INT, "mtudisc_lowat",
+		       SYSCTL_DESCR("Low mark on MTU Discovery route timers"),
 		       NULL, 0, &icmp6_mtudisc_lowat, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_MTUDISC_LOWAT, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "nd6_debug", NULL,
+		       CTLTYPE_INT, "nd6_debug",
+		       SYSCTL_DESCR("Enable neighbor discovery debug output"),
 		       NULL, 0, &nd6_debug, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_DEBUG, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "nd6_drlist", NULL,
+		       CTLTYPE_STRUCT, "nd6_drlist",
+		       SYSCTL_DESCR("Default router list"),
 		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_DRLIST, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
-		       CTLTYPE_STRUCT, "nd6_prlist", NULL,
+		       CTLTYPE_STRUCT, "nd6_prlist",
+		       SYSCTL_DESCR("Prefix list"),
 		       sysctl_net_inet6_icmp6_nd6, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_PRLIST, CTL_EOL);
