@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.14 1995/05/30 18:52:39 mycroft Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.15 1995/06/02 02:39:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -122,18 +122,14 @@ union_updatevp(un, uppervp, lowervp)
 	 * Ensure locking is ordered from lower to higher
 	 * to avoid deadlocks.
 	 */
-	if (nhash < ohash) {
-		int t = ohash;
-		ohash = nhash;
-		nhash = t;
-	}
-
-	if (ohash != nhash)
-		while (union_list_lock(ohash))
+	if (nhash < ohash)
+		while (union_list_lock(nhash))
 			continue;
-
-	while (union_list_lock(nhash))
+	while (union_list_lock(ohash))
 		continue;
+	if (nhash > ohash)
+		while (union_list_lock(nhash))
+			continue;
 
 	if (ohash != nhash || !docache) {
 		if (un->un_flags & UN_CACHED) {
