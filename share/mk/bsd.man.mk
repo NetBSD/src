@@ -1,15 +1,20 @@
-#	$NetBSD: bsd.man.mk,v 1.33 1997/06/30 19:26:21 phil Exp $
+#	$NetBSD: bsd.man.mk,v 1.34 1997/10/11 08:16:27 mycroft Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
-.if !target(.MAIN)
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
+.include <bsd.own.mk>
+.include <bsd.obj.mk>
 .MAIN:		all
 .endif
+
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
+.if !defined(NOMAN)
 realinstall:	${MANINSTALL}
+.endif
 cleandir:	cleanman
 
 MANTARGET?=	cat
@@ -132,10 +137,15 @@ manlinks: manpages
 .endif
 
 .if defined(CATPAGES)
+.if !defined(NOMAN)
 all: ${CATPAGES}
+.endif
 
 cleanman:
 	rm -f ${CATPAGES}
 .else
 cleanman:
 .endif
+
+# Make sure all of the standard targets are defined, even if they do nothing.
+clean depend includes lint regress tags:

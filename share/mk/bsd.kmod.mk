@@ -1,12 +1,15 @@
-#	$NetBSD: bsd.kmod.mk,v 1.21 1997/05/17 02:01:07 mycroft Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.22 1997/10/11 08:16:25 mycroft Exp $
 
+.if !target(__initialized__)
+__initialized__:
 .if exists(${.CURDIR}/../Makefile.inc)
 .include "${.CURDIR}/../Makefile.inc"
 .endif
-
 .include <bsd.own.mk>
-
+.include <bsd.obj.mk>
 .MAIN:		all
+.endif
+
 .PHONY:		cleankmod kmodinstall load unload
 realinstall:	kmodinstall
 clean cleandir:	cleankmod
@@ -81,12 +84,7 @@ unload: ${PROG}
 	/sbin/modunload -n ${KMOD}
 .endif
 
-.if !defined(NOMAN)
 .include <bsd.man.mk>
-.endif
-
-.include <bsd.obj.mk>
 .include <bsd.links.mk>
 .include <bsd.dep.mk>
-.include <bsd.subdir.mk>
 .include <bsd.sys.mk>
