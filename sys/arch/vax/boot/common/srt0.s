@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.8 2000/11/01 14:06:44 ragge Exp $ */
+/*	$NetBSD: srt0.s,v 1.9 2002/02/18 23:06:14 matt Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,11 +72,13 @@ ENTRY(machdep_start, 0)
 	mtpr	$0,$0x18	# stop real time interrupt clock
 	movl	4(ap), r6
 	movl	20(ap), r9	# end of symbol table
+	pushl	8(ap)		# number of symbols
+	pushl	12(ap)		# start of symbols
 	movab	_C_LABEL(bootrpb),r10	# get RPB address
 	pushl	r10		# argument for new boot
 	ashl	$9,76(r10),r8	# memory size (COMPAT)
 	movl	$3,r11		# ask boot (COMPAT)
 	clrl	r10		# no boot dev (COMPAT)
 
-	calls	$1,(r6)
+	calls	$3,(r6)
 	halt
