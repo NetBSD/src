@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.312.2.27 2003/01/03 17:07:59 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.312.2.28 2003/01/15 18:44:19 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.494 2002/12/30 04:02:22 explorer Exp 
+ *	NetBSD: pcidevs,v 1.495 2003/01/10 16:41:39 augustss Exp 
  */
 
 /*
@@ -1550,6 +1550,8 @@
 #define	PCI_PRODUCT_INTEL_PCI450_MC	0x84c5		/* 82451KX/GX Memory Controller (MC) */
 #define	PCI_PRODUCT_INTEL_82451NX_MIOC	0x84ca		/* 82451NX Memory & I/O Controller (MIOC) */
 #define	PCI_PRODUCT_INTEL_82451NX_PXB	0x84cb		/* 82451NX PCI Expander Bridge (PXB) */
+#define	PCI_PRODUCT_INTEL_21152	0xb152		/* S21152BB PCI to PCI Bridge */
+#define	PCI_PRODUCT_INTEL_21154	0xb154		/* S21152BA,S21154AE/BE PCI to PCI Bridge */
 #define	PCI_PRODUCT_INTEL_21555	0xb555		/* 21555 Non-Transparent PCI-PCI Bridge */
 
 /* Intergraph products */

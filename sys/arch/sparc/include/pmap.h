@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58.4.6 2002/12/29 19:40:14 thorpej Exp $ */
+/*	$NetBSD: pmap.h,v 1.58.4.7 2003/01/15 18:40:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -142,6 +142,7 @@ TAILQ_HEAD(mmuhd,mmuentry);
 struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
+	u_int	pm_cpuset;		/* CPU's this pmap has context on */
 	struct simplelock pm_lock;	/* spinlock */
 	int	pm_refcount;		/* just what it says */
 

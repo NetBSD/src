@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.8.2.4 2003/01/07 21:34:06 thorpej Exp $	*/
+/*	$NetBSD: bthci.c,v 1.8.2.5 2003/01/15 18:44:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #include <sys/vnode.h>
 
 #include <dev/bluetooth/bluetooth.h>
+#include <dev/bluetooth/bthci_util.h>
 #include <dev/bluetooth/bthcivar.h>
 
 #ifdef BTHCI_DEBUG
@@ -141,9 +142,15 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 #ifdef DIAGNOSTIC
 	if (sc->sc_methods->bt_open == NULL ||
 	    sc->sc_methods->bt_close == NULL ||
-	    sc->sc_methods->bt_control == NULL ||
-	    sc->sc_methods->bt_sendacldata == NULL ||
-	    sc->sc_methods->bt_sendscodata == NULL)
+
+	    sc->sc_methods->bt_control.bt_alloc == NULL ||
+	    sc->sc_methods->bt_control.bt_send == NULL ||
+
+	    sc->sc_methods->bt_acldata.bt_alloc == NULL ||
+	    sc->sc_methods->bt_acldata.bt_send == NULL ||
+
+	    sc->sc_methods->bt_scodata.bt_alloc == NULL ||
+	    sc->sc_methods->bt_scodata.bt_send == NULL)
 		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
@@ -355,12 +362,45 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 }
 
 static int
+bthcichanwrite(struct bthci_softc *sc,
+	       struct btframe_channel const *btchannel, struct uio *uio)
+{
+	struct btframe_buffer *btframebuf;
+	u_int8_t *btbuf;
+	int error;
+	size_t uiolen;
+
+	sc->sc_refcnt++;
+
+	uiolen = uio->uio_resid;
+
+	btbuf = btchannel->bt_alloc(sc->sc_handle, uiolen, &btframebuf);
+	if (btbuf == NULL) {
+		error = ENOMEM;
+		goto ret;
+	}
+
+	error = uiomove(btbuf, uiolen, uio);
+	if (error)
+		goto ret;
+
+	error = btchannel->bt_send(sc->sc_handle, btframebuf, uiolen);
+
+ ret:
+	if (--sc->sc_refcnt < 0)
+		wakeup(&sc->sc_refcnt);
+
+	return error;
+}
+
+static int
 bthciwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
-	u_int8_t *buf;
+	struct btframe_channel const *btchannel;
 	int error;
 	size_t uiolen;
+	u_int8_t bthcitype;
 
 	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
@@ -387,40 +427,25 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 		return (EINVAL);
 	}
 
-	sc->sc_refcnt++;
+	error = uiomove(&bthcitype, 1, uio);
+	if (error)
+		return (error);
 
-	buf = malloc(uiolen, M_TEMP, M_WAITOK);
-
-	error = uiomove(buf, uiolen, uio);
-	if (error) {
-		free(buf, M_TEMP);
-		goto ret;
-	}
-
-	if (buf[0] == BTHCI_PKTID_COMMAND) {
+	if (bthcitype == BTHCI_PKTID_COMMAND) {
 		/* Command */
-		error = sc->sc_methods->bt_control(sc->sc_handle,
-						   &buf[1], uiolen - 1);
-	} else if (buf[0] == BTHCI_PKTID_ACL_DATA) {
+		btchannel = &sc->sc_methods->bt_control;
+	} else if (bthcitype == BTHCI_PKTID_ACL_DATA) {
 		/* ACL data */
-		error = sc->sc_methods->bt_sendacldata(sc->sc_handle,
-						       &buf[1], uiolen - 1);
-	} else if (buf[0] == BTHCI_PKTID_SCO_DATA) {
+		btchannel = &sc->sc_methods->bt_acldata;
+	} else if (bthcitype == BTHCI_PKTID_SCO_DATA) {
 		/* SCO data */
-		error = sc->sc_methods->bt_sendscodata(sc->sc_handle,
-						       &buf[1], uiolen - 1);
+		btchannel = &sc->sc_methods->bt_scodata;
 	} else {
 		/* Bad packet type */
-		error = EINVAL;
+		return (EINVAL);
 	}
 
-	free(buf, M_TEMP);
-
- ret:
-	if (--sc->sc_refcnt < 0)
-		wakeup(&sc->sc_refcnt);
-
-	return error;
+	return (bthcichanwrite(sc, btchannel, uio));
 }
 
 #if 0
@@ -537,13 +562,12 @@ bthcikqfilter(dev_t dev, struct knote *kn)
 	return (0);
 }
 
-static void bthci_recveventdata(void *h, u_int8_t *data, size_t len)
+static void
+bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 {
 	struct bthci_softc *sc = h;
 	size_t pktlength;
-
-	if (!sc->sc_open)
-		return;
+	unsigned int ecode;
 
 	if (len < BTHCI_EVENT_MIN_LEN || len > BTHCI_EVENT_MAX_LEN) {
 		DPRINTFN(1,("%s: invalid sized event, size=%u\n",
@@ -551,7 +575,9 @@ static void bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 		return;
 	}
 
-	DPRINTFN(1,("%s: received event: %02x\n", __func__, data[0]));
+	ecode = data[0];
+	DPRINTFN(1,("%s: received event: %02x (%s)\n", __func__,
+		    ecode, bthci_eventstr(ecode)));
 
 	pktlength = data[BTHCI_EVENT_LEN_OFFT] + BTHCI_EVENT_LEN_OFFT +
 		BTHCI_EVENT_LEN_LENGTH;
@@ -562,6 +588,9 @@ static void bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 			    (unsigned int)len));
 		return;
 	}
+
+	if (!sc->sc_open)
+		return;
 
 	if (sc->sc_rd_len != 0) {
 		DPRINTFN(1,("%s: dropping an event, size=%u\n",
@@ -581,7 +610,8 @@ static void bthci_recveventdata(void *h, u_int8_t *data, size_t len)
 	selnotify(&sc->sc_rd_sel, 0);
 }
 
-static void bthci_recvacldata(void *h, u_int8_t *data, size_t len)
+static void
+bthci_recvacldata(void *h, u_int8_t *data, size_t len)
 {
 	struct bthci_softc *sc = h;
 	size_t pktlength;
@@ -625,7 +655,8 @@ static void bthci_recvacldata(void *h, u_int8_t *data, size_t len)
 	selnotify(&sc->sc_rd_sel, 0);
 }
 
-static void bthci_recvscodata(void *h, u_int8_t *data, size_t len)
+static void
+bthci_recvscodata(void *h, u_int8_t *data, size_t len)
 {
 	struct bthci_softc *sc = h;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.10 2003/01/06 22:10:19 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.45.4.11 2003/01/15 18:40:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  * referenced in generic code
  */
 #define	curcpu()		(cpuinfo.ci_self)
-#define	curlwp			(curcpu()->ci_curlwp)
+#define	curlwp			(cpuinfo.ci_curlwp)
 #define	CPU_IS_PRIMARY(ci)	((ci)->master)
 
 #define	cpu_swapin(p)		/* nothing */
@@ -99,7 +99,7 @@ void	cpu_boot_secondary_processors __P((void));
 #endif
 
 /*
- * Arguments to hardclock, softclock and gatherstats encapsulate the
+ * Arguments to hardclock, softclock and statclock encapsulate the
  * previous machine state in an opaque clockframe.  The ipl is here
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
@@ -117,6 +117,7 @@ extern int eintstack[];
 
 #define	CLKF_USERMODE(framep)	(((framep)->psr & PSR_PS) == 0)
 #define	CLKF_BASEPRI(framep)	(((framep)->psr & PSR_PIL) == 0)
+#define	CLKF_LOPRI(framep,n)	(((framep)->psr & PSR_PIL) < (n) << 8)
 #define	CLKF_PC(framep)		((framep)->pc)
 #if defined(MULTIPROCESSOR)
 #define	CLKF_INTR(framep)						\
@@ -131,27 +132,31 @@ void	*softnet_cookie;
 
 #define setsoftnet()	softintr_schedule(softnet_cookie);
 
-extern int	want_ast;
-
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
+ * Preempt the current process on the target CPU if in interrupt from
+ * user mode, or after the current trap/syscall if in system mode.
  */
-extern int	want_resched;		/* resched() was called */
-#define	need_resched(ci)		(want_resched = 1, want_ast = 1)
+#define need_resched(ci) do {						\
+	(ci)->want_resched = 1;						\
+	(ci)->want_ast = 1;						\
+									\
+	/* Just interrupt the target CPU, so it can notice its AST */	\
+	if ((ci)->ci_cpuid != cpu_number())				\
+		XCALL0(sparc_noop, 1U << (ci)->ci_cpuid);		\
+} while(0)
 
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid.  On the sparc, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, want_ast = 1)
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, cpuinfo.want_ast = 1)
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		(want_ast = 1)
+#define	signotify(p)		(cpuinfo.want_ast = 1)
 
 /* CPU architecture version */
 extern int cpu_arch;

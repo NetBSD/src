@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.17.2.23 2003/01/03 17:07:43 thorpej Exp $	*/
+/*	$NetBSD: wi.c,v 1.17.2.24 2003/01/15 18:44:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.23 2003/01/03 17:07:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.17.2.24 2003/01/15 18:44:16 thorpej Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -130,6 +130,7 @@ static int  wi_cmd(struct wi_softc *, int, int, int, int);
 static int  wi_seek_bap(struct wi_softc *, int, int);
 static int  wi_read_bap(struct wi_softc *, int, int, void *, int);
 static int  wi_write_bap(struct wi_softc *, int, int, void *, int);
+static int  wi_mwrite_bap(struct wi_softc *, int, int, struct mbuf *, int);
 static int  wi_read_rid(struct wi_softc *, int, void *, int *);
 static int  wi_write_rid(struct wi_softc *, int, void *, int);
 
@@ -715,7 +716,7 @@ wi_start(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_node *ni;
 	struct ieee80211_frame *wh;
-	struct mbuf *m0, *m;
+	struct mbuf *m0;
 	struct wi_frame frmhdr;
 	int cur, fid, off;
 
@@ -806,13 +807,12 @@ wi_start(struct ifnet *ifp)
 		}
 #endif
 		fid = sc->sc_txd[cur].d_fid;
-		wi_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr));
 		off = sizeof(frmhdr);
-		for (m = m0; m != NULL; m = m->m_next) {
-			if (m->m_len == 0)
-				continue;
-			wi_write_bap(sc, fid, off, m->m_data, m->m_len);
-			off += m->m_len;
+		if (wi_write_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr)) != 0 ||
+		    wi_mwrite_bap(sc, fid, off, m0, m0->m_pkthdr.len) != 0) {
+			ifp->if_oerrors++;
+			m_freem(m0);
+			continue;
 		}
 		m_freem(m0);
 		sc->sc_txd[cur].d_len = off;
@@ -1153,6 +1153,13 @@ wi_rx_intr(struct wi_softc *sc)
 
 	len = le16toh(frmhdr.wi_dat_len);
 	off = ALIGN(sizeof(struct ieee80211_frame));
+
+	if (off + len > MCLBYTES) {
+		CSR_WRITE_2(sc, WI_EVENT_ACK, WI_EV_RX);
+		ifp->if_ierrors++;
+		DPRINTF(("wi_rx_intr: oversized packet\n"));
+		return;
+	}
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
@@ -2024,6 +2031,33 @@ wi_write_bap(struct wi_softc *sc, int id, int off, void *buf, int buflen)
 		}
 	}
 #endif
+	return 0;
+}
+
+static int
+wi_mwrite_bap(struct wi_softc *sc, int id, int off, struct mbuf *m0, int totlen)
+{
+	int error, len;
+	struct mbuf *m;
+
+	for (m = m0; m != NULL && totlen > 0; m = m->m_next) {
+		if (m->m_len == 0)
+			continue;
+
+		len = min(m->m_len, totlen);
+
+		if (((u_long)m->m_data) % 2 != 0 || len % 2 != 0) {
+			m_copydata(m, 0, totlen, (caddr_t)&sc->sc_txbuf);
+			return wi_write_bap(sc, id, off, (caddr_t)&sc->sc_txbuf,
+			    totlen);
+		}
+
+		if ((error = wi_write_bap(sc, id, off, m->m_data, len)) != 0)
+			return error;
+
+		off += m->m_len;
+		totlen -= len;
+	}
 	return 0;
 }
 

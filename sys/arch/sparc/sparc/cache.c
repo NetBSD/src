@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.57.6.9 2003/01/07 21:21:24 thorpej Exp $ */
+/*	$NetBSD: cache.c,v 1.57.6.10 2003/01/15 18:40:14 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -570,13 +570,8 @@ sun4_cache_flush(base, len, ctx)
 
 
 #if defined(SUN4M) || defined(SUN4D)
-#ifdef MULTIPROCESSOR
 #define trapoff()	do { setpsr(getpsr() & ~PSR_ET); } while(0)
 #define trapon()	do { setpsr(getpsr() | PSR_ET); } while(0)
-#else
-#define trapoff()
-#define trapon()
-#endif
 /*
  * Flush the current context from the cache.
  *
@@ -722,13 +717,19 @@ srmmu_cache_flush(base, len, ctx)
 	char *p;
 
 	if (len < NBPG) {
+		int octx;
 		/* less than a page, flush just the covered cache lines */
 		ls = CACHEINFO.c_linesize;
 		baseoff = (int)base & (ls - 1);
 		i = (baseoff + len + ls - 1) >> CACHEINFO.c_l2linesize;
 		p = (char *)((int)base & -ls);
+		octx = getcontext4m();
+		trapoff();
+		setcontext4m(ctx);
 		for (; --i >= 0; p += ls)
 			sta(p, ASI_IDCACHELFP, 0);
+		setcontext4m(octx);
+		trapon();
 		return;
 	}
 

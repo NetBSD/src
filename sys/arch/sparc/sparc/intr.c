@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56.4.11 2003/01/07 21:21:28 thorpej Exp $ */
+/*	$NetBSD: intr.c,v 1.56.4.12 2003/01/15 18:40:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -272,7 +272,7 @@ nmi_soft(tf)
 
 #if defined(MULTIPROCESSOR)
 	switch (cpuinfo.msg_lev15.tag) {
-	case XPMSG11_PAUSECPU:
+	case XPMSG15_PAUSECPU:
 		/* XXX - assumes DDB is the only user of mp_pause_cpu() */
 		cpuinfo.flags |= CPUFLG_PAUSED;
 #if defined(DDB)
@@ -284,7 +284,6 @@ nmi_soft(tf)
 #endif
 		return;
 	}
-	cpuinfo.msg_lev15.tag = 0;
 #endif
 }
 
@@ -306,7 +305,6 @@ static void xcallintr(void *v)
 	    }
 	}
 	cpuinfo.flags |= CPUFLG_GOTMSG;
-	cpuinfo.msg.tag = 0;
 }
 #endif /* MULTIPROCESSOR */
 #endif /* SUN4M || SUN4D */
@@ -493,7 +491,8 @@ intr_establish(level, classipl, ih, vec)
 		printf("intr_establish: untie fast vector at level %d\n",
 		    level);
 		uninst_fasttrap(level);
-	} else if (vec != NULL && intrhand[level] == NULL) {
+	} else if (vec != NULL &&
+		   intrhand[level] == NULL && sintrhand[level] == NULL) {
 		inst_fasttrap(level, vec);
 	}
 

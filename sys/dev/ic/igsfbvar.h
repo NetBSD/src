@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfbvar.h,v 1.1.2.4 2002/10/18 02:41:53 nathanw Exp $ */
+/*	$NetBSD: igsfbvar.h,v 1.1.2.5 2003/01/15 18:44:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -111,7 +111,7 @@ struct igsfb_softc {
 	/* precomputed bit tables for cursor sprite 1bpp -> 2bpp conversion */
 	struct igs_bittab *sc_bittab;
 
-	int nscreens;
+	int sc_nscreens;
 
 	int sc_blanked;			/* screen is currently blanked */
 	int sc_curenb;			/* cursor sprite enabled */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.8.6.4 2002/10/18 02:43:27 nathanw Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.8.6.5 2003/01/15 18:44:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.8.6.4 2002/10/18 02:43:27 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.8.6.5 2003/01/15 18:44:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ int	esp_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void	esp_pcmcia_attach __P((struct device *, struct device *, void *));  
 void	esp_pcmcia_init __P((struct esp_pcmcia_softc *));
 int	esp_pcmcia_detach __P((struct device *, int));
-int	esp_pcmcia_enable __P((void *, int));
+int	esp_pcmcia_enable __P((struct device *, int));
 
 CFATTACH_DECL(esp_pcmcia, sizeof(struct esp_pcmcia_softc),
     esp_pcmcia_match, esp_pcmcia_attach, esp_pcmcia_detach, NULL);
@@ -202,6 +202,7 @@ esp_pcmcia_attach(parent, self, aux)
 	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
+	sc->sc_adapter.adapt_enable = esp_pcmcia_enable;
 	ncr53c9x_attach(sc);
 	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
 	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
@@ -286,10 +287,10 @@ esp_pcmcia_detach(self, flags)
 
 int
 esp_pcmcia_enable(arg, onoff)
-	void *arg;
+	struct device *arg;
 	int onoff;
 {
-	struct esp_pcmcia_softc *esc = arg;
+	struct esp_pcmcia_softc *esc = (void *) arg;
 
 	if (onoff) {
 #ifdef ESP_PCMCIA_POLL

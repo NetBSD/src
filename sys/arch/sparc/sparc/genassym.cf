@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.32.8.9 2003/01/03 16:55:26 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.32.8.10 2003/01/15 18:40:16 thorpej Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -129,12 +129,14 @@ define	LSONPROC	LSONPROC
 define	VM_PMAP		offsetof(struct vmspace, vm_map.pmap)
 define	PMAP_CTX	offsetof(struct pmap, pm_ctx)
 define	PMAP_CTXNUM	offsetof(struct pmap, pm_ctxnum)
+define	PMAP_CPUSET	offsetof(struct pmap, pm_cpuset)
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 
 # interrupt/fault metering
 define	V_SWTCH		offsetof(struct uvmexp, swtch)
 define	V_INTR		offsetof(struct uvmexp, intrs)
+define	V_SOFT		offsetof(struct uvmexp, softs)
 define	V_FAULTS	offsetof(struct uvmexp, faults)
 
 # CPU info structure
@@ -154,6 +156,8 @@ define	CPUINFO_CURPCB		offsetof(struct cpu_info, curpcb)
 define	CPUINFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPUINFO_SELF		offsetof(struct cpu_info, ci_self)
 define	CPUINFO_FLAGS		offsetof(struct cpu_info, flags)
+define	CPUINFO_WANT_AST	offsetof(struct cpu_info, want_ast)
+define	CPUINFO_WANT_RESCHED	offsetof(struct cpu_info, want_resched)
 define	CPUINFO_TT		offsetof(struct cpu_info, ci_tt)
 
 # PTE bits and related information

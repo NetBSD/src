@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113.4.16 2003/01/07 21:23:33 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113.4.17 2003/01/15 18:41:34 thorpej Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1479,9 +1479,6 @@ pmap_create()
 			pmap_get_page(&pm->pm_physaddr);
 		}
 		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
-		if (!pm->pm_physaddr)
-			panic("pmap_create");
-		ctx_alloc(pm);
 	}
 	DPRINTF(PDB_CREATE, ("pmap_create(%p): ctx %d\n", pm, pm->pm_ctx));
 	return pm;
@@ -3183,17 +3180,17 @@ ctx_alloc(pm)
 	int64_t *tsbaddr;
 	int i, ctx;
 
+	KASSERT(pm != pmap_kernel());
+	KASSERT(pm == curproc->p_vmspace->vm_map.pmap);
 	simple_lock(&pm->pm_lock);
 	ctx = pmap_next_ctx++;
 
 	/*
 	 * if we have run out of contexts, remove all user entries from
 	 * the TSB, TLB and dcache and start over with context 1 again.
-	 * note that we skip the highest-numbered context because
-	 * the PROM keeps some locked TLB entries there.
 	 */
 
-	if (ctx == numctx - 1) {
+	if (ctx == numctx) {
 		write_user_windows();
 		while (!LIST_EMPTY(&pmap_ctxlist)) {
 			ctx_free(LIST_FIRST(&pmap_ctxlist));

@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.8.2.7 2002/12/11 06:37:40 thorpej Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.8.2.8 2003/01/15 18:42:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.8.2.7 2002/12/11 06:37:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pecoff_exec.c,v 1.8.2.8 2003/01/15 18:42:09 thorpej Exp $");
 
 /*#define DEBUG_PECOFF*/
 
@@ -225,7 +225,8 @@ pecoff_load_file(p, epp, path, vcset, entry, argp)
 		goto bad;
 	fp = malloc(PECOFF_HDR_SIZE, M_TEMP, M_WAITOK);
 	peofs = dh.d_peofs + sizeof(signature) - 1;
-	if ((error = exec_read_from(p, vp, peofs, fp, PECOFF_HDR_SIZE)) != 0)
+	error = exec_read_from(p, vp, peofs, fp, PECOFF_HDR_SIZE);
+	if (error != 0)
 		goto bad;
 	if (COFF_BADMAG(fp)) {
 		error = ENOEXEC;
@@ -454,13 +455,14 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 {
 	int error, i;
 	struct pecoff_opthdr *wp;
-	long daddr, dsize, baddr, bsize;
+	long tsize, daddr, dsize, baddr, bsize;
 	struct coff_scnhdr *sh;
 	struct pecoff_args *argp;
 	int scnsiz = sizeof(struct coff_scnhdr) * fp->f_nscns;
 
 	wp = (void *)((char *)ap + sizeof(struct coff_aouthdr));
 
+	epp->ep_tsize = ap->a_tsize;
 	epp->ep_daddr = VM_MAXUSER_ADDRESS;
 	epp->ep_dsize = 0;
 	/* read section header */
@@ -488,7 +490,7 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 				 sh[i].s_vaddr, sh[i].s_size, sh[i].s_scnptr));
 */			pecoff_load_section(&epp->ep_vmcmds, epp->ep_vp,
 					   &sh[i], &epp->ep_taddr,
-					   &epp->ep_tsize, &prot);
+					   &tsize, &prot);
 		} else if ((s_flags & COFF_STYP_BSS) != 0) {
 			/* set up command for bss segment */
 			baddr = sh[i].s_vaddr;
