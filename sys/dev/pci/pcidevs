@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.641 2004/08/04 17:18:01 mycroft Exp $
+$NetBSD: pcidevs,v 1.642 2004/08/04 19:13:06 mycroft Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -820,8 +820,8 @@ product ALLIANCE AT24	0x6424	AT24
 product ALLIANCE AT25	0x643d	AT25
 
 /* Alteon products */
-product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
-product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
+product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Ethernet
+product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Ethernet
 product ALTEON BCM5700		0x0003	ACEnic BCM5700 10/100/1000 Ethernet
 product ALTEON BCM5701		0x0004	ACEnic BCM5701 10/100/1000 Ethernet
 
@@ -840,25 +840,25 @@ product AMD PCNET_HOME	0x2001	PCnet-Home HomePNA Ethernet
 product AMD PCSCSI_PCI	0x2020	PCscsi-PCI SCSI
 product AMD SC520_SC	0x3000	Elan SC520 System Controller
 product AMD SC751_SC	0x7006	AMD751 System Controller
-product AMD SC751_PPB	0x7007	AMD751 PCI-to-PCI Bridge
-product AMD PBC756_ISA	0x7408	AMD756 PCI-to-ISA Bridge
+product AMD SC751_PPB	0x7007	AMD751 PCI-PCI Bridge
+product AMD PBC756_ISA	0x7408	AMD756 PCI-ISA Bridge
 product AMD PBC756_IDE	0x7409	AMD756 IDE controller
 product AMD PBC756_PMC	0x740b	AMD756 Power Management Controller
 product AMD PBC756_USB	0x740c	AMD756 USB Host Controller
-product AMD SC762_NB	0x700c	AMD762 NorthBridge
+product AMD SC762_NB	0x700c	AMD762 Northbridge
 product AMD SC762_PPB	0x700d	AMD762 AGP Bridge
 product AMD SC761_SC	0x700e	AMD761 System Controller
-product AMD SC761_PPB	0x700f	AMD761 PCI-to-PCI Bridge
-product AMD PBC766_ISA	0x7410	AMD766 SouthBridge
+product AMD SC761_PPB	0x700f	AMD761 PCI-PCI Bridge
+product AMD PBC766_ISA	0x7410	AMD766 Southbridge
 product AMD PBC766_IDE	0x7411	AMD766 IDE controller
 product AMD PBC766_PMC	0x7413	AMD766 Power Management Controller
 product AMD PBC766_USB	0x7414	AMD766 USB Host Controller
-product AMD PBC768_ISA	0x7440	AMD768 PCI to ISA/LPC Bridge
+product AMD PBC768_ISA	0x7440	AMD768 PCI-ISA/LPC Bridge
 product AMD PBC768_IDE	0x7441	AMD768 EIDE Controller
 product AMD PBC768_PMC	0x7443	AMD768 Power Management Controller
 product AMD PBC768_AC	0x7445	AMD768 AC97 Audio
 product AMD PBC768_MD	0x7446	AMD768 AC97 Modem
-product AMD PBC768_PPB	0x7448	AMD768 PCI to PCI Bridge
+product AMD PBC768_PPB	0x7448	AMD768 PCI-PCI Bridge
 product AMD PBC768_USB	0x7449	AMD768 USB Controller
 product AMD PCIX8131_PPB	0x7450	AMD8131 PCI-X Tunnel
 product AMD PCIX8131_APIC	0x7451	AMD8131 IO Apic
@@ -890,16 +890,16 @@ product APPLE CONTROL		0x0003	Control
 product APPLE PLANB		0x0004	PlanB
 product APPLE OHARE		0x0007	OHare I/O Controller
 product APPLE BANDIT2		0x0008	Bandit Host-PCI Bridge
-product APPLE HEATHROW		0x0010	MAC-IO I/O Controller (Heathrow)
-product APPLE PADDINGTON	0x0017	MAC-IO I/O Controller (Paddington)
+product APPLE HEATHROW		0x0010	Heathrow I/O Controller
+product APPLE PADDINGTON	0x0017	Paddington I/O Controller
 product APPLE KEYLARGO_USB	0x0019	KeyLargo USB Controller
 product APPLE UNINORTH1		0x001e	UniNorth Host-PCI Bridge
 product APPLE UNINORTH2		0x001f	UniNorth Host-PCI Bridge
 product APPLE UNINORTH_AGP	0x0020	UniNorth AGP Interface
 product APPLE GMAC		0x0021	GMAC Ethernet
-product APPLE KEYLARGO		0x0022	MAC-IO I/O Controller (KeyLargo)
+product APPLE KEYLARGO		0x0022	KeyLargo I/O Controller
 product APPLE GMAC2		0x0024	GMAC Ethernet
-product APPLE PANGEA_MACIO	0x0025	MAC-IO I/O Controller (Pangea)
+product APPLE PANGEA_MACIO	0x0025	Pangea I/O Controller
 product APPLE PANGEA_USB	0x0026	Pangea USB Controller
 product APPLE PANGEA_AGP	0x0027	Pangea AGP Interface
 product APPLE PANGEA_PCI1	0x0028	Pangea Host-PCI Bridge
@@ -1101,8 +1101,8 @@ product BROADCOM BCM5702FE	0x164d	BCM5702FE 10/100 Ethernet
 product BROADCOM BCM5703	0x1647	BCM5703 10/100/1000 Ethernet
 product BROADCOM BCM5703X	0x16a7	BCM5703X 10/100/1000 Ethernet
 product BROADCOM BCM5703A3	0x16c7	BCM5703 10/100/1000 Ethernet
-product BROADCOM BCM5704C	0x1648	BCM5704C Gigabit Ethernet (1000BASE-T)
-product BROADCOM BCM5704S	0x16a8	BCM5704S Gigabit Ethernet (1000BASE-X)
+product BROADCOM BCM5704C	0x1648	BCM5704C 1000baseT Ethernet
+product BROADCOM BCM5704S	0x16a8	BCM5704S 1000baseX Ethernet
 product BROADCOM BCM5705	0x1653	BCM5705 10/100/1000 Ethernet
 product BROADCOM BCM5705M	0x165d	BCM5705M 10/100/1000 Ethernet
 product BROADCOM BCM5705_ALT	0x165e	BCM5705 10/100/1000 Ethernet
@@ -1286,7 +1286,7 @@ product CYCLONE PCI_700		0x0700	IQ80310 (PCI-700)
 /* Cyrix (now National) products */
 product CYRIX MEDIAGX_PCHB	0x0001	MediaGX Built-in PCI Host Controller
 product CYRIX CX5520_PCIB	0x0002	Cx5520 I/O Companion
-product CYRIX CX5530_PCIB	0x0100	Cx5530 I/O Companion Multi-Function South Bridge
+product CYRIX CX5530_PCIB	0x0100	Cx5530 I/O Companion Multi-Function Southbridge
 product CYRIX CX5530_SMI	0x0101	Cx5530 I/O Companion (SMI Status and ACPI Timer)
 product CYRIX CX5530_IDE	0x0102	Cx5530 I/O Companion (IDE Controller)
 product CYRIX CX5530_AUDIO	0x0103	Cx5530 I/O Companion (XpressAUDIO)
@@ -1375,12 +1375,12 @@ product EMULEX LP9000	0xf900	LP9000 FibreChannel adapter
 product EMULEX LP9802	0xf980	LP9802 FibreChannel adapter
 
 /* ENE Technology, Inc. products */
-product ENE CB710	0x710	CB710 Cardbus Controller
-product ENE CB720	0x720	CB720 Cardbus Controller
-product ENE CB1211	0x1211	CB1211 Cardbus Controller
-product ENE CB1225	0x1225	CB1225 Cardbus Controller
-product ENE CB1410	0x1410	CB1410 Cardbus Controller
-product ENE CB1420	0x1420	CB1420 Cardbus Controller
+product ENE CB710	0x710	CB710 CardBus Controller
+product ENE CB720	0x720	CB720 CardBus Controller
+product ENE CB1211	0x1211	CB1211 CardBus Controller
+product ENE CB1225	0x1225	CB1225 CardBus Controller
+product ENE CB1410	0x1410	CB1410 CardBus Controller
+product ENE CB1420	0x1420	CB1420 CardBus Controller
 
 /* Ensoniq products */
 product ENSONIQ AUDIOPCI	0x5000	AudioPCI
@@ -1420,11 +1420,11 @@ product EUMITCOM WL11000P	0x1100	WL11000P PCI WaveLAN/IEEE 802.11
 product O2MICRO OZ6729		0x6729	OZ6729 PCI-PCMCIA Bridge
 product O2MICRO OZ6730		0x673A	OZ6730 PCI-PCMCIA Bridge
 product O2MICRO OZ6832		0x6832	OZ6832/OZ6833 PCI-CardBus Bridge
-product O2MICRO OZ6836		0x6836	OZ6836/OZ6860 PCI-Cardbus Bridge
-product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-Cardbus Bridge
-product O2MICRO OZ6922		0x6925	OZ6922 PCI-Cardbus Bridge
-product O2MICRO OZ6933		0x6933	OZ6933 PCI-Cardbus Bridge
-product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-Cardbus Bridge
+product O2MICRO OZ6836		0x6836	OZ6836/OZ6860 PCI-CardBus Bridge
+product O2MICRO OZ6872		0x6872	OZ6812/OZ6872 PCI-CardBus Bridge
+product O2MICRO OZ6922		0x6925	OZ6922 PCI-CardBus Bridge
+product O2MICRO OZ6933		0x6933	OZ6933 PCI-CardBus Bridge
+product O2MICRO OZ6972		0x6972	OZ6912/OZ6972 PCI-CardBus Bridge
 
 /* Evans & Sutherland products */
 product ES FREEDOM	0x0001	Freedom PCI-GBus Interface
@@ -1559,38 +1559,38 @@ product IMS TT128M	0x9128	TwinTurbo 128M
 /* Intel products */
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
-product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge (PCEB)
-product INTEL CDC		0x0483	82424ZX Cache and DRAM controller (CDC)
-product INTEL SIO		0x0484	82378ZB System I/O (SIO)
-product INTEL 82426EX		0x0486	82426EX PCI-to-ISA Bridge (PCIB)
+product INTEL PCEB		0x0482	82375EB/SB PCI-EISA Bridge
+product INTEL CDC		0x0483	82424ZX Cache and DRAM controller
+product INTEL SIO		0x0484	82378ZB System I/O
+product INTEL 82426EX		0x0486	82426EX PCI-ISA Bridge
 product INTEL PCMC		0x04a3	82434LX/NX PCI, Cache and Memory Controller (PCMC)
 product INTEL GDT_RAID1		0x0600	GDT RAID
 product INTEL GDT_RAID2		0x061f	GDT RAID
 product INTEL 80960RM		0x0962	i960 RM PCI-PCI
 product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82542		0x1000	i82542 Gigabit Ethernet
-product INTEL 82543GC_FIBER	0x1001	i82453GC Gigabit Ethernet (1000BASE-X)
+product INTEL 82543GC_FIBER	0x1001	i82453GC 1000baseX Ethernet
 product INTEL MODEM56		0x1002	56k Modem
-product INTEL 82543GC_COPPER	0x1004	i82543GC Gigabit Ethernet (1000BASE-T)
-product INTEL 82544EI_COPPER	0x1008	i82544EI Gigabit Ethernet (1000BASE-T)
-product INTEL 82544EI_FIBER	0x1009	i82544EI Gigabit Ethernet (1000BASE-X)
-product INTEL 82544GC_COPPER	0x100c	i82544GC Gigabit Ethernet (1000BASE-T)
+product INTEL 82543GC_COPPER	0x1004	i82543GC 1000baseT Ethernet
+product INTEL 82544EI_COPPER	0x1008	i82544EI 1000baseT Ethernet
+product INTEL 82544EI_FIBER	0x1009	i82544EI 1000baseX Ethernet
+product INTEL 82544GC_COPPER	0x100c	i82544GC 1000baseT Ethernet
 product INTEL 82544GC_LOM	0x100d	i82544GC (LOM) Gigabit Ethernet
-product INTEL 82540EM		0x100e	i82540EM Gigabit Ethernet (1000BASE-T)
-product INTEL 82545EM_COPPER	0x100f	i82545EM Gigabit Ethernet (1000BASE-T)
-product INTEL 82546EB_COPPER	0x1010	i82546EB Gigabit Ethernet (1000BASE-T)
-product INTEL 82545EM_FIBER	0x1011	i82545EM Gigabit Ethernet (1000BASE-X)
-product INTEL 82546EB_FIBER	0x1012	i82546EB Gigabit Ethernet (1000BASE-X)
+product INTEL 82540EM		0x100e	i82540EM 1000baseT Ethernet
+product INTEL 82545EM_COPPER	0x100f	i82545EM 1000baseT Ethernet
+product INTEL 82546EB_COPPER	0x1010	i82546EB 1000baseT Ethernet
+product INTEL 82545EM_FIBER	0x1011	i82545EM 1000baseX Ethernet
+product INTEL 82546EB_FIBER	0x1012	i82546EB 1000baseX Ethernet
 product INTEL 82541EI		0x1013	i82541EI Gigabit Ethernet
 product INTEL 82540EM_LOM	0x1015	i82540EM (LOM) Gigabit Ethernet
 product INTEL 82540EP_LOM	0x1016	i82540EP (LOM) Gigabit Ethernet
 product INTEL 82540EP		0x1017	i82540EP Gigabit Ethernet
 product INTEL 82541EI_MOBILE	0x1018	i82541EI Mobile Gigabit Ethernet
 product INTEL 82547EI		0x1019	i82547EI Gigabit Ethernet
-product INTEL 82546EB_QUAD	0x101d	i82546EB Gigabit Ethernet (1000BASE-T)
+product INTEL 82546EB_QUAD	0x101d	i82546EB 1000baseT Ethernet
 product INTEL 82540EP_LP	0x101e	i82540EP Gigabit Ethernet
-product INTEL 82545GM_COPPER	0x1026	i82545GM Gigabit Ethernet (1000BASE-T)
-product INTEL 82545GM_FIBER	0x1027	i82545GM Gigabit Ethernet (1000BASE-X)
+product INTEL 82545GM_COPPER	0x1026	i82545GM 1000baseT Ethernet
+product INTEL 82545GM_FIBER	0x1027	i82545GM 1000baseX Ethernet
 product INTEL 82545GM_SERDES	0x1028	i82545GM Gigabit Ethernet (SERDES)
 product INTEL IN_BUSINESS	0x1030	InBusiness Fast Ethernet LAN Controller
 product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
@@ -1616,8 +1616,8 @@ product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
 product INTEL 82541ER		0x1078	i82541ER Gigabit Ethernet
-product INTEL 82546GB_COPPER	0x1079	i82546GB Gigabit Ethernet (1000BASE-T)
-product INTEL 82546GB_FIBER	0x107a	i82546GB Gigabit Ethernet (1000BASE-X)
+product INTEL 82546GB_COPPER	0x1079	i82546GB 1000baseT Ethernet
+product INTEL 82546GB_FIBER	0x107a	i82546GB 1000baseX Ethernet
 product INTEL 82546GB_SERDES	0x107b	i82546GB Gigabit Ethernet (SERDES)
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
@@ -1640,16 +1640,16 @@ product INTEL 82596		0x1226	82596 LAN Controller
 product INTEL EEPRO100		0x1227	EE Pro 100 10/100 Fast Ethernet
 product INTEL EEPRO100S		0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
 product INTEL 82557		0x1229	82557 Fast Ethernet LAN Controller
-product INTEL 82437FX		0x122d	82437FX System Controller (TSC)
-product INTEL 82371FB_ISA	0x122e	82371FB PCI-to-ISA Bridge (PIIX)
-product INTEL 82371FB_IDE	0x1230	82371FB IDE controller (PIIX)
-product INTEL 82371MX		0x1234	82371MX Mobile PCI I/O IDE Xcelerator (MPIIX)
-product INTEL 82437MX		0x1235	82437MX Mobile System Controller (MTSC)
-product INTEL 82441FX		0x1237	82441FX PCI and Memory Controller (PMC)
-product INTEL 82380AB		0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
-product INTEL 82380FB		0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
-product INTEL 82439HX		0x1250	82439HX System Controller (TXC)
-product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-to-PCI Bridge
+product INTEL 82437FX		0x122d	82437FX (TSC) System Controller
+product INTEL 82371FB_ISA	0x122e	82371FB (PIIX) PCI-ISA Bridge
+product INTEL 82371FB_IDE	0x1230	82371FB (PIIX) IDE controller
+product INTEL 82371MX		0x1234	82371MX (MPIIX) Mobile PCI I/O IDE Xcelerator
+product INTEL 82437MX		0x1235	82437MX (MTSC) Mobile System Controller
+product INTEL 82441FX		0x1237	82441FX (PMC) PCI and Memory Controller
+product INTEL 82380AB		0x123c	82380AB (MISA) Mobile PCI-ISA Bridge
+product INTEL 82380FB		0x124b	82380FB (MPCI2) Mobile PCI-PCI Bridge
+product INTEL 82439HX		0x1250	82439HX (TXC) System Controller
+product INTEL 82870P2_PPB	0x1460	82870P2 P64H2 PCI-PCI Bridge
 product INTEL 82870P2_IOxAPIC	0x1461	82870P2 P64H2 IOxAPIC
 product INTEL 82870P2_HPLUG	0x1462	82870P2 P64H2 Hot Plug Controller
 product INTEL 80960_RP		0x1960	ROB-in i960RP Microprocessor
@@ -1665,26 +1665,26 @@ product INTEL 82801AA_USB	0x2412	82801AA USB Controller
 product INTEL 82801AA_SMB	0x2413	82801AA SMBus Controller
 product INTEL 82801AA_ACA	0x2415	82801AA AC-97 Audio Controller
 product INTEL 82801AA_ACM	0x2416	82801AA AC-97 PCI Modem
-product INTEL 82801AA_HPB	0x2418	82801AA Hub-to-PCI Bridge
+product INTEL 82801AA_HPB	0x2418	82801AA Hub-PCI Bridge
 product INTEL 82801AB_LPC	0x2420	82801AB LPC Interface Bridge
 product INTEL 82801AB_IDE	0x2421	82801AB IDE Controller
 product INTEL 82801AB_USB	0x2422	82801AB USB Controller
 product INTEL 82801AB_SMB	0x2423	82801AB SMBus Controller
 product INTEL 82801AB_ACA	0x2425	82801AB AC-97 Audio Controller
 product INTEL 82801AB_ACM	0x2426	82801AB AC-97 PCI Modem
-product INTEL 82801AB_HPB	0x2428	82801AB Hub-to-PCI Bridge
+product INTEL 82801AB_HPB	0x2428	82801AB Hub-PCI Bridge
 product INTEL 82801BA_LPC	0x2440	82801BA LPC Interface Bridge
 product INTEL 82801BA_USB1	0x2442	82801BA USB Controller
 product INTEL 82801BA_SMB	0x2443	82801BA SMBus Controller
 product INTEL 82801BA_USB2	0x2444	82801BA USB Controller
 product INTEL 82801BA_ACA	0x2445	82801BA AC-97 Audio Controller
 product INTEL 82801BA_ACM	0x2446	82801BA AC-97 PCI Modem
-product INTEL 82801BAM_HPB	0x2448	82801BAM Hub-to-PCI Bridge
+product INTEL 82801BAM_HPB	0x2448	82801BAM Hub-PCI Bridge
 product INTEL 82801BA_LAN	0x2449	82801BA LAN Controller
 product INTEL 82801BAM_IDE	0x244a	82801BAM IDE Controller
 product INTEL 82801BA_IDE	0x244b	82801BA IDE Controller
 product INTEL 82801BAM_LPC	0x244c	82801BAM LPC Interface Bridge
-product INTEL 82801BA_HPB	0x244e	82801BA Hub-to-PCI Bridge
+product INTEL 82801BA_HPB	0x244e	82801BA Hub-PCI Bridge
 product INTEL 82801E_SMB	0x2453	82801E SMBus Controller
 product INTEL 82801E_LAN_1	0x2459	82801E LAN Controller
 product INTEL 82801E_LAN_2	0x245d	82801E LAN Controller
@@ -1741,16 +1741,16 @@ product INTEL E7500_HI_D2	0x2548	E7500 MCH HI_D vppb 2
 product INTEL E7501_HB		0x254c	E7501 MCH Host
 product INTEL E7505_HB		0x2550	E7505 MCH Host
 product INTEL E7505_RAS		0x2551	E7505 MCH RAS Controller
-product INTEL E7505_AGP		0x2552	E7505 MCH Host-to-AGP Bridge
-product INTEL E7505_HI_B1	0x2553	E7505 MCH HI_B PCI-to-PCI
-product INTEL E7505_HI_B2	0x2554	E7505 MCH HI_B PCI-to-PCI Error Reporting
+product INTEL E7505_AGP		0x2552	E7505 MCH Host-AGP Bridge
+product INTEL E7505_HI_B1	0x2553	E7505 MCH HI_B PCI-PCI Bridge
+product INTEL E7505_HI_B2	0x2554	E7505 MCH HI_B PCI-PCI Error Reporting
 product INTEL 82845G_DRAM	0x2560	82845G/GL DRAM Controller / Host-Hub I/F Bridge
-product INTEL 82845G_AGP	0x2561	82845G/GL Host-to-AGP Bridge
+product INTEL 82845G_AGP	0x2561	82845G/GL Host-AGP Bridge
 product INTEL 82845G_IGD	0x2562	82845G/GL Integrated Graphics Device
 product INTEL 82865_HB		0x2570	82865 Host
 product INTEL 82865_AGP		0x2571	82865 AGP
 product INTEL 82865_IGD		0x2572	82865G Integrated Graphics Device
-product INTEL 82801EB_HPB	0x2573	82801EB Hub-to-PCI Bridge
+product INTEL 82801EB_HPB	0x2573	82801EB Hub-PCI Bridge
 product INTEL 82875P_HB		0x2578	82875P Host
 product INTEL 82875P_AGP	0x2579	82875P AGP
 product INTEL 82915P_HB		0x2584	82915P Host
@@ -1771,9 +1771,9 @@ product INTEL 82801FB_AC	0x266e	82801FB/FR AC'97 Audio Controller
 product INTEL 82801FB_IDE	0x266f	82801FB/FR IDE Controller
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
-product INTEL 82855PM_AGP	0x3341	82855PM Host-to-AGP Bridge
+product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
 product INTEL 82855PM_PM	0x3342	82855PM Power Management Controller
-product INTEL 82855GM_MCH	0x3580	82855GM Host-to-Hub Controller
+product INTEL 82855GM_MCH	0x3580	82855GM Host-Hub Controller
 product INTEL 82855GM_IGD	0x3582	82855GM GMCH Integrated Graphics Device
 product INTEL 82855GM_MC	0x3584	82855GM GMCH Memory Controller
 product INTEL 82855GM_CP	0x3585	82855GM GMCH Configuration Process
@@ -1782,29 +1782,29 @@ product INTEL 82830MP_AGP	0x3576	82830MP CPU to AGP Bridge
 product INTEL 82830MP_IV	0x3577	82830MP Integrated Video
 product INTEL 82830MP_IO_2	0x3578	82830MP CPU to I/O Bridge 2
 product INTEL 80312_ATU		0x530d	80310 ATU
-product INTEL 82371SB_ISA	0x7000	82371SB PCI-to-ISA Bridge (PIIX3)
-product INTEL 82371SB_IDE	0x7010	82371SB IDE Interface (PIIX3)
-product INTEL 82371SB_USB	0x7020	82371SB USB Host Controller (PIIX3)
-product INTEL 82437VX		0x7030	82437VX System Controller (TVX)
-product INTEL 82439TX		0x7100	82439TX System Controller (MTXC)
-product INTEL 82371AB_ISA	0x7110	82371AB PCI-to-ISA Bridge (PIIX4)
-product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
-product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
-product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
+product INTEL 82371SB_ISA	0x7000	82371SB (PIIX3) PCI-ISA Bridge
+product INTEL 82371SB_IDE	0x7010	82371SB (PIIX3) IDE Interface
+product INTEL 82371SB_USB	0x7020	82371SB (PIIX3) USB Host Controller
+product INTEL 82437VX		0x7030	82437VX (TVX) System Controller
+product INTEL 82439TX		0x7100	82439TX (MTXC) System Controller
+product INTEL 82371AB_ISA	0x7110	82371AB (PIIX4) PCI-ISA Bridge
+product INTEL 82371AB_IDE	0x7111	82371AB (PIIX4) IDE controller
+product INTEL 82371AB_USB	0x7112	82371AB (PIIX4) USB Host Controller
+product INTEL 82371AB_PMC	0x7113	82371AB (PIIX4) Power Management Controller
 product INTEL 82810_MCH		0x7120	82810 Memory Controller Hub
 product INTEL 82810_GC		0x7121	82810 Graphics Controller
 product INTEL 82810_DC100_MCH	0x7122	82810-DC100 Memory Controller Hub
 product INTEL 82810_DC100_GC	0x7123	82810-DC100 Graphics Controller
 product INTEL 82810E_MCH	0x7124	82810E Memory Controller Hub
 product INTEL 82810E_GC		0x7125	82810E Graphics Controller
-product INTEL 82443LX		0x7180	82443LX PCI AGP Controller (PAC)
-product INTEL 82443LX_AGP	0x7181	82443LX AGP Interface (PAC)
+product INTEL 82443LX		0x7180	82443LX PCI AGP Controller
+product INTEL 82443LX_AGP	0x7181	82443LX AGP Interface
 product INTEL 82443BX		0x7190	82443BX	Host Bridge/Controller
 product INTEL 82443BX_AGP	0x7191	82443BX AGP Interface
 product INTEL 82443BX_NOAGP	0x7192	82443BX Host Bridge/Controller (AGP disabled)
 product INTEL 82440MX		0x7194	82443MX Host Bridge/Controller
 product INTEL 82440MX_ACA	0x7195	82443MX AC-97 Audio Controller
-product INTEL 82440MX_ISA	0x7198	82443MX PCI-to-ISA Bridge
+product INTEL 82440MX_ISA	0x7198	82443MX PCI-ISA Bridge
 product INTEL 82440MX_IDE	0x7199	82443MX IDE Controller
 product INTEL 82440MX_USB	0x719a	82443MX USB Host Controller
 product INTEL 82440MX_PMC	0x719b	82443MX Power Management Controller
@@ -1816,8 +1816,8 @@ product INTEL PCI450_PB		0x84c4	82454KX/GX PCI Bridge (PB)
 product INTEL PCI450_MC		0x84c5	82451KX/GX Memory Controller (MC)
 product INTEL 82451NX_MIOC	0x84ca	82451NX Memory & I/O Controller (MIOC)
 product INTEL 82451NX_PXB	0x84cb	82451NX PCI Expander Bridge (PXB)
-product INTEL 21152		0xb152	S21152BB PCI to PCI Bridge
-product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI to PCI Bridge
+product INTEL 21152		0xb152	S21152BB PCI-PCI Bridge
+product INTEL 21154		0xb154	S21152BA,S21154AE/BE PCI-PCI Bridge
 product INTEL 21555		0xb555	21555 Non-Transparent PCI-PCI Bridge
 
 /* Intergraph products */
@@ -2062,8 +2062,8 @@ product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
-product NETGEAR GA620		0x620a	GA620 1000baseSX Gigabit Ethernet
-product NETGEAR GA620T		0x630a	GA620 1000baseT Gigabit Ethernet
+product NETGEAR GA620		0x620a	GA620 1000baseSX Ethernet
+product NETGEAR GA620T		0x630a	GA620 1000baseT Ethernet
 product NETGEAR MA301		0x4100	MA301 PCI IEEE 802.11b
 
 /* Netmos products */
@@ -2436,9 +2436,9 @@ product SIS 180_SATA		0x0180	180 SATA controller
 product SIS 5597_VGA		0x0200	5597/5598 integrated VGA
 product SIS 85C501		0x0406	85C501
 product SIS 85C496		0x0496	85C496
-product SIS 530HB		0x0530	530 Host to PCI Bridge
-product SIS 540HB		0x0540	540 Host to PCI Bridge
-product SIS 550HB		0x0550	550 Host to PCI Bridge
+product SIS 530HB		0x0530	530 Host-PCI Bridge
+product SIS 540HB		0x0540	540 Host-PCI Bridge
+product SIS 550HB		0x0550	550 Host-PCI Bridge
 product SIS 85C601		0x0601	85C601
 product SIS 620			0x0620	620 Host Bridge
 product SIS 630			0x0630	630 Host Bridge
@@ -2611,7 +2611,7 @@ product TI	PCI1520		0xac55	PCI1520 PCI-CardBus Bridge
 product TI	PCI1510		0xac56	PCI1510 PCI-CardBus Bridge
 product TI	PCI1530		0xac57	PCI1530 PCI-CardBus Bridge
 product TI	PCI1515		0xac58	PCI1515 PCI-CardBus Bridge
-product TI	PCI2040		0xac60	PCI2040 PCI-to-DSP Bridge
+product TI	PCI2040		0xac60	PCI2040 PCI-DSP Bridge
 
 /* Titan Electronics products */
 product TITAN PCI800L		0x8080	PCI-800L
@@ -2625,13 +2625,13 @@ product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 /* Toshiba products */
 product TOSHIBA2 PORTEGE	0x0001	Portege Notebook
 product TOSHIBA2 HOST		0x0601	Host Bridge/Controller
-product TOSHIBA2 ISA		0x0602	ISA Bridge
-product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
-product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
-product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
+product TOSHIBA2 ISA		0x0602	PCI-ISA Bridge
+product TOSHIBA2 ToPIC95	0x0603	ToPIC95 PCI-CardBus Bridge
+product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B PCI-CardBus Bridge
+product TOSHIBA2 ToPIC97	0x060f	ToPIC97 PCI-CardBus Bridge
 product TOSHIBA2 SMCARD		0x0804	Smart Media Controller
 product TOSHIBA2 SDCARD		0x0805	Secure Digital Card Controller Type-A
-product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
+product TOSHIBA2 ToPIC100	0x0617	ToPIC100 PCI-CardBus Bridge
 product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
 product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
 
@@ -2680,7 +2680,7 @@ product TSENG ET6000		0x3208	ET6000
 
 /* UMC products */
 product UMC UM82C881	0x0001	UM82C881 486 Chipset
-product UMC UM82C886	0x0002	UM82C886 ISA Bridge
+product UMC UM82C886	0x0002	UM82C886 PCI-ISA Bridge
 product UMC UM8673F	0x0101	UM8673F EIDE Controller
 product UMC UM8881	0x0881	UM8881 HB4 486 PCI Chipset
 product UMC UM82C891	0x0891	UM82C891
