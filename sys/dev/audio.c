@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.184.2.4 2004/12/12 12:48:10 kent Exp $	*/
+/*	$NetBSD: audio.c,v 1.184.2.5 2004/12/25 12:24:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.4 2004/12/12 12:48:10 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184.2.5 2004/12/25 12:24:38 kent Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -294,15 +294,8 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_pconvbuffer = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_pconvbuffer_size = AU_RING_SIZE;
-	sc->sc_rconvbuffer = malloc(AU_RING_SIZE, M_DEVBUF, M_WAITOK);
-	sc->sc_rconvbuffer_size = AU_RING_SIZE;
-
 	if ((error = audio_set_defaults(sc, 0)))
 		panic("audioattach: audio_set_defaults failed");
-
-	sc->sc_input_fragment_length = 0;
 
 	iclass = mclass = oclass = -1;
 	sc->sc_inports.index = -1;
@@ -417,8 +410,6 @@ audiodetach(struct device *self, int flags)
 	/* free resources */
 	audio_free_ring(sc, &sc->sc_pr);
 	audio_free_ring(sc, &sc->sc_rr);
-	free(sc->sc_pconvbuffer, M_DEVBUF);
-	free(sc->sc_rconvbuffer, M_DEVBUF);
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&audio_cdevsw);
@@ -848,11 +839,6 @@ audio_initbufs(struct audio_softc *sc)
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
 	audio_init_ringbuffer(sc, &sc->sc_rr);
-#if NAURATECONV > 0
-	auconv_init_context(&sc->sc_rconv, sc->sc_rparams.hw_sample_rate,
-			    sc->sc_rparams.sample_rate,
-			    sc->sc_rr.s.start, sc->sc_rr.s.end);
-#endif
 	if (hw->init_input && (sc->sc_mode & AUMODE_RECORD)) {
 		error = hw->init_input(sc->hw_hdl, sc->sc_rr.s.start,
 				       sc->sc_rr.s.end - sc->sc_rr.s.start);
@@ -861,11 +847,6 @@ audio_initbufs(struct audio_softc *sc)
 	}
 
 	audio_init_ringbuffer(sc, &sc->sc_pr);
-#if NAURATECONV > 0
-	auconv_init_context(&sc->sc_pconv, sc->sc_pparams.sample_rate,
-			    sc->sc_pparams.hw_sample_rate,
-			    sc->sc_pr.s.start, sc->sc_pr.s.end);
-#endif
 	sc->sc_sil_count = 0;
 	if (hw->init_output && (sc->sc_mode & AUMODE_PLAY)) {
 		error = hw->init_output(sc->hw_hdl, sc->sc_pr.s.start,
@@ -1049,8 +1030,6 @@ audio_init_record(struct audio_softc *sc)
 	if (sc->hw_if->speaker_ctl &&
 	    (!sc->sc_full_duplex || (sc->sc_mode & AUMODE_PLAY) == 0))
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_OFF);
-	sc->sc_rconvbuffer_begin = 0;
-	sc->sc_rconvbuffer_end = 0;
 	splx(s);
 }
 
@@ -1065,7 +1044,6 @@ audio_init_play(struct audio_softc *sc)
 	sc->sc_wstamp = sc->sc_pr.stamp;
 	if (sc->hw_if->speaker_ctl)
 		sc->hw_if->speaker_ctl(sc->hw_hdl, SPKR_ON);
-	sc->sc_input_fragment_length = 0;
 	splx(s);
 }
 
@@ -1193,37 +1171,25 @@ audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 int
 audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 {
-	struct audio_ringbuffer *cb = &sc->sc_rr;
+	struct audio_ringbuffer *cb;
 	const uint8_t *outp;
+	uint8_t *inp;
+	audio_stream_t *last_stream;
 	int error, s, used, cc, n;
-	const struct audio_params *params;
-	int hw_bits_per_sample;
 
+	cb = &sc->sc_rr;
 	if (cb->mmapped)
 		return EINVAL;
 
-	DPRINTFN(1,("audio_read: cc=%lu mode=%d\n",
-		    (unsigned long)uio->uio_resid, sc->sc_mode));
+	DPRINTFN(1,("audio_read: cc=%zu mode=%d\n",
+		    uio->uio_resid, sc->sc_mode));
 
-	params = &sc->sc_rparams;
-	switch (params->hw_encoding) {
-	case AUDIO_ENCODING_SLINEAR_LE:
-	case AUDIO_ENCODING_SLINEAR_BE:
-	case AUDIO_ENCODING_ULINEAR_LE:
-	case AUDIO_ENCODING_ULINEAR_BE:
-		hw_bits_per_sample = params->hw_channels * params->precision
-			* params->factor;
-		break;
-	default:
-		hw_bits_per_sample = 8 * params->factor / params->factor_denom;
-	}
 	error = 0;
 	/*
 	 * If hardware is half-duplex and currently playing, return
 	 * silence blocks based on the number of blocks we have output.
 	 */
-	if (!sc->sc_full_duplex &&
-	    (sc->sc_mode & AUMODE_PLAY)) {
+	if (!sc->sc_full_duplex && (sc->sc_mode & AUMODE_PLAY)) {
 		while (uio->uio_resid > 0 && !error) {
 			s = splaudio();
 			for(;;) {
@@ -1255,126 +1221,59 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 		}
 		return (error);
 	}
+
+	last_stream = sc->sc_nrfilters > 0
+		? sc->sc_rstreams[sc->sc_nrfilters - 1]
+		: &cb->s;
+
 	while (uio->uio_resid > 0 && !error) {
-		if (sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin <= 0) {
-			s = splaudio();
-			while (cb->used * 8 < hw_bits_per_sample) {
-				if (!sc->sc_rbus) {
-					error = audiostartr(sc);
-					if (error) {
-						splx(s);
-						return (error);
-					}
-				}
-				if (ioflag & IO_NDELAY) {
-					splx(s);
-					return (EWOULDBLOCK);
-				}
-				DPRINTFN(1, ("audio_read: sleep used=%d\n",
-					     cb->used));
-				error = audio_sleep(&sc->sc_rchan, "aud_rd");
-				if (sc->sc_dying)
-					error = EIO;
+		s = splaudio();
+		while ((used = audio_stream_get_used(last_stream)) <= 0) {
+			if (!sc->sc_rbus) {
+				error = audiostartr(sc);
 				if (error) {
 					splx(s);
-					return error;
+					return (error);
 				}
 			}
-
-			/*
-			 * Move data in the ring buffer to sc_rconvbuffer as
-			 * possible with/without rate conversion.
-			 */
-			used = cb->used;
-			outp = cb->s.outp;
-			cb->copying = TRUE;
-			splx(s);
-			cc = used - cb->usedlow; /* maximum to read */
-			if (cc > sc->sc_rconvbuffer_size)
-				cc = sc->sc_rconvbuffer_size;
-			n = cc * params->factor / params->factor_denom;
-			if (n < cc)
-				cc = n;
-			/* cc must be aligned by the sample size */
-			cc = (cc * 8 / hw_bits_per_sample) * hw_bits_per_sample / 8;
-#ifdef DIAGNOSTIC
-			if (cc == 0)
-				printf("audio_read: cc=0 hw_bits_per_sample=%d\n",
-				       hw_bits_per_sample);
-#endif
-
-			/*
-			 * The format of data in the ring buffer is
-			 * [hw_sample_rate, hw_encoding, hw_precision, hw_channels]
-			 */
-#if NAURATECONV > 0
-			sc->sc_rconvbuffer_end =
-				auconv_record(&sc->sc_rconv, params,
-					      sc->sc_rconvbuffer, outp, cc);
-#else
-			n = cb->end - outp;
-			if (cc <= n) {
-				memcpy(sc->sc_rconvbuffer, outp, cc);
-			} else {
-				memcpy(sc->sc_rconvbuffer, outp, n);
-				memcpy(sc->sc_rconvbuffer + n, cb->start,
-				       cc - n);
+			if (ioflag & IO_NDELAY) {
+				splx(s);
+				return (EWOULDBLOCK);
 			}
-			sc->sc_rconvbuffer_end = cc;
-#endif /* !NAURATECONV */
-			/*
-			 * The format of data in sc_rconvbuffer is
-			 * [sample_rate, hw_encoding, hw_precision, channels]
-			 */
-			outp += cc;
-			if (outp >= cb->s.end)
-				outp -= cb->s.end - cb->s.start;
-			s = splaudio();
-			cb->s.outp = outp;
-			cb->used -= cc;
-			cb->copying = FALSE;
-			splx(s);
-
-			if (params->sw_code) {
-				cc = sc->sc_rconvbuffer_end;
-#ifdef DIAGNOSTIC
-				if (cc % params->factor != 0)
-					printf("audio_read: cc is not aligned"
-					       ": cc=%d factor=%d\n", cc,
-					       params->factor);
-#endif
-				cc = cc * params->factor_denom / params->factor;
-#ifdef DIAGNOSTIC
-				if (cc == 0)
-					printf("audio_read: cc=0 "
-					       "factor=%d/%d\n",
-					       params->factor,
-					       params->factor_denom);
-#endif
-				params->sw_code(sc->hw_hdl, sc->sc_rconvbuffer,
-						cc);
-				sc->sc_rconvbuffer_end = cc;
+			DPRINTFN(2, ("audio_read: sleep used=%d\n", used));
+			error = audio_sleep(&sc->sc_rchan, "aud_rd");
+			if (sc->sc_dying)
+				error = EIO;
+			if (error) {
+				splx(s);
+				return error;
 			}
-			sc->sc_rconvbuffer_begin = 0;
-			/*
-			 * The format of data in sc_rconvbuffer is
-			 * [sample_rate, encoding, precision, channels]
-			 */
 		}
 
-		cc = sc->sc_rconvbuffer_end - sc->sc_rconvbuffer_begin;
-		if (uio->uio_resid < cc)
-			cc = uio->uio_resid; /* and no more than we want */
+		outp = last_stream->outp;
+		inp = last_stream->inp;
+		cb->copying = TRUE;
+		splx(s);
 
-		DPRINTFN(0,("audio_read: buffer=%p[%d] (~ %d), cc=%d\n",
-			    sc->sc_rconvbuffer, sc->sc_rconvbuffer_begin,
-			    sc->sc_rconvbuffer_end, cc));
+		/*
+		 * cc is the amount of data in the last_stream excluding
+		 * wrapped data
+		 */
+		cc = outp <= inp ? inp - outp : last_stream->end - outp;
+		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
+
 		n = uio->uio_resid;
-		error = uiomove(sc->sc_rconvbuffer + sc->sc_rconvbuffer_begin,
-				cc, uio);
-		cc = n - uio->uio_resid; /* number of bytes actually moved */
-		sc->sc_rconvbuffer_begin += cc;
+		error = uiomove(__UNCONST(outp), cc, uio);
+		n -= uio->uio_resid; /* number of bytes actually moved */
 
+		outp += n;
+		if (outp >= cb->s.end)
+			outp = cb->s.start;
+		s = splaudio();
+		last_stream->outp = outp;
+		cb->copying = FALSE;
+		cb->used = audio_stream_get_used(last_stream);
+		splx(s);
 	}
 	return (error);
 }
@@ -1550,6 +1449,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 	stream_fetcher_t *last_fetcher;
 	uio_fetcher_t ufetcher;
 	stream_filter_t *filter;
+	audio_stream_t tmp_stream;
 
 	DPRINTFN(2,("audio_write: sc=%p count=%lu used=%d(hi=%d)\n",
 		    sc, (unsigned long)uio->uio_resid, sc->sc_pr.used,
@@ -1623,28 +1523,19 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		if (cc > cb->s.end - cb->s.start)
 			cc = cb->s.end - cb->s.start;
 
-#ifdef DIAGNOSTIC
 		/*
-		 * This should never happen since the block size and and
-		 * block pointers are always nicely aligned.
+		 * write to the cb as possible
+		 *
+		 * work with a temporary audio_stream_t to narrow
+		 * splaudio() enclosure
 		 */
-		if (cc == 0) {
-			printf("audio_write: cc == 0, swcode=%p, factor=%d "
-			       "remain=%d\n",
-			       sc->sc_pparams.sw_code, sc->sc_pparams.factor,
-			       input_remain);
-			cb->copying = FALSE;
-			return EINVAL;
-		}
-#endif
+		tmp_stream = cb->s;
+		error = last_fetcher->fetch_to(last_fetcher,
+					       &tmp_stream, cc, &cc);
 		s = splaudio();
-		/* write to the cb as possible */
-		error = last_fetcher->fetch_to(last_fetcher, &cb->s, cc, &cc);
-
-		/* cc is the size of data actually written to inp. */
-		einp = cb->s.inp + cc;
-		if (einp >= cb->s.end)
-			einp -= cb->s.end - cb->s.start; /* not cb->bufsize */
+		cb->s = tmp_stream;
+		cb->used += cc;
+		einp = cb->s.inp;
 
 		/*
 		 * This is a very suboptimal way of keeping track of
@@ -1652,8 +1543,6 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		 */
 		sc->sc_sil_count = 0;
 
-		cb->s.inp = einp; /* XXX need to be enclosed by splaudio()? */
-		cb->used += cc;
 		/*
 		 * If the interrupt routine wants the last block filled AND
 		 * the copy did not fill the last block completely it needs to
@@ -1692,6 +1581,7 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 {
 	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
+	audio_stream_t *last_stream;
 	int error = 0, s, offs, fd;
 	u_long stamp;
 	int rbus, pbus;
@@ -1704,7 +1594,10 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 		break;
 
 	case FIONREAD:
-		*(int *)addr = sc->sc_rr.used;
+		last_stream = sc->sc_nrfilters > 0
+			? sc->sc_rstreams[sc->sc_nrfilters - 1]
+			: &sc->sc_rr.s;
+		*(int *)addr = audio_stream_get_used(last_stream);
 		break;
 
 	case FIOASYNC:
@@ -1788,7 +1681,10 @@ audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	 * sample of what we write next?
 	 */
 	case AUDIO_WSEEK:
-		*(u_long *)addr = sc->sc_rr.used;
+		last_stream = sc->sc_nrfilters > 0
+			? sc->sc_rstreams[sc->sc_nrfilters - 1]
+			: &sc->sc_rr.s;
+		*(u_long *)addr = audio_stream_get_used(last_stream);
 		break;
 
 	case AUDIO_SETINFO:
@@ -1871,7 +1767,7 @@ audio_poll(struct audio_softc *sc, int events, struct proc *p)
 
 	if (events & (POLLIN | POLLRDNORM)) {
 		/*
-  		 * If half duplex and playing, audio_read() will generate
+		 * If half duplex and playing, audio_read() will generate
 		 * silence at the play rate; poll for silence being
 		 * available.  Otherwise, poll for recorded sound.
 		 */
@@ -2295,17 +2191,23 @@ audio_pint(void *v)
 void
 audio_rint(void *v)
 {
-	struct audio_softc *sc = v;
-	const struct audio_hw_if *hw = sc->hw_if;
-	struct audio_ringbuffer *cb = &sc->sc_rr;
+	struct audio_softc *sc;
+	const struct audio_hw_if *hw;
+	struct audio_ringbuffer *cb;
+	stream_fetcher_t *last_fetcher;
+	audio_stream_t *last_stream;
+	int cc;
+	int used;
 	int blksize;
 	int error;
 
+	sc = v;
+	cb = &sc->sc_rr;
 	if (!sc->sc_open)
 		return;		/* ignore interrupt if not open */
 
+	hw = sc->hw_if;
 	blksize = cb->blksize;
-
 	cb->s.inp += blksize;
 	if (cb->s.inp >= cb->s.end)
 		cb->s.inp = cb->s.start;
@@ -2351,25 +2253,32 @@ audio_rint(void *v)
 	}
 #endif
 
-	cb->used += blksize;
+	used = audio_stream_get_used(&sc->sc_rr.s);
 	if (cb->pause) {
 		DPRINTFN(1, ("audio_rint: pdrops %lu\n", cb->pdrops));
 		cb->pdrops += blksize;
 		cb->s.outp += blksize;
 		if (cb->s.outp >= cb->s.end)
 			cb->s.outp = cb->s.start;
-		cb->used -= blksize;
-	} else if (cb->used + blksize >= cb->usedhigh && !cb->copying) {
+	} else if (used + blksize >= cb->usedhigh && !cb->copying) {
 		DPRINTFN(1, ("audio_rint: drops %lu\n", cb->drops));
 		cb->drops += blksize;
 		cb->s.outp += blksize;
 		if (cb->s.outp >= cb->s.end)
 			cb->s.outp = cb->s.start;
-		cb->used -= blksize;
 	}
 
-	DPRINTFN(2, ("audio_rint: inp=%p cc=%d used=%d\n",
-		     cb->inp, blksize, cb->used));
+	if (sc->sc_nrfilters > 0) {
+		last_stream = sc->sc_rstreams[sc->sc_nrfilters - 1];
+		last_fetcher = &sc->sc_rfilters[sc->sc_nrfilters - 1]->base;
+		cc = audio_stream_get_space(last_stream);
+		error = last_fetcher->fetch_to(last_fetcher, last_stream,
+					       cc, &cc);
+		/* XXX what should do for error? */
+		cb->used = audio_stream_get_used(last_stream);
+	}
+
+	DPRINTFN(2, ("audio_rint: inp=%p cc=%d\n", cb->inp, blksize));
 	if (!hw->trigger_input) {
 		error = hw->start_input(sc->hw_hdl, cb->s.inp, blksize,
 		    audio_rint, (void *)sc);

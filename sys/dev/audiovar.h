@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.31.2.2 2004/12/11 16:30:11 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.31.2.3 2004/12/25 12:24:38 kent Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,23 +157,6 @@ struct audio_softc {
 	/* Sleep channels for reading and writing. */
 	int	sc_rchan;
 	int	sc_wchan;
-
-#define MAX_SAMPLE_SIZE	(AUDIO_MAX_CHANNELS * 24 / 8) /* 6channels x 24bit precision */
-	int	sc_input_fragment_length;
-	u_char	sc_input_fragment[MAX_SAMPLE_SIZE];
-	int	sc_pconvbuffer_size;
-	u_char	*sc_pconvbuffer;
-#if NAURATECONV > 0
-	struct auconv_context sc_pconv;
-#endif
-
-	int	sc_rconvbuffer_size;
-	int	sc_rconvbuffer_begin;
-	int	sc_rconvbuffer_end;
-	u_char	*sc_rconvbuffer;
-#if NAURATECONV > 0
-	struct auconv_context sc_rconv;
-#endif
 
 	u_char	sc_blkset;	/* Blocksize has been set */
 

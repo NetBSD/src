@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_if.h,v 1.54.2.3 2004/12/12 12:48:10 kent Exp $	*/
+/*	$NetBSD: audio_if.h,v 1.54.2.4 2004/12/25 12:24:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1994 Havard Eidnes.
@@ -101,9 +101,21 @@ audio_stream_get_space(const audio_stream_t *p)
 {
 	uint8_t *i;
 	const uint8_t *o;
+
 	i = p->inp;
 	o = p->outp;
 	return i <= o ? o - i : p->end - i + o - p->start;
+}
+
+static __inline int
+audio_stream_get_used(const audio_stream_t *p)
+{
+	uint8_t *i;
+	const uint8_t *o;
+
+	i = p->inp;
+	o = p->outp;
+	return o <= i ? i - o : p->end - o + i - p->start;
 }
 
 /**
