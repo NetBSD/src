@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.36 2003/10/08 20:36:25 itojun Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.37 2003/10/08 20:39:07 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.36 2003/10/08 20:36:25 itojun Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.37 2003/10/08 20:39:07 itojun Exp $");
 #endif
 
 #include <sys/param.h>
@@ -435,7 +435,7 @@ resolve_ccdname(name)
 	char *name;
 {
 	char c, *path;
-	size_t len, newlen;
+	size_t len;
 	int rawpart;
 
 	if (name[0] == '/' || name[0] == '.') {
@@ -446,19 +446,14 @@ resolve_ccdname(name)
 	len = strlen(name);
 	c = name[len - 1];
 
-	newlen = len + 8;
-	if ((path = malloc(newlen)) == NULL)
-		return (NULL);
-	memset(path, 0, newlen);
-
 	if (isdigit(c)) {
-		if ((rawpart = getrawpartition()) < 0) {
-			free(path);
+		if ((rawpart = getrawpartition()) < 0)
 			return (NULL);
-		}
-		(void)snprintf(path, newlen, "/dev/%s%c", name, 'a' + rawpart);
+		if (asprintf(&path, "/dev/%s%c", name, 'a' + rawpart) < 0)
+			return (NULL);
 	} else
-		(void)snprintf(path, newlen, "/dev/%s", name);
+		if (asprintf(&path, "/dev/%s", name) < 0)
+			return (NULL);
 
 	return (path);
 }
