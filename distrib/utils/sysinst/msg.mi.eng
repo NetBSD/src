@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.eng,v 1.36 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: msg.mi.eng,v 1.37 1999/04/09 10:24:38 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,14 +241,15 @@ message nomount
 {Partition %c's type is not 4.2BSD or msdos and therefore does not have
 a mount point.}
 
-message dodisklabel
-{Writing the NetBSD disklabel ...\n}
-
 message donewfs
 {Creating the new file systems on all 4.2BSD partitions...\n}
 
 message dotar
 {Populating filesystems with bootstrapping binaries and config files...\n}
+
+message dotarfail
+{The bootstrapping binaries and config file installation failed.
+Can't continue ...}
 
 message instcomplete
 {The installation of NetBSD-@@VERSION@@ is now complete.  The system
@@ -662,3 +663,8 @@ The physical geometry is % cylinders %d sectors %d heads\n}
 message biosguess
 {Using the information already on the disk, my best guess for the BIOS
 geometry is %d cylinders %d sectors %d heads\n}
+
+message cmdfail
+{Command
+        %s
+failed. I can't continue.}

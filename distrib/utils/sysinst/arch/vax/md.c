@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.3 1999/03/31 00:44:50 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.4 1999/04/09 10:24:42 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,19 +115,18 @@ md_get_info()
 /*
  * hook called before writing new disklabel.
  */
-void
+int
 md_pre_disklabel()
 {
-
+	return 1;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-void
-md_post_disklabel()
+int	md_post_disklabel (void)
 {
-
+	return 0;
 }
 
 /*
@@ -139,21 +138,22 @@ md_post_disklabel()
  *
  * On the vax, we use this opportunity to install the boot blocks.
  */
-void
+int
 md_post_newfs()
 {
 
 	printf(msg_string(MSG_dobootblks), diskdev);
 	run_prog(0, 0, "/sbin/disklabel -B %s", diskdev);
+	return 0;
 }
 
 /*
  * some ports use this to copy the MD filesystem, we do not.
  */
-void
+int
 md_copy_filesystem()
 {
-
+	return 0;
 }
 
 int

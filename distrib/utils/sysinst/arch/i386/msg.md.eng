@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.eng,v 1.9 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: msg.md.eng,v 1.10 1999/04/09 10:24:41 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -190,3 +190,6 @@ message biosmultmatch
 
 message pickdisk
 {Choose disk: }
+
+message wmbrfail
+{Rewrite of MBR failed. I can't continue.}

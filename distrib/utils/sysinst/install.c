@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.13 1999/01/21 08:02:17 garbled Exp $	*/
+/*	$NetBSD: install.c,v 1.14 1999/04/09 10:24:38 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,9 +52,13 @@ do_install()
 	doingwhat = msg_string(MSG_install);
 
 	msg_display(MSG_installusure);
-/*	process_menu(MENU_noyes);*/
+	process_menu(MENU_noyes);
+	if (!yesno)
+		return;
+#if 0
 	if (!askyesno(0))
 		return;
+#endif
 	
 	get_ramsize();
 
@@ -86,19 +90,26 @@ do_install()
 	if (!yesno)
 		return;
 
-	md_pre_disklabel();
+	if (md_pre_disklabel() != 0)
+		return;
 
-	write_disklabel();
+	if (write_disklabel() != 0)
+		return;
 	
-	md_post_disklabel();
+	if (md_post_disklabel() != 0)
+		return;
 
-	make_filesystems();
+	if (make_filesystems())
+		return;
 
-	md_copy_filesystem();
+	if (md_copy_filesystem() != 0)
+		return;
 
-	make_fstab();
+	if (make_fstab() != 0)
+		return;
 
-	md_post_newfs();
+	if (md_post_newfs() != 0)
+		return;
 
 	/* Done to here. */
 	msg_display(MSG_disksetupdone);

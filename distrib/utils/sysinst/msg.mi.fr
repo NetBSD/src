@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.13 1999/04/08 12:54:52 bouyer Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.14 1999/04/09 10:24:39 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -245,14 +245,15 @@ message nomount
 point de montage.
 }
 
-message dodisklabel
-{Ecriture du disklabel NetBSD ...\n}
-
 message donewfs
 {Création des nouveaux systèmes de fichiers sur toutes les partitions 4.2BSD.\n}
 
 message dotar
 {Installation des programmes d'ammorcage et fichiers de configuration ...\n}
+
+message dotarfail
+{L'installation des programmes d'ammorcage et fichiers de configuration a
+échoué. Impossible de continuer ...}
 
 message instcomplete
 {L'installation de NetBSD-@@VERSION@@ est terminée. L'ordinateur devrait
@@ -679,3 +680,8 @@ La géométrie physique est %d cylindres %d secteurs %d têtes\n}
 message biosguess
 {En utilisant les informations déja présentes sur le disque, je suppose que
 la géométrie utilisée par le BIOS est %d cylindres %d secteurs %d têtes\n}
+
+message cmdfail
+{La commande
+        %s
+ne s'est pas executée correctement. Impossible de continuer.}

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.37 1999/04/05 06:59:36 simonb Exp $	*/
+/*	$NetBSD: defs.h,v 1.38 1999/04/09 10:24:38 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -222,10 +222,10 @@ EXTERN char fs_mount[MAXFS][STRSIZE];
 
 /* Machine dependent functions .... */
 int	md_get_info __P((void));
-void	md_pre_disklabel __P((void));
-void	md_post_disklabel __P((void));
-void	md_post_newfs __P((void));
-void	md_copy_filesystem __P((void));
+int	md_pre_disklabel __P((void));
+int	md_post_disklabel __P((void));
+int	md_post_newfs __P((void));
+int	md_copy_filesystem __P((void));
 int	md_make_bsd_partitions __P((void));
 int	md_update __P((void));
 void	md_cleanup_install __P((void));
@@ -236,10 +236,9 @@ void toplevel __P((void));
 /* from disks.c */
 int	find_disks __P((void));
 void	disp_cur_fspart __P((int, int));
-void	make_bsd_partitions __P((void));
-void	write_disklabel __P((void));
-void	make_filesystems __P((void));
-void	make_fstab __P((void));
+int	write_disklabel __P((void));
+int	make_filesystems __P((void));
+int	make_fstab __P((void));
 int	fsck_disks __P((void));
 
 /* from label.c */
@@ -271,7 +270,7 @@ void	mnt_net_config __P((void));
 
 /* From run.c */
 int	collect __P((int kind, char **buffer, const char *name, ...));
-int	run_prog __P((int, int, char *, ...));
+int	run_prog __P((int, int, char *, char *, ...));
 void	do_logging __P((void));
 int	do_system __P((const char *));
 
@@ -315,7 +314,7 @@ int	target_already_root __P((void));
 FILE*	target_fopen __P((const char *filename, const char *type));
 int	target_collect_file __P((int kind, char **buffer, char *name));
 int	is_active_rootpart __P((const char *partname));
-void	cp_to_target __P((const char *src, const char *tgt_dst));
+int	cp_to_target __P((const char *src, const char *tgt_dst));
 void	dup_file_into_target __P((const char *filename));
 void	mv_within_target_or_die __P((const char *from, const char *to));
 int	cp_within_target __P((const char *frompath, const char *topath));

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.15 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.16 1999/04/09 10:24:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -268,15 +268,17 @@ int	md_get_info (void)
 	return 1;
 }
 
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 0;
 }
 
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
+	return 0;
 }
 
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
 #if 0
 	/* XXX boot blocks ... */
@@ -284,21 +286,24 @@ void	md_post_newfs (void)
 	run_prog(0, 1, "/sbin/disklabel -B %s /dev/r%sc",
 	    "-b /usr/mdec/rzboot -s /usr/mdec/bootrz", diskdev);
 #endif
+	return 0;
 }
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
 	if (target_already_root()) {
-		return;
+		return 0;
 	}
 
 	/* Copy the instbin(s) to the disk */
 	printf("%s", msg_string(MSG_dotar));
-	run_prog(0, 1, "pax -X -r -w -pe / /mnt");
+	if (run_prog(0, 1, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage install profile into target /.profile. */
-	cp_to_target("/tmp/.hdprofile", "/.profile");
-	cp_to_target("/usr/share/misc/termcap", "/.termcap");
+	if (cp_to_target("/tmp/.hdprofile", "/.profile") != 0)
+		return 1;
+	return cp_to_target("/usr/share/misc/termcap", "/.termcap");
 }
 
 int md_make_bsd_partitions (void)

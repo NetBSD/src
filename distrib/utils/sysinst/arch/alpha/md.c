@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 1999/03/31 00:44:49 fvdl Exp $	*/
+/*	$NetBSD: md.c,v 1.10 1999/04/09 10:24:40 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -109,15 +109,17 @@ md_get_info (void)
 /*
  * hook called before writing new disklabel.
  */
-void	md_pre_disklabel (void)
+int	md_pre_disklabel (void)
 {
+	return 0;
 }
 
 /*
  * hook called after writing disklabel to new target disk.
  */
-void	md_post_disklabel (void)
+int	md_post_disklabel (void)
 {
+	return 0;
 }
 
 /*
@@ -129,7 +131,7 @@ void	md_post_disklabel (void)
  *
  * On the Alpha, we use this opportunity to install the boot blocks.
  */
-void	md_post_newfs (void)
+int	md_post_newfs (void)
 {
 
 	const char *bootfile = target_expand("/boot");	/*XXX*/
@@ -138,9 +140,10 @@ void	md_post_newfs (void)
 	cp_to_target("/usr/mdec/boot", "/boot");
 	run_prog(0, 0, "/usr/mdec/installboot %s %s /dev/r%sc",
 	    bootfile,  "/usr/mdec/bootxx", diskdev);
+	return 0;
 }
 
-void	md_copy_filesystem (void)
+int	md_copy_filesystem (void)
 {
 	if (target_already_root()) {
 		return;
@@ -148,10 +151,11 @@ void	md_copy_filesystem (void)
 
 	/* Copy the instbin(s) to the disk */
 	printf ("%s", msg_string(MSG_dotar));
-	run_prog(0, 0, "pax -X -r -w -pe / /mnt");
+	if (run_prog(0, 0, "pax -X -r -w -pe / /mnt") != 0)
+		return 1;
 
 	/* Copy next-stage profile into target /.profile. */
-	cp_to_target ("/tmp/.hdprofile", "/.profile");
+	return cp_to_target ("/tmp/.hdprofile", "/.profile");
 }
 
 int md_make_bsd_partitions (void)
