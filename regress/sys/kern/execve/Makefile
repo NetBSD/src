@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.2 1995/01/07 23:14:00 mycroft Exp $
+#	$Id: Makefile,v 1.3 1995/03/01 18:29:04 glass Exp $
 
 PROG=	doexec
 NOMAN=	noman, no way, man
@@ -53,7 +53,7 @@ truncaout: goodaout
 	/bin/rm -rf truncaout
 	dd if=${.OBJDIR}/goodaout of=truncaout bs=16 count=1
 	chmod a+x truncaout
-	
+
 test-truncaout: ${PROG} truncaout
 	${RP} ${.OBJDIR}/truncaout | diff - ${OD}/truncaout
 
