@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.52 2003/10/21 04:35:01 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.53 2003/10/21 05:45:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.52 2003/10/21 04:35:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.53 2003/10/21 05:45:11 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -201,6 +201,8 @@ struct wm_softc {
 	struct device sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_space_tag_t sc_iot;		/* I/O space tag */
+	bus_space_handle_t sc_ioh;	/* I/O space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
@@ -317,8 +319,9 @@ do {									\
 /* sc_flags */
 #define	WM_F_HAS_MII		0x01	/* has MII */
 #define	WM_F_EEPROM_HANDSHAKE	0x02	/* requires EEPROM handshake */
-#define	WM_F_BUS64		0x10	/* bus is 64-bit */
-#define	WM_F_PCIX		0x20	/* bus is PCI-X */
+#define	WM_F_IOH_VALID		0x10	/* I/O handle is valid */
+#define	WM_F_BUS64		0x20	/* bus is 64-bit */
+#define	WM_F_PCIX		0x40	/* bus is PCI-X */
 
 #ifdef WM_EVENT_COUNTERS
 #define	WM_EVCNT_INCR(ev)	(ev)->ev_count++
@@ -554,6 +557,24 @@ static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
 };
 #endif /* WM_EVENT_COUNTERS */
 
+#if 0 /* Not currently used */
+static __inline uint32_t
+wm_io_read(struct wm_softc *sc, int reg)
+{
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0, reg);
+	return (bus_space_read_4(sc->sc_iot, sc->sc_ioh, 4));
+}
+#endif
+
+static __inline void
+wm_io_write(struct wm_softc *sc, int reg, uint32_t val)
+{
+
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 0, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, 4, val);
+}
+
 static const struct wm_product *
 wm_lookup(const struct pci_attach_args *pa)
 {
@@ -626,7 +647,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/*
-	 * Map the device.
+	 * Map the device.  All devices support memory-mapped acccess,
+	 * and it is really required for normal operation.
 	 */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, WM_PCI_MMBA);
 	switch (memtype) {
@@ -646,6 +668,31 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: unable to map device registers\n",
 		    sc->sc_dev.dv_xname);
 		return;
+	}
+
+	/*
+	 * In addition, i82544 and later support I/O mapped indirect
+	 * register access.  It is not desirable (nor supported in
+	 * this driver) to use it for normal operation, though it is
+	 * required to work around bugs in some chip versions.
+	 */
+	if (sc->sc_type >= WM_T_82544) {
+		/* First we have to find the I/O BAR. */
+		for (i = PCI_MAPREG_START; i < PCI_MAPREG_END; i += 4) {
+			if (pci_mapreg_type(pa->pa_pc, pa->pa_tag, i) ==
+			    PCI_MAPREG_TYPE_IO)
+				break;
+		}
+		if (i == PCI_MAPREG_END)
+			aprint_error("%s: WARNING: unable to find I/O BAR\n",
+			    sc->sc_dev.dv_xname);
+		else if (pci_mapreg_map(pa, i, PCI_MAPREG_TYPE_IO,
+					0, &sc->sc_iot, &sc->sc_ioh,
+					NULL, NULL) == 0)
+			sc->sc_flags |= WM_F_IOH_VALID;
+		else
+			aprint_error("%s: WARNING: unable to map I/O space\n",
+			    sc->sc_dev.dv_xname);
 	}
 
 	/* Enable bus mastering.  Disable MWI on the i82542 2.0. */
@@ -2000,7 +2047,35 @@ wm_reset(struct wm_softc *sc)
 {
 	int i;
 
-	CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
+	switch (sc->sc_type) {
+	case WM_T_82544:
+	case WM_T_82540:
+	case WM_T_82545:
+	case WM_T_82546:
+	case WM_T_82541:
+	case WM_T_82541_2:
+		/*
+		 * These chips have a problem with the memory-mapped
+		 * write cycle when issuing the reset, so use I/O-mapped
+		 * access, if possible.
+		 */
+		if (sc->sc_flags & WM_F_IOH_VALID)
+			wm_io_write(sc, WMREG_CTRL, CTRL_RST);
+		else
+			CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
+		break;
+
+	case WM_T_82545_3:
+	case WM_T_82546_3:
+		/* Use the shadow control register on these chips. */
+		CSR_WRITE(sc, WMREG_CTRL_SHADOW, CTRL_RST);
+		break;
+
+	default:
+		/* Everything else can safely use the documented method. */
+		CSR_WRITE(sc, WMREG_CTRL, CTRL_RST);
+		break;
+	}
 	delay(10000);
 
 	for (i = 0; i < 1000; i++) {
