@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.45 1994/03/02 23:23:04 cgd Exp $
+ *	$Id: locore.s,v 1.46 1994/03/08 11:59:41 mycroft Exp $
  */
 
 
@@ -1464,7 +1464,8 @@ ENTRY(swtch)
 
 	movl	$0,_curproc		# out of process
 
-	call	_splhigh
+	movl	_cpl,%eax		# splhigh()
+	movl	$-1,_cpl
 	movl	%eax,PCB_IML(%ecx)	# save ipl
 
 	/* save is done, now choose a new process or idle */
