@@ -1,4 +1,4 @@
-.\"     $NetBSD: lock.9,v 1.5 2001/01/22 21:58:17 ad Exp $
+.\"     $NetBSD: lock.9,v 1.6 2001/05/06 05:16:15 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -274,23 +274,29 @@ is acquired, the simplelock is released.
 .El
 .El
 .Sh RETURN VALUES
-Successfully obtained locks return 0.  Locks will always succeed
+Successfully obtained locks return 0.  A failed lock attempt always
+returns a non-zero error value.  No lock is held after an error
+return (in particular, a failed LK_UPGRADE or LK_FORCEUPGRADE will
+have released its shared access lock).  Locks will always succeed
 unless one of the following is true:
 .Bl -tag -width compact
-.It
-LK_FORCEUPGRADE is requested and some other process has already
-requested a lock upgrade (returns EBUSY).
-.It
-LK_NOWAIT is set and a sleep would be required (returns EBUSY).
-.It
-LK_SLEEPFAIL is set and a sleep was done (returns ENOLCK).
-.It
-PCATCH is set in lock priority and a signal arrives (returns
-either EINTR or ERESTART if system calls is to be restarted).
-.It
-Non-null lock timeout and timeout expires (returns EWOULDBLOCK).
-.It
-A failed lock attempt always returns a non-zero error value.  No lock
-is held after an error return (in particular, a failed LK_UPGRADE
-or LK_FORCEUPGRADE will have released its shared access lock).
+.It EBUSY
+LK_FORCEUPGRADE is requested and some other thread has already
+requested a lock upgrade or LK_NOWAIT is set and a sleep would
+be required.
+.It ENOLCK
+LK_SLEEPFAIL is set and a sleep was done.
+.It EINTR
+PCATCH is set in lock priority and a signal arrives to interrupt
+a system call.
+.It ERESTART
+PCATCH is set in lock priority and a signal arrives so that
+the system call is restarted.
+.It EWOULDBLOCK
+Non-null lock timeout and timeout expires.
 .El
+.Sh HISTORY
+The current kernel locking API first appeared in 4.4BSD.
+.Sh SEE ALSO
+.Xr pmap 9 ,
+.Xr uvm 9 .
