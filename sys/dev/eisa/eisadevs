@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.14 1997/07/12 14:41:05 perry Exp $
+$NetBSD: eisadevs,v 1.15 1998/07/01 21:57:32 kleink Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -40,8 +40,11 @@ vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor FSI		FORE Systems
+vendor HWP		Hewlett-Packard
+vendor INP		Interphase
 vendor INT		Intel
 vendor ETI		Microdyne
+vendor MLX		Mylex
 vendor SMC		Standard Microsystems Corp.
 vendor TCM		3Com
 vendor USC		UltraStor
@@ -78,6 +81,9 @@ product DEC 3004	DEFEA FDDI Controller
 product FSI 2001	ESA-200 ATM
 product FSI 2002	ESA-200A ATM
 product FSI 2003	ESA-200E ATM
+
+/* Interphase products */
+product INP 25D0	Seahawk 4811 FDDI Controller
 
 /* Intel products */
 product INT 1010	EtherExpress 32 Flash Ethernet
