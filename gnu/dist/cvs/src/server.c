@@ -5655,19 +5655,20 @@ kserver_authenticate_connection ()
 {
     int status;
     char instance[INST_SZ];
-    struct sockaddr_in peer;
-    struct sockaddr_in laddr;
-    int len;
+    struct sockaddr_storage peer;
+    struct sockaddr_storage laddr;
+    int plen, llen;
     KTEXT_ST ticket;
     AUTH_DAT auth;
     char version[KRB_SENDAUTH_VLEN];
     char user[ANAME_SZ];
 
     strcpy (instance, "*");
-    len = sizeof peer;
-    if (getpeername (STDIN_FILENO, (struct sockaddr *) &peer, &len) < 0
+    plen = sizeof peer;
+    llen = sizeof laddr;
+    if (getpeername (STDIN_FILENO, (struct sockaddr *) &peer, &plen) < 0
 	|| getsockname (STDIN_FILENO, (struct sockaddr *) &laddr,
-			&len) < 0)
+			&llen) < 0)
     {
 	printf ("E Fatal error, aborting.\n\
 error %s getpeername or getsockname failed\n", strerror (errno));
