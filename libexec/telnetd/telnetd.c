@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.30 2001/08/30 23:25:16 wiz Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.31 2001/09/02 18:56:26 wiz Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.30 2001/08/30 23:25:16 wiz Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.31 2001/09/02 18:56:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -636,7 +636,7 @@ usage()
 #ifdef DIAGNOSTICS
 	fprintf(stderr, " [-D (options|report|exercise|netdata|ptydata)]\n\t");
 #endif
-#ifdef	AUTHENTICATION
+#ifdef	ENCRYPTION
 	fprintf(stderr, " [-edebug]");
 #endif
 	fprintf(stderr, " [-h]");
