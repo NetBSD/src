@@ -1,15 +1,15 @@
-/* $NetBSD: mmeye.h,v 1.2 1999/09/16 13:33:04 msaitoh Exp $ */
+/* $NetBSD: mmeye.h,v 1.3 1999/09/17 12:16:37 tsubai Exp $ */
 
 /*
  * Brains mmEye specific register definition
  */
 
 #ifndef _MMEYE_MMEYE_H_
-#define _MMEYE_H_
+#define _MMEYE_MMEYE_H_
 
 /* IRQ mask register */
 #ifdef MMEYE_NEW_INT /* for new mmEye */
-#define	MMTA_IMASK	(*(volatile unsigned short  *)0xb000000E)
+#define	MMTA_IMASK	(*(volatile unsigned short  *)0xb000000e)
 #else /* for old mmEye */
 #define	MMTA_IMASK	(*(volatile unsigned short  *)0xb0000010)
 #endif
