@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16 2000/02/01 04:04:19 danw Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17 2000/02/02 16:41:56 danw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -162,14 +162,15 @@ device_register(dev, aux)
 
 	if (DEVICE_IS(parent, "mainbus") && DEVICE_IS(dev, "pci")) {
 		struct pcibus_attach_args *pba = aux;
-		int n;
+		int n, size = sizeof(pci_bridges) / sizeof(struct pci_bridge);
 
-		for (n = 0; n < 2; n++) {
+		for (n = 0; n < size; n++) {
 			if (pci_bridges[n].present &&
-			    pci_bridges[n].bus == pba->pba_bus)
+			    pci_bridges[n].bus == pba->pba_bus &&
+			    pci_bridges[n].reg[0] == addr)
 				break;
 		}
-		if (n == 2 || addr != pci_bridges[n].reg[0])
+		if (n == size)
 			return;
 	} else if (DEVICE_IS(parent, "pci")) {
 		struct pci_attach_args *pa = aux;
