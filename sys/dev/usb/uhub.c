@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.24 1999/08/28 21:42:35 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.25 1999/09/02 18:13:50 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -466,12 +466,14 @@ uhub_disconnect_port(up)
 		return;
 	}
 
-	hubname = USBDEVNAME(*up->parent->subdevs[0]);
-	for (i = 0; dev->subdevs[i]; i++) {
-		printf("%s: at %s port %d (addr %d) disconnected\n",
-		       USBDEVNAME(*dev->subdevs[i]), hubname,
-		       up->portno, dev->address);
-		config_detach(dev->subdevs[i], DETACH_FORCE);
+	if (dev->subdevs) {
+		hubname = USBDEVNAME(*up->parent->subdevs[0]);
+		for (i = 0; dev->subdevs[i]; i++) {
+			printf("%s: at %s port %d (addr %d) disconnected\n",
+			       USBDEVNAME(*dev->subdevs[i]), hubname,
+			       up->portno, dev->address);
+			config_detach(dev->subdevs[i], DETACH_FORCE);
+		}
 	}
 
 	dev->bus->devices[dev->address] = 0;
