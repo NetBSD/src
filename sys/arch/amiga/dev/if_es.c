@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.29 2002/03/02 21:08:04 mhitch Exp $ */
+/*	$NetBSD: if_es.c,v 1.30 2002/03/03 18:21:37 mhitch Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -38,7 +38,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.29 2002/03/02 21:08:04 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.30 2002/03/03 18:21:37 mhitch Exp $");
 
 #include "bpfilter.h"
 
@@ -279,7 +279,7 @@ esinit(struct es_softc *sc)
 	/* XXX set Multicast table from Multicast list */
 	smc->b1.bsr = BSR_BANK1;	/* Select bank 1 */
 	smc->b1.cr = CR_RAM32K | CR_NO_WAIT_ST | CR_SET_SQLCH;
-	smc->b1.ctr = CTR_AUTO_RLSE;
+	smc->b1.ctr = CTR_AUTO_RLSE | CTR_TE_ENA;
 	smc->b1.iar[0] = *((unsigned short *) &LLADDR(ifp->if_sadl)[0]);
 	smc->b1.iar[1] = *((unsigned short *) &LLADDR(ifp->if_sadl)[2]);
 	smc->b1.iar[2] = *((unsigned short *) &LLADDR(ifp->if_sadl)[4]);
@@ -291,7 +291,7 @@ esinit(struct es_softc *sc)
 	smc->b0.rcr = RCR_FILT_CAR | RCR_STRIP_CRC | RCR_RXEN | RCR_ALLMUL;
 	/* XXX add promiscuous flags */
 	smc->b2.bsr = BSR_BANK2;	/* Select bank 2 */
-	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX;
+	smc->b2.msk = sc->sc_intctl = MSK_RX_OVRN | MSK_RX | MSK_EPHINT;
 
 	/* Interface is now 'running', with no output active. */
 	ifp->if_flags |= IFF_RUNNING;
@@ -512,6 +512,10 @@ zzzz:
 			if (tx_pnr != (smc->b2.fifo >> 8))
 				goto zzzz;
 		}
+	}
+	if (intact & IST_EPHINT) {
+		ifp->if_oerrors++;
+		esreset(sc);
 	}
 	/* output packets */
 	estint(sc);
