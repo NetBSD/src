@@ -1,6 +1,6 @@
-#	$NetBSD: list,v 1.2 2002/02/23 22:02:08 gmcgarry Exp $
+#	$NetBSD: list,v 1.3 2002/04/09 00:31:39 lukem Exp $
 
-SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin sys/arch/hp300/stand
+SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
 
 PROG	bin/cat
 PROG	bin/chmod
