@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.47 2004/06/05 15:47:10 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.48 2004/06/06 12:28:52 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.47 2004/06/05 15:47:10 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.48 2004/06/06 12:28:52 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -95,6 +95,7 @@ enum filetype {
 #define GZIP_MAGIC1	0x8B
 #define GZIP_OMAGIC1	0x9E
 
+#define GZIP_TIMESTAMP	(off_t)4
 #define GZIP_ORIGNAME	(off_t)10
 
 #define HEAD_CRC	0x02
@@ -1004,9 +1005,12 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	char *s;
 	off_t size;
 	ssize_t len = strlen(file);
-	int fd, zfd;
 	unsigned char header1[4], name[PATH_MAX + 1];
 	enum filetype method;
+	int fd, zfd;
+#ifndef SMALL
+	time_t timestamp = 0;
+#endif
 
 	/* gather the old name info */
 
@@ -1063,6 +1067,25 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	if (method == FT_GZIP && (Nflag || lflag))
 #endif
 	{
+#ifndef SMALL
+		unsigned char header2[4];	/* timestamp */
+
+		if (lseek(fd, GZIP_TIMESTAMP, SEEK_SET) == -1) {
+			maybe_warn("can't lseek %s", file);
+			goto close_header_read;
+		}
+		if (read(fd, header2, sizeof header2) != sizeof header2) {
+			if (fflag)
+				goto lose_close_it;
+			maybe_warn("can't read %s", file);
+			goto lose;
+               }
+               timestamp = ((time_t)header2[3] << 24)
+                         + ((time_t)header2[2] << 16)
+                         + ((time_t)header2[1] << 8)
+                         +  (time_t)header2[0];
+#endif
+
 		if (header1[3] & ORIG_NAME) {
 			size_t rbytes;
 			int i;
@@ -1111,12 +1134,14 @@ close_header_read:
 				    file, isb.st_nlink - 1);
 				goto lose;
 			}
+			if (nflag == 0 && timestamp)
+				isb.st_mtime = timestamp;
 #endif
 		} else
 			goto lose;
 	}
 
-	if (cflag == 0) {
+	if (cflag == 0 && lflag == 0) {
 		zfd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
 		if (zfd == -1) {
 			maybe_warn("can't open %s", outfile);
