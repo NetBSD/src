@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.22 1999/05/25 00:09:01 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.23 1999/05/25 01:34:13 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -440,6 +440,10 @@ uvm_pageboot_alloc(size)
 
 		/* XXX: should be wired, but some pmaps don't like that ... */
 #if defined(PMAP_NEW)
+		/*
+		 * Note this memory is no longer managed, so using
+		 * pmap_kenter is safe.
+		 */
 		pmap_kenter_pa(vaddr, paddr, VM_PROT_READ|VM_PROT_WRITE);
 #else
 		pmap_enter(pmap_kernel(), vaddr, paddr,
