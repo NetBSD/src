@@ -1,28 +1,12 @@
-2004-05-15  Derek Price  <derek@ximbiot.com>
+2004-06-09  Derek Price  <derek@ximbiot.com>
 
-	* libz.dsp: Header file list updated.
-	* libz.mak: Regenerated for "libz.dsp" changes.
-	(Patch from Conrad Pino <conrad@pino.com>.)
+	* NEWS: Note Stefan & Sebastian's security fixes.
+	* acinclude.m4 (gl_SIZE_MAX, gl_XSIZE): Import from GNULIB.
+	* configure.in: Call gl_XSIZE.
 
-2004-05-13  Derek Price  <derek@ximbiot.com>
+2004-06-09  Derek Price  <derek@ximbiot.com>
 
-	* .cvsignore: Changed for "libz.dsp", "zlib.dsp" changes.
-	* libz.dsp: Added for "../cvsnt.dsw" changes.
-	* libz.dep: Added for "libz.dsp" addition.
-	* libz.mak: Added for "libz.dsp" addition.
-	* zlib.dsp: Removed for "../cvsnt.dsw" changes.
-	(Patch from Conrad Pino <conrad@pino.com>.)
-
-2004-05-13  Derek Price  <derek@ximbiot.com>
-
-	* fix-msvc-make-head.pl, fix-msvc-mak.pl: New files.
-	* .cvsignore: Add fix-msvc-mak.
-
-2004-04-20  Derek Price  <derek@ximbiot.com>
-
-	* filesubr.c (unlink_file_dir, deep_remove_dir): Handle errno of
-	ENOTEMPTY from dirs under Windows XP.
-	(Report and suggested fix from Ken Raeburn <raeburn@mit.edu>.)
+	* NEWS: Note CAN-2004-0414 fix.
 
 2004-05-19  Derek Price  <derek@ximbiot.com>
 

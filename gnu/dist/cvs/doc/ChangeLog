@@ -1,3 +1,8 @@
+2004-05-28  Derek Price  <derek@ximbiot.com>
+
+	* cvs.texinfo (Global options): Remove reference to global -l option.
+	(Report from Kevin Bulgrien <Kevin.Bulgrien@TriPointGlobal.com>.)
+
 2004-05-14  Mark D. Baushke  <mdb@cvshome.org>
 	
 	* cvs.texinfo: Fix makeinfo error.

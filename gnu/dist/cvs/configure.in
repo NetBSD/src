@@ -1,5 +1,5 @@
 dnl configure.in for cvs
-AC_INIT([Concurrent Versions System (CVS)],[1.11.16],[bug-cvs@gnu.org],[cvs])
+AC_INIT([Concurrent Versions System (CVS)],[1.11.17],[bug-cvs@gnu.org],[cvs])
 AC_CONFIG_SRCDIR(src/cvs.h)
 AM_INIT_AUTOMAKE([gnu 1.7.9 dist-bzip2 no-define])
 AC_PREREQ(2.58)
@@ -191,6 +191,7 @@ AC_REPLACE_FUNCS(\
 dnl
 dnl Begin GNULIB stuff.
 dnl
+gl_XSIZE
 
 dnl We always want to use the GNULIB getpass, so define its name to something
 dnl that won't conflict with system declarations.
