@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.5 2001/11/29 02:26:50 thorpej Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.6 2001/11/30 19:26:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -92,10 +92,11 @@ i80312_pci_init(pci_chipset_tag_t pc, void *cookie)
 	/*
 	 * Configure the PCI bus.
 	 *
-	 * XXX We need to revisit this.  We currently only configure
-	 * the Secondary bus (and its children).  The bus configure
-	 * code needs changes to support how the busses are arranged
-	 * on this chip.
+	 * XXX We need to revisit this.  We only configure the Secondary
+	 * bus (and its children).  The bus configure code needs changes
+	 * to support how the busses are arranged on this chip.  We also
+	 * need to only configure devices in the private device space on
+	 * the Secondary bus.
 	 */
 
 	binfo = bus_space_read_4(sc->sc_st, sc->sc_ppb_sh, PPB_REG_BUSINFO);
