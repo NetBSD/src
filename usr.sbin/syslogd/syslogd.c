@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.35 2000/06/30 17:32:43 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.34 2000/02/18 09:44:46 lukem Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.35 2000/06/30 17:32:43 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -191,7 +191,8 @@ int	*finet;			/* Internet datagram sockets */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
-int	SecureMode = 0;		/* when true, speak only unix domain socks */
+int	SecureMode = 0;		/* listen only on unix domain socks */
+int	NoNetMode = 0;		/* send+listen only on unix domain socks */
 char	**LogPaths;		/* array of pathnames to read messages from */
 
 void	cfline __P((char *, struct filed *));
@@ -227,7 +228,7 @@ main(argc, argv)
 	char *p, *line, **pp;
 	struct pollfd *readfds;
 
-	while ((ch = getopt(argc, argv, "dsf:m:p:P:")) != -1)
+	while ((ch = getopt(argc, argv, "dsSf:m:p:P:")) != -1)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -246,8 +247,11 @@ main(argc, argv)
 			logpath_fileadd(&LogPaths, &funixsize, 
 			    &funixmaxsize, optarg);
 			break;
-		case 's':		/* no network mode */
+		case 's':		/* no network listen mode */
 			SecureMode++;
+			break;
+		case 'S':		/* no network at all mode */
+			NoNetMode++;
 			break;
 		case '?':
 		default:
@@ -448,7 +452,7 @@ usage()
 	extern char *__progname;
 
 	(void)fprintf(stderr,
-"usage: %s [-f conffile] [-m markinterval] [-p logpath1] [-p logpath2 ..]\n",
+"usage: %s [-dsS] [-f conffile] [-m markinterval] [-P logpathfile] [-p logpath1] [-p logpath2 ..]\n",
 	    __progname);
 	exit(1);
 }
@@ -1336,6 +1340,9 @@ socksetup(af)
 {
 	struct addrinfo hints, *res, *r;
 	int error, maxs, *s, *socks;
+
+	if(NoNetMode)
+		return(NULL);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_flags = AI_PASSIVE;
