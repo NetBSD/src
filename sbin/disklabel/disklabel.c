@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.99 2001/10/19 01:16:37 lukem Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.100 2001/11/29 23:08:53 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.99 2001/10/19 01:16:37 lukem Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.100 2001/11/29 23:08:53 bjh21 Exp $");
 #endif
 #endif	/* not lint */
 
@@ -146,13 +146,13 @@ static int			 mbrpt_nobsd;	/*
 static struct mbr_partition	*readmbr(int);
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 static u_int		 filecore_partition_offset;
 static u_int		 get_filecore_partition(int);
 static int		 filecore_checksum(u_char *);
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
-#if defined(USE_MBR) || (defined(__arm32__) && defined(notyet))
+#if defined(USE_MBR) || (defined(USE_ACORN) && defined(notyet))
 static void		 confirm(const char *);
 #endif
 
@@ -297,7 +297,7 @@ main(int argc, char *argv[])
 	}
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 	/*
 	 * Check for the presence of a RiscOS filecore boot block
 	 * indicating an ADFS file system on the disc.
@@ -307,7 +307,7 @@ main(int argc, char *argv[])
 	 * is found to be ADFS only.
 	 */
 	filecore_partition_offset = get_filecore_partition(f);
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
 	switch (op) {
 
@@ -452,7 +452,7 @@ makelabel(const char *type, const char *name, struct disklabel *lp)
 		(void)strncpy(lp->d_packname, name, sizeof(lp->d_packname));
 }
 
-#if defined(USE_MBR) || (defined(__arm32__) && defined(notyet))
+#if defined(USE_MBR) || (defined(USE_ACORN) && defined(notyet))
 static void
 confirm(const char *txt)
 {
@@ -466,7 +466,7 @@ confirm(const char *txt)
 	if (first != 'y' && first != 'Y')
 		exit(0);
 }
-#endif	/* USE_MBR || __arm32__ && notyet */
+#endif	/* USE_MBR || USE_ACORN && notyet */
 
 int
 writelabel(int f, const char *boot, struct disklabel *lp)
@@ -515,10 +515,10 @@ writelabel(int f, const char *boot, struct disklabel *lp)
 		}
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 		/* XXX */
 		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
 		/*
 		 * First set the kernel disk label,
@@ -689,7 +689,7 @@ readmbr(int f)
 }
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 /*
  * static int filecore_checksum(u_char *bootblock)
  *
@@ -835,7 +835,7 @@ get_filecore_partition(int f)
 	}
 	return (0);
 }
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
 /*
  * Fetch disklabel for disk.
@@ -858,10 +858,10 @@ readlabel(int f)
 			sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 		/* XXX */
 		sectoffset = (off_t)filecore_partition_offset * DEV_BSIZE;
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) != BBSIZE)
@@ -955,11 +955,11 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 				sectoffset = (off_t)dosdp->mbrp_start * DEV_BSIZE;
 #endif	/* USE_MBR */
 
-#ifdef __arm32__
+#ifdef USE_ACORN
 			/* XXX */
 			sectoffset = (off_t)filecore_partition_offset
 			    * DEV_BSIZE;
-#endif	/* __arm32__ */
+#endif	/* USE_ACORN */
 
 			if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 			    read(f, boot, BBSIZE) != BBSIZE)
