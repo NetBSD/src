@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2001/10/04 16:04:53 oster Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/04 21:43:44 augustss Exp $
 
-SUBDIR=	ata dec hpc i2o ic isa ofw pci pckbc pcmcia raidframe \
+SUBDIR=	ata dec hpc i2o ic ir isa ofw pci pckbc pcmcia raidframe \
 	sbus scsipi sun tc usb vme wscons 
 
 KDIR=	/sys/dev
