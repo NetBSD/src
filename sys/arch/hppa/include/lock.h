@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.2 2003/06/23 11:01:16 martin Exp $	*/
+/* 	$NetBSD: lock.h,v 1.3 2003/09/20 22:28:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,9 @@
 #ifndef _HPPA_LOCK_H_
 #define	_HPPA_LOCK_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
+#endif
 
 #ifdef	MULTIPROCESSOR
 
