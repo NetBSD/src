@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.41.2.3 1999/11/01 06:19:16 scottr Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.41.2.4 1999/11/28 07:33:30 scottr Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -212,10 +212,13 @@ grfiv_attach(parent, self, aux)
 			length = 0x00100000;		/* 1MB */
 
 			if (sc->sc_basepa <= mac68k_vidphys &&
-			    mac68k_vidphys < (sc->sc_basepa + length))
+			    mac68k_vidphys < (sc->sc_basepa + length)) {
 				sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
-			else
-				sc->sc_fbofs = 0;
+			} else {
+				sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
+				sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+				length = mac68k_vidlen + sc->sc_fbofs;
+			}
 
 			printf(" @ %lx: Valkyrie video subsystem\n",
 			    sc->sc_basepa + sc->sc_fbofs);
@@ -267,14 +270,16 @@ grfiv_attach(parent, self, aux)
 	case MACH_CLASSAV:
 		sc->sc_basepa = CIVIC_BASE;
 		length = 0x00200000;		/* 2MB */
-
-		if (sc->sc_basepa <= mac68k_vidphys &&
-		    mac68k_vidphys < (sc->sc_basepa + length))
+		if (mac68k_vidphys >= sc->sc_basepa &&
+		    mac68k_vidphys < (sc->sc_basepa + length)) {
 			sc->sc_fbofs = mac68k_vidphys - sc->sc_basepa;
-		else
-			sc->sc_fbofs = 0;
+		} else {
+			sc->sc_basepa = m68k_trunc_page(mac68k_vidphys);
+			sc->sc_fbofs = mac68k_vidphys & PGOFSET;
+			length = mac68k_vidlen + sc->sc_fbofs;
+		}
 
-		printf(" @ %lx: Civic video subsystem\n",
+		printf(" @ %lx: CIVIC video subsystem\n",
 		    sc->sc_basepa + sc->sc_fbofs);
 		break;
 	case MACH_CLASSIIci:
