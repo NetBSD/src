@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.19 2000/11/20 08:24:13 chs Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.20 2001/04/24 06:15:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -139,7 +139,9 @@ readdisklabel(dev, strat, lp, clp)
 {
 	int			e;
 
-	bzero(clp, sizeof *clp);
+	if (clp != NULL)
+		bzero(clp, sizeof *clp);
+	else printf("Warning: clp == NULL\n");
 
 	/*
 	 * Give some guaranteed validity to the disk label.
@@ -168,7 +170,7 @@ readdisklabel(dev, strat, lp, clp)
 
 #ifdef DISKLABEL_NBDA
 	/* Try the native NetBSD/Atari format first. */
-	e = bsd_label(dev, strat, lp, 0, &clp->cd_label);
+	e = bsd_label(dev, strat, lp, 0, clp != NULL ? &clp->cd_label : NULL);
 #endif
 #if 0
 	/* Other label formats go here. */
@@ -177,7 +179,7 @@ readdisklabel(dev, strat, lp, clp)
 #endif
 #ifdef DISKLABEL_AHDI
 	/* The unprotected AHDI format comes last. */
-	if (e > 0)
+	if (e > 0 && (clp != NULL))
 		e = ahdi_label(dev, strat, lp, clp);
 #endif
 	if (e < 0)
@@ -310,12 +312,12 @@ writedisklabel(dev, strat, lp, clp)
  *          +1 if no valid label was found.
  */
 static int
-bsd_label(dev, strat, label, blkno, offset)
+bsd_label(dev, strat, label, blkno, offsetp)
 	dev_t			dev;
 	void			(*strat)(struct buf *);
 	struct disklabel	*label;
 	u_int			blkno,
-				*offset;
+				*offsetp;
 {
 	struct buf		*bp;
 	int			rv;
@@ -354,9 +356,10 @@ bsd_label(dev, strat, label, blkno, offset)
 			   && dl->d_magic  == DISKMAGIC
 		  	   && dkcksum(dl)  == 0
 			   )	{
-				*offset = (char *)dl - (char *)bb;
-				*label  = *dl;
-				rv      = 0;
+				if (offsetp != NULL)
+					*offsetp = (char *)dl - (char *)bb;
+				*label = *dl;
+				rv     = 0;
 				break;
 			}
 		}
