@@ -1,4 +1,4 @@
-/*	$NetBSD: bim.c,v 1.9 1999/01/25 22:42:11 garbled Exp $	*/
+/*	$NetBSD: bim.c,v 1.10 1999/07/25 05:53:01 abs Exp $	*/
 
 /*
  * Copyright (c) 1994 Philip A. Nelson.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bim.c,v 1.9 1999/01/25 22:42:11 garbled Exp $");
+__RCSID("$NetBSD: bim.c,v 1.10 1999/07/25 05:53:01 abs Exp $");
 #endif /* not lint */
 
 /*
@@ -342,7 +342,7 @@ add_image(num, args, syntax)
 	int     im_addr;	/* Byte address of the new boot image. */
 	unsigned int im_load_adr;	/* The memory load address. */
 	unsigned int im_run_adr;/* The memory run address. */
-	char   *nptr;		/* Pointer for makeing name lower case. */
+	char   *nptr;		/* Pointer for making name lower case. */
 
 	/* Check argument numbers. */
 	if (num != 2 && num != 3) {
