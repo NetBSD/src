@@ -32,8 +32,8 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94"; */
-static char *rcsid = "$Id: fts.c,v 1.10 1994/10/26 20:25:50 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94"; */
+static char *rcsid = "$Id: fts.c,v 1.11 1994/12/28 03:15:09 mycroft Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -558,7 +558,8 @@ fts_build(sp, type)
 	FTSENT *cur, *tail;
 	DIR *dirp;
 	void *adjaddr;
-	int cderrno, descend, len, level, maxlen, nlinks, saved_errno, nostat;
+	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno,
+	    nostat;
 	char *cp;
 
 	/* Set current node pointer. */
@@ -568,7 +569,15 @@ fts_build(sp, type)
 	 * Open the directory for reading.  If this fails, we're done.
 	 * If being called from fts_read, set the fts_info field.
 	 */
-	if ((dirp = opendir(cur->fts_accpath)) == NULL) {
+#ifdef FTS_WHITEOUT
+	if (ISSET(FTS_WHITEOUT))
+		oflag = DTF_NODUP|DTF_REWIND;
+	else
+		oflag = DTF_HIDEW|DTF_NODUP|DTF_REWIND;
+#else
+#define __opendir2(path, flag) opendir(path)
+#endif
+	if ((dirp = __opendir2(cur->fts_accpath, oflag)) == NULL) {
 		if (type == BREAD) {
 			cur->fts_info = FTS_DNR;
 			cur->fts_errno = errno;
@@ -676,6 +685,11 @@ mem1:				saved_errno = errno;
 		p->fts_parent = sp->fts_cur;
 		p->fts_level = level;
 
+#ifdef FTS_WHITEOUT
+		if (dp->d_type == DT_WHT)
+			p->fts_flags |= FTS_ISW;
+#endif
+
 		if (cderrno) {
 			if (nlinks) {
 				p->fts_info = FTS_NS;
@@ -779,7 +793,18 @@ fts_stat(sp, p, follow)
 
 	/* If user needs stat info, stat buffer already allocated. */
 	sbp = ISSET(FTS_NOSTAT) ? &sb : p->fts_statp;
-	
+
+#ifdef FTS_WHITEOUT
+	/* check for whiteout */
+	if (p->fts_flags & FTS_ISW) {
+		if (sbp != &sb) {
+			memset(sbp, '\0', sizeof (*sbp));
+			sbp->st_mode = S_IFWHT;
+		}
+		return (FTS_W);
+	}
+#endif
+
 	/*
 	 * If doing a logical walk, or application requested FTS_FOLLOW, do
 	 * a stat(2).  If that fails, check for a non-existent symlink.  If
