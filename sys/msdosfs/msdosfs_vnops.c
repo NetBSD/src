@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.113 2001/09/22 22:14:29 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.114 2001/09/22 22:20:00 chs Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -471,7 +471,7 @@ msdosfs_read(v)
 		return (0);
 	if (uio->uio_offset < 0)
 		return (EINVAL);
-	if (uio->uio_offset >= de->de_FileSize)
+	if (uio->uio_offset >= dep->de_FileSize)
 		return (0);
 
 	if (vp->v_type == VREG) {
