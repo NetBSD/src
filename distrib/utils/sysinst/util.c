@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.109 2003/07/27 08:57:27 dsl Exp $	*/
+/*	$NetBSD: util.c,v 1.110 2003/07/29 12:08:32 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1182,16 +1182,16 @@ set_tz_select(menudesc *m, void *arg)
 	time_t t;
 	char *new;
 
-	if (m) {
+	if (m && strcmp(tz_selected, m->opts[m->cursel].opt_name) != 0) {
 		new = strdup(m->opts[m->cursel].opt_name);
 		if (new == NULL)
 			return 0;
 		free(tz_selected);
 		tz_selected = new;
+		snprintf(tz_env, sizeof tz_env, "%.*s%s",
+			 zonerootlen, zoneinfo_dir, tz_selected);
+		setenv("TZ", tz_env, 1);
 	}
-	snprintf(tz_env, sizeof tz_env, "%*s%s",
-		 zonerootlen, zoneinfo_dir, tz_selected);
-	setenv("TZ", tz_env, 1);
 	t = time(NULL);
 	msg_display(MSG_choose_timezone, 
 		    tz_default, tz_selected, ctime(&t), localtime(&t)->tm_zone);
