@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.28 2003/08/07 11:15:19 agc Exp $	*/
+/*	$NetBSD: inet6.c,v 1.29 2003/09/04 09:23:39 itojun Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.28 2003/08/07 11:15:19 agc Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.29 2003/09/04 09:23:39 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,26 +150,31 @@ ip6protopr(off, name)
 	u_long off;
 	char *name;
 {
-	struct in6pcb cb;
-	register struct in6pcb *prev, *next;
+	struct inpcbtable table;
+	struct in6pcb *head, *prev, *next;
 	int istcp;
 	static int first = 1;
 	int width = 22;
+
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp6") == 0;
-	kread(off, (char *)&cb, sizeof (struct in6pcb));
-	in6pcb = cb;
-	prev = (struct in6pcb *)off;
-	if (in6pcb.in6p_next == (struct in6pcb *)off)
-		return;
-	while (in6pcb.in6p_next != (struct in6pcb *)off) {
-		next = in6pcb.in6p_next;
-		kread((u_long)next, (char *)&in6pcb, sizeof (in6pcb));
-		if (in6pcb.in6p_prev != prev) {
+	kread(off, (char *)&table, sizeof (table));
+	head = prev =
+	    (struct in6pcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
+	next = (struct in6pcb *)table.inpt_queue.cqh_first;
+	while (next != head) {
+		kread((u_long)next, (char *)&in6pcb, sizeof in6pcb);
+		if ((struct in6pcb *)in6pcb.in6p_queue.cqe_prev != prev) {
 			printf("???\n");
 			break;
 		}
+		prev = next;
+		next = (struct in6pcb *)in6pcb.in6p_queue.cqe_next;
+
+		if (in6pcb.in6p_af != AF_INET6)
+			continue;
+
 		if (!aflag && IN6_IS_ADDR_UNSPECIFIED(&in6pcb.in6p_laddr)) {
 			prev = next;
 			continue;
@@ -225,7 +230,6 @@ ip6protopr(off, name)
 #endif
 		}
 		putchar('\n');
-		prev = next;
 	}
 }
 
