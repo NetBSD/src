@@ -1,6 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
+ * $NetBSD: podule_data.h,v 1.8 1998/01/05 21:11:15 perry Exp $
  * generated from:
  *	NetBSD: podules,v 1.7 1997/10/14 22:22:08 mark Exp 
  */
