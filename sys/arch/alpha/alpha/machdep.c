@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.79 1997/06/08 23:59:57 veego Exp $ */
+/* $NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 1997/06/08 23:59:57 veego Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 1997/06/12 15:46:19 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -458,7 +458,6 @@ unknown_cputype:
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif
