@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.h,v 1.3 2002/11/27 16:44:01 atatat Exp $ */
+/*	$NetBSD: darwin_signal.h,v 1.4 2002/11/29 13:17:23 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	_DARWIN_DARWIN_H_
 
 #define DARWIN_SA_USERTRAMP 0x0100
+#define DARWIN_SA_ALLBITS   0x017f
 
 union darwin_sigval {
 	int sigval_int;
