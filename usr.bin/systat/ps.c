@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.18 2000/12/20 01:17:49 cgd Exp $  */
+/*      $NetBSD: ps.c,v 1.19 2001/07/14 07:09:11 matt Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.18 2000/12/20 01:17:49 cgd Exp $");
+__RCSID("$NetBSD: ps.c,v 1.19 2001/07/14 07:09:11 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -175,7 +175,7 @@ state2str(struct kinfo_proc *kp)
 
 	case SSLEEP:
 		if (flag & P_SINTR)     /* interuptable (long) */
-			*cp = p->p_slptime >= MAXSLP ? 'I' : 'S';
+			*cp = p->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';
 		break;
@@ -303,15 +303,17 @@ pmem2float(struct kinfo_proc *kp)
 	struct proc *p;
 	struct eproc *e; 
 	double fracmem;
-	int szptudot;
+	int szptudot = 0;
 
 	p = &(kp->kp_proc);
 	e = &(kp->kp_eproc);
 
 	if ((p->p_flag & P_INMEM) == 0)
 	        return (0.0);
+#ifdef USPACE
 	/* XXX want pmap ptpages, segtab, etc. (per architecture) */
 	szptudot = USPACE/getpagesize();
+#endif
 	/* XXX don't have info about shared */
 	fracmem = ((double)e->e_vm.vm_rssize + szptudot)/mempages;
 	return (fracmem >= 0) ? 100.0 * fracmem : 0;
