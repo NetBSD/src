@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.7 1998/05/08 19:08:18 chopps Exp $
+ * $NetBSD: main.c,v 1.8 1998/05/08 23:03:49 chopps Exp $
  *
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -308,6 +308,13 @@ pain()
 
 	/* Permit(); */
 
+	if (k_flag) {
+		fmem += 4*1024*1024;
+		fmemsz -= 4*1024*1024;
+	}
+	if (m_value && m_value < fmemsz)
+		fmemsz = m_value;
+
 	printf("Loading %s: ", kernel_name);
 	io = open(kernel_name, 0);
 	if (io < 0)
@@ -412,16 +419,8 @@ pain()
 		*kmemseg++ = *memseg++;
 
 	/*
-	 * Kernel supports direct load to fastmem, and the -Z
-	 * option was not specified.  Copy startup code to end
-	 * of kernel image and set start_it.
+	 * Copy startup code to end of kernel image and set start_it.
 	 */
-#if 0
-	if ((u_int32_t)kp < fmem) {
-		errno = EFBIG;
-		goto err;
-	}
-#endif
 	memcpy(kp + ksize + 256, (char *)startit,
 	    (char *)startit_end - (char *)startit);
 	CacheClearU();
