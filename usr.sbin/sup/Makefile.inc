@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.3 1997/10/25 06:58:48 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/01/21 09:07:04 mikel Exp $
 
 CPPFLAGS+=-UCMUCS -UCMU -UMACH -DVAR_TMP -DHAS_DAEMON -DHAS_POSIX_DIR
 CPPFLAGS+=-I${.CURDIR}/../source -I${.CURDIR}/../lib -I${.CURDIR}/../sys
+CPPFLAGS+=-DEE_XXX
 
 LIBSUPDIR != cd ${.CURDIR}/../lib;\
     printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}\n" | ${MAKE} -s -f-
