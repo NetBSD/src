@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_vm.c,v 1.25 2003/03/03 22:07:40 manu Exp $ */
+/*	$NetBSD: mach_vm.c,v 1.26 2003/03/05 22:39:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.25 2003/03/03 22:07:40 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_vm.c,v 1.26 2003/03/05 22:39:48 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -509,9 +509,9 @@ mach_vm_region(args)
 	 */
 	if (req->req_flavor != MACH_VM_REGION_BASIC_INFO) 
 		return mach_msg_error(args, EINVAL);
-	if (req->req_count * sizeof(int) < sizeof(*rbi))
+	if (req->req_count != (sizeof(*rbi) / sizeof(int))) /* This is 8 */
 		return mach_msg_error(args, EINVAL);
-	*msglen += ((req->req_count - 9) * sizeof(int)); 
+	*msglen = sizeof(*rep) + ((req->req_count - 9) * sizeof(int));
 
 	vme = uvm_map_findspace(&l->l_proc->p_vmspace->vm_map, 
 			    req->req_addr, 1, (vaddr_t *)&rep->rep_addr, 
@@ -522,27 +522,32 @@ mach_vm_region(args)
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
 	    MACH_MSGH_BITS_COMPLEX;
-	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_body.msgh_descriptor_count = 1;
-	rep->rep_obj.address = (void *)rep->rep_addr;
-	rep->rep_obj.size = rep->rep_size;
+	rep->rep_obj.address = NULL;
+	rep->rep_obj.size = 0;
 	rep->rep_obj.deallocate = 0;
-	rep->rep_obj.copy = 0; /* XXX */
-	rep->rep_obj.type = MACH_MSG_OOL_DESCRIPTOR;
-	rep->rep_size = (vme->end - vme->start);
+	rep->rep_obj.copy = 0; 
+	rep->rep_obj.pad1 = 0x11; 
+	rep->rep_obj.type = 0;
+	rep->rep_size = PAGE_SIZE; /* XXX Why? */
 	rep->rep_count = req->req_count;
 
 	rbi = (struct mach_vm_region_basic_info *)&rep->rep_info[0];
 	rbi->protection = vme->protection;
-	rbi->inheritance = vme->inheritance;
+	rbi->inheritance = 1; /* vme->inheritance */
 	rbi->shared = 0; /* XXX how can we know? */
 	rbi->offset = vme->offset;
 	rbi->behavior = MACH_VM_BEHAVIOR_DEFAULT; /* XXX What is it? */
 	rbi->user_wired_count = vme->wired_count;
 
+	/* XXX Why this? */
+	*(short *)((u_long)&rbi->user_wired_count + sizeof(short)) = 1;
+
 	rep->rep_info[rep->rep_count + 1] = 8; /* This is the trailer */
+
 	return 0;
 }
 
