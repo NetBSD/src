@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.81 2000/03/13 20:30:24 cgd Exp $
+$NetBSD: pcmciadevs,v 1.82 2000/03/16 16:38:41 onoe Exp $
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@ product AIRONET PC4800		0x0007 Aironet PC4800 Wireless LAN Adapter
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650 Wireless LAN
+product BAY SURFER_PRO		0x0806 AirSurfer Pro Wireless LAN
 product BAY STACK_660		0x0807 BayStack 660 Wireless LAN
 
 /* Raylink/WebGear */
@@ -224,6 +225,7 @@ vendor EPSON			-1	Seiko Epson Corporation
 vendor EXP			-1	EXP Computer Inc
 vendor ICOM			-1	ICOM Inc
 vendor BILLIONTON		-1	Billionton Systems Inc.
+vendor AMD			-1	AMD
 
 product MEGAHERTZ XJ2288 	{ "MEGAHERTZ", "MODEM&spXJ2288", NULL, NULL } Megahertz XJ2288 Modem
 product PREMAX PE200		{ "PMX&sp&sp&sp", "PE-200", NULL, NULL } PreMax PE-200
@@ -256,7 +258,7 @@ product AMBICOM AMB8002T	{ "AmbiCom&spInc", "AMB8002T", NULL, NULL } AmbiCom AMB
 product IODATA PCLAT		{ "I-O&spDATA", "PCLA", "ETHERNET", NULL } IO-DATA PCLA/T
 product EPSON EEN10B		{ "Seiko&spEpson&spCorp.", "Ethernet", "P/N:&spEEN10B&spRev.&sp00", NULL } Epson EEN10B
 product EXP EXPMULTIMEDIA	{ "EXP&sp&sp&sp", "PnPIDE", "F1", NULL } EXP IDE/ATAPI DVD Card
-product MELCO WLI_PCM		{ "AMD", "Am79C930", NULL, NULL } Melco WLI-PCM
+product AMD AM79C930		{ "AMD", "Am79C930", NULL, NULL } AMD Am79C930
 product ICOM SL200		{ "Icom", "SL-200", NULL, NULL } Icom SL-200
 product XIRCOM CFE_10		{ "Xircom", "CompactCard&spEthernet", "CFE-10", "1.00" } Xircom CompactCard CFE-10
 product BILLIONTON LNT10TN	{ "PCMCIA", "LNT-10TN", NULL, NULL } Billionton Systems Inc. LNT-10TN NE2000 Compatible Card
