@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.38 2001/02/18 22:32:32 simonb Exp $	*/
+/*	$NetBSD: locore.S,v 1.39 2001/04/19 07:15:24 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -32,6 +32,7 @@
  */
 
 #include "opt_ipkdb.h"
+#include "opt_netwinder.h"
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
@@ -48,7 +49,9 @@
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 
+#ifndef NETWINDER
 ENTRY_NP(kernel_text)
+#endif
 
 ASENTRY_NP(start)
 	add	r1, pc, #(Lstart - . - 8)
