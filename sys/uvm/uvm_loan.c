@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.39 2002/07/14 23:53:41 chs Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.40 2003/03/04 06:18:54 thorpej Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.39 2002/07/14 23:53:41 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.40 2003/03/04 06:18:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -619,7 +619,7 @@ uvm_loanuobj(ufi, output, flags, va)
 }
 
 /*
- * uvm_loanzero: "loan" a zero-fill page out
+ * uvm_loanzero: loan a zero-fill page out
  *
  * => called with map, amap, uobj locked
  * => return value:
@@ -628,6 +628,8 @@ uvm_loanuobj(ufi, output, flags, va)
  *		try again
  *	 1 = got it, everything still locked
  */
+
+static struct uvm_object uvm_loanzero_object;
 
 static int
 uvm_loanzero(ufi, output, flags)
@@ -640,11 +642,19 @@ uvm_loanzero(ufi, output, flags)
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
 	struct vm_amap *amap = ufi->entry->aref.ar_amap;
 
-	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
-		while ((pg = uvm_pagealloc(NULL, 0, NULL,
-		    UVM_PGA_ZERO)) == NULL) {
+	simple_lock(&uvm_loanzero_object.vmobjlock);
+
+	/*
+	 * first, get ahold of our single zero page.
+	 */
+
+	if (__predict_false((pg =
+			     TAILQ_FIRST(&uvm_loanzero_object.memq)) == NULL)) {
+		while ((pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
+					   UVM_PGA_ZERO)) == NULL) {
+			simple_unlock(&uvm_loanzero_object.vmobjlock);
 			uvmfault_unlockall(ufi, amap, uobj, NULL);
-			uvm_wait("loanzero1");
+			uvm_wait("loanzero");
 			if (!uvmfault_relock(ufi)) {
 				return (0);
 			}
@@ -654,57 +664,60 @@ uvm_loanzero(ufi, output, flags)
 			if (uobj) {
 				simple_lock(&uobj->vmobjlock);
 			}
+			simple_lock(&uvm_loanzero_object.vmobjlock);
 		}
 
-		/* got a zero'd page; return */
-		pg->flags &= ~(PG_WANTED|PG_BUSY);
+		/* got a zero'd page. */
+		pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+		pg->flags |= PG_RDONLY;
 		UVM_PAGE_OWN(pg, NULL);
+	}
+
+	if ((flags & UVM_LOAN_TOANON) == 0) {	/* loaning to kernel-page */
+		uvm_lock_pageq();
+		pg->loan_count++;
+		uvm_unlock_pageq();
+		simple_unlock(&uvm_loanzero_object.vmobjlock);
 		**output = pg;
 		(*output)++;
-		pg->loan_count = 1;
 		return (1);
 	}
 
-	/* loaning to an anon */
-	while ((anon = uvm_analloc()) == NULL ||
-	    (pg = uvm_pagealloc(NULL, 0, anon, UVM_PGA_ZERO)) == NULL) {
-		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj, anon);
+	/*
+	 * loaning to an anon.  check to see if there is already an anon
+	 * associated with this page.  if so, then just return a reference
+	 * to this object.
+	 */
 
-		/* out of swap causes us to fail */
-		if (anon == NULL) {
-			return (-1);
-		}
-
-		/*
-		 * drop our reference; we're the only one,
-		 * so it's okay that the anon isn't locked
-		 * here.
-		 */
-
-		anon->an_ref--;
-		uvm_anfree(anon);
-		uvm_wait("loanzero2");		/* wait for pagedaemon */
-
-		if (!uvmfault_relock(ufi)) {
-			/* map changed while unlocked, need relookup */
-			return (0);
-		}
-
-		/* relock everything else */
-		if (amap) {
-			amap_lock(amap);
-		}
-		if (uobj) {
-			simple_lock(&uobj->vmobjlock);
-		}
+	if (pg->uanon) {
+		anon = pg->uanon;
+		simple_lock(&anon->an_lock);
+		anon->an_ref++;
+		simple_unlock(&anon->an_lock);
+		simple_unlock(&uvm_loanzero_object.vmobjlock);
+		**output = anon;
+		(*output)++;
+		return (1);
 	}
 
-	/* got a zero'd page; return */
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
+	/*
+	 * need to allocate a new anon
+	 */
+
+	anon = uvm_analloc();
+	if (anon == NULL) {
+		/* out of swap causes us to fail */
+		simple_unlock(&uvm_loanzero_object.vmobjlock);
+		uvmfault_unlockall(ufi, amap, uobj, NULL);
+		return (-1);
+	}
+	anon->u.an_page = pg;
+	pg->uanon = anon;
 	uvm_lock_pageq();
+	pg->loan_count++;
 	uvm_pageactivate(pg);
 	uvm_unlock_pageq();
+	simple_unlock(&uvm_loanzero_object.vmobjlock);
 	**output = anon;
 	(*output)++;
 	return (1);
@@ -826,4 +839,16 @@ uvm_unloan(void *v, int npages, int flags)
 	} else {
 		uvm_unloanpage(v, npages);
 	}
+}
+
+/*
+ * uvm_loan_init(): initialize the uvm_loan() facility.
+ */
+
+void
+uvm_loan_init(void)
+{
+
+	simple_lock_init(&uvm_loanzero_object.vmobjlock);
+	TAILQ_INIT(&uvm_loanzero_object.memq);
 }

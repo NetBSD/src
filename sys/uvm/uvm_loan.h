@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.h,v 1.9 2001/11/06 08:07:51 chs Exp $	*/
+/*	$NetBSD: uvm_loan.h,v 1.10 2003/03/04 06:18:54 thorpej Exp $	*/
 
 /*
  *
@@ -50,6 +50,7 @@
  * loan prototypes
  */
 
+void uvm_loan_init __P((void));
 int uvm_loan __P((struct vm_map *, vaddr_t, vsize_t, void *, int));
 void uvm_unloan __P((void *, int, int));
 
