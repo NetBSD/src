@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.10 2001/09/16 16:34:43 wiz Exp $	*/
+/*	$NetBSD: nohup.c,v 1.11 2003/07/14 09:31:16 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-__RCSID("$NetBSD: nohup.c,v 1.10 2001/09/16 16:34:43 wiz Exp $");
+__RCSID("$NetBSD: nohup.c,v 1.11 2003/07/14 09:31:16 itojun Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -124,9 +124,9 @@ dofile()
 	if ((fd = open(p, O_RDWR|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR)) >= 0)
 		goto dupit;
 	if ((p = getenv("HOME")) != NULL) {
-		(void)strcpy(path, p);
-		(void)strcat(path, "/");
-		(void)strcat(path, FILENAME);
+		(void)strlcpy(path, p, sizeof(path));
+		(void)strlcat(path, "/", sizeof(path));
+		(void)strlcat(path, FILENAME, sizeof(path));
 		if ((fd = open(p = path, O_RDWR|O_CREAT|O_APPEND, S_IRUSR|S_IWUSR)) >= 0)
 			goto dupit;
 	}
