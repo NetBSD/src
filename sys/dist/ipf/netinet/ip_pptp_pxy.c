@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_pptp_pxy.c,v 1.1 2004/10/02 07:51:53 christos Exp $	*/
+/*	$NetBSD: ip_pptp_pxy.c,v 1.1.10.1 2005/02/06 07:41:35 jmc Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed
