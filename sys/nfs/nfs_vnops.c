@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.186.2.9 2005/03/16 12:09:47 tron Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.186.2.10 2005/03/16 12:50:30 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186.2.9 2005/03/16 12:09:47 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.186.2.10 2005/03/16 12:50:30 tron Exp $");
 
 #include "opt_nfs.h"
 #include "opt_uvmhist.h"
@@ -2426,7 +2426,7 @@ nfs_readdirrpc(vp, uiop, cred)
 	 * Should be called from buffer cache, so only amount of
 	 * NFS_DIRBLKSIZ will be requested.
 	 */
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
+	if (uiop->uio_iovcnt != 1 || uiop->uio_resid != NFS_DIRBLKSIZ)
 		panic("nfs readdirrpc bad uio");
 #endif
 
@@ -2575,6 +2575,17 @@ nfs_readdirrpc(vp, uiop, cred)
 		if (!more_dirs) {
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			more_dirs = (fxdr_unsigned(int, *tl) == 0);
+
+			/*
+			 * kludge: if we got no entries, treat it as EOF.
+			 * some server sometimes send a reply without any
+			 * entries or EOF.
+			 * although it might mean the server has very long name,
+			 * we can't handle such entries anyway.
+			 */
+
+			if (uiop->uio_resid >= NFS_DIRBLKSIZ)
+				more_dirs = 0;
 		}
 		m_freem(mrep);
 	}
@@ -2630,7 +2641,7 @@ nfs_readdirplusrpc(vp, uiop, cred)
 	struct nfs_fattr fattr, *fp;
 
 #ifdef DIAGNOSTIC
-	if (uiop->uio_iovcnt != 1 || (uiop->uio_resid & (NFS_DIRBLKSIZ - 1)))
+	if (uiop->uio_iovcnt != 1 || uiop->uio_resid != NFS_DIRBLKSIZ)
 		panic("nfs readdirplusrpc bad uio");
 #endif
 	ndp->ni_dvp = vp;
@@ -2805,6 +2816,13 @@ nfs_readdirplusrpc(vp, uiop, cred)
 		if (!more_dirs) {
 			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED);
 			more_dirs = (fxdr_unsigned(int, *tl) == 0);
+
+			/*
+			 * kludge: see a comment in nfs_readdirrpc.
+			 */
+
+			if (uiop->uio_resid >= NFS_DIRBLKSIZ)
+				more_dirs = 0;
 		}
 		m_freem(mrep);
 	}
