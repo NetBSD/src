@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.2 2002/06/27 15:07:53 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.3 2002/06/27 22:58:54 wiz Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wsmoused.c,v 1.2 2002/06/27 15:07:53 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.3 2002/06/27 22:58:54 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -72,7 +72,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-n] [-d device] [-f fifo] [-X number]\n",
+	    "Usage: %s [-d device] [-f fifo] [-n] [-X number]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 }
