@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.55 1999/12/23 15:34:19 ad Exp $	*/
+/*	$NetBSD: scc.c,v 1.56 1999/12/30 01:01:48 simonb Exp $	*/
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.55 1999/12/23 15:34:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.56 1999/12/30 01:01:48 simonb Exp $");
 
 #include "opt_ddb.h"
 
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: scc.c,v 1.55 1999/12/23 15:34:19 ad Exp $");
 #include <pmax/dev/rconsvar.h>
 #include <pmax/tc/sccvar.h>	/* XXX */
 #include <pmax/dev/lk201var.h>
+#include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
 #endif
 
 #ifdef alpha

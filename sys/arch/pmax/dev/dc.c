@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.54 1999/12/23 15:34:17 ad Exp $	*/
+/*	$NetBSD: dc.c,v 1.55 1999/12/30 01:01:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.54 1999/12/23 15:34:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.55 1999/12/30 01:01:48 simonb Exp $");
 
 /*
  * devDC7085.c --
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.54 1999/12/23 15:34:17 ad Exp $");
 #include <pmax/dev/dcvar.h>
 #include <pmax/dev/dc_cons.h>
 #include <pmax/dev/rconsvar.h>
+#include <pmax/dev/qvssvar.h>		/* XXX mouseInput() */
 
 #define DCUNIT(dev) (minor(dev) >> 2)
 #define DCLINE(dev) (minor(dev) & 3)
