@@ -30,6 +30,7 @@
 
 #include "bcdefs.h"
 #include <signal.h>
+#include <errno.h>
 #include "global.h"
 #include "proto.h"
 #include "getopt.h"
@@ -63,7 +64,7 @@ usage (char *progname)
   printf ("usage: %s [options] [file ...]\n%s%s%s%s%s%s%s", progname,
           "  -h  --help         print this usage and exit\n",
 	  "  -i  --interactive  force interactive mode\n",
-	  "  -l  --mathlib      use the predefine math routnes\n",
+	  "  -l  --mathlib      use the predefined math routines\n",
 	  "  -q  --quiet        don't print initial banner\n",
 	  "  -s  --standard     non-standard bc constructs are errors\n",
 	  "  -w  --warn         warn about non-standard bc constructs\n",
@@ -93,6 +94,9 @@ parse_args (argc, argv)
 
       switch (optch)
 	{
+	case 0: /* Long option setting a var. */
+	  break;
+
 	case 'c':  /* compile only */
 	  compile_only = TRUE;
 	  break;
@@ -167,7 +171,7 @@ main (argc, argv)
     interactive = TRUE;
   else
     interactive = FALSE;
-  quiet = TRUE;
+  quiet = FALSE;
   file_names = NULL;
 
 #ifdef HAVE_SETVBUF
@@ -347,6 +351,8 @@ void
 use_quit (sig)
      int sig;
 {
-  printf ("\n(interrupt) use quit to exit.\n");
+  int save = errno;
+  write (1, "\n(interrupt) use quit to exit.\n", 31);
   signal (SIGINT, use_quit);
+  errno = save;
 }
