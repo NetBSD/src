@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.2 2000/12/12 21:31:20 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.3 2000/12/13 19:35:48 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -23,3 +23,10 @@ sys/arch/i386/conf/GENERIC_LAPTOP		1.7
 sys/arch/i386/conf/INSTALL_LAPTOP		1.7
 
   Add a driver for an(4), Aironet and Cisco wireless pcmcia cards.
+
+crypto/dist/krb4/lib/krb/tf_util.c		1.2
+crypto/dist/krb4/lib/krb/kdc_reply.c		1.2
+crypto/dist/krb4/lib/krb/extra.c		1.2
+
+  Remove overwriting of the old ticket file.  Fix buffer overrun.
+  Remove obsolete support for environment variables.
