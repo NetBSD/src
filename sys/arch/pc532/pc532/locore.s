@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.36 1996/04/04 06:37:02 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.37 1996/05/17 16:38:24 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -95,7 +95,10 @@ __have_fpu:	.long	0	/* Have we an FPU installed? */
 
 	.text
 	.globl start
-start:	ints_off			# make sure interrupts are off.
+	.globl _kernel_text
+start:
+_kernel_text:
+	ints_off			# make sure interrupts are off.
 	bicpsrw	PSL_US			# make sure we are using sp0.
 	lprd    sb,0			# gcc expects this.
 
