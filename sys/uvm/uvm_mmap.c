@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.79 2003/11/29 19:06:48 yamt Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.80 2004/02/14 12:20:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.79 2003/11/29 19:06:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.80 2004/02/14 12:20:14 jdolecek Exp $");
+
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.79 2003/11/29 19:06:48 yamt Exp $");
 #include <uvm/uvm.h>
 #include <uvm/uvm_device.h>
 
+#ifndef COMPAT_ZERODEV
+#define COMPAT_ZERODEV	(0)
+#endif
 
 /*
  * unimplemented VM system calls:
@@ -403,7 +408,8 @@ sys_mmap(l, v, retval)
 			return (EOVERFLOW);		/* no offset wrapping */
 
 		/* special case: catch SunOS style /dev/zero */
-		if (vp->v_type == VCHR && vp->v_rdev == zerodev) {
+		if (vp->v_type == VCHR
+		    && (vp->v_rdev == zerodev || COMPAT_ZERODEV(vp->v_rdev))) {
 			flags |= MAP_ANON;
 			goto is_anon;
 		}
