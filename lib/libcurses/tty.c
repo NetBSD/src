@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 1/2/94"; */
-static char *rcsid = "$Id: tty.c,v 1.4 1994/01/24 08:36:59 cgd Exp $";
+static char *rcsid = "$Id: tty.c,v 1.5 1994/08/14 14:27:37 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -242,7 +242,7 @@ endwin()
 	(void)setvbuf(stdout, NULL, _IOLBF, 0);
 
 	return (tcsetattr(STDIN_FILENO, __tcaction ?
-	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios));
+	    TCSASOFT | TCSADRAIN : TCSADRAIN, &__orig_termios) ? ERR : OK);
 }
 
 /*
