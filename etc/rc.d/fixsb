@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fixsb,v 1.4 2004/04/21 17:02:41 dbj Exp $
+# $NetBSD: fixsb,v 1.5 2004/04/21 17:07:47 dbj Exp $
 #
 
 # PROVIDE: fixsb
@@ -79,8 +79,8 @@ check_part()
         M-*)
         if [ -n "${verbose}" ]; then
           echo "file system looks ok at fslevel 4." 1>&2
-          return 4
         fi
+        return 4
         ;;
 
         # if the high bit of fs_old_flags is not set, then there is a problem
