@@ -1,4 +1,4 @@
-/*	$NetBSD: pfil.h,v 1.16 2000/12/22 20:01:17 thorpej Exp $	*/
+/*	$NetBSD: pfil.h,v 1.17 2000/12/25 02:00:47 wiz Exp $	*/
 
 /*
  * Copyright (c) 1996 Matthew R. Green
@@ -55,19 +55,11 @@ struct packet_filter_hook {
 
 typedef	TAILQ_HEAD(pfil_list, packet_filter_hook) pfil_list_t;
 
-#define	PFIL_TYPE_AF		1	/* key is AF_* type */
-#define	PFIL_TYPE_IFNET		2	/* key is ifnet pointer */
-
 struct pfil_head {
 	pfil_list_t	ph_in;
 	pfil_list_t	ph_out;
-	int		ph_type;
-	union {
-		u_long		phu_val;
-		void		*phu_ptr;
-	} ph_un;
-#define	ph_af		ph_un.phu_val
-#define	ph_ifnet	ph_un.phu_ptr
+	void		*ph_key;
+	int		ph_dlt;
 	LIST_ENTRY(pfil_head) ph_list;
 };
 typedef struct pfil_head pfil_head_t;
@@ -83,7 +75,7 @@ int	pfil_remove_hook(int (*func)(void *, struct mbuf **,
 int	pfil_head_register(struct pfil_head *);
 int	pfil_head_unregister(struct pfil_head *);
 
-struct pfil_head *pfil_head_get(int, u_long);
+struct pfil_head *pfil_head_get(void *, int);
 
 static __inline struct packet_filter_hook *
 pfil_hook_get(int dir, struct pfil_head *ph)
