@@ -1,10 +1,9 @@
-# $NetBSD: md.sparc64,v 1.5 2000/04/29 03:46:30 thorpej Exp $
+# $NetBSD: md.sparc64,v 1.5.4.1 2000/08/26 01:06:06 mrg Exp $
 ./usr/include/sparc64/_G_config.h	comp-c-include
 ./usr/include/sparc64/ansi.h	comp-c-include
 ./usr/include/sparc64/aout_machdep.h	comp-c-include
 ./usr/include/sparc64/asm.h	comp-c-include
 ./usr/include/sparc64/autoconf.h	comp-c-include
-./usr/include/sparc64/bsd_audioio.h	comp-c-include
 ./usr/include/sparc64/bsd_openprom.h	comp-c-include
 ./usr/include/sparc64/bswap.h	comp-c-include
 ./usr/include/sparc64/bus.h	comp-c-include
