@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.4 1995/03/26 04:55:27 glass Exp $	*/
+/*	$NetBSD: edit.c,v 1.5 1995/07/28 07:03:41 phil Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: edit.c,v 1.4 1995/03/26 04:55:27 glass Exp $";
+static char rcsid[] = "$NetBSD: edit.c,v 1.5 1995/07/28 07:03:41 phil Exp $";
 #endif
 #endif /* not lint */
 
@@ -215,5 +215,5 @@ bad:					(void)fclose(fp);
 		warnx("entries too long");
 		return (0);
 	}
-	return (pw_scan(buf, pw));
+	return (pw_scan(buf, pw, (int *)NULL));
 }
