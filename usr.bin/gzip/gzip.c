@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.35 2004/04/07 14:25:43 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.36 2004/04/12 14:42:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.35 2004/04/07 14:25:43 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.36 2004/04/12 14:42:14 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -785,7 +785,8 @@ close_it:
 			maybe_err(1, "open for write: %s", outfile);
 
 		if ((size = unbzip2(in, out)) == 0) {
-			unlink(outfile);
+			if (cflag == 0)
+				unlink(outfile);
 			goto lose;
 		}
 	} else
@@ -814,17 +815,20 @@ close_it:
 		if (out == NULL)
 			maybe_err(1, "open for write: %s", outfile);
 
-		if ((size = zuncompress(in, out)) == 0) {
-			unlink(outfile);
-			goto lose;
-		}
-		if (ferror(in) || fclose(in)) {
-			unlink(outfile);
-			maybe_err(1, "failed infile fclose");
-		}
-		if (fclose(out)) {
-			unlink(outfile);
-			maybe_err(1, "failed outfile close");
+		size = zuncompress(in, out);
+		if (cflag == 0) {
+			if (size == 0) {
+				unlink(outfile);
+				goto lose;
+			}
+			if (ferror(in) || fclose(in)) {
+				unlink(outfile);
+				maybe_err(1, "failed infile fclose");
+			}
+			if (fclose(out)) {
+				unlink(outfile);
+				maybe_err(1, "failed outfile close");
+			}
 		}
 	} else
 #endif
@@ -855,12 +859,15 @@ close_it:
 		} else
 			out = stdout;
 
-		if ((size = gz_uncompress(in, out)) == 0) {
-			unlink(outfile);
-			goto lose;
+		size = gz_uncompress(in, out);
+		if (cflag == 0) {
+			if (size == 0) {
+				unlink(outfile);
+				goto lose;
+			}
+			if (fclose(out))
+				maybe_err(1, "failed fclose");
 		}
-		if (fclose(out))
-			maybe_err(1, "failed fclose");
 	}
 
 	/* if testing, or we uncompressed to stdout, this is all we need */
@@ -892,7 +899,8 @@ close_it:
 			goto lose;
 		}
 		newfile = outfile;
-		unlink(file);
+		if (cflag == 0)
+			unlink(file);
 		size = osb.st_size;
 #ifndef SMALL
 		copymodes(outfile, &isb);
