@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.8 2002/08/02 03:42:34 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.9 2002/09/21 00:50:10 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.8 2002/08/02 03:42:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.9 2002/09/21 00:50:10 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -1204,7 +1204,7 @@ rf_CreateRaidOneWriteDAG(
 }
 
 
-
+#if 0
 /* DAGs which have no commit points.
  *
  * The following DAGs are used in forward and backward error recovery experiments.
@@ -2129,3 +2129,4 @@ rf_CreateRaidOneWriteDAGFwd(
 
 	return;
 }
+#endif
