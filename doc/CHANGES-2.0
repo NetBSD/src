@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.270 2004/06/14 04:16:43 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.271 2004/06/14 04:18:14 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -3704,3 +3704,8 @@ sys/arch/hpc/hpc/kloader.c			1.12
 	As the 2nd stage loader uses simple word-by-word copy, make sure that
 	destination addresses of page tags are properly aligned.
 	[uwe, ticket #471]
+
+usr.bin/sed/compile.c				1.26-1.28
+
+	sed(1) fixes for PR#25899, PR#24234, PR#25911
+	[grant, ticket #494]
