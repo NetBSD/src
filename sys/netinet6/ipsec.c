@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.78 2003/09/10 22:29:27 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.79 2003/09/12 07:38:12 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.78 2003/09/10 22:29:27 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.79 2003/09/12 07:38:12 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -404,7 +404,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(0, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec4_getpolicybysock called "
@@ -438,7 +438,7 @@ ipsec4_getpolicybysock(m, dir, so, error)
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(0, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec4_getpolicybysock called "
@@ -514,7 +514,7 @@ ipsec4_getpolicybyaddr(m, dir, flag, error)
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+	sp = key_allocsp(0, &spidx, dir);
     }
 
 	/* SP found */
@@ -607,7 +607,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 		case IPSEC_POLICY_ENTRUST:
 			/* look for a policy in SPD */
 			if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-			    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+			    (kernsp = key_allocsp(0, &spidx, dir)) != NULL) {
 				/* SP found */
 				KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 					printf("DP ipsec6_getpolicybysock called "
@@ -641,7 +641,7 @@ ipsec6_getpolicybysock(m, dir, so, error)
 	/* when non-privilieged socket */
 	/* look for a policy in SPD */
 	if (ipsec_setspidx_mbuf(&spidx, AF_INET6, m, 1) == 0 &&
-	    (kernsp = key_allocsp(&spidx, dir)) != NULL) {
+	    (kernsp = key_allocsp(0, &spidx, dir)) != NULL) {
 		/* SP found */
 		KEYDEBUG(KEYDEBUG_IPSEC_STAMP,
 			printf("DP ipsec6_getpolicybysock called "
@@ -724,7 +724,7 @@ ipsec6_getpolicybyaddr(m, dir, flag, error)
 	if (*error != 0)
 		return NULL;
 
-	sp = key_allocsp(&spidx, dir);
+	sp = key_allocsp(0, &spidx, dir);
     }
 
 	/* SP found */

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.16 2003/09/08 06:51:59 itojun Exp $	*/
+/*	$NetBSD: key.h,v 1.17 2003/09/12 07:38:11 itojun Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -51,7 +51,8 @@ struct socket;
 struct sadb_msg;
 struct sadb_x_policy;
 
-extern struct secpolicy *key_allocsp __P((struct secpolicyindex *, u_int));
+extern struct secpolicy *key_allocsp __P((u_int16_t, struct secpolicyindex *,
+	u_int));
 extern int key_checkrequest
 	__P((struct ipsecrequest *isr, struct secasindex *));
 extern struct secasvar *key_allocsa __P((u_int, caddr_t, caddr_t,

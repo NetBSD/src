@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.39 2003/09/10 22:29:28 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.40 2003/09/12 07:38:13 itojun Exp $	*/
 /*	$KAME: ipsec.h,v 1.51 2001/08/05 04:52:58 itojun Exp $	*/
 
 /*
@@ -76,7 +76,8 @@ struct secpolicy {
 	int readonly;			/* write prohibited */
 	int refcnt;			/* reference count */
 	struct secpolicyindex *spidx;	/* selector - NULL if not valid */
-	u_int32_t id;			/* It's unique number on the system. */
+	u_int16_t tag;			/* PF tag */
+	u_int32_t id;			/* it identifies a policy in the SPD. */
 #define IPSEC_MANUAL_POLICYID_MAX	0x3fff
 				/*
 				 * 1 - 0x3fff are reserved for user operation.
