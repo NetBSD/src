@@ -1,4 +1,4 @@
-/* $NetBSD: mkdep.c,v 1.14 2003/01/18 22:32:20 jmmv Exp $ */
+/* $NetBSD: mkdep.c,v 1.15 2003/01/19 00:42:45 elric Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mkdep.c,v 1.14 2003/01/18 22:32:20 jmmv Exp $");
+__RCSID("$NetBSD: mkdep.c,v 1.15 2003/01/19 00:42:45 elric Exp $");
 #endif /* not lint */
 
 #if HAVE_CONFIG_H
@@ -100,7 +100,8 @@ main(argc, argv)
 	int     argc;
 	char  **argv;
 {
-	int 	aflag, pflag, ch, status;
+	/* LINTED local definition of index */
+	int 	aflag, pflag, index, status;
 	pid_t	cpid, pid;
 	char   *filename, *CC, *pathname, **args;
 	const char *tmpdir;
@@ -115,30 +116,23 @@ main(argc, argv)
 	pflag = 0;
 	filename = DEFAULT_FILENAME;
 
-	opterr = 0;
-	while ((ch = getopt(argc, argv, "af:p")) != -1) {
-		switch (ch) {
-		case 'a':
+	/* XXX should use getopt(). */
+	for (index = 1; index < argc; index++) {
+		if (strcmp(argv[index], "-a") == 0)
 			aflag = 1;
-			break;
-		case 'f':
-			filename = optarg;
-			break;
-		case 'p':
+		else if (strcmp(argv[index], "-f") == 0) {
+			if (++index < argc)
+				filename = argv[index];
+		} else if (strcmp(argv[index], "-p") == 0)
 			pflag = 1;
+		else
 			break;
-		default:
-			/* We need to ignore unknown options, as they may
-			 * be cc related. */
-			break;
-		}
 	}
-	argc -= optind;
-	argv += optind;
-	if (argc == 0) {
+
+	argc -= index;
+	argv += index;
+	if (argc == 0)
 		usage();
-		/* NOTREACHED */
-	}
 
 	if ((CC = getenv("CC")) == NULL)
 		CC = DEFAULT_CC;
