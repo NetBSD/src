@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.61 2001/11/13 13:14:38 lukem Exp $	*/
+/*	$NetBSD: i82557.c,v 1.62 2002/04/04 21:11:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.61 2001/11/13 13:14:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.62 2002/04/04 21:11:16 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -579,6 +579,26 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 	enaddr[5] = myea[2] >> 8;
 }
 
+static void
+fxp_eeprom_shiftin(struct fxp_softc *sc, int data, int len)
+{
+	uint16_t reg;
+	int x;
+
+	for (x = 1 << (len - 1); x != 0; x >>= 1) {
+		if (data & x)
+			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
+		else
+			reg = FXP_EEPROM_EECS;
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
+		    reg | FXP_EEPROM_EESK);
+		DELAY(4);
+		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
+		DELAY(4);
+	}
+}
+
 /*
  * Figure out EEPROM size.
  *
@@ -609,31 +629,18 @@ fxp_get_info(struct fxp_softc *sc, u_int8_t *enaddr)
 void
 fxp_autosize_eeprom(struct fxp_softc *sc)
 {
-	u_int16_t reg;
 	int x;
 
 	CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-	/*
-	 * Shift in read opcode.
-	 */
-	for (x = 3; x > 0; x--) {
-		if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
-			reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-		} else {
-			reg = FXP_EEPROM_EECS;
-		}
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-		DELAY(4);
-		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-		DELAY(4);
-	}
+
+	/* Shift in read opcode. */
+	fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
+
 	/*
 	 * Shift in address, wait for the dummy zero following a correct
 	 * address shift.
 	 */
-	for (x = 1; x <=  8; x++) {
+	for (x = 1; x <= 8; x++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 		    FXP_EEPROM_EECS | FXP_EEPROM_EESK);
@@ -670,43 +677,17 @@ fxp_read_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 
 	for (i = 0; i < words; i++) {
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
-		/*
-		 * Shift in read opcode.
-		 */
-		for (x = 3; x > 0; x--) {
-			if (FXP_EEPROM_OPC_READ & (1 << (x - 1))) {
-				reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-			} else {
-				reg = FXP_EEPROM_EECS;
-			}
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
-		}
-		/*
-		 * Shift in address.
-		 */
-		for (x = sc->sc_eeprom_size; x > 0; x--) {
-			if ((i + offset) & (1 << (x - 1))) {
-			    reg = FXP_EEPROM_EECS | FXP_EEPROM_EEDI;
-			} else {
-			    reg = FXP_EEPROM_EECS;
-			}
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
-			    reg | FXP_EEPROM_EESK);
-			DELAY(4);
-			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, reg);
-			DELAY(4);
-		}
+
+		/* Shift in read opcode. */
+		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_READ, 3);
+
+		/* Shift in address. */
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
+
 		reg = FXP_EEPROM_EECS;
 		data[i] = 0;
-		/*
-		 * Shift out data.
-		 */
+
+		/* Shift out data. */
 		for (x = 16; x > 0; x--) {
 			CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL,
 			    reg | FXP_EEPROM_EESK);
