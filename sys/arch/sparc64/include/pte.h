@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.3 1998/09/05 23:57:26 eeh Exp $ */
+/*	$NetBSD: pte.h,v 1.4 1999/05/30 19:01:50 eeh Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -216,10 +216,10 @@ extern void tlb_flush_ctx __P((int ctx));
         "b\6L\0"        "b\5CP\0"       "b\4CV\0" \
         "b\3E\0"        "b\2P\0"        "b\1W\0"        "b\0G\0"
 
-#define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid) \
+#define TSB_DATA(g,sz,pa,priv,write,cache,aliased,valid,ie) \
 (((valid)?TLB_V:0LL)|(sz)|(((u_int64_t)(pa))&TLB_PA_MASK)|\
 ((cache)?((aliased)?TLB_CP:TLB_CACHE_MASK):TLB_E)|\
-((priv)?TLB_P:0LL)|((write)?TLB_W:0LL)|((g)?TLB_G:0LL))
+((priv)?TLB_P:0LL)|((write)?TLB_W:0LL)|((g)?TLB_G:0LL)|((ie)?TLB_IE:0LL))
 
 #define MMU_CACHE_VIRT	0x3
 #define MMU_CACHE_PHYS	0x2
