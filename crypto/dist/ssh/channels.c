@@ -1,4 +1,4 @@
-/*	$NetBSD: channels.c,v 1.21 2002/05/13 02:58:17 itojun Exp $	*/
+/*	$NetBSD: channels.c,v 1.21.2.1 2002/06/26 16:53:04 tv Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -40,14 +40,13 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.173 2002/04/22 21:04:52 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.179 2002/06/26 08:55:02 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
 #include "ssh2.h"
 #include "packet.h"
 #include "xmalloc.h"
-#include "uidswap.h"
 #include "log.h"
 #include "misc.h"
 #include "channels.h"
@@ -131,10 +130,6 @@ static u_int x11_fake_data_len;
 
 #define	NUM_SOCKS	10
 
-/* Name and directory of socket for authentication agent forwarding. */
-static char *auth_sock_name = NULL;
-static char *auth_sock_dir = NULL;
-
 /* AF_UNSPEC or AF_INET or AF_INET6 */
 static int IPv4or6 = AF_UNSPEC;
 
@@ -212,7 +207,7 @@ channel_register_fds(Channel *c, int rfd, int wfd, int efd,
 
 Channel *
 channel_new(char *ctype, int type, int rfd, int wfd, int efd,
-    int window, int maxpack, int extusage, char *remote_name, int nonblock)
+    u_int window, u_int maxpack, int extusage, char *remote_name, int nonblock)
 {
 	int i, found;
 	Channel *c;
@@ -236,6 +231,9 @@ channel_new(char *ctype, int type, int rfd, int wfd, int efd,
 		/* There are no free slots.  Take last+1 slot and expand the array.  */
 		found = channels_alloc;
 		channels_alloc += 10;
+		if (channels_alloc > 10000)
+			fatal("channel_new: internal error: channels_alloc %d "
+			    "too big.", channels_alloc);
 		debug2("channel: expanding %d", channels_alloc);
 		channels = xrealloc(channels, channels_alloc * sizeof(Channel *));
 		for (i = found; i < channels_alloc; i++)
@@ -709,8 +707,8 @@ channel_pre_open(Channel *c, fd_set * readset, fd_set * writeset)
 			FD_SET(c->wfd, writeset);
 		} else if (c->ostate == CHAN_OUTPUT_WAIT_DRAIN) {
 			if (CHANNEL_EFD_OUTPUT_ACTIVE(c))
-                               debug2("channel %d: obuf_empty delayed efd %d/(%d)",
-                                   c->self, c->efd, buffer_len(&c->extended));
+			       debug2("channel %d: obuf_empty delayed efd %d/(%d)",
+				   c->self, c->efd, buffer_len(&c->extended));
 			else
 				chan_obuf_empty(c);
 		}
@@ -1575,8 +1573,9 @@ channel_after_select(fd_set * readset, fd_set * writeset)
 void
 channel_output_poll(void)
 {
-	int len, i;
 	Channel *c;
+	int i;
+	u_int len;
 
 	for (i = 0; i < channels_alloc; i++) {
 		c = channels[i];
@@ -1643,8 +1642,8 @@ channel_output_poll(void)
 			 * hack for extended data: delay EOF if EFD still in use.
 			 */
 			if (CHANNEL_EFD_INPUT_ACTIVE(c))
-                               debug2("channel %d: ibuf_empty delayed efd %d/(%d)",
-                                   c->self, c->efd, buffer_len(&c->extended));
+			       debug2("channel %d: ibuf_empty delayed efd %d/(%d)",
+				   c->self, c->efd, buffer_len(&c->extended));
 			else
 				chan_ibuf_empty(c);
 		}
@@ -1654,7 +1653,7 @@ channel_output_poll(void)
 		    c->remote_window > 0 &&
 		    (len = buffer_len(&c->extended)) > 0 &&
 		    c->extended_usage == CHAN_EXTENDED_READ) {
-			debug2("channel %d: rwin %d elen %d euse %d",
+			debug2("channel %d: rwin %u elen %u euse %d",
 			    c->self, c->remote_window, buffer_len(&c->extended),
 			    c->extended_usage);
 			if (len > c->remote_window)
@@ -1724,9 +1723,8 @@ void
 channel_input_extended_data(int type, u_int32_t seq, void *ctxt)
 {
 	int id;
-	int tcode;
 	char *data;
-	u_int data_len;
+	u_int data_len, tcode;
 	Channel *c;
 
 	/* Get the channel number and verify it. */
@@ -1881,7 +1879,7 @@ channel_input_open_confirmation(int type, u_int32_t seq, void *ctxt)
 			c->confirm(c->self, NULL);
 			debug2("callback done");
 		}
-		debug("channel %d: open confirm rwindow %d rmax %d", c->self,
+		debug("channel %d: open confirm rwindow %u rmax %u", c->self,
 		    c->remote_window, c->remote_maxpacket);
 	}
 	packet_check_eom();
@@ -1938,7 +1936,8 @@ void
 channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 {
 	Channel *c;
-	int id, adjust;
+	int id;
+	u_int adjust;
 
 	if (!compat20)
 		return;
@@ -1954,7 +1953,7 @@ channel_input_window_adjust(int type, u_int32_t seq, void *ctxt)
 	}
 	adjust = packet_get_int();
 	packet_check_eom();
-	debug2("channel %d: rcvd adjust %d", id, adjust);
+	debug2("channel %d: rcvd adjust %u", id, adjust);
 	c->remote_window += adjust;
 }
 
@@ -2329,12 +2328,12 @@ channel_connect_to(const char *host, u_short port)
 
 /*
  * Creates an internet domain socket for listening for X11 connections.
- * Returns a suitable display number for the DISPLAY variable, or -1 if
- * an error occurs.
+ * Returns 0 and a suitable display number for the DISPLAY variable
+ * stored in display_numberp , or -1 if an error occurs.
  */
 int
 x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
-    int single_connection)
+    int single_connection, u_int *display_numberp)
 {
 	Channel *nc = NULL;
 	int display_number, sock;
@@ -2406,7 +2405,8 @@ x11_create_display_inet(int x11_display_offset, int x11_use_localhost,
 	}
 
 	/* Return the display number for the DISPLAY environment variable. */
-	return display_number;
+	*display_numberp = display_number;
+	return (0);
 }
 
 static int
@@ -2672,105 +2672,6 @@ auth_request_forwarding(void)
 	packet_start(SSH_CMSG_AGENT_REQUEST_FORWARDING);
 	packet_send();
 	packet_write_wait();
-}
-
-/*
- * Returns the name of the forwarded authentication socket.  Returns NULL if
- * there is no forwarded authentication socket.  The returned value points to
- * a static buffer.
- */
-
-char *
-auth_get_socket_name(void)
-{
-	return auth_sock_name;
-}
-
-/* removes the agent forwarding socket */
-
-void
-auth_sock_cleanup_proc(void *_pw)
-{
-	struct passwd *pw = _pw;
-
-	if (auth_sock_name) {
-		temporarily_use_uid(pw);
-		unlink(auth_sock_name);
-		rmdir(auth_sock_dir);
-		auth_sock_name = NULL;
-		restore_uid();
-	}
-}
-
-/*
- * This is called to process SSH_CMSG_AGENT_REQUEST_FORWARDING on the server.
- * This starts forwarding authentication requests.
- */
-
-int
-auth_input_request_forwarding(struct passwd * pw)
-{
-	Channel *nc;
-	int sock;
-	struct sockaddr_un sunaddr;
-
-	if (auth_get_socket_name() != NULL) {
-		error("authentication forwarding requested twice.");
-		return 0;
-	}
-
-	/* Temporarily drop privileged uid for mkdir/bind. */
-	temporarily_use_uid(pw);
-
-	/* Allocate a buffer for the socket name, and format the name. */
-	auth_sock_name = xmalloc(MAXPATHLEN);
-	auth_sock_dir = xmalloc(MAXPATHLEN);
-	strlcpy(auth_sock_dir, "/tmp/ssh-XXXXXXXX", MAXPATHLEN);
-
-	/* Create private directory for socket */
-	if (mkdtemp(auth_sock_dir) == NULL) {
-		packet_send_debug("Agent forwarding disabled: "
-		    "mkdtemp() failed: %.100s", strerror(errno));
-		restore_uid();
-		xfree(auth_sock_name);
-		xfree(auth_sock_dir);
-		auth_sock_name = NULL;
-		auth_sock_dir = NULL;
-		return 0;
-	}
-	snprintf(auth_sock_name, MAXPATHLEN, "%s/agent.%d",
-		 auth_sock_dir, (int) getpid());
-
-	/* delete agent socket on fatal() */
-	fatal_add_cleanup(auth_sock_cleanup_proc, pw);
-
-	/* Create the socket. */
-	sock = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sock < 0)
-		packet_disconnect("socket: %.100s", strerror(errno));
-
-	/* Bind it to the name. */
-	memset(&sunaddr, 0, sizeof(sunaddr));
-	sunaddr.sun_family = AF_UNIX;
-	strlcpy(sunaddr.sun_path, auth_sock_name, sizeof(sunaddr.sun_path));
-
-	if (bind(sock, (struct sockaddr *) & sunaddr, sizeof(sunaddr)) < 0)
-		packet_disconnect("bind: %.100s", strerror(errno));
-
-	/* Restore the privileged uid. */
-	restore_uid();
-
-	/* Start listening on the socket. */
-	if (listen(sock, 5) < 0)
-		packet_disconnect("listen: %.100s", strerror(errno));
-
-	/* Allocate a channel for the authentication agent socket. */
-	nc = channel_new("auth socket",
-	    SSH_CHANNEL_AUTH_SOCKET, sock, sock, -1,
-	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
-	    0, xstrdup("auth socket"), 1);
-	strlcpy(nc->path, auth_sock_name, sizeof(nc->path));
-	return 1;
 }
 
 /* This is called to process an SSH_SMSG_AGENT_OPEN message. */

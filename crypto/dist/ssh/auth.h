@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.10.2.1 2002/05/28 19:27:35 tv Exp $	*/
-/*	$OpenBSD: auth.h,v 1.36 2002/05/12 23:53:45 djm Exp $	*/
+/*	$NetBSD: auth.h,v 1.10.2.2 2002/06/26 16:52:44 tv Exp $	*/
+/*	$OpenBSD: auth.h,v 1.39 2002/05/31 11:35:15 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -44,6 +44,7 @@
 #endif
 
 typedef struct Authctxt Authctxt;
+typedef struct Authmethod Authmethod;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
@@ -70,6 +71,12 @@ struct Authctxt {
 	krb5_principal	 krb5_user;
 	char		*krb5_ticket_file;
 #endif
+};
+
+struct Authmethod {
+	char	*name;
+	int	(*userauth)(Authctxt *authctxt);
+	int	*enabled;
 };
 
 /*

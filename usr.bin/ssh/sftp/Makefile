@@ -5,8 +5,6 @@
 PROG=	sftp
 BINOWN=	root
 
-BINMODE?=555
-
 BINDIR=	/usr/bin
 MAN=	sftp.1
 

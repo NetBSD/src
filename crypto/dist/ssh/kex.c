@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.14 2002/04/22 07:59:39 itojun Exp $	*/
+/*	$NetBSD: kex.c,v 1.14.2.1 2002/06/26 16:53:13 tv Exp $	*/
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.49 2002/03/26 23:14:51 markus Exp $");
+RCSID("$OpenBSD: kex.c,v 1.51 2002/06/24 14:55:38 markus Exp $");
 
 #include <openssl/crypto.h>
 
@@ -47,7 +47,7 @@ RCSID("$OpenBSD: kex.c,v 1.49 2002/03/26 23:14:51 markus Exp $");
 
 /* Use privilege separation for sshd */
 int use_privsep;
-struct monitor *monitor;
+struct monitor *pmonitor;
 
 
 /* prototype */
@@ -203,8 +203,8 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 		packet_get_char();
 	for (i = 0; i < PROPOSAL_MAX; i++)
 		xfree(packet_get_string(NULL));
-	packet_get_char();
-	packet_get_int();
+	(void) packet_get_char();
+	(void) packet_get_int();
 	packet_check_eom();
 
 	kex_kexinit_finish(kex);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.1.1.6 2002/03/08 01:20:59 itojun Exp $
+.\"	$NetBSD: scp.1,v 1.1.1.6.2.1 2002/06/26 16:53:43 tv Exp $
 .\"  -*- nroff -*-
 .\"
 .\" scp.1
@@ -10,7 +10,7 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.21 2002/01/29 23:50:37 markus Exp $
+.\" $OpenBSD: scp.1,v 1.23 2002/06/22 16:41:57 stevesk Exp $
 .\"
 .Dd September 25, 1999
 .Dt SCP 1
@@ -118,9 +118,9 @@ options.
 .It Fl o Ar ssh_option
 Can be used to pass options to
 .Nm ssh
-in the format used in the
-.Xr ssh 1
-configuration file. This is useful for specifying options
+in the format used in
+.Xr ssh_config 5 .
+This is useful for specifying options
 for which there is no separate
 .Nm scp
 command-line flag.  For example, forcing the use of protocol
@@ -153,4 +153,5 @@ California.
 .Xr ssh-add 1 ,
 .Xr ssh-agent 1 ,
 .Xr ssh-keygen 1 ,
+.Xr ssh_config 5 ,
 .Xr sshd 8
