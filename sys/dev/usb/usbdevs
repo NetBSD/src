@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.389 2004/12/26 07:03:29 imp Exp $
+$NetBSD: usbdevs,v 1.390 2004/12/26 07:39:24 imp Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -226,9 +226,9 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
 vendor AVANCELOGIC	0x0680	Avance Logic
-vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
 vendor CHPRODUCTS	0x068e	CH Products
+vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer
 vendor SAITEK		0x06a3	Saitek
