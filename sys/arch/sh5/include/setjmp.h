@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.h,v 1.4 2002/09/05 09:53:17 scw Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.5 2002/09/06 15:35:41 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 #define	_JB_R(r)	(_JB_REGS + (_JB_SZREGISTER_T * 2) + ((r) * 8))
 #define	_JB_TR(r)	(_JB_REGS + (_JB_SZREGISTER_T * 65) + ((r) * 8))
 #define	_JB_FPSCR	(_JB_REGS + (_JB_SZREGISTER_T * 73))
-#define	_JB_DR(r)	(_JB_REGS + (_JB_SZREGISTER_T * 74) + ((r) * 8))
+#define	_JB_DR(r)	(_JB_REGS + (_JB_SZREGISTER_T * 74) + (((r)/2) * 8))
 
 #define	_JB_R2		_JB_R(2)
 #define	_JB_R10		_JB_R(10)
