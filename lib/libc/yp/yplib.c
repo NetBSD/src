@@ -1,4 +1,4 @@
-/*	$NetBSD: yplib.c,v 1.31 1997/07/23 05:29:38 lukem Exp $	 */
+/*	$NetBSD: yplib.c,v 1.32 1998/07/27 12:29:21 mycroft Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yplib.c,v 1.31 1997/07/23 05:29:38 lukem Exp $");
+__RCSID("$NetBSD: yplib.c,v 1.32 1998/07/27 12:29:21 mycroft Exp $");
 #endif
 
 #include "namespace.h"
@@ -149,9 +149,9 @@ again:
 			u_short         ypb_port;
 			struct ypbind_binding *bn;
 
-			iov[0].iov_base = (caddr_t) & ypb_port;
+			iov[0].iov_base = &ypb_port;
 			iov[0].iov_len = sizeof ypb_port;
-			iov[1].iov_base = (caddr_t) & ybr;
+			iov[1].iov_base = &ybr;
 			iov[1].iov_len = sizeof ybr;
 
 			r = readv(fd, iov, 2);
