@@ -1,4 +1,4 @@
-/*	$NetBSD: intreg.h,v 1.8 1998/09/22 13:42:26 pk Exp $ */
+/*	$NetBSD: intreg.h,v 1.9 1998/10/26 08:12:15 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,6 @@ void	ienab_bis __P((int bis));	/* set given bits */
 void	ienab_bic __P((int bic));	/* clear given bits */
 #endif
 
-#if defined(SUN4M)
 #ifdef notyet
 #define IENAB_SYS	((_MAXNBPG * _MAXNCPU) + 0xc)
 #define IENAB_P0	0x0008
@@ -84,11 +83,9 @@ void	ienab_bic __P((int bic));	/* clear given bits */
 #define IENAB_P2	0x2008
 #define IENAB_P3	0x3008
 #endif /* notyet */
-#endif
 
-#if defined(SUN4M)
 /*
- * Interrupt Control Registers, located in IO space.
+ * sun4m Interrupt Control Registers, located in IO space.
  * There are two sets of interrupt registers called `Processor Interrupts'
  * and `System Interrupts'. The `Processor' set corresponds to the 15
  * interrupt levels as seen by the CPU. The `System' set corresponds to
@@ -153,5 +150,3 @@ struct icr_pi {
 				"f\0\7VME\0f\7\7SBUS\0b\16K\0b\17S\0b\20E\0"  \
 				"b\21A\0b\22SC\0b\23T\0b\24VI\0b\25MI\0"      \
 				"b\26F\0b\33V\0b\34M\0b\35I\0b\36ME\0b\37MA\0"
-
-#endif
