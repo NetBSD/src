@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.2 1994/11/18 02:54:07 christos Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.3 1995/01/10 00:04:08 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -92,13 +92,27 @@ struct svr4_strm {
 };
 
 /*
- * The following structure is determined empirically.
+ * The following structures are determined empirically.
  */
 struct svr4_strmcmd {
 	long	cmd;		/* command ? 		*/
 	long	len;		/* Address len 		*/
 	long	offs;		/* Address offset	*/
 	long	pad[61];
+};
+
+struct svr4_infocmd {
+	long	cmd;
+	long	tsdu;
+	long	etsdu;
+	long	cdata;
+	long	ddata;
+	long	addr;
+	long	opt;
+	long	tidu;
+	long	serv;
+	long	current;
+	long	provider;
 };
 
 struct svr4_netaddr {
@@ -109,4 +123,4 @@ struct svr4_netaddr {
 
 #define SVR4_ADDROF(sc) (struct svr4_netaddr *) (((char *) (sc)) + (sc)->offs)
 
-#endif /* !_SVR4_STROPTS_H_ */
+#endif /* !_SVR4_STROPTS
