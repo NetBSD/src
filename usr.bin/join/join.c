@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.18 2000/06/10 19:15:15 mycroft Exp $	*/
+/*	$NetBSD: join.c,v 1.19 2000/06/10 19:21:05 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.18 2000/06/10 19:15:15 mycroft Exp $");
+__RCSID("$NetBSD: join.c,v 1.19 2000/06/10 19:21:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -484,7 +484,7 @@ outfield(lp, fieldno)
 	if (needsep++)
 		(void)printf("%c", *tabchar);
 	if (!ferror(stdout)) {
-		if (lp->fieldcnt < fieldno) {
+		if (lp->fieldcnt <= fieldno) {
 			if (empty != NULL)
 				(void)printf("%s", empty);
 		} else {
