@@ -1,4 +1,4 @@
-/*	$NetBSD: term.c,v 1.21 2000/02/19 09:08:16 mycroft Exp $	*/
+/*	$NetBSD: term.c,v 1.22 2000/06/02 13:37:12 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: term.c,v 1.21 2000/02/19 09:08:16 mycroft Exp $");
+__RCSID("$NetBSD: term.c,v 1.22 2000/06/02 13:37:12 lukem Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1296,7 +1296,15 @@ term_settc(el, argc, argv)
 	    return 0;
 	}
 	else {
-	    el->el_term.t_val[tv - tval] = atoi(how);
+	    long i;
+	    char *ep;
+
+	    i = strtol(how, &ep, 10);
+	    if (*ep != '\0') {
+		(void) fprintf(el->el_errfile, "settc: Bad value `%s'.\n", how);
+		return -1;
+	    }
+	    el->el_term.t_val[tv - tval] = (int)i;
 	    el->el_term.t_size.v = Val(T_co);
 	    el->el_term.t_size.h = Val(T_li);
 	    if (tv == &tval[T_co] || tv == &tval[T_li])
@@ -1318,13 +1326,14 @@ term_echotc(el, argc, argv)
     int argc;
     char **argv;
 {
-    char   *cap, *scap;
+    char   *cap, *scap, *ep;
     int     arg_need, arg_cols, arg_rows;
     int     verbose = 0, silent = 0;
     char   *area;
     static char *fmts = "%s\n", *fmtd = "%d\n";
     struct termcapstr *t;
     char    buf[TC_BUFSIZE];
+    long    i;
 
     area = buf;
 
@@ -1460,7 +1469,14 @@ term_echotc(el, argc, argv)
 	    return -1;
 	}
 	arg_cols = 0;
-	arg_rows = atoi(*argv);
+	i = strtol(*argv, &ep, 10);
+	if (*ep != '\0' || i < 0) {
+	    if (!silent)
+		(void) fprintf(el->el_errfile,
+		    "echotc: Bad value `%s' for rows.\n", *argv);
+	    return -1;
+	}
+	arg_rows = (int)i;
 	argv++;
 	if (*argv && *argv[0]) {
 	    if (!silent)
@@ -1485,7 +1501,14 @@ term_echotc(el, argc, argv)
 		    "echotc: Warning: Missing argument.\n");
 	    return -1;
 	}
-	arg_cols = atoi(*argv);
+	i = strtol(*argv, &ep, 10);
+	if (*ep != '\0' || i < 0) {
+	    if (!silent)
+		(void) fprintf(el->el_errfile,
+		    "echotc: Bad value `%s' for cols.\n", *argv);
+	    return -1;
+	}
+	arg_cols = (int)i;
 	argv++;
 	if (!*argv || *argv[0] == '\0') {
 	    if (!silent)
@@ -1493,7 +1516,20 @@ term_echotc(el, argc, argv)
 		    "echotc: Warning: Missing argument.\n");
 	    return -1;
 	}
-	arg_rows = atoi(*argv);
+	i = strtol(*argv, &ep, 10);
+	if (*ep != '\0' || i < 0) {
+	    if (!silent)
+		(void) fprintf(el->el_errfile,
+		    "echotc: Bad value `%s' for rows.\n", *argv);
+	    return -1;
+	}
+	arg_rows = (int)i;
+	if (*ep != '\0') {
+	    if (!silent)
+		(void) fprintf(el->el_errfile,
+		    "echotc: Bad value `%s'.\n", *argv);
+	    return -1;
+	}
 	argv++;
 	if (*argv && *argv[0]) {
 	    if (!silent)
