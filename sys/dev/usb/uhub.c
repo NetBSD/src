@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.38 2000/02/02 13:18:46 augustss Exp $	*/
+/*	$NetBSD: uhub.c,v 1.39 2000/02/12 23:44:16 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -466,7 +466,7 @@ uhub_activate(self, act)
 	enum devact act;
 {
 	struct uhub_softc *sc = (struct uhub_softc *)self;
-	usbd_device_handle devhub = sc->sc_hub;
+	struct usbd_hub *hub = sc->sc_hub->hub;
 	usbd_device_handle dev;
 	int nports, port, i;
 
@@ -476,9 +476,11 @@ uhub_activate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		nports = devhub->hub->hubdesc.bNbrPorts;
+		if (hub == NULL) /* malfunctioning hub */
+			break;
+		nports = hub->hubdesc.bNbrPorts;
 		for(port = 0; port < nports; port++) {
-			dev = devhub->hub->ports[port].device;
+			dev = hub->ports[port].device;
 			if (dev != NULL) {
 				for (i = 0; dev->subdevs[i]; i++)
 					config_deactivate(dev->subdevs[i]);
@@ -497,7 +499,7 @@ uhub_activate(self, act)
 USB_DETACH(uhub)
 {
 	USB_DETACH_START(uhub, sc);
-	usbd_device_handle dev = sc->sc_hub;
+	struct usbd_hub *hub = sc->sc_hub->hub;
 	struct usbd_port *rup;
 	int port, nports;
 
@@ -507,23 +509,24 @@ USB_DETACH(uhub)
 	DPRINTF(("uhub_detach: sc=%port\n", sc));
 #endif
 
-	if (dev->hub == NULL)		/* Must be partially working */
+	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
-	nports = dev->hub->hubdesc.bNbrPorts;
+	nports = hub->hubdesc.bNbrPorts;
 	for(port = 0; port < nports; port++) {
-		rup = &dev->hub->ports[port];
+		rup = &hub->ports[port];
 		if (rup->device)
 			usb_disconnect_port(rup, self);
 	}
 	
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, dev, USBDEV(sc->sc_dev));
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
+			   USBDEV(sc->sc_dev));
 
-	free(dev->hub, M_USBDEV);
-	dev->hub = NULL;
+	free(hub, M_USBDEV);
+	sc->sc_hub->hub = NULL;
 
 	return (0);
 }
