@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.7 2003/04/01 02:09:48 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $ */
 
 /*-
  * Copyright (c) 1998 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.7 2003/04/01 02:09:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2003/05/31 00:38:05 kristerw Exp $");
 
 #include <sys/buf.h>
 #include <sys/kernel.h>
@@ -126,7 +126,7 @@ haltsys:
 		*(volatile u_int32_t *)0
 			= *(volatile u_int32_t *)MEMC_ROM_LOW_BASE;
 		/* reboot in SVC mode, IRQs and FIQs disabled */
-		asm volatile("movs pc, %0" : :
+		__asm __volatile("movs pc, %0" : :
 		    "r" (R15_MODE_SVC | R15_FIQ_DISABLE | R15_IRQ_DISABLE));
 	}
 	panic("cpu_reboot failed");
