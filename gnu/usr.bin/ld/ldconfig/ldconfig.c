@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.16 1997/01/03 07:10:52 mikel Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.17 1997/04/16 16:46:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1993,1995 Paul Kranenburg
@@ -362,14 +362,8 @@ buildhints()
 	}
 
 	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
-	if ((tmpfile = mktemp(tmpfile)) == NULL) {
+	if ((fd = mkstemp(tmpfile)) == -1) {
 		warn("%s", tmpfile);
-		return -1;
-	}
-
-	umask(0);	/* Create with exact permissions */
-	if ((fd = open(tmpfile, O_RDWR|O_CREAT|O_TRUNC, 0444)) == -1) {
-		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
 
@@ -384,6 +378,10 @@ buildhints()
 		return -1;
 	}
 	if (write(fd, strtab, strtab_sz) != strtab_sz) {
+		warn("%s", _PATH_LD_HINTS);
+		return -1;
+	}
+	if (fchmod(fd, 0444) == -1) {
 		warn("%s", _PATH_LD_HINTS);
 		return -1;
 	}
