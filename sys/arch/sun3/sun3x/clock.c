@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.19 2001/09/05 12:37:25 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.20 2001/09/05 14:18:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -539,7 +539,7 @@ clk_get_secs()
 	struct clock_ymdhms dt;
 	long secs;
 
-	bzero(&dt, sizeof(dt));
+	memset(&dt, 0, sizeof(dt));
 
 #ifdef	SUN3_470
 	if (intersil_va)

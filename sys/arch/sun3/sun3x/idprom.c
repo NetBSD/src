@@ -1,4 +1,4 @@
-/*	$NetBSD: idprom.c,v 1.8 1999/04/12 01:30:22 gwr Exp $	*/
+/*	$NetBSD: idprom.c,v 1.9 2001/09/05 14:18:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ idprom_etheraddr(eaddrp)
 	u_char *eaddrp;
 {
 
-	bcopy(identity_prom.idp_etheraddr, eaddrp, 6);
+	memcpy(eaddrp, identity_prom.idp_etheraddr, 6);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.73 2001/09/05 12:37:25 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74 2001/09/05 14:18:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -666,7 +666,7 @@ dumpsys()
 	blkno = dumplo;
 	todo = dumpsize;	/* pages */
 	vaddr = (char *)dumppage;
-	bzero(vaddr, NBPG);
+	memset(vaddr, 0, NBPG);
 
 	/* Set pointers to all three parts. */
 	kseg_p = (kcore_seg_t *)vaddr;
