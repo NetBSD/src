@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.36 2000/06/12 21:10:40 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.36.2.1 2000/08/04 09:43:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -835,13 +835,12 @@ again:
 	    WDSD_IBM | (xfer->drive << 4));
 	switch (drvp->state) {
 	case PIOMODE:
-piomode:
 		/* Don't try to set mode if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
 			goto ready;
 		/* Also don't try if the drive didn't report its mode */
 		if ((drvp->drive_flags & DRIVE_MODE) == 0)
-			goto ready;;
+			goto ready;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		drvp->state = PIOMODE_WAIT;
@@ -853,12 +852,23 @@ piomode:
 		if (chp->wdc->cap & WDC_CAPABILITY_IRQACK)
 			chp->wdc->irqack(chp);
 		if (chp->ch_status & WDCS_ERR) {
-			if (drvp->PIO_mode < 3) {
-				drvp->PIO_mode = 3;
-				goto piomode;
-			} else {
-				goto error;
+			if (chp->ch_error == WDCE_ABRT) {
+				/*
+				 * some ATAPI drives rejects pio settings.
+				 * all we can do here is fall back to PIO 0
+				 */
+				drvp->drive_flags &= ~DRIVE_MODE;
+				drvp->drive_flags &= ~(DRIVE_DMA|DRIVE_UDMA);
+				drvp->PIO_mode = 0;
+				drvp->DMA_mode = 0;
+				printf("%s:%d:%d: pio setting rejected, "
+				    "falling back to PIO mode 0\n",
+				    chp->wdc->sc_dev.dv_xname,
+				    chp->channel, xfer->drive);
+				chp->wdc->set_modes(chp);
+				goto ready;
 			}
+			goto error;
 		}
 	/* fall through */
 
