@@ -1,4 +1,4 @@
-/*	$NetBSD: atrun.c,v 1.11 2002/07/29 00:36:44 christos Exp $	*/
+/*	$NetBSD: atrun.c,v 1.12 2003/03/03 17:14:36 dsl Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -57,7 +57,7 @@ static char *namep;
 #if 0
 static char rcsid[] = "$OpenBSD: atrun.c,v 1.7 1997/09/08 22:12:10 millert Exp $";
 #else
-__RCSID("$NetBSD: atrun.c,v 1.11 2002/07/29 00:36:44 christos Exp $");
+__RCSID("$NetBSD: atrun.c,v 1.12 2003/03/03 17:14:36 dsl Exp $");
 #endif
 
 static int debug = 0;
@@ -113,6 +113,9 @@ become_user(pentry, uid)
 
 	if (setegid(pentry->pw_gid) < 0 || setgid(pentry->pw_gid) < 0)
 		perr("Cannot change primary group");
+
+	if (setsid() < 0)
+		perr("Cannot create a session");
 
 	if (setlogin(pentry->pw_name) < 0)
 		perr("Cannot set login name");
