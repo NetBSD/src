@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.1 2002/04/12 18:50:29 thorpej Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.2 2002/05/03 03:28:49 thorpej Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -54,7 +54,8 @@
 			 defined(CPU_SA110) + defined(CPU_SA1100) +	\
 			 defined(CPU_SA1110) +				\
 			 defined(CPU_XSCALE_80200) +			\
-			 defined(CPU_XSCALE_80321))
+			 defined(CPU_XSCALE_80321) +			\
+			 defined(CPU_XSCALE_PXA2X0))
 #else
 #define	CPU_NTYPES	2
 #endif /* _KERNEL_OPT */
@@ -85,7 +86,8 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
+    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
+     defined(CPU_XSCALE_PXA2X0))
 #define	ARM_ARCH_5	1
 #else
 #define	ARM_ARCH_5	0
@@ -125,7 +127,8 @@
 #endif
 
 #if !defined(_KERNEL_OPT) ||						\
-    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321))
+    (defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) ||		\
+     defined(CPU_XSCALE_PXA2X0))
 #define	ARM_MMU_XSCALE		1
 #else
 #define	ARM_MMU_XSCALE		0

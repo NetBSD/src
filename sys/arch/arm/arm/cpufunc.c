@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.42 2002/04/12 21:52:45 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.43 2002/05/03 03:28:48 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -498,7 +498,8 @@ struct cpu_functions sa110_cpufuncs = {
 };          
 #endif	/* CPU_SA110 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 struct cpu_functions xscale_cpufuncs = {
 	/* CPU functions */
 	
@@ -553,7 +554,7 @@ struct cpu_functions xscale_cpufuncs = {
 
 	xscale_setup			/* cpu setup		*/
 };
-#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 */
+#endif /* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
 
 /*
  * Global constants also used by locore.s
@@ -564,7 +565,8 @@ u_int cputype;
 u_int cpu_reset_needs_v4_MMU_disable;	/* flag used in locore.s */
 
 #if defined(CPU_ARM7TDMI) || defined(CPU_ARM8) || defined(CPU_ARM9) || \
-    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+    defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 static void get_cachetype_cp15 __P((void));
 
 static void
@@ -858,6 +860,16 @@ set_cpufuncs()
 		return 0;
 	}
 #endif /* CPU_XSCALE_80321 */
+#ifdef CPU_XSCALE_PXA2X0
+	if (cputype == CPU_ID_PXA250 || cputype == CPU_ID_PXA210) {
+		cpufuncs = xscale_cpufuncs;
+
+		cpu_reset_needs_v4_MMU_disable = 1;	/* XScale needs it */
+		get_cachetype_cp15();
+		pmap_pte_init_xscale();
+		return 0;
+	}
+#endif /* CPU_XSCALE_PXA2X0 */
 	/*
 	 * Bzzzz. And the answer was ...
 	 */
@@ -1227,7 +1239,8 @@ late_abort_fixup(arg)
 
 #if defined(CPU_ARM6) || defined(CPU_ARM7) || defined(CPU_ARM7TDMI) || \
 	defined(CPU_ARM8) || defined (CPU_ARM9) || defined(CPU_SA110) || \
-	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+	defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+	defined(CPU_XSCALE_PXA2X0)
 
 #define IGN	0
 #define OR	1
@@ -1579,7 +1592,8 @@ sa110_setup(args)
 }
 #endif	/* CPU_SA110 */
 
-#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321)
+#if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
+    defined(CPU_XSCALE_PXA2X0)
 struct cpu_option xscale_options[] = {
 #ifdef COMPAT_12
 	{ "branchpredict", 	BIC, OR,  CPU_CONTROL_BPRD_ENABLE },
@@ -1620,6 +1634,7 @@ xscale_setup(args)
 		 | CPU_CONTROL_CPCLK;
 
 	cpuctrl = parse_cpu_options(args, xscale_options, cpuctrl);
+cpuctrl |= CPU_CONTROL_AFLT_ENABLE;
 
 	/* Clear out the cache */
 	cpu_idcache_wbinv_all();
@@ -1641,4 +1656,4 @@ xscale_setup(args)
 	__asm ("mcr p15, 0, %0, c1, c0, 1" :: "r" (0));
 #endif
 }
-#endif	/* CPU_XSCALE_80200 */
+#endif	/* CPU_XSCALE_80200 || CPU_XSCALE_80321 || CPU_XSCALE_PXA2X0 */
