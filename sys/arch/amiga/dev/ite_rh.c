@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_rh.c,v 1.4 1995/02/16 21:57:43 chopps Exp $	*/
+/*	$NetBSD: ite_rh.c,v 1.5 1995/04/06 19:19:45 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Markus Wild
@@ -221,6 +221,10 @@ rh_clear(ip, sy, sx, h, w)
 	RZ3AlphaErase (ip->grf, sx, sy, w, h);
 }
 
+/*
+ * RETINA_SPEED_HACK code seems to work on some boards and on others
+ * it causes text to smear horizontally
+ */
 void
 rh_scroll(ip, sy, sx, count, dir)
 	struct ite_softc *ip;
@@ -236,16 +240,21 @@ rh_scroll(ip, sy, sx, count, dir)
 	rh_cursor(ip, ERASE_CURSOR);
 
 	if (dir == SCROLL_UP) {
+#ifdef	RETINA_SPEED_HACK
 		screen_up(ip, sy - count, ip->bottom_margin, count);
-		/* bcopy(fb + sy * ip->cols, fb + (sy - count) * ip->cols,
-		    4 * (ip->bottom_margin - sy + 1) * ip->cols); */
-		/* rh_clear(ip, ip->bottom_margin + 1 - count, 0,
-		    count, ip->cols); */
+#else
+		bcopy(fb + sy * ip->cols, fb + (sy - count) * ip->cols,
+		    4 * (ip->bottom_margin - sy + 1) * ip->cols);
+		rh_clear(ip, ip->bottom_margin + 1 - count, 0, count, ip->cols);
+#endif
 	} else if (dir == SCROLL_DOWN) {
+#ifdef	RETINA_SPEED_HACK
 		screen_down(ip, sy, ip->bottom_margin, count);
-		/* bcopy(fb + sy * ip->cols, fb + (sy + count) * ip->cols,
-		    4 * (ip->bottom_margin - sy - count + 1) * ip->cols); */
-		/* rh_clear(ip, sy, 0, count, ip->cols); */
+#else
+		bcopy(fb + sy * ip->cols, fb + (sy + count) * ip->cols,
+		    4 * (ip->bottom_margin - sy - count + 1) * ip->cols);
+		rh_clear(ip, sy, 0, count, ip->cols);
+#endif
 	} else if (dir == SCROLL_RIGHT) {
 		RZ3AlphaCopy(ip->grf, sx, sy, sx + count, sy,
 		    ip->cols - (sx + count), 1);
@@ -255,5 +264,8 @@ rh_scroll(ip, sy, sx, count, dir)
 		    ip->cols - (sx + count), 1);
 		RZ3AlphaErase(ip->grf, ip->cols - count, sy, count, 1);
 	}
+#ifndef	RETINA_SPEED_HACK
+	retina_cursor(ip, !ERASE_CURSOR);
+#endif
 }
 #endif /* NGRFRH */
