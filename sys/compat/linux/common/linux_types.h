@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.19 2004/09/20 18:41:08 jdolecek Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.20 2004/09/20 18:51:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,10 +54,14 @@
 #else
 typedef unsigned long linux_clock_t;
 typedef unsigned long linux_time_t;
-typedef struct {
-	long val[2];
-} linux_fsid_t;
 #endif
+
+/*
+ * From Linux include/asm-.../posix_types.h
+ */
+typedef struct {
+	int val[2];
+} linux_fsid_t;
 
 /*
  * Structure for uname(2)
