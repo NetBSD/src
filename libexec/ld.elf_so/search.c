@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.13 2002/09/24 12:52:20 mycroft Exp $	 */
+/*	$NetBSD: search.c,v 1.14 2002/10/01 14:16:53 junyoung Exp $	 */
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -55,6 +55,8 @@
 /*
  * Data declarations.
  */
+Search_Path    *_rtld_invalid_paths;
+
 static Obj_Entry *_rtld_search_library_path __P((const char *, size_t,
     const char *, size_t, int));
 
@@ -67,17 +69,36 @@ _rtld_search_library_path(name, namelen, dir, dirlen, mode)
 	int mode;
 {
 	char *pathname;
+	size_t pathnamelen;
 	Obj_Entry *obj;
+	Search_Path *sp;
 
-	pathname = xmalloc(dirlen + 1 + namelen + 1);
+	pathnamelen = dirlen + 1 + namelen;
+
+	for (sp = _rtld_invalid_paths; sp != NULL; sp = sp->sp_next) {
+		if (sp->sp_pathlen == pathnamelen &&
+		    !strncmp(name, sp->sp_path + dirlen + 1, namelen) &&
+		    !strncmp(dir, sp->sp_path, dirlen)) {
+			return NULL;
+		}
+	}
+
+	pathname = xmalloc(pathnamelen + 1);
 	(void)strncpy(pathname, dir, dirlen);
 	pathname[dirlen] = '/';
 	strcpy(pathname + dirlen + 1, name);
 
 	dbg(("  Trying \"%s\"", pathname));
 	obj = _rtld_load_object(pathname, mode);
-	if (obj == NULL)
-		free(pathname);
+	if (obj == NULL) {
+		Search_Path *path;
+
+		path = NEW(Search_Path);
+		path->sp_pathlen = pathnamelen;
+		path->sp_path = pathname;
+		path->sp_next = _rtld_invalid_paths;
+		_rtld_invalid_paths = path;
+	}
 	return obj;
 }
 
