@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.2 2001/06/12 17:10:26 matt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.3 2001/06/20 22:14:33 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -33,8 +33,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#include "opt_ebsa285.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,7 +284,7 @@ footbridge_pci_intr_map(pa, ihp)
 		*ihp = -1;
 		return(1);
 		break;
-#ifdef EBSA285
+#ifdef cats
 	/* This is machine dependant and needs to be moved */
 	case PCI_INTERRUPT_PIN_A:
 		intr = IRQ_PCI;
