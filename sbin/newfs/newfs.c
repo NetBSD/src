@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.24 1997/06/30 08:09:22 tls Exp $	*/
+/*	$NetBSD: newfs.c,v 1.25 1997/06/30 22:20:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$NetBSD: newfs.c,v 1.24 1997/06/30 08:09:22 tls Exp $";
+__RCSID("$NetBSD: newfs.c,v 1.25 1997/06/30 22:20:34 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,15 +69,12 @@ static char rcsid[] = "$NetBSD: newfs.c,v 1.24 1997/06/30 08:09:22 tls Exp $";
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <err.h>
 #include <util.h>
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 #include "mntopts.h"
+#include "dkcksum.h"
+#include "extern.h"
 
 struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -87,11 +84,10 @@ struct mntopt mopts[] = {
 	{ NULL },
 };
 
-#if __STDC__
-void	fatal(const char *fmt, ...);
-#else
-void	fatal();
-#endif
+static struct disklabel *getdisklabel __P((char *, int));
+static void rewritelabel __P((char *, int, struct disklabel *));
+static void usage __P((void));
+int	main __P((int, char *[]));
 
 #define	COMPAT			/* allow non-labeled disks */
 
@@ -185,7 +181,7 @@ int	unlabeled;
 #endif
 
 char	device[MAXPATHLEN];
-char	*progname;
+extern char *__progname;
 
 int
 main(argc, argv)
@@ -194,30 +190,24 @@ main(argc, argv)
 {
 	extern char *optarg;
 	extern int optind;
-	register int ch;
-	register struct partition *pp;
-	register struct disklabel *lp;
+	int ch;
+	struct partition *pp;
+	struct disklabel *lp;
 	struct disklabel mfsfakelabel;
-	struct disklabel *getdisklabel();
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
-	int fsi, fso, len, n, maxpartitions;
-	char *cp, *s1, *s2, *special, *opstring, buf[BUFSIZ];
+	int fsi = 0, fso, len, n, maxpartitions;
+	char *cp = NULL, *s1, *s2, *special, *opstring, buf[BUFSIZ];
 
-	if (progname = strrchr(*argv, '/'))
-		++progname;
-	else
-		progname = *argv;
-
-	if (strstr(progname, "mfs")) {
+	if (strstr(__progname, "mfs")) {
 		mfs = 1;
 		Nflag++;
 	}
 
 	maxpartitions = getmaxpartitions();
 	if (maxpartitions > 26)
-		fatal("insane maxpartitions value %d", maxpartitions);
+		errx(1, "insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
@@ -232,7 +222,7 @@ main(argc, argv)
 			break;
 		case 'S':
 			if ((sectorsize = atoi(optarg)) <= 0)
-				fatal("%s: bad sector size", optarg);
+				errx(1, "%s: bad sector size", optarg);
 			break;
 #ifdef COMPAT
 		case 'T':
@@ -241,50 +231,50 @@ main(argc, argv)
 #endif
 		case 'a':
 			if ((maxcontig = atoi(optarg)) <= 0)
-				fatal("%s: bad maximum contiguous blocks\n",
+				errx(1, "%s: bad maximum contiguous blocks",
 				    optarg);
 			break;
 		case 'b':
 			if ((bsize = atoi(optarg)) < MINBSIZE)
-				fatal("%s: bad block size", optarg);
+				errx(1, "%s: bad block size", optarg);
 			break;
 		case 'c':
 			if ((cpg = atoi(optarg)) <= 0)
-				fatal("%s: bad cylinders/group", optarg);
+				errx(1, "%s: bad cylinders/group", optarg);
 			cpgflg++;
 			break;
 		case 'd':
 			if ((rotdelay = atoi(optarg)) < 0)
-				fatal("%s: bad rotational delay\n", optarg);
+				errx(1, "%s: bad rotational delay", optarg);
 			break;
 		case 'e':
 			if ((maxbpg = atoi(optarg)) <= 0)
-		fatal("%s: bad blocks per file in a cylinder group\n",
+		errx(1, "%s: bad blocks per file in a cylinder group",
 				    optarg);
 			break;
 		case 'f':
 			if ((fsize = atoi(optarg)) <= 0)
-				fatal("%s: bad fragment size", optarg);
+				errx(1, "%s: bad fragment size", optarg);
 			break;
 		case 'i':
 			if ((density = atoi(optarg)) <= 0)
-				fatal("%s: bad bytes per inode\n", optarg);
+				errx(1, "%s: bad bytes per inode", optarg);
 			break;
 		case 'k':
 			if ((trackskew = atoi(optarg)) < 0)
-				fatal("%s: bad track skew", optarg);
+				errx(1, "%s: bad track skew", optarg);
 			break;
 		case 'l':
 			if ((interleave = atoi(optarg)) <= 0)
-				fatal("%s: bad interleave", optarg);
+				errx(1, "%s: bad interleave", optarg);
 			break;
 		case 'm':
 			if ((minfree = atoi(optarg)) < 0 || minfree > 99)
-				fatal("%s: bad free space %%\n", optarg);
+				errx(1, "%s: bad free space %%", optarg);
 			break;
 		case 'n':
 			if ((nrpos = atoi(optarg)) <= 0)
-				fatal("%s: bad rotational layout count\n",
+				errx(1, "%s: bad rotational layout count",
 				    optarg);
 			break;
 		case 'o':
@@ -296,33 +286,35 @@ main(argc, argv)
 				else if (strcmp(optarg, "time") == 0)
 					opt = FS_OPTTIME;
 				else
-	fatal("%s: unknown optimization preference: use `space' or `time'.");
+				    errx(1, "%s %s",
+					"unknown optimization preference: ",
+					"use `space' or `time'.");
 			}
 			break;
 		case 'p':
 			if ((trackspares = atoi(optarg)) < 0)
-				fatal("%s: bad spare sectors per track",
+				errx(1, "%s: bad spare sectors per track",
 				    optarg);
 			break;
 		case 'r':
 			if ((rpm = atoi(optarg)) <= 0)
-				fatal("%s: bad revolutions/minute\n", optarg);
+				errx(1, "%s: bad revolutions/minute", optarg);
 			break;
 		case 's':
 			if ((fssize = atoi(optarg)) <= 0)
-				fatal("%s: bad file system size", optarg);
+				errx(1, "%s: bad file system size", optarg);
 			break;
 		case 't':
 			if ((ntracks = atoi(optarg)) <= 0)
-				fatal("%s: bad total tracks", optarg);
+				errx(1, "%s: bad total tracks", optarg);
 			break;
 		case 'u':
 			if ((nsectors = atoi(optarg)) <= 0)
-				fatal("%s: bad sectors/track", optarg);
+				errx(1, "%s: bad sectors/track", optarg);
 			break;
 		case 'x':
 			if ((cylspares = atoi(optarg)) < 0)
-				fatal("%s: bad spare sectors per cylinder",
+				errx(1, "%s: bad spare sectors per cylinder",
 				    optarg);
 			break;
 		case '?':
@@ -378,12 +370,12 @@ main(argc, argv)
 	} else {
 		fso = open(special, O_WRONLY);
 		if (fso < 0)
-			fatal("%s: %s", special, strerror(errno));
+			err(1, "%s: ", special);
 
 		/* Bail if target special is mounted */
 		n = getmntinfo(&mp, MNT_NOWAIT);
 		if (n == 0)
-			fatal("%s: getmntinfo: %s", special, strerror(errno));
+			err(1, "%s: getmntinfo: ", special);
 
 		len = sizeof(_PATH_DEV) - 1;
 		s1 = special;
@@ -397,7 +389,7 @@ main(argc, argv)
 				*s2 = 'r';
 			}
 			if (strcmp(s1, s2) == 0 || strcmp(s1, &s2[1]) == 0)
-				fatal("%s is mounted on %s",
+				errx(1, "%s is mounted on %s",
 				    special, mp->f_mntonname);
 			++mp;
 		}
@@ -405,22 +397,20 @@ main(argc, argv)
 	if (mfs && disktype != NULL) {
 		lp = (struct disklabel *)getdiskbyname(disktype);
 		if (lp == NULL)
-			fatal("%s: unknown disk type", disktype);
+			errx(1, "%s: unknown disk type", disktype);
 		pp = &lp->d_partitions[1];
 	} else {
 		fsi = open(special, O_RDONLY);
 		if (fsi < 0)
-			fatal("%s: %s", special, strerror(errno));
+			err(1, "%s: ", special);
 		if (fstat(fsi, &st) < 0)
-			fatal("%s: %s", special, strerror(errno));
+			err(1, "%s: ", special);
 		if (!S_ISCHR(st.st_mode) && !mfs)
-			printf("%s: %s: not a character-special device\n",
-			    progname, special);
+			warnx("%s: not a character-special device", special);
 		cp = strchr(argv[0], '\0') - 1;
-		if (cp == 0 || (*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp))
-			fatal("%s: can't figure out file system partition",
-			    argv[0]);
+		if (cp == 0 || ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
+		    && !isdigit(*cp)))
+			errx(1, "can't figure out file system partition");
 #ifdef COMPAT
 		if (!mfs && disktype == NULL)
 			disktype = argv[1];
@@ -431,18 +421,16 @@ main(argc, argv)
 		else
 			pp = &lp->d_partitions[*cp - 'a'];
 		if (pp->p_size == 0)
-			fatal("%s: `%c' partition is unavailable",
-			    argv[0], *cp);
+			errx(1, "`%c' partition is unavailable", *cp);
 		if (pp->p_fstype == FS_BOOT)
-			fatal("%s: `%c' partition overlaps boot program",
-			      argv[0], *cp);
+			errx(1, "`%c' partition overlaps boot program", *cp);
 	}
 havelabel:
 	if (fssize == 0)
 		fssize = pp->p_size;
 	if (fssize > pp->p_size && !mfs)
-	       fatal("%s: maximum file system size on the `%c' partition is %d",
-			argv[0], *cp, pp->p_size);
+		errx(1, "maximum file system size on the `%c' partition is %d",
+		    *cp, pp->p_size);
 	if (rpm == 0) {
 		rpm = lp->d_rpm;
 		if (rpm <= 0)
@@ -451,17 +439,17 @@ havelabel:
 	if (ntracks == 0) {
 		ntracks = lp->d_ntracks;
 		if (ntracks <= 0)
-			fatal("%s: no default #tracks", argv[0]);
+			errx(1, "no default #tracks");
 	}
 	if (nsectors == 0) {
 		nsectors = lp->d_nsectors;
 		if (nsectors <= 0)
-			fatal("%s: no default #sectors/track", argv[0]);
+			errx(1, "no default #sectors/track");
 	}
 	if (sectorsize == 0) {
 		sectorsize = lp->d_secsize;
 		if (sectorsize <= 0)
-			fatal("%s: no default sector size", argv[0]);
+			errx(1, "no default sector size");
 	}
 	if (trackskew == -1) {
 		trackskew = lp->d_trackskew;
@@ -494,8 +482,8 @@ havelabel:
 	if (density == 0)
 		density = NFPI * fsize;
 	if (minfree < MINFREE && opt != FS_OPTSPACE) {
-		fprintf(stderr, "Warning: changing optimization to space ");
-		fprintf(stderr, "because minfree is less than %d%%\n", MINFREE);
+		warnx("%s %s %d%%", "Warning: changing optimization to space",
+		    "because minfree is less than", MINFREE);
 		opt = FS_OPTSPACE;
 	}
 	if (trackspares == -1) {
@@ -511,7 +499,7 @@ havelabel:
 	}
 	secpercyl = nsectors * ntracks - cylspares;
 	if (secpercyl != lp->d_secpercyl)
-		fprintf(stderr, "%s (%d) %s (%lu)\n",
+		warnx("%s (%d) %s (%u)\n",
 			"Warning: calculated sectors per cylinder", secpercyl,
 			"disagrees with disk label", lp->d_secpercyl);
 	if (maxbpg == 0)
@@ -543,7 +531,7 @@ havelabel:
 		args.base = membase;
 		args.size = fssize * sectorsize;
 		if (mount(MOUNT_MFS, argv[1], mntflags, &args) < 0)
-			fatal("%s: %s", argv[1], strerror(errno));
+			err(1, "%s: ", argv[1]);
 	}
 #endif
 	exit(0);
@@ -555,7 +543,7 @@ char lmsg[] = "%s: can't read disk label; disk type must be specified";
 char lmsg[] = "%s: can't read disk label";
 #endif
 
-struct disklabel *
+static struct disklabel *
 getdisklabel(s, fd)
 	char *s;
 	volatile int fd;
@@ -565,25 +553,26 @@ getdisklabel(s, fd)
 	if (ioctl(fd, DIOCGDINFO, &lab) < 0) {
 #ifdef COMPAT
 		if (disktype) {
-			struct disklabel *lp, *getdiskbyname();
+			struct disklabel *lp;
 
 			unlabeled++;
 			lp = getdiskbyname(disktype);
 			if (lp == NULL)
-				fatal("%s: unknown disk type", disktype);
+				errx(1, "%s: unknown disk type", disktype);
 			return (lp);
 		}
 #endif
 		warn("ioctl (GDINFO)");
-		fatal(lmsg, s);
+		errx(1, lmsg, s);
 	}
 	return (&lab);
 }
 
+static void
 rewritelabel(s, fd, lp)
 	char *s;
 	volatile int fd;
-	register struct disklabel *lp;
+	struct disklabel *lp;
 {
 #ifdef COMPAT
 	if (unlabeled)
@@ -593,11 +582,11 @@ rewritelabel(s, fd, lp)
 	lp->d_checksum = dkcksum(lp);
 	if (ioctl(fd, DIOCWDINFO, (char *)lp) < 0) {
 		warn("ioctl (WDINFO)");
-		fatal("%s: can't rewrite disk label", s);
+		errx(1, "%s: can't rewrite disk label", s);
 	}
 #if vax
 	if (lp->d_type == DTYPE_SMD && lp->d_flags & D_BADSECT) {
-		register i;
+		int i;
 		int cfd;
 		daddr_t alt;
 		char specname[64];
@@ -613,7 +602,7 @@ rewritelabel(s, fd, lp)
 			*cp = 'c';
 		cfd = open(specname, O_WRONLY);
 		if (cfd < 0)
-			fatal("%s: %s", specname, strerror(errno));
+			err(1, "%s: ", specname);
 		memset(blk, 0, sizeof(blk));
 		*(struct disklabel *)(blk + LABELOFFSET) = *lp;
 		alt = lp->d_ncylinders * lp->d_secpercyl - lp->d_nsectors;
@@ -623,8 +612,7 @@ rewritelabel(s, fd, lp)
 			offset = alt + i;
 			offset *= lp->d_secsize;
 			if (lseek(cfd, offset, SEEK_SET) == -1)
-				fatal("lseek to badsector area: %s",
-				    strerror(errno));
+				err(1, "lseek to badsector area: ");
 			if (write(cfd, blk, lp->d_secsize) < lp->d_secsize)
 				warn("alternate label %d write", i/2);
 		}
@@ -633,45 +621,17 @@ rewritelabel(s, fd, lp)
 #endif
 }
 
-/*VARARGS*/
-void
-#if __STDC__
-fatal(const char *fmt, ...)
-#else
-fatal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	if (fcntl(STDERR_FILENO, F_GETFL) < 0) {
-		openlog(progname, LOG_CONS, LOG_DAEMON);
-		vsyslog(LOG_ERR, fmt, ap);
-		closelog();
-	} else {
-		vwarnx(fmt, ap);
-	}
-	va_end(ap);
-	exit(1);
-	/*NOTREACHED*/
-}
-
+static void
 usage()
 {
 	if (mfs) {
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device mount-point\n",
-			progname);
+			__progname);
 	} else
 		fprintf(stderr,
 		    "usage: %s [ -fsoptions ] special-device%s\n",
-		    progname,
+		    __progname,
 #ifdef COMPAT
 		    " [device-type]");
 #else

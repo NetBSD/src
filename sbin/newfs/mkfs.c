@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.26 1997/06/30 22:20:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $";
+__RCSID("$NetBSD: mkfs.c,v 1.26 1997/06/30 22:20:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +53,27 @@ static char rcsid[] = "$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $";
 
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
+#include <signal.h>
 
 #ifndef STANDALONE
 #include <a.out.h>
 #include <stdio.h>
 #endif
+#include <extern.h>
 
+
+static void initcg __P((int, time_t));
+static void fsinit __P((time_t));
+static int makedir __P((struct direct *, int));
+static daddr_t alloc __P((int, int));
+static void iput __P((struct dinode *, ino_t));
+static void started __P((int));
+static void rdfs __P((daddr_t, int, void *));
+static void wtfs __P((daddr_t, int, void *));
+static int isblock __P((struct fs *, unsigned char *, int));
+static void clrblock __P((struct fs *, unsigned char *, int));
+static void setblock __P((struct fs *, unsigned char *, int));
 /*
  * make file system for cylinder-group style file systems
  */
@@ -107,7 +123,6 @@ extern int	bbsize;		/* boot block size */
 extern int	sbsize;		/* superblock size */
 extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
-extern caddr_t	malloc(), calloc();
 
 union {
 	struct fs fs;
@@ -125,22 +140,21 @@ union {
 struct dinode zino[MAXBSIZE / sizeof(struct dinode)];
 
 int	fsi, fso;
-daddr_t	alloc();
 
+void
 mkfs(pp, fsys, fi, fo)
 	struct partition *pp;
 	char *fsys;
 	int fi, fo;
 {
-	register long i, mincpc, mincpg, inospercg;
+	long i, mincpc, mincpg, inospercg;
 	long cylno, rpos, blk, j, warn = 0;
 	long used, mincpgcnt, bpcg;
 	long mapcramped, inodecramped;
 	long postblsize, rotblsize, totalsbsize;
-	int ppid, status;
+	int ppid = 0, status;
 	time_t utime;
 	quad_t sizepb;
-	void started();
 
 #ifndef STANDALONE
 	time(&utime);
@@ -148,11 +162,13 @@ mkfs(pp, fsys, fi, fo)
 	if (mfs) {
 		ppid = getpid();
 		(void) signal(SIGUSR1, started);
-		if (i = fork()) {
-			if (i == -1) {
-				perror("mfs");
-				exit(10);
-			}
+		switch (i = fork()) {
+		case -1:
+			perror("mfs");
+			exit(10);
+		case 0:
+			break;
+		default:
 			if (waitpid(i, &status, 0) != -1 && WIFEXITED(status))
 				exit(WEXITSTATUS(status));
 			exit(11);
@@ -324,7 +340,7 @@ mkfs(pp, fsys, fi, fo)
 		if (mincpc == 1 || sblock.fs_frag == 1 ||
 		    sblock.fs_bsize == MINBSIZE)
 			break;
-		printf("With a block size of %d %s %d\n", sblock.fs_bsize,
+		printf("With a block size of %d %s %ld\n", sblock.fs_bsize,
 		    "minimum bytes per inode is",
 		    (mincpg * bpcg - used) / MAXIPG(&sblock) + 1);
 		sblock.fs_bsize >>= 1;
@@ -343,16 +359,16 @@ mkfs(pp, fsys, fi, fo)
 	}
 	if (inodecramped) {
 		if (inospercg > MAXIPG(&sblock)) {
-			printf("Minimum bytes per inode is %d\n",
+			printf("Minimum bytes per inode is %ld\n",
 			    (mincpg * bpcg - used) / MAXIPG(&sblock) + 1);
 		} else if (!mapcramped) {
 			printf("With %d bytes per inode, ", density);
-			printf("minimum cylinders per group is %d\n", mincpg);
+			printf("minimum cylinders per group is %ld\n", mincpg);
 		}
 	}
 	if (mapcramped) {
 		printf("With %d sectors per cylinder, ", sblock.fs_spc);
-		printf("minimum cylinders per group is %d\n", mincpg);
+		printf("minimum cylinders per group is %ld\n", mincpg);
 	}
 	if (inodecramped || mapcramped) {
 		if (sblock.fs_bsize != bsize)
@@ -370,7 +386,7 @@ mkfs(pp, fsys, fi, fo)
 	 */
 	sblock.fs_cpg = cpg;
 	if (sblock.fs_cpg % mincpc != 0) {
-		printf("%s groups must have a multiple of %d cylinders\n",
+		printf("%s groups must have a multiple of %ld cylinders\n",
 			cpgflg ? "Cylinder" : "Warning: cylinder", mincpc);
 		sblock.fs_cpg = roundup(sblock.fs_cpg, mincpc);
 		if (!cpgflg)
@@ -398,11 +414,11 @@ mkfs(pp, fsys, fi, fo)
 	}
 	sblock.fs_fpg = (sblock.fs_cpg * sblock.fs_spc) / NSPF(&sblock);
 	if ((sblock.fs_cpg * sblock.fs_spc) % NSPB(&sblock) != 0) {
-		printf("panic (fs_cpg * fs_spc) % NSPF != 0");
+		printf("panic (fs_cpg * fs_spc) %% NSPF != 0");
 		exit(24);
 	}
 	if (sblock.fs_cpg < mincpg) {
-		printf("cylinder groups must have at least %d cylinders\n",
+		printf("cylinder groups must have at least %ld cylinders\n",
 			mincpg);
 		exit(25);
 	} else if (sblock.fs_cpg != cpg) {
@@ -510,7 +526,7 @@ next:
 	sblock.fs_dblkno = sblock.fs_iblkno + sblock.fs_ipg / INOPF(&sblock);
 	i = MIN(~sblock.fs_cgmask, sblock.fs_ncg - 1);
 	if (cgdmin(&sblock, i) - cgbase(&sblock, i) >= sblock.fs_fpg) {
-		printf("inode blocks/cyl group (%d) >= data blocks (%d)\n",
+		printf("inode blocks/cyl group (%ld) >= data blocks (%d)\n",
 		    cgdmin(&sblock, i) - cgbase(&sblock, i) / sblock.fs_frag,
 		    sblock.fs_fpg / sblock.fs_frag);
 		printf("number of cylinders per cylinder group (%d) %s.\n",
@@ -526,10 +542,10 @@ next:
 			    (cgdmin(&sblock, 0) + 3 * sblock.fs_frag));
 			exit(30);
 		}
-		printf("Warning: inode blocks/cyl group (%d) >= data blocks (%d) in last\n",
+		printf("Warning: inode blocks/cyl group (%ld) >= data blocks (%ld) in last\n",
 		    (cgdmin(&sblock, j) - cgbase(&sblock, j)) / sblock.fs_frag,
 		    i / sblock.fs_frag);
-		printf("    cylinder group. This implies %d sector(s) cannot be allocated.\n",
+		printf("    cylinder group. This implies %ld sector(s) cannot be allocated.\n",
 		    i * NSPF(&sblock));
 		sblock.fs_ncg--;
 		sblock.fs_ncyl -= sblock.fs_ncyl % sblock.fs_cpg;
@@ -598,7 +614,7 @@ next:
 			continue;
 		if (cylno % 8 == 0)
 			printf("\n");
-		printf(" %d,", fsbtodb(&sblock, cgsblock(&sblock, cylno)));
+		printf(" %ld,", fsbtodb(&sblock, cgsblock(&sblock, cylno)));
 		fflush(stdout);
 	}
 	if (!mfs)
@@ -648,13 +664,14 @@ next:
 /*
  * Initialize a cylinder group.
  */
+void
 initcg(cylno, utime)
 	int cylno;
 	time_t utime;
 {
 	daddr_t cbase, d, dlower, dupper, dmax, blkno;
-	long i, j, s;
-	register struct csum *cs;
+	long i;
+	struct csum *cs;
 
 	/*
 	 * Determine block bounds for cylinder group.
@@ -732,7 +749,7 @@ initcg(cylno, utime)
 		sblock.fs_dsize += dlower;
 	}
 	sblock.fs_dsize += acg.cg_ndblk - dupper;
-	if (i = dupper % sblock.fs_frag) {
+	if ((i = (dupper % sblock.fs_frag)) != 0) {
 		acg.cg_frsum[sblock.fs_frag - i]++;
 		for (d = dupper + sblock.fs_frag - i; dupper < d; dupper++) {
 			setbit(cg_blksfree(&acg), dupper);
@@ -839,10 +856,13 @@ struct odirect olost_found_dir[] = {
 #endif
 char buf[MAXBSIZE];
 
+void
 fsinit(utime)
 	time_t utime;
 {
+#ifdef LOSTDIR
 	int i;
+#endif
 
 	/*
 	 * initialize the node
@@ -895,8 +915,9 @@ fsinit(utime)
  * construct a set of directory entries in "buf".
  * return size of directory.
  */
+int
 makedir(protodir, entries)
-	register struct direct *protodir;
+	struct direct *protodir;
 	int entries;
 {
 	char *cp;
@@ -925,8 +946,7 @@ alloc(size, mode)
 	int i, frag;
 	daddr_t d, blkno;
 
-	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
-	    (char *)&acg);
+	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	if (acg.cg_magic != CG_MAGIC) {
 		printf("cg 0: bad magic number\n");
 		return (0);
@@ -972,17 +992,17 @@ goth:
 /*
  * Allocate an inode on the disk
  */
+static void
 iput(ip, ino)
-	register struct dinode *ip;
-	register ino_t ino;
+	struct dinode *ip;
+	ino_t ino;
 {
 	struct dinode buf[MAXINOPB];
 	daddr_t d;
 	int c;
 
 	c = ino_to_cg(&sblock, ino);
-	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize,
-	    (char *)&acg);
+	rdfs(fsbtodb(&sblock, cgtod(&sblock, 0)), sblock.fs_cgsize, &acg);
 	if (acg.cg_magic != CG_MAGIC) {
 		printf("cg 0: bad magic number\n");
 		exit(31);
@@ -1007,7 +1027,8 @@ iput(ip, ino)
  * Notify parent process that the filesystem has created itself successfully.
  */
 void
-started()
+started(n)
+	int n;
 {
 
 	exit(0);
@@ -1016,9 +1037,9 @@ started()
 /*
  * Replace libc function with one suited to our needs.
  */
-caddr_t
+void *
 malloc(size)
-	register u_long size;
+	size_t size;
 {
 	char *base, *i;
 	static u_long pgsz;
@@ -1048,10 +1069,10 @@ malloc(size)
 /*
  * Replace libc function with one suited to our needs.
  */
-caddr_t
+void *
 realloc(ptr, size)
-	char *ptr;
-	u_long size;
+	void *ptr;
+	size_t size;
 {
 	void *p;
 
@@ -1065,23 +1086,24 @@ realloc(ptr, size)
 /*
  * Replace libc function with one suited to our needs.
  */
-char *
+void *
 calloc(size, numelm)
-	u_long size, numelm;
+	size_t size, numelm;
 {
-	caddr_t base;
+	void *base;
 
 	size *= numelm;
 	base = malloc(size);
 	memset(base, 0, size);
-	return (base);
+	return base;
 }
 
 /*
  * Replace libc function with one suited to our needs.
  */
+void
 free(ptr)
-	char *ptr;
+	void *ptr;
 {
 	
 	/* do not worry about it for now */
@@ -1090,10 +1112,11 @@ free(ptr)
 /*
  * read a block from the file system
  */
+void
 rdfs(bno, size, bf)
 	daddr_t bno;
 	int size;
-	char *bf;
+	void *bf;
 {
 	int n;
 	off_t offset;
@@ -1105,13 +1128,13 @@ rdfs(bno, size, bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fsi, offset, SEEK_SET) < 0) {
-		printf("seek error: %ld\n", bno);
+		printf("seek error: %d\n", bno);
 		perror("rdfs");
 		exit(33);
 	}
 	n = read(fsi, bf, size);
 	if (n != size) {
-		printf("read error: %ld\n", bno);
+		printf("read error: %d\n", bno);
 		perror("rdfs");
 		exit(34);
 	}
@@ -1120,10 +1143,11 @@ rdfs(bno, size, bf)
 /*
  * write a block to the file system
  */
+void
 wtfs(bno, size, bf)
 	daddr_t bno;
 	int size;
-	char *bf;
+	void *bf;
 {
 	int n;
 	off_t offset;
@@ -1137,13 +1161,13 @@ wtfs(bno, size, bf)
 	offset = bno;
 	offset *= sectorsize;
 	if (lseek(fso, offset, SEEK_SET) < 0) {
-		printf("seek error: %ld\n", bno);
+		printf("seek error: %d\n", bno);
 		perror("wtfs");
 		exit(35);
 	}
 	n = write(fso, bf, size);
 	if (n != size) {
-		printf("write error: %ld\n", bno);
+		printf("write error: %d\n", bno);
 		perror("wtfs");
 		exit(36);
 	}
@@ -1152,6 +1176,7 @@ wtfs(bno, size, bf)
 /*
  * check if a block is available
  */
+int
 isblock(fs, cp, h)
 	struct fs *fs;
 	unsigned char *cp;
@@ -1184,6 +1209,7 @@ isblock(fs, cp, h)
 /*
  * take a block out of the map
  */
+void
 clrblock(fs, cp, h)
 	struct fs *fs;
 	unsigned char *cp;
@@ -1215,6 +1241,7 @@ clrblock(fs, cp, h)
 /*
  * put a block into the map
  */
+void
 setblock(fs, cp, h)
 	struct fs *fs;
 	unsigned char *cp;
