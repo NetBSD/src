@@ -1,4 +1,4 @@
-/*	$NetBSD: nfswrapper.c,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $	*/
+/*	$NetBSD: nfswrapper.c,v 1.2 1997/03/22 09:13:50 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -29,16 +29,13 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  */
 
-/* Makes the (filesystem dependant) mount
- part of open. Necessary for interoperation with
- tftp filesystem on same net device layer.
- Assumes:
- - socket descriptor (int) at open_file->f_devdata
- - server host IP in global rootip
- - path to mount in globel rootpath
+/*
+ * Makes the (filesystem dependant) mount part of open. Necessary for
+ * interoperation with tftp filesystem on same net device layer. Assumes: -
+ * socket descriptor (int) at open_file->f_devdata - server host IP in global
+ * rootip - path to mount in globel rootpath
  */
 
 #include <sys/param.h>
@@ -51,22 +48,22 @@
 
 #include "nfswrapper.h"
 
-int nfs_mountandopen(path, f)
-char *path;
-struct open_file *f;
+int 
+nfs_mountandopen(path, f)
+	char           *path;
+	struct open_file *f;
 {
-  int sock;
+	int             sock;
 
-  if(!rootpath[0]){
-    printf("no rootpath, no nfs\n");
-    return(ENXIO);
-  }
+	if (!rootpath[0]) {
+		printf("no rootpath, no nfs\n");
+		return (ENXIO);
+	}
+	sock = *(int *) (f->f_devdata);
 
-  sock= *(int*)(f->f_devdata);
-
-  if(nfs_mount(sock , rootip, rootpath)){
-    printf("mount failed\n");
-    return(ENXIO);
-  }
-  return(nfs_open(path, f));
+	if (nfs_mount(sock, rootip, rootpath)) {
+		printf("mount failed\n");
+		return (ENXIO);
+	}
+	return (nfs_open(path, f));
 }
