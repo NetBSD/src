@@ -42,7 +42,7 @@
  *	@(#)pmap.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.h,v 1.11 93/05/25 10:36:09 torek Exp 
- * $Id: pmap.h,v 1.5 1994/06/10 14:32:54 pk Exp $
+ * $Id: pmap.h,v 1.5.2.1 1994/08/17 06:19:34 deraadt Exp $
  */
 
 #ifndef	_SPARC_PMAP_H_
@@ -123,6 +123,7 @@ struct pmap {
 	int	**pm_pte;		/* points to pm_rpte */
 	int	pm_gap_start;		/* Starting with this vseg there's */
 	int	pm_gap_end;		/* no valid mapping until here */
+	struct pmap_statistics	pm_stats;	/* pmap statistics */
 };
 
 /* data appearing only in user pmaps */
@@ -170,5 +171,7 @@ extern pmap_t		kernel_pmap;
 void	pmap_bootstrap __P((int nmmu, int nctx));
 void	pmap_init __P((vm_offset_t phys_start, vm_offset_t phys_end));
 #endif /* KERNEL */
+
+#define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
 #endif /* _SPARC_PMAP_H_ */
