@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.417 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.418 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -204,3 +204,4 @@ Changes from NetBSD 2.0 to NetBSD 3.0:
 	auich(4): Add support for nForce4.  [kent 20050127]
 	viaide(4): Add support for nForce4.  [kent 20050127]
 	auich(4): Add support for nForce2 Ultra 400.  [jdolecek 20050127]
+	kernel: Add ffs file system snapshots. [hannken 20050131]
