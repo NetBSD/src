@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl
 #
-#	$NetBSD: libg++2netbsd,v 1.12 1996/12/17 19:14:16 phil Exp $
+#	$NetBSD: libg++2netbsd,v 1.13 1996/12/17 21:32:26 cgd Exp $
 #
 #  Perl script to convert a standard distribution directory for libg++ into
 #	a NetBSD source tree.
@@ -506,8 +506,13 @@ LIB=		g++
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
 CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
+.if (${MACHINE} == "alpha")
+LDADD=		-lcurses
+DPADD=		${LIBCURSES}
+.else
 LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
 DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
+.endif
 NOMAN=		noman
 LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
 			$(MAKE) -r -s -f - xxx | grep curses

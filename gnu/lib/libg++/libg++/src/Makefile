@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 1996/12/17 18:57:01 phil Exp $
+#	$NetBSD: Makefile,v 1.2 1996/12/17 21:32:27 cgd Exp $
 
 LIB=		g++
 
@@ -16,8 +16,13 @@ timer.c
 CXXFLAGS+=	-nostdinc++ -I$(.CURDIR)/../../include \
 		  -I$(.CURDIR)/../../libio -I$(.CURDIR)/../../libstdc++
 CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../../libio
+.if (${MACHINE} == "alpha")
+LDADD=		-lcurses
+DPADD=		${LIBCURSES}
+.else
 LDADD=		${DESTDIR}/usr/lib/c++rt0.o -lcurses
 DPADD=		${DESTDIR}/usr/lib/c++rt0.o ${LIBCURSES}
+.endif
 NOMAN=		noman
 LIBCURSES!=	printf "xxx:\n\techo \$${LIBCURSES}\n.include <bsd.prog.mk>" |\
 			$(MAKE) -r -s -f - xxx | grep curses
