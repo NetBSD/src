@@ -1,4 +1,4 @@
-/*	$NetBSD: cmp.c,v 1.13 1998/10/08 23:30:35 wsanchez Exp $	*/
+/*	$NetBSD: cmp.c,v 1.14 1998/10/09 02:00:39 enami Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cmp.c,v 1.13 1998/10/08 23:30:35 wsanchez Exp $");
+__RCSID("$NetBSD: cmp.c,v 1.14 1998/10/09 02:00:39 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -53,6 +53,20 @@ __RCSID("$NetBSD: cmp.c,v 1.13 1998/10/08 23:30:35 wsanchez Exp $");
 
 #include "ls.h"
 #include "extern.h"
+
+#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || \
+    defined(_XOPEN_SOURCE) || defined(__NetBSD__)
+#define ATIMENSEC_CMP(x, op, y) ((x)->st_atimensec op (y)->st_atimensec)
+#define CTIMENSEC_CMP(x, op, y) ((x)->st_ctimensec op (y)->st_ctimensec)
+#define MTIMENSEC_CMP(x, op, y) ((x)->st_mtimensec op (y)->st_mtimensec)
+#else
+#define ATIMENSEC_CMP(x, op, y) \
+	((x)->st_atimespec.ts_nsec op (y)->st_atimespec.ts_nsec)
+#define CTIMENSEC_CMP(x, op, y) \
+	((x)->st_ctimespec.ts_nsec op (y)->st_ctimespec.ts_nsec)
+#define MTIMENSEC_CMP(x, op, y) \
+	((x)->st_mtimespec.ts_nsec op (y)->st_mtimespec.ts_nsec)
+#endif
 
 int
 namecmp(a, b)
@@ -76,17 +90,10 @@ modcmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
 		return (-1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_mtimensec > a->fts_statp->st_mtimensec)
+	else if (MTIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (1);
-	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
+	else if (MTIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (-1);
-#else
-	else if (b->fts_statp->st_mtimespec.ts_nsec > a->fts_statp->st_mtimespec.ts_nsec)
-		return (1);
-	else if (b->fts_statp->st_mtimespec.ts_nsec < a->fts_statp->st_mtimespec.ts_nsec)
-		return (-1);
-#endif
 	else
 		return (namecmp(a, b));
 }
@@ -99,17 +106,10 @@ revmodcmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_mtime < a->fts_statp->st_mtime)
 		return (1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_mtimensec > a->fts_statp->st_mtimensec)
+	else if (MTIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (-1);
-	else if (b->fts_statp->st_mtimensec < a->fts_statp->st_mtimensec)
+	else if (MTIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (1);
-#else
-	else if (b->fts_statp->st_mtimespec.ts_nsec > a->fts_statp->st_mtimespec.ts_nsec)
-		return (-1);
-	else if (b->fts_statp->st_mtimespec.ts_nsec < a->fts_statp->st_mtimespec.ts_nsec)
-		return (1);
-#endif
 	else
 		return (revnamecmp(a, b));
 }
@@ -122,17 +122,10 @@ acccmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
 		return (-1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_atimensec > a->fts_statp->st_atimensec)
+	else if (ATIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (1);
-	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
+	else if (ATIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (-1);
-#else
-	else if (b->fts_statp->st_atimespec.ts_nsec > a->fts_statp->st_atimespec.ts_nsec)
-		return (1);
-	else if (b->fts_statp->st_atimespec.ts_nsec < a->fts_statp->st_atimespec.ts_nsec)
-		return (-1);
-#endif
 	else
 		return (namecmp(a, b));
 }
@@ -145,17 +138,10 @@ revacccmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_atime < a->fts_statp->st_atime)
 		return (1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_atimensec > a->fts_statp->st_atimensec)
+	else if (ATIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (-1);
-	else if (b->fts_statp->st_atimensec < a->fts_statp->st_atimensec)
+	else if (ATIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (1);
-#else
-	else if (b->fts_statp->st_atimespec.ts_nsec > a->fts_statp->st_atimespec.ts_nsec)
-		return (-1);
-	else if (b->fts_statp->st_atimespec.ts_nsec < a->fts_statp->st_atimespec.ts_nsec)
-		return (1);
-#endif
 	else
 		return (revnamecmp(a, b));
 }
@@ -168,17 +154,10 @@ statcmp(a, b)
 		return (1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
 		return (-1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_ctimensec > a->fts_statp->st_ctimensec)
+	else if (CTIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (1);
-	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
+	else if (CTIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (-1);
-#else
-	else if (b->fts_statp->st_ctimespec.ts_nsec > a->fts_statp->st_ctimespec.ts_nsec)
-		return (1);
-	else if (b->fts_statp->st_ctimespec.ts_nsec < a->fts_statp->st_ctimespec.ts_nsec)
-		return (-1);
-#endif
 	else
 		return (namecmp(a, b));
 }
@@ -191,17 +170,10 @@ revstatcmp(a, b)
 		return (-1);
 	else if (b->fts_statp->st_ctime < a->fts_statp->st_ctime)
 		return (1);
-#if defined(_POSIX_SOURCE) || defined(_POSIX_C_SOURCE) || defined (_XOPEN_SOURCE)
-	else if (b->fts_statp->st_ctimensec > a->fts_statp->st_ctimensec)
+	else if (CTIMENSEC_CMP(b->fts_statp, >, a->fts_statp))
 		return (-1);
-	else if (b->fts_statp->st_ctimensec < a->fts_statp->st_ctimensec)
+	else if (CTIMENSEC_CMP(b->fts_statp, <, a->fts_statp))
 		return (1);
-#else
-	else if (b->fts_statp->st_ctimespec.ts_nsec > a->fts_statp->st_ctimespec.ts_nsec)
-		return (-1);
-	else if (b->fts_statp->st_ctimespec.ts_nsec < a->fts_statp->st_ctimespec.ts_nsec)
-		return (1);
-#endif
 	else
 		return (revnamecmp(a, b));
 }
