@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.26 1995/04/10 01:01:50 mycroft Exp $	*/
+/*	$NetBSD: ite.c,v 1.27 1995/04/19 19:15:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,6 @@
 #if NITE > 0
 
 #include "grf.h"
-
 #undef NITE
 #define NITE	NGRF
 
@@ -211,14 +210,11 @@ iteoff(dev, flag)
 }
 
 /* ARGSUSED */
-#ifdef __STDC__
-iteopen(dev_t dev, int mode, int devtype, struct proc *p)
-#else
+int
 iteopen(dev, mode, devtype, p)
 	dev_t dev;
 	int mode, devtype;
 	struct proc *p;
-#endif
 {
 	int unit = UNIT(dev);
 	register struct tty *tp;
@@ -262,6 +258,7 @@ iteopen(dev, mode, devtype, p)
 }
 
 /*ARGSUSED*/
+int
 iteclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -279,6 +276,7 @@ iteclose(dev, flag, mode, p)
 	return(0);
 }
 
+int
 iteread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -289,6 +287,7 @@ iteread(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
 }
 
+int
 itewrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -299,6 +298,15 @@ itewrite(dev, uio, flag)
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
 
+struct tty *
+itetty(dev)
+	dev_t dev;
+{
+
+	return (ite_tty[UNIT(dev)]);
+}
+
+int
 iteioctl(dev, cmd, addr, flag, p)
 	dev_t dev;
 	int cmd;
@@ -908,6 +916,7 @@ itecninit(cp)
 }
 
 /*ARGSUSED*/
+int
 itecngetc(dev)
 	dev_t dev;
 {
