@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.conf.5,v 1.85 2001/07/17 02:05:20 sakane Exp $
+.\"	$KAME: racoon.conf.5,v 1.89 2001/08/17 07:16:38 itojun Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -43,8 +43,8 @@ is the configuration file for the
 .Xr racoon 8
 ISAKMP daemon.
 .Xr racoon 8
-negotiates security associations for itself (ISAKMP SA)
-and for kernel IPsec (IPsec SA).
+negotiates security associations for itself (ISAKMP SA, or phase 1 SA)
+and for kernel IPsec (IPsec SA, or phase 2 SA).
 The file consists of a sequence of directives and statements.
 Each directive is composed by a tag, and statements are enclosed by
 .Ql {
@@ -100,30 +100,28 @@ Major parameters are listed below.
 .Pp
 .Bl -tag -width addressx -compact
 .It Ar number
-means hexa-decimal or decimal number.
-The former is expressed with
-.Ql 0x .
+means a hexadecimal or a decimal number.
+The former must be prefixed with
+.Ql Li 0x .
 .It Ar string
 .It Ar path
 .It Ar file
-means any string enclosed
+means any string enclosed in
 .Ql \&"
 .Pq double quote .
 .It Ar address
-means IPv6 and IPv4 address.
+means IPv6 and/or IPv4 address.
 .It Ar port
-means TCP/UDP port number.
+means a TCP/UDP port number.
 The port number is always enclosed by
 .Ql \*(lB
 and
 .Ql \*(rB .
 .It Ar timeunit
 is one of following:
-.Ic sec , secs , second , seconds , min , mins , minute , minutes ,
+.Ic sec , secs , second , seconds ,
+.Ic min , mins , minute , minutes ,
 .Ic hour , hours .
-.It Ar byteunit
-is one of following:
-.Ic B , byte , bytes , KB , MB , TB .
 .El
 .\"
 .Ss Path Specification
@@ -131,7 +129,7 @@ is one of following:
 .It Ic path include Ar path ;
 specifies a path to include a file.
 See
-.Sx File Include .
+.Sx File Inclusion .
 .It Ic path pre_shared_key Ar file ;
 specifies a file containing pre-shared key(s) for various ID(s).
 See
@@ -150,7 +148,7 @@ simply add a SA to the file at the moment.
 You should maintain the file manually.
 .El
 .\"
-.Ss File Include
+.Ss File Inclusion
 .Bl -tag -width Ds -compact
 .It Ic include Ar file
 other configuration files can be included.
@@ -327,13 +325,11 @@ set this to off.
 The default is on.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
-.It Ic lifetime byte Ar number Ar byteunit ;
-define a lifetime of a certain time or certain number of bytes
+define a lifetime of a certain time
 which will be proposed in the phase 1 negotiations.
 Any proposal will be accepted, and the attribute(s) will be not proposed to
 the peer if you do not specify it(them).
 They can be individually specified in each proposal.
-Note that the lifetime of bytes is unused right now.
 .\"
 .It Ic initial_contact (on \(ba off) ;
 enable this to send an INITIAL-CONTACT message.
@@ -449,7 +445,6 @@ Or you can define 1, 2, or 5 as the DH group number.
 When you want to use aggressive mode,
 you must define same DH group in each proposal.
 .It Ic lifetime time Ar number Ar timeunit ;
-.It Ic lifetime byte Ar number Ar byteunit ;
 define lifetime of the phase 1 SA proposal.
 Refer to the description of
 .Ic lifetime
@@ -517,8 +512,7 @@ is one of following:
 Or you can define 1, 2, or 5 as the DH group number.
 .\"
 .It Ic lifetime time Ar number Ar timeunit ;
-.It Ic lifetime byte Ar number Ar byteunit ;
-define the lifetime of amount of time or number of bytes
+define the lifetime of amount of time
 which are to be used IPsec-SA.
 Any proposal will be accepted, and no attribute(s) will be proposed to
 the peer if you do not specify it(them).
@@ -553,6 +547,9 @@ Therefore you have to define all of the potential algorithms
 in the phase 2 proposals even if there is a algorithm which will not be used.
 These algorithms are define by using the following three directives,
 and they are lined with single comma as the separator.
+For algorithms that can take variable-length keys, algorithm names
+can be followed by a key length, like
+.Dq Li blowfish 448 .
 .Xr racoon 8
 will compute the actual phase 2 proposals by computing
 the permutation of the specified algorithms,
@@ -576,16 +573,16 @@ Note that the kernel may not support the algorithm you have specified.
 .Ic rc5 , rc4 , idea , 3idea ,
 .Ic cast128 , blowfish , null_enc ,
 .Ic twofish , rijndael
-.Pq used with esp
+.Pq used with ESP
 .\"
 .It Ic authentication_algorithm Ar algorithms ;
 .Ic des , 3des , des_iv64 , des_iv32 ,
 .Ic hmac_md5 , hmac_sha1 , non_auth
-.Pq used with esp authentication and AH
+.Pq used with ESP authentication and AH
 .\"
 .It Ic compression_algorithm Ar algorithms ;
 .Ic deflate
-.Pq used with ipcomp
+.Pq used with IPComp
 .El
 .El
 .\"
@@ -661,7 +658,7 @@ Keys which start with
 are hexa-decimal strings.
 Note that the file must be owned by the user ID running
 .Xr racoon 8
-.Pq usually privileged user ,
+.Pq usually the privileged user ,
 and must not be accessible by others.
 .\"
 .Sh EXAMPLE
@@ -684,8 +681,7 @@ sainfo anonymous
 {
 	pfs_group 2;
 	lifetime time 12 hour ;
-	lifetime byte 50 MB ;
-	encryption_algorithm 3des, blowfish, twofish, rijndael ;
+	encryption_algorithm 3des, blowfish 448, twofish, rijndael ;
 	authentication_algorithm hmac_sha1, hmac_md5 ;
 	compression_algorithm deflate ;
 }
@@ -704,7 +700,7 @@ foo.kame.net    hoge
 .\"
 .Sh SEE ALSO
 .\".Xr racoonctl 8 ,
-.Xr racoon 8
+.Xr racoon 8 ,
 .Xr setkey 8
 .\"
 .Sh HISTORY
@@ -715,5 +711,6 @@ configuration file first appeared in
 Yokogawa IPsec implementation.
 .\"
 .Sh BUGS
-Some statements may not yet be implemented.
-These will be added in the future.
+Some statements may not be handled by
+.Xr racoon 8
+yet.

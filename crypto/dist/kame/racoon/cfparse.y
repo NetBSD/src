@@ -1,4 +1,4 @@
-/*	$KAME: cfparse.y,v 1.102 2001/07/09 13:46:48 sakane Exp $	*/
+/*	$KAME: cfparse.y,v 1.107 2001/08/16 20:24:59 sakane Exp $	*/
 
 %{
 #include <sys/types.h>
@@ -105,7 +105,9 @@ static void clean_tmpalgtype __P((void));
 static int expand_isakmpspec __P((int, int, int *,
 	int, int, time_t, int, int, int, char *, struct remoteconf *));
 
+#if 0
 static int fix_lifebyte __P((u_long));
+#endif
 %}
 
 %union {
@@ -133,7 +135,7 @@ static int fix_lifebyte __P((u_long));
 %token RETRY RETRY_COUNTER RETRY_INTERVAL RETRY_PERSEND
 %token RETRY_PHASE1 RETRY_PHASE2
 	/* algorithm */
-%token ALGORITHM_LEVEL ALGORITHM_CLASS ALGORITHMTYPE STRENGTHTYPE
+%token ALGORITHM_CLASS ALGORITHMTYPE STRENGTHTYPE
 	/* policy */
 %token POLICY DIRTYPE ACTION
 %token PLADDRTYPE PROPOSAL WHICHSIDE
@@ -440,7 +442,7 @@ policy_specswrap
 			/*
 			if (cur_spidx->policy->pfs_group != 0
 			 && oakley_setdhgroup(cur_spidx->policy->pfs_group,
-					&cur_spidx->policy->pfsgrp) < 0) {
+					&cur_spidx->policy->pfsgrp) == -1) {
 				yyerror("failed to set DH value.\n");
 				return -1;
 			}
@@ -518,9 +520,14 @@ ipsecproposal_spec
 		EOS
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
 		{
+#if 1
+			yyerror("byte lifetime support is deprecated");
+			return -1;
+#else
 			prhead->lifebyte = fix_lifebyte($3 * $4);
 			if (prhead->lifebyte == 0)
 				return -1;
+#endif
 		}
 		EOS
 	|	PROTOCOL secproto
@@ -792,9 +799,14 @@ sainfo_spec
 		EOS
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
 		{
+#if 1
+			yyerror("byte lifetime support is deprecated");
+			return -1;
+#else
 			cur_sainfo->lifebyte = fix_lifebyte($3 * $4);
 			if (cur_sainfo->lifebyte == 0)
 				return -1;
+#endif
 		}
 		EOS
 	|	ALGORITHM_CLASS {
@@ -1062,11 +1074,16 @@ remote_spec
 		EOS
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
 		{
+#if 1
+			yyerror("byte lifetime support is deprecated");
+			return -1;
+#else
 			yywarn("the lifetime of bytes in phase 1 "
 				"will be ignored at the moment.");
 			prhead->lifebyte = fix_lifebyte($3 * $4);
 			if (prhead->lifebyte == 0)
 				return -1;
+#endif
 		}
 		EOS
 	|	PROPOSAL
@@ -1141,6 +1158,7 @@ dh_group_num
 	;
 identifierstring
 	:	/* nothing */ { $$ = NULL; }
+	|	ADDRSTRING { $$ = $1; }
 	|	QUOTEDSTRING { $$ = $1; }
 	;
 isakmpproposal_specs
@@ -1159,9 +1177,14 @@ isakmpproposal_spec
 		EOS
 	|	LIFETIME LIFETYPE_BYTE NUMBER unittype_byte
 		{
+#if 1
+			yyerror("byte lifetime support is deprecated");
+			return -1;
+#else
 			prhead->spspec->lifebyte = fix_lifebyte($3 * $4);
 			if (prhead->spspec->lifebyte == 0)
 				return -1;
+#endif
 		}
 		EOS
 	|	DH_GROUP dh_group_num
@@ -1412,8 +1435,6 @@ set_isakmp_proposal(rmconf, prspec)
 			"lifebyte = %d\n",
 			s->lifebyte ? s->lifebyte : p->lifebyte);
 		plog(LLV_DEBUG2, LOCATION, NULL,
-			"strength=%s\n", s_algstrength(s->strength));
-		plog(LLV_DEBUG2, LOCATION, NULL,
 			"encklen=%d\n", s->encklen);
 
 		memset(types, 0, ARRAYLEN(types));
@@ -1477,11 +1498,11 @@ expand_isakmpspec(prop_no, trns_no, types,
 	int j;
 	char tb[10];
 	plog(LLV_DEBUG2, LOCATION, NULL,
-		"p:%d t:%d ", prop_no, trns_no);
+		"p:%d t:%d\n", prop_no, trns_no);
 	for (j = class; j < MAXALGCLASS; j++) {
 		snprintf(tb, sizeof(tb), "%d", types[j]);
 		plog(LLV_DEBUG2, LOCATION, NULL,
-			"%s%s%s%s ",
+			"%s%s%s%s\n",
 			s_algtype(j, types[j]),
 			types[j] ? "(" : "",
 			tb[0] == '0' ? "" : tb,
@@ -1536,6 +1557,7 @@ expand_isakmpspec(prop_no, trns_no, types,
 	return trns_no;
 }
 
+#if 0
 /*
  * fix lifebyte.
  * Must be more than 1024B because its unit is kilobytes.
@@ -1552,6 +1574,7 @@ fix_lifebyte(t)
 
 	return(t / 1024);
 }
+#endif
 
 int
 cfparse()

@@ -1,4 +1,4 @@
-/*	$KAME: getcertsbyname.c,v 1.4 2001/08/06 05:46:41 itojun Exp $	*/
+/*	$KAME: getcertsbyname.c,v 1.6 2001/08/07 09:17:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,6 +102,11 @@ freecertinfo(ci)
  * get CERT RR by FQDN and create certinfo structure chain.
  */
 #ifdef HAVE_LWRES_GETRRSETBYNAME
+#define getrrsetbyname lwres_getrrsetbyname
+#define freerrset lwres_freerrset
+#define hstrerror lwres_hstrerror
+#endif
+#if defined(HAVE_LWRES_GETRRSETBYNAME) || defined(AHVE_GETRRSETBYNAME)
 int
 getcertsbyname(name, res)
 	char *name;
@@ -121,10 +126,10 @@ getcertsbyname(name, res)
 	memset(&head, 0, sizeof(head));
 	cur = &head;
 
-	error = lwres_getrrsetbyname(name, C_IN, T_CERT, 0, &rr);
+	error = getrrsetbyname(name, C_IN, T_CERT, 0, &rr);
 	if (error) {
 #ifdef DNSSEC_DEBUG
-		printf("lwres_getrrsetbyname: %s\n", lwres_hstrerror(error));
+		printf("getrrsetbyname: %s\n", hstrerror(error));
 #endif
 		h_errno = NO_RECOVERY;
 		goto end;
@@ -134,7 +139,7 @@ getcertsbyname(name, res)
 	 || rr->rri_rdtype != T_CERT
 	 || rr->rri_nrdatas == 0) {
 #ifdef DNSSEC_DEBUG
-		printf("lwres_getrrsetbyname: %s", lwres_hstrerror(error));
+		printf("getrrsetbyname: %s", hstrerror(error));
 #endif
 		h_errno = NO_RECOVERY;
 		goto end;
@@ -178,7 +183,7 @@ getcertsbyname(name, res)
 
 end:
 	if (rr)
-		lwres_freerrset(rr);
+		freerrset(rr);
 	if (error && head.ci_next)
 		freecertinfo(head.ci_next);
 

@@ -1,4 +1,4 @@
-.\"	$KAME: racoon.8,v 1.25 2001/02/22 00:41:38 sakane Exp $
+.\"	$KAME: racoon.8,v 1.27 2001/08/29 06:11:09 sakane Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .Sh SYNOPSIS
 .Nm racoon
 .Bk -words
-.Op Fl dFBv
+.Op Fl BdFv46
 .Ek
 .Bk -words
 .Op Fl f Ar configfile
@@ -52,35 +52,45 @@
 .\"
 .Sh DESCRIPTION
 .Nm
-speaks IKE (ISAKMP/Oakley) key management protocol, to establish
-security association with other hosts.
-SPD in the kernel usually trigger to start
+speaks IKE
+.Pq ISAKMP/Oakley
+key management protocol,
+to establish security association with other hosts.
+SPD
+.Pq Security Policy Database
+in the kernel usually triggers to start
 .Nm racoon .
 .Bl -tag -width Ds
+.It Fl B
+Install SA(s) from the file which is specified in
+.Xr racoon.conf 5 .
 .It Fl d
-increase the debug level.
-.It Fl f Ar configfile
-use
-.Ar configfile
-as the configuration file instead of the default.
+Increase the debug level.
+Multiple
+.Fl d
+will increase the debug level even more.
 .It Fl F
-run
+Run
 .Nm racoon
 in the foreground.
-.It Fl B
-install SA(s) from the file which is specified in
-.Xr racoon.conf 5 .
+.It Fl f Ar configfile
+Use
+.Ar configfile
+as the configuration file instead of the default.
 .It Fl l Ar logfile
-use
+Use
 .Ar logfile
 as the logging file instead of
 .Xr syslogd 8 .
 .It Fl p Ar isakmp-port
-listen for ISAKMP key exchange on port
+Listen to ISAKMP key exchange on port
 .Ar isakmp-port
 instead of the default port number, 500.
 .It Fl v
-causes a packet dump verbose when using high debugging level.
+The flag causes the packet dump be more verbose, with higher debugging level.
+.It Fl 4
+.It Fl 6
+Specifies the default address family for the sockets.
 .El
 .Pp
 .Nm
@@ -88,6 +98,13 @@ assumes the presence of kernel random number device
 .Xr rnd 4
 at
 .Pa /dev/urandom .
+Informational messages are labeled
+.Em info ,
+and debugging messages are labeled
+.Em debug .
+You have to configure
+.Xr syslog.conf 5
+if you want to see them in a logging file.
 .\"
 .Sh FILES
 .Bl -tag -width /etc/racoon.conf -compact
@@ -103,6 +120,7 @@ The command exits with 0 on success, and non-zero on errors.
 .Xr racoon.conf 5 ,
 .Xr setkey 8 ,
 .Xr syslogd 8
+.Xr syslog.conf 5
 .\"
 .Sh HISTORY
 The
