@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 1999/05/20 08:21:47 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.40 1999/05/22 20:28:22 eeh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -154,6 +154,36 @@ static int ndvmamap;	/* # of entries in dvmamap */
 void	dumpsys __P((void));
 caddr_t	mdallocsys __P((caddr_t));
 void	stackdump __P((void));
+
+/* 
+ * This is the table that tells us how to access different bus space types.
+ */ 
+
+#if BUS_BYPASS_ACCESS_ENABLED == 1
+/*
+ * Bypass access 
+ */
+int bus_type_asi[LAST_BUS_SPACE] = {
+	ASI_PHYS_NON_CACHED,
+	ASI_PHYS_NON_CACHED,
+	ASI_PHYS_NON_CACHED_LITTLE,
+	ASI_PHYS_NON_CACHED_LITTLE,
+	ASI_PHYS_CACHED_LITTLE,
+	0
+};
+#else
+/*
+ * MMU access 
+ */
+int bus_type_asi[LAST_BUS_SPACE] = {
+	ASI_PRIMARY,
+	ASI_PRIMARY,
+	ASI_PRIMARY_LITTLE,
+	ASI_PRIMARY_LITTLE,
+	ASI_PRIMARY_LITTLE,
+	0
+};
+#endif
 
 /*
  * Machine-dependent startup code
@@ -1634,6 +1664,7 @@ static	vaddr_t iobase = IODEV_BASE;
 #endif
 	switch (iospace) {
 	case PCI_CONFIG_BUS_SPACE:
+	case PCI_IO_BUS_SPACE:
 		pm_flags = PMAP_NC|PMAP_LITTLE;
 		break;
 	case PCI_MEMORY_BUS_SPACE:
@@ -1772,7 +1803,7 @@ void sparc_bus_barrier (t, h, offset, size, flags)
 struct sparc_bus_space_tag mainbus_space_tag = {
 	NULL,				/* cookie */
 	NULL,				/* parent bus tag */
-	UPA_BUS_SPACE,			/* type (ASI) */
+	UPA_BUS_SPACE,			/* type */
 	sparc_bus_map,			/* bus_space_map */
 	sparc_bus_unmap,		/* bus_space_unmap */
 	NULL,				/* bus_space_subregion */

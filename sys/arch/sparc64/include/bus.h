@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1999/03/23 21:29:05 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 1999/05/22 20:28:22 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,11 +81,16 @@
  *
  * PCI spaces are non-cached and little endian
  */
-#define UPA_BUS_SPACE	ASI_PHYS_NON_CACHED
-#define	SBUS_BUS_SPACE	ASI_PHYS_NON_CACHED
-#define PCI_CONFIG_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
-#define PCI_IO_BUS_SPACE	ASI_PHYS_NON_CACHED_LITTLE
-#define PCI_MEMORY_BUS_SPACE	ASI_PHYS_CACHED_LITTLE
+
+enum bus_type { 
+	UPA_BUS_SPACE,
+	SBUS_BUS_SPACE,
+	PCI_CONFIG_BUS_SPACE,
+	PCI_IO_BUS_SPACE,
+	PCI_MEMORY_BUS_SPACE,
+	LAST_BUS_SPACE
+}; 
+extern int bus_type_asi[LAST_BUS_SPACE];
 /* For backwards compatibility */
 #define SPARC_BUS_SPACE	UPA_BUS_SPACE
 
@@ -93,7 +98,7 @@
  * Bus address and size types
  */
 typedef	u_int64_t	bus_space_handle_t;
-typedef u_long		bus_type_t;
+typedef enum bus_type	bus_type_t;
 typedef u_int64_t	bus_addr_t;
 typedef u_int64_t	bus_size_t;
 
@@ -350,18 +355,18 @@ int bus_space_probe __P((
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
-#if 0
+#if 1
 #define	bus_space_read_1(t, h, o)					\
-	    lduba((h) + (o), (t)->type)
+	    lduba((h) + (o), bus_type_asi[(t)->type])
 
 #define	bus_space_read_2(t, h, o)					\
-	    lduha((h) + (o), (t)->type)
+	    lduha((h) + (o), bus_type_asi[(t)->type])
 
 #define	bus_space_read_4(t, h, o)					\
-	    lda((h) + (o), (t)->type)
+	    lda((h) + (o), bus_type_asi[(t)->type])
 
 #define	bus_space_read_8(t, h, o)					\
-	    ldxa((h) + (o), (t)->type)
+	    ldxa((h) + (o), bus_type_asi[(t)->type])
 #else
 	/* For the time being don't use address spaces */
 #define	bus_space_read_1(t, h, o)					\
@@ -421,18 +426,18 @@ int bus_space_probe __P((
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
-#if 0
+#if 1
 #define	bus_space_write_1(t, h, o, v)					\
-	((void)(stba((h) + (o), (t)->type, (v))))
+	((void)(stba((h) + (o), bus_type_asi[(t)->type], (v))))
 
 #define	bus_space_write_2(t, h, o, v)					\
-	((void)(stha((h) + (o), (t)->type, (v))))
+	((void)(stha((h) + (o), bus_type_asi[(t)->type], (v))))
 
 #define	bus_space_write_4(t, h, o, v)					\
-	((void)(sta((h) + (o), (t)->type, (v))))
+	((void)(sta((h) + (o), bus_type_asi[(t)->type], (v))))
 
 #define	bus_space_write_8(t, h, o, v)					\
-	((void)(stxa((h) + (o), (t)->type, (v))))
+	((void)(stxa((h) + (o), bus_type_asi[(t)->type], (v))))
 #else
 	/* Use primary ASI for now for debug */
 #define	bus_space_write_1(t, h, o, v)	do {				\
