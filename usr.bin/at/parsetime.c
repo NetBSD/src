@@ -116,7 +116,7 @@ static char *sc_token;	/* scanner - token buffer */
 static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 
-static char rcsid[] = "$Id: parsetime.c,v 1.1 1993/12/05 11:37:05 cgd Exp $";
+static char rcsid[] = "$Id: parsetime.c,v 1.2 1994/03/08 23:49:19 cgd Exp $";
 
 /* Local functions */
 
@@ -219,7 +219,7 @@ token()
 	    return sc_tokid = DOT;
 	else if (sc_token[0] == '+')
 	    return sc_tokid = PLUS;
-	else if (*sct == '/')
+	else if (sc_token[0] == '/')
 	    return sc_tokid = SLASH;
 	else
 	    return sc_tokid = JUNK;
@@ -447,7 +447,7 @@ month(tm)
 	     */
 	    mon = (sc_tokid-JAN);
 	    expect(NUMBER);
-	    mday = atol(sc_token)-1;
+	    mday = atol(sc_token);
 	    if (token() == NUMBER) {
 		year = atol(sc_token);
 		token();
