@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.1.2.4 2002/09/19 23:08:34 petrov Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.1.2.5 2002/11/23 13:11:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 	* saved are frame pointer and return address
 	*/
 
-#define GETC(reg)					; \
+#define GETC(reg)					  \
 	stx	%i6, [ reg + UC_GREGS + _REG_O6 * 8 ]	; \
 	add	%i7, 8, %l0				; \
 	stx	%l0, [ reg + UC_GREGS + _REG_PC * 8 ]   ; \
@@ -57,15 +57,15 @@
 							  \
 	st	%l1, [ reg + UC_FLAGS ]
 
-#define SETC(reg)					; \
+#define SETC(reg)					  \
 	ld	[ reg + UC_FLAGS ], %l0			; \
 	sethi	%hi(0x40000000), %l1			; \
 	andcc	%l0, %l1, %g0				; \
 	bz,a,pn	%icc,1f					; \
 	 nop						; \
 							  \
-	ldx	[ reg + UC_GREGS + _REG_O6 * 8 ], %i6	; \
 	ldx	[ reg + UC_GREGS + _REG_PC * 8 ], %i7   ; \
+	ldx	[ reg + UC_GREGS + _REG_O6 * 8 ], %i6	; \
 							; \
 	jmpl %i7, %g0					; \
 	 restore					; \
@@ -73,22 +73,22 @@
 	 mov	reg, %o0
 
 ENTRY(_getcontext_u)
-	save	%sp, -176, %sp
+	save	%sp, -CC64FSZ, %sp
 	flushw				! XXX
 	GETC(%i0)
-	mov %g0, %i0
+	clr	%i0
 	ret
 	 restore
 
 ENTRY(_setcontext_u)
-	save	%sp, -176, %sp
+	save	%sp, -CC64FSZ, %sp
 	flushw
 	mov	%i0, %o0
 	SETC(%o0)
 	NOTREACHED
 
 ENTRY(_swapcontext_u)
-	save	%sp, -176, %sp
+	save	%sp, -CC64FSZ, %sp
 	flushw
 	GETC(%i0)
 	mov %i1, %o0
