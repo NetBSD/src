@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.18 1996/10/13 22:19:20 christos Exp 
+ *	NetBSD: pcidevs,v 1.19 1996/10/15 23:41:57 christos Exp 
  */
 
 /*
@@ -41,49 +41,49 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C590,
 	    0,
 	    "3Com",
-	    "3c590 10b-T",
+	    "3c590 10Mbps",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595TX,
 	    0,
 	    "3Com",
-	    "3c595 100b-TX",
+	    "3c595 100Base-TX",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595T4,
 	    0,
 	    "3Com",
-	    "3c595 100b-T4",
+	    "3c595 100Base-T4",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C595MII,
 	    0,
 	    "3Com",
-	    "3c595 10b-MII",
+	    "3c595 10Mbps-MII",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900TPO,
 	    0,
 	    "3Com",
-	    "3c900 10b-T",
+	    "3c900 10Base-T",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900Combo,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C900COMBO,
 	    0,
 	    "3Com",
-	    "3c900 10b-Combo",
+	    "3c900 10Mbps-Combo",
 	},
 	{
-	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905,
+	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905TX,
 	    0,
 	    "3Com",
-	    "3c905 100b-TX",
+	    "3c905 100Base-TX",
 	},
 	{
 	    PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3C905T4,
 	    0,
 	    "3Com",
-	    "3c905 100b-T4",
+	    "3c905 100Base-T4",
 	},
 	{
 	    PCI_VENDOR_ACER, PCI_PRODUCT_ACER_M1435,
