@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.40 2000/08/02 20:25:11 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.41 2000/09/21 17:46:04 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1283,7 +1283,21 @@ uvm_pageidlezero()
 		uvm_unlock_fpageq(s);
 
 #ifdef PMAP_PAGEIDLEZERO
-		PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg));
+		if (PMAP_PAGEIDLEZERO(VM_PAGE_TO_PHYS(pg)) == FALSE) {
+			/*
+			 * The machine-dependent code detected some
+			 * reason for us to abort zeroing pages,
+			 * probably because there is a process now
+			 * ready to run.
+			 */
+			s = uvm_lock_fpageq();
+			TAILQ_INSERT_HEAD(&pgfl->pgfl_queues[PGFL_UNKNOWN],
+			    pg, pageq);
+			uvmexp.free++;
+			uvmexp.zeroaborts++;
+			uvm_unlock_fpageq(s);
+			return;
+		}
 #else
 		/*
 		 * XXX This will toast the cache unless the pmap_zero_page()

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.49 2000/09/13 15:00:25 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.50 2000/09/21 17:46:04 thorpej Exp $	*/
 
 /*
  *
@@ -274,6 +274,8 @@ struct uvmexp {
 				   was available */
 	int pga_zeromiss;	/* pagealloc where zero wanted and zero
 				   not available */
+	int zeroaborts;		/* number of times page zeroing was
+				   aborted */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */

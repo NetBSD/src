@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2000/09/10 03:45:58 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2000/09/21 17:46:05 thorpej Exp $	*/
 
 /*
  *
@@ -2182,10 +2182,12 @@ pmap_zero_page(pa)
 }
 
 /*
- * pmap_zero_page_uncached: the same, except uncached.
+ * pmap_zero_page_uncached: the same, except uncached.  Returns
+ * TRUE if the page was zero'd, FALSE if we aborted for some
+ * reason.
  */
 
-void
+boolean_t
 pmap_zero_page_uncached(pa)
 	paddr_t pa;
 {
@@ -2201,6 +2203,7 @@ pmap_zero_page_uncached(pa)
 	*zero_pte = 0;					/* zap! */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 	simple_unlock(&pmap_zero_page_lock);
+	return (TRUE);
 }
 
 /*
