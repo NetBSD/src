@@ -1,7 +1,7 @@
-/*	$NetBSD: texindex.c,v 1.1.1.4 2003/02/13 08:50:57 wiz Exp $	*/
+/*	$NetBSD: texindex.c,v 1.1.1.5 2003/07/03 14:58:51 wiz Exp $	*/
 
 /* texindex -- sort TeX index dribble output into an actual index.
-   Id: texindex.c,v 1.7 2003/01/19 18:47:15 karl Exp
+   Id: texindex.c,v 1.9 2003/05/19 13:10:59 karl Exp
 
    Copyright (C) 1987, 1991, 1992, 1996, 1997, 1998, 1999, 2000, 2001,
    2002, 2003 Free Software Foundation, Inc.
@@ -168,7 +168,7 @@ main (argc, argv)
 
   /* In case we write to a redirected stdout that fails.  */
   /* not ready atexit (close_stdout); */
-  
+
   /* Describe the kind of sorting to do. */
   /* The first keyfield uses the first braced field and folds case. */
   keyfields[0].braced = 1;
@@ -220,9 +220,7 @@ main (argc, argv)
 
       outfile = outfiles[i];
       if (!outfile)
-        {
-          outfile = concat (infiles[i], "s", "");
-        }
+        outfile = concat (infiles[i], "s");
 
       need_initials = 0;
       first_initial = '\0';
@@ -236,7 +234,6 @@ main (argc, argv)
 
   flush_tempfiles (tempcount);
   xexit (0);
-
   return 0; /* Avoid bogus warnings.  */
 }
 
@@ -324,7 +321,7 @@ decode_command (argc, argv)
   if (tempdir == NULL)
     tempdir = DEFAULT_TMPDIR;
   else
-    tempdir = concat (tempdir, "/", "");
+    tempdir = concat (tempdir, "/");
 
   keep_tempfiles = 0;
 
@@ -403,18 +400,15 @@ maketempname (count)
   if (!tempbase)
     {
       int fd;
-      char *tmpdir = getenv ("TEMPDIR");
-      if (!tmpdir)
-        tmpdir = "/tmp";
-      tempbase = concat (tmpdir, "/txidxXXXXXX");
+      tempbase = concat (tempdir, "txidxXXXXXX");
 
       fd = mkstemp (tempbase);
-      if (fd == -1) 
+      if (fd == -1)
         pfatal_with_name (tempbase);
     }
 
   sprintf (tempsuffix, ".%d", count);
-  return concat (tempdir, tempbase, tempsuffix);
+  return concat (tempbase, tempsuffix);
 }
 
 
@@ -1142,7 +1136,7 @@ parsefile (filename, nextline, data, size)
         }
       else
         first_initial = toupper (*p);
-      
+
       while (*p && *p != '\n')
         p++;
       if (p != end)
@@ -1655,39 +1649,31 @@ void
 perror_with_name (name)
      char *name;
 {
-  char *s;
-
-  s = strerror (errno);
-  printf ("%s: ", program_name);
-  printf ("%s; for file `%s'.\n", s, name);
+  fprintf (stderr, "%s: ", program_name);
+  perror (name);
 }
 
 void
 pfatal_with_name (name)
      char *name;
 {
-  char *s;
-
-  s = strerror (errno);
-  printf ("%s: ", program_name);
-  printf (_("%s; for file `%s'.\n"), s, name);
+  perror_with_name (name);
   xexit (1);
 }
 
-/* Return a newly-allocated string whose contents concatenate those of
-   S1, S2, S3.  */
+
+/* Return a newly-allocated string concatenating S1 and S2.  */
 
 char *
-concat (s1, s2, s3)
-     char *s1, *s2, *s3;
+concat (s1, s2)
+     char *s1, *s2;
 {
-  int len1 = strlen (s1), len2 = strlen (s2), len3 = strlen (s3);
-  char *result = (char *) xmalloc (len1 + len2 + len3 + 1);
+  int len1 = strlen (s1), len2 = strlen (s2);
+  char *result = (char *) xmalloc (len1 + len2 + 1);
 
   strcpy (result, s1);
   strcpy (result + len1, s2);
-  strcpy (result + len1 + len2, s3);
-  *(result + len1 + len2 + len3) = 0;
+  *(result + len1 + len2) = 0;
 
   return result;
 }

@@ -1,4 +1,4 @@
-# Id: Makefile.am,v 1.6 2003/01/31 16:26:23 karl Exp
+# Id: Makefile.am,v 1.7 2003/04/05 23:09:26 karl Exp
 # Makefile.am for texinfo/util.
 # Run automake in .. to produce Makefile.in from this.
 #
@@ -20,11 +20,11 @@ ginstall_info_SOURCES = install-info.c
 
 # Transform `ginstall-info' to `install-info' before applying any
 # user-specified name transformations.
-transform = s/ginstall-info/install-info/; @program_transform_name@
+transform = s/ginstall-info/install-info/; $(program_transform_name)
 
 localedir = $(datadir)/locale
 INCLUDES = -I$(top_srcdir)/lib -I../intl -DLOCALEDIR=\"$(localedir)\"
-LDADD = ../lib/libtxi.a @LIBINTL@
+LDADD = ../lib/libtxi.a $(LIBINTL)
 
 # Most of these are for fun.  The only one that's really supported is texi2dvi.
 # 
