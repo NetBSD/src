@@ -1,8 +1,3 @@
-/*	$NetBSD: limits.h,v 1.7 1998/01/09 22:24:04 perry Exp $	*/
-
-#ifndef	_MACHINE_LIMITS_H_
-#define	_MACHINE_LIMITS_H_
+/*	$NetBSD: limits.h,v 1.8 1998/07/23 23:47:02 gwr Exp $	*/
 
 #include <m68k/limits.h>
-
-#endif /* _MACHINE_LIMITS_H_ */
