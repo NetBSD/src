@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.11 2002/10/08 14:50:57 provos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.12 2002/10/11 21:54:58 provos Exp $	*/
 /*	$OpenBSD: systrace.c,v 1.32 2002/08/05 23:27:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -393,7 +393,8 @@ static void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: systrace [-aAituU] [-d poldir] [-g gui] [-f policy] [-p pid] command ...\n");
+	    "Usage: systrace [-aAituU] [-d poldir] [-g gui] [-f policy]\n"
+	    "\t [-c uid:gid] [-p pid] command ...\n");
 	exit(1);
 }
 
@@ -451,21 +452,38 @@ main(int argc, char **argv)
 	char **args;
 	char *filename = NULL;
 	char *policypath = NULL;
-	char *guipath = _PATH_XSYSTRACE;
+	char *guipath = _PATH_XSYSTRACE, *p;
 	struct timeval tv, tv_wait = {60, 0};
 	pid_t pidattach = 0;
 	int usex11 = 1, count;
 	int background;
+	int setcredentials = 0;
+	uid_t cr_uid;
+	gid_t cr_gid;
 
-	while ((c = getopt(argc, argv, "aAituUd:g:f:p:")) != -1) {
+	while ((c = getopt(argc, argv, "c:aAituUd:g:f:p:")) != -1) {
 		switch (c) {
+		case 'c':
+			p = strsep(&optarg, ":");
+			if (optarg == NULL || *optarg == '\0')
+				usage();
+			setcredentials = 1;
+			cr_uid = atoi(p);
+			cr_gid = atoi(optarg);
+
+			if (cr_uid <= 0 || cr_gid <= 0)
+				usage();
 		case 'a':
+			if (allow)
+				usage();
 			automatic = 1;
 			break;
 		case 'd':
 			policypath = optarg;
 			break;
 		case 'A':
+			if (automatic)
+				usage();
 			allow = 1;
 			break;
 		case 'u':
@@ -481,6 +499,8 @@ main(int argc, char **argv)
 			filename = optarg;
 			break;
 		case 'p':
+			if (setcredentials)
+				usage();
 			if ((pidattach = atoi(optarg)) == 0) {
 				warnx("bad pid: %s", optarg);
 				usage();
@@ -505,6 +525,11 @@ main(int argc, char **argv)
 
 	systrace_parameters();
 
+	if (setcredentials && !iamroot) {
+		fprintf(stderr, "Need to be root to change credentials.\n");
+		usage();
+	}
+
 	/* Local initalization */
 	systrace_initalias();
 	systrace_initpolicy(filename, policypath);
@@ -525,7 +550,12 @@ main(int argc, char **argv)
 			args[i] = argv[i];
 		args[i] = NULL;
 
-		trpid = intercept_run(background, trfd, args[0], args);
+		if (setcredentials)
+			trpid = intercept_run(background, trfd,
+			    cr_uid, cr_gid, args[0], args);
+		else
+			trpid = intercept_run(background, trfd, 0, 0,
+			    args[0], args);
 		if (trpid == -1)
 			err(1, "fork");
 
