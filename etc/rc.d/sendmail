@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.11 2000/09/19 13:04:39 lukem Exp $
+# $NetBSD: sendmail,v 1.12 2000/10/09 06:11:38 nisimura Exp $
 #
 
 # PROVIDE: mail
@@ -41,7 +41,7 @@ sendmail_precmd()
 
 	# check couple of common db files, too
 	for f in genericstable virtusertable domaintable mailertable; do
-		if [ -r "/etc/mail/$f" -a "/etc/mail/$f" -nt "/etc/mail/$f.db" ];
+		if [ -r "/etc/mail/$f" ] && [ "/etc/mail/$f" -nt "/etc/mail/$f.db" ];
 		then
 			echo \
     "${name}: /etc/mail/$f newer than /etc/mail/$f.db, regenerating"
