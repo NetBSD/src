@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.8 2002/12/20 16:54:16 tsutsui Exp $	*/
+/*      $NetBSD: clock.c,v 1.9 2003/01/18 12:29:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -161,7 +161,7 @@ microtime(tvp)
  */
 void
 inittodr(base)
-        time_t base;
+	time_t base;
 {
 	int badbase = 0, waszero = (base == 0);
 

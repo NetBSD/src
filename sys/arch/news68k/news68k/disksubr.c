@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 2003/01/11 16:00:50 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2003/01/18 12:29:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -132,8 +132,8 @@ setdisklabel(olp, nlp, openmask, osdep)
 			npp->p_cpg = opp->p_cpg;
 		}
 	}
- 	nlp->d_checksum = 0;
- 	nlp->d_checksum = dkcksum(nlp);
+	nlp->d_checksum = 0;
+	nlp->d_checksum = dkcksum(nlp);
 	*olp = *nlp;
 	return (0);
 }
@@ -187,7 +187,7 @@ done:
 	return (error);
 }
 
-/* 
+/*
  * UNTESTED !!
  *
  * Determine the size of the transfer, and make sure it is
@@ -207,14 +207,14 @@ bounds_check_with_label(bp, lp, wlabel)
 	int sz = (bp->b_bcount + DEV_BSIZE - 1) >> DEV_BSHIFT;
 
 	/* overwriting disk label ? */
-	/* XXX should also protect bootstrap in first 8K */ 
+	/* XXX should also protect bootstrap in first 8K */
 	if (bp->b_blkno + p->p_offset <= labelsector &&
 	    (bp->b_flags & B_READ) == 0 && wlabel == 0) {
 		bp->b_error = EROFS;
 		goto bad;
 	}
 
-	/* beyond partition? */ 
+	/* beyond partition? */
 	if (bp->b_blkno < 0 || bp->b_blkno + sz > maxsz) {
 		/* if exactly at end of disk, return an EOF */
 		if (bp->b_blkno == maxsz) {
@@ -228,7 +228,7 @@ bounds_check_with_label(bp, lp, wlabel)
 			goto bad;
 		}
 		bp->b_bcount = sz << DEV_BSHIFT;
-	}               
+	}
 
 	/* calculate cylinder for disksort to order transfers with */
 	bp->b_resid = (bp->b_blkno + p->p_offset) / lp->d_secpercyl;

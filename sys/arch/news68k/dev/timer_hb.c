@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_hb.c,v 1.4 2002/12/20 16:23:48 tsutsui Exp $	*/
+/*	$NetBSD: timer_hb.c,v 1.5 2003/01/18 12:29:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ timer_hb_attach(parent, self, aux)
 
 	printf("\n");
 
-        timer_config(timer_hb_initclocks);
+	timer_config(timer_hb_initclocks);
 
 #if 0 /* XXX this will be done in timer_hb_initclocks() */
 	isrlink_custom(ha->ha_ipl, (void *)_isr_clock);
@@ -155,7 +155,7 @@ void
 clock_intr(cf)
 	struct clockframe *cf;
 {
-#ifdef	LED_IDLE_CHECK 
+#ifdef	LED_IDLE_CHECK
 	extern char _Idle[];	/* locore.s */
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kb.c,v 1.3 2003/01/11 16:00:48 tsutsui Exp $	*/
+/*	$NetBSD: kb.c,v 1.4 2003/01/18 12:29:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -104,7 +104,6 @@ kb_cnattach(conssc_p)
 	return 0;
 }
 
-	
 void
 kb_cngetc(v, type, data)
 	void *v;

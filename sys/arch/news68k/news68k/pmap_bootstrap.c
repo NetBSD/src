@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.6 2002/12/20 16:54:17 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.7 2003/01/18 12:29:03 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -458,7 +458,7 @@ pmap_bootstrap(nextpa, firstpa)
 #ifdef M68040
 		if (RELOC(mmutype, int) == MMU_68040) {
 			int num;
-			
+
 			kpm->pm_stfree = ~l2tobm(0);
 			num = roundup((nptpages + 1) * (NPTEPG / SG4_LEV3SIZE),
 				      SG4_LEV2SIZE) / SG4_LEV2SIZE;

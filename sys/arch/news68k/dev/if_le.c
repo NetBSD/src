@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.6 2002/12/20 16:23:47 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.7 2003/01/18 12:29:00 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ lerdcsr(sc, port)
 	ler1->ler1_rap = port;
 	val = ler1->ler1_rdp;
 	return (val);
-} 
+}
 
 int
 le_match(parent, cf, aux)
