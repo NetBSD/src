@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_pci.c,v 1.7 1996/05/13 00:03:15 mycroft Exp $	*/
+/*	$NetBSD: if_ep_pci.c,v 1.8 1996/09/29 11:20:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -193,6 +193,4 @@ ep_pci_attach(parent, self, aux)
 		return;
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
-
-	epstop(sc);
 }
