@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.13 2003/07/15 02:54:44 lukem Exp $ */
+/* $NetBSD: opb.c,v 1.14 2003/07/25 10:12:44 scw Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,13 +66,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.13 2003/07/15 02:54:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.14 2003/07/25 10:12:44 scw Exp $");
 
 #include "locators.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #include <powerpc/spr.h>
 #include <powerpc/ibm4xx/dev/opbvar.h>
@@ -97,6 +98,15 @@ const struct opb_dev {
 	{ 0,		 NULL }
 };
 
+const struct opb_limit {
+	int pvr;
+	bus_addr_t base;
+	bus_addr_t limit;
+} opb_limits[] = {
+	{ IBM405GP,	IBM405GP_UART0_BASE,	IBM405GP_UART0_BASE + 0xfff },
+	{ 0,		0,			0 }
+};
+
 static int	opb_match(struct device *, struct cfdata *, void *);
 static void	opb_attach(struct device *, struct device *, void *);
 static int	opb_submatch(struct device *, struct cfdata *, void *);
@@ -104,6 +114,14 @@ static int	opb_print(void *, const char *);
 
 CFATTACH_DECL(opb, sizeof(struct device),
     opb_match, opb_attach, NULL, NULL);
+
+static struct powerpc_bus_space opb_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x0, IBM405GP_UART0_BASE, 0x1000
+};
+static char ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+static int opb_tag_init_done;
 
 /*
  * Probe for the opb; always succeeds.
@@ -140,10 +158,13 @@ opb_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct plb_attach_args *paa = aux;
 	struct opb_attach_args oaa;
+	bus_space_tag_t tag;
 	int i, pvr;
 
 	printf("\n");
 	pvr = mfpvr() >> 16;
+
+	tag = opb_get_bus_space_tag();
 
 	for (i = 0; opb_devs[i].name != NULL; i++) {
 		if (opb_devs[i].pvr != pvr)
@@ -151,7 +172,7 @@ opb_attach(struct device *parent, struct device *self, void *aux)
 		oaa.opb_name = opb_devs[i].name;
 		oaa.opb_addr = opb_devs[i].addr;
 		oaa.opb_irq = opb_devs[i].irq;
-		oaa.opb_bt = paa->plb_bt;
+		oaa.opb_bt = tag;
 		oaa.opb_dmat = paa->plb_dmat;
 
 		(void) config_found_sm(self, &oaa, opb_print, opb_submatch);
@@ -172,4 +193,29 @@ opb_print(void *aux, const char *pnp)
 		aprint_normal(" irq %d", oaa->opb_irq);
 
 	return (UNCONF);
+}
+
+bus_space_tag_t
+opb_get_bus_space_tag(void)
+{
+	int i, pvr;
+
+	if (!opb_tag_init_done) {
+		pvr = mfpvr() >> 16;
+
+		for (i = 0; opb_limits[i].pvr && opb_limits[i].pvr != pvr; i++)
+			;
+		if (opb_limits[i].pvr == 0)
+			panic("opb_get_bus_space_tag: no limits for this CPU!");
+
+		opb_tag.pbs_base = opb_limits[i].base;
+		opb_tag.pbs_limit = opb_limits[i].limit;
+
+		if (bus_space_init(&opb_tag, "opbtag",
+		    ex_storage, sizeof(ex_storage)))
+			panic("opb_attach: Failed to initialise opb_tag");
+		opb_tag_init_done = 1;
+	}
+
+	return (&opb_tag);
 }
