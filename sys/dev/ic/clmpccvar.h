@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpccvar.h,v 1.2 1999/02/20 00:27:30 scw Exp $ */
+/*	$NetBSD: clmpccvar.h,v 1.3 1999/08/01 09:35:05 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,16 +62,15 @@ struct clmpcc_chan {
 	struct clmpcc_softc *ch_sc;	/* Pointer to chip's softc structure */
 	u_char		ch_car;		/* Channel number (CD2400_REG_CAR) */
 	u_char		ch_openflags;	/* Persistant TIOC flags */
-	u_short		ch_flags;	/* Various channel-specific flags */
+	volatile u_short ch_flags;	/* Various channel-specific flags */
 #define	CLMPCC_FLG_IS_CONSOLE	0x0001	/* Channel is system console */
-#define CLMPCC_FLG_CARRIER_CHNG	0x0002
-#define CLMPCC_FLG_START_BREAK 	0x0004
-#define CLMPCC_FLG_END_BREAK 	0x0008
-#define CLMPCC_FLG_START 	0x0010
-#define CLMPCC_FLG_STOP 	0x0020
-#define CLMPCC_FLG_FIFO_CLEAR	0x0040
-#define CLMPCC_FLG_UPDATE_PARMS	0x0080
-#define CLMPCC_FLG_NEED_INIT	0x0100
+#define CLMPCC_FLG_START_BREAK 	0x0002
+#define CLMPCC_FLG_END_BREAK 	0x0004
+#define CLMPCC_FLG_FIFO_CLEAR	0x0008
+#define CLMPCC_FLG_UPDATE_PARMS	0x0010
+#define CLMPCC_FLG_NEED_INIT	0x0020
+
+	u_char		ch_tx_done;
 
 	u_char		ch_control;
 
@@ -90,6 +89,9 @@ struct clmpcc_chan {
 	u_int8_t	*ch_ibuf_end;	/* End of input ring buffer */
 	u_int8_t	*ch_ibuf_rd;	/* Input buffer tail (reader) */
 	u_int8_t	*ch_ibuf_wr;	/* Input buffer head (writer) */
+
+	u_int8_t	*ch_obuf_addr;	/* Output buffer address */
+	u_int		ch_obuf_size;	/* Output buffer size (in bytes) */
 };
 
 
@@ -98,11 +100,10 @@ struct clmpcc_softc {
 
 	/*
 	 * The bus/MD-specific attachment code must initialise the
-	 * following four fields before calling 'clmpcc_attach_subr()'.
+	 * following fields before calling 'clmpcc_attach_subr()'.
 	 */
 	bus_space_tag_t	sc_iot;		/* Tag for parent bus */
 	bus_space_handle_t sc_ioh;	/* Handle for chip's regs */
-
 	void		*sc_data;	/* MD-specific data */
 	int		sc_clk;		/* Clock-rate, in Hz */
 	u_char		sc_vector_base;	/* Vector base reg, or 0 for auto */
@@ -123,7 +124,7 @@ struct clmpcc_softc {
 	/*
 	 * No user-serviceable parts below
 	 */
-	int		sc_soft_running;
+	volatile int	sc_soft_running;
 	struct clmpcc_chan sc_chans[CLMPCC_NUM_CHANS];
 };
 
