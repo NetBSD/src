@@ -1,4 +1,4 @@
-/*	$NetBSD: rstat_proc.c,v 1.38 2000/12/01 02:10:22 simonb Exp $	*/
+/*	$NetBSD: rstat_proc.c,v 1.39 2002/01/28 13:10:01 augustss Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";
 static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rstat_proc.c,v 1.38 2000/12/01 02:10:22 simonb Exp $");
+__RCSID("$NetBSD: rstat_proc.c,v 1.39 2002/01/28 13:10:01 augustss Exp $");
 #endif
 #endif
 
@@ -355,7 +355,7 @@ setup()
 		numintfs++;
 		off = (long)ifnet.if_list.tqe_next;
 	}
-	dkinit(0, getgid());
+	dkinit(0);
 }
 
 /*
