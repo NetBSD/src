@@ -1,5 +1,11 @@
-#include "systm.h"
-#include "device.h"
+/*
+ * Machine ID PROM - system type and serial number
+ * $Id: idprom.c,v 1.6 1994/05/06 07:49:15 gwr Exp $
+ */
+
+#include "sys/param.h"
+#include "sys/systm.h"
+#include "sys/device.h"
 
 #include "machine/autoconf.h"
 #include "machine/control.h"

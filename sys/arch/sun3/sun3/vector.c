@@ -28,10 +28,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.c,v 1.7 1994/03/01 08:23:20 glass Exp $
+ *	$Id: vector.c,v 1.8 1994/05/06 07:47:14 gwr Exp $
  */
 
+#include <sys/param.h>
 #include <sys/systm.h>
+
 #include "vector.h"
 
 #define COPY_ENTRY16 COPY_ENTRY, COPY_ENTRY, COPY_ENTRY, COPY_ENTRY, \

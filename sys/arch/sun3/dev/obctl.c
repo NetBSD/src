@@ -28,9 +28,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/dev/Attic/obctl.c,v 1.2 1994/03/01 08:07:14 glass Exp $
+ *	$Id: obctl.c,v 1.3 1994/05/06 07:49:18 gwr Exp $
  */
 
+#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 

@@ -28,11 +28,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore2.c,v 1.20 1994/05/04 05:51:36 gwr Exp $
+ *	$Id: locore2.c,v 1.21 1994/05/06 07:47:12 gwr Exp $
  */
 
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/user.h>

@@ -40,9 +40,8 @@
  * SUCH DAMAGE.
  *
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
- *
- * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.1 1994/02/23 08:28:43 glass Exp $
+ *	from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
+ *	$Id: kbd.c,v 1.2 1994/05/06 07:49:17 gwr Exp $
  */
 
 /*
@@ -293,7 +292,7 @@ kbd_getid(void *arg)
 		(*tp->t_oproc)(tp);
 		retry = 2 * hz;
 	}
-	timeout((timeout_t)kbd_getid, (caddr_t)NULL, retry);
+	timeout(kbd_getid, (caddr_t)NULL, retry);
 }
 
 void

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.13 1994/03/01 08:23:00 glass Exp $
+ *	$Id: clock.c,v 1.14 1994/05/06 07:47:05 gwr Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
@@ -39,8 +39,8 @@
  *
  */
 
-#include <sys/systm.h>
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 
@@ -113,7 +113,7 @@ int clockmatch(parent, cf, args)
 	OBIO_DEFAULT_PARAM(caddr_t, obio_loc->obio_addr, OBIO_CLOCK);
     return /* probe */ 1;
 }
-#ifdef mine
+#if 0 /* Adam's */
 void set_clock_level(level_code, enable_clock)
      unsigned int level_code;
      int enable_clock;
@@ -223,7 +223,7 @@ void clockattach(parent, self, args)
     printf("\n");
 }
 
-#if 0
+#if 1	/* XXX - This stuff OK? -gwr */
 /*
  * Set up the real-time clock.  Leave stathz 0 since there is no secondary
  * clock available.

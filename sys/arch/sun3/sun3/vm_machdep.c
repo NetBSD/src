@@ -36,10 +36,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
- *
+ *	from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *	from: @(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
  *	vm_machdep.c,v 1.3 1993/07/07 07:09:32 cgd Exp
+ *	$Id: vm_machdep.c,v 1.14 1994/05/06 07:47:15 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -78,7 +78,7 @@ cpu_fork(p1, p2)
 	bcopy (&p1->p_md, &p2->p_md, sizeof (struct mdproc));
 
 	/* need to copy current frame pointer */
-	p2->p_regs = p1->p_regs;
+	p2->p_md.md_regs = p1->p_md.md_regs;
 
 	/*
 	 * Copy pcb and stack from proc p1 to p2. 
