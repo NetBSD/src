@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.2 2001/12/22 13:21:59 gehenna Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.3 2001/12/24 13:25:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdevs.h>
 
-#include <dev/usb/umassbus.h>
 #include <dev/usb/umassvar.h>
 #include <dev/usb/umass_quirks.h>
 
@@ -149,6 +148,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	  UMATCH_VENDOR_PRODUCT_REV,
 	  NULL, umass_fixup_yedata
 	},
+
 };
 
 const struct umass_quirk *
