@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.16 2000/10/01 03:29:12 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -481,6 +481,9 @@ static const keysym_t pckbd_keydesc_iopener[] = {
 
 #define KBD_MAP(name, base, map) \
 			{ name, base, sizeof(map)/sizeof(keysym_t), map }
+/* KBD_NULLMAP generates a entry for machine native variant.
+   the entry will be modified by machine dependent keyboard driver. */
+#define KBD_NULLMAP(name, base) { name, base, 0, 0 }
 
 const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
@@ -507,6 +510,12 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US | KB_IOPENER | KB_SWAPCTRLCAPS,	KB_US | KB_IOPENER,
 		pckbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_ES ,			KB_US,	pckbd_keydesc_es),
+	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
+	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
+	KBD_NULLMAP(KB_US | KB_MACHDEP | KB_SWAPCTRLCAPS,
+		    KB_US | KB_SWAPCTRLCAPS),
+	KBD_NULLMAP(KB_JP | KB_MACHDEP | KB_SWAPCTRLCAPS,
+		    KB_JP | KB_SWAPCTRLCAPS),
 	{0, 0, 0, 0}
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.40 2000/09/10 11:44:13 lukem Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.41 2000/10/01 03:29:13 takemura Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.40 2000/09/10 11:44:13 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.41 2000/10/01 03:29:13 takemura Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -926,6 +926,17 @@ wsdisplayioctl(dev, cmd, data, flag, p)
 
 	error = wsdisplay_internal_ioctl(sc, scr, cmd, data, flag, p);
 	return (error != -1 ? error : ENOTTY);
+}
+
+int
+wsdisplay_param(dev, cmd, dp)
+	struct device *dev;
+	u_long cmd;
+	struct wsdisplay_param *dp;
+{
+	struct wsdisplay_softc *sc = (struct wsdisplay_softc *)dev;
+	return ((*sc->sc_accessops->ioctl)(sc->sc_accesscookie, cmd,
+					   (caddr_t)dp, 0, NULL));
 }
 
 int
