@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.435 2002/04/05 18:31:07 bouyer Exp $
+#	$NetBSD: mi,v 1.436 2002/04/05 18:31:56 bouyer Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -3174,6 +3174,7 @@
 ./usr/share/man/cat9/mi_switch.0		comp-sys-catman
 ./usr/share/man/cat9/microtime.0		comp-sys-catman
 ./usr/share/man/cat9/mono_time.0		comp-sys-catman
+./usr/share/man/cat9/mstohz.0		comp-sys-catman
 ./usr/share/man/cat9/mtocl.0		comp-sys-catman
 ./usr/share/man/cat9/mtod.0		comp-sys-catman
 ./usr/share/man/cat9/namecache.0		comp-sys-catman
