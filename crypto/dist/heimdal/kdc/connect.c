@@ -33,7 +33,7 @@
 
 #include "kdc_locl.h"
 
-RCSID("$Id: connect.c,v 1.1.1.1.2.1 2000/06/21 06:37:31 thorpej Exp $");
+RCSID("$Id: connect.c,v 1.1.1.1.2.2 2000/10/17 23:12:11 tv Exp $");
 
 /*
  * a tuple describing on what to listen
@@ -417,7 +417,8 @@ do_request(void *buf, size_t len, int sendlength,
     ret = process_request(buf, len, &reply, &sendlength,
 			  d->addr_string, d->sa);
     if(reply.length){
-	kdc_log(5, "sending %d bytes to %s", reply.length, d->addr_string);
+	kdc_log(5, "sending %lu bytes to %s", (u_long)reply.length,
+	    d->addr_string);
 	if(sendlength){
 	    unsigned char len[4];
 	    len[0] = (reply.length >> 24) & 0xff;
@@ -454,7 +455,7 @@ handle_udp(struct descr *d)
 
     buf = malloc(max_request);
     if(buf == NULL){
-	kdc_log(0, "Failed to allocate %u bytes", max_request);
+	kdc_log(0, "Failed to allocate %lu bytes", (u_long)max_request);
 	return;
     }
 
@@ -542,14 +543,14 @@ grow_descr (struct descr *d, size_t n)
 
 	d->size += max(1024, d->len + n);
 	if (d->size >= max_request) {
-	    kdc_log(0, "Request exceeds max request size (%u bytes).",
-		    d->size);
+	    kdc_log(0, "Request exceeds max request size (%lu bytes).",
+		    (u_long)d->size);
 	    clear_descr(d);
 	    return -1;
 	}
 	tmp = realloc (d->buf, d->size);
 	if (tmp == NULL) {
-	    kdc_log(0, "Failed to re-allocate %u bytes.", d->size);
+	    kdc_log(0, "Failed to re-allocate %lu bytes.", (u_long)d->size);
 	    clear_descr(d);
 	    return -1;
 	}
@@ -618,7 +619,7 @@ handle_http_tcp (struct descr *d)
     }
     data = malloc(strlen(t));
     if (data == NULL) {
-	kdc_log(0, "Failed to allocate %u bytes", strlen(t));
+	kdc_log(0, "Failed to allocate %lu bytes", (u_long)strlen(t));
 	return -1;
     }
     if(*t == '/')
@@ -735,8 +736,8 @@ loop(void)
 	    if(d[i].s >= 0){
 		if(d[i].type == SOCK_STREAM && 
 		   d[i].timeout && d[i].timeout < time(NULL)) {
-		    kdc_log(1, "TCP-connection from %s expired after %u bytes",
-			    d[i].addr_string, d[i].len);
+		    kdc_log(1, "TCP-connection from %s expired after %lu bytes",
+			    d[i].addr_string, (u_long)d[i].len);
 		    clear_descr(&d[i]);
 		    continue;
 		}
