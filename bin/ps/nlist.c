@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,18 +32,24 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)nlist.c	5.5 (Berkeley) 7/1/91";
+static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <nlist.h>
+#include <sys/resource.h>
+
+#include <err.h>
 #include <errno.h>
+#include <kvm.h>
+#include <nlist.h>
 #include <stdio.h>
 #include <string.h>
 
-#ifdef SPPWAIT
+#include "ps.h"
+
+#ifdef P_PPWAIT
 #define NEWVM
 #endif
 
@@ -69,12 +75,14 @@ int	nlistread;			/* if nlist already read. */
 int	mempages;			/* number of pages of phys. memory */
 int	fscale;				/* kernel _fscale variable */
 
-#define kread(x, v) \
-	kvm_read(psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
+extern kvm_t *kd;
 
+#define kread(x, v) \
+	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
+
+int
 donlist()
 {
-	extern int eval;
 	int rval;
 #ifdef NEWVM
 	int tmp;
@@ -82,46 +90,47 @@ donlist()
 
 	rval = 0;
 	nlistread = 1;
-	if (kvm_nlist(psnl)) {
+	if (kvm_nlist(kd, psnl)) {
 		nlisterr(psnl);
 		eval = 1;
-		return(1);
+		return (1);
 	}
 	if (kread(X_FSCALE, fscale)) {
-		(void)fprintf(stderr, "ps: fscale: %s\n", kvm_geterr());
+		warnx("fscale: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
 #ifdef NEWVM
 	if (kread(X_AVAILEND, mempages)) {
-		(void)fprintf(stderr, "ps: avail_start: %s\n", kvm_geterr());
+		warnx("avail_start: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
 	if (kread(X_AVAILSTART, tmp)) {
-		(void)fprintf(stderr, "ps: avail_end: %s\n", kvm_geterr());
+		warnx("avail_end: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
 	mempages -= tmp;
 #else
 	if (kread(X_ECMX, mempages)) {
-		(void)fprintf(stderr, "ps: ecmx: %s\n", kvm_geterr());
+		warnx("ecmx: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
 #endif
 	if (kread(X_CCPU, ccpu)) {
-		(void)fprintf(stderr, "ps: ccpu: %s\n", kvm_geterr());
+		warnx("ccpu: %s", kvm_geterr(kd));
 		eval = rval = 1;
 	}
-	return(rval);
+	return (rval);
 }
 
+void
 nlisterr(nl)
 	struct nlist nl[];
 {
 	int i;
 
-	fprintf(stderr, "ps: nlist: can't find following symbols:");
+	(void)fprintf(stderr, "ps: nlist: can't find following symbols:");
 	for (i = 0; nl[i].n_name != NULL; i++)
 		if (nl[i].n_value == 0)
-			fprintf(stderr, " %s", nl[i].n_name);
-	fprintf(stderr, "\n");
+			(void)fprintf(stderr, " %s", nl[i].n_name);
+	(void)fprintf(stderr, "\n");
 }
