@@ -1,7 +1,7 @@
-/*	$NetBSD: fixmount.c,v 1.1.1.5 2002/11/29 22:58:57 christos Exp $	*/
+/*	$NetBSD: fixmount.c,v 1.1.1.6 2003/03/09 01:13:51 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: fixmount.c,v 1.8 2002/02/02 20:59:02 ezk Exp
+ * Id: fixmount.c,v 1.9 2002/12/27 22:44:06 ezk Exp
  *
  */
 

@@ -1,8 +1,8 @@
-/*	$NetBSD: strerror.c,v 1.1.1.1 2002/11/29 22:59:08 christos Exp $	*/
+/*	$NetBSD: strerror.c,v 1.1.1.2 2003/03/09 01:14:01 christos Exp $	*/
 
 /*
- * Copyright (c) 2002 Ion Badulescu
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 2002-2003 Ion Badulescu
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: strerror.c,v 1.1 2002/03/28 21:57:16 ib42 Exp
+ * Id: strerror.c,v 1.3 2002/12/27 22:44:11 ezk Exp
  *
  */
 
@@ -58,8 +58,11 @@ char *
 strerror(int errnum)
 {
 #ifdef HAVE_EXTERN_SYS_ERRLIST
-  if (errnum < 0 || errnum >= (sizeof(sys_errlist) >> 2))
-    return "(null)";
+  if (errnum < 0 || errnum >= (sizeof(sys_errlist) >> 2)) {
+    static char errstr[30];
+    sprintf(errstr, "Unknown error #%d", errnum);
+    return errstr;
+  }
   return sys_errlist[error];
 #else  /* not HAVE_EXTERN_SYS_ERRLIST */
   return "unknown (strerror not available)";

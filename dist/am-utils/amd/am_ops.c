@@ -1,7 +1,7 @@
-/*	$NetBSD: am_ops.c,v 1.1.1.5 2002/11/29 22:58:08 christos Exp $	*/
+/*	$NetBSD: am_ops.c,v 1.1.1.6 2003/03/09 01:13:05 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2002 Erez Zadok
+ * Copyright (c) 1997-2003 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: am_ops.c,v 1.14 2002/02/02 20:58:52 ezk Exp
+ * Id: am_ops.c,v 1.17 2002/12/27 22:43:46 ezk Exp
  *
  */
 
@@ -340,7 +340,7 @@ merge_opts(const char *opts1, const char *opts2)
     /* find reverse option of oneopt */
     revoneopt = reverse_option(oneopt);
     /* if option orits reverse exist in opts2, ignore it */
-    if (hasmntopt(&mnt2, oneopt) || hasmntopt(&mnt2, revoneopt))
+    if (amu_hasmntopt(&mnt2, oneopt) || amu_hasmntopt(&mnt2, revoneopt))
       continue;
     /* add option to returned string */
     if (newstr && newstr[0]) {
@@ -365,9 +365,20 @@ merge_opts(const char *opts1, const char *opts2)
 
 
 am_ops *
-ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map)
+ops_search(char *type)
 {
   am_ops **vp;
+  am_ops *rop = 0;
+  for (vp = vops; (rop = *vp); vp++)
+    if (STREQ(rop->fs_type, type))
+      break;
+  return rop;
+}
+
+
+am_ops *
+ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map)
+{
   am_ops *rop = 0;
 
   /*
@@ -382,9 +393,7 @@ ops_match(am_opts *fo, char *key, char *g_key, char *path, char *keym, char *map
     /*
      * Next find the correct filesystem type
      */
-    for (vp = vops; (rop = *vp); vp++)
-      if (STREQ(rop->fs_type, fo->opt_type))
-	break;
+    rop = ops_search(fo->opt_type);
     if (!rop) {
       plog(XLOG_USER, "fs type \"%s\" not recognized", fo->opt_type);
       rop = &amfs_error_ops;

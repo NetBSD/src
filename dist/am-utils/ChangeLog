@@ -1,6 +1,384 @@
+2003-01-25  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* Released beta version 6.1b2
+
+2003-01-24  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* amd/autil.c (am_unmounted): reset MFF_MKMNT from mf_flags when
+	calling rmdirs() on mountpoint
+
+	* amd/amfs_auto.c (amfs_auto_bgmount): ditto
+
+	* amd/amfs_nfsl.c (amfs_nfsl_umounted): ditto
+
+	* doc/am-utils.texi (opts Option): "sftlookup" -> "softlookup"
+
+	* NEWS: "sftlookup" -> "softlookup"
+
+	* amd/ops_nfs.c (nfs_mount): "sftlookup" -> "softlookup", also
+	check for "nosoftlookup" in combination with "soft"
+
+2003-01-23  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* m4/macros/check_nfs_fh_dref.m4: darwin/rhapsody is another
+	freebsd22 derivative
+
+	* NEWS: updated for Darwin changes
+
+	* .cvsignore: added A.i386-apple-darwin6.0
+
+	* m4/macros/os_cflags.m4: add -D_P1003_1B_VISIBLE to cflags for
+	Darwin
+
+2003-01-23  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* conf/mount/mount_aix.c (mount_aix3): clean back this file from
+	all the debugging cruft that is no longer needed (and really was
+	never needed in the first place).
+
+2003-01-10  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* scripts/test-amd.{misc,conf}: simple amd.conf and amd.misc
+	(map) files for testing basic amd functionality such as whether it
+	can mount its own mount NFS points.
+
+2002-12-28  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* amd/srvr_nfs.c (start_nfs_pings): don't set FSF_PINGING if
+	pings are disabled
+
+	* libamu/xdr_func.c (xdr_ftype): use a local enum_t variable
+	instead of casting the pointer to (enum_t *)
+	(xdr_mountstat3): ditto
+	(xdr_nfsstat): ditto
+
+	* libamu/misc_rpc.c (make_rpc_packet): fix make_rpc_packet() on
+	64-bit big-endian platforms, bug report from Bill Fenner
+	<fenner@research.att.com>
+
+	* configure.in: increase library patchlevel
+
+	* libamu/xutil.c (amu_release_controlling_tty): close and reopen
+	file descriptors 0,1,2 before calling setsid()
+
+2002-12-27  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* updated copyright year to 2003 on all files
+
+2002-12-10  Erez Zadok  <ezk@localhost.localdomain>
+
+	* rename "aux/" subdir into "m4/" so as to avoid problems with
+	MS-DOS systems (where "AUX" is a reserved name).  This required
+	fixing numerous files.
+
+2002-12-10  Erez Zadok  <ezk@filer.fsl.cs.sunysb.edu>
+
+	* configure.in: don't check for bad hasmntopt() function if
+	hasmntopt() doesn't exist on the system, because we will replace
+	it with our own version anyway.
+
+	* conf/transp/transp_sockets.c (amu_get_myaddress): use "%lx" in
+	dlog because htonl() returns a u_long.
+
+2002-12-10  Erez Zadok  <ezk@localhost.localdomain>
+
+	* include/am_defs.h: use system's hasmntopt() only if it is found
+	and it is not buggy.
+
+	* libamu/hasmntopt.c (nextmntopt): isspace() takes an int, not a
+	char.
+
+	* amd/am_ops.c, amd/amfs_auto.c, amd/autil.c, amd/nfs_subr.c,
+	amd/ops_cdfs.c, amd/ops_nfs.c, amd/srvr_nfs.c, libamu/hasmntopt.c,
+	libamu/mount_fs.c, libamu/mtab.c: rename all uses of hasmntopt()
+	to amu_hasmntopt().  Don't use hasmntopt() directly any more!
+
+	* aux/macros/func_bad_hasmntopt.m4: new M4 macro to test for a bad
+	hasmntopt() function, which incorrectly finds the option "soft" in
+	a string "hard,softlookup,ro".
+
+	* libamu/hasmntopt.c (hasmntopt): use 'const' on two args to
+	hasmntopt(), to match what most systems use.
+
+	* aux/macros/header_templates.m4: template for HAVE_BAD_HASMNTOPT.
+
+	* configure.in: invoke test for bad hasmntopt()
+
+	* NEWS: minor new port, i386-pc-linux-rh8.0.
+	Mention autofs-v4 on solaris9 works.
+
+	* bootstrap: remove any autom4te-*.cache directories, now that
+	autoconf uses a version number for them.
+
+2002-12-09  Ion Badulescu  <ionut@moisil.badula.org>
+
+	Patches from Christos Zoulas:
+
+	-1- am_utils.h: add full prototypes
+	-2- amfs_auto.c make functions static and add prototypes
+	-3- map.c: kill double free
+	-5- transp_sockets.c: add full prototypes
+
+2002-12-09  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* NEWS: updated
+
+	* doc/am-utils.texi (opts Option): document sftlookup
+
+	* conf/autofs/autofs_solaris_v2_v3.c: compile fixes
+
+2002-11-22  Erez Zadok  <ezk@filer.fsl.cs.sunysb.edu>
+
+	* amd/info_ldap.c (amu_ldap_rebind): gopt.ldap_cache_seconds is
+	%ld not %d.
+
+2002-11-21  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* {amd,fsinfo}/Makefile.am: remove special rules for processing
+	yacc/lex files, now that autoconf/automake properly handle them
+	better (esp. now that bison 1.75 behaves differently than older
+	bison versions).
+
+2002-11-21  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* config.guess.long: updated script so it will properly find the
+	version number of the new Itanium 2 machines running "Red Hat
+	Linux Advanced Workstation release 2.1AW (Derry)".  The script now
+	will report ia64-unknown-linux-rh2.1AW.
+
+2002-11-20  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* amfs_auto_bgmount(): almost complete rewrite
+
+	* fixed amfs_inherit to do the right thing and not dereference
+	freed mntfs'es
+
+	* #if 0'ed bogus code in fh_to_mp3() -- it is now done properly in
+	amfs_autofs_lookup_child()
+
+	* release the autofs_fh only in one place
+
+	* remove the mountpoint only if mf_refc == 1
+
+	* print the mntfs type in free_mntfs()
+
+	* new pseudo-mount option 'sftlookup' which causes lookups to
+	mounted shares from downed servers to return EIO; the default
+	depends on whether the mount is 'hard' or 'soft'
+
+	* improved querying of supported NFS versions on the server --
+	don't even try if it's known to be down
+
+	* solaris autofs mount code moved to transp_{sockets,tli}.c
+
+	* incipient (non-functional) AIX autofs support 
+
+2002-11-11  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* doc/am-utils.texi (Keep-alives): removed outdated info about not
+	maintaining the state of TCP NFS servers
+
+2002-11-04  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* include/am_utils.h: prototype for ops_search()
+
+	* amd/am_ops.c (ops_search): new function for searching the right
+	set of ops for a given filesystem type
+
+	* amd/restart.c (restart): cleanup and split into two functions in
+	preparation for handling the restart of amd's own mount points
+	(restart_fake_mntfs): new function, factored out from restart()
+
+2002-11-04  Ion Badulescu  <ionut@buggy.badula.org>
+
+	* amd/ops_cdfs.c (mount_cdfs): remove special code for loop device
+	(cdfs_umount): ditto
+
+	* conf/mount/mount_linux.c (mount_linux): factor it out to
+	mount_linux_nfs() and mount_linux_nonfs()
+	(mount_linux_nonfs): generalize loop device support to all
+	filesystems (not just cdfs); make it automatic for anything that's
+	a regular file
+	(parse_opts): deprecate the explicit "loop" mount option
+	(do_mount_linux): minor cleanup
+
+	* conf/umount/umount_default.c (umount_fs2): release loop device
+	on umount()
+
+2002-11-03  Erez Zadok  <ezk@cnm20>
+
+	* include/am_defs.h: moved #include of net/if.h above net/route.h,
+	because on AIX 5.2 if.h is needed for route.h (let's hope it
+	doesn't break things on other systems).
+
+	* include/am_defs.h: AIX 5.2 needs struct sigevent from signal.h
+	to be defined, but I don't want to move the inclusion of signal.h
+	this early into this file.  Luckily, amd doesn't need the size of
+	this structure in any other structure that it uses.  So we
+	sidestep it for now.
+
+	* conf/nfs_prot/nfs_prot_aix5_2.h: AIX 5.2 wants 'struct pathcnf',
+	but I couldn't find its definition anywhere.  Luckily, amd doesn't
+	need the size of this structure in any other structure that it
+	uses.  So we sidestep it for now.
+
+2002-11-02  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* config.guess, config.sub, doc/texinfo.tex: updates from
+	the latest GNU distributions (2002-09-05).
+
+2002-10-30  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* conf/nfs_prot/nfs_prot_aix5_2.h: add more definitions from
+	mount.h for NFSOPT_* and NFSMNT_*.
+	Don't use typedefs that aren't found in system header files.
+
+2002-10-30  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* Makefile.am (EXTRA_DIST_CONF): distribute nfs_prot_aix5_2.h.
+
+	* conf/nfs_prot/nfs_prot_aix5_2.h: new file.
+
+	* aux/macros/struct_nfs_args.m4 (ac_cv_have_struct_nfs_args): look
+	for "struct aux52_nfs_args".
+
+	* aux/macros/check_nfs_prot_headers.m4: define new header file for
+	AIX 5.2.
+
+2002-10-21  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/amd.conf.5 (ldap_proto_version): document in amd.conf
+	man page.
+
+	* scripts/amd.conf-sample (ldap_proto_version): show example of use
+
+	* doc/am-utils.texi (ldap_proto_version Parameter): document new
+	amd.conf option.
+
+	* amd/conf.c (gopt_ldap_proto_version): new conf function to
+	support ldap_proto_version amd.conf parameter.
+
+	* amd/amd.h: field to hold LDAP protocol version.
+
+	* amd/amd.c (init_global_options): set default for
+	ldap_proto_version.  ldap_proto_version patch from George Ross
+	<gdmr@dcs.ed.ac.uk> and Tim Colles <timc@inf.ed.ac.uk>.
+
+	* amd/info_ldap.c (amu_ldap_unbind): ignore SIGPIPE errors while
+	unbinding from an LDAP server that may have been restarted.  Fix
+	from George Ross <gdmr@dcs.ed.ac.uk>.
+
+2002-09-17  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* remove all autoconf stuff added for sys_nerr
+
+	* amq/amq.c, libamu/xutil.c, hlfsd/hlfsd.c: always use strerror
+
+	* libamu/strerror.c: more explicit text for unknown errno's
+
+2002-10-01  Erez Zadok  <ezk@cs.sunysb.edu>
+
+	* include/am_defs.h: define "extern int sys_err" if needed.
+
+	* aux/macros/header_templates.m4: template for
+	HAVE_EXTERN_SYS_NERR.
+
+	* hlfsd/hlfsd.h, libamu/xutil.c (expand_error), amq/amq.c
+	(show_mi): remove "extern int sys_err"
+
+	* configure.in: execute test for "extern int sys_err"
+
+	* Makefile.am (EXTRA_DIST_AUX): distribute new extern_sys_err.m4 file.
+
+	* aux/macros/extern_sys_nerr.m4: new test to check for existence
+	of "extern int sys_nerr" definition in system headers.
+
+2002-09-17  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* libamu/xutil.c (dbg_opt): bring comments in line with the code
+
+	* hlfsd/hlfsd.c (main): use amuDebug() instead of touching
+	debug_flags directly
+
+	* amd/amd.c (main): don't init debug_flags, leave it as zero (no
+	debugging by default)
+
+2002-09-11  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	Debug code sanitization:
+
+	- amuDebug() becomes an expression, and explicit if() statements
+	are added around it throughout the code
+	- amuDebugNo() goes away (ugh!)
+	- D_AMQ, D_DAEMON and D_FORK reverse their meaning
+	- D_ALL contains only options that don't affect amd's functionality
+
+2002-09-04  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* amd/amfs_auto.c (free_continuation): avoid double-free'ing the
+	mntfs if there was an error/timeout
+
+2002-09-04  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* amd/amfs_auto.c (amfs_auto_lookup_mntfs): use ereturn() instead
+	of "return NULL" to signal an error to the upper layers
+	(amfs_auto_mount): use strdup so the string can be free'd later on
+	[Debian bug report from Matt Chapman <matthewc@cse.unsw.edu.au>]
+
+2002-09-03  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	Patches from George Ross <gdmr@dcs.ed.ac.uk>:
+
+	* amd/amfs_auto.c (assign_error_mntfs): do not discard old mntfs,
+	it will be done in free_continuation(); assorted debugging messages
+
+	* amd/srvr_nfs.c (nfs_timed_out): allocate a new XID on server
+	timeout to avoid problems with late ping replies
+
+	* amd/mntfs.c (free_mntfs): sanity check for mf_refc; assorted
+	debugging messages
+
+	* amd/map.c (unmount_node): more verbose debug message
+
+2002-07-29  Ion Badulescu  <ion@guppy.limebrokerage.com>
+
+	* amd/amfs_auto.c (amfs_auto_lookup_mntfs): prevent deferencing
+	de-allocated memory in str3cat
+	(amfs_auto_lookup_mntfs): check for buffer overflow
+
+2002-07-11  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* scripts/expn.{1,in}: fixed typos as reported by Thomas Klausner
+	<wiz@danbala.ifoer.tuwien.ac.at>.
+
+2002-06-26  Erez Zadok  <ezk@agora.fsl.cs.sunysb.edu>
+
+	* doc/Makefile.am (install-html): don't use locally hacked
+	texi2html features.
+
+	* conf/transp/transp_sockets.c (amu_get_myaddress): Most modern
+	systems should use 127.0.0.1 as the localhost address over which
+	you can do NFS mounts.  In the past we found that some NFS clients
+	may not allow mounts from localhost.  So we used get_myaddress()
+	and that seemed to work.  Alas, on some other systems,
+	get_myaddress() may return one of the interface addresses at
+	random, and thus use a less efficient IP address than 127.0.0.1.
+	The solution is to hard-code 127.0.0.1, but still check if
+	get_myaddress() returns a different value and warn about it.
+
+	* doc/am-utils.texi: don't use ':' in @cindex entries.
+
 2002-06-25  Ion Badulescu  <ion@guppy.limebrokerage.com>
 
 	* Released beta version 6.1b1
+
+2002-06-24  Ion Badulescu  <ionut@moisil.badula.org>
+
+	* aux/macros/struct_nfs_args.m4: added test for aix51_nfs_args
+
+	* conf/nfs_prot/nfs_prot_aix5_1.h: rename aix42_nfs_args to
+	aix51_nfs_args, rename unknown fields to u<number>, add the
+	unknown new field into the middle of the old 4.2 structure
 
 2002-06-24  Ion Badulescu  <ion@guppy.limebrokerage.com>
 
