@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.4 1998/03/04 13:16:08 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.5 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -42,5 +42,5 @@
 
 #define	INCLUDED_OPTIONS
 
-void OptInit __P((void));
-int OptOrder __P((unsigned char *, int, int));
+void OptInit(void);
+int OptOrder(unsigned char *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: api.c,v 1.5 1998/07/09 18:33:32 msaitoh Exp $	*/
+/*	$NetBSD: api.c,v 1.6 2002/06/13 23:41:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)api.c	4.5 (Berkeley) 4/26/91";
 #else
-__RCSID("$NetBSD: api.c,v 1.5 1998/07/09 18:33:32 msaitoh Exp $");
+__RCSID("$NetBSD: api.c,v 1.6 2002/06/13 23:41:19 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,25 +74,25 @@ int apitrace = 0;
 
 /* api.c */
 #if	defined(MSDOS)
-static void movetous __P((char *, int, int , int));
-static void movetothem __P((int, int , char *, int));
+static void movetous(char *, int, int , int);
+static void movetothem(int, int , char *, int);
 #else
 #include "../sys_curses/telextrn.h"
 #endif
-static void name_resolution __P((union REGS *, struct SREGS *));
-static void query_session_id __P((union REGS *, struct SREGS *));
-static void query_session_parameters __P((union REGS *, struct SREGS *));
-static void query_session_cursor __P((union REGS *, struct SREGS *));
-static void connect_to_keyboard __P((union REGS *, struct SREGS *));
-static void disconnect_from_keyboard __P((union REGS *, struct SREGS *));
-static void write_keystroke __P((union REGS *, struct SREGS *));
-static void disable_input __P((union REGS *, struct SREGS *));
-static void enable_input __P((union REGS *, struct SREGS *));
-static void copy_subroutine __P((BufferDescriptor *, BufferDescriptor *,
-    CopyStringParms *, int, int ));
-static void copy_string __P((union REGS *, struct SREGS *));
-static void read_oia_group __P((union REGS *, struct SREGS *));
-static void unknown_op __P((union REGS *, struct SREGS *));
+static void name_resolution(union REGS *, struct SREGS *);
+static void query_session_id(union REGS *, struct SREGS *);
+static void query_session_parameters(union REGS *, struct SREGS *);
+static void query_session_cursor(union REGS *, struct SREGS *);
+static void connect_to_keyboard(union REGS *, struct SREGS *);
+static void disconnect_from_keyboard(union REGS *, struct SREGS *);
+static void write_keystroke(union REGS *, struct SREGS *);
+static void disable_input(union REGS *, struct SREGS *);
+static void enable_input(union REGS *, struct SREGS *);
+static void copy_subroutine(BufferDescriptor *, BufferDescriptor *,
+    CopyStringParms *, int, int);
+static void copy_string(union REGS *, struct SREGS *);
+static void read_oia_group(union REGS *, struct SREGS *);
+static void unknown_op(union REGS *, struct SREGS *);
 
 /*
  * General utility routines.

@@ -1,4 +1,4 @@
-/*	$NetBSD: api_exch.h,v 1.5 1998/07/26 22:38:15 mycroft Exp $	*/
+/*	$NetBSD: api_exch.h,v 1.6 2002/06/13 23:41:16 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -162,10 +162,10 @@ struct storage_descriptor {
     short	length;		/* In network byte order */
 };
 
-int api_exch_nextcommand __P((void));
-int api_exch_incommand __P((int));
-int api_exch_outcommand __P((int));
-int api_exch_outtype __P((int, int , const char *));
-int api_exch_intype __P((int, int , char *));
-int api_exch_flush __P((void));
-int api_exch_init __P((int, char *));
+int api_exch_nextcommand(void);
+int api_exch_incommand(int);
+int api_exch_outcommand(int);
+int api_exch_outtype(int, int , const char *);
+int api_exch_intype(int, int , char *);
+int api_exch_flush(void);
+int api_exch_init(int, char *);
