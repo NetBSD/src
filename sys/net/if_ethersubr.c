@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.29 1998/04/26 06:17:20 mrg Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.30 1998/04/29 21:37:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)if_ethersubr.c	8.2 (Berkeley) 4/4/96
  */
+
+#include "opt_gateway.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -436,6 +438,10 @@ ether_input(ifp, eh, m)
 	switch (etype) {
 #ifdef INET
 	case ETHERTYPE_IP:
+#ifdef GATEWAY
+		if (ipflow_fastforward(m))
+			return;
+#endif
 		schednetisr(NETISR_IP);
 		inq = &ipintrq;
 		break;

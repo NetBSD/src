@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.15 1997/10/02 19:42:00 is Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.16 1998/04/29 21:37:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996
@@ -64,6 +64,7 @@
 #include <netinet/in_var.h>
 #if defined(__NetBSD__)
 #include <netinet/if_inarp.h>
+#include "opt_gateway.h"
 #else
 #include <netinet/if_ether.h>
 #endif
@@ -590,6 +591,10 @@ fddi_input(ifp, fh, m)
 		switch (etype) {
 #ifdef INET
 		case ETHERTYPE_IP:
+#ifdef GATEWAY
+			if (ipflow_fastfoward(m))
+				return;
+#endif
 			schednetisr(NETISR_IP);
 			inq = &ipintrq;
 			break;

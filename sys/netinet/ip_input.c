@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.62 1998/04/29 20:45:30 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.63 1998/04/29 21:37:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -159,6 +159,10 @@ int	ipqmaxlen = IFQ_MAXLEN;
 struct	in_ifaddrhead in_ifaddr;
 struct	in_ifaddrhashhead *in_ifaddrhashtbl;
 struct	ifqueue ipintrq;
+struct	ipstat	ipstat;
+u_int16_t	ip_id;
+int	ip_defttl;
+struct ipqhead ipq;
 
 /*
  * We need to save the IP options in case a protocol wants to respond
@@ -705,6 +709,9 @@ ip_slowtimo()
 			ip_freef(fp);
 		}
 	}
+#ifdef GATEWAY
+	ipflow_slowtimo();
+#endif
 	splx(s);
 }
 
@@ -1188,8 +1195,12 @@ ip_forward(m, srcrt)
 		if (type)
 			ipstat.ips_redirectsent++;
 		else {
-			if (mcopy)
+			if (mcopy) {
+#ifdef GATEWAY
+				ipflow_create(&ipforward_rt, mcopy);
+#endif
 				m_freem(mcopy);
+			}
 			return;
 		}
 	}
