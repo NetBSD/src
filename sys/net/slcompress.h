@@ -39,7 +39,7 @@
  *	- added sl_uncompress_tcp_part.
  *
  *	From: 	slcompress.h	7.4	90/06/28
- *	$Id: slcompress.h,v 1.5 1994/01/15 20:13:16 deraadt Exp $
+ *	$Id: slcompress.h,v 1.6 1994/05/08 12:34:22 paulus Exp $
  */
 
 #ifndef _SLCOMPRESS_H_
@@ -158,6 +158,7 @@ struct slcompress {
 #define SLF_TOSS 1		/* tossing rcvd frames because of input err */
 
 extern void sl_compress_init __P((struct slcompress *));
+extern void sl_compress_setup __P((struct slcompress *, int maxslot));
 extern u_char sl_compress_tcp __P((struct mbuf *m, struct ip *ip,
 				   struct slcompress *, int comp_cid_flag));
 extern int sl_uncompress_tcp __P((u_char **bufp, int len, u_int type,
