@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.10 1998/05/14 00:01:32 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.11 1998/07/08 00:47:53 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.10 1998/05/14 00:01:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.11 1998/07/08 00:47:53 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,7 @@ static int	tlsbprint __P((void *, const char *));
 static int	tlsbsubmatch __P((struct device *, struct cfdata *, void *));
 static char	*tlsb_node_type_str __P((u_int32_t));
 
-/* There can be only one. */
+/* There can be only one, and we'll overload it with a bitmap of found nodes */
 int	tlsb_found;
 
 static int
@@ -146,8 +146,6 @@ tlsbattach(parent, self, aux)
 
 	printf("\n");
 
-	tlsb_found = 1;
-
 	/*
 	 * Attempt to find all devices on the bus, including
 	 * CPUs, memory modules, and I/O modules.
@@ -173,6 +171,12 @@ tlsbattach(parent, self, aux)
 			/* Nothing at this node. */
 			continue;
 		}
+		/*
+		 * Store up that we found something at this node.
+		 * We do this so that we don't have to do something
+		 * silly at fault time like try a 'baddadr'...
+		 */
+		tlsb_found |= (1 << node);
 		if (TLDEV_ISIOPORT(tldev))
 			continue;	/* not interested right now */
 		ta.ta_node = node;
