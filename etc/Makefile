@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.244 2003/01/09 16:57:45 mrg Exp $
+#	$NetBSD: Makefile,v 1.245 2003/02/16 00:22:37 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -305,6 +305,7 @@ release snapshot: check_DESTDIR check_RELEASEDIR .WAIT \
 #	Standalone target to create a CDROM image after the release
 #	was composed.  Should be run after "make release" in src and xsrc.
 #
+#	Note: At least mkisofs 2.0 should be used.
 #
 CDROM.image=${RELEASEDIR}/${MACHINE}/installation/cdrom/netbsd-${MACHINE}.iso
 CDROM.dir=	cdrom.dir
