@@ -1,4 +1,4 @@
-/*	$NetBSD: localhostname.c,v 1.4 1997/10/13 03:42:27 lukem Exp $	*/
+/*	$NetBSD: localhostname.c,v 1.5 1998/04/23 19:32:40 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,10 +38,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: localhostname.c,v 1.4 1997/10/13 03:42:27 lukem Exp $");
+__RCSID("$NetBSD: localhostname.c,v 1.5 1998/04/23 19:32:40 kleink Exp $");
 #endif
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <err.h>
 #include <netdb.h>
 #include <stdio.h>
