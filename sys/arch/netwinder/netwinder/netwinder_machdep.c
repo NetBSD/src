@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.37 2002/09/27 15:36:27 provos Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.38 2002/10/09 00:23:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -59,6 +59,8 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+
+#include <arm/arm32/machdep.h>
 
 #include <machine/bootconfig.h>
 #define	_ARM32_BUS_DMA_PRIVATE
@@ -340,7 +342,7 @@ struct l1_sec_map {
 };
 
 /*
- * u_int initarm(void);
+ * u_int initarm(...);
  *
  * Initial entry point on startup. This gets called before main() is
  * entered.
@@ -354,7 +356,7 @@ struct l1_sec_map {
  */
 
 u_int
-initarm(void)
+initarm(void *arg)
 {
 	int loop;
 	int loop1;
