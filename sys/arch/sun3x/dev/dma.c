@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.4 1997/03/20 16:01:38 gwr Exp $ */
+/*	$NetBSD: dma.c,v 1.5 1997/06/26 02:47:09 jeremy Exp $ */
 
 /*
  * Copyright (c) 1994 Paul Kranenburg.  All rights reserved.
@@ -330,7 +330,6 @@ espdmaintr(sc)
 	if (!(csr & D_WRITE) &&
 	    (resid = (NCR_READ_REG(nsc, NCR_FFLAG) & NCRFIFO_FF)) != 0) {
 		NCR_DMA(("dmaintr: empty esp FIFO of %d ", resid));
-		NCRCMD(nsc, NCRCMD_FLUSH);
 	}
 
 	if ((nsc->sc_espstat & NCRSTAT_TC) == 0) {
@@ -352,8 +351,15 @@ espdmaintr(sc)
 
 	trans = sc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
+#if	0
+		/*
+		 * This situation can happen in perfectly normal operation
+		 * if the ESP is reselected while using DMA to select
+		 * another target.  As such, don't print the warning.
+		 */
 		printf("%s: xfer (%d) > req (%d)\n",
 		    sc->sc_dev.dv_xname, trans, sc->sc_dmasize);
+#endif
 		trans = sc->sc_dmasize;
 	}
 
