@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	8.1 (Berkeley) 6/5/93
-.\"	$NetBSD: MAKEDEV.8,v 1.8 2000/12/05 21:25:38 wrstuden Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.9 2001/01/08 22:27:55 martin Exp $
 .\"
 .Dd July 23, 1997
 .Dt MAKEDEV 8 x68k
@@ -77,6 +77,8 @@ Makes fd/* for the fdescfs.
 Standard devices
 .It Ar local
 Configuration specific devices
+.It Ar isdn
+Make ISDN devices
 .El
 .Pp
 The
@@ -146,6 +148,19 @@ Set of 16 master and slave pseudo terminals, see
 . Bl -tag -width 0123456789 -compact
 . It Ar par#
 Motherboard parallel port
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact

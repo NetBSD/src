@@ -38,7 +38,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)MAKEDEV.8	5.2 (Berkeley) 3/22/91
-.\"	$NetBSD: MAKEDEV.8,v 1.9 2000/12/05 21:25:36 wrstuden Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.10 2001/01/08 22:27:53 martin Exp $
 .\"
 .Dd February 17, 1996
 .Dt MAKEDEV 8 arm32
@@ -75,6 +75,8 @@ Standard devices
 Configuration specific devices which are created by running the
 .Pa MAKEDEV.local
 shell script with the argument ``all''.
+.It Ar isdn
+Make ISDN devices
 .El
 .Pp
 The arm32 supports the following devices.
@@ -191,6 +193,19 @@ Scanners, see
 .Xr uscanner 4 
 . It Ar ttyU#
 Modem
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact

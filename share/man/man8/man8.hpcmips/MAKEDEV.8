@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\"	$NetBSD: MAKEDEV.8,v 1.5 2000/12/05 21:25:36 wrstuden Exp $
+.\"	$NetBSD: MAKEDEV.8,v 1.6 2001/01/08 22:27:54 martin Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -78,6 +78,8 @@ Standard devices
 Configuration specific devices
 .It Ar usbs
 Make USB devices
+.It Ar isdn
+Make ISDN devices
 .El
 .Pp
 The
@@ -184,6 +186,19 @@ Scanners, see
 .Xr uscanner 4 
 . It Ar ttyU#
 Modem
+. El
+.It ISDN devices:
+. Bl -tag -width 0123456789 -compact
+. It Ar i4b
+Comunication between userland isdnd and kernel
+. It Ar i4bctl
+Control device
+. It Ar i4brbch#
+Raw b-channel access
+. It Ar i4btel#
+Telephonie device
+. It Ar i4btrc#
+Trace device
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
