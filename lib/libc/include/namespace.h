@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.2.4.5 1996/09/17 23:01:52 jtc Exp $	*/
+/*	$NetBSD: namespace.h,v 1.2.4.6 1996/09/18 02:42:45 jtc Exp $	*/
 
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
@@ -47,7 +47,9 @@
 #define dbm_open	_dbm_open
 #define dbm_store	_dbm_store
 #define dbopen		_dbopen
+#define drand48		_drand48
 #define endrpcent	_endrpcent
+#define erand48		_erand48
 #define err		_err
 #define errx		_errx
 #define fts_children	_fts_children
@@ -62,7 +64,15 @@
 #define getrpcport	_getrpcport
 #define hcreate		_hcreate
 #define hdestroy	_hdestroy
+#define heapsort	_heapsort
 #define hsearch		_hsearch
+#define initstate	_initstate
+#define jrand48		_jrand48
+#define lcong48		_lcong48
+#define llabs		_qabs
+#define lldiv		_qdiv
+#define lrand48		_lrand48
+#define mergesort	_mergesort
 #define mpool_close	_mpool_close
 #define mpool_filter	_mpool_filter
 #define mpool_get	_mpool_get
@@ -70,6 +80,8 @@
 #define mpool_open	_mpool_open
 #define mpool_put	_mpool_put
 #define mpool_sync	_mpool_sync
+#define mrand48		_mrand48
+#define nrand48		_nrand48
 #define offtime		_offtime
 #define opendir		_opendir
 #define pmap_getmaps	_pmap_getmaps
@@ -78,13 +90,27 @@
 #define pmap_set	_pmap_set
 #define pmap_unset	_pmap_unset
 #define posix2time	_posix2time
+#define putenv		_putenv
+#define qabs		_qabs
+#define qdiv		_qdiv
+#define radixsort	_radixsort
+#define random		_random
 #define readdir		_readdir
+#define realpath	_realpath
 #define registerrpc	_registerrpc
 #define rewinddir	_rewinddir
 #define scandir		_scandir
+#define seed48		_seed48
 #define seekdir		_seekdir
+#define setenv		_setenv
 #define setrpcent	_setrpcent
+#define setstate	_setstate
+#define sradixsort	_sradixsort
+#define srand48		_srand48
+#define srandom		_srandom
+#define strtoll		_strtoq
 #define strtoq		_strtoq
+#define strtoull	_strtouq
 #define strtouq		_strtouq
 #define svc_getreq	_svc_getreq
 #define svc_getreqset	_svc_getreqset
@@ -125,6 +151,7 @@
 #define tzname		_tzname
 #define tzset		_tzset
 #define tzsetwall	_tzsetwall
+#define unsetenv	_unsetenv
 #define verr		_verr
 #define verrx		_verrx
 #define vwarn		_vwarn

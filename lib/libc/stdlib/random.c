@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.4 1995/12/28 08:52:43 thorpej Exp $	*/
+/*	$NetBSD: random.c,v 1.4.2.1 1996/09/18 02:42:58 jtc Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,12 +37,20 @@
 #if 0
 static char *sccsid = "from: @(#)random.c	5.9 (Berkeley) 2/23/91";
 #else
-static char *rcsid = "$NetBSD: random.c,v 1.4 1995/12/28 08:52:43 thorpej Exp $";
+static char *rcsid = "$NetBSD: random.c,v 1.4.2.1 1996/09/18 02:42:58 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __weak_alias
+__weak_alias(initstate,_initstate);
+__weak_alias(random,_random);
+__weak_alias(setstate,_setstate);
+__weak_alias(srandom,_srandom);
+#endif
 
 /*
  * random.c:

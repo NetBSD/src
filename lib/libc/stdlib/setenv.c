@@ -1,4 +1,4 @@
-/*	$NetBSD: setenv.c,v 1.8 1995/12/28 08:52:49 thorpej Exp $	*/
+/*	$NetBSD: setenv.c,v 1.8.2.1 1996/09/18 02:43:00 jtc Exp $	*/
 
 /*
  * Copyright (c) 1987 Regents of the University of California.
@@ -37,12 +37,18 @@
 #if 0
 static char *sccsid = "from: @(#)setenv.c	5.6 (Berkeley) 6/4/91";
 #else
-static char *rcsid = "$NetBSD: setenv.c,v 1.8 1995/12/28 08:52:49 thorpej Exp $";
+static char *rcsid = "$NetBSD: setenv.c,v 1.8.2.1 1996/09/18 02:43:00 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef __weak_alias
+__weak_alias(setenv,_setenv);
+__weak_alias(unsetenv,_unsetenv);
+#endif
 
 /*
  * setenv --

@@ -1,4 +1,4 @@
-/*	$NetBSD: qdiv.c,v 1.2 1995/12/28 08:52:34 thorpej Exp $	*/
+/*	$NetBSD: qdiv.c,v 1.2.2.1 1996/09/18 02:42:56 jtc Exp $	*/
 
 /*
  * Copyright (c) 1990 Regents of the University of California.
@@ -40,11 +40,17 @@
 #if 0
 static char *sccsid = "from: @(#)ldiv.c	5.2 (Berkeley) 4/16/91";
 #else
-static char *rcsid = "$NetBSD: qdiv.c,v 1.2 1995/12/28 08:52:34 thorpej Exp $";
+static char *rcsid = "$NetBSD: qdiv.c,v 1.2.2.1 1996/09/18 02:42:56 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdlib.h>		/* qdiv_t */
+
+#ifdef __weak_alias
+__weak_alias(qdiv,_qdiv);
+__weak_alias(lldiv,_qdiv);
+#endif
 
 qdiv_t
 qdiv(num, denom)
