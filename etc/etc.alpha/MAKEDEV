@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.49 1999/09/18 00:23:35 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.50 1999/10/06 22:26:14 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -145,7 +145,7 @@ wsmux|wsmouse|wskbd)
 	rm -f wsmouse wskbd
 	mknod wsmouse c 56 0
 	mknod wskbd c 56 1
-	chown root.wheel wsmouse wskbd
+	chown root:wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
 	;;
 
@@ -177,7 +177,7 @@ usb*)
 	major=45
 	rm -f $usb 
 	mknod $usb c $major $unit
-	chown root.wheel $usb
+	chown root:wheel $usb
 	chmod 600 $usb
 	;;
 
@@ -187,7 +187,7 @@ uhid*)
 	major=46
 	rm -f $uhid
 	mknod $uhid c $major $unit
-	chown root.wheel $uhid
+	chown root:wheel $uhid
 	chmod 666 $uhid
 	;;
 
@@ -197,7 +197,7 @@ ulpt*)
 	major=47
 	rm -f $ulpt
 	mknod $ulpt c $major $unit
-	chown root.wheel $ulpt
+	chown root:wheel $ulpt
 	chmod 600 $ulpt
 	;;
 
@@ -211,7 +211,7 @@ ttyU*)
 	mknod $ttyU c $major $(($unit + $dialin  ))
 	mknod $dtyU c $major $(($unit + $dialout ))
 	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp.wheel $ttyU $dtyU $ctyU
+	chown uucp:wheel $ttyU $dtyU $ctyU
 	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
@@ -224,7 +224,7 @@ ugen*)
 		ugenj=$ugen.$j
 		rm -f $ugenj
 		mknod $ugenj c $major $(($unit * 16 + $j))
-		chown root.wheel $ugenj
+		chown root:wheel $ugenj
 		chmod 600 $ugenj
 	done
 	;;
@@ -237,7 +237,7 @@ fd)
 		mknod fd/$n c 10 $n
 		n=$(($n + 1))
 	done
-	chown -R root.wheel fd
+	chown -R root:wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -288,7 +288,7 @@ ttyB*|ttyC*|ttyE*)
 	esac
         rm -f $name$unit
         mknod $name$unit c $major $minor
-        chown uucp.wheel $name$unit
+        chown uucp:wheel $name$unit
         ;;
 
 pty*)
@@ -387,7 +387,7 @@ bpf*|tun*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 lkm)
@@ -402,7 +402,7 @@ wskbd*)
 	wskbd=wskbd$unit
 	rm -f $wskbd
 	mknod $wskbd c 29 $unit
-	chown root.wheel $wskbd
+	chown root:wheel $wskbd
 	chmod 666 $wskbd
 	;;
 
@@ -411,7 +411,7 @@ wsmouse*)
 	wsmouse=wsmouse$unit
 	rm -f $wsmouse
 	mknod $wsmouse c 30 $unit
-	chown root.wheel $wsmouse
+	chown root:wheel $wsmouse
 	chmod 666 $wsmouse
 	;;
 
@@ -428,7 +428,7 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
+	chown root:wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -438,7 +438,7 @@ rmidi*)
 	rmidi=rmidi$unit
 	rm -f $rmidi
 	mknod $rmidi c $major $unit
-	chown root.wheel $rmidi
+	chown root:wheel $rmidi
 	chmod 666 $rmidi
 	;;
 
@@ -451,7 +451,7 @@ music*)
 	rm -f $sequencer $music
 	mknod $music     c $major $(($unit + 0))
 	mknod $sequencer c $major $(($unit + 128))
-	chown root.wheel $music $sequencer
+	chown root:wheel $music $sequencer
 	chmod 666 $music $sequencer
 	;;
 
@@ -462,7 +462,7 @@ lpt*|lpa*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit c 31 $(($unit + $flags))
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 ipl)    
@@ -471,7 +471,7 @@ ipl)
 	mknod ipnat c 35 1
 	mknod ipstate c 35 2
 	mknod ipauth c 35 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -485,14 +485,14 @@ satlink*)
 speaker)
 	rm -f speaker
 	mknod speaker c 41 0
-	chown root.wheel speaker
+	chown root:wheel speaker
 	;;
 
 random)
 	rm -f random urandom
 	mknod random c 39 0
 	mknod urandom c 39 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.24 1999/09/18 00:23:38 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.25 1999/10/06 22:26:16 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -119,7 +119,7 @@ fd)
 		mknod fd/$n c 11 $n
 		n=$(($n + 1))
 	done
-	chown -R root.wheel fd
+	chown -R root:wheel fd
 	chmod 755 fd
 	chmod 666 fd/*
 	;;
@@ -180,7 +180,7 @@ tty*)
 	rm -f tty0$unit
 	mknod tty0$unit c 8 $unit
 	mknod cu0$unit c 8 $(($unit + 128))
-	chown uucp.wheel tty0$unit cu0$unit
+	chown uucp:wheel tty0$unit cu0$unit
 	;;
 
 pty*)
@@ -276,7 +276,7 @@ lpt*)
 	mknod lpt${unit}  c 17 $(($unit + 64))
 	mknod lpt${unit}p c 17 $unit
 	chmod 0220 lpt${unit} lpt${unit}p
-	chown root.wheel lpt$unit
+	chown root:wheel lpt$unit
 	;;
 
 bpf*|tun*)
@@ -286,7 +286,7 @@ bpf*|tun*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 ipl)
@@ -295,7 +295,7 @@ ipl)
 	mknod ipnat c 28 1
 	mknod ipstate c 28 2
 	mknod ipauth c 28 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
@@ -315,7 +315,7 @@ random)
 	rm -f random urandom
 	mknod random c 29 0
 	mknod urandom c 29 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.95 1999/09/18 00:23:37 hubertf Exp $
+#	$NetBSD: MAKEDEV,v 1.96 1999/10/06 22:26:15 ad Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -194,7 +194,7 @@ usb*)
 	major=55
 	rm -f $usb
 	mknod $usb c $major $unit
-	chown root.wheel $usb
+	chown root:wheel $usb
 	chmod 600 $usb
 	;;
 
@@ -204,7 +204,7 @@ uhid*)
 	major=56
 	rm -f $uhid
 	mknod $uhid c $major $unit
-	chown root.wheel $uhid
+	chown root:wheel $uhid
 	chmod 666 $uhid
 	;;
 
@@ -214,7 +214,7 @@ ulpt*)
 	major=57
 	rm -f $ulpt
 	mknod $ulpt c $major $unit
-	chown root.wheel $ulpt
+	chown root:wheel $ulpt
 	chmod 600 $ulpt
 	;;
 
@@ -228,7 +228,7 @@ ttyU*)
 	mknod $ttyU c $major $(($unit + $dialin  ))
 	mknod $dtyU c $major $(($unit + $dialout ))
 	mknod $ctyU c $major $(($unit + $callunit))
-	chown uucp.wheel $ttyU $dtyU $ctyU
+	chown uucp:wheel $ttyU $dtyU $ctyU
 	chmod 600 $ttyU $dtyU $ctyU
 	;;
 
@@ -241,7 +241,7 @@ ugen*)
 		ugenj=$ugen.$j
 		rm -f $ugenj
 		mknod $ugenj c $major $(($unit * 16 + $j))
-		chown root.wheel $ugenj
+		chown root:wheel $ugenj
 		chmod 600 $ugenj
 	done
 	;;
@@ -250,7 +250,7 @@ ttyv*)
 	chr=12; unit=${i#ttyv}
 	rm -f ttyv$unit
 	mknod ttyv$unit	c $chr $unit
-	chown root.wheel ttyv$unit
+	chown root:wheel ttyv$unit
 	;;
 
 wscons)
@@ -265,7 +265,7 @@ wsmux|wsmouse|wskbd)
 	rm -f wsmouse wskbd
 	mknod wsmouse c 65 0
 	mknod wskbd c 65 1
-	chown root.wheel wsmouse wskbd
+	chown root:wheel wsmouse wskbd
 	chmod 600 wsmouse wskbd
 	;;
 
@@ -273,7 +273,7 @@ ttyEcfg)
 	chr=47
 	rm -f ttyEcfg
 	mknod ttyEcfg c $chr 255
-	chown root.wheel ttyEcfg
+	chown root:wheel ttyEcfg
 	chmod 600 ttyEcfg
 	;;
 
@@ -281,7 +281,7 @@ ttyE*)
 	chr=47; unit=${i#ttyE}
 	rm -f ttyE$unit
 	mknod ttyE$unit c $chr $unit
-	chown root.wheel ttyE$unit
+	chown root:wheel ttyE$unit
 	;;
 
 wsmouse*)
@@ -290,7 +290,7 @@ wsmouse*)
 	major=49
 	rm -f $wsmouse
 	mknod $wsmouse c $major $unit
-	chown root.wheel $wsmouse
+	chown root:wheel $wsmouse
 	chmod 600 $wsmouse
 	;;
 
@@ -300,7 +300,7 @@ wskbd*)
 	major=48
 	rm -f $wskbd
 	mknod $wskbd c $major $unit
-	chown root.wheel $wskbd
+	chown root:wheel $wskbd
 	chmod 600 $wskbd
 	;;
 
@@ -313,7 +313,7 @@ fd)
 			mknod fd/$n c 22 $n
 			n=$(($n + 1))
 		done
-		chown -R root.wheel fd
+		chown -R root:wheel fd
 		chmod 755 fd
 		chmod 666 fd/*
 	fi
@@ -397,7 +397,7 @@ com*|tty*)					# (XXX -- com should die)
 	rm -f com$unit tty0$unit dty0$unit
 	mknod tty0$unit c 8 $(($unit + $dialin ))
 	mknod dty0$unit c 8 $(($unit + $dialout))
-	chown uucp.wheel tty0$unit dty0$unit
+	chown uucp:wheel tty0$unit dty0$unit
 	;;
 
 pty*)
@@ -496,7 +496,7 @@ lpt*|lpa*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $(($unit + $flags))
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 bpf*|tun*|mms*|lms*|pms*|joy*)
@@ -510,7 +510,7 @@ bpf*|tun*|mms*|lms*|pms*|joy*)
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
-	chown root.wheel $name$unit
+	chown root:wheel $name$unit
 	;;
 
 ipl)
@@ -519,14 +519,14 @@ ipl)
 	mknod ipnat c 44 1
 	mknod ipstate c 44 2
 	mknod ipauth c 44 3
-	chown root.wheel ipl ipnat ipstate ipauth
+	chown root:wheel ipl ipnat ipstate ipauth
 	chmod 600 ipl ipnat ipstate ipauth
 	;;
 
 speaker)					# (XXX - installed)
 	rm -f speaker
 	mknod speaker c 27 0
-	chown root.wheel speaker
+	chown root:wheel speaker
 	;;
 
 lkm)
@@ -549,7 +549,7 @@ audio*)
 	mknod $audio    c $major $(($unit + 128))
 	mknod $mixer    c $major $(($unit + 16))
 	mknod $audioctl c $major $(($unit + 192))
-	chown root.wheel $audio $sound $mixer $audioctl
+	chown root:wheel $audio $sound $mixer $audioctl
 	chmod 666 $audio $sound $mixer $audioctl
 	;;
 
@@ -559,7 +559,7 @@ rmidi*)
 	rmidi=rmidi$unit
 	rm -f $rmidi
 	mknod $rmidi c $major $unit
-	chown root.wheel $rmidi
+	chown root:wheel $rmidi
 	chmod 666 $rmidi
 	;;
 
@@ -572,7 +572,7 @@ music*)
 	rm -f $sequencer $music
 	mknod $music     c $major $(($unit + 0))
 	mknod $sequencer c $major $(($unit + 128))
-	chown root.wheel $music $sequencer
+	chown root:wheel $music $sequencer
 	chmod 666 $music $sequencer
 	;;
 
@@ -580,7 +580,7 @@ apm*)
 	rm -f apm apmctl
 	mknod apm c 21 0
 	mknod apmctl c 21 8
-	chown root.wheel apm apmctl
+	chown root:wheel apm apmctl
 	chmod 644 apm apmctl
 	;;
 
@@ -595,7 +595,7 @@ random)
 	rm -f random urandom
 	mknod random c 46 0
 	mknod urandom c 46 1
-	chown root.wheel random urandom
+	chown root:wheel random urandom
 	chmod 444 random
 	chmod 644 urandom
 	;;
@@ -606,7 +606,7 @@ cfs*)
 	major=60
 	rm -f $cfs
 	mknod $cfs c $major $unit
-	chown root.wheel $cfs
+	chown root:wheel $cfs
 	chmod 600 $cfs
 	;;
 
