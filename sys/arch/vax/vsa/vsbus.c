@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.41 2003/01/18 07:10:35 thorpej Exp $ */
+/*	$NetBSD: vsbus.c,v 1.42 2003/04/01 15:18:15 thorpej Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -316,7 +316,7 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	if ((vaddr_t)to & PGOFSET) {
 		int cz = round_page((vaddr_t)to) - (vaddr_t)to;
 
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
 		bcopy(from, (caddr_t)pa, min(cz, len));
 		from += cz;
 		to += cz;
@@ -325,10 +325,10 @@ vsbus_copytoproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		bcopy(from, (caddr_t)pa, min(NBPG, len));
-		from += NBPG;
-		to += NBPG;
-		len -= NBPG;
+		bcopy(from, (caddr_t)pa, min(PAGE_SIZE, len));
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		len -= PAGE_SIZE;
 		pte += 8; /* XXX */
 	}
 }
@@ -350,7 +350,7 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	if ((vaddr_t)from & PGOFSET) {
 		int cz = round_page((vaddr_t)from) - (vaddr_t)from;
 
-		pa = (pte->pg_pfn << VAX_PGSHIFT) | (NBPG - cz) | KERNBASE;
+		pa = (pte->pg_pfn << VAX_PGSHIFT) | (PAGE_SIZE - cz) | KERNBASE;
 		bcopy((caddr_t)pa, to, min(cz, len));
 		from += cz;
 		to += cz;
@@ -359,10 +359,10 @@ vsbus_copyfromproc(struct proc *p, caddr_t from, caddr_t to, int len)
 	}
 	while (len > 0) {
 		pa = (pte->pg_pfn << VAX_PGSHIFT) | KERNBASE;
-		bcopy((caddr_t)pa, to, min(NBPG, len));
-		from += NBPG;
-		to += NBPG;
-		len -= NBPG;
+		bcopy((caddr_t)pa, to, min(PAGE_SIZE, len));
+		from += PAGE_SIZE;
+		to += PAGE_SIZE;
+		len -= PAGE_SIZE;
 		pte += 8; /* XXX */
 	}
 }
