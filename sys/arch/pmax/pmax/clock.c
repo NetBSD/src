@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.5 1994/11/24 17:50:50 dean Exp $	*/
+/*	$NetBSD: clock.c,v 1.6 1995/01/18 06:43:47 mellon Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -136,7 +136,7 @@ inittodr(base)
 	sec = c->sec;
 	min = c->min;
 	hour = c->hour;
-	day = c->day;
+	day = c->day + 1;
 	mon = c->mon;
 	year = c->year + YR_OFFSET;
 	splx(s);
@@ -150,7 +150,7 @@ inittodr(base)
 		 */
 		time.tv_sec = base;
 		if (!badbase) {
-			printf("WARNING: preposterous clock chip time");
+			printf("WARNING: preposterous clock chip time\n");
 			resettodr();
 		}
 		goto bad;
@@ -229,7 +229,7 @@ resettodr()
 	c->sec = sec;
 	c->min = min;
 	c->hour = hour;
-	c->day = day;
+	c->day = day - 1;
 	c->mon = mon;
 	c->year = year - YR_OFFSET;
 	c->regb = t;
