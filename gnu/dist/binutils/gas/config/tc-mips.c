@@ -11570,8 +11570,9 @@ mips_validate_fix (fixP, seg)
 	{
 	  symbolS *sym = fixP->fx_addsy;
 
-	  as_warn_where (fixP->fx_file, fixP->fx_line,
-			 _("Pretending global symbol used as branch target is local."));
+	  if (mips_pic == SVR4_PIC)
+	    as_warn_where (fixP->fx_file, fixP->fx_line,
+			   _("Pretending global symbol used as branch target is local."));
 
 	  fixP->fx_addsy = symbol_create (S_GET_NAME (sym),
 					  S_GET_SEGMENT (sym),
