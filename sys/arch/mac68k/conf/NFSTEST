@@ -1,6 +1,6 @@
 # GENERIC + NFS services
 #
-#     $Id: NFSTEST,v 1.2 1994/02/27 03:44:26 briggs Exp $
+#     $Id: NFSTEST,v 1.3 1994/02/27 16:48:35 briggs Exp $
 
 include	"std.mac68k"
 
@@ -36,7 +36,7 @@ options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS
 
 options		SCSI
-options		SCSIDEBUG
+#options	SCSIDEBUG
 
 # Networking options
 options		INET
@@ -53,6 +53,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Macintosh-specific options
 options		FPCOPROC
+options		COMPAT_NOMID
 
 config		netbsd	swap generic
 
