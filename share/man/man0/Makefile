@@ -1,5 +1,7 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$NetBSD: Makefile,v 1.9 2001/12/12 01:49:17 tv Exp $
+#	$NetBSD: Makefile,v 1.10 2001/12/12 12:24:23 lukem Exp $
+
+NOOBJ=		# defined
 
 .include <bsd.own.mk>
 
@@ -7,7 +9,6 @@
 FILES=		makewhatis.sed COPYRIGHT
 FILESDIR=	/usr/share/man
 .endif
-NOOBJ=		# defined
 
 CLEANFILES+=	man?
 CLEANFILES+=	man?pages.tmp
