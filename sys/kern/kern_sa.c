@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.46 2003/11/28 08:18:03 scw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.47 2004/01/02 18:52:17 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.46 2003/11/28 08:18:03 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.47 2004/01/02 18:52:17 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,14 +53,22 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.46 2003/11/28 08:18:03 scw Exp $");
 
 #include <uvm/uvm_extern.h>
 
+static __inline int sa_stackused(struct sastack *, struct sadata *);
+static __inline void sa_setstackfree(struct sastack *, struct sadata *);
+static struct sastack *sa_getstack(struct sadata *);
+static __inline struct sastack *sa_getstack0(struct sadata *);
 static __inline int sast_compare(struct sastack *, struct sastack *);
 static void sa_setwoken(struct lwp *);
+static void sa_switchcall(void *);
 static int sa_newcachelwp(struct lwp *);
+static __inline void sa_makeupcalls(struct lwp *);
 static struct lwp *sa_vp_repossess(struct lwp *l);
 
 static __inline int sa_pagefault(struct lwp *, ucontext_t *);
 
-void sa_upcall_getstate(union sau_state *, struct lwp *);
+static int sa_upcall0(struct lwp *, int, struct lwp *, struct lwp *,
+    size_t, void *, struct sadata_upcall *);
+static void sa_upcall_getstate(union sau_state *, struct lwp *);
 
 MALLOC_DEFINE(M_SA, "sa", "Scheduler activations");
 
@@ -140,6 +148,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		syscallarg(sa_upcall_t) new;
 		syscallarg(sa_upcall_t *) old;
 		syscallarg(int) flags;
+		syscallarg(ssize_t) stackinfo_offset;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sadata *sa;
@@ -157,7 +166,11 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_wokenq_head = NULL;
 		sa->sa_concurrency = 1;
 		SPLAY_INIT(&sa->sa_stackstree);
-		SLIST_INIT(&sa->sa_stackslist);
+		sa->sa_stacknext = NULL;
+		if (SCARG(uap, flags) & SA_FLAG_STACKINFO)
+			sa->sa_stackinfo_offset = SCARG(uap, stackinfo_offset);
+		else
+			sa->sa_stackinfo_offset = 0;
 		sa->sa_nstacks = 0;
 		sa->sa_vp_faultaddr = 0;
 		sa->sa_vp_ofaultaddr = 0;
@@ -200,6 +213,86 @@ sa_release(struct proc *p)
 	p->p_sa = NULL;
 }
 
+
+static __inline int
+sa_stackused(struct sastack *sast, struct sadata *sa)
+{
+	unsigned int gen;
+
+	if (copyin((void *)&((struct sa_stackinfo_t *)
+		       ((char *)sast->sast_stack.ss_sp +
+			   sa->sa_stackinfo_offset))->sasi_stackgen,
+		&gen, sizeof(unsigned int)) != 0) {
+#ifdef DIAGNOSTIC
+		printf("sa_stackused: couldn't copyin sasi_stackgen");
+#endif
+		sigexit(curlwp, SIGILL);
+		/* NOTREACHED */
+	}
+	return (sast->sast_gen != gen);
+}
+
+static __inline void
+sa_setstackfree(struct sastack *sast, struct sadata *sa)
+{
+
+	if (copyin((void *)&((struct sa_stackinfo_t *)
+		       ((char *)sast->sast_stack.ss_sp +
+			   sa->sa_stackinfo_offset))->sasi_stackgen,
+		&sast->sast_gen, sizeof(unsigned int)) != 0) {
+#ifdef DIAGNOSTIC
+		printf("sa_setstackfree: couldn't copyin sasi_stackgen");
+#endif
+		sigexit(curlwp, SIGILL);
+		/* NOTREACHED */
+	}
+}
+
+/* 
+ * Find next free stack, starting at sa->sa_stacknext.
+ */
+static struct sastack *
+sa_getstack(struct sadata *sa)
+{
+	struct sastack *sast;
+
+	SCHED_ASSERT_UNLOCKED();
+
+	if ((sast = sa->sa_stacknext) == NULL || sa_stackused(sast, sa))
+		sast = sa_getstack0(sa);
+
+	if (sast == NULL)
+		return NULL;
+
+	sast->sast_gen++;
+
+	return sast;
+}	
+
+static __inline struct sastack *
+sa_getstack0(struct sadata *sa)
+{
+	struct sastack *start;
+
+	if (sa->sa_stacknext == NULL) {
+		sa->sa_stacknext = SPLAY_MIN(sasttree, &sa->sa_stackstree);
+		if (sa->sa_stacknext == NULL)
+			return NULL;
+	}
+	start = sa->sa_stacknext;
+
+	while (sa_stackused(sa->sa_stacknext, sa)) {
+		sa->sa_stacknext = SPLAY_NEXT(sasttree, &sa->sa_stackstree,
+		    sa->sa_stacknext);
+		if (sa->sa_stacknext == NULL)
+			sa->sa_stacknext = SPLAY_MIN(sasttree,
+			    &sa->sa_stackstree);
+		if (sa->sa_stacknext == start)
+			return NULL;
+	}
+	return sa->sa_stacknext;
+}
+
 static __inline int
 sast_compare(struct sastack *a, struct sastack *b)
 {
@@ -220,7 +313,6 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 		syscallarg(stack_t *) stacks;
 	} */ *uap = v;
 	struct sadata *sa = l->l_proc->p_sa;
-	struct lwp *l2;
 	struct sastack *sast, newsast;
 	int count, error, f, i;
 
@@ -247,11 +339,7 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 			DPRINTFN(9, ("sa_stacks(%d.%d) returning stack %p\n",
 				     l->l_proc->p_pid, l->l_lid,
 				     newsast.sast_stack.ss_sp));
-			if ((l2 = sast->sast_blocker)) {
-				l2->l_upcallstack = NULL;
-				sast->sast_blocker = NULL;
-			}
-			if (SLIST_NEXT(sast, sast_list) != (void *)-1) {
+			if (sa_stackused(sast, sa) == 0) {
 				count = i;
 				error = EEXIST;
 				break;
@@ -269,19 +357,11 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 				     newsast.sast_stack.ss_sp));
 			sast = pool_get(&sastack_pool, PR_WAITOK);
 			sast->sast_stack = newsast.sast_stack;
-			sast->sast_blocker = NULL;
 			SPLAY_INSERT(sasttree, &sa->sa_stackstree, sast);
 			sa->sa_nstacks++;
 		}
-		SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
+		sa_setstackfree(sast, sa);
 	}
-
-	/*
-	 * Check if there are any pending upcalls we didn't make
-	 * because there were not enough stacks.
-	 */
-	if (sa->sa_wokenq_head != NULL)
-		l->l_flag |= L_SA_UPCALL; 
 
 	SA_LWP_STATE_UNLOCK(l, f);
 
@@ -372,14 +452,28 @@ void
 sa_yield(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
-#ifdef DEBUG
 	struct sadata *sa = p->p_sa;
-#endif
 	int ret, s;
 
 #if defined(MULTIPROCESSOR)
 	KDASSERT(l->l_flag & L_BIGLOCK);
 #endif
+
+	if (sa->sa_vp != l) {
+		/* 
+		 * We lost the VP on our way here, this happens for
+		 * instance when we sleep in systrace.  We'll try to
+		 * return to userland but the blocked upcall from the
+		 * sleep will probably already have called
+		 * sa_unblockyield() and we'll be recycled in
+		 * sa_setwoken().
+		 */
+		DPRINTFN(1,("sa_yield(%d.%d) lost VP\n",
+			     p->p_pid, l->l_lid));
+		KDASSERT(l->l_flag & L_SA_BLOCKING);
+		return;
+	}
+
 	/*
 	 * If we're the last running LWP, stick around to recieve
 	 * signals.
@@ -471,7 +565,7 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 	struct sadata *sa = l->l_proc->p_sa;
 	struct proc *p = l->l_proc;
 	struct lwp *l2, **hp;
-	struct sastack sast;
+	struct sastack *sast, up_sast;
 	int error, f, s;
 	void *preempted;
 
@@ -479,11 +573,13 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 		return (EINVAL);
 
 	SA_LWP_STATE_LOCK(l, f);
-	error = copyin(SCARG(uap, up_stack), &sast.sast_stack,
-	    sizeof(stack_t));
-	if (error) {
-		SA_LWP_STATE_UNLOCK(l, f);
-		return (error);
+	if (SCARG(uap, up_stack) != NULL) {
+		error = copyin(SCARG(uap, up_stack), &up_sast.sast_stack,
+		    sizeof(stack_t));
+		if (error) {
+			SA_LWP_STATE_UNLOCK(l, f);
+			return (error);
+		}
 	}
 
 	if (SCARG(uap, up_preempted) != NULL) {
@@ -493,8 +589,7 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			SA_LWP_STATE_UNLOCK(l, f);
 			return (error);
 		}
-	} else
-		preempted = (void *)-1;
+	}
 	SA_LWP_STATE_UNLOCK(l, f);
 
 	SCHED_LOCK(s);
@@ -503,25 +598,19 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			break;
 		}
 	}
-	if (l2 && (l2->l_upcallstack == NULL ||
-		(l2->l_upcallstack->sast_blocker != l2 &&
-		    l2->l_upcallstack->sast_blocker != NULL)))
-		l2 = NULL;
-
-	if (l2 == NULL) {
+	if (l2 == NULL || (l2->l_flag & L_SA_BLOCKING) == 0) {
 		/* just return, prevented in userland most of the time */
-		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) unblocked upcall done\n",
-			     p->p_pid, l->l_lid));
+		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) unblocked upcall for %d done\n",
+			     p->p_pid, l->l_lid, SCARG(uap, sa_id)));
 		KDASSERT(preempted != NULL);
-	} else if (preempted == (void *)-1) {
+	} else if (SCARG(uap, up_preempted) == NULL) {
 		/* recycle blocked LWP */
 		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) recycle %d "
-			     "(was %sready) upcall stack %p\n",
+			     "(was %sready)\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
-			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
-			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
+			     (l2->l_flag & L_SA_WOKEN) ? "" : "not "));
 
-		if (l2->l_upcallstack->sast_blocker == NULL) {
+		if (l2->l_flag & L_SA_WOKEN) {
 			/*
 			 * l2 is on the wokenq, remove it and put l2
 			 * in the cache
@@ -532,28 +621,26 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			*hp = l2->l_forw;
 			if (sa->sa_wokenq_tailp == &l2->l_forw)
 				sa->sa_wokenq_tailp = hp;
-			l2->l_flag &= ~L_SA_BLOCKING;
-			l2->l_upcallstack = NULL;
+			l2->l_flag &= ~(L_SA_BLOCKING|L_SA_WOKEN);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 		} else
 			/* let sa_setwoken put it in the cache */
-			l2->l_upcallstack->sast_blocker = NULL;
+			l2->l_flag |= L_SA_RECYCLE;
 	} else if (preempted != NULL) {
 		/* wait for the blocked LWP to get ready, then return */
 		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) waiting for %d "
 			     "(was %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
-			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
-			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
+			     (l2->l_flag & L_SA_WOKEN) ? "" :
+			     "not ", up_sast.sast_stack.ss_sp));
 
-		if (l2->l_upcallstack->sast_blocker != NULL) {
-			l2->l_upcallstack->sast_blocker = l;
+		if ((l2->l_flag & L_SA_WOKEN) == 0) {
+			l2->l_flag |= L_SA_WOKEN;
 			SCHED_UNLOCK(s); /* XXXcl we're still holding
 					  * the kernel lock, is that
 					  * good enough? */
 			SA_LWP_STATE_LOCK(l, f);
-			tsleep((caddr_t) &l2->l_upcallstack, PWAIT,
-			    "saunblock", 0);
+			tsleep((caddr_t) sa, PWAIT, "saunblock", 0);
 			SA_LWP_STATE_UNLOCK(l, f);
 			if (p->p_flag & P_WEXIT)
 				lwp_exit(l);
@@ -564,15 +651,19 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 		DPRINTFN(11,("sys_sa_unblockyield(%d.%d) resuming %d "
 			     "(is %sready) upcall stack %p\n",
 			     p->p_pid, l->l_lid, l2->l_lid, 
-			     (l2->l_upcallstack->sast_blocker == NULL) ? "" :
-			     "not ", l2->l_upcallstack->sast_stack.ss_sp));
+			     (l2->l_flag & L_SA_WOKEN) ? "" :
+			     "not ", up_sast.sast_stack.ss_sp));
 
 		sa->sa_vp = l2;
 		l2->l_flag &= ~L_SA_BLOCKING;
-		SLIST_INSERT_HEAD(&sa->sa_stackslist, l2->l_upcallstack,
-		    sast_list);
+		sast = SPLAY_FIND(sasttree, &sa->sa_stackstree, &up_sast);
+		if (sast == NULL) {
+			SCHED_UNLOCK(s);
+			return(ESRCH);
+		}
+		sa_setstackfree(sast, sa);
 
-		if (l2->l_upcallstack->sast_blocker == NULL) {
+		if (l2->l_flag & L_SA_WOKEN) {
 			/*
 			 * l2 is on the wokenq, remove it and
 			 * continue l2
@@ -583,15 +674,11 @@ sys_sa_unblockyield(struct lwp *l, void *v, register_t *retval)
 			*hp = l2->l_forw;
 			if (sa->sa_wokenq_tailp == &l2->l_forw)
 				sa->sa_wokenq_tailp = hp;
-			l2->l_upcallstack = NULL;
+			l2->l_flag &= ~L_SA_WOKEN;
 			setrunnable(l2);
 			PRELE(l2); /* PHOLD from sa_setwoken */
-		} else {
-			/* cleanup l_upcallstack */
-			l2->l_upcallstack->sast_blocker = NULL;
-			l2->l_upcallstack = NULL;
+		} else
 			l2 = NULL; /* don't continue l2 yet */
-		}
 
 		p->p_nrlwps--;
 		PHOLD(l);
@@ -626,10 +713,9 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 
 	/* XXX prevent recursive upcalls if we sleep formemory */
 	SA_LWP_STATE_LOCK(l, f);
+	sast = sa_getstack(sa);
 	sau = sadata_upcall_alloc(1);
 	SA_LWP_STATE_UNLOCK(l, f);
-
-	sast = SLIST_FIRST(&sa->sa_stackslist);
 	if (sast == NULL) {
 		/* assign to assure that it gets freed */
 		sau->sau_type = type & SA_UPCALL_TYPE_MASK;
@@ -637,18 +723,16 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		sadata_upcall_free(sau);
 		return (ENOMEM);
 	}
-	SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
-	SLIST_NEXT(sast, sast_list) = (void *)-1;
 	DPRINTFN(9,("sa_upcall(%d.%d) using stack %p\n", 
 	    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
-	error = sa_upcall0(l, type, event, interrupted, argsize, arg, sau,
-	    &sast->sast_stack);
+	error = sa_upcall0(l, type, event, interrupted, argsize, arg, sau);
 	if (error) {
-		SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 		sadata_upcall_free(sau);
+		sa_setstackfree(sast, sa);
 		return (error);
 	}
+	sau->sau_stack = sast->sast_stack;
 
 	SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 	l->l_flag |= L_SA_UPCALL;
@@ -656,9 +740,9 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	return (0);
 }
 
-int
+static int
 sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
-    size_t argsize, void *arg, struct sadata_upcall *sau, stack_t *st)
+    size_t argsize, void *arg, struct sadata_upcall *sau)
 {
 
 	KDASSERT((event == NULL) || (event != interrupted));
@@ -667,7 +751,6 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
 	sau->sau_argsize = argsize;
 	sau->sau_arg = arg;
-	sau->sau_stack = *st;
 
 	if (type & SA_UPCALL_DEFER_EVENT) {
 		sau->sau_event.ss_deferred.ss_lwp = event;
@@ -684,7 +767,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 }
 
 
-void
+static void
 sa_upcall_getstate(union sau_state *ss, struct lwp *l)
 {
 
@@ -757,7 +840,6 @@ sa_switch(struct lwp *l, int type)
 	struct sadata *sa = p->p_sa;
 	struct sadata_upcall *sau;
 	struct lwp *l2;
-	struct sastack *sast;
 	int error, s;
 
 	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
@@ -791,6 +873,7 @@ sa_switch(struct lwp *l, int type)
 		 * a SA_BLOCKED upcall and allocate resources for the
 		 * UNBLOCKED upcall.
 		 */
+
 		/*
 		 * The process of allocating a new LWP could cause
 		 * sleeps. We're called from inside sleep, so that
@@ -815,21 +898,6 @@ sa_switch(struct lwp *l, int type)
 			return;
 		}
 
-		sast = SLIST_FIRST(&sa->sa_stackslist);
-		if (sast == NULL) {
-#ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d flag %x): Not enough stacks.\n",
-			    p->p_pid, l->l_lid, l->l_flag);
-#endif
-			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
-			mi_switch(l, NULL);
-			return;
-		}
-		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
-		SLIST_NEXT(sast, sast_list) = (void *)-1;
-		DPRINTFN(9,("sa_switch(%d.%d) using stack %p\n", 
-		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
-
 		/*
 		 * XXX We need to allocate the sadata_upcall structure here,
 		 * XXX since we can't sleep while waiting for memory inside
@@ -842,21 +910,19 @@ sa_switch(struct lwp *l, int type)
 			printf("sa_switch(%d.%d): couldn't allocate upcall data.\n",
 			    p->p_pid, l->l_lid);
 #endif
-			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			return;
 		}
 
-		cpu_setfunc(l2, sa_switchcall, l2);
+		cpu_setfunc(l2, sa_switchcall, sau);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL,
-		    sau, &sast->sast_stack);
+		    sau);
 		if (error) {
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
 			    p->p_pid, l->l_lid, error);
 #endif
-			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			return;
@@ -874,23 +940,21 @@ sa_switch(struct lwp *l, int type)
 		if ((l->l_flag & L_SA_PAGEFAULT) && sa_pagefault(l,
 			&sau->sau_event.ss_captured.ss_ctx) != 0) {
 			sadata_upcall_free(sau);
-			SLIST_INSERT_HEAD(&sa->sa_stackslist, sast, sast_list);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_getcachelwp */
 			mi_switch(l, NULL);
 			DPRINTFN(10,("sa_switch(%d.%d) page fault resolved\n",
 				     p->p_pid, l->l_lid));
+			if (sa->sa_vp_faultaddr == sa->sa_vp_ofaultaddr)
+				sa->sa_vp_ofaultaddr = -1;
 			return;
 		}
 
-		DPRINTFN(8,("sa_switch(%d.%d) blocked upcall %d, stack %p\n",
-		    p->p_pid, l->l_lid, l2->l_lid, sast->sast_stack.ss_sp));
-		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
-		l2->l_flag |= L_SA_UPCALL;
+		DPRINTFN(8,("sa_switch(%d.%d) blocked upcall %d\n",
+			     p->p_pid, l->l_lid, l2->l_lid));
 
 		l->l_flag |= L_SA_BLOCKING;
-		sast->sast_blocker = l;
-		l->l_upcallstack = sast;
 		l2->l_priority = l2->l_usrpri;
+		sa->sa_vp_blocker = l;
 		sa->sa_vp = l2;
 		setrunnable(l2);
 		PRELE(l2); /* Remove the artificial hold-count */
@@ -930,30 +994,58 @@ sa_switch(struct lwp *l, int type)
 	SCHED_ASSERT_UNLOCKED();
 }
 
-void
+static void
 sa_switchcall(void *arg)
 {
-	struct lwp *l;
+	struct lwp *l, *l2;
 	struct proc *p;
 	struct sadata *sa;
-	int f;
+	struct sadata_upcall *sau;
+	struct sastack *sast;
+	int s;
 
-	l = arg;
-	p = l->l_proc;
+	l2 = curlwp;
+	p = l2->l_proc;
 	sa = p->p_sa;
-	sa->sa_vp = l;
 
-	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l->l_lid));
+	if (p->p_flag & P_WEXIT)
+		lwp_exit(l2);
 
+	l = sa->sa_vp_blocker;
+	KDASSERT(sa->sa_vp == l2);
+	sau = arg;
+
+	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l2->l_lid));
+
+	l2->l_flag &= ~L_SA;
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
 		/* Allocate the next cache LWP */
 		DPRINTFN(6,("sa_switchcall(%d.%d) allocating LWP\n",
-		    p->p_pid, l->l_lid));
-		SA_LWP_STATE_LOCK(l, f);
-		sa_newcachelwp(l);
-		SA_LWP_STATE_UNLOCK(l, f);
+		    p->p_pid, l2->l_lid));
+		sa_newcachelwp(l2);
 	}
-	upcallret(l);
+	sast = sa_getstack(sa);
+	if (sast) {
+		sau->sau_stack = sast->sast_stack;
+		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
+		l2->l_flag |= L_SA|L_SA_UPCALL;
+	} else {
+#ifdef DIAGNOSTIC
+		printf("sa_switchcall(%d.%d flag %x): Not enough stacks.\n",
+		    p->p_pid, l->l_lid, l->l_flag);
+#endif
+		sadata_upcall_free(sau);
+		PHOLD(l2);
+		SCHED_LOCK(s);
+		sa_putcachelwp(p, l2); /* sets L_SA */
+		sa->sa_vp = l;
+		mi_switch(l2, NULL);
+		/* mostly NOTREACHED */
+		SCHED_ASSERT_UNLOCKED();
+		splx(s);
+	}
+
+	upcallret(l2);
 }
 
 static int
@@ -1080,20 +1172,20 @@ sa_unblock_userret(struct lwp *l)
 		if (l2 == NULL)
 			lwp_exit(l);
 
-		PHOLD(l2);
+		sast = sa_getstack(sa);
+		if (p->p_flag & P_WEXIT)
+			lwp_exit(l);
 
 		sau = sadata_upcall_alloc(1);
 		sau->sau_arg = NULL;
-
 		if (p->p_flag & P_WEXIT) {
 			sadata_upcall_free(sau);
 			lwp_exit(l);
 		}
 
-		sast = SLIST_FIRST(&sa->sa_stackslist);
+		PHOLD(l2);
+
 		KDASSERT(sast != NULL);
-		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
-		SLIST_NEXT(sast, sast_list) = (void *)-1;
 		DPRINTFN(9,("sa_unblock_userret(%d.%d) using stack %p\n",
 		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 		
@@ -1102,7 +1194,7 @@ sa_unblock_userret(struct lwp *l)
 		 * PREEMPT upcall could be on the queue already.
 		 */
 		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER_EVENT,
-			l, l2, 0, NULL, sau, &sast->sast_stack) != 0) {
+			l, l2, 0, NULL, sau) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
@@ -1114,12 +1206,12 @@ sa_unblock_userret(struct lwp *l)
 			sigexit(l, SIGABRT);
 			/* NOTREACHED */
 		}
+		sau->sau_stack = sast->sast_stack;
 
 		SCHED_LOCK(s);
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
-		l->l_upcallstack = NULL;
 		sa_putcachelwp(p, l2);
 	}
 	SCHED_UNLOCK(s);
@@ -1131,18 +1223,12 @@ sa_unblock_userret(struct lwp *l)
 void
 sa_upcall_userret(struct lwp *l)
 {
-	struct lwp *l2, *eventq;
+	struct lwp *l2;
 	struct proc *p;
 	struct sadata *sa;
-	struct sa_t **sapp, *sap;
 	struct sadata_upcall *sau;
-	struct sa_t self_sa;
-	struct sa_t *sas[3], *sasp;
-	union sau_state e_ss;
 	struct sastack *sast;
-	void *stack, *ap;
-	ucontext_t u, *up;
-	int f, i, nint, nevents, s, type;
+	int f, s;
 
 	p = l->l_proc;
 	sa = p->p_sa;
@@ -1155,19 +1241,18 @@ sa_upcall_userret(struct lwp *l)
 	DPRINTFN(7,("sa_upcall_userret(%d.%d %x) \n", p->p_pid, l->l_lid,
 	    l->l_flag));
 
-	KDASSERT(l->l_upcallstack == NULL);
+	KDASSERT((l->l_flag & L_SA_BLOCKING) == 0);
 
+	sast = NULL;
+	if (SIMPLEQ_EMPTY(&sa->sa_upcalls) && sa->sa_wokenq_head != NULL)
+		sast = sa_getstack(sa);
 	SCHED_LOCK(s);
 	if (SIMPLEQ_EMPTY(&sa->sa_upcalls) && sa->sa_wokenq_head != NULL &&
-		!SLIST_EMPTY(&sa->sa_stackslist)) {
+	    sast != NULL) {
 		/* Invoke an "unblocked" upcall */
 		l2 = sa->sa_wokenq_head;
 		sa->sa_wokenq_head = l2->l_forw;
 
-		sast = SLIST_FIRST(&sa->sa_stackslist);
-		KDASSERT(sast != NULL);
-		SLIST_REMOVE_HEAD(&sa->sa_stackslist, sast_list);
-		SLIST_NEXT(sast, sast_list) = (void *)-1;
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) using stack %p\n",
 		    l->l_proc->p_pid, l->l_lid, sast->sast_stack.ss_sp));
 
@@ -1186,8 +1271,8 @@ sa_upcall_userret(struct lwp *l)
 			lwp_exit(l);
 		}
 
-		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l2, l, 0, NULL, sau,
-		    &sast->sast_stack) != 0) {
+		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l2, l, 0, NULL,
+			sau) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
@@ -1199,24 +1284,50 @@ sa_upcall_userret(struct lwp *l)
 			sigexit(l, SIGABRT);
 			/* NOTREACHED */
 		}
+		sau->sau_stack = sast->sast_stack;
 
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 
-		l2->l_flag &= ~L_SA_BLOCKING;
-		l2->l_upcallstack = NULL;
+		l2->l_flag &= ~(L_SA_BLOCKING|L_SA_WOKEN);
 		SCHED_LOCK(s);
 		sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
+		SCHED_UNLOCK(s);
+	} else {
+		SCHED_UNLOCK(s);
+		if (sast)
+			sa_setstackfree(sast, sa);
 	}
-	SCHED_UNLOCK(s);
 
 	KDASSERT(sa->sa_vp == l);
 
-	if (SIMPLEQ_EMPTY(&sa->sa_upcalls)) {		
+	while (!SIMPLEQ_EMPTY(&sa->sa_upcalls))
+		sa_makeupcalls(l);
+
+	if (sa->sa_wokenq_head == NULL)
 		l->l_flag &= ~L_SA_UPCALL;
-		SA_LWP_STATE_UNLOCK(l, f);
-		KERNEL_PROC_UNLOCK(l);
-		return;
-	}	
+
+	SA_LWP_STATE_UNLOCK(l, f);
+	KERNEL_PROC_UNLOCK(l);
+	return;
+}
+
+static __inline void
+sa_makeupcalls(struct lwp *l)
+{
+	struct lwp *l2, *eventq;
+	struct proc *p;
+	struct sadata *sa;
+	struct sa_t **sapp, *sap;
+	struct sa_t self_sa;
+	struct sa_t *sas[3], *sasp;
+	struct sadata_upcall *sau;
+	union sau_state e_ss;
+	void *stack, *ap;
+	ucontext_t u, *up;
+	int i, nint, nevents, s, type;
+
+	p = l->l_proc;
+	sa = p->p_sa;
 
 	sau = SIMPLEQ_FIRST(&sa->sa_upcalls);
 	SIMPLEQ_REMOVE_HEAD(&sa->sa_upcalls, sau_next);
@@ -1242,7 +1353,7 @@ sa_upcall_userret(struct lwp *l)
 		    sau->sau_event.ss_captured.ss_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of event LWP %d\n",
 			    p->p_pid, l->l_lid, sau->sau_event.ss_captured.ss_sa.sa_id);
 #endif
@@ -1259,7 +1370,7 @@ sa_upcall_userret(struct lwp *l)
 		    sau->sau_interrupted.ss_captured.ss_sa.sa_context,
 		    sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " context of interrupted LWP %d\n",
 			    p->p_pid, l->l_lid, sau->sau_interrupted.ss_captured.ss_sa.sa_id);
 #endif
@@ -1290,7 +1401,7 @@ sa_upcall_userret(struct lwp *l)
 	if (copyout(&u, up, sizeof(ucontext_t)) != 0) {
 		sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
-		printf("sa_upcall_userret: couldn't copyout activation"
+		printf("sa_makeupcalls: couldn't copyout activation"
 		    " ucontext for %d.%d\n", l->l_proc->p_pid, l->l_lid);
 #endif
 		sigexit(l, SIGILL);
@@ -1315,19 +1426,18 @@ sa_upcall_userret(struct lwp *l)
 			l2 = eventq;
 			KDASSERT(l2 != NULL);
 			eventq = l2->l_forw;
-			DPRINTFN(8,("sa_upcall_userret(%d.%d) unblocking extra %d\n",
+			DPRINTFN(8,("sa_makeupcalls(%d.%d) unblocking extra %d\n",
 				     p->p_pid, l->l_lid, l2->l_lid));
 			sa_upcall_getstate(&e_ss, l2);
 			SCHED_LOCK(s);
-			l2->l_flag &= ~L_SA_BLOCKING;
-			l2->l_upcallstack = NULL;
+			l2->l_flag &= ~(L_SA_BLOCKING|L_SA_WOKEN);
 			sa_putcachelwp(p, l2); /* PHOLD from sa_setwoken */
 			SCHED_UNLOCK(s);
 			if (copyout(&e_ss.ss_captured.ss_ctx,
 				e_ss.ss_captured.ss_sa.sa_context,
 				sizeof(ucontext_t)) != 0) {
 #ifdef DIAGNOSTIC
-				printf("sa_upcall_userret(%d.%d): couldn't copyout"
+				printf("sa_makeupcalls(%d.%d): couldn't copyout"
 				    " context of event LWP %d\n",
 				    p->p_pid, l->l_lid, e_ss.ss_captured.ss_sa.sa_id);
 #endif
@@ -1341,7 +1451,7 @@ sa_upcall_userret(struct lwp *l)
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
-			printf("sa_upcall_userret: couldn't copyout sa_t "
+			printf("sa_makeupcalls: couldn't copyout sa_t "
 			    "%d for %d.%d\n", i, p->p_pid, l->l_lid);
 #endif
 			sigexit(l, SIGILL);
@@ -1361,7 +1471,7 @@ sa_upcall_userret(struct lwp *l)
 			/* Copying onto the stack didn't work. Die. */
 			sadata_upcall_free(sau);
 #ifdef DIAGNOSTIC
-			printf("sa_upcall_userret(%d.%d): couldn't copyout"
+			printf("sa_makeupcalls(%d.%d): couldn't copyout"
 			    " sadata_upcall arg %p size %ld to %p \n",
 			    p->p_pid, l->l_lid,
 			    sau->sau_arg, (long) sau->sau_argsize, ap);
@@ -1378,18 +1488,10 @@ sa_upcall_userret(struct lwp *l)
 
 	sadata_upcall_free(sau);
 
-	DPRINTFN(7,("sa_upcall_userret(%d.%d): type %d\n", p->p_pid,
+	DPRINTFN(7,("sa_makeupcalls(%d.%d): type %d\n", p->p_pid,
 	    l->l_lid, type));
 
 	cpu_upcall(l, type, nevents, nint, sapp, ap, stack, sa->sa_upcall);
-
-	if (sa->sa_wokenq_head != NULL)
-		l->l_flag |= L_SA_UPCALL;
-	else if (SIMPLEQ_EMPTY(&sa->sa_upcalls))
-		l->l_flag &= ~L_SA_UPCALL;
-
-	SA_LWP_STATE_UNLOCK(l, f);
-	KERNEL_PROC_UNLOCK(l);
 }
 
 static void
@@ -1417,12 +1519,11 @@ sa_setwoken(struct lwp *l)
 		     l->l_proc->p_pid, l->l_lid, l->l_flag,
 		     vp_lwp->l_lid));
 
-	if (l->l_upcallstack && l->l_upcallstack->sast_blocker == NULL) {
+	if (l->l_flag & L_SA_RECYCLE) {
 		DPRINTFN(11,("sa_setwoken(%d.%d) recycle\n",
 			     l->l_proc->p_pid, l->l_lid));
-		l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING);
+		l->l_flag &= ~(L_SA_UPCALL|L_SA_BLOCKING|L_SA_RECYCLE);
 		l->l_flag |= L_SA;
-		l->l_upcallstack = NULL;
 		p->p_nrlwps--;
 		PHOLD(l);
 		sa_putcachelwp(p, l);
@@ -1508,11 +1609,10 @@ sa_setwoken(struct lwp *l)
 		panic("sa_vp LWP not sleeping/onproc/runnable");
 	}
 
-	if (l->l_upcallstack) {
-		if (l->l_upcallstack->sast_blocker != l)
-			sched_wakeup(&l->l_upcallstack);
-		l->l_upcallstack->sast_blocker = NULL;
-	}
+	if (l->l_flag & L_SA_WOKEN)
+		sched_wakeup(sa);
+	else
+		l->l_flag |= L_SA_WOKEN;
 
 	l->l_stat = LSSUSPENDED;
 	p->p_nrlwps--;
