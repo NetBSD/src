@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $	*/
+/*	$NetBSD: installboot.c,v 1.15 2004/03/13 22:51:50 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.14 2004/01/05 23:23:38 jmmv Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.15 2004/03/13 22:51:50 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/utsname.h>
@@ -82,6 +82,7 @@ const struct option {
 	{ "append",	IB_APPEND,	OPT_BOOL },
 	{ "command",	IB_COMMAND,	OPT_STRING,	OFFSET(command) },
 	{ "console",	IB_CONSOLE,	OPT_WORD,	OFFSET(console) },
+	{ "keymap",	IB_KEYMAP,	OPT_WORD,	OFFSET(keymap) },
 	{ "password",	IB_PASSWORD,	OPT_WORD,	OFFSET(password) },
 	{ "resetvideo",	IB_RESETVIDEO,	OPT_BOOL },
 	{ "speed",	IB_CONSPEED,	OPT_INT,	OFFSET(conspeed) },
