@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.20 2002/09/20 15:00:06 mycroft Exp $	*/
+/*	$NetBSD: fils.c,v 1.21 2002/09/29 08:14:32 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -38,7 +38,7 @@
 #  if (__NetBSD_Version__ < 105000000)
 #   undef STATETOP
 #  else
-#   include <sys/poll.h>
+#   include <poll.h>
 #   define USE_POLL
 #  endif
 # endif
