@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.63 2001/10/03 00:12:17 lukem Exp $
+#	$NetBSD: security,v 1.64 2001/10/03 07:04:32 cjs Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -14,6 +14,7 @@ else
 fi
 
 umask 077
+TZ=UTC; export TZ
 
 if [ -s /etc/security.conf ]; then
 	. /etc/security.conf
