@@ -1,4 +1,4 @@
-/*	$NetBSD: mscp_disk.c,v 1.23 2000/03/30 12:45:34 augustss Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.24 2000/05/20 13:41:33 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -65,7 +65,6 @@
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
-#include <machine/rpb.h>
 
 #include <dev/mscp/mscp.h>
 #include <dev/mscp/mscpreg.h>
@@ -111,7 +110,7 @@ int	rasize __P((dev_t));
 int	ra_putonline __P((struct ra_softc *));
 
 struct	cfattach ra_ca = {
-	sizeof(struct ra_softc), ramatch, raattach
+	sizeof(struct ra_softc), ramatch, rxattach
 };
 
 /*
@@ -139,29 +138,6 @@ ramatch(parent, cf, aux)
 	if (MSCP_MID_ECH(1, mp->mscp_guse.guse_mediaid) == 'X' - '@')
 		return 0;
 	return 1;
-}
-
-/*
- * The attach routine only checks and prints drive type.
- * Bringing the disk online is done when the disk is accessed
- * the first time. 
- */
-void
-raattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux; 
-{
-	struct	ra_softc *ra = (void *)self;
-	struct	mscp_softc *mi = (void *)parent;
-
-	rxattach(parent, self, aux);
-	/*
-	 * Find out if we booted from this disk.
-	 */
-	if ((B_TYPE(bootdev) == BDEV_UDA) && (ra->ra_hwunit == B_UNIT(bootdev))
-	    && (mi->mi_ctlrnr == B_CONTROLLER(bootdev))
-	    && (mi->mi_adapnr == B_ADAPTOR(bootdev)))
-		booted_from = self;
 }
 
 /* 
