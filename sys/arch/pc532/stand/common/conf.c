@@ -1,13 +1,8 @@
-/*	$NetBSD: cons.c,v 1.3 1995/08/29 21:55:43 phil Exp $	*/
+/*	$NetBSD: conf.c,v 1.1 1997/05/17 13:56:03 matthias Exp $	*/
 
 /*
- * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1990, 1993
+ * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * the Systems Programming Group of the University of Utah Computer
- * Science Department.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,57 +32,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah Hdr: cons.c 1.7 92/02/28
- *
- *	@(#)cons.c	8.1 (Berkeley) 6/10/93
+ *	@(#)conf.c	8.1 (Berkeley) 6/10/93
  */
 
 #include <sys/param.h>
-#include <dev/cons.h>
-#include "samachdep.h"
 
-#ifdef SCNCONSOLE
-int	scnprobe(), scninit(), scngetchar(), scnputchar();
-#endif
+#include <lib/libsa/stand.h>
 
-struct consdev constab[] = {
-#ifdef SCNCONSOLE
-	{ scnprobe,	scninit,	scngetchar,	scnputchar },
-#endif
-	{ 0 },
+#include <pc532/stand/common/samachdep.h>
+
+struct devsw devsw[] = {
+	{ "sd",	sdstrategy, sdopen, sdclose, sdioctl }, /*0*/
+	{ NULL,	      NULL,   NULL,    NULL,    NULL },
+	{ NULL,	      NULL,   NULL,    NULL,    NULL },
+	{ "md",	mdstrategy, mdopen, mdclose, mdioctl }, /*3*/
 };
 
-struct consdev *cn_tab;
-int noconsole;
-
-cninit()
-{
-	register struct consdev *cp;
-
-	cn_tab = NULL;
-	noconsole = 1;
-	for (cp = constab; cp->cn_probe; cp++) {
-		(*cp->cn_probe)(cp);
-		if (cp->cn_pri > CN_DEAD &&
-		    (cn_tab == NULL || cp->cn_pri > cn_tab->cn_pri))
-			cn_tab = cp;
-	}
-	if (cn_tab) {
-		(*cn_tab->cn_init)(cn_tab);
-		noconsole = 0;
-	}
-}
-
-cngetc()
-{
-	if (cn_tab)
-		return((*cn_tab->cn_getc)(cn_tab->cn_dev));
-	return(0);
-}
-
-cnputc(c)
-	int c;
-{
-	if (cn_tab)
-		(*cn_tab->cn_putc)(cn_tab->cn_dev, c);
-}
+int	ndevs = (sizeof(devsw)/sizeof(devsw[0]));
