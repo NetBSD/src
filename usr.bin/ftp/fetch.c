@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.32 1998/08/08 04:04:17 lukem Exp $	*/
+/*	$NetBSD: fetch.c,v 1.33 1998/08/08 04:40:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.32 1998/08/08 04:04:17 lukem Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.33 1998/08/08 04:40:50 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -732,7 +732,6 @@ auto_fetch(argc, argv, outfile)
 
 	ftpproxy = getenv(FTP_PROXY);
 	httpproxy = getenv(HTTP_PROXY);
-	host = path = dir = file = user = pass = NULL;
 
 	/*
 	 * Loop through as long as there's files to fetch.
@@ -812,17 +811,12 @@ auto_fetch(argc, argv, outfile)
 		}
 
 		/*
-		 * If dir is NULL, the file wasn't specified
-		 * (URL looked something like ftp://host)
-		 */
-		dir = path;
-		if (dir != NULL)
-			*dir++ = '\0';
-
-		/*
 		 * Extract the file and (if present) directory name.
 		 */
+		dir = path;
 		if (! EMPTYSTRING(dir)) {
+			if (*dir == '/')
+				dir++;		/* skip leading / */
 			cp = strrchr(dir, '/');
 			if (cp != NULL) {
 				*cp++ = '\0';
