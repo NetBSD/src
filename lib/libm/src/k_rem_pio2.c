@@ -127,7 +127,7 @@
  * to produce the hexadecimal values shown.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const int init_jk[] = {2,3,4,6}; /* initial value for jk */

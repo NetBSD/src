@@ -21,7 +21,7 @@
  *	Inexact flag raised if x not equal to rint(x).
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double

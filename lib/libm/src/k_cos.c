@@ -46,7 +46,7 @@
  *	   thus, reducing the rounding error in the subtraction.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double 

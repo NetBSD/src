@@ -18,7 +18,7 @@
  * Method: call gamma_r
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 extern int signgam;
 

@@ -15,7 +15,7 @@
  * fabs(x) returns the absolute value of x.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double one = 1.0;

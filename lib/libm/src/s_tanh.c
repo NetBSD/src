@@ -35,7 +35,7 @@
  *	only tanh(0)=0 is exact for finite argument.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double one=1.0, two=2.0, tiny = 1.0e-300;

@@ -45,7 +45,7 @@
  *		       = 1 - 2*(tan(y) - (tan(y)^2)/(1+tan(y)))
  */
 
-#include "fdlibm.h"
+#include <math.h>
 #ifdef __STDC__
 static const double 
 #else

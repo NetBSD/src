@@ -18,7 +18,7 @@
  * use __kernel_rem_pio2()
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 /*
  * Table of constants for 2/pi, 396 Hex digits (476 decimal) of 2/pi 

@@ -17,7 +17,7 @@
  * should use scalbn() instead.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #include <errno.h>
 

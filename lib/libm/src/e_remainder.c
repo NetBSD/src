@@ -20,7 +20,7 @@
  *	Based on fmod() return x-[x/p]chopped*p exactlp.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double zero = 0.0, one  = 1.0;

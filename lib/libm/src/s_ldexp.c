@@ -11,7 +11,7 @@
  * ====================================================
  */
 
-#include "fdlibm.h"
+#include <math.h>
 #include <errno.h>
 
 #ifdef __STDC__

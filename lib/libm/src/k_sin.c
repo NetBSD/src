@@ -39,7 +39,7 @@
  *		sin(x) = x + (S1*x + (x *(r-y/2)+y))
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double 

@@ -42,7 +42,7 @@
  *	TRIG(x) returns trig(x) nearly rounded 
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double one=1.0;

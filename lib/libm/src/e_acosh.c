@@ -26,7 +26,7 @@
  *	acosh(NaN) is NaN without signal.
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 static const double 

@@ -19,7 +19,7 @@
  * Method: See __ieee754_lgamma_r
  */
 
-#include "fdlibm.h"
+#include <math.h>
 
 #ifdef __STDC__
 	double __ieee754_gamma_r(double x, int *signgamp)
