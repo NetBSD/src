@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 1996/05/17 20:23:35 gwr Exp $
+#	$NetBSD: Makefile,v 1.39 1996/05/17 22:39:52 mark Exp $
 
 SUBDIR+=	bc cpio dc diff diff3 gawk grep groff
 SUBDIR+=	gzip rcs sdiff send-pr sort tar
@@ -9,6 +9,8 @@ SUBDIR+=	gzip rcs sdiff send-pr sort tar
 	(${MACHINE_ARCH} == "sparc") || \
 	(${MACHINE_ARCH} == "vax")
 SUBDIR+=        gas gcc gdb ld
+.elif	(${MACHINE_ARCH} == "arm32")
+SUBDIR+=	gcc ld
 .elif	(${MACHINE_ARCH} == "mips") 
 SUBDIR+=	gcc
 .endif
