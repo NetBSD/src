@@ -1398,6 +1398,7 @@
 ./usr/share/man/cat3/MD5Update.0
 ./usr/share/man/cat3/_longjmp.0
 ./usr/share/man/cat3/_setjmp.0
+./usr/share/man/cat3/a64l.0
 ./usr/share/man/cat3/abort.0
 ./usr/share/man/cat3/abs.0
 ./usr/share/man/cat3/acos.0
@@ -1745,6 +1746,7 @@
 ./usr/share/man/cat3/kvm_openfiles.0
 ./usr/share/man/cat3/kvm_read.0
 ./usr/share/man/cat3/kvm_write.0
+./usr/share/man/cat3/l64a.0
 ./usr/share/man/cat3/labs.0
 ./usr/share/man/cat3/lcong48.0
 ./usr/share/man/cat3/ldexp.0
@@ -2373,6 +2375,7 @@
 ./usr/share/man/man3/MD5Update.3
 ./usr/share/man/man3/_longjmp.3
 ./usr/share/man/man3/_setjmp.3
+./usr/share/man/man3/a64l.3
 ./usr/share/man/man3/abort.3
 ./usr/share/man/man3/abs.3
 ./usr/share/man/man3/acos.3
@@ -2720,6 +2723,7 @@
 ./usr/share/man/man3/kvm_openfiles.3
 ./usr/share/man/man3/kvm_read.3
 ./usr/share/man/man3/kvm_write.3
+./usr/share/man/man3/l64a.3
 ./usr/share/man/man3/labs.3
 ./usr/share/man/man3/lcong48.3
 ./usr/share/man/man3/ldexp.3
