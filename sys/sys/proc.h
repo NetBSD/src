@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.191 2004/03/26 15:01:16 drochner Exp $	*/
+/*	$NetBSD: proc.h,v 1.192 2004/04/17 15:17:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -427,7 +427,6 @@ struct pgrp *pg_find(pid_t, uint);	/* Find process group by id */
 #define pgfind(pgid) pg_find((pgid), PFIND_UNLOCK)
 
 struct simplelock;
-int	chgproccnt(uid_t, int);
 int	enterpgrp(struct proc *, pid_t, int);
 void	fixjobc(struct proc *, struct pgrp *, int);
 int	inferior(struct proc *, struct proc *);
