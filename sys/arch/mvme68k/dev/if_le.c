@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 1998/08/22 10:55:33 scw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.19.6.1 1999/01/31 14:12:30 scw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -134,7 +134,8 @@ extern struct cfdriver le_cd;
 hide void le_pcc_wrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
 hide u_int16_t le_pcc_rdcsr __P((struct lance_softc *, u_int16_t));
 
-void *ledatabuf; /* XXXCDC hack from pmap bootstrap */
+extern void	*ether_data_buff;
+extern u_long	ether_data_buff_size;
 
 hide void
 le_pcc_wrcsr(sc, port, val)
@@ -190,10 +191,10 @@ le_pcc_attach(parent, self, aux)
 	/* Map control registers. */
 	lesc->sc_r1 = (struct lereg1 *)PCC_VADDR(pa->pa_offset);
 
-	sc->sc_mem = ledatabuf;		/* XXX */
+	sc->sc_mem = ether_data_buff;
 	sc->sc_conf3 = LE_C3_BSWP;
 	sc->sc_addr = (u_long)sc->sc_mem;
-	sc->sc_memsize = 4 * NBPG;	/* XXX */
+	sc->sc_memsize = ether_data_buff_size;
 
 	myetheraddr(sc->sc_enaddr);
 
