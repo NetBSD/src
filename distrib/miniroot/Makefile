@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2000/11/01 07:57:59 garbled Exp $
+#	$NetBSD: Makefile,v 1.37 2001/02/25 03:54:25 jmc Exp $
 
 .include "../../Makefile.inc"
 .include <bsd.own.mk>
@@ -68,8 +68,8 @@ unconfig:
 ${CBIN}.conf: ${LISTS}
 	awk -f ${.CURDIR}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
-	${CRUNCHGEN} -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
+	${CRUNCHGEN} -f -D ${.CURDIR}/../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	${MAKE} -f ${CBIN}.mk all
