@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 1995/03/18 15:01:06 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 1998/10/29 20:12:56 bad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,3 +41,4 @@
 #define	_PATH_HALT	"/sbin/halt"
 #define	_PATH_REBOOT	"/sbin/reboot"
 #define	_PATH_WALL	"/usr/bin/wall"
+#define _PATH_RCSHUTDOWN	"/etc/rc.shutdown"

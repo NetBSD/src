@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.32 1998/10/09 03:01:40 enami Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.33 1998/10/29 20:12:56 bad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.32 1998/10/09 03:01:40 enami Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.33 1998/10/29 20:12:56 bad Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,7 @@ static char mbuf[BUFSIZ];
 void badtime __P((void));
 void die_you_gravy_sucking_pig_dog __P((void));
 void doitfast __P((void));
+void dorcshutdown __P((void));
 void finish __P((int));
 void getoffset __P((char *));
 void loop __P((void));
@@ -355,6 +356,7 @@ die_you_gravy_sucking_pig_dog()
 	}
 	if (dofast)
 		doitfast();
+	dorcshutdown();
 	if (doreboot || dohalt) {
 		char *args[16], **arg, *path;
 
@@ -475,6 +477,15 @@ getoffset(timearg)
 		badtime();
 	if ((offset = shuttime - now) < 0)
 		errx(1, "time is already past");
+}
+
+void
+dorcshutdown()
+{
+	(void)printf("\r\nAbout to run shutdown hooks...\r\n");
+	(void)system(_PATH_RCSHUTDOWN);
+	(void)sleep(5);		/* Give operator a chance to abort this. */
+	(void)printf("\r\nDone running shutdown hooks.\r\n");
 }
 
 #define	FSMSG	"fastboot file for fsck\n"
