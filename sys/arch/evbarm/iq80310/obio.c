@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.8 2002/09/27 03:17:48 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.9 2002/09/27 20:31:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -59,7 +59,7 @@
 int	obio_match(struct device *, struct cfdata *, void *);
 void	obio_attach(struct device *, struct device *, void *);
 
-struct cfattach obio_ca = {
+const struct cfattach obio_ca = {
 	sizeof(struct device), obio_match, obio_attach,
 };
 

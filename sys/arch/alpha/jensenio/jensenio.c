@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio.c,v 1.5 2002/09/27 03:17:43 thorpej Exp $ */
+/* $NetBSD: jensenio.c,v 1.6 2002/09/27 20:29:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.5 2002/09/27 03:17:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio.c,v 1.6 2002/09/27 20:29:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ const struct jensenio_dev {
 int	jensenio_match(struct device *, struct cfdata *, void *);
 void	jensenio_attach(struct device *, struct device *, void *);
 
-struct cfattach jensenio_ca = {
+const struct cfattach jensenio_ca = {
 	sizeof(struct device), jensenio_match, jensenio_attach
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tlsb.c,v 1.23 2002/09/27 03:17:44 thorpej Exp $ */
+/* $NetBSD: tlsb.c,v 1.24 2002/09/27 20:29:41 thorpej Exp $ */
 /*
  * Copyright (c) 1997 by Matthew Jacob
  * NASA AMES Research Center.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.23 2002/09/27 03:17:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.24 2002/09/27 20:29:41 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: tlsb.c,v 1.23 2002/09/27 03:17:44 thorpej Exp $");
 static int	tlsbmatch __P((struct device *, struct cfdata *, void *));
 static void	tlsbattach __P((struct device *, struct device *, void *));
 
-struct cfattach tlsb_ca = {
+const struct cfattach tlsb_ca = {
 	sizeof (struct device), tlsbmatch, tlsbattach
 };
 

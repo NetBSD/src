@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.27 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: grf.c,v 1.28 2002/09/27 20:30:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -99,7 +99,7 @@ void grfbusattach __P((struct device *, struct device *, void *));
  */
 struct grf_softc *grfsp[NGRF]; /* XXX */
 
-struct cfattach grfbus_ca = {
+const struct cfattach grfbus_ca = {
 	sizeof(struct device), grfbusmatch, grfbusattach
 };
 

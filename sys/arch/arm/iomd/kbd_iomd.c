@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_iomd.c,v 1.3 2002/09/27 15:35:46 provos Exp $	*/
+/*	$NetBSD: kbd_iomd.c,v 1.4 2002/09/27 20:30:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -67,7 +67,7 @@ extern struct kbd_softc *console_kbd;
 
 /* Device structures */
 
-struct cfattach kbd_iomd_ca = {
+const struct cfattach kbd_iomd_ca = {
 	sizeof(struct kbd_softc), kbd_iomd_probe, kbd_iomd_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.2 2002/03/17 19:40:37 atatat Exp $	*/
+/*	$NetBSD: mms.c,v 1.3 2002/09/27 20:31:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ struct mms_softc {
 int	mms_match(struct device *, struct cfdata *, void *);
 void	mms_attach(struct device *, struct device *, void *);
 
-struct cfattach mms_ca = {
+const struct cfattach mms_ca = {
 	sizeof(struct mms_softc), mms_match, mms_attach,
 };
 

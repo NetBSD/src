@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.8 2002/09/27 15:35:30 provos Exp $	*/
+/*	$NetBSD: asc.c,v 1.9 2002/09/27 20:29:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.8 2002/09/27 15:35:30 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.9 2002/09/27 20:29:15 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -122,7 +122,7 @@ void asc_dump		(void);
 int	asc_dmadebug = 0;
 #endif
 
-struct cfattach asc_ca = {
+const struct cfattach asc_ca = {
 	sizeof(struct asc_softc), ascmatch, ascattach
 };
 

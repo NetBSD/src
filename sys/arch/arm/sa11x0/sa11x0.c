@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0.c,v 1.7 2002/09/27 15:35:49 provos Exp $	*/
+/*	$NetBSD: sa11x0.c,v 1.8 2002/09/27 20:30:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, The NetBSD Foundation, Inc.  All rights reserved.
@@ -86,7 +86,7 @@ static int 	sa11x0_search(struct device *, struct cfdata *, void *);
 static int	sa11x0_print(void *, const char *);
 
 /* attach structures */
-struct cfattach saip_ca = {
+const struct cfattach saip_ca = {
 	sizeof(struct sa11x0_softc), sa11x0_match, sa11x0_attach
 };
 

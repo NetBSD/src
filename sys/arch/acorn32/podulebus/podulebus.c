@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.11 2002/09/27 15:35:31 provos Exp $ */
+/* $NetBSD: podulebus.c,v 1.12 2002/09/27 20:29:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.11 2002/09/27 15:35:31 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.12 2002/09/27 20:29:17 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -525,7 +525,7 @@ podulebusattach(parent, self, aux)
 }
 
 
-struct cfattach podulebus_ca = {
+const struct cfattach podulebus_ca = {
 	sizeof(struct device), podulebusmatch, podulebusattach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcconsole.c,v 1.4 2002/09/25 22:21:05 thorpej Exp $	*/
+/*	$NetBSD: vidcconsole.c,v 1.5 2002/09/27 20:30:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -106,7 +106,7 @@ vidcconsole_attach(parent, self, aux)
 	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
 }
 
-struct cfattach vidcconsole_ca = {
+const struct cfattach vidcconsole_ca = {
 	sizeof (struct vidcconsole_softc), vidcconsole_probe, vidcconsole_attach
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: btl.c,v 1.8 2002/04/05 18:27:45 bouyer Exp $	*/
+/*	$NetBSD: btl.c,v 1.9 2002/09/27 20:30:24 thorpej Exp $	*/
 /*	NetBSD: bt.c,v 1.10 1996/05/12 23:51:54 mycroft Exp 	*/
 
 #undef BTDIAG
@@ -167,7 +167,7 @@ int	btprobe __P((struct device *, struct cfdata *, void *));
 void	btattach __P((struct device *, struct device *, void *));
 int	btprint __P((void *, const char *));
 
-struct cfattach btl_ca = {
+const struct cfattach btl_ca = {
 	sizeof(struct bt_softc), btprobe, btattach
 };
 

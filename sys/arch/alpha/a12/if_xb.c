@@ -1,4 +1,4 @@
-/* $NetBSD: if_xb.c,v 1.9 2001/08/20 12:20:04 wiz Exp $ */
+/* $NetBSD: if_xb.c,v 1.10 2002/09/27 20:29:24 thorpej Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -74,7 +74,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.9 2001/08/20 12:20:04 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xb.c,v 1.10 2002/09/27 20:29:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ struct xb_softc {
 	struct	device d;
 } xb_softc;
 
-struct cfattach xb_ca = {
+const struct cfattach xb_ca = {
 	sizeof(struct xb_softc), xbmatch, xbattach,
 };
 
@@ -234,7 +234,7 @@ xbattach(parent, self, aux)
 	xbfound = 1;
 	ccp = &xb_configuration;
 	xb_init_config(ccp, 1);
-	printf(": driver %s mtu %d\n", "$Revision: 1.9 $", xbi.if_mtu);
+	printf(": driver %s mtu %d\n", "$Revision: 1.10 $", xbi.if_mtu);
 }
 
 static void

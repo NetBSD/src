@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.32 2002/08/03 00:12:57 itojun Exp $ */
+/*	$NetBSD: grf_ul.c,v 1.33 2002/09/27 20:30:03 thorpej Exp $ */
 #define UL_DEBUG
 
 /*-
@@ -40,7 +40,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.32 2002/08/03 00:12:57 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_ul.c,v 1.33 2002/09/27 20:30:03 thorpej Exp $");
 
 #include "grful.h"
 #if NGRFUL > 0
@@ -445,7 +445,7 @@ void grfulattach(struct device *, struct device *, void *);
 int grfulprint(void *, const char *);
 int grfulmatch(struct device *, struct cfdata *, void *);
 
-struct cfattach grful_ca = {
+const struct cfattach grful_ca = {
 	sizeof(struct grf_ul_softc), grfulmatch, grfulattach
 };
 

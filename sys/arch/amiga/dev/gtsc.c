@@ -1,4 +1,4 @@
-/*	$NetBSD: gtsc.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $ */
+/*	$NetBSD: gtsc.c,v 1.31 2002/09/27 20:30:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.30 2002/01/28 09:56:57 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtsc.c,v 1.31 2002/09/27 20:30:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ int gtsc_clock_override = 0;
 int gtsc_debug = 0;
 #endif
 
-struct cfattach gtsc_ca = {
+const struct cfattach gtsc_ca = {
 	sizeof(struct sbic_softc), gtscmatch, gtscattach
 };
 
