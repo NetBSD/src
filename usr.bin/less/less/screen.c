@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.5 1997/09/21 12:41:03 mrg Exp $	*/
+/*	$NetBSD: screen.c,v 1.6 1998/02/10 03:53:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1984,1985,1989,1994,1995,1996  Mark Nudelman
@@ -431,7 +431,7 @@ raw_mode(on)
 		 */
 		s = save_term;
 	}
-	tcsetattr(2, TCSADRAIN, &s);
+	tcsetattr(2, TCSANOW, &s);
 #if MUST_SET_LINE_DISCIPLINE
 	if (!on)
 	{
