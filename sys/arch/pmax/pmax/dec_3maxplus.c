@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_3maxplus.c,v 1.3 1998/03/26 03:12:05 thorpej Exp $	*/
+/*	$NetBSD: dec_3maxplus.c,v 1.4 1998/03/26 06:32:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.3 1998/03/26 03:12:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.4 1998/03/26 06:32:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -121,7 +121,6 @@ int		dec_3maxplus_intr __P((u_int mask, u_int pc,
 
 void		dec_3maxplus_cons_init __P((void));
 void		dec_3maxplus_device_register __P((struct device *, void *));
-const char*	dec_3maxplus_model_name __P((void));
 static void 	dec_3maxplus_errintr __P ((void));
 
 
@@ -140,10 +139,6 @@ void
 dec_3maxplus_init()
 {
 
-	platform.family = "Decstation 5000/240 or 5000/260 (3MAXPLUS)";
-
-	platform.model = "5000/2xx";
-
 	platform.iobus = "tcioasic";
 
 	platform.os_init = dec_3maxplus_os_init;
@@ -151,6 +146,8 @@ dec_3maxplus_init()
 	platform.cons_init = dec_3maxplus_cons_init;
 	platform.device_register = dec_3maxplus_device_register;
 
+	sprintf(cpu_model, "DECstation 5000/2%c0 (3MAXPLUS)",
+	    CPUISMIPS3 ? '6' : '4');
 
 	dec_3maxplus_os_init();
 }
@@ -202,8 +199,6 @@ dec_3maxplus_os_init()
 	/* clear any memory errors from probes */
 	*(volatile u_int *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
 	wbflush();
-
-	sprintf(cpu_model, "5000/2%d", cpu_mhz);
 }
 
 
@@ -231,14 +226,6 @@ dec_3maxplus_cons_init()
 {
 }
 
-
-const char*
-dec_3maxplus_model_name()
-{
-	return (CPUISMIPS3) ? "Decstation 5000/260"
-			    : "Decstation 5000/240";
-}
-  
 
 void
 dec_3maxplus_device_register(dev, aux)
