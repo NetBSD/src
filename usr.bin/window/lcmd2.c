@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lcmd2.c	3.23 (Berkeley) 6/17/90";*/
-static char rcsid[] = "$Id: lcmd2.c,v 1.3 1993/12/02 19:58:29 pk Exp $";
+static char rcsid[] = "$Id: lcmd2.c,v 1.4 1994/12/24 17:07:45 cgd Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: lcmd2.c,v 1.3 1993/12/02 19:58:29 pk Exp $";
 #include <sys/types.h>
 #include <sys/resource.h>
 #include "alias.h"
+#include <string.h>
 
 /*ARGSUSED*/
 l_iostat(v, a)
@@ -221,7 +222,7 @@ struct value *v, *a;
 		error("Can't open variable window: %s.", wwerror());
 		return;
 	}
-	if (var_walk(printvar, (int)w) >= 0)
+	if (var_walk(printvar, (long)w) >= 0)
 		waitnl(w);
 	closeiwin(w);
 }
@@ -304,7 +305,7 @@ l_alias(v, a)
 			error("Can't open alias window: %s.", wwerror());
 			return;
 		}
-		if (alias_walk(printalias, (int)w) >= 0)
+		if (alias_walk(printalias, (long)w) >= 0)
 			waitnl(w);
 		closeiwin(w);
 	} else {
