@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.130 2003/02/01 06:23:55 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.131 2003/02/20 22:16:08 atatat Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.130 2003/02/01 06:23:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.131 2003/02/20 22:16:08 atatat Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -1081,6 +1081,7 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 {
 	struct vm_map_entry *entry, *next, *tmp;
 	vaddr_t end, orig_hint;
+	const int topdown = map->flags & VM_MAP_TOPDOWN;
 	UVMHIST_FUNC("uvm_map_findspace");
 	UVMHIST_CALLED(maphist);
 
@@ -1114,6 +1115,23 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	 * something at this address, we have to start after it.
 	 */
 
+	/*
+	 * @@@: there are four, no, eight cases to consider.
+	 *
+	 * 0: found,     fixed,     bottom up -> fail
+	 * 1: found,     fixed,     top down  -> fail
+	 * 2: found,     not fixed, bottom up -> start after tmp->end, loop up
+	 * 3: found,     not fixed, top down  -> start before tmp->start, loop down
+	 * 4: not found, fixed,     bottom up -> check tmp->next->start, fail
+	 * 5: not found, fixed,     top down  -> check tmp->next->start, fail
+	 * 6: not found, not fixed, bottom up -> check tmp->next->start, loop up
+	 * 7: not found, not fixed, top down  -> check tmp->next->start, loop down
+	 *
+	 * as you can see, it reduces to roughly five cases, and that
+	 * adding top down mapping only adds one unique case (without
+	 * it, there would be four cases).
+	 */
+
 	if ((flags & UVM_FLAG_FIXED) == 0 && hint == map->min_offset) {
 		if ((entry = map->first_free) != &map->header)
 			hint = entry->end;
@@ -1125,7 +1143,11 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 				    0, 0, 0, 0);
 				return(NULL);
 			}
-			hint = tmp->end;
+			hint = topdown ? tmp->start - length : tmp->end;
+		} else if ((tmp->next == &map->header ||
+			    tmp->next->start >= hint + length)) {
+			entry = tmp;
+			goto quickfind;
 		}
 		entry = tmp;
 	}
@@ -1137,7 +1159,9 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 	 *	 next->start  = VA of end of current gap
 	 */
 
-	for (;; hint = (entry = next)->end) {
+	for (next = NULL;; hint = topdown ?
+		(entry = next)->start - length :
+		(entry = next)->end) {
 
 		/*
 		 * Find the end of the proposed new region.  Be sure we didn't
@@ -1176,15 +1200,23 @@ uvm_map_findspace(map, hint, length, result, uobj, uoffset, align, flags)
 			}
 			return (NULL);
 		}
-		next = entry->next;
-		if (next == &map->header || next->start >= end)
+		if (!topdown || next == NULL) {
+			next = entry->next;
+		} else
+			next = entry->prev;
+		if (next == &map->header ||
+		    (!topdown && next->start >= end) ||
+		    ( topdown && next->end   <= hint))
 			break;
 		if (flags & UVM_FLAG_FIXED) {
 			UVMHIST_LOG(maphist,"<- fixed mapping failed", 0,0,0,0);
 			return(NULL); /* only one shot at it ... */
 		}
 	}
+ quickfind:
 	SAVE_HINT(map, map->hint, entry);
+	if (topdown && entry->start == hint + length)
+		entry = entry->prev;
 	*result = hint;
 	UVMHIST_LOG(maphist,"<- got it!  (result=0x%x)", hint, 0,0,0);
 	return (entry);
@@ -1358,6 +1390,7 @@ uvm_unmap_remove(map, start, end, entry_list)
 
 		uvm_map_entry_unlink(map, entry);
 		map->size -= len;
+		entry->prev = NULL;
 		entry->next = first_entry;
 		first_entry = entry;
 		entry = next;
@@ -2954,7 +2987,11 @@ uvmspace_init(vm, pmap, min, max)
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
 	memset(vm, 0, sizeof(*vm));
-	uvm_map_setup(&vm->vm_map, min, max, VM_MAP_PAGEABLE);
+	uvm_map_setup(&vm->vm_map, min, max, VM_MAP_PAGEABLE
+#ifdef __USING_TOPDOWN_VM
+	    | VM_MAP_TOPDOWN
+#endif
+	    );
 	if (pmap)
 		pmap_reference(pmap);
 	else

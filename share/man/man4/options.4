@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.195 2003/02/10 15:30:52 wiz Exp $
+.\"	$NetBSD: options.4,v 1.196 2003/02/20 22:16:09 atatat Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1719,6 +1719,27 @@ Note that this sets the value of the
 variable which may be changed at run time -- see
 .Xr sysctl 8
 for details.
+.It Cd options USE_TOPDOWN_VM
+User space memory allocations (as made by
+.Xr mmap 2 )
+will be arranged in a
+.Dq top down
+fashion instead of the traditional
+.Dq upwards from MAXDSIZ \+ vm_daddr
+method.
+This includes the placement of
+.Xr ld.so 1 .
+Arranging memory in this manner allows either (or both of) the heap or
+.Xr mmap 2
+allocated space to grow larger than traditionally possible.
+This option is not available on all ports, but is instead expected to be
+offered on a port-by-port basis, after which some ports will commit to
+using it by default.
+See the files
+.Pa /usr/include/uvm/uvm_param.h
+for some implementation details, and
+.Pa /usr/include/machine/vmparam.h
+for port specific details including availability.
 .El
 .Ss amiga-specific Options
 .Bl -ohang
