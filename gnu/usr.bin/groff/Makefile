@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.8 1997/10/18 05:58:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 1998/09/29 23:47:36 lukem Exp $
 
 SUBDIR=	libgroff libdriver libbib\
 	groff troff nroff tbl pic eqn grog grops grotty grodvi grolj4 \
-	refer lookbib indxbib lkbib hpftodit tfmtodit addftinfo pfbtops psbb \
-	devices tmac mm man
+	refer lookbib indxbib lkbib hpftodit tfmtodit addftinfo pfbtops psbb
+
+.if !defined(NOSHARE) || \
+	make(clean) || make(cleandir) || make(distclean) || make(obj)
+SUBDIR+=devices tmac mm man
+.endif
 
 all-addftinfo all-eqn all-grodvi all-groff all-grolj4 all-grops all-grotty \
 all-hpftodit all-indxbib all-lkbib all-lookbib all-pfbtops all-pic all-refer \
