@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.h	5.7 (Berkeley) 5/9/91
- *	$Id: isa.h,v 1.11.2.4 1993/10/06 12:12:38 mycroft Exp $
+ *	$Id: isa.h,v 1.11.2.5 1993/10/09 22:18:54 mycroft Exp $
  */
 
 /*
@@ -105,12 +105,6 @@ unsigned kbd_8042cmd __P((int));
 #define	COMPAQ_RAMSETUP	0x80c00002	/* Compaq RAM setup */
 #define	WEITEK_FPU	0xC0000000	/* WTL 2167 */
 #define	CYRIX_EMC	0xC0000000	/* Cyrix EMC */
-
-/* stuff that used to be in pccons.c */
-#define MONO_BASE	0x3B4
-#define MONO_BUF	0xfe0B0000
-#define CGA_BASE	0x3D4
-#define CGA_BUF		0xfe0B8000
 
 /*
  * size of dma bounce buffer in pages
