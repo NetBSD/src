@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.20 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.21 2003/08/20 21:48:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.20 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.21 2003/08/20 21:48:42 fvdl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -70,8 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.20 2003/01/17 23:10:32 thorpej Ex
 #include <compat/svr4/svr4_syscall.h>
 #include <machine/svr4_machdep.h>
 
-void svr4_syscall_plain __P((struct trapframe));
-void svr4_syscall_fancy __P((struct trapframe));
+void svr4_syscall_plain __P((struct trapframe *));
+void svr4_syscall_fancy __P((struct trapframe *));
 extern struct sysent svr4_sysent[];
 
 void
@@ -100,7 +100,7 @@ svr4_syscall_intern(p)
  */
 void
 svr4_syscall_plain(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -112,9 +112,9 @@ svr4_syscall_plain(frame)
 	uvmexp.syscalls++;
 	l = curlwp;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = svr4_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -150,9 +150,9 @@ svr4_syscall_plain(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -160,7 +160,7 @@ svr4_syscall_plain(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -168,8 +168,8 @@ svr4_syscall_plain(frame)
 	default:
 	bad:
 		error = native_to_svr4_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 
@@ -186,7 +186,7 @@ svr4_syscall_plain(frame)
  */
 void
 svr4_syscall_fancy(frame)
-	struct trapframe frame;
+	struct trapframe *frame;
 {
 	register caddr_t params;
 	register const struct sysent *callp;
@@ -200,9 +200,9 @@ svr4_syscall_fancy(frame)
 	l = curlwp;
 	p = l->l_proc;
 
-	code = frame.tf_eax;
+	code = frame->tf_eax;
 	callp = svr4_sysent;
-	params = (caddr_t)frame.tf_esp + sizeof(int);
+	params = (caddr_t)frame->tf_esp + sizeof(int);
 
 	switch (code) {
 	case SYS_syscall:
@@ -236,9 +236,9 @@ svr4_syscall_fancy(frame)
 
 	switch (error) {
 	case 0:
-		frame.tf_eax = rval[0];
-		frame.tf_edx = rval[1];
-		frame.tf_eflags &= ~PSL_C;	/* carry bit */
+		frame->tf_eax = rval[0];
+		frame->tf_edx = rval[1];
+		frame->tf_eflags &= ~PSL_C;	/* carry bit */
 		break;
 	case ERESTART:
 		/*
@@ -246,7 +246,7 @@ svr4_syscall_fancy(frame)
 		 * the kernel through the trap or call gate.  We pushed the
 		 * size of the instruction into tf_err on entry.
 		 */
-		frame.tf_eip -= frame.tf_err;
+		frame->tf_eip -= frame->tf_err;
 		break;
 	case EJUSTRETURN:
 		/* nothing to do */
@@ -254,8 +254,8 @@ svr4_syscall_fancy(frame)
 	default:
 	bad:
 		error = native_to_svr4_errno[error];
-		frame.tf_eax = error;
-		frame.tf_eflags |= PSL_C;	/* carry bit */
+		frame->tf_eax = error;
+		frame->tf_eflags |= PSL_C;	/* carry bit */
 		break;
 	}
 

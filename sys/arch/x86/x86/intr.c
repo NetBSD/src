@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2003/07/14 22:32:39 lukem Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 2003/08/20 21:48:47 fvdl Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2003/07/14 22:32:39 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2003/08/20 21:48:47 fvdl Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -626,16 +626,16 @@ cpu_intr_init(struct cpu_info *ci)
 
 #ifdef MULTIPROCESSOR
 void
-x86_intlock(struct intrframe iframe)
+x86_intlock(struct intrframe *iframe)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (iframe->if_ppl < IPL_SCHED)
 		spinlockmgr(&kernel_lock, LK_EXCLUSIVE|LK_CANRECURSE, 0);
 }
 
 void
-x86_intunlock(struct intrframe iframe)
+x86_intunlock(struct intrframe *iframe)
 {
-	if (iframe.if_ppl < IPL_SCHED)
+	if (iframe->if_ppl < IPL_SCHED)
 		spinlockmgr(&kernel_lock, LK_RELEASE, 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.S,v 1.5 2003/08/07 16:27:56 agc Exp $	*/
+/*	$NetBSD: svr4_sigcode.S,v 1.6 2003/08/20 21:48:42 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@ IDTVEC(svr4_fasttrap)
 	CLEAR_ASTPENDING(%eax)
 	sti
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
+	pushl	%esp
 	call	_C_LABEL(trap)
+	addl	$4,%esp
 	jmp	2b
 1:	INTRFASTEXIT
