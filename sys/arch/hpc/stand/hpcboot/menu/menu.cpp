@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: menu.cpp,v 1.6 2003/12/23 15:08:33 uwe Exp $	*/
+/* -*-C++-*-	$NetBSD: menu.cpp,v 1.7 2003/12/23 15:10:01 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ MainTabWindow::layout()
 	} else if (height <= 240) {
 		x = 250, y = 5;
 	} else {
-		x = 5, y = 125;		
+		x = 5, y = 125;
 	}
 
 	HWND h;
@@ -381,7 +381,7 @@ ConsoleTabWindow::init(HWND w)
 	MoveWindow(_edit, 5, 60, _rect.right - _rect.left - 10,
 	    _rect.bottom - _rect.top - 60, TRUE);
 	Edit_FmtLines(_edit, TRUE);
-	
+
 	// log file.
 	_filename_edit = GetDlgItem(w, IDC_CONS_FILENAME);
 	_filesave = FALSE;
@@ -432,7 +432,7 @@ ConsoleTabWindow::command(int id, int msg)
 		hook = &menu._cons_hook[id - IDC_CONS_BTN_];
 		if (hook->func)
 			hook->func(hook->arg, menu._cons_parameter);
-			
+
 		break;
 	}
 }
@@ -443,7 +443,7 @@ ConsoleTabWindow::_open_log_file()
 	TCHAR path[MAX_PATH];
 	TCHAR filename[MAX_PATH];
 	TCHAR filepath[MAX_PATH];
-	
+
 	if (!_find_pref_dir(path)) {
 		print(L"couldn't find temporary directory.\n", TRUE);
 		return FALSE;
@@ -458,7 +458,7 @@ ConsoleTabWindow::_open_log_file()
 
 	wsprintf(path, TEXT("log file is %s\n"), filepath);
 	print(path, TRUE);
-	
+
 	return TRUE;
 }
 
