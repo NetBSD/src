@@ -27,11 +27,11 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.6 1994/03/19 08:02:14 cgd Exp $
+.\"	$Id: ld.1,v 1.7 1994/06/24 13:33:40 pk Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
-.Os NetBSD 0.9
+.Os NetBSD
 .Sh NAME
 .Nm ld
 .Nd link editor
@@ -48,6 +48,7 @@
 .Op Fl e Ar entry
 .Op Fl l Ar library-specifier
 .Op Fl L Ar library-search-path
+.Op Fl nostdlib
 .Op Fl o Ar filename
 .Op Fl T Ar address
 .Op Fl u Ar symbol
@@ -144,6 +145,15 @@ values assigned to (global) symbols in the output file.
 Produce a OMAGIC output file.
 .It Fl n
 Produce a NMAGIC output file.
+.It Fl nostdlib
+Do not search the built-in path
+.Po
+usually
+.Dq /usr/lib
+.Pc
+for
+.Ar -l
+specified libraries.
 .It Fl o Ar filename
 Specifies the name of the output file. Defaults to
 .Dq a.out.
