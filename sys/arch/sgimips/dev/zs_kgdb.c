@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.6 2003/07/15 03:35:52 lukem Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7 2004/02/08 13:15:42 sekiya Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.7 2004/02/08 13:15:42 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,15 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.6 2003/07/15 03:35:52 lukem Exp $");
  *   (gdb) target remote /dev/ttyb
  */
 
-void zs_kgdb_init __P((void));
-void zskgdb __P((struct zs_chanstate *cs));
+void zs_kgdb_init (void);
+void zskgdb (struct zs_chanstate *);
 
-static void	zs_setparam __P((struct zs_chanstate *, int, int));
+static void	zs_setparam (struct zs_chanstate *, int, int);
 static struct	zsops zsops_kgdb;
 
-extern struct	zschan *zs_get_chan_addr (int zs_unit, int channel);
-extern int	zs_getc __P((void *arg));
-extern void	zs_putc __P((void *arg, int c));
+extern struct	zschan *zs_get_chan_addr (int, int);
+extern int	zs_getc (void *);
+extern void	zs_putc (void *, int);
 
 static u_char zs_kgdb_regs[16] = {
 	0,	/* 0: CMD (reset, etc.) */
@@ -203,10 +203,10 @@ zskgdb(cs)
  * Interface to the lower layer (zscc)
  ****************************************************************/
 
-static void zs_kgdb_rxint __P((struct zs_chanstate *));
-static void zs_kgdb_stint __P((struct zs_chanstate *, int));
-static void zs_kgdb_txint __P((struct zs_chanstate *));
-static void zs_kgdb_softint __P((struct zs_chanstate *));
+static void zs_kgdb_rxint (struct zs_chanstate *);
+static void zs_kgdb_stint (struct zs_chanstate *, int);
+static void zs_kgdb_txint (struct zs_chanstate *);
+static void zs_kgdb_softint (struct zs_chanstate *);
 
 static struct zsops zsops_kgdb = {
 	zs_kgdb_rxint,		/* receive char available */
