@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.16 1997/05/02 14:24:28 christos Exp $	*/
+/*	$NetBSD: make.h,v 1.17 1997/05/08 21:24:46 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -210,6 +210,7 @@ typedef struct GNode {
 #define OP_NOTMAIN	0x00008000  /* The node is exempt from normal 'main
 				     * target' processing in parse.c */
 #define OP_PHONY	0x00010000  /* Not a file target; run always */
+#define OP_NOPATH	0x00020000  /* Don't search for file in the path */
 /* Attributes applied by PMake */
 #define OP_TRANSFORM	0x80000000  /* The node is a transformation rule */
 #define OP_MEMBER 	0x40000000  /* Target is a member of an archive */

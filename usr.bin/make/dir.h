@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
+/*	$NetBSD: dir.h,v 1.5 1997/05/08 21:24:42 gwr Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -54,13 +54,13 @@ typedef struct Path {
     Hash_Table    files;    	/* Hash table of files in directory */
 } Path;
 
-void Dir_Init __P((void));
+void Dir_Init __P((const char *));
 void Dir_End __P((void));
 Boolean Dir_HasWildcards __P((char *));
 void Dir_Expand __P((char *, Lst, Lst));
 char *Dir_FindFile __P((char *, Lst));
 int Dir_MTime __P((GNode *));
-void Dir_AddDir __P((Lst, char *));
+Path *Dir_AddDir __P((Lst, const char *));
 char *Dir_MakeFlags __P((char *, Lst));
 void Dir_ClearPath __P((Lst));
 void Dir_Concat __P((Lst, Lst));
