@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.3 1999/10/20 15:10:00 hubertf Exp $	*/
+/*	$NetBSD: shf.c,v 1.3.6.1 2002/02/26 19:50:53 he Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -357,7 +357,6 @@ shf_emptybuf(shf, flags)
 		shf->rp = nbuf + (shf->rp - shf->buf);
 		shf->wp = nbuf + (shf->wp - shf->buf);
 		shf->rbsize += shf->wbsize;
-		shf->wbsize += shf->wbsize;
 		shf->wnleft += shf->wbsize;
 		shf->wbsize *= 2;
 		shf->buf = nbuf;
