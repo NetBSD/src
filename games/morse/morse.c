@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.9 2000/05/08 07:56:04 mycroft Exp $	*/
+/*	$NetBSD: morse.c,v 1.10 2000/07/03 03:57:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,12 +43,13 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.9 2000/05/08 07:56:04 mycroft Exp $");
+__RCSID("$NetBSD: morse.c,v 1.10 2000/07/03 03:57:42 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 

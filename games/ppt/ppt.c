@@ -1,4 +1,4 @@
-/*	$NetBSD: ppt.c,v 1.8 2000/05/08 07:56:04 mycroft Exp $	*/
+/*	$NetBSD: ppt.c,v 1.9 2000/07/03 03:57:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -43,11 +43,12 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ppt.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ppt.c,v 1.8 2000/05/08 07:56:04 mycroft Exp $");
+__RCSID("$NetBSD: ppt.c,v 1.9 2000/07/03 03:57:43 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 	int	main __P((int, char *[]));

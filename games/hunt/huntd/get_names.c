@@ -1,4 +1,4 @@
-/*	$NetBSD: get_names.c,v 1.3 1998/07/06 07:00:31 mrg Exp $	*/
+/*	$NetBSD: get_names.c,v 1.4 2000/07/03 03:57:41 matt Exp $	*/
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.  The Berkeley software License Agreement
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_names.c,v 1.3 1998/07/06 07:00:31 mrg Exp $");
+__RCSID("$NetBSD: get_names.c,v 1.4 2000/07/03 03:57:41 matt Exp $");
 #endif /* not lint */
 
 #include "bsd.h"
@@ -17,6 +17,7 @@ __RCSID("$NetBSD: get_names.c,v 1.3 1998/07/06 07:00:31 mrg Exp $");
 # include	<sys/param.h>
 # include	<netdb.h>
 # include	<stdio.h>
+# include	<stdlib.h>
 # include	<string.h>
 # include	<unistd.h>
 # include	"hunt.h"

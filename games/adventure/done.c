@@ -1,4 +1,4 @@
-/*	$NetBSD: done.c,v 1.6 1998/09/13 15:21:36 hubertf Exp $	*/
+/*	$NetBSD: done.c,v 1.7 2000/07/03 03:57:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,13 +43,14 @@
 #if 0
 static char sccsid[] = "@(#)done.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: done.c,v 1.6 1998/09/13 15:21:36 hubertf Exp $");
+__RCSID("$NetBSD: done.c,v 1.7 2000/07/03 03:57:39 matt Exp $");
 #endif
 #endif /* not lint */
 
 /*      Re-coding of advent in C: termination routines */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "hdr.h"
 #include "extern.h"
 

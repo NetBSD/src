@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 1999/09/12 09:02:23 jsm Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2000/07/03 03:57:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.10 1999/09/12 09:02:23 jsm Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2000/07/03 03:57:43 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ __RCSID("$NetBSD: init.c,v 1.10 1999/09/12 09:02:23 jsm Exp $");
  *
  */
 
+#include <stdlib.h>
 #include <fcntl.h>
 
 #include "rogue.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.h,v 1.4 1997/10/19 16:58:02 christos Exp $	*/
+/*	$NetBSD: hack.h,v 1.5 2000/07/03 03:57:41 matt Exp $	*/
 
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
@@ -7,6 +7,7 @@
 #define _HACK_H_
 
 #include "config.h"
+#include <stdlib.h>
 #include <string.h>
 
 #ifndef BSD
