@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.154 2003/02/26 12:27:04 lukem Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.155 2003/06/30 03:06:06 tacha Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.154 2003/02/26 12:27:04 lukem Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.155 2003/06/30 03:06:06 tacha Exp $");
 #endif
 #endif /* not lint */
 
@@ -953,10 +953,10 @@ login_utmp(const char *line, const char *name, const char *host)
 		(void)strncpy(utmpx.ut_name, name, sizeof(utmpx.ut_name));
 		(void)strncpy(utmpx.ut_line, line, sizeof(utmpx.ut_line));
 		(void)strncpy(utmpx.ut_host, host, sizeof(utmpx.ut_host));
-		loginx(&utmpx);
+		ftpd_loginx(&utmpx);
 	}
 	if (dowtmp)
-		logwtmpx(line, name, host, 0, USER_PROCESS);
+		ftpd_logwtmpx(line, name, host, 0, USER_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
 	if (doutmp) {
@@ -987,7 +987,7 @@ logout_utmp(void)
 		}
 		if (okwtmp) {
 #ifdef SUPPORT_UTMPX
-			logwtmpx(ttyline, "", "", 0, DEAD_PROCESS);
+			ftpd_logwtmpx(ttyline, "", "", 0, DEAD_PROCESS);
 #endif
 #ifdef SUPPORT_UTMP
 			ftpd_logwtmp(ttyline, "", "");

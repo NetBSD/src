@@ -43,6 +43,9 @@
 #include <ttyent.h>
 #include <unistd.h>
 #include <utmp.h>
+#ifdef SUPPORT_UTMPX
+#include <utmpx.h>
+#endif
 #include <util.h>
 
 #include "extern.h"
@@ -122,3 +125,14 @@ ftpd_logout(const char *line)
 	}
 	return(rval);
 }
+
+#ifdef SUPPORT_UTMPX
+/*
+ * special version of loginx which updates utmpx only.
+ */
+void
+ftpd_loginx(const struct utmpx *ut)
+{
+	(void)pututxline(ut);
+}
+#endif
