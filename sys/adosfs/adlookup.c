@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.7 1994/06/29 06:29:24 cgd Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.8 1994/10/29 07:58:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
 #include <sys/mount.h>

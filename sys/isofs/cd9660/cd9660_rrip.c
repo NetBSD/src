@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.8 1994/09/22 02:44:39 mycroft Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.9 1994/10/29 07:58:38 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -41,6 +41,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/file.h>
