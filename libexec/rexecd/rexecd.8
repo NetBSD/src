@@ -1,4 +1,4 @@
-.\"	$NetBSD: rexecd.8,v 1.7 1999/03/22 18:25:45 garbled Exp $
+.\"	$NetBSD: rexecd.8,v 1.8 2002/01/15 02:24:28 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -133,6 +133,11 @@ and is not preceded by a flag byte.
 .El
 .Sh SEE ALSO
 .Xr rexec 3
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.2 .
 .Sh BUGS
 Indicating ``Login incorrect'' as opposed to ``Password incorrect''
 is a security breach which allows people to probe a system for users
@@ -140,11 +145,6 @@ with null passwords.
 .Pp
 A facility to allow all data and password exchanges to be encrypted should be
 present.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.2 .
 .Sh SECURITY CONSIDERATIONS
 As the passwords exchanged by the client and
 .Nm
