@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.106 2001/07/07 20:12:54 mrg Exp $ */
+/*	$NetBSD: trap.c,v 1.107 2001/11/28 05:45:28 lukem Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -401,7 +401,7 @@ badtrap:
 #ifdef FPU_DEBUG
 		if ((tf->tf_psr & PSR_PS) != 0) {
 			printf("FPU fault from kernel mode, pc=%x\n", pc);
-#if DDB
+#ifdef DDB
 			Debugger();
 #endif
 		}
