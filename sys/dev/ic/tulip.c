@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.105 2002/03/16 17:38:35 chs Exp $	*/
+/*	$NetBSD: tulip.c,v 1.106 2002/03/26 07:41:40 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.105 2002/03/16 17:38:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.106 2002/03/26 07:41:40 chs Exp $");
 
 #include "bpfilter.h"
 
@@ -103,7 +103,6 @@ void	tlp_stop __P((struct ifnet *, int));
 
 void	tlp_shutdown __P((void *));
 
-void	tlp_reset __P((struct tulip_softc *));
 void	tlp_rxdrain __P((struct tulip_softc *));
 int	tlp_add_rxbuf __P((struct tulip_softc *, int));
 void	tlp_idle __P((struct tulip_softc *, u_int32_t));
@@ -4128,9 +4127,6 @@ tlp_sia_set(sc)
  * 21140 GPIO utility functions.
  */
 void	tlp_21140_gpio_update_link __P((struct tulip_softc *));
-void	tlp_21140_gpio_get __P((struct tulip_softc *sc,
-	    struct ifmediareq *ifmr));
-int	tlp_21140_gpio_set __P((struct tulip_softc *sc));
 
 void
 tlp_21140_gpio_update_link(sc)
