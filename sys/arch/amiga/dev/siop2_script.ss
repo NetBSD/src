@@ -1,4 +1,4 @@
-;	$NetBSD: siop2_script.ss,v 1.1 1999/03/07 22:16:20 is Exp $
+;	$NetBSD: siop2_script.ss,v 1.2 1999/03/13 19:42:52 is Exp $
 
 ;
 ; Copyright (c) 1998 Michael L. Hitch
@@ -70,7 +70,7 @@ ENTRY	wait_reselect
 ENTRY	dataout
 ENTRY	datain
 
-PROC	scripts:
+PROC	siopng_scripts:
 
 scripts:
 
