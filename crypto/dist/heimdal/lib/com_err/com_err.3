@@ -1,4 +1,4 @@
-.\"     $NetBSD: com_err.3,v 1.1 2001/11/21 05:39:49 gmcgarry Exp $
+.\"     $NetBSD: com_err.3,v 1.2 2001/11/21 06:11:35 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,8 +169,7 @@ or in a window system application to pop up a dialogue box.
 .It Fn reset_com_err_hook ""
 Turns off the hook set in
 .Fn set_com_err_hook .
-.Ft void
-.Fn add_to_error_table "struct et_list *new_table"
+.It Fn add_to_error_table "new_table"
 Add the error table, its messages strings and error codes in
 .Fa new_table
 to the internal error table.
