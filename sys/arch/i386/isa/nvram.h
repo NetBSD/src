@@ -1,8 +1,8 @@
-/*	$NetBSD: nvram.h,v 1.3 1994/10/27 04:18:03 cgd Exp $	*/
+/*	$NetBSD: nvram.h,v 1.4 1995/05/04 19:39:49 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz.
@@ -35,125 +35,43 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)rtc.h	7.1 (Berkeley) 5/12/91
- */
-/* 
- * Mach Operating System
- * Copyright (c) 1991,1990,1989 Carnegie Mellon University
- * All Rights Reserved.
- * 
- * Permission to use, copy, modify and distribute this software and its
- * documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
- * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- * 
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- * 
- * any improvements or extensions that they make and grant Carnegie Mellon
- * the rights to redistribute these changes.
- */
-/*
-  Copyright 1988, 1989 by Intel Corporation, Santa Clara, California.
-
-		All Rights Reserved
-
-Permission to use, copy, modify, and distribute this software and
-its documentation for any purpose and without fee is hereby
-granted, provided that the above copyright notice appears in all
-copies and that both the copyright notice and this permission notice
-appear in supporting documentation, and that the name of Intel
-not be used in advertising or publicity pertaining to distribution
-of the software without specific, written prior permission.
-
-INTEL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS,
-IN NO EVENT SHALL INTEL BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
-NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
-WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
-*/
-
-/*
- * RTC/CMOS Register locations
+ *	@(#)rtc.h	8.1 (Berkeley) 6/11/93
  */
 
 /*
- * Register A definitions
+ * The following information is found in the non-volatile RAM in the
+ * MC146818A (or DS1287A or other compatible) RTC on AT-compatible PCs.
  */
-#define CLOCK_RATE		0x0a	/* register A address */
-#define CLOCK_RATE_UIP		0x80	/* Update in progress bit */
-#define CLOCK_RATE_DIV0		0x00	/* Time base of 4.194304 MHz */
-#define CLOCK_RATE_DIV1		0x10	/* Time base of 1.048576 MHz */
-#define CLOCK_RATE_DIV2		0x20	/* Time base of 32.768 KHz */
-#define CLOCK_RATE_6		0x06	/* interrupt rate of 976.562 */
 
-/*
- * Register B definitions
- */
-#define CLOCK_MODE		0x0b	/* register B address */
-#define CLOCK_MODE_SET		0x80	/* stop updates for time set */
-#define CLOCK_MODE_PIE		0x40	/* Periodic interrupt enable */
-#define CLOCK_MODE_AIE		0x20	/* Alarm interrupt enable */
-#define CLOCK_MODE_UIE		0x10	/* Update ended interrupt enable */
-#define CLOCK_MODE_SQWE		0x08	/* Square wave enable */
-#define CLOCK_MODE_DM		0x04	/* Date mode, 1 = binary, 0 = BCD */
-#define CLOCK_MODE_HM		0x02	/* hour mode, 1 = 24 hour, 0 = 12 hour */
-#define CLOCK_MODE_DSE		0x01	/* Daylight savings enable */
+/* NVRAM byte 0: bios diagnostic */
+#define NVRAM_DIAG	(MC_NVRAM_START + 0)	/* RTC offset 0xe */
 
-/* 
- * Register C definitions
- */
-#define CLOCK_INTR		0x0c	/* register C address */
-#define CLOCK_INTR_IRQF		0x80	/* IRQ flag */
-#define CLOCK_INTR_PF		0x40	/* PF flag bit */
-#define CLOCK_INTR_AF		0x20	/* AF flag bit */
-#define CLOCK_INTR_UF		0x10	/* UF flag bit */
+#define NVRAM_DIAG_BITS		"\020\010clock_battery\007ROM_cksum\006config_unit\005memory_size\004fixed_disk\003invalid_time"
 
-/*
- * Register D definitions
- */
-#define NVRAM_VALID		0x0d	/* register D address */
-#define NVRAM_VALID_VRT		0x80	/* Valid RAM and time bit */
+/* NVRAM byte 1: reset code */
+#define NVRAM_RESET	(MC_NVRAM_START + 1)	/* RTC offset 0xf */
 
-#define CLOCK_NREG		0x0a	/* number of RTC registers */
+#define	NVRAM_RESET_RST		0x00		/* normal reset */
+#define	NVRAM_RESET_LOAD 	0x04		/* load system */
 
-/*
- * These are generic CMOS locations, but we call then RTC anyway...
- */
-#define NVRAM_DIAG		0x0e	/* status register E - bios diagnostic */
-#define NVRAM_DIAG_BITS		"\020\010clock_battery\007ROM_cksum\006config_unit"\
-				"\005memory_size\004fixed_disk\003invalid_time"
+/* NVRAM byte 2: diskette drive type in upper/lower nibble */
+#define NVRAM_DISKETTE	(MC_NVRAM_START + 2)	/* RTC offset 0x10 */
 
-#define NVRAM_RESET		0x0f	/* status register F - reset code byte */
-#define	NVRAM_RESET_RST		0x00	/* normal reset */
-#define	NVRAM_RESET_LOAD	0x04	/* load system */
+#define	NVRAM_DISKETTE_NONE	 0		/* none present */
+#define	NVRAM_DISKETTE_360K	 0x10		/* 360K */
+#define	NVRAM_DISKETTE_12M	 0x20		/* 1.2M */
+#define	NVRAM_DISKETTE_720K	 0x30		/* 720K */
+#define	NVRAM_DISKETTE_144M	 0x40		/* 1.44M */
+#define	NVRAM_DISKETTE_TYPE5	 0x50		/* 2.88M, presumably */
+#define	NVRAM_DISKETTE_TYPE6	 0x60		/* 2.88M */
 
-#define NVRAM_DISKETTE		0x10	/* diskette drive type in upper/lower nibble */
-#define	NVRAM_DISKETTE_NONE	0x00	/* none present */
-#define	NVRAM_DISKETTE_360K	0x10	/* 360K */
-#define	NVRAM_DISKETTE_12M	0x20	/* 1.2M */
-#define	NVRAM_DISKETTE_720K	0x30	/* 720K */
-#define	NVRAM_DISKETTE_144M	0x40	/* 1.44M */
+/* NVRAM bytes 7 & 8: base memory size */
+#define NVRAM_BASELO	(MC_NVRAM_START + 7)	/* low byte; RTC off. 0x15 */
+#define NVRAM_BASEHI	(MC_NVRAM_START + 8)	/* high byte; RTC off. 0x16 */
 
-#define NVRAM_BASEMEM_LO	0x15	/* low byte of basemem size */
-#define NVRAM_BASEMEM_HI	0x16	/* high byte of basemem size */
-#define NVRAM_EXTMEM_LO		0x17	/* low byte of extended mem size */
-#define NVRAM_EXTMEM_HI		0x18	/* low byte of extended mem size */
+/* NVRAM bytes 9 & 10: extended memory size */
+#define NVRAM_EXTLO	(MC_NVRAM_START + 9)	/* low byte; RTC off. 0x17 */
+#define NVRAM_EXTHI	(MC_NVRAM_START + 10)	/* high byte; RTC off. 0x18 */
 
-#define CLOCK_CENTURY		0x32	/* current century - please increment in Dec99 */
-
-#define	CLOCK_NPORTS		16
-
-
-u_char nvram __P((u_char pos));
+/* NVRAM byte 36: current century.  (please increment in Dec99!) */
+#define NVRAM_CENTURY	(MC_NVRAM_START + 36)	/* RTC offset 0x32 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.30 1995/04/17 12:06:59 cgd Exp $	*/
+/*	$NetBSD: clock.c,v 1.31 1995/05/04 19:39:33 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles Hannum.
@@ -100,12 +100,32 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
-#include <i386/isa/clock.h>
-#include <i386/isa/rtc.h>
+#include <dev/ic/mc146818.h>
+#include <i386/isa/nvram.h>
 #include <i386/isa/timerreg.h>
 #include <i386/isa/spkrreg.h>
 
 void spinwait __P((int));
+
+__inline u_int
+mc146818_read(sc, reg)
+	void *sc;					/* XXX use it? */
+	u_int reg;
+{
+
+	outb(IO_RTC, reg);
+	return (inb(IO_RTC+1));
+}
+
+__inline void
+mc146818_write(sc, reg, datum)
+	void *sc;					/* XXX use it? */
+	u_int reg, datum;
+{
+
+	outb(IO_RTC, reg);
+	outb(IO_RTC+1, datum);
+}
 
 void
 startrtclock()
@@ -118,13 +138,12 @@ startrtclock()
 	outb(TIMER_MODE, TIMER_SEL0|TIMER_RATEGEN|TIMER_16BIT);
 
 	/* Correct rounding will buy us a better precision in timekeeping */
-	outb(IO_TIMER1, TIMER_DIV(hz)%256);
-	outb(IO_TIMER1, TIMER_DIV(hz)/256);
+	outb(IO_TIMER1, TIMER_DIV(hz) % 256);
+	outb(IO_TIMER1, TIMER_DIV(hz) / 256);
 
         /* Check diagnostic status */
-        outb (IO_RTC, RTC_DIAG);
-	if (s = inb (IO_RTC+1))
-		printf("RTC BIOS diagnostic error %b\n", s, RTCDG_BITS);
+	if (s = mc146818_read(NULL, NVRAM_DIAG))	/* XXX softc */
+		printf("RTC BIOS diagnostic error %b\n", s, NVRAM_DIAG_BITS);
 }
 
 int
@@ -241,8 +260,8 @@ sysbeep(pitch, period)
 	if (!beeping || last_pitch != pitch) {
 		disable_intr();
 		outb(TIMER_MODE, TIMER_SEL2 | TIMER_16BIT | TIMER_SQWAVE);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch)%256);
-		outb(TIMER_CNTR2, TIMER_DIV(pitch)/256);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch) % 256);
+		outb(TIMER_CNTR2, TIMER_DIV(pitch) / 256);
 		outb(PITAUX_PORT, inb(PITAUX_PORT) | PIT_SPKR);	/* enable counter 2 */
 		enable_intr();
 	}
@@ -267,8 +286,9 @@ findcpuspeed()
 		;
 	/* Read the value left in the counter */
 	remainder = gettick();
-	/* Formula for delaycount is :
-	 *  (loopcount * timer clock speed)/ (counter ticks * 1000)
+	/*
+	 * Formula for delaycount is:
+	 *  (loopcount * timer clock speed) / (counter ticks * 1000)
 	 */
 	delaycount = (FIRST_GUESS * TIMER_DIV(1000)) / (0xffff-remainder);
 }
@@ -294,51 +314,30 @@ rtcinit()
 		return;
 	first_rtcopen_ever = 0;
 
-	outb(IO_RTC, RTC_STATUSA);
-	outb(IO_RTC+1, RTC_DIV2 | RTC_RATE6);
-	outb(IO_RTC, RTC_STATUSB);
-	outb(IO_RTC+1, RTC_HM);
+	mc146818_write(NULL, MC_REGA,			/* XXX softc */
+	    MC_BASE_32_KHz | MC_RATE_1024_Hz);
+	mc146818_write(NULL, MC_REGB, MC_REGB_24HR);	/* XXX softc */
 }
 
 int
-rtcget(rtc_regs)
-	struct rtc_st *rtc_regs;
+rtcget(regs)
+	mc_todregs *regs;
 {
-	int i;
-        u_char *regs = (u_char *)rtc_regs;
         
 	rtcinit();
-	outb(IO_RTC, RTC_D); 
-	if (inb(IO_RTC+1) & RTC_VRT == 0) return(-1);
-	outb(IO_RTC, RTC_STATUSA);	
-	while (inb(IO_RTC+1) & RTC_UIP)		/* busy wait */
-		outb(IO_RTC, RTC_STATUSA);	
-	for (i = 0; i < RTC_NREG; i++) {
-		outb(IO_RTC, i);
-		regs[i] = inb(IO_RTC+1);
-	}
-	return(0);
+	if (mc146818_read(NULL, MC_REGD) & MC_REGD_VRT == 0) /* XXX softc */
+		return (-1);
+	MC146818_GETTOD(NULL, regs);			/* XXX softc */
+	return (0);
 }	
 
 void
-rtcput(rtc_regs)
-	struct rtc_st *rtc_regs;
+rtcput(regs)
+	mc_todregs *regs;
 {
-	u_char x;
-	int i;
-        u_char *regs = (u_char *)rtc_regs;
 
 	rtcinit();
-	outb(IO_RTC, RTC_STATUSB);
-	x = inb(IO_RTC+1);
-	outb(IO_RTC, RTC_STATUSB);
-	outb(IO_RTC+1, x | RTC_SET); 	
-	for (i = 0; i < RTC_NREGP; i++) {
-		outb(IO_RTC, i);
-		outb(IO_RTC+1, regs[i]);
-	}
-	outb(IO_RTC, RTC_STATUSB);
-	outb(IO_RTC+1, x & ~RTC_SET); 
+	MC146818_PUTTOD(NULL, regs);			/* XXX softc */
 }
 
 static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
@@ -348,7 +347,7 @@ yeartoday(year)
 	int year;
 {
 
-	return((year%4) ? 365 : 366);
+	return ((year % 4) ? 365 : 366);
 }
 
 int
@@ -356,7 +355,7 @@ hexdectodec(n)
 	char n;
 {
 
-	return(((n>>4)&0x0F)*10 + (n&0x0F));
+	return (((n >> 4) & 0x0f) * 10 + (n & 0x0f));
 }
 
 char
@@ -364,7 +363,7 @@ dectohexdec(n)
 	int n;
 {
 
-	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
+	return ((char)(((n / 10) << 4) & 0xf0) | ((n % 10) & 0x0f));
 }
 
 static int timeset;
@@ -381,7 +380,7 @@ inittodr(base)
          * We ignore the suggested time for now and go for the RTC
          * clock time stored in the CMOS RAM.
          */
-	struct rtc_st rtclk;
+	mc_todregs rtclk;
 	time_t n;
 	int sec, min, hr, dom, mon, yr;
 	int i, days = 0;
@@ -396,12 +395,12 @@ inittodr(base)
 
 	timeset = 1;
 
-	sec = hexdectodec(rtclk.rtc_sec);
-	min = hexdectodec(rtclk.rtc_min);
-	hr = hexdectodec(rtclk.rtc_hr);
-	dom = hexdectodec(rtclk.rtc_dom);
-	mon = hexdectodec(rtclk.rtc_mon);
-	yr = hexdectodec(rtclk.rtc_yr);
+	sec = hexdectodec(rtclk[MC_SEC]);
+	min = hexdectodec(rtclk[MC_MIN]);
+	hr = hexdectodec(rtclk[MC_HOUR]);
+	dom = hexdectodec(rtclk[MC_DOM]);
+	mon = hexdectodec(rtclk[MC_MONTH]);
+	yr = hexdectodec(rtclk[MC_YEAR]);
 	yr = (yr < 70) ? yr+100 : yr;
 
 	n = sec + 60 * min + 3600 * hr;
@@ -429,7 +428,7 @@ inittodr(base)
 void
 resettodr()
 {
-	struct rtc_st rtclk;
+	mc_todregs rtclk;
 	time_t n;
 	int diff, i, j;
 	int s;
@@ -450,27 +449,27 @@ resettodr()
 	if (tz.tz_dsttime)
 		diff -= 3600;
 	n = (time.tv_sec - diff) % (3600 * 24);   /* hrs+mins+secs */
-	rtclk.rtc_sec = dectohexdec(n%60);
+	rtclk[MC_SEC] = dectohexdec(n % 60);
 	n /= 60;
-	rtclk.rtc_min = dectohexdec(n%60);
-	rtclk.rtc_hr = dectohexdec(n/60);
+	rtclk[MC_MIN] = dectohexdec(n % 60);
+	rtclk[MC_HOUR] = dectohexdec(n / 60);
 
 	n = (time.tv_sec - diff) / (3600 * 24);	/* days */
-	rtclk.rtc_dow = (n + 4) % 7;  /* 1/1/70 is Thursday */
+	rtclk[MC_DOW] = (n + 4) % 7;  /* 1/1/70 is Thursday */
 
 	for (j = 1970, i = yeartoday(j); n >= i; j++, i = yeartoday(j))
 		n -= i;
 
-	rtclk.rtc_yr = dectohexdec(j - 1900);
+	rtclk[MC_YEAR] = dectohexdec(j - 1900);
 
 	if (i == 366)
 		month[1] = 29;
 	for (i = 0; n >= month[i]; i++)
 		n -= month[i];
 	month[1] = 28;
-	rtclk.rtc_mon = dectohexdec(++i);
+	rtclk[MC_MONTH] = dectohexdec(++i);
 
-	rtclk.rtc_dom = dectohexdec(++n);
+	rtclk[MC_DOM] = dectohexdec(++n);
 
 	s = splclock();
 	rtcput(&rtclk);

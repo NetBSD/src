@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 1995/05/01 14:15:13 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 1995/05/04 19:39:08 cgd Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -1384,13 +1384,6 @@ ENTRY(lgdt)
 	pushl	$GSEL(GCODE_SEL, SEL_KPL)
 	pushl	%eax
 	lret
-
-ENTRY(rtcin)
-	movb	4(%esp),%al
-	outb	%al,$0x70
-	xorl	%eax,%eax		# clear eax
-	inb	$0x71,%al
-	ret
 
 ENTRY(setjmp)
 	movl	4(%esp),%eax
