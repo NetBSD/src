@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.1 1998/09/06 02:20:36 mark Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.2 1998/10/05 01:09:38 mark Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -49,6 +49,11 @@
 
 #include <arm32/footbridge/dc21285reg.h>
 #include <arm32/footbridge/dc21285mem.h>
+
+#include "isa.h"
+#if NISA > 0
+#include <dev/isa/isavar.h>
+#endif
 
 void		footbridge_pci_attach_hook __P((struct device *,
 		    struct device *, struct pcibus_attach_args *));
@@ -244,7 +249,7 @@ footbridge_pci_intr_map(pcv, intrtag, pin, line, ihp)
 	int bus, device, function;
 
 	footbridge_pci_decompose_tag(pcv, intrtag, &bus, &device, &function);
-	printf("footbride_pci_intr_map: pcv=%p, tag=%08x pin=%d line=%d dev=%d\n",
+	printf("footbride_pci_intr_map: pcv=%p, tag=%08lx pin=%d line=%d dev=%d\n",
 	    pcv, intrtag, pin, line, device);
 #endif
 
@@ -328,6 +333,12 @@ footbridge_pci_intr_string(pcv, ih)
 	if (ih == 0)
 		panic("footbridge_pci_intr_string: bogus handle 0x%lx\n", ih);
 
+#if NISA > 0
+	if (ih >= 0x80 && ih <= 0x8f) {
+		sprintf(irqstr, "isairq %ld", (ih & 0x0f));
+		return(irqstr);
+	}
+#endif
 	sprintf(irqstr, "irq %ld", ih);
 	return(irqstr);	
 }
@@ -352,6 +363,19 @@ footbridge_pci_intr_establish(pcv, ih, level, func, arg)
 	length = strlen(footbridge_pci_intr_string(pcv, ih));
 	string = malloc(length + 1, M_DEVBUF, M_WAITOK);
 	strcpy(string, footbridge_pci_intr_string(pcv, ih));
+#if NISA > 0
+	/*
+	 * XXX the IDE driver will attach the interrupts in compat mode and
+	 * thus we need to fail this here.
+	 * This assumes that the interrupts are 14 and 15 which they are for
+	 * IDE compat mode.
+	 * Really the firmware should make this clear in the interrupt reg.
+	 */
+	if (ih >= 0x80 && ih <= 0x8d) {
+		intr = isa_intr_establish(NULL, (ih & 0x0f), IST_EDGE,
+		    level, func, arg);
+	} else
+#endif
 	intr = intr_claim(ih, level, string, func, arg);
 
 	return(intr);
@@ -367,7 +391,6 @@ footbridge_pci_intr_disestablish(pcv, cookie)
 	    pcv, cookie);
 #endif
 	/* XXXX Need to free the string */
-
 
 	intr_release(cookie);
 }
