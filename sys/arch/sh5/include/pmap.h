@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2002/09/11 11:08:45 scw Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2002/09/12 12:44:13 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,8 @@ struct pmap {
 
 #define	PMAP_ASID_UNASSIGNED	((u_int)(-1))
 #define	PMAP_ASID_KERNEL	0
-#define	PMAP_ASID_USER_START	1
+#define	PMAP_ASID_CACHEOPS	1
+#define	PMAP_ASID_USER_START	2
 
 typedef struct pmap *pmap_t;
 
