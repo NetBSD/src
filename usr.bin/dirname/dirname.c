@@ -1,4 +1,4 @@
-/*	$NetBSD: dirname.c,v 1.9 2005/02/17 17:41:34 xtraeme Exp $	*/
+/*	$NetBSD: dirname.c,v 1.10 2005/04/04 16:46:55 peter Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -39,12 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dirname.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: dirname.c,v 1.9 2005/02/17 17:41:34 xtraeme Exp $");
+__RCSID("$NetBSD: dirname.c,v 1.10 2005/04/04 16:46:55 peter Exp $");
 #endif /* not lint */
 
+#include <err.h>
+#include <libgen.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <locale.h>
 #include <unistd.h>
 
 static void usage(void);
@@ -52,13 +54,13 @@ static void usage(void);
 int
 main(int argc, char **argv)
 {
-	register char *p;
+	char *p;
 	int ch;
 
 	setlocale(LC_ALL, "");
 
 	while ((ch = getopt(argc, argv, "")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case '?':
 		default:
 			usage();
@@ -69,72 +71,9 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	/*
-	 * (1) If string is //, skip steps (2) through (5).
-	 * (2) If string consists entirely of slash characters, string
-	 *     shall be set to a single slash character.  In this case,
-	 *     skip steps (3) through (8).
-	 */
-	for (p = *argv;; ++p) {
-		if (!*p) {
-			if (p > *argv)
-				(void)printf("/\n");
-			else
-				(void)printf(".\n");
-			exit(0);
-		}
-		if (*p != '/')
-			break;
-	}
-
-	/*
-	 * (3) If there are any trailing slash characters in string, they
-	 *     shall be removed.
-	 */
-	for (; *p; ++p);
-	while (*--p == '/')
-		continue;
-	*++p = '\0';
-
-	/*
-	 * (4) If there are no slash characters remaining in string,
-	 *     string shall be set to a single period character.  In this
-	 *     case skip steps (5) through (8).
-	 *
-	 * (5) If there are any trailing nonslash characters in string,
-	 *     they shall be removed.
-	 */
-	while (--p >= *argv)
-		if (*p == '/')
-			break;
-	++p;
-	if (p == *argv) {
-		(void)printf(".\n");
-		exit(0);
-	}
-
-	/*
-	 * (6) If the remaining string is //, it is implementation defined
-	 *     whether steps (7) and (8) are skipped or processed.
-	 *
-	 * This case has already been handled, as part of steps (1) and (2).
-	 */
-	
-	/*
-	 * (7) If there are any trailing slash characters in string, they
-	 *     shall be removed.
-	 */
-	while (--p >= *argv)
-		if (*p != '/')
-			break;
-	++p;
-
-	/*
-	 * (8) If the remaining string is empty, string shall be set to
-	 *     a single slash character.
-	 */
-	*p = '\0';
-	(void)printf("%s\n", p == *argv ? "/" : *argv);
+	if ((p = dirname(*argv)) == NULL)
+		err(1, "%s", *argv);
+	(void)printf("%s\n", p);
 	exit(0);
 }
 
@@ -145,4 +84,3 @@ usage(void)
 	(void)fprintf(stderr, "usage: dirname path\n");
 	exit(1);
 }
-
