@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.18 2001/05/30 11:37:22 mrg Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.19 2001/06/14 20:32:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -224,8 +224,7 @@ compat_43_sys_fstat(p, v, retval)
 	struct stat43 oub;
 	int error;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.8 2001/04/09 10:22:01 jdolecek Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.9 2001/06/14 20:32:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -213,8 +213,7 @@ compat_12_sys_fstat(p, v, retval)
 	struct stat12 oub;
 	int error;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

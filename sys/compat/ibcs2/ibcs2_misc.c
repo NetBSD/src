@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.56 2001/05/24 10:49:31 kristerw Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.57 2001/06/14 20:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -1658,8 +1658,7 @@ xenix_sys_locking(p, v, retval)
 		return ibcs2_sys_fcntl(p, v, retval);
 	}
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 	off = fp->f_offset;
 

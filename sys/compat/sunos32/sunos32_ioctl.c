@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.5 2001/06/04 20:56:52 mrg Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.6 2001/06/14 20:32:45 thorpej Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -448,8 +448,7 @@ sunos32_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_file.c,v 1.16 2001/01/22 20:08:04 jdolecek Exp $	*/
+/*	$NetBSD: hpux_file.c,v 1.17 2001/06/14 20:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -251,8 +251,7 @@ hpux_sys_fcntl(p, v, retval)
 	struct vnode *vp;
 	struct sys_fcntl_args fa;
 
-	if ((u_int)SCARG(uap, fd) > p->p_fd->fd_nfiles ||
-	    (fp = p->p_fd->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(p->p_fd, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	pop = &p->p_fd->fd_ofileflags[SCARG(uap, fd)];

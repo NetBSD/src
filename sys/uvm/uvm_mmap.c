@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.53 2001/06/02 18:09:27 chs Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.54 2001/06/14 20:32:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -362,11 +362,8 @@ sys_mmap(p, v, retval)
 
 	if ((flags & MAP_ANON) == 0) {
 
-		if (fd < 0 || fd >= fdp->fd_nfiles)
-			return(EBADF);		/* failed range check? */
-		fp = fdp->fd_ofiles[fd];	/* convert to file pointer */
-		if (fp == NULL)
-			return(EBADF);
+		if ((fp = fd_getfile(fdp, fd)) == NULL)
+			return (EBADF);
 
 		if (fp->f_type != DTYPE_VNODE)
 			return (ENODEV);		/* only mmap vnodes! */

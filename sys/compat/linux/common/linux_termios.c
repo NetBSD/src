@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.12 2001/05/22 21:05:49 manu Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.13 2001/06/14 20:32:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -480,8 +480,7 @@ linux_ioctl_termios(p, uap, retval)
 	int (*bsdioctl) __P((struct file *, u_long, caddr_t, struct proc *));
 
 	fdp = p->p_fd;
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)

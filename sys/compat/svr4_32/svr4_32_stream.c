@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stream.c,v 1.3 2001/06/08 12:50:12 mrg Exp $	 */
+/*	$NetBSD: svr4_32_stream.c,v 1.4 2001/06/14 20:32:46 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1504,17 +1504,12 @@ svr4_32_sys_putmsg(p, v, retval)
 	int error;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return EBADF;
-
 #ifdef DEBUG_SVR4
 	show_msg(">putmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), SCARG(uap, flags));
 #endif /* DEBUG_SVR4 */
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {
@@ -1680,19 +1675,14 @@ svr4_32_sys_getmsg(p, v, retval)
 	int fl;
 	caddr_t sg;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
-		return EBADF;
-
 	memset(&sc, 0, sizeof(sc));
 
 #ifdef DEBUG_SVR4
 	show_msg(">getmsg", SCARG(uap, fd), SCARG(uap, ctl),
 		 SCARG(uap, dat), 0);
 #endif /* DEBUG_SVR4 */
-			
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if (SCARG(uap, ctl) != NULL) {

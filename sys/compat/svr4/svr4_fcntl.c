@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.36 2000/12/01 12:28:36 jdolecek Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.37 2001/06/14 20:32:45 thorpej Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ fd_revoke(p, fd, retval)
 	struct vattr vattr;
 	int error;
 
-	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
 	switch (fp->f_type) {
@@ -318,7 +318,7 @@ fd_truncate(p, fd, flp, retval)
 	/*
 	 * We only support truncating the file.
 	 */
-	if ((u_int)fd >= fdp->fd_nfiles || (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
 	vp = (struct vnode *)fp->f_data;
@@ -388,10 +388,12 @@ svr4_sys_open(p, v, retval)
 	if (!(SCARG(&cup, flags) & O_NOCTTY) && SESS_LEADER(p) &&
 	    !(p->p_flag & P_CONTROLT)) {
 		struct filedesc	*fdp = p->p_fd;
-		struct file	*fp = fdp->fd_ofiles[*retval];
+		struct file	*fp;
+
+		fp = fd_getfile(fdp, *retval);
 
 		/* ignore any error, just give it a try */
-		if (fp->f_type == DTYPE_VNODE)
+		if (fp != NULL && fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
 	}
 	return 0;

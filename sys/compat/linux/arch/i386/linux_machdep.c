@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.63 2001/05/30 11:37:25 mrg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.64 2001/06/14 20:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -623,9 +623,7 @@ linux_machdepioctl(p, v, retval)
 
 	fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	switch (com) {

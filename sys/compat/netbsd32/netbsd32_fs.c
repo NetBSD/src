@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.5 2001/05/30 11:37:28 mrg Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.6 2001/06/14 20:32:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -141,9 +141,10 @@ netbsd32_readv(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	return (dofilereadv32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp), 
@@ -253,9 +254,10 @@ netbsd32_writev(p, v, retval)
 	struct file *fp;
 	struct filedesc *fdp = p->p_fd;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	return (dofilewritev32(p, fd, fp, (struct netbsd32_iovec *)(u_long)SCARG(uap, iovp),
@@ -597,8 +599,7 @@ netbsd32___fstat13(p, v, retval)
 	struct stat ub;
 	int error = 0;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -664,9 +665,10 @@ netbsd32_preadv(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
@@ -706,9 +708,10 @@ netbsd32_pwritev(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	vp = (struct vnode *)fp->f_data;
