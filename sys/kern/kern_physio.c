@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.22 1995/07/24 07:45:24 cgd Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.23 1995/07/27 02:37:12 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -136,9 +136,7 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			 * "Set by physio for raw transfers.", in addition
 			 * to the "busy" and read/write flag.)
 			 */
-			s = splbio();
 			bp->b_flags = B_BUSY | B_PHYS | B_RAW | flags;
-			splx(s);
 
 			/* [set up the buffer for a maximum-sized transfer] */
 			bp->b_blkno = btodb(uio->uio_offset);
@@ -184,6 +182,12 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			while ((bp->b_flags & B_DONE) == 0)
 				tsleep((caddr_t) bp, PRIBIO + 1, "physio", 0);
 
+			/* Mark it busy again, so nobody else will use it. */
+			bp->b_flags |= B_BUSY;
+
+			/* [lower the priority level] */
+			splx(s);
+
 			/*
 			 * [unlock the part of the address space previously
 			 *    locked]
@@ -195,9 +199,6 @@ physio(strategy, bp, dev, flags, minphys, uio)
 			/* remember error value (save a splbio/splx pair) */
 			if (bp->b_flags & B_ERROR)
 				error = (bp->b_error ? bp->b_error : EIO);
-
-			/* [lower the priority level] */
-			splx(s);
 
 			/*
 			 * [deduct the transfer size from the total number
