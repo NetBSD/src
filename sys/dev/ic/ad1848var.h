@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.5 1999/09/06 17:07:05 rh Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.6 1999/10/05 03:31:35 itohy Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -17,10 +17,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD 
- *	  Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its 
- *    contributors may be used to endorse or promote products derived 
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -108,12 +108,20 @@ struct ad1848_softc {
 	u_char	speed_bits;
 	u_char	format_bits;
 	u_char	need_commit;
+
+	u_char	wave_mute_status;
+	int	open_mode;
 };
 
 #define MUTE_LEFT       1
 #define MUTE_RIGHT      2
 #define MUTE_ALL        (MUTE_LEFT | MUTE_RIGHT)
 #define MUTE_MONO       MUTE_ALL
+
+#define WAVE_MUTE0	1		/* force mute (overrides UNMUTE1) */
+#define WAVE_UNMUTE1	2		/* unmute (overrides MUTE2) */
+#define WAVE_MUTE2	4		/* weak mute */
+#define WAVE_MUTE2_INIT	0		/* init and MUTE2 */
 
 /*
  * Don't change this ordering without seriously looking around.
@@ -135,8 +143,6 @@ struct ad1848_softc {
 #define AUX1_IN_PORT	2
 #define DAC_IN_PORT	3
 
-#ifdef _KERNEL
-
 #define AD1848_KIND_LVL   0
 #define AD1848_KIND_MUTE  1
 #define AD1848_KIND_RECORDGAIN 2
@@ -148,6 +154,8 @@ typedef struct ad1848_devmap {
 	int  kind;
 	int  dev;
 } ad1848_devmap_t;
+
+#ifdef _KERNEL
 
 int	ad_read __P((struct ad1848_softc *, int));
 int	ad_xread __P((struct ad1848_softc *, int));
@@ -164,7 +172,7 @@ int	ad1848_mixer_get_port __P((struct ad1848_softc *, ad1848_devmap_t *,
 int	ad1848_mixer_set_port __P((struct ad1848_softc *, ad1848_devmap_t *,
 				   int, mixer_ctrl_t *));
 int	ad1848_set_speed __P((struct ad1848_softc *, u_long *));
-void	ad1848_mute_monitor __P((void *, int));
+void	ad1848_mute_wave_output __P((struct ad1848_softc *, int, int));
 int	ad1848_query_encoding __P((void *, struct audio_encoding *));
 int	ad1848_set_params __P((void *, int, int, struct audio_params *,
 			       struct audio_params *));
