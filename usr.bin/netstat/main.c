@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.47 2004/09/04 23:35:43 manu Exp $	*/
+/*	$NetBSD: main.c,v 1.48 2004/10/30 20:56:20 dsl Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.47 2004/09/04 23:35:43 manu Exp $");
+__RCSID("$NetBSD: main.c,v 1.48 2004/10/30 20:56:20 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -494,7 +494,7 @@ main(argc, argv)
 #define	BACKWARD_COMPATIBILITY
 #ifdef	BACKWARD_COMPATIBILITY
 	if (*argv) {
-		if (isdigit(**argv)) {
+		if (isdigit((unsigned char)**argv)) {
 			interval = atoi(*argv);
 			if (interval <= 0)
 				usage();
