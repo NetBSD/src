@@ -1,4 +1,4 @@
-# $NetBSD: md_share,v 1.74 1999/12/15 20:38:41 garbled Exp $
+# $NetBSD: md_share,v 1.75 1999/12/17 05:37:46 garbled Exp $
 ./usr/share/man/cat1/atari/edahdi.0
 ./usr/share/man/cat1/atari/msconfig.0
 ./usr/share/man/cat1/grfinfo.0
@@ -311,6 +311,7 @@
 ./usr/share/man/cat8/sparc/boot.0
 ./usr/share/man/cat8/sparc/installboot.0
 ./usr/share/man/cat8/sparc/makedev.0
+./usr/share/man/cat8/sparc/tadpolectl.0
 ./usr/share/man/cat8/sparc64/MAKEDEV.0
 ./usr/share/man/cat8/sparc64/installboot.0
 ./usr/share/man/cat8/sparc64/makedev.0
@@ -652,6 +653,7 @@
 ./usr/share/man/man8/sparc/boot.8
 ./usr/share/man/man8/sparc/installboot.8
 ./usr/share/man/man8/sparc/makedev.8
+./usr/share/man/man8/sparc/tadpolectl.8
 ./usr/share/man/man8/sparc64/MAKEDEV.8
 ./usr/share/man/man8/sparc64/installboot.8
 ./usr/share/man/man8/sparc64/makedev.8
