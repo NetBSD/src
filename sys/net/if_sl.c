@@ -64,7 +64,7 @@
  * interrupts and network activity; thus, splimp must be >= spltty.
  */
 
-/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.5 1993/04/09 20:42:06 cgd Exp $ */
+/* $Header: /cvsroot/src/sys/net/if_sl.c,v 1.6 1993/05/10 23:16:44 deraadt Exp $ */
 /* from if_sl.c,v 1.11 84/10/04 12:54:47 rick Exp */
 
 #include "sl.h"
@@ -537,7 +537,7 @@ slstart(tp)
 					 * Put the non-special bytes
 					 * into the tty output queue.
 					 */
-					sc->sc_bytessent += rb_write(
+					sc->sc_bytessent += rb_cwrite(
 								&tp->t_out,
 								(char *) bp,
 								cp - bp);
