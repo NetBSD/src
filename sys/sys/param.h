@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.145 2002/08/07 15:29:58 briggs Exp $	*/
+/*	$NetBSD: param.h,v 1.146 2002/08/26 01:16:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -174,7 +174,7 @@
 #define	CBLOCK	64		/* Clist block size, must be a power of 2. */
 #define	CBQSIZE	(CBLOCK/NBBY)	/* Quote bytes/cblock - can do better. */
 				/* Data chars/clist. */
-#define	CBSIZE	(CBLOCK - sizeof(struct cblock *) - CBQSIZE)
+#define	CBSIZE	(CBLOCK - (int)sizeof(struct cblock *) - CBQSIZE)
 #define	CROUND	(CBLOCK - 1)	/* Clist rounding. */
 
 /*
