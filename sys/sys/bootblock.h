@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.20 2003/11/13 08:17:12 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.21 2003/11/13 20:14:27 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002,2003 The NetBSD Foundation, Inc.
@@ -531,10 +531,10 @@ struct hp300_load {
 	int32_t count;
 };
 
-#define HP300_VOL_ID		-32768
-#define HP300_VOL_OCT		4096
+#define	HP300_VOL_ID		-32768
+#define	HP300_VOL_OCT		4096
 #define	HP300_DIR_TYPE		-5822
-#define HP300_DIR_FLAG		0x8001	/* dont ask me! */
+#define	HP300_DIR_FLAG		0x8001	/* dont ask me! */
 #define	HP300_SECTSIZE		256
 
 /* ------------------------------------------
