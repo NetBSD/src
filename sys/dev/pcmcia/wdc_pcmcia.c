@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.27 2000/01/24 23:14:23 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.28 2000/02/01 06:48:15 enami Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ struct wdc_pcmcia_product {
 	u_int32_t	wpp_vendor;	/* vendor ID */
 	u_int32_t	wpp_product;	/* product ID */
 	int		wpp_quirk_flag;	/* Quirk flags */
-#define WDC_PCMCIA_FORCE_16BIT_IO	0x01 /* Don't use PCMCIA_WIDTH_AUTO */
 #define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
 	const char	*wpp_name;	/* product name */
@@ -111,12 +110,6 @@ struct wdc_pcmcia_product {
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
 	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
 	  PCMCIA_STR_IBM_PORTABLE_CDROM },
-
-	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
-	  -1,			/* XXX */
-	  WDC_PCMCIA_FORCE_16BIT_IO,
-	  { NULL, NULL, NULL, NULL },
-	  "Hagiwara SYS-COM CompactFlash Card" },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
@@ -309,31 +302,18 @@ wdc_pcmcia_attach(parent, self, aux)
 		return;
 	}
 
-	/*
-	 * XXX  DEC Mobile Media CDROM is not yet tested whether it works
-	 * XXX  with PCMCIA_WIDTH_IO16.  HAGIWARA SYS-COM HPC-CF32 doesn't
-	 * XXX  work with PCMCIA_WIDTH_AUTO.
-	 * XXX  CANON FC-8M (SANDISK SDCFB 8M) works for both _AUTO and IO16.
-	 * XXX  So, here is temporary work around.
-	 */
 	wpp = wdc_pcmcia_lookup(pa);
 	if (wpp != NULL)
 		quirks = wpp->wpp_quirk_flag;
 	else
 		quirks = 0;
 
-	if (pcmcia_io_map(pa->pf, quirks & WDC_PCMCIA_FORCE_16BIT_IO ?
-	    PCMCIA_WIDTH_IO16 : PCMCIA_WIDTH_AUTO, 0,
+	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
 	    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
 		printf(": can't map first I/O space\n");
 		return;
 	} 
 
-	/*
-	 * Currently, # of iospace is 1 except DIGITAL Mobile Media CD-ROM.
-	 * So whether the work around like above is necessary or not
-	 * is unknown.  XXX.
-	 */
 	if (cfe->num_iospace <= 1)
 		sc->sc_auxiowindow = -1;
 	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
