@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.50 1998/08/04 04:03:15 perry Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.51 1998/08/23 22:42:32 pk Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -561,17 +561,17 @@ sprintf(buf, fmt, va_alist)
  * => XXX: useful vs. kernel %b?
  */
 char *
-bitmask_snprintf(ul, p, buf, buflen)
-	u_long ul;
+bitmask_snprintf(val, p, buf, buflen)
+	u_quad_t val;
 	const char *p;
 	char *buf;
 	size_t buflen;
 {
 	char *bp, *q;
 	size_t left;
-	register int n;
-	int tmp;
-	char snbuf[KPRINTF_BUFSIZE];
+	char *sbase, snbuf[KPRINTF_BUFSIZE];
+	int base, bit, ch, len, sep;
+	u_quad_t field;
 
 	bp = buf;
 	memset(buf, 0, buflen);
@@ -588,16 +588,13 @@ bitmask_snprintf(ul, p, buf, buflen)
 	if (buflen < KPRINTF_BUFSIZE)
 		return (buf);
 
-	if (*p == 8)
-		sprintf(snbuf,"%lo", ul);
-	else if (*p == 10)
-		sprintf(snbuf, "%ld", ul);
-	else if (*p == 16)
-		sprintf(snbuf, "%lx", ul);
-	else
-		return(buf);	/* punt if not oct, dec, or hex */
-	p++;
+	ch = *p++;
+	base = ch != '\177' ? ch : *p++;
+	sbase = base == 8 ? "%qo" : base == 10 ? "%qd" : base == 16 ? "%qx" : 0;
+	if (sbase == 0)
+		return (buf);	/* punt if not oct, dec, or hex */
 
+	sprintf(snbuf, sbase, val);
 	for (q = snbuf ; *q ; q++) {
 		*bp++ = *q;
 		left--;
@@ -607,32 +604,96 @@ bitmask_snprintf(ul, p, buf, buflen)
 	 * If the value we printed was 0, or if we don't have room for
 	 * "<x>", we're done.
 	 */
-	if (ul == 0 || left < 3)
+	if (val == 0 || left < 3)
 		return (buf);
 
 #define PUTBYTE(b, c, l)	\
 	*(b)++ = (c);		\
 	if (--(l) == 0)		\
 		goto out;
+#define PUTSTR(b, p, l) do {		\
+	int c;				\
+	while ((c = *(p)++) != 0) {	\
+		*(b)++ = c;		\
+		if (--(l) == 0)		\
+			goto out;	\
+	}				\
+	(p)++;				\
+} while (0)
 
-	for (tmp = 0; (n = *p++) != 0;) {
-		if (ul & (1 << (n - 1))) {
-			PUTBYTE(bp, tmp ? ',' : '<', left);
-				for (; (n = *p) > ' '; ++p) {
-					PUTBYTE(bp, n, left);
+	/*
+	 * Chris Torek's new style %b format is identified by a leading \177
+	 */
+	sep = '<';
+	if (ch != '\177') {
+		/* old (standard) %b format. */
+		for (;(bit = *p++) != 0;) {
+			if (val & (1 << (bit - 1))) {
+				PUTBYTE(bp, sep, left);
+				for (; (ch = *p) > ' '; ++p) {
+					PUTBYTE(bp, ch, left);
 				}
-				tmp = 1;
-		} else
-			for (; *p > ' '; ++p)
-				continue;
+				sep = ',';
+			} else
+				for (; *p > ' '; ++p)
+					continue;
+		}
+	} else {
+		/* new quad-capable %b format; also does fields. */
+		field = val;
+		while ((ch = *p++) != '\0') {
+			bit = *p++;	/* now 0-origin */
+			switch (ch) {
+			case 'b':
+				if (((u_int)(val >> bit) & 1) == 0)
+					goto skip;
+				PUTBYTE(bp, sep, left);
+				PUTSTR(bp, p, left);
+				sep = ',';
+				break;
+			case 'f':
+			case 'F':
+				len = *p++;	/* field length */
+				field = (val >> bit) & ((1ULL << len) - 1);
+				if (ch == 'F')	/* just extract */
+					break;
+				PUTBYTE(bp, sep, left);
+				sep = ',';
+				PUTSTR(bp, p, left);
+				PUTBYTE(bp, '=', left);
+				sprintf(snbuf, sbase, field);
+				q = snbuf; PUTSTR(bp, q, left);
+				break;
+			case '=':
+			case ':':
+				/*
+				 * Here "bit" is actually a value instead,
+				 * to be compared against the last field.
+				 * This only works for values in [0..255],
+				 * of course.
+				 */
+				if ((int)field != bit)
+					goto skip;
+				if (ch == '=')
+					PUTBYTE(bp, '=', left);
+				PUTSTR(bp, p, left);
+				break;
+			default:
+			skip:
+				while (*p++ != '\0')
+					continue;
+				break;
+			}
+		}
 	}
-	if (tmp)
-		*bp = '>';
+	if (sep != '<')
+		PUTBYTE(bp, '>', left);
+
+out:
+	return (buf);
 
 #undef PUTBYTE
-
- out:
-	return (buf);
+#undef PUTSTR
 }
 
 /*
