@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.65 2003/12/29 08:17:11 toshii Exp $	*/
+/*	$NetBSD: uhub.c,v 1.65.2.1 2004/06/14 04:15:30 jmc Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.65 2003/12/29 08:17:11 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.65.2.1 2004/06/14 04:15:30 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,7 @@ USB_ATTACH(uhub)
 			up->power = USB_MAX_POWER;
 		else
 			up->power = USB_MIN_POWER;
+		up->restartcnt = 0;
 	}
 
 	/* XXX should check for none, individual, or ganged power? */
