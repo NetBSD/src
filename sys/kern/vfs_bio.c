@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.102 2003/12/31 14:37:17 pk Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.103 2004/01/04 16:17:13 pk Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -81,7 +81,7 @@
 #include "opt_softdep.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.102 2003/12/31 14:37:17 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.103 2004/01/04 16:17:13 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,7 @@ bufpool_page_alloc(struct pool *pp, int flags)
 static void
 bufpool_page_free(struct pool *pp, void *v)
 {
-	uvm_km_free(kernel_map, (vaddr_t)v, MAXBSIZE);
+	uvm_km_free(buf_map, (vaddr_t)v, MAXBSIZE);
 }
 
 static struct pool_allocator bufmempool_allocator = {
