@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.35 1994/10/29 08:20:18 cgd Exp $	*/
+/*	$NetBSD: mount.h,v 1.36 1994/12/16 04:22:56 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mount.h	8.13 (Berkeley) 3/27/94
+ *	@(#)mount.h	8.15 (Berkeley) 7/14/94
  */
 
 #ifndef KERNEL
@@ -72,7 +72,8 @@ struct statfs {
 	long	f_files;		/* total file nodes in file system */
 	long	f_ffree;		/* free file nodes in fs */
 	fsid_t	f_fsid;			/* file system id */
-	long	f_spare[5];		/* spare for later */
+	uid_t	f_owner;		/* user that mounted the filesystem */
+	long	f_spare[4];		/* spare for later */
 	char	f_fstypename[MFSNAMELEN+1]; /* fs type name (inc. null) */
 	char	f_mntonname[MNAMELEN];	/* directory on which mounted */
 	char	f_mntfromname[MNAMELEN];/* mounted filesystem */
@@ -96,7 +97,7 @@ struct statfs {
 #define	MOUNT_AFS	"afs"		/* Andrew Filesystem */
 #define	MOUNT_CD9660	"cd9660"	/* ISO9660 (aka CDROM) Filesystem */
 #define	MOUNT_UNION	"union"		/* Union (translucent) Filesystem */
-#define MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
+#define	MOUNT_ADOSFS	"adosfs"	/* AmigaDOS Filesystem */
 
 /*
  * Structure per mounted file system.  Each mounted file system has an
@@ -144,7 +145,6 @@ struct mount {
 #define	MNT_LOCAL	0x00001000	/* filesystem is stored locally */
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
 #define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
-#define	MNT_USER	0x00008000	/* mounted by a user */
 
 /*
  * Mask of flags that are visible to statfs()
