@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_syscall.c,v 1.3 2000/12/18 23:29:47 thorpej Exp $	*/
+/*	$NetBSD: freebsd_syscall.c,v 1.4 2000/12/18 23:41:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -56,6 +56,7 @@
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/userret.h>
+#include <machine/freebsd_machdep.h>
 
 void freebsd_syscall_plain __P((struct trapframe));
 void freebsd_syscall_fancy __P((struct trapframe));
