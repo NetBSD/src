@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)utility.c	5.8 (Berkeley) 3/22/91";*/
-static char rcsid[] = "$Id: utility.c,v 1.3 1993/08/30 18:50:55 mycroft Exp $";
+static char rcsid[] = "$Id: utility.c,v 1.4 1993/08/30 18:53:06 mycroft Exp $";
 #endif /* not lint */
 
 #define PRINTOPTIONS
@@ -487,13 +487,16 @@ putf(cp, where)
 			break;
 
 		case 's':
-			puts(kerninfo.sysname);
+			putstr(kerninfo.sysname);
+			break;
 
 		case 'm':
-			puts(kerninfo.machine);
+			putstr(kerninfo.machine);
+			break;
 
 		case 'r':
-			puts(kerninfo.release);
+			putstr(kerninfo.release);
+			break;
 
 		case 'v':
 			puts(kerninfo.version);
