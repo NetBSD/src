@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.4 2002/05/02 23:04:31 bjh21 Exp $
+#	$NetBSD: list,v 1.5 2003/12/25 11:14:36 martin Exp $
 
 SRCDIRS	bin sbin usr.bin/less usr.bin usr.sbin gnu/usr.bin
 
@@ -53,7 +53,7 @@ PROG	usr/sbin/chroot
 
 SPECIAL	ping	srcdir distrib/utils/x_ping
 
-LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm
+LIBS	libhack.o -lbz2 -ledit -lutil -lcurses -ltermcap -lrmt -lcrypt -ll -lm -lz
 
 # init invokes the shell as -sh
 ARGVLN	sh -sh
