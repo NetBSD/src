@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:02 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2002/02/24 22:15:39 matt Exp $
 
 LIB=		backend
 NOLINT=		# defined
@@ -9,7 +9,7 @@ NOLINKLIB=	# defined
 SRCS=		${G_OBJS:.o=.c} ${G_out_file:T}
 
 CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \
-		-DTARGET_NAME=\"${MACHINE_GNU_ARCH}-netbsd\"
+		-DTARGET_NAME=\"${MACHINE_GNU_PLATFORM}\"
 HOST_CPPFLAGS+=	-I. -I${GCCARCH} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 .include <bsd.lib.mk>
