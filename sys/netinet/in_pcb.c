@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.42 1997/12/30 02:54:11 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.43 1998/01/05 09:52:03 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -71,6 +71,9 @@ struct inpcb *
 	in_pcblookup_port __P((struct inpcbtable *,
 	    struct in_addr, u_int, int));
 
+int	anonportmin = IPPORT_ANONMIN;
+int	anonportmax = IPPORT_ANONMAX;
+
 void
 in_pcbinit(table, bindhashsize, connecthashsize)
 	struct inpcbtable *table;
@@ -82,7 +85,7 @@ in_pcbinit(table, bindhashsize, connecthashsize)
 	    hashinit(bindhashsize, M_PCB, &table->inpt_bindhash);
 	table->inpt_connecthashtbl =
 	    hashinit(connecthashsize, M_PCB, &table->inpt_connecthash);
-	table->inpt_lastport = IPPORT_USERLOW;
+	table->inpt_lastport = (u_int16_t)anonportmin;
 }
 
 int
@@ -177,10 +180,13 @@ in_pcbbind(v, nam, p)
 	inp->inp_laddr = sin->sin_addr;
 noname:
 	if (lport == 0) {
-		for (lport = table->inpt_lastport + 1;
-		    lport != table->inpt_lastport; lport++) {
-			if (lport < IPPORT_USERLOW || lport > IPPORT_USERHIGH)
-				lport = IPPORT_USERLOW;
+		int cnt;
+
+		lport = table->inpt_lastport + 1;
+		for (cnt = anonportmax - anonportmin + 1; cnt; cnt--, lport++) {
+			if (lport < (u_int16_t)anonportmin ||
+			    lport > (u_int16_t)anonportmax)
+				lport = (u_int16_t)anonportmin;
 			if (!in_pcblookup_port(table, inp->inp_laddr,
 			    htons(lport), wild))
 				goto found;
