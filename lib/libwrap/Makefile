@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 1997/03/24 22:11:58 christos Exp $
+#	$NetBSD: Makefile,v 1.6 1997/10/09 14:36:28 lukem Exp $
 
+WARNS=0
 LIB=	wrap 
 
 SRCS=	hosts_access.c options.c shell_cmd.c rfc931.c eval.c hosts_ctl.c \
