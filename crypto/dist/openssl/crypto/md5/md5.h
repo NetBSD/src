@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_MD5
-#error MD5 is disabled.
-#endif
 
 #include <sys/types.h>
 #define	MD5_LONG	u_int32_t

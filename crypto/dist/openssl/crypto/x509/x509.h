@@ -72,17 +72,11 @@ extern "C" {
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>
 
-#ifndef NO_RSA
 #include <openssl/rsa.h>
-#endif
 
-#ifndef NO_DSA
 #include <openssl/dsa.h>
-#endif
 
-#ifndef NO_DH
 #include <openssl/dh.h>
-#endif
 
 #include <openssl/evp.h>
 
@@ -260,9 +254,7 @@ typedef struct x509_st
 	unsigned long ex_kusage;
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
-#ifndef NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
-#endif
 	X509_CERT_AUX *aux;
 	} X509;
 
@@ -641,20 +633,16 @@ X509_CRL *d2i_X509_CRL_fp(FILE *fp,X509_CRL **crl);
 int i2d_X509_CRL_fp(FILE *fp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_fp(FILE *fp,X509_REQ **req);
 int i2d_X509_REQ_fp(FILE *fp,X509_REQ *req);
-#ifndef NO_RSA
 RSA *d2i_RSAPrivateKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPrivateKey_fp(FILE *fp,RSA *rsa);
 RSA *d2i_RSAPublicKey_fp(FILE *fp,RSA **rsa);
 int i2d_RSAPublicKey_fp(FILE *fp,RSA *rsa);
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp,RSA **rsa);
 int i2d_RSA_PUBKEY_fp(FILE *fp,RSA *rsa);
-#endif
-#ifndef NO_DSA
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa);
 int i2d_DSA_PUBKEY_fp(FILE *fp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa);
 int i2d_DSAPrivateKey_fp(FILE *fp, DSA *dsa);
-#endif
 X509_SIG *d2i_PKCS8_fp(FILE *fp,X509_SIG **p8);
 int i2d_PKCS8_fp(FILE *fp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
@@ -672,20 +660,16 @@ X509_CRL *d2i_X509_CRL_bio(BIO *bp,X509_CRL **crl);
 int i2d_X509_CRL_bio(BIO *bp,X509_CRL *crl);
 X509_REQ *d2i_X509_REQ_bio(BIO *bp,X509_REQ **req);
 int i2d_X509_REQ_bio(BIO *bp,X509_REQ *req);
-#ifndef NO_RSA
 RSA *d2i_RSAPrivateKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPrivateKey_bio(BIO *bp,RSA *rsa);
 RSA *d2i_RSAPublicKey_bio(BIO *bp,RSA **rsa);
 int i2d_RSAPublicKey_bio(BIO *bp,RSA *rsa);
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp,RSA **rsa);
 int i2d_RSA_PUBKEY_bio(BIO *bp,RSA *rsa);
-#endif
-#ifndef NO_DSA
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa);
 int i2d_DSA_PUBKEY_bio(BIO *bp, DSA *dsa);
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa);
 int i2d_DSAPrivateKey_bio(BIO *bp, DSA *dsa);
-#endif
 X509_SIG *d2i_PKCS8_bio(BIO *bp,X509_SIG **p8);
 int i2d_PKCS8_bio(BIO *bp,X509_SIG *p8);
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
@@ -704,10 +688,8 @@ X509_REQ *X509_REQ_dup(X509_REQ *req);
 X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
-#ifndef NO_RSA
 RSA *RSAPublicKey_dup(RSA *rsa);
 RSA *RSAPrivateKey_dup(RSA *rsa);
-#endif
 
 #endif /* !SSLEAY_MACROS */
 
@@ -749,16 +731,12 @@ int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
 EVP_PKEY *	d2i_PUBKEY(EVP_PKEY **a,unsigned char **pp,
 			long length);
-#ifndef NO_RSA
 int		i2d_RSA_PUBKEY(RSA *a,unsigned char **pp);
 RSA *		d2i_RSA_PUBKEY(RSA **a,unsigned char **pp,
 			long length);
-#endif
-#ifndef NO_DSA
 int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
 DSA *		d2i_DSA_PUBKEY(DSA **a,unsigned char **pp,
 			long length);
-#endif
 
 X509_SIG *	X509_SIG_new(void );
 void		X509_SIG_free(X509_SIG *a);

@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_CAST
-#error CAST is disabled.
-#endif
 
 #define CAST_ENCRYPT	1
 #define CAST_DECRYPT	0

@@ -75,9 +75,7 @@ typedef struct lhash_node_st
 	{
 	void *data;
 	struct lhash_node_st *next;
-#ifndef NO_HASH_COMP
 	unsigned long hash;
-#endif
 	} LHASH_NODE;
 
 typedef struct lhash_st

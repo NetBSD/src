@@ -472,9 +472,6 @@ size_t BIO_ctrl_get_write_guarantee(BIO *b);
 size_t BIO_ctrl_get_read_request(BIO *b);
 int BIO_ctrl_reset_read_request(BIO *b);
 
-#ifdef NO_STDIO
-#define NO_FP_API
-#endif
 
 
 /* These two aren't currently implemented */

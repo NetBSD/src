@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_DH
-#error DH is disabled.
-#endif
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>

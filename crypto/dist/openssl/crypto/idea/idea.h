@@ -63,9 +63,6 @@
 extern "C" {
 #endif
 
-#ifdef NO_IDEA
-#error IDEA is disabled.
-#endif
 
 #include <sys/types.h>
 #define	IDEA_INT	u_int32_t
