@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.37 2004/05/23 23:03:24 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.38 2004/07/01 23:46:07 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -152,7 +152,7 @@ sigfillset(sigset_t *set)
 #endif /* !__LIBC12_SOURCE__ */
 
 /*
- * X/Open CAE Specification Issue 5 Version 2
+ * X/Open CAE Specification Issue 4 Version 2
  */      
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
@@ -165,20 +165,19 @@ int	__sigaltstack14 __P((const stack_t *, stack_t *));
 #else
 int	sigaltstack __P((const stack_t *, stack_t *)) __RENAME(__sigaltstack14);
 #endif
-#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
-
-
-/*
- * X/Open CAE Specification Issue 5 Version 2; IEEE Std 1003.1-2001 (POSIX)
- */      
-#if (_POSIX_C_SOURCE - 0) >= 200112L || \
-    (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 int	sighold __P((int));
 int	sigignore __P((int));
 int	sigpause __P((int));
 int	sigrelse __P((int));
 void	(*sigset __P((int, void (*)(int)))) __P((int));
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+
+
+/*
+ * X/Open CAE Specification Issue 5; IEEE Std 1003.1b-1993 (POSIX)
+ */      
+#if (_POSIX_C_SOURCE - 0) >= 199309L || (_XOPEN_SOURCE - 0) >= 500 || \
+    defined(_NETBSD_SOURCE)
 int	sigwait	__P((const sigset_t * __restrict, int * __restrict));
 int	sigwaitinfo __P((const sigset_t * __restrict, siginfo_t * __restrict));
 
