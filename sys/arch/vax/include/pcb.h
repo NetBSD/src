@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: pcb.h,v 1.1 1994/08/02 20:20:42 ragge Exp $
+ *	$Id: pcb.h,v 1.2 1994/10/08 15:43:55 ragge Exp $
  */
 
  /* All bugs are subject to removal without further notice */
@@ -52,4 +52,8 @@ struct pcb {
 	long	P1LR;		/*  Page 1 Length Register    */
 
 	/* Software registers */
+};
+
+/* Not yet... */
+struct	md_coredump {
 };
