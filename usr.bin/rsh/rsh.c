@@ -1,4 +1,4 @@
-/*	$NetBSD: rsh.c,v 1.18 2003/05/15 00:47:48 itojun Exp $	*/
+/*	$NetBSD: rsh.c,v 1.19 2003/05/22 02:14:03 hubertf Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)rsh.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rsh.c,v 1.18 2003/05/15 00:47:48 itojun Exp $");
+__RCSID("$NetBSD: rsh.c,v 1.19 2003/05/22 02:14:03 hubertf Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,6 +210,7 @@ main(int argc, char **argv)
 				sp = malloc(sizeof(*sp));
 				memset(sp, 0, sizeof(*sp));
 				sp->s_name = service;
+				sp->s_proto = "tcp"; 
 				sp->s_port = atoi(service);
 				if (sp->s_port <= 0 || sp->s_port > IPPORT_ANONMAX)
 					errx(1,"port must be between 1 and %d", IPPORT_ANONMAX);
