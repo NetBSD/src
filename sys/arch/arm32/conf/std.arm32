@@ -1,7 +1,0 @@
-# standard NetBSD/arm32 options
-
-machine	arm32
-
-options		MACHINE_NONCONTIG
-options		EXEC_AOUT
-options		EXEC_SCRIPT
