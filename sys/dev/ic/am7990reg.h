@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990reg.h,v 1.8 2003/11/02 11:07:44 wiz Exp $	*/
+/*	$NetBSD: am7990reg.h,v 1.9 2005/02/17 11:32:42 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ struct lermd {
 #endif
 	int16_t	  rmd2;
 	u_int16_t rmd3;
-};
+} __attribute__((__packed__));
 
 /*
  * Transmit message descriptor
@@ -100,7 +100,7 @@ struct letmd {
 #endif
 	int16_t	  tmd2;
 	u_int16_t tmd3;
-};
+} __attribute__((__packed__));
 
 /*
  * Initialization block
@@ -114,7 +114,7 @@ struct leinit {
 	u_int16_t init_tdra;		/* +0x0014 */
 	u_int16_t init_tlen;		/* +0x0016 */
 	int16_t	  pad0[4];		/* Pad to 16 shorts */
-};
+} __attribute__((__packed__));
 
 /* Receive message descriptor 1 (rmd1_bits) */ 
 #define	LE_R1_OWN	0x80		/* LANCE owns the packet */
