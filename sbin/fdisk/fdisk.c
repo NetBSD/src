@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.56 2002/10/08 07:38:47 jdarrow Exp $ */
+/*	$NetBSD: fdisk.c,v 1.57 2002/11/24 21:49:15 fvdl Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.56 2002/10/08 07:38:47 jdarrow Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.57 2002/11/24 21:49:15 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -571,7 +571,7 @@ print_mbr_partition(struct mbr_partition *partp,
 	    partp->mbrp_typ, get_type(partp->mbrp_typ));
 	printf("%*s    start %lld, size %ld (%ld MB), flag 0x%x\n",
 	    indent, "",
-	    start, getlong(&partp->mbrp_size),
+	    (long long)start, getlong(&partp->mbrp_size),
 	    getlong(&partp->mbrp_size) * 512 / (1024 * 1024), partp->mbrp_flag);
 	printf("%*s        beg: cylinder %4d, head %3d, sector %2d\n",
 	    indent, "",
