@@ -14,3 +14,8 @@
 >27	byte		x		- version %d
 >26	byte		x		.%d
 >28	byte		x		-%d
+
+# Basic recognition of Digital UNIX core dumps - Mike Bremford <mike@opac.bl.uk>
+#
+0	string		Core\001	Alpha COFF format core dump (Digital UNIX)
+>24	string		>\0		\b, from '%s'
