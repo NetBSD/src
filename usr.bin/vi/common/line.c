@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.6 2003/04/18 18:46:26 christos Exp $	*/
+/*	$NetBSD: line.c,v 1.7 2004/05/02 17:00:31 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -16,7 +16,7 @@
 #if 0
 static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
 #else
-__RCSID("$NetBSD: line.c,v 1.6 2003/04/18 18:46:26 christos Exp $");
+__RCSID("$NetBSD: line.c,v 1.7 2004/05/02 17:00:31 aymeric Exp $");
 #endif
 #endif /* not lint */
 
@@ -251,8 +251,7 @@ db_delete(sp, lno)
 	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
-	if (lno <= ep->c_lno)
-		ep->c_lno = OOBLNO;
+	ep->c_lno = OOBLNO;
 	if (ep->c_nlines != OOBLNO)
 		--ep->c_nlines;
 
@@ -306,8 +305,7 @@ db_append(sp, update, lno, p, len)
 	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
-	if (lno < ep->c_lno)
-		ep->c_lno = OOBLNO;
+	ep->c_lno = OOBLNO;
 	if (ep->c_nlines != OOBLNO)
 		++ep->c_nlines;
 
@@ -380,8 +378,7 @@ db_insert(sp, lno, p, len)
 	SIGUNBLOCK;
 
 	/* Flush the cache, update line count, before screen update. */
-	if (lno >= ep->c_lno)
-		ep->c_lno = OOBLNO;
+	ep->c_lno = OOBLNO;
 	if (ep->c_nlines != OOBLNO)
 		++ep->c_nlines;
 
@@ -448,8 +445,7 @@ db_set(sp, lno, p, len)
 	SIGUNBLOCK;
 
 	/* Flush the cache, before logging or screen update. */
-	if (lno == ep->c_lno)
-		ep->c_lno = OOBLNO;
+	ep->c_lno = OOBLNO;
 
 	/* File now dirty. */
 	if (F_ISSET(ep, F_FIRSTMODIFY))
