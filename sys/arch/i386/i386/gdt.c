@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.26 2002/10/01 12:56:51 fvdl Exp $	*/
+/*	$NetBSD: gdt.c,v 1.27 2002/10/08 20:16:09 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.26 2002/10/01 12:56:51 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.27 2002/10/08 20:16:09 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,69 +106,6 @@ setgdt(int sel, void *base, size_t limit,
 			ci->ci_gdt[sel].sd = *sd;
 	}
 }
-
-#if 0
-/*
- * Compact the GDT as follows:
- * 0) We partition the GDT into two areas, one of the slots before gdt_count,
- *    and one of the slots after.  After compaction, the former part should be
- *    completely filled, and the latter part should be completely empty.
- * 1) Step through the process list, looking for TSS and LDT descriptors in
- *    the second section, and swap them with empty slots in the first section.
- * 2) Arrange for new allocations to sweep through the empty section.  Since
- *    we're sweeping through all of the empty entries, and we'll create a free
- *    list as things are deallocated, we do not need to create a new free list
- *    here.
- */
-void
-gdt_compact()
-{
-	struct proc *p;
-	pmap_t pmap;
-	int slot = NGDT, oslot;
-
-	proclist_lock_read();
-	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
-		pmap = p->p_vmspace->vm_map.pmap;
-		oslot = IDXSEL(p->p_md.md_tss_sel);
-		if (oslot >= gdt_count) {
-			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
-				if (++slot >= gdt_count)
-					panic("gdt_compact botch 1");
-			}
-			gdt[slot] = gdt[oslot];
-			gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			p->p_md.md_tss_sel = GSEL(slot, SEL_KPL);
-		}
-		simple_lock(&pmap->pm_lock);
-		oslot = IDXSEL(pmap->pm_ldt_sel);
-		if (oslot >= gdt_count) {
-			while (gdt[slot].sd.sd_type != SDT_SYSNULL) {
-				if (++slot >= gdt_count)
-					panic("gdt_compact botch 2");
-			}
-			gdt[slot] = gdt[oslot];
-			gdt[oslot].gd.gd_type = SDT_SYSNULL;
-			pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
-			/*
-			 * XXXSMP: if the pmap is in use on other
-			 * processors, they need to reload their
-			 * LDT!
-			 */
-		}
-		simple_unlock(&pmap->pm_lock);
-	}
-	for (; slot < gdt_count; slot++)
-		if (gdt[slot].gd.gd_type == SDT_SYSNULL)
-			panic("gdt_compact botch 3");
-	for (slot = gdt_count; slot < gdt_size; slot++)
-		if (gdt[slot].gd.gd_type != SDT_SYSNULL)
-			panic("gdt_compact botch 4");
-	gdt_next = gdt_count;
-	gdt_free = GNULL_SEL;
-	proclist_unlock_read();
-}
-#endif
 
 /*
  * Initialize the GDT subsystem.  Called from autoconf().
@@ -397,6 +334,9 @@ tss_free(int sel)
 	gdt_put_slot(IDXSEL(sel));
 }
 
+/*
+ * Caller must have pmap locked for both of these functions.
+ */
 void
 ldt_alloc(struct pmap *pmap, union descriptor *ldt, size_t len)
 {
@@ -404,9 +344,7 @@ ldt_alloc(struct pmap *pmap, union descriptor *ldt, size_t len)
 
 	slot = gdt_get_slot();
 	setgdt(slot, ldt, len - 1, SDT_SYSLDT, SEL_KPL, 0, 0);
-	simple_lock(&pmap->pm_lock);
 	pmap->pm_ldt_sel = GSEL(slot, SEL_KPL);
-	simple_unlock(&pmap->pm_lock);
 }
 
 void
@@ -414,9 +352,7 @@ ldt_free(struct pmap *pmap)
 {
 	int slot;
 
-	simple_lock(&pmap->pm_lock);
 	slot = IDXSEL(pmap->pm_ldt_sel);
-	simple_unlock(&pmap->pm_lock);
 
 	gdt_put_slot(slot);
 }
