@@ -1,39 +1,14 @@
-/*	$NetBSD: dc.c,v 1.1.2.3 1998/10/23 11:56:26 nisimura Exp $ */
-
-/*
- * Copyright (c) 1996, 1998 Tohru Nishimura.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed by Christopher G. Demetriou
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+/*	$NetBSD: dc.c,v 1.1.2.4 1998/10/26 10:52:52 nisimura Exp $ */
 
 /*
  * DC7085 (DZ-11 look alike) quad asynchronous serial interface
  */
-#include "opt_ddb.h"
+
+#include "opt_ddb.h"			/* XXX TBD XXX */
+
+#include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
+
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.1.2.4 1998/10/26 10:52:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,10 +23,12 @@
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
-#include <mips/locore.h>
+#include <mips/locore.h>		/* XXX XXX XXX */
 #include <pmax/ibus/ibusvar.h>
-#include <pmax/ibus/dc7085reg.h> /* XXX dev/dec/dc7085reg.h XXX */
-#include <pmax/ibus/dc7085var.h>
+#include <pmax/ibus/dc7085reg.h>	/* XXX dev/dec/dc7085reg.h XXX */
+#include <pmax/ibus/dc7085var.h>	/* XXX 'Think different(ly)' XXX */
+
+extern struct cfdriver dc_cd;
 
 static struct speedtab dcspeedtab[] = {
 	{ 0,	0,	  },
@@ -77,67 +54,12 @@ static struct speedtab dcspeedtab[] = {
 #include "dc.h"
 #if NDC > 0
 
-int  dcmatch	__P((struct device *, struct cfdata *, void *));
-void dcattach	__P((struct device *, struct device *, void *));
-
-struct cfattach dc_ca = {
-	sizeof(struct dc_softc), dcmatch, dcattach
-};
-extern struct cfdriver dc_cd;
-
-int dc_major = 16;
-
-void dcstart __P((struct tty *));
-void dcstop __P((struct tty *, int));
-int  dcparam __P((struct tty *, struct termios *));
-int  dcintr __P((void *));
-int  dcmctl __P((struct dc_softc *, int, int, int));
-void dcttyrint __P((void *, int));
-
-void
-dcttyrint(v, cc)
-	void *v;
-	int cc;
-{
-	struct tty *tp = v;
-
-	(*linesw[tp->t_line].l_rint)(cc, tp);
-}
-
-int
-dcmatch(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
-{
-	struct ibus_attach_args *d = aux;
-
-	if (strcmp(d->ia_name, "dc") != 0 &&
-	    strcmp(d->ia_name, "mdc") != 0 &&
-	    strcmp(d->ia_name, "dc7085") != 0)
-		return 0;
-
-	if (badaddr((caddr_t)d->ia_addr, 2))
-		return 0;
-
-	return 1;
-}
-
-void
-dcattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct ibus_attach_args *d = aux;
-	struct dc_softc *sc = (struct dc_softc*)self;
-
-	sc->sc_reg = (void *)d->ia_addr;
-
-	ibus_intr_establish(parent, d->ia_cookie, IPL_TTY, dcintr, sc);
-
-	printf(": DC7085\n");
-}
+static void dcstart __P((struct tty *));
+static int  dcparam __P((struct tty *, struct termios *));
+static void dc_modem __P((struct dc_softc *, int, int));
+static void dcttyrint __P((void *, int));
+int  dcintr __P((void *));			/* EXPORT */
+extern int dc_major;				/* IMPORT */
 
 int
 dcintr(v)
@@ -236,6 +158,7 @@ dcopen(dev, flag, mode, p)
 		tp->t_lflag = TTYDEF_LFLAG;
 		ttychars(tp);
 		ttsetwater(tp);
+		dc_modem(sc, line, 1);
 
 	} else if ((tp->t_state & TS_XCLUDE) && curproc->p_ucred->cr_uid != 0)
 		return EBUSY;
@@ -252,8 +175,8 @@ dcopen(dev, flag, mode, p)
 			if (error) {
 				/* interrupted while waiting for carrier */
 				if ((tp->t_state & TS_ISOPEN) == 0) {
-					(void)dcmctl(sc, line, 0, DMSET);
-					ttwakeup(tp);
+					dc_modem(sc, line, 0);
+					ttwakeup(tp); /* ??? */
 				}
 				break;
 			}
@@ -288,10 +211,14 @@ dcclose(dev, flag, mode, p)
 	}
 	splx(s);
 	(*linesw[tp->t_line].l_close)(tp, flag);
-	if ((tp->t_cflag & HUPCL)
-	    || tp->t_wopen || (tp->t_state & TS_ISOPEN) == 0)
-		(void)dcmctl(sc, line, 0, DMSET);
-	return ttyclose(tp);
+	ttyclose(tp);
+
+	if ((tp->t_state & TS_ISOPEN) == 0 && tp->t_wopen == 0
+			&& (tp->t_cflag & HUPCL)) {
+		dc_modem(sc, line, 0);
+		(void)tsleep(sc, TTIPRI, ttclos, hz);
+	}
+	return 0;
 }
 
 int
@@ -305,7 +232,7 @@ dcread(dev, uio, flag)
 	sc = dc_cd.cd_devs[DCUNIT(dev)];
 	tp = sc->sc_tty[DCLINE(dev)];
 
-#ifdef HW_FLOW_CONTROL
+#ifdef HW_FLOW_CONTROL			/* XXX t_hwiflow() routine XXX */
 	if ((tp->t_cflag & CRTSCTS) && (tp->t_state & TS_TBLOCK) &&
 	    tp->t_rawq.c_cc < TTYHOG/5) {
 		tp->t_state &= ~TS_TBLOCK;
@@ -376,39 +303,23 @@ dcioctl(dev, cmd, data, flag, p)
 		break;
 
 	case TIOCSDTR:
-		(void)dcmctl(sc, line, SML_DTR|SML_RTS, DMBIS);
+		dc_modem(sc, line, 1);
 		break;
 
 	case TIOCCDTR:
-		(void)dcmctl(sc, line, SML_DTR|SML_RTS, DMBIC);
-		break;
-
-	case TIOCMSET:
-		(void)dcmctl(sc, line, *(int *)data, DMSET);
-		break;
-
-	case TIOCMBIS:
-		(void)dcmctl(sc, line, *(int *)data, DMBIS);
-		break;
-
-	case TIOCMBIC:
-		(void)dcmctl(sc, line, *(int *)data, DMBIC);
-		break;
-
-	case TIOCMGET:
-		*(int *)data = dcmctl(sc, line, 0, DMGET);
+		dc_modem(sc, line, 0);
 		break;
 
 	case TIOCGFLAGS:
-		*(int *)data = sc->dc_flags[line];
+		/* 07 means SOFTCAR|CLOCAL|CRTSCTS */
+		*(int *)data = sc->dc_flags[line] & 07;
 		break;
 
 	case TIOCSFLAGS:
                 error = suser(p->p_ucred, &p->p_acflag);
                 if (error)
                         return error;
-		/* 0x7 means SOFTCAR|CLOCAL|CRTSCTS */
-		sc->dc_flags[line] |= *(int *)data & 0x7;
+		sc->dc_flags[line] |= *(int *)data & 07;
 		break;
 
 	default:
@@ -417,7 +328,7 @@ dcioctl(dev, cmd, data, flag, p)
 	return 0;
 }
 
-void
+static void
 dcstart(tp)
 	struct tty *tp;
 {
@@ -455,6 +366,7 @@ out:
 void
 dcstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -464,7 +376,7 @@ dcstop(tp, flag)
 	splx(s);
 }
 
-int
+static int
 dcparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -504,7 +416,7 @@ dcparam(tp, t)
 	tp->t_cflag = t->c_cflag;
 
 	if (ospeed == 0) {
-		(void)dcmctl(sc, line, 0, DMSET);
+		dc_modem(sc, line, 0); /* ??? tsleep(9) ??? */
 		return 0;
 	}
 
@@ -522,6 +434,9 @@ dcparam(tp, t)
 	DELAY(10);
 	return 0;
 }
+
+#if 0
+int  dcmctl __P((struct dc_softc *, int, int, int));
 
 /*
  * XXX Need REDO -- do model specific case analysis for 3100/5100/5000 XXX
@@ -620,6 +535,75 @@ dcmctl(sc, line, bits, how)
 	splx(s);
 	return mbits;
 }
+#endif
+
+#if defined(__pmax__)
+#include <pmax/pmax/pmaxtype.h>
+
+/*
+ * Raise or lower modem control (DTR/RTS) signals.
+ *			pmax		3max			mipsmate
+ * line.2 detects 	only DSR	DSR/CTS/DCD/RI		DSR/CTS/DCD/RI
+ * line.3 detects	only DSR	DSR/CTS/DCD/RI		-???-
+ *
+ * line.2 sets		only DTR	only DTR		SS/DTR/RTS
+ * line.3 sets		only DTR	DTR/RTS			-???-
+ */
+static void
+dc_modem(sc, line, onoff)
+	struct dc_softc *sc;
+	int line, onoff;
+{
+	struct dc7085reg *reg = sc->sc_reg;
+	int mbits, tcr, s;
+	static u_int16_t ds5000[2] = {
+		DS5000_DC_L2_DTR,
+		DS5000_DC_L3_DTR|DS5000_DC_L3_RTS,
+	};
+
+	if (line == 0 || line == 1)
+		return;
+
+	mbits = 0;
+	if (systype == DS_PMAX) {
+		mbits = (line == 2) ? DS3100_DC_L2_DTR : DS3100_DC_L3_DTR;
+	}
+	if (systype == DS_MIPSMATE && line == 2) {
+		mbits = DS5100_DC_L2_DTR|DS5100_DC_L2_RTS;
+	}
+	if (systype == DS_3MAX) {
+		mbits = ds5000[line - 2];
+	}
+	if (mbits == 0)
+		return;
+
+	s = spltty();
+
+	tcr = reg->dctcr;
+	switch (onoff) {
+	case 1:
+		tcr |= mbits;
+		break;
+	case 0:
+		tcr &= ~mbits;
+		break;
+	}
+	reg->dctcr = tcr;
+	wbflush(); 
+
+	splx(s);
+}
+#endif
+
+static void
+dcttyrint(v, cc)
+	void *v;
+	int cc;
+{
+	struct tty *tp = v;
+
+	(*linesw[tp->t_line].l_rint)(cc, tp);
+}
 
 int	dcgetc __P((struct dc7085reg *, int));		/* EXPORT */
 void	dcputc __P((struct dc7085reg *, int, int));	/* EXPORT */
@@ -668,7 +652,7 @@ dcputc(reg, line, c)
 	splx(s);
 }
 
-tc_addr_t dc_cons_addr;
+tc_addr_t dc_cons_addr;		/* XXX */
 
 static int  dc_cngetc __P((dev_t));
 static void dc_cnputc __P((dev_t, int));
@@ -711,7 +695,7 @@ dc_cnattach(addr, line, rate, cflag)
 {
 	struct dc7085reg *reg;
 
-	dc_cons_addr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(addr);
+	dc_cons_addr = (tc_addr_t)MIPS_PHYS_TO_KSEG1(addr); /* XXX */
 
 	if (badaddr((caddr_t)dc_cons_addr, 2))
 		return 1;
