@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.24 1996/10/16 12:50:33 leo Exp $
+#	$NetBSD: files.atari,v 1.25 1996/11/09 22:30:55 leo Exp $
 #
 
 maxpartitions 16
@@ -47,11 +47,19 @@ file	arch/atari/dev/nvram.c		nvr needs-flag
 device	fdc { unit = -1 }
 attach	fdc at mainbus
 
+# TT/Falcon floppy driver
 device	fd
 attach	fd at fdc
 file	arch/atari/dev/fd.c		fd needs-flag
 file	arch/atari/dev/dma.c
 major	{fd = 2}
+
+# Hades floppy driver
+device	hdfd
+attach	hdfd at fdc
+file	arch/atari/dev/hdfd.c		hdfd needs-flag
+file	arch/atari/dev/hdfd_intr.s
+major	{hdfd = 2}
 
 # graphic devices
 define	grfb {}
