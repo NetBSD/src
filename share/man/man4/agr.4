@@ -1,4 +1,4 @@
-.\"	$NetBSD: agr.4,v 1.1 2005/03/18 11:11:51 yamt Exp $
+.\"	$NetBSD: agr.4,v 1.2 2005/03/18 12:42:47 wiz Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -39,10 +39,11 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides link aggregation functionality. (aka L2 trunking or bonding)
+driver provides link aggregation functionality (a.k.a. L2 trunking
+or bonding).
 .Pp
-It supports IEEE 802.3ad Link Aggregation Control Protocol (LACP) and
-Marker Protocol.
+It supports the IEEE 802.3ad Link Aggregation Control Protocol
+(LACP) and the Marker Protocol.
 .Pp
 The
 .Nm
@@ -50,12 +51,13 @@ driver supports the following link specific flags for
 .Xr ifconfig 8 :
 .Bl -tag -width -link0
 .It Cm link0
-Use round-robin distribution algorithm.
-Because it violates the frame ordering rule, don't use it unless
-you're really sure.
+Use the round-robin distribution algorithm.
+Don't use it unless you're really sure,
+because it violates the frame ordering rule.
 .It Cm -link0
-Use default distribution algorithm, which is based on the hash of DA/SA,
-TCI, and, if available, some upper layer protocol information like
+Use the default distribution algorithm, which is based on the hash
+of DA/SA, TCI, and, if available, some upper layer protocol
+information like
 .Xr ip 4
 DA/SA.
 .El
@@ -104,8 +106,7 @@ driver was written by
 .Sh BUGS
 The current implementation of the
 .Nm
-driver
-always attempts automatic configuration via LACP.
+driver always attempts automatic configuration via LACP.
 There is no way to configure statically or use non IEEE 802.3 devices.
 .Pp
 There is no way to configure LACP administrative variables, including
@@ -118,11 +119,11 @@ uses 0x8000 as system and port priorities.
 The
 .Nm
 driver uses the MAC address of the first-added physical
-interface as the MAC address of
+interface as the MAC address of the
 .Nm
 interface itself.
-Thus, removing the physical interface and use it for another purpose
-can result in non unique MAC addresses.
+Thus, removing the physical interface and using it for another purpose
+can result in non-unique MAC addresses.
 .Pp
 The current implementation of the
 .Nm
