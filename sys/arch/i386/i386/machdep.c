@@ -35,52 +35,47 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.47.2.10 1993/10/22 19:10:58 mycroft Exp $
+ *	$Id: machdep.c,v 1.47.2.11 1993/10/26 11:57:22 mycroft Exp $
  */
 
-#include "npx.h"
-#include "isa.h"
-
 #include <stddef.h>
-#include "param.h"
-#include "systm.h"
-#include "signalvar.h"
-#include "kernel.h"
-#include "map.h"
-#include "proc.h"
-#include "user.h"
-#include "exec.h"            /* for PS_STRINGS */
-#include "buf.h"
-#include "reboot.h"
-#include "conf.h"
-#include "file.h"
-#include "callout.h"
-#include "malloc.h"
-#include "mbuf.h"
-#include "msgbuf.h"
-#include "mount.h"
-#include "net/netisr.h"
-
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/signalvar.h>
+#include <sys/kernel.h>
+#include <sys/map.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/exec.h>
+#include <sys/buf.h>
+#include <sys/reboot.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/callout.h>
+#include <sys/malloc.h>
+#include <sys/mbuf.h>
+#include <sys/msgbuf.h>
+#include <sys/mount.h>
+#include <sys/device.h>
+#include <sys/vnode.h>
 #ifdef SYSVSHM
-#include "sys/shm.h"
+#include <sys/sys/shm.h>
 #endif
 
-#include "vm/vm.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_page.h"
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_page.h>
 
-#include "sys/device.h"
-#include "sys/exec.h"
-#include "sys/vnode.h"
+#include <machine/cpu.h>
+#include <machine/cpufunc.h>
+#include <machine/reg.h>
+#include <machine/specialreg.h>
 
-#include "machine/cpu.h"
-#include "machine/cpufunc.h"
-#include "machine/reg.h"
-#include "machine/specialreg.h"
+#include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
+#include <i386/isa/nvram.h>
 
-#include "i386/isa/isa.h"
-#include "i386/isa/isavar.h"
-#include "i386/isa/nvram.h"
+#include "npx.h"
 
 /*
  * Declare these as initialized data so we can patch them.
@@ -364,8 +359,6 @@ vmtime(otime, olbolt, oicr)
 	return (((time.tv_sec-otime)*HZ + lbolt-olbolt)*(1000000/HZ));
 }
 #endif
-
-extern int kstack[];
 
 /*
  * Send an interrupt to process.
@@ -920,7 +913,7 @@ struct soft_segment_descriptor gdt_segs[] = {
 	0,			/* unused - default 32 vs 16 bit size */
 	0  			/* limit granularity (byte/page units)*/ },
 	/* Proc 0 Tss Descriptor */
-{	(int) kstack,			/* segment base address  */
+{	(int) USRSTACK,		/* segment base address  */
 	sizeof(tss)-1,		/* length - all address space */
 	SDT_SYS386TSS,		/* segment type */
 	0,			/* segment descriptor priority level */
@@ -1028,9 +1021,10 @@ init386(first_avail)
 	extern char sigcode[], esigcode[];
 	/* table descriptors - used to load tables by microp */
 	struct region_descriptor r_gdt, r_idt;
-	int	pagesinbase, pagesinext;
 
 	proc0.p_addr = proc0paddr;
+
+	consinit();	/* XXXX */
 
 #ifndef LKM		/* don't do this if we're using LKM's */
 	/* make gdt memory segments */
@@ -1097,26 +1091,26 @@ init386(first_avail)
 #endif
 #ifdef KGDB
 	if (boothowto & RB_KDB)
-	    kgdb_connect(0);
+		kgdb_connect(0);
 #endif
 
 	/*
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
 	 */
-	biosbasemem = (nvram(NVRAM_BASEMEM_LO)<<0) |
-		      (nvram(NVRAM_BASEMEM_HI)<<8);
-	biosextmem = (nvram(NVRAM_EXTMEM_LO)<<0) |
-		     (nvram(NVRAM_EXTMEM_HI)<<8);
+	biosbasemem = (nvram(NVRAM_BASEMEM_HI)<<8) |
+		      (nvram(NVRAM_BASEMEM_LO));
+	biosextmem = (nvram(NVRAM_EXTMEM_HI)<<8) |
+		     (nvram(NVRAM_EXTMEM_LO));
 
 #ifndef BIOS_BASEMEM
 #define BIOS_BASEMEM 640
 #endif
 
 	if (biosbasemem == 0) {
+		biosbasemem = BIOS_BASEMEM;
 		printf("warning: nvram reports 0k base memory; assuming %k\n",
 		       biosbasemem);
-		biosbasemem = BIOS_BASEMEM;
 	}
 
 	avail_start = 0x1000;	/* BIOS leaves data in low memory */
@@ -1155,7 +1149,7 @@ init386(first_avail)
 	/* now running on new page tables, configured,and u/iom is accessible */
 
 	/* make a initial tss so microp can get interrupt stack on syscall! */
-	proc0.p_addr->u_pcb.pcb_tss.tss_esp0 = (int) kstack + UPAGES*NBPG;
+	proc0.p_addr->u_pcb.pcb_tss.tss_esp0 = (int) USRSTACK + UPAGES*NBPG;
 	proc0.p_addr->u_pcb.pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL) ;
 	_gsel_tss = GSEL(GPROC0_SEL, SEL_KPL);
 
@@ -1267,46 +1261,48 @@ _remque(element)
  * if COMPAT_NOMID is given as a kernel option.
  */
 cpu_exec_aout_makecmds(p, epp)
-struct proc *p;
-struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
 #ifdef COMPAT_NOMID
-  int error;
-  u_long midmag, magic;
-  u_short mid;
+	int error;
+	u_long midmag, magic;
+	u_short mid;
+	
+	midmag = ntohl(epp->ep_execp->a_midmag);
+	mid = (midmag >> 16) & 0xffff;
+	magic = midmag & 0xffff;
+	
+	if (magic == 0) {
+		magic = (epp->ep_execp->a_midmag & 0xffff);
+		mid = MID_ZERO;
+	}
+	
+	midmag = mid << 16 | magic;
 
-  midmag = ntohl(epp->ep_execp->a_midmag);
-  mid = (midmag >> 16 ) & 0xffff;
-  magic = midmag & 0xffff;
-
-  if(magic==0) {
-    magic = (epp->ep_execp->a_midmag & 0xffff);
-    mid = MID_ZERO;
-  }
-
-  switch (mid << 16 | magic) {
-  /*
-   * 386BSD's ZMAGIC format:
-   */
-  case (MID_ZERO << 16) | ZMAGIC:
-    error = cpu_exec_aout_prep_oldzmagic(p, epp);
-    break;
-
-  /*
-   * BSDI's QMAGIC format:
-   * the same as our new ZMAGIC format, but with a different magic number
-   */
-  case (MID_ZERO << 16) | QMAGIC:
-    error = exec_aout_prep_zmagic(p, epp);
-    break;
-
-  default:
-    error = ENOEXEC;
-  }
-
-  return error;
+	switch (midmag) {
+	    case (MID_ZERO << 16) | ZMAGIC:
+		/*
+		 * 386BSD's ZMAGIC format:
+		 */
+		error = cpu_exec_aout_prep_oldzmagic(p, epp);
+		break;
+		
+	    case (MID_ZERO << 16) | QMAGIC:
+		/*
+		 * BSDI's QMAGIC format:
+		 * same as new ZMAGIC format, but with different magic number
+		 */
+		error = exec_aout_prep_zmagic(p, epp);
+		break;
+		
+	    default:
+		error = ENOEXEC;
+	}
+	
+	return error;
 #else /* ! COMPAT_NOMID */
-  return ENOEXEC;
+	return ENOEXEC;
 #endif
 }
 
@@ -1321,112 +1317,62 @@ struct exec_package *epp;
  */
 int
 cpu_exec_aout_prep_oldzmagic(p, epp)
-     struct proc *p;
-     struct exec_package *epp;
+	struct proc *p;
+	struct exec_package *epp;
 {
-  struct exec *execp = epp->ep_execp;
-  struct exec_vmcmd *ccmdp;
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
 
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up size fields in epp\n");
-#endif
-  epp->ep_taddr = 0;
-  epp->ep_tsize = execp->a_text;
-  epp->ep_daddr = epp->ep_taddr + execp->a_text;
-  epp->ep_dsize = execp->a_data + execp->a_bss;
-  epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-  epp->ep_minsaddr = USRSTACK;
-  epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
-  epp->ep_entry = execp->a_entry;
+	epp->ep_taddr = 0;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
 
-  /* check if vnode is in open for writing, because we want to demand-page
-   * out of it.  if it is, don't do it, for various reasons
-   */
-  if ((execp->a_text != 0 || execp->a_data != 0) &&
-      (epp->ep_vp->v_flag & VTEXT) == 0 && epp->ep_vp->v_writecount != 0) {
+	/*
+	 * check if vnode is in open for writing, because we want to
+	 * demand-page out of it.  if it is, don't do it, for various
+	 * reasons
+	 */
+	if ((execp->a_text != 0 || execp->a_data != 0) &&
+	    (epp->ep_vp->v_flag & VTEXT) == 0 || epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
-    if (epp->ep_vp->v_flag & VTEXT)
-      panic("exec: a VTEXT vnode has writecount != 0\n");
+		if (epp->ep_vp->v_flag & VTEXT)
+			panic("exec: a VTEXT vnode has writecount != 0\n");
 #endif
-    epp->ep_vcp = NULL;
-#ifdef EXEC_DEBUG
-    printf("exec_prep_oldzmagic: returning with ETXTBSY\n");
-#endif
-    return ETXTBSY;
-  }
-  epp->ep_vp->v_flag |= VTEXT;
+		epp->ep_vcp = NULL;
+		return ETXTBSY;
+	}
+	epp->ep_vp->v_flag |= VTEXT;
 
-  /* set up command for text segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up text segment commands\n");
-#endif
-  epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
-			  execp->a_text,
-			  epp->ep_taddr,
-			  epp->ep_vp,
-			  NBPG,                  /* should this be CLBYTES? */
-			  VM_PROT_READ|VM_PROT_EXECUTE);
-  ccmdp = epp->ep_vcp;
+	/* set up command for text segment */
+	epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
+	    execp->a_text,
+	    epp->ep_taddr,
+	    epp->ep_vp,
+	    NBPG,			/* XXX should be CLBYTES? */
+	    VM_PROT_READ | VM_PROT_EXECUTE);
+	ccmdp = epp->ep_vcp;
 
-  /* set up command for data segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up data segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
-			     execp->a_data,
-			     epp->ep_daddr,
-			     epp->ep_vp,
-			     execp->a_text + NBPG, /* should be CLBYTES? */
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-  ccmdp = ccmdp->ev_next;
+	/* set up command for data segment */
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
+	    execp->a_data,
+	    epp->ep_daddr,
+	    epp->ep_vp,
+	    execp->a_text + NBPG,	/* XXX should be CLBYTES? */
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = ccmdp->ev_next;
 
-  /* set up command for bss segment */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up bss segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     execp->a_bss,
-			     epp->ep_daddr + execp->a_data,
-			     0,
-			     0,
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-  ccmdp = ccmdp->ev_next;
-
-  /* set up commands for stack.  note that this takes *two*, one
-   * to map the part of the stack which we can access, and one
-   * to map the part which we can't.
-   *
-   * arguably, it could be made into one, but that would require
-   * the addition of another mapping proc, which is unnecessary
-   *
-   * note that in memory, thigns assumed to be:
-   *    0 ....... ep_maxsaddr <stack> ep_minsaddr
-   */
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up unmapped stack segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     ((epp->ep_minsaddr - epp->ep_ssize) -
-			      epp->ep_maxsaddr),
-			     epp->ep_maxsaddr,
-			     0,
-			     0,
-			     VM_PROT_NONE);
-  ccmdp = ccmdp->ev_next;
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: setting up mapped stack segment commands\n");
-#endif
-  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
-			     epp->ep_ssize,
-			     (epp->ep_minsaddr - epp->ep_ssize),
-			     0,
-			     0,
-			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
-
-#ifdef EXEC_DEBUG
-  printf("exec_prep_oldzmagic: returning with no error\n");
-#endif
-  return 0;
+	/* set up command for bss segment */
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+	    execp->a_bss,
+	    epp->ep_daddr + execp->a_data,
+	    0,
+	    0,
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = ccmdp->ev_next;
+	
+	return exec_aout_setup_stack(p, epp, ccmdp);
 }
 #endif /* COMPAT_NOMID */
 
@@ -1444,7 +1390,7 @@ ptrace_set_pc (struct proc *p, unsigned int addr)
 {
 	struct pcb *pcb;
 	void *regs = (char*)p->p_addr +
-		((char*) p->p_regs - (char*) kstack);
+		((char*) p->p_regs - (char*) USRSTACK);
 
 	pcb = &p->p_addr->u_pcb;
 	((struct trapframe *)regs)->tf_eip = addr;
@@ -1456,7 +1402,7 @@ ptrace_single_step (struct proc *p)
 {
 	struct pcb *pcb;
 	void *regs = (char*)p->p_addr +
-		((char*) p->p_regs - (char*) kstack);
+		((char*) p->p_regs - (char*) USRSTACK);
 
 	pcb = &p->p_addr->u_pcb;
 	((struct trapframe *)regs)->tf_eflags |= PSL_T;
@@ -1475,7 +1421,7 @@ ptrace_getregs (struct proc *p, unsigned int *addr)
 	struct pcb *pcb;
 	struct regs regs = {0};
 	void *ptr = (char*)p->p_addr +
-		((char*) p->p_regs - (char*) kstack);
+		((char*) p->p_regs - (char*) USRSTACK);
 
 	pcb = &p->p_addr->u_pcb;
 	tp = ptr;
@@ -1504,7 +1450,7 @@ ptrace_setregs (struct proc *p, unsigned int *addr)
 	struct pcb *pcb;
 	struct regs regs = {0};
 	void *ptr = (char*)p->p_addr +
-		((char*) p->p_regs - (char*) kstack);
+		((char*) p->p_regs - (char*) USRSTACK);
 
 	if (error = copyin (addr, &regs, sizeof(regs)))
 		return error;
@@ -1533,6 +1479,7 @@ ptrace_setregs (struct proc *p, unsigned int *addr)
 unsigned int
 pmap_free_pages()
 {
+
 	return avail_remaining;
 }
 
@@ -1540,6 +1487,7 @@ int
 pmap_next_page(addrp)
 	vm_offset_t	*addrp;
 {
+
 	if (avail_next == avail_end)
 		return FALSE;
 
@@ -1557,6 +1505,7 @@ unsigned int
 pmap_page_index(pa)
 	vm_offset_t pa;
 {
+
 	if (pa >= avail_start && pa < hole_start)
 		return i386_btop(pa - avail_start);
 	if (pa >= hole_end && pa < avail_end)
