@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.23 2003/08/07 16:32:55 agc Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.24 2003/09/05 23:02:40 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.23 2003/08/07 16:32:55 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.24 2003/09/05 23:02:40 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -460,7 +460,7 @@ token_output(ifp, m0, dst, rt0)
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
 		    l->llc_snap.org_code[2] = 0;
 		bcopy((caddr_t) &etype, (caddr_t) &l->llc_snap.ether_type,
-		    sizeof(u_short));
+		    sizeof(u_int16_t));
 	}
 
 	/*

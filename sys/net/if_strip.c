@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.49 2003/08/07 16:32:54 agc Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.50 2003/09/05 23:02:40 itojun Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.49 2003/08/07 16:32:54 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.50 2003/09/05 23:02:40 itojun Exp $");
 
 #include "strip.h"
 
@@ -1675,7 +1675,7 @@ strip_newpacket(sc, ptr, end)
 	 * of the decoded packet.  Decode start of IP header, get the
 	 * IP header length and decode that many bytes in total.
 	 */
-	packetlen = ((u_short)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
+	packetlen = ((u_int16_t)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
 #if 0

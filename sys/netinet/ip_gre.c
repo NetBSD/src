@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_gre.c,v 1.28 2003/06/26 00:43:32 itojun Exp $ */
+/*	$NetBSD: ip_gre.c,v 1.29 2003/09/05 23:02:43 itojun Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.28 2003/06/26 00:43:32 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_gre.c,v 1.29 2003/09/05 23:02:43 itojun Exp $");
 
 #include "gre.h"
 #if NGRE > 0
@@ -154,7 +154,7 @@ gre_input2(struct mbuf *m, int hlen, u_char proto)
 	int s;
 	struct ifqueue *ifq;
 	struct gre_softc *sc;
-	u_short flags;
+	u_int16_t flags;
 
 	if ((sc = gre_lookup(m, proto)) == NULL) {
 		/* No matching tunnel or tunnel is down. */
@@ -311,7 +311,7 @@ gre_mobile_input(m, va_alist)
 	mip->mi.ip_dst.s_addr = mip->mh.odst;
 	mip->mi.ip_p = (ntohs(mip->mh.proto) >> 8);
 
-	if (gre_in_cksum((u_short*)&mip->mh, msiz) != 0) {
+	if (gre_in_cksum((u_int16_t *)&mip->mh, msiz) != 0) {
 		m_freem(m);
 		return;
 	}
