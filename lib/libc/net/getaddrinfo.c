@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.54 2001/08/20 02:33:31 itojun Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.55 2002/05/14 13:45:14 kleink Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.54 2001/08/20 02:33:31 itojun Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.55 2002/05/14 13:45:14 kleink Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -911,6 +911,9 @@ get_ai(pai, afd, addr)
 	memset(ai->ai_addr, 0, (size_t)afd->a_socklen);
 	ai->ai_addr->sa_len = afd->a_socklen;
 	ai->ai_addrlen = afd->a_socklen;
+#if defined (__alpha__) || (defined(__i386__) && defined(_LP64)) || defined(__sparc64__)
+	ai->__ai_pad0 = 0;
+#endif
 	ai->ai_addr->sa_family = ai->ai_family = afd->a_af;
 	p = (char *)(void *)(ai->ai_addr);
 	memcpy(p + afd->a_off, addr, (size_t)afd->a_addrlen);
