@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.7 2004/01/28 09:29:06 jdolecek Exp $ */
+/* $NetBSD: lpt.c,v 1.8 2004/01/28 18:03:45 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.7 2004/01/28 09:29:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.8 2004/01/28 18:03:45 jdolecek Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -343,7 +343,7 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
 static int
 lpt_detect(struct device * dev)
 {
-	u_char testbyte[18] = {
+	static const u_char testbyte[18] = {
 		0x55,			/* alternating zeros */
 		0xaa,			/* alternating ones */
 		0xfe, 0xfd, 0xfb, 0xf7,
