@@ -1,10 +1,10 @@
-/*	$NetBSD: sa11x0_gpioreg.h,v 1.6 2001/03/31 12:36:53 toshii Exp $	*/
+/*	$NetBSD: sa11x0_gpioreg.h,v 1.7 2001/07/07 15:49:41 ichiro Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.  All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Ichiro FUKUHARA.
+ * by Ichiro FUKUHARA (ichiro@ichiro.org).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,6 +123,24 @@ Extended GPIO
 #define GPIO_H3600_OPT_LOCK	GPIO (22)
 #define GPIO_H3600_OPT_IRQ	GPIO (24)
 #define GPIO_H3600_OPT_DETECT	GPIO (27)
+
+#define EGPIO_H3600_CARD_RESET		GPIO (1)
+#define EGPIO_H3600_OPT_RESET		GPIO (2)
+#define EGPIO_H3600_CODEC_RESET		GPIO (3)
+#define EGPIO_H3600_OPT_NVRAM_ON	GPIO (4)
+#define EGPIO_H3600_OPT_ON		GPIO (5)
+#define EGPIO_H3600_LCD33_ON		GPIO (6)
+#define EGPIO_H3600_RS232_ON		GPIO (7)
+#define EGPIO_H3600_LCD_PCI		GPIO (8)
+#define EGPIO_H3600_AUD_ON		GPIO (9)
+#define EGPIO_H3600_AUD_ALLON		GPIO (10)
+#define EGPIO_H3600_LCD5_ON		GPIO (14)
+#define EGPIO_H3600_LVDD_ON		GPIO (15)
+
+#define EGPIO_INIT	EGPIO_H3600_OPT_RESET|	\
+			EGPIO_H3600_OPT_NVRAM_ON|\
+			EGPIO_H3600_OPT_ON|	\
+			EGPIO_H3600_LCD_PCI 
 
 #define IRQ_H3600_POWER_BUTTON	IRQ_GPIO0
 #define IRQ_H3600_PCMCIA_CD0	IRQ_GPIO17
