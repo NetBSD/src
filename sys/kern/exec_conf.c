@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.31 1998/10/01 15:55:34 erh Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.32 1998/10/03 20:39:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -71,7 +71,7 @@
 #endif
 
 #ifdef COMPAT_LINUX
-#include <compat/linux/linux_exec.h>
+#include <compat/linux/common/linux_exec.h>
 #endif
 
 #ifdef COMPAT_FREEBSD
