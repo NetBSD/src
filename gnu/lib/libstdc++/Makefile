@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2002/02/28 02:13:34 tv Exp $
+#	$NetBSD: Makefile,v 1.19 2002/08/19 09:46:41 lukem Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,7 @@ SHLIB_MINOR=	0
 
 SUBDIR=		include io config
 
-TOP=		${.CURDIR}/../..
-DIST=		${TOP}/dist/toolchain
+DIST=		${NETBSDSRCDIR}/gnu/dist/toolchain
 
 SRCS=		${G_OBJS:.o=.cc} ${G_LIBIBERTY_OBJS:.o=.c}
 INCS=		_G_config.h
@@ -37,7 +36,7 @@ GCPPFLAGS=	${G_XCFLAGS} ${G_CINCLUDES} ${G_MT_CFLAGS} ${G_CXXINCLUDES}
 CPPFLAGS+=	-nostdinc++ -I${.CURDIR}/arch/${MACHINE_ARCH} \
 		${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
 		-I${DIST}/gcc/cp/inc \
-		-I${.CURDIR}/../libiberty -I${DIST}/include
+		-I${NETBSDSRCDIR}/gnu/lib/libiberty -I${DIST}/include
 
 CXXFLAGS+=	${G_XCXXFLAGS:M-f*}
 
@@ -115,7 +114,7 @@ SRCS=	PlotFile.cc SFile.cc builtinbuf.cc editbuf.cc filebuf.cc fstream.cc \
 	outfloat.c peekc.c strops.c \
 	cmathi.cc cstdlibi.cc cstringi.cc stdexcepti.cc stlinst.cc
 
-DIST=		${.CURDIR}/../../dist
+DIST=		${NETBSDSRCDIR}/gnu/dist
 CPPFLAGS+=	-I${DESTDIR}/usr/include/g++ -I${DIST}/libstdc++
 
 TEXINFO=	iostream.texi
