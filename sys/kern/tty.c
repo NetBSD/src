@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.112.8.1 1999/06/21 01:24:04 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.112.8.2 1999/08/02 22:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -1958,7 +1958,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "empty foreground process group\n");
 	else {
 		/* Pick interesting process. */
-		for (pick = NULL; p != 0; p = p->p_pglist.le_next)
+		for (pick = NULL; p != NULL; p = p->p_pglist.le_next)
 			if (proc_compare(pick, p))
 				pick = p;
 
@@ -1992,7 +1992,7 @@ ttyinfo(tp)
 		ttyprintf(tp, "%d%% ", tmp / 100);
 
 		/* Print resident set size. */
-		if (pick->p_stat == SIDL || pick->p_stat == SZOMB)
+		if (pick->p_stat == SIDL || P_ZOMBIE(pick))
 			tmp = 0;
 		else {
 			register struct vmspace *vm = pick->p_vmspace;
@@ -2050,7 +2050,7 @@ proc_compare(p1, p2)
 	/*
  	 * weed out zombies
 	 */
-	switch (TESTAB(p1->p_stat == SZOMB, p2->p_stat == SZOMB)) {
+	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
 	case ONLYA:
 		return (1);
 	case ONLYB:

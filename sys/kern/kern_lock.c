@@ -1,4 +1,44 @@
-/*	$NetBSD: kern_lock.c,v 1.16.2.1.2.2 1999/07/04 01:35:32 chs Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.16.2.1.2.3 1999/08/02 22:19:12 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Ross Harvey.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* 
  * Copyright (c) 1995
@@ -39,6 +79,7 @@
  *	@(#)kern_lock.c	8.18 (Berkeley) 5/21/95
  */
 
+#include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 #include "opt_ddb.h"
 
@@ -53,67 +94,141 @@
  * Locks provide shared/exclusive sychronization.
  */
 
-#if defined(LOCKDEBUG) || defined(DIAGNOSTIC)
-#define COUNT(p, x) if (p) (p)->p_locks += (x)
+#if defined(LOCKDEBUG) || defined(DIAGNOSTIC) /* { */
+#if defined(MULTIPROCESSOR) /* { */
+#define	COUNT_CPU(cpu_id, x)						\
+	/* atomic_add_ulong(&curcpu().ci_spin_locks, (x)) */
 #else
-#define COUNT(p, x)
-#endif
+u_long	spin_locks;
+#define	COUNT_CPU(cpu_id, x)	spin_locks += (x)
+#endif /* MULTIPROCESSOR */ /* } */
 
-#if 0 /*#was defined(MULTIPROCESSOR)*/
-/*-
-
-This macro is Bad Style and it doesn't work either... [pk, 10-14-1998]
-
--*
- * For multiprocessor system, try spin lock first.
- *
- * This should be inline expanded below, but we cannot have #if
- * inside a multiline define.
- */
-
-int lock_wait_time = 100;
-#define PAUSE(lkp, wanted)						\
-		if (lock_wait_time > 0) {				\
-			int i;						\
-									\
-			simple_unlock(&lkp->lk_interlock);		\
-			for (i = lock_wait_time; i > 0; i--)		\
-				if (!(wanted))				\
-					break;				\
-			simple_lock(&lkp->lk_interlock);		\
-		}							\
-		if (!(wanted))						\
-			break;
-
-#else /* ! MULTIPROCESSOR */
-
-/*
- * It is an error to spin on a uniprocessor as nothing will ever cause
- * the simple lock to clear while we are executing.
- */
-#define PAUSE(lkp, wanted)
-
-#endif /* MULTIPROCESSOR */
+#define	COUNT(lkp, p, cpu_id, x)					\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN)					\
+		COUNT_CPU((cpu_id), (x));				\
+	else								\
+		(p)->p_locks += (x);					\
+} while (0)
+#else
+#define COUNT(lkp, p, cpu_id, x)
+#endif /* LOCKDEBUG || DIAGNOSTIC */ /* } */
 
 /*
  * Acquire a resource.
  */
-#define ACQUIRE(lkp, error, extflags, wanted)				\
-	PAUSE(lkp, wanted);						\
-	for (error = 0; wanted; ) {					\
-		(lkp)->lk_waitcount++;					\
-		simple_unlock(&(lkp)->lk_interlock);			\
-		error = tsleep((void *)lkp, (lkp)->lk_prio,		\
-		    (lkp)->lk_wmesg, (lkp)->lk_timo);			\
-		simple_lock(&(lkp)->lk_interlock);			\
-		(lkp)->lk_waitcount--;					\
-		if (error)						\
-			break;						\
-		if ((extflags) & LK_SLEEPFAIL) {			\
-			error = ENOLCK;					\
-			break;						\
+#define ACQUIRE(lkp, error, extflags, drain, wanted)			\
+	if ((extflags) & LK_SPIN) {					\
+		int interlocked;					\
+									\
+		if ((drain) == 0)					\
+			(lkp)->lk_waitcount++;				\
+		for (interlocked = 1;;) {				\
+			if (wanted) {					\
+				if (interlocked) {			\
+					simple_unlock(&(lkp)->lk_interlock); \
+					interlocked = 0;		\
+				}					\
+			} else if (interlocked) {			\
+				break;					\
+			} else {					\
+				simple_lock(&(lkp)->lk_interlock);	\
+				interlocked = 1;			\
+			}						\
+		}							\
+		if ((drain) == 0)					\
+			(lkp)->lk_waitcount--;				\
+		KASSERT((wanted) == 0);					\
+		error = 0;	/* sanity */				\
+	} else {							\
+		for (error = 0; wanted; ) {				\
+			if ((drain))					\
+				(lkp)->lk_flags |= LK_WAITDRAIN;	\
+			else						\
+				(lkp)->lk_waitcount++;			\
+			simple_unlock(&(lkp)->lk_interlock);		\
+			/* XXX Cast away volatile. */			\
+			error = tsleep((drain) ? &(lkp)->lk_flags :	\
+			    (void *)(lkp), (lkp)->lk_prio,		\
+			    (lkp)->lk_wmesg, (lkp)->lk_timo);		\
+			simple_lock(&(lkp)->lk_interlock);		\
+			if ((drain) == 0)				\
+				(lkp)->lk_waitcount--;			\
+			if (error)					\
+				break;					\
+			if ((extflags) & LK_SLEEPFAIL) {		\
+				error = ENOLCK;				\
+				break;					\
+			}						\
 		}							\
 	}
+
+#define	SETHOLDER(lkp, pid, cpu_id)					\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN)					\
+		(lkp)->lk_cpu = cpu_id;					\
+	else								\
+		(lkp)->lk_lockholder = pid;				\
+} while (0)
+
+#define	WEHOLDIT(lkp, pid, cpu_id)					\
+	(((lkp)->lk_flags & LK_SPIN) != 0 ?				\
+	 ((lkp)->lk_cpu == (cpu_id)) : ((lkp)->lk_lockholder == (pid)))
+
+#define	WAKEUP_WAITER(lkp)						\
+do {									\
+	if (((lkp)->lk_flags & LK_SPIN) == 0 && (lkp)->lk_waitcount) {	\
+		/* XXX Cast away volatile. */				\
+		wakeup_one((void *)(lkp));				\
+	}								\
+} while (0)
+
+#if defined(LOCKDEBUG) /* { */
+#if defined(MULTIPROCESSOR) /* { */
+struct simplelock spinlock_list_slock = SIMPLELOCK_INITIALIZER;
+
+#define	SPINLOCK_LIST_LOCK()	cpu_simple_lock(&spinlock_list_slock)
+
+#define	SPINLOCK_LIST_UNLOCK()	cpu_simple_unlock(&spinlock_list_slock)
+#else
+#define	SPINLOCK_LIST_LOCK()	/* nothing */
+
+#define	SPINLOCK_LIST_UNLOCK()	/* nothing */
+#endif /* MULTIPROCESSOR */ /* } */
+
+TAILQ_HEAD(, lock) spinlock_list =
+    TAILQ_HEAD_INITIALIZER(spinlock_list);
+
+#define	HAVEIT(lkp)							\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN) {				\
+		int s = splhigh();					\
+		SPINLOCK_LIST_LOCK();					\
+		/* XXX Cast away volatile. */				\
+		TAILQ_INSERT_TAIL(&spinlock_list, (struct lock *)(lkp),	\
+		    lk_list);						\
+		SPINLOCK_LIST_UNLOCK();					\
+		splx(s);						\
+	}								\
+} while (0)
+
+#define	DONTHAVEIT(lkp)							\
+do {									\
+	if ((lkp)->lk_flags & LK_SPIN) {				\
+		int s = splhigh();					\
+		SPINLOCK_LIST_LOCK();					\
+		/* XXX Cast away volatile. */				\
+		TAILQ_REMOVE(&spinlock_list, (struct lock *)(lkp),	\
+		    lk_list);						\
+		SPINLOCK_LIST_UNLOCK();					\
+		splx(s);						\
+	}								\
+} while (0)
+#else
+#define	HAVEIT(lkp)		/* nothing */
+
+#define	DONTHAVEIT(lkp)		/* nothing */
+#endif /* LOCKDEBUG */ /* } */
 
 /*
  * Initialize a lock; required before use.
@@ -130,10 +245,14 @@ lockinit(lkp, prio, wmesg, timo, flags)
 	memset(lkp, 0, sizeof(struct lock));
 	simple_lock_init(&lkp->lk_interlock);
 	lkp->lk_flags = flags & LK_EXTFLG_MASK;
-	lkp->lk_prio = prio;
-	lkp->lk_timo = timo;
-	lkp->lk_wmesg = wmesg;
-	lkp->lk_lockholder = LK_NOPROC;
+	if (flags & LK_SPIN)
+		lkp->lk_cpu = LK_NOCPU;
+	else {
+		lkp->lk_lockholder = LK_NOPROC;
+		lkp->lk_prio = prio;
+		lkp->lk_timo = timo;
+	}
+	lkp->lk_wmesg = wmesg;	/* just a name for spin locks */
 }
 
 /*
@@ -170,18 +289,37 @@ lockmgr(lkp, flags, interlkp)
 	int error;
 	pid_t pid;
 	int extflags;
+	u_long cpu_id;
 	struct proc *p = curproc;
 
 	error = 0;
-	if (p)
-		pid = p->p_pid;
-	else
-		pid = LK_KERNPROC;
+
 	simple_lock(&lkp->lk_interlock);
 	if (flags & LK_INTERLOCK)
 		simple_unlock(interlkp);
 	extflags = (flags | lkp->lk_flags) & LK_EXTFLG_MASK;
-#ifdef DIAGNOSTIC
+
+#ifdef DIAGNOSTIC /* { */
+	/*
+	 * Don't allow spins on sleep locks and don't allow sleeps
+	 * on spin locks.
+	 */
+	if ((flags ^ lkp->lk_flags) & LK_SPIN)
+		panic("lockmgr: sleep/spin mismatch\n");
+#endif /* } */
+
+	if (extflags & LK_SPIN)
+		pid = LK_KERNPROC;
+	else {
+#ifdef DIAGNOSTIC /* { */
+		if (p == NULL)
+			panic("lockmgr: no context");
+#endif /* } */
+		pid = p->p_pid;
+	}
+	cpu_id = 0;			/* XXX cpu_number() XXX */
+
+#ifdef DIAGNOSTIC /* { */
 	/*
 	 * Once a lock has drained, the LK_DRAINING flag is set and an
 	 * exclusive lock is returned. The only valid operation thereafter
@@ -197,19 +335,19 @@ lockmgr(lkp, flags, interlkp)
 		if (lkp->lk_flags & LK_DRAINED)
 			panic("lockmgr: using decommissioned lock");
 		if ((flags & LK_TYPE_MASK) != LK_RELEASE ||
-		    lkp->lk_lockholder != pid)
+		    WEHOLDIT(lkp, pid, cpu_id) == 0)
 			panic("lockmgr: non-release on draining lock: %d\n",
 			    flags & LK_TYPE_MASK);
 		lkp->lk_flags &= ~LK_DRAINING;
 		if ((flags & LK_REENABLE) == 0)
 			lkp->lk_flags |= LK_DRAINED;
 	}
-#endif DIAGNOSTIC
+#endif /* DIAGNOSTIC */ /* } */
 
 	switch (flags & LK_TYPE_MASK) {
 
 	case LK_SHARED:
-		if (lkp->lk_lockholder != pid) {
+		if (WEHOLDIT(lkp, pid, cpu_id) == 0) {
 			/*
 			 * If just polling, check to see if we will block.
 			 */
@@ -221,12 +359,12 @@ lockmgr(lkp, flags, interlkp)
 			/*
 			 * Wait for exclusive locks and upgrades to clear.
 			 */
-			ACQUIRE(lkp, error, extflags, lkp->lk_flags &
+			ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
 			    (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE));
 			if (error)
 				break;
 			lkp->lk_sharecount++;
-			COUNT(p, 1);
+			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
 		/*
@@ -234,19 +372,20 @@ lockmgr(lkp, flags, interlkp)
 		 * An alternative would be to fail with EDEADLK.
 		 */
 		lkp->lk_sharecount++;
-		COUNT(p, 1);
+		COUNT(lkp, p, cpu_id, 1);
 		/* fall into downgrade */
 
 	case LK_DOWNGRADE:
-		if (lkp->lk_lockholder != pid || lkp->lk_exclusivecount == 0)
+		if (WEHOLDIT(lkp, pid, cpu_id) == 0 ||
+		    lkp->lk_exclusivecount == 0)
 			panic("lockmgr: not holding exclusive lock");
 		lkp->lk_sharecount += lkp->lk_exclusivecount;
 		lkp->lk_exclusivecount = 0;
 		lkp->lk_recurselevel = 0;
 		lkp->lk_flags &= ~LK_HAVE_EXCL;
-		lkp->lk_lockholder = LK_NOPROC;
-		if (lkp->lk_waitcount)
-			wakeup((void *)lkp);
+		SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+		DONTHAVEIT(lkp);
+		WAKEUP_WAITER(lkp);
 		break;
 
 	case LK_EXCLUPGRADE:
@@ -257,7 +396,7 @@ lockmgr(lkp, flags, interlkp)
 		 */
 		if (lkp->lk_flags & LK_WANT_UPGRADE) {
 			lkp->lk_sharecount--;
-			COUNT(p, -1);
+			COUNT(lkp, p, cpu_id, -1);
 			error = EBUSY;
 			break;
 		}
@@ -272,10 +411,10 @@ lockmgr(lkp, flags, interlkp)
 		 * after the upgrade). If we return an error, the file
 		 * will always be unlocked.
 		 */
-		if (lkp->lk_lockholder == pid || lkp->lk_sharecount <= 0)
+		if (WEHOLDIT(lkp, pid, cpu_id) || lkp->lk_sharecount <= 0)
 			panic("lockmgr: upgrade exclusive lock");
 		lkp->lk_sharecount--;
-		COUNT(p, -1);
+		COUNT(lkp, p, cpu_id, -1);
 		/*
 		 * If we are just polling, check to see if we will block.
 		 */
@@ -292,18 +431,19 @@ lockmgr(lkp, flags, interlkp)
 			 * drop to zero, then take exclusive lock.
 			 */
 			lkp->lk_flags |= LK_WANT_UPGRADE;
-			ACQUIRE(lkp, error, extflags, lkp->lk_sharecount);
+			ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount);
 			lkp->lk_flags &= ~LK_WANT_UPGRADE;
 			if (error)
 				break;
 			lkp->lk_flags |= LK_HAVE_EXCL;
-			lkp->lk_lockholder = pid;
+			SETHOLDER(lkp, pid, cpu_id);
+			HAVEIT(lkp);
 			if (lkp->lk_exclusivecount != 0)
 				panic("lockmgr: non-zero exclusive count");
 			lkp->lk_exclusivecount = 1;
 			if (extflags & LK_SETRECURSE)
 				lkp->lk_recurselevel = 1;
-			COUNT(p, 1);
+			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
 		/*
@@ -311,14 +451,14 @@ lockmgr(lkp, flags, interlkp)
 		 * lock, awaken upgrade requestor if we are the last shared
 		 * lock, then request an exclusive lock.
 		 */
-		if (lkp->lk_sharecount == 0 && lkp->lk_waitcount)
-			wakeup((void *)lkp);
+		if (lkp->lk_sharecount == 0)
+			WAKEUP_WAITER(lkp);
 		/* fall into exclusive request */
 
 	case LK_EXCLUSIVE:
-		if (lkp->lk_lockholder == pid && pid != LK_KERNPROC) {
+		if (WEHOLDIT(lkp, pid, cpu_id)) {
 			/*
-			 *	Recursive lock.
+			 * Recursive lock.
 			 */
 			if ((extflags & LK_CANRECURSE) == 0 &&
 			     lkp->lk_recurselevel == 0) {
@@ -332,7 +472,7 @@ lockmgr(lkp, flags, interlkp)
 			if (extflags & LK_SETRECURSE &&
 			    lkp->lk_recurselevel == 0)
 				lkp->lk_recurselevel = lkp->lk_exclusivecount;
-			COUNT(p, 1);
+			COUNT(lkp, p, cpu_id, 1);
 			break;
 		}
 		/*
@@ -347,7 +487,7 @@ lockmgr(lkp, flags, interlkp)
 		/*
 		 * Try to acquire the want_exclusive flag.
 		 */
-		ACQUIRE(lkp, error, extflags, lkp->lk_flags &
+		ACQUIRE(lkp, error, extflags, 0, lkp->lk_flags &
 		    (LK_HAVE_EXCL | LK_WANT_EXCL));
 		if (error)
 			break;
@@ -355,41 +495,50 @@ lockmgr(lkp, flags, interlkp)
 		/*
 		 * Wait for shared locks and upgrades to finish.
 		 */
-		ACQUIRE(lkp, error, extflags, lkp->lk_sharecount != 0 ||
+		ACQUIRE(lkp, error, extflags, 0, lkp->lk_sharecount != 0 ||
 		       (lkp->lk_flags & LK_WANT_UPGRADE));
 		lkp->lk_flags &= ~LK_WANT_EXCL;
 		if (error)
 			break;
 		lkp->lk_flags |= LK_HAVE_EXCL;
-		lkp->lk_lockholder = pid;
+		SETHOLDER(lkp, pid, cpu_id);
+		HAVEIT(lkp);
 		if (lkp->lk_exclusivecount != 0)
 			panic("lockmgr: non-zero exclusive count");
 		lkp->lk_exclusivecount = 1;
 		if (extflags & LK_SETRECURSE)
 			lkp->lk_recurselevel = 1;
-		COUNT(p, 1);
+		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	case LK_RELEASE:
 		if (lkp->lk_exclusivecount != 0) {
-			if (pid != lkp->lk_lockholder)
-				panic("lockmgr: pid %d, not exclusive lock "
-				    "holder %d unlocking", pid,
-				    lkp->lk_lockholder);
+			if (WEHOLDIT(lkp, pid, cpu_id) == 0) {
+				if (lkp->lk_flags & LK_SPIN) {
+					panic("lockmgr: processor %lu, not "
+					    "exclusive lock holder %lu "
+					    "unlocking", cpu_id, lkp->lk_cpu);
+				} else {
+					panic("lockmgr: pid %d, not "
+					    "exclusive lock holder %d "
+					    "unlocking", pid,
+					    lkp->lk_lockholder);
+				}
+			}
 			if (lkp->lk_exclusivecount == lkp->lk_recurselevel)
 				lkp->lk_recurselevel = 0;
 			lkp->lk_exclusivecount--;
-			COUNT(p, -1);
+			COUNT(lkp, p, cpu_id, -1);
 			if (lkp->lk_exclusivecount == 0) {
 				lkp->lk_flags &= ~LK_HAVE_EXCL;
-				lkp->lk_lockholder = LK_NOPROC;
+				SETHOLDER(lkp, LK_NOPROC, LK_NOCPU);
+				DONTHAVEIT(lkp);
 			}
 		} else if (lkp->lk_sharecount != 0) {
 			lkp->lk_sharecount--;
-			COUNT(p, -1);
+			COUNT(lkp, p, cpu_id, -1);
 		}
-		if (lkp->lk_waitcount)
-			wakeup((void *)lkp);
+		WAKEUP_WAITER(lkp);
 		break;
 
 	case LK_DRAIN:
@@ -399,7 +548,7 @@ lockmgr(lkp, flags, interlkp)
 		 * check for holding a shared lock, but at least we can
 		 * check for an exclusive one.
 		 */
-		if (lkp->lk_lockholder == pid)
+		if (WEHOLDIT(lkp, pid, cpu_id))
 			panic("lockmgr: draining against myself");
 		/*
 		 * If we are just polling, check to see if we will sleep.
@@ -410,28 +559,21 @@ lockmgr(lkp, flags, interlkp)
 			error = EBUSY;
 			break;
 		}
-		PAUSE(lkp, ((lkp->lk_flags &
+		ACQUIRE(lkp, error, extflags, 1,
+		    ((lkp->lk_flags &
 		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0));
-		for (error = 0; ((lkp->lk_flags &
-		     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) ||
-		     lkp->lk_sharecount != 0 || lkp->lk_waitcount != 0); ) {
-			lkp->lk_flags |= LK_WAITDRAIN;
-			simple_unlock(&lkp->lk_interlock);
-			if ((error = tsleep((void *)&lkp->lk_flags,
-			    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo)))
-				return (error);
-			if ((extflags) & LK_SLEEPFAIL)
-				return (ENOLCK);
-			simple_lock(&lkp->lk_interlock);
-		}
+		     lkp->lk_sharecount != 0 ||
+		     lkp->lk_waitcount != 0));
+		if (error)
+			break;
 		lkp->lk_flags |= LK_DRAINING | LK_HAVE_EXCL;
-		lkp->lk_lockholder = pid;
+		SETHOLDER(lkp, pid, cpu_id);
+		HAVEIT(lkp);
 		lkp->lk_exclusivecount = 1;
 		/* XXX unlikely that we'd want this */
 		if (extflags & LK_SETRECURSE)
 			lkp->lk_recurselevel = 1;
-		COUNT(p, 1);
+		COUNT(lkp, p, cpu_id, 1);
 		break;
 
 	default:
@@ -440,11 +582,12 @@ lockmgr(lkp, flags, interlkp)
 		    flags & LK_TYPE_MASK);
 		/* NOTREACHED */
 	}
-	if ((lkp->lk_flags & LK_WAITDRAIN) && ((lkp->lk_flags &
-	     (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
+	if ((lkp->lk_flags & (LK_WAITDRAIN|LK_SPIN)) == LK_WAITDRAIN &&
+	    ((lkp->lk_flags &
+	      (LK_HAVE_EXCL | LK_WANT_EXCL | LK_WANT_UPGRADE)) == 0 &&
 	     lkp->lk_sharecount == 0 && lkp->lk_waitcount == 0)) {
 		lkp->lk_flags &= ~LK_WAITDRAIN;
-		wakeup((void *)&lkp->lk_flags);
+		wakeup_one((void *)&lkp->lk_flags);
 	}
 	simple_unlock(&lkp->lk_interlock);
 	return (error);
@@ -456,28 +599,69 @@ lockmgr(lkp, flags, interlkp)
  */
 void
 lockmgr_printinfo(lkp)
-	struct lock *lkp;
+	__volatile struct lock *lkp;
 {
 
 	if (lkp->lk_sharecount)
 		printf(" lock type %s: SHARED (count %d)", lkp->lk_wmesg,
 		    lkp->lk_sharecount);
-	else if (lkp->lk_flags & LK_HAVE_EXCL)
-		printf(" lock type %s: EXCL (count %d) by pid %d",
-		    lkp->lk_wmesg, lkp->lk_exclusivecount, lkp->lk_lockholder);
-	if (lkp->lk_waitcount > 0)
+	else if (lkp->lk_flags & LK_HAVE_EXCL) {
+		printf(" lock type %s: EXCL (count %d) by ",
+		    lkp->lk_wmesg, lkp->lk_exclusivecount);
+		if (lkp->lk_flags & LK_SPIN)
+			printf("processor %lu", lkp->lk_cpu);
+		else
+			printf("pid %d", lkp->lk_lockholder);
+	} else
+		printf(" not locked");
+	if ((lkp->lk_flags & LK_SPIN) == 0 && lkp->lk_waitcount > 0)
 		printf(" with %d pending", lkp->lk_waitcount);
 }
 
-#if defined(LOCKDEBUG) && !defined(MULTIPROCESSOR)
-#include <sys/kernel.h>
-#include <vm/vm.h>
-#include <sys/sysctl.h>
-int lockpausetime = 0;
-struct ctldebug debug2 = { "lockpausetime", &lockpausetime };
-int simplelockrecurse;
-LIST_HEAD(slocklist, simplelock) slockdebuglist;
+#if defined(LOCKDEBUG) /* { */
+TAILQ_HEAD(, simplelock) simplelock_list =
+    TAILQ_HEAD_INITIALIZER(simplelock_list);
+
+#if defined(MULTIPROCESSOR) /* { */
+struct simplelock simplelock_list_slock = SIMPLELOCK_INITIALIZER;
+
+#define	SLOCK_LIST_LOCK()						\
+	cpu_simple_lock(&simplelock_list_slock)
+
+#define	SLOCK_LIST_UNLOCK()						\
+	cpu_simple_unlock(&simplelock_list_slock)
+
+#define	SLOCK_COUNT(x)							\
+	/* atomic_add_ulong(&curcpu()->ci_simple_locks, (x)) */
+#else
+u_long simple_locks;
+
+#define	SLOCK_LIST_LOCK()	/* nothing */
+
+#define	SLOCK_LIST_UNLOCK()	/* nothing */
+
+#define	SLOCK_COUNT(x)		simple_locks += (x)
+#endif /* MULTIPROCESSOR */ /* } */
+
+#ifdef DDB /* { */
 int simple_lock_debugger = 0;
+#define	SLOCK_DEBUGGER()	if (simple_lock_debugger) Debugger()
+#else
+#define	SLOCK_DEBUGGER()	/* nothing */
+#endif /* } */
+
+#define	SLOCK_WHERE(str, alp, id, l)					\
+do {									\
+	printf(str);							\
+	printf("currently at: %s:%d\n", (id), (l));			\
+	if ((alp)->lock_file != NULL)					\
+		printf("last locked: %s:%d\n", (alp)->lock_file,	\
+		    (alp)->lock_line);					\
+	if ((alp)->unlock_file != NULL)					\
+		printf("last unlocked: %s:%d\n", (alp)->unlock_file,	\
+		    (alp)->unlock_line);				\
+	SLOCK_DEBUGGER();						\
+} while (0)
 
 /*
  * Simple lock functions so that the debugger can see from whence
@@ -487,7 +671,12 @@ void
 simple_lock_init(alp)
 	struct simplelock *alp;
 {
-	alp->lock_data = SLOCK_UNLOCKED;
+
+#if defined(MULTIPROCESSOR) /* { */
+	cpu_simple_lock_init(alp);
+#else
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
+#endif /* } */
 	alp->lock_file = NULL;
 	alp->lock_line = 0;
 	alp->unlock_file = NULL;
@@ -501,42 +690,47 @@ _simple_lock(alp, id, l)
 	const char *id;
 	int l;
 {
+	u_long cpu_id = 0 /* XXX cpu_number() XXX */;
 	int s;
 
-	if (simplelockrecurse)
-		return;
-
 	s = splhigh();
-	if (alp->lock_data != SLOCK_UNLOCKED) {
-		printf("simple_lock: lock held\n");
-		printf("currently at: %s:%d\n", id, l);
-		printf("last locked: %s:%d\n",
-		       alp->lock_file, alp->lock_line);
-		printf("last unlocked: %s:%d\n",
-		       alp->unlock_file, alp->unlock_line);
-		if (lockpausetime == -1)
-			panic("simple_lock: lock held");
-		if (lockpausetime == 1) {
-#ifdef BACKTRACE
-			BACKTRACE(curproc);
-#endif
-		}
-		if (simple_lock_debugger) {
-			Debugger();
-		}
 
-		splx(s);
-		return;
+	/*
+	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
+	 * don't take any action, and just fall into the normal spin case.
+	 */
+	if (alp->lock_data == SIMPLELOCK_LOCKED) {
+#if defined(MULTIPROCESSOR) /* { */
+		if (alp->lock_holder == cpu_id) {
+			SLOCK_WHERE("simple_lock: locking against myself\n",
+			    alp, id, l);
+			goto out;
+		}
+#else
+		SLOCK_WHERE("simple_lock: lock held\n", alp, id, l);
+		goto out;
+#endif /* MULTIPROCESSOR */ /* } */
 	}
 
-	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	alp->lock_data = SLOCK_LOCKED;
+#if defined(MULTIPROCESSOR) /* { */
+	/* Acquire the lock before modifying any fields. */
+	cpu_simple_lock(alp);
+#else
+	alp->lock_data = SIMPLELOCK_LOCKED;
+#endif /* } */
+
 	alp->lock_file = id;
 	alp->lock_line = l;
+	alp->lock_holder = cpu_id;
 
-	if (curproc)
-		curproc->p_simple_locks++;
+	SLOCK_LIST_LOCK();
+	/* XXX Cast away volatile */
+	TAILQ_INSERT_TAIL(&simplelock_list, (struct simplelock *)alp, list);
+	SLOCK_LIST_UNLOCK();
 
+	SLOCK_COUNT(1);
+
+ out:
 	splx(s);
 }
 
@@ -546,44 +740,50 @@ _simple_lock_try(alp, id, l)
 	const char *id;
 	int l;
 {
-	int s;
-
-	if (simplelockrecurse)
-		return (1);
+	u_long cpu_id = 0 /* XXX cpu_number() XXX */;
+	int s, rv = 0;
 
 	s = splhigh();
-	if (alp->lock_data != SLOCK_UNLOCKED) {
-		printf("simple_lock_try: lock held\n");
-		printf("currently at: %s:%d\n", id, l);
-		printf("last locked: %s:%d\n",
-		       alp->lock_file, alp->lock_line);
-		printf("last unlocked: %s:%d\n",
-		       alp->unlock_file, alp->unlock_line);
-		if (lockpausetime == -1)
-			panic("simple_lock_try: lock held");
-		if (lockpausetime == 1) {
-#ifdef BACKTRACE
-			BACKTRACE(curproc);
-#endif
-		}
-		if (simple_lock_debugger) {
-			Debugger();
-		}
 
-		splx(s);
-		return (0);
+	/*
+	 * MULTIPROCESSOR case: This is `safe' since if it's not us, we
+	 * don't take any action.
+	 */
+#if defined(MULTIPROCESSOR) /* { */
+	if ((rv = cpu_simple_lock_try(alp)) == 0) {
+		if (alp->lock_holder == cpu_id)
+			SLOCK_WHERE("simple_lock_try: locking against myself\n",
+			    alp, id l);
+		goto out;
 	}
+#else
+	if (alp->lock_data == SIMPLELOCK_LOCKED) {
+		SLOCK_WHERE("simple_lock_try: lock held\n", alp, id, l);
+		goto out;
+	}
+	alp->lock_data = SIMPLELOCK_LOCKED;
+#endif /* MULTIPROCESSOR */ /* } */
 
-	LIST_INSERT_HEAD(&slockdebuglist, (struct simplelock *)alp, list);
-	alp->lock_data = SLOCK_LOCKED;
+	/*
+	 * At this point, we have acquired the lock.
+	 */
+
+	rv = 1;
+
 	alp->lock_file = id;
 	alp->lock_line = l;
+	alp->lock_holder = cpu_id;
 
-	if (curproc)
-		curproc->p_simple_locks++;
+	SLOCK_LIST_LOCK();
+	/* XXX Cast away volatile. */
+	TAILQ_INSERT_TAIL(&simplelock_list, (struct simplelock *)alp, list);
+	SLOCK_LIST_UNLOCK();
 
+	SLOCK_COUNT(1);
+
+ out:
 	splx(s);
-	return (1);
+	return (rv);
 }
 
 void
@@ -594,41 +794,38 @@ _simple_unlock(alp, id, l)
 {
 	int s;
 
-	if (simplelockrecurse)
-		return;
-
 	s = splhigh();
-	if (alp->lock_data == SLOCK_UNLOCKED) {
-		printf("simple_unlock: lock not held\n");
-		printf("currently at: %s:%d\n", id, l);
-		printf("last locked: %s:%d\n",
-		       alp->lock_file, alp->lock_line);
-		printf("last unlocked: %s:%d\n",
-		       alp->unlock_file, alp->unlock_line);
-		if (lockpausetime == -1)
-			panic("simple_unlock: lock not held");
-		if (lockpausetime == 1) {
-#ifdef BACKTRACE
-			BACKTRACE(curproc);
-#endif
-		}
-		if (simple_lock_debugger) {
-			Debugger();
-		}
-		splx(s);
-		return;
+
+	/*
+	 * MULTIPROCESSOR case: This is `safe' because we think we hold
+	 * the lock, and if we don't, we don't take any action.
+	 */
+	if (alp->lock_data == SIMPLELOCK_UNLOCKED) {
+		SLOCK_WHERE("simple_unlock: lock not held\n",
+		    alp, id, l);
+		goto out;
 	}
 
-	LIST_REMOVE(alp, list);
-	alp->list.le_next = NULL;
-	alp->list.le_prev = NULL;
-	alp->lock_data = SLOCK_UNLOCKED;
+	SLOCK_LIST_LOCK();
+	TAILQ_REMOVE(&simplelock_list, alp, list);
+	SLOCK_LIST_UNLOCK();
+
+	SLOCK_COUNT(-1);
+
+	alp->list.tqe_next = NULL;	/* sanity */
+	alp->list.tqe_prev = NULL;	/* sanity */
+
 	alp->unlock_file = id;
 	alp->unlock_line = l;
 
-	if (curproc)
-		curproc->p_simple_locks--;
+#if defined(MULTIPROCESSOR) /* { */
+	/* Now that we've modified all fields, release the lock. */
+	cpu_simple_unlock(alp);
+#else
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
+#endif /* } */
 
+ out:
 	splx(s);
 }
 
@@ -653,34 +850,36 @@ simple_lock_dump()
 	int s;
 
 	s = splhigh();
+	SLOCK_LIST_LOCK();
 	printf("all simple locks:\n");
-	for (alp = LIST_FIRST(&slockdebuglist);
-	     alp != NULL;
-	     alp = LIST_NEXT(alp, list)) {
-		printf("%p  %s:%d\n", alp, alp->lock_file, alp->lock_line);
+	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
+	     alp = TAILQ_NEXT(alp, list)) {
+		printf("%p CPU %lu %s:%d\n", alp, alp->lock_holder,
+		    alp->lock_file, alp->lock_line);
 	}
+	SLOCK_LIST_UNLOCK();
 	splx(s);
 }
 
 void
 simple_lock_freecheck(start, end)
-void *start, *end;
+	void *start, *end;
 {
 	struct simplelock *alp;
 	int s;
 
 	s = splhigh();
-	for (alp = LIST_FIRST(&slockdebuglist);
-	     alp != NULL;
-	     alp = LIST_NEXT(alp, list)) {
+	SLOCK_LIST_LOCK();
+	for (alp = TAILQ_FIRST(&simplelock_list); alp != NULL;
+	     alp = TAILQ_NEXT(alp, list)) {
 		if ((void *)alp >= start && (void *)alp < end) {
-			printf("freeing simple_lock %p %s:%d\n",
-			       alp, alp->lock_file, alp->lock_line);
-#ifdef DDB
-			Debugger();
-#endif
+			printf("freeing simple_lock %p CPU %lu %s:%d\n",
+			    alp, alp->lock_holder, alp->lock_file,
+			    alp->lock_line);
+			SLOCK_DEBUGGER();
 		}
 	}
+	SLOCK_LIST_UNLOCK();
 	splx(s);
 }
-#endif /* LOCKDEBUG && ! MULTIPROCESSOR */
+#endif /* LOCKDEBUG */ /* } */

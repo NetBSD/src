@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.133.4.4 1999/07/11 05:43:56 chs Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.133.4.5 1999/08/02 22:19:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -362,6 +362,7 @@ checkdirs(olddp)
 		return;
 	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
 		panic("mount: lost mount");
+	proclist_lock_read();
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		cwdi = p->p_cwdi;
 		if (cwdi->cwdi_cdir == olddp) {
@@ -375,6 +376,7 @@ checkdirs(olddp)
 			cwdi->cwdi_rdir = newdp;
 		}
 	}
+	proclist_unlock_read();
 	if (rootvnode == olddp) {
 		vrele(rootvnode);
 		VREF(newdp);
@@ -457,6 +459,7 @@ dounmount(mp, flags, p)
 {
 	struct vnode *coveredvp;
 	int error;
+	int async;
 
 	simple_lock(&mountlist_slock);
 	mp->mnt_flag |= MNT_UNMOUNT;
@@ -464,6 +467,7 @@ dounmount(mp, flags, p)
 	lockmgr(&mp->mnt_lock, LK_DRAIN | LK_INTERLOCK, &mountlist_slock);
 	if (mp->mnt_flag & MNT_EXPUBLIC)
 		vfs_setpublicfs(NULL, NULL, NULL);
+	async = mp->mnt_flag & MNT_ASYNC;
 	mp->mnt_flag &=~ MNT_ASYNC;
 	cache_purgevfs(mp);	/* remove cache entries for this file sys */
 	if (((mp->mnt_flag & MNT_RDONLY) ||
@@ -473,11 +477,14 @@ dounmount(mp, flags, p)
 	simple_lock(&mountlist_slock);
 	if (error) {
 		mp->mnt_flag &= ~MNT_UNMOUNT;
+		mp->mnt_flag |= async;
 		lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK | LK_REENABLE,
 		    &mountlist_slock);
-		if (mp->mnt_flag & MNT_MWAIT)
+		while(mp->mnt_wcnt > 0) {
 			wakeup((caddr_t)mp);
-		 return (error);
+			sleep(&mp->mnt_wcnt, PVFS);
+		}
+		return (error);
 	}
 	CIRCLEQ_REMOVE(&mountlist, mp, mnt_list);
 	if ((coveredvp = mp->mnt_vnodecovered) != NULLVP) {
@@ -487,9 +494,12 @@ dounmount(mp, flags, p)
 	mp->mnt_op->vfs_refcount--;
 	if (mp->mnt_vnodelist.lh_first != NULL)
 		panic("unmount: dangling vnode");
+	mp->mnt_flag |= MNT_GONE;
 	lockmgr(&mp->mnt_lock, LK_RELEASE | LK_INTERLOCK, &mountlist_slock);
-	if (mp->mnt_flag & MNT_MWAIT)
+	while(mp->mnt_wcnt > 0) {
 		wakeup((caddr_t)mp);
+		sleep(&mp->mnt_wcnt, PVFS);
+	}
 	free((caddr_t)mp, M_MOUNT);
 	return (0);
 }
@@ -2020,9 +2030,20 @@ sys_chflags(p, v, retval)
 	vp = nd.ni_vp;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/* Non-superusers cannot change the flags on devices, even if they
+	   own them. */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p)) != 0)
+			goto out;
+		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+			error = EINVAL;
+			goto out;
+		}
+	}
 	VATTR_NULL(&vattr);
 	vattr.va_flags = SCARG(uap, flags);
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+out:
 	vput(vp);
 	return (error);
 }
@@ -2052,9 +2073,21 @@ sys_fchflags(p, v, retval)
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	/* Non-superusers cannot change the flags on devices, even if they
+	   own them. */
+	if (suser(p->p_ucred, &p->p_acflag)) {
+		if ((error = VOP_GETATTR(vp, &vattr, p->p_ucred, p))
+		    != 0)
+			goto out;
+		if (vattr.va_type == VCHR || vattr.va_type == VBLK) {
+			error = EINVAL;
+			goto out;
+		}
+	}
 	VATTR_NULL(&vattr);
 	vattr.va_flags = SCARG(uap, flags);
 	error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+out:
 	VOP_UNLOCK(vp, 0);
 	FILE_UNUSE(fp, p);
 	return (error);
@@ -2949,7 +2982,7 @@ sys_revoke(p, v, retval)
 	if (p->p_ucred->cr_uid != vattr.va_uid &&
 	    (error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		goto out;
-	if (vp->v_usecount > 1 || (vp->v_flag & VALIASED))
+	if (vp->v_usecount > 1 || (vp->v_flag & (VALIASED | VLAYER)))
 		VOP_REVOKE(vp, REVOKEALL);
 out:
 	vrele(vp);
