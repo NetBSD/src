@@ -1,4 +1,4 @@
-.\"	$NetBSD: piixide.4,v 1.3 2003/12/14 01:38:04 thorpej Exp $
+.\"	$NetBSD: artsata.4,v 1.1 2003/12/14 01:38:04 thorpej Exp $
 .\"
 .\" Copyright (c) 2003 Manuel Bouyer.
 .\"
@@ -28,18 +28,18 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd December 13, 2003
-.Dt PIIXIDE 4
+.Dt ARTSATA 4
 .Os
 .Sh NAME
-.Nm piixide
-.Nd Intel IDE disk controllers driver
+.Nm artsata
+.Nd Intel i31244 Serial ATA disk controller driver
 .Sh SYNOPSIS
-.Cd "piixide* at pci? dev ? function ? flags 0x0000"
+.Cd "artsata* at pci? dev ? function ? flags 0x0000"
+.Cd "options PCIIDE_I31244_ENABLEDMA"
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the Intel PIIX, PIIX3, PIIX4, and
-82801 (ICH/ICH0/ICH2/ICH3/ICH4/ICH5) IDE controllers,
+driver supports the Intel i31244 Serial ATA and controllers,
 and provides the interface with the hardware for the
 .Xr ata 4
 driver.
@@ -49,7 +49,7 @@ The 0x0002 flag forces the
 driver to disable DMA on chipsets for which DMA would normally be
 enabled.
 This can be used as a debugging aid, or to work around
-problems where the IDE controller is wired up to the system incorrectly.
+problems where the SATA controller is wired up to the system incorrectly.
 .Sh SEE ALSO
 .Xr ata 4 ,
 .Xr atapi 4 ,
@@ -59,6 +59,7 @@ problems where the IDE controller is wired up to the system incorrectly.
 .Xr wd 4 ,
 .Xr wdc 4
 .Sh BUGS
-The timings used for the PIO and DMA modes for controllers listed above
-are for a PCI bus running at 30 or 33 MHz.
-This driver may not work properly on overclocked systems.
+The Intel i31244 Serial ATA controller revision 0 has a bug affecting
+DMA data transfers.
+The PCIIDE_I31244_ENABLEDMA option can be used to force DMA on the
+buggy revisions.
