@@ -233,6 +233,7 @@
 #include <smtp_stream.h>
 #include <valid_hostname.h>
 #include <dict.h>
+#include <watchdog.h>
 
 /* Global library. */
 
@@ -663,6 +664,8 @@ static void mail_reset(SMTPD_STATE *state)
 static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 {
     char   *err;
+    int     narg;
+    char   *arg;
 
     /*
      * Sanity checks.
@@ -672,7 +675,7 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	smtpd_chat_reply(state, "503 Error: need MAIL command");
 	return (-1);
     }
-    if (argc != 3
+    if (argc < 3
 	|| strcasecmp(argv[1].strval, "to:") != 0) {
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "501 Syntax: RCPT TO: <address>");
@@ -687,6 +690,14 @@ static int rcpt_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *argv)
 	state->error_mask |= MAIL_ERROR_PROTOCOL;
 	smtpd_chat_reply(state, "%s", err);
 	return (-1);
+    }
+    for (narg = 3; narg < argc; narg++) {
+	arg = argv[narg].strval;
+	if (1) {
+	    state->error_mask |= MAIL_ERROR_PROTOCOL;
+	    smtpd_chat_reply(state, "555 Unsupported option: %s", arg);
+	    return (-1);
+	}
     }
     if (var_smtpd_rcpt_limit && state->rcpt_count >= var_smtpd_rcpt_limit) {
 	state->error_mask |= MAIL_ERROR_POLICY;
@@ -854,6 +865,7 @@ static int data_cmd(SMTPD_STATE *state, int argc, SMTPD_TOKEN *unused_argv)
     if (state->err == CLEANUP_STAT_OK) {
 	state->error_count = 0;
 	state->error_mask = 0;
+	state->junk_cmds = 0;
 	smtpd_chat_reply(state, "250 Ok: queued as %s", state->queue_id);
     } else if ((state->err & CLEANUP_STAT_BAD) != 0) {
 	state->error_mask |= MAIL_ERROR_SOFTWARE;
@@ -1119,6 +1131,7 @@ static void smtpd_proto(SMTPD_STATE *state)
 		smtpd_chat_reply(state, "421 Error: too many errors");
 		break;
 	    }
+	    watchdog_pat();
 	    smtpd_chat_query(state);
 	    if ((argc = smtpd_token(vstring_str(state->buffer), &argv)) == 0) {
 		state->error_mask |= MAIL_ERROR_PROTOCOL;

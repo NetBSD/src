@@ -20,6 +20,7 @@ extern WATCHDOG *watchdog_create(unsigned, WATCHDOG_FN, char *);
 extern void watchdog_start(WATCHDOG *);
 extern void watchdog_stop(WATCHDOG *);
 extern void watchdog_destroy(WATCHDOG *);
+extern void watchdog_pat(void);
 
 /* LICENSE
 /* .ad
