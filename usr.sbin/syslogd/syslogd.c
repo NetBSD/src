@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.22 1999/02/21 13:30:15 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.23 1999/02/28 11:03:35 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -292,10 +292,10 @@ main(argc, argv)
 #endif
 	/* we can do this because we don't call logpath_add() */
 	if (funixsize == 0) {
-		char	*fake_logpaths[2] = { _PATH_LOG, 0 };
+		char	*fake_logpaths[2] = { _PATH_LOG, NULL };
 
 		funixsize = 1;
-		LogPaths = (char **)fake_logpaths; 
+		LogPaths = fake_logpaths; 
 	}
 	funix = (int *)malloc(sizeof(int) * funixsize);
 	if (funix == NULL) {
@@ -474,14 +474,14 @@ logpath_add(lp, szp, maxszp, new)
 	if (*szp == *maxszp) {
 		if (*maxszp == 0) {
 			*maxszp = 4;	/* start of with enough for now */
-			*lp = (char **)malloc(sizeof(char **) * 4);
+			*lp = (char **)malloc(sizeof(char *) * 4);
 			if (*lp == NULL) {
 				logerror("couldn't allocate line buffer");
 				die(0);
 			}
 		} else {
 			*maxszp *= 2;
-			*lp = realloc(*lp, sizeof(char **) * (*maxszp));
+			*lp = realloc(*lp, sizeof(char *) * (*maxszp));
 			if (*lp == NULL) {
 				logerror("couldn't allocate line buffer");
 				die(0);
