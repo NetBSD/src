@@ -1,4 +1,4 @@
-/*	$NetBSD: rawwrite.c,v 1.4 1997/11/01 06:49:23 lukem Exp $	*/
+/*	$NetBSD: rawwrite.c,v 1.5 1997/12/10 09:32:35 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -45,7 +45,7 @@
 
 static void help    PROTO((void));
 static void usage   PROTO((void));
-static void brwrite PROTO((char *, int));
+static void brwrite PROTO((char *, int, int));
 
 char	buf[NSECT_HD * SECT_SIZE];
 int	h_flag = 0;	/* Show help					*/
@@ -53,7 +53,7 @@ int	v_flag = 0;	/* Verbose (a dot for each track copied)	*/
 int	V_flag = 0;	/* Show version					*/
 char	*progname;
 
-const char version[] = "$Revision: 1.4 $";
+const char version[] = "$Revision: 1.5 $";
 
 int
 main(argc, argv)
@@ -65,16 +65,21 @@ char	*argv[];
 	int		ch;
 	char		*infile;
 	int		fd;
-	int		i;
+	int		i, n;
 	int		nsect;
 
 	progname = argv[0];
 	init_toslib(argv[0]);
 
-	while ((ch = getopt(argc, argv, "hvVwo:")) != -1) {
+	nsect  = NSECT_DD;
+
+	while ((ch = getopt(argc, argv, "hHvVwo:")) != -1) {
 		switch (ch) {
 			case 'h':
 				h_flag = 1;
+				break;
+			case 'H':
+				nsect  = NSECT_HD;
 				break;
 			case 'o':
 				redirect_output(optarg);
@@ -102,20 +107,24 @@ char	*argv[];
 		usage();
 
 	infile = argv[optind];
-	nsect  = NSECT_DD;
 
 	if ((fd = open(infile, O_RDONLY)) < 0)
 		fatal(-1, "Cannot open '%s'\n", infile);
 
 	for (i = 0; i < NTRK; i++) {
-		if (read(fd, buf, nsect * SECT_SIZE) != (nsect * SECT_SIZE))
+		n = read(fd, buf, nsect * SECT_SIZE);
+		if (n == 0) {
+			eprintf("Only %d sectors in input file\r\n", i + 1);
+			break;
+		}
+		if (n != (nsect * SECT_SIZE))
 		    fatal(-1, "\n\rRead error on '%s'\n", infile);
 		if (v_flag) {
 			if (i && !(i % 40))
 				eprintf("\r\n");
 			eprintf(".");
 		}
-		brwrite(buf, i);
+		brwrite(buf, i, nsect);
 	}
 	close(fd);
 	if (v_flag)
@@ -124,20 +133,20 @@ char	*argv[];
 }
 
 static void
-brwrite(buf, trk)
+brwrite(buf, trk, spt)
 char	*buf;
-int	trk;
+int	trk, spt;
 {
 	static u_char	trbuf[NSECT_DD * SECT_SIZE * 2];
 	static u_int	sideno  = 0;
 
 	for (sideno = 0; sideno < 2; sideno++) {
-		if (Flopfmt(trbuf, 0, 0, NSECT_DD/2, trk, sideno, 1,
+		if (Flopfmt(trbuf, 0, 0, spt/2, trk, sideno, 1,
 						0x87654321, 0xe5e5))
 			fatal(-1, "Format error");
-		if (Flopwr(buf, 0, 0, 1, trk, sideno, NSECT_DD/2))
+		if (Flopwr(buf, 0, 0, 1, trk, sideno, spt/2))
 			fatal(-1, "Write error");
-		buf += (NSECT_DD/2) * SECT_SIZE;
+		buf += (spt/2) * SECT_SIZE;
 	}
 }
 static void
@@ -158,6 +167,7 @@ Usage: %s [-hvVw] [-o <log-file>] <infile>\r
 Description of options:\r
 \r
 \t-h  What you're getting right now.\r
+\t-H  Write high density floppies.\r
 \t-o  Write output to both <output file> and stdout.\r
 \t-v  Show a '.' for each track written.\r
 \t-V  Print program version.\r
