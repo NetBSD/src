@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_dbg.c,v 1.15 2004/02/11 21:07:18 nathanw Exp $	*/
+/*	$NetBSD: pthread_dbg.c,v 1.16 2004/02/21 20:48:11 cl Exp $	*/
 
 /*-
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_dbg.c,v 1.15 2004/02/11 21:07:18 nathanw Exp $");
+__RCSID("$NetBSD: pthread_dbg.c,v 1.16 2004/02/21 20:48:11 cl Exp $");
 
 #include <stddef.h>
 #include <stdlib.h>
@@ -116,7 +116,7 @@ td_open(struct td_proc_callbacks_t *cb, void *arg, td_proc_t **procp)
 	}
 	proc->tsddestaddr = addr;
 
-	val = READ(proc, addr, &dbg, sizeof(int));
+	val = READ(proc, proc->dbgaddr, &dbg, sizeof(int));
 	if (val != 0)
 		goto error;
 
