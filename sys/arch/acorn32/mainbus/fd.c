@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4 2001/12/20 01:20:21 thorpej Exp $	*/
+/*	$NetBSD: fd.c,v 1.4.10.1 2002/05/16 15:45:33 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,7 +119,6 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 #include <machine/io.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bus.h>
