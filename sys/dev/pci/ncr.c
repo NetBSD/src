@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.24 1996/02/24 21:09:38 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.25 1996/03/11 16:13:57 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -272,22 +272,28 @@ extern PRINT_ADDR();
 #ifdef NCR_IOMAPPED
 
 #define	INB(r) inb (np->port + offsetof(struct ncr_reg, r))
+#define	INB_OFF(o) inb (np->port + (o))
 #define	INW(r) inw (np->port + offsetof(struct ncr_reg, r))
 #define	INL(r) inl (np->port + offsetof(struct ncr_reg, r))
+#define	INL_OFF(o) inl (np->port + (o))
 
 #define	OUTB(r, val) outb (np->port+offsetof(struct ncr_reg,r),(val))
 #define	OUTW(r, val) outw (np->port+offsetof(struct ncr_reg,r),(val))
 #define	OUTL(r, val) outl (np->port+offsetof(struct ncr_reg,r),(val))
+#define	OUTL_OFF(o, val) outl (np->port+(o),(val))
 
 #else
 
-#define INB(r) (np->reg->r)
-#define INW(r) (np->reg->r)
-#define INL(r) (np->reg->r)
+#define	INB(r) (np->reg->r)
+#define	INB_OFF(o) (*((volatile INT8 *)((char *)np->reg + (o))))
+#define	INW(r) (np->reg->r)
+#define	INL(r) (np->reg->r)
+#define	INL_OFF(o) (*((volatile INT32 *)((char *)np->reg + (o))))
 
-#define OUTB(r, val) np->reg->r = val
-#define OUTW(r, val) np->reg->r = val
-#define OUTL(r, val) np->reg->r = val
+#define	OUTB(r, val) np->reg->r = val
+#define	OUTW(r, val) np->reg->r = val
+#define	OUTL(r, val) np->reg->r = val
+#define	OUTL_OFF(o, val) *((volatile INT32 *)((char *)np->reg + (o))) = val
 
 #endif
 
@@ -397,18 +403,11 @@ extern PRINT_ADDR();
 **
 **	OS dependencies.
 **
+**	Note that various types are defined in ncr_reg.h.
+**
 **==========================================================
 */
 
-#ifdef __NetBSD__
-	#define INT32     int
-	#define U_INT32   u_int
-	#define TIMEOUT   (void*)
-#else  /*__NetBSD__*/
-	#define INT32     int32
-	#define U_INT32   u_int32
-	#define TIMEOUT   (timeout_func_t)
-#endif /*__NetBSD__*/
 #define PRINT_ADDR(xp) sc_print_addr(xp->sc_link)
 
 /*==========================================================
@@ -1256,7 +1255,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.24 1996/02/24 21:09:38 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.25 1996/03/11 16:13:57 cgd Exp $\n";
 
 u_long	ncr_version = NCR_VERSION	* 11
 	+ (u_long) sizeof (struct ncb)	*  7
@@ -1376,12 +1375,28 @@ static char *ncr_name (ncb_p np)
 #define	RELOC_SOFTC	0x40000000
 #define	RELOC_LABEL	0x50000000
 #define	RELOC_REGISTER	0x60000000
+#define	RELOC_KVAR	0x70000000
 #define	RELOC_MASK	0xf0000000
 
 #define	NADDR(label)	(RELOC_SOFTC | offsetof(struct ncb, label))
 #define PADDR(label)    (RELOC_LABEL | offsetof(struct script, label))
 #define	RADDR(label)	(RELOC_REGISTER | REG(label))
 #define	FADDR(label,ofs)(RELOC_REGISTER | ((REG(label))+(ofs)))
+#define	KVAR(which)	(RELOC_KVAR | (which))
+
+#define	SCRIPT_KVAR_MONO_TIME_TV_SEC	(0)
+#define	SCRIPT_KVAR_MONO_TIME		(SCRIPT_KVAR_MONO_TIME_TV_SEC + 1)
+#define	SCRIPT_KVAR_NCR_CACHE		(SCRIPT_KVAR_MONO_TIME + 1)
+
+#define	SCRIPT_KVAR_FIRST		SCRIPT_KVAR_MONO_TIME_TV_SEC
+#define	SCRIPT_KVAR_LAST		SCRIPT_KVAR_NCR_CACHE
+
+/*
+ * Kernel variables referenced in the scripts.
+ * THESE MUST ALL BE ALIGNED TO A 4-BYTE BOUNDARY.
+ */
+static void *script_kvars[] =
+	{ (void *)&mono_time.tv_sec, (void *)&mono_time, (void *)&ncr_cache };
 
 static	struct script script0 = {
 /*--------------------------< START >-----------------------*/ {
@@ -1389,7 +1404,7 @@ static	struct script script0 = {
 	**	Claim to be still alive ...
 	*/
 	SCR_COPY (sizeof (((struct ncb *)0)->heartbeat)),
-		(ncrcmd) &mono_time.tv_sec,
+		KVAR(SCRIPT_KVAR_MONO_TIME_TV_SEC),
 		NADDR (heartbeat),
 	/*
 	**      Make data structure address invalid.
@@ -1631,7 +1646,7 @@ static	struct script script0 = {
 	**      Set a time stamp for this selection
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &mono_time,
+		KVAR(SCRIPT_KVAR_MONO_TIME),
 		NADDR (header.stamp.select),
 	/*
 	**      load the savep (saved pointer) into
@@ -1813,7 +1828,7 @@ static	struct script script0 = {
 	**	... set a timestamp ...
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &mono_time,
+		KVAR(SCRIPT_KVAR_MONO_TIME),
 		NADDR (header.stamp.command),
 	/*
 	**	... and send the command
@@ -1835,7 +1850,7 @@ static	struct script script0 = {
 	**	set the timestamp.
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &mono_time,
+		KVAR(SCRIPT_KVAR_MONO_TIME),
 		NADDR (header.stamp.status),
 	/*
 	**	If this is a GETCC transfer,
@@ -2400,7 +2415,7 @@ static	struct script script0 = {
 	**	and count the disconnects.
 	*/
 	SCR_COPY (sizeof (struct timeval)),
-		(ncrcmd) &mono_time,
+		KVAR(SCRIPT_KVAR_MONO_TIME),
 		NADDR (header.stamp.disconnect),
 	SCR_COPY (4),
 		NADDR (disc_phys),
@@ -2784,7 +2799,7 @@ static	struct script script0 = {
 **	SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **		PADDR (no_data),
 **	SCR_COPY (sizeof (struct timeval)),
-**		(ncrcmd) &mono_time,
+**		KVAR(SCRIPT_KVAR_MONO_TIME),
 **		NADDR (header.stamp.data),
 **	SCR_MOVE_TBL ^ SCR_DATA_IN,
 **		offsetof (struct dsb, data[ 0]),
@@ -2811,7 +2826,7 @@ static	struct script script0 = {
 **	SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN)),
 **		PADDR (no_data),
 **	SCR_COPY (sizeof (struct timeval)),
-**		(ncrcmd) &mono_time,
+**		KVAR(SCRIPT_KVAR_MONO_TIME),
 **		NADDR (header.stamp.data),
 **	SCR_MOVE_TBL ^ SCR_DATA_OUT,
 **		offsetof (struct dsb, data[ 0]),
@@ -2830,8 +2845,7 @@ static	struct script script0 = {
 **
 **---------------------------------------------------------
 */
-(u_long)&ident
-
+0
 }/*-------------------------< ABORTTAG >-------------------*/,{
 	/*
 	**      Abort a bad reselection.
@@ -2873,19 +2887,19 @@ static	struct script script0 = {
 	**	Read the variable.
 	*/
 	SCR_COPY (4),
-		(ncrcmd) &ncr_cache,
+		KVAR(SCRIPT_KVAR_NCR_CACHE),
 		RADDR (scratcha),
 	/*
 	**	Write the variable.
 	*/
 	SCR_COPY (4),
 		RADDR (temp),
-		(ncrcmd) &ncr_cache,
+		KVAR(SCRIPT_KVAR_NCR_CACHE),
 	/*
 	**	Read back the variable.
 	*/
 	SCR_COPY (4),
-		(ncrcmd) &ncr_cache,
+		KVAR(SCRIPT_KVAR_NCR_CACHE),
 		RADDR (temp),
 }/*-------------------------< SNOOPEND >-------------------*/,{
 	/*
@@ -2928,7 +2942,7 @@ void ncr_script_fill (struct script * scr)
 	*p++ =SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_IN));
 	*p++ =PADDR (no_data);
 	*p++ =SCR_COPY (sizeof (struct timeval));
-	*p++ =(ncrcmd) &mono_time;
+	*p++ =KVAR(SCRIPT_KVAR_MONO_TIME);
 	*p++ =NADDR (header.stamp.data);
 	*p++ =SCR_MOVE_TBL ^ SCR_DATA_IN;
 	*p++ =offsetof (struct dsb, data[ 0]);
@@ -2952,7 +2966,7 @@ void ncr_script_fill (struct script * scr)
 	*p++ =SCR_JUMP ^ IFFALSE (WHEN (SCR_DATA_OUT));
 	*p++ =PADDR (no_data);
 	*p++ =SCR_COPY (sizeof (struct timeval));
-	*p++ =(ncrcmd) &mono_time;
+	*p++ =KVAR(SCRIPT_KVAR_MONO_TIME);
 	*p++ =NADDR (header.stamp.data);
 	*p++ =SCR_MOVE_TBL ^ SCR_DATA_OUT;
 	*p++ =offsetof (struct dsb, data[ 0]);
@@ -2983,7 +2997,7 @@ void ncr_script_fill (struct script * scr)
 
 static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 {
-	ncrcmd  opcode, new, old;
+	ncrcmd  opcode, new, old, tmp1, tmp2;
 	ncrcmd	*src, *dst, *start, *end;
 	int relocs;
 
@@ -3034,7 +3048,13 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 			**	COPY has TWO arguments.
 			*/
 			relocs = 2;
-			if ((src[0] ^ src[1]) & 3) {
+			tmp1 = src[0];
+			if ((tmp1 & RELOC_MASK) == RELOC_KVAR)
+				tmp1 = 0;
+			tmp2 = src[1];
+			if ((tmp2 & RELOC_MASK) == RELOC_KVAR)
+				tmp2 = 0;
+			if ((tmp1 ^ tmp2) & 3) {
 				printf ("%s: ERROR1 IN SCRIPT at %d.\n",
 					ncr_name(np), src-start-1);
 				DELAY (1000000);
@@ -3085,6 +3105,15 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 				case RELOC_SOFTC:
 					new = (old & ~RELOC_MASK) + vtophys(np);
 					break;
+				case RELOC_KVAR:
+					if (((old & ~RELOC_MASK) <
+					     SCRIPT_KVAR_FIRST) ||
+					    ((old & ~RELOC_MASK) >
+					     SCRIPT_KVAR_LAST))
+						panic("ncr KVAR out of range");
+					new = vtophys(script_kvars[old &
+					    ~RELOC_MASK]);
+					break;
 				case 0:
 					/* Don't relocate a 0 address. */
 					if (old == 0) {
@@ -3093,7 +3122,7 @@ static void ncr_script_copy_and_bind (struct script *script, ncb_p np)
 					}
 					/* fall through */
 				default:
-					new = vtophys(old);
+					panic("ncr_script_copy_and_bind: weird relocation %x\n", old);
 					break;
 				}
 
@@ -3246,12 +3275,28 @@ ncr_attach(parent, self, aux)
 	int retval;
 	ncb_p np = (void *)self;
 
-	/*
-	** XXX NetBSD
-	** Perhaps try to figure what which model chip it is and print that
-	** out.
-	*/
-	printf("\n");
+	printf(": NCR ");
+	switch (pa->pa_id) {
+	case NCR_810_ID:  
+		printf("53c810");
+		break;
+	case NCR_810AP_ID:
+		printf("53c810ap");
+		break;
+	case NCR_815_ID:
+		printf("53c815");
+		break;
+	case NCR_825_ID:
+		printf("53c825 Wide");
+		break;
+	case NCR_860_ID:
+		printf("53c860");
+		break;
+	case NCR_875_ID:
+		printf("53c875 Wide");
+		break;
+	}
+	printf(" SCSI\n");
 
 	/*
 	**	Try to map the controller chip to
@@ -5079,7 +5124,7 @@ void ncr_exception (ncb_p np)
 		int i;
 		np->regtime = mono_time;
 		for (i=0; i<sizeof(np->regdump); i++)
-			((char*)&np->regdump)[i] = ((char*)np->reg)[i];
+			((char*)&np->regdump)[i] = INB_OFF(i);
 		np->regdump.nc_dstat = dstat;
 		np->regdump.nc_sist  = sist;
 	};
@@ -5133,7 +5178,7 @@ void ncr_exception (ncb_p np)
 
 	printf ("\treg:\t");
 	for (i=0; i<16;i++)
-		printf (" %02x", ((u_char*)np->reg)[i]);
+		printf (" %02x", INB_OFF(i));
 	printf (".\n");
 
 	/*----------------------------------------
@@ -5256,7 +5301,7 @@ void ncr_exception (ncb_p np)
 				printf (" ");
 				break;
 			};
-			val = ((unsigned char*) np->vaddr) [i];
+			val = INB_OFF(i);
 			printf (" %x%x", val/16, val%16);
 			if (i%16==15) printf (".\n");
 		};
@@ -6541,16 +6586,15 @@ static	int	ncr_scatter
 #ifndef NCR_IOMAPPED
 static int ncr_regtest (struct ncb* np)
 {
-	register volatile u_long data, *addr;
+	register volatile u_long data;
 	/*
 	**	ncr registers may NOT be cached.
 	**	write 0xffffffff to a read only register area,
 	**	and try to read it back.
 	*/
-	addr = (u_long*) &np->reg->nc_dstat;
 	data = 0xffffffff;
-	*addr= data;
-	data = *addr;
+	OUTL_OFF(offsetof(struct ncr_reg, nc_dstat), data);
+	data = INL_OFF(offsetof(struct ncr_reg, nc_dstat));
 #if 1
 	if (data == 0xffffffff) {
 #else
