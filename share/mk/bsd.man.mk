@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.43 1999/02/12 01:10:07 lukem Exp $
+#	$NetBSD: bsd.man.mk,v 1.44 1999/02/12 12:38:45 lukem Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -12,7 +12,7 @@ __initialized__:
 .endif
 
 .PHONY:		catinstall maninstall catpages manpages catlinks manlinks cleanman
-.if ${MKMAN} != "no" && ${MKSHARE} != "no"
+.if ${MKMAN} != "no"
 realinstall:	${MANINSTALL}
 .endif
 cleandir distclean: cleanman
@@ -148,7 +148,7 @@ manlinks: manpages
 .endif
 
 .if defined(CATPAGES)
-.if ${MKMAN} != "no" && ${MKSHARE} != "no" && ${MKCATPAGES} != "no"
+.if ${MKCATPAGES} != "no"
 all: ${CATPAGES}
 .else
 all:
