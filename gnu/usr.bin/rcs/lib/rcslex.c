@@ -36,96 +36,6 @@ Report problems and direct all questions to:
 
 */
 
-
-
-/* rcslex.c,v
- * Revision 1.2  1993/06/28  19:13:10  nate
- * Added Chris Demetriou's FSYNC_ALL option which causes all writes to be
- * flushed immediately.  (In case of a crash in the middle of CVS/RCS commits
- *
- * Revision 1.1.1.1  1993/06/18  04:22:12  jkh
- * Updated GNU utilities
- *
- * Revision 5.11  1991/11/03  03:30:44  eggert
- * Fix porting bug to ancient hosts lacking vfprintf.
- *
- * Revision 5.10  1991/10/07  17:32:46  eggert
- * Support piece tables even if !has_mmap.
- *
- * Revision 5.9  1991/09/24  00:28:42  eggert
- * Don't export errsay().
- *
- * Revision 5.8  1991/08/19  03:13:55  eggert
- * Add eoflex(), mmap support.  Tune.
- *
- * Revision 5.7  1991/04/21  11:58:26  eggert
- * Add MS-DOS support.
- *
- * Revision 5.6  1991/02/25  07:12:42  eggert
- * Work around fputs bug.  strsave -> str_save (DG/UX name clash)
- *
- * Revision 5.5  1990/12/04  05:18:47  eggert
- * Use -I for prompts and -q for diagnostics.
- *
- * Revision 5.4  1990/11/19  20:05:28  hammer
- * no longer gives warning about unknown keywords if -q is specified
- *
- * Revision 5.3  1990/11/01  05:03:48  eggert
- * When ignoring unknown phrases, copy them to the output RCS file.
- *
- * Revision 5.2  1990/09/04  08:02:27  eggert
- * Count RCS lines better.
- *
- * Revision 5.1  1990/08/29  07:14:03  eggert
- * Work around buggy compilers with defective argument promotion.
- *
- * Revision 5.0  1990/08/22  08:12:55  eggert
- * Remove compile-time limits; use malloc instead.
- * Report errno-related errors with perror().
- * Ansify and Posixate.  Add support for ISO 8859.
- * Use better hash function.
- *
- * Revision 4.6  89/05/01  15:13:07  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.5  88/08/28  15:01:12  eggert
- * Don't loop when writing error messages to a full filesystem.
- * Flush stderr/stdout when mixing output.
- * Yield exit status compatible with diff(1).
- * Shrink stdio code size; allow cc -R; remove lint.
- * 
- * Revision 4.4  87/12/18  11:44:47  narten
- * fixed to use "varargs" in "fprintf"; this is required if it is to
- * work on a SPARC machine such as a Sun-4
- * 
- * Revision 4.3  87/10/18  10:37:18  narten
- * Updating version numbers. Changes relative to 1.1 actually relative
- * to version 4.1
- * 
- * Revision 1.3  87/09/24  14:00:17  narten
- * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
- * warnings)
- * 
- * Revision 1.2  87/03/27  14:22:33  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/03/25  18:12:51  wft
- * Only changed $Header to $Id.
- * 
- * Revision 3.3  82/12/10  16:22:37  wft
- * Improved error messages, changed exit status on error to 1.
- *
- * Revision 3.2  82/11/28  21:27:10  wft
- * Renamed ctab to map and included EOFILE; ctab is now a macro in rcsbase.h.
- * Added fflsbuf(), fputs(), and fprintf(), which abort the RCS operations
- * properly in case there is an IO-error (e.g., file system full).
- *
- * Revision 3.1  82/10/11  19:43:56  wft
- * removed unused label out:;
- * made sure all calls to getc() return into an integer, not a char.
- */
-
-
 /*
 #define LEXDB
 */
@@ -139,7 +49,7 @@ Report problems and direct all questions to:
 
 #include "rcsbase.h"
 
-libId(lexId, "rcslex.c,v 1.2 1993/06/28 19:13:10 nate Exp")
+libId(lexId, "$Id: rcslex.c,v 1.2 1993/08/02 17:47:26 mycroft Exp $")
 
 static struct hshentry *nexthsh;  /*pointer to next hash entry, set by lookup*/
 

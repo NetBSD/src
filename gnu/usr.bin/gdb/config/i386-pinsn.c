@@ -17,6 +17,10 @@ You should have received a copy of the GNU General Public License
 along with GDB; see the file COPYING.  If not, write to
 the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: i386-pinsn.c,v 1.2 1993/08/02 17:39:49 mycroft Exp $";
+#endif /* not lint */
+
 /*
  * 80386 instruction printer by Pace Willisson (pace@prep.ai.mit.edu)
  * July 1988

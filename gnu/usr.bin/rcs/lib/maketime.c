@@ -1,4 +1,3 @@
-#
 /*
  * MAKETIME		derive 32-bit time value from TM structure.
  *
@@ -20,61 +19,10 @@
  * 	Copyright 1981 by Ken Harrenstien, SRI International.
  *	(ARPANET: KLH @ SRI)
  */
-/* maketime.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:13  jkh
- * Updated GNU utilities
- *
- * Revision 5.3  1991/08/19  03:13:55  eggert
- * Add setfiledate, str2time, TZ_must_be_set.
- *
- * Revision 5.2  1990/11/01  05:03:30  eggert
- * Remove lint.
- *
- * Revision 5.1  1990/10/04  06:30:13  eggert
- * Calculate the GMT offset of 'xxx LT' as of xxx, not as of now.
- * Don't assume time_t is 32 bits.  Fix bugs near epoch and near end of time.
- *
- * Revision 5.0  1990/08/22  08:12:38  eggert
- * Switch to GMT and fix the bugs exposed thereby.
- * Permit dates past 1999/12/31.  Ansify and Posixate.
- *
- * Revision 1.8  88/11/08  13:54:53  narten
- * allow negative timezones (-24h <= x <= 24h)
- * 
- * Revision 1.7  88/08/28  14:47:52  eggert
- * Allow cc -R.  Remove unportable "#endif XXX"s.
- * 
- * Revision 1.6  87/12/18  17:05:58  narten
- * include rcsparam.h
- * 
- * Revision 1.5  87/12/18  11:35:51  narten
- * maketime.c: fixed USG code - you have tgo call "tzset" in order to have
- * "timezone" set. ("localtime" calls it, but it's probably better not to 
- * count on "localtime" having been called.)
- * 
- * Revision 1.4  87/10/18  10:26:57  narten
- * Updating version numbers. Changes relative to 1.0 are actually 
- * relative to 1.2
- * 
- * Revision 1.3  87/09/24  13:58:45  narten
- * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
- * warnings)
- * 
- * Revision 1.2  87/03/27  14:21:48  jenkins
- * Port to suns
- * 
- * Revision 1.2  83/12/05  10:12:56  wft
- * added cond. compilation for USG Unix; long timezone;
- * 
- * Revision 1.1  82/05/06  11:38:00  wft
- * Initial revision
- * 
- */
-
 
 #include "rcsbase.h"
 
-libId(maketId, "maketime.c,v 1.1.1.1 1993/06/18 04:22:13 jkh Exp")
+libId(maketId, "$Id: maketime.c,v 1.2 1993/08/02 17:47:15 mycroft Exp $")
 
 static struct tm const *time2tm P((time_t));
 

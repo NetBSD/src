@@ -1,5 +1,9 @@
 /* dir_name_max(dir) does the same as pathconf(dir, _PC_NAME_MAX) */
 
+#ifndef lint
+static char rcsid[] = "$Id: dirnamemax.c,v 1.2 1993/08/02 17:43:46 mycroft Exp $";
+#endif /* not lint */
+
 #include <sys/types.h>
 
 #ifdef HAVE_UNISTD_H

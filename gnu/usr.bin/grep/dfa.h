@@ -13,7 +13,10 @@
 
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
-   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
+   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA. 
+
+	$Id: dfa.h,v 1.3 1993/08/02 17:41:24 mycroft Exp $
+*/
 
 /* Written June, 1988 by Mike Haertel */
 

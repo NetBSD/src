@@ -32,95 +32,6 @@ Report problems and direct all questions to:
 
 */
 
-
-
-
-/* rcsdiff.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:16  jkh
- * Updated GNU utilities
- *
- * Revision 5.10  1991/10/07  17:32:46  eggert
- * Remove lint.
- *
- * Revision 5.9  1991/08/19  03:13:55  eggert
- * Add RCSINIT, -r$.  Tune.
- *
- * Revision 5.8  1991/04/21  11:58:21  eggert
- * Add -x, RCSINIT, MS-DOS support.
- *
- * Revision 5.7  1990/12/13  06:54:07  eggert
- * GNU diff 1.15 has -u.
- *
- * Revision 5.6  1990/11/01  05:03:39  eggert
- * Remove unneeded setid check.
- *
- * Revision 5.5  1990/10/04  06:30:19  eggert
- * Accumulate exit status across files.
- *
- * Revision 5.4  1990/09/27  01:31:43  eggert
- * Yield 1, not EXIT_FAILURE, when diffs are found.
- *
- * Revision 5.3  1990/09/11  02:41:11  eggert
- * Simplify -kkvl test.
- *
- * Revision 5.2  1990/09/04  17:07:19  eggert
- * Diff's argv was too small by 1.
- *
- * Revision 5.1  1990/08/29  07:13:55  eggert
- * Add -kkvl.
- *
- * Revision 5.0  1990/08/22  08:12:46  eggert
- * Add -k, -V.  Don't use access().  Add setuid support.
- * Remove compile-time limits; use malloc instead.
- * Don't pass arguments with leading '+' to diff; GNU DIFF treats them as options.
- * Add GNU diff's flags.  Make lock and temp files faster and safer.
- * Ansify and Posixate.
- *
- * Revision 4.6  89/05/01  15:12:27  narten
- * changed copyright header to reflect current distribution rules
- * 
- * Revision 4.5  88/08/09  19:12:41  eggert
- * Use execv(), not system(); yield exit status like diff(1)s; allow cc -R.
- * 
- * Revision 4.4  87/12/18  11:37:46  narten
- * changes Jay Lepreau made in the 4.3 BSD version, to add support for
- * "-i", "-w", and "-t" flags and to permit flags to be bundled together,
- * merged in.
- * 
- * Revision 4.3  87/10/18  10:31:42  narten
- * Updating version numbers. Changes relative to 1.1 actually
- * relative to 4.1
- * 
- * Revision 1.3  87/09/24  13:59:21  narten
- * Sources now pass through lint (if you ignore printf/sprintf/fprintf 
- * warnings)
- * 
- * Revision 1.2  87/03/27  14:22:15  jenkins
- * Port to suns
- * 
- * Revision 4.1  83/05/03  22:13:19  wft
- * Added default branch, option -q, exit status like diff.
- * Added fterror() to replace faterror().
- * 
- * Revision 3.6  83/01/15  17:52:40  wft
- * Expanded mainprogram to handle multiple RCS files.
- *
- * Revision 3.5  83/01/06  09:33:45  wft
- * Fixed passing of -c (context) option to diff.
- *
- * Revision 3.4  82/12/24  15:28:38  wft
- * Added call to catchsig().
- *
- * Revision 3.3  82/12/10  16:08:17  wft
- * Corrected checking of return code from diff; improved error msgs.
- *
- * Revision 3.2  82/12/04  13:20:09  wft
- * replaced getdelta() with gettree(). Changed diagnostics.
- *
- * Revision 3.1  82/11/28  19:25:04  wft
- * Initial revision.
- *
- */
 #include "rcsbase.h"
 
 #if DIFF_L
@@ -132,7 +43,7 @@ static int exitstatus;
 static RILE *workptr;
 static struct stat workstat;
 
-mainProg(rcsdiffId, "rcsdiff", "rcsdiff.c,v 1.1.1.1 1993/06/18 04:22:16 jkh Exp")
+mainProg(rcsdiffId, "rcsdiff", "$Id: rcsdiff.c,v 1.2 1993/08/02 17:47:51 mycroft Exp $")
 {
     static char const cmdusage[] =
 	    "\nrcsdiff usage: rcsdiff [-q] [-rrev1 [-rrev2]] [-Vn] [diff options] file ...";

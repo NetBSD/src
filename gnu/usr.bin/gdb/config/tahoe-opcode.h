@@ -1,6 +1,8 @@
 /*
  * Ported by the State University of New York at Buffalo by the Distributed
  * Computer Systems Lab, Department of Computer Science, 1991.
+ *
+ *	$Id: tahoe-opcode.h,v 1.2 1993/08/02 17:40:24 mycroft Exp $
  */
 
 #ifndef tahoe_opcodeT

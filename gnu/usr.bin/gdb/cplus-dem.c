@@ -16,6 +16,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: cplus-dem.c,v 1.2 1993/08/02 17:40:56 mycroft Exp $";
+#endif /* not lint */
+
 /* This is for g++ 1.36.1 (November 6 version). It will probably
    require changes for any other version.
 

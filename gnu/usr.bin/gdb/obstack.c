@@ -20,6 +20,9 @@ In other words, you are welcome to use, share and improve this program.
 You are forbidden to forbid anyone else to use, share and improve
 what you give them.   Help stamp out software-hoarding!  */
 
+#ifndef lint
+static char rcsid[] = "$Id: obstack.c,v 1.2 1993/08/02 17:41:04 mycroft Exp $";
+#endif /* not lint */
 
 #include "obstack.h"
 

@@ -15,6 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: obstack.c,v 1.2 1993/08/02 17:41:32 mycroft Exp $";
+#endif /* not lint */
+
 #include "obstack.h"
 
 /* This is just to get __GNU_LIBRARY__ defined.  */

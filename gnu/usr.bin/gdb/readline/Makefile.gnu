@@ -4,6 +4,8 @@
 #								   #
 ####################################################################
 
+#	$Id: Makefile.gnu,v 1.2 1993/08/02 17:40:31 mycroft Exp $
+
 # Here is a rule for making .o files from .c files that doesn't force
 # the type of the machine (like -sun3) into the flags.
 .c.o:

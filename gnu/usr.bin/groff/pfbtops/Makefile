@@ -1,7 +1,6 @@
-# Makefile for pfbtops
+#	$Id: Makefile,v 1.3 1993/08/02 17:44:37 mycroft Exp $
 
 PROG=		pfbtops
-SRCS=		pfbtops.c
 LDADD+=		$(LIBGROFF)
 DPADD+=		$(LIBGROFF)
 

@@ -20,6 +20,10 @@
    have a copy of the license, write to the Free Software Foundation,
    675 Mass Ave, Cambridge, MA 02139, USA. */
 
+#ifndef lint
+static char rcsid[] = "$Id: history.c,v 1.2 1993/08/02 17:40:36 mycroft Exp $";
+#endif /* not lint */
+
 /* The goal is to make the implementation transparent, so that you
    don't have to know what data types are used, just what functions
    you can call.  I think I have done that. */

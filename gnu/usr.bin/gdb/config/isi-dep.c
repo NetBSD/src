@@ -18,6 +18,10 @@ In other words, go ahead and share GDB, but don't try to stop
 anyone else from sharing it farther.  Help stamp out software hoarding!
 */
 
+#ifndef lint
+static char rcsid[] = "$Id: isi-dep.c,v 1.2 1993/08/02 17:39:50 mycroft Exp $";
+#endif /* not lint */
+
 #include <stdio.h>
 #include "defs.h"
 #include "param.h"

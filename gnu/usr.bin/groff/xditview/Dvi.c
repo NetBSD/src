@@ -1,13 +1,11 @@
-#ifndef SABER
-#ifndef lint
-static char Xrcsid[] = "$XConsortium: Dvi.c,v 1.9 89/12/10 16:12:25 rws Exp $";
-#endif /* lint */
-#endif /* SABER */
-
 /*
  * Dvi.c - Dvi display widget
  *
  */
+
+#ifndef lint
+static char rcsid[] = "$Id: Dvi.c,v 1.2 1993/08/02 17:45:49 mycroft Exp $";
+#endif /* not lint */
 
 #define XtStrlen(s)	((s) ? strlen(s) : 0)
 

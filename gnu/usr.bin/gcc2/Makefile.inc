@@ -1,3 +1,5 @@
+#	$Id: Makefile.inc,v 1.2 1993/08/02 17:39:20 mycroft Exp $
+
 COMMON_SRC=	toplev.c version.c tree.c print-tree.c \
 		stor-layout.c fold-const.c function.c stmt.c expr.c \
 		calls.c expmed.c explow.c optabs.c varasm.c \

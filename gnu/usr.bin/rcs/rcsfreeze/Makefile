@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.2 1993/08/02 17:47:54 mycroft Exp $
+
 MAN1=	rcsfreeze.0
 
 afterinstall:

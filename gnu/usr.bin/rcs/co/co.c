@@ -167,7 +167,7 @@ static struct hshentries *gendeltas;	/* deltas to be generated	*/
 static struct hshentry *targetdelta;	/* final delta to be generated	*/
 static struct stat workstat;
 
-mainProg(coId, "co", "co.c,v 1.1.1.1 1993/06/18 04:22:11 jkh Exp")
+mainProg(coId, "co", "$Id: co.c,v 1.2 1993/08/02 17:47:00 mycroft Exp $")
 {
 	static char const cmdusage[] =
 		"\nco usage: co -{flpqru}[rev] -ddate -jjoinlist -sstate -w[login] -Vn file ...";

@@ -1,4 +1,7 @@
-/* Readline.h -- the names of functions callable from within readline. */
+/* Readline.h -- the names of functions callable from within readline.
+
+	$Id: readline.h,v 1.2 1993/08/02 17:40:40 mycroft Exp $
+*/
 
 #ifndef _READLINE_H_
 #define _READLINE_H_

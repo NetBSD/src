@@ -15,6 +15,10 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
+#ifndef lint
+static char rcsid[] = "$Id: dfa.c,v 1.3 1993/08/02 17:41:22 mycroft Exp $";
+#endif /* not lint */
+
 /* Written June, 1988 by Mike Haertel
    Modified July, 1988 by Arthur David Olson to assist BMG speedups  */
 

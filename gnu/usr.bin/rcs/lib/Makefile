@@ -1,3 +1,5 @@
+#	$Id: Makefile,v 1.2 1993/08/02 17:47:13 mycroft Exp $
+
 # Define FSYNC_ALL to get slower but safer writes in case of crashes in
 # the middle of CVS/RCS changes
 CFLAGS += -DFSYNC_ALL

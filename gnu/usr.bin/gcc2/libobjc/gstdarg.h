@@ -1,7 +1,10 @@
 /* stdarg.h for GNU.
    Note that the type used in va_arg is supposed to match the
    actual type **after default promotions**.
-   Thus, va_arg (..., short) is not valid.  */
+   Thus, va_arg (..., short) is not valid. 
+
+	$Id: gstdarg.h,v 1.2 1993/08/02 17:39:01 mycroft Exp $
+*/
 
 #ifndef _STDARG_H
 #ifndef _ANSI_STDARG_H_

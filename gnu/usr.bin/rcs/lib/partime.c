@@ -20,52 +20,9 @@
  *	Perhaps should return 0 on success, else a non-zero error val?
  */
 
-/* partime.c,v
- * Revision 1.1.1.1  1993/06/18  04:22:13  jkh
- * Updated GNU utilities
- *
- * Revision 5.6  1991/08/19  03:13:55  eggert
- * Update timezones.
- *
- * Revision 5.5  1991/04/21  11:58:18  eggert
- * Don't put , just before } in initializer.
- *
- * Revision 5.4  1990/10/04  06:30:15  eggert
- * Remove date vs time heuristics that fail between 2000 and 2400.
- * Check for overflow when lexing an integer.
- * Parse 'Jan 10 LT' as 'Jan 10, LT', not 'Jan, 10 LT'.
- *
- * Revision 5.3  1990/09/24  18:56:31  eggert
- * Update timezones.
- *
- * Revision 5.2  1990/09/04  08:02:16  eggert
- * Don't parse two-digit years, because it won't work after 1999/12/31.
- * Don't permit 'Aug Aug'.
- *
- * Revision 5.1  1990/08/29  07:13:49  eggert
- * Be able to parse our own date format.  Don't assume year<10000.
- *
- * Revision 5.0  1990/08/22  08:12:40  eggert
- * Switch to GMT and fix the bugs exposed thereby.  Update timezones.
- * Ansify and Posixate.  Fix peekahead and int-size bugs.
- *
- * Revision 1.4  89/05/01  14:48:46  narten
- * fixed #ifdef DEBUG construct
- * 
- * Revision 1.3  88/08/28  14:53:40  eggert
- * Remove unportable "#endif XXX"s.
- * 
- * Revision 1.2  87/03/27  14:21:53  jenkins
- * Port to suns
- * 
- * Revision 1.1  82/05/06  11:38:26  wft
- * Initial revision
- * 
- */
-
 #include "rcsbase.h"
 
-libId(partId, "partime.c,v 1.1.1.1 1993/06/18 04:22:13 jkh Exp")
+libId(partId, "$Id: partime.c,v 1.2 1993/08/02 17:47:17 mycroft Exp $")
 
 #define given(v) (0 <= (v))
 #define TMNULL (-1) /* Items not given are given this value */

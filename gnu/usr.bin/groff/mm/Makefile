@@ -1,4 +1,4 @@
-# Makefile for mm macros
+#	$Id: Makefile,v 1.5 1993/08/02 17:44:26 mycroft Exp $
 
 # XXX -- this depends on ../include/defs.h
 TMACDIR?=	/usr/share/tmac

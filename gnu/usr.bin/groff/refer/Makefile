@@ -1,4 +1,4 @@
-# Makefile for refer
+#	$Id: Makefile,v 1.4 1993/08/02 17:45:00 mycroft Exp $
 
 PROG=		refer
 SRCS=		command.cc ref.cc refer.cc token.cc label.cc
