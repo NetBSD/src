@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.51 2002/02/27 02:33:51 lukem Exp $	*/
+/*	$NetBSD: inet.c,v 1.52 2002/05/26 16:05:45 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.51 2002/02/27 02:33:51 lukem Exp $");
+__RCSID("$NetBSD: inet.c,v 1.52 2002/05/26 16:05:45 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,6 +280,7 @@ tcp_stats(off, name)
 	ps(tcps_noport, "\t%llu dropped due to no socket\n");
 	p(tcps_connsdrained, "\t%llu connection%s drained due to memory "
 		"shortage\n");
+	p(tcps_pmtublackhole, "\t%llu PMTUD blackhole%s detected\n");
 
 	p(tcps_badsyn, "\t%llu bad connection attempt%s\n");
 	ps(tcps_sc_added, "\t%llu SYN cache entries added\n");
