@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.5 1998/11/16 22:41:01 thorpej Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.6 1999/01/01 14:05:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -106,6 +106,7 @@ struct pcic_softc {
 
 	/* this needs to be large enough to hold PCIC_MEM_PAGES bits */
 	int	subregionmask;
+#define PCIC_MAX_MEM_PAGES	(8 * sizeof(int))
 
 	/* used by memory window mapping functions */
 	bus_addr_t membase;
