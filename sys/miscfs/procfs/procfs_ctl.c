@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_ctl.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_ctl.c,v 1.2 1994/01/08 10:47:02 cgd Exp $
+ *	$Id: procfs_ctl.c,v 1.3 1994/01/09 19:44:04 ws Exp $
  */
 
 #include <sys/param.h>
@@ -190,7 +190,6 @@ procfs_control(curp, p, op)
 
 		p->p_oppid = 0;
 		p->p_flag &= ~SWTED;	/* XXX ? */
-		wakeup((caddr_t) curp);	/* XXX for CTL_WAIT below ? */
 
 		break;
 
@@ -198,7 +197,8 @@ procfs_control(curp, p, op)
 	 * Step.  Let the target process execute a single instruction.
 	 */
 	case PROCFS_CTL_STEP:
-		process_sstep(p);
+		if (error = process_sstep(p))
+			return error;
 		break;
 
 	/*

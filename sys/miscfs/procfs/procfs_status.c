@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_status.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_status.c,v 1.1 1994/01/05 07:51:27 cgd Exp $
+ *	$Id: procfs_status.c,v 1.2 1994/01/09 19:44:06 ws Exp $
  */
 
 #include <sys/param.h>
@@ -122,7 +122,7 @@ pfs_dostatus(curp, p, pfs, uio)
 	cr = p->p_ucred;
 
 	ps += sprintf(ps, " %d %d", cr->cr_uid, cr->cr_gid);
-	for (i = 0; i < cr->cr_ngroups; i++)
+	for (i = 1; i < cr->cr_ngroups; i++)
 		ps += sprintf(ps, " %d", cr->cr_groups[i]);
 	ps += sprintf(ps, "\n");
 
