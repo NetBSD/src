@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcide.c,v 1.8 2003/11/22 20:57:18 fvdl Exp $	*/
+/*	$NetBSD: pdcide.c,v 1.9 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -316,8 +316,8 @@ pdc202xx_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    PDC_IS_265(sc) ? pdc20265_pci_intr : pdc202xx_pci_intr);
 		/* clear interrupt, in case there is one pending */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, IDEDMA_CTL_INTR);
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
+		    IDEDMA_CTL_INTR);
 	}
 	return;
 }
@@ -432,9 +432,8 @@ pdc202xx_setup_channel(struct channel_softc *chp)
 	}
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
-		    idedma_ctl);
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL],
+		    0, idedma_ctl);
 	}
 }
 
@@ -482,9 +481,8 @@ pdc20268_setup_channel(struct channel_softc *chp)
 	/* nothing to do to setup modes, the controller snoop SET_FEATURE cmd */
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
-		    idedma_ctl);
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL],
+		    0, idedma_ctl);
 	}
 }
 
@@ -545,7 +543,7 @@ pdc20265_pci_intr(void *arg)
 		 * but we can't do it another way).
 		 */
 		dmastat = bus_space_read_1(sc->sc_dma_iot,
-		    sc->sc_dma_ioh, IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if((dmastat & IDEDMA_CTL_INTR) == 0)
 			continue;
 		crv = wdcintr(wdc_cp);

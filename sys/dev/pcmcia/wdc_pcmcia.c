@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.63 2003/10/23 03:56:36 briggs Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.64 2003/11/27 23:02:40 fvdl Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.63 2003/10/23 03:56:36 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.64 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.63 2003/10/23 03:56:36 briggs Exp $
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#include <dev/ic/wdcreg.h>
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcvar.h>
 
@@ -235,8 +236,8 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	const struct wdc_pcmcia_product *wpp;
-	bus_size_t offset;
-	int quirks;
+	bus_size_t offset = 0;
+	int quirks, i;
 
 	sc->sc_pf = pa->pf;
 
@@ -308,18 +309,11 @@ wdc_pcmcia_attach(parent, self, aux)
 		}
 
 		sc->sc_pmemh.memt = sc->sc_pmembaseh.memt;
-		if (offset == 0) {
-			sc->sc_pmemh.memh = sc->sc_pmembaseh.memh;
-		} else {
-			if (bus_space_subregion(sc->sc_pmemh.memt,
-				sc->sc_pmembaseh.memh, offset,
-				WDC_PCMCIA_REG_NPORTS, &sc->sc_pmemh.memh))
-				goto mapaux_failed;
-		}
+		sc->sc_pmemh.memh = sc->sc_pmembaseh.memh;
 
 		sc->sc_auxpmemh.memt = sc->sc_pmemh.memt;
 		if (bus_space_subregion(sc->sc_pmemh.memt,
-		    sc->sc_pmemh.memh, WDC_PCMCIA_AUXREG_OFFSET,
+		    sc->sc_pmembaseh.memh, WDC_PCMCIA_AUXREG_OFFSET + offset,
 		    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpmemh.memh))
 			goto mapaux_failed;
 		
@@ -348,18 +342,27 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
 	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
 		sc->wdc_channel.cmd_iot = sc->sc_pmemh.memt;
-		sc->wdc_channel.cmd_ioh = sc->sc_pmemh.memh;
+		sc->wdc_channel.cmd_baseioh = sc->sc_pmemh.memh;
 		sc->wdc_channel.ctl_iot = sc->sc_auxpmemh.memt;
 		sc->wdc_channel.ctl_ioh = sc->sc_auxpmemh.memh;
 	} else {
 		sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
-		sc->wdc_channel.cmd_ioh = sc->sc_pioh.ioh;
+		sc->wdc_channel.cmd_baseioh = sc->sc_pioh.ioh;
 		sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
 		sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
 	}
+	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
+		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
+		    sc->wdc_channel.cmd_baseioh,
+		    offset + i, i == 0 ? 4 : 1,
+		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
+			printf(": can't subregion I/O space\n");
+			goto mapaux_failed;
+		}
+	}
 	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_ioh;
+	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;

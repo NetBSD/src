@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.2 2003/11/07 10:44:42 enami Exp $	*/
+/*	$NetBSD: rccide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.2 2003/11/07 10:44:42 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.3 2003/11/27 23:02:40 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,8 @@ serverworks_setup_channel(struct channel_softc *chp)
 
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
-		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * channel, idedma_ctl);
+		bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0,
+		    idedma_ctl);
 	}
 }
 
@@ -244,19 +244,19 @@ serverworks_pci_intr(arg)
 	int dmastat, i, crv;
 
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		dmastat = bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i);
+		cp = &sc->pciide_channels[i];
+		dmastat = bus_space_read_1(sc->sc_dma_iot,
+		    cp->dma_iohs[IDEDMA_CTL], 0);
 		if ((dmastat & (IDEDMA_CTL_ACT | IDEDMA_CTL_INTR)) !=
 		    IDEDMA_CTL_INTR)
 			continue;
-		cp = &sc->pciide_channels[i];
 		wdc_cp = &cp->wdc_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
 			    sc->sc_wdcdev.sc_dev.dv_xname, i);
-			bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-			    IDEDMA_CTL + IDEDMA_SCH_OFFSET * i, dmastat);
+			bus_space_write_1(sc->sc_dma_iot,
+			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else
 			rv = 1;
 	}
