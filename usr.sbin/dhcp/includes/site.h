@@ -87,6 +87,10 @@
 
 /* #define FAILOVER_PROTOCOL */
 
+/* Define this if you want DNS update functionality to be available. */
+
+#define NSUPDATE
+
 /* Define this if you want the dhcpd.pid file to go somewhere other than
    the default (which varies from system to system, but is usually either
    /etc or /var/run. */
@@ -153,3 +157,9 @@
 /* Define this to change the logging facility used by dhcpd. */
 
 /* #define DHCPD_LOG_FACILITY LOG_DAEMON */
+
+/* Define this if you aren't debugging and you want to save memory
+   (potentially a _lot_ of memory) by allocating leases in chunks rather
+   than one at a time. */
+
+#define COMPACT_LEASES

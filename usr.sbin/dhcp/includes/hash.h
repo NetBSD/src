@@ -41,7 +41,7 @@
  * ``http://www.nominum.com''.
  */
 
-#define DEFAULT_HASH_SIZE	97
+#define DEFAULT_HASH_SIZE	9973
 
 /* The purpose of the hashed_object_t struct is to not match anything else. */
 typedef struct {
