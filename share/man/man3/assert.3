@@ -1,4 +1,4 @@
-.\"	$NetBSD: assert.3,v 1.5 1994/11/30 15:24:30 jtc Exp $
+.\"	$NetBSD: assert.3,v 1.6 2000/12/19 14:33:00 kleink Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)assert.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 9, 1993
+.Dd December 17, 2000
 .Dt ASSERT 3
 .Os
 .Sh NAME
@@ -49,8 +49,10 @@ macro tests the given
 .Ar expression
 and if it is false,
 the calling process is terminated.
-A
-diagnostic message is written to
+A diagnostic message, consisting of the text of the expression,
+the name of the source file, the line number and the enclosing
+function,
+is written to
 .Em stderr
 and the
 .Xr abort 3
@@ -78,8 +80,8 @@ if
 .Ar expression
 is false:
 .Bd -literal -offset indent
-"assertion \e"%s\e" failed: file \e"%s\e", line %d\en", \e
-		    "expression", __FILE__, __LINE__);
+"assertion \e"%s\e" failed: file \e"%s\e", line %d, function \e"%s\e"\en", \e
+		    "expression", __FILE__, __LINE__, __func__);
 .Ed
 .Sh SEE ALSO
 .Xr cc 1 ,
@@ -88,9 +90,12 @@ is false:
 The
 .Fn assert
 macro conforms to
-.St -ansiC .
+.St -isoC99 .
 .Sh HISTORY
 A
 .Nm assert
 macro appeared in
 .At v6 .
+.Pp
+Information on the name of the enclosing function appeared in
+.St -isoC99 .
