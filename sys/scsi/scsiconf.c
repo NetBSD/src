@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.35 1995/07/09 09:44:57 cgd Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.36 1995/07/12 09:43:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -400,7 +400,8 @@ scsi_probedev(scsi, target, lun)
 	    sizeof(scsi_quirk_patterns[0]), &priority);
 	if (priority != 0)
 		sc_link->quirks |= finger->quirks;
-	if ((inqbuf.version & SID_ANSII) == 0)
+	if ((inqbuf.version & SID_ANSII) == 0 &&
+	    (sc_link->quirks & SDEV_FORCELUNS) == 0)
 		sc_link->quirks |= SDEV_NOLUNS;
 
 	if ((sc_link->quirks & SDEV_NOLUNS) == 0)
