@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.42 2003/07/23 13:52:25 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.43 2004/04/05 10:44:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -100,7 +100,9 @@ void nfs_kqinit __P((void));
 void nfs_nhinit __P((void));
 void nfs_nhreinit __P((void));
 void nfs_nhdone __P((void));
-int nfs_nget __P((struct mount *, nfsfh_t *, int, struct nfsnode **));
+int nfs_nget1 __P((struct mount *, nfsfh_t *, int, struct nfsnode **, int));
+#define	nfs_nget(mp, fhp, fhsize, npp) \
+	nfs_nget1((mp), (fhp), (fhsize), (npp), 0)
 
 /* nfs_vnops.c */
 int nfs_null __P((struct vnode *, struct ucred *, struct proc *));
