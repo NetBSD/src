@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_raw.c,v 1.19 2003/08/07 16:33:33 agc Exp $	*/
+/*	$NetBSD: clnp_raw.c,v 1.20 2004/04/18 18:54:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.19 2003/08/07 16:33:33 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_raw.c,v 1.20 2004/04/18 18:54:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -314,10 +314,10 @@ clnp_usrreq(so, req, m, nam, control, p)
 			error = EISCONN;
 			break;
 		}
-		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB, M_WAITOK);
+		MALLOC(rp, struct rawisopcb *, sizeof *rp, M_PCB,
+		    M_WAITOK|M_ZERO);
 		if (rp == 0)
 			return (ENOBUFS);
-		bzero(rp, sizeof *rp);
 		so->so_pcb = rp;
 		break;
 
