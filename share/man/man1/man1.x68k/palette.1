@@ -1,14 +1,14 @@
-.\"	$NetBSD: palette.1,v 1.5 2000/11/07 06:43:25 lukem Exp $
+.\"	$NetBSD: palette.1,v 1.6 2001/04/21 14:30:18 wiz Exp $
 .\"
 .\" This software is in the Public Domain.
 .\" Author: Masaru Oki
 .\"
 .Dd March 5, 1995
-.Dt PALETTE 1
+.Dt PALETTE 1 x68k
 .Os
 .Sh NAME
 .Nm palette
-.Nd manipulate the text screen colormap.
+.Nd manipulate the text screen colormap
 .Sh SYNOPSIS
 .Nm palette
 .Op Ar red green blue Op Ar code
@@ -19,7 +19,7 @@ utility manipulates the colormap of x68k's console.
 The value of the color cell number
 .Ar code
 is replaced according to the arguments
-.Ar red, green, blue 
+.Ar red, green, blue
 .Po
 each value is an integer from
 .Li 0
