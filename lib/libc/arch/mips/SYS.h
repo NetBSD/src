@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.13 2002/01/14 00:55:55 thorpej Exp $ */
+/*	$NetBSD: SYS.h,v 1.14 2002/05/26 11:48:02 wiz Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan STone
@@ -90,11 +90,7 @@
 #endif
 
 
-#ifdef __STDC__
-# define SYSTRAP(x)	li v0,SYS_ ## x; syscall;
-#else
-# define SYSTRAP(x)	li v0,SYS_/**/x; syscall;
-#endif
+#define SYSTRAP(x)	li v0,SYS_ ## x; syscall;
 
 
 /*

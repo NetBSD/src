@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.21 2002/04/26 17:31:54 bjh21 Exp $	*/
+/*	$NetBSD: private.h,v 1.22 2002/05/26 11:49:58 wiz Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -145,12 +145,7 @@ static char	privatehid[] = "@(#)private.h	7.52";
 */
 
 #ifndef P
-#ifdef __STDC__
 #define P(x)	x
-#endif /* defined __STDC__ */
-#ifndef __STDC__
-#define P(x)	()
-#endif /* !defined __STDC__ */
 #endif /* !defined P */
 
 /*
