@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.1 2005/03/20 14:28:23 tron Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.4.2.2 2005/03/30 10:04:30 tron Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.1 2005/03/20 14:28:23 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4.2.2 2005/03/30 10:04:30 tron Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -113,9 +113,7 @@ stipending()
 	 * STI at the end
 	 */
 	while (s->vcpu_data[0].evtchn_upcall_pending) {
-		__insn_barrier();
 		cli();
-		__insn_barrier();
 		s->vcpu_data[0].evtchn_upcall_pending = 0;
 		/* NB. No need for a barrier here -- XCHG is a barrier
 		 * on x86. */
@@ -143,7 +141,6 @@ stipending()
 #endif
 			}
 		}
-		__insn_barrier();
 		sti();
 	}
 
