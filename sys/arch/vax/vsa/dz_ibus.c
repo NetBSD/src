@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.18 2000/06/05 00:09:20 matt Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.19 2000/07/19 18:15:04 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #include <machine/cpu.h>
 #include <machine/scb.h>
 
-#include <machine/../vax/gencons.h>
+#include <arch/vax/vax/gencons.h>
 
 #include <dev/qbus/dzreg.h>
 #include <dev/qbus/dzvar.h>

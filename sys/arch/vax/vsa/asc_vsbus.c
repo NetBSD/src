@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.19 2000/07/19 18:15:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.18 2000/06/18 22:47:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.19 2000/07/19 18:15:03 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -396,8 +396,8 @@ asc_vsbus_dma_intr(sc)
 
 	trans = asc->sc_dmasize - resid;
 	if (trans < 0) {			/* transferred < 0 ? */
-		printf("asc_vsbus_intr: xfer (%d) > req (%d)\n",
-		    trans, asc->sc_dmasize);
+		printf("asc_vsbus_intr: xfer (%d) > req (%lu)\n",
+		    trans, (u_long) asc->sc_dmasize);
 		trans = asc->sc_dmasize;
 	}
 	NCR_DMA(("asc_vsbus_intr: tcl=%d, tcm=%d; trans=%d, resid=%d\n",

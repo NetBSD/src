@@ -1,4 +1,4 @@
-/*	$NetBSD: urem.s,v 1.3 2000/07/19 01:01:02 matt Exp $	*/
+/*	$NetBSD: urem.s,v 1.4 2000/07/19 18:15:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -51,7 +51,7 @@
 #ifdef __ELF__
 ENTRY(__urem, 0)
 #else
-ENTRY(urem, 0)
+ASENTRY(urem, 0)
 #endif
 	movl	8(ap),r2
 	jlss	Leasy		# big divisor: settle by comparison

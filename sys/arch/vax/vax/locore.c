@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.49 2000/07/06 17:36:23 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.50 2000/07/19 18:15:03 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -53,7 +53,7 @@
 
 #include "opt_cputype.h"
 
-void	start(struct rpb *);
+void	_start(struct rpb *);
 void	main(void);
 
 extern	paddr_t avail_end;
@@ -89,7 +89,7 @@ extern struct cpu_dep ka680_calls;
  * management is disabled, and no interrupt system is active.
  */
 void
-start(struct rpb *prpb)
+_start(struct rpb *prpb)
 {
 	extern void *scratch;
 	struct pte *pt;

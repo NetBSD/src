@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.s,v 1.51 2000/07/17 02:54:04 matt Exp $   */
+/*	$NetBSD: intvec.s,v 1.52 2000/07/19 18:15:02 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -40,8 +40,8 @@
 #define SCBENTRY(name) \
 	.text			; \
 	.align 2		; \
-	.globl name		; \
-name /**/:
+	.globl __CONCAT(X,name)	; \
+__CONCAT(X,name):
 
 #define TRAPCALL(namn, typ) \
 SCBENTRY(namn)			; \
@@ -68,7 +68,7 @@ SCBENTRY(namn)			; \
 #define ISTACK 1
 #define	NOVEC	.long 0
 #define INTVEC(label,stack)	\
-	.long	label+stack;
+	.long	__CONCAT(X,label)+stack;
 
 	.text
 
@@ -158,7 +158,7 @@ _C_LABEL(rpb):
 # _memtest (memtest in C) holds the address to continue execution
 # at when returning from a intentional test.
 #
-mcheck: .globl	mcheck
+SCBENTRY(mcheck)
 	tstl	_C_LABEL(cold)		# Ar we still in coldstart?
 	bneq	L4		# Yes.
 
@@ -208,9 +208,7 @@ L4:	addl2	(sp)+,sp	# remove info pushed on stack
  * put in a need for an extra check when the fault is gotten during
  * PTE reference. Handled in pmap.c.
  */
-	.align	2
-	.globl	transl_v	# 20: Translation violation
-transl_v:
+SCBENTRY(transl_v)		# 20: Translation violation
 	pushr	$0x3f
 	pushl	28(sp)
 	pushl	28(sp)
@@ -221,11 +219,9 @@ transl_v:
 	addl2	$8,sp
 	rei
 1:	popr	$0x3f
-	brb	access_v
+	brb	Xaccess_v
 
-	.align	2
-	.globl	access_v	# 24: Access cntrl viol fault
-access_v:
+SCBENTRY(access_v)			# 24: Access cntrl viol fault
 	blbs	(sp), ptelen
 	pushl	$T_ACCFLT
 	bbc	$1,4(sp),1f
@@ -289,7 +285,7 @@ SCBENTRY(softnet)
 #	beql	2f			# no, skip looking at them one by one
 #define DONETISR(bit, fn) \
 	bbcc	$bit,_C_LABEL(netisr),1f; \
-	calls	$0,__CONCAT(_,fn); \
+	calls	$0,_C_LABEL(fn); \
 	1:
 
 #include <net/netisr_dispatch.h>
@@ -360,7 +356,7 @@ trap:	pushr	$0xfff
 	pushl	ap
 	pushl	fp
 	pushl	sp
-	calls	$1, _arithflt
+	calls	$1, _C_LABEL(arithflt)
 _C_LABEL(sret):
 	movl	(sp)+, fp
 	movl	(sp)+, ap
@@ -452,9 +448,7 @@ _C_LABEL(emtable):
  *	information.
  */
 
-	.align	2
-	.globl	emulate
-emulate:
+SCBENTRY(emulate)
 #if VAX630 || VAX650 || VAX410
 	movl	r11,32(sp)		# save register r11 in unused operand
 	movl	r10,36(sp)		# save register r10 in unused operand
