@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.20 1999/02/02 13:01:36 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.21 1999/04/07 12:47:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -511,7 +511,7 @@ scsipi_start(sc_link, type, flags)
 	scsipi_cmd.how = type;
 	return (scsipi_command(sc_link,
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
-	    0, 0, 2, type == SSS_START ? 30000 : 10000, NULL, flags));
+	    0, 0, 2, (type & SSS_START) ? 30000 : 10000, NULL, flags));
 }
 
 /*
