@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: vector.s,v 1.10.2.9 1993/10/27 05:46:58 mycroft Exp $
+ *	$Id: vector.s,v 1.10.2.10 1993/10/27 08:21:18 mycroft Exp $
  */
 
 #include <i386/isa/icu.h>
@@ -196,6 +196,7 @@ _Xresume/**/irq_num: ; \
 	xorl	%esi,%esi ; 	/* clear stray flag */ \
 7: ; \
 	movl	4(%ebx),%eax ; 	/* push argument or pointer to frame */ \
+	testl	%eax,%eax ; \
 	jnz	4f ; \
 	movl	%esp,%eax ; \
 4: ; \
