@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.142 1999/07/14 23:03:10 fvdl Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.143 1999/07/15 14:53:13 augustss Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.135 1999/07/14 23:02:01 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.136 1999/07/15 14:52:48 augustss Exp 
  */
 
 /*
@@ -498,6 +498,7 @@
 #define	PCI_VENDOR_ARIEL	0x1220		/* Ariel */
 #define	PCI_VENDOR_AZTECH	0x122d		/* Aztech */
 #define	PCI_VENDOR_3DO	0x1239		/* The 3D0 Company */
+#define	PCI_VENDOR_CCUBE	0x123f		/* C-Cube Microsystems */
 #define	PCI_VENDOR_AVM	0x1244		/* AVM */
 #define	PCI_VENDOR_STALLION	0x124d		/* Stallion Technologies */
 #define	PCI_VENDOR_LINEARSYS	0x1254		/* Linear Systems */
@@ -702,6 +703,9 @@
 #define	PCI_PRODUCT_AVANCE_AVG2302	0x2302		/* AVG2302 */
 #define	PCI_PRODUCT_AVANCE2_ALG2301	0x2301		/* ALG2301 */
 #define	PCI_PRODUCT_AVANCE2_ALG2302	0x2302		/* ALG2302 */
+
+/* CCUBE products */
+#define	PCI_PRODUCT_CCUBE_CINEMASTER	0x8888		/* Cinemaster C 3.0 DVD Decoder */
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz! Card ISDN Interface */
