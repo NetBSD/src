@@ -1,10 +1,10 @@
-/*	$NetBSD: cardbusdevs.h,v 1.25 2003/10/24 17:04:35 mycroft Exp $	*/
+/*	$NetBSD: cardbusdevs.h,v 1.26 2004/07/22 17:32:15 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: cardbusdevs,v 1.27 2003/10/24 17:04:16 mycroft Exp 
+ *	NetBSD: cardbusdevs,v 1.28 2004/07/22 17:32:02 mycroft Exp 
  */
 
 /*
@@ -87,8 +87,11 @@
 #define	CARDBUS_PRODUCT_3COM_3C575BTX	0x5157		/* 3CCFE575BT */
 #define	CARDBUS_PRODUCT_3COM_3C575CTX	0x5257		/* 3CCFE575CT */
 #define	CARDBUS_PRODUCT_3COM_3C656_E	0x6560		/* 3CCFEM656 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_3COM_3C656_M	0x6561		/* 3CCFEM656 56k Modem */
 #define	CARDBUS_PRODUCT_3COM_3C656B_E	0x6562		/* 3CCFEM656B 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_3COM_3C656B_M	0x6563		/* 3CCFEM656B 56k Modem */
 #define	CARDBUS_PRODUCT_3COM_3C656C_E	0x6564		/* 3CXFEM656C 10/100 Ethernet */
+#define	CARDBUS_PRODUCT_3COM_3C656C_M	0x6565		/* 3CXFEM656C 56k Modem */
 
 /* Advanced System Products products */
 #define	CARDBUS_PRODUCT_ADVSYS_ULTRA	0x1300		/* Ultra SCSI */
