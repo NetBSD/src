@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.40 2002/08/22 01:13:53 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.41 2002/08/24 02:16:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.40 2002/08/22 01:13:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.41 2002/08/24 02:16:30 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -777,24 +777,24 @@ initarm(void *cookie)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (KERNEL_BASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_KERNEL].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_NOCACHE);
+	    PTE_CACHE);
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
 	    kernel_ptpt.pv_pa, VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (VMEM_VBASE >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_VMEM].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_NOCACHE);
+	    PTE_CACHE);
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE+ (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa, VM_PROT_READ|VM_PROT_WRITE,
-	    PTE_NOCACHE);
+	    PTE_CACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop) {
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 
 	/* Map the vector page. */

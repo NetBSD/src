@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.33 2002/08/21 18:34:31 thorpej Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.34 2002/08/24 02:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -632,7 +632,7 @@ initarm(bootargs)
 		    PTE_BASE + ((KERNEL_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_KERNEL + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (PTE_BASE >> (PGSHIFT-2)),
@@ -641,13 +641,13 @@ initarm(bootargs)
 	pmap_map_entry(l1pagetable,
 	    PTE_BASE + (0x00000000 >> (PGSHIFT-2)),
 	    kernel_pt_table[KERNEL_PT_SYS].pv_pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_map_entry(l1pagetable,
 		    PTE_BASE + ((KERNEL_VM_BASE +
 		    (loop * 0x00400000)) >> (PGSHIFT-2)),
 		    kernel_pt_table[KERNEL_PT_VMDATA + loop].pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 
 	/* Map the vector page. */
 	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
