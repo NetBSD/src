@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.18 1996/04/23 15:26:08 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19 1996/05/09 23:49:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1458,19 +1458,16 @@ delay(n)
 
 #if defined(COMPAT_OSF1) || 1		/* XXX */
 void
-cpu_exec_ecoff_setregs(p, pack, stack, retval)
+cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct proc *p;
-	struct exec_package *pack;
+	struct exec_package *epp;
 	u_long stack;
 	register_t *retval;
 {
-	struct ecoff_aouthdr *eap;
+	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, pack, stack, retval);
-
-	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
-	p->p_md.md_tf->tf_gp = eap->ea_gp_value;
+	setregs(p, epp, stack, retval);
+	p->p_md.md_tf->tf_gp = execp->a.gp_value;
 }
 
 /*
@@ -1481,18 +1478,17 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
  *
  */
 int
-cpu_exec_ecoff_hook(p, epp, eap)
+cpu_exec_ecoff_hook(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
-	struct ecoff_aouthdr *eap;
 {
-	struct ecoff_filehdr *efp = epp->ep_hdr;
+	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 	extern struct emul emul_netbsd;
 #ifdef COMPAT_OSF1
 	extern struct emul emul_osf1;
 #endif
 
-	switch (efp->ef_magic) {
+	switch (execp->f.f_magic) {
 #ifdef COMPAT_OSF1
 	case ECOFF_MAGIC_ALPHA:
 		epp->ep_emul = &emul_osf1;
