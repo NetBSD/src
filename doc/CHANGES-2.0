@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.161 2004/04/29 04:52:41 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.162 2004/04/29 05:20:07 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1599,3 +1599,10 @@ share/mk/bsd.x11.mk				1.40
 
 	When creating man pages, provide a defintion for __adminmansuffix__.
 	[lukem, ticket #225]
+
+x11/bin/xdm/Makefile.xdm			1.4
+x11/bin/xdm/Makefile				1.6-1.7
+
+	Add -DARC4_RANDOM to the global CPPFLAGS and X11EXTRAMANDEFS.
+	Remove -DDEV_RANDOM, since ARC4_RANDOM takes precedence anyway.
+	[lukem, ticket #226]
