@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.6 1998/03/09 00:58:58 mrg Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.7 1998/08/09 22:36:39 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -168,7 +168,7 @@ uvm_total(totalp)
 	int paging;
 #endif
 
-	bzero(totalp, sizeof *totalp);
+	memset(totalp, 0, sizeof *totalp);
 
 	/*
 	 * calculate process statistics

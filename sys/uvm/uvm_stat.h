@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.12 1998/06/20 13:19:00 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.13 1998/08/09 22:36:39 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -163,7 +163,7 @@ do { \
 	(NAME).e = (struct uvm_history_ent *) \
 		malloc(sizeof(struct uvm_history_ent) * (N), M_TEMP, \
 		    M_WAITOK); \
-	bzero((NAME).e, sizeof(struct uvm_history_ent) * (N)); \
+	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (N)); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
 
@@ -175,7 +175,7 @@ do { \
 	(NAME).f = 0; \
 	simple_lock_init(&(NAME).l); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
-	bzero((NAME).e, sizeof(struct uvm_history_ent) * (NAME).n); \
+	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \
 } while (0)
 

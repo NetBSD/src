@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.22 1998/07/08 04:28:28 thorpej Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.23 1998/08/09 22:36:38 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -246,7 +246,7 @@ uvm_mapent_copy(src, dst)
 	vm_map_entry_t dst;
 {
 
-	bcopy(src, dst, ((char *)&src->uvm_map_entry_stop_copy) - ((char*)src));
+	memcpy(dst, src, ((char *)&src->uvm_map_entry_stop_copy) - ((char*)src));
 }
 
 /*
@@ -2377,7 +2377,7 @@ uvmspace_init(vm, pmap, min, max, pageable)
 {
 	UVMHIST_FUNC("uvmspace_init"); UVMHIST_CALLED(maphist);
 
-	bzero(vm, sizeof(*vm));
+	memset(vm, 0, sizeof(*vm));
 
 	uvm_map_setup(&vm->vm_map, min, max, pageable);
 
@@ -2597,7 +2597,7 @@ uvmspace_fork(vm1)
 
 	vm2 = uvmspace_alloc(old_map->min_offset, old_map->max_offset,
 		      old_map->entries_pageable);
-	bcopy(&vm1->vm_startcopy, &vm2->vm_startcopy,
+	memcpy(&vm2->vm_startcopy, &vm1->vm_startcopy,
 	(caddr_t) (vm1 + 1) - (caddr_t) &vm1->vm_startcopy);
 	new_map = &vm2->vm_map;		  /* XXX */
 	new_pmap = new_map->pmap;

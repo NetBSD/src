@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.13 1998/07/24 18:46:02 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.14 1998/08/09 22:36:39 perry Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -658,7 +658,7 @@ sys_swapctl(p, v, retval)
 			malloc(sizeof *sdp, M_VMSWAP, M_WAITOK);
 		spp = (struct swappri *)
 			malloc(sizeof *spp, M_VMSWAP, M_WAITOK);
-		bzero(sdp, sizeof(*sdp));
+		memset(sdp, 0, sizeof(*sdp));
 		sdp->swd_flags = SWF_FAKE;	/* placeholder only */
 		sdp->swd_vp = vp;
 		sdp->swd_dev = (vp->v_type == VBLK) ? vp->v_rdev : NODEV;

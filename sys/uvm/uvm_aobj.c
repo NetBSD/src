@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.8 1998/03/01 02:25:28 fvdl Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.9 1998/08/09 22:36:38 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -260,7 +260,7 @@ uao_find_swhash_elt(aobj, pageidx, create)
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 	elt->count = 0;
-	bzero(elt->slots, sizeof(elt->slots));
+	memset(elt->slots, 0, sizeof(elt->slots));
 
 	return(elt);
 }
@@ -505,7 +505,7 @@ uao_create(size, flags)
 			    M_UVMAOBJ, mflags);
 			if (aobj->u_swslots == NULL)
 				panic("uao_create: malloc swslots failed");
-			bzero(aobj->u_swslots, pages * sizeof(int));
+			memset(aobj->u_swslots, 0, pages * sizeof(int));
 		}
 
 		if (flags) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.11 1998/05/09 15:04:40 kleink Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.12 1998/08/09 22:36:38 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -297,10 +297,10 @@ uvm_fork(p1, p2, shared)
 	p2->p_stats = &up->u_stats;
 	p2->p_sigacts = &up->u_sigacts;
 	up->u_sigacts = *p1->p_sigacts;
-	bzero(&up->u_stats.pstat_startzero,
+	memset(&up->u_stats.pstat_startzero, 0,
 	(unsigned) ((caddr_t)&up->u_stats.pstat_endzero -
 		    (caddr_t)&up->u_stats.pstat_startzero));
-	bcopy(&p1->p_stats->pstat_startcopy, &up->u_stats.pstat_startcopy,
+	memcpy(&up->u_stats.pstat_startcopy, &p1->p_stats->pstat_startcopy,
 	((caddr_t)&up->u_stats.pstat_endcopy -
 	 (caddr_t)&up->u_stats.pstat_startcopy));
 	

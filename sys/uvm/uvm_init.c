@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.7 1998/05/05 20:51:05 kleink Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.8 1998/08/09 22:36:38 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -93,7 +93,7 @@ uvm_init()
 	 * step 1: zero the uvm structure
 	 */
 
-	bzero(&uvm, sizeof(uvm));
+	memset(&uvm, 0, sizeof(uvm));
 	averunnable.fscale = FSCALE;
 
 	/*

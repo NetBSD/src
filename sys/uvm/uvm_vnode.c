@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.13 1998/07/07 23:22:13 thorpej Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.14 1998/08/09 22:36:39 perry Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -1725,7 +1725,7 @@ uvn_io(uvn, pps, npages, flags, rw)
 		if (wanted && got == 0) {
 			result = EIO;		/* XXX: error? */
 		} else if (got < PAGE_SIZE * npages && rw == UIO_READ) {
-			bzero((void *) (kva + got), (PAGE_SIZE * npages) - got);
+			memset((void *) (kva + got), 0, (PAGE_SIZE * npages) - got);
 		}
 	}
 
