@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.89 1998/07/09 09:27:33 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.89.2.1 1998/08/07 12:39:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -614,7 +614,7 @@ audiopoll(dev, events, p)
 	}
 }
 
-int
+paddr_t
 audiommap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
