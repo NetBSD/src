@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.10 2000/06/14 06:49:23 cgd Exp $ */
+/* $NetBSD: lint1.h,v 1.11 2001/12/13 23:56:00 augustss Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -390,3 +390,20 @@ typedef struct cstk {
 } cstk_t;
 
 #include "externs1.h"
+
+#define	ERR_SETSIZE	1024
+#define __NERRBITS (sizeof(unsigned int))
+
+typedef	struct err_set {
+	unsigned int	errs_bits[(ERR_SETSIZE + __NERRBITS-1) / __NERRBITS];
+} err_set;
+
+#define	ERR_SET(n, p)	\
+    ((p)->errs_bits[(n)/__NERRBITS] |= (1 << ((n) % __NERRBITS)))
+#define	ERR_CLR(n, p)	\
+    ((p)->errs_bits[(n)/__NERRBITS] &= ~(1 << ((n) % __NERRBITS)))
+#define	ERR_ISSET(n, p)	\
+    ((p)->errs_bits[(n)/__NERRBITS] & (1 << ((n) % __NERRBITS)))
+#define	ERR_ZERO(p)	(void)memset((p), 0, sizeof(*(p)))
+
+extern err_set	msgset;

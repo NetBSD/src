@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.15 2001/05/28 12:40:37 lukem Exp $	*/
+/*	$NetBSD: err.c,v 1.16 2001/12/13 23:56:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,10 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: err.c,v 1.15 2001/05/28 12:40:37 lukem Exp $");
+__RCSID("$NetBSD: err.c,v 1.16 2001/12/13 23:56:00 augustss Exp $");
 #endif
 
-#define FD_SETSIZE 512
 #include <sys/types.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -48,8 +47,6 @@ int	nerr;
 
 /* number of syntax errors */
 int	sytxerr;
-
-extern fd_set msgset;
 
 
 static	const	char *basename(const char *);
@@ -412,7 +409,7 @@ verror( int n, va_list ap)
 {
 	const	char *fn;
 
-	if (FD_ISSET(n, &msgset))
+	if (ERR_ISSET(n, &msgset))
 		return;
 
 	fn = basename(curr_pos.p_file);
@@ -427,7 +424,7 @@ vwarning( int n, va_list ap)
 {
 	const	char *fn;
 
-	if (FD_ISSET(n, &msgset))
+	if (ERR_ISSET(n, &msgset))
 		return;
 
 	if (nowarn)
@@ -483,7 +480,7 @@ message(int n, ...)
 	va_list	ap;
 	const	char *fn;
 
-	if (FD_ISSET(n, &msgset))
+	if (ERR_ISSET(n, &msgset))
 		return;
 
 	va_start(ap, n);

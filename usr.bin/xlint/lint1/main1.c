@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.9 2001/12/04 17:56:34 wiz Exp $	*/
+/*	$NetBSD: main1.c,v 1.10 2001/12/13 23:56:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,10 +33,9 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main1.c,v 1.9 2001/12/04 17:56:34 wiz Exp $");
+__RCSID("$NetBSD: main1.c,v 1.10 2001/12/13 23:56:00 augustss Exp $");
 #endif
 
-#define FD_SETSIZE 512	/* more than the total number of error messages */
 #include <sys/types.h>
 #include <stdio.h>
 #include <string.h>
@@ -113,7 +112,7 @@ int	vflag = 1;
 /* Complain about structures which are never defined. */
 int	zflag = 1;
 
-fd_set	msgset;
+err_set	msgset;
 
 static	void	usage(void);
 
@@ -125,7 +124,7 @@ main(int argc, char *argv[])
 	int	c;
 	char	*ptr;
 
-	FD_ZERO(&msgset);
+	ERR_ZERO(&msgset);
 	while ((c = getopt(argc, argv, "abcdeghmprstuvwyzFX:")) != -1) {
 		switch (c) {
 		case 'a':	aflag++;	break;
@@ -160,10 +159,10 @@ main(int argc, char *argv[])
 				    err(1, "invalid error message id '%s'",
 					ptr);
 				if (*eptr || ptr == eptr || msg < 0 ||
-				    msg >= 1024)
+				    msg >= ERR_SETSIZE)
 					errx(1, "invalid error message id '%s'",
 					    ptr);
-				FD_SET(msg, &msgset);
+				ERR_SET(msg, &msgset);
 			}
 			break;
 		case '?':
