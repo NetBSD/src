@@ -1,4 +1,4 @@
-# $Header: /cvsroot/src/sys/conf/Attic/files.oldconf,v 1.6 1993/04/10 12:02:29 glass Exp $
+# $Header: /cvsroot/src/sys/conf/Attic/files.oldconf,v 1.7 1993/04/10 15:54:14 glass Exp $
 #
 ddb/db_access.c		optional ddb
 ddb/db_aout.c		optional ddb
@@ -107,9 +107,9 @@ netccitt/pk_output.c	optional ccitt
 netccitt/pk_subr.c	optional ccitt
 netccitt/pk_timer.c	optional ccitt
 netccitt/pk_usrreq.c	optional ccitt
-netimp/if_imp.c		optional imp
-netimp/if_imphost.c	optional imp
-netimp/raw_imp.c	optional imp
+netimp/if_imp.c		optional imp requires broken
+netimp/if_imphost.c	optional imp requires broken
+netimp/raw_imp.c	optional imp requires broken
 netinet/if_ether.c	optional ether inet
 netinet/in.c		optional inet
 netinet/in_pcb.c	optional inet
