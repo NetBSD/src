@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.197 2001/10/25 07:47:18 thorpej Exp $
+#	$NetBSD: bsd.own.mk,v 1.198 2001/10/25 22:31:11 bjh21 Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -14,7 +14,8 @@ MAKECONF?=	/etc/mk.conf
 .undef USE_NEW_TOOLCHAIN	# unset
 .else
 .if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "sparc64"
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE} == "arm26"
 USE_NEW_TOOLCHAIN=yes	# set
 .endif
 .endif
