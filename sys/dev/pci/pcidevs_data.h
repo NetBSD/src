@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.384 2002/01/05 00:16:43 augustss Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.385 2002/01/05 16:36:59 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.381 2002/01/04 18:26:20 augustss Exp 
+ *	NetBSD: pcidevs,v 1.382 2002/01/05 16:35:52 junyoung Exp 
  */
 
 /*
@@ -1064,12 +1064,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 VT",
-	},
-	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_B,
-	    0,
-	    "ATI Technologies",
-	    "Mach64 B",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GB,

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.386 2002/01/05 00:16:42 augustss Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.387 2002/01/05 16:36:59 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.381 2002/01/04 18:26:20 augustss Exp 
+ *	NetBSD: pcidevs,v 1.382 2002/01/05 16:35:52 junyoung Exp 
  */
 
 /*
@@ -805,7 +805,6 @@
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
-#define	PCI_PRODUCT_ATI_MACH64_B	0x4750		/* Mach64 B */
 #define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
 #define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
 #define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
