@@ -1,4 +1,4 @@
-.\" $NetBSD: installboot.8,v 1.18 2001/09/05 23:53:22 wiz Exp $
+.\" $NetBSD: installboot.8,v 1.19 2001/11/25 23:50:24 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Christopher G. Demetriou
 .\" All rights reserved.
@@ -109,7 +109,8 @@ by modifying the sector interior so
 the alpha 64-bit checksum also contains the embedded 16-bit sum and
 16-bit magic number expected by such systems.
 .\}
-.Em Note : No The existing
+.Em Note :
+The existing
 .Nx Ns /sparc
 disklabel should use no more than 4 partitions.
 .It Fl v
@@ -160,7 +161,6 @@ file system
 secondary bootstrap
 .El
 .Sh EXAMPLES
-.Pp
 .if t .ne 4
 Install the Berkeley Fast File System primary bootstrap on to disk sd0:
 .D1 Ic installboot /dev/rsd0c /usr/mdec/bootxx_ffs
