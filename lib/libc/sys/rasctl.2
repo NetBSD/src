@@ -1,4 +1,4 @@
-.\"     $NetBSD: rasctl.2,v 1.8 2003/01/19 20:12:32 jdolecek Exp $
+.\"     $NetBSD: rasctl.2,v 1.9 2003/04/16 13:34:55 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,8 +43,8 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/ras.h\*[Gt]
+.In sys/types.h
+.In sys/ras.h
 .Ft int
 .Fn rasctl "void *addr" "size_t len" "int op"
 .Sh DESCRIPTION

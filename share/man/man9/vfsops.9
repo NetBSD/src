@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.10 2003/04/06 07:09:47 gmcgarry Exp $
+.\"     $NetBSD: vfsops.9,v 1.11 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,9 +53,9 @@
 .Nm VFS_CHECKEXP
 .Nd kernel file system interface
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/mount.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
+.In sys/param.h
+.In sys/mount.h
+.In sys/vnode.h
 .Ft int
 .Fn VFS_MOUNT "struct mount *mp" "const char *path" "void *data" \
 "struct nameidata *ndp" "struct proc *p"

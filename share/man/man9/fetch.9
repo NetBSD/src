@@ -1,4 +1,4 @@
-.\"	$NetBSD: fetch.9,v 1.15 2002/10/14 13:43:23 wiz Exp $
+.\"	$NetBSD: fetch.9,v 1.16 2003/04/16 13:35:28 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe.
 .\" All rights reserved.
@@ -45,8 +45,8 @@
 .Nm fuiword
 .Nd fetch data from user-space
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In sys/types.h
+.In sys/systm.h
 .Ft int
 .Fn fubyte "const void *base"
 .Ft int

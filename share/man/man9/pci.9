@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.11 2003/04/16 10:14:05 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.12 2003/04/16 13:35:31 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -65,10 +65,10 @@
 .Nm PCI_REVISION
 .Nd Peripheral Component Interconnect
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/bus.h\*[Gt]
-.Fd #include \*[Lt]dev/pci/pcivar.h\*[Gt]
-.Fd #include \*[Lt]dev/pci/pcireg.h\*[Gt]
-.Fd #include \*[Lt]dev/pci/pcidevs.h\*[Gt]
+.In machine/bus.h
+.In dev/pci/pcivar.h
+.In dev/pci/pcireg.h
+.In dev/pci/pcidevs.h
 .Ft pcireg_t
 .Fn pci_conf_read "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
 .Ft void

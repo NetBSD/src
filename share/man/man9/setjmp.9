@@ -1,4 +1,4 @@
-.\"     $NetBSD: setjmp.9,v 1.2 2002/10/14 13:43:32 wiz Exp $
+.\"     $NetBSD: setjmp.9,v 1.3 2003/04/16 13:35:33 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,8 +42,8 @@
 .Nm longjmp
 .Nd non-local jumps
 .Sh SYNOPSIS
-.Fd #include \*[Lt]machine/types.h\*[Gt]
-.Fd #include \*[Lt]sys/systm.h\*[Gt]
+.In machine/types.h
+.In sys/systm.h
 .Ft int
 .Fn setjmp "label_t *label"
 .Ft void

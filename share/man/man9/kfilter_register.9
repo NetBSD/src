@@ -1,4 +1,4 @@
-.\"	$NetBSD: kfilter_register.9,v 1.7 2003/04/04 19:34:21 wiz Exp $
+.\"	$NetBSD: kfilter_register.9,v 1.8 2003/04/16 13:35:29 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm kfilter_unregister
 .Nd add or remove kernel event filters
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/event.h\*[Gt]
+.In sys/event.h
 .Ft int
 .Fn kfilter_register "const char *name" "struct filterops *filtops" "int *retfilter"
 .Ft int

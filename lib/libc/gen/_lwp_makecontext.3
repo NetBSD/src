@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_makecontext.3,v 1.2 2003/01/18 11:38:48 thorpej Exp $
+.\"	$NetBSD: _lwp_makecontext.3,v 1.3 2003/04/16 13:34:35 wiz Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,7 +43,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]lwp.h\*[Gt]
+.In lwp.h
 .Ft void
 .Fn _lwp_makecontext "ucontext_t *context" "void (*start_routine)(void *)" \
     "void *arg" "void *private" "caddr_t stack_base" "size_t stack_size"

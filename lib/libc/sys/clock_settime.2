@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.15 2003/01/18 11:33:02 thorpej Exp $
+.\" $NetBSD: clock_settime.2,v 1.16 2003/04/16 13:34:51 wiz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]time.h\*[Gt]
+.In time.h
 .Ft int
 .Fn clock_settime "clockid_t clock_id" "const struct timespec *tp"
 .Ft int

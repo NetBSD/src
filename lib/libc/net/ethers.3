@@ -1,4 +1,4 @@
-.\"	$NetBSD: ethers.3,v 1.12 2002/09/16 19:25:32 tron Exp $
+.\"	$NetBSD: ethers.3,v 1.13 2003/04/16 13:34:41 wiz Exp $
 .\"
 .\" Written by roland@frob.com.  Public domain.
 .\"
@@ -15,10 +15,10 @@
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]sys/socket.h\*[Gt]
-.Fd #include \*[Lt]net/if.h\*[Gt]
-.Fd #include \*[Lt]net/if_ether.h\*[Gt]
+.In sys/types.h
+.In sys/socket.h
+.In net/if.h
+.In net/if_ether.h
 .Ft char *
 .Fn ether_ntoa "const struct ether_addr *e"
 .Ft struct ether_addr *

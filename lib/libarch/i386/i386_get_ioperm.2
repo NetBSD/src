@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_get_ioperm.2,v 1.14 2002/10/01 16:02:42 wiz Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.15 2003/04/16 13:34:34 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,8 +44,8 @@
 .Sh LIBRARY
 .Lb libi386
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/types.h\*[Gt]
-.Fd #include \*[Lt]machine/sysarch.h\*[Gt]
+.In sys/types.h
+.In machine/sysarch.h
 .Ft int
 .Fn i386_get_ioperm "u_long *iomap"
 .Ft int

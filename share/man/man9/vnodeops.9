@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.15 2003/01/03 04:18:58 jschauma Exp $
+.\"     $NetBSD: vnodeops.9,v 1.16 2003/04/16 13:35:35 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -89,16 +89,16 @@
 .Nm VOP_BWRITE
 .Nd vnode operations
 .Sh SYNOPSIS
-.Fd #include \*[Lt]sys/param.h\*[Gt]
-.Fd #include \*[Lt]sys/buf.h\*[Gt]
-.Fd #include \*[Lt]sys/dirent.h\*[Gt]
-.Fd #include \*[Lt]sys/lock.h\*[Gt]
-.Fd #include \*[Lt]sys/vnode.h\*[Gt]
-.Fd #include \*[Lt]sys/mount.h\*[Gt]
-.Fd #include \*[Lt]sys/namei.h\*[Gt]
-.Fd #include \*[Lt]sys/unistd.h\*[Gt]
-.Fd #include \*[Lt]sys/fcntl.h\*[Gt]
-.Fd #include \*[Lt]sys/lockf.h\*[Gt]
+.In sys/param.h
+.In sys/buf.h
+.In sys/dirent.h
+.In sys/lock.h
+.In sys/vnode.h
+.In sys/mount.h
+.In sys/namei.h
+.In sys/unistd.h
+.In sys/fcntl.h
+.In sys/lockf.h
 .Ft int
 .Fn VOP_LOOKUP "struct vnode *dvp" "struct vnode **vpp" \
 "struct componentname *cnp"
