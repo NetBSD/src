@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.122 2001/03/16 20:42:13 christos Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.123 2001/04/01 23:04:31 aidan Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.122 2001/03/16 20:42:13 christos Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.123 2001/04/01 23:04:31 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -259,6 +259,7 @@ main(int argc, char *argv[])
 	hostname[0] = '\0';
 	homedir[0] = '\0';
 	gidcount = 0;
+	is_oob = 0;
 	version = FTPD_VERSION;
 
 	/*
@@ -516,8 +517,7 @@ main(int argc, char *argv[])
 		reply(220, "%s FTP server (%s) ready.", hostname, version);
 
 	(void) setjmp(errcatch);
-	for (;;)
-		(void) yyparse();
+	ftp_loop();
 	/* NOTREACHED */
 }
 
@@ -2184,6 +2184,29 @@ dologout(int status)
 	_exit(status);
 }
 
+void abor(void)
+{
+	tmpline[0] = '\0';
+	is_oob = 0;
+	reply(426, "Transfer aborted. Data connection closed.");
+	reply(226, "Abort successful");
+	longjmp(urgcatch, 1);
+}
+
+void statxfer(void)
+{
+	tmpline[0] = '\0';
+	is_oob = 0;
+	if (file_size != (off_t) -1)
+		reply(213,
+		    "Status: " LLF " of " LLF " byte%s transferred",
+		    (LLT)byte_count, (LLT)file_size,
+		    PLURAL(byte_count));
+	else
+		reply(213, "Status: " LLF " byte%s transferred",
+		    (LLT)byte_count, PLURAL(byte_count));
+}
+
 static void
 myoob(int signo)
 {
@@ -2193,27 +2216,13 @@ myoob(int signo)
 	if (!transflag)
 		return;
 	cp = tmpline;
-	if (getline(cp, 7, stdin) == NULL) {
+	if (getline(cp, sizeof(tmpline), stdin) == NULL) {
 		reply(221, "You could at least say goodbye.");
 		dologout(0);
 	}
-	if (strcasecmp(cp, "ABOR\r\n") == 0) {
-		tmpline[0] = '\0';
-		reply(426, "Transfer aborted. Data connection closed.");
-		reply(226, "Abort successful");
-		longjmp(urgcatch, 1);
-	}
-	if (strcasecmp(cp, "STAT\r\n") == 0) {
-		tmpline[0] = '\0';
-		if (file_size != (off_t) -1)
-			reply(213,
-			    "Status: " LLF " of " LLF " byte%s transferred",
-			    (LLT)byte_count, (LLT)file_size,
-			    PLURAL(byte_count));
-		else
-			reply(213, "Status: " LLF " byte%s transferred",
-			    (LLT)byte_count, PLURAL(byte_count));
-	}
+	is_oob = 1;
+	ftp_handle_line(cp);
+	is_oob = 0;
 }
 
 static int
