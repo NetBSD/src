@@ -18,8 +18,9 @@ along with GNU CC; see the file COPYING.  If not, write to
 the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
-#include "config.h"
 #include <stdio.h>
+#include "config.h"
+#include "system.h"
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -139,7 +140,10 @@ print_operand_address (file, addr)
 	  addr = XEXP (addr, 1);
 	}
       else
-	abort ();
+	{
+	  debug_rtx(addr);
+	  abort ();
+	}
 
       if (GET_CODE (addr) == REG)
 	{
@@ -162,7 +166,10 @@ print_operand_address (file, addr)
 		  else if (GET_CODE (XEXP (addr, 0)) == CONST_INT)
 		    offset = plus_constant (offset, INTVAL (XEXP (addr, 0)));
 		  else
-		    abort ();
+		    {
+		      debug_rtx(addr);
+		      abort ();
+		    }
 		}
 	      offset = XEXP (addr, 0);
 	    }
@@ -210,10 +217,16 @@ print_operand_address (file, addr)
 	      ireg = XEXP (addr, 1);
 	    }
 	  else
-	    abort ();
+	    {
+	      debug_rtx(addr);
+	      abort ();
+	    }
 	}
       else
-	abort ();
+	{
+	  debug_rtx(addr);
+	  abort ();
+	}
 
       /* If REG1 is non-zero, figure out if it is a base or index register.  */
       if (reg1)
@@ -649,6 +662,357 @@ check_float_value (mode, d, overflow)
     }
 
   return 0;
+}
+
+/* Nonzero if X is a hard reg that can be used as an index.  */
+#define XREG_OK_FOR_INDEX_P(X, STRICT) (!(STRICT) || REGNO_OK_FOR_INDEX_P (REGNO (X)))
+/* Nonzero if X is a hard reg that can be used as a base reg.  */
+#define XREG_OK_FOR_BASE_P(X, STRICT) (!(STRICT) || REGNO_OK_FOR_BASE_P (REGNO (X)))
+
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+
+/* Zero if this contains a (CONST (PLUS (SYMBOL_REF) (...))) and the
+   symbol in the SYMBOL_REF is an external symbol.  */
+
+#define INDIRECTABLE_CONSTANT_P(X) \
+ (! (GET_CODE ((X)) == CONST					\
+     && GET_CODE (XEXP ((X), 0)) == PLUS			\
+     && GET_CODE (XEXP (XEXP ((X), 0), 0)) == SYMBOL_REF	\
+     && SYMBOL_REF_FLAG (XEXP (XEXP ((X), 0), 0))))
+
+/* Re-definition of CONSTANT_ADDRESS_P, which is true only when there
+   are no SYMBOL_REFs for external symbols present.  */
+
+#define INDIRECTABLE_CONSTANT_ADDRESS_P(X) \
+  (GET_CODE (X) == LABEL_REF 						\
+   || (GET_CODE (X) == SYMBOL_REF && !SYMBOL_REF_FLAG (X))		\
+   || (GET_CODE (X) == CONST && INDIRECTABLE_CONSTANT_P(X))		\
+   || GET_CODE (X) == CONST_INT)
+
+
+/* Non-zero if X is an address which can be indirected.  External symbols
+   could be in a sharable image library, so we disallow those.  */
+
+#define INDIRECTABLE_ADDRESS_P(X, STRICT) \
+  (INDIRECTABLE_CONSTANT_ADDRESS_P (X) 				\
+   || (GET_CODE (X) == REG && XREG_OK_FOR_BASE_P (X, STRICT))		\
+   || (GET_CODE (X) == PLUS						\
+       && GET_CODE (XEXP (X, 0)) == REG					\
+       && XREG_OK_FOR_BASE_P (XEXP (X, 0), STRICT)			\
+       && INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1))))
+
+#else /* not NO_EXTERNAL_INDIRECT_ADDRESS */
+
+#define INDIRECTABLE_CONSTANT_P(X) \
+ (! (GET_CODE ((X)) == CONST						\
+     && GET_CODE (XEXP ((X), 0)) == PLUS				\
+     && GET_CODE (XEXP (XEXP ((X), 0), 0)) == SYMBOL_REF))
+   
+#define INDIRECTABLE_CONSTANT_ADDRESS_P(X) \
+  (!(flag_pic || TARGET_HALFPIC) ? CONSTANT_ADDRESS_P(X)		\
+   : (GET_CODE (X) == LABEL_REF						\
+      || GET_CODE (X) == SYMBOL_REF					\
+      || (GET_CODE (X) == CONST && INDIRECTABLE_CONSTANT_P (X))		\
+      || GET_CODE (X) == CONST_INT))  
+
+/* Non-zero if X is an address which can be indirected.  */
+#define INDIRECTABLE_ADDRESS_P(X, STRICT) \
+  (INDIRECTABLE_CONSTANT_ADDRESS_P (X)					\
+   || (GET_CODE (X) == REG && XREG_OK_FOR_BASE_P (X, STRICT))		\
+   || (GET_CODE (X) == PLUS						\
+       && GET_CODE (XEXP (X, 0)) == REG					\
+       && XREG_OK_FOR_BASE_P (XEXP (X, 0), STRICT)			\
+       && GET_CODE (XEXP (X, 1)) != SYMBOL_REF				\
+       && ((flag_pic || TARGET_HALFPIC)					\
+		    ? GET_CODE (XEXP (X, 1)) == CONST_INT		\
+		    : INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1))))	\
+   || (GET_CODE (X) == PLUS						\
+       && GET_CODE (XEXP (X, 1)) == REG					\
+       && XREG_OK_FOR_BASE_P (XEXP (X, 1), STRICT)			\
+       && GET_CODE (XEXP (X, 0)) != SYMBOL_REF				\
+       && ((flag_pic || TARGET_HALFPIC)					\
+		    ? GET_CODE (XEXP (X, 0)) == CONST_INT		\
+		    : INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1)))))
+
+#endif /* not NO_EXTERNAL_INDIRECT_ADDRESS */
+
+/* Go to ADDR if X is a valid address not using indexing.
+   (This much is the easy part.)  */
+#define GO_IF_NONINDEXED_ADDRESS(X, ADDR, STRICT) \
+{ register rtx xfoob = (X);						\
+  if (GET_CODE (X) == REG)						\
+    {									\
+      extern rtx *reg_equiv_mem;					\
+      if (! reload_in_progress						\
+	  || (xfoob = reg_equiv_mem[REGNO (X)]) == 0			\
+	  || INDIRECTABLE_ADDRESS_P (xfoob, STRICT))			\
+	goto ADDR;							\
+    }									\
+  if (INDIRECTABLE_CONSTANT_ADDRESS_P (X)) goto ADDR;			\
+  if (INDIRECTABLE_ADDRESS_P (X, STRICT)) goto ADDR;			\
+  xfoob = XEXP (X, 0);							\
+  if (GET_CODE (X) == MEM && INDIRECTABLE_ADDRESS_P (xfoob, STRICT))	\
+    goto ADDR;								\
+  if ((GET_CODE (X) == PRE_DEC || GET_CODE (X) == POST_INC)		\
+      && GET_CODE (xfoob) == REG					\
+      && XREG_OK_FOR_BASE_P (xfoob, STRICT))				\
+    goto ADDR; }
+
+/* 1 if PROD is either a reg times size of mode MODE
+   or just a reg, if MODE is just one byte.
+   This macro's expansion uses the temporary variables xfoo0 and xfoo1
+   that must be declared in the surrounding context.  */
+#define INDEX_TERM_P(PROD, MODE, STRICT) \
+(GET_MODE_SIZE (MODE) == 1						\
+ ? (GET_CODE (PROD) == REG && XREG_OK_FOR_BASE_P (PROD, STRICT))	\
+ : (GET_CODE (PROD) == MULT						\
+    &&									\
+    (xfoo0 = XEXP (PROD, 0), xfoo1 = XEXP (PROD, 1),			\
+     ((GET_CODE (xfoo0) == CONST_INT					\
+       && INTVAL (xfoo0) == GET_MODE_SIZE (MODE)			\
+       && GET_CODE (xfoo1) == REG					\
+       && XREG_OK_FOR_INDEX_P (xfoo1, STRICT))				\
+      ||								\
+      (GET_CODE (xfoo1) == CONST_INT					\
+       && INTVAL (xfoo1) == GET_MODE_SIZE (MODE)			\
+       && GET_CODE (xfoo0) == REG					\
+       && XREG_OK_FOR_INDEX_P (xfoo0, STRICT))))))
+
+/* Go to ADDR if X is the sum of a register
+   and a valid index term for mode MODE.  */
+#define GO_IF_REG_PLUS_INDEX(X, MODE, ADDR, STRICT) \
+{ register rtx xfooa;							\
+  if (GET_CODE (X) == PLUS)						\
+    { if (GET_CODE (XEXP (X, 0)) == REG					\
+	  && XREG_OK_FOR_BASE_P (XEXP (X, 0), STRICT)			\
+	  && (xfooa = XEXP (X, 1),					\
+	      INDEX_TERM_P (xfooa, MODE, STRICT)))			\
+	goto ADDR;							\
+      if (GET_CODE (XEXP (X, 1)) == REG					\
+	  && XREG_OK_FOR_BASE_P (XEXP (X, 1), STRICT)			\
+	  && (xfooa = XEXP (X, 0),					\
+	      INDEX_TERM_P (xfooa, MODE, STRICT)))			\
+	goto ADDR; } }
+
+#define GO_IF_LEGITIMATE_ADDRESS2(MODE, X, ADDR, STRICT) \
+{ register rtx xfoo, xfoo0, xfoo1;					\
+  GO_IF_NONINDEXED_ADDRESS (X, ADDR, STRICT);				\
+  if (GET_CODE (X) == PLUS)						\
+    { /* Handle <address>[index] represented with index-sum outermost */\
+      xfoo = XEXP (X, 0);						\
+      if (INDEX_TERM_P (xfoo, MODE, STRICT))				\
+	{ GO_IF_NONINDEXED_ADDRESS (XEXP (X, 1), ADDR, STRICT); }	\
+      xfoo = XEXP (X, 1);						\
+      if (INDEX_TERM_P (xfoo, MODE, STRICT))				\
+	{ GO_IF_NONINDEXED_ADDRESS (XEXP (X, 0), ADDR, STRICT); }	\
+      /* Handle offset(reg)[index] with offset added outermost */	\
+      if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 0)))		\
+	{ if (GET_CODE (XEXP (X, 1)) == REG				\
+	      && XREG_OK_FOR_BASE_P (XEXP (X, 1), STRICT))		\
+	    goto ADDR;							\
+	  GO_IF_REG_PLUS_INDEX (XEXP (X, 1), MODE, ADDR, STRICT); }	\
+      if (INDIRECTABLE_CONSTANT_ADDRESS_P (XEXP (X, 1)))		\
+	{ if (GET_CODE (XEXP (X, 0)) == REG				\
+	      && XREG_OK_FOR_BASE_P (XEXP (X, 0), STRICT))		\
+	    goto ADDR;							\
+	  GO_IF_REG_PLUS_INDEX (XEXP (X, 0), MODE, ADDR, STRICT); } } }
+
+
+int
+legitimate_pic_operand_p(xbar, strict)
+     register rtx xbar;
+     int strict;
+{
+  if (GET_CODE (xbar) == PLUS 
+      && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
+	   && GET_CODE (XEXP (xbar, 0)) == REG)
+	  || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
+	      && GET_CODE (XEXP (xbar, 1)) == REG)
+	  || (GET_CODE (XEXP (xbar, 0)) == MULT
+	      && GET_CODE (XEXP (xbar, 1)) == MEM)))
+    return 0;
+  return INDIRECTABLE_CONSTANT_P (xbar);
+}
+/*
+ * reg
+ * plus( reg , const_int )
+ * plus( reg , plus (const_int, reg))
+ */
+int
+legitimate_address_p(mode, xbar, strict)
+     enum machine_mode mode;
+     register rtx xbar;
+     int strict;
+{
+  if (flag_pic && !legitimate_pic_operand_p(xbar, mode))
+    return 0;
+  GO_IF_LEGITIMATE_ADDRESS2(mode, xbar, win, strict);
+  return 0;
+ win:
+  if (flag_pic)
+    {
+      if (GET_CODE (xbar) == PLUS 
+	  && ((GET_CODE (XEXP (xbar, 1)) == SYMBOL_REF
+	       && GET_CODE (XEXP (xbar, 0)) == REG)
+	      || (GET_CODE (XEXP (xbar, 0)) == SYMBOL_REF
+		  && GET_CODE (XEXP (xbar, 1)) == REG)))
+	return 0;
+    }
+  if (TARGET_DEBUGADDR
+      && GET_CODE (xbar) != REG
+      && GET_CODE (xbar) != PRE_DEC
+      && GET_CODE (xbar) != POST_INC
+      && GET_CODE (xbar) != SYMBOL_REF
+      && !(GET_CODE (xbar) == PLUS 
+	   && ((GET_CODE (XEXP (xbar, 1)) == CONST_INT
+		&& (GET_CODE (XEXP (xbar, 0)) == REG
+		    || (GET_CODE (XEXP (xbar, 0)) == PLUS
+			&& GET_CODE (XEXP (XEXP (xbar, 0), 0)) == REG
+			&& GET_CODE (XEXP (XEXP (xbar, 0), 1)) == REG)))
+	       || (GET_CODE (XEXP (xbar, 1)) == REG
+		   && GET_CODE (XEXP (xbar, 0)) == CONST_INT))))
+    {
+      fprintf(stderr, "===== Legitimate Address Operand\n");
+      debug_rtx(xbar);
+    }
+  return 1;
+}
+
+
+/*
+ * Like memory_operand exit when pic where
+ * we can't allow a double derefernce.
+ */
+int
+call_operand (op, mode)
+    register rtx op;
+    enum machine_mode mode;
+{
+  if (!memory_operand (op, mode))
+    return 0;
+  if ((flag_pic || TARGET_HALFPIC) && GET_CODE (op) == MEM && GET_CODE (XEXP (op, 0)) == MEM)
+    return 0;
+  if (TARGET_DEBUGADDR)
+    {
+      fprintf(stderr, "===== Call Operand\n");
+      debug_rtx(op);
+    }
+#if 0
+  debug_rtx(op);
+#endif
+  return 1;
+}
+
+int
+compare_operand (op, mode)
+    register rtx op;
+    enum machine_mode mode;
+{
+  if (!general_operand (op, mode))
+    return 0;
+  if (!(flag_pic || TARGET_HALFPIC))
+    return 1;
+  if (GET_CODE (op) == PLUS 
+      && ((GET_CODE (XEXP (op, 1)) == SYMBOL_REF
+	   && GET_CODE (XEXP (op, 0)) == REG)
+	  || (GET_CODE (XEXP (op, 0)) == SYMBOL_REF
+	      && GET_CODE (XEXP (op, 1)) == REG)))
+    return 0;
+  if (!INDIRECTABLE_CONSTANT_P (op))
+    return 0;
+  if (TARGET_DEBUGADDR)
+    {
+      fprintf(stderr, "===== Compare Operand\n");
+      debug_rtx(op);
+    }
+  return 1;
+}
+
+/* Returns 1 if OP is a sum of a symbol reference and a constant.  */
+
+int
+symbolic_operand (op, mode)
+     register rtx op;
+     enum machine_mode mode;
+{
+  return !INDIRECTABLE_CONSTANT_P (op);
+}
+
+/* Legitimize PIC addresses.  If the address is already
+   position-independent, we return ORIG.  Newly generated
+   position-independent addresses go to REG.  If we need more
+   than one register, we lose.  
+
+   An address is legitimized by making an indirect reference
+   through the Global Offset Table with the name of the symbol
+   used as an offset.  
+
+   The assembler/loader are responsible for translating a symbol name
+   into a PC-relative displacement.
+
+   A quick example may make things a little clearer:
+
+   When not generating PIC code to store the value 12345 into _foo+4
+   we would generate the following code:
+
+	movl	$12345, _foo+4
+
+   When generating PIC a transformation is made.  First, the compiler
+   loads the address of foo into a register.  So the transformation makes:
+
+	movab	_foo, r0
+	movl	$12345, 4(r0)
+
+   That (in a nutshell) is how *all* symbol references are handled.  */
+
+rtx
+legitimize_pic_address (orig, mode, reg)
+     rtx orig, reg;
+     enum machine_mode mode;
+{
+  rtx pic_ref = orig;
+
+  /* fprintf(stderr, "before: "); debug_rtx(orig); */
+  if (GET_CODE (orig) == SYMBOL_REF)
+    {
+      emit_move_insn (reg, orig);
+      pic_ref = reg;
+    }
+  else if (GET_CODE (orig) == CONST)
+    {
+      rtx base;
+
+      if (reg == 0)
+	abort ();
+
+      /* legitimize both operands of the PLUS */
+      if (GET_CODE (XEXP (orig, 0)) == PLUS)
+	{
+	  base = XEXP (XEXP (orig, 0), 0);
+	  if (GET_CODE (base) == SYMBOL_REF)
+	    {
+	      emit_move_insn (reg, base);
+	      base = reg;
+	    }
+	  orig = XEXP (XEXP (orig, 0), 1);
+	  if (GET_CODE (orig) == SYMBOL_REF)
+	    {
+	      if (base == reg)
+		abort();
+	      emit_move_insn (reg, orig);
+	      orig = reg;
+	    }
+	}
+      else abort ();
+
+      if (GET_CODE (orig) == CONST_INT)
+	pic_ref = plus_constant_for_output (base, INTVAL (orig));
+      else
+        pic_ref = gen_rtx_PLUS (Pmode, base, orig);
+      /* Likewise, should we set special REG_NOTEs here?  */
+    }
+  /* fprintf(stderr, "after: "); debug_rtx(pic_ref); */
+  return pic_ref;
 }
 
 #ifdef VMS_TARGET
