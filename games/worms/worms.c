@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.6 1995/04/22 08:00:58 cgd Exp $	*/
+/*	$NetBSD: worms.c,v 1.7 1995/04/22 08:08:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: worms.c,v 1.6 1995/04/22 08:00:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: worms.c,v 1.7 1995/04/22 08:08:05 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ static struct options {
 	{ 0, { 0, 0, 0 } }
 };
 
-#define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, putchar)
+#define	cursor(c, r)	tputs(tgoto(CM, c, r), 1, fputchar)
 
 char *tcp;
 static char	flavor[] = {
@@ -317,67 +317,67 @@ main(argc, argv)
 	(void)signal(SIGTSTP, onsig);
 	(void)signal(SIGTERM, onsig);
 
-	tputs(tgetstr("ti", &tcp), 1, putchar);
-	tputs(tgetstr("cl", &tcp), 1, putchar);
+	tputs(tgetstr("ti", &tcp), 1, fputchar);
+	tputs(tgetstr("cl", &tcp), 1, fputchar);
 	if (field) {
 		register char *p = field;
 
 		for (y = bottom; --y >= 0;) {
 			for (x = CO; --x >= 0;) {
-				putchar(*p++);
+				fputchar(*p++);
 				if (!*p)
 					p = field;
 			}
 			if (!Wrap)
-				putchar('\n');
+				fputchar('\n');
 			(void)fflush(stdout);
 		}
 		if (Wrap) {
 			if (IM && !IN) {
 				for (x = last; --x > 0;) {
-					putchar(*p++);
+					fputchar(*p++);
 					if (!*p)
 						p = field;
 				}
 				y = *p++;
 				if (!*p)
 					p = field;
-				putchar(*p);
+				fputchar(*p);
 				if (BC)
-					tputs(BC, 1, putchar);
+					tputs(BC, 1, fputchar);
 				else
 					cursor(last - 1, bottom);
-				tputs(IM, 1, putchar);
+				tputs(IM, 1, fputchar);
 				if (IC)
-					tputs(IC, 1, putchar);
-				putchar(y);
+					tputs(IC, 1, fputchar);
+				fputchar(y);
 				if (IP)
-					tputs(IP, 1, putchar);
-				tputs(EI, 1, putchar);
+					tputs(IP, 1, fputchar);
+				tputs(EI, 1, fputchar);
 			}
 			else if (SR || AL) {
 				if (HO)
-					tputs(HO, 1, putchar);
+					tputs(HO, 1, fputchar);
 				else
 					cursor(0, 0);
 				if (SR)
-					tputs(SR, 1, putchar);
+					tputs(SR, 1, fputchar);
 				else
-					tputs(AL, LI, putchar);
+					tputs(AL, LI, fputchar);
 				for (x = CO; --x >= 0;) {
-					putchar(*p++);
+					fputchar(*p++);
 					if (!*p)
 						p = field;
 				}
 			}
 			else for (x = last; --x >= 0;) {
-				putchar(*p++);
+				fputchar(*p++);
 				if (!*p)
 					p = field;
 			}
 		}
 		else for (x = CO; --x >= 0;) {
-			putchar(*p++);
+			fputchar(*p++);
 			if (!*p)
 				p = field;
 		}
@@ -388,7 +388,7 @@ main(argc, argv)
 			if ((x = w->xpos[h = w->head]) < 0) {
 				cursor(x = w->xpos[h] = 0,
 				     y = w->ypos[h] = bottom);
-				putchar(flavor[n % sizeof(flavor)]);
+				fputchar(flavor[n % sizeof(flavor)]);
 				ref[y][x]++;
 			}
 			else
@@ -403,7 +403,7 @@ main(argc, argv)
 				if (--ref[y1][x1] == 0) {
 					cursor(x1, y1);
 					if (trail)
-						putchar(trail);
+						fputchar(trail);
 				}
 			}
 			op = &(!x ? (!y ? upleft : (y == bottom ? lowleft : left)) : (x == last ? (!y ? upright : (y == bottom ? lowright : right)) : (!y ? upper : (y == bottom ? lower : normal))))[w->orientation];
@@ -422,7 +422,7 @@ main(argc, argv)
 			cursor(x += xinc[w->orientation],
 			    y += yinc[w->orientation]);
 			if (!Wrap || x != last || y != bottom)
-				putchar(flavor[n % sizeof(flavor)]);
+				fputchar(flavor[n % sizeof(flavor)]);
 			ref[w->ypos[h] = y][w->xpos[h] = x]++;
 		}
 	}
@@ -432,8 +432,8 @@ void
 onsig(signo)
 	int signo;
 {
-	tputs(tgetstr("cl", &tcp), 1, putchar);
-	tputs(tgetstr("te", &tcp), 1, putchar);
+	tputs(tgetstr("cl", &tcp), 1, fputchar);
+	tputs(tgetstr("te", &tcp), 1, fputchar);
 	exit(0);
 }
 
