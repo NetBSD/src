@@ -1,4 +1,4 @@
-/*	$NetBSD: gus.c,v 1.51 1998/01/25 23:48:06 mycroft Exp $	*/
+/*	$NetBSD: gus.c,v 1.52 1998/03/09 06:32:51 mikel Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1686,14 +1686,8 @@ gus_voice_intr(sc)
 			    sc->sc_playbuf = ++sc->sc_playbuf % sc->sc_nbufs;
 			    gus_start_playing(sc, sc->sc_playbuf);
 			} else if (sc->sc_bufcnt < 0) {
-#ifdef DDB
-			    printf("%s: negative bufcnt in stopped voice\n",
-				   sc->sc_dev.dv_xname);
-			    Debugger();
-#else
 			    panic("%s: negative bufcnt in stopped voice",
 				  sc->sc_dev.dv_xname);
-#endif
 			} else {
 			    sc->sc_playbuf = -1; /* none are active */
 			    gus_stops++;
