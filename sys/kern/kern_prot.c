@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.17 1994/08/25 07:13:55 deraadt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.18 1994/09/19 07:52:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -376,7 +376,8 @@ setgroups(p, uap, retval)
 
 	if (error = suser(pc->pc_ucred, &p->p_acflag))
 		return (error);
-	if ((ngrp = uap->gidsetsize) > NGROUPS)
+	ngrp = uap->gidsetsize;
+	if (ngrp < 1 || ngrp > NGROUPS)
 		return (EINVAL);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	if (error = copyin((caddr_t)uap->gidset,
