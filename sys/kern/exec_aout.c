@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.c,v 1.18 2000/06/27 17:41:07 mrg Exp $	*/
+/*	$NetBSD: exec_aout.c,v 1.19 2000/08/01 04:57:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -51,9 +51,7 @@
  */
 
 int
-exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_makecmds(struct proc *p, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;
@@ -100,9 +98,7 @@ exec_aout_makecmds(p, epp)
  */
 
 int
-exec_aout_prep_zmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_zmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
@@ -149,9 +145,7 @@ exec_aout_prep_zmagic(p, epp)
  */
 
 int
-exec_aout_prep_nmagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_nmagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
@@ -187,9 +181,7 @@ exec_aout_prep_nmagic(p, epp)
  */
 
 int
-exec_aout_prep_omagic(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_prep_omagic(struct proc *p, struct exec_package *epp)
 {
 	struct exec *execp = epp->ep_hdr;
 	long dsize, bsize, baddr;
@@ -239,9 +231,7 @@ exec_aout_prep_omagic(p, epp)
  */
 
 int
-exec_aout_setup_stack(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+exec_aout_setup_stack(struct proc *p, struct exec_package *epp)
 {
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
