@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 1999/07/27 21:45:41 thorpej Exp $ */
+/*	$NetBSD: lock.h,v 1.3 1999/07/27 22:22:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -47,6 +47,13 @@
 
 #include <sparc64/sparc64/asm.h>
 
+/*
+ * The value for SIMPLELOCK_LOCKED is what ldstub() naturally stores
+ * `lock_data' given its address (and the fact that SPARC is big-endian).
+ */
+#define	SIMPLELOCK_LOCKED	0xff000000
+#define	SIMPLELOCK_UNLOCKED	0
+
 static void	cpu_simple_lock_init __P((__volatile struct simplelock *));
 static void	cpu_simple_lock __P((__volatile struct simplelock *));
 static int	cpu_simple_lock_try __P((__volatile struct simplelock *));
@@ -57,7 +64,7 @@ cpu_simple_lock_init (alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 }
 
 static __inline__ void
@@ -72,8 +79,8 @@ cpu_simple_lock (alp)
 	 * becaused the cache-coherency logic does not have to
 	 * broadcast invalidates on the lock while we spin on it.
 	 */
-	while (ldstub(&alp->lock_data) != 0) {
-		while (alp->lock_data != 0)
+	while (ldstub(&alp->lock_data) != SIMPLELOCK_UNLOCKED) {
+		while (alp->lock_data != SIMPLELOCK_UNLOCKED)
 			/*void*/;
 	}
 }
@@ -83,7 +90,7 @@ cpu_simple_lock_try (alp)
 	__volatile struct simplelock *alp;
 {
 
-	return (ldstub(&alp->lock_data) == 0);
+	return (ldstub(&alp->lock_data) == SIMPLELOCK_UNLOCKED);
 }
 
 static __inline__ void
@@ -91,7 +98,7 @@ cpu_simple_unlock (alp)
 	__volatile struct simplelock *alp;
 {
 
-	alp->lock_data = 0;
+	alp->lock_data = SIMPLELOCK_UNLOCKED;
 }
 
 #endif /* _KERNEL */
