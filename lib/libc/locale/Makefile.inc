@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.30 2000/12/25 23:30:58 itojun Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2000/12/27 00:57:03 itojun Exp $
 
 # locale sources
 .PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
@@ -11,7 +11,7 @@ MAN+=	nl_langinfo.3 setlocale.3
 
 MLINKS+=setlocale.3 localeconv.3
 
-RUNE?=	no
+RUNE?=	yes
 
 .if ${RUNE} == "no"
 # singlebyte locale - dummy
