@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/14 17:15:26 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.4 2002/03/17 17:57:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #ifndef _ALPHA_MUTEX_IMPL_H_
 #define	_ALPHA_MUTEX_IMPL_H_
-
-#include <machine/atomic.h>
 
 struct mutex {
 	union {
