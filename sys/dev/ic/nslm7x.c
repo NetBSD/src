@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.9 2000/08/02 22:20:41 bouyer Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.10 2000/08/03 09:27:01 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -308,6 +308,7 @@ wb_match(sc)
 	DPRINTF(("winbond chip id %d\n", j));
 	switch(j) {
 	case WB_CHIPID_83781:
+	case WB_CHIPID_83781_2:
 		printf(": W83781D\n");
 
 		for (i = 0; i < 7; ++i) {
@@ -623,6 +624,7 @@ generic_stemp(sc, sensor)
 	struct envsys_tre_data *sensor;
 {
 	int sdata = lm_readreg(sc, LMD_SENSORBASE + 7);
+	DPRINTF(("sdata[temp] 0x%x\n", sdata));
 	/* temp is given in deg. C, we convert to uK */
 	sensor->cur.data_us = sdata * 1000000 + 273150000;
 }
@@ -637,6 +639,7 @@ generic_svolt(sc, sensors, infos)
 
 	for (i = 0; i < 7; i++) {
 		sdata = lm_readreg(sc, LMD_SENSORBASE + i);
+		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 		/* voltage returned as (mV >> 4), we convert to uVDC */
 		sensors[i].cur.data_s = (sdata << 4);
 		/* rfact is (factor * 10^4) */
@@ -658,6 +661,7 @@ generic_fanrpm(sc, sensors)
 	int i, sdata, divisor;
 	for (i = 0; i < 3; i++) {
 		sdata = lm_readreg(sc, LMD_SENSORBASE + 8 + i);
+		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
 		if (i == 2)
 			divisor = 2;	/* Fixed divisor for FAN3 */
 		else if (i == 1)	/* Bits 7 & 6 of VID/FAN  */
@@ -701,7 +705,7 @@ wb_svolt(sc)
 			sdata = lm_readreg(sc, (i == 7) ?
 			    WB_BANK5_5VSB : WB_BANK5_VBAT);
 		}
-		DPRINTF(("sdata[%d] 0x%x\n", i, sdata));
+		DPRINTF(("sdata[volt%d] 0x%x\n", i, sdata));
 		/* voltage returned as (mV >> 4), we convert to uV */
 		sdata =  sdata << 4;
 		/* special case for negative voltages */
@@ -734,13 +738,13 @@ wb_stemp(sc, sensors, n)
 	int sdata;
 	/* temperatures. Given in dC, we convert to uK */
 	sdata = lm_readreg(sc, LMD_SENSORBASE + 7);
-	DPRINTF(("sdata[%d] 0x%x\n", 9, sdata));
+	DPRINTF(("sdata[temp0] 0x%x\n", sdata));
 	sensors[0].cur.data_us = sdata * 1000000 + 273150000;
 	/* from bank1 */
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B1);
 	sdata = lm_readreg(sc, WB_BANK1_T2H) << 1;
 	sdata |=  (lm_readreg(sc, WB_BANK1_T2L) & 0x80) >> 7;
-	DPRINTF(("sdata[%d] 0x%x\n", 10, sdata));
+	DPRINTF(("sdata[temp1] 0x%x\n", sdata));
 	sensors[1].cur.data_us = (sdata * 1000000) / 2 + 273150000;
 	if (n < 3)
 		return;
@@ -748,7 +752,7 @@ wb_stemp(sc, sensors, n)
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B2);
 	sdata = lm_readreg(sc, WB_BANK2_T3H) << 1;
 	sdata |=  (lm_readreg(sc, WB_BANK2_T3L) & 0x80) >> 7;
-	DPRINTF(("sdata[%d] 0x%x\n", 11, sdata));
+	DPRINTF(("sdata[temp2] 0x%x\n", sdata));
 	sensors[2].cur.data_us = (sdata * 1000000) / 2 + 273150000;
 }
 
@@ -761,6 +765,7 @@ wb_fanrpm(sc, sensors)
 	lm_writereg(sc, WB_BANKSEL, WB_BANKSEL_B0);
 	for (i = 0; i < 3; i++) {
 		sdata = lm_readreg(sc, LMD_SENSORBASE + i + 8);
+		DPRINTF(("sdata[fan%d] 0x%x\n", i, sdata));
 		if (i == 0)
 			divisor = (lm_readreg(sc, LMD_VIDFAN) >> 4) & 0x3;
 		else if (i == 1)
