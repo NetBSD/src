@@ -49,4 +49,9 @@ get_longjmp_target PARAMS ((CORE_ADDR *));
 
 #define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
 
+#undef SOFTWARE_SINGLE_STEP_P
+#define SOFTWARE_SINGLE_STEP_P 1
+void arm_single_step PARAMS ((unsigned int, int));
+#define SOFTWARE_SINGLE_STEP(sig, bp_p) arm_single_step(sig, bp_p)
+
 #endif /* TM_NBSD_H */
