@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.129 2003/05/31 19:38:08 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.129 2003/05/31 19:38:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.130 2003/06/19 06:16:36 rh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -307,8 +307,10 @@ wi_attach(struct wi_softc *sc)
 #endif
 		if (sc->sc_sta_firmware_ver >= 60000)
 			sc->sc_flags |= WI_FLAGS_HAS_MOR;
-		if (sc->sc_sta_firmware_ver >= 60006)
+		if (sc->sc_sta_firmware_ver >= 60006) {
 			ic->ic_flags |= IEEE80211_F_HASIBSS;
+			ic->ic_flags |= IEEE80211_F_HASMONITOR;
+		}
 		sc->sc_ibss_port = 1;
 		break;
 
@@ -590,6 +592,8 @@ wi_init(struct ifnet *ifp)
 		wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_HOSTAP);
 		break;
 	case IEEE80211_M_MONITOR:
+		if (sc->sc_firmware_type == WI_LUCENT)
+			wi_write_val(sc, WI_RID_PORTTYPE, WI_PORTTYPE_ADHOC);
 		wi_cmd(sc, WI_CMD_TEST | (WI_TEST_MONITOR << 8), 0, 0, 0);
 		break;
 	}
