@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.9 1997/10/14 22:27:41 mark Exp $ */
+/* $NetBSD: sbic.c,v 1.10 1998/05/24 18:19:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1893,11 +1893,15 @@ sbicgo(dev, xs)
 	SBIC_TRACE(dev);
 	sbic_save_ptrs(dev, regs, dev->target, dev->lun);
 
+#if 0
+	/* XXX - This code was used on the 68040. This is left as a
+	 * reminder that consideration needs to be given to this when
+	 * DMA support is implemented
+	 */
 	/*
 	 * push the data cache ( I think this won't work (EH))
 	 */
-#if defined(M68040)
-	if (mmutype == MMU_68040 && usedma && count) {
+	if (usedma && count) {
 		dma_cachectl(addr, count);
 		if (((u_int)addr & 0xF) || (((u_int)addr + count) & 0xF))
 			dev->sc_flags |= SBICF_DCFLUSH;
@@ -2385,12 +2389,12 @@ sbicnextstate(dev, csr, asr)
 		/*
 		 * check for overlapping cache line, flush if so
 		 */
-#ifdef M68040
-		if (dev->sc_flags & SBICF_DCFLUSH) {
 #if 0
-			printf("sbic: 68040 DMA cache flush needs fixing? %x:%x\n",
-			    dev->sc_xs->data, dev->sc_xs->datalen);
-#endif
+		if (dev->sc_flags & SBICF_DCFLUSH) {
+			/* XXX - This check was used on the 68040. This is
+			 * left as a reminder that consideration needs to
+			 * be given to this when DMA support is implemented
+	 		 */
 		}
 #endif
 #ifdef DEBUG
@@ -2667,12 +2671,13 @@ sbicnextstate(dev, csr, asr)
 			/*
 			 * check for overlapping cache line, flush if so
 			 */
-#ifdef M68040
-			if (dev->sc_flags & SBICF_DCFLUSH) {
 #if 0
-				printf("sibc: 68040 DMA cache flush needs fixing? %x:%x\n",
-				    dev->sc_xs->data, dev->sc_xs->datalen);
-#endif
+			if (dev->sc_flags & SBICF_DCFLUSH) {
+				/* XXX - This check was used on the 68040.
+				 * This is left as a reminder that
+				 * consideration needs to be given to this
+				 * when DMA support is implemented
+		 		 */
 			}
 #endif
 			dev->sc_flags &=
