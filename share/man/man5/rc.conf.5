@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.46 2001/04/25 08:53:31 mjl Exp $
+.\"	$NetBSD: rc.conf.5,v 1.47 2001/06/17 01:14:15 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 1, 2000
+.Dd June 17, 2001
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -90,6 +90,11 @@ If set to
 .Xr shutdown 8
 will not run
 .Pa /etc/rc.shutdown .
+.It Sy rcshutdown_timeout
+If non-blank, use this as the number of seconds to run a watchdog timer for
+which will terminate
+.Pa /etc/rc.shutdown
+if the timer expires before the shutdown script completes.
 .El
 .Ss Basic network configuration:
 .Bl -tag -width net_interfaces
@@ -744,6 +749,14 @@ Passes
 .El
 .Ss NFS daemons and parameters:
 .Bl -tag -width net_interfaces
+.It Sy mountd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr mountd 8
+and passes
+.Sy mountd_flags .
 .It Sy nfs_client
 .Sq YES
 or
@@ -755,14 +768,9 @@ The number of local NFS asynchronous I/O server is now controlled via
 or
 .Sq NO .
 Sets up a host to be a NFS server by running
-.Xr mountd 8
-and
-.Xr nfsd 8 ,
+.Xr nfsd 8
 and passing
-.Sy mountd_flags
-and
-.Sy nfsd_flags
-to them, respectively.
+.Sy nfsd_flags .
 .It Sy lockd
 .Sq YES
 or
@@ -807,14 +815,6 @@ Passes
 The
 .Xr amd 8
 mount directory.
-Used only if
-.Sy amd
-is set to
-.Sq YES .
-.It Sy amd_master
-The
-.Xr amd 8
-automounter master map.
 Used only if
 .Sy amd
 is set to
