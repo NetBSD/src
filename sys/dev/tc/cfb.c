@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.12 1999/08/02 04:19:03 nisimura Exp $ */
+/* $NetBSD: cfb.c,v 1.13 1999/10/19 00:49:34 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.12 1999/08/02 04:19:03 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.13 1999/10/19 00:49:34 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ struct wsscreen_descr cfb_stdscreen = {
 	"std", 0, 0,
 	&cfb_emulops,
 	0, 0,
-	0
+	WSSCREEN_REVERSE
 };
 
 const struct wsscreen_descr *_cfb_scrlist[] = {
