@@ -1,5 +1,7 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\"	$NetBSD: fread.3,v 1.5 1995/02/02 01:15:42 jtc Exp $
+.\"
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" Chris Torek and the American National Standards Committee X3,
@@ -33,10 +35,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)fread.3	6.6 (Berkeley) 6/29/91
-.\"	$Id: fread.3,v 1.4 1993/10/04 18:51:06 jtc Exp $
+.\"     @(#)fread.3	8.2 (Berkeley) 3/8/94
 .\"
-.Dd June 29, 1991
+.Dd March 8, 1994
 .Dt FREAD 3
 .Os
 .Sh NAME
@@ -48,13 +49,13 @@
 .Ft size_t
 .Fn fread "void *ptr" "size_t size" "size_t nmemb" "FILE *stream"
 .Ft size_t
-.Fn fwrite "void *ptr" "size_t size" "size_t nmemb" "FILE *stream"
+.Fn fwrite "const void *ptr" "size_t size" "size_t nmemb" "FILE *stream"
 .Sh DESCRIPTION
 The function
 .Fn fread
 reads
 .Fa nmemb
-elements of data, each
+objects, each
 .Fa size
 bytes long, from the stream pointed to by
 .Fa stream ,
@@ -65,7 +66,7 @@ The function
 .Fn fwrite
 writes
 .Fa nmemb
-elements of data, each
+objects, each
 .Fa size
 bytes long, to the stream pointed to by
 .Fa stream ,
@@ -77,10 +78,10 @@ The functions
 and
 .Fn fwrite
 advance the file position indicator for the stream
-by the number of characters successfully read or written and return
-that number.
+by the number of bytes read or written.
+They return the number of objects read or written.
 If an error occurs, or the end-of-file is reached,
-the return value is a short character count (or zero).
+the return value is a short object count (or zero).
 .Pp
 The function
 .Fn fread
@@ -90,6 +91,11 @@ must use
 and
 .Xr ferror 3
 to determine which occurred.
+The function
+.Fn fwrite
+returns a value less than
+.Fa nmemb
+only if a write error has occurred.
 .Sh SEE ALSO
 .Xr read 2 ,
 .Xr write 2
