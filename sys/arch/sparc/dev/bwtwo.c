@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.11 1995/09/17 20:43:39 pk Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.12 1995/10/04 23:35:13 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,7 +263,7 @@ bwtwoattach(parent, self, args)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 		/* XXX: doesn't work (??) on Sun 4 yet. */
 		if (cputyp != CPU_SUN4)
 			fbrcons_init(&sc->sc_fb);

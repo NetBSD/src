@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwo.c,v 1.3 1995/10/02 21:44:51 pk Exp $ */
+/*	$NetBSD: cgtwo.c,v 1.4 1995/10/04 23:35:16 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -271,7 +271,7 @@ cgtwoattach(parent, self, args)
 	sc->sc_reg = (volatile struct cg2statusreg *)
 	    mapiodev((caddr_t)sc->sc_phys +
 		     CG2_ROPMEM_OFF + offsetof(struct cg2fb, status.reg),
-		     CG2_CTLREG_SIZE, ca->ca_bustype);
+		     sizeof(struct cg2statusreg), ca->ca_bustype);
 
 	sc->sc_cmap = (volatile u_short *)
 	    mapiodev((caddr_t)sc->sc_phys +
@@ -280,7 +280,7 @@ cgtwoattach(parent, self, args)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else

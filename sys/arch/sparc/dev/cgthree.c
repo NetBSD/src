@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree.c,v 1.14 1995/09/17 20:43:49 pk Exp $ */
+/*	$NetBSD: cgthree.c,v 1.15 1995/10/04 23:35:14 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -209,7 +209,7 @@ cgthreeattach(parent, self, args)
 
 	if (isconsole) {
 		printf(" (console)\n");
-#ifdef RCONSOLE
+#ifdef RASTERCONSOLE
 		fbrcons_init(&sc->sc_fb);
 #endif
 	} else
