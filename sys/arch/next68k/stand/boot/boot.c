@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2000/07/21 22:26:19 jdolecek Exp $	*/
+/*	$NetBSD: boot.c,v 1.4 2001/05/12 22:35:30 chs Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -33,11 +33,12 @@
 #include <sys/reboot.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libsa/loadfile.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/cpu.h>        /* for NEXT_RAMBASE */
 
-#define LOADADDR        (char *)NEXT_RAMBASE
+#define KERN_LOADADDR NEXT_RAMBASE
 
 extern int errno;
 
@@ -45,50 +46,56 @@ extern int errno;
  * Boot device is derived from PROM provided information.
  */
 
-extern char *bootprog_rev;
-extern char *bootprog_name;
+extern char bootprog_rev[];
+extern char bootprog_name[];
 extern int build;
 #define KNAMEN 100
 char kernel[KNAMEN];
-char *entry_point;		/* return value filled in by machdep_start */
+int entry_point;		/* return value filled in by machdep_start */
 
 extern void rtc_init(void);
 
 extern int try_bootp;
 
-char *
+volatile int qq;
+
+int
 main(char *boot_arg)
 {
-    printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
-    rtc_init();
+	int fd;
+	u_long marks[MARK_MAX];
 
-    try_bootp = 1;
+	memset(marks, 0, sizeof(marks));
+	printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
+	rtc_init();
+
+	try_bootp = 1;
 
 #if 0
-    printf("Press return to continue.\n");
-    getchar();
+	printf("Press return to continue.\n");
+	getchar();
 #endif
 
-    strcpy(kernel, boot_arg);
-    entry_point = NULL;
-    
-    while (1) {
-	errno = 0;
-	exec(kernel, LOADADDR, 0);
-	if (errno == ENOEXEC && entry_point != NULL) {
-          printf("Kernel loaded at 0x%lx\n",(unsigned long)entry_point);
-#if 0
-          printf("Press return to continue.\n");
-          getchar();
-#endif
-          return entry_point;
-        }
-	
-	printf("load of %s: %s\n", kernel, strerror(errno));
-	printf("boot: ");
-	gets(kernel);
-	/* XXX we have to write this back into boot_arg or even mg->boot* */
-	if (kernel[0] == '\0')
-		return NULL;
-    }
+	strcpy(kernel, boot_arg);
+	entry_point = NULL;
+
+	for (;;) {
+		marks[MARK_START] = (u_long)KERN_LOADADDR;
+		fd = loadfile(kernel, marks, LOAD_KERNEL);
+		if (fd != -1) {
+			break;
+		}
+
+		printf("load of %s: %s\n", kernel, strerror(errno));
+		printf("boot: ");
+		gets(kernel);
+		/* XXX we have to write this back into boot_arg or even mg->boot* */
+		if (kernel[0] == '\0')
+			return NULL;
+	}
+
+	*((u_long *)KERN_LOADADDR) = marks[MARK_END] - KERN_LOADADDR;
+	printf("entry 0x%lx esym 0x%lx\n",
+	       marks[MARK_ENTRY], marks[MARK_END] - KERN_LOADADDR);
+	return marks[MARK_ENTRY];
 }
