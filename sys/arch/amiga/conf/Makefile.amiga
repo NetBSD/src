@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.amiga,v 1.12 1994/03/20 10:08:44 chopps Exp $
+#	$Id: Makefile.amiga,v 1.13 1994/03/28 07:55:57 chopps Exp $
 #
 # Makefile for 4.4 BSD
 #
@@ -23,8 +23,8 @@
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	as ${DEBUG}
-CC=	gcc ${DEBUG}
-CPP=	/lib/cpp -traditional
+CC=	cc ${DEBUG}
+CPP=	cpp
 LD=	ld 
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/amiga/gmon.ex
