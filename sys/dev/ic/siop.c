@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.21 2000/06/13 13:59:17 bouyer Exp $	*/
+/*	$NetBSD: siop.c,v 1.21.2.1 2000/06/26 08:49:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -331,8 +331,10 @@ siop_reset(sc)
 	    htole32(sc->sc_scriptaddr + Ent_reselect);
 
 	/* start script */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	if ((sc->features & SF_CHIP_RAM) == 0) {
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_scriptdma, 0, NBPG,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	}
 	siop_shed_sync(sc, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
 	    sc->sc_scriptaddr + Ent_reselect);
