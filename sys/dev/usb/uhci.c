@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.29 1999/06/09 17:04:45 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.30 1999/06/26 08:30:17 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ struct uhci_pipe {
 LIST_HEAD(, uhci_intr_info) uhci_ii_free;
 
 void		uhci_busreset __P((uhci_softc_t *));
+void		uhci_power __P((int, void *));
 usbd_status	uhci_run __P((uhci_softc_t *, int run));
 uhci_soft_td_t *uhci_alloc_std __P((uhci_softc_t *));
 void		uhci_free_std __P((uhci_softc_t *, uhci_soft_td_t *));
@@ -294,15 +295,8 @@ uhci_init(sc)
 	int i, j;
 	uhci_soft_qh_t *csqh, *bsqh, *sqh;
 	uhci_soft_td_t *std;
-	usb_dma_t dma;
-	static int uhci_global_init_done = 0;
 
 	DPRINTFN(1,("uhci_init: start\n"));
-
-	if (!uhci_global_init_done) {
-		uhci_global_init_done = 1;
-		LIST_INIT(&uhci_ii_free);
-	}
 
 #if defined(USB_DEBUG)
 	if (uhcidebug > 2)
@@ -317,12 +311,12 @@ uhci_init(sc)
 	/* Allocate and initialize real frame array. */
 	r = usb_allocmem(sc->sc_dmatag, 
 			 UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
-			 UHCI_FRAMELIST_ALIGN, &dma);
+			 UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	sc->sc_pframes = KERNADDR(&dma);
+	sc->sc_pframes = KERNADDR(&sc->sc_dma);
 	UWRITE2(sc, UHCI_FRNUM, 0);		/* set frame number to 0 */
-	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&dma)); /* set frame list */
+	UWRITE4(sc, UHCI_FLBASEADDR, DMAADDR(&sc->sc_dma)); /* set frame list */
 
 	/* Allocate the dummy QH where bulk traffic will be queued. */
 	bsqh = uhci_alloc_sqh(sc);
@@ -377,11 +371,76 @@ uhci_init(sc)
 	sc->sc_bus.pipe_size = sizeof(struct uhci_pipe);
 	sc->sc_bus.do_poll = uhci_poll;
 
+	sc->sc_suspend = PWR_RESUME;
+	(void)powerhook_establish(uhci_power, sc);
+
 	DPRINTFN(1,("uhci_init: enabling\n"));
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
 		UHCI_INTR_IOCE | UHCI_INTR_SPIE);	/* enable interrupts */
 
 	return (uhci_run(sc, 1));		/* and here we go... */
+}
+
+/*
+ * Handle suspend/resume.
+ *
+ * Must use delay() here since we are called from an interrupt
+ * context, but since we are close to being inactive anyway
+ * it doesn't matter.
+ */
+void
+uhci_power(why, v)
+	int why;
+	void *v;
+{
+	uhci_softc_t *sc = v;
+	int cmd;
+	int s;
+
+	s = splusb();
+	cmd = UREAD2(sc, UHCI_CMD);
+
+	DPRINTF(("uhci_power: sc=%p, why=%d (was %d), cmd=0x%x\n", 
+		 sc, why, sc->sc_suspend, cmd));
+
+	if (why != PWR_RESUME) {
+#if defined(USB_DEBUG)
+		if (uhcidebug > 2)
+			uhci_dumpregs(sc);
+#endif
+		if (sc->sc_has_timo)
+			usb_untimeout(uhci_timo, sc->sc_has_timo, 
+				      sc->sc_has_timo->timo_handle);
+		uhci_run(sc, 0); /* stop the controller */
+		UHCICMD(sc, cmd | UHCI_CMD_EGSM); /* enter global suspend */
+		delay(USB_RESUME_WAIT * 1000);
+		sc->sc_suspend = why;
+		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
+	} else {
+		/*
+		 * XXX We should really do much more here in case the
+		 * controller registers have been lost and BIOS has
+		 * not restored them.
+		 */
+		sc->sc_suspend = why;
+		if (cmd & UHCI_CMD_RS)
+			uhci_run(sc, 0); /* in case BIOS has started it */
+		UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force global resume */
+		delay(USB_RESUME_DELAY * 1000);
+		UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
+		UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE | UHCI_INTR_RIE | 
+			UHCI_INTR_IOCE | UHCI_INTR_SPIE); /* re-enable intrs */
+		uhci_run(sc, 1); /* and start traffic again */
+		delay(USB_RESUME_RECOVERY * 1000);
+		if (sc->sc_has_timo)
+			usb_timeout(uhci_timo, sc->sc_has_timo, 
+				    sc->sc_ival, sc->sc_has_timo->timo_handle);
+#if defined(USB_DEBUG)
+		if (uhcidebug > 2)
+			uhci_dumpregs(sc);
+#endif
+	}
+	splx(s);
 }
 
 #ifdef USB_DEBUG
@@ -655,6 +714,10 @@ uhci_intr(p)
 	}
 #endif
 	status = UREAD2(sc, UHCI_STS);
+#ifdef DIAGNOSTIC
+	if (sc->sc_suspend != PWR_RESUME)
+		printf("uhci_intr: suspended sts=0x%x\n", status);
+#endif
 	ret = 0;
 	if (status & UHCI_STS_USBINT) {
 		UWRITE2(sc, UHCI_STS, UHCI_STS_USBINT); /* acknowledge */
@@ -933,17 +996,15 @@ uhci_run(sc, run)
 
 	run = run != 0;
 	s = splusb();
-	running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
-	if (run == running) {
-		splx(s);
-		return (USBD_NORMAL_COMPLETION);
-	}
-	UWRITE2(sc, UHCI_CMD, run ? UHCI_CMD_RS : 0);
+	DPRINTF(("uhci_run: setting run=%d\n", run));
+	UHCICMD(sc, run ? UHCI_CMD_RS : 0);
 	for(n = 0; n < 10; n++) {
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
 			splx(s);
+			DPRINTF(("uhci_run: done cmd=0x%x sts=0x%x\n",
+				 UREAD2(sc, UHCI_CMD), UREAD2(sc, UHCI_STS)));
 			return (USBD_NORMAL_COMPLETION);
 		}
 		usb_delay_ms(&sc->sc_bus, 1);
@@ -2552,7 +2613,10 @@ void
 uhci_root_ctrl_close(pipe)
 	usbd_pipe_handle pipe;
 {
+	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
+
 	usb_untimeout(uhci_timo, pipe->intrreqh, pipe->intrreqh->timo_handle);
+	sc->sc_has_timo = 0;
 	DPRINTF(("uhci_root_ctrl_close\n"));
 }
 
@@ -2561,7 +2625,10 @@ void
 uhci_root_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
+	uhci_softc_t *sc = (uhci_softc_t *)reqh->pipe->device->bus;
+
 	usb_untimeout(uhci_timo, reqh, reqh->timo_handle);
+	sc->sc_has_timo = 0;
 }
 
 usbd_status
@@ -2607,6 +2674,7 @@ uhci_root_intr_start(reqh)
 
 	sc->sc_ival = MS_TO_TICKS(reqh->pipe->endpoint->edesc->bInterval);
 	usb_timeout(uhci_timo, reqh, sc->sc_ival, reqh->timo_handle);
+	sc->sc_has_timo = reqh;
 	return (USBD_IN_PROGRESS);
 }
 
@@ -2615,7 +2683,10 @@ void
 uhci_root_intr_close(pipe)
 	usbd_pipe_handle pipe;
 {
+	uhci_softc_t *sc = (uhci_softc_t *)pipe->device->bus;
+
 	usb_untimeout(uhci_timo, pipe->intrreqh, pipe->intrreqh->timo_handle);
+	sc->sc_has_timo = 0;
 	DPRINTF(("uhci_root_intr_close\n"));
 }
 
