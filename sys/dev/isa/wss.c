@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.8 1995/12/24 02:32:03 mycroft Exp $	*/
+/*	$NetBSD: wss.c,v 1.9 1996/02/16 08:18:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -101,10 +101,7 @@ struct audio_device wss_device = {
 	"WSS"
 };
 
-int	wssprobe();
-void	wssattach();
 int	wssopen __P((dev_t, int));
-
 int	wss_getdev __P((void *, struct audio_device *));
 int	wss_setfd __P((void *, int));
 
@@ -164,6 +161,9 @@ struct audio_hw_if wss_hw_if = {
 #define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
 #endif
 
+int	wssprobe __P((struct device *, void *, void *));
+void	wssattach __P((struct device *, struct device *, void *));
+
 struct cfdriver wsscd = {
 	NULL, "wss", wssprobe, wssattach, DV_DULL, sizeof(struct wss_softc)
 };
@@ -172,11 +172,11 @@ struct cfdriver wsscd = {
  * Probe for the Microsoft Sound System hardware.
  */
 int
-wssprobe(parent, self, aux)
-    struct device *parent, *self;
-    void *aux;
+wssprobe(parent, match, aux)
+    struct device *parent;
+    void *match, *aux;
 {
-    register struct wss_softc *sc = (void *)self;
+    register struct wss_softc *sc = match;
     register struct isa_attach_args *ia = aux;
     register int iobase = ia->ia_iobase;
     static u_char interrupt_bits[12] = {
