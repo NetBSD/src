@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypcat.c,v 1.4 1996/04/30 22:50:53 jtc Exp $";
+static char rcsid[] = "$Id: ypcat.c,v 1.5 1996/05/07 18:27:48 jtc Exp $";
 #endif
 
 #include <sys/param.h>
@@ -96,9 +96,8 @@ char **argv;
 	int notrans;
 	int c, r, i;
 
+	domainname = NULL;
 	notrans = key = 0;
-	yp_get_default_domain(&domainname);
-
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
 		switch(c) {
 		case 'x':
@@ -122,6 +121,10 @@ char **argv;
 
 	if(optind + 1 != argc )
 		usage();
+
+	if (!domainname) {
+		yp_get_default_domain(&domainname);
+	}
 
 	inmap = argv[optind];
 	if (!notrans) {
