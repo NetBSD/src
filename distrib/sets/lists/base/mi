@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.238 2001/03/20 18:49:49 atatat Exp $
+# $NetBSD: mi,v 1.239 2001/03/21 16:25:38 wiz Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -441,7 +441,6 @@
 ./usr/include		base-c-usr
 ./usr/include/arpa		base-c-usr
 ./usr/include/cdk		base-c-usr
-./usr/include/compat		base-c-usr
 ./usr/include/dev		base-c-usr
 ./usr/include/dev/microcode	base-c-usr
 ./usr/include/dev/ofw		base-c-usr
