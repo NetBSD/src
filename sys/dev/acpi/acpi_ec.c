@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.12 2003/11/01 01:38:25 mycroft Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.13 2003/11/01 08:14:39 mycroft Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.12 2003/11/01 01:38:25 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.13 2003/11/01 08:14:39 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,8 +449,7 @@ EcGpeQueryHandler(void *Context)
 	}
 
 	/* I know I request Level trigger cleanup */
-	if (AcpiClearGpe(sc->sc_node->ad_handle, sc->sc_gpebit, ACPI_NOT_ISR)
-	    != AE_OK)
+	if (AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR) != AE_OK)
 		printf("%s: AcpiClearGpe failed\n", sc->sc_dev.dv_xname);
 
 	return_VOID;
@@ -700,8 +699,7 @@ EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
 		sc->sc_flags &= ~EC_F_PENDQUERY;
 	}
 
-	if (AcpiClearGpe(sc->sc_node->ad_handle, sc->sc_gpebit, ACPI_NOT_ISR)
-	    != AE_OK)
+	if (AcpiClearGpe(NULL, sc->sc_gpebit, ACPI_NOT_ISR) != AE_OK)
 		printf("%s: EcRequest: unable to clear EC GPE\n",
 		    sc->sc_dev.dv_xname);
 
