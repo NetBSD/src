@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/11/30 02:06:51 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2002/11/30 02:09:44 lukem Exp $
 #
 
 .include <bsd.own.mk>
@@ -23,5 +23,8 @@ CPPFLAGS+=	-I${.CURDIR} \
 WARNS?=	2
 
 .ifndef HOSTPROG
+DPADD+=		${LIBUTIL}
+LDADD+=		-lutil
+
 .include <bsd.prog.mk>
 .endif
