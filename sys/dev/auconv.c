@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.11.2.6 2005/01/01 17:35:27 kent Exp $	*/
+/*	$NetBSD: auconv.c,v 1.11.2.7 2005/01/01 17:44:38 kent Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.6 2005/01/01 17:35:27 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.11.2.7 2005/01/01 17:44:38 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
@@ -190,6 +190,18 @@ static const struct conv_table alaw_table[] = {
 	 alaw_to_linear8, linear8_to_alaw},
 	{0, 0, 0, NULL, NULL}};
 #endif
+
+void
+stream_filter_set_fetcher(stream_filter_t *this, stream_fetcher_t *p)
+{
+	this->prev = p;
+}
+
+void
+stream_filter_set_inputbuffer(stream_filter_t *this, audio_stream_t *stream)
+{
+	this->src = stream;
+}
 
 stream_filter_t *
 auconv_nocontext_filter_factory(
