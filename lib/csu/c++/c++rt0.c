@@ -1,4 +1,4 @@
-/*	$NetBSD: c++rt0.c,v 1.6 1997/12/29 15:36:50 pk Exp $	*/
+/*	$NetBSD: c++rt0.c,v 1.7 1998/08/05 23:24:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -71,9 +71,10 @@ __dtors()
 static void
 __ctors()
 {
+	unsigned long i = (unsigned long) __CTOR_LIST__[0];
 	void (**p)(void) = __CTOR_LIST__ + 1;
 
-	while (*p)
+	while (i--)
 		(**p++)();
 }
 
