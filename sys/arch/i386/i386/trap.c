@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.39 1994/05/07 00:52:44 cgd Exp $
+ *	$Id: trap.c,v 1.40 1994/05/13 00:50:44 cgd Exp $
  */
 
 /*
@@ -91,12 +91,12 @@ userret(p, pc, oticks)
 		 * Since we are curproc, a clock interrupt could
 		 * change our priority without changing run queues
 		 * (the running process is not kept on a run queue).
-		 * If this happened after we setrq ourselves but
+		 * If this happened after we setrunqueue ourselves but
 		 * before we swtch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
 		(void) splclock();
-		setrq(p);
+		setrunqueue(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
 		(void) spl0();
