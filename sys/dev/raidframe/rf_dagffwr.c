@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagffwr.c,v 1.9 2002/09/21 00:50:10 oster Exp $	*/
+/*	$NetBSD: rf_dagffwr.c,v 1.10 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.9 2002/09/21 00:50:10 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagffwr.c,v 1.10 2003/02/09 10:04:33 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -471,8 +471,8 @@ rf_CommonCreateSmallWriteDAG(
     void *bp,
     RF_RaidAccessFlags_t flags,
     RF_AllocListElem_t * allocList,
-    RF_RedFuncs_t * pfuncs,
-    RF_RedFuncs_t * qfuncs)
+    const RF_RedFuncs_t * pfuncs,
+    const RF_RedFuncs_t * qfuncs)
 {
 	RF_DagNode_t *readDataNodes, *readParityNodes, *readQNodes, *termNode;
 	RF_DagNode_t *unlockDataNodes, *unlockParityNodes, *unlockQNodes;

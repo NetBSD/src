@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_parityscan.c,v 1.17 2002/09/24 00:53:58 oster Exp $	*/
+/*	$NetBSD: rf_parityscan.c,v 1.18 2003/02/09 10:04:33 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.17 2002/09/24 00:53:58 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_parityscan.c,v 1.18 2003/02/09 10:04:33 jdolecek Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -144,7 +144,7 @@ rf_VerifyParity(raidPtr, aasm, correct_it, flags)
 {
 	RF_PhysDiskAddr_t *parityPDA;
 	RF_AccessStripeMap_t *doasm;
-	RF_LayoutSW_t *lp;
+	const RF_LayoutSW_t *lp;
 	int     lrc, rc;
 
 	lp = raidPtr->Layout.map;
