@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 1999/04/24 23:54:56 ross Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 1999/05/30 20:26:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -69,6 +69,9 @@ void	 closembufs __P((WINDOW *));
 void	 closenetstat __P((WINDOW *));
 void	 closepigs __P((WINDOW *));
 void	 closeswap __P((WINDOW *));
+void	 closetcp __P ((WINDOW *));
+void	 closeip __P ((WINDOW *));
+void	 closeicmp __P ((WINDOW *));
 int	 cmdiostat __P((char *, char *));
 int	 cmdkre __P((char *, char *));
 int	 cmdnetstat __P((char *, char *));
@@ -85,12 +88,18 @@ void	 fetchmbufs __P((void));
 void	 fetchnetstat __P((void));
 void	 fetchpigs __P((void));
 void	 fetchswap __P((void));
+void	 fetchtcp __P((void));
+void	 fetchip __P((void));
+void	 fetchicmp __P((void));
 int	 initiostat __P((void));
 int	 initkre __P((void));
 int	 initmbufs __P((void));
 int	 initnetstat __P((void));
 int	 initpigs __P((void));
 int	 initswap __P((void));
+int	 inittcp __P((void));
+int	 initip __P((void));
+int	 initicmp __P((void));
 int	 keyboard __P((void)) __attribute__((__noreturn__));
 ssize_t	 kvm_ckread __P((void *, void *, size_t));
 void	 labeliostat __P((void));
@@ -99,6 +108,10 @@ void	 labelmbufs __P((void));
 void	 labelnetstat __P((void));
 void	 labelpigs __P((void));
 void	 labelps __P((void));
+void	 labeltcp __P((void));
+void	 labeltcpsyn __P((void));
+void	 labelip __P((void));
+void	 labelicmp __P((void));
 void	 labels __P((void));
 void	 labelswap __P((void));
 void	 load __P((void));
@@ -110,6 +123,9 @@ WINDOW	*openmbufs __P((void));
 WINDOW	*opennetstat __P((void));
 WINDOW	*openpigs __P((void));
 WINDOW	*openswap __P((void));
+WINDOW	*opentcp __P((void));
+WINDOW	*openip __P((void));
+WINDOW	*openicmp __P((void));
 int	 prefix __P((char *, char *));
 void	 redraw __P((int));
 void	 showiostat __P((void));
@@ -118,6 +134,10 @@ void	 showmbufs __P((void));
 void	 shownetstat __P((void));
 void	 showpigs __P((void));
 void	 showswap __P((void));
+void	 showtcp __P((void));
+void	 showtcpsyn __P((void));
+void	 showip __P((void));
+void	 showicmp __P((void));
 void	 showps __P((void));
 void	 status __P((void));
 void	 suspend __P((int));
