@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.12 1999/01/10 18:18:56 christos Exp $	*/
+/*	$NetBSD: rtld.c,v 1.13 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -127,44 +127,61 @@ static void
 _rtld_init(
     caddr_t mapbase)
 {
-    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH);
+    Obj_Entry objself;	/* The dynamic linker shared object */
+#ifdef RTLD_RELOCATE_SELF
+    int dodebug = false;
+#else
+    int dodebug = true;
+#endif
 
     /* Conjure up an Obj_Entry structure for the dynamic linker. */
-
-    _rtld_objself.path = _rtld_path;
-    _rtld_objself.rtld = true;
-    _rtld_objself.mapbase = mapbase;
-#if defined(__mips__) || defined(__i386__)
+    objself.path = NULL;
+    objself.rtld = true;
+    objself.mapbase = mapbase;
+#if defined(__mips__)
     /*
-     * mips and i386 ld.so currently linked at load address,
+     * mips and ld.so currently linked at load address,
      * so no relocation needed
      */
-    _rtld_objself.relocbase = 0;
+    objself.relocbase = 0;
 #else
-    _rtld_objself.relocbase = mapbase;
+    objself.relocbase = mapbase;
 #endif
-    _rtld_objself.pltgot = NULL;
+    objself.pltgot = NULL;
 #ifdef OLD_GOT
-    _rtld_objself.dynamic = (Elf_Dyn *) _GLOBAL_OFFSET_TABLE_[0];
+    objself.dynamic = (Elf_Dyn *)_GLOBAL_OFFSET_TABLE_[0];
 #else
-    _rtld_objself.dynamic = &_DYNAMIC;
+    objself.dynamic = (Elf_Dyn *)&_DYNAMIC;
 #endif
 
-    _rtld_digest_dynamic(&_rtld_objself);
+#ifdef RTLD_RELOCATE_SELF
+    /* We have not been relocated yet, so fix the dynamic address */
+    objself.dynamic = (Elf_Dyn *)((u_long)mapbase + (char *) objself.dynamic);
+#endif /* RTLD_RELOCATE_SELF */
+
+    _rtld_digest_dynamic(&objself);
 #ifdef __alpha__
-/* XXX XXX XXX */
-_rtld_objself.pltgot = NULL;
+    /* XXX XXX XXX */
+    objself.pltgot = NULL;
 #endif
-    assert(_rtld_objself.needed == NULL);
+    assert(objself.needed == NULL);
 #if !defined(__mips__) && !defined(__i386__)
     /* no relocation for mips/i386 */
-    assert(!_rtld_objself.textrel);
+    assert(!objself.textrel);
 #endif
+
+    _rtld_relocate_objects(&objself, true, dodebug);
+
+    /*
+     * Now that we relocated ourselves, we can use globals.
+     */
+    _rtld_objself = objself;
+
+    _rtld_objself.path = _rtld_path;
+    _rtld_add_paths(&_rtld_paths, RTLD_DEFAULT_LIBRARY_PATH, true);
 
     /* Set up the _rtld_objlist pointer, so that rtld symbols can be found. */
     _rtld_objlist = &_rtld_objself;
-
-    _rtld_relocate_objects(&_rtld_objself, true);
 
     /* Make the object list empty again. */
     _rtld_objlist = NULL;
@@ -217,7 +234,7 @@ _rtld(
     bool bind_now = 0;
     const char *ld_bind_now;
     const char **argv;
-#ifdef RTLD_DEBUG
+#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
     int i = 0;
 #endif
 
@@ -229,12 +246,12 @@ _rtld(
      */
     /* Find the auxiliary vector on the stack. */
     /* first Elf_Word reserved to address of exit routine */
-#ifdef RTLD_DEBUG
-    xprintf("sp = %p, argc = %d, argv = %p <%s>\n", sp, sp[2],
+#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+    dbg("sp = %p, argc = %d, argv = %p <%s>\n", sp, sp[2],
 	&sp[3], (char *)sp[3]);
-    xprintf("got is at %p, dynamic is at %p\n", _GLOBAL_OFFSET_TABLE_, &_DYNAMIC);
+    dbg("got is at %p, dynamic is at %p\n", _GLOBAL_OFFSET_TABLE_, &_DYNAMIC);
     debug = 1;
-    xprintf("_ctype_ is %p\n", _ctype_);
+    dbg("_ctype_ is %p\n", _ctype_);
 #endif
 
     sp += 2;		/* skip over return argument space */
@@ -242,8 +259,8 @@ _rtld(
     sp += sp[0] + 2;	/* Skip over argc, arguments, and NULL terminator */
     env = (char **) sp;
     while (*sp++ != 0) {	/* Skip over environment, and NULL terminator */
-#ifdef RTLD_DEBUG
-	xprintf("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]);
+#if defined(RTLD_DEBUG) && !defined(RTLD_RELOCATE_SELF)
+	dbg("env[%d] = %p %s\n", i++, (void *)sp[-1], (char *)sp[-1]);
 #endif
     }
     aux = (const AuxInfo *) sp;
@@ -273,7 +290,7 @@ _rtld(
     _rtld_init((caddr_t) pAUX_base->au_v);
 
 #ifdef RTLD_DEBUG
-    xprintf("_ctype_ is %p\n", _ctype_);
+    dbg("_ctype_ is %p\n", _ctype_);
 #endif
 
     __progname = _rtld_objself.path;
@@ -290,7 +307,7 @@ _rtld(
 	if (ld_debug != NULL && *ld_debug != '\0')
 	    debug = 1;
 #endif
-	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"));
+	_rtld_add_paths(&_rtld_paths, getenv("LD_LIBRARY_PATH"), true);
     }
 
     dbg("%s is initialized, base address = %p", __progname,
@@ -341,11 +358,11 @@ _rtld(
 	_rtld_die();
 
     dbg("relocating objects");
-    if (_rtld_relocate_objects(_rtld_objmain, bind_now) == -1)
+    if (_rtld_relocate_objects(_rtld_objmain, bind_now, true) == -1)
 	_rtld_die();
 
     dbg("doing copy relocations");
-    if (_rtld_do_copy_relocations(_rtld_objmain) == -1)
+    if (_rtld_do_copy_relocations(_rtld_objmain, true) == -1)
 	_rtld_die();
 
     dbg("calling _init functions");
@@ -482,7 +499,7 @@ _rtld_dlopen(
     } else {
 	char *path = _rtld_find_library(name, NULL);
 	if (path != NULL)
-	    obj = _rtld_load_object(path);
+	    obj = _rtld_load_object(path, true);
     }
 
     if (obj != NULL) {
@@ -494,7 +511,8 @@ _rtld_dlopen(
 	    if (_rtld_load_needed_objects(obj) == -1) {
 		--obj->dl_refcount;
 		obj = NULL;
-	    } else if (_rtld_relocate_objects(obj, (mode & 3) == RTLD_NOW) == -1) {
+	    } else if (_rtld_relocate_objects(obj, (mode & 3) == RTLD_NOW,
+		true) == -1) {
 		--obj->dl_refcount;
 		obj = NULL;
 	    } else {

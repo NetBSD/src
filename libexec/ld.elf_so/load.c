@@ -1,4 +1,4 @@
-/*	$NetBSD: load.c,v 1.1 1996/12/16 20:37:59 cgd Exp $	*/
+/*	$NetBSD: load.c,v 1.2 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -62,7 +62,8 @@
  */
 Obj_Entry *
 _rtld_load_object(
-    char *filepath)
+    char *filepath,
+    bool dodebug)
 {
     Obj_Entry *obj;
 
@@ -92,11 +93,12 @@ _rtld_load_object(
 #ifdef RTLD_LOADER
 	_rtld_linkmap_add(obj);		/* for GDB */
 #endif
-
-	dbg("  %p .. %p: %s", obj->mapbase,
-	    obj->mapbase + obj->mapsize - 1, obj->path);
-	if (obj->textrel)
-	    dbg("  WARNING: %s has impure text", obj->path);
+	if (dodebug) {
+	    dbg("  %p .. %p: %s", obj->mapbase,
+		obj->mapbase + obj->mapsize - 1, obj->path);
+	    if (obj->textrel)
+		dbg("  WARNING: %s has impure text", obj->path);
+	}
     } else
 	free(filepath);
 
@@ -126,7 +128,7 @@ _rtld_load_needed_objects(
 	    if (libpath == NULL) {
 		status = -1;
 	    } else {
-		needed->obj = _rtld_load_object(libpath);
+		needed->obj = _rtld_load_object(libpath, true);
 		if (needed->obj == NULL)
 		    status = -1;		/* FIXME - cleanup */
 	    }

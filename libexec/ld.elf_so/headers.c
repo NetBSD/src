@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.2 1998/03/25 04:13:01 mhitch Exp $	*/
+/*	$NetBSD: headers.c,v 1.3 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -229,7 +229,8 @@ _rtld_digest_dynamic(
     obj->pltrelalim = (const Elf_RelA *) ((caddr_t) obj->pltrela + pltrelasize);
 
     if (dyn_rpath != NULL) {
-	_rtld_add_paths(&obj->rpaths, obj->strtab + dyn_rpath->d_un.d_val);
+	_rtld_add_paths(&obj->rpaths, obj->strtab + dyn_rpath->d_un.d_val,
+	    true);
     }
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.6 1998/11/24 11:34:30 tsubai Exp $	*/
+/*	$NetBSD: rtld.h,v 1.7 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -51,7 +51,11 @@
 #define SVR4_LIBDIRLEN	(sizeof SVR4_LIBDIR - 1)
 
 #ifndef	PAGESIZE
-#define PAGESIZE	CLBYTES
+# ifndef __sparc__
+#  define PAGESIZE	CLBYTES
+# else
+#  define PAGESIZE	8192	/* NPBG is not constant! */
+# endif
 #endif
 #define round_down(x)	((x) & ~(PAGESIZE-1))
 #define round_up(x)	round_down((x) + PAGESIZE - 1)
@@ -189,17 +193,21 @@ extern Obj_Entry *_rtld_digest_phdr(const Elf_Phdr *, int, caddr_t);
 
 /* load.c */
 
-extern Obj_Entry *_rtld_load_object(char *path);
+extern Obj_Entry *_rtld_load_object(char *path, bool);
 extern int _rtld_load_needed_objects(Obj_Entry *);
 
 /* path.c */
 
-extern void _rtld_add_paths(Search_Path **, const char *);
+extern void _rtld_add_paths(Search_Path **, const char *, bool);
 
 /* reloc.c */
-extern int _rtld_do_copy_relocations(const Obj_Entry *);
+extern int _rtld_do_copy_relocations(const Obj_Entry *, bool);
 extern caddr_t _rtld_bind(const Obj_Entry *, Elf_Word);
-extern int _rtld_relocate_objects(Obj_Entry *, bool);
+extern int _rtld_relocate_objects(Obj_Entry *, bool, bool);
+extern int _rtld_relocate_nonplt_object(const Obj_Entry *, const Elf_RelA *,
+    bool);
+extern int _rtld_relocate_plt_object(const Obj_Entry *, const Elf_RelA *,
+    caddr_t *, bool, bool);
 
 /* search.c */
 

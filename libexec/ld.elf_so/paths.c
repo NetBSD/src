@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.c,v 1.2 1997/10/08 08:55:36 mrg Exp $	*/
+/*	$NetBSD: paths.c,v 1.3 1999/02/24 18:31:00 christos Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -62,7 +62,8 @@ _rtld_find_path(
 void
 _rtld_add_paths(
     Search_Path **path_p,
-    const char *pathstr)
+    const char *pathstr,
+    bool dodebug)
 {
     Search_Path *path, **head_p = path_p;
 
@@ -96,7 +97,8 @@ _rtld_add_paths(
 	    (*path_p) = path;
 	    path_p = &path->sp_next;
 
-	    dbg(" added path \"%s\"", path->sp_path);
+	    if (dodebug)
+		dbg(" added path \"%s\"", path->sp_path);
 	}
 
 	if (ep[0] == '\0')
