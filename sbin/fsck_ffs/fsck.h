@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.25 2001/08/15 03:40:50 lukem Exp $	*/
+/*	$NetBSD: fsck.h,v 1.26 2001/08/15 03:54:53 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -187,6 +187,7 @@ int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
 char	usedsoftdep;		/* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
+int	forceimage;		/* file system is an image file */
 int	doswap;			/* convert byte order */
 int	needswap;		/* need to convert byte order in memory */
 int	do_blkswap;		/* need to do block addr byteswap */
