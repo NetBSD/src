@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.15 2004/03/19 15:21:42 pk Exp $	*/
+/*	$NetBSD: consinit.c,v 1.16 2004/03/19 21:10:31 petrov Exp $	*/
 
 /*-
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.15 2004/03/19 15:21:42 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.16 2004/03/19 21:10:31 petrov Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -218,7 +218,7 @@ consinit()
 	if ((prom_stdout_node = OF_instance_to_package(stdout)) == 0)
 		printf("WARNING: no PROM stdout\n");
 
-	DBPRINT(("stdout package = %x\r\n", fbnode));
+	DBPRINT(("stdout package = %x\r\n", prom_stdout_node));
 
 	DBPRINT(("buffer @ %p\r\n", buffer));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb_mainbus.c,v 1.2 2003/07/15 03:36:05 lukem Exp $	*/
+/*	$NetBSD: ffb_mainbus.c,v 1.3 2004/03/19 21:10:31 petrov Exp $	*/
 /*	$OpenBSD: creator_mainbus.c,v 1.4 2002/07/26 16:39:04 jason Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.2 2003/07/15 03:36:05 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.3 2004/03/19 21:10:31 petrov Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: ffb_mainbus.c,v 1.2 2003/07/15 03:36:05 lukem Exp $"
 
 #include <sparc64/dev/ffbreg.h>
 #include <sparc64/dev/ffbvar.h>
+
+extern int prom_stdout_node;
 
 int	ffb_mainbus_match(struct device *, struct cfdata *, void *);
 void	ffb_mainbus_attach(struct device *, struct device *, void *);
@@ -81,7 +83,6 @@ ffb_mainbus_attach(parent, self, aux)
 {
 	struct ffb_softc *sc = (struct ffb_softc *)self;
 	struct mainbus_attach_args *ma = aux;
-	extern int fbnode;
 	int i, nregs;
 
 	sc->sc_bt = ma->ma_bustag;
@@ -112,7 +113,7 @@ ffb_mainbus_attach(parent, self, aux)
 	}
 	sc->sc_nreg = nregs;
 
-	sc->sc_console = (fbnode == ma->ma_node);
+	sc->sc_console = (prom_stdout_node == ma->ma_node);
 	sc->sc_node = ma->ma_node;
 
 	if (strcmp(ma->ma_name, "SUNW,afb") == 0)
