@@ -1,3 +1,5 @@
+/* $NetBSD: isic_supio.c,v 1.3 2001/01/28 22:18:17 is Exp $ */
+
 /*
  *   Copyright (c) 1998,2001 Ignatios Souvatzis. All rights reserved.
  *
@@ -32,18 +34,14 @@
  *
  *	isic_supio.c - Amiga supio pseudo bus frontend for i4b_isic driver
  *	supports:
- *		- ISDN Blaster	5001/1
- *		- ISDN MasterII	5000/1
- *		- ISDN Master	2092/64
- *		- ISDN Surfer	4626/5
- *	But we attach to the supio, so just see "isic", "isicII", icis
- *	-----------------------------------------------------------
+ *		- VMC		ISDN Blaster	5001/1
+ *		- ITH		ISDN MasterII	5000/1
+ *		- BSC		ISDN Master	2092/64
+ *		- Individual	ISDN Surfer	4626/5
+ *		- Zeus		ISDN Link	2189/3
  *
- *	$Id: isic_supio.c,v 1.2 2001/01/25 22:22:15 is Exp $ 
+ *	But we attach to the supio, so just see "isicxx"
  *
- *      last edit-date: [Tue Jan  9 21:57:11 2001]
- *
- *	-is	ISDN Master II support added.
  *	-is	original implementation [Sun Feb 14 10:29:19 1999]
  *
  *---------------------------------------------------------------------------*/
