@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.12 1996/10/15 01:24:48 mark Exp $ */
+/*	$NetBSD: db_interface.c,v 1.13 1997/02/04 07:15:48 mark Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -58,25 +58,25 @@ static int nil;
 int db_access_svc_sp __P((struct db_variable *, db_expr_t *, int));
 
 struct db_variable db_regs[] = {
-	{ "spsr", (int *)&DDB_TF->tf_spsr, FCN_NULL, },
-	{ "r0", (int *)&DDB_TF->tf_r0, FCN_NULL, },
-	{ "r1", (int *)&DDB_TF->tf_r1, FCN_NULL, },
-	{ "r2", (int *)&DDB_TF->tf_r2, FCN_NULL, },
-	{ "r3", (int *)&DDB_TF->tf_r3, FCN_NULL, },
-	{ "r4", (int *)&DDB_TF->tf_r4, FCN_NULL, },
-	{ "r5", (int *)&DDB_TF->tf_r5, FCN_NULL, },
-	{ "r6", (int *)&DDB_TF->tf_r6, FCN_NULL, },
-	{ "r7", (int *)&DDB_TF->tf_r7, FCN_NULL, },
-	{ "r8", (int *)&DDB_TF->tf_r8, FCN_NULL, },
-	{ "r9", (int *)&DDB_TF->tf_r9, FCN_NULL, },
-	{ "r10", (int *)&DDB_TF->tf_r10, FCN_NULL, },
-	{ "r11", (int *)&DDB_TF->tf_r11, FCN_NULL, },
-	{ "r12", (int *)&DDB_TF->tf_r12, FCN_NULL, },
-	{ "usr_sp", (int *)&DDB_TF->tf_usr_sp, FCN_NULL, },
-	{ "svc_sp", (int *)&nil, db_access_svc_sp, },
-	{ "usr_lr", (int *)&DDB_TF->tf_usr_lr, FCN_NULL, },
-	{ "svc_lr", (int *)&DDB_TF->tf_svc_lr, FCN_NULL, },
-	{ "pc", (int *)&DDB_TF->tf_pc, FCN_NULL, },
+	{ "spsr", (long *)&DDB_TF->tf_spsr, FCN_NULL, },
+	{ "r0", (long *)&DDB_TF->tf_r0, FCN_NULL, },
+	{ "r1", (long *)&DDB_TF->tf_r1, FCN_NULL, },
+	{ "r2", (long *)&DDB_TF->tf_r2, FCN_NULL, },
+	{ "r3", (long *)&DDB_TF->tf_r3, FCN_NULL, },
+	{ "r4", (long *)&DDB_TF->tf_r4, FCN_NULL, },
+	{ "r5", (long *)&DDB_TF->tf_r5, FCN_NULL, },
+	{ "r6", (long *)&DDB_TF->tf_r6, FCN_NULL, },
+	{ "r7", (long *)&DDB_TF->tf_r7, FCN_NULL, },
+	{ "r8", (long *)&DDB_TF->tf_r8, FCN_NULL, },
+	{ "r9", (long *)&DDB_TF->tf_r9, FCN_NULL, },
+	{ "r10", (long *)&DDB_TF->tf_r10, FCN_NULL, },
+	{ "r11", (long *)&DDB_TF->tf_r11, FCN_NULL, },
+	{ "r12", (long *)&DDB_TF->tf_r12, FCN_NULL, },
+	{ "usr_sp", (long *)&DDB_TF->tf_usr_sp, FCN_NULL, },
+	{ "svc_sp", (long *)&nil, db_access_svc_sp, },
+	{ "usr_lr", (long *)&DDB_TF->tf_usr_lr, FCN_NULL, },
+	{ "svc_lr", (long *)&DDB_TF->tf_svc_lr, FCN_NULL, },
+	{ "pc", (long *)&DDB_TF->tf_pc, FCN_NULL, },
 };
 
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
@@ -200,10 +200,8 @@ db_write_text(dst, ch)
 
 	*dst = (unsigned char)ch;
 
-#ifdef CPU_SA110
 	/* make sure the caches and memory are in sync */
-	sync_caches();
-#endif	/* CPU_SA110 */
+	cpu_cache_syncI();
 
 	WriteWord(ptep, pteo);
 	tlb_flush();
@@ -230,10 +228,8 @@ db_write_bytes(addr, size, data)
 			*dst = *data;
 		dst++, data++;
 	}
-#ifdef CPU_SA110
 	/* make sure the caches and memory are in sync */
-	sync_caches();
-#endif
+	cpu_cache_syncI();
 }
 
 void
@@ -303,10 +299,9 @@ db_machine_init()
 
 
 u_int
-branch_taken(insn, pc, reg, db_regs)
+branch_taken(insn, pc, db_regs)
 	u_int insn;
 	u_int pc;
-	u_int reg;
 	db_regs_t *db_regs;
 {
 	int branch;
