@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.3 2000/05/02 02:07:41 perry Exp $
+#	$NetBSD: Makefile,v 1.4 2001/10/24 23:58:58 thorpej Exp $
 
 # XXX Temporary for NO_SENDMAIL
 .include <bsd.own.mk>
 
-SUBDIR=		postfix
+SUBDIR=		mdsetimage postfix
 
 .if !defined(NO_SENDMAIL)
 SUBDIR+=	sendmail
