@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.36 1997/03/22 22:03:28 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.37 1997/04/11 20:21:56 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -963,8 +963,9 @@ struct cpu_conf {
 	{ CPU_SUN4M, 0, 4, 0, 4, "MB86904", &module_swift },
 	{ CPU_SUN4M, 0, 5, 0, 5, "MB86907", &module_turbosparc },
 	{ CPU_SUN4M, 1, 1, 1, 0, "CY7C601/604", &module_cypress },
-	{ CPU_SUN4M, 1, 1, 1, 0xc, "CY7C601/605 (v1?)", &module_cypress },
-	{ CPU_SUN4M, 1, 1, 1, 0xf, "CY7C601/605 (v2?)", &module_cypress },
+	{ CPU_SUN4M, 1, 1, 1, 0xb, "CY7C601/605 (v.b)", &module_cypress },
+	{ CPU_SUN4M, 1, 1, 1, 0xc, "CY7C601/605 (v.c)", &module_cypress },
+	{ CPU_SUN4M, 1, 1, 1, 0xf, "CY7C601/605 (v.f)", &module_cypress },
 	{ CPU_SUN4M, 1, 3, 1, ANY, "CY7C611", &module_cypress },
 	{ CPU_SUN4M, 1, 0xf, 1, 1, "RT620/625", &module_hypersparc },
 	{ CPU_SUN4M, 4, 0, 0, ANY, "TMS390Z50 v0 or TMS390Z55", &module_viking },
