@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.68.2.3 2000/10/19 14:15:14 he Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.68.2.4 2001/04/06 00:03:51 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1919,8 +1919,10 @@ ufs_vinit(mntp, specops, fifoops, vpp)
 			 */
 			nvp->v_data = vp->v_data;
 			vp->v_data = NULL;
+			/* XXX spec_vnodeops has no locking, do it explicitly */
+			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vput(vp);
+			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
