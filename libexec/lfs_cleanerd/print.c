@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.7 1999/03/10 00:57:16 perseant Exp $	*/
+/*	$NetBSD: print.c,v 1.8 2000/01/18 08:02:31 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)print.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.7 1999/03/10 00:57:16 perseant Exp $");
+__RCSID("$NetBSD: print.c,v 1.8 2000/01/18 08:02:31 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,10 +83,14 @@ dump_summary(lfsp, sp, flags, iaddrp, addr)
 
 	blk=0;
 	datap = (u_long *)malloc((lfsp->lfs_ssize*lfsp->lfs_frag) * sizeof(u_long));
+	if(datap==NULL)
+		return(-1);
 
 	if (sp->ss_sumsum != (ck = cksum(&sp->ss_datasum, 
-	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum))))
+	    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum)))) {
+		free(datap);
 		return(-1);
+	}
 
 	if (flags & DUMP_SUM_HEADER) {
                 syslog(LOG_DEBUG, "    %s0x%X\t%s%d\t%s%d\n    %s0x%X\t%s0x%X",

@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.17 1999/11/09 20:33:37 perseant Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.18 2000/01/18 08:02:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.17 1999/11/09 20:33:37 perseant Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.18 2000/01/18 08:02:30 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -421,6 +421,8 @@ clean_fs(fsp, cost_func, nsegs, options)
 	struct seglist *segs, *sp;
 	long int to_clean, cleaned_bytes;
 	unsigned long i, j, total;
+	struct rusage ru;
+	int error;
 
 	if ((segs =
 	    malloc(fsp->fi_lfs.lfs_nseg * sizeof(struct seglist))) == NULL) {
@@ -440,8 +442,10 @@ clean_fs(fsp, cost_func, nsegs, options)
 		sp++;
 		i--;
 	}
-	if(j > nsegs)
+	if(j > nsegs) {
+		free(segs);
 		return;
+	}
 
 	/* If we relly need to clean a lot, do it now */
 	if(fsp->fi_cip->clean < 2*MIN_FREE_SEGS)
@@ -496,11 +500,13 @@ clean_fs(fsp, cost_func, nsegs, options)
 	}
 	free(segs);
 	if(debug) {
-		struct rusage ru;
-
-		getrusage(RUSAGE_SELF,&ru);
-		syslog(LOG_DEBUG,"Current usage: maxrss=%ld, idrss=%ld",
-		       ru.ru_maxrss,ru.ru_idrss);
+		error=getrusage(RUSAGE_SELF,&ru);
+		if(error) {
+			syslog(LOG_INFO,"getrusage returned error: %m");
+		} else {
+			syslog(LOG_DEBUG,"Current usage: maxrss=%ld, idrss=%ld, isrss=%ld",
+			       ru.ru_maxrss,ru.ru_idrss,ru.ru_isrss);
+		}
 	}
 }
 
