@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nfs_ops.c,v 1.5 1996/02/19 20:57:48 christos Exp $";
+static char *rcsid = "$Id: nfs_ops.c,v 1.6 1996/03/06 00:21:21 christos Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -551,6 +551,15 @@ mntfs *mf;
 
 	if (nfs_args.rsize = hasmntval(&mnt, "rsize"))
 		nfs_args.flags |= NFSMNT_RSIZE;
+
+#ifdef NFSMNT_READDIRSIZE
+	if (nfs_args.readdirsize = hasmntval(&mnt, "readdirsize")) {
+		nfs_args.flags |= NFSMNT_READDIRSIZE;
+	} else if (nfs_args.rsize) {
+		nfs_args.readdirsize = nfs_args.rsize;
+		nfs_args.flags |= NFSMNT_READDIRSIZE;
+	}
+#endif
 
 	if (nfs_args.wsize = hasmntval(&mnt, "wsize"))
 		nfs_args.flags |= NFSMNT_WSIZE;
