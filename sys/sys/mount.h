@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.85 2000/06/10 18:44:44 sommerfeld Exp $	*/
+/*	$NetBSD: mount.h,v 1.86 2000/06/26 21:10:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -146,7 +146,6 @@ struct mount {
  * one of the __MNT_UNUSED flags.
  */
 
-#define __MNT_UNUSED1	0x00100000
 #define __MNT_UNUSED2	0x00400000
 #define __MNT_UNUSED3	0x00800000
 
@@ -158,6 +157,7 @@ struct mount {
 #define	MNT_UNION	0x00000020	/* union with underlying filesystem */
 #define	MNT_ASYNC	0x00000040	/* file system written asynchronously */
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
+#define MNT_IGNORE	0x00100000	/* don't show entry in df */
 #define MNT_NOATIME	0x04000000	/* Never update access times in fs */
 #define MNT_SYMPERM	0x20000000	/* recognize symlink permission */
 #define MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
@@ -184,7 +184,7 @@ struct mount {
 /*
  * Mask of flags that are visible to statfs()
  */
-#define	MNT_VISFLAGMASK	0xfc00ffff
+#define	MNT_VISFLAGMASK	0xfc10ffff
 
 /*
  * External filesystem control flags.
