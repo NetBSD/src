@@ -41,7 +41,7 @@
  *
  *	@(#)disk.h	5.1 (Berkeley) 7/10/92
  *
- * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1.2.3 1993/11/24 05:08:57 mycroft Exp $ (LBL)
+ * from: $Header: /cvsroot/src/sys/sys/disk.h,v 1.1.2.4 1993/11/29 06:06:49 mycroft Exp $ (LBL)
  */
 
 /*
@@ -53,8 +53,8 @@
 struct buf;
 
 struct dkdevice {
-	struct	device dk_dev;		/* base device */
-	struct	dkdevice *dk_next;	/* list of disks; not yet used */
+	struct	device *dk_device;	/* base device */
+	struct	dkdevice *dk_next;	/* list of disks */
 	int	dk_bps;			/* xfer rate: bytes per second */
 	int	dk_bopenmask;		/* block devices open */
 	int	dk_copenmask;		/* character devices open */
@@ -106,6 +106,7 @@ struct disksort_stats {
 #endif
 
 #ifdef KERNEL
+struct dkdevice *dkhead, *dktail;
 #if 0
 /* This is how 4.4 does it, delete them or something */
 void	disksort __P((struct buf *, struct buf *));
