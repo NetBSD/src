@@ -1,4 +1,4 @@
-/*	$NetBSD: nubus.h,v 1.47 1999/06/10 03:25:18 briggs Exp $	*/
+/*	$NetBSD: nubus.h,v 1.48 1999/06/14 03:11:34 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -62,6 +62,7 @@
 #define    NUBUS_DRHW_FORMAC	0x013A	/* Formac color card II */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146	/* Micron Exceed color */
+#define    NUBUS_DRHW_RADGSC	0x0153	/* Radius GS/C */
 #define    NUBUS_DRHW_SPECTRM8	0x017b	/* SuperMac Spectrum/8  Series III */
 #define    NUBUS_DRHW_SPECTRUM	0x017c	/* SuperMac Spectrum/24 Series III */
 #define    NUBUS_DRHW_VIMAGE	0x026E	/* Interware Co., Ltd. Vimage */
