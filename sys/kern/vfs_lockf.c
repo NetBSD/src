@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lockf.c,v 1.26 2003/05/01 13:14:49 yamt Exp $	*/
+/*	$NetBSD: vfs_lockf.c,v 1.27 2003/05/01 14:36:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.26 2003/05/01 13:14:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lockf.c,v 1.27 2003/05/01 14:36:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,13 +67,13 @@ int	lockf_debug = 0;
 #define SELF	0x1
 #define OTHERS	0x2
 
-static int lf_clearlock(struct lockf *);
+static int lf_clearlock(struct lockf *, struct lockf **);
 static int lf_findoverlap(struct lockf *,
 	    struct lockf *, int, struct lockf ***, struct lockf **);
 static struct lockf *lf_getblock(struct lockf *);
 static int lf_getlock(struct lockf *, struct flock *);
-static int lf_setlock(struct lockf *);
-static void lf_split(struct lockf *, struct lockf *);
+static int lf_setlock(struct lockf *, struct lockf **, struct simplelock *);
+static void lf_split(struct lockf *, struct lockf *, struct lockf **);
 static void lf_wakelock(struct lockf *);
 
 #ifdef LOCKF_DEBUG
@@ -91,8 +91,6 @@ static void lf_printlist(char *, struct lockf *);
  */
 
 /*
- * XXXSMP TODO: Using the vnode's interlock should be sufficient.
- *
  * If there's a lot of lock contention on a single vnode, locking
  * schemes which allow for more paralleism would be needed.  Given how
  * infrequently byte-range locks are actually used in typical BSD
@@ -106,7 +104,9 @@ int
 lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
 	struct flock *fl = ap->a_fl;
-	struct lockf *lock;
+	struct lockf *lock = NULL;
+	struct lockf *sparelock;
+	struct vnode *vp = ap->a_vp;
 	off_t start, end;
 	int error;
 
@@ -134,12 +134,53 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 		return (EINVAL);
 
 	/*
+	 * allocate locks before acquire simple lock.
+	 * we need two locks in the worst case.
+	 */
+	switch (ap->a_op) {
+	case F_SETLK:
+	case F_UNLCK:
+		/*
+		 * XXX for F_UNLCK case, we can re-use lock.
+		 */
+		if ((fl->l_type & F_FLOCK) == 0) {
+			/*
+			 * byte-range lock might need one more lock.
+			 */
+			MALLOC(sparelock, struct lockf *, sizeof(*lock),
+			    M_LOCKF, M_WAITOK);
+			if (sparelock == NULL) {
+				error = ENOMEM;
+				goto quit;
+			}
+			break;
+		}
+		/* FALLTHROUGH */
+
+	case F_GETLK:
+		sparelock = NULL;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
+	if (lock == NULL) {
+		error = ENOMEM;
+		goto quit;
+	}
+
+	simple_lock(&vp->v_interlock);
+
+	/*
 	 * Avoid the common case of unlocking when inode has no locks.
 	 */
 	if (*head == (struct lockf *)0) {
 		if (ap->a_op != F_SETLK) {
 			fl->l_type = F_UNLCK;
-			return (0);
+			error = 0;
+			goto quit_unlock;
 		}
 	}
 
@@ -150,7 +191,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	/*
 	 * Create the lockf structure.
 	 */
-	MALLOC(lock, struct lockf *, sizeof(*lock), M_LOCKF, M_WAITOK);
 	lock->lf_start = start;
 	lock->lf_end = end;
 	/* XXX NJWLWP 
@@ -176,30 +216,39 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	switch (ap->a_op) {
 
 	case F_SETLK:
-		return (lf_setlock(lock));
+		error = lf_setlock(lock, &sparelock, &vp->v_interlock);
+		lock = NULL; /* lf_setlock freed it */
+		break;
 
 	case F_UNLCK:
-		error = lf_clearlock(lock);
-		FREE(lock, M_LOCKF);
-		return (error);
+		error = lf_clearlock(lock, &sparelock);
+		break;
 
 	case F_GETLK:
 		error = lf_getlock(lock, fl);
-		FREE(lock, M_LOCKF);
-		return (error);
+		break;
 
 	default:
-		FREE(lock, M_LOCKF);
-		return (EINVAL);
+		/* NOTREACHED */
 	}
-	/* NOTREACHED */
+
+quit_unlock:
+	simple_unlock(&vp->v_interlock);
+quit:
+	if (lock)
+		FREE(lock, M_LOCKF);
+	if (sparelock)
+		FREE(sparelock, M_LOCKF);
+
+	return (error);
 }
 
 /*
  * Set a byte-range lock.
  */
 static int
-lf_setlock(struct lockf *lock)
+lf_setlock(struct lockf *lock, struct lockf **sparelock,
+    struct simplelock *interlock)
 {
 	struct lockf *block;
 	struct lockf **head = lock->lf_head;
@@ -282,7 +331,7 @@ lf_setlock(struct lockf *lock)
 		if ((lock->lf_flags & F_FLOCK) &&
 		    lock->lf_type == F_WRLCK) {
 			lock->lf_type = F_UNLCK;
-			(void) lf_clearlock(lock);
+			(void) lf_clearlock(lock, NULL);
 			lock->lf_type = F_WRLCK;
 		}
 		/*
@@ -297,7 +346,7 @@ lf_setlock(struct lockf *lock)
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		error = tsleep((caddr_t)lock, priority, lockstr, 0);
+		error = ltsleep(lock, priority, lockstr, 0, interlock);
 
 		/*
 		 * We may have been awakened by a signal (in
@@ -376,7 +425,7 @@ lf_setlock(struct lockf *lock)
 				lock->lf_next = overlap;
 				overlap->lf_start = lock->lf_end + 1;
 			} else
-				lf_split(overlap, lock);
+				lf_split(overlap, lock, sparelock);
 			lf_wakelock(overlap);
 			break;
 
@@ -453,7 +502,7 @@ lf_setlock(struct lockf *lock)
  * and remove it (or shrink it), then wakeup anyone we can.
  */
 static int
-lf_clearlock(struct lockf *unlock)
+lf_clearlock(struct lockf *unlock, struct lockf **sparelock)
 {
 	struct lockf **head = unlock->lf_head;
 	struct lockf *lf = *head;
@@ -488,7 +537,7 @@ lf_clearlock(struct lockf *unlock)
 				overlap->lf_start = unlock->lf_end + 1;
 				break;
 			}
-			lf_split(overlap, unlock);
+			lf_split(overlap, unlock, sparelock);
 			overlap->lf_next = unlock->lf_next;
 			break;
 
@@ -688,7 +737,7 @@ lf_findoverlap(struct lockf *lf, struct lockf *lock, int type,
  * two or three locks as necessary.
  */
 static void
-lf_split(struct lockf *lock1, struct lockf *lock2)
+lf_split(struct lockf *lock1, struct lockf *lock2, struct lockf **sparelock)
 {
 	struct lockf *splitlock;
 
@@ -716,7 +765,8 @@ lf_split(struct lockf *lock1, struct lockf *lock2)
 	 * Make a new lock consisting of the last part of
 	 * the encompassing lock
 	 */
-	MALLOC(splitlock, struct lockf *, sizeof(*splitlock), M_LOCKF, M_WAITOK);
+	splitlock = *sparelock;
+	*sparelock = NULL;
 	memcpy((caddr_t)splitlock, (caddr_t)lock1, sizeof(*splitlock));
 	splitlock->lf_start = lock2->lf_end + 1;
 	TAILQ_INIT(&splitlock->lf_blkhd);
