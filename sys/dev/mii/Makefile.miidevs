@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.miidevs,v 1.1 1998/08/10 23:55:17 thorpej Exp $
+#	$NetBSD: Makefile.miidevs,v 1.2 2000/05/08 13:25:34 augustss Exp $
 
+RM=	rm
 AWK=	awk
 
 miidevs.h: miidevs devlist2h.awk
-	/bin/rm -f miidevs.h
+	${RM} -f miidevs.h miidevs_data.h
 	${AWK} -f devlist2h.awk miidevs
