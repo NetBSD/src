@@ -57,7 +57,7 @@
  * from: Utah $Hdr: cpu.h 1.16 91/03/25$
  *
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.7 1994/03/01 15:22:47 briggs Exp $
+ *	$Id: cpu.h,v 1.8 1994/04/21 23:18:55 briggs Exp $
  */
 
 /*
@@ -67,6 +67,9 @@
    A lot of this stuff is really specific to the m68k, not just the macs,
    but there isn't time to do anything about that right now...
  */
+
+#ifndef _MACHINE_CPU_H_
+#define _MACHINE_CPU_H_	1
 
 /*
  * definitions of cpu-dependent requirements
@@ -84,8 +87,6 @@
 #undef	NEED_BCMP		/* don't need bcmp function */
 #undef	NEED_STRLEN		/* don't need strlen function */
 
-/* ALICE BG -- Sun May 24 11:31:35 EDT 1992 -- what the hell do these things */
-/*  do? */
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 
@@ -95,12 +96,10 @@
  * clockframe; for hp300, use just what the hardware
  * leaves on the stack.
  */
-/* ALICE 05/23/92 BG -- Oh, no.  What does a VIA intleave on the stack? */
-/* ALICE 06/27/92 LK -- Make sure hardware clock routine does this: */
 
 typedef struct intrframe {
-	int	pc;
 	int	ps;
+	int	pc;
 } clockframe;
 
 #define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
@@ -199,6 +198,11 @@ extern unsigned char ssir;
 #define MACH_68040	2
 #define MACH_PENTIUM	3	/* 66 and 99 MHz versions *only* */
 
+/* Defines for mmutype */
+#define MMU_68851	-1
+#define MMU_68030	0
+#define MMU_68040	1
+
 /* values for cpuspeed (not really related to clock speed due to caches) */
 #define	MHZ_8		1
 #define	MHZ_16		2
@@ -287,8 +291,18 @@ extern	int	booter_version;
 #define	DC_BE		0x1000	/* data burst enable */
 #define	DC_WA		0x2000	/* write allocate */
 
+/* fields in the 68040 cache control register */
+#define IC40_ENABLE	0x00008000	/* enable instruction cache */
+#define DC40_ENABLE	0x80000000	/* enable data cache */
+
 #define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
 #define	CACHE_CLR	(CACHE_ON)
 #define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
 #define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+
+/* 68040 cache control */
+#define CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
+#define CACHE40_OFF	0x00000000
+
+#endif	/* !_MACHINE_CPU_H_ */
