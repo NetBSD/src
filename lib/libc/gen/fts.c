@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.16 1997/09/27 22:53:07 pk Exp $	*/
+/*	$NetBSD: fts.c,v 1.17 1997/10/07 23:02:17 pk Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.16 1997/09/27 22:53:07 pk Exp $");
+__RCSID("$NetBSD: fts.c,v 1.17 1997/10/07 23:02:17 pk Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -932,8 +932,9 @@ fts_alloc(sp, name, namelen)
 	if ((p = malloc(len)) == NULL)
 		return (NULL);
 
-	/* Copy the name plus the trailing NULL. */
-	memmove(p->fts_name, name, namelen + 1);
+	/* Copy the name, then append the trailing NULL. */
+	memmove(p->fts_name, name, namelen);
+	p->fts_name[namelen] = '\0';
 
 	if (!ISSET(FTS_NOSTAT))
 		p->fts_statp = (struct stat *)ALIGN(p->fts_name + namelen + 2);
