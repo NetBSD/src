@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.234 2004/04/03 00:08:04 wiz Exp $
+.\"	$NetBSD: options.4,v 1.235 2004/04/03 15:47:16 darcy Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -343,7 +343,14 @@ socket calls.
 .It Cd options COMPAT_AOUT
 This option enables support for a.out format executables.  See
 .Em man a.out(5)
-for details on the ancient format.
+for details on the ancient format.  Note that include
+.Em COMPAT_AOUT
+is
+.Em NOT
+required to run a.out binaries and that doing so may have extremely
+undesirable effects.  it is a deprecated interface that actually is
+harmful to system binaries.  If you use this option you should know
+what you are doing.
 .It Cd options COMPAT_SVR4
 On those architectures that support it, this enables binary
 compatibility with
