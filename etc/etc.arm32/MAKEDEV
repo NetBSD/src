@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.17 1997/08/22 10:46:35 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.18 1997/10/18 03:59:27 mark Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -39,7 +39,6 @@
 #	fd*	"floppy" disk drives (3 1/2", 5 1/4")
 #	sd*	SCSI disks
 #	cd*	SCSI CD-ROM
-#	acd*	ATAPI CD-ROM
 #	vnd*	"file" pseudo-disks
 #	md*	"memory" pseudo-disks
 #	ccd*	contatenated disk devices
@@ -95,8 +94,8 @@ all)
 	sh $0 ccd0 ccd1 uk0 uk1 ss0
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7 ttyv8 ttyv9
 	sh $0 lpa0 lpt0 bpf0 bpf1 bpf2 bpf3 tun0 tun1 tun2 ipl
-	sh $0 beep lkm quadmouse0 pms0 local cpu0 cpu1 acd0 acd1
-	sh $0 mouse-quadmouse0
+	sh $0 beep lkm qms0 pms0 local cpu0 cpu1
+	sh $0 mouse-qms0
 	;;
 
 ramdisk|floppy)
@@ -268,10 +267,9 @@ ss*)
 	chmod 640 $name$unit n$name$unit en$name$unit
 	;;
 
-cd*|acd*)
+cd*)
 	case $i in
 	cd*) name=cd;	unit=${i#cd};	chr=26;	blk=26;;
-	acd*) name=acd;	unit=${i#acd};	chr=20;	blk=20;;
 	esac
 	rm -f $name$unit? r$name$unit?
 	mknod ${name}${unit}a	b $blk $(($unit * 8 + 0))
@@ -303,12 +301,12 @@ lpt*|lpa*)
 	;;
 
 
-bpf*|tun*|pms*|quadmouse*)
+bpf*|tun*|pms*|qms*)
 	case $i in
 	bpf*) name=bpf;	unit=${i#bpf};	chr=32;;
 	tun*) name=tun;	unit=${i#tun};	chr=33;;
 	pms*) name=pms;	unit=${i#pms};	chr=40;;
-	quadmouse*) name=quadmouse;	unit=${i#quadmouse};	chr=9;;
+	qms*) name=qms;	unit=${i#qms};	chr=9;;
 	esac
 	rm -f $name$unit
 	mknod $name$unit	c $chr $unit
@@ -341,7 +339,7 @@ lkm)
 mouse-*)
 	case $i in
 	mouse-pms*) name=pms;	unit=${i#mouse-pms};;
-	mouse-quadmouse*) name=quadmouse;	unit=${i#mouse-quadmouse};;
+	mouse-qms*) name=qms;	unit=${i#mouse-qms};;
 	esac
 	rm -f mouse
 	ln -s $name$unit mouse
