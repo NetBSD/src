@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.12.4.2 2000/08/09 22:44:19 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.12.4.3 2002/06/06 20:00:19 he Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -151,8 +151,17 @@ extern int snaplen;
 extern const u_char *packetp;
 extern const u_char *snapend;
 
-/* True if  "l" bytes of "var" were captured */
-#define TTEST2(var, l) ((u_char *)&(var) <= snapend - (l))
+/*
+ * True if  "l" bytes of "var" were captured.
+ *
+ * The "snapend - (l) <= snapend" checks to make sure "l" isn't so large
+ * that "snapend - (l)" underflows.
+ *
+ * The check is for <= rather than < because "l" might be 0.
+ */
+#define TTEST2(var, l) (snapend - (l) <= snapend && \
+			(const u_char *)&(var) <= snapend - (l))
+
 
 /* True if "var" was captured */
 #define TTEST(var) TTEST2(var, sizeof(var))
