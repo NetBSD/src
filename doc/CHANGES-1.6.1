@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.77 2002/12/26 07:57:40 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.78 2002/12/26 07:59:58 tron Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -2688,3 +2688,70 @@ sys/sys/malloc.h                                1.80-1.81 (via hand patch)
 
         M_ZERO for inline'ed MALLOC.
         [yamt, ticket #957]
+
+usr.sbin/user/user.c				1.52-1.53
+
+	Remove user from supplementary groups when deleting a user and not
+	preserving information.
+	Remove BUGS section from userdel(8) accordingly.
+	Make this utility compile with WARNS=3 - add const-poisoning and
+	shadow variable name resolution.
+	[he, ticket #1041]
+
+usr.sbin/user/user.c				1.61-1.62
+
+	Handle PR 18474 in a more safe and scalable fashion - keep a table of
+	password types, and their associated lengths, and check in useradd or
+	usermod whether the given encrypted password has the correct length.
+	This removes the (duplicated) hardcoded lengths which had crept in
+	with the last commit, and also checks the length of the given password
+	against the expected length.
+	[he, ticket #1041]
+
+usr.sbin/sunlabel/sunlabel.c			1.6
+
+	sweep of errx/warnx, remove unnecessary trailing \n
+	[lukem, ticket #1042]
+
+usr.sbin/sunlabel/sunlabel.c			1.7
+
+	improve help display
+	minor KNF
+	[lukem, ticket #1042]
+
+usr.sbin/sunlabel/sunlabel.8			1.4
+usr.sbin/sunlabel/sunlabel.c			1.8
+
+	- make "device" non optional and remove "-d device", and actually make
+	  it work with "device"...
+	- tweak the docco a bit
+	[lukem, ticket #1042]
+
+usr.sbin/Makefile				1.182
+
+	enable sunlabel
+	[lukem, ticket #1043]
+
+distrib/sets/lists/base/mi			1.375
+distrib/sets/lists/man/mi			1.537
+
+	add sunlabel
+	[lukem, ticket #1043]
+
+tools/Makefile					1.61
+
+	enable sunlabel...
+	[lukem, ticket #1043]
+
+share/mk/bsd.sys.mk				1.83
+
+	add SUNLABEL
+	[lukem, ticket #1043]
+
+distrib/sparc/bootfs/Makefile			1.38
+
+	Add some magic with ${SUNLABEL} into ${IMAGEPOSTBUILD} (after
+	${INSTALLBOOT} runs) to ensure that boot.fs has a valid Sun disklabel.
+	Sparc boot floppies now boot.
+	[lukem, ticket #1044]
+
