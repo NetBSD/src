@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.13 1997/07/10 22:12:08 phil Exp $	*/
+/*	$NetBSD: fts.c,v 1.14 1997/07/13 18:59:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)fts.c	8.4 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: fts.c,v 1.13 1997/07/10 22:12:08 phil Exp $";
+__RCSID("$NetBSD: fts.c,v 1.14 1997/07/13 18:59:02 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +63,7 @@ static int	 fts_palloc __P((FTS *, size_t));
 static FTSENT	*fts_sort __P((FTS *, FTSENT *, int));
 static u_short	 fts_stat __P((FTS *, FTSENT *, int));
 
-#define	ISDOT(a)	(a[0] == '.' && (!a[1] || a[1] == '.' && !a[2]))
+#define	ISDOT(a)	(a[0] == '.' && (!a[1] || (a[1] == '.' && !a[2])))
 
 #define	CLR(opt)	(sp->fts_options &= ~(opt))
 #define	ISSET(opt)	(sp->fts_options & (opt))
@@ -80,12 +81,12 @@ FTS *
 fts_open(argv, options, compar)
 	char * const *argv;
 	register int options;
-	int (*compar)();
+	int (*compar) __P((const FTSENT **, const FTSENT **));
 {
 	register FTS *sp;
 	register FTSENT *p, *root;
 	register int nitems;
-	FTSENT *parent, *tmp;
+	FTSENT *parent, *tmp = NULL;	/* pacify gcc */
 	int len;
 
 	/* Options check. */
@@ -215,7 +216,7 @@ fts_close(sp)
 	FTS *sp;
 {
 	register FTSENT *freep, *p;
-	int saved_errno;
+	int saved_errno = 0;	/* pacify gcc */
 
 	/*
 	 * This still works if we haven't read anything -- the dummy structure
@@ -311,7 +312,7 @@ fts_read(sp)
 	if (p->fts_info == FTS_D) {
 		/* If skipped or crossed mount point, do post-order visit. */
 		if (instr == FTS_SKIP ||
-		    ISSET(FTS_XDEV) && p->fts_dev != sp->fts_dev) {
+		    (ISSET(FTS_XDEV) && p->fts_dev != sp->fts_dev)) {
 			if (p->fts_flags & FTS_SYMFOLLOW)
 				(void)close(p->fts_symfd);
 			if (sp->fts_child) {
@@ -361,7 +362,7 @@ fts_read(sp)
 
 	/* Move to the next node on this level. */
 next:	tmp = p;
-	if (p = p->fts_link) {
+	if ((p = p->fts_link) != NULL) {
 		free(tmp);
 
 		/*
@@ -564,8 +565,8 @@ fts_build(sp, type)
 	DIR *dirp;
 	void *adjaddr;
 	int cderrno, descend, len, level, maxlen, nlinks, oflag, saved_errno,
-	    nostat;
-	char *cp;
+	    nostat = 0;
+	char *cp = NULL;	/* pacify gcc */
 
 	/* Set current node pointer. */
 	cur = sp->fts_cur;
@@ -659,7 +660,7 @@ fts_build(sp, type)
 
 	/* Read the directory, attaching each entry to the `link' pointer. */
 	adjaddr = NULL;
-	for (head = tail = NULL, nitems = 0; dp = readdir(dirp);) {
+	for (head = tail = NULL, nitems = 0; (dp = readdir(dirp)) != NULL;) {
 		if (!ISSET(FTS_SEEDOT) && ISDOT(dp->d_name))
 			continue;
 
@@ -704,8 +705,8 @@ mem1:				saved_errno = errno;
 			p->fts_accpath = cur->fts_accpath;
 		} else if (nlinks == 0
 #ifdef DT_DIR
-		    || nostat && 
-		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN
+		    || (nostat && 
+		    dp->d_type != DT_DIR && dp->d_type != DT_UNKNOWN)
 #endif
 		    ) {
 			p->fts_accpath =
@@ -944,7 +945,7 @@ fts_lfree(head)
 	register FTSENT *p;
 
 	/* Free a linked list of structures. */
-	while (p = head) {
+	while ((p = head) != NULL) {
 		head = head->fts_link;
 		free(p);
 	}
