@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 1999/09/13 10:31:02 itojun Exp $
+#	$NetBSD: genassym.cf,v 1.2 1999/09/14 11:20:53 tsubai Exp $
 
 #
 # Copyright (c) 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -39,8 +39,6 @@
 #	@(#)genassym.c	5.11 (Berkeley) 5/10/91
 #
 
-include "opt_pmap_new.h"
-
 include <sys/param.h>
 include <sys/proc.h>
 include <sys/resourcevar.h>
@@ -59,20 +57,11 @@ include <machine/vmparam.h>
 
 define	SRUN			SRUN
 
-ifdef PMAP_NEW
 define	PDSLOT_PTE		PDSLOT_PTE
 define	PDSLOT_APTE		PDSLOT_APTE
 define	PDSLOT_KERN		PDSLOT_KERN
 define	NKPTP_MIN		NKPTP_MIN
 define	NKPTP_MAX		NKPTP_MAX
-else
-define	PTDPTDI			PTDPTDI
-define	KPTDI			KPTDI
-define	NKPDE_BASE		NKPDE_BASE
-define	NKPDE_MAX		NKPDE_MAX
-define	NKPDE_SCALE		NKPDE_SCALE
-define	APTDPTDI		APTDPTDI
-endif
 
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
