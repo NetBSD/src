@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)fts.h	5.24 (Berkeley) 5/5/92
- *	$Id: fts.h,v 1.2 1993/08/01 00:23:18 mycroft Exp $
+ *	from: @(#)fts.h	8.1 (Berkeley) 6/2/93
+ *	$Id: fts.h,v 1.3 1993/11/06 01:06:12 cgd Exp $
  */
 
 #ifndef	_FTS_H_
