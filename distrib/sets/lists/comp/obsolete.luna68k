@@ -1,2 +1,2 @@
-# $NetBSD: obsolete.luna68k,v 1.1 2001/11/28 13:29:29 kleink Exp $
-/usr/include/luna68k/svr4_machdep.h
+# $NetBSD: obsolete.luna68k,v 1.2 2002/11/17 02:48:04 lukem Exp $
+./usr/include/luna68k/svr4_machdep.h
