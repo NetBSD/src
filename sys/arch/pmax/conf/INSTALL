@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.16 1999/03/27 07:40:08 simonb Exp $
+# 	$NetBSD: INSTALL,v 1.17 1999/03/28 03:02:49 simonb Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -87,7 +87,7 @@ include 	"arch/pmax/conf/builtin.3max"
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 # (may also be present on a 5100).
 include 	"arch/pmax/conf/builtin.3100"
-include 	"arch/pmax/conf/builtin.5100"
+#include 	"arch/pmax/conf/builtin.5100"
 
 # baseboard devices on 5100, 3100 "ibus" virtual bus
 include 	"arch/pmax/conf/ibus.std"
