@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.75 2002/09/04 06:34:21 jdolecek Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.76 2002/11/12 23:40:21 manu Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.75 2002/09/04 06:34:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.76 2002/11/12 23:40:21 manu Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.75 2002/09/04 06:34:21 jdolecek Exp 
 #include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
 #include "opt_compat_mach.h"
+#include "opt_compat_darwin.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
@@ -126,6 +127,10 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_LINUX
 #include <compat/linux/common/linux_exec.h>
+#endif
+
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
 #endif
 
 #ifdef COMPAT_FREEBSD
@@ -485,6 +490,19 @@ const struct execsw execsw_builtin[] = {
 	  EXECSW_PRIO_ANY,
 	  MAXPATHLEN + 1,
 	  exec_mach_copyargs,
+	  NULL,
+	  coredump_netbsd },
+#endif
+
+#ifdef COMPAT_DARWIN
+	/* Darwin Mach-O (native word size) */
+	{ sizeof (struct exec_macho_fat_header),
+	  exec_macho_makecmds,
+	  { .mach_probe_func = exec_darwin_probe },
+	  &emul_darwin,
+	  EXECSW_PRIO_ANY,
+	  MAXPATHLEN + 1,
+	  exec_darwin_copyargs,
 	  NULL,
 	  coredump_netbsd },
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.579 2002/11/07 21:56:57 martin Exp $
+#	$NetBSD: files,v 1.580 2002/11/12 23:40:19 manu Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -68,6 +68,7 @@ defflag				COMPAT_AOUT
 defflag				COMPAT_AOUT_M68K
 defflag				COMPAT_M68K4K
 defflag				COMPAT_MACH
+defflag				COMPAT_DARWIN
 defflag				COMPAT_VAX1K
 defflag				COMPAT_43
 defflag				COMPAT_PECOFF
