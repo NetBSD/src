@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.16 1996/12/24 17:36:28 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.17 1996/12/31 18:03:30 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$NetBSD: var.c,v 1.16 1996/12/24 17:36:28 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.17 1996/12/31 18:03:30 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,10 @@ static char rcsid[] = "$NetBSD: var.c,v 1.16 1996/12/24 17:36:28 christos Exp $"
  */
 
 #include    <ctype.h>
+#ifndef MAKE_BOOTSTRAP
 #include    <regex.h>
+#endif
+#include    <stdlib.h>
 #include    "make.h"
 #include    "buf.h"
 
@@ -161,6 +164,7 @@ typedef struct {
     int	    	  flags;
 } VarPattern;
 
+#ifndef MAKE_BOOTSTRAP
 typedef struct {
     regex_t	   re;
     int		   nsub;
@@ -168,6 +172,7 @@ typedef struct {
     char 	  *replace;
     int		   flags;
 } VarREPattern;
+#endif
 
 static int VarCmp __P((ClientData, ClientData));
 static Var *VarFind __P((char *, GNode *, int));
@@ -182,8 +187,10 @@ static Boolean VarMatch __P((char *, Boolean, Buffer, ClientData));
 static Boolean VarSYSVMatch __P((char *, Boolean, Buffer, ClientData));
 #endif
 static Boolean VarNoMatch __P((char *, Boolean, Buffer, ClientData));
+#ifndef MAKE_BOOTSTRAP
 static void VarREError __P((int, regex_t *, const char *));
 static Boolean VarRESubstitute __P((char *, Boolean, Buffer, ClientData));
+#endif
 static Boolean VarSubstitute __P((char *, Boolean, Buffer, ClientData));
 static char *VarGetPattern __P((GNode *, int, char **, int, int *, int *,
 				VarPattern *));
@@ -1054,7 +1061,7 @@ VarSubstitute (word, addSpace, buf, patternp)
     return(TRUE);
 }
 
-
+#ifndef MAKE_BOOTSTRAP
 /*-
  *-----------------------------------------------------------------------
  * VarREError --
@@ -1205,6 +1212,7 @@ VarRESubstitute(word, addSpace, buf, patternp)
     }
     return(addSpace||added);
 }
+#endif
 
 
 /*-
@@ -1791,6 +1799,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    free(pattern.rhs);
 		    break;
 		}
+#ifndef MAKE_BOOTSTRAP
 		case 'C':
 		{
 		    VarREPattern    pattern;
@@ -1849,6 +1858,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		    free(pattern.matches);
 		    break;
 		}
+#endif
 		case 'Q':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarQuote (str);
