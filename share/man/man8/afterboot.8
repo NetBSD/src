@@ -1,4 +1,4 @@
-.\"	$NetBSD: afterboot.8,v 1.7 2003/05/14 07:40:27 wiz Exp $
+.\"	$NetBSD: afterboot.8,v 1.8 2003/06/26 12:04:47 wiz Exp $
 .\"
 .\" Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,7 +150,7 @@ Set the time zone to Eastern Europe Summer Time.
 One of the first things you will likely need to do is to set up your
 keyboard map (and maybe some other aspects about the system console).
 To change your keyboard encoding, edit the
-.Va Dq encoding
+.Dq Va encoding
 variable found in
 .Pa /etc/wscons.conf .
 .Pp
@@ -164,7 +164,7 @@ See the man page for
 .Xr hostname 1
 if it needs to be changed.
 You will also need to change the contents of the
-.Va Dq hostname
+.Dq Va hostname
 variable in
 .Pa /etc/rc.conf
 or edit the
@@ -254,7 +254,7 @@ ff02::%lo0/32      fe80::1%lo0   UC       0     0   32972  lo0
 .Ed
 .Pp
 The default gateway address is stored in the
-.Va Dq defaultroute
+.Dq Va defaultroute
 variable
 .Pa /etc/rc.conf ,
 or in the file
@@ -350,7 +350,7 @@ command.
 If necessary, correct it by editing the
 .Pa /etc/defaultdomain
 file or by setting the
-.Va Dq domainname
+.Dq Va domainname
 variable in
 .Pa /etc/rc.conf .
 The
