@@ -1,4 +1,4 @@
-.\"	$NetBSD: dbopen.3,v 1.8 1998/05/07 19:24:21 kleink Exp $
+.\"	$NetBSD: dbopen.3,v 1.9 1999/02/07 07:27:13 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,7 @@ dbopen, db \- database access methods
 #include <sys/types.h>
 #include <limits.h>
 #include <db.h>
+#include <fcntl.h>
 
 DB *
 dbopen(const char *file, int flags, mode_t mode, DBTYPE type,
