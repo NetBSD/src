@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.71 2000/03/20 22:59:26 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.72 2000/03/22 01:41:41 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -3126,7 +3126,7 @@ rf_auto_config_set(cset,unit)
 	int raidID;
 	int retcode;
 
-	printf("Starting autoconfigure on raid%d\n",raidID);
+	printf("RAID autoconfigure\n");
 
 	retcode = 0;
 	*unit = -1;
@@ -3176,7 +3176,7 @@ rf_auto_config_set(cset,unit)
 		printf("(Out of RAID devs!)\n");
 		return(1);
 	}
-
+	printf("Configuring raid%d:\n",raidID);
 	raidPtr = raidPtrs[raidID];
 
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */
