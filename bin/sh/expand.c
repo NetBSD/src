@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.68 2005/02/14 20:46:26 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.69 2005/03/19 15:02:58 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.68 2005/02/14 20:46:26 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.69 2005/03/19 15:02:58 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -922,7 +922,8 @@ recordregion(int start, int end, int inquotes)
 	if (ifslastp == NULL) {
 		ifsp = &ifsfirst;
 	} else {
-		if (ifslastp->endoff == start) {
+		if (ifslastp->endoff == start
+		    && ifslastp->inquotes == inquotes) {
 			/* extend previous area */
 			ifslastp->endoff = end;
 			return;
@@ -1009,7 +1010,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 			p++;
 
 			if (!inquotes) {
-				/* Ignore trailing IFS writespace */
+				/* Ignore trailing IFS whitespace */
 				for (; p < string + ifsp->endoff; p++) {
 					q = p;
 					if (*p == CTLESC)
