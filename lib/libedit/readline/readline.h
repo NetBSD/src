@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.5 2001/01/01 15:52:26 jdolecek Exp $	*/
+/*	$NetBSD: readline.h,v 1.1 2001/01/05 21:15:50 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
