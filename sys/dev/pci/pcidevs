@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.271 2000/11/04 16:41:57 thorpej Exp $
+$NetBSD: pcidevs,v 1.272 2000/11/14 16:20:20 bouyer Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -687,7 +687,8 @@ product ALLIANCE AT24	0x6424	AT24
 product	ALLIANCE AT25	0x643d	AT25
 
 /* Alteon products */
-product ALTEON ACENIC	0x0001	ACEnic Gigabit Ethernet
+product ALTEON ACENIC		0x0001	ACEnic 1000baseSX Gigabit Ethernet
+product ALTEON ACENIC_COPPER	0x0002	ACEnic 1000baseT Gigabit Ethernet
 
 /* AMD products */
 product AMD PCNET_PCI	0x2000	79c970 PCnet-PCI LANCE Ethernet
@@ -1323,7 +1324,8 @@ product NEOMAGIC NMMM256AV_AU	0x8005	MagicMedia 256AV Audio
 product NEOMAGIC NMMM256ZX_AU	0x8006	MagicMedia 256ZX Audio
 
 /* Netgear products */
-product NETGEAR GA620	0x620a	GA620 Gigabit Ethernet
+product NETGEAR GA620	0x620a	GA620 1000baseSX Gigabit Ethernet
+product NETGEAR GA620T	0x630a	GA620 1000baseT Gigabit Ethernet
 
 /* Network Security Technologies, Inc. */
 product NETSEC 7751		0x7751	7751
