@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.1 2000/09/27 22:40:54 thorpej Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.2 2000/09/28 07:20:56 enami Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,8 +72,14 @@
 
 #ifdef _KERNEL
 struct vlan_mc_entry {
-	struct ether_addr		mc_addr;
-	SLIST_ENTRY(vlan_mc_entry)	mc_entries;
+	LIST_ENTRY(vlan_mc_entry)	mc_entries;
+	/*
+	 * A key to identify this entry.  The mc_addr below can't be
+	 * used since multiple sockaddr may mapped into the same
+	 * ether_multi (e.g., AF_UNSPEC).
+	 */
+	struct ether_multi		*mc_enm;
+	struct sockaddr_storage		mc_addr;
 };
 
 struct	ifvlan {
@@ -84,7 +90,7 @@ struct	ifvlan {
 		u_int16_t ifvm_proto; /* encapsulation ethertype */
 		u_int16_t ifvm_tag; /* tag to apply on packets leaving if */
 	} ifv_mib;
-	SLIST_HEAD(__vlan_mchead, vlan_mc_entry)	ifv_mc_listhead;
+	LIST_HEAD(__vlan_mchead, vlan_mc_entry)	ifv_mc_listhead;
 	LIST_ENTRY(ifvlan)	ifv_list;
 };
 #define	ifv_if		ifv_ec.ec_if
