@@ -34,6 +34,9 @@
  *   but INRIA implementation returns EAI_xxx defined for getaddrinfo().
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: getnameinfo.c,v 1.2 2003/07/12 09:37:14 itojun Exp $");
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
