@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.8 2003/08/26 21:52:18 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.7 2003/06/04 19:51:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.8 2003/08/26 21:52:18 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -62,12 +62,15 @@ mach_bootstrap_look_up(args)
 	const char service_name[] = "lookup\021"; /* XXX Why */
 	int service_name_len;
 	struct mach_right *mr;
+	size_t len;
 
 	/* The trailer is word aligned  */
 	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
-	*msglen = sizeof(rep->rep_msgh) + sizeof(rep->rep_count) + 
-	    sizeof(rep->rep_bootstrap_port) + service_name_len *
-	    sizeof(rep->rep_trailer);
+	len = sizeof(*rep) - sizeof(rep->rep_service_name) + service_name_len;
+
+	if (len > *msglen)
+		return mach_msg_error(args, EINVAL);
+	*msglen = len;
 
 	mr = mach_right_get(NULL, l, MACH_PORT_TYPE_DEAD_NAME, 0);
 
@@ -79,8 +82,8 @@ mach_bootstrap_look_up(args)
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_count = 1; /* XXX Why? */
 	rep->rep_bootstrap_port = mr->mr_name;
-	strncpy((char *)&rep->rep_service_name, service_name,
-	    sizeof(rep->rep_service_name)); 
+	strncpy((char *)rep->rep_service_name, service_name,
+	    service_name_len);
 	/* XXX This is the trailer. We should find something better */
 	rep->rep_service_name[service_name_len + 7] = 8;
 
