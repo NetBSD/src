@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.3 1997/01/09 12:03:22 tls Exp $	*/
+/*	$NetBSD: whatis.c,v 1.4 1997/10/17 06:58:52 mikel Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-static char rcsid[] = "$NetBSD: whatis.c,v 1.3 1997/01/09 12:03:22 tls Exp $";
+static char rcsid[] = "$NetBSD: whatis.c,v 1.4 1997/10/17 06:58:52 mikel Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,7 @@ static char rcsid[] = "$NetBSD: whatis.c,v 1.3 1997/01/09 12:03:22 tls Exp $";
 
 #include <ctype.h>
 #include <err.h>
+#include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -77,6 +78,7 @@ main(argc, argv)
 	TAG *tp;
 	int ch, rv;
 	char *beg, *conffile, **p, *p_augment, *p_path;
+	glob_t pg;
 
 	conffile = NULL;
 	p_augment = p_path = NULL;
@@ -118,8 +120,14 @@ main(argc, argv)
 		config(conffile);
 		ep = (tp = getlist("_whatdb")) == NULL ?
 		   NULL : tp->list.tqh_first;
-		for (; ep != NULL; ep = ep->q.tqe_next)
-			whatis(argv, ep->s, 0);
+		for (; ep != NULL; ep = ep->q.tqe_next) {
+			if (glob(ep->s, GLOB_BRACE | GLOB_NOSORT | GLOB_QUOTE,
+			    NULL, &pg) != 0)
+				err(1, "glob");
+			for (p = pg.gl_pathv; *p; p++)
+				whatis(argv, *p, 0);
+			globfree(&pg);
+		}
 	}
 
 	if (!foundman) {
