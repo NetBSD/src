@@ -1,5 +1,5 @@
 /*
- *	$Id: loadkmap.c,v 1.2 1994/02/11 07:03:07 chopps Exp $
+ *	$Id: loadkmap.c,v 1.3 1994/05/11 19:09:29 chopps Exp $
  */
 
 #include <sys/types.h>
@@ -44,10 +44,10 @@ load_kmap (file)
     {
       if (read (fd, buf, sizeof (buf)) == sizeof (buf))
 	{
-	  if (ioctl (0, ITELOADKMAP, buf) == 0)
+	  if (ioctl (0, ITEIOCSKMAP, buf) == 0)
 	    return;
 	  else
-	    perror ("ITELOADKMAP");
+	    perror ("ITEIOCSKMAP");
 	}
       else
 	perror ("read kmap");
@@ -62,8 +62,8 @@ void
 dump_kmap()
 {
   char buf[sizeof (struct kbdmap)];
-  if (ioctl (0, ITEGETKMAP, buf) == 0)
+  if (ioctl (0, ITEIOCGKMAP, buf) == 0)
     write (1, buf, sizeof (buf));
   else
-    perror ("ITEGETKMAP");
+    perror ("ITEIOCGKMAP");
 }
