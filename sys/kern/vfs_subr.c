@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.195 2003/05/16 14:01:56 christos Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.196 2003/05/16 14:40:42 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.195 2003/05/16 14:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.196 2003/05/16 14:40:42 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1886,21 +1886,21 @@ vprint(label, vp)
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	buf[0] = '\0';
 	if (vp->v_flag & VROOT)
-		strcat(buf, "|VROOT");
+		strlcat(buf, "|VROOT", sizeof(buf));
 	if (vp->v_flag & VTEXT)
-		strcat(buf, "|VTEXT");
+		strlcat(buf, "|VTEXT", sizeof(buf));
 	if (vp->v_flag & VEXECMAP)
-		strcat(buf, "|VEXECMAP");
+		strlcat(buf, "|VEXECMAP", sizeof(buf));
 	if (vp->v_flag & VSYSTEM)
-		strcat(buf, "|VSYSTEM");
+		strlcat(buf, "|VSYSTEM", sizeof(buf));
 	if (vp->v_flag & VXLOCK)
-		strcat(buf, "|VXLOCK");
+		strlcat(buf, "|VXLOCK", sizeof(buf));
 	if (vp->v_flag & VXWANT)
-		strcat(buf, "|VXWANT");
+		strlcat(buf, "|VXWANT", sizeof(buf));
 	if (vp->v_flag & VBWAIT)
-		strcat(buf, "|VBWAIT");
+		strlcat(buf, "|VBWAIT", sizeof(buf));
 	if (vp->v_flag & VALIASED)
-		strcat(buf, "|VALIASED");
+		strlcat(buf, "|VALIASED", sizeof(buf));
 	if (buf[0] != '\0')
 		printf(" flags (%s)", &buf[1]);
 	if (vp->v_data == NULL) {
