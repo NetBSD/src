@@ -1,4 +1,4 @@
-/*	$NetBSD: if_en.c,v 1.6 1998/07/27 23:47:07 pk Exp $	*/
+/*	$NetBSD: if_en.c,v 1.7 1998/08/20 11:44:58 pk Exp $	*/
 
 /*
  *
@@ -43,6 +43,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/mbuf.h>
@@ -51,6 +52,7 @@
 
 #include <net/if.h>
 
+#include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
 
@@ -82,7 +84,7 @@ struct en_sbus_softc {
  * prototypes
  */
 
-static	int en_sbus_match __P((struct device *, void *, void *));
+static	int en_sbus_match __P((struct device *, struct cfdata *, void *));
 static	void en_sbus_attach __P((struct device *, struct device *, void *));
 
 /*
@@ -100,7 +102,7 @@ struct cfattach en_sbus_ca = {
  */
 
 static int
-en_sbus_match(parent, match, aux)
+en_sbus_match(parent, cf, aux)
 	struct device *parent;
         struct cfdata *cf;
 	void *aux;
@@ -127,28 +129,21 @@ en_sbus_attach(parent, self, aux)
 	struct sbus_attach_args *sa = aux;
 	struct en_softc *sc = (void *)self;
 	struct en_sbus_softc *scs = (void *)self;
-	bus_space_handle_t bh;
-	struct intrhand	*ih;
-	int lcv, iplcode;
 
 	printf("\n");
 
 	if (bus_space_map2(sa->sa_bustag, sa->sa_slot,
 			 sa->sa_offset,
 			 4*1024*1024,
-			 0, 0, &bh) != 0) {
+			 0, 0, &sc->en_base) != 0) {
 		printf("%s: cannot map registers\n", self->dv_xname);
 		return;
 	}
-	sc->en_base = (volatile caddr_t)bh;
 
 	/* Establish interrupt channel */
-	ih = bus_intr_establish(sa->sa_bustag,
-				sa->sa_pri, 0,
-				en_intr, sc);
+	(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, 0, en_intr, sc);
 
-	sc->ipl = ih->ih_pri;	/* used to be this */
-	/*sc->ipl = sa->sa_pri;	-* but this might more appropriate? */
+	sc->ipl = sa->sa_pri;	/* appropriate? */
 
 	sbus_establish(&scs->sc_sd, &sc->sc_dev);
 
