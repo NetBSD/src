@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.7 1998/10/04 00:02:27 fvdl Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.8 1999/10/04 17:46:37 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -73,16 +73,7 @@
 #define LINUX_SIGUNUSED	31
 #define LINUX_NSIG	32
 
-/*
- * XXX We don't really support linux real-time (>32) signals
- * XXX we now have >32 signals.  FIXME!
- * XXX old linux_sigset_t are assumed to be the same size.
- */
-#if 0
 #define LINUX__NSIG 		64
-#else
-#define LINUX__NSIG		32
-#endif
 #define LINUX__NSIG_BPW		32
 #define LINUX__NSIG_WORDS	(LINUX__NSIG / LINUX__NSIG_BPW)
 
