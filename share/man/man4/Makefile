@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.118 1999/12/11 23:10:15 augustss Exp $
+#	$NetBSD: Makefile,v 1.119 1999/12/20 05:50:48 itojun Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	ahb.4 ahc.4 aria.4 atalk.4 audio.4 awi.4 bha.4 bpf.4 cardbus.4 ccd.4 \
@@ -35,7 +35,7 @@ MAN+=	ex.4
 MAN+=	si.4
 
 # IPv6/IPsec
-MAN+=	faith.4 gif.4 ipsec.4 inet6.4
+MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4
 
 MLINKS+=bha.4 bt.4
 MLINKS+=cardbus.4 cbb.4
