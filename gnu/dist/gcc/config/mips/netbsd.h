@@ -1,5 +1,5 @@
 /* Definitions for DECstation running BSD as target machine for GNU compiler.
-   Copyright (C) 1993, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1993, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -39,12 +39,6 @@ Boston, MA 02111-1307, USA.  */
  "-D__ANSI_COMPAT -DMIPSEL -DR3000 -DSYSTYPE_BSD -D_SYSTYPE_BSD \
   -D__NetBSD__ -D__ELF__ -Dmips -D__NO_LEADING_UNDERSCORES__ -D__GP_SUPPORT__ \
   -Dunix -D_R3000 -Asystem(unix) -Asystem(NetBSD) -Amachine(mips)"
-
-#undef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
-
-#undef MACHINE_TYPE
-#define MACHINE_TYPE "NetBSD/mips"
 
 /* Always uses gas.  */
 

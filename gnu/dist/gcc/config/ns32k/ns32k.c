@@ -1,5 +1,5 @@
 /* Subroutines for assembler code output on the NS32000.
-   Copyright (C) 1988, 1994, 1995, 1996 Free Software Foundation, Inc.
+   Copyright (C) 1988, 1994, 1995, 1996, 1997 Free Software Foundation, Inc.
 
 This file is part of GNU CC.
 
@@ -19,8 +19,8 @@ the Free Software Foundation, 59 Temple Place - Suite 330,
 Boston, MA 02111-1307, USA.  */
 
 /* Some output-actions in ns32k.md need these.  */
-#include <stdio.h>
 #include "config.h"
+#include <stdio.h>
 #include "rtl.h"
 #include "regs.h"
 #include "hard-reg-set.h"
@@ -214,7 +214,7 @@ gen_indexed_expr (base, index, scale)
   if (GET_CODE (base) != REG && GET_CODE (base) != CONST_INT)
     base = gen_rtx (MEM, SImode, base);
   addr = gen_rtx (MULT, SImode, index,
-		  gen_rtx (CONST_INT, VOIDmode, 1 << INTVAL (scale)));
+		  GEN_INT (1 << INTVAL (scale)));
   addr = gen_rtx (PLUS, SImode, base, addr);
   return addr;
 }
@@ -702,7 +702,7 @@ print_operand (file, x, code)
 	  u.i[0] = CONST_DOUBLE_LOW (x); u.i[1] = CONST_DOUBLE_HIGH (x);
 	  PUT_IMMEDIATE_PREFIX(file);
 #ifdef SEQUENT_ASM
-	  /* Sequent likes it's floating point constants as integers */
+	  /* Sequent likes its floating point constants as integers */
 	  fprintf (file, "0Dx%08x%08x", u.i[1], u.i[0]);
 #else
 #ifdef ENCORE_ASM

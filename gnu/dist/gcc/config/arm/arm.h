@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for Acorn RISC Machine.
-   Copyright (C) 1991, 93, 94, 95, 96, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1991, 93, 94, 95, 96, 97, 1998 Free Software Foundation, Inc.
    Contributed by Pieter `Tiggr' Schoenmakers (rcpieter@win.tue.nl)
    and Martin Simmons (@harleqn.co.uk).
    More major hacks by Richard Earnshaw (rwe11@cl.cam.ac.uk)
@@ -86,7 +86,7 @@ extern int frame_pointer_needed;
 #if TARGET_CPU_DEFAULT == TARGET_CPU_arm2
 #define CPP_ARCH_DEFAULT_SPEC "-D__ARM_ARCH_2__"
 #else
-#if TARGET_CPU_DEFAULT == TARGET_CPU_arm6 || TARGET_CPU_DEFUALT == TARGET_CPU_arm610 || TARGET_CPU_DEFAULT == TARGET_CPU_arm7500fe
+#if TARGET_CPU_DEFAULT == TARGET_CPU_arm6 || TARGET_CPU_DEFAULT == TARGET_CPU_arm610 || TARGET_CPU_DEFAULT == TARGET_CPU_arm7500fe
 #define CPP_ARCH_DEFAULT_SPEC "-D__ARM_ARCH_3__"
 #else
 #if TARGET_CPU_DEFAULT == TARGET_CPU_arm7m
@@ -346,7 +346,7 @@ extern char *target_fp_name;
   {"apcs-float",		ARM_FLAG_APCS_FLOAT},	\
   {"no-apcs-float",	       -ARM_FLAG_APCS_FLOAT},	\
   {"apcs-reentrant",		ARM_FLAG_APCS_REENT},	\
-  {"no-apcs-rentrant",	       -ARM_FLAG_APCS_REENT},	\
+  {"no-apcs-reentrant",	       -ARM_FLAG_APCS_REENT},	\
   {"short-load-bytes",		ARM_FLAG_SHORT_BYTE},	\
   {"no-short-load-bytes",      -ARM_FLAG_SHORT_BYTE},	\
   {"short-load-words",	       -ARM_FLAG_SHORT_BYTE},	\
@@ -437,7 +437,7 @@ extern enum floating_point_type arm_fpu;
 /* What type of floating point instructions are available */
 extern enum floating_point_type arm_fpu_arch;
 
-/* Default floating point archtitecture.  Override in sub-target if
+/* Default floating point architecture.  Override in sub-target if
    necessary.  */
 #define FP_DEFAULT FP_SOFT2
 
@@ -482,6 +482,11 @@ extern int arm_arch4;
 	UNSIGNEDP = TARGET_SHORT_BY_BYTES != 0;	\
       (MODE) = SImode;				\
     }
+
+/* Define this macro if the promotion described by `PROMOTE_MODE'
+   should also be done for outgoing function arguments.  */
+/* This is required to ensure that push insns always push a word.  */
+#define PROMOTE_FUNCTION_ARGS
 
 /* Define for XFmode extended real floating point support.
    This will automatically cause REAL_ARITHMETIC to be defined.  */
@@ -754,12 +759,12 @@ extern int arm_arch4;
    least likely to contain a function parameter; in addition results are
    returned in r0.
    */
-#define REG_ALLOC_ORDER  \
+#define REG_ALLOC_ORDER  	    \
 {                                   \
-    3, 2, 1, 0, 12, 14,	4, 5,       \
-    6, 7, 8, 10, 9, 11, 13, 15,     \
+     3,  2,  1,  0, 12, 14,  4,  5, \
+     6,  7,  8, 10,  9, 11, 13, 15, \
     16, 17, 18, 19, 20, 21, 22, 23, \
-    24, 25			    \
+    24, 25, 26			    \
 }
 
 /* Register and constant classes.  */
@@ -868,9 +873,65 @@ enum reg_class
    ? GENERAL_REGS : NO_REGS)
 
 /* If we need to load shorts byte-at-a-time, then we need a scratch. */
-#define SECONDARY_INPUT_RELOAD_CLASS(CLASS,MODE,X)			\
-  (((MODE) == HImode && TARGET_SHORT_BY_BYTES && true_regnum (X) == -1)	\
+#define SECONDARY_INPUT_RELOAD_CLASS(CLASS,MODE,X)		\
+  (((MODE) == HImode && TARGET_SHORT_BY_BYTES			\
+    && (GET_CODE (X) == MEM					\
+	|| ((GET_CODE (X) == REG || GET_CODE (X) == SUBREG)	\
+	    && true_regnum (X) == -1)))				\
    ? GENERAL_REGS : NO_REGS)
+
+/* Try a machine-dependent way of reloading an illegitimate address
+   operand.  If we find one, push the reload and jump to WIN.  This
+   macro is used in only one place: `find_reloads_address' in reload.c.
+
+   For the ARM, we wish to handle large displacements off a base
+   register by splitting the addend across a MOV and the mem insn.
+   This can cut the number of reloads needed. */
+#define LEGITIMIZE_RELOAD_ADDRESS(X,MODE,OPNUM,TYPE,IND_LEVELS,WIN)	\
+do {									\
+  if (GET_CODE (X) == PLUS						\
+      && GET_CODE (XEXP (X, 0)) == REG					\
+      && REGNO (XEXP (X, 0)) < FIRST_PSEUDO_REGISTER			\
+      && REG_MODE_OK_FOR_BASE_P (XEXP (X, 0), MODE)			\
+      && GET_CODE (XEXP (X, 1)) == CONST_INT)				\
+    {									\
+      HOST_WIDE_INT val = INTVAL (XEXP (X, 1));				\
+      HOST_WIDE_INT low, high;						\
+									\
+      if (MODE == DImode || (TARGET_SOFT_FLOAT && MODE == DFmode))	\
+	low = ((val & 0xf) ^ 0x8) - 0x8;				\
+      else if (MODE == SImode || MODE == QImode				\
+	       || (MODE == SFmode && TARGET_SOFT_FLOAT)			\
+	       || (MODE == HImode && ! arm_arch4))			\
+	/* Need to be careful, -4096 is not a valid offset */		\
+	low = val >= 0 ? (val & 0xfff) : -((-val) & 0xfff);		\
+      else if (MODE == HImode && arm_arch4)				\
+	/* Need to be careful, -256 is not a valid offset */		\
+	low = val >= 0 ? (val & 0xff) : -((-val) & 0xff);		\
+      else if (GET_MODE_CLASS (MODE) == MODE_FLOAT			\
+	       && TARGET_HARD_FLOAT)					\
+	/* Need to be careful, -1024 is not a valid offset */		\
+	low = val >= 0 ? (val & 0x3ff) : -((-val) & 0x3ff);		\
+      else								\
+	break;								\
+									\
+      high = ((((val - low) & 0xffffffff) ^ 0x80000000) - 0x80000000);	\
+      /* Check for overflow or zero */					\
+      if (low == 0 || high == 0 || (high + low != val))			\
+	break;								\
+									\
+      /* Reload the high part into a base reg; leave the low part	\
+	 in the mem.  */						\
+      X = gen_rtx_PLUS (GET_MODE (X),					\
+			gen_rtx_PLUS (GET_MODE (X), XEXP (X, 0),	\
+				      GEN_INT (high)),			\
+			GEN_INT (low));					\
+      push_reload (XEXP (X, 0), NULL_RTX, &XEXP (X, 0), NULL_PTR,	\
+		   BASE_REG_CLASS, GET_MODE (X), VOIDmode, 0, 0,	\
+		   OPNUM, TYPE);					\
+      goto WIN;								\
+    }									\
+} while (0)
 
 /* Return the maximum number of consecutive registers
    needed to represent mode MODE in a register of class CLASS.
@@ -905,7 +966,13 @@ enum reg_class
 
 /* If we generate an insn to push BYTES bytes,
    this says how many the stack pointer really advances by.  */
-#define PUSH_ROUNDING(NPUSHED)  (((NPUSHED) + 3) & ~3)
+/* The push insns do not do this rounding implicitly.  So don't define this. */
+/* #define PUSH_ROUNDING(NPUSHED)  (((NPUSHED) + 3) & ~3) */
+
+/* Define this if the maximum size of all the outgoing args is to be
+   accumulated and pushed during the prologue.  The amount can be
+   found in the variable current_function_outgoing_args_size.  */
+#define ACCUMULATE_OUTGOING_ARGS
 
 /* Offset of first parameter from the argument pointer register value.  */
 #define FIRST_PARM_OFFSET(FNDECL)  4
@@ -1102,8 +1169,10 @@ enum reg_class
   int volatile_func = arm_volatile_func ();				\
   if ((FROM) == ARG_POINTER_REGNUM && (TO) == HARD_FRAME_POINTER_REGNUM)\
     (OFFSET) = 0;							\
-  else if ((FROM) == FRAME_POINTER_REGNUM && (TO) == STACK_POINTER_REGNUM)\
-    (OFFSET) = (get_frame_size () + 3 & ~3);				\
+  else if ((FROM) == FRAME_POINTER_REGNUM				\
+	   && (TO) == STACK_POINTER_REGNUM)				\
+    (OFFSET) = (current_function_outgoing_args_size			\
+		+ (get_frame_size () + 3 & ~3));			\
   else									\
     {									\
       int regno;							\
@@ -1125,8 +1194,10 @@ enum reg_class
 	{								\
 	   if (! frame_pointer_needed)					\
 	     offset -= 16;						\
-	   if (! volatile_func && (regs_ever_live[14] || saved_hard_reg)) \
+	   if (! volatile_func						\
+	       && (regs_ever_live[14] || saved_hard_reg)) 		\
 	     offset += 4;						\
+	   offset += current_function_outgoing_args_size;		\
 	   (OFFSET) = (get_frame_size () + 3 & ~3) + offset;		\
          }								\
     }									\
@@ -1340,7 +1411,9 @@ do									\
 	      && INTVAL (op) <= 31)					\
 	    goto LABEL;							\
         }								\
-      range = (MODE) == HImode ? (arm_arch4 ? 256 : 4095) : 4096;	\
+      /* NASTY: Since this limits the addressing of unsigned byte loads */      \
+      range = ((MODE) == HImode || (MODE) == QImode)                    \
+              ? (arm_arch4 ? 256 : 4095) : 4096;                        \
       if (code == CONST_INT && INTVAL (INDEX) < range			\
 	  && INTVAL (INDEX) > -range)  	      				\
         goto LABEL;							\
@@ -1390,14 +1463,15 @@ do									\
       else if (BASE_REGISTER_RTX_P (xop1))				\
 	GO_IF_LEGITIMATE_INDEX (MODE, REGNO (xop1), xop0, LABEL);	\
     }									\
-  else if (GET_CODE (X) == MINUS)					\
+  /* Reload currently can't handle MINUS, so disable this for now */	\
+  /* else if (GET_CODE (X) == MINUS)					\
     {									\
       rtx xop0 = XEXP (X,0);						\
       rtx xop1 = XEXP (X,1);						\
 									\
       if (BASE_REGISTER_RTX_P (xop0))					\
 	GO_IF_LEGITIMATE_INDEX (MODE, -1, xop1, LABEL);			\
-    }									\
+    } */								\
   else if (GET_MODE_CLASS (MODE) != MODE_FLOAT				\
 	   && GET_CODE (X) == SYMBOL_REF				\
 	   && CONSTANT_POOL_ADDRESS_P (X))				\
@@ -1500,10 +1574,11 @@ extern struct rtx_def *legitimize_pic_address ();
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE SImode
 
-/* Define this if the tablejump instruction expects the table
-   to contain offsets from the address of the table.
-   Do not define this if the table should contain absolute addresses.  */
-/* #define CASE_VECTOR_PC_RELATIVE */
+/* Define as C expression which evaluates to nonzero if the tablejump
+   instruction expects the table to contain offsets from the address of the
+   table.
+   Do not define this if the table should contain absolute addresses. */
+/* #define CASE_VECTOR_PC_RELATIVE 1 */
 
 /* Specify the tree operation to be used to convert reals to integers.  */
 #define IMPLICIT_FIX_EXPR  FIX_ROUND_EXPR
@@ -1603,12 +1678,11 @@ extern struct rtx_def *legitimize_pic_address ();
   ((X) == frame_pointer_rtx || (X) == stack_pointer_rtx	\
    || (X) == arg_pointer_rtx)
 
-#define RTX_COSTS(X,CODE,OUTER_CODE)		\
-  default:					\
+#define DEFAULT_RTX_COSTS(X,CODE,OUTER_CODE)		\
    return arm_rtx_costs (X, CODE, OUTER_CODE);
 
 /* Moves to and from memory are quite expensive */
-#define MEMORY_MOVE_COST(MODE)  10
+#define MEMORY_MOVE_COST(MODE,CLASS,IN)  10
 
 /* All address computations that can be done are free, but rtx cost returns
    the same for practically all of them.  So we weight the different types
@@ -1690,6 +1764,7 @@ do								\
     {								\
       rtx const_op = OP1;					\
       CODE = arm_canonicalize_comparison ((CODE), &const_op);	\
+      OP1 = const_op;						\
     }								\
 } while (0)
 
@@ -1712,6 +1787,7 @@ extern int arm_compare_fp;
   {"fpu_rhs_operand", {SUBREG, REG, CONST_DOUBLE}},			\
   {"arm_not_operand", {SUBREG, REG, CONST_INT}},			\
   {"offsettable_memory_operand", {MEM}},				\
+  {"bad_signed_byte_operand", {MEM}},					\
   {"alignable_memory_operand", {MEM}},					\
   {"shiftable_operator", {PLUS, MINUS, AND, IOR, XOR}},			\
   {"minmax_operator", {SMIN, SMAX, UMIN, UMAX}},			\
@@ -1742,26 +1818,22 @@ extern int arm_compare_fp;
   goto JUMPTO
 
 /* Output an internal label definition.  */
-#define ASM_OUTPUT_INTERNAL_LABEL(STREAM, PREFIX, NUM)  \
-  do                                    	      	   		\
-    {						      	   		\
-      char *s = (char *) alloca (40 + strlen (PREFIX));	   		\
-      extern int arm_target_label, arm_ccfsm_state;	   		\
-      extern rtx arm_target_insn;					\
-						           		\
-      if (arm_ccfsm_state == 3 && arm_target_label == (NUM)   		\
-	&& !strcmp (PREFIX, "L"))					\
-	{								\
-	  arm_ccfsm_state = 0;				        	\
-	  arm_target_insn = NULL;					\
-	}								\
-	ASM_GENERATE_INTERNAL_LABEL (s, (PREFIX), (NUM));   		\
-	arm_asm_output_label (STREAM, s);		                \
+#define ASM_OUTPUT_INTERNAL_LABEL(STREAM, PREFIX, NUM)  	\
+  do                                    	      	   	\
+    {						      	   	\
+      char *s = (char *) alloca (40 + strlen (PREFIX));	   	\
+      extern int arm_target_label, arm_ccfsm_state;	   	\
+      extern rtx arm_target_insn;				\
+						           	\
+      if (arm_ccfsm_state == 3 && arm_target_label == (NUM)   	\
+	&& !strcmp (PREFIX, "L"))				\
+	{							\
+	  arm_ccfsm_state = 0;				        \
+	  arm_target_insn = NULL;				\
+	}							\
+	ASM_GENERATE_INTERNAL_LABEL (s, (PREFIX), (NUM));   	\
+	ASM_OUTPUT_LABEL (STREAM, s);		                \
     } while (0)
-
-/* Output a label definition.  */
-#define ASM_OUTPUT_LABEL(STREAM,NAME)		\
-  arm_asm_output_label ((STREAM), (NAME))
 
 /* Output a push or a pop instruction (only used when profiling).  */
 #define ASM_OUTPUT_REG_PUSH(STREAM,REGNO) \
@@ -1916,9 +1988,9 @@ do {									\
 	  shift += 8;							\
 	}								\
     }									\
-  fprintf (FILE, "\tldr\t%spc, [%spc, #-4]\n", REGISTER_PREFIX,		\
-	   REGISTER_PREFIX);						\
-  ASM_OUTPUT_INT (FILE, XEXP (DECL_RTL (FUNCTION), 0));			\
+  fputs ("\tb\t", FILE);						\
+  assemble_name (FILE, XSTR (XEXP (DECL_RTL (FUNCTION), 0), 0));	\
+  fputc ('\n', FILE);							\
 } while (0)
 
 /* A C expression whose value is RTL representing the value of the return
@@ -1927,7 +1999,7 @@ do {									\
 #define RETURN_ADDR_RTX(COUNT, FRAME)	\
   ((COUNT == 0)				\
    ? gen_rtx (MEM, Pmode, plus_constant (FRAME, -4)) \
-   : (rtx) 0)
+   : NULL_RTX)
 
 /* Used to mask out junk bits from the return address, such as
    processor state, interrupt status, condition codes and the like.  */
@@ -1959,7 +2031,7 @@ struct rtx_def *legitimize_pic_address (/* struct rtx_def *,
 int is_pic (/* struct rtx_def * */);
 void arm_finalize_pic (/* void */);
 int arm_rtx_costs (/* struct rtx_def *, enum rtx_code, enum rtx_code */);
-int arm_adjust_code (/* struct rtx_def *, struct rtx_def *, 
+int arm_adjust_cost (/* struct rtx_def *, struct rtx_def *, 
 			struct rtx_def *, int */);
 int const_double_rtx_ok_for_fpu (/* struct rtx_def * */);
 int neg_const_double_rtx_ok_for_fpu (/* struct rtx_def * */);
@@ -1973,6 +2045,7 @@ int arm_add_operand (/* struct rtx_def *, enum machine_mode */);
 int arm_not_operand (/* struct rtx_def *, enum machine_mode */);
 int offsettable_memory_operand (/* struct rtx_def *, enum machine_mode */);
 int alignable_memory_operand (/* struct rtx_def *, enum machine_mode */);
+int bad_signed_byte_operand (/* struct rtx_def *, enum machine_mode */);
 int fpu_rhs_operand (/* struct rtx_def *, enum machine_mode */);
 int fpu_add_operand (/* struct rtx_def *, enum machine_mode */);
 int power_of_two_operand (/* struct rtx_def *, enum machine_mode */);
@@ -2003,9 +2076,9 @@ int arm_valid_machine_decl_attribute (/* union tree_node *, union tree_node *,
 					 union tree_node *,
 					 union tree_node * */);
 struct rtx_def *arm_gen_load_multiple (/* int, int, struct rtx_def *, 
-					  int, int */);
+					  int, int, int, int */);
 struct rtx_def *arm_gen_store_multiple (/* int, int, struct rtx_def *,
-					   int, int */);
+					   int, int, int, int */);
 int arm_gen_movstrqi (/* struct rtx_def ** */);
 struct rtx_def *gen_rotated_half_load (/* struct rtx_def * */);
 enum machine_mode arm_select_cc_mode (/* enum rtx_code, struct rtx_def *,
@@ -2035,8 +2108,6 @@ void output_func_prologue (/* FILE *, int */);
 void output_func_epilogue (/* FILE *, int */);
 void arm_expand_prologue (/* void */);
 void arm_print_operand (/* FILE *, struct rtx_def *, int */);
-void arm_asm_output_label (/* FILE *, char * */);
-void output_lcomm_directive (/* FILE *, char *, int, int */);
 void final_prescan_insn (/* struct rtx_def *, struct rtx_def **, int */);
 #ifdef AOF_ASSEMBLER
 struct rtx_def *aof_pic_entry (/* struct rtx_def * */);

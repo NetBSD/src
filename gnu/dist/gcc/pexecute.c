@@ -1,6 +1,6 @@
 /* Utilities to execute a program in a subprocess (possibly linked by pipes
    with other subprocesses), and wait for it.
-   Copyright (C) 1996, 1997 Free Software Foundation, Inc.
+   Copyright (C) 1996, 1997, 1998 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -27,11 +27,7 @@ Boston, MA 02111-1307, USA.  */
 #include "config.h"
 #endif
 
-#include <stdio.h>
-#include <errno.h>
-#ifdef __NetBSD__
-#include <unistd.h>
-#endif
+#include "system.h"
 
 #ifdef IN_GCC
 #include "gansidecl.h"
@@ -169,7 +165,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
       char *cp;
       for (cp = argv[i]; *cp; cp++)
 	{
-	  if (*cp == '"' || *cp == '\'' || *cp == '\\' || isspace (*cp))
+	  if (*cp == '"' || *cp == '\'' || *cp == '\\' || ISSPACE (*cp))
 	    fputc ('\\', argfile);
 	  fputc (*cp, argfile);
 	}
@@ -226,14 +222,50 @@ pwait (pid, status, flags)
 #if defined (_WIN32)
 
 #include <process.h>
-extern int _spawnv ();
-extern int _spawnvp ();
 
 #ifdef __CYGWIN32__
 
 #define fix_argv(argvec) (argvec)
 
-#else
+extern int _spawnv ();
+extern int _spawnvp ();
+
+int
+pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
+     const char *program;
+     char * const *argv;
+     const char *this_pname;
+     const char *temp_base;
+     char **errmsg_fmt, **errmsg_arg;
+     int flags;
+{
+  int pid;
+
+  if ((flags & PEXECUTE_ONE) != PEXECUTE_ONE)
+    abort ();
+  pid = (flags & PEXECUTE_SEARCH ? _spawnvp : _spawnv)
+    (_P_NOWAIT, program, fix_argv(argv));
+  if (pid == -1)
+    {
+      *errmsg_fmt = install_error_msg;
+      *errmsg_arg = program;
+      return -1;
+    }
+  return pid;
+}
+
+int
+pwait (pid, status, flags)
+     int pid;
+     int *status;
+     int flags;
+{
+  /* ??? Here's an opportunity to canonicalize the values in STATUS.
+     Needed?  */
+  return cwait (status, pid, WAIT_CHILD);
+}
+
+#else /* ! __CYGWIN32__ */
 
 /* This is a kludge to get around the Microsoft C spawn functions' propensity
    to remove the outermost set of double quotes from all arguments.  */
@@ -272,8 +304,24 @@ fix_argv (argvec)
   return (const char * const *) argvec;
 }
 
-#endif /* ! defined (__CYGWIN32__) */
+#include <io.h>
+#include <fcntl.h>
+#include <signal.h>
 
+/* mingw32 headers may not define the following.  */
+
+#ifndef _P_WAIT
+#  define _P_WAIT	0
+#  define _P_NOWAIT	1
+#  define _P_OVERLAY	2
+#  define _P_NOWAITO	3
+#  define _P_DETACH	4
+
+#  define WAIT_CHILD	0
+#  define WAIT_GRANDCHILD	1
+#endif
+
+/* Win32 supports pipes */
 int
 pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
      const char *program;
@@ -284,19 +332,86 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
      int flags;
 {
   int pid;
+  int pdes[2], org_stdin, org_stdout;
+  int input_desc, output_desc;
+  int retries, sleep_interval;
 
-  if ((flags & PEXECUTE_ONE) != PEXECUTE_ONE)
-    abort ();
+  /* Pipe waiting from last process, to be used as input for the next one.
+     Value is STDIN_FILE_NO if no pipe is waiting
+     (i.e. the next command is the first of a group).  */
+  static int last_pipe_input;
+
+  /* If this is the first process, initialize.  */
+  if (flags & PEXECUTE_FIRST)
+    last_pipe_input = STDIN_FILE_NO;
+
+  input_desc = last_pipe_input;
+
+  /* If this isn't the last process, make a pipe for its output,
+     and record it as waiting to be the input to the next process.  */
+  if (! (flags & PEXECUTE_LAST))
+    {
+      if (_pipe (pdes, 256, O_BINARY) < 0)
+	{
+	  *errmsg_fmt = "pipe";
+	  *errmsg_arg = NULL;
+	  return -1;
+	}
+      output_desc = pdes[WRITE_PORT];
+      last_pipe_input = pdes[READ_PORT];
+    }
+  else
+    {
+      /* Last process.  */
+      output_desc = STDOUT_FILE_NO;
+      last_pipe_input = STDIN_FILE_NO;
+    }
+
+  if (input_desc != STDIN_FILE_NO)
+    {
+      org_stdin = dup (STDIN_FILE_NO);
+      dup2 (input_desc, STDIN_FILE_NO);
+      close (input_desc); 
+    }
+
+  if (output_desc != STDOUT_FILE_NO)
+    {
+      org_stdout = dup (STDOUT_FILE_NO);
+      dup2 (output_desc, STDOUT_FILE_NO);
+      close (output_desc);
+    }
+
   pid = (flags & PEXECUTE_SEARCH ? _spawnvp : _spawnv)
     (_P_NOWAIT, program, fix_argv(argv));
+
+  if (input_desc != STDIN_FILE_NO)
+    {
+      dup2 (org_stdin, STDIN_FILE_NO);
+      close (org_stdin);
+    }
+
+  if (output_desc != STDOUT_FILE_NO)
+    {
+      dup2 (org_stdout, STDOUT_FILE_NO);
+      close (org_stdout);
+    }
+
   if (pid == -1)
     {
       *errmsg_fmt = install_error_msg;
       *errmsg_arg = program;
       return -1;
     }
+
   return pid;
 }
+
+/* MS CRTDLL doesn't return enough information in status to decide if the
+   child exited due to a signal or not, rather it simply returns an
+   integer with the exit code of the child; eg., if the child exited with 
+   an abort() call and didn't have a handler for SIGABRT, it simply returns
+   with status = 3. We fix the status code to conform to the usual WIF*
+   macros. Note that WIFSIGNALED will never be true under CRTDLL. */
 
 int
 pwait (pid, status, flags)
@@ -304,10 +419,26 @@ pwait (pid, status, flags)
      int *status;
      int flags;
 {
+  int termstat;
+
+  pid = _cwait (&termstat, pid, WAIT_CHILD);
+
   /* ??? Here's an opportunity to canonicalize the values in STATUS.
      Needed?  */
-  return _cwait (status, pid, WAIT_CHILD);
+
+  /* cwait returns the child process exit code in termstat.
+     A value of 3 indicates that the child caught a signal, but not
+     which one.  Since only SIGABRT, SIGFPE and SIGINT do anything, we
+     report SIGABRT.  */
+  if (termstat == 3)
+    *status = SIGABRT;
+  else
+    *status = (((termstat) & 0xff) << 8);
+
+  return pid;
 }
+
+#endif /* ! defined (__CYGWIN32__) */
 
 #endif /* _WIN32 */
 
@@ -410,7 +541,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
 	  /* See if we have an argument that needs fixing.  */
 	  if (strchr(argv[i], '/'))
 	    {
-	      tmpname = xmalloc (256);
+	      tmpname = (char *) xmalloc (256);
 	      mpwify_filename (argv[i], tmpname);
 	      argv[i] = tmpname;
 	    }
@@ -435,7 +566,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
       /* See if we have an argument that needs fixing.  */
       if (strchr(argv[i], '/'))
 	{
-	  tmpname = xmalloc (256);
+	  tmpname = (char *) xmalloc (256);
 	  mpwify_filename (argv[i], tmpname);
 	  argv[i] = tmpname;
 	}
@@ -505,6 +636,9 @@ pfinish ()
 
 extern int execv ();
 extern int execvp ();
+#ifdef IN_GCC
+extern char * my_strerror			PROTO ((int));
+#endif
 
 int
 pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
@@ -605,11 +739,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
 #else
       fprintf (stderr, ": %s\n", xstrerror (errno));
 #endif
-#ifdef __NetBSD__
       _exit (-1);
-#else
-      exit (-1);
-#endif
       /* NOTREACHED */
       return 0;
 

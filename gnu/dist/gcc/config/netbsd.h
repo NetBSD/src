@@ -13,11 +13,11 @@
 #define GCC_INCLUDE_DIR "/usr/include"
 
 #undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS		\
-  {					\
-    { GPLUSPLUS_INCLUDE_DIR, 1, 1 },	\
-    { GCC_INCLUDE_DIR, 0, 0 },		\
-    { 0, 0, 0 }				\
+#define INCLUDE_DEFAULTS			\
+  {						\
+    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1 },	\
+    { GCC_INCLUDE_DIR, "GCC", 0, 0 },		\
+    { 0, 0, 0, 0 }				\
   }
 
 /* Under NetBSD, the normal location of the compiler back ends is the
@@ -37,6 +37,7 @@
 #define MD_STARTFILE_PREFIX		"/usr/lib/"
 
 #endif
+
 
 /* Provide a CPP_SPEC appropriate for NetBSD.  Current we just deal with
    the GCC option `-posix'.  */
@@ -117,7 +118,9 @@
 
 #undef ASM_WEAKEN_LABEL
 #define ASM_WEAKEN_LABEL(FILE,NAME) \
-  do { fputs ("\t.weak\t", FILE); assemble_name (FILE, NAME); \
+  do { fputs ("\t.globl\t", FILE); assemble_name (FILE, NAME); \
+       fputc ('\n', FILE); \
+       fputs ("\t.weak\t", FILE); assemble_name (FILE, NAME); \
        fputc ('\n', FILE); } while (0)
 
 /* The following macro defines the format used to output the second
