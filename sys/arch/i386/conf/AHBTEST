@@ -10,6 +10,7 @@ options		INET,ISOFS,NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		SCSI
+options 	DDB
 
 config		"386bsd"	root on sd0 swap on sd0
 
@@ -52,7 +53,6 @@ pseudo-device	loop
 pseudo-device	ether
 pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	ddb
 pseudo-device	pty	4
 
 pseudo-device	swappager

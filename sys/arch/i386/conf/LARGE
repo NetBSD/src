@@ -8,6 +8,7 @@ timezone	8 dst
 maxusers	30
 options		INET,NFS,MFS,HSFS,DIAGNOSTIC # OSI real soon
 options		"COMPAT_43","TCP_COMPAT_42"
+options 	DDB
 
 config		"386bsd"	root on dk0 swap on dk0
 
@@ -38,7 +39,6 @@ pseudo-device	pty
 pseudo-device	ether
 pseudo-device	sl	2
 pseudo-device	log
-pseudo-device	ddb
 
 
 pseudo-device	swappager
