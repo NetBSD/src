@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)reboot.2	6.5 (Berkeley) 3/10/91
-.\"	$Id: reboot.2,v 1.3 1993/11/25 00:39:28 jtc Exp $
+.\"	$Id: reboot.2,v 1.4 1994/09/17 00:17:43 mycroft Exp $
 .\"
 .Dd March 10, 1991
 .Dt REBOOT 2
@@ -63,7 +63,7 @@ The default, causing the system to reboot in its usual fashion.
 Interpreted by the bootstrap program itself, causing it to
 prompt on the console as to what file should be booted.
 Normally, the system is booted from the file
-.Dq Em xx Ns No (0,0)vmunix ,
+.Dq Em xx Ns No (0,0)netbsd ,
 where
 .Em xx
 is the default disk name,
@@ -124,7 +124,7 @@ program in the newly booted system.
 When no options are given (i.e.,
 .Dv RB_AUTOBOOT
 is used), the system is
-rebooted from file ``vmunix'' in the root file system of unit 0
+rebooted from file ``netbsd'' in the root file system of unit 0
 of a disk chosen in a processor specific way.
 An automatic consistency check of the disks is normally performed
 (see
