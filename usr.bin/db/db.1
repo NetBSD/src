@@ -1,4 +1,4 @@
-.\" 	$NetBSD: db.1,v 1.5 2002/12/29 18:42:49 seb Exp $
+.\" 	$NetBSD: db.1,v 1.6 2003/01/05 13:07:38 seb Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,6 +57,9 @@ databases
 .Ek
 .Bk -words
 .Op Fl f Ar infile
+.Ek
+.Bk -words
+.Op Fl O Ar str
 .Ek
 .Ar type
 .Ar database
@@ -209,7 +212,7 @@ Read mode specific options are:
 Display key.
 .It Fl V
 Display value.
-.It Fl O Ar string
+.It Fl O Ar str
 Field separator string between key and value. Defaults to a single
 tab
 .Pq Sq \et .

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.6 2002/12/29 18:42:49 seb Exp $	*/
+/*	$NetBSD: db.c,v 1.7 2003/01/05 13:07:38 seb Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: db.c,v 1.6 2002/12/29 18:42:49 seb Exp $");
+__RCSID("$NetBSD: db.c,v 1.7 2003/01/05 13:07:38 seb Exp $");
 #endif /* not lint */
 
 #include <db.h>
@@ -461,9 +461,9 @@ usage(void)
 	const char *p = getprogname();
 
 	fprintf(stderr,
-    "Usage: %s [-KV] [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
+    "Usage: %s [-KV] [-Niq] [-E end] [-f inf] [-O str] type dbfile [key [...]]\n"
     "       %s -d [-Niq] [-E end] [-f inf] type dbfile [key [...]]\n"
-    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod] [-O str]\n"
+    "       %s -w [-Niq] [-E end] [-f inf] [-CDR] [-F sep] [-m mod]\n"
     "             type dbfile [key val [...]]\n"
 	    ,p ,p ,p );
 	fprintf(stderr,
@@ -484,7 +484,7 @@ usage(void)
 	    "\t-i\tignore case of key by converting to lower case\n"
 	    "\t-m mod\tmode of created database  [default: 0644]\n"
 	    "\t-q\tquiet operation (missing keys aren't errors)\n"
-	    "\t-O sep\toutput field separator string [default: '\\t']\n"
+	    "\t-O str\toutput field separator string [default: '\\t']\n"
 	    );
 	exit(1);
 }
