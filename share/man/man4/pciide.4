@@ -1,4 +1,4 @@
-.\"	$NetBSD: pciide.4,v 1.44 2002/10/05 17:10:01 kent Exp $
+.\"	$NetBSD: pciide.4,v 1.45 2002/10/07 00:09:16 wiz Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -29,7 +29,7 @@
 .\" INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 23, 2002
+.Dd October 7, 2002
 .Dt PCIIDE 4
 .Os
 .Sh NAME
@@ -50,7 +50,8 @@ functions for the
 .Ic wd
 and
 .Ic atapi
-drivers. This driver include specific, enhanced support for the CMD Tech
+drivers.
+This driver include specific, enhanced support for the CMD Tech
 PCI0640 controller, and IDE DMA/Ultra-DMA support for the following
 controllers:
 .Bl -dash -compact -offset indent
@@ -83,20 +84,22 @@ Silicon Image 0680 IDE controller
 Silicon Integrated System 5597/5598 IDE controller
 .It
 VIA Technologies VT82C586, VT82C586A, VT82C596A, VT82C686A, VT8233A,
- and VT8235 IDE Controllers
+and VT8235 IDE Controllers
 .El
 Some of these controllers are only available in multifunction PCI chips.
 .Pp
 The 0x0001 flag forces the
 .Nm
 driver to use DMA when there is no explicit DMA mode setting support for
-the controller but DMA is present. If the BIOS didn't set up the controller
+the controller but DMA is present.
+If the BIOS didn't set up the controller
 properly, this can cause a machine hang.
 .Pp
 The 0x0002 flag forces the
 .Nm
 driver to disable DMA on chipsets for which DMA would normally be
-enabled.  This can be used as a debugging aid, or to work around
+enabled.
+This can be used as a debugging aid, or to work around
 problems where the IDE controller is wired up to the system incorrectly.
 .Sh SEE ALSO
 .Xr intro 4 ,
@@ -114,24 +117,28 @@ and another controller has been installed and uses the ISA legacy I/O ports
 and interrupts.
 .Pp
 The PCI0646U controller is known to be buggy with Ultra-DMA transfers, so
-Ultra-DMA is disabled by default for this controller. To enable Ultra-DMA,
-use the PCIIDE_CMD0646U_ENABLEUDMA option. Ultra-DMA can eventually be
-disabled on a per-drive basis with config flags, see
+Ultra-DMA is disabled by default for this controller.
+To enable Ultra-DMA, use the PCIIDE_CMD0646U_ENABLEUDMA option.
+Ultra-DMA can eventually be disabled on a per-drive basis with config
+flags, see
 .Xr wd 4 .
 .Pp
 The AMD756 chip revision D2 has a bug affecting DMA (but not Ultra-DMA)
-modes.  The workaround documented by AMD is to not use DMA on any drive which
-does not support Ultra-DMA modes.  This does not appear to be necessary on all
-drives, the PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
-on the buggy revisions.  Multiword DMA can eventually be disabled on a
+modes.
+The workaround documented by AMD is to not use DMA on any drive which
+does not support Ultra-DMA modes.
+This does not appear to be necessary on all drives, the
+PCIIDE_AMD756_ENABLEDMA option can be used to force multiword DMA
+on the buggy revisions.
+Multiword DMA can eventually be disabled on a
 per-drive basis with config flags, see
 .Xr wd 4 .
 The bug, if triggered, will cause a total system hang.
 .Pp
 The timings used for the PIO and DMA modes for controllers listed above
 are for a PCI bus running at 30 or 33 MHz (except the OPTi controller,
-which supports both 25 and 33 MHz PCI bus timings). This driver may not
-work properly on overclocked systems.
+which supports both 25 and 33 MHz PCI bus timings).
+This driver may not work properly on overclocked systems.
 .Pp
 The core wdc doesn't support modes higher than Ultra-DMA 5, so the Promise
 Ultra/133 is only used at Ultra/100.
