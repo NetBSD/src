@@ -38,7 +38,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.1 1998/08/06 14:08:55 minoura Exp $
+ *	$NetBSD: iteioctl.h,v 1.2 1998/09/03 14:22:06 minoura Exp $
  */
 
 struct itewinsize {
@@ -78,9 +78,7 @@ struct iterepeat {
 
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
 
-#if ITEKANJI
 #define ITELOADFONT	_IOW('Z',0x80, unsigned char [4096])
-#endif
 
 #define ITETVCTRL	_IOW('Z',0x81, unsigned char)
 #define TVC_VOLUP	0x01
