@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.5 1997/10/07 14:42:33 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.6 1997/10/13 03:47:09 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -30,6 +30,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: makedbm.c,v 1.6 1997/10/13 03:47:09 lukem Exp $");
+#endif
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -209,6 +214,11 @@ list_database(database)
 
 	while (key.dptr != NULL) {
 		val = ypdb_fetch(db, key);
+				/* workround trailing \0 in aliases.db */
+		if (key.dptr[key.dsize - 1] == '\0')
+			key.dsize--;
+		if (val.dptr[val.dsize - 1] == '\0')
+			val.dsize--;
 		printf("%*.*s %*.*s\n",
 		    key.dsize, key.dsize, key.dptr,
 		    val.dsize, val.dsize, val.dptr);
