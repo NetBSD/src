@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $	*/
+/*	$NetBSD: statd.c,v 1.17.2.1 2001/12/09 18:09:52 he Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $");
+__RCSID("$NetBSD: statd.c,v 1.17.2.1 2001/12/09 18:09:52 he Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $");
 /* The actual program logic is in the file procs.c			*/
 
 #include <sys/param.h>
+#include <sys/wait.h>
 
 #include <err.h>
 #include <ctype.h>
@@ -89,6 +90,7 @@ static int notify_one __P((DBT *, HostInfo *, void *));
 static void init_file __P((char *));
 static int notify_one_host __P((char *));
 static void die __P((int)) __attribute__((__noreturn__));
+static void sigchld_handler __P((int));
 
 int main __P((int, char **));
 
@@ -98,6 +100,8 @@ main(argc, argv)
 	char **argv;
 {
 	int ch;
+
+	(void)signal(SIGCHLD, sigchld_handler);
 
 	while ((ch = getopt(argc, argv, "d")) != (-1)) {
 		switch (ch) {
@@ -622,4 +626,11 @@ die(n)
 {
 	(*db->close)(db);
 	exit(n);
+}
+
+static void
+sigchld_handler(dontcare)
+	int dontcare;
+{
+	while (wait3(&dontcare, WNOHANG, NULL) > 0);
 }
