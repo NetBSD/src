@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxxreg.h,v 1.5 1997/03/09 06:10:35 mikel Exp $	*/
+/*	$NetBSD: aic7xxxreg.h,v 1.6 1998/07/03 23:45:33 mjacob Exp $	*/
 
 /*
  * Aic7xxx register and scratch ram definitions.
@@ -479,6 +479,7 @@
 #define		FIFORESET	0x01
 
 #define	DFSTATUS		0x094
+#define		MREQPEND	0x10
 #define		HDONE		0x08
 #define		FIFOEMP		0x01
 
