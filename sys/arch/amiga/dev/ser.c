@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.59 2002/01/26 13:41:00 aymeric Exp $ */
+/*	$NetBSD: ser.c,v 1.60 2002/01/27 19:25:35 aymeric Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -737,8 +737,7 @@ serparam(struct tty *tp, struct termios *t)
 	if (t->c_ispeed && t->c_ispeed != t->c_ospeed)
 		return(EINVAL);
 
-	/* XXX missing here: console test */
-	if (serswflags & TIOCFLAG_SOFTCAR) {
+	if (serswflags & TIOCFLAG_SOFTCAR || serconsole == 0) {
 		t->c_cflag = (t->c_cflag & ~HUPCL) | CLOCAL;
 	}
 
