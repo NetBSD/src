@@ -1,16 +1,10 @@
-#	$NetBSD: files.sh3,v 1.9 2000/09/04 23:02:42 tsubai Exp $
+#	$NetBSD: files.sh3,v 1.10 2001/02/06 16:45:22 uch Exp $
 #
 # new style config file for sh3 architecture
 #
 
-# maxpartitions must be first item in files.${ARCH}.newconf
-maxpartitions 8
-
-maxusers 2 16 64
-
 defopt	PCLOCK
 
-file	arch/sh3/sh3/autoconf.c
 file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
@@ -35,36 +29,6 @@ file	arch/sh3/sh3/clock.c
 file	dev/clock_subr.c
 file	dev/cninit.c
 file	dev/cons.c
-major	{vnd = 14}
-
-#
-# Machine-independent SCSI drivers
-#
-
-include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
-
-#
-# Machine-independent ATA drivers
-#
-
-include "dev/ata/files.ata"
-major	{wd = 0}
-
-# Memory Disk for install floppy
-file arch/sh3/sh3/md_root.c	memory_disk_hooks
-major	{md = 17}
-
-#
-# System bus types
-#
-
-define mainbus { }
-device	mainbus:  mainbus
-attach	mainbus at root
-file	arch/sh3/sh3/mainbus.c	mainbus
 
 #
 # Compatibility modules
@@ -77,6 +41,3 @@ file	arch/sh3/sh3/compat_13_machdep.c	compat_13
 # Executable file format
 #
 file arch/sh3/sh3/coff_exec.c	exec_coff
-
-# network devices MII bus
-include "dev/mii/files.mii"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 1999/09/13 16:26:20 msaitoh Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1 2001/02/06 16:45:22 uch Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
