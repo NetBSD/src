@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2002 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.2 2001/09/24 13:22:27 wiz Exp $");
+__RCSID("$KTH-KRB: snprintf.c,v 1.34 2002/04/18 08:50:57 joda Exp $"
+      "$NetBSD: snprintf.c,v 1.3 2002/09/12 12:33:16 joda Exp $");
 #endif
 #include <stdio.h>
 #include <stdarg.h>
@@ -135,7 +136,7 @@ use_alternative (int flags, u_longest num, unsigned base)
 
 static int
 append_number(struct snprintf_state *state,
-	      u_longest num, unsigned base, char *rep,
+	      u_longest num, unsigned base, const char *rep,
 	      int width, int prec, int flags, int minusp)
 {
   int len = 0;
