@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.197 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.198 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -466,3 +466,4 @@ Changes from NetBSD 1.6 to NetBSD 2.0:
 	isdncapi(4): Add a support layer for CAPI to i4b.  [pooka 20030925]
 	iavc(4): Add support for AVM B1 PCI CAPI-compatible ISDN adapters.
 		[pooka 20030925]
+	file(1): update to 4.04.  [pooka 20030925]
