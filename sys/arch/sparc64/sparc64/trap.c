@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2003/11/24 20:41:16 cdi Exp $ */
+/*	$NetBSD: trap.c,v 1.103 2003/11/25 05:14:58 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2003/11/24 20:41:16 cdi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2003/11/25 05:14:58 cdi Exp $");
 
 #define NEW_FPSTATE
 
@@ -535,7 +535,7 @@ trap(tf, type, pc, tstate)
 		    (void *)(u_long)tf->tf_pc, (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    trapdebug & (TDB_FOLLOW | TDB_TRAP)) {
 		char sbuf[sizeof(PSTATE_BITS) + 64];
 
@@ -1101,7 +1101,6 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 	ksiginfo_t ksi;
 #ifdef DEBUG
 	static int lastdouble;
-	extern struct pcb* cpcb;
 #endif
 
 #ifdef DEBUG
@@ -1111,15 +1110,15 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 		Debugger();
 	}
 	write_user_windows();
-	if ((cpcb->pcb_nsaved > 8) ||
-	    (trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	if ((curpcb->pcb_nsaved > 8) ||
+	    (trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    (trapdebug & (TDB_ADDFLT | TDB_FOLLOW))) {
 		printf("%ld: data_access_fault(%p, %x, %p, %p, %lx, %lx) "
 			"nsaved=%d\n",
 			(long)(curproc?curproc->p_pid:-1), tf, type,
 			(void *)addr, (void *)pc,
-			sfva, sfsr, (int)cpcb->pcb_nsaved);
-		if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved))
+			sfva, sfsr, (int)curpcb->pcb_nsaved);
+		if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved))
 			Debugger();
 	}
 	if (trapdebug & TDB_FRAME) {
@@ -1130,7 +1129,7 @@ data_access_fault(tf, type, pc, addr, sfva, sfsr)
 			"nsaved=%d\n",
 			(long)(curproc?curproc->p_pid:-1), tf, type,
 			(void*)addr, (void*)pc,
-			sfva, sfsr, (int)cpcb->pcb_nsaved);
+			sfva, sfsr, (int)curpcb->pcb_nsaved);
 		Debugger();
 	}
 	if (trapdebug & TDB_STOPCALL) {
@@ -1293,7 +1292,7 @@ kfault:
 			       "%lx, %lx) nsaved=%d\n",
 				(long)(curproc ? curproc->p_pid : -1), tf, type,
 				(void *)addr, (void *)pc,
-				sfva, sfsr, (int)cpcb->pcb_nsaved);
+				sfva, sfsr, (int)curpcb->pcb_nsaved);
 			Debugger();
 		}
 #endif
@@ -1369,7 +1368,7 @@ data_access_error(tf, type, afva, afsr, sfva, sfsr)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) || 
+	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) || 
 	    trapdebug & (TDB_ADDFLT | TDB_FOLLOW)) {
 		char buf[768];
 
@@ -1530,7 +1529,7 @@ text_access_fault(tf, type, pc, sfsr)
 		Debugger();
 	}
 	write_user_windows();
-	if (((trapdebug & TDB_NSAVED) && cpcb->pcb_nsaved) || 
+	if (((trapdebug & TDB_NSAVED) && curpcb->pcb_nsaved) || 
 	    (trapdebug & (TDB_TXTFLT | TDB_FOLLOW)))
 		printf("%d text_access_fault(%x, %lx, %p)\n",
 		       curproc?curproc->p_pid:-1, type, pc, tf); 
@@ -1677,7 +1676,7 @@ text_access_error(tf, type, pc, sfsr, afva, afsr)
 		Debugger();
 	}
 	write_user_windows();
-	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    trapdebug & (TDB_TXTFLT | TDB_FOLLOW)) {
 		bitmask_snprintf(sfsr, SFSR_BITS, buf, sizeof buf);
 		printf("%ld text_access_error(%lx, %lx, %lx, %p)=%lx @ %lx %s\n",
@@ -1877,9 +1876,6 @@ syscall(tf, code, pc)
 	u_quad_t sticks;
 	vaddr_t dest;
 	vaddr_t opc, onpc;
-#ifdef DIAGNOSTIC
-	extern struct pcb *cpcb;
-#endif
 
 #ifdef DEBUG
 	write_user_windows();
@@ -1888,7 +1884,7 @@ syscall(tf, code, pc)
 		    (void *)(u_long)tf->tf_npc);
 		Debugger();
 	}
-	if ((trapdebug & TDB_NSAVED && cpcb->pcb_nsaved) ||
+	if ((trapdebug & TDB_NSAVED && curpcb->pcb_nsaved) ||
 	    trapdebug & (TDB_SYSCALL | TDB_FOLLOW))
 		printf("%d syscall(%lx, %p, %lx)\n",
 		       curproc ? curproc->p_pid : -1, (u_long)code, tf,
@@ -1908,9 +1904,9 @@ syscall(tf, code, pc)
 #ifdef DIAGNOSTIC
 	if (tf->tf_tstate & TSTATE_PRIV)
 		panic("syscall from kernel");
-	if (cpcb != &l->l_addr->u_pcb)
-		panic("syscall: cpcb/ppcb mismatch");
-	if (tf != (struct trapframe64 *)((caddr_t)cpcb + USPACE) - 1)
+	if (curpcb != &l->l_addr->u_pcb)
+		panic("syscall: curpcb/ppcb mismatch");
+	if (tf != (struct trapframe64 *)((caddr_t)curpcb + USPACE) - 1)
 		panic("syscall: trapframe");
 #endif
 	sticks = p->p_sticks;

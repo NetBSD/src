@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.149 2003/11/09 16:41:53 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.150 2003/11/25 05:14:58 cdi Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2003/11/09 16:41:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.150 2003/11/25 05:14:58 cdi Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1266,8 +1266,7 @@ remap_data:
 		paddr_t pa;
 
 		/* Initialize all the pointers to u0 */
-		cpcb = (struct pcb *)vmmap;
-		proc0paddr = cpcb;
+		proc0paddr = (struct pcb *)vmmap;
 		u0[0] = vmmap;
 		/* Allocate some VAs for u0 */
 		u0[1] = vmmap + 2*USPACE;
@@ -1344,10 +1343,12 @@ remap_data:
 		cpus->ci_cpcb = (struct pcb *)u0[0]; /* Need better source */
 		cpus->ci_upaid = CPU_UPAID;
 		cpus->ci_number = cpus->ci_upaid; /* How do we figure this out? */
+		cpus->ci_cpuid = cpus->ci_upaid;
 		cpus->ci_fplwp = NULL;
 		cpus->ci_spinup = main; /* Call main when we're running. */
 		cpus->ci_initstack = (void *)u0[1];
 		cpus->ci_paddr = cpu0paddr;
+
 		/* The rest will be done at CPU attach time. */
 		BDPRINTF(PDB_BOOT1, 
 			 ("Done inserting cpu_info into pmap_kernel()\r\n"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.72 2003/10/10 15:19:09 chs Exp $ */
+/*	$NetBSD: db_interface.c,v 1.73 2003/11/25 05:14:58 cdi Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.72 2003/10/10 15:19:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.73 2003/11/25 05:14:58 cdi Exp $");
 
 #include "opt_ddb.h"
 
@@ -883,11 +883,10 @@ db_dump_pcb(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	extern struct pcb *cpcb;
 	struct pcb *pcb;
 	int i;
 
-	pcb = cpcb;
+	pcb = curpcb;
 	if (have_addr) 
 		pcb = (struct pcb*) addr;
 
