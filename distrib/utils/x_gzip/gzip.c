@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.4 2003/08/06 14:38:02 itojun Exp $	*/
+/*	$NetBSD: gzip.c,v 1.5 2003/12/22 02:05:10 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Matthew R. Green
@@ -71,26 +71,24 @@ static	int	suffix_len = SUFFIX_LEN; /* length of suffix; includes nul */
 static	char	*newfile;		/* name of newly created file */
 static	char	*infile;		/* name of file coming in */
 
-static	void	usage __P((void));
-static	void	display_version __P((void));
-static	void	gz_compress __P((FILE *, gzFile));
-static	off_t	gz_uncompress __P((gzFile, FILE *));
-static	ssize_t	file_compress __P((char *));
-static	ssize_t	file_uncompress __P((char *));
-static	void	handle_pathname __P((char *));
-static	void	handle_file __P((char *, struct stat *));
-static	void	handle_dir __P((char *, struct stat *));
-static	void	handle_stdin __P((void));
-static	void	handle_stdout __P((void));
-static	void	print_verbage __P((char *, char *, ssize_t, ssize_t));
-static	void	print_test __P((char *, int));
+static	void	usage(void);
+static	void	display_version(void);
+static	void	gz_compress(FILE *, gzFile);
+static	off_t	gz_uncompress(gzFile, FILE *);
+static	ssize_t	file_compress(char *);
+static	ssize_t	file_uncompress(char *);
+static	void	handle_pathname(char *);
+static	void	handle_file(char *, struct stat *);
+static	void	handle_dir(char *, struct stat *);
+static	void	handle_stdin(void);
+static	void	handle_stdout(void);
+static	void	print_verbage(char *, char *, ssize_t, ssize_t);
+static	void	print_test(char *, int);
 
-int main __P((int, char *p[]));
+int main(int, char *p[]);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	const char *progname = getprogname();
 	int ch;
@@ -176,9 +174,7 @@ main(argc, argv)
 
 /* compress input to output then close both files */
 static void
-gz_compress(in, out)
-	FILE   *in;
-	gzFile out;
+gz_compress(FILE *in, gzFile out)
 {
 	char buf[BUFLEN];
 	ssize_t len;
@@ -214,9 +210,7 @@ gz_compress(in, out)
 
 /* uncompress input to output then close the input */
 static off_t
-gz_uncompress(in, out)
-	gzFile in;
-	FILE   *out;
+gz_uncompress(gzFile in, FILE *out)
 {
 	char buf[BUFLEN];
 	off_t size;
@@ -268,11 +262,10 @@ gz_uncompress(in, out)
  * original.
  */
 static ssize_t
-file_compress(file)
-	char  *file;
+file_compress(char *file)
 {
 	char outfile[MAXPATHLEN];
-	FILE  *in;
+	FILE *in;
 	gzFile out;
 	struct stat sb;
 	ssize_t size;
@@ -288,8 +281,9 @@ file_compress(file)
 				goto lose;
 			}
 			if (stat(file, &sb) == 0 && sb.st_nlink > 1) {
-				warnx("%s has %d other link%s -- skipping", file,
-				    sb.st_nlink-1, sb.st_nlink == 1 ? "" : "s");
+				warnx("%s has %d other link%s -- skipping",
+				    file, sb.st_nlink-1,
+				    sb.st_nlink == 1 ? "" : "s");
 				goto lose;
 			}
 		}
@@ -343,13 +337,12 @@ lose:
 
 /* uncompress the given file and remove the original */
 static ssize_t
-file_uncompress(file)
-	char  *file;
+file_uncompress(char *file)
 {
 	struct stat sb;
 	char buf[MAXPATHLEN];
 	char *outfile = buf, *s;
-	FILE  *out;
+	FILE *out;
 	gzFile in;
 	off_t size;
 	ssize_t len = strlen(file);
@@ -368,8 +361,9 @@ file_uncompress(file)
 				goto lose;
 			}
 			if (stat(file, &sb) == 0 && sb.st_nlink > 1) {
-				warnx("%s has %d other link%s -- skipping", file,
-				    sb.st_nlink-1, sb.st_nlink == 1 ? "" : "s");
+				warnx("%s has %d other link%s -- skipping",
+				    file, sb.st_nlink-1,
+				    sb.st_nlink == 1 ? "" : "s");
 				goto lose;
 			}
 		}
@@ -416,7 +410,8 @@ file_uncompress(file)
 		 */
 		if (stat(outfile, &sb) < 0) {
 			if (qflag == 0)
-	warn("couldn't stat (leaving original): %s", outfile);
+				warn("couldn't stat (leaving original): %s",
+				    outfile);
 			goto lose;
 		}
 		newfile = outfile;
@@ -436,7 +431,7 @@ lose:
 }
 
 static void
-handle_stdin()
+handle_stdin(void)
 {
 	gzFile *file;
 
@@ -455,7 +450,7 @@ handle_stdin()
 }
 
 static void
-handle_stdout()
+handle_stdout(void)
 {
 	gzFile *file;
 
@@ -475,8 +470,7 @@ handle_stdout()
 
 /* do what is asked for, for the path name */
 static void
-handle_pathname(path)
-	char *path;
+handle_pathname(char *path)
 {
 	char *opath = path, *s = 0;
 	ssize_t len;
@@ -529,9 +523,7 @@ out:
 
 /* compress/decompress a file */
 static void
-handle_file(file, sbp)
-	char *file;
-	struct stat *sbp;
+handle_file(char *file, struct stat *sbp)
 {
 	ssize_t usize, gsize;
 
@@ -554,13 +546,11 @@ handle_file(file, sbp)
 
 /* this is used with -r to recursively decend directories */
 static void
-handle_dir(dir, sbp)
-	char *dir;
-	struct stat *sbp;
+handle_dir(char *dir, struct stat *sbp)
 {
-	char	*path_argv[2];
-	FTS	*fts;
-	FTSENT	*entry;
+	char *path_argv[2];
+	FTS *fts;
+	FTSENT *entry;
 
 	path_argv[0] = dir;
 	path_argv[1] = 0;
@@ -592,9 +582,7 @@ handle_dir(dir, sbp)
 
 /* print compression statistics, and the new name (if there is one!) */
 static void
-print_verbage(file, newfile, usize, gsize)
-	char *file, *newfile;
-	ssize_t usize, gsize;
+print_verbage(char *file, char *newfile, ssize_t usize, ssize_t gsize)
 {
 	float percent = 100.0 - (100.0 * gsize / usize);
 
@@ -608,9 +596,7 @@ print_verbage(file, newfile, usize, gsize)
 
 /* print test results */
 static void
-print_test(file, ok)
-	char *file;
-	int ok;
+print_test(char *file, int ok)
 {
 
 	fprintf(stderr, "%s:%s  %s\n", file,
@@ -620,7 +606,7 @@ print_test(file, ok)
 
 /* display the usage of NetBSD gzip */
 static void
-usage()
+usage(void)
 {
 
 	fprintf(stderr,
@@ -632,7 +618,7 @@ usage()
 
 /* display the version of NetBSD gzip */
 static void
-display_version()
+display_version(void)
 {
 
 	printf("%s\n", gzip_version);
