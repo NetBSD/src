@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.84 2000/04/21 16:24:22 minoura Exp $	*/
+/*	$NetBSD: unistd.h,v 1.85 2000/06/27 05:51:54 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
 #define	_UNISTD_H_
 
 #include <machine/ansi.h>
+#include <machine/int_types.h>
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <sys/types.h>
@@ -215,9 +216,9 @@ pid_t	 getsid __P((pid_t));
 #if (!defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)) || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500
-#ifdef  _BSD_INTPTR_T_
-typedef _BSD_INTPTR_T_	intptr_t;
-#undef  _BSD_INTPTR_T_
+#ifndef	intptr_t
+typedef	__intptr_t	intptr_t;
+#define	intptr_t	intptr_t
 #endif
 
 #define F_ULOCK		0
