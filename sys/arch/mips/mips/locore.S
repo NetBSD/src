@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.57.2.2 1998/11/16 10:41:29 nisimura Exp $	*/
+/*	$NetBSD: locore.S,v 1.57.2.3 1998/12/06 21:05:08 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -542,9 +542,9 @@ NESTED(kcopy, 48, ra)
 
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
 	lw	ra, 44(sp)			# restore ra
+	sw	s0, U_PCB_ONFAULT(v1)
 	lw	s0, 32(sp)			# restore s0
 	addu	sp, sp, 48			# kill stack frame
-	sw	s0, U_PCB_ONFAULT(v1)
 	j	ra
 	move	v0, zero			# success!
 END(kcopy)
@@ -552,9 +552,9 @@ END(kcopy)
 LEAF(kcopyerr)
 	lw	v1, _C_LABEL(curpcb)		# restore the old handler
 	lw	ra, 44(sp)			# restore ra
+	sw	s0, U_PCB_ONFAULT(v1)
 	lw	s0, 32(sp)			# restore s0
 	addu	sp, sp, 48			# kill stack frame
-	sw	s0, U_PCB_ONFAULT(v1)
 	j	ra
 	li	v0, EFAULT			# return EFAULT
 END(kcopyerr)
