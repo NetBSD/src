@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2001/12/12 12:24:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.14 2002/04/30 13:08:02 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -11,7 +11,7 @@ COMMONOBJ!=	cd ${COMMON} && ${PRINTOBJDIR}
 
 PROG= boot
 SRCS= locore.S boot.c devopen.c
-SRCS+= romcalls.S putchar.c
+SRCS+= romcalls.S getchar.c putchar.c
 STRIPFLAG=
 BINMODE= 444
 
