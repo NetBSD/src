@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.37 1999/09/03 03:10:38 itojun Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.38 2000/01/25 16:24:32 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.37 1999/09/03 03:10:38 itojun Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.38 2000/01/25 16:24:32 sommerfeld Exp $");
 #endif
 #endif
 
@@ -291,6 +291,7 @@ struct sockaddr_in wherefrom;	/* Who we are */
 int packlen;			/* total length of packet */
 int minpacket;			/* min ip packet size */
 int maxpacket = 32 * 1024;	/* max ip packet size */
+int printed_ttl = 0;
 
 char *prog;
 char *source;
@@ -326,6 +327,8 @@ int mtus[] = {
          1536,  
          1500,  
          1492,
+	 1480,
+	 1280,
          1006,
           576,
           552,
@@ -355,6 +358,7 @@ int	main(int, char **);
 int	packet_ok(u_char *, int, struct sockaddr_in *, int);
 char	*pr_type(u_char);
 void	print(u_char *, int, struct sockaddr_in *);
+void	resize_packet(void);
 void	dump_packet(void);
 void	send_probe(int, int, struct timeval *);
 void	setsin(struct sockaddr_in *, u_int32_t);
@@ -890,7 +894,7 @@ main(int argc, char **argv)
 		int unreachable = 0;
 
 again:
-		Printf("%2d ", ttl);
+		printed_ttl = 0;
 		for (probe = 0; probe < nprobes; ++probe) {
 			register int cc;
 			struct timeval t1, t2;
@@ -1064,6 +1068,7 @@ send_probe(register int seq, int ttl, register struct timeval *tp)
 	register int cc;
 	register struct udpiphdr * ui;
 	struct ip tip;
+	int oldmtu = packlen;
 
 again:
 #ifdef BYTESWAP_IP_LEN
@@ -1173,21 +1178,16 @@ again:
 		if (cc < 0) {
 			/*
 			 * An errno of EMSGSIZE means we're writing too big a
-			 * datagram for the interface.  We have to just decrease
-			 * the packet size until we find one that works.
+			 * datagram for the interface.  We have to just
+			 * decrease the packet size until we find one that
+			 * works.
 			 *
 			 * XXX maybe we should try to read the outgoing if's 
 			 * mtu?
 			 */
-
 			if (errno == EMSGSIZE) {
 				packlen = *mtuptr++;
-		outudp->uh_ulen =
-		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
-#ifdef _NoLongerLooksUgly_
-                		Printf("message too big, "
-				    "trying new MTU = %d\n", packlen);
-#endif
+				resize_packet();
 				goto again;
 			} else
 				Fprintf(stderr, "%s: sendto: %s\n",
@@ -1198,6 +1198,16 @@ again:
 		    prog, hostname, packlen, cc);
 		(void)fflush(stdout);
 	}
+	if (oldmtu != packlen) {
+		Printf("message too big, "
+		    "trying new MTU = %d\n", packlen);
+		printed_ttl = 0;
+	}
+	if (!printed_ttl) {
+		Printf("%2d ", ttl);
+		printed_ttl = 1;
+	}
+	
 }
 
 double
@@ -1305,6 +1315,19 @@ packet_ok(register u_char *buf, int cc, register struct sockaddr_in *from,
 	return(0);
 }
 
+void resize_packet(void)
+{
+	if (useicmp) {
+		outicmp->icmp_cksum = 0;
+		outicmp->icmp_cksum = in_cksum((u_short *)outicmp,
+		    packlen - (sizeof(*outip) + optlen));
+		if (outicmp->icmp_cksum == 0)
+			outicmp->icmp_cksum = 0xffff;
+	} else {
+		outudp->uh_ulen =
+		    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
+	}
+}
 
 void
 print(register u_char *buf, register int cc, register struct sockaddr_in *from)
@@ -1578,8 +1601,7 @@ frag_err()
                 packlen = *mtuptr++;
 		Printf("Trying new MTU = %d\n", packlen);
         }
-	outudp->uh_ulen =
-	    htons((u_short)(packlen - (sizeof(*outip) + optlen)));
+	resize_packet();
 }
 
 int
