@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 1999/07/30 04:07:25 mycroft Exp $
+#	$NetBSD: Makefile,v 1.29 2001/03/04 16:12:36 tsutsui Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,7 @@ CPPFLAGS+=-DSTDC_HEADERS=1 -DHAVE_UNISTD_H=1 -DDIRENT=1 -Dunix
 .if (${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "i386")
 SRCS+=	match.S
 CPPFLAGS+=-DASMV
-MATCHCPPFLAGS=-D__NetBSD__
+MATCHCPPFLAGS=-traditional -D__NetBSD__
 
 .if (${OBJECT_FMT} == "ELF")
 MATCHCPPFLAGS+=-DNO_UNDERLINE
