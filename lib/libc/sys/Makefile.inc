@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.63 1997/08/25 05:07:43 mikel Exp $
+#	$NetBSD: Makefile.inc,v 1.64 1997/09/08 18:42:43 chuck Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -31,7 +31,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	getpgrp.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o ioctl.o kill.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
-	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
+	listen.o lstat.o madvise.o mincore.o minherit.o \
+	mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munmap.o nanosleep.o nfssvc.o ntp_adjtime.o ntp_gettime.o \
 	open.o pathconf.o poll.o \
@@ -156,7 +157,8 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
 	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 ktrace.2 \
-	link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
+	link.2 listen.2 lseek.2 mkdir.2 \
+	mkfifo.2 mknod.2 madvise.2 mincore.2 minherit.2 \
 	mlock.2 mmap.2 mount.2 mprotect.2 msgctl.2 msgget.2 msgrcv.2 \
 	msgsnd.2 msync.2 munmap.2 nanosleep.2 nfssvc.2 open.2 pathconf.2 \
 	pipe.2 poll.2 \
