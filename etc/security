@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.27 1997/08/22 09:40:17 lukem Exp $
+#	$NetBSD: security,v 1.28 1997/09/18 05:16:19 lukem Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -26,7 +26,7 @@ fi
 ERR=secure1.$$
 TMP1=secure2.$$
 TMP2=secure3.$$
-MPUID=secure4.$$
+MPBYUID=secure4.$$
 MPPATH=secure5.$$
 LIST=secure6.$$
 OUTPUT=secure7.$$
@@ -36,7 +36,7 @@ trap '/bin/rm -rf $SECUREDIR ; exit 0' 0 2 3
 MP=/etc/master.passwd
 
 # these is used several times.
-awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $MPUID
+awk -F: '{ print $1 " " $3 }' $MP | sort -k2n > $MPBYUID
 awk -F: '{ print $1 " " $9 }' $MP | sort -k2 > $MPPATH
 
 # Check the master password file syntax.
@@ -90,11 +90,11 @@ if [ "$check_passwd" = YES ]; then
 		column $OUTPUT
 	fi
 
-	< $MPUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
+	< $MPBYUID uniq -d -f 1 | awk '{ print $2 }' > $TMP2
 	if [ -s $TMP2 ] ; then
 		printf "\n$MP has duplicate user id's.\n"
 		while read uid; do
-			grep -w $uid $MPUID
+			grep -w $uid $MPBYUID
 		done < $TMP2 | column
 	fi
 fi
@@ -152,7 +152,7 @@ fi
 # in other environments.  Once the shells have been modified to warn
 # of '.' in the path, the path tests should go away.
 if [ "$check_rootdotfiles" = YES ]; then
-	cp /dev/null $OUTPUT
+	> $OUTPUT
 	rhome=`csh -fc "echo ~root"`
 	umaskset=no
 	list="/etc/csh.cshrc /etc/csh.login ${rhome}/.cshrc ${rhome}/.login"
@@ -197,7 +197,7 @@ end-of-csh
 		fi
 	fi
 
-	cp /dev/null $OUTPUT
+	> $OUTPUT
 	rhome=/root
 	umaskset=no
 	list="/etc/profile ${rhome}/.profile"
@@ -249,12 +249,17 @@ fi
 # Root and uucp should both be in /etc/ftpusers.
 # XXX This should be updated to support the new format...
 if [ "$check_ftpusers" = YES ]; then
-	list="root uucp"
+	> $OUTPUT
+	list="uucp "`awk '$2 == 0 { print $1 }' $MPBYUID`
 	for i in $list; do
 		if ! egrep "^$i$" /etc/ftpusers > /dev/null ; then
-			printf "\n$i is not listed in /etc/ftpusers file.\n"
+			printf "\t$i is not present\n" \ >> $OUTPUT
 		fi
 	done
+	if [ -s $OUTPUT ]; then
+		printf "\nChecking the /etc/ftpusers configuration:\n"
+		cat $OUTPUT
+	fi
 fi
 
 # Uudecode should not be in the /etc/aliases file.
@@ -413,7 +418,7 @@ fi
 
 # Display any changes in setuid files and devices.
 if [ "$check_devices" = YES ]; then
-	printf "\nChecking setuid files and devices:\n"
+	> $ERR
 	(find / \( ! -fstype local -o -fstype fdesc -o -fstype kernfs \
 			-o -fstype procfs \) -a -prune -o \
 	    \( \( -perm -u+s -a ! -type d \) -o \
@@ -423,9 +428,9 @@ if [ "$check_devices" = YES ]; then
 
 	# Display any errors that occurred during system file walk.
 	if [ -s $OUTPUT ] ; then
-		printf "Setuid/device find errors:\n"
-		cat $OUTPUT
-		printf "\n"
+		printf "Setuid/device find errors:\n" >> $ERR
+		cat $OUTPUT >> $ERR
+		printf "\n" >> $ERR
 	fi
 
 	# Display any changes in the setuid file list.
@@ -433,7 +438,7 @@ if [ "$check_devices" = YES ]; then
 	if [ -s $TMP1 ] ; then
 		# Check to make sure uudecode isn't setuid.
 		if grep -w uudecode $TMP1 > /dev/null ; then
-			printf "\nUudecode is setuid.\n"
+			printf "\nUudecode is setuid.\n" >> $ERR
 		fi
 
 		CUR=/var/backups/setuid.current
@@ -446,34 +451,34 @@ if [ "$check_devices" = YES ]; then
 				> $TMP2
 				join -110 -210 -v2 $CUR $TMP1 > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Setuid additions:\n"
-					tee -a $TMP2 < $OUTPUT
-					printf "\n"
+					printf "Setuid additions:\n" >> $ERR
+					tee -a $TMP2 < $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				join -110 -210 -v1 $CUR $TMP1 > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Setuid deletions:\n"
-					tee -a $TMP2 < $OUTPUT
-					printf "\n"
+					printf "Setuid deletions:\n" >> $ERR
+					tee -a $TMP2 < $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				sort -k10 $TMP2 $CUR $TMP1 | \
 				    sed -e 's/[	 ][	 ]*/ /g' | \
 				    uniq -u > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Setuid changes:\n"
-					column -t $OUTPUT
-					printf "\n"
+					printf "Setuid changes:\n" >> $ERR
+					column -t $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				cp $CUR $BACK
 				cp $TMP1 $CUR
 			fi
 		else
-			printf "Setuid additions:\n"
-			column -t $TMP1
-			printf "\n"
+			printf "Setuid additions:\n" >> $ERR
+			column -t $TMP1 >> $ERR
+			printf "\n" >> $ERR
 			cp $TMP1 $CUR
 		fi
 	fi
@@ -493,9 +498,9 @@ if [ "$check_devices" = YES ]; then
 		{ printf "Disk %s is user %s, group %s, permissions %s.\n", \
 		    $11, $3, $4, $1; }' < $TMP1 > $OUTPUT
 	if [ -s $OUTPUT ] ; then
-		printf "\nChecking disk ownership and permissions.\n"
-		cat $OUTPUT
-		printf "\n"
+		printf "\nChecking disk ownership and permissions.\n" >> $ERR
+		cat $OUTPUT >> $ERR
+		printf "\n" >> $ERR
 	fi
 
 	# Display any changes in the device file list.
@@ -511,16 +516,16 @@ if [ "$check_devices" = YES ]; then
 				> $TMP2
 				join -111 -211 -v2 $CUR $TMP1 > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Device additions:\n"
-					tee -a $TMP2 < $OUTPUT
-					printf "\n"
+					printf "Device additions:\n" >> $ERR
+					tee -a $TMP2 < $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				join -111 -211 -v1 $CUR $TMP1 > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Device deletions:\n"
-					tee -a $TMP2 < $OUTPUT
-					printf "\n"
+					printf "Device deletions:\n" >> $ERR
+					tee -a $TMP2 < $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				# Report any block device change. Ignore
@@ -532,20 +537,25 @@ if [ "$check_devices" = YES ]; then
 				    sed -e 's/[	 ][	 ]*/ /g' | \
 				    uniq -u > $OUTPUT
 				if [ -s $OUTPUT ] ; then
-					printf "Block device changes:\n"
-					column -t $OUTPUT
-					printf "\n"
+					printf "Block device changes:\n" >> $ERR
+					column -t $OUTPUT >> $ERR
+					printf "\n" >> $ERR
 				fi
 
 				cp $CUR $BACK
 				cp $TMP1 $CUR
 			fi
 		else
-			printf "Device additions:\n"
-			column -t $TMP1
-			printf "\n"
-			cp $TMP1 $CUR
+			printf "Device additions:\n" >> $ERR
+			column -t $TMP1 >> $ERR
+			printf "\n" >> $ERR
+			cp $TMP1 $CUR >> $ERR
 		fi
+	fi
+	if [ -s $ERR ] ; then
+		printf "\nChecking setuid files and devices:\n"
+		cat $ERR
+		printf "\n"
 	fi
 fi
 
