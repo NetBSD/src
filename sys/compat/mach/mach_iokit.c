@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_iokit.c,v 1.2 2003/02/05 23:58:09 manu Exp $ */
+/*	$NetBSD: mach_iokit.c,v 1.3 2003/02/07 16:56:19 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.2 2003/02/05 23:58:09 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_iokit.c,v 1.3 2003/02/07 16:56:19 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -113,3 +113,215 @@ mach_io_iterator_next(args)
 	*msglen = sizeof(*rep);
 	return 0;
 }
+
+int
+mach_io_service_open(args)
+	struct mach_trap_args *args;
+{
+	mach_io_service_open_request_t *req = args->smsg;
+	mach_io_service_open_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+	
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_connect.name = (mach_port_t)mr->mr_name;
+	rep->rep_connect.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_connect_method_scalari_scalaro(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_scalari_scalaro_request_t *req = args->smsg;
+	mach_io_connect_method_scalari_scalaro_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - 4096 + rep->rep_outcount;
+	return 0;
+}
+
+int
+mach_io_connect_get_service(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_get_service_request_t *req = args->smsg;
+	mach_io_connect_get_service_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_service.name = (mach_port_t)mr->mr_name;
+	rep->rep_service.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_get_property(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_get_property_request_t *req = args->smsg;
+	mach_io_registry_entry_get_property_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_properties.name = (mach_port_t)mr->mr_name;
+	rep->rep_properties.disposition = 0x11; /* XXX */
+	rep->rep_properties_count = 1; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_registry_entry_create_iterator(args)
+	struct mach_trap_args *args;
+{
+	mach_io_registry_entry_create_iterator_request_t *req = args->smsg;
+	mach_io_registry_entry_create_iterator_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_iterator.name = (mach_port_t)mr->mr_name;
+	rep->rep_iterator.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_object_conforms_to(args)
+	struct mach_trap_args *args;
+{
+	mach_io_object_conforms_to_request_t *req = args->smsg;
+	mach_io_object_conforms_to_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_conforms = 1; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_service_add_interest_notification(args)
+	struct mach_trap_args *args;
+{
+	mach_io_service_add_interest_notification_request_t *req = args->smsg;
+	mach_io_service_add_interest_notification_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+	struct lwp *l = args->l;
+	struct mach_port *mp;
+	struct mach_right *mr;
+
+	mp = mach_port_get();
+	mp->mp_flags |= MACH_MP_INKERNEL;
+	mr = mach_right_get(mp, l, MACH_PORT_TYPE_SEND, 0);
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
+	    MACH_MSGH_BITS_COMPLEX;
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_body.msgh_descriptor_count = 1;
+	rep->rep_notification.name = (mach_port_t)mr->mr_name;
+	rep->rep_notification.disposition = 0x11; /* XXX */
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+int
+mach_io_connect_set_notification_port(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_set_notification_port_request_t *req = args->smsg;
+	mach_io_connect_set_notification_port_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize; 
+
+	rep->rep_msgh.msgh_bits = 
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_trailer.msgh_trailer_size = 8;
+
+	*msglen = sizeof(*rep);
+	return 0;
+}
+
+
