@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.7 1998/11/13 22:44:17 abs Exp $ */
+/*	$NetBSD: apm.c,v 1.8 1999/01/15 00:29:02 augustss Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ int send_command(int fd,
 void
 usage(void)
 {
-    fprintf(stderr,"usage: %s [-v] [-z | -S] [-slba] [-f socket]\n",
+    fprintf(stderr,"usage: %s [-v] [-z | -S] [-slmba] [-f socket]\n",
 	    __progname);
     exit(1);
 }
@@ -159,6 +159,7 @@ main(int argc, char *argv[])
     int dostatus = FALSE;
     int doac = FALSE;
     int dopct = FALSE;
+    int domin = FALSE;
     int dobstate = FALSE;
     int nodaemon = FALSE;
     int fd;
@@ -168,7 +169,7 @@ main(int argc, char *argv[])
     struct apm_command command;
     struct apm_reply reply;
 
-    while ((ch = getopt(argc, argv, "lbvadsSzf:d")) != -1)
+    while ((ch = getopt(argc, argv, "lmbvadsSzf:d")) != -1)
 	switch(ch) {
 	case 'v':
 	    verbose = TRUE;
@@ -204,6 +205,12 @@ main(int argc, char *argv[])
 	    dopct = TRUE;
 	    action = GETSTATUS;
 	    break;
+	case 'm':
+	    if (action != NONE && action != GETSTATUS)
+		usage();
+	    domin = TRUE;
+	    action = GETSTATUS;
+	    break;
 	case 'a':
 	    if (action != NONE && action != GETSTATUS)
 		usage();
@@ -229,7 +236,7 @@ main(int argc, char *argv[])
 
     switch (action) {
     case NONE:
-	verbose = doac = dopct = dobstate = dostatus = TRUE;
+	verbose = doac = dopct = domin = dobstate = dostatus = TRUE;
 	action = GETSTATUS;
 	/* fallthrough */
     case GETSTATUS:
@@ -275,9 +282,18 @@ main(int argc, char *argv[])
 		if (dobstate)
 		    printf("Battery charge state: %s\n",
 			   battstate(reply.batterystate.battery_state));
-		if (dopct)
-		    printf("Battery remaining: %d percent\n",
-			   reply.batterystate.battery_life);
+		if (dopct || domin) {
+		    printf("Battery remaining: ");
+		    if (dopct)
+			printf("%d percent",reply.batterystate.battery_life);
+		    if (dopct && domin)
+			printf(" (");
+		    if (domin)
+			printf("%d minutes",reply.batterystate.minutes_left);
+		    if (dopct && domin)
+			printf(")");
+		    printf("\n");
+		}
 		if (doac)
 		    printf("A/C adapter state: %s\n", ac_state(reply.batterystate.ac_state));
 		if (dostatus)
@@ -287,6 +303,8 @@ main(int argc, char *argv[])
 		    printf("%d\n", reply.batterystate.battery_state);
 		if (dopct)
 		    printf("%d\n", reply.batterystate.battery_life);
+		if (domin)
+		    printf("%d\n", reply.batterystate.minutes_left);
 		if (doac)
 		    printf("%d\n", reply.batterystate.ac_state);
 		if (dostatus)

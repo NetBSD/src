@@ -1,4 +1,4 @@
-.\"	$NetBSD: apm.8,v 1.8 1997/11/11 10:07:55 mrg Exp $
+.\"	$NetBSD: apm.8,v 1.9 1999/01/15 00:29:02 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,9 @@ Put the system into suspend (deep sleep) mode.
 .It Fl S
 Put the system into stand-by (light sleep) mode.
 .It Fl l
-Display the estimated battery lifetime (in percent).
+Display the estimated battery lifetime in percent.
+.It Fl m
+Display the estimated battery lifetime in minutes.
 .It Fl b
 Display the battery status.  0 means high, 1 means low, 2 means
 critical, 3 means charging, 4 means absent, and 255 means unknown.
