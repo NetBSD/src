@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.6 2002/09/23 04:35:41 itojun Exp $	*/
+/*	$NetBSD: filter.c,v 1.7 2002/10/06 01:28:55 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.6 2002/09/23 04:35:41 itojun Exp $");
+__RCSID("$NetBSD: filter.c,v 1.7 2002/10/06 01:28:55 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -505,7 +505,10 @@ filter_ask(int fd, struct intercept_tlq *tls, struct filterq *fls,
 				continue;
 			}
 
-			action = filter_evaluate(tls, fls, pflags);
+			if (fls == NULL)
+				action = ICPOLICY_PERMIT;
+			else
+				action = filter_evaluate(tls, fls, pflags);
 			if (action == ICPOLICY_ASK) {
 				printf("Filter unmatched.\n");
 				continue;
