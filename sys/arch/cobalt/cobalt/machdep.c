@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.32 2001/06/02 18:09:11 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.33 2001/06/17 00:11:41 cyber Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -75,6 +75,7 @@
 
 #include <dev/cons.h>
 
+
 /* For sysctl. */
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
@@ -93,11 +94,19 @@ int	physmem;		/* Total physical memory */
 char	bootstring[512];	/* Boot command */
 int	netboot;		/* Are we netbooting? */
 
+char *	nfsroot_bstr = NULL;
+char *	root_bstr = NULL;
+int	bootunit = -1;
+int	bootpart = -1;
+
+
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
 void	configure(void);
 void	mach_init(unsigned int);
+void	decode_bootstring(void);
+static char *	strtok_light(char *, const char);
 
 /*
  * safepri is a safe priority for sleep to set for a spin-wait during
@@ -107,6 +116,8 @@ int	safepri = MIPS1_PSL_LOWIPL;
 
 extern caddr_t esym;
 extern struct user *proc0paddr;
+
+
 
 /*
  * Do all the stuff that locore normally does before calling main().
@@ -119,7 +130,6 @@ mach_init(memsize)
         u_long first, last;
 	vsize_t size;
 	extern char edata[], end[];
-	int i;
 
 	/*
 	 * Clear the BSS segment.
@@ -163,26 +173,7 @@ mach_init(memsize)
 	memset((char *)(memsize - 512), 0, 512);
 	bootstring[511] = '\0';
 
-	for (i = 0; i < 512; i++) {
-		switch (bootstring[i]) {
-		case '\0':
-			break;
-		case ' ':
-			continue;
-		case '-':
-			while (bootstring[i] != ' ' && bootstring[i] != '\0') {
-				BOOT_FLAG(bootstring[i], boothowto);
-				i++;
-			}
-		}
-		if (memcmp("single", bootstring + i, 5) == 0)
-			boothowto |= RB_SINGLE;
-		if (memcmp("nfsroot=", bootstring + i, 8) == 0)
-			netboot = 1;
-		/*
-		 * XXX Select root device from 'root=/dev/hd[abcd][1234]' too.
-		 */
-	}
+	decode_bootstring();
 
 #ifdef DDB
 	if (boothowto & RB_KDB)
@@ -529,3 +520,85 @@ cpu_intr(status, cause, pc, ipending)
 		softclock(NULL);
 	}
 }
+
+
+void
+decode_bootstring(void)
+{
+	char * work;
+	char * equ;
+	int i;
+
+	/* break apart bootstring on ' ' boundries  and itterate*/
+	work = strtok_light(bootstring, ' ');
+	while (work != '\0') {
+		/* if starts with '-', we got options, walk its decode */
+		if (work[0] == '-') {
+			i = 1;
+			while (work[i] != ' ' && work[i] != '\0') {
+				BOOT_FLAG(work[i], boothowto);
+				i++;
+			}
+		} else
+
+		/* if it has a '=' its an assignment, switch and set */
+		if ((equ = strchr(work,'=')) != '\0') {
+			if(0 == memcmp("nfsroot=", work, 8)) {
+				nfsroot_bstr = (equ +1);
+			} else
+			if(0 == memcmp("root=", work, 5)) {
+				root_bstr = (equ +1);
+			} 
+		} else
+
+		/* else it a single value, switch and process */
+		if (memcmp("single", work, 5) == 0) {
+			boothowto |= RB_SINGLE;
+		} else
+		if (memcmp("ro", work, 2) == 0) {
+			/* this is also inserted by the firmware */
+		}
+
+		/* grab next token */
+		work = strtok_light(NULL, ' ');
+	}
+
+	if (root_bstr != NULL) {
+		/* this should be of the form "/dev/hda1" */
+		/* [abcd][1234]    drive partition  linux probe order */
+		if ((memcmp("/dev/hd",root_bstr,7) == 0) &&
+		    (strlen(root_bstr) == 9) ){
+			bootunit = root_bstr[7] - 'a';
+			bootpart = root_bstr[8] - '1';
+		}
+	}
+}
+
+
+static char *
+strtok_light(str, sep)
+	char * str;
+	const char sep;
+{
+	static char * proc;
+	char * head;
+	char * work;
+
+	if (str != NULL)
+		proc = str;
+	if (proc == NULL)  /* end of string return NULL */
+		return proc;
+
+	head = proc;
+
+	work = strchr (proc, sep);
+	if (work == NULL) {  /* we hit the end */
+		proc = work;
+	} else {
+		proc = (work +1 );
+		*work = '\0';
+	}
+
+	return head;
+}
+
