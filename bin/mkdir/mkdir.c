@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.25 2001/09/16 22:07:14 wiz Exp $ */
+/* $NetBSD: mkdir.c,v 1.26 2002/02/19 06:30:12 enami Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.25 2001/09/16 22:07:14 wiz Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.26 2002/02/19 06:30:12 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 
 	pflag = 0;
 	while ((ch = getopt(argc, argv, "m:p")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'p':
 			pflag = 1;
 			break;
@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 
 	if (*argv == NULL)
 		usage();
-	
+
 	for (exitval = EXIT_SUCCESS; *argv != NULL; ++argv) {
 		char *slash;
 
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 }
 
 /*
- * mkpath -- create directories.  
+ * mkpath -- create directories.
  *	path     - path
  *	mode     - file mode of terminal directory
  *	dir_mode - file mode of intermediate directories
@@ -161,8 +161,8 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		*slash = '\0';
 
 		if (stat(path, &sb)) {
-			if (errno != ENOENT
-			    || mkdir(path, done ? mode : dir_mode)) {
+			if (errno != ENOENT ||
+			    mkdir(path, done ? mode : dir_mode)) {
 				warn("%s", path);
 				return (-1);
 			}
@@ -171,7 +171,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			 * file permission bits, so if you try to set a mode
 			 * including the sticky, setuid, setgid bits you lose
 			 * them. So chmod().
-                         */
+			 */
 			if (done && (mode & ~(S_IRWXU|S_IRWXG|S_IRWXU)) != 0 &&
 			    chmod(path, mode) == -1) {
 				warn("%s", path);
@@ -181,7 +181,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 			warnx("%s: %s", path, strerror(ENOTDIR));
 			return (-1);
 		}
-		    
+
 		*slash = '/';
 	}
 
@@ -191,7 +191,9 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: %s [-p] [-m mode] dirname ...\n", getprogname());
+
+	(void)fprintf(stderr, "usage: %s [-p] [-m mode] dirname ...\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
