@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.38 1999/03/22 07:52:56 mycroft Exp $ */
+/* $NetBSD: conf.c,v 1.38.2.1 1999/04/26 15:14:31 perry Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.38 1999/03/22 07:52:56 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.38.2.1 1999/04/26 15:14:31 perry Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,6 +189,54 @@ cdev_decl(ugen);
 #include "ulpt.h"
 cdev_decl(ulpt);
 
+#ifdef __I4B_IS_INTEGRATED
+/* open, close, ioctl */
+#define cdev_i4bctl_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, write */
+#define	cdev_i4brbch_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
+
+/* open, close, read, write */
+#define	cdev_i4btel_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	dev_init(c,n,write), (dev_type_ioctl((*))) enodev, \
+	(dev_type_stop((*))) enodev, \
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev, D_TTY }
+
+/* open, close, read, ioctl */
+#define cdev_i4btrc_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
+	(dev_type_mmap((*))) enodev }
+
+/* open, close, read, poll, ioctl */
+#define cdev_i4b_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, dev_init(c,n,poll), \
+	(dev_type_mmap((*))) enodev }	
+
+#include "i4b.h"
+#include "i4bctl.h"
+#include "i4btrc.h"
+#include "i4brbch.h"
+#include "i4btel.h"
+cdev_decl(i4b);
+cdev_decl(i4bctl);
+cdev_decl(i4btrc);
+cdev_decl(i4brbch);
+cdev_decl(i4btel);
+#endif
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -252,6 +300,20 @@ struct cdevsw	cdevsw[] =
 	cdev_ugen_init(NUGEN,ugen),	/* 48: USB generic driver */
 	cdev_midi_init(NMIDI,midi),	/* 49: MIDI I/O */
 	cdev_midi_init(NSEQUENCER,sequencer),	/* 50: sequencer I/O */
+#ifdef __I4B_IS_INTEGRATED
+	cdev_i4b_init(NI4B, i4b),		/* 51: i4b main device */
+	cdev_i4bctl_init(NI4BCTL, i4bctl),	/* 52: i4b control device */
+	cdev_i4brbch_init(NI4BRBCH, i4brbch),	/* 53: i4b raw b-chnl access */
+	cdev_i4btrc_init(NI4BTRC, i4btrc),	/* 54: i4b trace device */
+	cdev_i4btel_init(NI4BTEL, i4btel),	/* 55: i4b phone device */
+#else
+	cdev_notdef(),			/* 51 */
+	cdev_notdef(),			/* 52 */
+	cdev_notdef(),			/* 53 */
+	cdev_notdef(),			/* 54 */
+	cdev_notdef(),			/* 55 */
+#endif
+	
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
