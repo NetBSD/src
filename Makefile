@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.174 2002/05/03 08:59:14 lukem Exp $
+#	$NetBSD: Makefile,v 1.175 2002/05/07 02:11:07 lukem Exp $
 
 # This is the top-level makefile for building NetBSD. For an outline of
 # how to build a snapshot or release, as well as other release engineering
@@ -104,12 +104,12 @@ afterinstall: postinstall-check
 
 postinstall-check:
 	@echo "   === Post installation checks ==="
-	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR}/etc -d ${DESTDIR}/etc check
+	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ check
 	@echo "   ================================"
 
 postinstall-fix: .NOTMAIN
 	@echo "   === Post installation fixes ==="
-	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR}/etc -d ${DESTDIR}/etc fix
+	sh ${.CURDIR}/etc/postinstall -s ${.CURDIR} -d ${DESTDIR}/ fix
 	@echo "   ================================"
 
 

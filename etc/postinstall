@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.9 2002/05/06 03:02:59 lukem Exp $
+# $NetBSD: postinstall,v 1.10 2002/05/07 02:11:07 lukem Exp $
 #
 # Copyright (c) 2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,6 +46,8 @@
 #	- de* -> tlp* migration (/etc/ifconfig.de*, $ifconfig_de*,
 #	  dhclient.conf, ...) ?
 #	- support quiet/verbose mode ?
+#	- postfix
+#	- obsolete sets
 #
 
 #
@@ -143,7 +145,9 @@ rcconf_isset()
 	_name=$1
 	_var=$2
 	(
-		for f in ${DEST_ETC}/rc.conf ${DEST_ETC}/rc.conf.d/${_name}; do
+		for f in \
+		    ${DEST_DIR}/etc/rc.conf \
+		    ${DEST_DIR}/etc/rc.conf.d/${_name}; do
 			[ -f "${f}" ] && . "${f}";
 		done
 		if eval "[ -n \"\${${_var}}\" \
@@ -195,7 +199,7 @@ do_defaults()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_defaults  fix|check"
 
-	cmpdir $1 ${SRC_ETC}/defaults ${DEST_ETC}/defaults 444 \
+	cmpdir $1 ${SRC_DIR}/etc/defaults ${DEST_DIR}/etc/defaults 444 \
 		daily.conf monthly.conf rc.conf security.conf weekly.conf
 }
 
@@ -207,8 +211,20 @@ do_mtree()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_mtree  fix|check"
 
-	cmpdir $1 ${SRC_ETC}/mtree ${DEST_ETC}/mtree 444 \
+	cmpdir $1 ${SRC_DIR}/etc/mtree ${DEST_DIR}/etc/mtree 444 \
 		NetBSD.dist special
+}
+
+#
+#	periodic
+#
+additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
+do_periodic()
+{
+	[ -n "$1" ] || err 2 "USAGE: do_periodic  fix|check"
+
+	cmpdir $1 ${SRC_DIR}/etc ${DEST_DIR}/etc 644 \
+		daily weekly monthly security
 }
 
 #
@@ -218,15 +234,14 @@ additem rc "/etc/rc* and /etc/rc.d/ being up to date"
 do_rc()
 {
 	[ -n "$1" ] || err 2 "USAGE: do_rc  fix|check"
-
 	op=$1
-	rv=0
+	failed=0
 
-	cmpdir ${op} ${SRC_ETC} ${DEST_ETC} 644 \
+	cmpdir ${op} ${SRC_DIR}/etc ${DEST_DIR}/etc 644 \
 		rc rc.subr rc.shutdown
-	rv=$(( ${rv} + $? ))
+	failed=$(( ${failed} + $? ))
 
-	cmpdir ${op} ${SRC_ETC}/rc.d ${DEST_ETC}/rc.d 555 \
+	cmpdir ${op} ${SRC_DIR}/etc/rc.d ${DEST_DIR}/etc/rc.d 555 \
 		DAEMON LOGIN NETWORKING SERVERS accounting altqd amd \
 		apmd bootparams bootconf.sh ccd cleartmp cron \
 		dhclient dhcpd dhcrelay dmesg downinterfaces fsck \
@@ -240,18 +255,18 @@ do_rc()
 		screenblank sendmail securelevel sshd swap1 swap2 \
 		sysdb sysctl syslogd timed ttys virecover wscons xdm \
 		xfs ypbind yppasswdd ypserv
-	rv=$(( ${rv} + $? ))
+	failed=$(( ${failed} + $? ))
 
 		# check for obsolete rc.d files
 	for f in NETWORK gated; do
-		fd=${DEST_ETC}/rc.d/${f}
+		fd=${DEST_DIR}/etc/rc.d/${f}
 		[ ! -e "${fd}" ] && continue
 		if [ "${op}" = "check" ]; then
 			msg "Remove obsolete ${fd}"
-			rv=1
+			failed=1
 		elif ! rm ${fd}; then
 			msg "Can't remove obsolete ${fd}"
-			rv=1
+			failed=1
 		else
 			msg "Removed obsolete ${fd}"
 		fi
@@ -266,26 +281,13 @@ do_rc()
 		sysctl nfsiod_flags
 	while [ $# -gt 1 ]; do
 		if rcconf_isset $1 $2; then
-			rv=1
+			failed=1
 		fi
 		shift 2
 	done
 
-	return ${rv}
+	return ${failed}
 }
-
-#
-#	periodic
-#
-additem periodic "/etc/{daily,weekly,monthly,security} being up to date"
-do_periodic()
-{
-	[ -n "$1" ] || err 2 "USAGE: do_periodic  fix|check"
-
-	cmpdir $1 ${SRC_ETC} ${DEST_ETC} 644 \
-		daily weekly monthly security
-}
-
 
 #
 #	ssh
@@ -297,7 +299,7 @@ do_ssh()
 	op=$1
 
 	failed=0
-	_etcssh=${DEST_ETC}/ssh
+	_etcssh=${DEST_DIR}/etc/ssh
 	if [ ! -d "${_etcssh}" ]; then
 		if [ "${op}" = "check" ]; then
 			msg "${_etcssh} is not a directory"
@@ -317,7 +319,8 @@ do_ssh()
 			    ssh_host_rsa_key ssh_host_rsa_key.pub \
 			    ssh_host_key ssh_host_key.pub \
 		    ; do
-			if ! move_file ${op} ${DEST_ETC}/${f} ${_etcssh}/${f};
+			if ! move_file ${op} \
+			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f} ;
 			then
 				failed=1
 			fi
@@ -333,22 +336,23 @@ do_ssh()
 				# /etc/ssh{,d}.conf -> /etc/ssh/ssh{,d}_config
 				#
 			if ! move_file ${op} \
-			    ${DEST_ETC}/${f} ${_etcssh}/${f%.conf}_config ;
+			    ${DEST_DIR}/etc/${f} ${_etcssh}/${f%.conf}_config ;
 			then
 				failed=1
 			fi
 		done
 	fi
 
-	if [ -f "${_etcssh}/sshd_config" ]; then
-		sshdconf=${_etcssh}/sshd_config
-	elif [ -f "${_etcssh}/sshd.conf" ]; then
-		sshdconf=${_etcssh}/sshd.conf
-	elif [ -f "${DEST_ETC}/sshd.conf" ]; then
-		sshdconf=${DEST_ETC}/sshd.conf
-	else
-		sshdconf=""
-	fi
+	sshdconf=""
+	for f in \
+	    ${_etcssh}/sshd_config \
+	    ${_etcssh}/sshd.conf \
+	    ${DEST_DIR}/etc/sshd.conf ; do
+		if [ -f "${f}" ]; then
+			sshdconf=${f}
+			break;
+		fi
+	done
 	if [ -n "${sshdconf}" ]; then
 		awk '
 			$1 ~ /^[Hh][Oo][Ss][Tt][Kk][Ee][Yy]$/ &&
@@ -391,7 +395,7 @@ do_wscons()
 	[ -n "$1" ] || err 2 "USAGE: do_ssh  fix|check"
 	op=$1
 
-	[ -f ${DEST_ETC}/wscons.conf ] || return 0
+	[ -f ${DEST_DIR}/etc/wscons.conf ] || return 0
 
 	failed=0
 	while read _type _arg1 _rest; do
@@ -400,7 +404,7 @@ do_wscons()
 		"Obsolete wscons.conf(5) entry \""$_type $_arg1"\" found."
 			failed=1
 		fi
-	done < ${DEST_ETC}/wscons.conf
+	done < ${DEST_DIR}/etc/wscons.conf
 
 	return ${failed}
 }
@@ -421,8 +425,8 @@ Usage: ${PROGNAME} [-s srcdir] [-d destdir] operation [item [...]]
 	or fixes are applied.
 
 	Options:
-	-s srcdir	Source directory to compare from.  [${SRC_ETC}]
-	-d destdir	Destination directory to check.    [${DEST_ETC}]
+	-s srcdir	Source directory to compare from.  [${SRC_DIR}]
+	-d destdir	Destination directory to check.    [${DEST_DIR}]
 
 	Operation may be one of:
 		help	display this help
@@ -437,8 +441,6 @@ _USAGE_
 
 list()
 {
-	echo "Source directory: ${SRC_ETC}"
-	echo "Target directory: ${DEST_ETC}"
 	echo "Supported items:"
 	echo "  Item          Description"
 	echo "  ----          -----------"
@@ -454,9 +456,9 @@ main()
 	while getopts s:d: ch; do
 	case ${ch} in
 	s)
-		SRC_ETC=${OPTARG} ;;
+		SRC_DIR=${OPTARG} ;;
 	d)
-		DEST_ETC=${OPTARG} ;;
+		DEST_DIR=${OPTARG} ;;
 	*)
 		usage ;;
 	esac
@@ -464,8 +466,8 @@ main()
 	shift $((${OPTIND} - 1))
 	[ $# -gt 0 ] || usage
 
-	[ -d "${SRC_ETC}" ] || err 1 "${SRC_ETC} is not a directory"
-	[ -d "${DEST_ETC}" ] || err 1 "${DEST_ETC} is not a directory"
+	[ -d "${SRC_DIR}" ] || err 1 "${SRC_DIR} is not a directory"
+	[ -d "${DEST_DIR}" ] || err 1 "${DEST_DIR} is not a directory"
 
 	op=$1
 	shift
@@ -477,6 +479,8 @@ main()
 		;;
 
 	list)
+		echo "Source directory: ${SRC_DIR}"
+		echo "Target directory: ${DEST_DIR}"
 		list
 		;;
 
@@ -493,6 +497,8 @@ main()
 
 		# perform each check/fix
 		#
+		echo "Source directory: ${SRC_DIR}"
+		echo "Target directory: ${DEST_DIR}"
 		items_passed=
 		items_failed=
 		for i in ${todo}; do
@@ -544,8 +550,8 @@ mkdtemp ()
 # defaults
 #
 PROGNAME=${0##*/}
-SRC_ETC=/usr/src/etc
-DEST_ETC=/etc
+SRC_DIR="/usr/src"
+DEST_DIR="/"
 SCRATCHDIR=$( mkdtemp ) || err 1 "Can't create scratch directory"
 trap "/bin/rm -rf ${SCRATCHDIR} ; exit 0" 0 1 2 3 15	# EXIT HUP INT QUIT TERM
 umask 022
