@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.542 2003/01/23 17:38:23 christos Exp $
+# $NetBSD: mi,v 1.543 2003/01/23 23:47:58 kleink Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -126,7 +126,6 @@
 ./usr/share/man/cat1/fsplit.0			man-util-catman
 ./usr/share/man/cat1/fstat.0			man-util-catman
 ./usr/share/man/cat1/ftp.0			man-netutil-catman
-./usr/share/man/cat1/gcore.0			man-debug-catman
 ./usr/share/man/cat1/gcpp.0			man-util-catman
 ./usr/share/man/cat1/gencat.0			man-locale-catman
 ./usr/share/man/cat1/getconf.0			man-util-catman
