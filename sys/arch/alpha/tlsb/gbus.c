@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.6 1998/01/12 10:21:22 thorpej Exp $ */
+/* $NetBSD: gbus.c,v 1.7 1998/05/13 02:50:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,15 +37,17 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.6 1998/01/12 10:21:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.7 1998/05/13 02:50:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
-#include <machine/autoconf.h>
 #include <machine/rpb.h>
 #include <machine/pte.h>
+
+#include <alpha/tlsb/gbusreg.h>
+#include <alpha/tlsb/gbusvar.h>
 
 #include <alpha/tlsb/tlsbreg.h>
 #include <alpha/tlsb/tlsbvar.h>
@@ -67,17 +69,24 @@ struct cfattach gbus_ca = {
 
 static int	gbusprint __P((void *, const char *));
 
-void	gbus_intr_establish __P((struct confargs *, int (*)(void *), void *));
-void	gbus_intr_disestablish __P((struct confargs *));
-caddr_t	gbus_cvtaddr __P((struct confargs *));
-int	gbus_matchname __P((struct confargs *, char *));
+struct gbus_attach_args gbus_children[] = {
+	{ "zsc",	GBUS_DUART0_OFFSET },
+	{ "zsc",	GBUS_DUART1_OFFSET },
+	{ "mcclock",	GBUS_CLOCK_OFFSET },
+	{ NULL,		0 },
+};
 
 static int
-gbusprint(aux, cp)
+gbusprint(aux, pnp)
 	void *aux;
-	const char *cp;
+	const char *pnp;
 {
-	return (QUIET);
+	struct gbus_attach_args *ga = aux;
+
+	if (pnp)
+		printf("%s at %s", ga->ga_name, pnp);
+	printf(" offset 0x%lx", ga->ga_offset);
+	return (UNCONF);
 }
 
 static int
@@ -107,20 +116,15 @@ gbusattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	struct confargs nca;
 	struct gbus_softc *sc = (struct gbus_softc *)self;
 	struct tlsb_dev_attach_args *ta = aux;
+	struct gbus_attach_args *ga;
 
 	printf("\n");
 
-	sc->sc_dev = *self;
 	sc->sc_tlsbnode = ta->ta_node;
 
-	/* Attach the clock. */
-	nca.ca_name = "mcclock";
-	nca.ca_slot = -1;
-	nca.ca_offset = 0x20000000;
-	nca.ca_bus = NULL;
-	if (!config_found(self, &nca, gbusprint))
-		printf("no clock on %s\n", self->dv_xname);
+	/* Attach the children. */
+	for (ga = gbus_children; ga->ga_name != NULL; ga++)
+		(void) config_found(self, ga, gbusprint);
 }
