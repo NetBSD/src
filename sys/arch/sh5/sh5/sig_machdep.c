@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.2 2002/07/05 14:04:00 scw Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.3 2002/07/10 15:55:02 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -55,6 +55,84 @@
 void
 sendsig(int sig, sigset_t *returnmask, u_long code)
 {
+	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
+	struct sigcontext *scp, ksc;
+	struct trapframe *tf;
+	int onstack, fsize, rndfsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+
+	tf = p->p_md.md_regs;
+
+	/* Do we need to jump onto the signal stack? */
+	onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+
+	/* Allocate space for the signal handler context. */
+	fsize = sizeof(ksc);
+	rndfsize = ((fsize + 15) / 16) * 16;
+
+	if (onstack)
+		scp = (struct sigcontext *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp
+		    + p->p_sigctx.ps_sigstk.ss_size);
+	else
+		scp = (struct sigcontext *)(uintptr_t)tf->tf_caller.r15;
+	scp = (struct sigcontext *)((caddr_t)scp - rndfsize);
+
+	/* Build stack frame for signal trampoline. */
+	process_read_regs(p, &ksc.sc_regs);
+	ksc.sc_regs.r_intregs[24] = 0xACEBABE5ULL;	/* magic number */
+
+	/* Save FP state if necessary */
+	if ((p->p_md.md_flags & MDP_FPSAVED) == 0) {
+		p->p_md.md_flags |= sh5_fpsave(tf->tf_state.sf_usr,
+		    &p->p_addr->u_pcb);
+	}
+	if ((p->p_md.md_flags & MDP_FPUSED) != 0)
+		process_read_fpregs(p, &ksc.sc_regs);
+	ksc.sc_fpstate = p->p_md.md_flags & (MDP_FPUSED | MDP_FPSAVED);
+
+	/* Save signal stack */
+	ksc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+
+	/* Save signal mask */
+	ksc.sc_mask = *returnmask;
+
+	if (copyout(&ksc, (caddr_t)scp, fsize) != 0) {
+		/*
+		 * Process has trashed its stack; give it an illegal
+		 * instruction to halt it in its tracks.
+		 */
+		sigexit(p, SIGILL);
+		/* NOTREACHED */
+	}
+
+	/*
+	 * Set up the registers to directly invoke the signal handler.  The
+	 * signal trampoline is then used to return from the signal.  Note
+	 * the trampoline version numbers are coordinated with machine-
+	 * dependent code in libc.
+	 */
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 1:
+		tf->tf_caller.r18 =
+		    (register_t)(uintptr_t)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+
+	tf->tf_state.sf_spc = (register_t)(uintptr_t)catcher;
+	tf->tf_caller.r2 = sig;
+	tf->tf_caller.r3 = code;
+	tf->tf_caller.r15 = (register_t)(uintptr_t)scp;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
 }
 
 /*
@@ -70,10 +148,44 @@ sendsig(int sig, sigset_t *returnmask, u_long code)
 int
 sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 {
-#if 0
 	struct sys___sigreturn14_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-#endif
+	struct sigcontext *scp, ksc;
+	struct trapframe *tf;
+
+	tf = p->p_md.md_regs;
+
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
+	scp = SCARG(uap, sigcntxp);
+	if (ALIGN(scp) != (register_t)scp)
+		return (EINVAL);
+
+	if (copyin((caddr_t)scp, &ksc, sizeof(ksc)) != 0)
+		return (EFAULT);
+
+	if (ksc.sc_regs.r_intregs[24] != 0xACEBABE5ULL)	/* magic number */
+		return (EINVAL);
+
+	/* Restore register context. */
+	process_write_regs(p, &ksc.sc_regs);
+	if ((ksc.sc_fpstate & MDP_FPSAVED) != 0) {
+		sh5_fprestore(tf->tf_state.sf_usr, &p->p_addr->u_pcb);
+		p->p_md.md_flags = ksc.sc_fpstate & ~MDP_FPSAVED;
+	}
+
+	/* Restore signal stack. */
+	if (ksc.sc_onstack & SS_ONSTACK)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigctx.ps_sigstk.ss_flags &= ~SS_ONSTACK;
+
+	/* Restore signal mask. */
+	(void) sigprocmask1(p, SIG_SETMASK, &ksc.sc_mask, 0);
+
 	return (EJUSTRETURN);
 }
