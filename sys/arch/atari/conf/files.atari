@@ -1,9 +1,11 @@
 #
-#	$NetBSD: files.atari,v 1.76 2001/03/31 20:24:10 leo Exp $
+#	$NetBSD: files.atari,v 1.77 2001/04/10 06:28:38 leo Exp $
 
 maxpartitions 16
 
 maxusers 2 8 64
+
+defopt	opt_mbtype.h			_MILANHW_ _ATARIHW_
 
 device	mainbus {}
 attach	mainbus at root
@@ -209,7 +211,7 @@ file	arch/atari/atari/stalloc.c
 file	arch/atari/atari/vm_machdep.c
 file	arch/atari/atari/db_memrw.c		ddb
 file	arch/atari/atari/fpu.c
-file	arch/atari/dev/ym2149.c
+file	arch/atari/dev/ym2149.c			_atarihw_
 file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 
