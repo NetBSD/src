@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.112 2001/01/20 17:04:03 thorpej Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.113 2001/01/23 05:42:43 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.113 2001/01/20 17:03:32 thorpej Exp 
+ *	NetBSD: pcmciadevs,v 1.114 2001/01/23 05:42:12 thorpej Exp 
  */
 
 /*-
@@ -353,6 +353,9 @@
 #define	PCMCIA_CIS_XIRCOM_CE3	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CE3	0x010a
 #define	PCMCIA_STR_XIRCOM_CE3	"Xircom CreditCard 10/100 Ethernet"
+#define	PCMCIA_CIS_XIRCOM_CT2	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_XIRCOM_CT2	0x1101
+#define	PCMCIA_STR_XIRCOM_CT2	"Xircom CreditCard Token Ring II"
 #define	PCMCIA_CIS_XIRCOM_CEM	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_XIRCOM_CEM	0x110a
 #define	PCMCIA_STR_XIRCOM_CEM	"Xircom CreditCard Ethernet + Modem"
