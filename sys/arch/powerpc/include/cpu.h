@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2003/02/03 17:10:01 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2003/02/10 04:01:37 matt Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -35,6 +35,14 @@
 #ifndef	_POWERPC_CPU_H_
 #define	_POWERPC_CPU_H_
 
+struct cache_info {
+	int dcache_size;
+	int dcache_line_size;
+	int icache_size;
+	int icache_line_size;
+};
+
+#ifdef _KERNEL
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
@@ -46,16 +54,6 @@
 #include <machine/intr.h>
 #include <sys/device.h>
 
-
-struct cache_info {
-	int dcache_size;
-	int dcache_line_size;
-	int icache_size;
-	int icache_line_size;
-};
-
-
-#ifdef _KERNEL
 #include <sys/sched.h>
 #include <dev/sysmon/sysmonvar.h>
 
