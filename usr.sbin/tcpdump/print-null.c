@@ -1,4 +1,4 @@
-/*	$NetBSD: print-null.c,v 1.6 1999/07/02 11:31:34 itojun Exp $	*/
+/*	$NetBSD: print-null.c,v 1.7 1999/07/25 00:13:07 itojun Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-null.c,v 1.24 97/05/28 12:52:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-null.c,v 1.6 1999/07/02 11:31:34 itojun Exp $");
+__RCSID("$NetBSD: print-null.c,v 1.7 1999/07/25 00:13:07 itojun Exp $");
 #endif
 #endif
 
@@ -94,6 +94,12 @@ null_print(const u_char *p, const struct ip *ip, u_int length)
 	case AF_NS:
 		printf("ns: ");
 		break;
+
+#ifdef INET6
+	case AF_INET6:
+		printf("ip6: ");
+		break;
+#endif
 
 	default:
 		printf("AF %d: ", family);
