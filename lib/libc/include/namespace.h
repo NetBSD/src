@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.21 1998/10/14 11:25:18 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.22 1998/10/14 19:13:02 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -263,6 +263,10 @@
 #define regexec			_regexec
 #define regfree			_regfree
 #define registerrpc		_registerrpc
+#define res_init		_res_init
+#define res_mkquery		_res_mkquery
+#define res_query		_res_query
+#define res_search		_res_search
 #define rewinddir		_rewinddir
 #define scandir			_scandir
 #define seed48			_seed48
