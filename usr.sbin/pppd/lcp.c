@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.5 1994/05/30 01:18:49 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.6 1994/06/14 03:21:56 paulus Exp $";
 #endif
 
 /*
@@ -1268,7 +1268,7 @@ lcp_up(f)
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
     ppp_recv_config(f->unit, (go->neg_mru? MAX(wo->mru, go->mru): MTU),
-		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
+		    (go->neg_asyncmap? go->asyncmap: 0),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
