@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8.2.7 1997/11/22 00:33:04 simonb Exp $	*/
+/*	$NetBSD: net.c,v 1.8.2.8 1997/11/22 14:19:06 simonb Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <string.h>
 #include <curses.h>
 #include <unistd.h>
+#include <sys/param.h>
 #include "defs.h"
 #include "md.h"
 #include "msg_defs.h"
@@ -79,6 +80,39 @@ static void get_ifconfig_info (void)
 		*t = 0;
 }
 
+/* Fill in defaults network values for the selected interface */
+
+static void get_ifinterface_info(void)
+{
+	char *textbuf;
+	int textsize;
+	char *t;
+	char hostname[MAXHOSTNAMELEN];
+
+	/* First look to see if the selected interface is already configured. */
+	textsize = collect(T_OUTPUT, &textbuf, "/sbin/ifconfig %s 2>/dev/null",
+			   net_dev);
+	if (textsize >= 0) {
+		(void)strtok(textbuf, " \t\n"); /* ignore interface name */
+		while ((t = strtok(NULL, " \t\n")) != NULL) {
+			if (strcmp(t, "inet") == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "0.0.0.0") != 0)
+					strcpy(net_ip, t);
+			}
+			else if (strcmp(t, "netmask") == 0) {
+				t = strtok(NULL, " \t\n");
+				if (strcmp(t, "0x0") != 0)
+					strcpy(net_mask, t);
+			}
+		}
+	}
+
+	/* Check host (and domain?) name */
+	if (gethostname(hostname, sizeof(hostname)) == 0)
+		strncpy(net_host, hostname, sizeof(net_host));
+}
+
 /* Get the information to configure the network, configure it and
    make sure both the gateway and the name server are up. */
 
@@ -94,6 +128,7 @@ int config_network (void)
 	if (network_up)
 		return 1;
 
+	network_up = 1;
 	net_devices[0] = '\0';
 	get_ifconfig_info ();
 	if (strlen(net_devices) == 0) {
@@ -122,10 +157,13 @@ int config_network (void)
 
 	/* Remove that space we added. */
 	net_dev[strlen(net_dev)-1] = 0;
+
+	/* Preload any defaults we can find */
+	get_ifinterface_info ();
+	pass = strlen(net_mask) == 0 ? 0 : 1;
 	
 	/* Get other net information */
 	msg_display (MSG_netinfo);
-	pass = 0;
 	do {
 		msg_prompt_add (MSG_net_domain, net_domain, net_domain,
 				STRSIZE);
@@ -146,42 +184,55 @@ int config_network (void)
 		msg_prompt_add (MSG_net_namesrv, net_namesvr, net_namesvr,
 				STRSIZE);
 
-		msg_display (MSG_netok, net_domain, net_host, net_ip,
-			     net_mask, net_namesvr, net_defroute);
+		msg_display (MSG_netok, net_domain, net_host, net_ip, net_mask,
+			     *net_namesvr == '\0' ? "<none>" : net_namesvr,
+			     *net_defroute == '\0' ? "<none>" : net_defroute);
 		process_menu (MENU_yesno);
 		if (!yesno)
 			msg_display (MSG_netagain);
 		pass++;
 	} while (!yesno);
 
-	/* Create /etc/resolv.conf */
+	/* Create /etc/resolv.conf if a nameserver was given */
+	if (strcmp(net_namesvr, "") != 0) {
 #ifdef DEBUG
-	f = fopen ("/tmp/resolv.conf", "w");
+		f = fopen ("/tmp/resolv.conf", "w");
 #else
-	f = fopen ("/etc/resolv.conf", "w");
+		f = fopen ("/etc/resolv.conf", "w");
 #endif
-	if (f == NULL) {
-		endwin();
-		(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
-		exit(1);
+		if (f == NULL) {
+			endwin();
+			(void)fprintf(stderr, "%s", msg_string(MSG_resolv));
+			exit(1);
+		}
+		time(&now);
+		/* NB: ctime() returns a string ending in  '\n' */
+		(void)fprintf (f, ";\n; BIND data file\n; %s %s;\n", 
+			       "Created by NetBSD sysinst on", ctime(&now)); 
+		(void)fprintf (f,
+			       "nameserver %s\nlookup file bind\nsearch %s\n",
+			       net_namesvr, net_domain);
+		fclose (f);
 	}
-	time(&now);
-	/* NB: ctime() returns a string ending in  '\n' */
-	(void)fprintf (f, ";\n; BIND data file\n; %s %s;\n", 
-		       "Created by NetBSD sysinst on", ctime(&now)); 
-	(void)fprintf (f, "nameserver %s\nlookup file bind\nsearch %s\n",
-		       net_namesvr, net_domain);
-	fclose (f);
 
 	run_prog ("/sbin/ifconfig lo0 127.0.0.1");
 	run_prog ("/sbin/ifconfig %s inet %s netmask %s", net_dev, net_ip,
 		  net_mask);
-	run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
-	run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
-		  net_defroute);
 
-	network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
-		&& !run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
+	/* Set a default route if one was given */
+	if (strcmp(net_defroute, "") != 0) {
+		run_prog ("/sbin/route -f > /dev/null 2> /dev/null");
+		run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
+			  net_defroute);
+	}
+
+	if (strcmp(net_namesvr, "") != 0 && network_up)
+		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
+					net_defroute);
+
+	if (strcmp(net_defroute, "") != 0 && network_up)
+		network_up = !run_prog ("/sbin/ping -c 2 %s > /dev/null",
+					net_namesvr);
 
 	return network_up;
 }
