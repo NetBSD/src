@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.79 2000/02/14 12:37:35 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.80 2000/03/20 22:53:36 enami Exp $ */
 
 
 /*
@@ -484,8 +484,6 @@ wdcactivate(self, act)
 		break;
 
 	case DVACT_DEACTIVATE:
-		if (wdc->sc_dying != 0)
-			goto out;
 		for (i = 0; i < wdc->nchannels; i++) {
 			chp = wdc->channels[i];
 
@@ -516,7 +514,6 @@ wdcactivate(self, act)
 				}
 			}
 		}
-		wdc->sc_dying = 1;
 		break;
 	}
 
@@ -664,9 +661,14 @@ wdcintr(arg)
 	struct wdc_xfer *xfer;
 	int ret;
 
+	if ((chp->wdc->sc_dev.dv_flags & DVF_ACTIVE) == 0) {
+		WDCDEBUG_PRINT(("wdcintr: deactivated controller\n"),
+		    DEBUG_INTR);
+		return (0);
+	}
 	if ((chp->ch_flags & WDCF_IRQ_WAIT) == 0) {
 		WDCDEBUG_PRINT(("wdcintr: inactive controller\n"), DEBUG_INTR);
-		return 0;
+		return (0);
 	}
 
 	WDCDEBUG_PRINT(("wdcintr\n"), DEBUG_INTR);
@@ -1314,7 +1316,8 @@ __wdccommand_done(chp, xfer)
 		wdc_c->r_error = chp->ch_error;
 	}
 	wdc_c->flags |= AT_DONE;
-	if ((wdc_c->flags & AT_READREG) != 0 && chp->wdc->sc_dying != 0 &&
+	if ((wdc_c->flags & AT_READREG) != 0 &&
+	    (chp->wdc->sc_dev.dv_flags & DVF_ACTIVE) != 0 &&
 	    (wdc_c->flags & (AT_ERROR | AT_DF)) == 0) {
 		wdc_c->r_head = bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
 						 wd_sdh);
