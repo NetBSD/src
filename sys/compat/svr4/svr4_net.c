@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_net.c,v 1.24 2001/02/11 01:16:42 eeh Exp $	 */
+/*	$NetBSD: svr4_net.c,v 1.25 2001/04/07 17:37:10 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@ int svr4_soo_close __P((struct file *, struct proc *));
 int svr4_ptm_alloc __P((struct proc *));
 
 static struct fileops svr4_netops = {
-	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll, svr4_soo_close
+	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
+	soo_stat, svr4_soo_close
 };
 
 
