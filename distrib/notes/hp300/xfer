@@ -79,6 +79,6 @@ To prepare for installing via FTP:
 		Password: <your e-mail address>
 		Server path: /pub/NetBSD/NetBSD-_VER/hp300/binary/sets
 
-	Note: if you're not using a nameserver duing installation,
-	you might find 206.86.8.12 handy; it's the IP address of
-	ftp.NetBSD.ORG as of Dezember, 23, 1997.
+	Note: if you're not using a nameserver during installation,
+	you might find 204.152.184.75 handy; it's the IP address of
+	ftp.NetBSD.ORG as of December, 29, 1997.
