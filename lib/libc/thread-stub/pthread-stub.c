@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.4 2001/12/18 22:29:59 nathanw Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.5 2002/01/01 09:12:57 wdk Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -83,8 +83,8 @@ int _pthread_once(pthread_once_t *, void (*)(void));
 int _pthread_cond_init(pthread_cond_t *,const pthread_condattr_t *);
 int _pthread_cond_wait(pthread_cond_t *, pthread_mutex_t *);
 int _pthread_cond_signal(pthread_cond_t *);
-void _pthread_spinlock(pthread_t, pt_spin_t *);
-void _pthread_spinunlock(pthread_t, pt_spin_t *);
+void _pthread_spinlock(pthread_t, pthread_spin_t *);
+void _pthread_spinunlock(pthread_t, pthread_spin_t *);
 int _pthread_key_create(pthread_key_t *, void (*)(void *));
 int _pthread_setspecific(pthread_key_t, const void *);
 void* _pthread_getspecific(pthread_key_t);
@@ -229,7 +229,7 @@ _pthread_cond_signal(pthread_cond_t *c)
 }
 
 void 
-_pthread_spinlock(pthread_t t, pt_spin_t *l)
+_pthread_spinlock(pthread_t t, pthread_spin_t *l)
 {
 	/* LINTED deliberate lack of effect */
 	(void)t;
@@ -238,7 +238,7 @@ _pthread_spinlock(pthread_t t, pt_spin_t *l)
 }
 
 void
-_pthread_spinunlock(pthread_t t, pt_spin_t *l)
+_pthread_spinunlock(pthread_t t, pthread_spin_t *l)
 {
 	/* LINTED deliberate lack of effect */
 	(void)t;
