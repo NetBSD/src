@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.22 1999/06/05 16:55:19 eeh Exp $
+#	$NetBSD: files.sparc64,v 1.23 1999/06/07 20:31:34 thorpej Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -141,7 +141,6 @@ major	{ cd = 18 }
 major	{ fd = 16 }
 major	{ md = 5 }
 major	{ sd = 7 }
-major	{ vnd = 8 }
 major	{ wd = 12 }
 
 # Brooktree DAC attribute

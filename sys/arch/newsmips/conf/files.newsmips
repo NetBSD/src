@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.3 1998/07/21 17:36:03 drochner Exp $
+#	$NetBSD: files.newsmips,v 1.4 1999/06/07 20:31:32 thorpej Exp $
 # NEWS-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -93,7 +93,6 @@ include "dev/scsipi/files.scsipi"
 major { sd = 0 }
 major { fd = 1 }
 major { cd = 16 }
-major { st = 17 }
 
 device sc: scsi
 file arch/newsmips/dev/scsi_1185.c		sc needs-count

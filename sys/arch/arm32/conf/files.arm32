@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm32,v 1.76 1999/03/01 10:01:52 mark Exp $
+#	$NetBSD: files.arm32,v 1.77 1999/06/07 20:31:29 thorpej Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -35,7 +35,6 @@ file	arch/arm32/mainbus/mainbus_io_asm.S	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/arm32/mainbus/cpu.c		cpu needs-flag
-major	{cpu = 38}
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -59,7 +58,6 @@ attach	wdc at pioc with wdc_pioc
 file	arch/arm32/mainbus/wdc_pioc.c		wdc_pioc
 
 # Standard parallel driver
-major   {lpt = 8}
 attach  lpt at pioc with lpt_pioc
 file    arch/arm32/mainbus/lpt_pioc.c		lpt_pioc
 
@@ -111,8 +109,6 @@ file    arch/arm32/mainbus/fd.c			fdc needs-flag
 major   {fd = 17}
 
 # Standard serial driver
-major   {com = 12}
-
 attach	com at pioc with com_pioc
 file    arch/arm32/mainbus/com_pioc.c		com_pioc
 
@@ -142,7 +138,6 @@ file	arch/arm32/iomd/iomd_clock.c		iomd
 # quadmouse device
 device  qms
 file    arch/arm32/dev/qms.c			qms needs-flag
-major   {qms = 9}
 
 attach	qms at iomd with qms_iomd
 file    arch/arm32/iomd/qms_iomd.c		qms_iomd
@@ -155,7 +150,6 @@ define	spckbd { [irq = -1], [port = -1] }
 device	opms: tty
 file	arch/arm32/dev/pms.c			opms & opms_iomd needs-flag
 file	arch/arm32/shark/pms.c			opms & ofw needs-flag
-major	{opms = 40}
 
 attach	opms at spckbd with opms
 attach	opms at iomd with opms_iomd
@@ -164,7 +158,6 @@ file	arch/arm32/iomd/pms_iomd.c		opms_iomd
 # Standard keyboard driver
 device	kbd
 file	arch/arm32/dev/kbd.c			kbd needs-flag
-major	{kbd = 11}
 
 attach	kbd at iomd with kbd_iomd
 file	arch/arm32/iomd/kbd_iomd.c		kbd_iomd
@@ -196,12 +189,10 @@ file	arch/arm32/vidc/vidc20.c		vidc needs-count
 device	beep
 attach	beep at vidc
 file	arch/arm32/vidc/beep.c			beep needs-flag
-major	{beep = 10}
 
 device	vidcaudio: audio
 attach	vidcaudio at vidc
 file	arch/arm32/vidc/vidcaudio.c		vidcaudio needs-flag
-major	{vidcaudio = 36}
 
 device	lmcaudio: audio
 attach	lmcaudio at vidc
@@ -252,11 +243,7 @@ file	arch/arm32/rc7500/if_es.c		es & rc7500
 
 include "dev/scsipi/files.scsipi"
 major   {sd = 24}
-major   {st = 25}
 major   {cd = 26}
-major   {ch = 27}
-major	{uk = 28}
-major	{ss = 29}
 
 # Generic sbic (WD3393) driver
 define	sbic
@@ -325,7 +312,6 @@ file	arch/arm32/podulebus/amps.c		amps
 device  vidcvideo
 attach	vidcvideo at vidc
 file    arch/arm32/vidc/console/vidcvideo.c	vidcvideo needs-count
-major	{vidcvideo = 37}
 device  vt: tty
 attach	vt at vidc
 

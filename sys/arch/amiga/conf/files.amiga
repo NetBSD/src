@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.86 1999/04/19 21:22:57 kleink Exp $
+#	$NetBSD: files.amiga,v 1.87 1999/06/07 20:31:28 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -237,7 +237,6 @@ file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
 include "../../../dev/scsipi/files.scsipi"
 major	{sd = 4}
-major	{st = 5}
 major	{cd = 7}
 
 # wd 33c93 contrllers
@@ -395,7 +394,6 @@ file	arch/amiga/amiga/cc.c
 file	arch/amiga/amiga/db_memrw.c	ddb
 file	arch/amiga/dev/md_root.c		memory_disk_hooks
 
-major	{vnd = 6}
 major	{md = 15}	# Memory disk (for mini-kernel)
 
 # Compatibility modules
