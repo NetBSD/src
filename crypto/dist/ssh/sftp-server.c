@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-server.c,v 1.15 2002/06/24 05:48:35 itojun Exp $	*/
+/*	$NetBSD: sftp-server.c,v 1.16 2002/06/26 14:08:32 itojun Exp $	*/
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
  *
@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.36 2002/06/23 09:30:14 deraadt Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.37 2002/06/24 17:57:20 deraadt Exp $");
 
 #include "buffer.h"
 #include "bufaux.h"
@@ -693,13 +693,13 @@ ls_file(char *name, struct stat *st)
 	if ((pw = getpwuid(st->st_uid)) != NULL) {
 		user = pw->pw_name;
 	} else {
-		snprintf(ubuf, sizeof ubuf, "%u", st->st_uid);
+		snprintf(ubuf, sizeof ubuf, "%u", (u_int)st->st_uid);
 		user = ubuf;
 	}
 	if ((gr = getgrgid(st->st_gid)) != NULL) {
 		group = gr->gr_name;
 	} else {
-		snprintf(gbuf, sizeof gbuf, "%u", st->st_gid);
+		snprintf(gbuf, sizeof gbuf, "%u", (u_int)st->st_gid);
 		group = gbuf;
 	}
 	if (ltime != NULL) {

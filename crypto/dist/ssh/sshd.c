@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.23 2002/06/24 05:48:40 itojun Exp $	*/
+/*	$NetBSD: sshd.c,v 1.24 2002/06/26 14:08:33 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,7 +43,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.250 2002/06/23 10:29:52 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.251 2002/06/25 18:51:04 markus Exp $");
 
 #include <openssl/dh.h>
 #include <openssl/bn.h>
@@ -518,6 +518,7 @@ static void
 privsep_preauth_child(void)
 {
 	u_int32_t rand[256];
+	gid_t gidset[2];
 	struct passwd *pw;
 	int i;
 
@@ -547,7 +548,17 @@ privsep_preauth_child(void)
 	/* Drop our privileges */
 	debug3("privsep user:group %u:%u", (u_int)pw->pw_uid,
 	    (u_int)pw->pw_gid);
+#if 0
+	/* XXX not ready, to heavy after chroot */
 	do_setusercontext(pw);
+#else
+	gidset[0] = pw->pw_gid;
+	if (setgid(pw->pw_gid) < 0)
+		fatal("setgid failed for %u", pw->pw_gid );
+	if (setgroups(1, gidset) < 0)
+		fatal("setgroups: %.100s", strerror(errno));
+	permanently_set_uid(pw);
+#endif
 }
 
 static Authctxt*

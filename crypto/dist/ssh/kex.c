@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.15 2002/06/24 05:48:30 itojun Exp $	*/
+/*	$NetBSD: kex.c,v 1.16 2002/06/26 14:08:31 itojun Exp $	*/
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: kex.c,v 1.50 2002/05/15 15:47:49 mouring Exp $");
+RCSID("$OpenBSD: kex.c,v 1.51 2002/06/24 14:55:38 markus Exp $");
 
 #include <openssl/crypto.h>
 
@@ -203,8 +203,8 @@ kex_input_kexinit(int type, u_int32_t seq, void *ctxt)
 		packet_get_char();
 	for (i = 0; i < PROPOSAL_MAX; i++)
 		xfree(packet_get_string(NULL));
-	packet_get_char();
-	packet_get_int();
+	(void) packet_get_char();
+	(void) packet_get_int();
 	packet_check_eom();
 
 	kex_kexinit_finish(kex);

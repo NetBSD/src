@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.4 2002/06/24 05:48:31 itojun Exp $	*/
+/*	$NetBSD: monitor.c,v 1.5 2002/06/26 14:08:31 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2002 Markus Friedl <markus@openbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: monitor.c,v 1.17 2002/06/22 23:09:51 stevesk Exp $");
+RCSID("$OpenBSD: monitor.c,v 1.18 2002/06/26 13:20:57 deraadt Exp $");
 
 #include <openssl/dh.h>
 
@@ -1419,9 +1419,13 @@ mm_get_keystate(struct monitor *pmonitor)
 void *
 mm_zalloc(struct mm_master *mm, u_int ncount, u_int size)
 {
+	int len = size * ncount;
 	void *address;
 
-	address = mm_malloc(mm, size * ncount);
+	if (len <= 0)
+		fatal("%s: mm_zalloc(%u, %u)", __func__, ncount, size);
+
+	address = mm_malloc(mm, len);
 
 	return (address);
 }
