@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.4 1998/02/10 14:12:29 mrg Exp $	*/
+/*	$NetBSD: uvm_stat.c,v 1.5 1998/02/12 20:10:15 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -52,6 +52,14 @@
 #include <uvm/uvm.h>
 
 struct uvm_cnt *uvm_cnt_head = NULL;
+
+/*
+ * globals
+ */
+
+#ifdef UVMHIST_PRINT
+int uvmhist_print_enabled = 1;
+#endif
 
 /*
  * prototypes
