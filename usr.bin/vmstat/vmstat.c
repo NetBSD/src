@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.92 2001/11/29 21:22:25 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.93 2001/12/06 03:48:56 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.92 2001/11/29 21:22:25 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.93 2001/12/06 03:48:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1324,10 +1324,10 @@ dohashstat(int verbose, int todo, const char *hashname)
 			if (chain > maxchain)
 				maxchain = chain;
 		}
-		printf("%-16s %8ld %8d %8.2f %8d %8d %8d\n",
+		printf("%-16s %8ld %8d %8.2f %8d %8.2f %8d\n",
 		    hashnl[curhash->hashsize].n_name + 1,
 		    hashsize, used, used * 100.0 / hashsize,
-		    items, used ? items / used : 0, maxchain);
+		    items, used ? (double)items / used : 0.0, maxchain);
 	}
 }
 
