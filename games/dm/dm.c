@@ -1,4 +1,4 @@
-/*	$NetBSD: dm.c,v 1.19 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: dm.c,v 1.20 2004/02/08 22:23:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)dm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dm.c,v 1.19 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: dm.c,v 1.20 2004/02/08 22:23:50 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ int	users(void);
 
 int
 main(argc, argv)
-	int argc;
+	int argc __attribute__((__unused__));
 	char *argv[];
 {
 	char *cp;
