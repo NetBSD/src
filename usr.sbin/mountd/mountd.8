@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.16 1998/02/06 06:20:53 perry Exp $
+.\"	$NetBSD: mountd.8,v 1.17 1998/04/28 04:07:08 fair Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,9 @@ When
 .Nm
 is started,
 it loads the export host addresses and options into the kernel
-using the mount(2) system call.
+using the
+.Xr mount 2
+system call.
 After changing the exports file,
 a hangup signal should be sent to the
 .Nm
