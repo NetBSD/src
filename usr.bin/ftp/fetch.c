@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.56 1999/06/20 22:07:28 cgd Exp $	*/
+/*	$NetBSD: fetch.c,v 1.57 1999/06/24 14:48:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.56 1999/06/20 22:07:28 cgd Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.57 1999/06/24 14:48:35 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: fetch.c,v 1.56 1999/06/20 22:07:28 cgd Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 #include <util.h>
 
 #include "ftp_var.h"
