@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k.newconf,v 1.27 1995/04/20 15:28:54 briggs Exp $
+#	$NetBSD: files.mac68k.newconf,v 1.28 1995/04/21 11:35:15 briggs Exp $
 
 #	@(#)files.sparc	8.1 (Berkeley) 7/19/93
 #
@@ -31,7 +31,6 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 
 device	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
-file	arch/mac68k/dev/grf_gb.c	grf
 device	ite at mainbus
 file	arch/mac68k/dev/ite.c		ite needs-flag
 
