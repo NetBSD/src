@@ -20,7 +20,7 @@
  */
 
 /*
- * $Id: if_ed.c,v 1.21 1994/02/08 03:06:20 mycroft Exp $
+ * $Id: if_ed.c,v 1.22 1994/02/10 17:17:56 mycroft Exp $
  */
 
 /*
@@ -981,7 +981,6 @@ ed_attach(isa_dev)
 	ifp->if_unit = isa_dev->id_unit;
 	ifp->if_name = "ed" ;
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = ed_init;
 	ifp->if_output = ether_output;
 	ifp->if_start = ed_start;
 	ifp->if_ioctl = ed_ioctl;

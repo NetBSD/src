@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.12 1994/02/04 02:06:04 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.13 1994/02/10 17:17:58 mycroft Exp $
  */
 /*
  * TODO:
@@ -222,7 +222,6 @@ epattach(is)
 	ifp->if_name = "ep";
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-	ifp->if_init = epinit;
 	ifp->if_output = ether_output;
 	ifp->if_start = epstart;
 	ifp->if_ioctl = epioctl;

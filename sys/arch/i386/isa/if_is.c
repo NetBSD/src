@@ -198,7 +198,6 @@ is_attach(isa_dev)
 	ifp->if_name = isdriver.name ;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
-	ifp->if_init = is_init;
 	ifp->if_output = ether_output;
 	ifp->if_start = is_start;
 	ifp->if_ioctl = is_ioctl;
