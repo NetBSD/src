@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.26 2002/10/19 18:58:32 provos Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.27 2002/11/17 01:51:24 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.26 2002/10/19 18:58:32 provos Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.27 2002/11/17 01:51:24 itojun Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,8 +107,7 @@ realpath(path, resolved)
 	 *     if it is a directory, then change to that directory.
 	 * get the current directory name and append the basename.
 	 */
-	(void)strncpy(resolved, path, MAXPATHLEN - 1);
-	resolved[MAXPATHLEN - 1] = '\0';
+	(void)strlcpy(resolved, path, MAXPATHLEN);
 loop:
 	q = strrchr(resolved, '/');
 	if (q != NULL) {
