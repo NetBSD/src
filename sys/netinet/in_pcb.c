@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.45 1998/01/07 22:51:23 lukem Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.46 1998/01/08 00:32:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993, 1995
@@ -181,7 +181,7 @@ in_pcbbind(v, nam, p)
 
 noname:
 	if (lport == 0) {
-		int	   cnt
+		int	   cnt;
 		u_int16_t  min, max;
 		u_int16_t *lastport;
 
