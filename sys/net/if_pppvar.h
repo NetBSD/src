@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.7 1997/05/17 21:12:03 christos Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.8 1998/02/09 17:43:52 perry Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -42,6 +42,9 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
+
+#ifndef _NET_IF_PPPVAR_H_
+#define _NET_IF_PPPVAR_H_
 
 /*
  * Supported network protocols.  These values are used for
@@ -113,3 +116,5 @@ struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
 int	pppoutput __P((struct ifnet *, struct mbuf *,
 		       struct sockaddr *, struct rtentry *));
 #endif /* _KERNEL */
+
+#endif /* _NET_IF_PPPVAR_H_ */

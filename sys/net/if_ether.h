@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.3 1997/11/02 14:26:15 lukem Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.4 1998/02/09 17:43:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,6 +34,9 @@
  *
  *	@(#)if_ether.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_IF_ETHER_H_
+#define _NET_IF_ETHER_H_
 
 /*
  * Ethernet address - 6 octets
@@ -180,3 +183,5 @@ int	ether_hostton __P((const char *, struct ether_addr *));
 int	ether_line __P((const char *, struct ether_addr *, char *));
 __END_DECLS
 #endif
+
+#endif /* _NET_IF_ETHER_H_ */

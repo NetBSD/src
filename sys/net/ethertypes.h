@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.2 1997/03/15 18:12:19 is Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.3 1998/02/09 17:43:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -45,8 +45,8 @@
  * into the hardware independent ARP code. -is
  */
 
-#ifndef _ETHERTYPE_H_
-#define _ETHERTYPE_H_
+#ifndef _NET_ETHERTYPES_H_
+#define _NET_ETHERTYPES_H_
 
 #define	ETHERTYPE_PUP		0x0200	/* PUP protocol */
 #define	ETHERTYPE_IP		0x0800	/* IP protocol */
@@ -61,4 +61,4 @@
 #define	ETHERTYPE_TRAIL		0x1000		/* Trailer packet */
 #define	ETHERTYPE_NTRAILER	16
 
-#endif /* _ETHERTYPE_H_ */
+#endif /* _NET_ETHERTYPES_H_ */

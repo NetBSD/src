@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.9 1998/02/04 01:00:23 ross Exp $	*/
+/*	$NetBSD: if_types.h,v 1.10 1998/02/09 17:43:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -34,6 +34,9 @@
  *
  *	@(#)if_types.h	8.2 (Berkeley) 4/20/94
  */
+
+#ifndef _NET_IF_TYPES_H_
+#define _NET_IF_TYPES_H_
 
 /*
  * Interface types for benefit of parsing media address headers.
@@ -170,3 +173,5 @@
 #define IFT_DOCSCABLEMACLAYER	   0x7f /* CATV Mac Layer */
 #define IFT_DOCSCABLEDOWNSTREAM	   0x80 /* CATV Downstream interface */
 #define IFT_DOCSCABLEUPSTREAM	   0x81 /* CATV Upstream interface */
+
+#endif /* _NET_IF_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.6 1997/03/15 18:12:30 is Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.7 1998/02/09 17:43:45 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -35,6 +35,9 @@
  * from: NetBSD: if_ether.h,v 1.10 1994/06/29 06:37:55 cgd Exp
  *       @(#)if_ether.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NET_IF_ARC_H_
+#define _NET_IF_ARC_H_
 
 /*
  * Arcnet address - 1 octets
@@ -119,3 +122,5 @@ int	arc_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 	    struct rtentry *));
 int	arc_isphds __P((int));
 #endif
+
+#endif /* _NET_IF_ARC_H_ */
