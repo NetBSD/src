@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170var.h,v 1.4 2000/03/23 07:01:32 thorpej Exp $	*/
+/*	$NetBSD: smc83c170var.h,v 1.5 2001/05/17 17:32:47 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -107,6 +107,11 @@ struct epic_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	void *sc_sdhook;		/* shutdown hook */
 
+	int sc_hwflags;			/* info about board */
+#define EPIC_HAS_BNC		0x01	/* BNC on serial interface */
+#define EPIC_HAS_MII_FIBER	0x02	/* fiber on MII lxtphy */
+#define EPIC_DUPLEXLED_ON_694	0x04	/* duplex LED by software */
+
 	struct mii_data sc_mii;		/* MII/media information */
 	struct callout sc_mii_callout;	/* MII callout */
 
@@ -129,6 +134,8 @@ struct epic_softc {
 	int	sc_txlast;		/* last used TX descriptor */
 
 	int	sc_rxptr;		/* next ready RX descriptor */
+
+	int	sc_serinst;		/* ifmedia instance for serial mode */
 };
 
 #define	EPIC_CDTXADDR(sc, x)	((sc)->sc_cddma + EPIC_CDTXOFF((x)))
