@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: rusersd.c,v 1.5 1993/11/21 18:56:36 brezak Exp $";
+static char rcsid[] = "$Id: rusersd.c,v 1.5.2.1 1994/07/12 21:16:52 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -57,7 +57,7 @@ main(argc, argv)
         int sock = 0;
         int proto = 0;
 	struct sockaddr_in from;
-	int fromlen;
+	int fromlen = sizeof(from);
         
         /*
          * See if inetd started us
