@@ -1,4 +1,4 @@
-# $NetBSD: ad.sh3,v 1.6 2000/06/26 15:49:44 kleink Exp $
+# $NetBSD: ad.sh3,v 1.7 2001/04/02 12:46:34 msaitoh Exp $
 ./usr/include/sh3	comp-c-include
 ./usr/include/sh3/ansi.h	comp-c-include
 ./usr/include/sh3/aout_machdep.h	comp-c-include
@@ -61,3 +61,4 @@
 ./usr/include/sh3/vmparam.h	comp-c-include
 ./usr/include/sh3/wdogvar.h	comp-c-include
 ./usr/include/sh3/wdtreg.h	comp-c-include
+./usr/lib/libbfd.a		comp-c-lib
