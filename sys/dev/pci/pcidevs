@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.315 2001/04/12 06:26:20 matt Exp $
+$NetBSD: pcidevs,v 1.316 2001/04/12 07:46:00 itojun Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1257,7 +1257,7 @@ product KTI NE2KETHER	0x3000	Ethernet
 product	LMC HSSI	0x0003	HSSI Interface
 product	LMC DS3		0x0004	DS3 Interface
 product	LMC SSI		0x0005	SSI
-product	LMC T1		0x0006	T1 Interface
+product	LMC DS1		0x0006	DS1
 
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
