@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.2 2000/03/21 13:45:16 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.3 2000/03/23 11:33:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.2 2000/03/21 13:45:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac_pci.c,v 1.3 2000/03/23 11:33:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ static struct cac_linkage cac_pci_l1 = {
 
 /* This block of code inspired by Compaq's Linux driver. */
 struct cac_type {
-	int	ct_id;				/* PCI ID */
+	int	ct_subsysid;			/* PCI subsystem ID */
 	int	ct_mmreg;			/* Memory mapped registers */
 	struct	cac_linkage *ct_linkage;	/* Command interface */
 	char	*ct_typestr;			/* Textual description */
@@ -111,8 +111,7 @@ struct cac_type {
 	{ 0x1040110e, 0, &cac_pci_lX, "IAES" },
 	{ 0x2040110e, 0, &cac_pci_lX, "SMART" },
 #endif
-	{ 0x3040110E, 0, &cac_pci_l0, "SMART-2/E" },
-	{ 0xae100e11, 1, &cac_pci_l0, "SMART-2/P" },	/* XXX also SA 211? */
+	{ 0x3040110e, 0, &cac_pci_l0, "SMART-2/E" },
 	{ 0x40300e11, 1, &cac_pci_l0, "SMART-2/P" },
 	{ 0x40310e11, 1, &cac_pci_l0, "SMART-2SL" },
 	{ 0x40320e11, 1, &cac_pci_l0, "Smart Array 3200" },
@@ -121,7 +120,7 @@ struct cac_type {
 	{ 0x40400e11, 1, &cac_pci_l1, "Integrated Array" },
 	{ 0x40500e11, 1, &cac_pci_l1, "Smart Array 4200" },
 	{ 0x40510e11, 1, &cac_pci_l1, "Smart Array 4200ES" },
-	{ 0xffffffff, NULL, NULL },
+	{ -1, 1, &cac_pci_l0, "array controller (unknown type)" },
 };
 
 static int
@@ -131,14 +130,17 @@ cac_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa;
-	int i;
 	
 	pa = (struct pci_attach_args *)aux;
 
-	for (i = 0; cac_type[i].ct_linkage != NULL; i++)
-		if (pa->pa_id == cac_type[i].ct_id)
-			return (1);
- 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ && 
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPAQ_SMART2P)
+		return (1);
+
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC && 
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_CPQ42XX)
+		return (1);
+
 	return (0);
 }
 
@@ -154,7 +156,7 @@ cac_pci_attach(parent, self, aux)
 	pci_chipset_tag_t pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	pcireg_t csr;
+	pcireg_t csr, subsysid;
 	int mmreg;
 	
 	sc = (struct cac_softc *)self;
@@ -164,8 +166,10 @@ cac_pci_attach(parent, self, aux)
 	
 	printf(": ");
 
-	for (ct = cac_type; ct->ct_linkage != NULL; ct++)
-		if (pa->pa_id == ct->ct_id)
+	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+
+	for (ct = cac_type; ct->ct_subsysid != -1; ct++)
+		if (subsysid == ct->ct_subsysid)
 			break;
 
 	if ((mmreg = ct->ct_mmreg) != 0)
