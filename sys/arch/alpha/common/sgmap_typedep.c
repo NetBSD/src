@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap_typedep.c,v 1.9 1998/03/23 07:51:26 mjacob Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.10 1998/06/04 01:22:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.9 1998/03/23 07:51:26 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.10 1998/06/04 01:22:52 thorpej Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -58,6 +58,15 @@ int			__C(SGMAP_TYPE,_debug) = 0;
 #endif
 
 SGMAP_PTE_TYPE		__C(SGMAP_TYPE,_prefetch_spill_page_pte);
+
+void
+__C(SGMAP_TYPE,_init_spill_page_pte)()
+{
+
+	__C(SGMAP_TYPE,_prefetch_spill_page_pte) =
+	    (alpha_sgmap_prefetch_spill_page_pa >>
+	     SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
+}
 
 int
 __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -83,9 +92,7 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	 * Initialize the spill page PTE if that hasn't already been done.
 	 */
 	if (__C(SGMAP_TYPE,_prefetch_spill_page_pte) == 0)
-		__C(SGMAP_TYPE,_prefetch_spill_page_pte) =
-		    (alpha_sgmap_prefetch_spill_page_pa >>
-		     SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
+		__C(SGMAP_TYPE,_init_spill_page_pte)();
 
 	/*
 	 * Make sure that on error condition we return "no valid mappings".
