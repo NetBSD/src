@@ -380,6 +380,7 @@
 ./usr/share/man/cat4/opl.0
 ./usr/share/man/cat4/options.0
 ./usr/share/man/cat4/pci.0
+./usr/share/man/cat4/pciide.0
 ./usr/share/man/cat4/pcmcia.0
 ./usr/share/man/cat4/ppp.0
 ./usr/share/man/cat4/pss.0
@@ -429,6 +430,7 @@
 ./usr/share/man/cat4/wskbd.0
 ./usr/share/man/cat4/wsmouse.0
 ./usr/share/man/cat4/wss.0
+./usr/share/man/cat4/wd.0
 ./usr/share/man/cat4/wt.0
 ./usr/share/man/cat4/ym.0
 ./usr/share/man/cat4/zstty.0
@@ -1044,6 +1046,7 @@
 ./usr/share/man/cat9/vslock.0
 ./usr/share/man/cat9/vsunlock.0
 ./usr/share/man/cat9/wakeup.0
+./usr/share/man/cat9/wdc.0
 ./usr/share/man/cat9/writedisklabel.0
 ./usr/share/man/man1/Mail.1
 ./usr/share/man/man1/[.1
@@ -1427,6 +1430,7 @@
 ./usr/share/man/man4/opl.4
 ./usr/share/man/man4/options.4
 ./usr/share/man/man4/pci.4
+./usr/share/man/man4/pciide.4
 ./usr/share/man/man4/pcmcia.4
 ./usr/share/man/man4/ppp.4
 ./usr/share/man/man4/pss.4
@@ -1476,6 +1480,7 @@
 ./usr/share/man/man4/wskbd.4
 ./usr/share/man/man4/wsmouse.4
 ./usr/share/man/man4/wss.4
+./usr/share/man/man4/wd.4
 ./usr/share/man/man4/wt.4
 ./usr/share/man/man4/ym.4
 ./usr/share/man/man4/zstty.4
@@ -2091,4 +2096,5 @@
 ./usr/share/man/man9/vslock.9
 ./usr/share/man/man9/vsunlock.9
 ./usr/share/man/man9/wakeup.9
+./usr/share/man/man9/wdc.9
 ./usr/share/man/man9/writedisklabel.9
