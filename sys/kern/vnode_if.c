@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.20 1999/12/07 21:07:38 wrstuden Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.21 1999/12/07 23:58:28 thorpej Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.22 1999/12/07 21:06:48 wrstuden Exp 
+ *	NetBSD: vnode_if.src,v 1.23 1999/12/07 23:57:49 thorpej Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.19 1999/07/07 23:32:50 wrstuden Exp 
  */
@@ -770,22 +770,6 @@ struct vnodeop_desc vop_whiteout_desc = {
 	NULL,
 };
 
-int vop_balloc_vp_offsets[] = {
-	VOPARG_OFFSETOF(struct vop_balloc_args,a_vp),
-	VDESC_NO_OFFSET
-};
-struct vnodeop_desc vop_balloc_desc = {
-	0,
-	"vop_balloc",
-	0,
-	vop_balloc_vp_offsets,
-	VDESC_NO_OFFSET,
-	VOPARG_OFFSETOF(struct vop_balloc_args, a_cred),
-	VDESC_NO_OFFSET,
-	VDESC_NO_OFFSET,
-	NULL,
-};
-
 /* Special cases: */
 
 int vop_strategy_vp_offsets[] = {
@@ -869,7 +853,6 @@ struct vnodeop_desc *vfs_op_descs[] = {
 	&vop_update_desc,
 	&vop_lease_desc,
 	&vop_whiteout_desc,
-	&vop_balloc_desc,
 	NULL
 };
 
