@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.367 2002/12/08 21:54:03 perry Exp $
+# $NetBSD: mi,v 1.368 2002/12/09 14:08:02 scw Exp $
 .			base-sys-root
 ./altroot		base-sys-root
 ./bin			base-sys-root
@@ -1242,6 +1242,7 @@
 ./usr/share/man/cat8/dreamcast		base-man-share
 ./usr/share/man/cat8/evbarm		base-man-share
 ./usr/share/man/cat8/evbmips		base-man-share
+./usr/share/man/cat8/evbppc		base-man-share
 ./usr/share/man/cat8/evbsh3		base-man-share
 ./usr/share/man/cat8/hp300		base-man-share
 ./usr/share/man/cat8/hp700		base-man-share
@@ -1275,7 +1276,6 @@
 ./usr/share/man/cat8/sun2		base-man-share
 ./usr/share/man/cat8/sun3		base-man-share
 ./usr/share/man/cat8/vax		base-man-share
-./usr/share/man/cat8/walnut		base-man-share
 ./usr/share/man/cat8/x68k		base-man-share
 ./usr/share/man/cat8/x86_64		base-man-share
 ./usr/share/man/cat9		base-man-share
@@ -1339,6 +1339,7 @@
 ./usr/share/man/man8/dreamcast		base-man-share
 ./usr/share/man/man8/evbarm		base-man-share
 ./usr/share/man/man8/evbmips		base-man-share
+./usr/share/man/man8/evbppc		base-man-share
 ./usr/share/man/man8/evbsh3		base-man-share
 ./usr/share/man/man8/hp300		base-man-share
 ./usr/share/man/man8/hp700		base-man-share
@@ -1372,7 +1373,6 @@
 ./usr/share/man/man8/sun2		base-man-share
 ./usr/share/man/man8/sun3		base-man-share
 ./usr/share/man/man8/vax		base-man-share
-./usr/share/man/man8/walnut		base-man-share
 ./usr/share/man/man8/x68k		base-man-share
 ./usr/share/man/man8/x86_64		base-man-share
 ./usr/share/man/man9			base-man-share
@@ -1435,6 +1435,7 @@
 ./usr/share/man/html8/dreamcast		base-man-share
 ./usr/share/man/html8/evbarm		base-man-share
 ./usr/share/man/html8/evbmips		base-man-share
+./usr/share/man/html8/evbppc		base-man-share
 ./usr/share/man/html8/evbsh3		base-man-share
 ./usr/share/man/html8/hp300		base-man-share
 ./usr/share/man/html8/hp700		base-man-share
@@ -1468,7 +1469,6 @@
 ./usr/share/man/html8/sun2		base-man-share
 ./usr/share/man/html8/sun3		base-man-share
 ./usr/share/man/html8/vax		base-man-share
-./usr/share/man/html8/walnut		base-man-share
 ./usr/share/man/html8/x68k		base-man-share
 ./usr/share/man/html8/x86_64		base-man-share
 ./usr/share/man/html9			base-man-share

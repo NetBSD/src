@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2002/05/30 16:13:06 eeh Exp $
+#	$NetBSD: Makefile,v 1.1 2002/12/09 14:13:13 scw Exp $
 #
-# Makefile for walnut
+# Makefile for evbppc (walnut-specific at this time)
 #
 
 # have to have all of them here for crunch ...
