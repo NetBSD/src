@@ -1,4 +1,4 @@
-/*	$KAME: qdisc_hfsc.c,v 1.3 2000/10/18 09:15:17 kjc Exp $	*/
+/*	$KAME: qdisc_hfsc.c,v 1.4 2001/08/15 12:51:59 kjc Exp $	*/
 /*
  * Copyright (C) 1999-2000
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
@@ -59,7 +59,8 @@ hfsc_stat_loop(int fd, const char *ifname, int count, int interval)
 	double			sec;
 	int			cnt = count;
 	
-	strcpy(get_stats.iface.hfsc_ifname, ifname);
+	strlcpy(get_stats.iface.hfsc_ifname, ifname,
+		sizeof(get_stats.iface.hfsc_ifname));
 	new = &stats1[0];
 	last = &stats2[0];
 
@@ -88,7 +89,7 @@ hfsc_stat_loop(int fd, const char *ifname, int count, int interval)
 
 			if (sp->class_id != lp->class_id) {
 				quip_chandle2name(ifname, sp->class_handle,
-						  clnames[i]);
+						  clnames[i], sizeof(clnames[0]));
 				continue;
 			}
 
