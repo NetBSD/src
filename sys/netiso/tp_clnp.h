@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_clnp.h,v 1.6 1996/02/13 22:10:42 christos Exp $	*/
+/*	$NetBSD: tp_clnp.h,v 1.7 2002/05/12 21:30:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -83,7 +83,9 @@ SOFTWARE.
 #endif
 #include <netiso/iso_var.h>
 
-struct isopcb   tp_isopcb;
+#ifdef _KERNEL
+extern struct isopcb   tp_isopcb;
+#endif
 /* queue of active inpcbs for tp ; for tp with dod ip */
 
 #endif				/* _NETISO_TP_CLNP_H_ */
