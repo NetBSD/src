@@ -1,5 +1,5 @@
 /* BFD back-end for Hitachi H8/500 COFF binaries.
-   Copyright 1993, 1994, 1995, 1997, 1999, 2000
+   Copyright 1993, 1994, 1995, 1997, 1999, 2000, 2001
    Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
@@ -27,6 +27,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #include "coff/h8500.h"
 #include "coff/internal.h"
 #include "libcoff.h"
+
+static int  coff_h8500_select_reloc PARAMS ((reloc_howto_type *));
+static void rtype2howto      PARAMS ((arelent *, struct internal_reloc *));
+static void reloc_processing PARAMS ((arelent *, struct internal_reloc *, asymbol **, bfd *, asection *));
+static void extra_case       PARAMS ((bfd *, struct bfd_link_info *, struct bfd_link_order *, arelent *, bfd_byte *, unsigned int *, unsigned int *));
 
 #define COFF_DEFAULT_SECTION_ALIGNMENT_POWER (1)
 
@@ -63,8 +68,8 @@ HOWTO (R_H8500_PCREL16, 0, 1, 16, true, 0, complain_overflow_signed, 0, "r_pcrel
 static reloc_howto_type r_high16 =
 HOWTO (R_H8500_HIGH16, 0, 1, 8, false, 0,
        complain_overflow_dont, 0, "r_high16", true, 0x000ffff, 0x0000ffff, false);
-
-/* Turn a howto into a reloc number */
+
+/* Turn a howto into a reloc number.  */
 
 static int
 coff_h8500_select_reloc (howto)
@@ -80,18 +85,17 @@ coff_h8500_select_reloc (howto)
 
 #define __A_MAGIC_SET__
 
-/* Code to swap in the reloc */
-#define SWAP_IN_RELOC_OFFSET   bfd_h_get_32
-#define SWAP_OUT_RELOC_OFFSET bfd_h_put_32
+/* Code to swap in the reloc.  */
+#define SWAP_IN_RELOC_OFFSET	H_GET_32
+#define SWAP_OUT_RELOC_OFFSET	H_PUT_32
 #define SWAP_OUT_RELOC_EXTRA(abfd, src, dst) \
   dst->r_stuff[0] = 'S'; \
   dst->r_stuff[1] = 'C';
 
-/* Code to turn a r_type into a howto ptr, uses the above howto table
-   */
+/* Code to turn a r_type into a howto ptr, uses the above howto table.  */
 
 static void
-rtype2howto(internal, dst)
+rtype2howto (internal, dst)
      arelent * internal;
      struct internal_reloc *dst;
 {
@@ -132,7 +136,7 @@ rtype2howto(internal, dst)
 
 #define RTYPE2HOWTO(internal, relocentry) rtype2howto(internal,relocentry)
 
-/* Perform any necessary magic to the addend in a reloc entry */
+/* Perform any necessary magic to the addend in a reloc entry.  */
 
 #define CALC_ADDEND(abfd, symbol, ext_reloc, cache_ptr) \
  cache_ptr->addend =  ext_reloc.r_offset;
@@ -151,13 +155,9 @@ static void reloc_processing (relent, reloc, symbols, abfd, section)
   rtype2howto (relent, reloc);
 
   if (reloc->r_symndx > 0)
-    {
-      relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
-    }
+    relent->sym_ptr_ptr = symbols + obj_convert (abfd)[reloc->r_symndx];
   else
-    {
-      relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
-    }
+    relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
 
   relent->addend = reloc->r_offset;
   relent->address -= section->vma;
@@ -175,6 +175,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 {
   bfd_byte *d = data+*dst_ptr;
   asection *input_section = link_order->u.indirect.section;
+
   switch (reloc->howto->type)
     {
     case R_H8500_IMM8:
@@ -189,7 +190,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
       bfd_put_8 (in_abfd,
 		 (bfd_coff_reloc16_get_value (reloc, link_info, input_section)
 		  >> 16),
-		 d );
+		 d);
       (*dst_ptr) += 1;
       (*src_ptr) += 1;
       break;
@@ -197,7 +198,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
     case R_H8500_IMM16:
       bfd_put_16 (in_abfd,
 		  bfd_coff_reloc16_get_value (reloc, link_info, input_section),
-		  d  );
+		  d);
       (*dst_ptr) += 2;
       (*src_ptr) += 2;
       break;
@@ -214,7 +215,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
     case R_H8500_HIGH16:
       bfd_put_16 (in_abfd,
 		  (bfd_coff_reloc16_get_value (reloc, link_info, input_section)
-		   >>16),
+		   >> 16),
 		  d);
 
       (*dst_ptr) += 2;
@@ -223,20 +224,20 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 
     case R_H8500_IMM24:
       {
-	int v = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
+	int v = bfd_coff_reloc16_get_value (reloc, link_info, input_section);
 	int o = bfd_get_32 (in_abfd, data+ *dst_ptr -1);
 	v = (v & 0x00ffffff) | (o & 0xff00000);
-	bfd_put_32 (in_abfd, v, data  + *dst_ptr -1);
-	(*dst_ptr) +=3;
-	(*src_ptr)+=3;;
+	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr -1);
+	(*dst_ptr) += 3;
+	(*src_ptr) += 3;;
       }
       break;
     case R_H8500_IMM32:
       {
-	int v = bfd_coff_reloc16_get_value(reloc, link_info, input_section);
-	bfd_put_32 (in_abfd, v, data  + *dst_ptr);
-	(*dst_ptr) +=4;
-	(*src_ptr)+=4;;
+	int v = bfd_coff_reloc16_get_value (reloc, link_info, input_section);
+	bfd_put_32 (in_abfd, (bfd_vma) v, data  + *dst_ptr);
+	(*dst_ptr) += 4;
+	(*src_ptr) += 4;;
       }
       break;
 
@@ -248,7 +249,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 	  + *dst_ptr
 	    + link_order->u.indirect.section->output_section->vma;
 	int gap = dst - dot - 1; /* -1 since were in the odd byte of the
-				    word and the pc's been incremented */
+				    word and the pc's been incremented.  */
 
 	if (gap > 128 || gap < -128)
 	  {
@@ -271,7 +272,7 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 	  + *dst_ptr
 	    + link_order->u.indirect.section->output_section->vma;
 	int gap = dst - dot - 1; /* -1 since were in the odd byte of the
-				    word and the pc's been incremented */
+				    word and the pc's been incremented.  */
 
 	if (gap > 32767 || gap < -32768)
 	  {
@@ -281,9 +282,9 @@ extra_case (in_abfd, link_info, link_order, reloc, data, src_ptr, dst_ptr)
 		    input_section, reloc->address)))
 	      abort ();
 	  }
-	bfd_put_16 (in_abfd, gap, data + *dst_ptr);
-	(*dst_ptr)+=2;
-	(*src_ptr)+=2;
+	bfd_put_16 (in_abfd, (bfd_vma) gap, data + *dst_ptr);
+	(*dst_ptr) += 2;
+	(*src_ptr) += 2;
 	break;
       }
 

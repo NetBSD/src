@@ -1,5 +1,5 @@
 #objdump: -dr --prefix-addresses -mmips:4000
-#as: -mips3 -mcpu=r4000
+#as: -mips3 -mtune=r4000 -march=r4000
 #name: MIPS ld-ilocks
 #source: ld.s
 
@@ -629,4 +629,3 @@ Disassembly of section .text:
 0+05c4 <[^>]*> sd	a0,-23131\(at\)
 [ 	]*5c4: [A-Z0-9_]*LO[A-Z0-9_]*	.sbss.*
 0+05c8 <[^>]*> nop
-

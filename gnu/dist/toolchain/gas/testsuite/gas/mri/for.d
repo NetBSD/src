@@ -21,7 +21,7 @@ Disassembly of section .text:
 0+01c <foo\+(0x|)1c> cmpiw #1,%d0
 0+020 <foo\+(0x|)20> bgts 0+030 <foo\+(0x|)30>
 0+022 <foo\+(0x|)22> cmpiw #100,%d1
-0+026 <foo\+(0x|)26> bgts 0+02a <foo\+(0x|)2a>
+0+026 <foo\+(0x|)26> blts 0+02a <foo\+(0x|)2a>
 0+028 <foo\+(0x|)28> bras 0+02c <foo\+(0x|)2c>
 0+02a <foo\+(0x|)2a> addw %d0,%d1
 0+02c <foo\+(0x|)2c> subqw #1,%d0

@@ -5,4 +5,3 @@
 start:
  moveq 0,r2;nop
  di
-

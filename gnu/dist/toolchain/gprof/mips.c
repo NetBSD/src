@@ -1,10 +1,6 @@
 /*
- * Copyright (c) 1992, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This software was developed by the Computer Systems Engineering group
- * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
- * contributed to Berkeley. Modified by Ralph Campbell for mips.
+ * Copyright (c) 1983, 1993, 1998
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,11 +10,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -33,70 +25,90 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * From: sparc.c 5.1 (Berkeley) 7/7/92
  */
-
-#include <sys/cdefs.h>
-
-#if 0
-static char sccsid[] = "@(#)mips.c	8.1 (Berkeley) 6/6/93";
-#endif
-
 #include "gprof.h"
-#include "cg_arcs.h"   
+#include "search_list.h"
+#include "source.h"
+#include "symtab.h"
+#include "cg_arcs.h"
 #include "corefile.h"
 #include "hist.h"
-#include "symtab.h"
 
-static Sym indirectchild;
+static Sym indirect_child;
+
+void mips_find_call PARAMS ((Sym *, bfd_vma, bfd_vma));
 
 void
-mips_find_call(parentp, p_lowpc, p_highpc)
-	Sym	*parentp;
-	bfd_vma	p_lowpc;
-	bfd_vma	p_highpc;
+mips_find_call (parent, p_lowpc, p_highpc)
+     Sym *parent;
+     bfd_vma p_lowpc;
+     bfd_vma p_highpc;
 {
-	bfd_vma pc;
-	Sym *childp;
-	bfd_vma destpc;
-	unsigned int op;
-	int off;
-	static bool inited = FALSE;
+  bfd_vma pc, dest_pc;
+  unsigned int op;
+  int offset;
+  Sym *child;
+  static boolean inited = false;
 
-	if (!inited) {
-		inited = TRUE;
-		sym_init (&indirectchild);
-		indirectchild.cg.prop.fract = 1.0;
-		indirectchild.cg.cyc.head = &indirectchild;
+  if (!inited)
+    {
+      inited = true;
+      sym_init (&indirect_child);
+      indirect_child.name = _("<indirect child>");
+      indirect_child.cg.prop.fract = 1.0;
+      indirect_child.cg.cyc.head = &indirect_child;
+    }
+
+  if (!core_text_space)
+    {
+      return;
+    }
+  if (p_lowpc < s_lowpc)
+    {
+      p_lowpc = s_lowpc;
+    }
+  if (p_highpc > s_highpc)
+    {
+      p_highpc = s_highpc;
+    }
+  DBG (CALLDEBUG, printf (_("[find_call] %s: 0x%lx to 0x%lx\n"),
+			  parent->name, (unsigned long) p_lowpc,
+			  (unsigned long) p_highpc));
+  for (pc = p_lowpc; pc < p_highpc; pc += 4)
+    {
+      op = bfd_get_32 (core_bfd, &((char *)core_text_space)[pc - s_lowpc]);
+      if ((op & 0xfc000000) == 0x0c000000)
+	{
+	  /* This is a "jal" instruction.  Check that the destination
+	     is the address of a function.  */
+	  DBG (CALLDEBUG,
+	       printf (_("[find_call] 0x%lx: jal"), (unsigned long) pc));
+          offset = (op & 0x03ffffff) << 2;
+	  dest_pc = (pc & ~(bfd_vma) 0xfffffff) | offset;
+	  if (dest_pc >= s_lowpc && dest_pc <= s_highpc)
+	    {
+	      child = sym_lookup (&symtab, dest_pc);
+	      DBG (CALLDEBUG,
+		   printf (" 0x%lx\t; name=%s, addr=0x%lx",
+			   (unsigned long) dest_pc, child->name,
+			   (unsigned long) child->addr));
+	      if (child->addr == dest_pc)
+		{
+		  DBG (CALLDEBUG, printf ("\n"));
+		  /* a hit:  */
+		  arc_add (parent, child, (unsigned long) 0);
+		  continue;
+		}
+	    }
+	  /* Something funny going on.  */
+	  DBG (CALLDEBUG, printf ("\tbut it's a botch\n"));
 	}
-
-	if (core_text_space == 0)
-		return;
-	if (p_lowpc < s_lowpc)
-		p_lowpc = s_lowpc;
-	if (p_highpc > s_highpc)
-		p_highpc = s_highpc;
-
-	for (pc = p_lowpc; pc < p_highpc; pc += 4) {
-		off = pc - s_lowpc;
-		op = *(unsigned int *)&(((const char *)core_text_space)[off]);
-		if ((op & 0xfc000000) == 0x0c000000) {
-			/*
-			 * a jal insn -- check that this
-			 * is the address of a function.
-			 */
-			off = (op & 0x03ffffff) << 2;
-			destpc = (pc & 0xf0000000) | off;
-			if (destpc >= s_lowpc && destpc <= s_highpc) {
-				childp = sym_lookup(&symtab, destpc);
-				if (childp != 0 && childp->addr == destpc)
-					arc_add(parentp, childp, 0L);
-			}
-		} else if ((op & 0xfc00f83f) == 0x0000f809)
-			/*
-			 * A jalr -- an indirect call.
-			 */
-			arc_add(parentp, &indirectchild, 0L);
+      else if ((op & 0xfc00f83f) == 0x0000f809)
+	{
+	  /* This is a "jalr" instruction (indirect call).  */
+	  DBG (CALLDEBUG,
+	       printf (_("[find_call] 0x%lx: jalr\n"), (unsigned long) pc));
+	  arc_add (parent, &indirect_child, (unsigned long) 0);
 	}
+    }
 }

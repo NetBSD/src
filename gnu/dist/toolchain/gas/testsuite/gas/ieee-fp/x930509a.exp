@@ -16,13 +16,12 @@ proc dotest {} {
 	}
     }
     gas_finish
-    if !$x then { fail "$testname (listing didn't match)" }
-}
 
-# C54x alignment/addressing is different, so the listing looks different
-# float encoding is tested in c54x-specific tests.
-# No floating point support in assembly code for CRIS.
-if { ![istarget vax*-*-*] && ![istarget *c54x*-*-*]
-     && ![istarget cris-*-*] && ![istarget arc*-*-*] } then {
-    dotest
+    # C54x alignment/addressing is different, so the listing looks different
+    # float encoding is tested in c54x-specific tests.
+    # No floating point support in assembly code for CRIS.
+    setup_xfail "arc*-*-*" "cris-*-*" "*c30*-*-*" "*c54x*-*-*" "*c80*-*-*"
+    setup_xfail "vax*-*-*"
+
+    if !$x then { fail "$testname (listing didn't match)" }
 }

@@ -95,6 +95,7 @@ if { ![istarget hppa*-*-*] && ![istarget *c54x*-*-*] } then {
     setup_xfail "vax*-*-vms*"
     setup_xfail "mn10300*-*-*"
     setup_xfail "mn10200*-*-*"
+    setup_xfail "h8300*-*-elf*"
     do_930509a
 }
 
@@ -106,6 +107,7 @@ case $target_triplet in {
     default {
 	run_dump_test struct
 	run_dump_test align
+	run_dump_test align2
     }
 }
 
@@ -114,7 +116,7 @@ case $target_triplet in {
 # We omit the ARM toolchains because they define locals to
 #  start with '.', which eliminates .eos, .text etc from the output.
 # Omit c54x, since .tag and .def mean something different on that target
-if {   ([istarget *-*-coff*] && ![istarget m88*-*-*] && ![istarget *arm*-*-coff] && ![istarget thumb*-*-coff] && ![istarget *c54x*-*-coff]) \
+if {   ([istarget *-*-coff*] && ![istarget m88*-*-*] && ![istarget *arm*-*-coff] && ![istarget thumb*-*-coff] && ![istarget xscale-*-coff] && ![istarget *c54x*-*-coff]) \
      ||([istarget *-*-pe*] && ![istarget arm*-*-pe*] && ![istarget thumb*-*-pe*]) \
      || [istarget a29k-*-udi*] \
      || [istarget a29k-*-ebmon*] \
@@ -151,9 +153,17 @@ proc test_cond {} {
     }
 }
 
+# This test is not suitable for the PA for various reasons
+# not limited to the fact that it depends on specific section
+# names appearing in the output file.
 # again, p2align doesn't work on c54x target
-if ![istarget *c54x*-*-*] then {
-    test_cond
+case $target_triplet in {
+    { hppa*-*-* } { }
+    { *c54x*-*-* } { }
+    default {
+        test_cond
+        run_dump_test incbin
+    }
 }
 
 # FIXME: this is here cause of a bug in DejaGnu 1.1.1. When it is no longer

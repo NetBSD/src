@@ -28,7 +28,7 @@ if ![ld_assemble $as $srcdir/$subdir/defined.s tmpdir/def.o] {
 if ![ld_simple_link $ld tmpdir/def "-T $srcdir/$subdir/defined.t tmpdir/def.o"] {
     fail $testname
 } else {
-    if ![ld_nm $nm tmpdir/def] {
+    if ![ld_nm $nm "" tmpdir/def] {
 	unresolved $testname
     } else {
 	if {![info exists nm_output(value1)] \

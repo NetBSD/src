@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+   Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
 
 This file is part of BFD, the Binary File Descriptor library.
 
@@ -39,9 +39,10 @@ Boston, MA 02111-1307, USA.  */
    final_link routine once.  */
 extern boolean mcore_bfd_coff_final_link
   PARAMS ((bfd *, struct bfd_link_info *));
-
+#if 0
 static struct bfd_link_hash_table * coff_mcore_link_hash_table_create
   PARAMS ((bfd *));
+#endif
 static bfd_reloc_status_type        mcore_coff_unsupported_reloc
   PARAMS ((bfd *, arelent *, asymbol *, PTR, asection *, bfd *, char **));
 static boolean                      coff_mcore_relocate_section
@@ -52,6 +53,9 @@ static reloc_howto_type *           mcore_coff_reloc_type_lookup
 static reloc_howto_type *           coff_mcore_rtype_to_howto
   PARAMS ((bfd *, asection *, struct internal_reloc *,
 	   struct coff_link_hash_entry *, struct internal_syment *, bfd_vma *));
+static void mcore_emit_base_file_entry
+  PARAMS ((struct bfd_link_info *, bfd *, asection *, bfd_vma));
+static boolean in_reloc_p PARAMS ((bfd *, reloc_howto_type *));
 
 /* The NT loader points the toc register to &toc + 32768, in order to
    use the complete range of a 16-bit displacement. We have to adjust
@@ -216,21 +220,23 @@ mcore_hash_table;
 #define coff_mcore_hash_table(info) \
   ((mcore_hash_table *) ((info)->hash))
 
+#if 0
 /* Create an MCore coff linker hash table.  */
+
 static struct bfd_link_hash_table *
 coff_mcore_link_hash_table_create (abfd)
      bfd * abfd;
 {
   mcore_hash_table * ret;
 
-  ret = ((mcore_hash_table *) bfd_alloc (abfd, sizeof (* ret)));
+  ret = (mcore_hash_table *) bfd_malloc ((bfd_size_type) sizeof (* ret));
   if (ret == (mcore_hash_table *) NULL)
     return NULL;
 
   if (! _bfd_coff_link_hash_table_init
       (& ret->root, abfd, _bfd_coff_link_hash_newfunc))
     {
-      bfd_release (abfd, ret);
+      free (ret);
       return (struct bfd_link_hash_table *) NULL;
     }
 
@@ -242,8 +248,10 @@ coff_mcore_link_hash_table_create (abfd)
 
   return & ret->root.root;
 }
+#endif
 
 /* Add an entry to the base file.  */
+
 static void
 mcore_emit_base_file_entry (info, output_bfd, input_section, reloc_offset)
       struct bfd_link_info * info;
@@ -276,7 +284,7 @@ mcore_coff_unsupported_reloc (abfd, reloc_entry, symbol, data, input_section,
   BFD_ASSERT (reloc_entry->howto != (reloc_howto_type *)0);
 
   _bfd_error_handler (_("%s: Relocation %s (%d) is not currently supported.\n"),
-		      bfd_get_filename (abfd),
+		      bfd_archive_filename (abfd),
 		      reloc_entry->howto->name,
 		      reloc_entry->howto->type);
 
@@ -352,6 +360,7 @@ coff_mcore_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
 
 /* Return true if this relocation should appear in the output .reloc section.
    This function is referenced in pe_mkobject in peicode.h.  */
+
 static boolean
 in_reloc_p (abfd, howto)
      bfd * abfd ATTRIBUTE_UNUSED;
@@ -389,10 +398,10 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
       && output_bfd->xvec->byteorder != BFD_ENDIAN_UNKNOWN)
     {
       (*_bfd_error_handler)
-	(_("%s: compiled for a %s endian system and target is %s endian.\n"),
-	 bfd_get_filename (input_bfd),
-         bfd_big_endian (input_bfd) ? "big" : "little",
-         bfd_big_endian (output_bfd) ? "big" : "little");
+	(_("%s: compiled for a %s system and target is %s.\n"),
+	 bfd_archive_filename (input_bfd),
+         bfd_big_endian (input_bfd) ? _("big endian") : _("little endian"),
+         bfd_big_endian (output_bfd) ? _("big endian") : _("little endian"));
 
       bfd_set_error (bfd_error_wrong_format);
       return false;
@@ -497,7 +506,7 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
 	{
 	default:
 	  _bfd_error_handler (_("%s: unsupported relocation type 0x%02x"),
-			      bfd_get_filename (input_bfd), r_type);
+			      bfd_archive_filename (input_bfd), r_type);
 	  bfd_set_error (bfd_error_bad_value);
 	  return false;
 
@@ -505,7 +514,7 @@ coff_mcore_relocate_section (output_bfd, info, input_bfd, input_section,
 	  fprintf (stderr,
 		   _("Warning: unsupported reloc %s <file %s, section %s>\n"),
 		   howto->name,
-		   bfd_get_filename (input_bfd),
+		   bfd_archive_filename (input_bfd),
 		   input_section->name);
 
 	  fprintf (stderr,"sym %ld (%s), r_vaddr %ld (%lx)\n",

@@ -402,7 +402,7 @@ struct opinfo optable[257]={
 	{0x42,	O_wdm,	"wdm",	ADDR_IMPLIED},
 	{0xEB,	O_xba,	"xba",	ADDR_IMPLIED},
 	{0xFB,	O_xce,	"xce",	ADDR_IMPLIED},
-	{ 0 }
+	{ 0, 0, NULL, 0 }
 };
 #endif
 #define DISASM()\

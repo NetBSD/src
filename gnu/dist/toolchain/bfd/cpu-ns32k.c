@@ -1,5 +1,5 @@
 /* BFD support for the ns32k architecture.
-   Copyright 1990, 1991, 1994, 1995, 1998, 2000
+   Copyright 1990, 1991, 1994, 1995, 1998, 2000, 2001, 2002
    Free Software Foundation, Inc.
    Almost totally rewritten by Ian Dall from initial work
    by Andrew Cagney.
@@ -36,40 +36,36 @@ static const bfd_arch_info_type arch_info_struct[] =
 const bfd_arch_info_type bfd_ns32k_arch =
   N(32032,"ns32k:32032",false, &arch_info_struct[0]);
 
-static long
-ns32k_sign_extend(value, bits)
-     int value;
-     int bits;
-{
-  value = value & ((1 << bits) - 1);
-  return (value & (1 << (bits-1))
-	  ? value | (~((1 << bits) - 1))
-	  : value);
-}
+static bfd_reloc_status_type do_ns32k_reloc
+  PARAMS ((bfd *, arelent *, struct symbol_cache_entry *, PTR, asection *,
+	   bfd *, char **,
+	   bfd_vma (*) (bfd_byte *, int),
+	   int (*) (bfd_vma, bfd_byte *, int)));
 
-long
-_bfd_ns32k_get_displacement(buffer, offset, size)
+bfd_vma
+_bfd_ns32k_get_displacement (buffer, size)
      bfd_byte *buffer;
-     long offset;
-     long size;
+     int size;
 {
-  long value;
-  buffer += offset;
+  bfd_signed_vma value;
   switch (size)
     {
     case 1:
-      value = ns32k_sign_extend (*buffer, 7);
+      value = ((*buffer & 0x7f) ^ 0x40) - 0x40;
       break;
+
     case 2:
-      value = ns32k_sign_extend(*buffer++, 6);
+      value = ((*buffer++ & 0x3f) ^ 0x20) - 0x20;
       value = (value << 8) | (0xff & *buffer);
       break;
+
     case 4:
-      value = ns32k_sign_extend(*buffer++, 6);
+      value = ((*buffer++ & 0x3f) ^ 0x20) - 0x20;
       value = (value << 8) | (0xff & *buffer++);
       value = (value << 8) | (0xff & *buffer++);
       value = (value << 8) | (0xff & *buffer);
       break;
+
     default:
       abort ();
       return 0;
@@ -78,37 +74,38 @@ _bfd_ns32k_get_displacement(buffer, offset, size)
 }
 
 int
-_bfd_ns32k_put_displacement(value, buffer, offset, size)
-     long value;
+_bfd_ns32k_put_displacement (value, buffer, size)
+     bfd_vma value;
      bfd_byte *buffer;
-     long offset;
-     long size;
+     int size;
 {
-  buffer += offset;
   switch (size)
     {
     case 1:
-      if (value < -64 || value > 63)
+      if (value + 0x40 > 0x7f)
 	return -1;
-      value&=0x7f;
-      *buffer++=value;
+      value &= 0x7f;
+      *buffer++ = value;
       break;
+
     case 2:
-      if (value < -8192 || value > 8191)
+      if (value + 0x2000 > 0x3fff)
 	return -1;
-      value&=0x3fff;
-      value|=0x8000;
-      *buffer++=(value>>8);
-      *buffer++=value;
+      value &= 0x3fff;
+      value |= 0x8000;
+      *buffer++ = (value >> 8);
+      *buffer++ = value;
       break;
+
     case 4:
-      if (value < -0x1f000000 || value >= 0x20000000)
+      /* FIXME: is this correct?  -0x1f000000 <= value < 0x2000000 */
+      if (value + 0x1f000000 > 0x3effffff)
 	return -1;
-      value|=0xc0000000;
-      *buffer++=(value>>24);
-      *buffer++=(value>>16);
-      *buffer++=(value>>8);
-      *buffer++=value;
+      value |= (bfd_vma) 0xc0000000;
+      *buffer++ = (value >> 24);
+      *buffer++ = (value >> 16);
+      *buffer++ = (value >> 8);
+      *buffer++ = value;
       break;
     default:
       return -1;
@@ -116,19 +113,21 @@ _bfd_ns32k_put_displacement(value, buffer, offset, size)
   return 0;
 }
 
-long
-_bfd_ns32k_get_immediate (buffer, offset, size)
+bfd_vma
+_bfd_ns32k_get_immediate (buffer, size)
      bfd_byte *buffer;
-     long offset;
-     long size;
+     int size;
 {
-  long value = 0;
-  buffer += offset;
+  bfd_vma value = 0;
   switch (size)
     {
+    case 8:
+      value = (value << 8) | (*buffer++ & 0xff);
+      value = (value << 8) | (*buffer++ & 0xff);
+      value = (value << 8) | (*buffer++ & 0xff);
+      value = (value << 8) | (*buffer++ & 0xff);
     case 4:
       value = (value << 8) | (*buffer++ & 0xff);
-    case 3:
       value = (value << 8) | (*buffer++ & 0xff);
     case 2:
       value = (value << 8) | (*buffer++ & 0xff);
@@ -139,18 +138,21 @@ _bfd_ns32k_get_immediate (buffer, offset, size)
 }
 
 int
-_bfd_ns32k_put_immediate (value, buffer, offset, size)
-     long value;
+_bfd_ns32k_put_immediate (value, buffer, size)
+     bfd_vma value;
      bfd_byte *buffer;
-     long offset;
-     long size;
+     int size;
 {
-  buffer += offset + size - 1;
+  buffer += size - 1;
   switch (size)
     {
+    case 8:
+      *buffer-- = (value & 0xff); value >>= 8;
+      *buffer-- = (value & 0xff); value >>= 8;
+      *buffer-- = (value & 0xff); value >>= 8;
+      *buffer-- = (value & 0xff); value >>= 8;
     case 4:
       *buffer-- = (value & 0xff); value >>= 8;
-    case 3:
       *buffer-- = (value & 0xff); value >>= 8;
     case 2:
       *buffer-- = (value & 0xff); value >>= 8;
@@ -175,8 +177,8 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
      asection *input_section;
      bfd *output_bfd;
      char **error_message ATTRIBUTE_UNUSED;
-     long (*get_data) ();
-     int (*put_data) ();
+     bfd_vma (*get_data) PARAMS ((bfd_byte *, int));
+     int (*put_data) PARAMS ((bfd_vma, bfd_byte *, int));
 {
   int overflow = 0;
   bfd_vma relocation;
@@ -185,6 +187,7 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
   bfd_vma output_base = 0;
   reloc_howto_type *howto = reloc_entry->howto;
   asection *reloc_target_output_section;
+  bfd_byte *location;
 
   if ((symbol->section == &bfd_abs_section)
       && output_bfd != (bfd *) NULL)
@@ -217,7 +220,7 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
   reloc_target_output_section = symbol->section->output_section;
 
   /* Convert input-section-relative symbol value to absolute.  */
-  if (output_bfd && howto->partial_inplace == false)
+  if (output_bfd != NULL && ! howto->partial_inplace)
     output_base = 0;
   else
     output_base = reloc_target_output_section->vma;
@@ -230,7 +233,7 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
   /* Here the variable relocation holds the final address of the
      symbol we are relocating against, plus any addend.  */
 
-  if (howto->pc_relative == true)
+  if (howto->pc_relative)
     {
       /* This is a PC relative relocation.  We want to set RELOCATION
 	 to the distance between the address of the symbol and the
@@ -263,13 +266,13 @@ do_ns32k_reloc (abfd, reloc_entry, symbol, data, input_section, output_bfd,
       relocation -=
 	input_section->output_section->vma + input_section->output_offset;
 
-      if (howto->pcrel_offset == true)
+      if (howto->pcrel_offset)
 	relocation -= reloc_entry->address;
     }
 
   if (output_bfd != (bfd *) NULL)
     {
-      if (howto->partial_inplace == false)
+      if (! howto->partial_inplace)
 	{
 	  /* This is a partial relocation, and we want to apply the relocation
 	     to the reloc entry rather than the raw data. Modify the reloc
@@ -433,7 +436,8 @@ space consuming.  For each target:
 	    bfd_vma reloc_bits = (((1 << (howto->bitsize - 1)) - 1) << 1) | 1;
 
 	    if (((bfd_vma) check & ~reloc_bits) != 0
-		&& ((bfd_vma) check & ~reloc_bits) != (-1 & ~reloc_bits))
+		&& (((bfd_vma) check & ~reloc_bits)
+		    != (-(bfd_vma) 1 & ~reloc_bits)))
 	      {
 		/* The above right shift is incorrect for a signed
 		   value.  See if turning on the upper bits fixes the
@@ -444,7 +448,8 @@ space consuming.  For each target:
 		    check |= ((bfd_vma) - 1
 			      & ~((bfd_vma) - 1
 				  >> (howto->rightshift - howto->bitpos)));
-		    if (((bfd_vma) check & ~reloc_bits) != (-1 & ~reloc_bits))
+		    if (((bfd_vma) check & ~reloc_bits)
+			!= (-(bfd_vma) 1 & ~reloc_bits))
 		      flag = bfd_reloc_overflow;
 		  }
 		else
@@ -528,38 +533,39 @@ space consuming.  For each target:
 #define DOIT(x) \
   x = ( (x & ~howto->dst_mask) | (((x & howto->src_mask) +  relocation) & howto->dst_mask))
 
+  location = (bfd_byte *) data + addr;
   switch (howto->size)
     {
     case 0:
       {
-	char x = get_data (data, addr, 1);
+	char x = get_data (location, 1);
 	DOIT (x);
-	overflow = put_data(x, data, addr, 1);
+	overflow = put_data ((bfd_vma) x, location, 1);
       }
       break;
 
     case 1:
       if (relocation)
 	{
-	  short x = get_data (data, addr, 2);
+	  short x = get_data (location, 2);
 	  DOIT (x);
-	  overflow = put_data(x, (unsigned char *) data, addr, 2);
+	  overflow = put_data ((bfd_vma) x, location, 2);
 	}
       break;
     case 2:
       if (relocation)
 	{
-	  long x = get_data (data, addr, 4);
+	  long x = get_data (location, 4);
 	  DOIT (x);
-	  overflow = put_data(x, data, addr, 4);
+	  overflow = put_data ((bfd_vma) x, location, 4);
 	}
       break;
     case -2:
       {
-	long  x = get_data(data, addr, 4);
+	long x = get_data (location, 4);
 	relocation = -relocation;
 	DOIT(x);
-	overflow = put_data(x, data , addr, 4);
+	overflow = put_data ((bfd_vma) x, location, 4);
       }
       break;
 
@@ -571,9 +577,9 @@ space consuming.  For each target:
 #ifdef BFD64
       if (relocation)
 	{
-	  bfd_vma x = get_data (data, addr, 8);
+	  bfd_vma x = get_data (location, 8);
 	  DOIT (x);
-	  overflow = put_data(x, data, addr, 8);
+	  overflow = put_data (x, location, 8);
 	}
 #else
       abort ();
@@ -591,14 +597,14 @@ space consuming.  For each target:
 /* Relocate a given location using a given value and howto.  */
 
 bfd_reloc_status_type
-_bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
+_bfd_do_ns32k_reloc_contents (howto, input_bfd, relocation, location,
 			      get_data, put_data)
      reloc_howto_type *howto;
      bfd *input_bfd ATTRIBUTE_UNUSED;
      bfd_vma relocation;
      bfd_byte *location;
-     long (*get_data) ();
-     int (*put_data) ();
+     bfd_vma (*get_data) PARAMS ((bfd_byte *, int));
+     int (*put_data) PARAMS ((bfd_vma, bfd_byte *, int));
 {
   int size;
   bfd_vma x;
@@ -622,7 +628,7 @@ _bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
 #ifdef BFD64
     case 8:
 #endif
-      x = get_data (location, 0, size);
+      x = get_data (location, size);
       break;
     }
 
@@ -729,7 +735,7 @@ _bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
 
 	    if ((check & ~reloc_bits) != 0
 		&& (((bfd_vma) signed_check & ~reloc_bits)
-		    != (-1 & ~reloc_bits)))
+		    != (-(bfd_vma) 1 & ~reloc_bits)))
 	      overflow = true;
 	  }
 	  break;
@@ -758,7 +764,7 @@ _bfd_do_ns32k_reloc_contents ( howto, input_bfd, relocation, location,
 #ifdef BFD64
     case 8:
 #endif
-      put_data(x, location, 0, size);
+      put_data (x, location, size);
       break;
     }
 

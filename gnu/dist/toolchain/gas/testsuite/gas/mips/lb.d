@@ -388,8 +388,8 @@ Disassembly of section .text:
 0+0378 <[^>]*> lw	a0,0\(zero\)
 0+037c <[^>]*> lwl	a0,0\(zero\)
 0+0380 <[^>]*> lwr	a0,0\(zero\)
-0+0384 <[^>]*> lwc0	a0,0\(zero\)
+0+0384 <[^>]*> lwc0	\$4,0\(zero\)
 0+0388 <[^>]*> lwc1	\$f4,0\(zero\)
-0+038c <[^>]*> lwc2	a0,0\(zero\)
-0+0390 <[^>]*> lwc3	a0,0\(zero\)
+0+038c <[^>]*> lwc2	\$4,0\(zero\)
+0+0390 <[^>]*> lwc3	\$4,0\(zero\)
 	...

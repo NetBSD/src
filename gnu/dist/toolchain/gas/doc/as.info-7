@@ -1,1326 +1,1393 @@
-This is as.info, produced by makeinfo version 4.0 from as.texinfo.
+This is as.info, produced by makeinfo version 4.3 from as.texinfo.
 
 START-INFO-DIR-ENTRY
 * As: (as).                     The GNU assembler.
+* Gas: (as).                    The GNU assembler.
 END-INFO-DIR-ENTRY
 
    This file documents the GNU Assembler "as".
 
-   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001 Free
-Software Foundation, Inc.
+   Copyright (C) 1991, 92, 93, 94, 95, 96, 97, 98, 99, 2000, 2001, 2002
+Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-     under the terms of the GNU Free Documentation License, Version 1.1
-     or any later version published by the Free Software Foundation;
-   with no Invariant Sections, with no Front-Cover Texts, and with no
-    Back-Cover Texts.  A copy of the license is included in the
-section entitled "GNU Free Documentation License".
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the Free Software Foundation; with no
+Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+Texts.  A copy of the license is included in the section entitled "GNU
+Free Documentation License".
 
 
-File: as.info,  Node: SH Opcodes,  Prev: SH Directives,  Up: SH-Dependent
+File: as.info,  Node: M68K-Opts,  Next: M68K-Syntax,  Up: M68K-Dependent
 
-Opcodes
--------
-
-   For detailed information on the SH machine instruction set, see
-`SH-Microcomputer User's Manual' (Hitachi Micro Systems, Inc.).
-
-   `as' implements all the standard SH opcodes.  No additional
-pseudo-instructions are needed on this family.  Note, however, that
-because `as' supports a simpler form of PC-relative addressing, you may
-simply write (for example)
-
-     mov.l  bar,r0
-
-where other assemblers might require an explicit displacement to `bar'
-from the program counter:
-
-     mov.l  @(DISP, PC)
-
-   Here is a summary of SH opcodes:
-
-     Legend:
-     Rn        a numbered register
-     Rm        another numbered register
-     #imm      immediate data
-     disp      displacement
-     disp8     8-bit displacement
-     disp12    12-bit displacement
-     
-     add #imm,Rn                    lds.l @Rn+,PR
-     add Rm,Rn                      mac.w @Rm+,@Rn+
-     addc Rm,Rn                     mov #imm,Rn
-     addv Rm,Rn                     mov Rm,Rn
-     and #imm,R0                    mov.b Rm,@(R0,Rn)
-     and Rm,Rn                      mov.b Rm,@-Rn
-     and.b #imm,@(R0,GBR)           mov.b Rm,@Rn
-     bf disp8                       mov.b @(disp,Rm),R0
-     bra disp12                     mov.b @(disp,GBR),R0
-     bsr disp12                     mov.b @(R0,Rm),Rn
-     bt disp8                       mov.b @Rm+,Rn
-     clrmac                         mov.b @Rm,Rn
-     clrt                           mov.b R0,@(disp,Rm)
-     cmp/eq #imm,R0                 mov.b R0,@(disp,GBR)
-     cmp/eq Rm,Rn                   mov.l Rm,@(disp,Rn)
-     cmp/ge Rm,Rn                   mov.l Rm,@(R0,Rn)
-     cmp/gt Rm,Rn                   mov.l Rm,@-Rn
-     cmp/hi Rm,Rn                   mov.l Rm,@Rn
-     cmp/hs Rm,Rn                   mov.l @(disp,Rn),Rm
-     cmp/pl Rn                      mov.l @(disp,GBR),R0
-     cmp/pz Rn                      mov.l @(disp,PC),Rn
-     cmp/str Rm,Rn                  mov.l @(R0,Rm),Rn
-     div0s Rm,Rn                    mov.l @Rm+,Rn
-     div0u                          mov.l @Rm,Rn
-     div1 Rm,Rn                     mov.l R0,@(disp,GBR)
-     exts.b Rm,Rn                   mov.w Rm,@(R0,Rn)
-     exts.w Rm,Rn                   mov.w Rm,@-Rn
-     extu.b Rm,Rn                   mov.w Rm,@Rn
-     extu.w Rm,Rn                   mov.w @(disp,Rm),R0
-     jmp @Rn                        mov.w @(disp,GBR),R0
-     jsr @Rn                        mov.w @(disp,PC),Rn
-     ldc Rn,GBR                     mov.w @(R0,Rm),Rn
-     ldc Rn,SR                      mov.w @Rm+,Rn
-     ldc Rn,VBR                     mov.w @Rm,Rn
-     ldc.l @Rn+,GBR                 mov.w R0,@(disp,Rm)
-     ldc.l @Rn+,SR                  mov.w R0,@(disp,GBR)
-     ldc.l @Rn+,VBR                 mova @(disp,PC),R0
-     lds Rn,MACH                    movt Rn
-     lds Rn,MACL                    muls Rm,Rn
-     lds Rn,PR                      mulu Rm,Rn
-     lds.l @Rn+,MACH                neg Rm,Rn
-     lds.l @Rn+,MACL                negc Rm,Rn
-     
-     nop                            stc VBR,Rn
-     not Rm,Rn                      stc.l GBR,@-Rn
-     or #imm,R0                     stc.l SR,@-Rn
-     or Rm,Rn                       stc.l VBR,@-Rn
-     or.b #imm,@(R0,GBR)            sts MACH,Rn
-     rotcl Rn                       sts MACL,Rn
-     rotcr Rn                       sts PR,Rn
-     rotl Rn                        sts.l MACH,@-Rn
-     rotr Rn                        sts.l MACL,@-Rn
-     rte                            sts.l PR,@-Rn
-     rts                            sub Rm,Rn
-     sett                           subc Rm,Rn
-     shal Rn                        subv Rm,Rn
-     shar Rn                        swap.b Rm,Rn
-     shll Rn                        swap.w Rm,Rn
-     shll16 Rn                      tas.b @Rn
-     shll2 Rn                       trapa #imm
-     shll8 Rn                       tst #imm,R0
-     shlr Rn                        tst Rm,Rn
-     shlr16 Rn                      tst.b #imm,@(R0,GBR)
-     shlr2 Rn                       xor #imm,R0
-     shlr8 Rn                       xor Rm,Rn
-     sleep                          xor.b #imm,@(R0,GBR)
-     stc GBR,Rn                     xtrct Rm,Rn
-     stc SR,Rn
-
-
-File: as.info,  Node: Sparc-Dependent,  Next: V850-Dependent,  Prev: PJ-Dependent,  Up: Machine Dependencies
-
-SPARC Dependent Features
-========================
-
-* Menu:
-
-* Sparc-Opts::                  Options
-* Sparc-Aligned-Data::		Option to enforce aligned data
-* Sparc-Float::                 Floating Point
-* Sparc-Directives::            Sparc Machine Directives
-
-
-File: as.info,  Node: Sparc-Opts,  Next: Sparc-Aligned-Data,  Up: Sparc-Dependent
-
-Options
--------
-
-   The SPARC chip family includes several successive levels, using the
-same core instruction set, but including a few additional instructions
-at each level.  There are exceptions to this however.  For details on
-what instructions each variant supports, please see the chip's
-architecture reference manual.
-
-   By default, `as' assumes the core instruction set (SPARC v6), but
-"bumps" the architecture level as needed: it switches to successively
-higher architectures as it encounters instructions that only exist in
-the higher levels.
-
-   If not configured for SPARC v9 (`sparc64-*-*') GAS will not bump
-passed sparclite by default, an option must be passed to enable the v9
-instructions.
-
-   GAS treats sparclite as being compatible with v8, unless an
-architecture is explicitly requested.  SPARC v9 is always incompatible
-with sparclite.
-
-`-Av6 | -Av7 | -Av8 | -Asparclet | -Asparclite'
-`-Av8plus | -Av8plusa | -Av9 | -Av9a'
-     Use one of the `-A' options to select one of the SPARC
-     architectures explicitly.  If you select an architecture
-     explicitly, `as' reports a fatal error if it encounters an
-     instruction or feature requiring an incompatible or higher level.
-
-     `-Av8plus' and `-Av8plusa' select a 32 bit environment.
-
-     `-Av9' and `-Av9a' select a 64 bit environment and are not
-     available unless GAS is explicitly configured with 64 bit
-     environment support.
-
-     `-Av8plusa' and `-Av9a' enable the SPARC V9 instruction set with
-     UltraSPARC extensions.
-
-`-xarch=v8plus | -xarch=v8plusa'
-     For compatibility with the Solaris v9 assembler.  These options are
-     equivalent to -Av8plus and -Av8plusa, respectively.
-
-`-bump'
-     Warn whenever it is necessary to switch to another level.  If an
-     architecture level is explicitly requested, GAS will not issue
-     warnings until that level is reached, and will then bump the level
-     as required (except between incompatible levels).
-
-`-32 | -64'
-     Select the word size, either 32 bits or 64 bits.  These options
-     are only available with the ELF object file format, and require
-     that the necessary BFD support has been included.
-
-
-File: as.info,  Node: Sparc-Aligned-Data,  Next: Sparc-Float,  Prev: Sparc-Opts,  Up: Sparc-Dependent
-
-Enforcing aligned data
-----------------------
-
-   SPARC GAS normally permits data to be misaligned.  For example, it
-permits the `.long' pseudo-op to be used on a byte boundary.  However,
-the native SunOS and Solaris assemblers issue an error when they see
-misaligned data.
-
-   You can use the `--enforce-aligned-data' option to make SPARC GAS
-also issue an error about misaligned data, just as the SunOS and Solaris
-assemblers do.
-
-   The `--enforce-aligned-data' option is not the default because gcc
-issues misaligned data pseudo-ops when it initializes certain packed
-data structures (structures defined using the `packed' attribute).  You
-may have to assemble with GAS in order to initialize packed data
-structures in your own code.
-
-
-File: as.info,  Node: Sparc-Float,  Next: Sparc-Directives,  Prev: Sparc-Aligned-Data,  Up: Sparc-Dependent
-
-Floating Point
+M680x0 Options
 --------------
 
-   The Sparc uses IEEE floating-point numbers.
+   The Motorola 680x0 version of `as' has a few machine dependent
+options:
+
+`-l'
+     You can use the `-l' option to shorten the size of references to
+     undefined symbols.  If you do not use the `-l' option, references
+     to undefined symbols are wide enough for a full `long' (32 bits).
+     (Since `as' cannot know where these symbols end up, `as' can only
+     allocate space for the linker to fill in later.  Since `as' does
+     not know how far away these symbols are, it allocates as much
+     space as it can.)  If you use this option, the references are only
+     one word wide (16 bits).  This may be useful if you want the
+     object file to be as small as possible, and you know that the
+     relevant symbols are always less than 17 bits away.
+
+`--register-prefix-optional'
+     For some configurations, especially those where the compiler
+     normally does not prepend an underscore to the names of user
+     variables, the assembler requires a `%' before any use of a
+     register name.  This is intended to let the assembler distinguish
+     between C variables and functions named `a0' through `a7', and so
+     on.  The `%' is always accepted, but is not required for certain
+     configurations, notably `sun3'.  The `--register-prefix-optional'
+     option may be used to permit omitting the `%' even for
+     configurations for which it is normally required.  If this is
+     done, it will generally be impossible to refer to C variables and
+     functions with the same names as register names.
+
+`--bitwise-or'
+     Normally the character `|' is treated as a comment character, which
+     means that it can not be used in expressions.  The `--bitwise-or'
+     option turns `|' into a normal character.  In this mode, you must
+     either use C style comments, or start comments with a `#' character
+     at the beginning of a line.
+
+`--base-size-default-16  --base-size-default-32'
+     If you use an addressing mode with a base register without
+     specifying the size, `as' will normally use the full 32 bit value.
+     For example, the addressing mode `%a0@(%d0)' is equivalent to
+     `%a0@(%d0:l)'.  You may use the `--base-size-default-16' option to
+     tell `as' to default to using the 16 bit value.  In this case,
+     `%a0@(%d0)' is equivalent to `%a0@(%d0:w)'.  You may use the
+     `--base-size-default-32' option to restore the default behaviour.
+
+`--disp-size-default-16  --disp-size-default-32'
+     If you use an addressing mode with a displacement, and the value
+     of the displacement is not known, `as' will normally assume that
+     the value is 32 bits.  For example, if the symbol `disp' has not
+     been defined, `as' will assemble the addressing mode
+     `%a0@(disp,%d0)' as though `disp' is a 32 bit value.  You may use
+     the `--disp-size-default-16' option to tell `as' to instead assume
+     that the displacement is 16 bits.  In this case, `as' will
+     assemble `%a0@(disp,%d0)' as though `disp' is a 16 bit value.  You
+     may use the `--disp-size-default-32' option to restore the default
+     behaviour.
+
+`--pcrel'
+     Always keep branches PC-relative.  In the M680x0 architecture all
+     branches are defined as PC-relative.  However, on some processors
+     they are limited to word displacements maximum.  When `as' needs a
+     long branch that is not available, it normally emits an absolute
+     jump instead.  This option disables this substitution.  When this
+     option is given and no long branches are available, only word
+     branches will be emitted.  An error message will be generated if a
+     word branch cannot reach its target.  This option has no effect on
+     68020 and other processors that have long branches.  *note Branch
+     Improvement: M68K-Branch..
+
+`-m68000'
+     `as' can assemble code for several different members of the
+     Motorola 680x0 family.  The default depends upon how `as' was
+     configured when it was built; normally, the default is to assemble
+     code for the 68020 microprocessor.  The following options may be
+     used to change the default.  These options control which
+     instructions and addressing modes are permitted.  The members of
+     the 680x0 family are very similar.  For detailed information about
+     the differences, see the Motorola manuals.
+
+    `-m68000'
+    `-m68ec000'
+    `-m68hc000'
+    `-m68hc001'
+    `-m68008'
+    `-m68302'
+    `-m68306'
+    `-m68307'
+    `-m68322'
+    `-m68356'
+          Assemble for the 68000. `-m68008', `-m68302', and so on are
+          synonyms for `-m68000', since the chips are the same from the
+          point of view of the assembler.
+
+    `-m68010'
+          Assemble for the 68010.
+
+    `-m68020'
+    `-m68ec020'
+          Assemble for the 68020.  This is normally the default.
+
+    `-m68030'
+    `-m68ec030'
+          Assemble for the 68030.
+
+    `-m68040'
+    `-m68ec040'
+          Assemble for the 68040.
+
+    `-m68060'
+    `-m68ec060'
+          Assemble for the 68060.
+
+    `-mcpu32'
+    `-m68330'
+    `-m68331'
+    `-m68332'
+    `-m68333'
+    `-m68334'
+    `-m68336'
+    `-m68340'
+    `-m68341'
+    `-m68349'
+    `-m68360'
+          Assemble for the CPU32 family of chips.
+
+    `-m5200'
+          Assemble for the ColdFire family of chips.
+
+    `-m68881'
+    `-m68882'
+          Assemble 68881 floating point instructions.  This is the
+          default for the 68020, 68030, and the CPU32.  The 68040 and
+          68060 always support floating point instructions.
+
+    `-mno-68881'
+          Do not assemble 68881 floating point instructions.  This is
+          the default for 68000 and the 68010.  The 68040 and 68060
+          always support floating point instructions, even if this
+          option is used.
+
+    `-m68851'
+          Assemble 68851 MMU instructions.  This is the default for the
+          68020, 68030, and 68060.  The 68040 accepts a somewhat
+          different set of MMU instructions; `-m68851' and `-m68040'
+          should not be used together.
+
+    `-mno-68851'
+          Do not assemble 68851 MMU instructions.  This is the default
+          for the 68000, 68010, and the CPU32.  The 68040 accepts a
+          somewhat different set of MMU instructions.
 
 
-File: as.info,  Node: Sparc-Directives,  Prev: Sparc-Float,  Up: Sparc-Dependent
-
-Sparc Machine Directives
-------------------------
-
-   The Sparc version of `as' supports the following additional machine
-directives:
-
-`.align'
-     This must be followed by the desired alignment in bytes.
-
-`.common'
-     This must be followed by a symbol name, a positive number, and
-     `"bss"'.  This behaves somewhat like `.comm', but the syntax is
-     different.
-
-`.half'
-     This is functionally identical to `.short'.
-
-`.nword'
-     On the Sparc, the `.nword' directive produces native word sized
-     value, ie. if assembling with -32 it is equivalent to `.word', if
-     assembling with -64 it is equivalent to `.xword'.
-
-`.proc'
-     This directive is ignored.  Any text following it on the same line
-     is also ignored.
-
-`.register'
-     This directive declares use of a global application or system
-     register.  It must be followed by a register name %g2, %g3, %g6 or
-     %g7, comma and the symbol name for that register.  If symbol name
-     is `#scratch', it is a scratch register, if it is `#ignore', it
-     just surpresses any errors about using undeclared global register,
-     but does not emit any information about it into the object file.
-     This can be useful e.g. if you save the register before use and
-     restore it after.
-
-`.reserve'
-     This must be followed by a symbol name, a positive number, and
-     `"bss"'.  This behaves somewhat like `.lcomm', but the syntax is
-     different.
-
-`.seg'
-     This must be followed by `"text"', `"data"', or `"data1"'.  It
-     behaves like `.text', `.data', or `.data 1'.
-
-`.skip'
-     This is functionally identical to the `.space' directive.
-
-`.word'
-     On the Sparc, the `.word' directive produces 32 bit values,
-     instead of the 16 bit values it produces on many other machines.
-
-`.xword'
-     On the Sparc V9 processor, the `.xword' directive produces 64 bit
-     values.
-
-
-File: as.info,  Node: Z8000-Dependent,  Next: Vax-Dependent,  Prev: V850-Dependent,  Up: Machine Dependencies
-
-Z8000 Dependent Features
-========================
-
-   The Z8000 as supports both members of the Z8000 family: the
-unsegmented Z8002, with 16 bit addresses, and the segmented Z8001 with
-24 bit addresses.
-
-   When the assembler is in unsegmented mode (specified with the
-`unsegm' directive), an address takes up one word (16 bit) sized
-register.  When the assembler is in segmented mode (specified with the
-`segm' directive), a 24-bit address takes up a long (32 bit) register.
-*Note Assembler Directives for the Z8000: Z8000 Directives, for a list
-of other Z8000 specific assembler directives.
-
-* Menu:
-
-* Z8000 Options::               No special command-line options for Z8000
-* Z8000 Syntax::                Assembler syntax for the Z8000
-* Z8000 Directives::            Special directives for the Z8000
-* Z8000 Opcodes::               Opcodes
-
-
-File: as.info,  Node: Z8000 Options,  Next: Z8000 Syntax,  Up: Z8000-Dependent
-
-Options
--------
-
-   `as' has no additional command-line options for the Zilog Z8000
-family.
-
-
-File: as.info,  Node: Z8000 Syntax,  Next: Z8000 Directives,  Prev: Z8000 Options,  Up: Z8000-Dependent
+File: as.info,  Node: M68K-Syntax,  Next: M68K-Moto-Syntax,  Prev: M68K-Opts,  Up: M68K-Dependent
 
 Syntax
 ------
 
-* Menu:
+   This syntax for the Motorola 680x0 was developed at MIT.
 
-* Z8000-Chars::                Special Characters
-* Z8000-Regs::                 Register Names
-* Z8000-Addressing::           Addressing Modes
+   The 680x0 version of `as' uses instructions names and syntax
+compatible with the Sun assembler.  Intervening periods are ignored;
+for example, `movl' is equivalent to `mov.l'.
 
-
-File: as.info,  Node: Z8000-Chars,  Next: Z8000-Regs,  Up: Z8000 Syntax
+   In the following table APC stands for any of the address registers
+(`%a0' through `%a7'), the program counter (`%pc'), the zero-address
+relative to the program counter (`%zpc'), a suppressed address register
+(`%za0' through `%za7'), or it may be omitted entirely.  The use of
+SIZE means one of `w' or `l', and it may be omitted, along with the
+leading colon, unless a scale is also specified.  The use of SCALE
+means one of `1', `2', `4', or `8', and it may always be omitted along
+with the leading colon.
 
-Special Characters
-..................
+   The following addressing modes are understood:
+"Immediate"
+     `#NUMBER'
 
-   `!' is the line comment character.
+"Data Register"
+     `%d0' through `%d7'
 
-   You can use `;' instead of a newline to separate statements.
+"Address Register"
+     `%a0' through `%a7'
+     `%a7' is also known as `%sp', i.e. the Stack Pointer.  `%a6' is
+     also known as `%fp', the Frame Pointer.
 
-
-File: as.info,  Node: Z8000-Regs,  Next: Z8000-Addressing,  Prev: Z8000-Chars,  Up: Z8000 Syntax
+"Address Register Indirect"
+     `%a0@' through `%a7@'
 
-Register Names
-..............
+"Address Register Postincrement"
+     `%a0@+' through `%a7@+'
 
-   The Z8000 has sixteen 16 bit registers, numbered 0 to 15.  You can
-refer to different sized groups of registers by register number, with
-the prefix `r' for 16 bit registers, `rr' for 32 bit registers and `rq'
-for 64 bit registers.  You can also refer to the contents of the first
-eight (of the sixteen 16 bit registers) by bytes.  They are named `rNh'
-and `rNl'.
+"Address Register Predecrement"
+     `%a0@-' through `%a7@-'
 
-_byte registers_
-     r0l r0h r1h r1l r2h r2l r3h r3l
-     r4h r4l r5h r5l r6h r6l r7h r7l
-     
-_word registers_
-     r0 r1 r2 r3 r4 r5 r6 r7 r8 r9 r10 r11 r12 r13 r14 r15
-     
-_long word registers_
-     rr0 rr2 rr4 rr6 rr8 rr10 rr12 rr14
-     
-_quad word registers_
-     rq0 rq4 rq8 rq12
+"Indirect Plus Offset"
+     `APC@(NUMBER)'
 
-
-File: as.info,  Node: Z8000-Addressing,  Prev: Z8000-Regs,  Up: Z8000 Syntax
+"Index"
+     `APC@(NUMBER,REGISTER:SIZE:SCALE)'
 
-Addressing Modes
-................
+     The NUMBER may be omitted.
 
-   as understands the following addressing modes for the Z8000:
+"Postindex"
+     `APC@(NUMBER)@(ONUMBER,REGISTER:SIZE:SCALE)'
 
-`rN'
-     Register direct
+     The ONUMBER or the REGISTER, but not both, may be omitted.
 
-`@rN'
-     Indirect register
+"Preindex"
+     `APC@(NUMBER,REGISTER:SIZE:SCALE)@(ONUMBER)'
 
-`ADDR'
-     Direct: the 16 bit or 24 bit address (depending on whether the
-     assembler is in segmented or unsegmented mode) of the operand is
-     in the instruction.
+     The NUMBER may be omitted.  Omitting the REGISTER produces the
+     Postindex addressing mode.
 
-`address(rN)'
-     Indexed: the 16 or 24 bit address is added to the 16 bit register
-     to produce the final address in memory of the operand.
-
-`rN(#IMM)'
-     Base Address: the 16 or 24 bit register is added to the 16 bit sign
-     extended immediate displacement to produce the final address in
-     memory of the operand.
-
-`rN(rM)'
-     Base Index: the 16 or 24 bit register rN is added to the sign
-     extended 16 bit index register rM to produce the final address in
-     memory of the operand.
-
-`#XX'
-     Immediate data XX.
+"Absolute"
+     `SYMBOL', or `DIGITS', optionally followed by `:b', `:w', or `:l'.
 
 
-File: as.info,  Node: Z8000 Directives,  Next: Z8000 Opcodes,  Prev: Z8000 Syntax,  Up: Z8000-Dependent
+File: as.info,  Node: M68K-Moto-Syntax,  Next: M68K-Float,  Prev: M68K-Syntax,  Up: M68K-Dependent
 
-Assembler Directives for the Z8000
-----------------------------------
+Motorola Syntax
+---------------
 
-   The Z8000 port of as includes these additional assembler directives,
-for compatibility with other Z8000 assemblers.  As shown, these do not
-begin with `.' (unlike the ordinary as directives).
+   The standard Motorola syntax for this chip differs from the syntax
+already discussed (*note Syntax: M68K-Syntax.).  `as' can accept
+Motorola syntax for operands, even if MIT syntax is used for other
+operands in the same instruction.  The two kinds of syntax are fully
+compatible.
 
-`segm'
-     Generates code for the segmented Z8001.
+   In the following table APC stands for any of the address registers
+(`%a0' through `%a7'), the program counter (`%pc'), the zero-address
+relative to the program counter (`%zpc'), or a suppressed address
+register (`%za0' through `%za7').  The use of SIZE means one of `w' or
+`l', and it may always be omitted along with the leading dot.  The use
+of SCALE means one of `1', `2', `4', or `8', and it may always be
+omitted along with the leading asterisk.
 
-`unsegm'
-     Generates code for the unsegmented Z8002.
+   The following additional addressing modes are understood:
 
-`name'
-     Synonym for `.file'
+"Address Register Indirect"
+     `(%a0)' through `(%a7)'
+     `%a7' is also known as `%sp', i.e. the Stack Pointer.  `%a6' is
+     also known as `%fp', the Frame Pointer.
 
-`global'
-     Synonym for `.global'
+"Address Register Postincrement"
+     `(%a0)+' through `(%a7)+'
 
-`wval'
-     Synonym for `.word'
+"Address Register Predecrement"
+     `-(%a0)' through `-(%a7)'
 
-`lval'
-     Synonym for `.long'
+"Indirect Plus Offset"
+     `NUMBER(%A0)' through `NUMBER(%A7)', or `NUMBER(%PC)'.
 
-`bval'
-     Synonym for `.byte'
+     The NUMBER may also appear within the parentheses, as in
+     `(NUMBER,%A0)'.  When used with the PC, the NUMBER may be omitted
+     (with an address register, omitting the NUMBER produces Address
+     Register Indirect mode).
 
-`sval'
-     Assemble a string.  `sval' expects one string literal, delimited by
-     single quotes.  It assembles each byte of the string into
-     consecutive addresses.  You can use the escape sequence `%XX'
-     (where XX represents a two-digit hexadecimal number) to represent
-     the character whose ASCII value is XX.  Use this feature to
-     describe single quote and other characters that may not appear in
-     string literals as themselves.  For example, the C statement
-     `char *a = "he said \"it's 50% off\"";' is represented in Z8000
-     assembly language (shown with the assembler output in hex at the
-     left) as
+"Index"
+     `NUMBER(APC,REGISTER.SIZE*SCALE)'
 
-          68652073    sval    'he said %22it%27s 50%25 off%22%00'
-          61696420
-          22697427
-          73203530
-          25206F66
-          662200
+     The NUMBER may be omitted, or it may appear within the
+     parentheses.  The APC may be omitted.  The REGISTER and the APC
+     may appear in either order.  If both APC and REGISTER are address
+     registers, and the SIZE and SCALE are omitted, then the first
+     register is taken as the base register, and the second as the
+     index register.
 
-`rsect'
-     synonym for `.section'
+"Postindex"
+     `([NUMBER,APC],REGISTER.SIZE*SCALE,ONUMBER)'
 
-`block'
-     synonym for `.space'
+     The ONUMBER, or the REGISTER, or both, may be omitted.  Either the
+     NUMBER or the APC may be omitted, but not both.
 
-`even'
-     special case of `.align'; aligns output to even byte boundary.
+"Preindex"
+     `([NUMBER,APC,REGISTER.SIZE*SCALE],ONUMBER)'
+
+     The NUMBER, or the APC, or the REGISTER, or any two of them, may
+     be omitted.  The ONUMBER may be omitted.  The REGISTER and the APC
+     may appear in either order.  If both APC and REGISTER are address
+     registers, and the SIZE and SCALE are omitted, then the first
+     register is taken as the base register, and the second as the
+     index register.
 
 
-File: as.info,  Node: Z8000 Opcodes,  Prev: Z8000 Directives,  Up: Z8000-Dependent
+File: as.info,  Node: M68K-Float,  Next: M68K-Directives,  Prev: M68K-Moto-Syntax,  Up: M68K-Dependent
+
+Floating Point
+--------------
+
+   Packed decimal (P) format floating literals are not supported.  Feel
+free to add the code!
+
+   The floating point formats generated by directives are these.
+
+`.float'
+     `Single' precision floating point constants.
+
+`.double'
+     `Double' precision floating point constants.
+
+`.extend'
+`.ldouble'
+     `Extended' precision (`long double') floating point constants.
+
+
+File: as.info,  Node: M68K-Directives,  Next: M68K-opcodes,  Prev: M68K-Float,  Up: M68K-Dependent
+
+680x0 Machine Directives
+------------------------
+
+   In order to be compatible with the Sun assembler the 680x0 assembler
+understands the following directives.
+
+`.data1'
+     This directive is identical to a `.data 1' directive.
+
+`.data2'
+     This directive is identical to a `.data 2' directive.
+
+`.even'
+     This directive is a special case of the `.align' directive; it
+     aligns the output to an even byte boundary.
+
+`.skip'
+     This directive is identical to a `.space' directive.
+
+
+File: as.info,  Node: M68K-opcodes,  Prev: M68K-Directives,  Up: M68K-Dependent
 
 Opcodes
 -------
 
-   For detailed information on the Z8000 machine instruction set, see
-`Z8000 Technical Manual'.
+* Menu:
 
-   The following table summarizes the opcodes and their arguments:
-
-                 rs   16 bit source register
-                 rd   16 bit destination register
-                 rbs   8 bit source register
-                 rbd   8 bit destination register
-                 rrs   32 bit source register
-                 rrd   32 bit destination register
-                 rqs   64 bit source register
-                 rqd   64 bit destination register
-                 addr 16/24 bit address
-                 imm  immediate data
-     
-     adc rd,rs               clrb addr               cpsir @rd,@rs,rr,cc
-     adcb rbd,rbs            clrb addr(rd)           cpsirb @rd,@rs,rr,cc
-     add rd,@rs              clrb rbd                dab rbd
-     add rd,addr             com @rd                 dbjnz rbd,disp7
-     add rd,addr(rs)         com addr                dec @rd,imm4m1
-     add rd,imm16            com addr(rd)            dec addr(rd),imm4m1
-     add rd,rs               com rd                  dec addr,imm4m1
-     addb rbd,@rs            comb @rd                dec rd,imm4m1
-     addb rbd,addr           comb addr               decb @rd,imm4m1
-     addb rbd,addr(rs)       comb addr(rd)           decb addr(rd),imm4m1
-     addb rbd,imm8           comb rbd                decb addr,imm4m1
-     addb rbd,rbs            comflg flags            decb rbd,imm4m1
-     addl rrd,@rs            cp @rd,imm16            di i2
-     addl rrd,addr           cp addr(rd),imm16       div rrd,@rs
-     addl rrd,addr(rs)       cp addr,imm16           div rrd,addr
-     addl rrd,imm32          cp rd,@rs               div rrd,addr(rs)
-     addl rrd,rrs            cp rd,addr              div rrd,imm16
-     and rd,@rs              cp rd,addr(rs)          div rrd,rs
-     and rd,addr             cp rd,imm16             divl rqd,@rs
-     and rd,addr(rs)         cp rd,rs                divl rqd,addr
-     and rd,imm16            cpb @rd,imm8            divl rqd,addr(rs)
-     and rd,rs               cpb addr(rd),imm8       divl rqd,imm32
-     andb rbd,@rs            cpb addr,imm8           divl rqd,rrs
-     andb rbd,addr           cpb rbd,@rs             djnz rd,disp7
-     andb rbd,addr(rs)       cpb rbd,addr            ei i2
-     andb rbd,imm8           cpb rbd,addr(rs)        ex rd,@rs
-     andb rbd,rbs            cpb rbd,imm8            ex rd,addr
-     bit @rd,imm4            cpb rbd,rbs             ex rd,addr(rs)
-     bit addr(rd),imm4       cpd rd,@rs,rr,cc        ex rd,rs
-     bit addr,imm4           cpdb rbd,@rs,rr,cc      exb rbd,@rs
-     bit rd,imm4             cpdr rd,@rs,rr,cc       exb rbd,addr
-     bit rd,rs               cpdrb rbd,@rs,rr,cc     exb rbd,addr(rs)
-     bitb @rd,imm4           cpi rd,@rs,rr,cc        exb rbd,rbs
-     bitb addr(rd),imm4      cpib rbd,@rs,rr,cc      ext0e imm8
-     bitb addr,imm4          cpir rd,@rs,rr,cc       ext0f imm8
-     bitb rbd,imm4           cpirb rbd,@rs,rr,cc     ext8e imm8
-     bitb rbd,rs             cpl rrd,@rs             ext8f imm8
-     bpt                     cpl rrd,addr            exts rrd
-     call @rd                cpl rrd,addr(rs)        extsb rd
-     call addr               cpl rrd,imm32           extsl rqd
-     call addr(rd)           cpl rrd,rrs             halt
-     calr disp12             cpsd @rd,@rs,rr,cc      in rd,@rs
-     clr @rd                 cpsdb @rd,@rs,rr,cc     in rd,imm16
-     clr addr                cpsdr @rd,@rs,rr,cc     inb rbd,@rs
-     clr addr(rd)            cpsdrb @rd,@rs,rr,cc    inb rbd,imm16
-     clr rd                  cpsi @rd,@rs,rr,cc      inc @rd,imm4m1
-     clrb @rd                cpsib @rd,@rs,rr,cc     inc addr(rd),imm4m1
-     inc addr,imm4m1         ldb rbd,rs(rx)          mult rrd,addr(rs)
-     inc rd,imm4m1           ldb rd(imm16),rbs       mult rrd,imm16
-     incb @rd,imm4m1         ldb rd(rx),rbs          mult rrd,rs
-     incb addr(rd),imm4m1    ldctl ctrl,rs           multl rqd,@rs
-     incb addr,imm4m1        ldctl rd,ctrl           multl rqd,addr
-     incb rbd,imm4m1         ldd @rs,@rd,rr          multl rqd,addr(rs)
-     ind @rd,@rs,ra          lddb @rs,@rd,rr         multl rqd,imm32
-     indb @rd,@rs,rba        lddr @rs,@rd,rr         multl rqd,rrs
-     inib @rd,@rs,ra         lddrb @rs,@rd,rr        neg @rd
-     inibr @rd,@rs,ra        ldi @rd,@rs,rr          neg addr
-     iret                    ldib @rd,@rs,rr         neg addr(rd)
-     jp cc,@rd               ldir @rd,@rs,rr         neg rd
-     jp cc,addr              ldirb @rd,@rs,rr        negb @rd
-     jp cc,addr(rd)          ldk rd,imm4             negb addr
-     jr cc,disp8             ldl @rd,rrs             negb addr(rd)
-     ld @rd,imm16            ldl addr(rd),rrs        negb rbd
-     ld @rd,rs               ldl addr,rrs            nop
-     ld addr(rd),imm16       ldl rd(imm16),rrs       or rd,@rs
-     ld addr(rd),rs          ldl rd(rx),rrs          or rd,addr
-     ld addr,imm16           ldl rrd,@rs             or rd,addr(rs)
-     ld addr,rs              ldl rrd,addr            or rd,imm16
-     ld rd(imm16),rs         ldl rrd,addr(rs)        or rd,rs
-     ld rd(rx),rs            ldl rrd,imm32           orb rbd,@rs
-     ld rd,@rs               ldl rrd,rrs             orb rbd,addr
-     ld rd,addr              ldl rrd,rs(imm16)       orb rbd,addr(rs)
-     ld rd,addr(rs)          ldl rrd,rs(rx)          orb rbd,imm8
-     ld rd,imm16             ldm @rd,rs,n            orb rbd,rbs
-     ld rd,rs                ldm addr(rd),rs,n       out @rd,rs
-     ld rd,rs(imm16)         ldm addr,rs,n           out imm16,rs
-     ld rd,rs(rx)            ldm rd,@rs,n            outb @rd,rbs
-     lda rd,addr             ldm rd,addr(rs),n       outb imm16,rbs
-     lda rd,addr(rs)         ldm rd,addr,n           outd @rd,@rs,ra
-     lda rd,rs(imm16)        ldps @rs                outdb @rd,@rs,rba
-     lda rd,rs(rx)           ldps addr               outib @rd,@rs,ra
-     ldar rd,disp16          ldps addr(rs)           outibr @rd,@rs,ra
-     ldb @rd,imm8            ldr disp16,rs           pop @rd,@rs
-     ldb @rd,rbs             ldr rd,disp16           pop addr(rd),@rs
-     ldb addr(rd),imm8       ldrb disp16,rbs         pop addr,@rs
-     ldb addr(rd),rbs        ldrb rbd,disp16         pop rd,@rs
-     ldb addr,imm8           ldrl disp16,rrs         popl @rd,@rs
-     ldb addr,rbs            ldrl rrd,disp16         popl addr(rd),@rs
-     ldb rbd,@rs             mbit                    popl addr,@rs
-     ldb rbd,addr            mreq rd                 popl rrd,@rs
-     ldb rbd,addr(rs)        mres                    push @rd,@rs
-     ldb rbd,imm8            mset                    push @rd,addr
-     ldb rbd,rbs             mult rrd,@rs            push @rd,addr(rs)
-     ldb rbd,rs(imm16)       mult rrd,addr           push @rd,imm16
-     push @rd,rs             set addr,imm4           subl rrd,imm32
-     pushl @rd,@rs           set rd,imm4             subl rrd,rrs
-     pushl @rd,addr          set rd,rs               tcc cc,rd
-     pushl @rd,addr(rs)      setb @rd,imm4           tccb cc,rbd
-     pushl @rd,rrs           setb addr(rd),imm4      test @rd
-     res @rd,imm4            setb addr,imm4          test addr
-     res addr(rd),imm4       setb rbd,imm4           test addr(rd)
-     res addr,imm4           setb rbd,rs             test rd
-     res rd,imm4             setflg imm4             testb @rd
-     res rd,rs               sinb rbd,imm16          testb addr
-     resb @rd,imm4           sinb rd,imm16           testb addr(rd)
-     resb addr(rd),imm4      sind @rd,@rs,ra         testb rbd
-     resb addr,imm4          sindb @rd,@rs,rba       testl @rd
-     resb rbd,imm4           sinib @rd,@rs,ra        testl addr
-     resb rbd,rs             sinibr @rd,@rs,ra       testl addr(rd)
-     resflg imm4             sla rd,imm8             testl rrd
-     ret cc                  slab rbd,imm8           trdb @rd,@rs,rba
-     rl rd,imm1or2           slal rrd,imm8           trdrb @rd,@rs,rba
-     rlb rbd,imm1or2         sll rd,imm8             trib @rd,@rs,rbr
-     rlc rd,imm1or2          sllb rbd,imm8           trirb @rd,@rs,rbr
-     rlcb rbd,imm1or2        slll rrd,imm8           trtdrb @ra,@rb,rbr
-     rldb rbb,rba            sout imm16,rs           trtib @ra,@rb,rr
-     rr rd,imm1or2           soutb imm16,rbs         trtirb @ra,@rb,rbr
-     rrb rbd,imm1or2         soutd @rd,@rs,ra        trtrb @ra,@rb,rbr
-     rrc rd,imm1or2          soutdb @rd,@rs,rba      tset @rd
-     rrcb rbd,imm1or2        soutib @rd,@rs,ra       tset addr
-     rrdb rbb,rba            soutibr @rd,@rs,ra      tset addr(rd)
-     rsvd36                  sra rd,imm8             tset rd
-     rsvd38                  srab rbd,imm8           tsetb @rd
-     rsvd78                  sral rrd,imm8           tsetb addr
-     rsvd7e                  srl rd,imm8             tsetb addr(rd)
-     rsvd9d                  srlb rbd,imm8           tsetb rbd
-     rsvd9f                  srll rrd,imm8           xor rd,@rs
-     rsvdb9                  sub rd,@rs              xor rd,addr
-     rsvdbf                  sub rd,addr             xor rd,addr(rs)
-     sbc rd,rs               sub rd,addr(rs)         xor rd,imm16
-     sbcb rbd,rbs            sub rd,imm16            xor rd,rs
-     sc imm8                 sub rd,rs               xorb rbd,@rs
-     sda rd,rs               subb rbd,@rs            xorb rbd,addr
-     sdab rbd,rs             subb rbd,addr           xorb rbd,addr(rs)
-     sdal rrd,rs             subb rbd,addr(rs)       xorb rbd,imm8
-     sdl rd,rs               subb rbd,imm8           xorb rbd,rbs
-     sdlb rbd,rs             subb rbd,rbs            xorb rbd,rbs
-     sdll rrd,rs             subl rrd,@rs
-     set @rd,imm4            subl rrd,addr
-     set addr(rd),imm4       subl rrd,addr(rs)
+* M68K-Branch::                 Branch Improvement
+* M68K-Chars::                  Special Characters
 
 
-File: as.info,  Node: Vax-Dependent,  Prev: Z8000-Dependent,  Up: Machine Dependencies
+File: as.info,  Node: M68K-Branch,  Next: M68K-Chars,  Up: M68K-opcodes
 
-VAX Dependent Features
-======================
+Branch Improvement
+..................
+
+   Certain pseudo opcodes are permitted for branch instructions.  They
+expand to the shortest branch instruction that reach the target.
+Generally these mnemonics are made by substituting `j' for `b' at the
+start of a Motorola mnemonic.
+
+   The following table summarizes the pseudo-operations.  A `*' flags
+cases that are more fully described after the table:
+
+               Displacement
+               +------------------------------------------------------------
+               |                68020           68000/10, not PC-relative OK
+     Pseudo-Op |BYTE    WORD    LONG            ABSOLUTE LONG JUMP    **
+               +------------------------------------------------------------
+          jbsr |bsrs    bsrw    bsrl            jsr
+           jra |bras    braw    bral            jmp
+     *     jXX |bXXs    bXXw    bXXl            bNXs;jmp
+     *    dbXX | N/A    dbXXw   dbXX;bras;bral  dbXX;bras;jmp
+          fjXX | N/A    fbXXw   fbXXl            N/A
+     
+     XX: condition
+     NX: negative of condition XX
+                       `*'--see full description below
+         `**'--this expansion mode is disallowed by `--pcrel'
+`jbsr'
+`jra'
+     These are the simplest jump pseudo-operations; they always map to
+     one particular machine instruction, depending on the displacement
+     to the branch target.  This instruction will be a byte or word
+     branch is that is sufficient.  Otherwise, a long branch will be
+     emitted if available.  If no long branches are available and the
+     `--pcrel' option is not given, an absolute long jump will be
+     emitted instead.  If no long branches are available, the `--pcrel'
+     option is given, and a word branch cannot reach the target, an
+     error message is generated.
+
+     In addition to standard branch operands, `as' allows these
+     pseudo-operations to have all operands that are allowed for jsr
+     and jmp, substituting these instructions if the operand given is
+     not valid for a branch instruction.
+
+`jXX'
+     Here, `jXX' stands for an entire family of pseudo-operations,
+     where XX is a conditional branch or condition-code test.  The full
+     list of pseudo-ops in this family is:
+           jhi   jls   jcc   jcs   jne   jeq   jvc
+           jvs   jpl   jmi   jge   jlt   jgt   jle
+
+     Usually, each of these pseudo-operations expands to a single branch
+     instruction.  However, if a word branch is not sufficient, no long
+     branches are available, and the `--pcrel' option is not given, `as'
+     issues a longer code fragment in terms of NX, the opposite
+     condition to XX.  For example, under these conditions:
+              jXX foo
+     gives
+               bNXs oof
+               jmp foo
+           oof:
+
+`dbXX'
+     The full family of pseudo-operations covered here is
+           dbhi   dbls   dbcc   dbcs   dbne   dbeq   dbvc
+           dbvs   dbpl   dbmi   dbge   dblt   dbgt   dble
+           dbf    dbra   dbt
+
+     Motorola `dbXX' instructions allow word displacements only.  When
+     a word displacement is sufficient, each of these pseudo-operations
+     expands to the corresponding Motorola instruction.  When a word
+     displacement is not sufficient and long branches are available,
+     when the source reads `dbXX foo', `as' emits
+               dbXX oo1
+               bras oo2
+           oo1:bral foo
+           oo2:
+
+     If, however, long branches are not available and the `--pcrel'
+     option is not given, `as' emits
+               dbXX oo1
+               bras oo2
+           oo1:jmp foo
+           oo2:
+
+`fjXX'
+     This family includes
+           fjne   fjeq   fjge   fjlt   fjgt   fjle   fjf
+           fjt    fjgl   fjgle  fjnge  fjngl  fjngle fjngt
+           fjnle  fjnlt  fjoge  fjogl  fjogt  fjole  fjolt
+           fjor   fjseq  fjsf   fjsne  fjst   fjueq  fjuge
+           fjugt  fjule  fjult  fjun
+
+     Each of these pseudo-operations always expands to a single Motorola
+     coprocessor branch instruction, word or long.  All Motorola
+     coprocessor branch instructions allow both word and long
+     displacements.
+
+
+File: as.info,  Node: M68K-Chars,  Prev: M68K-Branch,  Up: M68K-opcodes
+
+Special Characters
+..................
+
+The immediate character is `#' for Sun compatibility.  The line-comment
+character is `|' (unless the `--bitwise-or' option is used).  If a `#'
+appears at the beginning of a line, it is treated as a comment unless
+it looks like `# line file', in which case it is treated normally.
+
+
+File: as.info,  Node: M68HC11-Dependent,  Next: M88K-Dependent,  Prev: M68K-Dependent,  Up: Machine Dependencies
+
+M68HC11 and M68HC12 Dependent Features
+======================================
 
 * Menu:
 
-* VAX-Opts::                    VAX Command-Line Options
-* VAX-float::                   VAX Floating Point
-* VAX-directives::              Vax Machine Directives
-* VAX-opcodes::                 VAX Opcodes
-* VAX-branch::                  VAX Branch Improvement
-* VAX-operands::                VAX Operands
-* VAX-no::                      Not Supported on VAX
+* M68HC11-Opts::                   M68HC11 and M68HC12 Options
+* M68HC11-Syntax::                 Syntax
+* M68HC11-Float::                  Floating Point
+* M68HC11-opcodes::                Opcodes
 
 
-File: as.info,  Node: VAX-Opts,  Next: VAX-float,  Up: Vax-Dependent
+File: as.info,  Node: M68HC11-Opts,  Next: M68HC11-Syntax,  Up: M68HC11-Dependent
 
-VAX Command-Line Options
-------------------------
+M68HC11 and M68HC12 Options
+---------------------------
 
-   The Vax version of `as' accepts any of the following options, gives
-a warning message that the option was ignored and proceeds.  These
-options are for compatibility with scripts designed for other people's
-assemblers.
+   The Motorola 68HC11 and 68HC12 version of `as' has a few machine
+dependent options.
 
-``-D' (Debug)'
-``-S' (Symbol Table)'
-``-T' (Token Trace)'
-     These are obsolete options used to debug old assemblers.
+   This option switches the assembler in the M68HC11 mode. In this mode,
+the assembler only accepts 68HC11 operands and mnemonics. It produces
+code for the 68HC11.
 
-``-d' (Displacement size for JUMPs)'
-     This option expects a number following the `-d'.  Like options
-     that expect filenames, the number may immediately follow the `-d'
-     (old standard) or constitute the whole of the command line
-     argument that follows `-d' (GNU standard).
+   This option switches the assembler in the M68HC12 mode. In this mode,
+the assembler also accepts 68HC12 operands and mnemonics. It produces
+code for the 68HC12. A fiew 68HC11 instructions are replaced by some
+68HC12 instructions as recommended by Motorola specifications.
 
-``-V' (Virtualize Interpass Temporary File)'
-     Some other assemblers use a temporary file.  This option commanded
-     them to keep the information in active memory rather than in a
-     disk file.  `as' always does this, so this option is redundant.
+   You can use the `--strict-direct-mode' option to disable the
+automatic translation of direct page mode addressing into extended mode
+when the instruction does not support direct mode.  For example, the
+`clr' instruction does not support direct page mode addressing. When it
+is used with the direct page mode, `as' will ignore it and generate an
+absolute addressing.  This option prevents `as' from doing this, and
+the wrong usage of the direct page mode will raise an error.
 
-``-J' (JUMPify Longer Branches)'
-     Many 32-bit computers permit a variety of branch instructions to
-     do the same job.  Some of these instructions are short (and fast)
-     but have a limited range; others are long (and slow) but can
-     branch anywhere in virtual memory.  Often there are 3 flavors of
-     branch: short, medium and long.  Some other assemblers would emit
-     short and medium branches, unless told by this option to emit
-     short and long branches.
+   The `--short-branchs' option turns off the translation of relative
+branches into absolute branches when the branch offset is out of range.
+By default `as' transforms the relative branch (`bsr', `bgt', `bge',
+`beq', `bne', `ble', `blt', `bhi', `bcc', `bls', `bcs', `bmi', `bvs',
+`bvs', `bra') into an absolute branch when the offset is out of the
+-128 .. 127 range.  In that case, the `bsr' instruction is translated
+into a `jsr', the `bra' instruction is translated into a `jmp' and the
+conditional branchs instructions are inverted and followed by a `jmp'.
+This option disables these translations and `as' will generate an error
+if a relative branch is out of range. This option does not affect the
+optimization associated to the `jbra', `jbsr' and `jbXX' pseudo opcodes.
 
-``-t' (Temporary File Directory)'
-     Some other assemblers may use a temporary file, and this option
-     takes a filename being the directory to site the temporary file.
-     Since `as' does not use a temporary disk file, this option makes
-     no difference.  `-t' needs exactly one filename.
+   The `--force-long-branchs' option forces the translation of relative
+branches into absolute branches. This option does not affect the
+optimization associated to the `jbra', `jbsr' and `jbXX' pseudo opcodes.
 
-   The Vax version of the assembler accepts additional options when
-compiled for VMS:
+   You can use the `--print-insn-syntax' option to obtain the syntax
+description of the instruction when an error is detected.
 
-`-h N'
-     External symbol or section (used for global variables) names are
-     not case sensitive on VAX/VMS and always mapped to upper case.
-     This is contrary to the C language definition which explicitly
-     distinguishes upper and lower case.  To implement a standard
-     conforming C compiler, names must be changed (mapped) to preserve
-     the case information.  The default mapping is to convert all lower
-     case characters to uppercase and adding an underscore followed by
-     a 6 digit hex value, representing a 24 digit binary value.  The
-     one digits in the binary value represent which characters are
-     uppercase in the original symbol name.
+   The `--print-opcodes' option prints the list of all the instructions
+with their syntax. The first item of each line represents the
+instruction name and the rest of the line indicates the possible
+operands for that instruction. The list is printed in alphabetical
+order. Once the list is printed `as' exits.
 
-     The `-h N' option determines how we map names.  This takes several
-     values.  No `-h' switch at all allows case hacking as described
-     above.  A value of zero (`-h0') implies names should be upper
-     case, and inhibits the case hack.  A value of 2 (`-h2') implies
-     names should be all lower case, with no case hack.  A value of 3
-     (`-h3') implies that case should be preserved.  The value 1 is
-     unused.  The `-H' option directs `as' to display every mapped
-     symbol during assembly.
-
-     Symbols whose names include a dollar sign `$' are exceptions to the
-     general name mapping.  These symbols are normally only used to
-     reference VMS library names.  Such symbols are always mapped to
-     upper case.
-
-`-+'
-     The `-+' option causes `as' to truncate any symbol name larger
-     than 31 characters.  The `-+' option also prevents some code
-     following the `_main' symbol normally added to make the object
-     file compatible with Vax-11 "C".
-
-`-1'
-     This option is ignored for backward compatibility with `as'
-     version 1.x.
-
-`-H'
-     The `-H' option causes `as' to print every symbol which was
-     changed by case mapping.
+   The `--generate-example' option is similar to `--print-opcodes' but
+it generates an example for each instruction instead.
 
 
-File: as.info,  Node: VAX-float,  Next: VAX-directives,  Prev: VAX-Opts,  Up: Vax-Dependent
+File: as.info,  Node: M68HC11-Syntax,  Next: M68HC11-Float,  Prev: M68HC11-Opts,  Up: M68HC11-Dependent
 
-VAX Floating Point
-------------------
+Syntax
+------
 
-   Conversion of flonums to floating point is correct, and compatible
-with previous assemblers.  Rounding is towards zero if the remainder is
-exactly half the least significant bit.
+   In the M68HC11 syntax, the instruction name comes first and it may
+be followed by one or several operands (up to three). Operands are
+separated by comma (`,'). In the normal mode, `as' will complain if too
+many operands are specified for a given instruction. In the MRI mode
+(turned on with `-M' option), it will treat them as comments. Example:
 
-   `D', `F', `G' and `H' floating point formats are understood.
+     inx
+     lda  #23
+     bset 2,x #4
+     brclr *bot #8 foo
 
-   Immediate floating literals (_e.g._ `S`$6.9') are rendered
-correctly.  Again, rounding is towards zero in the boundary case.
+   The following addressing modes are understood:
+"Immediate"
+     `#NUMBER'
 
-   The `.float' directive produces `f' format numbers.  The `.double'
-directive produces `d' format numbers.
+"Address Register"
+     `NUMBER,X', `NUMBER,Y'
+
+     The NUMBER may be omitted in which case 0 is assumed.
+
+"Direct Addressing mode"
+     `*SYMBOL', or `*DIGITS'
+
+"Absolute"
+     `SYMBOL', or `DIGITS'
 
 
-File: as.info,  Node: VAX-directives,  Next: VAX-opcodes,  Prev: VAX-float,  Up: Vax-Dependent
+File: as.info,  Node: M68HC11-Float,  Next: M68HC11-opcodes,  Prev: M68HC11-Syntax,  Up: M68HC11-Dependent
 
-Vax Machine Directives
+Floating Point
+--------------
+
+   Packed decimal (P) format floating literals are not supported.  Feel
+free to add the code!
+
+   The floating point formats generated by directives are these.
+
+`.float'
+     `Single' precision floating point constants.
+
+`.double'
+     `Double' precision floating point constants.
+
+`.extend'
+`.ldouble'
+     `Extended' precision (`long double') floating point constants.
+
+
+File: as.info,  Node: M68HC11-opcodes,  Prev: M68HC11-Float,  Up: M68HC11-Dependent
+
+Opcodes
+-------
+
+* Menu:
+
+* M68HC11-Branch::                 Branch Improvement
+
+
+File: as.info,  Node: M68HC11-Branch,  Up: M68HC11-opcodes
+
+Branch Improvement
+..................
+
+   Certain pseudo opcodes are permitted for branch instructions.  They
+expand to the shortest branch instruction that reach the target.
+Generally these mnemonics are made by prepending `j' to the start of
+Motorola mnemonic. These pseudo opcodes are not affected by the
+`--short-branchs' or `--force-long-branchs' options.
+
+   The following table summarizes the pseudo-operations.
+
+                                   Displacement Width
+               +-------------------------------------------------------------+
+               |                     Options                                 |
+               |    --short-branchs            --force-long-branchs          |
+               +--------------------------+----------------------------------+
+     Pseudo-Op |BYTE             WORD     | BYTE          WORD               |
+               +--------------------------+----------------------------------+
+           bsr | bsr <pc-rel>    <error>  |               jsr <abs>          |
+           bra | bra <pc-rel>    <error>  |               jmp <abs>          |
+          jbsr | bsr <pc-rel>   jsr <abs> | bsr <pc-rel>  jsr <abs>          |
+          jbra | bra <pc-rel>   jmp <abs> | bra <pc-rel>  jmp <abs>          |
+           bXX | bXX <pc-rel>    <error>  |               bNX +3; jmp <abs>  |
+          jbXX | bXX <pc-rel>   bNX +3;   | bXX <pc-rel>  bNX +3; jmp <abs>  |
+               |                jmp <abs> |                                  |
+               +--------------------------+----------------------------------+
+     XX: condition
+     NX: negative of condition XX
+
+`jbsr'
+`jbra'
+     These are the simplest jump pseudo-operations; they always map to
+     one particular machine instruction, depending on the displacement
+     to the branch target.
+
+`jbXX'
+     Here, `jbXX' stands for an entire family of pseudo-operations,
+     where XX is a conditional branch or condition-code test.  The full
+     list of pseudo-ops in this family is:
+           jbcc   jbeq   jbge   jbgt   jbhi   jbvs   jbpl  jblo
+           jbcs   jbne   jblt   jble   jbls   jbvc   jbmi
+
+     For the cases of non-PC relative displacements and long
+     displacements, `as' issues a longer code fragment in terms of NX,
+     the opposite condition to XX.  For example, for the non-PC
+     relative case:
+              jbXX foo
+     gives
+               bNXs oof
+               jmp foo
+           oof:
+
+
+File: as.info,  Node: M88K-Dependent,  Next: MIPS-Dependent,  Prev: M68HC11-Dependent,  Up: Machine Dependencies
+
+Motorola M88K Dependent Features
+================================
+
+* Menu:
+
+* M88K Directives::     M88K Machine Directives
+
+
+File: as.info,  Node: M88K Directives,  Up: M88K-Dependent
+
+M88K Machine Directives
+-----------------------
+
+   The M88K version of the assembler supports the following machine
+directives:
+
+`.align'
+     This directive aligns the section program counter on the next
+     4-byte boundary.
+
+`.dfloat EXPR'
+     This assembles a double precision (64-bit) floating point constant.
+
+`.ffloat EXPR'
+     This assembles a single precision (32-bit) floating point constant.
+
+`.half EXPR'
+     This directive assembles a half-word (16-bit) constant.
+
+`.word EXPR'
+     This assembles a word (32-bit) constant.
+
+`.string "STR"'
+     This directive behaves like the standard `.ascii' directive for
+     copying STR into the object file.  The string is not terminated
+     with a null byte.
+
+`.set SYMBOL, VALUE'
+     This directive creates a symbol named SYMBOL which is an alias for
+     another symbol (possibly not yet defined).  This should not be
+     confused with the mnemonic `set', which is a legitimate M88K
+     instruction.
+
+`.def SYMBOL, VALUE'
+     This directive is synonymous with `.set' and is presumably provided
+     for compatibility with other M88K assemblers.
+
+`.bss SYMBOL, LENGTH, ALIGN'
+     Reserve LENGTH bytes in the bss section for a local SYMBOL,
+     aligned to the power of two specified by ALIGN.  LENGTH and ALIGN
+     must be positive absolute expressions.  This directive differs
+     from `.lcomm' only in that it permits you to specify an alignment.
+     *Note `.lcomm': Lcomm.
+
+
+File: as.info,  Node: MIPS-Dependent,  Next: MMIX-Dependent,  Prev: M88K-Dependent,  Up: Machine Dependencies
+
+MIPS Dependent Features
+=======================
+
+   GNU `as' for MIPS architectures supports several different MIPS
+processors, and MIPS ISA levels I through V, MIPS32, and MIPS64.  For
+information about the MIPS instruction set, see `MIPS RISC
+Architecture', by Kane and Heindrich (Prentice-Hall).  For an overview
+of MIPS assembly conventions, see "Appendix D: Assembly Language
+Programming" in the same work.
+
+* Menu:
+
+* MIPS Opts::   	Assembler options
+* MIPS Object:: 	ECOFF object code
+* MIPS Stabs::  	Directives for debugging information
+* MIPS ISA::    	Directives to override the ISA level
+* MIPS autoextend::	Directives for extending MIPS 16 bit instructions
+* MIPS insn::		Directive to mark data as an instruction
+* MIPS option stack::	Directives to save and restore options
+* MIPS ASE instruction generation overrides:: Directives to control
+  			generation of MIPS ASE instructions
+
+
+File: as.info,  Node: MIPS Opts,  Next: MIPS Object,  Up: MIPS-Dependent
+
+Assembler options
+-----------------
+
+   The MIPS configurations of GNU `as' support these special options:
+
+`-G NUM'
+     This option sets the largest size of an object that can be
+     referenced implicitly with the `gp' register.  It is only accepted
+     for targets that use ECOFF format.  The default value is 8.
+
+`-EB'
+`-EL'
+     Any MIPS configuration of `as' can select big-endian or
+     little-endian output at run time (unlike the other GNU development
+     tools, which must be configured for one or the other).  Use `-EB'
+     to select big-endian output, and `-EL' for little-endian.
+
+`-mips1'
+`-mips2'
+`-mips3'
+`-mips4'
+`-mips5'
+`-mips32'
+`-mips64'
+     Generate code for a particular MIPS Instruction Set Architecture
+     level.  `-mips1' corresponds to the R2000 and R3000 processors,
+     `-mips2' to the R6000 processor, `-mips3' to the R4000 processor,
+     and `-mips4' to the R8000 and R10000 processors.  `-mips5',
+     `-mips32', and `-mips64' correspond to generic MIPS V, MIPS32, and
+     MIPS64 ISA processors, respectively.  You can also switch
+     instruction sets during the assembly; see *Note Directives to
+     override the ISA level: MIPS ISA.
+
+`-mgp32'
+`-mfp32'
+     Some macros have different expansions for 32-bit and 64-bit
+     registers.  The register sizes are normally inferred from the ISA
+     and ABI, but these flags force a certain group of registers to be
+     treated as 32 bits wide at all times.  `-mgp32' controls the size
+     of general-purpose registers and `-mfp32' controls the size of
+     floating-point registers.
+
+     On some MIPS variants there is a 32-bit mode flag; when this flag
+     is set, 64-bit instructions generate a trap.  Also, some 32-bit
+     OSes only save the 32-bit registers on a context switch, so it is
+     essential never to use the 64-bit registers.
+
+`-mgp64'
+     Assume that 64-bit general purpose registers are available.  This
+     is provided in the interests of symmetry with -gp32.
+
+`-mips16'
+`-no-mips16'
+     Generate code for the MIPS 16 processor.  This is equivalent to
+     putting `.set mips16' at the start of the assembly file.
+     `-no-mips16' turns off this option.
+
+`-mips3d'
+`-no-mips3d'
+     Generate code for the MIPS-3D Application Specific Extension.
+     This tells the assembler to accept MIPS-3D instructions.
+     `-no-mips3d' turns off this option.
+
+`-mdmx'
+`-no-mdmx'
+     Generate code for the MDMX Application Specific Extension.  This
+     tells the assembler to accept MDMX instructions.  `-no-mdmx' turns
+     off this option.
+
+`-mfix7000'
+`-mno-fix7000'
+     Cause nops to be inserted if the read of the destination register
+     of an mfhi or mflo instruction occurs in the following two
+     instructions.
+
+`-m4010'
+`-no-m4010'
+     Generate code for the LSI R4010 chip.  This tells the assembler to
+     accept the R4010 specific instructions (`addciu', `ffc', etc.),
+     and to not schedule `nop' instructions around accesses to the `HI'
+     and `LO' registers.  `-no-m4010' turns off this option.
+
+`-m4650'
+`-no-m4650'
+     Generate code for the MIPS R4650 chip.  This tells the assembler
+     to accept the `mad' and `madu' instruction, and to not schedule
+     `nop' instructions around accesses to the `HI' and `LO' registers.
+     `-no-m4650' turns off this option.
+
+`-m3900'
+`-no-m3900'
+`-m4100'
+`-no-m4100'
+     For each option `-mNNNN', generate code for the MIPS RNNNN chip.
+     This tells the assembler to accept instructions specific to that
+     chip, and to schedule for that chip's hazards.
+
+`-march=CPU'
+     Generate code for a particular MIPS cpu.  It is exactly equivalent
+     to `-mCPU', except that there are more value of CPU understood.
+     Valid CPU value are:
+
+          2000, 3000, 3900, 4000, 4010, 4100, 4111, 4300, 4400, 4600,
+          4650, 5000, rm5200, rm5230, rm5231, rm5261, rm5721, 6000,
+          rm7000, 8000, 10000, 12000, mips32-4k, sb1
+
+`-mtune=CPU'
+     Schedule and tune for a particular MIPS cpu.  Valid CPU values are
+     identical to `-march=CPU'.
+
+`-mcpu=CPU'
+     Generate code and schedule for a particular MIPS cpu.  This is
+     exactly equivalent to `-march=CPU' and `-mtune=CPU'.  Valid CPU
+     values are identical to `-march=CPU'.  Use of this option is
+     discouraged.
+
+`-nocpp'
+     This option is ignored.  It is accepted for command-line
+     compatibility with other assemblers, which use it to turn off C
+     style preprocessing.  With GNU `as', there is no need for
+     `-nocpp', because the GNU assembler itself never runs the C
+     preprocessor.
+
+`--construct-floats'
+`--no-construct-floats'
+     The `--no-construct-floats' option disables the construction of
+     double width floating point constants by loading the two halves of
+     the value into the two single width floating point registers that
+     make up the double width register.  This feature is useful if the
+     processor support the FR bit in its status  register, and this bit
+     is known (by the programmer) to be set.  This bit prevents the
+     aliasing of the double width register by the single width
+     registers.
+
+     By default `--construct-floats' is selected, allowing construction
+     of these floating point constants.
+
+`--trap'
+`--no-break'
+     `as' automatically macro expands certain division and
+     multiplication instructions to check for overflow and division by
+     zero.  This option causes `as' to generate code to take a trap
+     exception rather than a break exception when an error is detected.
+     The trap instructions are only supported at Instruction Set
+     Architecture level 2 and higher.
+
+`--break'
+`--no-trap'
+     Generate code to take a break exception rather than a trap
+     exception when an error is detected.  This is the default.
+
+`-n'
+     When this option is used, `as' will issue a warning every time it
+     generates a nop instruction from a macro.
+
+
+File: as.info,  Node: MIPS Object,  Next: MIPS Stabs,  Prev: MIPS Opts,  Up: MIPS-Dependent
+
+MIPS ECOFF object code
 ----------------------
 
-   The Vax version of the assembler supports four directives for
-generating Vax floating point constants.  They are described in the
-table below.
+   Assembling for a MIPS ECOFF target supports some additional sections
+besides the usual `.text', `.data' and `.bss'.  The additional sections
+are `.rdata', used for read-only data, `.sdata', used for small data,
+and `.sbss', used for small common objects.
 
-`.dfloat'
-     This expects zero or more flonums, separated by commas, and
-     assembles Vax `d' format 64-bit floating point constants.
+   When assembling for ECOFF, the assembler uses the `$gp' (`$28')
+register to form the address of a "small object".  Any object in the
+`.sdata' or `.sbss' sections is considered "small" in this sense.  For
+external objects, or for objects in the `.bss' section, you can use the
+`gcc' `-G' option to control the size of objects addressed via `$gp';
+the default value is 8, meaning that a reference to any object eight
+bytes or smaller uses `$gp'.  Passing `-G 0' to `as' prevents it from
+using the `$gp' register on the basis of object size (but the assembler
+uses `$gp' for objects in `.sdata' or `sbss' in any case).  The size of
+an object in the `.bss' section is set by the `.comm' or `.lcomm'
+directive that defines it.  The size of an external object may be set
+with the `.extern' directive.  For example, `.extern sym,4' declares
+that the object at `sym' is 4 bytes in length, whie leaving `sym'
+otherwise undefined.
 
-`.ffloat'
-     This expects zero or more flonums, separated by commas, and
-     assembles Vax `f' format 32-bit floating point constants.
-
-`.gfloat'
-     This expects zero or more flonums, separated by commas, and
-     assembles Vax `g' format 64-bit floating point constants.
-
-`.hfloat'
-     This expects zero or more flonums, separated by commas, and
-     assembles Vax `h' format 128-bit floating point constants.
-
-
-File: as.info,  Node: VAX-opcodes,  Next: VAX-branch,  Prev: VAX-directives,  Up: Vax-Dependent
-
-VAX Opcodes
------------
-
-   All DEC mnemonics are supported.  Beware that `case...' instructions
-have exactly 3 operands.  The dispatch table that follows the `case...'
-instruction should be made with `.word' statements.  This is compatible
-with all unix assemblers we know of.
+   Using small ECOFF objects requires linker support, and assumes that
+the `$gp' register is correctly initialized (normally done
+automatically by the startup code).  MIPS ECOFF assembly code must not
+modify the `$gp' register.
 
 
-File: as.info,  Node: VAX-branch,  Next: VAX-operands,  Prev: VAX-opcodes,  Up: Vax-Dependent
+File: as.info,  Node: MIPS Stabs,  Next: MIPS ISA,  Prev: MIPS Object,  Up: MIPS-Dependent
 
-VAX Branch Improvement
-----------------------
+Directives for debugging information
+------------------------------------
 
-   Certain pseudo opcodes are permitted.  They are for branch
-instructions.  They expand to the shortest branch instruction that
-reaches the target.  Generally these mnemonics are made by substituting
-`j' for `b' at the start of a DEC mnemonic.  This feature is included
-both for compatibility and to help compilers.  If you do not need this
-feature, avoid these opcodes.  Here are the mnemonics, and the code
-they can expand into.
-
-`jbsb'
-     `Jsb' is already an instruction mnemonic, so we chose `jbsb'.
-    (byte displacement)
-          `bsbb ...'
-
-    (word displacement)
-          `bsbw ...'
-
-    (long displacement)
-          `jsb ...'
-
-`jbr'
-`jr'
-     Unconditional branch.
-    (byte displacement)
-          `brb ...'
-
-    (word displacement)
-          `brw ...'
-
-    (long displacement)
-          `jmp ...'
-
-`jCOND'
-     COND may be any one of the conditional branches `neq', `nequ',
-     `eql', `eqlu', `gtr', `geq', `lss', `gtru', `lequ', `vc', `vs',
-     `gequ', `cc', `lssu', `cs'.  COND may also be one of the bit tests
-     `bs', `bc', `bss', `bcs', `bsc', `bcc', `bssi', `bcci', `lbs',
-     `lbc'.  NOTCOND is the opposite condition to COND.
-    (byte displacement)
-          `bCOND ...'
-
-    (word displacement)
-          `bNOTCOND foo ; brw ... ; foo:'
-
-    (long displacement)
-          `bNOTCOND foo ; jmp ... ; foo:'
-
-`jacbX'
-     X may be one of `b d f g h l w'.
-    (word displacement)
-          `OPCODE ...'
-
-    (long displacement)
-               OPCODE ..., foo ;
-               brb bar ;
-               foo: jmp ... ;
-               bar:
-
-`jaobYYY'
-     YYY may be one of `lss leq'.
-
-`jsobZZZ'
-     ZZZ may be one of `geq gtr'.
-    (byte displacement)
-          `OPCODE ...'
-
-    (word displacement)
-               OPCODE ..., foo ;
-               brb bar ;
-               foo: brw DESTINATION ;
-               bar:
-
-    (long displacement)
-               OPCODE ..., foo ;
-               brb bar ;
-               foo: jmp DESTINATION ;
-               bar:
-
-`aobleq'
-`aoblss'
-`sobgeq'
-`sobgtr'
-
-    (byte displacement)
-          `OPCODE ...'
-
-    (word displacement)
-               OPCODE ..., foo ;
-               brb bar ;
-               foo: brw DESTINATION ;
-               bar:
-
-    (long displacement)
-               OPCODE ..., foo ;
-               brb bar ;
-               foo: jmp DESTINATION ;
-               bar:
+   MIPS ECOFF `as' supports several directives used for generating
+debugging information which are not support by traditional MIPS
+assemblers.  These are `.def', `.endef', `.dim', `.file', `.scl',
+`.size', `.tag', `.type', `.val', `.stabd', `.stabn', and `.stabs'.
+The debugging information generated by the three `.stab' directives can
+only be read by GDB, not by traditional MIPS debuggers (this
+enhancement is required to fully support C++ debugging).  These
+directives are primarily used by compilers, not assembly language
+programmers!
 
 
-File: as.info,  Node: VAX-operands,  Next: VAX-no,  Prev: VAX-branch,  Up: Vax-Dependent
+File: as.info,  Node: MIPS ISA,  Next: MIPS autoextend,  Prev: MIPS Stabs,  Up: MIPS-Dependent
 
-VAX Operands
-------------
+Directives to override the ISA level
+------------------------------------
 
-   The immediate character is `$' for Unix compatibility, not `#' as
-DEC writes it.
+   GNU `as' supports an additional directive to change the MIPS
+Instruction Set Architecture level on the fly: `.set mipsN'.  N should
+be a number from 0 to 5, or 32 or 64.  The values 1 to 5, 32, and 64
+make the assembler accept instructions for the corresponding ISA level,
+from that point on in the assembly.  `.set mipsN' affects not only
+which instructions are permitted, but also how certain macros are
+expanded.  `.set mips0' restores the ISA level to its original level:
+either the level you selected with command line options, or the default
+for your configuration.  You can use this feature to permit specific
+R4000 instructions while assembling in 32 bit mode.  Use this directive
+with care!
 
-   The indirect character is `*' for Unix compatibility, not `@' as DEC
-writes it.
+   The directive `.set mips16' puts the assembler into MIPS 16 mode, in
+which it will assemble instructions for the MIPS 16 processor.  Use
+`.set nomips16' to return to normal 32 bit mode.
 
-   The displacement sizing character is ``' (an accent grave) for Unix
-compatibility, not `^' as DEC writes it.  The letter preceding ``' may
-have either case.  `G' is not understood, but all other letters (`b i l
-s w') are understood.
-
-   Register names understood are `r0 r1 r2 ... r15 ap fp sp pc'.  Upper
-and lower case letters are equivalent.
-
-   For instance
-     tstb *w`$4(r5)
-
-   Any expression is permitted in an operand.  Operands are comma
-separated.
+   Traditional MIPS assemblers do not support this directive.
 
 
-File: as.info,  Node: VAX-no,  Prev: VAX-operands,  Up: Vax-Dependent
+File: as.info,  Node: MIPS autoextend,  Next: MIPS insn,  Prev: MIPS ISA,  Up: MIPS-Dependent
 
-Not Supported on VAX
---------------------
+Directives for extending MIPS 16 bit instructions
+-------------------------------------------------
 
-   Vax bit fields can not be assembled with `as'.  Someone can add the
-required code if they really need it.
+   By default, MIPS 16 instructions are automatically extended to 32
+bits when necessary.  The directive `.set noautoextend' will turn this
+off.  When `.set noautoextend' is in effect, any 32 bit instruction
+must be explicitly extended with the `.e' modifier (e.g., `li.e
+$4,1000').  The directive `.set autoextend' may be used to once again
+automatically extend instructions when necessary.
+
+   This directive is only meaningful when in MIPS 16 mode.  Traditional
+MIPS assemblers do not support this directive.
 
 
-File: as.info,  Node: V850-Dependent,  Next: Z8000-Dependent,  Prev: Sparc-Dependent,  Up: Machine Dependencies
+File: as.info,  Node: MIPS insn,  Next: MIPS option stack,  Prev: MIPS autoextend,  Up: MIPS-Dependent
 
-v850 Dependent Features
+Directive to mark data as an instruction
+----------------------------------------
+
+   The `.insn' directive tells `as' that the following data is actually
+instructions.  This makes a difference in MIPS 16 mode: when loading
+the address of a label which precedes instructions, `as' automatically
+adds 1 to the value, so that jumping to the loaded address will do the
+right thing.
+
+
+File: as.info,  Node: MIPS option stack,  Next: MIPS ASE instruction generation overrides,  Prev: MIPS insn,  Up: MIPS-Dependent
+
+Directives to save and restore options
+--------------------------------------
+
+   The directives `.set push' and `.set pop' may be used to save and
+restore the current settings for all the options which are controlled
+by `.set'.  The `.set push' directive saves the current settings on a
+stack.  The `.set pop' directive pops the stack and restores the
+settings.
+
+   These directives can be useful inside an macro which must change an
+option such as the ISA level or instruction reordering but does not want
+to change the state of the code which invoked the macro.
+
+   Traditional MIPS assemblers do not support these directives.
+
+
+File: as.info,  Node: MIPS ASE instruction generation overrides,  Prev: MIPS option stack,  Up: MIPS-Dependent
+
+Directives to control generation of MIPS ASE instructions
+---------------------------------------------------------
+
+   The directive `.set mips3d' makes the assembler accept instructions
+from the MIPS-3D Application Specific Extension from that point on in
+the assembly.  The `.set nomips3d' directive prevents MIPS-3D
+instructions from being accepted.
+
+   The directive `.set mdmx' makes the assembler accept instructions
+from the MDMX Application Specific Extension from that point on in the
+assembly.  The `.set nomdmx' directive prevents MDMX instructions from
+being accepted.
+
+   Traditional MIPS assemblers do not support these directives.
+
+
+File: as.info,  Node: MMIX-Dependent,  Next: SH-Dependent,  Prev: MIPS-Dependent,  Up: Machine Dependencies
+
+MMIX Dependent Features
 =======================
 
 * Menu:
 
-* V850 Options::              Options
-* V850 Syntax::               Syntax
-* V850 Floating Point::       Floating Point
-* V850 Directives::           V850 Machine Directives
-* V850 Opcodes::              Opcodes
+* MMIX-Opts::              Command-line Options
+* MMIX-Expand::            Instruction expansion
+* MMIX-Syntax::            Syntax
+* MMIX-mmixal::		   Differences to `mmixal' syntax and semantics
 
 
-File: as.info,  Node: V850 Options,  Next: V850 Syntax,  Up: V850-Dependent
+File: as.info,  Node: MMIX-Opts,  Next: MMIX-Expand,  Up: MMIX-Dependent
 
-Options
--------
+Command-line Options
+--------------------
 
-   `as' supports the following additional command-line options for the
-V850 processor family:
+   The MMIX version of `as' has some machine-dependent options.
 
-`-wsigned_overflow'
-     Causes warnings to be produced when signed immediate values
-     overflow the space available for then within their opcodes.  By
-     default this option is disabled as it is possible to receive
-     spurious warnings due to using exact bit patterns as immediate
-     constants.
+   When `--fixed-special-register-names' is specified, only the register
+names specified in *Note MMIX-Regs:: are recognized in the instructions
+`PUT' and `GET'.
 
-`-wunsigned_overflow'
-     Causes warnings to be produced when unsigned immediate values
-     overflow the space available for then within their opcodes.  By
-     default this option is disabled as it is possible to receive
-     spurious warnings due to using exact bit patterns as immediate
-     constants.
+   You can use the `--globalize-symbols' to make all symbols global.
+This option is useful when splitting up a `mmixal' program into several
+files.
 
-`-mv850'
-     Specifies that the assembled code should be marked as being
-     targeted at the V850 processor.  This allows the linker to detect
-     attempts to link such code with code assembled for other
-     processors.
+   The `--gnu-syntax' turns off most syntax compatibility with
+`mmixal'.  Its usability is currently doubtful.
 
-`-mv850e'
-     Specifies that the assembled code should be marked as being
-     targeted at the V850E processor.  This allows the linker to detect
-     attempts to link such code with code assembled for other
-     processors.
+   The `--relax' option is not fully supported, but will eventually make
+the object file prepared for linker relaxation.
 
-`-mv850any'
-     Specifies that the assembled code should be marked as being
-     targeted at the V850 processor but support instructions that are
-     specific to the extended variants of the process.  This allows the
-     production of binaries that contain target specific code, but
-     which are also intended to be used in a generic fashion.  For
-     example libgcc.a contains generic routines used by the code
-     produced by GCC for all versions of the v850 architecture,
-     together with support routines only used by the V850E architecture.
+   If you want to avoid inadvertently calling a predefined symbol and
+would rather get an error, for example when using `as' with a compiler
+or other machine-generated code, specify `--no-predefined-syms'.  This
+turns off built-in predefined definitions of all such symbols,
+including rounding-mode symbols, segment symbols, `BIT' symbols, and
+`TRAP' symbols used in `mmix' "system calls".  It also turns off
+predefined special-register names, except when used in `PUT' and `GET'
+instructions.
+
+   By default, some instructions are expanded to fit the size of the
+operand or an external symbol (*note MMIX-Expand::).  By passing
+`--no-expand', no such expansion will be done, instead causing errors
+at link time if the operand does not fit.
+
+   The `mmixal' documentation (*note mmixsite::) specifies that global
+registers allocated with the `GREG' directive (*note MMIX-greg::) and
+initialized to the same non-zero value, will refer to the same global
+register.  This isn't strictly enforcable in `as' since the final
+addresses aren't known until link-time, but it will do an effort unless
+the `--no-merge-gregs' option is specified.  (Register merging isn't
+yet implemented in `ld'.)
+
+   `as' will warn every time it expands an instruction to fit an
+operand unless the option `-x' is specified.  It is believed that this
+behaviour is more useful than just mimicking `mmixal''s behaviour, in
+which instructions are only expanded if the `-x' option is specified,
+and assembly fails otherwise, when an instruction needs to be expanded.
+It needs to be kept in mind that `mmixal' is both an assembler and
+linker, while `as' will expand instructions that at link stage can be
+contracted.  (Though linker relaxation isn't yet implemented in `ld'.)
+The option `-x' also imples `--linker-allocated-gregs'.
+
+   Usually a two-operand-expression (*note GREG-base::) without a
+matching `GREG' directive is treated as an error by `as'.  When the
+option `--linker-allocated-gregs' is in effect, they are instead passed
+through to the linker, which will allocate as many global registers as
+is needed.
 
 
-File: as.info,  Node: V850 Syntax,  Next: V850 Floating Point,  Prev: V850 Options,  Up: V850-Dependent
+File: as.info,  Node: MMIX-Expand,  Next: MMIX-Syntax,  Prev: MMIX-Opts,  Up: MMIX-Dependent
+
+Instruction expansion
+---------------------
+
+   When `as' encounters an instruction with an operand that is either
+not known or does not fit the operand size of the instruction, `as'
+(and `ld') will expand the instruction into a sequence of instructions
+semantically equivalent to the operand fitting the instruction.
+Expansion will take place for the following instructions:
+
+`GETA'
+     Expands to a sequence of four instructions: `SETL', `INCML',
+     `INCMH' and `INCH'.  The operand must be a multiple of four.
+
+Conditional branches
+     A branch instruction is turned into a branch with the complemented
+     condition and prediction bit over five instructions; four
+     instructions setting `$255' to the operand value, which like with
+     `GETA' must be a multiple of four, and a final `GO $255,$255,0'.
+
+`PUSHJ'
+     Similar to expansion for conditional branches; four instructions
+     set `$255' to the operand value, followed by a `PUSHGO
+     $255,$255,0'.
+
+`JMP'
+     Similar to conditional branches and `PUSHJ'.  The final instruction
+     is `GO $255,$255,0'.
+
+   The linker `ld' is expected to shrink these expansions for code
+assembled with `--relax' (though not currently implemented).
+
+
+File: as.info,  Node: MMIX-Syntax,  Next: MMIX-mmixal,  Prev: MMIX-Expand,  Up: MMIX-Dependent
 
 Syntax
 ------
 
+   The assembly syntax is supposed to be upward compatible with that
+described in Sections 1.3 and 1.4 of `The Art of Computer Programming,
+Volume 1'.  Draft versions of those chapters as well as other MMIX
+information is located at
+<http://www-cs-faculty.stanford.edu/~knuth/mmix-news.html>.  Most code
+examples from the mmixal package located there should work unmodified
+when assembled and linked as single files, with a few noteworthy
+exceptions (*note MMIX-mmixal::).
+
+   Before an instruction is emitted, the current location is aligned to
+the next four-byte boundary.  If a label is defined at the beginning of
+the line, its value will be the aligned value.
+
+   In addition to the traditional hex-prefix `0x', a hexadecimal number
+can also be specified by the prefix character `#'.
+
+   After all operands to an MMIX instruction or directive have been
+specified, the rest of the line is ignored, treated as a comment.
+
 * Menu:
 
-* V850-Chars::                Special Characters
-* V850-Regs::                 Register Names
+* MMIX-Chars::		        Special Characters
+* MMIX-Symbols::		Symbols
+* MMIX-Regs::			Register Names
+* MMIX-Pseudos::		Assembler Directives
 
 
-File: as.info,  Node: V850-Chars,  Next: V850-Regs,  Up: V850 Syntax
+File: as.info,  Node: MMIX-Chars,  Next: MMIX-Symbols,  Up: MMIX-Syntax
 
 Special Characters
 ..................
 
-   `#' is the line comment character.
+   The characters `*' and `#' are line comment characters; each start a
+comment at the beginning of a line, but only at the beginning of a
+line.  A `#' prefixes a hexadecimal number if found elsewhere on a line.
+
+   Two other characters, `%' and `!', each start a comment anywhere on
+the line.  Thus you can't use the `modulus' and `not' operators in
+expressions normally associated with these two characters.
+
+   A `;' is a line separator, treated as a new-line, so separate
+instructions can be specified on a single line.
 
 
-File: as.info,  Node: V850-Regs,  Prev: V850-Chars,  Up: V850 Syntax
+File: as.info,  Node: MMIX-Symbols,  Next: MMIX-Regs,  Prev: MMIX-Chars,  Up: MMIX-Syntax
 
-Register Names
+Symbols
+.......
+
+   The character `:' is permitted in identifiers.  There are two
+exceptions to it being treated as any other symbol character: if a
+symbol begins with `:', it means that the symbol is in the global
+namespace and that the current prefix should not be prepended to that
+symbol (*note MMIX-prefix::).  The `:' is then not considered part of
+the symbol.  For a symbol in the label position (first on a line), a `:'
+at the end of a symbol is silently stripped off.  A label is permitted,
+but not required, to be followed by a `:', as with many other assembly
+formats.
+
+   The character `@' in an expression, is a synonym for `.', the
+current location.
+
+   In addition to the common forward and backward local symbol formats
+(*note Symbol Names::), they can be specified with upper-case `B' and
+`F', as in `8B' and `9F'.  A local label defined for the current
+position is written with a `H' appended to the number:
+     3H LDB $0,$1,2
+   This and traditional local-label formats cannot be mixed: a label
+must be defined and referred to using the same format.
+
+   There's a minor caveat: just as for the ordinary local symbols, the
+local symbols are translated into ordinary symbols using control
+characters are to hide the ordinal number of the symbol.
+Unfortunately, these symbols are not translated back in error messages.
+Thus you may see confusing error messages when local symbols are used.
+Control characters `\003' (control-C) and `\004' (control-D) are used
+for the MMIX-specific local-symbol syntax.
+
+   The symbol `Main' is handled specially; it is always global.
+
+   By defining the symbols `__.MMIX.start..text' and
+`__.MMIX.start..data', the address of respectively the `.text' and
+`.data' segments of the final program can be defined, though when
+linking more than one object file, the code or data in the object file
+containing the symbol is not guaranteed to be start at that position;
+just the final executable.  *Note MMIX-loc::.
+
+
+File: as.info,  Node: MMIX-Regs,  Next: MMIX-Pseudos,  Prev: MMIX-Symbols,  Up: MMIX-Syntax
+
+Register names
 ..............
 
-   `as' supports the following names for registers:
-`general register 0'
-     r0, zero
+   Local and global registers are specified as `$0' to `$255'.  The
+recognized special register names are `rJ', `rA', `rB', `rC', `rD',
+`rE', `rF', `rG', `rH', `rI', `rK', `rL', `rM', `rN', `rO', `rP', `rQ',
+`rR', `rS', `rT', `rU', `rV', `rW', `rX', `rY', `rZ', `rBB', `rTT',
+`rWW', `rXX', `rYY' and `rZZ'.  A leading `:' is optional for special
+register names.
 
-`general register 1'
-     r1
+   Local and global symbols can be equated to register names and used in
+place of ordinary registers.
 
-`general register 2'
-     r2, hp
-
-`general register 3'
-     r3, sp
-
-`general register 4'
-     r4, gp
-
-`general register 5'
-     r5, tp
-
-`general register 6'
-     r6
-
-`general register 7'
-     r7
-
-`general register 8'
-     r8
-
-`general register 9'
-     r9
-
-`general register 10'
-     r10
-
-`general register 11'
-     r11
-
-`general register 12'
-     r12
-
-`general register 13'
-     r13
-
-`general register 14'
-     r14
-
-`general register 15'
-     r15
-
-`general register 16'
-     r16
-
-`general register 17'
-     r17
-
-`general register 18'
-     r18
-
-`general register 19'
-     r19
-
-`general register 20'
-     r20
-
-`general register 21'
-     r21
-
-`general register 22'
-     r22
-
-`general register 23'
-     r23
-
-`general register 24'
-     r24
-
-`general register 25'
-     r25
-
-`general register 26'
-     r26
-
-`general register 27'
-     r27
-
-`general register 28'
-     r28
-
-`general register 29'
-     r29
-
-`general register 30'
-     r30, ep
-
-`general register 31'
-     r31, lp
-
-`system register 0'
-     eipc
-
-`system register 1'
-     eipsw
-
-`system register 2'
-     fepc
-
-`system register 3'
-     fepsw
-
-`system register 4'
-     ecr
-
-`system register 5'
-     psw
-
-`system register 16'
-     ctpc
-
-`system register 17'
-     ctpsw
-
-`system register 18'
-     dbpc
-
-`system register 19'
-     dbpsw
-
-`system register 20'
-     ctbp
+   Similarly for special registers, local and global symbols can be
+used.  Also, symbols equated from numbers and constant expressions are
+allowed in place of a special register, except when either of the
+options `--no-predefined-syms' and `--fixed-special-register-names' are
+specified.  Then only the special register names above are allowed for
+the instructions having a special register operand; `GET' and `PUT'.
 
 
-File: as.info,  Node: V850 Floating Point,  Next: V850 Directives,  Prev: V850 Syntax,  Up: V850-Dependent
+File: as.info,  Node: MMIX-Pseudos,  Prev: MMIX-Regs,  Up: MMIX-Syntax
 
-Floating Point
---------------
+Assembler Directives
+....................
 
-   The V850 family uses IEEE floating-point numbers.
+`LOC'
+     The `LOC' directive sets the current location to the value of the
+     operand field, which may include changing sections.  If the
+     operand is a constant, the section is set to either `.data' if the
+     value is `0x2000000000000000' or larger, else it is set to `.text'.
+     Within a section, the current location may only be changed to
+     monotonically higher addresses.  A LOC expression must be a
+     previously defined symbol or a "pure" constant.
 
-
-File: as.info,  Node: V850 Directives,  Next: V850 Opcodes,  Prev: V850 Floating Point,  Up: V850-Dependent
+     An example, which sets the label PREV to the current location, and
+     updates the current location to eight bytes forward:
+          prev LOC @+8
 
-V850 Machine Directives
------------------------
+     When a LOC has a constant as its operand, a symbol
+     `__.MMIX.start..text' or `__.MMIX.start..data' is defined
+     depending on the address as mentioned above.  Each such symbol is
+     interpreted as special by the linker, locating the section at that
+     address.  Note that if multiple files are linked, the first object
+     file with that section will be mapped to that address (not
+     necessarily the file with the LOC definition).
 
-`.offset <EXPRESSION>'
-     Moves the offset into the current section to the specified amount.
+`LOCAL'
+     Example:
+           LOCAL external_symbol
+           LOCAL 42
+           .local asymbol
 
-`.section "name", <type>'
-     This is an extension to the standard .section directive.  It sets
-     the current section to be <type> and creates an alias for this
-     section called "name".
+     This directive-operation generates a link-time assertion that the
+     operand does not correspond to a global register.  The operand is
+     an expression that at link-time resolves to a register symbol or a
+     number.  A number is treated as the register having that number.
+     There is one restriction on the use of this directive: the
+     pseudo-directive must be placed in a section with contents, code
+     or data.
 
-`.v850'
-     Specifies that the assembled code should be marked as being
-     targeted at the V850 processor.  This allows the linker to detect
-     attempts to link such code with code assembled for other
-     processors.
+`IS'
+     The `IS' directive:
+          asymbol IS an_expression
+     sets the symbol `asymbol' to `an_expression'.  A symbol may not be
+     set more than once using this directive.  Local labels may be set
+     using this directive, for example:
+          5H IS @+4
 
-`.v850e'
-     Specifies that the assembled code should be marked as being
-     targeted at the V850E processor.  This allows the linker to detect
-     attempts to link such code with code assembled for other
-     processors.
+`GREG'
+     This directive reserves a global register, gives it an initial
+     value and optionally gives it a symbolic name.  Some examples:
 
-
-File: as.info,  Node: V850 Opcodes,  Prev: V850 Directives,  Up: V850-Dependent
+          areg GREG
+          breg GREG data_value
+               GREG data_buffer
+               .greg creg, another_data_value
 
-Opcodes
--------
+     The symbolic register name can be used in place of a (non-special)
+     register.  If a value isn't provided, it defaults to zero.  Unless
+     the option `--no-merge-gregs' is specified, non-zero registers
+     allocated with this directive may be eliminated by `as'; another
+     register with the same value used in its place.  Any of the
+     instructions `CSWAP', `GO', `LDA', `LDBU', `LDB', `LDHT', `LDOU',
+     `LDO', `LDSF', `LDTU', `LDT', `LDUNC', `LDVTS', `LDWU', `LDW',
+     `PREGO', `PRELD', `PREST', `PUSHGO', `STBU', `STB', `STCO', `STHT',
+     `STOU', `STSF', `STTU', `STT', `STUNC', `SYNCD', `SYNCID', can
+     have a value nearby an initial value in place of its second and
+     third operands.  Here, "nearby" is defined as within the range
+     0...255 from the initial value of such an allocated register.
 
-   `as' implements all the standard V850 opcodes.
+          buffer1 BYTE 0,0,0,0,0
+          buffer2 BYTE 0,0,0,0,0
+           ...
+           GREG buffer1
+           LDOU $42,buffer2
+     In the example above, the `Y' field of the `LDOUI' instruction
+     (LDOU with a constant Z) will be replaced with the global register
+     allocated for `buffer1', and the `Z' field will have the value 5,
+     the offset from `buffer1' to `buffer2'.  The result is equivalent
+     to this code:
+          buffer1 BYTE 0,0,0,0,0
+          buffer2 BYTE 0,0,0,0,0
+           ...
+          tmpreg GREG buffer1
+           LDOU $42,tmpreg,(buffer2-buffer1)
 
-   `as' also implements the following pseudo ops:
+     Global registers allocated with this directive are allocated in
+     order higher-to-lower within a file.  Other than that, the exact
+     order of register allocation and elimination is undefined.  For
+     example, the order is undefined when more than one file with such
+     directives are linked together.  With the options `-x' and
+     `--linker-allocated-gregs', `GREG' directives for two-operand
+     cases like the one mentioned above can be omitted.  Sufficient
+     global registers will then be allocated by the linker.
 
-`hi0()'
-     Computes the higher 16 bits of the given expression and stores it
-     into the immediate operand field of the given instruction.  For
-     example:
+`BYTE'
+     The `BYTE' directive takes a series of operands separated by a
+     comma.  If an operand is a string (*note Strings::), each
+     character of that string is emitted as a byte.  Other operands
+     must be constant expressions without forward references, in the
+     range 0...255.  If you need operands having expressions with
+     forward references, use `.byte' (*note Byte::).  An operand can be
+     omitted, defaulting to a zero value.
 
-     `mulhi hi0(here - there), r5, r6'
+`WYDE'
+`TETRA'
+`OCTA'
+     The directives `WYDE', `TETRA' and `OCTA' emit constants of two,
+     four and eight bytes size respectively.  Before anything else
+     happens for the directive, the current location is aligned to the
+     respective constant-size bondary.  If a label is defined at the
+     beginning of the line, its value will be that after the alignment.
+     A single operand can be omitted, defaulting to a zero value
+     emitted for the directive.  Operands can be expressed as strings
+     (*note Strings::), in which case each character in the string is
+     emitted as a separate constant of the size indicated by the
+     directive.
 
-     computes the difference between the address of labels 'here' and
-     'there', takes the upper 16 bits of this difference, shifts it
-     down 16 bits and then mutliplies it by the lower 16 bits in
-     register 5, putting the result into register 6.
+`PREFIX'
+     The `PREFIX' directive sets a symbol name prefix to be prepended to
+     all symbols (except local symbols, *note MMIX-Symbols::), that are
+     not prefixed with `:', until the next `PREFIX' directive.  Such
+     prefixes accumulate.  For example,
+           PREFIX a
+           PREFIX b
+          c IS 0
+     defines a symbol `abc' with the value 0.
 
-`lo()'
-     Computes the lower 16 bits of the given expression and stores it
-     into the immediate operand field of the given instruction.  For
-     example:
-
-     `addi lo(here - there), r5, r6'
-
-     computes the difference between the address of labels 'here' and
-     'there', takes the lower 16 bits of this difference and adds it to
-     register 5, putting the result into register 6.
-
-`hi()'
-     Computes the higher 16 bits of the given expression and then adds
-     the value of the most significant bit of the lower 16 bits of the
-     expression and stores the result into the immediate operand field
-     of the given instruction.  For example the following code can be
-     used to compute the address of the label 'here' and store it into
-     register 6:
-
-     `movhi hi(here), r0, r6'     `movea lo(here), r6, r6'
-
-     The reason for this special behaviour is that movea performs a sign
-     extention on its immediate operand.  So for example if the address
-     of 'here' was 0xFFFFFFFF then without the special behaviour of the
-     hi() pseudo-op the movhi instruction would put 0xFFFF0000 into r6,
-     then the movea instruction would takes its immediate operand,
-     0xFFFF, sign extend it to 32 bits, 0xFFFFFFFF, and then add it
-     into r6 giving 0xFFFEFFFF which is wrong (the fifth nibble is E).
-     With the hi() pseudo op adding in the top bit of the lo() pseudo
-     op, the movhi instruction actually stores 0 into r6 (0xFFFF + 1 =
-     0x0000), so that the movea instruction stores 0xFFFFFFFF into r6 -
-     the right value.
-
-`hilo()'
-     Computes the 32 bit value of the given expression and stores it
-     into the immediate operand field of the given instruction (which
-     must be a mov instruction).  For example:
-
-     `mov hilo(here), r6'
-
-     computes the absolute address of label 'here' and puts the result
-     into register 6.
-
-`sdaoff()'
-     Computes the offset of the named variable from the start of the
-     Small Data Area (whoes address is held in register 4, the GP
-     register) and stores the result as a 16 bit signed value in the
-     immediate operand field of the given instruction.  For example:
-
-     `ld.w sdaoff(_a_variable)[gp],r6'
-
-     loads the contents of the location pointed to by the label
-     '_a_variable' into register 6, provided that the label is located
-     somewhere within +/- 32K of the address held in the GP register.
-     [Note the linker assumes that the GP register contains a fixed
-     address set to the address of the label called '__gp'.  This can
-     either be set up automatically by the linker, or specifically set
-     by using the `--defsym __gp=<value>' command line option].
-
-`tdaoff()'
-     Computes the offset of the named variable from the start of the
-     Tiny Data Area (whoes address is held in register 30, the EP
-     register) and stores the result as a 4,5, 7 or 8 bit unsigned
-     value in the immediate operand field of the given instruction.
-     For example:
-
-     `sld.w tdaoff(_a_variable)[ep],r6'
-
-     loads the contents of the location pointed to by the label
-     '_a_variable' into register 6, provided that the label is located
-     somewhere within +256 bytes of the address held in the EP
-     register.  [Note the linker assumes that the EP register contains
-     a fixed address set to the address of the label called '__ep'.
-     This can either be set up automatically by the linker, or
-     specifically set by using the `--defsym __ep=<value>' command line
-     option].
-
-`zdaoff()'
-     Computes the offset of the named variable from address 0 and
-     stores the result as a 16 bit signed value in the immediate
-     operand field of the given instruction.  For example:
-
-     `movea zdaoff(_a_variable),zero,r6'
-
-     puts the address of the label '_a_variable' into register 6,
-     assuming that the label is somewhere within the first 32K of
-     memory.  (Strictly speaking it also possible to access the last
-     32K of memory as well, as the offsets are signed).
-
-`ctoff()'
-     Computes the offset of the named variable from the start of the
-     Call Table Area (whoes address is helg in system register 20, the
-     CTBP register) and stores the result a 6 or 16 bit unsigned value
-     in the immediate field of then given instruction or piece of data.
-     For example:
-
-     `callt ctoff(table_func1)'
-
-     will put the call the function whoes address is held in the call
-     table at the location labeled 'table_func1'.
-
-   For information on the V850 instruction set, see `V850 Family
-32-/16-Bit single-Chip Microcontroller Architecture Manual' from NEC.
-Ltd.
-
-
-File: as.info,  Node: Reporting Bugs,  Next: Acknowledgements,  Prev: Machine Dependencies,  Up: Top
-
-Reporting Bugs
-**************
-
-   Your bug reports play an essential role in making `as' reliable.
-
-   Reporting a bug may help you by bringing a solution to your problem,
-or it may not.  But in any case the principal function of a bug report
-is to help the entire community by making the next version of `as' work
-better.  Bug reports are your contribution to the maintenance of `as'.
-
-   In order for a bug report to serve its purpose, you must include the
-information that enables us to fix the bug.
-
-* Menu:
-
-* Bug Criteria::                Have you found a bug?
-* Bug Reporting::               How to report bugs
-
-
-File: as.info,  Node: Bug Criteria,  Next: Bug Reporting,  Up: Reporting Bugs
-
-Have you found a bug?
-=====================
-
-   If you are not sure whether you have found a bug, here are some
-guidelines:
-
-   * If the assembler gets a fatal signal, for any input whatever, that
-     is a `as' bug.  Reliable assemblers never crash.
-
-   * If `as' produces an error message for valid input, that is a bug.
-
-   * If `as' does not produce an error message for invalid input, that
-     is a bug.  However, you should note that your idea of "invalid
-     input" might be our idea of "an extension" or "support for
-     traditional practice".
-
-   * If you are an experienced user of assemblers, your suggestions for
-     improvement of `as' are welcome in any case.
+`BSPEC'
+`ESPEC'
+     A pair of `BSPEC' and `ESPEC' directives delimit a section of
+     special contents (without specified semantics).  Example:
+           BSPEC 42
+           TETRA 1,2,3
+           ESPEC
+     The single operand to `BSPEC' must be number in the range 0...255.
+     The `BSPEC' number 80 is used by the GNU binutils implementation.
 

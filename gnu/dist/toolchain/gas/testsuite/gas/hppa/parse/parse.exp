@@ -119,7 +119,11 @@ proc do_valid_align_tests {} {
 }
 
 if [istarget hppa*-*-*] then {
-    # GAS-2.0 does not always parse ! as a line separator when it should.
+    if { ![istarget hppa*-*-linux*] 
+	 && ![istarget hppa*-*-netbsd*] } {
+	# GAS-2.0 does not always parse ! as a line separator when it should.
+	setup_xfail hppa*-*-*
+    }
     gas_test "linesepbug.s" "" "" "line separator bug"
 
     # Make sure GAS accepts syntax for accessing static data.

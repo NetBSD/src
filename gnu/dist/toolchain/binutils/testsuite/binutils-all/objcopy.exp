@@ -1,4 +1,4 @@
-#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001
+#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002
 #   Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -81,7 +81,7 @@ if ![string match "" $got] then {
     setup_xfail "h8300-*-hms" "h8300-*-coff"
     setup_xfail "h8500-*-hms" "h8500-*-coff"
     setup_xfail "hppa*-*-*"
-    clear_xfail "hppa*-*-*elf*" "hppa*-*-linux*"
+    clear_xfail "hppa*64*-*-hpux*" "hppa*-*-*elf*" "hppa*-*-linux*"
     setup_xfail "m88*-*-coff" "m88*-motorola-sysv*"
     setup_xfail "z8*-*-coff"
 
@@ -314,6 +314,7 @@ if {$low == "" || $origstart == ""} then {
 # Test stripping an object.
 
 proc strip_test { } {
+    global AR
     global CC
     global STRIP
     global STRIPFLAGS
@@ -323,6 +324,34 @@ proc strip_test { } {
     global subdir
 
     set test "strip"
+
+    if { [target_compile $srcdir/$subdir/testprog.c tmpdir/testprog.o object debug] != "" } {
+	untested $test
+	return
+    }
+
+    if [is_remote host] {
+	set archive libstrip.a
+	set objfile [remote_download host tmpdir/testprog.o];
+	remote_file host delete $archive
+    } else {
+	set archive tmpdir/libstrip.a
+	set objfile tmpdir/testprog.o
+    }
+
+    remote_file build delete tmpdir/libstrip.a
+
+    set exec_output [binutils_run $AR "rc $archive ${objfile}"]
+    if ![string match "" $exec_output] {
+	fail $test
+	return
+    }
+
+    set exec_output [binutils_run $STRIP "$STRIPFLAGS $archive"]
+    if ![string match "" $exec_output] {
+	fail $test
+	return
+    }
 
     if { [target_compile $srcdir/$subdir/testprog.c tmpdir/testprog.o object debug] != "" } {
 	untested $test
@@ -383,7 +412,7 @@ proc strip_test_with_saving_a_symbol { } {
     }
 
     set exec_output [binutils_run $NM "$NMFLAGS $objfile"]
-    if {![regexp {^([0-9a-fA-F]+)?[ ]+T main} $exec_output] \
+    if {![regexp {^([0-9a-fA-F]+)?[ ]+[TD] main} $exec_output] \
          && ![regexp {^([0-9a-fA-F]+)?[ ]+T _main} $exec_output]} {
 	fail $test
 	return
@@ -481,6 +510,7 @@ proc copy_executable { prog flags test1 test2 } {
 	setup_xfail "mips*-*-elf"
 
 	setup_xfail "*arm*-*-coff"
+	setup_xfail "xscale-*-coff"
 	setup_xfail "arm*-*-pe"
 	setup_xfail "thumb*-*-coff"
 	setup_xfail "thumb*-*-pe"
@@ -566,6 +596,15 @@ proc strip_executable_with_saving_a_symbol { prog flags test } {
     }
 
     set exec_output [binutils_run $NM "$NMFLAGS ${copyfile}"]
+    if { [istarget mmix-knuth-mmixware] } {
+	# Whenever there's a symbol in the mmo format, there's the symbol
+	# Main, so remove it manually from the expected output for sake of
+	# this test.
+
+	# Using "" not {} to get the \n and \r translated.
+	regsub "^\[0-9a-fA-F\]+\[ \]+T Main\[\n\r\]+" $exec_output "" exec_output
+    }
+
     if {![regexp {^[0-9a-fA-F]+ T main} $exec_output] \
          && ![regexp {^[0-9a-fA-F]+ T _main} $exec_output]} {
 	fail $test

@@ -1,73 +1,90 @@
 /* BFD back-end for oasys objects.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999
+   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1998, 1999, 2001, 2002
    Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support, <sac@cygnus.com>.
 
-This file is part of BFD, the Binary File Descriptor library.
+   This file is part of BFD, the Binary File Descriptor library.
 
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
-(at your option) any later version.
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2 of the License, or
+   (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   You should have received a copy of the GNU General Public License
+   along with this program; if not, write to the Free Software
+   Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 
 #define UNDERSCORE_HACK 1
 #include "bfd.h"
 #include "sysdep.h"
-#include <ctype.h>
+#include "safe-ctype.h"
 #include "libbfd.h"
 #include "oasys.h"
 #include "liboasys.h"
 
-/* XXX - FIXME.  offsetof belongs in the system-specific files in
-   ../include/sys. */
-/* Define offsetof for those systems which lack it */
-
-#ifndef offsetof
-#define offsetof(type, identifier) (size_t) &(((type *) 0)->identifier)
-#endif
-
-static boolean oasys_read_record PARAMS ((bfd *,
-					  oasys_record_union_type *));
+static boolean oasys_slurp_section_data PARAMS ((bfd * const));
+static boolean oasys_read_record PARAMS ((bfd *, oasys_record_union_type *));
 static boolean oasys_write_sections PARAMS ((bfd *));
-static boolean oasys_write_record PARAMS ((bfd *,
-					   oasys_record_enum_type,
-					   oasys_record_union_type *,
-					   size_t));
+static boolean oasys_write_record
+  PARAMS ((bfd *, oasys_record_enum_type, oasys_record_union_type *, size_t));
 static boolean oasys_write_syms PARAMS ((bfd *));
 static boolean oasys_write_header PARAMS ((bfd *));
 static boolean oasys_write_end PARAMS ((bfd *));
 static boolean oasys_write_data PARAMS ((bfd *));
+static size_t oasys_string_length PARAMS ((oasys_record_union_type *));
+static boolean oasys_slurp_symbol_table PARAMS ((bfd *const));
+static long int oasys_get_symtab_upper_bound PARAMS ((bfd *const));
+static const bfd_target *oasys_archive_p PARAMS ((bfd *));
+static boolean oasys_mkobject PARAMS ((bfd *));
+static const bfd_target *oasys_object_p PARAMS ((bfd *));
+static void oasys_get_symbol_info PARAMS ((bfd *, asymbol *, symbol_info *));
+static void oasys_print_symbol
+  PARAMS ((bfd *, void *, asymbol *, bfd_print_symbol_type));
+static boolean oasys_new_section_hook PARAMS ((bfd *, asection *));
+static long int oasys_get_reloc_upper_bound PARAMS ((bfd *, sec_ptr));
+static boolean oasys_get_section_contents
+  PARAMS ((bfd *, sec_ptr, void *, file_ptr, bfd_size_type));
+static int comp PARAMS ((const void *, const void *));
+static boolean oasys_write_object_contents PARAMS ((bfd *));
+static boolean oasys_set_section_contents
+  PARAMS ((bfd *, sec_ptr, void *, file_ptr, bfd_size_type));
+static asymbol *oasys_make_empty_symbol PARAMS ((bfd *));
+static bfd *oasys_openr_next_archived_file PARAMS ((bfd *, bfd *));
+static boolean oasys_find_nearest_line
+  PARAMS ((bfd *, asection *, asymbol **, bfd_vma,
+	   const char **, const char **, unsigned int *));
+static int oasys_generic_stat_arch_elt PARAMS ((bfd *, struct stat *));
+static int oasys_sizeof_headers PARAMS ((bfd *, boolean));
 
-/* Read in all the section data and relocation stuff too */
-PROTO (static boolean, oasys_slurp_section_data, (bfd * CONST abfd));
+long oasys_get_symtab PARAMS ((bfd *, asymbol **));
+long oasys_canonicalize_reloc
+  PARAMS ((bfd *, sec_ptr, arelent **, asymbol **));
+
+/* Read in all the section data and relocation stuff too.  */
 
 static boolean
 oasys_read_record (abfd, record)
      bfd *abfd;
      oasys_record_union_type *record;
 {
-  if (bfd_read ((PTR) record, 1, sizeof (record->header), abfd)
-      != sizeof (record->header))
+  bfd_size_type amt = sizeof (record->header);
+  if (bfd_bread ((PTR) record, amt, abfd) != amt)
     return false;
 
-  if ((size_t) record->header.length <= (size_t) sizeof (record->header))
+  amt = record->header.length - sizeof (record->header);
+  if ((long) amt <= 0)
     return true;
-  if (bfd_read ((PTR) (((char *) record) + sizeof (record->header)),
-		1, record->header.length - sizeof (record->header),
-		abfd)
-      != record->header.length - sizeof (record->header))
+  if (bfd_bread ((PTR) ((char *) record + sizeof (record->header)), amt, abfd)
+      != amt)
     return false;
   return true;
 }
+
 static size_t
 oasys_string_length (record)
      oasys_record_union_type *record;
@@ -94,7 +111,7 @@ moving in, and the defined symbols at the end of the table moving back.
 
 static boolean
 oasys_slurp_symbol_table (abfd)
-     bfd *CONST abfd;
+     bfd *const abfd;
 {
   oasys_record_union_type record;
   oasys_data_type *data = OASYS_DATA (abfd);
@@ -102,22 +119,24 @@ oasys_slurp_symbol_table (abfd)
   asymbol *dest_defined;
   asymbol *dest;
   char *string_ptr;
-
+  bfd_size_type amt;
 
   if (data->symbols != (asymbol *) NULL)
     {
       return true;
     }
   /* Buy enough memory for all the symbols and all the names */
-  data->symbols =
-    (asymbol *) bfd_alloc (abfd, sizeof (asymbol) * abfd->symcount);
+  amt = abfd->symcount;
+  amt *= sizeof (asymbol);
+  data->symbols = (asymbol *) bfd_alloc (abfd, amt);
+
+  amt = data->symbol_string_length;
 #ifdef UNDERSCORE_HACK
   /* buy 1 more char for each symbol to keep the underscore in*/
-  data->strings = bfd_alloc (abfd, data->symbol_string_length +
-			     abfd->symcount);
-#else
-  data->strings = bfd_alloc (abfd, data->symbol_string_length);
+  amt += abfd->symcount;
 #endif
+  data->strings = bfd_alloc (abfd, amt);
+
   if (!data->symbols || !data->strings)
     return false;
 
@@ -174,7 +193,7 @@ oasys_slurp_symbol_table (abfd)
 		  }
 		break;
 	      case RELOCATION_TYPE_UND:
-		dest = data->symbols + bfd_h_get_16 (abfd, record.symbol.refno);
+		dest = data->symbols + H_GET_16 (abfd, record.symbol.refno);
 		dest->section = bfd_und_section_ptr;
 		break;
 	      case RELOCATION_TYPE_COM:
@@ -193,7 +212,7 @@ oasys_slurp_symbol_table (abfd)
 	    dest->name = string_ptr;
 	    dest->the_bfd = abfd;
 	    dest->udata.p = (PTR) NULL;
-	    dest->value = bfd_h_get_32 (abfd, record.symbol.value);
+	    dest->value = H_GET_32 (abfd, record.symbol.value);
 
 #ifdef UNDERSCORE_HACK
 	    if (record.symbol.name[0] != '_')
@@ -218,16 +237,13 @@ oasys_slurp_symbol_table (abfd)
 
 static long
 oasys_get_symtab_upper_bound (abfd)
-     bfd *CONST abfd;
+     bfd *const abfd;
 {
   if (! oasys_slurp_symbol_table (abfd))
     return -1;
 
   return (abfd->symcount + 1) * (sizeof (oasys_symbol_type *));
 }
-
-/*
-*/
 
 extern const bfd_target oasys_vec;
 
@@ -238,7 +254,7 @@ oasys_get_symtab (abfd, location)
 {
   asymbol *symbase;
   unsigned int counter;
-  if (oasys_slurp_symbol_table (abfd) == false)
+  if (! oasys_slurp_symbol_table (abfd))
     {
       return -1;
     }
@@ -263,24 +279,25 @@ oasys_archive_p (abfd)
   oasys_extarchive_header_type header_ext;
   unsigned int i;
   file_ptr filepos;
+  bfd_size_type amt;
 
-  if (bfd_seek (abfd, (file_ptr) 0, false) != 0
-      || (bfd_read ((PTR) & header_ext, 1, sizeof (header_ext), abfd)
-	  != sizeof (header_ext)))
+  amt = sizeof (header_ext);
+  if (bfd_seek (abfd, (file_ptr) 0, 0) != 0
+      || bfd_bread ((PTR) &header_ext, amt, abfd) != amt)
     {
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
       return NULL;
     }
 
-  header.version = bfd_h_get_32 (abfd, header_ext.version);
-  header.mod_count = bfd_h_get_32 (abfd, header_ext.mod_count);
-  header.mod_tbl_offset = bfd_h_get_32 (abfd, header_ext.mod_tbl_offset);
-  header.sym_tbl_size = bfd_h_get_32 (abfd, header_ext.sym_tbl_size);
-  header.sym_count = bfd_h_get_32 (abfd, header_ext.sym_count);
-  header.sym_tbl_offset = bfd_h_get_32 (abfd, header_ext.sym_tbl_offset);
-  header.xref_count = bfd_h_get_32 (abfd, header_ext.xref_count);
-  header.xref_lst_offset = bfd_h_get_32 (abfd, header_ext.xref_lst_offset);
+  header.version = H_GET_32 (abfd, header_ext.version);
+  header.mod_count = H_GET_32 (abfd, header_ext.mod_count);
+  header.mod_tbl_offset = H_GET_32 (abfd, header_ext.mod_tbl_offset);
+  header.sym_tbl_size = H_GET_32 (abfd, header_ext.sym_tbl_size);
+  header.sym_count = H_GET_32 (abfd, header_ext.sym_count);
+  header.sym_tbl_offset = H_GET_32 (abfd, header_ext.sym_tbl_offset);
+  header.xref_count = H_GET_32 (abfd, header_ext.xref_count);
+  header.xref_lst_offset = H_GET_32 (abfd, header_ext.xref_lst_offset);
 
   /*
     There isn't a magic number in an Oasys archive, so the best we
@@ -299,13 +316,16 @@ oasys_archive_p (abfd)
     the headers.
     */
   {
-    oasys_ar_data_type *ar =
-    (oasys_ar_data_type *) bfd_alloc (abfd, sizeof (oasys_ar_data_type));
-
-    oasys_module_info_type *module =
-    (oasys_module_info_type *)
-    bfd_alloc (abfd, sizeof (oasys_module_info_type) * header.mod_count);
+    oasys_ar_data_type *ar;
+    oasys_module_info_type *module;
     oasys_module_table_type record;
+
+    amt = sizeof (oasys_ar_data_type);
+    ar = (oasys_ar_data_type *) bfd_alloc (abfd, amt);
+
+    amt = header.mod_count;
+    amt *= sizeof (oasys_module_info_type);
+    module = (oasys_module_info_type *) bfd_alloc (abfd, amt);
 
     if (!ar || !module)
       return NULL;
@@ -325,18 +345,19 @@ oasys_archive_p (abfd)
 	if (0)
 	  {
 	    oasys_extmodule_table_type_a_type record_ext;
-	    if (bfd_read ((PTR) & record_ext, 1, sizeof (record_ext), abfd)
-		!= sizeof (record_ext))
+
+	    amt = sizeof (record_ext);
+	    if (bfd_bread ((PTR) &record_ext, amt, abfd) != amt)
 	      return NULL;
 
-	    record.mod_size = bfd_h_get_32 (abfd, record_ext.mod_size);
-	    record.file_offset = bfd_h_get_32 (abfd, record_ext.file_offset);
+	    record.mod_size = H_GET_32 (abfd, record_ext.mod_size);
+	    record.file_offset = H_GET_32 (abfd, record_ext.file_offset);
 
-	    record.dep_count = bfd_h_get_32 (abfd, record_ext.dep_count);
-	    record.depee_count = bfd_h_get_32 (abfd, record_ext.depee_count);
-	    record.sect_count = bfd_h_get_32 (abfd, record_ext.sect_count);
+	    record.dep_count = H_GET_32 (abfd, record_ext.dep_count);
+	    record.depee_count = H_GET_32 (abfd, record_ext.depee_count);
+	    record.sect_count = H_GET_32 (abfd, record_ext.sect_count);
 
-	    module[i].name = bfd_alloc (abfd, 33);
+	    module[i].name = bfd_alloc (abfd, (bfd_size_type) 33);
 	    if (!module[i].name)
 	      return NULL;
 
@@ -350,39 +371,36 @@ oasys_archive_p (abfd)
 	else
 	  {
 	    oasys_extmodule_table_type_b_type record_ext;
-	    if (bfd_read ((PTR) & record_ext, 1, sizeof (record_ext), abfd)
-		!= sizeof (record_ext))
+
+	    amt = sizeof (record_ext);
+	    if (bfd_bread ((PTR) &record_ext, amt, abfd) != amt)
 	      return NULL;
 
-	    record.mod_size = bfd_h_get_32 (abfd, record_ext.mod_size);
-	    record.file_offset = bfd_h_get_32 (abfd, record_ext.file_offset);
+	    record.mod_size = H_GET_32 (abfd, record_ext.mod_size);
+	    record.file_offset = H_GET_32 (abfd, record_ext.file_offset);
 
-	    record.dep_count = bfd_h_get_32 (abfd, record_ext.dep_count);
-	    record.depee_count = bfd_h_get_32 (abfd, record_ext.depee_count);
-	    record.sect_count = bfd_h_get_32 (abfd, record_ext.sect_count);
-	    record.module_name_size = bfd_h_get_32 (abfd, record_ext.mod_name_length);
+	    record.dep_count = H_GET_32 (abfd, record_ext.dep_count);
+	    record.depee_count = H_GET_32 (abfd, record_ext.depee_count);
+	    record.sect_count = H_GET_32 (abfd, record_ext.sect_count);
+	    record.module_name_size = H_GET_32 (abfd,
+						record_ext.mod_name_length);
 
-	    module[i].name = bfd_alloc (abfd, record.module_name_size + 1);
+	    amt = record.module_name_size;
+	    module[i].name = bfd_alloc (abfd, amt + 1);
 	    if (!module[i].name)
 	      return NULL;
-	    if (bfd_read ((PTR) module[i].name, 1, record.module_name_size,
-			  abfd)
-		!= record.module_name_size)
+	    if (bfd_bread ((PTR) module[i].name, amt, abfd) != amt)
 	      return NULL;
 	    module[i].name[record.module_name_size] = 0;
-	    filepos +=
-	      sizeof (record_ext) +
-	      record.dep_count * 4 +
-	      record.module_name_size + 1;
-
+	    filepos += (sizeof (record_ext)
+			+ record.dep_count * 4
+			+ record.module_name_size + 1);
 	  }
-
 
 	module[i].size = record.mod_size;
 	module[i].pos = record.file_offset;
 	module[i].abfd = 0;
       }
-
   }
   return abfd->xvec;
 }
@@ -391,9 +409,9 @@ static boolean
 oasys_mkobject (abfd)
      bfd *abfd;
 {
-
-  abfd->tdata.oasys_obj_data = (oasys_data_type *) bfd_alloc (abfd, sizeof (oasys_data_type));
-  return abfd->tdata.oasys_obj_data ? true : false;
+  bfd_size_type amt = sizeof (oasys_data_type);
+  abfd->tdata.oasys_obj_data = (oasys_data_type *) bfd_alloc (abfd, amt);
+  return abfd->tdata.oasys_obj_data != NULL;
 }
 
 #define MAX_SECS 16
@@ -449,7 +467,7 @@ oasys_object_p (abfd)
 	      {
 		goto fail;
 	      }
-	    buffer = bfd_alloc (abfd, 3);
+	    buffer = bfd_alloc (abfd, (bfd_size_type) 3);
 	    if (!buffer)
 	      goto fail;
 	    section_number = record.section.relb & RELOCATION_SECT_BITS;
@@ -466,8 +484,8 @@ oasys_object_p (abfd)
 		BFD_FAIL ();
 	      }
 
-	    s->_raw_size = bfd_h_get_32 (abfd, record.section.value);
-	    s->vma = bfd_h_get_32 (abfd, record.section.vma);
+	    s->_raw_size = H_GET_32 (abfd, record.section.value);
+	    s->vma = H_GET_32 (abfd, record.section.vma);
 	    s->flags = 0;
 	    had_usefull = true;
 	  }
@@ -478,7 +496,7 @@ oasys_object_p (abfd)
 	case oasys_record_is_module_enum:
 	case oasys_record_is_named_section_enum:
 	case oasys_record_is_end_enum:
-	  if (had_usefull == false)
+	  if (! had_usefull)
 	    goto fail;
 	  loop = false;
 	  break;
@@ -525,8 +543,8 @@ oasys_get_symbol_info (ignore_abfd, symbol, ret)
 }
 
 static void
-oasys_print_symbol (ignore_abfd, afile, symbol, how)
-     bfd *ignore_abfd ATTRIBUTE_UNUSED;
+oasys_print_symbol (abfd, afile, symbol, how)
+     bfd *abfd;
      PTR afile;
      asymbol *symbol;
      bfd_print_symbol_type how;
@@ -541,10 +559,10 @@ oasys_print_symbol (ignore_abfd, afile, symbol, how)
       break;
     case bfd_print_symbol_all:
       {
-	CONST char *section_name = symbol->section == (asection *) NULL ?
-	(CONST char *) "*abs" : symbol->section->name;
+	const char *section_name = symbol->section == (asection *) NULL ?
+	(const char *) "*abs" : symbol->section->name;
 
-	bfd_print_symbol_vandf ((PTR) file, symbol);
+	bfd_print_symbol_vandf (abfd, (PTR) file, symbol);
 
 	fprintf (file, " %-5s %s",
 		 section_name,
@@ -569,21 +587,20 @@ static reloc_howto_type howto_table[] =
 /* Read in all the section data and relocation stuff too */
 static boolean
 oasys_slurp_section_data (abfd)
-     bfd *CONST abfd;
+     bfd *const abfd;
 {
   oasys_record_union_type record;
   oasys_data_type *data = OASYS_DATA (abfd);
   boolean loop = true;
-
   oasys_per_section_type *per;
-
   asection *s;
+  bfd_size_type amt;
 
   /* See if the data has been slurped already .. */
   for (s = abfd->sections; s != (asection *) NULL; s = s->next)
     {
       per = oasys_per_section (s);
-      if (per->initialized == true)
+      if (per->initialized)
 	return true;
     }
 
@@ -615,20 +632,21 @@ oasys_slurp_section_data (abfd)
 
 	    per = oasys_per_section (section);
 
-	    if (per->initialized == false)
+	    if (! per->initialized)
 	      {
 		per->data = (bfd_byte *) bfd_zalloc (abfd, section->_raw_size);
 		if (!per->data)
 		  return false;
-		per->reloc_tail_ptr = (oasys_reloc_type **) & (section->relocation);
+		per->reloc_tail_ptr
+		  = (oasys_reloc_type **) &section->relocation;
 		per->had_vma = false;
 		per->initialized = true;
 		section->reloc_count = 0;
 		section->flags = SEC_ALLOC;
 	      }
 
-	    dst_offset = bfd_h_get_32 (abfd, record.data.addr);
-	    if (per->had_vma == false)
+	    dst_offset = H_GET_32 (abfd, record.data.addr);
+	    if (! per->had_vma)
 	      {
 		/* Take the first vma we see as the base */
 		section->vma = dst_offset;
@@ -681,10 +699,11 @@ oasys_slurp_section_data (abfd)
 			      case RELOCATION_TYPE_REL:
 				{
 				  /* Relocate the item relative to the section */
-				  oasys_reloc_type *r =
-				  (oasys_reloc_type *)
-				  bfd_alloc (abfd,
-					     sizeof (oasys_reloc_type));
+				  oasys_reloc_type *r;
+
+				  amt = sizeof (oasys_reloc_type);
+				  r = (oasys_reloc_type *) bfd_alloc (abfd,
+								      amt);
 				  if (!r)
 				    return false;
 				  *(per->reloc_tail_ptr) = r;
@@ -709,26 +728,24 @@ oasys_slurp_section_data (abfd)
 				  r->relent.sym_ptr_ptr = (asymbol **) NULL;
 				  section->reloc_count++;
 
-				  /* Fake up the data to look like it's got the -ve pc in it, this makes
-				       it much easier to convert into other formats. This is done by
-				       hitting the addend.
-				       */
-				  if (r->relent.howto->pc_relative == true)
-				    {
-				      r->relent.addend -= dst_ptr - dst_base_ptr;
-				    }
-
-
+				  /* Fake up the data to look like
+				     it's got the -ve pc in it, this
+				     makes it much easier to convert
+				     into other formats.  This is done
+				     by hitting the addend.  */
+				  if (r->relent.howto->pc_relative)
+				    r->relent.addend -= dst_ptr - dst_base_ptr;
 				}
 				break;
 
 
 			      case RELOCATION_TYPE_UND:
 				{
-				  oasys_reloc_type *r =
-				  (oasys_reloc_type *)
-				  bfd_alloc (abfd,
-					     sizeof (oasys_reloc_type));
+				  oasys_reloc_type *r;
+
+				  amt = sizeof (oasys_reloc_type);
+				  r = (oasys_reloc_type *) bfd_alloc (abfd,
+								      amt);
 				  if (!r)
 				    return false;
 				  *(per->reloc_tail_ptr) = r;
@@ -752,17 +769,13 @@ oasys_slurp_section_data (abfd)
 				  section->reloc_count++;
 
 				  src += 2;
-				  /* Fake up the data to look like it's got the -ve pc in it, this makes
-				       it much easier to convert into other formats. This is done by
-				       hitting the addend.
-				       */
-				  if (r->relent.howto->pc_relative == true)
-				    {
-				      r->relent.addend -= dst_ptr - dst_base_ptr;
-				    }
-
-
-
+				  /* Fake up the data to look like
+				     it's got the -ve pc in it, this
+				     makes it much easier to convert
+				     into other formats.  This is done
+				     by hitting the addend.  */
+				  if (r->relent.howto->pc_relative)
+				    r->relent.addend -= dst_ptr - dst_base_ptr;
 				}
 				break;
 			      case RELOCATION_TYPE_COM:
@@ -794,7 +807,7 @@ oasys_new_section_hook (abfd, newsect)
      asection *newsect;
 {
   newsect->used_by_bfd = (PTR)
-    bfd_alloc (abfd, sizeof (oasys_per_section_type));
+    bfd_alloc (abfd, (bfd_size_type) sizeof (oasys_per_section_type));
   if (!newsect->used_by_bfd)
     return false;
   oasys_per_section (newsect)->data = (bfd_byte *) NULL;
@@ -830,13 +843,13 @@ oasys_get_section_contents (abfd, section, location, offset, count)
 {
   oasys_per_section_type *p = (oasys_per_section_type *) section->used_by_bfd;
   oasys_slurp_section_data (abfd);
-  if (p->initialized == false)
+  if (! p->initialized)
     {
-      (void) memset (location, 0, (int) count);
+      (void) memset (location, 0, (size_t) count);
     }
   else
     {
-      (void) memcpy (location, (PTR) (p->data + offset), (int) count);
+      (void) memcpy (location, (PTR) (p->data + offset), (size_t) count);
     }
   return true;
 }
@@ -899,7 +912,7 @@ oasys_write_record (abfd, type, record, size)
       checksum += *ptr++;
     }
   record->header.check_sum = 0xff & (-checksum);
-  if (bfd_write ((PTR) record, 1, size, abfd) != size)
+  if (bfd_bwrite ((PTR) record, (bfd_size_type) size, abfd) != size)
     return false;
   return true;
 }
@@ -917,28 +930,28 @@ oasys_write_syms (abfd)
     {
 
       oasys_symbol_record_type symbol;
-      asymbol *CONST g = generic[count];
+      asymbol *const g = generic[count];
 
-      CONST char *src = g->name;
+      const char *src = g->name;
       char *dst = symbol.name;
       unsigned int l = 0;
 
       if (bfd_is_com_section (g->section))
 	{
 	  symbol.relb = RELOCATION_TYPE_COM;
-	  bfd_h_put_16 (abfd, index, symbol.refno);
+	  H_PUT_16 (abfd, index, symbol.refno);
 	  index++;
 	}
       else if (bfd_is_abs_section (g->section))
 	{
 	  symbol.relb = RELOCATION_TYPE_ABS;
-	  bfd_h_put_16 (abfd, 0, symbol.refno);
+	  H_PUT_16 (abfd, 0, symbol.refno);
 
 	}
       else if (bfd_is_und_section (g->section))
 	{
 	  symbol.relb = RELOCATION_TYPE_UND;
-	  bfd_h_put_16 (abfd, index, symbol.refno);
+	  H_PUT_16 (abfd, index, symbol.refno);
 	  /* Overload the value field with the output index number */
 	  index++;
 	}
@@ -960,7 +973,7 @@ oasys_write_syms (abfd)
 	    {
 	      symbol.relb = RELOCATION_TYPE_REL | g->section->output_section->target_index;
 	    }
-	  bfd_h_put_16 (abfd, 0, symbol.refno);
+	  H_PUT_16 (abfd, 0, symbol.refno);
 	}
 #ifdef UNDERSCORE_HACK
       if (src[l] == '_')
@@ -972,7 +985,7 @@ oasys_write_syms (abfd)
 	  l++;
 	}
 
-      bfd_h_put_32 (abfd, g->value, symbol.value);
+      H_PUT_32 (abfd, g->value, symbol.value);
 
 
       if (g->flags & BSF_LOCAL)
@@ -1010,7 +1023,7 @@ oasys_write_sections (abfd)
 
   for (s = abfd->sections; s != (asection *) NULL; s = s->next)
     {
-      if (!isdigit ((unsigned char) s->name[0]))
+      if (!ISDIGIT (s->name[0]))
 	{
 	  (*_bfd_error_handler)
 	    (_("%s: can not represent section `%s' in oasys"),
@@ -1019,8 +1032,8 @@ oasys_write_sections (abfd)
 	  return false;
 	}
       out.relb = RELOCATION_TYPE_REL | s->target_index;
-      bfd_h_put_32 (abfd, s->_cooked_size, out.value);
-      bfd_h_put_32 (abfd, s->vma, out.vma);
+      H_PUT_32 (abfd, s->_cooked_size, out.value);
+      H_PUT_32 (abfd, s->vma, out.vma);
 
       if (! oasys_write_record (abfd,
 				oasys_record_is_section_enum,
@@ -1069,23 +1082,23 @@ oasys_write_end (abfd)
   oasys_end_record_type end;
   unsigned char null = 0;
   end.relb = RELOCATION_TYPE_ABS;
-  bfd_h_put_32 (abfd, abfd->start_address, end.entry);
-  bfd_h_put_16 (abfd, 0, end.fill);
+  H_PUT_32 (abfd, abfd->start_address, end.entry);
+  H_PUT_16 (abfd, 0, end.fill);
   end.zero = 0;
   if (! oasys_write_record (abfd,
 			    oasys_record_is_end_enum,
 			    (oasys_record_union_type *) & end,
 			    sizeof (end)))
     return false;
-  if (bfd_write ((PTR) & null, 1, 1, abfd) != 1)
+  if (bfd_bwrite ((PTR) &null, (bfd_size_type) 1, abfd) != 1)
     return false;
   return true;
 }
 
 static int
 comp (ap, bp)
-     CONST PTR ap;
-     CONST PTR bp;
+     const PTR ap;
+     const PTR bp;
 {
   arelent *a = *((arelent **) ap);
   arelent *b = *((arelent **) bp);
@@ -1134,8 +1147,8 @@ oasys_write_data (abfd)
 	      *mod = 0;
 
 
-	      bfd_h_put_32 (abfd, s->vma + current_byte_index,
-			    processed_data.addr);
+	      H_PUT_32 (abfd, s->vma + current_byte_index,
+			processed_data.addr);
 
 	      /* Don't start a relocation unless you're sure you can finish it
  	       within the same data record.  The worst case relocation is a
@@ -1207,16 +1220,16 @@ oasys_write_data (abfd)
 			  else
 #endif
 			    {
-			      asymbol *p = *(r->sym_ptr_ptr);
+			      asymbol *sym = *(r->sym_ptr_ptr);
 
 			      /* If this symbol has a section attached, then it
 			     has already been resolved.  Change from a symbol
 			     ref to a section ref */
-			      if (p->section != (asection *) NULL)
+			      if (sym->section != (asection *) NULL)
 				{
 				  rel_byte |= RELOCATION_TYPE_REL;
 				  rel_byte |=
-				    p->section->output_section->target_index;
+				    sym->section->output_section->target_index;
 				  *dst++ = rel_byte;
 				}
 			      else
@@ -1228,8 +1241,8 @@ oasys_write_data (abfd)
 			       into the symbol index in the table when the
 			       symbol table was written
 			       */
-				  *dst++ = p->value >> 8;
-				  *dst++ = p->value;
+				  *dst++ = sym->value >> 8;
+				  *dst++ = sym->value;
 				}
 			    }
 #define ADVANCE { if (++i >= 8) { i = 0; mod = dst++; *mod = 0; } current_byte_index++; }
@@ -1269,11 +1282,10 @@ oasys_write_data (abfd)
 		  --dst;
 		}
 
-	      if (! oasys_write_record (abfd,
-					oasys_record_is_data_enum,
-					((oasys_record_union_type *)
-					 & processed_data),
-					dst - (bfd_byte *) & processed_data))
+	      if (! (oasys_write_record
+		     (abfd, oasys_record_is_data_enum,
+		      ((oasys_record_union_type *) &processed_data),
+		      (size_t) (dst - (bfd_byte *) &processed_data))))
 		return false;
 	    }
 	}
@@ -1343,9 +1355,8 @@ static asymbol *
 oasys_make_empty_symbol (abfd)
      bfd *abfd;
 {
-
-  oasys_symbol_type *new =
-  (oasys_symbol_type *) bfd_zalloc (abfd, sizeof (oasys_symbol_type));
+  bfd_size_type amt = sizeof (oasys_symbol_type);
+  oasys_symbol_type *new = (oasys_symbol_type *) bfd_zalloc (abfd, amt);
   if (!new)
     return NULL;
   new->symbol.the_bfd = abfd;
@@ -1396,19 +1407,14 @@ oasys_openr_next_archived_file (arch, prev)
 }
 
 static boolean
-oasys_find_nearest_line (abfd,
-			 section,
-			 symbols,
-			 offset,
-			 filename_ptr,
-			 functionname_ptr,
-			 line_ptr)
+oasys_find_nearest_line (abfd, section, symbols, offset,
+			 filename_ptr, functionname_ptr, line_ptr)
      bfd *abfd ATTRIBUTE_UNUSED;
      asection *section ATTRIBUTE_UNUSED;
      asymbol **symbols ATTRIBUTE_UNUSED;
      bfd_vma offset ATTRIBUTE_UNUSED;
-     char **filename_ptr ATTRIBUTE_UNUSED;
-     char **functionname_ptr ATTRIBUTE_UNUSED;
+     const char **filename_ptr ATTRIBUTE_UNUSED;
+     const char **functionname_ptr ATTRIBUTE_UNUSED;
      unsigned int *line_ptr ATTRIBUTE_UNUSED;
 {
   return false;
@@ -1476,8 +1482,12 @@ oasys_sizeof_headers (abfd, exec)
   bfd_generic_get_relocated_section_contents
 #define oasys_bfd_relax_section bfd_generic_relax_section
 #define oasys_bfd_gc_sections bfd_generic_gc_sections
+#define oasys_bfd_merge_sections bfd_generic_merge_sections
+#define oasys_bfd_discard_group bfd_generic_discard_group
 #define oasys_bfd_link_hash_table_create _bfd_generic_link_hash_table_create
+#define oasys_bfd_link_hash_table_free _bfd_generic_link_hash_table_free
 #define oasys_bfd_link_add_symbols _bfd_generic_link_add_symbols
+#define oasys_bfd_link_just_syms _bfd_generic_link_just_syms
 #define oasys_bfd_final_link _bfd_generic_final_link
 #define oasys_bfd_link_split_section _bfd_generic_link_split_section
 
@@ -1532,6 +1542,6 @@ const bfd_target oasys_vec =
   BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
 
   NULL,
-  
+
   (PTR) 0
 };

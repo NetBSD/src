@@ -1,4 +1,4 @@
-#objdump: -s
+#objdump: -s --section=.text
 #as: -EL
 #name: arm little-endian fpconst
 

@@ -45,9 +45,9 @@ struct expressionS;
 #define MAX_RELOC_EXPANSION 3
 #define LOCAL_LABELS_FB 1
 
-/* Maximum symbol offset that can be encoded in a BFD_RELOC_MIPS_GPREL
+/* Maximum symbol offset that can be encoded in a BFD_RELOC_GPREL16
    relocation: */
-#define MAX_GPREL_OFFSET (0x7FF4)
+#define MAX_GPREL_OFFSET (0x7FF0)
 
 #define md_relax_frag(segment, fragp, stretch) mips_relax_frag(fragp, stretch)
 extern int mips_relax_frag PARAMS ((struct frag *, long));
@@ -83,6 +83,9 @@ struct mips_cl_insn
 
 extern int tc_get_register PARAMS ((int frame));
 
+#define md_after_parse_args() mips_after_parse_args()
+extern void mips_after_parse_args PARAMS ((void));
+
 #define tc_init_after_args() mips_init_after_args()
 extern void mips_init_after_args PARAMS ((void));
 
@@ -103,10 +106,6 @@ extern void mips_frob_file PARAMS ((void));
 extern void mips_frob_file_after_relocs PARAMS ((void));
 #endif
 
-#define TC_CONS_FIX_NEW cons_fix_new_mips
-extern void cons_fix_new_mips
-  PARAMS ((struct frag *, int, unsigned int, struct expressionS *));
-
 #define tc_fix_adjustable(fixp) mips_fix_adjustable (fixp)
 extern int mips_fix_adjustable PARAMS ((struct fix *));
 
@@ -114,9 +113,6 @@ extern int mips_fix_adjustable PARAMS ((struct fix *));
    relocations.  */
 #define TC_FORCE_RELOCATION(fixp) mips_force_relocation (fixp)
 extern int mips_force_relocation PARAMS ((struct fix *));
-
-/* md_apply_fix sets fx_done correctly.  */
-#define TC_HANDLE_FX_DONE 1
 
 /* Register mask variables.  These are set by the MIPS assembly code
    and used by ECOFF and possibly other object file formats.  */
