@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586var.h,v 1.1 1997/07/22 23:31:58 pk Exp $	*/
+/*	$NetBSD: i82586var.h,v 1.2 1997/07/28 22:26:12 pk Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -62,21 +62,24 @@
  * This sun version based on i386 version 1.30.
  */
 
+#define IEDEBUG
 
 #define	IED_RINT	0x01
 #define	IED_TINT	0x02
 #define	IED_RNR		0x04
 #define	IED_CNA		0x08
 #define	IED_READFRAME	0x10
-#define	IED_ALL		0x1f
+#define IED_ENQ		0x20
+#define IED_XMIT	0x40
+#define	IED_ALL		0x7f
 
 #define	ETHER_MIN_LEN	64
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-#define B_PER_F         3               /* recv buffers per frame */
-#define MXFRAMES        300             /* max number of recv frames */
-#define	MXRXBUF		(MXFRAMES*B_PER_F) /* number of buffers to allocate */
+#define B_PER_F		3		/* recv buffers per frame */
+#define MAXFRAMES	300		/* max number of recv frames */
+#define	MAXRXBUF	(MAXFRAMES*B_PER_F) /* number of buffers to allocate */
 #define	IE_RBUF_SIZE	256		/* size of each receive buffer;
 						MUST BE POWER OF TWO */
 #define	NTXBUF		2		/* number of transmit commands */
@@ -168,16 +171,16 @@ struct ie_softc {
 	 * the actual buffers (recv and xmit)
 	 */
 
-	volatile struct ie_recv_frame_desc *rframes[MXFRAMES];
-	volatile struct ie_recv_buf_desc *rbuffs[MXRXBUF];
-	volatile char *cbuffs[MXRXBUF];
+	volatile struct ie_recv_frame_desc *rframes[MAXFRAMES];
+	volatile struct ie_recv_buf_desc *rbuffs[MAXRXBUF];
+	volatile char *cbuffs[MAXRXBUF];
         int rfhead, rftail, rbhead, rbtail;
 
 	volatile struct ie_xmit_cmd *xmit_cmds[NTXBUF];
 	volatile struct ie_xmit_buf *xmit_buffs[NTXBUF];
 	u_char *xmit_cbuffs[NTXBUF];
+
 	int xmit_busy;
-	int xmit_free;
 	int xchead, xctail;
 
 	struct ie_en_addr mcast_addrs[MAXMCAST + 1];
