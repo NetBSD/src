@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.8 2001/11/09 20:52:19 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.9 2002/03/05 21:23:29 thorpej Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
+.include <bsd.own.mk>
 .include <bsd.subdir.mk>
 
 IMAGE=		boot.fs

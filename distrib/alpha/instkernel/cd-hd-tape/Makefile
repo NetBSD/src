@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2002/03/05 19:57:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.8 2002/03/05 21:23:28 thorpej Exp $
+
+.include <bsd.own.mk>
 
 IMAGE=		cdhdtape
 IMAGESIZE=	5760
@@ -62,5 +64,4 @@ clean cleandir distclean:
 # nothing to do here
 depend includes lint regress tags:
 
-.include <bsd.own.mk>
 .include <bsd.obj.mk>
