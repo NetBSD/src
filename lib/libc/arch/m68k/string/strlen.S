@@ -38,16 +38,17 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)strlen.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: strlen.S,v 1.2 1995/02/08 18:33:25 mycroft Exp $"
+	.asciz "$Id: strlen.S,v 1.3 1995/10/21 20:21:15 jtc Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 #include "DEFS.h"
 
 ENTRY(strlen)
-	moveq	#-1,d0
 	movl	sp@(4),a0		| string
+	movl	a0,d0
+	notl	d0
 slloop:
-	addql	#1,d0			| increment count
 	tstb	a0@+			| null?
 	bne	slloop			| no, keep going
+	addl	a0,d0
 	rts
