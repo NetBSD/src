@@ -59,7 +59,7 @@ Boston, MA 02111-1307, USA.  */
 
 #undef LINK_SPEC
 #define LINK_SPEC \
- "-m elf64alpha \
+ "-m elf64alpha_nbsd \
   %{O*:-O3} %{!O*:-O1} \
   %{assert*} %{R*} \
   %{shared:-shared} \
