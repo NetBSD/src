@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.2 2003/07/15 03:36:00 lukem Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 2003/08/10 22:22:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2003/07/15 03:36:00 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.3 2003/08/10 22:22:31 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -89,7 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.2 2003/07/15 03:36:00 lukem Exp $");
 void
 db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	char *src = (char *)addr;
+	char *src = (char *)(intptr_t)addr;
 
 	if (size == 8) {
 		*((register_t*)data) = *((register_t*)src);
@@ -118,7 +118,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 void
 db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
-	char *dst = (char *)addr;
+	char *dst = (char *)(intptr_t)addr;
 	extern char etext[];
 	int in_text = 0;
 
