@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7xvar.h,v 1.4 2000/07/27 21:49:22 bouyer Exp $ */
+/*	$NetBSD: nslm7xvar.h,v 1.5 2000/07/30 22:23:53 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -67,7 +67,12 @@
 #define LM_ID_LM79	0xC0
 #define LM_ID_MASK	0xFE
 
-/* additionnal registers for the Winbond W83627HF */
+/*
+ * additionnal registers for the Winbond chips:
+ * WB83781D: mostly lm7x compatible; extra temp sensors in bank1 & 2
+ * WB83782D & WB83627HF: voltage sensors needs different handling, more FAN
+ *                       dividers; mode voltage sensors, more temp sensors.
+ */
 #define WB_PIN		0x4B	/* pin & fan3 divider */
 #define WB_BANKSEL	0x4E	/* banck select register */
 #define WB_BANKSEL_B0	0x00	/* select bank 0 */
@@ -81,6 +86,10 @@
 #define WB_VENDID	0x4F	/* vendor ID register */
 #define WB_VENDID_WINBOND 0x5CA3
 /* Bank0 regs */
+#define WB_BANK0_CHIPID	0x58
+#define WB_CHIPID_83781		0x10
+#define WB_CHIPID_83782		0x30
+#define WB_CHIPID_83627		0x21
 #define WB_BANK0_FANBAT	0x5D
 /* Bank1 regs */
 #define WB_BANK1_T2H	0x50
@@ -90,15 +99,16 @@
 #define WB_BANK2_T3H	0x50
 #define WB_BANK2_T3L	0x51
 
-/* Bank4 regs */
+/* Bank4 regs 83782/83627 only */
 #define WB_BANK4_T1OFF	0x54
 #define WB_BANK4_T2OFF	0x55
 #define WB_BANK4_T3OFF	0x56
 
-/* Bank5 regs */
+/* Bank5 regs 83782/83627 only */
 #define WB_BANK5_5VSB	0x50
 #define WB_BANK5_VBAT	0x51
 
+#define WB83781_NUM_SENSORS	13
 #define WB_NUM_SENSORS	15
 
 struct lm_softc {
