@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2002/01/13 14:39:13 bjh21 Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2002/01/13 15:04:09 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: syscall.c,v 1.2 2002/01/13 14:39:13 bjh21 Exp $");
+__RCSID("$NetBSD: syscall.c,v 1.3 2002/01/13 15:04:09 bjh21 Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -100,6 +100,7 @@ __RCSID("$NetBSD: syscall.c,v 1.2 2002/01/13 14:39:13 bjh21 Exp $");
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#include <arm/swi.h>
 
 #ifdef arm26
 #include <machine/machdep.h>
@@ -179,11 +180,11 @@ syscall(trapframe_t *frame)
 	}
 #endif	/* CPU_ARM7 */
 
-	switch (insn & 0xf00000) { /* Which OS is the SWI from? */
-	case 0xf00000: /* ARM-defined SWIs */
+	switch (insn & SWI_OS_MASK) { /* Which OS is the SWI from? */
+	case SWI_OS_ARM: /* ARM-defined SWIs */
 		switch (code) {
-		case 0x00f00000 :	/* IMB */
-		case 0x00f00001 :	/* IMB_range */
+		case SWI_IMB:
+		case SWI_IMBrange:
 			/*
 			 * Do nothing as there is no prefetch unit that needs
 			 * flushing
@@ -198,7 +199,7 @@ syscall(trapframe_t *frame)
 		userret(p);
 		return;
 	case 0x000000: /* Old unofficial NetBSD range. */
-	case 0xa00000: /* New official NetBSD range. */
+	case SWI_OS_NETBSD: /* New official NetBSD range. */
 		break;
 	default:
 		/* Undefined so illegal instruction */
