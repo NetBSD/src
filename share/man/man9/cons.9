@@ -1,4 +1,4 @@
-.\"	$NetBSD: cons.9,v 1.10 2003/04/01 16:53:05 perry Exp $
+.\"	$NetBSD: cons.9,v 1.11 2003/04/01 16:56:34 perry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,9 +42,6 @@
 .Nm cnhalt ,
 .Nm cnpollc ,
 .Nm cnputc
-.\" void	cninit __P((void));
-.\" void	cnrint __P((void));
-.\"void	nullcnpollc __P((dev_t, int));
 .Nd console access interface
 .Sh SYNOPSIS
 .Fd #include \*[Lt]dev/cons.h\*[Gt]
@@ -64,7 +61,7 @@
 .Fn cnputc "int c"
 .Sh DESCRIPTION
 These functions operate over current console device.
-The console has to be initialized first, before these functions could be used.
+The console must be initialized before these functions can be used.
 .Pp
 Console input polling functions
 .Fn cngetc ,
