@@ -1,5 +1,5 @@
 /*
- * $Id: krb.h,v 1.2 2000/06/19 22:40:17 thorpej Exp $
+ * $Id: krb.h,v 1.3 2001/02/04 18:04:03 christos Exp $
  *
  * Copyright 1987, 1988 by the Massachusetts Institute of Technology. 
  *
@@ -336,7 +336,9 @@ struct krb_host {
 #define KRB_VERIFY_SECURE	1
 #define KRB_VERIFY_SECURE_FAIL	2
 
+#ifndef krb4_version
 extern const char *krb4_version;
+#endif
 
 typedef int (*key_proc_t) __P((const char *name,
 			       char *instance, /* INOUT parameter */
