@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.7 1998/07/29 20:50:12 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.8 1998/08/01 20:11:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -269,6 +269,9 @@ ums_disco(p)
 	void *p;
 {
 	struct ums_softc *sc = p;
+
+	DPRINTF(("ums_disco: sc=%p\n", sc));
+	usbd_abort_pipe(sc->sc_intrpipe);
 	sc->sc_disconnected = 1;
 }
 
