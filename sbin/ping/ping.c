@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.70 2002/11/16 16:02:03 itojun Exp $	*/
+/*	$NetBSD: ping.c,v 1.71 2002/11/16 16:39:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping.c,v 1.70 2002/11/16 16:02:03 itojun Exp $");
+__RCSID("$NetBSD: ping.c,v 1.71 2002/11/16 16:39:55 itojun Exp $");
 #endif
 
 #include <stdio.h>
@@ -441,6 +441,7 @@ main(int argc, char *argv[])
 		(void) memcpy(&send_addr, &whereto, sizeof(send_addr));
 
 	loc_addr.sin_family = AF_INET;
+	loc_addr.sin_len = sizeof(struct sockaddr_in);
 	loc_addr.sin_addr.s_addr = htonl((127<<24)+1);
 
 	if (datalen >= PHDR_LEN)	/* can we time them? */
