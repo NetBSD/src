@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.7 2003/01/19 01:13:46 wiz Exp $
+.\" $NetBSD: tar.1,v 1.8 2003/02/25 13:37:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd January 31, 2001
+.Dd February 25, 2003
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -39,7 +39,7 @@
 .Sh SYNOPSIS
 .Nm tar
 .Sm off
-.Oo \&- Oc {crtux} Op Fl befhlmopqvwzHLOPXZ014578
+.Oo \&- Oc {crtux} Op Fl befhjlmopqvwzHLOPXZ014578
 .Sm on
 .Op Ar archive
 .Op Ar blocksize
@@ -112,6 +112,11 @@ then the archive will be processed using
 .It Fl h , -dereference
 Follow symbolic links as if they were normal files
 or directories.
+.It Fl j, -bzip2, -bunzip2
+Use
+.Xr bzip2 1
+for compression of the archive.
+This option is a GNU extension.
 .It Fl l , -one-file-system
 Do not cross filesystems.
 .It Fl m , -modification-time
