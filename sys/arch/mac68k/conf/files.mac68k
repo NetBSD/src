@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.58 1997/02/13 18:59:06 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.59 1997/02/24 06:05:20 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -46,8 +46,9 @@ attach	grf at grfbus
 file	arch/mac68k/dev/grf.c		grf needs-flag
 
 device	ae: ifnet, ether
-attach	ae at nubus
-file	arch/mac68k/dev/if_ae.c		ae needs-flag
+attach	ae at nubus with ae_nubus
+file	arch/mac68k/dev/if_ae_nubus.c	ae_nubus
+file	arch/mac68k/dev/if_ae.c		ae
 
 device	ite
 attach	ite at grf
