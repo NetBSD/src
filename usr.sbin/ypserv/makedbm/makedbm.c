@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.14 1998/06/24 10:26:09 kleink Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.15 1999/06/07 03:06:08 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.14 1998/06/24 10:26:09 kleink Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.15 1999/06/07 03:06:08 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -285,7 +285,7 @@ create_database(infile, database, yp_input_file, yp_output_file,
 
 	snprintf(db_tempname, sizeof(db_tempname), "%s%s",
 	    database, mapname);
-	mktemp(db_tempname);
+	mktemp(db_tempname);	/* OK */
 	snprintf(db_mapname, sizeof(db_mapname), "%s%s",
 	    db_tempname, YPDB_SUFFIX);
 
