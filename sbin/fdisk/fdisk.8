@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.17 1999/03/07 11:02:05 mycroft Exp $
+.\"	$NetBSD: fdisk.8,v 1.18 1999/04/17 01:38:00 fvdl Exp $
 .\"
 .Dd April 4, 1993
 .Dt FDISK 8
@@ -8,7 +8,7 @@
 .Nd DOS partition maintenance program
 .Sh SYNOPSIS
 .Nm ""
-.Op Fl aiufS
+.Op Fl aiufBS
 .Bk -words
 .Op Fl 0 | 1 | 2 | 3
 .Ek
@@ -51,16 +51,13 @@ serves a similar purpose to the DOS program.
 When called with no arguments, it prints the sector 0 partition table.
 An example follows:
 .Bd -literal
-	******* Working on device /dev/rwd0d *******
-	Warning: BIOS sector numbering starts with sector 1
-	parameters extracted from in-core disklabel are:
-	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
+	NetBSD disklabel disk geometry:
+	cylinders: 769 heads: 15 sectors/track: 33 (495 sectors/cylinder)
 
-	parameters to be used for BIOS calculations are:
-	cylinders=769 heads=15 sectors/track=33 (495 sectors/cylinder)
-		
-	Information from DOS bootblock is:
-	The data for partition 0 is:
+	BIOS geometry:
+	cylinders: 769 heads: 15 sectors/track: 33 (495 sectors/cylinder)
+
+	Partition table:
 	0: sysid 169 (NetBSD)
     	    start 495, size 380160 (185 MB), flag 0
 		beg: cylinder    1, head   0, sector  1
@@ -183,6 +180,11 @@ should read the bootcode from.  The default is to read from
 if run on an i386, end leave the bootcode empty for other
 machines.
 .Pp
+The
+.Fl B
+flag can be used to install/update the bootselect code on i386
+platforms.
+.Pp
 The flags
 .Fl 0 ,
 .Fl 1 ,
@@ -253,9 +255,11 @@ lose all the data in that partition.
 You should run this program interactively once or twice to see how it works.
 This is completely safe as long as you answer the last question in the negative.
 .Sh FILES
-.Bl -tag -width /usr/mdec/mbrxx -compact
+.Bl -tag -width /usr/mdec/mbrxxxxxxxx -compact
 .It Pa /usr/mdec/mbr
 Default location of i386 bootcode
+.It Pa /usr/mdec/mbr_bootsel
+Default location of i386 bootselect code
 .El
 .Sh SEE ALSO
 .Xr disklabel 8
