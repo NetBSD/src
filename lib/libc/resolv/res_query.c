@@ -1,4 +1,4 @@
-/*	$NetBSD: res_query.c,v 1.5 2004/05/21 16:03:05 christos Exp $	*/
+/*	$NetBSD: res_query.c,v 1.6 2004/09/25 05:33:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -76,7 +76,7 @@
 static const char sccsid[] = "@(#)res_query.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_query.c,v 1.2.2.3.4.2 2004/03/16 12:34:19 marka Exp";
 #else
-__RCSID("$NetBSD: res_query.c,v 1.5 2004/05/21 16:03:05 christos Exp $");
+__RCSID("$NetBSD: res_query.c,v 1.6 2004/09/25 05:33:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,6 +94,7 @@ __RCSID("$NetBSD: res_query.c,v 1.5 2004/05/21 16:03:05 christos Exp $");
 #include <resolv.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 #include "port_after.h"
 
@@ -418,6 +419,12 @@ res_hostalias(const res_state statp, const char *name, char *dst, size_t siz) {
 	FILE *fp;
 
 	if (statp->options & RES_NOALIASES)
+		return (NULL);
+	/*
+	 * forbid hostaliases for setuid binary, due to possible security
+	 * breach.
+	 */
+	if (issetugid())
 		return (NULL);
 	file = getenv("HOSTALIASES");
 	if (file == NULL || (fp = fopen(file, "r")) == NULL)
