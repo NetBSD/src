@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.22 1999/01/06 04:11:25 nisimura Exp $	*/
+/*	$NetBSD: pmap.h,v 1.23 1999/01/14 18:45:45 castor Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -42,7 +42,7 @@
 #ifndef	_PMAP_MACHINE_
 #define	_PMAP_MACHINE_
 
-#include <mips/cpuregs.h>	/* for KSEG0 below */
+#include <mips/cpuarch.h>	/* for KSEG0 below */
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -98,7 +98,7 @@ typedef struct pmap {
 typedef struct pv_entry {
 	struct pv_entry	*pv_next;	/* next pv_entry */
 	struct pmap	*pv_pmap;	/* pmap where mapping lies */
-	vaddr_t	pv_va;			/* virtual address for mapping */
+	vaddr_t	pv_va;		/* virtual address for mapping */
 	int		pv_flags;	/* some flags for the mapping */
 } *pv_entry_t;
 
@@ -122,7 +122,6 @@ struct pmap kernel_pmap_store;
 void	pmap_bootstrap __P((void));
 
 void	pmap_set_modified __P((paddr_t));
-void	pmap_set_referenced __P((paddr_t));
 
 /*
  * pmap_prefer()  helps reduce virtual-coherency exceptions in

@@ -1,7 +1,14 @@
-/*	$NetBSD: setjmp.h,v 1.2 1998/09/16 23:15:08 thorpej Exp $	*/
+/*	$NetBSD: setjmp.h,v 1.3 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
- * machine/setjmp.h: machine dependent setjmp-related information.
+ * mips/setjmp.h: machine dependent setjmp-related information.
+ *
+ * For the size of this, refer to <machine/signal.h> as this uses the 
+ * struct sigcontext to restore it.
  */
 
-#define	_JBLEN	87		/* size, in longs, of a jmp_buf */
+#ifndef __JBLEN
+#include <machine/pubassym.h>
+#endif
+
+#define _JBLEN __JBLEN	/* Size in longs of jmp_buf */

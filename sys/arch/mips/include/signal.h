@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 1998/09/14 02:48:34 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 1999/01/14 18:45:45 castor Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,14 +55,16 @@ typedef int sig_atomic_t;
  * execution of the signal handler.  It is also made available
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
+ *
+ * sizeof(sigcontext) = 45 * sizeof(int) + 35 * sizeof(mips_reg_t)
  */
 #if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore (old style) */
-	int	sc_pc;		/* pc at time of signal */
-	int	sc_regs[32];	/* processor regs 0 to 31 */
-	int	mullo, mulhi;	/* mullo and mulhi registers... */
+	mips_reg_t sc_pc;	/* pc at time of signal */
+	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
+	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
@@ -73,9 +75,9 @@ struct sigcontext13 {
 struct sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	__sc_mask13;	/* signal mask to restore (old style) */
-	int	sc_pc;		/* pc at time of signal */
-	int	sc_regs[32];	/* processor regs 0 to 31 */
-	int	mullo, mulhi;	/* mullo and mulhi registers... */
+	mips_reg_t sc_pc;	/* pc at time of signal */
+	mips_reg_t sc_regs[32];	/* processor regs 0 to 31 */
+	mips_reg_t mullo, mulhi;/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
