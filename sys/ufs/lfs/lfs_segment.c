@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.112 2003/03/20 06:51:17 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.113 2003/03/20 14:17:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.112 2003/03/20 06:51:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.113 2003/03/20 14:17:21 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -455,6 +455,12 @@ lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 		 */
 		if (vp->v_mount != mp) {
 			printf("lfs_writevnodes: starting over\n");
+			/*
+			 * After this, pages might be busy
+			 * due to our own previous putpages.
+			 * Start actual segment write here to avoid deadlock.
+			 */
+			(void)lfs_writeseg(fs, sp);
 			goto loop;
 		}
 		
