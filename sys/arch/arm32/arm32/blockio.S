@@ -1,4 +1,4 @@
-/*	$NetBSD: blockio.S,v 1.7 1998/04/01 23:00:14 mark Exp $	*/
+/*	$NetBSD: blockio.S,v 1.8 1998/12/12 17:28:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -79,7 +79,7 @@ inswloop:
 /* Word aligned insw */
 
 fastinsw:
-	stmfd	r13!, {r4}
+	stmfd	sp!, {r4}
 
 fastinswloop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
@@ -91,7 +91,7 @@ fastinswloop:
 	subs	r2, r2, #0x00000002	/* Next */
 	bgt	fastinswloop
 
-	ldmfd	r13!, {r4}
+	ldmfd	sp!, {r4}
 
 	mov	pc, lr
 
@@ -135,7 +135,7 @@ outswloop:
 /* Word aligned outsw */
 
 fastoutsw:
-	stmfd	r13!, {r4}
+	stmfd	sp!, {r4}
 
 fastoutswloop:
 	ldr	r3, [r1], #0x0004
@@ -179,7 +179,7 @@ ENTRY(insw16)
 
 /* Word aligned insw */
 
-	stmfd	r13!, {r4-r7}
+	stmfd	sp!, {r4-r7}
 
 insw16loop:
 	ldr	r3, [r0, #0x0002]	/* take advantage of nonaligned
@@ -210,7 +210,7 @@ insw16loop:
 	subs	r2, r2, #0x00000008	/* Next */
 	bgt	insw16loop
 
-	ldmfd	r13!, {r4-r7}
+	ldmfd	sp!, {r4-r7}
 
 	mov	pc, lr
 
@@ -237,7 +237,7 @@ ENTRY(outsw16)
 
 /* Word aligned outsw */
 
-	stmfd	r13!, {r4-r7}
+	stmfd	sp!, {r4-r7}
 
 outsw16loop:
 	ldmia	r1!, {r4-r7}
@@ -305,7 +305,7 @@ ENTRY(inswm8)
 
 /* Word aligned insw */
 
-	stmfd	r13!, {r4-r11}
+	stmfd	sp!, {r4-r11}
 
 	mov	r11, #0xff000000
 	orr	r11, r11, #0x00ff0000
@@ -373,7 +373,7 @@ inswm8_l2:
 	subs	r2, r2, #0x00000001
 
 inswm8_l1:
-	ldmfd	r13!, {r4-r11}
+	ldmfd	sp!, {r4-r11}
 
 	mov	pc, lr
 
@@ -401,7 +401,7 @@ ENTRY(outswm8)
 
 /* Word aligned outsw */
 
-	stmfd	r13!, {r4-r10}
+	stmfd	sp!, {r4-r10}
 
 outswm8_loop8:
 	cmp	r2, #8
@@ -481,7 +481,7 @@ outswm8_l2:
 	subs	r2, r2, #0x00000001
 
 outswm8_l1:
-	ldmfd	r13!, {r4-r10}
+	ldmfd	sp!, {r4-r10}
 
 	mov	pc, lr
 
