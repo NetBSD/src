@@ -1,5 +1,4 @@
-/*	$NetBSD: sigsetjmp.S,v 1.1 1994/10/21 07:28:44 phil Exp $
- */
+/*	$NetBSD: sigsetjmp.S,v 1.2 1994/12/07 04:47:59 phil Exp $	*/
 
 /* 
  * Copyright (c) 1992 Helsinki University of Technology
@@ -24,7 +23,7 @@
  * 05-Aug-94  Matthias Pfaller (leo@marco.de)
  *	Converted to sigsetjmp.S from setjmp.S
  *
- *	$Id: sigsetjmp.S,v 1.1 1994/10/21 07:28:44 phil Exp $
+ *	$Id: sigsetjmp.S,v 1.2 1994/12/07 04:47:59 phil Exp $
  */
 
 #include <machine/asm.h>
