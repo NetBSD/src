@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.12 2002/03/31 05:51:47 ichiro Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.13 2002/03/31 05:54:19 ichiro Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -222,9 +222,9 @@ struct wi_counters {
 #define	 EXCLUDE_UNENCRYPTED	0x02
 #define	 HOST_ENCRYPT		0x10
 #define	 IV_EVERY_FRAME		0x00	/* IV = Initialization Vector */
-#define	 IV_EVERY10_FRAME	0x20	/* evary 10 frame IV reuse */
-#define	 IV_EVERY50_FRAME	0x40	/* evary 50 frame IV reuse */
-#define	 IV_EVERY100_FRAME	0x60	/* evary 100 frame IV reuse */
+#define	 IV_EVERY10_FRAME	0x20	/* every 10 frame IV reuse */
+#define	 IV_EVERY50_FRAME	0x40	/* every 50 frame IV reuse */
+#define	 IV_EVERY100_FRAME	0x60	/* every 100 frame IV reuse */
 #define	 HOST_DECRYPT		0x80
 #define WI_RID_WEP_MAPTABLE	0xFC29
 #define WI_RID_AUTH_CNTL	0xFC2A
