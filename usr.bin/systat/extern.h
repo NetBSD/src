@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.18 1999/12/25 01:49:25 jwise Exp $	*/
+/*	$NetBSD: extern.h,v 1.19 2000/01/05 11:59:12 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,9 +61,16 @@ extern int	protos;
 extern int	verbose;
 
 struct inpcb;
+#ifdef INET6
+struct in6pcb;
+#endif
 
 int	 checkhost __P((struct inpcb *));
 int	 checkport __P((struct inpcb *));
+#ifdef INET6
+int	 checkhost6 __P((struct in6pcb *));
+int	 checkport6 __P((struct in6pcb *));
+#endif
 void	 closebufcache __P((WINDOW *));
 void	 closeicmp __P ((WINDOW *));
 void	 closeiostat __P((WINDOW *));
