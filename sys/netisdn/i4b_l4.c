@@ -27,7 +27,7 @@
  *	i4b_l4.c - kernel interface to userland
  *	-----------------------------------------
  *
- *	$Id: i4b_l4.c,v 1.12 2002/03/24 20:36:00 martin Exp $ 
+ *	$Id: i4b_l4.c,v 1.13 2002/03/25 12:07:34 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.12 2002/03/24 20:36:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.13 2002/03/25 12:07:34 martin Exp $");
 
 #include "isdn.h"
 #include "irip.h"
@@ -74,13 +74,15 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_l4.c,v 1.12 2002/03/24 20:36:00 martin Exp $");
 #include <netisdn/i4b_l3.h>
 #include <netisdn/i4b_l4.h>
 
+static void i4b_l4_contr_ev_ind(int controller, int attach);
+
 unsigned int i4b_l4_debug = L4_DEBUG_DEFAULT;
 
 /*
  * BRIs (in userland sometimes called "controllers", but one controller
  * may have multiple BRIs, for example daic QUAD cards attach four BRIs).
  */
-static SIMPLEQ_HEAD(, isdn_l3_driver) bri_list = SIMPLEQ_HEAD_INITIALIZER(bri_list);
+static SLIST_HEAD(, isdn_l3_driver) bri_list = SLIST_HEAD_INITIALIZER(bri_list);
 static int next_bri = 0;
 
 /*
@@ -90,12 +92,13 @@ struct isdn_l3_driver *
 isdn_attach_bri(const char *devname, const char *cardname, 
     void *l1_token, const struct isdn_l3_driver_functions *l3driver)
 {
+	int s = splnet();
 	int l, bri = next_bri++;
 	struct isdn_l3_driver *new_ctrl;
 
 	new_ctrl = malloc(sizeof(*new_ctrl), M_DEVBUF, 0);
 	memset(new_ctrl, 0, sizeof *new_ctrl);
-	SIMPLEQ_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
+	SLIST_INSERT_HEAD(&bri_list, new_ctrl, l3drvq);
 	new_ctrl->bri = bri;
 	l = strlen(devname);
 	new_ctrl->devname = malloc(l+1, M_DEVBUF, 0);
@@ -112,6 +115,9 @@ isdn_attach_bri(const char *devname, const char *cardname,
 	new_ctrl->bch_state[1] = BCH_ST_FREE;
 
 	printf("BRI %d at %s\n", bri, devname);
+	i4b_l4_contr_ev_ind(bri, 1);
+
+	splx(s);
 
 	return new_ctrl;
 }
@@ -122,8 +128,23 @@ isdn_attach_bri(const char *devname, const char *cardname,
 int
 isdn_detach_bri(const struct isdn_l3_driver *l3drv)
 {
-	/* XXX - not yet implemented*/
-	printf("BRI %d detached\n", l3drv->bri);
+	struct isdn_l3_driver *sc;
+	int s = splnet();
+	int bri = l3drv->bri;
+	int max;
+
+	i4b_l4_contr_ev_ind(bri, 0);
+	SLIST_REMOVE(&bri_list, l3drv, isdn_l3_driver, l3drvq);
+
+	max = -1;
+	SLIST_FOREACH(sc, &bri_list, l3drvq)
+		if (sc->bri > max)
+			max = sc->bri;
+	next_bri = max+1;
+
+	splx(s);
+
+	printf("BRI %d detached\n", bri);
 	return 1;
 }
 
@@ -132,7 +153,7 @@ isdn_find_l3_by_bri(int bri)
 {
 	struct isdn_l3_driver *sc;
 
-	SIMPLEQ_FOREACH(sc, &bri_list, l3drvq)
+	SLIST_FOREACH(sc, &bri_list, l3drvq)
 		if (sc->bri == bri)
 			return sc;
 	return NULL;
@@ -144,7 +165,7 @@ int isdn_count_bri(int *mbri)
 	int count = 0;
 	int maxbri = -1;
 
-	SIMPLEQ_FOREACH(sc, &bri_list, l3drvq) {
+	SLIST_FOREACH(sc, &bri_list, l3drvq) {
 		count++;
 		if (sc->bri > maxbri)
 			maxbri = sc->bri;
@@ -181,7 +202,7 @@ i4b_l4_daemon_attached(void)
 	struct isdn_l3_driver *d;
 
 	int x = splnet();
-	SIMPLEQ_FOREACH(d, &bri_list, l3drvq)
+	SLIST_FOREACH(d, &bri_list, l3drvq)
 	{
 		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DOPEN, 0);
 	}
@@ -197,7 +218,7 @@ i4b_l4_daemon_detached(void)
 	struct isdn_l3_driver *d;
 
 	int x = splnet();
-	SIMPLEQ_FOREACH(d, &bri_list, l3drvq)
+	SLIST_FOREACH(d, &bri_list, l3drvq)
 	{
 		d->l3driver->N_MGMT_COMMAND(d->bri, CMR_DCLOSE, 0);
 	}
@@ -220,14 +241,14 @@ static time_t i4b_get_idletime(call_desc_t *cd);
 static int next_l4_driver_id = 0;
 
 struct l4_driver_desc {
-	SIMPLEQ_ENTRY(l4_driver_desc) l4drvq;
+	SLIST_ENTRY(l4_driver_desc) l4drvq;
 	char name[L4DRIVER_NAME_SIZ];
 	int driver_id;
 	const struct isdn_l4_driver_functions *driver;
 	int units;
 };
-static SIMPLEQ_HEAD(, l4_driver_desc) l4_driver_registry
-    = SIMPLEQ_HEAD_INITIALIZER(l4_driver_registry);
+static SLIST_HEAD(, l4_driver_desc) l4_driver_registry
+    = SLIST_HEAD_INITIALIZER(l4_driver_registry);
 
 int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driver_functions *driver)
 {
@@ -240,7 +261,7 @@ int isdn_l4_driver_attach(const char *name, int units, const struct isdn_l4_driv
 	new_driver->driver_id =	next_l4_driver_id++;
 	new_driver->driver = driver;
 	new_driver->units = units;
-	SIMPLEQ_INSERT_HEAD(&l4_driver_registry, new_driver, l4drvq);
+	SLIST_INSERT_HEAD(&l4_driver_registry, new_driver, l4drvq);
 	return new_driver->driver_id;
 }
 
@@ -253,7 +274,7 @@ int isdn_l4_driver_detatch(const char *name)
 const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int unit)
 {
 	struct l4_driver_desc * d;
-	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
 		if (strcmp(d->name, name) == 0) {
 			return d->driver;
 		}
@@ -263,7 +284,7 @@ const struct isdn_l4_driver_functions *isdn_l4_find_driver(const char *name, int
 int isdn_l4_find_driverid(const char *name)
 {
 	struct l4_driver_desc * d;
-	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
 		if (strcmp(d->name, name) == 0) {
 			return d->driver_id;
 		}
@@ -273,7 +294,7 @@ int isdn_l4_find_driverid(const char *name)
 const struct isdn_l4_driver_functions *isdn_l4_get_driver(int driver_id, int unit)
 {
 	struct l4_driver_desc * d;
-	SIMPLEQ_FOREACH(d, &l4_driver_registry, l4drvq)
+	SLIST_FOREACH(d, &l4_driver_registry, l4drvq)
 		if (d->driver_id == driver_id) {
 			return d->driver;
 		}
@@ -756,6 +777,26 @@ i4b_l4_packet_ind(int driver, int driver_unit, int dir, struct mbuf *pkt)
 		mp->direction = dir;
 		memcpy(mp->pktdata, ip,
 			len <MAX_PACKET_LOG ? len : MAX_PACKET_LOG);
+		i4bputqueue(m);
+	}
+}
+
+/*---------------------------------------------------------------------------*
+ *    send MSG_CONTR_EV_IND message to userland
+ *---------------------------------------------------------------------------*/
+static void
+i4b_l4_contr_ev_ind(int controller, int attach)
+{
+	struct mbuf *m;
+
+	if((m = i4b_Dgetmbuf(sizeof(msg_ctrl_ev_ind_t))) != NULL)
+	{
+		msg_ctrl_ev_ind_t *ev = (msg_ctrl_ev_ind_t *)m->m_data;
+
+		ev->header.type = MSG_CONTR_EV_IND;
+		ev->header.cdid = -1;
+		ev->controller = controller;
+		ev->event = attach;
 		i4bputqueue(m);
 	}
 }

@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.5 2002/03/24 20:35:57 martin Exp $ 
+ *	$Id: i4b_ioctl.h,v 1.6 2002/03/25 12:07:34 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -211,6 +211,7 @@ typedef struct {
 #define	MSG_IFSTATE_CHANGED_IND	'o'
 #define MSG_DIALOUTNUMBER_IND	'p'
 #define MSG_PACKET_IND		'q'
+#define	MSG_CONTR_EV_IND	'r'
 	int		cdid;		/* call descriptor id		*/
 } msg_hdr_t;
 
@@ -411,6 +412,17 @@ typedef struct {
 	int		numactive;	/* number of active connections */
 } msg_pdeact_ind_t;
 
+/*---------------------------------------------------------------------------*
+ *	connect indication
+ *		indicates incoming connection
+ *---------------------------------------------------------------------------*/
+typedef struct {
+	msg_hdr_t	header;		/* common header		*/
+	int		controller;	/* controller number		*/
+	int		event;
+#define CTRL_EV_IND_DETACH	0
+#define CTRL_EV_IND_ATTACH	1
+} msg_ctrl_ev_ind_t;
 
 /*===========================================================================*
  *===========================================================================*
