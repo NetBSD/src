@@ -1,4 +1,4 @@
-.\"	$NetBSD: rd.4,v 1.7 2001/09/11 06:30:06 gmcgarry Exp $
+.\"	$NetBSD: rd.4,v 1.8 2002/01/15 01:38:04 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -84,7 +84,7 @@ and
 for the block and character files respectively. The second
 component of the name, a drive unit number in the range of zero to
 seven, is represented by a
-.Sq Li ?
+.Sq Li \&?
 in the disk layouts below. The last component of the name is the
 file system partition
 and is designated
@@ -95,7 +95,8 @@ to
 which also corresponds to a minor device number sets: zero to seven,
 eight to 15, 16 to 23 and so forth for drive zero, drive two and drive
 three respectively
-(see physio 4 ) .
+(see
+.Xr physio 4 ) .
 The location and size (in sectors) of the
 partitions for these drives:
 .Bl -column header diskx undefined length
@@ -109,7 +110,7 @@ partitions for these drives:
 	rd?f	undefined
 	rd?g	36176	72240	323-967
 	rd?h	56336	52080	503-967
-
+.Pp
 .Tn 9134D No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	96	15936	1-166
@@ -120,7 +121,7 @@ partitions for these drives:
 	rd?f	undefined
 	rd?g	undefined
 	rd?h	undefined
-
+.Pp
 .Tn 9122S No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	undefined
@@ -131,7 +132,7 @@ partitions for these drives:
 	rd?f	undefined
 	rd?g	undefined
 	rd?h	undefined
-
+.Pp
 .Tn 7912P No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	0	15904	0-70
@@ -142,7 +143,7 @@ partitions for these drives:
 	rd?f	undefined
 	rd?g	38528	89600	172-571
 	rd?h	58688	69440	262-571
-
+.Pp
 .Tn 7914CT/P No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	224	15904	1-71
@@ -153,7 +154,7 @@ partitions for these drives:
 	rd?f	179648	78400	802-1151
 	rd?g	56448	201600	252-1151
 	rd?h	81088	176960	362-1151
-
+.Pp
 .Tn 7958A No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	252	16128	1-64
@@ -164,7 +165,7 @@ partitions for these drives:
 	rd?f	165564	89712	657-1012
 	rd?g	48636	206640	193-1012
 	rd?h	64764	190512	257-1012
-
+.Pp
 .Tn 7957A No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	154	16016	1-104
@@ -175,7 +176,7 @@ partitions for these drives:
 	rd?f	113344	46200	736-1035
 	rd?g	40810	118734	265-1035
 	rd?h	58520	101024	380-1035
-
+.Pp
 .Tn 7933H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	598	16146	1-27
@@ -186,7 +187,7 @@ partitions for these drives:
 	rd?f	265512	165646	444-720
 	rd?g	83720	706238	140-1320
 	rd?h	431158	358800	721-1320
-
+.Pp
 .Tn 9134L No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	80	15920	1-199
@@ -197,7 +198,7 @@ partitions for these drives:
 	rd?f	undefined
 	rd?g	36000	41840	450-972
 	rd?h	48000	29840	600-972
-
+.Pp
 .Tn 7936H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	861	16359	1-19
@@ -208,7 +209,7 @@ partitions for these drives:
 	rd?f	220416	120540	256-395
 	rd?g	84378	516600	98-697
 	rd?h	341817	259161	397-697
-
+.Pp
 .Tn 7937H No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	1599	15990	1-10
@@ -219,7 +220,7 @@ partitions for these drives:
 	rd?f	346983	246246	217-370
 	rd?g	84747	1031355	53-697
 	rd?h	593229	522873	371-697
-
+.Pp
 .Tn 7957B/7961B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	126	16002	1-127
@@ -230,7 +231,7 @@ partitions for these drives:
 	rd?f	115668	44226	918-1268
 	rd?g	48888	111006	388-1268
 	rd?h	65268	94626	518-1268
-
+.Pp
 .Tn 7958B/7962B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	378	16254	1-43
@@ -241,7 +242,7 @@ partitions for these drives:
 	rd?f	187488	109620	496-785
 	rd?g	49518	247590	131-785
 	rd?h	65772	231336	174-785
-
+.Pp
 .Tn 7959B/7963B No partitions :
 .Sy	disk	start	length	cyls
 	rd?a	378	16254	1-43
