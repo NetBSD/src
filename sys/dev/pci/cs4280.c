@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.7 2000/09/20 14:33:48 augustss Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.8 2000/11/26 11:08:59 takemura Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -1787,7 +1787,9 @@ cs4280_power(why, v)
 
 	DPRINTF(("%s: cs4280_power why=%d\n",
 	       sc->sc_dev.dv_xname, why));
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		sc->sc_suspend = why;
 
 		cs4280_halt_output(sc);
@@ -1800,7 +1802,8 @@ cs4280_power(why, v)
 		}
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
-	} else {
+		break;
+	case PWR_RESUME:
 		if (sc->sc_suspend == PWR_RESUME) {
 			printf("cs4280_power: odd, resume without suspend.\n");
 			sc->sc_suspend = why;
@@ -1816,6 +1819,11 @@ cs4280_power(why, v)
 				continue;
 			cs4280_write_codec(sc, 2*i, sc->ac97_reg[i]);
 		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 }
 

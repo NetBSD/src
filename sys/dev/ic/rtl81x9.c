@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.18 2000/11/15 01:02:17 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.19 2000/11/26 11:08:58 takemura Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -931,14 +931,24 @@ rtk_power(why, arg)
 	int s;
 
 	s = splnet();
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 		rtk_stop(ifp, 0);
 		if (sc->sc_power != NULL)
 			(*sc->sc_power)(sc, why);
-	} else if (ifp->if_flags & IFF_UP) {
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		rtk_init(ifp);
+		break;
+	case PWR_RESUME:
+		if (ifp->if_flags & IFF_UP) {
+			if (sc->sc_power != NULL)
+				(*sc->sc_power)(sc, why);
+			rtk_init(ifp);
+		}
+		break;
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 	}
 	splx(s);
 

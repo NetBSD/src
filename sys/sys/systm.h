@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.122 2000/11/19 00:56:39 sommerfeld Exp $	*/
+/*	$NetBSD: systm.h,v 1.123 2000/11/26 11:09:00 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -269,9 +269,12 @@ void	doshutdownhooks __P((void));
 void	*powerhook_establish __P((void (*)(int, void *), void *));
 void	powerhook_disestablish __P((void *));
 void	dopowerhooks __P((int));
-#define PWR_RESUME 0
-#define PWR_SUSPEND 1
-#define PWR_STANDBY 2
+#define PWR_RESUME	0
+#define PWR_SUSPEND	1
+#define PWR_STANDBY	2
+#define PWR_SOFTRESUME	3
+#define PWR_SOFTSUSPEND	4
+#define PWR_SOFTSTANDBY	5
 
 /*
  * Mountroot hooks.  Device drivers establish these to be executed
