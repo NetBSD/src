@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.8.4.1 1993/10/06 12:42:52 mycroft Exp $
+ *	$Id: cons.c,v 1.8.4.2 1993/10/17 14:03:04 mycroft Exp $
  */
 
 
@@ -78,11 +78,6 @@ struct	consdev *cn_tab;	/* physical console device info */
 
 void
 consinit()
-{
-}
-
-void
-cninit()
 {
 	register struct consdev *cp;
 
