@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4 1999/01/13 09:25:59 abs Exp $ */
+/*	$NetBSD: mem.c,v 1.5 1999/02/10 17:03:27 kleink Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/mem.c
@@ -200,7 +200,7 @@ mmrw(dev, uio, flags)
 		}
 		if (error)
 			break;
-		(caddr_t)iov->iov_base += c;
+		iov->iov_base = (caddr_t)iov->iov_base + c;
 		iov->iov_len -= c;
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
