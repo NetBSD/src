@@ -5710,7 +5710,7 @@ ENTRY(delay)			! %o0 = n
 	retl				! return
 	 nop				! [delay slot]
 
-#if defined(KGDB) || defined(DDB)
+#if defined(KGDB) || defined(DDB) || defined(DIAGNOSTIC)
 /*
  * Write all windows (user or otherwise), except the current one.
  *
