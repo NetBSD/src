@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.36 1999/01/19 08:30:47 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.37 1999/01/20 13:12:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.36 1999/01/19 08:30:47 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.37 1999/01/20 13:12:07 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -204,12 +204,12 @@ __pwproto_set()
 	ptr = (char *)(void *)prbuf;
 
 	/* first allocate the struct. */
-	__pwproto = (struct passwd *)ptr;
+	__pwproto = (struct passwd *)(void *)ptr;
 	ptr += sizeof(struct passwd);
 
 	/* name */
 	if(pw->pw_name && (pw->pw_name)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_name, strlen(pw->pw_name) + 1);
 		__pwproto->pw_name = ptr;
 		ptr += (strlen(pw->pw_name) + 1);
@@ -218,7 +218,7 @@ __pwproto_set()
 	
 	/* password */
 	if(pw->pw_passwd && (pw->pw_passwd)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_passwd, strlen(pw->pw_passwd) + 1);
 		__pwproto->pw_passwd = ptr;
 		ptr += (strlen(pw->pw_passwd) + 1);
@@ -239,7 +239,7 @@ __pwproto_set()
 
 	/* gecos */
 	if(pw->pw_gecos && (pw->pw_gecos)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_gecos, strlen(pw->pw_gecos) + 1);
 		__pwproto->pw_gecos = ptr;
 		ptr += (strlen(pw->pw_gecos) + 1);
@@ -248,7 +248,7 @@ __pwproto_set()
 	
 	/* dir */
 	if(pw->pw_dir && (pw->pw_dir)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_dir, strlen(pw->pw_dir) + 1);
 		__pwproto->pw_dir = ptr;
 		ptr += (strlen(pw->pw_dir) + 1);
@@ -257,7 +257,7 @@ __pwproto_set()
 
 	/* shell */
 	if(pw->pw_shell && (pw->pw_shell)[0]) {
-		ptr = (char *)ALIGN(ptr);
+		ptr = (char *)ALIGN((u_long)ptr);
 		memmove(ptr, pw->pw_shell, strlen(pw->pw_shell) + 1);
 		__pwproto->pw_shell = ptr;
 		ptr += (strlen(pw->pw_shell) + 1);
@@ -357,7 +357,7 @@ __pwparse(pw, s)
 		    (int)strlen(pw->pw_name), &data, &datalen) == 0) {
 			if (datalen > sizeof(adjunctpw) - 1)
 				datalen = sizeof(adjunctpw) - 1;
-			strncpy(adjunctpw, data, datalen);
+			strncpy(adjunctpw, data, (size_t)datalen);
 
 				/* skip name to get password */
 			if ((bp = strsep(&data, ":")) != NULL &&
@@ -375,6 +375,7 @@ __pwparse(pw, s)
  */
 static int	_local_getpw __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _local_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -382,7 +383,7 @@ _local_getpw(rv, cb_data, ap)
 	va_list	 ap;
 {
 	DBT		 key;
-	char		 bf[MAX(MAXLOGNAME, sizeof(_pw_keynum)) + 1];
+	char		 bf[/*CONSTCOND*/ MAX(MAXLOGNAME, sizeof(_pw_keynum)) + 1];
 	uid_t		 uid;
 	int		 search, len, rval;
 	const char	*name;
@@ -395,18 +396,18 @@ _local_getpw(rv, cb_data, ap)
 	switch (search) {
 	case _PW_KEYBYNUM:
 		++_pw_keynum;
-		memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+		memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 		key.size = sizeof(_pw_keynum) + 1;
 		break;
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
 		len = strlen(name);
-		memmove(bf + 1, name, MIN(len, MAXLOGNAME));
+		memmove(bf + 1, name, (size_t)MIN(len, MAXLOGNAME));
 		key.size = len + 1;
 		break;
 	case _PW_KEYBYUID:
 		uid = va_arg(ap, uid_t);
-		memmove(bf + 1, (char *)&uid, sizeof(len));
+		memmove(bf + 1, &uid, sizeof(len));
 		key.size = sizeof(uid) + 1;
 		break;
 	default:
@@ -434,6 +435,7 @@ _local_getpw(rv, cb_data, ap)
  */
 static int	_dns_getpw __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _dns_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -477,6 +479,7 @@ _dns_getpw(rv, cb_data, ap)
 			return NS_NOTFOUND;
 		case HES_ER_OK:
 			abort();
+			break;
 		default:
 			return NS_UNAVAIL;
 		}
@@ -498,6 +501,7 @@ _dns_getpw(rv, cb_data, ap)
  */
 static int	_nis_getpw __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _nis_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -621,6 +625,7 @@ __has_compatpw()
 	DBT pkey, pdata;
 	char bf[MAXLOGNAME];
 
+	/*LINTED*/
 	key.data = (u_char *)__yp_token;
 	key.size = strlen(__yp_token);
 
@@ -641,6 +646,7 @@ __has_compatpw()
  */
 static int	_bad_getpw __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _bad_getpw(rv, cb_data, ap)
 	void	*rv;
@@ -695,6 +701,7 @@ __getpwcompat(type, uid, name)
 		    defaultnis, type, uid);
 	default:
 		abort();
+		/*NOTREACHED*/
 	}
 }
 
@@ -705,6 +712,7 @@ __getpwcompat(type, uid, name)
  */
 static int	_compat_getpwent __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _compat_getpwent(rv, cb_data, ap)
 	void	*rv;
@@ -768,7 +776,7 @@ again:
 
 	++_pw_keynum;
 	bf[0] = _PW_KEYBYNUM;
-	memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+	memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 	key.data = (u_char *)bf;
 	key.size = sizeof(_pw_keynum) + 1;
 	if(__hashpw(&key) == NS_SUCCESS) {
@@ -862,7 +870,7 @@ _compat_getpw(rv, cb_data, ap)
 
 	for(s = -1, _pw_keynum=1; _pw_keynum; _pw_keynum++) {
 		bf[0] = _PW_KEYBYNUM;
-		memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+		memmove(bf + 1, &_pw_keynum, sizeof(_pw_keynum));
 		key.data = (u_char *)bf;
 		key.size = sizeof(_pw_keynum) + 1;
 		if(__hashpw(&key) != NS_SUCCESS)
