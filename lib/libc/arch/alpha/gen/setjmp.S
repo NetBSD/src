@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.2 1996/10/17 03:08:06 cgd Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.3 1997/12/05 02:06:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -65,12 +65,12 @@ LEAF(setjmp, 1)
 	CALL(sigblock)				/* see what's blocked */
 	stq	v0, (1 * 8)(s0)			/* and remember it in sc_mask */
 
-	lda	sp, -16(sp)			/* sizeof struct sigaltstack */
+	lda	sp, -24(sp)			/* sizeof struct sigaltstack */
 	mov	zero, a0
 	mov	sp, a1
-	CALL(sigaltstack)
-	ldl	t0, 12(sp)
-	lda	sp, 16(sp)
+	CALL(__sigaltstack14)
+	ldl	t0, 16(sp)			/* offset of ss_flags */
+	lda	sp, 24(sp)			/* sizeof struct sigaltstack */
 	ldq	ra, ((26 + 4) * 8)(s0)		/* restore return address */
 	blt	v0, botch			/* check for error */
 	and	t0, 0x1, t0			/* get SA_ONSTACK flag */
