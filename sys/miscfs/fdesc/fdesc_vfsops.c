@@ -1,8 +1,9 @@
 /*
+ * Copyright (c) 1992 The Regents of the University of California
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
  * All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
+ * This code is derived from software donated to Berkeley by
  * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,8 +16,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the University of
- *      California, Berkeley and its contributors.
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -33,33 +34,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: fdesc_vfsops.c,v 1.5 1993/08/23 16:02:46 mycroft Exp $
+ * From:
+ *	Id: fdesc_vfsops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
+ *
+ *	$Id: fdesc_vfsops.c,v 1.6 1994/01/05 09:01:00 cgd Exp $
  */
 
 /*
  * /dev/fd Filesystem
  */
 
-#include "param.h"
-#include "systm.h"
-#include "time.h"
-#include "types.h"
-#include "proc.h"
-#include "resourcevar.h"
-#include "filedesc.h"
-#include "vnode.h"
-#include "mount.h"
-#include "namei.h"
-#include "malloc.h"
-#include "miscfs/fdesc/fdesc.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/filedesc.h>
+#include <sys/vnode.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/malloc.h>
+#include <miscfs/fdesc/fdesc.h>
 
-static u_short fdesc_mntid;
+dev_t devctty;
 
 fdesc_init()
 {
 #ifdef FDESC_DIAGNOSTIC
 	printf("fdesc_init\n");		/* printed during system boot */
 #endif
+	devctty = makedev(nchrdev, 0);
 }
 
 /*
@@ -87,15 +92,15 @@ fdesc_mount(mp, path, data, ndp, p)
 	if (mp->mnt_flag & MNT_UPDATE)
 		return (EOPNOTSUPP);
 
-	error = getnewvnode(VT_FDESC, mp, &fdesc_vnodeops, &rvp);
+	error = fdesc_allocvp(Froot, FD_ROOT, mp, &rvp);
 	if (error)
 		return (error);
 
-	fmp = (struct fdescmount *) malloc(sizeof(struct fdescmount),
-				 M_MISCFSMNT, M_WAITOK);
+	MALLOC(fmp, struct fdescmount *, sizeof(struct fdescmount),
+				M_UFSMNT, M_WAITOK);	/* XXX */
 	rvp->v_type = VDIR;
 	rvp->v_flag |= VROOT;
-	/*VTOFDESC(rvp)->f_isroot = 1;*/
+	VTOFDESC(rvp)->fd_type = Froot;
 #ifdef FDESC_DIAGNOSTIC
 	printf("fdesc_mount: root vp = %x\n", rvp);
 #endif
@@ -179,7 +184,7 @@ fdesc_unmount(mp, mntflags, p)
 	/*
 	 * Finally, throw away the fdescmount structure
 	 */
-	free(mp->mnt_data, M_MISCFSMNT);
+	free(mp->mnt_data, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return 0;
 }
