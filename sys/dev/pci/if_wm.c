@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.28 2002/12/21 16:12:15 kristerw Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.29 2002/12/23 02:58:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -633,8 +633,9 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Get it out of power save mode, if needed. */
 	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		preg = pci_conf_read(pc, pa->pa_tag, pmreg + 4) & 0x3;
-		if (preg == 3) {
+		preg = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
+		    PCI_PMCSR_STATE_MASK;
+		if (preg == PCI_PMCSR_STATE_D3) {
 			/*
 			 * The card has lost all configuration data in
 			 * this state, so punt.
@@ -643,10 +644,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_dev.dv_xname);
 			return;
 		}
-		if (preg != 0) {
+		if (preg != PCI_PMCSR_STATE_D0) {
 			printf("%s: waking up from power state D%d\n",
 			    sc->sc_dev.dv_xname, preg);
-			pci_conf_write(pc, pa->pa_tag, pmreg + 4, 0);
+			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
+			    PCI_PMCSR_STATE_D0);
 		}
 	}
 
