@@ -42,7 +42,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ftpcmd.y	5.24 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: ftpcmd.y,v 1.2 1993/08/01 18:30:49 mycroft Exp $";
+static char rcsid[] = "$Id: ftpcmd.y,v 1.3 1994/04/14 03:15:40 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -875,10 +875,10 @@ yylex()
 				dologout(0);
 			}
 			(void) alarm(0);
-#ifdef SETPROCTITLE
+#ifdef HASSETPROCTITLE
 			if (strncasecmp(cbuf, "PASS", 4) != NULL)
 				setproctitle("%s: %s", proctitle, cbuf);
-#endif /* SETPROCTITLE */
+#endif /* HASSETPROCTITLE */
 			if ((cp = index(cbuf, '\r'))) {
 				*cp++ = '\n';
 				*cp = '\0';
