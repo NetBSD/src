@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.104 2003/09/13 03:18:13 mycroft Exp $	*/
+/*	$NetBSD: umass.c,v 1.105 2003/09/29 20:04:25 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.104 2003/09/13 03:18:13 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.105 2003/09/29 20:04:25 augustss Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -426,6 +426,8 @@ USB_ATTACH(umass)
 	if (quirk != NULL && quirk->uq_init != NULL) {
 		err = (*quirk->uq_init)(sc);
 		if (err) {
+			printf("%s: quirk init failed\n",
+			       USBDEVNAME(sc->sc_dev));
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -473,10 +475,10 @@ USB_ATTACH(umass)
 	if (!sc->sc_epaddr[UMASS_BULKIN] || !sc->sc_epaddr[UMASS_BULKOUT] ||
 	    (sc->sc_wire == UMASS_WPROTO_CBI_I &&
 	     !sc->sc_epaddr[UMASS_INTRIN])) {
-		DPRINTF(UDMASS_USB, ("%s: endpoint not found %u/%u/%u\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN],
-			sc->sc_epaddr[UMASS_BULKOUT],
-			sc->sc_epaddr[UMASS_INTRIN]));
+		printf("%s: endpoint not found %u/%u/%u\n",
+		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN],
+		       sc->sc_epaddr[UMASS_BULKOUT],
+		       sc->sc_epaddr[UMASS_INTRIN]);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -504,8 +506,8 @@ USB_ATTACH(umass)
 				USBD_EXCLUSIVE_USE,
 				&sc->sc_pipe[UMASS_BULKOUT]);
 	if (err) {
-		DPRINTF(UDMASS_USB, ("%s: cannot open %u-out pipe (bulk)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKOUT]));
+		printf("%s: cannot open %u-out pipe (bulk)\n",
+		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKOUT]);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -515,8 +517,8 @@ USB_ATTACH(umass)
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_BULKIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_BULKIN]);
 	if (err) {
-		DPRINTF(UDMASS_USB, ("%s: could not open %u-in pipe (bulk)\n",
-			USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN]));
+		printf("%s: could not open %u-in pipe (bulk)\n",
+		       USBDEVNAME(sc->sc_dev), sc->sc_epaddr[UMASS_BULKIN]);
 		umass_disco(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -539,9 +541,9 @@ USB_ATTACH(umass)
 		err = usbd_open_pipe(sc->sc_iface, sc->sc_epaddr[UMASS_INTRIN],
 				USBD_EXCLUSIVE_USE, &sc->sc_pipe[UMASS_INTRIN]);
 		if (err) {
-			DPRINTF(UDMASS_USB, ("%s: couldn't open %u-in (intr)\n",
-				USBDEVNAME(sc->sc_dev),
-				sc->sc_epaddr[UMASS_INTRIN]));
+			printf("%s: couldn't open %u-in (intr)\n",
+			       USBDEVNAME(sc->sc_dev),
+			       sc->sc_epaddr[UMASS_INTRIN]);
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -554,8 +556,8 @@ USB_ATTACH(umass)
 	for (i = 0; i < XFER_NR; i++) {
 		sc->transfer_xfer[i] = usbd_alloc_xfer(uaa->device);
 		if (sc->transfer_xfer[i] == NULL) {
-			DPRINTF(UDMASS_USB, ("%s: Out of memory\n",
-				USBDEVNAME(sc->sc_dev)));
+			printf("%s: Out of memory\n",
+			       USBDEVNAME(sc->sc_dev));
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -574,6 +576,8 @@ USB_ATTACH(umass)
 		sc->data_buffer = usbd_alloc_buffer(sc->transfer_xfer[bno],
 						    UMASS_MAX_TRANSFER_SIZE);
 		if (sc->data_buffer == NULL) {
+			printf("%s: no buffer memory\n",
+			       USBDEVNAME(sc->sc_dev));
 			umass_disco(sc);
 			USB_ATTACH_ERROR_RETURN;
 		}
@@ -648,15 +652,17 @@ USB_ATTACH(umass)
 USB_DETACH(umass)
 {
 	USB_DETACH_START(umass, sc);
-	struct umassbus_softc *scbus = sc->bus;
+	struct umassbus_softc *scbus;
 	int rv = 0, i, s;
 
 	DPRINTF(UDMASS_USB, ("%s: detached\n", USBDEVNAME(sc->sc_dev)));
 
 	/* Abort the pipes to wake up any waiting processes. */
 	for (i = 0 ; i < UMASS_NEP ; i++) {
-		if (sc->sc_pipe[i] != NULL)
+		if (sc->sc_pipe[i] != NULL) {
 			usbd_abort_pipe(sc->sc_pipe[i]);
+			sc->sc_pipe[i] = NULL;
+		}
 	}
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
@@ -670,6 +676,7 @@ USB_DETACH(umass)
 	}
 	splx(s);
 
+	scbus = sc->bus;
 	if (scbus != NULL) {
 		if (scbus->sc_child != NULL)
 			rv = config_detach(scbus->sc_child, flags);
