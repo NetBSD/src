@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.38 2001/11/19 03:18:32 lukem Exp $
+# $NetBSD: rc.subr,v 1.39 2002/02/25 06:58:14 lukem Exp $
 #
 # Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -563,11 +563,6 @@ $command $_flags $command_args"
 #	a backup or scratch file, ignore it.  Otherwise if it's
 #	executable run as a child process.
 #
-#	Note: because `.sh' files are sourced into the current environment
-#	run_rc_command() shouldn't be used because its difficult to ensure
-#	that the global variable state before and after the sourcing of 
-#	the .sh file won't adversely affect other scripts.
-#
 run_rc_script()
 {
 	_file=$1
@@ -576,26 +571,27 @@ run_rc_script()
 		err 3 'USAGE: run_rc_script file arg'
 	fi
 
-	if [ -n "$rc_fast_and_loose" ]; then
-		unset name command command_args extra_commands pidfile rcvar
-		unset required_dirs required_files required_vars
-		eval unset ${_arg}_cmd ${_arg}_precmd
+	unset	name command command_args extra_commands pidfile rcvar \
+		required_dirs required_files required_vars
+	eval unset ${_arg}_cmd ${_arg}_precmd
+
+	case "$_file" in
+	*.sh)				# run in current shell
 		set $_arg ; . $_file
-	else
-		case "$_file" in
-		*.sh)				# run in current shell
-			set $_arg ; . $_file
-			;;
-		*[~#]|*.OLD|*.orig)		# scratch file; skip
-			warn "Ignoring scratch file $_file"
-			;;
-		*)				# run in subshell
-			if [ -x $_file ]; then
+		;;
+	*[~#]|*.OLD|*.orig)		# scratch file; skip
+		warn "Ignoring scratch file $_file"
+		;;
+	*)				# run in subshell
+		if [ -x $_file ]; then
+			if [ -n "$rc_fast_and_loose" ]; then
+				set $_arg ; . $_file
+			else
 				( set $_arg ; . $_file )
 			fi
-			;;
-		esac
-	fi
+		fi
+		;;
+	esac
 }
 
 #
