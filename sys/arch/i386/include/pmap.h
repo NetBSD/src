@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2003/04/09 18:22:15 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.74 2003/07/22 13:55:33 yamt Exp $	*/
 
 /*
  *
@@ -265,13 +265,6 @@ struct pmap {
  * the pv_head structure points to a list of pv_entry structures (each
  * describes one mapping).
  */
-
-struct pv_entry;
-
-struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
-	struct pv_entry *pvh_list;	/* head of list (locked by pvh_lock) */
-};
 
 struct pv_entry {			/* locked by its list's pvh_lock */
 	struct pv_entry *pv_next;	/* next entry */
