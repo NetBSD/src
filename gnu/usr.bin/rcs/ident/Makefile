@@ -1,8 +1,9 @@
+#	$NetBSD: Makefile,v 1.1.1.2 1996/10/13 21:57:18 veego Exp $
+
 PROG=	ident
-SRCS=	ident.c 
 CFLAGS+= -I${.CURDIR}/../lib
-LDADD=  ${LIBRCS}
-DPADD=  ${LIBRCS}
+LDADD=	${LIBRCS} -lgnumalloc
+DPADD=	${LIBRCS} /usr/lib/libgnumalloc.a
 
 .include "../../Makefile.inc"
 .include <bsd.prog.mk>

@@ -1,7 +1,5 @@
-# Location of librcs
+#	$NetBSD: Makefile.inc,v 1.1.1.2 1996/10/13 21:56:39 veego Exp $
 
-.if exists(${.CURDIR}/../lib/obj)
-LIBRCS=	${.CURDIR}/../lib/obj/librcs.a
-.else
-LIBRCS=	${.CURDIR}/../lib/librcs.a
-.endif
+LIBRCS!=cd $(.CURDIR)/../lib; \
+	printf "xxx:\n\techo \$${.OBJDIR}/librcs.a\n" | \
+	${MAKE} -r -s -f - xxx | grep librcs
