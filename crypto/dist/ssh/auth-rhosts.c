@@ -1,3 +1,4 @@
+/*	$NetBSD: auth-rhosts.c,v 1.1.1.1.2.4 2001/12/10 23:52:33 he Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-rhosts.c,v 1.21 2001/02/08 19:30:51 itojun Exp $");
+RCSID("$OpenBSD: auth-rhosts.c,v 1.24 2001/06/23 15:12:17 itojun Exp $");
 
 #include "packet.h"
 #include "xmalloc.h"
@@ -24,6 +25,9 @@ RCSID("$OpenBSD: auth-rhosts.c,v 1.21 2001/02/08 19:30:51 itojun Exp $");
 #include "servconf.h"
 #include "canohost.h"
 #include "auth.h"
+
+/* import */
+extern ServerOptions options;
 
 /*
  * This function processes an rhosts-style file (.rhosts, .shosts, or
@@ -150,18 +154,33 @@ check_rhosts_file(const char *filename, const char *hostname,
 int
 auth_rhosts(struct passwd *pw, const char *client_user)
 {
-	extern ServerOptions options;
-	char buf[1024];
 	const char *hostname, *ipaddr;
+	int ret;
+
+	hostname = get_canonical_hostname(options.reverse_mapping_check);
+	ipaddr = get_remote_ipaddr();
+	ret = auth_rhosts2(pw, client_user, hostname, ipaddr);
+	return ret;
+}
+
+int
+auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
+    const char *ipaddr)
+{
+	char buf[1024];
 	struct stat st;
 	static const char *rhosts_files[] = {".shosts", ".rhosts", NULL};
 	u_int rhosts_file_index;
 
+	debug2("auth_rhosts2: clientuser %s hostname %s ipaddr %s",
+	    client_user, hostname, ipaddr);
+
 	/* no user given */
 	if (pw == NULL)
 		return 0;
+
 	/* Switch to the user's uid. */
-	temporarily_use_uid(pw->pw_uid);
+	temporarily_use_uid(pw);
 	/*
 	 * Quick check: if the user has no .shosts or .rhosts files, return
 	 * failure immediately without doing costly lookups from name
@@ -183,9 +202,6 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 	    stat(_PATH_RHOSTS_EQUIV, &st) < 0 &&
 	    stat(_PATH_SSH_HOSTS_EQUIV, &st) < 0)
 		return 0;
-
-	hostname = get_canonical_hostname(options.reverse_mapping_check);
-	ipaddr = get_remote_ipaddr();
 
 	/* If not logging in as superuser, try /etc/hosts.equiv and shosts.equiv. */
 	if (pw->pw_uid != 0) {
@@ -223,7 +239,7 @@ auth_rhosts(struct passwd *pw, const char *client_user)
 		return 0;
 	}
 	/* Temporarily use the user's uid. */
-	temporarily_use_uid(pw->pw_uid);
+	temporarily_use_uid(pw);
 
 	/* Check all .rhosts files (currently .shosts and .rhosts). */
 	for (rhosts_file_index = 0; rhosts_files[rhosts_file_index];
