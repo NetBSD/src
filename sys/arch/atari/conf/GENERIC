@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.51 1998/12/09 07:35:28 leo Exp $
+#	$NetBSD: GENERIC,v 1.52 1998/12/15 19:50:07 itohy Exp $
 #
 # Generic atari
 #
@@ -98,6 +98,8 @@ options 	COMPAT_13	# Compatibility to NetBSD1.3
 #options 	COMPAT_09	# has no meaning on the atari
 #options 	COMPAT_SUNOS	# Support to run Sun-3 executables
 #options 	TCP_COMPAT_42	# Disable UDP checksums (not needed)
+#options 	COMPAT_LINUX	# Support to run Linux/m68k executables
+#options 	EXEC_ELF32	# 32-bit ELF executables (Linux)
 
 #
 # Support for System V IPC facilities.
