@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.20 1998/09/08 21:54:01 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.21 1998/10/01 21:16:26 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.20 1998/09/08 21:54:01 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.21 1998/10/01 21:16:26 hubertf Exp $");
 #endif
 #endif
 
@@ -161,10 +161,10 @@ pkg_do(char *pkg)
 			if (Verbose)
 			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
 			vsystem("mkdir -p %s", p->name);
-			if (chdir(p->name) == -1) {
-			    warn("unable to change directory to `%s'", p->name);
-			    goto bomb;
-			}
+		    }
+		    if (chdir(p->name) == -1) {
+			warn("unable to change directory to `%s'", p->name);
+			goto bomb;
 		    }
 		    where_to = p->name;
 		    inPlace = 1;
@@ -284,29 +284,38 @@ pkg_do(char *pkg)
 				++code;
 		    }
 		}
-		else if ((cp = fileGetURL(pkg, p->name)) != NULL) {
-		    if (Verbose)
-			printf("Finished loading %s over FTP.\n", p->name);
-		    if (!fexists(CONTENTS_FNAME)) {
-			warnx("autoloaded package %s has no %s file?",
-				p->name, CONTENTS_FNAME);
-			if (!Force)
-			    ++code;
+		else {
+		    char *saved_Current;   /* allocated/set by save_dirs(), */
+		    char *saved_Previous;  /* freed by restore_dirs() */
+		    
+		    save_dirs(&saved_Current, &saved_Previous);
+		    
+		    if ((cp = fileGetURL(pkg, p->name)) != NULL) {
+			if (Verbose)
+			    printf("Finished loading %s over FTP.\n", p->name);
+			if (!fexists(CONTENTS_FNAME)) {
+			    warnx("autoloaded package %s has no %s file?",
+				  p->name, CONTENTS_FNAME);
+			    if (!Force)
+				++code;
+			}
+			else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
+					 CONTENTS_FNAME, 
+					 Prefix ? "-p " : "",
+					 Prefix ? Prefix : "",
+					 Verbose ? "-v " : "")) {
+			    warnx("add of dependency `%s' failed%s",
+				  p->name, Force ? " (proceeding anyway)" : "!");
+			    if (!Force)
+				++code;
+			}
+			else if (Verbose)
+			    printf("\t`%s' loaded successfully.\n", p->name);
+			/* Nuke the temporary playpen */
+			leave_playpen(cp);
+
+			restore_dirs(saved_Current, saved_Previous);
 		    }
-		    else if (vsystem("(pwd; cat %s) | pkg_add %s%s %s-S",
-                                     CONTENTS_FNAME, 
-                                     Prefix ? "-p " : "",
-                                     Prefix ? Prefix : "",
-				     Verbose ? "-v " : "")) {
-			warnx("add of dependency `%s' failed%s",
-				p->name, Force ? " (proceeding anyway)" : "!");
-			if (!Force)
-			    ++code;
-		    }
-		    else if (Verbose)
-			printf("\t`%s' loaded successfully.\n", p->name);
-		    /* Nuke the temporary playpen */
-		    leave_playpen(cp);
 		}
 	    }
 	    else {
