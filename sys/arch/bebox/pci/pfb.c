@@ -1,4 +1,4 @@
-/*	$NetBSD: pfb.c,v 1.1 1998/11/18 09:05:18 sakamoto Exp $	*/
+/*	$NetBSD: pfb.c,v 1.2 1998/11/24 06:34:10 sakamoto Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -230,7 +230,7 @@ pfb_mmap(v, offset, prot)
 	struct pfb_softc *sc = v;
 	struct pfb_devconfig *dc = sc->sc_dc;
 
-	if (offset > (dc->dc_linebytes * dc->dc_height))
+	if (offset > (dc->dc_linebytes * dc->dc_height) || offset < 0)
 		return -1;
 
 	return dc->dc_paddr + offset;
