@@ -1,8 +1,9 @@
-/* $ NetBSD$ */
+/* $NetBSD: grf_ultms.c,v 1.2.2.3 2002/05/28 19:37:34 tv Exp $ */
 
 /* Generated from
    NetBSD: grf_ultms.g,v 1.6 2002/01/26 13:40:55 aymeric Exp 
 */
+
 /*
  * This file was automatically created from
  * a TMS34010 assembler output file.
