@@ -1,4 +1,4 @@
-/*	$NetBSD: cd1190reg.h,v 1.1 1998/05/20 14:47:36 pk Exp $	*/
+/*	$NetBSD: cd1190reg.h,v 1.2 1998/05/20 16:06:56 pk Exp $	*/
 /*
  * Copyright (c) 1998 Iain Hibbert.
  * All rights reserved.
@@ -132,7 +132,7 @@
 
 #define CD1190_SCR_STATUS	(CD1190_SCR_IP3 | CD1190_SCR_IP2 | CD1190_SCR_IP1)
 
-/* Outout signals - Active High? */
+/* Outout signals - Active High?
  *
  *	IP3 	-	SLIN
  *	IP2 	-	*INIT / *RESET
