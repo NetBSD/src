@@ -2,7 +2,7 @@
 # Distribution kernel (any model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.34 1998/11/27 00:09:33 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.35 1999/02/07 07:14:21 jonathan Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -67,7 +67,6 @@ options 	QUOTA		# UFS quotas
 options 	INET		# Internet protocols
 options 	"TCP_COMPAT_42"	# compatibility with 4.2BSD TCP/IP
 options 	GATEWAY		# IP packet forwarding
-options 	MULTICAST	# Multicast support
 #options 	MROUTING	# Multicast routing support
 #options 	ISO		# OSI networking
 #options 	TPIP		# TPIP
