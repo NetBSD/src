@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.116 2003/04/08 04:31:24 kml Exp $	*/
+/*	$NetBSD: wi.c,v 1.117 2003/05/13 06:15:47 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.116 2003/04/08 04:31:24 kml Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.117 2003/05/13 06:15:47 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1948,18 +1948,16 @@ wi_cmd(struct wi_softc *sc, int cmd, int val0, int val1, int val2)
 	int i, status;
 
 	/* wait for the busy bit to clear */
-	for (i = 0; ; i++) {
+	for (i = 500; i > 0; i--) {	/* 5s */
 		if ((CSR_READ_2(sc, WI_COMMAND) & WI_CMD_BUSY) == 0)
 			break;
-		if (i == WI_TIMEOUT) {
-			printf("%s: wi_cmd: BUSY did not clear, "
-			    "cmd=0x%x, prev=0x%x\n", sc->sc_dev.dv_xname,
-			    cmd, CSR_READ_2(sc, WI_COMMAND));
-			return EIO;
-		}
-		DELAY(1);
+		DELAY(10*1000);	/* 10 m sec */
 	}
-
+	if (i == 0) {
+		printf("%s: wi_cmd: busy bit won't clear.\n",
+		    sc->sc_dev.dv_xname);
+		return(ETIMEDOUT);
+  	}
 	CSR_WRITE_2(sc, WI_PARAM0, val0);
 	CSR_WRITE_2(sc, WI_PARAM1, val1);
 	CSR_WRITE_2(sc, WI_PARAM2, val2);
