@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV,v 1.5 2002/06/19 15:00:07 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.6 2002/07/11 00:19:08 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -106,6 +106,7 @@
 #	tun*	network tunnel driver
 #	uk*	unknown SCSI device
 #	systrace syscall tracer
+#	kttcp	kernel ttcp helper
 
 dialin=0
 dialout=524288
@@ -138,6 +139,7 @@ all)
 	sh $0 altq
 	sh $0 clockctl
 	sh $0 systrace
+	sh $0 kttcp
 	;;
 
 minimal)
@@ -617,6 +619,12 @@ systrace)
 	rm -f systrace
 	mknod systrace c 70 0
 	chmod 644 systrace
+	;;
+
+kttcp)
+	rm -f kttcp
+	mknod kttcp c 71 0
+	chmod 600 kttcp
 	;;
 
 local)
