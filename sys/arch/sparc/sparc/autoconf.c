@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.126 1999/11/13 00:32:13 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.127 2000/01/09 20:53:30 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -576,8 +576,11 @@ bootpath_fake(bp, cp)
 		/*
 		 * Assume `fd(c,u,p)' means:
 		 * partition `p' on floppy drive `u' on controller `c'
+		 * Yet, for the purpose of determining the boot device,
+		 * we support only one controller, so we encode the
+		 * bootpath component by unit number, as on a v2 prom.
 		 */
-		BP_APPEND(bp, "fd", v0val[0], v0val[1], v0val[2]);
+		BP_APPEND(bp, "fd", -1, v0val[1], v0val[2]);
 		return;
 	}
 
@@ -1695,6 +1698,7 @@ device_register(dev, aux)
 	    strcmp(dvname, "espdma") == 0 ||
 	    strcmp(dvname, "esp") == 0 ||
 	    strcmp(dvname, "isp") == 0 ||
+	    strcmp(dvname, "fdc") == 0 ||
 	    strcmp(dvname, "xdc") == 0 ||
 	    strcmp(dvname, "xyc") == 0 ) {
 		/*
@@ -1702,6 +1706,19 @@ device_register(dev, aux)
 		 * parameters and advance boot path on match.
 		 */
 		if (instance_match(dev, aux, bp) != 0) {
+			if (strcmp(dvname, "fdc") == 0) {
+				/*
+				 * XXX - HACK ALERT
+				 * Sun PROMs don't really seem to support
+				 * multiple floppy drives. So we aren't
+				 * going to, either.  Since the PROM
+				 * only provides a node for the floppy
+				 * controller, we sneakily add a drive to
+				 * the bootpath here.
+				 */
+				strcpy(bootpath[nbootpath].name, "fd");
+				nbootpath++;
+			}
 			altbootpath_store(1, bp + 1);
 			return;
 		}
@@ -1767,6 +1784,16 @@ device_register(dev, aux)
 			nail_bootdev(dev, bp);
 			return;
 		}
+	} else if (strcmp("fd", dvname) == 0) {
+		/*
+		 * Sun PROMs don't really seem to support multiple
+		 * floppy drives. So we aren't going to, either.
+		 * If we get this far, the `fdc controller' has
+		 * already matched and has appended a fake `fd' entry
+		 * to the bootpath, so just accept that as the boot device.
+		 */
+		nail_bootdev(dev, bp);
+		return;
 	} else {
 		/*
 		 * Generic match procedure.
