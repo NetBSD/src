@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcvideo.c,v 1.4 2000/06/26 04:55:33 simonb Exp $	*/
+/*	$NetBSD: vidcvideo.c,v 1.5 2000/06/27 09:09:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -60,8 +60,6 @@
 /*#include <sys/user.h>*/
 #include <sys/syslog.h>
 /*#include <sys/resourcevar.h>*/
-/*#include <vm/vm.h>*/
-/*#include <vm/vm_kern.h>*/
 
 #include <machine/cpu.h>
 #include <machine/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.27 2000/06/25 16:00:43 ragge Exp $ */
+/*	$NetBSD: vsbus.c,v 1.28 2000/06/27 09:09:53 mrg Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -48,7 +48,6 @@
 #include <sys/stat.h>
 
 #include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #define _VAX_BUS_DMA_PRIVATE
 #include <machine/bus.h>
