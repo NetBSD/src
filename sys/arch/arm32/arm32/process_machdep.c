@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.8 1998/02/22 23:45:13 mark Exp $ */
+/* $NetBSD: process_machdep.c,v 1.9 1998/04/01 23:05:28 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster.  All rights reserved.
@@ -68,7 +68,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 
@@ -112,6 +111,7 @@ process_read_fpregs(p, regs)
 	arm_fpe_getcontext(p, regs);
 	return(0);
 #else	/* ARMFPE */
+	/* No hardware FP support */
 	bzero(regs, sizeof(struct fpreg));
 	return(0);
 #endif	/* ARMFPE */
@@ -143,6 +143,7 @@ process_write_fpregs(p, regs)
 	arm_fpe_setcontext(p, regs);
 	return(0);
 #else	/* ARMFPE */
+	/* No hardware FP support */
 	return(0);
 #endif	/* ARMFPE */
 }
