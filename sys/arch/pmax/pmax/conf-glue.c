@@ -99,10 +99,14 @@ void	noattach __P((struct device *parent, struct device *self, void *aux));
 
 /* placeholder definitions for new-style scsi bus/disk/tape drivers */
 
-struct cfdriver oldscsibuscd = {NULL, "", nomatch, noattach, DV_DULL, 0, 0};
+struct cfattach oldscsibus_ca = { 0, nomatch, noattach };
+struct cfdriver oldscsibus_cd = {NULL, "", DV_DULL };
 
-struct cfdriver rzcd	= {NULL, "rz", nomatch, noattach, DV_DULL, 0, 0};
-struct cfdriver tzcd	= {NULL, "tz", nomatch, noattach, DV_DULL, 0, 0};
+struct cfattach rz_ca = { 0, nomatch, noattach };
+struct cfdriver rz_cd	= { NULL, "rz", DV_DULL };
+
+struct cfattach tz_ca = { 0, nomatch, noattach };
+struct cfdriver tz_cd	= { NULL, "tz", DV_DULL} ;
 
 
 #define MAX_SCSI 4
