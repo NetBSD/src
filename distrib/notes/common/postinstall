@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.46 2002/07/26 00:11:29 lukem Exp $
+.\"	$NetBSD: postinstall,v 1.47 2002/09/28 23:07:31 elric Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,6 +265,17 @@ If you're using the machine in a networked environment,
 you should create an account for yourself (see below) and protect it and the
 .Dq root
 account with good passwords.
+By default, root login from the network is disabled (even via
+.Xr ssh 1 ).
+One way to become root over the network is to log in as a different
+user that belongs to group
+.Dq wheel
+(see
+.Xr group 5 )
+and use
+.Xr su 1
+to become root.
+.Pp
 Unless you have connected an unusual terminal device as the console
 you can just press
 .Key RETURN
