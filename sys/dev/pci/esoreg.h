@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.2 1999/08/14 22:42:16 kleink Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.3 1999/09/23 11:50:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -93,6 +93,10 @@
 #define ESO_SB_RBSR		0x0e	/* [R]  Read Buffer Status Register */
 #define  ESO_SB_RBSR_RDAV	0x80	 /* Data available in RDR */
 #define ESO_SB_PIOAFR		0x0f	/* [RW] PIO Access to FIFO Register */
+
+/* Game Port Device ports */
+#define ESO_GAME_JSTK_OFFSET	0x01	/* Offset from base address */
+#define ESO_GAME_JSTK_SIZE	0x01	/* Size of region */
 
 /* (Audio 1) DMAC Device ports */
 #define ESO_DMAC_DMAA		0x00	/* [RW] DMA Current/Base Address */
