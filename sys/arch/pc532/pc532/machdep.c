@@ -63,6 +63,8 @@ static char rcsid[] = "/b/source/CVS/src/sys/arch/pc532/pc532/machdep.c,v 1.2 19
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/mount.h>
+#include <sys/syscallargs.h>
 
 #include <dev/cons.h>
 
@@ -607,15 +609,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-struct sigreturn_args {
-	struct sigcontext *sigcntxp;
-};
-
 int
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct sigreturn_args *uap;
-	int *retval;
+	struct sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap;
+	register_t *retval;
 {
 	register struct sigcontext *scp;
 	register struct sigframe *fp;
@@ -812,7 +812,7 @@ setregs(p, entry, stack, retval)
 	struct proc *p;
 	u_long entry;
 	u_long stack;
-	int *retval;
+	register_t *retval;
 {
 	struct on_stack *r = (struct on_stack *)p->p_md.md_regs;
 	int i;
@@ -1102,8 +1102,11 @@ void reboot_cpu()
 int
 sysarch(p, uap, retval)
 	struct proc *p;
-	void  *uap;
-	int *retval;
+	struct sysarch_args /* {
+		syscallarg(int) op;
+		syscallarg(char *) parms;
+	} */ *uap;
+	register_t *retval;
 {
 	return ENOSYS;
 }

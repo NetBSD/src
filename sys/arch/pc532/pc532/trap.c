@@ -433,25 +433,25 @@ if (code == -1 && p->p_pid == 1) {
         else
                 callp = &sysent[code];
 
-	if ((i = callp->sy_narg * sizeof (int)) &&
+	if ((i = callp->sy_argsize) &&
 	    (error = copyin(params, (caddr_t)args, (u_int)i))) {
 		frame.sf_reg[REG_R0] = error;
 		frame.sf_psr |= PSL_C;	
 #ifdef SYSCALL_DEBUG
-		scdebug_call(p, code, callp->sy_narg, args);
+		scdebug_call(p, code, callp->sy_narg, i, args);
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSCALL))
-			ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
+			ktrsyscall(p->p_tracep, code, callp->sy_narg, i, &args);
 #endif
 		goto done;
 	}
 #ifdef SYSCALL_DEBUG
-	scdebug_call(p, code, callp->sy_narg, args);
+	scdebug_call(p, code, callp->sy_narg, i, args);
 #endif
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p->p_tracep, code, callp->sy_narg, &args);
+		ktrsyscall(p->p_tracep, code, callp->sy_narg, i, &args);
 #endif
 	rval[0] = 0;
 	rval[1] = 0;
