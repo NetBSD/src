@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.7 2001/02/05 01:45:32 christos Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.8 2001/02/19 23:03:45 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,8 +72,6 @@ int	main __P((int, char **));
 void	usage __P((void));
 int	verify_track(int, int, int, struct fdformat_parms *, char *);
 
-extern char *__progname;
-
 int
 confirm(int def)
 {
@@ -119,7 +117,8 @@ verify_track(int fd, int cyl, int trk, struct fdformat_parms *parms, char *buf)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", __progname);
+
+	fprintf(stderr, "Usage: %s [-f device] [-t type] [-n] [-B nbps] [-S nspt]\n\t[-T ntrk] [-C ncyl] [-P stepspercyl] [-G gaplen]\n\t[-F fillbyte] [-X xfer_rate] [-I interleave]\n", getprogname());
 	exit(1);
 }
 

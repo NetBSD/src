@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.11 2000/12/16 01:36:00 lukem Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.12 2001/02/19 23:03:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.11 2000/12/16 01:36:00 lukem Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.12 2001/02/19 23:03:45 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -134,7 +134,6 @@ int     fd = -1;
 int     msf = 1;
 
 /* for histedit */
-extern char *__progname;	/* from crt0.o */
 History *hist;
 HistEvent he;
 EditLine *elptr;
@@ -263,7 +262,7 @@ main(argc, argv)
 
 	hist = history_init();
 	history(hist, &he, H_SETSIZE, 100);	/* 100 elt history buffer */
-	elptr = el_init(__progname, stdin, stdout, stderr);
+	elptr = el_init(getprogname(), stdin, stdout, stderr);
 	el_set(elptr, EL_EDITOR, "emacs");
 	el_set(elptr, EL_PROMPT, prompt);
 	el_set(elptr, EL_HIST, history, hist);

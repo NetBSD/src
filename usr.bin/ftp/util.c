@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.104 2001/02/19 20:02:42 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.105 2001/02/19 23:03:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.104 2001/02/19 20:02:42 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.105 2001/02/19 23:03:46 cgd Exp $");
 #endif /* not lint */
 
 /*
@@ -1194,7 +1194,7 @@ controlediting(void)
 		HistEvent ev;
 		int editmode;
 
-		el = el_init(__progname, stdin, ttyout, stderr);
+		el = el_init(getprogname(), stdin, ttyout, stderr);
 		/* init editline */
 		hist = history_init();		/* init the builtin history */
 		history(hist, &ev, H_SETSIZE, 100);/* remember 100 events */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rusers.c,v 1.20 2001/01/16 02:43:37 cgd Exp $	*/
+/*	$NetBSD: rusers.c,v 1.21 2001/02/19 23:03:51 cgd Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rusers.c,v 1.20 2001/01/16 02:43:37 cgd Exp $");
+__RCSID("$NetBSD: rusers.c,v 1.21 2001/02/19 23:03:51 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -57,7 +57,6 @@ __RCSID("$NetBSD: rusers.c,v 1.20 2001/01/16 02:43:37 cgd Exp $");
 
 
 #define MAX_INT 0x7fffffff
-extern char *__progname;	/* from crt0.o */
 
 struct timeval timeout = { 25, 0 };
 int longopt;
@@ -234,7 +233,7 @@ onehost(char *host)
 
 	rusers_clnt = clnt_create(host, RUSERSPROG, RUSERSVERS_IDLE, "udp");
 	if (rusers_clnt == NULL) {
-		clnt_pcreateerror(__progname);
+		clnt_pcreateerror(getprogname());
 		exit(1);
 	}
 
@@ -270,7 +269,7 @@ allhosts(void)
 void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-la] [hosts ...]\n", __progname);
+	fprintf(stderr, "Usage: %s [-la] [hosts ...]\n", getprogname());
 	exit(1);
 }
 
