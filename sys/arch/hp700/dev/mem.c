@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.9 2003/11/23 17:09:29 chs Exp $	*/
+/*	$NetBSD: mem.c,v 1.10 2004/06/11 13:59:40 chs Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.9 2003/11/23 17:09:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.10 2004/06/11 13:59:40 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,8 +189,8 @@ memattach(struct device *parent, struct device *self, void *aux)
 	struct pdc_iodc_minit pdc_minit PDC_ALIGNMENT;
 	struct confargs *ca = aux;
 	struct mem_softc *sc = (struct mem_softc *)self;
-	int err;
-	int pagezero_cookie;
+	int s, err, pagezero_cookie;
+	char bits[128];
 
 	printf (":");
 
@@ -204,9 +204,6 @@ memattach(struct device *parent, struct device *self, void *aux)
 
 		/* XXX other values seem to blow it up */
 		if (sc->sc_vp->vi_status.hw_rev == 0) {
-			int s;
-			char bits[128];
-
 			bitmask_snprintf(VI_CTRL, VIPER_BITS, bits, 
 			    sizeof(bits));
 			printf (" viper rev %x, ctrl %s",
@@ -248,7 +245,9 @@ memattach(struct device *parent, struct device *self, void *aux)
 	    HPPA_PA_SPEC_LETTER(hppa_cpu_info->hppa_cpu_info_pa_spec) == 'e') {
 		sc->sc_l2 = (struct l2_mioc *)ca->ca_hpa;
 #ifdef DEBUG
-		printf(", sltcv %b", sc->sc_l2->sltcv, SLTCV_BITS);
+		bitmask_snprintf(sc->sc_l2->sltcv, SLTCV_BITS, bits,
+				 sizeof(bits));
+		printf(", sltcv %s", bits);
 #endif
 		/* sc->sc_l2->sltcv |= SLTCV_UP4COUT; */
 		if (sc->sc_l2->sltcv & SLTCV_ENABLE) {
