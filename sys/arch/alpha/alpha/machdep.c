@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.1 1996/12/07 02:08:49 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.2 1996/12/07 23:06:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1388,8 +1388,10 @@ setregs(p, pack, stack, retval)
 	tfp->tf_regs[FRAME_PS] = ALPHA_PSL_USERSET;
 	tfp->tf_regs[FRAME_PC] = pack->ep_entry & ~3;
 
-	tfp->tf_regs[FRAME_A0] = stack;
-	/* a1 and a2 already zeroed */
+	tfp->tf_regs[FRAME_A0] = stack;			/* a0 = sp */
+	tfp->tf_regs[FRAME_A1] = 0;			/* a1 = rtld cleanup */
+	tfp->tf_regs[FRAME_A2] = 0;			/* a2 = rtld object */
+	tfp->tf_regs[FRAME_A3] = (u_int64_t)PS_STRINGS;	/* a3 = ps_strings */
 	tfp->tf_regs[FRAME_T12] = tfp->tf_regs[FRAME_PC];	/* a.k.a. PV */
 
 	p->p_md.md_flags &= ~MDP_FPUSED;
