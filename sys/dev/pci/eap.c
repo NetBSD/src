@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.19 1998/11/25 22:17:07 augustss Exp $	*/
+/*	$NetBSD: eap.c,v 1.20 1999/01/08 19:22:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -803,10 +803,12 @@ eap_trigger_output(addr, start, end, blksize, intr, arg, param)
 	}
 
 	DPRINTF(("eap_trigger_output: DAC2_ADDR=0x%x, DAC2_SIZE=0x%x\n",
-		 (int)DMAADDR(p), EAP_SET_SIZE(0, ((end - start) >> 2) - 1)));
+		 (int)DMAADDR(p), 
+		 EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
 	EWRITE4(sc, EAP_MEMPAGE, EAP_DAC_PAGE);
 	EWRITE4(sc, EAP_DAC2_ADDR, DMAADDR(p));
-	EWRITE4(sc, EAP_DAC2_SIZE, EAP_SET_SIZE(0, ((end - start) >> 2) - 1));
+	EWRITE4(sc, EAP_DAC2_SIZE, 
+		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
 	EWRITE2(sc, EAP_DAC2_CSR, (blksize >> sampshift) - 1);
 	mode = EREAD4(sc, EAP_ICSC) & ~EAP_DAC2_EN;
@@ -863,10 +865,12 @@ eap_trigger_input(addr, start, end, blksize, intr, arg, param)
 	}
 
 	DPRINTF(("eap_trigger_input: ADC_ADDR=0x%x, ADC_SIZE=0x%x\n",
-		 (int)DMAADDR(p), EAP_SET_SIZE(0, ((end - start) >> 2) - 1)));
+		 (int)DMAADDR(p), 
+		 EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1)));
 	EWRITE4(sc, EAP_MEMPAGE, EAP_ADC_PAGE);
 	EWRITE4(sc, EAP_ADC_ADDR, DMAADDR(p));
-	EWRITE4(sc, EAP_ADC_SIZE, EAP_SET_SIZE(0, ((end - start) >> 2) - 1));
+	EWRITE4(sc, EAP_ADC_SIZE, 
+		EAP_SET_SIZE(0, (((char *)end - (char *)start) >> 2) - 1));
 
 	EWRITE2(sc, EAP_ADC_CSR, (blksize >> sampshift) - 1);
 	mode = EREAD4(sc, EAP_ICSC) & ~EAP_ADC_EN;

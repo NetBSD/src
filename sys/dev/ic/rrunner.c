@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.7 1998/11/20 04:12:58 kml Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.8 1999/01/08 19:22:35 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -3737,7 +3737,7 @@ esh_dma_sync(sc, mem, start, end, entries, size, do_equal, ops)
 	int do_equal;
 	int ops;
 {
-	int offset = mem - (void *) sc->sc_dma_addr;
+	int offset = (char *)mem - (char *)sc->sc_dma_addr;
 
 	if (start < end) {
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_dma,
