@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.29 2000/06/28 17:13:02 mrg Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.30 2000/11/14 18:21:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -79,7 +79,7 @@ enum _pdq_type_t {
 #define	PDQ_OS_PREFIX			"%s%d: "
 #define	PDQ_OS_PREFIX_ARGS		pdq->pdq_os_name, pdq->pdq_unit
 #endif
-#if defined(__FreeBSD__) && BSD >= 199506
+#if (defined(__FreeBSD__) && BSD >= 199506) || defined(__NetBSD__)
 #define	PDQ_OS_PAGESIZE			PAGE_SIZE
 #else
 #define	PDQ_OS_PAGESIZE			NBPG
