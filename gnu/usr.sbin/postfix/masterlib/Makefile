@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2000/04/30 21:22:03 perry Exp $
+#	$NetBSD: Makefile,v 1.2 2001/03/13 18:13:20 itojun Exp $
 
 LIB=	master
 
-DIST=	${.CURDIR}/../../../dist/postfix/${LIB}
+DIST=	${.CURDIR}/../../../dist/postfix/src/${LIB}
 .PATH:	${DIST}
 
 SRCS=	single_server.c multi_server.c trigger_server.c master_proto.c
