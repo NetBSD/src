@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.60 1998/10/06 00:20:45 matt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.61 1998/10/07 23:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,6 +131,7 @@ int	tcbhashsize = TCBHASHSIZE;
 int	tcp_freeq __P((struct tcpcb *));
 
 struct pool tcpcb_pool;
+struct pool tcp_template_pool;
 
 /*
  * Tcp initialization
@@ -141,6 +142,8 @@ tcp_init()
 
 	pool_init(&tcpcb_pool, sizeof(struct tcpcb), 0, 0, 0, "tcpcbpl",
 	    0, NULL, NULL, M_PCB);
+	pool_init(&tcp_template_pool, sizeof(struct tcpiphdr), 0, 0, 0,
+	    "tcptmpl", 0, NULL, NULL, M_MBUF);
 	in_pcbinit(&tcbtable, tcbhashsize, tcbhashsize);
 	LIST_INIT(&tcp_delacks);
 	if (max_protohdr < sizeof(struct tcpiphdr))
@@ -166,10 +169,9 @@ tcp_template(tp)
 	register struct tcpiphdr *n;
 
 	if ((n = tp->t_template) == 0) {
-		MALLOC(n, struct tcpiphdr *, sizeof (struct tcpiphdr),
-		    M_MBUF, M_NOWAIT);
+		n = pool_get(&tcp_template_pool, PR_NOWAIT);
 		if (n == NULL)
-			return (0);
+			return (NULL);
 	}
 	bzero(n->ti_x1, sizeof n->ti_x1);
 	n->ti_pr = IPPROTO_TCP;
@@ -431,7 +433,7 @@ tcp_close(tp)
 	TCP_CLEAR_DELACK(tp);
 
 	if (tp->t_template)
-		FREE(tp->t_template, M_MBUF);
+		pool_put(&tcp_template_pool, tp->t_template);
 	pool_put(&tcpcb_pool, tp);
 	inp->inp_ppcb = 0;
 	soisdisconnected(so);
