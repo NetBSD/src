@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.17 2001/06/01 23:26:31 jdolecek Exp $	 */
+/*	$NetBSD: exec.c,v 1.18 2003/02/27 12:22:52 hannken Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -177,7 +177,7 @@ exec_netbsd(file, loadaddr, boothowto)
 	BI_ADD(&btinfo_symtab, BTINFO_SYMTAB, sizeof(struct btinfo_symtab));
 
 	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
-		i386_trunc_page(basemem*1024));
+		x86_trunc_page(basemem*1024));
 	panic("exec returned");
 
 out:
