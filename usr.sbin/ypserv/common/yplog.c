@@ -1,4 +1,4 @@
-/*	$NetBSD: yplog.c,v 1.2 1997/04/17 17:46:16 christos Exp $	*/
+/*	$NetBSD: yplog.c,v 1.3 1997/10/07 14:39:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor
@@ -81,7 +81,7 @@ yplog(fmt, va_alist)
 
 void
 vyplog(fmt, ap)
-	register const char *fmt;
+	const char *fmt;
 	va_list ap;
 {
         time_t t;
