@@ -1,7 +1,7 @@
-/*	$NetBSD: rsaref_link.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $	*/
+/*	$NetBSD: rsaref_link.c,v 1.1.1.1.8.1 2001/01/28 15:52:21 he Exp $	*/
 
 #ifdef RSAREF
-static const char rcsid[] = "$Header: /cvsroot/src/dist/bind/lib/dst/Attic/rsaref_link.c,v 1.1.1.1 1999/11/20 18:54:07 veego Exp $";
+static const char rcsid[] = "Header: /proj/cvs/isc/bind8/src/lib/dst/rsaref_link.c,v 1.7 2000/07/17 07:36:53 vixie Exp";
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -708,6 +708,7 @@ dst_rsaref_init_random_struct(R_RANDOM_STRUCT * randomstruct)
 	 * This must be the FIRST CALL
 	 */
 	gettimeofday(&tv, 0);
+	assert(tv.tv_usec >= 0 && tv.tv_usec < 1000000);
 	R_RandomUpdate(randomstruct, (u_char *) &tv,
 		       sizeof(struct timeval));
 

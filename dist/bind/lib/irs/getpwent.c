@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.1.1.1 1999/11/20 18:54:09 veego Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.1.1.1.8.1 2001/01/28 15:52:22 he Exp $	*/
 
 /*
  * Copyright (c) 1996,1999 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: getpwent.c,v 1.20 1999/10/13 16:39:31 vixie Exp";
+static const char rcsid[] = "Id: getpwent.c,v 1.21 2000/02/21 21:40:56 vixie Exp";
 #endif
 
 /* Imports */
@@ -99,7 +99,7 @@ void
 endpwent() {
 	struct net_data *net_data = init();
 
-	return (endpwent_p(net_data));
+	endpwent_p(net_data);
 }
 
 /* Shared private. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: logging_p.h,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: logging_p.h,v 1.1.1.1.8.1 2001/01/28 15:52:23 he Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 by Internet Software Consortium.
@@ -26,6 +26,8 @@ typedef struct log_file_desc {
 	FILE *stream;
 	unsigned int versions;
 	unsigned long max_size;
+	uid_t owner;
+	gid_t group;
 } log_file_desc;
 
 typedef union log_output {

@@ -1,11 +1,11 @@
-/*	$NetBSD: pathtemplate.h,v 1.1.1.1 1999/11/20 18:54:00 veego Exp $	*/
+/*	$NetBSD: pathtemplate.h,v 1.1.1.1.8.1 2001/01/28 15:52:19 he Exp $	*/
 
 /*
- *	Id: pathtemplate.h,v 8.4 1999/01/08 19:28:30 vixie Exp
+ *	Id: pathtemplate.h,v 8.6 2000/04/21 06:54:15 vixie Exp
  */
 
 /*
- * Copyright (c) 1996-1999 by Internet Software Consortium.
+ * Copyright (c) 1996-2000 by Internet Software Consortium.
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -44,7 +44,11 @@
 #endif
 
 #ifndef _PATH_NDCSOCK
+#ifdef NEED_SECURE_DIRECTORY
+#define _PATH_NDCSOCK	"%DESTRUN%/ndc.d/ndc"
+#else
 #define _PATH_NDCSOCK	"%DESTRUN%/ndc"
+#endif
 #endif
 
 #ifndef _PATH_STATS

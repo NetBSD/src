@@ -1,4 +1,4 @@
-/*	$NetBSD: irp.c,v 1.1.1.1 1999/11/20 18:54:08 veego Exp $	*/
+/*	$NetBSD: irp.c,v 1.1.1.1.8.1 2001/01/28 15:52:22 he Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 by Internet Software Consortium.
@@ -18,7 +18,7 @@
  */
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: irp.c,v 8.5 1999/10/13 17:11:18 vixie Exp";
+static const char rcsid[] = "Id: irp.c,v 8.6 2000/02/04 08:28:33 vixie Exp";
 #endif
 
 /* Imports */
@@ -153,7 +153,9 @@ irs_irp_connect(struct irp_p *pvt) {
 	int flags;
 	struct sockaddr *addr;
 	struct sockaddr_in iaddr;
+#ifndef NO_SOCKADDR_UN
 	struct sockaddr_un uaddr;
+#endif
 	long ipaddr;
 	const char *irphost;
 	int code;
@@ -165,7 +167,9 @@ irs_irp_connect(struct irp_p *pvt) {
 		return (-1);
 	}
 
+#ifndef NO_SOCKADDR_UN
 	memset(&uaddr, 0, sizeof uaddr);
+#endif
 	memset(&iaddr, 0, sizeof iaddr);
 
 	irphost = getenv(IRPD_HOST_ENV);
@@ -173,6 +177,7 @@ irs_irp_connect(struct irp_p *pvt) {
 		irphost = "127.0.0.1";
 	}
 
+#ifndef NO_SOCKADDR_UN
 	if (irphost[0] == '/') {
 		addr = (struct sockaddr *)&uaddr;
 		strncpy(uaddr.sun_path, irphost, sizeof uaddr.sun_path);
@@ -181,7 +186,9 @@ irs_irp_connect(struct irp_p *pvt) {
 #ifdef HAVE_SA_LEN
 		uaddr.sun_len = socklen;
 #endif
-	} else {
+	} else
+#endif
+	{
 		if (inet_pton(AF_INET, irphost, &ipaddr) != 1) {
 			errno = EADDRNOTAVAIL;
 			perror("inet_pton");
