@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_usrreq.c,v 1.55 2000/10/06 10:21:06 enami Exp $	*/
+/*	$NetBSD: tcp_usrreq.c,v 1.56 2000/10/17 03:06:44 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -187,9 +187,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_CONTROL) {
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			return (in_control(so, (long)m, (caddr_t)nam,
 			    (struct ifnet *)control, p));
+#endif
 #ifdef INET6
 		case PF_INET6:
 			return (in6_control(so, (long)m, (caddr_t)nam,
@@ -202,10 +204,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	if (req == PRU_PURGEIF) {
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			in_purgeif((struct ifnet *)control);
 			in_pcbpurgeif(&tcbtable, (struct ifnet *)control);
 			break;
+#endif
 #ifdef INET6
 		case PF_INET6:
 			in6_purgeif((struct ifnet *)control);
@@ -220,12 +224,14 @@ tcp_usrreq(so, req, m, nam, control, p)
 
 	s = splsoftnet();
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -238,6 +244,8 @@ tcp_usrreq(so, req, m, nam, control, p)
 	}
 
 #ifdef DIAGNOSTIC
+	if (inp && in6p)
+		panic("tcp_usrreq: both inp and in6p set to non-NULL");
 	if (req != PRU_SEND && req != PRU_SENDOOB && control)
 		panic("tcp_usrreq: unexpected control mbuf");
 #endif
@@ -255,6 +263,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 		error = EINVAL;
 		goto release;
 	}
+#ifdef INET
 	if (inp) {
 		tp = intotcpcb(inp);
 		/* WHAT IF TP IS 0? */
@@ -263,8 +272,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 #endif
 		ostate = tp->t_state;
 	}
+#endif
 #ifdef INET6
-	else if (in6p) {
+	if (in6p) {
 		tp = in6totcpcb(in6p);
 		/* WHAT IF TP IS 0? */
 #ifdef KPROF
@@ -312,9 +322,11 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 */
 	case PRU_BIND:
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			error = in_pcbbind(inp, nam, p);
 			break;
+#endif
 #ifdef INET6
 		case PF_INET6:
 			error = in6_pcbbind(in6p, nam, p);
@@ -330,14 +342,16 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * Prepare to accept connections.
 	 */
 	case PRU_LISTEN:
+#ifdef INET
 		if (inp && inp->inp_lport == 0) {
 			error = in_pcbbind(inp, (struct mbuf *)0,
 			    (struct proc *)0);
 			if (error)
 				break;
 		}
+#endif
 #ifdef INET6
-		else if (in6p && in6p->in6p_lport == 0) {
+		if (in6p && in6p->in6p_lport == 0) {
 			error = in6_pcbbind(in6p, (struct mbuf *)0,
 			    (struct proc *)0);
 			if (error)
@@ -355,6 +369,7 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * Send initial segment on connection.
 	 */
 	case PRU_CONNECT:
+#ifdef INET
 		if (inp) {
 			if (inp->inp_lport == 0) {
 				error = in_pcbbind(inp, (struct mbuf *)0,
@@ -364,8 +379,9 @@ tcp_usrreq(so, req, m, nam, control, p)
 			}
 			error = in_pcbconnect(inp, nam);
 		}
+#endif
 #ifdef INET6
-		else if (in6p) {
+		if (in6p) {
 			if (in6p->in6p_lport == 0) {
 				error = in6_pcbbind(in6p, (struct mbuf *)0,
 				    (struct proc *)0);
@@ -382,10 +398,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 			break;
 		tp->t_template = tcp_template(tp);
 		if (tp->t_template == 0) {
+#ifdef INET
 			if (inp)
 				in_pcbdisconnect(inp);
+#endif
 #ifdef INET6
-			else if (in6p)
+			if (in6p)
 				in6_pcbdisconnect(in6p);
 #endif
 			error = ENOBUFS;
@@ -432,10 +450,12 @@ tcp_usrreq(so, req, m, nam, control, p)
 	 * of the peer, storing through addr.
 	 */
 	case PRU_ACCEPT:
+#ifdef INET
 		if (inp)
 			in_setpeeraddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setpeeraddr(in6p, nam);
 #endif
 		break;
@@ -532,19 +552,23 @@ tcp_usrreq(so, req, m, nam, control, p)
 		break;
 
 	case PRU_SOCKADDR:
+#ifdef INET
 		if (inp)
 			in_setsockaddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setsockaddr(in6p, nam);
 #endif
 		break;
 
 	case PRU_PEERADDR:
+#ifdef INET
 		if (inp)
 			in_setpeeraddr(inp, nam);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_setpeeraddr(in6p, nam);
 #endif
 		break;
@@ -590,12 +614,14 @@ tcp_ctloutput(op, so, level, optname, mp)
 
 	s = splsoftnet();
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		inp = sotoinpcb(so);
 #ifdef INET6
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		inp = NULL;
@@ -619,9 +645,11 @@ tcp_ctloutput(op, so, level, optname, mp)
 	}
 	if (level != IPPROTO_TCP) {
 		switch (family) {
+#ifdef INET
 		case PF_INET:
 			error = ip_ctloutput(op, so, level, optname, mp);
 			break;
+#endif
 #ifdef INET6
 		case PF_INET6:
 			error = ip6_ctloutput(op, so, level, optname, mp);
@@ -726,6 +754,7 @@ tcp_attach(so)
 			return (error);
 	}
 	switch (family) {
+#ifdef INET
 	case PF_INET:
 		error = in_pcballoc(so, &tcbtable);
 		if (error)
@@ -735,6 +764,7 @@ tcp_attach(so)
 		in6p = NULL;
 #endif
 		break;
+#endif
 #ifdef INET6
 	case PF_INET6:
 		error = in6_pcballoc(so, &tcb6);
@@ -748,6 +778,7 @@ tcp_attach(so)
 		return EAFNOSUPPORT;
 	}
 #ifdef IPSEC
+#ifdef INET
 	if (inp) {
 		error = ipsec_init_policy(so, &inp->inp_sp);
 		if (error != 0) {
@@ -755,8 +786,9 @@ tcp_attach(so)
 			return (error);
 		}
 	}
+#endif
 #ifdef INET6
-	else if (in6p) {
+	if (in6p) {
 		error = ipsec_init_policy(so, &in6p->in6p_sp);
 		if (error != 0) {
 			in6_pcbdetach(in6p);
@@ -778,10 +810,12 @@ tcp_attach(so)
 		int nofd = so->so_state & SS_NOFDREF;	/* XXX */
 
 		so->so_state &= ~SS_NOFDREF;	/* don't free the socket yet */
+#ifdef INET
 		if (inp)
 			in_pcbdetach(inp);
+#endif
 #ifdef INET6
-		else if (in6p)
+		if (in6p)
 			in6_pcbdetach(in6p);
 #endif
 		so->so_state |= nofd;

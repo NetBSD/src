@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.118 2000/10/17 02:57:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.119 2000/10/17 03:06:42 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -617,6 +617,7 @@ tcp_input(m, va_alist)
 	ip6 = NULL;
 #endif
 	switch (ip->ip_v) {
+#ifdef INET
 	case 4:
 		af = AF_INET;
 		iphlen = sizeof(struct ip);
@@ -657,6 +658,7 @@ tcp_input(m, va_alist)
 		len = ip->ip_len;
 		tlen = len - toff;
 		break;
+#endif
 #ifdef INET6
 	case 6:
 		ip = NULL;
@@ -747,9 +749,11 @@ tcp_input(m, va_alist)
 				return;
 			}
 			switch (af) {
+#ifdef INET
 			case AF_INET:
 				ip = mtod(m, struct ip *);
 				break;
+#endif
 #ifdef INET6
 			case AF_INET6:
 				ip6 = mtod(m, struct ip6_hdr *);
@@ -800,6 +804,7 @@ findpcb:
 	in6p = NULL;
 #endif
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		inp = in_pcblookup_connect(&tcbtable, ip->ip_src, th->th_sport,
 		    ip->ip_dst, th->th_dport);
@@ -877,6 +882,7 @@ findpcb:
 #endif
 #endif /*IPSEC*/
 		break;
+#endif /*INET*/
 #if defined(INET6) && !defined(TCP6)
 	case AF_INET6:
 	    {
@@ -943,6 +949,7 @@ findpcb:
 	 * Checksum extended TCP header and data.
 	 */
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 #ifndef PULLDOWN_TEST
 	    {
@@ -963,6 +970,7 @@ findpcb:
 		}
 #endif
 		break;
+#endif
 
 #ifdef INET6
 	case AF_INET6:
@@ -1000,6 +1008,7 @@ findpcb:
 		bzero(&src, sizeof(src));
 		bzero(&dst, sizeof(dst));
 		switch (af) {
+#ifdef INET
 		case AF_INET:
 			src.sin.sin_len = sizeof(struct sockaddr_in);
 			src.sin.sin_family = AF_INET;
@@ -1011,6 +1020,7 @@ findpcb:
 			dst.sin.sin_addr = ip->ip_dst;
 			dst.sin.sin_port = th->th_dport;
 			break;
+#endif
 #ifdef INET6
 		case AF_INET6:
 			src.sin6.sin6_len = sizeof(struct sockaddr_in6);
@@ -1064,9 +1074,11 @@ findpcb:
 				struct ip *sip;
 				sip = mtod(tcp_saveti, struct ip *);
 				switch (af) {
+#ifdef INET
 				case AF_INET:
 					sip->ip_v = 4;
 					break;
+#endif
 #ifdef INET6
 				case AF_INET6:
 					sip->ip_v = 6;
@@ -1121,10 +1133,12 @@ findpcb:
 						in6p = NULL;
 #endif
 						switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
 						case AF_INET:
 							inp = sotoinpcb(so);
 							tp = intotcpcb(inp);
 							break;
+#endif
 #ifdef INET6
 						case AF_INET6:
 							in6p = sotoin6pcb(so);
@@ -1159,9 +1173,11 @@ findpcb:
 					int i;
 
 					switch (af) {
+#ifdef INET
 					case AF_INET:
 						i = in_hosteq(ip->ip_src, ip->ip_dst);
 						break;
+#endif
 #ifdef INET6
 					case AF_INET6:
 						i = IN6_ARE_ADDR_EQUAL(&ip6->ip6_src, &ip6->ip6_dst);
@@ -2166,9 +2182,11 @@ dropwithreset:
 	struct ip *sip;
 	sip = mtod(m, struct ip *);
 	switch (af) {
+#ifdef INET
 	case AF_INET:
 		sip->ip_v = 4;
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		sip->ip_v = 6;
@@ -2905,9 +2923,11 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		goto resetandabort;
 
 	switch (so->so_proto->pr_domain->dom_family) {
+#ifdef INET
 	case AF_INET:
 		inp = sotoinpcb(so);
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		in6p = sotoin6pcb(so);
@@ -2925,6 +2945,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	}
     }
 	switch (src->sa_family) {
+#ifdef INET
 	case AF_INET:
 		if (inp) {
 			inp->inp_laddr = ((struct sockaddr_in *)dst)->sin_addr;
@@ -2949,6 +2970,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		}
 #endif
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		if (in6p) {
@@ -3242,13 +3264,18 @@ syn_cache_add(src, dst, th, hlen, so, m, optp, optlen, oi)
 	if (win > TCP_MAXWIN)
 		win = TCP_MAXWIN;
 
-	if (src->sa_family == AF_INET) {
+	switch (src->sa_family) {
+#ifdef INET
+	case AF_INET:
 		/*
 		 * Remember the IP options, if any.
 		 */
 		ipopts = ip_srcroute();
-	} else
+		break;
+#endif
+	default:
 		ipopts = NULL;
+	}
 
 	if (optp) {
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
@@ -3491,11 +3518,13 @@ syn_cache_respond(sc, m)
 	 * ip_len to be in host order, for convenience.
 	 */
 	switch (sc->sc_src.sa.sa_family) {
+#ifdef INET
 	case AF_INET:
 		ip->ip_len = tlen;
 		ip->ip_ttl = ip_defttl;
 		/* XXX tos? */
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
@@ -3508,11 +3537,13 @@ syn_cache_respond(sc, m)
 	}
 
 	switch (sc->sc_src.sa.sa_family) {
+#ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
 		    NULL);
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,

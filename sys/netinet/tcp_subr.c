@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.95 2000/10/17 02:57:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.96 2000/10/17 03:06:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -382,10 +382,16 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	struct tcphdr *th;
 
 	if (tp != NULL && (flags & TH_RST) == 0) {
+#ifdef DIAGNOSTIC
+		if (tp->t_inpcb && tp->t_in6pcb)
+			panic("tcp_respond: both t_inpcb and t_in6pcb are set");
+#endif
+#ifdef INET
 		if (tp->t_inpcb)
 			win = sbspace(&tp->t_inpcb->inp_socket->so_rcv);
+#endif
 #ifdef INET6
-		else if (tp->t_in6pcb)
+		if (tp->t_in6pcb)
 			win = sbspace(&tp->t_in6pcb->in6p_socket->so_rcv);
 #endif
 	}
@@ -575,6 +581,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 	th->th_urp = 0;
 
 	switch (family) {
+#ifdef INET
 	case AF_INET:
 	    {
 		struct ipovly *ipov = (struct ipovly *)ip;
@@ -587,6 +594,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		ip->ip_ttl = ip_defttl;
 		break;
 	    }
+#endif
 #ifdef INET6
 	case AF_INET6:
 	    {
@@ -657,11 +665,13 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 		ro = NULL;
 
 	switch (family) {
+#ifdef INET
 	case AF_INET:
 		error = ip_output(m, NULL, ro,
 		    (ip_mtudisc ? IP_MTUDISC : 0),
 		    NULL);
 		break;
+#endif
 #ifdef INET6
 	case AF_INET6:
 		error = ip6_output(m, NULL, (struct route_in6 *)ro, 0, NULL,
@@ -772,10 +782,16 @@ tcp_drop(tp, errno)
 {
 	struct socket *so;
 
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_drop: both t_inpcb and t_in6pcb are set");
+#endif
+#ifdef INET
 	if (tp->t_inpcb)
 		so = tp->t_inpcb->inp_socket;
+#endif
 #ifdef INET6
-	else if (tp->t_in6pcb)
+	if (tp->t_in6pcb)
 		so = tp->t_in6pcb->in6p_socket;
 #endif
 	else
@@ -1145,6 +1161,7 @@ tcp6_ctlinput(cmd, sa, d)
 }
 #endif
 
+#ifdef INET
 /* assumes that ip header and tcp header are contiguous on mbuf */
 void *
 tcp_ctlinput(cmd, sa, v)
@@ -1216,6 +1233,7 @@ tcp_quench(inp, errno)
 	if (tp)
 		tp->snd_cwnd = tp->t_segsz;
 }
+#endif
 
 #if defined(INET6) && !defined(TCP6)
 void
@@ -1405,16 +1423,22 @@ tcp_mss_from_peer(tp, offer)
 	u_long bufsize;
 	int mss;
 
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_mss_from_peer: both t_inpcb and t_in6pcb are set");
+#endif
 	so = NULL;
 	rt = NULL;
+#ifdef INET
 	if (tp->t_inpcb) {
 		so = tp->t_inpcb->inp_socket;
 #if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
 		rt = in_pcbrtentry(tp->t_inpcb);
 #endif
 	}
+#endif
 #ifdef INET6
-	else if (tp->t_in6pcb) {
+	if (tp->t_in6pcb) {
 		so = tp->t_in6pcb->in6p_socket;
 #if defined(RTV_SPIPE) || defined(RTV_SSTHRESH)
 #ifdef TCP6
@@ -1436,10 +1460,12 @@ tcp_mss_from_peer(tp, offer)
 	mss = max(mss, 32);		/* sanity */
 	tp->t_peermss = mss;
 	mss -= tcp_optlen(tp);
+#ifdef INET
 	if (tp->t_inpcb)
 		mss -= ip_optlen(tp->t_inpcb);
+#endif
 #ifdef INET6
-	else if (tp->t_in6pcb)
+	if (tp->t_in6pcb)
 		mss -= ip6_optlen(tp->t_in6pcb);
 #endif
 
@@ -1491,16 +1517,22 @@ tcp_established(tp)
 #endif
 	u_long bufsize;
 
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_established: both t_inpcb and t_in6pcb are set");
+#endif
 	so = NULL;
 	rt = NULL;
+#ifdef INET
 	if (tp->t_inpcb) {
 		so = tp->t_inpcb->inp_socket;
 #if defined(RTV_RPIPE)
 		rt = in_pcbrtentry(tp->t_inpcb);
 #endif
 	}
+#endif
 #ifdef INET6
-	else if (tp->t_in6pcb) {
+	if (tp->t_in6pcb) {
 		so = tp->t_in6pcb->in6p_socket;
 #if defined(RTV_RPIPE)
 #ifdef TCP6
@@ -1542,10 +1574,16 @@ tcp_rmx_rtt(tp)
 	struct rtentry *rt = NULL;
 	int rtt;
 
+#ifdef DIAGNOSTIC
+	if (tp->t_inpcb && tp->t_in6pcb)
+		panic("tcp_rmx_rtt: both t_inpcb and t_in6pcb are set");
+#endif
+#ifdef INET
 	if (tp->t_inpcb)
 		rt = in_pcbrtentry(tp->t_inpcb);
+#endif
 #ifdef INET6
-	else if (tp->t_in6pcb) {
+	if (tp->t_in6pcb) {
 #ifdef TCP6
 		rt = NULL;
 #else
