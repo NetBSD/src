@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.45 1996/07/25 14:38:40 is Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.46 1996/07/29 20:53:35 is Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -285,6 +285,9 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 				RELOC(z2mem_start, vm_offset_t) =
 				    RELOC(z2mem_end, vm_offset_t) - sp->ms_size;
 			}
+			/* XXX is: mark reserved area _here_. */
+			sp->ms_size = RELOC(z2mem_start, vm_offset_t) -
+			    sp->ms_start;
 			break;
 		}
 	}
