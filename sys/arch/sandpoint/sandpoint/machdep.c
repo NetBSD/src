@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2003/10/20 00:12:11 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2004/02/09 19:37:43 bjh21 Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2003/10/20 00:12:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2004/02/09 19:37:43 bjh21 Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -309,11 +309,8 @@ consinit(void)
 int
 pckbc_machdep_cnattach(pckbc_tag_t kbctag, pckbc_slot_t kbcslot)
 {
-#if (NPC > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
+
 	return (ENXIO);
-#endif
 }
 #endif
 
