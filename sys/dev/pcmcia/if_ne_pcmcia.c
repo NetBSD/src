@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.2 1997/10/14 01:59:17 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.1.2.3 1997/10/15 02:41:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ ne_pcmcia_match(parent, match, aux)
 #endif
 	void *aux;
 {
-	struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) aux;
+	struct pcmcia_attach_args *pa = aux;
 	int i;
 
 	for (i = 0; i < NE2000_NDEVS; i++) {

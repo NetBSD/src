@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.1.2.10 1997/10/14 05:29:32 thorpej Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.1.2.11 1997/10/15 02:41:38 enami Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -90,8 +90,7 @@ pcmcia_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct pcmciabus_attach_args *paa =
-	    (struct pcmciabus_attach_args *) aux;
+	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
 
 	printf("\n");
@@ -199,7 +198,7 @@ pcmcia_submatch(parent, cf, aux)
 	void *aux;
 {
 #endif
-	struct pcmcia_attach_args *paa = (struct pcmcia_attach_args *) aux;
+	struct pcmcia_attach_args *paa = aux;
 
 	if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != paa->pf->number)
 		return (0);
@@ -212,7 +211,7 @@ pcmcia_print(arg, pnp)
 	void *arg;
 	const char *pnp;
 {
-	struct pcmcia_attach_args *pa = (struct pcmcia_attach_args *) arg;
+	struct pcmcia_attach_args *pa = arg;
 	struct pcmcia_softc *sc = pa->pf->sc;
 	struct pcmcia_card *card = &sc->card;
 	int i;
@@ -650,7 +649,7 @@ int
 pcmcia_card_intr(arg)
 	void *arg;
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) arg;
+	struct pcmcia_softc *sc = arg;
 	struct pcmcia_function *pf;
 	int reg, ret, ret2;
 
