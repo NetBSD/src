@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 1994/11/14 05:59:38 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 1994/11/23 06:45:48 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1994 Adam Glass, Gordon W. Ross
@@ -63,8 +63,8 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #define decl_close(f)    int f __P((dev_t, int, int, struct proc *))
 #define decl_read(f)     int f __P((dev_t, struct uio *, int))
 #define decl_write(f)    int f __P((dev_t, struct uio *, int))
-#define decl_ioctl(f)    int f __P((dev_t dev, int cmd, caddr_t data, \
-				     int fflag, struct proc *))
+#define decl_ioctl(f)    int f __P((dev_t dev, u_long cmd, caddr_t data, \
+				     int fflag, struct proc *p))
 #define	decl_stop(f)     int f __P((struct tty *, int))
 #define	decl_reset(f)    int f __P((int))
 #define	decl_select(f)   int f __P((dev_t, int, struct proc*))
