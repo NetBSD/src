@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sbmips,v 1.1.2.3 2002/07/15 01:20:54 gehenna Exp $
+#	$NetBSD: majors.sbmips,v 1.1.2.4 2002/07/17 01:41:22 gehenna Exp $
 #
 # Device majors for sbmips
 #
@@ -70,3 +70,4 @@ device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
 device-major	systrace	char 70			systrace
+device-major	kttcp		char 71			kttcp
