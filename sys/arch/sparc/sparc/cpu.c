@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.118 2001/05/26 21:27:14 chs Exp $ */
+/*	$NetBSD: cpu.c,v 1.119 2001/06/07 17:59:47 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,12 +52,14 @@
  */
 
 #include "opt_multiprocessor.h"
+#include "opt_lockdebug.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/lock.h>
 
 #include <uvm/uvm.h>
 
@@ -104,7 +106,6 @@ struct cfattach cpu_ca = {
 static char *fsrtoname __P((int, int, int));
 void cache_print __P((struct cpu_softc *));
 void cpu_setup __P((struct cpu_softc *));
-void cpu_spinup __P((struct cpu_softc *));
 void fpu_init __P((struct cpu_info *));
 
 #define	IU_IMPL(psr)	((u_int)(psr) >> 28)
@@ -114,8 +115,10 @@ void fpu_init __P((struct cpu_info *));
 #define SRMMU_VERS(mmusr)	(((mmusr) >> 24) & 0xf)
 
 #if defined(MULTIPROCESSOR)
+void cpu_spinup __P((struct cpu_softc *));
 struct cpu_info *alloc_cpuinfo_global_va __P((int, vsize_t *));
 struct cpu_info	*alloc_cpuinfo __P((void));
+
 
 struct cpu_info *
 alloc_cpuinfo_global_va(ismaster, sizep)
@@ -203,6 +206,7 @@ alloc_cpuinfo()
 	pmap_update();
 
 	bzero((void *)cpi, sz);
+	cpi->flags = CPUFLG_STARTUP;
 	cpi->eintstack = (void *)((vaddr_t)cpi + sz);
 	cpi->idle_u = (void *)((vaddr_t)cpi + sz - INT_STACK_SIZE - USPACE);
 
@@ -398,19 +402,31 @@ static	struct cpu_softc *bootcpu;
 void
 cpu_boot_secondary_processors()
 {
-
-	/*
-	 * XXX This is currently a noop; the CPUs are already running, but
-	 * XXX aren't doing anything.  Eventually, this will release a
-	 * XXX semaphore that all those secondary processors are anxiously
-	 * XXX waiting on.
-	 */
+	int n;
 
 	if (cpu_instance != ncpu) {
 		printf("NOTICE: only %d out of %d CPUs were configured\n",
 			cpu_instance, ncpu);
 		return;
 	}
+
+	if (cpus == NULL)
+		return;
+
+	/* Tell the other CPU's to start up.  */
+	printf("cpu0: booting secondary processors:");
+	for (n = 0; n < ncpu; n++) {
+		struct cpu_info *cpi = cpus[n];
+
+		if (cpi == NULL || cpuinfo.mid == cpi->mid)
+			continue;
+
+		printf(" cpu%d", cpi->ci_cpuid);
+
+		/* tell it to continue */
+		//cpi->flags &= ~CPUFLG_STARTUP;
+	}
+	printf("\n");
 }
 #endif /* MULTIPROCESSOR */
 
@@ -444,6 +460,7 @@ cpu_setup(sc)
 #endif
 }
 
+#if defined(MULTIPROCESSOR)
 /*
  * Allocate per-CPU data, then start up this CPU using PROM.
  */
@@ -451,7 +468,6 @@ void
 cpu_spinup(sc)
 	struct cpu_softc *sc;
 {
-#if defined(MULTIPROCESSOR)
 	struct cpu_info *cpi = sc->sc_cpuinfo;
 	int n;
 extern void cpu_hatch __P((void));	/* in locore.s */
@@ -491,13 +507,31 @@ extern void cpu_hatch __P((void));	/* in locore.s */
 		delay(100);
 	}
 	printf("CPU did not spin up\n");
-#endif
+}
+
+void
+raise_ipi_wait_and_unlock(cpi)
+	struct cpu_info *cpi;
+{
+	int i;
+
+	raise_ipi(cpi);
+	i = 0;
+	while ((cpi->flags & CPUFLG_GOTMSG) == 0) {
+		if (i++ > 10000) {
+			printf("raise_ipi_wait_and_unlock(cpu%d): couldn't ping cpu%d\n",
+			    cpuinfo.ci_cpuid, cpi->ci_cpuid);
+			break;
+		}
+		delay(1);
+		cpuinfo.cache_flush((caddr_t)&cpi->flags, sizeof(cpi->flags));
+	}
+	simple_unlock(&cpi->msg.lock);
 }
 
 void
 mp_pause_cpus()
 {
-#if defined(MULTIPROCESSOR)
 	int n;
 
 	if (cpus == NULL)
@@ -505,19 +539,20 @@ mp_pause_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
+
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
+
 		simple_lock(&cpi->msg.lock);
 		cpi->msg.tag = XPMSG_PAUSECPU;
-		raise_ipi(cpi);
+		cpi->flags &= ~CPUFLG_GOTMSG;
+		raise_ipi_wait_and_unlock(cpi);
 	}
-#endif
 }
 
 void
 mp_resume_cpus()
 {
-#if defined(MULTIPROCESSOR)
 	int n;
 
 	if (cpus == NULL)
@@ -525,15 +560,15 @@ mp_resume_cpus()
 
 	for (n = 0; n < ncpu; n++) {
 		struct cpu_info *cpi = cpus[n];
+
 		if (cpi == NULL || cpuinfo.mid == cpi->mid)
 			continue;
 
-		simple_lock(&cpi->msg.lock);
-		cpi->msg.tag = XPMSG_RESUMECPU;
-		raise_ipi(cpi);
+		/* tell it to continue */
+		cpi->flags &= ~CPUFLG_PAUSED;
 	}
-#endif
 }
+#endif /* MULTIPROCESSOR */
 
 /*
  * fpu_init() must be run on associated CPU.
