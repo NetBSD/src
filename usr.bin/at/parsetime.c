@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.9 2000/01/06 00:44:09 tron Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.10 2000/10/04 19:14:53 mjl Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -38,6 +38,7 @@
 /* System Headers */
 
 #include <sys/types.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +46,6 @@
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <ctype.h>
 
 /* Local headers */
 
@@ -133,7 +133,7 @@ static char *sct;	/* scanner - next char pointer in current argument */
 static int need;	/* scanner - need to advance to next argument */
 
 static char *sc_token;	/* scanner - token buffer */
-static size_t sc_len;   /* scanner - lenght of token buffer */
+static size_t sc_len;   /* scanner - length of token buffer */
 static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
@@ -141,7 +141,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.9 2000/01/06 00:44:09 tron Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.10 2000/10/04 19:14:53 mjl Exp $");
 #endif
 #endif
 

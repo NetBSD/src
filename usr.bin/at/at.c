@@ -1,4 +1,4 @@
-/*	$NetBSD: at.c,v 1.15 2000/06/25 13:35:48 simonb Exp $	*/
+/*	$NetBSD: at.c,v 1.16 2000/10/04 19:14:53 mjl Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -35,6 +35,7 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -69,7 +70,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 #if 0
 static char rcsid[] = "$OpenBSD: at.c,v 1.15 1998/06/03 16:20:26 deraadt Exp $";
 #else
-__RCSID("$NetBSD: at.c,v 1.15 2000/06/25 13:35:48 simonb Exp $");
+__RCSID("$NetBSD: at.c,v 1.16 2000/10/04 19:14:53 mjl Exp $");
 #endif
 #endif
 
@@ -521,9 +522,7 @@ process_jobs(argc, argv, what)
 		for (i = optind; i < argc; i++) {
 			if (atoi(argv[i]) == jobno) {
 				if ((buf.st_uid != real_uid) && !(real_uid == 0)) {
-					(void)fprintf(stderr,
-					    "%s: Not owner\n", argv[i]);
-					exit(EXIT_FAILURE);
+					errx(EXIT_FAILURE, "%s: Not owner", argv[i]);
 				}
 				switch (what) {
 				case ATRM:
@@ -556,10 +555,8 @@ process_jobs(argc, argv, what)
 					break;
 
 				default:
-					(void)fprintf(stderr,
-					    "Internal error, process_jobs = %d\n",
-					    what);
-					exit(EXIT_FAILURE);
+					errx(EXIT_FAILURE, "Internal error, process_jobs = %d",
+						what);
 					break;
 				}
 			}
@@ -677,9 +674,7 @@ main(argc, argv)
 		(void)fprintf(stderr, "%s version %.1f\n", namep, AT_VERSION);
 
 	if (!check_permission()) {
-		(void)fprintf(stderr, "You do not have permission to use %s.\n",
-		    namep);
-		exit(EXIT_FAILURE);
+		errx(EXIT_FAILURE, "You do not have permission to use %s.", namep);
 	}
 
 	/* select our program */
