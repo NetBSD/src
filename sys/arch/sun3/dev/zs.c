@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.32 1996/01/30 22:34:52 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.33 1996/02/16 18:00:33 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -76,7 +76,7 @@
 #define ZSHARD_PRI	6	/* Wired on the CPU board... */
 #define ZSSOFT_PRI	3	/* Want tty pri (4) but this is OK. */
 
-#define ZS_DELAY()			delay2us()
+#define ZS_DELAY()			delay(2)
 
 /* The layout of this is hardware-dependent (padding, order). */
 struct zschan {

@@ -72,7 +72,7 @@
 /* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
 
-#define ZS_DELAY()			delay2us()
+#define ZS_DELAY()			delay(2)
 
 extern int kgdb_dev;
 extern int kgdb_rate;
