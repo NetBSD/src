@@ -1,4 +1,4 @@
-/*	$KAME: isakmp_var.h,v 1.21 2003/05/29 08:59:51 sakane Exp $	*/
+/*	$KAME: isakmp_var.h,v 1.22 2004/03/03 05:39:59 sakane Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -40,6 +40,13 @@ typedef struct { /* i_cookie + r_cookie */
 	cookie_t i_ck;
 	cookie_t r_ck;
 } isakmp_index;
+
+/* Temporary structure to make payload construction easier
+ */
+struct isakmp_construct{
+	caddr_t		buff;
+	u_int8_t	*np;
+};
 
 struct isakmp_gen;
 struct sched;
@@ -94,9 +101,10 @@ extern int isakmp_newcookie __P((caddr_t, struct sockaddr *, struct sockaddr *))
 extern int isakmp_p2ph __P((vchar_t **, struct isakmp_gen *));
 
 extern u_int32_t isakmp_newmsgid2 __P((struct ph1handle *));
-extern caddr_t set_isakmp_header __P((vchar_t *, struct ph1handle *, int));
+extern struct isakmp_construct set_isakmp_header __P((vchar_t *, struct ph1handle *));
 extern caddr_t set_isakmp_header2 __P((vchar_t *, struct ph2handle *, int));
 extern caddr_t set_isakmp_payload __P((caddr_t, vchar_t *, int));
+extern struct isakmp_construct set_isakmp_payload_c __P((struct isakmp_construct, vchar_t *, int));
 
 #ifdef HAVE_PRINT_ISAKMP_C
 extern void isakmp_printpacket __P((vchar_t *, struct sockaddr *,

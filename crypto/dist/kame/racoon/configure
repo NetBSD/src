@@ -3826,7 +3826,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   egrep "yes" >/dev/null 2>&1; then
   rm -rf conftest*
   echo "$ac_t""no" 1>&6
-        echo "WARNING: missing/crypto/sha2 is not compatible with this openssl."
+        echo "WARNING: racoon sha2 library is not compatible with recent openssl(0.9.6b or above)."
         echo "WARNING: sha2 disabled."
 else
   rm -rf conftest*
