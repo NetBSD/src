@@ -1,4 +1,4 @@
-/*	$NetBSD: nma.c,v 1.2 1997/03/25 03:07:22 thorpej Exp $	*/
+/*	$NetBSD: nma.c,v 1.3 1997/10/16 23:24:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Mats O Jansson.  All rights reserved.
@@ -29,12 +29,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef LINT
-static char rcsid[] = "$NetBSD: nma.c,v 1.2 1997/03/25 03:07:22 thorpej Exp $";
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: nma.c,v 1.3 1997/10/16 23:24:48 lukem Exp $");
 #endif
 
-#include <stddef.h>
-#include "common/nmadef.h"
+#include "os.h"
+#include "nma.h"
+#include "nmadef.h"
 
 struct commDev {
 	int		val;
@@ -223,4 +225,3 @@ nmaGetDevice(devno)
 
 	return(current->name);
 }
-
