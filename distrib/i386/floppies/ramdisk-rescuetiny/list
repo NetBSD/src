@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.10 2003/01/19 12:26:51 tsutsui Exp $
+#	$NetBSD: list,v 1.11 2003/05/09 12:32:42 lukem Exp $
 
 PROG	bin/cat
 PROG	bin/chmod
@@ -49,7 +49,6 @@ PROG	usr/bin/tip
 
 PROG	usr/mdec/installboot
 
-PROG	usr/sbin/bad144
 PROG	usr/sbin/chown	usr/bin/chgrp
 PROG	usr/sbin/chroot
 
