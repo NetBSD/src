@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: arith.y,v 1.8 1997/07/04 21:01:50 christos Exp $	*/
+/*	$NetBSD: arith.y,v 1.9 1998/01/31 12:34:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)arith.y	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: arith.y,v 1.8 1997/07/04 21:01:50 christos Exp $");
+__RCSID("$NetBSD: arith.y,v 1.9 1998/01/31 12:34:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ expcmd(argc, argv)
 
 	i = arith(p);
 
-	out1fmt("%d\n", i);
+	out1fmt("%ld\n", i);
 	return (! i);
 }
 
