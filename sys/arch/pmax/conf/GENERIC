@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.42 1999/04/21 12:53:56 simonb Exp $
+# 	$NetBSD: GENERIC,v 1.43 1999/04/26 02:20:02 jonathan Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -31,6 +31,13 @@ options 	DDB_ONPANIC=0		# don't enter debugger on panic
 #options 	DEBUG			# extra kernel debugging support
 options 	"COMPAT_43"		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
+
+options 	SYSVMSG		# System V-like message queues
+options 	SYSVSEM		# System V-like semaphores
+options 	SYSVSHM		# System V-like memory sharing
+#options 	SHMMAXPGS=1024	# 1024 pages is the default
+
+options 	LKM			# loadable kernel modules
 options 	"NKMEMCLUSTERS=1024"	# 4K pages in kernel malloc pool
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
