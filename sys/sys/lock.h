@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.54 2004/05/25 14:54:58 hannken Exp $	*/
+/*	$NetBSD: lock.h,v 1.55 2004/07/01 22:34:12 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -359,16 +359,16 @@ void	simple_lock_switchcheck(void);
 #define	simple_lock_only_held(x,y)		/* nothing */
 #else
 #define	simple_lock_try(alp)	(1)
-#ifndef lint
+#ifndef __lint__
 #define	simple_lock_init(alp)	(void)(alp)
 #define	simple_lock(alp)	(void)(alp)
 #define	simple_unlock(alp)	(void)(alp)
-#else /* lint */
+#else /* __lint__ */
 #define	simple_lock_init(alp)	/* nothing */
 #define	simple_lock(alp)	/* nothing */
 #define	simple_unlock(alp)	/* nothing */
 #define	simple_lock_only_held(x,y)		/* nothing */
-#endif /* lint */
+#endif /* __lint__ */
 #define	LOCK_ASSERT(x)		/* nothing */
 #endif
 
