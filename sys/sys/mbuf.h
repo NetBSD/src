@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.42 1999/02/27 18:20:37 sommerfe Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.43 1999/04/26 21:55:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -485,15 +485,36 @@ struct mbstat {
 	u_short	m_mtypes[256];	/* type specific mbuf allocations */
 };
 
+/*
+ * Mbuf sysctl variables.
+ */
+#define	MBUF_MSIZE		1	/* int: mbuf base size */
+#define	MBUF_MCLBYTES		2	/* int: mbuf cluster size */
+#define	MBUF_NMBCLUSTERS	3	/* int: limit on the # of clusters */
+#define	MBUF_MBLOWAT		4	/* int: mbuf low water mark */
+#define	MBUF_MCLLOWAT		5	/* int: mbuf cluster low water mark */
+#define	MBUF_MAXID		6	/* number of valid MBUF ids */
+
+#define	CTL_MBUF_NAMES { \
+	{ 0, 0 }, \
+	{ "msize", CTLTYPE_INT }, \
+	{ "mclbytes", CTLTYPE_INT }, \
+	{ "nmbclusters", CTLTYPE_INT }, \
+	{ "mblowat", CTLTYPE_INT }, \
+	{ "mcllowat", CTLTYPE_INT }, \
+}
+
 #ifdef	_KERNEL
 extern struct mbstat mbstat;
-extern int	nmbclusters;
-extern int	nmbufs;
-extern struct mbuf *mmbfree;
+extern int	nmbclusters;		/* limit on the # of clusters */
+extern int	mblowat;		/* mbuf low water mark */
+extern int	mcllowat;		/* mbuf cluster low water mark */
 extern int	max_linkhdr;		/* largest link-level header */
 extern int	max_protohdr;		/* largest protocol header */
 extern int	max_hdr;		/* largest link+protocol header */
 extern int	max_datalen;		/* MHLEN - max_hdr */
+extern const int msize;			/* mbuf base size */
+extern const int mclbytes;		/* mbuf cluster size */
 extern int	mbtypes[];		/* XXX */
 extern struct pool mbpool;
 extern struct pool mclpool;
