@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.2 2003/01/18 10:34:18 thorpej Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.3 2003/02/10 11:09:33 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -141,7 +141,7 @@ ENTRY(pthread__switch)
 #ifdef PIC
 	movl	PIC_GOT(switch_return_point), %esi
 #else
-	leal	locked_return_point, %esi
+	leal	switch_return_point, %esi
 #endif
 	movl	%esi, UC_EIP(%edi)
 	
