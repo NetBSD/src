@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.49 2004/08/10 02:54:19 mycroft Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.50 2004/08/10 08:29:27 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.49 2004/08/10 02:54:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.50 2004/08/10 08:29:27 mycroft Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -722,7 +722,8 @@ ray_disable(sc)
 {
 	RAY_DPRINTF(("%s: disable\n", sc->sc_xname));
 
-	ray_stop(sc);
+	if (sc->sc_if.if_flags & IFF_RUNNING)
+		ray_stop(sc);
 
 	sc->sc_resetloop = 0;
 	sc->sc_rxoverflow = 0;
