@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.60 2002/10/23 09:13:17 jdolecek Exp $	*/
+/*	$NetBSD: lpt.c,v 1.61 2002/12/10 07:19:25 rafal Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.60 2002/10/23 09:13:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.61 2002/12/10 07:19:25 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,10 +311,13 @@ lptpushbytes(sc)
 			}
 
 			bus_space_write_1(iot, ioh, lpt_data, *sc->sc_cp++);
+			DELAY(1);
 			bus_space_write_1(iot, ioh, lpt_control,
 			    control | LPC_STROBE);
+			DELAY(1);
 			sc->sc_count--;
 			bus_space_write_1(iot, ioh, lpt_control, control);
+			DELAY(1);
 
 			/* adapt busy-wait algorithm */
 			if (spin*2 + 16 < sc->sc_spinmax)
@@ -402,6 +405,7 @@ lptintr(arg)
 		DELAY(1);
 		sc->sc_count--;
 		bus_space_write_1(iot, ioh, lpt_control, control);
+		DELAY(1);
 		sc->sc_state |= LPT_OBUSY;
 	} else
 		sc->sc_state &= ~LPT_OBUSY;
