@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_funcs.c,v 1.2 1998/01/09 08:06:20 perry Exp $	*/
+/*	$NetBSD: cl_funcs.c,v 1.3 2000/05/31 19:49:23 jdc Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -85,10 +85,60 @@ cl_attr(sp, attribute, on)
 {
 	CL_PRIVATE *clp;
 
+	clp = CLP(sp);
+
 	switch (attribute) {
+	case SA_ALTERNATE:
+	/*
+	 * !!!
+	 * There's a major layering violation here.  The problem is that the
+	 * X11 xterm screen has what's known as an "alternate" screen.  Some
+	 * xterm termcap/terminfo entries include sequences to switch to/from
+	 * that alternate screen as part of the ti/te (smcup/rmcup) strings.
+	 * Vi runs in the alternate screen, so that you are returned to the
+	 * same screen contents on exit from vi that you had when you entered
+	 * vi.  Further, when you run :shell, or :!date or similar ex commands,
+	 * you also see the original screen contents.  This wasn't deliberate
+	 * on vi's part, it's just that it historically sent terminal init/end
+	 * sequences at those times, and the addition of the alternate screen
+	 * sequences to the strings changed the behavior of vi.  The problem
+	 * caused by this is that we don't want to switch back to the alternate
+	 * screen while getting a new command from the user, when the user is
+	 * continuing to enter ex commands, e.g.:
+	 *
+	 *	:!date				<<< switch to original screen
+	 *	[Hit return to continue]	<<< prompt user to continue
+	 *	:command			<<< get command from user
+	 *
+	 * Note that the :command input is a true vi input mode, e.g., input
+	 * maps and abbreviations are being done.  So, we need to be able to
+	 * switch back into the vi screen mode, without flashing the screen. 
+	 *
+	 * To make matters worse, the curses initscr() and endwin() calls will
+	 * do this automatically -- so, this attribute isn't as controlled by
+	 * the higher level screen as closely as one might like.
+	 */
+	if (on) {
+		if (clp->ti_te != TI_SENT) {
+			clp->ti_te = TI_SENT;
+			if (clp->smcup == NULL)
+				(void)cl_getcap(sp, "smcup", &clp->smcup);
+			if (clp->smcup != NULL)
+				(void)tputs(clp->smcup, 1, cl_putchar);
+		}
+	} else
+		if (clp->ti_te != TE_SENT) {
+			clp->ti_te = TE_SENT;
+			if (clp->rmcup == NULL)
+				(void)cl_getcap(sp, "rmcup", &clp->rmcup);
+			if (clp->rmcup != NULL)
+				(void)tputs(clp->rmcup, 1, cl_putchar);
+			(void)fflush(stdout);
+		}
+		(void)fflush(stdout);
+		break;
 	case SA_INVERSE:
 		if (F_ISSET(sp, SC_EX | SC_SCR_EXWROTE)) {
-			clp = CLP(sp);
 			if (clp->smso == NULL)
 				return (1);
 			if (on)
@@ -529,12 +579,7 @@ cl_suspend(sp, allowedp)
 	(void)keypad(stdscr, FALSE);
 
 #ifdef HAVE_BSD_CURSES
-	/* Send the terminal end sequence. */
-	if (clp->rmcup == NULL)
-		(void)cl_getcap(sp, "rmcup", &clp->rmcup);
-	if (clp->rmcup != NULL)
-		(void)tputs(clp->rmcup, 1, cl_putchar);
-	(void)fflush(stdout);
+	(void)cl_attr(sp, SA_ALTERNATE, 0);
 #else
 	(void)endwin();
 #endif
@@ -557,12 +602,7 @@ cl_suspend(sp, allowedp)
 	if (F_ISSET(gp, G_STDIN_TTY))
 		(void)tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &t);
 
-	/* Send the terminal initialization sequence. */
-	if (clp->smcup == NULL)
-		(void)cl_getcap(sp, "smcup", &clp->smcup);
-	if (clp->smcup != NULL)
-		(void)tputs(clp->smcup, 1, cl_putchar);
-	(void)fflush(stdout);
+	(void)cl_attr(sp, SA_ALTERNATE, 1);
 #endif
 	/* Put the cursor keys into application mode. */
 	(void)keypad(stdscr, TRUE);
