@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.28 2000/06/26 04:55:40 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.29 2000/06/29 01:56:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,6 +57,10 @@
 #include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern u_int lowram;
 extern char *extiobase;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.18 2000/06/26 04:55:33 simonb Exp $	*/
+/*	$NetBSD: mem.c,v 1.19 2000/06/29 01:56:00 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,10 @@
 #include <machine/pmap.h>
 
 #include "nvr.h"
+
+#define mmread  mmrw
+#define mmwrite mmrw
+cdev_decl(mm);
 
 extern u_int lowram;
 static caddr_t devzeropage;
