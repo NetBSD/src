@@ -1,4 +1,4 @@
-#	$NetBSD: WARPED,v 1.13 1996/11/28 03:15:36 thorpej Exp $
+#	$NetBSD: WARPED,v 1.14 1996/12/07 00:26:19 thorpej Exp $
 #
 #	WARPED - ftp/sup.netbsd.org server machine
 #
@@ -18,7 +18,7 @@ options		I586_CPU	# 83MHz P24T
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=... # size of extended memory
+#options	BIOSEXTMEM=... # size of extended memory
 
 options		DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

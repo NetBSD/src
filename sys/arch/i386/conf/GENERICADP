@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICADP,v 1.35 1996/11/28 03:15:22 thorpej Exp $
+#	$NetBSD: GENERICADP,v 1.36 1996/12/07 00:26:05 thorpej Exp $
 #
 #	GENERICADP -- everything that's currently supported, except non-
 #                     Adaptec SCSI controllers.
@@ -15,7 +15,7 @@ options		MATH_EMULATE	# floating point emulation
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=... # size of extended memory
+#options	BIOSEXTMEM=... # size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

@@ -1,4 +1,4 @@
-#	$NetBSD: HOMEWORLD,v 1.7 1996/11/28 03:15:27 thorpej Exp $
+#	$NetBSD: HOMEWORLD,v 1.8 1996/12/07 00:26:08 thorpej Exp $
 #
 #	HOMEWORLD - Mail, CVS, and GNATS server
 #
@@ -14,7 +14,7 @@ options		I486_CPU	# CPU classes; at least one is REQUIRED
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=...	# size of extended memory
+#options	BIOSEXTMEM=...	# size of extended memory
 
 options 	DUMMY_NOPS	# speed hack; recommended
 options		XSERVER,UCONSOLE

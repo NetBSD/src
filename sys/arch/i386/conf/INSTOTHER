@@ -1,4 +1,4 @@
-#	$NetBSD: INSTOTHER,v 1.27 1996/11/28 03:15:33 thorpej Exp $
+#	$NetBSD: INSTOTHER,v 1.28 1996/12/07 00:26:12 thorpej Exp $
 #
 #	INSTOTHER -- like GENERICOTHER.  This supports only non-Adaptec SCSI
 #                     adapters.  This kernel is GENERICOTHER with lines
@@ -18,7 +18,7 @@ options		MATH_EMULATE	# floating point emulation
 # Some BIOSes don't get the size of extended memory right.  If you
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
-#options	EXTMEM_SIZE=... # size of extended memory
+#options	BIOSEXTMEM=... # size of extended memory
 
 #options	DUMMY_NOPS	# speed hack; recommended
 #options	XSERVER,UCONSOLE
