@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.304 2005/03/16 12:59:08 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.305 2005/03/18 10:10:50 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -754,26 +754,22 @@ Notes:
         except during testing.
 
 Package:	XFree86
-Version:	3.3.6/4.4.0
-Current Vers:	3.3.6/4.4.0
+Version:	4.4.0
+Current Vers:	4.5.0
 Maintainer:	XFree86 consortium
 Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
 Mailing List:
 Responsible:	tron
 Notes:
-3.3.6:
-- Security patches from OpenBSD SA 2000-021 are merged into the tree.
-- Fix 01-08 from the xfree86 fixes directory are merged into the tree.
-- imported changes from 3.3.6 branch on 2001-03-05
 4.x:
  Only X4??src-1 to X4??src-6 were imported. X4??src-7 contains postscript
  files which we don't need in our tree.
  ALL changes must be sent back to the XFree86 repository. Patches should
- be sent to patches@XFree86.org.
+ be submitted back via http://bugzilla.xfree86.org.
 
 Package:	zlib
 Version:	1.1.4
-Current Vers:	1.2.2
+RCurrent Vers:	1.2.2
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.gzip.org/zlib/
 Mailing List:
