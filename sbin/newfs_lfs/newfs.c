@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.13 2003/08/12 08:41:37 dsl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.14 2004/10/29 19:04:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.13 2003/08/12 08:41:37 dsl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.14 2004/10/29 19:04:39 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ main(int argc, char **argv)
 		cp = strchr(argv[0], '\0') - 1;
 		if (!debug
 		    && ((*cp < 'a' || *cp > ('a' + maxpartitions - 1))
-		    && !isdigit(*cp)))
+		    && !isdigit((unsigned char)*cp)))
 			fatal("%s: can't figure out file system partition", argv[0]);
 
 #ifdef COMPAT
@@ -314,7 +314,7 @@ main(int argc, char **argv)
 #endif
 		lp = getdisklabel(special, fsi);
 
-		if (isdigit(*cp))
+		if (isdigit((unsigned char)*cp))
 			pp = &lp->d_partitions[0];
 		else
 			pp = &lp->d_partitions[*cp - 'a'];

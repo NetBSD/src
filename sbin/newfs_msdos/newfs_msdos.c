@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.17 2004/09/22 23:52:38 thorpej Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.18 2004/10/29 19:07:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.17 2004/09/22 23:52:38 thorpej Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.18 2004/10/29 19:07:46 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -770,11 +770,11 @@ getdiskinfo(int fd, const char *fname, const char *dtype, int oflag,
     s1 = fname;
     if ((s2 = strrchr(s1, '/')))
 	s1 = s2 + 1;
-    for (s2 = s1; *s2 && !isdigit(*s2); s2++);
+    for (s2 = s1; *s2 && !isdigit((unsigned char)*s2); s2++);
     if (!*s2 || s2 == s1)
 	s2 = NULL;
     else
-	while (isdigit(*++s2));
+	while (isdigit((unsigned char)*++s2));
     s1 = s2;
 #ifdef __FreeBSD__
     if (s2 && *s2 == 's') {
@@ -944,7 +944,7 @@ mklabel(u_int8_t *dest, const char *src)
     int c, i;
 
     for (i = 0; i < 11; i++) {
-	c = *src ? toupper(*src++) : ' ';
+	c = *src ? toupper((unsigned char)*src++) : ' ';
 	*dest++ = !i && c == '\xe5' ? 5 : c;
     }
 }

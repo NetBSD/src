@@ -1,4 +1,4 @@
-/* $NetBSD: fattr.c,v 1.2 2000/10/30 20:58:20 jdolecek Exp $ */
+/* $NetBSD: fattr.c,v 1.3 2004/10/29 19:11:15 dsl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fattr.c,v 1.2 2000/10/30 20:58:20 jdolecek Exp $");
+__RCSID("$NetBSD: fattr.c,v 1.3 2004/10/29 19:11:15 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -64,7 +64,7 @@ a_gid(s)
 	if ((gr = getgrnam(s)) != NULL)
 		gid = gr->gr_gid;
 	else {
-		for (gname = s; *s && isdigit(*s); ++s);
+		for (gname = s; *s && isdigit((unsigned char)*s); ++s);
 		if (!*s)
 			gid = atoi(gname);
 		else
@@ -84,7 +84,7 @@ a_uid(s)
 	if ((pw = getpwnam(s)) != NULL)
 		uid = pw->pw_uid;
 	else {
-		for (uname = s; *s && isdigit(*s); ++s);
+		for (uname = s; *s && isdigit((unsigned char)*s); ++s);
 		if (!*s)
 			uid = atoi(uname);
 		else
