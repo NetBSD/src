@@ -1,4 +1,4 @@
-/*	$NetBSD: proc1.c,v 1.1.1.1 2002/10/03 07:46:03 jdolecek Exp $	*/
+/*	$NetBSD: proc1.c,v 1.2 2002/11/01 09:49:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 		n = kevent(kq, NULL, 0, event, 1, NULL);
 		if (n < 0)
 			err(1, "kevent(2)");
-		printf("PID %5ld ", event[0].ident);
+		printf("PID %5ld ", (long) event[0].ident);
 		if (event[0].fflags & NOTE_EXIT) {
 			want &= ~NOTE_EXIT;
 			printf(" EXIT");
