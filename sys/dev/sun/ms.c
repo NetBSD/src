@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.18 2000/03/30 12:45:42 augustss Exp $	*/
+/*	$NetBSD: ms.c,v 1.19 2000/09/21 23:40:47 eeh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,13 @@ msopen(dev, flags, mode, p)
 	/* This is an exclusive open device. */
 	if (ms->ms_events.ev_io)
 		return (EBUSY);
+
+	if (ms->ms_deviopen) {
+		int err;
+		err = (*ms->ms_deviopen)(ms, flags);
+		if (err) 
+			return (err);
+	}
 	ms->ms_events.ev_io = p;
 	ev_init(&ms->ms_events);	/* may cause sleep */
 
@@ -126,6 +133,12 @@ msclose(dev, flags, mode, p)
 	ev_fini(&ms->ms_events);
 
 	ms->ms_events.ev_io = NULL;
+	if (ms->ms_deviclose) {
+		int err;
+		err = (*ms->ms_deviclose)(ms, flags);
+		if (err) 
+			return (err);
+	}
 	return (0);
 }
 
