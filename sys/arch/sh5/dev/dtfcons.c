@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfcons.c,v 1.5 2002/10/04 10:16:56 scw Exp $	*/
+/*	$NetBSD: dtfcons.c,v 1.6 2002/11/23 09:14:14 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@ cons_decl(dtfcons);
 
 const struct cdevsw dtf_cdevsw = {
 	dtfconsopen, dtfconsclose, dtfconsread, dtfconswrite, dtfconsioctl,
-	nostop, dtfconstty, dtfconspoll, nommap, D_TTY
+	nostop, dtfconstty, dtfconspoll, nommap, ttykqfilter, D_TTY
 };
 
 static int dtfconsmatch(struct device *, struct cfdata *, void *);
