@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.53.2.3.2.2 2005/03/16 19:47:57 tron Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.53.2.3.2.3 2005/03/16 19:49:51 tron Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53.2.3.2.2 2005/03/16 19:47:57 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.53.2.3.2.3 2005/03/16 19:49:51 tron Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -660,7 +660,7 @@ wdc_ata_bio_intr(struct wdc_channel *chp, struct ata_xfer *xfer, int irq)
 		}
 		if (drv_err != WDC_ATA_ERR)
 			goto end;
-		if (ata_bio->r_error & WDCE_CRC)
+		if (ata_bio->r_error & WDCE_CRC || ata_bio->error == ERR_DMA)
 			ata_dmaerr(drvp, (xfer->c_flags & C_POLL) ? AT_POLL : 0);
 	}
 
