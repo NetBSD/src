@@ -1222,11 +1222,17 @@ NAME(aout,set_section_contents) (abfd, section, location, offset, count)
   if (section != obj_textsec (abfd)
       && section != obj_datasec (abfd))
     {
-      (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, section));
-      bfd_set_error (bfd_error_nonrepresentable_section);
-      return false;
+      if (aout_section_merge_with_text_p (abfd, section))
+	section->filepos = obj_textsec (abfd)->filepos +
+			   (section->vma - obj_textsec (abfd)->vma);
+      else
+	{
+          (*_bfd_error_handler)
+	    ("%s: can not represent section `%s' in a.out object file format",
+	     bfd_get_filename (abfd), bfd_get_section_name (abfd, section));
+          bfd_set_error (bfd_error_nonrepresentable_section);
+          return false;
+	}
     }
 
   if (count != 0)
@@ -1540,11 +1546,16 @@ translate_to_native_sym_flags (abfd, cache_ptr, sym_pointer)
     sym_pointer->e_type[0] = N_UNDF | N_EXT;
   else
     {
-      (*_bfd_error_handler)
-	("%s: can not represent section `%s' in a.out object file format",
-	 bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
-      bfd_set_error (bfd_error_nonrepresentable_section);
-      return false;
+      if (aout_section_merge_with_text_p (abfd, sec))
+	sym_pointer->e_type[0] |= N_TEXT;
+      else
+	{
+          (*_bfd_error_handler)
+	    ("%s: can not represent section `%s' in a.out object file format",
+	     bfd_get_filename (abfd), bfd_get_section_name (abfd, sec));
+          bfd_set_error (bfd_error_nonrepresentable_section);
+          return false;
+	}
     }
 
   /* Turn the symbol from section relative to absolute again */
