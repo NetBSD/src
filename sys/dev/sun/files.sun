@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.7 2003/01/24 16:54:35 nakayama Exp $
+# $NetBSD: files.sun,v 1.8 2003/05/30 23:34:06 petrov Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -35,7 +35,7 @@ file	dev/sun/wskbdmap_sun.c		kbd & wskbd
 
 # upper layer of sun ms driver
 # XXX: middle layer for sun serial mice (split out?)
-device ms: firm_events
+device ms: firm_events, wsmousedev
 file	dev/sun/ms.c			ms needs-flag
 
 # e.g. - lower layer: sun (mouse systems) mouse at zs
