@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2000/03/28 00:39:17 thorpej Exp $
+#	$NetBSD: Makefile,v 1.142 2000/04/08 23:02:53 tsarna Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -84,8 +84,8 @@ BIN1+=	bootptab changelist csh.cshrc csh.login csh.logout daily \
 	netstart networks newsyslog.conf nsswitch.conf ntp.conf \
 	phones printcap profile protocols rbootd.conf rc rc.conf \
 	rc.lkm rc.local rc.subr rc.shutdown rc.wscons remote rpc \
-	security security.conf services shells syslog.conf weekly \
-	weekly.conf wscons.conf \
+	security security.conf services shells sysctl.conf syslog.conf \
+	weekly weekly.conf wscons.conf \
 	etc.${MACHINE}/ttys etc.${MACHINE}/disktab
 
 .if	(${MACHINE_ARCH} == "m68k") || \
