@@ -1,7 +1,7 @@
 #
 # deafult config file.
 #
-# 	$NetBSD: config.playstation2,v 1.9 2003/10/08 11:14:12 bouyer Exp $
+# 	$NetBSD: config.playstation2,v 1.10 2003/10/18 08:30:14 lukem Exp $
 #
 
 maxusers	16
@@ -44,7 +44,7 @@ ohci*	at sbus?
 wdc*	at spd?
 smap*	at spd?
 
-atabus* at wdc? channel ?
+atabus* at ata?
 wd*	at atabus? drive ? flags 0x0ff0	# disable DMA/UDMA
 ukphy*	at mii? phy ?	# generic unknown PHYs (IEEE Std. 802.3u)
 

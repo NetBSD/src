@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.69 2003/10/08 11:14:52 bouyer Exp $
+# $NetBSD: GENERIC,v 1.70 2003/10/18 08:30:14 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.69 $"
+#ident		"GENERIC-$Revision: 1.70 $"
 
 maxusers	32
 
@@ -278,8 +278,8 @@ wdc*	at isapnp?
 # PCMCIA IDE controllers
 wdc*	at pcmcia? function ?
 
-# ATA bus support
-atabus* at wdc? channel ?
+# ATA (IDE) bus support
+atabus* at ata?
 
 # IDE drives
 # Flags are used only with controllers that support DMA operations
@@ -295,7 +295,7 @@ atabus* at wdc? channel ?
 wd*	at atabus? drive ? flags 0x0000
 
 # ATAPI bus support
-atapibus* at atabus?
+atapibus* at atapi?
 
 # ATAPI devices
 # flags have the same meaning as for IDE drives.

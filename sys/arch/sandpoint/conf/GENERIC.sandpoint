@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.sandpoint,v 1.8 2003/10/08 11:55:44 bouyer Exp $
+# $NetBSD: GENERIC.sandpoint,v 1.9 2003/10/18 08:30:14 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8 $"
+#ident 		"GENERIC-$Revision: 1.9 $"
 
 maxusers	32
 
@@ -131,18 +131,7 @@ isa*	at pcib?			# ISA on PCI-ISA bridge
 #siside* at pci? dev ? function ?	# SiS IDE controllers
 #slide*  at pci? dev ? function ?	# Symphony Labs IDE controllers
 #viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
-#atabus* at pciide? channel ?
-#atabus* at acardide? channel ?
-#atabus* at aceride? channel ?
-#atabus* at cmdide? channel ?
-#atabus* at cypide? channel ?
-#atabus* at hptide? channel ?
-#atabus* at optiide? channel ?
-#atabus* at piixide? channel ?
-#atabus* at pdcide? channel ?
-#atabus* at siside? channel ?
-#atabus* at slide? channel ?
-#atabus* at viaide? channel ?
+#atabus* at ata?
 
 vga*	at pci? dev ? function ?
 
@@ -187,7 +176,7 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 #wd*	at atabus? drive ? flags 0x0000
-#atapibus* at atabus?
+#atapibus* at atapi?
 #cd*	at atapibus? drive ? flags 0x0000	# ATAPI CD-ROM drives
 #sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 #st*	at atapibus? drive ? flags 0x0000	# ATAPI tape drives
