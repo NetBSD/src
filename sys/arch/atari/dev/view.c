@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.3 1995/04/10 09:13:20 mycroft Exp $	*/
+/*	$NetBSD: view.c,v 1.4 1995/05/21 11:00:13 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -171,9 +171,10 @@ view_setsize(vu, vs)
 	struct view_softc *vu;
 	struct view_size *vs;
 {
-	view_t *new, *old;
+	view_t	*new, *old;
+	dmode_t	*dmode;
 	dimen_t ns;
-	int co, cs;
+	int	co, cs;
    
 	co = 0;
 	cs = 0;
@@ -190,7 +191,14 @@ view_setsize(vu, vs)
 	ns.width  = vs->width;
 	ns.height = vs->height;
 
-	new = grf_alloc_view(NULL, &ns, vs->depth);
+	if((dmode = grf_get_best_mode(&ns, vs->depth)) != NULL) {
+		/*
+		 * If we can't do better, leave it
+		 */
+		if(dmode == vu->view->mode)
+			return(0);
+	}
+	new = grf_alloc_view(dmode, &ns, vs->depth);
 	if (new == NULL)
 		return(ENOMEM);
 	
@@ -201,8 +209,6 @@ view_setsize(vu, vs)
 	vu->size.width = new->display.width;
 	vu->size.height = new->display.height;
 	vu->size.depth = new->bitmap->depth;
-	vu->size.x = vs->x;
-	vu->size.y = vs->y;
 
 	/* 
 	 * we need a custom remove here to avoid letting 
@@ -294,7 +300,6 @@ int	flags;
 	size.width = vu->size.width = view_default_width;
 	size.height = vu->size.height = view_default_height;
 	vu->size.depth = view_default_depth;
-
 	vu->view = grf_alloc_view(NULL, &size, vu->size.depth);
 	if (vu->view == NULL)
 		return(ENOMEM);
