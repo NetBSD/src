@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.4 2001/08/19 18:08:31 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.5 2001/09/10 21:19:40 chris Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -347,7 +347,7 @@ pagemove(from, to, len)
 		tva += NBPG;
 		len -= NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -397,7 +397,7 @@ vmapbuf(bp, len)
 		kva += NBPG;
 		len -= NBPG;
 	} while (len);
-	pmap_update();
+	pmap_update(kpmap);
 }
 
 /*
@@ -418,7 +418,7 @@ vunmapbuf(bp, len)
 	off = (vm_offset_t)bp->b_data - kva;
 	len = m68k_round_page(off + len);
 	pmap_remove(vm_map_pmap(kernel_map), kva, kva + len);
-	pmap_update();
+	pmap_update(vm_map_pmap(kernel_map));
 	uvm_km_free_wakeup(kernel_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = NULL;

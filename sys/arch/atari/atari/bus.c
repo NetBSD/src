@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.27 2001/05/26 21:27:05 chs Exp $	*/
+/*	$NetBSD: bus.c,v 1.28 2001/09/10 21:19:11 chris Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ bus_space_handle_t	*bshp;
 
 		*ptep = npte;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 	TBIAS();
 	return (0);
 }
@@ -713,7 +713,7 @@ bus_dmamem_map(t, segs, nsegs, size, kvap, flags)
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
 		}
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 
 	return (0);
 }

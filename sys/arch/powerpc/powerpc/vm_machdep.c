@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.35 2001/08/19 18:09:22 chs Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.36 2001/09/10 21:19:37 chris Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -197,7 +197,7 @@ pagemove(from, to, size)
 		va += NBPG;
 		to += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -369,7 +369,7 @@ vmapbuf(bp, len)
 		faddr += NBPG;
 		taddr += NBPG;
 	}
-	pmap_update();
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -391,7 +391,7 @@ vunmapbuf(bp, len)
 	off = (vaddr_t)bp->b_data - addr;
 	len = round_page(off + len);
 	pmap_kremove(addr, len);
-	pmap_update();
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, addr, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
