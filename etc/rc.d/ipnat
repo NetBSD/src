@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipnat,v 1.2 2000/03/12 03:49:36 thorpej Exp $
+# $NetBSD: ipnat,v 1.3 2000/04/30 13:23:33 lukem Exp $
 #
 
 # PROVIDE: ipnat
@@ -21,6 +21,8 @@ stop_cmd="/usr/sbin/ipnat -F -C"
 reload_precmd=$start_precmd
 reload_cmd="/usr/sbin/ipnat -F -C -f ${config}"
 
+extra_commands="reload"
+
 ipnat_start()
 {
 	if [ ! -f ${config} ]; then
@@ -34,4 +36,4 @@ ipnat_start()
 	/usr/sbin/ipnat -F -f ${config}
 }
 
-run_rc_command "$1" "reload"
+run_rc_command "$1"
