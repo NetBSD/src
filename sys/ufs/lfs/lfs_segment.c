@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.47 2000/05/31 01:40:02 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.48 2000/05/31 03:37:35 fredb Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -430,7 +430,7 @@ lfs_writevnodes(fs, mp, sp, op)
 		 * the IFILE.
 		 */
 		if ((ip->i_flag & IN_ALLMOD) ||
-		     vp->v_dirtyblkhd.lh_first != NULL))
+		     (vp->v_dirtyblkhd.lh_first != NULL))
 		{
 			only_cleaning = ((ip->i_flag & IN_ALLMOD)==IN_CLEANING);
 
