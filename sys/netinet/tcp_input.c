@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.47 1998/03/31 23:44:09 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.48 1998/04/03 07:54:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,36 +75,11 @@
 /*
  *	TODO list for SYN cache stuff:
  *
- *	(a) The definition of "struct syn_cache" says:
- *
- *		This structure should not exceeed 32 bytes.
- *
- *	    but it's 40 bytes on the Alpha.  Can reduce memory use one
- *	    of two ways:
- *
- *		(1) Use a dynamically-sized hash table, and handle
- *		    collisions by rehashing.  Then sc_next is unnecessary.
- *
- *		(2) Allocate syn_cache structures in pages (or some other
- *		    large chunk).  This would probably be desirable for
- *		    maintaining locality of reference anyway.
- *
- *		    If you do this, you can change sc_next to a page/index
- *		    value, and make it a 32-bit (or maybe even 16-bit)
- *		    integer, thus partly obviating the need for the previous
- *		    hack.
- *
- *	    It's also worth noting this this is necessary for IPv6, as well,
- *	    where we use 32 bytes just for the IP addresses, so eliminating
- *	    wastage is going to become more important.  (BTW, has anyone
- *	    integreated these changes with one fo the IPv6 status that are
- *	    available?)
- *
- *	(b) Find room for a "state" field, which is needed to keep a
- *	    compressed state for TIME_WAIT TCBs.  It's been noted already
- *	    that this is fairly important for very high-volume web and
- *	    mail servers, which use a large number of short-lived
- *	    connections.
+ *	Find room for a "state" field, which is needed to keep a
+ *	compressed state for TIME_WAIT TCBs.  It's been noted already
+ *	that this is fairly important for very high-volume web and
+ *	mail servers, which use a large number of short-lived
+ *	connections.
  */
 
 #ifndef TUBA_INCLUDE
