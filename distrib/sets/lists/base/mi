@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 2000/05/06 06:22:21 mycroft Exp $
+# $NetBSD: mi,v 1.162 2000/05/10 23:25:44 thorpej Exp $
 .
 ./altroot
 ./bin
@@ -915,6 +915,7 @@
 ./usr/share/man/cat4
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/amiga
+./usr/share/man/cat4/arm26
 ./usr/share/man/cat4/arm32
 ./usr/share/man/cat4/atari
 ./usr/share/man/cat4/hp300
@@ -978,6 +979,7 @@
 ./usr/share/man/man4
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/amiga
+./usr/share/man/man4/arm26
 ./usr/share/man/man4/arm32
 ./usr/share/man/man4/atari
 ./usr/share/man/man4/hp300
