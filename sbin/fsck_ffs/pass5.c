@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.43 2005/01/13 19:56:02 christos Exp $	*/
+/*	$NetBSD: pass5.c,v 1.44 2005/01/19 17:33:59 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.43 2005/01/13 19:56:02 christos Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.44 2005/01/19 17:33:59 xtraeme Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: pass5.c,v 1.43 2005/01/13 19:56:02 christos Exp $");
 #include "fsck.h"
 #include "extern.h"
 
-void print_bmap __P((u_char *,u_int32_t));
+void print_bmap (u_char *,u_int32_t);
 
 void
 pass5(void)
@@ -499,9 +499,7 @@ pass5(void)
 }
 
 void 
-print_bmap(map, size)
-	u_char *map;
-	u_int32_t size;
+print_bmap(u_char *map, u_int32_t size)
 {
 	int i, j;
 
