@@ -1,4 +1,4 @@
-/* $NetBSD: bcopyinout.S,v 1.7 1996/10/13 16:52:00 christos Exp $ */
+/* $NetBSD: bcopyinout.S,v 1.8 1996/10/15 01:00:33 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,6 +46,7 @@
 #include "assym.h"
 #include <sys/errno.h>
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
@@ -67,6 +68,12 @@ Lcurproc:
 	.global _copyin
 
 _copyin:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	teq	r2, #0x00000000
 	moveq	r0, #0x000000000
 	moveq	pc,lr
@@ -88,8 +95,12 @@ _copyin:
 	stmfd	sp!, {r4}
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
+
+#ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
 	beq	copyinoutpcbfault
+#endif
+
 	add	r3, pc, #copyinoutfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
@@ -114,6 +125,12 @@ copyin_loop:
 	.global _copyout
 
 _copyout:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	teq	r2, #0x00000000
 	moveq	r0, #0x000000000
 	moveq	pc,lr
@@ -135,8 +152,12 @@ _copyout:
 	stmfd	sp!, {r4}
 	ldr	r4, Lcurpcb
 	ldr	r4, [r4]
+
+#ifdef DIAGNOSTIC
 	teq	r4, #0x00000000
 	beq	copyinoutpcbfault
+#endif
+
 	add	r3, pc, #copyinoutfault - . - 8
 	str	r3, [r4, #PCB_ONFAULT]
 
@@ -167,20 +188,16 @@ Lbadaddress:
 	mov	r0, #EFAULT
 	mov	pc, lr
 
+#ifdef DIAGNOSTIC
 copyinoutpcbfault:
-	stmfd	sp!, {lr}
-	mov	r3, r1
-	mov	r1, r4
-	add	r0, pc, #copyinouttext - . - 8
-	mov	r2, r3
+	mov	r2, r1
+	mov	r1, r0
 	ldr	r3, Lcurproc
 	ldr	r3, [r3]
-	bl	_printf
-	mov	r0, #EFAULT
-	ldmfd	sp!, {lr}
-	ldmfd	sp!, {r4}
-	mov	pc, lr
+	add	r0, pc, #copyinouttext - . - 8
+	b	_panic
 
 copyinouttext:
-	.asciz	"Alert ! PCB = %08x during copyinout addr=%08x curproc=%08x\n"
+	.asciz	"Yikes - No valid PCB during copyinout() addr1=%08x addr2=%08x curproc=%08x\n"
 	.align	0
+#endif

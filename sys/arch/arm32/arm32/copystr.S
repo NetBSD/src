@@ -1,4 +1,4 @@
-/* $NetBSD: copystr.S,v 1.5 1996/08/29 22:18:09 mark Exp $ */
+/* $NetBSD: copystr.S,v 1.6 1996/10/15 01:00:30 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -43,6 +43,7 @@
 #include "assym.h"
 #include <sys/errno.h>
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
@@ -66,6 +67,12 @@ Lcurproc:
 	.global _copystr
 
 _copystr:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4-r5}
 	teq	r2, #0x00000000
 	moveq	r4, #0x00000000
@@ -106,6 +113,12 @@ copystrexit:
 	.global _copyinstr
 
 _copyinstr:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4-r6}
 	teq	r2, #0x00000000
 	moveq	r5, #0x00000000
@@ -171,6 +184,12 @@ copyinstrexit:
 	.global _copyoutstr
 
 _copyoutstr:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 	stmfd	sp!, {r4-r6}
 	teq	r2, #0x00000000
 	moveq	r5, #0x00000000

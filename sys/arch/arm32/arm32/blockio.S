@@ -1,4 +1,4 @@
-/* $NetBSD: blockio.S,v 1.3 1996/08/21 19:19:44 mark Exp $ */
+/* $NetBSD: blockio.S,v 1.4 1996/10/15 01:00:29 mark Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -43,6 +43,7 @@
  * Created      : 08/10/94
  */
 
+ip	.req	r12
 sp	.req	r13
 lr	.req	r14
 pc	.req	r15
@@ -59,6 +60,13 @@ pc	.req	r15
  */
 
 _insw:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -112,6 +120,12 @@ fastinswloop:
  */
 
 _outsw:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -174,6 +188,13 @@ fastoutswloop:
  */
 
 _insw16:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
@@ -233,6 +254,13 @@ insw16loop:
  */
 
 _outsw16:
+#if defined(GPROF) && defined(PROFILE_ASM)
+	stmfd	sp!, {lr}
+	mov	ip, lr
+	bl	mcount
+	ldmfd	sp!, {lr}
+#endif
+
 /* Make sure that we have a positive length */
 	cmp	r2, #0x00000000
 	movle	pc, lr
