@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2000/09/23 13:53:41 simonb Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/08 07:45:26 gmcgarry Exp $
 
 PROGAOUT=	uboot
 PROGSOURCE=	uboot.c tgets.c
@@ -7,10 +7,10 @@ NEWVERSWHAT=	"Primary Boot"
 CPPFLAGS+=	-DSUPPORT_ETHERNET -DSUPPORT_TAPE -DSUPPORT_DISK
 
 install:
-	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} \
+	${INSTALL} -d -m 755 -o ${BINOWN} -g ${BINGRP} ${INSTPRIV} \
 	    ${DESTDIR}${BINDIR}/rbootd
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 uboot.lif \
-	    ${DESTDIR}${BINDIR}/uboot.lif
+	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m 444 ${INSTPRIV} \
+	    uboot.lif ${DESTDIR}${BINDIR}/uboot.lif
 	rm -f ${DESTDIR}${BINDIR}/rdboot
 	ln ${DESTDIR}${BINDIR}/uboot.lif ${DESTDIR}${BINDIR}/rdboot
 	rm -f ${DESTDIR}${BINDIR}/bootrd
