@@ -1,3 +1,5 @@
+.\"	$NetBSD: kernmalloc.t,v 1.2 1998/01/09 06:41:12 perry Exp $
+.\"
 .\" Copyright (c) 1988 The Regents of the University of California.
 .\" All rights reserved.
 .\"

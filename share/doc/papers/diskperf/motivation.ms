@@ -1,3 +1,5 @@
+.\"	$NetBSD: motivation.ms,v 1.2 1998/01/09 06:41:01 perry Exp $
+.\"
 .\" Copyright (c) 1983 The Regents of the University of California.
 .\" All rights reserved.
 .\"
