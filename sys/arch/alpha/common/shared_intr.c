@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.8 1999/11/29 19:59:19 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.9 1999/12/07 21:36:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.8 1999/11/29 19:59:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.9 1999/12/07 21:36:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -151,7 +151,8 @@ alpha_shared_intr_establish(intr, num, type, level, fn, arg, basename)
 			break;
 	case IST_PULSE:
 		if (type != IST_NONE) {
-			if (intr[num].intr_q.tqh_first == NULL) {
+			if (intr[num].intr_q.tqh_first == NULL &&
+			    type != intr[num].intr_sharetype) {
 				printf("alpha_shared_intr_establish: %s %d: warning: using %s on %s\n",
 				    basename, num, intr_typename(type),
 				    intr_typename(intr[num].intr_sharetype));
