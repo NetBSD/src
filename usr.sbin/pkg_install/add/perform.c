@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.80 2003/04/10 16:12:38 grant Exp $	*/
+/*	$NetBSD: perform.c,v 1.81 2003/04/22 01:17:03 hubertf Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.80 2003/04/10 16:12:38 grant Exp $");
+__RCSID("$NetBSD: perform.c,v 1.81 2003/04/22 01:17:03 hubertf Exp $");
 #endif
 #endif
 
@@ -101,10 +101,10 @@ pkg_do(const char *pkg)
 {
 	char    playpen[FILENAME_MAX];
 	char    extract_contents[FILENAME_MAX];
-	char    upgrade_from[FILENAME_MAX];
-	char    upgrade_via[FILENAME_MAX];
-	char    upgrade_to[FILENAME_MAX];
-	int	upgrading = 0;
+	char    replace_from[FILENAME_MAX];
+	char    replace_via[FILENAME_MAX];
+	char    replace_to[FILENAME_MAX];
+	int	replacing = 0;
 	char   *where_to, *tmp, *extract;
 	char   *dbdir;
 	const char *exact;
@@ -302,23 +302,23 @@ pkg_do(const char *pkg)
 
 			/*
 			 * See if the pkg is already installed. If so, we might
-			 * want to upgrade it. 
+			 * want to upgrade/replace it. 
 			 */
 			(void) snprintf(buf, sizeof(buf), "%.*s[0-9]*",
 				(int)(s - PkgName) + 1, PkgName);
 			if (findmatchingname(dbdir, buf, note_whats_installed, installed) > 0) {
-				if (upgrade) {
-					snprintf(upgrade_from, sizeof(upgrade_from), "%s/%s/" REQUIRED_BY_FNAME,
+				if (Replace) {
+					snprintf(replace_from, sizeof(replace_from), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, installed);
-					snprintf(upgrade_via, sizeof(upgrade_via), "%s/.%s." REQUIRED_BY_FNAME,
+					snprintf(replace_via, sizeof(replace_via), "%s/.%s." REQUIRED_BY_FNAME,
 						 dbdir, installed);
-					snprintf(upgrade_to, sizeof(upgrade_to), "%s/%s/" REQUIRED_BY_FNAME,
+					snprintf(replace_to, sizeof(replace_to), "%s/%s/" REQUIRED_BY_FNAME,
 						 dbdir, PkgName);
 
 					if (Verbose)
 						printf("Upgrading %s to %s.\n", installed, PkgName);
 
-					if (fexists(upgrade_from)) {  /* Are there any dependencies? */
+					if (fexists(replace_from)) {  /* Are there any dependencies? */
 					  	/*
 						 * Upgrade step 1/4: Check if the new version is ok with all pkgs
 						 * (from +REQUIRED_BY) that require this pkg
@@ -326,12 +326,12 @@ pkg_do(const char *pkg)
 						FILE *rb;                     /* +REQUIRED_BY file */
 						char pkg2chk[FILENAME_MAX];
 
-						rb = fopen(upgrade_from, "r");
+						rb = fopen(replace_from, "r");
 						if (! rb) {
-							warnx("Cannot open '%s' for reading%s", upgrade_from,
+							warnx("Cannot open '%s' for reading%s", replace_from,
 							      Force ? " (proceeding anyways)" : "");
 							if (Force)
-								goto ignore_upgrade_depends_check;
+								goto ignore_replace_depends_check;
 							else
 								goto bomb;
 						}
@@ -355,7 +355,7 @@ pkg_do(const char *pkg)
 								warnx("Cannot check depends in '%s'%s", depC, 
 								      Force ? " (proceeding anyways)" : "!" );
 								if (Force)
-									goto ignore_upgrade_depends_check;
+									goto ignore_replace_depends_check;
 								else
 									goto bomb;
 							}
@@ -399,7 +399,7 @@ pkg_do(const char *pkg)
 											printf("@pkgdep check: %s is ok for %s (in %s pkg)\n",
 											       PkgName, depp->name, pkg2chk);
 									} else {
-										printf("Package %s requires %s, \n\tCannot perform upgrade to %s%s\n",
+										printf("Package %s requires %s, \n\tCannot replace with %s%s\n",
 										       pkg2chk, depp->name, PkgName,
 										       Force? " (proceeding anyways)" : "!");
 										if (! Force)
@@ -410,7 +410,7 @@ pkg_do(const char *pkg)
 						}
 						fclose(rb);
 						
-ignore_upgrade_depends_check:
+ignore_replace_depends_check:
 						/*
 						 * Upgrade step 2/4: Do the actual update by moving aside
 						 * the +REQUIRED_BY file, deinstalling the old pkg, adding
@@ -418,11 +418,11 @@ ignore_upgrade_depends_check:
 						 * into place (finished in step 3/4)
 						 */
 						if (Verbose)
-							printf("mv %s %s\n", upgrade_from, upgrade_via);						
-						rc = rename(upgrade_from, upgrade_via);
+							printf("mv %s %s\n", replace_from, replace_via);						
+						rc = rename(replace_from, replace_via);
 						assert(rc == 0);
 						
-						upgrading = 1;
+						replacing = 1;
 					}
 
 					if (Verbose)
@@ -499,11 +499,11 @@ ignore_upgrade_depends_check:
 					warnx("pkg `%s' required, but `%s' found installed.",
 					      p->name, installed);
 
-					if (upgrading) {
-						printf("HF: upgrade note -- could 'pkg_delete %s', and let the normal\n"
-						       "dependency handling reinstall the updated package, assuming one IS\n"
+					if (replacing) {
+						printf("HF: replace note -- could 'pkg_delete %s', and let the normal\n"
+						       "dependency handling reinstall the replaced package, assuming one IS\n"
 						       "available. But then I'd expect proper binary pkgs being available for\n"
-						       "the upgrade case.\n", installed);
+						       "the replace case.\n", installed);
 					}
 
 					if (Force) {
@@ -752,12 +752,12 @@ success:
 	free_plist(&Plist);
 	leave_playpen(Home);
 
-	if (upgrading) {
+	if (replacing) {
 		/*
 		 * Upgrade step 3/4: move back +REQUIRED_BY file
 		 * (see also step 2/4)
 		 */
-		rc = rename(upgrade_via, upgrade_to);
+		rc = rename(replace_via, replace_to);
 		assert(rc == 0);
 		
 		/*
