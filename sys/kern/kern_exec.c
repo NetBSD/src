@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.138.2.18 2002/11/11 22:13:39 nathanw Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.138.2.19 2002/11/12 20:11:04 nathanw Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.18 2002/11/11 22:13:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.138.2.19 2002/11/12 20:11:04 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -514,6 +514,7 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 	p->p_flag |= P_WEXIT; /* XXX hack. lwp-exit stuff wants to see it. */
 	exit_lwps(l);
 	p->p_flag &= ~P_WEXIT;
+	KDASSERT(p->p_nlwps == 1);
 
 	/* This is now LWP 1 */
 	l->l_lid = 1;
@@ -776,7 +777,9 @@ sys_execve(struct lwp *l, void *v, register_t *retval)
 		sigminusset(&contsigmask, &p->p_sigctx.ps_siglist);
 		SCHED_LOCK(s);
 		p->p_stat = SSTOP;
-		mi_switch(p, NULL);
+		l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		mi_switch(l, NULL);
 		SCHED_ASSERT_UNLOCKED();
 		splx(s);
 	}
