@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.63 2003/04/17 09:32:43 fvdl Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.64 2003/05/04 01:52:18 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.63 2003/04/17 09:32:43 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.64 2003/05/04 01:52:18 gmcgarry Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1939,6 +1939,6 @@ ffs_fserr(fs, uid, cp)
 	char *cp;
 {
 
-	log(LOG_ERR, "uid %d comm %s on %s: %s\n",
-	    uid, curproc->p_comm, fs->fs_fsmnt, cp);
+	log(LOG_ERR, "uid %d, pid %d, command %s, on %s: %s\n",
+	    uid, curproc->p_pid, curproc->p_comm, fs->fs_fsmnt, cp);
 }
