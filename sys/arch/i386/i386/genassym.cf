@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.17.10.3 2000/06/25 19:37:03 sommerfeld Exp $
+#	$NetBSD: genassym.cf,v 1.17.10.4 2000/06/25 23:10:18 sommerfeld Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -144,6 +144,7 @@ define	P_STAT			offsetof(struct proc, p_stat)
 define	P_WCHAN			offsetof(struct proc, p_wchan)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	P_FLAG			offsetof(struct proc, p_flag)
+define	P_CPU			offsetof(struct proc, p_cpu)
 
 define	P_SYSTEM		P_SYSTEM
 
