@@ -1,11 +1,11 @@
-/*	$NetBSD: plist.c,v 1.8 1998/06/05 11:22:20 frueauf Exp $	*/
+/*	$NetBSD: plist.c,v 1.9 1998/08/27 20:31:01 ross Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.8 1998/06/05 11:22:20 frueauf Exp $");
+__RCSID("$NetBSD: plist.c,v 1.9 1998/08/27 20:31:01 ross Exp $");
 #endif
 #endif
 
@@ -507,11 +507,12 @@ delete_hierarchy(char *dir, Boolean ign_err, Boolean nukedirs)
 	    *cp2 = '\0';
 	if (!isemptydir(dir))
 	    return 0;
-	if (RMDIR(dir) && !ign_err)
+	if (RMDIR(dir) && !ign_err) {
 	    if (!fexists(dir))
 		warnx("directory `%s' doesn't really exist", dir);
 	    else
 		return 1;
+	}
 	/* back up the pathname one component */
 	if (cp2) {
 	    cp1 = dir;

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.9 1997/10/19 19:53:54 mycroft Exp $	*/
+/*	$NetBSD: expand.c,v 1.10 1998/08/27 20:31:01 ross Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -336,11 +336,12 @@ slash:
 				if (addpath(*s++)) goto pathovfl;
 			if (addpath('/')) goto pathovfl;
 			if (stat(fixit(path), &stb) >= 0 &&
-			    (stb.st_mode&S_IFMT) == S_IFDIR)
+			    (stb.st_mode&S_IFMT) == S_IFDIR) {
 				if (*p == 0)
 					addone(path, "");
 				else
 					glob(p);
+			}
 pathovfl:
 			pathp = spathp;
 			*pathp = 0;

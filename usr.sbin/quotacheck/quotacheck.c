@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.18 1998/07/27 00:52:02 mycroft Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.19 1998/08/27 20:31:01 ross Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.18 1998/07/27 00:52:02 mycroft Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.19 1998/08/27 20:31:01 ross Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,13 +293,14 @@ chkquota(type, fsname, mntpt, v, pid)
 	sync();
 	dev_bsize = 1;
 	bread(SBOFF, (char *)&sblock, (long)SBSIZE);
-	if (sblock.fs_magic != FS_MAGIC)
+	if (sblock.fs_magic != FS_MAGIC) {
 		if (sblock.fs_magic== bswap32(FS_MAGIC)) {
 			needswap = 1;
 			ffs_sb_swap(&sblock, &sblock, 0);
 		} else
 			errx(1, "%s: superblock magic number 0x%x, not 0x%x",
 				fsname, sblock.fs_magic, FS_MAGIC);
+	}
 	dev_bsize = sblock.fs_fsize / fsbtodb(&sblock, 1);
 	maxino = sblock.fs_ncg * sblock.fs_ipg;
 	resetinodebuf();

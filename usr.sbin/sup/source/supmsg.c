@@ -1,4 +1,4 @@
-/*	$NetBSD: supmsg.c,v 1.5 1997/06/17 18:57:00 christos Exp $	*/
+/*	$NetBSD: supmsg.c,v 1.6 1998/08/27 20:31:02 ross Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -156,11 +156,12 @@ int msgsetup ()
 		if (x == SCMOK)  x = readint (&baseino);
 		if (x == SCMOK)  x = readint (&listonly);
 		if (x == SCMOK)  x = readint (&newonly);
-		if (x == SCMOK)
+		if (x == SCMOK) {
 			if (protver < 6)
 				release = (char *)NULL;
 			else
 				x = readstring (&release);
+		}
 		if (x == SCMOK)  x = readmend ();
 	} else {
 		x = writemsg (MSGSETUP);

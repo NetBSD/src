@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.5 1998/08/12 14:11:53 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.6 1998/08/27 20:31:03 ross Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -156,12 +156,12 @@ refclock_report(peer, code)
 		pp->currentstatus = code;
 		pp->lastevent = code;
 
-		if (code == CEVNT_FAULT)
+		if (code == CEVNT_FAULT) {
 		    NLOG(NLOG_CLOCKEVENT)
 		      msyslog(LOG_ERR,
 			     "clock %s fault '%s' (0x%02x)",
 			     refnumtoa(peer->srcadr.sin_addr.s_addr), ceventstr(code), code);
-		else {
+		} else {
 		    NLOG(NLOG_CLOCKEVENT)
 		      msyslog(LOG_INFO,
 			     "clock %s event '%s' (0x%02x)",
