@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.20 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.21 2002/07/04 23:32:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -94,8 +94,7 @@ struct sunos_sigframe {
  * SIG_DFL for "dangerous" signals.
  */
 void
-sunos_sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sunos_sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
@@ -105,6 +104,7 @@ sunos_sendsig(catcher, sig, mask, code)
 	struct frame *frame;
 	short ft;
 	int onstack, fsize;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;

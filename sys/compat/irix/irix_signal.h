@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.h,v 1.10 2002/04/14 21:50:50 manu Exp $ */
+/*	$NetBSD: irix_signal.h,v 1.11 2002/07/04 23:32:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@ void native_to_irix_sigset __P((const sigset_t *, irix_sigset_t *));
 void irix_to_native_sigset __P((const irix_sigset_t *, sigset_t *));
 
 
-void irix_sendsig __P((sig_t, int, sigset_t *, u_long));
+void irix_sendsig __P((int, sigset_t *, u_long));
 __END_DECLS
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.134 2002/07/04 19:20:02 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.135 2002/07/04 23:32:05 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.134 2002/07/04 19:20:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.135 2002/07/04 23:32:05 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -1085,17 +1085,18 @@ int sigpid = 0;
  * Send an interrupt to process.
  */
 void
-sendsig(catcher, sig, mask, code)
-	sig_t catcher;
+sendsig(sig, mask, code)
 	int sig;
 	sigset_t *mask;
 	u_long code;
 {
 	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
 	struct sigframe *fp;
 	struct frame *f;
 	int onstack;
 	struct sigcontext ksc;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
 	f = (struct frame *)p->p_md.md_regs;
 
@@ -1174,18 +1175,35 @@ sendsig(catcher, sig, mask, code)
 		/* NOTREACHED */
 	}
 
-	/* Set up the registers to return to sigcode. */
+	/*
+	 * Set up the registers to directly invoke the signal
+	 * handler.  The return address will be set up to point
+	 * to the signal trampoline to bounce us back.
+	 */
 	f->f_regs[A0] = sig;
 	f->f_regs[A1] = code;
 	f->f_regs[A2] = (int)&fp->sf_sc;
-	f->f_regs[A3] = (int)catcher;
+	f->f_regs[A3] = (int)catcher;		/* XXX ??? */
 
 	f->f_regs[PC] = (int)catcher;
 	f->f_regs[T9] = (int)catcher;
 	f->f_regs[SP] = (int)fp;
 
-	/* Signal trampoline code is at base of user stack. */
-	f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+#if 1 /* COMPAT_16 */
+	case 0:		/* legacy on-stack sigtramp */
+		f->f_regs[RA] = (int)p->p_sigctx.ps_sigcode;
+		break;
+#endif /* COMPAT_16 */
+
+	case 1:
+		f->f_regs[RA] = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
