@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.24 1999/09/15 19:57:02 is Exp $
+.\"	$NetBSD: netstat.1,v 1.25 1999/09/15 20:12:18 is Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Nm ""
-.Op Fl dgimnrsv
+.Op Fl dgiLmnrsv
 .Op Fl f Ar address_family
 .Op Fl M Ar core
 .Op Fl N Ar system
@@ -151,6 +151,8 @@ options is also present, multicast addresses currently in use are shown
 for each Ethernet interface and for each IP interface address.
 Multicast addresses are shown on separate lines following the interface
 address with which they are associated.
+.It Fl L
+Don't show link-level routes (e.g., IPv4 ARP or IPv6 neighbour cache).
 .It Fl M
 Extract values associated with the name list from the specified core
 instead of the default

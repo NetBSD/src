@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 1999/07/01 18:40:36 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.24 1999/09/15 20:12:18 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 1999/07/01 18:40:36 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 1999/09/15 20:12:18 is Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,8 @@ main(argc, argv)
 	af = AF_UNSPEC;
 	pcbaddr = 0;
 
-	while ((ch = getopt(argc, argv, "Aabdf:ghI:liM:mN:nP:p:rstuvw:")) != -1)
+	while ((ch = getopt(argc, argv, "Aabdf:ghI:LliM:mN:nP:p:rstuvw:"))
+		!= -1)
 		switch(ch) {
 		case 'A':
 			Aflag = 1;
@@ -347,6 +348,9 @@ main(argc, argv)
 			break;
 		case 'i':
 			iflag = 1;
+			break;
+		case 'L':
+			Lflag = 1;
 			break;
 		case 'l':
 			lflag = 1;
