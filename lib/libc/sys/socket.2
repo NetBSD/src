@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.15 1999/12/02 21:42:39 kleink Exp $
+.\"	$NetBSD: socket.2,v 1.16 1999/12/11 19:35:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -153,7 +153,7 @@ within a reasonable length of time, then
 the connection is considered broken and calls
 will indicate an error with
 -1 returns and with
-.Dv ETIMEDOUT
+.Er ETIMEDOUT
 as the specific code
 in the global variable
 .Va errno .
