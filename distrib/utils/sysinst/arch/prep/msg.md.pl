@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2002/08/12 02:22:56 grant Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2003/05/14 22:11:44 he Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/01/16 16:54:01 nonaka Exp */
 
@@ -111,6 +111,20 @@ message editparttable
 {Wyedytuj DOSowa tablice partycji. Podswietlona partycja jest aktualnie
 aktywna. Tablica partycji wyglada tak:
 
+}
+
+message mbrpart_start_special
+{
+  Specjalne wartosci, ktore moga byc podane jako wartosc poczatkowa:
+ -N:    zacznij na koncu partycji N
+  0:    zacznij na poczatku dysku
+}
+
+message mbrpart_size_special
+{
+  Specjalne wartoscki, ktore moga byc podane jako wartosc rozmiaru:
+ -N:    rozciagnij partycje, az do partycji N
+  0:    rozciagnij partycje, az do konca dysku
 }
 
 message reeditpart

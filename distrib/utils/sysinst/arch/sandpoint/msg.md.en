@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2002/08/12 02:22:56 grant Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.3 2003/05/14 22:11:45 he Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -156,6 +156,20 @@ message editparttable
 {Edit your DOS partition table.  The highlighted partition is the currently
 active partition.   The partition table currently looks like:
 
+}
+
+message mbrpart_start_special
+{
+  Special values that can be entered for the start value:
+ -N:    start at the end of partition N
+  0:    start at the beginning of the disk
+}
+
+message mbrpart_size_special
+{
+  Special values that can be entered for the size value:
+ -N:    size the partition so that it ends where partition N starts
+  0:    end at the end of the disk
 }
 
 message reeditpart
