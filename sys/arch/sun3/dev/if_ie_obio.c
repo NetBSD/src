@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_obio.c,v 1.11 1997/10/07 18:17:19 gwr Exp $	*/
+/*	$NetBSD: if_ie_obio.c,v 1.12 1997/12/08 21:49:50 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -122,20 +122,8 @@ ie_obio_attach(parent, self, args)
 	sc->sc_bcopy = bcopy;
 	sc->sc_bzero = bzero;
 
-	/*
-	 * The on-board "ie" just uses main memory, so
-	 * we can choose how much memory to give it.
-	 * XXX: Would like to use less than 64K...
-	 */
-	sc->sc_msize = 0x8000; /* MEMSIZE 32K */
-
 	/* Map in the control registers. */
 	sc->sc_reg = obio_mapin(ca->ca_paddr, sizeof(struct ieob));
-
-	/* Allocate "shared" memory (in DVMA space). */
-	sc->sc_maddr = dvma_malloc(sc->sc_msize);
-	if (sc->sc_maddr == NULL)
-		panic(": not enough dvma space");
 
 	/*
 	 * The on-board "ie" is wired-up such that its
@@ -143,6 +131,18 @@ ie_obio_attach(parent, self, args)
 	 * of the on-board memory space (on-board DVMA).
 	 */
 	sc->sc_iobase = (caddr_t)DVMA_OBIO_SLAVE_BASE;
+
+	/*
+	 * The on-board "ie" just uses main memory, so
+	 * we can choose how much memory to give it.
+	 * XXX: Would like to use less than 64K...
+	 */
+	sc->sc_msize = 0x8000; /* MEMSIZE 32K */
+
+	/* Allocate "shared" memory (in DVMA space). */
+	sc->sc_maddr = dvma_malloc(sc->sc_msize);
+	if (sc->sc_maddr == NULL)
+		panic(": not enough dvma space");
 
 	/*
 	 * Set the System Configuration Pointer (SCP).
@@ -161,29 +161,22 @@ ie_obio_attach(parent, self, args)
 	sc->buf_area    = sc->sc_maddr;
 	sc->buf_area_sz = sc->sc_msize;
 
+	/* Install interrupt handler. */
+	isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
+
 	/* Set the ethernet address. */
 	idprom_etheraddr(sc->sc_addr);
 
 	/* Do machine-independent parts of attach. */
 	ie_attach(sc);
-
-	/* Install interrupt handler. */
-	isr_add_autovect(ie_intr, (void *)sc, ca->ca_intpri);
 }
 
 
 /*
  * onboard ie support
  */
-void
-ie_obreset(sc)
-	struct ie_softc *sc;
-{
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
-	ieo->obctrl = 0;
-	delay(100);			/* XXX could be shorter? */
-	ieo->obctrl = IEOB_NORSET;
-}
+
+/* Whack the "channel attetion" line. */
 void
 ie_obattend(sc)
 	struct ie_softc *sc;
@@ -194,12 +187,28 @@ ie_obattend(sc)
 	ieo->obctrl &= ~IEOB_ATTEN;	/* down. */
 }
 
+/*
+ * This is called during driver attach.
+ * Reset and initialize.
+ */
+void
+ie_obreset(sc)
+	struct ie_softc *sc;
+{
+	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
+	ieo->obctrl = 0;
+	delay(20);
+	ieo->obctrl = (IEOB_NORSET | IEOB_ONAIR | IEOB_IENAB);
+}
+
+/*
+ * This is called at the end of ieinit().
+ * optional.
+ */
 void
 ie_obrun(sc)
 	struct ie_softc *sc;
 {
-	volatile struct ieob *ieo = (struct ieob *) sc->sc_reg;
-
-	ieo->obctrl |= (IEOB_ONAIR|IEOB_IENAB|IEOB_NORSET);
+	/* do it all in reset */
 }
 
