@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.25 2001/09/03 19:38:13 matt Exp $
+#	$NetBSD: files.hpcarm,v 1.26 2001/09/09 09:59:24 toshii Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -39,7 +39,6 @@ file	arch/hpcarm/hpcarm/setstack.S
 file	arch/hpcarm/hpcarm/softintr.c
 file	arch/hpcarm/hpcarm/spl.S
 file	arch/hpcarm/hpcarm/stubs.c
-file	arch/hpcarm/hpcarm/vm_machdep.c
 
 # ARM FPE
 #file	arch/hpcarm/fpe-arm/armfpe_glue.S	armfpe
