@@ -1,3 +1,5 @@
+/*	$NetBSD: bim.c,v 1.2 1995/03/18 12:28:10 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
  * All rights reserved.
@@ -27,14 +29,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: bim.c,v 1.1 1994/04/22 00:04:25 cgd Exp $
  */
 
 /*
  *  Boot Image Manager
  *
- *  (First copy called "hdsetup" an was written under Minix.)
+ *  (First copy called "hdsetup" and was written under Minix.)
  * 
  *   Phil Nelson
  *   Sept 30, 1990

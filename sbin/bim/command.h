@@ -1,3 +1,5 @@
+/*	$NetBSD: command.h,v 1.2 1995/03/18 12:28:17 cgd Exp $	*/
+
 /* 
  * Copyright (c) 1994 Philip A. Nelson.
  * All rights reserved.
@@ -27,8 +29,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: command.h,v 1.1 1994/04/22 00:04:29 cgd Exp $
  */
 
 /*

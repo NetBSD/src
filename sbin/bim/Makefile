@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.1 1994/04/22 00:04:22 cgd Exp $
+#	$NetBSD: Makefile,v 1.2 1995/03/18 12:28:06 cgd Exp $
 
 PROG   = bim
 SRCS   = bim.c command.c
