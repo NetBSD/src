@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.61 1998/05/19 12:15:38 pk Exp $	*/
+/*	$NetBSD: rtld.c,v 1.62 1998/05/30 18:28:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -1802,6 +1802,7 @@ __dlctl(fd, cmd, arg)
 	switch (cmd) {
 	case DL_GETERRNO:
 		*(int *)arg = dlerrno;
+		dlerrno = 0;
 		return (0);
 	default:
 		dlerrno = EOPNOTSUPP;
