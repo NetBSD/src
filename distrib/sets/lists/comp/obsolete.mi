@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.48 2001/05/16 13:48:53 ad Exp $
+# $NetBSD: obsolete.mi,v 1.49 2001/05/31 21:56:23 tron Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -246,7 +246,6 @@
 /usr/include/dev/scsipi/atapiconf.h
 /usr/include/dev/scsipi/cd_link.h
 /usr/include/dev/scsipi/cdvar.h
-/usr/include/dev/scsipi/scsi_cd.h
 /usr/include/dev/scsipi/scsi_changer.h
 /usr/include/dev/scsipi/scsi_ctron_ether.h
 /usr/include/dev/scsipi/scsi_message.h
