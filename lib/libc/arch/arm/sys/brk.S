@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.1 2000/12/29 20:14:02 bjh21 Exp $	*/
+/*	$NetBSD: brk.S,v 1.2 2001/01/09 19:47:27 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@ L1:
 	cmp	r0, r1
 	movlt	r0, r1
 	mov	r2, r0
-	swi	SYS_break
+	SYSTRAP(break)
 	bcs	cerror
 
 #ifdef PIC
