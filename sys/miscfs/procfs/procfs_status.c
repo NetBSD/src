@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_status.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_status.c,v 1.4 1994/05/04 03:42:22 cgd Exp $
+ *	$Id: procfs_status.c,v 1.5 1994/05/05 05:39:13 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -109,12 +109,17 @@ pfs_dostatus(curp, p, pfs, uio)
 			p->p_stats->p_start.tv_usec);
 	else
 		ps += sprintf(ps, " -1 -1");
-	
-	ps += sprintf(ps, " %d %d %d %d",
-		p->p_utime.tv_sec,
-		p->p_utime.tv_usec,
-		p->p_stime.tv_sec,
-		p->p_stime.tv_usec);
+
+	{
+		struct timeval ut, st;
+
+		calcru(p, &ut, &st, (void *) 0);
+		ps += sprintf(ps, " %d,%d %d,%d",
+			ut.tv_sec,
+			ut.tv_usec,
+			st.tv_sec,
+			st.tv_usec);
+	}
 
 	ps += sprintf(ps, " %s",
 		(p->p_wchan && p->p_wmesg) ? p->p_wmesg : "nochan");

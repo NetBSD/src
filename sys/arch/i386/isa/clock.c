@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.23 1994/05/03 20:32:24 mycroft Exp $
+ *	$Id: clock.c,v 1.24 1994/05/05 05:36:30 cgd Exp $
  */
 /* 
  * Mach Operating System
@@ -129,7 +129,7 @@ startrtclock()
 
 int
 clockintr(frame)
-	clockframe *frame;
+	struct clockframe *frame;
 {
 
 	hardclock(frame);
@@ -273,7 +273,7 @@ findcpuspeed()
 }
 
 void
-enablertclock()
+cpu_initclocks()
 {
 	static struct intrhand clockhand;
 
@@ -462,4 +462,10 @@ resettodr()
 	s = splclock();
 	rtcput(&rtclk);
 	splx(s);
+}
+
+void
+setstatclockrate(arg)
+	int arg;
+{
 }

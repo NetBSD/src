@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.12 1994/04/22 23:02:42 mycroft Exp $
+ *	$Id: mcd.c,v 1.13 1994/05/05 05:36:42 cgd Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -148,8 +148,9 @@ void hsg2msf __P((int, bcd_t *));
 int msf2hsg __P((bcd_t *));
 int mcd_volinfo __P((struct mcd_softc *));
 int mcdintr __P((struct mcd_softc *));
-void mcd_doread __P((int, struct mcd_mbx *));
 int mcd_setmode __P((struct mcd_softc *, int));
+void mcd_doread __P((int, struct mcd_mbx *));
+void mcd_doreadtimeout __P((void *arg));
 int mcd_toc_header __P((struct mcd_softc *, struct ioc_toc_header *));
 int mcd_read_toc __P((struct mcd_softc *));
 int mcd_toc_entry __P((struct mcd_softc *, struct ioc_read_toc_entry *));
@@ -840,6 +841,15 @@ mcdintr(sc)
 struct mcd_mbx *mbxsave;
 
 void
+mcd_doreadtimeout(arg)
+	void *arg;
+{
+	int state = (long)arg;
+
+	mcd_doread(state, NULL);
+}
+
+void
 mcd_doread(state, mbxin)
 	int state;
 	struct mcd_mbx *mbxin;
@@ -863,16 +873,16 @@ loop:
 		/* Get status. */
 		outb(iobase + mcd_command, MCD_CMDGETSTAT);
 		mbx->count = RDELAY_WAITSTAT;
-		timeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITSTAT,
+		timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITSTAT,
 		    hz/100);
 		return;
 
 	case MCD_S_WAITSTAT:
-		untimeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITSTAT);
+		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITSTAT);
 		if (mbx->count-- >= 0) {
 			if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
-				timeout((timeout_t) mcd_doread,
-				    (caddr_t) MCD_S_WAITSTAT, hz/100);
+				timeout(mcd_doreadtimeout,
+				    (caddr_t)MCD_S_WAITSTAT, hz/100);
 				return;
 			}
 			mcd_setflags(sc);
@@ -898,8 +908,8 @@ loop:
 		
 			mcd_put(iobase + mcd_command, MCD_CMDSETMODE);
 			mcd_put(iobase + mcd_command, rm);
-			timeout((timeout_t) mcd_doread,
-			    (caddr_t) MCD_S_WAITMODE, hz/100);
+			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE,
+			    hz/100);
 			return;
 		} else {
 			printf("%s: timeout getting status\n",
@@ -908,15 +918,15 @@ loop:
 		}
 
 	case MCD_S_WAITMODE:
-		untimeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITMODE);
+		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE);
 		if (mbx->count-- < 0) {
 			printf("%s: timeout setting mode\n",
 			    sc->sc_dev.dv_xname);
 			goto readerr;
 		}
 		if (inb(iobase + mcd_xfer) & MCD_ST_BUSY) {
-			timeout((timeout_t) mcd_doread,
-			    (caddr_t) MCD_S_WAITMODE, hz/100);
+			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITMODE,
+			    hz/100);
 			return;
 		}
 		mcd_setflags(sc);
@@ -945,12 +955,11 @@ nextblock:
 		mcd_put(iobase + mcd_command, 0);
 		mcd_put(iobase + mcd_command, 1);
 		mbx->count = RDELAY_WAITREAD;
-		timeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITREAD,
-		    hz/100);
+		timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD, hz/100);
 		return;
 
 	case MCD_S_WAITREAD:
-		untimeout((timeout_t) mcd_doread, (caddr_t) MCD_S_WAITREAD);
+		untimeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD);
 		if (mbx->count-- > 0) {
 			k = inb(iobase + mcd_xfer);
 			if ((k & 2) == 0) {	/* XXX MCD_ST_AUDIOBSY? */
@@ -978,8 +987,8 @@ nextblock:
 			}
 			if ((k & MCD_ST_BUSY) == 0)
 				mcd_getstat(sc, 0);
-			timeout((timeout_t) mcd_doread,
-			    (caddr_t) MCD_S_WAITREAD, hz/100);
+			timeout(mcd_doreadtimeout, (caddr_t)MCD_S_WAITREAD,
+			    hz/100);
 			return;
 		} else {
 			printf("%s: timeout reading data\n",

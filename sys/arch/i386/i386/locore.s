@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.64 1994/04/18 01:24:09 mycroft Exp $
+ *	$Id: locore.s,v 1.65 1994/05/05 05:35:46 cgd Exp $
  */
 
 /*
@@ -1391,22 +1391,22 @@ ENTRY(longjmp)
 ENTRY(setrq)
 	movl	4(%esp),%eax
 #ifdef DIAGNOSTIC
-	cmpl	$0,P_RLINK(%eax)	# should not be on q already
+	cmpl	$0,P_BACK(%eax)	# should not be on q already
 	jne	1f
 	cmpl	$0,P_WCHAN(%eax)
 	jne	1f
 	cmpb	$SRUN,P_STAT(%eax)
 	jne	1f
 #endif
-	movzbl	P_PRI(%eax),%edx
+	movzbl	P_PRIORITY(%eax),%edx
 	shrl	$2,%edx
 	btsl	%edx,_whichqs		# set q full bit
 	leal	_qs(,%edx,8),%edx	# locate q hdr
-	movl	%edx,P_LINK(%eax)	# link process on tail of q
-	movl	P_RLINK(%edx),%ecx
-	movl	%eax,P_RLINK(%edx)
-	movl	%ecx,P_RLINK(%eax)
-	movl	%eax,P_LINK(%ecx)
+	movl	%edx,P_FORW(%eax)	# link process on tail of q
+	movl	P_BACK(%edx),%ecx
+	movl	%eax,P_BACK(%edx)
+	movl	%ecx,P_BACK(%eax)
+	movl	%eax,P_FORW(%ecx)
 	ret
 #ifdef DIAGNOSTIC
 1:	pushl	$2f
@@ -1422,17 +1422,17 @@ ENTRY(setrq)
 ENTRY(remrq)
 	pushl	%esi
 	movl	8(%esp),%esi
-	movzbl	P_PRI(%esi),%eax
+	movzbl	P_PRIORITY(%esi),%eax
 	shrl	$2,%eax
 #ifdef DIAGNOSTIC
 	btl	%eax,_whichqs
 	jnc	1f
 #endif
-	movl	P_LINK(%esi),%ecx	# unlink process
-	movl	P_RLINK(%esi),%edx
-	movl	%edx,P_RLINK(%ecx)
-	movl	%ecx,P_LINK(%edx)
-	movl	$0,P_RLINK(%esi)	# zap reverse link to indicate off list
+	movl	P_FORW(%esi),%ecx	# unlink process
+	movl	P_BACK(%esi),%edx
+	movl	%edx,P_BACK(%ecx)
+	movl	%ecx,P_FORW(%edx)
+	movl	$0,P_BACK(%esi)	# zap reverse link to indicate off list
 	cmpl	%edx,%ecx		# q still has something?
 	jne	2f
 	btrl	%eax,_whichqs		# no; clear bit
@@ -1510,20 +1510,20 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 
 	leal	_qs(,%ebx,8),%eax	# select q
 
-	movl	P_LINK(%eax),%edi	# unlink from front of process q
+	movl	P_FORW(%eax),%edi	# unlink from front of process q
 #ifdef	DIAGNOSTIC
 	cmpl	%edi,%eax		# linked to self (e.g. nothing queued)?
 	je	_swtch_error		# not possible
 #endif
-	movl	P_LINK(%edi),%edx
-	movl	%edx,P_LINK(%eax)
+	movl	P_FORW(%edi),%edx
+	movl	%edx,P_FORW(%eax)
 
 	cmpl	%edx,%eax		# q empty
 	jne	3f
 	btrl	%ebx,%ecx		# yes, clear to indicate empty
 
-3:	movl	P_RLINK(%edi),%eax
-	movl	%eax,P_RLINK(%edx)
+3:	movl	P_BACK(%edi),%eax
+	movl	%eax,P_BACK(%edx)
 
 	movl	%ecx,_whichqs		# update q status
 
@@ -1539,7 +1539,7 @@ sw1:	bsfl	%ecx,%ebx		# find a full q
 #endif
 
 	/* Isolate process.  XXX Is this necessary? */
-	movl	%eax,P_RLINK(%edi)
+	movl	%eax,P_BACK(%edi)
 
 	/* It's okay to take interrupts here. */
 	sti

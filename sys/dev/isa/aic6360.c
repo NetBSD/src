@@ -30,7 +30,7 @@
  */
 
 /*
- * $Id: aic6360.c,v 1.4 1994/05/03 08:20:43 mycroft Exp $
+ * $Id: aic6360.c,v 1.5 1994/05/05 05:36:25 cgd Exp $
  *
  * Acknowledgements: Many of the algorithms used in this driver are
  * inspired by the work of Julian Elischer (julian@tfs.com) and
@@ -643,7 +643,7 @@ int	aic_scsi_cmd	__P((struct scsi_xfer *));
 int	aic_poll	__P((struct aic_softc *, struct acb *));
 void	aic_add_timeout __P((struct acb *, int));
 void	aic_remove_timeout __P((struct acb *));
-void	aic_timeout	__P((caddr_t));
+void	aic_timeout	__P((void *arg));
 int	aic_find	__P((struct aic_softc *));
 void	aic_sched	__P((struct aic_softc *));
 void	aic_scsi_reset	__P((struct aic_softc *));
@@ -902,13 +902,13 @@ aic_init(aic)
 		aic->state = AIC_CLEANING;
 		if (aic->nexus != NULL) {
 			aic->nexus->xs->error = XS_DRIVER_STUFFUP;
-			untimeout((timeout_t)aic_timeout, aic->nexus);
+			untimeout(aic_timeout, aic->nexus);
 			aic_done(aic->nexus);
 		}
 		aic->nexus = NULL;
 		while (acb = aic->nexus_list.tqh_first) {
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout((timeout_t)aic_timeout, acb);
+			untimeout(aic_timeout, acb);
 			aic_done(acb);
 		}
 	}
@@ -1006,7 +1006,7 @@ aic_scsi_cmd(xs)
 		s = splbio();
 
 	TAILQ_INSERT_TAIL(&aic->ready_list, acb, chain);
-	timeout((timeout_t)aic_timeout, acb, (xs->timeout*hz)/1000);
+	timeout(aic_timeout, acb, (xs->timeout*hz)/1000);
 
 	if (aic->state == AIC_IDLE)
 		aic_sched(aic);
@@ -1429,7 +1429,7 @@ aic_msgin(aic)
 			}
 			acb->xs->resid = acb->dleft = aic->dleft;
 			aic->flags |= AIC_BUSFREE_OK;
-			untimeout((timeout_t)aic_timeout, acb);
+			untimeout(aic_timeout, acb);
 			aic_done(acb);
 			break;
 		case MSG_MESSAGE_REJECT:
@@ -2070,7 +2070,7 @@ aicintr(aic)
 				 */
 				printf("aic: unexpected busfree\n");
 				xs->error = XS_DRIVER_STUFFUP;
-				untimeout((timeout_t)aic_timeout, acb);
+				untimeout(aic_timeout, acb);
 				aic_done(acb);
 			}
 			LOGLINE(aic);
@@ -2091,7 +2091,7 @@ aicintr(aic)
 			outb(CLRSINT1, CLRSELTIMO);
 			aic->state = AIC_IDLE;
 			acb->xs->error = XS_TIMEOUT;
-			untimeout((timeout_t)aic_timeout, acb);
+			untimeout(aic_timeout, acb);
 			aic_done(acb);
 			LOGLINE(aic);
 			outb(DMACNTRL0, INTEN);
@@ -2169,7 +2169,7 @@ aicintr(aic)
 			    __LINE__);
 			Debugger();
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout((timeout_t)aic_timeout, acb);
+			untimeout(aic_timeout, acb);
 			aic_done(acb);
 			aic_init(aic);
 			return 1;
@@ -2186,7 +2186,7 @@ aicintr(aic)
 			    __LINE__);
 			Debugger();
 			acb->xs->error = XS_DRIVER_STUFFUP;
-			untimeout((timeout_t)aic_timeout, acb);
+			untimeout(aic_timeout, acb);
 			aic_done(acb);
 			aic_init(aic);
 			return 1;
@@ -2258,10 +2258,10 @@ aicintr(aic)
 
 void
 aic_timeout(arg)
-	caddr_t arg;
+	void *arg;
 {
 	int s = splbio();
-	struct acb *acb = (void *)arg;
+	struct acb *acb = (struct acb *)arg;
 	struct aic_softc *aic;
 
 	aic = acb->xs->sc_link->adapter_softc;

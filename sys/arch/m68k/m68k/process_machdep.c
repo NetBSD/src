@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: process_machdep.c,v 1.5 1994/05/04 03:41:31 cgd Exp $
+ *	$Id: process_machdep.c,v 1.6 1994/05/05 05:37:22 cgd Exp $
  */
 
 /*
@@ -78,7 +78,7 @@ process_read_regs(p, regs)
 		return EIO;
 
 	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	bcopy(frame->f_regs, regs->r_regs, sizeof(frame->f_regs));
 	regs->r_sr = frame->f_sr;
@@ -98,7 +98,7 @@ process_write_regs(p, regs)
 		return EIO;
 
 	frame = (struct frame *)
-	    ((char *)p->p_addr + ((char *)p->p_regs - (char *)kstack));
+	    ((char *)p->p_addr + ((char *)p->p_md.md_regs - (char *)kstack));
 
 	/*
 	 * in the hp300 machdep.c _write_regs, PC alignment wasn't

@@ -37,7 +37,7 @@
  * From:
  *	Id: procfs_note.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: procfs_note.c,v 1.4 1994/05/04 05:41:55 cgd Exp $
+ *	$Id: procfs_note.c,v 1.5 1994/05/05 05:39:10 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -111,10 +111,7 @@ pfs_donote(curp, p, pfs, uio)
 	
 	if (pfs->pfs_type == Pnote && uio->uio_rw == UIO_READ) {
 		
-		mask = p->p_sig & ~p->p_sigmask;
-		
-		if (p->p_flag&P_PPWAIT)
-			mask &= ~stopsigmask;
+		mask = p->p_siglist & ~p->p_sigmask;
 		if (mask == 0)
 			return 0;
 		sig = ffs((long)mask);
@@ -122,7 +119,7 @@ pfs_donote(curp, p, pfs, uio)
 		if (error = pfs_readnote(sig, uio))
 			return error;
 		
-		p->p_sig &= ~mask;
+		p->p_siglist &= ~mask;
 		return 0;
 	}
 	

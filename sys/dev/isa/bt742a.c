@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: bt742a.c,v 1.25 1994/04/29 23:16:00 cgd Exp $
+ *      $Id: bt742a.c,v 1.26 1994/05/05 05:36:28 cgd Exp $
  */
 
 /*
@@ -370,7 +370,7 @@ void bt_inquire_setup_information __P((struct bt_softc *));
 void btminphys __P((struct buf *));
 int bt_scsi_cmd __P((struct scsi_xfer *));
 int bt_poll __P((struct bt_softc *, struct scsi_xfer *, struct bt_ccb *));
-void bt_timeout __P((caddr_t));
+void bt_timeout __P((void *arg));
 #ifdef UTEST
 void bt_print_ccb __P((struct bt_ccb *));
 void bt_print_active_ccbs __P((struct bt_softc *));
@@ -746,7 +746,7 @@ btintr(bt)
 		}
 		wmbi->stat = BT_MBI_FREE;
 		if (ccb) {
-			untimeout((timeout_t)bt_timeout, ccb);
+			untimeout(bt_timeout, ccb);
 			bt_done(bt, ccb);
 		}
 		/* Set the IN mail Box pointer for next */ bt_nextmbx(wmbi, wmbx, mbi);
@@ -1363,7 +1363,7 @@ bt_scsi_cmd(xs)
 	 */
 	SC_DEBUG(sc_link, SDEV_DB3, ("cmd_sent\n"));
 	if (!(flags & SCSI_NOMASK)) {
-		timeout((timeout_t)bt_timeout, ccb, (xs->timeout * hz) / 1000);
+		timeout(bt_timeout, ccb, (xs->timeout * hz) / 1000);
 		return SUCCESSFULLY_QUEUED;
 	}
 
@@ -1412,7 +1412,7 @@ bt_poll(bt, xs, ccb)
 		 * because we are polling, take out the timeout entry
 		 * bt_timeout made
 		 */
-		untimeout((timeout_t)bt_timeout, ccb);
+		untimeout(bt_timeout, ccb);
 		count = 2000;
 		while (count) {
 			/*
@@ -1441,10 +1441,10 @@ bt_poll(bt, xs, ccb)
 
 void
 bt_timeout(arg)
-	caddr_t arg;
+	void *arg;
 {
 	int s = splbio();
-	struct bt_ccb *ccb = (void *)arg;
+	struct bt_ccb *ccb = (struct bt_ccb *)arg;
 	struct bt_softc *bt;
 
 	bt = ccb->xfer->sc_link->adapter_softc;
@@ -1479,7 +1479,7 @@ bt_timeout(arg)
 		printf("\n");
 		bt_send_mbo(bt, ~SCSI_NOMASK, BT_MBO_ABORT, ccb);
 		/* 2 secs for the abort */
-		timeout((timeout_t)bt_timeout, ccb, 2 * hz);
+		timeout(bt_timeout, ccb, 2 * hz);
 		ccb->flags = CCB_ABORTED;
 	}
 	splx(s);
