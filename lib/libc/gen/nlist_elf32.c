@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_elf32.c,v 1.8 1998/02/03 18:23:49 perry Exp $	*/
+/*	$NetBSD: nlist_elf32.c,v 1.9 1998/07/26 17:55:45 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -180,7 +180,7 @@ ELFNAMEEND(__fdnlist)(fd, list)
 
 	for (i = 0; i < nsyms; i++) {
 		for (p = list; !ISLAST(p); ++p) {
-			char *nlistname;
+			const char *nlistname;
 			char *symtabname;
 
 			/* This may be incorrect */

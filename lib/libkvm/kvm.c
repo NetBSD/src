@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.58 1998/06/30 20:40:44 thorpej Exp $	*/
+/*	$NetBSD: kvm.c,v 1.59 1998/07/26 18:00:50 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.58 1998/06/30 20:40:44 thorpej Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.59 1998/07/26 18:00:50 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -793,7 +793,7 @@ kvm_nlist(kd, nl)
 			_kvm_err(kd, kd->program, "symbol too large");
 			return (-1);
 		}
-		rec.data = p->n_name;
+		rec.data = (char *)p->n_name;
 		rec.size = len;
 
 		/*

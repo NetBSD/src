@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.49 1998/07/19 17:47:08 drochner Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.50 1998/07/26 18:12:46 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.49 1998/07/19 17:47:08 drochner Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.50 1998/07/26 18:12:46 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -1012,7 +1012,7 @@ kread(nlx, addr, size)
 	void *addr;
 	size_t size;
 {
-	char *sym;
+	const char *sym;
 
 	if (namelist[nlx].n_type == 0 || namelist[nlx].n_value == 0) {
 		sym = namelist[nlx].n_name;
