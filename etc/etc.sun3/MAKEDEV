@@ -32,7 +32,7 @@
 # SUCH DAMAGE.
 #
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
-#	$Id: MAKEDEV,v 1.4 1995/08/17 18:02:48 thorpej Exp $
+#	$Id: MAKEDEV,v 1.5 1995/10/08 23:23:30 gwr Exp $
 #
 # Device "make" file.  Valid arguments:
 #	std	standard devices
@@ -55,6 +55,7 @@
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
+#	rd*	RAM-disk
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -191,6 +192,12 @@ cgtwo*)
 
 cgfour*)
 	mk cgfour$unit c 39 $unit
+	;;
+
+rd*)
+	mk  rd$unit b 13 $unit
+#	mk rrd$unit b 13 `expr $unit + 16`
+	mk rd${unit}c b 13 `expr $unit + 16`
 	;;
 
 local)
