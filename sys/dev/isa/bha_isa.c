@@ -1,4 +1,4 @@
-/*	$NetBSD: bha_isa.c,v 1.6.2.1 1997/05/13 03:08:09 thorpej Exp $	*/
+/*	$NetBSD: bha_isa.c,v 1.6.2.2 1997/05/18 17:26:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1996, 1997 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,11 @@
 
 #define	BHA_ISA_IOSIZE	4
 
+#ifdef __BROKEN_INDIRECT_CONFIG
 int	bha_isa_probe __P((struct device *, void *, void *));
+#else
+int	bha_isa_probe __P((struct device *, struct cfdata *, void *));
+#endif
 void	bha_isa_attach __P((struct device *, struct device *, void *));
 
 struct cfattach bha_isa_ca = {
@@ -63,7 +67,12 @@ struct cfattach bha_isa_ca = {
 int
 bha_isa_probe(parent, match, aux)
 	struct device *parent;
-	void *match, *aux;
+#ifdef __BROKEN_INDIRECT_CONFIG
+	void *match;
+#else
+	struct cfdata *match;
+#endif
+	void *aux;
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
