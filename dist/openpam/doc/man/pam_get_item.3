@@ -1,4 +1,4 @@
-.\"	$NetBSD: pam_get_item.3,v 1.5 2005/02/26 20:58:24 christos Exp $
+.\"	$NetBSD: pam_get_item.3,v 1.6 2005/03/03 02:09:04 christos Exp $
 .\"
 .\"-
 .\" Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -35,7 +35,7 @@
 .\"
 .\" $P4$
 .\"
-.Dd February 1, 2005
+.Dd March 2, 2005
 .Dt PAM_GET_ITEM 3
 .Os
 .Sh NAME
@@ -93,12 +93,19 @@ The prompt to use when asking the applicant for an
 expired authentication token prior to changing it.
 .It Dv PAM_SOCKADDR
 The sockaddr_storage of the applicants's host.
+.It Dv PAM_NUSER
+The
+.Do
+nested
+.Dc
+user if this is a login on top of a previous one.
 .El
 .Pp
 See
 .Xr pam_start 3
 for a description of
 .Vt struct pam_conv .
+.Pp
 .Sh RETURN VALUES
 The
 .Nm
