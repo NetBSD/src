@@ -1,4 +1,4 @@
-/*	$NetBSD: interface.h,v 1.17 2001/01/28 10:05:05 itojun Exp $	*/
+/*	$NetBSD: interface.h,v 1.18 2001/03/01 15:13:31 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -258,8 +258,8 @@ extern void token_if_print(u_char *, const struct pcap_pkthdr *,
 extern void udp_print(const u_char *, u_int, const u_char *, int);
 extern void vrrp_print(const u_char *, u_int, const u_char *);
 extern void wb_print(const void *, u_int);
-extern void hdlc_if_print(u_char *, const struct pcap_pkthdr *,
-			  const u_char *);
+extern void chdlc_if_print(u_char *, const struct pcap_pkthdr *,
+	const u_char *);
 extern int ah_print(register const u_char *, register const u_char *);
 extern int esp_print(register const u_char *, register const u_char *, int *);
 extern void isakmp_print(const u_char *, u_int, const u_char *);
