@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2002/02/24 03:18:44 matt Exp $
+#	$NetBSD: Makefile,v 1.20 2002/08/19 10:16:54 lukem Exp $
 
 .include <bsd.own.mk>   # For OBJECT_FMT
 
@@ -13,8 +13,8 @@
 PROG=	ldconfig
 SRCS=	ldconfig.c shlib.c
 
-CPPFLAGS += -I$(.CURDIR)/../../libexec/ld.aout_so
-.PATH:	$(.CURDIR)/../../libexec/ld.aout_so
+CPPFLAGS += -I${NETBSDSRCDIR}/libexec/ld.aout_so
+.PATH:	${NETBSDSRCDIR}/libexec/ld.aout_so
 
 .endif
 

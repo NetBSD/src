@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2000/12/31 06:03:52 itojun Exp $
+#	$NetBSD: Makefile,v 1.19 2002/08/19 10:16:58 lukem Exp $
 #	@(#)Makefile	8.3 (Berkeley) 3/27/94
+
+.include <bsd.own.mk>
 
 PROG=	mount_portal
 SRCS=	mount_portal.c activate.c conf.c getmntopts.c pt_conf.c \
@@ -8,8 +10,8 @@ SUBDIR= examples
 
 MAN=	mount_portal.8
 
-MOUNT=	${.CURDIR}/../mount
-CPPFLAGS+= -I${.CURDIR}/../../sys -I${MOUNT}
+MOUNT=	${NETBSDSRCDIR}/sbin/mount
+CPPFLAGS+= -I${NETBSDSRCDIR}/sys -I${MOUNT}
 .PATH:	${MOUNT}
 CPPFLAGS+= -DINET6
 
