@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.93 2002/11/16 07:40:41 uebayasi Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.94 2002/12/21 16:23:57 manu Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.93 2002/11/16 07:40:41 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.94 2002/12/21 16:23:57 manu Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1235,8 +1235,13 @@ format_bytes(buf, len, bytes)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct proc *p, register_t code,
-	register_t realcode, void *args, register_t rval[])
+trace_enter(p, code, realcode, callp, args, rval)
+	struct proc *p; 
+	register_t code;
+	register_t realcode;
+	const struct sysent *callp;
+	void *args;
+	register_t rval[];
 {
 #ifdef SYSCALL_DEBUG
 	scdebug_call(p, code, args);
@@ -1244,7 +1249,7 @@ trace_enter(struct proc *p, register_t code,
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, realcode, args);
+		ktrsyscall(p, code, realcode, callp, args);
 #endif /* KTRACE */
 
 #ifdef SYSTRACE

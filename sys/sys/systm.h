@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.152 2002/11/16 07:40:42 uebayasi Exp $	*/
+/*	$NetBSD: systm.h,v 1.153 2002/12/21 16:23:56 manu Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -315,7 +315,7 @@ void	doexithooks __P((struct proc *));
  * kernel syscall tracing/debugging hooks.
  */
 int	trace_enter __P((struct proc *, register_t, register_t,
-	    void *, register_t []));
+	    const struct sysent *, void *, register_t []));
 void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
 
 int	uiomove __P((void *, size_t, struct uio *));

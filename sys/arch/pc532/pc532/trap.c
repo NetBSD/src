@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2002/11/15 20:06:03 manu Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2002/12/21 16:23:59 manu Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller. All rights reserved.
@@ -529,7 +529,7 @@ syscall(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(p, code, code, args, rval)) != 0)
+	if ((error = trace_enter(p, code, code, NULL, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
