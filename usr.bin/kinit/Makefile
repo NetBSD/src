@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2003/12/13 22:07:35 chs Exp $
+# $NetBSD: Makefile,v 1.18 2005/01/10 03:11:18 lukem Exp $
 
 NOLINT= # defined
 
@@ -18,6 +18,10 @@ CPPFLAGS+= -DKRB4
 CPPFLAGS+= -I${DESTDIR}/usr/include/kerberosIV
 KRB4LDADD= -lkrb -ldes
 KRB4DPADD= ${LIBKRB} ${LIBDES}
+.endif
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
 .endif
 
 CPPFLAGS+= -I.					\

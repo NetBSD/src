@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2004/04/02 14:59:48 lha Exp $
+# $NetBSD: Makefile,v 1.14 2005/01/10 03:11:17 lukem Exp $
 
 NOLINT=		# defined
 
@@ -120,5 +120,9 @@ CPPFLAGS+= -I.					\
 	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
 	 -DHAVE_CONFIG_H
+
+.if (${USE_INET6} != "no")
+CPPFLAGS+=-DHAVE_IPV6
+.endif
 
 .include <bsd.lib.mk>
