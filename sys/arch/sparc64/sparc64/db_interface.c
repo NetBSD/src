@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.28 2000/03/16 02:36:58 eeh Exp $ */
+/*	$NetBSD: db_interface.c,v 1.29 2000/04/06 13:32:49 mrg Exp $ */
 
 /*
  * Mach Operating System
@@ -168,7 +168,7 @@ kdb_trap(type, tf)
 	register struct trapframe64 *tf;
 {
 	int s, tl;
-	struct trapstate *ts = &ddb_regs.ddb_ts;
+	struct trapstate *ts = &ddb_regs.ddb_ts[0];
 	extern int savetstate(struct trapstate *ts);
 	extern void restoretstate(int tl, struct trapstate *ts);
 	extern int trap_trace_dis;
@@ -393,11 +393,11 @@ struct pmap* pm;
 						j++;
 						data1 = ldxa((vaddr_t)&ptbl[j], ASI_PHYS_CACHED);
 						if (data0 || data1) {
-							db_printf("%p: %lx\t",
-								  (i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
+							db_printf("%llx: %llx\t",
+								  ((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|((j-1)<<PTSHIFT),
 								  (u_long)(data0));
-							db_printf("%p: %lx\n",
-								  (i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT),
+							db_printf("%llx: %llx\n",
+								  ((u_int64_t)i<<STSHIFT)|(k<<PDSHIFT)|(j<<PTSHIFT),
 								  (u_long)(data1));
 						}
 					}
@@ -847,7 +847,6 @@ db_uvmhistdump(addr, have_addr, count, modif)
 	db_expr_t count;
 	char *modif;
 {
-	int full = 0;
 	extern void uvmhist_dump __P((struct uvm_history *));
 	extern struct uvm_history_head uvm_histories;
 
