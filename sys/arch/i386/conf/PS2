@@ -1,4 +1,4 @@
-#	$NetBSD: PS2,v 1.24 2001/06/02 10:37:27 jdolecek Exp $
+#	$NetBSD: PS2,v 1.25 2001/07/21 13:15:00 jdolecek Exp $
 #
 #	Sample kernel config for PS/2 with MCA bus
 #
@@ -12,13 +12,6 @@
 #	 projects.
 
 include "arch/i386/conf/std.i386"
-
-# Enable the hooks used for initializing the root memory-disk.
-#options 	MEMORY_DISK_HOOKS
-#options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
-#options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-#options 	MINIROOTSIZE=3072	# size of memory disk, in blocks
-#options 	MINIROOTSIZE=2880	# 1.44M, same as a floppy
 
 makeoptions	COPTS="-Os"	# generates smaller code than -O2, -O1
 
