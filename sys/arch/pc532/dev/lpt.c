@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.29 1999/04/06 19:43:04 pk Exp $	*/
+/*	$NetBSD: lpt.c,v 1.30 1999/05/18 23:52:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -831,9 +831,7 @@ plipinput(sc)
 			bpf_mtap(ifp->if_bpf, m);
 		}
 #endif
-		/* We assume the header fit entirely in one mbuf. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		(*ifp->if_input)(ifp, m);
 	}
 	splx(s);
 	sc->sc_ifierrs = 0;

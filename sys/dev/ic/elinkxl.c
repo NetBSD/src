@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.12 1999/05/14 15:54:16 drochner Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.13 1999/05/18 23:52:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1183,9 +1183,7 @@ ex_intr(arg)
 						goto rcvloop;
 					}
 					m->m_pkthdr.rcvif = ifp;
-					m->m_pkthdr.len = m->m_len =
-					    total_len -
-					    sizeof(struct ether_header);
+					m->m_pkthdr.len = m->m_len = total_len;
 					eh = mtod(m, struct ether_header *);
 #if NBPFILTER > 0
 					if (ifp->if_bpf) {
@@ -1209,9 +1207,7 @@ ex_intr(arg)
 						}
 					}
 #endif /* NBPFILTER > 0 */
-					m->m_data +=
-					    sizeof(struct ether_header);
-					ether_input(ifp, eh, m);
+					(*ifp->if_input)(ifp, m);
 				}
 				goto rcvloop;
 			}

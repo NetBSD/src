@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.9 1999/03/24 05:51:20 mrg Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.10 1999/05/18 23:52:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -2405,7 +2405,6 @@ esh_read_snap_ring(sc, consumer, error)
 {
 	struct ifnet *ifp = &sc->sc_if;
 	struct esh_snap_ring_ctl *recv = &sc->sc_snap_recv;
-	struct hippi_header *hh;
 	int start_consumer = recv->ec_consumer;
 	u_int16_t control;
 
@@ -2489,10 +2488,9 @@ esh_read_snap_ring(sc, consumer, error)
 				if ((ifp->if_flags & IFF_RUNNING) == 0) {
 					m_freem(m);
 				} else {
-					m = m_pullup(m, sizeof(struct hippi_header *));
-					hh = mtod(m, struct hippi_header *);
-					m_adj(m, sizeof(struct hippi_header));
-					hippi_input(ifp, hh, m);
+					m = m_pullup(m,
+					    sizeof(struct hippi_header));
+					(*ifp->if_input)(ifp, m);
 				}
 			} else {
 				ifp->if_ierrors++;

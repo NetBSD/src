@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.57 1999/04/20 04:40:24 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.58 1999/05/18 23:52:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1504,10 +1504,7 @@ again:
 		}
 	}
 #endif
-
-	/* We assume the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 
 	/*
 	 * In periods of high traffic we can actually receive enough

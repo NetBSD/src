@@ -1,4 +1,4 @@
-/*	$NetBSD: if_el.c,v 1.57 1999/03/25 23:21:38 thorpej Exp $	*/
+/*	$NetBSD: if_el.c,v 1.58 1999/05/18 23:52:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, Matthew E. Kimmel.  Permission is hereby granted
@@ -622,9 +622,7 @@ elread(sc, len)
 	}
 #endif
 
-	/* We assume that the header fit entirely in one mbuf. */
-	m_adj(m, sizeof(struct ether_header));
-	ether_input(ifp, eh, m);
+	(*ifp->if_input)(ifp, m);
 }
 
 /*

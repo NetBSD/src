@@ -1,4 +1,4 @@
-/*	$NetBSD: ofnet.c,v 1.16 1999/05/04 23:56:54 thorpej Exp $	*/
+/*	$NetBSD: ofnet.c,v 1.17 1999/05/18 23:52:57 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -176,7 +176,6 @@ ofnet_read(of)
 	struct ofnet_softc *of;
 {
 	struct ifnet *ifp = &of->sc_ethercom.ec_if;
-	struct ether_header *eh;
 	struct mbuf *m, **mp, *head;
 	int l, len;
 	char *bufp;
@@ -256,15 +255,13 @@ ofnet_read(of)
 		}
 		if (head == 0)
 			continue;
-		eh = mtod(head, struct ether_header *);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		m_adj(head, sizeof(struct ether_header));
 		ifp->if_ipackets++;
-		ether_input(ifp, eh, head);
+		(*ifp->if_input)(ifp, head);
 	}
 }
 
