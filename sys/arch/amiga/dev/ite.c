@@ -37,7 +37,7 @@
  *
  *      from: Utah Hdr: ite.c 1.1 90/07/09
  *      from: @(#)ite.c 7.6 (Berkeley) 5/16/91
- *      $Id: ite.c,v 1.9 1994/02/17 09:10:40 chopps Exp $
+ *      $Id: ite.c,v 1.10 1994/02/21 06:30:38 chopps Exp $
  */
 
 /*
@@ -561,18 +561,27 @@ ite_cnfilter(c, caller)
 			mod |= mask;
 		splx(s);
 		return -1;
+	}	
+
+	if (up) {
+		splx(s);
+		return -1;
 	}
+	
 	/* translate modifiers */
-	if (mod & (KBD_MOD_SHIFT | KBD_MOD_CAPS)
-	    || key.mode & KBD_MODE_CAPS) {
+	if (mod & KBD_MOD_SHIFT) {
 		if (mod & KBD_MOD_ALT)
 			key = kbdmap.alt_shift_keys[c];
-		else
+		else 
 			key = kbdmap.shift_keys[c];
 	} else if (mod & KBD_MOD_ALT)
 		key = kbdmap.alt_keys[c];
-	else
+	else {
 		key = kbdmap.keys[c];
+		/* if CAPS and key is CAPable (no pun intended) */
+		if ((mod & KBD_MOD_CAPS) && (key.mode & KBD_MODE_CAPS))
+			key = kbdmap.shift_keys[c];
+	}
 	code = key.code;
 
 	/* if string return */
