@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.9 2002/10/02 02:23:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.10 2002/10/02 03:31:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -100,7 +100,7 @@ int	icside_intr(void *);
 void	icside_v6_shutdown(void *);
 
 CFATTACH_DECL(icside, sizeof(struct icside_softc),
-	icside_probe, icside_attach, NULL, NULL);
+    icside_probe, icside_attach, NULL, NULL);
 
 /*
  * Define prototypes for custom bus space functions.

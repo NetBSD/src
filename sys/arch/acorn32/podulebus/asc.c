@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.10 2002/10/02 02:23:51 thorpej Exp $	*/
+/*	$NetBSD: asc.c,v 1.11 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -74,7 +74,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.10 2002/10/02 02:23:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.11 2002/10/02 03:31:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ int	asc_dmadebug = 0;
 #endif
 
 CFATTACH_DECL(asc, sizeof(struct asc_softc),
-	ascmatch, ascattach, NULL, NULL);
+    ascmatch, ascattach, NULL, NULL);
 
 extern struct cfdriver asc_cd;
 

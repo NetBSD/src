@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.5 2002/10/02 02:23:51 thorpej Exp $	*/
+/*	$NetBSD: amps.c,v 1.6 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@ void	amps_attach	__P((struct device *, struct device *, void *));
 void	amps_shutdown	__P((void *arg));
 
 CFATTACH_DECL(amps, sizeof(struct amps_softc),
-	amps_probe, amps_attach, NULL, NULL);
+    amps_probe, amps_attach, NULL, NULL);
 
 /*
  * Attach arguments for child devices.

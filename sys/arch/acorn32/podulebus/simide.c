@@ -1,4 +1,4 @@
-/*	$NetBSD: simide.c,v 1.6 2002/10/02 02:23:52 thorpej Exp $	*/
+/*	$NetBSD: simide.c,v 1.7 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -96,7 +96,7 @@ void	simide_shutdown	__P((void *arg));
 int	simide_intr	__P((void *arg));
 
 CFATTACH_DECL(simide, sizeof(struct simide_softc),
-	simide_probe, simide_attach, NULL, NULL);
+    simide_probe, simide_attach, NULL, NULL);
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.4 2002/10/02 02:23:51 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.5 2002/10/02 03:31:59 thorpej Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -101,7 +101,7 @@ static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
 /* device attach and driver structure */
 
 CFATTACH_DECL(pioc, sizeof(struct pioc_softc),
-	piocmatch, piocattach, NULL, NULL);
+    piocmatch, piocattach, NULL, NULL);
 
 /*
  * void piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh,

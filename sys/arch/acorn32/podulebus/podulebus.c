@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.13 2002/10/02 02:23:52 thorpej Exp $ */
+/* $NetBSD: podulebus.c,v 1.14 2002/10/02 03:31:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.13 2002/10/02 02:23:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.14 2002/10/02 03:31:59 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -525,7 +525,7 @@ podulebusattach(parent, self, aux)
 }
 
 
-CFATTACH_DECL(podulebus, sizeof(struct podulebus_softc),
+CFATTACH_DECL(podulebus, sizeof(struct device),
 	podulebusmatch, podulebusattach, NULL, NULL);
 
 /* Useful functions that drivers may share */

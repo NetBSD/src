@@ -1,4 +1,4 @@
-/*	$NetBSD: csa.c,v 1.5 2002/10/02 02:23:51 thorpej Exp $	*/
+/*	$NetBSD: csa.c,v 1.6 2002/10/02 03:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ struct csa_softc {
 };
 
 CFATTACH_DECL(csa, sizeof(struct csa_softc),
-	csa_match, csa_attach, NULL, NULL);
+    csa_match, csa_attach, NULL, NULL);
 
 int csa_intr		 __P((void *arg));
 
