@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.1 2000/05/09 21:56:00 bjh21 Exp $ */
+/* $NetBSD: ptrace.h,v 1.2 2000/08/20 15:16:50 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -34,8 +34,8 @@
 /*
  * arm-dependent ptrace definitions
  */
-#define	PT_STEP		(PT_FIRSTMACH + 0)
+/* #define	PT_STEP		(PT_FIRSTMACH + 0) */
 #define	PT_GETREGS	(PT_FIRSTMACH + 1)
 #define	PT_SETREGS	(PT_FIRSTMACH + 2)
-#define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
-#define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+/* #define	PT_GETFPREGS	(PT_FIRSTMACH + 3) */
+/* #define	PT_SETFPREGS	(PT_FIRSTMACH + 4) */
