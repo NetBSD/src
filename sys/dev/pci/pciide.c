@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.174 2002/10/05 17:07:32 kent Exp $	*/
+/*	$NetBSD: pciide.c,v 1.175 2002/11/20 19:20:24 bouyer Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.174 2002/10/05 17:07:32 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.175 2002/11/20 19:20:24 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -3231,7 +3231,8 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL+ (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -3418,7 +3419,8 @@ pio:		pciide_pci_write(sc->sc_pc, sc->sc_tag,
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -3728,7 +3730,8 @@ hpt_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -4050,7 +4053,8 @@ pdc202xx_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
@@ -4101,7 +4105,8 @@ pdc20268_setup_channel(chp)
 	if (idedma_ctl != 0) {
 		/* Add software bits in status register */
 		bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		    IDEDMA_CTL, idedma_ctl);
+		    IDEDMA_CTL + (IDEDMA_SCH_OFFSET * chp->channel),
+		    idedma_ctl);
 	}
 	pciide_print_modes(cp);
 }
