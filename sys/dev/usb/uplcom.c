@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.30 2003/08/11 08:16:34 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.30 2003/08/11 08:16:34 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -167,6 +167,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UHA6400 },
 	/* TDK USB-PDC Adapter UPA9664 */
 	{ USB_VENDOR_TDK, USB_PRODUCT_TDK_UPA9664 },
+	/* Sony Ericsson USB Cable */
+	{ USB_VENDOR_SONYERICSSON, USB_PRODUCT_SONYERICSSON_DCU10 },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
