@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.16 1999/03/07 14:02:53 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.17 1999/03/17 10:13:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -114,8 +114,7 @@ int wdcdebug_wd_mask = 0;
 #define WDCDEBUG_PRINT(args, level)
 #endif
 
-#define ATA_DELAY_NORMAL 1000 /* 1s for a normal drive I/O */
-#define ATA_DELAY_RECOVERY 10000 /* 10s for setup or recovery drive I/O */
+#define ATA_DELAY 10000 /* 10s for a drive I/O */
 
 void  wdc_ata_bio_start  __P((struct channel_softc *,struct wdc_xfer *));
 int   wdc_ata_bio_intr   __P((struct channel_softc *, struct wdc_xfer *));
@@ -190,14 +189,14 @@ wdc_ata_bio_start(chp, xfer)
 		xfer->c_intr = wdc_ata_ctrl_intr;
 		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh, wd_sdh,
 		    WDSD_IBM | (xfer->drive << 4));
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY) != 0)
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY) != 0)
 			goto timeout;
 		wdccommandshort(chp, xfer->drive, WDCC_RECAL);
 		drvp->state = RECAL_WAIT;
 		if ((ata_bio->flags & ATA_POLL) == 0) {
 			chp->ch_flags |= WDCF_IRQ_WAIT;
 			timeout(wdctimeout, chp,
-			    ATA_DELAY_RECOVERY / 1000 * hz);
+			    ATA_DELAY / 1000 * hz);
 		} else {
 			/* Wait for at last 400ns for status bit to be valid */
 			delay(1);
@@ -211,9 +210,9 @@ wdc_ata_bio_start(chp, xfer)
 		dma_flags |= (ata_bio->flags & ATA_POLL) ?  WDC_DMA_POLL : 0;
 	}
 	if (ata_bio->flags & ATA_SINGLE)
-		ata_delay = ATA_DELAY_RECOVERY;
+		ata_delay = ATA_DELAY;
 	else
-		ata_delay = ATA_DELAY_NORMAL;
+		ata_delay = ATA_DELAY;
 again:
 	/*
 	 *
@@ -417,7 +416,7 @@ wdc_ata_bio_intr(chp, xfer)
 	}
 
 	/* Ack interrupt done by wait_for_unbusy */
-	if (wait_for_unbusy(chp, ATA_DELAY_NORMAL) < 0) {
+	if (wait_for_unbusy(chp, ATA_DELAY) < 0) {
 		printf("%s:%d:%d: device timeout, c_bcount=%d, c_skip%d\n",
 		    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
 		    xfer->c_bcount, xfer->c_skip);
@@ -444,7 +443,7 @@ wdc_ata_bio_intr(chp, xfer)
 			 * asserted for DMA transfers, so poll for DRDY.
 			 */
 			if (wdcwait(chp, WDCS_DRDY | WDCS_DRQ, WDCS_DRDY,
-			    ATA_DELAY_NORMAL) < 0) {
+			    ATA_DELAY) < 0) {
 				printf("%s:%d:%d: polled transfer timed out "
 				    "(st=0x%x)\n", chp->wdc->sc_dev.dv_xname,
 				    chp->channel, xfer->drive, chp->ch_status);
@@ -600,7 +599,7 @@ again:
 
 	case RECAL_WAIT:
 		errstring = "recal";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -620,7 +619,7 @@ again:
 
 	case PIOMODE_WAIT:
 		errstring = "piomode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -640,7 +639,7 @@ again:
 		break;
 	case DMAMODE_WAIT:
 		errstring = "dmamode";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -660,7 +659,7 @@ again:
 
 	case GEOMETRY_WAIT:
 		errstring = "geometry";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -677,7 +676,7 @@ again:
 
 	case MULTIMODE_WAIT:
 		errstring = "setmulti";
-		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY_RECOVERY))
+		if (wdcwait(chp, WDCS_DRDY, WDCS_DRDY, ATA_DELAY))
 			goto timeout;
 		if (chp->ch_status & (WDCS_ERR | WDCS_DWF))
 			goto error;
@@ -696,7 +695,7 @@ again:
 
 	if ((ata_bio->flags & ATA_POLL) == 0) {
 		chp->ch_flags |= WDCF_IRQ_WAIT;
-		timeout(wdctimeout, chp, ATA_DELAY_RECOVERY / 1000 * hz);
+		timeout(wdctimeout, chp, ATA_DELAY / 1000 * hz);
 	} else {
 		goto again;
 	}
