@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.538 2003/06/14 09:58:55 ichiro Exp $
+$NetBSD: pcidevs,v 1.539 2003/06/26 09:19:54 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -764,6 +764,7 @@ product	ADVSYS U3W	0x2700	ASB-3940U3W
 /* Aironet Wireless Communicasions products */
 product	AIRONET PC4xxx		0x0001	Aironet PC4500/PC4800 Wireless LAN Adapter
 product	AIRONET 350		0x0350	Aironet 350 Wireless LAN Adapter
+product	AIRONET MPI350		0xa504	Aironet 350 miniPCI Wireless LAN Adapter
 product	AIRONET PC4500		0x4500	Aironet PC4500 Wireless LAN Adapter
 product	AIRONET PC4800		0x4800	Aironet PC4800 Wireless LAN Adapter
 
