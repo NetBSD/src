@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.21 2004/01/29 13:18:58 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.22 2004/02/18 08:19:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003 Matthew R. Green
@@ -32,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003 Matthew R. Green\n\
      All rights reserved.\n");
-__RCSID("$NetBSD: gzip.c,v 1.21 2004/01/29 13:18:58 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.22 2004/02/18 08:19:48 mrg Exp $");
 #endif /* not lint */
 
 /*
@@ -68,12 +68,16 @@ __RCSID("$NetBSD: gzip.c,v 1.21 2004/01/29 13:18:58 mrg Exp $");
 enum filetype {
 	FT_GZIP,
 	FT_BZIP2,
+	FT_Z,
 	FT_LAST,
 	FT_UNKNOWN
 };
 
 #define BZ_NO_STDIO
 #include <bzlib.h>
+
+#define Z_SUFFIX	".Z"
+#define Z_MAGIC		"\037\235"
 
 #define BZ2_SUFFIX	".bz2"
 #define BZIP2_MAGIC	"\102\132\150"
@@ -135,6 +139,8 @@ static	void	print_list(int fd, off_t, const char *, time_t);
 static	void	usage(void);
 static	void	display_version(void);
 static	off_t	unbzip2(int, int);
+static	FILE 	*zopen(const char *);
+static	off_t	zuncompress(FILE *, FILE *);
 
 int main(int, char *p[]);
 
@@ -613,6 +619,10 @@ file_uncompress(char *file)
 		if (Sflag == NULL)
 			suffix = BZ2_SUFFIX;
 		method = FT_BZIP2;
+	} else if (memcmp(header1, Z_MAGIC, 2) == 0) {
+		if (Sflag == NULL)
+			suffix = Z_SUFFIX;
+		method = FT_Z;
 	} else
 		method = FT_UNKNOWN;
 
@@ -686,6 +696,39 @@ close_it:
 			unlink(outfile);
 			goto lose;
 		}
+	} else if (method == FT_Z) {
+		FILE *in, *out;
+		int fd;
+
+		if ((in = zopen(file)) == NULL)
+			maybe_err(1, "open for read: %s", file);
+
+		if (cflag == 1)
+			fd = STDOUT_FILENO;
+		else {
+			fd = open(outfile, O_WRONLY|O_CREAT|O_EXCL, 0600);
+			if (fd == -1)
+				maybe_err(1, "open for write: %s", outfile);
+		}
+		out = fdopen(fd, "w");
+		if (out == NULL)
+			maybe_err(1, "open for write: %s", outfile);
+
+		if ((size = zuncompress(in, out)) == 0) {
+			unlink(outfile);
+			goto lose;
+		}
+
+		if (ferror(in) || fclose(in)) {
+			unlink(outfile);
+			maybe_err(1, "failed infile fclose");
+		}
+
+		if (fclose(out)) {
+			unlink(outfile);
+			maybe_err(1, "failed outfile close");
+		}
+
 	} else {
 		if (lflag) {
 			int fd;
@@ -756,7 +799,7 @@ close_it:
 
 lose:
 	newfile = 0;
-	return (0);
+	return 0;
 }
 
 static void
@@ -1047,3 +1090,4 @@ display_version(void)
 }
 
 #include "unbzip2.c"
+#include "zuncompress.c"
