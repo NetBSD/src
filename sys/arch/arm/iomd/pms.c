@@ -1,4 +1,4 @@
-/*	$NetBSD: pms.c,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $	*/
+/*	$NetBSD: pms.c,v 1.1.6.4 2002/06/17 19:49:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: pms.c,v 1.1.6.3 2002/03/16 15:56:12 jdolecek Exp $");
+__RCSID("$NetBSD: pms.c,v 1.1.6.4 2002/06/17 19:49:40 jdolecek Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -694,5 +694,55 @@ pmsputbuffer(sc, buffer)
 		psignal(sc->sc_proc, SIGIO);
 }
 #endif
+
+/* XXXLUKEM (jdolecek) kqueue hooks not tested */
+static void
+filt_pmsrdetach(struct knote *kn)
+{
+	struct pms_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_pmsread(struct knote *kn, long hint)
+{
+	struct pms_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops pmsread_filtops =
+	{ 1, NULL, filt_pmsrdetach, filt_pmsread };
+
+int
+pmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct pms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &pmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
 
 /* End of pms.c */
