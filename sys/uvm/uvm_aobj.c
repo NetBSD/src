@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.12 1998/08/31 00:01:59 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.13 1998/09/18 19:27:20 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -587,8 +587,7 @@ uao_init()
 	simple_lock_init(&uao_list_lock);
 
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
-	    0, 0, 0, "uaoeltpl", 0,
-	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAOBJ);
+	    0, 0, 0, "uaoeltpl", 0, NULL, NULL, M_UVMAOBJ);
 
 	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0,
 	    "aobjpl", 0,
