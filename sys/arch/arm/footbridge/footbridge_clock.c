@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.18 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.17 2003/03/23 14:12:25 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_clock.c,v 1.18 2003/10/05 19:44:58 matt Exp $");
 
 /* Include header files */
 
@@ -410,7 +410,7 @@ calibrate_delay(void)
 #endif
 }
 
-int delaycount = 500;
+int delaycount = 25000;
 
 void
 delay(n)
@@ -422,8 +422,10 @@ delay(n)
 	if (n == 0) return;
 
 
-	// not calibrated the timer yet, so try to live with this horrible
-	// loop!
+	/* 
+	 * not calibrated the timer yet, so try to live with this horrible
+	 * loop!
+	 */
 	if (delay_clock_count == 0)
 	{
 	    while (n-- > 0) {

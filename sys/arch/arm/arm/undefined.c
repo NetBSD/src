@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $	*/
+/*	$NetBSD: undefined.c,v 1.18 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -54,7 +54,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.17 2003/04/28 01:54:49 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.18 2003/10/05 19:44:58 matt Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -126,10 +126,20 @@ remove_coproc_handler(void *cookie)
 static int
 gdb_trapper(u_int addr, u_int insn, struct trapframe *frame, int code)
 {
+	struct lwp *l;
+	l = (curlwp == NULL) ? &lwp0 : curlwp;
 
 	if (insn == GDB_BREAKPOINT || insn == GDB5_BREAKPOINT) {
 		if (code == FAULT_USER) {
-			trapsignal(curlwp, SIGTRAP, 0);
+			ksiginfo_t ksi;
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGTRAP;
+			ksi.ksi_code = TRAP_BRKPT;
+			ksi.ksi_addr = (u_int32_t *)addr;
+			ksi.ksi_trap = 0;
+			KERNEL_PROC_LOCK(l->l_proc);
+			trapsignal(l, &ksi);
+			KERNEL_PROC_UNLOCK(l->l_proc);
 			return 0;
 		}
 #ifdef KGDB
@@ -242,6 +252,7 @@ undefinedinstruction(trapframe_t *frame)
 
 	if (uh == NULL) {
 		/* Fault has not been handled */
+		ksiginfo_t ksi; 
 		
 #ifdef VERBOSE_ARM32
 		s = spltty();
@@ -270,8 +281,14 @@ undefinedinstruction(trapframe_t *frame)
 			Debugger();
 #endif
 		}
-
-		trapsignal(l, SIGILL, fault_instruction);
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		ksi.ksi_code = ILL_ILLOPC;
+		ksi.ksi_addr = (u_int32_t *)fault_pc;
+		ksi.ksi_trap = fault_instruction;
+		KERNEL_PROC_LOCK(l);
+		trapsignal(l, &ksi);
+		KERNEL_PROC_UNLOCK(l);
 	}
 
 	if ((fault_code & FAULT_USER) == 0)

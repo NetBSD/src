@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.5 2003/01/17 22:28:48 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -45,6 +45,7 @@
 
 #include <sys/signal.h>
 #include <sys/sa.h>
+#include <sys/ucontext.h>
 
 /*
  * Trap frame.  Pushed onto the kernel stack on a trap (synchronous exception).
@@ -80,9 +81,16 @@ typedef struct trapframe {
 /*
  * Signal frame.  Pushed onto user stack before calling sigcode.
  */
-
-struct sigframe {
+#ifdef COMPAT_16
+struct sigframe_sigcontext {
 	struct	sigcontext sf_sc;
+};
+#endif
+
+/* the pointers are use in the trampoline code to locate the ucontext */
+struct sigframe_siginfo {
+	siginfo_t	sf_si;		/* actual saved siginfo */
+	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
 /*
@@ -99,6 +107,10 @@ struct saframe {
 #endif
 	void *		sa_arg;
 };
+
+#ifdef _KERNEL
+void sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
+#endif
 
 #endif /* _LOCORE */
 

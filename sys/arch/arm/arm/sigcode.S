@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.S,v 1.5 2003/09/11 19:36:29 martin Exp $	*/
+/*	$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -33,11 +33,13 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: sigcode.S,v 1.5 2003/09/11 19:36:29 martin Exp $")
+RCSID("$NetBSD: sigcode.S,v 1.6 2003/10/05 19:44:58 matt Exp $")
 
 #include "assym.h"
+#include "opt_compat_netbsd.h"
 #include <sys/syscall.h>
 
+#ifdef COMPAT_16
 /*
  * Signal trampoline; copied to top of user stack.
  */
@@ -50,7 +52,13 @@ ENTRY_NP(sigcode)
  * The stack pointer points to the saved sigcontext.
  */
 	mov	r0, sp
+#if defined(SYS_compat_16___sigreturn14)
+	swi	SYS_compat_16___sigreturn14
+#elif defined(SYS___sigreturn14)
 	swi	SYS___sigreturn14
+#else
+	#error "no sigreturn14 syscall"
+#endif
 
 /* Well if that failed we better exit quick ! */
 
@@ -60,3 +68,4 @@ ENTRY_NP(sigcode)
 	.align	0
         .global _C_LABEL(esigcode)
 _C_LABEL(esigcode):
+#endif

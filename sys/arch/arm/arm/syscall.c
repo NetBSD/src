@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.18 2003/06/29 22:28:08 fvdl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.19 2003/10/05 19:44:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.18 2003/06/29 22:28:08 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.19 2003/10/05 19:44:58 matt Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -206,6 +206,7 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	int code, error;
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	ksiginfo_t ksi;
 
 	KERNEL_PROC_LOCK(p);
 
@@ -222,7 +223,13 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(l, SIGILL, insn);
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGILL;
+			/* XXX get an ILL_ILLSYSCALL assigned */
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+			ksi.ksi_trap = insn;
+			trapsignal(l, &ksi);
 			break;
 		}
 
@@ -234,7 +241,13 @@ syscall_plain(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		trapsignal(l, SIGILL, insn);
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		/* XXX get an ILL_ILLSYSCALL assigned */
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+		ksi.ksi_trap = insn;
+		trapsignal(l, &ksi);
 		userret(l);
 		return;
 	}
@@ -321,6 +334,7 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 	int code, error;
 	u_int nap, nargs;
 	register_t *ap, *args, copyargs[MAXARGS], rval[2];
+	ksiginfo_t ksi;
 
 	KERNEL_PROC_LOCK(p);
 
@@ -337,7 +351,13 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 			break;
 		default:
 			/* Undefined so illegal instruction */
-			trapsignal(l, SIGILL, insn);
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGILL;
+			/* XXX get an ILL_ILLSYSCALL assigned */
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+			ksi.ksi_trap = insn;
+			trapsignal(l, &ksi);
 			break;
 		}
 
@@ -349,7 +369,13 @@ syscall_fancy(struct trapframe *frame, struct lwp *l, u_int32_t insn)
 		break;
 	default:
 		/* Undefined so illegal instruction */
-		trapsignal(l, SIGILL, insn);
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGILL;
+		/* XXX get an ILL_ILLSYSCALL assigned */
+		ksi.ksi_code = 0;
+		ksi.ksi_addr = (u_int32_t *)(frame->tf_pc - INSN_SIZE);
+		ksi.ksi_trap = insn;
+		trapsignal(l, &ksi);
 		userret(l);
 		return;
 	}

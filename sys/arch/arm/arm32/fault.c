@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.33 2003/09/19 11:42:20 agc Exp $	*/
+/*	$NetBSD: fault.c,v 1.34 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.33 2003/09/19 11:42:20 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.34 2003/10/05 19:44:58 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,6 +270,7 @@ data_abort_handler(frame)
 	struct vm_map *map;
 	vm_prot_t ftype;
 	extern struct vm_map *kernel_map;
+	ksiginfo_t ksi;
 
 	/*
 	 * If we were expecting a Data Abort, signal that we got
@@ -387,9 +388,13 @@ copyfault:
 	/* check if this was a failed fixup */
 	if (error == ABORT_FIXUP_FAILED) {
 		if (user) {
-			trapsignal(l, SIGSEGV, TRAP_CODE);
-			userret(l);
-			return;
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = 0;
+			ksi.ksi_addr = (u_int32_t *)fault_address;
+			ksi.ksi_trap = TRAP_CODE;
+			ksi.ksi_errno = error;
+			goto trapsignal;
 		};
 		panic("Data abort fixup failed in kernel - we're dead");
 	};
@@ -406,7 +411,7 @@ copyfault:
 
 we_re_toast:
 		/*
-		 * Were are dead, try and provide some debug
+		 * We're are dead, try and provide some debug
 		 * information before dying.
 		 */
 #if defined(DDB) || defined(KGDB)
@@ -457,7 +462,14 @@ we_re_toast:
 		if ((frame->tf_spsr & PSR_MODE) == PSR_UND32_MODE) {
 			report_abort("UND32", fault_status,
 			    fault_address, fault_pc);
-			trapsignal(l, SIGSEGV, TRAP_CODE);
+			(void)memset(&ksi, 0, sizeof(ksi));
+			ksi.ksi_signo = SIGSEGV;
+			ksi.ksi_code = fault_status;
+			ksi.ksi_addr = (u_int32_t *)fault_address;
+			ksi.ksi_trap = TRAP_CODE;
+			KERNEL_PROC_LOCK(p);
+			trapsignal(l, &ksi);
+			KERNEL_PROC_UNLOCK(p);
 
 			/*
 			 * Force exit via userret()
@@ -551,13 +563,29 @@ we_re_toast:
 	}
 
 	report_abort("", fault_status, fault_address, fault_pc);
+
+	(void)memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_code = 0;
+	ksi.ksi_addr = (u_int32_t *)fault_address;
+	ksi.ksi_trap = TRAP_CODE;
+	ksi.ksi_errno = rv;
+	
 	if (rv == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_pid, p->p_comm,
 		    (p->p_cred && p->p_ucred) ?  p->p_ucred->cr_uid : -1);
-			trapsignal(l, SIGKILL, TRAP_CODE);
-	} else
-		trapsignal(l, SIGSEGV, TRAP_CODE);
+	}
+
+trapsignal:
+	KERNEL_PROC_LOCK(p);
+#if 0
+	/* maybe one day we'll do emulations */
+	(*p->p_emul->e_trapsignal)(l, &ksi);
+#else
+	trapsignal(l, &ksi);
+#endif
+	KERNEL_PROC_UNLOCK(p);
 
 out:
 	/* Call userret() if it was a USR mode fault */
@@ -587,6 +615,7 @@ prefetch_abort_handler(frame)
 	struct vm_map *map;
 	vaddr_t fault_pc, va;
 	int error;
+	ksiginfo_t ksi;
 
 	/*
 	 * Enable IRQ's (disabled by the abort) This always comes
@@ -653,16 +682,20 @@ prefetch_abort_handler(frame)
 		printf("prefetch: pc (%08lx) not in user process space\n",
 		    fault_pc);
 #endif
-		trapsignal(l, SIGSEGV, fault_pc);
-		userret(l);
-		return;
+		(void)memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGSEGV;
+		ksi.ksi_code = SEGV_ACCERR;
+		ksi.ksi_addr = (u_int32_t *)fault_pc;
+		ksi.ksi_trap = fault_pc;
+
+		goto prefetch_trapsignal;
 	}
 
 	/*
 	 * See if the pmap can handle this fault on its own...
 	 */
 	if (pmap_fault_fixup(map->pmap, va, VM_PROT_READ, 1))
-		goto out;
+		goto prefetch_out;
 
 	if (current_intr_depth > 0) {
 #ifdef DDB
@@ -676,15 +709,29 @@ prefetch_abort_handler(frame)
 
 	error = uvm_fault(map, va, 0, VM_PROT_READ);
 	if (error == 0)
-		goto out;
-
+		goto prefetch_out;
+	
+	(void)memset(&ksi, 0, sizeof(ksi));
+	ksi.ksi_signo = SIGSEGV;
+	ksi.ksi_code = 0;
+	ksi.ksi_errno = error;
+	ksi.ksi_addr = (u_int32_t *)fault_pc;
+	ksi.ksi_trap = fault_pc;
+	
 	if (error == ENOMEM) {
 		printf("UVM: pid %d (%s), uid %d killed: "
 		    "out of swap\n", p->p_pid, p->p_comm,
 		    (p->p_cred && p->p_ucred) ?  p->p_ucred->cr_uid : -1);
-		trapsignal(l, SIGKILL, fault_pc);
-	} else
-		trapsignal(l, SIGSEGV, fault_pc);
-out:
+	}
+prefetch_trapsignal:
+	KERNEL_PROC_LOCK(p);
+#if 0
+	/* maybe one day we'll do emulations */
+	(*p->p_emul->e_trapsignal)(l, &ksi);
+#else
+	trapsignal(l, &ksi);
+#endif
+	KERNEL_PROC_UNLOCK(p);
+prefetch_out:
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.139 2003/09/21 00:26:09 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.140 2003/10/05 19:44:58 matt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,12 +212,11 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.139 2003/09/21 00:26:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.140 2003/10/05 19:44:58 matt Exp $");
 
 #ifdef PMAP_DEBUG
-#define	PDEBUG(_lev_,_stat_) \
-	if (pmap_debug_level >= (_lev_)) \
-        	((_stat_))
+
+/* XXX need to get rid of all refs to this */
 int pmap_debug_level = 0;
 
 /*
@@ -249,7 +248,6 @@ int pmapdebug = 0;
         	((_stat_))
     
 #else	/* PMAP_DEBUG */
-#define	PDEBUG(_lev_,_stat_) /* Nothing */
 #define NPDEBUG(_lev_,_stat_) /* Nothing */
 #endif	/* PMAP_DEBUG */
 
