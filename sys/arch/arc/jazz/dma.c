@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.3 2001/05/15 14:29:17 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.4 2001/05/22 03:22:50 soda Exp $	*/
 /*	$OpenBSD: dma.c,v 1.5 1998/03/01 16:49:57 niklas Exp $	*/
 
 /*
@@ -149,7 +149,7 @@ picaDmaStart(sc, addr, size, datain)
 	regs->dma_mode = sc->mode & R4030_DMA_MODE;
 
 	sc->sc_active = 1;
-	if(datain == DMA_FROM_DEV) {
+	if (datain == DMA_FROM_DEV) {
 		sc->mode &= ~DMA_DIR_WRITE;
 		regs->dma_enab = R4030_DMA_ENAB_RUN | R4030_DMA_ENAB_READ;
 	}
@@ -220,6 +220,7 @@ picaDmaEnd(dma_softc_t *sc)
 	pDmaReg regs = sc->dma_reg;
 
 	/* Halt DMA */
+	regs->dma_count = 0;
 	regs->dma_enab = 0;
 	regs->dma_mode = 0;
 	sc->sc_active = 0;
@@ -251,7 +252,7 @@ asc_dma_init(sc)
 	sc->end = picaDmaEnd;
 
 	sc->dma_reg = (pDmaReg)R4030_SYS_DMA0_REGS;
-	sc->pte_size = 32;
+	sc->pte_size = MAXPHYS / JAZZ_DMA_PAGE_SIZE * sizeof(jazz_dma_pte_t);
 	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_16;
 	picaDmaTLBAlloc(sc);
 }
@@ -282,8 +283,8 @@ fdc_dma_init(dma_softc_t *sc)
 		sc->dma_reg = (pDmaReg)R4030_SYS_DMA1_REGS;
 		break;
 	}
-	sc->pte_size = 32;
-	sc->mode = R4030_DMA_MODE_160NS | R4030_DMA_MODE_8;
+	sc->pte_size = MAXPHYS / JAZZ_DMA_PAGE_SIZE * sizeof(jazz_dma_pte_t);
+	sc->mode = R4030_DMA_MODE_320NS | R4030_DMA_MODE_8;
 	picaDmaTLBAlloc(sc);
 }
 /*

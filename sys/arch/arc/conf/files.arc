@@ -1,4 +1,4 @@
-#	$NetBSD: files.arc,v 1.29 2001/04/30 04:52:53 tsutsui Exp $
+#	$NetBSD: files.arc,v 1.30 2001/05/22 03:22:49 soda Exp $
 #	$OpenBSD: files.arc,v 1.21 1999/09/11 10:20:20 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -123,10 +123,13 @@ file	arch/arc/jazz/osiop_jazzio.c	osiop_jazzio
 
 #	Floppy disk controller on Jazz-internal bus
 device	fdc {drive = -1}
-attach	fdc at jazzio
+file	arch/arc/jazz/fd.c		fdc	needs-flag
+
+attach	fdc at jazzio with fdc_jazzio
+file	arch/arc/jazz/fdc_jazzio.c	fdc_jazzio
+
 device	fd: disk
 attach	fd at fdc
-file	arch/arc/jazz/fd.c		fdc	needs-flag
 major	{fd = 7}
 
 #	bus independent raster console glue
