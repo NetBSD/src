@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1997/12/12 22:42:11 gwr Exp $
+#	$NetBSD: Makefile,v 1.8 1998/02/12 19:55:14 gwr Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,7 +15,8 @@ LISTS=	${TOP}/common/${IMAGE}.list \
 	${TOP}/common/mini_bin.list \
 	${TOP}/common/mini_usr.list
 
-KERNEL=${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
+KERNEL3 = ${SRCSYSDIR}/arch/sun3/compile/GENERIC/netbsd
+KERNEL3X= ${SRCSYSDIR}/arch/sun3/compile/GENERIC3X/netbsd
 
 MOUNT_POINT=	/mnt
 BDEV=		/dev/sd1b
@@ -33,7 +34,8 @@ ${IMAGE}.gz: ${TREE} ${LISTS} install.sub
 	-newfs ${NEWFSARGS} -s ${NBLKS} ${CDEV} ${DISKTYPE}
 	mount ${BDEV} ${MOUNT_POINT}
 	mtree -def ${TREE} -p ${MOUNT_POINT}/ -u
-	cp ${KERNEL} ${MOUNT_POINT}/netbsd
+	cp ${KERNEL3}  ${MOUNT_POINT}/netbsd.sun3
+	cp ${KERNEL3X} ${MOUNT_POINT}/netbsd.sun3x
 	TOPDIR=${TOP} CURDIR=${.CURDIR} \
 	  OBJDIR=${.OBJDIR} TARGDIR=${MOUNT_POINT} \
 	  sh ${TOP}/common/RunList.sh ${LISTS}
