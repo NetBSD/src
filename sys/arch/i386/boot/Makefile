@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 1996/06/18 06:05:44 mycroft Exp $
+#	$NetBSD: Makefile,v 1.23 1997/05/07 08:26:04 mycroft Exp $
 #
 # Ported to boot 386BSD by Julian Elischer (julian@tfs.com)
 # September 1992
@@ -26,6 +26,7 @@
 
 S=	${.CURDIR}/../../..
 
+.PHONY:	machine-links
 machine-links:
 	-rm -f machine && \
 	    ln -s ${.CURDIR}/../include machine
