@@ -84,7 +84,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dlpi.c,v 1.1.1.7 2000/06/10 18:04:46 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dlpi.c,v 1.1.1.8 2000/09/04 23:10:10 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -508,13 +508,17 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	struct sockaddr_in *to;
 	struct hardware *hto;
 {
+	unsigned hbufp = 0;
+	double hh [16];
+	double ih [1536 / sizeof (double)];
+	unsigned char *dbuf = (unsigned char *)ih;
 	unsigned dbuflen;
-	unsigned char dbuf [1536];
 	unsigned char sap [2];
 	unsigned char dstaddr [DLPI_MAXDLADDR];
 	unsigned addrlen;
 	int saplen;
 	int result;
+	int fudge;
 
 	if (!strcmp (interface -> name, "fallback"))
 		return send_fallback (interface, packet, raw,
@@ -524,7 +528,11 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 
 	/* Assemble the headers... */
 #ifdef USE_DLPI_RAW
-	assemble_hw_header (interface, dbuf, &dbuflen, hto);
+	assemble_hw_header (interface, (unsigned char *)hh, &dbuflen, hto);
+	fudge = dbuflen % 4; /* IP header must be word-aligned. */
+	memcpy (dbuf + fudge, (unsigned char *)hh, dbuflen);
+#else
+	fudge = 0;
 #endif
 	assemble_udp_ip_header (interface, dbuf, &dbuflen, from.s_addr,
 				to -> sin_addr.s_addr, to -> sin_port,
@@ -535,7 +543,7 @@ ssize_t send_packet (interface, packet, raw, len, from, to, hto)
 	dbuflen += len;
 
 #ifdef USE_DLPI_RAW
-	result = write (interface -> wfdesc, dbuf, dbuflen);
+	result = write (interface -> wfdesc, dbuf + fudge, dbuflen - fudge);
 #else
 	/* XXX: Assumes ethernet, with two byte SAP */
 	sap [0] = 0x08;		/* ETHERTYPE_IP, high byte */
@@ -1298,6 +1306,12 @@ int can_unicast_without_arp (ip)
 }
 
 int can_receive_unicast_unconfigured (ip)
+	struct interface_info *ip;
+{
+	return 1;
+}
+
+int supports_multiple_interfaces (ip)
 	struct interface_info *ip;
 {
 	return 1;

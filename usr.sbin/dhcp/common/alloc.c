@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: alloc.c,v 1.1.1.7 2000/06/24 06:38:26 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: alloc.c,v 1.1.1.8 2000/09/04 23:10:04 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -177,54 +177,6 @@ struct dhcp_packet *new_dhcp_packet (file, line)
 	return rval;
 }
 
-struct hash_table *new_hash_table (count, file, line)
-	int count;
-	const char *file;
-	int line;
-{
-	struct hash_table *rval = dmalloc (sizeof (struct hash_table)
-					   - (DEFAULT_HASH_SIZE
-					      * sizeof (struct hash_bucket *))
-					   + (count
-					      * sizeof (struct hash_bucket *)),
-					   file, line);
-	rval -> hash_count = count;
-	return rval;
-}
-
-struct hash_bucket *free_hash_buckets;
-
-struct hash_bucket *new_hash_bucket (file, line)
-	const char *file;
-	int line;
-{
-	struct hash_bucket *rval;
-	int i;
-	if (!free_hash_buckets) {
-		rval = dmalloc (127 * sizeof (struct hash_bucket),
-				file, line);
-		if (!rval)
-			return rval;
-		for (i = 0; i < 127; i++) {
-			rval -> next = free_hash_buckets;
-			free_hash_buckets = rval;
-			rval++;
-		}
-	}
-	rval = free_hash_buckets;
-	free_hash_buckets = rval -> next;
-	return rval;
-}
-
-void free_hash_bucket (ptr, file, line)
-	struct hash_bucket *ptr;
-	const char *file;
-	int line;
-{
-	ptr -> next = free_hash_buckets;
-	free_hash_buckets = ptr;
-}
-
 struct protocol *new_protocol (file, line)
 	const char *file;
 	int line;
@@ -316,14 +268,6 @@ void free_protocol (ptr, file, line)
 	dfree ((VOIDPTR)ptr, file, line);
 }
 
-void free_hash_table (ptr, file, line)
-	struct hash_table *ptr;
-	const char *file;
-	int line;
-{
-	dfree ((VOIDPTR)ptr, file, line);
-}
-
 void free_dhcp_packet (ptr, file, line)
 	struct dhcp_packet *ptr;
 	const char *file;
@@ -346,29 +290,6 @@ void free_client_lease (lease, file, line)
 	int line;
 {
 	dfree (lease, file, line);
-}
-
-struct auth_key *new_auth_key (len, file, line)
-	unsigned len;
-	const char *file;
-	int line;
-{
-	struct auth_key *peer;
-	unsigned size = len - 1 + sizeof (struct auth_key);
-
-	peer = (struct auth_key *)dmalloc (size, file, line);
-	if (!peer)
-		return peer;
-	memset (peer, 0, size);
-	return peer;
-}
-
-void free_auth_key (peer, file, line)
-	struct auth_key *peer;
-	const char *file;
-	int line;
-{
-	dfree (peer, file, line);
 }
 
 pair free_pairs;
@@ -691,9 +612,9 @@ int buffer_dereference (ptr, file, line)
 
 	(*ptr) -> refcnt--;
 	rc_register (file, line, ptr, *ptr, (*ptr) -> refcnt);
-	if (!(*ptr) -> refcnt)
+	if (!(*ptr) -> refcnt) {
 		dfree ((*ptr), file, line);
-	if ((*ptr) -> refcnt < 0) {
+	} else if ((*ptr) -> refcnt < 0) {
 		log_error ("%s(%d): negative refcnt!", file, line);
 #if defined (DEBUG_RC_HISTORY)
 		dump_rc_history ();
@@ -1058,114 +979,6 @@ int packet_dereference (ptr, file, line)
 	return 1;
 }
 
-int tsig_key_allocate (ptr, file, line)
-	struct tsig_key **ptr;
-	const char *file;
-	int line;
-{
-	int size;
-
-	if (!ptr) {
-		log_error ("%s(%d): null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		return 0;
-#endif
-	}
-	if (*ptr) {
-		log_error ("%s(%d): non-null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		*ptr = (struct tsig_key *)0;
-#endif
-	}
-
-	*ptr = dmalloc (sizeof **ptr, file, line);
-	if (*ptr) {
-		memset (*ptr, 0, sizeof **ptr);
-		(*ptr) -> refcnt = 1;
-		return 1;
-	}
-	return 0;
-}
-
-int tsig_key_reference (ptr, bp, file, line)
-	struct tsig_key **ptr;
-	struct tsig_key *bp;
-	const char *file;
-	int line;
-{
-	if (!ptr) {
-		log_error ("%s(%d): null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		return 0;
-#endif
-	}
-	if (*ptr) {
-		log_error ("%s(%d): non-null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		*ptr = (struct tsig_key *)0;
-#endif
-	}
-	*ptr = bp;
-	bp -> refcnt++;
-	rc_register (file, line, ptr, bp, bp -> refcnt);
-	dmalloc_reuse (bp, file, line, 1);
-	return 1;
-}
-
-int tsig_key_dereference (ptr, file, line)
-	struct tsig_key **ptr;
-	const char *file;
-	int line;
-{
-	int i;
-	struct tsig_key *tsig_key;
-
-	if (!ptr || !*ptr) {
-		log_error ("%s(%d): null pointer", file, line);
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		return 0;
-#endif
-	}
-
-	tsig_key = *ptr;
-	*ptr = (struct tsig_key *)0;
-	--tsig_key -> refcnt;
-	rc_register (file, line, ptr, tsig_key, tsig_key -> refcnt);
-	if (tsig_key -> refcnt > 0)
-		return 1;
-
-	if (tsig_key -> refcnt < 0) {
-		log_error ("%s(%d): negative refcnt!", file, line);
-#if defined (DEBUG_RC_HISTORY)
-		dump_rc_history ();
-#endif
-#if defined (POINTER_DEBUG)
-		abort ();
-#else
-		return 0;
-#endif
-	}
-
-	if (tsig_key -> name)
-		dfree (tsig_key -> name, file, line);
-	if (tsig_key -> algorithm)
-		dfree (tsig_key -> algorithm, file, line);
-	if (tsig_key -> key.buffer)
-		data_string_forget (&tsig_key -> key, file, line);
-	dfree (tsig_key, file, line);
-	return 1;
-}
-
 int dns_zone_allocate (ptr, file, line)
 	struct dns_zone **ptr;
 	const char *file;
@@ -1257,7 +1070,36 @@ int binding_scope_allocate (ptr, file, line)
 	if (!bp)
 		return 0;
 	memset (bp, 0, sizeof *bp);
+	binding_scope_reference (ptr, bp, file, line);
+	return 1;
+}
+
+int binding_scope_reference (ptr, bp, file, line)
+	struct binding_scope **ptr;
+	struct binding_scope *bp;
+	const char *file;
+	int line;
+{
+	if (!ptr) {
+		log_error ("%s(%d): null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		return 0;
+#endif
+	}
+	if (*ptr) {
+		log_error ("%s(%d): non-null pointer", file, line);
+#if defined (POINTER_DEBUG)
+		abort ();
+#else
+		*ptr = (struct binding_scope *)0;
+#endif
+	}
 	*ptr = bp;
+	bp -> refcnt++;
+	rc_register (file, line, ptr, bp, bp -> refcnt);
+	dmalloc_reuse (bp, file, line, 1);
 	return 1;
 }
 
