@@ -48,10 +48,10 @@
 # Special purpose devices:
 #	audio
 #	openprom
-#	bwtwo
-#	cgthree
-#	cgsix
-#	audio
+#	bwtwo*
+#	cgthree*
+#	cgsix*
+#	bpf*	packet filter
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 umask 77
@@ -110,8 +110,12 @@ openprom)
 	mknod openprom		c 70 0; chmod 600 openprom
 	;;
 
-bpf)
-	mknod bpf		c 105 0; chmod 600 bpf
+bpf*)
+	unit=`expr $i : 'bpf\(.*\)'`
+	rm -f bpf$unit
+	mknod bpf$unit c 105 $unit
+	chmod 600 bpf$unit
+	chown root.wheel bpf$unit
 	;;
 
 fd*|sd*)
