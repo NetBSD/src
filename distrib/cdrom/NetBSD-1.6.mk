@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.6.mk,v 1.2 2002/09/25 04:15:41 lukem Exp $
+# $NetBSD: NetBSD-1.6.mk,v 1.3 2002/09/29 06:44:36 lukem Exp $
 #
 # Configuration file for the NetBSD 1.6 binary release.
 
@@ -18,7 +18,7 @@ INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs,link
 # macppc has external bootblock generation tool
 EXTFILES.macppc=	macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
 INTFILES.macppc=	ofwboot.xcf:macppc/installation/ofwboot.xcf,link \
-			netbsd.macppc:macppc/installation/netbsd.ram.gz,link
+			netbsd.macppc:macppc/binary/kernel/netbsd.INSTALL.gz,link
 
 # BOOTFILE.pmax is absolute
 BOOTFILE.pmax=		${EXTFILEDIR}/pmax.bootxx
@@ -38,4 +38,3 @@ BOOTFILE.vax=		${EXTFILEDIR}/vax.xxboot
 EXTFILES.vax=		vax.xxboot:vax/binary/sets/base.tgz,./usr/mdec/xxboot
 INTFILES.vax=		netbsd.vax:vax/installation/netboot/install.ram.gz,link \
 			boot.vax:vax/binary/sets/base.tgz,./usr/mdec/boot
-VAX_IBOOT?=		${INSTALLBOOT} -m vax -o sunsum -o append
