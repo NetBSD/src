@@ -25,15 +25,15 @@
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  *
- *	$Id: sys.c,v 1.4 1994/01/11 14:27:56 mycroft Exp $
+ *	$Id: sys.c,v 1.5 1994/02/03 07:42:33 cgd Exp $
  */
 
 #include "boot.h"
 #include <sys/dirent.h>
 #include <sys/reboot.h>
 
-/* #define BUFSIZE 4096 */
-#define BUFSIZE MAXBSIZE
+#define	BUFSIZE	4096
+/* #define	BUFSIZE	MAXBSIZE */
 
 char buf[BUFSIZE], fsbuf[SBSIZE], iobuf[MAXBSIZE];
 
