@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.29 2002/10/22 22:50:11 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.30 2002/10/23 13:01:16 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.29 2002/10/22 22:50:11 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.30 2002/10/23 13:01:16 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1299,6 +1299,15 @@ expr_stmnt:
 	  }
 	;
 
+/*
+ * The following two productions are used to implement
+ * ({ [[decl-list] stmt-list] }). The way it is currently implemented,
+ * does not handle things other than expression lists, which is wrong.
+ * This means that ({ if (foo) blah; }) will still give a syntax error.
+ * Currently nothing in the tree uses such constructs (I changed the
+ * single occurance), so I am deferring implementation of this until it
+ * is really needed.
+ */
 expr_stmnt_val:
 	  expr T_SEMI {
 		/* XXX: We should really do that only on the last name */
