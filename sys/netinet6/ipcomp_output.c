@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcomp_output.c,v 1.3 1999/07/03 21:30:19 thorpej Exp $	*/
+/*	$NetBSD: ipcomp_output.c,v 1.4 1999/07/06 05:09:22 itojun Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -72,9 +72,7 @@
 #endif
 #include <netinet6/ipcomp.h>
 
-#if defined(__FreeBSD__) && __FreeBSD__ >= 3
 #include <netinet6/ipsec.h>
-#endif
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
