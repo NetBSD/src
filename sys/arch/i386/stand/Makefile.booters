@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.39 2003/01/28 16:21:58 dsl Exp $
+#	$NetBSD: Makefile.booters,v 1.40 2003/01/29 18:44:47 fvdl Exp $
 
 .include <bsd.own.mk>
 
@@ -54,7 +54,7 @@ LIBKERN_ARCH=i386
 KERNMISCMAKEFLAGS="LIBKERN_ARCH=i386"
 .endif
 
-CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list
+CLEANFILES+= ${STARTFILE} vers.c ${BASE}.list ${BASE}.ldscript
 SRCS+=	vers.c
 
 .if !make(obj) && !make(clean) && !make(cleandir)
@@ -117,7 +117,7 @@ ${BASE}.sym: ${STARTFILE} ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN} ${LIBI386}
 	@# Get linker to tell us its link script and remove the line.
 	@rm -f ${BASE}.ldscript
 	@ ${LD} --verbose >${BASE}.ldscript
-	@ printf '%b'  "1,/^===/d\nd\nd\n/ALIGN(0x1000)/\nd\n/^===/\nd\nwq\n" \
+	@ printf '%b' "1,/^===/d\n/ALIGN(0x1000.*)/\nd\n/^===/\nd\nwq\n" \
 		| ed -s ${BASE}.ldscript >/dev/null
 	${LD} -o ${BASE}.sym ${LDFLAGS} -Ttext ${RELOC} -T ${BASE}.ldscript \
 	    ${STARTFILE} ${OBJS} ${LIBLIST} >${BASE}.list
