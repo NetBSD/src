@@ -1,4 +1,4 @@
-.\" $NetBSD: wsdisplay.4,v 1.12 2002/06/22 19:08:32 bjh21 Exp $
+.\" $NetBSD: wsdisplay.4,v 1.13 2002/06/22 20:16:31 wiz Exp $
 .Dd June 22, 2002
 .Os
 .Dt WSDISPLAY 4
@@ -139,7 +139,7 @@ struct wsdisplay_cmap {
 	u_char	*red;
 	u_char	*green;
 	u_char	*blue;
-};      
+};
 .Ed
 .Pp
 The
@@ -147,7 +147,8 @@ The
 and
 .Va count
 members specify the range of color map entries to retrieve.  The
-.Va red , green
+.Va red ,
+.Va green ,
 and
 .Va blue
 members should each point to an array of
@@ -161,7 +162,8 @@ does not use eight bits internally to represent intensity.
 Change the display's color map.  The argument structure is the same as for
 .Dv WSDISPLAYIO_GETCMAP ,
 but
-.Va red , green
+.Va red ,
+.Va green ,
 and
 .Va blue
 are taken as pointers to the values to use to set the color map.
@@ -265,7 +267,7 @@ This means that
 and
 .Va cmap . Ns Va blue
 must each point to at least enough space to hold two
-.Li u_char Ns s.
+.Li u_char Ns s .
 .It Dv WSDISPLAYIO_CURSOR_DOSHAPE
 Get
 .Va size , image ,
@@ -280,7 +282,7 @@ device-dependent.
 Get all of the above.
 .El
 .Pp
-The device my elect to return information that was not requested by the user,
+The device may elect to return information that was not requested by the user,
 so those elements of
 .Li "struct wsdisplay_cursor"
 which are pointers should be initialised to
