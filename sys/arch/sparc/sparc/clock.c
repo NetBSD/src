@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.22 1995/05/29 23:57:15 pk Exp $ */
+/*	$NetBSD: clock.c,v 1.23 1995/08/29 22:13:19 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -132,7 +132,7 @@ struct cfdriver oclockcd =
  * On the 300/400 models, the eeprom will be dealt with when the clock is
  * attached.
  */
-static char	*eeprom_va = NULL;
+char		*eeprom_va = NULL;
 static int	eeprom_busy = 0;
 static int	eeprom_wanted = 0;
 static int	eeprom_nvram = 0;	/* non-zero if eeprom is on Mostek */
