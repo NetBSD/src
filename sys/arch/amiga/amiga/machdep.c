@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 2003/04/26 11:05:07 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2003/04/26 11:05:07 ragge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $"
 #include <sys/mount.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #include <sys/exec.h>
 
@@ -107,6 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2003/04/01 21:26:26 thorpej Exp $"
 
 #include "fd.h"
 #include "ser.h"
+#include "ksyms.h"
 
 /* prototypes */
 void identifycpu(void);
@@ -198,18 +200,16 @@ consinit()
 	 */
 	cninit();
 
-#if defined (DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end[];
 		extern int *esym;
 
-#ifndef __ELF__
-		ddb_init(*(int *)&end, ((int *)&end) + 1, esym);
-#else
-		ddb_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
+		ksyms_init((int)esym - (int)&end - sizeof(Elf32_Ehdr),
 		    (void *)&end, esym);
-#endif
 	}
+#endif
+#ifdef DDB
         if (boothowto & RB_KDB)
                 Debugger();
 #endif

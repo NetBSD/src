@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2003/04/02 03:53:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2003/04/26 11:05:12 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@
 #include <sys/mount.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -105,6 +106,8 @@
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
+
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = MACHINE;		/* evbsh3 */
@@ -271,8 +274,8 @@ initSH3(void *pc)	/* XXX return address */
 	/* Initialize pmap and start to address translation */
 	pmap_bootstrap();
 
-#ifdef DDB
-	ddb_init(0, NULL, NULL);
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(0, NULL, NULL);
 #endif
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.9 2003/04/01 20:48:27 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10 2003/04/26 11:05:12 ragge Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/extent.h>
+#include <sys/ksyms.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -130,6 +131,8 @@
 #include <hp700/hp700/machdep.h>
 #include <hp700/hp700/pim.h>
 #include <hp700/dev/cpudevs.h>
+
+#include "ksyms.h"
 
 /*
  * Different kinds of flags used throughout the kernel.
@@ -812,11 +815,11 @@ do {									\
 	}
 #endif /* NCOM > 0 */
 #endif /* KGDB */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end[];
 
-		ddb_init(1, end, (int*)esym);
+		ksyms_init(1, end, (int*)esym);
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.68 2003/04/26 11:05:17 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.68 2003/04/26 11:05:17 ragge Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $")
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.67 2003/04/19 14:44:39 tsutsui Exp $")
 #include <newsmips/newsmips/clockreg.h>
 #include <newsmips/newsmips/machid.h>
 #include <dev/cons.h>
+
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 extern char cpu_model[];
@@ -182,7 +185,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	struct btinfo_magic *bi_magic;
 	struct btinfo_bootarg *bi_arg;
 	struct btinfo_systype *bi_systype;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
 	int nsym = 0;
 	char *ssym, *esym;
@@ -202,7 +205,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 			x_bootdev = bi_arg->bootdev;
 			x_maxmem = bi_arg->maxmem;
 		}
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 		bi_sym = lookup_bootinfo(BTINFO_SYMTAB);
 		if (bi_sym) {
 			nsym = bi_sym->nsym;
@@ -254,7 +257,7 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	*(int *)(MIPS_PHYS_TO_KSEG1(MACH_BOOTSW_ADDR)) = x_boothowto;
 
 	kernend = (caddr_t)mips_round_page(end);
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (nsym)
 		kernend = (caddr_t)mips_round_page(esym);
 #endif
@@ -289,9 +292,9 @@ mach_init(x_boothowto, x_bootdev, x_bootname, x_maxmem)
 	 */
 	newsmips_bus_dma_init();
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (nsym)
-		ddb_init(esym - ssym, ssym, esym);
+		ksyms_init(esym - ssym, ssym, esym);
 #endif
 
 #ifdef KADB

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.59 2003/04/26 08:31:30 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.60 2003/04/26 11:05:13 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -59,10 +59,13 @@
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
 #include <sys/exec.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
-#ifdef DDB
+#include "ksyms.h"
+
+#if NKSYMS || defined(DDB) || defined(LKM)
 #include <machine/db_machdep.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
@@ -296,7 +299,7 @@ initarm(argc, argv, bi)
 	pv_addr_t kernel_l1pt;
 	pv_addr_t kernel_ptpt;
 	vsize_t pt_size;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	Elf_Shdr *sh;
 #endif
 
@@ -324,7 +327,7 @@ initarm(argc, argv, bi)
 	kerneldatasize = (u_int32_t)&end - (u_int32_t)KERNEL_TEXT_BASE;
 
 	symbolsize = 0;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (! memcmp(&end, "\177ELF", 4)) {
 		sh = (Elf_Shdr *)((char *)&end + ((Elf_Ehdr *)&end)->e_shoff);
 		loop = ((Elf_Ehdr *)&end)->e_shnum;
@@ -763,7 +766,9 @@ initarm(argc, argv, bi)
 		uh.uh_handler = db_trapper;
 		install_coproc_handler_static(0, &uh);
 	}
-	ddb_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
+#endif
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(symbolsize, ((int *)&end), ((char *)&end) + symbolsize);
 #endif
 
 	printf("kernsize=0x%x", kerneldatasize);

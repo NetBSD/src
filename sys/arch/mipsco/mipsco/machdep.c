@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2003/04/26 11:05:15 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2003/04/26 11:05:15 ragge Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $")
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/kcore.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -102,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2003/04/02 04:00:45 thorpej Exp $")
 
 #include "zsc.h"			/* XXX */
 #include "com.h"			/* XXX */
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 extern char  cpu_model[];
@@ -217,7 +219,7 @@ mach_init(argc, argv, envp, bim, bip)
 	int i, howto;
 	extern char edata[], end[];
 	char *bi_msg;
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	int nsym = 0;
 	caddr_t ssym = 0;
 	caddr_t esym = 0;
@@ -242,7 +244,7 @@ mach_init(argc, argv, envp, bim, bip)
 	kernend = (caddr_t)mips_round_page(end);
 	memset(edata, 0, end - edata);
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
 
 	/* Load sysmbol table if present */
@@ -306,10 +308,12 @@ mach_init(argc, argv, envp, bim, bip)
 	}
 
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	/* init symbols if present */
 	if (esym)
-		ddb_init(esym - ssym, ssym, esym);
+		ksyms_init(esym - ssym, ssym, esym);
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2003/04/02 02:24:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2003/04/26 11:05:18 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -67,6 +67,7 @@
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ucontext.h>
+#include <sys/ksyms.h>
 
 #include <dev/cons.h>
 
@@ -91,6 +92,7 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "ksyms.h"
 /*
  * Support for VERY low debugging ... in case we get NO output.
  * e.g. in case pmap does not work and can't do regular mapped
@@ -125,7 +127,7 @@ struct vm_map *mb_map = NULL;
 struct vm_map *phys_map = NULL;
 
 extern	char etext[], end[];
-#if defined(DDB)
+#if NKSYMS || defined(DDB) || defined(LKM)
 extern char *esym;
 #endif
 extern	paddr_t avail_start, avail_end;
@@ -976,7 +978,7 @@ init532()
 {
 	extern void main __P((void *));
 	extern int inttab[];
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	extern char *esym;
 #endif
 	pd_entry_t *pd;
@@ -1005,7 +1007,7 @@ init532()
 	lprd(cfg, CFG_ONE | CFG_IC | CFG_DC | CFG_DE | CFG_M);
 
 	/* Setup memory allocation variables. */
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	if (esym) {
 		avail_start = kppa(esym);
 		esym += KERNBASE;
@@ -1146,8 +1148,10 @@ consinit()
 		kgdb_debug_init = 1;
 	}
 #endif
+#if NKSYMS || defined(DDB) || defined(LKM)
+	ksyms_init(*(int *)end, ((int *)end) + 1, (int *)esym);
+#endif
 #if defined (DDB)
-	ddb_init(*(int *)end, ((int *)end) + 1, (int *)esym);
         if(boothowto & RB_KDB)
                 Debugger();
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2003/04/17 09:36:47 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2003/04/26 11:05:22 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -109,6 +109,7 @@
 #include <sys/sa.h>
 #include <sys/savar.h>
 #include <sys/syscallargs.h>
+#include <sys/ksyms.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -144,6 +145,7 @@
 
 #include "isa.h"
 #include "isadma.h"
+#include "ksyms.h"
 
 /* the following is used externally (sysctl_hw) */
 char machine[] = "x86_64";		/* cpu "architecture" */
@@ -1634,24 +1636,28 @@ init_x86_64(first_avail)
 
 	cpu_init_idt();
 
-#ifdef DDB
+#if NKSYMS || defined(DDB) || defined(LKM)
 	{
 		extern int end;
 		extern int *esym;
 		struct btinfo_symtab *symtab;
 		vaddr_t tssym, tesym;
 
+#ifdef DDB
 		db_machine_init();
+#endif
 
 		symtab = lookup_bootinfo(BTINFO_SYMTAB);
 		if (symtab) {
 			tssym = (vaddr_t)symtab->ssym + KERNBASE;
 			tesym = (vaddr_t)symtab->esym + KERNBASE;
-			ddb_init(symtab->nsym, (void *)tssym, (void *)tesym);
+			ksyms_init(symtab->nsym, (void *)tssym, (void *)tesym);
 		} else
-			ddb_init(*(long *)(void *)&end,
+			ksyms_init(*(long *)(void *)&end,
 			    ((long *)(void *)&end) + 1, esym);
 	}
+#endif
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
