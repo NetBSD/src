@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.31 1997/05/24 20:16:34 pk Exp $	*/
+/*	$NetBSD: xd.c,v 1.32 1997/06/10 20:59:12 pk Exp $	*/
 
 /*
  *
@@ -36,7 +36,7 @@
  * x d . c   x y l o g i c s   7 5 3 / 7 0 5 3   v m e / s m d   d r i v e r
  *
  * author: Chuck Cranor <chuck@ccrc.wustl.edu>
- * id: $NetBSD: xd.c,v 1.31 1997/05/24 20:16:34 pk Exp $
+ * id: $NetBSD: xd.c,v 1.32 1997/06/10 20:59:12 pk Exp $
  * started: 27-Feb-95
  * references: [1] Xylogics Model 753 User's Manual
  *                 part number: 166-753-001, Revision B, May 21, 1988.
@@ -360,7 +360,13 @@ int xdcmatch(parent, cf, aux)
 	if (strcmp(cf->cf_driver->cd_name, ra->ra_name))
 		return (0);
 
-	if (CPU_ISSUN4) {
+	switch (ca->ca_bustype) {
+	case BUS_OBIO:
+	case BUS_SBUS:
+	case BUS_VME16:
+	default:
+		return (0);
+	case BUS_VME32:
 		xdc = (struct xdc *) ra->ra_vaddr;
 		if (probeget((caddr_t) &xdc->xdc_csr, 1) == -1)
 			return (0);
@@ -368,8 +374,8 @@ int xdcmatch(parent, cf, aux)
 		XDC_WAIT(xdc, del, XDC_RESETUSEC, XDC_RESET);
 		if (del <= 0)
 			return (0);
+		return (1);
 	}
-	return (1);
 }
 
 /*
