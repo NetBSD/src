@@ -1,4 +1,4 @@
-/*	$NetBSD: memcluster.c,v 1.1.1.1 1999/11/20 18:54:11 veego Exp $	*/
+/*	$NetBSD: memcluster.c,v 1.1.1.1.8.1 2002/07/01 17:16:03 he Exp $	*/
 
 /*
  * Copyright (c) 1997,1999 by Internet Software Consortium.
@@ -22,10 +22,11 @@
    bigger and some debugging info stuck before and after the region given 
    back to the caller. */
 /* #define DEBUGGING_MEMCLUSTER */
+#define MEMCLUSTER_ATEND
 
 
 #if !defined(LINT) && !defined(CODECENTER)
-static const char rcsid[] = "Id: memcluster.c,v 8.19 1999/10/13 17:11:22 vixie Exp";
+static const char rcsid[] = "Id: memcluster.c,v 8.23 2001/06/18 14:44:05 marka Exp";
 #endif /* not lint */
 
 #include "port_before.h"
@@ -68,7 +69,7 @@ typedef struct {
 	const char *		file;
 	int			line;
 #endif
-	int			size;
+	size_t			size;
 	fence_t			fencepost;
 #endif
 } memcluster_element;
@@ -174,6 +175,10 @@ __memget_record(size_t size, const char *file, int line) {
 #endif
 	void *ret;
 
+#if !defined(MEMCLUSTER_RECORD)
+	UNUSED(file);
+	UNUSED(line);
+#endif
 	if (freelists == NULL)
 		if (meminit(0, 0) == -1)
 			return (NULL);
@@ -336,12 +341,19 @@ __memput_record(void *mem, size_t size, const char *file, int line) {
 	size_t new_size = quantize(size);
 #if defined (DEBUGGING_MEMCLUSTER)
 	memcluster_element *e;
+	memcluster_element *el;
 #ifdef MEMCLUSTER_RECORD
-	memcluster_element *prev, *el;
+	memcluster_element *prev;
 #endif
-	int fp;
+	fence_t fp;
 	char *p;
 #endif
+
+#if !defined (MEMCLUSTER_RECORD)
+	UNUSED(file);
+	UNUSED(line);
+#endif
+
 	REQUIRE(freelists != NULL);
 
 	if (size == 0) {
@@ -399,8 +411,19 @@ __memput_record(void *mem, size_t size, const char *file, int line) {
 	e->file = file;
 	e->line = line;
 #endif
+#ifdef MEMCLUSTER_ATEND
+	e->next = NULL;
+	el = freelists[new_size];
+	while (el != NULL && el->next != NULL)
+		el = el->next;
+	if (el)
+		el->next = e;
+	else
+		freelists[new_size] = e;
+#else
 	e->next = freelists[new_size];
 	freelists[new_size] = (void *)e;
+#endif
 #else
 	((memcluster_element *)mem)->next = freelists[new_size];
 	freelists[new_size] = (memcluster_element *)mem;
@@ -463,7 +486,7 @@ memstats(FILE *out) {
 	for (i = 1; i <= max_size; i++) {
 		if ((e = activelists[i]) != NULL)
 			while (e != NULL) {
-				fprintf(out, "%s:%d %#p:%d\n",
+				fprintf(out, "%s:%d %p:%d\n",
 				        e->file != NULL ? e->file :
 						"<UNKNOWN>", e->line,
 					(char *)e + sizeof *e, e->size);
@@ -471,6 +494,18 @@ memstats(FILE *out) {
 			}
 	}
 #endif
+}
+
+int
+memactive(void) {
+	size_t i;
+
+	if (stats == NULL)
+		return (0);
+	for (i = 1; i <= max_size; i++)
+		if (stats[i].gets != 0)
+			return (1);
+	return (0);
 }
 
 /* Private. */
@@ -505,7 +540,7 @@ quantize(size_t size) {
 #if defined(DEBUGGING_MEMCLUSTER)
 static void
 check(unsigned char *a, int value, size_t len) {
-	int i;
+	size_t i;
 	for (i = 0; i < len; i++)
 		INSIST(a[i] == value);
 }
