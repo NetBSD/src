@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.37 2000/05/29 17:37:12 jhawk Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.37.2.1 2000/12/31 20:14:43 jhawk Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -143,6 +143,11 @@ dp8390_config(sc, media, nmedia, defmedia)
 		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
 	}
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Attach the interface. */
 	if_attach(ifp);
