@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.50 2004/01/30 08:39:50 lukem Exp $
+# $NetBSD: maketars,v 1.51 2004/02/06 11:38:57 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -155,8 +155,10 @@ for setname in $lists; do
 			awk -f join.awk $SDIR/flist.$setname.full $SDIR/metalog
 			echo "./etc/mtree/set.${setname} type=file mode=0444"
 		) > ${setlistdir}/set.${setname}
-	else
-		mv ${SDIR}/flist.${setname} ${setlistdir}/set.${setname}
+	elif ! cmp -s ${SDIR}/flist.${setname} \
+			${setlistdir}/set.${setname} >/dev/null 2>&1; then
+		rm -f ${setlistdir}/set.${setname}
+		cp ${SDIR}/flist.${setname} ${setlistdir}/set.${setname}
 	fi
 done
 if $setfilesonly; then		# exit after creating the set lists
