@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.35 1998/03/01 02:23:38 fvdl Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.36 1998/03/02 22:26:14 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -1505,14 +1505,14 @@ ufs_readdir(v)
 			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);
 		}
 		lost += uio->uio_offset - off;
-		uio->uio_offset = off;
 		MALLOC(cookies, off_t *, ncookies * sizeof(off_t), M_TEMP,
 		    M_WAITOK);
+		uio->uio_offset = off;
 		*ap->a_ncookies = ncookies;
 		*ap->a_cookies = cookies;
 		for (off = offstart, dp = dpstart; off < uio->uio_offset; ) {
-			*(cookies++) = off;
 			off += dp->d_reclen;
+			*(cookies++) = off;
 			dp = (struct dirent *)((caddr_t)dp + dp->d_reclen);	
 		}
 	}
