@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.11 1995/03/04 01:55:58 cgd Exp $	*/
+/*	$NetBSD: setmode.c,v 1.12 1995/03/23 19:51:13 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: setmode.c,v 1.11 1995/03/04 01:55:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: setmode.c,v 1.12 1995/03/23 19:51:13 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,7 +50,6 @@ static char rcsid[] = "$NetBSD: setmode.c,v 1.11 1995/03/04 01:55:58 cgd Exp $";
 #include <ctype.h>
 #include <errno.h>
 #include <signal.h>
-#include <stddef.h>
 #include <stdlib.h>
 
 #ifdef SETMODE_DEBUG
