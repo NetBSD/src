@@ -1,4 +1,4 @@
-/*	$NetBSD: gethnamaddr.c,v 1.26 1999/09/20 04:39:11 lukem Exp $	*/
+/*	$NetBSD: gethnamaddr.c,v 1.27 1999/10/24 12:36:02 lukem Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1988, 1993
@@ -61,7 +61,7 @@
 static char sccsid[] = "@(#)gethostnamadr.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: gethnamaddr.c,v 8.21 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: gethnamaddr.c,v 1.26 1999/09/20 04:39:11 lukem Exp $");
+__RCSID("$NetBSD: gethnamaddr.c,v 1.27 1999/10/24 12:36:02 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,8 +183,8 @@ int _yp_gethtbyname __P((void *, void *, va_list));
 #endif
 
 static const ns_src default_dns_files[] = {
-	{ NSSRC_DNS, 	NS_SUCCESS },
 	{ NSSRC_FILES, 	NS_SUCCESS },
+	{ NSSRC_DNS, 	NS_SUCCESS },
 	{ 0 }
 };
 
