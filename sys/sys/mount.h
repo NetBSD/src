@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.112 2003/10/12 19:08:49 thorpej Exp $	*/
+/*	$NetBSD: mount.h,v 1.113 2003/10/13 16:55:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -200,6 +200,7 @@ struct mount {
 	{ MNT_EXKERB,		1,	"kerberos uid mapping" }, \
 	{ MNT_EXNORESPORT,	0,	"non-reserved ports" }, \
 	{ MNT_EXPUBLIC,		0,	"WebNFS exports" },
+
 /*
  * Flags set by internal operations.
  */
@@ -207,11 +208,11 @@ struct mount {
 #define	MNT_QUOTA	0x00002000	/* quotas are enabled on filesystem */
 #define	MNT_ROOTFS	0x00004000	/* identifies the root filesystem */
 
-
 #define __MNT_INTERNAL_FLAGS \
 	{ MNT_LOCAL,		0,	"local" }, \
 	{ MNT_QUOTA,		0,	"with quotas" }, \
 	{ MNT_ROOTFS,		1,	"root file system" },
+
 /*
  * Mask of flags that are visible to statfs()
  */
@@ -232,6 +233,7 @@ struct mount {
 	{ MNT_RELOAD,		1,	"reload filesystem data" }, \
 	{ MNT_FORCE,		1,	"force unmount or readonly change" }, \
 	{ MNT_GETARGS,		1,	"retrieve mount arguments" },
+
 /*
  * Internal filesystem control flags.
  *
@@ -254,6 +256,7 @@ struct mount {
 	__MNT_INTERNAL_FLAGS \
 	__MNT_EXTERNAL_FLAGS \
 	__MNT_CONTROL_FLAGS
+
 /*
  * Sysctl CTL_VFS definitions.
  *
