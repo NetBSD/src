@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.64 2000/03/22 17:42:57 thorpej Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.65 2000/03/23 05:16:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -416,6 +416,16 @@ finishdup(p, old, new, retval)
 	*retval = new;
 	FILE_UNUSE(fp, p);
 	return (0);
+}
+
+void
+fdremove(fdp, fd)
+	struct filedesc *fdp;
+	int fd;
+{
+
+	fdp->fd_ofiles[fd] = NULL;
+	fd_unused(fdp, fd);
 }
 
 int
