@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.139 2005/02/02 21:41:55 perry Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.140 2005/02/03 23:13:20 perry Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.139 2005/02/02 21:41:55 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.140 2005/02/03 23:13:20 perry Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -1018,8 +1018,7 @@ in_delayed_cksum(struct mbuf *m)
  */
 
 u_int
-ip_optlen(inp)
-	struct inpcb *inp;
+ip_optlen(struct inpcb *inp)
 {
 	struct mbuf *m = inp->inp_options;
 
@@ -1036,10 +1035,7 @@ ip_optlen(inp)
  * as indicated by a non-zero in_addr at the start of the options.
  */
 static struct mbuf *
-ip_insertoptions(m, opt, phlen)
-	struct mbuf *m;
-	struct mbuf *opt;
-	int *phlen;
+ip_insertoptions(struct mbuf *m, struct mbuf *opt, int *phlen)
 {
 	struct ipoption *p = mtod(opt, struct ipoption *);
 	struct mbuf *n;
@@ -1084,8 +1080,7 @@ ip_insertoptions(m, opt, phlen)
  * omitting those not copied during fragmentation.
  */
 int
-ip_optcopy(ip, jp)
-	struct ip *ip, *jp;
+ip_optcopy(struct ip *ip, struct ip *jp)
 {
 	u_char *cp, *dp;
 	int opt, optlen, cnt;
@@ -1129,11 +1124,8 @@ ip_optcopy(ip, jp)
  * IP socket option processing.
  */
 int
-ip_ctloutput(op, so, level, optname, mp)
-	int op;
-	struct socket *so;
-	int level, optname;
-	struct mbuf **mp;
+ip_ctloutput(int op, struct socket *so, int level, int optname,
+    struct mbuf **mp)
 {
 	struct inpcb *inp = sotoinpcb(so);
 	struct mbuf *m = *mp;
@@ -1382,13 +1374,10 @@ ip_ctloutput(op, so, level, optname, mp)
  */
 int
 #ifdef notyet
-ip_pcbopts(optname, pcbopt, m)
-	int optname;
+ip_pcbopts(int optname, struct mbuf **pcbopt, struct mbuf *m)
 #else
-ip_pcbopts(pcbopt, m)
+ip_pcbopts(struct mbuf **pcbopt, struct mbuf *m)
 #endif
-	struct mbuf **pcbopt;
-	struct mbuf *m;
 {
 	int cnt, optlen;
 	u_char *cp;
@@ -1487,9 +1476,7 @@ bad:
  * following RFC1724 section 3.3, 0.0.0.0/8 is interpreted as interface index.
  */
 static struct ifnet *
-ip_multicast_if(a, ifindexp)
-	struct in_addr *a;
-	int *ifindexp;
+ip_multicast_if(struct in_addr *a, int *ifindexp)
 {
 	int ifindex;
 	struct ifnet *ifp = NULL;
@@ -1522,10 +1509,7 @@ ip_multicast_if(a, ifindexp)
  * Set the IP multicast options in response to user setsockopt().
  */
 int
-ip_setmoptions(optname, imop, m)
-	int optname;
-	struct ip_moptions **imop;
-	struct mbuf *m;
+ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 {
 	int error = 0;
 	u_char loop;
@@ -1767,10 +1751,7 @@ ip_setmoptions(optname, imop, m)
  * Return the IP multicast options in response to user getsockopt().
  */
 int
-ip_getmoptions(optname, imo, mp)
-	int optname;
-	struct ip_moptions *imo;
-	struct mbuf **mp;
+ip_getmoptions(int optname, struct ip_moptions *imo, struct mbuf **mp)
 {
 	u_char *ttl;
 	u_char *loop;
@@ -1818,8 +1799,7 @@ ip_getmoptions(optname, imo, mp)
  * Discard the IP multicast options.
  */
 void
-ip_freemoptions(imo)
-	struct ip_moptions *imo;
+ip_freemoptions(struct ip_moptions *imo)
 {
 	int i;
 
@@ -1837,10 +1817,7 @@ ip_freemoptions(imo)
  * pointer that might NOT be lo0ifp -- easier than replicating that code here.
  */
 static void
-ip_mloopback(ifp, m, dst)
-	struct ifnet *ifp;
-	struct mbuf *m;
-	struct sockaddr_in *dst;
+ip_mloopback(struct ifnet *ifp, struct mbuf *m, struct sockaddr_in *dst)
 {
 	struct ip *ip;
 	struct mbuf *copym;
