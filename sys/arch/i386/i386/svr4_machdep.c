@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.39 1998/09/11 13:22:45 mycroft Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.40 1998/12/13 18:07:27 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -72,6 +72,47 @@
 #include <machine/svr4_machdep.h>
 
 static void svr4_getsiginfo __P((union svr4_siginfo *, int, u_long, caddr_t));
+#ifdef DEBUG_SVR4
+static void svr4_printcontext __P((const char *, struct svr4_ucontext *));
+
+static void
+svr4_printcontext(fun, uc)
+	const char *fun;
+	struct svr4_ucontext *uc;
+{
+	svr4_greg_t *r = uc->uc_mcontext.greg;
+	struct svr4_sigaltstack *s = &uc->uc_stack;
+
+	uprintf("%s at %p\n", fun, uc);
+
+	uprintf("Regs: ");
+	uprintf("GS = 0x%x ", r[SVR4_X86_GS]);
+	uprintf("FS = 0x%x ",  r[SVR4_X86_FS]);
+	uprintf("ES = 0x%x ", r[SVR4_X86_ES]);
+	uprintf("DS = 0x%x ",   r[SVR4_X86_DS]);
+	uprintf("EDI = 0x%x ",  r[SVR4_X86_EDI]);
+	uprintf("ESI = 0x%x ",  r[SVR4_X86_ESI]);
+	uprintf("EBP = 0x%x ",  r[SVR4_X86_EBP]);
+	uprintf("ESP = 0x%x ",  r[SVR4_X86_ESP]);
+	uprintf("EBX = 0x%x ",  r[SVR4_X86_EBX]);
+	uprintf("EDX = 0x%x ",  r[SVR4_X86_EDX]);
+	uprintf("ECX = 0x%x ",  r[SVR4_X86_ECX]);
+	uprintf("EAX = 0x%x ",  r[SVR4_X86_EAX]);
+	uprintf("TRAPNO = 0x%x ",  r[SVR4_X86_TRAPNO]);
+	uprintf("ERR = 0x%x ",  r[SVR4_X86_ERR]);
+	uprintf("EIP = 0x%x ",  r[SVR4_X86_EIP]);
+	uprintf("CS = 0x%x ",  r[SVR4_X86_CS]);
+	uprintf("EFL = 0x%x ",  r[SVR4_X86_EFL]);
+	uprintf("UESP = 0x%x ",  r[SVR4_X86_UESP]);
+	uprintf("SS = 0x%x ",  r[SVR4_X86_SS]);
+	uprintf("\n");
+
+	uprintf("Signal Stack: sp %p, size %d, flags 0x%x\n",
+	    s->ss_sp, s->ss_size, s->ss_flags);
+
+	uprintf("Flags: 0x%lx\n", uc->uc_flags);
+}
+#endif
 
 void
 svr4_setregs(p, epp, stack)
@@ -122,11 +163,11 @@ svr4_getcontext(p, uc, mask)
 	r[SVR4_X86_EDX] = tf->tf_edx;
 	r[SVR4_X86_ECX] = tf->tf_ecx;
 	r[SVR4_X86_EAX] = tf->tf_eax;
-	r[SVR4_X86_TRAPNO] = 0;
-	r[SVR4_X86_ERR] = 0;
+	r[SVR4_X86_TRAPNO] = tf->tf_trapno;
+	r[SVR4_X86_ERR] = tf->tf_err;
 	r[SVR4_X86_EIP] = tf->tf_eip;
 	r[SVR4_X86_CS] = tf->tf_cs;
-	r[SVR4_X86_UESP] = 0;
+	r[SVR4_X86_UESP] = tf->tf_esp;
 	r[SVR4_X86_SS] = tf->tf_ss;
 
 	/* Save signal stack. */
@@ -139,6 +180,10 @@ svr4_getcontext(p, uc, mask)
 	 * Set the flags
 	 */
 	uc->uc_flags = SVR4_UC_CPU|SVR4_UC_SIGMASK|SVR4_UC_STACK;
+#ifdef DEBUG_SVR4
+	svr4_printcontext("getcontext", uc);
+#endif  
+
 }
 
 
@@ -161,6 +206,9 @@ svr4_setcontext(p, uc)
 	svr4_greg_t *r = uc->uc_mcontext.greg;
 	sigset_t mask;
 
+#ifdef DEBUG_SVR4
+	svr4_printcontext("setcontext", uc);
+#endif  
 	/*
 	 * XXX:
 	 * Should we check the value of flags to determine what to restore?
@@ -203,10 +251,12 @@ svr4_setcontext(p, uc)
 		tf->tf_edx = r[SVR4_X86_EDX];
 		tf->tf_ecx = r[SVR4_X86_ECX];
 		tf->tf_eax = r[SVR4_X86_EAX];
+		tf->tf_trapno = r[SVR4_X86_TRAPNO];
+		tf->tf_err = r[SVR4_X86_ERR];
 		tf->tf_eip = r[SVR4_X86_EIP];
 		tf->tf_cs = r[SVR4_X86_CS];
 		tf->tf_ss = r[SVR4_X86_SS];
-		tf->tf_esp = r[SVR4_X86_ESP];
+		tf->tf_esp = r[SVR4_X86_UESP];
 	}
 
 	if (uc->uc_flags & SVR4_UC_STACK) {
