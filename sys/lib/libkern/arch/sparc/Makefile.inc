@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.6 1994/03/22 19:17:22 deraadt Exp $
+#	$Id: Makefile.inc,v 1.7 1994/06/30 06:51:51 deraadt Exp $
 
 SRCS+=  __main.c imax.c imin.c lmax.c lmin.c max.c min.c ulmax.c ulmin.c \
 	bcmp.c bzero.S ffs.S strcat.c strcmp.c strcpy.c strlen.S strncmp.c \
@@ -12,25 +12,25 @@ SRCS+=	_setjmp.S mul.S saveregs.S setjmp.S umul.S
 SRCS+=	rem.S sdiv.S udiv.S urem.S
 CLEANFILES+=rem.S sdiv.S udiv.S urem.S
 
-sdiv.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
+sdiv.S: divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.div')define(OP,\`div')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
-udiv.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
+udiv.S: divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.udiv')define(OP,\`div')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	@chmod 444 ${.TARGET}
 
-rem.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
+rem.S:	divrem.m4
 	echo 'building ${.TARGET} from ${.ALLSRC}'
 	(echo "define(NAME,\`.rem')define(OP,\`rem')define(S,\`true')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
 	chmod 444 ${.TARGET}
 
-urem.S: ${.CURDIR}/../../../lib/libc/arch/sparc/gen/divrem.m4
+urem.S: divrem.m4
 	@echo 'building ${.TARGET} from ${.ALLSRC}'
 	@(echo "define(NAME,\`.urem')define(OP,\`rem')define(S,\`false')"; \
 	 cat ${.ALLSRC}) | m4 > ${.TARGET}
