@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.91 2003/03/06 09:24:41 msaitoh Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.92 2003/03/06 09:32:22 msaitoh Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -1895,14 +1895,26 @@ lib/libz/gzio.c                                 1.15
 
 etc/services					1.63
 
-  Add ms-sql-{s,m} entries.
+	Add ms-sql-{s,m} entries.
 
 usr.bin/tftp/tftp.c				1.16
 
-  Fix sendto return value check (incomplete change in 1.14).
-  Noted by Brian Ginsbach in PR 19842.
+	Fix sendto return value check (incomplete change in 1.14).
+	Noted by Brian Ginsbach in PR 19842.
 
 sys/dev/scsipi/scsiconf.c			1.199 via patch
 
-  Add SDEV_NOLUNS quirk entry for "NEC     ", "CD-ROM DRIVE:502".
-  Fixes kern/18479 .
+	Add SDEV_NOLUNS quirk entry for "NEC     ", "CD-ROM DRIVE:502".
+	Fixes kern/18479 .
+
+sys/netinet6/frag6.c				1.12-1.13
+
+	Properly lock IPv6 reassembly queue.  Correct reassembly queue
+	length monitoring. [itojun, ticket #20]
+
+sys/netinet6/ip6_forward.c			1.22
+
+	do not forward packet back to point-to-point interface, if the packet
+	matches the ipv6 prefix assigned to the p2p interface
+	(= redirect case). this leads to pingpong, chews bandwidth.  bad thing
+	is that bad guy from remote can chew bandwidth. [itojun, ticket #21]
