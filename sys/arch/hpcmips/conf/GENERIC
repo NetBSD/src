@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2004/08/08 08:54:43 mycroft Exp $
+# $NetBSD: GENERIC,v 1.156 2004/08/08 16:38:50 mycroft Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 maxusers	16
 
@@ -40,6 +40,7 @@ options 	KLOADER
 # Standard system options
 options 	DDB			# in-kernel debugger
 #options 	DDB_ONPANIC=0		# don't enter debugger on panic
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB			# remote debugger
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 #options 	DEBUG			# extra kernel debugging support
