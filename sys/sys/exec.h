@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.45 1994/08/15 22:04:47 mycroft Exp $	*/
+/*	$NetBSD: exec.h,v 1.46 1994/09/28 00:41:17 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -65,15 +65,14 @@ struct ps_strings {
 
 /*
  * Below the PS_STRINGS and sigtramp, we may require a gap on the stack
- * (used to copyin/copyout various emulation data structures). The base
- * address of this gap may need alignment, so use this to reference it:
- *	(caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+ * (used to copyin/copyout various emulation data structures).
  */
 #if defined(COMPAT_SUNOS) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
 #define	STACKGAPLEN	400	/* plenty enough for now */
 #else
 #define	STACKGAPLEN	0
 #endif
+#define STACKGAPBASE ((caddr_t)ALIGN((caddr_t)PS_STRINGS - szsigcode - STACKGAPLEN))
 
 /*
  * Arguments to the exec system call.

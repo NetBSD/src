@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.30 1994/06/29 06:30:20 cgd Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.31 1994/09/28 00:41:28 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -235,7 +235,7 @@ sun_mount(p, uap, retval)
 		return (error);
 
 	if (strcmp(fsname, "4.2") == 0) {
-		uap->type = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+		uap->type = STACKGAPBASE;
 		if (error = copyout("ufs", uap->type, sizeof("ufs")))
 			return (error);
 	} else if (strcmp(fsname, "nfs") == 0) {
@@ -250,7 +250,7 @@ sun_mount(p, uap, retval)
 			return (error);
 		bcopy(&sain, &sa, sizeof sa);
 		sa.sa_len = sizeof(sain);
-		uap->data = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+		uap->data = STACKGAPBASE;
 		na.addr = (struct sockaddr *)((int)uap->data + sizeof na);
 		na.addrlen = sizeof(struct sockaddr);
 		na.sotype = SOCK_DGRAM;
@@ -705,7 +705,7 @@ sun_nfssvc(p, uap, retval)
 
 	bzero(&outuap, sizeof outuap);
 	outuap.fd = uap->fd;
-	outuap.mskval = (caddr_t)ALIGN(PS_STRINGS - szsigcode - STACKGAPLEN);
+	outuap.mskval = STACKGAPBASE;
 	outuap.msklen = sizeof sa;
 	outuap.mtchval = outuap.mskval + sizeof sa;
 	outuap.mtchlen = sizeof sa;
