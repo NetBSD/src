@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.31 2004/03/21 13:57:58 pk Exp $ */
+/*	$NetBSD: promlib.c,v 1.32 2004/03/22 12:37:43 pk Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.31 2004/03/21 13:57:58 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.32 2004/03/22 12:37:43 pk Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -1091,6 +1091,43 @@ void prom_getether(node, cp)
 	/* Fall back on the machine's global ethernet address */
 read_idprom:
 	memcpy(cp, idp->id_ether, 6);
+}
+
+/*
+ * The integer property "get-unum" on the root device is the address
+ * of a callable function in the PROM that takes a physical address
+ * (in lo/hipart format) and returns a string identifying the chip
+ * location of the corresponding memory cell.
+ */
+char *
+prom_pa_location(u_int phys_lo, u_int phys_hi)
+{
+static	char *(*unum)(u_int,u_int);
+	char *str, *unk = "<Unknown>";
+
+	switch (prom_version()) {
+	case PROM_OLDMON:
+	case PROM_OBP_V0:
+	case PROM_OPENFIRM:
+	default:
+		return (unk);
+	case PROM_OBP_V2:
+	case PROM_OBP_V3:
+		break;
+	}
+
+	if (unum == 0)
+		unum = (char *(*)(u_int,u_int))
+			prom_getpropint(prom_findroot(), "get-unum", 0);
+
+	if (unum == NULL)
+		return (unk);
+
+	str = unum(phys_lo, phys_hi);
+	if (str == NULL)
+		return (unk);
+
+	return (str);
 }
 
 static void prom_init_oldmon(void);
