@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.5 1998/10/04 00:02:27 fvdl Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.6 2003/07/26 19:59:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -76,9 +76,10 @@
 #define LINUX_SO_SECURITY_AUTHENTICATION	22
 #define LINUX_SO_SECURITY_ENCRYPTION_TRANSPORT	23
 #define LINUX_SO_SECURITY_ENCRYPTION_NETWORK	24
-
 #define LINUX_SO_BINDTODEVICE	25
 #define LINUX_SO_ATTACH_FILTER	26
-#define LINUX_SO_DETACH_FILTER	26
+#define LINUX_SO_DETACH_FILTER	27
+#define LINUX_SO_PEERNAME	28
+#define LINUX_SO_TIMESTAMP	29
 
 #endif /* !_I386_LINUX_SOCKET_H */
