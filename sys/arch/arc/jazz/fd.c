@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.14 2003/04/27 17:05:58 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.15 2003/06/18 08:58:36 drochner Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -85,7 +85,6 @@
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/disk.h>
 #include <sys/buf.h>
 #include <sys/uio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sci.c,v 1.27 2002/01/28 09:57:02 aymeric Exp $ */
+/*	$NetBSD: sci.c,v 1.28 2003/06/18 08:58:36 drochner Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -44,13 +44,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.27 2002/01/28 09:57:02 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.28 2003/06/18 08:58:36 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
-#include <sys/dkstat.h>
 #include <sys/buf.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
