@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.65 2000/01/08 07:35:39 augustss Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.66 2000/01/09 16:01:22 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp 
+ *	NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp 
  */
 
 /*-
@@ -640,6 +640,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_INTEL, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Intel",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_IBM, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -682,6 +689,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_XIRCOM, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Xircom",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_SMC, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -710,6 +724,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    NULL,
 	},
 	{
+	    PCMCIA_VENDOR_COMPAQ, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compaq",
+	    NULL,
+	},
+	{
 	    PCMCIA_VENDOR_LINKSYS, 0,
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
@@ -728,6 +749,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Lucent Technologies",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_COMPAQ2, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "Compaq",
 	    NULL,
 	},
 	{

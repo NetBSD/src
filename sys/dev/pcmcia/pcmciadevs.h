@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.65 2000/01/08 07:35:39 augustss Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.66 2000/01/09 16:01:22 joda Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.64 2000/01/08 07:34:49 augustss Exp 
+ *	NetBSD: pcmciadevs,v 1.65 2000/01/09 16:00:29 joda Exp 
  */
 
 /*-
@@ -50,19 +50,23 @@
 #define	PCMCIA_VENDOR_FUJITSU	0x0004	/* Fujitsu Corporation */
 #define	PCMCIA_VENDOR_SANDISK	0x0045	/* Sandisk Corporation */
 #define	PCMCIA_VENDOR_NEWMEDIA	0x0057	/* New Media Corporation */
+#define	PCMCIA_VENDOR_INTEL	0x0089	/* Intel */
 #define	PCMCIA_VENDOR_IBM	0x00a4	/* IBM Corporation */
 #define	PCMCIA_VENDOR_MOTOROLA	0x0109	/* Motorola Corporation */
 #define	PCMCIA_VENDOR_3COM	0x0101	/* 3Com Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ	0x0102	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_SOCKET	0x0104	/* Socket Communications */
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK Corporation */
+#define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_ADAPTEC	0x012f	/* Adaptec Corporation */
+#define	PCMCIA_VENDOR_COMPAQ	0x0138	/* Compaq */
 #define	PCMCIA_VENDOR_LINKSYS	0x0149	/* Linksys Corporation */
 #define	PCMCIA_VENDOR_SIMPLETECH	0x014d	/* Simple Technology */
 #define	PCMCIA_VENDOR_LUCENT	0x0156	/* Lucent Technologies */
+#define	PCMCIA_VENDOR_COMPAQ2	0x0183	/* Compaq */
 #define	PCMCIA_VENDOR_DAYNA	0x0194	/* Dayna Corporation */
 #define	PCMCIA_VENDOR_WEBGEAR	0x01a6	/* WebGear */
 #define	PCMCIA_VENDOR_BAY	0x01eb	/* Bay Networks */
