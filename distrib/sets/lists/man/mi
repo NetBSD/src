@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.418 2001/11/08 09:14:18 jmc Exp $
+# $NetBSD: mi,v 1.419 2001/11/10 07:58:32 gmcgarry Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -77,6 +77,7 @@
 ./usr/share/man/cat1/colrm.0			man-util-catman
 ./usr/share/man/cat1/column.0			man-util-catman
 ./usr/share/man/cat1/comm.0			man-util-catman
+./usr/share/man/cat1/compile_et.0		man-krb5-catman
 ./usr/share/man/cat1/compress.0			man-util-catman
 ./usr/share/man/cat1/cp.0			man-util-catman
 ./usr/share/man/cat1/cpio.0			man-util-catman
@@ -1643,8 +1644,8 @@
 ./usr/share/man/cat8/wire-test.0		man-netutil-catman
 ./usr/share/man/cat8/wsconscfg.0		man-sysutil-catman
 ./usr/share/man/cat8/wsconsctl.0		man-sysutil-catman
-./usr/share/man/cat8/wsmuxctl.0			man-sysutil-catman
 ./usr/share/man/cat8/wsfontload.0		man-sysutil-catman
+./usr/share/man/cat8/wsmuxctl.0			man-sysutil-catman
 ./usr/share/man/cat8/x68k/MAKEDEV.0		man-sysutil-catman
 ./usr/share/man/cat8/x68k/boot.0		man-sys-catman
 ./usr/share/man/cat8/x68k/loadbsd.0		man-sys-catman
@@ -1715,6 +1716,7 @@
 ./usr/share/man/man1/colrm.1			man-util-man
 ./usr/share/man/man1/column.1			man-util-man
 ./usr/share/man/man1/comm.1			man-util-man
+./usr/share/man/man1/compile_et.1		man-krb5-man
 ./usr/share/man/man1/compress.1			man-util-man
 ./usr/share/man/man1/cp.1			man-util-man
 ./usr/share/man/man1/cpio.1			man-util-man
@@ -3281,8 +3283,8 @@
 ./usr/share/man/man8/wire-test.8		man-netutil-man
 ./usr/share/man/man8/wsconscfg.8		man-sysutil-man
 ./usr/share/man/man8/wsconsctl.8		man-sysutil-man
-./usr/share/man/man8/wsmuxctl.8			man-sysutil-man
 ./usr/share/man/man8/wsfontload.8		man-sysutil-man
+./usr/share/man/man8/wsmuxctl.8			man-sysutil-man
 ./usr/share/man/man8/x68k/MAKEDEV.8		man-sysutil-man
 ./usr/share/man/man8/x68k/boot.8		man-sys-man
 ./usr/share/man/man8/x68k/loadbsd.8		man-sys-man
