@@ -1,4 +1,4 @@
-# $NetBSD: md.mac68k,v 1.34 1999/04/19 21:34:16 kleink Exp $
+# $NetBSD: md.mac68k,v 1.35 1999/12/23 10:23:00 kleink Exp $
 ./usr/include/mac68k
 ./usr/include/mac68k/_G_config.h
 ./usr/include/mac68k/adbsys.h
@@ -24,6 +24,7 @@
 ./usr/include/mac68k/kcore.h
 ./usr/include/mac68k/keyboard.h
 ./usr/include/mac68k/limits.h
+./usr/include/mac68k/math.h
 ./usr/include/mac68k/param.h
 ./usr/include/mac68k/pcb.h
 ./usr/include/mac68k/pio.h
