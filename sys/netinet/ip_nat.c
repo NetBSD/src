@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.56 2004/03/28 09:00:57 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.56.2.1 2004/05/30 11:24:52 tron Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -1130,11 +1130,10 @@ caddr_t data;
 	 */
 	ng.ng_sz = sizeof(nat_save_t);
 	aps = nat->nat_aps;
-	if ((aps != NULL) && (aps->aps_data != 0)) {
-		ng.ng_sz += sizeof(ap_session_t);
-		ng.ng_sz += aps->aps_psiz;
-		if (ng.ng_sz > 4)
-			ng.ng_sz -= 4;	/* XXX - sizeof(ipn_data) */
+	if (aps != NULL) {
+		ng.ng_sz += sizeof(ap_session_t) - 4;
+		if (aps->aps_data != 0)
+			ng.ng_sz += aps->aps_psiz;
 	}
 
 	BCOPYOUT(&ng, data, sizeof(ng));
@@ -1155,22 +1154,27 @@ caddr_t data;
 static int fr_natgetent(data)
 caddr_t data;
 {
+	int error, outsize;
 	ap_session_t *aps;
-	nat_save_t ipn;
+	nat_save_t *ipn, ipns;
 	nat_t *n, *nat;
-	int error;
 
-	error = fr_inobj(data, &ipn, IPFOBJ_NATSAVE);
+	error = fr_inobj(data, &ipns, IPFOBJ_NATSAVE);
 	if (error != 0)
 		return error;
 
-	nat = ipn.ipn_next;
+	KMALLOCS(ipn, nat_save_t *, ipns.ipn_dsize);
+	if (ipn == NULL)
+		return ENOMEM;
+
+	ipn->ipn_dsize = ipns.ipn_dsize;
+	nat = ipns.ipn_next;
 	if (nat == NULL) {
 		nat = nat_instances;
 		if (nat == NULL) {
 			if (nat_instances == NULL)
-				return ENOENT;
-			return 0;
+				error = ENOENT;
+			goto finished;
 		}
 	} else {
 		/*
@@ -1181,43 +1185,31 @@ caddr_t data;
 		for (n = nat_instances; n; n = n->nat_next)
 			if (n == nat)
 				break;
-		if (n == NULL)
-			return ESRCH;
+		if (n == NULL) {
+			error = ESRCH;
+			goto finished;
+		}
 	}
 
 	/*
-	 * Copy out the NAT structure.
+	 * Copy the NAT structure.
 	 */
-	error = copyoutptr((char *)nat,
-			   (char *)data + offsetof(struct nat_save, ipn_nat),
-			   sizeof(struct nat));
-	if (error != 0)
-		return error;
+	bcopy((char *)nat, &ipn->ipn_nat, sizeof(*nat));
 
 	/*
 	 * If we have a pointer to the NAT rule it belongs to, save that too.
 	 */
-	if (nat->nat_ptr != NULL) {
-		error = copyoutptr((char *)nat->nat_ptr,
-				   (char *)data +
-				   offsetof(struct nat_save, ipn_ipnat),
-				   sizeof(struct ipnat));
-		if (error != 0)
-			return error;
-	}
+	if (nat->nat_ptr != NULL)
+		bcopy((char *)nat->nat_ptr, (char *)&ipn->ipn_ipnat,
+		      sizeof(ipn->ipn_ipnat));
 
 	/*
 	 * If we also know the NAT entry has an associated filter rule,
 	 * save that too.
 	 */
-	if (nat->nat_fr != NULL) {
-		error = copyoutptr((char *)nat->nat_fr,
-				   (char *)data +
-				   offsetof(struct nat_save, ipn_rule),
-				   sizeof(struct frentry));
-		if (error != 0)
-			return error;
-	}
+	if (nat->nat_fr != NULL)
+		bcopy((char *)nat->nat_fr, (char *)&ipn->ipn_fr,
+		      sizeof(ipn->ipn_fr));
 
 	/*
 	 * Last but not least, if there is an application proxy session set
@@ -1225,31 +1217,31 @@ caddr_t data;
 	 * private data saved along side it by the proxy.
 	 */
 	aps = nat->nat_aps;
+	outsize = ipn->ipn_dsize - sizeof(*ipn) + 4;
 	if (aps != NULL) {
-		ipn.ipn_dsize = sizeof(*aps);
-		if (aps->aps_data)
-			ipn.ipn_dsize += aps->aps_psiz;
-		error = copyoutptr((char *)&ipn.ipn_dsize,
-				   (char *)data +
-				   offsetof(struct nat_save, ipn_dsize),
-				   sizeof(ipn.ipn_dsize));
-		if (error != 0)
-			return error;
+		char *s;
 
-		error = copyoutptr((char *)aps, (char *)data +
-				   offsetof(struct nat_save, ipn_data),
-				   sizeof(*aps));
-		if (error != 0)
-			return error;
-
-		if (aps->aps_psiz > 0) {
-			error = copyoutptr((char *)aps->aps_data,
-					   (char *)data + sizeof(*aps) +
-					   offsetof(struct nat_save, ipn_data),
-					   aps->aps_psiz);
-			if (error != 0)
-				return error;
+		if (outsize < sizeof(*aps)) {
+			error = ENOBUFS;
+			goto finished;
 		}
+
+		s = ipn->ipn_data;
+		bcopy((char *)aps, s, sizeof(*aps));
+		s += sizeof(*aps);
+		outsize -= sizeof(*aps);
+		if ((aps->aps_data != NULL) && (outsize >= aps->aps_psiz))
+			bcopy(aps->aps_data, s, aps->aps_psiz);
+		else
+			error = ENOBUFS;
+	}
+	if (error == 0) {
+		error = fr_outobjsz(data, ipn, IPFOBJ_NATSAVE, ipns.ipn_dsize);
+	}
+
+finished:
+	if (ipn != NULL) {
+		KFREES(ipn, ipns.ipn_dsize);
 	}
 	return error;
 }
@@ -1279,22 +1271,20 @@ caddr_t data;
 	if (error != 0)
 		return error;
 
+	aps = NULL;
 	nat = NULL;
-	if (ipn.ipn_dsize != 0) {
-		KMALLOCS(ipnn, nat_save_t *, sizeof(ipn) + ipn.ipn_dsize -
-			 sizeof(ipn.ipn_data));
+	if (ipn.ipn_dsize > sizeof(ipn)) {
+		KMALLOCS(ipnn, nat_save_t *, ipn.ipn_dsize);
 		if (ipnn == NULL)
 			return ENOMEM;
 
-		/* XXX should use fr_inobj */
-		error = copyinptr(data, ipnn, sizeof(ipn) + ipn.ipn_dsize -
-				  sizeof(ipn.ipn_data));
+		error = fr_inobjsz(data, ipnn, IPFOBJ_NATSAVE, ipn.ipn_dsize);
 		if (error != 0) {
 			error = EFAULT;
 			goto junkput;
 		}
 	} else
-		ipnn = NULL;
+		ipnn = &ipn;
 
 	KMALLOC(nat, nat_t *);
 	if (nat == NULL) {
@@ -1302,21 +1292,18 @@ caddr_t data;
 		goto junkput;
 	}
 
-	bcopy((char *)&ipn.ipn_nat, (char *)nat, sizeof(*nat));
+	bcopy((char *)&ipnn->ipn_nat, (char *)nat, sizeof(*nat));
 	/*
 	 * Initialize all these so that nat_delete() doesn't cause a crash.
 	 */
-	MUTEX_NUKE(&nat->nat_lock);
-	nat->nat_phnext[0] = NULL;
-	nat->nat_phnext[1] = NULL;
 	fr = nat->nat_fr;
-	nat->nat_fr = NULL;
 	aps = nat->nat_aps;
-	nat->nat_aps = NULL;
 	in = nat->nat_ptr;
-	nat->nat_ptr = NULL;
-	nat->nat_hm = NULL;
-	nat->nat_data = NULL;
+	bzero((char *)nat, offsetof(struct nat, nat_tqe));
+	nat->nat_tqe.tqe_pnext = NULL;
+	nat->nat_tqe.tqe_next = NULL;
+	nat->nat_tqe.tqe_ifq = NULL;
+	nat->nat_tqe.tqe_parent = nat;
 
 	/*
 	 * Restore the rule associated with this nat session
@@ -1328,14 +1315,12 @@ caddr_t data;
 			goto junkput;
 		}
 		nat->nat_ptr = in;
-		bcopy((char *)&ipn.ipn_ipnat, (char *)in, sizeof(*in));
+		bzero((char *)in, offsetof(struct ipnat, in_next6));
+		bcopy((char *)&ipnn->ipn_ipnat, (char *)in, sizeof(*in));
 		in->in_use = 1;
 		in->in_flags |= IPN_DELETE;
-		in->in_next = NULL;
-		in->in_rnext = NULL;
-		in->in_prnext = NULL;
-		in->in_mnext = NULL;
-		in->in_pmnext = NULL;
+
+		ATOMIC_INC(nat_stats.ns_rules);
 
 		nat_resolverule(in);
 	}
@@ -1354,8 +1339,11 @@ caddr_t data;
 		aps->aps_next = ap_sess_list;
 		ap_sess_list = aps;
 		bcopy(ipnn->ipn_data, (char *)aps, sizeof(*aps));
-		if (in)
+		if (in != NULL)
 			aps->aps_apr = in->in_apr;
+		else
+			aps->aps_apr = NULL;
+		aps->aps_nat = nat;
 		if (aps->aps_psiz != 0) {
 			KMALLOCS(aps->aps_data, void *, aps->aps_psiz);
 			if (aps->aps_data == NULL) {
@@ -1375,18 +1363,16 @@ caddr_t data;
 	 * build up a new one.
 	 */
 	if (fr != NULL) {
-		if (nat->nat_flags & SI_NEWFR) {
+		if ((nat->nat_flags & SI_NEWFR) != 0) {
 			KMALLOC(fr, frentry_t *);
 			nat->nat_fr = fr;
 			if (fr == NULL) {
 				error = ENOMEM;
 				goto junkput;
 			}
-			bcopy((char *)&ipn.ipn_fr, (char *)fr, sizeof(*fr));
+			bcopy((char *)&ipnn->ipn_fr, (char *)fr, sizeof(*fr));
 			MUTEX_NUKE(&fr->fr_lock);
 			MUTEX_INIT(&fr->fr_lock, "nat-filter rule lock");
-			ipn.ipn_nat.nat_fr = fr;
-			(void) fr_outobj(&ipn, data, IPFOBJ_NATSAVE);
 		} else {
 			for (n = nat_instances; n; n = n->nat_next)
 				if (n->nat_fr == fr)
@@ -1398,21 +1384,32 @@ caddr_t data;
 		}
 	}
 
-	if (ipnn != NULL) {
-		KFREES(ipnn, sizeof(ipn) + ipn.ipn_dsize);
+	if (ipnn != &ipn) {
+		KFREES(ipnn, ipn.ipn_dsize);
+		ipnn = NULL;
 	}
-	if (nat_insert(nat, 0) == -1) {
-		KFREE(nat);
-		error = ENOMEM;
-		goto junkput;
-	}
-	return 0;
+	if (nat_insert(nat, nat->nat_rev) == 0)
+		return 0;
+
+	error = ENOMEM;
+
 junkput:
-	if (ipnn != NULL) {
-		KFREES(ipnn, sizeof(ipn) + ipn.ipn_dsize);
+	if ((ipnn != NULL) && (ipnn != &ipn)) {
+		KFREES(ipnn, ipn.ipn_dsize);
 	}
-	if (nat != NULL)
-		nat_delete(nat, 0);
+	if (nat != NULL) {
+		if (nat->nat_fr) {
+			MUTEX_DESTROY(&nat->nat_fr->fr_lock);
+			KFREE(nat->nat_fr);
+		}
+		if (aps != NULL) {
+			if (aps->aps_data != NULL) {
+				KFREES(aps->aps_data, aps->aps_psiz);
+			}
+			KFREE(aps);
+		}
+		KFREE(nat);
+	}
 	return error;
 }
 
@@ -1482,15 +1479,15 @@ int logtype;
 	ifq = tqe->tqe_ifq;
 	if (ifq != NULL) {
 		*tqe->tqe_pnext = tqe->tqe_next;
-		if (tqe->tqe_next)
+		if (tqe->tqe_next != NULL)
 			tqe->tqe_next->tqe_pnext = tqe->tqe_pnext;
 		else
 			ifq->ifq_tail = tqe->tqe_pnext;
 		tqe->tqe_ifq = NULL;
-	}
+		if ((ifq->ifq_flags & IFQF_USER) != 0)
+			fr_deletetimeoutqueue(ifq);
 
-	if ((ifq->ifq_flags & IFQF_USER) != 0)
-		fr_deletetimeoutqueue(ifq);
+	}
 
 	nat->nat_ref--;
 	if (nat->nat_ref > 0) {
@@ -2351,6 +2348,7 @@ int	rev;
 
 	MUTEX_INIT(&nat->nat_lock, "nat entry lock");
 
+	nat->nat_rev = rev;
 	nat->nat_ref = 1;
 	nat->nat_bytes[0] = 0;
 	nat->nat_pkts[0] = 0;
@@ -3542,7 +3540,7 @@ u_32_t *passp;
 	nat_t *nat;
 	int rval;
 
-	if (nat_list == NULL || fr_nat_lock != 0)
+	if (nat_stats.ns_rules == 0 || fr_nat_lock != 0)
 		return 0;
 
 	fr = fin->fin_fr;
@@ -3815,7 +3813,7 @@ u_32_t *passp;
 	u_32_t iph;
 	int rval;
 
-	if (nat_list == NULL || fr_nat_lock != 0)
+	if (nat_stats.ns_rules == 0 || fr_nat_lock != 0)
 		return 0;
 
 	tcp = NULL;
