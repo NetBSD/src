@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.80 1994/01/16 03:08:58 cgd Exp $
+ *	$Id: machdep.c,v 1.81 1994/01/20 19:58:52 ws Exp $
  */
 
 #include <stddef.h>
@@ -604,7 +604,7 @@ boot(arghowto)
 		 */
 		if (panicstr == 0)
 			vnode_pager_umount(NULL);
-		sync((struct sigcontext *)0);
+		sync((struct proc *)0,(void *)0,(int *)0);
 		/*
 		 * Unmount filesystems
 		 */
