@@ -1,6 +1,8 @@
+/*	$NetBSD: trpt.c,v 1.4 1997/07/23 06:31:44 mikel Exp $	*/
+
 /*
- * Copyright (c) 1983, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,14 +34,17 @@
  */
 
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1983, 1988 Regents of the University of California.\n\
- All rights reserved.\n";
+static char copyright[] =
+"@(#) Copyright (c) 1983, 1988, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)trpt.c	5.14 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$Id: trpt.c,v 1.3 1994/12/23 16:35:50 cgd Exp $";
+#if 0
+static char sccsid[] = "@(#)trpt.c	8.1 (Berkeley) 6/6/93";
+#else
+static char rcsid[] = "$NetBSD: trpt.c,v 1.4 1997/07/23 06:31:44 mikel Exp $";
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -159,6 +164,11 @@ main(argc, argv)
 			argc--, argv++;
 			++kflag;
 		}
+		/*
+		 * Discard setgid privileges if not the running kernel so that
+		 * bad guys can't print interesting stuff from kernel memory.
+		 */
+		setgid(getgid());
 	}
 	else
 		system = _PATH_UNIX;
