@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.100 2003/08/08 18:54:16 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.101 2003/08/29 01:44:03 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -247,7 +247,6 @@ int	exec_add		__P((struct execsw *, const char *));
 int	exec_remove		__P((const struct execsw *));
 #endif /* LKM */
 
-#ifdef DEBUG
 void	new_vmcmd __P((struct exec_vmcmd_set *,
 		    int (*) __P((struct proc *, struct exec_vmcmd *)),
 		    u_long, u_long, struct vnode *, u_long, u_int, int));
@@ -255,24 +254,6 @@ void	new_vmcmd __P((struct exec_vmcmd_set *,
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,0)
 #define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) \
 	new_vmcmd(evsp,proc,len,addr,vp,offset,prot,flags)
-#else	/* DEBUG */
-#define	NEW_VMCMD(evsp,proc,len,addr,vp,offset,prot) \
-	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,0)
-#define	NEW_VMCMD2(evsp,proc,len,addr,vp,offset,prot,flags) do { \
-	struct exec_vmcmd *vcp; \
-	if ((evsp)->evs_used >= (evsp)->evs_cnt) \
-		vmcmdset_extend(evsp); \
-	vcp = &(evsp)->evs_cmds[(evsp)->evs_used++]; \
-	vcp->ev_proc = (proc); \
-	vcp->ev_len = (len); \
-	vcp->ev_addr = (addr); \
-	if ((vcp->ev_vp = (vp)) != NULLVP) \
-		VREF(vp); \
-	vcp->ev_offset = (offset); \
-	vcp->ev_prot = (prot); \
-	vcp->ev_flags = (flags); \
-} while (/* CONSTCOND */ 0)
-#endif /* DEBUG */
 
 #endif /* _KERNEL */
 
