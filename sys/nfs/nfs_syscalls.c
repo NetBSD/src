@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.41 2000/06/09 00:00:18 fvdl Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.42 2000/08/23 23:17:14 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -936,7 +936,7 @@ nfssvc_iod(p)
 	nfs_numasync++;
 	p->p_holdcnt++;
 	/*
-	 * Just loop around doin our stuff until SIGKILL
+	 * Just loop around doing our stuff until SIGKILL
 	 */
 	for (;;) {
 	    while (((nmp = nfs_iodmount[myiod]) == NULL
