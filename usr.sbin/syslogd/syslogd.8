@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)syslogd.8	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: syslogd.8,v 1.3 1996/01/02 17:41:48 perry Exp $
+.\"	$NetBSD: syslogd.8,v 1.4 1996/02/05 02:30:21 perry Exp $
 .\"
 .Dd June 6, 1993
 .Dt SYSLOGD 8
@@ -56,6 +56,13 @@ the default is
 .It Fl m
 Select the number of minutes between ``mark'' messages;
 the default is 20 minutes.
+.It Fl s
+Select ``secure'' mode, in which syslogd does not open a UDP socket but
+only communicates over a UNIX domain socket.
+This is valuable when the machine on
+which syslogd runs is subject to attack over the network and it is desired
+that the machine be protected from attempts to remotely fill logs
+and similar attacks.
 .It Fl p
 Specify the pathname of an alternate log socket;
 the default is

@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";*/
-static char rcsid[] = "$NetBSD: syslogd.c,v 1.6 1996/01/24 15:49:52 mrg Exp $";
+static char rcsid[] = "$NetBSD: syslogd.c,v 1.7 1996/02/05 02:30:26 perry Exp $";
 #endif /* not lint */
 
 /*
@@ -187,6 +187,7 @@ int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
+int	SecureMode = 0;		/* when true, speak only unix domain socks */
 
 void	cfline __P((char *, struct filed *));
 char   *cvthname __P((struct sockaddr_in *));
@@ -215,7 +216,7 @@ main(argc, argv)
 	FILE *fp;
 	char *p, line[MSG_BSIZE + 1];
 
-	while ((ch = getopt(argc, argv, "df:m:p:")) != EOF)
+	while ((ch = getopt(argc, argv, "dsf:m:p:")) != EOF)
 		switch(ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -228,6 +229,9 @@ main(argc, argv)
 			break;
 		case 'p':		/* path */
 			LogName = optarg;
+			break;
+		case 's':		/* no network mode */
+			SecureMode++;
 			break;
 		case '?':
 		default:
@@ -272,7 +276,12 @@ main(argc, argv)
 		dprintf("cannot create %s (%d)\n", LogName, errno);
 		die(0);
 	}
-	finet = socket(AF_INET, SOCK_DGRAM, 0);
+
+	if (!SecureMode)
+		finet = socket(AF_INET, SOCK_DGRAM, 0);
+	else
+		finet = -1;
+
 	inetm = 0;
 	if (finet >= 0) {
 		struct servent *sp;
@@ -634,9 +643,10 @@ fprintlog(f, flags, msg)
 		    iov[0].iov_base, iov[4].iov_base);
 		if (l > MAXLINE)
 			l = MAXLINE;
-		if (sendto(finet, line, l, 0,
-		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
-		    sizeof(f->f_un.f_forw.f_addr)) != l) {
+		if ((finet >= 0) &&
+		     (sendto(finet, line, l, 0,
+			     (struct sockaddr *)&f->f_un.f_forw.f_addr,
+			     sizeof(f->f_un.f_forw.f_addr)) != l)) {
 			int e = errno;
 			(void)close(f->f_file);
 			f->f_type = F_UNUSED;
