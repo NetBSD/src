@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.10 2003/03/05 23:56:13 fvdl Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11 2003/04/01 15:08:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -143,7 +143,7 @@ cpu_lwp_fork(l1, l2, stack, stacksize, func, arg)
 
 	/* Fix up the TSS. */
 	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + NBPG - 16;
+	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + PAGE_SIZE - 16;
 
 	l2->l_md.md_tss_sel = tss_alloc(pcb);
 
