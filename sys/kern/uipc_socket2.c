@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.30 1999/07/01 08:12:47 itojun Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.31 1999/08/04 21:30:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -676,9 +676,11 @@ sbcompress(sb, m, n)
 			m = m_free(m);
 			continue;
 		}
-		if (n && (n->m_flags & (M_EXT | M_EOR)) == 0 &&
-		    (n->m_data + n->m_len + m->m_len) < &n->m_dat[MLEN] &&
-		    n->m_type == m->m_type) {
+		if (n && (n->m_flags & M_EOR) == 0 && n->m_type == m->m_type &&
+		    (((n->m_flags & M_EXT) == 0 &&
+		      n->m_data + n->m_len + m->m_len < &n->m_dat[MLEN]) ||
+		     ((~n->m_flags & (M_EXT|M_CLUSTER)) == 0 &&
+		      n->m_data + n->m_len + m->m_len < &n->m_ext.ext_buf[MCLBYTES]))) {
 			memcpy(mtod(n, caddr_t) + n->m_len, mtod(m, caddr_t),
 			    (unsigned)m->m_len);
 			n->m_len += m->m_len;
