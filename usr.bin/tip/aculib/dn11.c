@@ -1,4 +1,4 @@
-/*	$NetBSD: dn11.c,v 1.7 2003/08/07 11:16:22 agc Exp $	*/
+/*	$NetBSD: dn11.c,v 1.8 2004/03/11 03:33:19 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: dn11.c,v 1.7 2003/08/07 11:16:22 agc Exp $");
+__RCSID("$NetBSD: dn11.c,v 1.8 2004/03/11 03:33:19 uebayasi Exp $");
 #endif /* not lint */
 
 /*
@@ -57,7 +57,7 @@ dn_dialer(num, acu)
 
 	if (boolean(value(VERBOSE)))
 		printf("\nstarting call...");
-	if ((dn = open(acu, 1)) < 0) {
+	if ((dn = open(acu, O_WRONLY)) < 0) {
 		if (errno == EBUSY)
 			printf("line busy...");
 		else
@@ -86,7 +86,7 @@ dn_dialer(num, acu)
 	/*
 	 * open line - will return on carrier
 	 */
-	if ((FD = open(DV, 2)) < 0) {
+	if ((FD = open(DV, O_RDWR)) < 0) {
 		if (errno == EIO)
 			printf("lost carrier...");
 		else
