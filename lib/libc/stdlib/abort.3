@@ -1,4 +1,4 @@
-.\"	$NetBSD: abort.3,v 1.8 2002/02/07 07:00:27 ross Exp $
+.\"	$NetBSD: abort.3,v 1.9 2002/08/10 16:47:54 yamt Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -60,6 +60,7 @@ is being caught and the signal handler does not return.
 Calling the
 .Fn abort
 function results in temporary files being removed.
+Any open streams are flushed and closed.
 .Sh RETURN VALUES
 The
 .Nm abort
