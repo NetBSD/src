@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5 2002/08/23 12:46:49 scw Exp $	*/
+/*	$NetBSD: cpu.c,v 1.6 2002/08/23 13:43:18 simonb Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -166,7 +166,7 @@ cpuattach(struct device *parent, struct device *self, void *aux)
 	 * enabled by POST code in the bootloader.
 	 */
 
-	printf("Enabling ecc handler\n");
+	printf("Enabling ecc handler at irq %d\n", eccirq);
 	intr_ecc_tb = 0;
 	intr_ecc_iv = processor_freq; /* Set interval */
 	intr_ecc_cnt = 0;
