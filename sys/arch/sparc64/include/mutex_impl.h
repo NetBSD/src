@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex_impl.h,v 1.1.2.2 2002/03/19 05:17:35 thorpej Exp $	*/
+/*	$NetBSD: mutex_impl.h,v 1.1.2.3 2002/03/20 02:34:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -62,11 +62,11 @@ struct mutex {
 			short mtx_oldspl;			/* 2-3 */
 			char mtx_rsvd[2];			/* 4-5 */
 			__cpu_simple_lock_t mtx_lock;		/* 6 */
-			char mtx_dummy;				/* 7 */
+			unsigned char mtx_dummy;		/* 7 */
 #else
 			char mtx_rsvd[2];			/* 0-1 */
 			__cpu_simple_lock_t mtx_lock;		/* 2 */
-			char mtx_dummy;				/* 3 */
+			unsigned char mtx_dummy;		/* 3 */
 			short mtx_minspl;			/* 4-5 */
 			short mtx_oldspl;			/* 6-7 */
 #endif
