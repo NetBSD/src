@@ -1,4 +1,4 @@
-#	$NetBSD: SPOT,v 1.5 1996/05/05 06:16:08 briggs Exp $
+#	$NetBSD: SPOT,v 1.6 1996/05/06 03:33:09 briggs Exp $
 #
 # SPOT
 
@@ -63,10 +63,11 @@ options		MACHINE_NONCONTIG
 config		netbsd	swap generic
 options		GENERIC
 
+grf0		at obio?	# Graphics devices might be internal or NuBUS
+
 nubus0		at mainbus?
 
 ae*	at nubus?
-grf0	at nubus?
 grf*	at nubus?
 
 #ncrscsi0	at mainbus?		# SCSI NCR 5380
