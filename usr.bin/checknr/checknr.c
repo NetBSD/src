@@ -1,4 +1,4 @@
-/*	$NetBSD: checknr.c,v 1.5 1997/10/18 12:38:13 lukem Exp $	*/
+/*	$NetBSD: checknr.c,v 1.6 1998/11/06 22:57:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-__RCSID("$NetBSD: checknr.c,v 1.5 1997/10/18 12:38:13 lukem Exp $");
+__RCSID("$NetBSD: checknr.c,v 1.6 1998/11/06 22:57:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -296,12 +296,12 @@ process(f)
 			 * find and isolate the macro/command name.
 			 */
 			strncpy(mac, line+1, 4);
-			if (isspace(mac[0])) {
+			if (isspace((unsigned char)mac[0])) {
 				pe(lineno);
 				printf("Empty command\n");
-			} else if (isspace(mac[1])) {
+			} else if (isspace((unsigned char)mac[1])) {
 				mac[1] = 0;
-			} else if (isspace(mac[2])) {
+			} else if (isspace((unsigned char)mac[2])) {
 				mac[2] = 0;
 			} else if (mac[0] != '\\' || mac[1] != '\"') {
 				pe(lineno);
@@ -330,12 +330,12 @@ process(f)
 			if (line[i]=='\\' && (i==0 || line[i-1]!='\\')) {
 				if (!sflag && line[++i]=='s') {
 					pl = line[++i];
-					if (isdigit(pl)) {
+					if (isdigit((unsigned char)pl)) {
 						n = pl - '0';
 						pl = ' ';
 					} else
 						n = 0;
-					while (isdigit(line[++i]))
+					while (isdigit((unsigned char)line[++i]))
 						n = 10 * n + line[i] - '0';
 					i--;
 					if (n == 0) {
@@ -536,7 +536,7 @@ addcmd(line)
 
 	/* grab the macro being defined */
 	mac = line+4;
-	while (isspace(*mac))
+	while (isspace((unsigned char)*mac))
 		mac++;
 	if (*mac == 0) {
 		pe(lineno);
@@ -544,7 +544,7 @@ addcmd(line)
 		return;
 	}
 	mac[2] = 0;
-	if (isspace(mac[1]) || mac[1] == '\\')
+	if (isspace((unsigned char)mac[1]) || mac[1] == '\\')
 		mac[1] = 0;
 	if (ncmds >= MAXCMDS) {
 		printf("Only %d known commands allowed\n", MAXCMDS);
