@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.155 2000/09/26 11:51:14 ad Exp $
+#	$NetBSD: INSTALL,v 1.156 2000/09/27 20:41:35 fvdl Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -521,38 +521,43 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # USB Controller and Devices
 
 # PCI USB controllers
-#uhci*	at pci?				# Universal Host Controller (Intel)
-#ohci*	at pci?				# Open Host Controller
+uhci*	at pci?				# Universal Host Controller (Intel)
+ohci*	at pci?				# Open Host Controller
 
 # USB bus support
-#usb*	at uhci?
-#usb*	at ohci?
+usb*	at uhci?
+usb*	at ohci?
 
 # USB Hubs
-#uhub*	at usb?
-#uhub*	at uhub? port ? configuration ? interface ?
+uhub*	at usb?
+uhub*	at uhub? port ? configuration ? interface ?
 
 # USB Mice
 #ums*	at uhub? port ? configuration ? interface ?
 #wsmouse*	at ums?
 
 # USB Keyboards
-#ukbd*	at uhub? port ? configuration ? interface ?
-#wskbd*	at ukbd? console ?
+ukbd*	at uhub? port ? configuration ? interface ?
+wskbd*	at ukbd? console ?
 
 # USB Generic HID devices
-#uhid*	at uhub? port ? configuration ? interface ?
+uhid*	at uhub? port ? configuration ? interface ?
 
 # USB Printer
 #ulpt*	at uhub? port ? configuration ? interface ?
 
 # USB Mass Storage
-#umass*	at uhub? port ? configuration ? interface ?
-#atapibus* at umass? channel ?
-#scsibus* at umass? channel ?
+umass*	at uhub? port ? configuration ? interface ?
+atapibus* at umass? channel ?
+scsibus* at umass? channel ?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
+
+# USB Ethernet adapters
+aue* 	at uhub? port ?		# ADMtek AN986 Pegasus based adapters
+cue* 	at uhub? port ?		# CATC USB-EL1201A based adapters
+kue* 	at uhub? port ?		# Kawasaki LSI KL5KUSB101B based adapters
 
 # Audio Devices
 
