@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.8 2001/12/29 14:06:19 augustss Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.9 2002/02/07 13:02:26 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -176,6 +176,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	  PQUIRK_NOMODESENSE,
 	  UMATCH_VENDOR_PRODUCT_REV,
 	  NULL, umass_fixup_yedata
+	},
+
+	{ { USB_VENDOR_ONSPEC, USB_PRODUCT_ONSPEC_MD2 },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  0,
+	  PQUIRK_NOMODESENSE,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
 	},
 
 	/* InSystem Design ATA over USB devices */
