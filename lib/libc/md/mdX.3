@@ -1,4 +1,4 @@
-.\"	$NetBSD: mdX.3,v 1.4 1999/08/17 03:36:35 enami Exp $
+.\"	$NetBSD: mdX.3,v 1.5 2001/09/16 02:24:56 wiz Exp $
 .\"
 .\" ----------------------------------------------------------------------------
 .\" "THE BEER-WARE LICENSE" (Revision 42):
@@ -43,7 +43,7 @@ message digest
 The MDX functions calculate a 128-bit cryptographic checksum (digest)
 for any number of input bytes.  A cryptographic checksum is a one-way
 hash-function, that is, you cannot find (except by exhaustive search)
-the input corresponding to a particular output.  This net result is 
+the input corresponding to a particular output.  This net result is
 a ``fingerprint'' of the input-data, which doesn't disclose the actual
 input.
 .Pp
@@ -73,7 +73,7 @@ which converts the return value to a 33-character
 string which represents the 128 bits in hexadecimal.
 .Pp
 .Fn MDXFile
-calculates the digest of a file, and uses 
+calculates the digest of a file, and uses
 .Fn MDXEnd
 to return the result.
 If the file cannot be opened, a null pointer is returned.
@@ -87,7 +87,7 @@ When using
 .Fn MDXFile ,
 or
 .Fn MDXData ,
-the 
+the
 .Ar buf
 argument can be a null pointer, in which case the returned string
 is allocated with
@@ -95,7 +95,7 @@ is allocated with
 and subsequently must be explicitly deallocated using
 .Xr free 3
 after use.
-If the 
+If the
 .Ar buf
 argument is non-null it must point to at least 33 characters of buffer space.
 .Sh SEE ALSO
@@ -118,10 +118,13 @@ argument is non-null it must point to at least 33 characters of buffer space.
 .%O RFC 1321
 .Re
 .Rs
-.%A RSA Laboratories 
+.%A RSA Laboratories
 .%T Frequently Asked Questions About today's Cryptography
 .Re
-.Sh AUTHOR
+.Sh HISTORY
+These functions appeared in
+.Nx 1.3 .
+.Sh AUTHORS
 The original MDX routines were developed by
 .Tn RSA
 Data Security, Inc., and published in the above references.
@@ -129,11 +132,7 @@ This code is derived directly from these implementations by Poul-Henning Kamp
 .Aq Li phk@login.dkuug.dk
 .Pp
 Phk ristede runen.
-.Sh HISTORY
-These functions appeared in
-.Nx 1.3 .
 .Sh BUGS
 No method is known to exist which finds two files having the same hash value,
 nor to find a file with a specific hash value.
 There is on the other hand no guarantee that such a method doesn't exist.
-.Sh COPYRIGHT
