@@ -1,4 +1,4 @@
-.\"	$NetBSD: esp.4,v 1.5 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: esp.4,v 1.6 2000/03/20 05:31:21 mycroft Exp $
 .\"
 .\" Copyright (c) 1997 Eric S. Hvozda <hvozda@netcom.com>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: esp.4,v 1.5 1999/03/16 01:19:15 garbled Exp $
+.\"	$NetBSD: esp.4,v 1.6 2000/03/20 05:31:21 mycroft Exp $
 .\"
 .Dd June 18, 1998
 .Dt ESP 4
@@ -39,6 +39,8 @@
 .Sh SYNOPSIS
 .Ss ISA bus
 .Cd "esp0 at isa? port 0x230 irq ?"
+.Ss PCMCIA
+.Cd "esp* at pcmcia? function ?"
 .Ss mac68k
 .Cd "esp0 at obio?"
 .Cd "esp1 at obio?"
@@ -66,7 +68,7 @@ driver provides support for the
 .Tn NCR
 53C94 and 53C96;
 .Tn Emulex
-ESP100, ESP100A, ESP200, ESP406; and
+ESP100, ESP100A, ESP200 and ESP406; and
 .Tn Qlogic
 FAS216 and FAS408
 .Tn SCSI
