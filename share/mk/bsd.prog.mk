@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.149 2002/02/02 16:49:52 veego Exp $
+#	$NetBSD: bsd.prog.mk,v 1.150 2002/02/02 16:54:26 veego Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -74,7 +74,7 @@ LIBSSL?=	${DESTDIR}/usr/lib/libssl.a
 LIBSL?=		${DESTDIR}/usr/lib/libsl.a
 LIBTERMCAP?=	${DESTDIR}/usr/lib/libtermcap.a
 LIBTELNET?=	${DESTDIR}/usr/lib/libtelnet.a
-LIBUSBHIB?=	${DESTDIR}/usr/lib/libusbhid.a
+LIBUSBHID?=	${DESTDIR}/usr/lib/libusbhid.a
 LIBUTIL?=	${DESTDIR}/usr/lib/libutil.a
 LIBWRAP?=	${DESTDIR}/usr/lib/libwrap.a
 LIBY?=		${DESTDIR}/usr/lib/liby.a
