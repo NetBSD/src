@@ -1,11 +1,11 @@
-/*	$NetBSD: ehci.c,v 1.54.2.6 2004/06/24 08:31:58 tron Exp $	*/
+/*	$NetBSD: ehci.c,v 1.54.2.7 2004/06/24 08:35:29 tron Exp $	*/
 
 /*
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net).
+ * by Lennart Augustsson (lennart@augustsson.net) and by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,7 +65,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.6 2004/06/24 08:31:58 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.54.2.7 2004/06/24 08:35:29 tron Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
