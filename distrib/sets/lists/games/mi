@@ -9,7 +9,6 @@
 ./usr/games/caesar
 ./usr/games/canfield
 ./usr/games/cfscores
-./usr/games/chess
 ./usr/games/countmail
 ./usr/games/cribbage
 ./usr/games/dm
@@ -28,7 +27,6 @@
 ./usr/games/hide/boggle
 ./usr/games/hide/canfield
 ./usr/games/hide/cfscores
-./usr/games/hide/chess
 ./usr/games/hide/cribbage
 ./usr/games/hide/fish
 ./usr/games/hide/gomoku
@@ -116,7 +114,6 @@
 ./usr/share/games/fortune/startrek.dat
 ./usr/share/games/fortune/zippy
 ./usr/share/games/fortune/zippy.dat
-./usr/share/games/gnuchess.book
 ./usr/share/games/larn/larn.help
 ./usr/share/games/larn/larnmaze
 ./usr/share/games/larn/larnopts
@@ -165,7 +162,6 @@
 ./usr/share/man/cat6/boggle.0
 ./usr/share/man/cat6/caesar.0
 ./usr/share/man/cat6/canfield.0
-./usr/share/man/cat6/chess.0
 ./usr/share/man/cat6/countmail.0
 ./usr/share/man/cat6/cribbage.0
 ./usr/share/man/cat6/factor.0
@@ -210,7 +206,6 @@
 ./usr/share/man/man6/boggle.6
 ./usr/share/man/man6/caesar.6
 ./usr/share/man/man6/canfield.6
-./usr/share/man/man6/chess.6
 ./usr/share/man/man6/countmail.6
 ./usr/share/man/man6/cribbage.6
 ./usr/share/man/man6/factor.6
