@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.49 2001/10/24 16:05:06 atatat Exp $	*/
+/*	$NetBSD: route.c,v 1.50 2001/10/24 18:40:16 atatat Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.49 2001/10/24 16:05:06 atatat Exp $");
+__RCSID("$NetBSD: route.c,v 1.50 2001/10/24 18:40:16 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ int	pid, rtm_addrs;
 int	s;
 int	forcehost, forcenet, doflush, nflag, af, qflag, tflag;
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
-int	locking, lockrest, debugonly;
+int	locking, lockrest, debugonly, shortoutput, rv;
 struct	rt_metrics rt_metrics;
 u_int32_t  rtm_inits;
 short ns_nullh[] = {0,0,0};
@@ -142,7 +142,7 @@ usage(cp)
 	if (cp)
 		warnx("botched keyword: %s", cp);
 	(void) fprintf(stderr,
-	    "Usage: %s [ -fnqv ] cmd [[ -<qualifers> ] args ]\n",
+	    "Usage: %s [ -fnqvs ] cmd [[ -<qualifers> ] args ]\n",
 	    getprogname());
 	exit(1);
 	/* NOTREACHED */
@@ -162,7 +162,7 @@ main(argc, argv)
 	if (argc < 2)
 		usage(NULL);
 
-	while ((ch = getopt(argc, argv, "fnqvdt")) != -1)
+	while ((ch = getopt(argc, argv, "fnqvdts")) != -1)
 		switch(ch) {
 		case 'f':
 			doflush = 1;
@@ -181,6 +181,9 @@ main(argc, argv)
 			break;
 		case 'd':
 			debugonly = 1;
+			break;
+		case 's':
+			shortoutput = 1;
 			break;
 		case '?':
 		default:
@@ -255,7 +258,7 @@ flushroutes(argc, argv)
 	struct rt_msghdr *rtm;
 
 	af = 0;
-	shutdown(s, 0); /* Don't want to read back our messages */
+	shutdown(s, SHUT_RD); /* Don't want to read back our messages */
 	if (argc > 1) {
 		argv++;
 		if (argc == 2 && **argv == '-')
@@ -804,7 +807,7 @@ newroute(argc, argv)
 	cmd = argv[0];
 	af = 0;
 	if (*cmd != 'g')
-		shutdown(s, 0); /* Don't want to read back our messages */
+		shutdown(s, SHUT_RD); /* Don't want to read back our messages */
 	while (--argc > 0) {
 		if (**(++argv)== '-') {
 			switch (key = keyword(1 + *argv)) {
@@ -1011,7 +1014,7 @@ newroute(argc, argv)
 			break;
 	}
 	if (*cmd == 'g')
-		exit(0);
+		exit(rv);
 	oerrno = errno;
 	if (!qflag) {
 		(void) printf("%s %s %s", cmd, ishost? "host" : "net", dest);
@@ -1484,7 +1487,7 @@ rtmsg(cmd, flags)
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
 	    l = ROUNDUP(u.sa.sa_len); memmove(cp, &(u), l); cp += l;\
-	    if (verbose) sodump(&(u),"u");\
+	    if (verbose && ! shortoutput) sodump(&(u),"u");\
 	}
 
 	errno = 0;
@@ -1524,7 +1527,7 @@ rtmsg(cmd, flags)
 	NEXTADDR(RTA_IFP, so_ifp);
 	NEXTADDR(RTA_IFA, so_ifa);
 	rtm.rtm_msglen = l = cp - (char *)&m_rtmsg;
-	if (verbose)
+	if (verbose && ! shortoutput)
 		print_rtmsg(&rtm, l);
 	if (debugonly)
 		return (0);
@@ -1696,8 +1699,9 @@ print_getmsg(rtm, msglen)
 	char *cp;
 	int i;
 
-	(void) printf("   route to: %s\n",
-	    routename((struct sockaddr *) &so_dst, NULL, RTF_HOST));
+	if (! shortoutput)
+		(void) printf("   route to: %s\n",
+		    routename((struct sockaddr *) &so_dst, NULL, RTF_HOST));
 	if (rtm->rtm_version != RTM_VERSION) {
 		warnx("routing message version %d not understood",
 		    rtm->rtm_version);
@@ -1739,10 +1743,10 @@ print_getmsg(rtm, msglen)
 			}
 	if (dst && mask)
 		mask->sa_family = dst->sa_family;	/* XXX */
-	if (dst)
+	if (dst && ! shortoutput)
 		(void)printf("destination: %s\n",
 		    routename(dst, mask, RTF_HOST));
-	if (mask) {
+	if (mask && ! shortoutput) {
 		int savenflag = nflag;
 
 		nflag = 1;
@@ -1750,37 +1754,68 @@ print_getmsg(rtm, msglen)
 		    routename(mask, NULL, RTF_HOST));
 		nflag = savenflag;
 	}
-	if (gate && rtm->rtm_flags & RTF_GATEWAY)
+	if (gate && rtm->rtm_flags & RTF_GATEWAY && ! shortoutput)
 		(void)printf("    gateway: %s\n",
 		    routename(gate, NULL, RTF_HOST));
-	if (ifa)
+	if (ifa && ! shortoutput)
 		(void)printf(" local addr: %s\n",
 		    routename(ifa, NULL, RTF_HOST));
-	if (ifp)
+	if (ifp && ! shortoutput)
 		(void)printf("  interface: %.*s\n",
 		    ifp->sdl_nlen, ifp->sdl_data);
-	(void)printf("      flags: ");
-	bprintf(stdout, rtm->rtm_flags, routeflags);
+	if (! shortoutput) {
+		(void)printf("      flags: ");
+		bprintf(stdout, rtm->rtm_flags, routeflags);
+	}
 
 #define lock(f)	((rtm->rtm_rmx.rmx_locks & __CONCAT(RTV_,f)) ? 'L' : ' ')
 #define msec(u)	(((u) + 500) / 1000)		/* usec to msec */
 
-	(void) printf("\n%s\n", "\
+	if (! shortoutput) {
+		(void) printf("\n%s\n", "\
  recvpipe  sendpipe  ssthresh  rtt,msec    rttvar  hopcount      mtu     expire");
-	printf("%8ld%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
-	printf("%8ld%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
-	printf("%8ld%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
-	printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
-	printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
-	printf("%8ld%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
-	printf("%8ld%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
-	if (rtm->rtm_rmx.rmx_expire)
-		rtm->rtm_rmx.rmx_expire -= time(0);
-	printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+		printf("%8ld%c ", rtm->rtm_rmx.rmx_recvpipe, lock(RPIPE));
+		printf("%8ld%c ", rtm->rtm_rmx.rmx_sendpipe, lock(SPIPE));
+		printf("%8ld%c ", rtm->rtm_rmx.rmx_ssthresh, lock(SSTHRESH));
+		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rtt), lock(RTT));
+		printf("%8ld%c ", msec(rtm->rtm_rmx.rmx_rttvar), lock(RTTVAR));
+		printf("%8ld%c ", rtm->rtm_rmx.rmx_hopcount, lock(HOPCOUNT));
+		printf("%8ld%c ", rtm->rtm_rmx.rmx_mtu, lock(MTU));
+		if (rtm->rtm_rmx.rmx_expire)
+			rtm->rtm_rmx.rmx_expire -= time(0);
+		printf("%8ld%c\n", rtm->rtm_rmx.rmx_expire, lock(EXPIRE));
+	}
 #undef lock
 #undef msec
 #define	RTA_IGN	(RTA_DST|RTA_GATEWAY|RTA_NETMASK|RTA_IFP|RTA_IFA|RTA_BRD)
-	if (verbose)
+
+	if ((rtm->rtm_addrs & RTF_GATEWAY) == 0)
+		rv = 1;
+	else {
+		char *cp, *name;
+		int addrs, i;
+		struct sockaddr *sa;
+
+		cp = (char *)(rtm + 1);
+		addrs = rtm->rtm_addrs;
+
+		for (i = 1; i; i <<= 1) {
+			sa = (struct sockaddr *)cp;
+			if (i == RTF_GATEWAY) {
+				name = routename(sa, NULL, RTF_HOST);
+				if (name[0] == '\0')
+					rv = 1;
+				else if (shortoutput)
+					printf("%s\n", name);
+			}
+			if (i & addrs)
+				ADVANCE(cp, sa);
+		}
+	}
+
+	if (shortoutput)
+		return;
+	else if (verbose)
 		pmsg_common(rtm);
 	else if (rtm->rtm_addrs &~ RTA_IGN) {
 		(void) printf("sockaddrs: ");

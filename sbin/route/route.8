@@ -1,4 +1,4 @@
-.\"	$NetBSD: route.8,v 1.25 2001/10/18 13:42:32 christos Exp $
+.\"	$NetBSD: route.8,v 1.26 2001/10/24 18:40:16 atatat Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,7 +41,7 @@
 .Nd manually manipulate the routing tables
 .Sh SYNOPSIS
 .Nm
-.Op Fl fnqv
+.Op Fl fnqsv
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -91,7 +91,12 @@ names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
 to forgo this, especially when attempting to repair networking operations).
 .It Fl q
-Suppress all output.
+Suppress all output from commands that manipulate the routing table.
+.It Fl s
+(short) Suppresses all output from a
+.Cm get
+command except for the actual gateway that will be used.
+How the gateway is printed depends on the type of route being looked up.
 .It Fl v
 (verbose) Print additional details.
 .El
@@ -363,6 +368,14 @@ The attempted operation is privileged.
 Only root may modify the routing tables.
 These privileges are enforced by the kernel.
 .El
+.Pp
+.Sh EXIT STATUS
+The
+.Nm
+utility exits 0 on success, and >0 if an error occurs.  This includes
+the use of the
+.Cm get
+command to look up a route that is incomplete.
 .Sh SEE ALSO
 .Xr netintro 4 ,
 .Xr sysctl 8 ,
