@@ -1,4 +1,4 @@
-/*	$NetBSD: vfscanf.c,v 1.13 1995/02/25 07:02:16 cgd Exp $	*/
+/*	$NetBSD: vfscanf.c,v 1.14 1995/03/22 00:57:02 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)vfscanf.c	8.1 (Berkeley) 6/4/93";
 #endif
-static char rcsid[] = "$NetBSD: vfscanf.c,v 1.13 1995/02/25 07:02:16 cgd Exp $";
+static char rcsid[] = "$NetBSD: vfscanf.c,v 1.14 1995/03/22 00:57:02 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdio.h>
@@ -172,7 +172,12 @@ literal:
 			flags |= SHORT;
 			goto again;
 		case 'l':
-			flags |= LONG;
+			if (*fmt == 'l') {
+				fmt++;
+				flags |= QUAD;
+			} else {
+				flags |= LONG;
+			}
 			goto again;
 		case 'q':
 			flags |= QUAD;
