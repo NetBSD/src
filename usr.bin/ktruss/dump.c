@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.5 1999/07/29 01:53:26 enami Exp $	*/
+/*	$NetBSD: dump.c,v 1.6 1999/08/06 00:11:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.5 1999/07/29 01:53:26 enami Exp $");
+__RCSID("$NetBSD: dump.c,v 1.6 1999/08/06 00:11:03 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -443,7 +443,7 @@ ktrsysret(ktr, buff, buffsz, lenp)
 	int buffsz, *lenp;
 	char *buff;
 {
-	register int ret = ktr->ktr_retval;
+	register register_t ret = ktr->ktr_retval;
 	register int error = ktr->ktr_error;
 
 	while (*lenp < 50)
@@ -457,7 +457,7 @@ ktrsysret(ktr, buff, buffsz, lenp)
 		if (error < MAXERRNOS && error >= -2)
 			sprintf(buff + strlen(buff), " %s",errnos[error].name);
 	} else
-		sprintf(buff + *lenp, " = %d", ret);
+		sprintf(buff + *lenp, " = %ld", (long)ret);
 	strcat(buff + *lenp, "\n");
 	*lenp = 0;
 	fputs(buff, stdout);
