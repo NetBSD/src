@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.45 1996/09/07 12:41:33 mycroft Exp $	*/
+/*	$NetBSD: proc.h,v 1.46 1996/10/02 18:05:09 ws Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -179,7 +179,7 @@ struct	proc {
 
 	u_char	p_priority;	/* Process priority. */
 	u_char	p_usrpri;	/* User-priority based on p_cpu and p_nice. */
-	char	p_nice;		/* Process "nice" value. */
+	u_char	p_nice;		/* Process "nice" value. */
 	char	p_comm[MAXCOMLEN+1];
 
 	struct 	pgrp *p_pgrp;	/* Pointer to process group. */

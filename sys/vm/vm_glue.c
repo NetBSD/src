@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_glue.c,v 1.56 1996/05/29 21:20:11 pk Exp $	*/
+/*	$NetBSD: vm_glue.c,v 1.57 1996/10/02 18:05:10 ws Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -379,7 +379,8 @@ loop:
 	ppri = INT_MIN;
 	for (p = allproc.lh_first; p != 0; p = p->p_list.le_next) {
 		if (p->p_stat == SRUN && (p->p_flag & P_INMEM) == 0) {
-			pri = p->p_swtime + p->p_slptime - p->p_nice * 8;
+			pri = p->p_swtime + p->p_slptime
+			    - (p->p_nice - NZERO) * 8;
 			if (pri > ppri) {
 				pp = p;
 				ppri = pri;

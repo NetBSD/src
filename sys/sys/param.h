@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 1996/05/25 22:07:35 jtc Exp $	*/
+/*	$NetBSD: param.h,v 1.25 1996/10/02 18:05:07 ws Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,7 +111,7 @@
 #define	PRIMASK	0x0ff
 #define	PCATCH	0x100		/* OR'd with pri for tsleep to check signals */
 
-#define	NZERO	0		/* default "nice" */
+#define	NZERO	20		/* default "nice" */
 
 #define	NBPW	sizeof(int)	/* number of bytes per word (integer) */
 
