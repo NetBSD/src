@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.1 2001/06/13 15:23:22 soda Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.2 2002/12/09 13:36:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -48,6 +48,8 @@
 #include <arc/jazz/pica.h>
 #include <arc/jazz/rd94.h>
 #include <arc/jazz/jazziovar.h>
+#include <arc/dev/mcclockvar.h>
+#include <arc/jazz/mcclock_jazziovar.h>
 #include <arc/pci/necpbvar.h>
 
 #include "tga.h"
@@ -84,6 +86,43 @@ char *c_nec_pci_mainbusdevs[] = {
 	NULL,
 };
 
+/*      
+ * chipset-dependent mcclock routines.
+ */
+
+u_int	mc_nec_pci_read __P((struct mcclock_softc *, u_int));
+void	mc_nec_pci_write __P((struct mcclock_softc *, u_int, u_int));
+        
+struct mcclock_jazzio_config mcclock_nec_pci_conf = {
+	0x80004000, 2,
+	{ mc_nec_pci_read, mc_nec_pci_write }
+};      
+ 
+u_int
+mc_nec_pci_read(sc, reg)
+	struct mcclock_softc *sc;
+	u_int reg;
+{
+	int i, as;
+
+	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
+	i = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 0);
+	return (i);
+}
+
+void
+mc_nec_pci_write(sc, reg, datum)
+	struct mcclock_softc *sc;
+	u_int reg, datum;
+{
+	int as;
+
+	as = bus_space_read_1(sc->sc_iot, sc->sc_ioh, 1) & 0x80;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 1, as | reg);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0, datum);
+}
+
 /*
  * chipset-dependent jazzio bus configuration
  */
@@ -101,6 +140,7 @@ void
 jazzio_nec_pci_set_iointr_mask(mask)
 	int mask;
 {
+
 	/* XXX: I don't know why, but firmware does. */
 	if (in32(RD94_V_LOCAL_IO_BASE + 0x560) != 0)
 		out16(RD94_SYS_LB_IE2, mask);
@@ -114,6 +154,7 @@ jazzio_nec_pci_set_iointr_mask(mask)
 void
 c_nec_pci_init()
 {
+
 	/*
 	 * Initialize I/O address offset
 	 */
@@ -173,6 +214,9 @@ c_nec_pci_init()
 	 */
 	c_nec_jazz_init();
 
+	/* chipset-dependent mcclock configuration */
+	mcclock_jazzio_conf = &mcclock_nec_pci_conf;
+
 	/* chipset-dependent jazzio bus configuration */
 	jazzio_conf = &jazzio_nec_pci_conf;
 }
@@ -183,6 +227,7 @@ c_nec_pci_init()
 void
 c_nec_pci_cons_init()
 {
+
 	if (!com_console) {
 		if (strcmp(arc_displayc_id, "10110004") == 0) {
 			/* NEC RISCstation 2200 PCI TGA [NEC-RA94] */
