@@ -1,4 +1,4 @@
-/*      $NetBSD: lemacvar.h,v 1.2 1997/10/15 05:55:55 explorer Exp $ */
+/*      $NetBSD: lemacvar.h,v 1.3 1998/05/14 18:24:00 matt Exp $ */
 
 /*
  * Copyright (c) 1997 Matt Thomas <matt@3am-software.com>
@@ -73,6 +73,9 @@ typedef struct {
 	unsigned cntr_txd_intrs;	/* total # of tranmit error intrs */
 	unsigned cntr_rxd_intrs;	/* total # of receive error intrs */
     } sc_cntrs;
+    /*
+     * We rely on sc_enaddr being aligned on (at least) a 16 bit boundary
+     */
     unsigned char sc_enaddr[6];		/* current Ethernet address */
     char sc_prodname[LEMAC_EEP_PRDNMSZ+1]; /* product name DE20x-xx */
     u_int8_t sc_eeprom[LEMAC_EEP_SIZE];	/* local copy eeprom */
@@ -124,6 +127,7 @@ typedef struct {
 	(((u_int16_t *)a1)[0] == ((u_int16_t *)a2)[0] \
 	 && ((u_int16_t *)a1)[1] == ((u_int16_t *)a2)[1] \
 	 && ((u_int16_t *)a1)[2] == ((u_int16_t *)a2)[2])
+
 #define	LEMAC_ADDRBRDCST(a1) \
 	(((u_int16_t *)a1)[0] == 0xFFFFU \
 	 && ((u_int16_t *)a1)[1] == 0xFFFFU \

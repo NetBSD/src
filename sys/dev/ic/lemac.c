@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.7 1998/03/30 10:35:03 hannken Exp $ */
+/* $NetBSD: lemac.c,v 1.8 1998/05/14 18:24:00 matt Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -290,7 +290,7 @@ lemac_input(
 #if NBPFILTER > 0
 	    && (sc->sc_if.if_flags & IFF_PROMISC) == 0
 #endif
-	    && !LEMAC_ADDREQUAL(eh.ether_dhost, LLADDR(sc->sc_if.if_sadl)))
+	    && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr))
 	return;
 
     MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -327,7 +327,7 @@ lemac_input(
      * drop it!
      */
     if ((eh.ether_dhost[0] & 1) == 0
-	   && !LEMAC_ADDREQUAL(eh.ether_dhost, LLADDR(sc->sc_if.if_sadl))) {
+	   && !LEMAC_ADDREQUAL(eh.ether_dhost, sc->sc_enaddr)) {
 	m_freem(m);
 	return;
     }
@@ -600,12 +600,12 @@ lemac_init(
     if (sc->sc_if.if_flags & IFF_UP) {
 	int saved_cs = LEMAC_INB(sc, LEMAC_REG_CS);
 	LEMAC_OUTB(sc, LEMAC_REG_CS, saved_cs | (LEMAC_CS_TXD | LEMAC_CS_RXD));
-	LEMAC_OUTB(sc, LEMAC_REG_PA0, LLADDR(sc->sc_if.if_sadl)[0]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA1, LLADDR(sc->sc_if.if_sadl)[1]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA2, LLADDR(sc->sc_if.if_sadl)[2]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA3, LLADDR(sc->sc_if.if_sadl)[3]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA4, LLADDR(sc->sc_if.if_sadl)[4]);
-	LEMAC_OUTB(sc, LEMAC_REG_PA5, LLADDR(sc->sc_if.if_sadl)[5]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA0, sc->sc_enaddr[0]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA1, sc->sc_enaddr[1]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA2, sc->sc_enaddr[2]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA3, sc->sc_enaddr[3]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA4, sc->sc_enaddr[4]);
+	LEMAC_OUTB(sc, LEMAC_REG_PA5, sc->sc_enaddr[5]);
 
 	LEMAC_OUTB(sc, LEMAC_REG_IC, LEMAC_INB(sc, LEMAC_REG_IC) | LEMAC_IC_IE);
 
@@ -791,10 +791,10 @@ lemac_ifioctl(
 		case AF_NS: {
 		    struct ns_addr *ina = &(IA_SNS(ifa)->sns_addr);
 		    if (ns_nullhost(*ina)) {
-			ina->x_host = *(union ns_host *)LLADDR(ifp->if_sadl);
+			ina->x_host = *(union ns_host *)sc->sc_enaddr;
 		    } else {
-			bcopy((caddr_t)ina->x_host.c_host,
-			      LLADDR(ifp->if_sadl), ifp->if_addrlen);
+			bcopy((caddr_t)ina->x_host.c_host, sc->sc_enaddr,
+			      ifp->if_addrlen);
 		    }
 		    break;
 		}
