@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.16 2000/02/25 00:42:47 mycroft Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.17 2000/03/11 08:53:33 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -207,13 +207,13 @@ static char z50_keytrans[] = {
 /* Sharp Tripad PV6000 */
 static char tripad_keytrans[] = {
 /*00*/  42,  15,  41,  16,   1,   2, 104, 221,	/* lsh tab ` q esc 1 WIN - */
-/*08*/  58,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
+/*08*/  29,  44,  45,  30,  31,  17,  18,   3,	/* ctrl z x a s w e 2 */
 /*10*/  56,  57,  46,  47,  32,  33,  19,   4,	/* lalt sp c v d f r 3 */
 /*18*/  48,  49,  34,  35,  20,  21,   5,   6,	/* b n g h t y 4 5 */
 /*20*/  50,  51,  36,  37,  22,  23,   7,   8,	/* m , j k u i 6 7 */
-/*28*/ 105,  29,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
-/*30*/  26,  27, 102,  52,  53,  39,  12,  13,	/* [ ] dar , / ; \- = */
-/*38*/  54, 103, 100, 102,  39,  28,  43,  14,	/* rsh - - uar - ; ent \ del */
+/*28*/ 105,  58,  38,  24,  25,   9,  10,  11,	/* Fn caps l o p 8 9 0 */
+/*30*/  26,  27,  75,  52,  53,  39,  12,  13,	/* [ ] la , / ; \- = */
+/*38*/  54,  77,  72,  80,  39,  28,  43,  14,  /* rsh ra ua da ; ent \ del */
 /*40*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
 /*48*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
 /*50*/ IGN, IGN, IGN, IGN, IGN, IGN, IGN, IGN,	/* - - - - - - - - */
@@ -353,7 +353,7 @@ vrkiu_initkeymap(void)
 		{ &platid_mask_MACH_IBM_WORKPAD_Z50,
 		  z50_keytrans, KB_US },
 		{ &platid_mask_MACH_SHARP_TRIPAD,
-		  tripad_keytrans, KB_JP },
+		  tripad_keytrans, KB_US },
 		{ &platid_mask_MACH_NEC_MCCS,
 		  mccs_keytrans, KB_JP },
 		{ &platid_mask_MACH_FUJITSU_INTERTOP,
