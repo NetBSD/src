@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.26 2000/11/09 00:02:54 eeh Exp $	*/
+/*	$NetBSD: zs.c,v 1.27 2000/11/10 11:57:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -377,7 +377,6 @@ zs_attach(zsc, zsd, pri)
 				struct	zs_chanstate *zst_cs;
 			} *zst = (struct zstty_softc *)child;
 			struct tty *tp;
-			int maj;
 
 			kma.kmta_tp = tp = zst->zst_tty;
 			kma.kmta_dev = tp->t_dev;

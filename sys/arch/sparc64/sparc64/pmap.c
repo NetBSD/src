@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2000/11/02 00:24:05 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2000/11/10 11:57:53 mrg Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -1471,7 +1471,6 @@ pmap_growkernel(maxkvaddr)
         vaddr_t maxkvaddr; 
 {
 	int s;
-	int64_t data;
 	paddr_t pg;
 	struct pmap *pm = pmap_kernel();
 	
