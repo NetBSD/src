@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.68 2000/10/07 20:14:12 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.69 2000/10/07 21:11:28 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -511,6 +511,8 @@ bin/sh/Makefile					1.50
 
 sys/arch/amiga/conf/GENERIC			patch
 sys/arch/arm32/conf/GENERIC			patch
+sys/arch/arm32/conf/RISCPC			patch
+sys/arch/arm32/conf/VOYAGER			patch
 sys/arch/atari/conf/GENERIC			patch
 sys/arch/bebox/conf/GENERIC			patch
 sys/arch/hp300/conf/GENERIC			patch
@@ -890,6 +892,7 @@ sys/arch/macppc/pci/pciide_machdep.c		patch
   Include pciidereg.h so that this file compiles again.
 
 sys/arch/sparc/stand/Makefile.booters		patch
+sys/arch/sparc/stand/Makefile.buildboot		patch
 distrib/sets/lists/base/md.sparc		patch
 
   Move the sparc boot loader close to the 4M limit, so that we
