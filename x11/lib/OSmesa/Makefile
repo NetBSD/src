@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2004/05/13 22:32:47 he Exp $
+#	$NetBSD: Makefile,v 1.13 2004/08/04 08:37:04 lukem Exp $
 
 NOLINT=		1	# XTODO: 3dnow.ln barfs on src/math/m_vertices.h
 
@@ -99,8 +99,7 @@ CLEANFILES+=	matypes.h
 DPSRCS+=	matypes.h
 
 
-LDADD+=		-lGL
-DPADD+=		${LIBGL}
+LIBDPLIBS=	GL ../GL
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
