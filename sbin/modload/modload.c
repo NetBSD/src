@@ -1,4 +1,4 @@
-/*	$NetBSD: modload.c,v 1.22.2.1 1999/04/23 21:31:15 perry Exp $	*/
+/*	$NetBSD: modload.c,v 1.22.2.2 1999/04/30 19:02:44 perry Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modload.c,v 1.22.2.1 1999/04/23 21:31:15 perry Exp $");
+__RCSID("$NetBSD: modload.c,v 1.22.2.2 1999/04/30 19:02:44 perry Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,7 +87,7 @@ int	verify_entry __P((char *, char *));
 
 int debug = 0;
 int verbose = 0;
-int symtab = 1;
+int symtab = 0;
 
 int
 linkcmd(kernel, entry, outfile, address, object)
@@ -233,7 +233,7 @@ main(argc, argv)
 			out = optarg;
 			break;	/* output file */
 		case 's':
-			symtab = 0;
+			symtab = 1;
 			break;
 		case '?':
 			usage();
