@@ -1,4 +1,4 @@
-/* $NetBSD: osf1.h,v 1.3 1999/04/26 03:07:40 cgd Exp $ */
+/* $NetBSD: osf1.h,v 1.4 1999/04/26 03:29:05 cgd Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -63,6 +63,7 @@ typedef u_int32_t	osf1_uint_t;
 typedef u_int64_t	osf1_sigset_t;
 typedef u_int64_t	osf1_size_t;
 typedef u_int64_t	osf1_fsid_t;
+typedef u_int64_t	osf1_rlim_t;
 typedef void		*osf1_data_ptr;	/* XXX hard to fix size */
 typedef void		*osf1_fcn_ptr;	/* XXX hard to fix size, bogus */
 
@@ -316,6 +317,25 @@ struct osf1_statfs {
 #define OSF1_RB_UNIPROC		0x0080
 #define OSF1_RB_PARAM		0x0100
 #define OSF1_RB_DUMP		0x0200
+
+
+/* resource.h */
+
+#define OSF1_RLIMIT_CPU		0
+#define OSF1_RLIMIT_FSIZE	1
+#define OSF1_RLIMIT_DATA	2
+#define OSF1_RLIMIT_STACK	3
+#define OSF1_RLIMIT_CORE	4
+#define OSF1_RLIMIT_RSS		5
+#define OSF1_RLIMIT_NOFILE	6
+#define OSF1_RLIMIT_AS		7
+
+#define OSF1_RLIM_INFINITY	0x7fffffffffffffffL 
+
+struct osf1_rlimit {
+	rlim_t	rlim_cur;
+	rlim_t	rlim_max;
+};
 
 
 /* signal.h */
