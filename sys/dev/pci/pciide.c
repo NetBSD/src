@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.59 2000/05/27 17:18:41 scw Exp $	*/
+/*	$NetBSD: pciide.c,v 1.60 2000/06/04 22:22:12 gmcgarry Exp $	*/
 
 
 /*
@@ -416,7 +416,7 @@ int	pciide_chansetup __P((struct pciide_softc *, int, pcireg_t));
 void	pciide_mapchan __P((struct pci_attach_args *,
 	    struct pciide_channel *, pcireg_t, bus_size_t *, bus_size_t *,
 	    int (*pci_intr) __P((void *))));
-int	pciiide_chan_candisable __P((struct pciide_channel *));
+int	pciide_chan_candisable __P((struct pciide_channel *));
 void	pciide_map_compat_intr __P(( struct pci_attach_args *,
 	    struct pciide_channel *, int, int));
 int	pciide_print __P((void *, const char *pnp));
@@ -1029,7 +1029,7 @@ pciide_mapchan(pa, cp, interface, cmdsizep, ctlsizep, pci_intr)
  * if channel can be disabled, 0 if not
  */
 int
-pciiide_chan_candisable(cp)
+pciide_chan_candisable(cp)
 	struct pciide_channel *cp;
 {
 	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
@@ -1316,7 +1316,7 @@ piix_chip_map(sc, pa)
 		pciide_mapchan(pa, cp, 0, &cmdsize, &ctlsize, pciide_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
-		if (pciiide_chan_candisable(cp)) {
+		if (pciide_chan_candisable(cp)) {
 			idetim = PIIX_IDETIM_CLEAR(idetim, PIIX_IDETIM_IDE,
 			    channel);
 			pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
@@ -1697,7 +1697,7 @@ amd756_chip_map(sc, pa)
 		pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
 
-		if (pciiide_chan_candisable(cp))
+		if (pciide_chan_candisable(cp))
 			chanenable &= ~AMD756_CHAN_EN(channel);
 		pciide_map_compat_intr(pa, cp, channel, interface);
 		if (cp->hw_ok == 0)
@@ -1843,7 +1843,7 @@ apollo_chip_map(sc, pa)
 		    pciide_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
-		if (pciiide_chan_candisable(cp)) {
+		if (pciide_chan_candisable(cp)) {
 			ideconf &= ~APO_IDECONF_EN(channel);
 			pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF,
 			    ideconf);
@@ -1990,7 +1990,7 @@ cmd_channel_map(pa, sc, channel)
 	if (cp->hw_ok == 0)
 		return;
 	if (channel == 1) {
-		if (pciiide_chan_candisable(cp)) {
+		if (pciide_chan_candisable(cp)) {
 			ctrl &= ~CMD_CTRL_2PORT;
 			pciide_pci_write(pa->pa_pc, pa->pa_tag,
 			    CMD_CTRL, ctrl);
@@ -2249,7 +2249,7 @@ cy693_chip_map(sc, pa)
 	cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
 	cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
 	wdcattach(&cp->wdc_channel);
-	if (pciiide_chan_candisable(cp)) {
+	if (pciide_chan_candisable(cp)) {
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    PCI_COMMAND_STATUS_REG, 0);
 	}
@@ -2367,7 +2367,7 @@ sis_chip_map(sc, pa)
 		    pciide_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
-		if (pciiide_chan_candisable(cp)) {
+		if (pciide_chan_candisable(cp)) {
 			if (channel == 0)
 				sis_ctr0 &= ~SIS_CTRL0_CHAN0_EN;
 			else
@@ -2511,7 +2511,7 @@ acer_chip_map(sc, pa)
 		    acer_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
-		if (pciiide_chan_candisable(cp)) {
+		if (pciide_chan_candisable(cp)) {
 			cr &= ~(PCIIDE_CHAN_EN(channel) << PCI_INTERFACE_SHIFT);
 			pci_conf_write(sc->sc_pc, sc->sc_tag,
 			    PCI_CLASS_REG, cr);
@@ -2739,7 +2739,7 @@ pdc202xx_chip_map(sc, pa)
 		    pdc202xx_pci_intr);
 		if (cp->hw_ok == 0)
 			continue;
-		if (pciiide_chan_candisable(cp))
+		if (pciide_chan_candisable(cp))
 			st &= ~(PDC_IS_262(sc) ?
 			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 		pciide_map_compat_intr(pa, cp, channel, interface);
