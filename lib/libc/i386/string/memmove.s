@@ -32,12 +32,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: memmove.s,v 1.9 1993/08/26 02:13:53 mycroft Exp $
+ *	$Id: memmove.s,v 1.10 1993/09/19 19:16:28 brezak Exp $
  */
 
 #if defined(LIBC_RCS) && !defined(lint)
 	.text
-	.asciz "$Id: memmove.s,v 1.9 1993/08/26 02:13:53 mycroft Exp $"
+	.asciz "$Id: memmove.s,v 1.10 1993/09/19 19:16:28 brezak Exp $"
 #endif /* LIBC_RCS and not lint */
 
 #include "DEFS.h"
@@ -86,4 +86,5 @@ TWOENTRY(memmove,memcpy)
 	popl	%eax
 	popl	%edi
 	popl	%esi
+	cld
 	ret
