@@ -1,4 +1,4 @@
-/*	$NetBSD: alloc.c,v 1.15 2000/03/30 12:19:47 augustss Exp $	*/
+/*	$NetBSD: alloc.c,v 1.16 2003/02/01 14:57:02 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.
@@ -114,8 +114,7 @@ struct fl {
 
 #ifdef HEAP_VARIABLE
 static char *top, *heapstart, *heaplimit;
-void setheap(start, limit)
-void *start, *limit;
+void setheap(void *start, void *limit)
 {
     heapstart = top = start;
     heaplimit = limit;
@@ -131,8 +130,7 @@ static char *top = (char*)HEAP_START;
 #endif /* HEAP_VARIABLE */
 
 void *
-alloc(size)
-	unsigned size;
+alloc(u_int size)
 {
 	struct fl **f = &freelist, **bestf = NULL;
 #ifndef ALLOC_FIRST_FIT
@@ -209,9 +207,7 @@ found:
 }
 
 void
-free(ptr, size)
-	void *ptr;
-	unsigned size; /* only for consistence check */
+free(void *ptr, u_int size)
 {
 	struct fl *f =
 	    (struct fl *)((char*)ptr - ALIGN(sizeof(unsigned)));
