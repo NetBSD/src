@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.11 2000/01/07 03:40:56 oster Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.12 2000/01/09 01:29:28 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -51,6 +51,7 @@
 #include "rf_decluster.h"
 #include "rf_driver.h"
 #include "rf_shutdown.h"
+#include "rf_kintf.h"
 
 #define RF_COPYBACK_DATA   0
 #define RF_COPYBACK_PARITY 1
@@ -59,10 +60,10 @@ int     rf_copyback_in_progress;
 
 static int rf_CopybackReadDoneProc(RF_CopybackDesc_t * desc, int status);
 static int rf_CopybackWriteDoneProc(RF_CopybackDesc_t * desc, int status);
-static void 
-rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
-    RF_RaidAddr_t addr, RF_RowCol_t testRow, RF_RowCol_t testCol,
-    RF_SectorNum_t testOffs);
+static void rf_CopybackOne(RF_CopybackDesc_t * desc, int typ,
+			   RF_RaidAddr_t addr, RF_RowCol_t testRow, 
+			   RF_RowCol_t testCol,
+			   RF_SectorNum_t testOffs);
 static void rf_CopybackComplete(RF_CopybackDesc_t * desc, int status);
 
 int 
@@ -79,11 +80,6 @@ rf_ConfigureCopyback(listp)
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-
-/* XXX these should be in a .h file somewhere */
-int raidlookup __P((char *, struct proc *, struct vnode **));
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
 
 /* do a complete copyback */
 void 

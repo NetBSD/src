@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.23 2000/01/09 00:00:18 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.24 2000/01/09 01:29:28 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -115,6 +115,7 @@
 #include "rf_options.h"
 #include "rf_shutdown.h"
 #include "rf_cpuutil.h"
+#include "rf_kintf.h"
 
 #include <sys/buf.h>
 
@@ -138,12 +139,6 @@ static void clean_rad(RF_RaidAccessDesc_t *);
 static void rf_ShutdownRDFreeList(void *);
 static int rf_ConfigureRDFreeList(RF_ShutdownList_t **);
 void rf_UnconfigureVnodes( RF_Raid_t * );
-
-/* XXX move these to their own .h file! */
-int raidwrite_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidread_component_label(dev_t, struct vnode *, RF_ComponentLabel_t *);
-int raidmarkclean(dev_t dev, struct vnode *b_vp,int);
-void rf_update_component_labels( RF_Raid_t *);
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
