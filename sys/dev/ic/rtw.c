@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.4 2004/12/13 00:48:02 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.5 2004/12/19 08:19:25 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.4 2004/12/13 00:48:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.5 2004/12/19 08:19:25 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -100,6 +100,8 @@ int rtw_debug = 2;
 } while (0)
 
 int rtw_dwelltime = 1000;	/* milliseconds */
+
+static void rtw_start(struct ifnet *);
 
 static int rtw_sysctl_verify_rfio(SYSCTLFN_PROTO);
 static int rtw_sysctl_verify_rfio_delay(SYSCTLFN_PROTO);
@@ -1084,6 +1086,8 @@ rtw_rxbufs_release(bus_dma_tag_t dmat, struct rtw_rxctl *desc)
 
 	for (i = 0; i < RTW_NRXDESC; i++) {
 		srx = &desc[i];
+		bus_dmamap_sync(dmat, srx->srx_dmamap, 0,
+		    srx->srx_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(dmat, srx->srx_dmamap);
 		m_freem(srx->srx_mbuf);
 		srx->srx_mbuf = NULL;
@@ -1352,8 +1356,120 @@ next:
 }
 
 static void
+rtw_txbuf_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
+    struct rtw_txctl *stx)
+{
+	struct mbuf *m;
+	struct ieee80211_node *ni;
+	bus_dmamap_t dmamap;
+
+	dmamap = stx->stx_dmamap;
+	m = stx->stx_mbuf;
+	ni = stx->stx_ni;
+	stx->stx_dmamap = NULL;
+	stx->stx_mbuf = NULL;
+	stx->stx_ni = NULL;
+
+	bus_dmamap_sync(dmat, dmamap, 0, dmamap->dm_mapsize,
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(dmat, dmamap);
+	m_freem(m);
+	ieee80211_release_node(ic, ni);
+}
+
+static void
+rtw_txbufs_release(bus_dma_tag_t dmat, struct ieee80211com *ic,
+    struct rtw_txctl_blk *stc)
+{
+	struct rtw_txctl *stx;
+
+	while ((stx = SIMPLEQ_FIRST(&stc->stc_dirtyq)) != NULL) {
+		rtw_txbuf_release(dmat, ic, stx);
+		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
+		SIMPLEQ_INSERT_HEAD(&stc->stc_dirtyq, stx, stx_q);
+	}
+}
+
+static __inline void
+rtw_collect_txpkt(struct rtw_softc *sc, struct rtw_txdesc_blk *htc,
+    struct rtw_txctl *stx, int ndesc)
+{
+	int data_retry, rts_retry;
+	struct rtw_txdesc *htx0, *htxn;
+	const char *condstring;
+
+	rtw_txbuf_release(sc->sc_dmat, &sc->sc_ic, stx);
+
+	htc->htc_nfree += ndesc;
+
+	htx0 = &htc->htc_desc[stx->stx_first];
+	htxn = &htc->htc_desc[stx->stx_last];
+
+	rts_retry = MASK_AND_RSHIFT(le32toh(htx0->htx_stat),
+	    RTW_TXSTAT_RTSRETRY_MASK);
+	data_retry = MASK_AND_RSHIFT(le32toh(htx0->htx_stat),
+	    RTW_TXSTAT_DRC_MASK);
+
+	sc->sc_if.if_collisions += rts_retry + data_retry;
+
+	if ((htx0->htx_stat & htole32(RTW_TXSTAT_TOK)) != 0)
+		condstring = "ok";
+	else {
+		sc->sc_if.if_oerrors++;
+		condstring = "error";
+	}
+
+	DPRINTF2(sc, ("%s: stx %p txdesc[%d, %d] %s tries rts %u data %u\n",
+	    sc->sc_dev.dv_xname, stx, stx->stx_first, stx->stx_last,
+	    condstring, rts_retry, data_retry));
+}
+
+/* Collect transmitted packets. */
+static __inline void
+rtw_collect_txring(struct rtw_softc *sc, struct rtw_txctl_blk *stc,
+    struct rtw_txdesc_blk *htc)
+{
+	int ndesc;
+	struct rtw_txctl *stx;
+
+	while ((stx = SIMPLEQ_FIRST(&stc->stc_dirtyq)) != NULL) {
+		ndesc = 1 + stx->stx_last - stx->stx_first;
+		if (stx->stx_last < stx->stx_first)
+			ndesc += htc->htc_ndesc;
+
+		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap, htc,
+		    stx->stx_first, ndesc,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		if ((htc->htc_desc[stx->stx_first].htx_stat &
+		    htole32(RTW_TXSTAT_OWN)) != 0) 
+			break;
+
+		rtw_collect_txpkt(sc, htc, stx, ndesc);
+		SIMPLEQ_REMOVE_HEAD(&stc->stc_dirtyq, stx_q);
+		SIMPLEQ_INSERT_HEAD(&stc->stc_freeq, stx, stx_q);
+		sc->sc_if.if_flags &= ~IFF_OACTIVE;
+	}
+	if (stx == NULL)
+		stc->stc_tx_timer = 0;
+}
+
+static void
 rtw_intr_tx(struct rtw_softc *sc, u_int16_t isr)
 {
+	int pri;
+	struct rtw_txctl_blk	*stc;
+	struct rtw_txdesc_blk	*htc;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		stc = &sc->sc_txctl_blk[pri];
+		htc = &sc->sc_txdesc_blk[pri];
+
+		rtw_collect_txring(sc, stc, htc);
+
+		rtw_start(&sc->sc_if);
+	}
+
 	/* TBD */
 	return;
 }
@@ -1406,11 +1522,16 @@ rtw_swring_setup(struct rtw_softc *sc)
 static void
 rtw_kick(struct rtw_softc *sc)
 {
+	int pri;
 	struct rtw_regs *regs = &sc->sc_regs;
+
 	rtw_io_enable(regs, RTW_CR_RE | RTW_CR_TE, 0);
 	RTW_WRITE16(regs, RTW_IMR, 0);
 	rtw_rxbufs_release(sc->sc_dmat, &sc->sc_rxctl[0]);
-	/* TBD free tx bufs */
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
+		    &sc->sc_txctl_blk[pri]);
+	}
 	rtw_swring_setup(sc);
 	rtw_hwring_setup(sc);
 	RTW_WRITE16(regs, RTW_IMR, sc->sc_inten);
@@ -1546,7 +1667,7 @@ rtw_intr(void *arg)
 static void
 rtw_stop(struct ifnet *ifp, int disable)
 {
-	int s;
+	int pri, s;
 	struct rtw_softc *sc = (struct rtw_softc *)ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct rtw_regs *regs = &sc->sc_regs;
@@ -1574,7 +1695,10 @@ rtw_stop(struct ifnet *ifp, int disable)
 		rtw_io_enable(&sc->sc_regs, RTW_CR_RE|RTW_CR_TE, 0);
 	}
 
-	/* TBD Release transmit buffers. */
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		rtw_txbufs_release(sc->sc_dmat, &sc->sc_ic,
+		    &sc->sc_txctl_blk[pri]);
+	}
 
 	if (disable) {
 		rtw_disable(sc);
@@ -2089,32 +2213,52 @@ rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * at the driver's selection of transmit control block for the packet.
  */
 static __inline int
-rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp, struct mbuf **mp,
+rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp,
+    struct rtw_txdesc_blk **htcp, struct mbuf **mp,
     struct ieee80211_node **nip)
 {
+	struct rtw_txctl_blk *stc;
+	struct rtw_txdesc_blk *htc;
 	struct mbuf *m0;
 	struct rtw_softc *sc;
 	struct ieee80211com *ic;
 
 	sc = (struct rtw_softc *)ifp->if_softc;
-	ic = &sc->sc_ic;
 
+	DPRINTF2(sc, ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
 	*mp = NULL;
+
+	stc = &sc->sc_txctl_blk[RTW_TXPRIMD];
+	htc = &sc->sc_txdesc_blk[RTW_TXPRIMD];
+
+	if (SIMPLEQ_EMPTY(&stc->stc_freeq) || htc->htc_nfree == 0) {
+		DPRINTF2(sc, ("%s: out of descriptors\n", __func__));
+		ifp->if_flags |= IFF_OACTIVE;
+		return 0;
+	}
+
+	ic = &sc->sc_ic;
 
 	if (!IF_IS_EMPTY(&ic->ic_mgtq)) {
 		IF_DEQUEUE(&ic->ic_mgtq, m0);
 		*nip = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 		m0->m_pkthdr.rcvif = NULL;
-	} else if (ic->ic_state != IEEE80211_S_RUN)
+		DPRINTF2(sc, ("%s: dequeue mgt frame\n", __func__));
+	} else if (ic->ic_state != IEEE80211_S_RUN) {
+		DPRINTF2(sc, ("%s: not running\n", __func__));
 		return 0;
-	else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
+	} else if (!IF_IS_EMPTY(&ic->ic_pwrsaveq)) {
 		IF_DEQUEUE(&ic->ic_pwrsaveq, m0);
 		*nip = (struct ieee80211_node *)m0->m_pkthdr.rcvif;
 		m0->m_pkthdr.rcvif = NULL;
+		DPRINTF2(sc, ("%s: dequeue pwrsave frame\n", __func__));
 	} else {
 		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
+		if (m0 == NULL) {
+			DPRINTF2(sc, ("%s: no frame\n", __func__));
 			return 0;
+		}
+		DPRINTF2(sc, ("%s: dequeue data frame\n", __func__));
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		ifp->if_opackets++;
 #if NBPFILTER > 0
@@ -2122,49 +2266,265 @@ rtw_dequeue(struct ifnet *ifp, struct rtw_txctl_blk **stcp, struct mbuf **mp,
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 		if ((m0 = ieee80211_encap(ifp, m0, nip)) == NULL) {
+			DPRINTF2(sc, ("%s: encap error\n", __func__));
 			ifp->if_oerrors++;
 			return -1;
 		}
 	}
-	*stcp = &sc->sc_txctl_blk[RTW_TXPRIMD];
+	DPRINTF2(sc, ("%s: leave\n", __func__));
+	*stcp = stc;
+	*htcp = htc;
 	*mp = m0;
 	return 0;
+}
+
+/* TBD factor with atw_start */
+static struct mbuf *
+rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
+    u_int ndescfree, short *ifflagsp, const char *dvname)
+{
+	int first, rc;
+	struct mbuf *m, *m0;
+
+	m0 = chain;
+
+	/*
+	 * Load the DMA map.  Copy and try (once) again if the packet
+	 * didn't fit in the alloted number of segments.
+	 */
+	for (first = 1;
+	     ((rc = bus_dmamap_load_mbuf(dmat, dmam, m0,
+			  BUS_DMA_WRITE|BUS_DMA_NOWAIT)) != 0 ||
+	      dmam->dm_nsegs > ndescfree) && first;
+	     first = 0) {
+		if (rc == 0)
+			bus_dmamap_unload(dmat, dmam);
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+			printf("%s: unable to allocate Tx mbuf\n",
+			    dvname);
+			break;
+		}
+		if (m0->m_pkthdr.len > MHLEN) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				printf("%s: cannot allocate Tx cluster\n",
+				    dvname);
+				m_freem(m);
+				break;
+			}
+		}
+		m_copydata(m0, 0, m0->m_pkthdr.len, mtod(m, caddr_t));
+		m->m_pkthdr.len = m->m_len = m0->m_pkthdr.len;
+		m_freem(m0);
+		m0 = m;
+		m = NULL;
+	}
+	if (rc != 0) {
+		printf("%s: cannot load Tx buffer, rc = %d\n", dvname, rc);
+		m_freem(m0);
+		return NULL;
+	} else if (dmam->dm_nsegs > ndescfree) {
+		*ifflagsp |= IFF_OACTIVE;
+		bus_dmamap_unload(dmat, dmam);
+		m_freem(m0);
+		return NULL;
+	}
+	return m0;
 }
 
 static void
 rtw_start(struct ifnet *ifp)
 {
-	struct mbuf *m0;
-	struct rtw_softc *sc;
-	struct rtw_txctl_blk *stc;
-	struct ieee80211_node *ni;
+	int desc, i, lastdesc, npkt, rate;
+	uint32_t proto_txctl0, txctl0, txctl1;
+	bus_dmamap_t		dmamap;
+	struct ieee80211com	*ic;
+	struct ieee80211_duration *d0;
+	struct ieee80211_frame	*wh;
+	struct ieee80211_node	*ni;
+	struct mbuf		*m0;
+	struct rtw_softc	*sc;
+	struct rtw_txctl_blk	*stc;
+	struct rtw_txdesc_blk	*htc;
+	struct rtw_txctl	*stx;
+	struct rtw_txdesc	*htx;
 
 	sc = (struct rtw_softc *)ifp->if_softc;
+	ic = &sc->sc_ic;
 
-#if 0
-	struct ifqueue		ic_mgtq;
-	struct ifqueue		ic_pwrsaveq;
-struct rtw_txctl_blk {
-	/* dirty/free s/w descriptors */
-	struct rtw_txq		stc_dirtyq;
-	struct rtw_txq		stc_freeq;
-	u_int			stc_ndesc;
-	struct rtw_txctl	*stc_desc;
-};
-#endif
-	while (!SIMPLEQ_EMPTY(&stc->stc_freeq)) {
-		if (rtw_dequeue(ifp, &stc, &m0, &ni) == -1)
+	DPRINTF2(sc, ("%s: enter %s\n", sc->sc_dev.dv_xname, __func__));
+
+	/* XXX do real rate control */
+	proto_txctl0 = RTW_TXCTL0_RTSRATE_1MBPS;
+
+	switch (rate = MAX(2, ieee80211_get_rate(ic))) {
+	case 2:
+		proto_txctl0 |= RTW_TXCTL0_RATE_1MBPS;
+		break;
+	case 4:
+		proto_txctl0 |= RTW_TXCTL0_RATE_2MBPS;
+		break;
+	case 11:
+		proto_txctl0 |= RTW_TXCTL0_RATE_5MBPS;
+		break;
+	case 22:
+		proto_txctl0 |= RTW_TXCTL0_RATE_11MBPS;
+		break;
+	}
+
+	if ((ic->ic_flags & IEEE80211_F_SHPREAMBLE) != 0)
+		proto_txctl0 |= RTW_TXCTL0_SPLCP;
+
+	for (;;) {
+		if (rtw_dequeue(ifp, &stc, &htc, &m0, &ni) == -1)
 			continue;
 		if (m0 == NULL)
 			break;
-		ieee80211_release_node(&sc->sc_ic, ni);
+		stx = SIMPLEQ_FIRST(&stc->stc_freeq);
+
+		dmamap = stx->stx_dmamap;
+
+		m0 = rtw_dmamap_load_txbuf(sc->sc_dmat, dmamap, m0,
+		    htc->htc_nfree, &ifp->if_flags, sc->sc_dev.dv_xname);
+
+		if (m0 == NULL || dmamap->dm_nsegs == 0) {
+			DPRINTF2(sc, ("%s: fail dmamap load\n", __func__));
+			goto post_dequeue_err;
+		}
+
+		txctl0 = proto_txctl0 |
+		    LSHIFT(m0->m_pkthdr.len, RTW_TXCTL0_TPKTSIZE_MASK);
+
+		wh = mtod(m0, struct ieee80211_frame *);
+
+		if (ieee80211_compute_duration(wh,
+		    m0->m_pkthdr.len - sizeof(wh),
+		    ic->ic_flags, ic->ic_fragthreshold,
+		    rate, &stx->stx_d0, &stx->stx_dn, &npkt) == -1) {
+			DPRINTF2(sc, ("%s: fail compute duration\n", __func__));
+			goto post_load_err;
+		}
+
+		/* XXX >= ? */
+		if (m0->m_pkthdr.len > ic->ic_rtsthreshold)
+			txctl0 |= RTW_TXCTL0_RTSEN;
+
+		d0 = &stx->stx_d0;
+
+		txctl1 = LSHIFT(d0->d_plcp_len, RTW_TXCTL1_LENGTH_MASK) |
+		    LSHIFT(d0->d_rts_dur, RTW_TXCTL1_RTSDUR_MASK);
+
+		if ((d0->d_plcp_svc & IEEE80211_PLCP_SERVICE_LENEXT) != 0)
+			txctl1 |= RTW_TXCTL1_LENGEXT;
+
+		/* TBD fragmentation */
+
+		stx->stx_first = htc->htc_next;
+
+		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
+		    htc, stx->stx_first, dmamap->dm_nsegs,
+		    BUS_DMASYNC_PREWRITE);
+
+		for (i = 0, lastdesc = desc = stx->stx_first;
+		     i < dmamap->dm_nsegs;
+		     i++, desc = RTW_NEXT_IDX(htc, desc)) {
+			if (dmamap->dm_segs[i].ds_len > RTW_TXLEN_LENGTH_MASK) {
+				DPRINTF2(sc, ("%s: seg too long\n", __func__));
+				goto post_load_err;
+			}
+			htx = &htc->htc_desc[desc];
+			htx->htx_ctl0 = htole32(txctl0);
+			if (i != 0)
+				htx->htx_ctl0 |= htole32(RTW_TXCTL0_OWN);
+			htx->htx_ctl1 = htole32(txctl1);
+			htx->htx_buf = htole32(dmamap->dm_segs[i].ds_addr);
+			htx->htx_len = htole32(dmamap->dm_segs[i].ds_len);
+			lastdesc = desc;
+			DPRINTF2(sc, ("%s: stx %p txdesc[%d] ctl0 %#08x "
+			    "ctl1 %#08x buf %#08x len %#08x\n",
+			    sc->sc_dev.dv_xname, stx, desc, htx->htx_ctl0,
+			    htx->htx_ctl1, htx->htx_buf, htx->htx_len));
+		}
+
+		htc->htc_desc[lastdesc].htx_ctl0 |= htole32(RTW_TXCTL0_LS);
+		htc->htc_desc[stx->stx_first].htx_ctl0 |=
+		   htole32(RTW_TXCTL0_FS);
+
+		DPRINTF2(sc, ("%s: stx %p FS on txdesc[%d], LS on txdesc[%d]\n",
+		    sc->sc_dev.dv_xname, stx, lastdesc, stx->stx_first));
+
+		stx->stx_ni = ni;
+		stx->stx_mbuf = m0;
+		stx->stx_last = lastdesc;
+
+		htc->htc_nfree -= dmamap->dm_nsegs;
+		htc->htc_next = desc;
+
+		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
+		    htc, stx->stx_first, dmamap->dm_nsegs,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		htc->htc_desc[stx->stx_first].htx_ctl0 |=
+		    htole32(RTW_TXCTL0_OWN);
+
+		DPRINTF2(sc, ("%s: stx %p OWN on txdesc[%d]\n",
+		    sc->sc_dev.dv_xname, stx, stx->stx_first));
+
+		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
+		    htc, stx->stx_first, 1,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		SIMPLEQ_REMOVE_HEAD(&stc->stc_freeq, stx_q);
+		SIMPLEQ_INSERT_TAIL(&stc->stc_dirtyq, stx, stx_q);
+
+		/* TBD poke just one txmtr? */
+		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL,
+		    RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ | RTW_TPPOLL_HPQ |
+		    RTW_TPPOLL_BQ);
 	}
+	DPRINTF2(sc, ("%s: leave\n", __func__));
+	return;
+post_load_err:
+	bus_dmamap_unload(sc->sc_dmat, dmamap);
+	m_freem(m0);
+post_dequeue_err:
+	ieee80211_release_node(&sc->sc_ic, ni);
 	return;
 }
 
 static void
 rtw_watchdog(struct ifnet *ifp)
 {
+	int pri;
+	struct rtw_softc *sc;
+	struct rtw_txctl_blk *stc;
+
+	sc = ifp->if_softc;
+
+	ifp->if_timer = 0;
+
+	if ((sc->sc_flags & RTW_F_ENABLED) == 0)
+		return;
+
+	for (pri = 0; pri < RTW_NTXPRI; pri++) {
+		stc = &sc->sc_txctl_blk[pri];
+
+		if (stc->stc_tx_timer == 0)
+			continue;
+
+		if (--stc->stc_tx_timer == 0) {
+			if (SIMPLEQ_EMPTY(&stc->stc_dirtyq))
+				continue;
+			printf("%s: transmit timeout, priority %d\n",
+			    ifp->if_xname, pri);
+			ifp->if_oerrors++;
+			/* XXX be gentle */
+			(void)rtw_init(ifp);
+			rtw_start(ifp);
+		} else
+			ifp->if_timer = 1;
+	}
 	/* TBD */
 	return;
 }
