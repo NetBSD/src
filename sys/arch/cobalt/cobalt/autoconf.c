@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2000/06/06 18:00:13 soren Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2001/06/17 00:11:40 cyber Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -33,10 +33,13 @@
 
 #include <machine/cpu.h>
 
-struct device *booted_device;
-int booted_partition;
+extern char	bootstring[];
+extern int	netboot;
+extern int	bootunit;
+extern int	bootpart;
 
-static void	findroot(void);
+struct device *booted_device;
+int booted_partition = 0;
 
 int		cpuspeed = 100;		/* Until we know more precisely. */
 
@@ -54,46 +57,38 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	findroot();
-
 	printf("boot device: %s\n",
 		booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
 
-extern char	bootstring[];
-extern int	netboot;
-
-static void
-findroot(void)
-{
-	struct device *dv;
-
-	if (booted_device)
-		return;
-
-	if ((booted_device == NULL) && netboot == 0)
-		for (dv = alldevs.tqh_first; dv != NULL;
-		     dv = dv->dv_list.tqe_next)
-			if (dv->dv_class == DV_DISK &&
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd"))
-				    booted_device = dv;
-
-	/*
-	 * XXX Match up MBR boot specification with BSD disklabel for root?
-	 */
-	booted_partition = 0;
-
-	return;
-}
+static int hd_iterate = -1;
 
 void
 device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
+	if (booted_device)
+		return;
+
 	if ((booted_device == NULL) && (netboot == 1))
 		if (dev->dv_class == DV_IFNET)
 			booted_device = dev;
+
+	if ((booted_device == NULL) && (netboot == 0)) {
+		if (dev->dv_class == DV_DISK &&
+		    !strcmp(dev->dv_cfdata->cf_driver->cd_name, "wd")) {
+			hd_iterate++;
+			if (hd_iterate == bootunit) {
+				booted_device = dev;
+			}
+		}
+		/*
+		 * XXX Match up MBR boot specification with BSD disklabel for root?
+		 */
+		booted_partition = 0;
+	}
 }
+
