@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_ioctl.c,v 1.8 1994/10/20 20:31:27 mycroft Exp $	*/
+/*	$NetBSD: scsi_ioctl.c,v 1.9 1994/10/23 19:24:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -59,7 +59,7 @@ void scsierr __P((struct buf *, int));
 
 struct scsi_ioctl {
 	struct buf *si_bp;
-	scsireq_t *si_screq;
+	scsireq_t si_screq;
 	struct scsi_link *si_sc_link;
 	struct uio si_uio;
 	struct iovec si_iov;
@@ -143,18 +143,12 @@ scsi_user_done(xs)
 		printf("User command with no ioctl\n");
 		return;
 	}
-	screq = si->si_screq;
-	si_free(si);
-	if (!screq) {	/* Is it one of ours? (the SCSI_USER bit says it is) */
-		sc_print_addr(xs->sc_link);
-		printf("User command with no request\n");
-		return;
-	}
+	screq = &si->si_screq;
 
 	SC_DEBUG(xs->sc_link, SDEV_DB2, ("user-done\n"));
 	screq->retsts = 0;
 	screq->status = xs->status;
-	switch(xs->error) {
+	switch (xs->error) {
 	case XS_NOERROR:
 		SC_DEBUG(xs->sc_link, SDEV_DB3, ("no error\n"));
 		screq->datalen_used = xs->datalen - xs->resid; /* probably rubbish */
@@ -186,7 +180,8 @@ scsi_user_done(xs)
 		break;
 	}
 	biodone(bp); 	/* we're waiting on it in scsi_strategy() */
-	return;		/* it'll free the xs and restart any queue */
+
+	si_free(si);
 }
 
 
@@ -222,21 +217,15 @@ scsistrategy(bp)
 		scsierr(bp, EINVAL);
 		return;
 	}
-	screq = si->si_screq;
+	screq = &si->si_screq;
+
 	sc_link = si->si_sc_link;
-	si_free(si);
 	if (!sc_link) {
 		printf("user_strat: No link pointer\n");
 		scsierr(bp, EINVAL);
-		return;
+		goto out;
 	}
 	SC_DEBUG(sc_link, SDEV_DB2, ("user_strategy\n"));
-	if (!screq) {
-		sc_print_addr(sc_link);
-		printf("No request block\n");
-		scsierr(bp, EINVAL);
-		return;
-	}
 
 	/*
 	 * We're in trouble if physio tried to break up the transfer.
@@ -245,19 +234,19 @@ scsistrategy(bp)
 		sc_print_addr(sc_link);
 		printf("physio split the request.. cannot proceed\n");
 		scsierr(bp, EIO);
-		return;
+		goto out;
 	}
 
 	if (screq->timeout == 0) {
 		scsierr(bp, EINVAL);
-		return;
+		goto out;
 	}
 
 	if (screq->cmdlen > sizeof(struct scsi_generic)) {
 		sc_print_addr(sc_link);
 		printf("cmdlen too big\n");
 		scsierr(bp, EFAULT);
-		return;
+		goto out;
 	}
 
 	if (screq->flags & SCCMD_READ)
@@ -277,7 +266,7 @@ scsistrategy(bp)
 	/* because there is a bp, scsi_scsi_cmd will return immediatly */
 	if (err) {
 		scsierr(bp, err);
-		return;
+		goto out;
 	}
 	SC_DEBUG(sc_link, SDEV_DB3, ("about to  sleep\n"));
 	s = splbio();
@@ -285,7 +274,9 @@ scsistrategy(bp)
 		tsleep(bp, PRIBIO, "scistr", 0);
 	splx(s);
 	SC_DEBUG(sc_link, SDEV_DB3, ("back from sleep\n"));
-	return;
+
+out:
+	si_free(si);
 }
 
 /*
@@ -331,7 +322,7 @@ scsi_do_ioctl(sc_link, dev, cmd, addr, f)
 			scsierr(bp, EINTR);
 			return EINTR;
 		}
-		si->si_screq = screq;
+		si->si_screq = *screq;
 		si->si_sc_link = sc_link;
 		if (len) {
 			si->si_iov.iov_base = daddr;
@@ -406,5 +397,4 @@ scsierr(bp, error)
 	bp->b_flags |= B_ERROR;
 	bp->b_error = error;
 	biodone(bp);
-	return;
 }
