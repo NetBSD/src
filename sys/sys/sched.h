@@ -1,4 +1,4 @@
-/* $NetBSD: sched.h,v 1.14.10.3 2002/03/10 21:33:09 thorpej Exp $ */
+/* $NetBSD: sched.h,v 1.14.10.4 2002/03/16 03:46:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -162,12 +162,18 @@ struct turnstile {
 	LIST_ENTRY(turnstile) ts_chain;	/* link on hash chain */
 	struct turnstile *ts_free;	/* turnstile free list */
 	void		*ts_obj;	/* lock object */
-	struct slpque	ts_sleepq;	/* queue of waiters */
-	u_int		ts_waiters;	/* number of waiters on queue */
+	struct turnstile_sleepq {	/* queues of waiters */
+		struct slpque tsq_q;
+		u_int tsq_waiters;
+	} ts_sleepq[2];
 };
 
 #define	TS_READER_Q	0		/* reader sleep queue */
 #define	TS_WRITER_Q	1		/* writer sleep queue */
+
+#define	TS_WAITERS(ts)							\
+	((ts)->ts_sleepq[TS_READER_Q].tsq_waiters +			\
+	 (ts)->ts_sleepq[TS_WRITER_Q].tsq_waiters)
 
 /*
  * Flags passed to the Linux-compatible __clone(2) system call.
