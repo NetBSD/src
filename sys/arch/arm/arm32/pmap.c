@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2002/03/24 04:56:49 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2002/03/24 05:15:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2002/03/24 04:56:49 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2002/03/24 05:15:59 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -2787,14 +2787,12 @@ pmap_enter(pmap, va, pa, prot, flags)
 	*pte = npte;
 
 	if (pg != NULL) {
-		boolean_t pmap_active = FALSE;
 		/* XXX this will change once the whole of pmap_enter uses
 		 * map_ptes
 		 */
 		ptes = pmap_map_ptes(pmap);
-		pmap_active = pmap_is_curpmap(pmap);
 		simple_lock(&pg->mdpage.pvh_slock);
- 		pmap_vac_me_harder(pmap, pg, ptes, pmap_active);
+ 		pmap_vac_me_harder(pmap, pg, ptes, pmap_is_curpmap(pmap));
 		simple_unlock(&pg->mdpage.pvh_slock);
 		pmap_unmap_ptes(pmap);
 	}
@@ -3200,7 +3198,7 @@ pmap_clearbit(pg, maskbits)
 	unsigned int maskbits;
 {
 	struct pv_entry *pv;
-	pt_entry_t *pte;
+	pt_entry_t *ptes;
 	vaddr_t va;
 	int tlbentry;
 
@@ -3229,8 +3227,8 @@ pmap_clearbit(pg, maskbits)
 	for (pv = pg->mdpage.pvh_list; pv; pv = pv->pv_next) {
 		va = pv->pv_va;
 		pv->pv_flags &= ~maskbits;
-		pte = pmap_pte(pv->pv_pmap, va);
-		KASSERT(pte != NULL);
+		ptes = pmap_map_ptes(pv->pv_pmap);	/* locks pmap */
+		KASSERT(pmap_pde_v(pmap_pde(pv->pv_pmap, va)));
 		if (maskbits & (PT_Wr|PT_M)) {
 			if ((pv->pv_flags & PT_NC)) {
 				/* 
@@ -3250,25 +3248,27 @@ pmap_clearbit(pg, maskbits)
 				 *
 				 */
 				if (maskbits & PT_Wr) {
-					*pte |= pte_cache_mode;
+					ptes[arm_btop(va)] |= pte_cache_mode;
 					pv->pv_flags &= ~PT_NC;
 				}
-			} else if (pmap_is_curpmap(pv->pv_pmap))
+			} else if (pmap_is_curpmap(pv->pv_pmap)) {
 				/* 
 				 * Entry is cacheable: check if pmap is
 				 * current if it is flush it,
 				 * otherwise it won't be in the cache
 				 */
 				cpu_idcache_wbinv_range(pv->pv_va, NBPG);
+			}
 
 			/* make the pte read only */
-			*pte &= ~PT_AP(AP_W);
+			ptes[arm_btop(va)] &= ~PT_AP(AP_W);
 		}
 
 		if (maskbits & PT_H)
-			*pte = (*pte & ~L2_MASK) | L2_INVAL;
+			ptes[arm_btop(va)] =
+			    (ptes[arm_btop(va)] & ~L2_MASK) | L2_INVAL;
 
-		if (pmap_is_curpmap(pv->pv_pmap))
+		if (pmap_is_curpmap(pv->pv_pmap)) {
 			/* 
 			 * if we had cacheable pte's we'd clean the
 			 * pte out to memory here
@@ -3276,6 +3276,8 @@ pmap_clearbit(pg, maskbits)
 			 * flush tlb entry as it's in the current pmap
 			 */
 			cpu_tlb_flushID_SE(pv->pv_va); 
+		}
+		pmap_unmap_ptes(pv->pv_pmap);		/* unlocks pmap */
 	}
 	cpu_cpwait();
 
