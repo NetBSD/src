@@ -1,4 +1,4 @@
-$NetBSD: podules,v 1.4 1997/02/18 03:08:04 mark Exp $
+$NetBSD: podules,v 1.5 1997/02/23 03:51:19 mark Exp $
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -112,6 +112,7 @@ podule	BRINI		LINK		0x00df	BriniLink transputer link adapter
 
 podule	ANT		ETHER3		0x00a4	ether 3/5 interface
 podule	ANT		ETHERB		0x00e4	ether B network slot interface
+podule	ANT		ETHERM		0x00d8	ether M dual interface NIC
 
 podule	ALSYSTEMS	SCSI		0x0107	SCSI II host adapter
 
