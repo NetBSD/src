@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.9 2002/08/06 19:20:29 thorpej Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.10 2002/08/12 19:33:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -292,8 +292,8 @@ ENTRY(cpu_switch)
 	ldr	r7, Lcurpcb
 	str	r0, [r7]
 
-	/* stash the old proc */
-	mov	r7, r1
+	/* stash the old proc while we call functions */
+	mov	r5, r1
 
 #if defined(LOCKDEBUG)
 	/* release the sched_lock before handling interrupts */
@@ -316,19 +316,15 @@ ENTRY(cpu_switch)
 	/* Push the old spl level onto the stack */
 	str	r0, [sp, #-0x0004]!
 
-	mov	r5, r7
-
 	/* First phase : find a new process */
 
 	/* rem: r5 = old proc */
-
 
 Lswitch_search:
 	IRQdisable
 #if defined(LOCKDEBUG)
 	bl	_C_LABEL(sched_lock_idle)
 #endif
-
 
 	/* Do we have any active queues  */
 	ldr	r7, Lwhichqs
@@ -339,7 +335,7 @@ Lswitch_search:
 	beq	_ASM_LABEL(idle)
 Lidle_ret:
 
-	/* restore old proc */
+	/* put old proc back in r1 */
 	mov	r1, r5
 
 	/* rem: r1 = old proc */
