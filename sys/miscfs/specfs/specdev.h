@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)specdev.h	7.4 (Berkeley) 4/19/91
- *	$Id: specdev.h,v 1.5 1993/09/07 15:41:56 ws Exp $
+ *	$Id: specdev.h,v 1.6 1993/12/22 13:14:44 cgd Exp $
  */
 
 #ifndef _SYS_SPECDEV_H_
@@ -214,7 +214,7 @@ int	spec_bmap __P((
 		daddr_t *bnp));
 int	spec_strategy __P((
 		struct buf *bp));
-void	spec_print __P((
+int	spec_print __P((
 		struct vnode *vp));
 #define spec_islocked ((int (*) __P(( \
 		struct vnode *vp))) nullop)
