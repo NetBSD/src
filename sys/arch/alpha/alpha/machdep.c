@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 1996/05/09 23:49:33 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.19.4.1 1996/06/03 18:34:19 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -1322,7 +1322,7 @@ netintr()
 #endif
 #ifdef PPP
 	if (netisr & (1 << NETISR_PPP)) {
-		netisr &= ~(1 << NETISR_CCITT);
+		netisr &= ~(1 << NETISR_PPP);
 		pppintr();
 	}
 #endif
