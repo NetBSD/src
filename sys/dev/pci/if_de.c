@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.59 1998/02/06 20:57:12 matt Exp $	*/
+/*	$NetBSD: if_de.c,v 1.60 1998/02/07 10:27:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -4999,7 +4999,7 @@ tulip_busdma_allocmem(
 	if (error == 0) {
 	    bus_dmamap_t map;
 	    error = bus_dmamap_create(sc->tulip_dmatag, size, 1, size, 0,
-				      BUS_DMA_ALLOCNOW, &map);
+				      BUS_DMA_NOWAIT, &map);
 	    if (error == 0) {
 		error = bus_dmamap_load(sc->tulip_dmatag, map, desc,
 					size, NULL, BUS_DMA_NOWAIT);
@@ -5031,7 +5031,7 @@ tulip_busdma_init(
      * Allocate dmamap for setup descriptor
      */
     error = bus_dmamap_create(sc->tulip_dmatag, sizeof(sc->tulip_setupbuf), 2,
-			      sizeof(sc->tulip_setupbuf), 0, BUS_DMA_ALLOCNOW,
+			      sizeof(sc->tulip_setupbuf), 0, BUS_DMA_NOWAIT,
 			      &sc->tulip_setupmap);
     if (error == 0) {
 	error = bus_dmamap_load(sc->tulip_dmatag, sc->tulip_setupmap,
