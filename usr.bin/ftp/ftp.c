@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.117 2001/12/26 09:40:16 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.118 2002/04/25 10:55:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1996-2001 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.117 2001/12/26 09:40:16 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.118 2002/04/25 10:55:43 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -486,9 +486,10 @@ getreply(int expecteof)
 			if (dig > 4 && pflag == 1 && isdigit(c))
 				pflag = 2;
 			if (pflag == 2) {
-				if (c != '\r' && c != ')')
-					*pt++ = c;
-				else {
+				if (c != '\r' && c != ')') {
+					if (pt < &pasv[sizeof(pasv) - 1])
+						*pt++ = c;
+				} else {
 					*pt = '\0';
 					pflag = 3;
 				}
