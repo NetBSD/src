@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.26 2003/10/01 14:50:06 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.27 2003/10/20 07:15:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.26 2003/10/01 14:50:06 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.27 2003/10/20 07:15:26 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,10 +158,10 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
 		sa->sa_nstacks = 0;
-		sa->sa_vp_faultaddr = NULL;
-		sa->sa_vp_ofaultaddr = NULL;
-		sa->sa_vp_stacks_low = NULL;
-		sa->sa_vp_stacks_high = NULL;
+		sa->sa_vp_faultaddr = 0;
+		sa->sa_vp_ofaultaddr = 0;
+		sa->sa_vp_stacks_low = 0;
+		sa->sa_vp_stacks_high = 0;
 		LIST_INIT(&sa->sa_lwpcache);
 		SIMPLEQ_INIT(&sa->sa_upcalls);
 		p->p_sa = sa;
