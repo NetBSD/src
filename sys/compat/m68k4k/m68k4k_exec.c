@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.14 2003/08/08 18:57:06 christos Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.15 2005/01/30 23:59:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.14 2003/08/08 18:57:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.15 2005/01/30 23:59:58 christos Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!
@@ -155,9 +155,10 @@ exec_m68k4k_prep_zmagic(p, epp)
 	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	/* set up command for bss segment */
-	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
-	    epp->ep_daddr + execp->a_data, NULLVP, 0,
-	    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+	if (execp->a_bss)
+		NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero, execp->a_bss,
+		    epp->ep_daddr + execp->a_data, NULLVP, 0,
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 
 	return (*epp->ep_esch->es_setup_stack)(p, epp);
 }
