@@ -373,13 +373,24 @@ static void dict_ldap_get_values(DICT_LDAP *dict_ldap, LDAPMessage * res,
 					 dict_ldap->result_attributes->argv,
 					    0, &tv, &resloop);
 		    }
-		    if (rc == LDAP_SUCCESS)
-			dict_ldap_get_values(dict_ldap, resloop, result);
-		    else {
-			msg_warn("%s: search error %d: %s ", myname, rc,
+		    switch (rc) {
+			case LDAP_SUCCESS:
+			    dict_ldap_get_values(dict_ldap, resloop, result);
+			    break;
+			case LDAP_NO_SUCH_OBJECT:
+			    /* Go ahead and treat this as though the DN existed
+			     * and just didn't have any result attributes.
+			     */
+			    msg_warn("%s: DN %s not found, skipping ", myname,
+				vals[i]);
+			    break;
+			default:
+			    msg_warn("%s: search error %d: %s ", myname, rc,
 				 ldap_err2string(rc));
-			dict_errno = DICT_ERR_RETRY;
+			    dict_errno = DICT_ERR_RETRY;
+			    break;
 		    }
+
 		    if (resloop != 0)
 			ldap_msgfree(resloop);
 		}
