@@ -1,5 +1,5 @@
 #!/bin/ksh
-# $NetBSD: script1,v 1.1 2001/01/05 02:06:57 garbled Exp $
+# $NetBSD: script1,v 1.2 2002/02/07 16:12:31 garbled Exp $
 if [ -z "$PKGSRCDIR" ]; then
 	if [ -d "/usr/pkgsrc" ]; then
 		PKGSRCDIR="/usr/pkgsrc"
@@ -8,7 +8,7 @@ if [ -z "$PKGSRCDIR" ]; then
 		PKGSRCDIR="/usr/src/pkgsrc"
 	fi
 fi
-cd $PKGSRCDIR/$1
+cd $PKGSRCDIR/$1 || exit 0
 #for i in */Makefile
 #do
 #	grep PKGNAME= $i >/dev/null
@@ -21,4 +21,4 @@ cd $PKGSRCDIR/$1
 #		fi
 #	fi
 #done
-ls -1d */ | grep -v pkg | sed -e 's@/@@'
+ls -1d */ | sed -e 's@/@@' | egrep -v '^(CVS|pkg)$'
