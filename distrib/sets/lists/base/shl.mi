@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.241 2003/10/25 22:34:40 kleink Exp $
+# $NetBSD: shl.mi,v 1.242 2003/10/27 17:15:22 pooka Exp $
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 ./lib/libc.so.12.106			base-sys-shlib
 ./lib/libcrypt.so.0.1			base-sys-shlib
@@ -57,7 +57,7 @@
 ./usr/lib/libkstream.so.2.0		base-krb4-shlib
 ./usr/lib/libkvm.so.5.2			base-sys-shlib
 ./usr/lib/libm.so.0.1			base-sys-shlib
-./usr/lib/libmagic.so.0.0		base-sys-shlib
+./usr/lib/libmagic.so.0.1		base-sys-shlib
 ./usr/lib/libmenu.so.4.1		base-sys-shlib
 ./usr/lib/libossaudio.so.0.0		base-sys-shlib
 ./usr/lib/libpcap.so.1.3		base-net-shlib
