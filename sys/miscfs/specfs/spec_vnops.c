@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)spec_vnops.c	7.37 (Berkeley) 5/30/91
- *	$Id: spec_vnops.c,v 1.9 1993/12/18 03:59:02 mycroft Exp $
+ *	$Id: spec_vnops.c,v 1.10 1993/12/22 13:14:42 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -502,13 +502,14 @@ spec_close(vp, flag, cred, p)
 /*
  * Print out the contents of a special device vnode.
  */
-void
+int
 spec_print(vp)
 	struct vnode *vp;
 {
 
 	printf("tag VT_NON, dev %d, %d\n", major(vp->v_rdev),
 		minor(vp->v_rdev));
+	return (0);
 }
 
 /*
