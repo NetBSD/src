@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_kn8ae.c,v 1.2 1997/03/12 21:09:43 cgd Exp $	*/
+/*	$NetBSD: dec_kn8ae.c,v 1.3 1997/03/21 01:26:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -143,7 +143,7 @@ dec_kn8ae_device_register(dev, aux)
 		else {
 			struct pcibus_attach_args *pba = aux;
 
-			if (b->bus != pba->pba_bus)
+			if ((b->slot / 1000) != pba->pba_bus)
 				return;
 	
 			pcidev = dev;
@@ -160,7 +160,7 @@ dec_kn8ae_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */
@@ -211,7 +211,7 @@ dec_kn8ae_device_register(dev, aux)
 		else {
 			struct pci_attach_args *pa = aux;
 
-			if (b->slot != pa->pa_device)
+			if ((b->slot % 1000) != pa->pa_device)
 				return;
 
 			/* XXX function? */
