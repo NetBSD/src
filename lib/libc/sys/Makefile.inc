@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 1996/10/13 20:28:55 cgd Exp $
+#	$NetBSD: Makefile.inc,v 1.43 1996/10/19 00:54:22 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
@@ -15,13 +15,15 @@ SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
 
 # modules with default implementations on all architectures:
 ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
-	chown.o chroot.o close.o connect.o dup.o dup2.o execve.o fchdir.o \
+	chown.o chroot.o \
+	clock_gettime.o clock_settime.o clock_getres.o \
+	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
-	getdirentries.o getegid.o geteuid.o getfh.o getfsstat.o getgid.o \
+	getdirentries.o getfh.o getfsstat.o \
 	getgroups.o getitimer.o __getlogin.o getpeername.o getpgid.o \
-	getpgrp.o getpid.o getppid.o getpriority.o getrlimit.o getrusage.o \
-	getsockname.o getsockopt.o gettimeofday.o getuid.o ioctl.o kill.o \
+	getpgrp.o getpriority.o getrlimit.o getrusage.o \
+	getsockname.o getsockopt.o gettimeofday.o ioctl.o kill.o \
 	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
 	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
@@ -34,18 +36,22 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	setrlimit.o setsid.o setsockopt.o settimeofday.o \
 	setuid.o shmat.o shmctl.o shmdt.o shmget.o shutdown.o sigaction.o \
 	sigaltstack.o socket.o socketpair.o stat.o statfs.o swapon.o \
-	symlink.o sync.o sysarch.o umask.o undelete.o unlink.o unmount.o \
+	symlink.o sysarch.o umask.o undelete.o unlink.o unmount.o \
 	utimes.o vadvise.o wait4.o write.o writev.o __semctl.o __syscall.o \
 	__sysctl.o
 
 PASM=	${ASM:.o=.po}
 SASM=	${ASM:.o=.so}
 
+NOERR=	getegid.o geteuid.o getgid.o getpid.o getppid.o getuid.o sync.o
+PNOERR= ${NOERR:.o=.po}
+SNOERR= ${NOERR:.o=.so}
+
 PSEUDO=	_exit.o
 PPSEUDO=${PSEUDO:.o=.po}
 SPSEUDO=${PSEUDO:.o=.so}
 
-OBJS+=	${ASM} ${PSEUDO}
+OBJS+=	${ASM} ${NOERR} ${PSEUDO}
 
 ${PASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
@@ -69,6 +75,32 @@ ${SASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@printf '#include "SYS.h"\nRSYSCALL(${.PREFIX})\n' | \
+	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
+	    ${CPP} -DPROF ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+.if (${MACHINE_ARCH} != "alpha")
+${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -k -o ${.TARGET}
+.else
+${SNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
+	    ${CPP} -DPIC ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}
+.endif
+
+${NOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/syscall.h
+	@echo creating ${.TARGET}
+	@printf '#include "SYS.h"\nRSYSCALL_NOERROR(${.PREFIX})\n' | \
 	    ${CPP} ${CFLAGS:M-[ID]*} ${AINC} | ${AS} -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
