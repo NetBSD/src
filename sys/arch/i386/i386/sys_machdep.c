@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.53 2000/12/11 05:41:06 mycroft Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.54 2001/01/16 01:50:36 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -240,6 +240,8 @@ i386_set_ldt(p, args, retval)
 		case SDT_MEMRWA:
 		case SDT_MEMROD:
 		case SDT_MEMRODA:
+		case SDT_MEMRWD:
+		case SDT_MEMRWDA:
 		case SDT_MEME:
 		case SDT_MEMEA:
 		case SDT_MEMER:
