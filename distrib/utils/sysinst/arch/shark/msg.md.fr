@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.5 2003/06/11 21:35:49 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.6 2003/06/12 11:20:13 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,14 +72,6 @@ de crééer un label.
 
 message dobootblks
 {Installation du block de démarrage sur %s ...
-}
-
-message emulbackup
-{Ou /emul/aout ou répertoire d' /emul sur votre système était un lien symbolique
-se dirigeant à un file system non-monté. Il a été donné une extension d' 'old'. Une
-fois que vous apportez votre copie de sauvegarde améliorée de système, vous
-pouvez devoir prendre soin de fusionner nouvellement créé / répertoire
-d' /emul/aout avec le vieil.
 }
 
 message arm32fspart
