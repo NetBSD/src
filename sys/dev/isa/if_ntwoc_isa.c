@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $	*/
+/*	$NetBSD: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $	*/
 /* 
  * Copyright (c) 1999 Christian E. Hopps
  * Copyright (c) 1996 John Hay.
@@ -29,11 +29,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $
+ * $Id: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.7 2003/05/03 18:11:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ntwoc_isa.c,v 1.8 2004/09/14 20:20:48 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,17 +214,17 @@ ntwoc_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	dbg = 0;
 
 	/* disallow wildcarded I/O base */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT) {
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT) {
 		printf("ntwoc_isa_probe: must specify port address\n");
 		return (0);
 	}
 
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT) {
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		printf("ntwoc_isa_probe: must specify irq\n");
 		return (0);
 	}
 
-	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT) {
+	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM) {
 		printf("ntwoc_isa_probe: must specify iomem\n");
 		return (0);
 	}

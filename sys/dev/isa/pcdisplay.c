@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay.c,v 1.25 2004/03/24 17:26:53 drochner Exp $ */
+/* $NetBSD: pcdisplay.c,v 1.26 2004/09/14 20:20:49 drochner Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.25 2004/03/24 17:26:53 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay.c,v 1.26 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,13 +233,13 @@ pcdisplay_match(parent, match, aux)
 
 	/* If values are hardwired to something that they can't be, punt. */
 	if (ia->ia_nio < 1 ||
-	    (ia->ia_io[0].ir_addr != ISACF_PORT_DEFAULT &&
+	    (ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT &&
 	     ia->ia_io[0].ir_addr != 0x3d0 &&
 	     ia->ia_io[0].ir_addr != 0x3b0))
 		return (0);
 
 	if (ia->ia_niomem < 1 ||
-	    (ia->ia_iomem[0].ir_addr != ISACF_IOMEM_DEFAULT &&
+	    (ia->ia_iomem[0].ir_addr != ISA_UNKNOWN_IOMEM &&
 	     ia->ia_iomem[0].ir_addr != 0xb8000 &&
 	     ia->ia_iomem[0].ir_addr != 0xb0000))
 		return (0);
@@ -248,11 +248,11 @@ pcdisplay_match(parent, match, aux)
 		return (0);
 
 	if (ia->ia_nirq > 0 &&
-	    ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT)
+	    ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ)
 		return (0);
 
 	if (ia->ia_ndrq > 0 &&
-	    ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT)
+	    ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ)
 		return (0);
 
 	if (pcdisplay_is_console(ia->ia_iot))

@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.57 2004/06/24 16:56:00 drochner Exp $	*/
+/*	$NetBSD: wds.c,v 1.58 2004/09/14 20:20:49 drochner Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.57 2004/06/24 16:56:00 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.58 2004/09/14 20:20:49 drochner Exp $");
 
 #include "opt_ddb.h"
 
@@ -277,7 +277,7 @@ wdsprobe(parent, match, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, WDS_ISA_IOSIZE, 0, &ioh))
@@ -289,10 +289,10 @@ wdsprobe(parent, match, aux)
 
 	if (rv) {
 #ifdef notyet
-		if (ia->ia_irq[0].ir_irq != ISACF_IRQ_DEFAULT &&
+		if (ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
 		    ia->ia_irq[0].ir_irq != wpd.sc_irq)
 			return (0);
-		if (ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT &&
+		if (ia->ia_drq[0].ir_drq != ISA_UNKNOWN_DRQ &&
 		    ia->ia_drq[0].ir_drq != wpd.sc_drq)
 			return (0);
 
@@ -302,9 +302,9 @@ wdsprobe(parent, match, aux)
 		ia->ia_ndrq = 1;
 		ia->ia_drq[0].ir_drq = wpd.sc_drq;
 #else
-		if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+		if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 			return (0);
-		if (ia->ia_drq[0].ir_drq == ISACF_DRQ_DEFAULT)
+		if (ia->ia_drq[0].ir_drq == ISA_UNKNOWN_DRQ)
 			return (0);
 
 		ia->ia_nirq = 1;

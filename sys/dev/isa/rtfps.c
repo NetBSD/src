@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.47 2004/09/14 17:19:34 drochner Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.48 2004/09/14 20:20:49 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.47 2004/09/14 17:19:34 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtfps.c,v 1.48 2004/09/14 20:20:49 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,9 +97,9 @@ rtfpsprobe(parent, self, aux)
 		return (0);
 
 	/* Disallow wildcarded i/o address. */
-	if (ia->ia_io[0].ir_addr == ISACF_PORT_DEFAULT)
+	if (ia->ia_io[0].ir_addr == ISA_UNKNOWN_PORT)
 		return (0);
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return (0);
 
 	/* if the first port is in use as console, then it. */
@@ -151,12 +151,8 @@ rtfpsattach(parent, self, aux)
 	struct isa_attach_args *ia = aux;
 	struct commulti_attach_args ca;
 	static int irqport[] = {
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		0x2f2,              0x6f2,              0x6f3,
-		ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT, ISACF_PORT_DEFAULT,
-		ISACF_PORT_DEFAULT
+		-1, -1, -1, -1, -1, -1, -1, -1,
+		-1, 0x2f2, 0x6f2, 0x6f3, -1, -1, -1, -1
 	};
 	bus_space_tag_t iot = ia->ia_iot;
 	int i, iobase, irq;
@@ -167,7 +163,7 @@ rtfpsattach(parent, self, aux)
 	sc->sc_iobase = ia->ia_io[0].ir_addr;
 	irq = ia->ia_irq[0].ir_irq;
 
-	if (irq >= 16 || irqport[irq] == ISACF_PORT_DEFAULT) {
+	if (irq >= 16 || irqport[irq] == -1) {
 		printf("%s: invalid irq\n", sc->sc_dev.dv_xname);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cy_isa.c,v 1.17 2002/10/02 03:10:46 thorpej Exp $	*/
+/*	$NetBSD: cy_isa.c,v 1.18 2004/09/14 20:20:46 drochner Exp $	*/
 
 /*
  * cy.c
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.17 2002/10/02 03:10:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy_isa.c,v 1.18 2004/09/14 20:20:46 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,9 +50,9 @@ cy_isa_probe(struct device *parent, struct cfdata *match, void *aux)
 	sc.sc_bustype = CY_BUSTYPE_ISA;
 
 	/* Disallow wildcarded memory address. */
-	if (ia->ia_iomem[0].ir_addr == ISACF_IOMEM_DEFAULT)
+	if (ia->ia_iomem[0].ir_addr == ISA_UNKNOWN_IOMEM)
 		return 0;
-	if (ia->ia_irq[0].ir_irq == ISACF_IRQ_DEFAULT)
+	if (ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ)
 		return 0;
 
 	if (bus_space_map(ia->ia_memt, ia->ia_iomem[0].ir_addr, CY_MEMSIZE, 0,
