@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_tb.c	7.7 (Berkeley) 5/9/91
- *	$Id: tty_tb.c,v 1.8 1994/02/09 21:06:51 mycroft Exp $
+ *	$Id: tty_tb.c,v 1.9 1994/02/12 15:52:49 glass Exp $
  */
 
 #include "tb.h"
@@ -130,10 +130,9 @@ tbopen(dev, tp)
 tbclose(tp)
 	register struct tty *tp;
 {
-	register int s;
 	int modebits = TBPOINT|TBSTOP;
 
-	tbtioctl(tp, BIOSMODE, &modebits, 0, p);
+	tbtioctl(tp, BIOSMODE, &modebits, 0, NULL);
 }
 
 /*
