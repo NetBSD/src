@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.7 2002/09/07 23:35:37 elric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.8 2002/09/08 07:52:41 elric Exp $");
 
 #include <sys/types.h>
 
@@ -85,7 +85,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,schedule);
+			BF_encrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -98,7 +98,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,schedule);
+			BF_encrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -118,7 +118,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_decrypt(tin,schedule);
+			BF_decrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2n(tout0,out);
@@ -132,7 +132,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_decrypt(tin,schedule);
+			BF_decrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2nn(tout0,tout1,out,l+8);
