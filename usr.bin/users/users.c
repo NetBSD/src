@@ -1,4 +1,4 @@
-/*	$NetBSD: users.c,v 1.4 1994/12/07 00:21:14 jtc Exp $	*/
+/*	$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $	*/
 
 /*
  * Copyright (c) 1980, 1987, 1993
@@ -43,16 +43,19 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)users.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: users.c,v 1.4 1994/12/07 00:21:14 jtc Exp $";
+static char rcsid[] = "$NetBSD: users.c,v 1.5 1994/12/20 15:58:19 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <utmp.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <err.h>
 
 typedef char	namebuf[UT_NAMESIZE];
+
+int scmp __P((const void *, const void *));
 
 int
 main(argc, argv)
@@ -64,7 +67,7 @@ main(argc, argv)
 	register int nmax = 0;
 	int cnt;
 	struct utmp utmp;
-	int ch, scmp();
+	int ch;
 
 	while ((ch = getopt(argc, argv, "")) != EOF)
 		switch(ch) {
@@ -110,8 +113,9 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 scmp(p, q)
-	void *p, *q;
+	const void *p, *q;
 {
 	return(strncmp((char *) p, (char *) q, UT_NAMESIZE));
 }
