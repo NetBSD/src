@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.7 1998/05/15 16:38:53 drochner Exp $	 */
+/*	$NetBSD: devopen.c,v 1.8 1999/04/14 11:45:39 drochner Exp $	 */
 
 /*
  * Copyright (c) 1996, 1997
@@ -42,12 +42,15 @@
 
 #include <libi386.h>
 #include <biosdisk.h>
+#include "devopen.h"
 #ifdef _STANDALONE
 #include <bootinfo.h>
 #endif
 
 extern int parsebootfile __P((const char *, char**, char**, unsigned int*,
 			      unsigned int*, const char**));
+
+static int dev2bios __P((char *, unsigned int, int *));
 
 static struct {
 	char           *name;
