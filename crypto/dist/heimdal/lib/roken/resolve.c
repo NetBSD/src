@@ -45,8 +45,8 @@
 
 #include <assert.h>
 
-__RCSID("$Heimdal: resolve.c,v 1.36 2002/09/09 21:39:19 joda Exp $"
-        "$NetBSD: resolve.c,v 1.5 2003/05/15 20:44:22 lha Exp $");
+__RCSID("$Heimdal: resolve.c,v 1.38.2.1 2003/04/22 15:02:47 lha Exp $"
+        "$NetBSD: resolve.c,v 1.6 2003/05/15 21:36:55 lha Exp $");
 
 #undef HAVE_RES_NSEARCH
 #if (defined(HAVE_RES_SEARCH) || defined(HAVE_RES_NSEARCH)) && defined(HAVE_DN_EXPAND)

@@ -33,8 +33,8 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: changepw.c,v 1.37 2002/09/03 16:14:34 nectar Exp $"
-        "$NetBSD: changepw.c,v 1.9 2003/01/27 03:33:36 elric Exp $");
+__RCSID("$Heimdal: changepw.c,v 1.38 2002/09/29 11:48:34 joda Exp $"
+        "$NetBSD: changepw.c,v 1.10 2003/05/15 21:36:47 lha Exp $");
 
 static krb5_error_code
 send_request (krb5_context context,

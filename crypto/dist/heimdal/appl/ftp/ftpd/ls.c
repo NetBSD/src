@@ -33,8 +33,8 @@
 #ifndef TEST
 #include "ftpd_locl.h"
 
-__RCSID("$Heimdal: ls.c,v 1.25 2002/08/22 08:31:03 joda Exp $"
-        "$NetBSD: ls.c,v 1.3 2003/05/15 20:44:08 lha Exp $");
+__RCSID("$Heimdal: ls.c,v 1.26 2003/02/25 10:51:30 lha Exp $"
+        "$NetBSD: ls.c,v 1.4 2003/05/15 21:36:31 lha Exp $");
 
 #else
 #include <stdio.h>

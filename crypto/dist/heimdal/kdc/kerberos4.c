@@ -33,8 +33,8 @@
 
 #include "kdc_locl.h"
 
-__RCSID("$Heimdal: kerberos4.c,v 1.41 2002/04/18 16:08:24 joda Exp $"
-        "$NetBSD: kerberos4.c,v 1.3 2003/05/15 20:44:13 lha Exp $");
+__RCSID("$Heimdal: kerberos4.c,v 1.45 2003/03/17 05:37:55 assar Exp $"
+        "$NetBSD: kerberos4.c,v 1.4 2003/05/15 21:36:36 lha Exp $");
 
 #ifdef KRB4
 

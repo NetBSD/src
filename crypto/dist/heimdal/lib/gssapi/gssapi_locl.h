@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: gssapi_locl.h,v 1.21 2001/08/29 02:21:09 assar Exp $
-   $NetBSD: gssapi_locl.h,v 1.3 2003/05/15 20:44:16 lha Exp $ */
+/* $Heimdal: gssapi_locl.h,v 1.24 2003/03/16 17:30:15 lha Exp $
+   $NetBSD: gssapi_locl.h,v 1.4 2003/05/15 21:36:43 lha Exp $ */
 
 #ifndef GSSAPI_LOCL_H
 #define GSSAPI_LOCL_H

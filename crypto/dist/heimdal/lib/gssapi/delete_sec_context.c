@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: delete_sec_context.c,v 1.9 2001/05/10 15:23:04 assar Exp $"
-        "$NetBSD: delete_sec_context.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: delete_sec_context.c,v 1.11 2003/03/16 17:46:40 lha Exp $"
+        "$NetBSD: delete_sec_context.c,v 1.4 2003/05/15 21:36:41 lha Exp $");
 
 OM_uint32 gss_delete_sec_context
            (OM_uint32 * minor_status,

@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: export_sec_context.c,v 1.4 2001/02/18 03:39:09 assar Exp $"
-        "$NetBSD: export_sec_context.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: export_sec_context.c,v 1.6 2003/03/16 18:02:52 lha Exp $"
+        "$NetBSD: export_sec_context.c,v 1.4 2003/05/15 21:36:42 lha Exp $");
 
 OM_uint32
 gss_export_sec_context (

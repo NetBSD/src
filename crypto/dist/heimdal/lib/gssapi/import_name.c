@@ -33,15 +33,37 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: import_name.c,v 1.11 2002/06/20 20:05:42 nectar Exp $"
-        "$NetBSD: import_name.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: import_name.c,v 1.13 2003/03/16 17:33:31 lha Exp $"
+        "$NetBSD: import_name.c,v 1.4 2003/05/15 21:36:43 lha Exp $");
+
+static OM_uint32
+parse_krb5_name (OM_uint32 *minor_status,
+		 const char *name,
+	 gss_name_t *output_name)
+{
+    krb5_error_code kerr;
+
+    kerr = krb5_parse_name (gssapi_krb5_context, name, output_name);
+
+    if (kerr == 0)
+	return GSS_S_COMPLETE;
+    else if (kerr == KRB5_PARSE_ILLCHAR || kerr == KRB5_PARSE_MALFORMED) {
+	gssapi_krb5_set_error_string ();
+	*minor_status = kerr;
+	return GSS_S_BAD_NAME;
+    } else {
+	gssapi_krb5_set_error_string ();
+	*minor_status = kerr;
+	return GSS_S_FAILURE;
+    }
+}
 
 static OM_uint32
 import_krb5_name (OM_uint32 *minor_status,
 		  const gss_buffer_t input_name_buffer,
 		  gss_name_t *output_name)
 {
-    krb5_error_code kerr;
+    krb5_error_code ret;
     char *tmp;
 
     tmp = malloc (input_name_buffer->length + 1);

@@ -34,8 +34,8 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #ifdef __RCSID
-__RCSID("$Heimdal: strupr.c,v 1.4 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strupr.c,v 1.3 2003/05/15 20:44:22 lha Exp $");
+__RCSID("$Heimdal: strupr.c,v 1.5 2003/04/14 11:46:41 lha Exp $"
+        "$NetBSD: strupr.c,v 1.4 2003/05/15 21:36:55 lha Exp $");
 #endif
 #endif
 #include <string.h>

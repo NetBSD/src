@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: get_addrs.c,v 1.44 2002/08/16 20:50:15 joda Exp $"
-        "$NetBSD: get_addrs.c,v 1.8 2003/05/15 20:44:19 lha Exp $");
+__RCSID("$Heimdal: get_addrs.c,v 1.45 2003/01/25 15:19:49 lha Exp $"
+        "$NetBSD: get_addrs.c,v 1.9 2003/05/15 21:36:49 lha Exp $");
 
 #ifdef __osf__
 /* hate */

@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: display_status.c,v 1.7 2001/08/23 04:34:41 assar Exp $"
-        "$NetBSD: display_status.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: display_status.c,v 1.9 2003/03/16 17:45:36 lha Exp $"
+        "$NetBSD: display_status.c,v 1.4 2003/05/15 21:36:41 lha Exp $");
 
 static char *krb5_error_string;
 

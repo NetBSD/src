@@ -33,17 +33,19 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: release_name.c,v 1.5 2000/04/12 09:48:27 assar Exp $"
-        "$NetBSD: release_name.c,v 1.3 2003/05/15 20:44:17 lha Exp $");
+__RCSID("$Heimdal: release_name.c,v 1.7 2003/03/16 17:52:48 lha Exp $"
+        "$NetBSD: release_name.c,v 1.4 2003/05/15 21:36:44 lha Exp $");
 
 OM_uint32 gss_release_name
            (OM_uint32 * minor_status,
             gss_name_t * input_name
            )
 {
-  GSSAPI_KRB5_INIT_MS(minor_status);
-  krb5_free_principal(gssapi_krb5_context,
-		      *input_name);
-  *input_name = GSS_C_NO_NAME;
-  return GSS_S_COMPLETE;
+    GSSAPI_KRB5_INIT ();
+    if (minor_status)
+      *minor_status = 0;
+    krb5_free_principal(gssapi_krb5_context,
+			*input_name);
+    *input_name = GSS_C_NO_NAME;
+    return GSS_S_COMPLETE;
 }

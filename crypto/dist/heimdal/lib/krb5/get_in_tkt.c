@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: get_in_tkt.c,v 1.106 2002/09/04 16:26:04 joda Exp $"
-        "$NetBSD: get_in_tkt.c,v 1.4 2003/05/15 20:44:19 lha Exp $");
+__RCSID("$Heimdal: get_in_tkt.c,v 1.107 2003/02/16 06:41:25 nectar Exp $"
+        "$NetBSD: get_in_tkt.c,v 1.5 2003/05/15 21:36:49 lha Exp $");
 
 krb5_error_code
 krb5_init_etype (krb5_context context,

@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: krb4.c,v 1.8 2000/10/08 13:19:22 assar Exp $"
-        "$NetBSD: krb4.c,v 1.4 2003/05/15 20:44:09 lha Exp $");
+__RCSID("$Heimdal: krb4.c,v 1.11 2003/04/16 16:45:41 joda Exp $"
+        "$NetBSD: krb4.c,v 1.5 2003/05/15 21:36:32 lha Exp $");
 
 #ifdef KRB4
 

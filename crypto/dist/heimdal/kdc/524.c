@@ -33,10 +33,12 @@
 
 #include "kdc_locl.h"
 
-__RCSID("$Heimdal: 524.c,v 1.25 2002/07/31 09:43:20 joda Exp $"
-        "$NetBSD: 524.c,v 1.9 2003/05/15 20:44:12 lha Exp $");
-
-#ifdef KRB4
+__RCSID("$Heimdal: 524.c,v 1.29 2003/03/17 05:35:47 assar Exp $"
+        "$NetBSD: 524.c,v 1.10 2003/05/15 21:36:35 lha Exp $");
+  
+#ifndef KRB4
+#include <krb5-v4compat.h>
+#endif
 
 /*
  * fetch the server from `t', returning the name in malloced memory in

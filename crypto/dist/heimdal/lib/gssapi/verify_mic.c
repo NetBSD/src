@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: verify_mic.c,v 1.16 2002/05/20 15:14:00 nectar Exp $"
-        "$NetBSD: verify_mic.c,v 1.7 2003/05/15 20:44:17 lha Exp $");
+__RCSID("$Heimdal: verify_mic.c,v 1.18.2.2 2003/05/05 18:59:42 lha Exp $"
+        "$NetBSD: verify_mic.c,v 1.8 2003/05/15 21:36:45 lha Exp $");
 
 static OM_uint32
 verify_mic_des

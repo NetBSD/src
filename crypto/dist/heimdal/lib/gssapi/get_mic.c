@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: get_mic.c,v 1.19 2001/10/31 13:37:39 nectar Exp $"
-        "$NetBSD: get_mic.c,v 1.7 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: get_mic.c,v 1.21 2003/03/16 18:02:04 lha Exp $"
+        "$NetBSD: get_mic.c,v 1.8 2003/05/15 21:36:42 lha Exp $");
 
 static OM_uint32
 mic_des

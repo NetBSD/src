@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: krb5.h,v 1.205 2002/09/03 17:31:47 joda Exp $
-   $NetBSD: krb5.h,v 1.3 2003/05/15 20:44:20 lha Exp $ */
+/* $Heimdal: krb5.h,v 1.209 2003/03/16 18:30:02 lha Exp $
+   $NetBSD: krb5.h,v 1.4 2003/05/15 21:36:50 lha Exp $ */
 
 #ifndef __KRB5_H__
 #define __KRB5_H__

@@ -32,8 +32,8 @@
  */
 
 #include "kpasswd_locl.h"
-__RCSID("$Heimdal: kpasswdd.c,v 1.53 2002/08/19 15:07:31 joda Exp $"
-        "$NetBSD: kpasswdd.c,v 1.7 2003/05/15 20:44:14 lha Exp $");
+__RCSID("$Heimdal: kpasswdd.c,v 1.54 2002/12/02 14:31:52 joda Exp $"
+        "$NetBSD: kpasswdd.c,v 1.8 2003/05/15 21:36:37 lha Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_SYS_UN_H

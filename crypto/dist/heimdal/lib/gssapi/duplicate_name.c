@@ -33,8 +33,8 @@
 
 #include "gssapi_locl.h"
 
-__RCSID("$Heimdal: duplicate_name.c,v 1.5 2001/05/11 09:16:46 assar Exp $"
-        "$NetBSD: duplicate_name.c,v 1.3 2003/05/15 20:44:16 lha Exp $");
+__RCSID("$Heimdal: duplicate_name.c,v 1.7 2003/03/16 17:44:26 lha Exp $"
+        "$NetBSD: duplicate_name.c,v 1.4 2003/05/15 21:36:42 lha Exp $");
 
 OM_uint32 gss_duplicate_name (
             OM_uint32 * minor_status,
