@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.7.10.2 2001/01/07 22:12:47 sommerfeld Exp $	*/
+/*	$NetBSD: gdt.h,v 1.7.10.3 2001/01/07 22:59:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@ struct pmap;
 
 void gdt_init __P((void));
 void gdt_init_cpu __P((void));
-void tss_alloc __P((struct proc *));
-void tss_free __P((struct proc *));
+int tss_alloc __P((struct pcb *));
+void tss_free __P((int));
 void ldt_alloc __P((struct pmap *, union descriptor *, size_t));
 void ldt_free __P((struct pmap *));

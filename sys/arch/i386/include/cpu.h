@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.2.17 2001/01/07 22:12:46 sommerfeld Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.2.18 2001/01/07 22:59:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -293,7 +293,7 @@ extern const struct cpu_cpuid_nameclass i386_cpuid_cpus[];
 /* machdep.c */
 void	dumpconf __P((void));
 void	cpu_reset __P((void));
-void	i386_init_pcb_tss_ldt __P((struct pcb *));
+void	i386_init_pcb_tss_ldt __P((struct cpu_info *));
 void	i386_proc0_tss_ldt_init __P((void));
 void	i386_bufinit __P((void));
 

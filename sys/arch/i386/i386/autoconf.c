@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.45.2.6 2001/01/07 22:12:40 sommerfeld Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45.2.7 2001/01/07 22:59:23 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -66,6 +66,7 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/gdt.h>
 #include <machine/bootinfo.h>
 
 #include "ioapic.h"
@@ -125,12 +126,14 @@ cpu_configure()
 
 	spl0();
 
-	/* Set up proc0's TSS and LDT (after the FPU is configured). */
-	i386_proc0_tss_ldt_init();
+	gdt_init();
 
 #ifdef MULTIPROCESSOR
 	cpu_init_idle_pcbs();
 #endif
+
+	/* Set up proc0's TSS and LDT (after the FPU is configured). */
+	i386_proc0_tss_ldt_init();
 
 	/* XXX Finish deferred buffer cache allocation. */
 	i386_bufinit();

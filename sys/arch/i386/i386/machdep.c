@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.376.2.13 2001/01/07 22:12:42 sommerfeld Exp $	*/
+/*	$NetBSD: machdep.c,v 1.376.2.14 2001/01/07 22:59:24 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -324,7 +324,9 @@ cpu_startup()
 	int sz, x;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
+#if 0
 	char buf[160];				/* about 2 line */
+#endif
 	char pbuf[9];
 #if NBIOSCALL > 0
 	extern int biostramp_image_size;
@@ -450,17 +452,25 @@ void
 i386_proc0_tss_ldt_init()
 {
 	struct pcb *pcb;
+	int x;
 
-	gdt_init();
 	curpcb = pcb = &proc0.p_addr->u_pcb;
 
 	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
 	pcb->pcb_tss.tss_esp0 = (int)proc0.p_addr + USPACE - 16;
 
-	i386_init_pcb_tss_ldt(pcb);
-	
+	pcb->pcb_flags = 0;
+	pcb->pcb_tss.tss_ioopt =
+	    ((caddr_t)pcb->pcb_iomap - (caddr_t)&pcb->pcb_tss) << 16;
+
+	for (x = 0; x < sizeof(pcb->pcb_iomap) / 4; x++)
+		pcb->pcb_iomap[x] = 0xffffffff;
+
+	pcb->pcb_ldt_sel = pmap_kernel()->pm_ldt_sel = GSEL(GLDT_SEL, SEL_KPL);
+	pcb->pcb_cr0 = rcr0();
+
 	proc0.p_md.md_regs = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
-	proc0.p_md.md_tss_sel = mumble.ci_idle_tss_sel;
+	proc0.p_md.md_tss_sel = tss_alloc(pcb);
 
 	ltr(proc0.p_md.md_tss_sel);
 	lldt(pcb->pcb_ldt_sel);
@@ -872,13 +882,11 @@ do_cpuid_serial(u_int *serial)
 	: "eax", "ebx", "ecx", "edx");
 }
 
->>>>>>> 1.426
 void
 identifycpu(ci)
 	struct cpu_info *ci;
 {
 	extern char cpu_vendor[];
-	extern int cpu_id;
 	extern int cpu_brand_id;
 	const char *name, *modifier, *vendorname, *brand = "";
 	int class = CPUCLASS_386, vendor, i, max;
@@ -2352,8 +2360,6 @@ init386(first_avail)
 		       ptoa(physmem), 2*1024*1024UL);
 		cngetc();
 	}
-
-	identifycpu();
 }
 
 struct queue {

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.86.2.12 2001/01/07 22:12:45 sommerfeld Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.86.2.13 2001/01/07 22:59:25 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -215,7 +215,7 @@ cpu_wait(p)
 {
 
 	/* Nuke the TSS. */
-	tss_free(p);
+	tss_free(p->p_md.md_tss_sel);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sigcode.s,v 1.1.4.2 2001/01/07 22:12:44 sommerfeld Exp $	*/
+/*	$NetBSD: svr4_sigcode.s,v 1.1.4.3 2001/01/07 22:59:25 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_vm86.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #include "assym.h"
@@ -139,6 +140,27 @@
 	popl	%eax		; \
 	addl	$8,%esp		; \
 	iret
+
+#ifdef MULTIPROCESSOR
+#define GET_CPUINFO(reg)			  \
+	movzbl	_C_LABEL(lapic_id)+3,reg	; \
+	movl	_C_LABEL(cpu_info)(,reg,4),reg
+
+#define CHECK_ASTPENDING(treg)				\
+	GET_CPUINFO(treg)				;\
+	cmpl $0,CPU_INFO_ASTPENDING(treg)
+		
+#define CLEAR_ASTPENDING(cireg)				\
+	movl $0,CPU_INFO_ASTPENDING(cireg)
+	
+#else
+
+#define CHECK_ASTPENDING(treg)		cmpb	$0,_C_LABEL(astpending)	
+#define CLEAR_ASTPENDING(treg)		movb	$0,_C_LABEL(astpending)
+
+#endif
+
+	
 
 /*
  * Signal trampoline; copied to top of user stack.

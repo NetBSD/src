@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.25 2001/01/07 22:12:43 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.26 2001/01/07 22:59:24 sommerfeld Exp $	*/
 
 /*
  *
@@ -837,7 +837,6 @@ pmap_bootstrap(kva_start)
 	struct pmap *kpm;
 	vaddr_t kva;
 	pt_entry_t *pte;
-	int first16q;
 	int i;
 
 	/*
@@ -1053,40 +1052,6 @@ pmap_bootstrap(kva_start)
 
 	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
 		  0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
-
-	/*
-	 * we must call uvm_page_physload() after we are done playing with
-	 * virtual_avail but before we call pmap_steal_memory.  [i.e. here]
-	 * this call tells the VM system how much physical memory it
-	 * controls.  If we have 16M of RAM or less, just put it all on
-	 * the default free list.  Otherwise, put the first 16M of RAM
-	 * on a lower priority free list (so that all of the ISA DMA'able
-	 * memory won't be eaten up first-off).
-	 */
-
-	if (avail_end <= (16 * 1024 * 1024))
-		first16q = VM_FREELIST_DEFAULT;
-	else
-		first16q = VM_FREELIST_FIRST16;
-
-	if (avail_start < hole_start)   /* any free memory before the hole? */
-		uvm_page_physload(atop(avail_start), atop(hole_start),
-				  atop(avail_start), atop(hole_start),
-				  first16q);
-
-	if (first16q != VM_FREELIST_DEFAULT &&
-	    hole_end < 16 * 1024 * 1024) {
-		uvm_page_physload(atop(hole_end), atop(16 * 1024 * 1024),
-				  atop(hole_end), atop(16 * 1024 * 1024),
-				  first16q);
-		uvm_page_physload(atop(16 * 1024 * 1024), atop(avail_end),
-				  atop(16 * 1024 * 1024), atop(avail_end),
-				  VM_FREELIST_DEFAULT);
-	} else {
-		uvm_page_physload(atop(hole_end), atop(avail_end),
-				  atop(hole_end), atop(avail_end),
-				  VM_FREELIST_DEFAULT);
-	}
 
 	/*
 	 * Initialize the TLB shootdown queues.
@@ -2149,12 +2114,12 @@ pmap_zero_page_uncached(pa)
 	pt_entry_t *zpte = PTESLEW(zero_pte, id);
 	caddr_t zerova = VASLEW(zerop, id);
 	boolean_t rv = TRUE;
+	int i, *ptr;
 	
 #ifdef DIAGNOSTIC
 	if (*zpte)
 		panic("pmap_zero_page_uncached: lock botch");
 #endif
-	int i, *ptr;
 
 	*zpte = (pa & PG_FRAME) | PG_V | PG_RW |	/* map in */
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
