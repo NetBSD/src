@@ -1,4 +1,4 @@
-/*	$NetBSD: res_send.c,v 1.16 1998/11/15 17:40:38 christos Exp $	*/
+/*	$NetBSD: res_send.c,v 1.17 1999/05/03 15:26:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1989, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_send.c,v 8.13 1997/06/01 20:34:37 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_send.c,v 1.16 1998/11/15 17:40:38 christos Exp $");
+__RCSID("$NetBSD: res_send.c,v 1.17 1999/05/03 15:26:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -500,7 +500,7 @@ read_len:
 			time_t seconds;
 			struct pollfd dsfd;
 			struct sockaddr_in from;
-			int fromlen;
+			socklen_t fromlen;
 
 			if ((s < 0) || vc) {
 				if (vc)

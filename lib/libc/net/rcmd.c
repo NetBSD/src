@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.30 1999/03/16 18:15:13 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.31 1999/05/03 15:26:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.30 1999/03/16 18:15:13 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.31 1999/05/03 15:26:12 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -213,7 +213,7 @@ hprcmd(hp, ahost, rport, locuser, remuser, cmd, fd2p)
 	} else {
 		char num[8];
 		int s2 = rresvport(&lport), s3;
-		int len = sizeof(from);
+		socklen_t len = sizeof(from);
 
 		if (s2 < 0)
 			goto bad;
