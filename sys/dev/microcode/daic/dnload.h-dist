@@ -1,0 +1,42 @@
+/*
+ * Copyright (c) 1997,2001 Martin Husemann <martin@duskware.de>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software withough specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+/*
+ *  File: dnload.h
+ *  This file is usualy generated from the binary bootstrap image
+ *  delivered with the ISDN controller. Just copy the file "dnload.bin"
+ *  to this directory, run "make" here and the kernel will compile fine.
+ *  If you don't have this software, download the newest version of
+ *  the DOS driver software for your card from http://www.diehl.de,
+ *  extract the archive and copy "dnload.bin" here.
+ */
+
+#error "You did not copy 'dnload.bin' to sys/dev/microcode/daic and ran 'make' there"
+
+/* ------------------------------------------------------------------------- */
+static u_int8_t dnload[] = {
+ 0
+};
+
+/* ------------------------------------------------------------------------- */
