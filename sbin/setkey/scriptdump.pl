@@ -1,6 +1,6 @@
 #! @LOCALPREFIX@/bin/perl
 #
-#	$NetBSD: scriptdump.pl,v 1.2 2000/07/18 23:32:19 itojun Exp $
+#	$NetBSD: scriptdump.pl,v 1.3 2001/09/07 04:12:10 itojun Exp $
 #
 
 if ($< != 0) {
@@ -34,9 +34,9 @@ foreach $_ (<IN>) {
 		$akey = $2;
 		$akey =~ s/\s//g;
 		$akey =~ s/^/0x/g;
-	} elsif (/^\treplay=(\d+) flags=(0x\d+) state=/) {
+	} elsif (/^\tseq=(0x\d+) replay=(\d+) flags=(0x\d+) state=/) {
 		print "$mode $src $dst $proto $spi";
-		$replay = $1;
+		$replay = $2;
 		print " -u $reqid" if $reqid;
 		if ($mode eq 'add') {
 			print " -m $ipsecmode -r $replay" if $replay;

@@ -1,5 +1,5 @@
-/*	$NetBSD: token.l,v 1.5 2001/02/16 23:55:05 thorpej Exp $	*/
-/*	$KAME: token.l,v 1.16 2000/08/28 16:41:10 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.6 2001/09/07 04:12:10 itojun Exp $	*/
+/*	$KAME: token.l,v 1.33 2001/08/17 06:21:57 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -46,26 +46,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <netdb.h>
+
 #include "vchar.h"
+#ifdef __NetBSD__
 #include "parse.h"
-
-#define DECHO \
-	if (f_debug) {printf("<%d>", yy_start); ECHO ; printf("\n"); }
-
-#define CMDARG \
-{ \
-	char *__buf__ = strdup(yytext), *__p__; \
-	for (__p__ = __buf__; *__p__ != NULL; __p__++) \
-		if (*__p__ == '\n' || *__p__ == '\t') \
-			*__p__ = ' '; \
-	strcat(cmdarg, __buf__); \
-	free(__buf__); \
-}
-
-#define PREPROC	DECHO CMDARG
+#else
+#include "y.tab.h"
+#endif
 
 int lineno = 1;
-char cmdarg[8192]; /* XXX: BUFSIZ is the better ? */
 
 extern u_char m_buf[BUFSIZ];
 extern u_int m_len;
@@ -78,6 +68,19 @@ extern void parse_init __P((void));
 int parse __P((FILE **));
 int yyparse __P((void));
 
+/* make the code compile on *BSD-current */
+#ifndef SADB_X_AALG_SHA2_256
+#define SADB_X_AALG_SHA2_256	(-1)
+#endif
+#ifndef SADB_X_AALG_SHA2_384
+#define SADB_X_AALG_SHA2_384	(-1)
+#endif
+#ifndef SADB_X_AALG_SHA2_512
+#define SADB_X_AALG_SHA2_512	(-1)
+#endif
+#ifndef SADB_X_EALG_TWOFISHCBC
+#define SADB_X_EALG_TWOFISHCBC	(-1)
+#endif
 %}
 
 /* common section */
@@ -86,32 +89,18 @@ ws		[ \t]+
 digit		[0-9]
 letter		[0-9A-Za-z]
 hexdigit	[0-9A-Fa-f]
-/*octet		(([01]?{digit}?{digit})|((2([0-4]{digit}))|(25[0-5])))*/
-special		[()+\|\?\*,]
 dot		\.
-comma		\,
 hyphen		\-
-colon		\:
 slash		\/
-bcl		\{
-ecl		\}
 blcl		\[
 elcl		\]
-percent		\%
 semi		\;
-usec		{dot}{digit}{1,6}
 comment		\#.*
-ccomment	"/*"
-bracketstring	\<[^>]*\>
 quotedstring	\"[^"]*\"
 decstring	{digit}+
-hexpair		{hexdigit}{hexdigit}
 hexstring	0[xX]{hexdigit}+
-octetstring	{octet}({dot}{octet})+
 ipaddress	[a-fA-F0-9:]([a-fA-F0-9:\.]*|[a-fA-F0-9:\.]*%[a-zA-Z0-9]*)
 ipaddrmask	{slash}{digit}{1,3}
-ipaddrport	{blcl}{decstring}{elcl}
-keyword		{letter}{letter}+
 name		{letter}(({letter}|{digit}|{hyphen})*({letter}|{digit}))*
 hostname	{name}(({dot}{name})+{dot}?)?
 
@@ -119,155 +108,124 @@ hostname	{name}(({dot}{name})+{dot}?)?
 
 %%
 
-add		{ PREPROC; return(ADD); }
-delete		{ PREPROC; return(DELETE); }
-deleteall	{ PREPROC; return(DELETEALL); }
-get		{ PREPROC; return(GET); }
-flush		{ PREPROC; return(FLUSH); }
-dump		{ PREPROC; return(DUMP); }
+add		{ return(ADD); }
+delete		{ return(DELETE); }
+deleteall	{ return(DELETEALL); }
+get		{ return(GET); }
+flush		{ return(FLUSH); }
+dump		{ return(DUMP); }
 
 	/* for management SPD */
-spdadd		{ PREPROC; return(SPDADD); }
-spddelete	{ PREPROC; return(SPDDELETE); }
-spddump		{ PREPROC; return(SPDDUMP); }
-spdflush	{ PREPROC; return(SPDFLUSH); }
-{hyphen}P	{ BEGIN S_PL; PREPROC; return(F_POLICY); }
+spdadd		{ return(SPDADD); }
+spddelete	{ return(SPDDELETE); }
+spddump		{ return(SPDDUMP); }
+spdflush	{ return(SPDFLUSH); }
+{hyphen}P	{ BEGIN S_PL; return(F_POLICY); }
 <S_PL>[a-zA-Z0-9:\.\-_/ \n\t][a-zA-Z0-9:\.\-_/ \n\t]* {
-		yymore();
+			yymore();
 
-		/* count up for nl */
-		    {
-			char *p;
-			for (p = yytext; *p != NULL; p++)
-				if (*p == '\n')
-					lineno++;
-		    }
+			/* count up for nl */
+			    {
+				char *p;
+				for (p = yytext; *p != NULL; p++)
+					if (*p == '\n')
+						lineno++;
+			    }
 
-		yylval.val.len = strlen(yytext);
-		yylval.val.buf = strdup(yytext);
+			yylval.val.len = strlen(yytext);
+			yylval.val.buf = strdup(yytext);
 
-		return(PL_REQUESTS);
-}
-<S_PL>{semi}	{ PREPROC; BEGIN INITIAL; return(EOT); }
+			return(PL_REQUESTS);
+		}
+<S_PL>{semi}	{ BEGIN INITIAL; return(EOT); }
+
+	/* address resolution flags */
+{hyphen}[n46][n46]*	{
+			yylval.val.len = strlen(yytext);
+			yylval.val.buf = strdup(yytext);
+			return(F_AIFLAGS);
+		}
 
 	/* security protocols */
-ah		{ PREPROC; yylval.num = 0; return(PR_AH); }
-esp		{ PREPROC; yylval.num = 0; return(PR_ESP); }
-ah-old		{ PREPROC; yylval.num = 1; return(PR_AH); }
-esp-old		{ PREPROC; yylval.num = 1; return(PR_ESP); }
-ipcomp		{ PREPROC; yylval.num = 0; return(PR_IPCOMP); }
+ah		{ yylval.num = 0; return(PR_AH); }
+esp		{ yylval.num = 0; return(PR_ESP); }
+ah-old		{ yylval.num = 1; return(PR_AH); }
+esp-old		{ yylval.num = 1; return(PR_ESP); }
+ipcomp		{ yylval.num = 0; return(PR_IPCOMP); }
 
 	/* authentication alogorithm */
-{hyphen}A	{ PREPROC; return(F_AUTH); }
-hmac-md5	{ PREPROC; yylval.num = SADB_AALG_MD5HMAC; return(ALG_AUTH); }
-hmac-sha1	{ PREPROC; yylval.num = SADB_AALG_SHA1HMAC; return(ALG_AUTH); }
-keyed-md5	{ PREPROC; yylval.num = SADB_X_AALG_MD5; return(ALG_AUTH); }
-keyed-sha1	{ PREPROC; yylval.num = SADB_X_AALG_SHA; return(ALG_AUTH); }
-null		{ PREPROC; yylval.num = SADB_X_AALG_NULL; return(ALG_AUTH); }
+{hyphen}A	{ return(F_AUTH); }
+hmac-md5	{ yylval.num = SADB_AALG_MD5HMAC; return(ALG_AUTH); }
+hmac-sha1	{ yylval.num = SADB_AALG_SHA1HMAC; return(ALG_AUTH); }
+keyed-md5	{ yylval.num = SADB_X_AALG_MD5; return(ALG_AUTH); }
+keyed-sha1	{ yylval.num = SADB_X_AALG_SHA; return(ALG_AUTH); }
+hmac-sha2-256	{ yylval.num = SADB_X_AALG_SHA2_256; return(ALG_AUTH); }
+hmac-sha2-384	{ yylval.num = SADB_X_AALG_SHA2_384; return(ALG_AUTH); }
+hmac-sha2-512	{ yylval.num = SADB_X_AALG_SHA2_512; return(ALG_AUTH); }
+null		{ yylval.num = SADB_X_AALG_NULL; return(ALG_AUTH); }
 
 	/* encryption alogorithm */
-{hyphen}E	{ PREPROC; return(F_ENC); }
-des-cbc		{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
-3des-cbc	{ PREPROC; yylval.num = SADB_EALG_3DESCBC; return(ALG_ENC); }
-simple		{ PREPROC; yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
-blowfish-cbc	{ PREPROC; yylval.num = SADB_X_EALG_BLOWFISHCBC; return(ALG_ENC); }
-cast128-cbc	{ PREPROC; yylval.num = SADB_X_EALG_CAST128CBC; return(ALG_ENC); }
-des-deriv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
-des-32iv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
-rijndael-cbc	{ PREPROC; yylval.num = SADB_X_EALG_RIJNDAELCBC; return(ALG_ENC); }
+{hyphen}E	{ return(F_ENC); }
+des-cbc		{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
+3des-cbc	{ yylval.num = SADB_EALG_3DESCBC; return(ALG_ENC); }
+simple		{ yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
+blowfish-cbc	{ yylval.num = SADB_X_EALG_BLOWFISHCBC; return(ALG_ENC); }
+cast128-cbc	{ yylval.num = SADB_X_EALG_CAST128CBC; return(ALG_ENC); }
+des-deriv	{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
+des-32iv	{ yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
+twofish-cbc	{ yylval.num = SADB_X_EALG_TWOFISHCBC; return(ALG_ENC); }
+rijndael-cbc	{ yylval.num = SADB_X_EALG_RIJNDAELCBC; return(ALG_ENC); }
 
 	/* compression algorithms */
-{hyphen}C	{ PREPROC; return(F_COMP); }
-oui		{ PREPROC; yylval.num = SADB_X_CALG_OUI; return(ALG_COMP); }
-deflate		{ PREPROC; yylval.num = SADB_X_CALG_DEFLATE; return(ALG_COMP); }
-lzs		{ PREPROC; yylval.num = SADB_X_CALG_LZS; return(ALG_COMP); }
-{hyphen}R	{ PREPROC; return(F_RAWCPI); }
+{hyphen}C	{ return(F_COMP); }
+oui		{ yylval.num = SADB_X_CALG_OUI; return(ALG_COMP); }
+deflate		{ yylval.num = SADB_X_CALG_DEFLATE; return(ALG_COMP); }
+lzs		{ yylval.num = SADB_X_CALG_LZS; return(ALG_COMP); }
+{hyphen}R	{ return(F_RAWCPI); }
 
 	/* extension */
-{hyphen}m	{ PREPROC; return(F_MODE); }
-transport	{ PREPROC; yylval.num = IPSEC_MODE_TRANSPORT; return(MODE); }
-tunnel		{ PREPROC; yylval.num = IPSEC_MODE_TUNNEL; return(MODE); }
-{hyphen}u	{ PREPROC; return(F_REQID); }
-{hyphen}f	{ PREPROC; return(F_EXT); }
-random-pad	{ PREPROC; yylval.num = SADB_X_EXT_PRAND; return(EXTENSION); }
-seq-pad		{ PREPROC; yylval.num = SADB_X_EXT_PSEQ; return(EXTENSION); }
-zero-pad	{ PREPROC; yylval.num = SADB_X_EXT_PZERO; return(EXTENSION); }
-nocyclic-seq	{ PREPROC; return(NOCYCLICSEQ); }
-{hyphen}r	{ PREPROC; return(F_REPLAY); }
-{hyphen}lh	{ PREPROC; return(F_LIFETIME_HARD); }
-{hyphen}ls	{ PREPROC; return(F_LIFETIME_SOFT); }
-
-
-	/* upper layer protocols */
-icmp		{ PREPROC; yylval.num = IPPROTO_ICMP; return(UP_PROTO); }
-icmp6		{ PREPROC; yylval.num = IPPROTO_ICMPV6; return(UP_PROTO); }
-tcp		{ PREPROC; yylval.num = IPPROTO_TCP; return(UP_PROTO); }
-udp		{ PREPROC; yylval.num = IPPROTO_UDP; return(UP_PROTO); }
+{hyphen}m	{ return(F_MODE); }
+transport	{ yylval.num = IPSEC_MODE_TRANSPORT; return(MODE); }
+tunnel		{ yylval.num = IPSEC_MODE_TUNNEL; return(MODE); }
+{hyphen}u	{ return(F_REQID); }
+{hyphen}f	{ return(F_EXT); }
+random-pad	{ yylval.num = SADB_X_EXT_PRAND; return(EXTENSION); }
+seq-pad		{ yylval.num = SADB_X_EXT_PSEQ; return(EXTENSION); }
+zero-pad	{ yylval.num = SADB_X_EXT_PZERO; return(EXTENSION); }
+nocyclic-seq	{ return(NOCYCLICSEQ); }
+{hyphen}r	{ return(F_REPLAY); }
+{hyphen}lh	{ return(F_LIFETIME_HARD); }
+{hyphen}ls	{ return(F_LIFETIME_SOFT); }
 
 	/* ... */
-any		{ PREPROC; return(ANY); }
-{ws}		{ PREPROC; }
+any		{ return(ANY); }
+{ws}		{ }
 {nl}		{ lineno++; }
 {comment}
-{semi}		{ PREPROC; return(EOT); }
+{semi}		{ return(EOT); }
+
+	/* for address parameters: /prefix, [port] */
+{slash}		{ return SLASH; }
+{blcl}		{ return BLCL; }
+{elcl}		{ return ELCL; }
 
 	/* parameter */
 {decstring}	{
 			char *bp;
 
-			PREPROC;
-			yylval.num = strtoul(yytext, &bp, 10);
+			yylval.ulnum = strtoul(yytext, &bp, 10);
 			return(DECSTRING);
 		}
 
-{ipaddress}	{
-			PREPROC;
-
-			yylval.val.len = yyleng;
-			yylval.val.buf = strdup(yytext);
-
-			return(ADDRESS);
-		}
-
-{ipaddrmask}	{
-			PREPROC;
-			yytext++;
-			yylval.num = atoi(yytext);
-			return(PREFIX);
-		}
-
-{ipaddrport}	{
-			char *p = yytext;
-			PREPROC;
-			while (*++p != ']') ;
-			*p = NULL;
-			yytext++;
-			yylval.num = atoi(yytext);
-			return(PORT);
-		}
-
-{blcl}any{elcl}	{
-			PREPROC;
-			return(PORTANY);
-		}
-
 {hexstring}	{
-			int len = yyleng - 2; /* (str - "0x") */
-			PREPROC;
-			yylval.val.len = (len & 1) + (len / 2);
-			/* fixed string if length is odd. */
-			if (len & 1) {
-				yytext[1] = '0';
-				yylval.val.buf = strdup(yytext + 1);
-			} else
-				yylval.val.buf = strdup(yytext + 2);
+			yylval.val.buf = strdup(yytext + 2);
+			yylval.val.len = strlen(yylval.val.buf);
 
 			return(HEXSTRING);
 		}
 
 {quotedstring}	{
 			char *p = yytext;
-			PREPROC;
 			while (*++p != '"') ;
 			*p = NULL;
 			yytext++;
@@ -275,6 +233,12 @@ any		{ PREPROC; return(ANY); }
 			yylval.val.buf = strdup(yytext);
 
 			return(QUOTEDSTRING);
+		}
+
+[A-Za-z0-9:][A-Za-z0-9:%\.-]* {
+			yylval.val.len = yyleng;
+			yylval.val.buf = strdup(yytext);
+			return(STRING);
 		}
 
 .		{
