@@ -1,4 +1,4 @@
-/*	$NetBSD: pppstats.c,v 1.15 1997/03/12 20:18:41 christos Exp $	*/
+/*	$NetBSD: pppstats.c,v 1.16 1997/05/17 21:33:09 christos Exp $	*/
 
 /*
  * print PPP statistics:
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-static char rcsid[] = "Id: pppstats.c,v 1.18 1997/03/04 03:44:47 paulus Exp ";
+static char rcsid[] = "Id: pppstats.c,v 1.19 1997/04/30 06:00:27 paulus Exp ";
 #else
-static char rcsid[] = "$NetBSD: pppstats.c,v 1.15 1997/03/12 20:18:41 christos Exp $";
+static char rcsid[] = "$NetBSD: pppstats.c,v 1.16 1997/05/17 21:33:09 christos Exp $";
 #endif
 #endif
 
@@ -89,7 +89,6 @@ static void get_ppp_cstats __P((struct ppp_comp_stats *));
 static void intpr __P((void));
 
 int main __P((int, char *argv[]));
-
 
 static void
 usage()
@@ -204,7 +203,7 @@ strioctl(fd, cmd, ptr, ilen, olen)
     return 0;
 }
 
-void
+static void
 get_ppp_stats(curp)
     struct ppp_stats *curp;
 {
@@ -218,7 +217,7 @@ get_ppp_stats(curp)
     }
 }
 
-void
+static void
 get_ppp_cstats(csp)
     struct ppp_comp_stats *csp;
 {
