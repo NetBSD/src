@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.7 1997/11/05 07:15:42 thorpej Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.8 1998/08/12 07:19:09 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -89,6 +89,7 @@ struct dp8390_softc {
 #define DP8390_VENDOR_FARALLON	0x14	/* Farallon EtherMac II-TP */
 #define DP8390_VENDOR_FOCUS	0x15	/* FOCUS Enhancements EtherLAN */
 #define DP8390_VENDOR_KINETICS	0x16	/* Kinetics EtherPort SE/30 */
+#define DP8390_VENDOR_CABLETRON	0x17	/* Cabletron Ethernet */
 
 /*
  * Compile-time config flags
