@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *	$Id: st.c,v 1.16.2.9 1994/02/01 20:44:11 mycroft Exp $
+ *	$Id: st.c,v 1.16.2.10 1994/02/06 08:15:47 mycroft Exp $
  */
 
 /*
@@ -175,7 +175,7 @@ struct st_data {
 					 * additional sense data needed
 					 * for mode sense/select.
 					 */
-	struct buf *buf_queue;		/* the queue of pending IO operations */
+	struct buf buf_queue;		/* the queue of pending IO operations */
 	struct scsi_xfer scsi_xfer;	/* scsi xfer struct for this drive */
 	u_int xfer_block_wait;		/* is a process waiting? */
 };
@@ -290,7 +290,9 @@ stattach(parent, self, aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	st->buf_queue = 0;
+	st->buf_queue.b_active = 0;
+	st->buf_queue.b_actf = 0;
+	st->buf_queue.b_actb = &st->buf_queue.b_actf;
 	st->flags |= ST_INITIALIZED;
 }
 
@@ -825,7 +827,7 @@ void
 ststrategy(bp)
 	struct buf *bp;
 {
-	struct buf **dp;
+	struct buf *dp;
 	int unit;
 	int opri;
 	struct st_data *st;
@@ -868,12 +870,11 @@ ststrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	dp = &(st->buf_queue);
-	while (*dp) {
-		dp = &((*dp)->b_actf);
-	}
-	*dp = bp;
+	dp = &st->buf_queue;
 	bp->b_actf = NULL;
+	bp->b_actb = dp->b_actb;
+	*dp->b_actb = bp;
+	dp->b_actb = &bp->b_actf;
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -914,7 +915,7 @@ ststart(unit)
 {
 	struct st_data *st = stcd.cd_devs[unit];
 	struct scsi_link *sc_link = st->sc_link;
-	register struct buf *bp = 0;
+	register struct buf *bp, *dp;
 	struct scsi_rw_tape cmd;
 	u_int flags;
 
@@ -930,9 +931,15 @@ ststart(unit)
 			wakeup((caddr_t)sc_link);
 			return;
 		}
-		if ((bp = st->buf_queue) == NULL)
+
+		bp = st->buf_queue.b_actf;
+		if (!bp)
 			return;	/* no work to bother with */
-		st->buf_queue = bp->b_actf;
+		if (dp = bp->b_actf)
+			dp->b_actb = bp->b_actb;
+		else
+			st->buf_queue.b_actb = bp->b_actb;
+		*bp->b_actb = dp;
 
 		/*
 		 * if the device has been unmounted byt the user
