@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.14 2001/02/19 23:03:44 cgd Exp $	*/
+/*	$NetBSD: record.c,v 1.15 2001/05/02 12:49:42 minoura Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -123,9 +123,10 @@ main(argc, argv)
 			break;
 		case 'P':
 			decode_int(optarg, &precision);
-			if (precision != 8 && precision != 16 &&
-			    precision != 24 && precision != 32)
-				errx(1, "precision must be between 8, 16, 24 or 32");
+			if (precision != 4 && precision != 8 &&
+			    precision != 16 && precision != 24 &&
+			    precision != 32)
+				errx(1, "precision must be between 4, 8, 16, 24 or 32");
 			break;
 		case 'p':
 			len = strlen(optarg);
@@ -382,7 +383,7 @@ usage()
 	    "-e encoding\n\t"
 	    "-i header information\n\t"
 	    "-m monitor volume\n\t"
-	    "-P precision bits (8, 16, 24 or 32)\n\t"
+	    "-P precision bits (4, 8, 16, 24 or 32)\n\t"
 	    "-p input port\n\t"
 	    "-s sample rate\n\t"
 	    "-t recording time\n\t"
