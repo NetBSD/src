@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2003/06/29 22:28:48 fvdl Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2004/05/06 22:53:02 matt Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -10,6 +10,12 @@
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 #define	PT_GETVECREGS	(PT_FIRSTMACH + 5)
 #define	PT_SETVECREGS	(PT_FIRSTMACH + 6)
+
+#define	PT_MACHDEP_STRINGS				\
+	"PT_STEP",					\
+	"PT_GETREGS",		"PT_SETREGS",		\
+	"PT_GETFPREGS",		"PT_SETFPREGS",		\
+	"PT_GETVECREGS",	"PT_SETVECREGS",
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT
