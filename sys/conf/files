@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.511 2002/04/07 06:54:35 martin Exp $
+#	$NetBSD: files,v 1.512 2002/04/16 20:33:00 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -144,11 +144,6 @@ defflag	opt_ffs.h		FFS_EI
 defflag	opt_ntfs.h		NTFS_DEBUG
 defflag				VNODE_OP_NOINLINE
 
-# RAIDframe options
-#
-defflag				RAID_AUTOCONFIG
-defflag				RAID_DIAGNOSTIC
-
 # buffer cache size options
 #
 defparam opt_bufcache.h		BUFCACHE BUFPAGES
@@ -288,6 +283,11 @@ define	sysmon_wdog
 file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
 file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
 file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
+
+#
+# RAIDframe
+#
+include "dev/raidframe/files.raidframe"
 
 #
 # "Chipset" drivers.  These are the bus-independent routines which
@@ -862,7 +862,6 @@ file	dev/ic/daic.c			daic
 #
 defpseudo vnd:		disk
 defpseudo ccd:		disk
-defpseudo raid:		disk
 defpseudo md:		disk
 defpseudo vcoda
 defpseudo netsmb
@@ -976,66 +975,6 @@ file	dev/midisyn.c			midisyn
 file	dev/mm.c
 file	dev/mulaw.c			mulaw
 file	dev/radio.c			radio			needs-flag
-file	dev/raidframe/rf_acctrace.c		raid		needs-flag
-file	dev/raidframe/rf_alloclist.c		raid		needs-flag
-file	dev/raidframe/rf_aselect.c		raid		needs-flag
-file	dev/raidframe/rf_callback.c		raid		needs-flag
-file	dev/raidframe/rf_chaindecluster.c	raid		needs-flag
-file	dev/raidframe/rf_copyback.c		raid		needs-flag
-file	dev/raidframe/rf_cvscan.c		raid		needs-flag
-file	dev/raidframe/rf_dagdegrd.c		raid		needs-flag
-file	dev/raidframe/rf_dagdegwr.c		raid		needs-flag
-file	dev/raidframe/rf_dagffrd.c		raid		needs-flag
-file	dev/raidframe/rf_dagffwr.c		raid		needs-flag
-file	dev/raidframe/rf_dagfuncs.c		raid		needs-flag
-file	dev/raidframe/rf_dagutils.c		raid		needs-flag
-file	dev/raidframe/rf_debugMem.c		raid		needs-flag
-file	dev/raidframe/rf_debugprint.c		raid		needs-flag
-file	dev/raidframe/rf_decluster.c		raid		needs-flag
-file	dev/raidframe/rf_declusterPQ.c		raid		needs-flag
-file	dev/raidframe/rf_diskqueue.c		raid		needs-flag
-file	dev/raidframe/rf_disks.c		raid		needs-flag
-file	dev/raidframe/rf_driver.c		raid		needs-flag
-file	dev/raidframe/rf_engine.c		raid		needs-flag
-file	dev/raidframe/rf_evenodd.c		raid		needs-flag
-file	dev/raidframe/rf_evenodd_dagfuncs.c	raid		needs-flag
-file	dev/raidframe/rf_evenodd_dags.c		raid		needs-flag
-file	dev/raidframe/rf_fifo.c			raid		needs-flag
-file	dev/raidframe/rf_interdecluster.c	raid		needs-flag
-file	dev/raidframe/rf_invertq.c		raid		needs-flag
-file	dev/raidframe/rf_layout.c		raid		needs-flag
-file	dev/raidframe/rf_map.c			raid		needs-flag
-file	dev/raidframe/rf_mcpair.c		raid		needs-flag
-file	dev/raidframe/rf_memchunk.c		raid		needs-flag
-file	dev/raidframe/rf_netbsdkintf.c		raid		needs-flag
-file	dev/raidframe/rf_nwayxor.c		raid		needs-flag
-file	dev/raidframe/rf_options.c		raid		needs-flag
-file	dev/raidframe/rf_paritylog.c		raid		needs-flag
-file	dev/raidframe/rf_paritylogDiskMgr.c	raid		needs-flag
-file	dev/raidframe/rf_paritylogging.c	raid		needs-flag
-file	dev/raidframe/rf_parityloggingdags.c	raid		needs-flag
-file	dev/raidframe/rf_parityscan.c		raid		needs-flag
-file	dev/raidframe/rf_pq.c			raid		needs-flag
-file	dev/raidframe/rf_pqdeg.c		raid		needs-flag
-file	dev/raidframe/rf_pqdegdags.c		raid		needs-flag
-file	dev/raidframe/rf_psstatus.c		raid		needs-flag
-file	dev/raidframe/rf_raid0.c		raid		needs-flag
-file	dev/raidframe/rf_raid1.c		raid		needs-flag
-file	dev/raidframe/rf_raid4.c		raid		needs-flag
-file	dev/raidframe/rf_raid5.c		raid		needs-flag
-file	dev/raidframe/rf_raid5_rotatedspare.c	raid		needs-flag
-file	dev/raidframe/rf_reconbuffer.c		raid		needs-flag
-file	dev/raidframe/rf_reconmap.c		raid		needs-flag
-file	dev/raidframe/rf_reconstruct.c		raid		needs-flag
-file	dev/raidframe/rf_reconutil.c		raid		needs-flag
-file	dev/raidframe/rf_revent.c		raid		needs-flag
-file	dev/raidframe/rf_shutdown.c		raid		needs-flag
-file	dev/raidframe/rf_sstf.c			raid		needs-flag
-file	dev/raidframe/rf_states.c		raid		needs-flag
-file	dev/raidframe/rf_stripelocks.c		raid		needs-flag
-file	dev/raidframe/rf_strutils.c		raid		needs-flag
-file	dev/raidframe/rf_threadstuff.c		raid		needs-flag
-file	dev/raidframe/rf_utils.c		raid		needs-flag
 file	dev/rnd.c			rnd			needs-flag
 file	dev/rndpool.c			rnd			needs-flag
 file	dev/sequencer.c			sequencer		needs-flag
