@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.20 2000/06/06 01:33:15 sommerfeld Exp $	*/
+/*	$NetBSD: rnd.c,v 1.20.2.1 2000/07/02 23:32:02 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -178,7 +178,7 @@ rnd_counter()
 
 #ifdef __HAVE_CPU_COUNTER
 	if (cpu_hascounter())
-		return cpu_counter();
+		return (cpu_counter() & 0xffffffff);
 #endif
 	microtime(&tv);
 
