@@ -1,7 +1,7 @@
-#	$Id: Makefile,v 1.6 1993/11/11 01:01:21 jtc Exp $
+#	$Id: Makefile,v 1.7 1994/12/22 09:34:12 cgd Exp $
 
 PROG=		fortune
-MAN6=		fortune.0
+MAN=		fortune.6
 CFLAGS+=	-I${.CURDIR}/../strfile 
 LDADD+=		-lcompat
 DPADD+=		${LIBCOMPAT}
