@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.63 2003/08/22 20:20:09 jonathan Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.64 2003/08/22 20:29:01 jonathan Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.63 2003/08/22 20:20:09 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.64 2003/08/22 20:29:01 jonathan Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -170,7 +170,7 @@ ip6_output(m0, opt, ro, flags, im6o, in6pcb, ifpp)
 
 	/* for AH processing. stupid to have "socket" variable in IP layer... */
 	/* so = ipsec_getsocket(m); */
-	so = in6pcb->in6p_socket;
+	so = (in6pcb == NULL) ? NULL: in6pcb->in6p_socket;
 	(void)ipsec_setsocket(m, NULL);
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
