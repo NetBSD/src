@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.11 1997/07/20 05:20:40 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.12 1997/07/23 20:25:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -39,9 +39,9 @@
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
-"@(#) Copyright (c) 1996, 1997\n\
-	The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: ccdconfig.c,v 1.11 1997/07/20 05:20:40 thorpej Exp $");
+"@(#) Copyright (c) 1996, 1997\
+	The NetBSD Foundation, Inc.  All rights reserved.");
+__RCSID("$NetBSD: ccdconfig.c,v 1.12 1997/07/23 20:25:13 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
