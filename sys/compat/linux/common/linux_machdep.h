@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.4 2001/09/22 21:24:16 manu Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.5 2002/01/14 23:14:43 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@
 #include <compat/linux/arch/powerpc/linux_machdep.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_machdep.h>
+#elif defined(__arm__)
+#include <compat/linux/arch/arm/linux_machdep.h>
 #else
 #error Undefined linux_machdep.h machine type.
 #endif
