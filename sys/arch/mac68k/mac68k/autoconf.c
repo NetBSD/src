@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 1996/08/09 10:30:23 mrg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 1996/10/04 14:07:03 scottr Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -74,7 +74,7 @@
 struct device	*booted_device;
 int		booted_partition;
 
-struct device *parsedisk __P((char *, int, int, dev_t *));
+static struct device *parsedisk __P((char *, int, int, dev_t *));
 static struct device *getdisk __P((char *, int, int, dev_t *));
 static int findblkmajor __P((struct device *));
 static int getstr __P((char *, int));
@@ -171,12 +171,12 @@ getdisk(str, len, defpart, devp)
 				printf(" %s", dv->dv_xname);
 #endif
 		}
-		printf("\n");
+		printf(" halt\n");
 	}
 	return (dv);
 }
 
-struct device *
+static struct device *
 parsedisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
@@ -188,6 +188,10 @@ parsedisk(str, len, defpart, devp)
 
 	if (len == 0)
 		return (NULL);
+
+	if (len == 4 && !strcmp(str, "halt"))
+		boot(RB_HALT, NULL);
+
 	cp = str + len - 1;
 	c = *cp;
 	if (c >= 'a' && c <= ('a' + MAXPARTITIONS - 1)) {
@@ -264,17 +268,18 @@ setroot(void)
 	if (boothowto & RB_ASKNAME) {
 		for (;;) {
 			printf("root device");
-			if (bootdv != NULL)
-				printf(" (default %s%c)", bootdv->dv_xname,
-				    bootdv->dv_class == DV_DISK ? 'a' : ' ');
+			if (bootdv != NULL) {
+				printf(" (default %s", bootdv->dv_xname);
+				if (bootdv->dv_class == DV_DISK)
+					printf("a");
+				printf(")");
+			}
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
 				strcpy(buf, bootdv->dv_xname);
 				len = strlen(buf);
 			}
-			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT, NULL);
 			if (len > 0 && buf[len - 1] == '*') {
 				buf[--len] = '\0';
 				dv = getdisk(buf, len, 1, &nrootdev);
@@ -301,9 +306,10 @@ setroot(void)
 		}
 		for (;;) {
 			printf("swap device");
-			if (rootdv != NULL)
-				printf(" (default %s%c)", rootdv->dv_xname,
-				    rootdv->dv_class == DV_DISK ? 'b' : ' ');
+			printf(" (default %s", rootdv->dv_xname);
+			if (rootdv->dv_class == DV_DISK)
+				printf("b");
+			printf(")");
 			printf(": ");
 			len = getstr(buf, sizeof(buf));
 			if (len == 0) {
@@ -324,8 +330,6 @@ setroot(void)
 				swapdv = rootdv;
 				break;
 			}
-			if (len == 4 && !strcmp(buf, "halt"))
-				boot(RB_HALT, NULL);
 			dv = getdisk(buf, len, 1, &nswapdev);
 			if (dv) {
 				if (dv->dv_class == DV_IFNET)
@@ -369,7 +373,7 @@ gotswap:
 	} else {
 
 		/*
-		 * `root DEV swap DEV': honour rootdev/swdevt.
+		 * `root DEV swap DEV': honor rootdev/swdevt.
 		 * rootdev/swdevt/mountroot already properly set.
 		 */
 		return;
