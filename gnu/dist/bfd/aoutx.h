@@ -228,17 +228,14 @@ HOWTO(10,	       0,  2,   32, false, 0, complain_overflow_bitfield,0,"BASE32",	f
 { -1 },
 { -1 },
 { -1 },
+  HOWTO(14,	       0,  2,	 0, true,  0, complain_overflow_bitfield,0,"GLOB_DAT",   false,0xffffffff,0xffffffff, false),
 { -1 },
+  HOWTO(16,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"JMP_TABLE",  false,         0,0x00000000, false),
+{ -1 }, { -1 }, { -1 }, { -1 }, { -1 },
+  HOWTO(22,	       0,  2,	 0, true,  0, complain_overflow_bitfield,0,"JMP_SLOT",   false,0xffffffff,0xffffffff, false),
+{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },
+  HOWTO(30,	       0,  2,	 0, true,  0, complain_overflow_bitfield,0,"JMP_TABLE",  false,0xffffffff,0xffffffff, false),
 { -1 },
-  HOWTO(16,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"JMP_TABLE", false,         0,0x00000000, false),
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 },
-{ -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 }, { -1 },
   HOWTO(32,	       0,  2,	 0, false, 0, complain_overflow_bitfield,0,"RELATIVE",  false,         0,0x00000000, false),
 { -1 },
 { -1 },
@@ -2315,6 +2312,13 @@ NAME(aout,swap_std_reloc_in) (abfd, bytes, cache_ptr, symbols, symcount)
   if (r_baserel)
     r_extern = 1;
 
+  /* jmptable relocs are always against the symbol table,
+     regardless of the setting of r_extern.  r_extern just reflects
+     whether the type of the symbol the reloc is against.  */
+  if (r_jmptable)
+    r_extern = 1;
+
+  BFD_ASSERT (!r_extern || r_index <= symcount);
   if (r_extern && r_index > symcount)
     {
       /* We could arrange to return an error, but it might be useful
