@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $ */
+/* $NetBSD: wskbd.c,v 1.43 2001/09/26 15:13:23 matthias Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.42 2001/08/05 11:26:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.43 2001/09/26 15:13:23 matthias Exp $");
 
 /*
  * Copyright (c) 1992, 1993
@@ -644,8 +644,9 @@ wskbd_rawinput(dev, buf, len)
 	struct wskbd_softc *sc = (struct wskbd_softc *)dev;
 	int i;
 
-	for (i = 0; i < len; i++)
-		wsdisplay_kbdinput(sc->sc_displaydv, buf[i]);
+	if (sc->sc_displaydv != NULL)
+		for (i = 0; i < len; i++)
+			wsdisplay_kbdinput(sc->sc_displaydv, buf[i]);
 	/* this is KS_GROUP_Ascii */
 #endif
 }
