@@ -1,4 +1,4 @@
-/*	$NetBSD: vm86.c,v 1.31 2003/01/17 23:10:32 thorpej Exp $	*/
+/*	$NetBSD: vm86.c,v 1.32 2003/09/06 22:08:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.31 2003/01/17 23:10:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm86.c,v 1.32 2003/09/06 22:08:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,14 @@ vm86_return(l, retval)
 		    p->p_pid);
 #endif
 		sigexit(l, SIGILL);
+	} else {
+		ksiginfo_t ksi;
+
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGURG;
+		ksi.ksi_trap = retval;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 	}
-	
-	(*p->p_emul->e_trapsignal)(l, SIGURG, retval);
 }
 
 #define	CLI	0xFA
@@ -353,8 +358,16 @@ vm86_gpfault(l, type)
 		goto bad;
 	}
 
-	if (trace && tf->tf_eflags & PSL_VM)
-		(*p->p_emul->e_trapsignal)(l, SIGTRAP, T_TRCTRAP);
+	if (trace && tf->tf_eflags & PSL_VM) {
+		ksiginfo_t ksi;
+
+		memset(&ksi, 0, sizeof(ksi));
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = T_TRCTRAP;
+		ksi.ksi_addr = (void *)tf->tf_eip;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
+	}
 	return;
 
 bad:
