@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2000/12/10 14:15:04 fvdl Exp $
+#	$NetBSD: Makefile,v 1.9 2000/12/12 17:56:21 jdolecek Exp $
 
 .include "../Makefile.inc"
 
@@ -23,7 +23,7 @@ KMOD=	compat_linux
 # common source
 SRCS+=	lkminit_emul.c
 SRCS+=	linux_cdrom.c linux_errno.c linux_exec.c linux_file.c \
-	linux_ioctl.c linux_ipc.c linux_misc.c linux_olduname.c linux_pipe.c \
+	linux_ioctl.c linux_ipc.c linux_misc.c linux_pipe.c \
 	linux_sched.c linux_sigaction.c linux_sigarray.c linux_signal.c \
 	linux_socket.c linux_termios.c linux_uselib.c
 SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c
@@ -42,7 +42,7 @@ SRCS+=	compat_util.c
 .if ${MACHINE} == "i386"
 SRCS+=	linux_break.c linux_llseek.c linux_misc_notalpha.c linux_oldolduname.c \
 	linux_oldselect.c linux_sig_notalpha.c linux_socketcall.c \
-	linux_ipccall.c linux_oldmmap.c
+	linux_ipccall.c linux_oldmmap.c linux_olduname.c
 SRCS+=	linux_ptrace.c linux_syscall.c
 SRCS+=	linux_sigcode.s
 .endif
@@ -56,6 +56,7 @@ SRCS+=	linux_sig_machdep.S
 
 .if ${MACHINE_ARCH} == "alpha"
 CPPFLAGS+=	-Dalpha
+SRCS+=	linux_olduname.c
 SRCS+=	linux_sigcode.s
 .endif
 
