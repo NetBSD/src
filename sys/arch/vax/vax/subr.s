@@ -1,4 +1,4 @@
-/*      $NetBSD: subr.s,v 1.9 1995/05/05 10:47:42 ragge Exp $     */
+/*      $NetBSD: subr.s,v 1.10 1995/06/05 16:27:13 ragge Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -54,6 +54,7 @@ _sigcode:	pushr	$0x3f
 		popr	$0x3f
 		chmk	$SYS_sigreturn
 		halt	
+		.align	2
 _esigcode:
 
 		.globl	_subyte

@@ -1,4 +1,4 @@
-/*      $NetBSD: pmap.c,v 1.12 1995/05/06 00:08:31 ragge Exp $     */
+/*      $NetBSD: pmap.c,v 1.13 1995/06/05 16:27:07 ragge Exp $     */
 #define DEBUG
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -415,7 +415,8 @@ pmap_bootstrap_alloc(size)
 
 vm_offset_t
 pmap_map(virtuell, pstart, pend, prot)
-	vm_offset_t	virtuell, pstart, pend;
+	vm_offset_t virtuell, pstart, pend;
+	int prot;
 {
 	vm_offset_t count;
 	int *pentry;
@@ -436,7 +437,10 @@ if(startpmapdebug)printf("pmap_map: virt %x, pstart %x, pend %x\n",virtuell, pst
 }
 
 vm_offset_t 
-pmap_extract(pmap_t pmap, vm_offset_t va) {
+pmap_extract(pmap, va)
+	pmap_t pmap;
+	vm_offset_t va;
+{
 
 	int	*pte, nypte;
 #ifdef DEBUG
@@ -458,7 +462,7 @@ pmap_protect(pmap, start, end, prot)
 	vm_offset_t     end;
 	vm_prot_t       prot;
 {
-  int pte, *patch,s;
+	int pte, *patch, s;
 
 #ifdef DEBUG
 if(startpmapdebug) printf("pmap_protect: pmap %x, start %x, end %x, prot %x\n",

@@ -1,4 +1,4 @@
-/*      $NetBSD: vm_machdep.c,v 1.13 1995/05/07 16:41:28 ragge Exp $       */
+/*      $NetBSD: vm_machdep.c,v 1.14 1995/06/05 16:27:27 ragge Exp $       */
 
 #undef SWDEBUG
 /*
@@ -81,6 +81,8 @@ pagemove(from, to, size)
  * cpu_fork() copies parent process trapframe directly into child PCB
  * so that when we swtch() to the child process it will go directly
  * back to user mode without any need to jump back through kernel.
+ * We also take away mapping for the second page after pcb, so that
+ * we get something like a "red zone".
  * No need for either double-map kernel stack or relocate it when
  * forking.
  */
@@ -91,6 +93,7 @@ cpu_fork(p1, p2)
 	struct pcb *nyproc;
 	struct trapframe *tf;
 	struct pmap *pmap, *opmap;
+	u_int *p2pte;
 	extern vm_map_t pte_map;
 
 	nyproc = &p2->p_addr->u_pcb;
@@ -98,6 +101,12 @@ cpu_fork(p1, p2)
 	opmap = &p1->p_vmspace->vm_pmap;
 	pmap = &p2->p_vmspace->vm_pmap;
 	pmap->pm_pcb = nyproc;
+
+#ifdef notyet
+	/* Mark page invalid */
+	p2pte = kvtopte((u_int *)p2->p_addr + 2 * NBPG);
+	*p2pte = 0; 
+#endif
 
 #ifdef notyet
 	/* Set up internal defs in PCB, and alloc PTEs. */
@@ -306,7 +315,6 @@ cpu_exec_aout_makecmds(p, epp)
  * Compatibility with reno programs.
  */
 	ep=epp->ep_hdr;
-
 	switch (ep->a_midmag) {
 	case 0x10b: /* ZMAGIC in 4.3BSD Reno programs */
 		error = reno_zmagic(p, epp);
@@ -341,7 +349,7 @@ reno_zmagic(p, epp)
 {
 	struct exec *execp = epp->ep_hdr;
 
-	epp->ep_taddr = USRTEXT;
+	epp->ep_taddr = 0;
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
@@ -406,7 +414,6 @@ suword(ptr,val)
  * Dump the machine specific header information at the start of a core dump.
  * First put all regs in PCB for debugging purposes. This is not an good
  * way to do this, but good for my purposes so far.
- * XXX - registers r6-r11 are lost in coredump!
  */
 int
 cpu_coredump(p, vp, cred, chdr)
@@ -427,6 +434,7 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_cpusize = sizeof(struct md_coredump);
 
 	bcopy(tf, &state, sizeof(struct md_coredump));
+	state.md_tf.code = mfpr(PR_USP); /* XXX */
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_VAX, CORE_CPU);
 	cseg.c_addr = 0;
@@ -462,4 +470,34 @@ copyin(from, to, len)
 	void *addr=&curproc->p_addr->u_pcb.iftrap;
 
 	return locopyin(from, to, len, addr);
+}
+
+/*
+ * cpu_swapin() is called just before a process shall be swapped in.
+ * Kernel stack and pcb must be mapped when we swtch() to this new
+ * process, to guarantee that we frob all pages here to ensure that
+ * they actually are in-core. Kernel stack red zone is also updated
+ * here.
+ */
+void
+cpu_swapin(p)
+	struct proc *p;
+{
+	u_int uarea, i, *j, rv;
+
+	uarea = (u_int)p->p_addr;
+
+	for(i = uarea;i < uarea + USPACE;i += PAGE_SIZE) {
+		j = (u_int *)kvtopte(i);
+		if ((*j & PG_V) == 0) {
+			rv = vm_fault(kernel_map, i,
+			    VM_PROT_WRITE|VM_PROT_READ, FALSE);
+			if (rv != KERN_SUCCESS)
+				panic("cpu_swapin: rv %d",rv);
+		}
+	}
+#ifdef notyet
+	j = (u_int *)kvtopte(uarea + 2 * NBPG);
+	*j = 0; /* Set kernel stack red zone */
+#endif
 }
