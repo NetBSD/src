@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.54 2000/03/06 21:03:46 thorpej Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.55 2000/04/12 10:36:43 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -106,7 +106,6 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/in6_ifattach.h>
 #endif
 
 #ifdef NS
@@ -780,9 +779,6 @@ ether_ifattach(ifp, lla)
 	}
 	LIST_INIT(&((struct ethercom *)ifp)->ec_multiaddrs);
 	ifp->if_broadcastaddr = etherbroadcastaddr;
-#ifdef INET6
-	in6_ifattach_getifid(ifp);
-#endif
 }
 
 void
