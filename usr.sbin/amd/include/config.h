@@ -496,8 +496,11 @@
 /* Define if have file maps (everyone should have it!) */
 #define HAVE_MAP_FILE 1
 
+#ifdef notdef
+/* set by a command line switch */
 /* Define if have HESIOD maps */
 #define HAVE_MAP_HESIOD 1
+#endif
 
 /* Define if have LDAP maps */
 /* #undef HAVE_MAP_LDAP */
@@ -505,8 +508,11 @@
 /* Define if have NDBM maps */
 #define HAVE_MAP_NDBM 1
 
+#ifdef notdef
+/* set by a command line switch */
 /* Define if have NIS maps */
 #define HAVE_MAP_NIS 1
+#endif
 
 /* Define if have NIS+ maps */
 /* #undef HAVE_MAP_NISPLUS */
