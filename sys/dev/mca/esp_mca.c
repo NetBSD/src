@@ -1,12 +1,11 @@
-/*	$NetBSD: esp_mca.c,v 1.2 2001/12/04 20:47:58 jdolecek Exp $	*/
+/*	$NetBSD: esp_mca.c,v 1.3 2001/12/04 20:51:23 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Charles M. Hannum, Jason R. Thorpe of the Numerical Aerospace
- * Simulation Facility, NASA Ames Research Center and Jaromir Dolecek.
+ * by Jaromir Dolecek <jdolecek@NetBSD.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
