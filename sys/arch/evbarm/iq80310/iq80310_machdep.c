@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.29 2002/02/22 17:23:13 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.30 2002/02/23 05:55:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -789,6 +789,15 @@ initarm(void *arg)
 	printf("switching to new L1 page table  @%#lx...", kernel_l1pt.pv_pa);
 #endif
 	setttb(kernel_l1pt.pv_pa);
+	cpu_tlb_flushID();
+	{ u_int tmp;
+	__asm __volatile("mrc p15, 0, %0, c1, c0, 0"
+		: "=r" (tmp));
+	tmp |= CPU_CONTROL_MMU_ENABLE;
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 0"
+		:
+		: "r" (tmp));
+	}
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done!\n");
