@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.93 2001/10/04 18:58:04 eeh Exp $
+#       $NetBSD: Makefile,v 1.94 2001/10/22 03:34:39 gmcgarry Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -11,14 +11,17 @@ MAN=	access.9 altq.9 arp.9 audio.9 autoconf.9 bitmask_snprintf.9 \
 	extent.9 fetch.9 fork1.9 hardclock.9 humanize_number.9 hz.9 \
 	in4_cksum.9 inittodr.9 intro.9 ioasic.9 ioctl.9 isa.9 isapnp.9 \
 	kprintf.9 kthread.9 linedisc.9 lock.9 log.9 malloc.9 mbuf.9 \
-	memcmp.9 memcpy.9 memmove.9 memset.9 \
-	microtime.9 panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	mca.9 memcmp.9 memcpy.9 memmove.9 memset.9 \
+	microtime.9 namecache.9 namei.9 \
+	panic.9 pci.9 pci_configure_bus.9 pci_intr.9 \
 	pcmcia.9 pfil.9 physio.9 \
 	pmap.9 pool.9 powerhook_establish.9 ppsratecheck.9 properties.9 \
-	psignal.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
+	psignal.9 rasops.9 ratecheck.9 resettodr.9 rnd.9 rt_timer.9 \
 	scsipi.9 setrunqueue.9 shutdownhook_establish.9 sleep.9 softintr.9 \
-	spl.9 store.9 time.9 todr.9 uiomove.9 ucom.9 vme.9 \
-	usbdi.9 uvm.9 wdc.9
+	spl.9 store.9 tc.9 time.9 todr.9 uiomove.9 ucom.9 \
+	vattr.9 vfs.9 vfsops.9 vme.9 vnode.9 vnodeops.9 vnsubr.9 \
+	usbdi.9 uvm.9 wdc.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9
+
 MLINKS+=arp.9 arp_ifinit.9 arp.9 arpresolve.9 arp.9 arpintr.9
 MLINKS+=access.9 kernacc.9 access.9 useracc.9
 MLINKS+=autoconf.9 config_search.9 \
@@ -176,6 +179,20 @@ MLINKS+=mbuf.9 m_get.9 mbuf.9 m_getclr.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 M_ALIGN.9 mbuf.9 MH_ALIGN.9 mbuf.9 M_LEADINGSPACE.9 \
 	mbuf.9 M_TRAILINGSPACE.9 mbuf.9 M_PREPEND.9 mbuf.9 MCHTYPE.9 \
 	mbuf.9 MEXTREMOVE.9 mbuf.9 MFREE.9
+MLINKS+=mca.9 mca_intr_establish.9 \
+	mca.9 mca_intr_disestablish.9 \
+	mca.9 mca_intr_evcnt.9 \
+	mca.9 mca_conf_read.9 \
+	mca.9 mca_conf_write.9
+MLINKS+=namecache.9 cache_lookup.9 \
+	namecache.9 cache_revlookup.9 \
+	namecache.9 cache_enter.9 \
+	namecache.9 cache_purge.9 \
+	namecache.9 cache_purgevfs.9 \
+	namecache.9 namecache_print.9
+MLINKS+=namei.9 lookup.9 \
+	namei.9 relookup.9 \
+	namei.9 NDINIT.9
 MLINKS+=pci.9 pci_conf_read.9 \
 	pci.9 pci_conf_write.9 \
 	pci.9 pci_conf_print.9 \
@@ -216,15 +233,11 @@ MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_cis_read_4.9 \
 	pcmcia.9 pcmcia_cis_read_n.9 \
 	pcmcia.9 pcmcia_scan_cis.9
+MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_init.9 pool.9 pool_put.9 pool.9 pool_prime.9 \
 	pool.9 pool_sethiwat.9 pool.9 pool_setlowat.9
-MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
-	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
-MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
-	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
-	rt_timer.9 rt_timer_remove_all.9
-MLINKS+=pfil.9 pfil_hook_get.9 pfil.9 pfil_add_hook.9 pfil.9 pfil_remove_hook.9
+MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=properties.9 propdb_create.9 \
 	properties.9 propdb_destroy.9 \
 	properties.9 prop_copy.9 \
@@ -233,8 +246,14 @@ MLINKS+=properties.9 propdb_create.9 \
 	properties.9 prop_list.9 \
 	properties.9 prop_objs.9 \
 	properties.9 prop_set.9
-MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
+MLINKS+=rasops.9 rasops_init.9 \
+	rasops.9 rasops_reconfig.9
+MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
+	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
+MLINKS+=rt_timer.9 rt_timer_queue_create.9 rt_timer.9 rt_timer_queue_change.9 \
+	rt_timer.9 rt_timer_queue_destroy.9 rt_timer.9 rt_timer_add.9 \
+	rt_timer.9 rt_timer_remove_all.9
 MLINKS+=setrunqueue.9 remrunqueue.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=sleep.9 wakeup.9 sleep.9 tsleep.9 sleep.9 ltsleep.9
@@ -248,6 +267,15 @@ MLINKS+=spl.9 spl0.9 spl.9 splbio.9 spl.9 splclock.9 spl.9 splhigh.9 \
 MLINKS+=store.9 subyte.9 store.9 suibyte.9 store.9 susword.9 \
 	store.9 suswintr.9 store.9 suword.9 store.9 suiword.9
 MLINKS+=time.9 boottime.9 time.9 mono_time.9 time.9 runtime.9
+MLINKS+=tc.9 tc_intr_establish.9 \
+	tc.9 tc_intr_disestablish.9 \
+	tc.9 tc_intr_evcnt.9 \
+	tc.9 tc_mb.9 \
+	tc.9 tc_wmb.9 \
+	tc.9 tc_syncbus.9 \
+	tc.9 tc_badaddr.9 \
+	tc.9 TC_DENSE_TO_SPARSE.9 \
+	tc.9 TC_PHYS_TO_UNCACHED.9
 MLINKS+=todr.9 todr_gettime.9 todr.9 todr_settime.9 \
 	todr.9 todr_getcal.9 todr.9 todr_setcal.9 \
 	todr.9 clock_ymdhms_to_secs.9 todr.9 clock_secs_to_ymdhms.9
@@ -285,7 +313,134 @@ MLINKS+=vme.9 vme_probe.9 \
 	vme.9 vme_dmamem_free.9 \
 	vme.9 vme_space_alloc.9 \
 	vme.9 vme_space_free.9 \
-	vme.9 vme_space_get.9 \
+	vme.9 vme_space_get.9
+MLINKS+=vattr.9 vattr_null.9 \
+	vattr.9 VATTR_NULL.9
+MLINKS+=vfsops.9 vfs_rootmountalloc.9 \
+	vfsops.9 vfs_export_lookup.9 \
+	vfsops.9 vfs_getnewfsid.9 \
+	vfsops.9 VFS_MOUNT.9 \
+	vfsops.9 VFS_START.9 \
+	vfsops.9 VFS_UNMOUNT.9 \
+	vfsops.9 VFS_ROOT.9 \
+	vfsops.9 VFS_QUOTACTL.9 \
+	vfsops.9 VFS_STATFS.9 \
+	vfsops.9 VFS_SYNC.9 \
+	vfsops.9 VFS_VGET.9 \
+	vfsops.9 VFS_FHTOVP.9 \
+	vfsops.9 VFS_VPTOFH.9 \
+	vfsops.9 VFS_CHECKEXP.9
+MLINKS+=vnode.9 vcount.9 \
+	vnode.9 vref.9 \
+	vnode.9 VREF.9 \
+	vnode.9 vrele.9 \
+	vnode.9 vget.9 \
+	vnode.9 vput.9 \
+	vnode.9 vhold.9 \
+	vnode.9 VHOLD.9 \
+	vnode.9 holdrele.9 \
+	vnode.9 HOLDRELE.9 \
+	vnode.9 getnewvnode.9 \
+	vnode.9 ungetnewvnode.9 \
+	vnode.9 vrecycle.9 \
+	vnode.9 vgone.9 \
+	vnode.9 vflush.9 \
+	vnode.9 vaccess.9 \
+	vnode.9 checkalias.9 \
+	vnode.9 bdevvp.9 \
+	vnode.9 cdevvp.9 \
+	vnode.9 vfinddev.9 \
+	vnode.9 vdevgone.9 \
+	vnode.9 vwakeup.9 \
+	vnode.9 vflushbuf.9 \
+	vnode.9 vinvalbuf.9 \
+	vnode.9 vtruncbuf.9 \
+	vnode.9 vprint.9
+MLINKS+=vnodeops.9 VOP_LOOKUP.9 \
+	vnodeops.9 VOP_CREATE.9 \
+	vnodeops.9 VOP_MKNOD.9 \
+	vnodeops.9 VOP_OPEN.9 \
+	vnodeops.9 VOP_CLOSE.9 \
+	vnodeops.9 VOP_ACCESS.9 \
+	vnodeops.9 VOP_GETATTR.9 \
+	vnodeops.9 VOP_SETATTR.9 \
+	vnodeops.9 VOP_READ.9 \
+	vnodeops.9 VOP_WRITE.9 \
+	vnodeops.9 VOP_IOCTL.9 \
+	vnodeops.9 VOP_FNCTL.9 \
+	vnodeops.9 VOP_POLL.9 \
+	vnodeops.9 VOP_REVOKE.9 \
+	vnodeops.9 VOP_MMAP.9 \
+	vnodeops.9 VOP_FSYNC.9 \
+	vnodeops.9 VOP_SEEK.9 \
+	vnodeops.9 VOP_REMOVE.9 \
+	vnodeops.9 VOP_LINK.9 \
+	vnodeops.9 VOP_RENAME.9 \
+	vnodeops.9 VOP_MKDIR.9 \
+	vnodeops.9 VOP_RMDIR.9 \
+	vnodeops.9 VOP_SYMLINK.9 \
+	vnodeops.9 VOP_READDIR.9 \
+	vnodeops.9 VOP_READLINK.9 \
+	vnodeops.9 VOP_ABORTOP.9 \
+	vnodeops.9 VOP_INACTIVE.9 \
+	vnodeops.9 VOP_RECLAIM.9 \
+	vnodeops.9 VOP_LOCK.9 \
+	vnodeops.9 VOP_UNLOCK.9 \
+	vnodeops.9 VOP_ISLOCKED.9 \
+	vnodeops.9 VOP_BMAP.9 \
+	vnodeops.9 VOP_PRINT.9 \
+	vnodeops.9 VOP_PATHCONF.9 \
+	vnodeops.9 VOP_ADVLOCK.9 \
+	vnodeops.9 VOP_BLKATOFF.9 \
+	vnodeops.9 VOP_VALLOC.9 \
+	vnodeops.9 VOP_BALLOC.9 \
+	vnodeops.9 VOP_REALLOCBLKS.9 \
+	vnodeops.9 VOP_VFREE.9 \
+	vnodeops.9 VOP_TRUNCATE.9 \
+	vnodeops.9 VOP_UPDATE.9 \
+	vnodeops.9 VOP_LEASE.9 \
+	vnodeops.9 VOP_WHITEOUT.9 \
+	vnodeops.9 VOP_PUTPAGES.9 \
+	vnodeops.9 VOP_STRATEGY.9 \
+	vnodeops.9 VOP_BWRITE.9
+MLINKS+=vnsubr.9 vn_bwrite.9 \
+	vnsubr.9 vn_close.9 \
+	vnsubr.9 vn_closefile.9 \
+	vnsubr.9 vn_default_error.9 \
+	vnsubr.9 vn_fnctl.9 \
+	vnsubr.9 vn_ioctl.9 \
+	vnsubr.9 vn_isunder.9 \
+	vnsubr.9 vn_lock.9 \
+	vnsubr.9 vn_marktext.9 \
+	vnsubr.9 vn_setrecurse.9 \
+	vnsubr.9 vn_restorerecurse.9 \
+	vnsubr.9 vn_open.9 \
+	vnsubr.9 vn_read.9 \
+	vnsubr.9 vn_poll.9 \
+	vnsubr.9 vn_stat.9 \
+	vnsubr.9 vn_write.9 \
+	vnsubr.9 vn_writechk.9
+MLINKS+=wsdisplay.9 wsdisplay_switchtoconsole.9 \
+	wsdisplay.9 wsdisplay_cnattach.9 \
+	wsdisplay.9 wsdisplaydevprint.9 \
+	wsdisplay.9 wsemuldisplaydevprint.9
+MLINKS+=wsfont.9 wsfont_init.9 \
+	wsfont.9 wsfont_matches.9 \
+	wsfont.9 wsfont_find.9 \
+	wsfont.9 wsfont_add.9 \
+	wsfont.9 wsfont_remove.9 \
+	wsfont.9 wsfont_enum.9 \
+	wsfont.9 wsfont_lock.9 \
+	wsfont.9 wsfont_unlock.9 \
+	wsfont.9 wsfont_getflg.9 \
+	wsfont.9 wsfont_map_unichar.9
+MLINKS+=wskbd.9 wskbd_input.9 \
+	wskbd.9 wskbd_rawinput.9 \
+	wskbd.9 wskbd_cnattach.9 \
+	wskbd.9 wskbd_cndetach.9 \
+	wskbd.9 wskbddevprint.9
+MLINKS+=wsmouse.9 wsmouse_input.9 \
+	wsmouse.9 wsmousedevprint.9
 
 SUBDIR= man9.i386 man9.sun3
 
