@@ -48,6 +48,7 @@ static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
+#include <sys/sysctl.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -76,17 +77,30 @@ struct vmstate {
 	int pmap_stod[BTSIZE];              /* dense to sparse */
 };
 
-static int cputyp;
+static int cputyp = -1;
 
 static int pgshift, nptesg;
 
+#define VA_VPG(va)	(cputyp==CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
+
 static void
-getpgshift(kd)
+_kvm_mustinit(kd)
 	kvm_t *kd;
 {
+	if (cputyp != -1)
+		return;
 	for (pgshift = 12; (1 << pgshift) != kd->nbpg; pgshift++)
 		;
 	nptesg = NBPSG / kd->nbpg;
+
+#if 1
+	if (cputyp == -1) {
+		if (kd->nbpg == 8192)
+			cputyp = CPU_SUN4;
+		else
+			cputyp = CPU_SUN4C;
+	}
+#endif
 }
 
 void
@@ -97,6 +111,7 @@ _kvm_freevtop(kd)
 		if (kd->vmst->pmeg != 0)
 			free(kd->vmst->pmeg);
 		free(kd->vmst);
+		kd->vmst  = 0;
 	}
 }
 
@@ -108,19 +123,22 @@ _kvm_initvtop(kd)
 	register int off;
 	register struct vmstate *vm;
 	struct stat st;
-	struct nlist nlist[3];
+	struct nlist nlist[2];
 
-	if (pgshift == 0)
-		getpgshift(kd);
+	_kvm_mustinit(kd);
 
-	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
-	if (vm == 0)
-		return (-1);
-	vm->pmeg = (int *)_kvm_malloc(kd, NPMEG * nptesg * sizeof(int));
-	if (vm->pmeg == 0)
-		return (-1);
-
-	kd->vmst = vm;
+	if (kd->vmst == 0) {
+		kd->vmst = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
+		if (kd->vmst == 0)
+			return (-1);
+		kd->vmst->pmeg = (int *)_kvm_malloc(kd,
+		    NPMEG * nptesg * sizeof(int));
+		if (kd->vmst->pmeg == 0) {
+			free(kd->vmst);
+			kd->vmst = 0;
+			return (-1);
+		}
+	}
 
 	if (fstat(kd->pmfd, &st) < 0)
 		return (-1);
@@ -158,28 +176,18 @@ _kvm_initvtop(kd)
 	 * them is if we do a kvm_getprocs() on a dead kernel, which is
 	 * not too common.
 	 */
-	nlist[0].n_name = "_cputyp";
-	nlist[1].n_name = "_pmap_stod";
-	nlist[2].n_name = 0;
+	nlist[0].n_name = "_pmap_stod";
+	nlist[1].n_name = 0;
 	(void)kvm_nlist(kd, nlist);
-	if (nlist[0].n_value == 0) {
-		_kvm_err(kd, kd->program, "cputyp: no such symbol");
-		return (-1);
-	}
-	if (kvm_read(kd, (u_long)nlist[0].n_value, 
-	    (char *)&cputyp, sizeof(cputyp)) != sizeof(cputyp)) {
-		_kvm_err(kd, kd->program, "cannot read cputyp");
-		return (-1);
-	}
 
 	/*
 	 * a kernel compiled only for the sun4 will not contain the symbol
-	 * map_stod. Instead, we are happy to use the identity map
+	 * pmap_stod. Instead, we are happy to use the identity map
 	 * initialized earlier.
 	 * If we are not a sun4, the lack of this symbol is fatal.
 	 */
-	if (nlist[1].n_value != 0) {
-		if (kvm_read(kd, (u_long)nlist[1].n_value, 
+	if (nlist[0].n_value != 0) {
+		if (kvm_read(kd, (u_long)nlist[0].n_value, 
 		    (char *)vm->pmap_stod, sizeof(vm->pmap_stod))
 		    != sizeof(vm->pmap_stod)) {
 			_kvm_err(kd, kd->program, "cannot read pmap_stod");
@@ -212,8 +220,7 @@ _kvm_uvatop(kd, p, va, pa)
 	register struct vmspace *vms = p->p_vmspace;
 	struct usegmap *usp;
 
-	if (pgshift == 0)
-		getpgshift(kd);
+	_kvm_mustinit(kd);
 
 	if ((u_long)vms < KERNBASE) {
 		_kvm_err(kd, kd->program, "_kvm_uvatop: corrupt proc");
@@ -270,8 +277,7 @@ _kvm_kvatop(kd, va, pa)
 	register int pte;
 	register int off;
 
-	if (pgshift == 0)
-		getpgshift(kd);
+	_kvm_mustinit(kd);
 
 	if (va >= KERNBASE) {
 		vm = kd->vmst;
@@ -288,3 +294,18 @@ _kvm_kvatop(kd, va, pa)
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
+
+#if 0
+static int
+getcputyp()
+{
+	int mib[2];
+	size_t size;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_CLASS;
+	size = sizeof cputyp;
+	if (sysctl(mib, 2, &cputyp, &size, NULL, 0) == -1)
+		return (-1);
+}
+#endif
