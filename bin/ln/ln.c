@@ -1,4 +1,4 @@
-/* $NetBSD: ln.c,v 1.24 2003/08/13 03:21:08 itojun Exp $ */
+/* $NetBSD: ln.c,v 1.25 2003/08/21 04:30:25 jschauma Exp $ */
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ln.c	8.2 (Berkeley) 3/31/94";
 #else
-__RCSID("$NetBSD: ln.c,v 1.24 2003/08/13 03:21:08 itojun Exp $");
+__RCSID("$NetBSD: ln.c,v 1.25 2003/08/21 04:30:25 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,6 +188,8 @@ linkit(char *target, char *source, int isdir)
 	if ((fflag && unlink(source) < 0 && errno != ENOENT) ||
 	    (*linkf)(target, source)) {
 		warn("%s", source);
+		free(sn);
+		free(tn);
 		return (1);
 	}
 	if (vflag)
