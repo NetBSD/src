@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.1 2003/03/05 22:08:26 matt Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.2 2003/03/16 07:07:19 matt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <machine/asm.h>
 
 #include <powerpc/spr.h>
+#include <powerpc/oea/bat.h>
 #include <powerpc/oea/hid.h>
 
 /*
@@ -111,14 +112,33 @@ __start:
 	eieio; sync
 #endif
 
+	/*
+	 * Make sure that .bss is zeroed.
+	 */
+	li	0,0
+	lis	8,edata@ha
+	addi	8,8,edata@l
+	lis	9,end@ha
+	addi	9,9,end@l
+5:	cmpw	0,8,9			/* edata & end are >= word aligned */
+	bge	6f
+	stw	0,0(8)
+	addi	8,8,4
+	b	5b
+6:
+
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
 	sync ; isync
 
+#if 1
 	/* Enable data and instruction caches */
 	mfspr	8,SPR_HID0
-	ori	8, 8, (HID0_ICE | HID0_DCE)@l
+	li	0,HID0_DLOCK
+	ori	8,8,(HID0_ICE | HID0_DCE)@l
+	andc	8,8,0
 	mtspr	SPR_HID0,8
+#endif
 
 /* compute end of kernel memory */
 	lis	8,_C_LABEL(end)@ha
@@ -137,7 +157,6 @@ __start:
 	
 	lis	3,__start@ha
 	addi	3,3,__start@l
-
 	li	5,0
 	li	6,0
 
@@ -202,3 +221,8 @@ _C_LABEL(return_to_dink):
  * Include common trap / execption code
  */
 #include <powerpc/powerpc/trap_subr.S>
+
+/*
+ * Include PIO routines
+ */
+#include <powerpc/powerpc/pio_subr.S>
