@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.3 1993/10/21 00:00:09 pk Exp $
+ *	$Id: rtld.c,v 1.4 1993/10/22 21:18:58 pk Exp $
  */
 
 #include <sys/param.h>
@@ -39,7 +39,7 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/mman.h>
-#ifdef sun
+#ifndef BSD
 #define MAP_COPY	MAP_PRIVATE
 #define MAP_FILE	0
 #define MAP_ANON	0
@@ -52,13 +52,18 @@
 
 #include "ld.h"
 
+#ifndef BSD		/* Need do better than this */
+#define NEED_DEV_ZERO	1
+#endif
+
 /*
  * Loader private data, hung off link_map->lm_lpd
  */
 struct lm_private {
-	int	lpd_version;
+	int		lpd_version;
+	struct link_map	*lpd_parent;
 #ifdef SUN_COMPAT
-	long	lpd_offset;	/* Correction for Sun main programs */
+	long		lpd_offset;	/* Correction for Sun main programs */
 #endif
 };
 
@@ -100,9 +105,15 @@ struct lm_private {
 #define LM_PLT(lmp)	((jmpslot_t *) \
 		(lmp->lm_addr + LD_PLT((lmp)->lm_ld)))
 
+/* Parent of link map */
+#define LM_PARENT(lmp)	(((struct lm_private *)((lmp)->lm_lpd))->lpd_parent)
 
 char			**environ;
 int			errno;
+uid_t			uid, euid;
+gid_t			gid, egid;
+int			careful;
+
 struct link_map		*link_map_head, *main_map;
 struct link_map		**link_map_tail = &link_map_head;
 struct rt_symbol	*rt_symbol_head;
@@ -117,14 +128,14 @@ static void		init_brk __P((void));
 static void		load_maps __P((struct crt_ldso *));
 static void		map_object __P((struct link_object *, struct link_map *));
 static void		alloc_link_map __P((	char *, struct link_object *,
-						caddr_t, caddr_t,
+						struct link_map *, caddr_t,
 						struct link_dynamic *));
 static void		check_text_reloc __P((	struct relocation_info *,
 						struct link_map *,
 						caddr_t));
 static void		reloc_maps __P((void));
 static void		reloc_copy __P((void));
-static char		*rtfindlib __P((char *, int, int));
+static char		*rtfindlib __P((char *, int, int, int *));
 void			binder_entry __P((void));
 long			binder __P((jmpslot_t *));
 static struct nzlist	*lookup __P((char *, struct link_map **));
@@ -146,8 +157,11 @@ struct link_dynamic	*dp;
 	int			n;
 	int			nreloc;		/* # of ld.so relocations */
 	struct relocation_info	*reloc;
+	char			**envp;
 
 	/* Check version */
+	if (version != CRT_VERSION_BSD && version != CRT_VERSION_SUN)
+		return;
 
 	/* Fixup __DYNAMIC structure */
 	(long)dp->ld_un.ld_2 += crtp->crt_ba;
@@ -174,8 +188,20 @@ struct link_dynamic	*dp;
 	/* Setup out (private) environ variable */
 	environ = crtp->crt_ep;
 
+	/* Get user and group identifiers */
+	uid = getuid(); euid = geteuid();
+	gid = getgid(); egid = getegid();
+
+	careful = (uid != euid) || (gid != egid);
+
+	if (careful) {
+		unsetenv("LD_LIBRARY_PATH");
+		unsetenv("LD_PRELOAD");
+		unsetenv("LD_RUN_PATH"); /* In case we ever implement this */
+	}
+
 	/* Setup directory search */
-	std_search_dirs();
+	std_search_dirs(getenv("LD_LIBRARY_PATH"));
 
 	/* Load required objects into the process address space */
 	load_maps(crtp);
@@ -189,22 +215,6 @@ struct link_dynamic	*dp;
 	crtp->crt_dp->ldd->ldd_cp = rt_symbol_head;
 }
 
-static void
-reloc_copy()
-{
-	struct rt_symbol	*rtsp;
-
-	for (rtsp = rt_symbol_head; rtsp; rtsp = rtsp->rt_next)
-		if (rtsp->rt_sp->nz_type == N_DATA + N_EXT) {
-#ifdef DEBUG
-xprintf("reloc_copy: from %#x to %#x, size %d\n",
-rtsp->rt_srcaddr, rtsp->rt_sp->nz_value, rtsp->rt_sp->nz_size);
-#endif
-			bcopy(rtsp->rt_srcaddr, (caddr_t)rtsp->rt_sp->nz_value,
-							rtsp->rt_sp->nz_size);
-		}
-}
-
 
 static void
 load_maps(crtp)
@@ -216,7 +226,7 @@ struct crt_ldso	*crtp;
 	/* Handle LD_PRELOAD's here */
 
 	/* Make an entry for the main program */
-	alloc_link_map("main", (struct link_object *)0, (caddr_t)0,
+	alloc_link_map("main", (struct link_object *)0, (struct link_map *)0,
 					(caddr_t)0, crtp->crt_dp);
 
 	for (lmp = link_map_head; lmp; lmp = lmp->lm_next) {
@@ -243,7 +253,7 @@ struct crt_ldso	*crtp;
 		if ((lop = lmp->lm_lop) == NULL)
 			continue;
 
-		name = lop->lo_name + lmp->lm_lob;
+		name = lop->lo_name + LM_LDBASE(LM_PARENT(lmp));
 
 		if ((path = lmp->lm_name) == NULL)
 			path = "not found";
@@ -257,11 +267,15 @@ struct crt_ldso	*crtp;
 	_exit(0);
 }
 
+/*
+ * Allocate a new link map for an shared object NAME loaded at ADDR as a
+ * result of the presence of link object LOP in the link map PARENT.
+ */
 static void
-alloc_link_map(name, lop, lob, addr, dp)
+alloc_link_map(name, lop, parent, addr, dp)
 char			*name;
+struct link_map		*parent;
 struct link_object	*lop;
-caddr_t			lob;
 caddr_t			addr;
 struct link_dynamic	*dp;
 {
@@ -279,9 +293,10 @@ struct link_dynamic	*dp;
 	lmp->lm_lop = lop;
 	lmp->lm_ld = dp;
 	lmp->lm_lpd = (caddr_t)lmpp;
-	lmp->lm_lob = lob;
 
 /*XXX*/	if (addr == 0) main_map = lmp;
+
+	lmpp->lpd_parent = parent;
 
 #ifdef SUN_COMPAT
 	lmpp->lpd_offset =
@@ -303,9 +318,12 @@ struct link_map		*lmp;
 	int		fd;
 	caddr_t		addr;
 	struct exec	hdr;
+	int		usehints = 0;
 
 	if (lop->lo_library) {
-		path = rtfindlib(name, lop->lo_major, lop->lo_minor);
+		usehints = 1;
+again:
+		path = rtfindlib(name, lop->lo_major, lop->lo_minor, &usehints);
 		if (path == NULL)
 			fatal("Cannot find lib%s.so.%d.%d\n",
 					name, lop->lo_major, lop->lo_minor);
@@ -314,8 +332,13 @@ struct link_map		*lmp;
 	}
 
 	fd = open(path, O_RDONLY, 0);
-	if (fd == -1)
+	if (fd == -1) {
+		if (usehints) {
+			usehints = 0;
+			goto again;
+		}
 		fatal("%s not found", path);
+	}
 
 	if (read(fd, &hdr, sizeof(hdr)) != sizeof(hdr)) {
 		fatal("%s: Cannot read exec header", path);
@@ -338,7 +361,7 @@ struct link_map		*lmp;
 	close(fd);
 
 	fd = -1;
-#ifdef sun
+#ifdef NEED_DEV_ZERO
 	if ((fd = open("/dev/zero", O_RDWR, 0)) == -1)
 		perror("/dev/zero");
 #endif
@@ -348,7 +371,7 @@ struct link_map		*lmp;
 				fd, hdr.a_text + hdr.a_data) == (caddr_t)-1)
 		fatal("Cannot map %s bss", path);
 
-#ifdef sun
+#ifdef NEED_DEV_ZERO
 	close(fd);
 #endif
 
@@ -358,7 +381,7 @@ struct link_map		*lmp;
 	/* Fixup __DYNAMIC structure */
 	(long)dp->ld_un.ld_2 += (long)addr;
 
-	alloc_link_map(path, lop, lmp->lm_addr, addr, dp);
+	alloc_link_map(path, lop, lmp, addr, dp);
 
 }
 
@@ -447,6 +470,22 @@ xprintf("RELOCATE(%s) internal at %#x, reloc = %#x\n", lmp->lm_name, addr, md_ge
 		}
 
 	}
+}
+
+static void
+reloc_copy()
+{
+	struct rt_symbol	*rtsp;
+
+	for (rtsp = rt_symbol_head; rtsp; rtsp = rtsp->rt_next)
+		if (rtsp->rt_sp->nz_type == N_DATA + N_EXT) {
+#ifdef DEBUG
+xprintf("reloc_copy: from %#x to %#x, size %d\n",
+rtsp->rt_srcaddr, rtsp->rt_sp->nz_value, rtsp->rt_sp->nz_size);
+#endif
+			bcopy(rtsp->rt_srcaddr, (caddr_t)rtsp->rt_sp->nz_value,
+							rtsp->rt_sp->nz_size);
+		}
 }
 
 static void
@@ -705,13 +744,160 @@ enter_rts(name, value, type, srcaddr, size)
 	return rtsp;
 }
 
+static struct hints_header	*hheader;
+static struct hints_bucket	*hbuckets;
+static char			*hstrtab;
+
+#define HINTS_VALID (hheader != NULL && hheader != (struct hints_header *)-1)
+
+static void
+maphints()
+{
+	caddr_t		addr;
+	long		msize;
+	int		fd;
+
+	if ((fd = open(_PATH_LD_HINTS, O_RDONLY, 0)) == -1) {
+		hheader = (struct hints_header *)-1;
+		return;
+	}
+
+	msize = PAGSIZ;
+	addr = mmap(0, msize, PROT_READ, MAP_FILE|MAP_COPY, fd, 0);
+
+	if (addr == (caddr_t)-1) {
+		hheader = (struct hints_header *)-1;
+		return;
+	}
+
+	hheader = (struct hints_header *)addr;
+	if (HH_BADMAG(*hheader)) {
+		munmap(addr, msize);
+		hheader = (struct hints_header *)-1;
+		return;
+	}
+
+	if (hheader->hh_version != LD_HINTS_VERSION_1) {
+		munmap(addr, msize);
+		hheader = (struct hints_header *)-1;
+		return;
+	}
+
+	if (hheader->hh_ehints > msize) {
+		if (mmap(addr+msize, hheader->hh_ehints - msize,
+				PROT_READ, MAP_FILE|MAP_COPY|MAP_FIXED,
+				fd, msize) != (caddr_t)(addr+msize)) {
+
+			munmap((caddr_t)hheader, msize);
+			hheader = (struct hints_header *)-1;
+			return;
+		}
+	}
+	close(fd);
+
+	hbuckets = (struct hints_bucket *)(addr + hheader->hh_hashtab);
+	hstrtab = (char *)(addr + hheader->hh_strtab);
+}
+
+int
+hinthash(cp, vmajor, vminor)
+char	*cp;
+int	vmajor, vminor;
+{
+	int	k = 0;
+
+	while (*cp)
+		k = (((k << 1) + (k >> 14)) ^ (*cp++)) & 0x3fff;
+
+	k = (((k << 1) + (k >> 14)) ^ (vmajor*257)) & 0x3fff;
+	k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
+
+	return k;
+}
+
 #undef major
 #undef minor
 
 static char *
-rtfindlib(name, major, minor)
+findhint(name, major, minor, preferred_path)
 char	*name;
+int	major, minor;
+char	*preferred_path;
 {
+	struct hints_bucket	*bp;
+
+	bp = hbuckets + (hinthash(name, major, minor) % hheader->hh_nbucket);
+
+	while (1) {
+		/* Sanity check */
+		if (bp->hi_namex >= hheader->hh_strtab_sz) {
+			fprintf(stderr, "Bad name index: %#x\n", bp->hi_namex);
+			break;
+		}
+		if (bp->hi_pathx >= hheader->hh_strtab_sz) {
+			fprintf(stderr, "Bad path index: %#x\n", bp->hi_pathx);
+			break;
+		}
+
+		if (strcmp(name, hstrtab + bp->hi_namex) == 0) {
+			/* It's `name', check version numbers */
+			if (bp->hi_major == major &&
+				(bp->hi_ndewey < 2 || bp->hi_minor == minor)) {
+					if (preferred_path == NULL ||
+					    strcmp(preferred_path,
+						hstrtab + bp->hi_pathx) == 0) {
+xprintf("%s.%d.%d -> %s\n", name, major, minor, hstrtab + bp->hi_pathx);
+						return hstrtab + bp->hi_pathx;
+					}
+			}
+		}
+
+		if (bp->hi_next == -1)
+			break;
+
+		/* Move on to next in bucket */
+		bp = &hbuckets[bp->hi_next];
+	}
+
+	/* No hints available for name */
+	return NULL;
+}
+
+static char *
+rtfindlib(name, major, minor, usehints)
+char	*name;
+int	major, minor;
+int	*usehints;
+{
+	char	*hint;
+	char	*cp, *ld_path = getenv("LD_LIBRARY_PATH");
+
+	if (hheader == NULL)
+		maphints();
+
+	if (!HINTS_VALID || !(*usehints)) {
+		*usehints = 0;
+		return (char *)findshlib(name, &major, &minor);
+	}
+
+	if (ld_path != NULL) {
+		/* Prefer paths from LD_LIBRARY_PATH */
+		while ((cp = strtok(ld_path, ":")) != NULL) {
+
+			ld_path = NULL;
+			hint = findhint(name, major, minor, cp);
+			if (hint)
+				return hint;
+		}
+	} else {
+		/* No LD_LIBRARY_PATH, check default */
+		hint = findhint(name, major, minor, NULL);
+		if (hint)
+			return hint;
+	}
+
+	/* No hints available for name */
+	*usehints = 0;
 	return (char *)findshlib(name, &major, &minor);
 }
 
@@ -788,7 +974,7 @@ xprintf("sbrk: incr = %#x, curbrk = %#x\n", incr, curbrk);
 
 	incr = (incr + PAGSIZ - 1) & ~(PAGSIZ - 1);
 
-#ifdef sun
+#ifdef NEED_DEV_ZERO
 	fd = open("/dev/zero", O_RDWR, 0);
 	if (fd == -1)
 		perror("/dev/zero");
@@ -800,7 +986,7 @@ xprintf("sbrk: incr = %#x, curbrk = %#x\n", incr, curbrk);
 		perror("Cannot map anonymous memory");
 	}
 
-#ifdef sun
+#ifdef NEED_DEV_ZERO
 	close(fd);
 #endif
 
