@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.8 2001/07/14 07:57:17 scottr Exp $	*/
+/*	$NetBSD: md.h,v 1.9 2001/11/29 23:20:58 thorpej Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -202,22 +202,22 @@ EXTERN	char *disk_names[]
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern",	1, NULL, "Kernel       : "},
-    {"kern_sbc",1, NULL, "Kernel (SBC) : "},
-    {"base",	1, NULL, "Base         : "},
-    {"etc",	1, NULL, "System (/etc): "},
-    {"comp",	1, NULL, "Compiler     : "},
-    {"games",	1, NULL, "Games        : "},
-    {"man",	1, NULL, "Manuals      : "},
-    {"misc",	1, NULL, "Miscellaneous: "},
-    {"text",	1, NULL, "Text tools   : "},
+    {"kern-GENERIC",	1, NULL, "Kernel       : "},
+    {"kern-GENERICSBC",	1, NULL, "Kernel (SBC) : "},
+    {"base",		1, NULL, "Base         : "},
+    {"etc",		1, NULL, "System (/etc): "},
+    {"comp",		1, NULL, "Compiler     : "},
+    {"games",		1, NULL, "Games        : "},
+    {"man",		1, NULL, "Manuals      : "},
+    {"misc",		1, NULL, "Miscellaneous: "},
+    {"text",		1, NULL, "Text tools   : "},
 
-    {"xbase",	1, NULL, "X11 clients  : "},
-    {"xfont",	1, NULL, "X11 fonts    : "},
-    {"xserver",	1, NULL, "X11 servers  : "},
-    {"xcontrib",1, NULL, "X11 contrib  : "},
-    {"xcomp",	1, NULL, "X programming: "},
-    {"xmisc",	1, NULL, "X11 Misc.    : "},
+    {"xbase",		1, NULL, "X11 clients  : "},
+    {"xfont",		1, NULL, "X11 fonts    : "},
+    {"xserver",		1, NULL, "X11 servers  : "},
+    {"xcontrib",	1, NULL, "X11 contrib  : "},
+    {"xcomp",		1, NULL, "X programming: "},
+    {"xmisc",		1, NULL, "X11 Misc.    : "},
     {NULL, 0, NULL, NULL }
 }
 #endif
