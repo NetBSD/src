@@ -1,4 +1,4 @@
-/* $NetBSD: apecs_pci.c,v 1.17 1999/06/29 17:10:57 ross Exp $ */
+/* $NetBSD: apecs_pci.c,v 1.18 2000/06/29 08:58:45 mrg Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,13 +29,14 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.17 1999/06/29 17:10:57 ross Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs_pci.c,v 1.18 2000/06/29 08:58:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <vm/vm.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
