@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.50 2002/02/23 21:01:48 he Exp $
+.\"	$NetBSD: main,v 1.61.2.51 2002/02/26 22:30:50 he Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -359,18 +359,18 @@ Without the unique cooperation and coordination the net makes
 possible, it's likely that
 .Nx
 wouldn't exist.
-.Ss Upgrade path to NetBSD 1.5.2
+.Ss Upgrade path to NetBSD 1.5.3
 If you are not installing your system ``from scratch'' but instead
 are going to upgrade an existing system already running
 .Nx
 you need to know which versions you can upgrade with
 .Nx
-1.5.2.
+1.5.3.
 .Pp
 .Nx
-1.5.2 is an upgrade of
+1.5.3 is an upgrade of
 .Nx
-1.5, 1.5.1, and earlier major and patch releases of
+1.5, 1.5.1, 1.5.2, and earlier major and maintenance releases of
 .Nx .
 .Pp
 The intermediate development versions of code available on the main trunk
@@ -382,26 +382,127 @@ These identifiers do not designate releases, but indicate major changes
 in internal kernel APIs.
 Note that the kernel from
 .Nx
-1.5.2 can
+1.5.3 can
 .Em not
 be used to upgrade a system running one of those intermediate development
 versions.
 Trying to use the
 .Nx
-1.5.2 kernel on such a system
+1.5.3 kernel on such a system
 .Em will
 probably result in problems.
 .Pp
 Please also note that it is not possible to do a direct ``version''
 comparison between any of the intermediate development versions mentioned
-above and 1.5.2 to determine if a given feature is present or absent
-in 1.5.2.  The development of 1.5 and the subsequent ``point'' releases
-is done on a separate branch in the CVS repository. The branch was created when
+above and 1.5.3 to determine if a given feature is present or absent
+in 1.5.3.  The development of 1.5 and the subsequent maintenance releases
+is done on a separate branch in the CVS repository.
+The branch was created when
 the release cycle for 1.5 was started, and during the release cycle of
 1.5 and its patch releases, selected fixes and enhancements have been
 imported from the main development trunk.
-So, there are features in 1.5.2 which were not in, e.g. 1.5B, and vice
+So, there are features in 1.5.3 which were not in, e.g. 1.5B, and vice
 versa.
+.Ss Major Changes Between 1.5.2 and 1.5.3
+Some highlights are:
+.Bl -bullet
+.It
+.Xr lpd 8
+has been fixed to deal with a security issue (SA2001-018).
+.It
+Drivers for Mylex DAC960, Compaq EISA array controllers, and I2O
+block/SCSI devices added.
+This has caused
+.Xr ca 4
+to be replaced by
+.Xr ld 4 .
+Drivers for the Mylex DAC960 management interface
+and DPT/Adaptec I2O RAID management interface has also been added.
+See
+.Xr dpti 4
+and
+.Xr mlxctl 8 .
+.It
+A driver for the 3ware Escalade 5000 and 6000 series RAID controllers
+has been added, see
+.Xr twe 4 .
+.It
+Network device driver fixes for
+.Xr ex 4 ,
+.Xr rtk 4 ,
+.Xr sip 4 ,
+.Xr ti 4 ,
+.Xr tl 4 ,
+and
+.Xr wi 4
+have been applied.
+.It
+Support for some more variants of
+.Xr rtk 4
+on CardBus has been added.
+.It
+The
+.Xr ne 4
+driver has been extended to support some more pcmcia cards.
+.It
+Support for more
+.Xr pciide 4
+controllers added: HPT-370A, Acard ATP-850/860.
+Ultra-DMA 100 support added for CMD 0649.
+.It
+A problem with the NFS server code, exposed on NetBSD/alpha,
+where use of ``..'' would return info for ``.'' has been fixed.
+.It
+Support for ``other-endian'' file systems has been improved.
+.It
+The layout algorithm for FFS file systems has been substantially
+improved, resulting in better performance, both due to improved
+locality between files and their corresponding directory, and
+lessened pressure on the buffer cache.
+.It
+Handling of init/fini section support and DWARF2 exception handling
+has been added to the C runtime startup code.
+.It
+OpenSSH has been upgraded to version 3.0.2.
+.It
+A security issue arising from a race between set-uid execution and
+use of ptrace has been fixed (SA2002-001).
+.It
+A driver for Creative Labs SBLive! EMU10000 has been added; see
+.Xr emuxki 4 .
+.It
+A driver for ESS Allegro-1 / Maestro-3 has been added; see
+.Xr esa 4 .
+.It
+Support for the 53c1010-33 and 53c1510D has been added to the
+.Xr siop 4
+driver.
+.It
+IPFilter upgraded to 3.4.23.
+.It
+The boot code on NetBSD/macppc has been improved.
+.It
+.Xr sendmail 8
+has been upgraded to version 8.11.6.
+.It
+Various other kernel stability and robustness fixes has been applied.
+.El
+.Pp
+In addition, many bugs have been fixed\(emmore than 70 problems
+reported through our problem tracking system have been fixed,
+and several other non-reported problems have also been found and fixed.
+See the CHANGES-1.5.3 file for the complete list.
+.Ss Known Caveats with 1.5.3
+The following are the major known issues with
+.Nx
+1.5.3.
+.Bl -bullet
+.It
+The upgrade of IPFilter to version 3.4.23 is not backward
+compatible.
+This means that the user-land tools used to manage
+IPFilter will have to be upgraded when the kernel is upgraded.
+.El
 .Ss Major Changes Between 1.5.1 and 1.5.2
 The main purpose of
 .Nx
