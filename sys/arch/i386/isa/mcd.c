@@ -35,7 +35,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mcd.c,v 1.16.2.1 1994/08/03 17:12:39 cgd Exp $
+ *	$Id: mcd.c,v 1.16.2.2 1994/08/05 23:00:24 mycroft Exp $
  */
 
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
@@ -430,7 +430,7 @@ mcdioctl(dev, cmd, addr, flags, p)
 	case CDIOCGETVOL:
 	case CDIOCSETVOL:
 	case CDIOCSETMONO:
-	case CDIOCSETSTERIO:
+	case CDIOCSETSTEREO:
 	case CDIOCSETMUTE:
 	case CDIOCSETLEFT:
 	case CDIOCSETRIGHT:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.31.2.1 1994/08/04 10:14:14 mycroft Exp $	*/
+/*	$NetBSD: cd.c,v 1.31.2.2 1994/08/05 23:01:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -702,7 +702,7 @@ cdioctl(dev, cmd, addr, flag)
 		data.page.audio.port[3].channels = 0;
 		return cd_set_mode(cd, &data);
 	}
-	case CDIOCSETSTERIO: {
+	case CDIOCSETSTEREO: {
 		struct ioc_vol *arg = (struct ioc_vol *) addr;
 		struct cd_mode_data data;
 		if (error = cd_get_mode(cd, &data, AUDIO_PAGE))
