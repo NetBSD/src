@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.21 1995/05/12 12:54:57 mycroft Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.22 1995/05/12 13:04:33 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
+#include <machine/reg.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -88,7 +89,7 @@ cpu_fork(p1, p2)
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
 	*tf = *(struct trapframe *)p1->p_md.md_regs;
-	tf->tf_regs[0] = 0;		/* D0 */
+	tf->tf_regs[D0] = 0;
 	tf->tf_sr &= ~PSL_C;
 	tf->tf_format = FMT0;
 	sf = (struct switchframe *)tf - 1;
