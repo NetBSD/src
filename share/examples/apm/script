@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# $NetBSD: script,v 1.1 1999/12/29 04:16:25 hubertf Exp $
+#
+
+#
+# Link this script to /etc/apm/{suspend,standby,resume,line,battery}
+# to play some sounds on suspend/resume, and enable/shutdown the 
+# network card. See apmd(8) for more information.
+#
+
+
+PATH=/usr/pkg/bin:/sbin:$PATH
+export PATH
+
+# Where some sound files are stored:
+S=/usr/X11R6/share/kde/sounds
+
+# What my network card's recognized as:
+if=ne0
+
+
+case $0 in
+*suspend)	
+	logger 'Suspending...'
+	pcmplay -f 22050 -c 1 $S/KDE_Window_UnMaximize.wav
+	# In case some NFS mounts still exist - we don't want them to hang:
+	umount -a    -t nfs
+	umount -a -f -t nfs
+	ifconfig $if down
+	kill `ps -auxwww | grep dhclient | awk '{print $2}'`
+	logger 'Suspending done.'
+	;;
+
+*standby)
+	logger 'Going to standby mode ....'
+	pcmplay -f 22050 -c 1 $S/KDE_Window_UnMaximize.wav
+	# In case some NFS mounts still exist - we don't want them to hang:
+	umount -a    -t nfs
+	umount -a -f -t nfs
+	ifconfig $if down
+	kill `ps -auxwww | grep dhclient | awk '{print $2}'`
+	logger 'Standby done.'
+	;;
+
+*resume)
+	logger Resuming...
+	pcmplay -f 22050 $S/KDE_Startup.wav
+	dhclient $if
+	# mount /home
+	# mount /data
+	logger 'Resuming done.'
+	;;
+
+*line)
+	# pcmplay -f 22050 -c 1 $S/KDE_Window_DeIconify.wav
+	;;
+
+*battery)
+	# pcmplay -f 22050 -c 1 $S/KDE_Window_DeIconify.wav
+	;;
+
+esac
+
+exit 0
