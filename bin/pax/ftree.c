@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.12 2001/10/25 08:51:51 lukem Exp $	*/
+/*	$NetBSD: ftree.c,v 1.13 2001/10/25 13:54:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.12 2001/10/25 08:51:51 lukem Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.13 2001/10/25 13:54:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -448,7 +448,7 @@ next_file(ARCHD *arcn)
 			statbuf.st_size = 0;
 #define NODETEST(t, m)							\
 			if (!(t)) {					\
-				tty_warn(1, "line %d: %s: %s not provided", \
+				tty_warn(1, "line %d: %s: %s not specified", \
 				    ftnode->lineno, ftent->fts_path, m); \
 				return(-1);				\
 			}
@@ -457,10 +457,8 @@ next_file(ARCHD *arcn)
 			NODETEST(ftnode->flags & F_MODE, "mode");
 			if (!(ftnode->flags & F_TIME))
 				statbuf.st_mtime = starttime;
-			NODETEST(ftnode->flags & F_GID ||
-			    ftnode->flags & F_GNAME, "group");
-			NODETEST(ftnode->flags & F_UID ||
-			    ftnode->flags & F_UNAME, "user");
+			NODETEST(ftnode->flags & (F_GID | F_GNAME), "group");
+			NODETEST(ftnode->flags & (F_UID | F_UNAME), "user");
 			if (ftnode->type == F_BLOCK || ftnode->type == F_CHAR)
 				NODETEST(ftnode->flags & F_DEV,
 				    "device number");
