@@ -38,7 +38,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compat.c	5.7 (Berkeley) 3/1/91"; */
-static char *rcsid = "$Id: compat.c,v 1.7 1994/06/06 22:45:21 jtc Exp $";
+static char *rcsid = "$Id: compat.c,v 1.8 1994/06/16 18:50:04 jtc Exp $";
 #endif /* not lint */
 
 /*-
@@ -262,7 +262,7 @@ CompatRunCommand (cmdp, gnp)
 	 * brk_string sticks our name in av[0], so we have to
 	 * skip over it...
 	 */
-	av = brk_string(cmd, &argc);
+	av = brk_string(cmd, &argc, TRUE);
 	av += 1;
     }
     
