@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.156 1998/06/07 18:34:38 sommerfe Exp $
+#	$NetBSD: GENERIC,v 1.157 1998/06/24 05:38:09 bouyer Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -323,7 +323,7 @@ fd*	at fdc? drive ?			# the drives themselves
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
 # ISA tape devices
-# note: the wt driver conflicts unpleasantly with ed devices at the
+# note: the wt driver conflicts unpleasantly with SMC boards at the
 # same I/O address. The probe reprograms their EEPROMs. Don't
 # uncomment it unless you are actually using it.
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
