@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.145 2003/09/10 19:01:12 tron Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.146 2003/09/10 19:19:24 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -1560,3 +1560,15 @@ sys/net/if.c					1.128-1.130 (via patch)
 	correct number range handling.  David Young
 	[itojun, ticket #1406]
 
+sys/dev/pci/pcidevs				1.543
+
+	Add entries for Intel 865PE chipset.
+	[tron, ticket #1416]
+
+sys/dev/pci/pcidevs				1.544
+sys/dev/pci/pcidevs.h				regenerate
+sys/dev/pci/pcidevs_data.h			regenerate
+
+	Correct names and descriptions for i875 entries to be consistent with
+	other Intel chipsets.
+	[tron, ticket #1417]
