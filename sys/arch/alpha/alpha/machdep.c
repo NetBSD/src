@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.136 1998/07/08 16:28:26 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.137 1998/07/09 00:46:17 mjacob Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 1998/07/08 16:28:26 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 1998/07/09 00:46:17 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1043,7 +1043,8 @@ cpu_startup()
 	printf(version);
 	identifycpu();
 	printf("real mem = %lu (%lu reserved for PROM, %lu used by NetBSD)\n",
-	    ptoa(totalphysmem), ptoa(resvmem), ptoa(physmem));
+	    ((vm_offset_t) totalphysmem << (vm_offset_t) PAGE_SHIFT),
+	    ptoa(resvmem), ptoa(physmem));
 	if (unusedmem)
 		printf("WARNING: unused memory = %d bytes\n", ctob(unusedmem));
 	if (unknownmem)
