@@ -1,4 +1,4 @@
-/*	$NetBSD: execl.c,v 1.7 2000/01/22 22:19:09 mycroft Exp $	*/
+/*	$NetBSD: execl.c,v 1.8 2002/05/26 14:03:19 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,22 +38,15 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: execl.c,v 1.7 2000/01/22 22:19:09 mycroft Exp $");
+__RCSID("$NetBSD: execl.c,v 1.8 2002/05/26 14:03:19 wiz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include "reentrant.h"
-
-#if __STDC__
-#include <stdarg.h>
-#define VA_START(ap, last)	va_start(ap, last)
-#else
-#include <varargs.h>
-#define VA_START(ap, last)	va_start(ap)
-#endif
 
 #ifdef __weak_alias
 __weak_alias(execl,_execl)
@@ -66,14 +59,7 @@ extern rwlock_t __environ_lock;
 #endif
 
 int
-#if __STDC__
 execl(const char *name, const char *arg, ...)
-#else
-execl(name, arg, va_alist)
-	const char *name;
-	const char *arg;
-	va_dcl
-#endif
 {
 	int r;
 #if defined(__i386__) || defined(__m68k__) || defined(__ns32k__)
@@ -86,14 +72,14 @@ execl(name, arg, va_alist)
 	char **argv;
 	int i;
 
-	VA_START(ap, arg);
+	va_start(ap, arg);
 	for (i = 2; va_arg(ap, char *) != NULL; i++)
 		;
 	va_end(ap);
 
 	argv = alloca (i * sizeof (char *));
 	
-	VA_START(ap, arg);
+	va_start(ap, arg);
 	argv[0] = (char *) arg;
 	for (i = 1; (argv[i] = (char *) va_arg(ap, char *)) != NULL; i++) 
 		;
