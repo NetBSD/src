@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.14 2002/08/06 22:46:11 itojun Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.15 2002/10/01 03:10:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.14 2002/08/06 22:46:11 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.15 2002/10/01 03:10:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,10 +143,8 @@ static void vidcvideo_attach __P((struct device *, struct device *, void *));
 
 
 /* config glue */
-const struct cfattach vidcvideo_ca = {
-	sizeof(struct vidcvideo_softc), vidcvideo_match, vidcvideo_attach,
-};
-
+CFATTACH_DECL(vidcvideo, sizeof(struct vidcvideo_softc),
+    vidcvideo_match, vidcvideo_attach, NULL, NULL)
 
 static struct fb_devconfig vidcvideo_console_dc;
 static int vidcvideo_is_console;
