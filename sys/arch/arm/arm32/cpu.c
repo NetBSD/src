@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2002/02/17 20:41:02 bjh21 Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2002/03/09 19:11:21 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -137,6 +137,9 @@ identify_master_cpu(struct device *dv, int cpu_number)
 	u_int fpsr;
 	void *uh;
 
+	evcnt_attach_dynamic(&curcpu()->ci_arm700bugcount, EVCNT_TYPE_MISC,
+	    NULL, dv->dv_xname, "arm700swibug");
+	
 	cpus[cpu_number].cpu_ctrl = cpuctrl;
 
 	/* Get the cpu ID from coprocessor 15 */
