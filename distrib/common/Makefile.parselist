@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.parselist,v 1.4 2003/03/25 23:07:29 lukem Exp $
+#	$NetBSD: Makefile.parselist,v 1.5 2003/11/14 06:00:34 matt Exp $
 #
 # Makefile snippet to setup parselist.awk related variables:
 #	PARSELISTENV	environment variables to pass to parselist.awk
@@ -22,7 +22,7 @@ PARSELISTENV+=	NETBSDSRCDIR=${NETBSDSRCDIR:Q} \
 		OBJDIR=${.OBJDIR:Q}
 
 PARSELISTDEP=	${DISTRIBDIR}/common/parselist.awk
-PARSELIST=	${PARSELISTENV} awk -f ${PARSELISTDEP}
+PARSELIST=	${PARSELISTENV} ${AWK} -f ${PARSELISTDEP}
 
 
 .endif	# _MAKEFILE_PARSELIST_
