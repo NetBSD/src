@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.15 1995/03/08 00:54:44 cgd Exp $	*/
+/*	$NetBSD: param.c,v 1.16 1996/03/12 03:08:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -75,6 +75,12 @@
  * Compiled with -DHZ=xx -DTIMEZONE=x -DDST=x -DMAXUSERS=xx
  */
 
+#ifndef TIMEZONE
+# define TIMEZONE 0
+#endif
+#ifndef DST
+# define DST 0
+#endif
 #ifndef HZ
 #define	HZ 100
 #endif
