@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.4 1997/04/14 19:09:01 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.5 1997/04/24 20:39:26 thorpej Exp $
 
 BINDIR=			/usr/mdec
 
@@ -16,9 +16,10 @@ CPPFLAGS+=		-DHEAP_LIMIT="0xffffdfff"
 
 COMMONSOURCE=		srt0.o autoconf.c clock.c conf.c cons.c devopen.c \
 			machdep.c prf.c rawfs.c netio.c
-DRIVERSOURCE=		ct.c dca.c dcm.c fhpib.c hil.c hpib.c if_le.c \
+DRIVERSOURCE=		ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c hpib.c if_le.c \
 			ite.c ite_dv.c ite_gb.c ite_rb.c ite_subr.c \
-			ite_tc.c ite_hy.c nhpib.c rd.c scsi.c sd.c
+			ite_tc.c ite_hy.c kbd.c kbdconf.c nhpib.c rd.c \
+			scsi.c sd.c
 
 ### Figure out what to use for mkboot
 MKBOOTDIR=		${.CURDIR}/../mkboot
