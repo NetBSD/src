@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.5 1997/11/02 00:27:21 thorpej Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.6 1997/11/20 04:02:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -106,6 +106,10 @@ struct ne2000dev {
       PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
       "PCMCIA", "UE2212", 0,
       0xff0, { 0x00, 0x00, 0xe8 } },
+    { "D-Link DE-650",
+      PCMCIA_MANUFACTURER_INVALID, PCMCIA_PRODUCT_INVALID,
+      "D-Link", "DE-650", 0,
+      0x0040, { 0x00, 0x80, 0xc8 } },
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
        driver.  Since I don't know the manfid or cis info strings for
@@ -132,9 +136,6 @@ struct ne2000dev {
     { "Dayna CommuniCard E",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0110, { 0x00, 0x80, 0x19 } },
-    { "D-Link DE-650",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0040, { 0x00, 0x80, 0xc8 } },
     { "EP-210 Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0110, { 0x00, 0x40, 0x33 } },
