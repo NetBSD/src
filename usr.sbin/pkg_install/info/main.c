@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.42 2004/08/13 13:34:42 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.43 2004/08/13 13:45:46 wiz Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.42 2004/08/13 13:34:42 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.43 2004/08/13 13:45:46 wiz Exp $");
 #endif
 #endif
 
@@ -57,7 +57,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "%s\n%s\n%s\n%s\n",
-	    "usage: pkg_info [-.BbcDdFfIikLmNnpqRrSsVvh] [-e package] [-l prefix]",
+	    "usage: pkg_info [-.BbcDdFfhIikLmNnpqRrSsVv] [-e package] [-K pkg_dbdir] [-l prefix]",
 	    "                pkg-name [pkg-name ...]",
 	    "       pkg_info -a [flags]",
 	    "       pkg_info -Q variable pkg-name [pkg-name ...]");
