@@ -1,4 +1,4 @@
-/*	$NetBSD: db_elf.c,v 1.15 2001/07/31 19:14:18 bjh21 Exp $	*/
+/*	$NetBSD: db_elf.c,v 1.16 2001/07/31 22:31:47 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -150,9 +150,13 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 	 * Find the first (and, we hope, only) SHT_SYMTAB section in
 	 * the file, and the SHT_STRTAB section that goes with it.
 	 */
+	if (elf->e_shoff == 0)
+		goto badheader;
 	shp = (Elf_Shdr *)((char *)symtab + elf->e_shoff);
 	for (i = 0; i < elf->e_shnum; i++) {
 		if (shp[i].sh_type == SHT_SYMTAB) {
+			if (shp[i].sh_offset == 0)
+				continue;
 			/* Got the symbol table. */
 			symtab_start = (Elf_Sym *)((char *)symtab + 
 			    shp[i].sh_offset);
@@ -160,6 +164,8 @@ db_elf_sym_init(symsize, symtab, esymtab, name)
 			    shp[i].sh_offset + shp[i].sh_size);
 			/* Find the string table to go with it. */
 			j = shp[i].sh_link;
+			if (shp[j].sh_offset == 0)
+				continue;
 			strtab_start = (char *)symtab + shp[j].sh_offset;
 			strtab_end = (char *)symtab + shp[j].sh_offset +
 			    shp[j].sh_size;
