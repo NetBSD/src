@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.58.6.2 1999/07/02 18:31:28 thorpej Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.58.6.3 1999/07/04 01:40:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -93,6 +93,8 @@ u_long	bufhash;
 TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
 int needbuffer;
 
+struct pool bufpool;
+
 /*
  * Insq/Remq for the buffer free lists.
  */
@@ -132,11 +134,13 @@ bremfree(bp)
 void
 bufinit()
 {
-	register struct buf *bp;
+	struct buf *bp;
 	struct bqueues *dp;
-	register int i;
+	int i;
 	int base, residual;
 
+	pool_init(&bufpool, sizeof(struct buf), 0, 0, 0, "bufpool", 0,
+		  NULL, NULL, 0);
 	for (dp = bufqueues; dp < &bufqueues[BQUEUES]; dp++)
 		TAILQ_INIT(dp);
 	bufhashtbl = hashinit(nbuf, M_CACHE, M_WAITOK, &bufhash);
@@ -506,6 +510,7 @@ brelse(bp)
 already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_flags, B_AGE|B_ASYNC|B_BUSY|B_NOCACHE);
+	SET(bp->b_flags, B_CACHE);
 
 	/* Allow disk interrupts. */
 	splx(s);
@@ -554,6 +559,12 @@ getblk(vp, blkno, size, slpflag, slptimeo)
 	struct bufhashhdr *bh;
 	struct buf *bp;
 	int s, err;
+
+#ifdef DIAGNOSTIC
+	if (vp->v_type == VREG && blkno >= 0) {
+		panic("getblk of VREG vp %p blkno 0x%x", vp, blkno);
+	}
+#endif
 
 	/*
 	 * XXX
