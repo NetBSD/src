@@ -1,4 +1,4 @@
-$NetBSD: IMPLEMENTATION,v 1.5 2000/02/01 00:15:22 itojun Exp $
+$NetBSD: IMPLEMENTATION,v 1.6 2000/02/03 19:57:13 itojun Exp $
 
 # NOTE: this is from original KAME distribution.
 # Some portion of this document is not applicable to the code merged into
@@ -175,6 +175,15 @@ scope index, a scoped IPv6 address is ambiguous to the kernel, and
 the kernel will not be able to determine the outbound interface for a
 packet.  KAME code tries to address the issue in several ways.
 
+Site-local address is very vaguely defined in the specs, and both specification
+and KAME code need tons of improvements to enable its actual use.
+For example, it is still very unclear how we define a site, or how we resolve
+hostnames in a site.  There are work underway to define behavior of routers
+at site border, however, we have almost no code for site boundary node support
+(both forwarding nor routing) and we bet almost noone has.
+We recommend, at this moment, you to use global addresses for experiments -
+there are way too many pitfalls if you use site-local addresses.
+
 1.3.1 Kernel internal
 
 In the kernel, the interface index for a link-local scope address is
@@ -256,7 +265,7 @@ userland.
 
 1.4.1 Assignment of link-local, and special addresses
 
-IPv6 link-local address is generated from IEEE802 adddress (ethernet MAC
+IPv6 link-local address is generated from IEEE802 address (ethernet MAC
 address).  Each of interface is assigned an IPv6 link-local address
 automatically, when the interface becomes up (IFF_UP).  Also, direct route
 for the link-local address is added to routing table.
@@ -425,10 +434,10 @@ the spec rather than the above longest-match rule.
 
 For new connections (when rule 1 does not apply), deprecated addresses
 (addresses with preferred lifetime = 0) will not be chosen as source address
-if other choises are available.  If no other choices are available,
+if other choices are available.  If no other choices are available,
 deprecated address will be used as a last resort.  If there are multiple
 choice of deprecated addresses, the above scope rule will be used to choose
-from those deprecated addreses.  If you would like to prohibit the use
+from those deprecated addresses.  If you would like to prohibit the use
 of deprecated address for some reason, configure net.inet6.ip6.use_deprecated
 to 0.  The issue related to deprecated address is described in RFC2462 5.5.4
 (NOTE: there is some debate underway in IETF ipngwg on how to use
@@ -607,14 +616,14 @@ Here we call the former one "listening side" and the latter one "initiating
 side", for reference purposes.
 
 Almost all KAME implementations treat tcp/udp port number space separately
-between IPv4 and IPv6.  You can perform wildcard bind on both of the adderss
+between IPv4 and IPv6.  You can perform wildcard bind on both of the address
 families, on the same port.
 
 There are some OS-platform differences in KAME code, as we use tcp/udp
 code from different origin.  The following table summarizes the behavior.
 
 		listening side		initiating side
-		(AF_INET6 wildcard	(connetion to ::ffff:10.1.1.1)
+		(AF_INET6 wildcard	(connection to ::ffff:10.1.1.1)
 		socket gets IPv4 conn.)
 		---			---
 KAME/BSDI3	not supported		not supported
@@ -684,7 +693,7 @@ getaddrinfo() is the preferred API.  getaddrinfo() does not implement the
 tweak.
 
 When writing applications that make outgoing connections, story goes much
-simpler if you treat AF_INET and AF_INET6 as totally seaprate address family.
+simpler if you treat AF_INET and AF_INET6 as totally separate address family.
 {set,get}sockopt issue goes simpler, DNS issue will be made simpler.  We do
 not recommend you to rely upon IPv4 mapped address.
 
@@ -723,7 +732,7 @@ There's no problem with open/close ordering.
 
 1.12.2.2 KAME/FreeBSD3x, initiating side
 
-KAME/FreeBSD3x supports outgoing connetion to IPv4 mapped address
+KAME/FreeBSD3x supports outgoing connection to IPv4 mapped address
 (::ffff:10.1.1.1), if the node is configured to accept IPv4 connections
 by AF_INET6 socket.
 
@@ -815,7 +824,7 @@ KAME/OpenBSD does not support connection initiation to IPv4 mapped address
 
 1.13 sockaddr_storage
 
-When RFC2553 was about to be finalized, there was discusson on how struct
+When RFC2553 was about to be finalized, there was discussion on how struct
 sockaddr_storage members are named.  One proposal is to prepend "__" to the
 members (like "__ss_len") as they should not be touched.  The other proposal
 was that don't prepend it (like "ss_len") as we need to touch those members
@@ -839,7 +848,7 @@ definition.
 
 KAME kit prior to December 1999 used RFC2553 definition.  KAME kit after
 December 1999 (including December) will conform to XNET definition,
-based on RFC2553bis discusson.
+based on RFC2553bis discussion.
 
 If you look at multiple IPv6 implementations, you will be able to see
 both definitions.  As an userland programmer, the most portable way of
@@ -1194,7 +1203,7 @@ following standards:
     "new IPsec" specification documented in rfc240[1-6].txt, rfc241[01].txt,
 	rfc2451.txt and draft-mcdonald-simple-ipsec-api-01.txt (draft expired,
 	but you can take from ftp://ftp.kame.net/pub/internet-drafts/).
-	(NOTE: IKE specifications, rfc241[7-9].txt are implemented in userland,
+	(NOTE: IKE specifications, rfc240[7-9].txt are implemented in userland,
 	as "racoon" IKE daemon)
     IPComp:
 	RFC2393: IP Payload Compression Protocol (IPComp)
@@ -1322,11 +1331,11 @@ NetBSD and OpenBSD.  For BSD/OS, ALTQ does not work.
 ALTQ in KAME supports (or tries to support) IPv6.
 (actually, ALTQ is developed on KAME repository since ALTQ 2.1 - Jan 2000)
 
-ALTQ occupies single character device nubmer.  For FreeBSD, it is officially
+ALTQ occupies single character device number.  For FreeBSD, it is officially
 allocated.  For OpenBSD and NetBSD, we use the number which is not
 currently allocated (will eventually get an official number).
 The character device is enabled for i386 architecture only.  To enable and
-compile ALTQ-ready kernel for other archtitectures, take the following steps:
+compile ALTQ-ready kernel for other archititectures, take the following steps:
 - assume that your architecture is FOOBAA.
 - modify sys/arch/FOOBAA/FOOBAA/conf.c (or somewhere that defines cdevsw),
   to include a line for ALTQ.  look at sys/arch/i386/i386/conf.c for
