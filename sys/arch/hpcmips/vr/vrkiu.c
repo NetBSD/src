@@ -1,4 +1,4 @@
-/*	$NetBSD: vrkiu.c,v 1.10 1999/12/11 08:23:29 castor Exp $	*/
+/*	$NetBSD: vrkiu.c,v 1.11 2000/01/17 12:22:37 shin Exp $	*/
 
 /*-
  * Copyright (c) 1999 SASAKI Takesi All rights reserved.
@@ -334,6 +334,52 @@ vrkiu_is_console(iot, ioh)
 	}
 }
 
+static void
+vrkiu_initkeymap(void)
+{
+	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_500A)) {
+		keytrans = mobilepro750c_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
+		keytrans = mobilepro_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
+		keytrans = mcr_jp_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
+		keytrans = z50_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_US;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
+		keytrans = tripad_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
+		keytrans = mccs_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
+		keytrans = intertop_keytrans;
+#if !defined(PCKBD_LAYOUT)
+		vrkiu_keymapdata.layout = KB_JP;
+#endif
+	}
+}
+
 /*
  * initialize device
  */
@@ -355,6 +401,7 @@ vrkiu_init(chip, iot, ioh)
 	vrkiu_write(chip, KIUWKI, 450);
 	vrkiu_write(chip, KIUSCANREP, 0x8023);
 				/* KEYEN | STPREP = 2 | ATSTP | ATSCAN */
+	vrkiu_initkeymap();
 	return 0;
 }
 
@@ -412,47 +459,6 @@ vrkiuattach(parent, self, aux)
 
 	printf("\n");
 
-	if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_520A)) {
-		keytrans = mobilepro_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_500A)) {
-		keytrans = mobilepro750c_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR_700A)) {
-		keytrans = mobilepro_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCR)) {
-		keytrans = mcr_jp_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_IBM_WORKPAD_Z50)) {
-		keytrans = z50_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_US;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_SHARP_TRIPAD)) {
-		keytrans = tripad_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_NEC_MCCS)) {
-		keytrans = mccs_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	} else if (platid_match(&platid, &platid_mask_MACH_FUJITSU_INTERTOP)) {
-		keytrans = intertop_keytrans;
-#if !defined(PCKBD_LAYOUT)
-		vrkiu_keymapdata.layout = KB_JP;
-#endif
-	}
 	wa.console = isconsole;
 	wa.keymap = &vrkiu_keymapdata;
 	wa.accessops = &vrkiu_accessops;
