@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.101 2003/05/13 05:31:56 thorpej Exp $
+# $NetBSD: md.i386,v 1.102 2003/07/26 08:43:02 dsl Exp $
 ./lib/libm387.so.0			base-sys-shlib
 ./lib/libm387.so.0.0			base-sys-shlib
 ./sbin/fdisk				base-sysutil-root
@@ -22,13 +22,6 @@
 ./usr/lkm/exec_pecoff.o			base-sys-lkm
 ./usr/lkm/exec_svr4_elf.o		base-sys-lkm
 ./usr/mdec/biosboot			base-sysutil-bin
-./usr/mdec/biosboot.sym			base-sysutil-bin
-./usr/mdec/biosboot_com0.sym		base-sysutil-bin
-./usr/mdec/biosboot_com0_115200.sym	base-sysutil-bin
-./usr/mdec/biosboot_com0_38400.sym	base-sysutil-bin
-./usr/mdec/biosboot_com0_57600.sym	base-sysutil-bin
-./usr/mdec/biosboot_com0_9600.sym	base-sysutil-bin
-./usr/mdec/biosboot_resetvideo.sym	base-sysutil-bin
 ./usr/mdec/bootxx_dosfs			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1			base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2			base-sysutil-bin
@@ -37,7 +30,6 @@
 ./usr/mdec/bootxx_ufs			base-sysutil-bin
 ./usr/mdec/bootxx_ustarfs		base-sysutil-bin
 ./usr/mdec/dosboot.com			base-sysutil-bin
-./usr/mdec/installboot			base-sysutil-bin
 ./usr/mdec/mbr				base-sysutil-bin
 ./usr/mdec/mbr_bootsel			base-sysutil-bin
 ./usr/mdec/mbr_ext			base-sysutil-bin
