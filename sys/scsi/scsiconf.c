@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.44 1995/11/01 01:15:07 pk Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.45 1995/12/11 04:43:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -224,10 +224,10 @@ scsi_strvis(dst, src, len)
 	int len;
 {
 
-	/* Trim leading and trailing blanks. */
-	while (len > 0 && src[0] == ' ')
+	/* Trim leading and trailing blanks and NULs. */
+	while (len > 0 && (src[0] == ' ' || src[0] == '\0'))
 		++src, --len;
-	while (len > 0 && src[len-1] == ' ')
+	while (len > 0 && (src[len-1] == ' ' || src[len-1] == '\0'))
 		--len;
 
 	while (len > 0) {
