@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	5.11 (Berkeley) 5/10/91
- *	$Id: genassym.c,v 1.8 1993/09/16 03:24:13 brezak Exp $
+ *	genassym.c,v 1.7 1993/08/03 06:33:55 mycroft Exp
  */
 
 #include "sys/param.h"
@@ -65,6 +65,7 @@ main()
 	pmap_t pmap = (pmap_t)0;
 	struct pcb *pcb = (struct pcb *)0;
         struct trapframe *tf = (struct trapframe *)0;
+        struct sigframe *sigf = (struct sigframe *)0;
 	register unsigned i;
 
 	printf("#define\tI386_CR3PAT %d\n", I386_CR3PAT);
@@ -132,6 +133,7 @@ main()
 	printf("#define\tPCB_FS %d\n", &pcb->pcb_tss.tss_fs);
 	printf("#define\tPCB_GS %d\n", &pcb->pcb_tss.tss_gs);
 	printf("#define\tPCB_LDT %d\n", &pcb->pcb_tss.tss_ldt);
+	printf("#define\tPCB_USERLDT %d\n", &pcb->pcb_ldt);
 	printf("#define\tPCB_IOOPT %d\n", &pcb->pcb_tss.tss_ioopt);
 	printf("#define\tNKMEMCLUSTERS %d\n", NKMEMCLUSTERS);
 	printf("#define\tU_PROF %d\n", &up->u_stats.p_prof);
@@ -166,6 +168,12 @@ main()
 	printf("#define\tTF_EFLAGS %d\n", &tf->tf_eflags);
 	printf("#define\tTF_ESP %d\n", &tf->tf_esp);
 	printf("#define\tTF_SS %d\n", &tf->tf_ss);
+
+	printf("#define\tSIGF_SIGNUM %d\n", &sigf->sf_signum);
+	printf("#define\tSIGF_CODE %d\n", &sigf->sf_code);
+	printf("#define\tSIGF_SCP %d\n", &sigf->sf_scp);
+	printf("#define\tSIGF_HANDLER %d\n", &sigf->sf_handler);
+	printf("#define\tSIGF_SC %d\n", &sigf->sf_sc);
 
 	printf("#define\tB_READ %d\n", B_READ);
 	printf("#define\tENOENT %d\n", ENOENT);
