@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.2 1997/10/31 22:12:21 pk Exp $
+#	$NetBSD: binstall.sh,v 1.3 1999/03/01 01:05:51 kim Exp $
 #
 
 vecho () {
@@ -30,9 +30,18 @@ Help () {
 	exit 0
 }
 
+Secure () {
+	echo "This script has to be run when the kernel is in 'insecure' mode."
+	echo "The best way is to run this script in single-user mode."
+	exit 1
+}
 
 PATH=/bin:/usr/bin:/sbin:/usr/sbin
 MDEC=${MDEC:-/usr/mdec}
+
+if [ "`sysctl -n kern.securelevel`" -gt 0 ]; then
+	Secure
+fi
 
 set -- `getopt "hm:tv" "$@"`
 if [ $? -gt 0 ]; then
