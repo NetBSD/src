@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.453 2001/08/12 08:35:31 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.454 2001/09/09 02:10:44 enami Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -632,8 +632,8 @@ const char *classnames[] = {
 
 const char *modifiers[] = {
 	"",
-	"OverDrive ",
-	"Dual ",
+	"OverDrive",
+	"Dual",
 	""
 };
 
@@ -1318,13 +1318,14 @@ identifycpu(struct cpu_info *ci)
 	int class = CPUCLASS_386, vendor, i, max;
 	int family, model, step, modif;
 	const struct cpu_cpuid_nameclass *cpup = NULL;
+	const struct cpu_cpuid_family *cpufam;
 	void (*cpu_setup) __P((void));
 	void (*cpu_cacheinfo) __P((struct cpu_info *));
 
 	if (cpuid_level == -1) {
 #ifdef DIAGNOSTIC
 		if (cpu < 0 || cpu >=
-		    (sizeof i386_nocpuid_cpus/sizeof(struct cpu_nocpuid_nameclass)))
+		    sizeof(i386_nocpuid_cpus) / sizeof(i386_nocpuid_cpus[0]))
 			panic("unknown cpu type %d\n", cpu);
 #endif
 		name = i386_nocpuid_cpus[cpu].cpu_name;
@@ -1377,27 +1378,30 @@ identifycpu(struct cpu_info *ci)
 				model = CPU_DEFMODEL;
 			} else if (model > CPU_MAXMODEL)
 				model = CPU_DEFMODEL;
-			i = family - CPU_MINFAMILY;
-			name = cpup->cpu_family[i].cpu_models[model];
+			cpufam = &cpup->cpu_family[family - CPU_MINFAMILY];
+			name = cpufam->cpu_models[model];
 			if (name == NULL)
-			    name = cpup->cpu_family[i].cpu_models[CPU_DEFMODEL];
-			class = cpup->cpu_family[i].cpu_class;
-			cpu_setup = cpup->cpu_family[i].cpu_setup;
-			cpu_cacheinfo = cpup->cpu_family[i].cpu_cacheinfo;
+				name = cpufam->cpu_models[CPU_DEFMODEL];
+			class = cpufam->cpu_class;
+			cpu_setup = cpufam->cpu_setup;
+			cpu_cacheinfo = cpufam->cpu_cacheinfo;
 
 			/*
 			 * Intel processors family >= 6, model 8 allow to
 			 * recognize brand by Brand ID value.
 			 */
-			if (vendor == CPUVENDOR_INTEL && family >= 6
-			    && model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
+			if (vendor == CPUVENDOR_INTEL && family >= 6 &&
+			    model >= 8 && cpu_brand_id && cpu_brand_id <= 3)
 				brand = i386_p3_brand[cpu_brand_id];
 		}
 	}
 
-	sprintf(cpu_model, "%s %s%s%s%s (%s-class)", vendorname, modifier, name,
-		(*brand) ? " " : "", brand,
-		classnames[class]);
+	snprintf(cpu_model, sizeof(cpu_model), "%s%s%s%s%s%s%s (%s-class)",
+	    vendorname,
+	    *modifier ? " " : "", modifier,
+	    *name ? " " : "", name,
+	    *brand ? " " : "", brand,
+	    classnames[class]);
 
 	cpu_class = class;
 
