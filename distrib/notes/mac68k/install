@@ -1,4 +1,4 @@
-	$NetBSD: install,v 1.18 1998/05/19 13:45:01 scottr Exp $	
+	$NetBSD: install,v 1.19 1998/08/23 12:42:19 hubertf Exp $	
 
 The installation can be broken down into three basic steps:
 	* Run Mkfs to build a filesystem or filesystems.
@@ -161,40 +161,4 @@ describing your software, your hardware, and as complete a description of
 the problem as you can.
 
 If the system does come up, congratulations, you have successfully
-installed NetBSD _VER.  When you first boot into NetBSD, it will
-automatically drop you into single-user mode with the root filesystem
-mounted read-write.  The system will ask you to choose a shell.  Simply hit
-return to get to a prompt.  If you are asked for a terminal type, respond
-with 'vt220' and hit return.  At this point, you need to configure at least
-one file in the /etc directory.  Change to the /etc directory and take a
-look at the /etc/rc.conf file.  Modify it to your tastes, making sure that
-you set "rc_configured=YES" so that your changes will be enabled and a
-multi-user boot can proceed.  If your /usr directory is on a separate
-partition and you do not know how to use 'ed' or 'ex', you will have to
-mount your /usr partition to gain access to 'vi'.  Do the following:
-
-mount /usr
-export TERM=vt220
-
-You can then edit /etc/rc.conf with 'vi'.  When you have finished, type
-'exit' at the prompt to leave the single-user shell and continue with the
-multi-user boot.  You should log in as "root" at the login prompt.  There
-is no initial password, but if you're using the machine in a networked
-environment, you should create yourself an account and protect it and the
-"root" account with good passwords.  Please see the adduser(8) man page for
-more information on how to add a new user. 
-
-Some of the files in the NetBSD _VER distribution might need to be
-tailored for your site.  In particular, if you have installed the X11
-distribution sets, you will need to edit the /etc/ld.so.conf file to
-look something like:
-
-# add the X shared libraries to the runtime linker search path
-/usr/X11R6/lib
-
-Also, don't forget to add /usr/X11R6/bin to your path in your shell's dot
-file so that you have access to the X binaries.  Many other files in /etc
-will probably need to be modified, as well.  Most of these files are
-described in section 5 of the manual pages.  If you are unfamiliar with
-UN*X-like operating systems or system administration, it's recommended that
-you buy a book that discusses it.  
+installed NetBSD _VER. 
