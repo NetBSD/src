@@ -1,4 +1,4 @@
-/*	$NetBSD: skbdkeymap.h,v 1.3 2000/01/07 15:19:12 uch Exp $ */
+/*	$NetBSD: skbdkeymap.h,v 1.4 2000/01/14 18:37:58 uch Exp $ */
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -54,7 +54,7 @@ const u_int8_t tc5165_mobilon_keymap[] = {
 /* 1 */	UNK, 56 , UNK, UNK, UNK, UNK, UNK, UNK,
 /* 2 */	UNK, UNK, 29 , UNK, UNK, UNK, UNK, UNK,
 /* 3 */	24 , 203, UNK, 38 , 10 , 27 , 13 , UNK,
-/* 4 */	40 , UNK, UNK, 39 , 26 , UNK, 11 , 12 ,
+/* 4 */	40 , UNK, UNK, 39 , 26 , 53 , 11 , 12 ,
 /* 5 */	UNK, UNK, UNK, 53 , 25 , UNK, UNK, IGN,
 /* 6 */	208, UNK, UNK, UNK, 52 , UNK, 43 , 14 ,
 /* 7 */	205, 200, UNK, UNK, IGN, UNK, UNK, 28 ,
