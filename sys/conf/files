@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.512 2002/04/16 20:33:00 thorpej Exp $
+#	$NetBSD: files,v 1.513 2002/04/16 20:50:16 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -194,7 +194,6 @@ define	wdc_base
 define	scsi		{[channel = -1]}
 define	ata		{[channel = -1], [drive = -1]}
 define	atapi		{[channel = -1]}
-define	mii		{[phy = -1]}
 define	irbus		{ }
 define	radiodev	{ }
 
@@ -263,14 +262,6 @@ defparam opt_ipkdb.h		IPKDBKEY			: IPKDB
 file	ipkdb/ipkdb_ipkdb.c		ipkdb
 file	ipkdb/ipkdb_if.c		ipkdb
 
-# Attribute for devices that read/write an IEEE 802.3u MII bus
-# using the bit-bang method.
-# XXX Can't be in dev/mii/files.mii because that file hasn't
-# XXX been included yet.
-#
-define	mii_bitbang
-file	dev/mii/mii_bitbang.c		mii_bitbang
-
 # Logical disk
 #
 device	ld: disk
@@ -283,6 +274,11 @@ define	sysmon_wdog
 file	dev/sysmon/sysmon_envsys.c	sysmon_envsys		needs-flag
 file	dev/sysmon/sysmon_wdog.c	sysmon_wdog		needs-flag
 file	dev/sysmon/sysmon.c		sysmon_envsys | sysmon_wdog
+
+#
+# MII/PHY support for network devices
+#
+include "dev/mii/files.mii"
 
 #
 # RAIDframe

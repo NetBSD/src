@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcmips,v 1.80 2002/03/23 09:02:01 hamajima Exp $
+#	$NetBSD: files.hpcmips,v 1.81 2002/04/16 20:50:20 thorpej Exp $
 
 # maxpartitions must be first item in files.${ARCH}.
 maxpartitions 8
@@ -361,9 +361,6 @@ device	fd: disk
 #attach	fd at fdc
 file	arch/i386/isa/fd.c		fdc needs-flag
 major	{fd = 2}
-
-# network devices MII bus
-include "dev/mii/files.mii"
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it

@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.27 2002/02/26 16:09:14 kleink Exp $
+#	$NetBSD: files.prep,v 1.28 2002/04/16 20:50:22 thorpej Exp $
 #
 # prep-specific configuration info
 #
@@ -177,9 +177,6 @@ file	arch/prep/isa/joy_timer.c	joy
 device	paud { }: audio, isadma, ad1848, auconv
 attach	paud at isa with paud_isa
 file	arch/prep/isa/paud_isa.c	paud_isa
-
-# network devices MII bus
-include	"dev/mii/files.mii"
 
 # USB drivers
 include "dev/usb/files.usb"
