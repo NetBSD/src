@@ -64,8 +64,8 @@ static char *allv[] = {
 static int allc = sizeof(allv)/sizeof(allv[0]);
 
 
-int h_output(), c_output(), s_output(), l_output(), do_registers(),
-    parseargs();
+static int h_output(), c_output(), s_output(), l_output(), do_registers(),
+	   parseargs();
 
 main(argc, argv)
 	int argc;

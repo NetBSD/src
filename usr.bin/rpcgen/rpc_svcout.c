@@ -46,7 +46,7 @@ static char ARG[] = "argument";
 static char RESULT[] = "result";
 static char ROUTINE[] = "local";
 
-int write_program(), printerr(), printif();
+static int write_program(), printerr(), printif();
 /*
  * write most of the service, that is, everything but the registrations. 
  */

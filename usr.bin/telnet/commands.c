@@ -57,6 +57,7 @@ static char sccsid[] = "@(#)commands.c	5.5 (Berkeley) 3/22/91";
 #include <varargs.h>
 #include <errno.h>
 
+#include <arpa/inet.h>
 #include <arpa/telnet.h>
 
 #include "general.h"
@@ -246,13 +247,19 @@ struct sendlist {
 };
 
 
-extern int
+static int
 	send_esc P((void)),
 	send_help P((void)),
 	send_docmd P((char *)),
 	send_dontcmd P((char *)),
 	send_willcmd P((char *)),
 	send_wontcmd P((char *));
+
+extern int
+	send_do P((int, int)),
+	send_dont P((int, int)),
+	send_will P((int, int)),
+	send_wont P((int, int));
 
 static struct sendlist Sendlist[] = {
     { "ao",	"Send Telnet Abort output",		1, 0, 0, 2, AO },
@@ -382,7 +389,6 @@ send_esc()
 send_docmd(name)
     char *name;
 {
-    void send_do();
     return(send_tncmd(send_do, "do", name));
 }
 
@@ -390,21 +396,18 @@ send_docmd(name)
 send_dontcmd(name)
     char *name;
 {
-    void send_dont();
     return(send_tncmd(send_dont, "dont", name));
 }
     static int
 send_willcmd(name)
     char *name;
 {
-    void send_will();
     return(send_tncmd(send_will, "will", name));
 }
     static int
 send_wontcmd(name)
     char *name;
 {
-    void send_wont();
     return(send_tncmd(send_wont, "wont", name));
 }
 
@@ -603,7 +606,7 @@ togxbinary(val)
 }
 
 
-extern int togglehelp P((void));
+static int togglehelp P((void));
 #if	defined(AUTHENTICATE)
 extern int auth_togdebug P((int));
 #endif
@@ -1465,7 +1468,7 @@ struct slclist {
 	int	arg;
 };
 
-extern void slc_help();
+static void slc_help();
 
 struct slclist SlcList[] = {
     { "export",	"Use local special character definitions",
@@ -1548,7 +1551,8 @@ extern void
 	env_export P((unsigned char *)),
 	env_unexport P((unsigned char *)),
 	env_send P((unsigned char *)),
-	env_list P((void)),
+	env_list P((void));
+static void
 	env_help P((void));
 
 struct envlist EnvList[] = {
@@ -2134,7 +2138,7 @@ tn(argc, argv)
     register struct hostent *host = 0;
     struct sockaddr_in sin;
     struct servent *sp = 0;
-    unsigned long temp, inet_addr();
+    unsigned long temp;
     extern char *inet_ntoa();
 #if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
     char *srp = 0, *strrchr();
@@ -2389,7 +2393,7 @@ static char
 	envhelp[] =	"change environment variables ('environ ?' for more)",
 	modestring[] = "try to enter line or character mode ('mode ?' for more)";
 
-extern int	help();
+static int	help();
 
 static Command cmdtab[] = {
 	{ "close",	closehelp,	bye,		1 },
