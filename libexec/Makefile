@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2002/03/22 18:10:21 thorpej Exp $
+#	$NetBSD: Makefile,v 1.42 2002/07/28 22:38:50 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -6,7 +6,7 @@
 SUBDIR=	atrun comsat fingerd ftpd getNAME getty identd ld.aout_so \
 	ld.elf_so lfs_cleanerd mail.local makekey makewhatis rexecd \
 	rlogind rmail rshd rpc.rquotad rpc.rstatd rpc.rusersd rpc.rwalld \
-	rpc.sprayd talkd telnetd tftpd uucpd
+	rpc.sprayd talkd telnetd tftpd utmp_update uucpd
 
 .if (${MKKERBEROS} != "no")
 # Heimdal/KTH Kerberos
