@@ -1,4 +1,4 @@
-/*	$NetBSD: aha.c,v 1.3 1996/03/25 07:11:12 mycroft Exp $	*/
+/*	$NetBSD: aha.c,v 1.4 1996/03/28 18:19:07 mycroft Exp $	*/
 
 #define AHADIAG
 #define integrate
@@ -934,7 +934,7 @@ aha_init(sc)
 	 */
 	if (!strncmp(sc->sc_model, "1542C", 5)) {
 		struct aha_extbios extbios;
-		struct aha_toggle toggle;
+		struct aha_unlock unlock;
 
 		printf("%s: unlocking mailbox interface\n", sc->sc_dev.dv_xname);
 		extbios.cmd.opcode = AHA_EXT_BIOS;
@@ -947,9 +947,10 @@ aha_init(sc)
 		    extbios.reply.flags, extbios.reply.mailboxlock);
 #endif /* AHADEBUG */
 
-		toggle.cmd.opcode = AHA_MBX_ENABLE;
-		toggle.cmd.enable = extbios.reply.mailboxlock;
-		aha_cmd(iobase, sc, sizeof(toggle.cmd), (u_char *)&toggle.cmd,
+		unlock.cmd.opcode = AHA_MBX_ENABLE;
+		unlock.cmd.junk = 0;
+		unlock.cmd.magic = extbios.reply.mailboxlock;
+		aha_cmd(iobase, sc, sizeof(unlock.cmd), (u_char *)&unlock.cmd,
 		    0, (u_char *)0);
 	}
 
