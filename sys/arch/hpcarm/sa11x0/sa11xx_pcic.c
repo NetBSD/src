@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.2 2001/03/21 16:16:35 toshii Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.3 2001/03/27 18:06:39 toshii Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -56,8 +56,6 @@
 #include <hpcarm/sa11x0/sa11xx_pcicreg.h>
 #include <hpcarm/sa11x0/sa11xx_pcicvar.h>
 
-static	void	sapcic_event_thread(void *);
-
 static	int	sapcic_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 					struct pcmcia_mem_handle *);
 static	void	sapcic_mem_free(pcmcia_chipset_handle_t,
@@ -82,6 +80,10 @@ static	void	sapcic_intr_disestablish(pcmcia_chipset_handle_t,
 						void *);
 static	void	sapcic_socket_enable(pcmcia_chipset_handle_t);
 static	void	sapcic_socket_disable(pcmcia_chipset_handle_t);
+
+static	void	sapcic_event_thread(void *);
+
+static	void	sapcic_delay(int, const char *);
 
 #ifdef DEBUG
 #define DPRINTF(arg)	printf arg
@@ -198,6 +200,19 @@ sapcic_event_thread(arg)
 	kthread_exit(0);
 }
 
+static void
+sapcic_delay(timo, wmesg)
+	int timo;		/* in milliseconds */
+	const char *wmesg;
+{
+#ifdef DIAGNOSTIC
+	if (curproc == NULL)
+		panic("sapcic_delay: called in interrupt context\n");
+#endif
+
+	tsleep(sapcic_delay, PWAIT, wmesg, roundup(timo * hz, 1000) / 1000);
+}
+
 int
 sapcic_intr(arg)
 	void *arg;
@@ -249,6 +264,7 @@ sapcic_mem_map(pch, kind, card_addr, size, pmh, offsetp, windowp)
 	pa = trunc_page(card_addr);
 	*offsetp = card_addr - pa;
 	size = round_page(card_addr + size) - pa;
+	pmh->realsize = size;
 
 	pa += SAPCIC_BASE_OFFSET;
 	pa += SAPCIC_SOCKET_OFFSET * so->socket;
@@ -289,14 +305,24 @@ sapcic_io_alloc(pch, start, size, align, pih)
 	struct pcmcia_io_handle *pih;
 {
 	struct sapcic_socket *so = pch;
+	int error;
+	bus_addr_t pa;
 
 	memset(pih, 0, sizeof(*pih));
 	pih->iot = so->sc->sc_iot;
 	pih->addr = start;
 	pih->size = size;
 
+	pa = pih->addr;
+	pa += SAPCIC_BASE_OFFSET;
+	pa += SAPCIC_SOCKET_OFFSET * so->socket;
+
+	DPRINTF(("sapcic_io_alloc: %x %x\n", (unsigned int)pa,
+		 (unsigned int)size));
 	/* XXX Are we ignoring alignment constraints? */
-	return (0);
+	error = bus_space_map(so->sc->sc_iot, pa, size, 0, &pih->ioh);
+
+	return (error);
 }
 
 static void
@@ -304,6 +330,9 @@ sapcic_io_free(pch, pih)
 	pcmcia_chipset_handle_t pch;
 	struct pcmcia_io_handle *pih;
 {
+	struct sapcic_socket *so = pch;
+
+	bus_space_unmap(so->sc->sc_iot, pih->ioh, pih->size);
 }
 
 static int
@@ -315,28 +344,13 @@ sapcic_io_map(pch, width, offset, size, pih, windowp)
 	struct pcmcia_io_handle *pih;
 	int *windowp;
 {
-	struct sapcic_socket *so = pch;
-	bus_addr_t pa;
-	int error;
-
-	pa = pih->addr + offset;
-	pa += SAPCIC_BASE_OFFSET;
-	pa += SAPCIC_SOCKET_OFFSET * so->socket;
-
-	DPRINTF(("sapcic_io_map: %x %x\n", (unsigned int)pa, (unsigned int)size));
-	error = bus_space_map(so->sc->sc_iot, pa, size, 0, &pih->ioh);
-	if (! error)
-		*windowp = (int)pih->ioh;
-	return (error);
+	return (0);
 }
 
 static void sapcic_io_unmap(pch, window)
 	pcmcia_chipset_handle_t pch;
 	int window;
 {
-	struct sapcic_socket *so = pch;
-
-	bus_space_unmap(so->sc->sc_iot, (bus_addr_t)window, 4096); /* XXX */
 }
 
 static void *
@@ -368,9 +382,9 @@ static void
 sapcic_socket_enable(pch)
 	pcmcia_chipset_handle_t pch;
 {
-	/* XXX usage of delay() should be decreased */
-
 	struct sapcic_socket *so = pch;
+	int i;
+
 #if defined(DIAGNOSTIC) && defined(notyet)
 	if (so->flags & PCIC_FLAG_ENABLED)
 		printf("sapcic_socket_enable: enabling twice\n");
@@ -385,7 +399,7 @@ sapcic_socket_enable(pch)
 	 * wait 300ms until power fails (Tpf).  Then, wait 100ms since
 	 * we are changing Vcc (Toff).
 	 */
-	delay((300 + 100) * 1000);
+	sapcic_delay(300 + 100, "pccen0");
 
 	/* power up the socket */
 	(so->pcictag->set_power)(so, so->socket ? SAPCIC_POWER_3V : SAPCIC_POWER_5V); /* XXX */
@@ -402,7 +416,7 @@ sapcic_socket_enable(pch)
 	 * some machines require some more time to be settled
 	 * (300ms is added here).
 	 */
-	delay((100 + 20 + 300) * 1000);
+	sapcic_delay(100 + 20 + 300, "pccen1");
 
 	/* honor nWAIT signal */
 	(so->pcictag->write)(so, SAPCIC_CONTROL_WAITENABLE, 1);
@@ -419,11 +433,16 @@ sapcic_socket_enable(pch)
 	(so->pcictag->write)(so, SAPCIC_CONTROL_RESET, 0);
 
 	/* wait 20ms as per pc card standard (r2.01) section 4.3.6 */
-	delay(20 * 1000);
+	sapcic_delay(20, "pccen2");
 
 	/* wait for the chip to finish initializing */
-/*	pcic_wait_ready(h);*/
-	delay(500 * 1000); 	/* XXX wait long enough */
+	sapcic_delay(10, "pccen3");
+	for(i = 100; i; i--) {
+		if ((so->pcictag->read)(so, SAPCIC_STATUS_READY))
+			break;
+		sapcic_delay(100, "pccen4");
+	}
+	DPRINTF(("sapcic_socket_enable: wait ready %d\n", 100 - i));
 
 	/* finally enable the interrupt */
 
@@ -433,7 +452,13 @@ static void
 sapcic_socket_disable(pch)
 	pcmcia_chipset_handle_t pch;
 {
+	struct sapcic_socket *so = pch;
+
 	/* XXX mask card interrupts */
-	/* XXX power down the card */
-	/* XXX float controller lines */
+
+	/* power down the card */
+	(so->pcictag->set_power)(so, SAPCIC_POWER_OFF);
+
+	/* float controller lines */
+	(so->pcictag->write)(so, SAPCIC_CONTROL_LINEENABLE, 0);
 }

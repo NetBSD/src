@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x1_pcic.c,v 1.3 2001/03/21 17:43:39 toshii Exp $        */
+/*      $NetBSD: sa11x1_pcic.c,v 1.4 2001/03/27 18:06:39 toshii Exp $        */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -186,6 +186,19 @@ sacpcic_read(so, reg)
 			return SAPCIC_CARD_INVALID;
 		else
 			return SAPCIC_CARD_VALID;
+
+	case SAPCIC_STATUS_VS1:
+		bit = (so->socket ? SR_S1_VS1 : SR_S0_VS1);
+		return (bit & cr);
+
+	case SAPCIC_STATUS_VS2:
+		bit = (so->socket ? SR_S1_VS2 : SR_S0_VS2);
+		return (bit & cr);
+
+	case SAPCIC_STATUS_READY:
+		bit = (so->socket ? SR_S1_READY : SR_S0_READY);
+		return (bit & cr);
+
 	default:
 		panic("sacpcic_read: bogus register\n");
 	}
