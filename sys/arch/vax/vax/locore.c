@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.25 1998/06/04 19:42:14 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.26 1998/06/07 20:20:05 ragge Exp $	*/
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -161,6 +161,10 @@ start()
 				switch ((vax_siedata >> 8) & 0xff) {
 				case 0:
                         		strcat(cpu_model, "/m{30,40}");
+					break;
+
+				case 1:
+                        		strcat(cpu_model, "/m{38,48}");
 					break;
 
 				case 2:
