@@ -1,4 +1,4 @@
-/* $NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $ */
+/* $NetBSD: ioasic.c,v 1.30 2000/05/28 06:07:31 gmcgarry Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.29 2000/03/15 03:07:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioasic.c,v 1.30 2000/05/28 06:07:31 gmcgarry Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -120,7 +120,7 @@ struct ioasic_dev ioasic_devs[] = {
 	{ "TOY_RTC ", IOASIC_SLOT_8_START, C(IOASIC_DEV_BOGUS),
 	  0, },
 	{ "AMD79c30", IOASIC_SLOT_9_START, C(IOASIC_DEV_ISDN),
-	  IOASIC_INTR_ISDN,  },
+	  IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD,  },
 };
 int ioasic_ndevs = sizeof(ioasic_devs) / sizeof(ioasic_devs[0]);
 
@@ -324,7 +324,7 @@ ioasic_intr(val)
 		CHECKINTR(IOASIC_DEV_SCC0, IOASIC_INTR_SCC_0);
 		CHECKINTR(IOASIC_DEV_SCC1, IOASIC_INTR_SCC_1);
 		CHECKINTR(IOASIC_DEV_LANCE, IOASIC_INTR_LANCE);
-		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN);
+		CHECKINTR(IOASIC_DEV_ISDN, IOASIC_INTR_ISDN_TXLOAD | IOASIC_INTR_ISDN_RXLOAD);
 
 		gifound |= ifound;
 	} while (ifound);
