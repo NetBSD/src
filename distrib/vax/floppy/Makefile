@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2002/04/06 16:41:24 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/30 15:28:32 lukem Exp $
 
-.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+
 .include <bsd.kernobj.mk>
 
 INSTKERNOBJ!=	cd ${.CURDIR}/../ramdisk-kernel && ${PRINTOBJDIR}
