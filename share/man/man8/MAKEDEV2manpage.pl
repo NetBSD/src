@@ -1,6 +1,6 @@
 #!/usr/pkg/bin/perl
 #
-#	$NetBSD: MAKEDEV2manpage.pl,v 1.9 2001/09/08 01:30:22 wiz Exp $
+#	$NetBSD: MAKEDEV2manpage.pl,v 1.10 2002/01/12 22:05:33 enami Exp $
 #
 # Copyright (c) 1999
 #	Hubert Feyrer <hubertf@netbsd.org>.  All rights reserved.
@@ -149,8 +149,8 @@ sub do_devices
               $l =~ s/\s*$//;
 
               # add manpage, if available
-              ($page) = ( $target=~/([a-zA-Z]+)/ );
-              $page = "fdc" if $page eq "fd";
+              ($page) = ($target=~/([a-zA-Z]+)/);
+              $page = "fdc" if $target eq "fd#";
               if ( -f "../man4/$page.4" or -f "../man4/man4.${arch}/$page.4" ) {
                   $l =~ s/\s+$//;
                   if ($l =~ /see/) {
