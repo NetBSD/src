@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.34 1997/05/08 16:19:45 mycroft Exp $	*/
+/*	$NetBSD: advnops.c,v 1.35 1997/05/14 19:00:17 veego Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -852,7 +852,7 @@ adosfs_access(v)
 #endif
 #ifdef QUOTA
 #endif
-	error = vaccess(vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
+	error = vaccess(sp->a_vp->v_type, adunixprot(ap->adprot) & ap->amp->mask,
 	    ap->uid, ap->gid, sp->a_mode, sp->a_cred);
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" %d)", error);
