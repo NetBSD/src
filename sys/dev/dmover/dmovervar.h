@@ -1,4 +1,4 @@
-/*	$NetBSD: dmovervar.h,v 1.6 2003/07/19 02:00:18 thorpej Exp $	*/
+/*	$NetBSD: dmovervar.h,v 1.7 2003/07/19 02:03:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -235,6 +235,9 @@ extern const char dmover_funcname_fill8[];
 
 extern const char dmover_funcname_copy[];
 #define	DMOVER_FUNC_COPY		dmover_funcname_copy
+
+extern const char dmover_funcname_iscsi_crc32c[];
+#define	DMOVER_FUNC_ISCSI_CRC32C	dmover_funcname_iscsi_crc32c
 
 extern const char dmover_funcname_xor2[];
 #define	DMOVER_FUNC_XOR2		dmover_funcname_xor2

@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_util.c,v 1.3 2002/08/04 02:17:06 thorpej Exp $	*/
+/*	$NetBSD: dmover_util.c,v 1.4 2003/07/19 02:03:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_util.c,v 1.3 2002/08/04 02:17:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_util.c,v 1.4 2003/07/19 02:03:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_util.c,v 1.3 2002/08/04 02:17:06 thorpej Exp 
 const char dmover_funcname_zero[] = "zero";
 const char dmover_funcname_fill8[] = "fill8";
 const char dmover_funcname_copy[] = "copy";
+const char dmover_funcname_iscsi_crc32c[] = "iscsi-crc32c";
 const char dmover_funcname_xor2[] = "xor2";
 const char dmover_funcname_xor3[] = "xor3";
 const char dmover_funcname_xor4[] = "xor4";
