@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.22.2.13 2002/08/19 01:22:18 sommerfeld Exp $
+#	$NetBSD: GENERIC_TINY,v 1.22.2.14 2002/08/31 20:31:33 sommerfeld Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.

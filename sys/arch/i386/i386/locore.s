@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.34 2002/08/19 01:22:28 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.35 2002/08/31 20:31:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -2118,6 +2118,26 @@ switch_restored:
 
 	/* Interrupts are okay again. */
 	sti
+
+/*
+ *  Check for restartable atomic sequences (RAS)
+ *  XXX %edi reloads are not necessary here as %edi is callee-saved!
+ */
+	movl	CPUVAR(CURPROC),%edi
+	cmpl	$0,P_NRAS(%edi)
+	je	1f
+	movl	P_MD_REGS(%edi),%edx
+	movl	TF_EIP(%edx),%eax
+	pushl	%eax
+	pushl	%edi
+	call	_C_LABEL(ras_lookup)
+	addl	$8,%esp
+	cmpl	$-1,%eax
+	je	1f
+	movl	CPUVAR(CURPROC),%edi
+	movl	P_MD_REGS(%edi),%edx
+	movl	%eax,TF_EIP(%edx)
+1:
 
 switch_return:
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)	

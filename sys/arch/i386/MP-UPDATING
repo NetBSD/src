@@ -1,3 +1,8 @@
+Last Synchronized: Sat Aug 31 12:58:28 EDT 2002
+
+merged with -current as of today.
+merged in restartable atomic sequence support.
+
 Last Synchronized: Sun Aug 18 19:21:52 EDT 2002
 
 merged with -current as of today.
@@ -54,7 +59,3 @@ Last Synchronized: Sun Sep 23 21:12:12 EDT 2001
 Now using new toolchain.  Most (but not all) of the new assembler
 warnings are now fixed.  Has all the ubcperf, new-dirpref, poolified
 softdeps, and assorted other goodness.
-
-
-
-
