@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.15 2003/08/27 19:59:57 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.16 2003/11/24 04:07:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,6 +114,12 @@
 #define RCSID(x)	.section .ident; .asciz x; .previous
 #else
 #define	RCSID(x)	.text; .asciz x
+#endif
+
+#ifdef NO_KERNEL_RCSIDS
+#define	__KERNEL_RCSID(_n, _s)	/* nothing */
+#else
+#define	__KERNEL_RCSID(_n, _s)	RCSID(_s)
 #endif
 
 #ifdef __ELF__
