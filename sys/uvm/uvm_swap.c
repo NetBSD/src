@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.37 2000/05/19 03:45:04 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.38 2000/06/27 17:29:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -53,7 +53,6 @@
 #include <sys/syscallargs.h>
 #include <sys/swap.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm.h>
 
 #include <miscfs/specfs/specdev.h>
