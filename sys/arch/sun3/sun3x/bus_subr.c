@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.2 1997/02/22 19:27:18 gwr Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.3 1997/02/24 01:35:33 jeremy Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -56,18 +56,11 @@
 #include <machine/machdep.h>
 #include <machine/mon.h>
 
-#include "pmap_pvt.h"
-
 label_t *nofault;
 
 /* This is defined in _startup.c */
 extern vm_offset_t tmp_vpages[];
 
-/* I really don't get this. -J
-   Yeah, this is sun3-specific, but we will eventually need
-   something similar to convert VME address spaces to our
-   physical addresses.  The conversion is pretty similar to
-   what the sun3 does with "page type bits". -gwr */
 static const int bustype_to_patype[4] = {
 	0,		/* OBMEM  */
 	0,		/* OBIO   */
@@ -102,7 +95,8 @@ int bus_peek(bustype, paddr, sz)
 	va_page = tmp_vpages[0];
 	va      = (caddr_t) va_page + offset;
 
-	pmap_enter_kernel(va_page, paddr, (VM_PROT_READ|VM_PROT_WRITE));
+	pmap_enter(pmap_kernel(), va_page, paddr, (VM_PROT_READ|VM_PROT_WRITE),
+		TRUE);
 
 	switch (sz) {
 		case 1:
@@ -119,12 +113,8 @@ int bus_peek(bustype, paddr, sz)
 			rtn = -1;
 	}
 
-	/*
-	 * XXX - This function is definitely NOT performance-critical,
-	 * so I would be more comfortable with the paranoid habit of
-	 * leaving the tmp_vpages unmapped when not in use. -gwr
-	 * (It might help prevent accidents...)
-	 */
+	pmap_remove(pmap_kernel(), va_page, va_page + NBPG);
+
 
 	return rtn;
 }
