@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.54 1995/05/12 17:54:41 cgd Exp $	*/
+/*	$NetBSD: com.c,v 1.55 1995/05/28 03:26:37 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -664,8 +664,6 @@ comstart(tp)
 	if (tp->t_outq.c_cc == 0)
 		goto out;
 	tp->t_state |= TS_BUSY;
-	if ((inb(iobase + com_lsr) & LSR_TXRDY) == 0)
-		goto out;
 	if (sc->sc_hwflags & COM_HW_FIFO) {
 		u_char buffer[16], *cp = buffer;
 		int n = q_to_b(&tp->t_outq, cp, sizeof buffer);
@@ -731,35 +729,6 @@ comeint(sc, stat)
 	(*linesw[tp->t_line].l_rint)(c, tp);
 }
  
-static inline void
-commint(sc)
-	struct com_softc *sc;
-{
-	struct tty *tp = sc->sc_tty;
-	int iobase = sc->sc_iobase;
-	u_char msr, delta;
-
-	msr = inb(iobase + com_msr);
-	delta = msr ^ sc->sc_msr;
-	sc->sc_msr = msr;
-
-	if (delta & MSR_DCD && (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
-		if (msr & MSR_DCD)
-			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
-		else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
-			outb(iobase + com_mcr,
-			    sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
-	}
-	if (delta & MSR_CTS && tp->t_cflag & CRTSCTS) {
-		/* the line is up and we want to do rts/cts flow control */
-		if (msr & MSR_CTS) {
-			tp->t_state &= ~TS_TTSTOP;
-			(*linesw[tp->t_line].l_start)(tp);
-		} else
-			tp->t_state |= TS_TTSTOP;
-	}
-}
-
 void
 comdiag(arg)
 	void *arg;
@@ -785,33 +754,38 @@ comintr(arg)
 	struct com_softc *sc = arg;
 	int iobase = sc->sc_iobase;
 	struct tty *tp;
-	u_char code;
+	u_char lsr, data, msr, delta;
 
-	code = inb(iobase + com_iir) & IIR_IMASK;
-	if (code & IIR_NOPEND)
-		return 0;
+	if (inb(iobase + com_iir) & IIR_NOPEND)
+		return (0);
+
+	tp = sc->sc_tty;
 
 	for (;;) {
-		if (code & IIR_RXRDY) {
-			tp = sc->sc_tty;
+		lsr = inb(iobase + com_lsr);
+
+		if (lsr & LSR_RCV_MASK) {
 			/* XXXX put in FIFO and process later */
-			while (code = (inb(iobase + com_lsr) & LSR_RCV_MASK)) {
-				if (code == LSR_RXRDY) {
-					code = inb(iobase + com_data);
+			do {
+				if (lsr & (LSR_BI|LSR_FE|LSR_PE|LSR_OE))
+					comeint(sc, lsr);
+				else {
+					data = inb(iobase + com_data);
 					if (tp->t_state & TS_ISOPEN)
-						(*linesw[tp->t_line].l_rint)(code, tp);
+						(*linesw[tp->t_line].l_rint)(data, tp);
 #ifdef KGDB
 					else {
 						if (kgdb_dev == makedev(commajor, unit) &&
-						    code == FRAME_END)
+						    data == FRAME_END)
 							kgdb_connect(0);
 					}
 #endif
-				} else
-					comeint(sc, code);
-			}
-		} else if (code == IIR_TXRDY) {
-			tp = sc->sc_tty;
+				}
+				lsr = inb(iobase + com_lsr);
+			} while (lsr & LSR_RCV_MASK);
+		}
+
+		if (lsr & LSR_TXRDY && (tp->t_state & TS_BUSY) != 0) {
 			tp->t_state &= ~TS_BUSY;
 			if (tp->t_state & TS_FLUSH)
 				tp->t_state &= ~TS_FLUSH;
@@ -820,15 +794,32 @@ comintr(arg)
 					(*linesw[tp->t_line].l_start)(tp);
 				else
 					comstart(tp);
-		} else if (code == IIR_MLSC) {
-			commint(sc);
-		} else {
-			log(LOG_WARNING, "%s: weird interrupt: iir=0x%02x\n",
-			    sc->sc_dev.dv_xname, code);
 		}
-		code = inb(iobase + com_iir) & IIR_IMASK;
-		if (code & IIR_NOPEND)
-			return 1;
+
+		msr = inb(iobase + com_msr);
+
+		if (msr != sc->sc_msr) {
+			delta = msr ^ sc->sc_msr;
+			sc->sc_msr = msr;
+			if (delta & MSR_DCD && (sc->sc_swflags & COM_SW_SOFTCAR) == 0) {
+				if (msr & MSR_DCD)
+					(void)(*linesw[tp->t_line].l_modem)(tp, 1);
+				else if ((*linesw[tp->t_line].l_modem)(tp, 0) == 0)
+					outb(iobase + com_mcr,
+					     sc->sc_mcr &= ~(MCR_DTR | MCR_RTS));
+			}
+			if (delta & MSR_CTS && (tp->t_cflag & CRTSCTS) != 0) {
+				/* the line is up and we want to do rts/cts flow control */
+				if (msr & MSR_CTS) {
+					tp->t_state &= ~TS_TTSTOP;
+					(*linesw[tp->t_line].l_start)(tp);
+				} else
+					tp->t_state |= TS_TTSTOP;
+			}
+		}
+
+		if (inb(iobase + com_iir) & IIR_NOPEND)
+			return (1);
 	}
 }
 
