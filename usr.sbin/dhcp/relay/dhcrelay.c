@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.4 2000/06/10 18:17:21 mellon Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.4.2.1 2000/07/22 05:01:23 mellon Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -124,6 +124,7 @@ int main (argc, argv, envp)
 	int no_daemon = 0;
 	int quiet = 0;
 	isc_result_t status;
+	char *s;
 
 #ifdef SYSLOG_4_2
 	openlog ("dhcrelay", LOG_NDELAY);
@@ -212,6 +213,10 @@ int main (argc, argv, envp)
 					iap, sizeof *iap);
 			}
  		}
+	}
+
+	if ((s = getenv ("PATH_DHCRELAY_PID"))) {
+		path_dhcrelay_pid = s;
 	}
 
 	if (!quiet) {
