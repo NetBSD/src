@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.75 1998/02/06 07:53:28 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.76 1998/02/06 11:20:35 mrg Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -59,11 +59,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	KTRACE		# system call tracing via ktrace(1)
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores

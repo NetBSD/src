@@ -1,4 +1,4 @@
-#	$NetBSD: KICKME,v 1.48 1998/02/06 07:21:47 mrg Exp $
+#	$NetBSD: KICKME,v 1.49 1998/02/06 11:20:42 mrg Exp $
 #
 #	KICKME -- 486Cx-33 development machine
 #
@@ -21,11 +21,6 @@ options 	DIAGNOSTIC	# internal consistency checks
 options 	KTRACE		# system call tracing, a la ktrace(1)
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores

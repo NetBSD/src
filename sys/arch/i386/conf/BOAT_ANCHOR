@@ -1,4 +1,4 @@
-#	$NetBSD: BOAT_ANCHOR,v 1.76 1998/02/06 07:21:42 mrg Exp $
+#	$NetBSD: BOAT_ANCHOR,v 1.77 1998/02/06 11:20:27 mrg Exp $
 #
 #	BOAT_ANCHOR -- kernel for the 386-20 the gang uses for testing
 #
@@ -25,11 +25,6 @@ options 	COMPAT_13
 options 	COMPAT_43	# and 4.3BSD
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 file-system	FFS		# UFS and quotas
 file-system	NFS		# Network File System client

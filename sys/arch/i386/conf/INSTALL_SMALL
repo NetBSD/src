@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.13 1998/02/06 07:53:29 thorpej Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.14 1998/02/06 11:20:37 mrg Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -60,11 +60,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	KTRACE		# system call tracing via ktrace(1)
 
 #options 	UVM		# Use UVM instead of Mach VM.
-
-# These are required for Mach VM
-options 	VNODEPAGER	# paging to vnodes
-options 	SWAPPAGER	# pageout
-options 	DEVPAGER	# paging to devices
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
