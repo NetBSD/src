@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.20 1996/02/01 07:28:18 mycroft Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.21 1996/02/05 17:39:25 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -8,7 +8,7 @@
  * in any changes that are made.
  *
  * This driver takes packets off the IP i/f and hands them up to a
- * user process to have it's wicked way with. This driver has it's
+ * user process to have its wicked way with. This driver has its
  * roots in a similar driver written by Phil Cockcroft (formerly) at
  * UCL. This driver is based much more on read/write/select mode of
  * operation though.
