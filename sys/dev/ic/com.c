@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.116 1997/10/19 14:26:16 fvdl Exp $	*/
+/*	$NetBSD: com.c,v 1.117 1997/10/19 20:01:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -355,6 +355,10 @@ com_attach_subr(sc)
 	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
 	int	*hayespp;
 #endif
+
+	/* Disable interrupts before configuring the device. */
+	sc->sc_ier = 0;
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
 
 	if (iot == comconstag && iobase == comconsaddr) {
 		comconsattached = 1;
