@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.411 2004/08/23 06:07:45 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.412 2004/08/25 00:23:15 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6805,3 +6805,8 @@ sys/netinet/fil.c				1.68
 	Fixes PRs 26666 and 26701.
 	[chs, ticket #783]
 
+
+distrib/notes/common/main				1.264
+
+	Update list of release engineers.
+	[tron, ticket #782]
