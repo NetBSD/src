@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.9 2001/07/22 13:34:07 wiz Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.10 2002/01/16 06:10:00 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1098,18 +1098,14 @@ sonic_read(sc, pkt, len)
 		return (0);
 	}
 
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a bpf filter listening on this interface.
-	 * If so, hand off the raw packet to enet, then discard things
-	 * not destined for us (but be sure to keep broadcast/multicast).
-	 */
-	if (ifp->if_bpf)
-		bpf_tap(ifp->if_bpf, pkt, len);
-#endif
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)
 		return (0);
+#if NBPFILTER > 0
+	/* Pass the packet to any BPF listeners. */
+	if (ifp->if_bpf)
+		bpf_mtap(ifp->if_bpf, m);
+#endif
 	(*ifp->if_input)(ifp, m);
 	return (1);
 }
