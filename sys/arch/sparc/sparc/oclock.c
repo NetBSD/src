@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.8 2003/07/15 00:05:07 lukem Exp $ */
+/*	$NetBSD: oclock.c,v 1.8.2.1 2004/07/10 16:38:27 tron Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.8 2003/07/15 00:05:07 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.8.2.1 2004/07/10 16:38:27 tron Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -239,10 +239,20 @@ oclockintr(cap)
 	void *cap;
 {
 	volatile int discard;
+	int s;
+
+	/*
+	 * Protect the clearing of the clock interrupt.  If we don't
+	 * do this, and we're interrupted (by the zs, for example),
+	 * the clock stops!
+	 * XXX WHY DOES THIS HAPPEN?
+	 */
+	s = splhigh();
 
 	discard = intersil_clear();
 	ienab_bic(IE_L10);  /* clear interrupt */
 	ienab_bis(IE_L10);  /* enable interrupt */
+	splx(s);
 
 	hardclock((struct clockframe *)cap);
 	return (1);
