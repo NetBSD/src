@@ -1450,8 +1450,8 @@ sfas_postaction(dev, rp, nexus)
 			 * more than we want. Let the chip handle that.
 			 */
 
-			*rp->sfas_tc_low = 256;
-			*rp->sfas_tc_mid = 0;
+			*rp->sfas_tc_low = 0;
+			*rp->sfas_tc_mid = 1;
 			*rp->sfas_tc_high = 0;
 			cmd = SFAS_CMD_TRANSFER_PAD;
 		}
