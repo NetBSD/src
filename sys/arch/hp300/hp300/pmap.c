@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1998/12/21 06:58:39 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 1998/12/21 08:51:39 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -104,6 +104,7 @@
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/user.h>
+#include <sys/pool.h>
 
 #include <machine/pte.h>
 
@@ -257,6 +258,8 @@ extern caddr_t	CADDR1, CADDR2;
 
 pt_entry_t	*caddr1_pte;	/* PTE for CADDR1 */
 pt_entry_t	*caddr2_pte;	/* PTE for CADDR2 */
+
+struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 
 struct pv_entry *pmap_alloc_pv __P((void));
 void	pmap_free_pv __P((struct pv_entry *));
@@ -577,6 +580,12 @@ bogons:
 #endif
 
 	/*
+	 * Initialize the pmap pools.
+	 */
+	pool_init(&pmap_pmap_pool, sizeof(struct pmap), 0, 0, 0, "pmappl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_VMPMAP);
+
+	/*
 	 * Now it is safe to enable pv_table recording.
 	 */
 	pmap_initialized = TRUE;
@@ -776,12 +785,8 @@ pmap_create(size)
 	if (size)
 		return (NULL);
 
-	/* XXX: is it ok to wait here? */
-	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-#ifdef notifwewait
-	if (pmap == NULL)
-		panic("pmap_create: cannot allocate a pmap");
-#endif
+	pmap = pool_get(&pmap_pmap_pool, PR_WAITOK);
+
 	bzero(pmap, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return (pmap);
@@ -840,7 +845,7 @@ pmap_destroy(pmap)
 	simple_unlock(&pmap->pm_lock);
 	if (count == 0) {
 		pmap_release(pmap);
-		free((caddr_t)pmap, M_VMPMAP);
+		pool_put(&pmap_pmap_pool, pmap);
 	}
 }
 
