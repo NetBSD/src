@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2002/06/11 06:06:19 itojun Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2002/07/02 21:34:18 soren Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2002/06/11 06:06:19 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2002/07/02 21:34:18 soren Exp $");
 #endif
 #endif /* not lint */
 
@@ -726,13 +726,17 @@ usage()
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-gimnrsSv] [-f address_family] [-M core] [-N system]\n", 
+"       %s [-bdgiLmnrsSv] [-f address_family] [-M core] [-N system]\n", 
 	progname);
 	(void)fprintf(stderr,
-"       %s [-n] [-I interface] [-M core] [-N system] [-w wait]\n", progname);
+"       %s [-dn] [-I interface] [-M core] [-N system] [-w wait]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-M core] [-N system] [-p protocol]\n", progname);
+"       %s [-p protocol] [-M core] [-N system]\n", progname);
 	(void)fprintf(stderr,
-"       %s [-M core] [-N system] [-p protocol] -P pcbaddr\n", progname);
+"       %s [-p protocol] [-M core] [-N system] -P pcbaddr\n", progname);
+	(void)fprintf(stderr,
+"       %s [-p protocol] [-i] [-I Interface] \n", progname);
+	(void)fprintf(stderr,
+"       %s [-s] [-f address_family] [-i] [-I Interface]\n", progname);
 	exit(1);
 }
