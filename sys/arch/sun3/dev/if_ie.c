@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.16.6.3 1997/03/10 15:08:32 is Exp $ */
+/*	$NetBSD: if_ie.c,v 1.16.6.4 1997/03/10 21:47:46 gwr Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -404,7 +404,7 @@ loop:
 
 	if (status & IE_ST_RNR) {
 		printf("%s: receiver not ready\n", sc->sc_dev.dv_xname);
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		sc->sc_if.if_ierrors++;
 		iereset(sc);
 	}
 
@@ -435,9 +435,9 @@ ierint(sc)
 		status = sc->rframes[i]->ie_fd_status;
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
-			sc->sc_ethercom.ec_if.if_ipackets++;
+			sc->sc_if.if_ipackets++;
 			if (!--timesthru) {
-				sc->sc_ethercom.ec_if.if_ierrors +=
+				sc->sc_if.if_ierrors +=
 				    SWAP(scb->ie_err_crc) +
 				    SWAP(scb->ie_err_align) +
 				    SWAP(scb->ie_err_resource) +
@@ -476,7 +476,7 @@ ietint(sc)
 	struct ifnet *ifp;
 	int     status;
 
-	ifp = &c->sc_ethercom.ec_if;
+	ifp = &c->sc_if;
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -571,7 +571,7 @@ check_eh(sc, eh, to_bpf)
 	struct ifnet *ifp;
 	int     i;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_if;
 
 	switch (sc->promisc) {
 	case IFF_ALLMULTI:
@@ -721,7 +721,7 @@ iexmit(sc)
 {
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_if;
 
 #if NBPFILTER > 0
 	/*
@@ -800,7 +800,7 @@ ieget(sc, mp, ehp, to_bpf)
 	if (!check_eh(sc, ehp, to_bpf)) {
 		ie_drop_packet_buffer(sc);
 		/* just this case, it's not an error */
-		sc->sc_ethercom.ec_if.if_ierrors--;
+		sc->sc_if.if_ierrors--;
 		return -1;
 	}
 	totlen -= (offset = sizeof *ehp);
@@ -812,7 +812,7 @@ ieget(sc, mp, ehp, to_bpf)
 	}
 
 	m = *mp;
-	m->m_pkthdr.rcvif = &sc->sc_ethercom.ec_if;
+	m->m_pkthdr.rcvif = &sc->sc_if;
 	m->m_len = MHLEN;
 	resid = m->m_pkthdr.len = totlen;
 	top = 0;
@@ -969,7 +969,7 @@ ie_readframe(sc, num)
 #else
 		if (ieget(sc, &m, &eh, 0)) {
 #endif
-			sc->sc_ethercom.ec_if.if_ierrors++;
+			sc->sc_if.if_ierrors++;
 			return;
 		}
 	}
@@ -1004,7 +1004,7 @@ ie_readframe(sc, num)
 		m0.m_next = m;
 
 		/* Pass it up */
-		bpf_mtap(sc->sc_ethercom.ec_if.if_bpf, &m0);
+		bpf_mtap(sc->sc_if.if_bpf, &m0);
 	}
 	/*
 	 * A signal passed up from the filtering code indicating that the
@@ -1028,7 +1028,7 @@ ie_readframe(sc, num)
 	/*
 	 * Finally pass this packet up to higher layers.
 	 */
-	ether_input(&sc->sc_ethercom.ec_if, &eh, m);
+	ether_input(&sc->sc_if, &eh, m);
 }
 
 static void
@@ -1170,7 +1170,7 @@ iereset(sc)
 	struct ifnet *ifp;
 	int s = splnet();
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_if;
 
 	printf("%s: reset\n", sc->sc_dev.dv_xname);
 
@@ -1503,7 +1503,7 @@ ieinit(sc)
 	void *ptr;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_if;
 
 	ptr = sc->buf_area;
 
@@ -1700,7 +1700,7 @@ mc_reset(sc)
 	struct ether_multistep step;
 	struct ifnet *ifp;
 
-	ifp = &sc->sc_ethercom.ec_if;
+	ifp = &sc->sc_if;
 
 	/*
 	 * Step through the list of addresses.
