@@ -1,7 +1,11 @@
-/* $NetBSD: asc_pmaz.c,v 1.3 2000/03/04 05:42:56 mhitch Exp $ */
+/* $NetBSD: asc_pmaz.c,v 1.4 2000/03/04 08:25:24 nisimura Exp $ */
 
-/*
- * Copyright (c) 2000 Tohru Nishimura.  All rights reserved.
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Tohru Nishimura.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -13,25 +17,27 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Tohru Nishimura
- *	for the NetBSD Project.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.3 2000/03/04 05:42:56 mhitch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_pmaz.c,v 1.4 2000/03/04 08:25:24 nisimura Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,48 +61,45 @@ struct asc_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
-	void	*sc_cookie;			/* intr. handling cookie */
-
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmamap;
-	int	sc_active;			/* DMA active ? */
-	int	sc_ispullup;			/* DMA into main memory? */
-	size_t	sc_dmasize;
 	caddr_t *sc_dmaaddr;
 	size_t	*sc_dmalen;
+	size_t	sc_dmasize;
+	int	sc_active;			/* DMA active ? */
+	int	sc_ispullup;			/* DMA into main memory? */
 
 	/* XXX XXX XXX */
 	caddr_t sc_base, sc_bounce, sc_target;
 };
 
-int	asc_pmaz_match __P((struct device *, struct cfdata *, void *));
-void	asc_pmaz_attach __P((struct device *, struct device *, void *));
+static int  asc_pmaz_match __P((struct device *, struct cfdata *, void *));
+static void asc_pmaz_attach __P((struct device *, struct device *, void *));
 
 struct cfattach xasc_pmaz_ca = {
 	sizeof(struct asc_softc), asc_pmaz_match, asc_pmaz_attach
 };
 
-struct scsipi_device asc_pmaz_dev = {
+static struct scsipi_device asc_pmaz_dev = {
 	NULL,			/* Use default error handler */
 	NULL,			/* have a queue, served by this */
 	NULL,			/* have no async handler */
 	NULL,			/* Use default 'done' routine */
 };
 
-void	asc_pmaz_reset __P((struct ncr53c9x_softc *));
-int	asc_pmaz_intr __P((struct ncr53c9x_softc *));
-int	asc_pmaz_setup __P((struct ncr53c9x_softc *, caddr_t *,
-						size_t *, int, size_t *));
-void	asc_pmaz_go __P((struct ncr53c9x_softc *));
-void	asc_pmaz_stop __P((struct ncr53c9x_softc *));
-
 static u_char	asc_read_reg __P((struct ncr53c9x_softc *, int));
 static void	asc_write_reg __P((struct ncr53c9x_softc *, int, u_char));
 static int	asc_dma_isintr __P((struct ncr53c9x_softc *));
+static void	asc_pmaz_reset __P((struct ncr53c9x_softc *));
+static int	asc_pmaz_intr __P((struct ncr53c9x_softc *));
+static int	asc_pmaz_setup __P((struct ncr53c9x_softc *, caddr_t *,
+						size_t *, int, size_t *));
+static void	asc_pmaz_go __P((struct ncr53c9x_softc *));
+static void	asc_pmaz_stop __P((struct ncr53c9x_softc *));
 static int	asc_dma_isactive __P((struct ncr53c9x_softc *));
 static void	asc_clear_latched_intr __P((struct ncr53c9x_softc *));
 
-struct ncr53c9x_glue asc_pmaz_glue = {
+static struct ncr53c9x_glue asc_pmaz_glue = {
         asc_read_reg,
         asc_write_reg,
         asc_dma_isintr,
@@ -124,7 +127,7 @@ struct ncr53c9x_glue asc_pmaz_glue = {
 #define PMAZ_DMAR_MASK		0x1ffff		/* 17 bits, 128k */
 #define PMAZ_DMA_ADDR(x)	((unsigned)(x) & PMAZ_DMAR_MASK)
 
-int
+static int
 asc_pmaz_match(parent, cfdata, aux)
 	struct device *parent;
 	struct cfdata *cfdata;
@@ -138,7 +141,7 @@ asc_pmaz_match(parent, cfdata, aux)
 	return (1);
 }
 
-void
+static void
 asc_pmaz_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -166,10 +169,9 @@ asc_pmaz_attach(parent, self, aux)
 		printf("%s: unable to map device\n", sc->sc_dev.dv_xname);
 		return;
 	}
-	asc->sc_cookie = ta->ta_cookie;
 	asc->sc_base = (caddr_t)ta->ta_addr;	/* XXX XXX XXX */
 
-	tc_intr_establish(parent, asc->sc_cookie, IPL_BIO,
+	tc_intr_establish(parent, ta->ta_cookie, IPL_BIO,
 		(int (*)(void *))ncr53c9x_intr, sc);
 	
 	sc->sc_id = 7;
@@ -217,7 +219,7 @@ asc_pmaz_attach(parent, self, aux)
 	ncr53c9x_attach(sc, &asc_pmaz_dev);
 }
 
-void
+static void
 asc_pmaz_reset(sc)
 	struct ncr53c9x_softc *sc;
 {
@@ -226,7 +228,7 @@ asc_pmaz_reset(sc)
 	asc->sc_active = 0;
 }
 
-int
+static int
 asc_pmaz_intr(sc)
 	struct ncr53c9x_softc *sc;
 {
@@ -254,7 +256,7 @@ asc_pmaz_intr(sc)
 	return (0);
 }
 
-int
+static int
 asc_pmaz_setup(sc, addr, len, datain, dmasize)
 	struct ncr53c9x_softc *sc;
 	caddr_t *addr;
@@ -299,7 +301,7 @@ asc_pmaz_setup(sc, addr, len, datain, dmasize)
 	return (0);
 }
 
-void
+static void
 asc_pmaz_go(sc)
 	struct ncr53c9x_softc *sc;
 {
@@ -317,7 +319,7 @@ asc_pmaz_go(sc)
 }
 
 /* NEVER CALLED BY MI 53C9x ENGINE INDEED */
-void
+static void
 asc_pmaz_stop(sc)
 	struct ncr53c9x_softc *sc;
 {
