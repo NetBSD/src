@@ -21,7 +21,7 @@
  *	this and resubmit it to the patchkit!
  *	Rodney W. Grimes
  *
- *	$Id: pcfs_vfsops.c,v 1.3 1993/05/20 03:34:21 cgd Exp $
+ *	$Id: pcfs_vfsops.c,v 1.4 1993/07/19 16:33:05 cgd Exp $
  */
 
 #include "param.h"
@@ -194,7 +194,7 @@ mountpcfs(devvp, mp, p)
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	dev_t dev = devvp->v_rdev;
 	union bootsector *bsp;
-	struct pcfsmount *pmp;
+	struct pcfsmount *pmp = NULL;
 	struct buf *bp0 = NULL;
 	struct byte_bpb33 *b33;
 	struct byte_bpb50 *b50;
