@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2003/06/25 10:38:03 tshiozak Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2003/12/13 04:28:50 matt Exp $
 
 NOLINT=		# defined
 NOPICINSTALL=	# defined
@@ -14,10 +14,9 @@ INTERNALLIB=	yes
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libc/citrus
 CPPFLAGS+=	-DLOCALEMOD_MAJOR=${SHLIB_MAJOR}
 CPPFLAGS+=	-DLIBC_SCCS
-BASENAME!=	basename ${.CURDIR}
+BASENAME=	${.CURDIR:T}
 LIB=		${BASENAME}
-.ifndef SRCS
-SRCS!=		echo ${SRCPRE}${BASENAME}.c | tr A-Z a-z
-.endif
+XNAME=		${SRCPRE}${BASENAME}.c 
+SRCS?=		${XNAME:tl}
 
 .PATH:	${NETBSDSRCDIR}/lib/libc/citrus/modules
