@@ -1,7 +1,11 @@
-# $NetBSD: files.rcons,v 1.2 1996/04/11 21:54:38 cgd Exp $
+# $NetBSD: files.rcons,v 1.3 1999/03/27 00:07:58 dbj Exp $
 #
 # Configuration file for RASTER Console.
 #
+
+# rcons bit-depth options
+defopt opt_rcons.h RCONS_2BPP RCONS_16BPP
+
 file dev/rcons/raster_op.c	rasterconsole | raster
 file dev/rcons/raster_text.c	rasterconsole | raster
 file dev/rcons/rcons_kern.c	rasterconsole
