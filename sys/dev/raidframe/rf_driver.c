@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.20 2000/01/07 03:03:44 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.21 2000/01/07 03:25:34 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -148,8 +148,6 @@ void rf_update_component_labels( RF_Raid_t *);
 
 RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 					 * printfs by different stripes */
-RF_DECLARE_GLOBAL_THREADID	/* declarations for threadid.h */
-
 
 #define SIGNAL_QUIESCENT_COND(_raid_)  wakeup(&((_raid_)->accesses_suspended))
 #define WAIT_FOR_QUIESCENCE(_raid_) \
@@ -181,9 +179,6 @@ rf_BootRaidframe()
 	if (raidframe_booted)
 		return (EBUSY);
 	raidframe_booted = 1;
-
-	rf_setup_threadid();
-	rf_assign_threadid();
 
 	rc = rf_mutex_init(&configureMutex);
 	if (rc) {
@@ -239,7 +234,6 @@ rf_UnconfigureArray()
 		if (rc) {
 			RF_ERRORMSG1("RAIDFRAME: unable to do global shutdown, rc=%d\n", rc);
 		}
-		rf_shutdown_threadid();
 
 		/*
 	         * We must wait until now, because the AllocList module
