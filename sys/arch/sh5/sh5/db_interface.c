@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.7 2002/10/10 08:52:31 scw Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.8 2002/11/24 12:07:52 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -335,6 +335,7 @@ branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
 	if (tr < 0)
 		db_error("inst_branch: Invalid branch instruction\n");
 
+	trv = 0; /* XXX: Stupid compiler */
 	switch (tr & 7) {
 	case 0:	trv = regs->tf_caller.tr0; break;
 	case 1:	trv = regs->tf_caller.tr1; break;
