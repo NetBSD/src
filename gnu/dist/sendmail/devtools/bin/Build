@@ -11,7 +11,7 @@
 # the sendmail distribution.
 #
 #
-#       Id: Build,v 8.155.4.7 2001/01/22 19:00:15 gshapiro Exp
+#	Id: Build,v 8.155.4.11 2001/08/16 02:13:48 geir Exp
 #
 
 #
@@ -86,8 +86,8 @@ do
 		arg=`echo $1 | sed 's/^-E//'`
 		if [ -z "$arg" ]
 		then
-		    shift   # move to argument
-		    arg=$1
+			shift   # move to argument
+			arg=$1
 		fi
 		if [ -z "$arg" ]
 		then
@@ -126,8 +126,8 @@ do
 		arg=`echo $1 | sed 's/^-f//'`
 		if [ -z "$arg" ]
 		then
-		    shift   # move to argument
-		    arg=$1
+			shift   # move to argument
+			arg=$1
 		fi
 		if [ "$pfx" ]
 		then
@@ -167,8 +167,8 @@ do
 		arg="`echo $1 | sed 's/^-O//'`"
 		if [ -z "$arg" ]
 		then
-		    shift   # move to argument
-		    arg="$1"
+			shift   # move to argument
+			arg="$1"
 		fi
 		case $arg
 		in
@@ -195,8 +195,8 @@ do
 		arg=`echo $1 | sed 's/^-Q//'`
 		if [ -z "$arg" ]
 		then
-		    shift   # move to argument
-		    arg=$1
+			shift   # move to argument
+			arg=$1
 		fi
 		if [ -z "$arg" ]
 		then
@@ -221,10 +221,10 @@ do
 		shift
 		build_variant=$1
 		if [ -z "$build_variant" ]
-		then 
-		    echo "Usage error with \"-v\" <build_variant>"  >&2
-		    echo "You must specify exactly one build variant of debug|optimized|purify"  >&2
-		    exit $EX_USAGE
+		then
+			echo "Usage error with \"-v\" <build_variant>"  >&2
+			echo "You must specify exactly one build variant of debug|optimized|purify"  >&2
+			exit $EX_USAGE
 		fi
 		shift
 		;;
@@ -239,20 +239,20 @@ done
 
 # process selected build variant.
 case $build_variant in
-    debug)
-	M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=DEBUG"
-	;;
-    optimized)
-	M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=OPTIMIZED"
-	;;
-    purify)
-	M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=PURIFY"
-	echo "Sorry, the purify build variant has not been plumbed yet. (Bummer.)"  >&2
-	exit $EX_USAGE
-	;;
-    *)
-	exit $EX_USAGE
-	;;
+	debug)
+		M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=DEBUG"
+		;;
+	optimized)
+		M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=OPTIMIZED"
+		;;
+	purify)
+		M4_BLDVARIANT_FLAGS="-DconfBLDVARIANT=PURIFY"
+		echo "Sorry, the purify build variant has not been plumbed yet. (Bummer.)"  >&2
+		exit $EX_USAGE
+		;;
+	*)
+		exit $EX_USAGE
+		;;
 esac
 
 
@@ -626,16 +626,24 @@ then
 	${mkdir} $obj
 
 		ln="ln -s"
-		(cd $obj; $ln ${obj_rel_base_dir}/${src_dir}/*.[ch13458] .)
 		(cd $obj
 		# This glob doesn't actually glob to something everywhere,
 		# thus the protective measures.
-		for i in ${obj_rel_base_dir}/${src_dir}/*.0 
-		do 
-			if [ -f $i ] 
-			then 
-				$ln $i `basename $i`.dist 
-			fi 
+		for i in ${obj_rel_base_dir}/${src_dir}/*.[ch13458]
+		do
+			if [ -f $i ]
+			then
+				$ln $i .
+			fi
+		done
+		# This glob doesn't actually glob to something everywhere,
+		# thus the protective measures.
+		for i in ${obj_rel_base_dir}/${src_dir}/*.0
+		do
+			if [ -f $i ]
+			then
+				$ln $i `basename $i`.dist
+			fi
 		done)
 		if [ -f helpfile ]
 		then
@@ -650,13 +658,15 @@ then
 	echo "define(\`bldARCH', \`\`$arch'')" >> $obj/.settings$$
 	cat $BUILDTOOLS/OS/$oscf >> $obj/.settings$$
 
-		cur_dir=`pwd`
-		cd $obj/..
-		absolute_obj_dir=`pwd`
-		cd $cur_dir
-		echo "ifdef(\`bldABS_OBJ_DIR',,\`define(\`bldABS_OBJ_DIR', \`$absolute_obj_dir')')" >> $obj/.settings$$
-		rel_src_dir="$obj_rel_base_dir/$src_dir"
-		echo "define(\`bldREL_SRC_DIR', \`$rel_src_dir')" >> $obj/.settings$$
+	cur_dir=`pwd`
+	cd $obj/..
+	absolute_obj_dir=`pwd`
+
+
+	cd $cur_dir
+	echo "ifdef(\`bldABS_OBJ_DIR',,\`define(\`bldABS_OBJ_DIR', \`$absolute_obj_dir')')" >> $obj/.settings$$
+	rel_src_dir="$obj_rel_base_dir/$src_dir"
+	echo "define(\`bldREL_SRC_DIR', \`$rel_src_dir')" >> $obj/.settings$$
 
 	if [ ! -z "$pfx" ]
 	then
