@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 1995/05/10 03:19:00 briggs Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9 1995/06/21 03:20:58 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -99,7 +99,7 @@ fpu_probe()
 	u_char	b;
 
 	nofault = (int *) &faultbuf;
-	if (setjmp(nofault)) {
+	if (setjmp(faultbuf)) {
 		nofault = (int *) 0;
 		return(0);
 	}
