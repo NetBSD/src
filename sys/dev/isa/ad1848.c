@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.50 1998/06/09 00:05:44 thorpej Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.51 1998/06/30 07:45:22 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -508,6 +508,9 @@ ad1848_probe(sc)
 		    break;
        		case 0x82:
 		    sc->chip_name = "CS4232";
+		    break;
+		case 0x03:
+		    sc->chip_name = "CS4236/CS4236B";
 		    break;
 		}
 	    }
