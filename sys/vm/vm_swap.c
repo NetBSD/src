@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.37.2.28 1997/06/05 18:07:35 mrg Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.37.2.29 1997/06/05 23:02:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -876,6 +876,7 @@ sw_reg_strategy(sdp, bp, bn)
 
 	for (resid = bp->b_resid; resid; resid -= sz) {
 		if (doswvnlock) VOP_LOCK(sdp->swd_vp);
+		nra = 0;
 		error = VOP_BMAP(sdp->swd_vp, bn / sdp->swd_bsize,
 				 	&vp, &nbn, &nra);
 		if (doswvnlock) VOP_UNLOCK(sdp->swd_vp);
