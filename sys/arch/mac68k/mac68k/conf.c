@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.49 1999/02/18 07:32:56 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.50 1999/04/19 21:22:59 kleink Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,6 +36,8 @@
  * Derived a long time ago from
  *      @(#)conf.c	7.9 (Berkeley) 5/28/91
  */
+
+#include "opt_compat_svr4.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,6 +215,7 @@ struct cdevsw	cdevsw[] =
 #endif
 	cdev_disk_init(NRAID,raid),	/* 42: RAIDframe disk driver */
 	cdev_disk_init(NFD,fd),		/* 43: Sony floppy disk */
+	cdev_svr4_net_init(NSVR4_NET,svr4_net), /* 44: svr4 net pseudo-device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
