@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2000/02/11 19:30:29 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2000/04/25 12:31:10 tsubai Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,6 @@
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
-#define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_PHYS_SIZE		(USRIOSIZE*NBPG)
 
 #define VM_PHYSSEG_MAX		1
