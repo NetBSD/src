@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2001/07/09 18:18:25 uch Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14 2001/11/28 05:47:37 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ extern int nkpde;
 extern char cpu_model[];
 extern paddr_t avail_start, avail_end;	// XXX
 
-#if defined sh3_debug || defined SYSCALL_DEBUG
+#if defined(sh3_debug) || defined(SYSCALL_DEBUG)
 int cpu_debug_mode = 1;
 #else
 int cpu_debug_mode = 0;
