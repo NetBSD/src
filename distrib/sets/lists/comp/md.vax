@@ -33,6 +33,10 @@
 ./usr/include/vax/psl.h
 ./usr/include/vax/pte.h
 ./usr/include/vax/ptrace.h
+./usr/include/vax/qdioctl.h
+./usr/include/vax/qdreg.h
+./usr/include/vax/qduser.h
+./usr/include/vax/qevent.h
 ./usr/include/vax/reg.h
 ./usr/include/vax/rpb.h
 ./usr/include/vax/rsp.h
