@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.18 2002/04/25 15:06:31 atatat Exp $
+# $NetBSD: GENERIC,v 1.19 2002/06/17 05:14:16 lukem Exp $
 #
 # GENERIC machine description file
 # 
@@ -157,6 +157,7 @@ pseudo-device	bpfilter	16	# Berkeley Packet Filter
 #pseudo-device	ipfilter		# ip filter
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
+pseudo-device	clockctl		# user control of clock subsystem
 
 # random number generator pseudo-device
 pseudo-device	rnd			# /dev/random and in-kernel generator

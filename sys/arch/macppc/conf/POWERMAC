@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.36 2002/04/25 15:06:31 atatat Exp $
+#	$NetBSD: POWERMAC,v 1.37 2002/06/17 05:14:15 lukem Exp $
 #
 # POWERMAC config file
 #
@@ -105,3 +105,4 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	openfirm		# /dev/openfirm
+pseudo-device	clockctl		# user control of clock subsystem

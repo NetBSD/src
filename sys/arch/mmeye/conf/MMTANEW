@@ -1,4 +1,4 @@
-#	$NetBSD: MMTANEW,v 1.15 2002/04/25 15:06:32 atatat Exp $
+#	$NetBSD: MMTANEW,v 1.16 2002/06/17 05:14:16 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -225,6 +225,7 @@ pseudo-device	tun		2	# network tunneling over tty
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
+pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.
 #pseudo-device	rnd			# /dev/random and in-kernel generator

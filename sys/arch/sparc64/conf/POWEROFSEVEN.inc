@@ -1,4 +1,4 @@
-# 	$NetBSD: POWEROFSEVEN.inc,v 1.12 2002/04/25 15:06:38 atatat Exp $
+# 	$NetBSD: POWEROFSEVEN.inc,v 1.13 2002/06/17 05:14:26 lukem Exp $
 #
 # from: NetBSD: GENERIC32,v 1.13 2001/02/28 00:08:18 mjacob Exp
 #
@@ -453,3 +453,5 @@ pseudo-device	pty			# pseudo-ttys (for network, etc.)
 ## and generate randomness for some kernel formulae.
 
 pseudo-device	rnd
+
+pseudo-device	clockctl		# user control of clock subsystem

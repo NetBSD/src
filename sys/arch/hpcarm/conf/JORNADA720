@@ -1,4 +1,4 @@
-#	$NetBSD: JORNADA720,v 1.20 2002/05/03 16:50:51 rjs Exp $
+#	$NetBSD: JORNADA720,v 1.21 2002/06/17 05:14:10 lukem Exp $
 #
 #	JORNADA -- Windows-CE based jornada 720
 #
@@ -7,7 +7,7 @@ include	"arch/hpcarm/conf/std.hpcarm"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 # estimated number of users
 maxusers	32
@@ -223,3 +223,4 @@ pseudo-device	wsmux
 
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem

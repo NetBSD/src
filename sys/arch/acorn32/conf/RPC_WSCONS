@@ -1,4 +1,4 @@
-#	$NetBSD: RPC_WSCONS,v 1.14 2002/04/25 15:06:21 atatat Exp $
+#	$NetBSD: RPC_WSCONS,v 1.15 2002/06/17 05:14:03 lukem Exp $
 #
 #	RPC_WSCONS -- Full RiscPC config with wscons
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.14 $"
+#ident		"GENERIC-$Revision: 1.15 $"
 
 # estimated number of users
 maxusers	32
@@ -343,6 +343,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and in-kernel generator
+pseudo-device	clockctl		# user control of clock subsystem
 
 makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"

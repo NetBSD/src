@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.32 2002/04/25 15:06:35 atatat Exp $
+#	$NetBSD: STEELHEAD,v 1.33 2002/06/17 05:14:21 lukem Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -73,3 +73,4 @@ pseudo-device	sl		3	# compressed SLIP
 pseudo-device	ppp		2	# Point-to-Point Protocol
 pseudo-device	vnd		4	# Vnode devices
 #pseudo-device	ether			#
+pseudo-device	clockctl		# user control of clock subsystem

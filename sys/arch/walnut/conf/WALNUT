@@ -1,4 +1,4 @@
-#	$NetBSD: WALNUT,v 1.20 2002/05/30 15:22:16 eeh Exp $
+#	$NetBSD: WALNUT,v 1.21 2002/06/17 05:14:28 lukem Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -249,3 +249,4 @@ pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	wsmux			# ick
+pseudo-device	clockctl		# user control of clock subsystem
