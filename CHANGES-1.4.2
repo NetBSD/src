@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.5 1999/08/23 08:58:32 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.6 1999/08/24 20:07:39 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -128,3 +128,24 @@ usr.sbin/pkg_install/lib/str.c			1.16
 
   (hubertf)
 
+sys/net/if.c					1.51
+
+  Fix a problem in ifa_ifwithnet() for netatalk, making atalkd
+  work in more configurations.  (bouyer)
+
+sys/netinet/ip_proxy.c				1.18
+
+  Check the protocol before forwarding to proxy module.  Fixes
+  PR#7831.  (bouyer/darrenr)
+
+gnu/usr.bin/tar/gnu.c				1.5
+gnu/usr.bin/tar/list.c				1.6
+
+  Cast off_t to size_t when passing arguments to functions expecting
+  a size_t.  This fixes errors due to memory corruption when
+  extracting archives with gtar style long file names on big endian
+  machines.  Fixes PR#8229.  (bad)
+
+doc/tmac/doc-common				1.32
+
+  Mark Ap as callable, fixes formatting of a few man pages.  (ross)
