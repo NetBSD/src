@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.4 1998/02/07 11:08:22 mrg Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.5 1998/02/07 17:00:36 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -184,6 +184,8 @@ struct uvmexp {
 	int swtch;	/* context switch count */
 	int softs;	/* software interrupt count */
 	int syscalls;	/* system calls */
+	int pageins;	/* pages paged in */
+	int pageouts;	/* pages paged out */
 	int swapins;	/* swapins */
 	int swapouts;	/* swapouts */
 	int forks;  	/* forks */
