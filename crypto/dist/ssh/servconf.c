@@ -1,4 +1,4 @@
-/*	$NetBSD: servconf.c,v 1.25 2003/07/23 03:52:20 itojun Exp $	*/
+/*	$NetBSD: servconf.c,v 1.26 2003/07/24 15:31:54 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,8 +11,15 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: servconf.c,v 1.123 2003/07/22 13:35:22 markus Exp $");
-__RCSID("$NetBSD: servconf.c,v 1.25 2003/07/23 03:52:20 itojun Exp $");
+RCSID("$OpenBSD: servconf.c,v 1.116 2003/02/21 09:05:53 markus Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.26 2003/07/24 15:31:54 itojun Exp $");
+
+#if defined(KRB4) || defined(KRB5)
+#include <krb.h>
+#endif
+#ifdef AFS
+#include <kafs.h>
+#endif
 
 #include "ssh.h"
 #include "log.h"
@@ -68,11 +75,16 @@ initialize_server_options(ServerOptions *options)
 	options->hostbased_uses_name_from_packet_only = -1;
 	options->rsa_authentication = -1;
 	options->pubkey_authentication = -1;
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	options->kerberos_authentication = -1;
 	options->kerberos_or_local_passwd = -1;
 	options->kerberos_ticket_cleanup = -1;
+#endif
+#if defined(AFS) || defined(KRB5)
 	options->kerberos_tgt_passing = -1;
+#endif
+#ifdef AFS
+	options->afs_token_passing = -1;
 #endif
 	options->password_authentication = -1;
 	options->kbd_interactive_authentication = -1;
@@ -174,15 +186,21 @@ fill_default_server_options(ServerOptions *options)
 		options->rsa_authentication = 1;
 	if (options->pubkey_authentication == -1)
 		options->pubkey_authentication = 1;
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	if (options->kerberos_authentication == -1)
 		options->kerberos_authentication = 0;
 	if (options->kerberos_or_local_passwd == -1)
 		options->kerberos_or_local_passwd = 1;
 	if (options->kerberos_ticket_cleanup == -1)
 		options->kerberos_ticket_cleanup = 1;
+#endif
+#if defined(AFS) || defined(KRB5)
 	if (options->kerberos_tgt_passing == -1)
 		options->kerberos_tgt_passing = 0;
+#endif
+#ifdef AFS
+	if (options->afs_token_passing == -1)
+		options->afs_token_passing = 0;
 #endif
 	if (options->password_authentication == -1)
 		options->password_authentication = 1;
@@ -235,9 +253,14 @@ typedef enum {
 	sPort, sHostKeyFile, sServerKeyBits, sLoginGraceTime, sKeyRegenerationTime,
 	sPermitRootLogin, sLogFacility, sLogLevel,
 	sRhostsAuthentication, sRhostsRSAAuthentication, sRSAAuthentication,
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
+#endif
+#if defined(AFS) || defined(KRB5)
 	sKerberosTgtPassing,
+#endif
+#ifdef AFS
+	sAFSTokenPassing,
 #endif
 	sChallengeResponseAuthentication,
 	sPasswordAuthentication, sKbdInteractiveAuthentication, sListenAddress,
@@ -253,7 +276,7 @@ typedef enum {
 	sClientAliveCountMax, sAuthorizedKeysFile, sAuthorizedKeysFile2,
 	sUsePrivilegeSeparation,
 	sIgnoreRootRhosts,
-	sDeprecated, sUnsupported
+	sDeprecated
 } ServerOpCodes;
 
 /* Textual representation of the tokens. */
@@ -278,18 +301,17 @@ static struct {
 	{ "rsaauthentication", sRSAAuthentication },
 	{ "pubkeyauthentication", sPubkeyAuthentication },
 	{ "dsaauthentication", sPubkeyAuthentication },			/* alias */
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	{ "kerberosauthentication", sKerberosAuthentication },
 	{ "kerberosorlocalpasswd", sKerberosOrLocalPasswd },
 	{ "kerberosticketcleanup", sKerberosTicketCleanup },
-	{ "kerberostgtpassing", sKerberosTgtPassing },
-#else
-	{ "kerberosauthentication", sUnsupported },
-	{ "kerberosorlocalpasswd", sUnsupported },
-	{ "kerberosticketcleanup", sUnsupported },
-	{ "kerberostgtpassing", sUnsupported },
 #endif
-	{ "afstokenpassing", sUnsupported },
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", sKerberosTgtPassing },
+#endif
+#ifdef AFS
+	{ "afstokenpassing", sAFSTokenPassing },
+#endif
 	{ "passwordauthentication", sPasswordAuthentication },
 	{ "kbdinteractiveauthentication", sKbdInteractiveAuthentication },
 	{ "challengeresponseauthentication", sChallengeResponseAuthentication },
@@ -593,7 +615,7 @@ parse_flag:
 	case sPubkeyAuthentication:
 		intptr = &options->pubkey_authentication;
 		goto parse_flag;
-#ifdef KRB5
+#if defined(KRB4) || defined(KRB5)
 	case sKerberosAuthentication:
 		intptr = &options->kerberos_authentication;
 		goto parse_flag;
@@ -605,9 +627,15 @@ parse_flag:
 	case sKerberosTicketCleanup:
 		intptr = &options->kerberos_ticket_cleanup;
 		goto parse_flag;
-
+#endif
+#if defined(AFS) || defined(KRB5)
 	case sKerberosTgtPassing:
 		intptr = &options->kerberos_tgt_passing;
+		goto parse_flag;
+#endif
+#ifdef AFS
+	case sAFSTokenPassing:
+		intptr = &options->afs_token_passing;
 		goto parse_flag;
 #endif
 
