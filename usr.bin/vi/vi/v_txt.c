@@ -1,4 +1,4 @@
-/*	$NetBSD: v_txt.c,v 1.5 2001/05/01 16:46:12 aymeric Exp $	*/
+/*	$NetBSD: v_txt.c,v 1.6 2001/08/20 21:44:57 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -548,7 +548,7 @@ next:	if (v_event_get(sp, evp, 0, ec_flags))
 	 * This was not documented as far as I know, and is a great test of vi
 	 * clones.
 	 */
-	if (rcol == 0 && !LF_ISSET(TXT_REPLAY) && evp->e_c == '\0') {
+	if (LF_ISSET(TXT_RECORD) && rcol == 0 && evp->e_c == '\0') {
 		if (vip->rep == NULL)
 			goto done;
 
