@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.30 2004/08/01 21:41:49 bouyer Exp $	*/
+/*	$NetBSD: atactl.c,v 1.31 2004/09/10 03:43:52 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.30 2004/08/01 21:41:49 bouyer Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.31 2004/09/10 03:43:52 atatat Exp $");
 #endif
 
 
@@ -417,7 +417,7 @@ print_smart_status(void *vbuf, void *tbuf)
 				attr = &value_buf->attributes[j];
 			if (threshold_buf->thresholds[j].id == i)
 				thresh = threshold_buf->thresholds[j].value;
-	}
+		}
 
 		if (thresh && attr == NULL)
 			errx(1, "threshold but not attr %d", i);
