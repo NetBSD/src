@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.12 1996/10/21 05:14:01 jtc Exp $	*/
+/*	$NetBSD: unistd.h,v 1.13 1998/05/05 21:59:34 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,6 +37,8 @@
 
 #ifndef _SYS_UNISTD_H_
 #define	_SYS_UNISTD_H_
+
+#include <sys/featuretest.h>
 
 /* compile-time symbolic constants */
 #define	_POSIX_JOB_CONTROL	/* implementation supports job control */
@@ -81,7 +83,7 @@
 #define	SEEK_CUR	1	/* set file offset to current plus offset */
 #define	SEEK_END	2	/* set file offset to EOF plus offset */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_C_SOURCE) && !defined(_XOPEN_SOURCE)
 /* whence values for lseek(2); renamed by POSIX 1003.1 */
 #define	L_SET		SEEK_SET
 #define	L_INCR		SEEK_CUR
