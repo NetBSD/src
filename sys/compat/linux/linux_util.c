@@ -1,4 +1,5 @@
-/* 	$NetBSD: linux_util.c,v 1.1 1995/02/28 23:25:29 fvdl Exp $	*/
+/* 	$NetBSD: linux_util.c,v 1.2 1995/03/05 23:23:49 fvdl Exp $	*/
+
 /*
  * Copyright (c) 1994 Christos Zoulas
  * Copyright (c) 1995 Frank van der Linden
@@ -48,21 +49,26 @@ const char      linux_emul_path[] = "/emul/linux";
 /*
  * Search an alternate path before passing pathname arguments on
  * to system calls. Useful for keeping a seperate 'emulation tree'.
+ *
+ * If cflag is set, we check if an attempt can be made to create
+ * the named file, i.e. we check if the directory it should
+ * be in exists.
  */
 int
-linux_emul_find(p, sgp, prefix, path, pbuf)
+linux_emul_find(p, sgp, prefix, path, pbuf, cflag)
 	struct proc	 *p;
 	caddr_t		 *sgp;		/* Pointer to stackgap memory */
 	const char	 *prefix;
 	char		 *path;
 	char		**pbuf;
+	int		  cflag;
 {
 	struct nameidata	 nd;
 	struct nameidata	 ndroot;
 	struct vattr		 vat;
 	struct vattr		 vatroot;
 	int			 error;
-	char			*ptr, *buf;
+	char			*ptr, *buf, *cp;
 	size_t			 sz, len;
 
 	buf = (char *) malloc(MAXPATHLEN, M_TEMP, M_WAITOK);
@@ -91,46 +97,70 @@ linux_emul_find(p, sgp, prefix, path, pbuf)
 		return EINVAL;
 	}
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
-
-	if ((error = namei(&nd)) != 0) {
-		free(buf, M_TEMP);
-		return error;
-	}
-
 	/*
-	 * We now compare the vnode of the linux_root to the one
-	 * vnode asked. If they resolve to be the same, then we
-	 * ignore the match so that the real root gets used.
-	 * This avoids the problem of traversing "../.." to find the
-	 * root directory and never finding it, because "/" resolves
-	 * to the emulation root directory. This is expensive :-(
+	 * We know that there is a / somewhere in this pathname.
+	 * Search backwards for it, to find the file's parent dir
+	 * to see if it exists in the alternate tree. If it does,
+	 * and we want to create a file (cflag is set). We don't
+	 * need to worry about the root comparison in this case.
 	 */
-	/* XXX: prototype should have const here for NDINIT */
-	NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, 
-	       (char *) linux_emul_path, p);
 
-	if ((error = namei(&ndroot)) != 0) {
-		/* Cannot happen! */
-		free(buf, M_TEMP);
-		vrele(nd.ni_vp);
-		return error;
+	if (cflag) {
+		for (cp = &ptr[len] - 1; *cp != '/'; cp--);
+		*cp = '\0';
+
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
+
+		if ((error = namei(&nd)) != 0) {
+			free(buf, M_TEMP);
+			return error;
+		}
+
+		*cp = '/';
 	}
+	else {
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, buf, p);
 
-	if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_ucred, p)) != 0) {
-		goto done;
+		if ((error = namei(&nd)) != 0) {
+			free(buf, M_TEMP);
+			return error;
+		}
+
+		/*
+		 * We now compare the vnode of the linux_root to the one
+		 * vnode asked. If they resolve to be the same, then we
+		 * ignore the match so that the real root gets used.
+		 * This avoids the problem of traversing "../.." to find the
+		 * root directory and never finding it, because "/" resolves
+		 * to the emulation root directory. This is expensive :-(
+		 */
+		/* XXX: prototype should have const here for NDINIT */
+		NDINIT(&ndroot, LOOKUP, FOLLOW, UIO_SYSSPACE, 
+		       (char *) linux_emul_path, p);
+
+		if ((error = namei(&ndroot)) != 0) {
+			/* Cannot happen! */
+			free(buf, M_TEMP);
+			vrele(nd.ni_vp);
+			return error;
+		}
+
+		if ((error = VOP_GETATTR(nd.ni_vp, &vat, p->p_ucred, p)) != 0) {
+			goto done;
+		}
+
+		if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_ucred, p))
+		    != 0) {
+			goto done;
+		}
+
+		if (vat.va_fsid == vatroot.va_fsid &&
+		    vat.va_fileid == vatroot.va_fileid) {
+			error = ENOENT;
+			goto done;
+		}
+
 	}
-
-	if ((error = VOP_GETATTR(ndroot.ni_vp, &vatroot, p->p_ucred, p)) != 0) {
-		goto done;
-	}
-
-	if (vat.va_fsid == vatroot.va_fsid &&
-	    vat.va_fileid == vatroot.va_fileid) {
-		error = ENOENT;
-		goto done;
-	}
-
 	if (sgp == NULL)
 		*pbuf = buf;
 	else {
@@ -143,6 +173,7 @@ linux_emul_find(p, sgp, prefix, path, pbuf)
 
 done:
 	vrele(nd.ni_vp);
-	vrele(ndroot.ni_vp);
+	if (!cflag)
+		vrele(ndroot.ni_vp);
 	return error;
 }

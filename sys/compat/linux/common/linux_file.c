@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.1 1995/02/28 23:24:53 fvdl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.2 1995/03/05 23:23:40 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -118,7 +118,7 @@ linux_creat(p, uap, retval)
 	caddr_t sg;
 
 	sg = stackgap_init();
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
 
 	SCARG(&oa, path) = SCARG(uap, path);
 	SCARG(&oa, flags) = O_CREAT | O_TRUNC | O_WRONLY;
@@ -148,13 +148,17 @@ linux_open(p, uap, retval)
 
 	sg = stackgap_init();
 
-	CHECK_ALT(p, &sg, SCARG(uap, path));
-
 	fl = linux_to_bsd_ioflags(SCARG(uap, flags));
+
+	if (fl & O_CREAT)
+		CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	else
+		CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&boa, path) = SCARG(uap, path);
 	SCARG(&boa, flags) = fl;
 	SCARG(&boa, mode) = SCARG(uap, mode);
+
 	if ((error = open(p, &boa, retval)))
 		return error;
 
@@ -172,6 +176,41 @@ linux_open(p, uap, retval)
                 if (fp->f_type == DTYPE_VNODE)
                         (fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, (caddr_t) 0, p);
         }
+	return 0;
+}
+
+/*
+ * This appears to be part of a Linux attempt to switch to 64 bits file sizes.
+ */
+int
+linux_llseek(p, uap, retval)
+	struct proc *p;
+	struct linux_llseek_args /* {
+		syscallarg(int) fd;
+		syscallarg(uint32_t) ohigh;
+		syscallarg(uint32_t) olow;
+		syscallarg(caddr_t) res;
+		syscallarg(int) whence;
+	} */ *uap;
+	register_t *retval;
+{
+	struct lseek_args bla;
+	int error;
+	off_t off;
+
+	off = SCARG(uap, olow) | (((off_t) SCARG(uap, ohigh)) << 32);
+
+	SCARG(&bla, fd) = SCARG(uap, fd);
+	SCARG(&bla, offset) = off;
+	SCARG(&bla, whence) = SCARG(uap, whence);
+
+	if ((error = lseek(p, &bla, retval)))
+		return error;
+
+	if ((error = copyout(retval, SCARG(uap, res), sizeof (off_t))))
+		return error;
+
+	retval[0] = 0;
 	return 0;
 }
 
@@ -405,7 +444,7 @@ linux_stat1(p, uap, retval, dolstat)
 
 	sg = stackgap_init();
 
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	st = stackgap_alloc(&sg, sizeof (struct stat));
 	SCARG(&sa, ub) = st;
@@ -450,7 +489,7 @@ linux_lstat(p, uap, retval)
 }
 
 /*
- * This one is only here because of the alternate path check.
+ * The following syscalls are only here because of the alternate path check.
  */
 int
 linux_access(p, uap, retval)
@@ -463,7 +502,178 @@ linux_access(p, uap, retval)
 {
 	caddr_t sg = stackgap_init();
 
-	CHECK_ALT(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	return access(p, uap, retval);
+}
+
+int
+linux_unlink(p, uap, retval)
+	struct proc *p;
+	struct linux_unlink_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
+
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return unlink(p, uap, retval);
+}
+
+int linux_chdir(p, uap, retval)
+	struct proc *p;
+	struct linux_chdir_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return chdir(p, uap, retval);
+}
+
+int
+linux_mknod(p, uap, retval)
+	struct proc *p;
+	struct linux_mknod_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) mode;
+		syscallarg(int) dev;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+
+	return mknod(p, uap, retval);
+}
+
+int
+linux_chmod(p, uap, retval)
+	struct proc *p;
+	struct linux_chmod_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) mode;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return chmod(p, uap, retval);
+}
+
+int
+linux_chown(p, uap, retval)
+	struct proc *p;
+	struct linux_chown_args /* {
+		syscallarg(char *) path;
+		syscallarg(int) uid;
+		syscallarg(int) gid;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+
+	return chmod(p, uap, retval);
+}
+
+int
+linux_rename(p, uap, retval)
+	struct proc *p;
+	struct linux_rename_args /* {
+		syscallarg(char *) from;
+		syscallarg(char *) to;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, from));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+
+	return rename(p, uap, retval);
+}
+
+int
+linux_mkdir(p, uap, retval)
+	struct proc *p;
+	struct linux_mkdir_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, path));
+	return mkdir(p, uap, retval);
+}
+
+int
+linux_rmdir(p, uap, retval)
+	struct proc *p;
+	struct linux_rmdir_args /* {
+		syscallarg(char *) path;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return rmdir(p, uap, retval);
+}
+
+int
+linux_symlink(p, uap, retval)
+	struct proc *p;
+	struct linux_symlink_args /* {
+		syscallarg(char *) path;
+		syscallarg(char *) to;
+	} */ *uap;
+	register_t *retval;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_CREAT(p, &sg, SCARG(uap, to));
+
+	return symlink(p, uap, retval);
+}
+
+int
+linux_readlink(p, uap, retval)
+	struct proc *p;
+	struct linux_readlink_args /* {
+		syscallarg(char *) name;
+		syscallarg(char *) buf;
+		syscallarg(int) count;
+	} */ *uap;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, name));
+	return readlink(p, uap, retval);
+}
+
+int
+linux_truncate(p, uap, retval)
+	struct proc *p;
+	struct linux_truncate_args /* {
+		syscallarg(char *) path;
+		syscallarg(long) length;
+	} */ *uap;
+{
+	caddr_t sg = stackgap_init();
+
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	return compat_43_truncate(p, uap, retval);
 }
