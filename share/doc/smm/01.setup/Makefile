@@ -6,6 +6,6 @@ FILES=	${SRCS}
 MACROS=	-ms
 
 paper.ps: ${SRCS}
-	${TBL} ${SRCS} | ${ROFF} > ${.TARGET}
+	${SOELIM} -I${.CURDIR} ${.ALLSRC} | ${TBL} | ${ROFF} > ${.TARGET}
 
 .include <bsd.doc.mk>
