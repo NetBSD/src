@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.13 1995/09/30 21:34:54 briggs Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.14 1995/10/01 05:10:20 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -426,8 +426,8 @@ extern	int			*nofault, mac68k_buserr_addr;
 			if (!(GET_5380_REG(NCR5380_DMSTAT) & SC_DMA_REQ)) {
 				nofault = (int *) 0;
 
-				pending_5380_data += (pending_5380_count-count);
-				pending_5380_count = count;
+				pending_5380_data += (dcount - count);
+				pending_5380_count -= (dcount - count);
 #if DEBUG
 				pdma_5380_state = "drq low";
 #endif
