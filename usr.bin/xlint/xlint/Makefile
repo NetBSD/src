@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/05/08 21:12:05 gwr Exp $
+#	$NetBSD: Makefile,v 1.7 1997/10/20 04:28:25 lukem Exp $
 
 .PATH:	${.CURDIR}/../lint1
 
@@ -9,5 +9,4 @@ MAN=	lint.1
 
 CFLAGS+=-I${.CURDIR}/../lint1
 
-.include "${.CURDIR}/../../Makefile.inc"
 .include <bsd.prog.mk>
