@@ -1,5 +1,5 @@
-/*	$NetBSD: if_gif.h,v 1.6 2000/07/02 00:21:42 thorpej Exp $	*/
-/*	$KAME: if_gif.h,v 1.12 2000/04/19 06:20:11 itojun Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.7 2001/07/29 05:08:32 itojun Exp $	*/
+/*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -39,10 +39,8 @@
 
 #include <sys/queue.h>
 
-#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #if defined(_KERNEL) && !defined(_LKM)
 #include "opt_inet.h"
-#endif
 #endif
 
 #include <netinet/in.h>
@@ -76,13 +74,13 @@ struct gif_softc {
 #define	GIF_MTU_MAX	(8192)	/* Maximum MTU */
 
 /* Prototypes */
+void gifattach0 __P((struct gif_softc *));
 void gif_input __P((struct mbuf *, int, struct ifnet *));
 int gif_output __P((struct ifnet *, struct mbuf *,
 		    struct sockaddr *, struct rtentry *));
-#if defined(__FreeBSD__) && __FreeBSD__ < 3
-int gif_ioctl __P((struct ifnet *, int, caddr_t));
-#else
 int gif_ioctl __P((struct ifnet *, u_long, caddr_t));
-#endif
+int gif_set_tunnel __P((struct ifnet *, struct sockaddr *, struct sockaddr *));
+void gif_delete_tunnel __P((struct ifnet *));
+int gif_encapcheck __P((const struct mbuf *, int, int, void *));
 
 #endif /* _NET_IF_GIF_H_ */
