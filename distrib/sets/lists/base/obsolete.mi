@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.19 2001/03/15 12:03:11 itojun Exp $
+# $NetBSD: obsolete.mi,v 1.20 2001/03/18 10:03:52 veego Exp $
 /bin/rcorder
 /dev/log
 /etc/disklabels
@@ -10,6 +10,8 @@
 /sbin/nfsd
 /sbin/nfsiod
 /sbin/quotacheck
+/usr/include/gssapi/rpc
+/usr/include/ss
 /usr/lib/libntp.so.0
 /usr/lib/libntp.so.0.0
 /usr/libexec/hprop

@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.144 2001/03/12 12:48:47 wiz Exp $
+#	$NetBSD: NetBSD.dist,v 1.145 2001/03/18 10:03:51 veego Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -209,22 +209,12 @@ krb5
 # ./usr/include/gssapi
 gssapi
 
-# ./usr/include/gssapi/rpc
-rpc
-# ./usr/include/gssapi/rpc
-..
-
 # ./usr/include/gssapi
 ..
 
 # ./usr/include/kadm5
 kadm5
 # ./usr/include/kadm5
-..
-
-# ./usr/include/ss
-ss
-# ./usr/include/ss
 ..
 
 # ./usr/include/openssl
