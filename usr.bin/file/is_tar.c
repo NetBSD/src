@@ -1,4 +1,4 @@
-/*	$NetBSD: is_tar.c,v 1.15 2002/07/09 14:59:54 pooka Exp $	*/
+/*	$NetBSD: is_tar.c,v 1.16 2002/07/10 16:15:54 pooka Exp $	*/
 
 /*
  * is_tar() -- figure out whether file is a tar archive.
@@ -17,7 +17,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include "file.h"
 #include "tar.h"
 
 #include <sys/cdefs.h>
@@ -25,7 +24,7 @@
 #if 0
 FILE_RCSID("@(#)Id: is_tar.c,v 1.17 2002/07/03 18:26:38 christos Exp ")
 #else
-__RCSID("$NetBSD: is_tar.c,v 1.15 2002/07/09 14:59:54 pooka Exp $");
+__RCSID("$NetBSD: is_tar.c,v 1.16 2002/07/10 16:15:54 pooka Exp $");
 #endif
 #endif
 

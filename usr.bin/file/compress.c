@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.c,v 1.13 2002/07/09 14:59:53 pooka Exp $	*/
+/*	$NetBSD: compress.c,v 1.14 2002/07/10 16:15:53 pooka Exp $	*/
 
 /*
  * compress routines:
@@ -8,8 +8,6 @@
  *					    using method, return sizeof new
  */
 #include "file.h"
-#include <fcntl.h>
-#include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -27,7 +25,7 @@
 #if 0
 FILE_RCSID("@(#)Id: compress.c,v 1.25 2002/07/03 18:26:37 christos Exp ")
 #else
-__RCSID("$NetBSD: compress.c,v 1.13 2002/07/09 14:59:53 pooka Exp $");
+__RCSID("$NetBSD: compress.c,v 1.14 2002/07/10 16:15:53 pooka Exp $");
 #endif
 #endif
 
