@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_debug.c,v 1.7 1997/07/13 18:51:50 christos Exp $	*/
+/*	$NetBSD: bt_debug.c,v 1.8 2002/01/12 11:27:16 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_debug.c	8.5 (Berkeley) 8/17/94";
 #else
-__RCSID("$NetBSD: bt_debug.c,v 1.7 1997/07/13 18:51:50 christos Exp $");
+__RCSID("$NetBSD: bt_debug.c,v 1.8 2002/01/12 11:27:16 aymeric Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ __bt_dump(dbp)
 	(void)fprintf(stderr, "%s: pgsz %d",
 	    F_ISSET(t, B_INMEM) ? "memory" : "disk", t->bt_psize);
 	if (F_ISSET(t, R_RECNO))
-		(void)fprintf(stderr, " keys %lu", t->bt_nrecs);
+		(void)fprintf(stderr, " keys %lu", (u_long) t->bt_nrecs);
 #undef X
 #define	X(flag, name) \
 	if (F_ISSET(t, flag)) { \
@@ -113,12 +113,12 @@ __bt_dmpage(h)
 	char *sep;
 
 	m = (BTMETA *)h;
-	(void)fprintf(stderr, "magic %lx\n", m->magic);
-	(void)fprintf(stderr, "version %lu\n", m->version);
-	(void)fprintf(stderr, "psize %lu\n", m->psize);
-	(void)fprintf(stderr, "free %lu\n", m->free);
-	(void)fprintf(stderr, "nrecs %lu\n", m->nrecs);
-	(void)fprintf(stderr, "flags %lu", m->flags);
+	(void)fprintf(stderr, "magic %lx\n", (u_long) m->magic);
+	(void)fprintf(stderr, "version %lu\n", (u_long) m->version);
+	(void)fprintf(stderr, "psize %lu\n", (u_long) m->psize);
+	(void)fprintf(stderr, "free %lu\n", (u_long) m->free);
+	(void)fprintf(stderr, "nrecs %lu\n", (u_long) m->nrecs);
+	(void)fprintf(stderr, "flags %lu", (u_long) m->flags);
 #undef X
 #define	X(flag, name) \
 	if (m->flags & flag) { \
@@ -218,14 +218,14 @@ __bt_dpage(h)
 			if (bl->flags & P_BIGKEY)
 				(void)fprintf(stderr,
 				    "big key page %lu size %u/",
-				    *(pgno_t *)bl->bytes,
+				    (u_long) *(pgno_t *)bl->bytes,
 				    *(u_int32_t *)(bl->bytes + sizeof(pgno_t)));
 			else if (bl->ksize)
 				(void)fprintf(stderr, "%s/", bl->bytes);
 			if (bl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    *(pgno_t *)(bl->bytes + bl->ksize),
+				    (u_long) *(pgno_t *)(bl->bytes + bl->ksize),
 				    *(u_int32_t *)(bl->bytes + bl->ksize +
 				    sizeof(pgno_t)));
 			else if (bl->dsize)
@@ -237,7 +237,7 @@ __bt_dpage(h)
 			if (rl->flags & P_BIGDATA)
 				(void)fprintf(stderr,
 				    "big data page %lu size %u",
-				    *(pgno_t *)rl->bytes,
+				    (u_long) *(pgno_t *)rl->bytes,
 				    *(u_int32_t *)(rl->bytes + sizeof(pgno_t)));
 			else if (rl->dsize)
 				(void)fprintf(stderr,
