@@ -1,4 +1,4 @@
-/*	$NetBSD: mlxvar.h,v 1.5 2001/09/18 18:15:52 wiz Exp $	*/
+/*	$NetBSD: mlxvar.h,v 1.5.14.1 2003/07/28 18:06:45 he Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
 /* Maximum queue depth, matching the older controllers. */
 #define	MLX_MAX_QUEUECNT	63
 
-/* Number of CCBs to reserve for `special' operations. */
-#define	MLX_NCCBS_RESERVE	7
+/* Number of CCBs to reserve for control operations. */
+#define	MLX_NCCBS_CONTROL	7
 
 /* Structure describing a system drive as attached to the controller. */
 struct mlx_sysdrive {
@@ -120,6 +120,7 @@ struct mlx_ccb {
 #define	MC_XFER_IN	MU_XFER_IN	/* Map describes inbound xfer */
 #define	MC_XFER_OUT	MU_XFER_OUT	/* Map describes outbound xfer */
 #define	MC_WAITING	0x0400		/* We have waiters */
+#define	MC_CONTROL	0x0800		/* Control operation */
 
 /*
  * Per-controller state.
@@ -137,7 +138,7 @@ struct mlx_softc {
 	SIMPLEQ_HEAD(, mlx_ccb)	mlx_ccb_queue;
 	struct mlx_ccb		*mlx_ccbs;
 	int			mlx_nccbs;
-	int			mlx_nccbs_free;
+	int			mlx_nccbs_ctrl;
 
 	caddr_t			mlx_sgls;
 	bus_addr_t		mlx_sgls_paddr;
@@ -149,8 +150,7 @@ struct mlx_softc {
 	int	(*mlx_reset)(struct mlx_softc *);
 
 	int			mlx_max_queuecnt;
-	struct mlx_enquiry2	*mlx_enq2;
-	int			mlx_iftype;
+	struct mlx_cinfo	mlx_ci;
 
 	time_t			mlx_lastpoll;
 	u_int			mlx_lastevent;
@@ -177,7 +177,6 @@ struct mlx_softc {
 #define	MLXF_PERIODIC_CTLR	0x0040	/* periodic check running */
 #define	MLXF_PERIODIC_DRIVE	0x0080	/* periodic check running */
 #define	MLXF_PERIODIC_REBUILD	0x0100	/* periodic check running */
-#define	MLXF_EISA		0x0200	/* EISA board */
 #define	MLXF_RESCANNING		0x0400	/* rescanning drive table */
 
 struct mlx_attach_args {
@@ -229,7 +228,7 @@ mlx_make_type1(struct mlx_ccb *mc, u_int8_t code, u_int16_t f1, u_int32_t f2,
 
 	mc->mc_mbox[0x0] = code;
 	mc->mc_mbox[0x2] = f1;
-	mc->mc_mbox[0x3] = (((f2 >> 24) & 0x3) << 6) | ((f1 >> 8) & 0x3f);
+	mc->mc_mbox[0x3] = ((f2 >> 18) & 0xc0) | ((f1 >> 8) & 0x3f);
 	mc->mc_mbox[0x4] = f2;
 	mc->mc_mbox[0x5] = (f2 >> 8);
 	mc->mc_mbox[0x6] = (f2 >> 16);
