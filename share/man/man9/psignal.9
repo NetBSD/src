@@ -1,4 +1,4 @@
-.\"	$NetBSD: psignal.9,v 1.3 1997/11/11 10:07:21 mrg Exp $
+.\"	$NetBSD: psignal.9,v 1.4 1999/03/06 21:55:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,8 @@
 .Ft void
 .Fn "gsignal" "int pgid" "int signum"
 .Sh DESCRIPTION
-These functions post a signal to one or more processes. The argument
+These functions post a signal to one or more processes.
+The argument
 .Fa signum
 common to all three functions should be in the range
 .Bq 1- Ns Dv NSIG .
@@ -63,14 +64,16 @@ to the process represented by the process structure
 .Fa p .
 With a few exceptions noted below, the target process signal disposition is
 updated and is marked as runnable, so further handling of the signal is done
-in the context of the target process after a context switch. Note that
+in the context of the target process after a context switch.
+Note that
 .Fn psignal
 does not by itself cause a context switch to happen.
 .Pp
 The target process is not marked as runnable in the following cases:
 .Bl -bullet -offset indent
 .It
-The target process is sleeping uninterruptibly. The signal will be
+The target process is sleeping uninterruptibly.
+The signal will be
 noticed when the process returns from the system call or trap.
 .It
 The target process is currently ignoring the signal.
@@ -111,7 +114,8 @@ pointed at by
 .Fa pgrp
 and calling
 .Fn psignal
-as appropriate. If
+as appropriate.
+If
 .Fa pgrp
 is
 .Dv NULL
@@ -130,7 +134,8 @@ then invokes
 .Fn pgsignal
 with the argument
 .Fa checkctty
-set to zero. If
+set to zero.
+If
 .Fa pgid
 is zero no action is taken.
 .Sh SEE ALSO
