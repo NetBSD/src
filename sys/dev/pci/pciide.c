@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.78 2000/07/06 15:08:11 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.79 2000/07/07 13:54:25 bouyer Exp $	*/
 
 
 /*
@@ -168,7 +168,7 @@ void cmd0643_9_setup_channel __P((struct channel_softc*));
 void cmd_channel_map __P((struct pci_attach_args *,
 			struct pciide_softc *, int));
 int  cmd_pci_intr __P((void *));
-void cmd648_9_irqack __P((struct channel_softc *));
+void cmd646_9_irqack __P((struct channel_softc *));
 
 void cy693_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void cy693_setup_channel __P((struct channel_softc*));
@@ -2191,7 +2191,8 @@ cmd0643_9_chip_map(sc, pa)
 		case PCI_PRODUCT_CMDTECH_648:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			sc->sc_wdcdev.UDMA_cap = 4;
-			sc->sc_wdcdev.irqack = cmd648_9_irqack;
+		case PCI_PRODUCT_CMDTECH_646:
+			sc->sc_wdcdev.irqack = cmd646_9_irqack;
 			break;
 		default:
 			sc->sc_wdcdev.irqack = pciide_irqack;
@@ -2304,7 +2305,7 @@ cmd0643_9_setup_channel(chp)
 }
 
 void
-cmd648_9_irqack(chp)
+cmd646_9_irqack(chp)
 	struct channel_softc *chp;
 {
 	u_int32_t priirq, secirq;
