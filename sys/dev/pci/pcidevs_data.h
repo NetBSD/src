@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.93 1998/10/19 12:13:58 bouyer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.94 1998/10/20 01:39:42 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.87 1998/10/19 12:11:50 bouyer Exp 
+ *	NetBSD: pcidevs,v 1.88 1998/10/20 01:38:57 thorpej Exp 
  */
 
 /*
@@ -1699,7 +1699,25 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029,
 	    0,
 	    "Realtek Semiconductor",
-	    "Ethernet",
+	    "8029 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8129,
+	    0,
+	    "Realtek Semiconductor",
+	    "8129 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8139,
+	    0,
+	    "Realtek Semiconductor",
+	    "8139 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_REALTEK2, PCI_PRODUCT_REALTEK2_RT8139_2,
+	    0,
+	    "Realtek Semiconductor (2nd PCI Vendor ID)",
+	    "8139 10/100 Ethernet (2nd PCI Device ID)",
 	},
 	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
@@ -5125,6 +5143,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSENTIAL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Essential Communications",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_REALTEK2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "Realtek Semiconductor (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{
