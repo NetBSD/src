@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2000/09/22 21:01:55 eeh Exp $	*/
+/*	$NetBSD: bus.h,v 1.26 2001/02/11 00:05:47 eeh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1499,10 +1499,16 @@ struct sparc_bus_dmamap {
 	 * PRIVATE MEMBERS: not for use my machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
-	int		_dm_segcnt;	/* number of segs this map can map */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
+	int		_dm_segcnt;	/* number of segs this map can map */
 	int		_dm_flags;	/* misc. flags */
+#define _DM_TYPE_LOAD	0
+#define _DM_TYPE_SEGS	1
+#define _DM_TYPE_UIO	2
+#define _DM_TYPE_MBUF	3
+	int		_dm_type;	/* type of mapping: raw, uio, mbuf, etc */
+	void		*_dm_source;	/* source mbuf, uio, etc. needed for unload *///////////////////////
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
