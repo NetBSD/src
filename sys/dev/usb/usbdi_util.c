@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.16 1999/08/07 23:14:17 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.17 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,8 +54,8 @@
 #include <dev/usb/usbdi_util.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)

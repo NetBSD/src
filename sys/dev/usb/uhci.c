@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.34 1999/08/02 23:35:55 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.35 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,6 +61,9 @@
 #include <sys/queue.h>
 #include <sys/select.h>
 
+#if defined(__FreeBSD__)
+#include <machine/bus_pio.h>
+#endif
 #include <machine/bus.h>
 
 #include <dev/usb/usb.h>
@@ -211,17 +214,11 @@ void		uhci_dump __P((void));
 void		uhci_dump_td __P((uhci_soft_td_t *));
 #endif
 
-#if defined(__NetBSD__)
 #define UWRITE2(sc, r, x) bus_space_write_2((sc)->iot, (sc)->ioh, (r), (x))
 #define UWRITE4(sc, r, x) bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x))
+#define UREAD1(sc, r) bus_space_read_1((sc)->iot, (sc)->ioh, (r))
 #define UREAD2(sc, r) bus_space_read_2((sc)->iot, (sc)->ioh, (r))
 #define UREAD4(sc, r) bus_space_read_4((sc)->iot, (sc)->ioh, (r))
-#elif defined(__FreeBSD__)
-#define UWRITE2(sc,r,x)	outw((sc)->sc_iobase + (r), (x))
-#define UWRITE4(sc,r,x)	outl((sc)->sc_iobase + (r), (x))
-#define UREAD2(sc,r)	inw((sc)->sc_iobase + (r))
-#define UREAD4(sc,r)	inl((sc)->sc_iobase + (r))
-#endif
 
 #define UHCICMD(sc, cmd) UWRITE2(sc, UHCI_CMD, cmd)
 #define UHCISTS(sc) UREAD2(sc, UHCI_STS)
@@ -458,7 +455,7 @@ uhci_dumpregs(sc)
 	       UREAD2(sc, UHCI_INTR),
 	       UREAD2(sc, UHCI_FRNUM),
 	       UREAD4(sc, UHCI_FLBASEADDR),
-	       UREAD2(sc, UHCI_SOF),
+	       UREAD1(sc, UHCI_SOF),
 	       UREAD2(sc, UHCI_PORTSC1),
 	       UREAD2(sc, UHCI_PORTSC2));
 }

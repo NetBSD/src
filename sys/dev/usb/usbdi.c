@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.26 1999/07/06 07:12:03 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.27 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,8 +61,8 @@
 #endif
  
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)
@@ -158,7 +158,7 @@ usbd_open_pipe_intr(iface, address, flags, pipe, priv, buffer, length, cb)
 }
 
 usbd_status 
-usbd_open_pipe_iso(iface, address, flags, pipe, priv, bufsize, nbuf, cb)
+usbd_open_pipe_iso(iface, address, flags, pipe, priv, bufsize, nbuf)
 	usbd_interface_handle iface;
 	u_int8_t address;
 	u_int8_t flags;
@@ -166,7 +166,6 @@ usbd_open_pipe_iso(iface, address, flags, pipe, priv, bufsize, nbuf, cb)
 	usbd_private_handle priv;
 	u_int32_t bufsize;
 	u_int32_t nbuf;
-	usbd_callback cb;
 {
 	usbd_status r;
 	usbd_pipe_handle p;

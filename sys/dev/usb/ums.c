@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.25 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: ums.c,v 1.26 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,8 +78,8 @@
 #endif
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (umsdebug) printf x
-#define DPRINTFN(n,x)	if (umsdebug>(n)) printf x
+#define DPRINTF(x)	if (umsdebug) logprintf x
+#define DPRINTFN(n,x)	if (umsdebug>(n)) logprintf x
 int	umsdebug = 0;
 #else
 #define DPRINTF(x)

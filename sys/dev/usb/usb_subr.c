@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.34 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.35 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,8 +64,8 @@
 #endif
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;
 #else
 #define DPRINTF(x)

@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.15 1999/08/02 19:36:48 augustss Exp $	*/
+/*	$NetBSD: usb.c,v 1.16 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,8 @@ MALLOC_DEFINE(M_USBHC, "USBHC", "USB host controller");
 #include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (usbdebug) printf x
-#define DPRINTFN(n,x)	if (usbdebug>(n)) printf x
+#define DPRINTF(x)	if (usbdebug) logprintf x
+#define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 int	usbdebug = 0;
 int	uhcidebug;
 int	ohcidebug;

@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.7 1999/06/30 06:44:23 augustss Exp $	*/
+/*	$NetBSD: umodem.c,v 1.8 1999/08/14 14:49:32 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@
 #include <dev/usb/usb_quirks.h>
 
 #ifdef USB_DEBUG
-#define DPRINTF(x)	if (umodemdebug) printf x
-#define DPRINTFN(n,x)	if (umodemdebug>(n)) printf x
+#define DPRINTF(x)	if (umodemdebug) logprintf x
+#define DPRINTFN(n,x)	if (umodemdebug>(n)) logprintf x
 int	umodemdebug = 0;
 #else
 #define DPRINTF(x)
