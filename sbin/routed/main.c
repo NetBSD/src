@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24.4.1 2000/10/18 00:39:48 tv Exp $	*/
+/*	$NetBSD: main.c,v 1.24.4.2 2004/04/07 23:06:44 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@ static char sccsid[] __attribute__((unused)) = "@(#)main.c	8.1 (Berkeley) 6/5/93
 #define __COPYRIGHT(a) char copyright[] = a;
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.24.4.1 2000/10/18 00:39:48 tv Exp $");
+__RCSID("$NetBSD: main.c,v 1.24.4.2 2004/04/07 23:06:44 jmc Exp $");
 #endif
 __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n");
@@ -222,7 +222,7 @@ main(int argc,
 		case 'v':
 			/* display version */
 			verbose++;
-			msglog("version 2.19");
+			msglog("version 2.19nb1");
 			break;
 
 		default:
