@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.h,v 1.13 2001/03/16 21:02:42 christos Exp $	*/
+/*	$NetBSD: glob.h,v 1.14 2001/10/27 15:35:19 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -99,10 +99,12 @@ typedef struct {
 
 __BEGIN_DECLS
 #ifdef __LIBC12_SOURCE__
-int	glob __P((const char *, int, int (*)(const char *, int), glob_t *));
+int	glob __P((const char * __restrict, int,
+	    int (* __restrict)(const char *, int), glob_t * __restrict));
 void	globfree __P((glob_t *));
 #else
-int	glob __P((const char *, int, int (*)(const char *, int), glob_t *))
+int	glob __P((const char * __restrict, int,
+	    int (* __restrict)(const char *, int), glob_t * __restrict))
 	__RENAME(__glob13);
 void	globfree __P((glob_t *)) __RENAME(__globfree13);
 #endif
