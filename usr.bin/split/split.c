@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.15 2003/06/26 23:06:52 bjh21 Exp $	*/
+/*	$NetBSD: split.c,v 1.16 2003/06/26 23:19:15 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.15 2003/06/26 23:06:52 bjh21 Exp $");
+__RCSID("$NetBSD: split.c,v 1.16 2003/06/26 23:19:15 bjh21 Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,7 +60,7 @@ __RCSID("$NetBSD: split.c,v 1.15 2003/06/26 23:06:52 bjh21 Exp $");
 #define DEFLINE	1000		/* Default num lines per file. */
 
 static int file_open;		/* If a file open. */
-static int ifd = -1, ofd = -1;	/* Input/output file descriptors. */
+static int ifd = STDIN_FILENO, ofd = -1; /* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
 static size_t sfxlen = 2;		/* suffix length. */
 
@@ -131,9 +131,8 @@ main(int argc, char *argv[])
 	argc -= optind;
 
 	if (*argv != NULL) {
-		if (strcmp(*argv, "-") == 0)
-			ifd = STDIN_FILENO;
-		else if ((ifd = open(*argv, O_RDONLY, 0)) < 0)
+		if (strcmp(*argv, "-") != 0 &&
+		    (ifd = open(*argv, O_RDONLY, 0)) < 0)
 			err(1, "%s", *argv);
 		++argv;
 	}
@@ -164,9 +163,6 @@ main(int argc, char *argv[])
 		numlines = DEFLINE;
 	else if (bytecnt)
 		usage();
-
-	if (ifd == -1)				/* Stdin by default. */
-		ifd = 0;
 
 	if (bytecnt)
 		split1(bytecnt);
