@@ -15,7 +15,7 @@
   - All data on your PDA will be lost if the kernel boot successfully.
   - NetBSD/hpcmips kernel is ELF format binary executable.
   - This program supports only MIPS (especially NEC VR41X1 or VR4102 CPU)
-    platforms -- NEC MC-R seriase, CASIO E- seriase, Everex Freestyle and 
+    platforms -- NEC MC-R series, CASIO E- series, Everex Freestyle and 
     others.
 
 1. How to use
