@@ -1,4 +1,4 @@
-/*	$NetBSD: sshconnect.c,v 1.25 2002/12/06 03:39:11 thorpej Exp $	*/
+/*	$NetBSD: sshconnect.c,v 1.26 2003/04/03 06:21:36 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.135 2002/09/19 01:58:18 djm Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.137 2002/11/21 23:03:51 deraadt Exp $");
 
 #include <openssl/bn.h>
 
@@ -244,7 +244,7 @@ ssh_connect(const char *host, struct sockaddr_storage * hostaddr,
 	 */
 	int full_failure = 1;
 
-	debug("ssh_connect: needpriv %d", needpriv);
+	debug2("ssh_connect: needpriv %d", needpriv);
 
 	/* Get default port if port has not been set. */
 	if (port == 0) {
@@ -642,10 +642,10 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 			    "%s key fingerprint is %s.\n"
 			    "Are you sure you want to continue connecting "
 			    "(yes/no)? ",
-			     host, ip,
-			     has_keys ? ",\nbut keys of different type are already "
-			     "known for this host." : ".",
-			     type, fp);
+			    host, ip,
+			    has_keys ? ",\nbut keys of different type are already "
+			    "known for this host." : ".",
+			    type, fp);
 			xfree(fp);
 			if (!confirm(msg))
 				goto fail;
