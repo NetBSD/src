@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.71 2000/06/11 02:41:10 mycroft Exp $
+#	$NetBSD: DISKLESS,v 1.72 2000/06/15 18:16:10 abs Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -99,6 +99,8 @@ options 	EISAVERBOSE	# verbose EISA device messages
 options 	PCIVERBOSE	# verbose PCI device messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 options 	SCSIVERBOSE	# verbose SCSI error messages
+
+options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 mainbus0 at root
 
