@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.42 1998/09/11 12:50:06 mycroft Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.43 1998/10/01 02:17:31 erh Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -63,6 +63,7 @@
 #include <compat/linux/linux_util.h>
 #include <compat/linux/linux_ioctl.h>
 #include <compat/linux/linux_exec.h>
+#include <compat/linux/linux_machdep.h>
 
 #include <machine/cpu.h>
 #include <machine/cpufunc.h>
@@ -73,7 +74,6 @@
 #include <machine/sysarch.h>
 #include <machine/vm86.h>
 #include <machine/vmparam.h>
-#include <machine/linux_machdep.h>
 
 /*
  * To see whether pcvt is configured (for virtual console ioctl calls).
@@ -221,6 +221,16 @@ linux_sendsig(catcher, sig, mask, code)
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
+int
+linux_sys_rt_sigreturn(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	/* XXX XAX write me */
+	return(ENOSYS);
+}
+
 int
 linux_sys_sigreturn(p, v, retval)
 	struct proc *p;
