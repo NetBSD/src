@@ -1,4 +1,4 @@
-/*	$NetBSD: humanize_number.c,v 1.3 2002/08/15 04:47:13 enami Exp $	*/
+/*	$NetBSD: humanize_number.c,v 1.1 2002/08/22 17:24:10 abs Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #ifndef __lint
 __COPYRIGHT("@(#) Copyright (c) 2002\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: humanize_number.c,v 1.3 2002/08/15 04:47:13 enami Exp $");
+__RCSID("$NetBSD: humanize_number.c,v 1.1 2002/08/22 17:24:10 abs Exp $");
 #endif /* !__lint */
 
 #include <assert.h>
@@ -120,14 +120,18 @@ humanize_number(char *buf, size_t len, int64_t bytes,
 			s2 = 0;
 		}
 		r = snprintf(buf, len, "%lld%s%lld%s%c%s",
+		    /* LONGLONG */
 		    (long long)(sign * s1),
-		    localeconv()->decimal_point, (long long)s2,
+		    localeconv()->decimal_point,
+		    /* LONGLONG */
+		    (long long)s2,
 		    (i == 0 && !(flags & HN_B)) || flags & HN_NOSPACE ?
 		    "" : " ", (i == 0 && (flags & HN_B)) ? 'B' :
 		    prefixes[i], suffix);
 
 	} else
 		r = snprintf(buf, len, "%lld%s%c%s",
+		    /* LONGLONG */
 		    (long long)(sign * ((bytes + 50) / 100)),
 		    i == 0 || flags & HN_NOSPACE ? "" : " ", (i == 0 &&
 		    (flags & HN_B)) ? 'B' : prefixes[i], suffix);
