@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.14.2.2 1997/06/07 05:50:38 cgd Exp $ */
+/* $NetBSD: interrupt.c,v 1.14.2.3 1997/07/22 05:54:35 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -97,7 +97,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14.2.2 1997/06/07 05:50:38 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.14.2.3 1997/07/22 05:54:35 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -109,6 +109,7 @@ __KERNEL_COPYRIGHT(0, \
 #include <machine/autoconf.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
+#include <machine/conf.h>
 
 #ifdef EVCNT_COUNTERS
 #include <sys/device.h>
@@ -136,7 +137,9 @@ static volatile int mc_expected, mc_received;
 struct evcnt	clock_intr_evcnt;	/* event counter for clock intrs. */
 #endif
 
-int	correctable_errors_fatal = 0;
+int		correctable_errors_fatal = 0;
+
+extern int	cputype;
 
 void
 interrupt(a0, a1, a2, framep)
@@ -213,67 +216,90 @@ machine_check(framep, vector, param)
 	struct trapframe *framep;
 	unsigned long vector, param;
 {
-	unsigned long mces, handled;
-	const char *type;
+	int (*mcheck) __P((struct trapframe *, unsigned long, unsigned long,
+	    unsigned long *, int)) = cpusw[cputype].machine_check;
+	unsigned long mces, orig_mces;
+	int fatalm;
 
-	mces = alpha_pal_rdmces();
-	handled = 0;
+	/*
+	 * Find out what's pending
+	 */
+	orig_mces = mces = alpha_pal_rdmces();
 
-	/* Is a machine check pending? */
-	if ((mces & ALPHA_MCES_MIP) != 0) {
-		/* If we weren't expecting it, then we punt. */
-		if (!mc_expected) {
-			type = "unexpected machine check";
-			goto fatal;
-		}
+	/*
+	 * Call the machine-dependent machine check handler.
+	 * If it handles anything, it'll clear the bits in 'mces'.
+	 * If a machine check is expected, it should leave mces's
+	 * ALPHA_MCES_MIP _SET_.
+	 *
+	 * If mc_expected is true and the machine check really is a fatal
+	 * one (i.e. it can't possibly be expected), mcheck should return
+	 * non-zero.
+	 */
+	if (mcheck != NULL)
+		fatalm = (*mcheck)(framep, vector, param, &mces, mc_expected);
+	else
+		fatalm = 0;
 
+	/*
+	 * Clear the error bits in the MCES, now that we've examined
+	 * the logout area (in the MD mcheck handler, if there was one).
+	 * That lets the PALcode write over the logout area.  If we don't
+	 * do this before we drop IPL (e.g. because of panic), we'll lose
+	 * badly if we take another machine check or correctable error.
+	 */
+	alpha_pal_wrmces(orig_mces);
+
+	/*
+	 * If a machine check was expected, clear that bit.
+	 */
+	if ((mces & ALPHA_MCES_MIP) != 0 && mc_expected && !fatalm) {
 		mc_expected = 0;
 		mc_received = 1;
 
-		handled |= ALPHA_MCES_MIP;
+		mces &= ~ALPHA_MCES_MIP;
 	}
 
-	/* How about a system correctable error? */
-	if ((mces & ALPHA_MCES_SCE) != 0) {
-		if (correctable_errors_fatal) {
-			type = "system correctable error";
-			goto fatal;
-		}
-		printf("Warning: system correctable error encountered.\n");
-		handled |= ALPHA_MCES_SCE;
-	}
-
-	/* How about a processor correctable error? */
-	if ((mces & ALPHA_MCES_PCE) != 0) {
-		if (correctable_errors_fatal) {
-			type = "processor correctable error";
-			goto fatal;
-		}
-		printf("Warning: processor correctable error encountered.\n");
-		handled |= ALPHA_MCES_PCE;
-	}
-
-	if (handled == 0) {
-		type = "fatal machine check or error (unknown type)";
-		goto fatal;
-	}
-
-	/* Clear pending machine checks and correctable errors */
-	alpha_pal_wrmces(mces);
-	return;
-
-fatal:
 	/*
-	 * Clear everything pending, so we don't lose (as badly) if we
-	 * drop IPL.
+	 * Try handling correctable errors.
 	 */
-	alpha_pal_wrmces(mces);
+	if ((mces & ALPHA_MCES_SCE) != 0 && !correctable_errors_fatal) {
+		printf("Warning: system correctable error encountered.\n");
+		mces &= ~ALPHA_MCES_SCE;
+	}
+	if ((mces & ALPHA_MCES_PCE) != 0 && !correctable_errors_fatal) {
+		printf("Warning: processor correctable error encountered.\n");
+		mces &= ~ALPHA_MCES_PCE;
+	}
 
 	/*
-	 * Roll over and die.
+	 * If everything was handled, go on as normal.
+	 */
+	if ((mces & (ALPHA_MCES_MIP | ALPHA_MCES_SCE | ALPHA_MCES_PCE)) == 0)
+		return;
+
+	/*
+	 * Otherwise, die!
 	 */
 	printf("\n");
-	printf("%s:\n", type);
+
+	{
+		int output = 0;
+
+#define PRINTBIT(x, l)							\
+		if ((mces & (x)) != 0) {				\
+			if (output)					\
+				printf(", ");				\
+			printf(l);					\
+			output = 1;					\
+		}							\
+
+		PRINTBIT(ALPHA_MCES_MIP, "machine check");
+		PRINTBIT(ALPHA_MCES_SCE, "system correctable error");
+		PRINTBIT(ALPHA_MCES_PCE, "processor correctable error");
+		printf(":\n");
+#undef PRINTBIT
+	}
 	printf("\n");
 	printf("    mces    = 0x%lx\n", mces);
 	printf("    vector  = 0x%lx\n", vector);

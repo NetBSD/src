@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb164.c,v 1.4.2.3 1997/06/01 04:11:16 cgd Exp $ */
+/* $NetBSD: dec_eb164.c,v 1.4.2.4 1997/07/22 05:54:30 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.4.2.3 1997/06/01 04:11:16 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.4.2.4 1997/07/22 05:54:30 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,8 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb164.c,v 1.4.2.3 1997/06/01 04:11:16 cgd Exp $"
 
 #include <alpha/wscons/wsdisplayvar.h>
 #include <alpha/wscons/wskbdvar.h>
-
-cpu_decl(dec_eb164);
 
 const char *
 dec_eb164_model_name()

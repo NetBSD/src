@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.60.2.6 1997/06/07 04:42:49 cgd Exp $ */
+/* $NetBSD: machdep.c,v 1.60.2.7 1997/07/22 05:54:37 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.6 1997/06/07 04:42:49 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.7 1997/07/22 05:54:37 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,8 +154,8 @@ int	cputype;		/* system type, from the RPB */
 u_int32_t no_optimize;
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = "alpha";
-char	machine_arch[] = "alpha";
+char	machine[] = MACHINE;		/* from <machine/param.h> */
+char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[128];
 const struct cpusw *cpu_fn_switch;		/* function switch */
 
@@ -458,7 +458,6 @@ unknown_cputype:
 	valloc(cfree, struct cblock, nclist);
 #endif
 	valloc(callout, struct callout, ncallout);
-	valloc(swapmap, struct map, nswapmap = maxproc * 2);
 #ifdef SYSVSHM
 	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
 #endif

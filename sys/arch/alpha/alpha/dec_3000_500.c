@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3000_500.c,v 1.9.2.1 1997/06/01 04:11:14 cgd Exp $ */
+/* $NetBSD: dec_3000_500.c,v 1.9.2.2 1997/07/22 05:54:27 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.9.2.1 1997/06/01 04:11:14 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.9.2.2 1997/07/22 05:54:27 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,8 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3000_500.c,v 1.9.2.1 1997/06/01 04:11:14 cgd Exp
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
-
-cpu_decl(dec_3000_500);
 
 const char *
 dec_3000_500_model_name()

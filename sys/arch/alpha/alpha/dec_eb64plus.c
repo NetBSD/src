@@ -1,4 +1,4 @@
-/* $NetBSD: dec_eb64plus.c,v 1.2.2.2 1997/06/01 04:11:17 cgd Exp $ */
+/* $NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 #include <machine/options.h>		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.2 1997/06/01 04:11:17 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.3 1997/07/22 05:54:31 cgd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dec_eb64plus.c,v 1.2.2.2 1997/06/01 04:11:17 cgd Exp
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
 
-cpu_decl(dec_eb64plus);
+/* XXX CGD SOMETHING MISSING? */
 
 const char *
 dec_eb64plus_model_name()

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.16.2.5 1997/06/01 04:11:09 cgd Exp $ */
+/* $NetBSD: conf.c,v 1.16.2.6 1997/07/22 05:54:24 cgd Exp $ */
 
 /*
  * Copyright Notice:
@@ -108,7 +108,7 @@ XXX Cannot do this until the DEC_XXX vs. NDEC_XXX nonsense is worked out.
 #endif
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.16.2.5 1997/06/01 04:11:09 cgd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.16.2.6 1997/07/22 05:54:24 cgd Exp $");
 __KERNEL_COPYRIGHT(0, \
     "Copyright (c) 1997 Christopher G. Demetriou.  All rights reserved.");
 
@@ -142,6 +142,7 @@ __KERNEL_COPYRIGHT(0, \
 #include "lpt.h"
 #include "md.h"
 #include "pty.h"
+#include "satlink.h"
 #include "scc.h"
 #include "sd.h"
 #include "se.h"
@@ -272,6 +273,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ipf_init(NIPFILTER,ipl),	/* 35: ip-filter device */
 	cdev_disk_init(NAWDC,wd),	/* 36: IDE disk driver */
 	cdev_se_init(NSE,se),		/* 37: Cabletron SCSI<->Ethernet */
+	cdev_satlink_init(NSATLINK,satlink), /* 38: planetconnect satlink */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
