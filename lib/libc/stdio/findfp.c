@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.10 1998/10/16 20:48:06 kleink Exp $	*/
+/*	$NetBSD: findfp.c,v 1.11 1998/10/18 13:56:22 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.10 1998/10/16 20:48:06 kleink Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.11 1998/10/18 13:56:22 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -153,7 +153,7 @@ f_prealloc()
 	struct glue *g;
 	int n;
 
-	n = getdtablesize() - FOPEN_MAX + 20;		/* 20 for slop. */
+	n = (int)sysconf(_SC_OPEN_MAX) - FOPEN_MAX + 20; /* 20 for slop. */
 	for (g = &__sglue; (n -= g->niobs) > 0 && g->next; g = g->next)
 		/* void */;
 	if (n > 0)
