@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.88 1998/03/29 21:59:44 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.89 1998/03/30 14:15:57 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -866,7 +866,8 @@ mbprint(aux, name)
 	if (name)
 		printf("%s at %s", ma->ma_name, name);
 	if (ma->ma_paddr)
-		printf(" %saddr %p", ma->ma_iospace ? "io" : "", ma->ma_paddr);
+		printf(" %saddr 0x%lx", ma->ma_iospace ? "io" : "",
+			(long)ma->ma_paddr);
 	if (ma->ma_pri)
 		printf(" ipl %d", ma->ma_pri);
 	return (UNCONF);
@@ -1164,8 +1165,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (void *)romreg.rr_paddr;
-		ma.ma_iospace = romreg.rr_iospace;
+		ma.ma_paddr = (bus_addr_t)romreg.rr_paddr;
+		ma.ma_iospace = (bus_type_t)romreg.rr_iospace;
 		ma.ma_size = romreg.rr_len;
 		if (getprop_intr1(node, &ma.ma_pri) != 0)
 			continue;
@@ -1210,8 +1211,8 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if (getprop_reg1(node, &romreg) != 0)
 			continue;
 
-		ma.ma_paddr = (void *)romreg.rr_paddr;
-		ma.ma_iospace = romreg.rr_iospace;
+		ma.ma_paddr = (bus_addr_t)romreg.rr_paddr;
+		ma.ma_iospace = (bus_type_t)romreg.rr_iospace;
 		ma.ma_size = romreg.rr_len;
 
 		if (getprop_intr1(node, &ma.ma_pri) != 0)
