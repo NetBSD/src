@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.145 1999/05/31 12:05:39 lukem Exp $	*/
+/*	$NetBSD: sd.c,v 1.146 1999/08/26 09:28:17 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -437,8 +437,14 @@ sdclose(dev, flag, fmt, p)
 		 * it, do it now.
 		 */
 		if ((sd->flags & SDF_DIRTY) != 0 &&
-		    sd->sc_ops->sdo_flush != NULL)
-			(*sd->sc_ops->sdo_flush)(sd, 0);
+		    sd->sc_ops->sdo_flush != NULL) {
+			if ((*sd->sc_ops->sdo_flush)(sd, 0)) {
+				printf("%s: cache synchronization failed\n",
+				    sd->sc_dev.dv_xname);
+				sd->flags &= ~SDF_FLUSHING;
+			} else
+				sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+		}
 
 		scsipi_wait_drain(sd->sc_link);
 
@@ -953,8 +959,14 @@ sd_shutdown(arg)
 	 * it, flush it.  We're cold at this point, so we poll for
 	 * completion.
 	 */
-	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL)
-		(*sd->sc_ops->sdo_flush)(sd, SCSI_AUTOCONF);
+	if ((sd->flags & SDF_DIRTY) != 0 && sd->sc_ops->sdo_flush != NULL) {
+		if ((*sd->sc_ops->sdo_flush)(sd, SCSI_AUTOCONF)) {
+			printf("%s: cache synchronization failed\n",
+			    sd->sc_dev.dv_xname);
+			sd->flags &= ~SDF_FLUSHING;
+		} else
+			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
+	}
 }
 
 /*
