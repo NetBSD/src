@@ -1,7 +1,10 @@
-#	$Id: Makefile,v 1.1 1993/05/22 06:14:08 cgd Exp $
+#	$Id: Makefile,v 1.2 1993/05/22 07:10:44 cgd Exp $
 
 PROG=	bitstring_test
 NOMAN=	noman, no way, man
+
+install:
+
 
 regress:	test-8 test-27 test-32 test-49 test-64 test-67
 
@@ -22,5 +25,6 @@ test-64: bitstring_test
 
 test-67: bitstring_test
 	bitstring_test 67 | diff - ${.CURDIR}/good/67
+
 
 .include <bsd.prog.mk>
