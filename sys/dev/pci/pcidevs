@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.113.2.8 2000/05/22 21:27:43 he Exp $
+$NetBSD: pcidevs,v 1.113.2.9 2000/06/03 18:31:43 he Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -760,6 +760,10 @@ product COROLLARY CBUSII_PCIB	0x0014	\"C-Bus II\"-PCI Bridge
 /* Cyclades products */
 product CYCLADES CYCLOMY_1	0x0100	Cyclom-Y below 1M
 product CYCLADES CYCLOMY_2	0x0101	Cyclom-Y above 1M
+product CYCLADES CYCLOM4Y_1	0x0102	Cyclom-4Y below 1M
+product CYCLADES CYCLOM4Y_2	0x0103	Cyclom-4Y above 1M
+product CYCLADES CYCLOM8Y_1	0x0104	Cyclom-8Y below 1M
+product CYCLADES CYCLOM8Y_2	0x0105	Cyclom-8Y above 1M
 product CYCLADES CYCLOMZ_1	0x0200	Cyclom-Z below 1M
 product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 
