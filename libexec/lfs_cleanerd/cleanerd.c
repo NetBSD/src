@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanerd.c,v 1.49 2003/08/07 09:46:43 agc Exp $	*/
+/*	$NetBSD: cleanerd.c,v 1.50 2003/09/19 05:50:41 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cleanerd.c	8.5 (Berkeley) 6/10/95";
 #else
-__RCSID("$NetBSD: cleanerd.c,v 1.49 2003/08/07 09:46:43 agc Exp $");
+__RCSID("$NetBSD: cleanerd.c,v 1.50 2003/09/19 05:50:41 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -713,6 +713,9 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	int num_blocks, i, j, error;
 	int seg_isempty=0;
 	unsigned long *lp;
+	struct seglist **nsegs;
+	caddr_t *nbuf;
+	BLOCK_INFO *nba;
 
 	lfsp = &fsp->fi_lfs;
 	sp = SEGUSE_ENTRY(lfsp, fsp->fi_segusep, id);
@@ -730,9 +733,14 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	}
 
 	/* Add a new segment to the accumulated list */
+	nsegs = (struct seglist **)realloc(sbp->segs,
+	    sizeof(struct seglist *) * (sbp->nsegs + 1));
+	nbuf = (caddr_t *)realloc(sbp->buf, sizeof(caddr_t) * (sbp->nsegs + 1));
+	if (!nsegs || !nbuf)
+		err(1, "realloc");
+	sbp->segs = nsegs;
+	sbp->buf = nbuf;
 	sbp->nsegs++;
-	sbp->segs = (struct seglist **)realloc(sbp->segs, sizeof(struct seglist *) * sbp->nsegs);
-	sbp->buf = (caddr_t *)realloc(sbp->buf, sizeof(caddr_t) * sbp->nsegs);
 	sbp->segs[sbp->nsegs - 1] = slp;
 
 	/* map the segment into a buffer */
@@ -882,7 +890,10 @@ add_segment(FS_INFO *fsp, struct seglist *slp, SEGS_AND_BLOCKS *sbp)
 	}
 
 	/* Add these blocks to the accumulated list */
-	sbp->ba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
+	nba = realloc(sbp->ba, (sbp->nb + num_blocks) * sizeof(BLOCK_INFO));
+	if (!nba)
+		err(1, "realloc");
+	sbp->ba = nba;
 	memcpy(sbp->ba + sbp->nb, tba, num_blocks * sizeof(BLOCK_INFO));
 	sbp->nb += num_blocks;
 
