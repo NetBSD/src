@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.98 2000/11/02 07:16:16 msaitoh Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.99 2000/11/03 09:07:25 toddpw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.98 2000/08/24 07:10:36 imp Exp 
+ *	NetBSD: pcmciadevs,v 1.99 2000/11/02 07:15:44 msaitoh Exp 
  */
 
 /*-
@@ -305,9 +305,12 @@
 #define	PCMCIA_CIS_SOCKET_DUAL_RS232	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_SOCKET_DUAL_RS232	0x0006
 #define	PCMCIA_STR_SOCKET_DUAL_RS232	"Socket Communications Dual RS232"
-#define	PCMCIA_CIS_SOCEKT_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
-#define	PCMCIA_PRODUCT_SOCEKT_LP_ETHER_CF	0x0075
-#define	PCMCIA_STR_SOCEKT_LP_ETHER_CF	"Socket Communications Low Power Ethernet CF"
+#define	PCMCIA_CIS_SOCKET_LP_ETHER_CF	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_LP_ETHER_CF	0x0075
+#define	PCMCIA_STR_SOCKET_LP_ETHER_CF	"Socket Communications LP-E CF"
+#define	PCMCIA_CIS_SOCKET_LP_ETHER	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_SOCKET_LP_ETHER	0x000d
+#define	PCMCIA_STR_SOCKET_LP_ETHER	"Socket Communications LP-E"
 
 /* TDK Products */
 #define	PCMCIA_CIS_TDK_LAK_CD021BX	{ NULL, NULL, NULL, NULL }
