@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.h,v 1.87 2003/05/24 06:25:39 gmcgarry Exp $	*/
+/*	$NetBSD: malloc.h,v 1.88 2003/07/08 06:49:20 itojun Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -207,17 +207,15 @@ extern char			*kmembase;
 extern struct kmembuckets	bucket[];
 
 #ifdef MALLOCLOG
-void	*_malloc(unsigned long size, struct malloc_type *type, int flags,
-	    const char *file, long line);
-void	_free(void *addr, struct malloc_type *type, const char *file,
-	    long line);
+void	*_malloc(unsigned long, struct malloc_type *, int, const char *, long);
+void	_free(void *, struct malloc_type *, const char *, long);
 #define	malloc(size, type, flags) \
 	    _malloc((size), (type), (flags), __FILE__, __LINE__)
 #define	free(addr, type) \
 	    _free((addr), (type), __FILE__, __LINE__)
 #else
-void	*malloc(unsigned long size, struct malloc_type *type, int flags);
-void	free(void *addr, struct malloc_type *type);
+void	*malloc(unsigned long, struct malloc_type *, int);
+void	free(void *, struct malloc_type *);
 #endif /* MALLOCLOG */
 
 #ifdef MALLOC_DEBUG
@@ -229,8 +227,7 @@ void	debug_malloc_print(void);
 void	debug_malloc_printit(void (*)(const char *, ...), vaddr_t);
 #endif /* MALLOC_DEBUG */
 
-void	*realloc(void *curaddr, unsigned long newsize,
-	    struct malloc_type *type, int flags);
+void	*realloc(void *, unsigned long, struct malloc_type *, int);
 unsigned long
 	malloc_roundup(unsigned long);
 #endif /* _KERNEL */
