@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.61 2003/01/24 21:55:17 fvdl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.62 2003/02/01 07:23:56 atatat Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.61 2003/01/24 21:55:17 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.62 2003/02/01 07:23:56 atatat Exp $");
 
 #include "fs_union.h"
 
@@ -684,12 +684,16 @@ vn_ioctl(fp, com, data, p)
 		if (com == FIOGETBMAP) {
 			daddr_t *block;
 
+			if (*(daddr_t *)data < 0)
+				return (EINVAL);
 			block = (daddr_t *)data;
 			return (VOP_BMAP(vp, *block, NULL, block, NULL));
 		}
 		if (com == OFIOGETBMAP) {
 			daddr_t ibn, obn;
 
+			if (*(int32_t *)data < 0)
+				return (EINVAL);
 			ibn = (daddr_t)*(int32_t *)data;
 			error = VOP_BMAP(vp, ibn, NULL, &obn, NULL);
 			*(int32_t *)data = (int32_t)obn;
