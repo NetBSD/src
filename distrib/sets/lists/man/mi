@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.317 2001/01/31 04:34:12 augustss Exp $
+# $NetBSD: mi,v 1.318 2001/02/02 22:01:19 is Exp $
 ./usr/share/info/am-utils.info			man-amd-info
 ./usr/share/info/as.info			man-computil-info
 ./usr/share/info/awk.info			man-util-info
@@ -426,6 +426,7 @@
 ./usr/share/man/cat4/aic.0			man-sys-catman
 ./usr/share/man/cat4/amiga/afsc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/ahsc.0		man-sys-catman
+./usr/share/man/cat4/amiga/amidisplaycc.0	man-sys-catman
 ./usr/share/man/cat4/amiga/atzsc.0		man-sys-catman
 ./usr/share/man/cat4/amiga/autoconf.0		man-sys-catman
 ./usr/share/man/cat4/amiga/bah.0		man-sys-catman
@@ -1896,6 +1897,7 @@
 ./usr/share/man/man4/aic.4			man-sys-man
 ./usr/share/man/man4/amiga/afsc.4		man-sys-man
 ./usr/share/man/man4/amiga/ahsc.4		man-sys-man
+./usr/share/man/man4/amiga/amidisplaycc.4	man-sys-man
 ./usr/share/man/man4/amiga/atzsc.4		man-sys-man
 ./usr/share/man/man4/amiga/autoconf.4		man-sys-man
 ./usr/share/man/man4/amiga/bah.4		man-sys-man
