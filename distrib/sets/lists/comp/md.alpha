@@ -47,5 +47,4 @@
 ./usr/include/alpha/varargs.h
 ./usr/include/alpha/vmparam.h
 ./usr/include/alpha/vuid_event.h
-./usr/include/alpha/wsconsio.h
 ./usr/include/alpha/z8530var.h
