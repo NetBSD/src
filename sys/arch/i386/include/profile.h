@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.9 1996/12/07 12:59:45 fvdl Exp $	*/
+/*	$NetBSD: profile.h,v 1.10 1997/11/05 03:53:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,10 +35,10 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL static __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount __P((void)) asm("mcount");				\
+extern void mcount __P((void)) __asm__("mcount");			\
 void									\
 mcount()								\
 {									\
@@ -49,11 +49,11 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("movl 4(%%ebp),%0" : "=r" (selfpc));			\
+	__asm__("movl 4(%%ebp),%0" : "=r" (selfpc));			\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
+	__asm__("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
 
