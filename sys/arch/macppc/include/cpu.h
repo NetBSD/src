@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 1998/10/25 10:13:21 tsubai Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 1998/10/25 17:39:52 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -69,7 +69,7 @@ syncicache(from, len)
 	char *p;
 
 	off = (int)from & (CACHELINESIZE - 1);
-	from -= off;
+	from = (char *)from - off;
 	len += off;
 
 	p = from; l = len;
@@ -96,7 +96,7 @@ flushcache(from, len)
 	char *p;
 
 	off = (int)from & (CACHELINESIZE - 1);
-	from -= off;
+	from = (char *)from - off;
 	len += off;
 
 	l = len; p = from;
