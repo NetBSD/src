@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.22 1997/01/04 23:30:21 leo Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.23 1997/01/12 15:46:37 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -672,13 +672,13 @@ u_short	rnum, val;
 extern __inline__ void
 scsi_falcon_ienable()
 {
-	single_inst_bset_b(MFP->mf_ierb, IB_DINT);
+	single_inst_bset_b(MFP->mf_imrb, IB_DINT);
 }
 
 extern __inline__ void
 scsi_falcon_idisable()
 {
-	single_inst_bclr_b(MFP->mf_ierb, IB_DINT);
+	single_inst_bclr_b(MFP->mf_imrb, IB_DINT);
 }
 
 extern __inline__ void
