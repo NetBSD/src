@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.11 2003/07/02 10:40:46 ichiro Exp $ */
+/*	$NetBSD: ixp425_com.c,v 1.12 2003/08/07 13:32:27 ichiro Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.11 2003/07/02 10:40:46 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.12 2003/08/07 13:32:27 ichiro Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -247,6 +247,7 @@ ixp4xx_com_attach_subr(struct ixp4xx_com_softc *sc)
 
 	sc->sc_fcr = FCR_TRIGGER_32 | FCR_RESETTF | FCR_RESETRF | FCR_ENABLE;
 	bus_space_write_4(iot, ioh, IXP425_UART_FCR, sc->sc_fcr);
+	sc->sc_fcr = FCR_TRIGGER_32 | FCR_ENABLE;
 
 	if (iot == ixp4xx_comcn_sc.sc_iot
 		&& sc->sc_baseaddr == ixp4xx_comcn_sc.sc_baseaddr) {
