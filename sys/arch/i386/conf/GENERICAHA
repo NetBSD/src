@@ -1,13 +1,13 @@
 #
-# GENERICISA -- Generic ISA machine -- distribution floppy
+# GENERICAHA -- Generic machine w/aha driver -- distribution floppy
 #
-#	$Id: GENERICAHA,v 1.20.2.1 1993/07/26 19:25:13 cgd Exp $
+#	$Id: GENERICAHA,v 1.20.2.2 1993/07/27 19:17:27 cgd Exp $
 #
 
 machine		"i386"
 cpu		"I386_CPU"
 cpu		"I486_CPU"
-ident		GENERICISA
+ident		GENERICAHA
 timezone	8 dst
 maxusers	10
 options		INET,ISOFS,NFSCLIENT
