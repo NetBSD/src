@@ -14,10 +14,18 @@ options		RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options		SWAPPAGER	# paging; REQUIRED
 options		VNODEPAGER	# mmap() of files
 options		DEVPAGER	# mmap() of devices
+#options	NTP		# NTP phase/frequency locked loop
 
 # CPU options
 
-options		CPU_ARM7	# We have an ARM7 core
+# For standard RiscPC's
+#options	CPU_SA110	# Support the SA110 core
+#options	CPU_ARM6	# Support the ARM6 core
+#options	CPU_ARM7	# Support the ARM7 core
+#options	CPU_LATE_ABORT	# ARM7XX compatibility
+
+# For A7000, Stork and other ARM7500 machines
+options		CPU_ARM7	# Support the ARM7 core
 options		CPU_ARM7500	# We are actually an ARM7500
 options		CPU_LATE_ABORT	# ARM7XX compatibility
 
@@ -30,7 +38,7 @@ options		ARMFPE		# ARM Ltd FPE
 
 file-system	FFS		# UFS
 #file-system	LFS		# log-structured file system
-#file-system	MFS		# memory file system
+file-system	MFS		# memory file system
 file-system	NFS
 
 file-system	CD9660		# ISO 9660 + Rock Ridge file system
@@ -52,10 +60,14 @@ options		NFSSERVER
 
 options		GATEWAY		# packet forwarding
 options		INET		# IP + ICMP + TCP + UDP
+#options	MROUTING	# IP multicast routing
 #options	NS		# XNS
+#options	NSIP		# XNS tunneling over IP
 #options	ISO,TPIP	# OSI
 #options	EON		# OSI tunneling over IP
 #options	CCITT,LLC,HDLC	# X.25
+#options	PFIL_HOOKS	# pfil(9) packet filter hooks (Required
+				# if you enable the pseudo-device ipl).
 
 # Compatibility options
 
@@ -64,7 +76,7 @@ options		COMPAT_12	# NetBSD 1.2 compatibility.
 #options	COMPAT_11	# NetBSD 1.1 compatibility.
 #options	COMPAT_10	# NetBSD 1.0 compatibility.
 #options	COMPAT_09	# NetBSD 0.9 compatibility.
-options         TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
+#options	TCP_COMPAT_42   # TCP bug compatibility with 4.2BSD
 
 # Shared memory options
 
@@ -75,14 +87,14 @@ options		SHMMAXPGS=1024	# 1024 pages is the default
 
 # Device options
 
-options		MEMORY_DISK_HOOKS	# boottime setup of ramdisk
+#options	MEMORY_DISK_HOOKS	# boottime setup of ramdisk
 options		MEMORY_DISK_SIZE=0	# Size in KBytes
-#options	PLIP		# Build plip device into lpt driver
 
-# Miscellaneous options
+# Miscellaneous kernel options
 options		KTRACE		# system call tracing, a la ktrace(1)
 options		IRQSTATS	# manage IRQ statistics
-#options	LKM		# loadable kernel modules
+options		LKM		# loadable kernel modules
+options		KMEMSTATS	# kernel memory statistics
 
 # Development and Debugging options
 
@@ -95,15 +107,12 @@ options		PROFILE_ASM	# when profiling, profile asm functions
 options		DIAGNOSTIC	# internally consistency checks
 options		POSTMORTEM	# perform postmortem on panic
 #options	ROTTEN_INNARDS	# show the gory bit of the postmortem
-#options	BLOCK_IRQS	# Block IRQ's during faults, syscalls and
-				# undefined instructions
 options		KSHELL		# kernel developemnt shell (debug)
 #options	DEBUGTERM	# create a debug console
 #options	IPKDB		# remote kernel debugging
 options		DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
-#config		netbsd	root on ? type nfs
 config		netbsd	root on ? type ?
 
 # The main bus device
@@ -172,8 +181,8 @@ scsibus* at asc?
 cosc*	at podulebus?			# MCS Connect32 SCSI II card
 scsibus* at cosc?
 
-#csc*	at podulebus?			# Cumana SCSI II card
-#scsibus* at csc?
+csc*	at podulebus?			# Cumana SCSI II card
+scsibus* at csc?
 
 ptsc*	at podulebus?			# Power-Tec SCSI II card
 scsibus* at ptsc?
