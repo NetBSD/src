@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.22 2000/03/03 03:47:17 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.23 2000/03/07 02:28:05 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -85,7 +85,6 @@
 #include <sys/vnode.h>
 
 /* XXX these should be in a header file somewhere */
-void rf_UnconfigureVnodes( RF_Raid_t * );
 int rf_CheckLabels( RF_Raid_t *, RF_Config_t *);
 static int rf_AllocDiskStructures(RF_Raid_t *, RF_Config_t *);
 
