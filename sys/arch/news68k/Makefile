@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1999/12/09 14:53:00 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2000/10/05 18:21:10 tsutsui Exp $
 
 # Makefile for news68k tags file
 
-# Find where mips source files are for inclusion in tags
+# Find where m68k source files are for inclusion in tags
 .include <../m68k/Makefile.inc>
 
 TNEWS68K=	../news68k/tags
