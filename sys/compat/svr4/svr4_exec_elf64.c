@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec_elf64.c,v 1.6 2003/06/28 14:21:26 darrenr Exp $	 */
+/*	$NetBSD: svr4_exec_elf64.c,v 1.7 2003/06/29 13:35:42 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf64.c,v 1.6 2003/06/28 14:21:26 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf64.c,v 1.7 2003/06/29 13:35:42 martin Exp $");
 
 #define	ELFSIZE		64				/* XXX should die */
 
@@ -62,8 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_exec_elf64.c,v 1.6 2003/06/28 14:21:26 darrenr 
 #include <compat/svr4/svr4_errno.h>
 
 int
-svr4_elf64_probe(p, epp, eh, itp, pos)
-	struct proc *p;
+svr4_elf64_probe(l, epp, eh, itp, pos)
+	struct lwp *l;
 	struct exec_package *epp;
 	void *eh;
 	char *itp;
@@ -72,7 +72,7 @@ svr4_elf64_probe(p, epp, eh, itp, pos)
 	int error;
 
 	if (itp[0]) {
-		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+		if ((error = emul_find_interp(l,
 		    epp->ep_esch->es_emul->e_path, itp)))
 			return error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_exec_elf32.c,v 1.17 2003/06/28 14:21:24 darrenr Exp $	*/
+/*	$NetBSD: netbsd32_exec_elf32.c,v 1.18 2003/06/29 13:35:38 martin Exp $	*/
 /*	from: NetBSD: exec_aout.c,v 1.15 1996/09/26 23:34:46 cgd Exp */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.17 2003/06/28 14:21:24 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.18 2003/06/29 13:35:38 martin Exp $");
 
 #define	ELFSIZE		32
 
@@ -56,32 +56,32 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_exec_elf32.c,v 1.17 2003/06/28 14:21:24 dar
 
 int netbsd32_copyinargs(struct exec_package *, struct ps_strings *, 
 			void *, size_t, const void *, const void *);
-int ELFNAME2(netbsd32,probe_noteless)(struct proc *, struct exec_package *epp,
+int ELFNAME2(netbsd32,probe_noteless)(struct lwp *, struct exec_package *epp,
 				      void *eh, char *itp, vaddr_t *pos);
-extern int ELFNAME2(netbsd,signature)(struct proc *, struct exec_package *,
+extern int ELFNAME2(netbsd,signature)(struct lwp *, struct exec_package *,
 				      Elf_Ehdr *);
 
 int
-ELFNAME2(netbsd32,probe)(struct proc *p, struct exec_package *epp,
+ELFNAME2(netbsd32,probe)(struct lwp *l, struct exec_package *epp,
 			 void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 
-	if ((error = ELFNAME2(netbsd,signature)(p, epp, eh)) != 0)
+	if ((error = ELFNAME2(netbsd,signature)(l, epp, eh)) != 0)
 		return error;
 
-	return ELFNAME2(netbsd32,probe_noteless)(p, epp, eh, itp, pos);
+	return ELFNAME2(netbsd32,probe_noteless)(l, epp, eh, itp, pos);
 }
 
 int
-ELFNAME2(netbsd32,probe_noteless)(struct proc *p, struct exec_package *epp,
+ELFNAME2(netbsd32,probe_noteless)(struct lwp *l, struct exec_package *epp,
 				  void *eh, char *itp, vaddr_t *pos)
 {
 	int error;
 
 	if (itp[0]) {
 		/* Translate interpreter name if needed */
-		if ((error = emul_find_interp(LIST_FIRST(&p->p_lwps),
+		if ((error = emul_find_interp(l,
 		    epp->ep_esch->es_emul->e_path, itp)) != 0)
 			return error;
 	}
@@ -101,7 +101,7 @@ ELFNAME2(netbsd32,probe_noteless)(struct proc *p, struct exec_package *epp,
  * extra information in case of dynamic binding.
  */
 int
-netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
+netbsd32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	size_t len;
@@ -109,7 +109,7 @@ netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
 	struct elf_args *ap;
 	int error;
 
-	if ((error = netbsd32_copyargs(p, pack, arginfo, stackp, argp)) != 0)
+	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
 	a = ai;
@@ -149,19 +149,19 @@ netbsd32_elf32_copyargs(struct proc *p, struct exec_package *pack,
 		a++;
 
 		a->a_type = AT_EUID;
-		a->a_v = p->p_ucred->cr_uid;
+		a->a_v = l->l_proc->p_ucred->cr_uid;
 		a++;
 
 		a->a_type = AT_RUID;
-		a->a_v = p->p_cred->p_ruid;
+		a->a_v = l->l_proc->p_cred->p_ruid;
 		a++;
 
 		a->a_type = AT_EGID;
-		a->a_v = p->p_ucred->cr_gid;
+		a->a_v = l->l_proc->p_ucred->cr_gid;
 		a++;
 
 		a->a_type = AT_RGID;
-		a->a_v = p->p_cred->p_rgid;
+		a->a_v = l->l_proc->p_cred->p_rgid;
 		a++;
 
 		free((char *)ap, M_TEMP);

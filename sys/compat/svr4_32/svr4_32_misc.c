@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_misc.c,v 1.21 2003/06/28 14:21:28 darrenr Exp $	 */
+/*	$NetBSD: svr4_32_misc.c,v 1.22 2003/06/29 13:35:43 martin Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.21 2003/06/28 14:21:28 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_misc.c,v 1.22 2003/06/29 13:35:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -494,7 +494,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(buf, M_TEMP);
  out1:
-	FILE_UNUSE(fp, p);
+	FILE_UNUSE(fp, l);
 	return error;
 }
 
@@ -601,7 +601,7 @@ svr4_32_mknod(l, retval, path, mode, dev)
 {
 	caddr_t sg = stackgap_init(l->l_proc, 0);
 
-	CHECK_ALT_CREAT(l->l_proc, &sg, path);
+	CHECK_ALT_CREAT(l, &sg, path);
 
 	if (S_ISFIFO(mode)) {
 		struct sys_mkfifo_args ap;
