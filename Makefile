@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.17 1994/02/10 01:50:17 cgd Exp $
+#	$Id: Makefile,v 1.18 1994/02/10 08:50:06 cgd Exp $
 
 # NOTE THAT etc *DOES NOT* BELONG IN THE LIST BELOW
 
@@ -14,7 +14,7 @@ SUBDIR+= regress
 
 regression-tests:
 	@echo Running regression tests...
-	@( cd regress; ${MAKE} regress )
+	@(cd regress && ${MAKE} regress)
 .endif
 
 afterinstall:
