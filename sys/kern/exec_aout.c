@@ -27,33 +27,33 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.1 1993/09/05 01:33:35 cgd Exp $
+ *	$Id: exec_aout.c,v 1.2 1993/12/12 19:26:18 deraadt Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "filedesc.h"
-#include "kernel.h"
-#include "proc.h"
-#include "mount.h"
-#include "malloc.h"
-#include "namei.h"
-#include "vnode.h"
-#include "file.h"
-#include "exec.h"
-#include "resourcevar.h"
-#include "wait.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/filedesc.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/mount.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/vnode.h>
+#include <sys/file.h>
+#include <sys/exec.h>
+#include <sys/resourcevar.h>
+#include <sys/wait.h>
+#include <sys/mman.h>
 
-#include "machine/cpu.h"
-#include "machine/reg.h"
-#include "machine/exec.h"
+#include <vm/vm.h>
+#include <vm/vm_param.h>
+#include <vm/vm_map.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_pager.h>
 
-#include "mman.h"
-#include "vm/vm.h"
-#include "vm/vm_param.h"
-#include "vm/vm_map.h"
-#include "vm/vm_kern.h"
-#include "vm/vm_pager.h"
+#include <machine/cpu.h>
+#include <machine/reg.h>
+#include <machine/exec.h>
 
 /*
  * exec_aout_makecmds(): Check if it's an a.out-format executable.
@@ -65,8 +65,6 @@
  * This function, in the former case, or the hook, in the latter, is
  * responsible for creating a set of vmcmds which can be used to build
  * the process's vm space and inserting them into the exec package.
- *
- * XXX: NMAGIC and OMAGIC are currently not supported.
  */
 
 int
@@ -93,8 +91,12 @@ exec_aout_makecmds(p, epp)
 	case (MID_MACHINE << 16) | ZMAGIC:
 		error = exec_aout_prep_zmagic(p, epp);
 		break;
-	case (MID_MACHINE << 16) | OMAGIC:
 	case (MID_MACHINE << 16) | NMAGIC:
+		error = exec_aout_prep_nmagic(p, epp);
+		break;
+	case (MID_MACHINE << 16) | OMAGIC:
+		error = exec_aout_prep_omagic(p, epp);
+		break;
 	default:
 		error = cpu_exec_aout_makecmds(p, epp);
 	}
@@ -114,10 +116,6 @@ bad:
  * exec_aout_prep_zmagic(): Prepare a 'native' ZMAGIC binary's exec package
  *
  * First, set of the various offsets/lengths in the exec package.
- * Note that the ep_ssize parameter must be set to be the current stack
- * limit; this is adjusted in the body of execve() to yield the
- * appropriate stack segment usage once the argument length is
- * calculated.
  *
  * Then, mark the text image busy (so it can be demand paged) or error
  * out if this is not possible.  Finally, set up vmcmds for the
@@ -136,9 +134,6 @@ exec_aout_prep_zmagic(p, epp)
 	epp->ep_tsize = execp->a_text;
 	epp->ep_daddr = epp->ep_taddr + execp->a_text;
 	epp->ep_dsize = execp->a_data + execp->a_bss;
-	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
-	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 	epp->ep_entry = execp->a_entry;
 
 	/*
@@ -147,7 +142,7 @@ exec_aout_prep_zmagic(p, epp)
 	 * reasons
 	 */
 	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    (epp->ep_vp->v_flag & VTEXT) == 0 && epp->ep_vp->v_writecount != 0) {
+	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
 			panic("exec: a VTEXT vnode has writecount != 0\n");
@@ -183,6 +178,119 @@ exec_aout_prep_zmagic(p, epp)
 	    0,
 	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
 	ccmdp = ccmdp->ev_next;
+
+	return exec_aout_setup_stack(p, epp, ccmdp);
+}
+
+/*
+ * exec_aout_prep_nmagic(): Prepare a 'native' NMAGIC binary's exec package
+ */
+
+int
+exec_aout_prep_nmagic(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
+	long bsize, baddr;
+
+	epp->ep_taddr = USRTEXT;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = roundup(epp->ep_taddr + execp->a_text, __LDPGSZ);
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+
+	/* set up command for text segment */
+	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_text,
+	    epp->ep_taddr,
+	    epp->ep_vp,
+	    sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_EXECUTE);
+	ccmdp = epp->ep_vcp;
+
+	/* set up command for data segment */
+	ccmdp->ev_next = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_data,
+	    epp->ep_daddr,
+	    epp->ep_vp,
+	    execp->a_text + sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = ccmdp->ev_next;
+
+	/* set up command for bss segment */
+	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0) {
+		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
+		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+		ccmdp = ccmdp->ev_next;
+	}
+
+	return exec_aout_setup_stack(p, epp, ccmdp);
+}
+
+/*
+ * exec_aout_prep_omagic(): Prepare a 'native' OMAGIC binary's exec package
+ */
+
+int
+exec_aout_prep_omagic(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	struct exec *execp = epp->ep_execp;
+	struct exec_vmcmd *ccmdp;
+	long bsize, baddr;
+
+	epp->ep_taddr = USRTEXT;
+	epp->ep_tsize = execp->a_text;
+	epp->ep_daddr = epp->ep_taddr + execp->a_text;
+	epp->ep_dsize = execp->a_data + execp->a_bss;
+	epp->ep_entry = execp->a_entry;
+
+	/* set up command for text and data segments */
+	epp->ep_vcp = new_vmcmd(vmcmd_map_readvn,
+	    execp->a_text + execp->a_data,
+	    epp->ep_taddr,
+	    epp->ep_vp,
+	    sizeof(struct exec),
+	    VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+	ccmdp = epp->ep_vcp;
+
+	/* set up command for bss segment */
+	baddr = roundup(epp->ep_daddr + execp->a_data, NBPG);
+	bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+	if (bsize > 0) {
+		ccmdp->ev_next = new_vmcmd(vmcmd_map_zero, bsize, baddr,
+		    0, 0, VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE);
+		ccmdp = ccmdp->ev_next;
+	}
+
+	return exec_aout_setup_stack(p, epp, ccmdp);
+}
+
+/*
+ * exec_aout_setup_stack(): Set up the stack segment for an a.out
+ * executable.
+ *
+ * Note that the ep_ssize parameter must be set to be the current stack
+ * limit; this is adjusted in the body of execve() to yield the
+ * appropriate stack segment usage once the argument length is
+ * calculated.
+ */
+
+int
+exec_aout_setup_stack(p, epp, ccmdp)
+	struct proc *p;
+	struct exec_package *epp;
+	struct exec_vmcmd *ccmdp;
+{
+
+	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+	epp->ep_minsaddr = USRSTACK;
+	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
