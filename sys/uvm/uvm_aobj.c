@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.13 1998/09/18 19:27:20 thorpej Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.14 1998/09/18 19:28:22 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -586,6 +586,10 @@ uao_init()
 	LIST_INIT(&uao_list);
 	simple_lock_init(&uao_list_lock);
 
+	/*
+	 * NOTE: Pages fror this pool must not come from a pageable
+	 * kernel map!
+	 */
 	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
 	    0, 0, 0, "uaoeltpl", 0, NULL, NULL, M_UVMAOBJ);
 
