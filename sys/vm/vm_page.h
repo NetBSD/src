@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_page.h,v 1.16 1994/10/30 19:11:21 cgd Exp $	*/
+/*	$NetBSD: vm_page.h,v 1.17 1995/01/09 02:46:43 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -287,7 +287,7 @@ vm_page_t	 vm_page_lookup __P((vm_object_t, vm_offset_t));
 void		 vm_page_remove __P((vm_page_t));
 void		 vm_page_rename __P((vm_page_t, vm_object_t, vm_offset_t));
 #ifndef MACHINE_NONCONTIG
-vm_offset_t	 vm_page_startup __P((vm_offset_t *, vm_offset_t *));
+void		 vm_page_startup __P((vm_offset_t *, vm_offset_t *));
 #endif
 void		 vm_page_unwire __P((vm_page_t));
 void		 vm_page_wire __P((vm_page_t));
