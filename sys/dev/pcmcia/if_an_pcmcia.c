@@ -1,7 +1,7 @@
-/* $NetBSD: if_an_pcmcia.c,v 1.21 2004/08/09 18:41:36 mycroft Exp $ */
+/* $NetBSD: if_an_pcmcia.c,v 1.22 2004/08/10 18:39:08 mycroft Exp $ */
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.21 2004/08/09 18:41:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pcmcia.c,v 1.22 2004/08/10 18:39:08 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,11 +89,7 @@ struct an_pcmcia_softc {
 CFATTACH_DECL(an_pcmcia, sizeof(struct an_pcmcia_softc),
     an_pcmcia_match, an_pcmcia_attach, an_pcmcia_detach, an_activate);
 
-static struct an_pcmcia_product {
-	u_int32_t	app_vendor;	/* vendor ID */
-	u_int32_t	app_product;	/* product ID */
-	const char	*app_cisinfo[4]; /* CIS information */
-} an_pcmcia_products[] = {
+static struct pcmcia_product an_pcmcia_products[] = {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4800,
 	  PCMCIA_CIS_AIRONET_PC4800 },
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_PC4500,
@@ -101,6 +97,8 @@ static struct an_pcmcia_product {
 	{ PCMCIA_VENDOR_AIRONET,	PCMCIA_PRODUCT_AIRONET_350,
 	  PCMCIA_CIS_AIRONET_350 },
 };
+static const size_t an_pcmcia_nproducts =
+    sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
 
 static int
 an_pcmcia_enable(sc)
@@ -144,29 +142,11 @@ an_pcmcia_match(parent, match, aux)
 	void *aux;
 {
 	struct pcmcia_attach_args *pa = aux;
-	struct an_pcmcia_product *app;
-	int n;
 
-	for (app = an_pcmcia_products,
-	    n = sizeof(an_pcmcia_products) / sizeof(an_pcmcia_products[0]);
-	    n; app++, n--) {
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    app->app_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], app->app_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    app->app_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], app->app_cisinfo[1]) == 0)
-			return 1;
-
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == app->app_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == app->app_product)
-			return 1;
-	}
-	return 0;
+	if (pcmcia_product_lookup(pa, an_pcmcia_products, an_pcmcia_nproducts,
+	    sizeof(an_pcmcia_products[0]), NULL))
+		return (1);
+	return (0);
 }
 
 static void
