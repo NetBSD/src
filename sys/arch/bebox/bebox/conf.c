@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 1998/06/26 00:08:41 thorpej Exp $	*/
+/*	$NetBSD: conf.c,v 1.6 1998/08/15 03:02:35 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Charles Hannum.
+ *	This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

@@ -1,7 +1,7 @@
-/*	$NetBSD: fd.c,v 1.20 1998/08/04 16:51:51 minoura Exp $	*/
+/*	$NetBSD: fd.c,v 1.21 1998/08/15 03:02:44 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

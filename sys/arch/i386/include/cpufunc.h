@@ -1,7 +1,7 @@
-/*	$NetBSD: cpufunc.h,v 1.14 1998/02/26 01:57:30 perry Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.15 1998/08/15 03:02:38 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1993 Charles Hannum.
+ * Copyright (c) 1993 Charles M. Hannum.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -14,7 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Charles Hannum.
+ *      This product includes software developed by Charles M. Hannum.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *

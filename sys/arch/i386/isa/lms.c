@@ -1,7 +1,7 @@
-/*	$NetBSD: lms.c,v 1.34 1998/03/22 12:53:55 drochner Exp $	*/
+/*	$NetBSD: lms.c,v 1.35 1998/08/15 03:02:39 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994 Charles Hannum.
+ * Copyright (c) 1993, 1994 Charles M. Hannum.
  * Copyright (c) 1992, 1993 Erik Forsberg.
  * All rights reserved.
  *

@@ -3,12 +3,12 @@
  *
  * Copyright (c) 1992, 1993 Brian Dunford-Shore and Scott Turner.
  *
- * Copyright (c) 1993 Charles Hannum.
+ * Copyright (c) 1993 Charles M. Hannum.
  *
  * All rights reserved.
  *
  * Parts of this code regarding the NetBSD interface were written
- * by Charles Hannum.
+ * by Charles M. Hannum.
  *
  * This code is derived from software contributed to Berkeley by
  * William Jolitz and Don Ahn.
@@ -25,7 +25,7 @@
  *    must display the following acknowledgement:
  *	This product includes software developed by
  *	Hellmuth Michaelis, Brian Dunford-Shore, Joerg Wunsch, Scott Turner
- *	and Charles Hannum.
+ *	and Charles M. Hannum.
  * 4. The name authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *

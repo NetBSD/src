@@ -1,7 +1,7 @@
-/*	$NetBSD: pccons.c,v 1.130 1998/08/13 18:00:05 rvb Exp $	*/
+/*	$NetBSD: pccons.c,v 1.131 1998/08/15 03:02:39 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
+ * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1998/08/13 21:36:03 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1998/08/15 03:02:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -44,7 +44,7 @@
  * Derived originally from an old hp300 version by Mike Hibler.  The version
  * by William Jolitz has been heavily modified to allow non-contiguous
  * mapping of physical memory by Wolfgang Solfrank, and to fix several bugs
- * and greatly speedup it up by Charles Hannum.
+ * and greatly speed it up by Charles Hannum.
  * 
  * A recursive map [a pde which points to the page directory] is used to map
  * the page tables using the pagetables themselves. This is done to reduce
