@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2000/05/17 09:16:44 mrg Exp $ */
+/*	$NetBSD: intr.c,v 1.24 2000/06/02 15:36:53 eeh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
+#include <sys/malloc.h>
 
 #include <vm/vm.h>
 
@@ -287,3 +288,34 @@ intr_establish(level, ih)
 	splx(s);
 }
 
+void *
+softintr_establish(level, fun, arg)
+	int level; 
+	int (*fun) __P((void *));
+	void *arg;
+{
+	struct intrhand *ih;
+
+	ih = malloc(sizeof(*ih), M_DEVBUF, 0);
+	bzero(ih, sizeof(*ih));
+	ih->ih_fun = fun;
+	ih->ih_arg = arg;
+	ih->ih_pil = level;
+	return (void *)ih;
+}
+
+void
+softintr_disestablish(cookie)
+	void *cookie;
+{
+	free(cookie, M_DEVBUF);
+}
+
+void
+softintr_schedule(cookie)
+	void *cookie;
+{
+	struct intrhand *ih = (struct intrhand *)cookie;
+
+	send_softint(-1, ih->ih_pil, ih);
+}
