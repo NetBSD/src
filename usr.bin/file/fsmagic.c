@@ -27,6 +27,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/param.h>
 #ifndef	major			/* if `major' not defined in types.h, */
 #include <sys/sysmacros.h>	/* try this one. */
 #endif
@@ -42,7 +43,7 @@
 
 #ifndef	lint
 static char *moduleid = 
-	"@(#)$Header: /cvsroot/src/usr.bin/file/Attic/fsmagic.c,v 1.1.1.1 1993/03/21 09:45:37 cgd Exp $";
+	"@(#)$Header: /cvsroot/src/usr.bin/file/Attic/fsmagic.c,v 1.2 1993/05/19 06:21:23 cgd Exp $";
 #endif	/* lint */
 
 extern char *progname;
@@ -54,7 +55,10 @@ fsmagic(fn)
 char *fn;
 {
 	extern struct stat statbuf;
-
+#ifdef S_IFLNK
+        char slink[PATH_MAX+1];
+#endif
+        
 	/*
 	 * Fstat is cheaper but fails for files you don't have read perms on.
 	 * On 4.2BSD and similar systems, use lstat() so identify symlinks.
@@ -94,6 +98,10 @@ char *fn;
 #ifdef	S_IFLNK
 	case S_IFLNK:
 		ckfputs("symbolic link", stdout);
+		if (readlink(fn, slink, sizeof(slink)) >= 0) {
+			ckfputs(" to ", stdout);
+			ckfputs(slink, stdout);
+		}
 		return 1;
 #endif
 #ifdef	S_IFSOCK
