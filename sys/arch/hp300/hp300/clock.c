@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.6 1994/02/04 23:02:03 mycroft Exp $
+ *	$Id: clock.c,v 1.7 1994/02/04 23:05:38 mycroft Exp $
  */
 
 #include "param.h"
@@ -387,14 +387,14 @@ profclock(framep)
 	 */
 	if (CLKF_USERMODE(framep)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(framep->pc, &curproc->p_stats.p_prof, 1);
+			addupc(CLKF_PC(framep), &curproc->p_stats.p_prof, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.
 	 * If we are profiling the kernel, record the tick.
 	 */
 	else if (profiling < 2) {
-		register int s = framep->pc - s_lowpc;
+		register int s = CLKF_PC(framep) - s_lowpc;
 
 		if (s < s_textsize)
 			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
