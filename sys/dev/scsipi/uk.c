@@ -1,4 +1,4 @@
-/*	$NetBSD: uk.c,v 1.24 1998/08/31 22:28:08 cgd Exp $	*/
+/*	$NetBSD: uk.c,v 1.25 1998/10/19 12:28:52 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,10 @@ struct uk_softc {
 int ukmatch __P((struct device *, struct cfdata *, void *));
 void ukattach __P((struct device *, struct device *, void *));
 
-struct cfattach uk_ca = {
+struct cfattach uk_scsibus_ca = {
+	sizeof(struct uk_softc), ukmatch, ukattach
+};
+struct cfattach uk_atapibus_ca = {
 	sizeof(struct uk_softc), ukmatch, ukattach
 };
 

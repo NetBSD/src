@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.17 1998/10/12 16:09:24 bouyer Exp $
+#	$NetBSD: files.scsipi,v 1.18 1998/10/19 12:28:52 bouyer Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -59,5 +59,6 @@ attach	su at scsibus
 file	dev/scsipi/su.c			su			needs-flag
 
 device	uk
-attach	uk at scsibus
+attach	uk at scsibus with uk_scsibus
+attach	uk at atapibus with uk_atapibus
 file	dev/scsipi/uk.c			uk			needs-flag
