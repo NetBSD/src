@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.2,v 1.1.2.16 2003/06/16 13:01:58 grant Exp $
+#	$NetBSD: CHANGES-1.6.2,v 1.1.2.17 2003/06/16 13:05:39 grant Exp $
 
 A complete list of changes from NetBSD 1.6.1 to NetBSD 1.6.2:
 
@@ -295,3 +295,10 @@ usr.bin/menuc/menuc.1				1.12
 
 	Replace some \n with \en for correct display. Closes PR 18539.
 	[manu, ticket #1226]
+
+sys/dev/pci/if_bge.c				1.38
+
+	Don't print a kernel message like "bge0: gigabit link up" when a
+	Gigabit link is detected. No other ethernet driver does this and this
+	driver doesn't do it for other modes.
+	[tron, ticket #1230]
