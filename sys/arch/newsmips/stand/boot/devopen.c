@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.4 2002/04/30 01:14:39 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.5 2002/11/22 16:27:08 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -46,6 +46,9 @@
 int dkopen __P((struct open_file *, ...));
 int dkclose __P((struct open_file *));
 int dkstrategy __P((void *, int, daddr_t, size_t, void *, size_t *));
+#ifdef HAVE_CHANGEDISK_HOOK
+void changedisk_hook __P((struct open_file *));
+#endif
 
 struct devsw devsw[] = {
 	{ "dk", dkstrategy, dkopen, dkclose, noioctl }
