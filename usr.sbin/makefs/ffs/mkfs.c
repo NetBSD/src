@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.3 2002/01/07 05:07:51 lukem Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.4 2002/01/07 16:27:23 lukem Exp $	*/
 /* From NetBSD: mkfs.c,v 1.55 2001/09/06 02:16:01 lukem Exp $ */
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.3 2002/01/07 05:07:51 lukem Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.4 2002/01/07 16:27:23 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,10 @@ __RCSID("$NetBSD: mkfs.c,v 1.3 2002/01/07 05:07:51 lukem Exp $");
 
 #include "makefs.h"
 
-#include "ufs/ufs/dir.h"
-#include "ufs/ufs/inode.h"
-#include "ufs/ufs/ufs_bswap.h"
-#include "ufs/ffs/fs.h"
+#include <ufs/ufs/dir.h>
+#include <ufs/ufs/inode.h>
+#include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ffs/fs.h>
 
 #include "ffs/ffs_extern.h"
 #include "ffs/newfs_extern.h"
