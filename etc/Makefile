@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.193 2001/11/20 16:07:59 thorpej Exp $
+#	$NetBSD: Makefile,v 1.194 2001/11/24 21:41:12 perry Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -175,6 +175,14 @@ install-etc-files:
 	    ${DESTDIR}/etc
 	pwd_mkdb -p ${TARGET_ENDIANNESS} -d ${DESTDIR}/ \
 		${DESTDIR}/etc/master.passwd
+.if defined(UNPRIVED)
+	echo "${DESTDIR}/etc/passwd type=file mode=0644 uname=root gname=wheel" \
+		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+	echo "${DESTDIR}/etc/pwd.db type=file mode=0644 uname=root gname=wheel" \
+		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+	echo "${DESTDIR}/etc/spwd.db type=file mode=0600 uname=root gname=wheel" \
+		| sed -e 's|^/|./|g' -e 's|//|/|g' >>${METALOG}
+.endif
 	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 555 \
 	     MAKEDEV.local etc.${MACHINE}/MAKEDEV ${DESTDIR}/dev
 	${INSTALL} ${INSTPRIV} -c -o root -g wheel -m 600 minfree \
