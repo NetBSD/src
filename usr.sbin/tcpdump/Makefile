@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2005/01/10 02:58:59 lukem Exp $	
+#	$NetBSD: Makefile,v 1.39 2005/03/09 03:11:23 christos Exp $	
 
 .include <bsd.own.mk>
 
@@ -73,8 +73,8 @@ CPPFLAGS+=-DINET6=1 -DHAVE_RES_USE_INET6=1
 
 .if (${MKCRYPTO} != "no")
 CPPFLAGS+=-DHAVE_LIBCRYPTO=1 
-LDADD+=	-lcrypto
-DPADD+=	${LIBCRYPTO}
+LDADD+=	-lcrypto -lcrypt
+DPADD+=	${LIBCRYPTO} ${LIBCRYPT}
 .endif
 
 CLEANFILES+=	version.c
