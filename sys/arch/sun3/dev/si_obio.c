@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.19 1998/02/05 04:56:45 gwr Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.20 1999/10/17 09:40:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 /*****************************************************************
  * OBIO functions for DMA
  ****************************************************************/
+
+#include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,7 +339,9 @@ si_obio_dma_setup(ncr_sc)
 	if (si->fifo_count != xlen) {
 		printf("si_dma_setup: fifo_count=0x%x, xlen=0x%x\n",
 			   si->fifo_count, xlen);
+#ifdef DDB
 		Debugger();
+#endif
 	}
 #endif
 
