@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.14 2003/10/22 05:56:36 itojun Exp $
+# $NetBSD: Makefile.inc,v 1.15 2004/01/03 13:46:30 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ BIND_DIR=	${.CURDIR}/..
 BIND_DIST_DIR=	${NETBSDSRCDIR}/dist/bind
 
 VER0!=		cat ${BIND_DIST_DIR}/Version
-.if 0 # ${MKCRYPTO} == "yes"
+.if 0 # ${MKCRYPTO} != "no"
 VER=		${VER0}
 .else
 VER=		${VER0}-NOESW
