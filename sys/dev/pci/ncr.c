@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $	*/
+/*	$NetBSD: ncr.c,v 1.68 1998/08/08 00:14:08 ross Exp $	*/
 
 /**************************************************************************
 **
@@ -1434,7 +1434,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.67 1998/06/08 06:55:57 thorpej Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.68 1998/08/08 00:14:08 ross Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -3610,7 +3610,11 @@ void
 ncr_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
+#else
+static void ncr_attach (pcici_t config_id, int unit)
+#endif
 {
+#ifdef __NetBSD__
 	struct pci_attach_args * const pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	int retval;
@@ -3698,9 +3702,6 @@ ncr_attach(parent, self, aux)
 		printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 #else /* !__NetBSD__ */
-
-static	void ncr_attach (pcici_t config_id, int unit)
-{
 	ncb_p np = (struct ncb*) 0;
 #if ! (__FreeBSD__ >= 2)
 	extern unsigned bio_imask;
@@ -3893,10 +3894,11 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	 * Trust BIOS only if we believe we have one and if we want to.
 	 */
 #ifdef	SCSI_NCR_TRUST_BIOS
-	if (!(np->features & FE_BIOS)) {
+	if (!(np->features & FE_BIOS))
 #else
-	if (1) {
+	if (1)
 #endif
+	/* if */ {
 		np->rv_dmode = 0;
 		np->rv_dcntl = NOCOM;
 		np->rv_ctest3 = 0;
@@ -3953,19 +3955,23 @@ static	void ncr_attach (pcici_t config_id, int unit)
 	if (np->vaddr2 != NULL) {
 		np->script = np->vaddr2;
 		np->script = (struct script *) np->vaddr2;
-	} else if (sizeof (struct script) > PAGE_SIZE) {
+	} else if (sizeof (struct script) > PAGE_SIZE)
+#else
+	if (ISSCRIPTRAMMAPPED(np))
+#endif
+	/* if */ {
+#ifdef __FreeBSD__
 		np->script  = (struct script*) vm_page_alloc_contig 
 			(round_page(sizeof (struct script)), 
 			 0x100000, 0xffffffff, PAGE_SIZE);
 #else
-	if (ISSCRIPTRAMMAPPED(np)) {
+		np->script = NULL;
+		np->p_script = np->paddr2;
+#endif /* __FreeBSD__ */
 		/*
 		 * A NULL value means that the script is in the chip's
 		 * on-board RAM and has no virtual address.
 		 */
-		np->script = NULL;
-		np->p_script = np->paddr2;
-#endif /* __FreeBSD__ */
 	} else {
 		np->script  = (struct script *)
 			malloc (sizeof (struct script), M_DEVBUF, M_WAITOK);
@@ -4745,14 +4751,13 @@ static INT32 ncr_start (struct scsipi_xfer * xp)
 	*/
 
 #ifdef __NetBSD__
-        if (!(flags & SCSI_POLL)) {
+        if (!(flags & SCSI_POLL))
 #else /* !__NetBSD__ */ 
-	if (!(flags & SCSI_NOMASK)) {
+	if (!(flags & SCSI_NOMASK))
 #endif /* __NetBSD__ */
-		if (np->lasttime) {
-			if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
-			return(SUCCESSFULLY_QUEUED);
-		};
+	/* if */ {
+		if(DEBUG_FLAGS & DEBUG_TINY) printf ("Q");
+		return(SUCCESSFULLY_QUEUED);
 	};
 
 	/*----------------------------------------------------
@@ -5803,7 +5808,7 @@ static void ncr_timeout (void *arg)
 **		si:	sist
 **
 **	SCSI bus lines:
-**		so:	control lines as driver by NCR.
+**		so:	control lines as driven by NCR.
 **		si:	control lines as seen by NCR.
 **		sd:	scsi data lines as seen by NCR.
 **
@@ -6000,12 +6005,15 @@ void ncr_exception (ncb_p np)
 	*/
 
 #ifdef __NetBSD__
-	if (mono_time.tv_sec - np->regtime.tv_sec>10) {
+	if (mono_time.tv_sec - np->regtime.tv_sec>10) 
+#else
+	if (time.tv_sec - np->regtime.tv_sec>10)
+#endif
+	/* if */ {
 		int i;
+#ifdef __NetBSD__
 		np->regtime = mono_time;
 #else
-	if (time.tv_sec - np->regtime.tv_sec>10) {
-		int i;
 		gettime(&np->regtime);
 #endif
 		for (i=0; i<sizeof(np->regdump); i++)
@@ -7475,10 +7483,11 @@ static int ncr_regtest (struct ncb* np)
 	OUTL_OFF(offsetof(struct ncr_reg, nc_dstat), data);
 	data = INL_OFF(offsetof(struct ncr_reg, nc_dstat));
 #if 1
-	if (data == 0xffffffff) {
+	if (data == 0xffffffff)
 #else
-	if ((data & 0xe2f0fffd) != 0x02000080) {
+	if ((data & 0xe2f0fffd) != 0x02000080)
 #endif
+	/* if */ {
 		printf ("CACHE TEST FAILED: reg dstat-sstat2 readback %x.\n",
 			(unsigned) data);
 		return (0x10);
