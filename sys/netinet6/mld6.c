@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.17 2001/12/18 03:04:04 itojun Exp $	*/
+/*	$NetBSD: mld6.c,v 1.18 2002/01/08 04:37:32 itojun Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.17 2001/12/18 03:04:04 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.18 2002/01/08 04:37:32 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -207,10 +207,12 @@ mld6_input(m, off)
 	/* source address validation */
 	ip6 = mtod(m, struct ip6_hdr *);/* in case mpullup */
 	if (!IN6_IS_ADDR_LINKLOCAL(&ip6->ip6_src)) {
+#if 0
 		log(LOG_ERR,
 		    "mld6_input: src %s is not link-local (grp=%s)\n",
 		    ip6_sprintf(&ip6->ip6_src),
 		    ip6_sprintf(&mldh->mld6_addr));
+#endif
 		/*
 		 * spec (RFC2710) does not explicitly
 		 * specify to discard the packet from a non link-local
@@ -336,7 +338,9 @@ mld6_input(m, off)
 			mldh->mld6_addr.s6_addr16[1] = 0; /* XXX */
 		break;
 	default:		/* this is impossible */
+#if 0
 		log(LOG_ERR, "mld6_input: illegal type(%d)", mldh->mld6_type);
+#endif
 		break;
 	}
 
