@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.22 2001/12/01 23:06:45 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.23 2001/12/08 21:30:04 chris Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -1650,7 +1650,10 @@ sa110_setup(args)
 /*	cpu_control(cpuctrlmask, cpuctrl);*/
 	cpu_control(0xffffffff, cpuctrl);
 
-	/* enable clockswitching */
+	/* 
+	 * enable clockswitching, note that this doesn't read or write to r0,
+	 * r0 is just to make it valid asm
+	 */
 	__asm ("mcr 15, 0, r0, c15, c1, 2");
 }
 #endif	/* CPU_SA110 */
