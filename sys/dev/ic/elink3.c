@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.13 1996/11/22 04:48:26 jonathan Exp $	*/
+/*	$NetBSD: elink3.c,v 1.14 1996/12/07 08:33:07 cjs Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -106,9 +106,19 @@ epconfig(sc, conn)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	u_int16_t i;
+	u_int32_t r;
 
-	sc->ep_connectors = 0;
 	printf("%s: ", sc->sc_dev.dv_xname);
+
+	/* print RAM size */
+	GO_WINDOW(3);
+	r = bus_space_read_2(iot, ioh, EP_W3_INTERNAL_CONFIG);
+	printf("%dKB %s-wide RAM, ", 8 << (r & 0x07),
+	    (r & 0x08) ? "word" : "byte");
+	GO_WINDOW(0);
+
+	/* determine connectors available */
+	sc->ep_connectors = 0;
 	if (conn & IS_AUI) {
 		printf("aui");
 		sc->ep_connectors |= AUI;
@@ -144,7 +154,7 @@ epconfig(sc, conn)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(", address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x, eisa)? and Boomerang (3c900)cards allow
@@ -173,7 +183,8 @@ epconfig(sc, conn)
 		break;
 
 	default:
-		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. Interface disabled",
+		printf("%s: wrote %d to TX_AVAIL_THRESH, read back %d. "
+		    "Interface disabled\n",
 		    sc->sc_dev.dv_xname, EP_THRESH_DISABLE, (int) i);
 		return;
 	}
@@ -430,27 +441,52 @@ startagain:
 	    0xffff);	/* Second dword meaningless */
 	if (EP_IS_BUS_32(sc->bustype)) {
 		for (m = m0; m; ) {
-			if (m->m_len > 3)
+			if (m->m_len > 3)  {
+				/* align our reads from core */
+				if (mtod(m, u_long) & 3)  {
+					u_long count =
+					    4 - (mtod(m, u_long) & 3);
+					bus_space_write_multi_1(iot, ioh,
+					    EP_W1_TX_PIO_WR_1,
+					    mtod(m, u_int8_t *), count);
+					m->m_data =
+					    (void *)(mtod(m, u_long) + count);
+					m->m_len -= count;
+				}
 				bus_space_write_multi_4(iot, ioh,
-				    EP_W1_TX_PIO_WR_1, mtod(m, u_int32_t *),
-				    m->m_len / 4);
-			if (m->m_len & 3)
+				    EP_W1_TX_PIO_WR_1,
+				    mtod(m, u_int32_t *), m->m_len >> 2);
+				m->m_data = (void *)(mtod(m, u_long) +
+					(u_long)(m->m_len & ~3));
+				m->m_len -= m->m_len & ~3;
+			}
+			if (m->m_len)  {
 				bus_space_write_multi_1(iot, ioh,
 				    EP_W1_TX_PIO_WR_1,
-				    mtod(m, u_int8_t *) + (m->m_len & ~3),
-				    m->m_len & 3);
+				    mtod(m, u_int8_t *), m->m_len);
+			}
 			MFREE(m, m0);
 			m = m0;
 		}
 	} else {
 		for (m = m0; m; ) {
-			if (m->m_len > 1)
+			if (m->m_len > 1)  {
+				if (mtod(m, u_long) & 1)  {
+					bus_space_write_1(iot, ioh,
+					    EP_W1_TX_PIO_WR_1,
+					    *(mtod(m, u_int8_t *)));
+					m->m_data =
+					    (void *)(mtod(m, u_long) + 1);
+					m->m_len -= 1;
+				}
 				bus_space_write_multi_2(iot, ioh,
 				    EP_W1_TX_PIO_WR_1, mtod(m, u_int16_t *),
-				    m->m_len / 2);
-			if (m->m_len & 1)
+				    m->m_len >> 1);
+			}
+			if (m->m_len & 1)  {
 				bus_space_write_1(iot, ioh, EP_W1_TX_PIO_WR_1,
 				     *(mtod(m, u_int8_t *) + m->m_len - 1));
+			}
 			MFREE(m, m0);
 			m = m0;
 		}
@@ -770,7 +806,7 @@ epget(sc, totlen)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct mbuf *top, **mp, *m;
-	int len;
+	int len, remaining;
 	int sh;
 
 	m = sc->mb[sc->next_mb];
@@ -822,26 +858,67 @@ epget(sc, totlen)
 			if (m->m_flags & M_EXT)
 				len = MCLBYTES;
 		}
-		len = min(totlen, len);
+		if (EP_IS_BUS_32(sc->bustype) )  {
+			u_long pad;
+			if (top == 0)  {
+			    /* align the struct ip header */
+			    pad = ALIGN(sizeof(struct ether_header))
+				 - sizeof(struct ether_header);
+			} else {
+			    /* XXX do we really need this? */
+			    pad = ALIGN(m->m_data) - (u_long) m->m_data;
+			}
+			m->m_data += pad;
+			len -= pad;
+		}
+		remaining = len = min(totlen, len);
 		if (EP_IS_BUS_32(sc->bustype)) {
-			if (len > 3) {
-				len &= ~3;
-				bus_space_read_multi_4(iot, ioh,
-				    EP_W1_RX_PIO_RD_1, mtod(m, u_int32_t *),
-				    len / 4);
-			} else
+			u_long offset = mtod(m, u_long);
+			/*
+			 * Read bytes up to the point where we are aligned.
+			 * (We can align to 4 bytes, rather than ALIGNBYTES,
+			 * here because we're later reading 4-byte chunks.)
+			 */
+			if ((remaining > 3) && (offset & 3))  {
+				int count = (4 - (offset & 3));
 				bus_space_read_multi_1(iot, ioh,
-				    EP_W1_RX_PIO_RD_1, mtod(m, u_int8_t *),
-				    len);
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int8_t *) offset, count);
+				offset += count;
+				remaining -= count;
+			}
+			if (remaining > 3) {
+				bus_space_read_multi_4(iot, ioh,
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int32_t *) offset, remaining >> 2);
+				offset += remaining & ~3;
+				remaining &= 3;
+			}
+			if (remaining)  {
+				bus_space_read_multi_1(iot, ioh,
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int8_t *) offset, remaining);
+			}
 		} else {
-			if (len > 1) {
-				len &= ~1;
+			u_long offset = mtod(m, u_long);
+			if ((remaining > 1) && (offset & 1))  {
+				bus_space_read_multi_1(iot, ioh,
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int8_t *) offset, 1);
+				remaining -= 1;
+				offset += 1;
+			}
+			if (remaining > 1) {
 				bus_space_read_multi_2(iot, ioh,
-				    EP_W1_RX_PIO_RD_1, mtod(m, u_int16_t *),
-				    len / 2);
-			} else
-				*(mtod(m, u_int8_t *)) =
-				    bus_space_read_1(iot, ioh, EP_W1_RX_PIO_RD_1);
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int16_t *) offset, remaining >> 1);
+				offset += remaining & ~1;
+			}
+			if (remaining & 1)  {
+				bus_space_read_multi_1(iot, ioh,
+				    EP_W1_RX_PIO_RD_1,
+				    (u_int8_t *) offset, remaining & 1);
+			}
 		}
 		m->m_len = len;
 		totlen -= len;
