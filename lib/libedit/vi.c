@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.5 1998/12/12 20:08:23 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.6 1999/02/05 20:53:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.5 1998/12/12 20:08:23 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.6 1999/02/05 20:53:50 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -129,7 +129,7 @@ cv_paste(el, c)
 	el->el_line.cursor++;
     ptr = el->el_line.cursor;
 	
-    c_insert(el, un->isize);
+    c_insert(el, (int)un->isize);
     if (el->el_line.cursor + un->isize > el->el_line.lastchar)
 	return CC_ERROR;
     (void) memcpy(ptr, un->buf, un->isize);
@@ -639,7 +639,7 @@ vi_undo(el, c)
 	    return CC_NORM;
 
 	el->el_line.cursor = un->ptr;
-	c_insert(el, un->isize);
+	c_insert(el, (int)un->isize);
 	(void) memcpy(un->ptr, un->buf, un->isize);
 	un->action = DELETE;
 	un->dsize = un->isize;

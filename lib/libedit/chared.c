@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.5 1998/12/12 20:08:21 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.6 1999/02/05 20:53:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.5 1998/12/12 20:08:21 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.6 1999/02/05 20:53:49 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -113,7 +113,7 @@ c_delafter(el, num)
 	char *cp;
 
 	if (el->el_map.current != el->el_map.emacs) 
-	    cv_undo(el, INSERT, num, el->el_line.cursor);
+	    cv_undo(el, INSERT, (size_t)num, el->el_line.cursor);
 
 	for (cp = el->el_line.cursor; cp <= el->el_line.lastchar; cp++)
 	    *cp = cp[num];
@@ -139,7 +139,7 @@ c_delbefore(el, num)
 	char *cp;
 
 	if (el->el_map.current != el->el_map.emacs) 
-	    cv_undo(el, INSERT, num, el->el_line.cursor - num);
+	    cv_undo(el, INSERT, (size_t)num, el->el_line.cursor - num);
 
 	for (cp = el->el_line.cursor - num; cp <= el->el_line.lastchar; cp++)
 	    *cp = cp[num];
