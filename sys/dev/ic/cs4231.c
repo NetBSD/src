@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231.c,v 1.8 2002/08/22 10:02:21 martin Exp $	*/
+/*	$NetBSD: cs4231.c,v 1.9 2002/08/22 10:06:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.8 2002/08/22 10:02:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.9 2002/08/22 10:06:22 martin Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: cs4231.c,v 1.8 2002/08/22 10:02:21 martin Exp $");
 #define CSAUDIO_MONITOR_CLASS	16
 
 #ifdef AUDIO_DEBUG
-int     cs4231_debug = 1;
+int     cs4231_debug = 0;
 #define DPRINTF(x)      if (cs4231_debug) printf x
 #else
 #define DPRINTF(x)
