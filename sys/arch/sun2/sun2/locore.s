@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.7 2001/06/27 03:25:31 fredette Exp $	*/
+/*	$NetBSD: locore.s,v 1.8 2001/08/16 23:54:31 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -227,9 +227,12 @@ sun2_mmu_specific:
 	movc %sfc, %d1			| save sfc to d1
 	moveq #FC_CONTROL, %d0		| sfc = FC_CONTROL
 	movc %d0, %sfc
-	movsb BUSERR_REG, %d0		| get value of bus error register
+	movsw BUSERR_REG, %d0		| get value of bus error register
 	movc %d1, %sfc			| restore sfc
 	movl %sp@+, %d1			| restore d1
+#ifdef	DEBUG
+	movw %d0, _C_LABEL(buserr_reg)	| save bus error register value
+#endif
 	andb #BUSERR_PROTERR, %d0 	| is this an MMU (protection *or* page unavailable) fault?
 	jeq Lisberr			| non-MMU bus error
 /* End of sun2 specific code. */
