@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.23 2002/10/03 07:27:50 lukem Exp $
+.\"	$NetBSD: installboot.8,v 1.24 2003/01/15 06:33:58 mhitch Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -150,6 +150,7 @@ into
 The following platforms do not require this step if the primary bootstrap
 already exists and the secondary bootstrap file is just being updated:
 .Sy alpha ,
+.Sy amiga ,
 .Sy pmax ,
 .Sy sparc64 ,
 and
@@ -206,6 +207,7 @@ The following machines are currently supported by
 .Nm "" :
 .Bd -ragged -offset indent
 .Sy alpha ,
+.Sy amiga ,
 .Sy macppc ,
 .Sy news68k ,
 .Sy newsmips ,
@@ -247,6 +249,10 @@ Append
 to the end of
 .Ar filesystem ,
 which must be a regular file in this case.
+.
+.It Sy command=<boot command>
+.Sy [ amiga ]
+Modify the default boot command line.
 .
 .It Sy sunsum
 .Sy [ alpha ,
@@ -421,6 +427,11 @@ with the secondary bootstrap
 already present:
 .Dl Ic installboot /dev/rsd0c /usr/mdec/bootxx /boot
 .
+.Ss NetBSD/amiga examples
+Modify the command line to change the default from "netbsd -ASn2" to
+"netbsd -S":
+.Dl Ic installboot -m amiga -o command="netbsd -S" /dev/rsd0a /usr/mdec/bootxx_ffs
+.
 .Sh SEE ALSO
 .Xr uname 3 ,
 .Xr boot 8 ,
@@ -446,8 +457,9 @@ Ross Harvey (alpha),
 Paul Kranenburg (sparc),
 Luke Mewburn (macppc),
 Matt Thomas (vax),
+Izumi Tsutsui (news68k, newsmips),
 and
-Izumi Tsutsui (news68k, newsmips).
+Michael Hitch (amiga).
 .
 .Sh BUGS
 There are not currently primary bootstraps to support all file systems

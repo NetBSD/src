@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.15 2002/10/03 05:31:25 lukem Exp $	*/
+/*	$NetBSD: installboot.h,v 1.16 2003/01/15 06:33:58 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ typedef enum {
 	IB_SUNSUM =	1<<10,		/* set Sun checksum */
 	IB_STAGE1START=	1<<11,		/* start block for stage 1 provided */
 	IB_STAGE2START=	1<<12,		/* start block for stage 2 provided */
+	IB_COMMAND = 	1<<13,		/* Amiga commandline option */
 } ib_flags;
 
 typedef struct {
@@ -145,6 +146,8 @@ int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
 int		alpha_parseopt(ib_params *, const char *);
 int		alpha_setboot(ib_params *);
 int		alpha_clearboot(ib_params *);
+int		amiga_parseopt(ib_params *, const char *);
+int		amiga_setboot(ib_params *);
 int		macppc_setboot(ib_params *);
 int		macppc_clearboot(ib_params *);
 int		news68k_setboot(ib_params *);

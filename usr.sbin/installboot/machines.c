@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.12 2002/06/02 10:44:57 isaki Exp $	*/
+/*	$NetBSD: machines.c,v 1.13 2003/01/15 06:33:58 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 struct ib_mach machines[] = {
 	{ "alpha",	alpha_parseopt,	alpha_setboot,	alpha_clearboot },
+	{ "amiga",	amiga_parseopt,	amiga_setboot,	no_clearboot },
 	{ "i386",	no_parseopt,	no_setboot,	no_clearboot },
 	{ "macppc",	no_parseopt,	macppc_setboot,	macppc_clearboot },
 	{ "news68k",	no_parseopt,	news68k_setboot, news68k_clearboot },
