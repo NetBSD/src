@@ -1,4 +1,4 @@
-/*	$NetBSD: com7.c,v 1.4 1997/01/07 11:56:39 tls Exp $	*/
+/*	$NetBSD: com7.c,v 1.5 1997/10/10 11:39:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,18 +33,20 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)com7.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: com7.c,v 1.4 1997/01/07 11:56:39 tls Exp $";
+__RCSID("$NetBSD: com7.c,v 1.5 1997/10/10 11:39:35 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
-fight(enemy,strength)
-int enemy,strength;
+int
+fight(enemy, strength)
+	int enemy,strength;
 {
 	int lifeline = 0;
 	int hurt;
@@ -53,16 +55,17 @@ int enemy,strength;
 	int i;
 	int exhaustion;
 
+	exhaustion = 0;
 fighton:
-	time++;
+	ourtime++;
 	snooze -= 5;
-	if (snooze > time)
-		exhaustion = CYCLE/(snooze - time);
+	if (snooze > ourtime)
+		exhaustion = CYCLE/(snooze - ourtime);
 	else {
 		puts("You collapse exhausted, and he pulverizes your skull.");
 		die();
 	}
-	if (snooze - time < 20)
+	if (snooze - ourtime < 20)
 		puts("You look tired! I hope you're able to fight.");
 	next = getcom(auxbuf, LINELENGTH, "<fight!>-: ", 0);
 	for (i=0; next && i < 10; i++)
@@ -192,7 +195,7 @@ fighton:
 					puts("he flees down the dark caverns.");
 					clearbit(location[position].objects,DARK);
 					injuries[SKULL] = 1;
-					followfight = time;
+					followfight = ourtime;
 					return (0);
 				}
 				else{
@@ -237,7 +240,7 @@ fighton:
 		case DROP:
 		case DRAW:
 			cypher();
-			time--;
+			ourtime--;
 			break;
 		
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.4 1997/01/07 11:56:49 tls Exp $	*/
+/*	$NetBSD: room.c,v 1.5 1997/10/10 11:40:16 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,26 +33,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)room.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: room.c,v 1.4 1997/01/07 11:56:49 tls Exp $";
+__RCSID("$NetBSD: room.c,v 1.5 1997/10/10 11:40:16 lukem Exp $");
 #endif
 #endif /* not lint */
 
 #include "extern.h"
 
+void
 writedes()
 {
 	int compass;
-	register char *p;
-	register c;
+	char *p;
+	int c;
 
 	printf("\n\t%s\n", location[position].name);
 	if (beenthere[position] < 3) {
 		compass = NORTH;
-		for (p = location[position].desc; c = *p++;)
+		for (p = location[position].desc; (c = *p++) != 0;)
 			if (c != '-' && c != '*' && c != '+')
 				putchar(c);
 			else {
@@ -63,10 +65,11 @@ writedes()
 	}
 }
 
+void
 printobjs()
 {
-	register unsigned int *p = location[position].objects;
-	register n;
+	unsigned int *p = location[position].objects;
+	int n;
 
 	printf("\n");
 	for (n = 0; n < NUMOFOBJECTS; n++)
@@ -74,8 +77,9 @@ printobjs()
 			puts(objdes[n]);
 }
 
+void
 whichway(here)
-struct room here;
+	struct room here;
 {
 	switch(direction) {
 
@@ -112,8 +116,8 @@ struct room here;
 
 char *
 truedirec(way, option)
-int way;
-char option;
+	int way;
+	char option;
 {
 	switch(way) {
 
@@ -122,7 +126,8 @@ char option;
 				case NORTH:
 					return("ahead");
 				case SOUTH:
-					return(option == '+' ? "behind you" : "back");
+					return(option == '+' ? "behind you" :
+					    "back");
 				case EAST:
 					return("left");
 				case WEST:
@@ -132,7 +137,8 @@ char option;
 		case SOUTH:
 			switch(direction) {
 				case NORTH:
-					return(option == '+' ? "behind you" : "back");
+					return(option == '+' ? "behind you" :
+					    "back");
 				case SOUTH:
 					return("ahead");
 				case EAST:
@@ -150,7 +156,8 @@ char option;
 				case EAST:
 					return("ahead");
 				case WEST:	
-					return(option == '+' ? "behind you" : "back");
+					return(option == '+' ? "behind you" :
+					    "back");
 			}
 
 		case WEST:
@@ -160,7 +167,8 @@ char option;
 				case SOUTH:
 					return("right");
 				case EAST:
-					return(option == '+' ? "behind you" : "back");
+					return(option == '+' ? "behind you" :
+					    "back");
 				case WEST:
 					return("ahead");
 			}
@@ -171,8 +179,9 @@ char option;
       }
 }
 
+void
 newway(thisway)
-int thisway;
+	int thisway;
 {
 	switch(direction){
 

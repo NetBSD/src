@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.4 1997/01/07 11:56:44 tls Exp $	*/
+/*	$NetBSD: fly.c,v 1.5 1997/10/10 11:39:50 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: fly.c,v 1.4 1997/01/07 11:56:44 tls Exp $";
+__RCSID("$NetBSD: fly.c,v 1.5 1997/10/10 11:39:50 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,12 +53,13 @@ static char rcsid[] = "$NetBSD: fly.c,v 1.4 1997/01/07 11:56:44 tls Exp $";
 int row, column;
 int dr = 0, dc = 0;
 char destroyed;
-int clock = 120;		/* time for all the flights in the game */
+int ourclock = 120;		/* time for all the flights in the game */
 char cross = 0;
 sig_t oldsig;
 
 void
-succumb()
+succumb(dummy)
+	int dummy;
 {
 	if (oldsig == SIG_DFL) {
 		endfly();
@@ -69,10 +71,9 @@ succumb()
 	}
 }
 
+int
 visual()
 {
-	void moveenemy();
-
 	destroyed = 0;
 	if(initscr() == ERR){
 		puts("Whoops!  No more memory...");
@@ -84,7 +85,7 @@ visual()
 	screen();
 	row = rnd(LINES-3) + 1;
 	column = rnd(COLS-2) + 1;
-	moveenemy();
+	moveenemy(0);
 	for (;;) {
 		switch(getchar()){
 
@@ -172,16 +173,17 @@ visual()
 			endfly();
 			return(1);
 		}
-		if (clock <= 0){
+		if (ourclock <= 0){
 			endfly();
 			die();
 		}
 	}
 }
 
+void
 screen()
 {
-	register int r,c,n;
+	int r,c,n;
 	int i;
 
 	clear();
@@ -195,9 +197,10 @@ screen()
 	refresh();
 }
 
+void
 target()
 {
-	register int n;
+	int n;
 
 	move(MIDR,MIDC-10);
 	addstr("-------   +   -------");
@@ -207,9 +210,10 @@ target()
 	}
 }
 
+void
 notarget()
 {
-	register int n;
+	int n;
 
 	move(MIDR,MIDC-10);
 	addstr("                     ");
@@ -219,9 +223,10 @@ notarget()
 	}
 }
 
+void
 blast()
 {
-	register int n;
+	int n;
 
 	alarm(0);
 	move(LINES-1, 24);
@@ -241,7 +246,8 @@ blast()
 }
 
 void
-moveenemy()
+moveenemy(dummy)
+	int dummy;
 {
 	double d;
 	int oldr, oldc;
@@ -262,7 +268,7 @@ moveenemy()
 		row += (rnd(9) - 4) % (4 - abs(row - MIDR));
 		column += (rnd(9) - 4) % (4 - abs(column - MIDC));
 	}
-	clock--;
+	ourclock--;
 	mvaddstr(oldr, oldc - 1, "   ");
 	if (cross)
 		target();
@@ -272,12 +278,13 @@ moveenemy()
 	move(LINES-1, 42);
 	printw("%3d", fuel);
 	move(LINES-1, 57);
-	printw("%3d", clock);
+	printw("%3d", ourclock);
 	refresh();
 	signal(SIGALRM, moveenemy);
 	alarm(1);
 }
 
+void
 endfly()
 {
 	alarm(0);
