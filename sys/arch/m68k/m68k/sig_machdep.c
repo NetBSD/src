@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.14 2000/12/22 22:58:54 jdolecek Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15 2001/07/28 13:08:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,7 +124,7 @@ sendsig(catcher, sig, mask, code)
 	 *	- FP coprocessor state
 	 */
 	kf.sf_state.ss_flags = SS_USERREGS;
-	bcopy(frame->f_regs, kf.sf_state.ss_frame.f_regs,
+	memcpy(kf.sf_state.ss_frame.f_regs, frame->f_regs,
 	    sizeof(frame->f_regs));
 	if (ft >= FMT4) {
 #ifdef DEBUG
@@ -134,7 +134,7 @@ sendsig(catcher, sig, mask, code)
 		kf.sf_state.ss_flags |= SS_RTEFRAME;
 		kf.sf_state.ss_frame.f_format = frame->f_format;
 		kf.sf_state.ss_frame.f_vector = frame->f_vector;
-		bcopy(&frame->F_u, &kf.sf_state.ss_frame.F_u,
+		memcpy(&kf.sf_state.ss_frame.F_u, &frame->F_u,
 		    (size_t) exframesize[ft]);
 		/*
 		 * Leave an indicator that we need to clean up the kernel
@@ -318,7 +318,7 @@ sys___sigreturn14(p, v, retval)
 		frame->f_stackadj -= sz;
 		frame->f_format = tstate.ss_frame.f_format;
 		frame->f_vector = tstate.ss_frame.f_vector;
-		bcopy(&tstate.ss_frame.F_u, &frame->F_u, sz);
+		memcpy(&frame->F_u, &tstate.ss_frame.F_u, sz);
 #ifdef DEBUG
 		if (sigdebug & SDB_FOLLOW)
 			printf("sigreturn(%d): copy in %d of frame type %d\n",
@@ -331,8 +331,8 @@ sys___sigreturn14(p, v, retval)
 	 * which will be handled below.
 	 */
 	if (flags & SS_USERREGS)
-		bcopy(tstate.ss_frame.f_regs,
-		    frame->f_regs, sizeof(frame->f_regs) - (2 * NBPW));
+		memcpy(frame->f_regs, tstate.ss_frame.f_regs,
+		    sizeof(frame->f_regs) - (2 * NBPW));
 
 	/*
 	 * Restore the original FP context
