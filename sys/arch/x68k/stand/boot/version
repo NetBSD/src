@@ -1,0 +1,8 @@
+$ NetBSD $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+0.3:	xxboot, ancient monolithic bootstrap program.
+1.0:	Initial version of the libsa-based bootstrap loader.

@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2001/10/01 17:03:38 minoura Exp $
+#	$NetBSD: Makefile,v 1.6 2001/10/15 16:23:01 minoura Exp $
 
 .include <bsd.own.mk>
 
 BOOT=	boot_ufs
-VERSION=1.0
+VERSIONFILE=	${.CURDIR}/version
+VERSION!=	awk -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } END { print it }' ${VERSIONFILE}
+NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses in hex
 TEXT=		0f0000		# Primary (me)
@@ -19,12 +21,19 @@ MKMAN=		no
 
 OBJCOPY?=	objcopy
 
-LIBKERN=	${.CURDIR}/../../../../lib/libkern/arch/${MACHINE_ARCH}
-COMMONDIR=	${.CURDIR}/../common
-LIBIOCS=	${.CURDIR}/../libiocs
+S=		${.CURDIR}/../../../..
+M=		$S/arch/${MACHINE}
+LIBKERN=	$S/lib/libkern/arch/${MACHINE_ARCH}
+COMMONDIR=	$M/stand/common
+LIBIOCS=	$M/stand/libiocs
 .PATH:		${LIBKERN} ${COMMONDIR}
 SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c #readufs_lfs.c
 SRCS+=	exec_image.S memset.S strcmp.S
+
+SRCS+=		vers.c
+CLEANFILES+=	vers.c
+vers.c:	${VERSIONFILE}
+	sh ${S}/conf/newvers_stand.sh -DM ${.ALLSRC} ${MACHINE} ${NEWVERSWHAT}
 
 CFLAGS=	-Os -fomit-frame-pointer
 CFLAGS+= -W -Wall -Wconversion -Wstrict-prototypes -Wmissing-prototypes
