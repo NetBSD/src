@@ -30,23 +30,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: sb.c,v 1.5 1994/03/06 17:19:16 mycroft Exp $
+ *	$Id: sb.c,v 1.6 1994/03/29 04:36:26 mycroft Exp $
  */
-
-#include "sb.h"
-#if NSB > 0
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/syslog.h>
+#include <sys/device.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 
 #include "sbreg.h"
@@ -66,15 +64,14 @@
  * most basic communications with the sb card.
  */
 struct sb_softc {
-#ifdef NEWCONFIG
 	struct device sc_dev;		/* base device */
 	struct isadev sc_id;		/* ISA device */
 	struct  intrhand sc_ih;		/* interrupt vectoring */
-#endif
+
 	u_short	sc_open;		/* reference count of open calls */
 	u_short sc_dmachan;		/* dma channel */
-	u_long	sc_locked;		/* true when doing HS DMA  */
-	u_long	sc_base;		/* I/O port base address */
+	u_short	sc_locked;		/* true when doing HS DMA  */
+	u_short	sc_iobase;		/* I/O port base address */
  	u_short	sc_adacmode;		/* low/high speed mode indicator */
 #define SB_ADAC_LS 0
 #define SB_ADAC_HS 1
@@ -85,21 +82,17 @@ struct sb_softc {
 	void	*sc_arg;		/* arg for sc_intr() */
 };
 
-int	sbreset(u_long);
+int sbreset __P((struct sb_softc *));
+void sb_spkron __P((struct sb_softc *));
+void sb_spkroff __P((struct sb_softc *));
 
-void sb_spkron(struct sb_softc *);
-void sb_spkroff(struct sb_softc *);
+static int wdsp(u_short iobase, int v);
+static int rdsp(u_short iobase);
 
-static int wdsp(u_long base, int v);
-static int rdsp(u_long base);
-
-/* XXX */
-#define splsb splhigh
-/* XXX */
-struct sb_softc *sb_softc;
+#define splsb splhigh		/* XXX */
+struct sb_softc *sb_softc;	/* XXX */
 
 #ifndef NEWCONFIG
-struct sb_softc sb_softcs[NSB];
 #define at_dma(flags, ptr, cc, chan)	isa_dmastart(flags, ptr, cc, chan)
 #endif
 
@@ -109,60 +102,73 @@ struct {
 	int wmidi;
 } sberr;
 
+int	sbintr __P((int));
+int	sbprobe();
+void	sbattach();
 #ifdef NEWCONFIG
-int	sbintr(struct sb_softc *);
-int	sbprobe(struct device *, struct cfdata *, void *);
-void	sbattach(struct device *, struct device *, void *);
 void	sbforceintr(void *);
+#endif
 
-struct cfdriver sbcd =
-	{ NULL, "sb", sbprobe, sbattach, sizeof(struct sb_softc) };
+struct cfdriver sbcd = {
+	NULL, "sb", sbprobe, sbattach, DV_DULL, sizeof(struct sb_softc)
+};
 
 int
-sbprobe(struct device *parent, struct cfdata *cf,  void *aux)
+sbprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	register struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register int base = ia->ia_iobase;
+	register struct sb_softc *sc = (void *)self;
+	register struct isa_attach_args *ia = aux;
+	register u_short iobase = ia->ia_iobase;
 
-	if (!SB_BASE_VALID(base)) {
-		printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
-		return (0);
+	if (!SB_BASE_VALID(ia->ia_iobase)) {
+		printf("sb: configured iobase %d invalid\n", ia->ia_iobase);
+		return 0;
 	}
-	ia->ia_iosize = SB_NPORT;
-	if (sbreset(base) < 0) {
+	sc->sc_iobase = iobase;
+	if (sbreset(sc) < 0) {
 		printf("sb: couldn't reset card\n");
-		return (0);
+		return 0;
 	}
 	/*
 	 * Cannot auto-discover DMA channel.
 	 */
 	if (!SB_DRQ_VALID(ia->ia_drq)) {
 		printf("sb: configured dma chan %d invalid\n", ia->ia_drq);
-		return (0);
+		return 0;
 	}
+#ifdef NEWCONFIG
 	/*
 	 * If the IRQ wasn't compiled in, auto-detect it.
 	 */
 	if (ia->ia_irq == IRQUNK) {
 		ia->ia_irq = isa_discoverintr(sbforceintr, aux);
-		sbreset(base);
+		sbreset(iobase);
 		if (!SB_IRQ_VALID(ia->ia_irq)) {
 			printf("sb: couldn't auto-detect interrupt");
-			return (0);
+			return 0;
 		}
-	} else if (!SB_IRQ_VALID(ia->ia_irq)) {
+	} else
+#endif
+	if (!SB_IRQ_VALID(ia->ia_irq)) {
 		int irq = ffs(ia->ia_irq) - 1;
 		printf("sb: configured irq %d invalid\n", irq);
+		return 0;
 	}
-	return (15);
+	ia->ia_iosize = SB_NPORT;
+	return 1;
 }
 
+#ifdef NEWCONFIG
 void
-sbforceintr(void *arg)
+sbforceintr(aux)
+	void *aux;
 {
 	static char dmabuf;
-	struct isa_attach_args *ia = (struct isa_attach_args *)arg;
-	int base = ia->ia_iobase;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
+
 	/*
 	 * Set up a DMA read of one byte.
 	 * XXX Note that at this point we haven't called 
@@ -175,11 +181,12 @@ sbforceintr(void *arg)
 	 * never need the buffer anyway.)
 	 */
 	at_dma(1, &dmabuf, 1, ia->ia_drq);
-	if (wdsp(base, SB_DSP_RDMA) == 0) {
-		(void)wdsp(base, 0);
-		(void)wdsp(base, 0);
+	if (wdsp(iobase, SB_DSP_RDMA) == 0) {
+		(void)wdsp(iobase, 0);
+		(void)wdsp(iobase, 0);
 	}
 }
+#endif
 
 void
 sbattach(parent, self, aux)
@@ -188,15 +195,17 @@ sbattach(parent, self, aux)
 {
 	register struct sb_softc *sc = (struct sb_softc *)self;
 	struct isa_attach_args *ia = (struct isa_attach_args *)aux;
-	register int base = ia->ia_iobase;
+	register u_short iobase = ia->ia_iobase;
 	register int vers;
 
 	/* XXX */
 	sb_softc = sc;
 
-	sc->sc_base = base;
+	sc->sc_iobase = iobase;
 	sc->sc_dmachan = ia->ia_drq;
 	sc->sc_locked = 0;
+
+#ifdef NEWCONFIG
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 	sc->sc_ih.ih_fun = sbintr;
 	sc->sc_ih.ih_arg = (void *)sc;
@@ -214,101 +223,43 @@ sbattach(parent, self, aux)
 	 * is plenty long enough to amortize any fixed time overhead.
 	 */
 	at_setup_dmachan(sc->sc_dmachan, NBPG);
-
-	vers = sbversion(base);
-	printf(" dsp v%d.%d\n", vers >> 8, vers & 0xff);
-}
 #endif
 
-#ifndef NEWCONFIG
-int	sbintr(int unit);
-int	sbprobe(struct isa_device *dev);
-int	sbattach(struct isa_device *dev);
-
-struct isa_driver sbdriver = { sbprobe, sbattach, "sb" };
-
-int
-sbprobe(struct isa_device *dev)
-{
-	register int base = dev->id_iobase;
-
-	if (!SB_BASE_VALID(base)) {
-		printf("sb: configured dma chan %d invalid\n", dev->id_drq);
-		return (0);
-	}
-	if (sbreset(base) < 0) {
-		printf("sb: couldn't reset card\n");
-		return (0);
-	}
-	/*
-	 * Cannot auto-discover DMA channel.
-	 */
-	if (!SB_DRQ_VALID(dev->id_drq)) {
-		printf("sb: configured dma chan %d invalid\n", dev->id_drq);
-		return (0);
-	}
-	/*
-	 * If the IRQ wasn't compiled in, auto-detect it.
-	 */
-	if (dev->id_irq == 0) {
-		printf("sb: no irq configured\n");
-		return (0);
-	} else if (!SB_IRQ_VALID(dev->id_irq)) {
-		int irq = ffs(dev->id_irq) - 1;
-		printf("sb: configured irq %d invalid\n", irq);
-		return (0);
-	}
-	return (15);
+	vers = sbversion(sc);
+	printf(": dsp v%d.%d\n", vers >> 8, vers & 0xff);
 }
 
-#define	UNIT(x)		(minor(x) & 0xf)
-
-int
-sbattach(struct isa_device *dev)
-{
-	int unit = UNIT(dev->id_unit);
-	register struct sb_softc *sc = &sb_softcs[unit];
-	register int base = dev->id_iobase;
-	register int vers;
-
-	/* XXX */
-	sb_softc = sc;
-
-	sc->sc_base = base;
-	sc->sc_dmachan = dev->id_drq;
-	sc->sc_locked = 0;
-
-	vers = sbversion(base);
-	printf("sb%d: dsp v%d.%d\n", unit, vers >> 8, vers & 0xff);
-}
-#endif
+#define	SBUNIT(x)		(minor(x) & 0xf)
 
 struct sb_softc *
 sbopen()
 {
+	/* XXXX */
 	struct sb_softc *sc = sb_softc;
 
 	if (sc == 0)
 		return 0;
 
-	if (sc->sc_open == 0 && sbreset(sc->sc_base) == 0) {
+	if (sc->sc_open == 0 && sbreset(sc) == 0) {
 		sc->sc_open = 1;
 		sc->sc_mintr = 0;
 		sc->sc_intr = 0;
-		return (sc);
+		return sc;
 	}
-	return (0);
+	return 0;
 }
 
 void
-sbclose(struct sb_softc *sc)
+sbclose(sc)
+	struct sb_softc *sc;
 {
+
 	sc->sc_open = 0;
 	sb_spkroff(sc);
 	sc->sc_intr = 0;
 	sc->sc_mintr = 0;
 	/* XXX this will turn off any dma */
-	sbreset(sc->sc_base);
+	sbreset(sc);
 }
 
 /*
@@ -317,35 +268,35 @@ sbclose(struct sb_softc *sc)
  * polling loop and wait until it can take the byte.
  */
 static int
-wdsp(u_long base, int v)
+wdsp(u_short iobase, int v)
 {
 	register int i;
 
 	for (i = 100; --i >= 0; ) {
-		if ((inb(base + SBP_DSP_WSTAT) & SB_DSP_BUSY) != 0)
+		if ((inb(iobase + SBP_DSP_WSTAT) & SB_DSP_BUSY) != 0)
 			continue;
-		outb(base + SBP_DSP_WRITE, v);
-		return (0);
+		outb(iobase + SBP_DSP_WRITE, v);
+		return 0;
 	}
 	++sberr.wdsp;
-	return (-1);
+	return -1;
 }
 
 /*
  * Read a byte from the DSP, using polling.
  */
 int
-rdsp(u_long base)
+rdsp(u_short iobase)
 {
 	register int i;
 
 	for (i = 100; --i >= 0; ) {
-		if ((inb(base + SBP_DSP_RSTAT) & SB_DSP_READY) == 0)
+		if ((inb(iobase + SBP_DSP_RSTAT) & SB_DSP_READY) == 0)
 			continue;
-		return (inb(base + SBP_DSP_READ));
+		return inb(iobase + SBP_DSP_READ);
 	}
 	++sberr.rdsp;
-	return (-1);
+	return -1;
 }
 
 /*
@@ -353,20 +304,23 @@ rdsp(u_long base)
  * Return non-zero if the card isn't detected.
  */
 int
-sbreset(register u_long base)
+sbreset(sc)
+	struct sb_softc *sc;
 {
+	register u_short iobase = sc->sc_iobase;
 	register int i;
+
 	/*
 	 * See SBK, section 11.3.
 	 * We pulse a reset signal into the card.
 	 * Gee, what a brilliant hardware design.
 	 */
-	outb(base + SBP_DSP_RESET, 1);
+	outb(iobase + SBP_DSP_RESET, 1);
 	delay(3);
-	outb(base + SBP_DSP_RESET, 0);
-	if (rdsp(base) != SB_MAGIC)
-		return (-1);
-	return (0);
+	outb(iobase + SBP_DSP_RESET, 0);
+	if (rdsp(iobase) != SB_MAGIC)
+		return -1;
+	return 0;
 }
 
 /*
@@ -380,9 +334,12 @@ sbreset(register u_long base)
  * they designed this card.
  */
 void
-sb_spkron(struct sb_softc *sc)
+sb_spkron(sc)
+	struct sb_softc *sc;
 {
-	(void)wdsp(sc->sc_base, SB_DSP_SPKR_ON);
+
+	(void)wdsp(sc->sc_iobase, SB_DSP_SPKR_ON);
+	/* XXX bogus */
 	delay(1000);
 }
 
@@ -390,9 +347,11 @@ sb_spkron(struct sb_softc *sc)
  * Turn off the speaker; see comment above.
  */
 void
-sb_spkroff(struct sb_softc *sc)
+sb_spkroff(sc)
+	struct sb_softc *sc;
 {
-	(void)wdsp(sc->sc_base, SB_DSP_SPKR_OFF);
+
+	(void)wdsp(sc->sc_iobase, SB_DSP_SPKR_OFF);
 }
 
 /*
@@ -400,14 +359,16 @@ sb_spkroff(struct sb_softc *sc)
  * in high byte, and minor code in low byte.
  */
 int
-sbversion(register u_long base)
+sbversion(sc)
+	struct sb_softc *sc;
 {
+	register u_short iobase = sc->sc_iobase;
 	int v;
 
-	if (wdsp(base, SB_DSP_VERSION) < 0)
-		return (0);
-	v = rdsp(base) << 8;
-	v |= rdsp(base);
+	if (wdsp(iobase, SB_DSP_VERSION) < 0)
+		return 0;
+	v = rdsp(iobase) << 8;
+	v |= rdsp(iobase);
 	return ((v >= 0) ? v : 0);
 }
 
@@ -416,18 +377,22 @@ sbversion(register u_long base)
  * resumed with sb_contdma().
  */
 void
-sb_haltdma(struct sb_softc *sc)
+sb_haltdma(sc)
+	struct sb_softc *sc;
 {
+
 	if (sc->sc_locked)
-		sbreset(sc->sc_base);
+		sbreset(sc);
 	else
-		(void)wdsp(sc->sc_base, SB_DSP_HALT);
+		(void)wdsp(sc->sc_iobase, SB_DSP_HALT);
 }
 
 void
-sb_contdma(struct sb_softc *sc)
+sb_contdma(sc)
+	struct sb_softc *sc;
 {
-	(void)wdsp(sc->sc_base, SB_DSP_CONT);
+
+	(void)wdsp(sc->sc_iobase, SB_DSP_CONT);
 }
 
 /*
@@ -475,7 +440,10 @@ sb_contdma(struct sb_softc *sc)
  * so isdac indicates output, and !isdac indicates input.
  */
 int
-sb_srtotc(int sr, int *mode, int isdac)
+sb_srtotc(sr, mode, isdac)
+	int sr;
+	int *mode;
+	int isdac;
 {
 	register int tc = 256 - 1000000 / sr;
 
@@ -499,7 +467,7 @@ sb_srtotc(int sr, int *mode, int isdac)
 				tc = SB_ADC_HS_MAX;
 		}
 	}
-	return (tc);
+	return tc;
 }
 
 /*
@@ -507,96 +475,112 @@ sb_srtotc(int sr, int *mode, int isdac)
  * See SBK, section 12.
  */
 int
-sb_tctosr(int tc)
+sb_tctosr(tc)
+	int tc;
 {
 	return (1000000 / (256 - tc));
 }
 
 int
-sb_set_sr(register struct sb_softc *sc, u_long *sr, int isdac)
+sb_set_sr(sc, sr, isdac)
+	register struct sb_softc *sc;
+	u_long *sr;
+	int isdac;
 {
 	register int tc;
 	int mode;
 
 	tc = sb_srtotc(*sr, &mode, isdac);
-	if (wdsp(sc->sc_base, SB_DSP_TIMECONST) < 0 ||
-	    wdsp(sc->sc_base, tc) < 0)
-		return (-1);
+	if (wdsp(sc->sc_iobase, SB_DSP_TIMECONST) < 0 ||
+	    wdsp(sc->sc_iobase, tc) < 0)
+		return -1;
 
 	*sr = sb_tctosr(tc);
 	sc->sc_adacmode = mode;
 	sc->sc_adactc = tc;
 
-	return (0);
+	return 0;
 }
 
 int
-sb_round_sr(u_long sr, int isdac)
+sb_round_sr(sr, isdac)
+	u_long sr;
+	int isdac;
 {
 	int mode, tc;
 
 	tc = sb_srtotc(sr, &mode, isdac);
-	return (sb_tctosr(tc));
+	return sb_tctosr(tc);
 }
 
 int
-sb_dma_input(struct sb_softc *sc, void *p, int cc, void (*intr)(), void *arg)
+sb_dma_input(sc, p, cc, intr, arg)
+	struct sb_softc *sc;
+	void *p;
+	int cc;
+	void (*intr)();
+	void *arg;
 {
-	register int base;
+	register u_short iobase;
 
 	at_dma(1, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	base = sc->sc_base;
+	iobase = sc->sc_iobase;
 	--cc;
 	if (sc->sc_adacmode == SB_ADAC_LS) {
-		if (wdsp(base, SB_DSP_RDMA) < 0 ||
-		    wdsp(base, cc) < 0 ||
-		    wdsp(base, cc >> 8) < 0) {
-			sbreset(sc->sc_base);
-			return (EIO);
+		if (wdsp(iobase, SB_DSP_RDMA) < 0 ||
+		    wdsp(iobase, cc) < 0 ||
+		    wdsp(iobase, cc >> 8) < 0) {
+			sbreset(sc);
+			return EIO;
 		}
 	} else {
-		if (wdsp(base, SB_DSP_BLOCKSIZE) < 0 ||
-		    wdsp(base, cc) < 0 ||
-		    wdsp(base, cc >> 8) < 0 ||
-		    wdsp(base, SB_DSP_HS_INPUT) < 0) {
-			sbreset(sc->sc_base);
-			return (EIO);
+		if (wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
+		    wdsp(iobase, cc) < 0 ||
+		    wdsp(iobase, cc >> 8) < 0 ||
+		    wdsp(iobase, SB_DSP_HS_INPUT) < 0) {
+			sbreset(sc);
+			return EIO;
 		}
 		sc->sc_locked = 1;
 	}
-	return (0);
+	return 0;
 }
 
 int
-sb_dma_output(struct sb_softc *sc, void *p, int cc, void (*intr)(), void *arg)
+sb_dma_output(sc, p, cc, intr, arg)
+	struct sb_softc *sc;
+	void *p;
+	int cc;
+	void (*intr)();
+	void *arg;
 {
-	register int base;
+	register u_short iobase;
 
 	at_dma(0, p, cc, sc->sc_dmachan);
 	sc->sc_intr = intr;
 	sc->sc_arg = arg;
-	base = sc->sc_base;
+	iobase = sc->sc_iobase;
 	--cc;
 	if (sc->sc_adacmode == SB_ADAC_LS) {
-		if (wdsp(base, SB_DSP_WDMA) < 0 ||
-		    wdsp(base, cc) < 0 ||
-		    wdsp(base, cc >> 8) < 0) {
-			sbreset(sc->sc_base);
-			return (EIO);
+		if (wdsp(iobase, SB_DSP_WDMA) < 0 ||
+		    wdsp(iobase, cc) < 0 ||
+		    wdsp(iobase, cc >> 8) < 0) {
+			sbreset(sc);
+			return EIO;
 		}
 	} else {
-		if (wdsp(base, SB_DSP_BLOCKSIZE) < 0 ||
-		    wdsp(base, cc) < 0 ||
-		    wdsp(base, cc >> 8) < 0 ||
-		    wdsp(base, SB_DSP_HS_OUTPUT) < 0) {
-			sbreset(sc->sc_base);
-			return (EIO);
+		if (wdsp(iobase, SB_DSP_BLOCKSIZE) < 0 ||
+		    wdsp(iobase, cc) < 0 ||
+		    wdsp(iobase, cc >> 8) < 0 ||
+		    wdsp(iobase, SB_DSP_HS_OUTPUT) < 0) {
+			sbreset(sc);
+			return EIO;
 		}
 		sc->sc_locked = 1;
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -606,28 +590,23 @@ sb_dma_output(struct sb_softc *sc, void *p, int cc, void (*intr)(), void *arg)
  * completion of a dma reception.  The three modes are mutually
  * exclusive so we know a priori which event has occurred.
  */
-#ifdef NEWCONFIG
 int
-sbintr(struct sb_softc *sc)
+sbintr(unit)
+	int unit;
 {
-#else
-int
-sbintr(int unit)
-{
-	register struct sb_softc *sc = &sb_softcs[UNIT(unit)];
-#endif
+	register struct sb_softc *sc = sbcd.cd_devs[SBUNIT(unit)];
 
 	sc->sc_locked = 0;
 	/* clear interrupt */
-	inb(sc->sc_base + SBP_DSP_RSTAT);
+	inb(sc->sc_iobase + SBP_DSP_RSTAT);
 	if (sc->sc_mintr != 0) {
-		int c = rdsp(sc->sc_base);
+		int c = rdsp(sc->sc_iobase);
 		(*sc->sc_mintr)(sc->sc_arg, c);
-	} else if(sc->sc_intr != 0) {
+	} else if (sc->sc_intr != 0)
 		(*sc->sc_intr)(sc->sc_arg);
-	} else
-		return (0);
-	return (1);
+	else
+		return 0;
+	return 1;
 }
 
 /*
@@ -636,17 +615,19 @@ sbintr(int unit)
  * which allows only midi I/O; the card must be reset
  * to leave this mode.  Unfortunately, the card does not
  * use transmit interrupts, so bytes must be output
-
-
  * using polling.  To keep the polling overhead to a
  * minimum, output should be driven off a timer.
  * This is a little tricky since only 320us separate
  * consecutive midi bytes.
  */
 void
-sb_set_midi_mode(struct sb_softc *sc, void (*intr)(), void *arg)
+sb_set_midi_mode(sc, intr, arg)
+	struct sb_softc *sc;
+	void (*intr)();
+	void *arg;
 {
-	wdsp(sc->sc_base, SB_MIDI_UART_INTR);
+
+	wdsp(sc->sc_iobase, SB_MIDI_UART_INTR);
 	sc->sc_mintr = intr;
 	sc->sc_intr = 0;
 	sc->sc_arg = arg;
@@ -656,9 +637,11 @@ sb_set_midi_mode(struct sb_softc *sc, void (*intr)(), void *arg)
  * Write a byte to the midi port, when in midi uart mode.
  */
 void
-sb_midi_output(struct sb_softc *sc, int v)
+sb_midi_output(sc, v)
+	struct sb_softc *sc;
+	int v;
 {
-	if (wdsp(sc->sc_base, v) < 0)
+
+	if (wdsp(sc->sc_iobase, v) < 0)
 		++sberr.wmidi;
 }
-#endif

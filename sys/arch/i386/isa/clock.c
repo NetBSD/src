@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.18 1994/03/06 17:18:48 mycroft Exp $
+ *	$Id: clock.c,v 1.19 1994/03/29 04:35:41 mycroft Exp $
  */
 /* 
  * Mach Operating System
@@ -93,6 +93,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
+#include <machine/cpufunc.h>
 
 #include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
@@ -103,7 +104,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 void spinwait __P((int));
 
 void
-startrtclock(void)
+startrtclock()
 {
 	int s;
 
@@ -126,27 +127,105 @@ void
 clockintr(frame)
 	clockframe frame;
 {
+
 	hardclock(&frame);
+}
+
+int
+gettick()
+{
+	u_char lo, hi;
+
+	/* Don't want someone screwing with the counter while we're here. */
+	disable_intr();
+	/* Select counter 0 and latch it. */
+	outb(TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
+	lo = inb(TIMER_CNTR0);
+	hi = inb(TIMER_CNTR0);
+	enable_intr();
+	return ((hi << 8) | lo);
+}
+
+/*
+ * Wait "n" microseconds.
+ * Relies on timer 1 counting down from (TIMER_FREQ / hz) at TIMER_FREQ Hz.
+ * Note: timer had better have been programmed before this is first used!
+ * (Note that we use `rate generator' mode, which counts at 1:1; `square
+ * wave' mode counts at 2:1).
+ */
+void
+delay(n)
+	int n;
+{
+	int limit, tick, otick;
+
+	/*
+	 * Read the counter first, so that the rest of the setup overhead is
+	 * counted.
+	 */
+	otick = gettick();
+
+#ifdef __GNUC__
+	/*
+	 * Calculate ((n * TIMER_FREQ) / 1e6) using explicit assembler code so
+	 * we can take advantage of the intermediate 64-bit quantity to prevent
+	 * loss of significance.
+	 */
+	n -= 5;
+	if (n < 0)
+		return;
+	{register int m;
+	__asm __volatile("mul %3"
+			 : "=a" (n), "=d" (m)
+			 : "0" (n), "r" (TIMER_FREQ));
+	__asm __volatile("div %3"
+			 : "=a" (n)
+			 : "0" (n), "d" (m), "r" (1000000)
+			 : "%edx");}
+#else
+	/*
+	 * Calculate ((n * TIMER_FREQ) / 1e6) without using floating point and
+	 * without any avoidable overflows.
+	 */
+	n -= 20;
+	{
+		int sec = n / 1000000,
+		    usec = n % 1000000;
+		n = sec * TIMER_FREQ +
+		    usec * (TIMER_FREQ / 1000000) +
+		    usec * ((TIMER_FREQ % 1000000) / 1000) / 1000 +
+		    usec * (TIMER_FREQ % 1000) / 1000000;
+	}
+#endif
+
+	limit = TIMER_FREQ / hz;
+
+	while (n > 0) {
+		tick = gettick();
+		if (tick > otick)
+			n -= limit - (tick - otick);
+		else
+			n -= otick - tick;
+		otick = tick;
+	}
 }
 
 unsigned int delaycount;	/* calibrated loop variable (1 millisecond) */
 
 #define FIRST_GUESS	0x2000
-findcpuspeed(void)
+findcpuspeed()
 {
-	unsigned char low;
-	unsigned int remainder;
+	int i;
+	int remainder;
 
 	/* Put counter in count down mode */
-	outb(IO_TIMER1+3, 0x34);
-	outb(IO_TIMER1, 0xff);
-	outb(IO_TIMER1, 0xff);
-	delaycount = FIRST_GUESS;
-	spinwait(1);
+	outb(TIMER_MODE, TIMER_SEL0 | TIMER_16BIT | TIMER_RATEGEN);
+	outb(TIMER_CNTR0, 0xff);
+	outb(TIMER_CNTR0, 0xff);
+	for (i = FIRST_GUESS; i; i--)
+		;
 	/* Read the value left in the counter */
-	low 	= inb(IO_TIMER1);	/* least siginifcant */
-	remainder = inb(IO_TIMER1);	/* most significant */
-	remainder = (remainder<<8) + low ;
+	remainder = gettick();
 	/* Formula for delaycount is :
 	 *  (loopcount * timer clock speed)/ (counter ticks * 1000)
 	 */
@@ -160,43 +239,36 @@ findcpuspeed(void)
 extern VEC(clk)();
 
 void
-enablertclock(void) {
+enablertclock()
+{
+
 	setidt(ICU_OFFSET+0, &VEC(clk), SDT_SYS386IGT, SEL_KPL);
 	INTREN(IRQ0);
 }
 
-/*
- * Delay for some number of milliseconds.
- */
 void
-spinwait(int millisecs)
+rtcinit()
 {
-	delay(1000 * millisecs);
-}
+	static int first_rtcopen_ever = 1;
 
-static int first_rtcopen_ever = 1;
+        if (!first_rtcopen_ever)
+		return;
+	first_rtcopen_ever = 0;
 
-void
-rtcinit(void)
-{
-        if (first_rtcopen_ever) {
-                outb(IO_RTC, RTC_STATUSA);
-                outb(IO_RTC+1, RTC_DIV2 | RTC_RATE6);
-                outb(IO_RTC, RTC_STATUSB);
-                outb(IO_RTC+1, RTC_HM);
-                first_rtcopen_ever = 0;
-        }
+	outb(IO_RTC, RTC_STATUSA);
+	outb(IO_RTC+1, RTC_DIV2 | RTC_RATE6);
+	outb(IO_RTC, RTC_STATUSB);
+	outb(IO_RTC+1, RTC_HM);
 }
 
 int
-rtcget(struct rtc_st *rtc_regs)
+rtcget(rtc_regs)
+	struct rtc_st *rtc_regs;
 {
-	int	i;
+	int i;
         u_char *regs = (u_char *)rtc_regs;
         
-	if (first_rtcopen_ever) {
-		rtcinit();
-	}
+	rtcinit();
 	outb(IO_RTC, RTC_D); 
 	if (inb(IO_RTC+1) & RTC_VRT == 0) return(-1);
 	outb(IO_RTC, RTC_STATUSA);	
@@ -210,15 +282,14 @@ rtcget(struct rtc_st *rtc_regs)
 }	
 
 void
-rtcput(struct rtc_st *rtc_regs)
+rtcput(rtc_regs)
+	struct rtc_st *rtc_regs;
 {
-	u_char	x;
-	int	i;
+	u_char x;
+	int i;
         u_char *regs = (u_char *)rtc_regs;
 
-	if (first_rtcopen_ever) {
-		rtcinit();
-	}
+	rtcinit();
 	outb(IO_RTC, RTC_STATUSB);
 	x = inb(IO_RTC+1);
 	outb(IO_RTC, RTC_STATUSB);
@@ -234,20 +305,26 @@ rtcput(struct rtc_st *rtc_regs)
 static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
 static int
-yeartoday(int year)
+yeartoday(year)
+	int year;
 {
+
 	return((year%4) ? 365 : 366);
 }
 
 int
-hexdectodec(char n)
+hexdectodec(n)
+	char n;
 {
+
 	return(((n>>4)&0x0F)*10 + (n&0x0F));
 }
 
 char
-dectohexdec(int n)
+dectohexdec(n)
+	int n;
 {
+
 	return((char)(((n/10)<<4)&0xF0) | ((n%10)&0x0F));
 }
 
@@ -267,14 +344,14 @@ inittodr(base)
 	time_t n;
 	int sec, min, hr, dom, mon, yr;
 	int i, days = 0;
-	int ospl;
+	int s;
 
-	ospl = splclock();
+	s = splclock();
 	if (rtcget(&rtclk)) {
-		splx(ospl);
+		splx(s);
 		return;
 	}
-	splx (ospl);
+	splx(s);
 
 	sec = hexdectodec(rtclk.rtc_sec);
 	min = hexdectodec(rtclk.rtc_min);
@@ -312,13 +389,12 @@ resettodr()
 	struct rtc_st rtclk;
 	time_t n;
 	int diff, i, j;
-	int ospl;
+	int s;
 
-	ospl = splclock();
-	if (rtcget(&rtclk)) {
+	s = splclock();
+	if (rtcget(&rtclk))
                 bzero(&rtclk, sizeof(rtclk));
-	}
-	splx(ospl);
+	splx(s);
 
 	diff = tz.tz_minuteswest * 60;
 	if (tz.tz_dsttime)
@@ -346,7 +422,7 @@ resettodr()
 
 	rtclk.rtc_dom = dectohexdec(++n);
 
-	ospl = splclock();
+	s = splclock();
 	rtcput(&rtclk);
-	splx(ospl);
+	splx(s);
 }

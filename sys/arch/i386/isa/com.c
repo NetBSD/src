@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.28 1994/03/25 04:38:01 mycroft Exp $
+ *	$Id: com.c,v 1.29 1994/03/29 04:35:44 mycroft Exp $
  */
 
 /*
@@ -40,7 +40,6 @@
  * uses National Semiconductor NS16450/NS16550AF UART
  */
 #include "com.h"
-#include "ast.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +59,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/comreg.h>
 #include <i386/isa/ic/ns16550.h>
 
@@ -69,7 +68,7 @@ struct com_softc {
 
 	u_short sc_iobase;
 	u_char sc_hwflags;
-#define	COM_HW_MULTI	0x01
+#define	COM_HW_NOIEN	0x01
 #define	COM_HW_FIFO	0x02
 #define	COM_HW_CONSOLE	0x40
 	u_char sc_swflags;
@@ -78,20 +77,20 @@ struct com_softc {
 #define	COM_SW_CRTSCTS	0x04
 #define	COM_SW_MDMBUF	0x08
 	u_char sc_msr, sc_mcr;
-} com_softc[NCOM];
+};
 /* XXXX should be in com_softc, but not ready for that yet */
 struct	tty *com_tty[NCOM];
 
-int comprobe __P((struct isa_device *));
-int comattach __P((struct isa_device *));
+int comprobe();
+void comattach();
 int comopen __P((dev_t, int, int, struct proc *));
 int comclose __P((dev_t, int, int, struct proc *));
 int comintr __P((int));
 int comparam __P((struct tty *, struct termios *));
 void comstart __P((struct tty *));
 
-struct	isa_driver comdriver = {
-	comprobe, comattach, "com"
+struct cfdriver comcd = {
+	NULL, "com", comprobe, comattach, DV_TTY, sizeof(struct com_softc)
 };
 
 int	comdefaultrate = TTYDEF_SPEED;
@@ -157,65 +156,39 @@ comprobe1(iobase)
 }
 
 int
-comprobe(dev)
-	struct isa_device *dev;
+comprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct com_softc *sc = &com_softc[dev->id_unit];
-	u_short iobase = dev->id_iobase;
-
-	if (dev->id_parent) {
-		if (iobase == 0) {
-			/*
-			 * For multiport cards, the iobase may be left
-			 * unspecified (zero) for slave ports.  In
-			 * that case we calculate it from the master
-			 * (parent) iobase setting and the slave port
-			 * number (physid).
-			 */
-			iobase = dev->id_iobase =
-			    dev->id_parent->id_iobase + (8 * dev->id_physid);
-		}
-	}
-
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", comdriver.name, dev->id_unit);
-	sc->sc_dev.dv_unit = dev->id_unit;
+	struct com_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 
 	if (!comprobe1(iobase))
 		return 0;
 
-	return COM_NPORTS;
+	ia->ia_iosize = COM_NPORTS;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int
-comattach(dev)
-	struct isa_device *dev;
+void
+comattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	int unit = dev->id_unit;
-	struct com_softc *sc = &com_softc[unit];
-	u_short iobase = dev->id_iobase;
+	struct com_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	struct cfdata *cf = sc->sc_dev.dv_cfdata;
+	u_short iobase = ia->ia_iobase;
 	struct tty *tp;
 
-	if (unit == comconsole)
-		delay(1000);
-
 	sc->sc_iobase = iobase;
-	sc->sc_hwflags = 0;
+	sc->sc_hwflags = cf->cf_flags & COM_HW_NOIEN;
 	sc->sc_swflags = 0;
 
-	printf("%s: ", sc->sc_dev.dv_xname);
-
-	printf("%s", sc->sc_dev.dv_xname);
-#if NAST > 0
-	if (dev->id_parent) {
-		printf(" at 0x%x %s%d slave %d",
-		    dev->id_iobase, dev->id_parent->id_driver->name,
-		    dev->id_parent->id_unit, dev->id_physid);
-		astslave(dev);
-		sc->sc_hwflags |= COM_HW_MULTI;
-	}
-#endif
-	printf(": ");
+	if (sc->sc_dev.dv_unit == comconsole)
+		delay(1000);
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(iobase + com_fifo,
@@ -224,11 +197,11 @@ comattach(dev)
 	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK)
 		if ((inb(iobase + com_fifo) & FIFO_TRIGGER_14) == FIFO_TRIGGER_14) {
 			sc->sc_hwflags |= COM_HW_FIFO;
-			printf("ns16550a, working fifo\n");
+			printf(": ns16550a, working fifo\n");
 		} else
-			printf("ns82550 or ns16550, broken fifo\n");
+			printf(": ns82550 or ns16550, broken fifo\n");
 	else
-		printf("ns82450 or ns16450, no fifo\n");
+		printf(": ns82450 or ns16450, no fifo\n");
 	outb(iobase + com_fifo, 0);
 
 	/* disable interrupts */
@@ -255,11 +228,11 @@ comattach(dev)
 	}
 #endif
 
-	/*
-	 * Need to reset baud rate, etc. of next print so reset comconsinit.
-	 * Also make sure console is always "hardwired".
-	 */
-	if (unit == comconsole) {
+	if (sc->sc_dev.dv_unit == comconsole) {
+		/*
+		 * Need to reset baud rate, etc. of next print so reset
+		 * comconsinit.  Also make sure console is always "hardwired".
+		 */
 		comconsinit = 0;
 		sc->sc_hwflags |= COM_HW_CONSOLE;
 		sc->sc_swflags |= COM_SW_SOFTCAR;
@@ -279,10 +252,10 @@ comopen(dev, flag, mode, p)
 	int s;
 	int error = 0;
  
-	if (unit >= NCOM)
+	if (unit >= comcd.cd_ndevs)
 		return ENXIO;
-	sc = &com_softc[unit];
-	if (!sc->sc_iobase)
+	sc = comcd.cd_devs[unit];
+	if (!sc)
 		return ENXIO;
 
 	s = spltty();
@@ -322,7 +295,7 @@ comopen(dev, flag, mode, p)
 		(void) inb(iobase + com_data);
 		/* you turn me on, baby */
 		sc->sc_mcr = MCR_DTR | MCR_RTS;
-		if (!(sc->sc_hwflags & COM_HW_MULTI))
+		if (!(sc->sc_hwflags & COM_HW_NOIEN))
 			sc->sc_mcr |= MCR_IENABLE;
 		outb(iobase + com_mcr, sc->sc_mcr);
 		outb(iobase + com_ier,
@@ -365,7 +338,7 @@ comclose(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = &com_softc[unit];
+	struct com_softc *sc = comcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	struct tty *tp = com_tty[unit];
 
@@ -436,7 +409,7 @@ comioctl(dev, cmd, data, flag, p)
 	struct proc *p;
 {
 	int unit = COMUNIT(dev);
-	struct com_softc *sc = &com_softc[unit];
+	struct com_softc *sc = comcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	struct tty *tp = com_tty[unit];
 	int error;
@@ -540,7 +513,7 @@ comparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
 {
-	struct com_softc *sc = &com_softc[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
 	u_short iobase = sc->sc_iobase;
 	int ospeed = comspeed(t->c_ospeed);
 	u_char cfcr;
@@ -635,7 +608,7 @@ void
 comstart(tp)
 	struct tty *tp;
 {
-	struct com_softc *sc = &com_softc[COMUNIT(tp->t_dev)];
+	struct com_softc *sc = comcd.cd_devs[COMUNIT(tp->t_dev)];
 	u_short iobase = sc->sc_iobase;
 	int s;
 
@@ -749,7 +722,7 @@ int
 comintr(unit)
 	int unit;
 {
-	struct com_softc *sc = &com_softc[unit];
+	struct com_softc *sc = comcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	struct tty *tp;
 	u_char code;
@@ -807,7 +780,6 @@ comintr(unit)
 comcnprobe(cp)
 	struct consdev *cp;
 {
-	int unit = CONUNIT;
 
 	if (!comprobe1(CONADDR)) {
 		cp->cn_pri = CN_DEAD;
@@ -819,10 +791,8 @@ comcnprobe(cp)
 		if (cdevsw[commajor].d_open == comopen)
 			break;
 
-	com_softc[unit].sc_iobase = CONADDR;
-
 	/* initialize required fields */
-	cp->cn_dev = makedev(commajor, unit);
+	cp->cn_dev = makedev(commajor, CONUNIT);
 #ifdef	COMCONSOLE
 	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
 #else
@@ -833,10 +803,9 @@ comcnprobe(cp)
 comcninit(cp)
 	struct consdev *cp;
 {
-	int unit = CONUNIT;
 
-	cominit(unit, comdefaultrate);
-	comconsole = unit;
+	cominit(CONUNIT, comdefaultrate);
+	comconsole = CONUNIT;
 	comconsinit = 0;
 }
 
@@ -844,7 +813,7 @@ cominit(unit, rate)
 	int unit, rate;
 {
 	int s = splhigh();
-	u_short iobase = com_softc[unit].sc_iobase;
+	u_short iobase = CONADDR;
 	u_char stat;
 
 	outb(iobase + com_cfcr, CFCR_DLAB);
@@ -862,7 +831,7 @@ comcngetc(dev)
 	dev_t dev;
 {
 	int s = splhigh();
-	u_short iobase = com_softc[COMUNIT(dev)].sc_iobase;
+	u_short iobase = CONADDR;
 	u_char stat, c;
 
 	while (((stat = inb(iobase + com_lsr)) & LSR_RXRDY) == 0)
@@ -881,7 +850,7 @@ comcnputc(dev, c)
 	int c;
 {
 	int s = splhigh();
-	u_short iobase = com_softc[COMUNIT(dev)].sc_iobase;
+	u_short iobase = CONADDR;
 	u_char stat;
 	register int timo;
 

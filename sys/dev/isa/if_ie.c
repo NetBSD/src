@@ -40,7 +40,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: if_ie.c,v 1.6 1994/03/06 17:19:04 mycroft Exp $
+ *	$Id: if_ie.c,v 1.7 1994/03/29 04:35:58 mycroft Exp $
  */
 
 /*
@@ -100,7 +100,6 @@ interval [sc_maddr, sc_maddr + sc_msize); to make 24-pointers, we subtract
 iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 */
 
-#include "ie.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -143,9 +142,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/ic/i82586.h>
 #include <i386/isa/if_ieatt.h>
 #include <i386/isa/if_ie507.h>
@@ -251,10 +248,8 @@ struct ie_softc {
 #if NBPFILTER > 0
 	caddr_t sc_bpf;
 #endif
-} ie_softc[NIE];
+};
 
-int ieprobe __P((struct isa_device *));
-int ieattach __P((struct isa_device *));
 int iewatchdog __P((/* short */));
 int ieintr __P((int));
 int ieinit __P((struct ie_softc *sc));
@@ -286,10 +281,11 @@ int in_ierint = 0;
 int in_ietint = 0;
 #endif
 
-struct isa_driver iedriver = {
-	ieprobe,
-	ieattach,
-	"ie"
+int ieprobe();
+void ieattach();
+
+struct cfdriver iecd = {
+	NULL, "ie", ieprobe, ieattach, DV_IFNET, sizeof(struct ie_softc)
 };
 
 #define MK_24(base, ptr) ((caddr_t)((u_long)ptr - (u_long)base))
@@ -350,32 +346,29 @@ ie_ack(sc, mask)
 }
 
 int
-ieprobe(isa_dev)
-	struct isa_device *isa_dev;
+ieprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ie_softc *sc = &ie_softc[isa_dev->id_unit];
-	int nports;
+	struct ie_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", iedriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
-
-	if (nports = sl_probe(isa_dev, sc))
-		return nports;
-	if (nports = el_probe(isa_dev, sc))
-		return nports;
+	if (sl_probe(sc, ia))
+		return 1;
+	if (el_probe(sc, ia))
+		return 1;
 	return 0;
 }
 
 int
-sl_probe(isa_dev, sc)
-	struct isa_device *isa_dev;
+sl_probe(sc, ia)
 	struct ie_softc *sc;
+	struct isa_attach_args *ia;
 {
 	u_char c;
 
-	sc->sc_iobase = isa_dev->id_iobase;
-	sc->sc_maddr = isa_dev->id_maddr;
+	sc->sc_iobase = ia->ia_iobase;
+	sc->sc_maddr = ia->ia_maddr;
 
 	c = inb(PORT + IEATT_REVISION);
 	switch(SL_BOARD(c)) {
@@ -408,11 +401,11 @@ sl_probe(isa_dev, sc)
 		return 0;
 	}
 
-	if (!isa_dev->id_msize)
-		isa_dev->id_msize = sc->sc_msize;
-	else if (isa_dev->id_msize != sc->sc_msize) {
+	if (!ia->ia_msize)
+		ia->ia_msize = sc->sc_msize;
+	else if (ia->ia_msize != sc->sc_msize) {
 		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
-		    sc->sc_dev.dv_xname, isa_dev->id_msize, sc->sc_msize);
+		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		return 0;
 	}
 
@@ -420,20 +413,21 @@ sl_probe(isa_dev, sc)
 	sc->chan_attn = sl_chan_attn;
 	slel_get_address(sc);
 
-	return 16;
+	ia->ia_iosize = 16;
+	return 1;
 }
 
 int
-el_probe(isa_dev, sc)
-	struct isa_device *isa_dev;
+el_probe(sc, ia)
 	struct ie_softc *sc;
+	struct isa_attach_args *ia;
 {
 	u_char c;
 	int i;
 	u_char signature[] = "*3COM*";
 
-	sc->sc_iobase = isa_dev->id_iobase;
-	sc->sc_maddr = isa_dev->id_maddr;
+	sc->sc_iobase = ia->ia_iobase;
+	sc->sc_maddr = ia->ia_maddr;
 
 	/* Reset and put card in CONFIG state without changing address. */
 	elink_reset();
@@ -462,17 +456,17 @@ el_probe(isa_dev, sc)
 	
 	c = inb(PORT + IE507_IRQ) & 0x0f;
 
-	if (isa_dev->id_irq != (1 << c)) {
+	if (ia->ia_irq != (1 << c)) {
 		printf("%s: kernel configured irq %d doesn't match board configured irq %d\n",
-		    sc->sc_dev.dv_xname, ffs(isa_dev->id_irq) - 1, c);
+		    sc->sc_dev.dv_xname, ffs(ia->ia_irq) - 1, c);
 		return 0;
 	}
 
 	c = (inb(PORT + IE507_MADDR) & 0x1c) + 0xc0;
 
-	if (kvtop(isa_dev->id_maddr) != ((int)c << 12)) {
+	if (kvtop(ia->ia_maddr) != ((int)c << 12)) {
 		printf("%s: kernel configured maddr %x doesn't match board configured maddr %x\n",
-		    sc->sc_dev.dv_xname, kvtop(isa_dev->id_maddr),
+		    sc->sc_dev.dv_xname, kvtop(ia->ia_maddr),
 		    (int)c << 12);
 		return 0;
 	}
@@ -492,11 +486,11 @@ el_probe(isa_dev, sc)
 		return 0;
 	}
 
-	if (!isa_dev->id_msize)
-		isa_dev->id_msize = sc->sc_msize;
-	else if (isa_dev->id_msize != sc->sc_msize) {
+	if (!ia->ia_msize)
+		ia->ia_msize = sc->sc_msize;
+	else if (ia->ia_msize != sc->sc_msize) {
 		printf("%s: kernel configured msize %d doesn't match board configured msize %d\n",
-		    sc->sc_dev.dv_xname, isa_dev->id_msize, sc->sc_msize);
+		    sc->sc_dev.dv_xname, ia->ia_msize, sc->sc_msize);
 		outb(PORT + IE507_CTRL, EL_CTRL_NRST);
 		return 0;
 	}
@@ -505,23 +499,25 @@ el_probe(isa_dev, sc)
 	sc->chan_attn = el_chan_attn;
 	slel_get_address(sc);
 
-	return 16;
+	ia->ia_iosize = 16;
+	return 1;
 }
 
 /*
  * Taken almost exactly from Bill's if_is.c, then modified beyond recognition.
  */
-int
-ieattach(isa_dev)
-	struct isa_device *isa_dev;
+void
+ieattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ie_softc *sc = &ie_softc[isa_dev->id_unit];
+	struct ie_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
 
 	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = iedriver.name;
+	ifp->if_name = iecd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = iestart;
@@ -570,7 +566,7 @@ int
 iewatchdog(unit)
 	short unit;
 {
-	struct ie_softc *sc = &ie_softc[unit];
+	struct ie_softc *sc = iecd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -585,7 +581,7 @@ int
 ieintr(unit)
 	int unit;
 {
-	struct ie_softc *sc = &ie_softc[unit];
+	struct ie_softc *sc = iecd.cd_devs[unit];
 	register u_short status;
 
 	status = sc->scb->ie_status;
@@ -1243,7 +1239,7 @@ int
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = &ie_softc[ifp->if_unit];
+	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -1847,7 +1843,7 @@ ieioctl(ifp, cmd, data)
 	int cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = &ie_softc[ifp->if_unit];
+	struct ie_softc *sc = iecd.cd_devs[ifp->if_unit];
 	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;

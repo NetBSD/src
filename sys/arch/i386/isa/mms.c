@@ -20,10 +20,8 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: mms.c,v 1.8 1994/02/17 03:39:55 mycroft Exp $
+ *	$Id: mms.c,v 1.9 1994/03/29 04:36:16 mycroft Exp $
  */
-
-#include "mms.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,7 +40,7 @@
 #include <machine/pio.h>
 #include <machine/mouse.h>
 
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 
 #define	MMS_ADDR	0	/* offset for register select */
 #define	MMS_DATA	1	/* offset for InPort data */
@@ -63,21 +61,25 @@ struct mms_softc {		/* driver status information */
 #define	MMS_ASLP	0x02	/* waiting for mouse data */
 	u_char sc_status;	/* mouse button status */
 	int sc_x, sc_y;		/* accumulated motion in the X,Y axis */
-} mms_softc[NMMS];
+};
 
-int mmsprobe __P((struct isa_device *));
-int mmsattach __P((struct isa_device *));
+int mmsprobe();
+void mmsattach();
 int mmsintr __P((int));
 
-struct isa_driver mmsdriver = { mmsprobe, mmsattach, "mms" };
+struct cfdriver mmscd = {
+	NULL, "mms", mmsprobe, mmsattach, DV_TTY, sizeof(struct mms_softc)
+};
 
 #define	MMSUNIT(dev)	(minor(dev))
 
 int
-mmsprobe(isa_dev)
-	struct isa_device *isa_dev;
+mmsprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	u_short iobase = isa_dev->id_iobase;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 
 	/* Read identification register to see if present */
 	if (inb(iobase + MMS_IDENT) != 0xde)
@@ -86,23 +88,23 @@ mmsprobe(isa_dev)
 	/* Seems it was there; reset. */
 	outb(iobase + MMS_ADDR, 0x87);
 
-	return MMS_NPORTS;
+	ia->ia_iosize = MMS_NPORTS;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int
-mmsattach(isa_dev)
-	struct isa_device *isa_dev;
+void
+mmsattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct mms_softc *sc = &mms_softc[isa_dev->id_unit];
-	u_short iobase = isa_dev->id_iobase;
+	struct mms_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 
 	/* Other initialization was done by mmsprobe. */
 	sc->sc_iobase = iobase;
 	sc->sc_state = 0;
-
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", mmsdriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
 }
 
 int
@@ -113,10 +115,10 @@ mmsopen(dev, flag)
 	int unit = MMSUNIT(dev);
 	struct mms_softc *sc;
 
-	if (unit >= NMMS)
+	if (unit >= mmscd.cd_ndevs)
 		return ENXIO;
-	sc = &mms_softc[unit];
-	if (!sc->sc_iobase)
+	sc = mmscd.cd_devs[unit];
+	if (!sc)
 		return ENXIO;
 
 	if (sc->sc_state & MMS_OPEN)
@@ -141,7 +143,7 @@ mmsclose(dev, flag)
 	dev_t dev;
 	int flag;
 {
-	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
+	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
 
 	/* Disable interrupts. */
 	outb(sc->sc_iobase + MMS_ADDR, 0x87);
@@ -159,7 +161,7 @@ mmsread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
+	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
 	int s;
 	int error;
 	size_t length;
@@ -207,7 +209,7 @@ mmsioctl(dev, cmd, addr, flag)
 	caddr_t addr;
 	int flag;
 {
-	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
+	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
 	struct mouseinfo info;
 	int s;
 	int error;
@@ -256,7 +258,7 @@ int
 mmsintr(unit)
 	int unit;
 {
-	struct mms_softc *sc = &mms_softc[unit];
+	struct mms_softc *sc = mmscd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	u_char buttons, changed, status;
 	char dx, dy;
@@ -319,7 +321,7 @@ mmsselect(dev, rw, p)
 	int rw;
 	struct proc *p;
 {
-	struct mms_softc *sc = &mms_softc[MMSUNIT(dev)];
+	struct mms_softc *sc = mmscd.cd_devs[MMSUNIT(dev)];
 	int s;
 	int ret;
 

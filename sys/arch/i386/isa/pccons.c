@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.60 1994/03/12 03:45:05 mycroft Exp $
+ *	$Id: pccons.c,v 1.61 1994/03/29 04:36:23 mycroft Exp $
  */
 
 /*
@@ -65,9 +65,9 @@
 #include <machine/pc/display.h>
 #include <machine/pccons.h>
 
-#include <i386/isa/isa_device.h>
-#include <i386/isa/icu.h>
 #include <i386/isa/isa.h>
+#include <i386/isa/isavar.h>
+#include <i386/isa/icu.h>
 #include <i386/isa/kbdreg.h>
 
 #define	XFREE86_BUG_COMPAT
@@ -111,10 +111,11 @@ static struct video_state {
 	char	so_at;		/* standout attributes */
 } vs;
 
-int pcprobe(), pcattach();
+int pcprobe();
+void pcattach();
 
-struct	isa_driver pcdriver = {
-	pcprobe, pcattach, "pc",
+struct cfdriver pccd = {
+	NULL, "pc", pcprobe, pcattach, DV_TTY, sizeof(struct device)
 };
 
 #define	COL		80
@@ -313,9 +314,11 @@ async_update()
  * these are both bad jokes
  */
 int
-pcprobe(dev)
-	struct isa_device *dev;
+pcprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
+	struct isa_attach_args *ia = aux;
 	u_char c;
 
 	/* Enable interrupts and keyboard, etc. */
@@ -385,21 +388,18 @@ lose:
 	 */
 #endif
 
-	return 16;
+	ia->ia_iosize = 16;
+	ia->ia_msize = 0;
+	return 1;
 }
 
-int
-pcattach(dev)
-	struct isa_device *dev;
+void
+pcattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
 
-	printf("pc%d: ", dev->id_unit);
-	if (vs.color == 0)
-		printf("mono");
-	else
-		printf("color");
-	printf("\n");
-
+	printf(": %s\n", vs.color ? "color" : "mono");
 	do_async_update(1);
 }
 
@@ -412,13 +412,13 @@ pcopen(dev, flag, mode, p)
 	int unit = PCUNIT(dev);
 	struct tty *tp;
 
-	if (unit >= NPC)
+	if (unit >= pccd.cd_ndevs)
 		return ENXIO;
 
-	if (!pc_tty[0])
-		tp = pc_tty[0] = ttymalloc();
+	if (!pc_tty[unit])
+		tp = pc_tty[unit] = ttymalloc();
 	else
-		tp = pc_tty[0];
+		tp = pc_tty[unit];
 
 	tp->t_oproc = pcstart;
 	tp->t_param = pcparam;
@@ -446,7 +446,7 @@ pcclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
-	register struct tty *tp = pc_tty[0];
+	register struct tty *tp = pc_tty[PCUNIT(dev)];
 
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);

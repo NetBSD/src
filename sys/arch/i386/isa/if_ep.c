@@ -21,17 +21,14 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.24 1994/03/14 06:57:25 hpeyerl Exp $
+ *	$Id: if_ep.c,v 1.25 1994/03/29 04:35:53 mycroft Exp $
  */
 /*
  * TODO:
  *	Multi-509 configs.
- *	don't pass unit into epstop.
- *	epintr returns an int for magnum. 0=not for me. 1=for me. -1=whoknows?
  *	deallocate mbufs when ifconfig'd down.
  */
 
-#include "ep.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -41,6 +38,7 @@
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/select.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -69,9 +67,7 @@
 #include <machine/cpu.h>
 #include <machine/pio.h>
 
-#include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
-#include <i386/isa/icu.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/if_epreg.h>
 #include <i386/isa/elink.h>
 
@@ -82,8 +78,11 @@
  * Ethernet software status per interface.
  */
 struct ep_softc {
+	struct device sc_dev;
+	struct intrhand sc_ih;
+
 	struct arpcom ep_ac;		/* Ethernet common part		*/
-	short   ep_io_addr;		/* i/o bus address		*/
+	short   ep_iobase;		/* i/o bus address		*/
 	char    ep_connectors;		/* Connectors on this card.	*/
 #define MAX_MBS  4			/* # of mbufs we keep around	*/
 	struct mbuf *mb[MAX_MBS];	/* spare mbuf storage.		*/
@@ -91,29 +90,27 @@ struct ep_softc {
 	int	last_mb;		/* Last mbuf.			*/
 	int	tx_start_thresh;	/* Current TX_start_thresh.	*/
 	caddr_t bpf;			/* BPF  "magic cookie"		*/
-} ep_softc[NEP];
+};
 
-static int epprobe __P((struct isa_device *));
-static int epattach __P((struct isa_device *));
+static int epprobe();
+static void epattach();
 
-struct isa_driver epdriver = {
-	epprobe,
-	epattach,
-	"ep"
+struct cfdriver epcd = {
+	NULL, "ep", epprobe, epattach, DV_IFNET, sizeof(struct ep_softc)
 };
 
 int epintr __P((int));
-static int epinit __P((int));
-static int epioctl __P((struct ifnet * ifp, int, caddr_t));
+static void epinit __P((struct ep_softc *));
+static int epioctl __P((struct ifnet *, int, caddr_t));
 static int epstart __P((struct ifnet *));
 static int epwatchdog __P((int));
-static void epreset __P((int));
+static void epreset __P((struct ep_softc *));
 static void epread __P((struct ep_softc *));
 static void epmbufqueue __P((struct ep_softc *));
-static void epstop __P((int));
+static void epstop __P((struct ep_softc *));
 
 static u_short epreadeeprom __P((int id_port, int offset));
-static int epbusyeeprom __P((struct isa_device * is));
+static int epbusyeeprom __P((struct ep_softc *));
 
 /*
  * Eisa probe routine. If any part of this probe should fail to
@@ -122,10 +119,12 @@ static int epbusyeeprom __P((struct isa_device * is));
  * at the moment.
  */
 int
-epprobe(is)
-	struct isa_device *is;
+epprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ep_softc *sc = &ep_softc[is->id_unit];
+	struct ep_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	int port;
 	int i;
 	int eisa_slot;
@@ -142,18 +141,20 @@ epprobe(is)
 	}
 	k = inw(port + EP_W0_PRODUCT_ID);
 	if ((k & 0xf0ff) != (PROD_ID & 0xf0ff))
-		return(isa_epprobe(is));
+		return isa_epprobe(sc, ia);
 
 	k = inw(port + EP_W0_ADDRESS_CFG);
 	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
 		
 	k = inw(port + EP_W0_RESOURCE_CFG);
 	k >>= 12;
-	if (is->id_irq != (1 << ((k == 2) ? 9 : k)))
-		return (isa_epprobe(is));
+	if (ia->ia_irq != (1 << ((k == 2) ? 9 : k)))
+		return isa_epprobe(sc, ia);
 
-	is->id_iobase = port;	/* Set the base addr for later */
-	return(0x10);
+	ia->ia_iobase = port;	/* Set the base addr for later */
+	ia->ia_iosize = 0x10;
+	ia->ia_msize = 0;
+	return 1;
 }
 
 /*
@@ -164,10 +165,10 @@ epprobe(is)
  * Magnum config holds promise of a fix but we'll have to wait a bit.
  */
 int
-isa_epprobe(is)
-	struct isa_device *is;
+isa_epprobe(sc, ia)
+	struct ep_softc *sc;
+	struct isa_attach_args *ia;
 {
-	struct ep_softc *sc = &ep_softc[is->id_unit];
 	u_short k;
 
 	outw(BASE + EP_COMMAND, GLOBAL_RESET);
@@ -191,12 +192,12 @@ isa_epprobe(is)
 
 	k = epreadeeprom(ELINK_ID_PORT, EEPROM_ADDR_CFG);	/* get addr cfg */
 	k = (k & 0x1f) * 0x10 + 0x200;			/* decode base addr. */
-	if (k != is->id_iobase)
+	if (k != ia->ia_iobase)
 		return (0);
 
 	k = epreadeeprom(ELINK_ID_PORT, EEPROM_RESOURCE_CFG);
 	k >>= 12;
-	if (is->id_irq != (1 << ((k == 2) ? 9 : k)))
+	if (ia->ia_irq != (1 << ((k == 2) ? 9 : k)))
 		return (0);
 
 	outb(ELINK_ID_PORT, ACTIVATE_ADAPTER_TO_CONFIG);
@@ -204,22 +205,24 @@ isa_epprobe(is)
 	return (0x10);		/* 16 bytes of I/O space used. */
 }
 
-static int
-epattach(is)
-	struct isa_device *is;
+static void
+epattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct ep_softc *sc = &ep_softc[is->id_unit];
+	struct ep_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
 	struct ifnet *ifp = &sc->ep_ac.ac_if;
-	u_short i;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
+	u_short i;
 
-	sc->ep_io_addr = is->id_iobase;
+	printf(": ");
 
-	printf("ep%d: ", is->id_unit);
+	sc->ep_iobase = ia->ia_iobase;
 
 	sc->ep_connectors = 0;
-	i = inw(is->id_iobase + EP_W0_CONFIG_CTRL);
+	i = inw(ia->ia_iobase + EP_W0_CONFIG_CTRL);
 	if (i & IS_AUI) {
 		printf("aui");
 		sc->ep_connectors |= AUI;
@@ -245,11 +248,11 @@ epattach(is)
 	for (i = 0; i < 3; i++) {
 		u_short *p;
 		GO_WINDOW(0);
-		if (epbusyeeprom(is))
-			return (0);
+		if (epbusyeeprom(sc))
+			return;
 		outw(BASE + EP_W0_EEPROM_COMMAND, READ_EEPROM | i);
-		if (epbusyeeprom(is))
-			return (0);
+		if (epbusyeeprom(sc))
+			return;
 		p = (u_short *) & sc->ep_ac.ac_enaddr[i * 2];
 		*p = htons(inw(BASE + EP_W0_EEPROM_DATA));
 		GO_WINDOW(2);
@@ -257,8 +260,8 @@ epattach(is)
 	}
 	printf(" address %s\n", ether_sprintf(sc->ep_ac.ac_enaddr));
 
-	ifp->if_unit = is->id_unit;
-	ifp->if_name = "ep";
+	ifp->if_unit = sc->sc_dev.dv_unit;
+	ifp->if_name = epcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS;
 	ifp->if_output = ether_output;
@@ -269,43 +272,43 @@ epattach(is)
 	if_attach(ifp);
 
 	/*
-	 * Fill the hardware address into ifa_addr if we find an
-	 * AF_LINK entry. We need to do this so bpf's can get the hardware
-	 * addr of this card. netstat likes this too!
+	 * Search down the ifa address list looking for the AF_LINK type entry
+	 * and initialize it.
 	 */
 	ifa = ifp->if_addrlist;
-	while ((ifa != 0) && (ifa->ifa_addr != 0) &&
-	    (ifa->ifa_addr->sa_family != AF_LINK))
-		ifa = ifa->ifa_next;
-
-	if ((ifa != 0) && (ifa->ifa_addr != 0)) {
-		sdl = (struct sockaddr_dl *) ifa->ifa_addr;
-		sdl->sdl_type = IFT_ETHER;
-		sdl->sdl_alen = ETHER_ADDR_LEN;
-		sdl->sdl_slen = 0;
-		bcopy(sc->ep_ac.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
+	while (ifa && ifa->ifa_addr) {
+		if (ifa->ifa_addr->sa_family == AF_LINK) {
+			/*
+			 * Fill in the link-level address for this interface.
+			 */
+			sdl = (struct sockaddr_dl *) ifa->ifa_addr;
+			sdl->sdl_type = IFT_ETHER;
+			sdl->sdl_alen = ETHER_ADDR_LEN;
+			sdl->sdl_slen = 0;
+			bcopy(sc->ep_ac.ac_enaddr, LLADDR(sdl), ETHER_ADDR_LEN);
+			break;
+		} else
+			ifa = ifa->ifa_next;
 	}
+
 #if NBPFILTER > 0
 	bpfattach(&sc->bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
-	return (1);
 }
-
 
 /*
  * The order in here seems important. Otherwise we may not receive
  * interrupts. ?!
  */
-static int
-epinit(unit)
-	int     unit;
+static void
+epinit(sc)
+	register struct ep_softc *sc;
 {
-	register struct ep_softc *sc = &ep_softc[unit];
 	register struct ifnet *ifp = &sc->ep_ac.ac_if;
 	int     s, i;
 
-	if (ifp->if_addrlist == (struct ifaddr *) 0)
-		return (0);
+	if (ifp->if_addrlist == 0)
+		return;
 
 	s = splimp();
 	while (inb(BASE + EP_STATUS) & S_COMMAND_IN_PROGRESS)
@@ -379,7 +382,6 @@ epinit(unit)
 
 	epstart(ifp);
 	splx(s);
-	return (0);
 }
 
 static const char padmap[] = {0, 3, 2, 1};
@@ -388,7 +390,7 @@ static int
 epstart(ifp)
 	struct ifnet *ifp;
 {
-	register struct ep_softc *sc = &ep_softc[ifp->if_unit];
+	register struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
 	struct mbuf *m, *top;
 	int     s, len, pad;
 
@@ -540,18 +542,18 @@ epintr(unit)
 	int     unit;
 {
 	int     status, i;
-	register struct ep_softc *sc = &ep_softc[unit];
+	register struct ep_softc *sc = epcd.cd_devs[unit];
 	struct ifnet *ifp = &sc->ep_ac.ac_if;
 
 	status = 0;
-checkintr:
 	status = inw(BASE + EP_STATUS) &
 	    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
 	if (status == 0) {
 		/* No interrupts. */
 		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		return (1);
+		return (0);
 	}
+loop:
 	/* important that we do this first. */
 	outw(BASE + EP_COMMAND, ACK_INTR | status);
 
@@ -566,9 +568,9 @@ checkintr:
 		epread(sc);
 	}
 	if (status & S_CARD_FAILURE) {
-		printf("ep%d: reset (status: %x)\n", unit, status);
+		printf("%s: reset (status: %x)\n", sc->sc_dev.dv_xname, status);
 		outw(BASE + EP_COMMAND, C_INTR_LATCH);
-		epinit(unit);
+		epinit(sc);
 		return (1);
 	}
 	if (status & S_TX_COMPLETE) {
@@ -599,7 +601,14 @@ checkintr:
 		}
 		epstart(ifp);
 	}
-	goto checkintr;
+	status = inw(BASE + EP_STATUS) &
+	    (S_TX_COMPLETE | S_TX_AVAIL | S_RX_COMPLETE | S_CARD_FAILURE);
+	if (status == 0) {
+		/* No interrupts. */
+		outw(BASE + EP_COMMAND, C_INTR_LATCH);
+		return (1);
+	}
+	goto loop;
 }
 
 static void
@@ -764,7 +773,7 @@ epioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	register struct ifaddr *ifa = (struct ifaddr *) data;
-	struct ep_softc *sc = &ep_softc[ifp->if_unit];
+	struct ep_softc *sc = epcd.cd_devs[ifp->if_unit];
 	struct ifreq *ifr = (struct ifreq *) data;
 	int error = 0;
 
@@ -774,7 +783,7 @@ epioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			epinit(ifp->if_unit);	/* before arpwhohas */
+			epinit(sc);	/* before arpwhohas */
 			((struct arpcom *) ifp)->ac_ipaddr = IA_SIN(ifa)->sin_addr;
 			arpwhohas((struct arpcom *) ifp, &IA_SIN(ifa)->sin_addr);
 			break;
@@ -793,23 +802,23 @@ epioctl(ifp, cmd, data)
 				    sc->ep_ac.ac_enaddr,
 				    sizeof(sc->ep_ac.ac_enaddr));
 			}
-			epinit(ifp->if_unit);
+			epinit(sc);
 			break;
 		    }
 #endif
 		default:
-			epinit(ifp->if_unit);
+			epinit(sc);
 			break;
 		}
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 && ifp->if_flags & IFF_RUNNING) {
 			ifp->if_flags &= ~IFF_RUNNING;
-			epstop(ifp->if_unit);
+			epstop(sc);
 			break;
 		}
 		if (ifp->if_flags & IFF_UP && (ifp->if_flags & IFF_RUNNING) == 0)
-			epinit(ifp->if_unit);
+			epinit(sc);
 		break;
 #ifdef notdef
 	case SIOCGHWADDR:
@@ -824,13 +833,13 @@ epioctl(ifp, cmd, data)
 }
 
 static void
-epreset(unit)
-	int     unit;
+epreset(sc)
+	struct ep_softc *sc;
 {
 	int s = splimp();
 
-	epstop(unit);
-	epinit(unit);
+	epstop(sc);
+	epinit(sc);
 	splx(s);
 }
 
@@ -838,16 +847,17 @@ static int
 epwatchdog(unit)
 	int     unit;
 {
-	log(LOG_ERR, "ep%d: watchdog\n", unit);
-	epreset(unit);
+	register struct ep_softc *sc = epcd.cd_devs[unit];
+
+	log(LOG_ERR, "%s: watchdog\n", sc->sc_dev.dv_xname);
+	epreset(sc);
 	return 0;
 }
 
 static void
-epstop(unit)
-	int     unit;
+epstop(sc)
+	register struct ep_softc *sc;
 {
-	register struct ep_softc *sc = &ep_softc[unit];
 
 	outw(BASE + EP_COMMAND, RX_DISABLE);
 	outw(BASE + EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -883,6 +893,7 @@ epreadeeprom(id_port, offset)
 	int     offset;
 {
 	int     i, data = 0;
+
 	outb(id_port, 0x80 + offset);
 	delay(1000);
 	for (i = 0; i < 16; i++)
@@ -891,25 +902,26 @@ epreadeeprom(id_port, offset)
 }
 
 static int
-epbusyeeprom(is)
-	struct isa_device *is;
+epbusyeeprom(sc)
+	struct ep_softc *sc;
 {
-	int     i = 0, j;
-	register struct ep_softc *sc = &ep_softc[is->id_unit];
+	int     i = 100, j;
 
-	while (i++ < 100) {
+	while (i--) {
 		j = inw(BASE + EP_W0_EEPROM_COMMAND);
 		if (j & EEPROM_BUSY)
 			delay(100);
 		else
 			break;
 	}
-	if (i >= 100) {
-		printf("\nep%d: eeprom failed to come ready.\n", is->id_unit);
+	if (!i) {
+		printf("\n%s: eeprom failed to come ready.\n",
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	if (j & EEPROM_TST_MODE) {
-		printf("\nep%d: 3c509 in test mode. Erase pencil mark!\n", is->id_unit);
+		printf("\n%s: 3c509 in test mode. Erase pencil mark!\n",
+		    sc->sc_dev.dv_xname);
 		return (1);
 	}
 	return (0);

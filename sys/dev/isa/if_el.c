@@ -9,7 +9,7 @@
 /*
  * 3COM Etherlink 3C501 device driver
  *
- *	$Id: if_el.c,v 1.7 1994/03/08 12:21:21 mycroft Exp $
+ *	$Id: if_el.c,v 1.8 1994/03/29 04:35:51 mycroft Exp $
  */
 
 /*
@@ -18,7 +18,6 @@
  *	- Does not currently support multicasts
  */
 
-#include "el.h"
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -55,7 +54,7 @@
 #include <machine/pio.h>
 
 #include <i386/isa/isa.h>
-#include <i386/isa/isa_device.h>
+#include <i386/isa/isavar.h>
 #include <i386/isa/icu.h>
 #include <i386/isa/if_elreg.h>
 
@@ -80,16 +79,14 @@ struct el_softc {
 	u_short sc_iobase;		/* base I/O addr */
 	caddr_t sc_bpf;			/* BPF magic cookie */
 	char sc_pktbuf[EL_BUFSIZ]; 	/* frame buffer */
-} el_softc[NEL];
+};
 
 /*
  * prototypes
  */
 int elintr __P((int));
-static int el_attach __P((struct isa_device *));
 static int el_init __P((struct el_softc *));
 static int el_ioctl __P((struct ifnet *, int, caddr_t));
-static int el_probe __P((struct isa_device *));
 static int el_start __P((struct ifnet *));
 static int el_watchdog __P((int));
 static void el_reset __P((struct el_softc *));
@@ -99,9 +96,12 @@ static inline void elread __P((struct el_softc *, caddr_t, int));
 static struct mbuf *elget __P((caddr_t, int, int, struct ifnet *));
 static inline void el_hardreset __P((struct el_softc *));
 
+int elprobe();
+void elattach();
+
 /* isa_driver structure for autoconf */
-struct isa_driver eldriver = {
-	el_probe, el_attach, "el"
+struct cfdriver elcd = {
+	NULL, "el", elprobe, elattach, DV_IFNET, sizeof(struct el_softc)
 };
 
 struct trailer_header {
@@ -115,12 +115,14 @@ struct trailer_header {
  * See if the card is there and at the right place.
  * (XXX - cgd -- needs help)
  */
-static int
-el_probe(isa_dev)
-	struct isa_device *isa_dev;
+int
+elprobe(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct el_softc *sc = &el_softc[isa_dev->id_unit];
-	u_short iobase = isa_dev->id_iobase;
+	struct el_softc *sc = (void *)self;
+	struct isa_attach_args *ia = aux;
+	u_short iobase = ia->ia_iobase;
 	u_char station_addr[ETHER_ADDR_LEN];
 	int i;
 
@@ -130,10 +132,6 @@ el_probe(isa_dev)
 
 	/* Grab some info for our structure. */
 	sc->sc_iobase = iobase;
-
-	/* XXX HACK */
-	sprintf(sc->sc_dev.dv_xname, "%s%d", eldriver.name, isa_dev->id_unit);
-	sc->sc_dev.dv_unit = isa_dev->id_unit;
 
 	/*
 	 * Now attempt to grab the station address from the PROM and see if it
@@ -168,7 +166,10 @@ el_probe(isa_dev)
 	dprintf(("Vendor code ok.\n"));
 	/* Copy the station address into the arpcom structure. */
 	bcopy(station_addr, sc->sc_arpcom.ac_enaddr, ETHER_ADDR_LEN);
-	return 1;		/* XXX - cgd? */
+
+	ia->ia_iosize = 4;	/* XXX */
+	ia->ia_msize = 0;
+	return 1;
 }
 
 /*
@@ -176,11 +177,12 @@ el_probe(isa_dev)
  * called, we know that the card exists at the given I/O address.  We still
  * assume that the IRQ given is correct.
  */
-static int
-el_attach(isa_dev)
-	struct isa_device *isa_dev;
+void
+elattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
 {
-	struct el_softc *sc = &el_softc[isa_dev->id_unit];
+	struct el_softc *sc = (void *)self;
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	struct ifaddr *ifa;
 	struct sockaddr_dl *sdl;
@@ -191,8 +193,8 @@ el_attach(isa_dev)
 	el_stop(sc);
 
 	/* Initialize ifnet structure. */
-	ifp->if_unit = isa_dev->id_unit;
-	ifp->if_name = eldriver.name;
+	ifp->if_unit = sc->sc_dev.dv_unit;
+	ifp->if_name = elcd.cd_name;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->if_start = el_start;
@@ -235,8 +237,7 @@ el_attach(isa_dev)
 	bpfattach(&sc->sc_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
 
-	dprintf(("el_attach() finished.\n"));
-	return 1;
+	dprintf(("elattach() finished.\n"));
 }
 
 /*
@@ -340,7 +341,7 @@ static int
 el_start(ifp)
 	struct ifnet *ifp;
 {
-	struct el_softc *sc = &el_softc[ifp->if_unit];
+	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
 	u_short iobase = sc->sc_iobase;
 	struct mbuf *m, *m0;
 	int s, i, len, retries, done;
@@ -479,7 +480,7 @@ int
 elintr(unit)
 	int unit;
 {
-	register struct el_softc *sc = &el_softc[unit];
+	register struct el_softc *sc = elcd.cd_devs[unit];
 	u_short iobase = sc->sc_iobase;
 	int stat, rxstat, len, done;
 
@@ -732,7 +733,7 @@ el_ioctl(ifp, command, data)
 	int command;
 	caddr_t data;
 {
-	struct el_softc *sc = &el_softc[ifp->if_unit];
+	struct el_softc *sc = elcd.cd_devs[ifp->if_unit];
 	register struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
@@ -826,7 +827,7 @@ static int
 el_watchdog(unit)
 	int unit;
 {
-	struct el_softc *sc = &el_softc[unit];
+	struct el_softc *sc = elcd.cd_devs[unit];
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	sc->sc_arpcom.ac_if.if_oerrors++;
