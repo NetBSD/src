@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.319 2001/04/12 06:26:50 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.320 2001/04/12 07:47:18 itojun Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.315 2001/04/12 06:26:20 matt Exp 
+ *	NetBSD: pcidevs,v 1.316 2001/04/12 07:46:00 itojun Exp 
  */
 
 /*
@@ -3142,10 +3142,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "SSI",
 	},
 	{
-	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_T1,
+	    PCI_VENDOR_LMC, PCI_PRODUCT_LMC_DS1,
 	    0,
 	    "LAN Media Corporation",
-	    "T1 Interface",
+	    "DS1",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
