@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.3 2004/11/15 00:21:41 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.4 2004/11/15 06:06:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.3 2004/11/15 00:21:41 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.4 2004/11/15 06:06:47 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -1419,7 +1419,7 @@ init(void)
 			p++;
 			while (isspace((unsigned char)*p))
 				p++;
-			if (*p == '\0') {
+			if (*p == '\0' || *p == '*') {
 				strcpy(prog, "*");
 				continue;
 			}
