@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.17 1996/10/07 19:09:17 cgd Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18 1996/10/07 23:57:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -55,10 +55,7 @@ cpu_coredump(p, vp, cred, chdr)
 {
 	int error;
 	register struct user *up = p->p_addr;
-	struct cpustate {
-		struct trapframe regs;
-		struct fpreg fpstate;
-	} cpustate;
+	struct md_coredump cpustate;
 	struct coreseg cseg;
 	extern struct proc *fpcurproc;
 
@@ -67,17 +64,17 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(cpustate);
 
-	cpustate.regs = *p->p_md.md_tf;
-	cpustate.regs.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
+	cpustate.md_tf = *p->p_md.md_tf;
+	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
 	if (p->p_md.md_flags & MDP_FPUSED)
 		if (p == fpcurproc) {
 			alpha_pal_wrfen(1);
-			savefpstate(&cpustate.fpstate);
+			savefpstate(&cpustate.md_fpstate);
 			alpha_pal_wrfen(0);
 		} else
-			cpustate.fpstate = p->p_addr->u_pcb.pcb_fp;
+			cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
 	else
-		bzero(&cpustate.fpstate, sizeof(cpustate.fpstate));
+		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ALPHA, CORE_CPU);
 	cseg.c_addr = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.3 1996/07/14 04:15:27 cgd Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4 1996/10/07 23:57:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,4 +60,5 @@ struct pcb {
  */
 struct md_coredump {
 	struct	trapframe md_tf;
+	struct	fpreg md_fpstate;
 };
