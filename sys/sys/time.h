@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)time.h	7.6 (Berkeley) 2/22/91
- *	$Id: time.h,v 1.4 1994/04/25 03:50:35 cgd Exp $
+ *	$Id: time.h,v 1.5 1994/05/06 22:41:46 cgd Exp $
  */
 
 #ifndef _SYS_TIME_H_
@@ -97,6 +97,16 @@ struct timezone {
 struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
 	struct	timeval it_value;	/* current value */
+};
+
+/* 
+ * Getkerninfo clock information structure
+ */
+struct clockinfo {
+	int	hz;		/* clock frequency */
+	int	tick;		/* micro-seconds per hz tick */
+	int	stathz;		/* statistics clock frequency */
+	int	profhz;		/* profiling clock frequency */
 };
 
 #ifdef KERNEL
