@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.553 2004/04/30 02:05:43 lukem Exp $	*/
+/*	$NetBSD: machdep.c,v 1.554 2004/05/03 16:38:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.553 2004/04/30 02:05:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.554 2004/05/03 16:38:28 lukem Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -538,6 +538,11 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_INT, "sse2", NULL,
 		       NULL, 0, &i386_has_sse2, 0,
 		       CTL_MACHDEP, CPU_SSE2, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL, 
+	    	       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "cpu_brand", NULL,
+		       NULL, 0, &cpu_brand_string, 0,
+		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tm_longrun_mode", NULL,

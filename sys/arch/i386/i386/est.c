@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.2 2004/04/30 02:05:43 lukem Exp $	*/
+/*	$NetBSD: est.c,v 1.3 2004/05/03 16:38:28 lukem Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.2 2004/04/30 02:05:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.3 2004/05/03 16:38:28 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,11 +356,6 @@ est_init(struct cpu_info *ci)
 	if ((rc = sysctl_createv(NULL, 0, &node, &estnode,
 	    0, CTLTYPE_NODE, "est", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
-		goto err;
-
-	if ((rc = sysctl_createv(NULL, 0, &estnode, &node,
-	    0, CTLTYPE_STRING, "cpu_brand", NULL,
-	    NULL, 0, &cpu_brand_string, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
 	if ((rc = sysctl_createv(NULL, 0, &estnode, &freqnode,
