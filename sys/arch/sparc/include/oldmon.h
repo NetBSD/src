@@ -31,7 +31,7 @@
  *
  *	from: Sprite /cdrom/src/kernel/Cvsroot/kernel/mach/sun3.md/machMon.h,v
  *	    9.1 90/10/03 13:52:34 mgbaker Exp SPRITE (Berkeley)
- *	$Id: oldmon.h,v 1.2 1994/08/20 01:20:59 deraadt Exp $
+ *	$Id: oldmon.h,v 1.3 1994/10/02 21:50:58 deraadt Exp $
  */
 #ifndef _MACHINE_OLDMON_H
 #define _MACHINE_OLDMON_H
@@ -199,13 +199,13 @@ struct om_vector {
 #define romp (romVectorPtr)
 
 /*
- * MONSTART and MONEND denote the range of the damn monitor.
+ * OLDMON_STARTVADDR and OLDMON_ENDVADDR denote the range of the damn monitor.
  * 
  * supposedly you can steal pmegs within this range that do not contain
  * valid pages. 
  */
-#define MONSTART	0xFFD00000
-#define MONEND		0xFFF00000
+#define OLDMON_STARTVADDR	0xFFD00000
+#define OLDMON_ENDVADDR		0xFFF00000
 
 /*
  * These describe the monitor's short segment which it basically uses to map
