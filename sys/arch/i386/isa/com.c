@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.12.2.8 1993/10/13 01:26:43 mycroft Exp $
+ *	$Id: com.c,v 1.12.2.9 1993/10/15 09:51:56 mycroft Exp $
  */
 
 /*
@@ -81,7 +81,7 @@ int	comdefaultrate = TTYDEF_SPEED;
 static int comprobe __P((struct device *, struct cfdata *, void *));
 static void comforceintr __P((void *));
 static void comattach __P((struct device *, struct device *, void *));
-static int comintr __P((void *));
+static int comintr __P((struct com_softc *));
 
 struct cfdriver comcd =
 { NULL, "com", comprobe, comattach, sizeof (struct com_softc) };
@@ -221,13 +221,14 @@ comattach(parent, self, aux)
 
 	/* look for a NS 16550AF UART with FIFOs */
 	outb(iobase + com_fifo,
-	     FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	     FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_8);
 	delay(100);
 	if ((inb(iobase + com_iir) & IIR_FIFO_MASK) == IIR_FIFO_MASK) {
 		sc->sc_flags |= COM_FIFO;
 		printf(": ns16550\n");
 	} else
 		printf(": ns8250 or ns16450\n");
+	outb(iobase + com_fifo, 0);
 	isa_establish(&sc->sc_id, &sc->sc_dev);
 
 	sc->sc_ih.ih_fun = comintr;
@@ -293,6 +294,13 @@ comopen(dev, flag, mode, p)
 
 	s = spltty();
 	iobase = sc->sc_iobase;
+	/* flush any pending I/O */
+	if (sc->sc_flags & COM_FIFO)
+		outb(iobase + com_fifo,
+		     FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_8);
+	(void) inb(iobase + com_lsr);
+	(void) inb(iobase + com_data);
+	/* you turn me on, baby */
 	outb(iobase + com_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
 	outb(iobase + com_ier, IER_ERXRDY | IER_ETXRDY | IER_ERLS | IER_EMSC);	
 
@@ -432,6 +440,8 @@ comioctl(dev, cmd, data, flag)
 			if (m & MCR_RTS)
 				bits |= TIOCM_RTS;
 			m = inb(iobase + com_msr);
+			if (m & MSR_DCD)
+				bits |= TIOCM_CD;
 			if (m & MSR_CTS)
 				bits |= TIOCM_CTS;
 			if (m & MSR_DSR)
@@ -462,25 +472,12 @@ comparam(tp, t)
 	int	ospeed = comspeed(t->c_ospeed);
 	u_char	cflag = t->c_cflag;
 	u_char	cfcr;
+	int	s;
  
 	/* check requested parameters */
-        if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
-                return EINVAL;
+	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+	        return EINVAL;
 	
-        /* and copy to tty */
-        tp->t_ispeed = t->c_ispeed;
-        tp->t_ospeed = t->c_ospeed;
-        tp->t_cflag = cflag;
-
-	if (ospeed == 0)
-		bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
-	else
-		bis(iobase + com_mcr, MCR_DTR | MCR_RTS);
-
-	outb(iobase + com_cfcr, CFCR_DLAB);
-	outb(iobase + com_dlbl, ospeed & 0xff);
-	outb(iobase + com_dlbh, ospeed >> 8);
-
 	switch (cflag & CSIZE) {
 	    case CS5:
 		cfcr = CFCR_5BITS;
@@ -502,6 +499,22 @@ comparam(tp, t)
 	}
 	if (cflag & CSTOPB)
 		cfcr |= CFCR_STOPB;
+
+	s = spltty();
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	tp->t_cflag = cflag;
+
+	if (ospeed == 0)
+		bic(iobase + com_mcr, MCR_DTR | MCR_RTS);
+	else
+		bis(iobase + com_mcr, MCR_DTR | MCR_RTS);
+
+	outb(iobase + com_cfcr, cfcr | CFCR_DLAB);
+	outb(iobase + com_dlbl, ospeed);
+	outb(iobase + com_dlbh, ospeed>>8);
 	outb(iobase + com_cfcr, cfcr);
 
 	/* when not using CRTS_IFLOW, RTS follows DTR */
@@ -519,6 +532,8 @@ comparam(tp, t)
 			else
 				;
 	}
+
+	splx(s);
 
 	return 0;
 }
@@ -571,10 +586,9 @@ comstop(tp, flag)
 	int	s;
 
 	s = spltty();
-	if (tp->t_state & TS_BUSY) {
+	if (tp->t_state & TS_BUSY)
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
-	}
 	splx(s);
 }
  
@@ -628,10 +642,9 @@ commint(sc)
 }
 
 static int
-comintr(arg)
-	void *arg;
+comintr(sc)
+	struct com_softc *sc;
 {
-	struct	com_softc *sc = arg;
 	u_short	iobase = sc->sc_iobase;
 	struct	tty *tp;
 	u_char	code;
@@ -661,11 +674,16 @@ comintr(arg)
 			break;
 		    case IIR_TXRDY:
 			tp = com_tty[sc->sc_dev.dv_unit];
-			tp->t_state &=~ (TS_BUSY | TS_FLUSH);
-			if (tp->t_line)
-				(*linesw[tp->t_line].l_start)(tp);
-			else
-				comstart(tp);
+			tp->t_state &=~ TS_BUSY;
+			if (tp->t_state & TS_FLUSH) {
+				tp->t_state &=~ TS_FLUSH;
+				wakeup((caddr_t)&tp->t_rawq);
+			} else {
+				if (tp->t_line)
+					(*linesw[tp->t_line].l_start)(tp);
+				else
+					comstart(tp);
+			}
 			break;
 		    case IIR_RLS:
 			comeint(sc, inb(iobase + com_lsr));
