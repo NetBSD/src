@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.9 2003/09/25 19:29:48 mycroft Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.10 2003/10/08 11:10:18 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.9 2003/09/25 19:29:48 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.10 2003/10/08 11:10:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,9 +153,7 @@ pciide_pnpbios_attach(parent, self, aux)
 	cp->ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_BIO,
 					pciide_compat_intr, cp);
 
-	wdcattach(&sc->sc_wdcdev);
-
-	pciide_channel_dma_setup(cp);
+	wdcattach(wdc_cp);
 }
 
 void
