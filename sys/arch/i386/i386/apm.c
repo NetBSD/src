@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.44 2000/02/07 17:36:59 thorpej Exp $ */
+/*	$NetBSD: apm.c,v 1.45 2000/03/04 21:37:23 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -153,7 +153,9 @@ static void	apm_create_thread __P((void *));
 static void	apm_thread __P((void *));
 static void	apm_perror __P((const char *, struct bioscallregs *, ...))
 		    __kprintf_attribute__((__format__(__printf__,1,3)));
+#ifdef APM_POWER_PRINT
 static void	apm_power_print __P((struct apm_softc *, struct bioscallregs *));
+#endif
 static void	apm_powmgt_enable __P((int));
 static void	apm_powmgt_engage __P((int, u_int));
 static int	apm_record_event __P((struct apm_softc *, u_int));
@@ -282,6 +284,7 @@ apm_perror(const char *str, struct bioscallregs *regs, ...) /* XXX cgd */
 	va_end(ap);
 }
 
+#ifdef APM_POWER_PRINT
 static void
 apm_power_print(sc, regs)
 	struct apm_softc *sc;
@@ -353,6 +356,7 @@ apm_power_print(sc, regs)
 	}
 	return;
 }
+#endif
 
 #if 0 /* currently unused */
 static void
@@ -502,7 +506,7 @@ apm_event_handle(sc, regs)
 	case APM_POWER_CHANGE:
 		DPRINTF(APMDEBUG_EVENTS, ("apmev: power status change\n"));
 		error = apm_get_powstat(&nregs);
-#ifndef APM_NO_POWER_PRINT
+#ifdef APM_POWER_PRINT
 		/* only print if nobody is catching events. */
 		if (error == 0 &&
 		    (sc->sc_flags & (SCFLAG_OREAD|SCFLAG_OWRITE)) == 0)
@@ -1248,7 +1252,9 @@ apmattach(parent, self, aux)
 	memset(&regs, 0, sizeof(regs));
 	error = apm_get_powstat(&regs);
 	if (error == 0) {
+#ifdef APM_POWER_PRINT
 		apm_power_print(apmsc, &regs);
+#endif
 	} else
 		apm_perror("get power status", &regs);
 	apm_cpu_busy();

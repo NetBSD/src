@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.305 2000/02/29 06:32:25 simonb Exp $
+#	$NetBSD: GENERIC,v 1.306 2000/03/04 21:37:23 mycroft Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.305 $"
+#ident 		"GENERIC-$Revision: 1.306 $"
 
 maxusers	32		# estimated number of users
 
@@ -201,7 +201,7 @@ mainbus0 at root
 #options 	APM_NO_IDLE		# Don't call BIOS CPU idle function
 #options 	APM_V10_ONLY		# Use only the APM 1.0 calls
 #options 	APM_NO_POWEROFF		# Don't power off on halt(8)
-#options 	APM_NO_POWER_PRINT	# Don't print stats on the console
+#options 	APM_POWER_PRINT		# Don't print stats on the console
 #options	APM_DISABLE_INTERRUPTS=0 # Don't disable interrupts
 
 
