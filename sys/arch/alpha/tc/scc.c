@@ -1,4 +1,4 @@
-/* $NetBSD: scc.c,v 1.30 1997/04/06 22:31:56 cgd Exp $ */
+/* $NetBSD: scc.c,v 1.31 1997/04/07 06:09:14 cgd Exp $ */
 
 /*
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -82,7 +82,6 @@
 #include <sys/proc.h>
 #include <sys/map.h>
 #include <sys/buf.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
@@ -103,6 +102,7 @@
 #endif
 
 #include <machine/rpb.h>
+#include <machine/conf.h>
 
 #include <dev/tc/tcvar.h>
 #include <alpha/tc/ioasicreg.h>

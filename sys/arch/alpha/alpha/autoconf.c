@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.21 1997/04/07 05:19:01 cgd Exp $ */
+/* $NetBSD: autoconf.c,v 1.22 1997/04/07 06:09:00 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -48,14 +48,13 @@
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/disklabel.h>
-#include <sys/conf.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
 #include <dev/cons.h>
 
 #include <machine/autoconf.h>
 #include <machine/prom.h>
-#include <machine/cpuconf.h>
+#include <machine/conf.h>
 
 struct device		*booted_device;
 int			booted_partition;
