@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.223 2000/05/14 14:58:14 soren Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.224 2000/05/18 08:03:22 garbled Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.216 2000/05/14 14:56:53 soren Exp 
+ *	NetBSD: pcidevs,v 1.217 2000/05/18 08:02:19 garbled Exp 
  */
 
 /*
@@ -992,6 +992,7 @@
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_TURBOWAYS25	0x0053		/* Turboways 25 ATM */
+produce IBM MPIC2	0xffff	MPIC-II
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (\"NICStAR\") */
