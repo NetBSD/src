@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.2 1999/10/15 06:42:22 haya Exp $
+#	$NetBSD: files.cardbus,v 1.3 1999/10/15 11:52:45 augustss Exp $
 #
 # files.cardbus
 #
@@ -31,3 +31,9 @@ file	dev/cardbus/if_ex_cardbus.c		ex_cardbus
 
 #attach	com at cardbus with com_cardbus
 #file	dev/cardbus/com_cardbus.c		com_cardbus
+
+#
+# OHCI USB controller
+#
+attach	ohci at cardbus with ohci_cardbus
+file	dev/cardbus/ohci_cardbus.c		ohci_cardbus
