@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.21 2002/02/11 16:23:18 tron Exp $
+# $NetBSD: mi,v 1.22 2002/06/18 12:59:27 christos Exp $
 ./usr/X11R6
 ./usr/X11R6/bin
 ./usr/X11R6/bin/Xmark
@@ -64,6 +64,7 @@
 ./usr/X11R6/bin/xsetroot
 ./usr/X11R6/bin/xsm
 ./usr/X11R6/bin/xstdcmap
+./usr/X11R6/bin/xsystrace
 ./usr/X11R6/bin/xterm
 ./usr/X11R6/bin/xwd
 ./usr/X11R6/bin/xwininfo
@@ -523,6 +524,7 @@
 ./usr/X11R6/man/cat1/xsetroot.0
 ./usr/X11R6/man/cat1/xsm.0
 ./usr/X11R6/man/cat1/xstdcmap.0
+./usr/X11R6/man/cat1/xsystrace.0
 ./usr/X11R6/man/cat1/xterm.0
 ./usr/X11R6/man/cat1/xwd.0
 ./usr/X11R6/man/cat1/xwininfo.0
