@@ -1,4 +1,4 @@
-/*	$NetBSD: ldconfig.c,v 1.33 2001/02/19 22:56:20 cgd Exp $	*/
+/*	$NetBSD: ldconfig.c,v 1.34 2001/11/01 07:33:43 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -389,7 +389,7 @@ buildhints()
 	int			strtab_sz = 0;	/* Total length of strings */
 	int			nhints = 0;	/* Total number of hints */
 	int			fd;
-	char			*tmpfile;
+	char			*tempfile;
 
 	for (shp = shlib_head; shp; shp = shp->next) {
 		strtab_sz += 1 + strlen(shp->name);
@@ -430,8 +430,6 @@ buildhints()
 		  (hinthash(shp->name, shp->major, shp->minor) % hdr.hh_nbucket);
 
 		if (bp->hi_pathx) {
-			int	i;
-
 			for (i = 0; i < hdr.hh_nbucket; i++) {
 				if (blist[i].hi_pathx == 0)
 					break;
@@ -469,9 +467,9 @@ buildhints()
 		errx(1, "str_index(%d) != strtab_sz(%d)", str_index, strtab_sz);
 	}
 
-	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
-	if ((fd = mkstemp(tmpfile)) == -1) {
-		warn("%s", tmpfile);
+	tempfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
+	if ((fd = mkstemp(tempfile)) == -1) {
+		warn("%s", tempfile);
 		return (-1);
 	}
 
@@ -504,7 +502,7 @@ buildhints()
 		return (-1);
 	}
 
-	if (rename(tmpfile, _PATH_LD_HINTS) != 0) {
+	if (rename(tempfile, _PATH_LD_HINTS) != 0) {
 		warn("%s", _PATH_LD_HINTS);
 		return (-1);
 	}
