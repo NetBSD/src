@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.1 2001/03/16 23:03:15 jdolecek Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.2 2001/03/17 16:59:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,11 +43,6 @@
  * drivers/net/3c523.[ch]).
  *
  * This driver uses generic i82586 stuff. See also ai(4), ef(4), ix(4).
- *
- * Known issues:
- * o seems like the initialization is not bullet proof; initially, the
- *	card I had responded with "incorrect termination" warning and started
- *	to work correctly after I booted the PS/2 with Slackware 3.3 bootdisk
  */
 
 #include <sys/param.h>
@@ -225,6 +220,13 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	sc->buf_area = sc->scb + IE_SCB_SZ;
 	sc->buf_area_sz = sc->sc_msize - IE_ISCP_SZ - IE_SCB_SZ - IE_SCP_SZ;
 
+	/*
+	 * According to docs, we might need to read the interrupt number and
+	 * write it back to the IRQ select register, since the POST might not
+	 * configure the IRQ properly.
+	 */
+	(void) mca_conf_write(ma->ma_mc, ma->ma_slot, 3, pos3 & 0x1f);
+
 	/* reset the card first */
 	elmc_mca_hwreset(sc, CARD_RESET);
 	delay(1000000 / ( 1<< 5));
@@ -279,14 +281,7 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 		printf("%s: couldn't establish interrupt handler\n",
 		       sc->sc_dev.dv_xname);
 	else
-		printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname, irq);
-
-	/*
-	 * According to docs, we might need to read the interrupt number and
-	 * write it back to the IRQ select register, since the POST might not
-	 * configure the IRQ properly.
-	 */
-	(void) mca_conf_write(ma->ma_mc, ma->ma_slot, 3, pos3 & 0x1f);
+		printf("%s: interrupting at irq %d\n", sc->sc_dev.dv_xname,irq);
 
 	return;
 }
