@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 2000/08/20 21:50:07 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 2000/09/02 04:50:08 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1314,7 +1314,7 @@ Lswnofpsave:
 	rts
 Lresnonofpatall:
 #endif
-	lea	%a1@(PCB_FPCTX),a%0		| pointer to FP save area
+	lea	%a1@(PCB_FPCTX),%a0		| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)
