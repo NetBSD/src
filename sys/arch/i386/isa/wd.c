@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.41 1994/02/25 18:08:21 mycroft Exp $
+ *	$Id: wd.c,v 1.42 1994/02/25 18:17:30 mycroft Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -838,38 +838,14 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 		msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
 		    wdstrategy, &du->dk_dd, &du->dk_cpd);
 		wdsetctlr(dev, du);
-		msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
-		    wdstrategy, &du->dk_dd, &du->dk_cpd);
-		if (msg) {
-#ifdef QUIETWORKS
-			if ((du->dk_flags & DKFL_QUIET) == 0) {
-				log(LOG_WARNING,
-				    "wd%d: cannot find label (%s)\n", lunit,
-				    msg);
-				error = EINVAL;	/* XXX needs translation */
-			}
-#else
-			log(LOG_WARNING, "wd%d: cannot find label (%s)\n",
-			    lunit, msg);
-			if (part != WDRAW)
-				error = EINVAL;	/* XXX needs translation */
 #endif
-			goto done;
-		} else {
-			wdsetctlr(dev, du);
-			du->dk_flags |= DKFL_BSDLABEL;
-			du->dk_flags &= ~DKFL_WRITEPROT;
-			if (du->dk_dd.d_flags & D_BADSECT)
-				du->dk_flags |= DKFL_BADSECT;
-		}
-#else
-		if (msg = readdisklabel(makewddev(major(dev), wdunit(dev), WDRAW),
-		    wdstrategy, &du->dk_dd, &du->dk_cpd)) {
+		if (msg = readdisklabel(makewddev(major(dev), wdunit(dev),
+		    WDRAW), wdstrategy, &du->dk_dd, &du->dk_cpd)) {
 			if ((du->dk_flags & DKFL_QUIET) == 0) {
 				log(LOG_WARNING,
 				    "wd%d: cannot find label (%s)\n",
 				    lunit, msg);
-				error = EINVAL;		/* XXX needs translation */
+				error = EINVAL;	/* XXX needs translation */
 			}
 			goto done;
 		} else {
@@ -879,7 +855,6 @@ wdopen(dev_t dev, int flags, int fmt, struct proc *p)
 			if (du->dk_dd.d_flags & D_BADSECT)
 				du->dk_flags |= DKFL_BADSECT;
 		}
-#endif
 
 done:
 		if (error)
