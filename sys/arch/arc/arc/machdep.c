@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2000/06/09 06:06:57 soda Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2000/06/17 07:29:06 soda Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -104,7 +104,24 @@
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
+#include "rasdisplay_jazzio.h"
+#if NRASDISPLAY_JAZZIO > 0
+#include <arc/jazz/rasdisplay_jazziovar.h>
+#endif
+
+#include "tga.h"
+#if NTGA > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/tgavar.h>
+#include <arc/pci/necpbvar.h>
+#endif
+
 #include "pc.h"
+
+#include "vga_jazzio.h"
+#if NVGA_JAZZIO > 0
+#include <arc/jazz/vga_jazziovar.h>
+#endif
 
 #include "vga_isa.h"
 #if NVGA_ISA > 0
@@ -113,10 +130,16 @@
 #include <dev/isa/vga_isavar.h>
 #endif
 
-#include "pckbd.h"
+#include "pckbc_jazzio.h"
+#if NPCKBC_JAZZIO > 0
+#include <arc/jazz/pckbc_jazzioreg.h>
+#endif
+
+#include "pckbc.h"
 #if NPCKBC > 0
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h>
+#include <dev/isa/isareg.h>
 #endif
 
 #include "com.h"
@@ -131,7 +154,7 @@
 #endif
 
 #ifndef COM_FREQ_MAGNUM
-#if 1
+#if 0
 #define COM_FREQ_MAGNUM	4233600 /* 4.2336MHz - ARC? */
 #else
 #define COM_FREQ_MAGNUM	8192000	/* 8.192 MHz - NEC RISCstation M402 */
@@ -917,34 +940,27 @@ consinit()
 			pccnattach();
 			return;
 #endif
-#if NVGA_PICA > 0
-			if (vga_cnattach(&arc_bus_io, &arc_bus_mem, -1, 1)
-			    == 0) {
-#if NPCKBC > 0
-				pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
-				    PCKBC_KBD_SLOT);
+#if NVGA_JAZZIO > 0
+			if (vga_jazzio_cnattach() == 0) {
+#if NPCKBC_JAZZIO > 0
+				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
 #endif
+				return;
 			}
-			return;
 #endif
 			break;
 
 		case MAGNUM:
-#if NFB > 0
-			if (fb_console()) {
-#if NPCKBC > 0
-				pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
-				    PCKBC_KBD_SLOT);
-#endif
-			}
-			return;
-#endif
-			break;
-
 		case NEC_R94:
-#if NFB > 0
-			fb_console();
-			return;
+#if NRASDISPLAY_JAZZIO > 0
+			if (rasdisplay_jazzio_cnattach()) {
+#if NPCKBC_JAZZIO > 0
+				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+#endif
+				return;
+			}
 #endif
 			break;
 
@@ -958,13 +974,18 @@ consinit()
 			break;
 
 		case NEC_RD94:
-#if NTGA_PCI > 0
-			tga_cnattach( /* XXX */);
-#if NPCKBC > 0
-			pckbc_cnattach(&arc_bus_io, PICA_SYS_KBD, 1,
-			    PCKBC_KBD_SLOT);
+#if NTGA > 0
+			necpb_init(&necpb_configuration);
+			 /* XXX device number is hardcoded */
+			if (tga_cnattach(&necpb_configuration.nc_iot,
+			    &necpb_configuration.nc_memt,
+			    &necpb_configuration.nc_pc, 0, 3, 0) == 0) {
+#if NPCKBC_JAZZIO > 0
+				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
 #endif
-			return;
+				return;
+			}
 #endif
 			break;
 
@@ -974,9 +995,23 @@ consinit()
 			pccnattach();
 			return;
 #endif
-#if NFB > 0
-			fb_console();
-			return;
+#if NVGA_JAZZIO > 0
+			if (vga_jazzio_cnattach() == 0) {
+#if NPCKBC_JAZZIO > 0
+				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+#endif
+				return;
+			}
+#endif
+#if NRASDISPLAY_JAZZIO > 0
+			if (rasdisplay_jazzio_cnattach()) {
+#if NPCKBC_JAZZIO > 0
+				pckbc_cnattach(&pica_bus, PICA_SYS_KBD,
+				    JAZZIO_KBCMDP, PCKBC_KBD_SLOT);
+#endif
+				return;
+			}
 #endif
 			break;
 
@@ -987,10 +1022,11 @@ consinit()
 			return;
 #endif
 #if NVGA_ISA > 0
-			if (vga_cnattach(&arc_bus_io, &arc_bus_mem, -1, 1)
-			    == 0) {
+			if (vga_isa_cnattach(&arc_bus_io, &arc_bus_mem) == 0) {
+#if NPCKBC > 0
 				pckbc_cnattach(&arc_bus_io, IO_KBD, KBCMDP,
 				    PCKBC_KBD_SLOT);
+#endif
 			}
 			return;
 #endif
