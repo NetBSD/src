@@ -1,8 +1,8 @@
-# 	$NetBSD: GENERIC,v 1.35.2.1 2000/06/23 14:36:14 fvdl Exp $
+# 	$NetBSD: GENERIC,v 1.35.2.2 2000/07/06 14:10:36 sommerfeld Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.35.2.1 $"
+#ident 		"GENERIC-$Revision: 1.35.2.2 $"
 
 maxusers	32
 
@@ -174,7 +174,7 @@ options 	MROUTING	# packet forwarding of multicast packets
 options 	NS		# Xerox NS networking
 #options 	NSIP		# Xerox NS tunneling over IP
 options 	ISO,TPIP	# OSI networking
-options 	EON		# OSI tunneling over IP
+#options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25 packet switched protocol
 options 	NETATALK	# AppleTalk (over Ethernet) protocol
 options 	NTP		# Network Time Protocol in-kernel support
