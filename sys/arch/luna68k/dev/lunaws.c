@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.3 2000/01/12 01:57:22 nisimura Exp $ */
+/* $NetBSD: lunaws.c,v 1.4 2000/01/14 03:28:13 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.3 2000/01/12 01:57:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.4 2000/01/14 03:28:13 nisimura Exp $");
 
 #include "wsmouse.h"
 
@@ -259,7 +259,7 @@ wsintr(chan)
 			else if (sc->sc_msreport == 2) {
 				sc->dy = (signed char)code;
 				wsmouse_input(sc->sc_wsmousedev,
-					sc->buttons, sc->dx, sc->dy, 0);
+					sc->buttons, sc->dx, sc->dy, 0, 0);
 				sc->sc_msreport = 0;
 			}
 #else
