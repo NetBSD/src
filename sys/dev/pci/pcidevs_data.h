@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.418 2002/04/15 11:12:47 ad Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.419 2002/04/15 14:44:31 mycroft Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.415 2002/04/15 11:12:25 ad Exp 
+ *	NetBSD: pcidevs,v 1.416 2002/04/15 14:43:42 mycroft Exp 
  */
 
 /*
@@ -640,24 +640,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7890/1 U2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892,
-	    0,
-	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7892 U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_29160,
-	    0,
-	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-29160 U160",
-	},
-	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_19160B,
-	    0,
-	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-19160B U160",
-	},
-	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3950U2B,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
@@ -676,34 +658,58 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "AIC-7896/7 U2",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_3960D,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892A,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AHA-3960D U160",
+	    "AIC-7892A U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892B,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7892B U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892D,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7892D U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7892P,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7892P U160",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899A,
+	    0,
+	    "Adaptec (2nd PCI Vendor ID)",
+	    "AIC-7899A U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899B,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7899B",
+	    "AIC-7899B U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899D,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7899D",
+	    "AIC-7899D U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899F,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7899F",
+	    "AIC-7899F RAID",
 	},
 	{
-	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899,
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AIC7899P,
 	    0,
 	    "Adaptec (2nd PCI Vendor ID)",
-	    "AIC-7899 U160",
+	    "AIC-7899P U160",
 	},
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622,
