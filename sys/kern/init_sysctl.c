@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.6 2003/12/07 10:31:32 he Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.7 2003/12/07 10:33:03 martin Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -1083,6 +1083,7 @@ sysctl_kern_cptime(SYSCTLFN_ARGS)
 		 */
 		name++;
 		namelen--;
+		break;
 	default:
 		return (EINVAL);
 	}
