@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.31 1994/12/13 15:54:52 mycroft Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.32 1995/02/05 14:09:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -85,9 +85,6 @@ struct disklabel {
 	 * as found in /usr/mdec.  These are returned when using
 	 * getdiskbyname(3) to retrieve the values from /etc/disktab.
 	 */
-#if defined(KERNEL) || defined(STANDALONE)
-	char	  d_packname[16];		/* pack identifier */ 
-#else
 	union {
 		char	un_d_packname[16];	/* pack identifier */ 
 		struct {
@@ -98,7 +95,6 @@ struct disklabel {
 #define d_packname	d_un.un_d_packname
 #define d_boot0		d_un.un_b.un_d_boot0
 #define d_boot1		d_un.un_b.un_d_boot1
-#endif	/* ! KERNEL or STANDALONE */
 
 			/* disk geometry: */
 	u_int32_t d_secsize;		/* # of bytes per sector */
