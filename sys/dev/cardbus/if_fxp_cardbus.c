@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_cardbus.c,v 1.7 2000/02/12 04:05:50 enami Exp $	*/
+/*	$NetBSD: if_fxp_cardbus.c,v 1.8 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -210,6 +210,7 @@ fxp_cardbus_setup(struct fxp_softc *sc)
 	(cf->cardbus_ctrl)(cc, CARDBUS_IO_ENABLE);
 	command |= (CARDBUS_COMMAND_IO_ENABLE | CARDBUS_COMMAND_MASTER_ENABLE);
     }
+    (cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
     /* enable the card */
     Cardbus_conf_write(csc->ct, tag, CARDBUS_COMMAND_STATUS_REG, command);
 }

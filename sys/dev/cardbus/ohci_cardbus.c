@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.4 2000/03/01 20:50:37 thorpej Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.5 2000/03/07 00:32:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ ohci_cardbus_attach(parent, self, aux)
 XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #endif
 	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_MEM_ENABLE);
+	(ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the device. */
 	csr = cardbus_conf_read(cc, cf, ca->ca_tag,
