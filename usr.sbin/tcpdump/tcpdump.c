@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpdump.c,v 1.9 1999/03/23 00:02:25 bad Exp $	*/
+/*	$NetBSD: tcpdump.c,v 1.9.2.1 1999/10/11 05:39:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: tcpdump.c,v 1.9 1999/03/23 00:02:25 bad Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.9.2.1 1999/10/11 05:39:09 cgd Exp $");
 #endif
 #endif
 
@@ -72,6 +72,7 @@ int Sflag;			/* print raw TCP sequence numbers */
 int tflag = 1;			/* print packet arrival time */
 int vflag;			/* verbose */
 int xflag;			/* print packet in hex */
+int Xflag;			/* print packet in ascii as well as hex */
 
 int packettype;
 
@@ -156,7 +157,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 	while (
-	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xY")) != -1)
+	    (op = getopt(argc, argv, "ac:defF:i:lnNOpqr:s:StT:vw:xXY")) != -1)
 		switch (op) {
 
 		case 'a':
@@ -268,6 +269,10 @@ main(int argc, char **argv)
 #endif
 		case 'x':
 			++xflag;
+			break;
+
+		case 'X':
+			++Xflag;
 			break;
 
 		default:
@@ -395,6 +400,10 @@ default_print_unaligned(register const u_char *cp, register u_int length)
 	register u_int i, s;
 	register int nshorts;
 
+	if (Xflag) {
+		ascii_print(cp, length);
+		return;
+	}
 	nshorts = (u_int) length / sizeof(u_short);
 	i = 0;
 	while (--nshorts >= 0) {
@@ -422,6 +431,10 @@ default_print(register const u_char *bp, register u_int length)
 	register u_int i;
 	register int nshorts;
 
+	if (Xflag) {
+		ascii_print(bp, length);
+		return;
+	}
 	if ((long)bp & 1) {
 		default_print_unaligned(bp, length);
 		return;
