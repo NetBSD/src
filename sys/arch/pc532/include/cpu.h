@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 1996/04/04 06:36:36 phil Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 1996/10/09 07:28:43 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -104,6 +104,32 @@ int	want_resched;	/* resched() was called */
  * We need a machine-independent name for this.
  */
 #define	DELAY(n)	delay(n)
+void	delay __P((int));
+
+#ifdef _KERNEL
+/* autoconf.c */
+void	configure __P((void));
+
+/* machdep.c */
+void	delay __P((int));
+void	dumpconf __P((void));
+void	cpu_reset __P((void));
+
+/* locore.s */
+void	proc_trampoline __P((void));
+
+/* clock.c */
+void	startrtclock __P((void));
+
+/* trap.c */
+void	child_return __P((struct proc *, struct syscframe frame));
+
+#ifdef GENERIC
+/* swapgeneric.c */
+void	setconf __P((void));
+#endif /* GENERIC */
+
+#endif /* _KERNEL */
 
 /* 
  * CTL_MACHDEP definitions.
