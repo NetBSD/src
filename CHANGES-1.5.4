@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.119 2003/11/27 19:06:07 cyber Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.120 2003/11/30 19:13:39 he Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2412,3 +2412,9 @@ dist/bind/bin/nslookup/commands.l		1.5
 	sync w/ bind837
 	[itojun, ticket #111]
 
+sys/netinet/in.c				1.89 via patch
+sys/netinet/ip_mroute.c				1.73,1.75 via patch
+sys/netinet/ip_mroute.h				1.21 via patch
+
+	Clean up multicast routing when an interface is detached.
+	[itojun, ticket #54]
