@@ -1,4 +1,4 @@
-# $NetBSD: files.arm26,v 1.24 2001/03/14 14:39:46 toshii Exp $
+# $NetBSD: files.arm26,v 1.25 2001/03/20 00:01:37 bjh21 Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -168,10 +168,7 @@ file	arch/arm26/iobus/upc_iobus.c		upc_iobus
 # Assorted podules
 #
 
-# Acorn Ether1
-device	ei: ether, ifnet, arp, i82586
-attach	ei at podulebus
-file	arch/arm26/podulebus/if_ei.c		ei
+include "dev/podulebus/files.podulebus"
 
 # Acorn/Atomwide Ether3
 device	ea: ether, ifnet, arp, seeq8005
