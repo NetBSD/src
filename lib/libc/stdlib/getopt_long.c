@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.4 2000/04/02 20:27:58 christos Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.5 2000/04/02 22:04:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,15 +38,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getopt_long.c,v 1.4 2000/04/02 20:27:58 christos Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.5 2000/04/02 22:04:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
+
+#include "namespace.h"
 
 #include <assert.h>
 #include <errno.h>
 #include <err.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+#include <getopt.h>
 
 #ifdef REPLACE_GETOPT
 #ifdef __weak_alias
