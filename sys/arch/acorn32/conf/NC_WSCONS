@@ -1,4 +1,4 @@
-#	$NetBSD: NC_WSCONS,v 1.13 2002/04/25 15:06:20 atatat Exp $
+#	$NetBSD: NC_WSCONS,v 1.13.4.1 2002/06/04 11:29:22 lukem Exp $
 #
 #	NC - with wscons
 #
@@ -186,7 +186,7 @@ pseudo-device	wsmux
 # vidcconsole PS2 mouse at IOMD
 #vidcconsole0	at vidc?		# display + vt100 emulation
 #kbd*		at iomd?		# PS/2 keyboard for vidcconsole
-#opms*		at iomd?		# RiscPC mouse for vidcconsole
+opms*		at iomd?		# PS/2 mouse
 
 # generic VT console device
 #vt0	at vidc?
