@@ -57,7 +57,7 @@ The /some/where/filter program can be a simple shell script like this:
 
     # Localize these
     INSPECT_DIR=/var/spool/filter
-    SENDMAIL=/usr/sbin/sendmail
+    SENDMAIL="/usr/sbin/sendmail -i"
 
     # Exit codes from <sysexits.h>
     EX_TEMPFAIL=75
