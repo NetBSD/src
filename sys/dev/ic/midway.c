@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.26 1997/04/24 02:24:07 mycroft Exp $	*/
+/*	$NetBSD: midway.c,v 1.27 1997/04/24 02:25:37 mycroft Exp $	*/
 /*	(sync'd to midway.c 1.67)	*/
 
 /*
@@ -591,7 +591,7 @@ u_int totlen, *drqneed;
       }
       m->m_len = MLEN;
     }
-    if (top && totlen >= MINCLSIZE) {
+    if (totlen >= MINCLSIZE) {
       MCLGET(m, M_DONTWAIT);
       if ((m->m_flags & M_EXT) == 0) {
 	m_freem(top);
