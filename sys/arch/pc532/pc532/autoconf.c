@@ -35,7 +35,7 @@
  *
  *	@(#)autoconf.c	7.1 (Berkeley) 5/9/91
  *
- *	$Id: autoconf.c,v 1.2 1993/10/27 06:31:06 phil Exp $
+ *	$Id: autoconf.c,v 1.3 1994/02/23 07:59:17 phil Exp $
  */
 
 /*
@@ -224,10 +224,7 @@ config_dev(struct pc532_device *dp, int *num)
 	if (driv = dp->pd_driver) {
 		dp->pd_alive = (*driv->probe)(dp);
 		if (dp->pd_alive)
-			if ((*driv->attach)(dp))  {
-				if (((*num)++)) printf (", ");
-				printf("%s%d", dp->pd_name, dp->pd_unit);
-			}
+			(*driv->attach)(dp);
 		return (1);
 	} else	return(0);
 }
