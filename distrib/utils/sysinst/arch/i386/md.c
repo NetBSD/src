@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.36.4.5 2000/11/09 22:47:34 tv Exp $ */
+/*	$NetBSD: md.c,v 1.36.4.6 2000/11/13 19:56:14 tv Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -787,7 +787,7 @@ endloop:
 static int
 move_aout_libs()
 {
-	int n;
+	int n, backedup = 0;
 	char prefix[MAXPATHLEN], src[MAXPATHLEN];
 	struct stat st;
 
@@ -807,6 +807,11 @@ move_aout_libs()
 	 */
 	if (target_realpath("/emul", prefix) == NULL || stat(prefix, &st) < 0) {
 		strcpy(prefix, target_expand("/emul"));
+		if (lstat(prefix, &st) == 0) {
+			run_prog(0, NULL, "mv -f %s %s", prefix,
+			    target_expand("/emul.old"));
+			backedup = 1;
+		}
 		if (scripting)
 			fprintf(script, "mkdir %s\n", prefix);
 		mkdir(prefix, 0755);
@@ -821,8 +826,11 @@ move_aout_libs()
 	 * move it out of the way.
 	 */
 	strcpy(src, concat_paths(prefix, "aout"));
-	run_prog(0, NULL, "mv -f %s %s", src,
-	    concat_paths(prefix, "aout.old"));
+	if (lstat(src, &st) == 0) {
+		run_prog(0, NULL, "mv -f %s %s", src,
+		    concat_paths(prefix, "aout.old"));
+		backedup = 1;
+	}
 
 	/*
 	 * We have created /emul if needed. Since no previous /emul/aout
@@ -868,6 +876,11 @@ domove:
 
 	strcpy(src, target_expand("/usr/X11R6/lib"));
 	handle_aout_x_libs(src, concat_paths(prefix, "usr/X11R6/lib"));
+
+	if (backedup) {
+		msg_display(MSG_emulbackup);
+		process_menu(MENU_ok);
+	}
 
 	return n;
 }
