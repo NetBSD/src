@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.3 1994/01/26 21:05:52 mw Exp $
+ *	$Id: if_le.c,v 1.4 1994/02/12 00:00:08 chopps Exp $
  */
 
 #include "le.h"
@@ -253,7 +253,6 @@ noreset:
 	ifp->if_unit = ad->amiga_unit;
 	ifp->if_name = "le";
 	ifp->if_mtu = ETHERMTU;
-	ifp->if_init = leinit;
 	ifp->if_ioctl = leioctl;
 	ifp->if_output = ether_output;
 	ifp->if_start = lestart;
