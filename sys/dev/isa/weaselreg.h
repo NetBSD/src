@@ -1,4 +1,4 @@
-/*	$NetBSD: weaselreg.h,v 1.5 2001/01/23 17:18:23 hpeyerl Exp $	*/
+/*	$NetBSD: weaselreg.h,v 1.6 2001/05/03 17:55:47 hpeyerl Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -48,6 +48,8 @@
 #define	WEASEL_WDT_SEMAPHORE		0x0fa0
 
 #define	WEASEL_CONFIG_BLOCK		0x0fa1
+
+#define WEASEL_WDT_TICKLE		0x0fa2
 
 #define	WEASEL_MISC_COMMAND		0x0fcd
 
@@ -140,3 +142,8 @@ struct weasel_config_block {
  *	tmp = WDT_SEMPAPHORE;
  *	WDT_SEMAPHORE ~= tmp;
  */
+#define WDT_ATTENTION   0x22    /* get the attention of the WDT state engine */
+#define WDT_OK          0xae    /* we get back an acknowledgement */
+#define WDT_ENABLE      0xf1    /* the command to arm to watchdog. */
+#define WDT_DISABLE     0xf4    /* the command to disarm the watchdog. */
+
