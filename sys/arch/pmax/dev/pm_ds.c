@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.11 1999/11/16 06:00:12 nisimura Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.12 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -39,7 +39,7 @@
 #include "pm.h"
 #include "dc.h"
 
-int	ds_pm_init __P ((struct fbinfo *fi, int unti, int cold_console_flag));
+int	ds_pm_init __P((struct fbinfo *fi, int unti, int cold_console_flag));
 int	pm_ds_match __P((struct device *, struct cfdata *, void *));
 void	pm_ds_attach __P((struct device *, struct device *, void *));
 
@@ -67,7 +67,7 @@ extern struct pmax_fbtty pmfb;
  * we hardcode an entry point.
  * XXX
  */
-void dcPutc	__P((dev_t, int));		/* XXX */
+void	dcPutc __P((dev_t, int));		/* XXX */
 
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.30 1999/12/03 03:06:11 nisimura Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.31 2000/01/08 01:02:39 simonb Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -73,7 +73,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.30 1999/12/03 03:06:11 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.31 2000/01/08 01:02:39 simonb Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -103,13 +103,12 @@ __KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.30 1999/12/03 03:06:11 nisimura E
  */
 void		dec_3maxplus_init __P((void));
 void		dec_3maxplus_bus_reset __P((void));
-void		dec_3maxplus_enable_intr
-		   __P ((unsigned slotno, int (*handler)(void *),
-			 void *sc, int onoff));
+void		dec_3maxplus_enable_intr __P((unsigned slotno,
+		    int (*handler)(void *), void *sc, int onoff));
 int		dec_3maxplus_intr __P((unsigned, unsigned, unsigned, unsigned));
 void		dec_3maxplus_cons_init __P((void));
 void		dec_3maxplus_device_register __P((struct device *, void *));
-static void 	dec_3maxplus_errintr __P ((void));
+static void 	dec_3maxplus_errintr __P((void));
 
 
 /*

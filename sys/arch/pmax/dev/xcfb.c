@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.30 1999/12/23 16:07:58 ad Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.31 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -151,8 +151,8 @@ struct fbdriver xcfb_driver = {
  * code is completely gone.
  */
 
-int xcfbmatch __P((struct device *, struct cfdata *, void *));
-void xcfbattach __P((struct device *, struct device *, void *));
+int	xcfbmatch __P((struct device *, struct cfdata *, void *));
+void	xcfbattach __P((struct device *, struct device *, void *));
 
 struct cfattach xcfb_ca = {
 	sizeof(struct device), xcfbmatch, xcfbattach

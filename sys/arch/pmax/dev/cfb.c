@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.34 1999/09/05 11:34:29 simonb Exp $	*/
+/*	$NetBSD: cfb.c,v 1.35 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -127,7 +127,7 @@ struct fbdriver cfb_driver = {
 	bt459CursorColor
 };
 
-int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
+int	cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
 
 #define	CFB_OFFSET_VRAM		0x0		/* from module's base */
 #define CFB_OFFSET_BT459	0x200000	/* Bt459 registers */
@@ -142,9 +142,9 @@ int cfbinit __P((struct fbinfo *fi, caddr_t cfbaddr, int unit, int silent));
  * code is completely gone.
  */
 
-int cfbmatch __P((struct device *, struct cfdata *, void *));
-void cfbattach __P((struct device *, struct device *, void *));
-int cfb_intr __P((void *sc));
+int	cfbmatch __P((struct device *, struct cfdata *, void *));
+void	cfbattach __P((struct device *, struct device *, void *));
+int	cfb_intr __P((void *sc));
 
 struct cfattach cfb_ca = {
 	sizeof(struct fbsoftc), cfbmatch, cfbattach

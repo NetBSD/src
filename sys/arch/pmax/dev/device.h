@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.13 1999/04/24 08:01:03 simonb Exp $	*/
+/*	$NetBSD: device.h,v 1.14 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ extern struct pmax_scsi_device scsi_dinit[];
  * Callbacks to add known a controller, and to configure all slaves on
  * all  known controllers.
  */
-void pmax_add_scsi __P((struct pmax_driver *dp, int unit));
-void configure_scsi __P((void));
+void	pmax_add_scsi __P((struct pmax_driver *dp, int unit));
+void	configure_scsi __P((void));
 
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbreg.h,v 1.7 1999/04/24 08:01:04 simonb Exp $	*/
+/*	$NetBSD: fbreg.h,v 1.8 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@ struct fbuaccess {
 
 struct pmax_fbtty {
 	int	row, col;		/* Screen pos for glass tty */
-	void	(*KBDPutc) __P ((dev_t dev, int c));
+	void	(*KBDPutc) __P((dev_t dev, int c));
 					/* Send char to keyboard func */
 	dev_t	kbddev;			/* Device for KBDPutc */
 };
@@ -70,13 +70,13 @@ typedef struct {
  */
 #define TO_MS(tv) ((tv.tv_sec * 1000) + (tv.tv_usec / 1000))
 
-extern void fbKbdEvent __P((int, struct fbinfo *));
-extern void fbMouseEvent __P((MouseReport *, struct fbinfo *));
-extern void fbMouseButtons __P((MouseReport *, struct fbinfo *));
-extern void fbScroll __P((struct fbinfo *));
-extern void fbPutc __P((dev_t, int));
-extern void fbBlitc __P((int, struct fbinfo *));
-extern int tb_kbdmouseconfig __P((struct fbinfo *fi));
-extern int fbmmap_fb __P((struct fbinfo *, dev_t, caddr_t, struct proc *));
+void	fbKbdEvent __P((int, struct fbinfo *));
+void	fbMouseEvent __P((MouseReport *, struct fbinfo *));
+void	fbMouseButtons __P((MouseReport *, struct fbinfo *));
+void	fbScroll __P((struct fbinfo *));
+void	fbPutc __P((dev_t, int));
+void	fbBlitc __P((int, struct fbinfo *));
+int	tb_kbdmouseconfig __P((struct fbinfo *fi));
+int	fbmmap_fb __P((struct fbinfo *, dev_t, caddr_t, struct proc *));
 
-extern void init_pmaxfbu __P((struct fbinfo *fi));
+void	init_pmaxfbu __P((struct fbinfo *fi));
