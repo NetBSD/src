@@ -1,4 +1,4 @@
-/*	$NetBSD: if_x25subr.c,v 1.7 1995/04/11 04:30:47 mycroft Exp $	*/
+/*	$NetBSD: if_x25subr.c,v 1.8 1995/06/13 05:38:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -119,7 +119,8 @@ register struct rtentry *rt;
 		rt->rt_llinfo = (caddr_t)lx;
 		insque(lx, &llinfo_x25);
 	}
-	for (ifa = rt->rt_ifp->if_addrlist; ifa; ifa = ifa->ifa_next) {
+	for (ifa = rt->rt_ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next) {
 		if (ifa->ifa_addr->sa_family == AF_CCITT)
 			lx->lx_ia = (struct x25_ifaddr *)ifa;
 	}

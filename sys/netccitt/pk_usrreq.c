@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_usrreq.c,v 1.8 1995/03/08 02:14:03 cgd Exp $	*/
+/*	$NetBSD: pk_usrreq.c,v 1.9 1995/06/13 05:38:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) University of British Columbia, 1984
@@ -337,8 +337,9 @@ register struct ifnet *ifp;
 	 * Find address for this interface, if it exists.
 	 */
 	if (ifp)
-		for (ifa = ifp -> if_addrlist; ifa; ifa = ifa -> ifa_next)
-			if (ifa -> ifa_addr -> sa_family == AF_CCITT)
+		for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+		    ifa = ifa->ifa_list.tqe_next)
+			if (ifa->ifa_addr->sa_family == AF_CCITT)
 				break;
 
 	ia = (struct x25_ifaddr *)ifa;
@@ -362,12 +363,8 @@ register struct ifnet *ifp;
 			if (ia == 0)
 				return (ENOBUFS);
 			bzero ((caddr_t)ia, sizeof (*ia));
-			if (ifa = ifp -> if_addrlist) {
-				for ( ; ifa -> ifa_next; ifa = ifa -> ifa_next)
-					;
-				ifa -> ifa_next = &ia -> ia_ifa;
-			} else
-				ifp -> if_addrlist = &ia -> ia_ifa;
+			TAILQ_INSERT_TAIL(&ifp->if_addrlist, &ia->ia_ifa,
+			    ifa_list);
 			ifa = &ia -> ia_ifa;
 			ifa -> ifa_netmask = (struct sockaddr *)&pk_sockmask;
 			ifa -> ifa_addr = (struct sockaddr *)&ia -> ia_xc.xc_addr;

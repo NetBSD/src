@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.2 1994/06/29 06:37:25 cgd Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.3 1995/06/13 05:38:51 mycroft Exp $	*/
 
 /* 
  * Copyright (C) Dirk Husemann, Computer Science Department IV, 
@@ -139,8 +139,9 @@ sdl_getaddrif(struct ifnet *ifp)
 {
 	register struct ifaddr *ifa;
 
-	for(ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) 	
-		if (ifa->ifa_addr->sa_family == AF_LINK ) 		
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next) 	
+		if (ifa->ifa_addr->sa_family == AF_LINK)
 			return((struct sockaddr_dl *)(ifa->ifa_addr));
 
 	return((struct sockaddr_dl *)0);
@@ -152,8 +153,9 @@ sdl_checkaddrif(struct ifnet *ifp, struct sockaddr_dl *sdl_c)
 {
 	register struct ifaddr *ifa;
 
-	for(ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) 	
-		if ((ifa->ifa_addr->sa_family == AF_LINK ) && 	 
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next) 	
+		if (ifa->ifa_addr->sa_family == AF_LINK && 	 
 		    !sdl_cmp((struct sockaddr_dl *)(ifa->ifa_addr), sdl_c))
 			return(1);
 	
