@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.c,v 1.1 2002/02/22 20:11:44 christos Exp $	 */
+/*	$NetBSD: utmpx.c,v 1.2 2002/02/25 20:19:26 christos Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: utmpx.c,v 1.1 2002/02/22 20:11:44 christos Exp $");
+__RCSID("$NetBSD: utmpx.c,v 1.2 2002/02/25 20:19:26 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -99,14 +99,14 @@ getutxent()
 			/* new file, add signature record */
 			(void)memset(&ut, 0, sizeof(ut));
 			ut.ut_type = SIGNATURE;
-			(void)memcpy(ut.ut_name, vers, sizeof(vers));
+			(void)memcpy(ut.ut_user, vers, sizeof(vers));
 			if (fwrite(&ut, sizeof(ut), 1, fp) != sizeof(ut))
 				goto failclose;
 		} else {
 			/* old file, read signature record */
 			if (fread(&ut, sizeof(ut), 1, fp) != sizeof(ut))
 				goto failclose;
-			if (memcmp(ut.ut_name, vers, sizeof(vers)) != 0 ||
+			if (memcmp(ut.ut_user, vers, sizeof(vers)) != 0 ||
 			    ut.ut_type != SIGNATURE)
 				goto failclose;
 		}
