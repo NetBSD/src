@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.4.4.3 2001/02/26 15:40:23 he Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4.4.4 2001/02/26 15:48:48 he Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -1802,7 +1802,7 @@ cs4280_power(why, v)
 		cs4280_init(sc, 0);
 		cs4280_reset_codec(sc);
 
-		(*sc->codev_if->vtbl->restore_ports)(sc->codec_if);
+		(*sc->codec_if->vtbl->restore_ports)(sc->codec_if);
 	}
 }
 
