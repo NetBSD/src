@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.93 1998/08/09 04:54:44 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.94 1998/08/09 05:44:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -2387,7 +2387,8 @@ audiosetinfo(sc, ai)
 			else if (setmode == AUMODE_PLAY)
 				rp = pp;
 		}
-		error = hw->set_params(sc->hw_hdl, setmode, sc->sc_mode, &pp, &rp);
+		error = hw->set_params(sc->hw_hdl, setmode,
+		    sc->sc_mode & (AUMODE_PLAY | AUMODE_RECORD), &pp, &rp);
 		if (error)
 			return (error);
 		if (!indep) {
