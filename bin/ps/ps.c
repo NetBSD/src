@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.24 1998/07/28 11:41:50 mycroft Exp $	*/
+/*	$NetBSD: ps.c,v 1.25 1998/07/28 18:54:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.24 1998/07/28 11:41:50 mycroft Exp $");
+__RCSID("$NetBSD: ps.c,v 1.25 1998/07/28 18:54:02 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: ps.c,v 1.24 1998/07/28 11:41:50 mycroft Exp $");
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -113,11 +114,8 @@ main(argc, argv)
 	struct kinfo_proc *kp;
 	struct varent *vent;
 	struct winsize ws;
-	dev_t ttydev;
-	pid_t pid;
-	uid_t uid;
 	gid_t egid = getegid();
-	int all, ch, flag, i, fmt, lineno, nentries;
+	int ch, flag, i, fmt, lineno, nentries;
 	int prtheader, wflag, what, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	const char *ttname;
@@ -134,16 +132,16 @@ main(argc, argv)
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	all = fmt = prtheader = wflag = xflg = 0;
-	pid = -1;
-	uid = (uid_t) -1;
-	ttydev = NODEV;
+	fmt = prtheader = wflag = xflg = 0;
+	what = KERN_PROC_UID;
+	flag = getuid();
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
-	    "acCeghjLlM:mN:O:o:p:rSTt:uvW:wx")) != -1)
+	    "acCeghjLlM:mN:O:o:p:rSTt:U:uvW:wx")) != -1)
 		switch((char)ch) {
 		case 'a':
-			all = 1;
+			what = KERN_PROC_ALL;
+			flag = 0;
 			break;
 		case 'c':
 			commandonly = 1;
@@ -194,7 +192,8 @@ main(argc, argv)
 			fmt = 1;
 			break;
 		case 'p':
-			pid = atol(optarg);
+			what = KERN_PROC_PID;
+			flag = atol(optarg);
 			xflg = 1;
 			break;
 		case 'r':
@@ -224,9 +223,29 @@ main(argc, argv)
 				err(1, "%s", ttypath);
 			if (!S_ISCHR(sb.st_mode))
 				errx(1, "%s: not a terminal", ttypath);
-			ttydev = sb.st_rdev;
+			what = KERN_PROC_TTY;
+			flag = sb.st_rdev;
 			break;
 		}
+		case 'U':
+			if (*optarg != '\0') {
+				struct passwd *pw;
+				char *ep;
+
+				what = KERN_PROC_UID;
+				pw = getpwnam(optarg);
+				if (pw == NULL) {
+					errno = 0;
+					flag = strtoul(optarg, &ep, 10);
+					if (errno)
+						err(1, "%s", optarg);
+					if (*ep != '\0')
+						errx(1, "%s: illegal user name",
+						    optarg);
+				} else
+					flag = pw->pw_uid;
+			}
+			break;
 		case 'u':
 			parsefmt(ufmt);
 			sortby = SORTCPU;
@@ -291,30 +310,11 @@ main(argc, argv)
 	if (!fmt)
 		parsefmt(dfmt);
 
-	if (!all && ttydev == NODEV && pid == -1)  /* XXX - should be cleaner */
-		uid = getuid();
-
 	/*
 	 * scan requested variables, noting what structures are needed,
 	 * and adjusting header widths as appropiate.
 	 */
 	scanvars();
-	/*
-	 * get proc list
-	 */
-	if (uid != (uid_t) -1) {
-		what = KERN_PROC_UID;
-		flag = uid;
-	} else if (ttydev != NODEV) {
-		what = KERN_PROC_TTY;
-		flag = ttydev;
-	} else if (pid != -1) {
-		what = KERN_PROC_PID;
-		flag = pid;
-	} else {
-		what = KERN_PROC_ALL;
-		flag = 0;
-	}
 	/*
 	 * select procs
 	 */
@@ -436,7 +436,7 @@ pscomp(a, b)
  *  ps foo -> ps -foo
  *  ps 34 -> ps -p34
  *
- * The old convention that 't' with no trailing tty arg means the users
+ * The old convention that 't' with no trailing tty arg means the user's
  * tty, is only supported if argv[1] doesn't begin with a '-'.  This same
  * feature is available with the option 'T', which takes no argument.
  */
@@ -481,8 +481,9 @@ kludge_oldps_options(s)
 	 * if there's a trailing number, and not a preceding 'p' (pid) or
 	 * 't' (tty) flag, then assume it's a pid and insert a 'p' flag.
 	 */
-	if (isdigit(*cp) && (cp == s || (cp[-1] != 't' && cp[-1] != 'p' &&
-	    (cp - 1 == s || cp[-2] != 't'))))
+	if (isdigit(*cp) &&
+	    (cp == s || (cp[-1] != 'U' && cp[-1] != 't' && cp[-1] != 'p' &&
+	     (cp - 1 == s || cp[-2] != 't'))))
 		*ns++ = 'p';
 	/* and append the number */
 	(void)strcpy(ns, cp);		/* XXX strcpy is safe */
