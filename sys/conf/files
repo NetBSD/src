@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.562 2002/10/10 22:10:52 thorpej Exp $
+#	$NetBSD: files,v 1.563 2002/10/10 22:12:53 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -64,8 +64,11 @@ defflag				COMPAT_PECOFF
 defflag	opt_compat_netbsd.h	COMPAT_09 COMPAT_10 COMPAT_11 COMPAT_12
 				COMPAT_13 COMPAT_14 COMPAT_15 COMPAT_NOMID
 
-# networking protocols
 #
+# Networking protocols
+#
+include "netatalk/files.netatalk"
+
 defflag	opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
 defflag	opt_inet.h		INET INET6 INET6_MD_CKSUM
