@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.135 1999/03/19 04:58:47 cgd Exp $	*/
+/*	$NetBSD: pccons.c,v 1.136 1999/07/26 19:31:54 wrstuden Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -849,6 +849,8 @@ pcclose(dev, flag, mode, p)
 	struct pc_softc *sc = pc_cd.cd_devs[PCUNIT(dev)];
 	struct tty *tp = sc->sc_tty;
 
+	if (tp == NULL)
+		return (0);
 	(*linesw[tp->t_line].l_close)(tp, flag);
 	ttyclose(tp);
 #ifdef notyet /* XXX */
