@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.5 1997/11/20 04:09:19 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.6 1997/12/15 07:15:57 scottr Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -168,7 +168,7 @@ struct scsipi_link {
 #define ADEV_LITTLETOC		0x0200	/* Audio TOC uses wrong byte order */
 #define ADEV_NOCAPACITY		0x0400	/* no READ_CD_CAPACITY command */
 #define ADEV_NOTUR		0x0800	/* no TEST_UNIT_READY command */
-#define ADEV_NODOORLOCK		0x1000	/* device can't look door */
+#define ADEV_NODOORLOCK		0x1000	/* device can't lock door */
 
 
 	struct	scsipi_device *device;	/* device entry points etc. */
