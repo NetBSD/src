@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.12 2004/09/27 23:02:53 dyoung Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.13 2004/12/02 00:05:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: /tcpdump/master/libpcap/pcap-bpf.c,v 1.67.2.4 2003/11/22 00:06:28 guy Exp  (LBL)";
 #else
-__RCSID("$NetBSD: pcap-bpf.c,v 1.12 2004/09/27 23:02:53 dyoung Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.13 2004/12/02 00:05:02 christos Exp $");
 #endif
 #endif
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: pcap-bpf.c,v 1.12 2004/09/27 23:02:53 dyoung Exp $");
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/utsname.h>
+#include <paths.h>
 
 #include <net/if.h>
 
@@ -458,8 +459,12 @@ static __inline int
 bpf_open(pcap_t *p, char *errbuf)
 {
 	int fd;
+#ifndef _PATH_BPF
 	int n = 0;
 	char device[sizeof "/dev/bpf0000000000"];
+#else
+	const char *device = _PATH_BPF;
+#endif
 
 #ifdef _AIX
 	/*
@@ -471,6 +476,7 @@ bpf_open(pcap_t *p, char *errbuf)
 		return (-1);
 #endif
 
+#ifndef _PATH_BPF
 	/*
 	 * Go through all the minors and find one that isn't in use.
 	 */
@@ -485,6 +491,12 @@ bpf_open(pcap_t *p, char *errbuf)
 	if (fd < 0)
 		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
 		    "(no devices found) %s: %s", device, pcap_strerror(errno));
+#else
+	if ((fd = open(device, O_RDWR)) == -1)
+		(void)snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "(cannot open device) %s: %s", device, pcap_strerror(errno));
+#endif
+
 
 	return (fd);
 }
