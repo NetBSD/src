@@ -36,7 +36,7 @@
  *
  * From:
  *	Id: procfs_i386.c,v 4.1 1993/12/17 10:47:45 jsp Rel
- *	$Id: process_machdep.c,v 1.2 1994/02/11 16:50:03 pk Exp $
+ *	$Id: process_machdep.c,v 1.3 1994/03/29 20:33:57 pk Exp $
  */
 
 /*
@@ -91,7 +91,9 @@ process_write_regs(p, regs)
 	struct proc *p;
 	struct reg *regs;
 {
+	int	psr = p->p_md.md_tf->tf_psr & ~PSR_ICC;
 	bcopy((caddr_t)regs, p->p_md.md_tf, sizeof(struct reg));
+	p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);
 	return (0);
 }
 
