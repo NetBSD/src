@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.41 1999/03/18 02:44:27 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.42 1999/03/18 04:31:36 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -72,6 +72,7 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/kernel.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -132,6 +133,8 @@ int	ess_audio1_halt __P((void *));
 int	ess_audio2_halt __P((void *));
 int	ess_audio1_intr __P((void *));
 int	ess_audio2_intr __P((void *));
+void	ess_audio1_poll __P((void *));
+void	ess_audio2_poll __P((void *));
 
 int	ess_speaker_ctl __P((void *, int));
 
@@ -439,10 +442,11 @@ ess_config_irq(sc)
 	DPRINTFN(2,("ess_config_irq\n"));
 
 	if (sc->sc_model == ESS_1887 &&
-	    sc->sc_audio1.irq == sc->sc_audio2.irq) {
+	    sc->sc_audio1.irq == sc->sc_audio2.irq &&
+	    sc->sc_audio1.irq != -1) {
 		/* Use new method, both interrupts are the same. */
 		v = ESS_IS_SELECT_IRQ;	/* enable intrs */
-		switch (sc->sc_audio2.irq) {
+		switch (sc->sc_audio1.irq) {
 		case 5:
 			v |= ESS_IS_INTRB;
 			break;
@@ -470,38 +474,52 @@ ess_config_irq(sc)
 		return;
 	}
 
-	/* Configure Audio 1 (record) for the appropriate IRQ line. */
-	v = ESS_IRQ_CTRL_MASK | ESS_IRQ_CTRL_EXT; /* All intrs on */
-	switch (sc->sc_audio1.irq) {
-	case 5:
-		v |= ESS_IRQ_CTRL_INTRB;
-		break;
-	case 7:
-		v |= ESS_IRQ_CTRL_INTRC;
-		break;
-	case 9:
-		v |= ESS_IRQ_CTRL_INTRA;
-		break;
-	case 10:
-		v |= ESS_IRQ_CTRL_INTRD;
-		break;
+	if (sc->sc_model == ESS_1887) {
+		/* Tell the 1887 to use the old interrupt method. */
+		ess_write_mix_reg(sc, ESS_MREG_INTR_ST, ESS_IS_ES1888);
+	}
+
+	if (sc->sc_audio1.polled) {
+		/* Turn off Audio1 interrupts. */
+		v = 0;
+	} else {
+		/* Configure Audio 1 for the appropriate IRQ line. */
+		v = ESS_IRQ_CTRL_MASK | ESS_IRQ_CTRL_EXT; /* All intrs on */
+		switch (sc->sc_audio1.irq) {
+		case 5:
+			v |= ESS_IRQ_CTRL_INTRB;
+			break;
+		case 7:
+			v |= ESS_IRQ_CTRL_INTRC;
+			break;
+		case 9:
+			v |= ESS_IRQ_CTRL_INTRA;
+			break;
+		case 10:
+			v |= ESS_IRQ_CTRL_INTRD;
+			break;
 #ifdef DIAGNOSTIC
-	default:
-		printf("ess: configured irq %d not supported for Audio 1\n", 
-		       sc->sc_audio1.irq);
-		return;
+		default:
+			printf("ess: configured irq %d not supported for Audio 1\n", 
+			       sc->sc_audio1.irq);
+			return;
 #endif
+		}
 	}
 	ess_write_x_reg(sc, ESS_XCMD_IRQ_CTRL, v);
 
 	if (sc->sc_model == ESS_1788)
 		return;
 
-	/* Audio2 is hardwired to INTRE in this mode. */
-	ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
-			  ESS_AUDIO2_CTRL2_IRQ2_ENABLE);
-	/* Tell the 1887 to use the old method. */
-	ess_write_mix_reg(sc, ESS_MREG_INTR_ST, ESS_IS_ES1888);
+	if (sc->sc_audio2.polled) {
+		/* Turn off Audio2 interrupts. */
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
+				    ESS_AUDIO2_CTRL2_IRQ2_ENABLE);
+	} else {
+		/* Audio2 is hardwired to INTRE in this mode. */
+		ess_set_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL2, 
+				  ESS_AUDIO2_CTRL2_IRQ2_ENABLE);
+	}
 }
 
 
@@ -787,20 +805,24 @@ essmatch(sc)
 	 */
 	if (sc->sc_model == ESS_1887 &&
 	    sc->sc_audio1.irq == sc->sc_audio2.irq &&
+	    sc->sc_audio1.irq != -1 &&
 	    ESS_IRQ12_VALID(sc->sc_audio1.irq))
 		goto irq_not1888;
 
 	/* Check that requested IRQ lines are valid and different. */
-	if (!ESS_IRQ1_VALID(sc->sc_audio1.irq)) {
+	if (sc->sc_audio1.irq != -1 &&
+	    !ESS_IRQ1_VALID(sc->sc_audio1.irq)) {
 		printf("ess: record irq %d invalid\n", sc->sc_audio1.irq);
 		return (0);
 	}
 	if (sc->sc_model != ESS_1788) {
-		if (!ESS_IRQ2_VALID(sc->sc_audio2.irq)) {
+		if (sc->sc_audio2.irq != -1 &&
+		    !ESS_IRQ2_VALID(sc->sc_audio2.irq)) {
 			printf("ess: play irq %d invalid\n", sc->sc_audio2.irq);
 			return (0);
 		}
-		if (sc->sc_audio1.irq == sc->sc_audio2.irq) {
+		if (sc->sc_audio1.irq == sc->sc_audio2.irq &&
+		    sc->sc_audio1.irq != -1) {
 			printf("ess: play and record irq both %d\n",
 			       sc->sc_audio1.irq);
 			return (0);
@@ -828,13 +850,22 @@ essattach(sc)
 	u_int v;
 
 	if (ess_setup_sc(sc, 0)) {
-		printf("%s: setup failed\n", sc->sc_dev.dv_xname);
+		printf(": setup failed\n");
 		return;
 	}
 
-	sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
-	    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
-	    ess_audio1_intr, sc);
+	printf(": ESS Technology ES%s [version 0x%04x]\n", 
+	       essmodel[sc->sc_model], sc->sc_version);
+	
+	sc->sc_audio1.polled = sc->sc_audio1.irq == -1;
+	if (!sc->sc_audio1.polled) {
+		sc->sc_audio1.ih = isa_intr_establish(sc->sc_ic,
+		    sc->sc_audio1.irq, sc->sc_audio1.ist, IPL_AUDIO,
+		    ess_audio1_intr, sc);
+		printf("%s: audio1 interrupting at irq %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_audio1.irq);
+	} else
+		printf("%s: audio1 polled\n", sc->sc_dev.dv_xname);
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_audio1.drq,
 	    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create map for drq %d\n",
@@ -843,9 +874,15 @@ essattach(sc)
 	}
 
 	if (sc->sc_model != ESS_1788) {
-		sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
-		    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
-		    ess_audio2_intr, sc);
+		sc->sc_audio2.polled = sc->sc_audio2.irq == -1;
+		if (!sc->sc_audio2.polled) {
+			sc->sc_audio2.ih = isa_intr_establish(sc->sc_ic,
+			    sc->sc_audio2.irq, sc->sc_audio2.ist, IPL_AUDIO,
+			    ess_audio2_intr, sc);
+			printf("%s: audio2 interrupting at irq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_audio2.irq);
+		} else
+			printf("%s: audio2 polled\n", sc->sc_dev.dv_xname);
 		if (isa_dmamap_create(sc->sc_ic, sc->sc_audio2.drq,
 		    MAX_ISADMA, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 			printf("%s: can't create map for drq %d\n",
@@ -854,9 +891,6 @@ essattach(sc)
 		}
 	}
 
-	printf(" ESS Technology ES%s [version 0x%04x]\n", 
-	       essmodel[sc->sc_model], sc->sc_version);
-	
 	/* 
 	 * Set record and play parameters to default values defined in
 	 * generic audio driver.
@@ -1013,8 +1047,6 @@ int
 ess_drain(addr)
 	void *addr;
 {
-	extern int hz;		/* XXX */
-
 	tsleep(addr, PWAIT | PCATCH, "essdr", hz/20); /* XXX */
 	return (0);
 }
@@ -1221,6 +1253,13 @@ ess_audio1_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio1.active = 1;
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
+	if (sc->sc_audio1.polled) {
+		sc->sc_audio1.dmacount = 0;
+		sc->sc_audio1.dmapos = sc->sc_audio1.buffersize =
+		    (char *)end - (char *)start;
+		sc->sc_audio1.blksize = blksize;
+		timeout(ess_audio1_poll, sc, hz/30);
+	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
 	if (param->channels == 2) {
@@ -1292,6 +1331,13 @@ ess_audio2_trigger_output(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio2.active = 1;
 	sc->sc_audio2.intr = intr;
 	sc->sc_audio2.arg = arg;
+	if (sc->sc_audio2.polled) {
+		sc->sc_audio2.dmacount = 0;
+		sc->sc_audio2.dmapos = sc->sc_audio2.buffersize =
+		    (char *)end - (char *)start;
+		sc->sc_audio2.blksize = blksize;
+		timeout(ess_audio2_poll, sc, hz/30);
+	}
 
 	reg = ess_read_mix_reg(sc, ESS_MREG_AUDIO2_CTRL2);
 	if (param->precision * param->factor == 16)
@@ -1354,6 +1400,13 @@ ess_audio1_trigger_input(addr, start, end, blksize, intr, arg, param)
 	sc->sc_audio1.active = 1;
 	sc->sc_audio1.intr = intr;
 	sc->sc_audio1.arg = arg;
+	if (sc->sc_audio1.polled) {
+		sc->sc_audio1.dmacount = 0;
+		sc->sc_audio1.dmapos = sc->sc_audio1.buffersize =
+		    (char *)end - (char *)start;
+		sc->sc_audio1.blksize = blksize;
+		timeout(ess_audio1_poll, sc, hz/30);
+	}
 
 	reg = ess_read_x_reg(sc, ESS_XCMD_AUDIO_CTRL);
 	if (param->channels == 2) {
@@ -1416,6 +1469,8 @@ ess_audio1_halt(addr)
 		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
 		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio1.drq);
+		if (sc->sc_audio1.polled)
+			untimeout(ess_audio1_poll, sc);
 		sc->sc_audio1.active = 0;
 	}
 
@@ -1435,6 +1490,8 @@ ess_audio2_halt(addr)
 		    ESS_AUDIO2_CTRL1_DAC_ENABLE |
 		    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
 		isa_dmaabort(sc->sc_ic, sc->sc_audio2.drq);
+		if (sc->sc_audio2.polled)
+			untimeout(ess_audio2_poll, sc);
 		sc->sc_audio2.active = 0;
 	}
 
@@ -1488,6 +1545,58 @@ ess_audio2_intr(arg)
 		return (1);
 	} else
 		return (0);
+}
+
+void
+ess_audio1_poll(addr)
+	void *addr;
+{
+	struct ess_softc *sc = addr;
+	int dmapos, dmacount;
+
+	if (!sc->sc_audio1.active)
+		return;
+
+	sc->sc_audio1.nintr++;
+
+	dmapos = isa_dmacount(sc->sc_ic, sc->sc_audio1.drq);
+	dmacount = sc->sc_audio1.dmacount + sc->sc_audio1.dmapos - dmapos;
+	if (dmapos > sc->sc_audio1.dmapos)
+		dmacount += sc->sc_audio1.buffersize;
+	while (dmacount > sc->sc_audio1.blksize) {
+		dmacount -= sc->sc_audio1.blksize;
+		(*sc->sc_audio1.intr)(sc->sc_audio1.arg);
+	}
+	sc->sc_audio1.dmapos = dmapos;
+	sc->sc_audio1.dmacount = dmacount;
+
+	timeout(ess_audio1_poll, sc, hz/30);
+}
+
+void
+ess_audio2_poll(addr)
+	void *addr;
+{
+	struct ess_softc *sc = addr;
+	int dmapos, dmacount;
+
+	if (!sc->sc_audio2.active)
+		return;
+
+	sc->sc_audio2.nintr++;
+
+	dmapos = isa_dmacount(sc->sc_ic, sc->sc_audio2.drq);
+	dmacount = sc->sc_audio2.dmacount + sc->sc_audio2.dmapos - dmapos;
+	if (dmapos > sc->sc_audio2.dmapos)
+		dmacount += sc->sc_audio2.buffersize;
+	while (dmacount > sc->sc_audio2.blksize) {
+		dmacount -= sc->sc_audio2.blksize;
+		(*sc->sc_audio2.intr)(sc->sc_audio2.arg);
+	}
+	sc->sc_audio2.dmapos = dmapos;
+	sc->sc_audio2.dmacount = dmacount;
+
+	timeout(ess_audio2_poll, sc, hz/30);
 }
 
 int
