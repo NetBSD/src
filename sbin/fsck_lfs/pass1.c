@@ -1,4 +1,4 @@
-/*	$Id: pass1.c,v 1.2 1999/03/24 05:32:23 nathanw Exp $	*/
+/*	$Id: pass1.c,v 1.2.2.1 2000/01/21 00:34:57 he Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -77,7 +77,7 @@ pass1()
         struct ifile *ifp;
         CLEANERINFO *cp;
 
-        idinode = lfs_ifind(&sblock,sblock.lfs_ifile,&ifblock);
+        idinode = lfs_difind(&sblock,sblock.lfs_ifile,&ifblock);
 
         /*
          * We now have the ifile's inode block in core.  Read out the
