@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_et.c,v 1.6 1997/01/10 20:59:27 leo Exp $	*/
+/*	$NetBSD: grfabs_et.c,v 1.7 1997/04/25 19:25:39 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -67,6 +67,13 @@
 #include <atari/dev/grf_etreg.h>
 
 #define	SAVEBUF_SIZE	(32*1024 + sizeof(save_area_t))
+
+/*
+ * Allow a 16Kb io-region and a 4MB frame buffer to be mapped. This
+ * is more or less required by the XFree server.
+ */
+#define	REG_MAPPABLE	(16 * 1024)
+#define	FRAME_MAPPABLE	(4 * 1024 * 1024)
 
 /*
  * Function decls
@@ -309,7 +316,8 @@ u_char   depth;
 	bm->hw_address    = (caddr_t)kvtop(et_priv.memkva);
 	bm->regs          = et_priv.regkva;
 	bm->hw_regs       = (caddr_t)kvtop(et_priv.regkva);
-	bm->reg_size      = et_priv.regsz;
+	bm->reg_size      = REG_MAPPABLE;
+	bm->phys_mappable = FRAME_MAPPABLE;
 
 	bm->bytes_per_row = (mode->size.width * depth) / NBBY;
 	bm->rows          = mode->size.height;
@@ -419,8 +427,8 @@ et_probe_card()
 	 */
 	et_priv.regkva  = (volatile caddr_t)pci_io_addr;
 	et_priv.memkva  = (volatile caddr_t)pci_mem_addr;
-	et_priv.memsz   = 4 * NBPG;
-	et_priv.regsz   = NBPG;
+	et_priv.memsz   = PCI_MEM_SIZE;
+	et_priv.regsz   = PCI_IO_SIZE;
 
 	if (found && !atari_realconfig) {
 		et_boardinit();

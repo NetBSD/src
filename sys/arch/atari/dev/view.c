@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.14 1997/01/10 21:00:37 leo Exp $	*/
+/*	$NetBSD: view.c,v 1.15 1997/04/25 19:25:41 leo Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -411,7 +411,7 @@ int	off, prot;
 	vu = &views[minor(dev)];
 	bm = vu->view->bitmap;
 	bmd_start = bm->hw_address; 
-	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
+	bmd_size = bm->phys_mappable;
 
 	/* 
 	 * control registers

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.6 1996/10/04 07:27:56 leo Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.7 1997/04/25 19:25:40 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -365,6 +365,7 @@ u_char	depth;
 	bm->regs          = NULL;
 	bm->hw_regs       = NULL;
 	bm->reg_size      = 0;
+	bm->phys_mappable = (depth * width * height) / NBBY;
 
 	bzero(bm->plane, bm_size);
 	return (bm);
