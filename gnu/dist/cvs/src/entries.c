@@ -95,7 +95,7 @@ write_ent_proc (node, closure)
     entnode = (Entnode *) node->data;
 
     if (closure != NULL && entnode->type != ENT_FILE)
-	*(int *) closure = 1;
+	closure = (void *)1;
 
     if (fputentent(entfile, entnode))
 	error (1, errno, "cannot write %s", entfilename);
