@@ -1,3 +1,5 @@
+/*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
+
 /*
  * units.c   Copyright (c) 1993 by Adrian Mariano (adrian@cam.cornell.edu)
  *
@@ -13,8 +15,6 @@
  *
  * I would appreciate (though I do not require) receiving a copy of any
  * improvements you might make to this program.
- *
- *	$Id: units.c,v 1.5 1996/04/01 21:43:53 mark Exp $
  */
 
 #include <ctype.h>
