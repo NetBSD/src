@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.32 1998/03/01 02:20:33 fvdl Exp $	*/
+/*	$NetBSD: newfs.c,v 1.33 1998/03/18 17:10:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.32 1998/03/01 02:20:33 fvdl Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.33 1998/03/18 17:10:16 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,6 +179,7 @@ int	sbsize = SBSIZE;	/* superblock size */
 int	mntflags = MNT_ASYNC;	/* flags to be passed to mount */
 u_long	memleft;		/* virtual memory available */
 caddr_t	membase;		/* start address of memory based filesystem */
+int needswap =0;		/* Filesystem not in native byte order */
 #ifdef COMPAT
 char	*disktype;
 int	unlabeled;
@@ -219,9 +220,21 @@ main(argc, argv)
 
 	opstring = mfs ?
 	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
+	    "B:NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:r:s:t:u:x:";
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
+		case 'B':
+			if (strcmp(optarg, "be") == 0) {
+#if BYTE_ORDER == LITTLE_ENDIAN
+				needswap = 1;
+#endif
+			} else if (strcmp(optarg, "le") == 0) {
+#if BYTE_ORDER == BIG_ENDIAN
+				needswap = 1;
+#endif
+			} else
+				usage();
+			break;
 		case 'N':
 			Nflag = 1;
 			break;
@@ -696,6 +709,7 @@ usage()
 		    "");
 #endif
 	fprintf(stderr, "where fsoptions are:\n");
+	fprintf(stderr, "\t-B byte order (`be' or `le')\n");
 	fprintf(stderr,
 	    "\t-N do not create file system, just print out parameters\n");
 	fprintf(stderr, "\t-O create a 4.3BSD format filesystem\n");
