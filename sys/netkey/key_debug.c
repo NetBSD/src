@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.20 2001/11/15 09:48:29 lukem Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.20.8.1 2002/06/20 15:52:57 gehenna Exp $	*/
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.20 2001/11/15 09:48:29 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key_debug.c,v 1.20.8.1 2002/06/20 15:52:57 gehenna Exp $");
 
 #ifdef _KERNEL
 #include "opt_inet.h"
@@ -466,10 +466,11 @@ kdebug_secpolicy(sp)
 	if (sp == NULL)
 		panic("kdebug_secpolicy: NULL pointer was passed.\n");
 
-	printf("secpolicy{ refcnt=%u state=%u policy=%u\n",
-		sp->refcnt, sp->state, sp->policy);
+	printf("secpolicy{ refcnt=%u state=%u policy=%u dir=%u\n",
+		sp->refcnt, sp->state, sp->policy, sp->dir);
 
-	kdebug_secpolicyindex(&sp->spidx);
+	if (sp->spidx)
+		kdebug_secpolicyindex(sp->spidx);
 
 	switch (sp->policy) {
 	case IPSEC_POLICY_DISCARD:
@@ -515,8 +516,8 @@ kdebug_secpolicyindex(spidx)
 	if (spidx == NULL)
 		panic("kdebug_secpolicyindex: NULL pointer was passed.\n");
 
-	printf("secpolicyindex{ dir=%u prefs=%u prefd=%u ul_proto=%u\n",
-		spidx->dir, spidx->prefs, spidx->prefd, spidx->ul_proto);
+	printf("secpolicyindex{ prefs=%u prefd=%u ul_proto=%u\n",
+		spidx->prefs, spidx->prefd, spidx->ul_proto);
 
 	ipsec_hexdump((caddr_t)&spidx->src,
 		((struct sockaddr *)&spidx->src)->sa_len);

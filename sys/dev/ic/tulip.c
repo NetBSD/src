@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.113.2.1 2002/06/20 16:33:19 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113 2002/05/03 08:48:12 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.113.2.1 2002/06/20 16:33:19 gehenna Exp $");
 
 #include "bpfilter.h"
 
@@ -876,7 +876,7 @@ tlp_start(ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 		last_txs = txs;
@@ -948,7 +948,7 @@ tlp_watchdog(ifp)
 	int doing_setup, doing_transmit;
 
 	doing_setup = (sc->sc_flags & TULIPF_DOING_SETUP);
-	doing_transmit = (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL);
+	doing_transmit = (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq));
 
 	if (doing_setup && doing_transmit) {
 		printf("%s: filter setup and transmit timeout\n",
@@ -1434,7 +1434,7 @@ tlp_txintr(sc)
 		if (txstat & TDSTAT_OWN)
 			break;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_ndescs;
 
@@ -2041,7 +2041,7 @@ tlp_stop(ifp, disable)
 	 * Release any queued transmit buffers.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 		if (txs->txs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
@@ -2533,7 +2533,7 @@ tlp_filter_setup(sc)
 	 * If there are transmissions pending, wait until they have
 	 * completed.
 	 */
-	if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) != NULL ||
+	if (! SIMPLEQ_EMPTY(&sc->sc_txdirtyq) ||
 	    (sc->sc_flags & TULIPF_DOING_SETUP) != 0) {
 		sc->sc_flags |= TULIPF_WANT_SETUP;
 		DPRINTF(sc, ("%s: tlp_filter_setup: deferring\n",
@@ -2731,7 +2731,7 @@ tlp_filter_setup(sc)
 	sc->sc_txfree -= 1;
 	sc->sc_txnext = TULIP_NEXTTX(sc->sc_txnext);
 
-	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+	SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 	/*
@@ -5149,13 +5149,6 @@ tlp_2114x_nway_service(sc, cmd)
 	}
 	return (0);
 }
-
-
-#define TULIP_SET(sc, reg, x) \
-        TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) | (x))
-
-#define TULIP_CLR(sc, reg, x) \
-	TULIP_WRITE((sc), (reg), TULIP_READ((sc), (reg)) & ~(x))
 
 void
 tlp_2114x_nway_auto(sc)

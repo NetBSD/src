@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acconfig.h - Global configuration constants
- *       xRevision: 69 $
+ *       $Revision: 1.1.1.1.16.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -125,12 +125,13 @@
  *****************************************************************************/
 
 /*
- * ACPI_DEBUG           - This switch enables all the debug facilities of the ACPI
- *                          subsystem.  This includes the DEBUG_PRINT output statements
- *                          When disabled, all DEBUG_PRINT statements are compiled out.
+ * ACPI_DEBUG           - This switch enables all the debug facilities of the
+ *                        ACPI subsystem.  This includes the DEBUG_PRINT output
+ *                        statements.  When disabled, all DEBUG_PRINT
+ *                        statements are compiled out.
  *
  * ACPI_APPLICATION     - Use this switch if the subsystem is going to be run
- *                          at the application level.
+ *                        at the application level.
  *
  */
 
@@ -144,57 +145,50 @@
 
 /* Version string */
 
-#define ACPI_CA_VERSION             0x20010831
+#define ACPI_CA_VERSION                 0x20020611
 
+/* Version of ACPI supported */
+
+#define ACPI_CA_SUPPORT_LEVEL           2
 
 /* Maximum objects in the various object caches */
 
-#define MAX_STATE_CACHE_DEPTH       64         /* State objects for stacks */
-#define MAX_PARSE_CACHE_DEPTH       96          /* Parse tree objects */
-#define MAX_EXTPARSE_CACHE_DEPTH    64          /* Parse tree objects */
-#define MAX_OBJECT_CACHE_DEPTH      64          /* Interpreter operand objects */
-#define MAX_WALK_CACHE_DEPTH        4           /* Objects for parse tree walks (method execution) */
-
+#define MAX_STATE_CACHE_DEPTH           64          /* State objects for stacks */
+#define MAX_PARSE_CACHE_DEPTH           96          /* Parse tree objects */
+#define MAX_EXTPARSE_CACHE_DEPTH        64          /* Parse tree objects */
+#define MAX_OBJECT_CACHE_DEPTH          64          /* Interpreter operand objects */
+#define MAX_WALK_CACHE_DEPTH            4           /* Objects for parse tree walks */
 
 /* String size constants */
 
-#define MAX_STRING_LENGTH           512
-#define PATHNAME_MAX                256     /* A full namespace pathname */
-
+#define MAX_STRING_LENGTH               512
+#define PATHNAME_MAX                    256         /* A full namespace pathname */
 
 /* Maximum count for a semaphore object */
 
-#define MAX_SEMAPHORE_COUNT         256
-
+#define MAX_SEMAPHORE_COUNT             256
 
 /* Max reference count (for debug only) */
 
-#define MAX_REFERENCE_COUNT         0x200
-
+#define MAX_REFERENCE_COUNT             0x400
 
 /* Size of cached memory mapping for system memory operation region */
 
-#define SYSMEM_REGION_WINDOW_SIZE   4096
+#define SYSMEM_REGION_WINDOW_SIZE       4096
+
+
+/******************************************************************************
+ *
+ * Configuration of subsystem behavior
+ *
+ *****************************************************************************/
 
 
 /*
- * Debugger threading model
- * Use single threaded if the entire subsystem is contained in an application
- * Use multiple threaded when the subsystem is running in the kernel.
- *
- * By default the model is single threaded if ACPI_APPLICATION is set,
- * multi-threaded if ACPI_APPLICATION is not set.
+ * Should the subystem abort the loading of an ACPI table if the
+ * table checksum is incorrect?
  */
-
-#define DEBUGGER_SINGLE_THREADED    0
-#define DEBUGGER_MULTI_THREADED     1
-
-#ifdef ACPI_APPLICATION
-#define DEBUGGER_THREADING          DEBUGGER_SINGLE_THREADED
-
-#else
-#define DEBUGGER_THREADING          DEBUGGER_MULTI_THREADED
-#endif
+#define ACPI_CHECKSUM_ABORT             FALSE
 
 
 /******************************************************************************
@@ -203,46 +197,69 @@
  *
  *****************************************************************************/
 
+/* Number of distinct GPE register blocks */
+
+#define ACPI_MAX_GPE_BLOCKS             2
+
 /*
  * Method info (in WALK_STATE), containing local variables and argumetns
  */
+#define MTH_NUM_LOCALS                  8
+#define MTH_MAX_LOCAL                   7
 
-#define MTH_NUM_LOCALS              8
-#define MTH_MAX_LOCAL               7
-
-#define MTH_NUM_ARGS                7
-#define MTH_MAX_ARG                 6
+#define MTH_NUM_ARGS                    7
+#define MTH_MAX_ARG                     6
 
 /* Maximum length of resulting string when converting from a buffer */
 
-#define ACPI_MAX_STRING_CONVERSION  200
+#define ACPI_MAX_STRING_CONVERSION      200
 
 /*
  * Operand Stack (in WALK_STATE), Must be large enough to contain MTH_MAX_ARG
  */
-
-#define OBJ_NUM_OPERANDS            8
-#define OBJ_MAX_OPERAND             7
+#define OBJ_NUM_OPERANDS                8
+#define OBJ_MAX_OPERAND                 7
 
 /* Names within the namespace are 4 bytes long */
 
-#define ACPI_NAME_SIZE              4
-#define PATH_SEGMENT_LENGTH         5           /* 4 chars for name + 1 INT8 for separator */
-#define PATH_SEPARATOR              '.'
-
+#define ACPI_NAME_SIZE                  4
+#define PATH_SEGMENT_LENGTH             5           /* 4 chars for name + 1 char for separator */
+#define PATH_SEPARATOR                  '.'
 
 /* Constants used in searching for the RSDP in low memory */
 
-#define LO_RSDP_WINDOW_BASE         0           /* Physical Address */
-#define HI_RSDP_WINDOW_BASE         0xE0000     /* Physical Address */
-#define LO_RSDP_WINDOW_SIZE         0x400
-#define HI_RSDP_WINDOW_SIZE         0x20000
-#define RSDP_SCAN_STEP              16
+#define LO_RSDP_WINDOW_BASE             0           /* Physical Address */
+#define HI_RSDP_WINDOW_BASE             0xE0000     /* Physical Address */
+#define LO_RSDP_WINDOW_SIZE             0x400
+#define HI_RSDP_WINDOW_SIZE             0x20000
+#define RSDP_SCAN_STEP                  16
+
+/* Operation regions */
+
+#define ACPI_NUM_PREDEFINED_REGIONS     8
+#define ACPI_USER_REGION_BEGIN          0x80
 
 /* Maximum SpaceIds for Operation Regions */
 
-#define ACPI_MAX_ADDRESS_SPACE      255
-#define ACPI_NUM_ADDRESS_SPACES     256
+#define ACPI_MAX_ADDRESS_SPACE          255
+
+/* RSDP checksums */
+
+#define ACPI_RSDP_CHECKSUM_LENGTH       20
+#define ACPI_RSDP_XCHECKSUM_LENGTH      36
+
+
+/******************************************************************************
+ *
+ * ACPI AML Debugger
+ *
+ *****************************************************************************/
+
+
+#define ACPI_DEBUGGER_MAX_ARGS          8  /* Must be max method args + 1 */
+
+#define ACPI_DEBUGGER_COMMAND_PROMPT    '-'
+#define ACPI_DEBUGGER_EXECUTE_PROMPT    '%'
 
 
 #endif /* _ACCONFIG_H */

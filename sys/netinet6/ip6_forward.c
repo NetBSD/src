@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.27.8.1 2002/05/30 13:52:32 gehenna Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.27.8.2 2002/06/20 15:52:44 gehenna Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.74 2001/06/12 23:54:55 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.27.8.1 2002/05/30 13:52:32 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.27.8.2 2002/06/20 15:52:44 gehenna Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -272,7 +272,7 @@ ip6_forward(m, srcrt)
 			break;
 		default:
 			printf("ip6_output (ipsec): error code %d\n", error);
-			/* fall through */
+			/* FALLTHROUGH */
 		case ENOENT:
 			/* don't show these error codes to the user */
 			break;
@@ -411,7 +411,7 @@ ip6_forward(m, srcrt)
 		}
 		m_freem(m);
 		return;
- 	}
+	}
 
 	if (rt->rt_flags & RTF_GATEWAY)
 		dst = (struct sockaddr_in6 *)rt->rt_gateway;
@@ -528,12 +528,10 @@ ip6_forward(m, srcrt)
 		return;
 	switch (error) {
 	case 0:
-#if 1
 		if (type == ND_REDIRECT) {
 			icmp6_redirect_output(mcopy, rt);
 			return;
 		}
-#endif
 		goto freecopy;
 
 	case EMSGSIZE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.30 2002/05/14 20:03:53 perseant Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.30.2.1 2002/06/20 15:53:08 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -204,32 +204,34 @@ void lfs_unmark_vnode(struct vnode *);
 void lfs_itimes(struct inode *, struct timespec *, struct timespec *,
 		struct timespec *);
 
-int lfs_balloc	(void *);
-int lfs_valloc	(void *);
-int lfs_vfree	(void *);
-int lfs_bwrite	(void *);
-int lfs_update	(void *);
-int lfs_truncate(void *);
-int lfs_blkatoff(void *);
-int lfs_fsync	(void *);
-int lfs_symlink	(void *);
-int lfs_mknod	(void *);
-int lfs_create	(void *);
-int lfs_mkdir	(void *);
-int lfs_read	(void *);
-int lfs_remove	(void *);
-int lfs_rmdir	(void *);
-int lfs_link	(void *);
-int lfs_rename	(void *);
-int lfs_getattr	(void *);
-int lfs_setattr	(void *);
-int lfs_close	(void *);
-int lfs_inactive(void *);
-int lfs_reclaim	(void *);
-int lfs_write	(void *);
-int lfs_whiteout(void *);
-int lfs_getpages(void *);
-int lfs_putpages(void *);
+int lfs_balloc	 (void *);
+int lfs_valloc	 (void *);
+int lfs_vfree	 (void *);
+int lfs_bwrite	 (void *);
+int lfs_update	 (void *);
+int lfs_truncate (void *);
+int lfs_blkatoff (void *);
+int lfs_fsync	 (void *);
+int lfs_symlink	 (void *);
+int lfs_mknod	 (void *);
+int lfs_create	 (void *);
+int lfs_mkdir	 (void *);
+int lfs_read	 (void *);
+int lfs_remove	 (void *);
+int lfs_rmdir	 (void *);
+int lfs_link	 (void *);
+int lfs_rename	 (void *);
+int lfs_getattr	 (void *);
+int lfs_setattr	 (void *);
+int lfs_close	 (void *);
+int lfsspec_close(void *);
+int lfsfifo_close(void *);
+int lfs_inactive (void *);
+int lfs_reclaim	 (void *);
+int lfs_write	 (void *);
+int lfs_whiteout (void *);
+int lfs_getpages (void *);
+int lfs_putpages (void *);
 
 __END_DECLS
 extern int lfs_mount_type;

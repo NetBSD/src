@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.7.2.1 2002/05/30 14:44:43 gehenna Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.7.2.2 2002/06/20 16:41:00 gehenna Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -41,20 +41,24 @@
 
 #include <sys/types.h> 
 #include <sys/exec.h>
+#include <sys/signal.h>
 #include <sys/exec_elf.h>
 
 #include <machine/vmparam.h>
 
-/* Address and size of shared arena used by usinit(3) on IRIX */
-#define IRIX_SH_ARENA_ADDR	0x200000
-#define IRIX_SH_ARENA_SZ	PAGE_SIZE
+#include <compat/svr4/svr4_types.h>
+#include <compat/svr4/svr4_signal.h>
 
-/* IRIX specific per-process data */
+/* IRIX specific per-process data, zero'ed on allocation */
 struct irix_emuldata {
 #define ied_startcopy ied_sigtramp
-	void *ied_sigtramp;	/* Address of signal trampoline */
+	void *ied_sigtramp[SVR4_NSIG];	/* Address of signal trampoline */
 #define ied_endcopy ied_pptr	
-	struct proc *ied_pptr;	/* parent process or NULL */
+	struct proc *ied_pptr;	/* parent process or NULL, for SIGHUP on exit */
+	int ied_procblk_count;	/* semaphore for blockproc */
+	struct proc *ied_shareparent; /* parent of the share group */
+	int ied_shareaddr;	/* VM space is shared with parent */
+	/* Only the share group parent keeps track of this: */
 };
 
 /* e_flags used by IRIX for ABI selection */
@@ -64,6 +68,8 @@ struct irix_emuldata {
 #define IRIX_EF_IRIX_ABI_MASK	0x00000030
 
 #define IRIX_ELF_AUX_ENTRIES 7
+
+int irix_check_exec __P((struct proc *p));
 
 #ifdef EXEC_ELF32
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
@@ -90,7 +96,7 @@ int irix_elf64_probe __P((struct proc *, struct exec_package *, void *,
     char *, vaddr_t *));
 #endif
 
-extern const struct emul emul_irix_n32;
 extern const struct emul emul_irix_o32;
+extern const struct emul emul_irix_n32;
 
 #endif /* !_IRIX_EXEC_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.4 2001/11/13 07:26:32 lukem Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.4.10.1 2002/06/20 16:33:51 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.4 2001/11/13 07:26:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.4.10.1 2002/06/20 16:33:51 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,8 +119,7 @@ esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	esc->sc_pf = pf;
 
-	for (cfe = SIMPLEQ_FIRST(&pf->cfe_head); cfe != NULL;
-	    cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
 		if (cfe->num_memspace != 0 ||
 		    cfe->num_iospace != 1)
 			continue;

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: pstree - Parser op tree manipulation/traversal/search
- *              xRevision: 32 $
+ *              $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.2.10.1 2002/06/20 16:32:41 gehenna Exp $");
 
 #define __PSTREE_C__
 
@@ -124,7 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: pstree.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
 #include "amlcode.h"
 
 #define _COMPONENT          ACPI_PARSER
-        MODULE_NAME         ("pstree")
+        ACPI_MODULE_NAME    ("pstree")
 
 
 /*******************************************************************************
@@ -149,13 +149,13 @@ AcpiPsGetArg (
     const ACPI_OPCODE_INFO  *OpInfo;
 
 
-    FUNCTION_ENTRY ();
+    ACPI_FUNCTION_ENTRY ();
 
 
     /* Get the info structure for this opcode */
 
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
-    if (ACPI_GET_OP_TYPE (OpInfo) != ACPI_OP_TYPE_OPCODE)
+    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
+    if (OpInfo->Class == AML_CLASS_UNKNOWN)
     {
         /* Invalid opcode or ASCII character */
 
@@ -164,7 +164,7 @@ AcpiPsGetArg (
 
     /* Check if this opcode requires argument sub-objects */
 
-    if (!(ACPI_GET_OP_ARGS (OpInfo)))
+    if (!(OpInfo->Flags & AML_HAS_ARGS))
     {
         /* Has no linked argument objects */
 
@@ -173,11 +173,11 @@ AcpiPsGetArg (
 
     /* Get the requested argument object */
 
-    Arg = Op->Value.Arg;
+    Arg = Op->Common.Value.Arg;
     while (Arg && Argn)
     {
         Argn--;
-        Arg = Arg->Next;
+        Arg = Arg->Common.Next;
     }
 
     return (Arg);
@@ -206,7 +206,7 @@ AcpiPsAppendArg (
     const ACPI_OPCODE_INFO  *OpInfo;
 
 
-    FUNCTION_ENTRY ();
+    ACPI_FUNCTION_ENTRY ();
 
 
     if (!Op)
@@ -216,17 +216,19 @@ AcpiPsAppendArg (
 
     /* Get the info structure for this opcode */
 
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
-    if (ACPI_GET_OP_TYPE (OpInfo) != ACPI_OP_TYPE_OPCODE)
+    OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
+    if (OpInfo->Class == AML_CLASS_UNKNOWN)
     {
         /* Invalid opcode */
 
+        ACPI_REPORT_ERROR (("PsAppendArg: Invalid AML Opcode: 0x%2.2X\n", 
+            Op->Common.AmlOpcode));
         return;
     }
 
     /* Check if this opcode requires argument sub-objects */
 
-    if (!(ACPI_GET_OP_ARGS (OpInfo)))
+    if (!(OpInfo->Flags & AML_HAS_ARGS))
     {
         /* Has no linked argument objects */
 
@@ -236,23 +238,23 @@ AcpiPsAppendArg (
 
     /* Append the argument to the linked argument list */
 
-    if (Op->Value.Arg)
+    if (Op->Common.Value.Arg)
     {
         /* Append to existing argument list */
 
-        PrevArg = Op->Value.Arg;
-        while (PrevArg->Next)
+        PrevArg = Op->Common.Value.Arg;
+        while (PrevArg->Common.Next)
         {
-            PrevArg = PrevArg->Next;
+            PrevArg = PrevArg->Common.Next;
         }
-        PrevArg->Next = Arg;
+        PrevArg->Common.Next = Arg;
     }
 
     else
     {
         /* No argument list, this will be the first argument */
 
-        Op->Value.Arg = Arg;
+        Op->Common.Value.Arg = Arg;
     }
 
 
@@ -260,8 +262,8 @@ AcpiPsAppendArg (
 
     while (Arg)
     {
-        Arg->Parent = Op;
-        Arg = Arg->Next;
+        Arg->Common.Parent = Op;
+        Arg = Arg->Common.Next;
     }
 }
 
@@ -285,10 +287,10 @@ AcpiPsGetChild (
     ACPI_PARSE_OBJECT       *Child = NULL;
 
 
-    FUNCTION_ENTRY ();
+    ACPI_FUNCTION_ENTRY ();
 
 
-    switch (Op->Opcode)
+    switch (Op->Common.AmlOpcode)
     {
     case AML_SCOPE_OP:
     case AML_ELSE_OP:
@@ -324,6 +326,10 @@ AcpiPsGetChild (
         Child = AcpiPsGetArg (Op, 3);
         break;
 
+
+    default:
+        /* All others have no children */
+        break;
     }
 
     return (Child);
@@ -354,7 +360,7 @@ AcpiPsGetDepthNext (
     ACPI_PARSE_OBJECT       *Arg;
 
 
-    FUNCTION_ENTRY ();
+    ACPI_FUNCTION_ENTRY ();
 
 
     if (!Op)
@@ -372,7 +378,7 @@ AcpiPsGetDepthNext (
 
     /* look for a sibling */
 
-    Next = Op->Next;
+    Next = Op->Common.Next;
     if (Next)
     {
         return (Next);
@@ -380,14 +386,14 @@ AcpiPsGetDepthNext (
 
     /* look for a sibling of parent */
 
-    Parent = Op->Parent;
+    Parent = Op->Common.Parent;
 
     while (Parent)
     {
         Arg = AcpiPsGetArg (Parent, 0);
         while (Arg && (Arg != Origin) && (Arg != Op))
         {
-            Arg = Arg->Next;
+            Arg = Arg->Common.Next;
         }
 
         if (Arg == Origin)
@@ -397,14 +403,15 @@ AcpiPsGetDepthNext (
             return (NULL);
         }
 
-        if (Parent->Next)
+        if (Parent->Common.Next)
         {
             /* found sibling of parent */
-            return (Parent->Next);
+
+            return (Parent->Common.Next);
         }
 
         Op = Parent;
-        Parent = Parent->Parent;
+        Parent = Parent->Common.Parent;
     }
 
     return (Next);

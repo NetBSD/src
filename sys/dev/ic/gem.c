@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.20 2002/05/15 23:51:49 matt Exp $ */
+/*	$NetBSD: gem.c,v 1.20.2.1 2002/06/20 16:33:05 gehenna Exp $ */
 
 /*
  * 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.20 2002/05/15 23:51:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.20.2.1 2002/06/20 16:33:05 gehenna Exp $");
 
 #include "bpfilter.h"
 
@@ -513,7 +513,7 @@ gem_stop(struct ifnet *ifp, int disable)
 	 * Release any queued transmit buffers.
 	 */
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 		if (txs->txs_mbuf != NULL) {
 			bus_dmamap_unload(sc->sc_dmatag, txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
@@ -1165,7 +1165,7 @@ gem_start(ifp)
 		sc->sc_txfree -= dmamap->dm_nsegs;
 		sc->sc_txnext = nexttx;
 
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txfreeq, txs_q);
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txdirtyq, txs, txs_q);
 
 		last_txs = txs;
@@ -1285,7 +1285,7 @@ gem_tint(sc)
 		}
 
 		DPRINTF(sc, ("gem_tint: releasing a desc\n"));
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs, txs_q);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
 
 		sc->sc_txfree += txs->txs_ndescs;
 
@@ -1325,7 +1325,7 @@ gem_tint(sc)
 		ifp->if_flags &= ~IFF_OACTIVE;
 		gem_start(ifp);
 
-		if (SIMPLEQ_FIRST(&sc->sc_txdirtyq) == NULL)
+		if (SIMPLEQ_EMPTY(&sc->sc_txdirtyq))
 			ifp->if_timer = 0;
 	}
 	DPRINTF(sc, ("%s: gem_tint: watchdog %d\n",

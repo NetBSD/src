@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.2 2001/11/13 13:01:58 lukem Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.2.10.1 2002/06/20 16:31:29 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2 2001/11/13 13:01:58 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2.10.1 2002/06/20 16:31:29 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2 2001/11/13 13:01:58 lukem Exp $"
 #include <dev/acpi/acpi_osd.h>
 
 #define	_COMPONENT	ACPI_OS_SERVICES
-MODULE_NAME("SCHEDULE")
+ACPI_MODULE_NAME("SCHEDULE")
 
 /*
  * ACPICA uses callbacks that are priority scheduled.  We run a kernel
@@ -105,7 +105,7 @@ void
 acpi_osd_sched_init(void)
 {
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	kthread_create(acpi_osd_sched_create_thread, NULL);
 
@@ -122,7 +122,7 @@ acpi_osd_sched_fini(void)
 {
 	int s;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	ACPI_TASK_QUEUE_LOCK(s);
 
@@ -231,7 +231,7 @@ AcpiOsQueueForExecution(UINT32 Priority, OSD_EXECUTION_CALLBACK Function,
 	struct acpi_task *at, *lat;
 	int s;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (acpi_osd_sched_proc == NULL)
 		printf("ACPI: WARNING: Callback scheduled before "
@@ -294,7 +294,7 @@ AcpiOsSleep(UINT32 Seconds, UINT32 Milliseconds)
 {
 	int timo;
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	timo = (Seconds * hz) + (Milliseconds / (1000 * hz));
 	if (timo == 0)
@@ -314,7 +314,7 @@ void
 AcpiOsStall(UINT32 Microseconds)
 {
 
-	FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
 	if (Microseconds > 1000)
 		AcpiOsSleep(0, Microseconds / 1000);

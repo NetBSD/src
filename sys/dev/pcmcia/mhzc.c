@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.8 2001/11/13 07:26:34 lukem Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.8.8.1 2002/06/20 16:33:57 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.8 2001/11/13 07:26:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.8.8.1 2002/06/20 16:33:57 gehenna Exp $");
 
 #include "opt_inet.h" 
 #include "opt_ns.h"
@@ -239,8 +239,7 @@ mhzc_attach(parent, self, aux)
 	 * Sure would have been nice if Megahertz had made the card a
 	 * proper multi-function device.
 	 */
-	for (cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head); cfe != NULL;
-	     cfe = SIMPLEQ_NEXT(cfe, cfe_list)) {
+	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
 		if (mhzc_check_cfe(sc, cfe)) {
 			/* Found one! */
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.143.2.5 2002/05/30 13:52:42 gehenna Exp $	*/
+/*	$NetBSD: systm.h,v 1.143.2.6 2002/06/20 15:53:04 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -306,6 +306,12 @@ void	doexechooks __P((struct proc *));
 void	*exithook_establish __P((void (*)(struct proc *, void *), void *));
 void	exithook_disestablish __P((void *));
 void	doexithooks __P((struct proc *));
+
+/*
+ * kernel syscall tracing/debugging hooks.
+ */
+int	trace_enter __P((struct proc *, register_t, void *, register_t []));
+void	trace_exit __P((struct proc *, register_t, void *, register_t [], int));
 
 int	uiomove __P((void *, int, struct uio *));
 

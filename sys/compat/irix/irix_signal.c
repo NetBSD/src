@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_signal.c,v 1.14 2002/04/14 21:50:50 manu Exp $ */
+/*	$NetBSD: irix_signal.c,v 1.14.2.1 2002/06/20 16:41:04 gehenna Exp $ */
 
 /*-
  * Copyright (c) 1994, 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.14 2002/04/14 21:50:50 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_signal.c,v 1.14.2.1 2002/06/20 16:41:04 gehenna Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -279,7 +279,7 @@ irix_sendsig(catcher, sig, mask, code)
 	 * the signal trampoline address.
 	 */
 	f->f_regs[PC] = (unsigned long)
-	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp);
+	    (((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp[sig]);
 
 	/* 
 	 * Remember that we're now on the signal stack. 
@@ -933,8 +933,12 @@ irix_sys_sigaction(p, v, retval)
 		syscallarg(struct svr4_sigaction *) osa;
 		syscallarg(void *) sigtramp;
 	} */ *uap = v;
+	int signum;
 	struct svr4_sys_sigaction_args cup;
+	struct irix_emuldata *ied;
+#ifdef DBUG_IRIX
 	void *sigtramp;
+#endif
 
 	/* 
 	 * On IRIX, the sigaction() system call has a fourth argument, which 
@@ -965,20 +969,23 @@ irix_sys_sigaction(p, v, retval)
 	 *     SA_SIGINFO was set, then the higher bit of sf.isf_signo is 
 	 *     still set.
 	 * 
-	 * We cannot handle per-sigaction signal trampoline. The signal 
-	 * trampoline is hence saved as per-process, in the p_emuldata
-	 * field of struct proc.
+	 * The signal trampoline is hence saved in the p_emuldata field
+	 * of struct proc, in an array (one element for each signal)
 	 */
-	sigtramp = ((struct irix_emuldata *)(p->p_emuldata))->ied_sigtramp;
+	signum = svr4_to_native_signo[SCARG(uap, signum)];
+	ied = (struct irix_emuldata *)(p->p_emuldata);
+
+#ifdef DEBUG_IRIX
+	sigtramp = ied->ied_sigtramp[signum];
 
 	if (sigtramp != NULL && sigtramp != SCARG(uap, sigtramp))
-		printf("Warning: unsupported per-sigaction sigtramp\n");
+		printf("Warning: sigtramp changed from %p to %p for sig. %d\n",
+			sigtramp, SCARG(uap, sigtramp), signum);
+#endif
 
-	if (sigtramp == NULL)
-		((struct irix_emuldata *)
-		    (p->p_emuldata))->ied_sigtramp = SCARG(uap, sigtramp);
+	ied->ied_sigtramp[signum] = SCARG(uap, sigtramp);
 
-	SCARG(&cup, signum) = SCARG(uap, signum);
+	SCARG(&cup, signum) = signum;
 	SCARG(&cup, nsa) = SCARG(uap, nsa);
 	SCARG(&cup, osa) = SCARG(uap, osa);
 

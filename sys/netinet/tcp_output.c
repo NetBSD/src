@@ -1,9 +1,9 @@
-/*	$NetBSD: tcp_output.c,v 1.79.2.1 2002/05/30 13:52:28 gehenna Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.79.2.2 2002/06/20 15:52:29 gehenna Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,7 +15,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -31,11 +31,11 @@
 
 /*
  *      @(#)COPYRIGHT   1.1 (NRL) 17 January 1995
- * 
+ *
  * NRL grants permission for redistribution and use in source and binary
  * forms, with or without modification, of the software and documentation
  * created at NRL provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
@@ -50,7 +50,7 @@
  * 4. Neither the name of the NRL nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THE SOFTWARE PROVIDED BY NRL IS PROVIDED BY NRL AND CONTRIBUTORS ``AS
  * IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
@@ -62,7 +62,7 @@
  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * The views and conclusions contained in the software and documentation
  * are those of the authors and should not be interpreted as representing
  * official policies, either expressed or implied, of the US Naval
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79.2.1 2002/05/30 13:52:28 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.79.2.2 2002/06/20 15:52:29 gehenna Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -199,7 +199,7 @@ extern struct mbuf *m_copypack();
  * the burst size it allows.  Default burst is 4 packets, per
  * the Internet draft.
  */
-int	tcp_cwm = 1;
+int	tcp_cwm = 0;
 int	tcp_cwm_burstsize = 4;
 
 #ifdef TCP_OUTPUT_COUNTERS
@@ -354,7 +354,7 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 
 	if (*txsegsizep != tp->t_segsz) {
 		/*
-		 * If the new segment size is larger, we don't want to 
+		 * If the new segment size is larger, we don't want to
 		 * mess up the congestion window, but if it is smaller
 		 * we'll have to reduce the congestion window to ensure
 		 * that we don't get into trouble with initial windows
@@ -363,9 +363,9 @@ tcp_segsize(struct tcpcb *tp, int *txsegsizep, int *rxsegsizep)
 		 * our congestion window will be different.
 		 */
 		if (*txsegsizep < tp->t_segsz) {
-			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz) 
+			tp->snd_cwnd = max((tp->snd_cwnd / tp->t_segsz)
 					   * *txsegsizep, *txsegsizep);
-			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz) 
+			tp->snd_ssthresh = max((tp->snd_ssthresh / tp->t_segsz)
 						* *txsegsizep, *txsegsizep);
 		}
 		tp->t_segsz = *txsegsizep;
@@ -671,7 +671,7 @@ again:
 	 * to peer.
 	 */
 	if (win > 0) {
-		/* 
+		/*
 		 * "adv" is the amount we can increase the window,
 		 * taking into account that we are limited by
 		 * TCP_MAXWIN << tp->rcv_scale.
@@ -768,7 +768,7 @@ send:
 #endif
 
 		tp->snd_nxt = tp->iss;
-		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ? 
+		tp->t_ourmss = tcp_mss_to_advertise(rt != NULL ?
 						    rt->rt_ifp : NULL, af);
 		if ((tp->t_flags & TF_NOOPT) == 0) {
 			opt[0] = TCPOPT_MAXSEG;
@@ -776,7 +776,7 @@ send:
 			opt[2] = (tp->t_ourmss >> 8) & 0xff;
 			opt[3] = tp->t_ourmss & 0xff;
 			optlen = 4;
-	 
+
 			if ((tp->t_flags & TF_REQ_SCALE) &&
 			    ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_RCVD_SCALE))) {
@@ -788,32 +788,32 @@ send:
 				optlen += 4;
 			}
 		}
- 	}
- 
- 	/*
-	 * Send a timestamp and echo-reply if this is a SYN and our side 
+	}
+
+	/*
+	 * Send a timestamp and echo-reply if this is a SYN and our side
 	 * wants to use timestamps (TF_REQ_TSTMP is set) or both our side
 	 * and our peer have sent timestamps in our SYN's.
- 	 */
- 	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
- 	     (flags & TH_RST) == 0 &&
- 	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
+	 */
+	if ((tp->t_flags & (TF_REQ_TSTMP|TF_NOOPT)) == TF_REQ_TSTMP &&
+	     (flags & TH_RST) == 0 &&
+	    ((flags & (TH_SYN|TH_ACK)) == TH_SYN ||
 	     (tp->t_flags & TF_RCVD_TSTMP))) {
 		u_int32_t *lp = (u_int32_t *)(opt + optlen);
- 
- 		/* Form timestamp option as shown in appendix A of RFC 1323. */
- 		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
- 		*lp++ = htonl(TCP_TIMESTAMP(tp));
- 		*lp   = htonl(tp->ts_recent);
- 		optlen += TCPOLEN_TSTAMP_APPA;
- 	}
 
- 	hdrlen += optlen;
- 
+		/* Form timestamp option as shown in appendix A of RFC 1323. */
+		*lp++ = htonl(TCPOPT_TSTAMP_HDR);
+		*lp++ = htonl(TCP_TIMESTAMP(tp));
+		*lp   = htonl(tp->ts_recent);
+		optlen += TCPOLEN_TSTAMP_APPA;
+	}
+
+	hdrlen += optlen;
+
 #ifdef DIAGNOSTIC
 	if (len > txsegsize)
 		panic("tcp data to be sent is larger than segment");
- 	if (max_linkhdr + hdrlen > MCLBYTES)
+	if (max_linkhdr + hdrlen > MCLBYTES)
 		panic("tcphdr too big");
 #endif
 

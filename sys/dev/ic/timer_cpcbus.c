@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_cpcbus.c,v 1.1.4.2 2002/05/30 14:46:01 gehenna Exp $	*/
+/*	$NetBSD: timer_cpcbus.c,v 1.1.4.3 2002/06/20 16:33:18 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@ cpctim_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct cpcbus_attach_args *caa = aux;
 
-	return (strcmp(caa->cpca_name, "timer") == 0);
+	return (strcmp(caa->cpca_name, "cpctim") == 0);
 }
 
 void

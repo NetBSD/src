@@ -2,7 +2,7 @@
 /******************************************************************************
  *
  * Module Name: psfind - Parse tree search routine
- *              xRevision: 28 $
+ *              $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +10,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,7 +116,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.2.10.1 2002/06/20 16:32:38 gehenna Exp $");
 
 #define __PSFIND_C__
 
@@ -125,7 +125,7 @@ __KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
 #include "amlcode.h"
 
 #define _COMPONENT          ACPI_PARSER
-        MODULE_NAME         ("psfind")
+        ACPI_MODULE_NAME    ("psfind")
 
 
 /*******************************************************************************
@@ -140,7 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: psfind.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
  *
  ******************************************************************************/
 
-static ACPI_PARSE_OBJECT*
+ACPI_PARSE_OBJECT*
 AcpiPsGetParent (
     ACPI_PARSE_OBJECT       *Op)
 {
@@ -151,7 +151,7 @@ AcpiPsGetParent (
 
     while (Parent)
     {
-        switch (Parent->Opcode)
+        switch (Parent->Common.AmlOpcode)
         {
         case AML_SCOPE_OP:
         case AML_PACKAGE_OP:
@@ -160,10 +160,13 @@ AcpiPsGetParent (
         case AML_POWER_RES_OP:
         case AML_THERMAL_ZONE_OP:
 
-            return (Parent->Parent);
+            return (Parent->Common.Parent);
+
+        default:
+            break;
         }
 
-        Parent = Parent->Parent;
+        Parent = Parent->Common.Parent;
     }
 
     return (Parent);
@@ -185,7 +188,7 @@ AcpiPsGetParent (
  *
  ******************************************************************************/
 
-static ACPI_PARSE_OBJECT *
+ACPI_PARSE_OBJECT *
 AcpiPsFindName (
     ACPI_PARSE_OBJECT       *Scope,
     UINT32                  Name,
@@ -199,38 +202,19 @@ AcpiPsFindName (
     /* search scope level for matching name segment */
 
     Op = AcpiPsGetChild (Scope);
-    OpInfo = AcpiPsGetOpcodeInfo (Op->Opcode);
 
     while (Op)
     {
+        OpInfo = AcpiPsGetOpcodeInfo (Op->Common.AmlOpcode);
 
-        if (OpInfo->Flags & AML_FIELD)
+        /* Check AML_CREATE first (since some opcodes have AML_FIELD set also )*/
+
+        if (OpInfo->Flags & AML_CREATE)
         {
-            /* Field, search named fields */
-
-            Field = AcpiPsGetChild (Op);
-            while (Field)
-            {
-                OpInfo = AcpiPsGetOpcodeInfo (Field->Opcode);
-
-                if ((OpInfo->Flags & AML_NAMED) &&
-                   AcpiPsGetName (Field) == Name &&
-                   (!Opcode || Field->Opcode == Opcode))
-                {
-                    return (Field);
-                }
-
-                Field = Field->Next;
-            }
-        }
-
-        else if (OpInfo->Flags & AML_CREATE)
-        {
-            if (Op->Opcode == AML_CREATE_FIELD_OP)
+            if (Op->Common.AmlOpcode == AML_CREATE_FIELD_OP)
             {
                 Field = AcpiPsGetArg (Op, 3);
             }
-
             else
             {
                 /* CreateXXXField, check name */
@@ -239,21 +223,39 @@ AcpiPsFindName (
             }
 
             if ((Field) &&
-                (Field->Value.String) &&
-                (!STRNCMP (Field->Value.String, (char *) &Name, ACPI_NAME_SIZE)))
+                (Field->Common.Value.String) &&
+                (!ACPI_STRNCMP (Field->Common.Value.String, (char *) &Name, ACPI_NAME_SIZE)))
             {
                 return (Op);
             }
         }
+        else if (OpInfo->Flags & AML_FIELD)
+        {
+            /* Field, search named fields */
 
+            Field = AcpiPsGetChild (Op);
+            while (Field)
+            {
+                OpInfo = AcpiPsGetOpcodeInfo (Field->Common.AmlOpcode);
+
+                if ((OpInfo->Flags & AML_NAMED) &&
+                   AcpiPsGetName (Field) == Name &&
+                   (!Opcode || Field->Common.AmlOpcode == Opcode))
+                {
+                    return (Field);
+                }
+
+                Field = Field->Common.Next;
+            }
+        }
         else if ((OpInfo->Flags & AML_NAMED) &&
                  (AcpiPsGetName (Op) == Name) &&
-                 (!Opcode || Op->Opcode == Opcode || Opcode == AML_SCOPE_OP))
+                 (!Opcode || Op->Common.AmlOpcode == Opcode || Opcode == AML_SCOPE_OP))
         {
             break;
         }
 
-        Op = Op->Next;
+        Op = Op->Common.Next;
     }
 
     return (Op);
@@ -289,7 +291,7 @@ AcpiPsFind (
     BOOLEAN                 Unprefixed = TRUE;
 
 
-    FUNCTION_TRACE_PTR ("PsFind", Scope);
+    ACPI_FUNCTION_TRACE_PTR ("PsFind", Scope);
 
 
     if (!Scope || !Path)
@@ -299,31 +301,22 @@ AcpiPsFind (
         return_PTR (NULL);
     }
 
-
     AcpiGbl_PsFindCount++;
-
 
     /* Handle all prefixes in the name path */
 
-    while (AcpiPsIsPrefixChar (GET8 (Path)))
+    while (AcpiPsIsPrefixChar (ACPI_GET8 (Path)))
     {
-        switch (GET8 (Path))
+        switch (ACPI_GET8 (Path))
         {
-
         case '\\':
 
             /* Could just use a global for "root scope" here */
 
-            while (Scope->Parent)
+            while (Scope->Common.Parent)
             {
-                Scope = Scope->Parent;
+                Scope = Scope->Common.Parent;
             }
-
-            /* get first object within the scope */
-            /* TBD: [Investigate] OR - set next in root scope to point to the same value as arg */
-
-            /* Scope = Scope->Value.Arg; */
-
             break;
 
 
@@ -335,7 +328,10 @@ AcpiPsFind (
             {
                 Scope = AcpiPsGetParent (Scope);
             }
+            break;
 
+        default:
+            /* Should not get here */
             break;
         }
 
@@ -345,9 +341,9 @@ AcpiPsFind (
 
     /* get name segment count */
 
-    switch (GET8 (Path))
+    switch (ACPI_GET8 (Path))
     {
-    case '\0':
+    case 0:
         SegCount = 0;
 
         /* Null name case */
@@ -362,9 +358,9 @@ AcpiPsFind (
         }
 
 
-        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Null path, returning current root scope Op=%p\n", Op));
+        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+            "Null path, returning current root scope Op=%p\n", Op));
         return_PTR (Op);
-        break;
 
     case AML_DUAL_NAME_PREFIX:
         SegCount = 2;
@@ -372,7 +368,7 @@ AcpiPsFind (
         break;
 
     case AML_MULTI_NAME_PREFIX_OP:
-        SegCount = GET8 (Path + 1);
+        SegCount = ACPI_GET8 (Path + 1);
         Path += 2;
         break;
 
@@ -381,14 +377,15 @@ AcpiPsFind (
         break;
     }
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Search scope %p Segs=%d Opcode=%4.4X Create=%d\n",
-                    Scope, SegCount, Opcode, Create));
+    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+        "Search scope %p Segs=%d Opcode=%4.4hX Create=%d\n",
+        Scope, SegCount, Opcode, Create));
 
     /* match each name segment */
 
     while (Scope && SegCount)
     {
-        MOVE_UNALIGNED32_TO_32 (&Name, Path);
+        ACPI_MOVE_UNALIGNED32_TO_32 (&Name, Path);
         Path += 4;
         SegCount --;
 
@@ -404,7 +401,9 @@ AcpiPsFind (
         Op = AcpiPsFindName (Scope, Name, NameOp);
         if (Op)
         {
-            ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "[%4.4s] Found! Op=%p Opcode=%4.4X\n", &Name, Op, Op->Opcode));
+            ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                "[%4.4s] Found! Op=%p Opcode=%4.4hX\n",
+                (char *) &Name, Op, Op->Common.AmlOpcode));
         }
 
         if (!Op)
@@ -427,7 +426,9 @@ AcpiPsFind (
                     AcpiPsSetName (Op, Name);
                     AcpiPsAppendArg (Scope, Op);
 
-                    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "[%4.4s] Not found, created Op=%p Opcode=%4.4X\n", &Name, Op, Opcode));
+                    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                        "[%4.4s] Not found, created Op=%p Opcode=%4.4hX\n",
+                        (char *) &Name, Op, Opcode));
                 }
             }
 
@@ -435,25 +436,29 @@ AcpiPsFind (
             {
                 /* Search higher scopes for unprefixed name */
 
-                while (!Op && Scope->Parent)
+                while (!Op && Scope->Common.Parent)
                 {
-                    Scope = Scope->Parent;
+                    Scope = Scope->Common.Parent;
                     Op = AcpiPsFindName (Scope, Name, Opcode);
                     if (Op)
                     {
-                        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "[%4.4s] Found in parent tree! Op=%p Opcode=%4.4X\n", &Name, Op, Op->Opcode));
+                        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                            "[%4.4s] Found in parent tree! Op=%p Opcode=%4.4hX\n",
+                            (char *) &Name, Op, Op->Common.AmlOpcode));
                     }
-
                     else
                     {
-                        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "[%4.4s] Not found in parent=%p\n", &Name, Scope));
+                        ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                            "[%4.4s] Not found in parent=%p\n",
+                            (char *) &Name, Scope));
                     }
                 }
             }
-
             else
             {
-                ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "Segment [%4.4s] Not Found in scope %p!\n", &Name, Scope));
+                ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
+                    "Segment [%4.4s] Not Found in scope %p!\n",
+                    (char *) &Name, Scope));
             }
         }
 

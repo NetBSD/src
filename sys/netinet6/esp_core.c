@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_core.c,v 1.21 2002/02/27 01:32:17 itojun Exp $	*/
+/*	$NetBSD: esp_core.c,v 1.21.8.1 2002/06/20 15:52:35 gehenna Exp $	*/
 /*	$KAME: esp_core.c,v 1.53 2001/11/27 09:47:30 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.21 2002/02/27 01:32:17 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_core.c,v 1.21.8.1 2002/06/20 15:52:35 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -586,7 +586,7 @@ esp_3des_blockdecrypt(algo, sav, s, d)
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
 	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d, 
+	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_DECRYPT);
 	return 0;
 }
@@ -603,7 +603,7 @@ esp_3des_blockencrypt(algo, sav, s, d)
 	/* assumption: d has a good alignment */
 	p = (des_key_schedule *)sav->sched;
 	bcopy(s, d, sizeof(DES_LONG) * 2);
-	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d, 
+	des_ecb3_encrypt((des_cblock *)d, (des_cblock *)d,
 			 p[0], p[1], p[2], DES_ENCRYPT);
 	return 0;
 }
@@ -1125,6 +1125,6 @@ esp_auth(m0, skip, length, sav, sum)
 	}
 	(*algo->result)(&s, sumbuf);
 	bcopy(sumbuf, sum, siz);	/* XXX */
-	
+
 	return 0;
 }

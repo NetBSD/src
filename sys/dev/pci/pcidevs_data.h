@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.427.2.1 2002/05/30 14:46:23 gehenna Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.427.2.2 2002/06/20 16:33:45 gehenna Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.433 2002/05/28 17:46:10 christos Exp 
+ *	NetBSD: pcidevs,v 1.439 2002/06/17 14:07:14 jdolecek Exp 
  */
 
 /*
@@ -1010,6 +1010,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced Micro Devices",
 	    "AMD768 USB Controller",
+	},
+	{
+	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_PBC8111_IDE,
+	    0,
+	    "Advanced Micro Devices",
+	    "AMD8111 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_AMI, PCI_PRODUCT_AMI_MEGARAID,
@@ -4492,6 +4498,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "MPC107 \"Chaparral\" Host Bridge",
 	},
 	{
+	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_MPC8245,
+	    0,
+	    "Motorola",
+	    "MPC8245 \"Kahlua II\" Host Bridge",
+	},
+	{
 	    PCI_VENDOR_MOT, PCI_PRODUCT_MOT_RAVEN,
 	    0,
 	    "Motorola",
@@ -6244,6 +6256,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI2040 PCI-to-DSP Bridge",
 	},
 	{
+	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800L,
+	    0,
+	    "Titan Electronics, Inc.",
+	    "PCI-800L",
+	},
+	{
 	    PCI_VENDOR_TITAN, PCI_PRODUCT_TITAN_PCI800H,
 	    0,
 	    "Titan Electronics, Inc.",
@@ -6808,6 +6826,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT6102 (Rhine II) 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
+	    0,
+	    "VIA Technologies",
+	    "VT82C686A MC-97 Modem Controller",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233,
 	    0,
 	    "VIA Technologies",
@@ -6820,16 +6844,28 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "VT8366 (Apollo KT266) CPU-PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT82C686A_MC97,
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8653,
 	    0,
 	    "VIA Technologies",
-	    "VT82C686A MC-97 Modem Controller",
+	    "VT8653 (Apollo Pro 266T) CPU-PCI Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8233A,
+	    0,
+	    "VIA Technologies",
+	    "VT8233A PCI-ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C100A,
 	    0,
 	    "VIA Technologies",
 	    "VT86C100A (Rhine-II) 10/100 Ethernet",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8231,
+	    0,
+	    "VIA Technologies",
+	    "VT8231 IDE Controller",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8363_PPB,
@@ -6866,6 +6902,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "VIA Technologies",
 	    "VT8605 (Apollo ProMedia 133) Host-AGP Bridge",
+	},
+	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8633AGP,
+	    0,
+	    "VIA Technologies",
+	    "VT8633 (Apollo Pro 266) CPU-AGP Bridge",
 	},
 	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8366AGP,

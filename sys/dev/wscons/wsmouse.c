@@ -1,4 +1,4 @@
-/* $NetBSD: wsmouse.c,v 1.22.8.1 2002/05/16 04:54:52 gehenna Exp $ */
+/* $NetBSD: wsmouse.c,v 1.22.8.2 2002/06/20 16:34:20 gehenna Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.22.8.1 2002/05/16 04:54:52 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmouse.c,v 1.22.8.2 2002/06/20 16:34:20 gehenna Exp $");
 
 #include "wsmouse.h"
 #include "wsdisplay.h"
@@ -471,14 +471,6 @@ wsmouseopen(dev_t dev, int flags, int mode, struct proc *p)
 	if ((flags & (FREAD | FWRITE)) == FWRITE)
 		return (0);			/* always allow open for write
 						   so ioctl() is possible. */
-
-#if NWSMUX > 0
-	if (sc->sc_base.me_parent != NULL) {
-		/* Grab the mouse out of the greedy hands of the mux. */
-		DPRINTF(("wsmouseopen: detach\n"));
-		wsmux_detach_sc(&sc->sc_base);
-	}
-#endif
 
 	if (sc->sc_base.me_evp != NULL)
 		return (EBUSY);

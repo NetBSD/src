@@ -1,4 +1,4 @@
-/*      $NetBSD: pciide_hpt_reg.h,v 1.6.2.1 2002/05/30 14:46:31 gehenna Exp $       */
+/*      $NetBSD: pciide_hpt_reg.h,v 1.6.2.2 2002/06/20 16:33:48 gehenna Exp $       */
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -138,10 +138,10 @@ static const u_int32_t hpt370_udma[] __attribute__((__unused__)) =
 	{0x16514e31, 0x164d4e31, 0x16494e31, 0x166d4e31, 0x16454e31,
 	 0x1a85f442};
 
-static u_int32_t hpt374_pio[] =
+static u_int32_t hpt374_pio[] __attribute__((__unused__)) =
 	{0x0ac1f48a, 0x0ac1f465, 0x0a81f454, 0x0a81f443, 0x0a81f442};
-static u_int32_t hpt374_dma[] =
+static u_int32_t hpt374_dma[] __attribute__((__unused__)) =
 	{0x228082ea, 0x22808254, 0x22808242};
-static u_int32_t hpt374_udma[] =
+static u_int32_t hpt374_udma[] __attribute__((__unused__)) =
 	{0x121882ea, 0x12148254, 0x120c8242, 0x128c8242, 0x12ac8242,
 	    0x12848242, 0x12808242};

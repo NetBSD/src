@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394arp.c,v 1.7 2001/11/15 09:48:26 lukem Exp $	*/
+/*	$NetBSD: if_ieee1394arp.c,v 1.7.8.1 2002/06/20 15:52:13 gehenna Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394arp.c,v 1.7 2001/11/15 09:48:26 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394arp.c,v 1.7.8.1 2002/06/20 15:52:13 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 			 *
 			 * In 4.4BSD, the above "if" statement checked
 			 * rt->rt_ifa against rt_key(rt).  It was changed
-			 * to the current form so that we can provide a 
+			 * to the current form so that we can provide a
 			 * better support for multiple IPv4 address on a
 			 * interface.
 			 */
@@ -293,7 +293,7 @@ ieee1394arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		mold = la->la_hold;
 		la->la_hold = 0;
 		splx(s);
-		
+
 		if (mold)
 			m_freem(mold);
 
@@ -355,7 +355,7 @@ ieee1394arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	struct sockaddr_dl *sdl;
 	struct mbuf *mold;
 	int s;
-	
+
 	if (rt)
 		la = (struct llinfo_arp *)rt->rt_llinfo;
 	else {
@@ -395,7 +395,7 @@ ieee1394arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		arpstat.as_dfrdropped++;
 		m_freem(mold);
 	}
-	
+
 	/*
 	 * Re-send the ARP request when appropriate.
 	 */
@@ -439,7 +439,7 @@ in_ieee1394arpinput(struct mbuf *m)
 	int op;
 	struct mbuf *mold;
 	int s;
-	
+
 	iar = mtod(m, struct ieee1394_arp *);
 	op = ntohs(iar->iar_arp.ar_op);
 	memcpy(&isaddr, &iar->iar_sip, sizeof(isaddr));
@@ -544,7 +544,7 @@ in_ieee1394arpinput(struct mbuf *m)
 				    ieee1394_sprintf(iar->iar_sha.iha_uid));
 			}
 		}
-		/* 
+		/*
 		 * sanity check for the address length.
 		 * XXX this does not work for protocols with variable address
 		 * length. -is
@@ -552,13 +552,13 @@ in_ieee1394arpinput(struct mbuf *m)
 		if (sdl->sdl_alen &&
 		    sdl->sdl_alen != iar->iar_arp.ar_hln) {
 			arpstat.as_rcvlenchg++;
-			log(LOG_WARNING, 
+			log(LOG_WARNING,
 			    "ieee1394arp from %s: new addr len %d, was %d",
 			    in_fmtaddr(isaddr), iar->iar_arp.ar_hln, sdl->sdl_alen);
 		}
 		if (ifp->if_addrlen != iar->iar_arp.ar_hln) {
 			arpstat.as_rcvbadlen++;
-			log(LOG_WARNING, 
+			log(LOG_WARNING,
 			    "ieee1394arp from %s: addr len: new %d, i/f %d (ignored)",
 			    in_fmtaddr(isaddr), iar->iar_arp.ar_hln,
 			    ifp->if_addrlen);

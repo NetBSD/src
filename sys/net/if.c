@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.104.2.1 2002/05/30 13:52:24 gehenna Exp $	*/
+/*	$NetBSD: if.c,v 1.104.2.2 2002/06/20 15:52:05 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104.2.1 2002/05/30 13:52:24 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.104.2.2 2002/06/20 15:52:05 gehenna Exp $");
 
 #include "opt_inet.h"
 
@@ -370,7 +370,7 @@ if_attach(ifp)
 			 * If we hit USHRT_MAX, we skip back to 0 since
 			 * there are a number of places where the value
 			 * of if_index or if_index itself is compared
-			 * to to or stored in an unsigned short.  By
+			 * to or stored in an unsigned short.  By
 			 * jumping back, we won't botch those assignments
 			 * or comparisons.
 			 */
@@ -468,9 +468,12 @@ void
 if_attachdomain()
 {
 	struct ifnet *ifp;
+	int s;
 
+	s = splnet();
 	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
 		if_attachdomain1(ifp);
+	splx(s);
 }
 
 void
@@ -478,6 +481,9 @@ if_attachdomain1(ifp)
 	struct ifnet *ifp;
 {
 	struct domain *dp;
+	int s;
+
+	s = splnet();
 
 	/* address family dependent data region */
 	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
@@ -486,6 +492,8 @@ if_attachdomain1(ifp)
 			ifp->if_afdata[dp->dom_family] =
 			    (*dp->dom_ifattach)(ifp);
 	}
+
+	splx(s);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.55 2001/11/12 15:25:10 lukem Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.55.8.1 2002/06/20 16:02:20 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.55 2001/11/12 15:25:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.55.8.1 2002/06/20 16:02:20 gehenna Exp $");
 
 #include "opt_ktrace.h"
 
@@ -114,11 +114,12 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 }
 
 void
-ktrsyscall(struct proc *p, register_t code, size_t argsize, register_t args[])
+ktrsyscall(struct proc *p, register_t code, register_t args[])
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
 	register_t *argp;
+	int argsize = p->p_emul->e_sysent[code].sy_argsize;
 	size_t len = sizeof(struct ktr_syscall) + argsize;
 	int i;
 

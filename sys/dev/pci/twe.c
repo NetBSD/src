@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.21.8.1 2002/05/30 14:46:34 gehenna Exp $	*/
+/*	$NetBSD: twe.c,v 1.21.8.2 2002/06/20 16:33:49 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.21.8.1 2002/05/30 14:46:34 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.21.8.2 2002/06/20 16:33:49 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -993,7 +993,7 @@ twe_ccb_enqueue(struct twe_softc *sc, struct twe_ccb *ccb)
 	while ((ccb = SIMPLEQ_FIRST(&sc->sc_ccb_queue)) != NULL) {
 		if (twe_ccb_submit(sc, ccb))
 			break;
-		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb, ccb_chain.simpleq);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_ccb_queue, ccb_chain.simpleq);
 	}
 
 	splx(s);

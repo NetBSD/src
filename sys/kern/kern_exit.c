@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.93 2002/03/17 23:41:30 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.93.4.1 2002/06/20 16:02:19 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,9 +78,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.93 2002/03/17 23:41:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.93.4.1 2002/06/20 16:02:19 gehenna Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_systrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -109,10 +110,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.93 2002/03/17 23:41:30 christos Exp 
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/systrace.h>
 
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>
+
 
 /*
  * exit --
@@ -213,6 +216,9 @@ exit1(struct proc *p, int rv)
 	 * release trace file
 	 */
 	ktrderef(p);
+#endif
+#ifdef SYSTRACE
+	systrace_sys_exit(p);
 #endif
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!

@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Module Name: psscope - Parser scope stack management routines
- *              xRevision: 29 $
+ *              $Revision: 1.2.10.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +9,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999, 2000, 2001, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2002, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,13 +115,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psscope.c,v 1.2 2001/11/13 13:02:01 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psscope.c,v 1.2.10.1 2002/06/20 16:32:40 gehenna Exp $");
 
 #include "acpi.h"
 #include "acparser.h"
 
 #define _COMPONENT          ACPI_PARSER
-        MODULE_NAME         ("psscope")
+        ACPI_MODULE_NAME    ("psscope")
 
 
 /*******************************************************************************
@@ -188,7 +188,7 @@ AcpiPsInitScope (
     ACPI_GENERIC_STATE      *Scope;
 
 
-    FUNCTION_TRACE_PTR ("PsInitScope", RootOp);
+    ACPI_FUNCTION_TRACE_PTR ("PsInitScope", RootOp);
 
 
     Scope = AcpiUtCreateGenericState ();
@@ -197,6 +197,7 @@ AcpiPsInitScope (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
+    Scope->Common.DataType      = ACPI_DESC_TYPE_STATE_RPSCOPE;
     Scope->ParseScope.Op        = RootOp;
     Scope->ParseScope.ArgCount  = ACPI_VAR_ARGS;
     Scope->ParseScope.ArgEnd    = ParserState->AmlEnd;
@@ -234,16 +235,17 @@ AcpiPsPushScope (
     ACPI_GENERIC_STATE      *Scope;
 
 
-    FUNCTION_TRACE_PTR ("PsPushScope", Op);
+    ACPI_FUNCTION_TRACE_PTR ("PsPushScope", Op);
 
 
     Scope = AcpiUtCreateGenericState ();
     if (!Scope)
     {
-        return (AE_NO_MEMORY);
+        return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
 
+    Scope->Common.DataType         = ACPI_DESC_TYPE_STATE_PSCOPE;
     Scope->ParseScope.Op           = Op;
     Scope->ParseScope.ArgList      = RemainingArgs;
     Scope->ParseScope.ArgCount     = ArgCount;
@@ -265,7 +267,7 @@ AcpiPsPushScope (
     {
         /* single argument */
 
-        Scope->ParseScope.ArgEnd = ACPI_MAX_AML;
+        Scope->ParseScope.ArgEnd = ACPI_TO_POINTER (ACPI_MAX_PTR);
     }
 
     return_ACPI_STATUS (AE_OK);
@@ -298,7 +300,7 @@ AcpiPsPopScope (
     ACPI_GENERIC_STATE      *Scope = ParserState->Scope;
 
 
-    FUNCTION_TRACE ("PsPopScope");
+    ACPI_FUNCTION_TRACE ("PsPopScope");
 
 
     /*
@@ -354,7 +356,7 @@ AcpiPsCleanupScope (
 {
     ACPI_GENERIC_STATE      *Scope;
 
-    FUNCTION_TRACE_PTR ("PsCleanupScope", ParserState);
+    ACPI_FUNCTION_TRACE_PTR ("PsCleanupScope", ParserState);
 
 
     if (!ParserState)

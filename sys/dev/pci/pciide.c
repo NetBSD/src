@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.152.2.1 2002/05/30 14:46:27 gehenna Exp $	*/
+/*	$NetBSD: pciide.c,v 1.152.2.2 2002/06/20 16:33:46 gehenna Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.152.2.1 2002/05/30 14:46:27 gehenna Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide.c,v 1.152.2.2 2002/06/20 16:33:46 gehenna Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -188,7 +188,6 @@ static int sis_hostbr_match __P(( struct pci_attach_args *));
 void acer_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void acer_setup_channel __P((struct channel_softc*));
 int  acer_pci_intr __P((void *));
-static int acer_isabr_match __P(( struct pci_attach_args *));
 
 void pdc202xx_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
 void pdc202xx_setup_channel __P((struct channel_softc*));
@@ -319,6 +318,11 @@ const struct pciide_product_desc pciide_amd_products[] =  {
 	{ PCI_PRODUCT_AMD_PBC768_IDE,
 	  0,
 	  "Advanced Micro Devices AMD768 IDE Controller",
+	  amd7x6_chip_map
+	},
+	{ PCI_PRODUCT_AMD_PBC8111_IDE,
+	  0,
+	  "Advanced Micro Devices AMD8111 IDE Controller",
 	  amd7x6_chip_map
 	},
 	{ 0,
@@ -1975,6 +1979,7 @@ amd7x6_chip_map(sc, pa)
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_AMD_PBC766_IDE:
 	case PCI_PRODUCT_AMD_PBC768_IDE:
+	case PCI_PRODUCT_AMD_PBC8111_IDE:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -2166,8 +2171,16 @@ apollo_chip_map(sc, pa)
 			sc->sc_wdcdev.UDMA_cap = 4;
 		}
 		break;
+	case PCI_PRODUCT_VIATECH_VT8231:
+		printf("VT8231 ATA100 controller\n");
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
 	case PCI_PRODUCT_VIATECH_VT8233:
 		printf("VT8233 ATA100 controller\n");
+		sc->sc_wdcdev.UDMA_cap = 5;
+		break;
+        case PCI_PRODUCT_VIATECH_VT8233A:
+		printf("VT8233A ATA100 controller\n");
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
@@ -3004,20 +3017,11 @@ pio:		sis_tim |= sis_pio_act[drvp->PIO_mode] <<
 	pciide_print_modes(cp);
 }
 
-static int
-acer_isabr_match(pa)
-	struct pci_attach_args *pa;
-{
-	return ((PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ALI) &&
-	   (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ALI_M1543));
-}
-
 void
 acer_chip_map(sc, pa)
 	struct pciide_softc *sc;
 	struct pci_attach_args *pa;
 {
-	struct pci_attach_args isa_pa;
 	struct pciide_channel *cp;
 	int channel;
 	pcireg_t cr, interface;
@@ -3078,27 +3082,6 @@ acer_chip_map(sc, pa)
 		pciide_pci_write(sc->sc_pc, sc->sc_tag, ACER_0x4B,
 		    pciide_pci_read(sc->sc_pc, sc->sc_tag, ACER_0x4B)
 		    | ACER_0x4B_CDETECT);
-		/* set south-bridge's enable bit, m1533, 0x79 */
-		if (pci_find_device(&isa_pa, acer_isabr_match) == 0) {
-			printf("%s: can't find PCI/ISA bridge, downgrading "
-			    "to Ultra/33\n", sc->sc_wdcdev.sc_dev.dv_xname);
-			sc->sc_wdcdev.UDMA_cap = 2;
-		} else {
-			if (rev == 0xC2)
-				/* 1543C-B0 (m1533, 0x79, bit 2) */
-				pciide_pci_write(isa_pa.pa_pc, isa_pa.pa_tag,
-				    ACER_0x79,
-				    pciide_pci_read(isa_pa.pa_pc, isa_pa.pa_tag,
-					ACER_0x79)
-				    | ACER_0x79_REVC2_EN);
-			else
-				/* 1553/1535 (m1533, 0x79, bit 1) */
-				pciide_pci_write(isa_pa.pa_pc, isa_pa.pa_tag,
-				    ACER_0x79,
-				    pciide_pci_read(isa_pa.pa_pc, isa_pa.pa_tag,
-					ACER_0x79)
-				    | ACER_0x79_EN);
-		}
 	}
 
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
@@ -3644,7 +3627,7 @@ pdc202xx_chip_map(sc, pa)
 			st &= ~(PDC_IS_262(sc) ?
 			    PDC262_STATE_EN(channel):PDC246_STATE_EN(channel));
 		pciide_map_compat_intr(pa, cp, channel, interface);
-		pdc202xx_setup_channel(&cp->wdc_channel);
+		sc->sc_wdcdev.set_modes(&cp->wdc_channel);
 	}
 	if (!PDC_IS_268(sc)) {
 		WDCDEBUG_PRINT(("pdc202xx_setup_chip: new controller state "

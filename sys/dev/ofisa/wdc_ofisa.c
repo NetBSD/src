@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_ofisa.c,v 1.7 2001/11/13 07:29:45 lukem Exp $	*/
+/*	$NetBSD: wdc_ofisa.c,v 1.7.8.1 2002/06/20 16:33:28 gehenna Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.7 2001/11/13 07:29:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_ofisa.c,v 1.7.8.1 2002/06/20 16:33:28 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,7 +78,7 @@ wdc_ofisa_probe(parent, cf, aux)
 	void *aux;
 {
 	struct ofisa_attach_args *aa = aux;
-	const char *compatible_strings[] = { "pnpPNP,600", NULL };
+	static const char *const compatible_strings[] = { "pnpPNP,600", NULL };
 	int rv = 0;
 
 	if (of_compatible(aa->oba.oba_phandle, compatible_strings) != -1)

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.7 2002/03/24 03:32:14 sommerfeld Exp $	*/
+/*	$NetBSD: acpi.c,v 1.7.2.1 2002/06/20 16:31:24 gehenna Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.7 2002/03/24 03:32:14 sommerfeld Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.7.2.1 2002/06/20 16:31:24 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,6 +254,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	/* Our current state is "awake". */
 	sc->sc_sleepstate = ACPI_STATE_S0;
 
+	/* Show SCI interrupt. */
+	if (AcpiGbl_FADT != NULL)
+		printf("%s: SCI interrupting at irq %d\n",
+			sc->sc_dev.dv_xname, AcpiGbl_FADT->SciInt);
 	/*
 	 * Check for fixed-hardware features.
 	 */
@@ -381,7 +385,6 @@ acpi_build_tree(struct acpi_softc *sc)
 			 *
 			 *	- present
 			 *	- enabled
-			 *	- to be shown
 			 *	- functioning properly
 			 *
 			 * However, if enabled, it's decoding resources,
@@ -390,9 +393,9 @@ acpi_build_tree(struct acpi_softc *sc)
 			 */
 			if ((ad->ad_devinfo.CurrentStatus &
 			     (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			      ACPI_STA_DEV_SHOW|ACPI_STA_DEV_OK)) !=
+			      ACPI_STA_DEV_OK)) !=
 			    (ACPI_STA_DEV_PRESENT|ACPI_STA_DEV_ENABLED|
-			     ACPI_STA_DEV_SHOW|ACPI_STA_DEV_OK))
+			     ACPI_STA_DEV_OK))
 				continue;
 
 			/*
@@ -558,7 +561,7 @@ acpi_fixed_power_button_handler(void *context)
 
 	printf("%s: fixed power button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*
@@ -575,7 +578,7 @@ acpi_fixed_sleep_button_handler(void *context)
 
 	printf("%s: fixed sleep button pressed\n", sc->sc_dev.dv_xname);
 
-	return (INTERRUPT_HANDLED);
+	return (ACPI_INTERRUPT_HANDLED);
 }
 
 /*****************************************************************************
@@ -703,9 +706,10 @@ acpi_get(ACPI_HANDLE handle, ACPI_BUFFER *buf,
 	if (rv != AE_BUFFER_OVERFLOW)
 		return (rv);
 
-	buf->Pointer = AcpiOsCallocate(buf->Length);
+	buf->Pointer = AcpiOsAllocate(buf->Length);
 	if (buf->Pointer == NULL)
 		return (AE_NO_MEMORY);
+	memset(buf->Pointer, 0, buf->Length);
 
 	return ((*getit)(handle, buf));
 }
