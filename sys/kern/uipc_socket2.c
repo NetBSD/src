@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.42 2001/11/12 15:25:33 lukem Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.43 2002/07/03 19:06:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.42 2001/11/12 15:25:33 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.43 2002/07/03 19:06:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,6 +425,61 @@ sbrelease(struct sockbuf *sb)
  * or sbdroprecord() when the data is acknowledged by the peer.
  */
 
+#ifdef SOCKBUF_DEBUG
+void
+sblastrecordchk(struct sockbuf *sb, const char *where)
+{
+	struct mbuf *m = sb->sb_mb;
+
+	while (m && m->m_nextpkt)
+		m = m->m_nextpkt;
+
+	if (m != sb->sb_lastrecord) {
+		printf("sblastrecordchk: sb_mb %p sb_lastrecord %p last %p\n",
+		    sb->sb_mb, sb->sb_lastrecord, m);
+		printf("packet chain:\n");
+		for (m = sb->sb_mb; m != NULL; m = m->m_nextpkt)
+			printf("\t%p\n", m);
+		panic("sblastrecordchk from %s\n", where);
+	}
+}
+
+void
+sblastmbufchk(struct sockbuf *sb, const char *where)
+{
+	struct mbuf *m = sb->sb_mb;
+	struct mbuf *n;
+
+	while (m && m->m_nextpkt)
+		m = m->m_nextpkt;
+
+	while (m && m->m_next)
+		m = m->m_next;
+
+	if (m != sb->sb_mbtail) {
+		printf("sblastmbufchk: sb_mb %p sb_mbtail %p last %p\n",
+		    sb->sb_mb, sb->sb_mbtail, m);
+		printf("packet tree:\n");
+		for (m = sb->sb_mb; m != NULL; m = m->m_nextpkt) {
+			printf("\t");
+			for (n = m; n != NULL; n = n->m_next)
+				printf("%p ", n);
+			printf("\n");
+		}
+		panic("sblastmbufchk from %s", where);
+	}
+}
+#endif /* SOCKBUF_DEBUG */
+
+#define	SBLINKRECORD(sb, m0)						\
+do {									\
+	if ((sb)->sb_lastrecord != NULL)				\
+		(sb)->sb_lastrecord->m_nextpkt = (m0);			\
+	else								\
+		(sb)->sb_mb = (m0);					\
+	(sb)->sb_lastrecord = (m0);					\
+} while (/*CONSTCOND*/0)
+
 /*
  * Append mbuf chain m to the last record in the
  * socket buffer sb.  The additional space associated
@@ -438,17 +493,50 @@ sbappend(struct sockbuf *sb, struct mbuf *m)
 
 	if (m == 0)
 		return;
-	if ((n = sb->sb_mb) != NULL) {
-		while (n->m_nextpkt)
-			n = n->m_nextpkt;
+
+	SBLASTRECORDCHK(sb, "sbappend 1");
+
+	if ((n = sb->sb_lastrecord) != NULL) {
+		/*
+		 * XXX Would like to simply use sb_mbtail here, but
+		 * XXX I need to verify that I won't miss an EOR that
+		 * XXX way.
+		 */
 		do {
 			if (n->m_flags & M_EOR) {
 				sbappendrecord(sb, m); /* XXXXXX!!!! */
 				return;
 			}
 		} while (n->m_next && (n = n->m_next));
+	} else {
+		/*
+		 * If this is the first record in the socket buffer, it's
+		 * also the last record.
+		 */
+		sb->sb_lastrecord = m;
 	}
 	sbcompress(sb, m, n);
+	SBLASTRECORDCHK(sb, "sbappend 2");
+}
+
+/*
+ * This version of sbappend() should only be used when the caller
+ * absolutely knows that there will never be more than one record
+ * in the socket buffer, that is, a stream protocol (such as TCP).
+ */
+void
+sbappend_stream(struct sockbuf *sb, struct mbuf *m)
+{
+
+	KDASSERT(m->m_nextpkt == NULL);
+	KASSERT(sb->sb_mb == sb->sb_lastrecord);
+
+	SBLASTMBUFCHK(sb, __func__);
+
+	sbcompress(sb, m, sb->sb_mbtail);
+
+	sb->sb_lastrecord = sb->sb_mb;
+	SBLASTRECORDCHK(sb, __func__);
 }
 
 #ifdef SOCKBUF_DEBUG
@@ -456,7 +544,7 @@ void
 sbcheck(struct sockbuf *sb)
 {
 	struct mbuf	*m;
-	int		len, mbcnt;
+	u_long		len, mbcnt;
 
 	len = 0;
 	mbcnt = 0;
@@ -469,7 +557,7 @@ sbcheck(struct sockbuf *sb)
 			panic("sbcheck nextpkt");
 	}
 	if (len != sb->sb_cc || mbcnt != sb->sb_mbcnt) {
-		printf("cc %d != %d || mbcnt %d != %d\n", len, sb->sb_cc,
+		printf("cc %lu != %lu || mbcnt %lu != %lu\n", len, sb->sb_cc,
 		    mbcnt, sb->sb_mbcnt);
 		panic("sbcheck");
 	}
@@ -487,18 +575,14 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 
 	if (m0 == 0)
 		return;
-	if ((m = sb->sb_mb) != NULL)
-		while (m->m_nextpkt)
-			m = m->m_nextpkt;
+
 	/*
 	 * Put the first mbuf on the queue.
 	 * Note this permits zero length records.
 	 */
 	sballoc(sb, m0);
-	if (m)
-		m->m_nextpkt = m0;
-	else
-		sb->sb_mb = m0;
+	SBLASTRECORDCHK(sb, "sbappendrecord 1");
+	SBLINKRECORD(sb, m0);
 	m = m0->m_next;
 	m0->m_next = 0;
 	if (m && (m0->m_flags & M_EOR)) {
@@ -506,6 +590,7 @@ sbappendrecord(struct sockbuf *sb, struct mbuf *m0)
 		m->m_flags |= M_EOR;
 	}
 	sbcompress(sb, m, m0);
+	SBLASTRECORDCHK(sb, "sbappendrecord 2");
 }
 
 /*
@@ -520,6 +605,9 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 
 	if (m0 == 0)
 		return;
+
+	SBLASTRECORDCHK(sb, "sbinsertoob 1");
+
 	for (mp = &sb->sb_mb; (m = *mp) != NULL; mp = &((*mp)->m_nextpkt)) {
 	    again:
 		switch (m->m_type) {
@@ -539,6 +627,10 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 	 */
 	sballoc(sb, m0);
 	m0->m_nextpkt = *mp;
+	if (*mp == NULL) {
+		/* m0 is actually the new tail */
+		sb->sb_lastrecord = m0;
+	}
 	*mp = m0;
 	m = m0->m_next;
 	m0->m_next = 0;
@@ -547,6 +639,7 @@ sbinsertoob(struct sockbuf *sb, struct mbuf *m0)
 		m->m_flags |= M_EOR;
 	}
 	sbcompress(sb, m, m0);
+	SBLASTRECORDCHK(sb, "sbinsertoob 2");
 }
 
 /*
@@ -559,7 +652,7 @@ int
 sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	struct mbuf *control)
 {
-	struct mbuf	*m, *n;
+	struct mbuf	*m, *n, *nlast;
 	int		space;
 
 	space = asa->sa_len;
@@ -592,21 +685,27 @@ sbappendaddr(struct sockbuf *sb, struct sockaddr *asa, struct mbuf *m0,
 	else
 		control = m0;
 	m->m_next = control;
-	for (n = m; n; n = n->m_next)
+
+	SBLASTRECORDCHK(sb, "sbappendaddr 1");
+
+	for (n = m; n->m_next != NULL; n = n->m_next)
 		sballoc(sb, n);
-	if ((n = sb->sb_mb) != NULL) {
-		while (n->m_nextpkt)
-			n = n->m_nextpkt;
-		n->m_nextpkt = m;
-	} else
-		sb->sb_mb = m;
+	sballoc(sb, n);
+	nlast = n;
+	SBLINKRECORD(sb, m);
+
+	sb->sb_mbtail = nlast;
+	SBLASTMBUFCHK(sb, "sbappendaddr");
+
+	SBLASTRECORDCHK(sb, "sbappendaddr 2");
+
 	return (1);
 }
 
 int
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
-	struct mbuf	*m, *n;
+	struct mbuf	*m, *mlast, *n;
 	int		space;
 
 	space = 0;
@@ -623,14 +722,20 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	if (space > sbspace(sb))
 		return (0);
 	n->m_next = m0;			/* concatenate data to control */
-	for (m = control; m; m = m->m_next)
+
+	SBLASTRECORDCHK(sb, "sbappendcontrol 1");
+
+	for (m = control; m->m_next != NULL; m = m->m_next)
 		sballoc(sb, m);
-	if ((n = sb->sb_mb) != NULL) {
-		while (n->m_nextpkt)
-			n = n->m_nextpkt;
-		n->m_nextpkt = control;
-	} else
-		sb->sb_mb = control;
+	sballoc(sb, m);
+	mlast = m;
+	SBLINKRECORD(sb, control);
+
+	sb->sb_mbtail = mlast;
+	SBLASTMBUFCHK(sb, "sbappendcontrol");
+
+	SBLASTRECORDCHK(sb, "sbappendcontrol 2");
+
 	return (1);
 }
 
@@ -671,6 +776,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 			n->m_next = m;
 		else
 			sb->sb_mb = m;
+		sb->sb_mbtail = m;
 		sballoc(sb, m);
 		n = m;
 		m->m_flags &= ~M_EOR;
@@ -683,6 +789,7 @@ sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 		else
 			printf("semi-panic: sbcompress\n");
 	}
+	SBLASTMBUFCHK(sb, __func__);
 }
 
 /*
@@ -693,12 +800,15 @@ void
 sbflush(struct sockbuf *sb)
 {
 
-	if (sb->sb_flags & SB_LOCK)
-		panic("sbflush");
+	KASSERT((sb->sb_flags & SB_LOCK) == 0);
+
 	while (sb->sb_mbcnt)
 		sbdrop(sb, (int)sb->sb_cc);
-	if (sb->sb_cc || sb->sb_mb)
-		panic("sbflush 2");
+
+	KASSERT(sb->sb_cc == 0);
+	KASSERT(sb->sb_mb == NULL);
+	KASSERT(sb->sb_mbtail == NULL);
+	KASSERT(sb->sb_lastrecord == NULL);
 }
 
 /*
@@ -739,6 +849,17 @@ sbdrop(struct sockbuf *sb, int len)
 		m->m_nextpkt = next;
 	} else
 		sb->sb_mb = next;
+	/*
+	 * First part is an inline SB_UPDATE_TAIL().  Second part
+	 * makes sure sb_lastrecord is up-to-date if we dropped
+	 * part of the last record.
+	 */
+	m = sb->sb_mb;
+	if (m == NULL) {
+		sb->sb_mbtail = NULL;
+		sb->sb_lastrecord = NULL;
+	} else if (m->m_nextpkt == NULL)
+		sb->sb_lastrecord = m;
 }
 
 /*
@@ -758,6 +879,7 @@ sbdroprecord(struct sockbuf *sb)
 			MFREE(m, mn);
 		} while ((m = mn) != NULL);
 	}
+	SB_UPDATE_TAIL(sb);
 }
 
 /*
