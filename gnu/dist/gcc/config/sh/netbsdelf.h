@@ -46,6 +46,8 @@ Boston, MA 02111-1307, USA.  */
 #define NETBSD_ELF
 #include <netbsd.h>
 
+#define OBJECT_FORMAT_ELF
+
 /* The prefix to add to user-visible assembler symbols.
    Note that svr4.h redefined it from the original value (that we want)
    in sh.h */
