@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdq_ifsubr.c,v 1.11 1997/03/24 15:24:36 thomas Exp
+ * Id: pdq_ifsubr.c,v 1.12 1997/06/05 01:56:35 thomas Exp
  *
  */
 
@@ -41,7 +41,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && BSD < 199401
 #include <sys/devconf.h>
 #elif defined(__bsdi__) || defined(__NetBSD__)
 #include <sys/device.h>
@@ -90,8 +90,16 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_param.h>
 
+#if defined(__FreeBSD__)
+/*
+ * Yet another specific ifdef for FreeBSD as it diverges...
+ */
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
+#else
 #include "pdqvar.h"
 #include "pdqreg.h"
+#endif
 
 #if defined(__bsdi__) && _BSDI_VERSION < 199506 /* XXX */
 static void

@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: pdq.c,v 1.30 1997/03/21 21:16:04 thomas Exp
+ * Id: pdq.c,v 1.32 1997/06/05 01:56:35 thomas Exp
  *
  */
 
@@ -39,8 +39,16 @@
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
+#if defined(__FreeBSD__)
+/*
+ * What a botch having to specific includes for FreeBSD!
+ */
+#include <dev/pdq/pdqvar.h>
+#include <dev/pdq/pdqreg.h>
+#else
 #include "pdqvar.h"
 #include "pdqreg.h"
+#endif
 
 #define	PDQ_ROUNDUP(n, x)	(((n) + ((x) - 1)) & ~((x) - 1))
 #define	PDQ_CMD_RX_ALIGNMENT	16
@@ -871,7 +879,10 @@ pdq_queue_transmit_data(
     PDQ_OS_DATABUF_T *pdu0;
     pdq_uint32_t freecnt;
 
-    if (tx->tx_free < 1)
+    /*
+     * Need 2 or more descriptors to be able to send.
+     */
+    if (tx->tx_free <= 1)
 	return PDQ_FALSE;
 
     dbp->pdqdb_transmits[producer] = tx->tx_hdrdesc;

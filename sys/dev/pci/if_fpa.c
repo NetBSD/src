@@ -21,7 +21,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Id: if_fpa.c,v 1.10 1997/03/21 13:45:45 thomas Exp
+ * Id: if_fpa.c,v 1.11 1997/06/05 01:56:35 thomas Exp
  *
  */
 
@@ -40,7 +40,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
-#if defined(__FreeBSD__)
+#if defined(__FreeBSD__) && BSD < 199401
 #include <sys/devconf.h>
 #elif defined(__bsdi__) || defined(__NetBSD__)
 #include <sys/device.h>
@@ -119,6 +119,7 @@ static pdq_softc_t *pdqs_pci[NFPA];
 #define	PDQ_PCI_UNIT_TO_SOFTC(unit)	(pdqs_pci[unit])
 #if BSD >= 199506
 #define	pdq_pci_ifwatchdog		NULL
+static void pdq_pci_shutdown(int howto, void *sc);
 #endif
 
 #elif defined(__bsdi__)
@@ -226,8 +227,12 @@ pdq_pci_attach(
     pdqs_pci[unit] = sc;
     pdq_ifattach(sc, pdq_pci_ifwatchdog);
     pci_map_int(config_id, pdq_pci_ifintr, (void*) sc, &net_imask);
+#if BSD >= 199506
+    at_shutdown(pdq_pci_shutdown, (void *) sc, SHUTDOWN_POST_SYNC);
+#endif
 }
 
+#if BSD < 199401
 static int
 pdq_pci_shutdown(
     struct kern_devconf *kdc,
@@ -238,6 +243,15 @@ pdq_pci_shutdown(
     (void) dev_detach(kdc);
     return 0;
 }
+#else
+static void
+pdq_pci_shutdown(
+    int howto,
+    void *sc)
+{
+    pdq_hwreset(((pdq_softc_t *)sc)->sc_pdq);
+}   
+#endif
 
 static u_long pdq_pci_count;
 
@@ -246,7 +260,9 @@ struct pci_device fpadevice = {
     pdq_pci_probe,
     pdq_pci_attach,
     &pdq_pci_count,
+#if BSD < 199401
     pdq_pci_shutdown,
+#endif
 };
 
 #ifdef DATA_SET
@@ -405,9 +421,6 @@ pdq_pci_attach(
     pdq_uint32_t data;
     pci_intr_handle_t intrhandle;
     const char *intrstr;
-    bus_addr_t csrbase;
-    bus_size_t csrsize;
-    int cacheable = 0;
 
     data = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_CFLT);
     if ((data & 0xFF00) < (DEFPA_LATENCY << 8)) {
@@ -419,15 +432,14 @@ pdq_pci_attach(
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
-
-    if (!pci_mem_find(pa->pa_pc, pa->pa_tag, PCI_CBMA, &csrbase, &csrsize, &cacheable))
-	sc->sc_csrtag = pa->pa_memt;
-    else if (!pci_io_find(pa->pa_pc, pa->pa_tag, PCI_CBIO, &csrbase, &csrsize))
-	sc->sc_csrtag = pa->pa_iot;
-    else
-	return;
-    if (bus_space_map(sc->sc_csrtag, csrbase, csrsize, cacheable, &sc->sc_membase))
-	return;
+    if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
+		       &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)
+	&& pci_mapreg_map(pa, PCI_CBMA,
+			  PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
+			  &sc->sc_csrtag, &sc->sc_membase, NULL, NULL)) {
+        printf(": unable to map device registers\n");
+        return;
+    }
 
     sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_membase,
 				sc->sc_if.if_xname, 0,
