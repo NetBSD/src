@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.57 2000/12/29 20:07:25 fvdl Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.58 2000/12/29 22:06:58 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -643,6 +643,10 @@ linux_machdepioctl(p, v, retval)
 		break;
 	case LINUX_KDSETMODE:
 		com = KDSETMODE;
+		break;
+	case LINUX_KDGETMODE:
+		/* KD_* values are equal to the wscons numbers */
+		com = WSDISPLAYIO_GMODE;
 		break;
 	case LINUX_KDENABIO:
 		com = KDENABIO;
