@@ -1,8 +1,8 @@
 %{
-/*	$NetBSD: nsparser.y,v 1.1.4.2 1998/11/02 03:29:37 lukem Exp $	*/
+/*	$NetBSD: nsparser.y,v 1.1.4.3 1999/01/14 06:57:37 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,30 +38,29 @@
  */
 
 #define _NS_PRIVATE
+#include <err.h>
 #include <nsswitch.h>
 #include <stdio.h>
 #include <string.h>
 
 
+static	void	_nsaddsrctomap __P((const char *));
 
-static void	addsrctomap __P((int));
-
-static	ns_DBT	curdbt;
-static	int	donesrc[NS_MAXSOURCE];
+static	ns_dbt		curdbt;
+static	ns_src		cursrc;
 %}
 
 %union {
-	char dbstr[NS_MAXDBLEN];
-	int  mapval;
+	char *str;
+	int   mapval;
 }
 
 %token	NL
-%token	FILES DNS NIS NISPLUS COMPAT
 %token	SUCCESS UNAVAIL NOTFOUND TRYAGAIN
 %token	RETURN CONTINUE
-%token	<dbstr> DATABASE
+%token	<str> STRING
 
-%type	<mapval> Source Status Action
+%type	<mapval> Status Action
 
 %%
 
@@ -77,28 +76,18 @@ Lines
 
 Entry
 	: NL
-	| Database ':' COMPAT NL
-		{
-			curdbt.map[curdbt.size++] = NS_COMPAT | NS_SUCCESS;
-			__nsdbput(&curdbt);
-		}
 	| Database ':' Srclist NL
 		{
-			__nsdbput(&curdbt);
+			_nsdbtput(&curdbt);
 		}
 	;
 
 Database
-	: DATABASE
+	: STRING
 		{
-			int i;
-			strncpy(curdbt.name, yylval.dbstr, NS_MAXDBLEN);
-			curdbt.name[NS_MAXDBLEN - 1] = '\0';
-			for (i = 0; i < NS_MAXSOURCE; i++) {
-				curdbt.map[i] = 0;
-				donesrc[i] = 0;
-			}
-			curdbt.size = 0;
+			curdbt.name = yylval.str;
+			curdbt.srclist = NULL;
+			curdbt.srclistsize = 0;
 		}
 	;
 
@@ -108,15 +97,14 @@ Srclist
 	;
 
 Item
-	: Source
+	: STRING
 		{
-			curdbt.map[curdbt.size] = NS_SUCCESS;
-
-			addsrctomap($1);
+			cursrc.flags = NS_SUCCESS;
+			_nsaddsrctomap($1);
 		}
-	| Source '[' { curdbt.map[curdbt.size] = NS_SUCCESS; } Criteria ']'
+	| STRING '[' { cursrc.flags = NS_SUCCESS; } Criteria ']'
 		{
-			addsrctomap($1);
+			_nsaddsrctomap($1);
 		}
 	;
 
@@ -129,18 +117,10 @@ Criterion
 	: Status '=' Action
 		{
 			if ($3)		/* if action == RETURN set RETURN bit */
-				curdbt.map[curdbt.size] |= $1;  
+				cursrc.flags |= $1;  
 			else		/* else unset it */
-				curdbt.map[curdbt.size] &= ~$1;
+				cursrc.flags &= ~$1;
 		}
-	;
-
-Source
-	: FILES		{ $$ = NS_FILES; }
-	| DNS		{ $$ = NS_DNS; }
-	| NIS		{ $$ = NS_NIS; }
-	| NISPLUS	{ $$ = NS_NISPLUS; }
-	| COMPAT	{ $$ = NS_COMPAT; }
 	;
 
 Status
@@ -158,35 +138,29 @@ Action
 %%
 
 static void
-addsrctomap(elem)
-	int elem;
+_nsaddsrctomap(elem)
+	const char *elem;
 {
-	static char *srcname[NS_MAXSOURCE] = {
-		"files",
-		"dns",
-		"nis",
-		"nisplus",
-		"compat"
-	};
+	int i;
 
-	if (elem == NS_COMPAT) {
-			/* XXX: syslog the following */
-		fprintf(stderr, "'compat' used with other sources in '%s'",
-		    curdbt.name);
-		return;
+
+	if (curdbt.srclistsize > 0) {
+		if ((strcasecmp(elem, NSSRC_COMPAT) == 0) ||
+		    (strcasecmp(curdbt.srclist[0].name, NSSRC_COMPAT) == 0)) {
+				/* XXX: syslog the following */
+			warnx("'compat' used with other sources in '%s'",
+			    curdbt.name);
+			return;
+		}
 	}
-	if (donesrc[elem]) {
-			/* XXX: syslog the following */
-		fprintf(stderr, "duplicate source '%s' for '%s'", srcname[elem],
-		    curdbt.name);
-		return;
+	for (i = 0; i < curdbt.srclistsize; i++) {
+		if (strcasecmp(curdbt.srclist[i].name, elem) == 0) {
+				/* XXX: syslog the following */
+			warnx("duplicate source '%s' for '%s'", elem,
+			    curdbt.name);
+			return;
+		}
 	}
-	donesrc[elem]++;
-	if (curdbt.size >= NS_MAXSOURCE) {
-			/* XXX: syslog the following */
-		fprintf(stderr, "too many sources for '%s'", curdbt.name);
-		return;
-	}
-	curdbt.map[curdbt.size] |= (u_char)elem;
-	curdbt.size++;
-} /* addsrctomap */
+	cursrc.name = elem;
+	_nsdbtaddsrc(&curdbt, &cursrc);
+}
