@@ -1,10 +1,11 @@
-/* $NetBSD: show.c,v 1.4 1997/10/16 00:32:12 hubertf Exp $ */
+/*	$NetBSD: show.c,v 1.5 1997/10/17 14:54:20 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: show.c,v 1.11 1997/10/08 07:47:38 charnier Exp";
 #else
-static const char *rcsid = "$NetBSD: show.c,v 1.4 1997/10/16 00:32:12 hubertf Exp $";
+__RCSID("$NetBSD: show.c,v 1.5 1997/10/17 14:54:20 lukem Exp $");
 #endif
 #endif
 
@@ -27,6 +28,8 @@ static const char *rcsid = "$NetBSD: show.c,v 1.4 1997/10/16 00:32:12 hubertf Ex
  * Various display routines for the info module.
  *
  */
+
+#include <err.h>
 
 #include "lib.h"
 #include "info.h"
@@ -197,6 +200,9 @@ show_files(char *title, Package *plist)
 
 	case PLIST_IGNORE:
 	    ign = TRUE;
+	    break;
+
+	default:
 	    break;
 	}
 	p = p->next;

@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.3 1997/10/16 00:32:22 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.4 1997/10/17 14:54:38 lukem Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -135,6 +135,7 @@ char		*fileURLFilename(char *, char *, int);
 char		*fileURLHost(char *, char *, int);
 char		*fileFindByPath(char *, char *);
 char		*fileGetContents(char *);
+Boolean		make_preserve_name(char *, int, char *, char *);
 void		write_file(char *, char *);
 void		copy_file(char *, char *, char *);
 void		move_file(char *, char *, char *);

@@ -1,3 +1,8 @@
+/*	$NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $	*/
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $");
+#endif
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -15,7 +20,7 @@
  * `state' of FTP_t
  *
  * from FreeBSD Id: ftpio.c,v 1.25 1997/02/22 15:06:50 peter Exp
- * $NetBSD: ftpio.c,v 1.2 1997/06/05 12:59:48 agc Exp $
+ * $NetBSD: ftpio.c,v 1.3 1997/10/17 14:54:32 lukem Exp $
  *
  */
 
@@ -66,6 +71,7 @@ static int	get_url_info(char *url_in, char *host_ret, int *port_ret, char *name_
 static void	ftp_timeout(int sig);
 static void	ftp_set_timeout(void);
 static void	ftp_clear_timeout(void);
+int		networkInit(void);
 
 
 /* Global status variable - ick */

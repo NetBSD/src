@@ -1,10 +1,11 @@
-/* $NetBSD: perform.c,v 1.3 1997/10/16 00:32:09 hubertf Exp $ */
+/*	$NetBSD: perform.c,v 1.4 1997/10/17 14:54:17 lukem Exp $	*/
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-static const char *rcsid = "$NetBSD: perform.c,v 1.3 1997/10/16 00:32:09 hubertf Exp $";
+__RCSID("$NetBSD: perform.c,v 1.4 1997/10/17 14:54:17 lukem Exp $");
 #endif
 #endif
 
@@ -31,6 +32,7 @@ static const char *rcsid = "$NetBSD: perform.c,v 1.3 1997/10/16 00:32:09 hubertf
 #include "lib.h"
 #include "info.h"
 
+#include <err.h>
 #include <signal.h>
 
 static int pkg_do(char *);
