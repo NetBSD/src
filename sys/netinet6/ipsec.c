@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.21 2000/06/03 16:14:02 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.22 2000/06/12 10:40:46 itojun Exp $	*/
 /*	$KAME: ipsec.c,v 1.65 2000/06/03 15:51:28 itojun Exp $	*/
 
 /*
@@ -1891,7 +1891,7 @@ ipsec4_encapsulate(m, sav)
 	}
 #if 0
 	/* XXX if the dst is myself, perform nothing. */
-	if (key_ismyaddr(AF_INET, _INADDRBYSA(&sav->sah->saidx.dst))) {
+	if (key_ismyaddr((struct sockaddr *)&sav->sah->saidx.dst)) {
 		m_freem(m);
 		return EINVAL;
 	}
@@ -2008,7 +2008,7 @@ ipsec6_encapsulate(m, sav)
 	}
 #if 0
 	/* XXX if the dst is myself, perform nothing. */
-	if (key_ismyaddr(AF_INET6, _INADDRBYSA(&sav->sah->saidx.dst))) {
+	if (key_ismyaddr((struct sockaddr *)&sav->sah->saidx.dst)) {
 		m_freem(m);
 		return EINVAL;
 	}
