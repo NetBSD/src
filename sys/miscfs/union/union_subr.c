@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.16 1995/06/27 00:15:13 gwr Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.17 1995/10/05 06:26:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Jan-Simon Pendry
@@ -1040,12 +1040,14 @@ union_dircache(vp)
 	struct vnode *vp;
 {
 	int cnt;
-	struct vnode *nvp;
+	struct vnode *nvp = NULLVP;
 	struct vnode **vpp;
-	struct vnode **dircache = VTOUNION(vp)->un_dircache;
-	struct union_node *un;
+	struct vnode **dircache;
 	int error;
 
+	VOP_LOCK(vp);
+
+	dircache = VTOUNION(vp)->un_dircache;
 	if (dircache == 0) {
 		cnt = 0;
 		union_dircache_r(vp, 0, &cnt);
@@ -1067,16 +1069,18 @@ union_dircache(vp)
 	}
 
 	if (*vpp == NULLVP)
-		return (NULLVP);
+		goto out;
 
 	VOP_LOCK(*vpp);
 	VREF(*vpp);
 	error = union_allocvp(&nvp, vp->v_mount, NULLVP, NULLVP, 0, *vpp, NULLVP, 0);
-	if (error)
-		return (NULLVP);
-	VTOUNION(vp)->un_dircache = 0;
-	VTOUNION(nvp)->un_dircache = dircache;
+	if (!error) {
+		VTOUNION(vp)->un_dircache = 0;
+		VTOUNION(nvp)->un_dircache = dircache;
+	}
 
+out:
+	VOP_UNLOCK(vp);
 	return (nvp);
 }
 
