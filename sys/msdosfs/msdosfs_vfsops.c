@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.45 1997/05/08 16:53:06 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995 Wolfgang Solfrank.
@@ -61,6 +61,7 @@
 #include <sys/ioctl.h>
 #include <sys/malloc.h>
 #include <sys/dirent.h>
+#include <sys/stat.h>
 
 #include <msdosfs/bpb.h>
 #include <msdosfs/bootsect.h>
@@ -211,7 +212,7 @@ msdosfs_mount(mp, path, data, ndp, p)
 	pmp = VFSTOMSDOSFS(mp);
 	pmp->pm_gid = args.gid;
 	pmp->pm_uid = args.uid;
-	pmp->pm_mask = args.mask;
+	pmp->pm_mask = args.mask & ALLPERMS;
 	pmp->pm_flags |= args.flags & MSDOSFSMNT_MNTOPT;
 
 	/*
