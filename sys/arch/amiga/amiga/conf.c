@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.34 1996/04/21 21:06:53 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.35 1996/04/27 20:48:50 veego Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,7 +87,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #include "msc.h"
 #include "ite.h"
 #include "kbd.h"
-#include "mouse.h"
+#include "ms.h"
 #include "view.h"
 #include "mfcs.h"
 dev_decl(filedesc,open);
@@ -111,7 +111,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NSER,ser),	/* 12: built-in single-port serial */
 	cdev_tty_init(NITE,ite),	/* 13: console terminal emulator */
 	cdev_mouse_init(NKBD,kbd),	/* 14: /dev/kbd */
-	cdev_mouse_init(NMOUSE,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
+	cdev_mouse_init(NMS,ms),	/* 15: /dev/mouse0 /dev/mouse1 */
 	cdev_view_init(NVIEW,view),	/* 16: /dev/view00 /dev/view01 ... */
 	cdev_tty_init(NMFCS,mfcs),	/* 17: MultiFaceCard III serial */
 	cdev_disk_init(NFD,fd),		/* 18: floppy disk */
