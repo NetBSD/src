@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 1999/03/26 22:36:02 bgrayson Exp $
+#	$NetBSD: Makefile,v 1.26 1999/09/12 01:19:23 chs Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/2/93
 
 PROG=		ps
@@ -11,8 +11,3 @@ BINMODE=	2555
 CWARNFLAGS+=	-Wno-format-y2k
 
 .include <bsd.prog.mk>
-
-# XXX
-.if defined(PMAP_NEW)
-CPPFLAGS+=      -DPMAP_NEW
-.endif

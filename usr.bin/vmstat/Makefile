@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 1999/03/24 05:51:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.19 1999/09/12 01:19:26 chs Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	vmstat
@@ -11,8 +11,3 @@ BINGRP=	kmem
 BINMODE=2555
 
 .include <bsd.prog.mk>
-
-# XXX
-.if defined(PMAP_NEW)
-CPPFLAGS+=      -DPMAP_NEW
-.endif
