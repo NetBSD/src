@@ -1,7 +1,7 @@
-#	$NetBSD: files.bicons,v 1.1 2001/02/09 19:43:23 uch Exp $
-
-file	dev/hpc/bicons.c
-file	dev/hpc/bifont.c
+#	$NetBSD: files.bicons,v 1.2 2001/02/12 17:55:09 uch Exp $
 
 defpseudo	biconsdev
 file	dev/hpc/biconsdev.c	biconsdev	needs-count
+file	dev/hpc/bicons.c	biconsdev
+file	dev/hpc/bifont.c	biconsdev
+
