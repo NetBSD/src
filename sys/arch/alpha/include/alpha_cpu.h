@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.23 1998/08/14 16:50:03 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.24 1998/09/20 18:28:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -289,6 +289,18 @@ typedef unsigned long alpha_pt_entry_t;
 #define	ALPHA_IMPLVER_EV4	0		/* LCA/EV4/EV45 */
 #define	ALPHA_IMPLVER_EV5	1		/* EV5/EV56/PCA56 */
 #define	ALPHA_IMPLVER_EV6	2		/* EV6 */
+
+/*
+ * Maximum processor ID we allow from `whami', and related constants.
+ *
+ * XXX This is not really processor or PALcode specific, but this is
+ * a convenient place to put these definitions.
+ *
+ * XXX This is clipped at 63 so that we can use `long's for proc bitmasks.
+ */
+
+#define	ALPHA_WHAMI_MAXID	63
+#define	ALPHA_MAXPROCS		(ALPHA_WHAMI_MAXID + 1)
 
 /*
  * Misc. support routines.
