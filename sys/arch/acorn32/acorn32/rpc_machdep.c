@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.27 2002/03/23 02:22:56 thorpej Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.28 2002/03/24 18:12:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Reinoud Zandijk.
@@ -57,7 +57,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.27 2002/03/23 02:22:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.28 2002/03/24 18:12:54 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -1098,7 +1098,7 @@ rpc_sa110_cc_setup(void)
 
 	(void) pmap_extract(pmap_kernel(), KERNEL_TEXT_BASE, &kaddr);
 	for (loop = 0; loop < CPU_SA110_CACHE_CLEAN_SIZE; loop += NBPG) {
-		pte = pmap_pte(pmap_kernel(), (sa110_cc_base + loop));
+		pte = vtopte(sa110_cc_base + loop);
 		*pte = L2_PTE(kaddr, AP_KR);
 	}
 	sa110_cache_clean_addr = sa110_cc_base;

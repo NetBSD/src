@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.5 2002/02/18 19:57:09 bjh21 Exp $	*/
+/*	$NetBSD: esc.c,v 1.6 2002/03/24 18:12:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: esc.c,v 1.5 2002/02/18 19:57:09 bjh21 Exp $");
+__RCSID("$NetBSD: esc.c,v 1.6 2002/03/24 18:12:54 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -75,9 +75,6 @@ __RCSID("$NetBSD: esc.c,v 1.5 2002/02/18 19:57:09 bjh21 Exp $");
 #include <acorn32/podulebus/podulebus.h>
 #include <acorn32/podulebus/escreg.h>
 #include <acorn32/podulebus/escvar.h>
-
-/* Externs */
-extern pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
 
 void escinitialize __P((struct esc_softc *));
 void esc_minphys   __P((struct buf *bp));
@@ -222,7 +219,7 @@ escinitialize(dev)
  * Setup pages to noncachable, that way we don't have to flush the cache
  * every time we need "bumped" transfer.
  */
-	pte = pmap_pte(pmap_kernel(), (vm_offset_t)dev->sc_bump_va);
+	pte = vtopte((vaddr_t) dev->sc_bump_va);
 	*pte &= ~PT_C;
 	cpu_tlb_flushD();
 	cpu_dcache_wbinv_range((vm_offset_t)dev->sc_bump_va, NBPG);
