@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.c,v 1.18 1998/04/02 10:45:54 kleink Exp $	*/
+/*	$NetBSD: quota.c,v 1.19 1998/07/12 04:56:06 mrg Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)quota.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quota.c,v 1.18 1998/04/02 10:45:54 kleink Exp $");
+__RCSID("$NetBSD: quota.c,v 1.19 1998/07/12 04:56:06 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,6 +111,7 @@ void	usage __P((void));
 
 int	qflag;
 int	vflag;
+uid_t	myuid;
 
 int
 main(argc, argv)
@@ -122,6 +123,7 @@ main(argc, argv)
 	int i, gflag = 0, uflag = 0;
 	int ch;
 
+	myuid = getuid();
 	while ((ch = getopt(argc, argv, "ugvq")) != -1) {
 		switch(ch) {
 		case 'g':
@@ -146,7 +148,7 @@ main(argc, argv)
 		uflag++;
 	if (argc == 0) {
 		if (uflag)
-			showuid(getuid());
+			showuid(myuid);
 		if (gflag) {
 			mygid = getgid();
 			ngroups = getgroups(NGROUPS, gidset);
@@ -202,14 +204,12 @@ showuid(uid)
 	uid_t uid;
 {
 	struct passwd *pwd = getpwuid(uid);
-	uid_t myuid;
 	char *name;
 
 	if (pwd == NULL)
 		name = "(no account)";
 	else
 		name = pwd->pw_name;
-	myuid = getuid();
 	if (uid != myuid && myuid != 0) {
 		printf("quota: %s (uid %d): permission denied\n", name, uid);
 		return;
@@ -225,13 +225,11 @@ showusrname(name)
 	char *name;
 {
 	struct passwd *pwd = getpwnam(name);
-	u_long myuid;
 
 	if (pwd == NULL) {
 		warnx("%s: unknown user", name);
 		return;
 	}
-	myuid = getuid();
 	if (pwd->pw_uid != myuid && myuid != 0) {
 		warnx("%s (uid %d): permission denied", name, pwd->pw_uid);
 		return;
@@ -266,7 +264,7 @@ showgid(gid)
 		for (i = 0; i < ngroups; i++)
 			if (gid == gidset[i])
 				break;
-		if (i >= ngroups && getuid() != 0) {
+		if (i >= ngroups && myuid != 0) {
 			warnx("%s (gid %d): permission denied", name, gid);
 			return;
 		}
@@ -300,7 +298,7 @@ showgrpname(name)
 		for (i = 0; i < ngroups; i++)
 			if (grp->gr_gid == gidset[i])
 				break;
-		if (i >= ngroups && getuid() != 0) {
+		if (i >= ngroups && myuid != 0) {
 			warnx("%s (gid %d): permission denied",
 			    name, grp->gr_gid);
 			return;
@@ -470,7 +468,7 @@ getprivs(id, quotatype)
 	if (nfst == 0)
 		errx(2, "no filesystems mounted!");
 	setfsent();
-	for (i=0; i<nfst; i++) {
+	for (i = 0; i < nfst; i++) {
 		if (qup == NULL) {
 			if ((qup =
 			    (struct quotause *)malloc(sizeof *qup)) == NULL)
@@ -533,6 +531,7 @@ ufshasquota(fs, type, qfnamep)
 		initname = 1;
 	}
 	(void)strncpy(buf, fs->fs_mntops, sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
 	for (opt = strtok(buf, ","); opt; opt = strtok(NULL, ",")) {
 		if ((cp = strchr(opt, '=')) != NULL)
 			*cp++ = '\0';
