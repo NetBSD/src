@@ -1,4 +1,4 @@
-/*	$NetBSD: icpvar.h,v 1.2 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icpvar.h,v 1.3 2003/06/13 05:57:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -105,6 +105,14 @@ struct icp_cachedrv {
 };
 
 /*
+ * Call-backs into the service back-ends (ld for cache service,
+ * icpsp for raw service).
+ */
+struct icp_servicecb {
+	void	(*iscb_openings)(struct device *, int);
+};
+
+/*
  * Per-controller context.
  */
 struct icp_softc {
@@ -124,8 +132,12 @@ struct icp_softc {
 	u_int8_t		icp_bus_cnt;
 	u_int8_t		icp_bus_id[ICP_MAXBUS];
 	struct icp_cachedrv	icp_cdr[ICP_MAX_HDRIVES];
+	const struct icp_servicecb *icp_servicecb[ICP_MAX_HDRIVES + ICP_MAXBUS];
+	struct device		*icp_children[ICP_MAX_HDRIVES + ICP_MAXBUS];
 	int			icp_ndevs;
 	int			icp_openings;
+	int			icp_features;
+	int			icp_nchan;
 
 	u_int32_t		icp_info;
 	u_int32_t		icp_info2;
@@ -139,6 +151,8 @@ struct icp_softc {
 	struct icp_ccb		*icp_ccbs;
 	u_int			icp_nccbs;
 	u_int			icp_flags;
+	u_int			icp_qfreeze;
+	u_int			icp_running;
 	SIMPLEQ_HEAD(,icp_ccb)	icp_ccb_freelist;
 	SIMPLEQ_HEAD(,icp_ccb)	icp_ccb_queue;
 	SIMPLEQ_HEAD(,icp_ccb)	icp_ucmd_queue;
@@ -167,8 +181,13 @@ struct icp_softc {
 	int			icp_pci_subdevice_id;
 };
 
+/* icp_features */
+#define	ICP_FEAT_CACHESERVICE	0x01	/* cache service usable */
+#define	ICP_FEAT_RAWSERVICE	0x02	/* raw service usable */
+
 /* icp_flags */
 #define	ICP_F_WAIT_CCB		0x01	/* someone waiting for CCBs */
+#define	ICP_F_WAIT_FREEZE	0x02	/* someone waiting for qfreeze */
 
 #define	ICP_HAS_WORK(icp)						\
 	(! SIMPLEQ_EMPTY(&(icp)->icp_ccb_queue) ||			\
@@ -234,6 +253,14 @@ int	icp_ccb_wait_user(struct icp_softc *, struct icp_ccb *, int);
 int	icp_cmd(struct icp_softc *, u_int8_t, u_int16_t, u_int32_t, u_int32_t,
 		u_int32_t);
 int	icp_ucmd(struct icp_softc *, gdt_ucmd_t *);
+int	icp_freeze(struct icp_softc *);
+void	icp_unfreeze(struct icp_softc *);
+
+void	icp_rescan(struct icp_softc *, int);
+void	icp_rescan_all(struct icp_softc *);
+
+void	icp_register_servicecb(struct icp_softc *, int,
+	    const struct icp_servicecb *);
 
 gdt_evt_str *icp_store_event(struct icp_softc *, u_int16_t, u_int16_t,
 	    gdt_evt_data *);

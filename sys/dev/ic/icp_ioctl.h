@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.h,v 1.1 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icp_ioctl.h,v 1.2 2003/06/13 05:57:30 thorpej Exp $	*/
 
 /*
  *       Copyright (c) 2000-03 Intel Corporation
@@ -170,5 +170,19 @@ typedef struct gdt_statist {
 	u_int16_t	sg_count_max;
 } __attribute__((__packed__)) gdt_statist_t;
 #define	GDT_IOCTL_STATIST	_IOR('J', 9, gdt_statist_t)
+
+/* rescan host drives */
+typedef struct gdt_rescan {
+	u_int16_t	io_node;
+	u_int8_t	flag;
+	u_int16_t	hdr_no;
+	struct {
+		u_int8_t	bus;
+		u_int8_t	target;
+		u_int8_t	lun;
+		u_int8_t	cluster_type;
+	} __attribute__((__packed__)) hdr_list[ICP_MAX_HDRIVES];
+} __attribute__((__packed__)) gdt_rescan_t;
+#define	GDT_IOCTL_RESCAN	_IOWR('J', 11, gdt_rescan_t)
 
 #endif /* _DEV_IC_ICP_IOCTL_H_ */

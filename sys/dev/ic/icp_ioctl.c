@@ -1,4 +1,4 @@
-/*	$NetBSD: icp_ioctl.c,v 1.2 2003/05/18 06:18:25 thorpej Exp $	*/
+/*	$NetBSD: icp_ioctl.c,v 1.3 2003/06/13 05:57:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.2 2003/05/18 06:18:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp_ioctl.c,v 1.3 2003/06/13 05:57:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h> 
@@ -105,6 +105,9 @@ const struct cdevsw icp_cdevsw = {
 
 extern struct cfdriver icp_cd;
 
+static struct lock icp_ioctl_mutex =
+    LOCK_INITIALIZER(PRIBIO|PCATCH, "icplk", 0, 0);
+
 static int
 icpopen(dev_t dev, int flag, int mode, struct proc *p)
 {
@@ -120,7 +123,10 @@ icpopen(dev_t dev, int flag, int mode, struct proc *p)
 static int
 icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
-	int error = 0;
+	int error;
+
+	if ((error = lockmgr(&icp_ioctl_mutex, LK_EXCLUSIVE, NULL)) != 0)
+		return (error);
 
 	switch (cmd) {
 	case GDT_IOCTL_GENERAL:
@@ -129,8 +135,10 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		gdt_ucmd_t *ucmd = (void *) data;
 
 		icp = device_lookup(&icp_cd, ucmd->io_node);
-		if (icp == NULL)
-			return (ENXIO);
+		if (icp == NULL) {
+			error = ENXIO;
+			break;
+		}
 
 		error = icp_ucmd(icp, ucmd);
 		break;
@@ -147,8 +155,10 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		gdt_ctrt_t *p = (void *) data;
 
 		icp = device_lookup(&icp_cd, p->io_node);
-		if (icp == NULL)
-			return (ENXIO);
+		if (icp == NULL) {
+			error = ENXIO;
+			break;
+		}
 
 		/* XXX magic numbers */
 		p->oem_id = 0x8000;
@@ -253,9 +263,34 @@ icpioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 		memcpy(&icp_stats, data, sizeof(gdt_statist_t));
 		break;
 
+
+	case GDT_IOCTL_RESCAN:
+	    {
+		struct icp_softc *icp;
+		gdt_rescan_t *rsc = (void *) data;
+
+		icp = device_lookup(&icp_cd, rsc->io_node);
+		if (icp == NULL) {
+			error = ENXIO;
+			break;
+		}
+
+		error = icp_freeze(icp);
+		if (error)
+			break;
+		if (rsc->flag == 0)
+			icp_rescan_all(icp);
+		else
+			icp_rescan(icp, rsc->hdr_no);
+		icp_unfreeze(icp);
+		break;
+	    }
+
 	default:
-		return (ENOTTY);
+		error = ENOTTY;
 	}
+
+	(void) lockmgr(&icp_ioctl_mutex, LK_RELEASE, NULL);
 
 	return (error);
 }

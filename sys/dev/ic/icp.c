@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.9 2003/05/17 15:34:12 thorpej Exp $	*/
+/*	$NetBSD: icp.c,v 1.10 2003/06/13 05:57:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,11 +76,14 @@
  *
  * Support for the ICP-Vortex management tools added by
  * Jason R. Thorpe of Wasabi Systems, Inc., based on code
- * provided by Achim Leubner <achim.leubner@intel.com>
+ * provided by Achim Leubner <achim.leubner@intel.com>.
+ *
+ * Additional support for dynamic rescan of cacheservice drives by
+ * Jason R. Thorpe of Wasabi Systems, Inc.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.9 2003/05/17 15:34:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.10 2003/06/13 05:57:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +118,7 @@ int	icp_print(void *, const char *);
 int	icp_submatch(struct device *, struct cfdata *, void *);
 void	icp_watchdog(void *);
 void	icp_ucmd_intr(struct icp_ccb *);
+void	icp_recompute_openings(struct icp_softc *);
 
 int	icp_count;	/* total # of controllers, for ioctl interface */
 
@@ -133,11 +137,9 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	struct icp_binfo binfo;
 	struct icp_ccb *ic;
 	u_int16_t cdev_cnt;
-	int i, j, state, feat, nsegs, rv, noscsi, nocache;
+	int i, j, state, feat, nsegs, rv;
 
 	state = 0;
-	noscsi = 0;
-	nocache = 0;
 
 	if (intrstr != NULL)
 		aprint_normal("%s: interrupting at %s\n", icp->icp_dv.dv_xname,
@@ -267,8 +269,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 		    "%s: scatter/gather not supported (raw service)\n",
 		    icp->icp_dv.dv_xname);
 #endif
-		noscsi = 1;
-	}
+	} else
+		icp->icp_features |= ICP_FEAT_RAWSERVICE;
 
 	/*
 	 * Set/get cache service features (scatter/gather).
@@ -285,8 +287,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 		    "%s: scatter/gather not supported (cache service)\n",
 		    icp->icp_dv.dv_xname);
 #endif
-		nocache = 1;
-	}
+	} else
+		icp->icp_features |= ICP_FEAT_CACHESERVICE;
 
 	/*
 	 * Pull some information from the board and dump.
@@ -308,14 +310,15 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	 * Determine the number of devices, and number of openings per
 	 * device.
 	 */
-	if (!nocache) {
+	if (icp->icp_features & ICP_FEAT_CACHESERVICE) {
 		for (j = 0; j < cdev_cnt && j < ICP_MAX_HDRIVES; j++) {
 			if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INFO, j, 0,
 			    0))
 				continue;
 
 			icp->icp_cdr[j].cd_size = icp->icp_info;
-			icp->icp_ndevs++;
+			if (icp->icp_cdr[j].cd_size != 0)
+				icp->icp_ndevs++;
 
 			if (icp_cmd(icp, ICP_CACHESERVICE, ICP_DEVTYPE, j, 0,
 			    0))
@@ -323,21 +326,17 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 		}
 	}
 
-	if (!noscsi)
-		icp->icp_ndevs += binfo.bi_chan_count;
+	if (icp->icp_features & ICP_FEAT_RAWSERVICE) {
+		icp->icp_nchan = binfo.bi_chan_count;
+		icp->icp_ndevs += icp->icp_nchan;
+	}
 
-	if (icp->icp_ndevs != 0)
-		icp->icp_openings =
-		    (icp->icp_nccbs - ICP_NCCB_RESERVE) / icp->icp_ndevs;
-#ifdef ICP_DEBUG
-	aprint_debug("%s: %d openings per device\n", icp->icp_dv.dv_xname,
-	    icp->icp_openings);
-#endif
+	icp_recompute_openings(icp);
 
 	/*
 	 * Attach SCSI channels.
 	 */
-	if (!noscsi) {
+	if (icp->icp_features & ICP_FEAT_RAWSERVICE) {
 		struct icp_ioc_version *iv;
 		struct icp_rawioc *ri;
 		struct icp_getch *gc;
@@ -380,7 +379,8 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 				icp->icp_bus_id[j] = ICP_MAXID_FC;
 
 			icpa.icpa_unit = j + ICPA_UNIT_SCSI;
-			config_found_sm(&icp->icp_dv, &icpa, icp_print,
+			icp->icp_children[icpa.icpa_unit] =
+			    config_found_sm(&icp->icp_dv, &icpa, icp_print,
 			    icp_submatch);
 		}
 	}
@@ -388,13 +388,14 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	/*
 	 * Attach cache devices.
 	 */
-	if (!nocache) {
+	if (icp->icp_features & ICP_FEAT_CACHESERVICE) {
 		for (j = 0; j < cdev_cnt && j < ICP_MAX_HDRIVES; j++) {
 			if (icp->icp_cdr[j].cd_size == 0)
 				continue;
 		
 			icpa.icpa_unit = j;
-			config_found_sm(&icp->icp_dv, &icpa, icp_print,
+			icp->icp_children[icpa.icpa_unit] =
+			    config_found_sm(&icp->icp_dv, &icpa, icp_print,
 			    icp_submatch);
 		}
 	}
@@ -428,6 +429,165 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 	bus_dmamap_destroy(icp->icp_dmat, icp->icp_scr_dmamap);
 
 	return (1);
+}
+
+void
+icp_register_servicecb(struct icp_softc *icp, int unit,
+    const struct icp_servicecb *cb)
+{
+
+	icp->icp_servicecb[unit] = cb;
+}
+
+void
+icp_rescan(struct icp_softc *icp, int unit)
+{
+	struct icp_attach_args icpa;
+	u_int newsize, newtype;
+
+	/*
+	 * NOTE: It is very important that the queue be frozen and not
+	 * commands running when this is called.  The ioctl mutex must
+	 * also be held.
+	 */
+
+	KASSERT(icp->icp_qfreeze != 0);
+	KASSERT(icp->icp_running == 0);
+	KASSERT(unit < ICP_MAX_HDRIVES);
+
+	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INFO, unit, 0, 0)) {
+#ifdef ICP_DEBUG
+		printf("%s: rescan: unit %d ICP_INFO failed -> 0x%04x\n",
+		    icp->icp_dv.dv_xname, unit, icp->icp_status);
+#endif
+		goto gone;
+	}
+	if ((newsize = icp->icp_info) == 0) {
+#ifdef ICP_DEBUG
+		printf("%s: rescan: unit %d has zero size\n",
+		    icp->icp_dv.dv_xname, unit);
+#endif
+ gone:
+		/*
+		 * Host drive is no longer present; detach if a child
+		 * is currently there.
+		 */
+		if (icp->icp_cdr[unit].cd_size != 0)
+			icp->icp_ndevs--;
+		icp->icp_cdr[unit].cd_size = 0;
+		if (icp->icp_children[unit] != NULL) {
+			(void) config_detach(icp->icp_children[unit],
+			    DETACH_FORCE);
+			icp->icp_children[unit] = NULL;
+		}
+		return;
+	}
+
+	if (icp_cmd(icp, ICP_CACHESERVICE, ICP_DEVTYPE, unit, 0, 0))
+		newtype = icp->icp_info;
+	else {
+#ifdef ICP_DEBUG
+		printf("%s: rescan: unit %d ICP_DEVTYPE failed\n",
+		    icp->icp_dv.dv_xname, unit);
+#endif
+		newtype = 0;	/* XXX? */
+	}
+
+#ifdef ICP_DEBUG
+	printf("%s: rescan: unit %d old %u/%u, new %u/%u\n",
+	    icp->icp_dv.dv_xname, unit, icp->icp_cdr[unit].cd_size,
+	    icp->icp_cdr[unit].cd_type, newsize, newtype);
+#endif
+
+	/*
+	 * If the type or size changed, detach any old child (if it exists)
+	 * and attach a new one.
+	 */
+	if (icp->icp_children[unit] == NULL ||
+	    newsize != icp->icp_cdr[unit].cd_size ||
+	    newtype != icp->icp_cdr[unit].cd_type) {
+		if (icp->icp_cdr[unit].cd_size == 0)
+			icp->icp_ndevs++;
+		icp->icp_cdr[unit].cd_size = newsize;
+		icp->icp_cdr[unit].cd_type = newtype;
+		if (icp->icp_children[unit] != NULL)
+			(void) config_detach(icp->icp_children[unit],
+			    DETACH_FORCE);
+
+		icpa.icpa_unit = unit;
+		icp->icp_children[unit] = config_found_sm(&icp->icp_dv, &icpa,
+		    icp_print, icp_submatch);
+	}
+
+	icp_recompute_openings(icp);
+}
+
+void
+icp_rescan_all(struct icp_softc *icp)
+{
+	int unit;
+	u_int16_t cdev_cnt;
+
+	/*
+	 * This is the old method of rescanning the host drives.  We
+	 * start by reinitializing the cache service.
+	 */
+	if (!icp_cmd(icp, ICP_CACHESERVICE, ICP_INIT, ICP_LINUX_OS, 0, 0)) {
+		printf("%s: unable to re-initialize cache service for rescan\n",
+		    icp->icp_dv.dv_xname);
+		return;
+	}
+	cdev_cnt = (u_int16_t) icp->icp_info;
+
+	/* For each host drive, do the new-style rescan. */
+	for (unit = 0; unit < cdev_cnt && unit < ICP_MAX_HDRIVES; unit++)
+		icp_rescan(icp, unit);
+
+	/* Now detach anything in the slots after cdev_cnt. */
+	for (; unit < ICP_MAX_HDRIVES; unit++) {
+		if (icp->icp_cdr[unit].cd_size != 0) {
+#ifdef ICP_DEBUG
+			printf("%s: rescan all: unit %d < new cdev_cnt (%d)\n",
+			    icp->icp_dv.dv_xname, unit, cdev_cnt);
+#endif
+			icp->icp_ndevs--;
+			icp->icp_cdr[unit].cd_size = 0;
+			if (icp->icp_children[unit] != NULL) {
+				(void) config_detach(icp->icp_children[unit],
+				    DETACH_FORCE);
+				icp->icp_children[unit] = NULL;
+			}
+		}
+	}
+
+	icp_recompute_openings(icp);
+}
+
+void
+icp_recompute_openings(struct icp_softc *icp)
+{
+	int unit, openings;
+
+	if (icp->icp_ndevs != 0)
+		openings =
+		    (icp->icp_nccbs - ICP_NCCB_RESERVE) / icp->icp_ndevs;
+	else
+		openings = 0;
+	if (openings == icp->icp_openings)
+		return;
+	icp->icp_openings = openings;
+
+#ifdef ICP_DEBUG
+	printf("%s: %d device%s, %d openings per device\n",
+	    icp->icp_dv.dv_xname, icp->icp_ndevs,
+	    icp->icp_ndevs == 1 ? "" : "s", icp->icp_openings);
+#endif
+
+	for (unit = 0; unit < ICP_MAX_HDRIVES + ICP_MAXBUS; unit++) {
+		if (icp->icp_children[unit] != NULL)
+			(*icp->icp_servicecb[unit]->iscb_openings)(
+			    icp->icp_children[unit], icp->icp_openings);
+	}
 }
 
 void
@@ -562,6 +722,17 @@ icp_intr(void *cookie)
 	if ((ic->ic_flags & IC_ALLOCED) == 0) {
 		/* XXX ICP's "iir" driver just sends an event here. */
 		panic("icp_intr: inactive CCB identified");
+	}
+
+	/*
+	 * Try to protect ourselves from the running command count already
+	 * being 0 (e.g. if a polled command times out).
+	 */
+	KDASSERT(icp->icp_running != 0);
+	if (--icp->icp_running == 0 &&
+	    (icp->icp_flags & ICP_F_WAIT_FREEZE) != 0) {
+		icp->icp_flags &= ~ICP_F_WAIT_FREEZE;
+		wakeup(&icp->icp_qfreeze);
 	}
 
 	switch (icp->icp_status) {
@@ -873,7 +1044,7 @@ icp_ccb_enqueue(struct icp_softc *icp, struct icp_ccb *ic)
 			SIMPLEQ_INSERT_TAIL(&icp->icp_ccb_queue, ic, ic_chain);
 	}
 
-	for (;;) {
+	for (; icp->icp_qfreeze == 0;) {
 		if (__predict_false((ic =
 			    SIMPLEQ_FIRST(&icp->icp_ucmd_queue)) != NULL)) {
 			struct icp_ucmd_ctx *iu = ic->ic_context;
@@ -973,7 +1144,9 @@ icp_ccb_unmap(struct icp_softc *icp, struct icp_ccb *ic)
 int
 icp_ccb_poll(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 {
-	int rv;
+	int s, rv;
+
+	s = splbio();
 
 	for (timo = ICP_BUSY_WAIT_MS * 100; timo != 0; timo--) {
 		if (!(*icp->icp_test_busy)(icp))
@@ -987,11 +1160,22 @@ icp_ccb_poll(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 
 	icp_ccb_submit(icp, ic);
 
-	for (timo *= 10; timo != 0; timo--) {
-		DELAY(100);
-		icp_intr(icp);
-		if ((ic->ic_flags & IC_COMPLETE) != 0)
-			break;
+	if (cold) {
+		for (timo *= 10; timo != 0; timo--) {
+			DELAY(100);
+			icp_intr(icp);
+			if ((ic->ic_flags & IC_COMPLETE) != 0)
+				break;
+		}
+	} else {
+		ic->ic_flags |= IC_WAITING;
+		while ((ic->ic_flags & IC_COMPLETE) == 0) {
+			if ((rv = tsleep(ic, PRIBIO, "icpwccb",
+					 mstohz(timo))) != 0) {
+				timo = 0;
+				break;
+			}
+		}
 	}
 
 	if (timo != 0) {
@@ -1010,6 +1194,8 @@ icp_ccb_poll(struct icp_softc *icp, struct icp_ccb *ic, int timo)
 
 	while ((*icp->icp_test_busy)(icp) != 0)
 		DELAY(10);
+
+	splx(s);
 
 	return (rv);
 }
@@ -1074,8 +1260,45 @@ icp_ccb_submit(struct icp_softc *icp, struct icp_ccb *ic)
 	ic->ic_cmd.cmd_boardnode = htole32(ICP_LOCALBOARD);
 	ic->ic_cmd.cmd_cmdindex = htole32(ic->ic_ident);
 
+	icp->icp_running++;
+
 	(*icp->icp_copy_cmd)(icp, ic);
 	(*icp->icp_release_event)(icp, ic);
+}
+
+int
+icp_freeze(struct icp_softc *icp)
+{
+	int s, error = 0;
+
+	s = splbio();
+	if (icp->icp_qfreeze++ == 0) {
+		while (icp->icp_running != 0) {
+			icp->icp_flags |= ICP_F_WAIT_FREEZE;
+			error = tsleep(&icp->icp_qfreeze, PRIBIO|PCATCH,
+			    "icpqfrz", 0);
+			if (error != 0 && --icp->icp_qfreeze == 0 &&
+			    ICP_HAS_WORK(icp)) {
+				icp_ccb_enqueue(icp, NULL);
+				break;
+			}
+		}
+	}
+	splx(s);
+
+	return (error);
+}
+
+void
+icp_unfreeze(struct icp_softc *icp)
+{
+	int s;
+
+	s = splbio();
+	KDASSERT(icp->icp_qfreeze != 0);
+	if (--icp->icp_qfreeze == 0 && ICP_HAS_WORK(icp))
+		icp_ccb_enqueue(icp, NULL);
+	splx(s);
 }
 
 /* XXX Global - should be per-controller? XXX */

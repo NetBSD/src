@@ -1,4 +1,4 @@
-/*	$NetBSD: icpreg.h,v 1.2 2003/05/13 15:42:34 thorpej Exp $	*/
+/*	$NetBSD: icpreg.h,v 1.3 2003/06/13 05:57:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,8 @@
 #define _IC_ICPREG_H_
 
 #define ICP_MAXBUS		6	/* XXX Why not 5? */
-#define ICP_MAX_HDRIVES		35	/* 5 busses * 7 targets XXX correct? */
+#define ICP_MAX_LDRIVES		255	/* max logical drive count */
+#define ICP_MAX_HDRIVES		100	/* max host drive count */
 #define ICP_MAXID_FC		127	/* Fibre-channel maximum ID */
 #define ICP_MAXOFFSETS		128
 #define ICP_MAXSG		17	/* Max. s/g elements; actually 128 */
