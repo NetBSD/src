@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.14 1999/12/22 04:03:04 itojun Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.15 2000/01/06 15:46:11 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -64,9 +64,7 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
-#ifdef __NetBSD__	/*XXX*/
 #include "opt_ipsec.h"
-#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -76,9 +74,7 @@
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
-#ifdef __NetBSD__
 #include <sys/proc.h>
-#endif
 
 #include <net/if.h>
 #include <net/route.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6protosw.h,v 1.4 1999/12/13 15:17:23 itojun Exp $	*/
+/*	$NetBSD: ip6protosw.h,v 1.5 2000/01/06 15:46:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,9 +81,6 @@ struct socket;
 struct domain;
 struct proc;
 struct ip6_hdr;
-#ifdef __FreeBSD__
-struct pr_usrreqs;
-#endif
 
 /*
  * argument type for the last arg of pr_ctlinput().
@@ -96,11 +93,7 @@ struct ip6ctlparam {
 };
 
 struct ip6protosw {
-#if (defined(__FreeBSD__) && __FreeBSD__ < 3) || defined(__OpenBSD__)
-	short 	pr_type;		/* socket type used for */
-#else
 	int 	pr_type;		/* socket type used for */
-#endif
 	struct	domain *pr_domain;	/* domain protocol a member of */
 	short	pr_protocol;		/* protocol number */
 	short	pr_flags;		/* see below */
@@ -108,27 +101,17 @@ struct ip6protosw {
 /* protocol-protocol hooks */
 	int	(*pr_input)		/* input to protocol (from below) */
 			__P((struct mbuf **, int *, int));
-#ifdef __bsdi__
-	int	(*pr_output)();		/* output to protocol (from above) */
-#else
 	int	(*pr_output)		/* output to protocol (from above) */
 			__P((struct mbuf *, ...));
-#endif
 	void	(*pr_ctlinput)		/* control input (from below) */
 			__P((int, struct sockaddr *, void *));
 	int	(*pr_ctloutput)		/* control output (from above) */
 			__P((int, struct socket *, int, int, struct mbuf **));
 
 /* user-protocol hook */
-#if !(defined(__FreeBSD__) && __FreeBSD__ < 3) && !defined(__bsdi__)
 	int	(*pr_usrreq)		/* user request: see list below */
 			__P((struct socket *, int, struct mbuf *,
 			     struct mbuf *, struct mbuf *, struct proc *));
-#else
-	int	(*pr_usrreq)		/* user request: see list below */
-			__P((struct socket *, int, struct mbuf *,
-			     struct mbuf *, struct mbuf *));
-#endif
 
 /* utility hooks */
 	void	(*pr_init)		/* initialization hook */
@@ -140,12 +123,8 @@ struct ip6protosw {
 			__P((void));
 	void	(*pr_drain)		/* flush any excess space possible */
 			__P((void));
-#ifdef __FreeBSD__
-	struct  pr_usrreqs *pr_usrreqs;	/* supersedes pr_usrreq() */
-#else
 	int	(*pr_sysctl)		/* sysctl for protocol */
 			__P((int *, u_int, void *, size_t *, void *, size_t));
-#endif
 };
 
 #endif /* !_NETINET6_IP6PROTOSW_H_ */
