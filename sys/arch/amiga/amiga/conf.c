@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.65 2002/03/16 16:55:52 martin Exp $	*/
+/*	$NetBSD: conf.c,v 1.66 2002/06/17 06:27:26 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #include "opt_compat_svr4.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.65 2002/03/16 16:55:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.66 2002/06/17 06:27:26 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,9 @@ cdev_decl(isdntrc);
 cdev_decl(isdnbchan);
 cdev_decl(isdntel);
 
+#include "clockctl.h"
+cdev_decl(clockctl);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -192,6 +195,7 @@ struct cdevsw	cdevsw[] =
 			    wsdisplay), /* 53: display */
 
 	cdev_mouse_init(NWSKBD,wskbd),  /* 54: keyboard */
+	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 55: clockctl pseudo device */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
