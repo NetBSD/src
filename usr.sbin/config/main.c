@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.57 2001/07/01 02:46:47 gmcgarry Exp $	*/
+/*	$NetBSD: main.c,v 1.58 2001/10/02 21:31:01 tv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -99,9 +99,7 @@ void	defopt(struct hashtab *ht, const char *fname,
 
 int badfilename(const char *fname);
 
-#ifdef	MAKE_BOOTSTRAP
 const char *progname;
-#endif
 
 int
 main(int argc, char **argv)
