@@ -16,6 +16,5 @@ OFFSET           TYPE              VALUE
 
 Contents of section \.text:
  0+ dd2d0038                             .*
-Contents of section \.data:
 Contents of section \.MMIX\.reg_contents:
  0+ 00000000 aabbccdd 00000000 00112233  .*

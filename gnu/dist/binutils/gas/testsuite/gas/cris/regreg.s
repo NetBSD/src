@@ -7,6 +7,7 @@
 ; is less expensive than any other time and still falling in cost.
 
  .text
+ .syntax no_register_prefix
 start:
  @OC@	r1,r3
  @OC@	r0,r0

@@ -10,124 +10,124 @@ Disassembly of section .text:
 # load_store:
 0*0 <load_store> 0d ?9d ?54 ?3f ? *	cfldrseq	mvf5, ?\[sp, #252\]
 0*4 <load_store\+0x4> 4d ?9b ?e4 ?12 ? *	cfldrsmi	mvf14, ?\[fp, #72\]
-0*8 <load_store\+0x8> 7d ?1c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip, -#240\]
+0*8 <load_store\+0x8> 7d ?1c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip, #-240\]
 0*c <load_store\+0xc> bd ?9a ?04 ?3f ? *	cfldrslt	mvf0, ?\[sl, #252\]
 0*10 <load_store\+0x10> cd ?9b ?a4 ?12 ? *	cfldrsgt	mvf10, ?\[fp, #72\]
-0*14 <load_store\+0x14> dd ?3c ?64 ?3c ? *	cfldrsle	mvf6, ?\[ip, -#240\]!
+0*14 <load_store\+0x14> dd ?3c ?64 ?3c ? *	cfldrsle	mvf6, ?\[ip, #-240\]!
 0*18 <load_store\+0x18> 9d ?ba ?04 ?3f ? *	cfldrsls	mvf0, ?\[sl, #252\]!
 0*1c <load_store\+0x1c> 4d ?bb ?e4 ?12 ? *	cfldrsmi	mvf14, ?\[fp, #72\]!
-0*20 <load_store\+0x20> 7d ?3c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip, -#240\]!
+0*20 <load_store\+0x20> 7d ?3c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip, #-240\]!
 0*24 <load_store\+0x24> bd ?ba ?04 ?3f ? *	cfldrslt	mvf0, ?\[sl, #252\]!
 0*28 <load_store\+0x28> cc ?bb ?a4 ?12 ? *	cfldrsgt	mvf10, ?\[fp\], #72
-0*2c <load_store\+0x2c> dc ?3c ?64 ?3c ? *	cfldrsle	mvf6, ?\[ip\], -#240
+0*2c <load_store\+0x2c> dc ?3c ?64 ?3c ? *	cfldrsle	mvf6, ?\[ip\], #-240
 0*30 <load_store\+0x30> 9c ?ba ?04 ?3f ? *	cfldrsls	mvf0, ?\[sl\], #252
 0*34 <load_store\+0x34> 4c ?bb ?e4 ?12 ? *	cfldrsmi	mvf14, ?\[fp\], #72
-0*38 <load_store\+0x38> 7c ?3c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip\], -#240
+0*38 <load_store\+0x38> 7c ?3c ?24 ?3c ? *	cfldrsvc	mvf2, ?\[ip\], #-240
 0*3c <load_store\+0x3c> bd ?da ?04 ?3f ? *	cfldrdlt	mvd0, ?\[sl, #252\]
 0*40 <load_store\+0x40> cd ?db ?a4 ?12 ? *	cfldrdgt	mvd10, ?\[fp, #72\]
-0*44 <load_store\+0x44> dd ?5c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip, -#240\]
+0*44 <load_store\+0x44> dd ?5c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip, #-240\]
 0*48 <load_store\+0x48> 9d ?da ?04 ?3f ? *	cfldrdls	mvd0, ?\[sl, #252\]
 0*4c <load_store\+0x4c> 4d ?db ?e4 ?12 ? *	cfldrdmi	mvd14, ?\[fp, #72\]
-0*50 <load_store\+0x50> 7d ?7c ?24 ?3c ? *	cfldrdvc	mvd2, ?\[ip, -#240\]!
+0*50 <load_store\+0x50> 7d ?7c ?24 ?3c ? *	cfldrdvc	mvd2, ?\[ip, #-240\]!
 0*54 <load_store\+0x54> bd ?fa ?04 ?3f ? *	cfldrdlt	mvd0, ?\[sl, #252\]!
 0*58 <load_store\+0x58> cd ?fb ?a4 ?12 ? *	cfldrdgt	mvd10, ?\[fp, #72\]!
-0*5c <load_store\+0x5c> dd ?7c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip, -#240\]!
+0*5c <load_store\+0x5c> dd ?7c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip, #-240\]!
 0*60 <load_store\+0x60> 9d ?fa ?04 ?3f ? *	cfldrdls	mvd0, ?\[sl, #252\]!
 0*64 <load_store\+0x64> 4c ?fb ?e4 ?12 ? *	cfldrdmi	mvd14, ?\[fp\], #72
-0*68 <load_store\+0x68> 7c ?7c ?24 ?3c ? *	cfldrdvc	mvd2, ?\[ip\], -#240
+0*68 <load_store\+0x68> 7c ?7c ?24 ?3c ? *	cfldrdvc	mvd2, ?\[ip\], #-240
 0*6c <load_store\+0x6c> bc ?fa ?04 ?3f ? *	cfldrdlt	mvd0, ?\[sl\], #252
 0*70 <load_store\+0x70> cc ?fb ?a4 ?12 ? *	cfldrdgt	mvd10, ?\[fp\], #72
-0*74 <load_store\+0x74> dc ?7c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip\], -#240
+0*74 <load_store\+0x74> dc ?7c ?64 ?3c ? *	cfldrdle	mvd6, ?\[ip\], #-240
 0*78 <load_store\+0x78> 9d ?9a ?05 ?3f ? *	cfldr32ls	mvfx0, ?\[sl, #252\]
 0*7c <load_store\+0x7c> 4d ?9b ?e5 ?12 ? *	cfldr32mi	mvfx14, ?\[fp, #72\]
-0*80 <load_store\+0x80> 7d ?1c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip, -#240\]
+0*80 <load_store\+0x80> 7d ?1c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip, #-240\]
 0*84 <load_store\+0x84> bd ?9a ?05 ?3f ? *	cfldr32lt	mvfx0, ?\[sl, #252\]
 0*88 <load_store\+0x88> cd ?9b ?a5 ?12 ? *	cfldr32gt	mvfx10, ?\[fp, #72\]
-0*8c <load_store\+0x8c> dd ?3c ?65 ?3c ? *	cfldr32le	mvfx6, ?\[ip, -#240\]!
+0*8c <load_store\+0x8c> dd ?3c ?65 ?3c ? *	cfldr32le	mvfx6, ?\[ip, #-240\]!
 0*90 <load_store\+0x90> 9d ?ba ?05 ?3f ? *	cfldr32ls	mvfx0, ?\[sl, #252\]!
 0*94 <load_store\+0x94> 4d ?bb ?e5 ?12 ? *	cfldr32mi	mvfx14, ?\[fp, #72\]!
-0*98 <load_store\+0x98> 7d ?3c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip, -#240\]!
+0*98 <load_store\+0x98> 7d ?3c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip, #-240\]!
 0*9c <load_store\+0x9c> bd ?ba ?05 ?3f ? *	cfldr32lt	mvfx0, ?\[sl, #252\]!
 0*a0 <load_store\+0xa0> cc ?bb ?a5 ?12 ? *	cfldr32gt	mvfx10, ?\[fp\], #72
-0*a4 <load_store\+0xa4> dc ?3c ?65 ?3c ? *	cfldr32le	mvfx6, ?\[ip\], -#240
+0*a4 <load_store\+0xa4> dc ?3c ?65 ?3c ? *	cfldr32le	mvfx6, ?\[ip\], #-240
 0*a8 <load_store\+0xa8> 9c ?ba ?05 ?3f ? *	cfldr32ls	mvfx0, ?\[sl\], #252
 0*ac <load_store\+0xac> 4c ?bb ?e5 ?12 ? *	cfldr32mi	mvfx14, ?\[fp\], #72
-0*b0 <load_store\+0xb0> 7c ?3c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip\], -#240
+0*b0 <load_store\+0xb0> 7c ?3c ?25 ?3c ? *	cfldr32vc	mvfx2, ?\[ip\], #-240
 0*b4 <load_store\+0xb4> bd ?da ?05 ?3f ? *	cfldr64lt	mvdx0, ?\[sl, #252\]
 0*b8 <load_store\+0xb8> cd ?db ?a5 ?12 ? *	cfldr64gt	mvdx10, ?\[fp, #72\]
-0*bc <load_store\+0xbc> dd ?5c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip, -#240\]
+0*bc <load_store\+0xbc> dd ?5c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip, #-240\]
 0*c0 <load_store\+0xc0> 9d ?da ?05 ?3f ? *	cfldr64ls	mvdx0, ?\[sl, #252\]
 0*c4 <load_store\+0xc4> 4d ?db ?e5 ?12 ? *	cfldr64mi	mvdx14, ?\[fp, #72\]
-0*c8 <load_store\+0xc8> 7d ?7c ?25 ?3c ? *	cfldr64vc	mvdx2, ?\[ip, -#240\]!
+0*c8 <load_store\+0xc8> 7d ?7c ?25 ?3c ? *	cfldr64vc	mvdx2, ?\[ip, #-240\]!
 0*cc <load_store\+0xcc> bd ?fa ?05 ?3f ? *	cfldr64lt	mvdx0, ?\[sl, #252\]!
 0*d0 <load_store\+0xd0> cd ?fb ?a5 ?12 ? *	cfldr64gt	mvdx10, ?\[fp, #72\]!
-0*d4 <load_store\+0xd4> dd ?7c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip, -#240\]!
+0*d4 <load_store\+0xd4> dd ?7c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip, #-240\]!
 0*d8 <load_store\+0xd8> 9d ?fa ?05 ?3f ? *	cfldr64ls	mvdx0, ?\[sl, #252\]!
 0*dc <load_store\+0xdc> 4c ?fb ?e5 ?12 ? *	cfldr64mi	mvdx14, ?\[fp\], #72
-0*e0 <load_store\+0xe0> 7c ?7c ?25 ?3c ? *	cfldr64vc	mvdx2, ?\[ip\], -#240
+0*e0 <load_store\+0xe0> 7c ?7c ?25 ?3c ? *	cfldr64vc	mvdx2, ?\[ip\], #-240
 0*e4 <load_store\+0xe4> bc ?fa ?05 ?3f ? *	cfldr64lt	mvdx0, ?\[sl\], #252
 0*e8 <load_store\+0xe8> cc ?fb ?a5 ?12 ? *	cfldr64gt	mvdx10, ?\[fp\], #72
-0*ec <load_store\+0xec> dc ?7c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip\], -#240
+0*ec <load_store\+0xec> dc ?7c ?65 ?3c ? *	cfldr64le	mvdx6, ?\[ip\], #-240
 0*f0 <load_store\+0xf0> 9d ?8a ?04 ?3f ? *	cfstrsls	mvf0, ?\[sl, #252\]
 0*f4 <load_store\+0xf4> 4d ?8b ?e4 ?12 ? *	cfstrsmi	mvf14, ?\[fp, #72\]
-0*f8 <load_store\+0xf8> 7d ?0c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip, -#240\]
+0*f8 <load_store\+0xf8> 7d ?0c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip, #-240\]
 0*fc <load_store\+0xfc> bd ?8a ?04 ?3f ? *	cfstrslt	mvf0, ?\[sl, #252\]
 0*100 <load_store\+0x100> cd ?8b ?a4 ?12 ? *	cfstrsgt	mvf10, ?\[fp, #72\]
-0*104 <load_store\+0x104> dd ?2c ?64 ?3c ? *	cfstrsle	mvf6, ?\[ip, -#240\]!
+0*104 <load_store\+0x104> dd ?2c ?64 ?3c ? *	cfstrsle	mvf6, ?\[ip, #-240\]!
 0*108 <load_store\+0x108> 9d ?aa ?04 ?3f ? *	cfstrsls	mvf0, ?\[sl, #252\]!
 0*10c <load_store\+0x10c> 4d ?ab ?e4 ?12 ? *	cfstrsmi	mvf14, ?\[fp, #72\]!
-0*110 <load_store\+0x110> 7d ?2c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip, -#240\]!
+0*110 <load_store\+0x110> 7d ?2c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip, #-240\]!
 0*114 <load_store\+0x114> bd ?aa ?04 ?3f ? *	cfstrslt	mvf0, ?\[sl, #252\]!
 0*118 <load_store\+0x118> cc ?ab ?a4 ?12 ? *	cfstrsgt	mvf10, ?\[fp\], #72
-0*11c <load_store\+0x11c> dc ?2c ?64 ?3c ? *	cfstrsle	mvf6, ?\[ip\], -#240
+0*11c <load_store\+0x11c> dc ?2c ?64 ?3c ? *	cfstrsle	mvf6, ?\[ip\], #-240
 0*120 <load_store\+0x120> 9c ?aa ?04 ?3f ? *	cfstrsls	mvf0, ?\[sl\], #252
 0*124 <load_store\+0x124> 4c ?ab ?e4 ?12 ? *	cfstrsmi	mvf14, ?\[fp\], #72
-0*128 <load_store\+0x128> 7c ?2c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip\], -#240
+0*128 <load_store\+0x128> 7c ?2c ?24 ?3c ? *	cfstrsvc	mvf2, ?\[ip\], #-240
 0*12c <load_store\+0x12c> bd ?ca ?04 ?3f ? *	cfstrdlt	mvd0, ?\[sl, #252\]
 0*130 <load_store\+0x130> cd ?cb ?a4 ?12 ? *	cfstrdgt	mvd10, ?\[fp, #72\]
-0*134 <load_store\+0x134> dd ?4c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip, -#240\]
+0*134 <load_store\+0x134> dd ?4c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip, #-240\]
 0*138 <load_store\+0x138> 9d ?ca ?04 ?3f ? *	cfstrdls	mvd0, ?\[sl, #252\]
 0*13c <load_store\+0x13c> 4d ?cb ?e4 ?12 ? *	cfstrdmi	mvd14, ?\[fp, #72\]
-0*140 <load_store\+0x140> 7d ?6c ?24 ?3c ? *	cfstrdvc	mvd2, ?\[ip, -#240\]!
+0*140 <load_store\+0x140> 7d ?6c ?24 ?3c ? *	cfstrdvc	mvd2, ?\[ip, #-240\]!
 0*144 <load_store\+0x144> bd ?ea ?04 ?3f ? *	cfstrdlt	mvd0, ?\[sl, #252\]!
 0*148 <load_store\+0x148> cd ?eb ?a4 ?12 ? *	cfstrdgt	mvd10, ?\[fp, #72\]!
-0*14c <load_store\+0x14c> dd ?6c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip, -#240\]!
+0*14c <load_store\+0x14c> dd ?6c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip, #-240\]!
 0*150 <load_store\+0x150> 9d ?ea ?04 ?3f ? *	cfstrdls	mvd0, ?\[sl, #252\]!
 0*154 <load_store\+0x154> 4c ?eb ?e4 ?12 ? *	cfstrdmi	mvd14, ?\[fp\], #72
-0*158 <load_store\+0x158> 7c ?6c ?24 ?3c ? *	cfstrdvc	mvd2, ?\[ip\], -#240
+0*158 <load_store\+0x158> 7c ?6c ?24 ?3c ? *	cfstrdvc	mvd2, ?\[ip\], #-240
 0*15c <load_store\+0x15c> bc ?ea ?04 ?3f ? *	cfstrdlt	mvd0, ?\[sl\], #252
 0*160 <load_store\+0x160> cc ?eb ?a4 ?12 ? *	cfstrdgt	mvd10, ?\[fp\], #72
-0*164 <load_store\+0x164> dc ?6c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip\], -#240
+0*164 <load_store\+0x164> dc ?6c ?64 ?3c ? *	cfstrdle	mvd6, ?\[ip\], #-240
 0*168 <load_store\+0x168> 9d ?8a ?05 ?3f ? *	cfstr32ls	mvfx0, ?\[sl, #252\]
 0*16c <load_store\+0x16c> 4d ?8b ?e5 ?12 ? *	cfstr32mi	mvfx14, ?\[fp, #72\]
-0*170 <load_store\+0x170> 7d ?0c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip, -#240\]
+0*170 <load_store\+0x170> 7d ?0c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip, #-240\]
 0*174 <load_store\+0x174> bd ?8a ?05 ?3f ? *	cfstr32lt	mvfx0, ?\[sl, #252\]
 0*178 <load_store\+0x178> cd ?8b ?a5 ?12 ? *	cfstr32gt	mvfx10, ?\[fp, #72\]
-0*17c <load_store\+0x17c> dd ?2c ?65 ?3c ? *	cfstr32le	mvfx6, ?\[ip, -#240\]!
+0*17c <load_store\+0x17c> dd ?2c ?65 ?3c ? *	cfstr32le	mvfx6, ?\[ip, #-240\]!
 0*180 <load_store\+0x180> 9d ?aa ?05 ?3f ? *	cfstr32ls	mvfx0, ?\[sl, #252\]!
 0*184 <load_store\+0x184> 4d ?ab ?e5 ?12 ? *	cfstr32mi	mvfx14, ?\[fp, #72\]!
-0*188 <load_store\+0x188> 7d ?2c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip, -#240\]!
+0*188 <load_store\+0x188> 7d ?2c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip, #-240\]!
 0*18c <load_store\+0x18c> bd ?aa ?05 ?3f ? *	cfstr32lt	mvfx0, ?\[sl, #252\]!
 0*190 <load_store\+0x190> cc ?ab ?a5 ?12 ? *	cfstr32gt	mvfx10, ?\[fp\], #72
-0*194 <load_store\+0x194> dc ?2c ?65 ?3c ? *	cfstr32le	mvfx6, ?\[ip\], -#240
+0*194 <load_store\+0x194> dc ?2c ?65 ?3c ? *	cfstr32le	mvfx6, ?\[ip\], #-240
 0*198 <load_store\+0x198> 9c ?aa ?05 ?3f ? *	cfstr32ls	mvfx0, ?\[sl\], #252
 0*19c <load_store\+0x19c> 4c ?ab ?e5 ?12 ? *	cfstr32mi	mvfx14, ?\[fp\], #72
-0*1a0 <load_store\+0x1a0> 7c ?2c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip\], -#240
+0*1a0 <load_store\+0x1a0> 7c ?2c ?25 ?3c ? *	cfstr32vc	mvfx2, ?\[ip\], #-240
 0*1a4 <load_store\+0x1a4> bd ?ca ?05 ?3f ? *	cfstr64lt	mvdx0, ?\[sl, #252\]
 0*1a8 <load_store\+0x1a8> cd ?cb ?a5 ?12 ? *	cfstr64gt	mvdx10, ?\[fp, #72\]
-0*1ac <load_store\+0x1ac> dd ?4c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip, -#240\]
+0*1ac <load_store\+0x1ac> dd ?4c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip, #-240\]
 0*1b0 <load_store\+0x1b0> 9d ?ca ?05 ?3f ? *	cfstr64ls	mvdx0, ?\[sl, #252\]
 0*1b4 <load_store\+0x1b4> 4d ?cb ?e5 ?12 ? *	cfstr64mi	mvdx14, ?\[fp, #72\]
-0*1b8 <load_store\+0x1b8> 7d ?6c ?25 ?3c ? *	cfstr64vc	mvdx2, ?\[ip, -#240\]!
+0*1b8 <load_store\+0x1b8> 7d ?6c ?25 ?3c ? *	cfstr64vc	mvdx2, ?\[ip, #-240\]!
 0*1bc <load_store\+0x1bc> bd ?ea ?05 ?3f ? *	cfstr64lt	mvdx0, ?\[sl, #252\]!
 0*1c0 <load_store\+0x1c0> cd ?eb ?a5 ?12 ? *	cfstr64gt	mvdx10, ?\[fp, #72\]!
-0*1c4 <load_store\+0x1c4> dd ?6c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip, -#240\]!
+0*1c4 <load_store\+0x1c4> dd ?6c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip, #-240\]!
 0*1c8 <load_store\+0x1c8> 9d ?ea ?05 ?3f ? *	cfstr64ls	mvdx0, ?\[sl, #252\]!
 0*1cc <load_store\+0x1cc> 4c ?eb ?e5 ?12 ? *	cfstr64mi	mvdx14, ?\[fp\], #72
-0*1d0 <load_store\+0x1d0> 7c ?6c ?25 ?3c ? *	cfstr64vc	mvdx2, ?\[ip\], -#240
+0*1d0 <load_store\+0x1d0> 7c ?6c ?25 ?3c ? *	cfstr64vc	mvdx2, ?\[ip\], #-240
 0*1d4 <load_store\+0x1d4> bc ?ea ?05 ?3f ? *	cfstr64lt	mvdx0, ?\[sl\], #252
 0*1d8 <load_store\+0x1d8> cc ?eb ?a5 ?12 ? *	cfstr64gt	mvdx10, ?\[fp\], #72
-0*1dc <load_store\+0x1dc> dc ?6c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip\], -#240
+0*1dc <load_store\+0x1dc> dc ?6c ?65 ?3c ? *	cfstr64le	mvdx6, ?\[ip\], #-240
 # move:
 0*1e0 <move> 9e ?00 ?a4 ?50 ? *	cfmvsrls	mvf0, ?sl
 0*1e4 <move\+0x4> ee ?0a ?44 ?50 ? *	cfmvsr	mvf10, ?r4
@@ -179,66 +179,66 @@ Disassembly of section .text:
 0*29c <move\+0xbc> 1e ?16 ?65 ?30 ? *	cfmvr64hne	r6, ?mvdx6
 0*2a0 <move\+0xc0> be ?17 ?05 ?30 ? *	cfmvr64hlt	r0, ?mvdx7
 0*2a4 <move\+0xc4> 5e ?13 ?75 ?30 ? *	cfmvr64hpl	r7, ?mvdx3
-0*2a8 <move\+0xc8> ce ?11 ?06 ?11 ? *	cfmval32gt	mvax1, ?mvfx1
-0*2ac <move\+0xcc> 8e ?1d ?06 ?13 ? *	cfmval32hi	mvax3, ?mvfx13
-0*2b0 <move\+0xd0> 6e ?14 ?06 ?13 ? *	cfmval32vs	mvax3, ?mvfx4
-0*2b4 <move\+0xd4> 2e ?10 ?06 ?11 ? *	cfmval32cs	mvax1, ?mvfx0
-0*2b8 <move\+0xd8> 5e ?1a ?06 ?13 ? *	cfmval32pl	mvax3, ?mvfx10
-0*2bc <move\+0xdc> 9e ?01 ?06 ?14 ? *	cfmv32alls	mvfx4, ?mvax1
-0*2c0 <move\+0xe0> 3e ?03 ?06 ?18 ? *	cfmv32alcc	mvfx8, ?mvax3
-0*2c4 <move\+0xe4> 7e ?03 ?06 ?12 ? *	cfmv32alvc	mvfx2, ?mvax3
-0*2c8 <move\+0xe8> ce ?01 ?06 ?16 ? *	cfmv32algt	mvfx6, ?mvax1
-0*2cc <move\+0xec> 0e ?03 ?06 ?17 ? *	cfmv32aleq	mvfx7, ?mvax3
-0*2d0 <move\+0xf0> ee ?1c ?06 ?32 ? *	cfmvam32	mvax2, ?mvfx12
-0*2d4 <move\+0xf4> ae ?18 ?06 ?33 ? *	cfmvam32ge	mvax3, ?mvfx8
-0*2d8 <move\+0xf8> ee ?16 ?06 ?32 ? *	cfmvam32	mvax2, ?mvfx6
-0*2dc <move\+0xfc> be ?12 ?06 ?32 ? *	cfmvam32lt	mvax2, ?mvfx2
-0*2e0 <move\+0x100> 9e ?15 ?06 ?30 ? *	cfmvam32ls	mvax0, ?mvfx5
-0*2e4 <move\+0x104> ee ?02 ?06 ?3a ? *	cfmv32am	mvfx10, ?mvax2
-0*2e8 <move\+0x108> 4e ?03 ?06 ?3e ? *	cfmv32ammi	mvfx14, ?mvax3
-0*2ec <move\+0x10c> 8e ?02 ?06 ?3d ? *	cfmv32amhi	mvfx13, ?mvax2
-0*2f0 <move\+0x110> 2e ?02 ?06 ?31 ? *	cfmv32amcs	mvfx1, ?mvax2
-0*2f4 <move\+0x114> 6e ?00 ?06 ?3b ? *	cfmv32amvs	mvfx11, ?mvax0
-0*2f8 <move\+0x118> 7e ?1e ?06 ?53 ? *	cfmvah32vc	mvax3, ?mvfx14
-0*2fc <move\+0x11c> 3e ?1a ?06 ?50 ? *	cfmvah32cc	mvax0, ?mvfx10
-0*300 <move\+0x120> 1e ?1f ?06 ?51 ? *	cfmvah32ne	mvax1, ?mvfx15
-0*304 <move\+0x124> de ?1b ?06 ?50 ? *	cfmvah32le	mvax0, ?mvfx11
-0*308 <move\+0x128> 4e ?19 ?06 ?50 ? *	cfmvah32mi	mvax0, ?mvfx9
-0*30c <move\+0x12c> 0e ?03 ?06 ?55 ? *	cfmv32aheq	mvfx5, ?mvax3
-0*310 <move\+0x130> ae ?00 ?06 ?59 ? *	cfmv32ahge	mvfx9, ?mvax0
-0*314 <move\+0x134> ee ?01 ?06 ?53 ? *	cfmv32ah	mvfx3, ?mvax1
-0*318 <move\+0x138> de ?00 ?06 ?57 ? *	cfmv32ahle	mvfx7, ?mvax0
-0*31c <move\+0x13c> 1e ?00 ?06 ?5c ? *	cfmv32ahne	mvfx12, ?mvax0
-0*320 <move\+0x140> be ?17 ?06 ?70 ? *	cfmva32lt	mvax0, ?mvfx7
-0*324 <move\+0x144> 5e ?13 ?06 ?72 ? *	cfmva32pl	mvax2, ?mvfx3
-0*328 <move\+0x148> ce ?11 ?06 ?71 ? *	cfmva32gt	mvax1, ?mvfx1
-0*32c <move\+0x14c> 8e ?1d ?06 ?73 ? *	cfmva32hi	mvax3, ?mvfx13
-0*330 <move\+0x150> 6e ?14 ?06 ?73 ? *	cfmva32vs	mvax3, ?mvfx4
-0*334 <move\+0x154> 2e ?00 ?06 ?79 ? *	cfmv32acs	mvfx9, ?mvax0
-0*338 <move\+0x158> 5e ?02 ?06 ?7f ? *	cfmv32apl	mvfx15, ?mvax2
-0*33c <move\+0x15c> 9e ?01 ?06 ?74 ? *	cfmv32als	mvfx4, ?mvax1
-0*340 <move\+0x160> 3e ?03 ?06 ?78 ? *	cfmv32acc	mvfx8, ?mvax3
-0*344 <move\+0x164> 7e ?03 ?06 ?72 ? *	cfmv32avc	mvfx2, ?mvax3
-0*348 <move\+0x168> ce ?1b ?06 ?90 ? *	cfmva64gt	mvax0, ?mvdx11
-0*34c <move\+0x16c> 0e ?15 ?06 ?91 ? *	cfmva64eq	mvax1, ?mvdx5
-0*350 <move\+0x170> ee ?1c ?06 ?92 ? *	cfmva64	mvax2, ?mvdx12
-0*354 <move\+0x174> ae ?18 ?06 ?93 ? *	cfmva64ge	mvax3, ?mvdx8
-0*358 <move\+0x178> ee ?16 ?06 ?92 ? *	cfmva64	mvax2, ?mvdx6
-0*35c <move\+0x17c> be ?00 ?06 ?94 ? *	cfmv64alt	mvdx4, ?mvax0
-0*360 <move\+0x180> 9e ?01 ?06 ?90 ? *	cfmv64als	mvdx0, ?mvax1
-0*364 <move\+0x184> ee ?02 ?06 ?9a ? *	cfmv64a	mvdx10, ?mvax2
-0*368 <move\+0x188> 4e ?03 ?06 ?9e ? *	cfmv64ami	mvdx14, ?mvax3
-0*36c <move\+0x18c> 8e ?02 ?06 ?9d ? *	cfmv64ahi	mvdx13, ?mvax2
-0*370 <move\+0x190> 2e ?1c ?06 ?b0 ? *	cfmvsc32cs	dspsc, ?mvfx12
-0*374 <move\+0x194> 6e ?10 ?06 ?b0 ? *	cfmvsc32vs	dspsc, ?mvfx0
-0*378 <move\+0x198> 7e ?1e ?06 ?b0 ? *	cfmvsc32vc	dspsc, ?mvfx14
-0*37c <move\+0x19c> 3e ?1a ?06 ?b0 ? *	cfmvsc32cc	dspsc, ?mvfx10
-0*380 <move\+0x1a0> 1e ?1f ?06 ?b0 ? *	cfmvsc32ne	dspsc, ?mvfx15
-0*384 <move\+0x1a4> de ?00 ?06 ?b6 ? *	cfmv32scle	mvfx6, ?dspsc
-0*388 <move\+0x1a8> 4e ?00 ?06 ?b2 ? *	cfmv32scmi	mvfx2, ?dspsc
-0*38c <move\+0x1ac> 0e ?00 ?06 ?b5 ? *	cfmv32sceq	mvfx5, ?dspsc
-0*390 <move\+0x1b0> ae ?00 ?06 ?b9 ? *	cfmv32scge	mvfx9, ?dspsc
-0*394 <move\+0x1b4> ee ?00 ?06 ?b3 ? *	cfmv32sc	mvfx3, ?dspsc
+0*2a8 <move\+0xc8> ce ?21 ?14 ?40 ? *	cfmval32gt	mvax1, ?mvfx1
+0*2ac <move\+0xcc> 8e ?2d ?34 ?40 ? *	cfmval32hi	mvax3, ?mvfx13
+0*2b0 <move\+0xd0> 6e ?24 ?34 ?40 ? *	cfmval32vs	mvax3, ?mvfx4
+0*2b4 <move\+0xd4> 2e ?20 ?14 ?40 ? *	cfmval32cs	mvax1, ?mvfx0
+0*2b8 <move\+0xd8> 5e ?2a ?34 ?40 ? *	cfmval32pl	mvax3, ?mvfx10
+0*2bc <move\+0xdc> 9e ?11 ?44 ?40 ? *	cfmv32alls	mvfx4, ?mvax1
+0*2c0 <move\+0xe0> 3e ?13 ?84 ?40 ? *	cfmv32alcc	mvfx8, ?mvax3
+0*2c4 <move\+0xe4> 7e ?13 ?24 ?40 ? *	cfmv32alvc	mvfx2, ?mvax3
+0*2c8 <move\+0xe8> ce ?11 ?64 ?40 ? *	cfmv32algt	mvfx6, ?mvax1
+0*2cc <move\+0xec> 0e ?13 ?74 ?40 ? *	cfmv32aleq	mvfx7, ?mvax3
+0*2d0 <move\+0xf0> ee ?2c ?24 ?60 ? *	cfmvam32	mvax2, ?mvfx12
+0*2d4 <move\+0xf4> ae ?28 ?34 ?60 ? *	cfmvam32ge	mvax3, ?mvfx8
+0*2d8 <move\+0xf8> ee ?26 ?24 ?60 ? *	cfmvam32	mvax2, ?mvfx6
+0*2dc <move\+0xfc> be ?22 ?24 ?60 ? *	cfmvam32lt	mvax2, ?mvfx2
+0*2e0 <move\+0x100> 9e ?25 ?04 ?60 ? *	cfmvam32ls	mvax0, ?mvfx5
+0*2e4 <move\+0x104> ee ?12 ?a4 ?60 ? *	cfmv32am	mvfx10, ?mvax2
+0*2e8 <move\+0x108> 4e ?13 ?e4 ?60 ? *	cfmv32ammi	mvfx14, ?mvax3
+0*2ec <move\+0x10c> 8e ?12 ?d4 ?60 ? *	cfmv32amhi	mvfx13, ?mvax2
+0*2f0 <move\+0x110> 2e ?12 ?14 ?60 ? *	cfmv32amcs	mvfx1, ?mvax2
+0*2f4 <move\+0x114> 6e ?10 ?b4 ?60 ? *	cfmv32amvs	mvfx11, ?mvax0
+0*2f8 <move\+0x118> 7e ?2e ?34 ?80 ? *	cfmvah32vc	mvax3, ?mvfx14
+0*2fc <move\+0x11c> 3e ?2a ?04 ?80 ? *	cfmvah32cc	mvax0, ?mvfx10
+0*300 <move\+0x120> 1e ?2f ?14 ?80 ? *	cfmvah32ne	mvax1, ?mvfx15
+0*304 <move\+0x124> de ?2b ?04 ?80 ? *	cfmvah32le	mvax0, ?mvfx11
+0*308 <move\+0x128> 4e ?29 ?04 ?80 ? *	cfmvah32mi	mvax0, ?mvfx9
+0*30c <move\+0x12c> 0e ?13 ?54 ?80 ? *	cfmv32aheq	mvfx5, ?mvax3
+0*310 <move\+0x130> ae ?10 ?94 ?80 ? *	cfmv32ahge	mvfx9, ?mvax0
+0*314 <move\+0x134> ee ?11 ?34 ?80 ? *	cfmv32ah	mvfx3, ?mvax1
+0*318 <move\+0x138> de ?10 ?74 ?80 ? *	cfmv32ahle	mvfx7, ?mvax0
+0*31c <move\+0x13c> 1e ?10 ?c4 ?80 ? *	cfmv32ahne	mvfx12, ?mvax0
+0*320 <move\+0x140> be ?27 ?04 ?a0 ? *	cfmva32lt	mvax0, ?mvfx7
+0*324 <move\+0x144> 5e ?23 ?24 ?a0 ? *	cfmva32pl	mvax2, ?mvfx3
+0*328 <move\+0x148> ce ?21 ?14 ?a0 ? *	cfmva32gt	mvax1, ?mvfx1
+0*32c <move\+0x14c> 8e ?2d ?34 ?a0 ? *	cfmva32hi	mvax3, ?mvfx13
+0*330 <move\+0x150> 6e ?24 ?34 ?a0 ? *	cfmva32vs	mvax3, ?mvfx4
+0*334 <move\+0x154> 2e ?10 ?94 ?a0 ? *	cfmv32acs	mvfx9, ?mvax0
+0*338 <move\+0x158> 5e ?12 ?f4 ?a0 ? *	cfmv32apl	mvfx15, ?mvax2
+0*33c <move\+0x15c> 9e ?11 ?44 ?a0 ? *	cfmv32als	mvfx4, ?mvax1
+0*340 <move\+0x160> 3e ?13 ?84 ?a0 ? *	cfmv32acc	mvfx8, ?mvax3
+0*344 <move\+0x164> 7e ?13 ?24 ?a0 ? *	cfmv32avc	mvfx2, ?mvax3
+0*348 <move\+0x168> ce ?2b ?04 ?c0 ? *	cfmva64gt	mvax0, ?mvdx11
+0*34c <move\+0x16c> 0e ?25 ?14 ?c0 ? *	cfmva64eq	mvax1, ?mvdx5
+0*350 <move\+0x170> ee ?2c ?24 ?c0 ? *	cfmva64	mvax2, ?mvdx12
+0*354 <move\+0x174> ae ?28 ?34 ?c0 ? *	cfmva64ge	mvax3, ?mvdx8
+0*358 <move\+0x178> ee ?26 ?24 ?c0 ? *	cfmva64	mvax2, ?mvdx6
+0*35c <move\+0x17c> be ?10 ?44 ?c0 ? *	cfmv64alt	mvdx4, ?mvax0
+0*360 <move\+0x180> 9e ?11 ?04 ?c0 ? *	cfmv64als	mvdx0, ?mvax1
+0*364 <move\+0x184> ee ?12 ?a4 ?c0 ? *	cfmv64a	mvdx10, ?mvax2
+0*368 <move\+0x188> 4e ?13 ?e4 ?c0 ? *	cfmv64ami	mvdx14, ?mvax3
+0*36c <move\+0x18c> 8e ?12 ?d4 ?c0 ? *	cfmv64ahi	mvdx13, ?mvax2
+0*370 <move\+0x190> 2e ?20 ?c4 ?e0 ? *	cfmvsc32cs	dspsc, ?mvdx12
+0*374 <move\+0x194> 6e ?20 ?04 ?e0 ? *	cfmvsc32vs	dspsc, ?mvdx0
+0*378 <move\+0x198> 7e ?20 ?e4 ?e0 ? *	cfmvsc32vc	dspsc, ?mvdx14
+0*37c <move\+0x19c> 3e ?20 ?a4 ?e0 ? *	cfmvsc32cc	dspsc, ?mvdx10
+0*380 <move\+0x1a0> 1e ?20 ?f4 ?e0 ? *	cfmvsc32ne	dspsc, ?mvdx15
+0*384 <move\+0x1a4> de ?10 ?64 ?e0 ? *	cfmv32scle	mvdx6, ?dspsc
+0*388 <move\+0x1a8> 4e ?10 ?24 ?e0 ? *	cfmv32scmi	mvdx2, ?dspsc
+0*38c <move\+0x1ac> 0e ?10 ?54 ?e0 ? *	cfmv32sceq	mvdx5, ?dspsc
+0*390 <move\+0x1b0> ae ?10 ?94 ?e0 ? *	cfmv32scge	mvdx9, ?dspsc
+0*394 <move\+0x1b4> ee ?10 ?34 ?e0 ? *	cfmv32sc	mvdx3, ?dspsc
 0*398 <move\+0x1b8> de ?02 ?74 ?00 ? *	cfcpysle	mvf7, ?mvf2
 0*39c <move\+0x1bc> 1e ?06 ?c4 ?00 ? *	cfcpysne	mvf12, ?mvf6
 0*3a0 <move\+0x1c0> be ?07 ?04 ?00 ? *	cfcpyslt	mvf0, ?mvf7

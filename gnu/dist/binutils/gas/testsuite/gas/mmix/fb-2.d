@@ -28,6 +28,5 @@ Contents of section \.text:
  0020 00000000 fd000000 231e0000 00000000  .*
  0030 00000000 00000000 00000000 00000000  .*
  0040 fd000000 002a002b 002b002c           .*
-Contents of section \.data:
 Contents of section \.MMIX\.reg_contents:
  0000 00000000 00000000                    .*

@@ -23,6 +23,5 @@ SYMBOL TABLE:
 
 Contents of section \.text:
  0000 e3fd0001 232afe00                    .*
-Contents of section \.data:
 Contents of section \.MMIX\.reg_contents:
  07f0 00000000 0000002e                    .*

@@ -1,10 +1,10 @@
 #source: tlsg.s
 #as:
-#ld: -melf64_ia64
+#ld:
 #objdump: -sj.debug_foobar
 #target: ia64-*-*
 
-.*: +file format elf64-ia64-little
+.*: +file format elf..-ia64-.*
 
 Contents of section .debug_foobar:
  0+ 18000000 0+  +.*

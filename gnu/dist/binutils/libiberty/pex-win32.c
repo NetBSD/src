@@ -57,7 +57,13 @@ fix_argv (argvec)
      char **argvec;
 {
   int i;
+  char * command0 = argvec[0];
 
+  /* Ensure that the executable pathname uses Win32 backslashes.  */
+  for (; *command0 != '\0'; command0++)
+    if (*command0 == '/')
+      *command0 = '\\';
+ 
   for (i = 1; argvec[i] != 0; i++)
     {
       int len, j;
@@ -130,15 +136,16 @@ int
 pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
      const char *program;
      char * const *argv;
-     const char *this_pname;
-     const char *temp_base;
+     const char *this_pname ATTRIBUTE_UNUSED;
+     const char *temp_base ATTRIBUTE_UNUSED;
      char **errmsg_fmt, **errmsg_arg;
      int flags;
 {
   int pid;
-  int pdes[2], org_stdin, org_stdout;
+  int pdes[2];
+  int org_stdin = -1;
+  int org_stdout = -1;
   int input_desc, output_desc;
-  int retries, sleep_interval;
 
   /* Pipe waiting from last process, to be used as input for the next one.
      Value is STDIN_FILE_NO if no pipe is waiting
@@ -203,7 +210,7 @@ pexecute (program, argv, this_pname, temp_base, errmsg_fmt, errmsg_arg, flags)
   if (pid == -1)
     {
       *errmsg_fmt = install_error_msg;
-      *errmsg_arg = program;
+      *errmsg_arg = (char*) program;
       return -1;
     }
 
@@ -221,7 +228,7 @@ int
 pwait (pid, status, flags)
      int pid;
      int *status;
-     int flags;
+     int flags ATTRIBUTE_UNUSED;
 {
   int termstat;
 

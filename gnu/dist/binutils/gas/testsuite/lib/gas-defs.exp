@@ -1,4 +1,4 @@
-# Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000, 2001, 2002
+# Copyright (C) 1993, 1994, 1997, 1998, 1999, 2000, 2001, 2002, 2003
 # Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,7 @@ proc gas_run { prog as_opts redir } {
     global subdir
     global host_triplet
 
-    verbose "Executing $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir"
+    verbose -log "Executing $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir"
     catch "exec $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog $redir" comp_output
     set comp_output [prune_warnings $comp_output]
     verbose "output was $comp_output"
@@ -60,7 +60,7 @@ proc gas_start { prog as_opts } {
     global subdir
     global spawn_id
 
-    verbose "Starting $AS $ASFLAGS $as_opts $prog" 2
+    verbose -log "Starting $AS $ASFLAGS $as_opts $prog" 2
     catch {
 	spawn -noecho -nottycopy $srcdir/lib/run $AS $ASFLAGS $as_opts $srcdir/$subdir/$prog
     } foo
@@ -168,7 +168,7 @@ proc gas_init { args } {
 
     case "$target_cpu" in {
 	"m68???"		{ set target_cpu_family m68k }
-	"i[34]86"		{ set target_cpu_family i386 }
+	"i[3-7]86"		{ set target_cpu_family i386 }
 	default			{ set target_cpu_family $target_cpu }
     }
 
@@ -180,6 +180,44 @@ proc gas_init { args } {
     }
     # Need to return an empty string.
     return
+}
+
+#
+# is_elf_format
+#	true if the object format is known to be ELF
+#
+proc is_elf_format {} {
+    if { ![istarget *-*-sysv4*] \
+	 && ![istarget *-*-unixware*] \
+	 && ![istarget *-*-elf*] \
+	 && ![istarget *-*-eabi*] \
+	 && ![istarget hppa*64*-*-hpux*] \
+	 && ![istarget *-*-linux*] \
+	 && ![istarget frv-*-uclinux*] \
+	 && ![istarget *-*-irix5*] \
+	 && ![istarget *-*-irix6*] \
+	 && ![istarget *-*-netbsd*] \
+	 && ![istarget *-*-solaris2*] } {
+	return 0
+    }
+
+    if { [istarget *-*-linux*aout*] \
+	 || [istarget *-*-linux*oldld*] } {
+	return 0
+    }
+
+    if { ![istarget *-*-netbsdelf*] \
+	 && ([istarget *-*-netbsd*aout*] \
+	     || [istarget *-*-netbsdpe*] \
+	     || [istarget arm*-*-netbsd*] \
+	     || [istarget sparc-*-netbsd*] \
+	     || [istarget i*86-*-netbsd*] \
+	     || [istarget m68*-*-netbsd*] \
+	     || [istarget vax-*-netbsd*] \
+	     || [istarget ns32k-*-netbsd*]) } {
+    	return 0
+    }
+    return 1
 }
 
 
@@ -374,7 +412,7 @@ proc run_dump_test { name {extra_options {}} } {
     catch "exec $srcdir/lib/run $AS $ASFLAGS $opts(as) -o dump.o $sourcefile" comp_output
     set comp_output [prune_warnings $comp_output]
 
-    if ![string match "" $comp_output] then {
+    if { ![string match "" $comp_output] || $opts(stderr) != "" } then {
 	if { $opts(stderr) == "" }  then {
 	    send_log "$comp_output\n"
 	    verbose "$comp_output" 3
@@ -546,14 +584,14 @@ proc regexp_diff { file_1 file_2 } {
     if [file exists $file_1] then {
 	set file_a [open $file_1 r]
     } else {
-	warning "$file_1 doesn't exist"
+	perror "$file_1 doesn't exist"
 	return 1
     }
 
     if [file exists $file_2] then {
 	set file_b [open $file_2 r]
     } else {
-	fail "$file_2 doesn't exist"
+	perror "$file_2 doesn't exist"
 	close $file_a
 	return 1
     }

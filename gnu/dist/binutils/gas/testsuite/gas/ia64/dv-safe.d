@@ -6,7 +6,7 @@
 
 Disassembly of section \.text:
 
-0000000000000000 <start>:
+0+000 <start>:
    0:	02 08 04 04 02 38 	\[MII\]       cmp\.eq p1,p2=r1,r2
    6:	30 18 10 08 70 00 	            cmp\.eq p3,p4=r3,r4;;
    c:	00 00 04 00       	            nop\.i 0x0

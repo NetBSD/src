@@ -17,7 +17,7 @@ Disassembly of section .text:
   1b:	0f c2 c1 02 [ 	]*cmpleps %xmm1,%xmm0
   1f:	0f c2 0a 03 [ 	]*cmpunordps \(%edx\),%xmm1
   23:	f3 0f c2 d2 04 [ 	]*cmpneqss %xmm2,%xmm2
-  28:	f3 0f c2 1c 24 05 [ 	]*cmpnltss \(%esp,1\),%xmm3
+  28:	f3 0f c2 1c 24 05 [ 	]*cmpnltss \(%esp\),%xmm3
   2e:	0f c2 e5 06 [ 	]*cmpnleps %xmm5,%xmm4
   32:	0f c2 2e 07 [ 	]*cmpordps \(%esi\),%xmm5
   36:	f3 0f c2 f7 00 [ 	]*cmpeqss %xmm7,%xmm6
@@ -25,7 +25,7 @@ Disassembly of section .text:
   40:	0f c2 c1 00 [ 	]*cmpeqps %xmm1,%xmm0
   44:	0f c2 0a 00 [ 	]*cmpeqps \(%edx\),%xmm1
   48:	f3 0f c2 d2 00 [ 	]*cmpeqss %xmm2,%xmm2
-  4d:	f3 0f c2 1c 24 00 [ 	]*cmpeqss \(%esp,1\),%xmm3
+  4d:	f3 0f c2 1c 24 00 [ 	]*cmpeqss \(%esp\),%xmm3
   53:	0f c2 e5 01 [ 	]*cmpltps %xmm5,%xmm4
   57:	0f c2 2e 01 [ 	]*cmpltps \(%esi\),%xmm5
   5b:	f3 0f c2 f7 01 [ 	]*cmpltss %xmm7,%xmm6
@@ -41,7 +41,7 @@ Disassembly of section .text:
   8a:	0f c2 c1 04 [ 	]*cmpneqps %xmm1,%xmm0
   8e:	0f c2 0a 04 [ 	]*cmpneqps \(%edx\),%xmm1
   92:	f3 0f c2 d2 04 [ 	]*cmpneqss %xmm2,%xmm2
-  97:	f3 0f c2 1c 24 04 [ 	]*cmpneqss \(%esp,1\),%xmm3
+  97:	f3 0f c2 1c 24 04 [ 	]*cmpneqss \(%esp\),%xmm3
   9d:	0f c2 e5 05 [ 	]*cmpnltps %xmm5,%xmm4
   a1:	0f c2 2e 05 [ 	]*cmpnltps \(%esi\),%xmm5
   a5:	f3 0f c2 f7 05 [ 	]*cmpnltss %xmm7,%xmm6
@@ -57,7 +57,7 @@ Disassembly of section .text:
   d4:	0f 2f c1 [ 	]*comiss %xmm1,%xmm0
   d7:	0f 2f 0a [ 	]*comiss \(%edx\),%xmm1
   da:	0f 2a d3 [ 	]*cvtpi2ps %mm3,%xmm2
-  dd:	0f 2a 1c 24 [ 	]*cvtpi2ps \(%esp,1\),%xmm3
+  dd:	0f 2a 1c 24 [ 	]*cvtpi2ps \(%esp\),%xmm3
   e1:	f3 0f 2a e5 [ 	]*cvtsi2ss %ebp,%xmm4
   e5:	f3 0f 2a 2e [ 	]*cvtsi2ss \(%esi\),%xmm5
   e9:	0f 2d f7 [ 	]*cvtps2pi %xmm7,%mm6
@@ -71,14 +71,14 @@ Disassembly of section .text:
  106:	0f 5e c1 [ 	]*divps  %xmm1,%xmm0
  109:	0f 5e 0a [ 	]*divps  \(%edx\),%xmm1
  10c:	f3 0f 5e d3 [ 	]*divss  %xmm3,%xmm2
- 110:	f3 0f 5e 1c 24 [ 	]*divss  \(%esp,1\),%xmm3
+ 110:	f3 0f 5e 1c 24 [ 	]*divss  \(%esp\),%xmm3
  115:	0f ae 55 00 [ 	]*ldmxcsr 0x0\(%ebp\)
  119:	0f ae 1e [ 	]*stmxcsr \(%esi\)
  11c:	0f ae f8 [ 	]*sfence 
  11f:	0f 5f c1 [ 	]*maxps  %xmm1,%xmm0
  122:	0f 5f 0a [ 	]*maxps  \(%edx\),%xmm1
  125:	f3 0f 5f d3 [ 	]*maxss  %xmm3,%xmm2
- 129:	f3 0f 5f 1c 24 [ 	]*maxss  \(%esp,1\),%xmm3
+ 129:	f3 0f 5f 1c 24 [ 	]*maxss  \(%esp\),%xmm3
  12e:	0f 5d e5 [ 	]*minps  %xmm5,%xmm4
  131:	0f 5d 2e [ 	]*minps  \(%esi\),%xmm5
  134:	f3 0f 5d f7 [ 	]*minss  %xmm7,%xmm6
@@ -87,7 +87,7 @@ Disassembly of section .text:
  13f:	0f 29 11 [ 	]*movaps %xmm2,\(%ecx\)
  142:	0f 28 12 [ 	]*movaps \(%edx\),%xmm2
  145:	0f 16 dc [ 	]*movlhps %xmm4,%xmm3
- 148:	0f 17 2c 24 [ 	]*movhps %xmm5,\(%esp,1\)
+ 148:	0f 17 2c 24 [ 	]*movhps %xmm5,\(%esp\)
  14c:	0f 16 2e [ 	]*movhps \(%esi\),%xmm5
  14f:	0f 12 f7 [ 	]*movhlps %xmm7,%xmm6
  152:	0f 13 07 [ 	]*movlps %xmm0,\(%edi\)
@@ -102,7 +102,7 @@ Disassembly of section .text:
  171:	0f 59 c1 [ 	]*mulps  %xmm1,%xmm0
  174:	0f 59 0a [ 	]*mulps  \(%edx\),%xmm1
  177:	f3 0f 59 d2 [ 	]*mulss  %xmm2,%xmm2
- 17b:	f3 0f 59 1c 24 [ 	]*mulss  \(%esp,1\),%xmm3
+ 17b:	f3 0f 59 1c 24 [ 	]*mulss  \(%esp\),%xmm3
  180:	0f 56 e5 [ 	]*orps   %xmm5,%xmm4
  183:	0f 56 2e [ 	]*orps   \(%esi\),%xmm5
  186:	0f 53 f7 [ 	]*rcpps  %xmm7,%xmm6
@@ -118,7 +118,7 @@ Disassembly of section .text:
  1ab:	0f 51 c1 [ 	]*sqrtps %xmm1,%xmm0
  1ae:	0f 51 0a [ 	]*sqrtps \(%edx\),%xmm1
  1b1:	f3 0f 51 d2 [ 	]*sqrtss %xmm2,%xmm2
- 1b5:	f3 0f 51 1c 24 [ 	]*sqrtss \(%esp,1\),%xmm3
+ 1b5:	f3 0f 51 1c 24 [ 	]*sqrtss \(%esp\),%xmm3
  1ba:	0f 5c e5 [ 	]*subps  %xmm5,%xmm4
  1bd:	0f 5c 2e [ 	]*subps  \(%esi\),%xmm5
  1c0:	f3 0f 5c f7 [ 	]*subss  %xmm7,%xmm6
@@ -134,14 +134,14 @@ Disassembly of section .text:
  1e1:	0f e0 c1 [ 	]*pavgb  %mm1,%mm0
  1e4:	0f e0 0a [ 	]*pavgb  \(%edx\),%mm1
  1e7:	0f e3 d3 [ 	]*pavgw  %mm3,%mm2
- 1ea:	0f e3 1c 24 [ 	]*pavgw  \(%esp,1\),%mm3
+ 1ea:	0f e3 1c 24 [ 	]*pavgw  \(%esp\),%mm3
  1ee:	0f c5 c1 00 [ 	]*pextrw \$0x0,%mm1,%eax
  1f2:	0f c4 09 01 [ 	]*pinsrw \$0x1,\(%ecx\),%mm1
  1f6:	0f c4 d2 02 [ 	]*pinsrw \$0x2,%edx,%mm2
  1fa:	0f ee c1 [ 	]*pmaxsw %mm1,%mm0
  1fd:	0f ee 0a [ 	]*pmaxsw \(%edx\),%mm1
  200:	0f de d2 [ 	]*pmaxub %mm2,%mm2
- 203:	0f de 1c 24 [ 	]*pmaxub \(%esp,1\),%mm3
+ 203:	0f de 1c 24 [ 	]*pmaxub \(%esp\),%mm3
  207:	0f ea e5 [ 	]*pminsw %mm5,%mm4
  20a:	0f ea 2e [ 	]*pminsw \(%esi\),%mm5
  20d:	0f da f7 [ 	]*pminub %mm7,%mm6

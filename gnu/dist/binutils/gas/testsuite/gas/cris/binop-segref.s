@@ -1,7 +1,7 @@
 ; This used to be part of the binop test; differences broke when the
 ; broken-dot-word handling was broke and were moved here.
-
  .text
+ .syntax no_register_prefix
  .byte 56,43,42 ; Make sure we don't start at zero.
 
 ; Some differences we want to see computed right, giving the right
