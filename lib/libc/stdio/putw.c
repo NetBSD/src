@@ -1,4 +1,4 @@
-/*	$NetBSD: putw.c,v 1.9 1999/09/20 04:39:32 lukem Exp $	*/
+/*	$NetBSD: putw.c,v 1.10 2003/07/18 21:52:18 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)putw.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: putw.c,v 1.9 1999/09/20 04:39:32 lukem Exp $");
+__RCSID("$NetBSD: putw.c,v 1.10 2003/07/18 21:52:18 nathanw Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: putw.c,v 1.9 1999/09/20 04:39:32 lukem Exp $");
 #include <stdio.h>
 #include "fvwrite.h"
 #include "reentrant.h"
+#include "local.h"
 
 int
 putw(w, fp)
