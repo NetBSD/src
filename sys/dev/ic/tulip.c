@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.23 1999/09/29 23:11:36 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.24 1999/09/30 00:07:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -4564,8 +4564,14 @@ tlp_pmac_nway_service(sc, cmd)
 		/*
 		 * Only retry autonegotiation every 5 seconds.
 		 */
-		if (++sc->sc_nway_ticks != 5)
+		if (++sc->sc_nway_ticks != 5) {
+			/*
+			 * Update status; this may indicate link-up
+			 * next time around.
+			 */
+			tlp_pmac_nway_status(sc);
 			return (0);
+		}
 
 		sc->sc_nway_ticks = 0;
 		tlp_pmac_nway_reset(sc);
@@ -4675,13 +4681,11 @@ tlp_pmac_nway_status(sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	if (sc->sc_flags & TULIPF_LINK_UP)
-		mii->mii_media_status |= IFM_ACTIVE;
-
 	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		if (TULIP_ISSET(sc, CSR_STATUS, STATUS_LNPANC) == 0) {
 			/* Erg, still trying, I guess... */
 			mii->mii_media_active |= IFM_NONE;
+			sc->sc_flags &= ~TULIPF_LINK_UP;
 			return;
 		}
 
@@ -4709,6 +4713,22 @@ tlp_pmac_nway_status(sc)
 		 */
 		mii->mii_media_active = ife->ifm_media;
 	}
+
+	/*
+	 * Update link status.
+	 */
+	reg = TULIP_READ(sc, CSR_PMAC_10TSTAT);
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_10_T &&
+	    (reg & PMAC_10TSTAT_LS10) == 0)
+		sc->sc_flags |= TULIPF_LINK_UP;
+	else if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX &&
+	         (reg & PMAC_10TSTAT_LS100) == 0)
+		sc->sc_flags |= TULIPF_LINK_UP;
+	else
+		sc->sc_flags &= ~TULIPF_LINK_UP;
+
+	if (sc->sc_flags & TULIPF_LINK_UP)
+		mii->mii_media_status |= IFM_ACTIVE;
 }
 
 void
