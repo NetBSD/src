@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.64 1999/07/08 18:12:14 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.65 1999/07/12 20:55:32 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -86,6 +86,7 @@
 #endif
 
 #ifndef _LOCORE
+#include <sys/inttypes.h>
 #include <sys/types.h>
 #endif
 
