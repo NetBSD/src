@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.4 1997/10/14 01:14:20 lukem Exp $	*/
+/*	$NetBSD: scores.c,v 1.5 1999/09/08 21:18:00 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -96,7 +96,7 @@ getscores(fpp)
 	FILE **fpp;
 {
 	int sd, mint, lck;
-	char *mstr, *human;
+	const char *mstr, *human;
 	FILE *sf;
 
 	if (fpp != NULL) {

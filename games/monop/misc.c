@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 1999/08/21 10:40:03 simonb Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 1999/09/08 21:17:52 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 1999/09/08 21:17:52 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: misc.c,v 1.7 1999/08/21 10:40:03 simonb Exp $");
  */
 int
 getyn(prompt)
-	char *prompt;
+	const char *prompt;
 {
 	int com;
 
@@ -96,7 +96,7 @@ next_play()
  */
 int
 get_int(prompt)
-	char *prompt;
+	const char *prompt;
 {
 	int num;
 	char *sp;

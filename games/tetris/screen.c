@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.10 1999/08/14 16:40:23 tron Exp $	*/
+/*	$NetBSD: screen.c,v 1.11 1999/09/08 21:18:00 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -339,7 +339,7 @@ scr_end()
 
 void
 stop(why)
-	char *why;
+	const char *why;
 {
 
 	if (isset)
@@ -376,7 +376,7 @@ scr_update()
 	register regcell so, cur_so = 0;
 	register int i, ccol, j;
 	sigset_t sigset, osigset;
-	static struct shape *lastshape;
+	static const struct shape *lastshape;
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGTSTP);

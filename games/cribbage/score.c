@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.6 1998/08/30 09:19:37 veego Exp $	*/
+/*	$NetBSD: score.c,v 1.7 1999/09/08 21:17:47 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.6 1998/08/30 09:19:37 veego Exp $");
+__RCSID("$NetBSD: score.c,v 1.7 1999/09/08 21:17:47 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: score.c,v 1.6 1998/08/30 09:19:37 veego Exp $");
  * array.  the two arrays are for the case where the suits are equal and
  * not equal respectively
  */
-long crbescr[169] = {
+const long crbescr[169] = {
     -10000, 271827, 278883, 332319, 347769, 261129, 250653, 253203, 248259,
     243435, 256275, 237435, 231051, -10000, -10000, 412815, 295707, 349497,
     267519, 262521, 259695, 254019, 250047, 262887, 244047, 237663, -10000,
@@ -78,7 +78,7 @@ long crbescr[169] = {
     -10000, -10000, -10000, -10000, -10000, -10000, -10000
 };
 
-long crbnescr[169] = {
+const long crbnescr[169] = {
     325272, 260772, 267828, 321264, 336714, 250074, 239598, 242148, 237204,
     232380, 246348, 226380, 219996, -10000, 342528, 401760, 284652, 338442,
     256464, 251466, 248640, 242964, 238992, 252960, 232992, 226608, -10000,
@@ -100,7 +100,7 @@ long crbnescr[169] = {
     -10000, -10000, -10000, -10000, -10000, -10000, 295896
 };
 
-static int ichoose2[5] = { 0, 0, 2, 6, 12 };
+static const int ichoose2[5] = { 0, 0, 2, 6, 12 };
 static int pairpoints, runpoints;		/* Globals from pairuns. */
 
 /*
@@ -110,7 +110,7 @@ static int pairpoints, runpoints;		/* Globals from pairuns. */
  */
 int
 scorehand(hand, starter, n, crb, do_explain)
-	CARD hand[];
+	const CARD hand[];
 	CARD starter;
 	int n;
 	BOOLEAN crb;		/* true if scoring crib */
@@ -185,12 +185,12 @@ scorehand(hand, starter, n, crb, do_explain)
  */
 int
 fifteens(hand, n)
-	CARD hand[];
+	const CARD hand[];
 	int n;
 {
 	int *sp, *np;
 	int i;
-	CARD *endp;
+	const CARD *endp;
 	static int sums[15], nsums[15];
 
 	np = nsums;
@@ -228,7 +228,7 @@ fifteens(hand, n)
  */
 int
 pairuns(h, n)
-	CARD h[];
+	const CARD h[];
 	int n;
 {
 	int i;
@@ -297,7 +297,8 @@ pairuns(h, n)
  */
 int
 pegscore(crd, tbl, n, sum)
-	CARD crd, tbl[];
+	CARD crd;
+	const CARD tbl[];
 	int n, sum;
 {
 	BOOLEAN got[RANKS];
@@ -352,7 +353,8 @@ pegscore(crd, tbl, n, sum)
  */
 int
 adjust(cb, tnv)
-	CARD cb[], tnv;
+	const CARD cb[];
+	CARD tnv;
 {
 	long scr;
 	int i, c0, c1;

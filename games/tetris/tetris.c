@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.9 1999/03/22 06:12:23 abs Exp $	*/
+/*	$NetBSD: tetris.c,v 1.10 1999/09/08 21:18:01 jsm Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -117,7 +117,7 @@ main(argc, argv)
 	char *argv[];
 {
 	register int pos, c;
-	register char *keys;
+	register const char *keys;
 	register int level = 2;
 	char key_write[6][10];
 	int ch, i, j;
@@ -258,7 +258,7 @@ main(argc, argv)
 		}
 		if (c == keys[1]) {
 			/* turn */
-			struct shape *new = &shapes[curshape->rot];
+			const struct shape *new = &shapes[curshape->rot];
 
 			if (fits_in(new, pos))
 				curshape = new;

@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.6 1997/10/12 00:54:24 lukem Exp $	*/
+/*	$NetBSD: print.c,v 1.7 1999/09/08 21:17:51 jsm Exp $	*/
 
 /*
  * Copyright (c) 1982, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.6 1997/10/12 00:54:24 lukem Exp $");
+__RCSID("$NetBSD: print.c,v 1.7 1999/09/08 21:17:51 jsm Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,7 @@ prboard()
 		show_card(14, temp, pp->battle, &pp->sh_battle);
 		show_card(16, temp, pp->speed, &pp->sh_speed);
 		for (i = C_25; i <= C_200; i++) {
-			char	*name;
+			const char	*name;
 			int	end;
 
 			if (pp->nummiles[i] == pp->sh_nummiles[i])

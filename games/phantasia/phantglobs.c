@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.c,v 1.4 1998/07/27 01:12:35 mycroft Exp $	*/
+/*	$NetBSD: phantglobs.c,v 1.5 1999/09/08 21:17:54 jsm Exp $	*/
 
 /*
  * phantglobs.c - globals for Phantasia
@@ -30,7 +30,7 @@ jmp_buf Timeoenv;	/* used for timing out waiting for input	*/
 long	Fileloc;	/* location in file of player statistics	*/
 
 const char *Login;	/* pointer to login of player			*/
-char	*Enemyname;	/* pointer name of monster/player we are battling*/
+const char *Enemyname;	/* pointer name of monster/player we are battling*/
 
 struct	player	Player;	/* stats for player				*/
 struct	player	Other;	/* stats for another player			*/
@@ -39,10 +39,10 @@ struct	monster	Curmonster;/* stats for current monster			*/
 
 struct	energyvoid Enrgyvoid;/* energy void buffer			*/
 
-struct	charstats *Statptr;/* pointer into Stattable[]			*/
+const struct	charstats *Statptr;/* pointer into Stattable[]		*/
 
 /* lookup table for character type dependent statistics */
-struct	charstats Stattable[7] = {
+const struct	charstats Stattable[7] = {
 	/* MAGIC USER */
 	{
 		15.0, 200.0, 18.0, 175.0, 10,
@@ -92,7 +92,7 @@ struct	charstats Stattable[7] = {
 };
 
 /* menu of items for purchase */
-struct menuitem	Menu[] = {
+const struct menuitem	Menu[] = {
 	{"Mana", 1},
 	{"Shield", 5},
 	{"Book", 200},
@@ -110,9 +110,9 @@ FILE	*Energyvoidfp;	/* pointer to open energy void file		*/
 char	Databuf[SZ_DATABUF];	/* a place to read data into		*/
 
 /* some canned strings for messages */
-char	Illcmd[] = "Illegal command.\n";
-char	Illmove[] = "Too far.\n";
-char	Illspell[] = "Illegal spell.\n";
-char	Nomana[] = "Not enought mana for that spell.\n";
-char	Somebetter[] = "But you already have something better.\n";
-char	Nobetter[] = "That's no better than what you already have.\n";
+const char	Illcmd[] = "Illegal command.\n";
+const char	Illmove[] = "Too far.\n";
+const char	Illspell[] = "Illegal spell.\n";
+const char	Nomana[] = "Not enought mana for that spell.\n";
+const char	Somebetter[] = "But you already have something better.\n";
+const char	Nobetter[] = "That's no better than what you already have.\n";
