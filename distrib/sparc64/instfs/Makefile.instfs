@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.instfs,v 1.1 2002/05/07 14:41:37 lukem Exp $
+#	$NetBSD: Makefile.instfs,v 1.2 2002/06/01 16:36:09 lukem Exp $
 
 INSTFSDIR=	${.CURDIR}/../instfs
 
@@ -11,7 +11,7 @@ CRUNCHBIN=	ramdiskbin
 LISTS=		${INSTFSDIR}/list ${DISTRIBDIR}/common/list.sysinst
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be
-MAKEDEVTARGETS=	ramdisk
+MAKEDEVTARGETS=	ramdisk bpf0
 PARSELISTENV=	INSTFSDIR=${INSTFSDIR:Q}
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		${INSTFSDIR}/disktab.preinstall ${INSTFSDIR}/dot.profile \
