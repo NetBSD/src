@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo.c,v 1.14 2001/07/27 18:38:55 scw Exp $ */
+/*	$NetBSD: pcctwo.c,v 1.15 2001/08/12 18:33:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -91,12 +91,11 @@ struct pcctwo_device {
  * Devices that live on the PCCchip2, attached in this order.
  */
 static struct pcctwo_device pcctwo_devices[] = {
-	{"clock", PCCTWO_RTC_OFF},
+	{"clock", 0},
 	{"clmpcc", PCCTWO_SCC_OFF},
 	{"ie", PCCTWO_IE_OFF},
 	{"osiop", PCCTWO_NCRSC_OFF},
 	{"lpt", PCCTWO_LPT_OFF},
-	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
 };
 
@@ -125,12 +124,11 @@ static int pcctwo_vec2icsr_1x7[] = {
  * Devices that live on the MCchip, attached in this order.
  */
 static struct pcctwo_device mcchip_devices[] = {
-	{"clock", PCCTWO_RTC_OFF},
+	{"clock", PCCTWO_NVRAM_OFF},
 	{"zsc", MCCHIP_ZS0_OFF},
 	{"zsc", MCCHIP_ZS1_OFF},
 	{"ie", PCCTWO_IE_OFF},
 	{"osiop", PCCTWO_NCRSC_OFF},
-	{"nvram", PCCTWO_NVRAM_OFF},
 	{NULL, 0}
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctworeg.h,v 1.9 2001/07/27 18:38:55 scw Exp $ */
+/*	$NetBSD: pcctworeg.h,v 1.10 2001/08/12 18:33:13 scw Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -53,8 +53,6 @@
 #define PCCTWO_SCC_OFF      0x03000	/* Offset of CD2401 Serial Comms chip */
 #define PCCTWO_IE_OFF	    0x04000	/* Offset of 82596 LAN controller */
 #define PCCTWO_NCRSC_OFF    0x05000	/* Offset of NCR53C710 SCSI chip */
-#define PCCTWO_NVRAM_OFF    0x7e000	/* Offset of MK48T18 NVRAM */
-#define PCCTWO_RTC_OFF      0x7fff8	/* Offset of MK48T18 RTC registers */
 
 /*
  * The two devices on mvme162's MCchip
