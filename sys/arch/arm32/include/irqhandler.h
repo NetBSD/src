@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.11 1998/02/21 23:16:28 mark Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.12 1998/06/17 19:36:33 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -194,6 +194,75 @@
 #define IRQ_EXPCARD6	0x1E
 #define IRQ_EXPCARD7	0x1F
 #endif	/* RISCPC */
+
+#ifdef  OFWGENCFG
+/* These are just made up for now!  -JJK */
+#define IRQ_TIMER0      0
+
+#define IRQ_RESERVED0   0x08
+#define IRQ_RESERVED1   0x09
+#define IRQ_RESERVED2   0x0A
+#define IRQ_RESERVED3   0x0B
+#endif
+
+/* XXX why is this in ARM7500? */
+#ifdef SHARK
+/* shark hardware requirements for IRQ's:
+   IDE:       14                (hardwired)
+   PCI:        5, 9, 10, 11, 15 (mapped to UMIPCI inta, intb, intc, intd)
+   UMIISA:     10, 11, 12
+   SuperIO:    1, 3..12, 14, 15 (all may be remapped.  defaults as follows.)
+    KBC:       1
+    USI:       3                (UART with Slow Infrared support)
+    UART:      4
+    FLOPPY:    6                (not currently used on shark)
+    PARALLEL:  7
+    RTC:       8                (not used on shark: RTC in sequoia used)
+    MOUSE:    12
+   Sequoia:    8                (internal RTC hardwired to irq 8)
+   Codec:      5, 7, 9, 10, 15  (irqe, connected to 15, has special status.)
+   CS8900:     5, 10, 11, 12    (P.14 of datasheet sez only 1 used/time)
+   FERR#:     13                (unconnected floating point error)
+
+total of 15 irqs:
+  timer, ide, 2 umi = isa/pci, ethernet, 2 codec, kb, usi, uart, floppy, 
+  parallel, rtc, mouse, ferr (irq 13)
+
+eventually, need to read the OFW dev info tree, and allocate IRQs.
+hardcoded for now.
+*/
+#define IRQ_TIMER0	0x00  /* hardwired to 8254 counter 0 in sequoia */
+#define IRQ_KEYBOARD    0x01
+#define IRQ_CASCADE     0x02  /* hardwired IRQ for second 8259 = IRQ_SLAVE */
+#define IRQ_USI         0x03
+#define IRQ_UART        0x04
+#define IRQ_ETHERNET    0x05
+#define IRQ_FLOPPY      0x06
+#define IRQ_PARALLEL    0x07
+
+#define IRQ_RTC         0x08  /* hardwired to the sequoia RTC */
+#define IRQ_CODEC1      0x09
+#define IRQ_UMI1        0x0A  /* isa or pci */
+#define IRQ_UMI2        0x0B  /* isa or pci */
+
+#define IRQ_MOUSE       0x0C
+#define IRQ_FERR        0x0D  /* FERR# pin on sequoia needs to be connected */
+#define IRQ_IDE         0x0E  /* hardwired to the IDE connector */
+#define IRQ_CODEC2      0x0F  /* special interrupt on codec */
+
+#define IRQ_RESERVED0   0x10
+#define IRQ_RESERVED1   0x11
+#define IRQ_RESERVED2   0x12
+#define IRQ_RESERVED3   0x13
+
+/* XXX should this go into isa_machdep.h.  Somewhere else? */
+/* Interrupt sharing types. */
+#define	IST_NONE	0	/* none */
+#define	IST_PULSE	1	/* pulsed */
+#define	IST_EDGE	2	/* edge-triggered */
+#define	IST_LEVEL	3	/* level-triggered */
+
+#endif /* SHARK */
 
 #endif	/* CPU_ARM7500 */
 
