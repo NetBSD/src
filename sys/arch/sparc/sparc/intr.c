@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.18 1997/03/15 18:10:42 is Exp $ */
+/*	$NetBSD: intr.c,v 1.19 1997/04/03 17:25:18 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -73,6 +73,9 @@
 #include <netiso/iso.h>
 #include <netiso/clnp.h>
 #endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
+#endif
 #include "ppp.h"
 #if NPPP > 0
 #include <net/ppp_defs.h>
@@ -142,6 +145,10 @@ soft01intr(fp)
 				arpintr();
 			if (n & (1 << NETISR_IP))
 				ipintr();
+#endif
+#ifdef NETATALK
+			if (n & (1 << NETISR_ATALK))
+				atintr();
 #endif
 #ifdef NS
 			if (n & (1 << NETISR_NS))
