@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.5 2002/08/05 02:55:39 enami Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.6 2002/08/05 02:56:58 enami Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -236,6 +236,7 @@ in_cksum_internal(struct mbuf *m, int off, int len, u_int sum)
 int
 in_cksum(struct mbuf *m, int len)
 {
+
 	return (in_cksum_internal(m, 0, len, 0));
 }
 
