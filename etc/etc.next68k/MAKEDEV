@@ -20,7 +20,7 @@
 # MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
 #	from: @(#)MAKEDEV	5.2 (Berkeley) 6/22/90
-#	$NetBSD: MAKEDEV,v 1.19 2001/12/19 18:30:08 wiz Exp $
+#	$NetBSD: MAKEDEV,v 1.20 2002/01/13 14:23:35 manu Exp $
 #
 ###########################################################################
 #
@@ -65,6 +65,7 @@
 # Graphics devices:
 #
 # Special purpose devices:
+#       clockctl clock control for non root users
 #	tun*	network tunnel driver
 #	bpf*	packet filter
 #	lkm	loadable kernel modules interface
@@ -93,6 +94,7 @@ all)
 	sh $0 tun0 tun1 tun2 tun3 lkm ipl local
 	sh $0 scsibus0 scsibus1 scsibus2 scsibus3
 	sh $0 wscons
+	sh $0 clockctl
 	;;
 
 std)
@@ -390,6 +392,13 @@ scsibus*)
 	mknod scsibus$unit c 39 $unit
 	chown root:wheel scsibus$unit
 	chmod 644 scsibus$unit
+	;;
+
+clockctl)
+	rm -f clockctl
+	mknod clockctl c 46 0
+	chown root.ntpd clockctl
+	chmod 660 clockctl
 	;;
 
 local)
