@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.37 2001/08/19 01:21:42 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.38 2001/11/02 05:33:21 lukem Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.37 2001/08/19 01:21:42 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.38 2001/11/02 05:33:21 lukem Exp $");
 #endif
 #endif
 
@@ -1816,9 +1816,9 @@ pr_rthdr(void *extbuf)
 #endif /* USE_RFC2292BIS */
 
 int
-pr_bitrange(v, s, ii)
+pr_bitrange(v, soff, ii)
 	u_int32_t v;
-	int s;
+	int soff;
 	int ii;
 {
 	int off;
@@ -1829,7 +1829,7 @@ pr_bitrange(v, s, ii)
 		/* shift till we have 0x01 */
 		if ((v & 0x01) == 0) {
 			if (ii > 1)
-				printf("-%u", s + off - 1);
+				printf("-%u", soff + off - 1);
 			ii = 0;
 			switch (v & 0x0f) {
 			case 0x00:
@@ -1857,7 +1857,7 @@ pr_bitrange(v, s, ii)
 				break;
 		}
 		if (!ii)
-			printf(" %u", s + off);
+			printf(" %u", soff + off);
 		ii += i;
 		v >>= i; off += i;
 	}
