@@ -1,7 +1,7 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 1998/09/13 01:42:45 thorpej Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.4 2000/12/11 17:36:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,11 +76,14 @@ compat_13_sys_sigreturn(p, v, retval)
 	tf = p->p_md.md_regs;
 #ifdef VM86
 	if (context.sc_eflags & PSL_VM) {
+		void syscall_vm86 __P((struct trapframe));
+
 		tf->tf_vm86_gs = context.sc_gs;
 		tf->tf_vm86_fs = context.sc_fs;
 		tf->tf_vm86_es = context.sc_es;
 		tf->tf_vm86_ds = context.sc_ds;
 		set_vflags(p, context.sc_eflags);
+		p->p_md.md_syscall = syscall_vm86;
 	} else
 #endif
 	{

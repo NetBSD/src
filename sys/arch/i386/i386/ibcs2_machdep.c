@@ -1,7 +1,7 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.11 2000/11/29 21:53:48 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.12 2000/12/11 17:36:03 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -133,6 +133,7 @@ ibcs2_sendsig(catcher, sig, mask, code)
 		frame.sf_sc.sc_es = tf->tf_vm86_es;
 		frame.sf_sc.sc_ds = tf->tf_vm86_ds;
 		frame.sf_sc.sc_eflags = get_vflags(p);
+		(*p->p_emul->e_syscall_intern)(p);
 	} else
 #endif
 	{
