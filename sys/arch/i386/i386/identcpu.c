@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.9 2004/03/21 17:59:44 kim Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.10 2004/03/26 13:57:44 minoura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.9 2004/03/21 17:59:44 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.10 2004/03/26 13:57:44 minoura Exp $");
 
 #include "opt_cputype.h"
 
@@ -1110,11 +1110,17 @@ identifycpu(struct cpu_info *ci)
 			ci->cpu_setup = cpufam->cpu_setup;
 			ci->ci_info = cpufam->cpu_info;
 
-			if (vendor == CPUVENDOR_INTEL && family == 6 &&
-			    model >= 5) {
-				const char *tmp = intel_family6_name(ci);
-				if (tmp != NULL)
-					name = tmp;
+			if (vendor == CPUVENDOR_INTEL) {
+				if (family == 6 && model >= 5) {
+					const char *tmp;
+					tmp = intel_family6_name(ci);
+					if (tmp != NULL)
+						name = tmp;
+				}
+				if (family == CPU_MAXFAMILY &&
+				    i386_intel_brand[ci->ci_brand_id])
+					name =
+					     i386_intel_brand[ci->ci_brand_id];
 			}
 
 			if (vendor == CPUVENDOR_AMD && family == 6 &&
