@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.13 1999/04/12 20:57:52 pk Exp $ */
+/*	$NetBSD: ts.c,v 1.14 2000/01/17 04:55:28 matt Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -141,6 +141,8 @@ int tstrace = 1;
 #include <vax/uba/ubavar.h>
 
 #include <vax/uba/tsreg.h>
+
+#include "opt_vax750.h"
 
 #include "ts.h"
 
@@ -487,7 +489,7 @@ tsstart (sc, bp)
 			goto do_cmd;
 			return (-1);	/* ??? */
 		}
-#if defined(VAX750)
+#if VAX750
 		if (vax_cputype == VAX_750)
 			itmp = i & 0xfffffff;		/* mask off bdp */
 		else
@@ -918,7 +920,7 @@ tsintr(ctlr)
 				ubarelse((struct uba_softc *)
 				    sc->sc_dev.dv_parent,
 				    (int *)&bp->b_ubinfo);
-#if defined(VAX750)
+#if VAX750
 				if (vax_cputype == VAX_750 &&
 				    sc->sc_unit.uu_ubinfo != 0)
 					ubarelse((struct uba_softc *)
