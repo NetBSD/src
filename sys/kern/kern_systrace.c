@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.1 2002/06/17 16:22:51 christos Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2 2002/06/18 01:24:15 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -29,8 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.1 2002/06/17 16:22:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2 2002/06/18 01:24:15 thorpej Exp $");
 
 #include "opt_systrace.h"
 
@@ -56,10 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.1 2002/06/17 16:22:51 christos E
 
 #include <miscfs/procfs/procfs.h>
 
-
-#ifdef SYSTRACE
 #ifdef __NetBSD__
-/* XXX: is this ok? */
 #define	SYSTRACE_LOCK(fst, p)	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL)
 #define	SYSTRACE_UNLOCK(fst, p)	lockmgr(&fst->lock, LK_RELEASE, NULL)
 #else
@@ -70,12 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.1 2002/06/17 16:22:51 christos E
 #define	M_XDATA		M_FILE	/* XXX */
 #endif
 
-int	systraceopen(dev_t, int, int, struct proc *);
-int	systraceclose(dev_t, int, int, struct proc *);
-int	systraceread(dev_t, struct uio *, int);
-int	systracewrite(dev_t, struct uio *, int);
-int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	systraceselect(dev_t, int, struct proc *);
+cdev_decl(systrace);
 
 #ifdef __NetBSD__
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *,
@@ -267,8 +260,8 @@ systracef_ioctl(struct file *fp, u_long cmd, caddr_t data, struct proc *p)
 
 	switch (cmd) {
 	case FIONBIO:
-        case FIOASYNC:
-                return (0);
+	case FIOASYNC:
+		return (0);
 
 	case STRIOCATTACH:
 		pid = *(pid_t *)data;
@@ -498,7 +491,7 @@ systrace_unlock(void)
 }
 
 void
-systrace_init()
+systrace_init(void)
 {
 	pool_init(&systr_proc_pl, sizeof(struct str_process), 0, 0, 0,
 	    "strprocpl", NULL);
@@ -508,98 +501,38 @@ systrace_init()
 }
 
 int
-systraceopen(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
+systraceopen(dev_t dev, int flag, int mode, struct proc *p)
 {
-	return (0);
-}
+	struct fsystrace *fst;
+	struct file *fp;
+	int error, fd;
 
-int
-systraceclose(dev, flag, mode, p)
-	dev_t	dev;
-	int	flag;
-	int	mode;
-	struct proc *p;
-{
-	return (0);
-}
+	/* falloc() will use the descriptor for us. */
+	if ((error = falloc(p, &fp, &fd)) != 0)
+		return (error);
 
-int
-systraceread(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
+	MALLOC(fst, struct fsystrace *, sizeof(*fst), M_XDATA, M_WAITOK);
 
-int
-systracewrite(dev, uio, ioflag)
-	dev_t	dev;
-	struct uio *uio;
-	int	ioflag;
-{
-	return (EIO);
-}
+	memset(fst, 0, sizeof(struct fsystrace));
+	lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
 
-int
-systraceioctl(dev, cmd, data, flag, p)
-	dev_t	dev;
-	u_long	cmd;
-	caddr_t	data;
-	int	flag;
-	struct proc *p;
-{
-	struct file *f;
-	struct fsystrace *fst = NULL;
-	int fd, error;
+	TAILQ_INIT(&fst->processes);
+	TAILQ_INIT(&fst->messages);
+	TAILQ_INIT(&fst->policies);
 
-	switch (cmd) {
-	case SYSTR_CLONE:
-		MALLOC(fst, struct fsystrace *, sizeof(struct fsystrace),
-		    M_XDATA, M_WAITOK);
+	if (suser(p->p_ucred, &p->p_acflag) == 0)
+		fst->issuser = 1;
 
-		memset(fst, 0, sizeof(struct fsystrace));
-		lockinit(&fst->lock, PLOCK, "systrace", 0, 0);
-		TAILQ_INIT(&fst->processes);
-		TAILQ_INIT(&fst->messages);
-		TAILQ_INIT(&fst->policies);
+	fp->f_flag = FREAD | FWRITE;
+	fp->f_type = DTYPE_SYSTRACE;
+	fp->f_ops = &systracefops;
+	fp->f_data = (caddr_t) fst;
 
-		if (suser(p->p_ucred, &p->p_acflag) == 0)
-			fst->issuser = 1;
-    
-		error = falloc(p, &f, &fd);
-		if (error) {
-			FREE(fst, M_XDATA);
-			return (error);
-		}
-		f->f_flag = FREAD | FWRITE;
-		f->f_type = DTYPE_VNODE;
-		f->f_ops = &systracefops;
-		f->f_data = (caddr_t) fst;
-		*(int *)data = fd;
-		FILE_SET_MATURE(f);
-#ifdef __NetBSD__
-		FILE_UNUSE(f, p);
-#endif
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
+	p->p_dupfd = fd;
+	FILE_SET_MATURE(fp);
+	FILE_UNUSE(fp, p);
 
-int
-systraceselect(dev, rw, p)
-	dev_t	dev;
-	int	rw;
-	struct proc *p;
-{
-	return (0);
+	return (ENXIO);
 }
 
 void
@@ -1371,4 +1304,3 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 
 	return (0);
 }
-#endif
