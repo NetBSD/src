@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.80 2004/08/12 21:10:18 thorpej Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.81 2004/08/12 21:34:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.80 2004/08/12 21:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.81 2004/08/12 21:34:52 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -186,7 +186,7 @@ wdc_atapi_kill_xfer(struct wdc_channel *chp, struct ata_xfer *xfer, int reason)
 		    reason);
 		panic("wdc_ata_bio_kill_xfer");
 	}
-	wdc_free_xfer(chp, xfer);
+	ata_free_xfer(chp, xfer);
 	scsipi_done(sc_xfer);
 }
 
@@ -344,7 +344,7 @@ wdc_atapi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 			return;
 		}
 
-		xfer = wdc_get_xfer(WDC_NOSLEEP);
+		xfer = ata_get_xfer(ATAXF_NOSLEEP);
 		if (xfer == NULL) {
 			sc_xfer->error = XS_RESOURCE_SHORTAGE;
 			scsipi_done(sc_xfer);
@@ -900,7 +900,7 @@ wdc_atapi_done(struct wdc_channel *chp, struct ata_xfer *xfer)
 	callout_stop(&chp->ch_callout);
 	/* mark controller inactive and free the command */
 	chp->ch_queue->active_xfer = NULL;
-	wdc_free_xfer(chp, xfer);
+	ata_free_xfer(chp, xfer);
 
 	if (chp->ch_drive[drive].drive_flags & DRIVE_WAITDRAIN) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;

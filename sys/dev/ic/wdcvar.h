@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.68 2004/08/12 21:10:18 thorpej Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.69 2004/08/12 21:34:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -193,11 +193,6 @@ int	wdcactivate(struct device *, enum devact);
 int	wdcintr(void *);
 void	wdc_exec_xfer(struct wdc_channel *, struct ata_xfer *);
 
-struct ata_xfer *wdc_get_xfer(int); /* int = WDC_NOSLEEP/CANSLEEP */
-#define WDC_CANSLEEP 0x00
-#define WDC_NOSLEEP 0x01
-
-void	wdc_free_xfer (struct wdc_channel *, struct ata_xfer *);
 void	wdcstart(struct wdc_channel *);
 void	wdcrestart(void*);
 

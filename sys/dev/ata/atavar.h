@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.53 2004/08/12 21:10:18 thorpej Exp $	*/
+/*	$NetBSD: atavar.h,v 1.54 2004/08/12 21:34:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -307,6 +307,11 @@ int	ata_set_mode(struct ata_drive_datas *, u_int8_t, u_int8_t);
 #define CMD_OK    0
 #define CMD_ERR   1
 #define CMD_AGAIN 2
+
+struct ata_xfer *ata_get_xfer(int);
+void	ata_free_xfer(struct wdc_channel *, struct ata_xfer *);
+#define	ATAXF_CANSLEEP	0x00
+#define	ATAXF_NOSLEEP	0x01
 
 void	ata_print_modes(struct wdc_channel *);
 int	ata_downgrade_mode(struct ata_drive_datas *, int);

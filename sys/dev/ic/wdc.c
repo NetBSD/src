@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.198 2004/08/12 21:34:52 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.198 2004/08/12 21:34:52 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $");
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/proc.h>
 
@@ -124,8 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.197 2004/08/12 21:10:18 thorpej Exp $");
 
 /* timeout for the control commands */
 #define WDC_CTRL_DELAY 10000 /* 10s, for the recall command */
-
-struct pool wdc_xfer_pool;
 
 #if NWD > 0
 extern const struct ata_bustype wdc_ata_bustype; /* in ata_wdc.c */
@@ -776,7 +773,6 @@ void
 wdcattach(struct wdc_channel *chp)
 {
 	struct wdc_softc *wdc = chp->ch_wdc;
-	static int inited = 0;
 
 	if (chp->ch_flags & WDCF_DISABLED)
 		return;
@@ -791,12 +787,7 @@ wdcattach(struct wdc_channel *chp)
 	callout_init(&chp->ch_callout);
 	if (wdc->drv_probe == NULL)
 		wdc->drv_probe = wdc_drvprobe;
-	if (inited == 0) {
-		/* Initialize the ata_xfer pool. */
-		pool_init(&wdc_xfer_pool, sizeof(struct ata_xfer), 0,
-		    0, 0, "wdcspl", NULL);
-		inited++;
-	}
+
 	TAILQ_INIT(&chp->ch_queue->queue_xfer);
 	chp->ch_queue->queue_freeze = 0;
 	chp->ch_queue->active_xfer = NULL;
@@ -1439,8 +1430,8 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct ata_command *ata_c)
 	    DEBUG_FUNCS);
 
 	/* set up an xfer and queue. Wait for completion */
-	xfer = wdc_get_xfer(ata_c->flags & AT_WAIT ? WDC_CANSLEEP :
-	    WDC_NOSLEEP);
+	xfer = ata_get_xfer(ata_c->flags & AT_WAIT ? ATAXF_CANSLEEP :
+	    ATAXF_NOSLEEP);
 	if (xfer == NULL) {
 		return ATACMD_TRY_AGAIN;
 	 }
@@ -1680,7 +1671,7 @@ __wdccommand_done_end(struct wdc_channel *chp, struct ata_xfer *xfer)
 	struct ata_command *ata_c = xfer->c_cmd;
 
 	ata_c->flags |= AT_DONE;
-	wdc_free_xfer(chp, xfer);
+	ata_free_xfer(chp, xfer);
 	if (ata_c->flags & AT_WAIT)
 		wakeup(ata_c);
 	else if (ata_c->callback)
@@ -1832,35 +1823,6 @@ wdc_exec_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
 	WDCDEBUG_PRINT(("wdcstart from wdc_exec_xfer, flags 0x%x\n",
 	    chp->ch_flags), DEBUG_XFERS);
 	wdcstart(chp);
-}
-
-struct ata_xfer *
-wdc_get_xfer(int flags)
-{
-	struct ata_xfer *xfer;
-	int s;
-
-	s = splbio();
-	xfer = pool_get(&wdc_xfer_pool,
-	    ((flags & WDC_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
-	splx(s);
-	if (xfer != NULL) {
-		memset(xfer, 0, sizeof(struct ata_xfer));
-	}
-	return xfer;
-}
-
-void
-wdc_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
-{
-	struct wdc_softc *wdc = chp->ch_wdc;
-	int s;
-
-	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
-		(*wdc->free_hw)(chp);
-	s = splbio();
-	pool_put(&wdc_xfer_pool, xfer);
-	splx(s);
 }
 
 /*

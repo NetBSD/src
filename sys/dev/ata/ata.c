@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.40 2004/08/12 21:10:18 thorpej Exp $      */
+/*      $NetBSD: ata.c,v 1.41 2004/08/12 21:34:52 thorpej Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.40 2004/08/12 21:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.41 2004/08/12 21:34:52 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.40 2004/08/12 21:10:18 thorpej Exp $");
 #include <sys/conf.h>
 #include <sys/fcntl.h>
 #include <sys/proc.h>
+#include <sys/pool.h>
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
@@ -69,6 +70,8 @@ extern int wdcdebug_mask; /* init'ed in wdc.c */
 #else
 #define WDCDEBUG_PRINT(args, level)
 #endif
+
+POOL_INIT(ata_xfer_pool, sizeof(struct ata_xfer), 0, 0, 0, "ataspl", NULL);
 
 /*****************************************************************************
  * ATA bus layer.
@@ -495,6 +498,35 @@ ata_dmaerr(struct ata_drive_datas *drvp, int flags)
 		drvp->n_dmaerrs = 1; /* just got an error */
 		drvp->n_xfers = 1; /* restart counting from this error */
 	}
+}
+
+struct ata_xfer *
+ata_get_xfer(int flags)
+{
+	struct ata_xfer *xfer;
+	int s;
+
+	s = splbio();
+	xfer = pool_get(&ata_xfer_pool,
+	    ((flags & ATAXF_NOSLEEP) != 0 ? PR_NOWAIT : PR_WAITOK));
+	splx(s);
+	if (xfer != NULL) {
+		memset(xfer, 0, sizeof(struct ata_xfer));
+	}
+	return xfer;
+}
+
+void
+ata_free_xfer(struct wdc_channel *chp, struct ata_xfer *xfer)
+{
+	struct wdc_softc *wdc = chp->ch_wdc;
+	int s;
+
+	if (wdc->cap & WDC_CAPABILITY_HWLOCK)
+		(*wdc->free_hw)(chp);
+	s = splbio();
+	pool_put(&ata_xfer_pool, xfer);
+	splx(s);
 }
 
 void
