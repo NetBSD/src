@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.125 2002/09/06 13:18:43 gehenna Exp $ */
+/*	$NetBSD: machdep.c,v 1.126 2002/09/19 10:38:04 ragge Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -99,7 +99,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>

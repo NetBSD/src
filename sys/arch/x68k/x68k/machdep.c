@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.107 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: machdep.c,v 1.108 2002/09/19 10:38:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,7 +62,6 @@
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/msgbuf.h>
