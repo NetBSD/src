@@ -1,4 +1,4 @@
-/* $NetBSD: ecoff_machdep.h,v 1.4 1997/04/06 08:47:22 cgd Exp $ */
+/* $NetBSD: ecoff_machdep.h,v 1.5 1999/04/27 02:32:33 cgd Exp $ */
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -50,6 +50,11 @@
 #define ECOFF_FLAG_EXEC			0002
 #define ECOFF_SEGMENT_ALIGNMENT(ep) \
     (((ep)->f.f_flags & ECOFF_FLAG_EXEC) == 0 ? 8 : 16)
+
+#define	ECOFF_FLAG_OBJECT_TYPE_MASK	0x3000
+#define		ECOFF_OBJECT_TYPE_NO_SHARED	0x1000
+#define		ECOFF_OBJECT_TYPE_SHARABLE	0x2000
+#define		ECOFF_OBJECT_TYPE_CALL_SHARED	0x3000
 
 struct ecoff_symhdr {
 	int16_t		magic;
