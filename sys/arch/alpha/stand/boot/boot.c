@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.9 1997/01/18 00:59:46 cgd Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 1997/01/18 01:58:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,10 +61,20 @@ vm_offset_t ffp_save, ptbr_save;
 
 int debug;
 
+char *kernelnames[] = {
+	"netbsd",
+	"netbsd.bak",
+	"netbsd.old",
+	"onetbsd",
+	NULL
+};
+
 void
 main()
 {
+	char *name, **namep;
 	u_int64_t entry;
+	int win;
 
 	/* Init prom callback vector. */
 	init_prom_calls();
@@ -83,13 +93,20 @@ main()
 	prom_getenv(PROM_E_BOOTED_FILE, boot_file, sizeof(boot_file));
 	prom_getenv(PROM_E_BOOTED_OSFLAGS, boot_flags, sizeof(boot_flags));
 
-	if (boot_file[0] == '\0')
-		bcopy("netbsd", boot_file, sizeof "netbsd");
+	if (boot_file[0] != 0)
+		(void)printf("Boot file: %s\n", boot_file);
+	(void)printf("Boot flags: %s\n", boot_flags);
 
-	(void)printf("Boot: %s %s\n", boot_file, boot_flags);
+	if (boot_file[0] != '\0')
+		win = (loadfile(name = boot_file, &entry) == 0);
+	else
+		for (namep = kernelnames, win = 0; *namep != NULL && !win;
+		    namep++)
+			win = (loadfile(name = *namep, &entry) == 0);
 
-	if (!loadfile(boot_file, &entry)) {
-		(void)printf("Entering kernel at 0x%lx...\n", entry);
+	printf("\n");
+	if (win) {
+		(void)printf("Entering %s at 0x%lx...\n", name, entry);
 		(*(void (*)())entry)(ffp_save, ptbr_save, 0);
 	}
 

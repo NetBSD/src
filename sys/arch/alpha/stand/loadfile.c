@@ -1,4 +1,4 @@
-/*	$NetBSD: loadfile.c,v 1.3 1996/09/23 04:32:44 cgd Exp $	*/
+/*	$NetBSD: loadfile.c,v 1.4 1997/01/18 01:58:32 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -82,6 +82,8 @@ loadfile(fname, entryp)
 	} hdr;
 	ssize_t nr;
 	int fd, rval;
+
+	printf("\nLoading %s...\n", fname);
 
 	/* Open the file. */
 	rval = 1;
