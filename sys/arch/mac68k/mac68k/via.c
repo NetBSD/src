@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.31 1995/09/04 05:05:58 briggs Exp $	*/
+/*	$NetBSD: via.c,v 1.32 1995/09/12 22:52:08 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -140,7 +140,7 @@ VIA_initialize()
 		}
 
 		/*
-		 * unlock nubus
+		 * unlock nubus and set vPCR for SCSI interrupts.
 		 */
 		via2_reg(vPCR)   = 0x66;
 		via2_reg(vBufB) |= 0x02;
@@ -161,7 +161,6 @@ VIA_initialize()
 	}
 	via_inited = 1;
 }
-
 
 void
 via1_intr(struct frame *fp)
@@ -205,6 +204,7 @@ via2_intr(struct frame *fp)
 
 	intbits = via2_reg(vIFR);	/* get interrupts pending */
 	intbits &= via2_reg(vIER);	/* only care about enabled */
+
 	/*
 	 * Unflag interrupts we're about to process.
 	 */
