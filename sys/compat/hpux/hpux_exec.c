@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.22 2000/12/11 05:29:01 mycroft Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.23 2000/12/14 22:55:36 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -94,9 +94,9 @@
 
 #include <machine/hpux_machdep.h>
 
-extern char sigcode[], esigcode[];
 extern struct sysent hpux_sysent[];
 extern const char * const hpux_syscallnames[];
+extern char sigcode[], esigcode[];
 extern int native_to_hpux_errno[];
 void syscall __P((void));
 
@@ -107,9 +107,9 @@ const struct emul emul_hpux = {
 	native_to_hpux_errno,
 	HPUX_SYS_syscall,
 	HPUX_SYS_MAXSYSCALL,
-	hpux_sendsig,
 	hpux_sysent,
 	hpux_syscallnames,
+	hpux_sendsig,
 	sigcode,
 	esigcode,
 	NULL,
