@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.c,v 1.9 1995/01/18 02:54:24 mycroft Exp $	*/
+/*	$NetBSD: disk.c,v 1.10 1995/01/18 15:46:34 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -64,7 +64,6 @@ devopen()
 {
 	struct dos_partition *dptr;
 	struct disklabel *dl;
-	int dosdev = inode.i_dev;
 	int i, sector, di;
 	
 	di = get_diskinfo(dosdev);
@@ -76,7 +75,7 @@ devopen()
 #ifdef	EMBEDDED_DISKLABEL
 		dl = &disklabel;
 #else	EMBEDDED_DISKLABEL
-		Bread(dosdev, 0);
+		Bread(0);
 		dptr = (struct dos_partition *)(((char *)0)+DOSPARTOFF);
 		sector = LABELSECTOR;
 		for (i = 0; i < NDOSPART; i++, dptr++)
@@ -84,7 +83,7 @@ devopen()
 				sector = dptr->dp_start + LABELSECTOR;
 				break;
 			}
-		Bread(dosdev, sector++);
+		Bread(sector++);
 		dl=((struct disklabel *)0);
 		disklabel = *dl;	/* structure copy (maybe useful later)*/
 #endif	EMBEDDED_DISKLABEL
@@ -118,7 +117,7 @@ devopen()
 			do_bad144 = 0;
 			do {
 				/* XXX: what if the "DOS sector" < 512 bytes ??? */
-				Bread(dosdev, dkbbnum + i);
+				Bread(dkbbnum + i);
 				dkbptr = (struct dkbad *) 0;
 /* XXX why is this not in <sys/dkbad.h> ??? */
 #define DKBAD_MAGIC 0x4321
@@ -143,9 +142,8 @@ devopen()
 devread()
 {
 	int offset, sector = bnum;
-	int dosdev = inode.i_dev;
 	for (offset = 0; offset < cnt; offset += BPS) {
-		Bread(dosdev, badsect(dosdev, sector++));
+		Bread(badsect(sector++));
 		bcopy(0, iodest+offset, BPS);
 	}
 }
@@ -162,8 +160,8 @@ static int ra_dev;
 static int ra_end;
 static int ra_first;
 
-Bread(dosdev, sector)
-	int dosdev, sector;
+Bread(sector)
+	int sector;
 {
 	if (dosdev != ra_dev || sector < ra_first || sector >= ra_end) {
 		int cyl, head, sec, nsec;
@@ -190,8 +188,8 @@ Bread(dosdev, sector)
 	bcopy(ra_buf + (sector - ra_first) * BPS, I_ADDR, BPS);
 }
 
-badsect(dosdev, sector)
-	int dosdev, sector;
+badsect(sector)
+	int sector;
 {
 	int i;
 #ifdef DO_BAD144
