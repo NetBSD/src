@@ -1,4 +1,4 @@
-/* $NetBSD: awd.c,v 1.3.2.2 1997/06/01 04:12:45 cgd Exp $ */
+/* $NetBSD: awd.c,v 1.3.2.3 1997/07/22 05:46:04 cgd Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -346,7 +346,8 @@ wdprobe(parent, match, aux)
 	struct wdc_attach_args *wa = aux;
 	int drive = wa->wa_drive;
 
-	if (match->cf_loc[0] != -1 && match->cf_loc[0] != drive)
+	if (match->cf_loc[AWDCCF_DRIVE] != AWDCCF_DRIVE_DEFAULT &&
+	    match->cf_loc[AWDCCF_DRIVE] != drive)
 		return 0;
 	
 	if (wdcommandshort(wdc, drive, WDCC_RECAL) != 0 ||
@@ -594,21 +595,21 @@ wdcstart(wdc)
 		panic("wdcstart: controller still active");
 #endif
 
-	/*
-	 * XXX
-	 * This is a kluge.  See comments in wd_get_parms().
-	 */
-	if ((wdc->sc_flags & WDCF_WANTED) != 0) {
-		wdc->sc_flags &= ~WDCF_WANTED;
-		wakeup(wdc);
-		return;
-	}
 
 loop:
 	/* Is there a drive for the controller to do a transfer with? */
 	wd = wdc->sc_drives.tqh_first;
-	if (wd == NULL)
+	if (wd == NULL) {
+	/*
+	 * XXX
+	 * This is a kluge.  See comments in wd_get_parms().
+	 */
+		if ((wdc->sc_flags & WDCF_WANTED) != 0) {
+			wdc->sc_flags &= ~WDCF_WANTED;
+			wakeup(wdc);
+		}
 		return;
+	}
     
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
 	bp = wd->sc_q.b_actf;
@@ -1536,20 +1537,29 @@ wdsize(dev)
 	dev_t dev;
 {
 	struct wd_softc *wd;
-	int part;
+	int part, unit, omask;
 	int size;
-    
-	if (wdopen(dev, 0, S_IFBLK, NULL) != 0)
+
+	unit = WDUNIT(dev);
+	if (unit >= awd_cd.cd_ndevs)
 		return -1;
-	wd = awd_cd.cd_devs[WDUNIT(dev)];
+	wd = awd_cd.cd_devs[unit];
+	if (wd == NULL)
+		return (-1);
+
 	part = WDPART(dev);
+	omask = wd->sc_dk.dk_openmask & (1 << part);
+
+	if (omask == 0 && wdopen(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
 	if (wd->sc_dk.dk_label->d_partitions[part].p_fstype != FS_SWAP)
-		size = -1;
+		size = (-1);
 	else
-		size = wd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (wdclose(dev, 0, S_IFBLK, NULL) != 0)
-		return -1;
-	return size;
+		size = wd->sc_dk.dk_label->d_partitions[part].p_size *
+		    (wd->sc_dk.dk_label->d_secsize / DEV_BSIZE);
+	if (omask == 0 && wdclose(dev, 0, S_IFBLK, NULL) != 0)
+		return (-1);
+	return (size);
 }
 
 
