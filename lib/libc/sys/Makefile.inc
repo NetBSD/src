@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.11 (Berkeley) 6/23/91
-#	$Id: Makefile.inc,v 1.6 1993/08/16 03:32:58 mycroft Exp $
+#	$Id: Makefile.inc,v 1.7 1993/08/16 04:16:33 mycroft Exp $
 
 # sys sources
 .PATH: ${.CURDIR}/${MACHINE}/sys ${.CURDIR}/sys
@@ -36,8 +36,6 @@ PSEUDO=	_exit.o _getlogin.o
 PPSEUDO=${PSEUDO:.o=.po}
 
 OBJS+=	${ASM} ${PSEUDO}
-POBJS+=	${PASM} ${PPSEUDO}
-CLEANFILES+=${ASM} ${PSEUDO} ${POBJS} 
 
 ${PASM}: ${.CURDIR}/${MACHINE}/SYS.h /usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
