@@ -1,8 +1,12 @@
-/*	$NetBSD: isinf.c,v 1.7 1998/11/14 19:31:02 christos Exp $	*/
+/*	$NetBSD: isinf.c,v 1.8 1999/08/29 18:11:28 mycroft Exp $	*/
 
-/*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+/*
+ * Copyright (c) 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ *
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,50 +35,34 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ * from: Header: isinf.c,v 1.1 91/07/08 19:03:34 torek Exp
  */
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91";
+static char sccsid[] = "@(#)isinf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.7 1998/11/14 19:31:02 christos Exp $");
+__RCSID("$NetBSD: isinf.c,v 1.8 1999/08/29 18:11:28 mycroft Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/types.h>
+#include <machine/ieee.h>
 #include <math.h>
 
 #ifdef __weak_alias
-__weak_alias(isnan,_isnan);
 __weak_alias(isinf,_isinf);
 #endif
-
-int
-isnan(d)
-	double d;
-{
-	register struct IEEEdp {
-		u_int manl : 32;
-		u_int manh : 20;
-		u_int  exp : 11;
-		u_int sign :  1;
-	} *p = (struct IEEEdp *)(void *)&d;
-
-	return(p->exp == 2047 && (p->manh || p->manl));
-}
 
 int
 isinf(d)
 	double d;
 {
-	register struct IEEEdp {
-		u_int manl : 32;
-		u_int manh : 20;
-		u_int  exp : 11;
-		u_int sign :  1;
-	} *p = (struct IEEEdp *)(void *)&d;
+	register struct ieee_double *p = (struct ieee_double *)(void *)&d;
 
-	return(p->exp == 2047 && !p->manh && !p->manl);
+	return (p->dbl_exp == DBL_EXP_INFNAN &&
+	    (p->dbl_frach == 0 && p->dbl_fracl == 0));
 }
