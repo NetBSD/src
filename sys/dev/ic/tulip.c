@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.74 2000/10/03 23:35:55 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.75 2000/10/05 07:22:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1336,8 +1336,13 @@ tlp_rxintr(sc)
 		 * If an error occured, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
+	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
+		 * error.
 		 */
-		if (rxstat & TDSTAT_ES) {
+		if (rxstat & TDSTAT_ES &&
+		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
+		    (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_RE |
+		    TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
@@ -1836,16 +1841,6 @@ tlp_init(sc)
 
 	sc->sc_rxint_mask = STATUS_RI|STATUS_RU|STATUS_RWT;
 	sc->sc_txint_mask = STATUS_TI|STATUS_UNF|STATUS_TJT;
-
-	/*
-	 * If 802.1Q VLAN MTU is enabled, we must ignore Receive Watchdog
-	 * and Transmit Jabber errors.
-	 */
-	if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
-		sc->sc_inten &= ~(STATUS_RWT | STATUS_TJT);
-		sc->sc_rxint_mask &= ~STATUS_RWT;
-		sc->sc_txint_mask &= ~STATUS_TJT;
-	}
 
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_WB89C840F:
