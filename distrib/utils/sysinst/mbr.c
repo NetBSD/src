@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.51 2003/08/10 14:51:49 dsl Exp $ */
+/*	$NetBSD: mbr.c,v 1.52 2003/09/21 02:30:18 takemura Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -237,7 +237,7 @@ set_mbr_type(menudesc *m, void *arg)
 	char *cp;
 	int opt = mbri->opt;
 	int type;
-	int sz;
+	int start, sz;
 	int i;
 	char numbuf[4];
 
@@ -323,10 +323,11 @@ set_mbr_type(menudesc *m, void *arg)
 		if (mbri->sector != 0)
 			/* shouldn't be possible to have null start... */
 			return 0;
-		if (find_mbr_space(&mbri->mbr, &mbrp->mbrp_start,
-				   &mbrp->mbrp_size, bsec, -1) != 0)
+		if (find_mbr_space(&mbri->mbr, &start, &sz, bsec, -1) != 0)
 			/* no space */
 			return 0;
+		mbrp->mbrp_start = start;
+		mbrp->mbrp_size = sz;
 		/* If there isn't an active partition mark this one active */
 		if (!MBR_IS_EXTENDED(type)) {
 			for (i = 0; i < NMBRPART; i++)
