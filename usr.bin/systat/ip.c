@@ -1,4 +1,4 @@
-/*	$NetBSD: ip.c,v 1.10 2001/06/12 15:17:29 wiz Exp $	*/
+/*	$NetBSD: ip.c,v 1.11 2003/02/24 10:10:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Andrew Doran <ad@NetBSD.org>
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ip.c,v 1.10 2001/06/12 15:17:29 wiz Exp $");
+__RCSID("$NetBSD: ip.c,v 1.11 2003/02/24 10:10:00 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ WINDOW *
 openip(void)
 {
 
-	return (subwin(stdscr, LINES-5-1, 0, 5, 0));
+	return (subwin(stdscr, -1, 0, 5, 0));
 }
 
 void
