@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.43 1999/01/08 10:15:10 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.44 1999/01/19 23:07:29 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -181,7 +181,7 @@ void
 hypersparc_cache_enable()
 {
 	int i, ls, ts;
-	u_int pcr;
+	u_int pcr, v;
 	extern u_long dvma_cachealign;
 
 	ls = CACHEINFO.c_linesize;
@@ -213,8 +213,16 @@ hypersparc_cache_enable()
 	if (CACHEINFO.c_hwflush)
 		panic("cache_enable: can't handle 4M with hw-flush cache");
 
+	/*
+	 * Enable instruction cache and, on single-processor machines,
+	 * disable `Unimplemented Flush Traps'.
+	 */
+	v = HYPERSPARC_ICCR_ICE | (ncpu == 1 ? HYPERSPARC_ICCR_FTD : 0);
+	wrasr(v, HYPERSPARC_ASRNUM_ICCR);
+
 	printf("cache enabled\n");
 }
+
 
 void
 swift_cache_enable()
