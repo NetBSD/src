@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.2 1998/08/29 21:43:00 pk Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.3 1998/08/31 11:13:54 pk Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -170,12 +170,12 @@ void
 lesetutp(sc)
 	struct lance_softc *sc;
 {
-	struct le_softc *lesc = (struct le_softc *)sc;
+	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
 
-	csr = L64854_GCSR(lesc->sc_dma);
+	csr = L64854_GCSR(dma);
 	csr |= E_TP_AUI;
-	L64854_SCSR(lesc->sc_dma, csr);
+	L64854_SCSR(dma, csr);
 	delay(20000);	/* must not touch le for 20ms */
 }
 
@@ -183,13 +183,12 @@ void
 lesetaui(sc)
 	struct lance_softc *sc;
 {
-	struct le_softc *lesc = (struct le_softc *)sc;
+	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
 
-	csr = L64854_GCSR(lesc->sc_dma);
+	csr = L64854_GCSR(dma);
 	csr &= ~E_TP_AUI;
-	L64854_SCSR(lesc->sc_dma, csr);
-
+	L64854_SCSR(dma, csr);
 	delay(20000);	/* must not touch le for 20ms */
 }
 
@@ -232,12 +231,12 @@ lemediastatus(sc, ifmr)
 	struct lance_softc *sc;
 	struct ifmediareq *ifmr;
 {
-	struct le_softc *lesc = (struct le_softc *)sc;
+	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 
 	/*
 	 * Notify the world which media we're currently using.
 	 */
-	if (L64854_GCSR(lesc->sc_dma) & E_TP_AUI)
+	if (L64854_GCSR(dma) & E_TP_AUI)
 		ifmr->ifm_active = IFM_ETHER|IFM_10_T;
 	else
 		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
