@@ -1,6 +1,8 @@
-/*	$NetBSD: mem.c,v 1.17 1995/04/10 16:49:14 mycroft Exp $	*/
+/*	$NetBSD: mem.c,v 1.18 1995/04/13 22:02:04 gwr Exp $	*/
 
 /*
+ * Copyright (c) 1994, 1995 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -51,16 +53,22 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
+#include <vm/vm.h>
+#include <vm/vm_kern.h>
+#include <vm/vm_map.h>
+
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
-#include <vm/vm.h>
-
 extern int eeprom_uio();
 extern vm_offset_t avail_start, avail_end;
-extern vm_offset_t vmmap;
+
+vm_offset_t vmmap;	/* XXX - poor name...
+                     * It is a virtual page, not a map.
+                     */
 caddr_t zeropage;
+
 
 /*ARGSUSED*/
 int
@@ -96,6 +104,8 @@ mmrw(dev, uio, flags)
 	static int physlock;
 
 	if (minor(dev) == 0) {
+		if (vmmap == 0)
+			return (EIO);
 		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
@@ -121,32 +131,34 @@ mmrw(dev, uio, flags)
 		case 0:
 			v = uio->uio_offset;
 			/* allow reads only in RAM */
-			if (v >= avail_end) {
+			if (v < 0 || v >= avail_end) {
 				error = EFAULT;
 				goto unlock;
 			}
+			/*
+			 * If the offset (physical address) is outside the
+			 * region of physical memory that is "managed" by
+			 * the pmap system, then we are not allowed to
+			 * call pmap_enter with that physical address.
+			 * Everything from zero to avail_start is mapped
+			 * linearly with physical zero at virtual KERNBASE,
+			 * so redirect the access to /dev/kmem instead.
+			 * This is a better alternative than hacking the
+			 * pmap to deal with requests on unmanaged memory.
+			 * Also note: unlock done at end of function.
+			 */
 			if (v < avail_start) {
-				/*
-				 * The offset was below avail_start, where the
-				 * pmap will refuse to create mappings.
-				 * Everything below there is mapped linearly
-				 * with physical zero at virtual KERNBASE, so
-				 * use kmem! (hack alert! 8-)
-				 */
 				v += KERNBASE;
-				if (physlock > 1)
-					wakeup((caddr_t)&physlock);
-				physlock = 0;
 				goto use_kmem;
 			}
-			pmap_enter(pmap_kernel(), (vm_offset_t)vmmap,
+			/* Temporarily map the memory at vmmap. */
+			pmap_enter(pmap_kernel(), vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(NBPG - o));
 			error = uiomove((caddr_t)vmmap + o, c, uio);
-			pmap_remove(pmap_kernel(), (vm_offset_t)vmmap,
-			    (vm_offset_t)vmmap + NBPG);
+			pmap_remove(pmap_kernel(), vmmap, vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -154,10 +166,24 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 		use_kmem:
-			c = min(iov->iov_len, MAXPHYS);
+			/*
+			 * Watch out!  You might assume it is OK to copy
+			 * up to MAXPHYS bytes here, but that is wrong.
+			 * The next page might NOT be part of the range:
+			 *   	(KERNBASE..(KERNBASE+avail_start))
+			 * which is asked for here via the goto in the
+			 * /dev/mem case above.  The consequence is that
+			 * we copy one page at a time.  Big deal.
+			 * Most requests are small anyway. -gwr
+			 */
+			o = v & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+			{
+				error = EFAULT;
+				goto unlock;
+			}
 			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
@@ -178,6 +204,10 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
+			/*
+			 * On the first call, allocate and zero a page
+			 * of memory for use with /dev/zero.
+			 */
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
@@ -197,6 +227,12 @@ mmrw(dev, uio, flags)
 		uio->uio_offset += c;
 		uio->uio_resid -= c;
 	}
+
+	/*
+	 * Note the different location of this label, compared with
+	 * other ports.  This is because the /dev/mem to /dev/kmem
+	 * redirection above jumps here on error to do its unlock.
+	 */
 unlock:
 	if (minor(dev) == 0) {
 		if (physlock > 1)
@@ -211,23 +247,48 @@ mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
+	register int v = off;
+
 	/*
-	 * /dev/mem is the only one that makes sense through this
-	 * interface.  For /dev/kmem any physaddr we return here
-	 * could be transient and hence incorrect or invalid at
-	 * a later time.  /dev/null just doesn't make any sense
-	 * and /dev/zero is a hack that is handled via the default
-	 * pager in mmap().
+	 * Check address validity.
 	 */
-	if (minor(dev) != 0)
+	if (v & PGOFSET)
 		return (-1);
-	/*
-	 * Allow access only in RAM.
-	 *
-	 * This could be extended to allow access to IO space but
-	 * it is probably better to make device drivers do it.
-	 */
-	if ((u_int)off >= (u_int)avail_end)
-		return (-1);
-	return (sun3_btop(off));
+
+	switch (minor(dev)) {
+
+	case 0:		/* dev/mem */
+		/* Allow access only in RAM. */
+		if (v < 0 || v >= avail_end)
+			return (-1);
+		return (v);
+
+	case 5: 	/* dev/vme16d16 */
+		if (v & 0xffff0000)
+			break;
+		v |= 0xff0000;
+		/* fall through */
+	case 6: 	/* dev/vme24d16 */
+		if (v & 0xff000000)
+			break;
+		v |= 0xff000000;
+		/* fall through */
+	case 7: 	/* dev/vme32d16 */
+		return (v | PMAP_VME16);
+
+	case 8: 	/* dev/vme16d32 */
+		if (v & 0xffff0000)
+			break;
+		v |= 0xff0000;
+		/* fall through */
+	case 9: 	/* dev/vme24d32 */
+		if (v & 0xff000000)
+			break;
+		v |= 0xff000000;
+		/* fall through */
+	case 10:	/* dev/vme32d32 */
+		return (v | PMAP_VME32);
+	}
+
+	return (-1);
 }
