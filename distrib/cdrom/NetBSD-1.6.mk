@@ -1,4 +1,4 @@
-# $NetBSD: NetBSD-1.6.mk,v 1.6 2002/11/18 12:39:43 lukem Exp $
+# $NetBSD: NetBSD-1.6.mk,v 1.7 2003/02/13 23:54:07 jmc Exp $
 #
 # Configuration file for the NetBSD 1.6 binary release.
 
@@ -21,7 +21,7 @@ INTFILES.i386=		boot.i386:i386/installation/floppy/boot-big.fs,link
 # macppc has external bootblock generation tool
 EXTFILES.macppc=	macppc.ofwboot:macppc/binary/sets/base.tgz,./usr/mdec/ofwboot
 INTFILES.macppc=	ofwboot.xcf:macppc/installation/ofwboot.xcf,link \
-			netbsd.macppc:macppc/binary/kernel/netbsd-INSTALL.gz,link
+			netbsd.macppc:macppc/binary/kernel/netbsd.INSTALL.gz,link
 
 # BOOTFILE.pmax is absolute
 BOOTFILE.pmax=		${EXTFILEDIR}/pmax.bootxx
