@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.8 1999/09/16 11:45:20 lukem Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.9 1999/09/17 09:18:15 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.8 1999/09/16 11:45:20 lukem Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.9 1999/09/17 09:18:15 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,6 @@ __RCSID("$NetBSD: qdivrem.c,v 1.8 1999/09/16 11:45:20 lukem Exp $");
  * Multiprecision divide.  This algorithm is from Knuth vol. 2 (2nd ed),
  * section 4.3.1, pp. 257--259.
  */
-
-#include <assert.h>
 
 #include "quad.h"
 
@@ -283,8 +281,6 @@ static void
 shl(digit *p, int len, int sh)
 {
 	int i;
-
-	_DIAGASSERT(p != 0);
 
 	for (i = 0; i < len; i++)
 		p[i] = LHALF((u_long)p[i] << sh) |
