@@ -1,4 +1,4 @@
-/*	$NetBSD: tstp.c,v 1.17 2000/04/24 14:09:44 blymn Exp $	*/
+/*	$NetBSD: tstp.c,v 1.18 2000/04/27 00:27:23 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tstp.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: tstp.c,v 1.17 2000/04/24 14:09:44 blymn Exp $");
+__RCSID("$NetBSD: tstp.c,v 1.18 2000/04/27 00:27:23 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -127,48 +127,7 @@ __stopwin(void)
 	__restore_stophandler();
 
 	if (curscr != NULL) {
-		if (curscr->wattr & __STANDOUT && SE != NULL) {
-			tputs(SE, 0, __cputchar);
-			curscr->wattr &= ~__STANDOUT;
-			if (UE != NULL && !strcmp(SE, UE)) {
-				curscr->wattr &= ~__UNDERSCORE;
-			}
-			if (ME != NULL && !strcmp(SE, ME)) {
-				curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
-			}
-			if (OP != NULL && !strcmp(SE, OP)) {
-				curscr->wattr &= ~__COLOR;
-			}
-
-		}
-		if (curscr->wattr & __UNDERSCORE && UE != NULL) {
-			tputs(UE, 0, __cputchar);
-			curscr->wattr &= ~__UNDERSCORE;
-			if (ME != NULL && !strcmp(UE, ME)) {
-				curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
-			}
-			if (OP != NULL && !strcmp(UE, OP)) {
-				curscr->wattr &= ~__COLOR;
-			}
-		}
-		if (curscr->wattr & __ATTRIBUTES && ME != NULL) {
-			tputs(ME, 0, __cputchar);
-			curscr->wattr &= ~__ATTRIBUTES | __ALTCHARSET | __COLOR;
-			if (OP != NULL && !strcmp(ME, OP)) {
-				curscr->wattr &= ~__COLOR;
-			}
-		}
-		if (curscr->wattr & __ALTCHARSET && AE != NULL) {
-			tputs(AE, 0, __cputchar);
-			curscr->wattr &= ~__ALTCHARSET;
-		}
-		if (curscr->wattr & __COLOR) {
-			if (OC != NULL)
-				tputs(OC, 0, __cputchar);
-			if (OP != NULL)
-				tputs(OP, 0, __cputchar);
-			curscr->wattr &= ~__COLOR;
-		}
+		__unsetattr(0);
 		__mvcur((int) curscr->cury, (int) curscr->curx, (int) curscr->maxy - 1, 0, 0);
 	}
 
