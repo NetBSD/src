@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.2 2003/07/28 19:37:03 jonathan Exp $ */
+/*	$NetBSD: xform.h,v 1.3 2003/08/25 04:09:58 thorpej Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -29,7 +29,7 @@
 #include <sys/md5.h>
 #include <sys/sha1.h>
 #include <crypto/sha2/sha2.h>
-#include <opencrypto/rmd160.h>
+#include <crypto/ripemd160//rmd160.h>
 
 /* Declarations */
 struct auth_hash {
