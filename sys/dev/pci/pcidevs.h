@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.297 2001/01/17 20:56:47 thorpej Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.298 2001/01/22 13:58:37 mjl Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.291 2001/01/17 20:55:47 thorpej Exp 
+ *	NetBSD: pcidevs,v 1.292 2001/01/22 13:57:54 mjl Exp 
  */
 
 /*
@@ -843,6 +843,11 @@
 
 /* AVM products */
 #define	PCI_PRODUCT_AVM_FRITZ_CARD	0x0a00		/* Fritz! Card ISDN Interface */
+
+/* Stallion products */
+#define	PCI_PRODUCT_STALLION_EC8_32	0x0000		/* EC8/32 */
+#define	PCI_PRODUCT_STALLION_EC8_64	0x0002		/* EC8/64 */
+#define	PCI_PRODUCT_STALLION_EASYIO	0x0003		/* EasyIO */
 
 /* Bit3 products */
 #define	PCI_PRODUCT_BIT3_PCIVME617	0x0001		/* PCI-VME Interface Mod. 617 */
