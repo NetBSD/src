@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.119 1999/03/19 06:40:11 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.120 1999/03/25 03:29:06 explorer Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.112 1999/03/19 06:39:32 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.113 1999/03/25 03:28:17 explorer Exp 
  */
 
 /*
@@ -508,6 +508,7 @@
 #define	PCI_VENDOR_RISCOM	0x12aa		/* RISCom */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
 #define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
+#define	PCI_VENDOR_LMC	0x1376		/* LAN Media Corporation */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -886,6 +887,11 @@
 
 /* KTI products - XXX better descriptions */
 #define	PCI_PRODUCT_KTI_NE2KETHER	0x3000		/* Ethernet */
+
+/* LAN Media Corporation */
+#define	PCI_PRODUCT_LMC_HSSI	0x0003		/* HSSI Interface */
+#define	PCI_PRODUCT_LMC_DS3	0x0004		/* DS3 Interface */
+#define	PCI_PRODUCT_LMC_SSI	0x0005		/* SSI */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
