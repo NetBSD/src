@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.6 1997/10/12 00:54:32 lukem Exp $	*/
+/*	$NetBSD: save.c,v 1.7 1999/03/29 05:12:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.6 1997/10/12 00:54:32 lukem Exp $");
+__RCSID("$NetBSD: save.c,v 1.7 1999/03/29 05:12:39 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -47,10 +47,6 @@ __RCSID("$NetBSD: save.c,v 1.6 1997/10/12 00:54:32 lukem Exp $");
 #ifndef	unctrl
 #include "unctrl.h"
 #endif
-
-# ifdef	attron
-#	include	<term.h>
-# endif	attron
 
 /*
  * @(#)save.c	1.2 (Berkeley) 3/28/83
