@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.21 2000/03/06 03:08:32 mhitch Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.22 2000/09/28 03:11:29 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -139,6 +139,15 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	if (len > ((caddr_t)mips_trunc_page(cp + NBPG * 2) - cp))
 		len = (caddr_t)mips_trunc_page(cp + NBPG * 2) - cp;
 
+	/* Get physical address of buffer start, no next phys addr */
+	phys = (u_int)kvtophys((vaddr_t)cp);
+	nphys = -1;
+
+	/* Compute 2nd DMA pointer only if next page is part of this I/O */
+	if ((NBPG - (phys & (NBPG - 1))) < len) {
+		nphys = (u_int)kvtophys((vaddr_t)mips_trunc_page(cp + NBPG));
+	}
+
 	if ((vaddr_t)cp & 7) {
 		u_int32_t *p;
 		u_int32_t scrval;
@@ -149,10 +158,10 @@ asic_dma_start(asc, state, cp, flag, len, off)
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SDR1, p[1]);
 		scrval = ((vaddr_t)cp >> 1) & 3;
-		cp = (caddr_t)((vaddr_t)cp & ~7);
+		phys &= ~7;
 		if (flag != ASCDMA_READ) {
 			scrval |= 4;
-			cp += 8;
+			phys += 8;
 		}
 		bus_space_write_4(asc->sc_bst, asc->sc_bsh,
 						IOASIC_SCSI_SCR, scrval);
@@ -161,16 +170,6 @@ asic_dma_start(asc, state, cp, flag, len, off)
 	/* If R4K, writeback and invalidate  the buffer */
 	if (CPUISMIPS3)
 		mips3_HitFlushDCache((vaddr_t)cp, len);
-
-	/* Get physical address of buffer start, no next phys addr */
-	phys = (u_int)kvtophys((vaddr_t)cp);
-	nphys = -1;
-
-	/* Compute 2nd DMA pointer only if next page is part of this I/O */
-	if ((NBPG - (phys & (NBPG - 1))) < len) {
-		cp = (caddr_t)mips_trunc_page(cp + NBPG);
-		nphys = (u_int)kvtophys((vaddr_t)cp);
-	}
 
 	/* If not R4K, need to invalidate cache lines for both physical segments */
 	if (!CPUISMIPS3 && flag == ASCDMA_READ) {
