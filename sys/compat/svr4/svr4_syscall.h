@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.h,v 1.40 1998/01/09 06:26:49 thorpej Exp $	*/
+/*	$NetBSD: svr4_syscall.h,v 1.41 1998/01/22 17:34:15 mycroft Exp $	*/
 
 /*
  * System call numbers.
