@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,16 +32,15 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)utilities.c	5.10 (Berkeley) 12/2/92"; */
-static char *rcsid = "$Id: utilities.c,v 1.4 1994/02/19 09:07:18 cgd Exp $";
+/*static char sccsid[] = "from: @(#)utilities.c	8.2 (Berkeley) 3/25/94";*/
+static char *rcsid = "$Id: utilities.c,v 1.5 1994/06/08 19:33:47 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 
-#include <ufs/dinode.h>
-#include <ufs/dir.h>
-#include <ufs/fs.h>
+#include <ufs/ufs/dinode.h>
+#include <ufs/ufs/dir.h>
 
 #include <errno.h>
 #include <stdio.h>
@@ -72,7 +71,7 @@ pathcheck(name)
 		*cp = '\0';
 		ep = lookupname(name);
 		if (ep == NULL) {
-			/* safe; we know the pathname exists in the dump */
+			/* Safe; we know the pathname exists in the dump. */
 			ep = addentry(name, pathsearch(name)->d_ino, NODE);
 			newnode(ep);
 		}
@@ -327,19 +326,15 @@ flagvalues(ep)
  */
 ino_t
 dirlookup(name)
-	char *name;
+	const char *name;
 {
-	register struct direct *dp;
+	struct direct *dp;
 	ino_t ino;
  
-	dp = pathsearch(name);
-	if (dp != NULL)
-		ino = dp->d_ino;
-	else
-		ino = 0;
+	ino = ((dp = pathsearch(name)) == NULL) ? 0 : dp->d_ino;
 
 	if (ino == 0 || TSTINO(ino, dumpmap) == 0)
-		fprintf(stderr, "%s is not on tape\n", name);
+		fprintf(stderr, "%s is not on the tape\n", name);
 	return (ino);
 }
 
