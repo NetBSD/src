@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.155 2002/09/11 02:41:21 itojun Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.156 2002/10/16 15:15:28 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.155 2002/09/11 02:41:21 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.156 2002/10/16 15:15:28 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1051,7 +1051,8 @@ findpcb:
 #endif
 		{
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp4_log_refused(ip, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
@@ -1090,7 +1091,8 @@ findpcb:
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
-			if (tcp_log_refused && (tiflags & TH_SYN)) {
+			if (tcp_log_refused &&
+			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp6_log_refused(ip6, th);
 			}
 			TCP_FIELDS_TO_HOST(th);
