@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.16 1999/02/09 08:55:24 erh Exp $	*/
+/*	$NetBSD: interactive.c,v 1.17 2001/02/04 21:38:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.16 1999/02/09 08:55:24 erh Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.17 2001/02/04 21:38:01 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,8 @@ struct dirent	*glob_readdir __P((RST_DIR *dirp));
 static int	 glob_stat __P((const char *, struct stat *));
 static void	 mkentry __P((char *, struct direct *, struct afile *));
 static void	 printlist __P((char *, char *));
+
+extern char *__progname;	/* from crt0.o */
 
 /*
  * Read and execute commands from the terminal.
@@ -312,7 +314,6 @@ getcmd(curdir, cmd, name, ap)
 	char *curdir, *cmd, *name;
 	struct arglist *ap;
 {
-	extern char *__progname;	/* from crt0.o */
 	char *cp;
 	static char input[BUFSIZ];
 	char output[BUFSIZ];
