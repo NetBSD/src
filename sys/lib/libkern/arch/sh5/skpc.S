@@ -1,4 +1,4 @@
-/*	$NetBSD: skpc.S,v 1.1 2002/10/17 11:53:33 scw Exp $	*/
+/*	$NetBSD: skpc.S,v 1.2 2002/10/19 08:55:00 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -43,13 +43,12 @@
  * XXX: Room for some optimising here, specifically to use quad loads.
  */
 ENTRY(skpc)
-	andi	r2, 0xff, r2
 #ifndef _LP64
 	add.l	r4, r63, r4
-	addz.l	r3, r4, r3		/* r3 = &cp[size] */
-#else
-	add	r3, r4, r3		/* r3 = &cp[size] */
+	addz.l	r3, r63, r3
 #endif
+	andi	r2, 0xff, r2
+	add	r3, r4, r3		/* r3 = &cp[size] */
 	pta/l	1f, tr1
 	pta/u	2f, tr2
 	ptabs/u	r18, tr0
