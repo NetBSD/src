@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.12 2003/06/30 12:07:19 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.13 2003/09/06 19:02:42 yamt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -227,7 +227,7 @@ Unmount a file system specified by the mount structure
 The argument
 .Fa p
 is the calling process.
-.Fa VFS_UNMOUNT
+.Fn VFS_UNMOUNT
 performs any file system type specific operations required before the
 file system is unmounted, such are flushing buffers.
 If MNT_FORCE is specified in the flags
@@ -316,7 +316,7 @@ The locked vnode is returned in
 .Fa vpp .
 .Pp
 A call to
-.Fa VFS_FHTOVP
+.Fn VFS_FHTOVP
 should generally be followed by a call to
 .Fn VFS_CHECKEXP
 to check if the file is accessable to the client.
