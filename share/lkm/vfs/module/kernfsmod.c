@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: kernfsmod.c,v 1.3 1994/07/24 07:16:23 mycroft Exp $
+ *	$Id: kernfsmod.c,v 1.4 1994/12/24 13:26:56 cgd Exp $
  */
 #define printf I_HATE_ANSI
 #include <stdio.h>
@@ -55,6 +55,7 @@ extern struct vfsops kernfs_vfsops;
 extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
 
 /*
+ * XXX THE FOLLOWING COMMENT IS PROBABLY BOGUS...	- cgd, 12/24/94
  * Currently, the mount system call is broken in the way it operates
  * and the vfssw[] table does not have a character string identifier
  * for the file system type; therefore, to remount a file system after
@@ -67,16 +68,16 @@ extern struct vnodeopv_desc kernfs_vnodeop_opv_desc;
  * change the file system operation: for instance, in ISOFS, this
  * could be used to enable/disable Rockridge extensions.
  */
-MOD_VFS("kernfs", MOUNT_KERNFS, &kernfs_vfsops)
+MOD_VFS("kernfs", -1, &kernfs_vfsops)
 
 /*
  * External entry point; should generally match name of .o file.  The
  * arguments are always the same for all loaded modules.  The "load",
  * "unload", and "stat" functions in "DISPATCH" will be called under
- * their respective circumstances unless their value is "nosys".  If
- * called, they are called with the same arguments (cmd is included to
- * allow the use of a single function, ver is included for version
- * matching between modules and the kernel loader for the modules).
+ * their respective circumstances.  If no function is desired, lkm_nofunc()
+ * should be supplied.  They are called with the same arguments (cmd is
+ * included to allow the use of a single function, ver is included for
+ * version matching between modules and the kernel loader for the modules).
  *
  * Since we expect to link in the kernel and add external symbols to
  * the kernel symbol name space in a future version, generally all
@@ -102,5 +103,5 @@ kernfsmod(lkmtp, cmd, ver)
 	vfs_opv_init_explicit(&kernfs_vnodeop_opv_desc);
 	vfs_opv_init_default(&kernfs_vnodeop_opv_desc);
 
-	DISPATCH(lkmtp, cmd, ver, nosys, nosys, nosys)
+	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc)
 }
