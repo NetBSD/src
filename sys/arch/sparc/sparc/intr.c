@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.78 2003/01/23 19:54:35 pk Exp $ */
+/*	$NetBSD: intr.c,v 1.79 2003/01/23 22:33:41 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -318,6 +318,7 @@ nmi_soft(tf)
 			/* In case there's an xcall in progress (unlikely) */
 			spl0();
 			cpuinfo.flags &= ~CPUFLG_READY;
+			cpu_ready_mask &= ~(1 << cpu_number());
 			prom_cpustop(0);
 			break;
 		case OPENPROM_MBX_ABORT:
