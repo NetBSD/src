@@ -1,8 +1,8 @@
-# 	$NetBSD: INSTALL,v 1.6 2002/01/21 13:47:25 mrg Exp $
+# 	$NetBSD: INSTALL,v 1.7 2002/01/27 13:23:26 jdolecek Exp $
 
 include "arch/sparc64/conf/GENERIC32"
 
-#ident 		"INSTALL-$Revision: 1.6 $"
+#ident 		"INSTALL-$Revision: 1.7 $"
 
 include "arch/sparc64/conf/std.sparc64-64"
 
@@ -16,6 +16,7 @@ options 	DIAGNOSTIC
 makeoptions	DEBUG="-g"
 options 	DEBUG
 #options 	SYSCALL_DEBUG
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 #MEMORY DISK ROOT options:
 

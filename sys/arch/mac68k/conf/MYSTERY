@@ -1,4 +1,4 @@
-#	$NetBSD: MYSTERY,v 1.26 2001/11/20 08:43:28 lukem Exp $
+#	$NetBSD: MYSTERY,v 1.27 2002/01/27 13:23:20 jdolecek Exp $
 #
 # GENERIC
 
@@ -33,6 +33,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# cheap kernel consistency checks

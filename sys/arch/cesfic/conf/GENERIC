@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2001/12/28 12:21:55 martin Exp $
+# $NetBSD: GENERIC,v 1.9 2002/01/27 13:23:13 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -26,7 +26,10 @@ maxusers	32
 #options 	LEDEBUG
 
 options 	FPSP
+
 # Standard system options
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	COMPAT_43	# compatibility with 4.3BSD interfaces
 options 	COMPAT_44	# compatibility with 4.4BSD binaries

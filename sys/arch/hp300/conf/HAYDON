@@ -1,4 +1,4 @@
-#	$NetBSD: HAYDON,v 1.14 2001/11/20 12:56:27 lukem Exp $
+#	$NetBSD: HAYDON,v 1.15 2002/01/27 13:23:16 jdolecek Exp $
 #
 # HAYDON
 #
@@ -74,6 +74,7 @@ options 	DDB		# Kernel Dynamic Debugger
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
 options 	KTRACE		# system call tracing support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 config		netbsd root on ? type ?
 

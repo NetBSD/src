@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.32 2001/12/14 05:57:00 gmcgarry Exp $
+#	$NetBSD: DISKLESS,v 1.33 2002/01/27 13:23:16 jdolecek Exp $
 #
 # Diskless HP 9000/300-series workstation
 #
@@ -37,6 +37,7 @@ options 	SYSVSHM		# System V-style shared memory
 options 	SYSVSEM		# System V-style semaphores
 options 	SYSVMSG		# System V-style message queues
 options 	KTRACE		# system call tracing support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Filesystems
 file-system	NFS		# Network filesystem client

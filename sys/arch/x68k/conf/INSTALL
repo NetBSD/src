@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.46 2002/01/14 04:27:13 isaki Exp $
+#	$NetBSD: INSTALL,v 1.47 2002/01/27 13:23:29 jdolecek Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -6,7 +6,7 @@
 
 include "arch/x68k/conf/std.x68k"
 
-#ident 		"INSTALL-$Revision: 1.46 $"
+#ident 		"INSTALL-$Revision: 1.47 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -74,6 +74,8 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 ## Loadable kernel module support
 #options 	LKM
+
+options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program
 #options 	NFS_BOOT_BOOTPARAM

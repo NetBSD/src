@@ -1,4 +1,4 @@
-# 	$NetBSD: BILL-THE-CAT,v 1.15 2001/11/20 12:56:38 lukem Exp $
+# 	$NetBSD: BILL-THE-CAT,v 1.16 2002/01/27 13:23:26 jdolecek Exp $
 # 	From: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 
 include "arch/sparc/conf/std.sparc"
@@ -54,6 +54,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support; still under development.
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 #options 	NFS_BOOT_BOOTPARAM

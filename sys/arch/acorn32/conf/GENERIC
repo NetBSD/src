@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.8 2002/01/25 15:20:54 reinoud Exp $
+# $NetBSD: GENERIC,v 1.9 2002/01/27 13:23:08 jdolecek Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -20,7 +20,7 @@
 
 include		"arch/acorn32/conf/std.acorn32"
 
-#ident		"GENERIC-$Revision: 1.8 $"
+#ident		"GENERIC-$Revision: 1.9 $"
 
 # estimated number of users
 maxusers	32
@@ -129,6 +129,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options
 

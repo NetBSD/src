@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.23 2001/11/20 12:56:36 lukem Exp $
+#	$NetBSD: INSTALL,v 1.24 2002/01/27 13:23:24 jdolecek Exp $
 #
 # INSTALL -- install kernel
 #
@@ -30,6 +30,8 @@ file-system 	NFS				# Network File System client
 
 options 	KMEMSTATS			# saves about 50k
 options 	INET				# IP + ICMP + TCP + UDP
+
+options		PIPE_SOCKETPAIR			# smaller, but slower pipe(2)
 
 # pc532 special options
 options 	CPU30MHZ			# necessary for fast machines

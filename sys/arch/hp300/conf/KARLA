@@ -1,4 +1,4 @@
-#	$NetBSD: KARLA,v 1.12 2001/11/20 12:56:27 lukem Exp $
+#	$NetBSD: KARLA,v 1.13 2002/01/27 13:23:16 jdolecek Exp $
 #
 # KARLA
 #
@@ -69,6 +69,7 @@ options 	DDB		# Kernel Dynamic Debugger
 #options 	DEBUG		# extra kernel debugging support
 #options 	DIAGNOSTIC	# extra kernel debugging checks
 options 	KTRACE		# system call tracing support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 config		netbsd root on ? type ?
 

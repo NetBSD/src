@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.31 2002/01/19 18:45:11 oster Exp $
+# $NetBSD: GENERIC,v 1.32 2002/01/27 13:23:21 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/mmeye/conf/std.mmeye"
 
-#ident 		"GENERIC-$Revision: 1.31 $"
+#ident 		"GENERIC-$Revision: 1.32 $"
 
 maxusers	16		# estimated number of users
 
@@ -50,6 +50,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

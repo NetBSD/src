@@ -1,4 +1,4 @@
-#	$NetBSD: SIMICS,v 1.5 2001/11/20 12:56:43 lukem Exp $
+#	$NetBSD: SIMICS,v 1.6 2002/01/27 13:23:29 jdolecek Exp $
 #
 #	INSTALL_TINY - Tiny Installation kernel, suitable for 4M machines.
 #
@@ -47,6 +47,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 #options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks

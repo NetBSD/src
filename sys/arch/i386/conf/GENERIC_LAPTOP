@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.39 2002/01/19 18:45:10 oster Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.40 2002/01/27 13:23:19 jdolecek Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,7 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.39 $"
+#ident 		"GENERIC-$Revision: 1.40 $"
 
 maxusers	32		# estimated number of users
 
@@ -63,6 +63,8 @@ options 	SYSVSHM		# System V-like memory sharing
 #options 	SHMMAXPGS=1024	# 1024 pages is the default
 
 options 	LKM		# loadable kernel modules
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks

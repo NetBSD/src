@@ -1,10 +1,10 @@
-# 	$NetBSD: SPLODE,v 1.7 2002/01/22 01:23:18 mrg Exp $
+# 	$NetBSD: SPLODE,v 1.8 2002/01/27 13:23:27 jdolecek Exp $
 #
 # Configuration for Ultra1, 32 bit mode.
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident 		"GENERIC-$Revision: 1.7 $"
+#ident 		"GENERIC-$Revision: 1.8 $"
 
 maxusers	256
 
@@ -58,6 +58,8 @@ options 	SYSVSHM		# System V shared memory
 
 ## Loadable kernel module support; still under development.
 options 	LKM
+
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; default on sparc is the bootparam protocol
 options 	NFS_BOOT_BOOTPARAM

@@ -2,7 +2,7 @@
 # R4000 (any model) kernel config file
 
 #
-# 	$NetBSD: R4000,v 1.25 2001/11/20 12:56:37 lukem Exp $
+# 	$NetBSD: R4000,v 1.26 2002/01/27 13:23:25 jdolecek Exp $
 #
 include		"arch/pmax/conf/std.pmax"
 
@@ -27,6 +27,7 @@ options 	DDB_ONPANIC=0		# don't enter debugger on panic
 options 	COMPAT_43		# compatibility with 4.3BSD binaries
 options 	KTRACE			# system call tracing support
 options 	LKM			# loadable kernel modules
+#options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Old 4.4BSD/pmax kgdb options
 #options 	KGDB			# support for kernel gdb
