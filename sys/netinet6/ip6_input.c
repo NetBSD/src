@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.27 2000/08/31 07:35:44 itojun Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.28 2000/10/23 03:45:25 itojun Exp $	*/
 /*	$KAME: ip6_input.c,v 1.121 2000/08/31 06:07:29 itojun Exp $	*/
 
 /*
@@ -688,7 +688,7 @@ ip6_input(m)
 	 * Tell launch routine the next header
 	 */
 #ifdef IFA_STATS
-	if (IFA_STATS && deliverifp != NULL) {
+	if (deliverifp != NULL) {
 		struct in6_ifaddr *ia6;
 		ia6 = in6_ifawithifp(deliverifp, &ip6->ip6_dst);
 		if (ia6)
