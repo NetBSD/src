@@ -1,4 +1,4 @@
-/*	$NetBSD: bdes.c,v 1.1.1.1 2000/06/16 16:50:39 thorpej Exp $	*/
+/*	$NetBSD: bdes.c,v 1.2 2000/06/16 17:16:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,17 +40,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1991, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)bdes.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: bdes.c,v 1.1.1.1 2000/06/16 16:50:39 thorpej Exp $";
+__RCSID("$NetBSD: bdes.c,v 1.2 2000/06/16 17:16:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,22 +103,22 @@ static char rcsid[] = "$NetBSD: bdes.c,v 1.1.1.1 2000/06/16 16:50:39 thorpej Exp
 #ifdef	FASTWAY
 #define	DES_KEY(buf) \
 	if (des_setkey(buf)) \
-		err("des_setkey", 0);
+		bdes_err(0, "des_setkey");
 #define	DES_XFORM(buf) \
 	if (des_cipher(buf, buf, 0L, (inverse ? -1 : 1))) \
-		err("des_cipher", 0);
+		bdes_err(0, "des_cipher");
 #else
 #define	DES_KEY(buf)	{						\
 				char bits1[64];	/* bits of key */	\
 				expand(buf, bits1);			\
 				if (setkey(bits1))			\
-					err("setkey", 0);		\
+					bdes_err(0, "setkey");		\
 			}
 #define	DES_XFORM(buf)	{						\
 				char bits1[64];	/* bits of message */	\
 				expand(buf, bits1);			\
 				if (encrypt(bits1, inverse))		\
-					err("encrypt", 0);		\
+					bdes_err(0, "encrypt");		\
 				compress(bits1, buf);			\
 			}
 #endif
@@ -129,7 +129,7 @@ static char rcsid[] = "$NetBSD: bdes.c,v 1.1.1.1 2000/06/16 16:50:39 thorpej Exp
 #define	READ(buf, n)	fread(buf, sizeof(char), n, stdin)
 #define WRITE(buf,n)						\
 		if (fwrite(buf, sizeof(char), n, stdout) != n)	\
-			err(bn, NULL);
+			bdes_err(bn, NULL);
 
 /*
  * some things to make references easier
@@ -163,12 +163,30 @@ int macbits = -1;			/* number of bits in authentication */
 int fbbits = -1;			/* number of feedback bits */
 int pflag;				/* 1 to preserve parity bits */
 
-main(ac, av)
-	int ac;				/* arg count */
-	char **av;			/* arg vector */
+int	setbits(char *, int);
+void	bdes_err(int, const char *);
+int	tobinhex(char, int);
+void	cvtkey(char *, char *);
+void	makekey(Desbuf);
+void	ecbenc(void);
+void	ecbdec(void);
+void	cbcenc(void);
+void	cbcdec(void);
+void	cbcauth(void);
+void	cfbenc(void);
+void	cfbdec(void);
+void	cfbaenc(void);
+void	cfbadec(void);
+void	ofbenc(void);
+void	ofbdec(void);
+void	cfbauth(void);
+void	expand(Desbuf, char *);
+void	compress(char *, Desbuf);
+void	usage(void);
+
+int
+main(int ac, char *av[])
 {
-	extern int optind;		/* option (argument) number */
-	extern char *optarg;		/* argument to option if any */
 	register int i;			/* counter in a for loop */
 	register char *p;		/* used to obtain the key */
 	Desbuf msgbuf;			/* I/O buffer */
@@ -208,16 +226,20 @@ main(ac, av)
 		case 'F':		/* use alternative CFB mode */
 			alg = ALG_CFBA;
 			if ((fbbits = setbits(optarg, 7)) > 56 || fbbits == 0)
-				err(-1, "-F: number must be 1-56 inclusive");
+				bdes_err(-1,
+				    "-F: number must be 1-56 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-F: number must be a multiple of 7");
+				bdes_err(-1,
+				    "-F: number must be a multiple of 7");
 			break;
 		case 'f':		/* use CFB mode */
 			alg = ALG_CFB;
 			if ((fbbits = setbits(optarg, 8)) > 64 || fbbits == 0)
-				err(-1, "-f: number must be 1-64 inclusive");
+				bdes_err(-1,
+				    "-f: number must be 1-64 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-f: number must be a multiple of 8");
+				bdes_err(-1,
+				    "-f: number must be a multiple of 8");
 			break;
 		case 'k':		/* encryption key */
 			kflag = 1;
@@ -226,14 +248,17 @@ main(ac, av)
 		case 'm':		/* number of bits for MACing */
 			mode = MODE_AUTHENTICATE;
 			if ((macbits = setbits(optarg, 1)) > 64)
-				err(-1, "-m: number must be 0-64 inclusive");
+				bdes_err(-1,
+				    "-m: number must be 0-64 inclusive");
 			break;
 		case 'o':		/* use OFB mode */
 			alg = ALG_OFB;
 			if ((fbbits = setbits(optarg, 8)) > 64 || fbbits == 0)
-				err(-1, "-o: number must be 1-64 inclusive");
+				bdes_err(-1,
+				    "-o: number must be 1-64 inclusive");
 			else if (fbbits == -1)
-				err(-1, "-o: number must be a multiple of 8");
+				bdes_err(-1,
+				    "-o: number must be a multiple of 8");
 			break;
 		case 'p':		/* preserve parity bits */
 			pflag = 1;
@@ -293,7 +318,7 @@ main(ac, av)
 	case ALG_CFBA:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using CFBA mode */
-			err(-1, "can't authenticate with CFBA mode");
+			bdes_err(-1, "can't authenticate with CFBA mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using CFBA mode */
 			cfbadec();
@@ -306,7 +331,7 @@ main(ac, av)
 	case ALG_ECB:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using ECB mode */
-			err(-1, "can't authenticate with ECB mode");
+			bdes_err(-1, "can't authenticate with ECB mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using ECB mode */
 			ecbdec();
@@ -319,7 +344,7 @@ main(ac, av)
 	case ALG_OFB:
 		switch(mode) {
 		case MODE_AUTHENTICATE:	/* authenticate using OFB mode */
-			err(-1, "can't authenticate with OFB mode");
+			bdes_err(-1, "can't authenticate with OFB mode");
 			break;
 		case MODE_DECRYPT:	/* decrypt using OFB mode */
 			ofbdec();
@@ -336,9 +361,8 @@ main(ac, av)
 /*
  * print a warning message and, possibly, terminate
  */
-err(n, s)
-	int n;			/* offending block number */
-	char *s;		/* the message */
+void
+bdes_err(int n, const char *s)
 {
 	if (n > 0)
 		(void)fprintf(stderr, "bdes (block %d): ", n);
@@ -351,9 +375,8 @@ err(n, s)
 /*
  * map a hex character to an integer
  */
-tobinhex(c, radix)
-	char c;			/* char to be converted */
-	int radix;		/* base (2 to 16) */
+int
+tobinhex(char c, int radix)
 {
 	switch(c) {
 	case '0':		return(0x0);
@@ -382,9 +405,8 @@ tobinhex(c, radix)
 /*
  * convert the key to a bit pattern
  */
-cvtkey(obuf, ibuf)
-	char *obuf;			/* bit pattern */
-	char *ibuf;			/* the key itself */
+void
+cvtkey(char *obuf, char *ibuf)
 {
 	register int i, j;		/* counter in a for loop */
 	int nbuf[64];			/* used for hex/key translation */
@@ -407,7 +429,7 @@ cvtkey(obuf, ibuf)
 			 */
 			for (i = 0; ibuf[i] && i < 16; i++)
 				if ((nbuf[i] = tobinhex(ibuf[i], 16)) == -1)
-					err(-1, "bad hex digit in key");
+					bdes_err(-1, "bad hex digit in key");
 			while (i < 16)
 				nbuf[i++] = 0;
 			for (i = 0; i < 8; i++)
@@ -427,7 +449,7 @@ cvtkey(obuf, ibuf)
 			 */
 			for (i = 0; ibuf[i] && i < 16; i++)
 				if ((nbuf[i] = tobinhex(ibuf[i], 2)) == -1)
-					err(-1, "bad binary digit in key");
+					bdes_err(-1, "bad binary digit in key");
 			while (i < 64)
 				nbuf[i++] = 0;
 			for (i = 0; i < 8; i++)
@@ -450,9 +472,8 @@ cvtkey(obuf, ibuf)
  * 2. must be a valid decimal number
  * 3. must be a multiple of mult
  */
-setbits(s, mult)
-	char *s;			/* the ASCII string */
-	int mult;			/* what it must be a multiple of */
+int
+setbits(char *s, int mult)
 {
 	register char *p;		/* pointer in a for loop */
 	register int n = 0;		/* the integer collected */
@@ -469,7 +490,7 @@ setbits(s, mult)
 		if (isdigit(*p))
 			n = n * 10 + *p - '0';
 		else {
-			err(-1, "bad decimal digit in MAC length");
+			bdes_err(-1, "bad decimal digit in MAC length");
 		}
 	}
 	/*
@@ -492,8 +513,8 @@ setbits(s, mult)
  * systems set the parity (high) bit of each character to 0, and the
  * DES ignores the low order bit of each character.
  */
-makekey(buf)
-	Desbuf buf;				/* key block */
+void
+makekey(Desbuf buf)
 {
 	register int i, j;			/* counter in a for loop */
 	register int par;			/* parity counter */
@@ -520,7 +541,8 @@ makekey(buf)
 /*
  * This encrypts using the Electronic Code Book mode of DES
  */
-ecbenc()
+void
+ecbenc(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int bn;	/* block number */
@@ -548,7 +570,8 @@ ecbenc()
 /*
  * This decrypts using the Electronic Code Book mode of DES
  */
-ecbdec()
+void
+ecbdec(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
@@ -566,20 +589,22 @@ ecbdec()
 		if ((c = getchar()) == EOF) {
 			n = CHAR(msgbuf, 7);
 			if (n < 0 || n > 7)
-				err(bn, "decryption failed (block corrupted)");
+				bdes_err(bn,
+				    "decryption failed (block corrupted)");
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(BUFFER(msgbuf), n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		bdes_err(bn, "decryption failed (incomplete block)");
 }
 
 /*
  * This encrypts using the Cipher Block Chaining mode of DES
  */
-cbcenc()
+void
+cbcenc(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int bn;	/* block number */
@@ -612,7 +637,8 @@ cbcenc()
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-cbcdec()
+void
+cbcdec(void)
 {
 	register int n;		/* number of bytes actually read */
 	Desbuf msgbuf;		/* I/O buffer */
@@ -635,20 +661,22 @@ cbcdec()
 		if ((c = getchar()) == EOF) {
 			n = CHAR(msgbuf, 7);
 			if (n < 0 || n > 7)
-				err(bn, "decryption failed (block corrupted)");
+				bdes_err(bn,
+				    "decryption failed (block corrupted)");
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(BUFFER(msgbuf), n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		bdes_err(bn, "decryption failed (incomplete block)");
 }
 
 /*
  * This authenticates using the Cipher Block Chaining mode of DES
  */
-cbcauth()
+void
+cbcauth(void)
 {
 	register int n, j;		/* number of bytes actually read */
 	Desbuf msgbuf;		/* I/O buffer */
@@ -692,7 +720,8 @@ cbcauth()
 /*
  * This encrypts using the Cipher FeedBack mode of DES
  */
-cfbenc()
+void
+cfbenc(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int nbytes;	/* number of bytes to read */
@@ -733,7 +762,8 @@ cfbenc()
 /*
  * This decrypts using the Cipher Block Chaining mode of DES
  */
-cfbdec()
+void
+cfbdec(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
@@ -765,20 +795,22 @@ cfbdec()
 		if ((c = getchar()) == EOF) {
 			n = obuf[nbytes-1];
 			if (n < 0 || n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				bdes_err(bn,
+				    "decryption failed (block corrupted)");
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		bdes_err(bn, "decryption failed (incomplete block)");
 }
 
 /*
  * This encrypts using the alternative Cipher FeedBack mode of DES
  */
-cfbaenc()
+void
+cfbaenc(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int nbytes;	/* number of bytes to read */
@@ -823,7 +855,8 @@ cfbaenc()
 /*
  * This decrypts using the alternative Cipher Block Chaining mode of DES
  */
-cfbadec()
+void
+cfbadec(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
@@ -855,21 +888,23 @@ cfbadec()
 		if ((c = getchar()) == EOF) {
 			if ((n = (obuf[nbytes-1] - '0')) < 0
 						|| n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				bdes_err(bn,
+				    "decryption failed (block corrupted)");
 		}
 		else
 			(void)ungetc(c, stdin);
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		bdes_err(bn, "decryption failed (incomplete block)");
 }
 
 
 /*
  * This encrypts using the Output FeedBack mode of DES
  */
-ofbenc()
+void
+ofbenc(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
@@ -914,7 +949,8 @@ ofbenc()
 /*
  * This decrypts using the Output Block Chaining mode of DES
  */
-ofbdec()
+void
+ofbdec(void)
 {
 	register int n;		/* number of bytes actually read */
 	register int c;		/* used to test for EOF */
@@ -946,7 +982,8 @@ ofbdec()
 		if ((c = getchar()) == EOF) {
 			n = obuf[nbytes-1];
 			if (n < 0 || n > nbytes-1)
-				err(bn, "decryption failed (block corrupted)");
+				bdes_err(bn,
+				    "decryption failed (block corrupted)");
 		}
 		else
 			(void)ungetc(c, stdin);
@@ -956,13 +993,14 @@ ofbdec()
 		WRITE(obuf, n);
 	}
 	if (n > 0)
-		err(bn, "decryption failed (incomplete block)");
+		bdes_err(bn, "decryption failed (incomplete block)");
 }
 
 /*
  * This authenticates using the Cipher FeedBack mode of DES
  */
-cfbauth()
+void
+cfbauth(void)
 {
 	register int n, j;	/* number of bytes actually read */
 	register int nbytes;	/* number of bytes to read */
@@ -1013,9 +1051,8 @@ cfbauth()
 /*
  * change from 8 bits/Uchar to 1 bit/Uchar
  */
-expand(from, to)
-	Desbuf from;			/* 8bit/unsigned char string */
-	char *to;			/* 1bit/char string */
+void
+expand(Desbuf from, char *to)
 {
 	register int i, j;		/* counters in for loop */
 
@@ -1027,9 +1064,8 @@ expand(from, to)
 /*
  * change from 1 bit/char to 8 bits/Uchar
  */
-compress(from, to)
-	char *from;			/* 1bit/char string */
-	Desbuf to;			/* 8bit/unsigned char string */
+void
+compress(char *from, Desbuf to)
 {
 	register int i, j;		/* counters in for loop */
 
@@ -1044,9 +1080,12 @@ compress(from, to)
 /*
  * message about usage
  */
-usage()
+void
+usage(void)
 {
-	(void)fprintf(stderr, "%s\n", 
-"usage: bdes [-abdp] [-F bit] [-f bit] [-k key] [-m bit] [-o bit] [-v vector]");
+	extern const char *__progname;
+
+	(void) fprintf(stderr, "usage: %s %s\n", __progname,
+	    "[-abdp] [-F bit] [-f bit] [-k key] [-m bit] [-o bit] [-v vector]");
 	exit(1);
 }
