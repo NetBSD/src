@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.54 2000/01/19 16:29:54 tsutsui Exp $
+# $NetBSD: Makefile.alpha,v 1.55 2000/01/24 20:36:06 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -179,6 +179,8 @@ depend: .depend
 	test -z "${SFILES}" || \
 	${MKDEP} -a -x assembler-with-cpp ${AFLAGS} ${CPPFLAGS} ${SFILES}
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/genassym.c
+
+dependall: depend all
 
 
 # depend on root or device configuration

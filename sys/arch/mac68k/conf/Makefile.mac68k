@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.72 2000/01/19 16:29:58 tsutsui Exp $
+#	$NetBSD: Makefile.mac68k,v 1.73 2000/01/24 20:36:13 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -175,6 +175,8 @@ depend: .depend
 	  ${CPPFLAGS} < ${MAC68K}/mac68k/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration

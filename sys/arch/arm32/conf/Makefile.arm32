@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm32,v 1.49 2000/01/19 16:29:55 tsutsui Exp $
+#	$NetBSD: Makefile.arm32,v 1.50 2000/01/24 20:36:11 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -188,6 +188,9 @@ depend: .depend
 .ifdef MONITOR
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} modedefs.c
 .endif
+
+dependall: depend all
+
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile

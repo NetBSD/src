@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbsh3.el,v 1.2 2000/01/19 16:30:04 tsutsui Exp $
+#	$NetBSD: Makefile.evbsh3.el,v 1.3 2000/01/24 20:36:12 tron Exp $
 
 # Makefile for NetBSD
 #
@@ -182,6 +182,8 @@ depend: .depend
 	  ${CPPFLAGS} < ${EVBSH3}/evbsh3/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration
