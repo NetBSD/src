@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.78 2002/10/20 02:27:00 isaki Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.79 2002/11/24 17:33:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.78 2002/10/20 02:27:00 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.79 2002/11/24 17:33:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -1208,6 +1208,30 @@ config_finalize(void)
 	while ((f = TAILQ_FIRST(&config_finalize_list)) != NULL) {
 		TAILQ_REMOVE(&config_finalize_list, f, f_list);
 		free(f, M_TEMP);
+	}
+}
+
+/*
+ * We need a dummy object to stuff into the evcnt link set to
+ * ensure that there always is at least one object in the set.
+ */
+static struct evcnt dummy_static_evcnt;
+__link_set_add_bss(evcnts, dummy_static_evcnt);
+
+/*
+ * Initialize event counters.  This does the attach procedure for
+ * each of the static event counters in the "evcnts" link set.
+ */
+void
+evcnt_init(void)
+{
+	__link_set_decl(evcnts, struct evcnt);
+	struct evcnt * const *evp;
+
+	__link_set_foreach(evp, evcnts) {
+		if (*evp == &dummy_static_evcnt)
+			continue;
+		evcnt_attach_static(*evp);
 	}
 }
 
