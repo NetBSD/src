@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.75 2002/03/09 04:29:03 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.76 2002/03/25 01:56:48 chs Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.75 2002/03/09 04:29:03 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.76 2002/03/25 01:56:48 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -943,7 +943,8 @@ ReFault:
 				(void) pmap_enter(ufi.orig_map->pmap, currva,
 				    VM_PAGE_TO_PHYS(pages[lcv]),
 				    pages[lcv]->flags & PG_RDONLY ?
-				    VM_PROT_READ : enter_prot & MASK(ufi.entry),
+				    enter_prot & ~VM_PROT_WRITE :
+				    enter_prot & MASK(ufi.entry),
 				    PMAP_CANFAIL |
 				     (wired ? PMAP_WIRED : 0));
 
@@ -1642,7 +1643,7 @@ Case2:
 	KASSERT((access_type & VM_PROT_WRITE) == 0 ||
 		(pg->flags & PG_RDONLY) == 0);
 	if (pmap_enter(ufi.orig_map->pmap, ufi.orig_rvaddr, VM_PAGE_TO_PHYS(pg),
-	    pg->flags & PG_RDONLY ? VM_PROT_READ : enter_prot,
+	    pg->flags & PG_RDONLY ? enter_prot & ~VM_PROT_WRITE : enter_prot,
 	    access_type | PMAP_CANFAIL | (wired ? PMAP_WIRED : 0)) != 0) {
 
 		/*
