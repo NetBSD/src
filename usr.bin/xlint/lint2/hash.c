@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.2 1995/07/03 21:24:47 cgd Exp $	*/
+/*	$NetBSD: hash.c,v 1.2.4.1 1997/11/04 21:42:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,8 +32,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hash.c,v 1.2 1995/07/03 21:24:47 cgd Exp $";
+static char rcsid[] = "$NetBSD: hash.c,v 1.2.4.1 1997/11/04 21:42:43 thorpej Exp $";
 #endif
+
+/*
+ * XXX Really need a generalized hash table package
+ */
 
 #include <stddef.h>
 #include <string.h>
@@ -50,9 +54,14 @@ static	int	hash __P((const char *));
  * Initialize hash table.
  */
 void
-inithash()
+_inithash(tablep)
+	hte_t ***tablep;	
 {
-	htab = xcalloc(HSHSIZ2, sizeof (hte_t *));
+
+	if (tablep == NULL)
+		tablep = &htab;
+
+	*tablep = xcalloc(HSHSIZ2, sizeof (hte_t *));
 }
 
 /*
@@ -78,15 +87,19 @@ hash(s)
  * given name exists and mknew is set, create a new one.
  */
 hte_t *
-hsearch(s, mknew)
+_hsearch(table, s, mknew)
+	hte_t	**table;
 	const	char *s;
 	int	mknew;
 {
 	int	h;
 	hte_t	*hte;
 
+	if (table == NULL)
+		table = htab;
+
 	h = hash(s);
-	for (hte = htab[h]; hte != NULL; hte = hte->h_link) {
+	for (hte = table[h]; hte != NULL; hte = hte->h_link) {
 		if (strcmp(hte->h_name, s) == 0)
 			break;
 	}
@@ -95,13 +108,14 @@ hsearch(s, mknew)
 		return (hte);
 
 	/* create a new hte */
-	hte = xalloc(sizeof (hte_t));
+	hte = xmalloc(sizeof (hte_t));
 	hte->h_name = xstrdup(s);
 	hte->h_lsym = &hte->h_syms;
 	hte->h_lcall = &hte->h_calls;
 	hte->h_lusym = &hte->h_usyms;
-	hte->h_link = htab[h];
-	htab[h] = hte;
+	hte->h_link = table[h];
+	hte->h_hte = NULL;
+	table[h] = hte;
 
 	return (hte);
 }
@@ -110,14 +124,41 @@ hsearch(s, mknew)
  * Call function f for each name in the hash table.
  */
 void
-forall(f)
+_forall(table, f)
+	hte_t	**table;
 	void	(*f) __P((hte_t *));
 {
 	int	i;
 	hte_t	*hte;
 
+	if (table == NULL)
+		table = htab;
+
 	for (i = 0; i < HSHSIZ2; i++) {
-		for (hte = htab[i]; hte != NULL; hte = hte->h_link)
+		for (hte = table[i]; hte != NULL; hte = hte->h_link)
 			(*f)(hte);
 	}
+}
+
+/*
+ * Free all contents of the hash table that this module allocated.
+ */
+void
+_destroyhash(table)
+	hte_t	**table;
+{
+	int	i;
+	hte_t	*hte, *nexthte;
+
+	if (table == NULL)
+		err(1, "_destroyhash called on main hash table");
+
+	for (i = 0; i < HSHSIZ2; i++) {
+		for (hte = table[i]; hte != NULL; hte = nexthte) {
+			free(hte->h_name);
+			nexthte = hte->h_link;
+			free(hte);
+		}
+	}
+	free(table);
 }

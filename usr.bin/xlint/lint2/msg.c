@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $	*/
+/*	$NetBSD: msg.c,v 1.2.4.1 1997/11/04 21:42:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: msg.c,v 1.2 1995/07/03 21:24:56 cgd Exp $";
+static char rcsid[] = "$NetBSD: msg.c,v 1.2.4.1 1997/11/04 21:42:49 thorpej Exp $";
 #endif
 
 #include <string.h>
@@ -66,6 +66,7 @@ static	const	char *msgs[] = {
 	"%s: too few args for format  \t%s",			      /* 15 */
 	"%s: too many args for format  \t%s",			      /* 16 */
 	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
+	"%s renamed multiple times  \t%s  ::  %s",		      /* 18 */
 };
 
 static	const	char *basename __P((const char *));
