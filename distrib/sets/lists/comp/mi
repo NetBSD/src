@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.724 2004/09/05 06:32:03 manu Exp $
+#	$NetBSD: mi,v 1.725 2004/09/06 09:47:16 yamt Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -5085,6 +5085,7 @@
 ./usr/share/man/cat9/m_adj.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_cat.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copyback.0		comp-sys-catman		.cat
+./usr/share/man/cat9/m_copyback_cow.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copydata.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copym.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_copypacket.0		comp-sys-catman		.cat
@@ -5095,6 +5096,7 @@
 ./usr/share/man/cat9/m_get.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_getclr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/m_gethdr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/m_makewritable.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_prepend.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_pulldown.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/m_pullup.0			comp-sys-catman		.cat
@@ -8815,6 +8817,7 @@
 ./usr/share/man/man9/m_adj.9			comp-sys-man		.man
 ./usr/share/man/man9/m_cat.9			comp-sys-man		.man
 ./usr/share/man/man9/m_copyback.9		comp-sys-man		.man
+./usr/share/man/man9/m_copyback_cow.9		comp-sys-man		.man
 ./usr/share/man/man9/m_copydata.9		comp-sys-man		.man
 ./usr/share/man/man9/m_copym.9			comp-sys-man		.man
 ./usr/share/man/man9/m_copypacket.9		comp-sys-man		.man
@@ -8825,6 +8828,7 @@
 ./usr/share/man/man9/m_get.9			comp-sys-man		.man
 ./usr/share/man/man9/m_getclr.9			comp-sys-man		.man
 ./usr/share/man/man9/m_gethdr.9			comp-sys-man		.man
+./usr/share/man/man9/m_makewritable.9		comp-sys-man		.man
 ./usr/share/man/man9/m_prepend.9		comp-sys-man		.man
 ./usr/share/man/man9/m_pulldown.9		comp-sys-man		.man
 ./usr/share/man/man9/m_pullup.9			comp-sys-man		.man
