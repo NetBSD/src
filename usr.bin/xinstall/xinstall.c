@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.84 2004/01/29 07:58:33 lukem Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.85 2004/01/30 01:38:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.84 2004/01/29 07:58:33 lukem Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.85 2004/01/30 01:38:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,6 +465,7 @@ makelink(char *from_name, char *to_name)
 					/* XXX: only metalog hardlinked files */
 				int omode;
 				char *oowner, *ogroup, *offlags;
+				char *dres;
 
 					/* XXX: use underlying perms */
 				omode = mode;
@@ -475,7 +476,21 @@ makelink(char *from_name, char *to_name)
 				group = NULL;
 				offlags = fflags;
 				fflags = NULL;
-				metadata_log(to_name, "file", NULL, NULL, NULL);
+				switch (digesttype) {
+				case DIGEST_MD5:
+					dres = MD5File(from_name, NULL);
+					break;
+				case DIGEST_RMD160:
+					dres = RMD160File(from_name, NULL);
+					break;
+				case DIGEST_SHA1:
+					dres = SHA1File(from_name, NULL);
+					break;
+				default:
+					dres = NULL;
+				}
+				metadata_log(to_name, "file", NULL, NULL, dres);
+				free(dres);
 				mode = omode;
 				owner = oowner;
 				group = ogroup;
