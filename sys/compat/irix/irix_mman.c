@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.4 2002/09/21 21:14:57 manu Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.5 2002/10/14 21:14:24 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.4 2002/09/21 21:14:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.5 2002/10/14 21:14:24 manu Exp $");
 
 #include "opt_sysv.h"
 
@@ -151,8 +151,6 @@ irix_mmap(p, addr, len, prot, flags, fd, pos, retval)
 	if (flags & IRIX_MAP_RENAME)
 		bsd_flags |= MAP_RENAME;
 		
-	if (flags & IRIX_MAP_LOCAL)
-		printf("Warning: unsupported IRIX mmap() flag MAP_LOCAL\n");
 	if (flags & IRIX_MAP_AUTORESRV)
 		printf("Warning: unsupported IRIX mmap() flag MAP_AUTORESV\n");
 	if (flags & IRIX_MAP_TEXT)
@@ -224,6 +222,14 @@ out:
 	SCARG(&cup, fd) = fd;
 	SCARG(&cup, pos) = pos;
 
+	/* A private mapping that should not be visible to the share group */
+	if (flags & IRIX_MAP_LOCAL) {
+		if ((error = sys_mmap(p, &cup, retval)) != 0)
+			return error;
+		irix_isrr_insert((vaddr_t)addr, len, IRIX_ISRR_PRIVATE, p);
+		return 0;
+	}
+		
 	IRIX_VM_SYNC(p, error = sys_mmap(p, &cup, retval));
 	return error;
 }
@@ -235,9 +241,17 @@ irix_sys_munmap(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+	struct irix_sys_munmap_args /* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+	} */ *uap = v;
 	int error;
 
 	IRIX_VM_SYNC(p, error = sys_munmap(p, v, retval));
+	if (error == 0)
+		irix_isrr_insert((vaddr_t)SCARG(uap, addr), 
+		    SCARG(uap, len), IRIX_ISRR_SHARED, p);
+
 	return error;
 }
 
