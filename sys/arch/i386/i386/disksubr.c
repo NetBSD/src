@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 1998/08/05 02:45:08 perry Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 1998/08/13 18:18:54 rvb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -88,6 +88,13 @@ readdisklabel(dev, strat, lp, osdep)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
+	if (lp->d_ncylinders == 16383) {
+		printf("disklabel: Disk > 8G ... readjusting chs %d/%d/%d to ",
+			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
+		lp->d_ncylinders = lp->d_secperunit /  lp->d_ntracks / lp->d_nsectors;
+		printf("%d/%d/%d\n",
+			lp->d_ncylinders, lp->d_ntracks, lp->d_nsectors);
+	}
 	lp->d_npartitions = RAW_PART + 1;
 	for (i = 0; i < RAW_PART; i++) {
 		lp->d_partitions[i].p_size = 0;
@@ -172,10 +179,21 @@ readdisklabel(dev, strat, lp, osdep)
 				    dp->dp_size;
 				lp->d_partitions[2].p_offset = 
 				    dp->dp_start;
-				lp->d_ntracks = dp->dp_ehd + 1;
-				lp->d_nsectors = DPSECT(dp->dp_esect);
-				lp->d_secpercyl =
-				    lp->d_ntracks * lp->d_nsectors;
+				if (lp->d_ntracks != dp->dp_ehd + 1 ||
+				    lp->d_nsectors != DPSECT(dp->dp_esect)) {
+					printf("disklabel: readjusting chs %d/%d/%d to ",
+						lp->d_ncylinders, lp->d_ntracks,
+						lp->d_nsectors);
+					lp->d_ntracks = dp->dp_ehd + 1;
+					lp->d_nsectors = DPSECT(dp->dp_esect);
+					lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
+					lp->d_ncylinders = lp->d_secperunit / lp->d_secpercyl;
+					if (! lp->d_ncylinders)
+						lp->d_ncylinders = 1;
+					printf("%d/%d/%d\n",
+						lp->d_ncylinders, lp->d_ntracks,
+						lp->d_nsectors);
+				    }
 			}
 		}
 		lp->d_npartitions = RAW_PART + 1 + i;
