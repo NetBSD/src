@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.8 1998/07/14 22:18:37 tv Exp $	*/
+/*	$NetBSD: rtld.c,v 1.9 1998/07/15 11:26:28 tv Exp $	*/
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -89,22 +89,12 @@ Search_Path *_rtld_paths;
 char *__progname;
 char **environ;
 
-#ifdef sparc
-Elf_Addr *_rtld_self_GOT;
-#endif
-
-#ifndef OLD_GOT
+#ifdef OLD_GOT
+extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
+#else
+extern Elf_Addr _GLOBAL_OFFSET_TABLE_[];
 extern Elf_Dyn _DYNAMIC;
 #endif
-
-void _rtld_test(void);
-void _rtld_test(void) { xprintf("%p\n", _GLOBAL_OFFSET_TABLE_); }
-
-void _dynamicprint(u_long *);
-void _dynamicprint(u_long *ptr) {
-	while (*ptr)
-		xprintf("%p, %p\n", *ptr++, *ptr++);
-}
 
 static void
 _rtld_call_fini_functions(
