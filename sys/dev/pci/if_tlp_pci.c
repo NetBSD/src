@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.55 2001/11/13 07:48:45 lukem Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.56 2001/12/07 21:13:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.55 2001/11/13 07:48:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.56 2001/12/07 21:13:58 matt Exp $");
 
 #include "opt_tlp.h"
 
@@ -911,8 +911,16 @@ tlp_pci_attach(parent, self, aux)
 		 * be in an ISV SROM anyhow, tho ISV can cope with
 		 * multi-port boards).
 		 */
-		if (tlp_isv_srom_enaddr(sc, enaddr))
+		if (!tlp_isv_srom_enaddr(sc, enaddr)) {
+#ifdef __sparc__
+			if (!sc->sc_srom[20] && !sc->sc_srom[21] &&
+			    !sc->sc_srom[22]) {
+				extern void myetheraddr __P((u_char *));
+				myetheraddr(enaddr);
+			} else 
+#endif
 			memcpy(enaddr, &sc->sc_srom[20], ETHER_ADDR_LEN);
+		}
 
 		/*
 		 * Davicom chips all have an internal MII interface
