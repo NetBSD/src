@@ -1,4 +1,4 @@
-/* $NetBSD: sf16fmr2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $ */
+/* $NetBSD: sf16fmr2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $ */
 /* $OpenBSD: sf16fmr2.c,v 1.3 2001/12/18 18:48:08 mickey Exp $ */
 /* $RuOBSD: sf16fmr2.c,v 1.12 2001/10/18 16:51:36 pva Exp $ */
 
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.9 2003/07/14 15:47:16 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sf16fmr2.c,v 1.10 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ int	sf2r_set_info(void *, struct radio_info *);
 int	sf2r_search(void *, int);
 
 /* define our interface to the higher level radio driver */
-struct radio_hw_if sf2r_hw_if = {
+const struct radio_hw_if sf2r_hw_if = {
 	NULL, /* open */
 	NULL, /* close */
 	sf2r_get_info,

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.183 2004/07/07 22:30:22 mycroft Exp $	*/
+/*	$NetBSD: audio.c,v 1.184 2004/10/29 12:57:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.183 2004/07/07 22:30:22 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.184 2004/10/29 12:57:16 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -227,7 +227,7 @@ audioattach(struct device *parent, struct device *self, void *aux)
 {
 	struct audio_softc *sc = (void *)self;
 	struct audio_attach_args *sa = aux;
-	struct audio_hw_if *hwp = sa->hwif;
+	const struct audio_hw_if *hwp = sa->hwif;
 	void *hdlp = sa->hdl;
 	int error;
 	mixer_devinfo_t mi;
@@ -483,7 +483,7 @@ au_setup_ports(struct audio_softc *sc, struct au_mixer_ports *ports,
  * probed/attached to the hardware driver.
  */
 struct device *
-audio_attach_mi(struct audio_hw_if *ahwp, void *hdlp, struct device *dev)
+audio_attach_mi(const struct audio_hw_if *ahwp, void *hdlp, struct device *dev)
 {
 	struct audio_attach_args arg;
 
@@ -528,7 +528,7 @@ int
 audio_alloc_ring(struct audio_softc *sc, struct audio_ringbuffer *r,
 		 int direction, size_t bufsize)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	void *hdl = sc->hw_hdl;
 	/*
 	 * Alloc DMA play and record buffers
@@ -835,7 +835,7 @@ audio_init_ringbuffer(struct audio_softc *sc, struct audio_ringbuffer *rp)
 int
 audio_initbufs(struct audio_softc *sc)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	int error;
 
 	DPRINTF(("audio_initbufs: mode=0x%x\n", sc->sc_mode));
@@ -945,7 +945,7 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 {
 	int error;
 	u_int mode;
-	struct audio_hw_if *hw;
+	const struct audio_hw_if *hw;
 
 	hw = sc->hw_if;
 	if (!hw)
@@ -1130,7 +1130,7 @@ audio_drain(struct audio_softc *sc)
 int
 audio_close(struct audio_softc *sc, int flags, int ifmt, struct proc *p)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	int s;
 
 	DPRINTF(("audio_close: sc=%p\n", sc));
@@ -1768,7 +1768,7 @@ int
 audio_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	    struct proc *p)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_offset *ao;
 	int error = 0, s, offs, fd;
 	u_long stamp;
@@ -2077,7 +2077,7 @@ audio_kqfilter(struct audio_softc *sc, struct knote *kn)
 paddr_t
 audio_mmap(struct audio_softc *sc, off_t off, int prot)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb;
 	int s;
 
@@ -2245,7 +2245,7 @@ void
 audio_pint(void *v)
 {
 	struct audio_softc *sc = v;
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_pr;
 	u_char *inp;
 	int cc, ccr;
@@ -2374,7 +2374,7 @@ void
 audio_rint(void *v)
 {
 	struct audio_softc *sc = v;
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_ringbuffer *cb = &sc->sc_rr;
 	int blksize;
 	int error;
@@ -2850,7 +2850,7 @@ audiosetinfo(struct audio_softc *sc, struct audio_info *ai)
 	int cleared;
 	int s, setmode, modechange = 0;
 	int error;
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	struct audio_params pp, rp;
 	int np, nr;
 	unsigned int blks;
@@ -3188,7 +3188,7 @@ int
 audiogetinfo(struct audio_softc *sc, struct audio_info *ai)
 {
 	struct audio_prinfo *r = &ai->record, *p = &ai->play;
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 
 	if (hw == 0)		/* HW has not attached */
 		return(ENXIO);
@@ -3322,7 +3322,7 @@ int
 mixer_ioctl(struct audio_softc *sc, u_long cmd, caddr_t addr, int flag,
 	    struct proc *p)
 {
-	struct audio_hw_if *hw = sc->hw_if;
+	const struct audio_hw_if *hw = sc->hw_if;
 	int error = EINVAL;
 
 	DPRINTF(("mixer_ioctl(%lu,'%c',%lu)\n",

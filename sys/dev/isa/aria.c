@@ -1,4 +1,4 @@
-/*	$NetBSD: aria.c,v 1.20 2004/07/09 02:27:20 mycroft Exp $	*/
+/*	$NetBSD: aria.c,v 1.21 2004/10/29 12:57:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996, 1998 Roland C. Dowdeswell.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.20 2004/07/09 02:27:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aria.c,v 1.21 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ struct audio_device aria_device = {
  * Define our interface to the higher level audio driver.
  */
 
-struct audio_hw_if aria_hw_if = {
+const struct audio_hw_if aria_hw_if = {
 	ariaopen,
 	ariaclose,
 	NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.13 2003/09/10 10:40:40 uwe Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.14 2004/10/29 12:57:17 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.13 2003/09/10 10:40:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4231_ebus.c,v 1.14 2004/10/29 12:57:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,7 @@ static int	cs4231_ebus_trigger_input(void *, void *, void *, int,
 static int	cs4231_ebus_halt_output(void *);
 static int	cs4231_ebus_halt_input(void *);
 
-struct audio_hw_if audiocs_ebus_hw_if = {
+const struct audio_hw_if audiocs_ebus_hw_if = {
 	cs4231_open,
 	cs4231_close,
 	NULL,			/* drain */

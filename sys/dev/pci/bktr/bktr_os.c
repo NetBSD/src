@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.37 2003/06/29 22:30:31 fvdl Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.38 2004/10/29 12:57:26 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.37 2003/06/29 22:30:31 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.38 2004/10/29 12:57:26 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -1348,7 +1348,7 @@ struct cfdriver bktr_cd = {
 int	bktr_get_info(void *, struct radio_info *);
 int	bktr_set_info(void *, struct radio_info *);
 
-struct radio_hw_if bktr_hw_if = {
+static struct radio_hw_if bktr_hw_if = {
 	NULL,	/* open */
 	NULL,	/* close */
 	bktr_get_info,

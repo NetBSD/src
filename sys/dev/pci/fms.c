@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.19 2004/09/22 12:20:25 kent Exp $	*/
+/*	$NetBSD: fms.c,v 1.20 2004/10/29 12:57:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.19 2004/09/22 12:20:25 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.20 2004/10/29 12:57:18 yamt Exp $");
 
 #include "mpu.h"
 
@@ -116,7 +116,7 @@ struct audio_device fms_device = {
 };
 
 
-struct audio_hw_if fms_hw_if = {
+const struct audio_hw_if fms_hw_if = {
 	fms_open,
 	fms_close,
 	NULL,
