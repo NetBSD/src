@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 1999/04/19 03:11:36 simonb Exp $
+# $NetBSD: mi,v 1.8 1999/09/03 07:48:37 tron Exp $
 ./usr/X11R6/bin/gccmakedep
 ./usr/X11R6/bin/imake
 ./usr/X11R6/bin/lndir
@@ -226,6 +226,8 @@
 ./usr/X11R6/lib/X11/config/NetBSD.cf
 ./usr/X11R6/lib/X11/config/Oki.cf
 ./usr/X11R6/lib/X11/config/OpenBSD.cf
+./usr/X11R6/lib/X11/config/QNX.cf
+./usr/X11R6/lib/X11/config/QNX.rules
 ./usr/X11R6/lib/X11/config/Server.tmpl
 ./usr/X11R6/lib/X11/config/ServerLib.tmpl
 ./usr/X11R6/lib/X11/config/Threads.tmpl
@@ -272,6 +274,8 @@
 ./usr/X11R6/lib/X11/config/necLib.rules
 ./usr/X11R6/lib/X11/config/necLib.tmpl
 ./usr/X11R6/lib/X11/config/noop.rules
+./usr/X11R6/lib/X11/config/nto.cf
+./usr/X11R6/lib/X11/config/nto.rules
 ./usr/X11R6/lib/X11/config/oldlib.rules
 ./usr/X11R6/lib/X11/config/os2.cf
 ./usr/X11R6/lib/X11/config/os2.rules
