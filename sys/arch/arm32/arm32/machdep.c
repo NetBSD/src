@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.14 1996/10/17 02:48:39 mark Exp $ */
+/* $NetBSD: machdep.c,v 1.15 1996/12/27 01:53:41 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -2218,11 +2218,7 @@ cpu_startup()
 	if (cmos_read(RTC_ADDR_REBOOTCNT) > 0)
 		printf("Warning: REBOOTCNT = %d\n", cmos_read(RTC_ADDR_REBOOTCNT));
 
-	printf("nkmemclusters=%d\n", NKMEMCLUSTERS);
 	printf("real mem = %d (%d pages)\n", arm_page_to_byte(physmem), physmem);
-
-/*	printf("kernel_map=%08x\n", kernel_map);
-	vm_map_print(kernel_map, 1);*/
 
 	/*
 	 * Find out how much space we need, allocate it,
@@ -2243,7 +2239,7 @@ cpu_startup()
 
 
 	bufsize = MAXBSIZE * nbuf;
-	printf("cpu_startup: bufsize=%d\n", bufsize);
+	printf("cpu_startup: buffer VM size = %d\n", bufsize);
 	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 				   &maxaddr, bufsize, TRUE);
 	minaddr = (vm_offset_t)buffers;
@@ -2255,12 +2251,6 @@ cpu_startup()
 		/* don't want to alloc more physical mem than needed */
 		bufpages = btoc(MAXBSIZE) * nbuf;
 	}
-
-	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);
-
-/*	printf("buffer_map=%08x\n", buffer_map);
-	vm_map_print(buffer_map, 1);*/
 
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
@@ -2308,10 +2298,6 @@ cpu_startup()
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			       VM_MBUF_SIZE, FALSE);
 
-/*	printf("mb_map=%08x\n", mb_map);
-	vm_map_print(mb_map, 1);
-	vm_map_print(kernel_map, 1);*/
-
 	/*
 	 * Initialise callouts
 	 */
@@ -2323,8 +2309,8 @@ cpu_startup()
 
 	printf("avail mem = %d (%d pages)\n", (int)ptoa(cnt.v_free_count),
 	    (int)ptoa(cnt.v_free_count) / NBPG);
-/*	printf("using %d buffers containing %d bytes of memory\n",
-	    nbuf, bufpages * CLBYTES);*/
+	printf("using %d buffers containing %d bytes of memory\n",
+	    nbuf, bufpages * CLBYTES);
 
 	/*
 	 * Set up buffers, so they can be used to read disk labels.
@@ -2412,6 +2398,13 @@ allocsys(v)
 			bufpages = (arm_byte_to_page(2 * 1024 * 1024)
 			         + physmem) / (20 * CLSIZE);
 
+	/*
+	 * XXX stopgap measure to prevent wasting too much KVM on
+	 * the sparsely filled buffer cache.
+	 */
+	if (bufpages * MAXBSIZE > VM_MAX_KERNEL_BUF)
+		bufpages = VM_MAX_KERNEL_BUF / MAXBSIZE;
+
 #ifdef DIAGNOSTIC
 	if (bufpages == 0)
 		panic("bufpages = 0\n");
@@ -2422,6 +2415,13 @@ allocsys(v)
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
+	/*
+	 * XXX stopgap measure to prevent wasting too much KVM on
+	 * the sparsely filled buffer cache.
+	 */
+	if (nbuf * MAXBSIZE > VM_MAX_KERNEL_BUF)
+		nbuf = VM_MAX_KERNEL_BUF / MAXBSIZE;
 
 	if (nswbuf == 0) {
 		nswbuf = (nbuf / 2) & ~1;       /* force even */
