@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.26 2003/08/07 11:15:26 agc Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.27 2004/10/30 21:05:53 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.26 2003/08/07 11:15:26 agc Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.27 2004/10/30 21:05:53 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ getnewpasswd(pw, min_pw_len)
 			(void)printf("Please enter a longer password.\n");
 			continue;
 		}
-		for (t = p; *t && islower(*t); ++t);
+		for (t = p; *t && islower((unsigned char)*t); ++t);
 		if (!*t && ++tries < 2) {
 			(void)printf("Please don't use an all-lower case "
 				     "password.\nUnusual capitalization, "
