@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.21 2002/11/26 18:49:43 christos Exp $	*/
+/*	$NetBSD: satlink.c,v 1.22 2003/05/09 23:51:29 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.21 2002/11/26 18:49:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.22 2003/05/09 23:51:29 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,19 @@ satlinkattach(parent, self, aux)
 		return;
 	}
 
+	if (isa_drq_alloc(sc->sc_ic, sc->sc_drq) != 0) {
+		printf("%s: can't reserve drq %d\n",
+		    sc->sc_dev.dv_xname, sc->sc_drq);
+		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
+		    sc->sc_bufsize);
+		isa_dmamem_free(sc->sc_ic, sc->sc_drq, ringaddr,
+		    sc->sc_bufsize);
+		return;
+	}
+
 	/* Create the DMA map. */
 	if (isa_dmamap_create(sc->sc_ic, sc->sc_drq, sc->sc_bufsize,
-	    BUS_DMA_NOWAIT)) {
+	    BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
 		printf("%s: can't create DMA map\n", sc->sc_dev.dv_xname);
 		isa_dmamem_unmap(sc->sc_ic, sc->sc_drq, sc->sc_buf,
 		    sc->sc_bufsize);

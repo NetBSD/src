@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2 2001/09/15 01:17:47 wdk Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.3 2003/05/09 23:51:27 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -159,6 +159,10 @@ void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 	_isa_dmamem_unmap(&(ic)->ic_dmastate, (c), (k), (s))
 #define	isa_dmamem_mmap(ic, c, a, s, o, p, f)				\
 	_isa_dmamem_mmap(&(ic)->ic_dmastate, (c), (a), (s), (o), (p), (f))
+#define isa_drq_alloc(ic, c)						\
+	_isa_drq_alloc(&(ic)->ic_dmastate, c)
+#define isa_drq_free(ic, c)						\
+	_isa_drq_free(&(ic)->ic_dmastate, c)
 #define	isa_drq_isfree(ic, c)						\
 	_isa_drq_isfree(&(ic)->ic_dmastate, (c))
 #define	isa_malloc(ic, c, s, p, f)					\
@@ -168,4 +172,4 @@ void	isa_mem_free(bus_space_tag_t, bus_space_handle_t, bus_size_t);
 #define	isa_mappage(m, o, p)						\
 	_isa_mappage((m), (o), (p))
 
-#endif /* _ISA_MACHDEP_H_ XXX */
+ endif /* _ISA_MACHDEP_H_ XXX */

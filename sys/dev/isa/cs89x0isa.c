@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.6 2003/05/03 18:11:26 wiz Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.7 2003/05/09 23:51:28 fvdl Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.6 2003/05/03 18:11:26 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.7 2003/05/09 23:51:28 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,8 +89,14 @@ cs_isa_dma_attach(struct cs_softc *sc)
 			goto after_dma_block;
 		}
 
+		if (isa_drq_alloc(isc->sc_ic, isc->sc_drq) != 0) {
+			printf("%s: unable to reserve drq %d\n",
+			    sc->sc_dev.dv_xname, isc->sc_drq);
+			goto after_dma_block;
+		}
+
 		if (isa_dmamap_create(isc->sc_ic, isc->sc_drq,
-		    CS8900_DMASIZE, BUS_DMA_NOWAIT) != 0) {
+		    CS8900_DMASIZE, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW) != 0) {
 			printf("%s: unable to create ISA DMA map\n",
 			    sc->sc_dev.dv_xname);
 			goto after_dma_block;
