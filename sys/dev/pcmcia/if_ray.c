@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.24 2000/12/11 17:53:19 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.25 2000/12/12 17:25:34 thorpej Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -1577,6 +1577,7 @@ done:
 			break;
 		}
 		m_freem(m);
+		return;
 	} else if ((fc0 & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_DATA) {
 		RAY_DPRINTF(("%s: pkt not type data fc0 0x%x\n",
 		    sc->sc_xname, fc0));
