@@ -1,4 +1,4 @@
-/*	$NetBSD: mountd.c,v 1.39 1997/08/13 12:36:04 bouyer Exp $	*/
+/*	$NetBSD: mountd.c,v 1.40 1997/08/28 05:49:15 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,7 +52,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-static char rcsid[] = "$NetBSD: mountd.c,v 1.39 1997/08/13 12:36:04 bouyer Exp $";
+static char rcsid[] = "$NetBSD: mountd.c,v 1.40 1997/08/28 05:49:15 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -343,7 +343,7 @@ mntsrv(rqstp, transp)
 	struct in_addr saddr;
 	u_short sport;
 	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
-	long bad = ENOENT;
+	long bad = EACCES;
 	int defset, hostset, ret;
 	sigset_t sighup_mask;
 
@@ -425,7 +425,6 @@ mntsrv(rqstp, transp)
 			if (debug)
 				fprintf(stderr, "Mount successful.\n");
 		} else {
-			bad = EACCES;
 			if (!svc_sendreply(transp, xdr_long, (caddr_t)&bad))
 				syslog(LOG_ERR, "Can't send reply");
 		}
