@@ -1,0 +1,32 @@
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.1 2002/08/01 15:18:17 he Exp $
+
+A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
+
+File						Revision(s)
+----						--------
+
+sys/sys/param.h					patch
+sys/conf/osrelease.sh				patch
+share/tmac/doc-common				patch
+
+  Mark this with 1.5.4_ALPHA.
+
+crypto/dist/openssl/CHANGES			patch
+crypto/dist/openssl/crypto/cryptlib.c		patch
+crypto/dist/openssl/crypto/cryptlib.h		patch
+crypto/dist/openssl/crypto/asn1/asn1_lib.c	patch
+crypto/dist/openssl/crypto/conf/conf.c		patch
+crypto/dist/openssl/crypto/objects/obj_dat.c	patch
+crypto/dist/openssl/ssl/s2_clnt.c		patch
+crypto/dist/openssl/ssl/s2_lib.c		patch
+crypto/dist/openssl/ssl/s2_srvr.c		patch
+crypto/dist/openssl/ssl/s3_clnt.c		patch
+crypto/dist/openssl/ssl/s3_srvr.c		patch
+crypto/dist/openssl/ssl/ssl.h			patch
+crypto/dist/openssl/ssl/ssl_asn1.c		patch
+crypto/dist/openssl/ssl/ssl_err.c		patch
+crypto/dist/openssl/ssl/ssl_sess.c		patch
+crypto/Makefile.openssl				1.7 via patch
+
+  Apply point patch to add ASN.1 encoding and buffer overflow
+  checks.
