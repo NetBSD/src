@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9x.c,v 1.29 1998/11/30 07:34:06 pk Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.30 1998/11/30 07:44:24 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -241,8 +241,8 @@ ncr53c9x_attach(sc, dev)
 }
 
 /*
- * This is the generic esp reset function. It does not reset the SCSI bus,
- * only this controllers, but kills any on-going commands, and also stops
+ * This is the generic ncr53c9x reset function. It does not reset the SCSI bus,
+ * only this controller, but kills any on-going commands, and also stops
  * and resets the DMA.
  *
  * After reset, registers are loaded with the defaults from the attach
@@ -305,7 +305,7 @@ ncr53c9x_scsi_reset(sc)
 }
 
 /*
- * Initialize esp state machine
+ * Initialize ncr53c9x state machine
  */
 void
 ncr53c9x_init(sc, doreset)
@@ -1047,9 +1047,9 @@ gotit:
 			NCR_MSGS(("cmdcomplete "));
 			if (sc->sc_dleft < 0) {
 				struct scsipi_link *sc_link = ecb->xs->sc_link;
-				printf("%s: %ld extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft,
-				    sc_link->scsipi_scsi.target, sc_link->scsipi_scsi.lun);
+				scsi_print_addr(ecb->xs->sc_link);
+				printf("got %ld extra bytes\n",
+				    sc->sc_dev.dv_xname, -(long)sc->sc_dleft);
 				sc->sc_dleft = 0;
 			}
 			ecb->dleft = (ecb->flags & ECB_TENTATIVE_DONE)
@@ -1171,16 +1171,17 @@ gotit:
 				break;
 
 			default:
-				printf("%s: unrecognized MESSAGE EXTENDED;"
-				    " sending REJECT\n", sc->sc_dev.dv_xname);
+				scsi_print_addr(ecb->xs->sc_link);
+				printf("unrecognized MESSAGE EXTENDED;"
+				       " sending REJECT\n");
 				goto reject;
 			}
 			break;
 
 		default:
 			NCR_MSGS(("ident "));
-			printf("%s: unrecognized MESSAGE; sending REJECT\n",
-			    sc->sc_dev.dv_xname);
+			scsi_print_addr(ecb->xs->sc_link);
+			printf("unrecognized MESSAGE; sending REJECT\n");
 		reject:
 			ncr53c9x_sched_msgout(SEND_REJECT);
 			break;
@@ -1189,8 +1190,9 @@ gotit:
 
 	case NCR_RESELECTED:
 		if (!MSG_ISIDENTIFY(sc->sc_imess[0])) {
-			printf("%s: reselect without IDENTIFY;"
-			    " sending DEVICE RESET\n", sc->sc_dev.dv_xname);
+			scsi_print_addr(ecb->xs->sc_link);
+			printf("reselect without IDENTIFY;"
+			       " sending DEVICE RESET\n");
 			goto reset;
 		}
 
@@ -1198,8 +1200,8 @@ gotit:
 		break;
 
 	default:
-		printf("%s: unexpected MESSAGE IN; sending DEVICE RESET\n",
-		    sc->sc_dev.dv_xname);
+		scsi_print_addr(ecb->xs->sc_link);
+		printf("unexpected MESSAGE IN; sending DEVICE RESET\n");
 	reset:
 		ncr53c9x_sched_msgout(SEND_DEV_RESET);
 		break;
@@ -1739,7 +1741,7 @@ printf("<<RESELECT CONT'd>>");
 			 */
 			ecb = sc->sc_nexus;
 			if (!ecb)
-				panic("esp: no nexus");
+				panic("ncr53c9x: no nexus");
 
 			sc_link = ecb->xs->sc_link;
 			ti = &sc->sc_tinfo[sc_link->scsipi_scsi.target];
@@ -1902,7 +1904,7 @@ printf("<<RESELECT CONT'd>>");
 	 * have a current command working the SCSI bus.
 	 */
 	if (sc->sc_state != NCR_CONNECTED || ecb == NULL) {
-		panic("esp no nexus");
+		panic("ncr53c9x: no nexus");
 	}
 
 	switch (sc->sc_phase) {
