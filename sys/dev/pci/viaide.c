@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.9 2004/01/03 22:56:53 thorpej Exp $	*/
+/*	$NetBSD: viaide.c,v 1.10 2004/02/20 16:36:29 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -90,6 +90,11 @@ static const struct pciide_product_desc pciide_nvidia_products[] = {
 	{ PCI_PRODUCT_NVIDIA_NFORCE2_ATA133,
 	  0,
 	  "NVIDIA nForce2 IDE Controller",
+	  via_chip_map
+	},
+	{ PCI_PRODUCT_NVIDIA_NFORCE3_ATA133,
+	  0,
+	  "NVIDIA nForce3 IDE Controller",
 	  via_chip_map
 	},
 	{ 0,
