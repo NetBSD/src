@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 1997/09/14 14:40:14 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1997/10/01 02:18:14 enami Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.9 1997/09/14 14:40:14 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1997/10/01 02:18:14 enami Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -72,7 +72,6 @@ main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int optind;
 	int ret = 0, erg;
 	int ch;
 
