@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.94 2003/03/07 01:22:16 lukem Exp $
+#	$NetBSD: build.sh,v 1.95 2003/03/14 05:22:50 thorpej Exp $
 #
 # Copyright (c) 2001-2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -88,7 +88,16 @@ initdefaults()
 
 	# Set defaults.
 	toolprefix=nb
-	MAKEFLAGS=
+	# Some systems have a small ARG_MAX.  -X prevents make(1) from
+	# exporting variables in the environment redundantly.
+	case "${uname_s}" in
+	Darwin | FreeBSD)
+		MAKEFLAGS=-X
+		;;
+	*)
+		MAKEFLAGS=
+		;;
+	esac
 	makeenv=
 	makewrapper=
 	runcmd=
@@ -689,7 +698,7 @@ createmakewrapper()
 	eval cat <<EOF $makewrapout
 #! /bin/sh
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.94 2003/03/07 01:22:16 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.95 2003/03/14 05:22:50 thorpej Exp $
 #
 
 EOF
