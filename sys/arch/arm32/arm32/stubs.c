@@ -1,4 +1,4 @@
-/* $NetBSD: stubs.c,v 1.11 1996/10/15 23:39:30 mark Exp $ */
+/* $NetBSD: stubs.c,v 1.12 1996/10/17 02:52:26 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -91,7 +91,7 @@ int (*mountroot)() = do_mountroot;
 
 #ifdef RAMDISK_HOOKS
 extern struct rd_conf *bootrd;
-#endif
+#endif	/* RAMDISK_HOOKS */
 
 int load_ramdisc_from_floppy __P((struct rd_conf *rd, dev_t dev));
 
@@ -123,7 +123,7 @@ do_mountroot()
 		boothowto |= RB_SINGLE;
 		rootdev = makedev(major(rootdev), 0);
 	}
-#endif
+#endif	/* NFDC ... */
 
 /*
  * Slight bug with mounting CD's sometimes. The first mount may fail
@@ -135,7 +135,7 @@ do_mountroot()
 	/* Test for the fake nfs device */
 	if (major(rootdev) == 1)
 		return(nfs_mountroot());
-#endif
+#endif	/* NFSCLIENT */
 #ifdef CD9660
 	if (major(rootdev) == 20 || major(rootdev) == 26) {
 		error = cd9660_mountroot();
@@ -143,20 +143,18 @@ do_mountroot()
 			error = cd9660_mountroot();
 	}
 	else {
-#endif
+#endif	/* CD9660 */
 #ifdef FFS
 		error = ffs_mountroot();
-#else
-#error	FFS not configured
-#endif
+#endif	/* FFS */
 #ifdef CD9660
 		if (error)
 			error = cd9660_mountroot();
 	}
-#endif
+#endif	/* CD9660 */
 	return(error);
 } 
-#endif
+#endif	/* GENERIC */
 
 
 /* Eventually this will become macros */
@@ -342,7 +340,7 @@ dumpsys()
 #if NHYDRABUS > 0
 		if (block == 0)
 			addr += NBPG;
-#endif
+#endif	/* NHYDRABUS */
 		for (;addr < (bootconfig.dram[block].address
 		    + (bootconfig.dram[block].pages * NBPG)); addr += NBPG) {
 		    	if ((len % (1024*1024)) == 0)
