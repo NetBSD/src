@@ -1,29 +1,17 @@
-PREFIX?=	/usr/local
-SYS_INCLUDES?=	-I/usr/src/sys-altq
+#	$NetBSD: Makefile,v 1.2 2000/12/16 18:57:34 thorpej Exp $
 
-PROGS=		altqd
-ALTQD_OBJS= 	altqd.o if_nameindex.o libaltq2.o ../libaltq/libaltq.a
-MAN5=		altq.conf.5
-MAN8=		altqd.8
+PROG=	altqd
+MAN=	altqd.8 altq.conf.5
 
-CFLAGS=		-g -Wall
-CFLAGS+=	-W -Wpointer-arith -Wcast-qual -Wmissing-prototypes -ansi
-DEFINES=	-DALTQ $(SYS_DEFINES)
-INCLUDES=	-I. -I../libaltq $(SYS_INCLUDES)
+SRCS=	altqd.c libaltq2.c
 
-all: $(PROGS)
+CPPFLAGS+= -DALTQ -I${.CURDIR}/../libaltq
 
-install: $(PROGS)
-	$(INSTALL) $(COPY) -m 0755 $(PROGS) $(PREFIX)/bin
-	$(INSTALL) $(COPY) -m 0644 $(MAN5) $(PREFIX)/man/man5
-	$(INSTALL) $(COPY) -m 0644 $(MAN8) $(PREFIX)/man/man8
+LIBALTQOBJ != cd ${.CURDIR}/../libaltq && make print-objdir
+DPADD+=	${LIBALTQOBJ}/libaltq.a
+LDADD+=	-L${LIBALTQOBJ} -laltq
 
-altqd: $(ALTQD_OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -o $@ $(ALTQD_OBJS) $(SYS_LIBS) -lm
+DPADD+=	${LIBM}
+LDADD+=	-lm
 
-.c.o: 
-	$(CC) $(CFLAGS) $(INCLUDES) $(DEFINES) -c $*.c
-
-clean:;		-rm -f $(PROGS) *.a *.o core *.core *.bak ,* *~ "#"*
-
-
+.include <bsd.prog.mk>
