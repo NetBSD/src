@@ -37,7 +37,7 @@
  *	@(#)SYS.h	8.1 (Berkeley) 6/4/93
  *
  *	from: Header: SYS.h,v 1.2 92/07/03 18:57:00 torek Exp
- *	$Id: SYS.h,v 1.4 1996/10/19 00:28:31 jtc Exp $
+ *	$Id: SYS.h,v 1.5 1996/10/24 13:00:32 jtc Exp $
  */
 
 #include <machine/asm.h>
@@ -102,7 +102,6 @@
  *
  * XXX - This should be optimized.
  */
-#define SYSCALL_NOERROR(x) \
 #define RSYSCALL_NOERROR(x) \
 	RSYSCALL(x)
 
