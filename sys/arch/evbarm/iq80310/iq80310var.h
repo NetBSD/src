@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310var.h,v 1.1 2001/11/07 00:33:25 thorpej Exp $	*/
+/*	$NetBSD: iq80310var.h,v 1.2 2001/11/09 20:58:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -38,6 +38,8 @@
 #ifndef _IQ80310_IQ80310VAR_H_
 #define	_IQ80310_IQ80310VAR_H_
 
+#include <dev/pci/pcivar.h>
+
 /*
  * XINT3 bits 0-4 are "IRQ 0-4".  XINT0 bits 0-2 are "IRQ 5-7".
  */
@@ -47,6 +49,8 @@
 void	iq80310_calibrate_delay(void);
 
 void	iq80310_7seg(char, char);
+
+void	iq80310_pci_init(pci_chipset_tag_t, void *);
 
 void	*iq80310_intr_establish(int, int, int (*)(void *), void *);
 void	iq80310_intr_disestablish(void *);
