@@ -1,4 +1,4 @@
-/*	$NetBSD: ldexp.c,v 1.1 1995/02/10 17:50:24 cgd Exp $	*/
+/*	$NetBSD: ldexp.c,v 1.2 1999/03/10 08:15:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -53,7 +53,7 @@ ldexp(val, exp)
 	 */
 	u.v = val;
 	oldexp = u.s.dbl_exp;
-	if (val == 0 || exp == 0 || oldexp == DBL_EXP_INFNAN)
+	if (val == 0.0 || exp == 0 || oldexp == DBL_EXP_INFNAN)
 		return (val);
 
 	/*
@@ -64,7 +64,7 @@ ldexp(val, exp)
 	 */
 	newexp = oldexp + exp;
 	if (newexp >= DBL_EXP_INFNAN) {
-		/* u.s.dbl_sign = val < 0; -- already set */
+		/* u.s.dbl_sign = val < 0.0; -- already set */
 		u.s.dbl_exp = DBL_EXP_INFNAN;
 		u.s.dbl_frach = u.s.dbl_fracl = 0;
 		errno = ERANGE;
@@ -76,7 +76,7 @@ ldexp(val, exp)
 		 * (see comments in machine/ieee.h).
 		 */
 		if (newexp <= -DBL_FRACBITS) {
-			/* u.s.dbl_sign = val < 0; -- already set */
+			/* u.s.dbl_sign = val < 0.0; -- already set */
 			u.s.dbl_exp = 0;
 			u.s.dbl_frach = u.s.dbl_fracl = 0;
 			errno = ERANGE;
@@ -88,7 +88,7 @@ ldexp(val, exp)
 		 * 2^-2097, so we may have to do this as many as three
 		 * steps (not just two, as for positive `exp's below).
 		 */
-		mul.v = 0;
+		mul.v = 0.0;
 		while (exp <= -DBL_EXP_BIAS) {
 			mul.s.dbl_exp = 1;
 			val *= mul.v;
@@ -116,7 +116,7 @@ ldexp(val, exp)
 		 * arithmetic just as for normal `double's.
 		 */
 		mulexp = exp <= DBL_EXP_BIAS ? exp : DBL_EXP_BIAS;
-		mul.v = 0;
+		mul.v = 0.0;
 		mul.s.dbl_exp = mulexp + DBL_EXP_BIAS;
 		val *= mul.v;
 		if (mulexp == exp)
