@@ -3,6 +3,7 @@
 PROG=		genclass
 SRCS=		genclass.sh
 NOMAN=
+STRIP=
 
 genclass:	genclass.sh
 	sed -e 's|^PROTODIR=.*|PROTODIR=${DESTDIR}/usr/include/g++/gen|' \
