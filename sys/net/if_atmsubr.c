@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.26 2000/12/18 19:44:33 thorpej Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.27 2001/01/17 00:30:50 thorpej Exp $       */
 
 /*
  *
@@ -346,8 +346,6 @@ void
 atm_ifattach(ifp)
 	struct ifnet *ifp;
 {
-	struct ifaddr *ifa;
-	struct sockaddr_dl *sdl;
 
 	ifp->if_type = IFT_ATM;
 	ifp->if_addrlen = 0;
@@ -359,30 +357,8 @@ atm_ifattach(ifp)
 	ifp->if_input = atm_input;
 #endif
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
-	    ifa = ifa->ifa_list.tqe_next)
-#elif defined(__FreeBSD__) && ((__FreeBSD__ > 2) || defined(_NET_IF_VAR_H_))
-/*
- * for FreeBSD-3.0.  3.0-SNAP-970124 still sets -D__FreeBSD__=2!
- * XXX -- for now, use newly-introduced "net/if_var.h" as an identifier.
- * need a better way to identify 3.0.  -- kjc
- */
-	for (ifa = ifp->if_addrhead.tqh_first; ifa; 
-	    ifa = ifa->ifa_link.tqe_next)
-#elif defined(__FreeBSD__) || defined(__bsdi__)
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next) 
-#endif
-
-		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
-		    sdl->sdl_family == AF_LINK) {
-			sdl->sdl_type = IFT_ATM;
-			sdl->sdl_alen = ifp->if_addrlen;
-#ifdef notyet /* if using ATMARP, store hardware address using the next line */
-			bcopy(ifp->hw_addr, LLADDR(sdl), ifp->if_addrlen);
-#endif
-			break;
-		}
+	if_alloc_sadl(ifp);
+	/* XXX Store LLADDR for ATMARP. */
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_ATM_RFC1483, sizeof(struct atmllc));
