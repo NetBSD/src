@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.73.2.6 2003/08/27 03:54:10 msaitoh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.73.2.7 2003/08/27 08:41:14 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -135,7 +135,6 @@ sys___sysctl(p, v, retval)
 	size_t savelen = 0, oldlen = 0;
 	sysctlfn *fn;
 	int name[CTL_MAXNAME];
-	size_t *oldlenp;
 
 	/*
 	 * all top-level sysctl names are non-terminal
@@ -196,11 +195,10 @@ sys___sysctl(p, v, retval)
 	 * XXX Hey, we wire `old', but what about `new'?
 	 */
 
-	oldlenp = SCARG(uap, oldlenp);
-	if (oldlenp) {
-		if ((error = copyin(oldlenp, &oldlen, sizeof(oldlen))))
+	if (SCARG(uap, oldlenp)) {
+		if ((error = copyin(SCARG(uap, oldlenp), &oldlen,
+		    sizeof(oldlen))))
 			return (error);
-		oldlenp = &oldlen;
 	}
 	if (SCARG(uap, old) != NULL) {
 		error = lockmgr(&sysctl_memlock, LK_EXCLUSIVE, NULL);
@@ -214,7 +212,7 @@ sys___sysctl(p, v, retval)
 		savelen = oldlen;
 	}
 	error = (*fn)(name + 1, SCARG(uap, namelen) - 1, SCARG(uap, old),
-	    oldlenp, SCARG(uap, new), SCARG(uap, newlen), p);
+	    &oldlen, SCARG(uap, new), SCARG(uap, newlen), p);
 	if (SCARG(uap, old) != NULL) {
 		uvm_vsunlock(p, SCARG(uap, old), savelen);
 		(void) lockmgr(&sysctl_memlock, LK_RELEASE, NULL);
