@@ -1,4 +1,4 @@
-/*	$NetBSD: getmode.c,v 1.1 2002/01/21 20:04:37 tv Exp $	*/
+/*	$NetBSD: getmode.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,10 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
-
 #include <stdlib.h>
 
 void *setmode(const char *str) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pwrite.c,v 1.1 2002/01/21 20:04:37 tv Exp $	*/
+/*	$NetBSD: pwrite.c,v 1.2 2002/01/31 19:23:14 tv Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,9 +38,7 @@
 
 /* Emulate pwrite() with lseek()/write()/lseek(). Not thread-safe, of course. */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
 #if !HAVE_PWRITE
 #include <unistd.h>

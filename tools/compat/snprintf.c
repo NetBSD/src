@@ -35,7 +35,9 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: snprintf.c,v 1.1 2002/01/29 10:20:32 tv Exp $");
+#if 0
+RCSID("$Id: snprintf.c,v 1.2 2002/01/31 19:23:14 tv Exp $");
+#endif
 #endif
 #include <stdio.h>
 #include <stdarg.h>

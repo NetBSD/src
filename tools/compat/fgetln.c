@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.2 2002/01/21 20:04:37 tv Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.3 2002/01/31 19:23:14 tv Exp $	*/
 
 /*
  * Copyright 1999 Luke Mewburn <lukem@netbsd.org>.
@@ -27,11 +27,9 @@
  * USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifndef HAVE_FGETLN
+#if !HAVE_FGETLN
 #include <stdlib.h>
 
 #define BUFCHUNKS	BUFSIZ
@@ -74,4 +72,4 @@ fgetln(FILE *fp, size_t *len)
 	*len = strlen(buf);
 	return (buf);
 }
-#endif	/* HAVE_FGETLN */
+#endif
