@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.15 1996/09/09 16:38:52 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -222,12 +222,12 @@ static int chrtoblktbl[] = {
 	/*  5 */	NODEV,
 	/*  6 */	NODEV,
 	/*  7 */	NODEV,
-	/*  8 */	8,
-	/*  9 */	9,
+	/*  8 */	8,		/* sd */
+	/*  9 */	9,		/* vnd */
 	/* 10 */	NODEV,
 	/* 11 */	NODEV,
-	/* 12 */	NODEV,
-	/* 13 */	3,
+	/* 12 */	2,		/* st */
+	/* 13 */	3,		/* cd */
 	/* 14 */	NODEV,
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
@@ -241,8 +241,8 @@ static int chrtoblktbl[] = {
 	/* 24 */	NODEV,
 	/* 25 */	NODEV,
 	/* 26 */	NODEV,
-	/* 27 */	7,
-	/* 28 */	6,
+	/* 27 */	7,		/* ccd */
+	/* 28 */	6,		/* rd */
 	/* 29 */	NODEV,
 	/* 30 */	NODEV,
 	/* 31 */	NODEV,
