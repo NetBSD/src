@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.23 2002/10/23 09:13:56 jdolecek Exp $	*/
+/*	$NetBSD: ms.c,v 1.24 2003/05/30 23:34:06 petrov Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2002/10/23 09:13:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.24 2003/05/30 23:34:06 petrov Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,11 @@ __KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.23 2002/10/23 09:13:56 jdolecek Exp $");
 #include <dev/sun/event_var.h>
 #include <dev/sun/msvar.h>
 
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsmousevar.h>
+
 #include "locators.h"
+#include "wsmouse.h"
 
 extern struct cfdriver ms_cd;
 
@@ -315,6 +319,19 @@ ms_input(ms, c)
 		/* NOTREACHED */
 	}
 
+#if NWSMOUSE > 0
+	if (ms->ms_wsmousedev != NULL && ms->ms_ready == 2) {
+		mb = ((ms->ms_mb & 4) >> 2) |
+			(ms->ms_mb & 2) |
+			((ms->ms_mb & 1) << 2);
+		wsmouse_input(ms->ms_wsmousedev,
+			      mb, ms->ms_dx, ms->ms_dy, 0,
+			      WSMOUSE_INPUT_DELTA);
+		ms->ms_dx = 0;
+		ms->ms_dy = 0;
+		return;
+	}
+#endif
 	/*
 	 * We have at least one event (mouse button, delta-X, or
 	 * delta-Y; possibly all three, and possibly three separate
