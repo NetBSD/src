@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.46 2004/07/22 20:25:23 mycroft Exp $	*/
+/*	$NetBSD: wivar.h,v 1.47 2004/07/22 20:30:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -129,6 +129,7 @@ struct wi_softc	{
 	int			sc_txalloc;
 	int			sc_txalloced;
 	int			sc_txqueue;
+	int			sc_txqueued;
 	struct wi_rssdesc 	sc_rssd[WI_NTXRSS];
 	wi_rssdescq_t		sc_rssdfree;
 	int			sc_tx_timer;
