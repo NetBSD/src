@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_wrlock.3,v 1.2 2003/06/08 06:44:33 thorpej Exp $
+.\" $NetBSD: pthread_rwlock_wrlock.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -75,7 +75,7 @@ The
 function blocks until a write lock can be acquired against
 .Fa lock .
 .Pp
-The 
+The
 .Fn pthread_rwlock_timedwrlock
 performs the same action, with but will not wait beyond
 .Fa abstime
@@ -83,7 +83,7 @@ to obtain the lock before returning.
 .Pp
 The
 .Fn pthread_rwlock_trywrlock
-function performs the same action as 
+function performs the same action as
 .Fn pthread_rwlock_wrlock ,
 but does not block if the lock cannot be immediately obtained.
 .Pp

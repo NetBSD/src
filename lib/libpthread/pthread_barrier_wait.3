@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_barrier_wait.3,v 1.2 2003/06/08 06:44:28 thorpej Exp $
+.\" $NetBSD: pthread_barrier_wait.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 The
 .Fn pthread_barrier_wait
 function causes the current thread to wait on the barrier specified.
-Once as many threads as specified by the 
+Once as many threads as specified by the
 .Fa count
 parameter to the corresponding
 .Fn pthread_barrier_init
@@ -54,7 +54,7 @@ calls and continue execution.
 If successful,
 .Fn pthread_barrier_wait
 will return zero for all waiting threads except for one.  One thread will
-receive status 
+receive status
 .Dv PTHREAD_BARRIER_SERIAL_THREAD ,
 which is intended to indicate that this thead may be used to update
 shared data.  It is the responsibilty of this thread to insure the visibility and atomicity of any updates to shared data with respect to the other threads participating in the barrier.

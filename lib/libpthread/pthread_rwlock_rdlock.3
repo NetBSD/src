@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.3 2003/07/01 10:23:53 wiz Exp $
+.\" $NetBSD: pthread_rwlock_rdlock.3,v 1.4 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,7 +81,7 @@ presently blocked on the lock.  If the read lock cannot be
 immediately acquired, the calling thread blocks until it can
 acquire the lock.
 .Pp
-The 
+The
 .Fn pthread_rwlock_timedrdlock
 performs the same action, with but will not wait beyond
 .Fa abstime

@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_spin_init.3,v 1.2 2003/06/08 06:44:34 thorpej Exp $
+.\" $NetBSD: pthread_spin_init.3,v 1.3 2003/07/04 08:36:06 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ The
 .Fn pthread_spin_init
 function is used to initialize a spinlock.  The
 .Fa pshared
-parameter is currently unused and all spinlocks exhibit the 
+parameter is currently unused and all spinlocks exhibit the
 .Dv PTHREAD_PROCESS_SHARED
 property.
 .Pp
@@ -72,7 +72,7 @@ The
 .Fa lock
 parameter was NULL or the
 .Fa pshared
-parameter was neither 
+parameter was neither
 .Dv PTHREAD_PROCESS_SHARED
 nor
 .Dv PTHREAD_PROCESS_PRIVATE .
