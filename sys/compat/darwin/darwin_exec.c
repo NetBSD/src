@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.21 2003/10/19 07:52:22 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.22 2003/10/25 10:43:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.21 2003/10/19 07:52:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.22 2003/10/25 10:43:45 manu Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.21 2003/10/19 07:52:22 manu Exp $"
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
 #include <compat/darwin/darwin_sysctl.h>
+#include <compat/darwin/darwin_iokit.h>
+#include <compat/darwin/darwin_iohidsystem.h>
 
 /* Redefined from sys/dev/wscons/wsdisplay.c */
 extern const struct cdevsw wsdisplay_cdevsw;
@@ -319,7 +321,20 @@ darwin_e_proc_exit(p)
 	if (ded->ded_fakepid == 2)
 		mach_bootstrap_port = mach_saved_bootstrap_port;
 
-	/* Restore text mode and black and white colormap */
+	/*
+	 * Terminate the iohidsystem kernel thread.
+	 * We need to post a fake event in case
+	 * the thread is sleeping for an event.
+	 */
+	if (ded->ded_hidsystem_finished != NULL) {
+		*ded->ded_hidsystem_finished = 1;
+		darwin_iohidsystem_postfake(p);
+		wakeup(ded->ded_hidsystem_finished);
+	}
+
+	/* 
+	 * Restore text mode and black and white colormap 
+	 */
 	if (ded->ded_wsdev != NODEV) {
 		mode = WSDISPLAYIO_MODE_EMUL;
 		error = (*wsdisplay_cdevsw.d_ioctl)(ded->ded_wsdev,
