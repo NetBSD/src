@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/06/03 11:23:55 fvdl Exp $
+#	$NetBSD: Makefile,v 1.2 2000/07/25 06:29:45 cgd Exp $
 #
 
 INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
@@ -8,7 +8,7 @@ INCS=	auth.h auth_unix.h clnt.h clnt_soc.h nettype.h \
 
 
 rpcb_prot.h: rpcb_prot.x
-	rpcgen -h ${.ALLSRC} -o ${.TARGET}
+	${RPCGEN} -h ${.ALLSRC} -o ${.TARGET}
 
 CLEANFILES+=	rpcb_prot.h
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/06/12 01:57:25 mycroft Exp $
+#	$NetBSD: Makefile,v 1.18 2000/07/25 06:29:46 cgd Exp $
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c
@@ -18,7 +18,7 @@ bootparam_prot.h: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.h
 	ln -s ${.ALLSRC} ${.TARGET}
 
 bootparam_prot_svc.c: bootparam_prot.x bootparam_prot.h
-	rpcgen -C -L -m -o ${.TARGET} bootparam_prot.x
+	${RPCGEN} -C -L -m -o ${.TARGET} bootparam_prot.x
 
 CLEANFILES += bootparam_prot_svc.c bootparam_prot.x bootparam_prot.h
 

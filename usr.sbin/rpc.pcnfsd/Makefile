@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/25 06:58:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2000/07/25 06:29:46 cgd Exp $
 
 PROG=	rpc.pcnfsd
 MAN=	pcnfsd.8
@@ -12,13 +12,13 @@ DPADD=	${LIBRPCSVC} ${LIBCRYPT}
 LDADD=	-lrpcsvc -lcrypt
 
 pcnfsd_svc.c: pcnfsd.x
-	rpcgen -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
+	${RPCGEN} -C -s udp -s tcp -I ${.CURDIR}/pcnfsd.x -o $@
 
 pcnfsd_xdr.c: pcnfsd.x
-	rpcgen -C -c ${.CURDIR}/pcnfsd.x -o $@
+	${RPCGEN} -C -c ${.CURDIR}/pcnfsd.x -o $@
 
 pcnfsd.h: pcnfsd.x
-	rpcgen -C -h ${.CURDIR}/pcnfsd.x -o $@
+	${RPCGEN} -C -h ${.CURDIR}/pcnfsd.x -o $@
 
 CLEANFILES += pcnfsd_svc.c pcnfsd_xdr.c pcnfsd.h
 CLEANFILES += clnt.pcnfsd pcnfsd_test.o pcnfsd_test.ln pcnfsd_clnt.*
