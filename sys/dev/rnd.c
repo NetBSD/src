@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.7 1997/10/15 07:22:46 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.8 1997/10/19 11:43:05 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -87,16 +87,63 @@ int     rnd_debug = 0;
  */
 #define RND_ENTROPY_THRESHOLD	64
 
+typedef struct _rnd_event_t {
+	rndsource_t *source;
+	u_int32_t    val;
+	u_int32_t    timestamp;
+} rnd_event_t;
+
+typedef struct _rnd_eventq_t {
+	u_int16_t    count;
+	u_int16_t    head;
+	u_int16_t    tail;
+	rnd_event_t  events[RND_EVENTQSIZE];
+} rnd_eventq_t;
+
+/*
+ * the event queue
+ */
+static rnd_eventq_t rnd_events;
+
 /*
  * our select/poll queue
  */
 struct selinfo rnd_selq;
 
 /*
- * Set when there are readers blocking on data from us
+ * Set when there are readers blocking on data from us, we have a timeout
+ * scheduled, etc.
  */
 #define RND_READWAITING 0x00000001
+#define RND_TIMEOUTPEND 0x00000002
 u_int32_t  rnd_status;
+
+/*
+ * our random pool.  This is defined here rather than using the general
+ * purpose one defined in rndpool.c
+ */
+static rndpool_t   rnd_pool;
+
+/*
+ * This is used for devices that pass a NULL source pointer into the
+ * rnd_add_*() functions.  The user never sees this source, and cannot
+ * modify it.
+ */
+static rndsource_t rnd_source_no_estimate = {
+	{ 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	0, 0, 0, 0,
+	(RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN)
+};
+
+/*
+ * This source is used to easily "remove" queue entries when the source
+ * which actually generated the events is going away.
+ */
+static rndsource_t rnd_source_no_collect = {
+	{ 'U', 'n', 'k', 'n', 'o', 'w', 'n', 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+	0, 0, 0, 0,
+	(RND_FLAG_NO_COLLECT | RND_FLAG_NO_ESTIMATE | RND_TYPE_UNKNOWN)
+};
 
 void	rndattach __P((int));
 int	rndopen __P((dev_t, int, int, struct proc *));
@@ -106,7 +153,48 @@ int	rndwrite __P((dev_t, struct uio *, int));
 int	rndioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 int	rndpoll __P((dev_t, int, struct proc *));
 
-static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t *);
+static inline void	rnd_wakeup_readers(void);
+static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t);
+static inline u_int32_t rnd_timestamp(void);
+static 	      void	rnd_timeout(void *);
+
+/*
+ * Generate a 32-bit timestamp.  This should be more machine dependant,
+ * using cycle counters and the like when possible.
+ */
+static inline u_int32_t
+rnd_timestamp()
+{
+	struct timeval	tv;
+	u_int32_t	t;
+
+	microtime(&tv);
+
+	t = tv.tv_sec * 1000000 + tv.tv_usec;
+
+	return t;
+}
+
+/*
+ * Check to see if there are readers waiting on us.  If so, kick them.
+ */
+static inline void
+rnd_wakeup_readers()
+{
+	/*
+	 * If we have added new bits, and now have enough to do something,
+	 * wake up sleeping readers.
+	 */
+	if (rndpool_get_entropy_count(&rnd_pool) > RND_ENTROPY_THRESHOLD) {
+		if (rnd_status & RND_READWAITING) {
+			DPRINTF(RND_DEBUG_SNOOZE,
+				("waking up pending readers.\n"));
+			rnd_status &= ~RND_READWAITING;
+			wakeup(&rnd_status);
+		}
+		selwakeup(&rnd_selq);
+	}
+}
 
 /*
  * Use the timing of the event to estimate the entropy gathered.
@@ -116,25 +204,27 @@ static inline u_int32_t rnd_estimate_entropy(rndsource_t *, u_int32_t *);
 static inline u_int32_t
 rnd_estimate_entropy(rs, t)
 	rndsource_t *rs;
-	u_int32_t *t;
+	u_int32_t t;
 {
-	struct timeval	tv;
 	int32_t		delta;
 	int32_t		delta2;
 	int32_t		delta3;
 
-	microtime(&tv);
-
-	*t = tv.tv_sec * 1000000 + tv.tv_usec;
-
-	if (*t < rs->last_time)
-		delta = UINT_MAX - rs->last_time + *t;
+	/*
+	 * If the time counter has overflowed, calculate the real difference.
+	 * If it has not, it is simplier.
+	 */
+	if (t < rs->last_time)
+		delta = UINT_MAX - rs->last_time + t;
 	else
-		delta = rs->last_time - *t;
+		delta = rs->last_time - t;
 
 	if (delta < 0)
 		delta = -delta;
 
+	/*
+	 * Calculate the second and third order differentials
+	 */
 	delta2 = rs->last_delta - delta;
 	if (delta2 < 0)
 		delta2 = -delta2;
@@ -143,10 +233,17 @@ rnd_estimate_entropy(rs, t)
 	if (delta3 < 0)
 		delta3 = -delta3;
 
-	rs->last_time = *t;
+	rs->last_time = t;
 	rs->last_delta = delta;
 	rs->last_delta2 = delta2;
 
+	/*
+	 * If any delta is 0, we got no entropy.  If all are non-zero, we
+	 * got one bit.
+	 *
+	 * XXX This is probably too conservative, but better than that than
+	 * too liberal.
+	 */
 	if (delta == 0 || delta2 == 0 || delta3 == 0)
 		return 0;
 
@@ -246,10 +343,13 @@ rndread(dev, uio, ioflag)
 			if (mode == RND_EXTRACT_ANY)
 				break;
 
-			s = splhigh();
-			entcnt = rndpool_get_entropy_count(NULL);
+			/*
+			 * How much entropy do we have?  If it is enough for
+			 * one hash, we can read.
+			 */
+			s = splsoftclock();
+			entcnt = rndpool_get_entropy_count(&rnd_pool);
 			splx(s);
-
 			if (entcnt >= RND_ENTROPY_THRESHOLD)
 				break;
 
@@ -295,6 +395,7 @@ rndwrite(dev, uio, ioflag)
 	u_int8_t	*buf;
 	int		ret;
 	int		n;
+	int		s;
 
 	DPRINTF(RND_DEBUG_WRITE,
 		("Random:  Write of %d requested\n", uio->uio_resid));
@@ -316,7 +417,9 @@ rndwrite(dev, uio, ioflag)
 		/*
 		 * Mix in the bytes.
 		 */
-		rnd_add_data(NULL, buf, n, 0);
+		s = splsoftclock();
+		rndpool_add_data(&rnd_pool, buf, n, 0);
+		splx(s);
 
 		DPRINTF(RND_DEBUG_WRITE, ("Random:  Copied in %d bytes\n", n));
 	}
@@ -341,6 +444,7 @@ rndioctl(dev, cmd, addr, flag, p)
 	rnddata_t		*rnddata;
 	u_int32_t		 count;
 	u_int32_t		 start;
+	int			 s;
 	
 	ret = 0;
 
@@ -355,7 +459,9 @@ rndioctl(dev, cmd, addr, flag, p)
 		break;
 
 	case RNDGETENTCNT:
-		*(u_int32_t *)addr = rndpool_get_entropy_count(NULL);
+		s = splsoftclock();
+		*(u_int32_t *)addr = rndpool_get_entropy_count(&rnd_pool);
+		splx(s);
 
 		break;
 
@@ -363,8 +469,10 @@ rndioctl(dev, cmd, addr, flag, p)
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
 
-		ret = copyout(rndpool_get_pool(NULL),
+		s = splsoftclock();
+		ret = copyout(rndpool_get_pool(&rnd_pool),
 			      addr, rndpool_get_poolsize());
+		splx(s);
 
 		break;
 
@@ -372,7 +480,10 @@ rndioctl(dev, cmd, addr, flag, p)
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
 
-		rndpool_increment_entropy_count(NULL, *(u_int32_t *)addr);
+		s = splsoftclock();
+		rndpool_increment_entropy_count(&rnd_pool, *(u_int32_t *)addr);
+		rnd_wakeup_readers();
+		splx(s);
 
 		break;
 
@@ -380,7 +491,10 @@ rndioctl(dev, cmd, addr, flag, p)
 		if ((ret = suser(p->p_ucred, &p->p_acflag)) != 0)
 			return (ret);
 
-		rndpool_set_entropy_count(NULL, *(u_int32_t *)addr);
+		s = splsoftclock();
+		rndpool_set_entropy_count(&rnd_pool, *(u_int32_t *)addr);
+		rnd_wakeup_readers();
+		splx(s);
 
 		break;
 
@@ -494,8 +608,13 @@ rndioctl(dev, cmd, addr, flag, p)
 			return (ret);
 
 		rnddata = (rnddata_t *)addr;
-		rnd_add_data(NULL, rnddata->data, rnddata->len,
-			     rnddata->entropy);
+
+		s = splsoftclock();
+		rndpool_add_data(&rnd_pool, rnddata->data, rnddata->len,
+				 rnddata->entropy);
+
+		rnd_wakeup_readers();
+		splx(s);
 
 		break;
 
@@ -538,8 +657,8 @@ rndpoll(dev, events, p)
 	/*
 	 * make certain we have enough entropy to be readable
 	 */
-	s = splhigh();
-	entcnt = rndpool_get_entropy_count(NULL);
+	s = splsoftclock();
+	entcnt = rndpool_get_entropy_count(&rnd_pool);
 	splx(s);
 
 	if (entcnt >= RND_ENTROPY_THRESHOLD)
@@ -551,7 +670,7 @@ rndpoll(dev, events, p)
 }
 
 /*
- * always called at splhigh() or something else safe
+ * initialize the data for the random generator.
  */
 void
 rnd_init(void)
@@ -561,7 +680,11 @@ rnd_init(void)
 
 	LIST_INIT(&rnd_sources);
 
-	rndpool_init_global();
+	rnd_events.count = 0;
+	rnd_events.head = 0;
+	rnd_events.tail = 0;
+
+	rndpool_init(&rnd_pool);
 
 	rnd_ready = 1;
 
@@ -598,6 +721,40 @@ rnd_attach_source(rs, name, tyfl)
 }
 
 /*
+ * remove a source from our list of sources
+ */
+void
+rnd_detach_source(rs)
+	rndsource_element_t *rs;
+{
+	u_int16_t    count;
+	u_int16_t    elem;
+	rnd_event_t *ev;
+	int          s;
+
+	s = splhigh();
+
+	LIST_REMOVE(rs, list);
+
+	/*
+	 * If there are events queued up, remove them from the event queue
+	 */
+	count = rnd_events.count;
+	elem = rnd_events.tail;
+
+	while (count--) {
+		ev = &rnd_events.events[elem++];
+		if (elem == RND_EVENTQSIZE)
+			elem = 0;
+
+		if (ev->source == &rs->data)
+			ev->source = &rnd_source_no_collect;
+	}
+
+	splx(s);
+}
+	
+/*
  * Add a value to the entropy pool.  If rs is NULL no entropy estimation
  * will be performed, otherwise it should point to the source-specific
  * source structure.
@@ -607,62 +764,125 @@ rnd_add_uint32(rs, val)
 	rndsource_element_t *rs;
 	u_int32_t val;
 {
+	rndsource_t    *rst;
 	int		s;
-	u_int32_t	entropy;
-	u_int32_t	t;
 
 	s = splhigh();
 
-	/*
-	 * if the source is NULL, add the byte given and return.
-	 */
-	if (rs == NULL) {
-		rndpool_add_uint32(NULL, val, 0);
+	if (rnd_events.count == RND_EVENTQSIZE) {
 		splx(s);
 		return;
 	}
+
+	/*
+	 * If the source is null, we don't want to estimate, but we will
+	 * collect.  Point to our internal source definition for this.
+	 */
+	if (rs == NULL)
+		rst = &rnd_source_no_estimate;
+	else
+		rst = &rs->data;
 
 	/*
 	 * If we are not collecting any data at all, just return.
 	 */
-	if (rs->data.tyfl & RND_FLAG_NO_COLLECT) {
+	if (rst->tyfl & RND_FLAG_NO_COLLECT) {
 		splx(s);
 		return;
 	}
-
-	rndpool_add_uint32(NULL, val, 0);
 
 	/*
-	 * If we are not estimating entropy from this source, we are done.
+	 * Otherwise, queue it up for later addition, and schedule a
+	 * timeout to process it.
 	 */
-	if (rs->data.tyfl & RND_FLAG_NO_ESTIMATE) {
-		splx(s);
-		return;
+	rnd_events.events[rnd_events.head].source = rst;
+	rnd_events.events[rnd_events.head].val = val;
+	rnd_events.events[rnd_events.head].timestamp = rnd_timestamp();
+	rnd_events.head++;
+	if (rnd_events.head == RND_EVENTQSIZE)
+		rnd_events.head = 0;
+	rnd_events.count++;
+
+	if ((rnd_status & RND_TIMEOUTPEND) == 0) {
+		rnd_status |= RND_TIMEOUTPEND;
+		timeout(rnd_timeout, rst, 1);
 	}
 
-	entropy = rnd_estimate_entropy(&rs->data, &t);
+	splx(s);
+}
 
-	if (entropy) {
-		rndpool_add_uint32(NULL, t, entropy);
-		rs->data.total += entropy;
+static void
+rnd_timeout(arg)
+	void *arg;
+{
+	u_int32_t	entropy;
+	rnd_event_t    *ev;
+	int		s;
+	u_int16_t	count;
+	u_int16_t	processed;
+
+	/*
+	 * make certain nothing else can tweak our magic flag while we
+	 * are doing so.  This might allow multiple timeouts to be
+	 * queued, but there should be at most one other.
+	 */
+	s = splhigh();
+	count = rnd_events.count;
+	rnd_status &= ~RND_TIMEOUTPEND;
+	splx(s);
+
+	if (count == 0)
+		return;
+
+	processed = 0;
+
+	s = splsoftclock();
+	while (count-- > 0) {
+		processed++;
 
 		/*
-		 * if we have enough bits to do something useful,
-		 * wake up sleeping readers.
+		 * we only modify the tail in this function, and always at
+		 * splsoftclock.
 		 */
-		if (rndpool_get_entropy_count(NULL) > RND_ENTROPY_THRESHOLD) {
-			if (rnd_status & RND_READWAITING) {
+		ev = &rnd_events.events[rnd_events.tail++];
+		if (rnd_events.tail == RND_EVENTQSIZE)
+			rnd_events.tail = 0;
 
-				DPRINTF(RND_DEBUG_SNOOZE,
-					("waking up pending readers.\n"));
+		/*
+		 * We repeat this check here, since it is possible the source
+		 * was disabled before we were called, but after the entry
+		 * was queued.
+		 */
+		if ((ev->source->tyfl & RND_FLAG_NO_COLLECT) == 0) {
 
-				rnd_status &= ~RND_READWAITING;
-				wakeup(&rnd_status);
-			}
-			selwakeup(&rnd_selq);
+			rndpool_add_uint32(&rnd_pool, ev->val, 0);
+
+			/*
+			 * If we are not estimating entropy from this source,
+			 * assume zero.  We still add the timestamp, just
+			 * don't bother calculating the estimation.
+			 */
+			if (ev->source->tyfl & RND_FLAG_NO_ESTIMATE)
+				entropy = 0;
+			else
+				entropy = rnd_estimate_entropy(ev->source,
+							       ev->timestamp);
+
+			rndpool_add_uint32(&rnd_pool, ev->timestamp, entropy);
+			ev->source->total += entropy;
 		}
+
 	}
 
+	/*
+	 * wake up any potential readers waiting.
+	 */
+	rnd_wakeup_readers();
+
+	splx(s);
+
+	s = splhigh();
+	rnd_events.count -= processed;
 	splx(s);
 }
 
@@ -673,6 +893,7 @@ rnd_add_data(rs, p, len, entropy)
 	u_int32_t len;
 	u_int32_t entropy;
 {
+	rndsource_t    *rst;
 	int		s;
 	u_int32_t	t;
 
@@ -683,57 +904,41 @@ rnd_add_data(rs, p, len, entropy)
 	if (entropy > len * 8)
 		return;
 
-	s = splhigh();
+	s = splsoftclock();
 
 	/*
-	 * if the source is NULL, add the data and return.
+	 * If the source is null, we don't want to estimate, but we will
+	 * collect.
 	 */
-	if (rs == NULL) {
-		rndpool_add_data(NULL, p, len, entropy);
-		splx(s);
-		return;
-	}
+	if (rs == NULL)
+		rst = &rnd_source_no_estimate;
+	else
+		rst = &rs->data;
 
 	/*
 	 * If we are not collecting any data at all, just return.
 	 */
-	if (rs->data.tyfl & RND_FLAG_NO_COLLECT) {
+	if (rst->tyfl & RND_FLAG_NO_COLLECT) {
 		splx(s);
 		return;
 	}
 
-	rndpool_add_data(NULL, p, len, entropy);
+	rndpool_add_data(&rnd_pool, p, len, entropy);
 
 	/*
-	 * If we are not estimating entropy from this source, we are done.
+	 * If we are not estimating timing entropy from this source, add
+	 * the timestamp and assume zero entropy from timing info.
 	 */
-	if (rs->data.tyfl & RND_FLAG_NO_ESTIMATE) {
-		splx(s);
-		return;
-	}
+	t = rnd_timestamp();
+	if (rst->tyfl & RND_FLAG_NO_ESTIMATE)
+		entropy = 0;
+	else
+		entropy = rnd_estimate_entropy(rst, t);
 
-	entropy = rnd_estimate_entropy(&rs->data, &t);
+	rndpool_add_uint32(&rnd_pool, t, entropy);
+	rst->total += entropy;
 
-	if (entropy) {
-		rndpool_add_uint32(NULL, t, entropy);
-		rs->data.total += entropy;
-
-		/*
-		 * if we have enough bits to do something useful,
-		 * wake up sleeping readers.
-		 */
-		if (rndpool_get_entropy_count(NULL) > RND_ENTROPY_THRESHOLD) {
-			if (rnd_status & RND_READWAITING) {
-
-				DPRINTF(RND_DEBUG_SNOOZE,
-					("waking up pending readers.\n"));
-
-				rnd_status &= ~RND_READWAITING;
-				wakeup(&rnd_status);
-			}
-			selwakeup(&rnd_selq);
-		}
-	}
+	rnd_wakeup_readers();
 
 	splx(s);
 }
@@ -744,20 +949,19 @@ rnd_extract_data(p, len, flags)
 	u_int32_t len;
 	u_int32_t flags;
 {
-	struct timeval tv;
 	int s;
 	int retval;
 
-	s = splhigh();
+	s = splsoftclock();
 
 #if RND_USE_EXTRACT_TIME
-	microtime(&tv);
-	rndpool_add_uint32(NULL, tv.tv_usec, 0);
+	rndpool_add_uint32(&rnd_pool, rnd_timestamp(), 0);
 #endif
 
-	retval = rndpool_extract_data(NULL, p, len, flags);
+	retval = rndpool_extract_data(&rnd_pool, p, len, flags);
 
 	splx(s);
 
 	return retval;
 }
+
