@@ -1,12 +1,13 @@
-/*	$NetBSD: flt_rounds.c,v 1.2 1997/05/08 13:38:33 matthias Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.3 1997/07/13 18:45:30 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: flt_rounds.c,v 1.2 1997/05/08 13:38:33 matthias Exp $";
+__RCSID("$NetBSD: flt_rounds.c,v 1.3 1997/07/13 18:45:30 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <machine/cpufunc.h>

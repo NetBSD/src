@@ -1,4 +1,4 @@
-/*	$NetBSD: frexp.c,v 1.2 1996/09/16 18:10:53 jonathan Exp $	*/
+/*	$NetBSD: frexp.c,v 1.3 1997/07/13 18:45:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "from: @(#)frexp.c	8.1 (Berkeley) 6/4/93";
+#if 0
+static char sccsid[] = "@(#)frexp.c	8.1 (Berkeley) 6/4/93";
+#else
+__RCSID("$NetBSD: frexp.c,v 1.3 1997/07/13 18:45:24 christos Exp $");
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
