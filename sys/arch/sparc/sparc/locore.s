@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 1998/11/26 22:30:31 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.108 1998/11/26 22:36:43 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -5601,8 +5601,8 @@ Lkcopy_start:
 	 * Not much to copy, just do it a byte at a time.
 	 */
 	deccc	%o2		! while (--len >= 0)
-	 bl	1f
-	EMPTY
+	bl	1f
+	 EMPTY
 0:
 	ldsb	[%o0], %o4	!	*dst++ = *src++;
 	inc	%o0
@@ -5623,7 +5623,7 @@ Lkcopy_fancy:
 	! check for common case first: everything lines up.
 !	btst	7, %o0		! done already
 	bne	1f
-	EMPTY
+	 EMPTY
 	btst	7, %o1
 	be,a	Lkcopy_doubles
 	 dec	8, %o2		! if all lined up, len -= 8, goto bcopy_doubes
@@ -5761,17 +5761,20 @@ Lkcopy_done:
 	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
 	 mov	0, %o0		! delay slot: return success
+	/* NOTREACHED */
 
 1:
 	stb	%o4, [%o1]
 	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
 	 mov	0, %o0		! delay slot: return success
+	/* NOTREACHED */
 
 Lkcerr:
 	st	%g1, [%o5 + PCB_ONFAULT]	! restore onfault
 	retl
 	 mov	EFAULT, %o0	! delay slot: return error indicator
+	/* NOTREACHED */
 
 /*
  * savefpstate(f) struct fpstate *f;
