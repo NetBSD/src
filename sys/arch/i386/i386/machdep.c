@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.435 2001/04/24 04:30:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.436 2001/05/02 13:08:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -332,10 +332,6 @@ cpu_startup()
 	vsize_t size;
 	char buf[160];				/* about 2 line */
 	char pbuf[9];
-#if NBIOSCALL > 0
-	extern int biostramp_image_size;
-	extern u_char biostramp_image[];
-#endif
 
 	/*
 	 * Initialize error message buffer (et end of core).
@@ -461,26 +457,6 @@ cpu_startup()
 	printf("avail memory = %s\n", pbuf);
 	format_bytes(pbuf, sizeof(pbuf), bufpages * PAGE_SIZE);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
-
-#if NBIOSCALL > 0
-	/*
-	 * this should be caught at kernel build time, but put it here
-	 * in case someone tries to fake it out...
-	 */
-#ifdef DIAGNOSTIC
-	if (biostramp_image_size > PAGE_SIZE)
-	    panic("biostramp_image_size too big: %x vs. %x\n",
-		  biostramp_image_size, PAGE_SIZE);
-#endif
-	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
-		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
-		       VM_PROT_ALL);		/* protection */
-	pmap_update();
-	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
-#ifdef DEBUG
-	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
-#endif
-#endif
 
 	/* Safe for i/o port / memory space allocation to use malloc now. */
 	i386_bus_space_mallocok();
@@ -1881,6 +1857,10 @@ init386(first_avail)
 	int x, first16q;
 	u_int64_t seg_start, seg_end;
 	u_int64_t seg_start1, seg_end1;
+#if NBIOSCALL > 0
+	extern int biostramp_image_size;
+	extern u_char biostramp_image[];
+#endif
 
 	proc0.p_addr = proc0paddr;
 	curpcb = &proc0.p_addr->u_pcb;
@@ -2203,6 +2183,24 @@ init386(first_avail)
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED|VM_PROT_READ|VM_PROT_WRITE);
 	pmap_update();
 	memset(vtopte(0), 0, PAGE_SIZE);/* make sure it is clean before using */
+
+	/*
+	 * this should be caught at kernel build time, but put it here
+	 * in case someone tries to fake it out...
+	 */
+#ifdef DIAGNOSTIC
+	if (biostramp_image_size > PAGE_SIZE)
+	    panic("biostramp_image_size too big: %x vs. %x\n",
+		  biostramp_image_size, PAGE_SIZE);
+#endif
+	pmap_kenter_pa((vaddr_t)BIOSTRAMP_BASE,	/* virtual */
+		       (paddr_t)BIOSTRAMP_BASE,	/* physical */
+		       VM_PROT_ALL);		/* protection */
+	pmap_update();
+	memcpy((caddr_t)BIOSTRAMP_BASE, biostramp_image, biostramp_image_size);
+#ifdef DEBUG_BIOSCALL
+	printf("biostramp installed @ %x\n", BIOSTRAMP_BASE);
+#endif
 #endif
 
 	pmap_enter(pmap_kernel(), idt_vaddr, idt_paddr,
