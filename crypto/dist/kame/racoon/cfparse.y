@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cfparse.y,v 1.20 2004/04/12 03:34:05 itojun Exp $");
+__RCSID("$NetBSD: cfparse.y,v 1.21 2004/11/10 20:23:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,7 +192,7 @@ static int fix_lifebyte __P((u_long));
 %token GENERATE_POLICY SUPPORT_PROXY
 %token PROPOSAL
 %token EXEC_PATH EXEC_COMMAND EXEC_SUCCESS EXEC_FAILURE
-%token GSSAPI_ID
+%token GSS_ID GSS_ID_ENC GSS_ID_ENCTYPE
 %token COMPLEX_BUNDLE
 
 %token PREFIX PORT PORTANY UL_PROTO ANY
@@ -205,7 +205,7 @@ static int fix_lifebyte __P((u_long));
 %token EOS BOC EOC COMMA
 
 %type <num> NUMBER BOOLEAN SWITCH keylength
-%type <num> PATHTYPE IDENTIFIERTYPE LOGLEV 
+%type <num> PATHTYPE IDENTIFIERTYPE LOGLEV GSS_ID_ENCTYPE
 %type <num> ALGORITHM_CLASS dh_group_num
 %type <num> ALGORITHMTYPE STRENGTHTYPE
 %type <num> PREFIX prefix PORT port ike_port
@@ -227,6 +227,7 @@ statements
 statement
 	:	path_statement
 	|	include_statement
+	|	gssenc_statement
 	|	identifier_statement
 	|	logging_statement
 	|	padding_statement
@@ -273,6 +274,18 @@ include_statement
 			vfree($2);
 			if (yycf_switch_buffer(path) != 0)
 				return -1;
+		}
+	;
+
+	/* gss_id_enc */
+gssenc_statement
+	:	GSS_ID_ENC GSS_ID_ENCTYPE EOS
+		{
+			if ($2 >= LC_GSSENC_MAX) {
+				yyerror("invalid GSS ID encoding %d", $2);
+				return -1;
+			}
+			lcconf->gss_id_enc = $2;
 		}
 	;
 
@@ -1011,7 +1024,7 @@ isakmpproposal_spec
 			prhead->spspec->algclass[algclass_isakmp_dh] = $2;
 		}
 		EOS
-	|	GSSAPI_ID QUOTEDSTRING
+	|	GSS_ID QUOTEDSTRING
 		{
 			if (prhead->spspec->vendorid != VENDORID_GSSAPI) {
 				yyerror("wrong Vendor ID for gssapi_id");
@@ -1364,12 +1377,20 @@ expand_isakmpspec(prop_no, trns_no, types,
 	new->dh_group = types[algclass_isakmp_dh];
 	new->vendorid = vendorid;
 #ifdef HAVE_GSSAPI
-	if (gssid != NULL) {
-		new->gssid = vmalloc(strlen(gssid) + 1);
-		memcpy(new->gssid->v, gssid, new->gssid->l);
-		racoon_free(gssid);
-	} else
-		new->gssid = NULL;
+	if (new->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB) {
+		if (gssid != NULL) {
+			new->gssid = vmalloc(strlen(gssid));
+			memcpy(new->gssid->v, gssid, new->gssid->l);
+			racoon_free(gssid);
+		} else {
+			/*
+			 * Allocate the default ID so that it gets put
+			 * into a GSS ID attribute during the Phase 1
+			 * exchange.
+			 */
+			new->gssid = gssapi_get_default_gss_id();
+		}
+	}
 #endif
 	insisakmpsa(new, rmconf);
 

@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.10 2003/07/12 09:37:11 itojun Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2004/11/10 20:23:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,7 +81,7 @@ int f_local = 0;	/* local test mode.  behave like a wall. */
 int vflag = 1;		/* for print-isakmp.c */
 static int loading_sa = 0;	/* install sa when racoon boots up. */
 
-#define RACOON_VERSION	"20001216 sakane@kame.net"
+#define RACOON_VERSION	"20001216 sakane@kame.net - NetBSD 20041110"
 #ifdef RACOON_PKG_VERSION
 static char version0[] = "@(#)package version " RACOON_PKG_VERSION ;
 static char version[] = "@(#)internal version " RACOON_VERSION ;

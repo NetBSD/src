@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gssapi.c,v 1.3 2004/04/12 03:34:07 itojun Exp $");
+__RCSID("$NetBSD: gssapi.c,v 1.4 2004/11/10 20:23:28 thorpej Exp $");
 
 #ifdef HAVE_GSSAPI
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <unistd.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -130,6 +131,25 @@ gssapi_gss2vmbuf(gss_buffer_t gsstoken, vchar_t **vmbuf)
 	(*vmbuf)->l = gsstoken->length;
 
 	return 0;
+}
+
+vchar_t *
+gssapi_get_default_gss_id(void)
+{
+	char name[NI_MAXHOST];
+	vchar_t *gssid;
+
+	if (gethostname(name, sizeof(name)) != 0) {
+		plog(LLV_ERROR, LOCATION, NULL, "gethostname failed: %s\n",
+		    strerror(errno));
+		return (NULL);
+	}
+	name[sizeof(name) - 1] = '\0';
+
+	gssid = racoon_malloc(sizeof(*gssid));
+	gssid->l = asprintf(&gssid->v, "%s/%s", GSSAPI_DEF_NAME, name);
+
+	return (gssid);
 }
 
 static int
@@ -220,8 +240,15 @@ gssapi_init(struct ph1handle *iph1)
 		return -1;
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL, "will try to acquire '%*s' creds\n",
+#if 0
+	/*
+	 * XXXJRT Did this debug message ever work?  This is a GSS name
+	 * blob at this point.
+	 */
+	plog(LLV_DEBUG, LOCATION, NULL, "will try to acquire '%.*s' creds\n",
 	    cred->length, cred->value);
+#endif
+
 	maj_stat = gss_release_buffer(&min_stat, cred);
 	if (GSS_ERROR(maj_stat))
 		gssapi_error(min_stat, LOCATION, "release cred buffer\n");
@@ -263,15 +290,16 @@ gssapi_get_itoken(struct ph1handle *iph1, int *lenp)
 	dummy = &empty;
 
 	if (iph1->approval != NULL && iph1->approval->gssid != NULL) {
-		plog(LLV_DEBUG, LOCATION, NULL, "using provided service '%s'\n",
-		    iph1->approval->gssid->v);
+		plog(LLV_DEBUG, LOCATION, NULL,
+		    "using provided service '%.*s'\n",
+		    iph1->approval->gssid->l, iph1->approval->gssid->v);
 		name_token.length = iph1->approval->gssid->l;
 		name_token.value = iph1->approval->gssid->v;
 		maj_stat = gss_import_name(&min_stat, &name_token,
 		    GSS_C_NO_OID, &partner);
 		if (GSS_ERROR(maj_stat)) {
-			gssapi_error(min_stat, LOCATION, "import of %s\n",
-			    name_token.value);
+			gssapi_error(min_stat, LOCATION, "import of '%.*s'\n",
+			    name_token.length, name_token.value);
 			return -1;
 		}
 	} else
@@ -653,13 +681,16 @@ gssapi_free_state(struct ph1handle *iph1)
 }
 
 vchar_t *
-gssapi_get_default_id(struct ph1handle *iph1)
+gssapi_get_id(struct ph1handle *iph1)
 {
 	gss_buffer_desc id_buffer;
 	gss_buffer_t id = &id_buffer;
 	gss_name_t defname, canon_name;
 	OM_uint32 min_stat, maj_stat;
 	vchar_t *vmbuf;
+
+	if (iph1->rmconf->proposal->gssid != NULL)
+		return (vdup(iph1->rmconf->proposal->gssid));
 
 	if (gssapi_get_default_name(iph1, 0, &defname) < 0)
 		return NULL;
@@ -691,8 +722,14 @@ gssapi_get_default_id(struct ph1handle *iph1)
 	if (GSS_ERROR(maj_stat))
 		gssapi_error(min_stat, LOCATION, "release canonical name\n");
 
-	plog(LLV_DEBUG, LOCATION, NULL, "will try to acquire '%*s' creds\n",
+#if 0
+	/*
+	 * XXXJRT Did this debug message ever work?  This is a GSS name
+	 * blob at this point.
+	 */
+	plog(LLV_DEBUG, LOCATION, NULL, "will try to acquire '%.*s'\n",
 	    id->length, id->value);
+#endif
 
 	if (gssapi_gss2vmbuf(id, &vmbuf) < 0) {
 		plog(LLV_ERROR, LOCATION, NULL, "gss2vmbuf failed\n");

@@ -42,7 +42,7 @@
 #include <gssapi/gssapi.h>
 #endif
 
-#define GSSAPI_DEF_NAME         "ike"
+#define GSSAPI_DEF_NAME         "host"
 
 struct ph1handle;
 struct isakmpsa;
@@ -89,4 +89,5 @@ int gssapi_id_sent __P((struct ph1handle *));
 void gssapi_set_id_rcvd __P((struct ph1handle *));
 int gssapi_id_rcvd __P((struct ph1handle *));
 void gssapi_free_state __P((struct ph1handle *));
-vchar_t *gssapi_get_default_id __P((struct ph1handle *));
+vchar_t *gssapi_get_id __P((struct ph1handle *));
+vchar_t *gssapi_get_default_gss_id __P((void));

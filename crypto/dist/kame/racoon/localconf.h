@@ -54,6 +54,10 @@
 
 #define LC_IDENTTYPE_MAX	5	/* XXX */
 
+#define	LC_GSSENC_UTF16LE	0	/* GSS ID in UTF-16LE */
+#define	LC_GSSENC_LATIN1	1	/* GSS ID in ISO-Latin-1 */
+#define	LC_GSSENC_MAX		2
+
 struct localconf {
 	char *racoon_conf;		/* configuration filename */
 
@@ -98,6 +102,8 @@ struct localconf {
 		 * usually uses this format.  If the option, 'complex_bundle'
 		 * is enable, racoon uses old format.
 		 */
+
+	int gss_id_enc;			/* GSS ID encoding to use */
 };
 
 extern struct localconf *lcconf;

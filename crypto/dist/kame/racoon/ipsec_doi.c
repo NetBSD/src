@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipsec_doi.c,v 1.15 2004/04/12 03:34:07 itojun Exp $");
+__RCSID("$NetBSD: ipsec_doi.c,v 1.16 2004/11/10 20:23:28 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -85,6 +85,7 @@ __RCSID("$NetBSD: ipsec_doi.c,v 1.15 2004/04/12 03:34:07 itojun Exp $");
 #include "gcmalloc.h"
 
 #ifdef HAVE_GSSAPI
+#include <iconv.h>
 #include "auth_gssapi.h"
 #endif
 
@@ -269,8 +270,8 @@ found:
 saok:
 #ifdef HAVE_GSSAPI
 	if (sa->gssid != NULL)
-		plog(LLV_DEBUG, LOCATION, NULL, "gss id in new sa '%s'\n",
-		    sa->gssid->v);
+		plog(LLV_DEBUG, LOCATION, NULL, "gss id in new sa '%.*s'\n",
+		    sa->gssid->l, sa->gssid->v);
 	if (iph1-> side == INITIATOR) {
 		if (iph1->rmconf->proposal->gssid != NULL)
 			iph1->gi_i = vdup(iph1->rmconf->proposal->gssid);
@@ -280,21 +281,17 @@ saok:
 	} else {
 		if (tsa.gssid != NULL) {
 			iph1->gi_r = vdup(tsa.gssid);
-			if (iph1->rmconf->proposal->gssid != NULL)
-				iph1->gi_i =
-				    vdup(iph1->rmconf->proposal->gssid);
-			else
-				iph1->gi_i = gssapi_get_default_id(iph1);
+			iph1->gi_i = gssapi_get_id(iph1);
 			if (sa->gssid == NULL && iph1->gi_i != NULL)
 				sa->gssid = vdup(iph1->gi_i);
 		}
 		iph1->approval = sa;
 	}
 	if (iph1->gi_i != NULL)
-		plog(LLV_DEBUG, LOCATION, NULL, "GIi is %*s\n",
+		plog(LLV_DEBUG, LOCATION, NULL, "GIi is '%.*s'\n",
 		    iph1->gi_i->l, iph1->gi_i->v);
 	if (iph1->gi_r != NULL)
-		plog(LLV_DEBUG, LOCATION, NULL, "GIr is %*s\n",
+		plog(LLV_DEBUG, LOCATION, NULL, "GIr is '%.*s'\n",
 		    iph1->gi_r->l, iph1->gi_r->v);
 #else
 	iph1->approval = sa;
@@ -662,16 +659,81 @@ t2isakmpsa(trns, sa)
 #ifdef HAVE_GSSAPI
 		case OAKLEY_ATTR_GSS_ID:
 		{
+			iconv_t cd;
+			size_t srcleft, dstleft, rv;
+			const char *src;
+			char *dst;
 			int len = ntohs(d->lorv);
 
-			sa->gssid = vmalloc(len);
-			memcpy(sa->gssid->v, d + 1, len);
+			/*
+			 * Older versions of racoon just placed the
+			 * ISO-Latin-1 string on the wire directly.
+			 * Check to see if we are configured to be
+			 * compatible with this behavior.
+			 */
+			if (lcconf->gss_id_enc == LC_GSSENC_LATIN1) {
+				sa->gssid = vmalloc(len);
+				memcpy(sa->gssid->v, d + 1, len);
+				plog(LLV_DEBUG, LOCATION, NULL,
+				  "received old-style gss id '%.*s' (len %d)\n",
+				  sa->gssid->l, sa->gssid->v, sa->gssid->l);
+				break;
+			}
+
+			/*
+			 * For Windows 2000 compatbility, we expect
+			 * the GSS ID attribute on the wire to be
+			 * encoded in UTF-16LE.  Internally, we work
+			 * in ISO-Latin-1.  Therefore, we should need
+			 * 1/2 the specified length, which should
+			 * always be a multiple of 2 octets.
+			 */
+			cd = iconv_open("latin1", "utf-16le");
+			if (cd == (iconv_t) -1) {
+				plog(LLV_ERROR, LOCATION, NULL,
+				    "unable to initialize utf-16le -> latin1 "
+				    "conversion descriptor: %s\n",
+				    strerror(errno));
+				break;
+			}
+
+			sa->gssid = vmalloc(len / 2);
+
+			src = (const char *)(d + 1);
+			srcleft = len;
+
+			dst = sa->gssid->v;
+			dstleft = len / 2;
+
+			rv = iconv(cd, &src, &srcleft, &dst, &dstleft);
+			if (rv != 0) {
+				if (rv == -1) {
+					plog(LLV_ERROR, LOCATION, NULL,
+					   "unable to convert GSS ID from "
+					   "utf-16le -> latin1: %s\n",
+					   strerror(errno));
+				} else {
+					plog(LLV_ERROR, LOCATION, NULL,
+					    "%zd character%s in GSS ID cannot "
+					    "be represented in latin1\n",
+					    rv, rv == 1 ? "" : "s");
+				}
+				(void) iconv_close(cd);
+				vfree(sa->gssid);
+				sa->gssid = NULL;
+				break;
+			}
+			(void) iconv_close(cd);
+
+			/* XXX dstleft should always be 0; assert it? */
+			sa->gssid->l = (len / 2) - dstleft;
+
 			plog(LLV_DEBUG, LOCATION, NULL,
-			    "received gss id '%s' (len %d)\n", sa->gssid->v,
-			    sa->gssid->l);
+			    "received gss id '%.*s' (len %d)\n", sa->gssid->l,
+			    sa->gssid->v, sa->gssid->l);
 			break;
 		}
-#endif
+#endif /* HAVE_GSSAPI */
 
 		default:
 			break;
@@ -2583,16 +2645,77 @@ setph1attr(sa, buf)
 	if (sa->authmethod == OAKLEY_ATTR_AUTH_METHOD_GSSAPI_KRB &&
 	    sa->gssid != NULL) {
 		attrlen += sizeof(struct isakmp_data);
-		attrlen += sa->gssid->l;
+		/*
+		 * Older versions of racoon just placed the ISO-Latin-1
+		 * string on the wire directly.  Check to see if we are
+		 * configured to be compatible with this behavior.  Otherwise,
+		 * we encode the GSS ID as UTF-16LE for Windows 2000
+		 * comatibility, which requires twice the number of octets.
+		 */
+		if (lcconf->gss_id_enc == LC_GSSENC_LATIN1)
+			attrlen += sa->gssid->l;
+		else
+			attrlen += sa->gssid->l * 2;
 		if (buf) {
 			plog(LLV_DEBUG, LOCATION, NULL, "gss id attr: len %d, "
-			    "val '%s'\n", sa->gssid->l, sa->gssid->v);
-			p = isakmp_set_attr_v(p, OAKLEY_ATTR_GSS_ID,
-				(caddr_t)sa->gssid->v, 
-				sa->gssid->l);
+			    "val '%.*s'\n", sa->gssid->l, sa->gssid->l,
+			    sa->gssid->v);
+			if (lcconf->gss_id_enc == LC_GSSENC_LATIN1) {
+				p = isakmp_set_attr_v(p, OAKLEY_ATTR_GSS_ID,
+					(caddr_t)sa->gssid->v, 
+					sa->gssid->l);
+			} else {
+				size_t dstleft = sa->gssid->l * 2;
+				size_t srcleft = sa->gssid->l;
+				const char *src = (const char *)sa->gssid->v;
+				char *odst, *dst = racoon_malloc(dstleft);
+				iconv_t cd;
+				size_t rv;
+
+				cd = iconv_open("utf-16le", "latin1");
+				if (cd == (iconv_t) -1) {
+					plog(LLV_ERROR, LOCATION, NULL,
+					    "unable to initialize "
+					    "latin1 -> utf-16le "
+					    "converstion descriptor: %s\n",
+					    strerror(errno));
+					attrlen -= sa->gssid->l * 2;
+					goto gssid_done;
+				}
+				odst = dst;
+				rv = iconv(cd, &src, &srcleft,
+				    &dst, &dstleft);
+				if (rv != 0) {
+					if (rv == -1) {
+						plog(LLV_ERROR, LOCATION, NULL,
+						    "unable to convert GSS ID "
+						    "from latin1 -> utf-16le: "
+						    "%s\n", strerror(errno));
+					} else {
+						/* should never happen */
+						plog(LLV_ERROR, LOCATION, NULL,
+						    "%zd character%s in GSS ID "
+						    "cannot be represented "
+						    "in utf-16le\n",
+						    rv, rv == 1 ? "" : "s");
+					}
+					(void) iconv_close(cd);
+					attrlen -= sa->gssid->l * 2;
+					goto gssid_done;
+				}
+				(void) iconv_close(cd);
+
+				/* XXX Check srcleft and dstleft? */
+
+				p = isakmp_set_attr_v(p, OAKLEY_ATTR_GSS_ID,
+					odst, sa->gssid->l * 2);
+
+				racoon_free(odst);
+			}
 		}
 	}
-#endif
+ gssid_done:
+#endif /* HAVE_GSSAPI */
 
 	return attrlen;
 }
