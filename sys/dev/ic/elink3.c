@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.54 1999/03/25 23:18:32 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.55 1999/04/13 20:23:52 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,6 +123,19 @@
 #ifdef DEBUG
 int epdebug = 0;
 #endif
+
+/*
+ * XXX endian workaround for big-endian CPUs  with pcmcia:
+ * if stream methods for bus_space_multi are not provided, define them
+ * using non-stream bus_space_{read,write}_multi_.
+ * Assumes host CPU is same endian-ness as bus.
+ */
+#ifndef __BUS_SPACE_HAS_STREAM_METHODS
+#define bus_space_read_multi_stream_2	bus_space_read_multi_2
+#define bus_space_read_multi_stream_4	bus_space_read_multi_4
+#define bus_space_write_multi_stream_2	bus_space_write_multi_2
+#define bus_space_write_multi_stream_4	bus_space_write_multi_4
+#endif /* __BUS_SPACE_HAS_STREAM_METHODS */
 
 /*
  * Structure to map media-present bits in boards to ifmedia codes and
@@ -1115,7 +1128,7 @@ startagain:
 					    (void *)(mtod(m, u_long) + count);
 					m->m_len -= count;
 				}
-				bus_space_write_multi_4(iot, ioh,
+				bus_space_write_multi_stream_4(iot, ioh,
 				    txreg, mtod(m, u_int32_t *), m->m_len >> 2);
 				m->m_data = (void *)(mtod(m, u_long) +
 					(u_long)(m->m_len & ~3));
@@ -1138,7 +1151,7 @@ startagain:
 					    (void *)(mtod(m, u_long) + 1);
 					m->m_len -= 1;
 				}
-				bus_space_write_multi_2(iot, ioh,
+				bus_space_write_multi_stream_2(iot, ioh,
 				    txreg, mtod(m, u_int16_t *),
 				    m->m_len >> 1);
 			}
@@ -1599,7 +1612,7 @@ epget(sc, totlen)
 				remaining -= count;
 			}
 			if (remaining > 3) {
-				bus_space_read_multi_4(iot, ioh,
+				bus_space_read_multi_stream_4(iot, ioh,
 				    rxreg, (u_int32_t *) offset,
 				    remaining >> 2);
 				offset += remaining & ~3;
@@ -1618,7 +1631,7 @@ epget(sc, totlen)
 				offset += 1;
 			}
 			if (remaining > 1) {
-				bus_space_read_multi_2(iot, ioh,
+				bus_space_read_multi_stream_2(iot, ioh,
 				    rxreg, (u_int16_t *) offset,
 				    remaining >> 1);
 				offset += remaining & ~1;
