@@ -1,5 +1,5 @@
+#	$NetBSD: changelist,v 1.2 1996/05/08 17:19:24 thorpej Exp $
 #	from: @(#)changelist	8.1 (Berkeley) 6/9/93
-#	$Id: changelist,v 1.1 1994/06/15 04:28:11 cgd Exp $
 #
 # List of files which the security script backs up and checks
 # for modifications.

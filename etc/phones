@@ -1,3 +1,4 @@
+#	$NetBSD: phones,v 1.2 1996/05/08 17:19:43 thorpej Exp $
 #	@(#)phones	5.2 (Berkeley) 6/30/90
 #
 # phones -- remote host phone number data base

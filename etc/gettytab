@@ -1,3 +1,4 @@
+#	$NetBSD: gettytab,v 1.7 1996/05/08 17:19:35 thorpej Exp $
 #	from: @(#)gettytab	5.14 (Berkeley) 3/27/91
 #
 # Most of the table entries here are just copies of the old getty table,

@@ -1,3 +1,4 @@
+#	$NetBSD: remote,v 1.5 1996/05/08 17:19:46 thorpej Exp $
 #	@(#)remote	5.2 (Berkeley) 6/30/90
 #
 # remote -- remote host description file
