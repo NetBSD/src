@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.41 2001/09/29 20:10:07 jdolecek Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.42 2001/10/05 15:30:06 simonb Exp $
 
 .if !target(__initialized__)
 __initialized__:
@@ -47,9 +47,9 @@ beforedepend: machine-links
 machine-links:
 	-rm -f machine && \
 	    ln -s $S/arch/${MACHINE}/include machine
-	-rm -f ${MACHINE_ARCH} && \
-	    ln -s $S/arch/${MACHINE_ARCH}/include ${MACHINE_ARCH}
-CLEANFILES+=machine ${MACHINE_ARCH}
+	-rm -f ${MACHINE_CPU} && \
+	    ln -s $S/arch/${MACHINE_CPU}/include ${MACHINE_CPU}
+CLEANFILES+=machine ${MACHINE_CPU}
 
 cleankmod:
 	rm -f a.out [Ee]rrs mklog core *.core \
@@ -95,4 +95,5 @@ unload:
 .include <bsd.dep.mk>
 .include <bsd.sys.mk>
 
-.-include "machine/Makefile.inc"
+.-include "$S/arch/${MACHINE_CPU}/include/Makefile.inc"
+.-include "$S/arch/${MACHINE}/include/Makefile.inc"
