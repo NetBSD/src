@@ -1,6 +1,6 @@
-.\" $NetBSD: acpi.4,v 1.8 2003/04/18 17:05:17 thorpej Exp $
+.\" $NetBSD: acpi.4,v 1.9 2004/04/25 03:12:11 kochi Exp $
 .\"
-.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 18, 2003
+.Dd April 25, 2004
 .Dt ACPI 4
 .Os
 .Sh NAME
@@ -51,25 +51,92 @@
 .Cd "npx*      at acpi?"
 .Cd "pckbc*    at acpi?"
 .Cd "spic*     at acpi?"
+.Cd "vald*     at acpi?"
 .Cd "wss*      at acpi?"
 .Pp
+.Cd "options   ACPI_DEBUG"
 .Cd "options   ACPIVERBOSE"
 .Cd "options   ACPI_PCI_FIXUP"
 .Cd "options   ACPI_ACTIVATE_DEV=0"
+.Cd "options   ACPICA_PEDANTIC"
 .Sh DESCRIPTION
 .Nx
 provides machine-independent bus support for
 .Tn ACPI
-devices.
+devices and includes several
+.Tn ACPI
+device drivers.
 .Pp
 The
-.Dv "ACPI_PCI_FIXUP"
-option enables ACPI-based PCI interrupt routing fixup.
+.Nx
+implementation of
+.Tn ACPI
+integrates Intel's ACPI Component Architecture
+(aka ACPI-CA) for the OS-independent part.
+The ACPI-CA provides
+OS-neutral ACPI functionalities such as ACPI BIOS table support,
+an ACPI event framework and an AML (ACPI Machine Language) interpreter.
 .Pp
-The
-.Dv "ACPI_ACTIVATE_DEV"
-option determines if the ACPI driver should attempt to activate
-inactive devices.  The default is off.
+Options:
+.Bl -tag -width ACPI_ACTIVATE_DEV -offset 3n
+.It Nm ACPI_DEBUG
+Enable ACPI debugging message outputs.
+.It Nm ACPI_PCI_FIXUP
+Enable ACPI-based PCI interrupt routing fixup.
+If you have PCI interrupt related problem, try this option.
+.It Nm ACPI_ACTIVATE_DEV
+Determine if the ACPI driver should attempt to activate
+inactive devices.
+The default is off.
+.It Nm ACPICA_PEDANTIC
+Force strict conformance to the ACPI specification in the
+ACPI-CA.
+Do not enable this option unless you are debugging.
+.El
+.Sh SUPPORTED DEVICES
+.Nx
+.Tn ACPI
+supports several machine-dependent and machine-independent devices:
+.Ss machine-independent devices
+.Bl -tag -width pcdisplay -offset indent
+.It acpiacad
+.Tn ACPI
+AC adapters.
+.It acpibat
+.Tn ACPI
+Control Method Batteries.
+.It acpibut
+.Tn ACPI
+power and sleep buttons.
+.It acpiec
+.Tn ACPI
+Embedded Controllers.
+.It acpilid
+.Tn ACPI
+lid switches.
+.It acpitz
+.Tn ACPI
+thermal zones.
+.It com
+NS8250-, NS16450-, and NS16550-based serial ports.
+.It fdc
+Floppy disk controllers.
+.It lpt
+Standard ISA parallel port interface.
+.It wss
+Windows Sound System-compatible sound cards based on the AD1848 and compatible chips.
+.El
+.Ss i386-dependent devices
+.Bl -tag -width pcdisplay -offset indent
+.It npx
+i386 numeric processing extension coprocessor.
+.It pckbc
+PC keyboard controllers.
+.It spic
+Sony programmable I/O controller.
+.It vald
+Toshiba Libretto device.
+.El
 .Sh SEE ALSO
 .Xr acpiacad 4 ,
 .Xr acpibat 4 ,
@@ -85,7 +152,16 @@ inactive devices.  The default is off.
 .Xr pci 4 ,
 .Xr pckbc 4 ,
 .Xr spic 4 ,
+.\" .Xr vald 4 ,
 .Xr wss 4
+.Rs
+.%T ACPI specification
+.%O http://www.acpi.info/
+.Re
+.Rs
+.%T Intel ACPI CA (Component Architecture)
+.%O http://developer.intel.com/technology/iapc/acpi/
+.Re
 .Sh HISTORY
 The
 .Nm
@@ -93,6 +169,6 @@ driver
 appeared in
 .Nx 1.6 .
 .Sh BUGS
-The
+Most of the
 .Tn ACPI
-implementation is very incomplete and so are the man pages.
+power management functionalities are not implemented.
