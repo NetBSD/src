@@ -6,9 +6,6 @@
 #define NETBSD_ELF
 #include <netbsd.h>
 
-/* Use bcopy etc. instead of memcpy etc. */
-#undef	TARGET_MEM_FUNCTIONS
-
 #undef SDB_DEBUGGING_INFO
 #define SDB_DEBUGGING_INFO
 #undef DBX_DEBUGGING_INFO
