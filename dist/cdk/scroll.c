@@ -1,9 +1,9 @@
 #include <cdk.h>
 
 /*
- * $Author: garbled $
- * $Date: 2001/01/09 18:41:54 $
- * $Revision: 1.3 $
+ * $Author: agc $
+ * $Date: 2003/08/28 11:32:33 $
+ * $Revision: 1.4 $
  */
 
 /*
@@ -754,7 +754,7 @@ static void createCDKScrollItemList (CDKSCROLL *scrollp, boolean numbers, char *
    {
       for (x=0 ; x < listSize; x++)
       {
-	 sprintf (temp, "%4d. %s", x + 1, list[x]);
+	 snprintf (temp, sizeof(temp), "%4d. %s", x + 1, list[x]);
 	 scrollp->item[x]	= char2Chtype (temp, &scrollp->itemLen[x], &scrollp->itemPos[x]);
 	 scrollp->itemPos[x]	= justifyString (scrollp->fieldWidth, scrollp->itemLen[x], scrollp->itemPos[x]);
 	 widestItem		= MAXIMUM (widestItem, scrollp->itemLen[x]);
@@ -864,7 +864,7 @@ void addCDKScrollItem (CDKSCROLL *scrollp, char *item)
      */
    if (scrollp->numbers == NUMBERS)
    {
-      sprintf (temp, "%4d. %s", itemNumber + 1, item);
+      snprintf (temp, sizeof(temp), "%4d. %s", itemNumber + 1, item);
       scrollp->item[itemNumber] = char2Chtype (temp, &scrollp->itemLen[itemNumber], &scrollp->itemPos[itemNumber]);
       scrollp->itemPos[itemNumber] = justifyString (scrollp->fieldWidth, scrollp->itemLen[itemNumber], scrollp->itemPos[itemNumber]);
    }
