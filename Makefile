@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.234 2004/05/17 07:00:16 lukem Exp $
+#	$NetBSD: Makefile,v 1.235 2004/07/30 07:05:11 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -71,7 +71,6 @@
 #   do-gnu-lib-libgcc3: builds and installs prerequisites from gnu/lib/libgcc3
 #   do-lib-csu:      builds and installs prerequisites from lib/csu.
 #   do-lib-libc:     builds and installs prerequisites from lib/libc.
-#   do-lib-libdes:   builds and installs prerequisites from lib/libdes.
 #   do-lib:          builds and installs prerequisites from lib.
 #   do-gnu-lib:      builds and installs prerequisites from gnu/lib.
 #   do-ld.so:        builds and installs prerequisites from libexec/ld.*_so.
@@ -190,9 +189,6 @@ BUILDTARGETS+=	do-lib-csu
 BUILDTARGETS+=	do-gnu-lib-libgcc${LIBGCC_EXT}
 .endif
 BUILDTARGETS+=	do-lib-libc
-.if ${MKCRYPTO} != "no"
-BUILDTARGETS+=	do-lib-libdes
-.endif
 BUILDTARGETS+=	do-lib do-gnu-lib
 BUILDTARGETS+=	do-ld.so
 BUILDTARGETS+=	do-build
