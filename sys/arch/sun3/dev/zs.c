@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.27 1995/06/28 04:31:25 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.28 1995/07/03 02:52:13 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -959,8 +959,7 @@ zsabort()
 #ifdef DDB
 	Debugger();
 #else
-	printf("stopping on keyboard abort\n");
-	sun3_rom_abort();
+	sun3_mon_abort();
 #endif
 }
 
