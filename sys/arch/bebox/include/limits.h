@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.1 1997/10/14 06:48:26 sakamoto Exp $	*/
+/*	$NetBSD: limits.h,v 1.2 1998/01/09 22:23:46 perry Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef	_MACHINE_LIMITS_H_
+#define	_MACHINE_LIMITS_H_
+
 #define	CHAR_BIT	8		/* bits per char		*/
 #define	MB_LEN_MAX	1		/* no multibyte characters	*/
 #define	CHAR_MIN	0		/* min value in char		*/
@@ -61,3 +64,5 @@
 #define	QUAD_MIN	(-0x7fffffffffffffffLL-1)	/* min signed quad */
 #endif	/* !_POSIX_SOURCE && !_XOPEN_SOURCE */
 #endif	/* !_ANSI_SOURCE */
+
+#endif /* _MACHINE_LIMITS_H_ */

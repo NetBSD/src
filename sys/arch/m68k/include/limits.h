@@ -1,4 +1,4 @@
-/*	$NetBSD: limits.h,v 1.9 1994/10/26 07:50:48 cgd Exp $	*/
+/*	$NetBSD: limits.h,v 1.10 1998/01/09 22:23:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,6 +34,9 @@
  *
  *	@(#)limits.h	7.2 (Berkeley) 6/28/90
  */
+
+#ifndef	_M68K_MACHINE_LIMITS_H_
+#define	_M68K_MACHINE_LIMITS_H_
 
 #define	CHAR_BIT	8		/* number of bits in a char */
 #define	MB_LEN_MAX	1		/* no multibyte characters */
@@ -82,3 +85,5 @@
 #define FLT_MAX		3.40282347E+38F
 #define FLT_MIN		1.17549435E-38F
 #endif
+
+#endif /* _M68K_MACHINE_LIMITS_H_ */
