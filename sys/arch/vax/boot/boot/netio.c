@@ -1,4 +1,4 @@
-/*	$NetBSD: netio.c,v 1.2 1999/04/01 20:40:07 ragge Exp $	*/
+/*	$NetBSD: netio.c,v 1.3 1999/05/07 16:19:28 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -96,6 +96,8 @@
 #include "lib/libsa/netif.h"
 #include "lib/libsa/bootparam.h"
 #include "lib/libsa/nfs.h"
+
+#include <lib/libkern/libkern.h>
 
 extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 
