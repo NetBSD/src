@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.31.2.1 2000/06/30 16:27:33 simonb Exp $	*/
+/* 	$NetBSD: px.c,v 1.31.2.2 2000/10/16 21:50:31 tv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.31.2.1 2000/06/30 16:27:33 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.31.2.2 2000/10/16 21:50:31 tv Exp $");
 
 /*
  * px.c: driver for the DEC TURBOchannel 2D and 3D accelerated framebuffers
@@ -367,7 +367,7 @@ px_init(fi, slotbase, unit, console)
 
 	/* Align to 8KB. px_info struct gets the first 4KB */
 	bufpa = (bufpa + 8191) & ~8191;
-	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG0(bufpa);
+	pxi = (struct px_info *)MIPS_PHYS_TO_KSEG1(bufpa);
 	px_unit[unit] = pxi;
 	bufpa += PXMAP_INFO_SIZE;
 
@@ -396,7 +396,7 @@ px_init(fi, slotbase, unit, console)
 	 */
 	if (pxi->pxi_option) {
 		bufpa = MIPS_KSEG0_TO_PHYS(slotbase + PXG_SRAM_OFFSET);
-		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG0(bufpa);
+		pxi->pxi_rbuf = (int *)MIPS_PHYS_TO_KSEG1(bufpa);
 		pxi->pxi_rbuf_phys = bufpa;
 		pxi->pxi_rbuf_size = px_probe_sram(pxi);
 	}
