@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.2 2001/08/20 23:08:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq.h,v 1.3 2001/09/10 23:17:49 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -56,8 +56,7 @@ struct fiq_regs {
 
 extern int fiq_claim(void *, size_t);
 extern void fiq_release(void);
-extern void fiq_enable(int);
-extern void fiq_disable(void);
+extern void fiq_installhandler(void *, size_t);
 extern void fiq_setregs(const struct fiq_regs *);
 extern void fiq_getregs(struct fiq_regs *);
 extern void (*fiq_downgrade_handler)(void);
