@@ -1,4 +1,4 @@
-#	$NetBSD: CARDBUS,v 1.14.2.9 2001/05/06 14:44:49 he Exp $
+#	$NetBSD: CARDBUS,v 1.14.2.10 2001/05/06 15:19:39 he Exp $
 #
 #	CARDBUS -- GENERIC + CardBus support
 #	from: GENERIC,v 1.358 2000/07/05 04:07:25 sommerfeld Exp
@@ -697,6 +697,7 @@ ugen*	at uhub? port ?
 # PCI audio devices
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
+clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
 eap*	at pci? dev ? function ?	# Ensoniq AudioPCI
 eso*	at pci? dev ? function ?	# ESS Solo-1 PCI AudioDrive
@@ -738,6 +739,7 @@ opl*	at ym?
 #audio*	at aria?
 audio*	at auvia?
 audio*	at clcs?
+audio*	at clct?
 audio*	at cmpci?
 audio*	at eap?
 audio*	at eso?
@@ -763,6 +765,8 @@ mpu*	at ym?
 
 # MIDI support
 #midi*	at cms?			# Creative Music System
+midi*	at clcs?		# Cirrus Logic CS3280 MIDI port
+#midi*	at clct?		# Cirrus Logic CS4281 MIDI port
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
