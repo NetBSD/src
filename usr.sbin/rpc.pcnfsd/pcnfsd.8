@@ -1,20 +1,16 @@
-.\"	$NetBSD: pcnfsd.8,v 1.3 1995/07/25 22:20:29 gwr Exp $
+.\"	$NetBSD: pcnfsd.8,v 1.4 1995/08/14 19:48:07 gwr Exp $
 .\" @(#) @(#)pcnfsd.8c	1.1 9/3/91;
 .TH PCNFSD 8C "25 April 1991"
 .SH NAME
 pcnfsd \- (PC)NFS authentication and print request server
 .SH SYNOPSIS
 .B /usr/sbin/rpc.pcnfsd 
-.SH AVAILABILITY
-This program is freely redistributable.
 .SH DESCRIPTION
-.IX  "pcnfsd command"  ""  "\fLpcnfsd\fP \(em adjunct services for PC ONC clients"
-.IX  servers  pcnfsd  ""  "\fLpcnfsd\fP \(em adjunct services for PC ONC clients"
 .LP
 .B pcnfsd
 is an
 .SM RPC
-server that supports ONC clients on PC (DOS, OS/2, Macintosh, and other)
+server that supports Sun ONC clients on PC (DOS, OS/2, Macintosh, and other)
 systems. This page describes version two of the
 .B pcnfsd
 server.
@@ -79,7 +75,7 @@ the client may use and which is exported by NFS.
 .B pcnfsd
 creates a subdirectory for each of its clients: the parent
 directory is normally
-.B /usr/spool/pcnfs
+.B /export/pcnfs
 and the subdirectory is the hostname of the client system.
 If you wish to use a different parent directory, you should add a
 line of the form
@@ -202,8 +198,20 @@ will be rejected because the \fIalias-for\fP has been specified as "-".
 .PD 0
 .TP 20
 .B /etc/pcnfsd.conf
+configuration file
+.TP 20
+.B /export/pcnfs
+default print spool directory
 .PD
 .SH "SEE ALSO"
-.BR lp (1)
-.BR lpstat (1)
-.BR lpq (1)
+.BR lpr (1),
+.BR lpc (8)
+.SH HISTORY
+The
+.B pcnfsd
+source code is distributed by Sun Microsystems, Inc. with their
+.SM PC/NFS
+product under terms described in common.h in that source code.
+Those terms require that you be informed that this version of
+.B pcnfsd
+was modified to run on NetBSD and is NOT supported by Sun.
