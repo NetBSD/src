@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.newsmips,v 1.13 1999/03/08 06:33:26 tsubai Exp $
+#	$NetBSD: Makefile.newsmips,v 1.14 1999/03/12 06:42:48 tsubai Exp $
 
 # Makefile for NetBSD
 #
@@ -118,8 +118,8 @@ LINKFLAGS+=	-x
 
 SYSTEM_LD_TAIL+=;\
 		echo mv $@ $@.elf; mv $@ $@.elf; \
-		echo objcopy -O ecoff-bigmips -R .ident -R .mdebug $@.elf $@; \
-		objcopy -O ecoff-bigmips -R .ident -R .mdebug $@.elf $@; \
+		echo objcopy -O ecoff-bigmips -R .ident $@.elf $@; \
+		objcopy -O ecoff-bigmips -R .ident $@.elf $@; \
 		chmod 755 $@
 
 %LOAD
