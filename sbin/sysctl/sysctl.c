@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.67 2003/05/18 02:07:20 itojun Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.68 2003/05/31 23:42:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.67 2003/05/18 02:07:20 itojun Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.68 2003/05/31 23:42:23 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -326,7 +326,7 @@ parse(char *string, int flags)
 	int special = 0;
 	void *newval = 0;
 	int intval, newsize = 0;
-	quad_t quadval;
+	long long quadval;
 	size_t size;
 	struct list *lp;
 	int mib[CTL_MAXNAME];
@@ -584,7 +584,7 @@ parse(char *string, int flags)
 			}
 			/* FALLTHROUGH */
 		case CTLTYPE_QUAD:
-			sscanf(newval, "%lld", (long long *)&quadval);
+			sscanf(newval, "%lld", &quadval);
 			newval = &quadval;
 			newsize = sizeof quadval;
 			break;
