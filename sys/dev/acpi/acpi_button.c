@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.11 2003/11/03 06:03:47 kochi Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.12 2003/11/03 17:24:22 mycroft Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.11 2003/11/03 06:03:47 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.12 2003/11/03 17:24:22 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,8 +131,8 @@ acpibut_attach(struct device *parent, struct device *self, void *aux)
 	rv = AcpiInstallNotifyHandler(sc->sc_node->ad_handle,
 	    ACPI_DEVICE_NOTIFY, acpibut_notify_handler, sc);
 	if (rv != AE_OK) {
-		printf("%s: unable to register device notify handler: %d\n",
-		    sc->sc_dev.dv_xname, rv);
+		printf("%s: unable to register DEVICE NOTIFY handler: %s\n",
+		    sc->sc_dev.dv_xname, AcpiFormatException(rv));
 		return;
 	}
 
@@ -182,7 +182,8 @@ acpibut_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		    acpibut_pressed_event, sc);
 		if (rv != AE_OK)
 			printf("%s: WARNING: unable to queue button pressed "
-			    "callback: %d\n", sc->sc_dev.dv_xname, rv);
+			    "callback: %s\n", sc->sc_dev.dv_xname,
+			    AcpiFormatException(rv));
 		break;
 
 	/* XXX ACPI_NOTIFY_DeviceWake?? */
