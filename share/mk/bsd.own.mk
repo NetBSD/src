@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.199 2001/10/26 04:59:10 jmc Exp $
+#	$NetBSD: bsd.own.mk,v 1.200 2001/10/26 06:41:46 jmc Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -23,7 +23,7 @@ USE_NEW_TOOLCHAIN=yes	# set
 .if !defined(_SRC_TOP_)
 # Find the top of the source tree to see if we're inside of $BSDSRCDIR
 _SRC_TOP_!= cd ${.CURDIR}; while :; do \
-		here=`pwd`; echo "$$here" >&2 ; \
+		here=`pwd`; \
 		[ -f build.sh  ] && [ -d tools ] && { echo $$here; break; }; \
 		case $$here in /) echo ""; break;; esac; \
 		cd ..; done 
