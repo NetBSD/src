@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.7 1999/03/29 11:11:34 fvdl Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.7.2.1 1999/04/27 00:10:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1520,8 +1520,16 @@ ex_read_eeprom(sc, offset)
 	GO_WINDOW(0);
 	if (ex_eeprom_busy(sc))
 		goto out;
-	bus_space_write_1(iot, ioh, ELINK_W0_EEPROM_COMMAND,
-	    READ_EEPROM | (offset & 0x3f));
+	switch (sc->ex_bustype) {
+	case EX_BUS_PCI:
+		bus_space_write_1(iot, ioh, ELINK_W0_EEPROM_COMMAND,
+ 		    READ_EEPROM | (offset & 0x3f));
+		break;
+	case EX_BUS_CARDBUS:
+		bus_space_write_2(iot, ioh, ELINK_W0_EEPROM_COMMAND,
+		    0x230 + (offset & 0x3f));
+		break;
+	}
 	if (ex_eeprom_busy(sc))
 		goto out;
 	data = bus_space_read_2(iot, ioh, ELINK_W0_EEPROM_DATA);
