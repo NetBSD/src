@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.9 1998/10/12 16:09:11 bouyer Exp $	*/
+/*	$NetBSD: icside.c,v 1.10 1998/11/22 14:55:29 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -77,6 +77,7 @@ struct icside_softc {
 	struct bus_space 	sc_tag;			/* custom tag */
 	struct podule_attach_args *sc_pa;		/* podule info */
 	struct icside_channel {
+		struct channel_softc	wdc_channel;	/* generic part */
 		irqhandler_t		ic_ih;		/* interrupt handler */
 		bus_space_tag_t		ic_irqiot;	/* Bus space tag */
 		bus_space_handle_t	ic_irqioh;	/* handle for IRQ */
@@ -171,6 +172,7 @@ icside_attach(parent, self, aux)
 	struct ide_version *ide = NULL;
 	u_int iobase;
 	int channel;
+	struct icside_channel *icp;
 	struct channel_softc *cp;
 	int loop;
 	int id;
@@ -232,7 +234,7 @@ icside_attach(parent, self, aux)
 
 	/* Initialize wdc struct */
 	sc->sc_wdcdev.channels = malloc(
-	    sizeof(struct channel_softc) * ide->channels, M_DEVBUF, M_NOWAIT);
+	    sizeof(struct channel_softc *) * ide->channels, M_DEVBUF, M_NOWAIT);
 	sc->icside_channels = malloc(
 	    sizeof(struct icside_channel) * ide->channels, M_DEVBUF, M_NOWAIT);
 	if (sc->sc_wdcdev.channels == NULL || sc->icside_channels == NULL) {
@@ -246,7 +248,10 @@ icside_attach(parent, self, aux)
 	sc->sc_pa = pa;
 
 	for (channel = 0; channel < ide->channels; ++channel) {
-		cp = &sc->sc_wdcdev.channels[channel];
+		icp = &sc->icside_channels[channel];
+		sc->sc_wdcdev.channels[channel] = &icp->wdc_channel;
+		cp = &icp->wdc_channel;
+
 		cp->channel = channel;
 		cp->wdc = &sc->sc_wdcdev;
 		cp->ch_queue = malloc(sizeof(struct channel_queue), M_DEVBUF,
@@ -271,24 +276,21 @@ icside_attach(parent, self, aux)
 		if (bus_space_map(iot, iobase + ide->auxregs[channel],
 		    AUX_REGISTER_SPACE, 0, &cp->ctl_ioh))
 			return;
-		sc->icside_channels[channel].ic_irqiot = iot;
+		icp->ic_irqiot = iot;
 		if (bus_space_map(iot, iobase + ide->irqregs[channel],
-		    IRQ_REGISTER_SPACE, 0,
-		    &sc->icside_channels[channel].ic_irqioh))
+		    IRQ_REGISTER_SPACE, 0, &icp->ic_irqioh))
 			return;
 		/* Disable interrupts */
-		(void)bus_space_read_1(iot,
-		    sc->icside_channels[channel].ic_irqioh, 0);
+		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		/* Call common attach routines */
 		wdcattach(cp);
 		/* Disable interrupts */
-		(void)bus_space_read_1(iot,
-		    sc->icside_channels[channel].ic_irqioh, 0);
+		(void)bus_space_read_1(iot, icp->ic_irqioh, 0);
 		pa->pa_podule->irq_addr = iobase + ide->irqstatregs[channel];
 		pa->pa_podule->irq_mask = IRQ_STATUS_REGISTER_MASK;
-		ihp = &sc->icside_channels[channel].ic_ih;
+		ihp = &icp->ic_ih;
 		ihp->ih_func = icside_intr;
-		ihp->ih_arg = cp;
+		ihp->ih_arg = icp;
 		ihp->ih_level = IPL_BIO;
 		ihp->ih_name = "icside";
 		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
@@ -300,8 +302,7 @@ icside_attach(parent, self, aux)
 			continue;
 		}
 		/* Enable interrupts */
-		bus_space_write_1(iot, sc->icside_channels[channel].ic_irqioh,
-		    0, 0);
+		bus_space_write_1(iot, icp->ic_irqioh, 0, 0);
 	}
 }
 
@@ -314,13 +315,12 @@ int
 icside_intr(arg)
 	void *arg;
 {
-	struct channel_softc *chp = arg;
-	struct icside_softc *sc = (struct icside_softc*)chp->wdc;
-	irqhandler_t *ihp = &sc->icside_channels[chp->channel].ic_ih;
+	struct icside_channel *icp = arg;
+	irqhandler_t *ihp = &icp->ic_ih;
 	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
 
 	/* XXX - not bus space yet - should really be handled by podulebus */
 	if ((*intraddr) & ihp->ih_maskbits)
-		wdcintr(chp);
+		wdcintr(&icp->wdc_channel);
 	return(0);
 }
