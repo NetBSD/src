@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.26 2002/09/23 05:51:19 simonb Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.27 2003/01/18 07:40:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.26 2002/09/23 05:51:19 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.27 2003/01/18 07:40:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.26 2002/09/23 05:51:19 simonb Exp 
 #include <sys/unistd.h>
 
 #include <net/if.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #include <compat/ibcs2/ibcs2_types.h>
@@ -332,8 +333,8 @@ stio2stios(t, ts)
 }
 
 int
-ibcs2_sys_ioctl(p, v, retval)
-	struct proc *p;
+ibcs2_sys_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -342,6 +343,7 @@ ibcs2_sys_ioctl(p, v, retval)
 		syscallarg(int) cmd;
 		syscallarg(caddr_t) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
@@ -507,11 +509,11 @@ ibcs2_sys_ioctl(p, v, retval)
 
 	case IBCS2_TIOCGWINSZ:
 		SCARG(uap, cmd) = TIOCGWINSZ;
-		return sys_ioctl(p, uap, retval);
+		return sys_ioctl(l, uap, retval);
 
 	case IBCS2_TIOCSWINSZ:
 		SCARG(uap, cmd) = TIOCSWINSZ;
-		return sys_ioctl(p, uap, retval);
+		return sys_ioctl(l, uap, retval);
 
 	case IBCS2_TIOCGPGRP:
 		return copyout((caddr_t)&p->p_pgrp->pg_id, SCARG(uap, data),
@@ -523,7 +525,7 @@ ibcs2_sys_ioctl(p, v, retval)
 
 		SCARG(&sa, pid) = 0;
 		SCARG(&sa, pgid) = (int)SCARG(uap, data);
-		if ((error = sys_setpgid(p, &sa, retval)) != 0)
+		if ((error = sys_setpgid(l, &sa, retval)) != 0)
 			return error;
 		return 0;
 	    }
@@ -535,7 +537,7 @@ ibcs2_sys_ioctl(p, v, retval)
 		return ENOSYS;
 
 	case IBCS2_SIOCSOCKSYS:
-		return ibcs2_socksys(p, uap, retval);
+		return ibcs2_socksys(l, uap, retval);
 
 	case IBCS2_FIONBIO:
 		{
@@ -550,7 +552,7 @@ ibcs2_sys_ioctl(p, v, retval)
 
 	case IBCS2_I_NREAD:     /* STREAMS */
 	        SCARG(uap, cmd) = FIONREAD;
-		return sys_ioctl(p, uap, retval);
+		return sys_ioctl(l, uap, retval);
 
 	default:
 		DPRINTF(("ibcs2_ioctl(%d): unknown cmd 0x%x ",
@@ -560,8 +562,8 @@ ibcs2_sys_ioctl(p, v, retval)
 }
 
 int
-ibcs2_sys_gtty(p, v, retval)
-	struct proc *p;
+ibcs2_sys_gtty(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -569,6 +571,7 @@ ibcs2_sys_gtty(p, v, retval)
 		syscallarg(int) fd;
 		syscallarg(struct sgttyb *) tb;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct sgttyb tb;
