@@ -1,6 +1,4 @@
 #!/bin/csh -f
-#
-#	from: Mach, Revision 2.2  92/04/04  11:36:01  rpd
-#	$NetBSD: rmaouthdr,v 1.1 1996/08/25 23:39:24 jtk Exp $
-#
+#	$NetBSD: rmaouthdr,v 1.2 1996/09/09 16:55:11 mycroft Exp $
+
 dd if=$1 of=$2 ibs=32 skip=1 obs=1024b
