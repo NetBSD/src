@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.5.2.1 2000/08/31 15:30:46 minoura Exp $
+# $NetBSD: dot.profile,v 1.5.2.2 2000/12/15 05:32:42 he Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -46,7 +46,7 @@ export EDITOR
 
 umask 022
 
-ROOTDEV=/dev/md0a
+ROOTDEVS="/dev/md0a /dev/fd0c /dev/fd1c /dev/fd2c /Dummy"
 
 if [ "X${DONEPROFILE}" = "X" ]; then
 	DONEPROFILE=YES
@@ -57,13 +57,20 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 	echo ''
 
-	# mount the ramdisk read write
-	mount -u $ROOTDEV /
+	# mount the miniroot read write
+	# our miniroot can be either on ramdisk or on floppy.
+	for $ROOTDEV in $ROOTDEVS; do
+		( mount -u $ROOTDEV / > /dev/null 2>&1 ) && break
+	done
 
 	# pull in the functions that people will use from the shell prompt.
 	# . /.commonutils
 	# . /.instutils
 
-	# run sysinst.
-	sysinst
+	if [ "$ROOTDEV" = "/Dummy" ]; then
+		echo "Could not determine root device."
+	else
+		# run sysinst.
+		sysinst
+	fi
 fi
