@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.1 2002/07/10 10:24:16 scw Exp $	*/
+/*	$NetBSD: profile.h,v 1.2 2002/07/10 10:30:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,6 +46,7 @@
  */
 
 #ifdef _LP64
+
 #define	MCOUNT					\
 __asm("	.globl	_mcount				\n" \
 "	.type	_mcount,@function		\n" \
@@ -80,7 +81,7 @@ __asm("	.globl	_mcount				\n" \
 "	ptabs/l	r0, tr0				\n" \
 "	ld.q	r15, 80, r14			\n" \
 "	addi	r15, 96, r15			\n" \
-"	blink	tr0, r63			\n"
+"	blink	tr0, r63			\n")
 
 #else	/* !_LP64 */
 
@@ -118,7 +119,8 @@ __asm("	.globl	_mcount				\n" \
 "	ptabs/l	r0, tr0				\n" \
 "	ld.l	r15, 72, r14			\n" \
 "	addi.l	r15, 80, r15			\n" \
-"	blink	tr0, r63			\n"
+"	blink	tr0, r63			\n")
+#endif
 
 #ifdef _KERNEL
 #define	MCOUNT_ENTER					\
