@@ -1,4 +1,4 @@
-#	$NetBSD: NBTY,v 1.12 1998/08/05 16:08:35 minoura Exp $
+#	$NetBSD: NBTY,v 1.13 1998/09/03 14:29:33 minoura Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -86,10 +86,8 @@ options 	TUN			# tunnelling
 #options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	DEBUG			# extra kernel debugging support
 options 	FPSP			# floating point emulation for MC68040
-options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
 #options 	JUPITER			# support for "JUPITER-X"
-#options 	EIOMAPSIZE=0		# do not map PCI address space
 #options        MAPPEDCOPY              # use page mapping for large copyin/copy
 #options 	BUFPAGES=900
 #options 	NKMEMCLUSTERS=256

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.20 1998/08/05 16:08:34 minoura Exp $
+#	$NetBSD: GENERIC,v 1.21 1998/09/03 14:29:33 minoura Exp $
 
 #
 #	GENERIC
@@ -85,9 +85,7 @@ options 	INET			# Internet protocols
 options 	DEBUG
 options 	MACHINE_NONCONTIG	# support for noncontig memory
 options 	FPSP			# '40 Floating Point Software
-options 	ITEKANJI		# Kanji display for console
 options 	PANICBUTTON		# enable interrupt switch
-options 	EIOMAPSIZE=0		# do not map PCI address space
 options 	MAPPEDCOPY		# use page mapping for large copyin/copyout
 #options 	BUFPAGES=900
 #options 	NKMEMCLUSTERS=256
