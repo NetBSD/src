@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machparam.h 1.11 89/08/14
  *	from: @(#)param.h	7.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.10 1994/05/17 10:29:52 cgd Exp $
+ *	$Id: param.h,v 1.11 1994/05/20 18:21:26 mycroft Exp $
  */
 
 /*
@@ -103,8 +103,10 @@
 /*
  * Disklabel location
  */
-#ifndef OLD_DISKLABEL
+#ifndef LABELSECTOR
 #define LABELSECTOR     (1024/DEV_BSIZE)
+#endif
+#ifndef LABELOFFSET
 #define LABELOFFSET     0
 #endif
 
