@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.40 2001/04/27 21:36:58 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.41 2001/05/14 20:35:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1060,6 +1060,103 @@ scsipi_start(periph, type, flags)
 	    (struct scsipi_generic *) &scsipi_cmd, sizeof(scsipi_cmd),
 	    0, 0, SCSIPIRETRIES, (type & SSS_START) ? 60000 : 10000,
 	    NULL, flags));
+}
+
+/*
+ * scsipi_mode_sense, scsipi_mode_sense_big:
+ *	get a sense page from a device
+ */
+
+int
+scsipi_mode_sense(periph, byte2, page, data, len, flags, retries, timeout)
+	struct scsipi_periph *periph;
+	int byte2, page, len, flags, retries, timeout;
+	struct scsipi_mode_header *data;
+{
+	struct scsipi_mode_sense scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = MODE_SENSE;
+	scsipi_cmd.byte2 = byte2;
+	scsipi_cmd.page = page;
+	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
+		_lto2b(len, scsipi_cmd.u_len.atapi.length);
+	else
+		scsipi_cmd.u_len.scsi.length = len & 0xff;
+	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | XS_CTL_DATA_IN);
+	SC_DEBUG(periph, SCSIPI_DB2,
+	    ("scsipi_mode_sense: error=%d\n", error));
+	return (error);
+}
+
+int
+scsipi_mode_sense_big(periph, byte2, page, data, len, flags, retries, timeout)
+	struct scsipi_periph *periph;
+	int byte2, page, len, flags, retries, timeout;
+	struct scsipi_mode_header_big *data;
+{
+	struct scsipi_mode_sense_big scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = MODE_SENSE_BIG;
+	scsipi_cmd.byte2 = byte2;
+	scsipi_cmd.page = page;
+	_lto2b(len, scsipi_cmd.length);
+	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | XS_CTL_DATA_IN);
+	SC_DEBUG(periph, SCSIPI_DB2,
+	    ("scsipi_mode_sense_big: error=%d\n", error));
+	return (error);
+}
+
+int
+scsipi_mode_select(periph, byte2, data, len, flags, retries, timeout)
+	struct scsipi_periph *periph;
+	int byte2, len, flags, retries, timeout;
+	struct scsipi_mode_header *data;
+{
+	struct scsipi_mode_select scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = MODE_SELECT;
+	scsipi_cmd.byte2 = byte2;
+	if (scsipi_periph_bustype(periph) == SCSIPI_BUSTYPE_ATAPI)
+		_lto2b(len, scsipi_cmd.u_len.atapi.length);
+	else
+		scsipi_cmd.u_len.scsi.length = len & 0xff;
+	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | XS_CTL_DATA_OUT);
+	SC_DEBUG(periph, SCSIPI_DB2,
+	    ("scsipi_mode_select: error=%d\n", error));
+	return (error);
+}
+
+int
+scsipi_mode_select_big(periph, byte2, data, len, flags, retries, timeout)
+	struct scsipi_periph *periph;
+	int byte2, len, flags, retries, timeout;
+	struct scsipi_mode_header_big *data;
+{
+	struct scsipi_mode_select_big scsipi_cmd;
+	int error;
+
+	bzero(&scsipi_cmd, sizeof(scsipi_cmd));
+	scsipi_cmd.opcode = MODE_SELECT_BIG;
+	scsipi_cmd.byte2 = byte2;
+	_lto2b(len, scsipi_cmd.length);
+	error = scsipi_command(periph, (struct scsipi_generic *)&scsipi_cmd,
+	    sizeof(scsipi_cmd), (void *)data, len, retries, timeout, NULL,
+	    flags | XS_CTL_DATA_OUT);
+	SC_DEBUG(periph, SCSIPI_DB2,
+	    ("scsipi_mode_select: error=%d\n", error));
+	return (error);
 }
 
 /*
