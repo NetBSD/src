@@ -1,4 +1,4 @@
-/*	$NetBSD: bootptest.c,v 1.10 2002/09/18 23:13:40 mycroft Exp $	*/
+/*	$NetBSD: bootptest.c,v 1.11 2002/09/20 19:23:58 mycroft Exp $	*/
 
 /*
  * bootptest.c - Test out a bootp server.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bootptest.c,v 1.10 2002/09/18 23:13:40 mycroft Exp $");
+__RCSID("$NetBSD: bootptest.c,v 1.11 2002/09/20 19:23:58 mycroft Exp $");
 #endif
 
 char *usage = "bootptest [-h] server-name [vendor-data-template-file]";
@@ -141,6 +141,7 @@ main(int argc, char **argv)
 	int use_hwa = 0;
 	int32 vend_magic;
 	int32 xid;
+	struct pollfd set[1];
 
 	progname = strrchr(argv[0], '/');
 	if (progname)
@@ -374,11 +375,9 @@ main(int argc, char **argv)
 	recvcnt = 0;
 	bp->bp_secs = secs = 0;
 	send_request(s);
+	set[0].fd = s;
+	set[0].events = POLLIN;
 	while (1) {
-		struct pollfd set[1];
-
-		set[0].fd = s;
-		set[0].events = POLLIN;
 		n = poll(set, 1, WAITSECS * 1000);
 		if (n < 0) {
 			perror("poll");
