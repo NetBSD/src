@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.19 1998/09/11 12:50:13 mycroft Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.20 1998/09/13 01:41:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -170,5 +170,19 @@ struct vnode;
 struct ucred;
 int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
 			  struct core *));
+
+/*
+ * Compatibility functions.  See compat/common/kern_sig_13.c.
+ */
+void	native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
+void	native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
+void	native_sigaction13_to_sigaction __P((const struct sigaction13 *,
+	    struct sigaction *));
+void	native_sigaction_to_sigaction13 __P((const struct sigaction *,
+	    struct sigaction13 *));
+void	native_sigaltstack13_to_sigaltstack __P((const struct sigaltstack13 *,
+	    struct sigaltstack *));
+void	native_sigaltstack_to_sigaltstack13 __P((const struct sigaltstack *,
+	    struct sigaltstack13 *));
 #endif	/* _KERNEL */
 #endif	/* !_SYS_SIGNALVAR_H_ */

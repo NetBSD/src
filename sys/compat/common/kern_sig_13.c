@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_13.c,v 1.3 1998/09/11 12:50:07 mycroft Exp $	*/
+/*	$NetBSD: kern_sig_13.c,v 1.4 1998/09/13 01:41:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -48,13 +48,6 @@
 #include <machine/limits.h>
 
 #include <compat/common/compat_util.h>
-
-void native_sigset13_to_sigset __P((const sigset13_t *, sigset_t *));
-void native_sigset_to_sigset13 __P((const sigset_t *, sigset13_t *));
-void native_sigaction13_to_sigaction __P((const struct sigaction13 *, struct sigaction *));
-void native_sigaction_to_sigaction13 __P((const struct sigaction *, struct sigaction13 *));
-void native_sigaltstack13_to_sigaltstack __P((const struct sigaltstack13 *, struct sigaltstack *));
-void native_sigaltstack_to_sigaltstack13 __P((const struct sigaltstack *, struct sigaltstack13 *));
 
 void
 native_sigset13_to_sigset(oss, ss)
