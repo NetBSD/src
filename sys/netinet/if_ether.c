@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ether.c	8.1 (Berkeley) 6/10/93
- *	$Id: if_ether.c,v 1.14 1994/06/04 03:15:09 gwr Exp $
+ *	$Id: if_ether.c,v 1.15 1994/06/21 03:54:27 chopps Exp $
  */
 
 /*
@@ -39,6 +39,8 @@
  * TODO:
  *	add "inuse/lock" bit (or ref. count) along with valid bit
  */
+
+#ifdef INET
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -861,3 +863,4 @@ db_show_arptab()
 	return (0);
 }
 #endif
+#endif /* INET */
