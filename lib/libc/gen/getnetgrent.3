@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetgrent.3,v 1.7 1998/08/29 08:32:33 lukem Exp $
+.\"	$NetBSD: getnetgrent.3,v 1.8 1999/01/16 08:05:33 lukem Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getnetgrent.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd January 16, 1999
 .Dt GETNETGRENT 3
 .Os
 .Sh NAME
@@ -55,17 +55,9 @@
 .Ft void
 .Fn endnetgrent void
 .Sh DESCRIPTION
-These functions operate on the netgroup database file
-.Pa /etc/netgroup.db
-which is described
-in
+These functions operate on the netgroup database file which is described in
 .Xr netgroup 5 .
-If that file does not exist, and the system supports 
-.Sy YP ,
-then the
-.Sy netgroup 
-.Sy YP
-databases are used instead.
+.Pp
 The database defines a set of netgroups, each made up of one or more triples:
 .Bd -literal -offset indent
 (host, user, domain)
@@ -125,7 +117,8 @@ have no return value.
 netgroup database file
 .El
 .Sh SEE ALSO
-.Xr netgroup 5
+.Xr netgroup 5 ,
+.Xr nsswitch.conf 5
 .Sh BUGS
 The function
 .Fn getnetgrent

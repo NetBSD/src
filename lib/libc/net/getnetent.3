@@ -1,4 +1,4 @@
-.\"	$NetBSD: getnetent.3,v 1.6 1998/02/05 18:48:45 perry Exp $
+.\"	$NetBSD: getnetent.3,v 1.7 1999/01/16 08:13:28 lukem Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getnetent.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd June 4, 1993
+.Dd January 16, 1999
 .Dt GETNETENT 3
 .Os BSD 4.2
 .Sh NAME
@@ -65,8 +65,8 @@ functions
 each return a pointer to an object with the
 following structure
 containing the broken-out
-fields of a line in the network data base,
-.Pa /etc/networks .
+fields of a line in the network data base as described in
+.Xr networks 5 .
 .Bd -literal -offset indent
 struct	netent {
 	char		*n_name;	/* official name of net */
@@ -133,7 +133,8 @@ Null pointer
 .Dv EOF
 or error.
 .Sh SEE ALSO
-.Xr networks 5
+.Xr networks 5 ,
+.Xr nsswitch.conf 5
 .Sh HISTORY
 The
 .Fn getnetent ,
