@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.63 2001/12/08 00:35:30 thorpej Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.64 2002/01/04 06:47:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.63 2001/12/08 00:35:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.64 2002/01/04 06:47:46 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -273,7 +273,7 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  netbsd32_elf32_copyargs,
 	  NULL,
-	  coredump_netbsd32 },
+	  coredump_netbsd32 },		/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 #endif
 
@@ -286,7 +286,7 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 
 #ifdef COMPAT_FREEBSD
 	/* FreeBSD Elf32 (probe not 64-bit safe) */
@@ -298,7 +298,7 @@ const struct execsw execsw_builtin[] = {
 	  FREEBSD_ELF_AUX_ARGSIZ,
 	  elf32_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 
 #ifdef COMPAT_LINUX
@@ -311,7 +311,7 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  LINUX_COPYARGS_FUNCTION,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 
 #ifdef COMPAT_IRIX
@@ -324,7 +324,7 @@ const struct execsw execsw_builtin[] = {
 	  IRIX_AUX_ARGSIZ,
 	  irix_elf32_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 
 #ifdef COMPAT_SVR4_32
@@ -337,7 +337,7 @@ const struct execsw execsw_builtin[] = {
 	  SVR4_32_AUX_ARGSIZ,
 	  svr4_32_copyargs,
 	  NULL,
-	  coredump_netbsd32 },
+	  coredump_netbsd32 },	/* XXX XXX XXX */
 	  /* This one should go first so it matches instead of native */
 #endif
 
@@ -351,7 +351,7 @@ const struct execsw execsw_builtin[] = {
 	  SVR4_AUX_ARGSIZ,
 	  svr4_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 
 #ifdef COMPAT_IBCS2
@@ -364,7 +364,7 @@ const struct execsw execsw_builtin[] = {
 	  IBCS2_ELF_AUX_ARGSIZ,
 	  elf32_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 
 #ifdef EXEC_ELF_CATCHALL
@@ -377,7 +377,7 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
 	  elf32_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf32 },
 #endif
 #endif /* EXEC_ELF32 */
 
@@ -391,7 +391,7 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf64 },
 
 #ifdef COMPAT_LINUX
 	/* Linux Elf64 */
@@ -403,7 +403,7 @@ const struct execsw execsw_builtin[] = {
 	  LINUX_ELF_AUX_ARGSIZ,
 	  linux_elf64_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf64 },
 #endif
 
 #ifdef COMPAT_SVR4
@@ -416,7 +416,7 @@ const struct execsw execsw_builtin[] = {
 	  SVR4_AUX_ARGSIZ64,
 	  svr4_copyargs64,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf64 },
 #endif
 
 #ifdef EXEC_ELF_CATCHALL
@@ -429,7 +429,7 @@ const struct execsw execsw_builtin[] = {
 	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
 	  elf64_copyargs,
 	  NULL,
-	  coredump_netbsd },
+	  coredump_elf64 },
 #endif
 #endif /* EXEC_ELF64 */
 
