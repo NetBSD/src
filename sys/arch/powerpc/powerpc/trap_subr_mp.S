@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr_mp.S,v 1.1 2001/03/07 08:05:07 tsubai Exp $	*/
+/*	$NetBSD: trap_subr_mp.S,v 1.2 2001/06/10 11:09:28 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -638,7 +638,7 @@ s_dsitrap:
 	mfctr	31			/* & CTR */
 	mfdar	3
 s_pte_spill:
-	bl	_C_LABEL(pte_spill)	/* try a spill */
+	bl	_C_LABEL(pmap_pte_spill) /* try a spill */
 	or.	3,3,3
 	mtctr	31			/* restore CTR */
 	mtlr	30			/* and trap type */
