@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.26 2001/09/10 13:30:15 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.27 2001/09/10 22:17:34 augustss Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -218,7 +218,7 @@ USB generic devices, see
 USB Diamond Rio 500 devices, see
 .Xr \&urio 4
 . It Ar uscanner#
-Scanners, see
+USB scanners, see
 .Xr \&uscanner 4
 . It Ar ttyU#
 USB modems
@@ -307,8 +307,12 @@ ALTQ control interface
 Generic VME access
 . It Ar wsfont#
 Console font control
+. It Ar wsmux#
+Wscons event multiplexor, see
+.Xr \&wsmux 4
 . It Ar agp#
-AGP GARt devices
+AGP GARt devices, see
+.Xr \&agp 4
 . El
 .El
 .Sh FILES
