@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.5.4.2 2000/08/07 01:03:41 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.5.4.3 2000/10/18 16:31:32 tv Exp $	*/
 
 /*
  * Copyright (c) 1998 Matthew R. Green
@@ -100,7 +100,7 @@ netbsd32_setregs(p, pack, stack)
 	}
 	bzero((caddr_t)tf, sizeof *tf);
 	tf->tf_tstate = tstate;
-	tf->tf_global[1] = (int)PS_STRINGS;
+	tf->tf_global[1] = (int)(long)p->p_psstr;
 	tf->tf_pc = pack->ep_entry & ~3;
 	tf->tf_npc = tf->tf_pc + 4;
 
@@ -234,7 +234,7 @@ netbsd32_sendsig(catcher, sig, mask, code)
 	 * Arrange to continue execution at the code copied out in exec().
 	 * It needs the function to call in %g1, and a new stack pointer.
 	 */
-	addr = (long)PS_STRINGS - szsigcode;
+	addr = (long)p->p_psstr - szsigcode;
 	tf->tf_global[1] = (long)catcher;
 	tf->tf_pc = addr;
 	tf->tf_npc = addr + 4;
