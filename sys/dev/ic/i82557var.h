@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.9 1999/12/12 17:46:36 thorpej Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.10 2000/02/09 22:15:58 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -187,6 +187,9 @@ struct fxp_softc {
 	 */
 	struct fxp_control_data *sc_control_data;
 
+	bus_dma_segment_t sc_cdseg;	/* control dma segment */
+	int	sc_cdnseg;
+
 	int	sc_flags;		/* misc. flags */
 
 #define	FXPF_WANTINIT		0x01	/* want a re-init */
@@ -204,7 +207,7 @@ struct fxp_softc {
 	int	(*sc_enable) __P((struct fxp_softc *));
 	void	(*sc_disable) __P((struct fxp_softc *));
 
-	int sc_eeprom_size;		/* log2 size of EEPROM */
+	int	sc_eeprom_size;		/* log2 size of EEPROM */
 #if NRND > 0
 	rndsource_element_t rnd_source;	/* random source */
 #endif
@@ -317,6 +320,7 @@ do {									\
 	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (reg), (val))
 
 void	fxp_attach __P((struct fxp_softc *));
+int	fxp_detach __P((struct fxp_softc *));
 int	fxp_intr __P((void *));
 
 int	fxp_enable __P((struct fxp_softc*));

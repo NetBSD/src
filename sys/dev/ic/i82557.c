@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.17 2000/02/02 17:09:47 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.18 2000/02/09 22:15:57 joda Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -261,6 +261,9 @@ fxp_attach(sc)
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
+	sc->sc_cdseg = seg;
+	sc->sc_cdnseg = rseg;
+
 	bzero(sc->sc_control_data, sizeof(struct fxp_control_data));
 
 	if ((error = bus_dmamap_create(sc->sc_dmat,
@@ -867,6 +870,8 @@ fxp_intr(arg)
 	u_int16_t len, rxstat, txstat;
 	u_int8_t statack;
 
+	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+		return 0;
 	/*
 	 * If the interface isn't running, don't try to
 	 * service the interrupt.. just ack it and bail.
@@ -1861,4 +1866,55 @@ fxp_disable(sc)
 		(*sc->sc_disable)(sc);
 		sc->sc_enabled = 0;
 	}
+}
+
+
+
+int
+fxp_detach(sc)
+	struct fxp_softc *sc;
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int i;
+
+	/* Unhook our tick handler. */
+	untimeout(fxp_tick, sc);
+
+	if (sc->sc_flags & FXPF_MII) {
+		/* Detach all PHYs */
+		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	}
+
+	/* Delete all remaining media. */
+	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+
+#if NRND > 0
+	rnd_detach_source(&sc->rnd_source);
+#endif
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+	ether_ifdetach(ifp);
+	if_detach(ifp);
+
+	for (i = 0; i < FXP_NRFABUFS; i++) {
+		bus_dmamap_unload(sc->sc_dmat, sc->sc_rxmaps[i]);
+		bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxmaps[i]);
+	}
+
+	for (i = 0; i < FXP_NTXCB; i++) {
+		bus_dmamap_unload(sc->sc_dmat, FXP_DSTX(sc, i)->txs_dmamap);
+		bus_dmamap_destroy(sc->sc_dmat, FXP_DSTX(sc, i)->txs_dmamap);
+	}
+
+
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
+			 sizeof(struct fxp_control_data));
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
+
+	shutdownhook_disestablish(sc->sc_sdhook);
+
+	return (0);
 }
