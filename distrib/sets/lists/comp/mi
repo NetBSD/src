@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.640 2003/11/16 15:10:46 yamt Exp $
+#	$NetBSD: mi,v 1.641 2003/11/18 00:56:57 thorpej Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -1210,6 +1210,7 @@
 ./usr/share/man/cat2/fstat.0		comp-c-catman
 ./usr/share/man/cat2/fstatfs.0		comp-c-catman
 ./usr/share/man/cat2/fsync.0		comp-c-catman
+./usr/share/man/cat2/fsync_range.0	comp-c-catman
 ./usr/share/man/cat2/ftruncate.0	comp-c-catman
 ./usr/share/man/cat2/futimes.0		comp-c-catman
 ./usr/share/man/cat2/getcontext.0	comp-c-catman
@@ -4675,6 +4676,7 @@
 ./usr/share/man/man2/fstat.2		comp-c-man
 ./usr/share/man/man2/fstatfs.2		comp-c-man
 ./usr/share/man/man2/fsync.2		comp-c-man
+./usr/share/man/man2/fsync_range.2	comp-c-man
 ./usr/share/man/man2/ftruncate.2		comp-c-man
 ./usr/share/man/man2/futimes.2		comp-c-man
 ./usr/share/man/man2/getcontext.2	comp-c-man
