@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.10 1999/03/23 21:29:04 drochner Exp $	*/
+/*	$NetBSD: bus.h,v 1.11 1999/04/20 05:48:37 is Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -270,5 +270,20 @@ bus_space_write_region_stream_1(t, h, o, a, c)
 #define bus_space_copy_region_2(t, srch, srco, dsth, dsto, c) \
 	((t)->absm->bscr2)((t), (srch), (srco), (dsth), (dsto), (c))
 
+/* 
+ * Bus read/write barrier methods.
+ * 
+ *      void bus_space_barrier __P((bus_space_tag_t tag,
+ *          bus_space_handle_t bsh, bus_size_t offset,
+ *          bus_size_t len, int flags));
+ *    
+ * Note: the 680x0 does not currently require barriers, but we must
+ * provide the flags to MI code.
+ */   
+#define bus_space_barrier(t, h, o, l, f)        \
+        ((void)((void)(t), (void)(h), (void)(o), (void)(l), (void)(f)))
+#define BUS_SPACE_BARRIER_READ  0x01            /* force read barrier */
+#define BUS_SPACE_BARRIER_WRITE 0x02            /* force write barrier */
+ 
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 #endif /* _AMIGA_BUS_H_ */
