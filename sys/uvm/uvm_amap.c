@@ -1,9 +1,5 @@
-/*	$NetBSD: uvm_amap.c,v 1.18 1999/01/24 23:53:15 chuck Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.19 1999/01/28 14:46:27 chuck Exp $	*/
 
-/*
- * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
- *	   >>>USE AT YOUR OWN RISK, WORK IS NOT FINISHED<<<
- */
 /*
  *
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -34,13 +30,18 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * from: Id: uvm_amap.c,v 1.1.2.25 1998/02/06 22:49:23 chs Exp
  */
 
 /*
- * uvm_amap.c: uvm amap ops
+ * uvm_amap.c: amap operations
  */
+
+/*
+ * this file contains functions that perform operations on amaps.  see
+ * uvm_amap.h for a brief explanation of the role of amaps in uvm.
+ */
+
+#undef UVM_AMAP_INLINE		/* enable/disable amap inlines */
 
 #include "opt_uvmhist.h"
 
@@ -54,12 +55,16 @@
 #include <vm/vm_page.h>
 #include <vm/vm_kern.h>
 
-#define UVM_AMAP		/* pull in uvm_amap.h functions */
+#define UVM_AMAP_C		/* ensure disabled inlines are in */
 #include <uvm/uvm.h>
 #include <uvm/uvm_swap.h>
 
 /*
- * pool for vm_amap_structures.
+ * pool for allocation of vm_map structures.  note that the pool has
+ * its own simplelock for its protection.  also note that in order to
+ * avoid an endless loop, the amap pool's allocator cannot allocate
+ * memory from an amap (it currently goes through the kernel uobj, so
+ * we are ok).
  */
 
 struct pool uvm_amap_pool;
@@ -70,11 +75,11 @@ struct pool uvm_amap_pool;
 
 static struct vm_amap *amap_alloc1 __P((int, int, int));
 
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 /*
  * what is ppref?   ppref is an _optional_ amap feature which is used
  * to keep track of reference counts on a per-page basis.  it is enabled
- * when VM_AMAP_PPREF is defined.
+ * when UVM_AMAP_PPREF is defined.
  *
  * when enabled, an array of ints is allocated for the pprefs.  this
  * array is allocated only when a partial reference is added to the
@@ -109,6 +114,8 @@ static __inline void pp_setreflen __P((int *, int, int, int));
 
 /*
  * pp_getreflen: get the reference and length for a specific offset
+ *
+ * => ppref's amap must be locked
  */
 static __inline void
 pp_getreflen(ppref, offset, refp, lenp)
@@ -126,6 +133,8 @@ pp_getreflen(ppref, offset, refp, lenp)
 
 /*
  * pp_setreflen: set the reference and length for a specific offset
+ *
+ * => ppref's amap must be locked
  */
 static __inline void
 pp_setreflen(ppref, offset, ref, len)
@@ -176,7 +185,7 @@ amap_alloc1(slots, padslots, waitf)
 	simple_lock_init(&amap->am_l);
 	amap->am_ref = 1;
 	amap->am_flags = 0;
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	amap->am_ppref = NULL;
 #endif
 	amap->am_maxslot = totalslots;
@@ -235,8 +244,8 @@ amap_alloc(sz, padsz, waitf)
 /*
  * amap_free: free an amap
  *
- * => amap must be locked.
- * => the amap is "gone" after we are done with it.
+ * => the amap must be locked (mainly for simplelock accounting)
+ * => the amap should have a zero reference count and be empty
  */
 void
 amap_free(amap)
@@ -252,11 +261,11 @@ amap_free(amap)
 	FREE(amap->am_slots, M_UVMAMAP);
 	FREE(amap->am_bckptr, M_UVMAMAP);
 	FREE(amap->am_anon, M_UVMAMAP);
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE)
 		FREE(amap->am_ppref, M_UVMAMAP);
 #endif
-	amap_unlock(amap);
+	amap_unlock(amap);	/* mainly for lock debugging */
 	pool_put(&uvm_amap_pool, amap);
 
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
@@ -265,10 +274,13 @@ amap_free(amap)
 /*
  * amap_extend: extend the size of an amap (if needed)
  *
- * => amap being extended should be passed in unlocked (we will lock
- *	it as needed).
- * => amap has a reference count of one (our map entry)
- * => XXXCDC: should it have a waitflag???
+ * => called from uvm_map when we want to extend an amap to cover
+ *    a new mapping (rather than allocate a new one)
+ * => amap should be unlocked (we will lock it)
+ * => to safely extend an amap it should have a reference count of
+ *    one (thus it can't be shared)
+ * => XXXCDC: needs a waitflag or failure return value?
+ * => XXXCDC: support padding at this level?
  */
 void
 amap_extend(entry, addsize)
@@ -278,7 +290,7 @@ amap_extend(entry, addsize)
 	struct vm_amap *amap = entry->aref.ar_amap;
 	int slotoff = entry->aref.ar_pageoff;
 	int slotmapped, slotadd, slotneed;
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	int *newppref, *oldppref;
 #endif
 	u_int *newsl, *newbck, *oldsl, *oldbck;
@@ -289,9 +301,9 @@ amap_extend(entry, addsize)
 	UVMHIST_LOG(maphist, "  (entry=0x%x, addsize=0x%x)", entry,addsize,0,0);
 
 	/*
-	 * first, determine how many slots we need in the amap.   don't forget
-	 * that ar_pageoff could be non-zero: this means that there are some
-	 * unused slots before us in the amap.
+	 * first, determine how many slots we need in the amap.  don't
+	 * forget that ar_pageoff could be non-zero: this means that
+	 * there are some unused slots before us in the amap.
 	 */
 
 	amap_lock(amap);					/* lock! */
@@ -301,12 +313,13 @@ amap_extend(entry, addsize)
 	slotneed = slotoff + slotmapped + slotadd;
 
 	/*
-	 * case 1: we already have enough slots in the map and thus only need
-	 * to bump the reference counts on the slots we are adding.
+	 * case 1: we already have enough slots in the map and thus
+	 * only need to bump the reference counts on the slots we are
+	 * adding.
 	 */
 
 	if (amap->am_nslot >= slotneed) {
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 			amap_pp_adjref(amap, slotoff + slotmapped, addsize, 1);
 		}
@@ -318,11 +331,11 @@ amap_extend(entry, addsize)
 	}
 
 	/*
-	 * case 2: we pre-allocated slots for use and we just need to bump
-	 * nslot up to take account for these slots.
+	 * case 2: we pre-allocated slots for use and we just need to
+	 * bump nslot up to take account for these slots.
 	 */
 	if (amap->am_maxslot >= slotneed) {
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 		if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 			if ((slotoff + slotmapped) < amap->am_nslot)
 				amap_pp_adjref(amap, slotoff + slotmapped, 
@@ -335,8 +348,8 @@ amap_extend(entry, addsize)
 		amap->am_nslot = slotneed;
 		amap_unlock(amap);
 		/*
-		 * no need to zero am_anon since that was done at alloc time and we
-		 * never shrink an allocation.
+		 * no need to zero am_anon since that was done at
+		 * alloc time and we never shrink an allocation.
 		 */
 		UVMHIST_LOG(maphist,"<- done (case 2), amap = 0x%x, slotneed=%d", 
 		    amap, slotneed, 0, 0);
@@ -344,19 +357,14 @@ amap_extend(entry, addsize)
 	}
 
 	/*
-	 * case 3: we need to malloc a new amap and copy all the amap data over
+	 * case 3: we need to malloc a new amap and copy all the amap
+	 * data over from old amap to the new one.
 	 *
-	 * XXX: should we pad out this allocation in hopes of avoid future case3
-	 * extends?
-	 * XXX: how about using kernel realloc?
-	 *
-	 * NOTE: we have the only map that has a reference to this amap locked.
-	 * thus, no one else is going to try and change the amap while it is 
-	 * unlocked (but we unlock just to be safe).
+	 * XXXCDC: could we take advantage of a kernel realloc()?  
 	 */
 
 	amap_unlock(amap);	/* unlock in case we sleep in malloc */
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	newppref = NULL;
 	if (amap->am_ppref && amap->am_ppref != PPREF_NONE) {
 		MALLOC(newppref, int *, slotneed * sizeof(int), M_UVMAMAP,
@@ -402,7 +410,7 @@ amap_extend(entry, addsize)
 	memset(newbck + amap->am_nslot, 0, sizeof(int) * slotadded); /* XXX: needed? */
 	amap->am_bckptr = newbck;
 
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	/* do ppref */
 	oldppref = amap->am_ppref;
 	if (newppref) {
@@ -428,7 +436,7 @@ amap_extend(entry, addsize)
 	FREE(oldsl, M_UVMAMAP);
 	FREE(oldbck, M_UVMAMAP);
 	FREE(oldover, M_UVMAMAP);
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	if (oldppref && oldppref != PPREF_NONE)
 		FREE(oldppref, M_UVMAMAP);
 #endif
@@ -437,18 +445,17 @@ amap_extend(entry, addsize)
 }
 
 /*
- * amap_share_protect: change protection of an amap in a sharemap
+ * amap_share_protect: change protection of anons in a shared amap
  *
- * for sharemaps it is not possible to find all of the maps which
- * reference the sharemap (e.g. to remove or change a mapping).
- * in order to get around this (and support sharemaps) we use 
- * pmap_page_protect to change the protection on all mappings of the
- * page.   we traverse am_anon or am_slots depending on the current
- * state of the amap.
+ * for shared amaps, given the current data structure layout, it is
+ * not possible for us to directly locate all maps referencing the
+ * shared anon (to change the protection).  in order to protect data
+ * in shared maps we use pmap_page_protect().  [this is useful for IPC
+ * mechanisms like map entry passing that may want to write-protect
+ * all mappings of a shared amap.]  we traverse am_anon or am_slots
+ * depending on the current state of the amap.
  *
- * => the map that entry belongs to must be locked by the caller.
- * => the amap pointed to by entry->aref.ar_amap must be locked by caller.
- * => the map should be locked before the amap (by the caller).
+ * => entry's map and amap must be locked by the caller
  */
 void
 amap_share_protect(entry, prot)
@@ -489,10 +496,9 @@ amap_share_protect(entry, prot)
 /*
  * amap_wipeout: wipeout all anon's in an amap; then free the amap!
  *
- * => if amap is part of an active map entry, then the map that contains
- *	the map entry must be locked.
- * => amap's reference count should be one (the final reference).
- * => the amap must be locked by the caller.
+ * => called from amap_unref when the final reference to an amap is 
+ *	discarded (i.e. when reference count == 1)
+ * => the amap should be locked (by the caller)
  */
 
 void
@@ -532,9 +538,9 @@ amap_wipeout(amap)
 	 * now we free the map
 	 */
 
+	amap->am_ref = 0;	/* ... was one */
 	amap->am_nused = 0;
-	amap->am_ref--;		/* drop final reference */
-	amap_free(amap);
+	amap_free(amap);	/* will unlock and free amap */
 	UVMHIST_LOG(maphist,"<- done!", 0,0,0,0);
 }
 
@@ -573,9 +579,9 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	if (entry->aref.ar_amap == NULL) {
 
 		/*
-		 * check to see if we have a large amap that we can chunk.
-		 * we align startva/endva to chunk-sized boundaries and then
-		 * clip to them.
+		 * check to see if we have a large amap that we can
+		 * chunk.  we align startva/endva to chunk-sized
+		 * boundaries and then clip to them.
 		 */
 
 		if (canchunk && atop(entry->end - entry->start) >=
@@ -604,9 +610,13 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	}
 
 	/*
-	 * first check and see if we are the only map entry referencing the amap
-	 * we currently have.   if so, then we can just take it over rather
-	 * than copying it.
+	 * first check and see if we are the only map entry
+	 * referencing the amap we currently have.  if so, then we can
+	 * just take it over rather than copying it.  note that we are
+	 * reading am_ref with the amap unlocked... the value can only
+	 * be one if we have the only reference to the amap (via our
+	 * locked map).  if we are greater than one we fall through to
+	 * the next case (where we double check the value).
 	 */
 
 	if (entry->aref.ar_amap->am_ref == 1) {
@@ -632,25 +642,23 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	amap_lock(srcamap);
 
 	/*
-	 * need to double check reference count now that we've got the src amap
-	 * locked down.   (in which case we lost a reference while we were
-	 * mallocing the new map).
+	 * need to double check reference count now that we've got the
+	 * src amap locked down.  the reference count could have
+	 * changed while we were in malloc.  if the reference count
+	 * dropped down to one we take over the old map rather than
+	 * copying the amap.
 	 */
 
-	if (srcamap->am_ref == 1) {
-		/*
-		 * take over the old amap, get rid of the new one we just
-		 * allocated.
-		 */
+	if (srcamap->am_ref == 1) {		/* take it over? */
 		entry->etype &= ~UVM_ET_NEEDSCOPY;
 		amap->am_ref--;		/* drop final reference to map */
-		amap_free(amap);
+		amap_free(amap);	/* dispose of new (unused) amap */
 		amap_unlock(srcamap);
 		return;
 	}
 
 	/*
-	 * copy it now.
+	 * we must copy it now.
 	 */
 
 	UVMHIST_LOG(maphist, "  copying amap now",0, 0, 0, 0);
@@ -668,15 +676,16 @@ amap_copy(map, entry, waitf, canchunk, startva, endva)
 	}
 
 	/*
-	 * drop our reference to the old amap (srcamap) and unlock.  we will
-	 * not have the very last reference to srcamap so there is no need
-	 * to worry about freeing it.
+	 * drop our reference to the old amap (srcamap) and unlock.
+	 * we know that the reference count on srcamap is greater than
+	 * one (we checked above), so there is no way we could drop
+	 * the count to zero.  [and no need to worry about freeing it]
 	 */
 
 	srcamap->am_ref--;
 	if (srcamap->am_ref == 1 && (srcamap->am_flags & AMAP_SHARED) != 0)
 		srcamap->am_flags &= ~AMAP_SHARED;   /* clear shared flag */
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 	if (srcamap->am_ppref && srcamap->am_ppref != PPREF_NONE) {
 		amap_pp_adjref(srcamap, entry->aref.ar_pageoff, 
 		    entry->end - entry->start, -1);
@@ -838,8 +847,9 @@ ReStart:
 /*
  * amap_splitref: split a single reference into two seperate references
  *
- * => caller must lock map which is referencing the amap
- * => caller must not lock amap referenced (we will do it)
+ * => called from uvm_map's clip routines
+ * => origref's map should be locked
+ * => origref->ar_amap should be unlocked (we will lock)
  */
 void
 amap_splitref(origref, splitref, offset)
@@ -865,7 +875,7 @@ amap_splitref(origref, splitref, offset)
 	if (origref->ar_amap->am_nslot - origref->ar_pageoff - leftslots <= 0)
 		panic("amap_splitref: map size check failed");
 
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
         /*
 	 * establish ppref before we add a duplicate reference to the amap
 	 */
@@ -880,7 +890,7 @@ amap_splitref(origref, splitref, offset)
 	amap_unlock(origref->ar_amap);
 }
 
-#ifdef VM_AMAP_PPREF
+#ifdef UVM_AMAP_PPREF
 
 /*
  * amap_pp_establish: add a ppref array to an amap, if possible
@@ -955,7 +965,7 @@ amap_pp_adjref(amap, curslot, bytelen, adjval)
 	 */
 
 	if (lcv != curslot)
-		panic("ADJREF");
+		panic("amap_pp_adjref: overshot target");
 
 	for (/* lcv already set */; lcv < stopslot ; lcv += len) {
 		pp_getreflen(ppref, lcv, &ref, &len);
