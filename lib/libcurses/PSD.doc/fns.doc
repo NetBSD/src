@@ -860,6 +860,11 @@ to FALSE the recognition of any sequence of characters
 that have been associated with the key symbol will be disabled.
 By default, this flag is TRUE so sequences will be recognised.
 .Ds
+.Fn keyname "int key"
+.De
+Returns a description of the key
+.Vn key .
+.Ds
 .Fn keypad "WINDOW *win" "int boolf"
 .De
 Sets the boolean flag for interpretation of escape sequences.  If
