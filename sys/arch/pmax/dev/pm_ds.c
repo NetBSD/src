@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_ds.c,v 1.10 1999/07/25 22:50:29 ad Exp $	*/
+/*	$NetBSD: pm_ds.c,v 1.11 1999/11/16 06:00:12 nisimura Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -37,13 +37,7 @@
 
 #include "fb.h"
 #include "pm.h"
-#include "dc_ds.h"
-
-#if 0
-#if NDC_DS == 0
-pm needs dc device
-#endif
-#endif
+#include "dc.h"
 
 int	ds_pm_init __P ((struct fbinfo *fi, int unti, int cold_console_flag));
 int	pm_ds_match __P((struct device *, struct cfdata *, void *));

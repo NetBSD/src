@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3100.c,v 1.14 1999/11/15 09:50:26 nisimura Exp $ */
+/* $NetBSD: dec_3100.c,v 1.15 1999/11/16 06:00:12 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -90,7 +90,7 @@
 
 #include <pmax/ibus/ibusvar.h>
 
-#include "dc_ds.h"
+#include "dc.h"
 #include "le_pmax.h"
 #include "sii.h"
 
@@ -239,12 +239,12 @@ dec_3100_intr(mask, pc, status, cause)
 	}
 #endif /* NLE_PMAX */
 
-#if NDC_DS > 0
+#if NDC > 0
 	if (mask & MIPS_INT_MASK_2) {
 		(*tc_slot_info[1].intr)(tc_slot_info[1].sc);
 		intrcnt[SERIAL0_INTR]++;
 	}
-#endif /* NDC_DS */
+#endif /* NDC */
 
 	if (mask & MIPS_INT_MASK_4) {
 		dec_3100_errintr();

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.28 1999/09/05 11:34:30 simonb Exp $	*/
+/*	$NetBSD: fb.c,v 1.29 1999/11/16 06:00:12 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,8 +93,7 @@
 
 #include "rasterconsole.h"
 
-#include "dc_ioasic.h"
-#include "dc_ds.h"
+#include "dc.h"
 #include "scc.h"
 #include "dtop.h"
 
@@ -115,7 +114,7 @@
 extern void fbScreenInit __P (( struct fbinfo *fi));
 
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if NDC > 0
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dcvar.h>
 #endif
@@ -291,13 +290,13 @@ tb_kbdmouseconfig(fi)
 
 	switch (systype) {
 
-#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+#if NDC > 0
 	case DS_PMAX:
 	case DS_3MAX:
 		fi->fi_glasstty->KBDPutc = dcPutc;
 		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
 		break;
-#endif	/* NDC_DS || NDC_IOASIC */
+#endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:

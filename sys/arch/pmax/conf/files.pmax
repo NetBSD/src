@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.70 1999/11/15 09:50:48 nisimura Exp $
+#	$NetBSD: files.pmax,v 1.71 1999/11/16 06:00:11 nisimura Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -143,10 +143,8 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an ASIC.
 device dc: tty
 file	arch/pmax/dev/dc.c		dc
-attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic	needs-flag
 attach dc at ibus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
+file	arch/pmax/dev/dc_ds.c		dc needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
