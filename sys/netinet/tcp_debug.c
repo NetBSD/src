@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tcp_debug.c	7.6 (Berkeley) 6/28/90
- *	$Id: tcp_debug.c,v 1.5 1994/01/08 21:21:57 mycroft Exp $
+ *	$Id: tcp_debug.c,v 1.6 1994/01/08 23:07:16 mycroft Exp $
  */
 
 #ifdef TCPDEBUG
@@ -72,6 +72,7 @@ int	tcpconsdebug = 0;
 /*
  * Tcp debug routines
  */
+void
 tcp_trace(act, ostate, tp, ti, req)
 	short act, ostate;
 	struct tcpcb *tp;
