@@ -1,7 +1,7 @@
-/*	$NetBSD: ops_efs.c,v 1.1.1.6 2003/03/09 01:13:15 christos Exp $	*/
+/*	$NetBSD: ops_efs.c,v 1.1.1.7 2004/11/27 01:00:40 christos Exp $	*/
 
 /*
- * Copyright (c) 1997-2003 Erez Zadok
+ * Copyright (c) 1997-2004 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
  * SUCH DAMAGE.
  *
  *
- * Id: ops_efs.c,v 1.13 2002/12/27 22:43:51 ezk Exp
+ * Id: ops_efs.c,v 1.18 2004/01/06 03:56:20 ezk Exp
  *
  */
 
@@ -74,7 +74,8 @@ am_ops efs_ops =
   0,				/* efs_readlink */
   0,				/* efs_mounted */
   0,				/* efs_umounted */
-  find_amfs_auto_srvr,
+  amfs_generic_find_srvr,
+  0,				/* efs_get_wchan */
   FS_MKMNT | FS_NOTIMEOUT | FS_UBACKGROUND | FS_AMQINFO, /* nfs_fs_flags */
 #ifdef HAVE_FS_AUTOFS
   AUTOFS_EFS_FS_FLAGS,
@@ -104,7 +105,7 @@ efs_match(am_opts *fo)
 
 
 static int
-mount_efs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_autofs)
+mount_efs(char *mntdir, char *fs_name, char *opts, int on_autofs)
 {
   efs_args_t efs_args;
   mntent_t mnt;
@@ -142,17 +143,17 @@ mount_efs(char *mntdir, char *real_mntdir, char *fs_name, char *opts, int on_aut
   /*
    * Call generic mount routine
    */
-  return mount_fs2(&mnt, real_mntdir, flags, (caddr_t) &efs_args, 0, type, 0, NULL, mnttab_file_name);
+  return mount_fs(&mnt, flags, (caddr_t) &efs_args, 0, type, 0, NULL, mnttab_file_name, on_autofs);
 }
 
 
 static int
 efs_mount(am_node *am, mntfs *mf)
 {
+  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
   int error;
 
-  error = mount_efs(mf->mf_mount, mf->mf_real_mount, mf->mf_info, mf->mf_mopts,
-		    am->am_flags & AMF_AUTOFS);
+  error = mount_efs(mf->mf_mount, mf->mf_info, mf->mf_mopts, on_autofs);
   if (error) {
     errno = error;
     plog(XLOG_ERROR, "mount_efs: %m");
@@ -166,6 +167,7 @@ efs_mount(am_node *am, mntfs *mf)
 static int
 efs_umount(am_node *am, mntfs *mf)
 {
-  return UMOUNT_FS(mf->mf_mount, mf->mf_real_mount, mnttab_file_name);
+  int on_autofs = mf->mf_flags & MFF_ON_AUTOFS;
+  return UMOUNT_FS(mf->mf_mount, mnttab_file_name, on_autofs);
 }
 
