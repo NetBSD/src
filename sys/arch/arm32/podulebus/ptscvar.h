@@ -1,4 +1,4 @@
-/* $NetBSD: ptscvar.h,v 1.1 1996/01/31 23:26:38 mark Exp $ */
+/* $NetBSD: ptscvar.h,v 1.2 1997/01/28 04:10:47 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -35,7 +35,7 @@
 #include <arm32/podulebus/sfasvar.h>
 #include <arm32/podulebus/ptscreg.h>
 
-#define PTSC_POLL 1
+#define PTSC_POLL 0
 
 struct ptsc_specific {
     vu_char		*sc_iobase;
