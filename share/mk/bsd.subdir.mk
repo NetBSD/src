@@ -1,10 +1,14 @@
-#	$NetBSD: bsd.subdir.mk,v 1.26 1997/10/11 07:26:54 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.27 1997/10/11 08:16:29 mycroft Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
+.if !target(__initialized__)
+__initialized__:
+.if exists(${.CURDIR}/../Makefile.inc)
+.include "${.CURDIR}/../Makefile.inc"
+.endif
 .include <bsd.own.mk>
-
-.if !target(.MAIN)
-.MAIN: all
+.include <bsd.obj.mk>
+.MAIN:		all
 .endif
 
 .for dir in ${SUBDIR}

@@ -1,9 +1,16 @@
-#	$NetBSD: bsd.doc.mk,v 1.33 1997/06/28 01:22:59 christos Exp $
+#	$NetBSD: bsd.doc.mk,v 1.34 1997/10/11 08:16:24 mycroft Exp $
 #	@(#)bsd.doc.mk	8.1 (Berkeley) 8/14/93
 
+.if !target(__initialized__)
+__initialized__:
+.if exists(${.CURDIR}/../Makefile.inc)
+.include "${.CURDIR}/../Makefile.inc"
+.endif
 .include <bsd.own.mk>
-
+.include <bsd.obj.mk>
 .MAIN:		all
+.endif
+
 .PHONY:		cleandoc docinstall print spell
 realinstall:	docinstall
 clean cleandir:	cleandoc
