@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.19 1998/07/06 07:03:28 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.19.2.1 2000/10/04 13:58:15 he Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.19 1998/07/06 07:03:28 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.19.2.1 2000/10/04 13:58:15 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -1097,6 +1097,7 @@ sendmail(user, bombed)
 			cp = "NOACCT";
 			break;
 		case FILTERERR:
+			cp = "FILTERERR";
 			if (stat(tempfile, &stb) < 0 || stb.st_size == 0 ||
 			    (fp = fopen(tempfile, "r")) == NULL) {
 				printf("\nhad some errors and may not have printed\n");
@@ -1106,7 +1107,6 @@ sendmail(user, bombed)
 			while ((i = getc(fp)) != EOF)
 				putchar(i);
 			(void)fclose(fp);
-			cp = "FILTERERR";
 			break;
 		case ACCESS:
 			printf("\nwas not printed because it was not linked to the original file\n");
@@ -1233,7 +1233,7 @@ init()
 	(void)snprintf(&pxlength[2], sizeof(pxlength) - 2, "%ld", PY);
 	cgetstr(bp, "rm", &RM);
 	if ((s = checkremote()) != NULL)
-		syslog(LOG_WARNING, s);
+		syslog(LOG_WARNING, "%s", s);
 
 	cgetstr(bp, "af", &AF);
 	cgetstr(bp, "of", &OF);
