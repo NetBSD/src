@@ -1,4 +1,4 @@
-/*	$NetBSD: getcwd.c,v 1.14 1998/08/26 00:38:40 perry Exp $	*/
+/*	$NetBSD: getcwd.c,v 1.15 1998/11/06 19:43:23 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcwd.c	8.5 (Berkeley) 2/7/95";
 #else
-__RCSID("$NetBSD: getcwd.c,v 1.14 1998/08/26 00:38:40 perry Exp $");
+__RCSID("$NetBSD: getcwd.c,v 1.15 1998/11/06 19:43:23 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -66,6 +66,10 @@ __weak_alias(realpath,_realpath);
 	(dp->d_name[0] == '.' && (dp->d_name[1] == '\0' || \
 	    (dp->d_name[1] == '.' && dp->d_name[2] == '\0')))
 
+
+#if defined(__SVR4) || defined(__svr4__)
+#define d_fileno d_ino
+#endif
 
 /*
  * char *realpath(const char *path, char resolved_path[MAXPATHLEN]);
@@ -199,6 +203,7 @@ getcwd(pt, size)
 	size_t ptsize, upsize;
 	int save_errno;
 	char *ept, *eup, *up;
+	size_t dlen;
 
 	/*
 	 * If no buffer specified by the user, allocate one as necessary.
@@ -294,8 +299,14 @@ getcwd(pt, size)
 			for (;;) {
 				if (!(dp = readdir(dir)))
 					goto notfound;
-				if (dp->d_fileno == ino)
+				if (dp->d_fileno == ino) {
+#if defined(__SVR4) || defined(__svr4__)
+					dlen = strlen(dp->d_name);
+#else
+					dlen = dp->d_namlen;
+#endif
 					break;
+				}
 			}
 		} else
 			for (;;) {
@@ -303,8 +314,12 @@ getcwd(pt, size)
 					goto notfound;
 				if (ISDOT(dp))
 					continue;
-				memmove(bup, dp->d_name,
-				    (size_t)(dp->d_namlen + 1));
+#if defined(__SVR4) || defined(__svr4__)
+				dlen = strlen(dp->d_name);
+#else
+				dlen = dp->d_namlen;
+#endif
+				memmove(bup, dp->d_name, dlen + 1);
 
 				/* Save the first error for later. */
 				if (lstat(up, &s)) {
@@ -321,7 +336,7 @@ getcwd(pt, size)
 		 * Check for length of the current name, preceding slash,
 		 * leading slash.
 		 */
-		if (bpt - pt <= dp->d_namlen + (first ? 1 : 2)) {
+		if (bpt - pt <= dlen + (first ? 1 : 2)) {
 			size_t len, off;
 
 			if (!ptsize) {
@@ -339,8 +354,8 @@ getcwd(pt, size)
 		}
 		if (!first)
 			*--bpt = '/';
-		bpt -= dp->d_namlen;
-		memmove(bpt, dp->d_name, (size_t)dp->d_namlen);
+		bpt -= dlen;
+		memmove(bpt, dp->d_name, dlen);
 		(void)closedir(dir);
 
 		/* Truncate any file name. */
