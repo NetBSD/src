@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.8 2003/02/26 21:28:22 fvdl Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.9 2003/06/28 11:33:19 fvdl Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -100,7 +100,10 @@ void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 void
 i386_ipi_halt(struct cpu_info *ci)
 {
+	simple_lock(&ci->ci_slock);
 	disable_intr();
+	ci->ci_flags &= ~CPUF_RUNNING;
+	simple_unlock(&ci->ci_slock);
 
 	printf("%s: shutting down\n", ci->ci_dev->dv_xname);
 	for(;;) {
