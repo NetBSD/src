@@ -1,6 +1,8 @@
+/*	$NetBSD: maketime.h,v 1.1.1.1 1996/10/13 21:57:10 veego Exp $	*/
+
 /* Yield time_t from struct partime yielded by partime.  */
 
-/* Copyright 1993 Paul Eggert
+/* Copyright 1993, 1994, 1995 Paul Eggert
    Distributed under license by the Free Software Foundation, Inc.
 
 This file is part of RCS.
@@ -16,8 +18,9 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
-along with RCS; see the file COPYING.  If not, write to
-the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.
+along with RCS; see the file COPYING.
+If not, write to the Free Software Foundation,
+59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 
 Report problems and direct all questions to:
 
@@ -31,12 +34,8 @@ Report problems and direct all questions to:
 #	define __MAKETIME_P(x) ()
 #endif
 
-#ifndef __STDC__
-#	define const
-#endif
-
 struct tm *time2tm __MAKETIME_P((time_t,int));
-time_t difftm __MAKETIME_P((struct tm const*, struct tm const*));
-time_t str2time __MAKETIME_P((char const *, time_t, int));
-time_t tm2time __MAKETIME_P((struct tm*, int));
-void adjzone __MAKETIME_P((struct tm*, int));
+time_t difftm __MAKETIME_P((struct tm const *, struct tm const *));
+time_t str2time __MAKETIME_P((char const *, time_t, long));
+time_t tm2time __MAKETIME_P((struct tm *, int));
+void adjzone __MAKETIME_P((struct tm *, long));

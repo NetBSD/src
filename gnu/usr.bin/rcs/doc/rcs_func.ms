@@ -1,3 +1,5 @@
+.\"	$NetBSD: rcs_func.ms,v 1.1.1.2 1996/10/13 21:57:14 veego Exp $
+.\"
 .SH
 Functions of RCS (Revision Control System)
 .PP
