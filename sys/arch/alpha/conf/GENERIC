@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.124 1999/07/29 19:36:58 augustss Exp $
+# $NetBSD: GENERIC,v 1.125 1999/08/05 15:51:36 jdolecek Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
 
@@ -38,6 +38,7 @@ file-system	MFS		# Memory-based file system
 file-system	CD9660		# ISO-9660 CD-ROM FS (w/RockRidge extensions)
 file-system	MSDOSFS		# MS-DOS-compatible file system
 file-system	NFS		# Sun NFS-compatible file system client
+file-system	NTFS		# Windows/NT file system (experimental)
 #file-system	KERNFS
 #file-system	PROCFS
 
