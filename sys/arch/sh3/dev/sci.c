@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.23 2002/04/26 10:22:54 msaitoh Exp $ */
+/* $NetBSD: sci.c,v 1.24 2002/04/28 11:38:48 msaitoh Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -421,6 +421,9 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
 	    sc);
 
+#ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
+	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scisoft, sc);
+#endif
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
