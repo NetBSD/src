@@ -1,7 +1,7 @@
 #ifndef lint
-/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
-/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: nlm_prot.x,v 1.2 1993/08/01 18:45:31 mycroft Exp $";
+%/*static char sccsid[] = "from: @(#)nlm_prot.x 1.8 87/09/21 Copyr 1987 Sun Micro";*/
+%/*static char sccsid[] = "from: * @(#)nlm_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
+%static char rcsid[] = "$Id: nlm_prot.x,v 1.3 1993/08/03 13:18:06 mycroft Exp $";
 #endif /* not lint */
 
 /*
