@@ -1,4 +1,4 @@
-/*	$NetBSD: macros.h,v 1.18 2000/04/09 16:37:09 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.19 2000/07/01 06:43:43 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1998, 2000 Ludd, University of Lule}, Sweden.
@@ -46,7 +46,7 @@ ffs(int reg)
 			bneq	1f
 			mnegl	$1,%0
 		1:	incl	%0"
-			: "&=r" (val)
+			: "=&r" (val)
 			: "r" (reg) );
 	return	val;
 }
@@ -301,7 +301,7 @@ insqti(void *entry, void *header) {
 			brb 1f;
 		2:	clrl %0;
 			1:;"
-			: "&=g"(ret)
+			: "=&g"(ret)
 			: "r"(entry), "r"(header)
 			: "memory");
 
@@ -326,7 +326,7 @@ remqhi(void *header) {
 			brb 3f;
 		2:	clrl %0;
 			3:;"
-			: "&=g"(ret)
+			: "=&g"(ret)
 			: "r"(header)
 			: "memory");
 
