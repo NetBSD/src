@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.11 2004/03/13 17:31:33 bjh21 Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.12 2004/03/17 08:48:58 martin Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.11 2004/03/13 17:31:33 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.12 2004/03/17 08:48:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.11 2004/03/13 17:31:33 bjh21 Exp $");
 
 #include <dev/ic/i8042reg.h>
 #include <dev/ic/pckbcvar.h> 
-#include <dev/pckbc/pckbdvar.h>
+#include <dev/pckbport/pckbportvar.h>
 
 #include <dev/ebus/ebusreg.h>
 #include <dev/ebus/ebusvar.h>
@@ -71,7 +71,7 @@ static void	pckbc_ebus_attach(struct device *, struct device *, void *);
 
 static void	pckbc_js_attach_common(	struct pckbc_js_softc *,
 					bus_space_tag_t, bus_addr_t, int, int);
-static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbc_slot_t);
+static void	pckbc_js_intr_establish(struct pckbc_softc *, pckbport_slot_t);
 static int	jsc_pckbdintr(void *vsc);
 
 /* Mr.Coffee */
@@ -252,7 +252,7 @@ pckbc_js_attach_common(jsc, iot, ioaddr, intr, isconsole)
 static void
 pckbc_js_intr_establish(sc, slot)
 	struct pckbc_softc *sc;
-	pckbc_slot_t slot;
+	pckbport_slot_t slot;
 {
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)sc;
 	void *res;
@@ -306,8 +306,8 @@ jsc_pckbdintr(void *vsc)
  */
 int
 pckbport_machdep_cnattach(constag, slot)
-    pckbc_tag_t constag;
-    pckbc_slot_t slot;
+    pckbport_tag_t constag;
+    pckbport_slot_t slot;
 {
 
 	return (0);
