@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.183 2004/05/06 05:33:31 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.184 2004/05/06 05:34:35 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1862,3 +1862,10 @@ sys/arch/x86/x86/lapic.c			1.6
 
 	Compile TSC support code when __x86_64__ is defined.
 	[toshii, ticket #254]
+
+lib/libpthread/pthread_cond.c			1.15
+
+	In the nothread version, don't return EINTR if select() was interrupted
+	since this value is explicitly ruled out by POSIX.  Instead, return 0,
+	like a spurious wakeup. PR#24240.
+	[kleink, ticket #255]
