@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sun3,v 1.24 1994/11/21 21:26:45 gwr Exp $
+#	$NetBSD: Makefile.sun3,v 1.25 1995/01/11 20:37:12 gwr Exp $
 
 #
 # Makefile for NetBSD
@@ -30,7 +30,7 @@ AWK = nawk
 # PROF is set to -pg by config if profiling is requested (config -p).
 AS=	gas 
 CC=	gcc -O ${DEBUG}
-CPP=	gcpp -traditional ${XINC}
+CPP=	gcpp
 LD=	ld
 TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/sun3/gmon.ex
