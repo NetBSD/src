@@ -1,4 +1,4 @@
-/*	$NetBSD: esiopvar.h,v 1.6 2002/04/27 17:39:52 bouyer Exp $	*/
+/*	$NetBSD: esiopvar.h,v 1.7 2002/04/27 18:46:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Manuel Bouyer.
@@ -138,6 +138,7 @@ esiop_table_sync(esiop_cmd, ops)
 /* Driver internal state */
 struct esiop_softc {
 	struct siop_common_softc sc_c;
+	u_int32_t sc_semoffset;		/* semaphore */
 	u_int32_t sc_shedoffset;	/* base of scheduler ring */
 	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
@@ -155,6 +156,7 @@ struct esiop_softc {
 
 /* defs for sc_flags */
 #define SCF_CHAN_NOSLOT	0x0001		/* channel out of sheduler slot */
+#define SCF_CHAN_ADAPTREQ 0x0002	/* esiop_scsipi_request() is running */
 
 void    esiop_attach __P((struct esiop_softc *));
 int	esiop_intr __P((void *));

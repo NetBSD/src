@@ -1,4 +1,4 @@
-;	$NetBSD: esiop.ss,v 1.11 2002/04/27 17:39:52 bouyer Exp $
+;	$NetBSD: esiop.ss,v 1.12 2002/04/27 18:46:50 bouyer Exp $
 
 ;
 ; Copyright (c) 2002 Manuel Bouyer.
@@ -115,11 +115,18 @@ ENTRY load_targtable;
 EXTERN tlq_offset;
 EXTERN abs_msgin2;
 
+EXTERN abs_sem; a 32bits word used a semaphore between script and driver
+ABSOLUTE sem_done = 0x01; there are pending done commands
+ABSOLUTE sem_start = 0x02; a CMD slot was freed
+
 PROC  esiop_script:
 
 no_cmd:
-	MOVE ISTAT & 0x10 TO SFBR;  pending done command ?
+	LOAD SCRATCHB0, 4, abs_sem; pending done command ?
+	MOVE SCRATCHB0 & sem_done TO SFBR;
 	INTFLY 0, IF NOT 0x00; 
+	MOVE SCRATCHB0 | sem_start TO SCRATCHB0; we are there because the 
+	STORE NOFLUSH SCRATCHB0, 4, abs_sem;     cmd ring is empty
 reselect:
 	MOVE 0x00 TO SCRATCHA1;
 	MOVE 0x00 TO SCRATCHC0;
@@ -256,6 +263,9 @@ handle_cmd:
 	JUMP REL(script_sched), IF NOT 0x00; next command if ignore
 	MOVE SCRATCHB0 & 0xfc to SCRATCHB0; clear f_cmd_*
 	CALL REL(restoredsa); and move SCRATCHB to DSA
+	LOAD SCRATCHB0, 4, abs_sem;
+	MOVE SCRATCHB0 | sem_start TO SCRATCHB0;
+	STORE NOFLUSH SCRATCHB0, 4, abs_sem;
 
 ; a NOP by default; patched with MOVE GPREG & 0xfe to GPREG on compile-time
 ; option "SIOP_SYMLED"
@@ -405,7 +415,9 @@ doner3:
 	MOVE 0xff to SCRATCHF3;
 	MOVE 0  to SCRATCHE2;
 is_done:
-	MOVE ISTAT | 0x10 TO ISTAT; signal that cmd is done in ISTAT
+	LOAD SCRATCHB0, 4, abs_sem; signal that a command is done
+	MOVE SCRATCHB0 | sem_done TO SCRATCHB0;
+	STORE NOFLUSH SCRATCHB0, 4, abs_sem;
 	JUMP REL(script_sched); and attempt next command
 
 handle_extin:
