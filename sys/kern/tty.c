@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.79 1997/04/02 03:11:27 kleink Exp $	*/
+/*	$NetBSD: tty.c,v 1.80 1997/04/02 03:23:01 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -615,7 +615,7 @@ ttyoutput(c, tp)
 	case CONTROL:
 		break;
 	case NEWLINE:
-		if(ISSET(tp->t_oflag, OCRNL))
+		if (ISSET(tp->t_oflag, OCRNL))
 			col = 0;
 		break;
 	case RETURN:
