@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.vax,v 1.18 1996/02/09 02:21:38 mycroft Exp $
+#	$NetBSD: Makefile.vax,v 1.19 1996/02/26 02:53:53 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -22,13 +22,13 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS=	as
-AWK=	awk
-CC=	cc
-CPP=	cpp
-LD=	ld
-STRIP=	strip -d
-TOUCH=	touch -f -c
+AS?=	as
+AWK?=	awk
+CC?=	cc
+CPP?=	cpp
+LD?=	ld
+STRIP?=	strip -d
+TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
 S=	../../../..
