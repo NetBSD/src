@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.21 1998/01/12 18:04:04 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.22 1998/12/20 14:32:53 thomas Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -289,9 +289,13 @@ int	off, prot;
 {
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
+	u_int			vgabase, linbase;
 	
 	gp = grfsp[GRFUNIT(dev)];
 	gi = &gp->g_display;
+
+	vgabase = gi->gd_vgabase;
+	linbase = gi->gd_linbase;
 
 	/* 
 	 * control registers
@@ -300,10 +304,16 @@ int	off, prot;
 		return(((u_int)gi->gd_regaddr + off) >> PGSHIFT);
 
 	/*
+	 * VGA memory
+	 */
+	if (off >= vgabase && off < (vgabase + gi->gd_vgasize))
+		return(((u_int)gi->gd_vgaaddr - vgabase + off) >> PGSHIFT);
+
+	/*
 	 * frame buffer
 	 */
-	if ((off >= 0) && (off < gi->gd_fbsize))
-		return (((u_int)gi->gd_fbaddr + off) >> PGSHIFT);
+	if (off >= linbase && off < (linbase + gi->gd_fbsize))
+		return(((u_int)gi->gd_fbaddr - linbase + off) >> PGSHIFT);
 	return(-1);
 }
 
@@ -389,8 +399,12 @@ struct grf_softc *gp;
   
 	gi->gd_fbaddr  = bm.hw_address;
 	gi->gd_fbsize  = bm.phys_mappable;
+	gi->gd_linbase = bm.lin_base;
 	gi->gd_regaddr = bm.hw_regs;
 	gi->gd_regsize = bm.reg_size;
+	gi->gd_vgaaddr = bm.vga_address;
+	gi->gd_vgasize = bm.vga_mappable;
+	gi->gd_vgabase = bm.vga_base;
 
 	if(viewioctl(gp->g_viewdev, VIOCGSIZE, (caddr_t)&vs, 0, NOPROC)) {
 		/*
