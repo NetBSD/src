@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.4 1997/04/06 09:58:31 jonathan Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.5 1997/04/06 10:07:56 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
