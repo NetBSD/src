@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.448 2001/06/19 17:58:41 jdolecek Exp $
+#	$NetBSD: files,v 1.449 2001/07/01 02:56:20 gmcgarry Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -121,6 +121,9 @@ defopt	RAID_AUTOCONFIG
 
 # buffer cache size options
 defopt	opt_bufcache.h	BUFCACHE BUFPAGES
+
+# userconf
+defopt opt_userconf.h	USERCONF
 
 
 # Not entirely MI, but present on multiple arch's
@@ -862,6 +865,7 @@ file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prof.c
 file	kern/subr_rmap.c
+file	kern/subr_userconf.c		userconf
 file	kern/subr_xxx.c
 file	kern/sys_generic.c
 file	kern/sys_pipe.c			new_pipe

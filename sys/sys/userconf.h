@@ -1,7 +1,7 @@
-/* $NetBSD: boot_flag.h,v 1.3 2001/07/01 02:56:21 gmcgarry Exp $ */
+/*	$NetBSD: userconf.h,v 1.1 2001/07/01 02:56:21 gmcgarry Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,48 +33,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _SYS_BOOT_FLAG_H_
-#define _SYS_BOOT_FLAG_H_
+#ifndef _SYS_USERCONF_H_
+#define _SYS_USERCON_H_
 
-#include <sys/reboot.h>
+void user_config __P((void));
 
-/*
- * Recognize standard boot arguments. If the flag is known, appropriate
- * value is or'ed to retval, otherwise retval is left intact.
- * Note that not all ports use all flags recognized here. This list is mere
- * concatenation of all non-conflicting standard boot flags. Individual ports
- * might use also other flags (see e.g. alpha).
- */
-#define	BOOT_FLAG(arg, retval) do {				\
-	switch (arg) {						\
-	case 'a': /* ask for file name to boot from */		\
-		(retval) |= RB_ASKNAME;				\
-		break;						\
-	case 'b': /* always halt, never reboot */		\
-		(retval) |= RB_HALT;				\
-		break;						\
-	case 'c': /* userconf */				\
-		(retval) |= RB_USERCONF;			\
-		break;						\
-	case 'd': /* break into the kernel debugger ASAP (if compiled in) */ \
-		(retval) |= RB_KDB;				\
-		break;						\
-	case 'm': /* mini root present in memory */		\
-		(retval) |= RB_MINIROOT;			\
-		break;						\
-	case 'q': /* boot quietly */				\
-		(retval) |= AB_QUIET;				\
-		break;						\
-	case 's': /* boot to single user */			\
-		(retval) |= RB_SINGLE;				\
-		break;						\
-	case 'v': /* boot verbosely */				\
-		(retval) |= AB_VERBOSE;				\
-		break;						\
-	default:  /* something else, do nothing */		\
-		break;						\
-	} /* switch */						\
-								\
-	} while (/* CONSTCOND */ 0)
-
-#endif /* _SYS_BOOT_FLAG_H_ */
+#endif

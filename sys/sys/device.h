@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.45 2000/12/01 02:07:04 simonb Exp $ */
+/* $NetBSD: device.h,v 1.46 2001/07/01 02:56:20 gmcgarry Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -173,9 +173,11 @@ struct cfdata {
 	short	*cf_parents;		/* potential parents */
 	const char **cf_locnames;	/* locator names (machine dependent) */
 };
-#define FSTATE_NOTFOUND	0	/* has not been found */
-#define	FSTATE_FOUND	1	/* has been found */
-#define	FSTATE_STAR	2	/* duplicable */
+#define FSTATE_NOTFOUND		0	/* has not been found */
+#define	FSTATE_FOUND		1	/* has been found */
+#define	FSTATE_STAR		2	/* duplicable */
+#define FSTATE_DSTAR		3	/* has not been found, and disabled */
+#define FSTATE_DNOTFOUND	4	/* duplicate, and disabled */
 
 typedef int (*cfmatch_t)(struct device *, struct cfdata *, void *);
 
