@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $	*/
+/*	$NetBSD: pass1.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.8 2000/01/28 16:01:46 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,6 @@ __RCSID("$NetBSD: pass1.c,v 1.7 2000/01/26 16:21:32 bouyer Exp $");
 #include <ufs/ext2fs/ext2fs.h>
 
 #include <ufs/ufs/dinode.h> /* for IFMT & friends */
-#include <ufs/ufs/dir.h> /* for IFTODT & friends */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,20 +68,43 @@ void
 pass1()
 {
 	ino_t inumber;
-	int c, i, cgd;
+	int c, i;
+	daddr_t dbase;
 	struct inodesc idesc;
 
 	/*
 	 * Set file system reserved blocks in used block map.
 	 */
 	for (c = 0; c < sblock.e2fs_ncg; c++) {
-		i = c * sblock.e2fs.e2fs_bpg + sblock.e2fs.e2fs_first_dblock;
-		cgd = i + cgoverhead;
+		dbase = c * sblock.e2fs.e2fs_bpg +
+		    sblock.e2fs.e2fs_first_dblock;
+		/* Mark the blocks used for the inode table */
+		if (sblock.e2fs_gd[c].ext2bgd_i_tables >= dbase) {
+			for (i = 0; i < sblock.e2fs_itpg; i++)
+				setbmap(sblock.e2fs_gd[c].ext2bgd_i_tables + i);
+		}
+		/* Mark the blocks used for the block bitmap */
+		if (sblock.e2fs_gd[c].ext2bgd_b_bitmap >= dbase)
+			setbmap(sblock.e2fs_gd[c].ext2bgd_b_bitmap);
+		/* Mark the blocks used for the inode bitmap */
+		if (sblock.e2fs_gd[c].ext2bgd_i_bitmap >= dbase)
+			setbmap(sblock.e2fs_gd[c].ext2bgd_i_bitmap);
 
-		if (c == 0)
-			i = 0;
-		for (; i < cgd; i++)
-			setbmap(i);
+		if (sblock.e2fs.e2fs_rev == E2FS_REV0 ||
+		    (sblock.e2fs.e2fs_features_rocompat &
+			EXT2F_ROCOMPAT_SPARSESUPER) == 0 ||
+		    cg_has_sb(c)) {
+			/* Mark copuy of SB and descriptors */
+			setbmap(dbase);
+			for (i = 1; i <= sblock.e2fs_ngdb; i++)
+				setbmap(dbase+i);
+		}
+
+
+		if (c == 0) {
+			for(i = 0; i < dbase; i++)
+				setbmap(i);
+		}
 	}
 
 	/*
@@ -248,7 +270,7 @@ checkinode(inumber, idesc)
 	} else {
 		statemap[inumber] = FSTATE;
 	}
-	typemap[inumber] = IFTODT(mode);
+	typemap[inumber] = E2IFTODT(mode);
 	badblk = dupblk = 0;
 	idesc->id_number = inumber;
 	(void)ckinode(dp, idesc);
