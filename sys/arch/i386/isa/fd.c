@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fd.c	7.4 (Berkeley) 5/25/91
- *	$Id: fd.c,v 1.20.2.26 1993/10/29 20:03:36 mycroft Exp $
+ *	$Id: fd.c,v 1.20.2.27 1993/11/03 14:15:27 mycroft Exp $
  */
 
 #ifdef DIAGNOSTIC
@@ -103,7 +103,6 @@ struct fdc_softc {
 	struct	fd_softc *sc_fd[4];	/* pointers to children */
 	struct	fd_softc *sc_afd;	/* active drive */
 	struct	buf sc_head;		/* head of buf chain */
-	struct	buf sc_rhead;		/* raw head of buf chain */
 	enum	fdc_state sc_state;
 	int	sc_retry;		/* number of retries so far */
 	u_char	sc_status[7];		/* copy of registers */
@@ -593,13 +592,11 @@ STATIC void
 fdstart(fdc)
 	struct fdc_softc *fdc;
 {
-	int s = splbio();
 
 	/* interrupt routine is responsible for running the work queue; just
 	   call it if idle */
 	if (fdc->sc_state == DEVIDLE)
 		(void) fdcintr((void *)fdc);
-	splx(s);
 }
 
 STATIC void
@@ -698,7 +695,7 @@ fdcstate(fdc)
 	if (!bp) {
 		fdc->sc_state = DEVIDLE;
 #ifdef DIAGNOSTIC
-		if (fdc->sc_afd) {
+		if (fd = fdc->sc_afd) {
 			printf("%s: stray afd %s\n", fdc->sc_dev.dv_xname,
 				fd->sc_dk.dk_dev.dv_xname);
 			fdc->sc_afd = NULL;
@@ -712,16 +709,14 @@ fdcstate(fdc)
 	if (fdc->sc_afd && (fd != fdc->sc_afd))
 		printf("%s: confused fd pointers\n", fdc->sc_dev.dv_xname);
 #endif
-	read = bp->b_flags & B_READ;
-	untimeout((timeout_t)fd_motor_off, (caddr_t)fd);
-	/* turn off motor 4 seconds from now */
-	timeout((timeout_t)fd_motor_off, (caddr_t)fd, 4 * hz);
+
 	switch (fdc->sc_state) {
 	    case DEVIDLE:
 		fdc->sc_retry = 0;
 		fdc->sc_afd = fd;
 		fd->sc_skip = 0;
 		fd->sc_blkno = bp->b_blkno * DEV_BSIZE / FDC_BSIZE;
+		untimeout((timeout_t)fd_motor_off, (caddr_t)fd);
 		if (fd->sc_flags & FD_MOTOR_WAIT) {
 			fdc->sc_state = MOTORWAIT;
 			return 0;
@@ -736,7 +731,7 @@ fdcstate(fdc)
 			fd->sc_flags |= FD_MOTOR | FD_MOTOR_WAIT;
 			set_motor(fdc, 0);
 			fdc->sc_state = MOTORWAIT;
-			/* allow 1 second for motor to stabilize */
+			/* allow .25s for motor to stabilize */
 			timeout((timeout_t)fd_motor_on, (caddr_t)fd, hz/4);
 			return 0;
 		}
@@ -745,6 +740,7 @@ fdcstate(fdc)
 
 		/* fall through */
 	    case DOSEEK:
+	    doseek:
 		if (fd->sc_track != bp->b_cylin) {
 			out_fdc(iobase, NE7CMD_SPECIFY);/* specify command */
 			out_fdc(iobase, fd->sc_type->steprate);
@@ -754,12 +750,13 @@ fdcstate(fdc)
 			out_fdc(iobase, bp->b_cylin);
 			fd->sc_track = -1;
 			fdc->sc_state = SEEKWAIT;
-			timeout((timeout_t)fd_timeout, (caddr_t)fdc, 4 * hz);
+			timeout((timeout_t)fd_timeout, (caddr_t)fdc, hz*4);
 			return 0;
 		}
 
 		/* fall through */
 	    case DOIO:
+	    doio:
 		type = fd->sc_type;
 		sectrac = type->sectrac;
 		sec = fd->sc_blkno % (sectrac * type->heads);
@@ -777,6 +774,7 @@ fdcstate(fdc)
 			 Debugger();
 		 }}
 #endif
+		read = bp->b_flags & B_READ;
 		at_dma(read, bp->b_un.b_addr + fd->sc_skip, nblks * FDC_BSIZE,
 		       fdc->sc_drq);
 		outb(iobase + fdctl, type->rate);
@@ -817,8 +815,7 @@ fdcstate(fdc)
 			return fdcretry(fdc);
 		}
 		fd->sc_track = bp->b_cylin;
-		fdc->sc_state = DOIO;
-		return 1;
+		goto doio;
 
 	    case IOTIMEDOUT:
 		at_dma_abort(fdc->sc_drq);
@@ -831,7 +828,8 @@ fdcstate(fdc)
 		untimeout((timeout_t)fd_timeout, (caddr_t)fdc);
 		if (fdc_result(fdc) != 7 || (st0 & 0xf8) != 0) {
 			at_dma_abort(fdc->sc_drq);
-			fd_status(fd, 7, read ? "read failed" : "write failed");
+			fd_status(fd, 7, bp->b_flags & B_READ ?
+				  "read failed" : "write failed");
 			printf("blkno %d skip %d cylin %d status %x\n", bp->b_blkno,
 			       fd->sc_skip, bp->b_cylin, fdc->sc_status[0]);
 			return fdcretry(fdc);
@@ -843,16 +841,18 @@ fdcstate(fdc)
 			blkno = fd->sc_blkno += nblks;
 			type = fd->sc_type;
 			bp->b_cylin = (blkno / (type->sectrac * type->heads)) * type->step;
-			fdc->sc_state = DOSEEK;
+			goto doseek;
 		} else {
-			fd->sc_skip = 0;
 			bp->b_resid = 0;
 			dp->b_actf = bp->av_forw;
 			biodone(bp);
+			/* turn off motor 5s from now */
+			timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
+			fd->sc_skip = 0;
 			fdc->sc_afd = NULL;
 			fdc->sc_state = DEVIDLE;
+			return 1;
 		}
-		return 1;			/* will return immediately */
 
 	    case DORESET:
 		/* try a reset, keep motor on */
@@ -893,14 +893,12 @@ fdcstate(fdc)
 			return fdcretry(fdc);
 		}
 		fd->sc_track = 0;
-		fdc->sc_state = DOSEEK;
-		return 1;			/* will return immediately */
+		goto doseek;
 
 	    case MOTORWAIT:
 		if (fd->sc_flags & FD_MOTOR_WAIT)
 			return 0;		/* time's not up yet */
-		fdc->sc_state = DOSEEK;
-		return 1;			/* will return immediately */
+		goto doseek;
 
 	    default:
 		fd_status(fd, 0, "stray interrupt");
@@ -918,6 +916,7 @@ fdcretry(fdc)
 	struct fdc_softc *fdc;
 {
 	register struct buf *dp, *bp;
+	struct fd_softc *fd;
 
 	dp = &(fdc->sc_head);
 	bp = dp->b_actf;
@@ -944,8 +943,10 @@ fdcretry(fdc)
 		break;
 
 	    default:
+		fd = fdc->sc_afd;
+
 		diskerr(bp, "fd", "hard error", LOG_PRINTF,
-			fdc->sc_afd->sc_skip, (struct disklabel *)NULL);
+			fd->sc_skip, (struct disklabel *)NULL);
 		printf(" (st0 %b ", fdc->sc_status[0], NE7_ST0BITS);
 		printf("st1 %b ", fdc->sc_status[1], NE7_ST1BITS);
 		printf("st2 %b ", fdc->sc_status[2], NE7_ST2BITS);
@@ -954,13 +955,14 @@ fdcretry(fdc)
 
 		bp->b_flags |= B_ERROR;
 		bp->b_error = EIO;
-		bp->b_resid = bp->b_bcount - fdc->sc_afd->sc_skip;
+		bp->b_resid = bp->b_bcount - fd->sc_skip;
 		dp->b_actf = bp->av_forw;
-		fdc->sc_afd->sc_skip = 0;
 		biodone(bp);
-		fdc->sc_state = DEVIDLE;
+		/* turn off motor 5s from now */
+		timeout((timeout_t)fd_motor_off, (caddr_t)fd, hz*5);
+		fd->sc_skip = 0;
 		fdc->sc_afd = NULL;
-		fdc->sc_retry = 0;
+		fdc->sc_state = DEVIDLE;
 		return 1;
 	}
 	fdc->sc_retry++;
