@@ -1,0 +1,5 @@
+Makefile.test	test Makefile for Berkeley make
+main.c		test main() routine
+gzip.h		header file
+inflate.c	decompression routine (originally written by Mark Adler)
+unzip.c		interface routine
