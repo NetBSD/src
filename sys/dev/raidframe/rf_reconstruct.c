@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.53 2003/03/21 23:11:23 dsl Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.54 2003/04/10 04:11:50 simonb Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.53 2003/03/21 23:11:23 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.54 2003/04/10 04:11:50 simonb Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -629,7 +629,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 	RF_ReconEvent_t *event;
 	struct timeval etime, elpsd;
 	unsigned long xor_s, xor_resid_us;
-	int     retcode, i, ds;
+	int     i, ds;
 
 	switch (reconDesc->state) {
 
@@ -647,7 +647,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 		reconDesc->state = 1;
 
 		Dprintf("RECON: begin request suspend\n");
-		retcode = rf_SuspendNewRequestsAndWait(raidPtr);
+		rf_SuspendNewRequestsAndWait(raidPtr);
 		Dprintf("RECON: end request suspend\n");
 		rf_StartUserStats(raidPtr);	/* zero out the stats kept on
 						 * user accs */
@@ -762,7 +762,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 		reconDesc->state = 6;
 
-		retcode = rf_SuspendNewRequestsAndWait(raidPtr);
+		rf_SuspendNewRequestsAndWait(raidPtr);
 		rf_StopUserStats(raidPtr);
 		rf_PrintUserStats(raidPtr);	/* print out the stats on user
 						 * accs accumulated during
