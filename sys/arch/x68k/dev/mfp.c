@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.2 1999/03/16 16:30:19 minoura Exp $	*/
+/*	$NetBSD: mfp.c,v 1.3 1999/03/18 12:27:59 minoura Exp $	*/
 
 /*
  *
@@ -54,7 +54,6 @@
 
 static int mfp_match __P((struct device *, struct cfdata *, void *));
 static void mfp_attach __P((struct device *, struct device *, void *));
-static int mfp_search __P((struct device *, struct cfdata *cf, void *));
 static void mfp_init __P((void));
 
 struct cfattach mfp_ca = {
@@ -157,8 +156,6 @@ mfp_init (void)
 void
 mfp_wait_for_hsync (void)
 {
-	struct mfp_softc *sc = mfp_cd.cd_devs[0]; /* XXX */
-
 	/* wait for CRT HSYNC */
 	while (mfp_get_gpip() & MFP_GPIP_HSYNC)
 		asm("nop");
@@ -175,8 +172,6 @@ int
 mfp_send_usart (command)
 	int command;
 {
-	struct mfp_softc *sc = mfp_cd.cd_devs[0]; /* XXX */
-
 	while (!(mfp_get_tsr() & MFP_TSR_BE));
 	mfp_set_udr(command);
 
