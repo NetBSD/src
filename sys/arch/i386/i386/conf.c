@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.79 1996/09/08 00:46:57 mycroft Exp $	*/
+/*	$NetBSD: conf.c,v 1.80 1996/09/08 03:31:39 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -204,7 +204,7 @@ struct cdevsw	cdevsw[] =
 	cdev_apm_init(NAPM,apm),	/* 21: Advancded Power Management */
 	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
-	cdev_notdef(),			/* 24 */
+	cdev_disk_init(NRD,rd),		/* 24: ram disk driver */
 	cdev_notdef(),			/* 25 */
 	cdev_joy_init(NJOY,joy),        /* 26: joystick */
 	cdev_spkr_init(NSPKR,spkr),	/* 27: PC speaker */
