@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8.2.6 2001/07/25 23:56:54 nathanw Exp $
+#	$NetBSD: Makefile,v 1.8.2.7 2001/08/08 16:39:33 nathanw Exp $
 #
 
 WARNS=	2
@@ -28,7 +28,8 @@ assym.h: genassym.sh ${ARCHDIR}/genassym.cf
 
 LIB=	pthread
 SRCS=	pthread.c pthread_cond.c pthread_lock.c pthread_mutex.c
-SRCS+=	pthread_run.c pthread_sa.c pthread_sig.c pthread_stack.c
+SRCS+=	pthread_run.c pthread_sa.c pthread_sig.c pthread_specific.c
+SRCS+=  pthread_stack.c
 SRCS+=  pthread_debug.c
 SRCS+=	sched.c
 # Architecture-dependent files
@@ -42,4 +43,12 @@ debuglog: debuglog.o
 	$(CC) -o debuglog debuglog.o -lpthread
 
 .include <bsd.lib.mk>
+
+# WARNS=2 sets -Wcast-qual. This causes problems for one of
+# pthread_setspecific() and pthread_getspecific(), since the constness
+# of the argument to setspecific() has to be discarded *somewhere*
+# before returning it from getspecific().
+CFLAGS+= -Wno-cast-qual
+
+
 # DO NOT DELETE
