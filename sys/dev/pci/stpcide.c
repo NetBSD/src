@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.4.2.1 2004/08/22 13:08:44 tron Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.4.2.2 2004/08/22 13:26:06 tron Exp $	*/
 
 /*
  * Copyright (c) 2003 Tohru Nishimura
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Toru Nishimura.
+ *	This product includes software developed by Tohru Nishimura.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
