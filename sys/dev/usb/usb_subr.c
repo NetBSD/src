@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.31 1999/05/13 23:29:41 augustss Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.32 1999/05/16 13:51:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -750,6 +750,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.port = port;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
+	uaa.vendor = UGETW(dd->idVendor);
+	uaa.product = UGETW(dd->idProduct);
+	uaa.release = UGETW(dd->bcdDevice);
 
 	/* First try with device specific drivers. */
 	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
@@ -807,6 +810,9 @@ usbd_probe_and_attach(parent, dev, port, addr)
 	uaa.usegeneric = 1;
 	uaa.configno = UHUB_UNK_CONFIGURATION;
 	uaa.ifaceno = UHUB_UNK_INTERFACE;
+	uaa.vendor = UHUB_UNK_VENDOR;
+	uaa.product = UHUB_UNK_PRODUCT;
+	uaa.release = UHUB_UNK_RELEASE;
 	if (USB_DO_ATTACH(dev, bdev, parent, &uaa, usbd_print, usbd_submatch))
 		return (USBD_NORMAL_COMPLETION);
 
@@ -1006,6 +1012,19 @@ usbd_print(aux, pnp)
 		printf(" configuration %d", uaa->configno);
 	if (uaa->ifaceno != UHUB_UNK_INTERFACE)
 		printf(" interface %d", uaa->ifaceno);
+#if 0
+	/* 
+	 * It gets very crowded with these locators on the attach line.
+	 * They are not really needed since they are printed in the clear
+	 * by each driver.
+	 */
+	if (uaa->vendor != UHUB_UNK_VENDOR)
+		printf(" vendor 0x%04x", uaa->vendor);
+	if (uaa->product != UHUB_UNK_PRODUCT)
+		printf(" product 0x%04x", uaa->product);
+	if (uaa->release != UHUB_UNK_RELEASE)
+		printf(" release 0x%04x", uaa->release);
+#endif
 	return (UNCONF);
 }
 
@@ -1025,7 +1044,17 @@ usbd_submatch(parent, cf, aux)
 	     cf->uhubcf_configuration != uaa->configno) ||
 	    (uaa->ifaceno != UHUB_UNK_INTERFACE &&
 	     cf->uhubcf_interface != UHUB_UNK_INTERFACE &&
-	     cf->uhubcf_interface != uaa->ifaceno))
+	     cf->uhubcf_interface != uaa->ifaceno) ||
+	    (uaa->vendor != UHUB_UNK_VENDOR &&
+	     cf->uhubcf_vendor != UHUB_UNK_VENDOR &&
+	     cf->uhubcf_vendor != uaa->vendor) ||
+	    (uaa->product != UHUB_UNK_PRODUCT &&
+	     cf->uhubcf_product != UHUB_UNK_PRODUCT &&
+	     cf->uhubcf_product != uaa->product) ||
+	    (uaa->release != UHUB_UNK_RELEASE &&
+	     cf->uhubcf_release != UHUB_UNK_RELEASE &&
+	     cf->uhubcf_release != uaa->release)
+	   )
 		return 0;
 	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
 }
@@ -1113,7 +1142,7 @@ usbd_fill_deviceinfo(dev, di)
 
 	di->config = dev->config;
 	usbd_devinfo_vp(dev, di->vendor, di->product);
-	usbd_printBCD(di->revision, UGETW(dev->ddesc.bcdDevice));
+	usbd_printBCD(di->release, UGETW(dev->ddesc.bcdDevice));
 	di->vendorNo = UGETW(dev->ddesc.idVendor);
 	di->productNo = UGETW(dev->ddesc.idProduct);
 	di->class = dev->ddesc.bDeviceClass;

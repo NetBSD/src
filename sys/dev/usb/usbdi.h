@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.17 1999/01/10 19:13:16 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.18 1999/05/16 13:51:05 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -252,6 +252,9 @@ struct usb_attach_arg {
 	int			port;
 	int			configno;
 	int			ifaceno;
+	int			vendor;
+	int			product;
+	int			release;
 	usbd_device_handle	device;	/* current device */
 	usbd_interface_handle	iface; /* current interface */
 	int			usegeneric;
