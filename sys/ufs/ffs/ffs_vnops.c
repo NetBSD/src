@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.31 2000/05/29 18:53:35 mycroft Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.32 2000/06/28 14:16:40 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -47,10 +47,6 @@
 #include <sys/vnode.h>
 #include <sys/pool.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>

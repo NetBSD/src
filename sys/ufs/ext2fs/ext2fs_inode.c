@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_inode.c,v 1.19 2000/05/30 19:09:44 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_inode.c,v 1.20 2000/06/28 14:16:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -48,10 +48,6 @@
 #include <sys/malloc.h>
 #include <sys/trace.h>
 #include <sys/resourcevar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

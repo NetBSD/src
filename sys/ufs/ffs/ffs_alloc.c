@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.35 2000/05/19 04:34:44 thorpej Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.36 2000/06/28 14:16:39 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -48,10 +48,6 @@
 #include <sys/mount.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/ufsmount.h>

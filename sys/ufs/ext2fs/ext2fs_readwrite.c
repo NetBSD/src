@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_readwrite.c,v 1.12 2000/05/13 23:43:13 perseant Exp $	*/
+/*	$NetBSD: ext2fs_readwrite.c,v 1.13 2000/06/28 14:16:38 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -50,10 +50,6 @@
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
-
-#include <vm/vm.h>
-
-#include <uvm/uvm_extern.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

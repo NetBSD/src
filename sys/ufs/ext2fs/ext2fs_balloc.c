@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_balloc.c,v 1.5 2000/05/28 08:44:32 mycroft Exp $	*/
+/*	$NetBSD: ext2fs_balloc.c,v 1.6 2000/06/28 14:16:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -43,8 +43,6 @@
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/vnode.h>
-
-#include <vm/vm.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>

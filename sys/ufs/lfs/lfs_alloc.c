@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.38 2000/06/27 20:57:12 perseant Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.39 2000/06/28 14:16:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -83,8 +83,6 @@
 #include <sys/mount.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
-
-#include <vm/vm.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
