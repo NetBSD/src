@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.3,v 1.1.2.97 2004/05/20 03:44:22 jmc Exp $
+#	$NetBSD: CHANGES-1.6.3,v 1.1.2.98 2004/05/26 14:07:50 tron Exp $
 
 A complete list of changes from NetBSD 1.6.2 to NetBSD 1.6.3:
 
@@ -755,3 +755,33 @@ usr.sbin/rpc.yppasswdd/yppasswdd_mkpw.c		1.12
 	effect, this gets us some additional error checking.
 	
 	[1694, ticket #wennmach]
+
+sys/dev/pci/if_ti.c				1.59
+
+	cur_rx->ti_vlan_tag holds the 802.1q VLAN tag and the 802.1p priority.
+	Trimm the priority, as the upper layers won't do it and will drop the
+	packet if priority is not 0.
+	While there, print the revision in the "unsupported chip revision"
+	printf.
+	[bouyer, ticket #1697]
+
+sys/dev/pci/if_ti.c				1.60
+sys/dev/pci/if_tireg.h				1.13
+
+	Use the bus_space_*_stream_* methods to access the chip's registers.
+	As we turn the chip to big-endian mode on big-endian systems, we should
+	never byte-swap the data read/written from/to registers. Tested on
+	sparc64. Finally fix kern/13341 by Jason R. Thorpe (really, the hard
+	work of putting bus_dmamap_sync() calls at the right places has been
+	done my Jason mid-2001 :)
+	[bouyer, ticket #1698]
+
+gnu/dist/toolchain/gcc/config/m68k/m68k.c	1.3
+
+	Fix a bug WRT -vomit-frame-pointer -- use_return_insn() must return
+	false if we saved the GOT pointer register.
+	Note: This is already fixed in the GCC 3 sources, but GCC 3 uses a
+	different condition to determine whether to save and restore the
+	register, so the patch cannot be the same.
+	[skrll, ticket #1699]
+
