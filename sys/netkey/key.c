@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.16 2000/03/30 13:03:58 augustss Exp $	*/
+/*	$NetBSD: key.c,v 1.17 2000/05/08 18:31:37 thorpej Exp $	*/
 /*	$KAME: key.c,v 1.67 2000/03/05 02:38:25 itojun Exp $	*/
 
 /*
@@ -4207,7 +4207,7 @@ key_setident(sah, mhp)
 			msg0->sadb_msg_errno = EINVAL;
 			return -1;
 		}
-#undef __IDENTXID(a)
+#undef __IDENTXID
 		break;
 	case SADB_IDENTTYPE_PREFIX:
 	case SADB_IDENTTYPE_FQDN:

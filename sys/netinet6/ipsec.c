@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.19 2000/03/21 23:53:31 itojun Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.20 2000/05/08 18:31:10 thorpej Exp $	*/
 /*	$KAME: ipsec.c,v 1.53 2000/03/09 13:02:05 sakane Exp $	*/
 
 /*
@@ -1429,7 +1429,7 @@ ipsec_get_reqlevel(isr)
 			((struct sockaddr *)&isr->sp->spidx.src)->sa_family);
 	}
 
-#undef IPSEC_CHECK_DEFAULT(lev)
+#undef IPSEC_CHECK_DEFAULT
 
 	/* set level */
 	switch (isr->level) {
