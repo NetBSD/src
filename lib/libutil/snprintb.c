@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.1 2002/09/20 21:10:10 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.2 2002/09/20 21:11:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,6 +32,15 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_CONFIG_H
+#include "config.h"
+#else
+#include <sys/cdefs.h>
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: snprintb.c,v 1.2 2002/09/20 21:11:11 christos Exp $");
+#endif
+#endif
 
 /*
  * snprintb: print an interpreted bitmask to a buffer
