@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.10 1999/05/12 00:05:11 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.11 1999/05/12 00:38:20 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -104,8 +104,8 @@ dumpitem(char *label, struct hid_item *h)
 		return;
 	printf("%s size=%d count=%d page=%s usage=%s%s", label,
 	       h->report_size, h->report_count, 
-	       usage_page(HID_PAGE(h->usage)), 
-	       usage_in_page(h->usage),
+	       hid_usage_page(HID_PAGE(h->usage)), 
+	       hid_usage_in_page(h->usage),
 	       h->flags & HIO_CONST ? " Const" : "");
 	printf(", logical range %d..%d",
 	       h->logical_minimum, h->logical_maximum);
@@ -128,8 +128,8 @@ dumpitems(report_desc_t r)
 		switch (h.kind) {
 		case hid_collection:
 			printf("Collection page=%s usage=%s\n",
-			       usage_page(HID_PAGE(h.usage)), 
-			       usage_in_page(h.usage));
+			       hid_usage_page(HID_PAGE(h.usage)), 
+			       hid_usage_in_page(h.usage));
 			break;
 		case hid_endcollection:
 			printf("End collection\n");
@@ -186,7 +186,7 @@ prdata(u_char *buf, struct hid_item *h)
 
 	pos = h->pos;
 	for (i = 0; i < h->report_count; i++) {
-		data = get_data(buf, h);
+		data = hid_get_data(buf, h);
 		if (h->logical_minimum < 0)
 			printf("%d", (int)data);
 		else
@@ -241,11 +241,11 @@ dumpdata(int f, report_desc_t rd, int loop)
 		for (n = hids; n; n = n->next) {
 			namep = namebuf;
 			namep += sprintf(namep, "%s:%s.",
-					 usage_page(HID_PAGE(n->collection)),
-					 usage_in_page(n->collection));
+					 hid_usage_page(HID_PAGE(n->collection)),
+					 hid_usage_in_page(n->collection));
 			namep += sprintf(namep, "%s:%s",
-					 usage_page(HID_PAGE(n->usage)),
-					 usage_in_page(n->usage));
+					 hid_usage_page(HID_PAGE(n->usage)),
+					 hid_usage_in_page(n->usage));
 			if (all || gotname(namebuf)) {
 				if (!noname)
 					printf("%s=", namebuf);
@@ -318,13 +318,13 @@ main(int argc, char **argv)
 		dev = devname;
 	}
 
-	init_hid(table);
+	hid_init(table);
 
 	f = open(dev, O_RDWR);
 	if (f < 0)
 		err(1, "%s", dev);
 
-	r = get_report_desc(f);
+	r = hid_get_report_desc(f);
 	if (r == 0) 
 		errx(1, "USB_GET_REPORT_DESC");
 	       
@@ -335,6 +335,6 @@ main(int argc, char **argv)
 	if (nnames != 0 || all)
 		dumpdata(f, r, loop);
 
-	dispose_report_desc(r);
+	hid_dispose_report_desc(r);
 	exit(0);
 }
