@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.3,v 1.55 2000/05/23 12:27:27 itojun Exp $
+.\"	$NetBSD: sysctl.3,v 1.56 2000/05/23 12:35:34 itojun Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1199,7 +1199,7 @@ An attempt to change a value protected by the current kernel security
 level is made.
 .El
 .Sh FILES
-.Bl -tag -width <netinet/icmpXvar.h> -compact
+.Bl -tag -width <netinet6/udp6Xvar.h> -compact
 .It Pa <sys/sysctl.h>
 definitions for top level identifiers, second level kernel and hardware
 identifiers, and user level identifiers
@@ -1220,6 +1220,10 @@ definitions for fourth level ICMPv6 identifiers
 definitions for fourth level TCP identifiers
 .It Pa <netinet/udp_var.h>
 definitions for fourth level UDP identifiers
+.It Pa <netinet6/udp6_var.h>
+definitions for fourth level IPv6 UDP identifiers
+.It Pa <netinet6/ipsec.h>
+definitions for fourth level IPsec identifiers
 .El
 .Sh SEE ALSO
 .Xr sysctl 8 ,
