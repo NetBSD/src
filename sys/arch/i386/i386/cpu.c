@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.20 2004/08/30 15:05:17 drochner Exp $ */
+/* $NetBSD: cpu.c,v 1.20.6.1 2005/01/25 13:01:08 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2004/08/30 15:05:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20.6.1 2005/01/25 13:01:08 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -293,7 +293,7 @@ cpu_attach(parent, self, aux)
 	/*
 	 * Allocate UPAGES contiguous pages for the idle PCB and stack.
 	 */
-	kstack = uvm_km_alloc (kernel_map, USPACE);
+	kstack = uvm_km_alloc(kernel_map, USPACE, 0, UVM_KMF_WIRED);
 	if (kstack == 0) {
 		if (caa->cpu_role != CPU_ROLE_AP) {
 			panic("cpu_attach: unable to allocate idle stack for"
@@ -696,7 +696,8 @@ cpu_set_tss_gates(struct cpu_info *ci)
 {
 	struct segment_descriptor sd;
 
-	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
 	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
 	    IDTVEC(tss_trap08));
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
@@ -713,7 +714,8 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 * XXX overwriting the gate set in db_machine_init.
 	 * Should rearrange the code so that it's set only once.
 	 */
-	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE);
+	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
+	    UVM_KMF_WIRED);
 	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
 	    Xintrddbipi);
 
