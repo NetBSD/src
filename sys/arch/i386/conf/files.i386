@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.56 1995/04/28 08:19:40 cgd Exp $
+#	$NetBSD: files.i386,v 1.57 1995/07/27 04:40:55 mycroft Exp $
 #
 # new style config file for i386 architecture
 #
@@ -103,7 +103,7 @@ file	arch/i386/isa/spkr.c		speaker needs-flag
 # AMD am7990 (Lance) -based boards
 # (BICC Isolan, NE2100, DEPCA)
 # XXX conflicts with other ports; can't be in files.isa
-device	le at isa: ether, ifnet, isadma
+device	le at isa, pci: ether, ifnet, isadma
 file	dev/isa/if_le.c			le
 
 #
