@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.25 1998/07/08 05:25:42 mjacob Exp $ */
+/* $NetBSD: interrupt.c,v 1.26 1998/07/08 16:28:25 mjacob Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.25 1998/07/08 05:25:42 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.26 1998/07/08 16:28:25 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,11 +137,7 @@ machine_check(mces, framep, vector, param)
 	struct trapframe *framep;
 	unsigned long vector, param;
 {
-#if	0	/* TO BE FIXED */
 	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
-#else
-	struct mchkinfo *mcp = &mchkinfo[0];
-#endif
 	const char *type;
 
 	/* Make sure it's an error we know about. */
@@ -209,11 +205,7 @@ badaddr_read(addr, size, rptr)
 	size_t size;
 	void *rptr;
 {
-#if	0
 	struct mchkinfo *mcp = &mchkinfo[alpha_pal_whami()];
-#else
-	struct mchkinfo *mcp = &mchkinfo[0];
-#endif
 	long rcpt;
 
 	/* Get rid of any stale machine checks that have been waiting.  */
