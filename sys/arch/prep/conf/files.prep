@@ -1,10 +1,17 @@
-#	$NetBSD: files.prep,v 1.19 2001/06/18 14:04:39 nonaka Exp $
+#	$NetBSD: files.prep,v 1.20 2001/06/20 14:35:23 nonaka Exp $
 #
 # prep-specific configuration info
 #
 maxpartitions 8
 
 maxusers 2 8 64
+
+# IBM
+file    arch/prep/prep/ibm_machdep.c
+file    arch/prep/prep/ibm_6050.c
+file    arch/prep/prep/ibm_7248.c
+
+file    arch/prep/prep/platform.c
 
 file	arch/prep/prep/autoconf.c
 file	arch/prep/prep/bus_space.c

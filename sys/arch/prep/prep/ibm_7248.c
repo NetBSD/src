@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu.c,v 1.4 2001/06/20 14:35:25 nonaka Exp $	*/
+/*	$NetBSD: ibm_7248.c,v 1.1 2001/06/20 14:35:26 nonaka Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -17,8 +17,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -37,44 +37,33 @@
  */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/device.h>
 
-#include <machine/autoconf.h>
-#include <machine/bus.h>
-#include <machine/cpu.h>
+#include <machine/intr.h>
 #include <machine/platform.h>
 
-int cpumatch(struct device *, struct cfdata *, void *);
-void cpuattach(struct device *, struct device *, void *);
-
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
+struct platform platform_ibm_7248 = {
+	"IBM PPS Model 7248 (E)",	/* model */
+	platform_generic_match,		/* match */
+	pci_intr_fixup_ibm_7248,	/* pci_intr_fixup */
+	ext_intr,			/* ext_intr */
+	cpu_setup_ibm_generic,		/* cpu_setup */
+	reset_ibm_generic,		/* reset */
 };
 
-extern struct cfdriver cpu_cd;
-
-int
-cpumatch(parent, cfdata, aux)
-	struct device *parent;
-	struct cfdata *cfdata;
-	void *aux;
-{
-	struct confargs *ca = aux;
-
-	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-		return (0);
-	return (1);
-}
-
 void
-cpuattach(parent, dev, aux)
-	struct device *parent;
-	struct device *dev;
-	void *aux;
+pci_intr_fixup_ibm_7248(int bus, int dev, int *line)
 {
+	if (bus != 0)
+		return;
 
-	printf("\n");
-
-	(*platform->cpu_setup)(dev);
+	switch (dev) {
+	case 12:
+	case 13:
+	case 16:
+	case 18:
+	case 22:
+		*line = 15;
+		break;
+	}
 }
+
