@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.32 2003/10/31 22:47:44 cl Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.33 2003/10/31 23:36:50 cl Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.32 2003/10/31 22:47:44 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.33 2003/10/31 23:36:50 cl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1154,8 +1154,8 @@ sa_upcall_userret(struct lwp *l)
 
 		DPRINTFN(9,("sa_upcall_userret(%d.%d) nstacks--   = %2d\n",
 		    l->l_proc->p_pid, l->l_lid, sa->sa_nstacks));
-		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER, l, l2, 0, NULL, sau,
-		    &st) != 0) {
+		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED | SA_UPCALL_DEFER_EVENT,
+			l, l2, 0, NULL, sau, &st) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
@@ -1170,6 +1170,9 @@ sa_upcall_userret(struct lwp *l)
 		SIMPLEQ_INSERT_TAIL(&sa->sa_upcalls, sau, sau_next);
 		l->l_flag |= L_SA_UPCALL;
 		l->l_flag &= ~L_SA_BLOCKING;
+		SCHED_LOCK(s);
+		sa_putcachelwp(p, l2); /* PHOLD from sa_vp_repossess */
+		SCHED_UNLOCK(s);
 
 		/* We migth have sneaked past signal handling and userret */
 		SA_LWP_STATE_UNLOCK(l, f);
@@ -1346,10 +1349,6 @@ sa_vp_repossess(struct lwp *l)
 	 * Put ourselves on the virtual processor and note that the
 	 * previous occupant of that position was interrupted.
 	 */
-
-
-
-
 	l2 = sa->sa_vp;
 	sa->sa_vp = l;
 	if (sa->sa_idle == l2)
@@ -1375,12 +1374,7 @@ sa_vp_repossess(struct lwp *l)
 			    l2->l_stat);
 #endif
 		}
-		sa_putcachelwp(p, l2);
-		/*
-		 * XXX SMP race! Need to be sure that l2's state is
-		 * captured before the upcall before we make it possible
-		 * for another processor to grab it.
-		 */
+		l2->l_stat = LSSUSPENDED;
 		SCHED_UNLOCK(s);
 	}
 	return l2;
@@ -1457,7 +1451,7 @@ sa_vp_donate(struct lwp *l)
 			SCHED_LOCK(s);
 			
 			p->p_nrlwps--;
-			sa_putcachelwp(p, l);
+			l->l_stat = LSSUSPENDED;
 			sa->sa_vp = l2;
 			sa->sa_vp_wait_count--;
 			l2->l_flag &= ~L_SA_WANTS_VP;
