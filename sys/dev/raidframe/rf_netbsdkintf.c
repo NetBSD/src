@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.67 2000/03/07 02:12:13 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.68 2000/03/07 02:28:05 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2430,6 +2430,63 @@ rf_final_update_component_labels( raidPtr )
 		}
 	}
 	/* 	printf("Component labels updated\n"); */
+}
+
+void
+rf_UnconfigureVnodes( raidPtr )
+	RF_Raid_t *raidPtr;
+{
+	int r,c; 
+	struct proc *p;
+
+
+	/* We take this opportunity to close the vnodes like we should.. */
+
+	p = raidPtr->engine_thread;
+
+	for (r = 0; r < raidPtr->numRow; r++) {
+		for (c = 0; c < raidPtr->numCol; c++) {
+			printf("Closing vnode for row: %d col: %d\n", r, c);
+			if (raidPtr->raid_cinfo[r][c].ci_vp != NULL) {
+				if (raidPtr->Disks[r][c].auto_configured == 1) {
+					VOP_CLOSE(raidPtr->raid_cinfo[r][c].ci_vp, 
+						  FREAD, NOCRED, 0);
+					vput(raidPtr->raid_cinfo[r][c].ci_vp);
+		
+				} else {				
+					VOP_UNLOCK(raidPtr->raid_cinfo[r][c].ci_vp, 0);
+					(void) vn_close(raidPtr->raid_cinfo[r][c].ci_vp,
+							FREAD | FWRITE, p->p_ucred, p);
+				}
+				raidPtr->raid_cinfo[r][c].ci_vp = NULL;
+				raidPtr->Disks[r][c].auto_configured = 0;
+			} else {
+				printf("vnode was NULL\n");
+			}
+
+		}
+	}
+	for (r = 0; r < raidPtr->numSpare; r++) {
+		printf("Closing vnode for spare: %d\n", r);
+		if (raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp) {
+			if (raidPtr->Disks[0][raidPtr->numCol + r].auto_configured == 1) {
+				VOP_CLOSE(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp, 
+					  FREAD, NOCRED, 0);
+				vput(raidPtr->raid_cinfo[0][raidPtr->numCol +r].ci_vp);
+				
+			} else {
+				VOP_UNLOCK(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp, 0);
+				(void) vn_close(raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp,
+						FREAD | FWRITE, p->p_ucred, p);
+			}
+			raidPtr->raid_cinfo[0][raidPtr->numCol + r].ci_vp = NULL;			
+			raidPtr->Disks[0][raidPtr->numCol + r].auto_configured = 0;
+		} else {
+			printf("vnode was NULL\n");
+		}
+	}
+
+
 }
 
 
