@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.24.2.1 1998/11/09 06:06:36 chs Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.24.2.2 1999/02/25 04:03:31 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -204,18 +204,27 @@ ffs_truncate(v)
 	 * last byte of the file is allocated. Since the smallest
 	 * value of osize is 0, length will be at least 1.
 	 */
+	/*
+	 * XXXCHS why must the last byte of the file be allocated?
+	 * this seems bogus.
+	 */
 	if (osize < length) {
 		if (length > fs->fs_maxfilesize)
 			return (EFBIG);
+#ifdef UBC
+		aflags = 0;
+		bp = 0;
+#else
 		offset = blkoff(fs, length - 1);
 		lbn = lblkno(fs, length - 1);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
-				   aflags);
+		error = ffs_balloc(oip, lbn, offset + 1, ap->a_cred, &bp, NULL,
+				   aflags, NULL);
 		if (error)
 			return (error);
+#endif
 		oip->i_ffs_size = length;
 #if defined(UVM)
 		uvm_vnp_setsize(ovp, length);
@@ -245,13 +254,17 @@ ffs_truncate(v)
 	if (offset == 0) {
 		oip->i_ffs_size = length;
 	} else {
+#ifdef UBC
+#else
 		lbn = lblkno(fs, length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, aflags);
+		error = ffs_balloc(oip, lbn, offset, ap->a_cred, &bp, NULL,
+				   aflags, NULL);
 		if (error)
 			return (error);
+#endif
 		oip->i_ffs_size = length;
 		size = blksize(fs, oip, lbn);
 #if defined(UVM)
@@ -259,12 +272,16 @@ ffs_truncate(v)
 #else
 		(void) vnode_pager_uncache(ovp);
 #endif
+#ifdef UBC
+		uvm_vnp_zerorange(ovp, oip->i_ffs_size, size - offset);
+#else
 		memset((char *)bp->b_data + offset, 0,  (u_int)(size - offset));
 		allocbuf(bp, size);
 		if (aflags & B_SYNC)
 			bwrite(bp);
 		else
 			bawrite(bp);
+#endif
 	}
 #if defined(UVM)
 	uvm_vnp_setsize(ovp, length);
