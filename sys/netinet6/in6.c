@@ -1,3 +1,5 @@
+/*	$NetBSD: in6.c,v 1.2.2.3 1999/08/02 22:36:03 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -101,7 +103,6 @@
 #include <netinet/if_ether.h>
 #endif
 
-#include <netinet6/in6_systm.h>
 #include <netinet6/nd6.h>
 #include <netinet6/ip6.h>
 #include <netinet6/mld6_var.h>
@@ -1279,7 +1280,7 @@ in6_addmulti(maddr6, ifp, errorp)
 	struct	in6_ifaddr *ia;
 	struct	in6_ifreq ifr;
 	struct	in6_multi *in6m;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	*errorp = 0;
 	/*
@@ -1354,7 +1355,7 @@ in6_delmulti(in6m)
 	struct in6_multi *in6m;
 {
 	struct	in6_ifreq ifr;
-	int	s = splnet();
+	int	s = splsoftnet();
 
 	if (--in6m->in6m_refcount == 0) {
 		/*

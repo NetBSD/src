@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_pcb.h,v 1.2.2.3 1999/08/02 22:36:04 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -88,7 +90,7 @@ struct	in6pcb {
 	u_short	in6p_fport;		/* foreign port */
 	struct	in6_addr in6p_laddr;	/* local host table entry */
 	u_short	in6p_lport;		/* local port */
-	u_long	in6p_flowinfo;		/* priority and flowlabel */
+	u_int32_t in6p_flowinfo;	/* priority and flowlabel */
 	struct	socket *in6p_socket;	/* back pointer to socket */
 	caddr_t	in6p_ppcb;		/* pointer to per-protocol pcb */
 	struct	route_in6 in6p_route;	/* placeholder for routing entry */
@@ -167,9 +169,9 @@ struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 extern struct rtentry *
 	in6_pcbrtentry __P((struct in6pcb *));
 extern struct in6pcb *in6_pcblookup_connect __P((struct in6pcb *,
-	struct in6_addr *, u_int, struct in6_addr *, u_int));
+	struct in6_addr *, u_int, struct in6_addr *, u_int, int));
 extern struct in6pcb *in6_pcblookup_bind __P((struct in6pcb *,
-	struct in6_addr *, u_int));
+	struct in6_addr *, u_int, int));
 #endif
 #endif /* _KERNEL */
 

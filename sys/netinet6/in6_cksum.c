@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_cksum.c,v 1.2.2.3 1999/08/02 22:36:03 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -79,11 +81,11 @@
 #define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
 
 static union {
-	u_short phs[4];
+	u_int16_t phs[4];
 	struct {
-		u_long	ph_len;
-		u_char	ph_zero[3];
-		u_char	ph_nxt;
+		u_int32_t	ph_len;
+		u_int8_t	ph_zero[3];
+		u_int8_t	ph_nxt;
 	} ph;
 } uph;
 
@@ -100,7 +102,7 @@ in6_cksum(m, nxt, off, len)
 	u_int8_t nxt;
 	register int off, len;
 {
-	register u_short *w;
+	register u_int16_t *w;
 	register int sum = 0;
 	register int mlen = 0;
 	int byte_swapped = 0;
@@ -110,12 +112,12 @@ in6_cksum(m, nxt, off, len)
 	struct ip6_hdr *ip6;	
 	
 	union {
-		char	c[2];
-		u_short	s;
+		u_int8_t	c[2];
+		u_int16_t	s;
 	} s_util;
 	union {
-		u_short s[2];
-		long	l;
+		u_int16_t s[2];
+		u_int32_t l;
 	} l_util;
 
 	/* sanity check */
@@ -138,7 +140,7 @@ in6_cksum(m, nxt, off, len)
 		ip6->ip6_dst.s6_addr16[1] = 0;
 	}
 #endif
-	w = (u_short *)&ip6->ip6_src;
+	w = (u_int16_t *)&ip6->ip6_src;
 	uph.ph.ph_len = htonl(len);
 	uph.ph.ph_nxt = nxt;
 
@@ -174,7 +176,7 @@ in6_cksum(m, nxt, off, len)
 			break;
 		m = m->m_next;
 	}
-	w = (u_short *)(mtod(m, u_char *) + off);
+	w = (u_int16_t *)(mtod(m, u_char *) + off);
 	mlen = m->m_len - off;
 	if (len < mlen)
 		mlen = len;
@@ -182,11 +184,11 @@ in6_cksum(m, nxt, off, len)
 	/*
 	 * Force to even boundary.
 	 */
-	if ((1 & (int) w) && (mlen > 0)) {
+	if ((1 & (long) w) && (mlen > 0)) {
 		REDUCE;
 		sum <<= 8;
 		s_util.c[0] = *(u_char *)w;
-		w = (u_short *)((char *)w + 1);
+		w = (u_int16_t *)((char *)w + 1);
 		mlen--;
 		byte_swapped = 1;
 	}
@@ -235,7 +237,7 @@ in6_cksum(m, nxt, off, len)
 	for (;m && len; m = m->m_next) {
 		if (m->m_len == 0)
 			continue;
-		w = mtod(m, u_short *);
+		w = mtod(m, u_int16_t *);
 		if (mlen == -1) {
 			/*
 			 * The first byte of this mbuf is the continuation
@@ -247,7 +249,7 @@ in6_cksum(m, nxt, off, len)
 			 */
 			s_util.c[1] = *(char *)w;
 			sum += s_util.s;
-			w = (u_short *)((char *)w + 1);
+			w = (u_int16_t *)((char *)w + 1);
 			mlen = m->m_len - 1;
 			len--;
 		} else
@@ -258,11 +260,11 @@ in6_cksum(m, nxt, off, len)
 		/*
 		 * Force to even boundary.
 		 */
-		if ((1 & (int) w) && (mlen > 0)) {
+		if ((1 & (long) w) && (mlen > 0)) {
 			REDUCE;
 			sum <<= 8;
 			s_util.c[0] = *(u_char *)w;
-			w = (u_short *)((char *)w + 1);
+			w = (u_int16_t *)((char *)w + 1);
 			mlen--;
 			byte_swapped = 1;
 		}

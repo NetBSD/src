@@ -1,3 +1,5 @@
+/*	$NetBSD: raw_ip6.c,v 1.2.2.3 1999/08/02 22:36:07 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -62,6 +64,10 @@
  *	@(#)raw_ip.c	8.2 (Berkeley) 1/4/94
  */
 
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -80,7 +86,6 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/ip6_mroute.h>
@@ -164,8 +169,8 @@ rip6_input(mp, offp, proto)
 		   !IN6_ARE_ADDR_EQUAL(&in6p->in6p_faddr, &ip6->ip6_src))
 			continue;
 		if (in6p->in6p_cksum != -1
-		 && in6_cksum(m, ip6->ip6_nxt, *offp,
-			 sizeof(struct ip6_hdr) + ip6->ip6_plen - *offp)) {
+		 && in6_cksum(m, ip6->ip6_nxt, *offp, m->m_pkthdr.len - *offp))
+		{
 			/* XXX bark something */
 			continue;
 		}
@@ -461,7 +466,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 			error = EACCES;
 			break;
 		}
-		s = splnet();
+		s = splsoftnet();
 		if ((error = soreserve(so, rip6_sendspace, rip6_recvspace)) ||
 		    (error = in6_pcballoc(so, &rawin6pcb))) {
 			splx(s);
@@ -469,7 +474,7 @@ rip6_usrreq(so, req, m, nam, control, p)
 		}
 		splx(s);
 		in6p = sotoin6pcb(so);
-		in6p->in6p_ip6.ip6_nxt = (int)nam;
+		in6p->in6p_ip6.ip6_nxt = (long)nam;
 		in6p->in6p_cksum = -1;
 #ifdef IPSEC
 		if ((error = ipsec_init_policy(&in6p->in6p_sp)) != 0)

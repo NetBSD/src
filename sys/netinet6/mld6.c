@@ -1,3 +1,5 @@
+/*	$NetBSD: mld6.c,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.
@@ -68,6 +70,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -135,7 +140,7 @@ void
 mld6_start_listening(in6m)
 	struct in6_multi *in6m;
 {
-	int s = splnet();
+	int s = splsoftnet();
 
 	/*
 	 * (draft-ietf-ipngwg-mld, page 10)
@@ -333,7 +338,7 @@ mld6_fasttimeo()
 	if (!mld6_timers_are_running)
 		return;
 
-	s = splnet();
+	s = splsoftnet();
 	mld6_timers_are_running = 0;
 	IN6_FIRST_MULTI(step, in6m);
 	while (in6m != NULL) {

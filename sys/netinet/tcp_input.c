@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.77.2.3.2.2 1999/07/01 23:47:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.77.2.3.2.3 1999/08/02 22:34:59 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -125,6 +125,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +141,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/if_types.h>
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -173,6 +175,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netkey/key.h>
 #include <netkey/key_debug.h>
 #endif /*IPSEC*/
+#ifdef INET6
+#include "faith.h"
+#endif
 
 int	tcprexmtthresh = 3;
 int	tcp_log_refused;
@@ -718,10 +723,11 @@ findpcb:
 			d.s6_addr16[5] = htons(0xffff);
 			bcopy(&ip->ip_dst, &d.s6_addr32[3], sizeof(ip->ip_dst));
 			in6p = in6_pcblookup_connect(&tcb6, &s, th->th_sport,
-				&d, th->th_dport);
+				&d, th->th_dport, 0);
 			if (in6p == 0) {
 				++tcpstat.tcps_pcbhashmiss;
-				in6p = in6_pcblookup_bind(&tcb6, &d, th->th_dport);
+				in6p = in6_pcblookup_bind(&tcb6, &d,
+					th->th_dport, 0);
 			}
 		}
 #endif
@@ -776,11 +782,24 @@ findpcb:
 		break;
 #if defined(INET6) && !defined(TCP6)
 	case AF_INET6:
+	    {
+		int faith;
+
+#if defined(NFAITH) && NFAITH > 0
+		if (m->m_pkthdr.rcvif
+		 && m->m_pkthdr.rcvif->if_type == IFT_FAITH) {
+			faith = 1;
+		} else
+			faith = 0;
+#else
+		faith = 0;
+#endif
 		in6p = in6_pcblookup_connect(&tcb6, &ip6->ip6_src, th->th_sport,
-			&ip6->ip6_dst, th->th_dport);
+			&ip6->ip6_dst, th->th_dport, faith);
 		if (in6p == NULL) {
 			++tcpstat.tcps_pcbhashmiss;
-			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst, th->th_dport);
+			in6p = in6_pcblookup_bind(&tcb6, &ip6->ip6_dst,
+				th->th_dport, faith);
 		}
 		if (in6p == NULL) {
 			++tcpstat.tcps_noport;
@@ -793,6 +812,7 @@ findpcb:
 		}
 #endif /*IPSEC*/
 		break;
+	    }
 #endif
 	}
 
@@ -1112,6 +1132,8 @@ after_listen:
 				sowwakeup(so);
 				if (so->so_snd.sb_cc)
 					(void) tcp_output(tp);
+				if (tcp_saveti)
+					m_freem(tcp_saveti);
 				return;
 			}
 		} else if (th->th_ack == tp->snd_una &&
@@ -1137,6 +1159,8 @@ after_listen:
 			TCP_SETUP_ACK(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
 				(void) tcp_output(tp);
+			if (tcp_saveti)
+				m_freem(tcp_saveti);
 			return;
 		}
 	}
@@ -1920,7 +1944,6 @@ dodata:							/* XXX */
 	}
 	if (so->so_options & SO_DEBUG) {
 		tcp_trace(TA_INPUT, ostate, tp, tcp_saveti, 0);
-		m_freem(tcp_saveti);
 	}
 
 	/*
@@ -1928,6 +1951,8 @@ dodata:							/* XXX */
 	 */
 	if (needoutput || (tp->t_flags & TF_ACKNOW))
 		(void) tcp_output(tp);
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 badsyn:
@@ -1948,6 +1973,8 @@ dropafterack:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
 	(void) tcp_output(tp);
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 dropwithreset:
@@ -1988,13 +2015,15 @@ dropwithreset:
 	}
     }
 	if (tiflags & TH_ACK)
-		(void)tcp_respond(tp, m, m, (tcp_seq)0, th->th_ack, TH_RST);
+		(void)tcp_respond(tp, m, m, th, (tcp_seq)0, th->th_ack, TH_RST);
 	else {
 		if (tiflags & TH_SYN)
 			tlen++;
-		(void)tcp_respond(tp, m, m, th->th_seq + tlen, (tcp_seq)0,
+		(void)tcp_respond(tp, m, m, th, th->th_seq + tlen, (tcp_seq)0,
 		    TH_RST|TH_ACK);
 	}
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	return;
 
 drop:
@@ -2010,11 +2039,11 @@ drop:
 #endif
 		else
 			so = NULL;
-		if (so && (so->so_options & SO_DEBUG) != 0) {
+		if (so && (so->so_options & SO_DEBUG) != 0)
 			tcp_trace(TA_DROP, ostate, tp, tcp_saveti, 0);
-			m_freem(tcp_saveti);
-		}
 	}
+	if (tcp_saveti)
+		m_freem(tcp_saveti);
 	m_freem(m);
 	return;
 }
@@ -2880,7 +2909,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 	return (so);
 
 resetandabort:
-	(void) tcp_respond(NULL, m, m,
+	(void) tcp_respond(NULL, m, m, th,
 			   th->th_seq + tlen, (tcp_seq)0, TH_RST|TH_ACK);
 abort:
 	if (so != NULL)
@@ -3215,6 +3244,8 @@ syn_cache_respond(sc, m)
 		th->th_sport = sc->sc_dst.sin6.sin6_port;
 		break;
 #endif
+	default:
+		th = NULL;
 	}
 
 	th->th_seq = htonl(sc->sc_iss);
@@ -3327,6 +3358,9 @@ syn_cache_respond(sc, m)
 			0, NULL);
 		break;
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 	return (error);
 }

@@ -1,3 +1,5 @@
+/*	$NetBSD: nd6.c,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -70,7 +72,6 @@
 #include <netinet/if_inarp.h>
 #include <net/if_fddi.h>
 #endif /* __NetBSD__ */
-#include <netinet6/in6_systm.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -373,7 +374,7 @@ nd6_timer(ignored_arg)
 	register struct nd_defrouter *dr;
 	register struct nd_prefix *pr;
 	
-	s = splnet();
+	s = splsoftnet();
 	timeout(nd6_timer, (caddr_t)0, nd6_prune * hz);
 
 	ln = llinfo_nd6.ln_next;
@@ -618,6 +619,60 @@ nd6_lookup(addr6, create, ifp)
 }
 
 /*
+ * Detect if a given IPv6 address identifies a neighbor on a given link.
+ * XXX: should take care of the destination of a p2p link? 
+ */
+int
+nd6_is_addr_neighbor(addr, ifp)
+	struct in6_addr *addr;
+	struct ifnet *ifp;
+{
+	register struct ifaddr *ifa;
+	int i;
+
+#define IFADDR6(a) ((((struct in6_ifaddr *)(a))->ia_addr).sin6_addr)
+#define IFMASK6(a) ((((struct in6_ifaddr *)(a))->ia_prefixmask).sin6_addr)
+
+	/* A link-local address is always a neighbor. */
+	if (IN6_IS_ADDR_LINKLOCAL(addr))
+		return(1);
+
+	/*
+	 * If the address matches one of our addresses,
+	 * it should be a neighbor.
+	 */
+#ifdef __bsdi__
+	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+#else
+	for (ifa = ifp->if_addrlist.tqh_first;
+	     ifa;
+	     ifa = ifa->ifa_list.tqe_next)
+#endif
+	{
+		if (ifa->ifa_addr->sa_family != AF_INET6)
+			next: continue;
+
+		for (i = 0; i < 4; i++) {
+			if ((IFADDR6(ifa).s6_addr32[i] ^ addr->s6_addr32[i]) &
+			    IFMASK6(ifa).s6_addr32[i])
+				goto next;
+		}
+		return(1);
+	}
+
+	/*
+	 * Even if the address matches none of our addresses, it might be
+	 * in the neighbor cache.
+	 */
+	if (nd6_lookup(addr, 0, ifp))
+		return(1);
+
+	return(0);
+#undef IFADDR6
+#undef IFMASK6
+}
+
+/*
  * Free an nd6 llinfo entry.
  */
 void
@@ -634,7 +689,7 @@ nd6_free(rt)
 		int s;
 		in6 = &((struct sockaddr_in6 *)rt_key(rt))->sin6_addr;
 
-		s = splnet();
+		s = splsoftnet();
 		dr = defrouter_lookup(&((struct sockaddr_in6 *)rt_key(rt))->
 				      sin6_addr,
 				      rt->rt_ifp);
@@ -893,7 +948,14 @@ nd6_rtrequest(req, rt, sa)
 			ln->ln_expire = time_second;
 		}
 		rt->rt_flags |= RTF_LLINFO;
+#if 0
 		insque(ln, &llinfo_nd6);
+#else
+		ln->ln_next = llinfo_nd6.ln_next;
+		llinfo_nd6.ln_next = ln;
+		ln->ln_prev = &llinfo_nd6;
+		ln->ln_next->ln_prev = ln;
+#endif
 
 		/*
 		 * check if rt_key(rt) is one of my address assigned
@@ -938,7 +1000,13 @@ nd6_rtrequest(req, rt, sa)
 		if (!ln)
 			break;
 		nd6_inuse--;
+#if 0
 		remque(ln);
+#else
+		ln->ln_next->ln_prev = ln->ln_prev;
+		ln->ln_prev->ln_next = ln->ln_next;
+		ln->ln_prev = NULL;
+#endif
 		rt->rt_llinfo = 0;
 		rt->rt_flags &= ~RTF_LLINFO;
 		if (ln->ln_hold)
@@ -1031,7 +1099,7 @@ nd6_ioctl(cmd, data, ifp)
 	switch (cmd) {
 	case SIOCGDRLST_IN6:
 		bzero(drl, sizeof(*drl));
-		s = splnet();
+		s = splsoftnet();
 		dr = nd_defrouter.lh_first;
 		while (dr && i < DRLSTSIZ) {
 			drl->defrouter[i].rtaddr = dr->rtaddr;
@@ -1056,7 +1124,7 @@ nd6_ioctl(cmd, data, ifp)
 		break;
 	case SIOCGPRLST_IN6:
 		bzero(prl, sizeof(*prl));
-		s = splnet();
+		s = splsoftnet();
 		pr = nd_prefix.lh_first;
 		while (pr && i < PRLSTSIZ) {
 			struct nd_pfxrouter *pfr;
@@ -1116,7 +1184,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the prefix advertised by routers */
 		struct nd_prefix *pr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		for (pr = nd_prefix.lh_first; pr; pr = next) {
 			next = pr->ndpr_next;
 			if (!IN6_IS_ADDR_UNSPECIFIED(&pr->ndpr_addr))
@@ -1131,7 +1199,7 @@ nd6_ioctl(cmd, data, ifp)
 		/* flush all the default routers */
 		struct nd_defrouter *dr, *next;
 
-		s = splnet();
+		s = splsoftnet();
 		if ((dr = nd_defrouter.lh_first) != NULL) {
 			/*
 			 * The first entry of the list may be stored in
@@ -1150,7 +1218,7 @@ nd6_ioctl(cmd, data, ifp)
 	    {
 		  struct llinfo_nd6 *ln;
 
-		  s = splnet();
+		  s = splsoftnet();
 		  if ((rt = nd6_lookup(&nbi->addr, 0, ifp)) == NULL) {
 			  error = EINVAL;
 			  break;
@@ -1173,12 +1241,13 @@ nd6_ioctl(cmd, data, ifp)
  * on reception of inbound ND6 packets. (RS/RA/NS/redirect)
  */
 struct rtentry *
-nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type)
+nd6_cache_lladdr(ifp, from, lladdr, lladdrlen, type, code)
 	struct ifnet *ifp;
 	struct in6_addr *from;
 	char *lladdr;
 	int lladdrlen;
 	int type;	/* ICMP6 type */
+	int code;	/* type dependent information */
 {
 	struct rtentry *rt = NULL;
 	struct llinfo_nd6 *ln = NULL;
@@ -1318,23 +1387,35 @@ fail:
 	 * This case is rare but we figured that we MUST NOT set IsRouter.
 	 *
 	 * newentry olladdr  lladdr  llchange	    NS  RS  RA	redir
-	 *	0	n	n	--	(1)	c   ?
-	 *	0	y	n	--	(2)	c   s
-	 *	0	n	y	--	(3)	c   s
-	 *	0	y	y	n	(4)	c   s
-	 *	0	y	y	y	(5)	c   s
-	 *	1	--	n	--	(6) c	c 	c
-	 *	1	--	y	--	(7) c	c   s	c
+	 *							D R
+	 *	0	n	n	--	(1)	c   ?     s
+	 *	0	y	n	--	(2)	c   s     s
+	 *	0	n	y	--	(3)	c   s     s
+	 *	0	y	y	n	(4)	c   s     s
+	 *	0	y	y	y	(5)	c   s     s
+	 *	1	--	n	--	(6) c	c 	c s
+	 *	1	--	y	--	(7) c	c   s	c s
 	 *
 	 *					(c=clear s=set)
 	 */
 	switch (type & 0xff) {
 	case ND_NEIGHBOR_SOLICIT:
-	case ND_REDIRECT:
 		/*
 		 * New entry must have is_router flag cleared.
 		 */
 		if (is_newentry)	/*(6-7)*/
+			ln->ln_router = 0;
+		break;
+	case ND_REDIRECT:
+		/*
+		 * If the icmp is a redirect to a better router, always set the
+		 * is_router flag. Otherwise, if the entry is newly created, 
+		 * clear the flag. [RFC 2461, sec 8.3]
+		 * 
+		 */
+		if (code == ND_REDIRECT_ROUTER)
+			ln->ln_router = 1;
+		else if (is_newentry) /*(6-7)*/
 			ln->ln_router = 0;
 		break;
 	case ND_ROUTER_SOLICIT:
@@ -1361,7 +1442,7 @@ static void
 nd6_slowtimo(ignored_arg)
     void *ignored_arg;
 {
-	int s = splnet();
+	int s = splsoftnet();
 	register int i;
 	register struct nd_ifinfo *nd6if;
 

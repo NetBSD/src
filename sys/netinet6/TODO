@@ -1,5 +1,5 @@
 KAME/NetBSD integration TODOs
-$NetBSD: TODO,v 1.2.2.2 1999/07/01 23:48:26 thorpej Exp $
+$NetBSD: TODO,v 1.2.2.3 1999/08/02 22:36:02 thorpej Exp $
 Jun-ichiro itojun Hagino <itojun@itojun.org>
 
 
@@ -107,6 +107,10 @@ KAME code introduces 5 mbuf flags, which should be decreased.  M_ANYCAST6
 is local to IPv6 code so it should be M_PROTO0 or something like that.
 Others (IPsec items) are used across IPv4 and IPv6 so they cannot be in
 M_PROTO0 kind of thing.
+
+* s/splnet/splsoftnet/
+
+as Jason pointed out.
 
 
 USERLAND

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.29 1998/08/10 08:11:12 matthias Exp $	*/
+/*	$NetBSD: denode.h,v 1.29.8.1 1999/08/02 22:31:33 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -147,7 +147,6 @@ struct denode {
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
-	struct lock de_lock;	/* denode lock */
 	u_char de_Name[12];	/* name, from DOS directory entry */
 	u_char de_Attributes;	/* attributes, from directory entry */
 	u_char de_CHun;		/* Hundredth of second of CTime*/
@@ -240,13 +239,13 @@ struct denode {
  * This overlays the fid structure (see mount.h)
  */
 struct defid {
-	u_short defid_len;	/* length of structure */
-	u_short defid_pad;	/* force long alignment */
+	u_int16_t defid_len;	/* length of structure */
+	u_int16_t defid_pad;	/* force 4-byte alignment */
 
-	u_long defid_dirclust;	/* cluster this dir entry came from */
-	u_long defid_dirofs;	/* offset of entry within the cluster */
+	u_int32_t defid_dirclust; /* cluster this dir entry came from */
+	u_int32_t defid_dirofs;	/* offset of entry within the cluster */
 #if 0
-	u_long	defid_gen;	/* generation number */
+	u_int32_t defid_gen;	/* generation number */
 #endif
 };
 
@@ -281,12 +280,9 @@ int	msdosfs_readlink	__P((void *));
 #define	msdosfs_abortop		genfs_abortop
 int	msdosfs_inactive	__P((void *));
 int	msdosfs_reclaim		__P((void *));
-int	msdosfs_lock		__P((void *));
-int	msdosfs_unlock		__P((void *));
 int	msdosfs_bmap		__P((void *));
 int	msdosfs_strategy	__P((void *));
 int	msdosfs_print		__P((void *));
-int	msdosfs_islocked	__P((void *));
 int	msdosfs_advlock		__P((void *));
 int	msdosfs_reallocblks	__P((void *));
 int	msdosfs_pathconf	__P((void *));

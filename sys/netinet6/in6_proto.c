@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_proto.c,v 1.2.2.3 1999/08/02 22:36:04 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -64,6 +66,9 @@
 
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -80,7 +85,6 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/in_var.h>
-#include <netinet6/in6_systm.h>
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || (defined(__NetBSD__) && !defined(TCP6))
 #include <netinet/ip.h>
 #include <netinet/ip_var.h>
@@ -170,7 +174,12 @@ struct ip6protosw inet6sw[] = {
 { SOCK_STREAM,	&inet6domain,	IPPROTO_TCP,	PR_CONNREQUIRED | PR_WANTRCVD | PR_LISTEN,
   tcp6_input,	0,		tcp6_ctlinput,	tcp_ctloutput,
   tcp_usrreq,
+#ifdef INET
+  /* If inet4, no need to have tcp_slowtimo and tcp_fasttimo happen TWICE */
+  tcp_init,	NULL,		NULL,		tcp_drain,	tcp_sysctl
+#else
   tcp_init,	tcp_fasttimo,	tcp_slowtimo,	tcp_drain,	tcp_sysctl
+#endif
 },
 #endif
 { SOCK_RAW,	&inet6domain,	IPPROTO_RAW,	PR_ATOMIC | PR_ADDR,
@@ -287,7 +296,7 @@ int	ip6_gif_hlim = GIF_HLIM;
 int	ip6_gif_hlim = 0;
 #endif
 
-u_long	ip6_id = 0UL;
+u_int32_t ip6_id = 0UL;
 int	ip6_keepfaith = 0;
 time_t	ip6_log_time = (time_t)0L;
 

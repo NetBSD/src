@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_var.h,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -176,7 +178,7 @@ struct	ip6stat {
 #define	IPV6_FORWARDING		0x02	/* most of IPv6 header exists */
 
 extern struct	ip6stat ip6stat;	/* statistics */
-extern u_long	ip6_id;			/* fragment identifier */
+extern u_int32_t ip6_id;		/* fragment identifier */
 extern int	ip6_defhlim;		/* default hop limit */
 extern int	ip6_defmcasthlim;	/* default multicast hop limit */
 extern int	ip6_forwarding;		/* act as router? */
@@ -209,7 +211,7 @@ void	ip6_freemoptions __P((struct ip6_moptions *));
 int	ip6_unknown_opt __P((u_int8_t *, struct mbuf *, int));
 char *	ip6_get_prevhdr __P((struct mbuf *, int));
 int	ip6_mforward __P((struct ip6_hdr *, struct ifnet *, struct mbuf *));
-int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, long *,
+int	ip6_process_hopopts __P((struct mbuf *, u_int8_t *, int, u_int32_t *,
 				 u_int32_t *));
 void	ip6_savecontrol __P((struct in6pcb *, struct mbuf **, struct ip6_hdr *,
 		struct mbuf *));

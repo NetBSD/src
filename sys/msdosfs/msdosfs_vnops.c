@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.1.2.2 1999/08/01 05:17:46 chs Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.79.2.1.2.3 1999/08/02 22:31:34 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -373,7 +373,7 @@ msdosfs_setattr(v)
 		printf("    va_type %d, va_nlink %x, va_fsid %lx, va_fileid %lx\n",
 		    vap->va_type, vap->va_nlink, vap->va_fsid, vap->va_fileid);
 		printf("    va_blocksize %lx, va_rdev %x, va_bytes %qx, va_gen %lx\n",
-		    vap->va_blocksize, vap->va_rdev, vap->va_bytes, vap->va_gen);
+		    vap->va_blocksize, vap->va_rdev, (long long)vap->va_bytes, vap->va_gen);
 		printf("    va_uid %x, va_gid %x\n",
 		    vap->va_uid, vap->va_gid);
 #endif
@@ -1677,46 +1677,6 @@ msdosfs_readlink(v)
 	return (EINVAL);
 }
 
-int
-msdosfs_lock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	register struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags, &vp->v_interlock));
-}
-
-int
-msdosfs_unlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-
-	return (lockmgr(&VTODE(vp)->de_lock, ap->a_flags | LK_RELEASE,
-		&vp->v_interlock));
-}
-
-int
-msdosfs_islocked(v)
-	void *v;
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	return (lockstatus(&VTODE(ap->a_vp)->de_lock));
-}
-
 /*
  * vp  - address of vnode file the file
  * bn  - which cluster we are interested in mapping to a filesystem block number.
@@ -1822,7 +1782,7 @@ msdosfs_print(v)
 	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d ", major(dep->de_dev), minor(dep->de_dev));
-	lockmgr_printinfo(&dep->de_lock);
+	lockmgr_printinfo(&ap->a_vp->v_lock);
 	printf("\n");
 	return (0);
 }
@@ -1915,12 +1875,12 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, msdosfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, msdosfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, msdosfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, msdosfs_lock },		/* lock */
-	{ &vop_unlock_desc, msdosfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_lock },			/* lock */
+	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
 	{ &vop_bmap_desc, msdosfs_bmap },		/* bmap */
 	{ &vop_strategy_desc, msdosfs_strategy },	/* strategy */
 	{ &vop_print_desc, msdosfs_print },		/* print */
-	{ &vop_islocked_desc, msdosfs_islocked },	/* islocked */
+	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
 	{ &vop_pathconf_desc, msdosfs_pathconf },	/* pathconf */
 	{ &vop_advlock_desc, msdosfs_advlock },		/* advlock */
 	{ &vop_reallocblks_desc, msdosfs_reallocblks },	/* reallocblks */

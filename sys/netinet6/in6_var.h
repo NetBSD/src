@@ -1,3 +1,5 @@
+/*	$NetBSD: in6_var.h,v 1.2.2.3 1999/08/02 22:36:04 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -95,7 +97,7 @@ struct	in6_ifaddr {
 	struct	sockaddr_in6 ia_net;	/* network number of interface */
 	struct	sockaddr_in6 ia_dstaddr; /* space for destination addr */
 	struct	sockaddr_in6 ia_prefixmask; /* prefix mask */
-	u_long	ia_plen;		/* prefix length */
+	u_int32_t ia_plen;		/* prefix length */
 	struct	in6_ifaddr *ia_next;	/* next in6 list of IP6 addresses */
 	LIST_HEAD(in6_multihead, in6_multi) ia6_multiaddrs;
 					/* list of multicast addresses */
@@ -152,8 +154,8 @@ struct  in6_prefixreq {
 	char	ipr_name[IFNAMSIZ];
 	u_char	ipr_origin;
 	u_char	ipr_plen;
-	u_long	ipr_vltime;
-	u_long	ipr_pltime;
+	u_int32_t ipr_vltime;
+	u_int32_t ipr_pltime;
 	struct in6_prflags ipr_flags;
 	struct	sockaddr_in6 ipr_prefix;
 };
@@ -183,8 +185,8 @@ struct	in6_rrenumreq {
 		u_char autonomous : 1;
 		u_char reserved : 6;
 	} irr_raflagmask;
-	u_long	irr_vltime;
-	u_long	irr_pltime;
+	u_int32_t irr_vltime;
+	u_int32_t irr_pltime;
 	struct in6_prflags irr_flags;
 	struct	sockaddr_in6 irr_matchprefix;
 	struct	sockaddr_in6 irr_useprefix;

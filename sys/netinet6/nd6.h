@@ -1,3 +1,5 @@
+/*	$NetBSD: nd6.h,v 1.2.2.3 1999/08/02 22:36:06 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -256,6 +258,7 @@ union nd_opts {
 /* nd6.c */
 void nd6_init __P((void));
 void nd6_ifattach __P((struct ifnet *));
+int nd6_is_addr_neighbor __P((struct in6_addr *, struct ifnet *));
 void nd6_option_init __P((void *, int, union nd_opts *));
 struct nd_opt_hdr *nd6_option __P((union nd_opts *));
 int nd6_options __P((union nd_opts *));
@@ -270,7 +273,7 @@ void nd6_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 void nd6_p2p_rtrequest __P((int, struct rtentry *, struct sockaddr *));
 int nd6_ioctl __P((u_long, caddr_t, struct ifnet *));
 struct rtentry *nd6_cache_lladdr __P((struct ifnet *, struct in6_addr *,
-	char *, int, int));
+	char *, int, int, int));
 /* for test */
 int nd6_output __P((struct ifnet *, struct mbuf *, struct sockaddr_in6 *,
 		    struct rtentry *));

@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_input.c,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -67,6 +69,9 @@
 #endif
 #if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
 #include "opt_inet.h"
+#ifdef __NetBSD__	/*XXX*/
+#include "opt_ipsec.h"
+#endif
 #endif
 
 #include <sys/param.h>
@@ -141,7 +146,7 @@ struct ip6stat ip6stat;
 
 static void ip6_init2 __P((void *));
 
-static int ip6_hopopts_input __P((u_int32_t *, long *, struct mbuf **, int *));
+static int ip6_hopopts_input __P((u_int32_t *, u_int32_t *, struct mbuf **, int *));
 
 /*
  * IP6 initialization: fill in IP6 protocol switch table.
@@ -237,7 +242,7 @@ ip6_input(m)
 	register struct ip6_hdr *ip6;
 	int off = sizeof(struct ip6_hdr), nest;
 	u_int32_t plen;
-	long rtalert = -1;
+	u_int32_t rtalert = ~0;
 	int nxt, ours = 0;
 
 #ifdef IPSEC
@@ -449,7 +454,7 @@ ip6_input(m)
 		 * accept the packet if a router alert option is included
 		 * and we act as an IPv6 router.
 		 */
-		if (rtalert >= 0 && ip6_forwarding)
+		if (rtalert != ~0 && ip6_forwarding)
 			ours = 1;
 	} else
 		nxt = ip6->ip6_nxt;
@@ -523,7 +528,7 @@ ip6_input(m)
 static int
 ip6_hopopts_input(plenp, rtalertp, mp, offp)
 	u_int32_t *plenp;
-	long *rtalertp;		/* XXX: should be stored more smart way */
+	u_int32_t *rtalertp;	/* XXX: should be stored more smart way */
 	struct mbuf **mp;
 	int *offp;
 {
@@ -563,7 +568,7 @@ ip6_process_hopopts(m, opthead, hbhlen, rtalertp, plenp)
 	struct mbuf *m;
 	u_int8_t *opthead;
 	int hbhlen;
-	long *rtalertp;
+	u_int32_t *rtalertp;
 	u_int32_t *plenp;
 {
 	struct ip6_hdr *ip6;

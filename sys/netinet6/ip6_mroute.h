@@ -1,3 +1,5 @@
+/*	$NetBSD: ip6_mroute.h,v 1.2.2.3 1999/08/02 22:36:05 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1998 WIDE Project.
  * All rights reserved.

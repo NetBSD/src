@@ -1,3 +1,5 @@
+/*	$NetBSD: in6.h,v 1.2.2.3 1999/08/02 22:36:03 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -65,13 +67,15 @@
 #ifndef _NETINET6_IN6_H_
 #define _NETINET6_IN6_H_
 
+#if !defined(_XOPEN_SOURCE)
 #include <sys/queue.h>
+#endif
 
 /*
  * Identification of the network protocol stack
  */
 #define __KAME__
-#define __KAME_VERSION		"SNAP 19990628/NetBSD-current"
+#define __KAME_VERSION		"SNAP 19990705/NetBSD-current"
 
 /*
  * Local port number conventions:
@@ -110,25 +114,27 @@
 /*
  * IPv6 address
  */
-struct  in6_addr {
+struct in6_addr {
 	union {
-		u_int32_t  u6_addr32[4];
-		u_int16_t  u6_addr16[8];
-		u_int8_t   u6_addr8[16];
-	} u6_addr;			/* 128 bit IP6 address */
+		u_int32_t  __u6_addr32[4];
+		u_int16_t  __u6_addr16[8];
+		u_int8_t   __u6_addr8[16];
+	} __u6_addr;			/* 128-bit IP6 address */
 };
 
-#define s6_addr32 u6_addr.u6_addr32
-#define s6_addr16 u6_addr.u6_addr16
-#define s6_addr8  u6_addr.u6_addr8
-#define s6_addr   u6_addr.u6_addr8
+#define s6_addr32 __u6_addr.__u6_addr32
+#define s6_addr16 __u6_addr.__u6_addr16
+#define s6_addr8  __u6_addr.__u6_addr8
+#define s6_addr   __u6_addr.__u6_addr8
 
 #define INET6_ADDRSTRLEN	46
 
 /*
  * Socket address for IPv6
  */
+#if !defined(_XOPEN_SOURCE)
 #define SIN6_LEN
+#endif
 struct sockaddr_in6 {
 	u_char		sin6_len;	/* length of this struct(sa_family_t)*/
 	u_char		sin6_family;	/* AF_INET6 (sa_family_t) */
@@ -301,10 +307,12 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 /*
  * IP6 route structure
  */
-struct	route_in6 {
+#if !defined(_XOPEN_SOURCE)
+struct route_in6 {
 	struct	rtentry *ro_rt;
 	struct	sockaddr_in6 ro_dst;
 };
+#endif
 
 /*
  * Options for use with [gs]etsockopt at the IPV6 level.
@@ -374,6 +382,7 @@ struct in6_pktinfo {
 #define	IPV6_PORTRANGE_HIGH	1	/* "high" - request firewall bypass */
 #define	IPV6_PORTRANGE_LOW	2	/* "low" - vouchsafe security */
 
+#if !defined(_XOPEN_SOURCE)
 /*
  * Definitions for inet6 sysctl operations.
  *
@@ -405,8 +414,8 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 }, \
-	{ "ipsec6", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
+	{ "ipsec6", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
@@ -504,6 +513,7 @@ struct in6_pktinfo {
 	&ip6_gif_hlim, \
 	0, \
 }
+#endif /* !_XOPEN_SOURCE */
 
 #ifdef _KERNEL
 struct cmsghdr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.47.4.1 1999/07/01 23:47:03 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.47.4.2 1999/08/02 22:34:59 thorpej Exp $	*/
 
 /*
 %%% portions-copyright-nrl-95
@@ -115,6 +115,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  */
 
 #include "opt_inet.h"
+#include "opt_ipsec.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,6 +585,9 @@ send:
 		iphdrlen = sizeof(struct ip6_hdr) + sizeof(struct tcphdr);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		iphdrlen = 0;
+		break;
 	}
 	hdrlen = iphdrlen;
 	if (flags & TH_SYN) {
@@ -768,6 +772,13 @@ send:
 		th = (struct tcphdr *)(ip6 + 1);
 		break;
 #endif
+	default:	/*pacify gcc*/
+		ip = NULL;
+#ifdef INET6
+		ip6 = NULL;
+#endif
+		th = NULL;
+		break;
 	}
 	if (tp->t_template == 0)
 		panic("tcp_output");
@@ -1062,6 +1073,9 @@ send:
 		break;
 	    }
 #endif
+	default:
+		error = EAFNOSUPPORT;
+		break;
 	}
 	if (error) {
 out:

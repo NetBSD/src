@@ -1,3 +1,5 @@
+/*	$NetBSD: keyv2.h,v 1.2.2.3 1999/08/02 22:37:57 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: keyv2.h,v 1.2.2.2 1999/07/01 23:48:42 thorpej Exp $ */
+/* KAME Id: keyv2.h,v 1.1.6.1.6.4 1999/06/08 05:33:39 itojun Exp */
 
 /*
  * This file has been derived rfc 2367,
@@ -281,8 +283,12 @@ struct sadb_x_ipsecrequest {
 #define SADB_EALG_NULL          3	/* 11 */
 #define SADB_EALG_BLOWFISHCBC   4
 #define SADB_EALG_CAST128CBC    5
+#if 0
 #define SADB_EALG_RC5CBC        6
 #define SADB_EALG_MAX           7
+#else
+#define SADB_EALG_MAX           6
+#endif
 
 #if 1	/*nonstandard */
 #define SADB_X_CALG_NONE	0

@@ -1,3 +1,5 @@
+/*	$NetBSD: ah.h,v 1.2.2.3 1999/08/02 22:36:02 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
@@ -33,6 +35,12 @@
 
 #ifndef _NETINET6_AH_H_
 #define _NETINET6_AH_H_
+
+#if (defined(__FreeBSD__) && __FreeBSD__ >= 3) || defined(__NetBSD__)
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_inet.h"
+#endif
+#endif
 
 #include <netkey/keydb.h>		/* for struct secas */
 

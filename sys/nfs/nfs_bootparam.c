@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.11.4.1 1999/06/21 01:28:55 thorpej Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.11.4.2 1999/08/02 22:38:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -146,8 +146,8 @@ nfs_bootparam(nd, procp)
 	}
 
 	nd->nd_myip.s_addr = my_ip.s_addr;
-	printf("nfs_boot: client_addr=%s (RARP from %s)\n",
-	       inet_ntoa(my_ip), inet_ntoa(arps_ip));
+	printf("nfs_boot: client_addr=%s", inet_ntoa(my_ip));
+	printf(" (RARP from %s)\n", inet_ntoa(arps_ip));
 
 	/*
 	 * Do enough of ifconfig(8) so that the chosen interface
