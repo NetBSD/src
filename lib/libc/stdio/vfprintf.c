@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)vfprintf.c	5.50 (Berkeley) 12/16/92";*/
-static char *rcsid = "$Id: vfprintf.c,v 1.15 1995/02/25 07:06:38 cgd Exp $";
+static char *rcsid = "$Id: vfprintf.c,v 1.16 1995/03/22 00:56:55 jtc Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -358,7 +358,12 @@ reswitch:	switch (ch) {
 			flags |= SHORTINT;
 			goto rflag;
 		case 'l':
-			flags |= LONGINT;
+			if (*fmt == 'l') {
+				fmt++;
+				flags |= QUADINT;
+			} else {
+				flags |= LONGINT;
+			}
 			goto rflag;
 		case 'q':
 			flags |= QUADINT;
