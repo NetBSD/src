@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_lock.c,v 1.3 2003/01/18 18:45:55 christos Exp $	*/
+/*	$NetBSD: pthread_lock.c,v 1.4 2003/01/22 13:52:03 scw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 static int nspins = NSPINS;
 
-extern char pthread__lock_ras_start[], pthread__lock_ras_end[];
+extern void pthread__lock_ras_start(void), pthread__lock_ras_end(void);
 
 static void
 pthread__ras_simple_lock_init(__cpu_simple_lock_t *alp)
@@ -149,8 +149,9 @@ pthread__lockprim_init(void)
 	len = sizeof(ncpu);
 	sysctl(mib, 2, &ncpu, &len, NULL, 0);
 
-	if (ncpu == 1 && rasctl(pthread__lock_ras_start,
-	    (size_t)(pthread__lock_ras_end - pthread__lock_ras_start),
+	if (ncpu == 1 && rasctl((void *)pthread__lock_ras_start,
+	    (size_t)((uintptr_t)pthread__lock_ras_end -
+	             (uintptr_t)pthread__lock_ras_start),
 	    RAS_INSTALL) == 0) {
 		pthread__lock_ops = &pthread__lock_ops_ras;
 		return;
