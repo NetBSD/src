@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.536 2003/01/05 22:31:13 christos Exp $
+# $NetBSD: GENERIC,v 1.537 2003/01/07 03:19:38 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.536 $"
+#ident 		"GENERIC-$Revision: 1.537 $"
 
 maxusers	32		# estimated number of users
 
@@ -250,29 +250,29 @@ cpu* at mainbus?
 
 # Advanced Control and Power Interface
 
-#acpi0		at mainbus0
-#options	ACPI_PCI_FIXUP=1	# PCI interrupt routing via ACPI
-#options	ACPI_ACTIVATE_DEV=0	# If set, activate inactive devices
+#acpi0 		at mainbus0
+#options 	ACPI_PCI_FIXUP=1	# PCI interrupt routing via ACPI
+#options 	ACPI_ACTIVATE_DEV=0	# If set, activate inactive devices
 
 # ACPI devices
-#acpiacad*	at acpi?		# ACPI AC Adapter
-#acpibat*	at acpi?		# ACPI Battery
-#acpibut*	at acpi?		# ACPI Button
-#acpiec*	at acpi?		# ACPI Embedded Controller
-#acpilid*	at acpi?		# ACPI Lid Switch
-#acpitz*	at acpi?		# ACPI Thermal Zone
+#acpiacad* 	at acpi?		# ACPI AC Adapter
+#acpibat* 	at acpi?		# ACPI Battery
+#acpibut* 	at acpi?		# ACPI Button
+#acpiec* 	at acpi?		# ACPI Embedded Controller
+#acpilid* 	at acpi?		# ACPI Lid Switch
+#acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-#com*		at acpi?		# Serial communications interface
-#fdc*		at acpi?		# Floppy disk controller
-#lpt*		at acpi?		# Parallel port
+#com* 		at acpi?		# Serial communications interface
+#fdc* 		at acpi?		# Floppy disk controller
+#lpt* 		at acpi?		# Parallel port
 #npx*		at acpi?		# Math coprocessor
-#pckbc*		at acpi?		# PC keyboard controller
-#wss*		at acpi?		# NeoMagic 256AV in wss mode
+#pckbc* 	at acpi?		# PC keyboard controller
+#wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
 # Sony Vaio jog dial
-#spic*		at acpi?		# Sony Programmable I/O Controller
-#wsmouse*	at spic?
+#spic* 		at acpi?		# Sony Programmable I/O Controller
+#wsmouse* 	at spic?
 
 # Plug-and-Play BIOS and attached devices
 
