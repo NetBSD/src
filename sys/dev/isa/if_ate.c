@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.40 2004/09/14 20:20:47 drochner Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.41 2004/12/12 21:03:07 abs Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.40 2004/09/14 20:20:47 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.41 2004/12/12 21:03:07 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ ate_find(iot, ioh, iobase, irq)
 	if (eeprom[FE_EEPROM_CONF] != bus_space_read_1(iot, ioh, FE_BMPR19)) {
 #ifdef DIAGNOSTIC
 		printf("ate_find: "
-		    "incorrect configration in eeprom and chip\n");
+		    "incorrect configuration in eeprom and chip\n");
 #endif
 		return (0);
 	}

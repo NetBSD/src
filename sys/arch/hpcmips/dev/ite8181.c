@@ -1,4 +1,4 @@
-/*	$NetBSD: ite8181.c,v 1.20 2003/11/13 03:09:28 chs Exp $	*/
+/*	$NetBSD: ite8181.c,v 1.21 2004/12/12 21:03:06 abs Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001 SATO Kazumi
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.20 2003/11/13 03:09:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite8181.c,v 1.21 2004/12/12 21:03:06 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -850,7 +850,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 			return (EINVAL);
 		}
 		/*
-		 * nothing to do because we have only one configration
+		 * nothing to do because we have only one configuration
 		 */
 		return (0);
 	case HPCFBIO_GDSPCONF:
@@ -873,7 +873,7 @@ ite8181_ioctl(v, cmd, data, flag, p)
 		}
 		/*
 		 * nothing to do
-		 * because we have only one unit and one configration
+		 * because we have only one unit and one configuration
 		 */
 		return (0);
 	case HPCFBIO_GOP:
