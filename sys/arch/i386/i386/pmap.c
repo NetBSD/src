@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83.2.37 2001/05/11 15:54:35 sommerfeld Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83.2.38 2001/05/13 00:45:03 sommerfeld Exp $	*/
 
 /*
  *
@@ -472,6 +472,8 @@ static pt_entry_t	*pmap_tmpmap_pvepte __P((struct pv_entry *));
 static void		 pmap_tmpunmap_pa __P((void));
 static void		 pmap_tmpunmap_pvepte __P((struct pv_entry *));
 static void		pmap_unmap_ptes __P((struct pmap *));
+static void		pmap_tlb_pool_page_free(void *, unsigned long, int);
+static void		*pmap_tlb_pool_page_alloc(unsigned long, int, int);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -1014,7 +1016,7 @@ pmap_bootstrap(kva_start)
 	    0,			/* ioff */
 	    PR_STATIC,
 	    "pmaptlbpl",
-	    0, NULL, NULL, M_VMPMAP);
+	    0, pmap_tlb_pool_page_alloc, pmap_tlb_pool_page_free, M_VMPMAP);
 	for (i = 0; i < I386_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		simple_lock_init(&pmap_tlb_shootdown_q[i].pq_slock);
@@ -1128,7 +1130,7 @@ pmap_init()
 	pj_page = (void *)uvm_km_alloc (kernel_map, pj_nbytes);
 	if (pj_page == NULL)
 		panic("pmap_init: pj_page");
-	pool_prime (&pmap_tlb_shootdown_job_pool, pj_nentries, pj_page);
+	pool_prime (&pmap_tlb_shootdown_job_pool, pj_nentries);
 	pool_setlowat(&pmap_tlb_shootdown_job_pool, 0);
 	pool_sethiwat(&pmap_tlb_shootdown_job_pool, pj_nentries);
 	pool_sethardlimit(&pmap_tlb_shootdown_job_pool, pj_nentries, 0, 0);
@@ -3347,6 +3349,28 @@ pmap_tlb_ipispin(void)
 #endif
 
 #endif
+
+static void *
+pmap_tlb_pool_page_alloc(unsigned long len, int flags, int mtype)
+{
+	void *r;
+
+#ifdef DIAGNOSTIC
+	KASSERT(pj_page != NULL);
+	KASSERT(len == pj_nbytes);
+#endif
+	/* XXX locking */
+	r = pj_page;
+	pj_page = NULL;
+
+	return (r);
+}
+
+static void
+pmap_tlb_pool_page_free(void *v, unsigned long sz, int mtype)
+{
+	panic("pmap_tlb_pool_page_free invoked");
+}
 
 void
 pmap_tlb_shootnow(int32_t cpumask)
