@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.19 1996/05/07 01:38:35 thorpej Exp $	*/
+/*	$NetBSD: am7990.c,v 1.20 1996/07/05 23:56:57 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -624,9 +624,13 @@ am7990_tint(sc)
 				am7990_reset(sc);
 				return;
 			}
-			if (tmd.tmd3 & LE_T3_LCAR)
-				printf("%s: lost carrier\n",
-				    sc->sc_dev.dv_xname);
+			if (tmd.tmd3 & LE_T3_LCAR) {
+				if (sc->sc_nocarrier)
+					(*sc->sc_nocarrier)(sc);
+				else
+					printf("%s: lost carrier\n",
+					    sc->sc_dev.dv_xname);
+			}
 			if (tmd.tmd3 & LE_T3_LCOL)
 				ifp->if_collisions++;
 			if (tmd.tmd3 & LE_T3_RTRY) {
