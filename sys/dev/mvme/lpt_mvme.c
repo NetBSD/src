@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mvme.c,v 1.1 2002/02/12 20:38:44 scw Exp $	*/
+/*	$NetBSD: lpt_mvme.c,v 1.1.10.1 2002/05/16 12:02:54 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -121,13 +121,6 @@
 int lptdebug = 1;
 #endif
 
-/* {b,c}devsw[] function prototypes */
-dev_type_open(lptopen);
-dev_type_close(lptclose);
-dev_type_write(lptwrite);
-dev_type_ioctl(lptioctl);
-
-
 #define	LPTUNIT(s)	(minor(s) & 0x0f)
 #define	LPTFLAGS(s)	(minor(s) & 0xf0)
 
@@ -136,6 +129,15 @@ static int pushbytes __P((struct lpt_softc *));
 
 extern struct cfdriver lpt_cd;
 
+dev_type_open(lptopen);
+dev_type_close(lptclose);
+dev_type_write(lptwrite);
+dev_type_ioctl(lptioctl);
+
+const struct cdevsw lpt_cdevsw = {
+	lptopen, lptclose, noread, lptwrite, lptioctl,
+	nostop, notty, nopoll, nommap,
+};
 
 void
 lpt_attach_subr(sc)
