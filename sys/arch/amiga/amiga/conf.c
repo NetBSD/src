@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.36 1996/05/19 21:04:18 veego Exp $	*/
+/*	$NetBSD: conf.c,v 1.37 1996/09/05 15:46:26 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -49,8 +49,6 @@
 #ifdef BANKEDDEVPAGER
 #include <sys/bankeddev.h>
 #endif
-
-int	ttselect	__P((dev_t, int, struct proc *));
 
 #include "vnd.h"
 #include "sd.h"

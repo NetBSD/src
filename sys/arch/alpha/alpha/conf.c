@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.12 1996/07/11 03:47:58 cgd Exp $	*/
+/*	$NetBSD: conf.c,v 1.13 1996/09/05 15:46:22 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -42,14 +42,6 @@
 #include <sys/tty.h>
 #include <sys/conf.h>
 #include <sys/vnode.h>
-
-int	ttselect	__P((dev_t, int, struct proc *));
-
-#ifndef LKM
-#define	lkmenodev	enodev
-#else
-int	lkmenodev();
-#endif
 
 bdev_decl(sw);
 #include "st.h"
@@ -124,12 +116,6 @@ cdev_decl(cd);
 cdev_decl(ch);
 #include "scc.h"
 cdev_decl(scc);
-#ifdef LKM
-#define	NLKM	1
-#else
-#define	NLKM	0
-#endif
-cdev_decl(lkm);
 #include "audio.h"
 cdev_decl(audio);
 #include "wscons.h"
