@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_stack.c,v 1.1.2.8 2002/12/20 01:07:58 nathanw Exp $	*/
+/*	$NetBSD: pthread_stack.c,v 1.1.2.9 2002/12/20 15:33:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <err.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <ucontext.h>
 #include <unistd.h>
