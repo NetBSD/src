@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_usrreq.c,v 1.12 1997/10/10 01:54:32 explorer Exp $	*/
+/*	$NetBSD: tuba_usrreq.c,v 1.13 1998/05/06 01:22:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -239,7 +239,7 @@ tuba_usrreq(so, req, m, nam, control, p)
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;
-		tp->t_timer[TCPT_KEEP] = TCPTV_KEEP_INIT;
+		TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 		tp->iss = tcp_new_iss(tp, sizeof(tp), 0);
 		tcp_sendseqinit(tp);
 		error = tcp_output(tp);
