@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.6 2002/09/19 21:12:10 mycroft Exp $	*/
+/*	$NetBSD: input.c,v 1.7 2002/12/26 20:15:11 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,7 +80,8 @@ rwait(tvp)
 	struct timeval *tvp;
 {
 	struct pollfd set[1];
-	struct timeval starttv, endtv, *s;
+	struct timeval starttv, endtv;
+	int timeout;
 #define	NILTZ ((struct timezone *)0)
 
 	/*
@@ -91,13 +92,13 @@ rwait(tvp)
 	if (tvp) {
 		(void) gettimeofday(&starttv, NILTZ);
 		endtv = *tvp;
-		s = &endtv;
+		timeout = tvp->tv_sec * 1000 + tvp->tv_usec / 1000;
 	} else
-		s = 0;
+		timeout = INFTIM;
 again:
 	set[0].fd = STDIN_FILENO;
 	set[0].events = POLLIN;
-	switch (poll(set, 1, s->tv_sec * 1000 + s->tv_usec / 1000)) {
+	switch (poll(set, 1, timeout)) {
 
 	case -1:
 		if (tvp == 0)
