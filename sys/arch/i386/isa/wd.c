@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.52 1994/03/02 22:07:00 mycroft Exp $
+ *	$Id: wd.c,v 1.53 1994/03/02 23:27:13 mycroft Exp $
  */
 
 #define	QUIETWORKS	/* define this to make wdopen() set DKFL_QUIET */
@@ -366,7 +366,7 @@ wddisksort(struct buf *dp, struct buf *bp)
 static void
 wdustart(register struct disk *du)
 {
-	register struct buf *bp, *dp = &wdutab[du->dk_lunit];
+	register struct buf *dp = &wdutab[du->dk_lunit];
 	int ctrlr = du->dk_ctrlr;
     
 	/* unit already active? */
@@ -374,8 +374,7 @@ wdustart(register struct disk *du)
 		return;
     
 	/* anything to start? */
-	bp = dp->b_actf;
-	if (bp == NULL)
+	if (dp->b_actf == NULL)
 		return;	
     
 	/* link onto controller queue */
@@ -413,13 +412,16 @@ wdstart(int ctrlr)
 loop:
 	/* is there a drive for the controller to do a transfer with? */
 	dp = wdtab[ctrlr].b_forw;
-	if (dp == NULL)
+	if (dp == NULL) {
+		wdtab[ctrlr].b_active = 0;
 		return;
+	}
     
 	/* is there a transfer to this drive ? if so, link it on
 	   the controller's queue */
 	bp = dp->b_actf;
 	if (bp == NULL) {
+		dp->b_active = 0;
 		wdtab[ctrlr].b_forw = dp->b_forw;
 		goto loop;
 	}
