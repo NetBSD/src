@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.39 1997/10/10 01:53:24 fvdl Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.40 1997/11/16 23:23:20 fvdl Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -321,10 +321,18 @@ nfs_disconnect(nmp)
 	register struct socket *so;
 
 	if (nmp->nm_so) {
+		struct nfsreq dummyreq;
+
+		bzero(&dummyreq, sizeof(dummyreq));
+		dummyreq.r_nmp = nmp;
+		nfs_rcvlock(&dummyreq);
+
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
 		soshutdown(so, 2);
 		soclose(so);
+
+		nfs_rcvunlock(&nmp->nm_iflag);
 	}
 }
 
@@ -666,17 +674,7 @@ nfs_reply(myrep)
 		}
 		if (nam)
 			m_freem(nam);
-
-		/*
-		 * XXX: Temporary work-around for unexplained lossage with a
-		 * XXX: netmask that's not byte-aligned, i.e. 255.255.255.192.
-		 * XXX: See PR kern/3579 for details.
-		 */
-		if (mrep == 0) {
-			printf("nfs_reply: null mbuf from nfs_receive()\n");
-			continue;
-		}
-
+	
 		/*
 		 * Get the xid and check that it is an rpc reply
 		 */
@@ -1304,7 +1302,7 @@ nfs_timer(arg)
 		    (rep->r_flags & R_SENT) ||
 		    nmp->nm_sent < nmp->nm_cwnd) &&
 		   (m = m_copym(rep->r_mreq, 0, M_COPYALL, M_DONTWAIT))){
-			if ((nmp->nm_flag & NFSMNT_NOCONN) == 0)
+		        if (so->so_state & SS_ISCONNECTED)
 			    error = (*so->so_proto->pr_usrreq)(so, PRU_SEND, m,
 			    (struct mbuf *)0, (struct mbuf *)0, (struct proc *)0);
 			else
