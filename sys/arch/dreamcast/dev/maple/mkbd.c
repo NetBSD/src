@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.4 2001/01/31 03:21:03 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.5 2001/02/02 03:09:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -128,19 +128,19 @@ mkbdattach(parent, self, aux)
 	    MAPLE_FUNC_KEYBOARD) >> 24;
 	switch(kbdtype) {
  	case 1:
- 		printf(" (Japanese keyboard)");
+ 		printf(": Japanese keyboard");
 		mkbd_keymapdata.layout = KB_JP;
  		break;
 	case 2:
-		printf(" (US keyboard)");
+		printf(": US keyboard");
 		mkbd_keymapdata.layout = KB_US;
 		break;
 	case 3:
-		printf(" (European keyboard)");
+		printf(": European keyboard");
 		mkbd_keymapdata.layout = KB_UK;
 		break;
 	default:
-		printf(" (Unknown keyboard %d)", kbdtype);
+		printf(": Unknown keyboard %d", kbdtype);
 	}
 	printf("\n");
 
