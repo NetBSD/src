@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.13 2001/09/07 02:17:30 simonb Exp $	*/
+/*	$NetBSD: atactl.c,v 1.14 2001/09/07 16:33:50 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -387,11 +387,11 @@ device_identify(int argc, char *argv[])
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
 		printf("Command sets/features enabled:\n");
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set1 &
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd1_en &
 			      (WDC_CMD1_SRV | WDC_CMD1_RLSE | WDC_CMD1_AHEAD |
 			       WDC_CMD1_CACHE | WDC_CMD1_SEC | WDC_CMD1_SMART),
 			       ata_cmd_set1);
-		print_bitinfo("\t", "\n", inqbuf->atap_cmd_set2 &
+		print_bitinfo("\t", "\n", inqbuf->atap_cmd2_en &
 			      (WDC_CMD2_RMSN | ATA_CMD2_APM), ata_cmd_set2);
 	}
 
