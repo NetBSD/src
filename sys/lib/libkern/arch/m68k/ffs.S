@@ -38,7 +38,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 	.text
 	/*.asciz "from: @(#)ffs.s	5.1 (Berkeley) 5/12/90"*/
-	.asciz "$Id: ffs.S,v 1.1 1994/03/29 07:14:47 chopps Exp $"
+	.asciz "$Id: ffs.S,v 1.2 1994/09/09 03:07:23 mycroft Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
@@ -46,13 +46,11 @@
 #include "DEFS.h"
 
 ENTRY(ffs)
-	moveq	#-1,d0
-	movl	sp@(4),d1
-	jeq	done
-again:
-	addql	#1,d0
-	btst	d0,d1
-	jeq	again
-done:
-	addql	#1,d0
+	movl	sp@(4),d0
+	movl	d0,d1
+	negl	d0
+	andl	d0,d1
+	movql	#32,d0
+	bfffo	d1{#0:#32},d1
+	subl	d1,d0
 	rts
