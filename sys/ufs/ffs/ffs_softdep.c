@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.54 2004/01/10 16:23:36 hannken Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.55 2004/01/10 17:16:38 hannken Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.54 2004/01/10 16:23:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.55 2004/01/10 17:16:38 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -193,7 +193,7 @@ void softdep_pageiodone1 __P((struct buf *));
 #endif
 void softdep_pageiodone __P((struct buf *));
 void softdep_flush_vnode __P((struct vnode *, daddr_t));
-static void softdep_trackbufs(int, boolean_t);
+static void softdep_trackbufs(struct inode *, int, boolean_t);
 
 /*
  * Exported softdep operations.
@@ -692,9 +692,9 @@ softdep_process_worklist(matchmnt)
 			mp = WK_DIRREM(wk)->dm_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT);
+			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_remove(WK_DIRREM(wk));
-			vn_finished_write(mp, 0);
+			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEBLKS:
@@ -702,9 +702,9 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEBLKS(wk)->fb_ump->um_mountp;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT);
+			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freeblocks(WK_FREEBLKS(wk));
-			vn_finished_write(mp, 0);
+			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEFRAG:
@@ -712,9 +712,9 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEFRAG(wk)->ff_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT);
+			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freefrag(WK_FREEFRAG(wk));
-			vn_finished_write(mp, 0);
+			vn_finished_write(mp, V_LOWER);
 			break;
 
 		case D_FREEFILE:
@@ -722,9 +722,9 @@ softdep_process_worklist(matchmnt)
 			mp = WK_FREEFILE(wk)->fx_mnt;
 			if (mp == matchmnt)
 				matchcnt += 1;
-			vn_start_write(NULL, &mp, V_WAIT);
+			vn_start_write(NULL, &mp, V_WAIT|V_LOWER);
 			handle_workitem_freefile(WK_FREEFILE(wk));
-			vn_finished_write(mp, 0);
+			vn_finished_write(mp, V_LOWER);
 			break;
 
 		default:
@@ -1852,7 +1852,7 @@ setup_allocindir_phase2(bp, ip, aip)
 		if (newindirdep) {
 			if (indirdep->ir_savebp != NULL) {
 				brelse(newindirdep->ir_savebp);
-				softdep_trackbufs(-1, FALSE);
+				softdep_trackbufs(ip, -1, FALSE);
 			}
 			WORKITEM_FREE(newindirdep, D_INDIRDEP);
 		}
@@ -1869,7 +1869,7 @@ setup_allocindir_phase2(bp, ip, aip)
 			VOP_BMAP(bp->b_vp, bp->b_lblkno, NULL, &bp->b_blkno,
 				 NULL);
 		}
-		softdep_trackbufs(1, TRUE);
+		softdep_trackbufs(ip, 1, TRUE);
 		newindirdep->ir_savebp =
 		    getblk(ip->i_devvp, bp->b_blkno, bp->b_bcount, 0, 0);
 		newindirdep->ir_savebp->b_flags |= B_ASYNC;
@@ -2523,7 +2523,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 		FREE_LOCK(&lk);
 	} else {
 		FREE_LOCK(&lk);
-		softdep_trackbufs(1, FALSE);
+		softdep_trackbufs(ip, 1, FALSE);
 		error = bread(ip->i_devvp, dbn, (int)fs->fs_bsize, NOCRED, &bp);
 		if (error)
 			return (error);
@@ -2559,7 +2559,7 @@ indir_trunc(ip, dbn, level, lbn, countp)
 	}
 	bp->b_flags |= B_INVAL | B_NOCACHE;
 	brelse(bp);
-	softdep_trackbufs(-1, FALSE);
+	softdep_trackbufs(ip, -1, FALSE);
 	return (allerror);
 }
 
@@ -3400,7 +3400,7 @@ softdep_disk_io_initiation(bp)
 			if (LIST_FIRST(&indirdep->ir_deplisthd) == NULL) {
 				indirdep->ir_savebp->b_flags |= B_INVAL | B_NOCACHE;
 				brelse(indirdep->ir_savebp);
-				softdep_trackbufs(-1, FALSE);
+				softdep_trackbufs(NULL, -1, FALSE);
 
 				/* inline expand WORKLIST_REMOVE(wk); */
 				wk->wk_state &= ~ONWORKLIST;
@@ -5428,9 +5428,9 @@ clear_remove(p)
 				continue;
 			mp = pagedep->pd_mnt;
 			ino = pagedep->pd_ino;
+			if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
+				continue;
 			FREE_LOCK(&lk);
-			if (vn_start_write(NULL, &mp, V_WAIT | V_PCATCH) != 0)
-				return;
 			if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 				softdep_error("clear_remove: vget", error);
 				vn_finished_write(mp, 0);
@@ -5501,9 +5501,9 @@ clear_inodedeps(p)
 	for (ino = firstino; ino <= lastino; ino++) {
 		if (inodedep_lookup(fs, ino, 0, &inodedep) == 0)
 			continue;
+		if (vn_start_write(NULL, &mp, V_NOWAIT) != 0)
+			continue;
 		FREE_LOCK(&lk);
-		if (vn_start_write(NULL, &mp, V_WAIT | V_PCATCH) != 0)
-			return;
 		if ((error = VFS_VGET(mp, ino, &vp)) != 0) {
 			softdep_error("clear_inodedeps: vget", error);
 			vn_finished_write(mp, 0);
@@ -5797,8 +5797,9 @@ softdep_lookupvp(fs, ino)
 }
 
 static void
-softdep_trackbufs(int delta, boolean_t throttle)
+softdep_trackbufs(struct inode *ip, int delta, boolean_t throttle)
 {
+	struct proc *p = curproc;
 
 	if (delta < 0) {
 		if (softdep_lockedbufs < nbuf >> 2) {
@@ -5809,9 +5810,18 @@ softdep_trackbufs(int delta, boolean_t throttle)
 		return;
 	}
 
+	KASSERT(ip != NULL);
+	/*
+	 * Kernel threads never get blocked.
+	 * User processes check for file system suspension every 10 msecs.
+	 */
 	while (throttle && softdep_lockedbufs >= nbuf >> 2) {
 		speedup_syncer();
-		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", 0);
+		if (p && (p->p_flag & P_SYSTEM))
+			break;
+		tsleep(&softdep_lockedbufs, PRIBIO, "softdbufs", mstohz(10));
+		if ((ITOV(ip)->v_mount->mnt_iflag & IMNT_SUSPEND))
+			break;
 	}
 	softdep_lockedbufs += delta;
 }
