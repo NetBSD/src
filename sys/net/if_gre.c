@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
+/*	$NetBSD: if_gre.c,v 1.10 2000/07/05 18:14:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -53,19 +53,12 @@
 #include "bpfilter.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
-#include <sys/sockio.h>
-#include <sys/file.h>
-#include <sys/tty.h>
-#include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/queue.h>
 #if __NetBSD__
 #include <sys/systm.h>
 #endif
@@ -113,48 +106,77 @@
                          correct value */
 #define LINK_MASK (IFF_LINK0|IFF_LINK1|IFF_LINK2)
 
-struct gre_softc gre_softc[NGRE];
+LIST_HEAD(, gre_softc) gre_softc_list;
 
+int	gre_clone_create __P((struct if_clone *, int));
+void	gre_clone_destroy __P((struct ifnet *));
+
+struct if_clone gre_cloner =
+    IF_CLONE_INITIALIZER("gre", gre_clone_create, gre_clone_destroy);
 
 void gre_compute_route(struct gre_softc *sc);
 #ifdef DIAGNOSTIC
 void gre_inet_ntoa(struct in_addr in);
 #endif
 
+void	greattach __P((int));
+
+/* ARGSUSED */
 void
-greattach(void)
+greattach(count)
+	int count;
 {
-	struct gre_softc *sc;
-	int i;
 
-	i = 0 ;
-	for (sc = gre_softc ; i < NGRE ; sc++ ) {
-		sprintf(sc->sc_if.if_xname, "gre%d", i++);
-		sc->sc_if.if_softc = sc;
-		sc->sc_if.if_type =  IFT_OTHER;
-		sc->sc_if.if_addrlen = 4;
-		sc->sc_if.if_hdrlen = 24; /* IP + GRE */
-		sc->sc_if.if_mtu = GREMTU; 
-		sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
-		sc->sc_if.if_output = gre_output;
-		sc->sc_if.if_ioctl = gre_ioctl;
-		sc->sc_if.if_collisions = 0;
-		sc->sc_if.if_ierrors = 0;
-		sc->sc_if.if_oerrors = 0;
-		sc->sc_if.if_ipackets = 0;
-		sc->sc_if.if_opackets = 0;
-		sc->g_dst.s_addr = sc->g_src.s_addr=INADDR_ANY;
-		sc->g_proto = IPPROTO_GRE;
-		if_attach(&sc->sc_if);
-#if 0
-#if NBPFILTER > 0
-		bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW, sizeof(u_int32_t) );
-#endif
-#endif
-
-	}
+	LIST_INIT(&gre_softc_list);
+	if_clone_attach(&gre_cloner);
 }
 
+int
+gre_clone_create(ifc, unit)
+	struct if_clone *ifc;
+	int unit;
+{
+	struct gre_softc *sc;
+
+	sc = malloc(sizeof(struct gre_softc), M_DEVBUF, M_WAITOK);
+	memset(sc, 0, sizeof(struct gre_softc));
+
+	sprintf(sc->sc_if.if_xname, "%s%d", ifc->ifc_name, unit);
+	sc->sc_if.if_softc = sc;
+	sc->sc_if.if_type =  IFT_OTHER;
+	sc->sc_if.if_addrlen = 4;
+	sc->sc_if.if_hdrlen = 24; /* IP + GRE */
+	sc->sc_if.if_mtu = GREMTU; 
+	sc->sc_if.if_flags = IFF_POINTOPOINT|IFF_MULTICAST;
+	sc->sc_if.if_output = gre_output;
+	sc->sc_if.if_ioctl = gre_ioctl;
+	sc->g_dst.s_addr = sc->g_src.s_addr = INADDR_ANY;
+	sc->g_proto = IPPROTO_GRE;
+	if_attach(&sc->sc_if);
+#if 0
+#if NBPFILTER > 0
+	bpfattach(&sc->gre_bpf, &sc->sc_if, DLT_RAW, sizeof(u_int32_t));
+#endif
+#endif
+	LIST_INSERT_HEAD(&gre_softc_list, sc, sc_list);
+	return (0);
+}
+
+void
+gre_clone_destroy(ifp)
+	struct ifnet *ifp;
+{
+	struct gre_softc *sc = ifp->if_softc;
+
+	LIST_REMOVE(sc, sc_list);
+#if 0
+#if NBPFILTER > 0
+	bpfdetach(ifp);
+#endif
+#endif
+	if_detach(ifp);
+	free(sc, M_DEVBUF);
+}
 
 /* 
  * The output routine. Takes a packet and encapsulates it in the protocol
@@ -171,7 +193,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, struct sockaddr *dst,
 	   struct rtentry *rt)
 {
 	int error = 0;
-	struct gre_softc *sc = (struct gre_softc *)(ifp->if_softc);
+	struct gre_softc *sc = ifp->if_softc;
 	struct greip *gh;
 	struct ip *inp;
 	u_char ttl, osrc;
