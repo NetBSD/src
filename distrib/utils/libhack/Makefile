@@ -1,42 +1,32 @@
-# $NetBSD: Makefile,v 1.12 2001/10/05 01:17:28 jmc Exp $
+# $NetBSD: Makefile,v 1.13 2001/12/12 00:05:10 tv Exp $
 #
 # Stubs to kill off some things from libc:
 # This save space on a boot system.
 # (See Makefile.inc also.)
 
-LIB=	hack
-SRCS=	getcap.c getgrent.c gethost.c getnet.c getnetgr.c getpwent.c \
-	localeconv.c perror.c setlocale.c \
-	strerror.c strsignal.c utmp.c yplib.c
+LIB=		hack
+SRCS=		getcap.c getgrent.c gethost.c getnet.c getnetgr.c getpwent.c \
+		localeconv.c perror.c setlocale.c \
+		strerror.c strsignal.c utmp.c yplib.c
 .ifndef NOLIBHACKOPENDIR
-SRCS+=        opendir.c
+SRCS+=		opendir.c
 .endif
 
+WARNS=		1
+NOLINKLIB=	# defined
+NOLINT= 	# defined
+NOPIC=		# defined
+NOPROFILE=	# defined
 
-HACKOBJS= getcap.o getgrent.o gethost.o getnet.o getnetgr.o getpwent.o \
-	localeconv.o perror.o setlocale.o \
-	strerror.o strsignal.o utmp.o yplib.o
-.ifndef NOLIBHACKOPENDIR
-HACKOBJS+= opendir.o
-.endif
+realall: libhack.o
 
-.if ${MACHINE_ARCH} != "sparc64"
-DBG= -Os
-.endif
-WARNS=	1
-MKPIC=	no
-MKLINT= no
-MKPROFILE=no
+libhack.o: libhack.a
+	${LD} -r -o $@ --whole-archive libhack.a
 
-all: libhack.a libhack.o
-
-libhack.o : $(HACKOBJS)
-	$(LD) -r -o $@ $(HACKOBJS)
-
-CLEANFILES+=  libhack.o
+CLEANFILES+=	libhack.o
 
 tpwent: getpwent.c
-	$(CC) -g -o $@.o -DTEST_MAIN -c getpwent.c
-	$(CC) -o $@ $@.o
+	${CC} -g -o $@.o -DTEST_MAIN -c getpwent.c
+	${CC} -o $@ $@.o
 
 .include <bsd.lib.mk>
