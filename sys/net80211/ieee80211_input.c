@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.14 2003/10/27 17:11:19 mycroft Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.15 2003/12/07 05:34:22 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.8 2003/08/19 22:17:03 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.14 2003/10/27 17:11:19 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.15 2003/12/07 05:34:22 dyoung Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -288,8 +288,12 @@ ieee80211_input(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni,
 			bpf_mtap(ic->ic_rawbpf, m);
 #endif
 		m = ieee80211_decap(ifp, m);
-		if (m == NULL)
+		if (m == NULL) {
+			IEEE80211_DPRINTF(("ieee80211_input: "
+			    "decapsulation error for src %s\n",
+			    ether_sprintf(wh->i_addr2)));
 			goto err;
+		}
 		ifp->if_ipackets++;
 
 		/* perform as a bridge within the AP */
