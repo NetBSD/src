@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah.c,v 1.4 1995/04/11 05:46:53 mycroft Exp $ */
+/*	$NetBSD: if_bah.c,v 1.5 1995/04/11 18:52:00 chopps Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -524,13 +524,13 @@ bah_start(ifp)
 #endif
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		return (0);
+		return;
 
 	s = splimp();
 
 	if (sc->sc_tx_fillcount >= 2) {
 		splx(s);
-		return (0);
+		return;
 	}
 
 	IF_DEQUEUE(&ifp->if_snd, m);
@@ -539,7 +539,7 @@ bah_start(ifp)
 	splx(s);
 
 	if (m == 0)
-		return (0);
+		return;
 
 #if NBPFILTER > 0
 	/*
@@ -666,7 +666,6 @@ bah_start(ifp)
 	 * the hardware retries till shutdown.
 	 * TODO: Insert some reasonable transmit timeout timer.
 	 */
-	return (1);
 }
 
 void 
@@ -752,8 +751,10 @@ bah_srint(sc,dummy)
 	u_char volatile *bah_ram_ptr;
 	struct mbuf *m, *dst, *head;
 	struct arc_header *ah;
+	struct ifnet *ifp;
 
 	head = 0;
+	ifp = &sc->sc_arccom.ac_if;
 
 #ifdef BAHTIMINGS
 	int copystart,lencopy,perbyte;
@@ -792,11 +793,11 @@ bah_srint(sc,dummy)
 		 * count it as input error (we dont have any other
 		 * detectable)
 	 	 */
-		sc->sc_arccom.ac_if.if_ierrors++;
+		ifp->if_ierrors++;
 		goto cleanup;
 	}
 			
-	m->m_pkthdr.rcvif = &sc->sc_arccom.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 	m->m_len = 0;
 
 	/*
@@ -837,7 +838,7 @@ bah_srint(sc,dummy)
 			MGET(m, M_DONTWAIT, MT_DATA);
 		
 			if (m == 0) {
-				sc->sc_arccom.ac_if.if_ierrors++;
+				ifp->if_ierrors++;
 				goto cleanup;
 			}
 		
@@ -876,12 +877,12 @@ bah_srint(sc,dummy)
 #endif
 
 	m_adj(head, 3); /* gcc does structure padding */
-	arc_input(&sc->sc_arccom.ac_if, ah, head);
+	arc_input(ifp, ah, head);
 
 	/* arc_input has freed it, we dont need to... */
 
 	head = NULL;
-	sc->sc_arccom.ac_if.if_ipackets++;
+	ifp->if_ipackets++;
 	
 cleanup:
 
