@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_7043_140.c,v 1.1.12.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: ibm_7043_140.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.1.12.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include "opt_openpic.h"
 #if !defined(OPENPIC)
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm_7043_140.c,v 1.1.12.3 2004/09/21 13:21:00 skrll 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-void pci_intr_fixup_ibm_7043_140(int, int, int *);
+void pci_intr_fixup_ibm_7043_140(int, int, int, int *);
 void init_intr_mpic(void);
 
 struct platform platform_ibm_7043_140 = {
@@ -73,7 +73,7 @@ struct platform platform_ibm_7043_140 = {
 };
 
 void
-pci_intr_fixup_ibm_7043_140(int bus, int dev, int *line)
+pci_intr_fixup_ibm_7043_140(int bus, int dev, int swiz, int *line)
 {
 
 	if (*line >= 1 && *line < OPENPIC_INTR_NUM - 3)

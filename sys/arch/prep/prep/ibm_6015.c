@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6015.c,v 1.1.2.4 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: ibm_6015.c,v 1.1.2.5 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #include <machine/intr.h>
 #include <machine/platform.h>
 
-void pci_intr_fixup_ibm_6015(int, int, int *);
+void pci_intr_fixup_ibm_6015(int, int, int, int *);
 
 struct platform platform_ibm_6015 = {
 	"IBM PPS Model 6015",			/* model */
@@ -55,7 +55,7 @@ struct platform platform_ibm_6015 = {
 };
 
 void
-pci_intr_fixup_ibm_6015(int bus, int dev, int *line)
+pci_intr_fixup_ibm_6015(int bus, int dev, int swiz, int *line)
 {
 	if (bus != 0)
 		return;

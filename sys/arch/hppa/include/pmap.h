@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.3.6.1 2004/08/03 10:35:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.3.6.2 2005/01/17 19:29:28 skrll Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -108,7 +108,7 @@ extern int dcache_line_mask;
  * according to the parisc manual aliased va's should be
  * different by high 12 bits only.
  */
-#define	PMAP_PREFER(o,h)	do {					\
+#define	PMAP_PREFER(o,h,s,td)	do {					\
 	vaddr_t pmap_prefer_hint;					\
 	pmap_prefer_hint = (*(h) & HPPA_PGAMASK) | ((o) & HPPA_PGAOFF);	\
 	if (pmap_prefer_hint < *(h))					\

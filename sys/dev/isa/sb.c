@@ -1,4 +1,4 @@
-/*	$NetBSD: sb.c,v 1.74.2.4 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: sb.c,v 1.74.2.5 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.4 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb.c,v 1.74.2.5 2005/01/17 19:31:11 skrll Exp $");
 
 #include "midi.h"
 
@@ -74,7 +74,7 @@ const struct midi_hw_if sb_midi_hw_if = {
 };
 #endif
 
-int	sb_getdev __P((void *, struct audio_device *));
+int	sb_getdev(void *, struct audio_device *);
 
 /*
  * Define our interface to the higher level audio driver.
@@ -103,7 +103,7 @@ const struct audio_hw_if sb_hw_if = {
 	sb_malloc,
 	sb_free,
 	sb_round_buffersize,
-        sb_mappage,
+	sb_mappage,
 	sbdsp_get_props,
 	sbdsp_trigger_output,
 	sbdsp_trigger_input,
@@ -116,8 +116,7 @@ const struct audio_hw_if sb_hw_if = {
 
 
 int
-sbmatch(sc)
-	struct sbdsp_softc *sc;
+sbmatch(struct sbdsp_softc *sc)
 {
 	static const u_char drq_conf[8] = {
 		0x01, 0x02, -1, 0x08, -1, 0x20, 0x40, 0x80
@@ -147,13 +146,13 @@ sbmatch(sc)
 		}
 	}
 
-        if (0 <= sc->sc_drq16 && sc->sc_drq16 <= 3)
-        	/* 
-                 * XXX Some ViBRA16 cards seem to have two 8 bit DMA 
+	if (0 <= sc->sc_drq16 && sc->sc_drq16 <= 3)
+		/*
+                 * XXX Some ViBRA16 cards seem to have two 8 bit DMA
                  * channels.  I've no clue how to use them, so ignore
                  * one of them for now.  -- augustss@NetBSD.org
                  */
-        	sc->sc_drq16 = -1;
+		sc->sc_drq16 = -1;
 
 	if (ISSB16CLASS(sc)) {
 		if (sc->sc_drq16 == -1)
@@ -165,7 +164,7 @@ sbmatch(sc)
 		}
 	} else
 		sc->sc_drq16 = sc->sc_drq8;
-	
+
 	if (ISSBPROCLASS(sc)) {
 		if (!SBP_IRQ_VALID(sc->sc_irq)) {
 			printf("%s: configured irq %d invalid\n",
@@ -226,8 +225,7 @@ sbmatch(sc)
 
 
 void
-sbattach(sc)
-	struct sbdsp_softc *sc;
+sbattach(struct sbdsp_softc *sc)
 {
 	struct audio_attach_args arg;
 
@@ -259,14 +257,13 @@ sbattach(sc)
  */
 
 int
-sb_getdev(addr, retp)
-	void *addr;
-	struct audio_device *retp;
+sb_getdev(void *addr, struct audio_device *retp)
 {
-	struct sbdsp_softc *sc = addr;
 	static const char * const names[] = SB_NAMES;
+	struct sbdsp_softc *sc;
 	const char *config;
 
+	sc = addr;
 	if (sc->sc_model == SB_JAZZ)
 		strlcpy(retp->name, "MV Jazz16", sizeof(retp->name));
 	else
@@ -278,6 +275,6 @@ sb_getdev(addr, retp)
 	else
 		config = "??";
 	strlcpy(retp->config, config, sizeof(retp->config));
-		
+
 	return 0;
 }

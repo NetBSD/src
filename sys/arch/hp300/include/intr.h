@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.12.16.3 2004/09/21 13:15:27 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.12.16.4 2005/01/17 19:29:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ void	softintr_disestablish(void *);
 void	softintr_init(void);
 void	softintr_dispatch(void);
 
-extern volatile u_int8_t ssir;
+extern volatile uint8_t ssir;
 #define setsoft(x)	ssir |= (1<<(x))
 
 #define softintr_schedule(arg)				\

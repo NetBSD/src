@@ -1,4 +1,4 @@
-/* $NetBSD: toccata.c,v 1.6.2.4 2004/11/02 07:50:22 skrll Exp $ */
+/* $NetBSD: toccata.c,v 1.6.2.5 2005/01/17 19:29:12 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,20 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.4 2004/11/02 07:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.5 2005/01/17 19:29:12 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 #include <sys/fcntl.h>		/* FREAD */
 
 #include <machine/bus.h>
 
 #include <sys/audioio.h>
 #include <dev/audio_if.h>
- 
 
 #include <dev/ic/ad1848reg.h>
 #include <dev/ic/ad1848var.h>
@@ -68,13 +67,13 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.4 2004/11/02 07:50:22 skrll Exp $"
  * (1024x9bit FIFO) chips.
  */
 
-#define TOCC_FIFO_STAT	0x1ffe 
-#define TOCC_FIFO_DATA	0x2000 
+#define TOCC_FIFO_STAT	0x1ffe
+#define TOCC_FIFO_DATA	0x2000
 
 /*
  * I don't know whether the AD1848 PIO data registers are connected... and
  * at 2 or 3 accesses to read or write a data byte in the best case, I better
- * don't even think about it. The AD1848 address/status and data port are 
+ * don't even think about it. The AD1848 address/status and data port are
  * here:
  */
 #define TOCC_CODEC_ADDR	0x67FF
@@ -103,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: toccata.c,v 1.6.2.4 2004/11/02 07:50:22 skrll Exp $"
  * write 1+4+0x10+0x80			(0x95)
  * pb int: write 512 bytes to fifo
  * pb int off by writing 1+4+0x10	(0x15)
- */ 
+ */
 
 #define TOCC_RST	0x02
 #define TOCC_ACT	0x01
@@ -165,7 +164,7 @@ int toccata_intr(void *);
 int toccata_readreg(struct ad1848_softc *, int);
 void toccata_writereg(struct ad1848_softc *, int, int);
 
-int toccata_round_blocksize(void *, int);
+int toccata_round_blocksize(void *, int, int, const audio_params_t *);
 size_t toccata_round_buffersize(void *, int, size_t);
 
 int toccata_open(void *, int);
@@ -219,7 +218,7 @@ const struct audio_hw_if audiocs_hw_if = {
 struct toccata_softc {
 	struct ad1848_softc	sc_ad;
 	struct isr		sc_isr;
-	volatile u_int8_t	*sc_boardp; /* only need a few addresses! */
+	volatile uint8_t	*sc_boardp; /* only need a few addresses! */
 
 	void			(*sc_captmore)(void *);
 	void			 *sc_captarg;
@@ -230,14 +229,15 @@ struct toccata_softc {
 	void			 *sc_playarg;
 };
 
-int toccata_match (struct device *, struct cfdata *, void *);
-void toccata_attach (struct device *, struct device *, void *);
+int toccata_match(struct device *, struct cfdata *, void *);
+void toccata_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(toccata, sizeof(struct toccata_softc),
     toccata_match, toccata_attach, NULL, NULL);
 
 int
-toccata_match(struct device *parent, struct cfdata *cfp, void *aux) {
+toccata_match(struct device *parent, struct cfdata *cfp, void *aux)
+{
 	struct zbus_args *zap;
 
 	zap = aux;
@@ -252,18 +252,18 @@ toccata_match(struct device *parent, struct cfdata *cfp, void *aux) {
 }
 
 void
-toccata_attach(struct device *parent, struct device *self, void *aux) {
+toccata_attach(struct device *parent, struct device *self, void *aux)
+{
 	struct toccata_softc *sc;
 	struct ad1848_softc *asc;
 	struct zbus_args *zap;
-
-	volatile u_int8_t *boardp;
+	volatile uint8_t *boardp;
 
 	sc = (struct toccata_softc *)self;
 	asc = &sc->sc_ad;
 	zap = aux;
 
-	boardp = (volatile u_int8_t *)zap->va;
+	boardp = (volatile uint8_t *)zap->va;
 	sc->sc_boardp = boardp;
 
 	*boardp = TOCC_RST;
@@ -281,7 +281,7 @@ toccata_attach(struct device *parent, struct device *self, void *aux) {
 
 	sc->sc_captbuf = 0;
 	sc->sc_playmore = 0;
-	
+
 	sc->sc_isr.isr_ipl = 6;
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_intr = toccata_intr;
@@ -292,13 +292,12 @@ toccata_attach(struct device *parent, struct device *self, void *aux) {
 }
 
 /* interrupt handler */
-
 int
 toccata_intr(void *tag) {
 	struct toccata_softc *sc;
-	u_int8_t *buf;
-	volatile u_int8_t *fifo;
-	u_int8_t status;
+	uint8_t *buf;
+	volatile uint8_t *fifo;
+	uint8_t status;
 	int i;
 
 	sc = tag;
@@ -323,7 +322,7 @@ toccata_intr(void *tag) {
 				*buf++ = *fifo;
 				*buf++ = *fifo;
 			}
-	
+
 			/* XXX if (sc->sc_captmore) { */
 			(*sc->sc_captmore)(sc->sc_captarg);
 			return 1;
@@ -333,7 +332,7 @@ toccata_intr(void *tag) {
 	/*
 	 * Something is wrong; switch interrupts off to avoid wedging the
 	 * machine, and notify the alpha tester.
-	 * Normally, the halt_* functions should have switched off the 
+	 * Normally, the halt_* functions should have switched off the
 	 * FIFO interrupt.
 	 */
 #ifdef DEBUG
@@ -342,29 +341,34 @@ toccata_intr(void *tag) {
 #endif
 	*sc->sc_boardp = TOCC_ACT;
 	return 1;
-}		
+}
 
 /* support for ad1848 functions */
 
 int
-toccata_readreg(struct ad1848_softc *asc, int offset) {
-	struct toccata_softc *sc = (struct toccata_softc *)asc;
+toccata_readreg(struct ad1848_softc *asc, int offset)
+{
+	struct toccata_softc *sc;
 
-	return (*(sc->sc_boardp + TOCC_CODEC_ADDR +
-		offset * (TOCC_CODEC_REG - TOCC_CODEC_ADDR)));
+	sc = (struct toccata_softc *)asc;
+	return *(sc->sc_boardp + TOCC_CODEC_ADDR +
+		offset * (TOCC_CODEC_REG - TOCC_CODEC_ADDR));
 }
 
 void
-toccata_writereg(struct ad1848_softc *asc, int offset, int value) {
-	struct toccata_softc *sc = (struct toccata_softc *)asc;
+toccata_writereg(struct ad1848_softc *asc, int offset, int value)
+{
+	struct toccata_softc *sc;
 
+	sc = (struct toccata_softc *)asc;
 	*(sc->sc_boardp + TOCC_CODEC_ADDR +
 		offset * (TOCC_CODEC_REG - TOCC_CODEC_ADDR)) = value;
 }
 
 /* our own copy of open/close; we don't ever enable the ad1848 interrupts */
 int
-toccata_open(void *addr, int flags) {
+toccata_open(void *addr, int flags)
+{
 	struct toccata_softc *sc;
 	struct ad1848_softc *asc;
 
@@ -377,37 +381,42 @@ toccata_open(void *addr, int flags) {
 		ad1848_mute_wave_output(asc, WAVE_UNMUTE1, 1);
 
 #ifdef AUDIO_DEBUG
-        if (ad1848debug)
-                ad1848_dump_regs(asc);
-#endif  
- 
-        return 0;
+	if (ad1848debug)
+		ad1848_dump_regs(asc);
+#endif
+
+	return 0;
 }
 
 void
-toccata_close(void *addr) {
-	struct toccata_softc *sc = addr;
-        struct ad1848_softc *asc = &sc->sc_ad;
+toccata_close(void *addr)
+{
+	struct toccata_softc *sc;
+	struct ad1848_softc *asc;
 	unsigned reg;
- 
-        asc->open_mode = 0;
-                
-        ad1848_mute_wave_output(asc, WAVE_UNMUTE1, 0);
+
+	sc = addr;
+	asc = &sc->sc_ad;
+	asc->open_mode = 0;
+
+	ad1848_mute_wave_output(asc, WAVE_UNMUTE1, 0);
 
 	reg = ad_read(&sc->sc_ad, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad, SP_INTERFACE_CONFIG,
 		(reg & ~(CAPTURE_ENABLE|PLAYBACK_ENABLE)));
 
-        /* Disable interrupts */
+	/* Disable interrupts */
 	*sc->sc_boardp = TOCC_ACT;
 #ifdef AUDIO_DEBUG
-        if (ad1848debug)
-                ad1848_dump_regs(asc);
+	if (ad1848debug)
+		ad1848_dump_regs(asc);
 #endif
 }
 
 int
-toccata_round_blocksize(void *addr, int blk) {
+toccata_round_blocksize(void *addr, int blk,
+			int mode, const audio_params_t *param)
+{
 	int ret;
 
 	ret = blk > 512 ? 512 : (blk & -4);
@@ -416,12 +425,10 @@ toccata_round_blocksize(void *addr, int blk) {
 }
 
 size_t
-toccata_round_buffersize(void *addr, int direction, size_t suggested) {
-	int ret;
+toccata_round_buffersize(void *addr, int direction, size_t suggested)
+{
 
-	ret = suggested & -4;
-
-	return (ret);
+	return suggested & -4;
 }
 
 struct audio_device toccata_device = {
@@ -429,18 +436,22 @@ struct audio_device toccata_device = {
 };
 
 int
-toccata_getdev(void *addr, struct audio_device *retp) {
+toccata_getdev(void *addr, struct audio_device *retp)
+{
+
 	*retp = toccata_device;
-	return (0);
+	return 0;
 }
 
 int
-toccata_get_props(void *addr) {
-	return (0);
+toccata_get_props(void *addr)
+{
+	return 0;
 }
 
 int
-toccata_halt_input(void *addr) {
+toccata_halt_input(void *addr)
+{
 	struct toccata_softc *sc;
 	struct ad1848_softc *asc;
 	unsigned reg;
@@ -452,20 +463,20 @@ toccata_halt_input(void *addr) {
 	*sc->sc_boardp = TOCC_CP_TAIL;
 	sc->sc_captmore = 0;
 	sc->sc_captbuf = 0;
-	
+
 	reg = ad_read(&sc->sc_ad, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad, SP_INTERFACE_CONFIG, (reg & ~CAPTURE_ENABLE));
 
 	return 0;
 }
 
-int 
-toccata_start_input(void *addr, void *block, int blksize, 
-	void (*intr)(void *), void *intrarg) {
-
+int
+toccata_start_input(void *addr, void *block, int blksize,
+	void (*intr)(void *), void *intrarg)
+{
 	struct toccata_softc *sc;
-	unsigned reg;
-	volatile u_int8_t *cmd;
+	unsigned int reg;
+	volatile uint8_t *cmd;
 
 	sc = addr;
 	cmd = sc->sc_boardp;
@@ -484,17 +495,18 @@ toccata_start_input(void *addr, void *block, int blksize,
 
 	sc->sc_captarg = intrarg;
 	sc->sc_captmore = intr;
-	sc->sc_captbuf = (u_int8_t *)block;
+	sc->sc_captbuf = (uint8_t *)block;
 	sc->sc_captbufsz = blksize;
 
 	return 0;
 }
 
 int
-toccata_halt_output(void *addr) {
+toccata_halt_output(void *addr)
+{
 	struct toccata_softc *sc;
 	struct ad1848_softc *asc;
-	unsigned reg;
+	unsigned int reg;
 
 	sc = addr;
 	asc = &sc->sc_ad;
@@ -502,22 +514,22 @@ toccata_halt_output(void *addr) {
 	/* we're half_duplex; be brutal */
 	*sc->sc_boardp = TOCC_PB_TAIL;
 	sc->sc_playmore = 0;
-	
+
 	reg = ad_read(&sc->sc_ad, SP_INTERFACE_CONFIG);
 	ad_write(&sc->sc_ad, SP_INTERFACE_CONFIG, (reg & ~PLAYBACK_ENABLE));
 
 	return 0;
 }
 
-int 
-toccata_start_output(void *addr, void *block, int blksize, 
-	void (*intr)(void*), void *intrarg) {
-
+int
+toccata_start_output(void *addr, void *block, int blksize,
+	void (*intr)(void*), void *intrarg)
+{
 	struct toccata_softc *sc;
 	unsigned reg;
 	int i;
-	volatile u_int8_t *cmd, *fifo;
-	u_int8_t *buf;
+	volatile uint8_t *cmd, *fifo;
+	uint8_t *buf;
 
 	sc = addr;
 	buf = block;
@@ -542,7 +554,7 @@ toccata_start_output(void *addr, void *block, int blksize,
 		*fifo = *buf++;
 		*fifo = *buf++;
 	}
-	
+
 	if (sc->sc_playmore == 0) {
 		reg = ad_read(&sc->sc_ad, SP_INTERFACE_CONFIG);
 		ad_write(&sc->sc_ad, SP_INTERFACE_CONFIG,
@@ -570,32 +582,37 @@ static ad1848_devmap_t csmapping[] = {
 	{ TOCCATA_REC_LVL, AD1848_KIND_RECORDGAIN, -1 },
 	{ TOCCATA_RECORD_SOURCE, AD1848_KIND_RECORDSOURCE, -1 },
 /* only in mode 2: */
-	{ TOCCATA_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL }, 
+	{ TOCCATA_LINE_IN_LVL, AD1848_KIND_LVL, AD1848_LINE_CHANNEL },
 	{ TOCCATA_LINE_IN_MUTE, AD1848_KIND_MUTE, AD1848_LINE_CHANNEL },
 };
 
 #define nummap (sizeof(csmapping) / sizeof(csmapping[0]))
 
 int
-toccata_set_port(void *addr, mixer_ctrl_t *cp) {
-	struct ad1848_softc *ac = addr;
+toccata_set_port(void *addr, mixer_ctrl_t *cp)
+{
+	struct ad1848_softc *ac;
 
 	/* printf("set_port(%d)\n", cp->dev); */
-	return (ad1848_mixer_set_port(ac, csmapping,
-		ac->mode == 2 ? nummap : nummap - 2, cp));
+	ac = addr;
+	return ad1848_mixer_set_port(ac, csmapping,
+		ac->mode == 2 ? nummap : nummap - 2, cp);
 }
 
 int
-toccata_get_port(void *addr, mixer_ctrl_t *cp) {
-	struct ad1848_softc *ac = addr;
+toccata_get_port(void *addr, mixer_ctrl_t *cp)
+{
+	struct ad1848_softc *ac;
 
 	/* printf("get_port(%d)\n", cp->dev); */
-	return (ad1848_mixer_get_port(ac, csmapping,
-		ac->mode == 2 ? nummap : nummap - 2, cp));
+	ac = addr;
+	return ad1848_mixer_get_port(ac, csmapping,
+		ac->mode == 2 ? nummap : nummap - 2, cp);
 }
 
 int
-toccata_query_devinfo(void *addr, mixer_devinfo_t *dip) {
+toccata_query_devinfo(void *addr, mixer_devinfo_t *dip)
+{
 
 	switch(dip->index) {
 	case TOCCATA_MIC_IN_LVL:	/* Microphone */
@@ -705,7 +722,7 @@ toccata_query_devinfo(void *addr, mixer_devinfo_t *dip) {
 		strcpy(dip->un.e.member[1].label.name, AudioNon);
 		dip->un.e.member[1].ord = 1;
 		break;
-		
+
 	case TOCCATA_REC_LVL:	/* record level */
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = TOCCATA_INPUT_CLASS;
@@ -753,7 +770,7 @@ toccata_query_devinfo(void *addr, mixer_devinfo_t *dip) {
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCmonitor);
 		break;
-		    
+
 	case TOCCATA_RECORD_CLASS:		/* record source class */
 		dip->type = AUDIO_MIXER_CLASS;
 		dip->mixer_class = TOCCATA_RECORD_CLASS;
@@ -766,5 +783,5 @@ toccata_query_devinfo(void *addr, mixer_devinfo_t *dip) {
 		/*NOTREACHED*/
 	}
 
-	return (0);
+	return 0;
 }

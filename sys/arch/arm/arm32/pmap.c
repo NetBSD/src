@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.137.2.3 2004/09/21 13:13:10 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.137.2.4 2005/01/17 19:29:12 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -212,7 +212,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.3 2004/09/21 13:13:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.137.2.4 2005/01/17 19:29:12 skrll Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -4136,14 +4136,14 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
 {
 	extern void pool_page_free(struct pool *, void *);
 
-	if (pmap_initialized) {
-		pool_page_free(pp, v);
+	if ((vaddr_t)v <= last_bootstrap_page) {
+		*((void **)v) = free_bootstrap_pages;
+		free_bootstrap_pages = v;
 		return;
 	}
 
-	if ((vaddr_t)v < last_bootstrap_page) {
-		*((void **)v) = free_bootstrap_pages;
-		free_bootstrap_pages = v;
+	if (pmap_initialized) {
+		pool_page_free(pp, v);
 		return;
 	}
 }
@@ -4212,7 +4212,7 @@ pmap_postinit(void)
 			cpu_tlb_flushD_SE(va);
 
 			va += PAGE_SIZE;
-			m = m->pageq.tqe_next;
+			m = TAILQ_NEXT(m, pageq);
 		}
 
 #ifdef DIAGNOSTIC

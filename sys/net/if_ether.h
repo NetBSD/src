@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.33.2.3 2004/09/21 13:36:36 skrll Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.33.2.4 2005/01/17 19:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -168,9 +168,9 @@ struct	ethercom {
 #define	ETHERCAP_JUMBO_MTU	0x00000004	/* 9000 byte MTU supported */
 
 #ifdef	_KERNEL
-extern u_int8_t etherbroadcastaddr[ETHER_ADDR_LEN];
-extern u_int8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
-extern u_int8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
+extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
+extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 
 int	ether_ioctl(struct ifnet *, u_long, caddr_t);
 int	ether_addmulti (struct ifreq *, struct ethercom *);
@@ -188,7 +188,6 @@ int	ether_multiaddr(struct sockaddr *, u_int8_t[], u_int8_t[]);
 struct ether_multi {
 	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
 	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
-	struct	 ethercom *enm_ec;	/* back pointer to ethercom */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };

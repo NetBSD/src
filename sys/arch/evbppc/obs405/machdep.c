@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.4.4 2004/09/21 13:15:07 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.4.5 2005/01/17 19:29:23 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.4 2004/09/21 13:15:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.5 2005/01/17 19:29:23 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -101,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.4.4 2004/09/21 13:15:07 skrll Exp $"
 #include <machine/trap.h>
 #include <machine/powerpc.h>
 #include <powerpc/spr.h>
+#include <machine/obs405.h>
+
 #include <powerpc/ibm4xx/dcr405gp.h>
 
 #include "ksyms.h"
@@ -130,6 +132,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 	ibm4xx_init_board_data(info_block, startkernel);
 
 	ibm4xx_init((void (*)(void))ext_intr);
+
+	/* machine-dependent functions */
+	md_device_register = obs405_device_register;
 
 	/*
 	 * Initialize console.

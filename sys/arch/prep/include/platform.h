@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.7.2.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: platform.h,v 1.7.2.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ struct platform {
 	const char	*model;
 	int		(*match)(struct platform *);
 	void		(*pci_get_chipset_tag)(pci_chipset_tag_t);
-	void		(*pci_intr_fixup)(int, int, int *);
+	void		(*pci_intr_fixup)(int, int, int, int *);
 	void		(*init_intr)(void);
 	void		(*cpu_setup)(struct device *);
 	void		(*reset)(void);
@@ -65,7 +65,7 @@ extern const char *obiodevs_nodev[];
 
 int ident_platform(void);
 int platform_generic_match(struct platform *);
-void pci_intr_nofixup(int, int, int *);
+void pci_intr_nofixup(int, int, int, int *);
 void cpu_setup_unknown(struct device *);
 void reset_unknown(void);
 void reset_prep_generic(void);

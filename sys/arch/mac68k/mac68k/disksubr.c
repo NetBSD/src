@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45.2.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45.2.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.2.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.2.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,15 +92,14 @@ int fat_types[] = {
 	-1
 };
 
-static int getFreeLabelEntry __P((struct disklabel *));
-static int whichType __P((struct part_map_entry *));
-static void setpartition __P((struct part_map_entry *,
-		struct partition *, int));
-static int getNamedType __P((struct part_map_entry *, int,
-		struct disklabel *, int, int, int *));
-static char *read_mac_label __P((char *, struct disklabel *, int *));
-static char *read_mbr_label __P((char *, struct disklabel *, int *));
-static char *read_bsd_label __P((char *, struct disklabel *, int *));
+static int getFreeLabelEntry(struct disklabel *);
+static int whichType(struct part_map_entry *);
+static void setpartition(struct part_map_entry *, struct partition *, int);
+static int getNamedType(struct part_map_entry *, int, struct disklabel *, int,
+	    int, int *);
+static char *read_mac_label(char *, struct disklabel *, int *);
+static char *read_mbr_label(char *, struct disklabel *, int *);
+static char *read_bsd_label(char *, struct disklabel *, int *);
 
 
 /*
@@ -108,8 +107,7 @@ static char *read_bsd_label __P((char *, struct disklabel *, int *));
  * or -1 if no entry
  */
 static int
-getFreeLabelEntry(lp)
-	struct disklabel *lp;
+getFreeLabelEntry(struct disklabel *lp)
 {
 	int i;
 
@@ -125,8 +123,7 @@ getFreeLabelEntry(lp)
  * figure out what the type of the given part is and return it
  */
 static int
-whichType(part)
-	struct part_map_entry *part;
+whichType(struct part_map_entry *part)
 {
 	struct blockzeroblock *bzb;
 	char typestr[32], *s;
@@ -169,10 +166,7 @@ whichType(part)
 }
 
 static void
-setpartition(part, pp, fstype)
-	struct part_map_entry *part;
-	struct partition *pp;
-	int fstype;
+setpartition(struct part_map_entry *part, struct partition *pp, int fstype)
 {
 	pp->p_size = part->pmPartBlkCnt;
 	pp->p_offset = part->pmPyPartStart;
@@ -182,12 +176,8 @@ setpartition(part, pp, fstype)
 }
 
 static int
-getNamedType(part, num_parts, lp, type, alt, maxslot)
-	struct part_map_entry *part;
-	int num_parts;
-	struct disklabel *lp;
-	int type, alt;
-	int *maxslot;
+getNamedType(struct part_map_entry *part, int num_parts, struct disklabel *lp,
+    int type, int alt, int *maxslot)
 {
 	struct blockzeroblock *bzb;
 	int i;
@@ -253,10 +243,7 @@ getNamedType(part, num_parts, lp, type, alt, maxslot)
  * with the partition data from block #1 on.
  */
 static char *
-read_mac_label(dlbuf, lp, match)
-	char *dlbuf;
-	struct disklabel *lp;
-	int *match;
+read_mac_label(char *dlbuf, struct disklabel *lp, int *match)
 {
 	u_int16_t *sbSigp;
 	struct part_map_entry *part;
@@ -335,10 +322,7 @@ read_mac_label(dlbuf, lp, match)
  * this should suffice to mount_msdos Zip and other removable media.
  */
 static char *
-read_mbr_label(dlbuf, lp, match)
-	char *dlbuf;
-	struct disklabel *lp;
-	int *match;
+read_mbr_label(char *dlbuf, struct disklabel *lp, int *match)
 {
 	struct mbr_partition *dp;
 	struct partition *pp;
@@ -386,10 +370,7 @@ read_mbr_label(dlbuf, lp, match)
  * (different ports have variable-sized bootcode before the label)
  */
 static char *
-read_bsd_label(dlbuf, lp, match)
-	char *dlbuf;
-	struct disklabel *lp;
-	int *match;
+read_bsd_label(char *dlbuf, struct disklabel *lp, int *match)
 {
 	struct disklabel *dlp;
 	char *msg;
@@ -426,11 +407,8 @@ read_bsd_label(dlbuf, lp, match)
  * string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 	struct buf *bp;
 	char *msg;
@@ -484,10 +462,8 @@ readdisklabel(dev, strat, lp, osdep)
  * Check new disk label for sensibility before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, osdep)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *osdep;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *osdep)
 {
 #if 0
 	int i;
@@ -547,11 +523,8 @@ setdisklabel(olp, nlp, openmask, osdep)
  *  we want to write dos disklabels some day. Really!
  */
 int
-writedisklabel(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *osdep)
 {
 #if 0
 	struct buf *bp;
@@ -620,10 +593,7 @@ done:
  * if needed, and signal errors or early completion.
  */
 int
-bounds_check_with_label(dk, bp, wlabel)
-	struct disk *dk;
-	struct buf *bp;
-	int wlabel;
+bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 {
 	struct disklabel *lp = dk->dk_label;
 	struct partition *p = lp->d_partitions + DISKPART(bp->b_dev);

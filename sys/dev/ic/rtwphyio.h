@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphyio.h,v 1.1.2.2 2004/10/19 15:56:56 skrll Exp $ */
+/* $NetBSD: rtwphyio.h,v 1.1.2.3 2005/01/17 19:30:40 skrll Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -32,8 +32,8 @@
 #ifndef _DEV_IC_RTWPHYIO_H
 #define _DEV_IC_RTWPHYIO_H
 
-int rtw_rf_hostwrite(struct rtw_regs *, enum rtw_rfchipid, u_int, u_int32_t);
-int rtw_rf_macwrite(struct rtw_regs *, enum rtw_rfchipid, u_int, u_int32_t);
+int rtw_rf_hostwrite(struct rtw_regs *, enum rtw_rfchipid, u_int, uint32_t);
+int rtw_rf_macwrite(struct rtw_regs *, enum rtw_rfchipid, u_int, uint32_t);
 u_int8_t rtw_bbp_read(struct rtw_regs *, u_int);
 int rtw_bbp_write(struct rtw_regs *, u_int, u_int);
 

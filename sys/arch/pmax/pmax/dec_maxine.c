@@ -1,4 +1,4 @@
-/* $NetBSD: dec_maxine.c,v 1.40.22.3 2004/09/21 13:20:23 skrll Exp $ */
+/* $NetBSD: dec_maxine.c,v 1.40.22.4 2005/01/17 19:30:09 skrll Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.40.22.3 2004/09/21 13:20:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_maxine.c,v 1.40.22.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,7 +270,7 @@ dec_maxine_cons_init()
 	DELAY(160000000 / 9600);        /* XXX */
 
 #ifdef WSCONS
-	zs_ioasic_cnattach(ioasic_base, 0x100000, 0);
+	zs_ioasic_cnattach(ioasic_base, 0x100000, 1);
 #else
 	scc_cnattach(ioasic_base, 0x100000);
 #endif
@@ -332,7 +332,7 @@ dec_maxine_intr_establish(dev, cookie, level, handler, arg)
     do {							\
 	if (can_serve & (bits)) {				\
 		ifound = 1;					\
-		intrcnt[vvv] += 1;				\
+		intrtab[vvv].ih_count.ev_count++;		\
 		(*intrtab[vvv].ih_func)(intrtab[vvv].ih_arg);	\
 	}							\
     } while (0)

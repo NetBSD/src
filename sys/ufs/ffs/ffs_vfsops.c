@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.9 2004/11/29 07:25:05 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.10 2005/01/17 19:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,12 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.9 2004/11/29 07:25:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.10 2005/01/17 19:33:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
-#include "opt_compat_netbsd.h"
 #include "opt_softdep.h"
 #endif
 
@@ -109,6 +108,7 @@ struct vfsops ffs_vfsops = {
 	ffs_mountroot,
 	ufs_check_export,
 	ffs_snapshot,
+	vfs_stdextattrctl,
 	ffs_vnodeopv_descs,
 };
 
@@ -144,12 +144,6 @@ ffs_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("ffs_mountroot: can't setup bdevvp's");
-
 	if ((error = vfs_rootmountalloc(MOUNT_FFS, "root_device", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -158,7 +152,6 @@ ffs_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -215,18 +208,6 @@ ffs_mount(mp, path, data, ndp, l)
 	update = mp->mnt_flag & MNT_UPDATE;
 
 	/* Check arguments */
-	if (update) {
-		/* Use the extant mount */
-		ump = VFSTOUFS(mp);
-		devvp = ump->um_devvp;
-		if (args.fspec == NULL)
-			vref(devvp);
-	} else {
-		/* New mounts must have a filename for the device */
-		if (args.fspec == NULL)
-			return (EINVAL);
-	}
-
 	if (args.fspec != NULL) {
 		/*
 		 * Look up the name and verify that it's sane.
@@ -249,8 +230,19 @@ ffs_mount(mp, path, data, ndp, l)
 			 * Be sure we're still naming the same device
 			 * used for our initial mount
 			 */
+			ump = VFSTOUFS(mp);
 			if (devvp != ump->um_devvp)
 				error = EINVAL;
+		}
+	} else {
+		if (!update) {
+			/* New mounts must have a filename for the device */
+			return (EINVAL);
+		} else {
+			/* Use the extant mount */
+			ump = VFSTOUFS(mp);
+			devvp = ump->um_devvp;
+			vref(devvp);
 		}
 	}
 
@@ -275,10 +267,34 @@ ffs_mount(mp, path, data, ndp, l)
 	}
 
 	if (!update) {
+		int flags;
+
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		if (mp->mnt_flag & MNT_RDONLY)
+			flags = FREAD;
+		else
+			flags = FREAD|FWRITE;
+		error = VOP_OPEN(devvp, flags, FSCRED, l);
+		if (error)
+			goto fail;
 		error = ffs_mountfs(devvp, mp, l);
 		if (error) {
-			vrele(devvp);
-			return (error);
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, flags, NOCRED, l);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
 		}
 
 		ump = VFSTOUFS(mp);
@@ -302,6 +318,7 @@ ffs_mount(mp, path, data, ndp, l)
 		 */
 		vrele(devvp);
 
+		ump = VFSTOUFS(mp);
 		fs = ump->um_fs;
 		if (fs->fs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
 			/*
@@ -437,7 +454,11 @@ ffs_mount(mp, path, data, ndp, l)
 		}
 		(void) ffs_cgupdate(ump, MNT_WAIT);
 	}
-	return error;
+	return (error);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 /*
@@ -699,16 +720,8 @@ ffs_mountfs(devvp, mp, l)
 	dev = devvp->v_rdev;
 	p = l ? l->l_proc : NULL;
 	cred = p ? p->p_ucred : NOCRED;
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
+
+	/* Flush out any old buffers remaining from a previous use. */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -716,9 +729,6 @@ ffs_mountfs(devvp, mp, l)
 		return (error);
 
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
-	if (error)
-		return (error);
 	if (VOP_IOCTL(devvp, DIOCGPART, &dpart, FREAD, cred, l) != 0)
 		size = DEV_BSIZE;
 	else
@@ -986,9 +996,6 @@ out:
 	devvp->v_specmountpoint = NULL;
 	if (bp)
 		brelse(bp);
-	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-	(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, cred, l);
-	VOP_UNLOCK(devvp, 0);
 	if (ump) {
 		if (ump->um_oldfscompat)
 			free(ump->um_oldfscompat, M_UFSMNT);

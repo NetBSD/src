@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.142.2.4 2004/12/18 09:33:06 skrll Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.142.2.5 2005/01/17 19:32:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.4 2004/12/18 09:33:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.142.2.5 2005/01/17 19:32:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -200,7 +200,7 @@ int	tcp_compat_42 = 0;
 #endif
 int	tcp_rst_ppslim = 100;	/* 100pps */
 int	tcp_ackdrop_ppslim = 100;	/* 100pps */
-int	tcp_do_loopback_cksum = 1;
+int	tcp_do_loopback_cksum = 0;
 
 /* tcb hash */
 #ifndef TCBHASHSIZE
@@ -689,6 +689,9 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 			m_freem(m);
 			return EAFNOSUPPORT;
 		}
+		/* clear h/w csum flags inherited from rx packet */
+		m->m_pkthdr.csum_flags = 0;
+
 		if ((flags & TH_SYN) == 0 || sizeof(*th0) > (th0->th_off << 2))
 			tlen = sizeof(*th0);
 		else

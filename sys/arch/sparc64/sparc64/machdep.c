@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145.2.7 2004/12/18 09:31:35 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.145.2.8 2005/01/17 19:30:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.7 2004/12/18 09:31:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145.2.8 2005/01/17 19:30:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1181,15 +1181,17 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 				sglen, len);
 		retval = bus_dmamap_load_raw(t, map, segs, i,
 			(bus_size_t)len, flags);
-		if (map->dm_mapsize != len)
-			panic("load_mbuf: mapsize %ld != len %lx\n",
-				(long)map->dm_mapsize, len);
-		sglen = 0;
-		for (j = 0; j < map->dm_nsegs; j++)
-			sglen += map->dm_segs[j].ds_len;
-		if (sglen != len)
-			panic("load_mbuf: dmamap sglen %ld != len %lx\n",
-				sglen, len);
+		if (retval == 0) {
+			if (map->dm_mapsize != len)
+				panic("load_mbuf: mapsize %ld != len %lx\n",
+					(long)map->dm_mapsize, len);
+			sglen = 0;
+			for (j = 0; j < map->dm_nsegs; j++)
+				sglen += map->dm_segs[j].ds_len;
+			if (sglen != len)
+				panic("load_mbuf: dmamap sglen %ld != len %lx\n",
+					sglen, len);
+		}
 		return (retval);
 	}
 #endif

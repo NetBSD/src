@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.32.2.4 2004/12/18 09:33:17 skrll Exp $	*/
+/*	$NetBSD: errno.h,v 1.32.2.5 2005/01/17 19:33:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -164,7 +164,10 @@
 #define ENOSTR		91		/* Not a STREAM */
 #define ETIME		92		/* STREAM ioctl timeout */
 
-#define	ELAST		92		/* Must equal largest errno */
+/* File system extended attribute errors */
+#define	ENOATTR		93		/* Attribute not found */
+
+#define	ELAST		93		/* Must equal largest errno */
 
 #ifdef _KERNEL
 /* pseudo-errors returned inside kernel to modify return to process */

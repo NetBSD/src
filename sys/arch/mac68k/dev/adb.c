@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.44.2.3 2004/09/21 13:18:02 skrll Exp $	*/
+/*	$NetBSD: adb.c,v 1.44.2.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.3 2004/09/21 13:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.4 2005/01/17 19:29:35 skrll Exp $");
 
 #include "opt_adb.h"
 
@@ -56,12 +56,12 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.44.2.3 2004/09/21 13:18:02 skrll Exp $");
 /*
  * Function declarations.
  */
-static int	adbmatch __P((struct device *, struct cfdata *, void *));
-static void	adbattach __P((struct device *, struct device *, void *));
-static int	adbprint __P((void *, const char *));
-void		adb_config_interrupts __P((struct device *));
+static int	adbmatch(struct device *, struct cfdata *, void *);
+static void	adbattach(struct device *, struct device *, void *);
+static int	adbprint(void *, const char *);
+void		adb_config_interrupts(struct device *);
 
-extern void	adb_jadbproc __P((void));
+extern void	adb_jadbproc(void);
 
 /*
  * Global variables.
@@ -82,10 +82,7 @@ CFATTACH_DECL(adb, sizeof(struct device),
     adbmatch, adbattach, NULL, NULL);
 
 static int
-adbmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+adbmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	static int adb_matched = 0;
 
@@ -98,9 +95,7 @@ adbmatch(parent, cf, aux)
 }
 
 static void
-adbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+adbattach(struct device *parent, struct device *self, void *aux)
 {
 	printf("\n");
 
@@ -111,8 +106,7 @@ adbattach(parent, self, aux)
 }
 
 void
-adb_config_interrupts(self)
-	struct device *self;
+adb_config_interrupts(struct device *self)
 {
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
@@ -188,9 +182,7 @@ adb_config_interrupts(self)
 
 
 int
-adbprint(args, name)
-	void *args;
-	const char *name;
+adbprint(void *args, const char *name)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
 	int rv = UNCONF;
@@ -320,10 +312,5 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
 void 
 adb_op_comprout(void)
 {
-#ifdef __NetBSD__
 	asm("movw	#1,%a2@			| update flag value");
-#else				/* for macos based testing */
-	asm {
-		move.w #1,(a2) }		/* update flag value */
-#endif
 }

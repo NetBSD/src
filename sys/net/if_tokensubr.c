@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.22.2.4 2004/12/18 09:32:51 skrll Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.22.2.5 2005/01/17 19:32:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.4 2004/12/18 09:32:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.22.2.5 2005/01/17 19:32:38 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -634,7 +634,7 @@ token_input(ifp, m)
 		}
 		break;
 	}
-#endif /* INET || NS */
+#endif /* INET || NS || DECNET */
 #ifdef	ISO
 	case LLC_ISO_LSAP:
 		switch (l->llc_control) {
@@ -732,7 +732,7 @@ token_input(ifp, m)
 	default:
 		/* printf("token_input: unknown dsap 0x%x\n", l->llc_dsap); */
 		ifp->if_noproto++;
-#if defined(INET) || defined(NS) || defined(DECNET)
+#if defined(INET) || defined(NS) || defined(DECNET) || defined(ISO)
 	dropanyway:
 #endif
 		m_freem(m);

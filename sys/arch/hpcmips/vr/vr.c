@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.41.2.3 2004/09/21 13:16:13 skrll Exp $	*/
+/*	$NetBSD: vr.c,v 1.41.2.4 2005/01/17 19:29:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.41.2.3 2004/09/21 13:16:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.41.2.4 2005/01/17 19:29:28 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -546,33 +546,36 @@ VR_INTR(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	uvmexp.intrs++;
 
+	/* Deal with unneded compare interrupts occasionally so that we can
+	 * keep spllowersoftclock. */
 	if (ipending & MIPS_INT_MASK_5) {
-		/*
-		 * spl* uses MIPS_INT_MASK not MIPS3_INT_MASK. it causes
-		 * INT5 interrupt.
-		 */
-		mips3_cp0_compare_write(mips3_cp0_count_read());
+		mips3_cp0_compare_write(0);
 	}
 
-	/* for spllowersoftclock */
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
-
 	if (ipending & MIPS_INT_MASK_1) {
-		(*vr_intr_handler[1])(vr_intr_arg[1], pc, status);
-
-		cause &= ~MIPS_INT_MASK_1;
-		_splset(((status & ~cause) & MIPS_HARD_INT_MASK)
-		    | MIPS_SR_INT_IE);
+		_splset(MIPS_SR_INT_IE); /* for spllowersoftclock */
+		/* Remove the lower priority pending bits from status so that
+		 * spllowersoftclock will not happen if other interrupts are
+		 * pending. */
+		(*vr_intr_handler[1])(vr_intr_arg[1], pc, status & ~(ipending
+		& (MIPS_INT_MASK_0|MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)));
 	}
 
 	if (ipending & MIPS_INT_MASK_0) {
+		_splset(MIPS_INT_MASK_1|MIPS_SR_INT_IE);
 		(*vr_intr_handler[0])(vr_intr_arg[0], pc, status);
-
-		cause &= ~MIPS_INT_MASK_0;
 	}
-	_splset(((status & ~cause) & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
 
-	softintr(ipending);
+	if (ipending & MIPS_SOFT_INT_MASK_1) {
+		_splset(MIPS_INT_MASK_1|MIPS_INT_MASK_0|MIPS_SR_INT_IE);
+		softintr(MIPS_SOFT_INT_MASK_1);
+	}
+
+	if (ipending & MIPS_SOFT_INT_MASK_0) {
+		_splset(MIPS_SOFT_INT_MASK_1|MIPS_INT_MASK_1|MIPS_INT_MASK_0|
+		    MIPS_SR_INT_IE);
+		softintr(MIPS_SOFT_INT_MASK_0);
+	}
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7.2.3 2004/09/21 13:20:24 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7.2.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.2.3 2004/09/21 13:20:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7.2.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,15 +67,34 @@ struct evcnt pmax_memerr_evcnt =
 
 extern void MachFPInterrupt(unsigned, unsigned, unsigned, struct frame *);
 
+static const char * const intrnames[] = {
+	"serial0",
+	"serial1",
+	"ether",
+	"scsi",
+	"optslot0",
+	"optslot1",
+	"optslot2",
+	"dtop",
+	"isdn",
+	"floppy"
+};
+
+void
+intr_init(void)
+{
+	int i;
+
+	for (i = 0; i < MAX_DEV_NCOOKIES; i++)
+		evcnt_attach_dynamic(&intrtab[i].ih_count, EVCNT_TYPE_INTR,
+		    NULL, "pmax", intrnames[i]);
+}
+
 /*
  * pmax uses standard mips1 convention, wiring FPU to hard interrupt 5.
  */
 void
-cpu_intr(status, cause, pc, ipending)
-	u_int32_t status;
-	u_int32_t cause;
-	u_int32_t pc;
-	u_int32_t ipending;
+cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 
 	uvmexp.intrs++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.71.28.3 2004/09/21 13:18:08 skrll Exp $	*/
+/*	$NetBSD: via.c,v 1.71.28.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.71.28.3 2004/09/21 13:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via.c,v 1.71.28.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include "opt_mac68k.h"
 
@@ -52,22 +52,22 @@ __KERNEL_RCSID(0, "$NetBSD: via.c,v 1.71.28.3 2004/09/21 13:18:08 skrll Exp $");
 #include <machine/intr.h>
 #include <machine/viareg.h>
 
-void	mrg_adbintr __P((void *));
-void	mrg_pmintr __P((void *));
-void	rtclock_intr __P((void *));
-void	profclock __P((void *));
+void	mrg_adbintr(void *);
+void	mrg_pmintr(void *);
+void	rtclock_intr(void *);
+void	profclock(void *);
 
-void	via1_intr __P((void *));
-void	via2_intr __P((void *));
-void	rbv_intr __P((void *));
-void	oss_intr __P((void *));
-void	via2_nubus_intr __P((void *));
-void	rbv_nubus_intr __P((void *));
+void	via1_intr(void *);
+void	via2_intr(void *);
+void	rbv_intr(void *);
+void	oss_intr(void *);
+void	via2_nubus_intr(void *);
+void	rbv_nubus_intr(void *);
 
-static void	via1_noint __P((void *));
-static void	via2_noint __P((void *));
-static void	slot_ignore __P((void *));
-static void	slot_noint __P((void *));
+static void	via1_noint(void *);
+static void	via2_noint(void *);
+static void	slot_ignore(void *);
+static void	slot_noint(void *);
 
 int	VIA2 = VIA2OFF;		/* default for II, IIx, IIcx, SE/30. */
 
@@ -144,7 +144,7 @@ void *slotptab[7] = {
 static int	nubus_intr_mask = 0;
 
 void
-via_init()
+via_init(void)
 {
 	/* Initialize VIA1 */
 	/* set all timers to 0 */
@@ -230,8 +230,7 @@ via_init()
  * Set the state of the modem serial port's clock source.
  */
 void
-via_set_modem(onoff)
-	int	onoff;
+via_set_modem(int onoff)
 {
 	via_reg(VIA1, vDirA) |= DA1O_vSync;
 	if (onoff)
@@ -241,8 +240,7 @@ via_set_modem(onoff)
 }
 
 void
-via1_intr(intr_arg)
-	void *intr_arg;
+via1_intr(void *intr_arg)
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -273,8 +271,7 @@ via1_intr(intr_arg)
 }
 
 void
-via2_intr(intr_arg)
-	void *intr_arg;
+via2_intr(void *intr_arg)
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -299,8 +296,7 @@ via2_intr(intr_arg)
 }
 
 void
-rbv_intr(intr_arg)
-	void *intr_arg;
+rbv_intr(void *intr_arg)
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -324,8 +320,7 @@ rbv_intr(intr_arg)
 }
 
 void
-oss_intr(intr_arg)
-	void *intr_arg;
+oss_intr(void *intr_arg)
 {
 	u_int8_t intbits, bitnum;
 	u_int mask;
@@ -349,24 +344,19 @@ oss_intr(intr_arg)
 }
 
 static void
-via1_noint(bitnum)
-	void *bitnum;
+via1_noint(void *bitnum)
 {
 	printf("via1_noint(%d)\n", (int)bitnum);
 }
 
 static void
-via2_noint(bitnum)
-	void *bitnum;
+via2_noint(void *bitnum)
 {
 	printf("via2_noint(%d)\n", (int)bitnum);
 }
 
 int
-add_nubus_intr(slot, func, client_data)
-	int slot;
-	void (*func) __P((void *));
-	void *client_data;
+add_nubus_intr(int slot, void (*func)(void *), void *client_data)
 {
 	int	s;
 
@@ -399,7 +389,7 @@ add_nubus_intr(slot, func, client_data)
 }
 
 void
-enable_nubus_intr()
+enable_nubus_intr(void)
 {
 	if ((nubus_intr_mask & 0x3f) == 0)
 		return;
@@ -412,8 +402,7 @@ enable_nubus_intr()
 
 /*ARGSUSED*/
 void
-via2_nubus_intr(bitarg)
-	void *bitarg;
+via2_nubus_intr(void *bitarg)
 {
 	u_int8_t i, intbits, mask;
 
@@ -433,8 +422,7 @@ via2_nubus_intr(bitarg)
 
 /*ARGSUSED*/
 void
-rbv_nubus_intr(bitarg)
-	void *bitarg;
+rbv_nubus_intr(void *bitarg)
 {
 	u_int8_t i, intbits, mask;
 
@@ -453,8 +441,7 @@ rbv_nubus_intr(bitarg)
 }
 
 static void
-slot_ignore(client_data)
-	void *client_data;
+slot_ignore(void *client_data)
 {
 	int mask = (1 << (int)client_data);
 
@@ -467,8 +454,7 @@ slot_ignore(client_data)
 }
 
 static void
-slot_noint(client_data)
-	void *client_data;
+slot_noint(void *client_data)
 {
 	int slot = (int)client_data + 9;
 
@@ -479,7 +465,7 @@ slot_noint(client_data)
 }
 
 void
-via_powerdown()
+via_powerdown(void)
 {
 	if (VIA2 == VIA2OFF) {
 		via2_reg(vDirB) |= 0x04;  /* Set write for bit 2 */
@@ -496,10 +482,7 @@ via_powerdown()
 }
 
 void
-via1_register_irq(irq, irq_func, client_data)
-	int irq;
-	void (*irq_func)(void *);
-	void *client_data;
+via1_register_irq(int irq, void (*irq_func)(void *), void *client_data)
 {
 	if (irq_func) {
  		via1itab[irq] = irq_func;
@@ -511,10 +494,7 @@ via1_register_irq(irq, irq_func, client_data)
 }
 
 void
-via2_register_irq(irq, irq_func, client_data)
-	int irq;
-	void (*irq_func)(void *);
-	void *client_data;
+via2_register_irq(int irq, void (*irq_func)(void *), void *client_data)
 {
 	if (irq_func) {
  		via2itab[irq] = irq_func;

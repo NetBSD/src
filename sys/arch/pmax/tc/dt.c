@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.1.12.3 2004/09/21 13:20:25 skrll Exp $	*/
+/*	$NetBSD: dt.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.12.3 2004/09/21 13:20:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.1.12.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,26 +326,16 @@ dt_dispatch(void *cookie)
 {
 	struct dt_softc *sc;
 	struct dt_msg *msg;
-	int s, other, mouse;
+	int s;
 	struct dt_device *dtdv;
 
 	sc = cookie;
 	msg = NULL;
-	other = DT_ADDR_KBD;
-	mouse = 0;
 
 	for (;;) {
 		s = spltty();
-		if (msg != NULL) {
+		if (msg != NULL)
 			SLIST_INSERT_HEAD(&sc->sc_free, msg, chain.slist);
-			if (mouse) {
-				dt_ms_addr = msg->src;
-				dt_kbd_addr = other;
-			} else {
-				dt_kbd_addr = msg->src;
-				dt_ms_addr = other;
-			}
-		}
 		msg = SIMPLEQ_FIRST(&sc->sc_queue);
 		if (msg != NULL)
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, chain.simpleq);
@@ -353,11 +343,7 @@ dt_dispatch(void *cookie)
 		if (msg == NULL)
 			break;
 
-		if (msg->src == DT_ADDR_MOUSE)
-			other = DT_ADDR_KBD;
-		else if (msg->src == DT_ADDR_KBD)
-			other = DT_ADDR_MOUSE;
-		else {
+		if (msg->src != DT_ADDR_MOUSE && msg->src != DT_ADDR_KBD) {
 			printf("%s: message from unknown dev 0x%x\n",
 			    sc->sc_dv.dv_xname, sc->sc_msg.src);
 			dt_msg_dump(msg);
@@ -371,19 +357,28 @@ dt_dispatch(void *cookie)
 		}
 
 		/*
-		 * 1. Mouse should have no more than eight buttons.
+		 * 1. Mouse should have no more than eight buttons, so first
+		 *    8 bits of body will be zero.
 		 * 2. Mouse should always send full locator report.
+		 *    Note:  my mouse does not send 'z' data, so the size
+		 *    did not match the size of struct dt_locator_msg - mhitch
 		 * 3. Keyboard should never report all-up (0x00) in
 		 *    a packet with size > 1.
 		 */
-		if (DT_CTL_LEN(msg->ctl) == sizeof(struct dt_locator_msg) &&
-		    msg->body[0] == 0) {
-			mouse = 1;
-			dtdv = &dt_ms_dv;
-		} else {
-			mouse = 0;
-			dtdv = &dt_kbd_dv;
+		if (DT_CTL_LEN(msg->ctl) >= 6 &&
+		    msg->body[0] == 0 && msg->src != dt_ms_addr) {
+			dt_kbd_addr = dt_ms_addr;
+			dt_ms_addr = msg->src;
+		} else if (DT_CTL_LEN(msg->ctl) < 6 && msg->body[0] != 0 &&
+		    msg->src != dt_kbd_addr) {
+			dt_ms_addr = dt_kbd_addr;
+			dt_kbd_addr = msg->src;
 		}
+
+		if (msg->src == dt_kbd_addr)
+			dtdv = &dt_kbd_dv;
+		else
+			dtdv = &dt_ms_dv;
 
 		if (dtdv->dtdv_handler != NULL)
 			(*dtdv->dtdv_handler)(dtdv->dtdv_dv, msg);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.4 2004/09/21 13:20:42 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.5 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,6 @@
 #ifndef	_IBM4XX_PMAP_H_
 #define	_IBM4XX_PMAP_H_
 
-#include <powerpc/ibm4xx/pte.h>
 #include <powerpc/ibm4xx/tlb.h>
 
 #define KERNEL_PID	1	/* TLB PID to use for kernel translation */
@@ -152,19 +151,23 @@ typedef	struct pmap *pmap_t;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 
-#define pmap_clear_modify(pg)		(check_attr((pg), PTE_HI_CHG, 1))
-#define	pmap_clear_reference(pg)	(check_attr((pg), PTE_HI_REF, 1))
-#define	pmap_is_modified(pg)		(check_attr((pg), PTE_HI_CHG, 0))
-#define	pmap_is_referenced(pg)		(check_attr((pg), PTE_HI_REF, 0))
+#define	PMAP_ATTR_REF		0x1
+#define	PMAP_ATTR_CHG		0x2
+
+#define pmap_clear_modify(pg)	(pmap_check_attr((pg), PMAP_ATTR_CHG, 1))
+#define	pmap_clear_reference(pg)(pmap_check_attr((pg), PMAP_ATTR_REF, 1))
+#define	pmap_is_modified(pg)	(pmap_check_attr((pg), PMAP_ATTR_CHG, 0))
+#define	pmap_is_referenced(pg)	(pmap_check_attr((pg), PMAP_ATTR_REF, 0))
 
 #define	pmap_phys_address(x)		(x)
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 void pmap_unwire(struct pmap *pm, vaddr_t va);
 void pmap_bootstrap(u_int kernelstart, u_int kernelend);
 boolean_t pmap_extract(struct pmap *, vaddr_t, paddr_t *);
-boolean_t check_attr(struct vm_page *, u_int, int);
+boolean_t pmap_check_attr(struct vm_page *, u_int, int);
 void pmap_real_memory(paddr_t *, psize_t *);
 int pmap_tlbmiss(vaddr_t va, int ctx);
 
@@ -174,8 +177,8 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 }
 
-int	ctx_alloc(struct pmap*);
-void	ctx_free(struct pmap*);
+int	ctx_alloc(struct pmap *);
+void	ctx_free(struct pmap *);
 
 #define PMAP_NEED_PROCWR
 void pmap_procwr(struct proc *, vaddr_t, size_t);

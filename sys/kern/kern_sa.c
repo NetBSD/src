@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.16.2.5 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.16.2.6 2005/01/17 19:32:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.5 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sa.c,v 1.16.2.6 2005/01/17 19:32:25 skrll Exp $");
 
 #include "opt_ktrace.h"
 
@@ -776,9 +776,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	KDASSERT((event == NULL) || (event != interrupted));
 
 	sau->sau_flags = 0;
-	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
-	sau->sau_argsize = argsize;
-	sau->sau_arg = arg;
+	sau->sau_arg = 0;
 
 	if (type & SA_UPCALL_DEFER_EVENT) {
 		sau->sau_event.ss_deferred.ss_lwp = event;
@@ -790,6 +788,10 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 		sau->sau_flags |= SAU_FLAG_DEFERRED_INTERRUPTED;
 	} else
 		sa_upcall_getstate(&sau->sau_interrupted, interrupted);
+
+	sau->sau_type = type & SA_UPCALL_TYPE_MASK;
+	sau->sau_argsize = argsize;
+	sau->sau_arg = arg;
 
 	return (0);
 }

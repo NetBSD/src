@@ -1,4 +1,4 @@
-/*	$NetBSD: gus_isapnp.c,v 1.22.2.1 2004/11/02 07:51:55 skrll Exp $	*/
+/*	$NetBSD: gus_isapnp.c,v 1.22.2.2 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22.2.1 2004/11/02 07:51:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22.2.2 2005/01/17 19:31:11 skrll Exp $");
 
 #include "guspnp.h"
 #if NGUSPNP > 0
@@ -73,31 +73,25 @@ __KERNEL_RCSID(0, "$NetBSD: gus_isapnp.c,v 1.22.2.1 2004/11/02 07:51:55 skrll Ex
 #include <dev/ic/interwavereg.h>
 
 
-int	gus_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	gus_isapnp_attach __P((struct device *, struct device *, void *));
-static int     gus_isapnp_open __P((void *, int));
+int	gus_isapnp_match(struct device *, struct cfdata *, void *);
+void	gus_isapnp_attach(struct device *, struct device *, void *);
+static int     gus_isapnp_open(void *, int);
 
 static const struct audio_hw_if guspnp_hw_if = {
 	gus_isapnp_open,
 	iwclose,
-	NULL,
-	
+	NULL,			/* drain */
 	iw_query_encoding,
 	iw_set_params,
-	
 	iw_round_blocksize,
-	
 	iw_commit_settings,
-	
 	iw_init_output,
 	iw_init_input,
 	iw_start_output,
 	iw_start_input,
 	iw_halt_output,
 	iw_halt_input,
-	
 	iw_speaker_ctl,
-	
 	iw_getdev,
 	iw_setfd,
 	iw_set_port,
@@ -108,12 +102,10 @@ static const struct audio_hw_if guspnp_hw_if = {
 	iw_round_buffersize,
 	iw_mappage,
 	iw_get_props,
-	NULL,
-	NULL,
-	NULL,
+	NULL,			/* trigger_output */
+	NULL,			/* trigger_input */
+	NULL,			/* dev_ioctl */
 };
-
-
 
 CFATTACH_DECL(guspnp, sizeof(struct iw_softc),
     gus_isapnp_match, gus_isapnp_attach, NULL, NULL);
@@ -133,34 +125,28 @@ extern struct cfdriver guspnp_cd;
 static int gus_0 = 1;		/* XXX what's this */
 
 int
-gus_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+gus_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_gus_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
-
-
 
 /*
  * Attach hardware to driver, attach hardware driver to audio
  * pseudo-device driver.
  */
-
 void
-gus_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+gus_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-        struct iw_softc *sc = (struct iw_softc *)self;
-	struct isapnp_attach_args *ipa = aux;
+	struct iw_softc *sc;
+	struct isapnp_attach_args *ipa;
 
+	sc = (struct iw_softc *)self;
+	ipa = aux;
 	printf("\n");
 
 	if (!gus_0)
@@ -168,7 +154,7 @@ gus_isapnp_attach(parent, self, aux)
 	gus_0 = 0;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
+		printf("%s: error in region allocation\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -192,31 +178,31 @@ gus_isapnp_attach(parent, self, aux)
 
 	sc->sc_ic = ipa->ipa_ic;
 
-        /*
+	/*
          * Create our DMA maps.
          */
-        if (sc->sc_playdrq != -1) {
+	if (sc->sc_playdrq != -1) {
 		sc->sc_play_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_playdrq);
-                if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
-                    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-                        printf("%s: can't create map for drq %d\n",
-                            sc->sc_dev.dv_xname, sc->sc_playdrq);
-                        return;
-		      }
-	      }
-        if (sc->sc_recdrq != -1) {
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_playdrq,
+		    sc->sc_play_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_playdrq);
+			return;
+		}
+	}
+	if (sc->sc_recdrq != -1) {
 		sc->sc_rec_maxsize = isa_dmamaxsize(sc->sc_ic,
 		    sc->sc_recdrq);
-                if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
-                    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
-                        printf("%s: can't create map for drq %d\n",
-                            sc->sc_dev.dv_xname, sc->sc_recdrq);
-                        return;
-		      }
-	      }
+		if (isa_dmamap_create(sc->sc_ic, sc->sc_recdrq,
+		    sc->sc_rec_maxsize, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW)) {
+			printf("%s: can't create map for drq %d\n",
+			    sc->sc_dev.dv_xname, sc->sc_recdrq);
+			return;
+		}
+	}
 
-        /*
+	/*
          * isapnp is a child if isa, and we need isa for the DMA
          * routines.
          */
@@ -229,15 +215,13 @@ gus_isapnp_attach(parent, self, aux)
 	iwattach(sc);
 }
 
-static
-int 
-gus_isapnp_open(addr, flags)
-     void *addr;
-     int flags;
+static int
+gus_isapnp_open(void *addr, int flags)
 {
 	/* open hardware */
-	struct iw_softc *sc = (struct iw_softc *)addr;
+	struct iw_softc *sc;
 
+	sc = (struct iw_softc *)addr;
 	if (!sc)
 		return ENXIO;
 

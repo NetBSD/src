@@ -1,4 +1,4 @@
-/*	$NetBSD: auccvar.h,v 1.4 2002/01/26 13:40:53 aymeric Exp $	*/
+/*	$NetBSD: auccvar.h,v 1.4.16.1 2005/01/17 19:29:12 skrll Exp $	*/
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
  * All rights reserved.
@@ -45,7 +45,7 @@ typedef struct aucc_data {
 	u_int	nd_volume;	/* 0..63 */
 	u_int	nd_busy;	/* 1, if channel is busy */
 	u_short	*nd_dma;	/* pointer to dma buffer */
-	u_int	nd_dmalength;  	/* length of dma data */
+	u_int	nd_dmalength;	/* length of dma data */
 	int	nd_mask;	/* mask of active channels,
 				   together with this one */
 	void    (*nd_intr)(void *); /* interrupt routine */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.18.2.4 2004/09/21 13:13:10 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.18.2.5 2005/01/17 19:29:12 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -74,7 +74,8 @@ cpuswitch.o fault.o machdep.o: Makefile
 
 # various assembly files that depend on assym.h
 atomic.o bcopy_page.o bcopyinout.o copystr.o cpuswitch.o exception.o: assym.h
-fiq_subr.o fusu.o in_cksum_arm.o irq_dispatch.o sigcode.o vectors.o: assym.h
+fiq_subr.o fusu.o in_cksum_arm.o irq_dispatch.o isa_irq.o sigcode.o: assym.h
+spl.o vectors.o: assym.h
 
 ##
 ## (7) misc settings

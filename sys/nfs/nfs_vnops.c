@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.175.2.7 2004/12/18 09:33:17 skrll Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.175.2.8 2005/01/17 19:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.175.2.7 2004/12/18 09:33:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.175.2.8 2005/01/17 19:32:55 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -271,17 +271,16 @@ static void
 nfs_cache_enter(struct vnode *dvp, struct vnode *vp,
     struct componentname *cnp)
 {
+	struct nfsnode *dnp = VTONFS(dvp);
 
 	if (vp != NULL) {
 		struct nfsnode *np = VTONFS(vp);
 
 		np->n_ctime = np->n_vattr->va_ctime.tv_sec;
-	} else {
-		struct nfsnode *dnp = VTONFS(dvp);
-
-		if (!timespecisset(&dnp->n_nctime))
-			dnp->n_nctime = dnp->n_vattr->va_mtime;
 	}
+
+	if (!timespecisset(&dnp->n_nctime))
+		dnp->n_nctime = dnp->n_vattr->va_mtime;
 
 	cache_enter(dvp, vp, cnp);
 }
@@ -882,15 +881,20 @@ nfs_lookup(v)
 			return err2;
 		}
 
-		if (error == ENOENT) {
-			if (!VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
-			    cnp->cn_lwp) && timespeccmp(&vattr.va_mtime,
-			    &VTONFS(dvp)->n_nctime, ==)) {
-				goto noentry;
+		if (VOP_GETATTR(dvp, &vattr, cnp->cn_cred,
+		    cnp->cn_lwp) || timespeccmp(&vattr.va_mtime,
+		    &VTONFS(dvp)->n_nctime, !=)) {
+			if (error == 0) {
+				vrele(*vpp);
+				*vpp = NULLVP;
 			}
 			cache_purge1(dvp, NULL, PURGE_CHILDREN);
 			timespecclear(&np->n_nctime);
 			goto dorpc;
+		}
+
+		if (error == ENOENT) {
+			goto noentry;
 		}
 
 		newvp = *vpp;

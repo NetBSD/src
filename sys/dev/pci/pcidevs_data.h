@@ -1,4 +1,4 @@
-/*	$NetBSD: pcidevs_data.h,v 1.541.2.10 2004/12/18 09:32:09 skrll Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.541.2.11 2005/01/17 19:31:25 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -3352,12 +3352,20 @@ const struct pci_product pci_products[] = {
 	    "Radeon Mobility A3",
 	},
 	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT,
+	    "Radeon 9600 XT",
+	},
+	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
 	    "Mach32",
 	},
 	{
-	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_IGP_320M,
-	    "Radeon IGP 320M",
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_9600_XT_S,
+	    "Radeon 9600 XT Secondary",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_U1,
+	    "Radeon Mobility U1",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RADEON_M6_U2,
@@ -3986,6 +3994,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705_ALT,
 	    "BCM5705 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721,
+	    "BCM5721 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5750,
@@ -4762,6 +4774,10 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_EMULEX, PCI_PRODUCT_EMULEX_LP9802,
 	    "LP9802 FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_MCR510,
+	    "MCR510 PCI Memory Card Reader Controller",
 	},
 	{
 	    PCI_VENDOR_ENE, PCI_PRODUCT_ENE_CB710,
@@ -6208,6 +6224,10 @@ const struct pci_product pci_products[] = {
 	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG,
+	    "PRO/Wireless LAN 2915ABG Mini-PCI Adapter",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
 	    "80310 ATU",
 	},
@@ -6972,6 +6992,10 @@ const struct pci_product pci_products[] = {
 	    "FC929X",
 	},
 	{
+	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_FC919X,
+	    "FC919X",
+	},
+	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_PERC_4SC,
 	    "PERC 4/SC",
 	},
@@ -7128,6 +7152,22 @@ const struct pci_product pci_products[] = {
 	    "RIVA TNT2 Model 64",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800U,
+	    "GeForce 6800 Ultra",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800,
+	    "GeForce 6800",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800LE,
+	    "GeForce 6800LE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_GEFORCE_6800GT,
+	    "GeForce 6800 GT",
+	},
+	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_PCIB,
 	    "nForce2 PCI-ISA bridge",
 	},
@@ -7166,6 +7206,34 @@ const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_FW,
 	    "nForce2 Firewire Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PCIB,
+	    "nForce2 Ultra 400 PCI-ISA bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SMBUS,
+	    "nForce2 Ultra 400 SMBus Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_ATA133,
+	    "nForce2 Ultra 400 ATA133 IDE",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_OHCI,
+	    "nForce2 Ultra 400 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_EHCI,
+	    "nForce2 Ultra 400 USB2 Host Controller",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_PPB,
+	    "nForce2 Ultra 400 PCI-PCI bridge",
+	},
+	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE2_400_SATA,
+	    "nForce2 Ultra 400 Serial ATA Controller",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_NFORCE3_PCHB,
@@ -9328,6 +9396,10 @@ const struct pci_product pci_products[] = {
 	    "VT6105 (Rhine III) 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT61XX,
+	    "VT61XX (Velocity) 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8623_VGA,
 	    "VT8623 (Apollo CLE266) VGA Controller",
 	},
@@ -9872,4 +9944,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1889;
+const int pci_nproducts = 1907;

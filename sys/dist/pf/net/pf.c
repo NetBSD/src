@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.3.2.6 2004/12/18 09:32:35 skrll Exp $	*/
+/*	$NetBSD: pf.c,v 1.3.2.7 2005/01/17 19:32:11 skrll Exp $	*/
 /*	$OpenBSD: pf.c,v 1.457.2.3 2004/11/13 23:48:51 brad Exp $ */
 
 /*
@@ -2012,6 +2012,8 @@ pf_map_addr(sa_family_t af, struct pf_rule *r, struct pf_addr *saddr,
 
 	get_addr:
 		PF_ACPY(naddr, &rpool->counter, af);
+		if (init_addr != NULL && PF_AZERO(init_addr, af))
+			PF_ACPY(init_addr, naddr, af);
 		PF_AINC(&rpool->counter, af);
 		break;
 	}
@@ -5423,7 +5425,28 @@ pf_check_proto_cksum(struct mbuf *m, int off, int len, u_int8_t p,
 		return (1);
 	if (m->m_pkthdr.len < off + len)
 		return (1);
-		switch (af) {
+#ifdef __NetBSD__
+	switch (p) {
+	case IPPROTO_TCP: {
+			struct tcphdr th; /* XXX */
+			int thlen;
+
+			m_copydata(m, off, sizeof(th), &th); /* XXX */
+			thlen = th.th_off << 2;
+			return tcp_input_checksum(af, m, &th, off,
+			    thlen, len - thlen) != 0;
+		}
+
+	case IPPROTO_UDP: {
+			struct udphdr uh; /* XXX */
+
+			m_copydata(m, off, sizeof(uh), &uh); /* XXX */
+			return udp_input_checksum(af, m, &uh, off, len) != 0;
+		}
+		break;
+	}
+#endif /* __NetBSD__ */
+	switch (af) {
 #ifdef INET
 	case AF_INET:
 		if (p == IPPROTO_ICMP) {
@@ -5905,7 +5928,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip6_plen), IPPROTO_TCP, AF_INET6)) {
+		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_TCP, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -5938,7 +5962,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && uh.uh_sum && pf_check_proto_cksum(m,
-		    off, ntohs(h->ip6_plen), IPPROTO_UDP, AF_INET6)) {
+		    off, ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_UDP, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}
@@ -5972,7 +5997,8 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0,
 			goto done;
 		}
 		if (dir == PF_IN && pf_check_proto_cksum(m, off,
-		    ntohs(h->ip6_plen), IPPROTO_ICMPV6, AF_INET6)) {
+		    ntohs(h->ip6_plen) - (off - sizeof(struct ip6_hdr)),
+		    IPPROTO_ICMPV6, AF_INET6)) {
 			action = PF_DROP;
 			goto done;
 		}

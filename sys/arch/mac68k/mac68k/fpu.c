@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.29.2.3 2004/09/21 13:18:06 skrll Exp $	*/
+/*	$NetBSD: fpu.c,v 1.29.2.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.3 2004/09/21 13:18:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -62,18 +62,15 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.29.2.3 2004/09/21 13:18:06 skrll Exp $");
 
 extern label_t *nofault;
 
-static int  fpu_match __P((struct device *, struct cfdata *, void *));
-static void fpu_attach __P((struct device *, struct device *, void *));
-static int  fpu_probe __P((void));
+static int  fpu_match(struct device *, struct cfdata *, void *);
+static void fpu_attach(struct device *, struct device *, void *);
+static int  fpu_probe(void);
 
 CFATTACH_DECL(fpu, sizeof(struct device),
     fpu_match, fpu_attach, NULL, NULL);
 
 static int
-fpu_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+fpu_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 1;
 }
@@ -91,10 +88,7 @@ static char *fpu_descr[] = {
 	"unknown" };
 
 static void
-fpu_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+fpu_attach(struct device *parent, struct device *self, void *args)
 {
 	char *descr;
 
@@ -113,7 +107,7 @@ fpu_attach(parent, self, args)
 }
 
 static int
-fpu_probe()
+fpu_probe(void)
 {
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.

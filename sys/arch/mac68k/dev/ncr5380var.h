@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.2 1996/05/25 16:42:31 briggs Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.2.64.1 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -33,7 +33,7 @@ static volatile u_char	*scsi_enable = NULL;
 static volatile u_char	*scsi_flag   = NULL;
 
 static __inline__ void
-scsi_clear_drq __P((void))
+scsi_clear_drq(void)
 {
 	int	s;
 
@@ -43,7 +43,7 @@ scsi_clear_drq __P((void))
 }
 
 static __inline__ void
-scsi_clear_irq __P((void))
+scsi_clear_irq(void)
 {
 	int	s;
 
@@ -53,7 +53,7 @@ scsi_clear_irq __P((void))
 }
 
 static __inline__ void
-scsi_ienable __P((void))
+scsi_ienable(void)
 {
 	int	s;
 
@@ -63,7 +63,7 @@ scsi_ienable __P((void))
 }
 
 static __inline__ void
-scsi_idisable __P((void))
+scsi_idisable(void)
 {
 	int	s;
 
@@ -72,7 +72,7 @@ scsi_idisable __P((void))
 	splx(s);
 }
 
-void	pdma_stat __P((void));
-void	pdma_cleanup __P((void));
-void	scsi_show __P((void));
+void	pdma_stat(void);
+void	pdma_cleanup(void);
+void	scsi_show(void);
 

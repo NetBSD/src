@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.51.2.6 2004/11/02 07:53:37 skrll Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.51.2.7 2005/01/17 19:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.6 2004/11/02 07:53:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.51.2.7 2005/01/17 19:33:11 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,6 +103,7 @@ struct vfsops mfs_vfsops = {
 	NULL,
 	ufs_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	vfs_stdextattrctl,
 	mfs_vnodeopv_descs,
 };
 
@@ -177,14 +178,6 @@ mfs_mountroot()
 	struct mfsnode *mfsp;
 	int error = 0;
 
-	/*
-	 * Get vnodes for rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp)) {
-		printf("mfs_mountroot: can't setup bdevvp's");
-		return (error);
-	}
-
 	if ((error = vfs_rootmountalloc(MOUNT_MFS, "mfs_root", &mp))) {
 		vrele(rootvp);
 		return (error);
@@ -206,7 +199,6 @@ mfs_mountroot()
 		bufq_free(&mfsp->mfs_buflist);
 		free(mp, M_MOUNT);
 		free(mfsp, M_MFSNODE);
-		vrele(rootvp);
 		return (error);
 	}	
 	simple_lock(&mountlist_slock);

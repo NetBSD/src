@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.28.2.3 2004/09/21 13:39:24 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.28.2.4 2005/01/17 19:33:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -30,11 +30,11 @@
  */
 
 /*
- * uvm_bio.c: buffered i/o vnode mapping cache
+ * uvm_bio.c: buffered i/o object mapping cache
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.3 2004/09/21 13:39:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.4 2005/01/17 19:33:11 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.28.2.3 2004/09/21 13:39:24 skrll Exp $
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/vnode.h>
-#include <sys/proc.h>
 
 #include <uvm/uvm.h>
 
@@ -82,8 +80,8 @@ struct ubc_map
 {
 	struct uvm_object *	uobj;		/* mapped object */
 	voff_t			offset;		/* offset into uobj */
-	voff_t			writeoff;	/* overwrite offset */
-	vsize_t			writelen;	/* overwrite len */
+	voff_t			writeoff;	/* write offset */
+	vsize_t			writelen;	/* write len */
 	int			refcount;	/* refcount on mapping */
 	int			flags;		/* extra state */
 
@@ -119,16 +117,9 @@ int ubc_winshift = UBC_WINSHIFT;
 int ubc_winsize;
 #if defined(PMAP_PREFER)
 int ubc_nqueues;
-boolean_t ubc_release_unmap = FALSE;
 #define UBC_NQUEUES ubc_nqueues
-#define UBC_RELEASE_UNMAP(uobj) \
-	(ubc_release_unmap && (((struct vnode *)uobj)->v_flag & VTEXT))
-#elif defined(PMAP_CACHE_VIVT)
-#define UBC_NQUEUES 1
-#define UBC_RELEASE_UNMAP(uobj) TRUE
 #else
 #define UBC_NQUEUES 1
-#define UBC_RELEASE_UNMAP(uobj) FALSE
 #endif
 
 /*
@@ -175,13 +166,10 @@ ubc_init(void)
 	}
 	va = (vaddr_t)1L;
 #ifdef PMAP_PREFER
-	PMAP_PREFER(0, &va);
+	PMAP_PREFER(0, &va, 0, 0);	/* kernel is never topdown */
 	ubc_nqueues = va >> ubc_winshift;
 	if (ubc_nqueues == 0) {
 		ubc_nqueues = 1;
-	}
-	if (ubc_nqueues != 1) {
-		ubc_release_unmap = TRUE;
 	}
 #endif
 	ubc_winsize = 1 << ubc_winshift;
@@ -228,7 +216,6 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 	int flags;
 {
 	struct uvm_object *uobj;
-	struct vnode *vp;
 	struct ubc_map *umap;
 	vaddr_t va, eva, ubc_offset, slot_offset;
 	int i, error, npages;
@@ -249,37 +236,56 @@ ubc_fault(ufi, ign1, ign2, ign3, ign4, fault_type, access_type, flags)
 
 	va = ufi->orig_rvaddr;
 	ubc_offset = va - (vaddr_t)ubc_object.kva;
-
-	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx at %d",
-	    va, ubc_offset, access_type, 0);
-
 	umap = &ubc_object.umap[ubc_offset >> ubc_winshift];
 	KASSERT(umap->refcount != 0);
 	slot_offset = ubc_offset & (ubc_winsize - 1);
 
+	/*
+	 * some platforms cannot write to individual bytes atomically, so
+	 * software has to do read/modify/write of larger quantities instead.
+	 * this means that the access_type for "write" operations
+	 * can be VM_PROT_READ, which confuses us mightily.
+	 * 
+	 * deal with this by resetting access_type based on the info
+	 * that ubc_alloc() stores for us.
+	 */
+
+	access_type = umap->writelen ? VM_PROT_WRITE : VM_PROT_READ;
+	UVMHIST_LOG(ubchist, "va 0x%lx ubc_offset 0x%lx access_type %d",
+	    va, ubc_offset, access_type, 0);
+
+#ifdef DIAGNOSTIC
+	if ((access_type & VM_PROT_WRITE) != 0) {
+		if (slot_offset < trunc_page(umap->writeoff) ||
+		    umap->writeoff + umap->writelen <= slot_offset) {
+			panic("ubc_fault: out of range write");
+		}
+	}
+#endif
+
 	/* no umap locking needed since we have a ref on the umap */
 	uobj = umap->uobj;
-	vp = (struct vnode *)uobj;
-	KASSERT(vp != NULL);
 
-	npages = MIN(ubc_winsize - slot_offset,
-		     (round_page(MAX(vp->v_size, umap->offset +
-				     umap->writeoff + umap->writelen)) -
-		      umap->offset)) >> PAGE_SHIFT;
+	if ((access_type & VM_PROT_WRITE) == 0) {
+		npages = (ubc_winsize - slot_offset) >> PAGE_SHIFT;
+	} else {
+		npages = (round_page(umap->offset + umap->writeoff +
+		    umap->writelen) - (umap->offset + slot_offset))
+		    >> PAGE_SHIFT;
+		flags |= PGO_PASTEOF;
+	}
 
 again:
 	memset(pgs, 0, sizeof (pgs));
 	simple_lock(&uobj->vmobjlock);
 
-	UVMHIST_LOG(ubchist, "slot_offset 0x%x writeoff 0x%x writelen 0x%x "
-	    "v_size 0x%x", slot_offset, umap->writeoff, umap->writelen,
-	    vp->v_size);
-	UVMHIST_LOG(ubchist, "getpages vp %p offset 0x%x npages %d",
+	UVMHIST_LOG(ubchist, "slot_offset 0x%x writeoff 0x%x writelen 0x%x ",
+	    slot_offset, umap->writeoff, umap->writelen, 0);
+	UVMHIST_LOG(ubchist, "getpages uobj %p offset 0x%x npages %d",
 	    uobj, umap->offset + slot_offset, npages, 0);
 
-	flags |= PGO_PASTEOF;
-	error = VOP_GETPAGES(vp, umap->offset + slot_offset, pgs, &npages, 0,
-	    access_type, 0, flags);
+	error = (*uobj->pgops->pgo_get)(uobj, umap->offset + slot_offset, pgs,
+	    &npages, 0, access_type, 0, flags);
 	UVMHIST_LOG(ubchist, "getpages error %d npages %d", error, npages, 0,
 	    0);
 
@@ -298,6 +304,7 @@ again:
 	simple_lock(&uobj->vmobjlock);
 	uvm_lock_pageq();
 	for (i = 0; va < eva; i++, va += PAGE_SIZE) {
+
 		/*
 		 * for virtually-indexed, virtually-tagged caches we should
 		 * avoid creating writable mappings when we don't absolutely
@@ -326,9 +333,11 @@ again:
 			continue;
 		}
 		if (pg->loan_count != 0) {
+
 			/*
 			 * avoid unneeded loan break if possible.
 			 */
+
 			if ((access_type & VM_PROT_WRITE) == 0)
 				prot &= ~VM_PROT_WRITE;
 
@@ -390,22 +399,22 @@ ubc_alloc(uobj, offset, lenp, flags)
 	vsize_t *lenp;
 	int flags;
 {
-	struct vnode *vp = (struct vnode *)uobj;
 	vaddr_t slot_offset, va;
 	struct ubc_map *umap;
 	voff_t umap_offset;
 	int error;
 	UVMHIST_FUNC("ubc_alloc"); UVMHIST_CALLED(ubchist);
 
-	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx filesize 0x%x",
-	    uobj, offset, *lenp, vp->v_size);
+	UVMHIST_LOG(ubchist, "uobj %p offset 0x%lx len 0x%lx",
+	    uobj, offset, *lenp, 0);
 
+	KASSERT(*lenp > 0);
 	umap_offset = (offset & ~((voff_t)ubc_winsize - 1));
 	slot_offset = (vaddr_t)(offset & ((voff_t)ubc_winsize - 1));
 	*lenp = MIN(*lenp, ubc_winsize - slot_offset);
 
 	/*
-	 * the vnode is always locked here, so we don't need to add a ref.
+	 * the object is always locked here, so we don't need to add a ref.
 	 */
 
 again:
@@ -446,7 +455,7 @@ again:
 
 #ifdef DIAGNOSTIC
 	if ((flags & UBC_WRITE) && (umap->writeoff || umap->writelen)) {
-		panic("ubc_fault: concurrent writes vp %p", uobj);
+		panic("ubc_alloc: concurrent writes uobj %p", uobj);
 	}
 #endif
 	if (flags & UBC_WRITE) {
@@ -472,8 +481,8 @@ again:
 		}
 		memset(pgs, 0, sizeof(pgs));
 		simple_lock(&uobj->vmobjlock);
-		error = VOP_GETPAGES(vp, trunc_page(offset), pgs, &npages, 0,
-		    VM_PROT_READ|VM_PROT_WRITE, 0, gpflags);
+		error = (*uobj->pgops->pgo_get)(uobj, trunc_page(offset), pgs,
+		    &npages, 0, VM_PROT_READ | VM_PROT_WRITE, 0, gpflags);
 		UVMHIST_LOG(ubchist, "faultbusy getpages %d", error, 0, 0, 0);
 		if (error) {
 			goto out;
@@ -553,22 +562,12 @@ ubc_release(va, flags)
 	umap->writelen = 0;
 	umap->refcount--;
 	if (umap->refcount == 0) {
-		if (UBC_RELEASE_UNMAP(uobj)) {
+		if (flags & UBC_UNMAP) {
 
 			/*
-			 * if the cache is virtually indexed and virtually
-			 * tagged, we cannot create a compatible cache alias.
-			 *
-			 * if this file is the executable image of
-			 * some process, that process will likely have
-			 * the file mapped at an alignment other than
-			 * what PMAP_PREFER() would like.  we'd like
-			 * to have process text be able to use the
-			 * cache even if someone is also reading the
-			 * file.
-			 *
-			 * so invalidate mappings of such files as soon as
-			 * possible.
+			 * Invalidate any cached mappings if requested.
+			 * This is typically used to avoid leaving
+			 * incompatible cache aliases around indefinitely.
 			 */
 
 			pmap_remove(pmap_kernel(), umapva,

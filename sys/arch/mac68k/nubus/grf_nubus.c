@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_nubus.c,v 1.66.6.3 2004/09/21 13:18:08 skrll Exp $	*/
+/*	$NetBSD: grf_nubus.c,v 1.66.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.66.6.3 2004/09/21 13:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.66.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -50,63 +50,58 @@ __KERNEL_RCSID(0, "$NetBSD: grf_nubus.c,v 1.66.6.3 2004/09/21 13:18:08 skrll Exp
 #include <mac68k/nubus/nubus.h>
 #include <mac68k/dev/grfvar.h>
 
-static void	load_image_data __P((caddr_t data, struct image_data *image));
+static void	load_image_data(caddr_t, struct image_data *);
 
-static void	grfmv_intr_generic_write1 __P((void *vsc));
-static void	grfmv_intr_generic_write4 __P((void *vsc));
-static void	grfmv_intr_generic_or4 __P((void *vsc));
+static void	grfmv_intr_generic_write1(void *);
+static void	grfmv_intr_generic_write4(void *);
+static void	grfmv_intr_generic_or4(void *);
 
-static void	grfmv_intr_cb264 __P((void *vsc));
-static void	grfmv_intr_cb364 __P((void *vsc));
-static void	grfmv_intr_cmax __P((void *vsc));
-static void	grfmv_intr_cti __P((void *vsc));
-static void	grfmv_intr_radius __P((void *vsc));
-static void	grfmv_intr_radius24 __P((void *vsc));
-static void	grfmv_intr_supermacgfx __P((void *vsc));
-static void	grfmv_intr_lapis __P((void *vsc));
-static void	grfmv_intr_formac __P((void *vsc));
-static void	grfmv_intr_vimage __P((void *vsc));
-static void	grfmv_intr_gvimage __P((void *vsc));
-static void	grfmv_intr_radius_gsc __P((void *vsc));
-static void	grfmv_intr_radius_gx __P((void *vsc));
+static void	grfmv_intr_cb264(void *);
+static void	grfmv_intr_cb364(void *);
+static void	grfmv_intr_cmax(void *);
+static void	grfmv_intr_cti(void *);
+static void	grfmv_intr_radius(void *);
+static void	grfmv_intr_radius24(void *);
+static void	grfmv_intr_supermacgfx(void *);
+static void	grfmv_intr_lapis(void *);
+static void	grfmv_intr_formac(void *);
+static void	grfmv_intr_vimage(void *);
+static void	grfmv_intr_gvimage(void *);
+static void	grfmv_intr_radius_gsc(void *);
+static void	grfmv_intr_radius_gx(void *);
 
-static int	grfmv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static int	grfmv_match __P((struct device *, struct cfdata *, void *));
-static void	grfmv_attach __P((struct device *, struct device *, void *));
+static int	grfmv_mode(struct grf_softc *, int, void *);
+static int	grfmv_match(struct device *, struct cfdata *, void *);
+static void	grfmv_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(macvid, sizeof(struct grfbus_softc),
     grfmv_match, grfmv_attach, NULL, NULL);
 
 static void
-load_image_data(data, image)
-	caddr_t	data;
-	struct	image_data *image;
+load_image_data(caddr_t	data, struct image_data *image)
 {
-	bcopy(data     , &image->size,       4);
-	bcopy(data +  4, &image->offset,     4);
-	bcopy(data +  8, &image->rowbytes,   2);
-	bcopy(data + 10, &image->top,        2);
-	bcopy(data + 12, &image->left,       2);
-	bcopy(data + 14, &image->bottom,     2);
-	bcopy(data + 16, &image->right,      2);
-	bcopy(data + 18, &image->version,    2);
-	bcopy(data + 20, &image->packType,   2);
-	bcopy(data + 22, &image->packSize,   4);
-	bcopy(data + 26, &image->hRes,       4);
-	bcopy(data + 30, &image->vRes,       4);
-	bcopy(data + 34, &image->pixelType,  2);
-	bcopy(data + 36, &image->pixelSize,  2);
-	bcopy(data + 38, &image->cmpCount,   2);
-	bcopy(data + 40, &image->cmpSize,    2);
-	bcopy(data + 42, &image->planeBytes, 4);
+	memcpy(&image->size,       data     , 4);
+	memcpy(&image->offset,     data +  4, 4);
+	memcpy(&image->rowbytes,   data +  8, 2);
+	memcpy(&image->top,        data + 10, 2);
+	memcpy(&image->left,       data + 12, 2);
+	memcpy(&image->bottom,     data + 14, 2);
+	memcpy(&image->right,      data + 16, 2);
+	memcpy(&image->version,    data + 18, 2);
+	memcpy(&image->packType,   data + 20, 2);
+	memcpy(&image->packSize,   data + 22, 4);
+	memcpy(&image->hRes,       data + 26, 4);
+	memcpy(&image->vRes,       data + 30, 4);
+	memcpy(&image->pixelType,  data + 34, 2);
+	memcpy(&image->pixelSize,  data + 36, 2);
+	memcpy(&image->cmpCount,   data + 38, 2);
+	memcpy(&image->cmpSize,    data + 40, 2);
+	memcpy(&image->planeBytes, data + 42, 4);
 }
 
 
 static int
-grfmv_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+grfmv_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
 
@@ -130,9 +125,7 @@ grfmv_match(parent, cf, aux)
 }
 
 static void
-grfmv_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+grfmv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)self;
 	struct nubus_attach_args *na = (struct nubus_attach_args *)aux;
@@ -143,7 +136,7 @@ grfmv_attach(parent, self, aux)
 	nubus_dir dir, mode_dir;
 	int mode;
 
-	bcopy(na->fmt, &sc->sc_slot, sizeof(nubus_slot));
+	memcpy(&sc->sc_slot, na->fmt, sizeof(nubus_slot));
 
 	sc->sc_tag = na->na_tag;
 	sc->card_id = na->drhw;
@@ -351,10 +344,7 @@ bad:
 }
 
 static int
-grfmv_mode(gp, cmd, arg)
-	struct grf_softc *gp;
-	int cmd;
-	void *arg;
+grfmv_mode(struct grf_softc *gp, int cmd, void *arg)
 {
 	switch (cmd) {
 	case GM_GRFON:
@@ -378,8 +368,7 @@ grfmv_mode(gp, cmd, arg)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_write1(vsc)
-	void	*vsc;
+grfmv_intr_generic_write1(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -394,8 +383,7 @@ grfmv_intr_generic_write1(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_write4(vsc)
-	void	*vsc;
+grfmv_intr_generic_write4(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -410,8 +398,7 @@ grfmv_intr_generic_write4(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_generic_or4(vsc)
-	void	*vsc;
+grfmv_intr_generic_or4(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	unsigned long	scratch;
@@ -426,8 +413,7 @@ grfmv_intr_generic_or4(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius(vsc)
-	void	*vsc;
+grfmv_intr_radius(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -446,8 +432,7 @@ grfmv_intr_radius(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius24(vsc)
-	void	*vsc;
+grfmv_intr_radius24(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -469,8 +454,7 @@ grfmv_intr_radius24(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cti(vsc)
-	void	*vsc;
+grfmv_intr_cti(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t c;
@@ -484,8 +468,7 @@ grfmv_intr_cti(vsc)
 
 /*ARGSUSED*/
 static void
-grfmv_intr_cb264(vsc)
-	void	*vsc;
+grfmv_intr_cb264(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -539,8 +522,7 @@ grfmv_intr_cb264(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cb364(vsc)
-	void	*vsc;
+grfmv_intr_cb364(void *vsc)
 {
 	struct grfbus_softc *sc;
 	volatile char *slotbase;
@@ -628,8 +610,7 @@ grfmv_intr_cb364(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_supermacgfx(vsc)
-	void	*vsc;
+grfmv_intr_supermacgfx(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
@@ -642,8 +623,7 @@ grfmv_intr_supermacgfx(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_cmax(vsc)
-	void	*vsc;
+grfmv_intr_cmax(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int32_t dummy;
@@ -658,8 +638,7 @@ grfmv_intr_cmax(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_lapis(vsc)
-	void	*vsc;
+grfmv_intr_lapis(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -672,8 +651,7 @@ grfmv_intr_lapis(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_formac(vsc)
-	void	*vsc;
+grfmv_intr_formac(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
@@ -687,8 +665,7 @@ grfmv_intr_formac(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_vimage(vsc)
-	void	*vsc;
+grfmv_intr_vimage(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 
@@ -701,8 +678,7 @@ grfmv_intr_vimage(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_gvimage(vsc)
-	void	*vsc;
+grfmv_intr_gvimage(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
@@ -715,8 +691,7 @@ grfmv_intr_gvimage(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius_gsc(vsc)
-	void	*vsc;
+grfmv_intr_radius_gsc(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 	u_int8_t dummy;
@@ -730,8 +705,7 @@ grfmv_intr_radius_gsc(vsc)
  */
 /*ARGSUSED*/
 static void
-grfmv_intr_radius_gx(vsc)
-	void	*vsc;
+grfmv_intr_radius_gx(void *vsc)
 {
 	struct grfbus_softc *sc = (struct grfbus_softc *)vsc;
 

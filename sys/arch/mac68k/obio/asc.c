@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.44.6.3 2004/09/21 13:18:09 skrll Exp $	*/
+/*	$NetBSD: asc.c,v 1.44.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.44.6.3 2004/09/21 13:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.44.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
@@ -99,15 +99,15 @@ int	asc_debug = 0;		/* non-zero enables debugging output */
 
 static u_int8_t		asc_wave_tab[0x800];
 
-static int	asc_ring_bell __P((void *, int, int, int));
-static void	asc_stop_bell __P((void *));
+static int	asc_ring_bell(void *, int, int, int);
+static void	asc_stop_bell(void *);
 #if __notyet__
-static void	asc_intr_enable __P((void));
-static void	asc_intr __P((void *));
+static void	asc_intr_enable(void);
+static void	asc_intr(void *);
 #endif
 
-static int	ascmatch __P((struct device *, struct cfdata *, void *));
-static void	ascattach __P((struct device *, struct device *, void *));
+static int	ascmatch(struct device *, struct cfdata *, void *);
+static void	ascattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(asc, sizeof(struct asc_softc),
     ascmatch, ascattach, NULL, NULL);
@@ -127,10 +127,7 @@ const struct cdevsw asc_cdevsw = {
 };
 
 static int
-ascmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+ascmatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_addr_t addr;
@@ -160,9 +157,7 @@ ascmatch(parent, cf, aux)
 }
 
 static void
-ascattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+ascattach(struct device *parent, struct device *self, void *aux)
 {
 	struct asc_softc *sc = (struct asc_softc *)self;
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
@@ -215,11 +210,7 @@ ascattach(parent, self, aux)
 }
 
 int
-ascopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ascopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct asc_softc *sc;
 	int unit;
@@ -236,11 +227,7 @@ ascopen(dev, flag, mode, p)
 }
 
 int
-ascclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+ascclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct asc_softc *sc;
 
@@ -251,30 +238,19 @@ ascclose(dev, flag, mode, p)
 }
 
 int
-ascread(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+ascread(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (ENXIO);
 }
 
 int
-ascwrite(dev, uio, ioflag)
-	dev_t dev;
-	struct uio *uio;
-	int ioflag;
+ascwrite(dev_t dev, struct uio *uio, int ioflag)
 {
 	return (ENXIO);
 }
 
 int
-ascioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ascioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct asc_softc *sc;
 	int error;
@@ -292,10 +268,7 @@ ascioctl(dev, cmd, data, flag, p)
 }
 
 paddr_t
-ascmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+ascmmap(dev_t dev, off_t off, int prot)
 {
 	int unit = ASCUNIT(dev);
 	struct asc_softc *sc;
@@ -312,9 +285,7 @@ ascmmap(dev, off, prot)
 }
 
 static int 
-asc_ring_bell(arg, freq, length, volume)
-	void *arg;
-	int freq, length, volume;
+asc_ring_bell(void *arg, int freq, int length, int volume)
 {
 	struct asc_softc *sc = (struct asc_softc *)arg;
 	unsigned long cfreq;
@@ -363,8 +334,7 @@ asc_ring_bell(arg, freq, length, volume)
 }
 
 static void 
-asc_stop_bell(arg)
-	void *arg;
+asc_stop_bell(void *arg)
 {
 	struct asc_softc *sc = (struct asc_softc *)arg;
 
@@ -380,7 +350,7 @@ asc_stop_bell(arg)
 
 #if __notyet__
 static void
-asc_intr_enable()
+asc_intr_enable(void)
 {
 	int s;
 
@@ -395,8 +365,7 @@ asc_intr_enable()
 
 /*ARGSUSED*/
 static void
-asc_intr(arg)
-        void *arg;
+asc_intr(void *arg)
 {
 #ifdef ASC_DEBUG
 	struct asc_softc *sc = (struct asc_softc *)arg;

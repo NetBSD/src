@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.8.2.7 2004/11/29 07:24:50 skrll Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.8.2.8 2005/01/17 19:32:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.8.2.7 2004/11/29 07:24:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.8.2.8 2005/01/17 19:32:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -103,6 +103,7 @@ struct vfsops cd9660_vfsops = {
 	cd9660_mountroot,
 	cd9660_check_export,
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
+	vfs_stdextattrctl,
 	cd9660_vnodeopv_descs,
 };
 
@@ -132,12 +133,6 @@ cd9660_mountroot()
 	if (root_device->dv_class != DV_DISK)
 		return (ENODEV);
 	
-	/*
-	 * Get vnodes for swapdev and rootdev.
-	 */
-	if (bdevvp(rootdev, &rootvp))
-		panic("cd9660_mountroot: can't setup rootvp");
-
 	if ((error = vfs_rootmountalloc(MOUNT_CD9660, "root_device", &mp))
 			!= 0) {
 		vrele(rootvp);
@@ -149,7 +144,6 @@ cd9660_mountroot()
 		mp->mnt_op->vfs_refcount--;
 		vfs_unbusy(mp);
 		free(mp, M_MOUNT);
-		vrele(rootvp);
 		return (error);
 	}
 	simple_lock(&mountlist_slock);
@@ -235,21 +229,42 @@ cd9660_mount(mp, path, data, ndp, l)
 			return (error);
 		}
 	}
-	if ((mp->mnt_flag & MNT_UPDATE) == 0)
+	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
+		/*
+		 * Disallow multiple mounts of the same device.
+		 * Disallow mounting of a device that is currently in use
+		 * (except for root, which might share swap device for
+		 * miniroot).
+		 */
+		error = vfs_mountedon(devvp);
+		if (error)
+			goto fail;
+		if (vcount(devvp) > 1 && devvp != rootvp) {
+			error = EBUSY;
+			goto fail;
+		}
+		error = VOP_OPEN(devvp, FREAD, FSCRED, l);
+		if (error)
+			goto fail;
 		error = iso_mountfs(devvp, mp, l, &args);
-	else {
-		if (devvp != imp->im_devvp)
-			error = EINVAL;	/* needs translation */
-		else
-			vrele(devvp);
-	}
-	if (error) {
+		if (error) {
+			vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
+			(void)VOP_CLOSE(devvp, FREAD, NOCRED, l);
+			VOP_UNLOCK(devvp, 0);
+			goto fail;
+		}
+	} else {
 		vrele(devvp);
-		return error;
+		if (devvp != imp->im_devvp)
+			return (EINVAL);	/* needs translation */
 	}
 	imp = VFSTOISOFS(mp);
 	return set_statvfs_info(path, UIO_USERSPACE, args.fspec, UIO_USERSPACE,
 	    mp, l);
+
+fail:
+	vrele(devvp);
+	return (error);
 }
 
 /*
@@ -307,7 +322,6 @@ iso_mountfs(devvp, mp, l, argp)
 	struct buf *bp = NULL, *pribp = NULL, *supbp = NULL;
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
-	int needclose = 0;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 	int iso_bsize;
 	int iso_blknum;
@@ -321,23 +335,9 @@ iso_mountfs(devvp, mp, l, argp)
 	if (!ronly)
 		return EROFS;
 	
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return error;
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return EBUSY;
+	/* Flush out any old buffers remaining from a previous use. */
 	if ((error = vinvalbuf(devvp, V_SAVE, l->l_proc->p_ucred, l, 0, 0)) != 0)
 		return (error);
-
-	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED, l);
-	if (error)
-		return error;
-	needclose = 1;
 	
 	/* This is the "logical sector size".  The standard says this
 	 * should be 2048 or the physical sector size on the device,
@@ -510,11 +510,6 @@ out:
 		brelse(pribp);
 	if (supbp)
 		brelse(supbp);
-	if (needclose) {
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		(void)VOP_CLOSE(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, l);
-		VOP_UNLOCK(devvp, 0);
-	}
 	if (isomp) {
 		free(isomp, M_ISOFSMNT);
 		mp->mnt_data = NULL;

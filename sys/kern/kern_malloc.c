@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.79.2.3 2004/09/21 13:35:05 skrll Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.79.2.4 2005/01/17 19:32:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79.2.3 2004/09/21 13:35:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79.2.4 2005/01/17 19:32:25 skrll Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -78,7 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.79.2.3 2004/09/21 13:35:05 skrll E
 
 #include <uvm/uvm_extern.h>
 
-static struct vm_map kmem_map_store;
+static struct vm_map_kernel kmem_map_store;
 struct vm_map *kmem_map = NULL;
 
 #include "opt_kmempages.h"
@@ -314,7 +314,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 		if (__predict_false(va == NULL)) {
 			/*
 			 * Kmem_malloc() can return NULL, even if it can
-			 * wait, if there is no map space avaiable, because
+			 * wait, if there is no map space available, because
 			 * it can't fix that problem.  Neither can we,
 			 * right now.  (We should release pages which
 			 * are completely free and which are in buckets
@@ -799,16 +799,7 @@ kmeminit_nkmempages(void)
 		return;
 	}
 
-	/*
-	 * We use the following (simple) formula:
-	 *
-	 *	- Starting point is physical memory / 4.
-	 *
-	 *	- Clamp it down to NKMEMPAGES_MAX.
-	 *
-	 *	- Round it up to NKMEMPAGES_MIN.
-	 */
-	npages = physmem / 4;
+	npages = physmem;
 
 	if (npages > NKMEMPAGES_MAX)
 		npages = NKMEMPAGES_MAX;
@@ -855,8 +846,9 @@ kmeminit(void)
 	    (vsize_t)(nkmempages * sizeof(struct kmemusage)));
 	kmb = 0;
 	kmem_map = uvm_km_suballoc(kernel_map, &kmb,
-	    &kml, (vsize_t)(nkmempages << PAGE_SHIFT), 
+	    &kml, ((vsize_t)nkmempages << PAGE_SHIFT), 
 	    VM_MAP_INTRSAFE, FALSE, &kmem_map_store);
+	uvm_km_vacache_init(kmem_map, "kvakmem", 0);
 	kmembase = (char *)kmb;
 	kmemlimit = (char *)kml;
 #ifdef KMEMSTATS

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm_6040.c,v 1.2.2.3 2004/09/21 13:21:00 skrll Exp $	*/
+/*	$NetBSD: ibm_6040.c,v 1.2.2.4 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.2.2.3 2004/09/21 13:21:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.2.2.4 2005/01/17 19:30:09 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm_6040.c,v 1.2.2.3 2004/09/21 13:21:00 skrll Exp $
 #include <machine/platform.h>
 
 /*
-static void pci_intr_fixup_ibm_6040(int, int, int *);
+static void pci_intr_fixup_ibm_6040(int, int, int, int *);
 */
 
 static const char *obiodevs_ibm_6040[] = {
@@ -56,7 +56,7 @@ struct platform platform_ibm_6040 = {
 	"IBM PPS Model 6040 (E)",		/* model */
 	platform_generic_match,			/* match */
 	prep_pci_get_chipset_tag_indirect,	/* pci_get_chipset_tag */
-	pci_intr_nofixup,		/* pci_intr_fixup */
+	pci_intr_nofixup,			/* pci_intr_fixup */
 	init_intr_ivr,				/* init_intr */
 	cpu_setup_ibm_generic,			/* cpu_setup */
 	reset_prep_generic,			/* reset */

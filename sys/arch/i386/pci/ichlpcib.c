@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.6.2.4 2004/09/21 13:17:06 skrll Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.6.2.5 2005/01/17 19:29:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.4 2004/09/21 13:17:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.6.2.5 2005/01/17 19:29:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -184,12 +184,11 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 				  ioreg | LPCIB_TCO1_CNT_TCO_TMR_HLT);
 
 	/*
-	 * Enable TCO timeout SMI. SMBIOS might ignore it, but...
+	 * Enable TCO timeout SMI only if the hardware reset does not
+	 * work. We don't know what the SMBIOS does.
 	 */
 	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
-	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
-		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN,
-				  ioreg | LPCIB_SMI_EN_TCO_EN);
+	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
 
 	/*
 	 * And enable TCO timeout reset.
@@ -202,11 +201,16 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 			       pcireg & (~LPCIB_PCI_GEN_STA_NO_REBOOT));
 		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 					LPCIB_PCI_GEN_STA);
-		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
+		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
 			printf("%s: TCO timer reboot disabled by hardware; "
 			       "hope SMBIOS properly handles it.\n",
 			       sc->sc_dev.dv_xname);
+			ioreg |= LPCIB_SMI_EN_TCO_EN;
+		}
 	}
+
+	if (ioreg & LPCIB_SMI_EN_GBL_SMI_EN)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
 
 	printf("%s: TCO (watchdog) timer configured.\n", sc->sc_dev.dv_xname);
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.15.2.3 2004/09/21 13:21:49 skrll Exp $       */
+/*      $NetBSD: pccons.c,v 1.15.2.4 2005/01/17 19:30:19 skrll Exp $       */
 
 /*
  * Copyright 1997
@@ -135,7 +135,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.15.2.3 2004/09/21 13:21:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.15.2.4 2005/01/17 19:30:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_xserver.h"
@@ -165,11 +165,7 @@ __KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.15.2.3 2004/09/21 13:21:49 skrll Exp $"
 #include <machine/pio.h>
 
 #include <machine/pccons.h>
-#ifdef i386
-#include <machine/pc/display.h>
-#else
-#include <shark/shark/display.h>
-#endif
+#include <dev/ic/pcdisplay.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -354,14 +350,14 @@ struct regspec
 struct display_info
 {
     int           init;
-    vm_offset_t   paddr;
+    paddr_t       paddr;
     int           linebytes;
     int           depth;
     int           height;
     int           width;
     char          *charSet;
     int           charSetLen;
-    vm_offset_t   ioBase;
+    paddr_t       ioBase;
     int           ioLen;
 };
 
@@ -1740,7 +1736,7 @@ pcioctl(dev_t       dev,
 			 * Warning: Relies on OFW setting up the console in 
 			 * linear mode 
 			 */			
-			vm_offset_t linearPhysAddr = displayInfo(paddr); 
+			paddr_t linearPhysAddr = displayInfo(paddr); 
 
 			/* Size unknown - X Server will probe chip later. */
 			((struct map_info *)data)->method = MAP_MMAP;
@@ -1764,9 +1760,9 @@ pcioctl(dev_t       dev,
 		case CONSOLE_GET_IO_INFO:
 		    if(data)
 		    {
-			vm_offset_t ioPhysAddr = displayInfo(ioBase);
+			paddr_t ioPhysAddr = displayInfo(ioBase);
 			int ioLength = displayInfo(ioLen); 
-			vm_offset_t pam_io_data;
+			paddr_t pam_io_data;
 
 			((struct map_info *)data)->method = MAP_MMAP;
 			((struct map_info *)data)->size 
@@ -1793,7 +1789,7 @@ pcioctl(dev_t       dev,
 	        case CONSOLE_GET_MEM_INFO:
 		    if(data)
 		    {
-		        vm_offset_t vam_mem_data = isa_mem_data_vaddr();
+		        vaddr_t vam_mem_data = isa_mem_data_vaddr();
 
 			/* 
 			 * Address and size defined in shark.h and 
@@ -2448,7 +2444,7 @@ sput(struct pc_softc   *sc,
         u_short was;
 #endif
         unsigned cursorat;
-	vm_offset_t vam_mem_data = isa_mem_data_vaddr();
+	vaddr_t vam_mem_data = isa_mem_data_vaddr();
         
         /* 
         ** Check to see if we have color support
@@ -3992,7 +3988,8 @@ pcmmap(dev_t   dev,
        int     nprot)
 {
 #ifdef SHARK
-    vm_offset_t pam_io_data, vam_mem_data;
+    paddr_t pam_io_data;
+    vaddr_t vam_mem_data;
 
     if (offset < 0)
 	return (-1);
@@ -4169,11 +4166,11 @@ getDisplayInfo(struct display_info *displayInfP)
 	
 	/* Linear frame buffer virtual and physical address */
 	if (OF_getprop(phandle, "address", &tempval, 
-		       sizeof(vm_offset_t)) > 0)
+		       sizeof(vaddr_t)) > 0)
 	{
-	    vm_offset_t vaddr;
+	    vaddr_t vaddr;
 
-	    vaddr = (vm_offset_t)of_decode_int((unsigned char *)&tempval);
+	    vaddr = (vaddr_t)of_decode_int((unsigned char *)&tempval);
 	    /* translation must be done by OFW, because we have not yet
 	       called ofw_configmem and switched over to netBSD memory
 	       manager */
@@ -4181,7 +4178,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	}
 	else
 	{
-	    displayInfP->paddr = (vm_offset_t)(-1);
+	    displayInfP->paddr = (paddr_t)(-1);
 	}
 
 	/* Bytes per scan line */
@@ -4191,7 +4188,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	}
 	else
 	{
-	    displayInfP->linebytes = (vm_offset_t)(-1);
+	    displayInfP->linebytes = -1;
 	}
 
 	/* Colour depth - bits per pixel */
@@ -4201,7 +4198,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	}
 	else
 	{
-	    displayInfP->depth = (vm_offset_t)(-1);
+	    displayInfP->depth = -1;
 	}
 
 	/* Display height - pixels */
@@ -4211,7 +4208,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	}
 	else
 	{
-	    displayInfP->height = (vm_offset_t)(-1);
+	    displayInfP->height = -1;
 	}
 
 	/* Display width - pixels */
@@ -4221,7 +4218,7 @@ getDisplayInfo(struct display_info *displayInfP)
 	}
 	else
 	{
-	    displayInfP->width = (vm_offset_t)(-1);
+	    displayInfP->width = -1;
 	}
 
 	/* Name of character Set */
@@ -4276,34 +4273,34 @@ getDisplayInfo(struct display_info *displayInfP)
 		} else {
 #if 0
 			/* XXX leave this alone until 'address' hack dies */
-			displayInfP->paddr = (vm_offset_t)-1;
+			displayInfP->paddr = (paddr_t)-1;
 #endif
 		}
 		if (ioStart != 0xffffffff) {
 			displayInfP->ioBase = ioStart;
 			displayInfP->ioLen = ioEnd - ioStart;
 		} else {
-			displayInfP->ioBase = (vm_offset_t)-1;
+			displayInfP->ioBase = (paddr_t)-1;
 			displayInfP->ioLen = -1;
 		}
 	    }
 	}
 	if (regSize <= 0)
 	{
-	    displayInfP->ioBase = (vm_offset_t)-1;
+	    displayInfP->ioBase = (paddr_t)-1;
 	    displayInfP->ioLen = -1;
 	}
     }
     else
     {
-	displayInfP->paddr  = (vm_offset_t)-1;
+	displayInfP->paddr  = (paddr_t)-1;
 	displayInfP->linebytes = -1;
 	displayInfP->depth = -1;
 	displayInfP->height = -1;
 	displayInfP->width = -1;
 	displayInfP->charSet = (char *)-1;
 	displayInfP->charSetLen = 0;
-	displayInfP->ioBase = (vm_offset_t)-1;
+	displayInfP->ioBase = (paddr_t)-1;
 	displayInfP->ioLen = 0;
     }
     return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.9.2.3 2004/09/21 13:21:24 skrll Exp $	*/
+/*	$NetBSD: console.c,v 1.9.2.4 2005/01/17 19:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.9.2.3 2004/09/21 13:21:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.9.2.4 2005/01/17 19:30:19 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -144,8 +144,9 @@ gio_video_init(char *consdev)
 		case MACH_SGI_IP22:
 #if (NPCKBC > 0)
 			/* XXX Hardcoded iotag, HPC address XXX */
-			pckbc_cnattach(1, 0x1fb80000 + HPC_PBUS_CH6_DEVREGS
-				+ IOC_KB_REGS, KBCMDP, PCKBC_KBD_SLOT);
+			pckbc_cnattach(1, HPC_BASE_ADDRESS_0 +
+			    HPC3_PBUS_CH6_DEVREGS + IOC_KB_REGS, KBCMDP,
+			    PCKBC_KBD_SLOT);
 #endif
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.78.2.6 2004/11/02 07:51:30 skrll Exp $	*/
+/*	$NetBSD: atw.c,v 1.78.2.7 2005/01/17 19:30:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.78.2.6 2004/11/02 07:51:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.78.2.7 2005/01/17 19:30:39 skrll Exp $");
 
 #include "bpfilter.h"
 
@@ -2205,7 +2205,8 @@ atw_recv_mgmt(struct ieee80211com *ic, struct mbuf *m,
 		if (ic->ic_opmode != IEEE80211_M_IBSS ||
 		    ic->ic_state != IEEE80211_S_RUN)
 			break;
-		if (ieee80211_ibss_merge(ic, ni, atw_get_tsft(sc)) == ENETRESET)
+		if (le64toh(ni->ni_tsf) >= atw_get_tsft(sc) &&
+		    ieee80211_ibss_merge(ic, ni) == ENETRESET)
 			atw_change_ibss(sc);
 		break;
 	default:
@@ -3539,7 +3540,7 @@ atw_start(struct ifnet *ifp)
 		 * probably strip FCS just in case it sticks around in
 		 * bridged packets.
 		 */
-		hh->atw_service = IEEE80211_PLCP_SERVICE; /* XXX guess */
+		hh->atw_service = 0x00; /* XXX guess */
 		hh->atw_paylen = htole16(m0->m_pkthdr.len -
 		    sizeof(struct atw_frame));
 

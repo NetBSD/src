@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.8.2.4 2004/12/18 09:31:26 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.8.2.5 2005/01/17 19:30:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.4 2004/12/18 09:31:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.8.2.5 2005/01/17 19:30:09 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -352,6 +352,16 @@ cpu_setup(self, ci)
 	 * Configure power-saving mode.
 	 */
 	switch (vers) {
+	case MPC604:
+	case MPC604e:
+	case MPC604ev:
+		/*
+		 * Do not have HID0 support settings, but can support
+		 * MSR[POW] off
+		 */
+		powersave = 1;
+		break;
+
 	case MPC603:
 	case MPC603e:
 	case MPC603ev:
@@ -377,9 +387,9 @@ cpu_setup(self, ci)
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
-		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
+		hid0 &= ~(HID0_HIGH_BAT_EN | HID0_SLEEP);
 		hid0 |= HID0_NAP | HID0_DPM;
-		powersave = 0;		/* but don't use it */
+		powersave = 1;
 		break;
 
 	default:
@@ -448,8 +458,8 @@ cpu_setup(self, ci)
 		aprint_normal("%s: ", self->dv_xname);
 		cpu_print_speed();
 
-		if (vers == MPC604ev || vers == MPC750 || vers == MPC7400 ||
-		    vers == IBM750FX || vers == MPC7410 || MPC745X_P(vers)) {
+		if (vers == IBM750FX || vers == MPC750 ||
+		    vers == MPC7400  || vers == MPC7410 || MPC745X_P(vers)) {
 			if (MPC745X_P(vers)) {
 				cpu_config_l3cr(vers);
 			} else {

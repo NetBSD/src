@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.75.2.3 2004/09/21 13:37:12 skrll Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.75.2.4 2005/01/17 19:32:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75.2.3 2004/09/21 13:37:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.75.2.4 2005/01/17 19:32:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1066,8 +1066,7 @@ reset_vif(vifp)
 		}
 	} else if (vifp->v_flags & VIFF_REGISTER) {
 #ifdef PIM
-		if (vifp->v_flags & VIFF_REGISTER)
-			reg_vif_num = VIFI_INVALID;
+		reg_vif_num = VIFI_INVALID;
 #endif
 	} else {
 		satosin(&ifr.ifr_addr)->sin_len = sizeof(struct sockaddr_in);

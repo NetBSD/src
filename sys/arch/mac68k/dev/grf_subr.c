@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_subr.c,v 1.16.2.3 2004/09/21 13:18:03 skrll Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.16.2.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.16.2.3 2004/09/21 13:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.16.2.4 2005/01/17 19:29:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -50,10 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_subr.c,v 1.16.2.3 2004/09/21 13:18:03 skrll Exp 
 #include <mac68k/dev/grfvar.h>
 
 void
-grf_establish(sc, sp, g_mode)
-	struct grfbus_softc *sc;
-	nubus_slot *sp;
-	int (*g_mode) __P((struct grf_softc *, int, void *));
+grf_establish(struct grfbus_softc *sc, nubus_slot *sp,
+    int (*g_mode)(struct grf_softc *, int, void *))
 {
 	struct grfmode *gm = &sc->curr_mode;
 	struct grfbus_attach_args ga;
@@ -77,9 +75,7 @@ grf_establish(sc, sp, g_mode)
 }
 
 int
-grfbusprint(aux, name)
-	void *aux;
-	const char *name;
+grfbusprint(void *aux, const char *name)
 {
 	struct grfbus_attach_args *ga = aux;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.12.2.3 2004/09/21 13:18:03 skrll Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.12.2.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.12.2.3 2004/09/21 13:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.12.2.4 2005/01/17 19:29:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,11 +70,11 @@ const struct cdevsw grf_cdevsw = {
 	nostop, notty, nopoll, grfmmap, nokqfilter,
 };
 
-void	grf_scinit __P((struct grf_softc *, const char *, int));
-void	grf_init __P((int));
-void	grfattach __P((int));
-int	grfmap __P((dev_t, struct macfb_softc *, caddr_t *, struct proc *));
-int	grfunmap __P((dev_t, struct macfb_softc *, caddr_t, struct proc *));
+void	grf_scinit(struct grf_softc *, const char *, int);
+void	grf_init(int);
+void	grfattach(int);
+int	grfmap(dev_t, struct macfb_softc *, caddr_t *, struct proc *);
+int	grfunmap(dev_t, struct macfb_softc *, caddr_t, struct proc *);
 
 /* Non-private for the benefit of libkvm. */
 struct	grf_softc *grf_softc;
@@ -84,10 +84,7 @@ int	numgrf = 0;
  * Initialize a softc to sane defaults.
  */
 void
-grf_scinit(sc, name, unit)
-	struct grf_softc *sc;
-	const char *name;
-	int unit;
+grf_scinit(struct grf_softc *sc, const char *name, int unit)
 { 
 	memset(sc, 0, sizeof(struct grf_softc));
 	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "%s%d", name, unit);
@@ -101,8 +98,7 @@ grf_scinit(sc, name, unit)
  * them to avoid problems down the road.
  */
 void
-grf_init(n)
-	int n;
+grf_init(int n)
 {
 	struct grf_softc *sc;
 	int i;
@@ -142,8 +138,7 @@ grf_init(n)
  * so other than a basic sanity check we do nothing.
  */
 void
-grfattach(n)
-	int n;
+grfattach(int n)
 {
 	if (n <= 0) {
 #ifdef DIAGNOSTIC
@@ -163,12 +158,10 @@ grfattach(n)
  * device, the only bit of information we really need is the macfb_softc.
  */
 void
-grf_attach(sc, unit)
-	struct macfb_softc *sc;
-	int unit;
+grf_attach(struct macfb_softc *sc, int unit)
 {
-	grf_init(unit);
 
+	grf_init(unit);
 	if (unit < numgrf)
 		grf_softc[unit].mfb_sc = sc;
 }
@@ -177,11 +170,7 @@ grf_attach(sc, unit)
  * Standard device ops
  */
 int
-grfopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+grfopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -198,11 +187,7 @@ grfopen(dev, flag, mode, p)
 }
 
 int
-grfclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+grfclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct grf_softc *sc;
 	int unit = GRFUNIT(dev);
@@ -221,12 +206,7 @@ grfclose(dev, flag, mode, p)
 }
 
 int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
@@ -305,10 +285,7 @@ grfioctl(dev, cmd, data, flag, p)
 }
 
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+grfmmap(dev_t dev, off_t off, int prot)
 {
 	struct grf_softc *sc;
 	struct macfb_devconfig *dc;
@@ -334,11 +311,7 @@ grfmmap(dev, off, prot)
 }
 
 int
-grfmap(dev, sc, addrp, p)
-	dev_t dev;
-	struct macfb_softc *sc;
-	caddr_t *addrp;
-	struct proc *p;
+grfmap(dev_t dev, struct macfb_softc *sc, caddr_t *addrp, struct proc *p)
 {
 	struct specinfo si;
 	struct vnode vn;
@@ -364,11 +337,7 @@ grfmap(dev, sc, addrp, p)
 }
 
 int
-grfunmap(dev, sc, addr, p)
-	dev_t dev;
-	struct macfb_softc *sc;
-	caddr_t addr;
-	struct proc *p;
+grfunmap(dev_t dev, struct macfb_softc *sc, caddr_t addr, struct proc *p)
 {
 	vm_size_t size;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.72.2.5 2004/10/19 15:56:37 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.72.2.6 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -349,27 +349,27 @@ struct fpframe;
 struct pcb;
 
 /* machdep.c */
-void	mac68k_set_bell_callback __P((int (*)(void *, int, int, int), void *));
-int	mac68k_ring_bell __P((int, int, int));
-u_int	get_mapping __P((void));
+void	mac68k_set_bell_callback(int (*)(void *, int, int, int), void *);
+int	mac68k_ring_bell(int, int, int);
+u_int	get_mapping(void);
 
 /* locore.s functions */
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
+int	suline(caddr_t, caddr_t);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
+void	proc_trampoline(void);
+void	loadustp(int);
 
 /* sys_machdep.c */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
 
 /* vm_machdep.c */
-void	physaccess __P((caddr_t, caddr_t, register int, register int));
-void	physunaccess __P((caddr_t, register int));
-int	kvtop __P((caddr_t));
+void	physaccess(caddr_t, caddr_t, int, int);
+void	physunaccess(caddr_t, int);
+int	kvtop(caddr_t);
 
 #endif
 

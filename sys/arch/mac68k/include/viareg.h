@@ -1,4 +1,4 @@
-/*	$NetBSD: viareg.h,v 1.12 1999/06/28 01:56:57 briggs Exp $	*/
+/*	$NetBSD: viareg.h,v 1.12.36.1 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -199,13 +199,13 @@ extern int VIA2;
 
 #define vDirA_ADBState	0x30
 
-void	via_init __P((void));
-void	via_powerdown __P((void));
-void	via_set_modem __P((int));
-int	add_nubus_intr   __P((int, void (*) __P((void *)), void *));
-void	enable_nubus_intr __P((void));
-void	via1_register_irq __P((int, void (*)(void *), void *));
-void	via2_register_irq __P((int, void (*)(void *), void *));
+void	via_init(void);
+void	via_powerdown(void);
+void	via_set_modem(int);
+int	add_nubus_intr(int, void (*)(void *), void *);
+void	enable_nubus_intr(void);
+void	via1_register_irq(int, void (*)(void *), void *);
+void	via2_register_irq(int, void (*)(void *), void *);
 
-extern void	(*via1itab[7]) __P((void *));
-extern void	(*via2itab[7]) __P((void *));
+extern void	(*via1itab[7])(void *);
+extern void	(*via2itab[7])(void *);

@@ -1,6 +1,7 @@
-/*	$NetBSD: pte.h,v 1.1 2001/06/13 06:01:49 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_autoconf.c,v 1.2.2.2 2005/01/17 19:30:09 skrll Exp $	*/
+/*	Original Tag: ibm4xxgpx_autoconf.c,v 1.2 2004/10/23 17:12:22 thorpej Exp $	*/
 
-/*-
+/*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
  * All rights reserved.
@@ -31,24 +32,32 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_IBM4XX_PTE_H_
-#define	_IBM4XX_PTE_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_autoconf.c,v 1.2.2.2 2005/01/17 19:30:09 skrll Exp $");
 
-#include <powerpc/ibm4xx/tlb.h>
+#include <sys/param.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/systm.h>
 
-/*
- * Page Table Entries
- */
-#ifndef	_LOCORE
-struct pte {
-	u_int pte_hi;
-	u_int pte_lo;
-};
-typedef	struct pte pte_t;
-#endif	/* _LOCORE */
+#include <machine/cpu.h>
 
-/* Pmap mananged reference/modified bits */
-#define	PTE_HI_REF	0x00000020
-#define	PTE_HI_CHG	0x00000040
+void
+ibm4xx_device_register(struct device *dev, void *aux)
+{
+	struct device *parent = dev->dv_parent;
 
-#endif	/* _IBM4XX_PTE_H_ */
+	if (strcmp(dev->dv_cfdata->cf_name, "emac") == 0 &&
+	    strcmp(parent->dv_cfdata->cf_name, "opb") == 0) {
+		/* Set the mac-addr of the on-chip Ethernet. */
+		/* XXX 405GP/405GPr only has one; what about CPUs with two? */
+		/* XXX board_data is for IBM ROM Monitor 1.x with 405GP */
+		if (prop_set(dev_propdb, dev, "mac-addr",
+			     &board_data.mac_address_local,
+			     sizeof(board_data.mac_address_local),
+			     PROP_CONST, 0) != 0)
+			printf("WARNING: unable to set mac-addr "
+			    "property for %s\n", dev->dv_xname);
+		return;
+	}
+}

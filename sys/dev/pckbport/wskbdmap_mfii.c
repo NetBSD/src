@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.7 2004/10/19 15:57:26 skrll Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.2.4.8 2005/01/17 19:31:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.7 2004/10/19 15:57:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.2.4.8 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -551,6 +551,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_NULLMAP(KB_US | KB_MACHDEP,	KB_US),
 #ifndef WSKBD_USONLY
 	KBD_NULLMAP(KB_DE | KB_MACHDEP,	KB_DE),
+	KBD_NULLMAP(KB_ES | KB_MACHDEP,	KB_ES),
 	KBD_NULLMAP(KB_FR | KB_MACHDEP,	KB_FR),
 	KBD_NULLMAP(KB_JP | KB_MACHDEP,	KB_JP),
 	KBD_NULLMAP(KB_US | KB_MACHDEP | KB_SWAPCTRLCAPS,

@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.40.2.6 2004/12/18 09:33:17 skrll Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.40.2.7 2005/01/17 19:32:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -121,7 +121,7 @@ struct nfsnode_dir {
 	nfsuint64 ndir_cookieverf;	/* Cookie verifier */
 	struct nfsdirhashhead *ndir_dircache; /* offset -> cache hash heads */
 	struct nfsdirchainhead ndir_dirchain; /* Chain of dir cookies */
-	struct timespec ndir_nctime;	/* Last neg cache entry */
+	struct timespec ndir_nctime;	/* Last name cache entry */
 	unsigned ndir_dircachesize;	/* Size of dir cookie cache */
 };
 
@@ -206,7 +206,8 @@ LIST_HEAD(nfsnodehashhead, nfsnode);
 #define	NACC		0x0100	/* Special file accessed */
 #define	NUPD		0x0200	/* Special file updated */
 #define	NCHG		0x0400	/* Special file times changed */
-#define	NTRUNCDELAYED	0x1000	/* Should be truncated later */
+#define	NTRUNCDELAYED	0x1000	/* Should be truncated later;
+				   implies stale cache */
 #define	NREMOVED	0x2000	/* Has been removed */
 #define	NUSEOPENCRED	0x4000	/* Try open cred first rather than owner's */
 

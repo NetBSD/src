@@ -1,4 +1,4 @@
-/* 	$NetBSD: px.c,v 1.19.2.4 2004/11/21 08:53:49 skrll Exp $	*/
+/* 	$NetBSD: px.c,v 1.19.2.5 2005/01/17 19:31:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.4 2004/11/21 08:53:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: px.c,v 1.19.2.5 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ px_init(struct stic_info *si, int bootstrap)
 		 * directly from vm_physmem[].
 		 */
 		bva = (caddr_t)uvm_pageboot_alloc(PX_BUF_SIZE + PX_BUF_ALIGN);
-		bpa = (STIC_KSEG_TO_PHYS(kva) + PX_BUF_ALIGN - 1) &
+		bpa = (STIC_KSEG_TO_PHYS(bva) + PX_BUF_ALIGN - 1) &
 		    ~(PX_BUF_ALIGN - 1);
 		if (bpa + PX_BUF_SIZE > 8192*1024)
 			panic("px_init: allocation out of bounds");

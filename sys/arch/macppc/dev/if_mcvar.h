@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcvar.h,v 1.7 2003/04/09 01:54:45 thorpej Exp $	*/
+/*	$NetBSD: if_mcvar.h,v 1.7.2.1 2005/01/17 19:29:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -45,7 +45,7 @@
 				    (sc)->sc_regh, MACE_REG(reg), (val)))
 
 #ifndef	MC_RXDMABUFS
-#define	MC_RXDMABUFS	4
+#define	MC_RXDMABUFS	2
 #endif
 #if (MC_RXDMABUFS < 2)
 #error Must have at least two buffers for DMA!

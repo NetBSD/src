@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.112.2.3 2004/09/21 13:36:36 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.112.2.4 2005/01/17 19:32:38 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.3 2004/09/21 13:36:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.112.2.4 2005/01/17 19:32:38 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -176,7 +176,8 @@ extern u_char	at_org_code[3];
 extern u_char	aarp_org_code[3];
 #endif /* NETATALK */
 
-u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
+    { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}
 
 #define SIN(x) ((struct sockaddr_in *)x)
@@ -1215,12 +1216,16 @@ ether_crc32_be(const u_int8_t *buf, size_t len)
 }
 
 #ifdef INET
-u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
-u_char	ether_ipmulticast_max[6] = { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
+const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN] =
+    { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
+const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN] =
+    { 0x01, 0x00, 0x5e, 0x7f, 0xff, 0xff };
 #endif
 #ifdef INET6
-u_char	ether_ip6multicast_min[6] = { 0x33, 0x33, 0x00, 0x00, 0x00, 0x00 };
-u_char	ether_ip6multicast_max[6] = { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
+const uint8_t ether_ip6multicast_min[ETHER_ADDR_LEN] =
+    { 0x33, 0x33, 0x00, 0x00, 0x00, 0x00 };
+const uint8_t ether_ip6multicast_max[ETHER_ADDR_LEN] =
+    { 0x33, 0x33, 0xff, 0xff, 0xff, 0xff };
 #endif
 
 /*
@@ -1337,7 +1342,6 @@ ether_addmulti(struct ifreq *ifr, struct ethercom *ec)
 	}
 	bcopy(addrlo, enm->enm_addrlo, 6);
 	bcopy(addrhi, enm->enm_addrhi, 6);
-	enm->enm_ec = ec;
 	enm->enm_refcount = 1;
 	LIST_INSERT_HEAD(&ec->ec_multiaddrs, enm, enm_list);
 	ec->ec_multicnt++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esoreg.h,v 1.5.28.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: esoreg.h,v 1.5.28.4 2005/01/17 19:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Klaus J. Klein
@@ -133,7 +133,7 @@
 #define ESO_MIXREG_PVR_SYNTH	0x36	/* Playback mixer: FM/Synth */
 #define ESO_MIXREG_PVR_CD	0x38	/* Playback mixer: AuxA/CD */
 #define ESO_MIXREG_PVR_AUXB	0x3a	/* Playback mixer: AuxB */
-#define ESO_MIXREG_PCSPKR_VOL	0x3c	/* PC speaker volume */ 
+#define ESO_MIXREG_PCSPKR_VOL	0x3c	/* PC speaker volume */
 #define ESO_MIXREG_PVR_LINE	0x3e	/* Playback mixer: Line */
 #define ESO_MIXREG_SPAT		0x50	/* Spatializer Enable and Mode */
 #define  ESO_MIXREG_SPAT_MONO	0x02	/* 0 = Stereo in, 1 = Mono in */

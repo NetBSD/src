@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC,v 1.195.2.4 2004/11/14 08:15:05 skrll Exp $
+# $NetBSD: GENERIC,v 1.195.2.5 2005/01/17 19:29:12 skrll Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
 #
-# Created from: # NetBSD: GENERIC.in,v 1.23 2004/06/28 21:07:47 bouyer Exp $
+# Created from: # NetBSD: GENERIC.in,v 1.27 2005/01/13 16:11:38 is Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.195.2.4 $"
+#ident 		"GENERIC-$Revision: 1.195.2.5 $"
 
 
 maxusers	8
@@ -416,11 +416,7 @@ cbiiisc0 	at zbus0		# Cyberstorm mk.III/Cyberstorm PPC SCSI
 scsibus*	at cbiiisc0
 empsc0		at zbus0		# Emplant scsi
 scsibus*	at empsc0
-#idesc0		at mainbus0		# A4000 & A1200 IDE
-#scsibus*	at idesc0
 
-# <<< comment out the wdc/atapibus entries below if the idesc lines above >>>
-# <<< are uncommented >>>
 wdc0		at mainbus0		# A4000 & A1200 IDE bus
 atabus* 	at wdc? channel ?	# ATA bus
 wd*		at atabus? drive ?	#  + drives

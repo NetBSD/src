@@ -1,4 +1,4 @@
-/*	$NetBSD: inst.c,v 1.10.2.3 2004/09/21 13:15:39 skrll Exp $	*/
+/*	$NetBSD: inst.c,v 1.10.2.4 2005/01/17 19:29:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -295,7 +295,7 @@ dsklabel()
 
 struct fsname_to_type {
 	const char *name;
-	u_int8_t type;
+	uint8_t type;
 } n_to_t[] = {
 	{ "unused",	FS_UNUSED },
 	{ "ffs",	FS_BSDFFS },

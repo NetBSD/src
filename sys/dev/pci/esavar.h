@@ -1,4 +1,4 @@
-/* $NetBSD: esavar.h,v 1.4 2002/03/16 14:34:01 jmcneill Exp $ */
+/* $NetBSD: esavar.h,v 1.4.12.1 2005/01/17 19:31:24 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -27,7 +27,7 @@
 
 /*
  * ESS Allegro-1 / Maestro3 Audio Driver
- * 
+ *
  * Based on the FreeBSD maestro3 driver
  *
  */
@@ -76,12 +76,12 @@ struct esa_channel {
 	int			blksize;
 	int			pos;
 	void			*buf;
-	u_int32_t		start;
-	u_int32_t		count;
+	uint32_t		start;
+	uint32_t		count;
 
 	/* mode settings */
 	struct audio_params	mode;
-	
+
 	void			(*intr)(void *);
 	void			*arg;
 };
@@ -133,5 +133,5 @@ struct esa_softc
 	int			delay1, delay2;
 
 	void			*powerhook;
-	u_int16_t		*savemem;
+	uint16_t		*savemem;
 };

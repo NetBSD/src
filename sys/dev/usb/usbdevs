@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.332.2.6 2004/11/14 08:15:57 skrll Exp $
+$NetBSD: usbdevs,v 1.332.2.7 2005/01/17 19:31:53 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -40,6 +40,11 @@ $NetBSD: usbdevs,v 1.332.2.6 2004/11/14 08:15:57 skrll Exp $
 /*
  * List of known USB vendors
  *
+ * USB.org publishes a VID list of USB-IF member companies at
+ * http://www.usb.org/developers/tools
+ * Note that it does not show companies that have obtained a Vendor ID
+ * without becoming full members.
+ *
  * Please note that these IDs do not do anything. Adding an ID here and
  * regenerating the usbdevs.h and usbdevs_data.h only makes a symbolic name
  * available to the source code and does not change any functionality, nor
@@ -56,7 +61,7 @@ $NetBSD: usbdevs,v 1.332.2.6 2004/11/14 08:15:57 skrll Exp $
  * make the device recognised by the appropriate device driver.
  */
 
-vendor EGALAX2		0x0123  eGalax, Inc.
+vendor EGALAX2		0x0123	eGalax, Inc.
 vendor AOX		0x03e8	AOX
 vendor ATMEL		0x03eb	Atmel
 vendor MITSUMI		0x03ee	Mitsumi
@@ -74,7 +79,7 @@ vendor CATC		0x0423	Computer Access Technology
 vendor SMC2		0x0424	Standard Microsystems
 vendor GRAVIS		0x0428	Advanced Gravis Computer
 vendor SUN		0x0430	Sun Microsystems
-vendor TAUGA		0x0436  Taugagreining HF
+vendor TAUGA		0x0436	Taugagreining HF
 vendor AMD		0x0438	Advanced Micro Devices
 vendor LEXMARK		0x043d	Lexmark International
 vendor NANAO		0x0440	NANAO
@@ -226,9 +231,9 @@ vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
 vendor SIEMENS		0x067c	Siemens
 vendor AVANCELOGIC	0x0680	Avance Logic
-vendor HAGIWARA		0x0693  Hagiwara Sys-Com
 vendor MINOLTA		0x0686	Minolta
 vendor CHPRODUCTS	0x068e	CH Products
+vendor HAGIWARA		0x0693	Hagiwara Sys-Com
 vendor CTX		0x0698	Chuntex
 vendor ASKEY		0x069a	Askey Computer
 vendor SAITEK		0x06a3	Saitek
@@ -256,10 +261,10 @@ vendor MIDIMAN		0x0763	Midiman
 vendor LINKSYS2		0x077b	Linksys
 vendor GRIFFIN		0x077d	Griffin Technology
 vendor SANDISK		0x0781	SanDisk
-vendor JENOPTIK		0x0784  Jenoptik
+vendor JENOPTIK		0x0784	Jenoptik
+vendor LOGITEC		0x0789	Logitec
 vendor BRIMAX		0x078e	Brimax
 vendor AXIS		0x0792	Axis Communications
-vendor LOGITEC		0x0789	Logitec
 vendor ABL		0x0794	ABL Electronics
 vendor SUNCOMM		0x079c	Sun Communications, Inc.
 vendor ALFADATA		0x079d	Alfadata Computer
@@ -288,9 +293,9 @@ vendor STSN		0x07ef	STSN
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
+vendor PALM		0x0830	Palm Computing
 vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACTIONSTAR	0x0835	Action Star Enterprise
-vendor PALM		0x0830	Palm Computing
 vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
@@ -351,7 +356,7 @@ vendor MEDIAGEAR	0x0a48	MediaGear
 vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
-vendor NEODIO		0x0aec  Neodio
+vendor NEODIO		0x0aec	Neodio
 vendor VODAFONE		0x0af0	Vodafone
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
@@ -375,13 +380,13 @@ vendor ZCOM		0x0cde	Z-Com
 vendor TANGTOP		0x0d3d	Tangtop
 vendor SMC3		0x0d5c	Standard Microsystems
 vendor PEN		0x0d7d	Pen Drive
-vendor ACDC		0x0d7e  American Computer & Digital Components
+vendor ACDC		0x0d7e	American Computer & Digital Components
 vendor ABC		0x0d8c	ABC
 vendor MSI		0x0db0	Micro Star
 vendor HAWKING		0x0e66	Hawking
 vendor OTI		0x0ea0	Ours Technology
-vendor PILOTECH		0x0eaf  Pilotech
-vendor EGALAX		0x0eef  eGalax
+vendor PILOTECH		0x0eaf	Pilotech
+vendor EGALAX		0x0eef	eGalax
 vendor QUALCOMM		0x1004	Qualcomm
 vendor MOTOROLA		0x1063	Motorola
 vendor CCYU		0x1065	CCYU Technology
@@ -409,7 +414,7 @@ vendor ERICSSON		0x2282	Ericsson
 vendor MOTOROLA2	0x22b8	Motorola
 vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor HIROSE		0x2631	Hirose Electric
-vendor NHJ		0x2770  NHJ
+vendor NHJ		0x2770	NHJ
 vendor PLANEX		0x2c02	Planex Communications
 vendor VIDZMEDIA	0x3275	VidzMedia Pte Ltd
 vendor AEI		0x3334	AEI

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_elmc_mca.c,v 1.12.2.3 2004/09/21 13:30:17 skrll Exp $	*/
+/*	$NetBSD: if_elmc_mca.c,v 1.12.2.4 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.3 2004/09/21 13:30:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_elmc_mca.c,v 1.12.2.4 2005/01/17 19:31:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,11 +146,11 @@ elmc_mca_attach(struct device *parent, struct device *self, void *aux)
 	case 8: irq = 9; break;
 	case 1: irq = 12; break;
 	default:
-		printf("%s: cannot determine irq\n", sc->sc_dev.dv_xname);
+		printf(": cannot determine irq\n");
 		return;
 	}
 
-	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 24) >> 3) * 0x8000);
+	pbram_addr = ELMC_MADDR_BASE + (((pos2 & 0x18) >> 3) * 0x8000);
 
 	printf(" slot %d irq %d: 3Com EtherLink/MC Ethernet Adapter (3C523)\n",
 		ma->ma_slot + 1, irq);

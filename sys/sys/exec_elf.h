@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.70.2.6 2004/11/18 21:06:01 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.70.2.7 2005/01/17 19:33:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -420,6 +420,8 @@ typedef struct {
 /* Symbol Table index of the undefined symbol */
 #define	ELF_SYM_UNDEFINED	0
 
+#define STN_UNDEF		0	/* undefined index */
+
 /* st_info: Symbol Bindings */
 #define	STB_LOCAL		0	/* local symbol */
 #define	STB_GLOBAL		1	/* global symbol */
@@ -444,14 +446,18 @@ typedef struct {
 #define	STT_LOPROC		13	/* Processor-specific range */
 #define	STT_HIPROC		15
 
-/* st_info utility macros */
-#define	ELF32_ST_BIND(info)		((Elf32_Word)(info) >> 4)
-#define	ELF32_ST_TYPE(info)		((Elf32_Word)(info) & 0xf)
-#define	ELF32_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
+/* st_other: Visibility Types */
+#define	STV_DEFAULT		0	/* use binding type */
+#define	STV_INTERNAL		1	/* not referenced from outside */
+#define	STV_HIDDEN		2	/* not visible, may be used via ptr */
+#define	STV_PROTECTED		3	/* visible, not preemptible */
 
-#define	ELF64_ST_BIND(info)		((Elf64_Xword)(info) >> 4)
-#define	ELF64_ST_TYPE(info)		((Elf64_Xword)(info) & 0xf)
-#define	ELF64_ST_INFO(bind,type)	((Elf_Byte)(((bind) << 4) | ((type) & 0xf)))
+/* st_info/st_other utility macros */
+#define	ELF_ST_BIND(info)		((uint32_t)(info) >> 4)
+#define	ELF_ST_TYPE(info)		((uint32_t)(info) & 0xf)
+#define	ELF_ST_INFO(bind,type)		((Elf_Byte)(((bind) << 4) | \
+					 ((type) & 0xf)))
+#define	ELF_ST_VISIBILITY(other)	((uint32_t)(other) & 3)
 
 /*
  * Special section indexes
@@ -735,10 +741,6 @@ struct netbsd_elfcore_procinfo {
 #define	ELF_R_TYPE	ELF32_R_TYPE
 #define	ELFCLASS	ELFCLASS32
 
-#define	ELF_ST_BIND	ELF32_ST_BIND
-#define	ELF_ST_TYPE	ELF32_ST_TYPE
-#define	ELF_ST_INFO	ELF32_ST_INFO
-
 #define	AuxInfo		Aux32Info
 #elif defined(ELFSIZE) && (ELFSIZE == 64)
 #define	Elf_Ehdr	Elf64_Ehdr
@@ -758,12 +760,18 @@ struct netbsd_elfcore_procinfo {
 #define	ELF_R_TYPE	ELF64_R_TYPE
 #define	ELFCLASS	ELFCLASS64
 
-#define	ELF_ST_BIND	ELF64_ST_BIND
-#define	ELF_ST_TYPE	ELF64_ST_TYPE
-#define	ELF_ST_INFO	ELF64_ST_INFO
-
 #define	AuxInfo		Aux64Info
 #endif
+
+#define	ELF32_ST_BIND(info)		ELF_ST_BIND(info)
+#define	ELF32_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define	ELF32_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define	ELF32_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
+
+#define	ELF64_ST_BIND(info)		ELF_ST_BIND(info)
+#define	ELF64_ST_TYPE(info)		ELF_ST_TYPE(info)
+#define	ELF64_ST_INFO(bind,type)	ELF_ST_INFO(bind,type)
+#define	ELF64_ST_VISIBILITY(other)	ELF_ST_VISIBILITY(other)
 
 #ifdef _KERNEL
 

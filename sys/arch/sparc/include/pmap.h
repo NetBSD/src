@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.68.2.3 2004/09/21 13:22:15 skrll Exp $ */
+/*	$NetBSD: pmap.h,v 1.68.2.4 2005/01/17 19:30:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -171,6 +171,7 @@ struct regmap {
 };
 
 struct segmap {
+	uint64_t sg_wiremap;		/* per-page wire bits (4m) */
 	int	*sg_pte;		/* points to NPTESG PTEs */
 	pmeg_t	sg_pmeg;		/* the MMU segment number (4c) */
 	u_char	sg_npte;		/* number of valid PTEs in sg_pte
@@ -243,8 +244,9 @@ int	pmap_dumpmmu(int (*)(dev_t, daddr_t, caddr_t, size_t), daddr_t);
 
 #define	pmap_kernel()	(&kernel_pmap_store)
 #define	pmap_resident_count(pm)	((pm)->pm_stats.resident_count)
+#define	pmap_wired_count(pm)	((pm)->pm_stats.wired_count)
 
-#define PMAP_PREFER(fo, ap)		pmap_prefer((fo), (ap))
+#define PMAP_PREFER(fo, ap, sz, td)	pmap_prefer((fo), (ap))
 
 #define PMAP_EXCLUDE_DECLS	/* tells MI pmap.h *not* to include decls */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: maccons.c,v 1.3.6.3 2004/09/21 13:18:05 skrll Exp $	*/
+/*	$NetBSD: maccons.c,v 1.3.6.4 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.3.6.3 2004/09/21 13:18:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.3.6.4 2005/01/17 19:29:35 skrll Exp $");
 
 #include "wsdisplay.h"
 #include "wskbd.h"
@@ -46,11 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: maccons.c,v 1.3.6.3 2004/09/21 13:18:05 skrll Exp $"
 #include <mac68k/dev/macfbvar.h>
 #include <mac68k/dev/akbdvar.h>
 
-void maccnprobe __P((struct consdev *));
-void maccninit __P((struct consdev *));
-int maccngetc __P((dev_t));
-void maccnputc __P((dev_t, int));
-void maccnpollc __P((dev_t, int));
+void maccnprobe(struct consdev *);
+void maccninit(struct consdev *);
+int maccngetc(dev_t);
+void maccnputc(dev_t, int);
+void maccnpollc(dev_t, int);
 
 static int	maccons_initted = (-1);
 
@@ -106,7 +106,7 @@ maccnputc(dev_t dev, int c)
 {
 #if NZSC > 0
 	extern dev_t mac68k_zsdev;
-	extern int zscnputc __P((dev_t dev, int c));
+	extern int zscnputc(dev_t, int);
 #endif
 
 #if NWSDISPLAY > 0

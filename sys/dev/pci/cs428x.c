@@ -1,4 +1,4 @@
-/*	$NetBSD: cs428x.c,v 1.6.2.3 2004/09/21 13:31:01 skrll Exp $	*/
+/*	$NetBSD: cs428x.c,v 1.6.2.4 2005/01/17 19:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -33,7 +33,7 @@
 /* Common functions for CS4280 and CS4281 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.6.2.3 2004/09/21 13:31:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs428x.c,v 1.6.2.4 2005/01/17 19:31:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,24 +63,14 @@ int cs428x_debug = 0;
 #endif
 
 int
-cs428x_open(void *addr, int flags)
-{
-	return 0;
-}
-
-void
-cs428x_close(void *addr)
-{
-}
-
-int
-cs428x_round_blocksize(void *addr, int blk)
+cs428x_round_blocksize(void *addr, int blk,
+		       int mode, const audio_params_t *param)
 {
 	struct cs428x_softc *sc;
 	int retval;
-	
+
 	DPRINTFN(5,("cs428x_round_blocksize blk=%d -> ", blk));
-	
+
 	sc = addr;
 	if (blk < sc->hw_blocksize)
 		retval = sc->hw_blocksize;
@@ -193,7 +183,7 @@ cs428x_mappage(void *addr, void *mem, off_t off, int prot)
 		return -1;
 
 	for (p = sc->sc_dmas; p && BUFADDR(p) != mem; p = p->next)
-		;
+		continue;
 
 	if (p == NULL) {
 		DPRINTF(("cs428x_mappage: bad buffer address\n"));
@@ -230,10 +220,10 @@ cs428x_attach_codec(void *addr, struct ac97_codec_if *codec_if)
 }
 
 int
-cs428x_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
+cs428x_read_codec(void *addr, uint8_t ac97_addr, uint16_t *ac97_data)
 {
 	struct cs428x_softc *sc;
-	u_int32_t acctl;
+	uint32_t acctl;
 	int n;
 
 	sc = addr;
@@ -276,10 +266,10 @@ cs428x_read_codec(void *addr, u_int8_t ac97_addr, u_int16_t *ac97_data)
 }
 
 int
-cs428x_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
+cs428x_write_codec(void *addr, uint8_t ac97_addr, uint16_t ac97_data)
 {
 	struct cs428x_softc *sc;
-	u_int32_t acctl;
+	uint32_t acctl;
 
 	sc = addr;
 
@@ -302,7 +292,7 @@ cs428x_write_codec(void *addr, u_int8_t ac97_addr, u_int16_t ac97_data)
 
 /* Internal functions */
 int
-cs428x_allocmem(struct cs428x_softc *sc, 
+cs428x_allocmem(struct cs428x_softc *sc,
 		size_t size, struct malloc_type *pool, int flags,
 		struct cs428x_dma *p)
 {
@@ -363,8 +353,7 @@ cs428x_allocmem(struct cs428x_softc *sc,
 }
 
 int
-cs428x_src_wait(sc)
-	struct cs428x_softc *sc;
+cs428x_src_wait(struct cs428x_softc *sc)
 {
 	int n;
 

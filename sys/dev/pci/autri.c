@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.15.2.6 2004/11/14 08:15:43 skrll Exp $	*/
+/*	$NetBSD: autri.c,v 1.15.2.7 2005/01/17 19:31:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -25,9 +25,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Trident 4DWAVE-DX/NX, SiS 7018, ALi M5451 Sound Driver
- * 
+ *
  * The register information is taken from the ALSA driver.
  *
  * Documentation links:
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.6 2004/11/14 08:15:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.15.2.7 2005/01/17 19:31:23 skrll Exp $");
 
 #include "midi.h"
 
@@ -98,39 +98,38 @@ static __inline void autri_reg_clear_1(struct autri_softc *, int, uint8_t);
 static __inline void autri_reg_set_4(struct autri_softc *, int, uint32_t);
 static __inline void autri_reg_clear_4(struct autri_softc *, int, uint32_t);
 
-int	autri_attach_codec(void *sc, struct ac97_codec_if *);
-int	autri_read_codec(void *sc, u_int8_t a, u_int16_t *d);
-int	autri_write_codec(void *sc, u_int8_t a, u_int16_t d);
-int	autri_reset_codec(void *sc);
-enum ac97_host_flags	autri_flags_codec(void *sc);
+int	autri_attach_codec(void *, struct ac97_codec_if *);
+int	autri_read_codec(void *, uint8_t, uint16_t *);
+int	autri_write_codec(void *, uint8_t, uint16_t);
+int	autri_reset_codec(void *);
+enum ac97_host_flags	autri_flags_codec(void *);
 
-static void autri_powerhook(int why,void *addr);
-static int  autri_init(void *sc);
+static void autri_powerhook(int, void *);
+static int  autri_init(void *);
 static struct autri_dma *autri_find_dma(struct autri_softc *, void *);
-static void autri_setup_channel(struct autri_softc *sc,int mode,
-				struct audio_params *param);
-static void autri_enable_interrupt(struct autri_softc *sc, int ch);
-static void autri_disable_interrupt(struct autri_softc *sc, int ch);
-static void autri_startch(struct autri_softc *sc, int ch, int ch_intr);
-static void autri_stopch(struct autri_softc *sc, int ch, int ch_intr);
-static void autri_enable_loop_interrupt(void *sc);
+static void autri_setup_channel(struct autri_softc *, int,
+				const audio_params_t *param);
+static void autri_enable_interrupt(struct autri_softc *, int);
+static void autri_disable_interrupt(struct autri_softc *, int);
+static void autri_startch(struct autri_softc *, int, int);
+static void autri_stopch(struct autri_softc *, int, int);
+static void autri_enable_loop_interrupt(void *);
 #if 0
-static void autri_disable_loop_interrupt(void *sc);
+static void autri_disable_loop_interrupt(void *);
 #endif
 
 CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
 int	autri_open(void *, int);
-void	autri_close(void *);
 int	autri_query_encoding(void *, struct audio_encoding *);
-int	autri_set_params(void *, int, int,
-			 struct audio_params *, struct audio_params *);
-int	autri_round_blocksize(void *, int);
+int	autri_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+			 stream_filter_list_t *, stream_filter_list_t *);
+int	autri_round_blocksize(void *, int, int, const audio_params_t *);
 int	autri_trigger_output(void *, void *, void *, int, void (*)(void *),
-			     void *, struct audio_params *);
+			     void *, const audio_params_t *);
 int	autri_trigger_input(void *, void *, void *, int, void (*)(void *),
-			    void *, struct audio_params *);
+			    void *, const audio_params_t *);
 int	autri_halt_output(void *);
 int	autri_halt_input(void *);
 int	autri_getdev(void *, struct audio_device *);
@@ -141,13 +140,11 @@ void	autri_free(void *, void *, struct malloc_type *);
 size_t	autri_round_buffersize(void *, int, size_t);
 paddr_t autri_mappage(void *, void *, off_t, int);
 int	autri_get_props(void *);
-int	autri_query_devinfo(void *addr, mixer_devinfo_t *dip);
-
-int     autri_get_portnum_by_name(struct autri_softc *, char *, char *, char *);
+int	autri_query_devinfo(void *, mixer_devinfo_t *);
 
 static const struct audio_hw_if autri_hw_if = {
-        autri_open,
-	autri_close,
+	autri_open,
+	NULL,			/* close */
 	NULL,			/* drain */
 	autri_query_encoding,
 	autri_set_params,
@@ -191,6 +188,26 @@ const struct midi_hw_if autri_midi_hw_if = {
 };
 #endif
 
+#define AUTRI_NFORMATS	8
+static const struct audio_format autri_formats[AUTRI_NFORMATS] = {
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 16, 16,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_ULINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 2, AUFMT_STEREO, 0, {4000, 48000}},
+	{NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_LE, 8, 8,
+	 1, AUFMT_MONAURAL, 0, {4000, 48000}},
+};
+
 /*
  * register set/clear bit
  */
@@ -228,22 +245,24 @@ autri_reg_clear_4(struct autri_softc *sc, int no, uint32_t mask)
 int
 autri_attach_codec(void *sc_, struct ac97_codec_if *codec_if)
 {
-	struct autri_codec_softc *sc = sc_;
+	struct autri_codec_softc *sc;
 
 	DPRINTF(("autri_attach_codec()\n"));
-
+	sc = sc_;
 	sc->codec_if = codec_if;
 	return 0;
 }
 
 int
-autri_read_codec(void *sc_, u_int8_t index, u_int16_t *data)
+autri_read_codec(void *sc_, uint8_t index, uint16_t *data)
 {
-	struct autri_codec_softc *codec = sc_;
-	struct autri_softc *sc = codec->sc;
-	u_int32_t status, addr, cmd, busy;
-	u_int16_t count;
+	struct autri_codec_softc *codec;
+	struct autri_softc *sc;
+	uint32_t status, addr, cmd, busy;
+	uint16_t count;
 
+	codec = sc_;
+	sc = codec->sc;
 	/*DPRINTF(("sc->sc->type : 0x%X",sc->sc->type));*/
 
 	switch (sc->sc_devid) {
@@ -310,13 +329,15 @@ autri_read_codec(void *sc_, u_int8_t index, u_int16_t *data)
 }
 
 int
-autri_write_codec(void *sc_, u_int8_t index, u_int16_t data)
+autri_write_codec(void *sc_, uint8_t index, uint16_t data)
 {
-	struct autri_codec_softc *codec = sc_;
-	struct autri_softc *sc = codec->sc;
-	u_int32_t addr, cmd, busy;
-	u_int16_t count;
+	struct autri_codec_softc *codec;
+	struct autri_softc *sc;
+	uint32_t addr, cmd, busy;
+	uint16_t count;
 
+	codec = sc_;
+	sc = codec->sc;
 	/*DPRINTF(("autri_write_codec(0x%X,0x%X)\n",index,data));*/
 
 	switch (sc->sc_devid) {
@@ -369,13 +390,16 @@ autri_write_codec(void *sc_, u_int8_t index, u_int16_t data)
 int
 autri_reset_codec(void *sc_)
 {
-	struct autri_codec_softc *codec = sc_;
-	struct autri_softc *sc = codec->sc;
-	u_int32_t reg, ready;
-	int addr, count = 200;
+	struct autri_codec_softc *codec;
+	struct autri_softc *sc;
+	uint32_t reg, ready;
+	int addr, count;
 
-	DPRINTF(("autri_reset_codec(codec=%p,sc=%p)\n",codec,sc));
-	DPRINTF(("sc->sc_devid=%X\n",sc->sc_devid));
+	codec = sc_;
+	sc = codec->sc;
+	count = 200;
+	DPRINTF(("autri_reset_codec(codec=%p,sc=%p)\n", codec, sc));
+	DPRINTF(("sc->sc_devid=%X\n", sc->sc_devid));
 
 	switch (sc->sc_devid) {
 	case AUTRI_DEVICE_ID_4DWAVE_DX:
@@ -457,8 +481,9 @@ autri_flags_codec(void *sc_)
 int
 autri_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
+	struct pci_attach_args *pa;
 
+	pa = (struct pci_attach_args *)aux;
 	switch (PCI_VENDOR(pa->pa_id)) {
 	case PCI_VENDOR_TRIDENT:
 		switch (PCI_PRODUCT(pa->pa_id)) {
@@ -487,16 +512,19 @@ autri_match(struct device *parent, struct cfdata *match, void *aux)
 void
 autri_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct autri_softc *sc = (struct autri_softc *)self;
-	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
-	pci_chipset_tag_t pc = pa->pa_pc;
+	struct autri_softc *sc;
+	struct pci_attach_args *pa;
+	pci_chipset_tag_t pc;
 	struct autri_codec_softc *codec;
 	pci_intr_handle_t ih;
 	char const *intrstr;
 	char devinfo[256];
 	int r;
-	u_int32_t reg;
+	uint32_t reg;
 
+	sc = (struct autri_softc *)self;
+	pa = (struct pci_attach_args *)aux;
+	pc = pa->pa_pc;
 	aprint_naive(": Audio controller\n");
 
 	sc->sc_devid = pa->pa_id;
@@ -556,7 +584,7 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 	codec->host_if.write = autri_write_codec;
 	codec->host_if.flags = autri_flags_codec;
 
-	if ((r = ac97_attach(&codec->host_if)) != 0) {
+	if ((r = ac97_attach(&codec->host_if, self)) != 0) {
 		aprint_error("%s: can't attach codec (error 0x%X)\n",
 		    sc->sc_dev.dv_xname, r);
 		return;
@@ -575,8 +603,9 @@ autri_attach(struct device *parent, struct device *self, void *aux)
 static void
 autri_powerhook(int why, void *addr)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
+	sc = addr;
 	if (why == PWR_RESUME && sc->sc_old_power == PWR_SUSPEND) {
 		DPRINTF(("PWR_RESUME\n"));
 		autri_init(sc);
@@ -589,12 +618,14 @@ autri_powerhook(int why, void *addr)
 int
 autri_init(void *sc_)
 {
-	struct autri_softc *sc = sc_;
-	u_int32_t reg;
+	struct autri_softc *sc;
+	uint32_t reg;
+	pci_chipset_tag_t pc;
+	pcitag_t pt;
 
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t pt = sc->sc_pt;
-
+	sc = sc_;
+	pc = sc->sc_pc;
+	pt = sc->sc_pt;
 	DPRINTF(("in autri_init()\n"));
 	DPRINTFN(5,("pci_conf_read(0x40) : 0x%X\n",pci_conf_read(pc,pt,0x40)));
 	DPRINTFN(5,("pci_conf_read(0x44) : 0x%X\n",pci_conf_read(pc,pt,0x44)));
@@ -708,44 +739,45 @@ autri_init(void *sc_)
 static void
 autri_enable_loop_interrupt(void *sc_)
 {
-	struct autri_softc *sc = sc_;
-	u_int32_t reg;
+	struct autri_softc *sc;
+	uint32_t reg;
 
 	/*reg = (ENDLP_IE | MIDLP_IE);*/
 	reg = ENDLP_IE;
-
+	sc = sc_;
 	if (sc->sc_devid == AUTRI_DEVICE_ID_SIS_7018)
 		reg |= BANK_B_EN;
 
-	autri_reg_set_4(sc,AUTRI_LFO_GC_CIR,reg);
+	autri_reg_set_4(sc, AUTRI_LFO_GC_CIR, reg);
 }
 
 #if 0
 static void
 autri_disable_loop_interrupt(void *sc_)
 {
-	struct autri_softc *sc = sc_;
-	u_int32_t reg;
+	struct autri_softc *sc;
+	uint32_t reg;
 
 	reg = (ENDLP_IE | MIDLP_IE);
-	autri_reg_clear_4(sc,AUTRI_LFO_GC_CIR,reg);
+	sc = sc_;
+	autri_reg_clear_4(sc, AUTRI_LFO_GC_CIR, reg);
 }
 #endif
 
 int
 autri_intr(void *p)
 {
-	struct autri_softc *sc = p;
-	u_int32_t intsrc;
-	u_int32_t mask, active[2];
+	struct autri_softc *sc;
+	uint32_t intsrc;
+	uint32_t mask, active[2];
 	int ch, endch;
 /*
 	u_int32_t reg;
 	u_int32_t cso,eso;
 */
-
-	intsrc = TREAD4(sc,AUTRI_MISCINT);
-	if ((intsrc & (ADDRESS_IRQ|MPU401_IRQ)) == 0)
+	sc = p;
+	intsrc = TREAD4(sc, AUTRI_MISCINT);
+	if ((intsrc & (ADDRESS_IRQ | MPU401_IRQ)) == 0)
 		return 0;
 
 	if (intsrc & ADDRESS_IRQ) {
@@ -759,7 +791,7 @@ autri_intr(void *p)
 			endch = 64;
 		}
 
-		for (ch=0; ch<endch; ch++) {
+		for (ch = 0; ch < endch; ch++) {
 			mask = 1 << (ch & 0x1f);
 			if (active[(ch & 0x20) ? 1 : 0] & mask) {
 
@@ -772,11 +804,11 @@ autri_intr(void *p)
 				TWRITE4(sc,AUTRI_LFO_GC_CIR, reg | ch);
 
 				if (sc->sc_devid == AUTRI_DEVICE_ID_4DWAVE_NX) {
-				  cso = TREAD4(sc, 0xe0) & 0x00ffffff;
-				  eso = TREAD4(sc, 0xe8) & 0x00ffffff;
+					cso = TREAD4(sc, 0xe0) & 0x00ffffff;
+					eso = TREAD4(sc, 0xe8) & 0x00ffffff;
 				} else {
-				  cso = (TREAD4(sc, 0xe0) >> 16) & 0x0000ffff;
-				  eso = (TREAD4(sc, 0xe8) >> 16) & 0x0000ffff;
+					cso = (TREAD4(sc, 0xe0) >> 16) & 0x0000ffff;
+					eso = (TREAD4(sc, 0xe8) >> 16) & 0x0000ffff;
 				}
 				/*printf("cso=%d, eso=%d\n",cso,eso);*/
 #endif
@@ -811,7 +843,7 @@ autri_intr(void *p)
  */
 
 int
-autri_allocmem(struct autri_softc *sc, size_t size, size_t align, 
+autri_allocmem(struct autri_softc *sc, size_t size, size_t align,
 	       struct autri_dma *p)
 {
 	int error;
@@ -821,7 +853,7 @@ autri_allocmem(struct autri_softc *sc, size_t size, size_t align,
 	    p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
 	    &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
-		return (error);
+		return error;
 
 	error = bus_dmamem_map(sc->sc_dmatag, p->segs, p->nsegs, p->size,
 	    &p->addr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
@@ -845,12 +877,13 @@ unmap:
 	bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
 free:
 	bus_dmamem_free(sc->sc_dmatag, p->segs, p->nsegs);
-	return (error);
+	return error;
 }
 
 int
 autri_freemem(struct autri_softc *sc, struct autri_dma *p)
 {
+
 	bus_dmamap_unload(sc->sc_dmatag, p->map);
 	bus_dmamap_destroy(sc->sc_dmatag, p->map);
 	bus_dmamem_unmap(sc->sc_dmatag, p->addr, p->size);
@@ -866,18 +899,13 @@ autri_open(void *addr, int flags)
 		    TREAD4((struct autri_softc *)addr, AUTRI_MISCINT)));
 	DPRINTFN(5,("LFO_GC_CIR : 0x%08X\n",
 		    TREAD4((struct autri_softc *)addr, AUTRI_LFO_GC_CIR)));
-        return 0;
-}
-
-void
-autri_close(void *addr)
-{
-	DPRINTF(("autri_close()\n"));
+	return 0;
 }
 
 int
 autri_query_encoding(void *addr, struct audio_encoding *fp)
 {
+
 	switch (fp->index) {
 	case 0:
 		strcpy(fp->name, AudioEulinear);
@@ -928,7 +956,7 @@ autri_query_encoding(void *addr, struct audio_encoding *fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		break;
 	default:
-		return (EINVAL);
+		return EINVAL;
 	}
 
 	return 0;
@@ -936,69 +964,36 @@ autri_query_encoding(void *addr, struct audio_encoding *fp)
 
 int
 autri_set_params(void *addr, int setmode, int usemode,
-		 struct audio_params *play, struct audio_params *rec)
+		 audio_params_t *play, audio_params_t *rec,
+		 stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
-	struct audio_params *p;
-	int mode;
-
-	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
-		if ((setmode & mode) == 0)
-			continue;
-
-		p = mode == AUMODE_PLAY ? play : rec;
-
-		if (p->sample_rate < 4000 || p->sample_rate > 48000 ||
-		    (p->precision != 8 && p->precision != 16) ||
-		    (p->channels != 1 && p->channels != 2))
-			return (EINVAL);
-
-		p->factor = 1;
-		p->sw_code = 0;
-		switch (p->encoding) {
-		case AUDIO_ENCODING_SLINEAR_BE:
-		case AUDIO_ENCODING_ULINEAR_BE:
-			if (p->precision == 16)
-				p->sw_code = swap_bytes;
-			break;
-		case AUDIO_ENCODING_SLINEAR_LE:
-		case AUDIO_ENCODING_ULINEAR_LE:
-			break;
-		case AUDIO_ENCODING_ULAW:
-			if (mode == AUMODE_PLAY)
-				p->sw_code = mulaw_to_ulinear8;
-			else
-				p->sw_code = ulinear8_to_mulaw;
-
-			break;
-		case AUDIO_ENCODING_ALAW:
-			if (mode == AUMODE_PLAY)
-				p->sw_code = alaw_to_ulinear8;
-			else
-				p->sw_code = ulinear8_to_alaw;
-
-			break;
-		default:
-			return (EINVAL);
-		}
+	if (setmode & AUMODE_RECORD) {
+		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
+					 AUMODE_RECORD, rec, FALSE, rfil) < 0)
+			return EINVAL;
 	}
-
+	if (setmode & AUMODE_PLAY) {
+		if (auconv_set_converter(autri_formats, AUTRI_NFORMATS,
+					 AUMODE_PLAY, play, FALSE, pfil) < 0)
+			return EINVAL;
+	}
 	return 0;
 }
 
 int
-autri_round_blocksize(void *addr, int block)
+autri_round_blocksize(void *addr, int block,
+		      int mode, const audio_params_t *param)
 {
-	return (block & -4);
+	return block & -4;
 }
 
 int
 autri_halt_output(void *addr)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
 	DPRINTF(("autri_halt_output()\n"));
-
+	sc = addr;
 	sc->sc_play.intr = NULL;
 	autri_stopch(sc, sc->sc_play.ch, sc->sc_play.ch_intr);
 	autri_disable_interrupt(sc, sc->sc_play.ch_intr);
@@ -1009,10 +1004,10 @@ autri_halt_output(void *addr)
 int
 autri_halt_input(void *addr)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
 	DPRINTF(("autri_halt_input()\n"));
-
+	sc = addr;
 	sc->sc_rec.intr = NULL;
 	autri_stopch(sc, sc->sc_rec.ch, sc->sc_rec.ch_intr);
 	autri_disable_interrupt(sc, sc->sc_rec.ch_intr);
@@ -1023,10 +1018,10 @@ autri_halt_input(void *addr)
 int
 autri_getdev(void *addr, struct audio_device *retp)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
 	DPRINTF(("autri_getdev().\n"));
-
+	sc = addr;
 	strncpy(retp->name, "Trident 4DWAVE", sizeof(retp->name));
 	snprintf(retp->version, sizeof(retp->version), "0x%02x",
 	     PCI_REVISION(sc->sc_class));
@@ -1054,50 +1049,45 @@ autri_getdev(void *addr, struct audio_device *retp)
 int
 autri_mixer_set_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
-	return (sc->sc_codec.codec_if->vtbl->mixer_set_port(
-	    sc->sc_codec.codec_if, cp));
+	sc = addr;
+	return sc->sc_codec.codec_if->vtbl->mixer_set_port(
+	    sc->sc_codec.codec_if, cp);
 }
 
 int
 autri_mixer_get_port(void *addr, mixer_ctrl_t *cp)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
-	return (sc->sc_codec.codec_if->vtbl->mixer_get_port(
-	    sc->sc_codec.codec_if, cp));
+	sc = addr;
+	return sc->sc_codec.codec_if->vtbl->mixer_get_port(
+	    sc->sc_codec.codec_if, cp);
 }
 
 int
 autri_query_devinfo(void *addr, mixer_devinfo_t *dip)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
-	return (sc->sc_codec.codec_if->vtbl->query_devinfo(
-	    sc->sc_codec.codec_if, dip));
-}
-
-int
-autri_get_portnum_by_name(struct autri_softc *sc, char *class,
-			  char *device, char *qualifier)
-{
-	return (sc->sc_codec.codec_if->vtbl->get_portnum_by_name(
-	    sc->sc_codec.codec_if, class, device, qualifier));
+	sc = addr;
+	return sc->sc_codec.codec_if->vtbl->query_devinfo(
+	    sc->sc_codec.codec_if, dip);
 }
 
 void *
 autri_malloc(void *addr, int direction, size_t size,
     struct malloc_type *pool, int flags)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 	struct autri_dma *p;
 	int error;
 
 	p = malloc(sizeof(*p), pool, flags);
 	if (!p)
 		return NULL;
-
+	sc = addr;
 #if 0
 	error = autri_allocmem(sc, size, 16, p);
 #endif
@@ -1115,9 +1105,10 @@ autri_malloc(void *addr, int direction, size_t size,
 void
 autri_free(void *addr, void *ptr, struct malloc_type *pool)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 	struct autri_dma **pp, *p;
 
+	sc = addr;
 	for (pp = &sc->sc_dmas; (p = *pp) != NULL; pp = &p->next) {
 		if (KERNADDR(p) == ptr) {
 			autri_freemem(sc, p);
@@ -1134,7 +1125,7 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 	struct autri_dma *p;
 
 	for (p = sc->sc_dmas; p && KERNADDR(p) != addr; p = p->next)
-		;
+		continue;
 
 	return p;
 }
@@ -1142,44 +1133,45 @@ autri_find_dma(struct autri_softc *sc, void *addr)
 size_t
 autri_round_buffersize(void *addr, int direction, size_t size)
 {
+
 	return size;
 }
 
 paddr_t
 autri_mappage(void *addr, void *mem, off_t off, int prot)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 	struct autri_dma *p;
 
 	if (off < 0)
-		return (-1);
-
+		return -1;
+	sc = addr;
 	p = autri_find_dma(sc, mem);
 	if (!p)
-		return (-1);
+		return -1;
 
-	return (bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
-	    off, prot, BUS_DMA_WAITOK));
+	return bus_dmamem_mmap(sc->sc_dmatag, p->segs, p->nsegs,
+	    off, prot, BUS_DMA_WAITOK);
 }
 
 int
 autri_get_props(void *addr)
 {
-	return (AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
-		AUDIO_PROP_FULLDUPLEX);
+	return AUDIO_PROP_MMAP | AUDIO_PROP_INDEPENDENT |
+	    AUDIO_PROP_FULLDUPLEX;
 }
 
 static void
 autri_setup_channel(struct autri_softc *sc, int mode,
-		    struct audio_params *param)
+		    const audio_params_t *param)
 {
 	int i, ch, channel;
-	u_int32_t reg, cr[5];
-	u_int32_t cso, eso;
-	u_int32_t delta, dch[2], ctrl;
-	u_int32_t alpha_fms, fm_vol, attribute;
+	uint32_t reg, cr[5];
+	uint32_t cso, eso;
+	uint32_t delta, dch[2], ctrl;
+	uint32_t alpha_fms, fm_vol, attribute;
 
-	u_int32_t dmaaddr, dmalen;
+	uint32_t dmaaddr, dmalen;
 	int factor, rvol, cvol;
 	struct autri_chstatus *chst;
 
@@ -1202,7 +1194,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		factor++;
 	}
 
-	delta = (u_int32_t)param->sample_rate;
+	delta = param->sample_rate;
 	if (delta < 4000)
 		delta = 4000;
 	if (delta > 48000)
@@ -1232,7 +1224,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 	rvol = cvol = 0x7f;
 	fm_vol = 0x0 | ((rvol & 0x7f) << 7) | (cvol & 0x7f);
 
-	for (ch=0; ch<2; ch++) {
+	for (ch = 0; ch < 2; ch++) {
 
 		if (ch == 0)
 			dmalen = (chst->length >> factor);
@@ -1252,7 +1244,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		case AUTRI_DEVICE_ID_4DWAVE_DX:
 			cr[0] = (cso << 16) | (alpha_fms & 0x0000ffff);
 			cr[1] = dmaaddr;
-			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff); 
+			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff);
 			cr[3] = fm_vol;
 			cr[4] = ctrl;
 			break;
@@ -1266,7 +1258,7 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		case AUTRI_DEVICE_ID_SIS_7018:
 			cr[0] = (cso << 16) | (alpha_fms & 0x0000ffff);
 			cr[1] = dmaaddr;
-			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff); 
+			cr[2] = (eso << 16) | (dch[ch] & 0x0000ffff);
 			cr[3] = attribute;
 			cr[4] = ctrl;
 			break;
@@ -1285,12 +1277,12 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 		reg = TREAD4(sc,AUTRI_LFO_GC_CIR) & ~0x0000003f;
 		TWRITE4(sc,AUTRI_LFO_GC_CIR, reg | channel);
 
-		for (i=0; i<5; i++) {
+		for (i = 0; i < 5; i++) {
 			TWRITE4(sc, AUTRI_ARAM_CR + i*sizeof(cr[0]), cr[i]);
 			DPRINTFN(5,("cr[%d] : 0x%08X\n", i, cr[i]));
 		}
 
-		/* Bank A only */  
+		/* Bank A only */
 		if (channel < 0x20) {
 			TWRITE4(sc, AUTRI_EBUF1, AUTRI_EMOD_STILL);
 			TWRITE4(sc, AUTRI_EBUF2, AUTRI_EMOD_STILL);
@@ -1302,14 +1294,14 @@ autri_setup_channel(struct autri_softc *sc, int mode,
 int
 autri_trigger_output(void *addr, void *start, void *end, int blksize,
 		     void (*intr)(void *), void *arg,
-		     struct audio_params *param)
+		     const audio_params_t *param)
 {
-	struct autri_softc *sc = addr;
-        struct autri_dma *p;
+	struct autri_softc *sc;
+	struct autri_dma *p;
 
 	DPRINTFN(5,("autri_trigger_output: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
-
+	sc = addr;
 	sc->sc_play.intr = intr;
 	sc->sc_play.intr_arg = arg;
 	sc->sc_play.offset = 0;
@@ -1342,14 +1334,14 @@ autri_trigger_output(void *addr, void *start, void *end, int blksize,
 int
 autri_trigger_input(void *addr, void *start, void *end, int blksize,
 		    void (*intr)(void *), void *arg,
-		    struct audio_params *param)
+		    const audio_params_t *param)
 {
-	struct autri_softc *sc = addr;
-        struct autri_dma *p;
+	struct autri_softc *sc;
+	struct autri_dma *p;
 
 	DPRINTFN(5,("autri_trigger_input: sc=%p start=%p end=%p "
 	    "blksize=%d intr=%p(%p)\n", addr, start, end, blksize, intr, arg));
-
+	sc = addr;
 	sc->sc_rec.intr = intr;
 	sc->sc_rec.intr_arg = arg;
 	sc->sc_rec.offset = 0;
@@ -1393,6 +1385,7 @@ autri_trigger_input(void *addr, void *start, void *end, int blksize,
 static int
 autri_halt(struct autri_softc *sc)
 {
+
 	DPRINTF(("autri_halt().\n"));
 	/*autri_stopch(sc);*/
 	autri_disable_interrupt(sc, sc->sc_play.channel);
@@ -1427,7 +1420,7 @@ static void
 autri_startch(struct autri_softc *sc, int ch, int ch_intr)
 {
 	int reg;
-	u_int32_t chmask;
+	uint32_t chmask;
 
 	reg = (ch & 0x20) ? AUTRI_START_B : AUTRI_START_A;
 	ch &= 0x1f;
@@ -1441,7 +1434,7 @@ static void
 autri_stopch(struct autri_softc *sc, int ch, int ch_intr)
 {
 	int reg;
-	u_int32_t chmask;
+	uint32_t chmask;
 
 	reg = (ch & 0x20) ? AUTRI_STOP_B : AUTRI_STOP_A;
 	ch &= 0x1f;
@@ -1456,12 +1449,12 @@ int
 autri_midi_open(void *addr, int flags, void (*iintr)(void *, int),
 		void (*ointr)(void *), void *arg)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
 	DPRINTF(("autri_midi_open()\n"));
-
-	DPRINTFN(5,("MPUR1 : 0x%02X\n",TREAD1(sc,AUTRI_MPUR1)));
-	DPRINTFN(5,("MPUR2 : 0x%02X\n",TREAD1(sc,AUTRI_MPUR2)));
+	sc = addr;
+	DPRINTFN(5,("MPUR1 : 0x%02X\n", TREAD1(sc, AUTRI_MPUR1)));
+	DPRINTFN(5,("MPUR2 : 0x%02X\n", TREAD1(sc, AUTRI_MPUR2)));
 
 	sc->sc_iintr = iintr;
 	sc->sc_ointr = ointr;
@@ -1472,17 +1465,17 @@ autri_midi_open(void *addr, int flags, void (*iintr)(void *, int),
 
 	if (flags & FWRITE)
 		autri_reg_set_1(sc, AUTRI_MPUR2, AUTRI_MIDIOUT_CONNECT);
-	
-	return (0);
+
+	return 0;
 }
 
 void
 autri_midi_close(void *addr)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 
 	DPRINTF(("autri_midi_close()\n"));
-
+	sc = addr;
 	tsleep(sc, PWAIT, "autri", hz/10); /* give uart a chance to drain */
 
 	sc->sc_iintr = NULL;
@@ -1492,22 +1485,24 @@ autri_midi_close(void *addr)
 int
 autri_midi_output(void *addr, int d)
 {
-	struct autri_softc *sc = addr;
+	struct autri_softc *sc;
 	int x;
 
+	sc = addr;
 	for (x = 0; x != MIDI_BUSY_WAIT; x++) {
 		if ((TREAD1(sc, AUTRI_MPUR1) & AUTRI_MIDIOUT_READY) == 0) {
 			TWRITE1(sc, AUTRI_MPUR0, d);
-			return (0);
+			return 0;
 		}
 		delay(MIDI_BUSY_DELAY);
 	}
-	return (EIO);
+	return EIO;
 }
 
 void
 autri_midi_getinfo(void *addr, struct midi_info *mi)
 {
+
 	mi->name = "4DWAVE MIDI UART";
 	mi->props = MIDI_PROP_CAN_INPUT;
 }

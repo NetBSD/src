@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.57.2.6 2004/10/19 15:58:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.57.2.7 2005/01/17 19:33:10 skrll Exp $
 
 INCSDIR= /usr/include/sys
 
@@ -9,7 +9,7 @@ INCS=	acct.h agpio.h ansi.h ataio.h audioio.h \
 	device.h dir.h dirent.h disk.h disklabel.h disklabel_acorn.h \
 	dkbad.h dkio.h dkstat.h domain.h drvctlio.h dvdio.h \
 	endian.h envsys.h errno.h event.h exec.h exec_aout.h \
-	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extent.h \
+	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
 	fcntl.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	float_ieee754.h fstypes.h gmon.h hash.h \
 	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h ipc.h \

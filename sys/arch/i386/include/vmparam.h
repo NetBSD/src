@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51.2.3 2004/09/21 13:16:57 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51.2.4 2005/01/17 19:29:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,11 +114,9 @@
 #ifdef _KERNEL_OPT
 #include "opt_uvm.h"
 #endif
-#define __HAVE_TOPDOWN_VM
-#ifdef USE_TOPDOWN_VM
+#define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
 	trunc_page(USRSTACK - MAXSSIZ - (sz))
-#endif
 
 /* XXX max. amount of KVM to be used by buffers. */
 #ifndef VM_MAX_KERNEL_BUF

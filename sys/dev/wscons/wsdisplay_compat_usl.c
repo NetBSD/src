@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.23.2.4 2004/09/21 13:34:29 skrll Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.23.2.5 2005/01/17 19:32:11 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.23.2.4 2004/09/21 13:34:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.23.2.5 2005/01/17 19:32:11 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -318,7 +318,7 @@ wsdisplay_usl_ioctl1(struct wsdisplay_softc *sc, u_long cmd, caddr_t data,
 		for (idx = 0; idx <= maxidx; idx++)
 			if (wsdisplay_screenstate(sc, idx) == EBUSY)
 				ss->v_state |= (1 << (idx + 1));
-#undef s
+#undef ss
 		return (0);
 
 #ifdef WSDISPLAY_COMPAT_PCVT

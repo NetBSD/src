@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $	*/
+/*	$NetBSD: ipi.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.2.2.3 2004/09/21 13:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.2.2.4 2005/01/17 19:30:28 skrll Exp $");
 
 #include <sys/param.h> 
 #include <sys/device.h>
@@ -75,19 +75,10 @@ x86_send_ipi(struct cpu_info *ci, int ipimask)
 }
 
 void
-x86_self_ipi (int vector)
-{
-	i82489_writereg(LAPIC_ICRLO,
-	    vector | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT | LAPIC_DEST_SELF);
-}
-
-
-void
 x86_broadcast_ipi (int ipimask)
 {
 	struct cpu_info *ci, *self = curcpu();
 	int count = 0;
-
 	CPU_INFO_ITERATOR cii;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
@@ -101,9 +92,7 @@ x86_broadcast_ipi (int ipimask)
 	if (!count)
 		return;
 
-	i82489_writereg(LAPIC_ICRLO,
-	    LAPIC_IPI_VECTOR | LAPIC_DLMODE_FIXED | LAPIC_LVL_ASSERT |
-	    LAPIC_DEST_ALLEXCL);
+	x86_ipi(LAPIC_IPI_VECTOR, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 }
 
 void

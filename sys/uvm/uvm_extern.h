@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.82.2.6 2004/10/31 07:12:40 skrll Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.82.2.7 2005/01/17 19:33:11 skrll Exp $	*/
 
 /*
  *
@@ -135,7 +135,7 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 /* 0x3: will need, 0x4: dontneed */
 #define UVM_ADV_MASK	0x7	/* mask */
 
-/* mapping flags */
+/* bits 0xffff0000: mapping flags */
 #define UVM_FLAG_FIXED   0x010000 /* find space */
 #define UVM_FLAG_OVERLAY 0x020000 /* establish overlay */
 #define UVM_FLAG_NOMERGE 0x040000 /* don't merge map entries */
@@ -143,6 +143,8 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define UVM_FLAG_AMAPPAD 0x100000 /* for bss: pad amap to reduce malloc() */
 #define UVM_FLAG_TRYLOCK 0x200000 /* fail if we can not lock map */
 #define UVM_FLAG_NOWAIT  0x400000 /* not allowed to sleep */
+#define UVM_FLAG_QUANTUM 0x800000 /* entry never be splitted later */
+#define UVM_FLAG_WAITVA  0x1000000 /* wait for va */
 
 /* macros to extract info */
 #define UVM_PROTECTION(X)	((X) & UVM_PROT_MASK)
@@ -178,11 +180,25 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
 #define	UVM_PGA_ZERO		0x0002	/* returned page must be zero'd */
 
 /*
- * the following defines are for ubc_alloc's flags
+ * flags for ubc_alloc()
  */
 #define UBC_READ	0x01
 #define UBC_WRITE	0x02
 #define UBC_FAULTBUSY	0x04
+
+/*
+ * flags for ubc_release()
+ */
+#define UBC_UNMAP	0x01
+
+/*
+ * helpers for calling ubc_release()
+ */
+#ifdef PMAP_CACHE_VIVT
+#define UBC_WANT_UNMAP(vp) (((vp)->v_flag & VTEXT) != 0)
+#else
+#define UBC_WANT_UNMAP(vp) FALSE
+#endif
 
 /*
  * flags for uvn_findpages().
@@ -205,7 +221,9 @@ typedef off_t voff_t;		/* XXX: offset within a uvm_object */
  * structures
  */
 
+struct buf;
 struct core;
+struct loadavg;
 struct mount;
 struct pglist;
 struct proc;
@@ -221,8 +239,8 @@ struct simplelock;
 struct vm_map_entry;
 struct vm_map;
 struct vm_page;
-
-extern struct pool *uvm_aiobuf_pool;
+struct vmspace;
+struct vmtotal;
 
 /*
  * uvmexp: global data structures that are exported to parts of the kernel
@@ -436,6 +454,7 @@ struct uvmexp_sysctl {
 };
 
 #ifdef _KERNEL
+/* we need this before including uvm_page.h on some platforms */
 extern struct uvmexp uvmexp;
 #endif
 
@@ -478,6 +497,8 @@ struct vmspace {
 
 #ifdef _KERNEL
 
+extern struct pool *uvm_aiobuf_pool;
+
 /*
  * used to keep state while iterating over the map for a core dump.
  */
@@ -509,21 +530,8 @@ extern struct vm_map *phys_map;
 #define uvm_km_zalloc(MAP,SIZE) uvm_km_alloc1(MAP,SIZE,TRUE)
 #define uvm_km_alloc(MAP,SIZE)  uvm_km_alloc1(MAP,SIZE,FALSE)
 
-#endif /* _KERNEL */
-
 #define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
 
-struct buf;
-struct loadavg;
-struct proc;
-struct pmap;
-struct vmspace;
-struct vmtotal;
-struct mount;
-struct vnode;
-struct core;
-
-#ifdef _KERNEL
 #include <sys/mallocvar.h>
 MALLOC_DECLARE(M_VMMAP);
 MALLOC_DECLARE(M_VMPMAP);
@@ -589,14 +597,14 @@ int			uvm_io(struct vm_map *, struct uio *);
 /* uvm_km.c */
 vaddr_t			uvm_km_alloc1(struct vm_map *, vsize_t, boolean_t);
 void			uvm_km_free(struct vm_map *, vaddr_t, vsize_t);
-void			uvm_km_free_wakeup(struct vm_map *, vaddr_t, vsize_t);
+#define uvm_km_free_wakeup(map, start, size) uvm_km_free((map), (start), (size))
 vaddr_t			uvm_km_kmemalloc1(struct vm_map *, struct
 			    uvm_object *, vsize_t, vsize_t, voff_t, int);
 vaddr_t			uvm_km_kmemalloc(struct vm_map *, struct
 			    uvm_object *, vsize_t, int);
 struct vm_map		*uvm_km_suballoc(struct vm_map *, vaddr_t *,
 			    vaddr_t *, vsize_t, int, boolean_t,
-			    struct vm_map *);
+			    struct vm_map_kernel *);
 vaddr_t			uvm_km_valloc1(struct vm_map *, vsize_t,
 			    vsize_t, voff_t, uvm_flag_t);
 vaddr_t			uvm_km_valloc(struct vm_map *, vsize_t);
@@ -608,6 +616,11 @@ vaddr_t			uvm_km_valloc_prefer_wait(struct vm_map *, vsize_t,
 vaddr_t			uvm_km_alloc_poolpage1(struct vm_map *,
 			    struct uvm_object *, boolean_t);
 void			uvm_km_free_poolpage1(struct vm_map *, vaddr_t);
+vaddr_t			uvm_km_alloc_poolpage_cache(struct vm_map *,
+			    struct uvm_object *, boolean_t);
+void			uvm_km_free_poolpage_cache(struct vm_map *, vaddr_t);
+void			uvm_km_vacache_init(struct vm_map *,
+			    const char *, size_t);
 
 extern __inline__ vaddr_t
 uvm_km_kmemalloc(struct vm_map *map, struct uvm_object *obj, vsize_t sz, int flags)

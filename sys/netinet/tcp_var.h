@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.102.2.5 2004/12/18 09:33:06 skrll Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.102.2.6 2005/01/17 19:32:54 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -822,7 +822,10 @@ int	 syn_cache_respond(struct syn_cache *, struct mbuf *);
 void	 syn_cache_timer(void *);
 void	 syn_cache_cleanup(struct tcpcb *);
 
-int	tcp_newreno(struct tcpcb *, struct tcphdr *);
+int	 tcp_newreno(struct tcpcb *, struct tcphdr *);
+
+int	 tcp_input_checksum(int, struct mbuf *, const struct tcphdr *, int, int,
+    int);
 #endif
 
 #endif /* _NETINET_TCP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_obio.c,v 1.49.6.3 2004/09/21 13:18:09 skrll Exp $	*/
+/*	$NetBSD: grf_obio.c,v 1.49.6.4 2005/01/17 19:29:49 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998 Scott Reynolds
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.49.6.3 2004/09/21 13:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_obio.c,v 1.49.6.4 2005/01/17 19:29:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,9 +88,9 @@ extern long		videorowbytes;
 extern long		videobitdepth;
 extern u_long		videosize;
 
-static int	grfiv_mode __P((struct grf_softc *gp, int cmd, void *arg));
-static int	grfiv_match __P((struct device *, struct cfdata *, void *));
-static void	grfiv_attach __P((struct device *, struct device *, void *));
+static int	grfiv_mode(struct grf_softc *, int, void *);
+static int	grfiv_match(struct device *, struct cfdata *, void *);
+static void	grfiv_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(intvid, sizeof(struct grfbus_softc),
     grfiv_match, grfiv_attach, NULL, NULL);
@@ -103,10 +103,7 @@ CFATTACH_DECL(intvid, sizeof(struct grfbus_softc),
 #define VALKYRIE_CONTROL_BASE	0x50f2a000
 
 static int
-grfiv_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+grfiv_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	bus_space_handle_t bsh;
@@ -201,9 +198,7 @@ grfiv_match(parent, cf, aux)
 }
 
 static void
-grfiv_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+grfiv_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct obio_attach_args *oa = (struct obio_attach_args *)aux;
 	struct grfbus_softc *sc;
@@ -358,10 +353,7 @@ grfiv_attach(parent, self, aux)
 }
 
 static int
-grfiv_mode(sc, cmd, arg)
-	struct grf_softc *sc;
-	int cmd;
-	void *arg;
+grfiv_mode(struct grf_softc *sc, int cmd, void *arg)
 {
 	switch (cmd) {
 	case GM_GRFON:

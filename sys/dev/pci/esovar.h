@@ -1,4 +1,4 @@
-/*	$NetBSD: esovar.h,v 1.4.28.3 2004/09/21 13:31:02 skrll Exp $	*/
+/*	$NetBSD: esovar.h,v 1.4.28.4 2005/01/17 19:31:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -120,9 +120,9 @@ struct eso_softc {
 	bus_space_handle_t	sc_game_ioh;
 
 	/* MI audio interface: play/record interrupt callbacks and arguments */
-	void			(*sc_pintr) __P((void *));
+	void			(*sc_pintr)(void *);
 	void *			sc_parg;
-	void			(*sc_rintr) __P((void *));
+	void			(*sc_rintr)(void *);
 	void *			sc_rarg;
 
 	/* Auto-initialize DMA transfer block drain timeouts, in ticks */
@@ -131,7 +131,7 @@ struct eso_softc {
 
 	/* Audio 2 state */
 	uint8_t			sc_a2c2;	/* Audio 2 Control 2 */
-	
+
 	/* Mixer state */
 	uint8_t			sc_gain[ESO_NGAINDEVS][2];
 #define	ESO_LEFT		0

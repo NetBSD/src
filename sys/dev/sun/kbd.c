@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37.2.4 2004/09/21 13:33:27 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37.2.5 2005/01/17 19:31:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.4 2004/09/21 13:33:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.5 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,8 +477,6 @@ kbd_input(k, code)
 	int code;
 {
 	if (k->k_evmode) {
-
-#ifdef KBD_IDLE_EVENTS
 		/*
 		 * XXX: is this still true?
 		 * IDLEs confuse the MIT X11R4 server badly, so we must drop them.
@@ -488,7 +486,6 @@ kbd_input(k, code)
 		 */
 		if (code == KBD_IDLE)
 			return;
-#endif
 
 		/*
 		 * Keyboard is generating firm events.  Turn this keystroke

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.67.2.6 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.67.2.7 2005/01/17 19:32:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.6 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.67.2.7 2005/01/17 19:32:25 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -104,7 +104,7 @@ static struct lkm_table	*curp;			/* global for in-progress ops */
 static struct lkm_table *lkmlookup(int, char *, int *);
 static struct lkm_table *lkmalloc(void);
 static void lkmfree(void);
-static void lkmunreserve(void);
+static void lkmunreserve(int);
 static int _lkm_syscall(struct lkm_table *, int);
 static int _lkm_vfs(struct lkm_table *, int);
 static int _lkm_dev(struct lkm_table *, int);
@@ -264,14 +264,15 @@ lkmfree(void)
  * or explicitly by modload as a result of a link failure.
  */
 static void
-lkmunreserve(void)
+lkmunreserve(int delsymtab)
 {
 
 	if (lkm_state == LKMS_IDLE)
 		return;
 
 	if (curp && curp->syms) {
-		ksyms_delsymtab(curp->private.lkm_any->lkm_name);
+		if (delsymtab)
+			ksyms_delsymtab(curp->private.lkm_any->lkm_name);
 		uvm_km_free(kernel_map, curp->syms, curp->sym_size);/**/
 		curp->syms = 0;
 	}
@@ -308,7 +309,7 @@ lkmclose(dev_t dev, int flag, int mode, struct lwp *l)
 		 * by way of error or by way of close-on-exit from
 		 * a premature exit of "modload".
 		 */
-		lkmunreserve();	/* coerce state to LKM_IDLE */
+		lkmunreserve(1);	/* coerce state to LKM_IDLE */
 		lkmfree();
 	}
 
@@ -452,7 +453,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		if ((flag & FWRITE) == 0) /* only allow this if writing */
 			return EPERM;
 
-		lkmunreserve();	/* coerce state to LKM_IDLE */
+		lkmunreserve(0);	/* coerce state to LKM_IDLE */
 		if (curp != NULL)
 			lkmfree();
 #ifdef DEBUG
@@ -476,43 +477,63 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 			return ENXIO;
 		}
 
-		if (curp->size - curp->offset > 0)
+		if (curp->size - curp->offset > 0) {
 			/* The remainder must be bss, so we clear it */
 			memset((caddr_t)curp->area + curp->offset, 0,
 			       curp->size - curp->offset);
+		}
 
+#ifdef DDB
+		/*
+		 * Temporarily load the symbol table before the entry
+		 * routine is called, so that the symbols are available
+		 * for DDB backtrace and breakpoints.
+		 */
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
 			error = ksyms_addsymtab("/lkmtemp/",
 			    (char *)curp->syms, curp->sym_symsize,
 			    (char *)curp->syms + curp->sym_symsize,
 			    curp->sym_size - curp->sym_symsize);
+
 			if (error)
-				break;
+				goto rdyfail;
+
 #ifdef DEBUG
 			if (lkmdebug & LKMDB_INFO)
 				printf( "DDB symbols added!\n" );
 #endif
 		}
+#endif /* DDB */
 
 		curp->entry = (int (*)(struct lkm_table *, int, int))
 				(*((long *) (data)));
 
 		/* call entry(load)... (assigns "private" portion) */
 		error = (*(curp->entry))(curp, LKM_E_LOAD, LKM_VERSION);
+
 		if (curp->syms && curp->sym_offset >= curp->sym_size) {
+#ifdef DDB
 			ksyms_delsymtab("/lkmtemp/");
-			error = ksyms_addsymtab(curp->private.lkm_any->lkm_name,
-			    (char *)curp->syms, curp->sym_symsize,
-			    (char *)curp->syms + curp->sym_symsize,
-			    curp->sym_size - curp->sym_symsize);
+#endif
+
+			if (!error) {
+				error = ksyms_addsymtab(curp->private.lkm_any->lkm_name,
+				    (char *)curp->syms, curp->sym_symsize,
+				    (char *)curp->syms + curp->sym_symsize,
+				    curp->sym_size - curp->sym_symsize);
+			}
 		}
+
 		if (error) {
+#ifdef DDB
+    rdyfail:
+#endif
 			/*
 			 * Module may refuse loading or may have a
 			 * version mismatch...
 			 */
 			lkm_state = LKMS_UNLOADING;	/* for lkmunreserve */
-			lkmunreserve();			/* free memory */
+			lkmunreserve(0);		/* free memory */
 			lkmfree();			/* free slot */
 #ifdef DEBUG
 			if (lkmdebug & LKMDB_INFO)
@@ -550,7 +571,7 @@ lkmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct lwp *l)
 		}
 
 		lkm_state = LKMS_UNLOADING;	/* non-idle for lkmunreserve */
-		lkmunreserve();			/* free memory */
+		lkmunreserve(1);		/* free memory */
 		lkmfree();			/* free slot */
 		break;
 

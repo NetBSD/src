@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_sbus.c,v 1.3.6.3 2004/09/21 13:20:13 skrll Exp $	*/
+/*	$NetBSD: ohci_sbus.c,v 1.3.6.4 2005/01/17 19:30:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.3.6.3 2004/09/21 13:20:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.3.6.4 2005/01/17 19:30:08 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_sbus.c,v 1.3.6.3 2004/09/21 13:20:13 skrll Exp 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdivar.h>
+#include <dev/usb/usb_mem.h>
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: aedvar.h,v 1.5 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: aedvar.h,v 1.5.6.1 2005/01/17 19:29:35 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -72,4 +72,4 @@ struct aed_softc {
 /* Options */
 #define AED_MSEMUL	0x1		/* emulate mouse buttons */
 
-int	aed_input __P((adb_event_t *event));
+int	aed_input(adb_event_t *);

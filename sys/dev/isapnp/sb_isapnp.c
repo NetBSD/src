@@ -1,4 +1,4 @@
-/*	$NetBSD: sb_isapnp.c,v 1.41.6.3 2004/09/21 13:30:16 skrll Exp $	*/
+/*	$NetBSD: sb_isapnp.c,v 1.41.6.4 2005/01/17 19:31:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.41.6.3 2004/09/21 13:30:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.41.6.4 2005/01/17 19:31:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: sb_isapnp.c,v 1.41.6.3 2004/09/21 13:30:16 skrll Exp
 #include <dev/isa/sbvar.h>
 #include <dev/isa/sbdspvar.h>
 
-int	sb_isapnp_match __P((struct device *, struct cfdata *, void *));
-void	sb_isapnp_attach __P((struct device *, struct device *, void *));
+int	sb_isapnp_match(struct device *, struct cfdata *, void *);
+void	sb_isapnp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(sb_isapnp, sizeof(struct sbdsp_softc),
     sb_isapnp_match, sb_isapnp_attach, NULL, NULL);
@@ -77,41 +77,39 @@ CFATTACH_DECL(sb_isapnp, sizeof(struct sbdsp_softc),
  * Probe for the soundblaster hardware.
  */
 int
-sb_isapnp_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+sb_isapnp_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	int pri, variant;
 
 	pri = isapnp_devmatch(aux, &isapnp_sb_devinfo, &variant);
 	if (pri && variant > 0)
 		pri = 0;
-	return (pri);
+	return pri;
 }
-
 
 /*
  * Attach hardware to driver, attach hardware driver to audio
  * pseudo-device driver.
  */
 void
-sb_isapnp_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+sb_isapnp_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct sbdsp_softc *sc = (struct sbdsp_softc *)self;
-	struct isapnp_attach_args *ipa = aux;
+	struct sbdsp_softc *sc;
+	struct isapnp_attach_args *ipa;
 
+	sc = (struct sbdsp_softc *)self;
+	ipa = aux;
 	printf("\n");
 
-	/* Avance logic ALS100+ does not like being frobbed 
-	   trying to set irq/drq so set that quirk skip over it */
+	/*
+	 * Avance logic ALS100+ does not like being frobbed
+	 * trying to set irq/drq so set that quirk skip over it
+	 */
 	if(!strcmp(ipa->ipa_devlogic, "@@@1001"))
 		sc->sc_quirks = SB_QUIRK_NO_INIT_DRQ;
 
 	if (isapnp_config(ipa->ipa_iot, ipa->ipa_memt, ipa)) {
-		printf("%s: error in region allocation\n", 
+		printf("%s: error in region allocation\n",
 		       sc->sc_dev.dv_xname);
 		return;
 	}
@@ -126,15 +124,15 @@ sb_isapnp_attach(parent, self, aux)
 	sc->sc_irq = ipa->ipa_irq[0].num;
 
 	sc->sc_drq8 = ipa->ipa_drq[0].num;
-        if (ipa->ipa_ndrq > 1 && ipa->ipa_drq[0].num != ipa->ipa_drq[1].num) {
-        	/* Some cards have the 16 bit drq first */
-        	if (sc->sc_drq8 >= 4) {
-                	sc->sc_drq16 = sc->sc_drq8;
-                        sc->sc_drq8 = ipa->ipa_drq[1].num;
-                } else
-                	sc->sc_drq16 = ipa->ipa_drq[1].num;
-        } else
-        	sc->sc_drq16 = -1;
+	if (ipa->ipa_ndrq > 1 && ipa->ipa_drq[0].num != ipa->ipa_drq[1].num) {
+		/* Some cards have the 16 bit drq first */
+		if (sc->sc_drq8 >= 4) {
+			sc->sc_drq16 = sc->sc_drq8;
+			sc->sc_drq8 = ipa->ipa_drq[1].num;
+		} else
+			sc->sc_drq16 = ipa->ipa_drq[1].num;
+	} else
+		sc->sc_drq16 = -1;
 
 #if NMPU > 0
 	if (ipa->ipa_nio > 1) {

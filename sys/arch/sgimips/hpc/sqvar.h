@@ -1,4 +1,4 @@
-/*	$NetBSD: sqvar.h,v 1.4.10.3 2004/09/21 13:21:19 skrll Exp $	*/
+/*	$NetBSD: sqvar.h,v 1.4.10.4 2005/01/17 19:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -43,8 +43,8 @@
 #include <sgimips/hpc/hpcreg.h>
 
 /* Note, these must be powers of two for the magic NEXT/PREV macros to work */
-#define SQ_NRXDESC		32
-#define SQ_NTXDESC		16
+#define SQ_NRXDESC		64
+#define SQ_NTXDESC		64
 
 #define	SQ_NRXDESC_MASK		(SQ_NRXDESC - 1)
 #define	SQ_NEXTRX(x)		((x + 1) & SQ_NRXDESC_MASK)
@@ -74,6 +74,38 @@ struct sq_control {
 
 #define	SQ_TYPE_8003		0
 #define	SQ_TYPE_80C03		1
+
+/* Trace Actions */
+#define SQ_RESET		1
+#define SQ_ADD_TO_DMA		2
+#define SQ_START_DMA		3
+#define SQ_DONE_DMA		4
+#define SQ_RESTART_DMA		5
+#define SQ_TXINTR_ENTER		6
+#define SQ_TXINTR_EXIT		7
+#define SQ_TXINTR_BUSY		8
+#define SQ_IOCTL		9
+#define SQ_ENQUEUE		10
+
+struct sq_action_trace {
+	int action;
+	int line;
+	int bufno;
+	int status;
+	int freebuf;
+};
+
+#define SQ_TRACEBUF_SIZE	100
+
+#define SQ_TRACE(act, sc, buf, stat) do {				\
+	(sc)->sq_trace[(sc)->sq_trace_idx].action = (act);		\
+	(sc)->sq_trace[(sc)->sq_trace_idx].line = __LINE__;		\
+	(sc)->sq_trace[(sc)->sq_trace_idx].bufno = (buf);		\
+	(sc)->sq_trace[(sc)->sq_trace_idx].status = (stat);		\
+	(sc)->sq_trace[(sc)->sq_trace_idx].freebuf = (sc)->sc_nfreetx;	\
+	if (++(sc)->sq_trace_idx == SQ_TRACEBUF_SIZE)			\
+		(sc)->sq_trace_idx = 0;					\
+} while (0)
 
 struct sq_softc {
 	struct device 		sc_dev;
@@ -128,6 +160,9 @@ struct sq_softc {
 	rndsource_element_t 	rnd_source;	/* random source */
 #endif
 	struct hpc_values       *hpc_regs;      /* HPC register definitions */
+
+	int			sq_trace_idx;
+	struct sq_action_trace	sq_trace[SQ_TRACEBUF_SIZE];
 };
 
 #define	SQ_CDTXADDR(sc, x)	((sc)->sc_cddma + SQ_CDTXOFF((x)))
@@ -164,9 +199,9 @@ SQ_INIT_RXDESC(struct sq_softc *sc, unsigned int x)
 	if (sc->hpc_regs->revision == 3) {
 		__rxd->hpc3_hdd_bufptr =
 			(sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr;
-		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HDD_CTL_OWN |
-			HDD_CTL_INTR | HDD_CTL_EOPACKET |
-			((x) == (SQ_NRXDESC  - 1) ? HDD_CTL_EOCHAIN : 0);
+		__rxd->hpc3_hdd_ctl = __m->m_ext.ext_size | HPC3_HDD_CTL_OWN |
+			HPC3_HDD_CTL_INTR | HPC3_HDD_CTL_EOPACKET |
+			((x) == (SQ_NRXDESC  - 1) ? HPC3_HDD_CTL_EOCHAIN : 0);
 	} else {
 		__rxd->hpc1_hdd_bufptr = (sc)->sc_rxmap[(x)]->dm_segs[0].ds_addr
 			| ((x) == (SQ_NRXDESC - 1) ? HPC1_HDD_CTL_EOCHAIN : 0);

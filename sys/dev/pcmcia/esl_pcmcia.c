@@ -1,4 +1,4 @@
-/*	$NetBSD: esl_pcmcia.c,v 1.8.6.3 2004/09/21 13:32:19 skrll Exp $	*/
+/*	$NetBSD: esl_pcmcia.c,v 1.8.6.4 2005/01/17 19:31:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Jared D. McNeill <jmcneill@invisible.yi.org>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8.6.3 2004/09/21 13:32:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esl_pcmcia.c,v 1.8.6.4 2005/01/17 19:31:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,9 +61,9 @@ static const struct pcmcia_product esl_pcmcia_products[] = {
 static const size_t esl_pcmcia_nproducts =
     sizeof(esl_pcmcia_products) / sizeof(esl_pcmcia_products[0]);
 
-int	esl_pcmcia_match(struct device *, struct cfdata *, void *); 
+int	esl_pcmcia_match(struct device *, struct cfdata *, void *);
 int	esl_pcmcia_validate_config(struct pcmcia_config_entry *);
-void	esl_pcmcia_attach(struct device *, struct device *, void *);  
+void	esl_pcmcia_attach(struct device *, struct device *, void *);
 int	esl_pcmcia_detach(struct device *, int);
 
 int	esl_pcmcia_enable(struct esl_pcmcia_softc *);
@@ -75,33 +75,38 @@ CFATTACH_DECL(esl_pcmcia, sizeof(struct esl_pcmcia_softc),
 int
 esl_pcmcia_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	struct pcmcia_attach_args *pa = aux;
+	struct pcmcia_attach_args *pa;
 
+	pa = aux;
 	if (pcmcia_product_lookup(pa, esl_pcmcia_products, esl_pcmcia_nproducts,
 	    sizeof(esl_pcmcia_products[0]), NULL))
-		return (2); 
-	return (0);
+		return 2;
+	return 0;
 }
 
 int
 esl_pcmcia_validate_config(struct pcmcia_config_entry *cfe)
 {
+
 	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
 	    cfe->num_memspace != 0 ||
 	    cfe->num_iospace != 1)
-		return (EINVAL);
-	return (0);
+		return EINVAL;
+	return 0;
 }
 
 void
 esl_pcmcia_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct esl_pcmcia_softc *esc = (void *)self;
-	struct pcmcia_attach_args *pa = aux;
+	struct esl_pcmcia_softc *esc;
+	struct pcmcia_attach_args *pa;
 	struct pcmcia_config_entry *cfe;
-	struct pcmcia_function *pf = pa->pf;
+	struct pcmcia_function *pf;
 	int error;
 
+	esc = (void *)self;
+	pa = aux;
+	pf = pa->pf;
 	esc->sc_pf = pf;
 
 	error = pcmcia_function_configure(pf, esl_pcmcia_validate_config);
@@ -137,26 +142,27 @@ fail:
 int
 esl_pcmcia_detach(struct device *self, int flags)
 {
-	struct esl_pcmcia_softc *esc = (void *)self;
+	struct esl_pcmcia_softc *esc;
 	int rv;
 
+	esc = (void *)self;
 	if (esc->sc_state != ESL_PCMCIA_ATTACHED)
-		return (0);
+		return 0;
 
 	if (esc->sc_opldev) {
 		rv = config_detach(esc->sc_opldev, flags);
 		if (rv)
-			return (rv);
+			return rv;
 	}
 	if (esc->sc_audiodev) {
 		rv = config_detach(esc->sc_audiodev, flags);
 		if (rv)
-			return (rv);
+			return rv;
 	}
 
 	pcmcia_function_unconfigure(esc->sc_pf);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -167,7 +173,7 @@ esl_pcmcia_enable(struct esl_pcmcia_softc *sc)
 	sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_AUDIO, esl_intr,
 	    sc);
 	if (!sc->sc_ih)
-		return (EIO);
+		return EIO;
 
 	error = pcmcia_function_enable(sc->sc_pf);
 	if (error) {
@@ -175,7 +181,7 @@ esl_pcmcia_enable(struct esl_pcmcia_softc *sc)
 		sc->sc_ih = 0;
 	}
 
-	return (error);
+	return error;
 }
 
 void

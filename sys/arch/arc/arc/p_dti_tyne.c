@@ -1,4 +1,4 @@
-/*	$NetBSD: p_dti_tyne.c,v 1.4.2.3 2004/09/21 13:12:48 skrll Exp $	*/
+/*	$NetBSD: p_dti_tyne.c,v 1.4.2.4 2005/01/17 19:29:12 skrll Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.4.2.3 2004/09/21 13:12:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: p_dti_tyne.c,v 1.4.2.4 2005/01/17 19:29:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ u_int32_t
 btl_dti_tyne_phystokv(p)
 	u_int32_t p;
 {
-	return ((v & 0x7fffff) | TYNE_V_BOUNCE);
+	return ((p & 0x7fffff) | TYNE_V_BOUNCE);
 }
 #endif /* NBTL > 0 */
 
