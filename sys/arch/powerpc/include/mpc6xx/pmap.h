@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2002/07/17 03:11:08 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6 2002/07/18 22:51:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -60,6 +60,7 @@ struct pmap {
 typedef	struct pmap *pmap_t;
 
 #ifdef	_KERNEL
+extern int pmap_use_altivec;
 extern struct pmap kernel_pmap_;
 #define	pmap_kernel()	(&kernel_pmap_)
 

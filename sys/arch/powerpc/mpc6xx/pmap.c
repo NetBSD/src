@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2002/07/17 03:11:08 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2002/07/18 22:51:58 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,6 +66,7 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_altivec.h"
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -103,6 +104,10 @@ struct pteg {
 	pte_t pt[8];
 };
 typedef struct pteg pteg_t;
+
+#ifdef ALTIVEC
+int pmap_use_altivec;
+#endif
 
 volatile pteg_t *pmap_pteg_table;
 unsigned int pmap_pteg_cnt;
@@ -2685,6 +2690,10 @@ pmap_bootstrap(paddr_t kernelstart, paddr_t kernelend,
 	__asm __volatile ("sync; mtsdr1 %0; isync"
 		      :: "r"((u_int)pmap_pteg_table | (pmap_pteg_mask >> 10)));
 	tlbia();
+
+#ifdef ALTIVEC
+	pmap_use_altivec = cpu_altivec;
+#endif
 
 #ifdef DEBUG
 	if (pmapdebug & PMAPDEBUG_BOOT) {
