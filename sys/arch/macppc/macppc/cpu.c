@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2001/03/07 12:44:05 tsubai Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2001/03/20 15:52:07 tsubai Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999 Internet Research Institute, Inc.
@@ -125,7 +125,6 @@ cpumatch(parent, cf, aux)
 #define MPC620		20
 #define MPC750		8
 #define MPC7400		12
-#define MPC7400_2	0x800c
 
 void
 cpuattach(parent, self, aux)
@@ -143,7 +142,7 @@ cpuattach(parent, self, aux)
 #endif
 
 	asm volatile ("mfpvr %0" : "=r"(pvr));
-	vers = pvr >> 16;
+	vers = (pvr >> 16) & 0x0fff;
 
 	switch (id) {
 	case 0:
@@ -152,7 +151,6 @@ cpuattach(parent, self, aux)
 		case MPC604:
 		case MPC604ev:
 		case MPC7400:
-		case MPC7400_2:
 			asm volatile ("mtspr 1023,%0" :: "r"(id));
 		}
 		identifycpu(model);
@@ -181,7 +179,6 @@ cpuattach(parent, self, aux)
 	case MPC603ev:
 	case MPC750:
 	case MPC7400:
-	case MPC7400_2:
 		/* Select DOZE mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_DOZE | HID0_DPM;
@@ -196,7 +193,6 @@ cpuattach(parent, self, aux)
 	switch (vers) {
 	case MPC750:
 	case MPC7400:
-	case MPC7400_2:
 		/* Select NAP mode. */
 		hid0 &= ~(HID0_DOZE | HID0_NAP | HID0_SLEEP);
 		hid0 |= HID0_NAP;
@@ -210,7 +206,6 @@ cpuattach(parent, self, aux)
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		break;
 	case MPC7400:
-	case MPC7400_2:
 		hid0 &= ~HID0_SPD;
 		hid0 |= HID0_EMCP | HID0_BTIC | HID0_SGE | HID0_BHT;
 		hid0 |= HID0_EIEC;
@@ -230,7 +225,7 @@ cpuattach(parent, self, aux)
 	/*
 	 * Display cache configuration.
 	 */
-	if (vers == MPC750 || vers == MPC7400 || vers == MPC7400_2) {
+	if (vers == MPC750 || vers == MPC7400) {
 		printf("%s", self->dv_xname);
 		config_l2cr();
 	} else if (OF_finddevice("/bandit/ohare") != -1) {
@@ -254,7 +249,6 @@ static struct cputab models[] = {
 	{ MPC620,     "620" },
 	{ MPC750,     "750" },
 	{ MPC7400,   "7400" },
-	{ MPC7400_2, "7400" },
 	{ 0,	       NULL }
 };
 
@@ -270,7 +264,7 @@ identifycpu(cpu_model)
 	rev = pvr & 0xffff;
 
 	while (cp->name) {
-		if (cp->version == vers)
+		if (cp->version == (vers & 0x0fff))
 			break;
 		cp++;
 	}
