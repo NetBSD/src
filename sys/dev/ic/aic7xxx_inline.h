@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxx_inline.h,v 1.2 2003/04/19 19:38:21 fvdl Exp $	*/
+
 /*
  * Inline routines shareable across OS platforms.
  *
@@ -36,8 +38,6 @@
  * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
- *
- * $Id: aic7xxx_inline.h,v 1.1 2003/04/19 19:33:30 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_inline.h#39 $
  *
