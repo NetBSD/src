@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.9 2002/09/11 11:03:08 scw Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.10 2002/09/22 20:45:31 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -834,19 +834,25 @@ ENTRY(pmap_asm_zero_page)
 #ifndef _LP64
 	add.l	r2, r63, r2		/* Ensure kva is sign-extended */
 #endif
-	movi	NBPG, r0
-	add	r2, r0, r0		/* End of page */
+	movi	NBPG-32, r0
+	add	r2, r0, r0		/* End of page (minus 1 cache-line) */
 	blink	tr1, r63
 
 	/* Cache-align the loop */
 	.balign	32
-1:	alloco	r2, 0			/* Allocate a cache block */
+1:	alloco	r2, 32			/* Allocate next cache-line */
 	st.q	r2, 0, r63		/* Zero the block */
 	st.q	r2, 8, r63
 	st.q	r2, 16, r63
 	st.q	r2, 24, r63
 	addi	r2, 32, r2		/* Next block */
 	bne/l	r2, r0, tr1		/* Back for the next one, until done */
+
+	/* Finish the remaining block */
+	st.q	r2, 0, r63
+	st.q	r2, 8, r63
+	st.q	r2, 16, r63
+	st.q	r2, 24, r63
 	blink	tr0, r63
 
 
@@ -863,8 +869,8 @@ ENTRY(pmap_asm_copy_page)
 	add.l	r2, r63, r2		/* Ensure src/dst are sign-extended */
 	add.l	r3, r63, r3
 #endif
-	movi	NBPG, r0
-	add	r2, r0, r0		/* End of page */
+	movi	NBPG-32, r0
+	add	r2, r0, r0		/* End of page (minus 1 cache-line) */
 	blink	tr1, r63
 
 	/* Cache-align the loop */
@@ -873,14 +879,25 @@ ENTRY(pmap_asm_copy_page)
 	ld.q	r3, 8, r5
 	ld.q	r3, 16, r6
 	ld.q	r3, 24, r7
-	alloco	r2, 0			/* Allocate a cache block for dst */
+	ld.q	r3, 32, r63		/* Pre-fetch next src cache-line */
 	st.q	r2, 0, r4
 	st.q	r2, 8, r5
 	st.q	r2, 16, r6
 	st.q	r2, 24, r7
+	alloco	r2, 32			/* Allocate cache-line for next dst */
 	addi	r2, 32, r2		/* Next dst block */
 	addi	r3, 32, r3		/* Next src block */
 	bne/l	r2, r0, tr1		/* Back for the next one, until done */
+
+	/* Finish the remaining block */
+	ld.q	r3, 0, r4
+	ld.q	r3, 8, r5
+	ld.q	r3, 16, r6
+	ld.q	r3, 24, r7
+	st.q	r2, 0, r4
+	st.q	r2, 8, r5
+	st.q	r2, 16, r6
+	st.q	r2, 24, r7
 	blink	tr0, r63
 
 
