@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.2 2002/05/30 15:35:20 gehenna Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.3 2002/05/31 01:16:20 gehenna Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -109,8 +109,9 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
 void
 findroot(void)
 {
-	int i, majdev, unit, part;
+	int unit, part;
 	struct device *dv;
+	const char *name;
 	char buf[32];
 
 #if 0
@@ -120,19 +121,15 @@ findroot(void)
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
 		return;
 
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (majdev == dev_name2blk[i].d_maj)
-			break;
-	if (dev_name2blk[i].d_name == NULL)
+	name = devsw_blk2name((bootdev >> B_TYPESHIFT) & B_TYPEMASK);
+	if (name == NULL)
 		return;
 
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	sprintf(buf, "%s%d", name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;
