@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread-stub.c,v 1.3.6.5 2002/01/01 09:12:57 wdk Exp $	*/
+/*	$NetBSD: pthread-stub.c,v 1.3.6.6 2002/01/01 21:40:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Michael Graff <explorer@flame.org>.
@@ -65,6 +65,7 @@ __weak_alias(pthread_setspecific, _pthread_setspecific)
 __weak_alias(pthread_getspecific, _pthread_getspecific)
 __weak_alias(pthread_self, _pthread_self)
 __weak_alias(pthread_sigmask, _pthread_sigmask)
+__weak_alias(pthread__errno, _pthread__errno)
 #endif
 
 int _pthread_mutex_init(pthread_mutex_t *, pthread_mutexattr_t *);
@@ -297,3 +298,10 @@ _pthread_sigmask(int h, const sigset_t *s, sigset_t *o)
 	return (0);
 }
 
+void *
+_pthread__errno(void)
+{
+
+	return NULL;
+}
+	
