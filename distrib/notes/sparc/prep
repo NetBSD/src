@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.18 2002/05/03 03:58:45 mbw Exp $
+.\"	$NetBSD: prep,v 1.19 2002/06/30 12:43:05 lukem Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -54,7 +54,7 @@ type:
 .disp)
 .Pp
 Next, if you are using any security features of OpenBoot PROM, you should
-turn them off - 
+turn them off \(em
 .Nx
 can't deal well with this.
 .Pp
@@ -82,7 +82,7 @@ This variable maps how the OpenBoot PROM 1 assigns
 numbers based on the SCSI target ID.
 Thus the device at SCSI target ID 3 is considered
 .Sq unit
-0, and the SCSI device at target ID 0 is 
+0, and the SCSI device at target ID 0 is
 .Sq unit
 3.  When you type
 .Dq Ic boot scsi(0,0,0) ,
@@ -108,7 +108,7 @@ to SCSI target 0.
 .Pp
 The
 .Nx*M
-.Li GENERIC 
+.Li GENERIC
 kernel does not wire things down as does
 .Tn SunOS .
 It names the disks in the order
@@ -133,7 +133,7 @@ There are two approaches to fixing this problem: changing the
 mapping that OpenBoot PROM 1 does, and changing the
 .Nx
 kernel configuration.
-To get OpenBoot PROM 1 to number the SCSI 
+To get OpenBoot PROM 1 to number the SCSI
 .Sq unit
 numbers the same as the SCSI target IDs, you need to run this command:
 .Pp
@@ -151,7 +151,7 @@ kernel that matches the PROM's odd target mapping by treating
 .Sq unit
 0 (i.e. SCSI target ID 3) as
 .Li sd0
-and 
+and
 .Sq unit
 3 (i.e. SCSI target ID 0) as
 .Li sd3 .
@@ -305,9 +305,9 @@ where t is the SCSI target and p is the partition number.
 .Ss2 Determining how to boot from an SBUS card
 .
 Some SBUS cards have firmware that lets you use them as a boot device.
-These cards do not automatically create a 
+These cards do not automatically create a
 .Ic devalias
-entry, so you must traverse the device tree to figure out what the 
+entry, so you must traverse the device tree to figure out what the
 OpenBoot PROM calls your card.  You will be using OpenBoot PROM commands
 at the `ok' prompt. First `cd' to the top of the device tree and list the
 nodes there.  The following is the procedure to boot from an HME card in a
@@ -346,7 +346,7 @@ ffd3dc68 espdma@4,8400000
 /iommu@0,10000000/sbus@0,10001000/SUNW,hme@1,8c00000
 .disp)
 OK, now we know the path to the HME device in this example.  Now, we need
-to determine if it's capable of booting.  If it is, it will have the 
+to determine if it's capable of booting.  If it is, it will have the
 .Ic word
 `open'.
 .(disp
@@ -359,7 +359,8 @@ use-frame-mode              dump-phys     transfer-speed=10
 transfer-speed=100          mii-write     mii-read
 create-rev-id
 .disp)
-Great!  Also, in case you're interested in further details about your
+Great!
+Also, in case you're interested in further details about your
 hardware, you can use the `.attributes' command.
 .(disp
 .No ok Ic ".attributes"
@@ -386,7 +387,7 @@ command.  In this example, you'd type:
 .No ok Ic "boot /iommu/sbus/SUNW,hme"
 .disp)
 And when the kernel is done booting, it may not automatically use your
-card as the root device -- you may need to type in the 
+card as the root device -- you may need to type in the
 .Nx*M
 name for
 that device:
@@ -407,7 +408,7 @@ root on hme0
 If you're installing
 .Nx*M
 for the first time it's a good idea
-to look at the partition sizes of disk you intend installing 
+to look at the partition sizes of disk you intend installing
 .Nx*M
 on.
 .Pp
@@ -415,7 +416,7 @@ Assuming a classic partition scheme with
 .Pa /
 (root) and
 .Pa /usr
-filesystems, a comfortable size for the 
+filesystems, a comfortable size for the
 .Nx
 root filesystem partition is
 about 20 MB; a good initial size for the swap partition is twice the amount
@@ -434,7 +435,7 @@ beyond the first 2 GB of your disk.
 Some network devices (i.e. the built-in
 .Em le
 interface on sun4m machines)
-allow a choice between operating on a UTP or a AUI port once the 
+allow a choice between operating on a UTP or a AUI port once the
 .Nx
 kernel is running. The
 .Em le
