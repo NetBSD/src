@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1996/03/11 02:38:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 1996/04/04 23:34:25 phil Exp $
 
 LIB=	stdc++
 
@@ -13,13 +13,13 @@ ioprims.c ioprintf.c ioseekoff.c ioseekpos.c iostrerror.c ioungetc.c \
 iovfprintf.c iovfscanf.c outfloat.c strops.c cmathi.cc cstdlibi.cc \
 cstringi.cc exceptioni.cc newi.cc stddefi.cc stdexcepti.cc typeinfoi.cc \
 cstrmain.cc cstrio.cc fcomplex.cc fcomio.cc dcomplex.cc dcomio.cc \
-ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc 
+ldcomplex.cc ldcomio.cc random.cc tempbuf.cc tree.cc rx.c \
 
 CXXFLAGS+=  -nostdinc++ 
 CFLAGS+=    -I$(.CURDIR) -I$(.CURDIR)/../libio -I$(.CURDIR)/stl
 NOMAN=	    noman
 
-.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl
+.PATH: $(.CURDIR)/../libio  $(.CURDIR)/stl $(.CURDIR)/../librx
 
 .include <bsd.lib.mk>
 
