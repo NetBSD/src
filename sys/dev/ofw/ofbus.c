@@ -1,4 +1,4 @@
-/*	$NetBSD: ofbus.c,v 1.4 1997/04/16 23:32:04 thorpej Exp $	*/
+/*	$NetBSD: ofbus.c,v 1.5 1998/01/12 09:33:31 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,18 +44,10 @@ struct cfattach ofbus_ca = {
 	sizeof(struct device), ofbprobe, ofbattach
 };
 
-struct cfdriver ofbus_cd = {
-	NULL, "ofbus", DV_DULL
-};
-
 struct cfattach ofroot_ca = {
 	sizeof(struct device), ofbprobe, ofbattach
 };
  
-struct cfdriver ofroot_cd = {
-	NULL, "ofroot", DV_DULL
-};
-
 static int
 ofbprint(aux, name)
 	void *aux;
