@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.8 1999/08/26 09:28:18 hannken Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.9 1999/09/11 21:42:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -101,3 +101,5 @@ struct sd_ops {
 
 void sdattach __P((struct device *, struct sd_softc *, struct scsipi_link *,
     const struct sd_ops *));
+int sdactivate __P((struct device *, enum devact));
+int sddetach __P((struct device *, int));
