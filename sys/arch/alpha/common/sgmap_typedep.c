@@ -1,7 +1,7 @@
-/* $NetBSD: sgmap_typedep.c,v 1.4 1997/09/05 02:21:49 thorpej Exp $ */
+/* $NetBSD: sgmap_typedep.c,v 1.5 1998/01/17 03:38:51 thorpej Exp $ */
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.4 1997/09/05 02:21:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgmap_typedep.c,v 1.5 1998/01/17 03:38:51 thorpej Exp $");
 
 #ifdef SGMAP_LOG
 
@@ -52,6 +52,10 @@ u_long			__C(SGMAP_TYPE,_log_loads);
 u_long			__C(SGMAP_TYPE,_log_unloads);
 
 #endif /* SGMAP_LOG */
+
+#ifdef SGMAP_DEBUG
+int			__C(SGMAP_TYPE,_debug);
+#endif
 
 int
 __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
@@ -90,9 +94,11 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	dmalen = buflen;
 
 #ifdef SGMAP_DEBUG
-	printf("sgmap_load: ----- buf = %p -----\n", buf);
-	printf("sgmap_load: dmaoffset = 0x%lx, dmalen = 0x%lx\n",
-	    dmaoffset, dmalen);
+	if (__C(SGMAP_TYPE,_debug)) {
+		printf("sgmap_load: ----- buf = %p -----\n", buf);
+		printf("sgmap_load: dmaoffset = 0x%lx, dmalen = 0x%lx\n",
+		    dmaoffset, dmalen);
+	}
 #endif
 
 #ifdef SGMAP_LOG
@@ -121,8 +127,10 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 	pte = &page_table[pteidx * SGMAP_PTE_SPACING];
 
 #ifdef SGMAP_DEBUG
-	printf("sgmap_load: sgva = 0x%lx, pteidx = %d, pte = %p (pt = %p)\n",
-	    a->apdc_sgva, pteidx, pte, page_table);
+	if (__C(SGMAP_TYPE,_debug))
+		printf("sgmap_load: sgva = 0x%lx, pteidx = %d, "
+		    "pte = %p (pt = %p)\n", a->apdc_sgva, pteidx, pte,
+		    page_table);
 #endif
 
 	/*
@@ -140,9 +148,11 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 #endif
 
 #ifdef SGMAP_DEBUG
-	printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, dma addr = 0x%lx\n",
-	    sgmap->aps_wbase, (pteidx << SGMAP_ADDR_PTEIDX_SHIFT),
-	    map->dm_segs[0].ds_addr);
+	if (__C(SGMAP_TYPE,_debug))
+		printf("sgmap_load: wbase = 0x%lx, vpage = 0x%x, "
+		    "dma addr = 0x%lx\n", sgmap->aps_wbase,
+		    (pteidx << SGMAP_ADDR_PTEIDX_SHIFT),
+		    map->dm_segs[0].ds_addr);
 #endif
 
 	a->apdc_pteidx = pteidx;
@@ -163,8 +173,9 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 		 */
 		*pte = (pa >> SGPTE_PGADDR_SHIFT) | SGPTE_VALID;
 #ifdef SGMAP_DEBUG
-		printf("sgmap_load:     pa = 0x%lx, pte = %p, *pte = 0x%lx\n",
-		    pa, pte, (u_long)(*pte));
+		if (__C(SGMAP_TYPE,_debug))
+			printf("sgmap_load:     pa = 0x%lx, pte = %p, "
+			    "*pte = 0x%lx\n", pa, pte, (u_long)(*pte));
 #endif
 	}
 
@@ -180,6 +191,11 @@ __C(SGMAP_TYPE,_load)(t, map, buf, buflen, p, flags, sgmap)
 			__C(SGMAP_TYPE,_log_next) = 0;
 		__C(SGMAP_TYPE,_log_loads)++;
 	}
+#endif
+
+#if defined(SGMAP_DEBUG) && defined(DDB)
+	if (__C(SGMAP_TYPE,_debug))
+		Debugger();
 #endif
 
 	map->dm_nsegs = 1;
@@ -259,8 +275,9 @@ __C(SGMAP_TYPE,_unload)(t, map, sgmap)
 	    pte = &page_table[a->apdc_pteidx * SGMAP_PTE_SPACING];
 	    ptecnt != 0; ptecnt--, pte += SGMAP_PTE_SPACING) {
 #ifdef SGMAP_DEBUG
-		printf("sgmap_unload:     pte = %p, *pte = 0x%lx\n",
-		    pte, (u_long)(*pte));
+		if (__C(SGMAP_TYPE,_debug))
+			printf("sgmap_unload:     pte = %p, *pte = 0x%lx\n",
+			    pte, (u_long)(*pte));
 #endif
 		*pte = 0;
 	}
