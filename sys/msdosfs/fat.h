@@ -1,4 +1,4 @@
-/*	$NetBSD: fat.h,v 1.12.8.1 1999/08/20 05:39:26 cgd Exp $	*/
+/*	$NetBSD: fat.h,v 1.12.8.2 2000/04/30 13:11:22 he Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1997 Wolfgang Solfrank.
@@ -80,7 +80,14 @@
 #define	FAT16(pmp)	(pmp->pm_fatmask == FAT16_MASK)
 #define	FAT32(pmp)	(pmp->pm_fatmask == FAT32_MASK)
 
-#define	MSDOSFSEOF(pmp, cn)	((cn) == (CLUST_EOFS & (pmp)->pm_fatmask))
+/*
+ * M$ in it's unlimited wisdom desided that EOF mark is anything
+ * between 0xfffffff8 and 0xffffffff (masked by appropriate fatmask,
+ * of course).
+ * Note that cn is supposed to be already adjusted accordingly to FAT type.
+ */ 
+#define	MSDOSFSEOF(pmp, cn)	\
+	(((cn) & CLUST_EOFS) == (CLUST_EOFS & (pmp)->pm_fatmask))
 
 #ifdef _KERNEL
 /*
