@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.h,v 1.8 1994/01/29 02:03:43 jtc Exp $
+ *	$Id: md.h,v 1.9 1994/02/10 21:21:28 pk Exp $
  */
 
 /*
@@ -43,6 +43,13 @@
 #define N_SET_FLAG(ex,f)	N_SETMAGIC(ex,N_GETMAGIC(ex), \
 					MID_MACHINE, N_GETFLAG(ex)|(f))
 #define N_IS_DYNAMIC(ex)	((N_GETFLAG(ex) & EX_DYNAMIC))
+
+/*
+ * Should be handled by a.out.h ?
+ */
+#define N_ADJUST(ex)		(((ex).a_entry < PAGSIZ) ? -PAGSIZ : 0)
+#define TEXT_START(ex)		(N_TXTADDR(ex) + N_ADJUST(ex))
+#define DATA_START(ex)		(N_DATADDR(ex) + N_ADJUST(ex))
 
 #else
 
