@@ -1,4 +1,4 @@
-/*	$NetBSD: lm_pnpbios.c,v 1.1 2000/02/25 02:17:44 groo Exp $ */
+/*	$NetBSD: lm_pnpbios.c,v 1.2 2000/03/01 20:24:53 groo Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,17 +65,18 @@ struct cfattach lm_pnpbios_ca = {
 };
 
 /*
- * XXX - overkill for one entry, and no quirks/hints yet, but given that
- * there's no "Environmental Monitor" pnpbios ID string, I have a feeling
- * this attach is going to be one hell of a crap-shoot.
+ * XXX - no known pnpbios ids for lm series chips.
  */
 struct lm_pnpbios_hint {
 	char idstr[8];
 	int io_region_idx_lm7x;
 };
 
+/*
+ * Currently no known valid pnpbios id's - PNP0C02 is
+ * for reserved motherboard resources, probing it is bad.
+ */
 struct lm_pnpbios_hint lm_pnpbios_hints[] = {
-	{ "PNP0C02", 0 },
 	{ { 0 }, 0 }
 };
 
@@ -102,11 +103,29 @@ lm_pnpbios_match(parent, match, aux)
 	void *aux;
 {
 	struct pnpbiosdev_attach_args *aa = aux;
+	struct lm_pnpbios_hint *wph;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	int rv;
 
-	if (lm_pnpbios_hints_index(aa->idstr) == -1)
+	int wphi;
+
+	if ((wphi = lm_pnpbios_hints_index(aa->idstr)) == -1)
 		return (0);
 
-	return (1);
+	wph = &lm_pnpbios_hints[wphi];
+
+	if (pnpbios_io_map(aa->pbt, aa->resc, wph->io_region_idx_lm7x,
+			   &iot, &ioh)) {
+		return (0);
+	}
+
+	rv = lm_probe(iot, ioh);
+
+	pnpbios_io_unmap(aa->pbt, aa->resc, wph->io_region_idx_lm7x,
+			 iot, ioh);
+
+	return (rv);
 }
 
 void
