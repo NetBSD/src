@@ -1,34 +1,27 @@
-#	$NetBSD: Makefile.inc,v 1.3 2000/02/20 03:52:22 mycroft Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2000/03/30 03:25:48 fredb Exp $
 #
 #	mac68k-specific release building goo
 #
 
-# This is commented out in the distribution, because GENERICSBC isn't
-# distributed (it's just GENERIC:s/ncrsci/sbc/).
+# You will find no configs for GENERICSBC or INSTALLSBC in the
+# sources. That's because they're trivial to generate--each is
+# simply its corresponding config with "ncrscsi" commented out,
+# and "sbc" uncommented.
 #
-#EXTRA_KERNELS+=	GENERICSBC
-BUILD_KERNELS+= 	INSTALL
+BUILD_KERNELS?=	INSTALL	# INSTALLSBC
+EXTRA_KERNELS?=		# GENERICSBC
 
-INSTALLATION_DIRS+=		installation/instkernel
+INSTALLATION_DIRS+=	installation/instkernel
 
 snap_md_post:
-#
-# Build the ramdisk...
-#
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && \
-		${MAKE} clean
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE} clean
 .endif
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && \
-		${MAKE} ${_J}
-#
-# and put them all together.
-#
-.for k in ${EXTRA_INSTALL_KERNELS}
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/ramdisk && ${MAKE}
 .ifndef UPDATE
-	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
-		${MAKE} clean
+	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && ${MAKE} clean
 .endif
+.for k in ${BUILD_KERNELS}
 	cd ${.CURDIR}/../distrib/mac68k/instkernel/instkernel && \
 		${MAKE} INSTALL_KERNEL=${k} && ${MAKE} release INSTALL_KERNEL=${k}
 .endfor
