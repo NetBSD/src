@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconutil.c,v 1.12 2002/11/19 01:49:42 oster Exp $	*/
+/*	$NetBSD: rf_reconutil.c,v 1.13 2002/11/23 01:58:18 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  ********************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.12 2002/11/19 01:49:42 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconutil.c,v 1.13 2002/11/23 01:58:18 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -148,7 +148,6 @@ rf_MakeReconControl(reconDesc, frow, fcol, srow, scol)
 		return (NULL);
 	}
 	reconCtrlPtr->fullBufferList = NULL;
-	reconCtrlPtr->priorityList = NULL;
 	reconCtrlPtr->floatingRbufs = NULL;
 	reconCtrlPtr->committedRbufs = NULL;
 	for (i = 0; i < raidPtr->numFloatingReconBufs; i++) {
@@ -336,12 +335,6 @@ rf_CheckFloatingRbufCount(raidPtr, dolock)
 		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
 			sum++;
 	}
-	for (rbuf = raidPtr->reconControl[frow]->priorityList; rbuf; 
-	     rbuf = rbuf->next) {
-		if (rbuf->type == RF_RBUF_TYPE_FLOATING)
-			sum++;
-	}
-
 	RF_ASSERT(sum == raidPtr->numFloatingReconBufs);
 
 	if (dolock)
