@@ -1,4 +1,4 @@
-/*	$NetBSD: nexus.h,v 1.3 1995/02/13 00:43:25 ragge Exp $	*/
+/*	$NetBSD: nexus.h,v 1.4 1995/02/23 17:51:42 ragge Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -68,6 +68,10 @@
 #if VAX730
 #define	NNEX730	NNEXSBI
 #define	NEX730	((struct nexus *)0xf20000)
+#endif
+#if VAX630
+#define NNEX630 1
+#define NEX630  ((struct nexus *)0x20088000)
 #endif
 #define	NEXSIZE	0x2000
 
