@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2000/09/12 19:42:26 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2000/09/27 18:20:33 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
 /*
@@ -379,7 +379,7 @@ struct {
 #define PDB_EXTRACT	0x10000
 #define	PDB_BOOT	0x20000
 #define	PDB_BOOT1	0x40000
-int	pmapdebug = PDB_BOOT|PDB_BOOT1;
+int	pmapdebug = 0;
 /* Number of H/W pages stolen for page tables */
 int	pmap_pages_stolen = 0;
 
@@ -464,10 +464,50 @@ pmap_enter_kpage(va, data)
 		BDPRINTF(PDB_BOOT1, 
 			 ("pseg_set: pm=%p va=%p data=%lx newp %lx\r\n",
 			  pmap_kernel(), va, (long)data, (long)newp));
+#ifdef DEBUG
 		if (pmapdebug & PDB_BOOT1)
 		{int i; for (i=0; i<140000000; i++) ;}
+#endif
 	}
 }
+
+/*
+ * See checp bootargs to see if we need to enable bootdebug.
+ */
+#ifdef DEBUG
+void pmap_bootdebug __P((void));
+void
+pmap_bootdebug() 
+{
+	int chosen;
+	char *cp;
+	char buf[128];
+
+	/*
+	 * Grab boot args from PROM
+	 */
+	chosen = OF_finddevice("/chosen");
+	/* Setup pointer to boot flags */
+	OF_getprop(chosen, "bootargs", buf, sizeof(buf));
+	cp = buf;
+	if (cp != NULL)
+		return;
+	while (*cp != '-')
+		if (*cp++ == '\0')
+			return;
+	for (;;) 
+		switch (*++cp) {
+		case '\0':
+			return;
+		case 'V':
+			pmapdebug |= PDB_BOOT;
+			break;
+		case 'D':
+			pmapdebug |= PDB_BOOT1;
+			break;
+		}
+}
+#endif
 
 /*
  * This is called during bootstrap, before the system is really initialized.
@@ -507,6 +547,10 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 	paddr_t newkp;
 	vaddr_t newkv, firstaddr, intstk;
 	vsize_t kdsize, ktsize;
+
+#ifdef DEBUG
+	pmap_bootdebug();
+#endif
 
 	BDPRINTF(PDB_BOOT, ("Entered pmap_bootstrap.\r\n"));
 	/*
