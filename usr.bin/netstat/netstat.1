@@ -1,4 +1,4 @@
-.\"	$NetBSD: netstat.1,v 1.31 2001/05/28 05:52:41 itojun Exp $
+.\"	$NetBSD: netstat.1,v 1.32 2001/09/03 14:56:08 sommerfeld Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,7 @@ data structures.
 There are a number of output formats,
 depending on the options for the information presented.
 The first form of the command displays a list of active sockets for
-each protocol.
+each protocol.  
 The second form presents the contents of one of the other network
 data structures according to the option selected.
 Using the third form, with a
@@ -104,7 +104,7 @@ for debugging.
 .It Fl a
 With the default display,
 show the state of all sockets; normally sockets used by
-server processes are not shown.
+server processes are not shown.  
 .It Fl b
 With the interface display (option
 .Fl i ) ,
@@ -271,6 +271,9 @@ refer to
 .Xr inet 3 ) .
 Unspecified,
 or ``wildcard'', addresses and ports appear as ``*''.
+You can use the
+.Xr fstat 1
+to find out which process or processes hold references to a socket.
 .Pp
 The interface display provides a table of cumulative
 statistics regarding packets transferred, errors, and collisions.
@@ -345,9 +348,11 @@ The first line of each screen of information contains a summary since the
 system was last rebooted.  Subsequent lines of output show values
 accumulated over the preceding interval.
 .Sh SEE ALSO
+.Xr fstat 1 ,
 .Xr nfsstat 1 ,
 .Xr ps 1 ,
 .Xr vmstat 1 ,
+.Xr inet 3 ,
 .Xr hosts 5 ,
 .Xr networks 5 ,
 .Xr protocols 5 ,
