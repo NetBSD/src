@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aereg.h,v 1.10 1995/06/28 04:31:10 cgd Exp $	*/
+/*	$NetBSD: if_aereg.h,v 1.11 1995/07/30 13:38:08 briggs Exp $	*/
 
 /*
  * National Semiconductor DS8390 NIC register definitions.
@@ -30,6 +30,7 @@ struct ae_ring {
 #define AE_VENDOR_INTERLAN	0x01	/* Interlan A310 card (GatorCard) */
 #define AE_VENDOR_DAYNA		0x02	/* DaynaPORT E/30s (and others?) */
 #define AE_VENDOR_ASANTE	0x03	/* Asante MacCon II/E */
+#define AE_VENDOR_FARALLON	0x04	/* Farallon EtherMac II-TP */
 
 /*
  * Compile-time config flags
@@ -57,3 +58,5 @@ struct ae_ring {
 #define AE_ROM_OFFSET		0x000f0000
 #define AE_DATA_OFFSET		0x000d0000	/* Offset to NIC memory */
 #define AE_NIC_OFFSET		0x000e0000	/* Offset to NIC registers */
+
+#define FE_ROM_OFFSET		0x000d0006	/* Determined empirically */

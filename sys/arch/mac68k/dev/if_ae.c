@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.32 1995/07/30 02:44:27 briggs Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.33 1995/07/30 13:38:04 briggs Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -214,6 +214,9 @@ ae_id_card(slot, sc)
 	case NUBUS_DRSW_ASANTE:
 		sc->vendor = AE_VENDOR_ASANTE;
 		break;
+	case NUBUS_DRSW_FARALLON:
+		sc->vendor = AE_VENDOR_FARALLON;
+		break;
 	case NUBUS_DRSW_GATOR:
 		switch (slottype.drhw) {
 		default:
@@ -341,6 +344,19 @@ aeprobe(parent, match, aux)
 			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i * 2);
 		printf("it is dangerous to continue.\n");
 		return (0);	/* Since we don't work yet... */
+		break;
+
+	case AE_VENDOR_FARALLON:
+		sc->regs_rev = 1;
+		sc->rom_addr = addr + FE_ROM_OFFSET;
+		sc->nic_addr = addr + AE_NIC_OFFSET;
+		sc->mem_start = addr + AE_DATA_OFFSET;
+		if ((memsize = ae_size_card_memory(sc)) == 0)
+			return (0);
+
+		/* Get station address from on-board ROM */
+		for (i = 0; i < ETHER_ADDR_LEN; ++i)
+			sc->sc_arpcom.ac_enaddr[i] = *(sc->rom_addr + i);
 		break;
 
 	default:
