@@ -35,7 +35,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)kvm.c	5.18 (Berkeley) 5/7/91";*/
-static char rcsid[] = "$Id: kvm.c,v 1.29 1994/03/31 06:08:28 cgd Exp $";
+static char rcsid[] = "$Id: kvm.c,v 1.30 1994/04/15 23:36:38 cgd Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -1220,19 +1220,19 @@ long			object;
 long			offset;
 vm_offset_t		*maddr;
 {
-	queue_head_t	bucket;
+	struct pglist	bucket;
 	struct vm_page	mem;
 	long		addr, baddr;
 
 	baddr = vm_page_buckets +
-		vm_page_hash(object,offset) * sizeof(queue_head_t);
+		vm_page_hash(object,offset) * sizeof(struct pglist);
 
 	if (kvm_read((void *) baddr, &bucket, sizeof (bucket)) == -1) {
 		seterr("can't read vm_page_bucket");
 		return 0;
 	}
 
-	addr = (long)bucket.next;
+	addr = (long)bucket.tqh_first;
 
 	while (addr != baddr) {
 		if (kvm_read((void *) addr, &mem, sizeof (mem)) == -1) {
@@ -1245,7 +1245,7 @@ vm_offset_t		*maddr;
 			return 1;
 		}
 
-		addr = (long)mem.hashq.next;
+		addr = (long)mem.hashq.tqe_next;
 	}
 
 	return -1;
