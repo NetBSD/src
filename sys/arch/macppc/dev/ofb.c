@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.40 2004/12/15 04:52:05 briggs Exp $	*/
+/*	$NetBSD: ofb.c,v 1.41 2004/12/17 05:44:12 briggs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.40 2004/12/15 04:52:05 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.41 2004/12/17 05:44:12 briggs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -235,15 +235,6 @@ ofb_common_init(node, dc)
 
 		memset(name, 0, 64);
 		OF_package_to_path(node, name, sizeof(name));
-
-		/*
-		 * /chaos/control on some boxes hangs up in OF_open.
-		 * If we return here, we get "can't map frame buffer"
-		 * which isn't really a big deal in these cases.
-		 */
-		if (!strncmp(name, "/chaos@F0000000/control@B", sizeof(name)))
-			return;
-
 		dc->dc_ih = OF_open(name);
 	}
 
