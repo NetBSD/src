@@ -1,4 +1,4 @@
-/*	$Id: ld.h,v 1.5 1993/11/10 21:53:42 pk Exp $	*/
+/*	$Id: ld.h,v 1.6 1993/12/07 01:44:25 mycroft Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -844,7 +844,7 @@ void	*xrealloc __P((void *, int));
 void	fatal __P((char *, ...));
 void	error __P((char *, ...));
 void	padfile __P((int,int));
-char	*concat __P((char *, char *, char *));
+char	*concat __P((const char *, const char *, const char *));
 int	parse __P((char *, char *, char *));
 
 /* In symbol.c: */

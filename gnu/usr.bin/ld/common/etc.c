@@ -1,5 +1,5 @@
 /*
- * $Id: etc.c,v 1.2 1993/10/21 00:52:52 pk Exp $
+ * $Id: etc.c,v 1.3 1993/12/07 01:44:23 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -85,7 +85,7 @@ fatal(fmt, va_alist)
 
 char *
 concat(s1, s2, s3)
-	char *s1, *s2, *s3;
+	const char *s1, *s2, *s3;
 {
 	register int	len1 = strlen (s1),
 			len2 = strlen (s2),
