@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)filedesc.h	7.4 (Berkeley) 5/4/91
- *	$Id: filedesc.h,v 1.3 1993/05/20 16:22:17 cgd Exp $
+ *	$Id: filedesc.h,v 1.4 1993/12/23 17:16:00 cgd Exp $
  */
 
 #ifndef _SYS_FILEDESC_H_
@@ -100,6 +100,8 @@ int	fdavail __P((struct proc *p, int n));
 int	falloc __P((struct proc *p, struct file **resultfp, int *resultfd));
 struct	filedesc *fdcopy __P((struct proc *p));
 void	fdfree __P((struct proc *p));
+int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
+	    int error));
 #endif
 
 #endif /* !_SYS_FILEDESC_H_ */
