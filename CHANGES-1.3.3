@@ -893,3 +893,41 @@ gnu/dist/gdb/config/ns32k/tm-nbsd.h		1.3
 lib/libc/arch/ns32k/sys/exect.S			1.6
 
   Avoid a BPT/Trace trap in shutdown.  (matthias)
+
+gnu/usr.bin/send-pr/categories			1.15, 1.20
+
+  Add 'install' category.  (jonathan)
+
+gnu/usr.bin/ld/arch/i386/md.c			1.13
+
+  Fix a problem running under Virtual PC.  (mycroft)
+
+sys/arch/sparc/sparc/iommureg.h			1.6
+
+  Strengthen a previous patch which attempted to work around a
+  hardware but in some Sparcstation 4 and 5 models.  (pk)
+
+include/unistd.h				patch
+
+  Add missing declaration of getpgid().  (kleink)
+
+sys/arch/amiga/dev/grf_cv.c			1.26
+
+  Add a few "nop" instructions to make the memory size probe
+  more reliable.  (veego)
+
+sys/arch/amiga/dev/cbsc.c			1.7
+
+  Fix detection of CyberStorm SCSI MK I which use the older
+  product ID.  (mhitch)
+
+sys/arch/pmax/dev/dtop.c			1.35
+
+  Fix the non-repeating up/down arrow on the Personal DECstation running X.
+  The previous fix for the non-working right-shift key broke the autorepeat
+  for the up and down arrow keys.
+
+sys/arch/i386/conf/INSTALL			1.102
+
+  Avoid IRQs 5 and 7, the most likely cause of problems on modern
+  laptops.  (marc)
