@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.122 1999/12/02 23:40:27 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.123 1999/12/17 07:24:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.122 1999/12/02 23:40:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 1999/12/17 07:24:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2331,14 +2331,47 @@ void
 pmap_zero_page(phys)
 	paddr_t phys;
 {
-	caddr_t p;
+	u_long *p0, *p1, *pend;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_zero_page(%lx)\n", phys);
 #endif
-	p = (caddr_t)ALPHA_PHYS_TO_K0SEG(phys);
-	bzero(p, PAGE_SIZE);
+
+	p0 = (u_long *)ALPHA_PHYS_TO_K0SEG(phys);
+	pend = (u_long *)((u_long)p0 + PAGE_SIZE);
+
+	/*
+	 * Unroll the loop a bit, doing 16 quadwords per iteration.
+	 * Do only 8 back-to-back stores, and alternate registers.
+	 */
+	do {
+		__asm __volatile(
+		"# BEGIN loop body\n"
+		"	addq	%2, (8 * 8), %1		\n"
+		"	stq	$31, (0 * 8)(%0)	\n"
+		"	stq	$31, (1 * 8)(%0)	\n"
+		"	stq	$31, (2 * 8)(%0)	\n"
+		"	stq	$31, (3 * 8)(%0)	\n"
+		"	stq	$31, (4 * 8)(%0)	\n"
+		"	stq	$31, (5 * 8)(%0)	\n"
+		"	stq	$31, (6 * 8)(%0)	\n"
+		"	stq	$31, (7 * 8)(%0)	\n"
+		"					\n"
+		"	addq	%3, (8 * 8), %0		\n"
+		"	stq	$31, (0 * 8)(%1)	\n"
+		"	stq	$31, (1 * 8)(%1)	\n"
+		"	stq	$31, (2 * 8)(%1)	\n"
+		"	stq	$31, (3 * 8)(%1)	\n"
+		"	stq	$31, (4 * 8)(%1)	\n"
+		"	stq	$31, (5 * 8)(%1)	\n"
+		"	stq	$31, (6 * 8)(%1)	\n"
+		"	stq	$31, (7 * 8)(%1)	\n"
+		"	# END loop body"
+		: "=r" (p0), "=r" (p1)
+		: "0" (p0), "1" (p1)
+		: "memory");
+	} while (p0 < pend);
 }
 
 /*
