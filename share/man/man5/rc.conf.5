@@ -1,7 +1,8 @@
-.\"	$NetBSD: rc.conf.5,v 1.7 1997/04/02 02:02:51 cjs Exp $
+.\"	$NetBSD: rc.conf.5,v 1.8 1997/05/12 05:21:51 mikel Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
+.\" Copyright (c) 1997 Michael W. Long
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -52,14 +53,13 @@ file is a shell script that is sourced by
 if it exists, meaning
 that
 .Nm
-must be valid shell commands.
+must contain valid shell commands.
 .Pp
 Listed below are the
-.Sy daemon_flags
+.Nm
 variables that may be set, the values that each may be set to,
-a brief description of what each daemon does, and a reference to
-each daemon's manual page. Most 
-.Sy daemon_flags
+a brief description of what each variable does, and a reference to
+relevant manual pages. Most 
 variables have three values: a list of parameters to pass on the
 command line, "DEFAULT" for a reasonable default set of parameters,
 or "NO" if the daemon is not to be run at all. Some programs don't
@@ -68,6 +68,17 @@ always run, and will not take "NO."
 The arguments passed if "DEFAULT" is chosen are listed in
 .Nm
 itself.
+.Pp
+Actions to perform on boot-up:
+.Bl -tag -width bootparamd_flags
+.It Sy update_motd
+YES or NO.  Updates the
+.Nx
+version string in the
+.Pa /etc/motd
+file to reflect the version of the running kernel.  See
+.Xr motd 5 .
+.El
 .Pp
 Programs run on boot-up:
 .Bl -tag -width bootparamd_flags
@@ -92,6 +103,12 @@ to load in packet filter specifications from
 .Pa /etc/ipf.conf
 at network boot time, before any interfaces are configured.  See
 .Xr ipf 5 .
+.It Sy ntpdate_hosts
+Parameters, DEFAULT or NO.
+List of time servers for
+.Xr ntpdate 8 .
+If DEFAULT, the list of servers is loaded from
+.Pa /etc/ntp.conf .
 .El
 .Pp
 Interface boot-up configuration:
@@ -104,7 +121,7 @@ at boot time.
 If DEFAULT, the interfaces are found by running
 .Xr ifconfig 8
 with the
-.Ar -l
+.Fl l
 flag. Usually, the parameters for the subsequent
 .Xr ifconfig 8
 commands are found in files named
@@ -114,7 +131,7 @@ where
 is the name of each interface (e.g.
 .Pa /etc/ifconfig.le0 ) .
 Alternatively, the parameters may be taken from an
-.Em ifconfig_*
+.Sy ifconfig_*
 variable (see below).  In either case, the parameters have the interface
 name prepended to them and are then handed to
 .Xr ifconfig 8 .
@@ -123,9 +140,9 @@ Parameters only.
 Supplies a set of parameters for configuring the given interface
 .Dq *
 (e.g.
-.Em ifconfig_le0 ) .
+.Sy ifconfig_le0 ) .
 See
-.Em net_interfaces ,
+.Sy net_interfaces
 above.
 .El
 .Pp
@@ -142,20 +159,23 @@ option turns on libwrap connection logging.  See
 .It Sy portmap
 YES or NO.  The
 .Xr portmap 8
-daemon is required for any Sun RPC based services.  These include NFS, YP,
+daemon is required for any
+.Xr rpc 3
+services.  These include NFS, YP,
 .Xr bootparamd 8 ,
 .Xr rstatd 8 ,
 .Xr rusersd 8 ,
 and
 .Xr rwalld 8 .
 .El
+.Pp
 Commonly used daemons:
 .Bl -tag -width bootparamd_flags
 .It Sy update_flags
 Parameters or DEFAULT.  The
 .Xr update 8
 daemon flushes cached disk pages that are dirty to disk at regular intervals.
-.It Sy syslog_flags
+.It Sy syslogd_flags
 Parameters, DEFAULT or NO.
 Syslog daemon; logs messages to logfiles.  See
 .Xr syslogd 8 .
@@ -170,12 +190,9 @@ Parameters, DEFAULT or NO.
 Local and wide area network time synchronisation daemon.  If this is used,
 .Sy timed_flags
 should be set to
-.Ar -M -F localhost
+.Dq Ar -M -F localhost
 on one xntp-using host on the network, and to "NO"
 on any other xntp-using host.
-.Xr xntpd 8
-is not included with
-.Nx .
 .It Sy sendmail_flags
 Parameters, DEFAULT or NO.
 Sendmail SMTP mail transport agent.  See
@@ -192,6 +209,7 @@ The
 option turns on extra logging.  See
 .Xr lpd 8 .
 .El
+.Pp
 Routing daemons:
 .Bl -tag -width bootparamd_flags
 .It Sy routed_flags
@@ -214,15 +232,20 @@ Parameters, DEFAULT or NO.
 DVMRP multicast routing protocol daemon.  See
 .Xr mrouted 8 .
 .El
+.Pp
 Daemons used to boot other hosts over a network:
 .Bl -tag -width bootparamd_flags
 .It Sy rarpd_flags
 Parameters, DEFAULT or NO.
-Reverse ARP daemon; used to boot NetBSD and Sun workstations.  See
+Reverse ARP daemon; used to boot
+.Nx
+and Sun workstations.  See
 .Xr rarpd 8 .
 .It Sy bootparamd_flags
 Parameters, DEFAULT or NO.
-Boot parameter server; used for booting NetBSD and SunOS 4.x systems.  See
+Boot parameter server; used for booting
+.Nx
+and SunOS 4.x systems.  See
 .Xr bootparamd 8 .
 .It Sy dhcpd_flags
 Parameters, DEFAULT or NO.
@@ -238,6 +261,7 @@ Parameters, DEFAULT or NO.
 DEC MOP protocol daemon; used for booting VAX and other DEC machines.  See
 .Xr mopd 8 .
 .El
+.Pp
 YP (NIS) daemons:
 .Bl -tag -width bootparamd_flags
 .It Sy ypbind_flags
@@ -255,6 +279,7 @@ Parameters, DEFAULT or NO.
 Allows remote YP users to update password on master server.  See
 .Xr yppasswdd 8 .
 .El
+.Pp
 Network file system daemons:
 .Bl -tag -width bootparamd_flags
 .It Sy nfs_client
@@ -320,6 +345,7 @@ Used only if
 .Sy amd_flags
 is not set to NO.
 .El
+.Pp
 Other daemons:
 .Bl -tag -width bootparamd_flags
 .It Sy rwhod
@@ -327,7 +353,7 @@ YES or NO.  Daemon to support
 .Xr rwho 8
 command.  See
 .Xr rwhod 8 .
-.It Sy kerberos
+.It Sy kerberos_server
 YES or NO.  Runs the kerberos server
 .Xr kerberos 8
 and the kerberos admininstration server,
@@ -339,15 +365,8 @@ The kerberos server is only available with the domestic distribution of
 .Sh FILES
 .Pa /etc/rc.conf
 .Sh SEE ALSO
-.Xr boot 8
-.Sh BUGS
-The
-.Sy kerberos_server
-variable is actually used by the default
-.Pa /etc/rc.local
-script, not the
-.Pa /etc/rc
-script.
+.Xr boot 8 ,
+.Xr rc 8
 .Sh HISTORY
 The
 .Nm
