@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.2 1993/08/01 17:56:58 mycroft Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.3 1994/03/28 07:08:56 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -64,8 +64,6 @@ char	device[SSIZE];
 char	count[SSIZE], mode[SSIZE], pos[SSIZE], op[SSIZE];
 
 char	resp[BUFSIZ];
-
-long	lseek();
 
 FILE	*debug;
 #define	DEBUG(f)	if (debug) fprintf(debug, f)
