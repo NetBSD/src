@@ -1,4 +1,4 @@
-/*	$NetBSD: cgthree_sbus.c,v 1.1.4.5 2002/04/01 07:47:09 nathanw Exp $ */
+/*	$NetBSD: cgthree_sbus.c,v 1.1.4.6 2002/08/13 02:19:56 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.1.4.5 2002/04/01 07:47:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgthree_sbus.c,v 1.1.4.6 2002/08/13 02:19:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,6 +190,8 @@ cgthreeattach_sbus(parent, self, args)
 
 	isconsole = fb_is_console(node);
 	name = PROM_getpropstring(node, "model");
+	if (name == NULL)
+		name = "cgthree";
 
 	if (sa->sa_npromvaddrs != 0)
 		fb->fb_pixels = (caddr_t)(u_long)sa->sa_promvaddrs[0];

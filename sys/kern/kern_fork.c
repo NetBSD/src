@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.14 2002/08/01 02:46:19 nathanw Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.15 2002/08/13 02:20:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.14 2002/08/01 02:46:19 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.15 2002/08/13 02:20:05 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -370,6 +370,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	if (flags & FORK_SHAREFILES)
 		fdshare(p1, p2);
+	else if (flags & FORK_CLEANFILES)
+		p2->p_fd = fdinit(p1);
 	else
 		p2->p_fd = fdcopy(p1);
 

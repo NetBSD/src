@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.40.2.5 2002/08/01 02:42:11 nathanw Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.40.2.6 2002/08/13 02:18:24 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.5 2002/08/01 02:42:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.40.2.6 2002/08/13 02:18:24 nathanw Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -142,6 +142,8 @@ struct {
 	_qe(0, 0, 0, PCI_VENDOR_COMPAQ, PCI_PRODUCT_COMPAQ_TRIFLEX4),
 	/* Triton needed for Connectix Virtual PC */
 	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82437FX),
+	/* Connectix Virtual PC 5 has a 440BX */
+	_qe(0, 0, 0, PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82443BX_NOAGP),
 	{0, 0xffffffff} /* patchable */
 };
 #undef _m1tag

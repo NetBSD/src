@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23.4.3 2002/01/08 00:27:06 nathanw Exp $
+#	$NetBSD: Makefile,v 1.23.4.4 2002/08/13 02:18:40 nathanw Exp $
 
 KDIR=	/sys/arch/pmax/include
 INCSDIR= /usr/include/pmax
@@ -15,7 +15,8 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kcore.h kdbparam.h \
 	limits.h lock.h locore.h \
 	math.h mcontext.h mips_opcode.h \
-	param.h pcb.h pmap.h pmioctl.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h pmioctl.h \
+	proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h regdef.h regnum.h reloc.h \
 	setjmp.h signal.h stdarg.h \
 	tc_machdep.h trap.h types.h \

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.13 2002/08/01 02:45:36 nathanw Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.104.2.14 2002/08/13 02:19:53 nathanw Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -114,7 +114,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.13 2002/08/01 02:45:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.14 2002/08/13 02:19:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -146,15 +146,12 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.104.2.13 2002/08/01 02:45:36 na
 #include "rf_dagflags.h"
 #include "rf_desc.h"
 #include "rf_diskqueue.h"
-#include "rf_acctrace.h"
 #include "rf_etimer.h"
 #include "rf_general.h"
-#include "rf_debugMem.h"
 #include "rf_kintf.h"
 #include "rf_options.h"
 #include "rf_driver.h"
 #include "rf_parityscan.h"
-#include "rf_debugprint.h"
 #include "rf_threadstuff.h"
 
 int     rf_kdebug_level = 0;
@@ -2692,6 +2689,12 @@ rf_find_raid_components()
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"fd")) {
 			continue;
 		}
+
+		/* we don't care about CD's... */
+		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"cd")) {
+			continue;
+		}
+
 		/* hdfd is the Atari/Hades floppy driver */
 		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name,"hdfd")) {
 			continue;

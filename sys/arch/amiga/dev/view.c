@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.17.8.2 2002/04/01 07:39:00 nathanw Exp $ */
+/*	$NetBSD: view.c,v 1.17.8.3 2002/08/13 02:17:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.2 2002/04/01 07:39:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.17.8.3 2002/08/13 02:17:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,6 +334,8 @@ view_get_colormap(struct view_softc *vu, colormap_t *ucm)
 	u_long *uep;
 
 	/* add one incase of zero, ick. */
+	if (ucm->size + 1 > SIZE_T_MAX / sizeof(u_long))
+		return EINVAL;
 	cme = malloc(sizeof (u_long)*(ucm->size + 1), M_IOCTLOPS, M_WAITOK);
 	if (cme == NULL)
 		return(ENOMEM);

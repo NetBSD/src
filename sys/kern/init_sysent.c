@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.124.2.10 2002/08/01 02:46:18 nathanw Exp $ */
+/* $NetBSD: init_sysent.c,v 1.124.2.11 2002/08/13 02:20:03 nathanw Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.10 2002/08/01 02:46:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.124.2.11 2002/08/13 02:20:03 nathanw Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -884,10 +884,10 @@ struct sysent sysent[] = {
 	    sys_nosys },			/* 339 = unimplemented */
 	{ 5, s(struct sys___sigaction_sigtramp_args), 0,
 	    sys___sigaction_sigtramp },		/* 340 = __sigaction_sigtramp */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 341 = filler */
-	{ 0, 0, 0,
-	    sys_nosys },			/* 342 = filler */
+	{ 3, s(struct sys_pmc_get_info_args), 0,
+	    sys_pmc_get_info },			/* 341 = pmc_get_info */
+	{ 3, s(struct sys_pmc_control_args), 0,
+	    sys_pmc_control },			/* 342 = pmc_control */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 343 = filler */
 	{ 0, 0, 0,

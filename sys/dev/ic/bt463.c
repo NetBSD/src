@@ -1,4 +1,4 @@
-/* $NetBSD: bt463.c,v 1.3.4.4 2002/01/08 00:29:37 nathanw Exp $ */
+/* $NetBSD: bt463.c,v 1.3.4.5 2002/08/13 02:19:23 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.3.4.4 2002/01/08 00:29:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bt463.c,v 1.3.4.5 2002/08/13 02:19:23 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,7 +369,7 @@ bt463_set_cmap(rc, cmapp)
 	int s;
 
 	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
-	    (cmapp->index + cmapp->count) > BT463_NCMAP_ENTRIES)
+	    cmapp->count > BT463_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 	if (!uvm_useracc(cmapp->red, cmapp->count, B_READ) ||
 	    !uvm_useracc(cmapp->green, cmapp->count, B_READ) ||
@@ -398,10 +398,11 @@ bt463_get_cmap(rc, cmapp)
 	struct wsdisplay_cmap *cmapp;
 {
 	struct bt463data *data = (struct bt463data *)rc;
-	int error, count, index;
+	u_int count, index;
+	int error;
 
-	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
-	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
+	if (cmapp->index >= BT463_NCMAP_ENTRIES ||
+	    cmapp->count > BT463_NCMAP_ENTRIES - cmapp->index)
 		return (EINVAL);
 
 	count = cmapp->count;

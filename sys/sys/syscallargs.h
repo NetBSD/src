@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.99.2.10 2002/08/01 02:47:00 nathanw Exp $ */
+/* $NetBSD: syscallargs.h,v 1.99.2.11 2002/08/13 02:20:25 nathanw Exp $ */
 
 /*
  * System call argument lists.
@@ -1303,6 +1303,18 @@ struct sys___sigaction_sigtramp_args {
 	syscallarg(int) vers;
 };
 
+struct sys_pmc_get_info_args {
+	syscallarg(int) ctr;
+	syscallarg(int) op;
+	syscallarg(void *) args;
+};
+
+struct sys_pmc_control_args {
+	syscallarg(int) ctr;
+	syscallarg(int) op;
+	syscallarg(void *) args;
+};
+
 /*
  * System call prototypes.
  */
@@ -1633,4 +1645,6 @@ int	sys_sa_setconcurrency(struct lwp *, void *, register_t *);
 int	sys_sa_yield(struct lwp *, void *, register_t *);
 int	sys_sa_preempt(struct lwp *, void *, register_t *);
 int	sys___sigaction_sigtramp(struct lwp *, void *, register_t *);
+int	sys_pmc_get_info(struct lwp *, void *, register_t *);
+int	sys_pmc_control(struct lwp *, void *, register_t *);
 #endif /* _SYS__SYSCALLARGS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.4.4.5 2002/08/01 02:41:35 nathanw Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.4.4.6 2002/08/13 02:18:09 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -339,7 +339,7 @@ splx(int new)
 	 * XXX get nested interrupts, and I don't know why yet.
 	 */
 	if ((new & IRQ_BITS) == 0 && (ipending & IRQ_BITS))
-		i80200_intr_enable(INTCTL_IM);
+		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }
 
 int
@@ -391,7 +391,7 @@ iq80310_intr_init(void)
 
 	/* Enable external interrupts on the i80200. */
 	i80200_extirq_dispatch = iq80310_intr_dispatch;
-	i80200_intr_enable(INTCTL_IM);
+	i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
@@ -458,7 +458,7 @@ iq80310_intr_dispatch(struct clockframe *frame)
 	stray = 1;
 
 	/* First, disable external IRQs. */
-	i80200_intr_disable(INTCTL_IM);
+	i80200_intr_disable(INTCTL_IM | INTCTL_PM);
 
 	pcpl = current_spl_level;
 
@@ -496,12 +496,16 @@ iq80310_intr_dispatch(struct clockframe *frame)
 
 		current_spl_level = pcpl;
 
+#if 0 /* XXX */
 		if (rv == 0)
 			printf("Stray interrupt: IRQ %d\n", irq);
+#endif
 	}
 
+#if 0 /* XXX */
 	if (stray)
 		printf("Stray external interrupt\n");
+#endif
 
 	/* Check for pendings soft intrs. */
 	if ((ipending & ~IRQ_BITS) & ~current_spl_level) {
@@ -515,5 +519,5 @@ iq80310_intr_dispatch(struct clockframe *frame)
 	 * interrupts.
 	 */
 	if ((ipending & IRQ_BITS) == 0)
-		i80200_intr_enable(INTCTL_IM);
+		i80200_intr_enable(INTCTL_IM | INTCTL_PM);
 }

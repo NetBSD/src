@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.7.26.2 2002/04/01 07:38:57 nathanw Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.7.26.3 2002/08/13 02:17:41 nathanw Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.2 2002/04/01 07:38:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.7.26.3 2002/08/13 02:17:41 nathanw Exp $");
 
 #include "grfcv3d.h"
 #if NGRFCV3D > 0
@@ -962,7 +962,7 @@ cv3d_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 	if (cmap->count == 0 || cmap->index >= 256)
 		return (0);
 
-	if (cmap->index + cmap->count > 256)
+	if (cmap->count > 256 - cmap->index)
 		cmap->count = 256 - cmap->index;
 
 	/* first read colors out of the chip, then copyout to userspace */

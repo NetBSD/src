@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.2.8.4 2002/06/20 03:42:25 nathanw Exp $
+#	$NetBSD: files.walnut,v 1.2.8.5 2002/08/13 02:19:03 nathanw Exp $
 #
 # walnut-specific configuration info
 
@@ -45,34 +45,50 @@ include "dev/wscons/files.wscons"
 include "dev/rasops/files.rasops"
 include "dev/wsfont/files.wsfont"
 
-# System bus
-define	mainbus {[addr=-1], [irq=-1]}
-device	mainbus : mainbus
-attach	mainbus at root
-file	arch/walnut/walnut/mainbus.c		mainbus
+# Processor Local Bus
+define	plb {}
+device	plb : plb
+attach	plb at root
+file	arch/powerpc/ibm4xx/dev/plb.c		plb
 
-device	cpu
-attach	cpu at mainbus
+# On-chip Peripheral Bus
+define	opb {[addr=-1], [irq=-1]}
+device	opb : plb
+attach	opb at plb
+file	arch/powerpc/ibm4xx/dev/opb.c		opb
+
+device	cpu {}
+attach	cpu at plb
 file	arch/powerpc/ibm4xx/cpu.c
 
 # On-chip com device(s)
-attach	com at mainbus with com_mainbus
-file	arch/powerpc/ibm4xx/dev/com_mainbus.c	com_mainbus
+attach	com at opb with com_opb
+file	arch/powerpc/ibm4xx/dev/com_opb.c	com_opb
 
 # On-chip ethernet device(s)
 device	emac: ether, ifnet, arp, mii
-attach	emac at mainbus
+attach	emac at opb
 file	arch/powerpc/ibm4xx/dev/if_emac.c	emac
+
+# Watchdog timer
+device	wdog: sysmon_wdog
+attach	wdog at opb
+file	arch/powerpc/ibm4xx/dev/wdog.c		wdog
 
 # PCI bus support
 include	"dev/pci/files.pci"
 
 # On-chip PCI bridge
 device	pchb : pcibus
-attach	pchb at mainbus
+attach	pchb at plb
 file	arch/walnut/pci/pchb.c			pchb
 
 file	arch/walnut/pci/pci_machdep.c		pci
+
+# Off-chip peripheral bus
+device	pbus {[addr=-1], [irq=-1]}
+attach	pbus at plb
+file	arch/walnut/dev/pbus.c			pbus
 
 define	todservice {}
 
@@ -81,12 +97,12 @@ attach	todclock at todservice
 file	arch/walnut/dev/todclock.c		todclock	needs-count
 
 device	dsrtc: todservice
-attach	dsrtc at mainbus
+attach	dsrtc at pbus
 file	arch/walnut/dev/ds1743.c		dsrtc
 
 include "dev/pckbc/files.pckbc"
-attach	pckbc at mainbus with pckbc_mainbus
-file	arch/walnut/dev/pckbc_mainbus.c		pckbc_mainbus
+attach	pckbc at pbus with pckbc_pbus
+file	arch/walnut/dev/pckbc_pbus.c		pckbc_pbus
 
 #
 # Machine-independent CardBus drivers

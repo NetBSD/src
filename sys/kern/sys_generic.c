@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.54.2.8 2002/07/12 01:40:21 nathanw Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.54.2.9 2002/08/13 02:20:07 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.8 2002/07/12 01:40:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.54.2.9 2002/08/13 02:20:07 nathanw Exp $");
 
 #include "opt_ktrace.h"
 
@@ -775,7 +775,7 @@ selscan(struct proc *p, fd_mask *ibitp, fd_mask *obitp, int nfd,
 	int		msk, i, j, fd, n;
 	fd_mask		ibits, obits;
 	struct file	*fp;
-	static int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
+	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
 			       POLLWRNORM | POLLHUP | POLLERR,
 			       POLLRDBAND };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.42.2.11 2002/06/20 03:44:52 nathanw Exp $ */
+/* $NetBSD: ispvar.h,v 1.42.2.12 2002/08/13 02:19:28 nathanw Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -758,6 +758,7 @@ typedef enum {
 	ISPASYNC_CONF_CHANGE,		/* Platform Configuration Change */
 	ISPASYNC_UNHANDLED_RESPONSE,	/* Unhandled Response Entry */
 	ISPASYNC_FW_CRASH,		/* Firmware has crashed */
+	ISPASYNC_FW_DUMPED,		/* Firmware crashdump taken */
 	ISPASYNC_FW_RESTARTED		/* Firmware has been restarted */
 } ispasync_t;
 int isp_async(struct ispsoftc *, ispasync_t, void *);

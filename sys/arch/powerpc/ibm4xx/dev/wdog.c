@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.1.2.2 2002/08/06 22:47:09 nathanw Exp $ */
+/* $NetBSD: wdog.c,v 1.1.2.3 2002/08/13 02:18:44 nathanw Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -45,9 +45,8 @@
 #include <sys/properties.h>
 #include <sys/wdog.h>
 
-#include <machine/autoconf.h>
-
 #include <powerpc/spr.h>
+#include <powerpc/ibm4xx/dev/opbvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -70,10 +69,10 @@ struct cfattach wdog_ca = {
 static int
 wdog_match(struct device *parent, struct cfdata *cf, void *aux)
 {
-	struct mainbus_attach_args *maa = aux;
+	struct opb_attach_args *oaa = aux;
 
 	/* match only watchdog devices */
-	if (strcmp(maa->mb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(oaa->opb_name, cf->cf_driver->cd_name) != 0)
 		return (0);
 
 	return (1);

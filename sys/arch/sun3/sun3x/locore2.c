@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.26.6.4 2002/07/12 01:39:53 nathanw Exp $	*/
+/*	$NetBSD: locore2.c,v 1.26.6.5 2002/08/13 02:19:01 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@ void _bootstrap __P((void));
 
 static void _vm_init __P((void));
 
-#if defined(DDB) && !defined(SYMTAB_SPACE)
+#if defined(DDB)
 static void _save_symtab __P((void));
 
 /*
@@ -134,7 +134,7 @@ _save_symtab()
 	ssym = (char *)ehdr;
 	esym = (char *)maxsym;
 }
-#endif	/* DDB && !SYMTAB_SPACE */
+#endif	/* DDB */
 
 /*
  * This function is called from _bootstrap() to initialize
@@ -156,7 +156,7 @@ _vm_init()
 	 * if DDB is not part of this kernel, ignore the symbols.
 	 */
 	esym = end + 4;
-#if defined(DDB) && !defined(SYMTAB_SPACE)
+#if defined(DDB)
 	/* This will advance esym past the symbols. */
 	_save_symtab();
 #endif

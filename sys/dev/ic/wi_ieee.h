@@ -1,4 +1,4 @@
-/*	$NetBSD: wi_ieee.h,v 1.3.2.12 2002/06/20 03:45:08 nathanw Exp $	*/
+/*	$NetBSD: wi_ieee.h,v 1.3.2.13 2002/08/13 02:19:31 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -129,6 +129,13 @@ struct wi_80211_hdr {
 #define WI_STYPE_MGMT_AUTH	0x00B0	/* authentication */
 #define WI_STYPE_MGMT_DEAUTH	0x00C0	/* deauthentication */
 
+#define	WI_STYPE_CTL_PSPOLL	0x00A0
+#define	WI_STYPE_CTL_RTS	0x00B0
+#define	WI_STYPE_CTL_CTS	0x00C0
+#define	WI_STYPE_CTL_ACK	0x00D0
+#define	WI_STYPE_CTL_CFEND	0x00E0
+#define	WI_STYPE_CTL_CFENDACK	0x00F0
+
 struct wi_mgmt_hdr {
 	u_int16_t		frame_ctl;
 	u_int16_t		duration;
@@ -227,7 +234,7 @@ struct wi_counters {
 #define	 IV_EVERY100_FRAME	0x60	/* every 100 frame IV reuse */
 #define	 HOST_DECRYPT		0x80
 #define WI_RID_WEP_MAPTABLE	0xFC29
-#define WI_RID_AUTH_CNTL	0xFC2A
+#define WI_RID_CNFAUTHMODE	0xFC2A
 #define WI_RID_ROAMING_MODE	0xFC2D
 #define WI_RID_BASIC_RATE	0xFCB3
 #define WI_RID_SUPPORT_RATE	0xFCB4

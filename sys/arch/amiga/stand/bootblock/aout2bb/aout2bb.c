@@ -1,4 +1,4 @@
-/*	$NetBSD: aout2bb.c,v 1.4.26.3 2002/08/01 02:41:08 nathanw Exp $	*/
+/*	$NetBSD: aout2bb.c,v 1.4.26.4 2002/08/13 02:17:46 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ main(argc, argv)
 	buffer = malloc(bbsize);
 	relbuf = (u_int32_t *)malloc(bbsize);
 	if (buffer == NULL || relbuf == NULL)
-		err(1, "Unable to allocate memory\n");
+		err(1, "Unable to allocate memory");
 
 	ifd = open(argv[0], O_RDONLY, 0);
 	if (ifd < 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_machdep.c,v 1.26.8.7 2002/08/01 02:41:41 nathanw Exp $	*/
+/*	$NetBSD: hpux_machdep.c,v 1.26.8.8 2002/08/13 02:18:11 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.7 2002/08/01 02:41:41 nathanw Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hpux_machdep.c,v 1.26.8.8 2002/08/13 02:18:11 nathanw Exp $");                                                  
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,9 @@ hpux_sys_getcontext(lp, v, retval)
 	const char *str;
 	int l, i, error = 0;
 	int len; 
+
+	if (SCARG(uap, len) <= 0)
+		return (EINVAL);
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)

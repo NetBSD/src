@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.6.5 2002/06/20 03:42:27 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.6.6 2002/08/13 02:19:07 nathanw Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -154,6 +154,7 @@ void
 initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 {
 	extern int defaulttrap, defaultsize;
+	extern int sctrap, scsize;
 	extern int alitrap, alisize;
 	extern int dsitrap, dsisize;
 	extern int isitrap, isisize;
@@ -213,6 +214,9 @@ initppc(u_int startkernel, u_int endkernel, char *args, void *info_block)
 			/*
 			 * This one is (potentially) installed during autoconf
 			 */
+			break;
+		case EXC_SC:
+			memcpy((void *)EXC_SC, &sctrap, (size_t)&scsize);
 			break;
 		case EXC_ALI:
 			memcpy((void *)EXC_ALI, &alitrap, (size_t)&alisize);

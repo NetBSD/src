@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.156.2.14 2002/08/01 02:45:43 nathanw Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.156.2.15 2002/08/13 02:19:56 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.14 2002/08/01 02:45:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.156.2.15 2002/08/13 02:19:56 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -443,6 +443,9 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "SONY    ", "CD-ROM CDU-55S  ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-561  ", ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "SONY    ", "CD-ROM CDU-76S", ""},
+				PQUIRK_NOLUNS|PQUIRK_NOSYNC|PQUIRK_NOWIDE},
 	{{T_CDROM, T_REMOV,
 	 "SONY    ", "CD-ROM CDU-8003A", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.4.6 2002/07/02 20:15:19 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.4.7 2002/08/13 02:18:05 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -78,9 +78,7 @@
 #endif
 
 /* For sysctl. */
-char machine[] = MACHINE;
-char machine_arch[] = MACHINE_ARCH;
-char cpu_model[] = "Cobalt Microserver";
+extern char cpu_model[];
 
 /* Our exported CPU info; we can have only one. */  
 struct cpu_info cpu_info_store;
@@ -185,6 +183,8 @@ mach_init(memsize)
         if (boothowto & RB_KDB)
                 kgdb_connect(0);
 #endif    
+
+	strcpy(cpu_model, "Cobalt Microserver");
 
 	/*
 	 * Load the rest of the available pages into the VM system.
@@ -314,26 +314,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-int
-cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	/* All sysctl names at this level are terminal. */
-	if (namelen != 1)
-		return ENOTDIR;
-
-	switch (name[0]) {
-	default:
-		return EOPNOTSUPP;
-	}
 }
 
 int	waittime = -1;

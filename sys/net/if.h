@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.65.2.6 2002/08/01 02:46:37 nathanw Exp $	*/
+/*	$NetBSD: if.h,v 1.65.2.7 2002/08/13 02:20:12 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -76,6 +76,7 @@
 
 #if !defined(_XOPEN_SOURCE)
 
+#include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
 #include <net/pfil.h>

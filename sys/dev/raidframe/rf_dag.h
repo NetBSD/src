@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.3.20.1 2001/10/22 20:41:33 nathanw Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.3.20.2 2002/08/13 02:19:48 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -43,7 +43,6 @@
 #include "rf_layout.h"
 #include "rf_dagflags.h"
 #include "rf_acctrace.h"
-#include "rf_memchunk.h"
 
 #define RF_THREAD_CONTEXT   0	/* we were invoked from thread context */
 #define RF_INTR_CONTEXT     1	/* we were invoked from interrupt context */
@@ -152,8 +151,6 @@ typedef enum RF_DagStatus_e {
 }       RF_DagStatus_t;
 #define RF_MAX_HDR_SUCC 1
 
-#define RF_MAXCHUNKS 10
-
 struct RF_DagHeader_s {
 	RF_DagStatus_t status;	/* status of this DAG */
 	int     numSuccedents;	/* DAG may be a tree, i.e. may have > 1 root */
@@ -180,19 +177,6 @@ struct RF_DagHeader_s {
 				 * is for */
 	void   *bp;		/* the bp for this I/O passed down from the
 				 * file system. ignored outside kernel */
-
-	RF_ChunkDesc_t *memChunk[RF_MAXCHUNKS];	/* experimental- Chunks of
-						 * memory to be retained upon
-						 * DAG free for re-use */
-	int     chunkIndex;	/* the idea is to avoid calls to alloc and
-				 * free */
-
-	RF_ChunkDesc_t **xtraMemChunk;	/* escape hatch which allows
-					 * SelectAlgorithm to merge memChunks
-					 * from several dags */
-	int     xtraChunkIndex;	/* number of ptrs to valid chunks */
-	int     xtraChunkCnt;	/* number of ptrs to chunks allocated */
-
 };
 
 struct RF_DagList_s {

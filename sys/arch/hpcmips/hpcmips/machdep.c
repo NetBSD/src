@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64.2.6 2002/06/24 22:04:44 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.64.2.7 2002/08/13 02:18:14 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.6 2002/06/24 22:04:44 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.7 2002/08/13 02:18:14 nathanw Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -97,15 +97,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64.2.6 2002/06/24 22:04:44 nathanw Exp
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/mount.h>
-#include <sys/sysctl.h>
 #include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <ufs/mfs/mfs_extern.h>	/* mfs_initminiroot() */
 #include <dev/cons.h>		/* cntab access (cpu_reboot) */
 
 #include <machine/psl.h>
 #include <machine/sysconf.h>
-#include <machine/bootinfo.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>
 #include <machine/kloader.h>
@@ -151,10 +153,9 @@ static int __bicons_enable;
 #endif
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;		/* from <machine/param.h> */
-char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[128];	
+extern	char cpu_model[];	
 char	cpu_name[40];			/* set cpu depend xx_init() */
+
 struct cpu_info cpu_info_store;		/* only one cpu */
 int	cpuspeed = 1;			/* approx # instr per usec. */
 
@@ -620,35 +621,6 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-}
-
-
-/*
- * Machine dependent system variables.
- */
-int
-cpu_sysctl(int *name, u_int namelen, void *oldp, size_t *oldlenp, void *newp,
-    size_t newlen, struct proc *p)
-{
-
-	/* all sysctl names at this level are terminal */
-	if (namelen != 1)
-		return (ENOTDIR);		/* overloaded */
-
-	switch (name[0]) {
-	case CPU_CONSDEV:
-		return (sysctl_rdstruct(oldp, oldlenp, newp, &cn_tab->cn_dev,
-		    sizeof cn_tab->cn_dev));
-	case CPU_ROOT_DEVICE:
-		return (sysctl_rdstring(oldp, oldlenp, newp, 
-		    root_device->dv_xname));
-	case CPU_BOOTED_KERNEL:
-		return (sysctl_rdstring(oldp, oldlenp, newp, 
-		    booted_kernel));
-	default:
-		return (EOPNOTSUPP);
-	}
-	/* NOTREACHED */
 }
 
 void

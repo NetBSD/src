@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15.8.3 2002/01/08 00:24:44 nathanw Exp $
+#	$NetBSD: Makefile,v 1.15.8.4 2002/08/13 02:18:11 nathanw Exp $
 
 KDIR=	/sys/arch/hp300/include
 INCSDIR= /usr/include/hp300
@@ -16,7 +16,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h \
-	param.h pcb.h pmap.h proc.h profile.h psl.h pte.h ptrace.h \
+	param.h pcb.h pmap.h pmc.h proc.h profile.h psl.h pte.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	trap.h types.h \

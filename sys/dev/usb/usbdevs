@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.148.2.13 2002/08/01 02:46:06 nathanw Exp $
+$NetBSD: usbdevs,v 1.148.2.14 2002/08/13 02:20:00 nathanw Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -499,7 +499,11 @@ product BTC BTC7932		0x6782	Keyboard with mouse port
 /* Canon, Inc. products */
 product CANON N656U		0x2206	CANOSCAN N656U
 product CANON S10		0x3041	PowerShot S10
-product CANON S100		0x3045	PowerShot S100
+product CANON S20		0x3043	PowerShot S20
+product CANON S100_US		0x3045	PowerShot S100
+product CANON S100_EU		0x3047	PowerShot S100
+product CANON G1		0x3048	PowerShot G1
+product CANON A20		0x304e	PowerShot A20
 
 /* CATC products */
 product CATC NETMATE		0x000a	Netmate ethernet adapter
@@ -662,6 +666,7 @@ product FTDI SERIAL_8U232AM	0x6001	8U232AM Serial converter
 product FUJIPHOTO MASS0100	0x0100	Mass Storage
 
 /* Genesys Logic products */
+product GENESYS GL650		0x0604	GL650 Hub
 product GENESYS GL641USB	0x0700	GL641USB CompactFlash Card Reader
 
 /* Hagiwara products */
@@ -874,6 +879,7 @@ product LOGITECH QUICKCAMWEB	0x0801	QuickCam Web
 product LOGITECH QUICKCAMPRO	0x0810	QuickCam Pro
 product LOGITECH QUICKCAMEXP	0x0840	QuickCam Express
 product LOGITECH QUICKCAM	0x0850	QuickCam
+product LOGITECH QUICKCAMPRO3k	0x08b0	QuickCam Pro 3000
 product LOGITECH N43		0xc000	N43
 product LOGITECH N48		0xc001	N48 mouse
 product LOGITECH MBA47		0xc002	M-BA47 mouse

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.41.6.6 2002/08/01 02:42:56 nathanw Exp $
+# 	$NetBSD: INSTALL,v 1.41.6.7 2002/08/13 02:18:40 nathanw Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -70,9 +70,7 @@ options 	COMPAT_14
 
 # Raster console options
 options 	FONT_BOLD8x16		# Font for fb devices
-options 	FONT_LUCIDA16x29	# Font for px devices
-#options 	FONT_GALLANT12x22
-#options 	FONT_QVSS8x15
+options 	FONT_GALLANT12x22
 
 # pmax specific
 options 	HZ=256		# RTC rate required

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.4.2.2 2002/06/20 03:42:55 nathanw Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.4.2.3 2002/08/13 02:19:15 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@ struct irix_usema_idaddr {
 	int *iui_oidp;	/* pointer to is_oid field in struct irix_semaphore */
 };
 
-/* waigint processes list */
+/* waitint processes list */
 struct irix_waiting_proc_rec {
 	TAILQ_ENTRY(irix_waiting_proc_rec) iwpr_list;
 	struct proc *iwpr_p;

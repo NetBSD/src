@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.16 2000/03/23 06:31:51 thorpej Exp $	*/
+/*	$NetBSD: kernel.h,v 1.16.6.1 2002/08/13 02:20:21 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -67,6 +67,11 @@ extern int hz;			/* system clock's frequency */
 extern int stathz;		/* statistics clock's frequency */
 extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
+
+extern int profsrc;		/* profiling source */
+#if defined(_KERNEL)
+#define PROFSRC_CLOCK	0
+#endif
 
 /*
  * These globals indicate the number of times hardlock() has ticked,

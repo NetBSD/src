@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.9.2.2 2001/11/14 19:15:49 nathanw Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.9.2.3 2002/08/13 02:19:52 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.9.2.2 2001/11/14 19:15:49 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_layout.c,v 1.9.2.3 2002/08/13 02:19:52 nathanw Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -451,19 +451,6 @@ rf_ConfigureLayout(
 	} else {
 		raidPtr->headSepLimit = rf_GetDefaultHeadSepLimit(raidPtr);
 	}
-
-	printf("RAIDFRAME: Configure (%s): total number of sectors is %lu (%lu MB)\n",
-	    layoutPtr->map->configName,
-	    (unsigned long) raidPtr->totalSectors,
-	    (unsigned long) (raidPtr->totalSectors / 1024 * (1 << raidPtr->logBytesPerSector) / 1024));
-	if (raidPtr->headSepLimit >= 0) {
-		printf("RAIDFRAME(%s): Using %ld floating recon bufs with head sep limit %ld\n",
-		    layoutPtr->map->configName, (long) raidPtr->numFloatingReconBufs, (long) raidPtr->headSepLimit);
-	} else {
-		printf("RAIDFRAME(%s): Using %ld floating recon bufs with no head sep limit\n",
-		    layoutPtr->map->configName, (long) raidPtr->numFloatingReconBufs);
-	}
-
 	return (0);
 }
 /* typically there is a 1-1 mapping between stripes and parity stripes.

@@ -1,4 +1,4 @@
-/*	$NetBSD: yyyin_cksum.c,v 1.4 1996/01/06 16:50:55 ragge Exp $	*/
+/*	$NetBSD: yyyin_cksum.c,v 1.4.24.1 2002/08/13 02:19:02 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
