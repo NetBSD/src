@@ -1,4 +1,4 @@
-.\"	$NetBSD: passwd.5,v 1.12 1999/01/16 14:16:43 lukem Exp $
+.\"	$NetBSD: passwd.5,v 1.13 1999/10/28 09:24:55 is Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,9 +172,16 @@ user's work phone number
 user's home phone number
 .El
 .Pp
-This information is used by the
+The full name may contain a ampersand (``&'') which will be replaced by
+the capitalized login name when the gecos field is displayed or used
+by various programs such as
+.Xr finger 1 ,
+.Xr sendmail 8 ,
+etc.
+.Pp
+The office and phone number subfields are used by the
 .Xr finger 1
-program.
+program, and possibly other applications.
 .Pp
 The user's home directory is the full
 .Ux
