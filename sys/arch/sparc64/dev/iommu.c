@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.15.2.1 2000/07/18 16:23:19 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.15.2.2 2000/08/07 00:57:26 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -584,6 +584,9 @@ iommu_dvmamap_unload(t, is, map)
 	sgsize = round_page(map->dm_segs[0].ds_len + 
 			    ((int)map->dm_segs[0].ds_addr & PGOFSET));
 
+	/* Flush the caches */
+	bus_dmamap_unload(t->_parent, map);
+
 	/* Mark the mappings as invalid. */
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
@@ -593,7 +596,6 @@ iommu_dvmamap_unload(t, is, map)
 	splx(s);
 	if (error != 0)
 		printf("warning: %qd of DVMA space lost\n", (long long)sgsize);
-	cache_flush((caddr_t)(u_long)dvmaddr, (u_int)sgsize);	
 }
 
 
