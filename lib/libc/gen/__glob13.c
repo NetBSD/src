@@ -1,4 +1,4 @@
-/*	$NetBSD: __glob13.c,v 1.5 1998/03/31 20:35:04 kleink Exp $	*/
+/*	$NetBSD: __glob13.c,v 1.6 1998/06/19 22:53:57 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: __glob13.c,v 1.5 1998/03/31 20:35:04 kleink Exp $");
+__RCSID("$NetBSD: __glob13.c,v 1.6 1998/06/19 22:53:57 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,9 +52,6 @@ __RCSID("$NetBSD: __glob13.c,v 1.5 1998/03/31 20:35:04 kleink Exp $");
  *
  * Optional extra services, controlled by flags not defined by POSIX:
  *
- * GLOB_QUOTE:
- *	Escaping convention: \ inhibits any special meaning the following
- *	character might have (except \ at end of string is retained).
  * GLOB_MAGCHAR:
  *	Set in gl_flags if pattern contained a globbing character.
  * GLOB_NOMAGIC:
@@ -196,7 +193,10 @@ glob(pattern, flags, errfunc, pglob)
 
 	bufnext = patbuf;
 	bufend = bufnext + MAXPATHLEN;
-	if (flags & GLOB_QUOTE) {
+	if (flags & GLOB_NOESCAPE) {
+	    while (bufnext < bufend && (c = *patnext++) != EOS) 
+		    *bufnext++ = c;
+	} else {
 		/* Protect the quoted characters. */
 		while (bufnext < bufend && (c = *patnext++) != EOS) 
 			if (c == QUOTE) {
@@ -209,9 +209,6 @@ glob(pattern, flags, errfunc, pglob)
 			else
 				*bufnext++ = c;
 	}
-	else 
-	    while (bufnext < bufend && (c = *patnext++) != EOS) 
-		    *bufnext++ = c;
 	*bufnext = EOS;
 
 	if (flags & GLOB_BRACE)
@@ -484,20 +481,27 @@ glob0(pattern, pglob)
 	if ((err = glob1(patbuf, pglob)) != 0)
 		return(err);
 
-	/*
-	 * If there was no match we are going to append the pattern 
-	 * if GLOB_NOCHECK was specified or if GLOB_NOMAGIC was specified
-	 * and the pattern did not contain any magic characters
-	 * GLOB_NOMAGIC is there just for compatibility with csh.
-	 */
-	if (pglob->gl_pathc == oldpathc && 
-	    ((pglob->gl_flags & GLOB_NOCHECK) || 
-	      ((pglob->gl_flags & GLOB_NOMAGIC) &&
-	       !(pglob->gl_flags & GLOB_MAGCHAR))))
-		return(globextend(pattern, pglob));
-	else if (!(pglob->gl_flags & GLOB_NOSORT)) 
+	if (pglob->gl_pathc == oldpathc) {	
+		/*
+		 * If there was no match we are going to append the pattern 
+		 * if GLOB_NOCHECK was specified or if GLOB_NOMAGIC was
+		 * specified and the pattern did not contain any magic
+		 * characters GLOB_NOMAGIC is there just for compatibility
+		 * with csh.
+		 */
+		if ((pglob->gl_flags & GLOB_NOCHECK) ||
+		    ((pglob->gl_flags & (GLOB_NOMAGIC|GLOB_MAGCHAR))
+		     == GLOB_NOMAGIC)) {
+			if ((err = globextend(pattern, pglob)) != 0)
+				return (err);
+		} else {
+			return (GLOB_NOMATCH);
+		}
+	} else if (!(pglob->gl_flags & GLOB_NOSORT)) {
 		qsort(pglob->gl_pathv + pglob->gl_offs + oldpathc,
 		    pglob->gl_pathc - oldpathc, sizeof(char *), compare);
+	}
+
 	return(0);
 }
 
@@ -505,7 +509,7 @@ static int
 compare(p, q)
 	const void *p, *q;
 {
-	return(strcmp(*(char **)p, *(char **)q));
+	return(strcoll(*(char **)p, *(char **)q));
 }
 
 static int
