@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.122 2003/07/02 13:40:53 yamt Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.123 2003/07/02 13:41:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.122 2003/07/02 13:40:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.123 2003/07/02 13:41:38 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -203,7 +203,7 @@ lfs_writerd(void *arg)
 			}
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 				    MFSNAMELEN) == 0) {
-				fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+				fs = VFSTOUFS(mp)->um_lfs;
 				if (fs->lfs_pdflush ||
 				    !TAILQ_EMPTY(&fs->lfs_pchainhd)) {
 					fs->lfs_pdflush = 0;
@@ -1473,7 +1473,7 @@ lfs_sync(struct mount *mp, int waitfor, struct ucred *cred, struct proc *p)
 	int error;
 	struct lfs *fs;
 
-	fs = ((struct ufsmount *)mp->mnt_data)->ufsmount_u.lfs;
+	fs = VFSTOUFS(mp)->um_lfs;
 	if (fs->lfs_ronly)
 		return 0;
 	lfs_writer_enter(fs, "lfs_dirops");
