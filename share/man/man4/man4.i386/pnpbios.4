@@ -1,4 +1,4 @@
-.\" $NetBSD: pnpbios.4,v 1.6 2001/01/28 00:59:27 nathanw Exp $
+.\" $NetBSD: pnpbios.4,v 1.7 2001/04/02 20:42:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -84,8 +84,8 @@ Yamaha OPL3-SA3 sound driver
 The
 .Nm
 bus provides a different way to attach devices than the real buses
-(e.g., 
-.Xr isa 4 ).
+(e.g.,
+.Xr isa 4 ) .
 The reason to use
 .Nm
 instead of the real bus is that some machines have weird routings
@@ -94,7 +94,7 @@ be found in the BIOS, which is why the
 .Nm
 bus has a better chance of succeeding with getting it right.
 .Pp
-Many older BIOS implementations do not support PnP, 
+Many older BIOS implementations do not support PnP,
 and some newer ones do not follow the standards.
 .Sh SEE ALSO
 .Xr intro 4 ,

@@ -1,4 +1,4 @@
-.\" $NetBSD: pcibios.4,v 1.9 2001/04/02 12:03:56 soda Exp $
+.\" $NetBSD: pcibios.4,v 1.10 2001/04/02 20:42:19 wiz Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,11 +95,11 @@ require this option, since the driver allocates necessary space
 by itself.
 
 .It Nm PCIBIOS_BUS_FIXUP
-fixup PCI bus numbering; needed for many 
+fixup PCI bus numbering; needed for many
 .Xr cardbus 4
 bridges.
 .Pp
-Each PCI bus and CardBus should have a unique bus number. 
+Each PCI bus and CardBus should have a unique bus number.
 But some BIOS implementations don't assign a bus number
 for subordinate PCI buses. And many BIOS implementations
 don't assign a bus number for CardBuses.
@@ -112,9 +112,9 @@ but normally the bus number 0 is used by the machine's
 primary PCI bus. Thus, this bus number for cardbus is
 incorrect
 .Pq not assigned .
-In this situation, a device located in cardbus0 doesn't 
+In this situation, a device located in cardbus0 doesn't
 show correct device ID,
-because its bus number 0 incorrectly refers to the primary 
+because its bus number 0 incorrectly refers to the primary
 PCI bus, and a device ID in the primary PCI bus is shown
 in the boot message instead of the device's ID in the cardbus0.
 
@@ -178,7 +178,7 @@ Then type the following to continue to boot:
 To modify kernel image without kernel recompilation,
 run the following command on shell:
 .Dl Ic gdb --write /netbsd
-And type the following commands at the 
+And type the following commands at the
 .Qq Sy (gdb)
 prompt:
 .Dl Ic set pcibios_irqs_hint=0xa00
@@ -203,7 +203,7 @@ is specified in addition to the
 .Em PCIBIOS_INTR_FIXUP ,
 the PCI Interrupt Routing table takes precedence.
 In this case, a kernel with
-.Em PCIBIOSVERBOSE 
+.Em PCIBIOSVERBOSE
 shows
 .Qq Sy WARNING: overriding irq XX
 in the PCI routing table.
