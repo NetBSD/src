@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.24 2002/03/17 23:22:05 christos Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.25 2002/03/17 23:29:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -202,6 +202,7 @@ struct audio_softc {
 	u_long	sc_rlastintr;	/* last time we saw a rec interrupt */
 	long	sc_rblktime;	/* nominal time between interrupts */
 #endif
+};
 
 extern int auconv_check_params(const struct audio_params *);
 
