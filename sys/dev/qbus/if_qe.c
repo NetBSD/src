@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.47 2001/04/12 20:04:24 thorpej Exp $ */
+/*      $NetBSD: if_qe.c,v 1.48 2001/04/26 20:05:46 ragge Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -32,7 +32,6 @@
 /*
  * Driver for DEQNA/DELQA ethernet cards.
  * Things that is still to do:
- *	Have a timeout check for hang transmit logic.
  *	Handle ubaresets. Does not work at all right now.
  *	Fix ALLMULTI reception. But someone must tell me how...
  *	Collect statistics.
@@ -89,11 +88,11 @@ struct	qe_softc {
 	bus_dma_tag_t	sc_dmat;
 	struct qe_cdata *sc_qedata;	/* Descriptor struct		*/
 	struct qe_cdata *sc_pqedata;	/* Unibus address of above	*/
-	bus_dmamap_t	sc_cmap;	/* Map for control structures	*/
 	struct mbuf*	sc_txmbuf[TXDESCS];
 	struct mbuf*	sc_rxmbuf[RXDESCS];
 	bus_dmamap_t	sc_xmtmap[TXDESCS];
 	bus_dmamap_t	sc_rcvmap[RXDESCS];
+	struct ubinfo	sc_ui;
 	int		sc_intvec;	/* Interrupt vector		*/
 	int		sc_nexttx;
 	int		sc_inq;
@@ -131,11 +130,11 @@ struct	cfattach qe_ca = {
 int
 qematch(struct device *parent, struct cfdata *cf, void *aux)
 {
-	bus_dmamap_t	cmap;
 	struct	qe_softc ssc;
 	struct	qe_softc *sc = &ssc;
 	struct	uba_attach_args *ua = aux;
 	struct	uba_softc *ubasc = (struct uba_softc *)parent;
+	struct ubinfo ui;
 
 #define	PROBESIZE	(sizeof(struct qe_ring) * 4 + 128)
 	struct	qe_ring ring[15]; /* For diag purposes only */
@@ -157,23 +156,16 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	 * send and receive a internal packet; some junk is loopbacked
 	 * so that the DEQNA has a reason to interrupt.
 	 */
-	if ((error = bus_dmamap_create(sc->sc_dmat, PROBESIZE, 1, PROBESIZE, 0,
-	    BUS_DMA_NOWAIT, &cmap))) {
-		printf("qematch: bus_dmamap_create failed = %d\n", error);
+	ui.ui_size = PROBESIZE;
+	ui.ui_vaddr = (caddr_t)&ring[0];
+	if ((error = uballoc((void *)parent, &ui, UBA_CANTWAIT)))
 		return 0;
-	}
-	if ((error = bus_dmamap_load(sc->sc_dmat, cmap, ring, PROBESIZE, 0,
-	    BUS_DMA_NOWAIT))) {
-		printf("qematch: bus_dmamap_load failed = %d\n", error);
-		bus_dmamap_destroy(sc->sc_dmat, cmap);
-		return 0;
-	}
 
 	/*
 	 * Init a simple "fake" receive and transmit descriptor that
 	 * points to some unused area. Send a fake setup packet.
 	 */
-	rp = (void *)cmap->dm_segs[0].ds_addr;
+	rp = (void *)ui.ui_baddr;
 	ring[0].qe_flag = ring[0].qe_status1 = QE_NOTYET;
 	ring[0].qe_addr_lo = LOWORD(&rp[4]);
 	ring[0].qe_addr_hi = HIWORD(&rp[4]) | QE_VALID | QE_EOMSG | QE_SETUP;
@@ -200,8 +192,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	/*
 	 * All done with the bus resources.
 	 */
-	bus_dmamap_unload(sc->sc_dmat, cmap);
-	bus_dmamap_destroy(sc->sc_dmat, cmap);
+	ubfree((void *)parent, &ui);
 	return 1;
 }
 
@@ -219,8 +210,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	struct	ifnet *ifp = (struct ifnet *)&sc->sc_if;
 	struct	qe_ring *rp;
 	u_int8_t enaddr[ETHER_ADDR_LEN];
-	bus_dma_segment_t seg;
-	int i, rseg, error;
+	int i, error;
 
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
@@ -229,37 +219,14 @@ qeattach(struct device *parent, struct device *self, void *aux)
         /*
          * Allocate DMA safe memory for descriptors and setup memory.
          */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-	    sizeof(struct qe_cdata), NBPG, 0, &seg, 1, &rseg,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate control data, error = %d\n",
-		    error);
-		goto fail_0;
-	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-	    sizeof(struct qe_cdata), (caddr_t *)&sc->sc_qedata,
-	    BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-		printf(": unable to map control data, error = %d\n", error);
-		goto fail_1;
+	sc->sc_ui.ui_size = sizeof(struct qe_cdata);
+	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0))) {
+		printf(": unable to ubmemalloc(), error = %d\n", error);
+		return;
 	}
-
-	if ((error = bus_dmamap_create(sc->sc_dmat,
-	    sizeof(struct qe_cdata), 1,
-	    sizeof(struct qe_cdata), 0, BUS_DMA_NOWAIT,
-	    &sc->sc_cmap)) != 0) {
-		printf(": unable to create control data DMA map, error = %d\n",
-		    error);
-		goto fail_2;
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cmap,
-	    sc->sc_qedata, sizeof(struct qe_cdata), NULL,
-	    BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load control data DMA map, error = %d\n",
-		    error);
-		goto fail_3;
-	}
+	sc->sc_pqedata = (struct qe_cdata *)sc->sc_ui.ui_baddr;
+	sc->sc_qedata = (struct qe_cdata *)sc->sc_ui.ui_vaddr;
 
 	/*
 	 * Zero the newly allocated memory.
@@ -308,7 +275,6 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	 * Create ring loops of the buffer chains.
 	 * This is only done once.
 	 */
-	sc->sc_pqedata = (struct qe_cdata *)sc->sc_cmap->dm_segs[0].ds_addr;
 
 	rp = sc->sc_qedata->qc_recv;
 	rp[RXDESCS].qe_addr_lo = LOWORD(&sc->sc_pqedata->qc_recv[0]);
@@ -385,16 +351,6 @@ qeattach(struct device *parent, struct device *self, void *aux)
 		if (sc->sc_rcvmap[i] != NULL)
 			bus_dmamap_destroy(sc->sc_dmat, sc->sc_rcvmap[i]);
 	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cmap);
- fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cmap);
- fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_qedata,
-	    sizeof(struct qe_cdata));
- fail_1:
-	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
- fail_0:
-	return;
 }
 
 /*
