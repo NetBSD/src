@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.70 2000/07/24 03:46:57 sommerfeld Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.71 2000/08/30 15:04:45 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -564,7 +564,7 @@ udp4_realinput(src, dst, m, off)
 
 		/*
 		 * KAME note: usually we drop udpiphdr from mbuf here.
-		 * we need udpiphdr for iPsec processing so we do that later.
+		 * we need udpiphdr for IPsec processing so we do that later.
 		 */
 		/*
 		 * Locate pcb(s) for datagram.
@@ -730,7 +730,7 @@ udp6_realinput(af, src, dst, m, off)
 
 		/*
 		 * KAME note: usually we drop udpiphdr from mbuf here.
-		 * we need udpiphdr for iPsec processing so we do that later.
+		 * we need udpiphdr for IPsec processing so we do that later.
 		 */
 		/*
 		 * Locate pcb(s) for datagram.
@@ -971,7 +971,7 @@ udp_input(m, va_alist)
 		iphlen += sizeof(struct udphdr);
 		/*
 		 * KAME note: usually we drop udpiphdr from mbuf here.
-		 * we need udpiphdr for iPsec processing so we do that later.
+		 * we need udpiphdr for IPsec processing so we do that later.
 		 */
 		/*
 		 * Locate pcb(s) for datagram.
