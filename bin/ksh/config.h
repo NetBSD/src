@@ -62,7 +62,7 @@
 #define RETSIGTYPE void
 
 /* Define if the `S_IS*' macros in <sys/stat.h> do not work properly.  */
-#define STAT_MACROS_BROKEN 1
+/* #undef STAT_MACROS_BROKEN */
 
 /* Define if `sys_siglist' is declared by <signal.h>.  */
 #define SYS_SIGLIST_DECLARED 1
@@ -215,7 +215,7 @@
 /* #undef COMPLEX_HISTORY */
 
 /* Strict POSIX behaviour? (see comments in configure.in for more details) */
-/* #undef POSIXLY_CORRECT */
+#define POSIXLY_CORRECT 1
 
 /* Specify default $ENV? (see comments in configure.in for more details) */
 /* #undef DEFAULT_ENV */
