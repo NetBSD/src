@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2001/10/13 06:15:20 jmc Exp $
+#	$NetBSD: Makefile,v 1.8 2001/10/21 23:23:23 jmc Exp $
 
 TOP=		${.CURDIR}/..
 MINIROOT=	${TOP}/../miniroot
@@ -52,6 +52,7 @@ CRUNCHCONF=	${CBIN}.conf
 MTREECONF=	mtree.conf
 
 CRUNCHGEN?=	crunchgen
+MDSETIMAGE?=	mdsetimage
 MTREE?=		mtree
 DISKTYPE?=	miniroot
 
@@ -59,7 +60,7 @@ all: netbsd.INSTALL ${IMAGE}
 
 netbsd.INSTALL: ${KERN} ${IMAGE}
 	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${IMAGE}
+	${MDSETIMAGE} -v netbsd.tmp ${IMAGE}
 	strip netbsd.tmp
 	mv netbsd.tmp ${.TARGET}
 

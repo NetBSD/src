@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.2 2000/05/02 16:06:52 sjg Exp $
+#	$NetBSD: Makefile,v 1.3 2001/10/21 23:23:21 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
 .include "${TOP}/Makefile.inc"
 .include <bsd.kernobj.mk>
+.include <bsd.own.mk>
 
 IMAGE=		boot.fs
 KERN=		${KERNOBJDIR}/INSTALL/netbsd
 
 MOUNT_POINT?=	/mnt
+MDSETIMAGE?=	mdsetimage
 VND?=		vnd0
 VND_DEV=	/dev/${VND}a
 VND_RDEV=	/dev/r${VND}a
@@ -61,7 +63,7 @@ unconfig:
 
 netbsd.ram.gz: ${KERN} ${RAMDISK}
 	cp ${KERN} netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
 

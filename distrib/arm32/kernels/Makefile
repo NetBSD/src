@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/11/12 00:56:13 matt Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/21 23:23:19 jmc Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -15,13 +15,14 @@ RAMDISK!=	cd $(.CURDIR)/../ramdisk/; \
 		    ${MAKE} -s -f-
 
 CLEANFILES+=	netbsd.tmp ${KERNELS:C/^.*$/netbsd.&.gz/g}
+MDSETIMAGE?=	mdsetimage
 
 all:	${KERNELS:C/^.*$/netbsd.&.gz/g}
 
 .for kern in ${KERNELS}
 netbsd.${kern}.gz: ${KERNOBJDIR}/${kern}/netbsd ${RAMDISK}
 	cp ${KERNOBJDIR}/${kern}/netbsd netbsd.tmp
-	mdsetimage -v netbsd.tmp ${RAMDISK}
+	${MDSETIMAGE} -v netbsd.tmp ${RAMDISK}
 	${STRIP} netbsd.tmp
 	gzip -9 netbsd.tmp
 	mv netbsd.tmp.gz ${.TARGET}
