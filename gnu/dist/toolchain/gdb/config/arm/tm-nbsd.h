@@ -39,16 +39,6 @@
 #define IN_SOLIB_CALL_TRAMPOLINE(pc, name) \
   STREQ ((name), "_PROCEDURE_LINKAGE_TABLE_")
 
-/* Figure out where the longjmp will land.  Slurp the args out of the stack.
-   We expect the first arg to be a pointer to the jmp_buf structure from which
-   we extract the pc (JB_PC) that we will land at.  The pc is copied into ADDR.
-   This routine returns true on success */
-
-extern int
-get_longjmp_target PARAMS ((CORE_ADDR *));
-
-#define GET_LONGJMP_TARGET(ADDR) get_longjmp_target(ADDR)
-
 /* For compatibility with previous implemenations of GDB on arm/NetBSD,
    override the default little-endian breakpoint.  */
 #undef ARM_LE_BREAKPOINT
