@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.186 1998/03/27 18:11:32 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.187 1998/04/10 02:56:56 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -2603,122 +2603,133 @@ get_mapping(void)
 	}
 #endif
 
-	/*
-	 * We should now look through all of NuBus space to find where
-	 * the internal video is being mapped.  Just to be sure we handle
-	 * all the cases, we simply map our NuBus space exactly how
-	 * MacOS did it.  As above, we find a bunch of ranges that are
-	 * contiguously mapped.  Since there are a lot of pages that
-	 * are all mapped to 0, we handle that as a special case where
-	 * the length is negative.  We search in increments of 32768
-	 * because that's the page size that MacOS uses.
-	 */
-
-	nbnumranges = 0;
-	for (i = 0; i < NBMAXRANGES; i++) {
-		nbphys[i] = 0;
-		nblog[i] = 0;
-		nblen[i] = 0;
-	}
-
-	same = 0;
-	for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
-		if (!get_physical(addr, &phys)) {
-			continue;
+	if (mac68k_vidlen > 0) {
+		/*
+		 * We've already figured out where internal video is in
+		 * setmachdep() (by using intvid_info[]).  Tell the user
+		 * what we know.
+		 */
+		printf("On-board video at addr 0x%x (phys 0x%x), len 0x%x.\n",
+		    mac68k_vidlog, mac68k_vidphys, mac68k_vidlen);
+	} else {
+		/*
+		 * We should now look through all of NuBus space to find where
+		 * the internal video is being mapped.  Just to be sure we
+		 * handle all the cases, we simply map our NuBus space exactly
+		 * how MacOS did it.  As above, we find a bunch of ranges that
+		 * are contiguously mapped.  Since there are a lot of pages
+		 * that are all mapped to 0, we handle that as a special case
+		 * where the length is negative.  We search in increments of
+		 * 32768 because that's the page size that MacOS uses.
+		 */
+		nbnumranges = 0;
+		for (i = 0; i < NBMAXRANGES; i++) {
+			nbphys[i] = 0;
+			nblog[i] = 0;
+			nblen[i] = 0;
 		}
-		len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
+
+		same = 0;
+		for (addr = 0xF9000000; addr < 0xFF000000; addr += 32768) {
+			if (!get_physical(addr, &phys)) {
+				continue;
+			}
+			len = nbnumranges == 0 ? 0 : nblen[nbnumranges - 1];
 
 #if 0
-		printf ("0x%lx --> 0x%lx\n", addr, phys);
+			printf ("0x%lx --> 0x%lx\n", addr, phys);
 #endif
-		if (nbnumranges > 0
-		    && addr == nblog[nbnumranges - 1] + len
-		    && phys == nbphys[nbnumranges - 1]) {	/* Same as last one */
-			nblen[nbnumranges - 1] += 32768;
-			same = 1;
-		} else {
-			if ((nbnumranges > 0)
-			    && !same
-			    && (addr == nblog[nbnumranges - 1] + len)
-			    && (phys == nbphys[nbnumranges - 1] + len)) {
+			if (nbnumranges > 0
+			    && addr == nblog[nbnumranges - 1] + len
+			    && phys == nbphys[nbnumranges - 1]) {
+				/* Same as last one */
 				nblen[nbnumranges - 1] += 32768;
+				same = 1;
 			} else {
-				if (same) {
-					nblen[nbnumranges - 1] = -len;
-					same = 0;
+				if ((nbnumranges > 0)
+				    && !same
+				    && (addr == nblog[nbnumranges - 1] + len)
+				    && (phys == nbphys[nbnumranges - 1] + len))
+					nblen[nbnumranges - 1] += 32768;
+				else {
+					if (same) {
+						nblen[nbnumranges - 1] = -len;
+						same = 0;
+					}
+					if (nbnumranges == NBMAXRANGES) {
+						printf("get_mapping(): "
+						    "Too many NuBus ranges.\n");
+						break;
+					}
+					nbnumranges++;
+					nblog[nbnumranges - 1] = addr;
+					nbphys[nbnumranges - 1] = phys;
+					nblen[nbnumranges - 1] = 32768;
 				}
-				if (nbnumranges == NBMAXRANGES) {
-					printf("get_mapping(): Too many NuBus "
-					    "ranges.\n");
-					break;
-				}
-				nbnumranges++;
-				nblog[nbnumranges - 1] = addr;
-				nbphys[nbnumranges - 1] = phys;
-				nblen[nbnumranges - 1] = 32768;
 			}
 		}
-	}
-	if (same) {
-		nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
-		same = 0;
-	}
+		if (same) {
+			nblen[nbnumranges - 1] = -nblen[nbnumranges - 1];
+			same = 0;
+		}
 #if 0
-	printf("Non-system RAM (nubus, etc.):\n");
-	for (i = 0; i < nbnumranges; i++) {
-		printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
-		    nblog[i], nbphys[i], nblen[i], nblen[i]);
-	}
+		printf("Non-system RAM (nubus, etc.):\n");
+		for (i = 0; i < nbnumranges; i++) {
+			printf("     Log = 0x%lx, Phys = 0x%lx, Len = 0x%lx (%lu)\n",
+			    nblog[i], nbphys[i], nblen[i], nblen[i]);
+		}
 #endif
 
-	/*
-	 * We must now find the logical address of internal video in the
-	 * ranges we made above.  Internal video is at physical 0, but
-	 * a lot of pages map there.  Instead, we look for the logical
-	 * page that maps to 32768 and go back one page.
-	 */
-
-	for (i = 0; i < nbnumranges; i++) {
-		if (nblen[i] > 0
-		    && nbphys[i] <= 32768
-		    && 32768 <= nbphys[i] + nblen[i]) {
-			mac68k_vidlog = nblog[i] - nbphys[i];
-			mac68k_vidlen = nblen[i] + nbphys[i];
-			mac68k_vidphys = 0;
-			break;
+		/*
+		 * We must now find the logical address of internal video in the
+		 * ranges we made above.  Internal video is at physical 0, but
+		 * a lot of pages map there.  Instead, we look for the logical
+		 * page that maps to 32768 and go back one page.
+		 */
+		for (i = 0; i < nbnumranges; i++) {
+			if (nblen[i] > 0
+			    && nbphys[i] <= 32768
+			    && 32768 <= nbphys[i] + nblen[i]) {
+				mac68k_vidlog = nblog[i] - nbphys[i];
+				mac68k_vidlen = nblen[i] + nbphys[i];
+				mac68k_vidphys = 0;
+				break;
+			}
 		}
-	}
-	if (i == nbnumranges) {
-		if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
-			printf("Checking for Internal Video ");
-			/*
-			 * Kludge for IIvx internal video (60b0 0000).
-			 * PB 520 (6000 0000)
-			 */
-			check_video("PB/IIvx (0x60?00000)", 1 * 1024 * 1024,
-						   1 * 1024 * 1024);
-		} else if (0x50F40000 <= videoaddr && videoaddr < 0x50FBFFFF) {
-			/*
-			 * Kludge for LC internal video
-			 */
-			check_video("LC video (0x50f40000)",
-					512 * 1024, 512 * 1024);
-		} else if (0x50100100 <= videoaddr && videoaddr < 0x50400000) {
-			/*
-			 * Kludge for AV internal video
-			 */
-			check_video("AV video (0x50100100)", 1 * 1024 * 1024,
-						1 * 1024 * 1024);
+		if (i == nbnumranges) {
+			if (0x60000000 <= videoaddr && videoaddr < 0x70000000) {
+				printf("Checking for Internal Video ");
+				/*
+				 * Kludge for IIvx internal video (60b0 0000).
+				 * PB 520 (6000 0000)
+				 */
+				check_video("PB/IIvx (0x60?00000)",
+				    1 * 1024 * 1024, 1 * 1024 * 1024);
+			} else if (0x50F40000 <= videoaddr
+			    && videoaddr < 0x50FBFFFF) {
+				/*
+				 * Kludge for LC internal video
+				 */
+				check_video("LC video (0x50f40000)",
+				    512 * 1024, 512 * 1024);
+			} else if (0x50100100 <= videoaddr
+			    && videoaddr < 0x50400000) {
+				/*
+				 * Kludge for AV internal video
+				 */
+				check_video("AV video (0x50100100)",
+				    1 * 1024 * 1024, 1 * 1024 * 1024);
+			} else {
+				printf( "  no internal video at address 0 -- "
+					"videoaddr is 0x%lx.\n", videoaddr);
+			}
 		} else {
-			printf( "  no internal video at address 0 -- "
-				"videoaddr is 0x%lx.\n", videoaddr);
+			printf("  Video address = 0x%lx\n", videoaddr);
+			printf("  Int video starts at 0x%x\n",
+			    mac68k_vidlog);
+			printf("  Length = 0x%x (%d) bytes\n",
+			    mac68k_vidlen, mac68k_vidlen);
 		}
-	} else {
-		printf("  Video address = 0x%lx\n", videoaddr);
-		printf("  Int video starts at 0x%x\n",
-		    mac68k_vidlog);
-		printf("  Length = 0x%x (%d) bytes\n",
-		    mac68k_vidlen, mac68k_vidlen);
 	}
 
 	return low[0];		/* Return physical address of logical 0 */
