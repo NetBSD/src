@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.9.12.1 2000/07/18 16:23:21 mrg Exp $ */
+/*	$NetBSD: asm.h,v 1.9.12.2 2000/07/26 23:28:09 mycroft Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -44,6 +44,11 @@
 #ifndef _ASM_H_
 #define _ASM_H_
 
+#ifndef _LOCORE
+#define _LOCORE
+#endif
+#include <machine/frame.h>
+
 #ifdef __arch64__
 #ifndef __ELF__
 #define __ELF__
@@ -69,9 +74,9 @@
  * to work without a stack frame (doing so requires saving %o7) .
  */
 #define PIC_PROLOGUE(dest,tmp) \
-	3: rd %pc, tmp; \
-	sethi %hi(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
-	or dest,%lo(_C_LABEL(_GLOBAL_OFFSET_TABLE_)-(3b-.)),dest; \
+	sethi %hi(_GLOBAL_OFFSET_TABLE_-4),dest; \
+	rd %pc, tmp; \
+	or dest,%lo(_GLOBAL_OFFSET_TABLE_+4),dest; \
 	add dest,tmp,dest
 
 /*
