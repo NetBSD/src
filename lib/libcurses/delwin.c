@@ -1,4 +1,4 @@
-/*	$NetBSD: delwin.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
+/*	$NetBSD: delwin.c,v 1.12 2003/07/30 11:19:00 dsl Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)delwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: delwin.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
+__RCSID("$NetBSD: delwin.c,v 1.12 2003/07/30 11:19:00 dsl Exp $");
 #endif
 #endif				/* not lint */
 
@@ -54,22 +54,34 @@ __RCSID("$NetBSD: delwin.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 int
 delwin(WINDOW *win)
 {
-
 	WINDOW *wp, *np;
+	struct __winlist *wl, *pwl;
+	SCREEN *screen;
 
 	if (win->orig == NULL) {
 		/*
 		 * If we are the original window, delete the space for all
-		 * the subwindows, the line space and the window space.
+		 * the subwindows and the window space.
 		 */
-		free(win->lspace);
 		free(win->wspace);
-		free(win->lines);
 		wp = win->nextp;
 		while (wp != win) {
 			np = wp->nextp;
 			delwin(wp);
 			wp = np;
+		}
+		/* Remove ourselves from the list of windows on the screen. */
+		pwl = NULL;
+		screen = win->screen;
+		for (wl = screen->winlistp; wl; pwl = wl, wl = wl->nextp) {
+			if (wl->winp != win)
+				continue;
+			if (pwl != NULL)
+				pwl->nextp = wl->nextp;
+			else
+				screen->winlistp = wl->nextp;
+			free(wl);
+			break;
 		}
 	} else {
 		/*
@@ -82,6 +94,8 @@ delwin(WINDOW *win)
 			continue;
 		wp->nextp = win->nextp;
 	}
+	free(win->lspace);
+	free(win->lines);
 	free(win);
 	return (OK);
 }
