@@ -13,7 +13,7 @@
 #define BUSERR_REG  0x60000000
 #define DIAG_REG    0x70000000
 
-#define SEG_SIZE    0x20000
+#define NBSEG    0x20000
 #define NPMEG       0x100
 
 #define VAC_CACHE_TAGS    0x80000000
