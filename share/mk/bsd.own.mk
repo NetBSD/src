@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.132 2000/01/22 19:53:53 mycroft Exp $
+#	$NetBSD: bsd.own.mk,v 1.133 2000/02/19 02:10:31 tsutsui Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -81,11 +81,7 @@ STRIPFLAG?=	-s
 #SYS_INCLUDE= 	symlinks
 
 # XXX The next one is temporary until the transition to UVM is complete.
-
-# Systems on which UVM is the standard VM system.
-.if ${MACHINE} != "pica"
 UVM?=		yes
-.endif
 
 # The sparc64 port is incomplete.
 .if ${MACHINE_ARCH} == "sparc64"
