@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)print.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: print.c,v 1.6 1993/08/18 12:52:39 brezak Exp $";
+static char rcsid[] = "$Id: print.c,v 1.7 1994/03/23 04:05:31 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -45,7 +45,7 @@ static char rcsid[] = "$Id: print.c,v 1.6 1993/08/18 12:52:39 brezak Exp $";
 
 static void  binit __P((char *));
 static void  bput __P((char *));
-static char *ccval __P((int));
+static char *ccval __P((struct cchar *, int));
 
 void
 print(tp, wp, ldisc, fmt)
@@ -176,7 +176,7 @@ print(tp, wp, ldisc, fmt)
 		binit("cchars");
 		for (p = cchars1; p->name; ++p) {
 			(void)snprintf(buf1, sizeof(buf1), "%s = %s;",
-			    p->name, ccval(cc[p->sub]));
+			    p->name, ccval(p, cc[p->sub]));
 			bput(buf1);
 		}
 		binit(NULL);
@@ -187,7 +187,7 @@ print(tp, wp, ldisc, fmt)
 				continue;
 #define	WD	"%-8s"
 			(void)sprintf(buf1 + cnt * 8, WD, p->name);
-			(void)sprintf(buf2 + cnt * 8, WD, ccval(cc[p->sub]));
+			(void)sprintf(buf2 + cnt * 8, WD, ccval(p, cc[p->sub]));
 			if (++cnt == LINELENGTH / 8) {
 				cnt = 0;
 				(void)printf("%s\n", buf1);
@@ -232,7 +232,8 @@ bput(s)
 }
 
 static char *
-ccval(c)
+ccval(p, c)
+	struct cchar *p;
 	int c;
 {
 	static char buf[5];
@@ -241,6 +242,10 @@ ccval(c)
 	if (c == _POSIX_VDISABLE)
 		return("<undef>");
 
+	if (p->sub == VMIN || p->sub == VTIME) {
+		(void)snprintf(buf, sizeof(buf), "%d", c);
+		return (buf);
+	}
 	bp = buf;
 	if (c & 0200) {
 		*bp++ = 'M';

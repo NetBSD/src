@@ -33,10 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)gfmt.c	5.4 (Berkeley) 6/10/91";*/
-static char rcsid[] = "$Id: gfmt.c,v 1.5 1993/08/01 18:57:40 mycroft Exp $";
+static char rcsid[] = "$Id: gfmt.c,v 1.6 1994/03/23 04:05:28 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include "stty.h"
@@ -131,6 +132,11 @@ gread(tp, s)
 			tp->c_cc[VLNEXT] = tmp;
 			continue;
 		}
+		if (CHK("min")) {
+			(void)sscanf(ep, "%ld", &tmp);
+			tp->c_cc[VMIN] = tmp;
+			continue;
+		}
 		if (CHK("oflag")) {
 			tp->c_oflag = tmp;
 			continue;
@@ -164,6 +170,11 @@ gread(tp, s)
 			tp->c_cc[VSUSP] = tmp;
 			continue;
 		}
+		if (CHK("time")) {
+			(void)sscanf(ep, "%ld", &tmp);
+			tp->c_cc[VTIME] = tmp;
+			continue;
+		}
 		if (CHK("werase")) {
 			tp->c_cc[VWERASE] = tmp;
 			continue;
@@ -177,7 +188,7 @@ gerr(s)
 	char *s;
 {
 	if (s)
-		err("illegal gfmt1 option -- %s", s);
+		errx(1, "illegal gfmt1 option -- %s", s);
 	else
-		err("illegal gfmt1 option");
+		errx(1, "illegal gfmt1 option");
 }
