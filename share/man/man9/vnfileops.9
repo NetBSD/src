@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnfileops.9,v 1.7 2003/04/16 13:35:35 wiz Exp $
+.\"     $NetBSD: vnfileops.9,v 1.8 2003/04/20 04:42:15 gmcgarry Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,9 @@
 .Ft int
 .Fn vn_closefile "struct file *fp" "struct proc *p"
 .Ft int
-.Fn vn_fcntl "struct file *fp" "u_int com" "caddr_t data" "struct proc *p"
+.Fn vn_fcntl "struct file *fp" "u_int com" "void *data" "struct proc *p"
 .Ft int
-.Fn vn_ioctl "struct file *fp" "u_long com" "caddr_t data" "struct proc *p"
+.Fn vn_ioctl "struct file *fp" "u_long com" "void *data" "struct proc *p"
 .Ft int
 .Fn vn_read "struct file *fp" "off_t *offset" "struct uio *uio" "struct ucred *cred" "int flags"
 .Ft int
