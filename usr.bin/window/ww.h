@@ -1,4 +1,4 @@
-/*	$NetBSD: ww.h,v 1.10 1997/11/21 08:36:52 lukem Exp $	*/
+/*	$NetBSD: ww.h,v 1.11 1997/12/31 06:55:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -378,6 +378,10 @@ void	wwupdate1 __P((int, int));
 int	wwvisible __P((struct ww *));
 void	wwvprintf __P((struct ww *, const char *, va_list));
 int	wwwrite __P((struct ww *, char *, int));
+#ifdef TERMINFO
+int	wwterminfoinit __P((void));
+int	wwterminfoend __P((void));
+#endif
 
 #undef MIN
 #undef MAX
