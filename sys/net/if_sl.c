@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.39.4.2 1997/01/26 02:45:41 rat Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -230,7 +230,7 @@ slinit(sc)
 		if (p)
 			sc->sc_ep = (u_char *)p + SLBUFSIZE;
 		else {
-			printf("sl%d: can't allocate buffer\n", sc - sl_softc);
+			printf("sl%d: can't allocate buffer\n", sc->sc_unit);
 			sc->sc_if.if_flags &= ~IFF_UP;
 			return (0);
 		}
