@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.h,v 1.6 2000/06/21 05:45:15 matt Exp $	*/
+/*	$NetBSD: ibcs2_machdep.h,v 1.7 2000/12/02 16:09:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -52,5 +52,8 @@ void	ibcs2_sendsig __P((sig_t, int, sigset_t *, u_long));
 int	ibcs2_sys_sysmachine __P((struct proc *, void *, register_t *retval));
 
 #endif /* _KERNEL */
+
+/* i386 has separated ibcs2_syscall() from syscall() */
+#define IBCS2_MACHDEP_HAS_SEPARATED_SYSCALL
 
 #endif /* !_I386_IBCS2_MACHDEP_H_ */
