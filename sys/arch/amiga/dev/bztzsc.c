@@ -1,4 +1,4 @@
-/*	$NetBSD: bztzsc.c,v 1.15.2.1 2002/02/11 20:06:51 jdolecek Exp $ */
+/*	$NetBSD: bztzsc.c,v 1.15.2.2 2002/10/10 18:31:22 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 Michael L. Hitch
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.15.2.1 2002/02/11 20:06:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bztzsc.c,v 1.15.2.2 2002/10/10 18:31:22 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,9 +75,8 @@ void	bztzscattach(struct device *, struct device *, void *);
 int	bztzscmatch(struct device *, struct cfdata *, void *);
 
 /* Linkup to the rest of the kernel */
-struct cfattach bztzsc_ca = {
-	sizeof(struct bztzsc_softc), bztzscmatch, bztzscattach
-};
+CFATTACH_DECL(bztzsc, sizeof(struct bztzsc_softc),
+    bztzscmatch, bztzscattach, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.

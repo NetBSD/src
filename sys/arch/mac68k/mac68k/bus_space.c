@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.15.2.3 2002/06/23 17:37:45 jdolecek Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.15.2.4 2002/10/10 18:33:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/extent.h>
-#include <sys/map.h>
 
 #include <machine/bus.h>
 
@@ -292,7 +291,7 @@ mac68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t h,
 		break;
 	case 8:
 	default:
-		panic("bus_space_probe: unsupported data size %d\n", size);
+		panic("bus_space_probe: unsupported data size %d", size);
 		/* NOTREACHED */
 	}
 

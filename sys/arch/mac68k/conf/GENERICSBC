@@ -1,4 +1,4 @@
-#	$NetBSD: GENERICSBC,v 1.2.2.5 2002/09/06 08:36:51 jdolecek Exp $
+#	$NetBSD: GENERICSBC,v 1.2.2.6 2002/10/10 18:33:44 jdolecek Exp $
 #
 # GENERICSBC
 
@@ -6,7 +6,7 @@ include	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERICSBC-$Revision: 1.2.2.5 $"
+#ident 		"GENERICSBC-$Revision: 1.2.2.6 $"
 
 maxusers	16		# estimated number of users
 
@@ -40,7 +40,7 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
@@ -120,6 +120,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.

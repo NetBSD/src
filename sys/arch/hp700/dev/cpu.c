@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.1.2.3 2002/09/06 08:35:12 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.1.2.4 2002/10/10 18:32:46 jdolecek Exp $	*/
 
 /*	$OpenBSD: cpu.c,v 1.8 2000/08/15 20:38:24 mickey Exp $	*/
 
@@ -56,9 +56,8 @@ struct cpu_softc {
 int	cpumatch __P((struct device *, struct cfdata *, void *));
 void	cpuattach __P((struct device *, struct device *, void *));
 
-struct cfattach cpu_ca = {
-	sizeof(struct cpu_softc), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+    cpumatch, cpuattach, NULL, NULL);
 
 int
 cpumatch(parent, cf, aux)   

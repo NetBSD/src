@@ -1,4 +1,4 @@
-/*	$NetBSD: dpti.c,v 1.3.4.3 2002/06/23 17:46:04 jdolecek Exp $	*/
+/*	$NetBSD: dpti.c,v 1.3.4.4 2002/10/10 18:38:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.3.4.3 2002/06/23 17:46:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpti.c,v 1.3.4.4 2002/10/10 18:38:42 jdolecek Exp $");
 
 #include "opt_i2o.h"
 
@@ -142,13 +142,18 @@ int	dpti_match(struct device *, struct cfdata *, void *);
 int	dpti_passthrough(struct dpti_softc *, caddr_t, struct proc *);
 int	dpti_sysinfo(struct dpti_softc *, u_long, caddr_t);
 
-cdev_decl(dpti);
+dev_type_open(dptiopen);
+dev_type_ioctl(dptiioctl);
+
+const struct cdevsw dpti_cdevsw = {
+	dptiopen, nullclose, noread, nowrite, dptiioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 extern struct cfdriver dpti_cd;
 
-struct cfattach dpti_ca = {
-	sizeof(struct dpti_softc), dpti_match, dpti_attach
-};
+CFATTACH_DECL(dpti, sizeof(struct dpti_softc),
+    dpti_match, dpti_attach, NULL, NULL);
 
 int
 dpti_match(struct device *parent, struct cfdata *match, void *aux)
@@ -207,13 +212,6 @@ dptiopen(dev_t dev, int flag, int mode, struct proc *p)
 		return (EPERM);
 	if (device_lookup(&dpti_cd, minor(dev)) == NULL)
 		return (ENXIO);
-
-	return (0);
-}
-
-int
-dpticlose(dev_t dev, int flag, int mode, struct proc *p)
-{
 
 	return (0);
 }

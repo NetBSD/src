@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1.10.2 2002/06/23 17:42:30 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.10.3 2002/10/10 18:36:53 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -83,7 +82,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /* ZS channel used as the console device (if any) */
 void *zs_conschan_get, *zs_conschan_put;
@@ -174,7 +172,6 @@ zs_attach(zsc, zsd, pri)
 	for (channel = 0; channel < 2; channel++) {
 		struct zschan *zc;
 		struct device *child;
-		extern struct cfdriver zstty_cd; /* in ioconf.c */
 
 		zsc_args.channel = channel;
 		cs = &zsc->zsc_cs_store[channel];
@@ -250,7 +247,8 @@ zs_attach(zsc, zsd, pri)
 		 * sunkbd and sunms line disciplines.
 		 */
 		if (child 
-		    && (child->dv_cfdata->cf_driver == &zstty_cd)) {
+		    && (!strcmp(child->dv_cfdata->cf_name,
+		    		"zstty"))) {
 			struct kbd_ms_tty_attach_args kma;
 			struct zstty_softc {	
 				/* The following are the only fields we need here */
@@ -296,7 +294,7 @@ zs_attach(zsc, zsd, pri)
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
 	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
-		panic("zsattach: could not establish soft interrupt\n");
+		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    zsc->zsc_dev.dv_xname, "intr");

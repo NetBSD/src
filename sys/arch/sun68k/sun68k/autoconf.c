@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.2 2002/06/23 17:42:53 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.3 2002/10/10 18:37:13 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -113,9 +113,8 @@ cpu_configure()
 static int 	mainbus_match __P((struct device *, struct cfdata *, void *));
 static void	mainbus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -194,10 +193,9 @@ int sun68k_bus_search(parent, cf, aux)
 {
 	struct mainbus_attach_args *map = aux;
 	struct mainbus_attach_args ma;
-	cfmatch_t mf;
 
 	/* Check whether we're looking for a specifically named device */
-	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_driver->cd_name) != 0)
+	if (map->ma_name != NULL && strcmp(map->ma_name, cf->cf_name) != 0)
 		return (0);
 
 #ifdef	DIAGNOSTIC
@@ -222,9 +220,9 @@ int sun68k_bus_search(parent, cf, aux)
 	 * will pass to the device's match and attach functions.
 	 */
 #ifdef	DIAGNOSTIC
-#define BAD_LOCATOR(ma_loc, what) panic("sun68k_bus_search: %s %s for: %s%d\n", \
+#define BAD_LOCATOR(ma_loc, what) panic("sun68k_bus_search: %s %s for: %s%d", \
 				     map-> ma_loc == LOCATOR_REQUIRED ? "missing" : "unexpected", \
-				     what, cf->cf_driver->cd_name, cf->cf_unit)
+				     what, cf->cf_name, cf->cf_unit)
 #else
 #define BAD_LOCATOR(ma_loc, what) return (0)
 #endif
@@ -243,8 +241,7 @@ int sun68k_bus_search(parent, cf, aux)
 	 * preserved for the related attach call.
 	 * XXX - This is a hack...
 	 */
-	mf = cf->cf_attach->ca_match;
-	if ((*mf)(parent, cf, &ma) > 0) {
+	if (config_match(parent, cf, &ma) > 0) {
 		config_attach(parent, cf, &ma, sun68k_bus_print);
 	}
 	return (0);

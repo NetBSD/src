@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.1.2.2 2002/06/23 17:42:53 jdolecek Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.1.2.3 2002/10/10 18:37:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@ dev3x_mapin(maptype, physaddr, length)
 	u_int i, pa, pte, pgva, va;
 
 	if ((sun3x_devmap + length) > (MON_KDB_BASE + MON_KDB_SIZE))
-		panic("dev3x_mapin: length=%d\n", length);
+		panic("dev3x_mapin: length=%d", length);
 
 	for (i = 0; i < MAP__NTYPES; i++)
 		if (sun3x_mapinfo[i].maptype == maptype)

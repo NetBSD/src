@@ -1,4 +1,4 @@
-/*      $NetBSD: pccons.c,v 1.6.6.2 2002/06/23 17:41:32 jdolecek Exp $       */
+/*      $NetBSD: pccons.c,v 1.6.6.3 2002/10/10 18:36:03 jdolecek Exp $       */
 
 /*
  * Copyright 1997
@@ -116,6 +116,7 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 #include <machine/kerndebug.h>
 
 #include <uvm/uvm_extern.h>
@@ -129,10 +130,8 @@
 #include <machine/pccons.h>
 #ifdef i386
 #include <machine/pc/display.h>
-#include <machine/conf.h>
 #else
 #include <shark/shark/display.h>
-#include <sys/conf.h>
 #endif
 
 #include <dev/isa/isareg.h>
@@ -155,7 +154,7 @@ extern int msgbufmapped;
 #endif
 
 /*
-** Macro defintions
+** Macro definitions
 */
 
 /*
@@ -355,12 +354,24 @@ static void            cga_save_restore    __P((int));
 /*
 ** Data structures required by config
 */
-struct cfattach pc_ca = 
-{
-    sizeof(struct pc_softc), pcprobe, pcattach
-};
+CFATTACH_DECL(pc, sizeof(struct pc_softc),
+    pcprobe, pcattach, NULL, NULL);
 
 extern struct cfdriver pc_cd;
+
+dev_type_open(pcopen);
+dev_type_close(pcclose);
+dev_type_read(pcread);
+dev_type_write(pcwrite);
+dev_type_ioctl(pcioctl);
+dev_type_tty(pctty);
+dev_type_poll(pcpoll);
+dev_type_mmap(pcmmap);
+
+const struct cdevsw pc_cdevsw = {
+	pcopen, pcclose, pcread, pcwrite, pcioctl,
+	nostop, pctty, pcpoll, pcmmap, ttykqfilter, D_TTY
+};
 
 static unsigned int   addr_6845   = MONO_BASE;
 
@@ -1869,46 +1880,6 @@ pcstart(struct tty *tp)
     return;
 } /* End pcstart() */
 
-
-
-/*
-**++
-**  FUNCTIONAL DESCRIPTION:
-**
-**     pcstop
-**
-**     This routine does nothing as writes to the output device
-**     aren't buffered and therefore cannot be stopped.
-**
-**  FORMAL PARAMETERS:
-**
-**     tp   - Pointer to our tty structure.
-**     flag - Ignored.
-**
-**  IMPLICIT INPUTS:
-**
-**     none.
-**
-**  IMPLICIT OUTPUTS:
-**
-**     none.
-**
-**  FUNCTION VALUE:
-**
-**     none.
-**
-**  SIDE EFFECTS:
-**
-**     none.
-**--
-*/
-void
-pcstop(struct tty *tp, 
-       int        flag)
-{
-    return;
-} /* End pcstop() */
-
 /*****************************************************************************/
 /*                                                                           */
 /*     The following are the routines that allow the pc device to operate    */
@@ -1961,13 +1932,7 @@ pccnprobe(struct consdev *cp)
     
     /* locate the major number 
     */
-    for (maj = 0; maj < nchrdev; maj++)
-    {
-        if (cdevsw[maj].d_open == pcopen)
-        {
-            break;
-        }
-    }
+    maj = cdevsw_lookup_major(&pc_cdevsw);
     /* initialize required fields 
     */
     cp->cn_dev = makedev(maj, 0);

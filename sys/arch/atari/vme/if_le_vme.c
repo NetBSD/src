@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.12.2.1 2001/08/03 04:11:18 lukem Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.12.2.2 2002/10/10 18:32:06 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -121,9 +121,8 @@ static int bvme410_mem_size __P((bus_space_tag_t, u_long));
 static void bvme410_copytobuf __P((struct lance_softc *, void *, int, int));
 static void bvme410_zerobuf __P((struct lance_softc *, int, int));
 
-struct cfattach le_vme_ca = {
-	sizeof(struct le_softc), le_vme_match, le_vme_attach
-};
+CFATTACH_DECL(le_vme, sizeof(struct le_softc),
+    le_vme_match, le_vme_attach, NULL, NULL);
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -340,9 +339,9 @@ le_vme_attach(parent, self, aux)
 	printf("\n%s: ", sc->sc_dev.dv_xname);
 
 	if (bus_space_map(va->va_iot, va->va_iobase, va->va_iosize, 0, &ioh))
-		panic("leattach: cannot map io-area\n");
+		panic("leattach: cannot map io-area");
 	if (bus_space_map(va->va_memt, va->va_maddr, va->va_msize, 0, &memh))
-		panic("leattach: cannot map mem-area\n");
+		panic("leattach: cannot map mem-area");
 
 	lesc->sc_iot    = va->va_iot;
 	lesc->sc_ioh    = ioh;

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.2.6.2 2002/06/23 17:35:43 jdolecek Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.2.6.3 2002/10/10 18:32:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -152,7 +152,7 @@ obio_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
     bus_space_handle_t *bshp)
 {
 
-	panic("obio_bs_alloc(): not implemented\n");
+	panic("obio_bs_alloc(): not implemented");
 }
 
 
@@ -167,7 +167,7 @@ void
 obio_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	panic("obio_bs_free(): not implemented\n");
+	panic("obio_bs_free(): not implemented");
 }
 
 int

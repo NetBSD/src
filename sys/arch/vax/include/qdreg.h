@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.1 1998/03/21 10:02:39 ragge Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.1.28.1 2002/10/10 18:37:17 jdolecek Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -332,7 +332,7 @@
 #define XMT_RDY_B	0x10
 #define RCV_RDY_B	0x20
 
-	/* status register bit defintions */
+	/* status register bit definitions */
 
 #define RCV_RDY 	0x01
 #define FIFO_FULL	0x02

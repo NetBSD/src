@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.20.4.6 2002/09/06 08:40:49 jdolecek Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.20.4.7 2002/10/10 18:36:09 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -91,7 +91,6 @@
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #include <dev/sbus/sbusvar.h>
 
@@ -106,19 +105,25 @@ static void	cgfourteenattach(struct device *, struct device *, void *);
 static int	cgfourteenmatch(struct device *, struct cfdata *, void *);
 static void	cgfourteenunblank(struct device *);
 
-/* cdevsw prototypes */
-cdev_decl(cgfourteen);
-
-struct cfattach cgfourteen_ca = {
-	sizeof(struct cgfourteen_softc), cgfourteenmatch, cgfourteenattach
-};
+CFATTACH_DECL(cgfourteen, sizeof(struct cgfourteen_softc),
+    cgfourteenmatch, cgfourteenattach, NULL, NULL);
 
 extern struct cfdriver cgfourteen_cd;
+
+dev_type_open(cgfourteenopen);
+dev_type_close(cgfourteenclose);
+dev_type_ioctl(cgfourteenioctl);
+dev_type_mmap(cgfourteenmmap);
+
+const struct cdevsw cgfourteen_cdevsw = {
+	cgfourteenopen, cgfourteenclose, noread, nowrite, cgfourteenioctl,
+	nostop, notty, nopoll, cgfourteenmmap, nokqfilter,
+};
 
 /* frame buffer generic driver */
 static struct fbdriver cgfourteenfbdriver = {
 	cgfourteenunblank, cgfourteenopen, cgfourteenclose, cgfourteenioctl,
-	cgfourteenpoll, cgfourteenmmap, cgfourteenkqfilter
+	nopoll, cgfourteenmmap, nokqfilter
 };
 
 static void cg14_set_video __P((struct cgfourteen_softc *, int));
@@ -165,7 +170,7 @@ cgfourteenmatch(parent, cf, aux)
 		return (0);
 
 	/* Check driver name */
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*
@@ -611,41 +616,6 @@ cgfourteenmmap(dev, off, prot)
 		BUS_ADDR(sc->sc_physadr[CG14_PXL_IDX].oa_space,
 			sc->sc_physadr[CG14_PXL_IDX].oa_base),
 		off, prot, BUS_SPACE_MAP_LINEAR));
-}
-
-int
-cgfourteenpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgfourteendetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgfourteen_filtops =
-	{ 1, NULL, filt_cgfourteendetach, filt_seltrue };
-
-int
-cgfourteenkqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgfourteen_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.17.4.2 2002/06/23 17:38:50 jdolecek Exp $
+#	$NetBSD: files.newsmips,v 1.17.4.3 2002/10/10 18:34:33 jdolecek Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -131,12 +131,4 @@ file arch/newsmips/apbus/xafb.c			xafb needs-flag
 #
 file dev/md_root.c				memory_disk_hooks
 
-major { sd = 0 }
-major { fd = 1 }
-major { md = 2 }
-major { cd = 16 }
-
-#
-# RAIDframe
-#
-major { raid = 32 }
+include "arch/newsmips/conf/majors.newsmips"

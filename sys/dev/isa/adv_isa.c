@@ -1,4 +1,4 @@
-/*	$NetBSD: adv_isa.c,v 1.2.18.1 2002/01/10 19:55:17 thorpej Exp $	*/
+/*	$NetBSD: adv_isa.c,v 1.2.18.2 2002/10/10 18:39:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.2.18.1 2002/01/10 19:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adv_isa.c,v 1.2.18.2 2002/10/10 18:39:27 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,10 +104,8 @@ static int asc_ioport[ASC_IOADR_TABLE_MAX_IX] =
 int	adv_isa_probe __P((struct device *, struct cfdata *, void *));
 void	adv_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach adv_isa_ca =
-{
-	sizeof(ASC_SOFTC), adv_isa_probe, adv_isa_attach
-};
+CFATTACH_DECL(adv_isa, sizeof(ASC_SOFTC), 
+    adv_isa_probe, adv_isa_attach, NULL, NULL);
 
 /******************************************************************************/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.h,v 1.4.4.3 2002/09/06 08:43:10 jdolecek Exp $ */
+/*	$NetBSD: irix_usema.h,v 1.4.4.4 2002/10/10 18:37:58 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 #include <compat/irix/irix_types.h>
 #include <compat/irix/irix_exec.h>
 
-extern const dev_t irix_usemaclonedev;
-
 extern struct vfsops irix_usema_dummy_vfsops;
 void irix_usema_dummy_vfs_init __P((void));
 extern const struct vnodeopv_desc * const irix_usema_vnodeopv_descs[];
@@ -58,12 +56,6 @@ extern const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[];
 
 
 void	irix_usemaattach __P((struct device *, struct device *, void *));
-int	irix_usemaopen	__P((dev_t, int, int, struct proc *));
-int	irix_usemaread	__P((dev_t, struct uio *, int));
-int	irix_usemawrite	__P((dev_t, struct uio *, int)); 
-int	irix_usemapoll	__P((dev_t, int, struct proc *));
-int	irix_usemaioctl	__P((dev_t, u_long, caddr_t, int, struct proc *));
-int	irix_usemaclose	__P((dev_t, int, int, struct proc *)); 
 
 int	irix_usema_close	__P((void *));
 int	irix_usema_access	__P((void *));

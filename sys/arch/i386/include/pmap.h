@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.58.2.3 2002/01/10 19:44:52 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.58.2.4 2002/10/10 18:33:30 jdolecek Exp $	*/
 
 /*
  *
@@ -61,7 +61,7 @@
  * (the following assumes that KERNBASE is 0xc0000000)
  *
  * PDE#s	VA range		usage
- * 0->767	0x0 -> 0xbfc00000	user address space, note that the
+ * 0->766	0x0 -> 0xbfc00000	user address space, note that the
  *					max user address is 0xbfbfe000
  *					the final two pages in the last 4MB
  *					used to be reserved for the UAREA
@@ -131,7 +131,7 @@
  *   |1023|
  *   +----+
  *
- * note that mapping of the PDP at PTP#959's VA (0xeffbf000) is
+ * note that mapping of the PDP at PTP#767's VA (0xbffbf000) is
  * defined as "PDP_BASE".... within that mapping there are two
  * defines:
  *   "PDP_PDE" (0xbfeffbfc) is the VA of the PDE in the PDP
@@ -144,6 +144,7 @@
  * note that in the APTE_BASE space, the APDP appears at VA
  * "APDP_BASE" (0xfffff000).
  */
+/* XXX MP should we allocate one APDP_PDE per processor?? */
 
 /*
  * the following defines identify the slots used as described above.
@@ -211,6 +212,12 @@
 #define PG_PVLIST	PG_AVAIL2	/* mapping has entry on pvlist */
 /* PG_AVAIL3 not used */
 
+/*
+ * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
+ * Used to avoid false sharing of cache lines.
+ */
+#define NPTECL			8
+
 #ifdef _KERNEL
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -230,6 +237,9 @@ LIST_HEAD(pmap_head, pmap); /* struct pmap_head: head of a pmap list */
  *
  * note that the pm_obj contains the simple_lock, the reference count,
  * page list, and number of PTPs within the pmap.
+ *
+ * XXX If we ever support processor numbers higher than 31, we'll have
+ * XXX to rethink the CPU mask.
  */
 
 struct pmap {
@@ -246,6 +256,7 @@ struct pmap {
 	union descriptor *pm_ldt;	/* user-set LDT */
 	int pm_ldt_len;			/* number of LDT entries */
 	int pm_ldt_sel;			/* LDT selector */
+	u_int32_t pm_cpus;		/* mask of CPUs using pmap */
 };
 
 /* pm_flags */
@@ -304,18 +315,6 @@ struct pv_page {
 };
 
 /*
- * pmap_remove_record: a record of VAs that have been unmapped, used to
- * flush TLB.  if we have more than PMAP_RR_MAX then we stop recording.
- */
-
-#define PMAP_RR_MAX	16	/* max of 16 pages (64K) */
-
-struct pmap_remove_record {
-	int prr_npages;
-	vaddr_t prr_vas[PMAP_RR_MAX];
-};
-
-/*
  * global kernel variables
  */
 
@@ -335,12 +334,12 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define	pmap_update(pmap)		/* nothing (yet) */
 
-#define pmap_clear_modify(pg)		pmap_change_attrs(pg, 0, PG_M)
-#define pmap_clear_reference(pg)	pmap_change_attrs(pg, 0, PG_U)
-#define pmap_copy(DP,SP,D,L,S)		
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PG_M)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PG_U)
+#define pmap_copy(DP,SP,D,L,S)
 #define pmap_is_modified(pg)		pmap_test_attrs(pg, PG_M)
 #define pmap_is_referenced(pg)		pmap_test_attrs(pg, PG_U)
-#define pmap_move(DP,SP,D,L,S)		
+#define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		i386_ptob(ppn)
 #define pmap_valid_entry(E) 		((E) & PG_V) /* is PDE or PTE valid? */
 
@@ -351,7 +350,7 @@ extern int pmap_pg_g;			/* do we support PG_G? */
 
 void		pmap_activate __P((struct proc *));
 void		pmap_bootstrap __P((vaddr_t));
-boolean_t	pmap_change_attrs __P((struct vm_page *, int, int));
+boolean_t	pmap_clear_attrs __P((struct vm_page *, int));
 void		pmap_deactivate __P((struct proc *));
 void		pmap_page_remove  __P((struct vm_page *));
 void		pmap_remove __P((struct pmap *, vaddr_t, vaddr_t));
@@ -360,6 +359,10 @@ void		pmap_write_protect __P((struct pmap *, vaddr_t,
 				vaddr_t, vm_prot_t));
 
 vaddr_t reserve_dumppages __P((vaddr_t)); /* XXX: not a pmap fn */
+
+void	pmap_tlb_shootdown __P((pmap_t, vaddr_t, pt_entry_t, int32_t *));
+void	pmap_tlb_shootnow __P((int32_t));
+void	pmap_do_tlb_shootdown __P((struct cpu_info *));
 
 #define PMAP_GROWKERNEL		/* turn on pmap_growkernel interface */
 
@@ -372,6 +375,12 @@ boolean_t			pmap_pageidlezero __P((paddr_t));
 /*
  * inline functions
  */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * pmap_update_pg: flush one page from the TLB (or flush the whole thing
@@ -411,7 +420,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  * pmap_page_protect: change the protection of all recorded mappings
  *	of a managed page
  *
- * => this function is a frontend for pmap_page_remove/pmap_change_attrs
+ * => this function is a frontend for pmap_page_remove/pmap_clear_attrs
  * => we only have to worry about making the page more protected.
  *	unprotecting a page is done on-demand at fault time.
  */
@@ -421,7 +430,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
 		if (prot & (VM_PROT_READ|VM_PROT_EXECUTE)) {
-			(void) pmap_change_attrs(pg, PG_RO, PG_RW);
+			(void) pmap_clear_attrs(pg, PG_RW);
 		} else {
 			pmap_page_remove(pg);
 		}

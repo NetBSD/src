@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_button.c,v 1.2.2.3 2002/03/16 16:00:49 jdolecek Exp $	*/
+/*	$NetBSD: acpi_button.c,v 1.2.2.4 2002/10/10 18:38:24 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2.2.3 2002/03/16 16:00:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_button.c,v 1.2.2.4 2002/10/10 18:38:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,8 @@ struct acpibut_softc {
 int	acpibut_match(struct device *, struct cfdata *, void *);
 void	acpibut_attach(struct device *, struct device *, void *);
 
-struct cfattach acpibut_ca = {
-	sizeof(struct acpibut_softc), acpibut_match, acpibut_attach,
-};
+CFATTACH_DECL(acpibut, sizeof(struct acpibut_softc),
+    acpibut_match, acpibut_attach, NULL, NULL);
 
 void	acpibut_pressed_for_sleep(void *);
 void	acpibut_pressed_for_wakeup(void *);

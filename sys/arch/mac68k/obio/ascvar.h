@@ -1,4 +1,4 @@
-/*	$NetBSD: ascvar.h,v 1.6.4.1 2002/06/18 19:37:16 jdolecek Exp $	*/
+/*	$NetBSD: ascvar.h,v 1.6.4.2 2002/10/10 18:33:54 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds.  All rights reserved.

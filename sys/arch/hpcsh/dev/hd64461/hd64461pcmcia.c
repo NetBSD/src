@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.5 2002/06/23 17:36:59 jdolecek Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.4.2.6 2002/10/10 18:33:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -196,10 +196,8 @@ STATIC void hd64461pcmcia_attach(struct device *, struct device *, void *);
 STATIC int hd64461pcmcia_print(void *, const char *);
 STATIC int hd64461pcmcia_submatch(struct device *, struct cfdata *, void *);
 
-struct cfattach hd64461pcmcia_ca = {
-	sizeof(struct hd64461pcmcia_softc), hd64461pcmcia_match,
-	hd64461pcmcia_attach
-};
+CFATTACH_DECL(hd64461pcmcia, sizeof(struct hd64461pcmcia_softc),
+    hd64461pcmcia_match, hd64461pcmcia_attach, NULL, NULL);
 
 STATIC void hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *,
     enum controller_channel);
@@ -348,7 +346,7 @@ hd64461pcmcia_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	paa->pct = (pcmcia_chipset_tag_t)&hd64461pcmcia_functions;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

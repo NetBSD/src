@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.14.2.5 2002/06/23 17:46:04 jdolecek Exp $	*/
+/*	$NetBSD: iop.c,v 1.14.2.6 2002/10/10 18:38:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.14.2.5 2002/06/23 17:46:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.14.2.6 2002/10/10 18:38:42 jdolecek Exp $");
 
 #include "opt_i2o.h"
 #include "iop.h"
@@ -106,6 +106,15 @@ static struct	i2o_systab *iop_systab;
 static int	iop_systab_size;
 
 extern struct cfdriver iop_cd;
+
+dev_type_open(iopopen);
+dev_type_close(iopclose);
+dev_type_ioctl(iopioctl);
+
+const struct cdevsw iop_cdevsw = {
+	iopopen, iopclose, noread, nowrite, iopioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 #define	IC_CONFIGURE	0x01
 #define	IC_PRIORITY	0x02
@@ -239,8 +248,6 @@ static void	iop_tfn_print(struct iop_softc *, struct i2o_fault_notify *);
 #ifdef I2ODEBUG
 static void	iop_reply_print(struct iop_softc *, struct i2o_reply *);
 #endif
-
-cdev_decl(iop);
 
 static inline u_int32_t
 iop_inl(struct iop_softc *sc, int off)
@@ -876,7 +883,7 @@ iop_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->iopcf_tid != IOPCF_TID_DEFAULT && cf->iopcf_tid != ia->ia_tid)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cardslot.c,v 1.14.2.2 2002/06/23 17:45:56 jdolecek Exp $	*/
+/*	$NetBSD: cardslot.c,v 1.14.2.3 2002/10/10 18:38:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.14.2.2 2002/06/23 17:45:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardslot.c,v 1.14.2.3 2002/10/10 18:38:31 jdolecek Exp $");
 
 #include "opt_cardslot.h"
 
@@ -74,10 +74,8 @@ STATIC int cardslot_cb_print __P((void *aux, const char *pcic));
 static int cardslot_16_print __P((void *, const char *));
 static int cardslot_16_submatch __P((struct device *, struct cfdata *,void *));
 
-struct cfattach cardslot_ca = {
-	sizeof(struct cardslot_softc), cardslotmatch, cardslotattach
-};
-
+CFATTACH_DECL(cardslot, sizeof(struct cardslot_softc),
+    cardslotmatch, cardslotattach, NULL, NULL);
 
 STATIC int
 cardslotmatch(parent, cf, aux)
@@ -191,7 +189,7 @@ cardslot_16_submatch(parent, cf, aux)
 	}
 
 	if ((cf->cf_loc[PCMCIABUSCF_CONTROLLER] == PCMCIABUSCF_CONTROLLER_DEFAULT)) {
-		return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return (config_match(parent, cf, aux));
 	}
 
 	return 0;

@@ -1,5 +1,5 @@
-/* $NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $ */
-/*	$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $	*/
+/* $NetBSD: isr.c,v 1.5.6.1 2002/10/10 18:33:40 jdolecek Exp $ */
+/*	$NetBSD: isr.c,v 1.5.6.1 2002/10/10 18:33:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5 2000/07/09 08:08:20 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.5.6.1 2002/10/10 18:33:40 jdolecek Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -218,7 +218,7 @@ isrdispatch_autovec(evec)
 
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRAUTOVEC) || (vec >= (ISRAUTOVEC + NISRAUTOVEC)))
-		panic("isrdispatch_autovec: bad vec 0x%x\n", vec);
+		panic("isrdispatch_autovec: bad vec 0x%x", vec);
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
@@ -263,7 +263,7 @@ isrdispatch_vectored(pc, evec, frame)
 	uvmexp.intrs++;
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
-		panic("isrdispatch_vectored: bad vec 0x%x\n", vec);
+		panic("isrdispatch_vectored: bad vec 0x%x", vec);
 	isr = &isr_vectored[vec - ISRVECTORED];
 
 	if (isr->isr_func == NULL) {

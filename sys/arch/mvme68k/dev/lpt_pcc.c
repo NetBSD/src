@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.4.2.1 2002/03/16 15:58:52 jdolecek Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.4.2.2 2002/10/10 18:34:17 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,9 +79,8 @@ struct lpt_funcs lpt_pcc_funcs = {
 static int lpt_pcc_match __P((struct device *, struct cfdata *, void *));
 static void lpt_pcc_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_pcc_ca = {
-	sizeof(struct lpt_softc), lpt_pcc_match, lpt_pcc_attach
-};
+CFATTACH_DECL(lpt_pcc, sizeof(struct lpt_softc),
+    lpt_pcc_match, lpt_pcc_attach, NULL, NULL);
 
 extern struct cfdriver lpt_cd;
 

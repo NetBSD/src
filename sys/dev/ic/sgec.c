@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.16.2.2 2002/01/10 19:55:01 thorpej Exp $ */
+/*      $NetBSD: sgec.c,v 1.16.2.3 2002/10/10 18:39:11 jdolecek Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.16.2.2 2002/01/10 19:55:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.16.2.3 2002/10/10 18:39:11 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -578,7 +578,7 @@ ze_add_rxbuf(sc, i)
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL,
 	    BUS_DMA_READ|BUS_DMA_NOWAIT);
 	if (error)
-		panic("%s: can't load rx DMA map %d, error = %d\n",
+		panic("%s: can't load rx DMA map %d, error = %d",
 		    sc->sc_dev.dv_xname, i, error);
 	sc->sc_rxmbuf[i] = m;
 

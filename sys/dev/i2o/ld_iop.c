@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.7.2.2 2002/01/10 19:54:02 thorpej Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.7.2.3 2002/10/10 18:38:44 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.7.2.2 2002/01/10 19:54:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.7.2.3 2002/10/10 18:38:44 jdolecek Exp $");
 
 #include "opt_i2o.h"
 #include "rnd.h"
@@ -92,12 +92,8 @@ static int	ld_iop_match(struct device *, struct cfdata *, void *);
 static int	ld_iop_start(struct ld_softc *, struct buf *);
 static void	ld_iop_unconfig(struct ld_iop_softc *, int);
 
-struct cfattach ld_iop_ca = {
-	sizeof(struct ld_iop_softc),
-	ld_iop_match,
-	ld_iop_attach,
-	ld_iop_detach
-};
+CFATTACH_DECL(ld_iop, sizeof(struct ld_iop_softc),
+    ld_iop_match, ld_iop_attach, ld_iop_detach, NULL);
 
 #ifdef I2OVERBOSE
 static const char * const ld_iop_errors[] = { 

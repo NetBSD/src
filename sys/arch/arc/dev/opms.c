@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1.4.4 2002/10/02 22:02:22 jdolecek Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.4.5 2002/10/10 18:31:38 jdolecek Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -93,9 +93,17 @@
 
 extern struct cfdriver opms_cd;
 
-cdev_decl(opms);
+dev_type_open(opmsopen);
+dev_type_close(opmsclose);
+dev_type_read(opmsread);
+dev_type_ioctl(opmsioctl);
+dev_type_poll(opmspoll);
+dev_type_kqfilter(opmskqfilter);
 
-#define	LMSUNIT(dev)	(minor(dev))
+const struct cdevsw opms_cdevsw = {
+	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
+	nostop, notty, opmspoll, nommap, opmskqfilter,
+};
 
 static __inline void pms_dev_cmd __P((u_char));
 static __inline void pms_aux_cmd __P((u_char));
@@ -163,8 +171,7 @@ opms_common_attach(sc, opms_iot, config)
 int
 opmsopen(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
-	int mode;
+	int flag, mode;
 	struct proc *p;
 {
 	int unit = PMSUNIT(dev);
@@ -205,8 +212,7 @@ opmsopen(dev, flag, mode, p)
 int
 opmsclose(dev, flag, mode, p)
 	dev_t dev;
-	int flag;
-	int mode;
+	int flag, mode;
 	struct proc *p;
 {
 	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
@@ -446,7 +452,7 @@ static const struct filterops opmsread_filtops =
 int
 opmskqfilter(dev_t dev, struct knote *kn)
 {
-	struct opms_softc *sc = opms_cd.cd_devs[LMSUNIT(dev)];
+	struct opms_softc *sc = opms_cd.cd_devs[PMSUNIT(dev)];
 	struct klist *klist;
 	int s;
 

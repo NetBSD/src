@@ -1,4 +1,4 @@
-/* $NetBSD: gbus.c,v 1.9.16.1 2001/08/03 04:10:52 lukem Exp $ */
+/* $NetBSD: gbus.c,v 1.9.16.2 2002/10/10 18:31:15 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.9.16.1 2001/08/03 04:10:52 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gbus.c,v 1.9.16.2 2002/10/10 18:31:15 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,9 +64,8 @@ struct gbus_softc {
 static int	gbusmatch __P((struct device *, struct cfdata *, void *));
 static void	gbusattach __P((struct device *, struct device *, void *));
 
-struct cfattach gbus_ca = {
-	sizeof(struct gbus_softc), gbusmatch, gbusattach
-};
+CFATTACH_DECL(gbus, sizeof(struct gbus_softc),
+    gbusmatch, gbusattach, NULL, NULL);
 
 static int	gbusprint __P((void *, const char *));
 static int	gbussubmatch __P((struct device *, struct cfdata *, void *));
@@ -145,5 +144,5 @@ gbussubmatch(parent, cf, aux)
 	    cf->cf_loc[GBUSCF_OFFSET] != ga->ga_offset)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.8.2.2 2002/02/11 20:08:06 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8.2.3 2002/10/10 18:32:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.2 2002/02/11 20:08:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8.2.3 2002/10/10 18:32:56 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,39 +108,36 @@ makebootdev(const char *cp)
 static void
 get_device(const char *name)
 {
-	int loop, unit, part;
-	char buf[32];
+	int unit, part;
+	char devname[16], buf[32];
 	const char *cp;
 	struct device *dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
 
-	for (loop = 0; dev_name2blk[loop].d_name != NULL; ++loop) {
-		if (strncmp(name, dev_name2blk[loop].d_name,
-		    strlen(dev_name2blk[loop].d_name)) == 0) {
-			name += strlen(dev_name2blk[loop].d_name);
-			unit = part = 0;
+	if (devsw_name2blk(name, devname, sizeof(devname)) == -1)
+		return;
 
-			cp = name;
-			while (*cp >= '0' && *cp <= '9')
-				unit = (unit * 10) + (*cp++ - '0');
-			if (cp == name)
-				return;
+	name += strlen(devname);
+	unit = part = 0;
 
-			if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
-				part = *cp - 'a';
-			else if (*cp != '\0' && *cp != ' ')
-				return;
-			sprintf(buf, "%s%d", dev_name2blk[loop].d_name, unit);
-			for (dv = alldevs.tqh_first; dv != NULL;
-			    dv = dv->dv_list.tqe_next) {
-				if (strcmp(buf, dv->dv_xname) == 0) {
-					booted_device = dv;
-					booted_partition = part;
-					return;
-				}
-			}
+	cp = name;
+	while (*cp >= '0' && *cp <= '9')
+		unit = (unit * 10) + (*cp++ - '0');
+	if (cp == name)
+		return;
+
+	if (*cp >= 'a' && *cp <= ('a' + MAXPARTITIONS))
+		part = *cp - 'a';
+	else if (*cp != '\0' && *cp != ' ')
+		return;
+	sprintf(buf, "%s%d", devname, unit);
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+		if (strcmp(buf, dv->dv_xname) == 0) {
+			booted_device = dv;
+			booted_partition = part;
+			return;
 		}
-	} 
+	}
 }

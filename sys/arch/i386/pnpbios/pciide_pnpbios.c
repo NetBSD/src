@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_pnpbios.c,v 1.3.12.1 2002/01/10 19:45:08 thorpej Exp $	*/
+/*	$NetBSD: pciide_pnpbios.c,v 1.3.12.2 2002/10/10 18:33:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Soren S. Jorvang.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.3.12.1 2002/01/10 19:45:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_pnpbios.c,v 1.3.12.2 2002/10/10 18:33:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,11 +60,8 @@ extern void	pciide_dma_start(void *, int, int);
 extern int	pciide_dma_finish(void *, int, int, int);
 extern int	pciide_compat_intr (void *);
 
-struct cfattach pciide_pnpbios_ca = {
-	sizeof(struct pciide_softc),
-	pciide_pnpbios_match,
-	pciide_pnpbios_attach
-};
+CFATTACH_DECL(pciide_pnpbios, sizeof(struct pciide_softc),
+    pciide_pnpbios_match, pciide_pnpbios_attach, NULL, NULL);
 
 int
 pciide_pnpbios_match(parent, match, aux)

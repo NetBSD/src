@@ -1,4 +1,4 @@
-/*	$NetBSD: i82072.c,v 1.3 2000/12/03 04:51:05 matt Exp $	*/
+/*	$NetBSD: i82072.c,v 1.3.4.1 2002/10/10 18:34:12 jdolecek Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/conf.h>
+#include <sys/event.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
@@ -49,12 +50,16 @@
 #include <machine/bus.h>
 
 dev_type_open(fdopen);
-dev_type_close(fdclose);
-dev_type_ioctl(fdioctl);
-dev_type_size(fdsize);
-dev_type_dump(fddump);
 dev_type_strategy(fdstrategy);
 
+const struct bdevsw fd_bdevsw = {
+	fdopen, nullclose, fdstrategy, noioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, nullclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 #define	I82072_STATUS	0x000003
 #define	I82072_DATA	0x000007
@@ -72,9 +77,8 @@ static int	fd_match (struct device *, struct cfdata *, void *);
 static void	fd_attach (struct device *, struct device *, void *);
 static void     fd_reset (struct fd_softc *);
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fd_match, fd_attach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fd_match, fd_attach, NULL, NULL);
 
 static int	fd_intr (void *);
 
@@ -123,34 +127,10 @@ fdopen(dev_t dev, int flags, int mode, struct proc *p)
 	return (EBADF);
 }
 
-int
-fdclose(dev_t dev, int flags, int mode, struct proc *p)
-{
-	return 0;
-}
-
 void
 fdstrategy(struct buf *bp)
 {
 	panic("fdstrategy");
-}
-
-int
-fdioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct proc *p)
-{
-	return (EINVAL);
-}
-
-int
-fddump(dev_t dev, daddr_t blkno, caddr_t va, size_t size)
-{
-	return (ENODEV);
-}
-
-int
-fdsize(dev_t dev)
-{
-	return (0);
 }
 
 static int

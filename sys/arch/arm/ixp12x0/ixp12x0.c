@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0.c,v 1.2.4.2 2002/09/06 08:32:48 jdolecek Exp $ */
+/*	$NetBSD: ixp12x0.c,v 1.2.4.3 2002/10/10 18:31:53 jdolecek Exp $ */
 /*
  * Copyright (c) 2002
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -62,7 +62,7 @@ ixp12x0_attach(sc)
 	 */
 	if (bus_space_subregion(sc->sc_iot, sc->sc_ioh, 0,
 	    IXP12X0_PCI_SIZE, &sc->sc_pci_ioh))
-		panic("%s: unable to subregion PCI registers\n",
+		panic("%s: unable to subregion PCI registers",
 		      sc->sc_dev.dv_xname); 
 	/*
 	 * PCI bus reset

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_machdep.c,v 1.27.4.4 2002/09/06 08:36:12 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_machdep.c,v 1.27.4.5 2002/10/10 18:33:19 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.27.4.4 2002/09/06 08:36:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_machdep.c,v 1.27.4.5 2002/10/10 18:33:19 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -325,7 +325,7 @@ netbsd_to_freebsd_ptrace_regs(nregs, nfpregs, fregs)
 #ifdef DIAGNOSTIC
 	if (sizeof(fregs->freebsd_ptrace_fpregs.sv_pad) <
 	    sizeof(nframe->sv_ex_tw) + sizeof(nframe->sv_pad)) {
-		panic("netbsd_to_freebsd_ptrace_regs: %s\n",
+		panic("netbsd_to_freebsd_ptrace_regs: %s",
 		      "sizeof(freebsd_save87) >= sizeof(save87)");
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34.2.1 2002/06/23 17:37:44 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.34.2.2 2002/10/10 18:33:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Bill Studenmund
@@ -91,7 +91,6 @@
  * Some warts needed by z8530tty.c -
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * abort detection on console will now timeout after iterating on a loop
@@ -221,9 +220,8 @@ static int	zsc_match __P((struct device *, struct cfdata *, void *));
 static void	zsc_attach __P((struct device *, struct device *, void *));
 static int  zsc_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zsc_match, zsc_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zsc_match, zsc_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -271,7 +269,7 @@ zsc_attach(parent, self, aux)
 
 	/* Make sure everything's inited ok. */
 	if (zsaddr[zsc_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zsc_unit);
+		panic("zs_attach: zs%d not mapped", zsc_unit);
 
 	chip = 0; /* We'll deal with chip types post 1.2 */
 	printf(" chip type %d \n",chip);
@@ -877,7 +875,6 @@ void  zs_write_data(cs, val)
 cons_decl(zs);
 
 static void	zscnsetup __P((void));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
 /*
  * Console functions.
@@ -943,13 +940,10 @@ zscnprobe(struct consdev * cp)
 {
 	extern u_long   IOBase;
 	int     maj, unit, i;
+	extern const struct cdevsw zstty_cdevsw;
 
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == zsopen) {
-			break;
-		}
-	}
-	if (maj != nchrdev) {
+	maj = cdevsw_lookup_major(&zstty_cdevsw);
+	if (maj != -1) {
 		cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
 		if (mac68k_machine.serial_console != 0) {
 			cp->cn_pri = CN_REMOTE;	 /* Higher than CN_INTERNAL */

@@ -1,4 +1,4 @@
-/* $NetBSD: ohci.c,v 1.1.6.2 2002/09/06 08:37:24 jdolecek Exp $ */
+/* $NetBSD: ohci.c,v 1.1.6.3 2002/10/10 18:34:04 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -47,9 +47,8 @@
 static int	ohci_aubus_match(struct device *, struct cfdata *, void *);
 static void	ohci_aubus_attach(struct device *, struct device *, void *);
 
-struct cfattach ohci_aubus_ca = {
-	sizeof (struct device), ohci_aubus_match, ohci_aubus_attach, 
-};
+CFATTACH_DECL(ohci_aubus, sizeof (struct device),
+    ohci_aubus_match, ohci_aubus_attach, NULL, NULL);
 
 int
 ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -57,7 +56,7 @@ ohci_aubus_match(struct device *parent, struct cfdata *match, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	return (0);	/* XXX unimplemented! */
-	if (strcmp(aa->aa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

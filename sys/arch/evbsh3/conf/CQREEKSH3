@@ -1,4 +1,4 @@
-#	$NetBSD: CQREEKSH3,v 1.11.2.5 2002/09/06 08:34:28 jdolecek Exp $
+#	$NetBSD: CQREEKSH3,v 1.11.2.6 2002/10/10 18:32:32 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -41,7 +41,7 @@ options 	BSC_RTCOR_VAL	=0xa53a
 options 	FRQCR_VAL	=0x0102
 
 options 	HZ=50		# clock interrupt generates every 1/HZ sec
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD

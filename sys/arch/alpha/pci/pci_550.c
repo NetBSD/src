@@ -1,4 +1,4 @@
-/* $NetBSD: pci_550.c,v 1.21.2.2 2002/06/23 17:34:14 jdolecek Exp $ */
+/* $NetBSD: pci_550.c,v 1.21.2.3 2002/10/10 18:31:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.21.2.2 2002/06/23 17:34:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_550.c,v 1.21.2.3 2002/10/10 18:31:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -275,7 +275,7 @@ dec_550_intr_string(ccv, ih)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_string: bogus 550 IRQ 0x%lx", ih);
 	sprintf(irqstr, "dec 550 irq %ld", ih);
 	return (irqstr);
 }
@@ -296,7 +296,7 @@ dec_550_intr_evcnt(ccv, ih)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_evcnt: bogus 550 IRQ 0x%lx", ih);
 
 	return (alpha_shared_intr_evcnt(dec_550_pci_intr, ih));
 }
@@ -320,7 +320,7 @@ dec_550_intr_establish(ccv, ih, level, func, arg)
 #endif
 
 	if (ih >= DEC_550_MAX_IRQ)
-		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx\n", ih);
+		panic("dec_550_intr_establish: bogus dec 550 IRQ 0x%lx", ih);
 
 	cookie = alpha_shared_intr_establish(dec_550_pci_intr, ih, IST_LEVEL,
 	    level, func, arg, "dec 550 irq");
@@ -412,7 +412,7 @@ dec_550_iointr(arg, vec)
 	irq = SCB_VECTOIDX(vec - 0x900);
 
 	if (irq >= DEC_550_MAX_IRQ)
-		panic("550_iointr: vec 0x%lx out of range\n", vec);
+		panic("550_iointr: vec 0x%lx out of range", vec);
 
 	if (!alpha_shared_intr_dispatch(dec_550_pci_intr, irq)) {
 		alpha_shared_intr_stray(dec_550_pci_intr, irq,

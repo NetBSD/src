@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172pci.c,v 1.5.6.2 2002/06/23 17:36:56 jdolecek Exp $	*/
+/*	$NetBSD: vrc4172pci.c,v 1.5.6.3 2002/10/10 18:33:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -102,9 +102,8 @@ static int	vrc4172pci_mcr700_intr(void *arg);
 #endif
 #endif
 
-struct cfattach vrc4172pci_ca = {
-	sizeof(struct vrc4172pci_softc), vrc4172pci_match, vrc4172pci_attach
-};
+CFATTACH_DECL(vrc4172pci, sizeof(struct vrc4172pci_softc),
+    vrc4172pci_match, vrc4172pci_attach, NULL, NULL);
 
 static inline void
 vrc4172pci_write(struct vrc4172pci_softc *sc, int offset, u_int32_t val)

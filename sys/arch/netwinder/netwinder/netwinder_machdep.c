@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.6.2.7 2002/09/06 08:38:09 jdolecek Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.6.2.8 2002/10/10 18:34:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -494,7 +494,7 @@ initarm(void)
 
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 
 	/*
 	 * Allocate a page for the system page mapped to V0x00000000

@@ -1,9 +1,8 @@
 static int cpumatch(struct device *, struct cfdata *, void *);
 static void cpuattach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpumatch, cpuattach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 

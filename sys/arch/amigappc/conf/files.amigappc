@@ -1,4 +1,4 @@
-#	$NetBSD: files.amigappc,v 1.3.2.2 2002/06/23 17:34:37 jdolecek Exp $
+#	$NetBSD: files.amigappc,v 1.3.2.3 2002/10/10 18:31:35 jdolecek Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -92,7 +92,6 @@ attach	fdc at mainbus
 device	fd: disk
 attach	fd at fdc
 file	arch/amiga/dev/fd.c		fd needs-flag
-major	{fd = 2}
 
 # graphic devices
 define	grfbus {}
@@ -249,8 +248,6 @@ attach	lpt at supio with lpt_supio
 file	arch/amiga/dev/lpt_supio.c	lpt_supio
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 7}
 
 # wd 33c93 contrllers
 define	sbic
@@ -402,13 +399,10 @@ define	gayle
 file	arch/amiga/amiga/gayle.c		gayle
 
 include "dev/ata/files.ata"
-major	{wd = 17}
 
 # Amiga 4000/1200 IDE using MI wdc
 attach	wdc at mainbus with wdc_amiga: gayle
 file	arch/amiga/dev/wdc_amiga.c	wdc_amiga
-
-major	{md = 15}	# Memory disk (for mini-kernel)
 
 # Compatibility modules
 
@@ -426,3 +420,5 @@ major	{md = 15}	# Memory disk (for mini-kernel)
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include "arch/amiga/conf/majors.amiga"

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.31 2001/06/03 15:07:20 ragge Exp $	*/
+/*	$NetBSD: ka820.c,v 1.31.2.1 2002/10/10 18:37:23 jdolecek Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -131,9 +131,8 @@ struct ka820_softc {
 	int sc_binid;		/* CPU node ID */
 };
 
-struct cfattach cpu_bi_ca = {
-	sizeof(struct ka820_softc), ka820_match, ka820_attach
-};
+CFATTACH_DECL(cpu_bi, sizeof(struct ka820_softc),
+    ka820_match, ka820_attach, NULL, NULL);
 
 #ifdef notyet
 extern struct pte BRAMmap[];
@@ -304,9 +303,8 @@ struct mem_bi_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-struct cfattach mem_bi_ca = {
-	sizeof(struct mem_bi_softc), ms820_match, ms820_attach
-};
+CFATTACH_DECL(mem_bi, sizeof(struct mem_bi_softc),
+    ms820_match, ms820_attach, NULL, NULL);
 
 static int
 ms820_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -569,7 +567,7 @@ ka820_startslave(struct device *dev, struct cpu_info *ci)
 	ka820_txrx(id, "S %x\r", (int)&tramp);	/* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
-		if ((volatile)ci->ci_flags & CI_RUNNING)
+		if ((volatile int)ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
 		printf("%s: (ID %d) failed starting??!!??\n",

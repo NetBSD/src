@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.1 2001/05/16 10:56:43 tsubai Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.1.4.1 2002/10/10 18:33:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -61,9 +61,8 @@ struct wi_obio_softc {
 	void *sc_sdhook;
 };
 
-struct cfattach wi_obio_ca = {
-	sizeof(struct wi_obio_softc), wi_obio_match, wi_obio_attach
-};
+CFATTACH_DECL(wi_obio, sizeof(struct wi_obio_softc),
+    wi_obio_match, wi_obio_attach, NULL, NULL);
 
 int
 wi_obio_match(parent, match, aux)
@@ -105,7 +104,6 @@ wi_obio_attach(parent, self, aux)
 	wisc->sc_enable = wi_obio_enable;
 	wisc->sc_disable = wi_obio_disable;
 
-	wisc->sc_ifp = &wisc->sc_ethercom.ec_if;
 	if (wi_attach(wisc)) {
 		printf("%s: failed to attach controller\n", self->dv_xname);
 		return;

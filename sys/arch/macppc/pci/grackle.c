@@ -1,4 +1,4 @@
-/*	$NetBSD: grackle.c,v 1.1.10.2 2002/06/23 17:37:56 jdolecek Exp $	*/
+/*	$NetBSD: grackle.c,v 1.1.10.3 2002/10/10 18:34:01 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -48,9 +48,8 @@ int grackle_print __P((void *, const char *));
 pcireg_t grackle_conf_read __P((pci_chipset_tag_t, pcitag_t, int));
 void grackle_conf_write __P((pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 
-struct cfattach grackle_ca = {
-	sizeof(struct grackle_softc), grackle_match, grackle_attach
-};
+CFATTACH_DECL(grackle, sizeof(struct grackle_softc),
+    grackle_match, grackle_attach, NULL, NULL);
 
 int
 grackle_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.1 2002/02/11 20:09:25 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.2 2002/10/10 18:37:45 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -129,8 +129,7 @@ matchbiosdisks()
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
 	struct device *dv;
-	struct devnametobdevmaj *d;
-	int i, ck, error, m, n;
+	int i, ck, error, m, n, bmajor;
 	struct vnode *tv;
 	char mbr[DEV_BSIZE];
 
@@ -144,9 +143,9 @@ matchbiosdisks()
 	 */
 	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next)
 		if (dv->dv_class == DV_DISK &&
-		    (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		     !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")))
+		    (!strcmp(dv->dv_cfdata->cf_name, "sd") ||
+		     !strcmp(dv->dv_cfdata->cf_name, "wd") ||
+		     !strcmp(dv->dv_cfdata->cf_name, "ld")))
 			x86_64_ndisks++;
 
 	if (x86_64_ndisks == 0)
@@ -179,23 +178,21 @@ matchbiosdisks()
 			continue;
 #ifdef GEOM_DEBUG
 		printf("matchbiosdisks: trying to match (%s) %s\n",
-		    dv->dv_xname, dv->dv_cfdata->cf_driver->cd_name);
+		    dv->dv_xname, dv->dv_cfdata->cf_name);
 #endif
-		if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-		    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")) {
+		if (!strcmp(dv->dv_cfdata->cf_name, "sd") ||
+		    !strcmp(dv->dv_cfdata->cf_name, "wd") ||
+		    !strcmp(dv->dv_cfdata->cf_name, "ld")) {
 			n++;
 			sprintf(x86_64_alldisks->dl_nativedisks[n].ni_devname,
-			    "%s%d", dv->dv_cfdata->cf_driver->cd_name,
+			    "%s%d", dv->dv_cfdata->cf_name,
 			    dv->dv_unit);
 
-			for (d = dev_name2blk; d->d_name &&
-			   strcmp(d->d_name, dv->dv_cfdata->cf_driver->cd_name);
-			   d++);
-			if (d->d_name == NULL)
+			bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+			if (bmajor == -1)
 				return;
 
-			if (bdevvp(MAKEDISKDEV(d->d_maj, dv->dv_unit, RAW_PART),
+			if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, RAW_PART),
 			    &tv))
 				panic("matchbiosdisks: can't alloc vnode");
 
@@ -252,9 +249,8 @@ match_harddisk(dv, bid)
 	struct device *dv;
 	struct btinfo_bootdisk *bid;
 {
-	struct devnametobdevmaj *i;
 	struct vnode *tmpvn;
-	int error;
+	int bmajor, error;
 	struct disklabel label;
 	int found = 0;
 
@@ -270,18 +266,15 @@ match_harddisk(dv, bid)
 	/*
 	 * lookup major number for disk block device
 	 */
-	i = dev_name2blk;
-	while (i->d_name &&
-	       strcmp(i->d_name, dv->dv_cfdata->cf_driver->cd_name))
-		i++;
-	if (i->d_name == NULL)
+	bmajor = devsw_name2blk(dv->dv_xname, NULL, 0);
+	if (bmajor == NULL)
 		return(0); /* XXX panic() ??? */
 
 	/*
 	 * Fake a temporary vnode for the disk, open
 	 * it, and read the disklabel for comparison.
 	 */
-	if (bdevvp(MAKEDISKDEV(i->d_maj, dv->dv_unit, bid->partition), &tmpvn))
+	if (bdevvp(MAKEDISKDEV(bmajor, dv->dv_unit, bid->partition), &tmpvn))
 		panic("findroot can't alloc vnode");
 	error = VOP_OPEN(tmpvn, FREAD, NOCRED, 0);
 	if (error) {
@@ -359,7 +352,7 @@ findroot(void)
 			if (dv->dv_class != DV_DISK)
 				continue;
 
-			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "fd")) {
+			if (!strcmp(dv->dv_cfdata->cf_name, "fd")) {
 				/*
 				 * Assume the configured unit number matches
 				 * the BIOS device number.  (This is the old
@@ -373,9 +366,9 @@ findroot(void)
 				goto found;
 			}
 
-			if (!strcmp(dv->dv_cfdata->cf_driver->cd_name, "sd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "wd") ||
-			    !strcmp(dv->dv_cfdata->cf_driver->cd_name, "ld")) {
+			if (!strcmp(dv->dv_cfdata->cf_name, "sd") ||
+			    !strcmp(dv->dv_cfdata->cf_name, "wd") ||
+			    !strcmp(dv->dv_cfdata->cf_name, "ld")) {
 				/*
 				 * Don't trust BIOS device numbers, try
 				 * to match the information passed by the
@@ -439,7 +432,7 @@ device_register(dev, aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "isa")) {
 			struct isa_attach_args *iaa = aux;
 
@@ -451,7 +444,7 @@ device_register(dev, aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_driver->cd_name,
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
 		    "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;

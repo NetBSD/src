@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.1.6.4 2002/03/16 15:56:12 jdolecek Exp $	*/
+/*	$NetBSD: rtc.c,v 1.1.6.5 2002/10/10 18:31:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -50,7 +50,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
-#include <machine/conf.h>
+#include <sys/event.h>
 #include <machine/rtc.h>
 #include <arm/iomd/iic.h>
 #include <arm/iomd/todclockvar.h>
@@ -249,11 +249,20 @@ rtc_read(arg, rtc)
 
 /* device and attach structures */
 
-struct cfattach rtc_ca = {
-	sizeof(struct rtc_softc), rtcmatch, rtcattach
-};
+CFATTACH_DECL(rtc, sizeof(struct rtc_softc),
+    rtcmatch, rtcattach, NULL, NULL);
 
 extern struct cfdriver rtc_cd;
+
+dev_type_open(rtcopen);
+dev_type_close(rtcclose);
+dev_type_read(rtcread);
+dev_type_write(rtcwrite);
+
+const struct cdevsw rtc_cdevsw = {
+	rtcopen, rtcclose, rtcread, rtcwrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * rtcmatch()
@@ -474,25 +483,6 @@ rtcwrite(dev, uio, flag)
 	(void)splx(s);
 
 	return(0);
-}
-
-
-int
-rtcioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-/*	struct rtc_softc *sc = rtc_cd.cd_devs[minor(dev)];*/
-
-/*	switch (cmd) {
-	case RTCIOC_READ:
-		return(0);
-	}*/
-
-	return(EINVAL);
 }
 
 /* End of rtc.c */

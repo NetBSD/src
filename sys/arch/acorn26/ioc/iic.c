@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.1.6.2 2002/06/23 17:33:46 jdolecek Exp $	*/
+/*	$NetBSD: iic.c,v 1.1.6.3 2002/10/10 18:30:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,7 +47,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iic.c,v 1.1.6.2 2002/06/23 17:33:46 jdolecek Exp $");
+__RCSID("$NetBSD: iic.c,v 1.1.6.3 2002/10/10 18:30:14 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -72,9 +72,8 @@ static int  iic_match (struct device *, struct cfdata *, void *);
 static void iic_attach(struct device *, struct device *, void *);
 static int  iicsearch(struct device *, struct cfdata *, void *);
 
-struct cfattach iic_ca = {
-	sizeof(struct iic_softc), iic_match, iic_attach
-};
+CFATTACH_DECL(iic, sizeof(struct iic_softc),
+    iic_match, iic_attach, NULL, NULL);
 
 /* Local function prototypes */
 
@@ -340,7 +339,7 @@ iicsearch(struct device *parent, struct cfdata *cf, void *aux)
 		iba.ib_aux = NULL;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &iba) > 0) {
+		if (config_match(parent, cf, &iba) > 0) {
 			config_attach(parent, cf, &iba, iicprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

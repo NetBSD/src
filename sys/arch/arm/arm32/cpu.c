@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.4.6 2002/09/06 08:32:21 jdolecek Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.4.7 2002/10/10 18:31:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,14 +45,14 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.4.6 2002/09/06 08:32:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.4.7 2002/10/10 18:31:44 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 #include <uvm/uvm_extern.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <arm/cpuconf.h>
@@ -171,35 +171,35 @@ enum cpu_class {
 	CPU_CLASS_ARM10E
 };
 
-static const char *generic_steppings[16] = {
+static const char * const generic_steppings[16] = {
 	"rev 0",	"rev 1",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa110_steppings[16] = {
+static const char * const sa110_steppings[16] = {
 	"rev 0",	"step J",	"step K",	"step S",
 	"step T",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa1100_steppings[16] = {
+static const char * const sa1100_steppings[16] = {
 	"rev 0",	"step B",	"step C",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"step D",	"step E",	"rev 10"	"step G",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *sa1110_steppings[16] = {
+static const char * const sa1110_steppings[16] = {
 	"step A-0",	"rev 1",	"rev 2",	"rev 3",
 	"step B-0",	"step B-1",	"step B-2",	"step B-3",
 	"step B-4",	"step B-5",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *ixp12x0_steppings[16] = {
+static const char * const ixp12x0_steppings[16] = {
 	"(IXP1200 step A)",		"(IXP1200 step B)",
 	"rev 2",			"(IXP1200 step C)",
 	"(IXP1200 step D)",		"(IXP1240/1250 step A)",
@@ -208,21 +208,21 @@ static const char *ixp12x0_steppings[16] = {
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *xscale_steppings[16] = {
+static const char * const xscale_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step C-0",
 	"step D-0",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *i80321_steppings[16] = {
+static const char * const i80321_steppings[16] = {
 	"step A-0",	"step B-0",	"rev 2",	"rev 3",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
 	"rev 12",	"rev 13",	"rev 14",	"rev 15",
 };
 
-static const char *pxa2x0_steppings[16] = {
+static const char * const pxa2x0_steppings[16] = {
 	"step A-0",	"step A-1",	"step B-0",	"step B-1",
 	"rev 4",	"rev 5",	"rev 6",	"rev 7",
 	"rev 8",	"rev 9",	"rev 10",	"rev 11",
@@ -233,7 +233,7 @@ struct cpuidtab {
 	u_int32_t	cpuid;
 	enum		cpu_class cpu_class;
 	const char	*cpu_name;
-	const char	**cpu_steppings;
+	const char * const *cpu_steppings;
 };
 
 const struct cpuidtab cpuids[] = {
@@ -351,7 +351,7 @@ const struct cpu_classtab cpu_classes[] = {
  * The remaining fields in the cpu structure are filled in appropriately.
  */
 
-static const char *wtnames[] = {
+static const char * const wtnames[] = {
 	"write-through",
 	"write-back",
 	"write-back",

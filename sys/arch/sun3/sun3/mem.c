@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.38.2.2 2002/03/16 16:00:07 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.38.2.3 2002/10/10 18:37:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -78,28 +78,14 @@
 static int promacc __P((caddr_t, int, int));
 static caddr_t devzeropage;
 
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int

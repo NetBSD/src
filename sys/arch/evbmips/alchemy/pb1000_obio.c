@@ -1,4 +1,4 @@
-/* $NetBSD: pb1000_obio.c,v 1.1.6.2 2002/09/06 08:34:17 jdolecek Exp $ */
+/* $NetBSD: pb1000_obio.c,v 1.1.6.3 2002/10/10 18:32:28 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -54,9 +54,8 @@ static void	obio_attach(struct device *, struct device *, void *);
 static int	obio_submatch(struct device *, struct cfdata *, void *);
 static int	obio_print(void *, const char *);
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 /* There can be only one. */
 int	obio_found;
@@ -111,7 +110,7 @@ obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[OBIOCF_ADDR] != oa->oba_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int

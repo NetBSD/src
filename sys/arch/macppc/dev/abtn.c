@@ -1,4 +1,4 @@
-/*	$NetBSD: abtn.c,v 1.3 2001/06/08 00:32:01 matt Exp $	*/
+/*	$NetBSD: abtn.c,v 1.3.2.1 2002/10/10 18:33:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -51,9 +51,8 @@ static int abtn_match __P((struct device *, struct cfdata *, void *));
 static void abtn_attach __P((struct device *, struct device *, void *));
 static void abtn_adbcomplete __P((caddr_t, caddr_t, int));
 
-struct cfattach abtn_ca = {
-	sizeof(struct abtn_softc), abtn_match, abtn_attach
-};
+CFATTACH_DECL(abtn, sizeof(struct abtn_softc),
+    abtn_match, abtn_attach, NULL, NULL);
 
 int
 abtn_match(parent, cf, aux)

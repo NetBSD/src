@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.2.6.2 2002/09/06 08:37:24 jdolecek Exp $ */
+/* $NetBSD: if_aumac.c,v 1.2.6.3 2002/10/10 18:34:04 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2.6.2 2002/09/06 08:37:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.2.6.3 2002/10/10 18:34:04 jdolecek Exp $");
 
 #include "bpfilter.h"
 
@@ -200,9 +200,8 @@ static void	aumac_attach(struct device *, struct device *, void *);
 
 int	aumac_copy_small = 0;
 
-struct cfattach aumac_ca = {
-	sizeof(struct aumac_softc), aumac_match, aumac_attach,
-};
+CFATTACH_DECL(aumac, sizeof(struct aumac_softc),
+    aumac_match, aumac_attach, NULL, NULL);
 
 static const struct {
 	bus_addr_t	mac_base;
@@ -218,7 +217,7 @@ aumac_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
-	if (strcmp(aa->aa_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.1.14.2 2002/06/23 17:35:29 jdolecek Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.1.14.3 2002/10/10 18:32:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -73,6 +73,6 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 	    PCIIDE_CHANNEL_NAME(chan), irq);
 	return (cookie);
 #else
-	panic("pciide_machdep_compat_intr_establish() called\n");
+	panic("pciide_machdep_compat_intr_establish() called");
 #endif
 }

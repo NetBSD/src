@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_mainbus.c,v 1.1.6.2 2002/06/23 17:35:42 jdolecek Exp $	*/
+/*	$NetBSD: i80321_mainbus.c,v 1.1.6.3 2002/10/10 18:32:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -60,10 +60,8 @@
 int	i80321_mainbus_match(struct device *, struct cfdata *, void *);
 void	i80321_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach iopxs_mainbus_ca = {
-	sizeof(struct i80321_softc), i80321_mainbus_match,
-	    i80321_mainbus_attach,
-};
+CFATTACH_DECL(iopxs_mainbus, sizeof(struct i80321_softc),
+    i80321_mainbus_match, i80321_mainbus_attach, NULL, NULL);
 
 /* There can be only one. */
 int	i80321_mainbus_found;
@@ -82,7 +80,7 @@ i80321_mainbus_match(struct device *parent, struct cfdata *cf, void *aux)
 	/* XXX Shoot arch/arm/mainbus in the head. */
 	return (1);
 #else
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0)
+	if (strcmp(cf->cf_name, ma->ma_name) == 0)
 		return (1);
 
 	return (0);
@@ -113,7 +111,7 @@ i80321_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_MCU_BASE,
 	    VERDE_MCU_SIZE, &sc->sc_mcu_sh))
-		panic("%s: unable to subregion MCU registers\n",
+		panic("%s: unable to subregion MCU registers",
 		    sc->sc_dev.dv_xname);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.29.2.2 2002/02/11 20:08:32 jdolecek Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.29.2.3 2002/10/10 18:33:46 jdolecek Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -734,7 +734,7 @@ camprogram(sc)
 		continue;
 	if (timeout == 0) {
 		/* XXX */
-		panic("%s: CAM initialisation failed\n", sc->sc_dev.dv_xname);
+		panic("%s: CAM initialisation failed", sc->sc_dev.dv_xname);
 	}
 	timeout = 10000;
 	while (((NIC_GET(sc, SNR_ISR) & ISR_LCD) == 0) && timeout--)

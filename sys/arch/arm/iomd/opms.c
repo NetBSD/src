@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:22 jdolecek Exp $	*/
+/*	$NetBSD: opms.c,v 1.1.8.5 2002/10/10 18:31:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:22 jdolecek Exp $");
+__RCSID("$NetBSD: opms.c,v 1.1.8.5 2002/10/10 18:31:51 jdolecek Exp $");
 
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -56,9 +56,9 @@ __RCSID("$NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:22 jdolecek Exp $");
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/mouse.h>
 #include <arm/iomd/opmsvar.h>
 
@@ -88,6 +88,18 @@ static __inline void opms_flush __P((struct opms_softc *sc));
 static int cmd_mouse __P((struct opms_softc *, u_char));
 
 extern struct cfdriver opms_cd;
+
+dev_type_open(opmsopen);
+dev_type_close(opmsclose);
+dev_type_read(opmsread);
+dev_type_ioctl(opmsioctl);
+dev_type_poll(opmspoll);
+dev_type_kqfilter(opmskqfilter);
+
+const struct cdevsw opms_cdevsw = {
+	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
+	nostop, notty, opmspoll, nommap, opmskqfilter,
+};
 
 /* opms device driver structure */
 

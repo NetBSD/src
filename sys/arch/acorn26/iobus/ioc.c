@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.2.6.2 2002/06/23 17:33:44 jdolecek Exp $ */
+/* $NetBSD: ioc.c,v 1.2.6.3 2002/10/10 18:30:12 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: ioc.c,v 1.2.6.2 2002/06/23 17:33:44 jdolecek Exp $");
+__RCSID("$NetBSD: ioc.c,v 1.2.6.3 2002/10/10 18:30:12 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/kernel.h>
@@ -58,9 +58,8 @@ static int ioc_print(void *aux, const char *pnp);
 static int ioc_irq_clock(void *cookie);
 static int ioc_irq_statclock(void *cookie);
 
-struct cfattach ioc_ca = {
-	sizeof(struct ioc_softc), ioc_match, ioc_attach
-};
+CFATTACH_DECL(ioc, sizeof(struct ioc_softc),
+    ioc_match, ioc_attach, NULL, NULL);
 
 struct device *the_ioc;
 
@@ -152,7 +151,7 @@ ioc_search(struct device *parent, struct cfdata *cf, void *aux)
 			    + (IOC_TYPE_SYNC << IOC_TYPE_SHIFT)
 			    + (ioc.ioc_offset >> 2),
 			    1 << IOC_BANK_SHIFT, &ioc.ioc_sync_h);
-	if ((cf->cf_attach->ca_match)(parent, cf, &ioc) > 0)
+	if (config_match(parent, cf, &ioc) > 0)
 		config_attach(parent, cf, &ioc, ioc_print);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2001/01/15 20:19:56 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.4.1 2002/10/10 18:34:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthias Pfaller.
@@ -33,9 +33,9 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <machine/icu.h>
 
 static int	mbprobe __P((struct device *, struct cfdata *, void *));
@@ -43,9 +43,8 @@ static void	mbattach __P((struct device *, struct device *, void *));
 static int	mbsearch __P((struct device *, struct cfdata *, void *));
 static int	mbprint __P((void *, const char *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbprobe, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbprobe, mbattach, NULL, NULL);
 
 static int
 mbprobe(parent, cf, aux)
@@ -53,7 +52,7 @@ mbprobe(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-	return(strcmp(cf->cf_driver->cd_name, "mainbus") == 0);
+	return(strcmp(cf->cf_name, "mainbus") == 0);
 }
 
 static void
@@ -128,7 +127,7 @@ mbsearch(parent, cf, aux)
 	ca.ca_irq   = cf->cf_irq;
 	ca.ca_flags = cf->cf_flags;
 
-	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
+	while (config_match(parent, cf, &ca) > 0) {
 		config_attach(parent, cf, &ca, mbprint);
 		if (cf->cf_fstate != FSTATE_STAR)
 			break;

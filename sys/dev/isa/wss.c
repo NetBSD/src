@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.57.22.1 2002/01/10 19:55:47 thorpej Exp $	*/
+/*	$NetBSD: wss.c,v 1.57.22.2 2002/10/10 18:39:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.57.22.1 2002/01/10 19:55:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.57.22.2 2002/10/10 18:39:53 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,7 @@ mad_read(sc, port)
 		pwd = M_PASSWD_931;
 		break;
 	default:
-		panic("mad_read: Bad chip type=%d\n", sc->mad_chip_type);
+		panic("mad_read: Bad chip type=%d", sc->mad_chip_type);
 	}
 	s = splaudio();		/* don't want an interrupt between outb&inb */
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);
@@ -441,7 +441,7 @@ mad_write(sc, port, value)
 		pwd = M_PASSWD_931;
 		break;
 	default:
-		panic("mad_write: Bad chip type=%d\n", sc->mad_chip_type);
+		panic("mad_write: Bad chip type=%d", sc->mad_chip_type);
 	}
 	s = splaudio();
 	bus_space_write_1(sc->sc_iot, sc->mad_ioh, MC_PASSWD_REG, pwd);

@@ -1,11 +1,11 @@
-# $NetBSD: GENERIC,v 1.8.2.3 2002/09/06 08:39:41 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.8.2.4 2002/10/10 18:35:34 jdolecek Exp $
 
 #include 	"arch/sbmips/conf/std.sbmips.eb"	# big-endian mode
 include 	"arch/sbmips/conf/std.sbmips.el"	# little-endian mode
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.8.2.3 $"
+#ident 		"GENERIC-$Revision: 1.8.2.4 $"
 
 # The following three options are required for BCM1250 pass 1 silicon
 options 	SB1250_PASS1
@@ -28,7 +28,7 @@ options 	LKM		# loadable kernel modules
 options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	DDB		# kernel dynamic debugger
 options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions 	DEBUG="-g"	# compile full symbol table
@@ -89,6 +89,7 @@ options 	INET6		# IPV6
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
 #options 	TCP_COMPAT_42

@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.25.4.1 2002/09/06 08:42:19 jdolecek Exp $ */
+/*	$NetBSD: mba.c,v 1.25.4.2 2002/10/10 18:37:18 jdolecek Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -79,13 +79,11 @@ void	mbaqueue(struct mba_device *);
 void	mbastart(struct mba_softc *);
 void	mbamapregs(struct mba_softc *);
 
-struct	cfattach mba_cmi_ca = {
-	sizeof(struct mba_softc), mbamatch, mbaattach
-};
+CFATTACH_DECL(mba_cmi, sizeof(struct mba_softc),
+    mbamatch, mbaattach, NULL, NULL);
 
-struct	cfattach mba_sbi_ca = {
-	sizeof(struct mba_softc), mbamatch, mbaattach
-};
+CFATTACH_DECL(mba_sbi, sizeof(struct mba_softc),
+    mbamatch, mbaattach, NULL, NULL);
 
 #define	MBA_WCSR(reg, val) \
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, (reg), (val))

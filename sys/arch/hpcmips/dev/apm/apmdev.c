@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.5.4.4 2002/10/02 22:02:23 jdolecek Exp $ */
+/*	$NetBSD: apmdev.c,v 1.5.4.5 2002/10/10 18:32:56 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -53,7 +53,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -146,13 +145,21 @@ static const char *apm_strerror(int);
 static void	apm_suspend(struct apm_softc *);
 static void	apm_resume(struct apm_softc *, u_int, u_int);
 
-cdev_decl(apmdev);
-
-struct cfattach apmdev_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apmdev, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 extern struct cfdriver apmdev_cd;
+
+dev_type_open(apmdevopen);
+dev_type_close(apmdevclose);
+dev_type_ioctl(apmdevioctl);
+dev_type_poll(apmdevpoll);
+dev_type_kqfilter(apmdevkqfilter);
+
+const struct cdevsw apmdev_cdevsw = {
+	apmdevopen, apmdevclose, noread, nowrite, apmdevioctl,
+	nostop, notty, apmdevpoll, nommap, apmdevkqfilter,
+};
 
 /* configurable variables */
 int	apm_bogus_bios = 0;

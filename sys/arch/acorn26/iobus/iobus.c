@@ -1,4 +1,4 @@
-/* $NetBSD: iobus.c,v 1.2.6.2 2002/06/23 17:33:43 jdolecek Exp $ */
+/* $NetBSD: iobus.c,v 1.2.6.3 2002/10/10 18:30:12 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: iobus.c,v 1.2.6.2 2002/06/23 17:33:43 jdolecek Exp $");
+__RCSID("$NetBSD: iobus.c,v 1.2.6.3 2002/10/10 18:30:12 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -53,9 +53,8 @@ struct iobus_softc {
 	struct device	sc_dev;
 };
 
-struct cfattach iobus_ca = {
-	sizeof(struct iobus_softc), iobus_match, iobus_attach
-};
+CFATTACH_DECL(iobus, sizeof(struct iobus_softc),
+    iobus_match, iobus_attach, NULL, NULL);
 
 struct iobus_softc *the_iobus;
 
@@ -93,8 +92,8 @@ iobus_search_ioc(struct device *parent, struct cfdata *cf, void *aux)
 
 	ioa.ioa_tag = 2;
 	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
-	if (strcmp(cf->cf_driver->cd_name, "ioc") == 0 &&
-	    (cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
+	if (strcmp(cf->cf_name, "ioc") == 0 &&
+	    config_match(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
 
 	return 0;
@@ -107,7 +106,7 @@ iobus_search(struct device *parent, struct cfdata *cf, void *aux)
 	
 	ioa.ioa_tag = 2;
 	ioa.ioa_base = (bus_addr_t)MEMC_IO_BASE + cf->cf_loc[IOBUSCF_BASE];
-	if ((cf->cf_attach->ca_match)(parent, cf, &ioa) > 0)
+	if (config_match(parent, cf, &ioa) > 0)
 		config_attach(parent, cf, &ioa, iobus_print);
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39ir.c,v 1.2.2.2 2002/02/11 20:08:10 jdolecek Exp $ */
+/*	$NetBSD: tx39ir.c,v 1.2.2.3 2002/10/10 18:32:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -78,9 +78,8 @@ static void	tx39ir_dump(struct tx39ir_softc *);
 static int	tx39ir_intr(void *);
 #endif
 
-struct cfattach tx39ir_ca = {
-	sizeof(struct tx39ir_softc), tx39ir_match, tx39ir_attach
-};
+CFATTACH_DECL(tx39ir, sizeof(struct tx39ir_softc),
+    tx39ir_match, tx39ir_attach, NULL, NULL);
 
 int
 tx39ir_match(struct device *parent, struct cfdata *cf, void *aux)

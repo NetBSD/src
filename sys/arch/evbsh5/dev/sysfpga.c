@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.3.2.2 2002/09/06 08:34:35 jdolecek Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.3.2.3 2002/10/10 18:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -37,6 +37,9 @@
 
 /* Cayman's System FPGA Chip */
 
+#include "sh5pci.h"
+#include "superio.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -62,18 +65,23 @@ struct sysfpga_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_bust;
 	bus_space_handle_t sc_bush;
-	void *sc_ih[SYSFPGA_NGROUPS];
-	struct sysfpga_ihandler sc_ih_superio[SYSFPGA_SUPERIO_NINTR];
 	u_int8_t sc_intmr[SYSFPGA_NGROUPS];
+	void *sc_ih[SYSFPGA_NGROUPS];
+#if NSUPERIO > 0
+	struct sysfpga_ihandler sc_ih_superio[SYSFPGA_SUPERIO_NINTR];
+#endif
+#if NSH5PCI > 0
+	struct sysfpga_ihandler sc_ih_pci1[SYSFPGA_PCI1_NINTR];
+	struct sysfpga_ihandler sc_ih_pci2[SYSFPGA_PCI1_NINTR];
+#endif
 };
 
 static int sysfpgamatch(struct device *, struct cfdata *, void *);
 static void sysfpgaattach(struct device *, struct device *, void *);
 static int sysfpgaprint(void *, const char *);
 
-struct cfattach sysfpga_ca = {
-	sizeof(struct sysfpga_softc), sysfpgamatch, sysfpgaattach
-};
+CFATTACH_DECL(sysfpga, sizeof(struct sysfpga_softc),
+    sysfpgamatch, sysfpgaattach, NULL, NULL);
 extern struct cfdriver sysfpga_cd;
 
 /*
@@ -95,8 +103,14 @@ static struct sysfpga_device sysfpga_devices[] = {
 #define	sysfpga_reg_write(s,r,v)	\
 	    bus_space_write_4((s)->sc_bust, (s)->sc_bush, (r), (v))
 
-
+#if NSUPERIO > 0
 static int sysfpga_intr_handler_irl1(void *);
+#endif
+#if NSH5PCI > 0
+static int sysfpga_intr_handler_irl2(void *);
+static int sysfpga_intr_handler_irl3(void *);
+#endif
+
 static int sysfpga_intr_dispatch(struct sysfpga_softc *,
 	    struct sysfpga_ihandler *, int);
 
@@ -116,7 +130,7 @@ sysfpgamatch(struct device *parent, struct cfdata *cf, void *args)
 	if (sysfpga_sc)
 		return (0);
 
-	return (cf->cf_driver == &sysfpga_cd);
+	return (1);
 }
 
 /*ARGSUSED*/
@@ -147,12 +161,20 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 	    sysfpga_cpuclksel[SYSFPGA_BDMR_CPUCLKSEL(reg)],
 	    SYSFPGA_CPUMR_CLKMODE(sysfpga_reg_read(sc, SYSFPGA_REG_CPUMR)));
 
+#if NSUPERIO > 0
 	memset(sc->sc_ih_superio, 0, sizeof(sc->sc_ih_superio));
+#endif
+#if NSH5PCI > 0
+	memset(sc->sc_ih_superio, 0, sizeof(sc->sc_ih_pci1));
+	memset(sc->sc_ih_superio, 0, sizeof(sc->sc_ih_pci2));
+#endif
+
 	for (i = 0; i < SYSFPGA_NGROUPS; i++) {
 		sysfpga_reg_write(sc, SYSFPGA_REG_INTMR(i), 0);
 		sc->sc_intmr[i] = 0;
 	}
 
+#if NSUPERIO > 0
 	/*
 	 * Hook interrupts from the Super IO device
 	 */
@@ -162,6 +184,23 @@ sysfpgaattach(struct device *parent, struct device *self, void *args)
 
 	if (sc->sc_ih[SYSFPGA_IGROUP_SUPERIO] == NULL)
 		panic("sysfpga: failed to register superio isr");
+#endif
+
+#if NSH5PCI > 0
+	/*
+	 * Hook interrupts from the PCI1 and PCI2 pins
+	 */
+        sc->sc_ih[SYSFPGA_IGROUP_PCI1] =
+            sh5_intr_establish(INTC_INTEVT_IRL2, IST_LEVEL, IPL_SH5PCI,
+            sysfpga_intr_handler_irl2, sc);
+        sc->sc_ih[SYSFPGA_IGROUP_PCI2] =
+            sh5_intr_establish(INTC_INTEVT_IRL3, IST_LEVEL, IPL_SH5PCI,
+            sysfpga_intr_handler_irl3, sc);
+
+	if (sc->sc_ih[SYSFPGA_IGROUP_PCI1] == NULL ||
+	    sc->sc_ih[SYSFPGA_IGROUP_PCI2] == NULL)
+		panic("sysfpga: failed to register pci isr");
+#endif
 
 #ifdef DEBUG
 	sysfpga_reg_write(sc, SYSFPGA_REG_NMIMR, 1);
@@ -194,56 +233,145 @@ sysfpgaprint(void *arg, const char *cp)
 	return (UNCONF);
 }
 
+#if NSUPERIO > 0
 static int
 sysfpga_intr_handler_irl1(void *arg)
 {
 	struct sysfpga_softc *sc = arg;
 	struct sysfpga_ihandler *ih;
-	u_int8_t intsr0;
-	int h = 0;
+	u_int8_t intsr, intmr;
+	int sr_reg, h = 0;
 
 	ih = sc->sc_ih_superio;
+	sr_reg = SYSFPGA_REG_INTSR(SYSFPGA_IGROUP_SUPERIO);
+	intmr = sc->sc_intmr[SYSFPGA_IGROUP_SUPERIO];
 
-	for (intsr0 = sysfpga_reg_read(sc, SYSFPGA_REG_INTSR(0));
-	    (intsr0 & sc->sc_intmr[0]) != 0;
-	    intsr0 = sysfpga_reg_read(sc, SYSFPGA_REG_INTSR(0))) {
-		intsr0 &= sc->sc_intmr[0];
+	for (intsr = sysfpga_reg_read(sc, sr_reg);
+	    (intsr &= intmr) != 0;
+	    intsr = sysfpga_reg_read(sc, sr_reg)) {
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_UART1))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART1))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_UART1);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_UART2))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_UART2))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_UART2);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_MOUSE))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_MOUSE))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_MOUSE);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_KBD))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_KBD))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_KBD);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_LAN))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LAN))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_LAN);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_IDE))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_IDE))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_IDE);
 
-		if (intsr0 & (1 << SYSFPGA_SUPERIO_INUM_LPT))
+		if (intsr & (1 << SYSFPGA_SUPERIO_INUM_LPT))
 			h |= sysfpga_intr_dispatch(sc, ih,
 			    SYSFPGA_SUPERIO_INUM_LPT);
 
 		if (h == 0)
 			panic("sysfpga: unclaimed IRL1 interrupt: 0x%02x",
-			    intsr0);
+			    intsr);
 	}
 
 	return (h);
 }
+#endif
+
+#if NSH5PCI > 0
+static int
+sysfpga_intr_handler_irl2(void *arg)
+{
+	struct sysfpga_softc *sc = arg;
+	struct sysfpga_ihandler *ih;
+	u_int8_t intsr, intmr;
+	int sr_reg, h = 0;
+
+	ih = sc->sc_ih_pci1;
+	sr_reg = SYSFPGA_REG_INTSR(SYSFPGA_IGROUP_PCI1);
+	intmr = sc->sc_intmr[SYSFPGA_IGROUP_PCI1];
+
+	for (intsr = sysfpga_reg_read(sc, sr_reg);
+	    (intsr &= intmr) != 0;
+	    intsr = sysfpga_reg_read(sc, sr_reg)) {
+
+		if (intsr & (1 << SYSFPGA_PCI1_INTA))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTA);
+
+		if (intsr & (1 << SYSFPGA_PCI1_INTB))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTB);
+
+		if (intsr & (1 << SYSFPGA_PCI1_INTC))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTC);
+
+		if (intsr & (1 << SYSFPGA_PCI1_INTD))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI1_INTD);
+
+		if (h == 0)
+			panic("sysfpga: unclaimed IRL2 interrupt: 0x%02x",
+			    intsr);
+	}
+
+	return (h);
+}
+
+static int
+sysfpga_intr_handler_irl3(void *arg)
+{
+	struct sysfpga_softc *sc = arg;
+	struct sysfpga_ihandler *ih;
+	u_int8_t intsr, intmr;
+	int sr_reg, h = 0;
+
+	ih = sc->sc_ih_pci2;
+	sr_reg = SYSFPGA_REG_INTSR(SYSFPGA_IGROUP_PCI2);
+	intmr = sc->sc_intmr[SYSFPGA_IGROUP_PCI2];
+
+	for (intsr = sysfpga_reg_read(sc, sr_reg);
+	    (intsr &= intmr) != 0;
+	    intsr = sysfpga_reg_read(sc, sr_reg)) {
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTA))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTA);
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTB))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTB);
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTC))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTC);
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTD))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTD);
+
+		if (intsr & (1 << SYSFPGA_PCI2_FAL))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_FAL);
+
+		if (intsr & (1 << SYSFPGA_PCI2_DEG))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_DEG);
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTP))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTP);
+
+		if (intsr & (1 << SYSFPGA_PCI2_INTS))
+			h |= sysfpga_intr_dispatch(sc, ih, SYSFPGA_PCI2_INTS);
+
+		if (h == 0)
+			panic("sysfpga: unclaimed IRL3 interrupt: 0x%02x",
+			    intsr);
+	}
+
+	return (h);
+}
+#endif
 
 static int
 sysfpga_intr_dispatch(struct sysfpga_softc *sc, struct sysfpga_ihandler *ih,
@@ -289,19 +417,34 @@ sysfpga_intr_establish(int group, int level, int inum,
 	int s;
 
 	switch (group) {
+#if NSUPERIO > 0
 	case SYSFPGA_IGROUP_SUPERIO:
 		KDASSERT(inum < SYSFPGA_SUPERIO_NINTR);
 		KDASSERT(level >= IPL_SUPERIO);
 		ih = sc->sc_ih_superio;
 		break;
+#endif
+#if NSH5PCI > 0
+	case SYSFPGA_IGROUP_PCI1:
+		KDASSERT(inum < SYSFPGA_PCI1_NINTR);
+		KDASSERT(level >= IPL_SH5PCI);
+		ih = sc->sc_ih_pci1;
+		break;
 
+	case SYSFPGA_IGROUP_PCI2:
+		KDASSERT(inum < SYSFPGA_PCI2_NINTR);
+		KDASSERT(level >= IPL_SH5PCI);
+		ih = sc->sc_ih_pci2;
+		break;
+#endif
 	default:
 		return (NULL);
 	}
 
+	ih += inum;
+
 	KDASSERT(ih->ih_func == NULL);
 
-	ih += inum;
 	ih->ih_level = level;
 	ih->ih_group = group;
 	ih->ih_inum = inum;
@@ -330,4 +473,11 @@ sysfpga_intr_disestablish(void *cookie)
 	splx(s);
 
 	ih->ih_func = NULL;
+}
+
+void
+sysfpga_nmi_clear(void)
+{
+
+	sysfpga_reg_write(sysfpga_sc, SYSFPGA_REG_NMISR, 0);
 }

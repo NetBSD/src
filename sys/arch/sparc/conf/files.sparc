@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.102.2.5 2002/09/06 08:40:47 jdolecek Exp $
+#	$NetBSD: files.sparc,v 1.102.2.6 2002/10/10 18:36:07 jdolecek Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -182,16 +182,6 @@ file dev/sun/sunms.c			ms
 #
 include "dev/scsipi/files.scsipi"
 
-major	{ cd = 18 }
-major	{ fd = 16 }
-major	{ md = 5 }
-major	{ sd = 7 }
-major	{ xd = 10 }
-major	{ xy = 3 }
-
-# RAIDframe
-major 	{ raid = 25 }
-
 attach dma at obio with dma_obio
 file	arch/sparc/dev/dma_obio.c	dma_obio
 
@@ -323,3 +313,5 @@ file	arch/sparc/sparc/compat_13_machdep.c	compat_13 | compat_sunos
 file	netns/ns_cksum.c		ns
 
 file	dev/md_root.c			memory_disk_hooks
+
+include "arch/sparc/conf/majors.sparc"

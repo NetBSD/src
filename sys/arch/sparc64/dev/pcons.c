@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.7.2.2 2002/06/23 17:42:08 jdolecek Exp $	*/
+/*	$NetBSD: pcons.c,v 1.7.2.3 2002/10/10 18:36:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -49,7 +49,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <machine/eeprom.h>
 #include <machine/psl.h>
@@ -61,11 +60,24 @@
 static int pconsmatch __P((struct device *, struct cfdata *, void *));
 static void pconsattach __P((struct device *, struct device *, void *));
 
-struct cfattach pcons_ca = {
-	sizeof(struct pconssoftc), pconsmatch, pconsattach
-};
+CFATTACH_DECL(pcons, sizeof(struct pconssoftc),
+    pconsmatch, pconsattach, NULL, NULL);
 
 extern struct cfdriver pcons_cd;
+
+dev_type_open(pconsopen);
+dev_type_close(pconsclose);
+dev_type_read(pconsread);
+dev_type_write(pconswrite);
+dev_type_ioctl(pconsioctl);
+dev_type_tty(pconstty);
+dev_type_poll(pconspoll);
+
+const struct cdevsw pcons_cdevsw = {
+	pconsopen, pconsclose, pconsread, pconswrite, pconsioctl,
+	nostop, pconstty, pconspoll, nommap, ttykqfilter, D_TTY
+};
+
 static struct cnm_state pcons_cnm_state;
 
 static int pconsprobe __P((void));
@@ -224,13 +236,6 @@ pconstty(dev)
 	struct pconssoftc *sc = pcons_cd.cd_devs[minor(dev)];
 
 	return sc->of_tty;
-}
-
-void
-pconsstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
 }
 
 static void

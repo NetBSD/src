@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.7.2.2 2002/09/06 08:40:54 jdolecek Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.7.2.3 2002/10/10 18:36:15 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -147,9 +147,10 @@ zs_kgdb_init()
 	struct zsdevice *zsd;
 	volatile struct zschan *zc;
 	int channel, promzs_unit;
+	extern const struct cdevsw zstty_cdevsw;
 
 	/* printf("zs_kgdb_init: kgdb_dev=0x%x\n", kgdb_dev); */
-	if (major(kgdb_dev) != zs_major)
+	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
 		return;
 
 	/* Note: (ttya,ttyb) on zs0, and (ttyc,ttyd) on zs2 */

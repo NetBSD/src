@@ -1,4 +1,4 @@
-/*	$NetBSD: crime.c,v 1.4.2.1 2002/03/16 15:59:27 jdolecek Exp $	*/
+/*	$NetBSD: crime.c,v 1.4.2.2 2002/10/10 18:35:36 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -60,9 +60,8 @@ static void	crime_attach(struct device *, struct device *, void *);
 void *		crime_intr_establish(int, int, int, int (*)(void *), void *);
 int		crime_intr(void *);
 
-struct cfattach crime_ca = {
-	sizeof(struct device), crime_match, crime_attach
-};
+CFATTACH_DECL(crime, sizeof(struct device),
+    crime_match, crime_attach, NULL, NULL);
 
 static int
 crime_match(parent, match, aux)

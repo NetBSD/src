@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9.4.2 2002/09/06 08:38:17 jdolecek Exp $	*/
+/*	$NetBSD: fb.c,v 1.9.4.3 2002/10/10 18:34:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -69,9 +69,8 @@ void fb_cnattach(void);
 
 static void fb253_init(void);
 
-struct cfattach fb_ca = {
-	sizeof(struct fb_softc), fb_match, fb_attach,
-};
+CFATTACH_DECL(fb, sizeof(struct fb_softc),
+    fb_match, fb_attach, NULL, NULL);
 
 struct fb_devconfig fb_console_dc;
 

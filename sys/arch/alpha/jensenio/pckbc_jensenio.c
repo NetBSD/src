@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.1.8.1 2001/08/03 04:10:45 lukem Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.1.8.2 2002/10/10 18:31:03 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.1.8.1 2001/08/03 04:10:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.1.8.2 2002/10/10 18:31:03 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,8 @@ struct pckbc_jensenio_softc {
 int	pckbc_jensenio_match(struct device *, struct cfdata *, void *);
 void	pckbc_jensenio_attach(struct device *, struct device *, void *);
 
-struct cfattach pckbc_jensenio_ca = {
-	sizeof(struct pckbc_jensenio_softc),
-	    pckbc_jensenio_match, pckbc_jensenio_attach
-};
+CFATTACH_DECL(pckbc_jensenio, sizeof(struct pckbc_jensenio_softc),
+    pckbc_jensenio_match, pckbc_jensenio_attach, NULL, NULL);
 
 void	pckbc_jensenio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 void	pckbc_jensenio_intr(void *, u_long);
@@ -93,7 +91,7 @@ pckbc_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct jensenio_attach_args *ja = aux;
 
 	/* Always present. */
-	if (strcmp(ja->ja_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ja->ja_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

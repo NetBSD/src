@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.3.2.2 2002/09/06 08:40:09 jdolecek Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.3.2.3 2002/10/10 18:35:50 jdolecek Exp $	*/
 
 /*
  * This is still very much experimental. There is as yet no DB support
@@ -44,6 +44,8 @@
 
 typedef	vaddr_t		db_addr_t;	/* address - unsigned */
 typedef	int64_t		db_expr_t;	/* expression - signed */
+
+typedef u_int32_t	opcode_t;
 
 typedef struct trapframe db_regs_t;
 db_regs_t		ddb_regs;	/* register state */

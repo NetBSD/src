@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.6.2.5 2002/09/06 08:39:32 jdolecek Exp $
+#	$NetBSD: NATSUMI,v 1.6.2.6 2002/10/10 18:35:24 jdolecek Exp $
 #
 #	for development
 #
@@ -32,7 +32,7 @@ options 	SYSVSEM		# System V-like semaphores
 options 	SYSVSHM		# System V-like memory sharing
 options 	SHMMAXPGS=8192
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options

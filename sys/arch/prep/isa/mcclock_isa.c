@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.1.10.3 2002/03/16 15:59:22 jdolecek Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.1.10.4 2002/10/10 18:35:26 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -56,10 +56,8 @@ struct mcclock_isa_softc {
 int	mcclock_isa_match __P((struct device *, struct cfdata *, void *));
 void	mcclock_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mcclock_isa_ca = {
-	sizeof (struct mcclock_isa_softc), mcclock_isa_match,
-	    mcclock_isa_attach, 
-};
+CFATTACH_DECL(mcclock_isa, sizeof (struct mcclock_isa_softc),
+    mcclock_isa_match, mcclock_isa_attach, NULL, NULL);
 
 void	mcclock_isa_write __P((struct mcclock_softc *, u_int, u_int));
 u_int	mcclock_isa_read __P((struct mcclock_softc *, u_int));

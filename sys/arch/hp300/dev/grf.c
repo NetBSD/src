@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.39.2.3 2002/06/23 17:36:06 jdolecek Exp $	*/
+/*	$NetBSD: grf.c,v 1.39.2.4 2002/10/10 18:32:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.3 2002/06/23 17:36:06 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.4 2002/10/10 18:32:37 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 
@@ -90,17 +90,25 @@ __KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.39.2.3 2002/06/23 17:36:06 jdolecek Exp $"
 #define	iteoff(u,f)
 #endif /* NITE > 0 */
 
-/* prototypes for the devsw entry points */
-cdev_decl(grf);
-
 int	grfmatch __P((struct device *, struct cfdata *, void *));
 void	grfattach __P((struct device *, struct device *, void *));
 
-struct cfattach grf_ca = {
-	sizeof(struct grf_softc), grfmatch, grfattach
-};
+CFATTACH_DECL(grf, sizeof(struct grf_softc),
+    grfmatch, grfattach, NULL, NULL);
 
 extern struct cfdriver grf_cd;
+
+dev_type_open(grfopen);
+dev_type_close(grfclose);
+dev_type_ioctl(grfioctl);
+dev_type_poll(grfpoll);
+dev_type_mmap(grfmmap);
+dev_type_kqfilter(grfkqfilter);
+
+const struct cdevsw grf_cdevsw = {
+	grfopen, grfclose, nullread, nullwrite, grfioctl,
+	nostop, notty, grfpoll, grfmmap, grfkqfilter,
+};
 
 int	grfprint __P((void *, const char *));
 

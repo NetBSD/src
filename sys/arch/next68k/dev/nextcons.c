@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.3 2000/09/29 06:35:57 deberg Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.3.4.1 2002/10/10 18:34:38 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -43,13 +43,15 @@
 #include <sys/lock.h>
 
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/bus.h>
 
 #include <dev/cons.h>
 #include <dev/wscons/wskbdvar.h>
 #include <dev/wscons/wsdisplayvar.h>
+
+#include <next68k/dev/intiovar.h>
 #include <next68k/dev/nextdisplayvar.h>
 #include <next68k/dev/nextkbdvar.h>
 
@@ -69,6 +71,7 @@ nextcnprobe(struct consdev *cp)
 	if ((rom_machine_type == NeXT_WARP9)
 	    || (rom_machine_type == NeXT_X15)
 	    || (rom_machine_type == NeXT_WARP9C)
+	    || (rom_machine_type == NeXT_TURBO_MONO)
 	    || (rom_machine_type == NeXT_TURBO_COLOR))
 		cp->cn_pri = CN_INTERNAL;
 	else 

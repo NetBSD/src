@@ -1,4 +1,4 @@
-/*	$NetBSD: pcctwo_68k.c,v 1.1.8.2 2002/03/16 15:58:53 jdolecek Exp $	*/
+/*	$NetBSD: pcctwo_68k.c,v 1.1.8.3 2002/10/10 18:34:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -60,9 +60,8 @@
 void pcctwoattach(struct device *, struct device *, void *);
 int pcctwomatch(struct device *, struct cfdata *, void *);
 
-struct cfattach pcctwo_ca = {
-	sizeof(struct pcctwo_softc), pcctwomatch, pcctwoattach
-};
+CFATTACH_DECL(pcctwo, sizeof(struct pcctwo_softc),
+    pcctwomatch, pcctwoattach, NULL, NULL);
 
 extern struct cfdriver pcctwo_cd;
 

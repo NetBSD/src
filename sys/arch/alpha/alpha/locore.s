@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.96.2.4 2002/09/06 08:31:21 jdolecek Exp $ */
+/* $NetBSD: locore.s,v 1.96.2.5 2002/10/10 18:30:50 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.96.2.4 2002/09/06 08:31:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.s,v 1.96.2.5 2002/10/10 18:30:50 jdolecek Exp $");
 
 #include "assym.h"
 
@@ -903,24 +903,39 @@ cpu_switch_queuescan:
 
 	/*
 	 * Now running on the new u struct.
-	 * Restore registers and return.
 	 */
-	ldq	t0, P_ADDR(s2)
-
-	/* NOTE: ksp is restored by the swpctx */
-	ldq	s0, U_PCB_CONTEXT+(0 * 8)(t0)		/* restore s0 - s6 */
-	ldq	s1, U_PCB_CONTEXT+(1 * 8)(t0)
-	ldq	s2, U_PCB_CONTEXT+(2 * 8)(t0)
-	ldq	s3, U_PCB_CONTEXT+(3 * 8)(t0)
-	ldq	s4, U_PCB_CONTEXT+(4 * 8)(t0)
-	ldq	s5, U_PCB_CONTEXT+(5 * 8)(t0)
-	ldq	s6, U_PCB_CONTEXT+(6 * 8)(t0)
-	ldq	ra, U_PCB_CONTEXT+(7 * 8)(t0)		/* restore ra */
-	ldq	a0, U_PCB_CONTEXT+(8 * 8)(t0)		/* restore ipl */
+	ldq	s0, P_ADDR(s2)
+	ldq	a0, U_PCB_CONTEXT+(8 * 8)(s0)	/* restore ipl */
 	and	a0, ALPHA_PSL_IPL_MASK, a0
 	call_pal PAL_OSF1_swpipl
 
-	ldiq	v0, 1				/* possible ret to savectx() */
+	/*
+	 * Check for restartable atomic sequences (RAS).
+	 */
+	ldl	t0, P_NRAS(s2)			/* p->p_nras == 0? */
+	beq	t0, 1f				/* yes, skip */
+	ldq	s1, P_MD_TF(s2)			/* s1 = p->p_md.md_tf */
+	mov	s2, a0				/* first ras_lookup() arg */
+	ldq	a1, (FRAME_PC*8)(s1)		/* second ras_lookup() arg */
+	CALL(ras_lookup)			/* ras_lookup(p, PC) */
+	addq	v0, 1, t0			/* -1 means "not in ras" */
+	beq	t0, 1f
+	stq	v0, (FRAME_PC*8)(s1)
+
+1:
+	/*
+	 * Restore registers and return.
+	 * NOTE: ksp is restored by the swpctx.
+	 */
+	ldq	s1, U_PCB_CONTEXT+(1 * 8)(s0)		/* restore s1-s6 */
+	ldq	s2, U_PCB_CONTEXT+(2 * 8)(s0)
+	ldq	s3, U_PCB_CONTEXT+(3 * 8)(s0)
+	ldq	s4, U_PCB_CONTEXT+(4 * 8)(s0)
+	ldq	s5, U_PCB_CONTEXT+(5 * 8)(s0)
+	ldq	s6, U_PCB_CONTEXT+(6 * 8)(s0)
+	ldq	ra, U_PCB_CONTEXT+(7 * 8)(s0)		/* restore ra */
+	ldq	s0, U_PCB_CONTEXT+(0 * 8)(s0)		/* restore s0 */
+
 	RET
 	END(cpu_switch)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.3.2.3 2002/03/16 15:57:28 jdolecek Exp $	*/
+/*	$NetBSD: obio.c,v 1.3.2.4 2002/10/10 18:32:25 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -59,9 +59,8 @@
 int	obio_match(struct device *, struct cfdata *, void *);
 void	obio_attach(struct device *, struct device *, void *);
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach,
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 int	obio_print(void *, const char *);
 int	obio_submatch(struct device *, struct cfdata *, void *);
@@ -111,7 +110,7 @@ obio_match(struct device *parent, struct cfdata *cf, void *aux)
 	/* XXX Shoot arch/arm/mainbus in the head. */
 	return (1);
 #else
-	if (strcmp(cf->cf_driver->cd_name, ma->ma_name) == 0)
+	if (strcmp(cf->cf_name, ma->ma_name) == 0)
 		return (1);
 
 	return (0);
@@ -179,5 +178,5 @@ obio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[OBIOCF_ADDR] != oba->oba_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }

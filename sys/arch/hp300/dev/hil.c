@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.42.2.8 2002/10/02 21:51:39 jdolecek Exp $	*/
+/*	$NetBSD: hil.c,v 1.42.2.9 2002/10/10 18:32:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.8 2002/10/02 21:51:39 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.9 2002/10/10 18:32:39 jdolecek Exp $");
 
 #include "opt_compat_hpux.h"
 #include "rnd.h"
@@ -79,9 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.42.2.8 2002/10/02 21:51:39 jdolecek Exp $"
 int	hilmatch __P((struct device *, struct cfdata *, void *));
 void	hilattach __P((struct device *, struct device *, void *));
 
-const struct cfattach hil_ca = {
-	sizeof(struct hil_softc), hilmatch, hilattach,
-};
+CFATTACH_DECL(hil, sizeof(struct hil_softc),
+    hilmatch, hilattach, NULL, NULL);
 
 struct	_hilbell default_bell = { BELLDUR, BELLFREQ };
 
@@ -105,8 +104,19 @@ extern struct kbdmap kbd_map[];
 /* symbolic sleep message strings */
 char hilin[] = "hilin";
 
-cdev_decl(hil);
 extern struct cfdriver hil_cd;
+
+dev_type_open(hilopen);
+dev_type_close(hilclose);
+dev_type_read(hilread);
+dev_type_ioctl(hilioctl);
+dev_type_poll(hilpoll);
+dev_type_kqfilter(hilkqfilter);
+
+const struct cdevsw hil_cdevsw = {
+	hilopen, hilclose, hilread, nullwrite, hilioctl,
+	nostop, notty, hilpoll, nommap, hilkqfilter,
+};
 
 void	hilattach_deferred __P((struct device *));
 
@@ -756,16 +766,6 @@ hpuxhilioctl(dev, cmd, data, flag)
 	return(0);
 }
 #endif
-
-/* ARGSUSED */
-paddr_t
-hilmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-	return (-1);
-}
 
 /*ARGSUSED*/
 int

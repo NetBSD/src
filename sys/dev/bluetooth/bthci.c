@@ -1,4 +1,4 @@
-/*	$NetBSD: bthci.c,v 1.1.4.2 2002/09/06 08:43:59 jdolecek Exp $	*/
+/*	$NetBSD: bthci.c,v 1.1.4.3 2002/10/10 18:38:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 #include <dev/bluetooth/bluetooth.h>
 #include <dev/bluetooth/bthcivar.h>
 
-#ifdef IRFRAME_DEBUG
+#ifdef BTHCI_DEBUG
 #define DPRINTF(x)	if (bthcidebug) printf x
 #define Static
 int bthcidebug = 0;
@@ -60,8 +60,6 @@ int bthcidebug = 0;
 #define DPRINTF(x)
 #define Static static
 #endif
-
-cdev_decl(bthci);
 
 int bthci_match(struct device *parent, struct cfdata *match, void *aux);
 void bthci_attach(struct device *parent, struct device *self, void *aux);
@@ -75,15 +73,22 @@ struct cfdriver bthci_cd = {
 };
 #endif
 
-struct cfattach bthci_ca = {
-	sizeof(struct bthci_softc), bthci_match, bthci_attach,
-	bthci_detach, bthci_activate
-};
+CFATTACH_DECL(bthci, sizeof(struct bthci_softc),
+    bthci_match, bthci_attach, bthci_detach, bthci_activate);
 
-extern struct cfattach bthci_ca;
 extern struct cfdriver bthci_cd;
 
-#define IRFRAMEUNIT(dev) (minor(dev))
+dev_type_open(bthciopen);
+dev_type_close(bthciclose);
+dev_type_poll(bthcipoll);
+dev_type_kqfilter(bthcikqfilter);
+
+const struct cdevsw bthci_cdevsw = {
+	bthciopen, bthciclose, noread, nowrite, noioctl,
+	nostop, notty, bthcipoll, nommap, bthcikqfilter,
+};
+
+#define BTHCIUNIT(dev) (minor(dev))
 
 int
 bthci_match(struct device *parent, struct cfdata *match, void *aux)
@@ -106,7 +111,7 @@ bthci_attach(struct device *parent, struct device *self, void *aux)
 	if (sc->sc_methods->bt_read == NULL ||
 	    sc->sc_methods->bt_write == NULL ||
 	    sc->sc_methods->bt_poll == NULL)
-		panic("%s: missing methods\n", sc->sc_dev.dv_xname);
+		panic("%s: missing methods", sc->sc_dev.dv_xname);
 #endif
 
 	printf("driver not implemented");
@@ -138,9 +143,7 @@ bthci_detach(struct device *self, int flags)
 	/* XXX needs reference count */
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == bthciopen)
-			break;
+	maj = cdevsw_lookup_major(&bthci_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
@@ -155,7 +158,7 @@ bthciopen(dev_t dev, int flag, int mode, struct proc *p)
 	struct bthci_softc *sc;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
@@ -177,7 +180,7 @@ bthciclose(dev_t dev, int flag, int mode, struct proc *p)
 	struct bthci_softc *sc;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	sc->sc_open = 0;
@@ -194,7 +197,7 @@ bthciread(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -214,7 +217,7 @@ bthciwrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -238,7 +241,7 @@ bthciioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 	void *vaddr = addr;
 	int error;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)
@@ -279,7 +282,7 @@ bthcipoll(dev_t dev, int events, struct proc *p)
 {
 	struct bthci_softc *sc;
 
-	sc = device_lookup(&bthci_cd, IRFRAMEUNIT(dev));
+	sc = device_lookup(&bthci_cd, BTHCIUNIT(dev));
 	if (sc == NULL)
 		return (ENXIO);
 	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 || !sc->sc_open)

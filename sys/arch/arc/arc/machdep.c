@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.62.2.5 2002/09/06 08:32:02 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.62.2.6 2002/10/10 18:31:36 jdolecek Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>

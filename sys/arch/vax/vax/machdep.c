@@ -1,6 +1,7 @@
-/* $NetBSD: machdep.c,v 1.118.2.5 2002/09/06 08:42:23 jdolecek Exp $	 */
+/* $NetBSD: machdep.c,v 1.118.2.6 2002/10/10 18:37:23 jdolecek Exp $	 */
 
 /*
+ * Copyright (c) 2002, Hugh Graham.
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
@@ -53,7 +54,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
+#include <sys/extent.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/time.h>
@@ -107,9 +108,17 @@ int		physmem;
 int		*symtab_start;
 int		*symtab_end;
 int		symtab_nsyms;
+struct cpmbx	*cpmbx;		/* Console program mailbox address */
 
-#define	IOMAPSZ	100
-static	struct map iomap[IOMAPSZ];
+/*
+ * Extent map to manage I/O register space.  We allocate storage for
+ * 32 regions in the map.  iomap_ex_malloc_safe will indicate that it's
+ * safe to use malloc() to dynamically allocate region descriptors in
+ * case we run out.
+ */
+static long iomap_ex_storage[EXTENT_FIXED_STORAGE_SIZE(32) / sizeof(long)];
+static struct extent *iomap_ex;
+static int iomap_ex_malloc_safe;
 
 struct vm_map *exec_map = NULL;
 struct vm_map *mb_map = NULL;
@@ -241,6 +250,8 @@ cpu_startup()
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
+
+	iomap_ex_malloc_safe = 1;
 }
 
 u_int32_t dumpmag = 0x8fca0101;
@@ -250,14 +261,20 @@ long	dumplo = 0;
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int		nblks;
 
 	/*
 	 * XXX include the final RAM page which is not included in physmem.
 	 */
+	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
 	dumpsize = physmem + 1;
-	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
-		nblks = (*bdevsw[major(dumpdev)].d_psize) (dumpdev);
+	if (bdev->d_psize != NULL) {
+		nblks = (*bdev->d_psize)(dumpdev);
 		if (dumpsize > btoc(dbtob(nblks - dumplo)))
 			dumpsize = btoc(dbtob(nblks - dumplo));
 		else if (dumplo == 0)
@@ -291,11 +308,20 @@ setstatclockrate(hzrate)
 void
 consinit()
 {
+	extern vaddr_t iospace;
+
 	/*
-	 * Init I/O memory resource map. Must be done before cninit()
+	 * Init I/O memory extent map. Must be done before cninit()
 	 * is called; we may want to use iospace in the console routines.
+	 *
+	 * NOTE: We need to reserve the first vax-page of iospace
+	 * for the console routines.
 	 */
-	rminit(iomap, IOSPSZ, (long)1, "iomap", IOMAPSZ);
+	KASSERT(iospace != 0);
+	iomap_ex = extent_create("iomap", iospace + VAX_NBPG,
+	    iospace + ((IOSPSZ * VAX_NBPG) - 1), M_DEVBUF,
+	    (caddr_t) iomap_ex_storage, sizeof(iomap_ex_storage),
+	    EX_NOCOALESCE|EX_NOWAIT);
 #ifdef DEBUG
 	iospace_inited = 1;
 #endif
@@ -397,7 +423,9 @@ sys___sigreturn14(p, v, retval)
 	return (EJUSTRETURN);
 }
 
-struct trampframe {
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+
+struct otrampframe {
 	unsigned	sig;	/* Signal number */
 	unsigned	code;	/* Info code */
 	unsigned	scp;	/* Pointer to struct sigcontext */
@@ -408,17 +436,14 @@ struct trampframe {
 				 * argument */
 };
 
-void
-sendsig(sig, mask, code)
-	int		sig;
-	sigset_t	*mask;
-	u_long		code;
+static void
+oldsendsig(int sig, sigset_t *mask, u_long code)
 {
 	struct	proc	*p = curproc;
 	struct	sigacts *ps = p->p_sigacts;
 	struct	trapframe *syscf;
 	struct	sigcontext *sigctx, gsigctx;
-	struct	trampframe *trampf, gtrampf;
+	struct	otrampframe *trampf, gtrampf;
 	unsigned	cursp;
 	int	onstack;
 	sig_t	catcher = SIGACTION(p, sig).sa_handler;
@@ -437,8 +462,8 @@ sendsig(sig, mask, code)
 
 	/* Set up positions for structs on stack */
 	sigctx = (struct sigcontext *) (cursp - sizeof(struct sigcontext));
-	trampf = (struct trampframe *) ((unsigned)sigctx -
-	    sizeof(struct trampframe));
+	trampf = (struct otrampframe *) ((unsigned)sigctx -
+	    sizeof(struct otrampframe));
 
 	 /* Place for pointer to arg list in sigreturn */
 	cursp = (unsigned)sigctx - 8;
@@ -471,23 +496,104 @@ sendsig(sig, mask, code)
 	 * machine-dependent code in libc.
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-#if 1 /* COMPAT_16 */
 	case 0:
 		syscf->pc = (int)p->p_sigctx.ps_sigcode;
 		break;
-#endif /* COMPAT_16 */
-
 	case 1:
 		syscf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 
 	default:
-		/* Don't know what trampoline version; kill it. */
+		/* ``cannot happen'' */
 		sigexit(p, SIGILL);
 	}
 	syscf->psl = PSL_U | PSL_PREVU;
 	syscf->ap = cursp;
 	syscf->sp = cursp;
+
+	if (onstack)
+		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
+}
+
+#endif
+
+struct trampoline {
+	unsigned int narg;	/* Argument count (== 3) */
+	unsigned int sig;	/* Signal number */
+	unsigned int code;	/* Info code */
+	unsigned int scp;	/* Pointer to struct sigcontext */
+};
+
+/*
+ * Brief description of how sendsig() works:
+ * A struct sigcontext is allocated on the user stack. The relevant
+ * registers are saved in it. Below it is a struct trampframe constructed, it
+ * is actually an argument list for callg. The user
+ * stack pointer is put below all structs.
+ *
+ * The registers will contain when the signal handler is called:
+ * pc, psl	- Obvious
+ * sp		- An address below all structs
+ * fp 		- The address of the signal handler
+ * ap		- The address to the callg frame
+ *
+ * The trampoline code will save r0-r5 before doing anything else.
+ */
+void
+sendsig(int sig, sigset_t *mask, u_long code)
+{
+	struct proc *p = curproc;
+	struct sigacts *ps = p->p_sigacts;
+	struct trampoline tramp;
+	struct sigcontext sigctx;
+	struct trapframe *tf = p->p_addr->u_pcb.framep;
+	sig_t catcher = SIGACTION(p, sig).sa_handler;
+	int onstack =
+	    (p->p_sigctx.ps_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
+	int cursp = onstack == 0 ? tf->sp :
+	    ((int)p->p_sigctx.ps_sigstk.ss_sp + p->p_sigctx.ps_sigstk.ss_size);
+
+#if defined(COMPAT_16) || defined(COMPAT_ULTRIX) || defined(COMPAT_IBCS2)
+	if (ps->sa_sigdesc[sig].sd_vers < 2)
+		return oldsendsig(sig, mask, code);
+#endif
+
+	/*
+	 * The sigcontext struct will be passed back to sigreturn().
+	 */
+	sigctx.sc_pc = tf->pc;
+	sigctx.sc_ps = tf->psl;
+	sigctx.sc_ap = tf->ap;
+	sigctx.sc_fp = tf->fp;
+	sigctx.sc_sp = tf->sp;
+	sigctx.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
+	sigctx.sc_mask = *mask;
+
+	/*
+	 * Arguments given to the signal handler.
+	 */
+	tramp.narg = 3;
+	tramp.sig = sig;
+	tramp.code = code;
+	tramp.scp = cursp - sizeof(struct sigcontext);
+
+	if (copyout(&sigctx, (char *)tramp.scp, sizeof(struct sigcontext)) ||
+	    copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)))
+		sigexit(p, SIGILL);
+
+	switch (ps->sa_sigdesc[sig].sd_vers) {
+	case 2:
+		tf->pc = (int)ps->sa_sigdesc[sig].sd_tramp;
+		break;
+	default:
+		/* Don't know what trampoline version; kill it. */
+		sigexit(p, SIGILL);
+	}
+	tf->psl = PSL_U | PSL_PREVU;
+	tf->ap = tramp.scp - sizeof(tramp);
+	tf->fp = (int)catcher;
+	tf->sp = tf->ap;
 
 	if (onstack)
 		p->p_sigctx.ps_sigstk.ss_flags |= SS_ONSTACK;
@@ -574,8 +680,12 @@ cpu_reboot(howto, b)
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		return;
 	/*
 	 * For dumps during autoconfiguration, if dump device has already
@@ -591,7 +701,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 	printf("dump ");
-	switch ((*bdevsw[major(dumpdev)].d_dump) (dumpdev, 0, 0, 0)) {
+	switch ((*bdev->d_dump) (dumpdev, 0, 0, 0)) {
 
 	case ENXIO:
 		printf("device bad\n");
@@ -707,9 +817,8 @@ vax_map_physmem(phys, size)
 	paddr_t phys;
 	int size;
 {
-	extern vaddr_t iospace;
 	vaddr_t addr;
-	int pageno;
+	int error;
 	static int warned = 0;
 
 #ifdef DEBUG
@@ -721,13 +830,14 @@ vax_map_physmem(phys, size)
 		if (addr == 0)
 			panic("vax_map_physmem: kernel map full");
 	} else {
-		pageno = rmalloc(iomap, size);
-		if (pageno == 0) {
+		error = extent_alloc(iomap_ex, size * VAX_NBPG, VAX_NBPG, 0,
+		    EX_FAST | EX_NOWAIT |
+		    (iomap_ex_malloc_safe ? EX_MALLOCOK : 0), &addr);
+		if (error) {
 			if (warned++ == 0) /* Warn only once */
 				printf("vax_map_physmem: iomap too small");
 			return 0;
 		}
-		addr = iospace + (pageno * VAX_NBPG);
 	}
 	ioaccess(addr, phys, size);
 #ifdef PHYSMEMDEBUG
@@ -745,17 +855,19 @@ vax_unmap_physmem(addr, size)
 	vaddr_t addr;
 	int size;
 {
-	extern vaddr_t iospace;
-	int pageno = (addr - iospace) / VAX_NBPG;
 #ifdef PHYSMEMDEBUG
 	printf("vax_unmap_physmem: unmapping %d pages at addr %lx\n", 
 	    size, addr);
 #endif
+	addr &= ~VAX_PGOFSET;
 	iounaccess(addr, size);
 	if (size >= LTOHPN)
 		uvm_km_free(kernel_map, addr, size * VAX_NBPG);
-	else
-		rmfree(iomap, size, pageno);
+	else if (extent_free(iomap_ex, addr, size * VAX_NBPG,
+			     EX_NOWAIT |
+			     (iomap_ex_malloc_safe ? EX_MALLOCOK : 0)))
+		printf("vax_unmap_physmem: addr 0x%lx size %dvpg: "
+		    "can't free region\n", addr, size);
 }
 
 void *
@@ -822,3 +934,37 @@ krnunlock()
 	KERNEL_UNLOCK();
 }
 #endif
+
+/*
+ * Generic routines for machines with "console program mailbox".
+ */
+void
+generic_halt()
+{
+	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
+		asm("halt");
+
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;   /* let console override */
+	} else if (cpmbx->mbox_halt != MHALT_HALT)
+		cpmbx->mbox_halt = MHALT_HALT;  /* the os decides */
+
+	asm("halt");
+}
+
+void
+generic_reboot(int arg)
+{
+	if (cpmbx == NULL)  /* Too late to complain here, but avoid panic */
+		asm("halt");
+
+	if (cpmbx->user_halt != UHALT_DEFAULT) {
+		if (cpmbx->mbox_halt != 0)
+			cpmbx->mbox_halt = 0;
+	} else if (cpmbx->mbox_halt != MHALT_REBOOT)
+		cpmbx->mbox_halt = MHALT_REBOOT;
+
+	asm("halt");
+}
+

@@ -1,4 +1,4 @@
-/* $NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $ */
+/* $NetBSD: timekeeper.c,v 1.1.10.1 2002/10/10 18:33:38 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.1 2000/01/05 08:48:56 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.1.10.1 2002/10/10 18:33:38 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ struct timekeeper_softc {
 static int  clock_match __P((struct device *, struct cfdata *, void *));
 static void clock_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach clock_ca = {
-	sizeof (struct timekeeper_softc), clock_match, clock_attach
-};
+CFATTACH_DECL(clock, sizeof (struct timekeeper_softc),
+    clock_match, clock_attach, NULL, NULL);
 extern struct cfdriver clock_cd;
 
 static void mkclock_get __P((struct device *, time_t, struct clock_ymdhms *));

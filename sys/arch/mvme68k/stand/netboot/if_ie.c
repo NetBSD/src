@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.6 2001/07/07 09:06:44 scw Exp $	*/
+/*	$NetBSD: if_ie.c,v 1.6.2.1 2002/10/10 18:34:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -156,7 +156,7 @@ ie_error(nif, str, ier)
 	char   *str;
 	volatile struct iereg *ier;
 {
-	panic("ie%d: unknown error\n", nif->nif_unit);
+	panic("ie%d: unknown error", nif->nif_unit);
 }
 
 void

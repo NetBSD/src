@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn_jazzio.c,v 1.1 2001/07/05 14:42:35 thorpej Exp $	*/
+/*	$NetBSD: if_sn_jazzio.c,v 1.1.2.1 2002/10/10 18:31:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -71,10 +71,8 @@
 int	sonic_jazzio_match(struct device *, struct cfdata *, void *);
 void	sonic_jazzio_attach(struct device *, struct device *, void *);
 
-struct cfattach sn_jazzio_ca = {
-	sizeof(struct sonic_softc), sonic_jazzio_match,
-	    sonic_jazzio_attach,
-};
+CFATTACH_DECL(sn_jazzio, sizeof(struct sonic_softc),
+    sonic_jazzio_match, sonic_jazzio_attach, NULL, NULL);
 
 int
 sonic_jazzio_match(struct device *parent, struct cfdata *match, void *aux)

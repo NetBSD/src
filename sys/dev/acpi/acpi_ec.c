@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.3.2.3 2002/06/23 17:45:02 jdolecek Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.3.2.4 2002/10/10 18:38:24 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.3.2.3 2002/06/23 17:45:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.3.2.4 2002/10/10 18:38:24 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,9 +278,8 @@ static ACPI_STATUS	EcWrite(struct acpi_ec_softc *sc, UINT8 Address,
 int	acpiec_match(struct device *, struct cfdata *, void *);
 void	acpiec_attach(struct device *, struct device *, void *);
 
-struct cfattach acpiec_ca = {
-	sizeof(struct acpi_ec_softc), acpiec_match, acpiec_attach,
-};
+CFATTACH_DECL(acpiec, sizeof(struct acpi_ec_softc),
+    acpiec_match, acpiec_attach, NULL, NULL);
 
 /*
  * acpiec_match:

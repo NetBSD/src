@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.23.2.2 2002/01/10 19:45:09 thorpej Exp $ */
+/* $NetBSD: pnpbios.c,v 1.23.2.3 2002/10/10 18:33:36 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.23.2.2 2002/01/10 19:45:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pnpbios.c,v 1.23.2.3 2002/10/10 18:33:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,9 +181,8 @@ static struct{
 };
 
 
-struct cfattach pnpbios_ca = {
-	sizeof(struct pnpbios_softc), pnpbios_match, pnpbios_attach
-};
+CFATTACH_DECL(pnpbios, sizeof(struct pnpbios_softc),
+    pnpbios_match, pnpbios_attach, NULL, NULL);
 
 /*
  * Private stack and return value buffer. Spec (1.0a, ch. 4.3) says that
@@ -813,7 +812,7 @@ pnpbios_submatch(parent, match, aux)
 	    match->cf_loc[PNPBIOSCF_INDEX] != aa->idx)
 		return (0);
 
-	return ((*match->cf_attach->ca_match)(parent, match, aux));
+	return (config_match(parent, match, aux));
 }
 
 static int

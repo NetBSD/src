@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.32.2.1 2002/06/23 17:43:10 jdolecek Exp $ */
+/*	$NetBSD: vsbus.c,v 1.32.2.2 2002/10/10 18:37:27 jdolecek Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,6 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/map.h>
 #include <sys/device.h>
 #include <sys/dkstat.h>
 #include <sys/disklabel.h>
@@ -98,9 +97,8 @@ static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
 extern struct vax_bus_space vax_mem_bus_space;
 static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
 
-struct	cfattach vsbus_ca = { 
-	sizeof(struct vsbus_softc), vsbus_match, vsbus_attach
-};
+CFATTACH_DECL(vsbus, sizeof(struct vsbus_softc),
+    vsbus_match, vsbus_attach, NULL, NULL);
 
 int
 vsbus_print(aux, name)
@@ -224,7 +222,7 @@ vsbus_search(parent, cf, aux)
 	*sc->sc_intclr = 0xff;
 	scb_vecref(0, 0); /* Clear vector ref */
 
-	i = (*cf->cf_attach->ca_match) (parent, cf, &va);
+	i = config_match(parent, cf, &va);
 	vax_unmap_physmem(va.va_addr, 1);
 	c = *sc->sc_intreq & ~sc->sc_mask;
 	if (i == 0)
@@ -255,7 +253,7 @@ vsbus_search(parent, cf, aux)
 
 fail:
 	printf("%s%d at %s csr 0x%x %s\n",
-	    cf->cf_driver->cd_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_name, cf->cf_unit, parent->dv_xname,
 	    cf->cf_loc[0], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
 	return 0;

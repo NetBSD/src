@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.1.6.2 2002/06/23 17:33:45 jdolecek Exp $ */
+/* $NetBSD: arcpp.c,v 1.1.6.3 2002/10/10 18:30:14 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.6.2 2002/06/23 17:33:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.1.6.3 2002/10/10 18:30:14 jdolecek Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -102,9 +102,16 @@ struct arcpp_softc {
 #define	ARCPPPRI	(PZERO+8)
 #define	ARCPP_BSIZE	1024
 
-cdev_decl(arcpp);
-
 extern struct cfdriver arcpp_cd;
+
+dev_type_open(arcppopen);
+dev_type_close(arcppclose);
+dev_type_write(arcppwrite);
+
+const struct cdevsw arcpp_cdevsw = {
+	arcppopen, arcppclose, noread, arcppwrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 #define	ARCPPUNIT(s)	(minor(s) & 0x1f)
 #define	ARCPPFLAGS(s)	(minor(s) & 0xe0)
@@ -115,9 +122,8 @@ static void arcpp_attach(struct device *, struct device *, void *);
 static int arcppintr(void *);
 static int arcpppushbytes(struct arcpp_softc *);
 
-struct cfattach arcpp_ca = {
-	sizeof(struct arcpp_softc), arcpp_match, arcpp_attach
-};
+CFATTACH_DECL(arcpp, sizeof(struct arcpp_softc),
+    arcpp_match, arcpp_attach, NULL, NULL);
 
 static int
 arcpp_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -315,11 +321,4 @@ arcppintr(void *arg)
 		wakeup((caddr_t)sc);
 
 	return 1;
-}
-
-int
-arcppioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
-{
-
-	return ENODEV;
 }

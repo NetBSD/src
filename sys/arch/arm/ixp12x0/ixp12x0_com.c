@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.3.4.2 2002/09/06 08:32:50 jdolecek Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.3.4.3 2002/10/10 18:31:53 jdolecek Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -111,8 +111,6 @@
 #include <dev/cons.h>
 #include "ixpcom.h"
 
-cdev_decl(ixpcom);
-
 static int	ixpcomparam(struct tty *, struct termios *);
 static void	ixpcomstart(struct tty *);
 static int	ixpcomhwiflow(struct tty *, int);
@@ -145,6 +143,19 @@ static tcflag_t ixpcomconscflag;
 static struct cnm_state ixpcom_cnm_state;
 
 extern struct cfdriver ixpcom_cd;
+
+dev_type_open(ixpcomopen);
+dev_type_close(ixpcomclose);
+dev_type_read(ixpcomread);
+dev_type_write(ixpcomwrite);
+dev_type_stop(ixpcomstop);
+dev_type_tty(ixpcomtty);
+dev_type_poll(ixpcompoll);
+
+const struct cdevsw ixpcom_cdevsw = {
+	ixpcomopen, ixpcomclose, ixpcomread, ixpcomwrite, nullioctl,
+	ixpcomstop, ixpcomtty, ixpcompoll, nommap, ttykqfilter, D_TTY
+};
 
 struct consdev ixpcomcons = {
 	NULL, NULL, ixpcomcngetc, ixpcomcnputc, ixpcomcnpollc, NULL,
@@ -220,9 +231,7 @@ ixpcom_attach_subr(sc)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == ixpcomopen)
-				break;
+		maj = cdevsw_lookup_major(&ixpcom_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -705,17 +714,6 @@ ixpcomtty(dev)
 	return (tp);
 }
 
-int
-ixpcomioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-        return (0);
-}
-
 /*
  * Stop output on a line.
  */
@@ -1177,7 +1175,7 @@ ixpcomintr(void* arg)
 			}
 		} else {
 #ifdef DIAGNOSTIC
-			panic("ixpcomintr: we shouldn't reach here\n");
+			panic("ixpcomintr: we shouldn't reach here");
 #endif
 			CLR(sc->sc_rie, CR_RIE);
 			ixpcom_set_cr(sc);

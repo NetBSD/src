@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.1 2000/03/19 23:07:44 soren Exp $	*/
+/*	$NetBSD: console.c,v 1.1.10.1 2002/10/10 18:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -37,7 +37,6 @@
 #include <sys/tty.h>
 #include <sys/termios.h>
 
-#include <machine/conf.h>
 #include <machine/bus.h>
 
 #include <dev/cons.h>

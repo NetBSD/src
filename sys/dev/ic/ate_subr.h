@@ -1,4 +1,4 @@
-/*	$NetBSD: ate_subr.h,v 1.2 2001/03/31 09:49:00 jdolecek Exp $	*/
+/*	$NetBSD: ate_subr.h,v 1.2.6.1 2002/10/10 18:38:49 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -29,5 +29,19 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/*
+ * EEPROM allocation of AT1700/RE2000.
+ */
+#define FE_ATI_EEP_ADDR		0x08	/* Station address.  (8-13)	*/
+#define FE_ATI_EEP_MEDIA	0x18	/* Media type.			*/
+#define FE_ATI_EEP_MAGIC	0x19	/* XXX Magic.			*/
+#define FE_ATI_EEP_MODEL	0x1e	/* Hardware type.		*/
+#define FE_ATI_EEP_REVISION	0x1f	/* Hardware revision.		*/
+
+#define FE_ATI_MODEL_AT1700T	0x00
+#define FE_ATI_MODEL_AT1700BT	0x01
+#define FE_ATI_MODEL_AT1700FT	0x02
+#define FE_ATI_MODEL_AT1700AT	0x03
 
 void ate_read_eeprom __P((bus_space_tag_t, bus_space_handle_t, u_char *));

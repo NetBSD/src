@@ -1,4 +1,4 @@
-/*	$NetBSD: midi_pcppi.c,v 1.4.24.1 2002/01/10 19:55:36 thorpej Exp $	*/
+/*	$NetBSD: midi_pcppi.c,v 1.4.24.2 2002/10/10 18:39:45 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.4.24.1 2002/01/10 19:55:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi_pcppi.c,v 1.4.24.2 2002/10/10 18:39:45 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,9 +72,8 @@ void	midi_pcppi_on    __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void	midi_pcppi_off   __P((midisyn *, u_int32_t, u_int32_t, u_int32_t));
 void	midi_pcppi_close __P((midisyn *));
 
-struct cfattach midi_pcppi_ca = {
-	sizeof(struct midi_pcppi_softc), midi_pcppi_match, midi_pcppi_attach
-};
+CFATTACH_DECL(midi_pcppi, sizeof(struct midi_pcppi_softc),
+    midi_pcppi_match, midi_pcppi_attach, NULL, NULL);
 
 struct midisyn_methods midi_pcppi_hw = {
 	0,			/* open */

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.108.2.1 2002/01/10 19:55:32 thorpej Exp $	*/
+/*	$NetBSD: isa.c,v 1.108.2.2 2002/10/10 18:39:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.108.2.1 2002/01/10 19:55:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.108.2.2 2002/10/10 18:39:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,9 +63,8 @@ int	isamatch(struct device *, struct cfdata *, void *);
 void	isaattach(struct device *, struct device *, void *);
 int	isaprint(void *, const char *);
 
-struct cfattach isa_ca = {
-	sizeof(struct isa_softc), isamatch, isaattach
-};
+CFATTACH_DECL(isa, sizeof(struct isa_softc),
+    isamatch, isaattach, NULL, NULL);
 
 void	isa_attach_knowndevs(struct isa_softc *);
 void	isa_free_knowndevs(struct isa_softc *);
@@ -78,7 +77,7 @@ isamatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct isabus_attach_args *iba = aux;
 
-	if (strcmp(iba->iba_busname, cf->cf_driver->cd_name))
+	if (strcmp(iba->iba_busname, cf->cf_name))
 		return (0);
 
 	/* XXX check other indicators */
@@ -251,7 +250,7 @@ isasubmatch(struct device *parent, struct cfdata *cf, void *aux)
 		}
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -379,7 +378,7 @@ isasearch(struct device *parent, struct cfdata *cf, void *aux)
 		ia.ia_ndrq = 2;
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &ia) > 0) {
+		if (config_match(parent, cf, &ia) > 0) {
 			config_attach(parent, cf, &ia, isaprint);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

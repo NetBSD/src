@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.32.4.3 2002/09/06 08:42:06 jdolecek Exp $	*/
+/*	$NetBSD: xd.c,v 1.32.4.4 2002/10/10 18:37:05 jdolecek Exp $	*/
 
 /*
  *
@@ -238,10 +238,6 @@ void	xdc_xdreset __P((struct xdc_softc *, struct xd_softc *));
 /* machine interrupt hook */
 int	xdcintr __P((void *));
 
-/* bdevsw, cdevsw */
-bdev_decl(xd);
-cdev_decl(xd);
-
 /* autoconf */
 static int	xdcmatch __P((struct device *, struct cfdata *, void *));
 static void	xdcattach __P((struct device *, struct device *, void *));
@@ -258,13 +254,11 @@ int	xdgetdisklabel __P((struct xd_softc *, void *));
  * cfattach's: device driver interface to autoconfig
  */
 
-struct cfattach xdc_ca = {
-	sizeof(struct xdc_softc), xdcmatch, xdcattach
-};
+CFATTACH_DECL(xdc, sizeof(struct xdc_softc),
+    xdcmatch, xdcattach, NULL, NULL);
 
-struct cfattach xd_ca = {
-	sizeof(struct xd_softc), xdmatch, xdattach
-};
+CFATTACH_DECL(xd, sizeof(struct xd_softc),
+    xdmatch, xdattach, NULL, NULL);
 
 extern struct cfdriver xd_cd;
 
@@ -273,6 +267,24 @@ struct xdc_attach_args {	/* this is the "aux" args to xdattach */
 	char	*dvmabuf;	/* scratch buffer for reading disk label */
 	int	fullmode;	/* submit mode */
 	int	booting;	/* are we booting or not? */
+};
+
+dev_type_open(xdopen);
+dev_type_close(xdclose);
+dev_type_read(xdread);
+dev_type_write(xdwrite);
+dev_type_ioctl(xdioctl);
+dev_type_strategy(xdstrategy);
+dev_type_dump(xddump);
+dev_type_size(xdsize);
+
+const struct bdevsw xd_bdevsw = {
+	xdopen, xdclose, xdstrategy, xdioctl, xddump, xdsize, D_DISK
+};
+
+const struct cdevsw xd_cdevsw = {
+	xdopen, xdclose, xdread, xdwrite, xdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*

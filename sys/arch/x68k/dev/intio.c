@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.8.4.2 2002/01/10 19:50:19 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.8.4.3 2002/10/10 18:37:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -125,9 +125,8 @@ static int intio_search __P((struct device *, struct cfdata *cf, void *));
 static int intio_print __P((void *, const char *));
 static void intio_alloc_system_ports __P((struct intio_softc*));
 
-struct cfattach intio_ca = {
-	sizeof(struct intio_softc), intio_match, intio_attach
-};
+CFATTACH_DECL(intio, sizeof(struct intio_softc),
+    intio_match, intio_attach, NULL, NULL);
 
 static struct intio_interrupt_vector {
 	intio_intr_handler_t	iiv_handler;
@@ -225,13 +224,13 @@ intio_search(parent, cf, aux)
 
 	ia->ia_bst = sc->sc_bst;
 	ia->ia_dmat = sc->sc_dmat;
-	ia->ia_name = cf->cf_driver->cd_name;
+	ia->ia_name = cf->cf_name;
 	ia->ia_addr = cf->cf_addr;
 	ia->ia_intr = cf->cf_intr;
 	ia->ia_dma = cf->cf_dma;
 	ia->ia_dmaintr = cf->cf_dmaintr;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, ia) > 0)
+	if (config_match(parent, cf, ia) > 0)
 		config_attach(parent, cf, ia, intio_print);
 
 	return (0);

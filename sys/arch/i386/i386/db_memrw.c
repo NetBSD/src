@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11.4.1 2002/01/10 19:44:37 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11.4.2 2002/10/10 18:33:18 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.4.1 2002/01/10 19:44:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11.4.2 2002/10/10 18:33:18 jdolecek Exp $");
 
 #include "opt_largepages.h"
 
@@ -151,6 +151,10 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		tmppte = (oldpte & ~PG_KR) | PG_KW;
 		*pte = tmppte;
 		pmap_update_pg(pgva);
+		/*
+		 * MULTIPROCESSOR: no shootdown required as the PTE continues to
+		 * map the same page and other CPU's don't need write access.
+		 */
 
 		/*
 		 * Page is now writeable.  Do as much access as we
@@ -163,7 +167,23 @@ db_write_text(vaddr_t addr, size_t size, char *data)
 		 * Restore the old PTE.
 		 */
 		*pte = oldpte;
+
+#if 0 
+		/*
+		 * XXXSMP Not clear if this is needed for 100% correctness.
+		 */
+		{
+			int cpumask = 0;
+			/*
+			 * shoot down in case other cpu mistakenly caches page.
+			 */
+			pmap_tlb_shootdown(pmap_kernel(), pgva, oldpte, &cpumask);
+			pmap_tlb_shootnow(cpumask);
+		}
+#else
 		pmap_update_pg(pgva);
+#endif
+		
 	} while (size != 0);
 }
 

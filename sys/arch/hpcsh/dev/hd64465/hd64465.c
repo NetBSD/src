@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465.c,v 1.1.8.3 2002/06/23 17:37:00 jdolecek Exp $	*/
+/*	$NetBSD: hd64465.c,v 1.1.8.4 2002/10/10 18:33:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,15 +76,14 @@ STATIC int hd64465_print(void *, const char *);
 STATIC void hd64465_info(void);
 #endif
 
-struct cfattach hd64465if_ca = {
-	sizeof(struct device), hd64465_match, hd64465_attach
-};
+CFATTACH_DECL(hd64465if, sizeof(struct device),
+    hd64465_match, hd64465_attach);
 
 int
 hd64465_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	if (strcmp("hd64465if", cf->cf_driver->cd_name))
+	if (strcmp("hd64465if", cf->cf_name))
 		return (0);
 
 	if (hd64465_reg_read_2(HD64465_SDIDR) != 0x8122) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.3 2002/09/06 08:38:59 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.1.2.4 2002/10/10 18:35:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@
 #include <sys/exec.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.1.6.1 2002/01/10 19:52:10 thorpej Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.1.6.2 2002/10/10 18:38:09 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.1.6.1 2002/01/10 19:52:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.1.6.2 2002/10/10 18:38:09 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ sunos_exec_aout_prep_zmagic(p, epp)
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

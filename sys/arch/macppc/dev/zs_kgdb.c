@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.1.2.2 2002/01/10 19:45:49 thorpej Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.1.2.3 2002/10/10 18:33:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -125,6 +125,7 @@ char *zs_kgdb_devname = KGDB_DEVNAME;
 void
 zs_kgdb_init()
 {
+	extern const struct cdevsw zstty_cdevsw;
 	struct zs_chanstate cs;
 	volatile struct zschan *zc;
 	int escc, escc_ch, obio, zs_offset;
@@ -160,7 +161,7 @@ zs_kgdb_init()
 		return;
 	zc = (struct zschan *)(reg[2] + zs_offset);
 
-	kgdb_dev = makedev(zs_major, channel);
+	kgdb_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), channel);
 
 	printf("zs_kgdb_init: attaching tty%02d at %d baud\n",
 		channel, kgdb_rate);

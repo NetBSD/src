@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39uart.c,v 1.4.6.1 2002/02/11 20:08:11 jdolecek Exp $ */
+/*	$NetBSD: tx39uart.c,v 1.4.6.2 2002/10/10 18:32:59 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -61,9 +61,8 @@ struct tx39uart_softc {
 	int sc_enabled;
 };
 
-struct cfattach tx39uart_ca = {
-	sizeof(struct tx39uart_softc), tx39uart_match, tx39uart_attach
-};
+CFATTACH_DECL(tx39uart, sizeof(struct tx39uart_softc),
+    tx39uart_match, tx39uart_attach, NULL, NULL);
 
 int
 tx39uart_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -99,7 +98,7 @@ tx39uart_search(struct device *parent, struct cfdata *cf, void *aux)
 	}
 	
 	if (!(sc->sc_enabled & (1 << ua.ua_slot)) && /* not attached slot */
-	    (*cf->cf_attach->ca_match)(parent, cf, &ua)) {
+	    config_match(parent, cf, &ua)) {
 		config_attach(parent, cf, &ua, tx39uart_print);
 		sc->sc_enabled |= (1 << ua.ua_slot);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48.2.3 2002/03/16 15:59:08 jdolecek Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.48.2.4 2002/10/10 18:34:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -185,7 +185,7 @@ cpu_exit(arg)
 
 	/* Don't update pcb in cpu_switch. */
 	curproc = NULL;
-	cpu_switch(NULL);
+	cpu_switch(NULL, NULL);
 	/* NOTREACHED */
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a50.c,v 1.29.4.2 2002/06/23 17:34:14 jdolecek Exp $ */
+/* $NetBSD: pci_2100_a50.c,v 1.29.4.3 2002/10/10 18:31:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.29.4.2 2002/06/23 17:34:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a50.c,v 1.29.4.3 2002/10/10 18:31:06 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -146,7 +146,7 @@ dec_2100_a50_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -166,7 +166,7 @@ dec_2100_a50_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};
@@ -186,7 +186,7 @@ dec_2100_a50_intr_map(pa, ihp)
 			break;
 #ifdef DIAGNOSTIC
 		default:			/* XXX gcc -Wuninitialized */
-			panic("dec_2100_a50_intr_map bogus PCI pin %d\n",
+			panic("dec_2100_a50_intr_map bogus PCI pin %d",
 			    buspin);
 #endif
 		};

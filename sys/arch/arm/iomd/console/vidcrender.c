@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcrender.c,v 1.4.2.3 2002/06/23 17:34:54 jdolecek Exp $	*/
+/*	$NetBSD: vidcrender.c,v 1.4.2.4 2002/10/10 18:31:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -53,7 +53,6 @@
 #include <sys/conf.h>
 #include <sys/tty.h>
 #include <sys/device.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/syslog.h>
@@ -94,7 +93,6 @@
 #define PRETTYCURSOR
 #endif
 
-extern int physcon_major;
 extern struct vconsole *vconsole_default;
 
 extern videomemory_t videomemory;
@@ -1223,7 +1221,7 @@ vidc_cursor_init(vc)
 		/* Allocate cursor memory first time round */
 		cursor_data = (char *)uvm_km_zalloc(kernel_map, NBPG);
 		if (!cursor_data)
-			panic("Cannot allocate memory for hardware cursor\n");
+			panic("Cannot allocate memory for hardware cursor");
 		(void) pmap_extract(pmap_kernel(), (vaddr_t)cursor_data, &pa);
 		IOMD_WRITE_WORD(IOMD_CURSINIT, pa);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.5 2001/04/30 01:17:31 lukem Exp $	*/
+/*	$NetBSD: lock.h,v 1.5.2.1 2002/10/10 18:33:29 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,10 +43,35 @@
 #ifndef _I386_LOCK_H_
 #define	_I386_LOCK_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_lockdebug.h"
+#endif
+
 typedef	__volatile int		__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
+
+/*
+ * compiler barrier: prevent reordering of instructions.
+ * XXX something similar will move to <sys/cdefs.h>
+ * or thereabouts.
+ * This prevents the compiler from reordering code around
+ * this "instruction", acting as a sequence point for code generation.
+ */
+
+#define __lockbarrier() __asm __volatile("": : :"memory")
+
+#ifdef LOCKDEBUG
+
+extern void __cpu_simple_lock_init __P((__cpu_simple_lock_t *));
+extern void __cpu_simple_lock __P((__cpu_simple_lock_t *));
+extern int __cpu_simple_lock_try __P((__cpu_simple_lock_t *));
+extern void __cpu_simple_unlock __P((__cpu_simple_lock_t *));
+
+#else
+
+#include <machine/atomic.h>
 
 static __inline void __cpu_simple_lock_init __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
@@ -54,45 +79,47 @@ static __inline void __cpu_simple_lock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 static __inline int __cpu_simple_lock_try __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
-static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *)) 
+static __inline void __cpu_simple_unlock __P((__cpu_simple_lock_t *))
 	__attribute__((__unused__));
 
 static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 {
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	*lockp = __SIMPLELOCK_UNLOCKED;
+	__lockbarrier();
 }
 
 static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *alp)
+__cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
 
-	do {
-		__asm __volatile("xchgl %0, %2"
-			: "=r" (__val)
-			: "0" (__val), "m" (*alp));
-	} while (__val != __SIMPLELOCK_UNLOCKED);
+	while (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_LOCKED) {
+		continue;	/* spin */
+	}
+	__lockbarrier();
 }
 
 static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *alp)
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
 {
-	int __val = __SIMPLELOCK_LOCKED;
+	int r = (i386_atomic_testset_i(lockp, __SIMPLELOCK_LOCKED)
+	    == __SIMPLELOCK_UNLOCKED);
 
-	__asm __volatile("xchgl %0, %2"
-		: "=r" (__val)
-		: "0" (__val), "m" (*alp));
+	__lockbarrier();
 
-	return ((__val == __SIMPLELOCK_UNLOCKED) ? 1 : 0);
+	return (r);
 }
 
 static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *alp)
+__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 {
 
-	*alp = __SIMPLELOCK_UNLOCKED;
+	__lockbarrier();
+	*lockp = __SIMPLELOCK_UNLOCKED;
 }
+
+#endif /* !LOCKDEBUG */
 
 #endif /* _I386_LOCK_H_ */

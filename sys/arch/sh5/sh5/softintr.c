@@ -1,4 +1,4 @@
-/*	$NetBSD: softintr.c,v 1.2.2.2 2002/09/06 08:40:36 jdolecek Exp $	*/
+/*	$NetBSD: softintr.c,v 1.2.2.3 2002/10/10 18:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -127,8 +127,8 @@ softintr_init(void)
 		TAILQ_INIT(&si->si_q);
 
 		simple_lock_init(&si->si_slock);
-		si->si_evcnt = &_sh5_intr_events[i];
-		si->si_ipl = soft_intr_prio[i] - 1;
+		si->si_evcnt = &_sh5_intr_events[soft_intr_prio[i]];
+		si->si_ipl = soft_intr_prio[i];
 	}
 
 	ssir = 0;
@@ -177,7 +177,7 @@ softintr_disestablish(void *cookie)
 		sih->sih_pending = 0;
 		TAILQ_REMOVE(&si->si_q, sih, sih_q);
 		if (TAILQ_EMPTY(&si->si_q))
-			ssir &= ~(1 << si->si_ipl);
+			ssir &= ~(1 << (si->si_ipl - 1));
 	}
 	splx(s);
 
@@ -196,7 +196,7 @@ softintr_schedule(void *cookie)
 	if (__predict_true(sih->sih_pending == 0)) {
 		sih->sih_pending = 1;
 		if (TAILQ_EMPTY(&si->si_q))
-			ssir |= (1 << si->si_ipl);
+			ssir |= (1 << (si->si_ipl - 1));
 		TAILQ_INSERT_TAIL(&si->si_q, sih, sih_q);
 	}
 	splx(s);
@@ -262,9 +262,6 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 		 */
 		(void) splhigh();
 
-		if (TAILQ_FIRST(&si->si_q) != NULL)
-			si->si_evcnt->ev_count++;
-
 		/*
 		 * Dispatch all soft interrupts at the current level
 		 */
@@ -272,6 +269,7 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 			TAILQ_REMOVE(&si->si_q, sih, sih_q);
 			sih->sih_pending = 0;
 
+			si->si_evcnt->ev_count++;
 			uvmexp.softs++;
 
 			/*
@@ -291,7 +289,7 @@ softintr_dispatch(u_int oldspl, u_int softspl)
 		 * Clear the "pending" status for soft interrupts at
 		 * this level.
 		 */
-		ssir &= ~(1 << si->si_ipl);
+		ssir &= ~(1 << (si->si_ipl - 1));
 	}
 
 	/*

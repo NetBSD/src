@@ -1,4 +1,4 @@
-/*	$NetBSD: joy_timer.c,v 1.1.2.3 2002/09/06 08:36:30 jdolecek Exp $	*/
+/*	$NetBSD: joy_timer.c,v 1.1.2.4 2002/10/10 18:33:32 jdolecek Exp $	*/
 
 /*
  * XXX This _really_ should be rewritten such that it doesn't
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.2.3 2002/09/06 08:36:30 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.2.4 2002/10/10 18:33:32 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/conf.h>
 
 #include <machine/bus.h>
 
@@ -51,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: joy_timer.c,v 1.1.2.3 2002/09/06 08:36:30 jdolecek E
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
 #include <machine/joystick.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.45.2.1 2002/01/10 19:52:15 thorpej Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.45.2.2 2002/10/10 18:38:10 jdolecek Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.45.2.1 2002/01/10 19:52:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.45.2.2 2002/10/10 18:38:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,4 +82,6 @@ const struct emul emul_svr4 = {
 #else
 	syscall,
 #endif
+	NULL,
+	NULL,
 };

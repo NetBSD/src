@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.10.6.3 2002/09/06 08:36:22 jdolecek Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10.6.4 2002/10/10 18:33:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.6.3 2002/09/06 08:36:22 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10.6.4 2002/10/10 18:33:26 jdolecek Exp $");
 
 #include "opt_syscall_debug.h"
 #include "opt_vm86.h"
@@ -148,7 +148,11 @@ syscall_plain(frame)
 
 	rval[0] = 0;
 	rval[1] = 0;
+
+	KERNEL_PROC_LOCK(p);
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -226,12 +230,14 @@ syscall_fancy(frame)
 			goto bad;
 	}
 
+	KERNEL_PROC_LOCK(p);
 	if ((error = trace_enter(p, code, args, rval)) != 0)
 		goto bad;
 
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -269,7 +275,9 @@ syscall_vm86(frame)
 	register struct proc *p;
 
 	p = curproc;
+	KERNEL_PROC_LOCK(p);
 	(*p->p_emul->e_trapsignal)(p, SIGBUS, T_PROTFLT);
+	KERNEL_PROC_UNLOCK(p);
 	userret(p);
 }
 #endif
@@ -284,9 +292,14 @@ child_return(arg)
 	tf->tf_eax = 0;
 	tf->tf_eflags &= ~PSL_C;
 
+	KERNEL_PROC_UNLOCK(p);
+
 	userret(p);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
+	if (KTRPOINT(p, KTR_SYSRET)) {
+		KERNEL_PROC_LOCK(p);
 		ktrsysret(p, SYS_fork, 0, 0);
+		KERNEL_PROC_UNLOCK(p);
+	}
 #endif
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.1.8.4 2002/10/02 22:02:25 jdolecek Exp $        */
+/*      $NetBSD: opms.c,v 1.1.8.5 2002/10/10 18:36:02 jdolecek Exp $        */
 
 /*
  * Copyright 1997
@@ -109,6 +109,7 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 #include <machine/kerndebug.h>
 
 #include <dev/isa/isavar.h>
@@ -117,7 +118,6 @@
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 #include <shark/shark/i8042reg.h>
@@ -192,12 +192,22 @@ int                  opmsintr         __P((void *));
 */
 
 /* Autoconfiguration data structures */
-struct cfattach opms_ca = 
-{
-        sizeof(struct opms_softc), opmsprobe, opmsattach,
-};
+CFATTACH_DECL(opms, sizeof(struct opms_softc),
+    opmsprobe, opmsattach, NULL, NULL);
 
 extern struct cfdriver opms_cd;
+
+dev_type_open(opmsopen);
+dev_type_close(opmsclose);
+dev_type_read(opmsread);
+dev_type_ioctl(opmsioctl);
+dev_type_poll(opmspoll);
+dev_type_kqfilter(opmskqfilter);
+
+const struct cdevsw opms_cdevsw = {
+	opmsopen, opmsclose, opmsread, nowrite, opmsioctl,
+	nostop, notty, opmspoll, nommap, opmskqfilter,
+};
 
 /* variable to control which debugs printed if kernel compiled with 
 ** option KERNEL_DEBUG. 
@@ -257,8 +267,8 @@ opmsprobe(parent, match, aux)
     ** child of a real keyboard controller driver.)
     */
     if ((parent != NULL) &&
-        (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") ||
-         (!strcmp(parent->dv_cfdata->cf_driver->cd_name, "vt"))))
+        (!strcmp(parent->dv_cfdata->cf_name, "pc") ||
+         (!strcmp(parent->dv_cfdata->cf_name, "vt"))))
     {
         /* 
         ** The mouse shares registers with the parent, so

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.h,v 1.8 2000/08/16 04:44:37 thorpej Exp $	*/
+/*	$NetBSD: gdt.h,v 1.8.4.1 2002/10/10 18:33:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,11 +36,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(_LOCORE)
+
 struct proc;
 struct pmap;
 
 void gdt_init __P((void));
-void tss_alloc __P((struct proc *));
-void tss_free __P((struct proc *));
+void gdt_init_cpu __P((struct cpu_info *));
+void gdt_reload_cpu __P((struct cpu_info *));
+void gdt_alloc_cpu __P((struct cpu_info *));
+int tss_alloc __P((struct pcb *));
+void tss_free __P((int));
 void ldt_alloc __P((struct pmap *, union descriptor *, size_t));
 void ldt_free __P((struct pmap *));
+
+#endif /* LOCORE */
+
+#define	MINGDTSIZ	512
+#define	MAXGDTSIZ	8192

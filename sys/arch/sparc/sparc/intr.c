@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.53.2.3 2002/09/06 08:41:09 jdolecek Exp $ */
+/*	$NetBSD: intr.c,v 1.53.2.4 2002/10/10 18:36:21 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -474,7 +474,7 @@ intr_disestablish(level, ih)
 	for (p = &intrhand[level]; (q = *p) != ih; p = &q->ih_next)
 		continue;
 	if (q == NULL)
-		panic("intr_disestablish: level %d intrhand %p fun %p arg %p\n",
+		panic("intr_disestablish: level %d intrhand %p fun %p arg %p",
 		    level, ih, ih->ih_fun, ih->ih_arg);
 
 	*p = q->ih_next;

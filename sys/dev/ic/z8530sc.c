@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530sc.c,v 1.15.2.1 2002/01/10 19:55:11 thorpej Exp $	*/
+/*	$NetBSD: z8530sc.c,v 1.15.2.2 2002/10/10 18:39:21 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.15.2.1 2002/01/10 19:55:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530sc.c,v 1.15.2.2 2002/10/10 18:39:21 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ void
 zs_loadchannelregs(cs)
 	struct zs_chanstate *cs;
 {
-	u_char *reg;
+	u_char *reg, v;
 
 	zs_write_csr(cs, ZSM_RESET_ERR); /* XXX: reset error condition */
 
@@ -144,8 +144,14 @@ zs_loadchannelregs(cs)
 	zs_iflush(cs);	/* XXX */
 #endif
 
-	if (memcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0)
-	    return;	/* only change if values are different */
+	if (cs->cs_ctl_chan != NULL)
+		v = ((cs->cs_ctl_chan->cs_creg[5] & (ZSWR5_RTS | ZSWR5_DTR)) !=
+		    (cs->cs_ctl_chan->cs_preg[5] & (ZSWR5_RTS | ZSWR5_DTR)));
+	else
+		v = 0;
+
+	if (memcmp((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16) == 0 && !v)
+		return;	/* only change if values are different */
 
 	/* Copy "pending" regs to "current" */
 	memcpy((caddr_t)cs->cs_creg, (caddr_t)cs->cs_preg, 16);
@@ -215,6 +221,13 @@ zs_loadchannelregs(cs)
 	/* char size, enable (RX/TX)*/
 	zs_write_reg(cs, 3, reg[3]);
 	zs_write_reg(cs, 5, reg[5]);
+
+	/* Write the status bits on the alternate channel also. */
+	if (cs->cs_ctl_chan != NULL) {
+		v = cs->cs_ctl_chan->cs_preg[5];
+		cs->cs_ctl_chan->cs_creg[5] = v;
+		zs_write_reg(cs->cs_ctl_chan, 5, v);
+	}
 
 	/* interrupt enables: RX, TX, STATUS */
 	zs_write_reg(cs, 1, reg[1]);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lasi.c,v 1.1.2.3 2002/09/06 08:35:14 jdolecek Exp $	*/
+/*	$NetBSD: lasi.c,v 1.1.2.4 2002/10/10 18:32:46 jdolecek Exp $	*/
 
 /*	$OpenBSD: lasi.c,v 1.4 2001/06/09 03:57:19 mickey Exp $	*/
 
@@ -79,9 +79,8 @@ struct lasi_softc {
 int	lasimatch __P((struct device *, struct cfdata *, void *));
 void	lasiattach __P((struct device *, struct device *, void *));
 
-struct cfattach lasi_ca = {
-	sizeof(struct lasi_softc), lasimatch, lasiattach
-};
+CFATTACH_DECL(lasi, sizeof(struct lasi_softc),
+    lasimatch, lasiattach, NULL, NULL);
 
 /*
  * Before a module is matched, this fixes up its gsc_attach_args.

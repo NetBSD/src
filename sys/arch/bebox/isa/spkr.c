@@ -1,4 +1,4 @@
-/*	$NetBSD: spkr.c,v 1.7 2000/05/27 04:42:14 thorpej Exp $	*/
+/*	$NetBSD: spkr.c,v 1.7.8.1 2002/10/10 18:32:11 jdolecek Exp $	*/
 
 /*
  * spkr.c -- device driver for console speaker on 80386
@@ -24,11 +24,11 @@
 #include <sys/malloc.h>
 #include <sys/uio.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/spkr.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -42,8 +42,17 @@ struct spkr_softc {
 	struct device sc_dev;
 };
 
-struct cfattach spkr_ca = {
-	sizeof(struct spkr_softc), spkrprobe, spkrattach
+CFATTACH_DECL(spkr, sizeof(struct spkr_softc),
+    spkrprobe, spkrattach, NULL, NULL);
+
+dev_type_open(spkropen);
+dev_type_close(spkrclose);
+dev_type_write(spkrwrite);
+dev_type_ioctl(spkrioctl);
+
+const struct cdevsw spkr_cdevsw = {
+	spkropen, spkrclose, noread, spkrwrite, spkrioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /**************** MACHINE DEPENDENT PART STARTS HERE *************************
@@ -417,7 +426,7 @@ spkrprobe (parent, match, aux)
 	 * child of a real keyboard controller driver.)
 	 */
 	if ((parent == NULL) ||
-	    (strcmp(parent->dv_cfdata->cf_driver->cd_name, "pc") != 0))
+	    (strcmp(parent->dv_cfdata->cf_name, "pc") != 0))
 		return (0);
 	if (match->cf_loc[PCKBDCF_PORT] != PITAUX_PORT)
 		return (0);

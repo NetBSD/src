@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.2.6.2 2002/06/23 17:34:14 jdolecek Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.2.6.3 2002/10/10 18:31:07 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2.6.2 2002/06/23 17:34:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.2.6.3 2002/10/10 18:31:07 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -425,7 +425,7 @@ dec_2100_a500_intr_string(void *v, pci_intr_handle_t ih)
 	static char irqstr[15];		/* 11 + 2 + NULL + sanity */
 
 	if (ih >= SABLE_MAX_IRQ)
-		panic("dec_2100_a500_intr_string: bogus T2 IRQ 0x%lx\n", ih);
+		panic("dec_2100_a500_intr_string: bogus T2 IRQ 0x%lx", ih);
 
 	sprintf(irqstr, "T2 irq %ld", ih);
 	return (irqstr);
@@ -437,7 +437,7 @@ dec_2100_a500_intr_evcnt(void *v, pci_intr_handle_t ih)
 	struct ttwoga_config *tcp = v;
 
 	if (ih >= SABLE_MAX_IRQ)
-		panic("dec_2100_a500_intr_evcnt: bogus T2 IRQ 0x%lx\n", ih);
+		panic("dec_2100_a500_intr_evcnt: bogus T2 IRQ 0x%lx", ih);
 
 	return (alpha_shared_intr_evcnt(tcp->tc_intrtab, ih));
 }
@@ -450,7 +450,7 @@ dec_2100_a500_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	void *cookie;
 
 	if (ih >= SABLE_MAX_IRQ)
-		panic("dec_2100_a500_intr_establish: bogus IRQ 0x%lx\n",
+		panic("dec_2100_a500_intr_establish: bogus IRQ 0x%lx",
 		    ih);
 
 	cookie = alpha_shared_intr_establish(tcp->tc_intrtab, ih,
@@ -528,7 +528,7 @@ dec_2100_a500_eisa_intr_string(void *v, int eirq)
 	static char irqstr[32];
 
 	if (eirq > 15 || eirq == 13)
-		panic("dec_2100_a500_eisa_intr_string: bogus EISA IRQ 0x%x\n",
+		panic("dec_2100_a500_eisa_intr_string: bogus EISA IRQ 0x%x",
 		    eirq);
 
 	sprintf(irqstr, "eisa irq %d (T2 irq %d)", eirq,
@@ -542,7 +542,7 @@ dec_2100_a500_eisa_intr_evcnt(void *v, int eirq)
 	struct ttwoga_config *tcp = v;
 
 	if (eirq > 15 || eirq == 13)
-		panic("dec_2100_a500_eisa_intr_evcnt: bogus EISA IRQ 0x%x\n",
+		panic("dec_2100_a500_eisa_intr_evcnt: bogus EISA IRQ 0x%x",
 		    eirq);
 
 	return (alpha_shared_intr_evcnt(tcp->tc_intrtab,

@@ -1,4 +1,4 @@
-/*	$NetBSD: opms_iomd.c,v 1.1.8.2 2002/06/23 17:34:53 jdolecek Exp $	*/
+/*	$NetBSD: opms_iomd.c,v 1.1.8.3 2002/10/10 18:31:51 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 D.C. Tsen
@@ -58,9 +58,8 @@ static int  opms_iomd_probe     __P((struct device *, struct cfdata *, void *));
 static void opms_iomd_attach    __P((struct device *, struct device *, void *));
 static void opms_iomd_intenable __P((struct opms_softc *sc, int enable));
 
-struct cfattach opms_iomd_ca = {
-	sizeof(struct opms_softc), opms_iomd_probe, opms_iomd_attach
-};
+CFATTACH_DECL(opms_iomd, sizeof(struct opms_softc),
+    opms_iomd_probe, opms_iomd_attach, NULL, NULL);
 
 static int
 opms_iomd_probe(parent, cf, aux)
@@ -104,10 +103,10 @@ opms_iomd_intenable(sc, enable)
 	if (enable) {
 		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "opms", opmsintr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim interrupt\n", sc->sc_dev.dv_xname);
+			panic("%s: Cannot claim interrupt", sc->sc_dev.dv_xname);
 	} else {
 		if (intr_release(sc->sc_ih) != 0)
-			panic("%s: Cannot release IRQ\n", sc->sc_dev.dv_xname);
+			panic("%s: Cannot release IRQ", sc->sc_dev.dv_xname);
 	}
 }
 

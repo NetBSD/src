@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fw.c,v 1.10.2.3 2002/09/06 08:44:47 jdolecek Exp $	*/
+/*	$NetBSD: if_fw.c,v 1.10.2.4 2002/10/10 18:39:24 jdolecek Exp $	*/
 
 /* XXX ALTQ XXX */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.10.2.3 2002/09/06 08:44:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fw.c,v 1.10.2.4 2002/10/10 18:39:24 jdolecek Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -102,10 +102,8 @@ void fw_start(struct ifnet *);
 int  fw_init(struct ifnet *);
 void fw_stop(struct ifnet *, int);
 
-struct cfattach fw_ca = {
-	sizeof(struct fw_softc), fw_match, fw_attach,
-	fw_detach, fw_activate
-};
+CFATTACH_DECL(fw, sizeof(struct fw_softc),
+    fw_match, fw_attach, fw_detach, fw_activate);
 
 int
 fw_match(struct device *parent, struct cfdata *match, void *aux)

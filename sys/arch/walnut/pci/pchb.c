@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.1.2.3 2002/09/06 08:42:34 jdolecek Exp $	*/
+/*	$NetBSD: pchb.c,v 1.1.2.4 2002/10/10 18:37:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,11 +58,10 @@
 
 static int	pchbmatch(struct device *, struct cfdata *, void *);
 static void	pchbattach(struct device *, struct device *, void *);
-static int	phcbprint(void *, const char *);
+static int	pchbprint(void *, const char *);
 
-struct cfattach pchb_ca = {
-	sizeof(struct device), pchbmatch, pchbattach
-};
+CFATTACH_DECL(pchb, sizeof(struct device),
+    pchbmatch, pchbattach, NULL, NULL);
 
 static int pcifound = 0;
 
@@ -76,7 +75,7 @@ pchbmatch(struct device *parent, struct cfdata *cf, void *aux)
 	int class, id;
 
 	/* match only pchb devices */
-	if (strcmp(paa->plb_name, cf->cf_driver->cd_name) != 0)
+	if (strcmp(paa->plb_name, cf->cf_name) != 0)
 		return 0;
 
 	pci_machdep_init();
@@ -165,12 +164,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	pba.pba_bus = 0;
 	pba.pba_bridgetag = NULL;
 	pba.pba_flags = PCI_FLAGS_MEM_ENABLED | PCI_FLAGS_IO_ENABLED;
-	config_found(self, &pba, phcbprint);
+	config_found(self, &pba, pchbprint);
 }
 
 
 static int
-phcbprint(void *aux, const char *p)
+pchbprint(void *aux, const char *p)
 {
 
 	if (p == NULL)

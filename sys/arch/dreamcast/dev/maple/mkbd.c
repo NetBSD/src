@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.8.2.4 2002/06/23 17:35:35 jdolecek Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.8.2.5 2002/10/10 18:32:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -92,10 +92,8 @@ static struct mkbd_softc *mkbd_console_softc = NULL;
 
 static int mkbd_console_initted = 0;
 
-/* Driver definition. */
-struct cfattach mkbd_ca = {
-	sizeof(struct mkbd_softc), mkbdmatch, mkbdattach
-};
+CFATTACH_DECL(mkbd, sizeof(struct mkbd_softc),
+    mkbdmatch, mkbdattach, NULL, NULL);
 
 static int
 mkbdmatch(struct device *parent, struct cfdata *cf, void *aux)

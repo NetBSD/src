@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4231_ebus.c,v 1.6.6.2 2002/06/23 17:46:00 jdolecek Exp $ */
+/*	$NetBSD: cs4231_ebus.c,v 1.6.6.3 2002/10/10 18:38:35 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -66,10 +66,8 @@ struct cs4231_ebus_softc {
 void	cs4231_ebus_attach(struct device *, struct device *, void *);
 int	cs4231_ebus_match(struct device *, struct cfdata *, void *);
 
-struct cfattach audiocs_ebus_ca = {
-	sizeof(struct cs4231_ebus_softc), cs4231_ebus_match, cs4231_ebus_attach
-};
-
+CFATTACH_DECL(audiocs_ebus, sizeof(struct cs4231_ebus_softc),
+    cs4231_ebus_match, cs4231_ebus_attach, NULL, NULL);
 
 /* audio_hw_if methods specific to ebus dma */
 static int	cs4231_ebus_trigger_output(void *, void *, void *, int,

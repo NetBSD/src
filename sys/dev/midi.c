@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.21.4.5 2002/10/02 22:02:29 jdolecek Exp $	*/
+/*	$NetBSD: midi.c,v 1.21.4.6 2002/10/10 18:38:20 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.5 2002/10/02 22:02:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.21.4.6 2002/10/10 18:38:20 jdolecek Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -91,10 +91,21 @@ void	midiattach(struct device *, struct device *, void *);
 int	mididetach(struct device *, int);
 int	midiactivate(struct device *, enum devact);
 
-struct cfattach midi_ca = {
-	sizeof(struct midi_softc), midiprobe, midiattach,
-	mididetach, midiactivate
+dev_type_open(midiopen);
+dev_type_close(midiclose);
+dev_type_read(midiread);
+dev_type_write(midiwrite);
+dev_type_ioctl(midiioctl);
+dev_type_poll(midipoll);
+dev_type_kqfilter(midikqfilter);
+
+const struct cdevsw midi_cdevsw = {
+	midiopen, midiclose, midiread, midiwrite, midiioctl,
+	nostop, notty, midipoll, nommap, midikqfilter,
 };
+
+CFATTACH_DECL(midi, sizeof(struct midi_softc),
+    midiprobe, midiattach, mididetach, midiactivate);
 
 #ifdef MIDI_SAVE
 #define MIDI_SAVE_SIZE 100000
@@ -156,7 +167,6 @@ midiactivate(struct device *self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->dying = 1;
@@ -179,9 +189,7 @@ mididetach(struct device *self, int flags)
 	wakeup(&sc->rchan);
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == midiopen)
-			break;
+	maj = cdevsw_lookup_major(&midi_cdevsw);
 
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.4.2 2002/09/06 08:34:37 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.4.3 2002/10/10 18:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,9 +52,8 @@ static int mainbusmatch(struct device *, struct cfdata *, void *);
 static void mainbusattach(struct device *, struct device *, void *);
 static int mainbusprint(void *, const char *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbusmatch, mainbusattach, NULL, NULL);
 extern struct cfdriver mainbus_cd;
 
 /*

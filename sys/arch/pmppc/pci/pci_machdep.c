@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.1.4.2 2002/06/23 17:39:33 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.1.4.3 2002/10/10 18:35:14 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -51,6 +51,7 @@
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/time.h>
+#include <machine/pcb.h>
 
 #include <uvm/uvm.h>
 
@@ -65,6 +66,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pciconf.h>
+
+int setfault(faultbuf); /* defined in locore.S */
 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
@@ -131,21 +134,39 @@ pcireg_t
 pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	pcireg_t data;
+	faultbuf env, *oldfault;
+
+	oldfault = curpcb->pcb_onfault;
+	if (setfault(env)) {
+		curpcb->pcb_onfault = oldfault;
+		return 0;
+	}
 
 /*printf("pci_conf_read %x %x\n", tag, reg);*/
 	out32rb(CPC_PCICFGADR, SP_PCI(tag, reg));
 	data = in32rb(CPC_PCICFGDATA);
 	/*out32rb(CPC_PCICFGADR, 0);*/
+
+	curpcb->pcb_onfault = oldfault;
 	return data;
 }
 
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+	faultbuf env, *oldfault;
+
+	oldfault = curpcb->pcb_onfault;
+	if (setfault(env)) {
+		curpcb->pcb_onfault = oldfault;
+		return;
+	}
+
 /*printf("pci_conf_write %x %x %x\n", tag, reg, data);*/
 	out32rb(CPC_PCICFGADR, SP_PCI(tag, reg));
 	out32rb(CPC_PCICFGDATA, data);
 	/*out32rb(CPC_PCICFGADR, 0);*/
+	curpcb->pcb_onfault = oldfault;
 }
 
 int
@@ -189,7 +210,7 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih < 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);

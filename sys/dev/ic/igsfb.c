@@ -1,4 +1,4 @@
-/*	$NetBSD: igsfb.c,v 1.2.8.3 2002/09/06 08:44:19 jdolecek Exp $ */
+/*	$NetBSD: igsfb.c,v 1.2.8.4 2002/10/10 18:39:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -32,7 +32,7 @@
  * Only tested on IGA 1682 in Krups JavaStation-NC.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.8.3 2002/09/06 08:44:19 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igsfb.c,v 1.2.8.4 2002/10/10 18:39:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,59 +126,6 @@ static u_int16_t igsfb_spread_bits_8(u_int8_t);
 
 static struct igs_bittab *igsfb_bittab = NULL;
 static struct igs_bittab *igsfb_bittab_bswap = NULL;
-
-
-/*
- * Enable chip.  This always goes through I/O space because
- * uninitialized card only decodes I/O accesses to VDO and VSE.
- */
-int
-igsfb_enable(iot)
-	bus_space_tag_t iot;
-{
-	bus_space_handle_t vdoh;
-	bus_space_handle_t vseh;
-	bus_space_handle_t regh;
-	int ret;
-
-	ret = bus_space_map(iot, IGS_VDO, 1, 0, &vdoh);
-	if (ret != 0) {
-		printf("unable to map VDO register\n");
-		goto out0;
-	}
-
-	ret = bus_space_map(iot, IGS_VSE, 1, 0, &vseh);
-	if (ret != 0) {
-		printf("unable to map VSE register\n");
-		goto out1;
-	}
-
-	ret = bus_space_map(iot, IGS_REG_BASE, IGS_REG_SIZE, 0, &regh);
-	if (ret != 0) {
-		printf("unable to map I/O registers\n");
-		goto out2;
-	}
-
-	/*
-	 * Enable video: start decoding i/o space accesses.
-	 */
-	bus_space_write_1(iot, vdoh, 0, IGS_VDO_ENABLE | IGS_VDO_SETUP);
-	bus_space_write_1(iot, vseh, 0, IGS_VSE_ENABLE);
-	bus_space_write_1(iot, vdoh, 0, IGS_VDO_ENABLE);
-
-	/*
-	 * Enable memory: start decoding memory space accesses.
-	 * While here, enable coprocessor and select IGS_COP_BASE_B.
-	 */
-	igs_ext_write(iot, regh, IGS_EXT_BIU_MISC_CTL,
-		      (IGS_EXT_BIU_LINEAREN
-		       | IGS_EXT_BIU_COPREN | IGS_EXT_BIU_COPASELB));
-
-	bus_space_unmap(iot, regh, IGS_REG_SIZE);
-  out2:	bus_space_unmap(iot, vseh, 1);
-  out1:	bus_space_unmap(iot, vdoh, 1);
-  out0: return (ret);
-}
 
 
 /*
@@ -320,7 +267,7 @@ igsfb_common_attach(sc, isconsole)
 	}
 
 
-	printf("%s: %dmb%s, %dx%d, %dbpp\n",
+	printf("%s: %dMB%s, %dx%d, %dbpp\n",
 	       sc->sc_dev.dv_xname,
 	       (u_int32_t)(sc->sc_vmemsz >> 20),
 	       bswap_msg,
@@ -410,9 +357,11 @@ igsfb_common_init(sc)
 	if (sc->sc_hwflags & IGSFB_HW_BSWAP)
 	    ri->ri_flg |= RI_BSWAP;
 
+	/* XXX: deduce these from chip registers */
 	ri->ri_depth = 8;
 	ri->ri_width = 1024;
 	ri->ri_height = 768;
+
 	ri->ri_stride = 1024;
 	ri->ri_bits = (u_char *)sc->sc_fbh;
 

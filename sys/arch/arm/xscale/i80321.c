@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321.c,v 1.2.4.3 2002/09/06 08:33:07 jdolecek Exp $	*/
+/*	$NetBSD: i80321.c,v 1.2.4.4 2002/10/10 18:31:56 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -102,7 +102,7 @@ i80321_attach(struct i80321_softc *sc)
 
 	if (bus_space_subregion(sc->sc_st, sc->sc_sh, VERDE_ATU_BASE,
 	    VERDE_ATU_SIZE, &sc->sc_atu_sh))
-		panic("%s: unable to subregion ATU registers\n",
+		panic("%s: unable to subregion ATU registers",
 		    sc->sc_dev.dv_xname);
 
 	/* We expect the Memory Controller to be already sliced off. */

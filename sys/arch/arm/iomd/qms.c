@@ -1,4 +1,4 @@
-/*	$NetBSD: qms.c,v 1.1.6.4 2002/10/02 22:02:22 jdolecek Exp $	*/
+/*	$NetBSD: qms.c,v 1.1.6.5 2002/10/10 18:31:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -54,7 +54,6 @@
 #include <sys/poll.h>
 
 #include <machine/bus.h>
-#include <machine/conf.h>
 #include <machine/mouse.h>
 #include <arm/iomd/qmsvar.h>
 
@@ -67,6 +66,18 @@ static void qmsputbuffer	__P((struct qms_softc *sc, struct mousebufrec *buf));
 #endif
 
 extern struct cfdriver qms_cd;
+
+dev_type_open(qmsopen);
+dev_type_close(qmsclose);
+dev_type_read(qmsread);
+dev_type_ioctl(qmsioctl);
+dev_type_poll(qmspoll);
+dev_type_kqfilter(qmskqfilter);
+
+const struct cdevsw qms_cdevsw = {
+	qmsopen, qmsclose, qmsread, nowrite, qmsioctl,
+	nostop, notty, qmspoll, nommap, qmskqfilter,
+};
 
 /* qms device structure */
 

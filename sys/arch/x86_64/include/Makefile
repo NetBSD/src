@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.1.2.3 2002/09/06 08:42:48 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.1.2.4 2002/10/10 18:37:43 jdolecek Exp $
 
 KDIR=	/sys/arch/x86_64/include
 INCSDIR= /usr/include/x86_64
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bios32.h bootinfo.h bswap.h bus.h byte_swap.h \
-	cdefs.h conf.h cpu.h cpufunc.h \
+	cdefs.h cpu.h cpufunc.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h fpu.h frame.h frameasm.h \

@@ -1,7 +1,7 @@
-/*	$NetBSD: autoconf.h,v 1.6.26.1 2002/01/10 19:43:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.6.26.2 2002/10/10 18:32:45 jdolecek Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,11 @@
  */
 
 #ifdef _KERNEL
-void	hp300_cninit __P((void));
-caddr_t	iomap __P((caddr_t, int));
-void	iounmap __P((caddr_t, int));
+void	hp300_cninit(void);
+void	iomap_init(void);
+caddr_t	iomap(caddr_t, int);
+void	iounmap(caddr_t, int);
+
+extern struct extent *extio_ex;
+extern int extio_ex_malloc_safe;
 #endif /* _KERNEL */

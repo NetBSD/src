@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.1.6.2 2002/09/06 08:36:58 jdolecek Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.1.6.3 2002/10/10 18:33:53 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -186,9 +186,8 @@ static struct mbuf *netdock_get __P((struct netdock_softc *, int));
 
 /***********************/
 
-struct cfattach netdock_nubus_ca = {
-	sizeof(struct netdock_softc), netdock_nubus_match, netdock_nubus_attach
-};
+CFATTACH_DECL(netdock_nubus, sizeof(struct netdock_softc),
+    netdock_nubus_match, netdock_nubus_attach, NULL, NULL);
 
 /***********************/
 

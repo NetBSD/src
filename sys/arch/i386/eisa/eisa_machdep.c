@@ -1,4 +1,4 @@
-/*	$NetBSD: eisa_machdep.c,v 1.13.2.1 2002/01/10 19:44:33 thorpej Exp $	*/
+/*	$NetBSD: eisa_machdep.c,v 1.13.2.2 2002/10/10 18:33:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13.2.1 2002/01/10 19:44:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13.2.2 2002/10/10 18:33:16 jdolecek Exp $");
+
+#include "ioapic.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -89,6 +91,11 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13.2.1 2002/01/10 19:44:33 thorpe
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 #include <dev/eisa/eisavar.h>
+
+#if NIOAPIC > 0
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
+#endif
 
 /*
  * EISA doesn't have any special needs; just use the generic versions
@@ -144,6 +151,9 @@ eisa_intr_map(ec, irq, ihp)
 	u_int irq;
 	eisa_intr_handle_t *ihp;
 {
+#if NIOAPIC > 0
+	struct mp_intr_map *mip;
+#endif
 
 	if (irq >= ICU_LEN) {
 		printf("eisa_intr_map: bad IRQ %d\n", irq);
@@ -154,6 +164,37 @@ eisa_intr_map(ec, irq, ihp)
 		printf("eisa_intr_map: changed IRQ 2 to IRQ 9\n");
 		irq = 9;
 	}
+
+#if NIOAPIC > 0
+	if (mp_busses != NULL) {
+		int bus = mp_eisa_bus;
+
+		if (bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == irq) {
+					*ihp = mip->ioapic_ih | irq;
+					return 0;
+				}
+			}
+		}
+
+		bus = mp_isa_bus;
+		
+		if (bus != -1) {
+			for (mip = mp_busses[bus].mb_intrs; mip != NULL;
+			     mip=mip->next) {
+				if (mip->bus_pin == irq) {
+					*ihp = mip->ioapic_ih | irq;
+					return 0;
+				}
+			}
+		}
+
+		printf("eisa_intr_map: no MP mapping found\n");
+	}
+#endif
+	
 
 	*ihp = irq;
 	return 0;
@@ -166,10 +207,20 @@ eisa_intr_string(ec, ih)
 {
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_string: bogus handle 0x%x\n", ih);
+	if (ih == 0 || (ih & 0xff) >= ICU_LEN || ih == 2)
+		panic("eisa_intr_string: bogus handle 0x%x", ih);
 
+#if NIOAPIC > 0
+	if (ih & APIC_INT_VIA_APIC)
+		sprintf(irqstr, "apic %d int %d (irq %d)",
+		    APIC_IRQ_APIC(ih),
+		    APIC_IRQ_PIN(ih),
+		    ih&0xff);
+	else
+		sprintf(irqstr, "irq %d", ih&0xff);
+#else
 	sprintf(irqstr, "irq %d", ih);
+#endif
 	return (irqstr);
 	
 }
@@ -189,9 +240,17 @@ eisa_intr_establish(ec, ih, type, level, func, arg)
 	int type, level, (*func) __P((void *));
 	void *arg;
 {
+	if (ih != -1) {
+#if NIOAPIC > 0
+		if (ih & APIC_INT_VIA_APIC) {
+			return apic_intr_establish(ih, type, level,
+			    func, arg);
+		}
+#endif
+	}
 
 	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("eisa_intr_establish: bogus handle 0x%x\n", ih);
+		panic("eisa_intr_establish: bogus handle 0x%x", ih);
 
 	return isa_intr_establish(NULL, ih, type, level, func, arg);
 }

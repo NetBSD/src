@@ -1,4 +1,4 @@
-/*	$NetBSD: viewioctl.h,v 1.6.44.2 2002/06/23 17:34:32 jdolecek Exp $	*/
+/*	$NetBSD: viewioctl.h,v 1.6.44.3 2002/10/10 18:31:33 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -56,6 +56,5 @@ struct view_size {
 #define VIOCGCMAP 	_IOWR('V', 0x6, colormap_t)
 
 #ifdef _KERNEL
-int viewioctl(dev_t, u_long, caddr_t, int, struct proc *);
 void viewprobe(void);
 #endif

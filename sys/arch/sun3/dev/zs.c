@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.62.2.1 2001/09/13 01:14:51 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.62.2.2 2002/10/10 18:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -90,7 +90,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The Sun3 provides a 4.9152 MHz clock to the ZS chips.
@@ -200,9 +199,8 @@ static int	zs_match __P((struct device *, struct cfdata *, void *));
 static void	zs_attach __P((struct device *, struct device *, void *));
 static int  zs_print __P((void *, const char *name));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -278,7 +276,7 @@ zs_attach(parent, self, aux)
 
 	/* Use the mapping setup by the Sun PROM. */
 	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zs_unit);
+		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.
@@ -831,6 +829,7 @@ cninit()
 	struct consdev *cn;
 	int channel, zs_unit, zstty_unit;
 	u_char inSource, outSink;
+	extern const struct cdevsw zstty_cdevsw;
 
 	/* Get the zs driver ready for console duty. */
 	zs_init();
@@ -871,7 +870,8 @@ cninit()
 		zs_unit = zstty_conf[zstty_unit].zs_unit;
 		channel = zstty_conf[zstty_unit].channel;
 		cn = &consdev_tty;
-		cn->cn_dev = makedev(zs_major, zstty_unit);
+		cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw),
+				     zstty_unit);
 		cn->cn_pri = CN_REMOTE;
 		break;
 

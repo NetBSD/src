@@ -1,4 +1,4 @@
-/*	$NetBSD: csc.c,v 1.2.2.4 2002/09/06 08:31:11 jdolecek Exp $	*/
+/*	$NetBSD: csc.c,v 1.2.2.5 2002/10/10 18:30:28 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -63,9 +63,8 @@
 void cscattach   __P((struct device *, struct device *, void *));
 int  cscmatch    __P((struct device *, struct cfdata *, void *));
 
-struct cfattach csc_ca = {
-	sizeof(struct csc_softc), cscmatch, cscattach
-};
+CFATTACH_DECL(csc, sizeof(struct csc_softc),
+    cscmatch, cscattach, NULL, NULL);
 
 int csc_intr		__P((void *arg));
 int csc_setup_dma	__P((struct sfas_softc *sc, void *ptr, int len,
@@ -196,7 +195,7 @@ cscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    csc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags |= SCSIPI_ADAPT_POLL_ONLY;

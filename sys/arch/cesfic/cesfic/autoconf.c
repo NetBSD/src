@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.2.1 2001/08/03 04:11:23 lukem Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.2.2 2002/10/10 18:32:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -34,7 +34,6 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mount.h>
 #include <sys/queue.h>
 #include <sys/reboot.h>
@@ -62,9 +61,8 @@ int	mainbusmatch __P((struct device *, struct cfdata *, void *));
 void	mainbusattach __P((struct device *, struct device *, void *));
 int	mainbussearch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbusmatch, mainbusattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbusmatch, mainbusattach, NULL, NULL);
 
 int
 mainbusmatch(parent, match, aux)
@@ -106,7 +104,7 @@ mainbussearch(parent, cf, aux)
 	void *aux;
 {
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+	if (config_match(parent, cf, NULL) > 0)
 		config_attach(parent, cf, NULL, NULL);
 	return (0);
 }

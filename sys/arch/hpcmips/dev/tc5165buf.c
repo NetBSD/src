@@ -1,4 +1,4 @@
-/*	$NetBSD: tc5165buf.c,v 1.7.4.2 2002/02/11 20:08:06 jdolecek Exp $ */
+/*	$NetBSD: tc5165buf.c,v 1.7.4.3 2002/10/10 18:32:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -95,9 +95,8 @@ int	tc5165buf_input_establish(void *, struct hpckbd_if *);
 
 struct tc5165buf_chip tc5165buf_chip;
 
-struct cfattach tc5165buf_ca = {
-	sizeof(struct tc5165buf_softc), tc5165buf_match, tc5165buf_attach
-};
+CFATTACH_DECL(tc5165buf, sizeof(struct tc5165buf_softc),
+    tc5165buf_match, tc5165buf_attach, NULL, NULL);
 
 int
 tc5165buf_match(struct device *parent, struct cfdata *cf, void *aux)

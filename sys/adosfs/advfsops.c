@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46.2.4 2002/09/06 08:30:50 jdolecek Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.46.2.5 2002/10/10 18:30:06 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.46.2.4 2002/09/06 08:30:50 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.46.2.5 2002/10/10 18:30:06 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.46.2.4 2002/09/06 08:30:50 jdolecek E
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+#include <sys/conf.h>
 #include <adosfs/adosfs.h>
 
 void adosfs_init __P((void));
@@ -102,14 +103,21 @@ adosfs_mount(mp, path, data, ndp, p)
 	int error;
 	mode_t accessmode;
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		amp = VFSTOADOSFS(mp);
+		if (amp == NULL)
+			return EIO;
+		args.uid = amp->uid;
+		args.gid = amp->gid;
+		args.mask = amp->mask;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &amp->export);
+		return copyout(&args, data, sizeof(args));
+	}
 	error = copyin(data, (caddr_t)&args, sizeof(struct adosfs_args));
 	if (error)
 		return(error);
 	
-#if 0
-	if (mp->mnt_flag & MNT_UPDATE)
-		return (EOPNOTSUPP);
-#endif
 	if ((mp->mnt_flag & MNT_RDONLY) == 0)
 		return (EROFS);
 	/*
@@ -134,7 +142,7 @@ adosfs_mount(mp, path, data, ndp, p)
 		vrele(devvp);
 		return (ENOTBLK);
 	}
-	if (major(devvp->v_rdev) >= nblkdev) {
+	if (bdevsw_lookup(devvp->v_rdev) == NULL) {
 		vrele(devvp);
 		return (ENXIO);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.1.6.4 2002/06/23 17:36:58 jdolecek Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.1.6.5 2002/10/10 18:33:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,9 +70,8 @@ STATIC int hd64461_print(void *, const char *);
 STATIC void hd64461_info(void);
 #endif
 
-struct cfattach hd64461if_ca = {
-	sizeof(struct device), hd64461_match, hd64461_attach
-};
+CFATTACH_DECL(hd64461if, sizeof(struct device),
+    hd64461_match, hd64461_attach, NULL, NULL);
 
 int
 hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -88,7 +87,7 @@ hd64461_match(struct device *parent, struct cfdata *cf, void *aux)
 		break;
 	}
 
-	if (strcmp("hd64461if", cf->cf_driver->cd_name))
+	if (strcmp("hd64461if", cf->cf_name))
 		return (0);
 
 	return (1);

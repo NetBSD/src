@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.32.2.4 2002/06/23 17:36:13 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.32.2.5 2002/10/10 18:32:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.32.2.4 2002/06/23 17:36:13 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.32.2.5 2002/10/10 18:32:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,27 +63,14 @@ extern u_int lowram;
 extern char *extiobase;
 static caddr_t devzeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int

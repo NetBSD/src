@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14.2.1 2002/06/23 17:38:51 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.2.2 2002/10/10 18:34:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>

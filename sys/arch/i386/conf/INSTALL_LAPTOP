@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.9.2.6 2002/09/06 08:36:04 jdolecek Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.9.2.7 2002/10/10 18:33:13 jdolecek Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -72,7 +72,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 
 #options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
 
@@ -186,6 +186,7 @@ config		netbsd	root on ? type ?
 #
 
 mainbus0 at root
+cpu* at mainbus?
 
 #apm0	at mainbus0			# Advanced power management
 

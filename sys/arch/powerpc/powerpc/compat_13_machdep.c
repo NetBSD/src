@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.3 2001/05/28 00:15:10 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.3.2.1 2002/10/10 18:35:22 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>  

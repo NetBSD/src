@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.1.6.2 2002/06/23 17:39:50 jdolecek Exp $	*/
+/*	$NetBSD: obio.c,v 1.1.6.3 2002/10/10 18:35:24 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,9 +59,8 @@ static void	obio_attach(struct device *, struct device *, void *);
 static int	obio_print(void *, const char *);
 static int	obio_search(struct device *, struct cfdata *, void *);
 
-struct cfattach obio_ca = {
-	sizeof(struct device), obio_match, obio_attach
-};
+CFATTACH_DECL(obio, sizeof(struct device),
+    obio_match, obio_attach, NULL, NULL);
 
 extern struct cfdriver obio_cd;
 
@@ -96,7 +95,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 		return 0;
 
 	for (; *p != NULL; p++) {
-		if (strcmp(cf->cf_driver->cd_name, *p) == 0) {
+		if (strcmp(cf->cf_name, *p) == 0) {
 			oa.oa_iot = &prep_isa_io_space_tag;
 			oa.oa_memt = &prep_isa_mem_space_tag;
 			oa.oa_iobase = cf->cf_iobase;
@@ -105,7 +104,7 @@ obio_search(struct device *parent, struct cfdata *cf, void *aux)
 			oa.oa_msize = cf->cf_msize;
 			oa.oa_irq = cf->cf_irq == 2 ? 9 : cf->cf_irq;
 
-			if ((*cf->cf_attach->ca_match)(parent, cf, &oa) > 0)
+			if (config_match(parent, cf, &oa) > 0)
 				config_attach(parent, cf, &oa, obio_print);
 		}
 	}

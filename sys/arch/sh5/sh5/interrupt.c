@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2.2.2 2002/09/06 08:40:31 jdolecek Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2.2.3 2002/10/10 18:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -107,10 +107,11 @@ static void *intr_arg;
 
 struct evcnt _sh5_intr_events[NIPL];
 static char *intr_names[NIPL] = {
-	"softmisc", "softclock", "softnet", "softserial",
-	"irq5", "irq6", "irq7", "irq8",
-	"irq9", "irq10", "irq11", "irq12",
-	"irq13", "irq14", "irq15"
+	"none",
+	"softmisc", "softclock", "softnet", "ipl4",
+	"ipl5", "ipl6", "ipl7", "ipl8",
+	"ipl9", "softserial", "ipl11", "ipl12",
+	"ipl13", "clock", "ipl15"
 };
 
 void sh5_intr_dispatch(struct intrframe *);
@@ -161,11 +162,12 @@ sh5_intr_establish(int intevt, int trigger, int level,
 	struct intrhand *ih;
 
 	KDASSERT(szintrhand != 0);
+	KDASSERT(level > 0 && level < NIPL);
 
 	ih = alloc_ih();
 	ih->ih_func = ih_func;
 	ih->ih_arg = ih_arg;
-	ih->ih_level = level << SH5_CONREG_SR_IMASK_SHIFT;
+	ih->ih_level = level;
 	ih->ih_intevt = intevt;
 	ih->ih_type = trigger;
 
@@ -195,7 +197,7 @@ sh5_intr_evcnt(void *cookie)
 {
 	struct intrhand *ih = cookie;
 
-	return (&_sh5_intr_events[ih->ih_level - 1]);
+	return (&_sh5_intr_events[ih->ih_level]);
 }
 
 void
@@ -209,8 +211,7 @@ sh5_intr_dispatch(struct intrframe *fr)
 
 	KDASSERT(ih->ih_func != NULL);
 
-	if (ih->ih_level)
-		_sh5_intr_events[ih->ih_level - 1].ev_count++;
+	_sh5_intr_events[ih->ih_level].ev_count++;
 
 	if ((ih->ih_func)(ih->ih_arg ? ih->ih_arg : (void *)fr))
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2.8.2 2002/06/23 17:36:01 jdolecek Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2.8.3 2002/10/10 18:32:31 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -132,9 +132,8 @@ static int	pcib_isa_intr_alloc(void *, int, int, int *);
 static const char *
 		pcib_isa_intr_string(void *, int);
 
-struct cfattach pcib_ca = {
-	sizeof(struct pcib_softc), pcib_match, pcib_attach
-};
+CFATTACH_DECL(pcib, sizeof(struct pcib_softc),
+    pcib_match, pcib_attach, NULL, NULL);
 
 static int
 pcib_match(struct device *parent, struct cfdata *match, void *aux)
@@ -158,7 +157,7 @@ pcib_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	if (my_sc != NULL)
-		panic("pcib_attach: already attached!\n");
+		panic("pcib_attach: already attached!");
 	my_sc = (void *)self;
 
 	/*
@@ -443,7 +442,7 @@ pcib_isa_intr_string(void *v, int irq)
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("pcib_isa_intr_string: bogus isa irq 0x%x\n", irq);
+		panic("pcib_isa_intr_string: bogus isa irq 0x%x", irq);
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
@@ -454,7 +453,7 @@ pcib_isa_intr_evcnt(void *v, int irq)
 {
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("pcib_isa_intr_evcnt: bogus isa irq 0x%x\n", irq);
+		panic("pcib_isa_intr_evcnt: bogus isa irq 0x%x", irq);
 
 	return (&my_sc->sc_intrtab[irq].intr_count);
 }

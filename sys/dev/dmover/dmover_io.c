@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.4.6.2 2002/09/06 08:44:01 jdolecek Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.4.6.3 2002/10/10 18:38:35 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.4.6.2 2002/09/06 08:44:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.4.6.3 2002/10/10 18:38:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -104,7 +104,13 @@ struct pool dmio_state_pool;
 struct pool dmio_usrreq_state_pool;
 
 void	dmoverioattach(int);
-cdev_decl(dmoverio);
+
+dev_type_open(dmoverioopen);
+
+const struct cdevsw dmoverio_cdevsw = {
+	dmoverioopen, noclose, noread, nowrite, noioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*
  * dmoverioattach:

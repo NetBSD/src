@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.1.2.1 2002/10/10 18:30:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.1 2001/06/01 16:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.1.2.1 2002/10/10 18:30:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,10 +54,8 @@ struct mcclock_mainbus_softc {
 int	mcclock_mainbus_match(struct device *, struct cfdata *, void *);
 void	mcclock_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach mcclock_mainbus_ca = {
-	sizeof (struct mcclock_mainbus_softc), mcclock_mainbus_match,
-	    mcclock_mainbus_attach, 
-};
+CFATTACH_DECL(mcclock_mainbus, sizeof(struct mcclock_mainbus_softc),
+    mcclock_mainbus_match, mcclock_mainbus_attach, NULL, NULL);
 
 void	mcclock_mainbus_write(struct mcclock_softc *, u_int, u_int);
 u_int	mcclock_mainbus_read(struct mcclock_softc *, u_int);
@@ -71,7 +69,7 @@ mcclock_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

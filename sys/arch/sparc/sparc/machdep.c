@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181.2.7 2002/09/06 08:41:13 jdolecek Exp $ */
+/*	$NetBSD: machdep.c,v 1.181.2.8 2002/10/10 18:36:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -91,7 +91,6 @@
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/extent.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/device.h>
 #include <sys/reboot.h>
@@ -99,7 +98,6 @@
 #include <sys/kernel.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
@@ -807,13 +805,16 @@ long	dumplo = 0;
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;
 
-	if (dumpdev == NODEV || bdevsw[major(dumpdev)].d_psize == 0)
-		/* No usable dump device */
+	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
-	nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 
 	dumpblks = ctod(physmem) + pmap_dumpsize();
 	if (dumpblks > (nblks - ctod(1)))
@@ -852,6 +853,7 @@ reserve_dumppages(p)
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	int psize;
 	daddr_t blkno;
 	int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
@@ -866,6 +868,9 @@ dumpsys()
 	stackdump();
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -882,14 +887,14 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
 		return;
 	}
 	blkno = dumplo;
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 
 	error = pmap_dumpmmu(dump, blkno);
 	blkno += pmap_dumpsize();

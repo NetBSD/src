@@ -1,4 +1,4 @@
-/* $NetBSD: logout.h,v 1.3 2001/03/25 05:52:38 nathanw Exp $ */
+/* $NetBSD: logout.h,v 1.3.2.1 2002/10/10 18:31:00 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -31,7 +31,7 @@
  */
 
 /*
- * Various Alpha OSF/1 PAL Logout error defintions.
+ * Various Alpha OSF/1 PAL Logout error definitions.
  */
 
 /*

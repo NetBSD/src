@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.36 2001/06/07 08:35:29 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.36.2.1 2002/10/10 18:31:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -126,6 +126,8 @@ config_console()
 {	
 	struct cfdata *cf;
 
+	config_init();
+
 	/*
 	 * we need mainbus' cfdata.
 	 */
@@ -192,6 +194,7 @@ findroot(void)
 	struct disk *dkp;
 	struct partition *pp;
 	struct device **devs;
+	const struct bdevsw *bdev;
 	int i, maj, unit;
 
 	if (boothowto & RB_ASKNAME)
@@ -214,20 +217,23 @@ findroot(void)
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
 			
-			for (maj = 0; maj < nblkdev; maj++)
-				if (bdevsw[maj].d_strategy ==
-				    dkp->dk_driver->d_strategy)
-					break;
+			maj = devsw_name2blk(genericconf[i]->cd_name, NULL, 0);
+			if (maj == -1)
+				continue;
+			bdev = bdevsw_lookup(makedev(maj, 0));
 #ifdef DIAGNOSTIC
-			if (maj >= nblkdev)
+			if (bdev == NULL)
 				panic("findroot: impossible");
 #endif
+			if (bdev == NULL ||
+			    bdev->d_strategy != dkp->dk_driver->d_strategy)
+				continue;
 
 			/* Open disk; forces read of disklabel. */
-			if ((*bdevsw[maj].d_open)(MAKEDISKDEV(maj,
+			if ((*bdev->d_open)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0))
 				continue;
-			(void)(*bdevsw[maj].d_close)(MAKEDISKDEV(maj,
+			(void)(*bdev->d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &proc0);
 			
 			pp = &dkp->dk_label->d_partitions[booted_partition];
@@ -242,9 +248,8 @@ findroot(void)
 /* 
  * mainbus driver 
  */
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mbmatch, mbattach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mbmatch, mbattach, NULL, NULL);
 
 int
 mbmatch(pdp, cfp, auxp)

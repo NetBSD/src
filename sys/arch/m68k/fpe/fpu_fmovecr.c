@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fmovecr.c,v 1.8 2000/09/22 19:47:59 is Exp $	*/
+/*	$NetBSD: fpu_fmovecr.c,v 1.8.4.1 2002/10/10 18:33:42 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -77,7 +77,7 @@ fpu_const(fp, offset)
 
 #ifdef DEBUG
     if (fp == NULL) {
-	panic("fpu_const: NULL pointer passed\n");
+	panic("fpu_const: NULL pointer passed");
     }
 #endif
     if (offset == 0) {

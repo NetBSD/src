@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.1.6.2 2002/01/10 19:47:28 thorpej Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.1.6.3 2002/10/10 18:34:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -132,9 +132,8 @@ struct smap_softc {
 STATIC int smap_match(struct device *, struct cfdata *, void *);
 STATIC void smap_attach(struct device *, struct device *, void *);
 
-struct cfattach smap_ca = {
-	sizeof (struct smap_softc), smap_match, smap_attach
-};
+CFATTACH_DECL(smap, sizeof (struct smap_softc),
+    smap_match, smap_attach, NULL, NULL);
 
 STATIC int smap_intr(void *);
 STATIC void smap_rxeof(void *);

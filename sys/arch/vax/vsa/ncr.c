@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.35 2001/04/25 17:53:26 bouyer Exp $	*/
+/*	$NetBSD: ncr.c,v 1.35.2.1 2002/10/10 18:37:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -114,9 +114,8 @@ static	void si_dma_eop(struct ncr5380_softc *);
 static	void si_dma_stop(struct ncr5380_softc *);
 static	void si_dma_go(void *);
 
-struct cfattach si_vsbus_ca = {
-	sizeof(struct si_softc), si_vsbus_match, si_vsbus_attach
-};
+CFATTACH_DECL(si_vsbus, sizeof(struct si_softc),
+    si_vsbus_match, si_vsbus_attach, NULL, NULL);
 
 static int
 si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -261,7 +260,7 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("si_dma_alloc: len=0x%x\n", xlen);
+		panic("si_dma_alloc: len=0x%x", xlen);
 
 	/*
 	 * Find free PDMA handle.  Guaranteed to find one since we

@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_sun.c,v 1.1 2001/06/14 12:57:15 fredette Exp $	*/
+/*	$NetBSD: netif_sun.c,v 1.1.2.1 2002/10/10 18:37:12 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ netif_init(aux)
 	}
 	if ((dd->rbuf == NULL) ||
 	    (dd->tbuf == NULL))
-		panic("netif_init: malloc failed\n");
+		panic("netif_init: malloc failed");
 
 #ifdef NETIF_DEBUG
 	if (debug)
@@ -314,7 +314,7 @@ netif_put(desc, pkt, len)
 
 #ifdef PARANOID
 	if (sif == NULL)
-		panic("netif_put: no saif ptr\n");
+		panic("netif_put: no saif ptr");
 #endif
 
 	/*
@@ -324,7 +324,7 @@ netif_put(desc, pkt, len)
 	 * very much data anyway, so the copy is fine.
 	 */
 	if (slen > dd->tbuf_len)
-		panic("netif_put: slen=%d\n", slen);
+		panic("netif_put: slen=%d", slen);
 	bcopy(pkt, dd->tbuf, slen);
 
 	if (slen < 60) {
@@ -406,7 +406,7 @@ break2:
 
 	/* If we went beyond our buffer, were dead! */
 	if (rlen > dd->rbuf_len)
-		panic("netif_get: rlen=%d\n", rlen);
+		panic("netif_get: rlen=%d", rlen);
 
 	/* The caller's buffer may be smaller... */
 	if (rlen > maxlen)

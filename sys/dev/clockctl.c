@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.4.2.3 2002/03/16 16:00:48 jdolecek Exp $ */
+/*      $NetBSD: clockctl.c,v 1.4.2.4 2002/10/10 18:38:18 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.4.2.3 2002/03/16 16:00:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.4.2.4 2002/10/10 18:38:18 jdolecek Exp $");
 
 #include "opt_ntp.h"
 
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.4.2.3 2002/03/16 16:00:48 jdolecek Ex
 #include <sys/ioctl.h>
 #include <sys/device.h>
 #include <sys/time.h>
+#include <sys/conf.h>
 #ifdef NTP
 #include <sys/timex.h>
 #endif /* NTP */
@@ -52,6 +53,12 @@ struct clockctl_softc {
 	struct device   clockctl_dev;
 };
 
+dev_type_ioctl(clockctlioctl);
+
+const struct cdevsw clockctl_cdevsw = {
+	nullopen, nullclose, noread, nowrite, clockctlioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void
 clockctlattach(parent, self, aux)
@@ -61,24 +68,6 @@ clockctlattach(parent, self, aux)
 {
 	/* Nothing to set up before open is called */
 	return;
-}
-
-int
-clockctlopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
-{
-	return 0; 
-}
-
-int
-clockctlclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags, fmt;
-	struct proc *p;
-{
-	return 0;
 }
 
 int
@@ -135,7 +124,6 @@ clockctlioctl(dev, cmd, data, flags, p)
 
 			error = ntp_adjtime1(&ntv, args, &args->retval);
 			return (error);
-			break;
 		}
 #endif /* NTP */
 		default:

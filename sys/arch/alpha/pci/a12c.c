@@ -1,4 +1,4 @@
-/* $NetBSD: a12c.c,v 1.8.4.2 2002/06/23 17:34:12 jdolecek Exp $ */
+/* $NetBSD: a12c.c,v 1.8.4.3 2002/10/10 18:31:04 jdolecek Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -38,7 +38,7 @@
 #include "opt_avalon_a12.h"		/* Config options headers */
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.8.4.2 2002/06/23 17:34:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.8.4.3 2002/10/10 18:31:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: a12c.c,v 1.8.4.2 2002/06/23 17:34:12 jdolecek Exp $"
 int	a12cmatch __P((struct device *, struct cfdata *, void *));
 void	a12cattach __P((struct device *, struct device *, void *));
 
-struct cfattach a12c_ca = {
-	sizeof(struct a12c_softc), a12cmatch, a12cattach,
-};
+CFATTACH_DECL(a12c, sizeof(struct a12c_softc),
+    a12cmatch, a12cattach, NULL, NULL);
 
 extern struct cfdriver a12c_cd;
 
@@ -144,7 +143,7 @@ a12cattach(parent, self, aux)
 	a12c_init(ccp, 1);
 
 	/* XXX print chipset information */
-	printf(": driver %s over logic %x\n", "$Revision: 1.8.4.2 $", 
+	printf(": driver %s over logic %x\n", "$Revision: 1.8.4.3 $", 
 		A12_ALL_EXTRACT(REGVAL(A12_VERS)));
 
 	pci_a12_pickintr(ccp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: au_icu.c,v 1.2.6.2 2002/09/06 08:37:18 jdolecek Exp $	*/
+/*	$NetBSD: au_icu.c,v 1.2.6.3 2002/10/10 18:34:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -233,9 +233,9 @@ au_intr_establish(int irq, int req, int level, int type,
 	int cpu_intr, s;
 
 	if (irq >= NIRQS)
-		panic("au_intr_establish: bogus IRQ %d\n", irq);
+		panic("au_intr_establish: bogus IRQ %d", irq);
 	if (req > 1)
-		panic("au_intr_establish: bogus request %d\n", req);
+		panic("au_intr_establish: bogus request %d", req);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)

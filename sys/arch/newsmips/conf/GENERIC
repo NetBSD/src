@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.36.2.5 2002/09/06 08:38:15 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.36.2.6 2002/10/10 18:34:33 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.36.2.5 $"
+#ident 		"GENERIC-$Revision: 1.36.2.6 $"
 
 maxusers	16
 
@@ -45,7 +45,7 @@ options 	SYSVSHM			# System V shared memory
 options 	LKM			# loadable kernel modules
 #options 	NTP			# network time protocol
 #options 	UCONSOLE		# users can redirect console (unsafe)
-#options 	USERCONF		# userconf(4) support
+options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 
 # Debugging options
@@ -106,6 +106,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 options 	NFS_BOOT_BOOTPARAM

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.3.2.1 2002/03/16 15:59:28 jdolecek Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.3.2.2 2002/10/10 18:35:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -136,8 +136,9 @@ zs_kgdb_init()
 {
 	volatile struct zschan *zc;
 	int channel, unit;
+	extern const struct cdevsw zstty_cdevsw;
 
-	if (major(kgdb_dev) != zs_major)
+	if (cdevsw_lookup(kgdb_dev) != &zstty_cdevsw)
 		return;
 
 	unit = (kgdb_dev & 2) ? 2 : 0;

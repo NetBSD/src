@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.33.4.3 2002/09/06 08:42:08 jdolecek Exp $	*/
+/*	$NetBSD: xy.c,v 1.33.4.4 2002/10/10 18:37:06 jdolecek Exp $	*/
 
 /*
  *
@@ -180,10 +180,6 @@ void	xyc_xyreset __P((struct xyc_softc *, struct xy_softc *));
 /* machine interrupt hook */
 int	xycintr __P((void *));
 
-/* bdevsw, cdevsw */
-bdev_decl(xy);
-cdev_decl(xy);
-
 /* autoconf */
 static int	xycmatch __P((struct device *, struct cfdata *, void *));
 static void	xycattach __P((struct device *, struct device *, void *));
@@ -200,18 +196,34 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  * cfattach's: device driver interface to autoconfig
  */
 
-struct cfattach xyc_ca = {
-	sizeof(struct xyc_softc), xycmatch, xycattach
-};
+CFATTACH_DECL(xyc, sizeof(struct xyc_softc),
+    xycmatch, xycattach, NULL, NULL);
 
-struct cfattach xy_ca = {
-	sizeof(struct xy_softc), xymatch, xyattach
-};
+CFATTACH_DECL(xy, sizeof(struct xy_softc),
+    xymatch, xyattach, NULL, NULL);
 
 extern struct cfdriver xy_cd;
 
 struct xyc_attach_args {	/* this is the "aux" args to xyattach */
 	int	driveno;	/* unit number */
+};
+
+dev_type_open(xyopen);
+dev_type_close(xyclose);
+dev_type_read(xyread);
+dev_type_write(xywrite);
+dev_type_ioctl(xyioctl);
+dev_type_strategy(xystrategy);
+dev_type_dump(xydump);
+dev_type_size(xysize);
+
+const struct bdevsw xy_bdevsw = {
+	xyopen, xyclose, xystrategy, xyioctl, xydump, xysize, D_DISK
+};
+
+const struct cdevsw xy_cdevsw = {
+	xyopen, xyclose, xyread, xywrite, xyioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 /*
@@ -1392,7 +1404,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	if (iopb == NULL) { /* nothing doing? */
 		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
-		panic("xyc_submit_iorq: xyc_chain failed!\n");
+		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 	iopbaddr = dvma_kvtopa(iopb, xycsc->bustype);
 

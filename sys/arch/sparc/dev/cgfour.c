@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.24.4.4 2002/06/28 08:04:21 jdolecek Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.24.4.5 2002/10/10 18:36:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -134,20 +133,25 @@ static void	cgfourunblank __P((struct device *));
 
 static int	cg4_pfour_probe __P((void *, void *));
 
-/* cdevsw prototypes */
-cdev_decl(cgfour);
-
-struct cfattach cgfour_ca = {
-	sizeof(struct cgfour_softc), cgfourmatch, cgfourattach
-};
+CFATTACH_DECL(cgfour, sizeof(struct cgfour_softc),
+    cgfourmatch, cgfourattach, NULL, NULL);
 
 extern struct cfdriver cgfour_cd;
+
+dev_type_open(cgfouropen);
+dev_type_ioctl(cgfourioctl);
+dev_type_mmap(cgfourmmap);
+
+const struct cdevsw cgfour_cdevsw = {
+	cgfouropen, nullclose, noread, nowrite, cgfourioctl,
+	nostop, notty, nopoll, cgfourmmap, nokqfilter,
+};
 
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgfourfbdriver = {
-	cgfourunblank, cgfouropen, cgfourclose, cgfourioctl, cgfourpoll,
-	cgfourmmap, cgfourkqfilter
+	cgfourunblank, cgfouropen, nullclose, cgfourioctl, nopoll,
+	cgfourmmap, nokqfilter
 };
 
 static void cgfourloadcmap __P((struct cgfour_softc *, int, int));
@@ -320,16 +324,6 @@ cgfouropen(dev, flags, mode, p)
 }
 
 int
-cgfourclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgfourioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -387,41 +381,6 @@ cgfourioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 #endif
-	return (0);
-}
-
-int
-cgfourpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgfourdetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgfour_filtops =
-	{ 1, NULL, filt_cgfourdetach, filt_seltrue };
-
-int
-cgfourkqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgfour_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

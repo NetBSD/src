@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.1.10.2 2002/06/23 17:38:07 jdolecek Exp $ */
+/* $NetBSD: sbjcn.c,v 1.1.10.3 2002/10/10 18:34:08 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -154,7 +154,6 @@ int	sbjcn_speed(long, long *);
 static int cflag2modes(tcflag_t, u_char *, u_char *);
 int	sbjcn_param(struct tty *, struct termios *);
 void	sbjcn_start(struct tty *);
-void	sbjcnstop(struct tty *, int);
 int	sbjcn_hwiflow(struct tty *, int);
 
 void	sbjcn_loadchannelregs(struct sbjcn_channel *);
@@ -169,14 +168,24 @@ int	sbjcn_init(u_long addr, int chan, int rate, tcflag_t cflag);
 int	sbjcn_common_getc(u_long addr, int chan);
 void	sbjcn_common_putc(u_long addr, int chan, int c);
 
-/* XXX: These belong elsewhere */
-cdev_decl(sbjcn);
-
 int	sbjcn_cngetc(dev_t dev);
 void	sbjcn_cnputc(dev_t dev, int c);
 void	sbjcn_cnpollc(dev_t dev, int on);
 
 extern struct cfdriver sbjcn_cd;
+
+dev_type_open(sbjcnopen);
+dev_type_close(sbjcnclose);
+dev_type_read(sbjcnread);
+dev_type_write(sbjcnwrite);
+dev_type_ioctl(sbjcnioctl);
+dev_type_stop(sbjcnstop);
+dev_type_tty(sbjcntty);
+
+const struct cdevsw sbjcn_cdevsw = {
+	sbjcnopen, sbjcnclose, sbjcnread, sbjcnwrite, sbjcnioctl,
+	sbjcnstop, sbjcntty, nopoll, nommap, ttykqfilter, D_TTY
+};
 
 #define	integrate	static inline
 integrate void sbjcn_rxsoft(struct sbjcn_channel *, struct tty *);
@@ -221,9 +230,8 @@ void	sbjcn_kgdb_putc(void *, int);
 static int	sbjcn_match(struct device *, struct cfdata *, void *);
 static void	sbjcn_attach(struct device *, struct device *, void *);
 
-const struct cfattach sbjcn_ca = {
-	sizeof(struct sbjcn_softc), sbjcn_match, sbjcn_attach,
-};
+CFATTACH_DECL(sbjcn, sizeof(struct sbjcn_softc),
+    sbjcn_match, sbjcn_attach, NULL, NULL);
 
 #define	READ_REG(rp)		(mips3_ld((uint64_t *)(rp)))
 #define	WRITE_REG(rp, val)	(mips3_sd((uint64_t *)(rp), (val)))
@@ -325,9 +333,7 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == sbjcnopen)
-				break;
+		maj = cdevsw_lookup_major(&sbjcn_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, (sc->sc_dev.dv_unit << 1) + chan);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.2.6.2 2002/06/23 17:33:42 jdolecek Exp $ */
+/* $NetBSD: pmap.h,v 1.2.6.3 2002/10/10 18:30:11 jdolecek Exp $ */
 /*-
  * Copyright (c) 1997, 1998 Ben Harris
  * All rights reserved.
@@ -53,6 +53,12 @@ extern boolean_t pmap_fault(pmap_t, vaddr_t, vm_prot_t);
 
 extern long _pmap_resident_count(pmap_t);
 extern long _pmap_wired_count(pmap_t);
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /* Save on hassle and kernel VM */
 #define PMAP_MAP_POOLPAGE(pa)	((vaddr_t)MEMC_PHYS_BASE + (pa))

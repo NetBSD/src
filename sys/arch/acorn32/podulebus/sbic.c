@@ -1,4 +1,4 @@
-/* $NetBSD: sbic.c,v 1.1.6.3 2002/03/16 15:55:28 jdolecek Exp $ */
+/* $NetBSD: sbic.c,v 1.1.6.4 2002/10/10 18:30:31 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2001 Richard Earnshaw
@@ -85,7 +85,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.1.6.3 2002/03/16 15:55:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbic.c,v 1.1.6.4 2002/10/10 18:30:31 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/callout.h>
@@ -1807,7 +1807,7 @@ sbicmsgin(struct sbic_softc *dev)
 						(SBIC_ASR_DBR | SBIC_ASR_INT)))
 						GET_SBIC_asr(regs, asr);
 					if (asr & SBIC_ASR_DBR)
-						panic("msgin: jammed again!\n");
+						panic("msgin: jammed again!");
 					GET_SBIC_csr(regs, csr);
 					CSR_TRACE('e', csr, asr, dev->target);
 					if ((csr & 0x07) != MESG_OUT_PHASE) {

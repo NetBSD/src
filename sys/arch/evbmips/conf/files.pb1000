@@ -1,14 +1,14 @@
-#	$NetBSD: files.pb1000,v 1.1.6.2 2002/09/06 08:34:21 jdolecek Exp $
+#	$NetBSD: files.pb1000,v 1.1.6.3 2002/10/10 18:32:29 jdolecek Exp $
 
 file	arch/evbmips/alchemy/pb1000_intr.c
 
 file	arch/evbmips/alchemy/autoconf.c
-file	arch/evbmips/alchemy/conf.c
-file	arch/evbmips/alchemy/disksubr.c
 file	arch/evbmips/alchemy/machdep.c
 
 file	arch/mips/mips/bus_dma.c
 file	arch/evbmips/evbmips/clock.c
+file	arch/evbmips/evbmips/conf_common.c
+file	arch/evbmips/evbmips/disksubr.c
 file	arch/evbmips/evbmips/interrupt.c
 file	arch/evbmips/evbmips/yamon.c
 
@@ -40,4 +40,3 @@ include "dev/pcmcia/files.pcmcia"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-major	{ md = 6 }

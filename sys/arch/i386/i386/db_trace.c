@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.30.2.2 2002/09/06 08:36:11 jdolecek Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.30.2.3 2002/10/10 18:33:18 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.2 2002/09/06 08:36:11 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.3 2002/10/10 18:33:18 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,25 +45,50 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.30.2.2 2002/09/06 08:36:11 jdolecek E
 /*
  * Machine register set.
  */
+
+#define dbreg(xx) (long *)offsetof(db_regs_t, tf_ ## xx)
+
+static int db_i386_regop (const struct db_variable *, db_expr_t *, int);
+
 const struct db_variable db_regs[] = {
-	{ "ds",		(long *)&ddb_regs.tf_ds,     FCN_NULL },
-	{ "es",		(long *)&ddb_regs.tf_es,     FCN_NULL },
-	{ "fs",		(long *)&ddb_regs.tf_fs,     FCN_NULL },
-	{ "gs",		(long *)&ddb_regs.tf_gs,     FCN_NULL },
-	{ "edi",	(long *)&ddb_regs.tf_edi,    FCN_NULL },
-	{ "esi",	(long *)&ddb_regs.tf_esi,    FCN_NULL },
-	{ "ebp",	(long *)&ddb_regs.tf_ebp,    FCN_NULL },
-	{ "ebx",	(long *)&ddb_regs.tf_ebx,    FCN_NULL },
-	{ "edx",	(long *)&ddb_regs.tf_edx,    FCN_NULL },
-	{ "ecx",	(long *)&ddb_regs.tf_ecx,    FCN_NULL },
-	{ "eax",	(long *)&ddb_regs.tf_eax,    FCN_NULL },
-	{ "eip",	(long *)&ddb_regs.tf_eip,    FCN_NULL },
-	{ "cs",		(long *)&ddb_regs.tf_cs,     FCN_NULL },
-	{ "eflags",	(long *)&ddb_regs.tf_eflags, FCN_NULL },
-	{ "esp",	(long *)&ddb_regs.tf_esp,    FCN_NULL },
-	{ "ss",		(long *)&ddb_regs.tf_ss,     FCN_NULL },
+	{ "ds",		dbreg(ds),     db_i386_regop },
+	{ "es",		dbreg(es),     db_i386_regop },
+	{ "fs",		dbreg(fs),     db_i386_regop },
+	{ "gs",		dbreg(gs),     db_i386_regop },
+	{ "edi",	dbreg(edi),    db_i386_regop },
+	{ "esi",	dbreg(esi),    db_i386_regop },
+	{ "ebp",	dbreg(ebp),    db_i386_regop },
+	{ "ebx",	dbreg(ebx),    db_i386_regop },
+	{ "edx",	dbreg(edx),    db_i386_regop },
+	{ "ecx",	dbreg(ecx),    db_i386_regop },
+	{ "eax",	dbreg(eax),    db_i386_regop },
+	{ "eip",	dbreg(eip),    db_i386_regop },
+	{ "cs",		dbreg(cs),     db_i386_regop },
+	{ "eflags",	dbreg(eflags), db_i386_regop },
+	{ "esp",	dbreg(esp),    db_i386_regop },
+	{ "ss",		dbreg(ss),     db_i386_regop },
 };
-const struct db_variable * const db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+const struct db_variable * const db_eregs =
+    db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
+
+static int
+db_i386_regop (const struct db_variable *vp, db_expr_t *val, int opcode)
+{
+	db_expr_t *regaddr =
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	
+	switch (opcode) {
+	case DB_VAR_GET:
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
+		break;
+	default:
+		panic("db_i386_regop: unknown op %d", opcode);
+	}
+	return 0;
+}
 
 /*
  * Stack trace.
@@ -267,6 +292,11 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			}
 		}
 		if (INKERNEL((int)frame) && name) {
+			/*
+			 * XXX traps should be based off of the Xtrap*
+			 * locations rather than on trap, since some traps
+			 * (e.g., npxdna) don't go through trap()
+			 */
 #ifdef __ELF__
 			if (!strcmp(name, "trap")) {
 				is_trap = TRAP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.35.8.1 2002/01/10 19:47:48 thorpej Exp $	*/
+/*	$NetBSD: fb.c,v 1.35.8.2 2002/10/10 18:35:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -69,7 +69,7 @@
 #include <sys/malloc.h>
 #include <sys/conf.h>
 
-#include <machine/conf.h>
+#include <dev/cons.h>
 #include <dev/sun/fbio.h>
 #include <machine/fbvar.h>
 #include <machine/pmioctl.h>
@@ -78,7 +78,6 @@
 #include <pmax/dev/qvssvar.h>
 #include <pmax/dev/rconsvar.h>
 
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #include "dc.h"
@@ -186,8 +185,6 @@ fbconnect(fi)
 		rcons_connect(fi);
 }
 
-cdev_decl(fb);                /* generic framebuffer pseudo-device */
-
 #include "fb_usrreq.c"	/* old pm-compatible driver that supports X11R5/R6 */
 
 
@@ -212,24 +209,42 @@ tb_kbdmouseconfig(fi)
 #if NDC > 0
 	case DS_PMAX:
 	case DS_3MAX:
+	    {
+		extern const struct cdevsw dc_cdevsw;
+		int maj;
+
+		maj = cdevsw_lookup_major(&dc_cdevsw);
 		fi->fi_glasstty->KBDPutc = dcPutc;
-		fi->fi_glasstty->kbddev = makedev(DCDEV, DCKBD_PORT);
+		fi->fi_glasstty->kbddev = makedev(maj, DCKBD_PORT);
 		break;
+	    }
 #endif /* NDC */
 
 #if NSCC > 0
 	case DS_3MIN:
 	case DS_3MAXPLUS:
+	    {
+		extern const struct cdevsw scc_cdevsw;
+		int maj;
+
+		maj = cdevsw_lookup_major(&scc_cdevsw);
 		fi->fi_glasstty->KBDPutc = sccPutc;
-		fi->fi_glasstty->kbddev = makedev(SCCDEV, SCCKBD_PORT);
+		fi->fi_glasstty->kbddev = makedev(maj, SCCKBD_PORT);
 		break;
+	    }
 #endif /* NSCC */
 
 #if NDTOP > 0
 	case DS_MAXINE:
+	    {
+		extern const struct cdevsw dtop_cdevsw;
+		int maj;
+
+		maj = cdevsw_lookup_major(&dtop_cdevsw);
 		fi->fi_glasstty->KBDPutc = dtopKBDPutc;
-		fi->fi_glasstty->kbddev = makedev(DTOPDEV, DTOPKBD_PORT);
+		fi->fi_glasstty->kbddev = makedev(maj, DTOPKBD_PORT);
 		break;
+	    }
 #endif	/* NDTOP */
 
 	default:

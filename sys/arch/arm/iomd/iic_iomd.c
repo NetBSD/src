@@ -1,4 +1,4 @@
-/*	$NetBSD: iic_iomd.c,v 1.2.2.2 2002/01/10 19:37:59 thorpej Exp $	*/
+/*	$NetBSD: iic_iomd.c,v 1.2.2.3 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -58,9 +58,8 @@
 static int  iic_iomd_probe  __P((struct device *, struct cfdata *, void *));
 static void iic_iomd_attach __P((struct device *, struct device *, void *));
 
-struct cfattach iic_iomd_ca = {
-	sizeof(struct iic_softc), iic_iomd_probe, iic_iomd_attach
-};
+CFATTACH_DECL(iic_iomd, sizeof(struct iic_softc),
+    iic_iomd_probe, iic_iomd_attach, NULL, NULL);
 
 /*
  * iic device probe function

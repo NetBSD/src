@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461video.c,v 1.2.4.6 2002/06/23 17:36:59 jdolecek Exp $	*/
+/*	$NetBSD: hd64461video.c,v 1.2.4.7 2002/10/10 18:33:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -137,10 +137,8 @@ STATIC void hd64461video_info(struct hd64461video_softc *);
 STATIC void hd64461video_dump(void) __attribute__((__unused__));
 #endif
 
-struct cfattach hd64461video_ca = {
-	sizeof(struct hd64461video_softc), hd64461video_match,
-	hd64461video_attach
-};
+CFATTACH_DECL(hd64461video, sizeof(struct hd64461video_softc),
+    hd64461video_match, hd64461video_attach, NULL, NULL);
 
 int hd64461video_ioctl(void *, u_long, caddr_t, int, struct proc *);
 paddr_t hd64461video_mmap(void *, off_t, int);
@@ -268,6 +266,7 @@ void
 hd64461video_cnprobe(struct consdev *cndev)
 {
 #if NWSDISPLAY > 0
+	extern const struct cdevsw wsdisplay_cdevsw;
 	int maj, unit;
 #endif
 	cndev->cn_dev = NODEV;
@@ -275,12 +274,9 @@ hd64461video_cnprobe(struct consdev *cndev)
 
 #if NWSDISPLAY > 0
 	unit = 0;
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-	}
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
 
-	if (maj != nchrdev) {
+	if (maj != -1) {
 		cndev->cn_pri = CN_INTERNAL;
 		cndev->cn_dev = makedev(maj, unit);
 	}
@@ -327,7 +323,7 @@ hd64461video_setup_hpcfbif(struct hd64461video_chip *hvc)
 
 	switch (depth) {
 	default:
-		panic("%s: not supported color depth\n", __FUNCTION__);
+		panic("%s: not supported color depth", __FUNCTION__);
 		/* NOTREACHED */
 	case 16:
 		fb->hf_class = HPCFB_CLASS_RGBCOLOR;

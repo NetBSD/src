@@ -1,4 +1,4 @@
-/*	$NetBSD: ixpsip.c,v 1.1.6.2 2002/09/06 08:32:56 jdolecek Exp $ */
+/*	$NetBSD: ixpsip.c,v 1.1.6.3 2002/10/10 18:31:54 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -53,9 +53,8 @@ static void	ixpsip_attach(struct device *, struct device *, void *);
 static int	ixpsip_search(struct device *, struct cfdata *, void *);
 static int	ixpsip_print(void *, const char *);
 
-struct cfattach ixpsip_ca = {
-	sizeof(struct ixpsip_softc), ixpsip_match, ixpsip_attach,
-};
+CFATTACH_DECL(ixpsip, sizeof(struct ixpsip_softc),
+    ixpsip_match, ixpsip_attach, NULL, NULL);
 
 extern struct bus_space ixpsip_bs_tag;
 
@@ -93,7 +92,7 @@ ixpsip_search(parent, cf, aux)
 	sa.sa_size = cf->cf_loc[IXPSIPCF_SIZE];
 	sa.sa_intr = cf->cf_loc[IXPSIPCF_INTR];
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &sa) > 0)
+	if (config_match(parent, cf, &sa) > 0)
 		config_attach(parent, cf, &sa, ixpsip_print);
 
 	return (0);

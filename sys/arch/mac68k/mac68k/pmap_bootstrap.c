@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.55 2001/05/30 15:24:32 lukem Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.55.2.1 2002/10/10 18:33:52 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -204,7 +204,7 @@ pmap_bootstrap(nextpa, firstpa)
 			printf("Older machines may need Mode32 to get that ");
 			printf("option.\n");
 		}
-		panic("Cannot work with the current memory mappings.\n");
+		panic("Cannot work with the current memory mappings.");
 	}
 
 	/*
@@ -610,7 +610,7 @@ bootstrap_mac68k(tc)
 		printf("Pmap bootstrapped.\n");
 
 	if (!vidlen)
-		panic("Don't know how to relocate video!\n");
+		panic("Don't know how to relocate video!");
 
 	if (mac68k_machine.do_graybars)
 		printf("Moving ROMBase from %p to %p.\n", oldROMBase, ROMBase);

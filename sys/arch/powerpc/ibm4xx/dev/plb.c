@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.3.4.2 2002/09/06 08:39:10 jdolecek Exp $ */
+/* $NetBSD: plb.c,v 1.3.4.3 2002/10/10 18:35:18 jdolecek Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -93,10 +93,8 @@ static void	plb_attach(struct device *, struct device *, void *);
 static int	plb_submatch(struct device *, struct cfdata *, void *);
 static int	plb_print(void *, const char *);
 
-struct cfattach plb_ca = {
-	sizeof(struct device), plb_match, plb_attach
-};
-
+CFATTACH_DECL(plb, sizeof(struct device),
+    plb_match, plb_attach, NULL, NULL);
 
 /*
  * Probe for the plb; always succeeds.
@@ -112,7 +110,7 @@ static int
 plb_submatch(struct device *parent, struct cfdata *cf, void *aux)
 {
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pvr.c,v 1.8.4.3 2002/09/06 08:33:52 jdolecek Exp $	*/
+/*	$NetBSD: pvr.c,v 1.8.4.4 2002/10/10 18:32:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.8.4.3 2002/09/06 08:33:52 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvr.c,v 1.8.4.4 2002/10/10 18:32:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,9 +188,8 @@ struct pvr_softc {
 int	pvr_match(struct device *, struct cfdata *, void *);
 void	pvr_attach(struct device *, struct device *, void *);
 
-struct cfattach pvr_ca = {
-	sizeof(struct pvr_softc), pvr_match, pvr_attach,
-};
+CFATTACH_DECL(pvr, sizeof(struct pvr_softc),
+    pvr_match, pvr_attach, NULL, NULL);
 
 void	pvr_getdevconfig(struct fb_devconfig *);
 
@@ -238,9 +237,6 @@ int	pvr_is_console;
 int
 pvr_match(struct device *parent, struct cfdata *match, void *aux)
 {
-
-	if (strcmp("pvr", match->cf_driver->cd_name) != 0)
-		return (0);
 
 	return (1);
 }
@@ -613,17 +609,15 @@ pvrcnprobe(struct consdev *cndev)
 {
 #if NWSDISPLAY > 0
 	int maj, unit;
+	extern const struct cdevsw wsdisplay_cdevsw;
 #endif
 	cndev->cn_dev = NODEV;
 	cndev->cn_pri = CN_NORMAL;
 
 #if NWSDISPLAY > 0
 	unit = 0;
-	for (maj = 0; maj < nchrdev; maj++) {
-		if (cdevsw[maj].d_open == wsdisplayopen)
-			break;
-	}
-	if (maj != nchrdev) {
+	maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
+	if (maj != -1) {
 		cndev->cn_pri = CN_INTERNAL;
 		cndev->cn_dev = makedev(maj, unit);
 	}

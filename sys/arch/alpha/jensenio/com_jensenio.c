@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.1.8.1 2001/08/03 04:10:45 lukem Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.1.8.2 2002/10/10 18:31:02 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.1.8.1 2001/08/03 04:10:45 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.1.8.2 2002/10/10 18:31:02 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +79,8 @@ int	com_jensenio_match(struct device *, struct cfdata *, void *);
 void	com_jensenio_attach(struct device *, struct device *, void *);
 void	com_jensenio_cleanup(void *);
 
-struct cfattach com_jensenio_ca = {
-	sizeof(struct com_jensenio_softc), com_jensenio_match,
-	    com_jensenio_attach
-};
+CFATTACH_DECL(com_jensenio, sizeof(struct com_jensenio_softc),
+    com_jensenio_match, com_jensenio_attach, NULL, NULL);
 
 void	com_jensenio_intr(void *, u_long);
 
@@ -92,7 +90,7 @@ com_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct jensenio_attach_args *ja = aux;
 
 	/* Always present. */
-	if (strcmp(ja->ja_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ja->ja_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

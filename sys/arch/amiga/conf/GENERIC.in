@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.in,v 1.2.4.2 2002/09/06 08:31:42 jdolecek Exp $
+# $NetBSD: GENERIC.in,v 1.2.4.3 2002/10/10 18:31:19 jdolecek Exp $
 #
 # GENERIC machine description file
 #
@@ -56,7 +56,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.2.4.2 $"
+#ident 		"GENERIC-$Revision: 1.2.4.3 $"
 
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 makeoptions	COPTS="-Os"
@@ -120,6 +120,7 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # Filesystems
 file-system 	FFS		# Berkeley fast file system
@@ -207,7 +208,7 @@ options 	UCONSOLE	# anyone can redirect a virtual console
 ')m4_dnl
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 m4_ifdef(`INSTALL_CONFIGURATION', `m4_dnl
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory

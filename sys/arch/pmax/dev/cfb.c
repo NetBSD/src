@@ -1,4 +1,4 @@
-/*	$NetBSD: cfb.c,v 1.39.2.1 2002/01/10 19:47:47 thorpej Exp $	*/
+/*	$NetBSD: cfb.c,v 1.39.2.2 2002/10/10 18:35:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -134,9 +134,8 @@ static void	cfbattach __P((struct device *, struct device *, void *));
 static int	cfbinit __P((struct fbinfo *, caddr_t, int, int));
 static int	cfb_intr __P((void *sc));
 
-struct cfattach cfb_ca = {
-	sizeof(struct fbsoftc), cfbmatch, cfbattach
-};
+CFATTACH_DECL(cfb, sizeof(struct fbsoftc),
+    cfbmatch, cfbattach, NULL, NULL);
 
 int
 cfb_cnattach(addr)

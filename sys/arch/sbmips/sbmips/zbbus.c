@@ -1,4 +1,4 @@
-/* $NetBSD: zbbus.c,v 1.1.10.2 2002/06/23 17:40:25 jdolecek Exp $ */
+/* $NetBSD: zbbus.c,v 1.1.10.3 2002/10/10 18:35:35 jdolecek Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -44,9 +44,8 @@
 static int	zbbus_match(struct device *, struct cfdata *, void *);
 static void	zbbus_attach(struct device *, struct device *, void *);
 
-struct cfattach zbbus_ca = {
-	sizeof(struct device), zbbus_match, zbbus_attach
-};
+CFATTACH_DECL(zbbus, sizeof(struct device),
+    zbbus_match, zbbus_attach, NULL, NULL);
 
 static int	zbbus_print(void *, const char *);
 static int	zbbus_submatch(struct device *, struct cfdata *, void *);
@@ -114,7 +113,7 @@ zbbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[ZBBUSCF_BUSID] != zap->za_locs.za_busid)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static const char *

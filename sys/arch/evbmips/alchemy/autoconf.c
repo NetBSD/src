@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1.6.2 2002/09/06 08:34:14 jdolecek Exp $ */
+/* $NetBSD: autoconf.c,v 1.1.6.3 2002/10/10 18:32:27 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ void
 device_register(struct device *dev, void *aux)
 {
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 	struct aubus_attach_args *aa = aux;
 
 	/*
@@ -90,7 +90,7 @@ device_register(struct device *dev, void *aux)
 	 */
 
 	/* Fetch the MAC addresses from YAMON. */
-	if (strcmp(cd->cd_name, "aumac") == 0) {
+	if (strcmp(name, "aumac") == 0) {
 		uint8_t ethaddr[ETHER_ADDR_LEN];
 		char prop_name[sizeof("0xffffffff:mac-addr") + 1];
 		const char *cp;
@@ -108,7 +108,8 @@ device_register(struct device *dev, void *aux)
 				ethaddr[i] = strtoul(cp, &cp0, 16);
 				cp = cp0 + 1;
 			}
-			if (aa->aa_addr != MAC0_BASE) {
+			if (aa->aa_addr != MAC0_BASE &&
+			    aa->aa_addr != AU1500_MAC0_BASE) {
 				/* XXX
 				 * The PROM has a variable for the MAC address
 				 * of the first interface.  For now, just add

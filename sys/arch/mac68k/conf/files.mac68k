@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.98.2.4 2002/09/06 08:36:52 jdolecek Exp $
+#	$NetBSD: files.mac68k,v 1.98.2.5 2002/10/10 18:33:44 jdolecek Exp $
 
 # mac68k-specific configuration info
 
@@ -194,16 +194,6 @@ file	dev/cninit.c
 #	These files are out of order
 file	dev/md_root.c			memory_disk_hooks
 
-major	{sd = 4}
-major	{cd = 6}
-major	{md = 13}
-
-# RAIDframe
-major	{raid = 20}
-
-#ATA disk
-major	{wd = 22}
-
 # Compatibility modules
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
@@ -223,3 +213,5 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include	"arch/mac68k/conf/majors.mac68k"

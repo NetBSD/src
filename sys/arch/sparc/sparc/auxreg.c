@@ -1,4 +1,4 @@
-/*	$NetBSD: auxreg.c,v 1.28.4.1 2002/03/16 15:59:50 jdolecek Exp $ */
+/*	$NetBSD: auxreg.c,v 1.28.4.2 2002/10/10 18:36:19 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,12 +66,11 @@ static void auxregattach_obio
 
 static void auxregattach __P((struct device *));
 
-struct cfattach auxreg_mainbus_ca = {
-	sizeof(struct device), auxregmatch_mainbus, auxregattach_mainbus
-};
-struct cfattach auxreg_obio_ca = {
-	sizeof(struct device), auxregmatch_obio, auxregattach_obio
-};
+CFATTACH_DECL(auxreg_mainbus, sizeof(struct device),
+    auxregmatch_mainbus, auxregattach_mainbus, NULL, NULL);
+
+CFATTACH_DECL(auxreg_obio, sizeof(struct device),
+    auxregmatch_obio, auxregattach_obio, NULL, NULL);
 
 #ifdef BLINK
 static struct callout blink_ch = CALLOUT_INITIALIZER;

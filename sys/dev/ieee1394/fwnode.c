@@ -1,4 +1,4 @@
-/*	$NetBSD: fwnode.c,v 1.5.4.4 2002/06/23 17:47:01 jdolecek Exp $	*/
+/*	$NetBSD: fwnode.c,v 1.5.4.5 2002/10/10 18:39:22 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.4.4 2002/06/23 17:47:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwnode.c,v 1.5.4.5 2002/10/10 18:39:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,10 +76,8 @@ int     fwnodedebug = 1;
 #define DPRINTFN(n,x)
 #endif
 
-struct cfattach fwnode_ca = {
-	sizeof(struct fwnode_softc), fwnode_match, fwnode_attach,
-	fwnode_detach
-};
+CFATTACH_DECL(fwnode, sizeof(struct fwnode_softc),
+    fwnode_match, fwnode_attach, fwnode_detach, NULL);
 
 int
 fwnode_match(struct device *parent, struct cfdata *match, void *aux)
@@ -175,7 +173,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 	}
 	
 	if (ab->ab_cbarg)
-		panic("Got an invalid abuf on callback\n");
+		panic("Got an invalid abuf on callback");
 
 	if (ab->ab_length != ab->ab_retlen) {
 		DPRINTF(("%s: config rom short read. Expected :%d, received: "
@@ -204,7 +202,7 @@ fwnode_configrom_input(struct ieee1394_abuf *ab, int rcode)
 
 #ifdef DIAGNOSTIC
 	if (ab->ab_retlen < (ab->ab_length / 4))
-		panic("Configrom shrank during iscomplete check?\n");
+		panic("Configrom shrank during iscomplete check?");
 #endif
 	
 	if (ab->ab_retlen > (ab->ab_length / 4)) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.14.2.3 2002/06/23 17:36:58 jdolecek Exp $
+#	$NetBSD: files.hpcsh,v 1.14.2.4 2002/10/10 18:33:04 jdolecek Exp $
 #
 maxpartitions 8
 
@@ -42,19 +42,14 @@ file	arch/hpcsh/hpcsh/debug.c
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 3}
-major	{st = 4}
-major	{cd = 5}
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 1}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 6}
 
 #
 # System bus types
@@ -125,3 +120,5 @@ include	"dev/wscons/files.wscons"
 #
 device	fdc {drive = -1}	# files.pcmcia requires.
 include "dev/pcmcia/files.pcmcia"
+
+include "arch/hpcsh/conf/majors.hpcsh"

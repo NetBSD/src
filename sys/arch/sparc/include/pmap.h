@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.57.2.3 2002/09/06 08:40:59 jdolecek Exp $ */
+/*	$NetBSD: pmap.h,v 1.57.2.4 2002/10/10 18:36:16 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -272,6 +272,11 @@ int		mmu_pagein __P((struct pmap *pm, vaddr_t, int));
 void		pmap_writetext __P((unsigned char *, int));
 void		pmap_globalize_boot_cpuinfo __P((struct cpu_info *));
 
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /* SUN4/SUN4C SPECIFIC DECLARATIONS */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.2.2.3 2002/06/23 17:46:15 jdolecek Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.2.2.4 2002/10/10 18:38:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.2.2.3 2002/06/23 17:46:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.2.2.4 2002/10/10 18:38:51 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -144,7 +144,19 @@ void cdtty_txsoft(struct cd18xx_softc *, struct cdtty_port *, struct tty *);
 void cdtty_stsoft(struct cd18xx_softc *, struct cdtty_port *, struct tty *);
 void cd18xx_softintr(void *);
 
-cdev_decl(cdtty);
+dev_type_open(cdttyopen);
+dev_type_close(cdttyclose);
+dev_type_read(cdttyread);
+dev_type_write(cdttywrite);
+dev_type_ioctl(cdttyioctl);
+dev_type_stop(cdttystop);
+dev_type_tty(cdttytty);
+dev_type_poll(cdttypoll);
+
+const struct cdevsw cdtty_cdevsw = {
+	cdttyopen, cdttyclose, cdttyread, cdttywrite, cdttyioctl,
+	cdttystop, cdttytty, cdttypoll, nommap, ttykqfilter, D_TTY
+};
 
 static void	cdtty_shutdown(struct cd18xx_softc *, struct cdtty_port*);
 static void	cdttystart(struct tty *);

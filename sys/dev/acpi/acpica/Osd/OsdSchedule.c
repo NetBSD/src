@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.2.2.3 2002/06/23 17:45:05 jdolecek Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.2.2.4 2002/10/10 18:38:25 jdolecek Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2.2.3 2002/06/23 17:45:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.2.2.4 2002/10/10 18:38:25 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -316,10 +316,18 @@ AcpiOsStall(UINT32 Microseconds)
 
 	ACPI_FUNCTION_TRACE(__FUNCTION__);
 
+	/*
+	 * sleep(9) isn't safe because AcpiOsStall may be called
+	 * with interrupt-disabled. (eg. by AcpiEnterSleepState)
+	 * we should watch out for long stall requests.
+	 */
+#ifdef ACPI_DEBUG
 	if (Microseconds > 1000)
-		AcpiOsSleep(0, Microseconds / 1000);
-	else
-		delay(Microseconds);
+		ACPI_DEBUG_PRINT((ACPI_DB_INFO, "long stall: %uus\n",
+		    Microseconds));
+#endif
+
+	delay(Microseconds);
 
 	return_VOID;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isapnp.c,v 1.13.22.1 2002/01/10 19:55:56 thorpej Exp $	*/
+/*	$NetBSD: wdc_isapnp.c,v 1.13.22.2 2002/10/10 18:39:59 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.13.22.1 2002/01/10 19:55:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isapnp.c,v 1.13.22.2 2002/10/10 18:39:59 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,9 +70,8 @@ struct wdc_isapnp_softc {
 int	wdc_isapnp_probe 	__P((struct device *, struct cfdata *, void *));
 void	wdc_isapnp_attach 	__P((struct device *, struct device *, void *));
 
-struct cfattach wdc_isapnp_ca = {
-	sizeof(struct wdc_isapnp_softc), wdc_isapnp_probe, wdc_isapnp_attach
-};
+CFATTACH_DECL(wdc_isapnp, sizeof(struct wdc_isapnp_softc),
+    wdc_isapnp_probe, wdc_isapnp_attach, NULL, NULL);
 
 #ifdef notyet
 static void	wdc_isapnp_dma_setup __P((struct wdc_isapnp_softc *));

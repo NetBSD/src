@@ -1,4 +1,4 @@
-/*	$NetBSD: superioreg.h,v 1.1.4.2 2002/09/06 08:34:34 jdolecek Exp $	*/
+/*	$NetBSD: superioreg.h,v 1.1.4.3 2002/10/10 18:32:33 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
 #define	SUPERIO_DEV_REG_BAR1_HI		0x62
 #define	SUPERIO_DEV_REG_BAR1_LO		0x63
 #define	SUPERIO_DEV_REG_INT0_SEL	0x70
-#define	SUPERIO_DEV_REG_INT1_SEL	0x71
+#define	SUPERIO_DEV_REG_INT1_SEL	0x72
 #define	SUPERIO_DEV_REG_DMA_SEL		0x74
 #define	SUPERIO_DEV_REG_MODE		0xf0
 #define	SUPERIO_DEV_REG_OPTION		0xf1

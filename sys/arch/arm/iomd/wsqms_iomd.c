@@ -1,4 +1,4 @@
-/*	$NetBSD: wsqms_iomd.c,v 1.2.2.3 2002/09/06 08:32:47 jdolecek Exp $	*/
+/*	$NetBSD: wsqms_iomd.c,v 1.2.2.4 2002/10/10 18:31:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Reinoud Zandijk
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.2.2.3 2002/09/06 08:32:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.2.2.4 2002/10/10 18:31:52 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -60,11 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: wsqms_iomd.c,v 1.2.2.3 2002/09/06 08:32:47 jdolecek 
 static int  wsqms_iomd_probe(struct device *, struct cfdata *, void *);
 static void wsqms_iomd_attach(struct device *, struct device *, void *);
 
-
-struct cfattach wsqms_iomd_ca = {
-	sizeof(struct wsqms_softc), wsqms_iomd_probe, wsqms_iomd_attach
-};
-
+CFATTACH_DECL(wsqms_iomd, sizeof(struct wsqms_softc),
+    wsqms_iomd_probe, wsqms_iomd_attach, NULL, NULL);
 
 static int
 wsqms_iomd_probe(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.2.2.2 2002/03/16 15:59:27 jdolecek Exp $	*/
+/*	$NetBSD: mace.c,v 1.2.2.3 2002/10/10 18:35:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -60,9 +60,8 @@ static void	mace_attach(struct device *, struct device *, void *);
 static int	mace_print(void *, const char *);
 static int	mace_search(struct device *, struct cfdata *, void *);
 
-struct cfattach mace_ca = {
-	sizeof(struct mace_softc), mace_match, mace_attach
-};
+CFATTACH_DECL(mace, sizeof(struct mace_softc),
+    mace_match, mace_attach, NULL, NULL);
 
 static int
 mace_match(parent, match, aux)
@@ -147,7 +146,7 @@ mace_search(parent, cf, aux)
 		maa.maa_sh = MIPS_PHYS_TO_KSEG1(maa.maa_offset + 0x1f000000);
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &maa) > 0) {
+		if (config_match(parent, cf, &maa) > 0) {
 			config_attach(parent, cf, &maa, mace_print);
 			tryagain = (cf->cf_fstate == FSTATE_STAR);
 		}

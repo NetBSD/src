@@ -1,4 +1,4 @@
-/*	$NetBSD: ptsc.c,v 1.2.2.3 2002/09/06 08:31:13 jdolecek Exp $	*/
+/*	$NetBSD: ptsc.c,v 1.2.2.4 2002/10/10 18:30:30 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -68,9 +68,8 @@
 void ptscattach __P((struct device *, struct device *, void *));
 int  ptscmatch  __P((struct device *, struct cfdata *, void *));
 
-struct cfattach ptsc_ca = {
-	sizeof(struct ptsc_softc), ptscmatch, ptscattach
-};
+CFATTACH_DECL(ptsc, sizeof(struct ptsc_softc),
+    ptscmatch, ptscattach, NULL, NULL);
 
 int ptsc_intr		 __P((void *arg));
 int ptsc_setup_dma	 __P((struct sfas_softc *sc, void *ptr, int len,
@@ -201,7 +200,7 @@ ptscattach(pdp, dp, auxp)
 	sc->sc_softc.sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 	    ptsc_intr, &sc->sc_softc, &sc->sc_softc.sc_intrcnt);
 	if (sc->sc_softc.sc_ih == NULL)
-	    panic("%s: Cannot install IRQ handler\n", dp->dv_xname);
+	    panic("%s: Cannot install IRQ handler", dp->dv_xname);
 #else
 	printf(" polling");
 	sc->sc_softc.sc_adapter.adapt_flags = SCSIPI_ADAPT_POLL_ONLY;

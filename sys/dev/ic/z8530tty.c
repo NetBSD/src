@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.77.2.2 2002/06/23 17:47:00 jdolecek Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.77.2.3 2002/10/10 18:39:21 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.77.2.2 2002/06/23 17:47:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.77.2.3 2002/10/10 18:39:21 jdolecek Exp $");
 
 #include "opt_kgdb.h"
 
@@ -215,16 +215,26 @@ struct zstty_softc {
 static int	zstty_match(struct device *, struct cfdata *, void *);
 static void	zstty_attach(struct device *, struct device *, void *);
 
-struct cfattach zstty_ca = {
-	sizeof(struct zstty_softc), zstty_match, zstty_attach
-};
+CFATTACH_DECL(zstty, sizeof(struct zstty_softc),
+    zstty_match, zstty_attach, NULL, NULL);
 
 extern struct cfdriver zstty_cd;
 
-struct zsops zsops_tty;
+dev_type_open(zsopen);
+dev_type_close(zsclose);
+dev_type_read(zsread);
+dev_type_write(zswrite);
+dev_type_ioctl(zsioctl);
+dev_type_stop(zsstop);
+dev_type_tty(zstty);
+dev_type_poll(zspoll);
 
-/* Routines called from other code. */
-cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
+const struct cdevsw zstty_cdevsw = {
+	zsopen, zsclose, zsread, zswrite, zsioctl,
+	zsstop, zstty, zspoll, nommap, ttykqfilter, D_TTY
+};
+
+struct zsops zsops_tty;
 
 static void zs_shutdown __P((struct zstty_softc *));
 static void	zsstart __P((struct tty *));
@@ -295,7 +305,7 @@ zstty_attach(parent, self, aux)
 	zst->zst_cs = cs;
 	zst->zst_swflags = cf->cf_flags;	/* softcar, etc. */
 	zst->zst_hwflags = args->hwflags;
-	dev = makedev(zs_major, tty_unit);
+	dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), tty_unit);
 
 	if (zst->zst_swflags)
 		printf(" flags 0x%x", zst->zst_swflags);
@@ -1222,15 +1232,17 @@ zs_modem(zst, onoff)
 	struct zstty_softc *zst;
 	int onoff;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 
 	if (cs->cs_wr5_dtr == 0)
 		return;
 
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
 	if (onoff)
-		SET(cs->cs_preg[5], cs->cs_wr5_dtr);
+		SET(ccs->cs_preg[5], cs->cs_wr5_dtr);
 	else
-		CLR(cs->cs_preg[5], cs->cs_wr5_dtr);
+		CLR(ccs->cs_preg[5], cs->cs_wr5_dtr);
 
 	if (!cs->cs_heldchange) {
 		if (zst->zst_tx_busy) {
@@ -1248,8 +1260,10 @@ tiocm_to_zs(zst, how, ttybits)
 	u_long how;
 	int ttybits;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 	u_char zsbits;
+
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
 
 	zsbits = 0;
 	if (ISSET(ttybits, TIOCM_DTR))
@@ -1259,16 +1273,16 @@ tiocm_to_zs(zst, how, ttybits)
 
 	switch (how) {
 	case TIOCMBIC:
-		CLR(cs->cs_preg[5], zsbits);
+		CLR(ccs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMBIS:
-		SET(cs->cs_preg[5], zsbits);
+		SET(ccs->cs_preg[5], zsbits);
 		break;
 
 	case TIOCMSET:
-		CLR(cs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
-		SET(cs->cs_preg[5], zsbits);
+		CLR(ccs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
+		SET(ccs->cs_preg[5], zsbits);
 		break;
 	}
 
@@ -1286,11 +1300,13 @@ static int
 zs_to_tiocm(zst)
 	struct zstty_softc *zst;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 	u_char zsbits;
 	int ttybits = 0;
 
-	zsbits = cs->cs_preg[5];
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
+	zsbits = ccs->cs_preg[5];
 	if (ISSET(zsbits, ZSWR5_DTR))
 		SET(ttybits, TIOCM_DTR);
 	if (ISSET(zsbits, ZSWR5_RTS))
@@ -1352,19 +1368,21 @@ static void
 zs_hwiflow(zst)
 	struct zstty_softc *zst;
 {
-	struct zs_chanstate *cs = zst->zst_cs;
+	struct zs_chanstate *cs = zst->zst_cs, *ccs;
 
 	if (cs->cs_wr5_rts == 0)
 		return;
 
+	ccs = (cs->cs_ctl_chan != NULL ? cs->cs_ctl_chan : cs);
+
 	if (ISSET(zst->zst_rx_flags, RX_ANY_BLOCK)) {
-		CLR(cs->cs_preg[5], cs->cs_wr5_rts);
-		CLR(cs->cs_creg[5], cs->cs_wr5_rts);
+		CLR(ccs->cs_preg[5], cs->cs_wr5_rts);
+		CLR(ccs->cs_creg[5], cs->cs_wr5_rts);
 	} else {
-		SET(cs->cs_preg[5], cs->cs_wr5_rts);
-		SET(cs->cs_creg[5], cs->cs_wr5_rts);
+		SET(ccs->cs_preg[5], cs->cs_wr5_rts);
+		SET(ccs->cs_creg[5], cs->cs_wr5_rts);
 	}
-	zs_write_reg(cs, 5, cs->cs_creg[5]);
+	zs_write_reg(ccs, 5, ccs->cs_creg[5]);
 }
 
 

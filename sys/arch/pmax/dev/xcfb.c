@@ -1,4 +1,4 @@
- /*	$NetBSD: xcfb.c,v 1.34.8.1 2002/01/10 19:47:50 thorpej Exp $	*/
+ /*	$NetBSD: xcfb.c,v 1.34.8.2 2002/10/10 18:35:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -100,8 +100,7 @@ xcfb needs dtop device
 #include <pmax/dev/ims332.h>
 #include <pmax/dev/xcfbvar.h>
 
-#include <pmax/pmax/cons.h>
-
+#include <dev/cons.h>
 #include <dev/tc/tcvar.h>
 
 
@@ -139,9 +138,8 @@ static int	xcfbmatch __P((struct device *, struct cfdata *, void *));
 static void	xcfbattach __P((struct device *, struct device *, void *));
 static int	xcfbinit __P((struct fbinfo *, caddr_t, int, int));
 
-struct cfattach xcfb_ca = {
-	sizeof(struct device), xcfbmatch, xcfbattach
-};
+CFATTACH_DECL(xcfb, sizeof(struct device),
+    xcfbmatch, xcfbattach, NULL, NULL);
 
 int
 xcfb_cnattach()

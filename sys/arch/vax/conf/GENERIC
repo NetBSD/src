@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89.2.5 2002/09/06 08:42:15 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.89.2.6 2002/10/10 18:37:15 jdolecek Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89.2.5 $"
+#ident 		"GENERIC-$Revision: 1.89.2.6 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -71,11 +71,12 @@ options 	INET6		# IPV6
 #options 	EON		# OSI tunneling over IP
 #options 	CCITT,LLC,HDLC	# X.25
 #options 	NETATALK	# AppleTalk networking protocols
-#options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
-#options 	PPP_DEFLATE	# Deflate compression support for PPP
-#options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
+options 	PPP_BSDCOMP	# BSD-Compress compression support for PPP
+options 	PPP_DEFLATE	# Deflate compression support for PPP
+options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 
 # All supported filesystem types
 file-system 	FFS
@@ -124,13 +125,15 @@ options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+options 	COMPAT_15
+options 	COMPAT_16
 #options 	COMPAT_ULTRIX
 options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Kernel(s) to compile
@@ -212,6 +215,7 @@ mtc*		at uba? csr 0174500	# Tape MSCP ctlr
 de*		at uba? csr 0174510	# DELUA/DEUNA
 qe*		at uba? csr 0174440	# DEQNA/DELQA
 dhu*		at uba? csr 0160440	# DHU-11
+#dmf*		at uba? csr 0160340	# DMF-32
 dz*		at uba? csr 0160100	# DZ-11
 dl*		at uba? csr 0176500	# DL-11
 rlc*		at uba? csr 0174400	# RL11/RLV11 controller
@@ -252,7 +256,7 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter 8		# Not supported by de yet.
 pseudo-device	ipfilter		# IP filter (firewall) and NAT
 #pseudo-device	sl	2
-#pseudo-device	ppp	2
+pseudo-device	ppp	2
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	tun	2
 #pseudo-device	gre	2		# generic L3 over IP tunnel

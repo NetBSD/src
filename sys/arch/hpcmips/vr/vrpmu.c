@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpmu.c,v 1.10.2.2 2002/02/11 20:08:15 jdolecek Exp $	*/
+/*	$NetBSD: vrpmu.c,v 1.10.2.3 2002/10/10 18:33:03 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999 M. Warner Losh.  All rights reserved.
@@ -74,9 +74,8 @@ void vrpmu_dump_intr(void *);
 void vrpmu_dump_intr2(unsigned int, unsigned int);
 void vrpmu_dump_regs(void *);
 
-struct cfattach vrpmu_ca = {
-	sizeof(struct vrpmu_softc), vrpmumatch, vrpmuattach
-};
+CFATTACH_DECL(vrpmu, sizeof(struct vrpmu_softc),
+    vrpmumatch, vrpmuattach, NULL, NULL);
 
 struct vrpmu_softc *this_pmu;
 

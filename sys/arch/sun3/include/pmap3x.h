@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.15.2.1 2001/09/13 01:14:52 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.15.2.2 2002/10/10 18:37:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,6 +69,12 @@ segsz_t pmap_count __P((pmap_t, int));
 
 /* Map a given physical region to a virtual region */
 vaddr_t pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 /*
  * Flags to tell pmap_enter `this is not to be cached', etc.

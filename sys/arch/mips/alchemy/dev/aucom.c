@@ -1,6 +1,6 @@
 #define	AU1x00_UART	/* XXX */
 
-/*	$NetBSD: aucom.c,v 1.1.6.2 2002/09/06 08:37:21 jdolecek Exp $	*/
+/*	$NetBSD: aucom.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  * XXX: hacked to work with almost 16550-alike Alchemy Au1X00 on-chip uarts
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.6.2 2002/09/06 08:37:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -142,6 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: aucom.c,v 1.1.6.2 2002/09/06 08:37:21 jdolecek Exp $
 
 #ifdef AU1x00_UART
 /* Renamed local functions (from cdev_decl) */
+#define	com_cdevsw	aucom_cdevsw
 #define	comopen		aucomopen
 #define	comclose	aucomclose
 #define	comread		aucomread
@@ -209,9 +210,6 @@ void	com_common_putc(dev_t, bus_space_tag_t, bus_space_handle_t, int);
 int	cominit(bus_space_tag_t, bus_addr_t, int, int, tcflag_t,
 				     bus_space_handle_t *);
 
-/* XXX: This belongs elsewhere */
-cdev_decl(com);
-
 int	comcngetc(dev_t);
 void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
@@ -234,6 +232,20 @@ integrate void com_schedrx(struct com_softc *);
 void	comdiag(void *);
 
 extern struct cfdriver com_cd;
+
+dev_type_open(comopen);
+dev_type_close(comclose);
+dev_type_read(comread);
+dev_type_write(comwrite);
+dev_type_ioctl(comioctl);
+dev_type_stop(comstop);
+dev_type_tty(comtty);
+dev_type_poll(compoll);
+
+const struct cdevsw com_cdevsw = {
+	comopen, comclose, comread, comwrite, comioctl,
+	comstop, comtty, compoll, nommap, ttykqfilter, D_TTY
+};
 
 /*
  * Make this an option variable one can patch.
@@ -604,9 +616,7 @@ com_attach_subr(struct com_softc *sc)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == comopen)
-				break;
+		maj = cdevsw_lookup_major(&com_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -700,9 +710,7 @@ com_detach(struct device *self, int flags)
 	int maj, mn;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == comopen)
-			break;
+	maj = cdevsw_lookup_major(&com_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;

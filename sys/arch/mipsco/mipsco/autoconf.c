@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.6 2001/03/31 00:10:03 wdk Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.6.2.1 2002/10/10 18:34:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/dkstat.h>
 #include <sys/conf.h>

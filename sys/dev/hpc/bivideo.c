@@ -1,4 +1,4 @@
-/*	$NetBSD: bivideo.c,v 1.9.2.3 2002/06/23 17:46:02 jdolecek Exp $	*/
+/*	$NetBSD: bivideo.c,v 1.9.2.4 2002/10/10 18:38:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.9.2.3 2002/06/23 17:46:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bivideo.c,v 1.9.2.4 2002/10/10 18:38:39 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -122,9 +122,9 @@ void	bivideo_set_contrast(struct bivideo_softc *, int);
 /*
  *  static variables
  */
-struct cfattach bivideo_ca = {
-	sizeof(struct bivideo_softc), bivideomatch, bivideoattach,
-};
+CFATTACH_DECL(bivideo, sizeof(struct bivideo_softc),
+    bivideomatch, bivideoattach, NULL, NULL);
+
 struct hpcfb_accessops bivideo_ha = {
 	bivideo_ioctl, bivideo_mmap
 };
@@ -141,7 +141,7 @@ bivideomatch(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
     
 	if (bivideo_dont_attach ||
-	    strcmp(ma->ma_name, match->cf_driver->cd_name))
+	    strcmp(ma->ma_name, match->cf_name))
 		return 0;
 
 	return (1);

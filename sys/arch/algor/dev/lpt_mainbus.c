@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $	*/
+/*	$NetBSD: lpt_mainbus.c,v 1.3.2.1 2002/10/10 18:30:36 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.3 2001/06/15 04:01:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_mainbus.c,v 1.3.2.1 2002/10/10 18:30:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,8 @@ struct lpt_mainbus_softc {
 int	lpt_mainbus_match(struct device *, struct cfdata *, void *);
 void	lpt_mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach lpt_mainbus_ca = {
-	sizeof(struct lpt_mainbus_softc), lpt_mainbus_match,
-	    lpt_mainbus_attach
-};
+CFATTACH_DECL(lpt_mainbus, sizeof(struct lpt_mainbus_softc),
+    lpt_mainbus_match, lpt_mainbus_attach, NULL, NULL);
 
 int
 lpt_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
@@ -83,7 +81,7 @@ lpt_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 	struct mainbus_attach_args *ma = aux;
 
 	/* Always present. */
-	if (strcmp(ma->ma_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(ma->ma_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

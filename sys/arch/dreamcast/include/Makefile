@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5.2.3 2002/09/06 08:33:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5.2.4 2002/10/10 18:32:22 jdolecek Exp $
 
 KDIR=	/sys/arch/dreamcast/include
 INCSDIR= /usr/include/dreamcast
 
 INCS=	ansi.h aout_machdep.h asm.h \
 	bswap.h bus.h \
-	cdefs.h coff_machdep.h conf.h cpu.h cputypes.h \
+	cdefs.h coff_machdep.h cpu.h cputypes.h \
 	db_machdep.h disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h \

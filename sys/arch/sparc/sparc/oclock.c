@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.1.8.2 2002/06/23 17:41:53 jdolecek Exp $ */
+/*	$NetBSD: oclock.c,v 1.1.8.3 2002/10/10 18:36:24 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,10 +67,8 @@ void establish_hostid(struct idprom *);
 static int oclockmatch(struct device *, struct cfdata *, void *);
 static void oclockattach(struct device *, struct device *, void *);
 
-struct cfattach oclock_ca = {
-	sizeof(struct device), oclockmatch, oclockattach
-};
-
+CFATTACH_DECL(oclock, sizeof(struct device),
+    oclockmatch, oclockattach, NULL, NULL);
 
 #if defined(SUN4)
 static bus_space_tag_t i7_bt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.7.2.6 2002/09/06 08:44:05 jdolecek Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.7.2.7 2002/10/10 18:38:40 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.6 2002/09/06 08:44:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.7.2.7 2002/10/10 18:38:40 jdolecek Exp $");
 
 #define FBDEBUG
 static const char _copyright[] __attribute__ ((unused)) =
@@ -53,7 +53,6 @@ static const char _copyright[] __attribute__ ((unused)) =
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/signalvar.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -203,8 +202,6 @@ static void	hpcfb_power(int, void *);
 static void	hpcfb_cmap_reorder(struct hpcfb_fbconf *,
 		    struct hpcfb_devconfig *);
 
-static int	pow(int, int);
-
 void    hpcfb_cursor(void *, int, int, int);
 int     hpcfb_mapchar(void *, int, unsigned int *);
 void    hpcfb_putchar(void *, int, int, u_int, long);
@@ -236,9 +233,8 @@ struct wsdisplay_emulops hpcfb_emulops = {
 /*
  *  static variables
  */
-struct cfattach hpcfb_ca = {
-	sizeof(struct hpcfb_softc), hpcfbmatch, hpcfbattach,
-};
+CFATTACH_DECL(hpcfb, sizeof(struct hpcfb_softc),
+    hpcfbmatch, hpcfbattach, NULL, NULL);
 
 struct wsscreen_descr hpcfb_stdscreen = {
 	"std",
@@ -284,15 +280,6 @@ struct hpcfb_tvrow hpcfb_console_tvram[HPCFB_MAX_ROW];
 /*
  *  function bodies
  */
-static int
-pow(int x, int n)
-{
-	int res = 1;
-	while (0 < n--) {
-		res *= x;
-	}
-	return (res);
-}
 
 int
 hpcfbmatch(struct device *parent, struct cfdata *match, void *aux)
@@ -317,7 +304,7 @@ hpcfbattach(struct device *parent, struct device *self, void *aux)
 		hpcfb_console_dc.dc_sc = sc;
 		printf(": %dx%d pixels, %d colors, %dx%d chars",
 		    sc->sc_dc->dc_rinfo.ri_width,sc->sc_dc->dc_rinfo.ri_height,
-		    pow(2, sc->sc_dc->dc_rinfo.ri_depth),
+		    (1 << sc->sc_dc->dc_rinfo.ri_depth),
 		    sc->sc_dc->dc_rinfo.ri_cols,sc->sc_dc->dc_rinfo.ri_rows);
 		/* Set video chip dependent CLUT if any. */
 		if (sc->sc_accessops->setclut)
@@ -727,7 +714,7 @@ hpcfb_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
 		sc->sc_accessops->setclut(sc->sc_accessctx, &dc->dc_rinfo);
 	printf("hpcfb: %dx%d pixels, %d colors, %dx%d chars\n",
 	    dc->dc_rinfo.ri_width, dc->dc_rinfo.ri_height,
-	    pow(2, dc->dc_rinfo.ri_depth),
+	    (1 << dc->dc_rinfo.ri_depth),
 	    dc->dc_rinfo.ri_cols, dc->dc_rinfo.ri_rows);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1.4.1 2002/01/10 19:48:20 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.1.4.2 2002/10/10 18:35:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ sandpoint_bus_space_init(void)
 	    EX_NOCOALESCE|EX_NOWAIT);
 	error = extent_alloc_region(ioport_ex, 0x10000, 0x7F0000, EX_NOWAIT);
 	if (error)
-		panic("sandpoint_bus_space_init: can't block out reserved I/O space 0x10000-0x7fffff: error=%d\n", error);
+		panic("sandpoint_bus_space_init: can't block out reserved I/O space 0x10000-0x7fffff: error=%d", error);
 	iomem_ex = extent_create("iomem", 0x80000000, 0xfdffffff, M_DEVBUF,
 	    (caddr_t)iomem_ex_storage, sizeof(iomem_ex_storage),
 	    EX_NOCOALESCE|EX_NOWAIT);

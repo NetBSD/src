@@ -1,4 +1,4 @@
-/*	$NetBSD: afsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $ */
+/*	$NetBSD: afsc.c,v 1.27.2.2 2002/10/10 18:31:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.27.2.1 2002/02/11 20:06:49 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: afsc.c,v 1.27.2.2 2002/10/10 18:31:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,13 +66,11 @@ void afsc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach afsc_ca = {
-	sizeof(struct siop_softc), afscmatch, afscattach
-};
+CFATTACH_DECL(afsc, sizeof(struct siop_softc),
+    afscmatch, afscattach, NULL, NULL);
 
-struct cfattach aftsc_ca = {
-	sizeof(struct siop_softc), afscmatch, afscattach
-};
+CFATTACH_DECL(aftsc, sizeof(struct siop_softc),
+    afscmatch, afscattach, NULL, NULL);
 
 /*
  * if we are a Commodore Amiga A4091 or possibly an A4000T

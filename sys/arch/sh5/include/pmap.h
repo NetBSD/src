@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.4.2.2 2002/09/06 08:40:18 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.4.2.3 2002/10/10 18:35:51 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,17 +38,7 @@
 #ifndef	_SH5_PMAP_H
 #define	_SH5_PMAP_H
 
-#include "opt_kernel_ipt.h"
-
 #include <sh5/pte.h>
-
-/*
- * Assume 512MB of KSEG1 KVA, but allow this to be over-ridden
- * if necessary.
- */
-#ifndef	KERNEL_IPT_SIZE
-#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / NBPG)
-#endif
 
 
 #if defined(_KERNEL)
@@ -64,6 +54,14 @@
 #endif
 
 #if defined(_KERNEL)
+/*
+ * Assume 512MB of KSEG1 KVA, but allow this to be over-ridden
+ * if necessary.
+ */
+#ifndef	KERNEL_IPT_SIZE
+#define	KERNEL_IPT_SIZE	(SH5_KSEG1_SIZE / NBPG)
+#endif
+
 struct pmap {
 	int pm_refs;		/* pmap reference count */
 	u_int pm_asid;		/* ASID for this pmap */
@@ -72,7 +70,10 @@ struct pmap {
 	struct pmap_statistics pm_stats;
 };
 
-#define	PMAP_ASID_RESERVED	0
+#define	PMAP_ASID_UNASSIGNED	((u_int)(-1))
+#define	PMAP_ASID_KERNEL	0
+#define	PMAP_ASID_CACHEOPS	1
+#define	PMAP_ASID_USER_START	2
 
 typedef struct pmap *pmap_t;
 
@@ -82,8 +83,8 @@ extern struct pmap kernel_pmap_store;
 #define	pmap_kernel()	(&kernel_pmap_store)
 
 extern int pmap_write_trap(int, vaddr_t);
-extern boolean_t pmap_clear_bit(struct vm_page *, int);
-extern boolean_t pmap_query_bit(struct vm_page *, int);
+extern boolean_t pmap_clear_bit(struct vm_page *, ptel_t);
+extern boolean_t pmap_query_bit(struct vm_page *, ptel_t);
 
 extern vaddr_t pmap_map_poolpage(paddr_t);
 extern paddr_t pmap_unmap_poolpage(vaddr_t);
@@ -100,10 +101,17 @@ extern paddr_t pmap_unmap_poolpage(vaddr_t);
 
 #define	pmap_phys_address(x)		(x)
 
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
+
 /* Private pmap data and functions */
 extern int	pmap_initialized;
 extern u_int	pmap_ipt_hash(vsid_t vsid, vaddr_t va);  /* See exception.S */
 extern vaddr_t	pmap_map_device(paddr_t, u_int);
+extern int	pmap_page_is_cacheable(pmap_t, vaddr_t);
 
 extern void (*__cpu_tlbinv)(pteh_t, pteh_t);
 extern void (*__cpu_tlbinv_cookie)(pteh_t, u_int);

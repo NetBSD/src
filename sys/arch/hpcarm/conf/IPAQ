@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.9.2.6 2002/09/06 08:35:24 jdolecek Exp $
+#	$NetBSD: IPAQ,v 1.9.2.7 2002/10/10 18:32:49 jdolecek Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -102,7 +102,7 @@ options 	IRQSTATS	# manage IRQ statistics
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Development and Debugging options

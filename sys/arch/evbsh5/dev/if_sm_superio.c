@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_superio.c,v 1.3.2.2 2002/09/06 08:34:33 jdolecek Exp $	*/
+/*	$NetBSD: if_sm_superio.c,v 1.3.2.3 2002/10/10 18:32:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.3.2.2 2002/09/06 08:34:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_superio.c,v 1.3.2.3 2002/10/10 18:32:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,9 +85,8 @@ struct sm_superio_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach sm_superio_ca = {
-	sizeof(struct sm_superio_softc), sm_superio_match, sm_superio_attach
-};
+CFATTACH_DECL(sm_superio, sizeof(struct sm_superio_softc),
+    sm_superio_match, sm_superio_attach, NULL, NULL);
 extern struct cfdriver sm_cd;
 
 static int
@@ -166,6 +165,9 @@ sm_superio_attach(struct device *parent, struct device *self, void *aux)
 
 	/* should always be enabled */
 	sc->sc_flags |= SMC_FLAGS_ENABLED;
+
+	/* read accesses are always 32-bits wide on Cayman ... */
+	sc->sc_flags |= SMC_FLAGS_32BIT_READ;
 
 	/* The PHY does not need to be isolated */
 	sc->sc_mii.mii_flags |= MIIF_NOISOLATE;

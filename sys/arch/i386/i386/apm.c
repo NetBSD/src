@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.60.2.7 2002/10/02 22:02:24 jdolecek Exp $ */
+/*	$NetBSD: apm.c,v 1.60.2.8 2002/10/10 18:33:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.60.2.7 2002/10/02 22:02:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.60.2.8 2002/10/10 18:33:16 jdolecek Exp $");
 
 #include "apm.h"
 #if NAPM > 1
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.60.2.7 2002/10/02 22:02:24 jdolecek Exp $"
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
@@ -176,13 +175,21 @@ static const char *apm_strerror __P((int));
 static void	apm_suspend __P((struct apm_softc *));
 static void	apm_resume __P((struct apm_softc *, struct bioscallregs *));
 
-cdev_decl(apm);
-
-struct cfattach apm_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apm, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 extern struct cfdriver apm_cd;
+
+dev_type_open(apmopen);
+dev_type_close(apmclose);
+dev_type_ioctl(apmioctl);
+dev_type_poll(apmpoll);
+dev_type_kqfilter(apmkqfilter);
+
+const struct cdevsw apm_cdevsw = {
+	apmopen, apmclose, noread, nowrite, apmioctl,
+	nostop, notty, apmpoll, nommap, apmkqfilter,
+};
 
 /* configurable variables */
 int	apm_bogus_bios = 0;
@@ -1392,13 +1399,11 @@ apmattach(parent, self, aux)
 	    apminfo.apm_code32_seg_len,
 	    apminfo.apm_data_seg_len,
 	    apmsc->sc_dev.dv_xname));
-	setsegment(&gdt[GAPM32CODE_SEL].sd,
-	    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
+	setgdt(GAPM32CODE_SEL, ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 	    apminfo.apm_code32_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 1, 0);
 #ifdef GAPM16CODE_SEL
-	setsegment(&gdt[GAPM16CODE_SEL].sd,
-	    ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
+	setgdt(GAPM16CODE_SEL, ISA_HOLE_VADDR(apminfo.apm_code16_seg_base),
 	    apminfo.apm_code16_seg_len - 1,
 	    SDT_MEMERA, SEL_KPL, 0, 0);
 #endif
@@ -1408,7 +1413,7 @@ apmattach(parent, self, aux)
 		 * descriptor to just the first byte of the code
 		 * segment, read only.
 		 */
-		setsegment(&gdt[GAPMDATA_SEL].sd,
+		setgdt(GAPMDATA_SEL,
 		    ISA_HOLE_VADDR(apminfo.apm_code32_seg_base),
 		    0, SDT_MEMROA, SEL_KPL, 0, 0);
 	} else if (apminfo.apm_data_seg_base < IOM_BEGIN) {
@@ -1431,13 +1436,11 @@ apmattach(parent, self, aux)
 		    ("mapping bios data area %x @ 0x%lx\n%s: ",
 		    apminfo.apm_data_seg_base, memh,
 		    apmsc->sc_dev.dv_xname));
-		setsegment(&gdt[GAPMDATA_SEL].sd,
-		    (void *)memh,
+		setgdt(GAPMDATA_SEL, (void *)memh,
 		    apminfo.apm_data_seg_len - 1,
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 	} else
-		setsegment(&gdt[GAPMDATA_SEL].sd,
-		    ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
+		setgdt(GAPMDATA_SEL, ISA_HOLE_VADDR(apminfo.apm_data_seg_base),
 		    apminfo.apm_data_seg_len - 1,
 		    SDT_MEMRWA, SEL_KPL, 1, 0);
 
@@ -1705,7 +1708,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 			break;
 		}
-		apm_suspend_now++;	/* flag for peroidic event */
+		apm_suspend_now++;	/* flag for periodic event */
 		break;
 
 	case APM_IOC_DEV_CTL:

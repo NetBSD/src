@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_dv.c,v 1.15.28.3 2002/06/23 17:36:07 jdolecek Exp $	*/
+/*	$NetBSD: grf_dv.c,v 1.15.28.4 2002/10/10 18:32:38 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.15.28.3 2002/06/23 17:36:07 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: grf_dv.c,v 1.15.28.4 2002/10/10 18:32:38 jdolecek Exp $");                                                  
 
 #include "opt_compat_hpux.h"
 
@@ -127,13 +127,11 @@ void	dvbox_dio_attach __P((struct device *, struct device *, void *));
 
 int	dvboxcnattach __P((bus_space_tag_t, bus_addr_t, int));
 
-struct cfattach dvbox_intio_ca = {
-	sizeof(struct grfdev_softc), dvbox_intio_match, dvbox_intio_attach
-};
+CFATTACH_DECL(dvbox_intio, sizeof(struct grfdev_softc),
+    dvbox_intio_match, dvbox_intio_attach, NULL, NULL);
 
-struct cfattach dvbox_dio_ca = {
-	sizeof(struct grfdev_softc), dvbox_dio_match, dvbox_dio_attach
-};
+CFATTACH_DECL(dvbox_dio, sizeof(struct grfdev_softc),
+    dvbox_dio_match, dvbox_dio_attach, NULL, NULL);
 
 /* DaVinci grf switch */
 struct grfsw dvbox_grfsw = {

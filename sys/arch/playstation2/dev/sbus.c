@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.1.6.2 2002/01/10 19:47:29 thorpej Exp $	*/
+/*	$NetBSD: sbus.c,v 1.1.6.3 2002/10/10 18:35:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,9 +87,8 @@ STATIC void sbus_attach(struct device *, struct device *, void *);
 STATIC int sbus_search(struct device *, struct cfdata *, void *);
 STATIC int sbus_print(void *, const char *);
 
-struct cfattach sbus_ca = {
-	sizeof (struct device), sbus_match, sbus_attach
-};
+CFATTACH_DECL(sbus, sizeof (struct device),
+    sbus_match, sbus_attach, NULL, NULL);
 
 extern struct cfdriver sbus_cd;
 STATIC int __sbus_attached;
@@ -123,7 +122,7 @@ sbus_search(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args sa;
 
-	if ((*cf->cf_attach->ca_match)(parent, cf, &sa))
+	if (config_match(parent, cf, &sa))
 		config_attach(parent, cf, &sa, sbus_print);
 	
 	return (0);
@@ -179,7 +178,7 @@ sbus_intr_establish(enum sbus_irq irq, int (*ih_func)(void *), void *ih_arg)
 {
 	switch (irq) {
 	default:
-		panic("unknown IRQ\n");
+		panic("unknown IRQ");
 		break;
 	case SBUS_IRQ_PCMCIA:
 		sbus_pcmcia_intr = ih_func;
@@ -202,7 +201,7 @@ sbus_intr_disestablish(void *handle)
 
 	switch (irq) {
 	default:
-		panic("unknown IRQ\n");
+		panic("unknown IRQ");
 		break;
 	case SBUS_IRQ_PCMCIA:
 		sbus_pcmcia_intr = sbus_spurious_intr;

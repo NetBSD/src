@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.1.4.2 2002/09/06 08:40:33 jdolecek Exp $	*/
+/*	$NetBSD: mem.c,v 1.1.4.3 2002/10/10 18:35:55 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1.4.2 2002/09/06 08:40:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.1.4.3 2002/10/10 18:35:55 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -63,31 +63,14 @@ extern vaddr_t vmmap;
 static caddr_t zeropage;
 static volatile int physlock;
 
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
+dev_type_mmap(mmmmap);
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-	switch (minor(dev)) {
-	default:
-		break;
-	}
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, mmmmap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int

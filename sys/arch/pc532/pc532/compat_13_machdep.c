@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.2 2001/01/02 19:16:35 matthias Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.2.4.1 2002/10/10 18:34:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -46,7 +46,6 @@
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/user.h>
 #include <sys/mount.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.46.10.3 2002/06/23 17:37:31 jdolecek Exp $	*/
+/*	$NetBSD: vector.s,v 1.46.10.4 2002/10/10 18:33:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -227,9 +227,6 @@
 #endif /* __ELF__ */
 
 #define	INTR(irq_num, icu, ack) \
-XRESUME_VEC(irq_num)							;\
-	cli								;\
-	jmp	1f							;\
 XRECURSE_VEC(irq_num)							;\
 	pushfl								;\
 	pushl	%cs							;\
@@ -243,12 +240,15 @@ XINTR(irq_num):								;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	testb	$IRQ_BIT(irq_num),_C_LABEL(cpl) + IRQ_BYTE(irq_num)	;\
-	jnz	XHOLD(irq_num)		/* currently masked; hold it */	;\
-1:	movl	_C_LABEL(cpl),%eax	/* cpl to restore on exit */	;\
-	pushl	%eax							;\
-	orl	_C_LABEL(intrmask) + (irq_num) * 4,%eax			;\
-	movl	%eax,_C_LABEL(cpl)	/* add in this intr's mask */	;\
+	movl	_C_LABEL(iminlevel) + (irq_num) * 4, %eax		;\
+	movzbl	CPL,%ebx		/* XXX tuneme */		;\
+	cmpl	%eax,%ebx		/* XXX tuneme */		;\
+	jae	XHOLD(irq_num)		/* currently masked; hold it */	;\
+XRESUME_VEC(irq_num)						\
+	movzbl	CPL,%eax		/* cpl to restore on exit */	;\
+	pushl	%eax			/* XXX tuneme	*/		;\
+	movl	_C_LABEL(imaxlevel) + (irq_num) * 4, %eax/* XXXtuneme */ ;\
+	movl	%eax,CPL		/* XXX tuneme		 */	;\
 	sti				/* safe to take intrs now */	;\
 	movl	_C_LABEL(intrhand) + (irq_num) * 4,%ebx	/* head of chain */ ;\
 	testl	%ebx,%ebx						;\
@@ -379,7 +379,6 @@ _C_LABEL(strayintrnames):
 	.asciz	"stray8", "stray9", "stray10", "stray11"
 	.asciz	"stray12", "stray13", "stray14", "stray15"
 _C_LABEL(eintrnames):
-
 	/* And counters */
 	.data
 #ifdef __ELF__

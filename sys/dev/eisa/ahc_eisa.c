@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.19.4.1 2002/01/10 19:53:51 thorpej Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.19.4.2 2002/10/10 18:38:36 jdolecek Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.19.4.1 2002/01/10 19:53:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.19.4.2 2002/10/10 18:38:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,9 +60,8 @@ int	ahc_eisa_match __P((struct device *, struct cfdata *, void *));
 void	ahc_eisa_attach __P((struct device *, struct device *, void *));
 
 
-struct cfattach ahc_eisa_ca = {
-	sizeof(struct ahc_softc), ahc_eisa_match, ahc_eisa_attach
-};
+CFATTACH_DECL(ahc_eisa, sizeof(struct ahc_softc),
+    ahc_eisa_match, ahc_eisa_attach, NULL, NULL);
 
 /*
  * Check the slots looking for a board we recognise
@@ -127,7 +126,7 @@ ahc_eisa_attach(parent, self, aux)
 	} else if (strcmp(ea->ea_idstring, "ADP7771") == 0) {
 		printf(": %s\n", EISA_PRODUCT_ADP7771);
 	} else {
-		panic(": Unknown device type %s\n", ea->ea_idstring);
+		panic(": Unknown device type %s", ea->ea_idstring);
 	}
 
 	if (ahc_alloc(ahc, ioh, iot, ea->ea_dmat,

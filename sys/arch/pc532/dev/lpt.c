@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.34 2001/04/13 23:30:02 thorpej Exp $	*/
+/*	$NetBSD: lpt.c,v 1.34.2.1 2002/10/10 18:34:53 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -72,9 +72,9 @@
 #include <sys/device.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
+#include <sys/conf.h>
 
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 
 #if defined(INET) && defined(PLIP)
 #include "bpfilter.h"
@@ -205,11 +205,20 @@ static
 	int	pliptransmit __P((volatile struct i8255 *, u_char *, int));
 #endif
 
-struct cfattach lpt_ca = {
-	sizeof(struct lpt_softc), lptmatch, lptattach
-};
+CFATTACH_DECL(lpt, sizeof(struct lpt_softc),
+    lptmatch, lptattach, NULL, NULL);
 
 extern struct cfdriver lpt_cd;
+
+dev_type_open(lptopen);
+dev_type_close(lptclose);
+dev_type_write(lptwrite);
+dev_type_ioctl(lptioctl);
+
+const struct cdevsw lpt_cdevsw = {
+	lptopen, lptclose, noread, lptwrite, lptioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 static int
 lptmatch(parent, cf, aux)

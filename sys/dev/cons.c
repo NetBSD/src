@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.40.2.3 2002/09/06 08:43:45 jdolecek Exp $	*/
+/*	$NetBSD: cons.c,v 1.40.2.4 2002/10/10 18:38:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.40.2.3 2002/09/06 08:43:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.40.2.4 2002/10/10 18:38:19 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +58,19 @@ __KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.40.2.3 2002/09/06 08:43:45 jdolecek Exp $
 
 #include <dev/cons.h>
 
+dev_type_open(cnopen);
+dev_type_close(cnclose);
+dev_type_read(cnread);
+dev_type_write(cnwrite);
+dev_type_ioctl(cnioctl);
+dev_type_poll(cnpoll);
+dev_type_kqfilter(cnkqfilter);
+
+const struct cdevsw cons_cdevsw = {
+	cnopen, cnclose, cnread, cnwrite, cnioctl,
+	nostop, notty, cnpoll, nommap, cnkqfilter, D_TTY
+};
+
 struct	tty *constty = NULL;	/* virtual console output device */
 struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp;	/* vnode for underlying device. */
@@ -68,6 +81,7 @@ cnopen(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	const struct cdevsw *cdev;
 	dev_t cndev;
 
 	if (cn_tab == NULL)
@@ -85,7 +99,7 @@ cnopen(dev, flag, mode, p)
 		 * code. Panicing looks better than jumping into nowhere
 		 * through cdevsw below....
 		 */
-		panic("cnopen: no console device\n");
+		panic("cnopen: no console device");
 	}
 	if (dev == cndev) {
 		/*
@@ -94,14 +108,17 @@ cnopen(dev, flag, mode, p)
 		 * dev == 0 and cn_dev has not been set, but was probably
 		 * initialised to 0.
 		 */
-		panic("cnopen: cn_tab->cn_dev == dev\n");
+		panic("cnopen: cn_tab->cn_dev == dev");
 	}
+	cdev = cdevsw_lookup(cndev);
+	if (cdev == NULL)
+		return (ENXIO);
 
 	if (cn_devvp == NULLVP) {
 		/* try to get a reference on its vnode, but fail silently */
 		cdevvp(cndev, &cn_devvp);
 	}
-	return ((*cdevsw[major(cndev)].d_open)(cndev, flag, mode, p));
+	return ((*cdev->d_open)(cndev, flag, mode, p));
 }
  
 int
@@ -110,6 +127,7 @@ cnclose(dev, flag, mode, p)
 	int flag, mode;
 	struct proc *p;
 {
+	const struct cdevsw *cdev;
 	struct vnode *vp;
 
 	if (cn_tab == NULL)
@@ -121,6 +139,9 @@ cnclose(dev, flag, mode, p)
 	 * screw up others who have it open.
 	 */
 	dev = cn_tab->cn_dev;
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
 	if (cn_devvp != NULLVP) {
 		/* release our reference to real dev's vnode */
 		vrele(cn_devvp);
@@ -128,7 +149,7 @@ cnclose(dev, flag, mode, p)
 	}
 	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
 		return (0);
-	return ((*cdevsw[major(dev)].d_close)(dev, flag, mode, p));
+	return ((*cdev->d_close)(dev, flag, mode, p));
 }
  
 int
@@ -137,6 +158,7 @@ cnread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	const struct cdevsw *cdev;
 
 	/*
 	 * If we would redirect input, punt.  This will keep strange
@@ -151,7 +173,10 @@ cnread(dev, uio, flag)
 		return ENXIO;
 
 	dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_read)(dev, uio, flag));
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_read)(dev, uio, flag));
 }
  
 int
@@ -160,6 +185,7 @@ cnwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
+	const struct cdevsw *cdev;
 
 	/*
 	 * Redirect output, if that's appropriate.
@@ -171,17 +197,12 @@ cnwrite(dev, uio, flag)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_write)(dev, uio, flag));
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_write)(dev, uio, flag));
 }
 
-void
-cnstop(tp, flag)
-	struct tty *tp;
-	int flag;
-{
-
-}
- 
 int
 cnioctl(dev, cmd, data, flag, p)
 	dev_t dev;
@@ -190,6 +211,7 @@ cnioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
+	const struct cdevsw *cdev;
 	int error;
 
 	/*
@@ -216,7 +238,10 @@ cnioctl(dev, cmd, data, flag, p)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_ioctl)(dev, cmd, data, flag, p));
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_ioctl)(dev, cmd, data, flag, p));
 }
 
 /*ARGSUSED*/
@@ -226,6 +251,7 @@ cnpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+	const struct cdevsw *cdev;
 
 	/*
 	 * Redirect the poll, if that's appropriate.
@@ -238,7 +264,10 @@ cnpoll(dev, events, p)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_poll)(dev, events, p));
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_poll)(dev, events, p));
 }
 
 /*ARGSUSED*/
@@ -247,6 +276,7 @@ cnkqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
+	const struct cdevsw *cdev;
 
 	/*
 	 * Redirect the kqfilter, if that's appropriate.
@@ -259,7 +289,10 @@ cnkqfilter(dev, kn)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
+	cdev = cdevsw_lookup(dev);
+	if (cdev == NULL)
+		return (ENXIO);
+	return ((*cdev->d_kqfilter)(dev, kn));
 }
 
 int

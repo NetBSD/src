@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.3.2.2 2002/06/23 17:33:48 jdolecek Exp $ */
+/* $NetBSD: podulebus.c,v 1.3.2.3 2002/10/10 18:30:17 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.3.2.2 2002/06/23 17:33:48 jdolecek Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.3.2.3 2002/10/10 18:30:17 jdolecek Exp $");
 
 #include <sys/device.h>
 #include <sys/malloc.h>
@@ -74,9 +74,8 @@ struct podulebus_softc {
 	struct	ioc_attach_args sc_ioc;
 };
 
-struct cfattach podulebus_ca = {
-	sizeof(struct podulebus_softc), podulebus_match, podulebus_attach
-};
+CFATTACH_DECL(podulebus, sizeof(struct podulebus_softc),
+    podulebus_match, podulebus_attach, NULL, NULL);
 
 /* ARGSUSED */
 static int
@@ -351,7 +350,7 @@ podulebus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT ||
 	    cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_slotnum)
-		return (*cf->cf_attach->ca_match)(parent, cf, aux);
+		return config_match(parent, cf, aux);
 	return 0;
 }
 

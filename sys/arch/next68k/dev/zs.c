@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.15 2001/05/30 15:24:24 lukem Exp $	*/
+/*	$NetBSD: zs.c,v 1.15.2.1 2002/10/10 18:34:39 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -75,6 +75,8 @@
 #include <machine/z8530var.h>
 
 #include <next68k/next68k/isr.h>
+
+#include <next68k/dev/intiovar.h>
 #include <next68k/dev/zs_cons.h>
 
 #include "zsc.h" 	/* NZSC */
@@ -89,7 +91,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 12;
 
 /*
  * The NeXT provides a 3.686400 MHz clock to the ZS chips.
@@ -170,9 +171,8 @@ static int  zs_print __P((void *, const char *name));
 extern int  zs_getc __P((void *arg));
 extern void zs_putc __P((void *arg, int c));
 
-struct cfattach zsc_ca = {
-	sizeof(struct zsc_softc), zs_match, zs_attach
-};
+CFATTACH_DECL(zsc, sizeof(struct zsc_softc),
+    zs_match, zs_attach, NULL, NULL);
 
 extern struct cfdriver zsc_cd;
 
@@ -192,6 +192,13 @@ zs_match(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
+	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
+
+	if (zsaddr[cf->cf_unit] == NULL)
+		return(0);
+
+	ia->ia_addr = (void *)zsaddr[cf->cf_unit];
+
 	return(1);
 }
 
@@ -222,7 +229,7 @@ zs_attach(parent, self, aux)
 	}
 
 	if (zsaddr[zs_unit] == NULL)
-		panic("zs_attach: zs%d not mapped\n", zs_unit);
+		panic("zs_attach: zs%d not mapped", zs_unit);
 
 	/*
 	 * Initialize software state for each channel.
@@ -282,7 +289,7 @@ zs_attach(parent, self, aux)
 		}
 	}
 
-	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0);
+	isrlink_autovec(zshard, NULL, NEXT_I_IPL(NEXT_I_SCC), 0, NULL);
 	INTR_ENABLE(NEXT_I_SCC);
 
 	{
@@ -656,25 +663,20 @@ void zscninit __P((struct consdev *));
 int  zscngetc __P((dev_t));
 void zscnputc __P((dev_t, int));
 void zscnprobe __P((struct consdev *));
-extern int	zsopen __P(( dev_t dev, int flags, int mode, struct proc *p));
 
 void
 zscnprobe(cp)
 	struct consdev * cp;
 {
+  extern const struct cdevsw zstty_cdevsw;
   int     maj;
-  for (maj = 0; maj < nchrdev; maj++) {
-    if (cdevsw[maj].d_open == zsopen) {
-      break;
-    }
-  }
-  if (maj != nchrdev) {
+  maj = cdevsw_lookup_major(&zstty_cdevsw);
+  if (maj != -1) {
 #ifdef SERCONSOLE
     cp->cn_pri = CN_REMOTE;
 #else
     cp->cn_pri = CN_NORMAL;		 /* Lower than CN_INTERNAL */
 #endif
-    zs_major = maj;
     zs_consunit = 0;
     zsaddr[0] = (void *)IIOV(NEXT_P_SCC);
     cp->cn_dev = makedev(maj, zs_consunit);

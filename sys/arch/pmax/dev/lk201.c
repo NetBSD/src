@@ -1,4 +1,4 @@
-/*	$NetBSD: lk201.c,v 1.19 2000/01/10 03:24:32 simonb Exp $	*/
+/*	$NetBSD: lk201.c,v 1.19.8.1 2002/10/10 18:35:03 jdolecek Exp $	*/
 
 /*
  * The LK201 keycode mapping routine is here, along with initialization
@@ -404,7 +404,7 @@ lk_getc(dev)
 
 #ifdef DIAGNOSTIC
 	if (raw_kbd_getc == NULL) {
-		panic("Reading from LK-201 before kbd driver diverted\n");
+		panic("Reading from LK-201 before kbd driver diverted");
 		return (-1);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960var.h,v 1.27 2001/05/01 16:40:03 lukem Exp $	*/
+/*	$NetBSD: mb86960var.h,v 1.27.2.1 2002/10/10 18:39:07 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -30,8 +30,6 @@
  * software, nor does the author assume any responsibility for damages
  * incurred with its use.
  */
-
-#define FE_VERSION "if_fe.c ver. 0.8"
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.1.2.4 2002/03/16 15:59:28 jdolecek Exp $	*/
+/*	$NetBSD: hpc.c,v 1.1.2.5 2002/10/10 18:35:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -117,9 +117,8 @@ int	hpc_submatch(struct device *, struct cfdata *, void *);
 
 int	hpc_power_intr(void *);
 
-struct cfattach hpc_ca = {
-	sizeof(struct hpc_softc), hpc_match, hpc_attach
-};
+CFATTACH_DECL(hpc, sizeof(struct hpc_softc),
+    hpc_match, hpc_attach, NULL, NULL);
 
 int
 hpc_match(struct device *parent, struct cfdata *cf, void *aux)
@@ -152,7 +151,7 @@ hpc_attach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		panic("hpc_attach: can't handle HPC on an IP%d\n",
+		panic("hpc_attach: can't handle HPC on an IP%d",
 		    mach_type);
 	};
 
@@ -203,7 +202,7 @@ hpc_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[HPCCF_OFFSET] != ha->ha_devoff)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

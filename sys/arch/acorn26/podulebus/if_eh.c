@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.3.2.2 2002/06/23 17:33:47 jdolecek Exp $ */
+/* $NetBSD: if_eh.c,v 1.3.2.3 2002/10/10 18:30:16 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.3.2.2 2002/06/23 17:33:47 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.3.2.3 2002/10/10 18:30:16 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -134,9 +134,8 @@ static void eh_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 static int eh_match(struct device *, struct cfdata *, void *);
 static void eh_attach(struct device *, struct device *, void *);
 
-struct cfattach eh_ca = {
-	sizeof(struct eh_softc), eh_match, eh_attach
-};
+CFATTACH_DECL(eh, sizeof(struct eh_softc),
+    eh_match, eh_attach, NULL, NULL);
 
 static int
 eh_match(struct device *parent, struct cfdata *cf, void *aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.118.2.5 2002/09/06 08:37:38 jdolecek Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.118.2.6 2002/10/10 18:34:06 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -120,7 +120,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118.2.5 2002/09/06 08:37:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118.2.6 2002/10/10 18:34:06 jdolecek Exp $");
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -133,7 +133,6 @@ __KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.118.2.5 2002/09/06 08:37:38 jdole
 #include <sys/mount.h>			/* fsid_t for syscallargs */
 #include <sys/proc.h>
 #include <sys/buf.h>
-#include <sys/clist.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
@@ -362,9 +361,11 @@ static const struct pridtab cputab[] = {
 	  CPU_MIPS_NO_LLSC | CPU_MIPS_R4K_MMU,	"Toshiba R5900 CPU"	},
 
 	{ 0, MIPS_TX4900, MIPS_REV_TX4927, -1,	CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"Toshiba TX4927 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"Toshiba TX4927 CPU"	},
 	{ 0, MIPS_TX4900, -1, -1,		CPU_ARCH_MIPS3, 48,
-	  CPU_MIPS_R4K_MMU,			"Toshiba TX4900 CPU"	},
+	  CPU_MIPS_R4K_MMU | CPU_MIPS_DOUBLE_COUNT,
+						"Toshiba TX4900 CPU"	},
 
 #if 0 /* ID collisions : can we use a CU1 test or similar? */
 	{ 0, MIPS_R3SONY, -1, -1,		CPU_ARCH_MIPS1, -1,
@@ -384,19 +385,19 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_MTI, MIPS_20Kc, -1, -1,	-1, 0,
 	  MIPS64_FLAGS,				"20Kc"			},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1000, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1000, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1000, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1000 (Rev 2 core)" 	},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1500, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1500, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1500, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1500, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1500 (Rev 2 core)" 	},
 
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, MIPS_AU1100, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV1, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 1 core)"	},
-	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, MIPS_AU1100, -1, -1, 0,
+	{ MIPS_PRID_CID_ALCHEMY, MIPS_AU_REV2, -1, MIPS_AU1100, -1, 0,
 	  MIPS32_FLAGS | CPU_MIPS_NO_WAIT,	"Au1100 (Rev 2 core)" 	},
 
 	/* The SB1 CPUs use a CCA of 5 - "Cacheable Coherent Shareable" */
@@ -780,7 +781,6 @@ mips_vector_init(void)
 		mycpu = ct;
 		cpu_arch = ct->cpu_isa;
 		mips_num_tlb_entries = ct->cpu_ntlb;
-
 		break;
 	}
 
@@ -828,9 +828,9 @@ mips_vector_init(void)
 #endif /* defined(MIPS32) || defined(MIPS64) */
 
 	if (cpu_arch < 1)
-		panic("Unknown CPU ISA for CPU type 0x%x\n", cpu_id);
+		panic("Unknown CPU ISA for CPU type 0x%x", cpu_id);
 	if (mips_num_tlb_entries < 1)
-		panic("Unknown number of TLBs for CPU type 0x%x\n", cpu_id);
+		panic("Unknown number of TLBs for CPU type 0x%x", cpu_id);
 
 	/*
 	 * Check cpu-specific flags.
@@ -1427,9 +1427,14 @@ cpu_dump(void)
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
 	int i;
 
-	dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+
+	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
@@ -1482,17 +1487,17 @@ cpu_dump(void)
 void
 cpu_dumpconf(void)
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1528,6 +1533,7 @@ dumpsys(void)
 	u_long maddr;
 	int psize;
 	daddr_t blkno;
+	const struct bdevsw *bdev;
 	int (*dump)(dev_t, daddr_t, caddr_t, size_t);
 	int error;
 
@@ -1535,6 +1541,9 @@ dumpsys(void)
 	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -1551,7 +1560,7 @@ dumpsys(void)
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1565,7 +1574,7 @@ dumpsys(void)
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 
 	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {

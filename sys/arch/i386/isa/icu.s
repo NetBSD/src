@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.64.2.1 2002/01/10 19:44:56 thorpej Exp $	*/
+/*	$NetBSD: icu.s,v 1.64.2.2 2002/10/10 18:33:31 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,8 +41,11 @@
 #include <net/netisr.h>
 
 	.data
-	.globl	_C_LABEL(imen),_C_LABEL(cpl),_C_LABEL(ipending)
-	.globl	_C_LABEL(astpending),_C_LABEL(netisr)
+	.globl	_C_LABEL(imen),_C_LABEL(ipending)
+	.globl	_C_LABEL(netisr)
+#ifndef MULTIPROCESSOR
+	.globl	_C_LABEL(astpending)
+#endif
 _C_LABEL(imen):
 	.long	0xffff		# interrupt mask enable (all off)
 
@@ -53,14 +56,14 @@ _C_LABEL(imen):
 
 	ALIGN_TEXT
 _C_LABEL(splhigh):
-	movl	$-1,%eax
-	xchgl	%eax,_C_LABEL(cpl)
+	movl	$IPL_HIGH,%eax
+	xchgl	%eax,CPL
 	ret
 
 	ALIGN_TEXT
 _C_LABEL(splx):
 	movl	4(%esp),%eax
-	movl	%eax,_C_LABEL(cpl)
+	movl	%eax,CPL
 	testl	%eax,%eax
 	jnz	_C_LABEL(Xspllower)
 	ret
@@ -78,13 +81,17 @@ IDTVEC(spllower)
 	pushl	%ebx
 	pushl	%esi
 	pushl	%edi
-	movl	_C_LABEL(cpl),%ebx	# save priority
+	movzbl	CPL,%ebx		# save priority
 	movl	$1f,%esi		# address to resume loop at
-1:	movl	%ebx,%eax
-	notl	%eax
-	andl	_C_LABEL(ipending),%eax
+1:	movl	%ebx,%eax		# get cpl
+	shrl	$4,%eax			# find its mask.
+	movl	_C_LABEL(iunmask)(,%eax,4),%eax
+	andl	_C_LABEL(ipending),%eax		# any non-masked bits left?
 	jz	2f
 	bsfl	%eax,%eax
+#ifdef MULTIPROCESSOR
+	lock
+#endif
 	btrl	%eax,_C_LABEL(ipending)
 	jnc	1b
 	jmp	*_C_LABEL(Xrecurse)(,%eax,4)
@@ -103,19 +110,23 @@ IDTVEC(spllower)
  */
 IDTVEC(doreti)
 	popl	%ebx			# get previous priority
-	movl	%ebx,_C_LABEL(cpl)
+	movl	%ebx,CPL
 	movl	$1f,%esi		# address to resume loop at
 1:	movl	%ebx,%eax
-	notl	%eax
+	shrl	$4,%eax
+	movl	_C_LABEL(iunmask)(,%eax,4),%eax
 	andl	_C_LABEL(ipending),%eax
 	jz	2f
 	bsfl    %eax,%eax               # slow, but not worth optimizing
+#ifdef MULTIPROCESSOR
+	lock
+#endif
 	btrl    %eax,_C_LABEL(ipending)
 	jnc     1b			# some intr cleared the in-memory bit
 	jmp	*_C_LABEL(Xresume)(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
+	CHECK_ASTPENDING()
 	cli
-	cmpb	$0,_C_LABEL(astpending)
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
 #ifdef VM86
@@ -123,12 +134,15 @@ IDTVEC(doreti)
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	3f
-4:	movb	$0,_C_LABEL(astpending)
+4:	CLEAR_ASTPENDING()
 	sti
+	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	call	_C_LABEL(trap)
+	cli
 	jmp	2b
-3:	INTRFASTEXIT
+3:
+	INTRFASTEXIT
 
 
 /*
@@ -136,19 +150,24 @@ IDTVEC(doreti)
  */
 
 IDTVEC(softserial)
-	movl	_C_LABEL(imask) + IPL_SOFTSERIAL * 4,%eax
-	movl	%eax,_C_LABEL(cpl)
-
+	movl	$IPL_SOFTSERIAL,CPL
+#ifdef MULTIPROCESSOR
+	call	_C_LABEL(apic_intlock)
+#endif
 	pushl	$I386_SOFTINTR_SOFTSERIAL
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-
-	movl	%ebx,_C_LABEL(cpl)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)
+#endif
+	movl	%ebx,CPL
 	jmp	*%esi
 
 IDTVEC(softnet)
-	movl	_C_LABEL(imask) + IPL_SOFTNET * 4,%eax
-	movl	%eax,_C_LABEL(cpl)
+	movl	$IPL_SOFTNET,CPL
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intlock)
+#endif
 	xorl	%edi,%edi
 	xchgl	_C_LABEL(netisr),%edi
 
@@ -159,25 +178,27 @@ IDTVEC(softnet)
 	jz	1f		;\
 	call	_C_LABEL(c)	;\
 1:
-
 #include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
+	
 	pushl	$I386_SOFTINTR_SOFTNET
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-
-	movl	%ebx,_C_LABEL(cpl)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)	
+#endif
+	movl	%ebx,CPL
 	jmp	*%esi
 
 IDTVEC(softclock)
-	movl	_C_LABEL(imask) + IPL_SOFTCLOCK * 4,%eax
-	movl	%eax,_C_LABEL(cpl)
-
+	movl	$IPL_SOFTCLOCK,CPL
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intlock)
+#endif
 	pushl	$I386_SOFTINTR_SOFTCLOCK
 	call	_C_LABEL(softintr_dispatch)
 	addl	$4,%esp
-
-	movl	%ebx,_C_LABEL(cpl)
+#ifdef MULTIPROCESSOR	
+	call	_C_LABEL(apic_intunlock)		
+#endif
+	movl	%ebx,CPL
 	jmp	*%esi

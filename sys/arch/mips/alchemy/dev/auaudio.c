@@ -1,4 +1,4 @@
-/* $NetBSD: auaudio.c,v 1.1.6.2 2002/09/06 08:37:20 jdolecek Exp $ */
+/* $NetBSD: auaudio.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -45,9 +45,8 @@
 static int	auaudio_match(struct device *, struct cfdata *, void *);
 static void	auaudio_attach(struct device *, struct device *, void *);
 
-struct cfattach auaudio_ca = {
-	sizeof (struct device), auaudio_match, auaudio_attach, 
-};
+CFATTACH_DECL(auaudio, sizeof (struct device),
+    auaudio_match, auaudio_attach, NULL, NULL);
 
 int
 auaudio_match(struct device *parent, struct cfdata *match, void *aux)
@@ -55,7 +54,7 @@ auaudio_match(struct device *parent, struct cfdata *match, void *aux)
 	struct aubus_attach_args *aa = aux;
 
 	return (0);	/* XXX unimplemented! */
-	if (strcmp(aa->aa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

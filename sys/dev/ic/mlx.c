@@ -1,4 +1,4 @@
-/*	$NetBSD: mlx.c,v 1.10.2.5 2002/09/06 08:44:27 jdolecek Exp $	*/
+/*	$NetBSD: mlx.c,v 1.10.2.6 2002/10/10 18:39:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.10.2.5 2002/09/06 08:44:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mlx.c,v 1.10.2.6 2002/10/10 18:39:07 jdolecek Exp $");
 
 #include "ld.h"
 
@@ -135,7 +135,14 @@ static int	mlx_user_command(struct mlx_softc *, struct mlx_usercommand *);
 
 static __inline__ time_t	mlx_curtime(void);
 
-cdev_decl(mlx);
+dev_type_open(mlxopen);
+dev_type_close(mlxclose);
+dev_type_ioctl(mlxioctl);
+
+const struct cdevsw mlx_cdevsw = {
+	mlxopen, mlxclose, noread, nowrite, mlxioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 extern struct	cfdriver mlx_cd; 
 static struct	proc *mlx_periodic_proc;
@@ -488,9 +495,9 @@ mlx_init(struct mlx_softc *mlx, const char *intrstr)
 	/* Set maximum number of queued commands for `regular' operations. */
 	mlx->mlx_max_queuecnt =
 	    min(ci->ci_max_commands, MLX_MAX_QUEUECNT) -
-	    MLX_NCCBS_RESERVE;
+	    MLX_NCCBS_CONTROL;
 #ifdef DIAGNOSTIC
-	if (mlx->mlx_max_queuecnt < MLX_NCCBS_RESERVE + MLX_MAX_DRIVES)
+	if (mlx->mlx_max_queuecnt < MLX_NCCBS_CONTROL + MLX_MAX_DRIVES)
 		printf("%s: WARNING: few CCBs available\n",
 		    mlx->mlx_dv.dv_xname);
 	if (ci->ci_max_sg < MLX_MAX_SEGS) {
@@ -674,7 +681,7 @@ mlx_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->mlxacf_unit != mlxa->mlxa_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*
@@ -976,7 +983,7 @@ mlx_periodic_create(void *cookie)
 	int rv;
 
 	rv = kthread_create1(mlx_periodic_thread, NULL, &mlx_periodic_proc,
-	    "mlxmonitor");
+	    "mlxtask");
 	if (rv == 0)
 		return;
 
@@ -995,7 +1002,7 @@ mlx_periodic_thread(void *cookie)
 				if (mlx->mlx_ci.ci_iftype > 1)
 					mlx_periodic(mlx);
 
-		tsleep(mlx_periodic_thread, PWAIT, "mlxzzz", hz);
+		tsleep(mlx_periodic_thread, PWAIT, "mlxzzz", hz * 2);
 	}
 }
 
@@ -1879,21 +1886,23 @@ mlx_user_command(struct mlx_softc *mlx, struct mlx_usercommand *mu)
  * Allocate and initialise a CCB.
  */
 int
-mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int special)
+mlx_ccb_alloc(struct mlx_softc *mlx, struct mlx_ccb **mcp, int control)
 {
 	struct mlx_ccb *mc;
 	int s;
 
 	s = splbio();
-	if ((!special && mlx->mlx_nccbs_free < MLX_NCCBS_RESERVE) ||
-	    SLIST_FIRST(&mlx->mlx_ccb_freelist) == NULL) {
-		splx(s);
-		*mcp = NULL;
-		return (EAGAIN);
+	if (control) {
+		if (mlx->mlx_nccbs_ctrl >= MLX_NCCBS_CONTROL) {
+			splx(s);
+			*mcp = NULL;
+			return (EAGAIN);
+		}
+		mc->mc_flags |= MC_CONTROL;
+		mlx->mlx_nccbs_ctrl++;
 	}
 	mc = SLIST_FIRST(&mlx->mlx_ccb_freelist);
 	SLIST_REMOVE_HEAD(&mlx->mlx_ccb_freelist, mc_chain.slist);
-	mlx->mlx_nccbs_free--;
 	splx(s);
 
 	*mcp = mc;
@@ -1909,9 +1918,10 @@ mlx_ccb_free(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	int s;
 
 	s = splbio();
+	if ((mc->mc_flags & MC_CONTROL) != 0)
+		mlx->mlx_nccbs_ctrl--;
 	mc->mc_flags = 0;
 	SLIST_INSERT_HEAD(&mlx->mlx_ccb_freelist, mc, mc_chain.slist);
-	mlx->mlx_nccbs_free++;
 	splx(s);
 }
 
@@ -2084,7 +2094,7 @@ mlx_ccb_submit(struct mlx_softc *mlx, struct mlx_ccb *mc)
 	int i, s, r;
 
 	/* Save the ident so we can handle this command when complete. */
-	mc->mc_mbox[1] = (u_int8_t)mc->mc_ident;
+	mc->mc_mbox[1] = (u_int8_t)(mc->mc_ident + 1);
 
 	/* Mark the command as currently being processed. */
 	mc->mc_status = MLX_STATUS_BUSY;
@@ -2148,6 +2158,7 @@ mlx_intr(void *cookie)
 
 	while ((*mlx->mlx_findcomplete)(mlx, &ident, &status) != 0) {
 		result = 1;
+		ident--;
 
 		if (ident >= MLX_MAX_QUEUECNT) {
 			printf("%s: bad completion returned\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.18 2001/05/16 05:36:54 matt Exp $ */
+/*	$NetBSD: ts.c,v 1.18.2.1 2002/10/10 18:37:19 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -125,7 +125,6 @@ int tstrace = 1;
 #include <sys/conf.h>
 #include <sys/errno.h>
 #include <sys/file.h>
-#include <sys/map.h>
 #include <sys/syslog.h>
 #include <sys/ioctl.h>
 #include <sys/mtio.h>
@@ -194,18 +193,27 @@ int	tsmatch __P((struct device *, void *, void *));
 void	tsattach __P((struct device *, struct device *, void *));
 void	tsstrategy __P((struct buf *));
 
-int	tsopen __P((dev_t, int, int, struct proc *));
-int	tsclose __P((dev_t, int, int, struct proc *));
-int	tsioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	tsread __P((dev_t, struct uio *));
-int	tswrite __P((dev_t, struct uio *));
-int	tsdump __P((dev_t, daddr_t, caddr_t, size_t));
-
-struct	cfattach ts_ca = {
-	sizeof(struct ts_softc), tsmatch, tsattach
-};
+CFATTACH_DECL(ts, sizeof(struct ts_softc),
+    tsmatch, tsattach, NULL, NULL);
 
 extern struct cfdriver ts_cd;
+
+dev_type_open(tsopen);
+dev_type_close(tsclose);
+dev_type_read(tsread);
+dev_type_write(tswrite);
+dev_type_ioctl(tsioctl);
+dev_type_strategy(tsstrategy);
+dev_type_dump(tsdump);
+
+const struct bdevsw ts_bdevsw = {
+	tsopen, tsclose, tsstrategy, tsioctl, tsdump, nosize, D_TAPE
+};
+
+const struct cdevsw ts_cdevsw = {
+	tsopen, tsclose, tsread, tswrite, tsioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_TAPE
+};
 
 #define ST_INVALID	0	/* uninitialized, before probe */
 #define ST_PROBE	1	/* during tsprobe(), not used */
@@ -1318,9 +1326,10 @@ tsioctl (dev, cmd, data, flag, p)
  * 
  */
 int
-tsread (dev, uio)
+tsread (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	return (physio (tsstrategy, NULL, dev, B_READ, minphys, uio));
 }
@@ -1329,9 +1338,10 @@ tsread (dev, uio)
  *
  */
 int
-tswrite (dev, uio)
+tswrite (dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
+	int flag;
 {
 	return (physio (tsstrategy, NULL, dev, B_WRITE, minphys, uio));
 }

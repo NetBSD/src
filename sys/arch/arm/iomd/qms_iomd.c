@@ -1,4 +1,4 @@
-/*	$NetBSD: qms_iomd.c,v 1.3.2.2 2002/01/10 19:38:15 thorpej Exp $	*/
+/*	$NetBSD: qms_iomd.c,v 1.3.2.3 2002/10/10 18:31:51 jdolecek Exp $	*/
 
 /*
  * Copyright (c) Scott Stevens 1995 All rights reserved
@@ -57,9 +57,8 @@ static int  qms_iomd_probe     __P((struct device *, struct cfdata *, void *));
 static void qms_iomd_attach    __P((struct device *, struct device *, void *));
 static void qms_iomd_intenable __P((struct qms_softc *sc, int enable));
 
-struct cfattach qms_iomd_ca = {
-	sizeof(struct qms_softc), qms_iomd_probe, qms_iomd_attach
-};
+CFATTACH_DECL(qms_iomd, sizeof(struct qms_softc),
+    qms_iomd_probe, qms_iomd_attach, NULL, NULL);
 
 static int
 qms_iomd_probe(parent, cf, aux)
@@ -110,10 +109,10 @@ qms_iomd_intenable(sc, enable)
 	if (enable) {
 		sc->sc_ih = intr_claim(sc->sc_irqnum, IPL_TTY, "qms", qmsintr, sc);
 		if (!sc->sc_ih)
-			panic("%s: Cannot claim interrupt\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot claim interrupt", sc->sc_device.dv_xname);
 	} else {
 		if (intr_release(sc->sc_ih) != 0)
-			panic("%s: Cannot release IRQ\n", sc->sc_device.dv_xname);
+			panic("%s: Cannot release IRQ", sc->sc_device.dv_xname);
 	}
 }
 

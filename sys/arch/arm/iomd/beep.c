@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.c,v 1.4.2.5 2002/09/06 08:32:42 jdolecek Exp $	*/
+/*	$NetBSD: beep.c,v 1.4.2.6 2002/10/10 18:31:50 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.4.2.5 2002/09/06 08:32:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.4.2.6 2002/10/10 18:31:50 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: beep.c,v 1.4.2.5 2002/09/06 08:32:42 jdolecek Exp $"
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/conf.h>
 #include <machine/intr.h>
 #include <arm/arm32/katelib.h>
 #include <machine/pmap.h>
@@ -84,18 +83,24 @@ struct beep_softc {
 
 int	beepprobe	(struct device *, struct cfdata *, void *);
 void	beepattach	(struct device *, struct device *, void *);
-int	beepopen	(dev_t, int, int, struct proc *);
-int	beepclose	(dev_t, int, int, struct proc *);
 int	beepintr	(void *arg);
 void	beepdma		(struct beep_softc *sc, int buf);
 
 static int sdma_channel;
 
-struct cfattach beep_ca = {
-	sizeof(struct beep_softc), beepprobe, beepattach
-};
+CFATTACH_DECL(beep, sizeof(struct beep_softc),
+    beepprobe, beepattach, NULL, NULL);
 
 extern struct cfdriver beep_cd;
+
+dev_type_open(beepopen);
+dev_type_close(beepclose);
+dev_type_ioctl(beepioctl);
+
+const struct cdevsw beep_cdevsw = {
+	beepopen, beepclose, noread, nowrite, beepioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 int
 beepprobe(struct device *parent, struct cfdata *cf, void *aux)
@@ -132,9 +137,9 @@ beepattach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_buffer0 = uvm_km_zalloc(kernel_map, NBPG);
 	if (sc->sc_buffer0 == 0) 
-		panic("beep: Cannot allocate buffer memory\n");
+		panic("beep: Cannot allocate buffer memory");
 	if ((sc->sc_buffer0 & (NBPG -1)) != 0)
-		panic("beep: Cannot allocate page aligned buffer\n");
+		panic("beep: Cannot allocate page aligned buffer");
 	sc->sc_buffer1 = sc->sc_buffer0;
 
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)sc->sc_buffer0,
@@ -161,7 +166,7 @@ beepattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih.ih_name = "dma snd ch 0";
 
 	if (irq_claim(sdma_channel, &sc->sc_ih))
-		panic("Cannot claim IRQ %d for beep%d\n",
+		panic("Cannot claim IRQ %d for beep%d",
 		    sdma_channel, parent->dv_unit);
 
 	disable_irq(sdma_channel);

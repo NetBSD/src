@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.13.16.1 2002/02/11 20:06:51 jdolecek Exp $ */
+/*	$NetBSD: com_supio.c,v 1.13.16.2 2002/10/10 18:31:22 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.13.16.1 2002/02/11 20:06:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.13.16.2 2002/10/10 18:31:22 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,9 +116,8 @@ static int comconsrate;
 static tcflag_t comconscflag;
 #endif
 
-struct cfattach com_supio_ca = {
-	sizeof(struct comsupio_softc), com_supio_match, com_supio_attach
-};
+CFATTACH_DECL(com_supio, sizeof(struct comsupio_softc),
+    com_supio_match, com_supio_attach, NULL, NULL);
 
 int
 com_supio_match(struct device *parent, struct cfdata *match, void *aux)

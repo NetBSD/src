@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_zbus.c,v 1.7.4.1 2002/02/11 20:07:00 jdolecek Exp $ */
+/*	$NetBSD: if_ne_zbus.c,v 1.7.4.2 2002/10/10 18:31:28 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.7.4.1 2002/02/11 20:07:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_zbus.c,v 1.7.4.2 2002/10/10 18:31:28 jdolecek Exp $");
 
 /*
  * Thanks to Village Tronic for giving me a card.
@@ -81,9 +81,8 @@ struct ne_zbus_softc {
 	struct isr		sc_isr;
 };
 
-struct cfattach ne_zbus_ca = {
-	sizeof(struct ne_zbus_softc), ne_zbus_match, ne_zbus_attach
-};
+CFATTACH_DECL(ne_zbus, sizeof(struct ne_zbus_softc),
+    ne_zbus_match, ne_zbus_attach, NULL, NULL);
 
 /*
  * The Amiga address are shifted by one bit to the ISA-Bus, but

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.31.2.4 2002/09/06 08:40:52 jdolecek Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.31.2.5 2002/10/10 18:36:14 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -157,13 +157,11 @@ static paddr_t	sparc_vme_dmamem_mmap __P((bus_dma_tag_t,
 
 int sparc_vme_mmap_cookie __P((vme_addr_t, vme_am_t, bus_space_handle_t *));
 
-struct cfattach vme_mainbus_ca = {
-	sizeof(struct sparcvme_softc), vmematch_mainbus, vmeattach_mainbus
-};
+CFATTACH_DECL(vme_mainbus, sizeof(struct sparcvme_softc),
+    vmematch_mainbus, vmeattach_mainbus, NULL, NULL);
 
-struct cfattach vme_iommu_ca = {
-	sizeof(struct sparcvme_softc), vmematch_iommu, vmeattach_iommu
-};
+CFATTACH_DECL(vme_iommu, sizeof(struct sparcvme_softc),
+    vmematch_iommu, vmeattach_iommu, NULL, NULL);
 
 int	(*vmeerr_handler) __P((void));
 

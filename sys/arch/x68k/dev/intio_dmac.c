@@ -1,4 +1,4 @@
-/*	$NetBSD: intio_dmac.c,v 1.11.2.2 2002/09/06 08:42:41 jdolecek Exp $	*/
+/*	$NetBSD: intio_dmac.c,v 1.11.2.3 2002/10/10 18:37:34 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -81,9 +81,8 @@ static int dmac_dump_regs __P((void));
 static int dmac_match __P((struct device *, struct cfdata *, void *));
 static void dmac_attach __P((struct device *, struct device *, void *));
 
-struct cfattach dmac_ca = {
-	sizeof(struct dmac_softc), dmac_match, dmac_attach
-};
+CFATTACH_DECL(dmac, sizeof(struct dmac_softc),
+    dmac_match, dmac_attach, NULL, NULL);
 
 static int
 dmac_match(parent, cf, aux)

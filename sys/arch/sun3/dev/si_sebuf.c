@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.13.2.1 2001/08/25 06:16:01 thorpej Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.13.2.2 2002/10/10 18:37:05 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,9 +138,8 @@ static void se_reset __P((struct ncr5380_softc *));
 static int	se_match __P((struct device *, struct cfdata *, void *));
 static void	se_attach __P((struct device *, struct device *, void *));
 
-struct cfattach si_sebuf_ca = {
-	sizeof(struct se_softc), se_match, se_attach
-};
+CFATTACH_DECL(si_sebuf, sizeof(struct se_softc),
+    se_match, se_attach, NULL, NULL);
 
 static void	se_minphys __P((struct buf *));
 
@@ -262,7 +261,7 @@ se_attach(parent, self, args)
 	sc->sc_dma = (struct se_dma_handle *)
 		malloc(i, M_DEVBUF, M_WAITOK);
 	if (sc->sc_dma == NULL)
-		panic("se: dma_malloc failed\n");
+		panic("se: dma_malloc failed");
 	for (i = 0; i < SCI_OPENINGS; i++)
 		sc->sc_dma[i].dh_flags = 0;
 
@@ -603,7 +602,7 @@ se_dma_alloc(ncr_sc)
 
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
-		panic("se_dma_alloc: xlen=0x%x\n", xlen);
+		panic("se_dma_alloc: xlen=0x%x", xlen);
 
 	/*
 	 * Never attempt single transfers of more than 63k, because

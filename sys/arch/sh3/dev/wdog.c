@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.4.6.2 2002/06/23 17:40:36 jdolecek Exp $ */
+/* $NetBSD: wdog.c,v 1.4.6.3 2002/10/10 18:35:43 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 2000 SAITOH Masanobu.  All rights reserved.
@@ -37,9 +37,9 @@
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/syslog.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/conf.h>
 #include <machine/intr.h>
 
 #include <sh3/frame.h>
@@ -56,11 +56,19 @@ static int wdogmatch(struct device *, struct cfdata *, void *);
 static void wdogattach(struct device *, struct device *, void *);
 static int wdogintr(void *);
 
-struct cfattach wdog_ca = {
-	sizeof(struct wdog_softc), wdogmatch, wdogattach
-};
+CFATTACH_DECL(wdog, sizeof(struct wdog_softc),
+    wdogmatch, wdogattach, NULL, NULL);
 
 extern struct cfdriver wdog_cd;
+
+dev_type_open(wdogopen);
+dev_type_close(wdogclose);
+dev_type_ioctl(wdogioctl);
+
+const struct cdevsw wdog_cdevsw = {
+	wdogopen, wdogclose, noread, nowrite, wdogioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void
 wdog_wr_cnt(unsigned char x)
@@ -80,7 +88,7 @@ static int
 wdogmatch(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "wdog"))
+	if (strcmp(cfp->cf_name, "wdog"))
 		return (0);
 
 	return (1);

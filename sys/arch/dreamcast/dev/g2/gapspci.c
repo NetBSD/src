@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci.c,v 1.2.6.1 2002/06/23 17:35:34 jdolecek Exp $	*/
+/*	$NetBSD: gapspci.c,v 1.2.6.2 2002/10/10 18:32:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -58,11 +58,8 @@ void	gaps_attach(struct device *, struct device *, void *);
 
 int	gaps_print(void *, const char *);
 
-struct cfattach gapspci_ca = {
-	sizeof(struct gaps_softc), 
-	gaps_match,
-	gaps_attach,
-};
+CFATTACH_DECL(gapspci, sizeof(struct gaps_softc),
+    gaps_match, gaps_attach, NULL, NULL);
 
 int
 gaps_match(struct device *parent, struct cfdata *match, void *aux)
@@ -70,9 +67,6 @@ gaps_match(struct device *parent, struct cfdata *match, void *aux)
   	struct g2bus_attach_args *ga = aux;
 	char idbuf[16];
 	bus_space_handle_t tmp_memh;
-
-	if(strcmp("gapspci", match->cf_driver->cd_name))
-		return 0;
 
 	if (bus_space_map(ga->ga_memt, 0x01001400, 0x100, 0, &tmp_memh) != 0)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.1.6.3 2002/10/02 22:02:24 jdolecek Exp $	*/
+/*	$NetBSD: apm.c,v 1.1.6.4 2002/10/10 18:33:57 jdolecek Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -114,13 +114,8 @@ static int	apm_record_event __P((struct apm_softc *, u_int));
 #endif
 #endif
 
-#ifdef __NetBSD__
-cdev_decl(apm);
-#endif
-
-struct cfattach apm_ca = {
-	sizeof(struct apm_softc), apmmatch, apmattach
-};
+CFATTACH_DECL(apm, sizeof(struct apm_softc),
+    apmmatch, apmattach, NULL, NULL);
 
 #ifdef __OpenBSD__
 struct cfdriver apm_cd = {
@@ -128,6 +123,17 @@ struct cfdriver apm_cd = {
 };
 #else
 extern struct cfdriver apm_cd;
+
+dev_type_open(apmopen);
+dev_type_close(apmclose);
+dev_type_ioctl(apmioctl);
+dev_type_poll(apmpoll);
+dev_type_kqfilter(apmkqfilter);
+
+const struct cdevsw apm_cdevsw = {
+	apmopen, apmclose, noread, nowrite, apmioctl,
+	nostop, notty, apmpoll, nommap, apmkqfilter,
+};
 #endif
 
 int	apm_evindex;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4.2.2 2002/09/06 08:40:09 jdolecek Exp $	*/
+/*	$NetBSD: cpu.h,v 1.4.2.3 2002/10/10 18:35:50 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -167,11 +167,10 @@ curcpu(void)
 #define	cpu_number()			0
 
 /*
- * Can't swapout u-area, (__SWAP_BROKEN)
- * since we use P1 converted address for trapframe.
+ * Can swapout u-area
  */
 #define	cpu_swapin(p)			/* nothing */
-#define	cpu_swapout(p)			panic("cpu_swapout: can't get here");
+#define	cpu_swapout(p)			/* nothing */
 
 /*
  * Arguments to hardclock and gatherstats encapsulate the previous
@@ -185,7 +184,7 @@ struct clockframe {
 #define	CLKF_BASEPRI(cf)   (((cf)->cf_state.sf_ssr&SH5_CONREG_SR_IMASK_ALL)==0)
 #define	CLKF_PC(cf)        ((cf)->cf_state.sf_spc)
 
-#define	CLKF_INTR(cf)      (curcpu()->ci_intr_depth > 0)
+#define	CLKF_INTR(cf)      (curcpu()->ci_intr_depth > 1)
 
 /*
  * This is used during profiling to integrate system time.  It can safely
@@ -246,6 +245,7 @@ do {									\
 
 #ifdef _KERNEL
 extern void delay(u_int);
+extern u_int _sh5_delay_constant;
 extern u_int _sh5_ctc_ticks_per_us;
 
 struct pcb;

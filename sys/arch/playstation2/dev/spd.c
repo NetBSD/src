@@ -1,4 +1,4 @@
-/*	$NetBSD: spd.c,v 1.1.6.2 2002/01/10 19:47:29 thorpej Exp $	*/
+/*	$NetBSD: spd.c,v 1.1.6.3 2002/10/10 18:35:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -66,9 +66,8 @@ STATIC struct {
 	const char *name;
 } __spd_table[2];
 
-struct cfattach spd_ca = {
-	sizeof(struct device), spd_match, spd_attach
-};
+CFATTACH_DECL(spd, sizeof(struct device),
+    spd_match, spd_attach, NULL, NULL);
 
 #ifdef DEBUG
 #define LEGAL_SLOT(slot)	((slot) >= 0 && (slot) < 2)

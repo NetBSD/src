@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.c,v 1.1.8.2 2002/03/16 16:00:48 jdolecek Exp $	*/
+/*	$NetBSD: mm.c,v 1.1.8.3 2002/10/10 18:38:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.1.8.2 2002/03/16 16:00:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.1.8.3 2002/10/10 18:38:20 jdolecek Exp $");
 
 /*
  * Memory special file
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: mm.c,v 1.1.8.2 2002/03/16 16:00:48 jdolecek Exp $");
 #include <sys/malloc.h>
 #include <sys/ioctl.h>
 #include <sys/proc.h>
+
+dev_type_ioctl(mmioctl);
 
 int
 mmioctl(dev, cmd, data, flag, p)

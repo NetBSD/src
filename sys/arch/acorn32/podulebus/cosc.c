@@ -1,4 +1,4 @@
-/*	$NetBSD: cosc.c,v 1.3.2.4 2002/09/06 08:31:11 jdolecek Exp $	*/
+/*	$NetBSD: cosc.c,v 1.3.2.5 2002/10/10 18:30:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -62,9 +62,8 @@
 void coscattach	__P((struct device *, struct device *, void *));
 int coscmatch	__P((struct device *, struct cfdata *, void *));
 
-struct cfattach cosc_ca = {
-	sizeof(struct cosc_softc), coscmatch, coscattach
-};
+CFATTACH_DECL(cosc, sizeof(struct cosc_softc),
+    coscmatch, coscattach, NULL, NULL);
 
 int cosc_intr		 __P((void *arg));
 int cosc_setup_dma	 __P((struct esc_softc *sc, void *ptr, int len,
@@ -275,7 +274,7 @@ coscattach(pdp, dp, auxp)
 		sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_BIO,
 		    cosc_intr, sc, &sc->sc_intrcnt);
 		if (sc->sc_ih == NULL)
-			panic("%s: Cannot install IRQ handler\n",
+			panic("%s: Cannot install IRQ handler",
 			    dp->dv_xname);
 	}
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh5,v 1.4.2.2 2002/09/06 08:39:53 jdolecek Exp $
+#	$NetBSD: files.sh5,v 1.4.2.3 2002/10/10 18:35:46 jdolecek Exp $
 
 
 #
@@ -85,21 +85,32 @@ file	arch/sh5/dev/scif.c				scif needs-flag
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{st = 5}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include "dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file dev/md_root.c				memory_disk_hooks
-major	{md = 17}
 
+#
+# Machine Independent I2O drivers
+#
+include "dev/i2o/files.i2o"
+
+#
+# PCIbus support
+#
+include "dev/pci/files.pci"
+
+device	sh5pci: pcibus
+attach	sh5pci at superhyway
+file	arch/sh5/pci/sh5_pci.c				sh5pci needs-flag
+
+# OSS audio driver compatibility
+include	"compat/ossaudio/files.ossaudio"
 
 # Source files
 file	arch/sh5/sh5/autoconf.c

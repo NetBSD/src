@@ -1,4 +1,4 @@
-/*	$NetBSD: auxio.c,v 1.1.10.2 2002/06/23 17:42:05 jdolecek Exp $	*/
+/*	$NetBSD: auxio.c,v 1.1.10.3 2002/10/10 18:36:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Matthew R. Green
@@ -82,12 +82,11 @@ void	auxio_ebus_attach(struct device *, struct device *, void *);
 int	auxio_sbus_match(struct device *, struct cfdata *, void *);
 void	auxio_sbus_attach(struct device *, struct device *, void *);
 
-struct cfattach auxio_ebus_ca = {
-	sizeof(struct auxio_softc), auxio_ebus_match, auxio_ebus_attach
-};
-struct cfattach auxio_sbus_ca = {
-	sizeof(struct auxio_softc), auxio_sbus_match, auxio_sbus_attach
-};
+CFATTACH_DECL(auxio_ebus, sizeof(struct auxio_softc),
+    auxio_ebus_match, auxio_ebus_attach, NULL, NULL);
+
+CFATTACH_DECL(auxio_sbus, sizeof(struct auxio_softc),
+    auxio_sbus_match, auxio_sbus_attach, NULL, NULL);
 
 #ifdef BLINK
 static struct callout blink_ch = CALLOUT_INITIALIZER;

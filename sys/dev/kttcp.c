@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.4.6.2 2002/09/06 08:43:46 jdolecek Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.4.6.3 2002/10/10 18:38:19 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -91,28 +91,17 @@ static int kttcp_soreceive(struct socket *, unsigned long long,
 
 void	kttcpattach(int);
 
-cdev_decl(kttcp);
+dev_type_ioctl(kttcpioctl);
+
+const struct cdevsw kttcp_cdevsw = {
+	nullopen, nullclose, noread, nowrite, kttcpioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 void
 kttcpattach(int count)
 {
 	/* Do nothing. */
-}
-
-int
-kttcpopen(dev_t dev, int flags, int fmt, struct proc *p)
-{
-
-	/* Always succeeds. */
-	return (0);
-}
-
-int
-kttcpclose(dev_t dev, int flags, int fmt, struct proc *p)
-{
-
-	/* Always succeeds. */
-	return (0);
 }
 
 int

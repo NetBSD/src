@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.h,v 1.5 1995/05/05 22:08:43 mycroft Exp $	*/
+/*	$NetBSD: nvram.h,v 1.5.48.1 2002/10/10 18:33:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -53,6 +53,7 @@
 
 #define	NVRAM_RESET_RST		0x00		/* normal reset */
 #define	NVRAM_RESET_LOAD 	0x04		/* load system */
+#define NVRAM_RESET_JUMP	0x0a		/* jump through 40:67 */
 
 /* NVRAM byte 2: diskette drive type in upper/lower nibble */
 #define NVRAM_DISKETTE	(MC_NVRAM_START + 2)	/* RTC offset 0x10 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.14.2.1 2002/01/10 19:55:27 thorpej Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.14.2.2 2002/10/10 18:39:35 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.14.2.1 2002/01/10 19:55:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.14.2.2 2002/10/10 18:39:35 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,9 +96,8 @@ struct ec_softc {
 int	ec_probe __P((struct device *, struct cfdata *, void *));
 void	ec_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ec_ca = {
-	sizeof(struct ec_softc), ec_probe, ec_attach
-};
+CFATTACH_DECL(ec, sizeof(struct ec_softc),
+    ec_probe, ec_attach, NULL, NULL);
 
 int	ec_set_media __P((struct ec_softc *, int));
 

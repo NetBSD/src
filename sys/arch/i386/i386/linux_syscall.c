@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.16.2.3 2002/09/06 08:36:14 jdolecek Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.16.2.4 2002/10/10 18:33:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.16.2.3 2002/09/06 08:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.16.2.4 2002/10/10 18:33:20 jdolecek Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -148,7 +148,11 @@ linux_syscall_plain(frame)
 #endif /* SYSCALL_DEBUG */
 	rval[0] = 0;
 	rval[1] = 0;
+
+	KERNEL_PROC_LOCK(p);
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];
@@ -227,6 +231,7 @@ linux_syscall_fancy(frame)
 			break;
 		}
 	}
+	KERNEL_PROC_LOCK(p);
 
 	if ((error = trace_enter(p, code, args, rval)) != 0)
 		goto bad;
@@ -234,6 +239,8 @@ linux_syscall_fancy(frame)
 	rval[0] = 0;
 	rval[1] = 0;
 	error = (*callp->sy_call)(p, args, rval);
+	KERNEL_PROC_UNLOCK(p);
+
 	switch (error) {
 	case 0:
 		frame.tf_eax = rval[0];

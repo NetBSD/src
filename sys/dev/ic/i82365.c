@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.62.4.2 2002/06/23 17:46:25 jdolecek Exp $	*/
+/*	$NetBSD: i82365.c,v 1.62.4.3 2002/10/10 18:38:58 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.4.2 2002/06/23 17:46:25 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365.c,v 1.62.4.3 2002/10/10 18:38:58 jdolecek Exp $");
 
 #define	PCICDEBUG
 
@@ -631,7 +631,7 @@ pcic_submatch(parent, cf, aux)
 		panic("unknown pcic socket");
 	}
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

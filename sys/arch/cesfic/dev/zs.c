@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.1 2001/05/14 18:23:07 drochner Exp $	*/
+/*	$NetBSD: zs.c,v 1.1.2.1 2002/10/10 18:32:16 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ void zs_putc __P((void*, int));
 
 static struct zs_chanstate zs_conschan_store;
 static int zs_hwflags[2][2];
-int zs_major = 10;
 int zssoftpending;
 
 extern struct cfdriver zsc_cd;
@@ -129,7 +128,7 @@ zs_config(zsc, base)
 			cs = &zs_conschan_store;
 		} else {
 			cs = malloc(sizeof(struct zs_chanstate),
-				    M_DEVBUF, M_NOWAIT);
+				    M_DEVBUF, M_NOWAIT | M_ZERO);
 			if(channel==0){
 				cs->cs_reg_csr  = base+7;
 				cs->cs_reg_data = base+15;

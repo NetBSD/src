@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.2.6.2 2002/09/06 08:35:56 jdolecek Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.2.6.3 2002/10/10 18:33:07 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.2.6.2 2002/09/06 08:35:56 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.2.6.3 2002/10/10 18:33:07 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,10 +164,8 @@ void		vald_acpi_fan_switch(struct vald_acpi_softc *);
 ACPI_STATUS	vald_acpi_bcm_set(ACPI_HANDLE, UINT32);
 ACPI_STATUS	vald_acpi_dssx_set(UINT32);
 
-struct cfattach vald_acpi_ca = {
-	sizeof(struct vald_acpi_softc), vald_acpi_match, vald_acpi_attach,
-};
-
+CFATTACH_DECL(vald_acpi, sizeof(struct vald_acpi_softc),
+    vald_acpi_match, vald_acpi_attach, NULL, NULL);
 
 /*
  * vald_acpi_match:

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.5.2.3 2002/06/23 17:40:28 jdolecek Exp $	*/
+/*	$NetBSD: zs.c,v 1.5.2.4 2002/10/10 18:35:37 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
  * or you can not see messages done with printf during boot-up...
  */
 int zs_def_cflag = (CREAD | CS8 | HUPCL);
-int zs_major = 0;
 
 #define PCLK		3672000	 /* PCLK pin input clock rate */
 
@@ -169,11 +168,9 @@ static int	zs_hpc_match __P((struct device *, struct cfdata *, void *));
 static void	zs_hpc_attach __P((struct device *, struct device *, void *));
 static int	zs_print __P((void *, const char *name));
 
-struct cfattach zsc_hpc_ca = {
-	sizeof(struct zsc_softc), zs_hpc_match, zs_hpc_attach
-};
+CFATTACH_DECL(zsc_hpc, sizeof(struct zsc_softc),
+    zs_hpc_match, zs_hpc_attach, NULL, NULL);
 
-cdev_decl(zs);
 extern struct	cfdriver zsc_cd;
 
 static int	zshard __P((void *));
@@ -194,7 +191,7 @@ zs_hpc_match(parent, cf, aux)
 {
 	struct hpc_attach_args *ha = aux;
 
-	if (strcmp(ha->ha_name, cf->cf_driver->cd_name) == 0)
+	if (strcmp(ha->ha_name, cf->cf_name) == 0)
 		return (1);
 
 	return (0);
@@ -707,25 +704,19 @@ void
 zscninit(cn)
 	struct consdev *cn;
 {
+	extern const struct cdevsw zstty_cdevsw;
 	char* consdev;
 
 	if ((consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut")) == NULL)
-		panic("zscninit without valid ARCS ConsoleOut setting!\n");
+		panic("zscninit without valid ARCS ConsoleOut setting!");
 
 	if (strlen(consdev) != 9 ||
 	    strncmp(consdev, "serial", 6) != 0)
-		panic("zscninit with ARCS console not set to serial!\n");
+		panic("zscninit with ARCS console not set to serial!");
 
 	cons_port = consdev[7] - '0';
 
-	/*
-	 * Initialize the zstty console device major (needed by cnopen)
-	 */
-	for (zs_major = 0; zs_major < nchrdev; zs_major++)
-		if (cdevsw[zs_major].d_open == zsopen)
-			break;
-
-	cn->cn_dev = makedev(zs_major, cons_port);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&zstty_cdevsw), cons_port);
 	cn->cn_pri = CN_REMOTE;
 
 	/* Mark this unit as the console */

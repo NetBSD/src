@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.10.2.5 2002/09/06 08:33:58 jdolecek Exp $
+#	$NetBSD: files.evbarm,v 1.10.2.6 2002/10/10 18:32:23 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -18,22 +18,15 @@ include "dev/wsfont/files.wsfont"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 16}
 
 # Memory disk driver
 file	dev/md_root.c				md & memory_disk_hooks
-major	{md = 18}
-
-# RAIDframe
-major	{raid = 71}
 
 #
 # Machine-independent SCSI drivers
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 24}
-major	{cd = 26}
 
 # Generic MD files
 file	arch/evbarm/evbarm/autoconf.c
@@ -78,3 +71,5 @@ file	arch/evbarm/dev/plcom.c			plcom needs-flag
 device	ixpcom: tty
 file	arch/arm/ixp12x0/ixp12x0_com.c		ixpcom needs-flag
 file	arch/arm/ixp12x0/ixp12x0_com_io.c       ixpcom
+
+include "arch/arm/conf/majors.arm32"

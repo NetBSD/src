@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_gsc.c,v 1.1.2.3 2002/09/06 08:35:17 jdolecek Exp $	*/
+/*	$NetBSD: osiop_gsc.c,v 1.1.2.4 2002/10/10 18:32:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.  All rights reserved.
@@ -89,9 +89,8 @@ int osiop_gsc_match(struct device *, struct cfdata *, void *);
 void osiop_gsc_attach(struct device *, struct device *, void *);
 int osiop_gsc_intr(void *);
 
-struct cfattach osiop_gsc_ca = {
-	sizeof(struct osiop_softc), osiop_gsc_match, osiop_gsc_attach
-};
+CFATTACH_DECL(osiop_gsc, sizeof(struct osiop_softc),
+    osiop_gsc_match, osiop_gsc_attach, NULL, NULL);
 
 int
 osiop_gsc_match(parent, match, aux)

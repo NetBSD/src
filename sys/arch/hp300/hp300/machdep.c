@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147.2.6 2002/09/06 08:35:06 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.147.2.7 2002/10/10 18:32:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.2.6 2002/09/06 08:35:06 jdolecek Exp $");                                                  
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.2.7 2002/10/10 18:32:43 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_hpux.h"
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.2.6 2002/09/06 08:35:06 jdolecek E
 #include <sys/systm.h>
 #include <sys/callout.h>
 #include <sys/buf.h>
-#include <sys/clist.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
 #include <sys/file.h>
@@ -62,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147.2.6 2002/09/06 08:35:06 jdolecek E
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
@@ -242,12 +240,11 @@ hp300_init()
 void
 consinit()
 {
-	extern struct map extiomap[];
 
 	/*
-	 * Initialize the DIO resource map.
+	 * Initialize the external I/O extent map.
 	 */
-	rminit(extiomap, (long)EIOMAPSIZE, (long)1, "extio", EIOMAPSIZE/16);
+	iomap_init();
 
 	/*
 	 * Initialize the console before we print anything out.
@@ -418,6 +415,9 @@ cpu_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
+
+	/* Safe to use malloc for extio_ex now. */
+	extio_ex_malloc_safe = 1;
 }
 
 /*
@@ -871,18 +871,18 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
@@ -909,6 +909,7 @@ cpu_dumpconf()
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
@@ -923,6 +924,9 @@ dumpsys()
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
 	if (dumpsize == 0) {
 		cpu_dumpconf();
 		if (dumpsize == 0)
@@ -933,7 +937,7 @@ dumpsys()
 		    minor(dumpdev));
 		return;
 	}
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	blkno = dumplo;
 
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),

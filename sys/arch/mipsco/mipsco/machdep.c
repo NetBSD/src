@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28.2.3 2002/09/06 08:37:51 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.28.2.4 2002/10/10 18:34:11 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.3 2002/09/06 08:37:51 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.4 2002/10/10 18:34:11 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28.2.3 2002/09/06 08:37:51 jdolecek Ex
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
@@ -666,7 +665,7 @@ unimpl_intr_establish(level, func, arg)
 	int (*func) __P((void *));
 	void *arg;
 {
-	panic("sysconf.init didn't init intr_establish\n");
+	panic("sysconf.init didn't init intr_establish");
 }
 
 void
@@ -736,7 +735,9 @@ static void
 prom_cninit(cn)
 	struct consdev *cn;
 {
-	cn->cn_dev = makedev(0, 0);
+	extern const struct cdevsw cons_cdevsw;
+
+	cn->cn_dev = makedev(cdevsw_lookup_major(&cons_cdevsw), 0);
 	cn->cn_pri = CN_REMOTE;
 }
 

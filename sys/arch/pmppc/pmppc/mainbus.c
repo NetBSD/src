@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.2.2 2002/06/23 17:39:37 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.3 2002/10/10 18:35:15 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,9 +56,8 @@
 int	mainbus_match(struct device *, void *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), (cfmatch_t)mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    (cfmatch_t)mainbus_match, mainbus_attach, NULL, NULL);
 
 static int mainbus_print(void *, const char *);
 
@@ -80,7 +79,7 @@ mainbus_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	if (cf->cf_loc[MAINBUSCF_ADDR] != maa->mb_addr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 static int
@@ -154,9 +153,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 static int	cpu_match(struct device *, struct cfdata *, void *);
 static void	cpu_attach(struct device *, struct device *, void *);
 
-struct cfattach cpu_ca = {
-	sizeof(struct device), cpu_match, cpu_attach
-};
+CFATTACH_DECL(cpu, sizeof(struct device),
+    cpu_match, cpu_attach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 

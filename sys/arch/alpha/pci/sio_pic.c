@@ -1,4 +1,4 @@
-/* $NetBSD: sio_pic.c,v 1.29.4.1 2001/08/03 04:10:48 lukem Exp $ */
+/* $NetBSD: sio_pic.c,v 1.29.4.2 2002/10/10 18:31:10 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.29.4.1 2001/08/03 04:10:48 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio_pic.c,v 1.29.4.2 2002/10/10 18:31:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ sio_intr_string(v, irq)
 	static char irqstr[12];		/* 8 + 2 + NULL + sanity */
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_string: bogus isa irq 0x%x\n", irq);
+		panic("sio_intr_string: bogus isa irq 0x%x", irq);
 
 	sprintf(irqstr, "isa irq %d", irq);
 	return (irqstr);
@@ -463,7 +463,7 @@ sio_intr_evcnt(v, irq)
 {
 
 	if (irq == 0 || irq >= ICU_LEN || irq == 2)
-		panic("sio_intr_evcnt: bogus isa irq 0x%x\n", irq);
+		panic("sio_intr_evcnt: bogus isa irq 0x%x", irq);
 
 	return (alpha_shared_intr_evcnt(sio_intr, irq));
 }

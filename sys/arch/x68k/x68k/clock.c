@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11.2.1 2002/09/06 08:42:45 jdolecek Exp $	*/
+/*	$NetBSD: clock.c,v 1.11.2.2 2002/10/10 18:37:39 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,10 +68,8 @@ struct clock_softc {
 static int clock_match __P((struct device *, struct cfdata *, void *));
 static void clock_attach __P((struct device *, struct device *, void *));
 
-struct cfattach clock_ca = {
-	sizeof(struct clock_softc), clock_match, clock_attach
-};
-
+CFATTACH_DECL(clock, sizeof(struct clock_softc),
+    clock_match, clock_attach, NULL, NULL);
 
 static int
 clock_match(parent, cf, aux)

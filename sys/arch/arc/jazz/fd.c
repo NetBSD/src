@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3.2.1 2002/09/06 08:32:08 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.3.2.2 2002/10/10 18:31:42 jdolecek Exp $	*/
 /*	$OpenBSD: fd.c,v 1.6 1998/10/03 21:18:57 millert Exp $	*/
 /*	NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp 	*/
 
@@ -104,9 +104,6 @@
 
 #include "locators.h"
 
-bdev_decl(fd);
-cdev_decl(fd);
-
 #define FDUNIT(dev)	DISKUNIT(dev)
 #define FDTYPE(dev)	DISKPART(dev)
 
@@ -184,8 +181,23 @@ void fdattach __P((struct device *, struct device *, void *));
 
 extern struct cfdriver fd_cd;
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
+
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
 void fdgetdisklabel(struct fd_softc *);
@@ -1088,27 +1100,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }
 
 int

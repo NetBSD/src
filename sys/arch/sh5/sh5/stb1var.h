@@ -1,4 +1,4 @@
-/*	$NetBSD: stb1var.h,v 1.1.4.2 2002/09/06 08:40:37 jdolecek Exp $	*/
+/*	$NetBSD: stb1var.h,v 1.1.4.3 2002/10/10 18:35:57 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -44,7 +44,12 @@ extern	void	_sh5_stb1_tlbinv(pteh_t, pteh_t);
 extern	void	_sh5_stb1_tlbinv_cookie(pteh_t, u_int);
 extern	void	_sh5_stb1_tlbinv_all(void);
 extern	void	_sh5_stb1_tlbload(void);
-extern	void	_sh5_stb1_cache_purge(vaddr_t, vsize_t);
-extern	void	_sh5_stb1_cache_invalidate(vaddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_dpurge(vaddr_t, paddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_dpurge_iinv(vaddr_t, paddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_dinv(vaddr_t, paddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_dinv_iinv(vaddr_t, paddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_iinv(vaddr_t, paddr_t, vsize_t);
+extern	void	_sh5_stb1_cache_iinv_all(void);
+extern	void	_sh5_stb1_cache_purge_all(void);
 
 #endif /* _STB1VAR_H */

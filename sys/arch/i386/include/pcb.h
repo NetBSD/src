@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.28.2.3 2002/06/23 17:37:29 jdolecek Exp $	*/
+/*	$NetBSD: pcb.h,v 1.28.2.4 2002/10/10 18:33:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,6 +81,10 @@
 #ifndef _I386_PCB_H_
 #define _I386_PCB_H_
 
+#if defined(_KERNEL) && !defined(_LKM)
+#include "opt_multiprocessor.h"
+#endif
+
 #include <sys/signal.h>
 
 #include <machine/segments.h>
@@ -109,8 +113,9 @@ struct pcb {
 	int	vm86_eflags;		/* virtual eflags for vm86 mode */
 	int	vm86_flagmask;		/* flag mask for vm86 mode */
 	void	*vm86_userp;		/* XXX performance hack */
-	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 	struct pmap *pcb_pmap;		/* back pointer to our pmap */
+	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
+	u_long	pcb_iomap[NIOPORTS/32];	/* I/O bitmap */
 };
 
 /*    
@@ -120,9 +125,5 @@ struct pcb {
 struct md_coredump {
 	long	md_pad[8];
 };    
-
-#ifdef _KERNEL
-extern	struct pcb *curpcb;		/* our current running pcb */
-#endif
 
 #endif /* _I386_PCB_H_ */

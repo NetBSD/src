@@ -57,9 +57,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.3.2.2 2002/01/10 19:52:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.c,v 1.3.2.3 2002/10/10 18:38:15 jdolecek Exp $");
 
-#include <openssl/blowfish.h>
+#include <sys/types.h>
+
+#include <crypto/blowfish/blowfish.h>
 #include "bf_locl.h"
 
 void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
@@ -83,7 +85,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,schedule);
+			BF_encrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -96,7 +98,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			tin1^=tout1;
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_encrypt(tin,schedule);
+			BF_encrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0];
 			tout1=tin[1];
 			l2n(tout0,out);
@@ -116,7 +118,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_decrypt(tin,schedule);
+			BF_decrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2n(tout0,out);
@@ -130,7 +132,7 @@ void BF_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
 			n2l(in,tin1);
 			tin[0]=tin0;
 			tin[1]=tin1;
-			BF_decrypt(tin,schedule);
+			BF_decrypt(tin,(BF_KEY *)schedule);
 			tout0=tin[0]^xor0;
 			tout1=tin[1]^xor1;
 			l2nn(tout0,tout1,out,l+8);

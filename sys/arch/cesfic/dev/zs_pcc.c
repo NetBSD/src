@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.1 2001/05/14 18:23:07 drochner Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.1.2.1 2002/10/10 18:32:17 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -56,9 +56,8 @@ static void	zsc_pcc_attach __P((struct device *, struct device *, void *));
 
 static char *zsbase;
 
-struct cfattach zsc_pcc_ca = {
-	sizeof(struct zsc_softc), zsc_pcc_match, zsc_pcc_attach
-};
+CFATTACH_DECL(zsc_pcc, sizeof(struct zsc_softc),
+    zsc_pcc_match, zsc_pcc_attach, NULL, NULL);
 
 static int
 zsc_pcc_match(parent, cf, aux)

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.10.4.5 2002/09/06 08:43:04 jdolecek Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.10.4.6 2002/10/10 18:37:54 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.5 2002/09/06 08:43:04 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.6 2002/10/10 18:37:54 jdolecek Exp $");
 
 #ifndef ELFSIZE
 #define ELFSIZE		32	/* XXX should die */
@@ -48,12 +48,13 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.10.4.5 2002/09/06 08:43:04 jdolecek 
 #include <sys/proc.h>
 #include <sys/lock.h>
 #include <sys/exec.h>
+#include <sys/types.h>
 #include <sys/exec_elf.h>
 #include <sys/malloc.h>
 
-#include <uvm/uvm_extern.h>
-
 #include <machine/regnum.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/common/compat_util.h>
 
@@ -110,6 +111,8 @@ const struct emul emul_irix_o32 = {
 #else
 	irix_syscall,
 #endif
+	NULL,
+	irix_vm_fault,
 };
 
 const struct emul emul_irix_n32 = {
@@ -140,6 +143,8 @@ const struct emul emul_irix_n32 = {
 #else
 	irix_syscall,
 #endif
+	NULL,
+	irix_vm_fault,
 };
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: wss_pnpbios.c,v 1.5.10.2 2002/06/23 17:37:32 jdolecek Exp $ */
+/* $NetBSD: wss_pnpbios.c,v 1.5.10.3 2002/10/10 18:33:36 jdolecek Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.5.10.2 2002/06/23 17:37:32 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_pnpbios.c,v 1.5.10.3 2002/10/10 18:33:36 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,8 @@ void wss_pnpbios_attach __P((struct device *, struct device *, void *));
 int wss_pnpbios_hints_index __P((const char *));
 
 
-struct cfattach wss_pnpbios_ca = {
-	sizeof(struct wss_softc), wss_pnpbios_match, wss_pnpbios_attach
-};
+CFATTACH_DECL(wss_pnpbios, sizeof(struct wss_softc),
+    wss_pnpbios_match, wss_pnpbios_attach, NULL, NULL);
 
 struct wss_pnpbios_hint {
 	char idstr[8];
@@ -146,7 +145,7 @@ wss_pnpbios_attach(parent, self, aux)
 	}
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 1, &sc->wss_recdrq)) {
 		printf(": can't get recording DMA channel");
-		sc->wss_recdrq = -1;
+		sc->wss_recdrq = sc->wss_playdrq;
 	}
 
 	sc->sc_ad1848.sc_ad1848.sc_iot = sc->sc_iot;

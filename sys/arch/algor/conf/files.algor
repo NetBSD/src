@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.7.2.3 2002/06/23 17:34:04 jdolecek Exp $
+#	$NetBSD: files.algor,v 1.7.2.4 2002/10/10 18:30:34 jdolecek Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -67,14 +67,11 @@ include "dev/i2o/files.i2o"
 # Machine-independent SCSI drivers
 #
 include "dev/scsipi/files.scsipi"
-major { cd = 3 }
-major { sd = 8 }
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major { wd = 4 }
 
 #
 # Machine-independent WS console drivers
@@ -93,13 +90,6 @@ include "dev/usb/files.usb"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-major { md = 6 }
-
-# RAIDframe
-major { raid = 16 }
-
-# Logical disks
-major { ld = 17 }
 
 # Console glue.
 file	dev/cons.c
@@ -152,7 +142,6 @@ file	dev/isa/fdc_isa.c			fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{ fd = 0 }
 
 # ISA Plug and Play devices
 file	arch/algor/isa/isapnp_machdep.c		isapnp
@@ -190,3 +179,5 @@ file	arch/algor/dev/com_mainbus.c		com_mainbus & algor_p4032
 
 attach	lpt at mainbus with lpt_mainbus
 file	arch/algor/dev/lpt_mainbus.c		lpt_mainbus & algor_p4032
+
+include	"arch/algor/conf/majors.algor"

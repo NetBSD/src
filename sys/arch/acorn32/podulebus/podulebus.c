@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.4.2.4 2002/06/23 17:33:57 jdolecek Exp $ */
+/* $NetBSD: podulebus.c,v 1.4.2.5 2002/10/10 18:30:30 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.4.2.4 2002/06/23 17:33:57 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: podulebus.c,v 1.4.2.5 2002/10/10 18:30:30 jdolecek Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -118,7 +118,7 @@ podulebusprint(aux, name)
 		printf(" [ netslot %d ]", pa->pa_podule_number - MAX_PODULES);
 #ifdef DIAGNOSTIC
 	else
-		panic("Invalid slot type\n");
+		panic("Invalid slot type");
 #endif
 
 	return (UNCONF);
@@ -136,12 +136,12 @@ podulebussubmatch(parent, cf, aux)
 	/* Return priority 0 or 1 for wildcarded podule */
 
 	if (cf->cf_loc[PODULEBUSCF_SLOT] == PODULEBUSCF_SLOT_DEFAULT)
-		return((*cf->cf_attach->ca_match)(parent, cf, aux));
+		return(config_match(parent, cf, aux));
 
 	/* Return higher priority if we match the specific podule */
 
 	else if (cf->cf_loc[PODULEBUSCF_SLOT] == pa->pa_podule_number)
-		return((*cf->cf_attach->ca_match)(parent, cf, aux) * 8);
+		return(config_match(parent, cf, aux) * 8);
 
 	/* Fail */
 	return(0);
@@ -525,9 +525,8 @@ podulebusattach(parent, self, aux)
 }
 
 
-struct cfattach podulebus_ca = {
-	sizeof(struct device), podulebusmatch, podulebusattach
-};
+CFATTACH_DECL(podulebus, sizeof(struct device),
+	podulebusmatch, podulebusattach, NULL, NULL);
 
 /* Useful functions that drivers may share */
 
@@ -545,7 +544,7 @@ matchpodule(pa, manufacturer, product, required_slot)
 	int required_slot;
 {
 	if (pa->pa_podule->attached)
-		panic("podulebus: Podule already attached\n");
+		panic("podulebus: Podule already attached");
 
 	if (IS_PODULE(pa, manufacturer, product))
 		return(1);

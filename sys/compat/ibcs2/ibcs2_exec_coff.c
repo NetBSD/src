@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec_coff.c,v 1.1.6.1 2002/01/10 19:51:11 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_exec_coff.c,v 1.1.6.2 2002/10/10 18:37:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.1.6.1 2002/01/10 19:51:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_exec_coff.c,v 1.1.6.2 2002/10/10 18:37:54 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,7 +450,7 @@ n	 */
 	    epp->ep_vp->v_writecount != 0) {
 #ifdef DIAGNOSTIC
 		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0\n");
+			panic("exec: a VTEXT vnode has writecount != 0");
 #endif
 		return ETXTBSY;
 	}

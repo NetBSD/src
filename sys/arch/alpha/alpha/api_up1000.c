@@ -1,4 +1,4 @@
-/* $NetBSD: api_up1000.c,v 1.8.2.1 2002/01/10 19:36:57 thorpej Exp $ */
+/* $NetBSD: api_up1000.c,v 1.8.2.2 2002/10/10 18:30:41 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -34,18 +34,19 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8.2.1 2002/01/10 19:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: api_up1000.c,v 1.8.2.2 2002/10/10 18:30:41 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
+#include <sys/conf.h>
 #include <dev/cons.h>
 
 #include <machine/alpha.h>
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/bus.h>
 
 #include <dev/ic/comreg.h>
@@ -160,7 +161,7 @@ api_up1000_cons_init()
 		printf("ctb->ctb_term_type = 0x%lx\n", ctb->ctb_term_type);
 		printf("ctb->ctb_turboslot = 0x%lx\n", ctb->ctb_turboslot);
 
-		panic("consinit: unknown console type %ld\n",
+		panic("consinit: unknown console type %ld",
 		    ctb->ctb_term_type);
 	}
 #ifdef KGDB
@@ -179,7 +180,7 @@ api_up1000_device_register(dev, aux)
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
 	struct cfdata *cf = dev->dv_cfdata;
-	struct cfdriver *cd = cf->cf_driver;
+	const char *name = cf->cf_name;
 
 	if (found)
 		return;
@@ -200,7 +201,7 @@ api_up1000_device_register(dev, aux)
 	}
 
 	if (pcidev == NULL) {
-		if (strcmp(cd->cd_name, "pci"))
+		if (strcmp(name, "pci"))
 			return;
 		else {
 			struct pcibus_attach_args *pba = aux;
@@ -232,9 +233,9 @@ api_up1000_device_register(dev, aux)
 	}
 
 	if ((ideboot || scsiboot) &&
-	    (!strcmp(cd->cd_name, "sd") ||
-	     !strcmp(cd->cd_name, "st") ||
-	     !strcmp(cd->cd_name, "cd"))) {
+	    (!strcmp(name, "sd") ||
+	     !strcmp(name, "st") ||
+	     !strcmp(name, "cd"))) {
 		struct scsipibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsipidev)
@@ -251,12 +252,12 @@ api_up1000_device_register(dev, aux)
 
 		switch (b->boot_dev_type) {
 		case 0:
-			if (strcmp(cd->cd_name, "sd") &&
-			    strcmp(cd->cd_name, "cd"))
+			if (strcmp(name, "sd") &&
+			    strcmp(name, "cd"))
 				return;
 			break;
 		case 1:
-			if (strcmp(cd->cd_name, "st"))
+			if (strcmp(name, "st"))
 				return;
 			break;
 		default:
@@ -272,7 +273,7 @@ api_up1000_device_register(dev, aux)
 	/*
 	 * Support to boot from IDE drives.
 	 */
-	if ((ideboot || scsiboot) && !strcmp(cd->cd_name, "wd")) {
+	if ((ideboot || scsiboot) && !strcmp(name, "wd")) {
 		struct ata_device *adev = aux;
 		if ((strncmp("pciide", parent->dv_xname, 6) != 0)) {
 			return;

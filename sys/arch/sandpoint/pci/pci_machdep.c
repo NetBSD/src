@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.4.2.4 2002/06/23 17:40:00 jdolecek Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4.2.5 2002/10/10 18:35:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -278,7 +278,7 @@ pci_intr_string(pc, ih)
 	static char irqstr[8];		/* 4 + 2 + NULL + sanity */
 
 	if (ih < 0 || ih >= ICU_LEN)
-		panic("pci_intr_string: bogus handle 0x%x\n", ih);
+		panic("pci_intr_string: bogus handle 0x%x", ih);
 
 	sprintf(irqstr, "irq %d", ih);
 	return (irqstr);
@@ -304,7 +304,7 @@ pci_intr_establish(pc, ih, level, func, arg)
 {
 #if 0
 	if (ih < SANDPOINT_INTR_PCI0 || ih > SANDPOINT_INTR_PCI3)
-		panic("pci_intr_establish: bogus handle 0x%x\n", ih);
+		panic("pci_intr_establish: bogus handle 0x%x", ih);
 #endif
 
 	/*

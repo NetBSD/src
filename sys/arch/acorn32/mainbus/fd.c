@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.4.2.3 2002/09/06 08:31:09 jdolecek Exp $	*/
+/*	$NetBSD: fd.c,v 1.4.2.4 2002/10/10 18:30:25 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -111,6 +111,7 @@
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/fdio.h>
+#include <sys/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -118,7 +119,6 @@
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
-#include <machine/conf.h>
 #include <machine/io.h>
 #include <arm/arm32/katelib.h>
 #include <machine/bus.h>
@@ -186,9 +186,8 @@ int fdcprobe __P((struct device *, struct cfdata *, void *));
 int fdprint __P((void *, const char *));
 void fdcattach __P((struct device *, struct device *, void *));
 
-struct cfattach fdc_ca = {
-	sizeof(struct fdc_softc), fdcprobe, fdcattach
-};
+CFATTACH_DECL(fdc, sizeof(struct fdc_softc),
+    fdcprobe, fdcattach, NULL, NULL);
 
 /*
  * Floppies come in various flavors, e.g., 1.2MB vs 1.44MB; here is how
@@ -264,15 +263,29 @@ void fdattach __P((struct device *, struct device *, void *));
 extern char floppy_read_fiq[], floppy_read_fiq_end[];
 extern char floppy_write_fiq[], floppy_write_fiq_end[];
 
-struct cfattach fd_ca = {
-	sizeof(struct fd_softc), fdprobe, fdattach
-};
+CFATTACH_DECL(fd, sizeof(struct fd_softc),
+    fdprobe, fdattach, NULL, NULL);
 
 extern struct cfdriver fd_cd;
 
+dev_type_open(fdopen);
+dev_type_close(fdclose);
+dev_type_read(fdread);
+dev_type_write(fdwrite);
+dev_type_ioctl(fdioctl);
+dev_type_strategy(fdstrategy);
+
+const struct bdevsw fd_bdevsw = {
+	fdopen, fdclose, fdstrategy, fdioctl, nodump, nosize, D_DISK
+};
+
+const struct cdevsw fd_cdevsw = {
+	fdopen, fdclose, fdread, fdwrite, fdioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
+
 void fdgetdisklabel __P((struct fd_softc *));
 int fd_get_parms __P((struct fd_softc *));
-void fdstrategy __P((struct buf *));
 void fdstart __P((struct fd_softc *));
 
 struct dkdriver fddkdriver = { fdstrategy };
@@ -393,7 +406,7 @@ fdcattach(parent, self, aux)
 	fdc->sc_ih = intr_claim(pa->pa_irq, IPL_BIO, "fdc",
 	    fdcintr, fdc);
 	if (!fdc->sc_ih)
-		panic("%s: Cannot claim IRQ %d\n", self->dv_xname, pa->pa_irq);
+		panic("%s: Cannot claim IRQ %d", self->dv_xname, pa->pa_irq);
 
 #if 0
 	/*
@@ -1071,7 +1084,7 @@ loop:
 		    fdc->sc_fr.fh_r12, (u_int)bp->b_data, fd->sc_skip);
 #endif
 		if (fiq_claim(&fdc->sc_fh) == -1)
-			panic("%s: Cannot claim FIQ vector\n", fdc->sc_dev.dv_xname);
+			panic("%s: Cannot claim FIQ vector", fdc->sc_dev.dv_xname);
 		IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x01);
 		bus_space_write_2(iot, ioh, fdctl, type->rate);
 #ifdef FD_DEBUG
@@ -1305,27 +1318,6 @@ fdcretry(fdc)
 		fdfinish(fd, bp);
 	}
 	fdc->sc_errors++;
-}
-
-int
-fdsize(dev)
-	dev_t dev;
-{
-
-	/* Swapping to floppies would not make sense. */
-	return -1;
-}
-
-int
-fddump(dev, blkno, va, size)
-	dev_t dev;
-	daddr_t blkno;
-	caddr_t va;
-	size_t size;
-{
-
-	/* Not implemented. */
-	return ENXIO;
 }
 
 int
@@ -1586,7 +1578,7 @@ load_memory_disc_from_floppy(md, dev)
 	int type;
 	int floppysize;
 
-	if (major(dev) != 17)	/* XXX - nice if the major was defined elsewhere */
+	if (bdevsw_lookup(dev) != &fd_bdevsw)
 		return(EINVAL);
 
 	if (md->md_type == MD_UNCONFIGURED || md->md_addr == 0)
@@ -1634,7 +1626,7 @@ load_memory_disc_from_floppy(md, dev)
 		fdstrategy(bp);
 
 		if (biowait(bp))
-			panic("Cannot load floppy image\n");
+			panic("Cannot load floppy image");
                                                  
 		memcpy((caddr_t)md->md_addr + loop * fd_types[type].sectrac
 		    * DEV_BSIZE, (caddr_t)bp->b_data,

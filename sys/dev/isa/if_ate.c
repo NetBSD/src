@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ate.c,v 1.26.2.2 2002/01/10 19:55:26 thorpej Exp $	*/
+/*	$NetBSD: if_ate.c,v 1.26.2.3 2002/10/10 18:39:34 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.26.2.2 2002/01/10 19:55:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.26.2.3 2002/10/10 18:39:34 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ate.c,v 1.26.2.2 2002/01/10 19:55:26 thorpej Exp 
 #include <dev/ic/ate_subr.h>
 
 #include <dev/isa/isavar.h>
-#include <dev/isa/if_fereg.h>	/* XXX */
 
 int	ate_match __P((struct device *, struct cfdata *, void *));
 void	ate_attach __P((struct device *, struct device *, void *));
@@ -64,15 +63,8 @@ struct ate_softc {
 	void	*sc_ih;				/* interrupt cookie */
 };
 
-struct cfattach ate_isa_ca = {
-	sizeof(struct ate_softc), ate_match, ate_attach
-};
-
-#if NetBSD <= 199712
-struct cfdriver ate_isa_cd = {
-	NULL, "ate", DV_IFNET
-};
-#endif
+CFATTACH_DECL(ate_isa, sizeof(struct ate_softc),
+    ate_match, ate_attach, NULL, NULL);
 
 struct fe_simple_probe_struct {
 	u_char port;	/* Offset from the base I/O address. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.32.2.2 2002/06/23 17:34:33 jdolecek Exp $	*/
+/*	$NetBSD: pmap.h,v 1.32.2.3 2002/10/10 18:31:34 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -136,6 +136,12 @@ extern struct pmap	kernel_pmap_store;
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
 #define	pmap_update(pmap)		/* nothing (yet) */
+
+static __inline void
+pmap_remove_all(struct pmap *pmap)
+{
+	/* Nothing. */
+}
 
 vaddr_t		pmap_map __P((vaddr_t, paddr_t, paddr_t, int));
 void		pmap_procwr __P((struct proc *, vaddr_t, u_long));

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.32.2.5 2002/10/10 18:33:23 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.5 2002/10/10 18:33:23 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,13 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Ex
 #include "mca.h"
 #include "apm.h"
 #include "pnpbios.h"
+#include "mpbios.h"
 #include "acpi.h"
 #include "vesabios.h"
+
+#include <machine/cpuvar.h>
+#include <machine/i82093var.h>
+#include <machine/mpbiosvar.h>
 
 #if NAPM > 0
 #include <machine/bioscall.h>
@@ -78,9 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.32.2.4 2002/09/06 08:36:18 jdolecek Ex
 int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 int	mainbus_print __P((void *, const char *));
 
@@ -98,6 +102,8 @@ union mainbus_attach_args {
 #if NPNPBIOS > 0
 	struct pnpbios_attach_args mba_paa;
 #endif
+	struct cpu_attach_args mba_caa;
+	struct apic_attach_args aaa_caa;
 #if NACPI > 0
 	struct acpibus_attach_args mba_acpi;
 #endif
@@ -150,6 +156,23 @@ mainbus_attach(parent, self, aux)
 	union mainbus_attach_args mba;
 
 	printf("\n");
+
+#if NMPBIOS > 0
+	if (mpbios_probe(self))
+		mpbios_scan(self);
+	else
+#endif
+	{
+		struct cpu_attach_args caa;
+		
+		memset(&caa, 0, sizeof(caa));
+		caa.caa_name = "cpu";
+		caa.cpu_number = 0;
+		caa.cpu_role = CPU_ROLE_SP;
+		caa.cpu_func = 0;
+		
+		config_found(self, &caa, mainbus_print);
+	}
 
 #if NVESABIOS > 0
 	if (vbeprobe()) {

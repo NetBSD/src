@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_clock.c,v 1.1.2.3 2002/06/23 17:34:47 jdolecek Exp $	*/
+/*	$NetBSD: footbridge_clock.c,v 1.1.2.4 2002/10/10 18:31:47 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -63,9 +63,8 @@ static int load_timer __P((int, int));
 static int clockmatch	__P((struct device *parent, struct cfdata *cf, void *aux));
 static void clockattach	__P((struct device *parent, struct device *self, void *aux));
 
-struct cfattach footbridge_clock_ca = {
-	sizeof(struct clock_softc), clockmatch, clockattach
-};
+CFATTACH_DECL(footbridge_clock, sizeof(struct clock_softc),
+    clockmatch, clockattach, NULL, NULL);
 
 /*
  * int clockmatch(struct device *parent, void *match, void *aux)
@@ -203,6 +202,12 @@ setstatclockrate(hz)
 void
 cpu_initclocks()
 {
+	/* stathz and profhz should be set to something, we have the timer */
+	if (stathz == 0)
+		stathz = 64;
+
+	if (profhz == 0)
+		profhz = stathz * 5;
 
 	/* Report the clock frequencies */
 	printf("clock: hz=%d stathz = %d profhz = %d\n", hz, stathz, profhz);
@@ -220,17 +225,17 @@ cpu_initclocks()
 	    "tmr1 hard clk", clockhandler, 0);
 
 	if (clock_sc->sc_clockintr == NULL)
-		panic("%s: Cannot install timer 1 interrupt handler\n",
+		panic("%s: Cannot install timer 1 interrupt handler",
 		    clock_sc->sc_dev.dv_xname);
 
 	/* If stathz is non-zero then setup the stat clock */
 	if (stathz) {
 		/* Setup timer 2 and claim interrupt */
 		setstatclockrate(stathz);
-       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_CLOCK,
+       		clock_sc->sc_statclockintr = intr_claim(IRQ_TIMER_2, IPL_STATCLOCK,
        		    "tmr2 stat clk", statclockhandler, 0);
 		if (clock_sc->sc_statclockintr == NULL)
-			panic("%s: Cannot install timer 2 interrupt handler\n",
+			panic("%s: Cannot install timer 2 interrupt handler",
 			    clock_sc->sc_dev.dv_xname);
 	}
 }
@@ -264,7 +269,7 @@ microtime(tvp)
 
 #ifdef DIAGNOSTIC
 	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d\n", tm, deltatm);
+		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
 #endif
 
 	/* Fill in the timeval struct */

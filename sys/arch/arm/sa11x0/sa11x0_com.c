@@ -1,4 +1,4 @@
-/*      $NetBSD: sa11x0_com.c,v 1.1.2.3 2002/09/06 08:32:59 jdolecek Exp $        */
+/*      $NetBSD: sa11x0_com.c,v 1.1.2.4 2002/10/10 18:31:55 jdolecek Exp $        */
 
 /*-
  * Copyright (c) 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -111,7 +111,19 @@
 
 #include "sacom.h"
 
-cdev_decl(sacom);
+dev_type_open(sacomopen);
+dev_type_close(sacomclose);
+dev_type_read(sacomread);
+dev_type_write(sacomwrite);
+dev_type_ioctl(sacomioctl);
+dev_type_stop(sacomstop);
+dev_type_tty(sacomtty);
+dev_type_poll(sacompoll);
+
+const struct cdevsw sacom_cdevsw = {
+	sacomopen, sacomclose, sacomread, sacomwrite, sacomioctl,
+	sacomstop, sacomtty, sacompoll, nommap, ttykqfilter, D_TTY
+};
 
 static	int	sacom_match(struct device *, struct cfdata *, void *);
 static	void	sacom_attach(struct device *, struct device *, void *);
@@ -125,7 +137,6 @@ void		sacom_shutdown(struct sacom_softc *);
 static	u_int	cflag2cr0(tcflag_t);
 int		sacomparam(struct tty *, struct termios *);
 void		sacomstart(struct tty *);
-void		sacomstop(struct tty *, int);
 int		sacomhwiflow(struct tty *, int);
 
 void		sacom_loadchannelregs(struct sacom_softc *);
@@ -187,9 +198,8 @@ static int sacomconsattached;
 static int sacomconsrate;
 static tcflag_t sacomconscflag;
 
-struct cfattach sacom_ca = {
-	sizeof(struct sacom_softc), sacom_match, sacom_attach
-};
+CFATTACH_DECL(sacom, sizeof(struct sacom_softc),
+    sacom_match, sacom_attach, NULL, NULL);
 extern struct cfdriver sacom_cd;
 
 #ifdef hpcarm
@@ -325,9 +335,7 @@ sacom_attach_subr(sc)
 		int maj;
 
 		/* locate the major number */
-		for (maj = 0; maj < nchrdev; maj++)
-			if (cdevsw[maj].d_open == sacomopen)
-				break;
+		maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 		cn_tab->cn_dev = makedev(maj, sc->sc_dev.dv_unit);
 
@@ -366,9 +374,7 @@ sacom_detach(self, flags)
 	int maj, mn;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == sacomopen)
-			break;
+	maj = cdevsw_lookup_major(&sacom_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	mn = self->dv_unit;
@@ -1465,7 +1471,7 @@ sacomintr(arg)
 			}
 		} else {
 #ifdef DIAGNOSTIC
-			panic("sacomintr: we shouldn't reach here\n");
+			panic("sacomintr: we shouldn't reach here");
 #endif
 			CLR(sc->sc_cr3, CR3_RIE);
 			bus_space_write_4(iot, ioh, SACOM_CR3, sc->sc_cr3);

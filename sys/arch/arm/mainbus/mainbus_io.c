@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus_io.c,v 1.2.2.5 2002/09/06 08:32:58 jdolecek Exp $	*/
+/*	$NetBSD: mainbus_io.c,v 1.2.2.6 2002/10/10 18:31:54 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -182,7 +182,7 @@ mainbus_bs_alloc(t, rstart, rend, size, alignment, boundary, cacheable,
 	bus_addr_t *bpap;
 	bus_space_handle_t *bshp;
 {
-	panic("mainbus_bs_alloc(): Help!\n");
+	panic("mainbus_bs_alloc(): Help!");
 }
 
 
@@ -204,7 +204,7 @@ mainbus_bs_free(t, bsh, size)
 	bus_size_t size;
 {
 
-	panic("mainbus_bs_free(): Help!\n");
+	panic("mainbus_bs_free(): Help!");
 	/* mainbus_bs_unmap() does all that we need to do. */
 /*	mainbus_bs_unmap(t, bsh, size);*/
 }

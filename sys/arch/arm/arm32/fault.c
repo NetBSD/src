@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.1.2.7 2002/09/06 08:32:24 jdolecek Exp $	*/
+/*	$NetBSD: fault.c,v 1.1.2.8 2002/10/10 18:31:44 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -47,7 +47,7 @@
 #include "opt_pmap_debug.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.2.7 2002/09/06 08:32:24 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.1.2.8 2002/10/10 18:31:44 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ badaddr_read(void *addr, size_t size, void *rptr)
 
 	default:
 		data_abort_expected = 0;
-		panic("badaddr: invalid size (%lu)\n", (u_long) size);
+		panic("badaddr: invalid size (%lu)", (u_long) size);
 	}
 
 	/* Disallow further Data Aborts. */
@@ -271,7 +271,7 @@ copyfault:
 #endif
 		frame->tf_pc = (u_int)pcb->pcb_onfault;
 		if ((frame->tf_spsr & PSR_MODE) == PSR_USR32_MODE)
-			panic("Yikes pcb_onfault=%p during USR mode fault\n",
+			panic("Yikes pcb_onfault=%p during USR mode fault",
 			    pcb->pcb_onfault);
 		return;
 	}
@@ -330,7 +330,7 @@ copyfault:
 			userret(p);
 			return;
 		};
-		panic("Data abort fixup failed in kernel - we're dead\n");
+		panic("Data abort fixup failed in kernel - we're dead");
 	};
 
 	/* Now act on the fault type */
@@ -513,9 +513,11 @@ copyfault:
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, 0, ftype);
 		pcb->pcb_onfault = onfault;
-		if (rv == 0)
+		if (rv == 0) {
+			if (user != 0) /* Record any stack growth... */
+				uvm_grow(p, trunc_page(va));
 			goto out;
-
+		}
 		if (user == 0) {
 			if (pcb->pcb_onfault) {
 				frame->tf_r0 = rv;
@@ -590,7 +592,7 @@ prefetch_abort_handler(frame)
 	if (error == ABORT_FIXUP_RETURN)
 		return;
 	if (error == ABORT_FIXUP_FAILED)
-		panic("prefetch abort fixup failed\n");
+		panic("prefetch abort fixup failed");
 
 	/* Get the current proc structure or proc0 if there is none */
 	if ((p = curproc) == 0) {
@@ -617,7 +619,7 @@ prefetch_abort_handler(frame)
 		 * All the kernel code pages are loaded at boot time
 		 * and do not get paged
 		 */
-	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08lx)\n",
+	        panic("Prefetch abort in non-USR mode (frame=%p PC=0x%08lx)",
 	            frame, fault_pc);
 	}
 

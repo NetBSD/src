@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.24.2.2 2002/01/10 19:53:42 thorpej Exp $ */
+/*	$NetBSD: kdb.c,v 1.24.2.3 2002/10/10 18:38:29 jdolecek Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.24.2.2 2002/01/10 19:53:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.24.2.3 2002/10/10 18:38:29 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,9 +98,8 @@ int	kdbprint __P((void *, const char *));
 void	kdbsaerror __P((struct device *, int));
 void	kdbgo __P((struct device *, struct mscp_xi *));
 
-struct	cfattach kdb_ca = {
-	sizeof(struct kdb_softc), kdbmatch, kdbattach
-};
+CFATTACH_DECL(kdb, sizeof(struct kdb_softc),
+    kdbmatch, kdbattach, NULL, NULL);
 
 /*
  * More driver definitions, for generic MSCP code.

@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.5.8.2 2002/06/18 19:29:11 jdolecek Exp $	*/
+/*	$NetBSD: aed.c,v 1.5.8.3 2002/10/10 18:33:57 jdolecek Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -61,8 +61,6 @@ static void	aed_dokeyupdown __P((adb_event_t *event));
 static void	aed_handoff __P((adb_event_t *event));
 static void	aed_enqevent __P((adb_event_t *event));
 
-cdev_decl(aed);
-
 /*
  * Global variables.
  */
@@ -75,11 +73,22 @@ static struct aed_softc *aed_sc = NULL;
 static int aed_options = 0; /* | AED_MSEMUL; */
 
 /* Driver definition */
-struct cfattach aed_ca = {
-	sizeof(struct aed_softc), aedmatch, aedattach
-};
+CFATTACH_DECL(aed, sizeof(struct aed_softc),
+    aedmatch, aedattach, NULL, NULL);
 
 extern struct cfdriver aed_cd;
+
+dev_type_open(aedopen);
+dev_type_close(aedclose);
+dev_type_read(aedread);
+dev_type_ioctl(aedioctl);
+dev_type_poll(aedpoll);
+dev_type_kqfilter(aedkqfilter);
+
+const struct cdevsw aed_cdevsw = {
+	aedopen, aedclose, aedread, nullwrite, aedioctl,
+	nostop, notty, aedpoll, nommap, aedkqfilter,
+};
 
 static int
 aedmatch(parent, cf, aux)
@@ -160,7 +169,7 @@ aed_input(event)
 		break;
 	default:                /* God only knows. */
 #ifdef DIAGNOSTIC
-		panic("aed: received event from unsupported device!\n");
+		panic("aed: received event from unsupported device!");
 #endif
 		break;
 	}
@@ -501,17 +510,6 @@ aedread(dev, uio, flag)
 	splx(s);
 	return (0);
 }
-
-
-int 
-aedwrite(dev, uio, flag)
-    dev_t dev;
-    struct uio *uio;
-    int flag;
-{
-	return 0;
-}
-
 
 int 
 aedioctl(dev, cmd, data, flag, p)

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.2.2.7 2002/09/06 08:36:01 jdolecek Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.2.2.8 2002/10/10 18:33:11 jdolecek Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -67,9 +67,8 @@ options 	SYSVSHM		# System V-like memory sharing
 
 options 	LKM		# loadable kernel modules
 
-#options 	USERCONF	# userconf(4) support
-options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
-options 	MALLOC_NOINLINE		# Not inlining MALLOC saves memory
+options 	USERCONF	# userconf(4) support
+#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -108,9 +107,6 @@ options 	SOFTDEP		# FFS soft updates support.
 #options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
-
-options 	VNODE_OP_NOINLINE	# Not inlining vnode op calls saves mem
-
 # Networking options
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
@@ -130,6 +126,7 @@ options 	INET6		# IPV6
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
+#options	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 #options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
@@ -161,6 +158,7 @@ config		netbsd root on ? type ?
 #
 
 mainbus0 at root
+cpu0	at mainbus0
 mca0	at mainbus0
 isa0	at mainbus0
 

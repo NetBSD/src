@@ -1,4 +1,4 @@
-/* $NetBSD: kvm86.c,v 1.3.8.2 2002/09/06 08:36:14 jdolecek Exp $ */
+/* $NetBSD: kvm86.c,v 1.3.8.3 2002/10/10 18:33:20 jdolecek Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.3.8.2 2002/09/06 08:36:14 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kvm86.c,v 1.3.8.3 2002/10/10 18:33:20 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,10 @@ kvm86_prepare(vmd)
 	extern paddr_t vm86newptd;
 	extern struct trapframe *vm86frame;
 	extern pt_entry_t *vm86pgtableva;
+
+#ifdef MULTIPROCESSOR
+#error this needs a rewrite for MP
+#endif
 
 	vm86newptd = vtophys((vaddr_t)vmd) | PG_V | PG_RW | PG_U | PG_u;
 	vm86pgtableva = vmd->pgtbl;

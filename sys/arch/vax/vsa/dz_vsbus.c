@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.20.2.2 2002/06/23 17:43:09 jdolecek Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.20.2.3 2002/10/10 18:37:25 jdolecek Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -74,9 +74,8 @@ static  void    dz_vsbus_attach(struct device *, struct device *, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
-struct  cfattach dz_vsbus_ca = {
-	sizeof(struct dz_softc), dz_vsbus_match, dz_vsbus_attach
-};
+CFATTACH_DECL(dz_vsbus, sizeof(struct dz_softc),
+    dz_vsbus_match, dz_vsbus_attach, NULL, NULL);
 
 #define REG(name)     short name; short X##name##X;
 static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
@@ -92,7 +91,6 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 #undef REG
 
 cons_decl(dz);
-cdev_decl(dz);
 
 #if NDZKBD > 0 || NDZMS > 0
 static int
@@ -148,18 +146,24 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct dz_softc *sc = (void *)self;
 	struct vsbus_attach_args *va = aux;
+#if NDZKBD > 0
+	extern const struct cdevsw dz_cdevsw;
+#endif
 #if NDZKBD > 0 || NDZMS > 0
 	struct dzkm_attach_args daa;
 #endif
-	int s;
+	int s, consline;
 
 	/* 
 	 * XXX - This is evil and ugly, but...
 	 * due to the nature of how bus_space_* works on VAX, this will
 	 * be perfectly good until everything is converted.
 	 */
-	if (dz_regs == 0) /* This isn't console */
+	if (dz_regs == 0) /* This isn't console */ {
 		dz_regs = vax_map_physmem(va->va_paddr, 1);
+		consline = -1;
+	} else
+		consline = minor(cn_tab->cn_dev);
 	sc->sc_ioh = dz_regs;
 	sc->sc_dr.dr_csr = 0;
 	sc->sc_dr.dr_rbuf = 4;
@@ -179,12 +183,12 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n%s: 4 lines", self->dv_xname);
 
-	dzattach(sc, NULL);
+	dzattach(sc, NULL, consline);
 	DELAY(10000);
 
 #if NDZKBD > 0
 	/* Don't touch this port if this is the console */
-	if (cn_tab->cn_dev != makedev(getmajor(dzopen), 0)) {
+	if (cn_tab->cn_dev != makedev(cdevsw_lookup_major(&dz_cdevsw), 0)) {
 		dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) 
 		    | DZ_LPR_8_BIT_CHAR;
 		daa.daa_line = 0;
@@ -194,7 +198,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	}
 #endif
 #if NDZMS > 0
-	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_7_BIT_CHAR \
+	dz->rbuf = DZ_LPR_RX_ENABLE | (DZ_LPR_B4800 << 8) | DZ_LPR_8_BIT_CHAR \
 	    | DZ_LPR_PARENB | DZ_LPR_OPAR | 1 /* line */;
 	daa.daa_line = 1;
 	daa.daa_flags = 0;
@@ -234,6 +238,7 @@ dzcnprobe(struct consdev *cndev)
 	extern	vaddr_t iospace;
 	int diagcons;
 	paddr_t ioaddr = 0x200A0000;
+	extern const struct cdevsw dz_cdevsw;
 
 	switch (vax_boardtype) {
 	case VAX_BTYP_410:
@@ -261,7 +266,7 @@ dzcnprobe(struct consdev *cndev)
 		cndev->cn_pri = CN_REMOTE;
 	else
 		cndev->cn_pri = CN_NORMAL;
-	cndev->cn_dev = makedev(getmajor(dzopen), diagcons);
+	cndev->cn_dev = makedev(cdevsw_lookup_major(&dz_cdevsw), diagcons);
 	(vaddr_t)dz = dz_regs = iospace;
 	ioaccess(iospace, ioaddr, 1);
 }
@@ -331,15 +336,17 @@ dzgetc(struct dz_linestate *ls)
 void
 dzputc(struct dz_linestate *ls, int ch)
 {
-	int line = 0; /* = ls->dz_line; */
+	int line;
 	u_short tcr;
 	int s;
+	extern const struct cdevsw dz_cdevsw;
 
 	/* if the dz has already been attached, the MI
 	   driver will do the transmitting: */
 	if (ls && ls->dz_sc) {
 		s = spltty();
-		putc(ch, &ls->dz_sc->sc_dz[line].dz_tty->t_outq);
+		line = ls->dz_line;
+		putc(ch, &ls->dz_tty->t_outq);
 		tcr = dz->tcr;
 		if (!(tcr & (1 << line)))
 			dz->tcr = tcr | (1 << line);
@@ -349,6 +356,6 @@ dzputc(struct dz_linestate *ls, int ch)
 	}
 
 	/* use dzcnputc to do the transmitting: */
-	dzcnputc(makedev(getmajor(dzopen), line), ch);
+	dzcnputc(makedev(cdevsw_lookup_major(&dz_cdevsw), 0), ch);
 }
 #endif /* NDZKBD > 0 || NDZMS > 0 */

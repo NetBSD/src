@@ -1,4 +1,4 @@
-/*	$NetBSD: mms.c,v 1.5.26.3 2002/10/02 22:02:23 jdolecek Exp $	*/
+/*	$NetBSD: mms.c,v 1.5.26.4 2002/10/10 18:32:09 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -36,12 +36,12 @@
 #include <sys/vnode.h>
 #include <sys/device.h>
 #include <sys/poll.h>
+#include <sys/conf.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/mouse.h>
-#include <machine/conf.h>
 
 #include <dev/isa/isavar.h>
 
@@ -71,11 +71,22 @@ int mmsprobe __P((struct device *, struct cfdata *, void *));
 void mmsattach __P((struct device *, struct device *, void *));
 int mmsintr __P((void *));
 
-struct cfattach mms_ca = {
-	sizeof(struct mms_softc), mmsprobe, mmsattach
-};
+CFATTACH_DECL(mms, sizeof(struct mms_softc),
+    mmsprobe, mmsattach, NULL, NULL);
 
 extern struct cfdriver mms_cd;
+
+dev_type_open(mmsopen);
+dev_type_close(mmsclose);
+dev_type_read(mmsread);
+dev_type_ioctl(mmsioctl);
+dev_type_poll(mmspoll);
+dev_type_kqfilter(mmskqfilter);
+
+const struct cdevsw mms_cdevsw = {
+	mmsopen, mmsclose, mmsread, nowrite, mmsioctl,
+	nostop, notty, mmspoll, nommap, mmskqfilter,
+};
 
 #define	MMSUNIT(dev)	(minor(dev))
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2002/09/06 08:34:38 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.5.2.3 2002/10/10 18:32:35 jdolecek Exp $
 
 KDIR=	/sys/arch/evbsh5/include
 INCSDIR= /usr/include/evbsh5
@@ -13,7 +13,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	limits.h lock.h \
 	math.h \
-	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \
+	param.h pcb.h pci_machdep.h pmap.h pmc.h proc.h profile.h ptrace.h \
 	reg.h \
 	setjmp.h signal.h stdarg.h \
 	types.h \

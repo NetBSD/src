@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh5,v 1.4.4.2 2002/09/06 08:39:53 jdolecek Exp $
+#	$NetBSD: Makefile.sh5,v 1.4.4.3 2002/10/10 18:35:45 jdolecek Exp $
 
 # Makefile for NetBSD/sh5
 #
@@ -49,10 +49,10 @@ SH5_ABI_DEF=-D_LP64
 
 .if (${MACHINE_ARCH} == sh5el)
 SH5_ENDIAN_CC=	-ml
-SH5_ENDIAN_LD=	shlelf${SH5_ABI}
+SH5_ENDIAN_LD=	shlelf${SH5_ABI}_nbsd
 .elif (${MACHINE_ARCH} == sh5eb)
 SH5_ENDIAN_CC=	-mb
-SH5_ENDIAN_LD=	shelf${SH5_ABI}
+SH5_ENDIAN_LD=	shelf${SH5_ABI}_nbsd
 .else
 .BEGIN:
 	@echo "MACHINE_ARCH must be either sh5el or sh5eb"
@@ -66,12 +66,13 @@ AR=		sh5ar
 NM=		sh5nm
 RANLIB=		sh5ranlib
 SIZE=		sh5size
+OBJCOPY=	sh5objcopy
 
 CPPFLAGS+=	-D__NetBSD__ -D${MACHINE} ${SH5_ABI_DEF}
 CFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	${SH5_ENDIAN_CC} -m5-${SH5_ABI}media-nofpu
 AFLAGS+=	-x assembler-with-cpp -traditional-cpp
-COPTS?=		-O0
+COPTS?=		-O1
 DEFWARNINGS=	no
 CWARNFLAGS+=	-Werror -Wall -Wno-main -Wpointer-arith
 CWARNFLAGS+=	-Wno-uninitialized -Wno-format
@@ -100,6 +101,14 @@ locore.o: ${THISSH5}/${MACHINE}/locore.S assym.h
 ##
 # LINKTEXT possibly set by individual sh5 port
 LINKTEXT?=	-Ttext 0xc0000000
+
+# The following is needed until we get a bootloader.
+SYSTEM_LD_TAIL_EXTRA=	; \
+	${DBSYM} $@	; \
+	${OBJCOPY} --change-section-lma .text-0x40000000 \
+		   --change-section-lma .rodata-0x40000000 \
+		   --change-section-lma .data-0x40000000 \
+		   --set-start 0xffffffff80000001 $@ $@.bin
 
 ##
 ## (6) port specific target dependencies

@@ -1,4 +1,4 @@
-#	$NetBSD: COMPUTEX7750,v 1.8.4.5 2002/09/06 08:34:27 jdolecek Exp $
+#	$NetBSD: COMPUTEX7750,v 1.8.4.6 2002/10/10 18:32:31 jdolecek Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -44,7 +44,7 @@ options 	BSC_SDMR3_VAL	=0xff940110
 
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	HZ=64		# clock interrupt generates every 1/HZ sec
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 
 # Compatibility options
 options 	COMPAT_43	# and 4.3BSD

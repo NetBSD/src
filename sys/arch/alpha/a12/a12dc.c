@@ -1,4 +1,4 @@
-/* $NetBSD: a12dc.c,v 1.5.2.1 2002/06/23 17:34:05 jdolecek Exp $ */
+/* $NetBSD: a12dc.c,v 1.5.2.2 2002/10/10 18:30:39 jdolecek Exp $ */
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -64,7 +64,7 @@
 #ifndef BSIDE
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.2.1 2002/06/23 17:34:05 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.2.2 2002/10/10 18:30:39 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -76,10 +76,11 @@ __KERNEL_RCSID(0, "$NetBSD: a12dc.c,v 1.5.2.1 2002/06/23 17:34:05 jdolecek Exp $
 #include <sys/user.h>
 #include <sys/uio.h>
 #include <sys/device.h>
+#include <sys/conf.h>
 
 #include <dev/cons.h>
 
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 
@@ -100,11 +101,24 @@ struct a12dc_softc {
 	struct  device sc_dev;
 } a12dc_softc;
 
-struct cfattach a12dc_ca = {
-	sizeof(struct a12dc_softc), a12dcmatch, a12dcattach,
-};
+CFATTACH_DECL(a12dc, sizeof(struct a12dc_softc),
+    a12dcmatch, a12dcattach, NULL, NULL);
 
 extern	struct cfdriver a12dc_cd;
+
+dev_type_open(a12dcopen);
+dev_type_close(a12dcclose);
+dev_type_read(a12dcread);
+dev_type_write(a12dcwrite);
+dev_type_ioctl(a12dcioctl);
+dev_type_stop(a12dcstop);
+dev_type_tty(a12dctty);
+dev_type_poll(a12dcpoll);
+
+const struct cdevsw a12dc_cdevsw = {
+	a12dcopen, a12dcclose, a12dcread, a12dcwrite, a12dcioctl,
+	a12dcstop, a12dctty, a12dcpoll, nommap, ttykqfilter, D_TTY
+};
 
 int	a12dcfound;		/* There Can Be Only One. */
 
@@ -150,7 +164,7 @@ a12dcattach(parent, self, aux)
 	/* note that we've attached the chipset; can't have 2 A12Cs. */
 	a12dcfound = 1;
 
-	printf(": driver %s\n", "$Revision: 1.5.2.1 $");
+	printf(": driver %s\n", "$Revision: 1.5.2.2 $");
 
 	tp = a12dc_tty[0] = ttymalloc();
 	tp->t_oproc = a12dcstart;
@@ -447,15 +461,12 @@ a12dctty(dev)
 int
 a12dccnattach()
 {
-	int i;
 	static struct consdev a12dccons = {
 		NULL, NULL, a12dccngetc, a12dccnputc, a12dccnpollc, NULL,
 		    NODEV, CN_NORMAL
 	};
 
-	for(i = 0; i < nchrdev; ++i)
-		if (cdevsw[i].d_open == a12dcopen)
-			a12dccons.cn_dev = makedev(i, 0);
+	a12dccons.cn_dev = makedev(cdevsw_lookup_major(&a12dc_cdevsw), 0);
 
 	cn_tab = &a12dccons;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8.4.1 2001/08/03 04:11:56 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.8.4.2 2002/10/10 18:34:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,9 +43,8 @@ int	mainbus_match __P((struct device *, struct cfdata *, void *));
 void	mainbus_attach __P((struct device *, struct device *, void *));
 int	mainbus_print __P((void *, const char *));
 
-struct cfattach mainbus_ca = {
-	sizeof(struct device), mainbus_match, mainbus_attach
-};
+CFATTACH_DECL(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL);
 
 /*
  * Probe for the mainbus; always succeeds.

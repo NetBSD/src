@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.18.2.4 2002/09/06 08:39:48 jdolecek Exp $ */
+/*	$NetBSD: scif.c,v 1.18.2.5 2002/10/10 18:35:42 jdolecek Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -264,13 +264,24 @@ struct callout scif_soft_ch = CALLOUT_INITIALIZER;
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
-	sizeof(struct scif_softc), scif_match, scif_attach
-};
+CFATTACH_DECL(scif, sizeof(struct scif_softc),
+    scif_match, scif_attach, NULL, NULL);
 
 extern struct cfdriver scif_cd;
 
-cdev_decl(scif);
+dev_type_open(scifopen);
+dev_type_close(scifclose);
+dev_type_read(scifread);
+dev_type_write(scifwrite);
+dev_type_ioctl(scifioctl);
+dev_type_stop(scifstop);
+dev_type_tty(sciftty);
+dev_type_poll(scifpoll);
+
+const struct cdevsw scif_cdevsw = {
+	scifopen, scifclose, scifread, scifwrite, scifioctl,
+	scifstop, sciftty, scifpoll, nommap, ttykqfilter, D_TTY
+};
 
 void InitializeScif (unsigned int);
 
@@ -409,7 +420,7 @@ static int
 scif_match(struct device *parent, struct cfdata *cfp, void *aux)
 {
 
-	if (strcmp(cfp->cf_driver->cd_name, "scif")
+	if (strcmp(cfp->cf_name, "scif")
 	    || cfp->cf_unit >= SCIF_MAX_UNITS)
 		return 0;
 
@@ -1452,9 +1463,7 @@ scifcnprobe(struct consdev *cp)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == scifopen)
-			break;
+	maj = cdevsw_lookup_major(&scif_cdevsw);
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);

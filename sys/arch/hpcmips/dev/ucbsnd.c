@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.5.6.3 2002/06/18 20:06:12 jdolecek Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.5.6.4 2002/10/10 18:32:56 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -150,8 +150,6 @@ struct ucbsnd_softc {
 	struct ring_buf sc_rb;
 };
 
-cdev_decl(ucbsnd);
-
 int	ucbsnd_match(struct device*, struct cfdata*, void*);
 void	ucbsnd_attach(struct device*, struct device*, void*);
 
@@ -174,8 +172,21 @@ void	ringbuf_producer_return(struct ring_buf*, size_t);
 void	*ringbuf_consumer_get(struct ring_buf*, size_t*);
 void	ringbuf_consumer_return(struct ring_buf*);
 
-struct cfattach ucbsnd_ca = {
-	sizeof(struct ucbsnd_softc), ucbsnd_match, ucbsnd_attach
+CFATTACH_DECL(ucbsnd, sizeof(struct ucbsnd_softc),
+    ucbsnd_match, ucbsnd_attach, NULL, NULL);
+
+dev_type_open(ucbsndopen);
+dev_type_close(ucbsndclose);
+dev_type_read(ucbsndread);
+dev_type_write(ucbsndwrite);
+dev_type_ioctl(ucbsndioctl);
+dev_type_poll(ucbsndpoll);
+dev_type_mmap(ucbsndmmap);
+dev_type_kqfilter(ucbsndkqfilter);
+
+const struct cdevsw ucbsnd_cdevsw = {
+	ucbsndopen, ucbsndclose, ucbsndread, ucbsndwrite, ucbsndioctl,
+	nostop, notty, ucbsndpoll, ucbsndmmap,  ucbsndkqfilter,
 };
 
 int

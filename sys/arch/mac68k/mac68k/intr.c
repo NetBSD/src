@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17 2001/04/12 18:26:26 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.17.2.1 2002/10/10 18:33:49 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -257,7 +257,7 @@ intr_dispatch(evec)
 	vec = (evec & 0xfff) >> 2;
 #ifdef DIAGNOSTIC
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
-		panic("intr_dispatch: bad vec 0x%x\n", vec);
+		panic("intr_dispatch: bad vec 0x%x", vec);
 #endif
 	ipl = vec - ISRLOC;
 

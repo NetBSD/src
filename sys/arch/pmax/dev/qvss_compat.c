@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.27.2.2 2002/01/10 19:47:49 thorpej Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.27.2.3 2002/10/10 18:35:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -75,6 +75,7 @@
 #include <uvm/uvm_extern.h>
 #include <miscfs/specfs/specdev.h>
 
+#include <dev/cons.h>
 #include <dev/dec/lk201.h>		/* LK-201 keycodes */
 
 #include <dev/sun/fbio.h>
@@ -86,7 +87,6 @@
 #include <pmax/dev/fbreg.h>		/* XXX should be renamed fbvar.h */
 #include <pmax/dev/qvssvar.h>			/* our own externs */
 
-#include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
 #include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */
@@ -121,7 +121,7 @@ init_pmaxfbu(fi)
 	struct fbuaccess *fbu = NULL;
 
 	if (fi == NULL || fi->fi_fbu == NULL)
-		panic("init_pmaxfb: given null pointer to framebuffer\n");
+		panic("init_pmaxfb: given null pointer to framebuffer");
 
 	/* XXX don't rely on there being a pmax_fb struct */
 	fbu = fi->fi_fbu;

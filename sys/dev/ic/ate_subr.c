@@ -1,4 +1,4 @@
-/*	$NetBSD: ate_subr.c,v 1.1.6.1 2002/01/10 19:54:14 thorpej Exp $	*/
+/*	$NetBSD: ate_subr.c,v 1.1.6.2 2002/10/10 18:38:49 jdolecek Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ate_subr.c,v 1.1.6.1 2002/01/10 19:54:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ate_subr.c,v 1.1.6.2 2002/10/10 18:38:49 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,8 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: ate_subr.c,v 1.1.6.1 2002/01/10 19:54:14 thorpej Exp
 
 #include <dev/ic/mb86960reg.h>
 #include <dev/ic/ate_subr.h>
-
-#include <dev/isa/if_fereg.h>	/* XXX */
 
 static __inline__ void ate_strobe __P((bus_space_tag_t, bus_space_handle_t));
 

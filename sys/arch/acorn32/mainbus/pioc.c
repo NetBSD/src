@@ -1,4 +1,4 @@
-/*	$NetBSD: pioc.c,v 1.1.6.2 2002/01/10 19:36:28 thorpej Exp $	*/     
+/*	$NetBSD: pioc.c,v 1.1.6.3 2002/10/10 18:30:26 jdolecek Exp $	*/     
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -100,9 +100,8 @@ static void piocgetid	 __P((bus_space_tag_t iot, bus_space_handle_t ioh,
 
 /* device attach and driver structure */
 
-struct cfattach pioc_ca = {
-	sizeof(struct pioc_softc), piocmatch, piocattach
-};
+CFATTACH_DECL(pioc, sizeof(struct pioc_softc),
+    piocmatch, piocattach, NULL, NULL);
 
 /*
  * void piocgetid(bus_space_tag_t iot, bus_space_handle_t ioh,
@@ -243,7 +242,7 @@ piocsearch(parent, cf, aux)
 		}
 
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, &pa) > 0) {
+		if (config_match(parent, cf, &pa) > 0) {
 			config_attach(parent, cf, &pa, piocprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}
@@ -279,7 +278,7 @@ piocsubmatch(parent, cf, aux)
 		if (pa->pa_irq == -1)
 			pa->pa_irq = cf->cf_loc[2];
 		tryagain = 0;
-		if ((*cf->cf_attach->ca_match)(parent, cf, pa) > 0) {
+		if (config_match(parent, cf, pa) > 0) {
 			config_attach(parent, cf, pa, piocprint);
 /*			tryagain = (cf->cf_fstate == FSTATE_STAR);*/
 		}

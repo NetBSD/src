@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.2.3 2002/06/23 17:36:52 jdolecek Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.2.4 2002/10/10 18:32:57 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -397,7 +397,7 @@ __bs_peek(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset,
 		*((u_int32_t *)ptr) = bus_space_read_4(t, bsh, offset);
 		break;
 	default:
-		panic("bus_space_peek: bad size, %d\n", size);
+		panic("bus_space_peek: bad size, %d", size);
 	}
 
 	return (0);
@@ -422,7 +422,7 @@ __bs_poke(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t offset,
 		bus_space_write_4(t, bsh, offset, val);
 		break;
 	default:
-		panic("bus_space_poke: bad size, %d\n", size);
+		panic("bus_space_poke: bad size, %d", size);
 	}
 
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.27.2.3 2002/03/16 15:59:53 jdolecek Exp $ */
+/*	$NetBSD: mem.c,v 1.27.2.4 2002/10/10 18:36:23 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,7 +55,6 @@
 
 #include <sparc/sparc/vaddrs.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -63,27 +62,13 @@ extern vaddr_t prom_vstart;
 extern vaddr_t prom_vend;
 caddr_t zeropage;
 
-/*ARGSUSED*/
-int
-mmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
+dev_type_read(mmrw);
+dev_type_ioctl(mmioctl);
 
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-mmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
+const struct cdevsw mem_cdevsw = {
+	nullopen, nullclose, mmrw, mmrw, mmioctl,
+	nostop, notty, nopoll, nommap, nokqfilter,
+};
 
 /*ARGSUSED*/
 int
@@ -210,14 +195,4 @@ unlock:
 		physlock = 0;
 	}
 	return (error);
-}
-
-paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
-{
-
-	return (-1);
 }

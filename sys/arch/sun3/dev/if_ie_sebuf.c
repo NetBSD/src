@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.6 1998/10/01 20:05:10 thorpej Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.6.26.1 2002/10/10 18:37:03 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -89,10 +89,8 @@ static void *wmemset __P((void *dst, int val, size_t size));
 static int  ie_sebuf_match __P((struct device *, struct cfdata *, void *));
 static void ie_sebuf_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ie_sebuf_ca = {
-	sizeof(struct ie_softc), ie_sebuf_match, ie_sebuf_attach
-};
-
+CFATTACH_DECL(ie_sebuf, sizeof(struct ie_softc),
+    ie_sebuf_match, ie_sebuf_attach, NULL, NULL);
 
 static int
 ie_sebuf_match(parent, cf, args)

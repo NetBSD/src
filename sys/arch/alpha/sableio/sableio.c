@@ -1,4 +1,4 @@
-/* $NetBSD: sableio.c,v 1.1 2000/12/21 20:51:57 thorpej Exp $ */
+/* $NetBSD: sableio.c,v 1.1.6.1 2002/10/10 18:31:11 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.1 2000/12/21 20:51:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sableio.c,v 1.1.6.1 2002/10/10 18:31:11 jdolecek Exp $");
 
 #include "isadma.h"
 
@@ -105,9 +105,8 @@ struct sableio_softc {
 int	sableio_match(struct device *, struct cfdata *, void *);
 void	sableio_attach(struct device *, struct device *, void *);
 
-struct cfattach sableio_ca = {
-	sizeof(struct sableio_softc), sableio_match, sableio_attach
-};
+CFATTACH_DECL(sableio, sizeof(struct sableio_softc),
+    sableio_match, sableio_attach, NULL, NULL);
 
 int	sableio_print(void *, const char *);
 int	sableio_submatch(struct device *, struct cfdata *, void *);
@@ -119,7 +118,7 @@ sableio_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
-	if (strcmp(pba->pba_busname, cf->cf_driver->cd_name) != 0)
+	if (strcmp(pba->pba_busname, cf->cf_name) != 0)
 		return (0);
 
 	/*
@@ -189,7 +188,7 @@ sableio_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->cf_loc[SABLEIOCF_PORT] != sa->sa_ioaddr)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int

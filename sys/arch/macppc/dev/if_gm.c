@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.13.2.3 2002/03/16 15:58:31 jdolecek Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.13.2.4 2002/10/10 18:33:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -128,9 +128,8 @@ void gmac_mii_writereg __P((struct device *, int, int, int));
 void gmac_mii_statchg __P((struct device *));
 void gmac_mii_tick __P((void *));
 
-struct cfattach gm_ca = {
-	sizeof(struct gmac_softc), gmac_match, gmac_attach
-};
+CFATTACH_DECL(gm, sizeof(struct gmac_softc),
+    gmac_match, gmac_attach, NULL, NULL);
 
 int
 gmac_match(parent, match, aux)

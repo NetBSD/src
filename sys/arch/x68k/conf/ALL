@@ -1,4 +1,4 @@
-#	$NetBSD: ALL,v 1.42.2.4 2002/09/06 08:42:38 jdolecek Exp $
+#	$NetBSD: ALL,v 1.42.2.5 2002/10/10 18:37:31 jdolecek Exp $
 
 #
 #	ALL -- everything that currently exist including experimental
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.42.2.4 $"
+#ident 		"ALL-$Revision: 1.42.2.5 $"
 
 maxusers	32
 
@@ -71,7 +71,7 @@ options 	SYSVSHM		# System V shared memory
 ## Loadable kernel module support
 options 	LKM
 
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 ## NFS boot options; not supported currently: needs nfsboot program
@@ -192,6 +192,7 @@ options 	NTP		# Network Time Protocol in-kernel support
 #options 	PPS_SYNC	# Add serial line synchronization for NTP
 options 	PFIL_HOOKS	# Add pfil(9) hooks, intended for custom LKMs.
 options 	IPFILTER_LOG	# Add ipmon(8) logging for ipfilter device
+#options 	IPFILTER_DEFAULT_BLOCK	# block all packets by default
 options 	PPP_BSDCOMP	# Add BSD compression to ppp device
 options 	PPP_DEFLATE	# Add deflate (libz) compression to ppp device
 options 	PPP_FILTER	# Add active filters for ppp (via bpf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdrom.c,v 1.4.2.4 2002/09/06 08:33:51 jdolecek Exp $	*/
+/*	$NetBSD: gdrom.c,v 1.4.2.5 2002/10/10 18:32:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -45,19 +45,29 @@
 #include <sys/disk.h>
 #include <sys/cdio.h>
 #include <sys/proc.h>
+#include <sys/conf.h>
 
 #include <machine/sysasicvar.h>
 
 int	gdrommatch(struct device *, struct cfdata *, void *);
 void	gdromattach(struct device *, struct device *, void *);
-int	gdromopen(dev_t, int, int, struct proc *);
-int	gdromclose(dev_t, int, int, struct proc *);
-void	gdromstrategy(struct buf *);
-int	gdromioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	gdromdump(dev_t, daddr_t, caddr_t, size_t);
-int	gdromsize(dev_t);
-int	gdromread(dev_t, struct uio *, int);
-int	gdromwrite(dev_t, struct uio *, int);
+
+dev_type_open(gdromopen);
+dev_type_close(gdromclose);
+dev_type_read(gdromread);
+dev_type_write(gdromwrite);
+dev_type_ioctl(gdromioctl);
+dev_type_strategy(gdromstrategy);
+
+const struct bdevsw gdrom_bdevsw = {
+	gdromopen, gdromclose, gdromstrategy, gdromioctl, nodump,
+	nosize, D_DISK
+};
+
+const struct cdevsw gdrom_cdevsw = {
+	gdromopen, gdromclose, gdromread, gdromwrite, gdromioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 struct gdrom_softc {
 	struct device sc_dv;	/* generic device info; must come first */
@@ -74,9 +84,8 @@ struct gdrom_softc {
 	int cmd_cond;		/* resulting condition of command */
 };
 
-struct cfattach gdrom_ca = {
-	sizeof(struct gdrom_softc), gdrommatch, gdromattach
-};
+CFATTACH_DECL(gdrom, sizeof(struct gdrom_softc),
+    gdrommatch, gdromattach, NULL, NULL);
 
 struct dkdriver gdromdkdriver = { gdromstrategy };
 
@@ -357,7 +366,7 @@ gdrommatch(struct device *parent, struct cfdata *cf, void *aux)
 	static int gdrom_matched = 0;
 
 	/* Allow only once instance. */
-	if (strcmp("gdrom", cf->cf_driver->cd_name) || gdrom_matched)
+	if (gdrom_matched)
 		return (0);
 	gdrom_matched = 1;
 
@@ -556,23 +565,6 @@ gdromioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 #endif
 }
 
-
-/*
- * Can't dump to CD; read only media...
- */
-int
-gdromdump(dev_t	dev, daddr_t blkno, caddr_t va, size_t size)
-{
-
-	return (EINVAL);
-}
-
-int
-gdromsize(dev_t dev)
-{
-
-	return (-1);
-}
 
 int
 gdromread(dev_t dev, struct uio *uio, int flags)

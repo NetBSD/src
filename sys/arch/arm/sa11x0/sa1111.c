@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.1.2.3 2002/09/06 08:32:59 jdolecek Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.1.2.4 2002/10/10 18:31:55 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -85,9 +85,8 @@ struct platid_data sacc_platid_table[] = {
 };
 #endif
 
-struct cfattach sacc_ca = {
-	sizeof(struct sacc_softc), sacc_probe, sacc_attach
-};
+CFATTACH_DECL(sacc, sizeof(struct sacc_softc),
+    sacc_probe, sacc_attach, NULL, NULL);
 
 #ifdef INTR_DEBUG
 #define DPRINTF(arg)	printf arg
@@ -185,7 +184,7 @@ sa1111_search(parent, cf, aux)
 	struct cfdata *cf;
 	void *aux;
 {
-        if ((*cf->cf_attach->ca_match)(parent, cf, NULL) > 0)
+        if (config_match(parent, cf, NULL) > 0)
                 config_attach(parent, cf, NULL, sa1111_print);
 
         return 0;
@@ -274,7 +273,7 @@ sacc_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	} else if (sc->sc_intrtype[irq] != type)
 		/* XXX we should be able to share raising and
 		 * falling edge intrs */
-		panic("sacc_intr_establish: type must be unique\n");
+		panic("sacc_intr_establish: type must be unique");
 
 	/* install intr handler */
 #ifdef hpcarm

@@ -1,4 +1,4 @@
-/*	$NetBSD: mca.c,v 1.5.2.1 2002/01/10 19:56:01 thorpej Exp $	*/
+/*	$NetBSD: mca.c,v 1.5.2.2 2002/10/10 18:40:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.5.2.1 2002/01/10 19:56:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.5.2.2 2002/10/10 18:40:04 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: mca.c,v 1.5.2.1 2002/01/10 19:56:01 thorpej Exp $");
 int	mca_match __P((struct device *, struct cfdata *, void *));
 void	mca_attach __P((struct device *, struct device *, void *));
 
-struct cfattach mca_ca = {
-	sizeof(struct device), mca_match, mca_attach
-};
+CFATTACH_DECL(mca, sizeof(struct device),
+    mca_match, mca_attach, NULL, NULL);
 
 int	mca_submatch __P((struct device *, struct cfdata *, void *));
 int	mca_print __P((void *, const char *));
@@ -72,7 +71,7 @@ mca_match(parent, cf, aux)
 {
 	struct mcabus_attach_args *mba = aux;
 
-	if (strcmp(mba->mba_busname, cf->cf_driver->cd_name))
+	if (strcmp(mba->mba_busname, cf->cf_name))
 		return (0);
 
 	/* sanity (only mca0 supported currently) */
@@ -129,7 +128,7 @@ mca_submatch(parent, cf, aux)
 	if (cf->mcacf_slot != MCA_UNKNOWN_SLOT &&
 	    cf->mcacf_slot != ma->ma_slot)
 		return 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 void

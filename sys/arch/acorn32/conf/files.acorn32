@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.7.2.5 2002/09/06 08:31:07 jdolecek Exp $
+#	$NetBSD: files.acorn32,v 1.7.2.6 2002/10/10 18:30:23 jdolecek Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -18,12 +18,16 @@ defflag	FOOTBRIDGE
 define	isadma
 file	dev/isa/isadma.c		isadma		needs-flag
 
+# Simtec Hydra multiprocessor system
+device	hydra { slave = -1 }
+attach	hydra at mainbus
+file	arch/acorn32/acorn32/hydra.c		hydra		needs-flag
+file	arch/acorn32/acorn32/hydra_boot.S	hydra		needs-flag
 
 #
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major	{wd = 16}
 
 # PIOC (Peripheral IO Controller) device
 # parent to wdc, fdc, com and lpt
@@ -49,7 +53,6 @@ attach	fdc at pioc
 device	fd: disk
 attach	fd at fdc
 file	arch/acorn32/mainbus/fd.c			fdc needs-flag
-major	{fd = 17}
 
 # Standard serial driver
 attach	com at pioc with com_pioc
@@ -57,10 +60,6 @@ file	arch/acorn32/mainbus/com_pioc.c		com_pioc
 
 # Memory disk driver
 file	arch/acorn32/dev/md_hooks.c		md & memory_disk_hooks
-major	{md = 18}
-
-# RAIDframe
-major	{raid = 71}
 
 include "arch/arm/iomd/files.iomd"
 
@@ -98,8 +97,6 @@ file	arch/acorn32/podulebus/if_ie.c		ie
 #
 
 include "dev/scsipi/files.scsipi"
-major	{sd = 24}
-major	{cd = 26}
 
 #
 # Miscelanious podulebus devices not moved yet to dev/podules
@@ -191,3 +188,5 @@ include "dev/i2o/files.i2o"
 #
 # Include USB stuff
 #include "dev/usb/files.usb"
+
+include "arch/acorn32/conf/majors.acorn32"

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.20.4.6 2002/09/06 08:37:17 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.20.4.7 2002/10/10 18:34:02 jdolecek Exp $
 
 S=	${.CURDIR}/../../../..
 
 PROG=		ofwboot
 FILES=		${PROG}.elf ${PROG}.xcf
-SRCS=		Locore.c ofdev.c hfs.c net.c netif_of.c vers.c
+SRCS=		Locore.c ofdev.c hfs.c net.c netif_of.c alloc.c vers.c
 XCOFFXTRA=	Xcoffxtra.c
 XCOFFXTRAOBJ=	Xcoffxtra.o
 CFLAGS+=	-Wno-main -msoft-float -mmultiple

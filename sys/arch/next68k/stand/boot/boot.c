@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.4.2.1 2002/09/06 08:38:29 jdolecek Exp $	*/
+/*	$NetBSD: boot.c,v 1.4.2.2 2002/10/10 18:34:44 jdolecek Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -63,6 +63,7 @@ extern int build;
 #define KNAMEN 100
 char kernel[KNAMEN];
 int entry_point;		/* return value filled in by machdep_start */
+int turbo;
 
 extern void rtc_init(void);
 
@@ -77,18 +78,35 @@ main(char *boot_arg)
 	u_long marks[MARK_MAX];
 	int dev;
 	char count, lun, part;
+	char machine;
 	char *file;
 #ifdef PROCESS_ARGS
 	char *kernel_args = MON(char *, MG_boot_dev);
 #endif
 
+	machine = MON(char, MG_machine_type);
+	if (machine == NeXT_TURBO_MONO || machine == NeXT_TURBO_COLOR)
+		turbo = 1;
+	else
+		turbo = 0;
+
 	memset(marks, 0, sizeof(marks));
 	printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
+	printf(">> type %d, %sturbo\n", machine, turbo ? "" : "non-");
 	rtc_init();
 
 	try_bootp = 1;
 
 #if 0
+	{
+		int i;
+		int *p = (int *)mg;
+		for (i = 0; i <= 896; ) {
+			printf ("%d: %x %x %x %x %x %x %x %x\n", i, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
+			p = &p[8];
+			i += 8*4;
+		}
+	}
 	printf("Press return to continue.\n");
 	getchar();
 #endif

@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.6.2.4 2002/09/06 08:38:20 jdolecek Exp $
+# $NetBSD: SLAB,v 1.6.2.5 2002/10/10 18:34:36 jdolecek Exp $
 #
 # deberg's development machine
 #
@@ -21,7 +21,7 @@ options 	SYSVSHM		# System V shared memory
 options 	LKM		# loadable kernel modules
 options 	INSECURE	# disable kernel security level
 options 	UCONSOLE	# Allow non-root TIOCCONS
-#options 	USERCONF	# userconf(4) support
+options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 
 options 	DEBUG		# kernel debugging code
@@ -150,6 +150,8 @@ wsdisplay*	at nextdisplay? console ?
 wskbd*		at nextkbd? console ?
 
 # INTIO
+nextdma*	at intio? ipl 6
+
 zsc0	at intio? ipl 5
 #zsc1	at intio? ipl 5
 

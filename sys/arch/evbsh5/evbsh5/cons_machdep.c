@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.2.2.2 2002/09/06 08:34:36 jdolecek Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.2.2.3 2002/10/10 18:32:34 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -41,10 +41,6 @@
  * XXX: Needs a rototil.
  */
 
-#include "com.h"
-#include "scif.h"
-#include "dtfcons.h"
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -66,33 +62,31 @@
 #include <ddb/db_extern.h>
 #endif
 
+#include "com.h"
 #if NCOM > 0
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>
-
-dev_type_cnprobe(comcnprobe);
-dev_type_cninit(comcninit);
-cdev_decl(com);
 static bus_space_tag_t comtag;
 static bus_addr_t comaddr;
+cons_decl(com);
 #endif
 
 
+#include "scif.h"
 #if NSCIF > 0
 #include <sh5/dev/pbridgereg.h>
 #include <sh5/dev/scifreg.h>
 #include <sh5/dev/scifvar.h>
-
 /* XXX: Gross hack until scif is re-written */
 bus_space_tag_t _sh5_scif_bt;
 bus_space_handle_t _sh5_scif_bh;
 #endif
 
+
+#include "dtfcons.h"
 #if NDTFCONS > 0
 #include <sh5/dev/dtfconsvar.h>
-cdev_decl(dtfcons);
-dev_type_cnprobe(dtfconscnprobe);
-dev_type_cninit(dtfconscninit);
+cons_decl(dtfcons);
 #endif
 
 /*
@@ -136,6 +130,7 @@ consinit(void)
 void
 comcnprobe(struct consdev *cn)
 {
+	extern const struct cdevsw com_cdevsw;
 	bus_space_handle_t bh;
 	int i, pri = CN_DEAD;
 
@@ -152,11 +147,7 @@ comcnprobe(struct consdev *cn)
 	if (i == 0)
 		goto done;
 
-	for (i = 0; i < nchrdev; i++)
-		if (cdevsw[i].d_open == comopen)
-			break;
-
-	cn->cn_dev = makedev(i, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&com_cdevsw), 0);
 	pri = CN_NORMAL;
 
 done:
@@ -175,13 +166,9 @@ comcninit(struct consdev *cn)
 void
 dtfconscnprobe(struct consdev *cn)
 {
-	int i;
+	extern const struct cdevsw dtf_cdevsw;
 
-	for (i = 0; i < nchrdev; i++)
-		if (cdevsw[i].d_open == dtfconsopen)
-			break;
-
-	cn->cn_dev = makedev(i, 0);
+	cn->cn_dev = makedev(cdevsw_lookup_major(&dtf_cdevsw), 0);
 	cn->cn_pri = CN_NORMAL;
 }
 

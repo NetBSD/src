@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.25.2.3 2002/06/24 07:04:05 jdolecek Exp $	*/
+/*	$NetBSD: ite.c,v 1.25.2.4 2002/10/10 18:37:34 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -146,8 +146,6 @@ int	next_repeat_timeo  = 3;  /* /100: timeout when repeating for next char */
 
 u_char	cons_tabs[MAX_TABS];
 
-cdev_decl(ite);
-
 void	itestart __P((struct tty *tp));
 
 void iteputchar __P((int c, struct ite_softc *ip));
@@ -156,11 +154,23 @@ void ite_putstr __P((const u_char * s, int len, dev_t dev));
 void iteattach __P((struct device *, struct device *, void *));
 int itematch __P((struct device *, struct cfdata *, void *));
 
-struct cfattach ite_ca = {
-	sizeof(struct ite_softc), itematch, iteattach
-};
+CFATTACH_DECL(ite, sizeof(struct ite_softc),
+    itematch, iteattach, NULL, NULL);
 
 extern struct cfdriver ite_cd;
+
+dev_type_open(iteopen);
+dev_type_close(iteclose);
+dev_type_read(iteread);
+dev_type_write(itewrite);
+dev_type_ioctl(iteioctl);
+dev_type_tty(itetty);
+dev_type_poll(itepoll);
+
+const struct cdevsw ite_cdevsw = {
+	iteopen, iteclose, iteread, itewrite, iteioctl,
+	nostop, itetty, itepoll, nommap, ttykqfilter, D_TTY
+};
 
 int
 itematch(pdp, cdp, auxp)
@@ -192,9 +202,7 @@ itematch(pdp, cdp, auxp)
 	 * during early init we do not have a device pointer
 	 * and thus no unit number.
 	 */
-	for(maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 	gp->g_itedev = makedev(maj, cdp->cf_unit);
 #endif
 	return(1);
@@ -581,18 +589,6 @@ itestart(tp)
 	}
 out:
 	splx(s);
-}
-
-void
-itestop(tp, rw)
-	struct tty *tp;
-	int rw;
-{
-	/*
-	 * XXX not implemented
-	 * Stylistically, this should return ENODEV, but this returns void.
-	 * So just do nothing. This is identical to dev_noimpl(stop,enodev).
-	 */ 
 }
 
 /* XXX called after changes made in underlying grf layer. */
@@ -2431,9 +2427,7 @@ itecnprobe(cd)
 	int maj;
 
 	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == iteopen)
-			break;
+	maj = cdevsw_lookup_major(&ite_cdevsw);
 
 	/* 
 	 * return priority of the best ite (already picked from attach)

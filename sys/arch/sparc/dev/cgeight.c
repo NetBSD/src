@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.24.4.4 2002/06/28 08:04:20 jdolecek Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.24.4.5 2002/10/10 18:36:08 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -102,7 +102,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/eeprom.h>
-#include <machine/conf.h>
 
 #include <dev/sun/fbio.h>
 #include <dev/sun/fbvar.h>
@@ -130,20 +129,25 @@ static void	cgeightunblank __P((struct device *));
 
 static int	cg8_pfour_probe __P((void *, void *));
 
-/* cdevsw prototypes */
-cdev_decl(cgeight);
-
-struct cfattach cgeight_ca = {
-	sizeof(struct cgeight_softc), cgeightmatch, cgeightattach
-};
+CFATTACH_DECL(cgeight, sizeof(struct cgeight_softc),
+    cgeightmatch, cgeightattach, NULL, NULL);
 
 extern struct cfdriver cgeight_cd;
+
+dev_type_open(cgeightopen);
+dev_type_ioctl(cgeightioctl);
+dev_type_mmap(cgeightmmap);
+
+const struct cdevsw cgeight_cdevsw = {
+	cgeightopen, nullclose, noread, nowrite, cgeightioctl,
+	nostop, notty, nopoll, cgeightmmap, nokqfilter
+};
 
 #if defined(SUN4)
 /* frame buffer generic driver */
 static struct fbdriver cgeightfbdriver = {
-	cgeightunblank, cgeightopen, cgeightclose, cgeightioctl, 
-	cgeightpoll, cgeightmmap, cgeightkqfilter
+	cgeightunblank, cgeightopen, nullclose, cgeightioctl, 
+	nopoll, cgeightmmap, nokqfilter
 };
 
 static void cgeightloadcmap __P((struct cgeight_softc *, int, int));
@@ -323,16 +327,6 @@ cgeightopen(dev, flags, mode, p)
 }
 
 int
-cgeightclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
-{
-
-	return (0);
-}
-
-int
 cgeightioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
@@ -390,41 +384,6 @@ cgeightioctl(dev, cmd, data, flags, p)
 		return (ENOTTY);
 	}
 #endif
-	return (0);
-}
-
-int
-cgeightpoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
-{
-
-	return (seltrue(dev, events, p));
-}
-
-static void
-filt_cgeightdetach(struct knote *kn)
-{
-	/* Nothing to do */
-}
-
-static const struct filterops cgeight_filtops =
-	{ 1, NULL, filt_cgeightdetach, filt_seltrue };
-
-int
-cgeightkqfilter(dev_t dev, struct knote *kn)
-{
-	switch (kn->kn_filter) {
-	case EVFILT_READ:
-	case EVFILT_WRITE:
-		kn->kn_fop = &cgeight_filtops;
-		break;
-	default:
-		return (1);
-	}
-
-	/* Nothing more to do */
 	return (0);
 }
 

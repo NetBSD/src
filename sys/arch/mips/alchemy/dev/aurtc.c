@@ -1,4 +1,4 @@
-/* $NetBSD: aurtc.c,v 1.1.6.2 2002/09/06 08:37:23 jdolecek Exp $ */
+/* $NetBSD: aurtc.c,v 1.1.6.3 2002/10/10 18:34:03 jdolecek Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -52,9 +52,8 @@ static void	aurtc_init(struct device *);
 static void	aurtc_get(struct device *, time_t, struct clocktime *);
 static void	aurtc_set(struct device *, struct clocktime *);
 
-struct cfattach aurtc_ca = {
-	sizeof (struct device), aurtc_match, aurtc_attach, 
-};
+CFATTACH_DECL(aurtc, sizeof (struct device),
+    aurtc_match, aurtc_attach, NULL, NULL);
 
 const struct clockfns aurtc_clockfns = {
 	aurtc_init, aurtc_get, aurtc_set,
@@ -65,7 +64,7 @@ aurtc_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
-	if (strcmp(aa->aa_name, match->cf_driver->cd_name) == 0)
+	if (strcmp(aa->aa_name, match->cf_name) == 0)
 		return (1);
 
 	return (0);

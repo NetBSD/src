@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.22.2.4 2002/06/23 17:42:05 jdolecek Exp $	*/
+/*	$NetBSD: ebus.c,v 1.22.2.5 2002/10/10 18:36:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Matthew R. Green
@@ -98,9 +98,8 @@ struct ebus_softc {
 int	ebus_match __P((struct device *, struct cfdata *, void *));
 void	ebus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach ebus_ca = {
-	sizeof(struct ebus_softc), ebus_match, ebus_attach
-};
+CFATTACH_DECL(ebus, sizeof(struct ebus_softc),
+    ebus_match, ebus_attach, NULL, NULL);
 
 bus_space_tag_t ebus_alloc_bus_tag __P((struct ebus_softc *, int));
 

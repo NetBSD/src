@@ -1,4 +1,4 @@
-/*	$NetBSD: plumohci.c,v 1.3.6.1 2002/01/10 19:43:52 thorpej Exp $ */
+/*	$NetBSD: plumohci.c,v 1.3.6.2 2002/10/10 18:32:55 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi
@@ -113,9 +113,8 @@ struct plumohci_softc {
 	LIST_HEAD(, plumohci_shm) sc_shm_head;
 };
 
-struct cfattach plumohci_ca = {
-	sizeof(struct plumohci_softc), plumohci_match, plumohci_attach,
-};
+CFATTACH_DECL(plumohci, sizeof(struct plumohci_softc),
+    plumohci_match, plumohci_attach, NULL, NULL);
 
 int
 plumohci_match(struct device *parent, struct cfdata *match, void *aux)

@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.20.2.3 2002/06/23 17:38:56 jdolecek Exp $
+# $NetBSD: files.next68k,v 1.20.2.4 2002/10/10 18:34:36 jdolecek Exp $
 
 # next68k-specific configuration info
 
@@ -49,14 +49,19 @@ file	arch/next68k/next68k/conf.c
 file 	arch/next68k/next68k/sys_machdep.c
 file	arch/next68k/next68k/isr.c
 file	arch/next68k/next68k/autoconf.c
+file	arch/next68k/next68k/mainbus.c
 file	arch/next68k/next68k/nextrom.c
 file	arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
 file	arch/next68k/next68k/kgdb_machdep.c	kgdb
 
 #file	arch/next68k/dev/dbj_debug.c
-file 	arch/next68k/dev/bus_dma.c
-file	arch/next68k/dev/nextdma.c
+file 	arch/m68k/m68k/bus_dma.c
+
+define	nextdma
+device	nextdma
+attach	nextdma at intio
+file	arch/next68k/dev/nextdma.c	nextdma
 
 file	dev/cons.c
 file	dev/cninit.c
@@ -68,9 +73,9 @@ include "dev/scsipi/files.scsipi"
 include "dev/wscons/files.wscons"
 
 device	xe: arp, ether, ifnet
-attach	xe at intio
-file	arch/next68k/dev/mb8795.c
-file	arch/next68k/dev/if_xe.c
+attach	xe at intio: nextdma
+file	arch/next68k/dev/mb8795.c	xe
+file	arch/next68k/dev/if_xe.c	xe needs-flag
 
 device	nextdisplay: wsemuldisplaydev, wsrasteremulops
 attach	nextdisplay at mainbus
@@ -82,17 +87,11 @@ file	arch/next68k/dev/nextkbd.c		nextkbd needs-flag
 file	arch/next68k/dev/wskbdmap_next.c	nextkbd
 file	arch/next68k/dev/nextcons.c		nextkbd
 
-attach	esp at intio
+attach	esp at intio: nextdma
 file	arch/next68k/dev/esp.c		esp needs-flag
 
 # Memory disk for boot tape
 file	dev/md_root.c			memory_disk_hooks
-major	{sd = 4}
-major	{cd = 6}
-major	{md = 13}
-
-# RAIDframe
-major	{raid = 20}
 
 # NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
 include "compat/aoutm68k/files.aoutm68k"
@@ -111,3 +110,5 @@ file arch/m68k/m68k/linux_trap.c		compat_linux
 
 # OSS audio driver compatibility
 include "compat/ossaudio/files.ossaudio"
+
+include "arch/next68k/conf/majors.next68k"

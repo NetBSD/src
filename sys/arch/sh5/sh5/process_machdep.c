@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.3.2.2 2002/09/06 08:40:34 jdolecek Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.3.2.3 2002/10/10 18:35:56 jdolecek Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -72,6 +72,7 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 
 	tf->tf_state.sf_spc = pack->ep_entry;
 	tf->tf_state.sf_ssr = SH5_CONREG_SR_MMU;
+	tf->tf_state.sf_flags = SF_FLAGS_CALLEE_SAVED;
 
 	tf->tf_caller.r2 = (register_t) argc;			 /* argc */
 	tf->tf_caller.r3 = (register_t) (sstack + sizeof(long)); /* argv */
@@ -82,13 +83,30 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	 * passed by the dynamic loader. The kernel always sets them to 0.
 	 */
 
-	tf->tf_caller.r7 = (register_t) (uintptr_t) p->p_psstr;
+	tf->tf_caller.r7 = (register_t)(long)p->p_psstr;
 
 	/* Align the stack as required by the SH-5 ABI */
 	tf->tf_caller.r15 = (register_t) (sstack & ~0xf);
 
 	/* Give the new process a clean set of FP regs */
 	memset(&p->p_addr->u_pcb.pcb_ctx.sf_fpregs, 0, sizeof(struct fpregs));
+
+	/*
+	 * I debated with myself about the following for a wee while.
+	 *
+	 * Disable FPU Exceptions for arithmetic operations on de-normalised
+	 * numbers. While this is contrary to the IEEE-754, it's how things
+	 * work in NetBSD/i386.
+	 *
+	 * Since most applications are likely to have been developed on i386
+	 * platforms, most application programmers would never see this
+	 * fault in their code. The in-tree top(1) program is one such
+	 * offender, under certain circumstances.
+	 *
+	 * With FPSCR.DN set, denormalised numbers are quietly flushed to zero.
+	 */
+	p->p_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr = 0x20000;
+
 	sh5_fprestore(SH5_CONREG_USR_FPRS_MASK << SH5_CONREG_USR_FPRS_SHIFT,
 	    &p->p_addr->u_pcb);
 }
@@ -309,14 +327,14 @@ process_write_regs(struct proc *p, struct reg *regs)
 	tf->tf_caller.r61 = regs->r_intregs[61];
 	tf->tf_caller.r62 = regs->r_intregs[62];
 
-	tf->tf_caller.tr0 = regs->r_intregs[0];
-	tf->tf_caller.tr1 = regs->r_intregs[1];
-	tf->tf_caller.tr2 = regs->r_intregs[2];
-	tf->tf_caller.tr3 = regs->r_intregs[3];
-	tf->tf_caller.tr4 = regs->r_intregs[4];
-	tf->tf_callee.tr5 = regs->r_intregs[5];
-	tf->tf_callee.tr6 = regs->r_intregs[6];
-	tf->tf_callee.tr7 = regs->r_intregs[7];
+	tf->tf_caller.tr0 = regs->r_tr[0];
+	tf->tf_caller.tr1 = regs->r_tr[1];
+	tf->tf_caller.tr2 = regs->r_tr[2];
+	tf->tf_caller.tr3 = regs->r_tr[3];
+	tf->tf_caller.tr4 = regs->r_tr[4];
+	tf->tf_callee.tr5 = regs->r_tr[5];
+	tf->tf_callee.tr6 = regs->r_tr[6];
+	tf->tf_callee.tr7 = regs->r_tr[7];
 
 	tf->tf_state.sf_spc = regs->r_pc;
 	tf->tf_state.sf_usr = regs->r_usr;

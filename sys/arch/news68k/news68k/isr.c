@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7 2001/07/07 06:24:00 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.7.2.1 2002/10/10 18:34:30 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ isrdispatch_autovec(evec)
 
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRAUTOVEC) || (vec >= (ISRAUTOVEC + NISRAUTOVEC)))
-		panic("isrdispatch_autovec: bad vec 0x%x\n", vec);
+		panic("isrdispatch_autovec: bad vec 0x%x", vec);
 	ipl = vec - ISRAUTOVEC;
 
 	intrcnt[ipl]++;
@@ -259,7 +259,7 @@ isrdispatch_vectored(pc, evec, frame)
 	uvmexp.intrs++;
 
 	if ((vec < ISRVECTORED) || (vec >= (ISRVECTORED + NISRVECTORED)))
-		panic("isrdispatch_vectored: bad vec 0x%x\n", vec);
+		panic("isrdispatch_vectored: bad vec 0x%x", vec);
 	isr = &isr_vectored[vec - ISRVECTORED];
 
 	if (isr->isr_func == NULL) {
@@ -292,7 +292,7 @@ set_vector_entry(entry, handler)
 	void *handler;
 {
 	if ((entry < 0) || (entry >= NVECTORS))
-		panic("set_vector_entry: setting vector too high or low\n");
+		panic("set_vector_entry: setting vector too high or low");
 	vectab[entry] = handler;
 }
 
@@ -301,7 +301,7 @@ get_vector_entry(entry)
 	int entry;
 {
 	if ((entry < 0) || (entry >= NVECTORS))
-		panic("get_vector_entry: setting vector too high or low\n");
+		panic("get_vector_entry: setting vector too high or low");
 	return ((void *) vectab[entry]);
 }
 

@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.10 2000/06/29 08:58:47 mrg Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.10.4.1 2002/10/10 18:31:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.10 2000/06/29 08:58:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.10.4.1 2002/10/10 18:31:05 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ dwlpx_conf_read(cpv, tag, offset)
 	u_int32_t rvp;
 
 	if (ccp == NULL) {
-		panic("NULL ccp in dwlpx_conf_read\n");
+		panic("NULL ccp in dwlpx_conf_read");
 	}
 	sc = ccp->cc_sc;
 	secondary = tag >> 24;
@@ -212,7 +212,7 @@ dwlpx_conf_write(cpv, tag, offset, data)
 	u_int32_t rvp;
 
 	if (ccp == NULL) {
-		panic("NULL ccp in dwlpx_conf_write\n");
+		panic("NULL ccp in dwlpx_conf_write");
 	}
 	sc = ccp->cc_sc;
 	secondary = tag >> 24;

@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.26.2.1 2002/02/11 20:07:08 jdolecek Exp $ */
+/*	$NetBSD: wesc.c,v 1.26.2.2 2002/10/10 18:31:33 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.26.2.1 2002/02/11 20:07:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wesc.c,v 1.26.2.2 2002/10/10 18:31:33 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,9 +65,8 @@ void wesc_dump(void);
 #ifdef DEBUG
 #endif
 
-struct cfattach wesc_ca = {
-	sizeof(struct siop_softc), wescmatch, wescattach
-};
+CFATTACH_DECL(wesc, sizeof(struct siop_softc),
+    wescmatch, wescattach, NULL, NULL);
 
 /*
  * if we are an MacroSystemsUS Warp Engine

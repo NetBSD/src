@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.17.2.4 2002/09/06 08:36:44 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.17.2.5 2002/10/10 18:33:40 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.4 2002/09/06 08:36:44 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.5 2002/10/10 18:33:40 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -46,13 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.2.4 2002/09/06 08:36:44 jdolecek Ex
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
 #include <sys/file.h>
-#include <sys/clist.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
@@ -654,18 +652,18 @@ long	dumplo = 0;		/* blocks */
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int chdrsize;	/* size of dump header */
 	int nblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		return;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		return;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	chdrsize = cpu_dumpsize();
 
 	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
@@ -692,6 +690,7 @@ cpu_dumpconf()
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	daddr_t blkno;		/* current block to write */
 				/* dump routine */
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
@@ -706,6 +705,9 @@ dumpsys()
 	/* Make sure dump device is valid. */
 	if (dumpdev == NODEV)
 		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return;
 	if (dumpsize == 0) {
 		cpu_dumpconf();
 		if (dumpsize == 0)
@@ -716,7 +718,7 @@ dumpsys()
 		    minor(dumpdev));
 		return;
 	}
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	blkno = dumplo;
 
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),

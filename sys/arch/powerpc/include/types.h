@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12.2.2 2002/09/06 08:39:17 jdolecek Exp $	*/
+/*	$NetBSD: types.h,v 1.12.2.3 2002/10/10 18:35:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -57,6 +57,7 @@ typedef struct label_t {
 #endif
 
 #define	__HAVE_CPU_COUNTER
-#define __HAVE_SYSCALL_INTERN
+#define	__HAVE_SYSCALL_INTERN
+#define	__HAVE_MD_RUNQUEUE
 
 #endif	/* _MACHTYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.9.2.5 2002/09/06 08:43:46 jdolecek Exp $	*/
+/*	$NetBSD: ld.c,v 1.9.2.6 2002/10/10 18:38:20 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.9.2.5 2002/09/06 08:43:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.9.2.6 2002/10/10 18:38:20 jdolecek Exp $");
 
 #include "rnd.h"
 
@@ -77,6 +77,24 @@ static int	ldstart(struct ld_softc *, struct buf *);
 static void	ldunlock(struct ld_softc *);
 
 extern struct	cfdriver ld_cd;
+
+dev_type_open(ldopen);
+dev_type_close(ldclose);
+dev_type_read(ldread);
+dev_type_write(ldwrite);
+dev_type_ioctl(ldioctl);
+dev_type_strategy(ldstrategy);
+dev_type_dump(lddump);
+dev_type_size(ldsize);
+
+const struct bdevsw ld_bdevsw = {
+	ldopen, ldclose, ldstrategy, ldioctl, lddump, ldsize, D_DISK
+};
+
+const struct cdevsw ld_cdevsw = {
+	ldopen, ldclose, ldread, ldwrite, ldioctl,
+	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+};
 
 static struct	dkdriver lddkdriver = { ldstrategy };
 static void	*ld_sdh;
@@ -185,12 +203,8 @@ ldenddetach(struct ld_softc *sc)
 			printf("%s: not drained\n", sc->sc_dv.dv_xname);
 
 	/* Locate the major numbers. */
-	for (bmaj = 0; bmaj <= nblkdev; bmaj++)
-		if (bdevsw[bmaj].d_open == ldopen)
-			break;
-	for (cmaj = 0; cmaj <= nchrdev; cmaj++)
-		if (cdevsw[cmaj].d_open == ldopen)
-			break;
+	bmaj = bdevsw_lookup_major(&ld_bdevsw);
+	cmaj = cdevsw_lookup_major(&ld_cdevsw);
 
 	/* Kill off any queued buffers. */
 	s = splbio();

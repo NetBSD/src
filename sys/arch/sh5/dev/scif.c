@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.1.4.2 2002/09/06 08:40:00 jdolecek Exp $	*/
+/*	$NetBSD: scif.c,v 1.1.4.3 2002/10/10 18:35:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -251,20 +251,31 @@ int scifisconsole = 0;
 #ifdef SCIFCN_SPEED
 unsigned int scifcn_speed = SCIFCN_SPEED;
 #else
-unsigned int scifcn_speed = 9600;
+unsigned int scifcn_speed = 38400;
 #endif
 
 #define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
 
 u_int scif_rbuf_size = SCIF_RING_SIZE;
 
-struct cfattach scif_ca = {
-	sizeof(struct scif_softc), scif_match, scif_attach
-};
+CFATTACH_DECL(scif, sizeof(struct scif_softc),
+    scif_match, scif_attach, NULL, NULL);
 
 extern struct cfdriver scif_cd;
 
-cdev_decl(scif);
+dev_type_open(scifopen);
+dev_type_close(scifclose);
+dev_type_read(scifread);
+dev_type_write(scifwrite);
+dev_type_ioctl(scifioctl);
+dev_type_stop(scifstop);
+dev_type_tty(sciftty);
+dev_type_poll(scifpoll);
+
+const struct cdevsw scif_cdevsw = {
+	scifopen, scifclose, scifread, scifwrite, scifioctl,
+	scifstop, sciftty, scifpoll, nommap, ttykqfilter, D_TTY
+};
 
 void InitializeScif(bus_space_tag_t, bus_space_handle_t, unsigned int);
 
@@ -338,11 +349,11 @@ InitializeScif(bus_space_tag_t bt, bus_space_handle_t bh, unsigned int bps)
 	/* Serial Mode Register */
 	/* 8bit,NonParity,Even,1Stop */
 	bus_space_write_2(bt, bh, SCIF_REG_SCSMR2, 0x00);
-
+#if 0
 	/* Bit Rate Register */
 	bus_space_write_1(bt, bh, SCIF_REG_SCBRR2,
 	    divrnd(cprc_clocks.cc_peripheral, 32 * bps) - 1);
-
+#endif
 	/*
 	 * wait 1mSec, because Send/Recv must begin 1 bit period after
 	 * BRR is set.
@@ -354,7 +365,9 @@ InitializeScif(bus_space_tag_t bt, bus_space_handle_t bh, unsigned int bps)
 
 	/* Send permission, Receive permission ON */
 	bus_space_write_2(bt, bh, SCIF_REG_SCSCR2,
-	    SCIF_SCSCR2_TE | SCIF_SCSCR2_RE);
+	    SCIF_SCSCR2_TE | SCIF_SCSCR2_RE | 0x0a);
+
+	bus_space_write_2(bt, bh, SCIF_REG_SCSPTR2, 0x85);
 
 	/* Serial Status Register */
 	/* Clear Status */
@@ -400,6 +413,7 @@ scif_putc(bus_space_tag_t bt, bus_space_handle_t bh, unsigned char c)
 static unsigned char
 scif_getc(bus_space_tag_t bt, bus_space_handle_t bh)
 {
+#if 0
 	u_int8_t c, err_c;
 	u_int16_t err_c2;
 
@@ -416,18 +430,15 @@ scif_getc(bus_space_tag_t bt, bus_space_handle_t bh)
 		}
 
 		c = bus_space_read_1(bt, bh, SCIF_REG_SCFDR2);
-		err_c = bus_space_read_2(bt, bh, SCIF_REG_SCFSR2);
 
+		err_c = bus_space_read_2(bt, bh, SCIF_REG_SCFSR2);
 		bus_space_write_2(bt, bh, SCIF_REG_SCFSR2,
-		    bus_space_read_2(bt, bh, SCIF_REG_SCFSR2) &
-		    ~(SCIF_SCFSR2_ER | SCIF_SCFSR2_BRK |
-		      SCIF_SCFSR2_RDF | SCIF_SCFSR2_DR));
+		    err_c & ~(SCIF_SCFSR2_ER | SCIF_SCFSR2_BRK |
+			      SCIF_SCFSR2_RDF | SCIF_SCFSR2_DR));
 
 		err_c2 = bus_space_read_2(bt, bh, SCIF_REG_SCLSR2);
-
 		bus_space_write_2(bt, bh, SCIF_REG_SCLSR2,
-		    bus_space_read_2(bt, bh, SCIF_REG_SCLSR2) &
-		    ~SCIF_SCLSR2_ORER);
+		    err_c2 & ~SCIF_SCLSR2_ORER);
 
 		if ((err_c & (SCIF_SCFSR2_ER | SCIF_SCFSR2_BRK | SCIF_SCFSR2_FER
 		    | SCIF_SCFSR2_PER)) == 0) {
@@ -435,6 +446,18 @@ scif_getc(bus_space_tag_t bt, bus_space_handle_t bh)
 				return(c);
 		}
 	}
+#else
+	unsigned char c;
+
+	while (!(bus_space_read_2(bt, bh, SCIF_REG_SCFSR2) & SCIF_SCFSR2_DR))
+		;
+
+	c = bus_space_read_1(bt, bh, SCIF_REG_SCFRD2);
+
+	bus_space_write_2(bt, bh, SCIF_REG_SCFSR2, 0);
+
+	return (c);
+#endif
 }
 
 #if 0
@@ -474,7 +497,7 @@ scif_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_fifolen = 16;
 
 	sc->sc_iot = pa->pa_bust;
-	bus_space_map(sc->sc_iot, pa->pa_offset, SCIF_REG_SZ, 0, sc->sc_ioh);
+	bus_space_map(sc->sc_iot, pa->pa_offset, SCIF_REG_SZ, 0, &sc->sc_ioh);
 
 	if (scifisconsole || kgdb_attached) {
 		/* InitializeScif(scifcn_speed); */
@@ -1448,16 +1471,9 @@ rnd_add_uint32(&sc->rnd_source, iir | lsr);
 void
 scifcnprobe(struct consdev *cp)
 {
-	int maj;
-
-	/* locate the major number */
-	for (maj = 0; maj < nchrdev; maj++)
-		if (cdevsw[maj].d_open == scifopen)
-			break;
-
 	/* Initialize required fields. */
-	cp->cn_dev = makedev(maj, 0);
-	cp->cn_pri = CN_NORMAL;
+	cp->cn_dev = makedev(cdevsw_lookup_major(&scif_cdevsw), 0);
+	cp->cn_pri = CN_REMOTE;
 }
 
 void

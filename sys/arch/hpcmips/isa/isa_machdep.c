@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.15.2.2 2002/02/11 20:08:09 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.15.2.3 2002/10/10 18:32:58 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -98,9 +98,8 @@ struct vrisab_softc {
 	struct hpcmips_isa_chipset sc_isa_ic;
 };
 
-struct cfattach vrisab_ca = {
-	sizeof(struct vrisab_softc), vrisabmatch, vrisabattach
-};
+CFATTACH_DECL(vrisab, sizeof(struct vrisab_softc),
+    vrisabmatch, vrisabattach, NULL, NULL);
 
 #ifdef DEBUG_FIND_PCIC
 #include <mips/cpuregs.h>
@@ -123,7 +122,7 @@ vrisabmatch(struct device *parent, struct cfdata *match, void *aux)
 	platid_mask_t mask;
 	int n;
 
-	if (strcmp(haa->haa_busname, match->cf_driver->cd_name))
+	if (strcmp(haa->haa_busname, match->cf_name))
 		return (0);
 
 	if (match->cf_loc[HPCIOIFCF_PLATFORM] == HPCIOIFCF_PLATFORM_DEFAULT) 

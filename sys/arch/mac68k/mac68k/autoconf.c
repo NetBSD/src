@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.55.2.1 2002/06/23 17:37:45 jdolecek Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.55.2.2 2002/10/10 18:33:48 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,17 +115,16 @@ static void
 findbootdev()
 {
 	struct device *dv;
-	int major, unit, controller, i;
+	int major, unit, controller;
 	char buf[32];
+	const char *name;
 
 	booted_device = NULL;
 	booted_partition = 0;	/* Assume root is on partition a */
 
 	major = B_TYPE(bootdev);
-	for (i = 0; dev_name2blk[i].d_name != NULL; i++)
-		if (major == dev_name2blk[i].d_maj)
-			break;
-	if (dev_name2blk[i].d_name == NULL)
+	name = devsw_blk2name(major);
+	if (name == NULL)
 		return;
 
 	unit = B_UNIT(bootdev);
@@ -146,9 +145,8 @@ findbootdev()
 		break;
 	}
 
-	sprintf(buf, "%s%d", dev_name2blk[i].d_name, unit);
-	for (dv = alldevs.tqh_first; dv != NULL;
-	    dv = dv->dv_list.tqe_next) {
+	sprintf(buf, "%s%d", name, unit);
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.1.6.2 2002/09/06 08:41:29 jdolecek Exp $	*/
+/*	$NetBSD: sab.c,v 1.1.6.3 2002/10/10 18:36:35 jdolecek Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -55,7 +55,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
-#include <machine/conf.h>
 
 #include <dev/cons.h>
 
@@ -144,29 +143,33 @@ void sabtty_cnpollc(struct sabtty_softc *, int);
 void sabtty_shutdown(void *);
 int sabttyparam(struct sabtty_softc *, struct tty *, struct termios *);
 
-int sabopen(dev_t, int, int, struct proc *);
-int sabclose(dev_t, int, int, struct proc *);
-int sabread(dev_t, struct uio *, int);
-int sabwrite(dev_t, struct uio *, int);
-int sabioctl(dev_t, u_long, caddr_t, int, struct proc *);
-void sabstop(struct tty *, int);
-struct tty *sabtty(dev_t);
 void sabtty_cnputc(struct sabtty_softc *, int);
 int sabtty_cngetc(struct sabtty_softc *);
 void sabtty_abort(struct sabtty_softc *);
 
-struct cfattach sab_ca = {
-	sizeof(struct sab_softc), sab_match, sab_attach
-};
+CFATTACH_DECL(sab, sizeof(struct sab_softc),
+    sab_match, sab_attach, NULL, NULL);
 
 extern struct cfdriver sab_cd;
 
-
-struct cfattach sabtty_ca = {
-	sizeof(struct sabtty_softc), sabtty_match, sabtty_attach
-};
+CFATTACH_DECL(sabtty, sizeof(struct sabtty_softc),
+    sabtty_match, sabtty_attach, NULL, NULL);
 
 extern struct cfdriver sabtty_cd;
+
+dev_type_open(sabopen);
+dev_type_close(sabclose);
+dev_type_read(sabread);
+dev_type_write(sabwrite);
+dev_type_ioctl(sabioctl);
+dev_type_stop(sabstop);
+dev_type_tty(sabtty);
+dev_type_poll(sabpoll);
+
+const struct cdevsw sabtty_cdevsw = {
+	sabopen, sabclose, sabread, sabwrite, sabioctl,
+	sabstop, sabtty, sabpoll, nommap, ttykqfilter, D_TTY
+};
 
 struct sabtty_rate {
 	int baud;
@@ -1285,19 +1288,19 @@ sabtty_console_flags(sc)
 	struct sabtty_softc *sc;
 {
 	int node, channel, cookie;
-	u_int chosen;
+	u_int options;
 	char buf[255];
 
 	node = sc->sc_parent->sc_node;
 	channel = sc->sc_portno;
 
-	chosen = OF_finddevice("/chosen");
+	options = OF_finddevice("/options");
 
 	/* Default to channel 0 if there are no explicit prom args */
 	cookie = 0;
 
 	if (node == OF_instance_to_package(OF_stdin())) {
-		if (OF_getprop(chosen, "input-device", buf,
+		if (OF_getprop(options, "input-device", buf,
 		    sizeof(buf)) != -1) {
 			if (strcmp("ttyb", buf) == 0)
 				cookie = 1;
@@ -1310,7 +1313,7 @@ sabtty_console_flags(sc)
 	/* Default to same channel if there are no explicit prom args */
 
 	if (node == OF_instance_to_package(OF_stdout())) {
-		if (OF_getprop(chosen, "output-device", buf,
+		if (OF_getprop(options, "output-device", buf,
 		    sizeof(buf)) != -1) {
 			if (strcmp("ttyb", buf) == 0)
 				cookie = 1;

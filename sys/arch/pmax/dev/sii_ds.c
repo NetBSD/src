@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.17.2.1 2001/09/13 01:14:18 thorpej Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.17.2.2 2002/10/10 18:35:04 jdolecek Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -57,9 +57,8 @@ static int	sii_ds_match __P((struct device* parent, struct cfdata *match,
 static void	sii_ds_attach __P((struct device *parent, struct device *self,
 		    void *aux));
 
-struct cfattach sii_ds_ca = {
-	sizeof(struct siisoftc), sii_ds_match, sii_ds_attach
-};
+CFATTACH_DECL(sii_ds, sizeof(struct siisoftc),
+    sii_ds_match, sii_ds_attach, NULL, NULL);
 
 /* define a safe address in the SCSI buffer for doing status & message DMA */
 #define SII_BUF_ADDR	(MIPS_PHYS_TO_KSEG1(KN01_SYS_SII_B_START) \

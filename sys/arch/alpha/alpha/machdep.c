@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek Exp $ */
+/* $NetBSD: machdep.c,v 1.245.2.7 2002/10/10 18:30:52 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -75,13 +75,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.7 2002/10/10 18:30:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/signalvar.h>
 #include <sys/kernel.h>
-#include <sys/map.h>
 #include <sys/proc.h>
 #include <sys/sched.h>
 #include <sys/buf.h>
@@ -99,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek E
 #include <sys/exec_ecoff.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/conf.h>
 #include <machine/kcore.h>
 #include <machine/fpu.h>
 
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.245.2.6 2002/09/06 08:31:23 jdolecek E
 #include <machine/reg.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#include <machine/conf.h>
+#include <machine/cpuconf.h>
 #include <machine/ieeefp.h>
 
 #ifdef DDB
@@ -1195,9 +1195,13 @@ cpu_dump()
 	kcore_seg_t *segp;
 	cpu_kcore_hdr_t *cpuhdrp;
 	phys_ram_seg_t *memsegp;
+	const struct bdevsw *bdev;
 	int i;
 
-	dump = bdevsw[major(dumpdev)].d_dump;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
+		return (ENXIO);
+	dump = bdev->d_dump;
 
 	memset(buf, 0, sizeof buf);
 	segp = (kcore_seg_t *)buf;
@@ -1239,17 +1243,17 @@ cpu_dump()
 void
 cpu_dumpconf()
 {
+	const struct bdevsw *bdev;
 	int nblks, dumpblks;	/* size of dump area */
-	int maj;
 
 	if (dumpdev == NODEV)
 		goto bad;
-	maj = major(dumpdev);
-	if (maj < 0 || maj >= nblkdev)
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL)
 		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
-	if (bdevsw[maj].d_psize == NULL)
+	if (bdev->d_psize == NULL)
 		goto bad;
-	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	nblks = (*bdev->d_psize)(dumpdev);
 	if (nblks <= ctod(1))
 		goto bad;
 
@@ -1282,6 +1286,7 @@ bad:
 void
 dumpsys()
 {
+	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memcl;
 	u_long maddr;
 	int psize;
@@ -1293,6 +1298,9 @@ dumpsys()
 	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
+		return;
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL)
 		return;
 
 	/*
@@ -1309,7 +1317,7 @@ dumpsys()
 	printf("\ndumping to dev %u,%u offset %ld\n", major(dumpdev),
 	    minor(dumpdev), dumplo);
 
-	psize = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
+	psize = (*bdev->d_psize)(dumpdev);
 	printf("dump ");
 	if (psize == -1) {
 		printf("area unavailable\n");
@@ -1323,7 +1331,7 @@ dumpsys()
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 	blkno = dumplo + cpu_dumpsize();
-	dump = bdevsw[major(dumpdev)].d_dump;
+	dump = bdev->d_dump;
 	error = 0;
 
 	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {

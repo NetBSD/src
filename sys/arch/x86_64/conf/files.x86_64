@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86_64,v 1.3.2.4 2002/09/06 08:42:48 jdolecek Exp $
+#	$NetBSD: files.x86_64,v 1.3.2.5 2002/10/10 18:37:42 jdolecek Exp $
 #
 # new style config file for x86_64 architecture
 #
@@ -66,25 +66,15 @@ file	arch/x86_64/x86_64/pmc.c		perfctrs
 #
 
 include	"dev/scsipi/files.scsipi"
-major	{sd = 4}
-major	{cd = 6}
 
 #
 # Machine-independent ATA drivers
 #
 
 include	"dev/ata/files.ata"
-major	{wd = 0}
 
 # Memory Disk for install floppy
 file	arch/x86_64/x86_64/md_root.c		memory_disk_hooks
-major	{md = 17}
-
-# RAIDframe
-major	{raid = 18}
-
-# Logical disk
-major	{ld = 19}
 
 #
 # Machine-independent I2O drivers
@@ -132,8 +122,6 @@ file	arch/x86_64/pci/pcib.c			pcib
 #
 
 include	"dev/isa/files.isa"
-major	{mcd = 7}
-#major	{scd = 15}
 
 # XXX THE FOLLOWING BLOCK SHOULD GO INTO dev/pci/files.pci, BUT CANNOT
 # XXX BECAUSE NOT 'lpt' IS DEFINED IN files.isa, RATHER THAN files.
@@ -177,7 +165,6 @@ file	dev/isa/fdc_isa.c			fdc_isa
 
 device	fd: disk
 attach	fd at fdc
-major	{fd = 2}
 
 #
 # Compatibility modules
@@ -195,3 +182,5 @@ include	"compat/ossaudio/files.ossaudio"
 include	"dev/usb/files.usb"
 
 include	"dev/ieee1394/files.ieee1394"
+
+include	"arch/x86_64/conf/majors.x86_64"

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcom.c,v 1.1.22.1 2002/01/10 19:55:44 thorpej Exp $	*/
+/*	$NetBSD: tcom.c,v 1.1.22.2 2002/10/10 18:39:52 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.1.22.1 2002/01/10 19:55:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcom.c,v 1.1.22.2 2002/10/10 18:39:52 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,9 +115,8 @@ void tcomattach __P((struct device *, struct device *, void *));
 int tcomintr __P((void *));
 int tcomprint __P((void *, const char *));
 
-struct cfattach tcom_ca = {
-	sizeof(struct tcom_softc), tcomprobe, tcomattach
-};
+CFATTACH_DECL(tcom, sizeof(struct tcom_softc),
+    tcomprobe, tcomattach, NULL, NULL);
 
 int
 tcomprobe(parent, self, aux)

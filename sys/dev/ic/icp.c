@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.2.4.2 2002/06/23 17:46:28 jdolecek Exp $	*/
+/*	$NetBSD: icp.c,v 1.2.4.3 2002/10/10 18:39:00 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2.4.2 2002/06/23 17:46:28 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.2.4.3 2002/10/10 18:39:00 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -446,7 +446,7 @@ icp_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->icpacf_unit != icpa->icpa_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 int
@@ -666,7 +666,7 @@ icp_ccb_map(struct icp_softc *icp, struct icp_ccb *ic, void *data, int size,
 			sg->sg_len = htole32(xfer->dm_segs[i].ds_len);
 		}
 	} else if (nsegs > 1)
-		panic("icp_ccb_map: no SG list specified, but nsegs > 1\n");
+		panic("icp_ccb_map: no SG list specified, but nsegs > 1");
 
 	if ((dir & IC_XFER_OUT) != 0)
 		i = BUS_DMASYNC_PREWRITE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.1.2.6 2002/09/06 08:33:37 jdolecek Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.1.2.7 2002/10/10 18:32:12 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -378,7 +378,7 @@ initarm(bootargs)
 
 	if (ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_EBSA
 	    && ebsabootinfo.bt_magic != BT_MAGIC_NUMBER_CATS)
-		panic("Incompatible magic number passed in boot args\n");
+		panic("Incompatible magic number passed in boot args");
 
 /*	{
 	int loop;
@@ -495,7 +495,7 @@ initarm(bootargs)
 #ifdef DIAGNOSTIC
 	/* This should never be able to happen but better confirm that. */
 	if (!kernel_l1pt.pv_pa || (kernel_l1pt.pv_pa & (L1_TABLE_SIZE-1)) != 0)
-		panic("initarm: Failed to align the kernel page directory\n");
+		panic("initarm: Failed to align the kernel page directory");
 #endif
 
 	/*
@@ -564,7 +564,7 @@ initarm(bootargs)
 	/* Now we fill in the L2 pagetable for the kernel static code/data */
 
 	if (N_GETMAGIC(kernexec[0]) != ZMAGIC)
-		panic("Illegal kernel format\n");
+		panic("Illegal kernel format");
 	else {
 		extern int end;
 

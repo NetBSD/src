@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.50.8.1 2002/01/10 19:55:35 thorpej Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.50.8.2 2002/10/10 18:39:43 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.50.8.1 2002/01/10 19:55:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.50.8.2 2002/10/10 18:39:43 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +93,8 @@ struct lpt_isa_softc {
 int lpt_isa_probe __P((struct device *, struct cfdata *, void *));
 void lpt_isa_attach __P((struct device *, struct device *, void *));
 
-struct cfattach lpt_isa_ca = {
-	sizeof(struct lpt_isa_softc), lpt_isa_probe, lpt_isa_attach
-};
+CFATTACH_DECL(lpt_isa, sizeof(struct lpt_isa_softc),
+    lpt_isa_probe, lpt_isa_attach, NULL, NULL);
 
 int	lpt_port_test __P((bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_char, u_char));

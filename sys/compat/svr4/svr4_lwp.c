@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_lwp.c,v 1.5.4.1 2002/01/10 19:52:17 thorpej Exp $	*/
+/*	$NetBSD: svr4_lwp.c,v 1.5.4.2 2002/10/10 18:38:10 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.4.1 2002/01/10 19:52:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_lwp.c,v 1.5.4.2 2002/10/10 18:38:10 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -281,5 +281,4 @@ svr4_sys__lwp_setprivate(p, v, retval)
 
 	/* XXX: Use mach field! */
 	return copyin(SCARG(uap, buffer), &p->p_thread, sizeof(void *));
-	return 0;
 }

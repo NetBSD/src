@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.19.2.2 2002/09/06 08:40:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.19.2.3 2002/10/10 18:36:16 jdolecek Exp $
 
 KDIR=	/sys/arch/sparc/include
 INCSDIR= /usr/include/sparc
 
 INCS=	ansi.h aout_machdep.h apmvar.h asm.h autoconf.h \
 	bswap.h bootinfo.h \
-	cdefs.h cgtworeg.h conf.h cpu.h \
+	cdefs.h cgtworeg.h cpu.h \
 	disklabel.h \
 	eeprom.h elf_machdep.h endian.h endian_machdep.h \
 	float.h frame.h fsr.h \
