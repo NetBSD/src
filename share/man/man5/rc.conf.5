@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.57 2002/03/27 08:53:43 lukem Exp $
+.\"	$NetBSD: rc.conf.5,v 1.58 2002/04/18 12:13:07 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 27, 2002
+.Dd April 18, 2002
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -45,12 +45,16 @@ The
 .Nm
 file specifies which services are enabled during system startup by
 the startup scripts invoked by
-.Pa /etc/rc .
+.Pa /etc/rc 
+(see
+.Xr rc 8 ) ,
+and the shutdown scripts invoked by
+.Pa /etc/rc.shutdown .
 The
 .Nm
 file is a shell script that is sourced by
-.Pa /etc/rc
-if it exists, meaning that
+.Xr rc 8 ,
+meaning that
 .Nm
 must contain valid shell commands.
 .Pp
@@ -75,9 +79,40 @@ have the same name with "_flags" appended, and determine what
 arguments are passed to the program if it is enabled.
 .Pp
 If a variable that
-.Pa /etc/rc
+.Xr rc 8
 expects to be set is not set, or the value is not one of the allowed
 values, a warning will be printed.
+.Pp
+By default,
+.Nm
+reads
+.Pa /etc/defaults/rc.conf
+(if it is readable)
+to obtain default values for various variables, and the end-user
+may override these by appending appropriate entries to the end of
+.Nm "" .
+.Pp
+.Xr rc.d 8
+scripts that use
+.Ic load_rc_config
+from
+.Xr rc.subr 8
+also support sourcing an optional end-user provided per-script override
+file
+.Pa /etc/rc.conf.d/ Ns Ar service ,
+(where
+.Ar service
+is the contents of the
+.Sy name
+variable in the
+.Xr rc.d 8
+script).
+This may contain variable overrides, including allowing the end-user
+to override various
+.Ic run_rc_command
+.Xr rc.d 8
+control variables, and thus changing the operation of the script
+without requiring editing of the script.
 .Ss Overall control
 .Bl -tag -width net_interfaces
 .It Sy rc_configured
@@ -254,8 +289,8 @@ to 0 in
 will actually result in the system booting with securelevel set to 1, as
 .Xr init 8
 will raise the level when
-.Pa /etc/rc
-finishes.
+.Xr rc 8
+completes.
 .El
 .Ss Networking startup
 .Bl -tag -width net_interfaces
@@ -1065,7 +1100,14 @@ resides in
 .Pa /etc .
 .It Pa /etc/defaults/rc.conf
 Default settings for
-.Nm "" .
+.Nm "" ,
+sourced by
+.Nm
+before the end-user configuration section.
+.It Pa /etc/rc.conf.d/ Ns Ar foo
+.Ar foo Ns No -specific
+.Nm
+overrides.
 .El
 .Sh SEE ALSO
 .Xr ifconfig.if 5 ,
