@@ -1,4 +1,4 @@
-.\"	$NetBSD: donations,v 1.6 1999/05/05 19:12:45 is Exp $	
+.\"	$NetBSD: donations,v 1.7 1999/05/05 23:32:24 billc Exp $	
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,6 +62,7 @@ Neil J. McRae
 Perry E. Metzger
 Herb Peyerl
 Mike Price
+Dave Rand
 Thor Lancelot Simon
 Bill Sommerfeld
 Paul Southworth
@@ -72,6 +73,7 @@ Steve Wadlow
 .Ed
 
 .Bd -unfilled -offset indent
+AboveNet Communications, Inc.
 Advanced System Products, Inc.
 Avalon Computer Systems
 Bay Area Internet Solutions
@@ -86,4 +88,5 @@ MS Macro System GmbH, Germany
 Numerical Aerospace Simulation Facility, NASA Ames Research Center
 Piermont Information Systems Inc.
 VMC Harald Frank, Germany
+Warped Communications, Inc.
 .Ed
