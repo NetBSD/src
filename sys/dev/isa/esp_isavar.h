@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isavar.h,v 1.1 2000/03/18 21:49:33 mycroft Exp $	*/
+/*	$NetBSD: esp_isavar.h,v 1.2 2000/03/19 21:27:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Allen Briggs.
@@ -91,6 +91,7 @@ struct esp_isa_probe_data {
 	int sc_parity;
 	int sc_sync;
 	int sc_id;
+	u_char sc_cfg4, sc_cfg5;
 };
 
 #define ESP_ISA_IOSIZE  16

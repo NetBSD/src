@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_isa.c,v 1.18 2000/03/18 21:50:20 mycroft Exp $	*/
+/*	$NetBSD: esp_isa.c,v 1.19 2000/03/19 21:27:01 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,12 +193,14 @@ esp_isa_find(iot, ioh, epd)
 
 	/* reset card before we probe? */
 
+	epd->sc_cfg4 = NCRCFG4_ACTNEG;
+	epd->sc_cfg5 = NCRCFG5_CRS1 | NCRCFG5_AADDR | NCRCFG5_PTRINC;
+
 	/*
 	 * Switch to the PIO regs and look for the bit pattern
 	 * we expect...
 	 */
-	bus_space_write_1(iot, ioh, NCR_CFG4,
-		NCRCFG4_CRS1 | bus_space_read_1(iot, ioh, NCR_CFG4));
+	bus_space_write_1(iot, ioh, NCR_CFG5, epd->sc_cfg5);
 
 #define SIG_MASK 0x87
 #define REV_MASK 0x70
@@ -243,8 +245,7 @@ esp_isa_find(iot, ioh, epd)
 			break;
 	}
 
-	bus_space_write_1(iot, ioh, NCR_CFG4,
-		~NCRCFG4_CRS1 & bus_space_read_1(iot, ioh, NCR_CFG4));
+	bus_space_write_1(iot, ioh, NCR_CFG5, epd->sc_cfg5);
 
 	/* Try to set NCRESPCFG3_FCLK, some FAS408's don't support
 	 * NCRESPCFG3_FCLK even though it is documented.  A bad
@@ -280,8 +281,7 @@ esp_isa_init(esc, epd)
 	if ((epd->sc_rev == NCR_VARIANT_FAS408) && epd->sc_isfast) {
 		sc->sc_freq = 40;
 		sc->sc_cfg3 |= NCRESPCFG3_FCLK;
-	}
-	else
+	} else
 		sc->sc_freq = 24;
 
 	/* Setup the register defaults */
@@ -290,6 +290,8 @@ esp_isa_init(esc, epd)
 		sc->sc_cfg1 |= NCRCFG1_PARENB;
 	sc->sc_cfg2 = NCRCFG2_SCSI2;
 	sc->sc_cfg3 |= NCRESPCFG3_IDM | NCRESPCFG3_FSCSI;
+	sc->sc_cfg4 = epd->sc_cfg4;
+	sc->sc_cfg5 = epd->sc_cfg5;
 
 	/*
 	 * This is the value used to start sync negotiations
