@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.68.2.1 1999/11/01 06:19:09 scottr Exp $
+#	$NetBSD: Makefile.mac68k,v 1.68.2.2 2000/02/13 04:17:36 scottr Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,7 @@ CWARNFLAGS+=	-Wno-main
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} -msoft-float
 AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
-STRIPFLAGS=	-d
+STRIPFLAGS=	-g
 
 %INCLUDES
 
@@ -175,6 +175,8 @@ depend: .depend
 	  ${CPPFLAGS} < ${MAC68K}/mac68k/genassym.cf
 	@sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >> .depend
 	@rm -f assym.dep
+
+dependall: depend all
 
 
 # depend on root or device configuration

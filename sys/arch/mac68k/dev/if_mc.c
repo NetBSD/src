@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.12.2.2 1999/11/02 06:46:12 scottr Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.12.2.3 2000/02/13 04:17:40 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -627,7 +627,9 @@ mace_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
+#if NBPFILTER > 0
 	struct ether_header *eh = (struct ether_header *)pkt;
+#endif
 	struct mbuf *m;
 
 	if (len <= sizeof(struct ether_header) ||
