@@ -1,7 +1,7 @@
 /* TODO
 Add intrinfo.
 */
-/*	$NetBSD: ehci.c,v 1.15 2001/11/21 02:44:30 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.16 2001/11/21 02:47:07 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ Add intrinfo.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.15 2001/11/21 02:44:30 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.16 2001/11/21 02:47:07 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -860,6 +860,7 @@ ehci_dump_link(ehci_link_t link, int type)
 			case EHCI_LINK_QH: printf("QH"); break;
 			case EHCI_LINK_SITD: printf("SITD"); break;
 			case EHCI_LINK_FSTN: printf("FSTN"); break;
+			}
 		}
 		printf(">");
 	}
