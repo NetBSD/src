@@ -1,4 +1,4 @@
-/*	$NetBSD: regnum.h,v 1.1 1995/12/20 02:00:28 jonathan Exp $	*/
+/*	$NetBSD: regnum.h,v 1.2 1996/03/19 15:20:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -134,12 +134,3 @@ int ipcreg[NIPCREG] = {
 	F24, F25, F26, F27, F28, F29, F30, F31, FSR,
 };
 #endif
-
-#ifdef LANGUAGE_C
-/*
- * Register set accessible via /proc/$pid/reg
- */
-struct reg {
-        int     r_regs[71];	/* numbered as above */
-};
-#endif /* LANGUAGE_C */
