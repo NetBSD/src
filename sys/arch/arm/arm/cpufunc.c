@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.28 2002/01/25 21:33:26 thorpej Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.29 2002/01/30 00:37:18 thorpej Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -698,6 +698,12 @@ set_cpufuncs()
 		cpufuncs = sa110_cpufuncs;
 		cpu_reset_needs_v4_MMU_disable = 1;	/* SA needs it */
 		get_cachetype();
+		/*
+		 * Enable the right variant of sleeping.
+		 */
+		if (cputype == CPU_ID_SA1100 ||
+		    cputype == CPU_ID_SA1110)
+			cpufuncs.cf_sleep = sa11x0_cpu_sleep;
 		return 0;
 	}
 #endif	/* CPU_SA110 */
