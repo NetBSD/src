@@ -1,6 +1,6 @@
-.\" $NetBSD: vidcaudio.4,v 1.2 2003/12/31 17:29:08 wiz Exp $
+.\" $NetBSD: vidcaudio.4,v 1.3 2004/01/01 16:27:38 bjh21 Exp $
 .\"
-.\" Copyright (c) 2003 Ben Harris
+.\" Copyright (c) 2003, 2004 Ben Harris
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 31, 2003
+.Dd January 1, 2004
 .Dt VIDCAUDIO 4 acorn32
 .Os
 .Sh NAME
@@ -43,15 +43,19 @@ and of the video and sound macrocell of the
 .Tn ARM7500
 and
 .Tn ARM7500FE .
+.Pp
 The driver can work in two modes, either using the internal 8-bit
 DACs of the
 .Tn VIDC20
 and its internal reference clock,
-or using the serial sound output of the
-.Tn ARM7500
-or
-.Tn ARM7500FE
+or using the serial sound output of any supported chip
 feeding external 16-bit DACs and an external sound clock.
+On systems with a
+.Tn VIDC20 ,
+the choice of mode is based on the
+.Ql *Configure SoundSystem
+setting under
+.Tn RISC OS .
 .Sh SEE ALSO
 .Xr audio 4
 .Sh HISTORY
@@ -66,10 +70,6 @@ because it had bit-rotted so far as to be useless.
 The first version was written by Melvin Tang-Richardson.
 The rewrite was by Ben Harris.
 .Sh BUGS
-The driver always uses 8-bit mode on the
-.Tn VIDC20 ,
-whereas it should use 16-bit mode if external DACs are fitted.
-.Pp
 The driver doesn't support the
 .Fn sysbeep
 interface for emulating a console bell.
