@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2001/02/04 18:32:16 briggs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2001/03/06 20:11:41 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,19 +38,19 @@
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
 #ifndef	MAXTSIZ
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(64*1024*1024)		/* max text size */
 #endif
 
 #ifndef	DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* default data size */
+#define	DFLDSIZ		(128*1024*1024)		/* default data size */
 #endif
 
 #ifndef	MAXDSIZ
-#define	MAXDSIZ		(512*1024*1024)		/* max data size */
+#define	MAXDSIZ		(1*1024*1024*1024)	/* max data size */
 #endif
 
 #ifndef	DFLSSIZ
-#define	DFLSSIZ		(1*1024*1024)		/* default stack size */
+#define	DFLSSIZ		(2*1024*1024)		/* default stack size */
 #endif
 
 #ifndef	MAXSSIZ
