@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.43 1996/12/20 09:08:14 mrg Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.44 1997/01/11 05:21:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -42,6 +42,7 @@
 #include <sys/domain.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -51,6 +52,7 @@
 #include <sys/sysctl.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -64,6 +66,9 @@
 #ifdef PFIL_HOOKS
 #include <net/pfil.h>
 #endif /* PFIL_HOOKS */
+
+/* XXX should really put this in libkern.h */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
 
 #ifndef	IPFORWARDING
 #ifdef GATEWAY
@@ -1158,6 +1163,66 @@ ip_forward(m, srcrt)
 		break;
 	}
 	icmp_error(mcopy, type, code, dest, destifp);
+}
+
+void
+ip_savecontrol(inp, mp, ip, m)
+	register struct inpcb *inp;
+	register struct mbuf **mp;
+	register struct ip *ip;
+	register struct mbuf *m;
+{
+
+	if (inp->inp_socket->so_options & SO_TIMESTAMP) {
+		struct timeval tv;
+
+		microtime(&tv);
+		*mp = sbcreatecontrol((caddr_t) &tv, sizeof(tv),
+		    SCM_TIMESTAMP, SOL_SOCKET);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	if (inp->inp_flags & INP_RECVDSTADDR) {
+		*mp = sbcreatecontrol((caddr_t) &ip->ip_dst,
+		    sizeof(struct in_addr), IP_RECVDSTADDR, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+#ifdef notyet
+	/*
+	 * XXX
+	 * Moving these out of udp_input() made them even more broken
+	 * than they already were.
+	 *	- fenner@parc.xerox.com
+	 */
+	/* options were tossed already */
+	if (inp->inp_flags & INP_RECVOPTS) {
+		*mp = sbcreatecontrol((caddr_t) opts_deleted_above,
+		    sizeof(struct in_addr), IP_RECVOPTS, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+	/* ip_srcroute doesn't do what we want here, need to fix */
+	if (inp->inp_flags & INP_RECVRETOPTS) {
+		*mp = sbcreatecontrol((caddr_t) ip_srcroute(),
+		    sizeof(struct in_addr), IP_RECVRETOPTS, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
+#endif
+	if (inp->inp_flags & INP_RECVIF) {
+		struct sockaddr_dl sdl;
+
+		sdl.sdl_len = offsetof(struct sockaddr_dl, sdl_data[0]);
+		sdl.sdl_family = AF_LINK;
+		sdl.sdl_index = m->m_pkthdr.rcvif ?
+		    m->m_pkthdr.rcvif->if_index : 0;
+		sdl.sdl_nlen = sdl.sdl_alen = sdl.sdl_slen = 0;
+		*mp = sbcreatecontrol((caddr_t) &sdl, sdl.sdl_len,
+		    IP_RECVIF, IPPROTO_IP);
+		if (*mp)
+			mp = &(*mp)->m_next;
+	}
 }
 
 int
