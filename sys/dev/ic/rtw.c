@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.30 2004/12/27 20:04:45 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.30 2004/12/27 20:04:45 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1228,8 +1228,11 @@ rtw_io_enable(struct rtw_regs *regs, u_int8_t flags, int enable)
 static void
 rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 {
+	static const int ratetbl[4] = {2, 4, 11, 22};	/* convert rates:
+							 * hardware -> net80211
+							 */
 	u_int next, nproc = 0;
-	int len, rate, rssi;
+	int hwrate, len, rate, rssi;
 	u_int32_t hrssi, hstat, htsfth, htsftl;
 	struct rtw_rxdesc *hrx;
 	struct rtw_rxctl *srx;
@@ -1282,6 +1285,7 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			printf("%s: DMA error/FIFO overflow %08x, "
 			    "rx descriptor %d\n", sc->sc_dev.dv_xname,
 			    hstat & RTW_RXSTAT_IOERROR, next);
+			sc->sc_if.if_ierrors++;
 			goto next;
 		}
 
@@ -1291,24 +1295,14 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 			goto next;
 		}
 
-		switch (hstat & RTW_RXSTAT_RATE_MASK) {
-		case RTW_RXSTAT_RATE_1MBPS:
-			rate = 2;
-			break;
-		case RTW_RXSTAT_RATE_2MBPS:
-			rate = 4;
-			break;
-		case RTW_RXSTAT_RATE_5MBPS:
-			rate = 11;
-			break;
-		case RTW_RXSTAT_RATE_11MBPS:
-			rate = 22;
-			break;
-		default:
+		hwrate = MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK);
+		if (hwrate >= sizeof(ratetbl) / sizeof(ratetbl[0])) {
 			printf("%s: unknown rate #%d\n", sc->sc_dev.dv_xname,
 			    MASK_AND_RSHIFT(hstat, RTW_RXSTAT_RATE_MASK));
+			sc->sc_if.if_ierrors++;
 			goto next;
 		}
+		rate = ratetbl[hwrate];
 
 #ifdef RTW_DEBUG
 #define PRINTSTAT(flag) do { \
