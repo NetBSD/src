@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.175 2004/04/30 04:06:03 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.176 2004/05/05 15:39:55 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1755,3 +1755,56 @@ share/man/man4/fast_ipsec.4			0-1.1
 	fast_ipsec, along with an explicit caveat about the unsupported, 
 	unsafe state of combining both IPv6 and fast_ipsec.
 	[jonathan, ticket #236]
+
+sys/dev/pci/hifn7751.c				1.21
+
+	Identify AES-capable chips (7955, 7956) in the driver attach message.
+	[jonathan, ticket #239]
+
+distrib/notes/sgimips/hardware			1.8
+
+	Add missing .bullet)
+	[pooka, ticket #242]
+
+crypto/dist/ssh/sshd_config			1.19
+
+	Set LoginGraceTime back to 600 like it used to be.  This should
+	help slow machines with long keys to still work like they did with
+	NetBSD 1.6 and before.
+	[jonb, ticket #243]
+
+sys/arch/i386/conf/GENERIC			1.602
+sys/arch/i386/conf/GENERIC_LAPTOP		1.93
+
+	Uncomment 'wd* at umass?' in GENERIC, add to GENERIC_LAPTOP.
+	supports the ISD's ATA protocol over Bulk-Only, used with the Archos
+	studio and Archos Jukebox products, among others.
+	[gendalia, ticket #244]
+
+sys/arch/vax/vsa/vsbus.c			1.45
+
+	Fix bug that were introduced together with the merge of nathanw_sa:
+	SCSI on VS2k/VS3100 stopped working. Spotted and fixed by
+	Anders Hjalmarsson. This fixes PR#25307.
+	[ragge, ticket #245]
+
+gnu/dist/gcc/gcc/config/sparc/sparc-protos.h	1.2
+gnu/dist/gcc/gcc/config/sparc/sparc.c		1.4
+gnu/dist/gcc/gcc/config/sparc/sparc.md		1.7
+
+	Bring in a change from gcc-current to fix double -> unsigned long
+	conversions and generally avoid 128 bit (emulated) floats in between.
+	This fixes heaps of problems in perl >= 5.7.1, where integer values
+	and unsigned values are separated by the interpreter.
+	[martin, ticket #246]
+
+sys/dev/microcode/isp/asm_2100.h		1.5
+
+	Revert ISP2100 firmware to Qlogic revision 1.19.16 (the version that
+	shipped with NetBSD 1.5). With all newer versions available to us, we
+	have seen some adapters crash -- and fail to respond to reset -- under
+	certain heavy load conditions.  This version appears stable under heavy
+	load with the current driver on multiple systems on which we can
+	reproduce the failure with newer versions.
+	[tls, ticket #247]
+
