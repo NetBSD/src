@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: newvers.sh,v 1.30 2000/01/23 23:39:19 hubertf Exp $
+#	$NetBSD: newvers.sh,v 1.31 2000/07/14 07:14:03 thorpej Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -52,14 +52,14 @@ osrelcmd=`dirname $0`/osrelease.sh
 ost="NetBSD"
 osr=`sh $osrelcmd`
 
-echo "char ostype[] = \"${ost}\";" > vers.c
-echo "char osrelease[] = \"${osr}\";" >> vers.c
+echo "const char ostype[] = \"${ost}\";" > vers.c
+echo "const char osrelease[] = \"${osr}\";" >> vers.c
 echo \
-  "char sccs[] = \
+  "const char sccs[] = \
     \"@""(#)${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
   >> vers.c
 echo \
-  "char version[] = \
+  "const char version[] = \
     \"${ost} ${osr} (${id}) #${v}: ${t}\\n    ${u}@${h}:${d}\\n\";" \
   >> vers.c
 
