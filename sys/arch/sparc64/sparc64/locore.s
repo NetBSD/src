@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.31 1999/02/28 00:26:46 eeh Exp $	*/
+/*	$NetBSD: locore.s,v 1.32 1999/03/22 05:35:39 eeh Exp $	*/
 /*
  * Copyright (c) 1996, 1997, 1998 Eduardo Horvath
  * Copyright (c) 1996 Paul Kranenburg
@@ -50,16 +50,19 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  */
 
-#undef NO_VCACHE
-#define TRAPTRACE
-#define TRAPSTATS
-#undef TRAPS_USE_IG
-#undef LOCKED_PCB
-#define HWREF
-#define MMUDEBUG
-#define VECTORED_INTERRUPTS
-#undef PMAP_FPSTATE
-
+#undef NO_VCACHE		/* Map w/D$ disabled */
+#undef TRAPTRACE		/* Keep history of all traps (may watchdog) */
+#define TRAPSTATS		/* Count traps */
+#undef TRAPS_USE_IG		/* Use Interrupt Globals for trap handling */
+#undef LOCKED_PCB		/* Lock current proc's PCB in MMU */
+#define HWREF			/* Handle ref/mod tracking in trap handlers */
+#undef MMUDEBUG		/* Check use of MMU regs during MMU faults */
+#define VECTORED_INTERRUPTS	/* Use interrupt vectors */
+#define PMAP_FPSTATE		/* Allow nesting of VIS pmap copy/zero */
+#undef PMAP_PHYS_PAGE		/* Don't use block ld/st for pmap copy/zero */
+#define DCACHE_BUG		/* Clear D$ line before loads from ASI_PHYS */
+#undef NO_TSB			/* Don't use TSB */
+	
 #include "opt_ddb.h"
 #include "opt_uvm.h"
 #include "opt_compat_svr4.h"
@@ -154,6 +157,28 @@
 #else	
 #define NOTREACHED
 #endif
+
+/*
+ * This macro will clear out a cache line before an explicit
+ * access to that location.  It's mostly used to make certain
+ * loads bypassing the D$ do not get stale D$ data.
+ *
+ * It uses a register with the address to clear and a temporary
+ * which is destroyed.
+ */
+#ifdef DCACHE_BUG
+#define DLFLUSH(a,t) \
+	andn	a, 0x1f, t; \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
+	membar	#Sync
+#define DLFLUSH2(t) \
+	stxa	%g0, [ t ] ASI_DCACHE_TAG; \
+	membar	#Sync
+#else
+#define DLFLUSH(a,t)
+#define DLFLUSH2(t)
+#endif
+	
 
 /*
  * A handy macro for maintaining instrumentation counters.
@@ -720,6 +745,10 @@ ufast_IMMU_miss:			! 063 = fast instr access MMU miss
 	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
 #endif
+#ifdef NO_TSB
+	ba,a	%icc, instr_miss; 
+	 nop
+#endif
 	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn %g4, instr_miss		!					Got right tag?
@@ -745,6 +774,10 @@ ufast_DMMU_miss:			! 068 = fast data access MMU miss
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
+#ifdef NO_TSB
+	ba,a	%icc, data_miss; 
+	 nop
 #endif
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
@@ -985,6 +1018,10 @@ kfast_IMMU_miss:			! 063 = fast instr access MMU miss
 	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
 #endif
+#ifdef NO_TSB
+	ba,a	%icc, instr_miss; 
+	 nop
+#endif
 	brgez,pn %g5, instr_miss	!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
 	brnz,pn %g4, instr_miss		!					Got right tag?
@@ -1010,6 +1047,10 @@ kfast_DMMU_miss:			! 068 = fast data access MMU miss
 	inc	%g6					! DEBUG
 	stw	%g6, [%g7+%lo(_C_LABEL(missmmu))]	! DEBUG
 0:							! DEBUG
+#endif
+#ifdef NO_TSB
+	ba,a	%icc, data_miss; 
+	 nop
 #endif
 	brgez,pn %g5, data_miss		!					Entry invalid?  Punt
 	 xor	%g1, %g4, %g4		!					Compare TLB tags
@@ -1837,6 +1878,7 @@ asmptechk:
 	and	%g5, STMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g4, %g5, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
@@ -1844,6 +1886,7 @@ asmptechk:
 	and	%g5, PDMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g4, %g5, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4		! Remember -- UNSIGNED
 	brz,pn	%g4, 1f					! NULL entry? check somewhere else
 	
@@ -1851,6 +1894,7 @@ asmptechk:
 	and	%g5, PTMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g4, %g5, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g6
 	brgez,pn %g6, 1f				! Entry invalid?  Punt
 	 srlx	%g6, 32, %o0	
@@ -1908,6 +1952,7 @@ dmmu_write_fault:
 	and	%g5, STMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 	
 	srlx	%g3, PDSHIFT, %g5
@@ -1915,6 +1960,7 @@ dmmu_write_fault:
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
@@ -1922,6 +1968,7 @@ dmmu_write_fault:
 	sll	%g5, 3, %g5
 	 brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	add	%g5, %g4, %g6
+	DLFLUSH(%g6,%g4)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 btst	TTE_REAL_W|TTE_W, %g4			! Is it a ref fault?
@@ -2037,6 +2084,7 @@ Ludata_miss:
 	and	%g5, STMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 
 	srlx	%g3, PDSHIFT, %g5
@@ -2044,6 +2092,7 @@ Ludata_miss:
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 	
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
@@ -2051,6 +2100,7 @@ Ludata_miss:
 	sll	%g5, 3, %g5
 	brz,pn	%g4, winfix				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
+	DLFLUSH(%g6,%g4)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, winfix				! Entry invalid?  Punt
 	 bset	TTE_ACCESS, %g4				! Update the modified bit
@@ -2311,6 +2361,7 @@ winfixspill:
 	and	%g7, STMASK, %g7
 	sll	%g7, 3, %g7
 	add	%g7, %g1, %g1
+	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1		! Load pointer to directory
 	
 	srlx	%g6, PDSHIFT, %g7			! Do page directory
@@ -2318,6 +2369,7 @@ winfixspill:
 	sll	%g7, 3, %g7
 	brz,pn	%g1, 0f
 	 add	%g7, %g1, %g1
+	DLFLUSH(%g1,%g7)
 	ldxa	[%g1] ASI_PHYS_CACHED, %g1
 	
 	srlx	%g6, PTSHIFT, %g7			! Convert to ptab offset
@@ -2325,6 +2377,7 @@ winfixspill:
 	brz	%g1, 0f
 	 sll	%g7, 3, %g7
 	add	%g1, %g7, %g7
+	DLFLUSH(%g7,%g1)
 	ldxa	[%g7] ASI_PHYS_CACHED, %g7		! This one is not
 	brgez	%g7, 0f
 	 srlx	%g7, PGSHIFT, %g7			! Isolate PA part
@@ -2340,6 +2393,8 @@ winfixspill:
 	 * Now save all user windows to cpcb.
 	 */
 #ifdef NOTDEF_DEBUG
+	add	%g6, PCB_NSAVED, %g7
+	DLFLUSH(%g6,%g7)	
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! make sure that pcb_nsaved
 	brz,pt	%g7, 1f					! is zero, else
 	 nop
@@ -2360,6 +2415,8 @@ winfixspill:
 1:
 	mov	%g7, %g1
 	CHKPT(%g5,%g7,0x13)
+	add	%g6, PCB_NSAVED, %g7
+	DLFLUSH(%g6,%g7)
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Start incrementing pcb_nsaved
 
 #ifdef DEBUG
@@ -2879,6 +2936,7 @@ Lutext_miss:
 	and	%g5, STMASK, %g5
 	sll	%g5, 3, %g5
 	add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 
 	srlx	%g3, PDSHIFT, %g5
@@ -2886,6 +2944,7 @@ Lutext_miss:
 	sll	%g5, 3, %g5
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g4
+	DLFLUSH(%g4,%g5)
 	ldxa	[%g4] ASI_PHYS_CACHED, %g4
 
 	srlx	%g3, PTSHIFT, %g5			! Convert to ptab offset
@@ -2893,6 +2952,7 @@ Lutext_miss:
 	sll	%g5, 3, %g5
 	brz,pn	%g4, textfault				! NULL entry? check somewhere else
 	 add	%g5, %g4, %g6
+	DLFLUSH(%g6,%g4)
 	ldxa	[%g6] ASI_PHYS_CACHED, %g4
 	brgez,pn %g4, textfault			
 	 bset	TTE_ACCESS, %g4				! Update accessed bit
@@ -4572,7 +4632,7 @@ print_dtlb:
 	membar	#Sync
 	inc	%l2
 	set	2f, %o0
-	call	_C_LABEL(printf)
+	call	_C_LABEL(db_printf)
 	 inc	8, %l1
 	
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4582,7 +4642,7 @@ print_dtlb:
 	membar	#Sync
 	inc	%l2
 	set	3f, %o0
-	call	_C_LABEL(printf)
+	call	_C_LABEL(db_printf)
 	 inc	8, %l1
 
 	cmp	%l1, %l3
@@ -4612,7 +4672,7 @@ print_dtlb:
 	inc	%l2
 	srax	%o4, 32, %o4
 	set	2f, %o0
-	call	_C_LABEL(printf)
+	call	_C_LABEL(db_printf)
 	 inc	8, %l1
 	
 	ldxa	[%l1] ASI_DMMU_TLB_TAG, %o2
@@ -4626,7 +4686,7 @@ print_dtlb:
 	inc	%l2
 	srax	%o4, 32, %o4
 	set	3f, %o0
-	call	_C_LABEL(printf)
+	call	_C_LABEL(db_printf)
 	 inc	8, %l1
 
 	cmp	%l1, %l3
@@ -4800,6 +4860,16 @@ dostart:
 	set	romwstate, %o0
 	rdpr	%wstate, %o1			! Save ROM wstate
 	stx	%o1, [%o0]	
+#endif
+
+#if 0
+	/*
+	 * Disable the DCACHE entirely for debug.
+	 */
+	ldxa	[%g0] ASI_MCCR, %o1
+	andn	%o1, MCCR_DCACHE_EN, %o1
+	stxa	%o1, [%g0] ASI_MCCR
+	membar	#Sync
 #endif
 
 	/*
@@ -6942,6 +7012,7 @@ Lsw_load:
 	and	%o1, STMASK, %o1
 	sll	%o1, 3, %o1
 	add	%o1, %o4, %o4
+	DLFLUSH(%o4,%o1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o4
 	
 	srlx	%g1, PDSHIFT, %o1
@@ -6949,6 +7020,7 @@ Lsw_load:
 	sll	%o1, 3, %o1
 	brz,pn	%o4, 1f					! NULL entry? check somewhere else
 	 add	%o1, %o4, %o4
+	DLFLUSH(%o4,%o1)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o4
 	
 	srlx	%g1, PTSHIFT, %o1			! Convert to ptab offset
@@ -6956,6 +7028,7 @@ Lsw_load:
 	sll	%o1, 3, %o1
 	brz,pn	%o4, 1f					! NULL entry? check somewhere else
 	 add	%o1, %o4, %o0
+	DLFLUSH(%o0,%o4)
 	ldxa	[%o0] ASI_PHYS_CACHED, %o4
 	brgez,pn %o4, 1f				! Entry invalid?  Punt
 	 mov	TLB_TAG_ACCESS, %o2
@@ -7470,6 +7543,8 @@ ENTRY(_remque)
  * the contents of the D$.  We will execute a flush at the end
  * to sync the I$.
  */
+paginuse:
+	.word	0
 ENTRY(pmap_zero_page)
 	!!
 	!! If we have 64-bit physical addresses (and we do now)
@@ -7525,7 +7600,7 @@ ENTRY(pmap_zero_page)
 	!! routine and nest FP use in the kernel
 	!! 
 	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE), %l0	! Calculate pointer to fpstate
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
 	rd	%fprs, %l1			! Save old fprs so we can restore it later
 	andn	%l0, BLOCK_ALIGN, %l0		! And make it block aligned
 	call	_C_LABEL(savefpstate)
@@ -7548,6 +7623,19 @@ ENTRY(pmap_zero_page)
 1:	
 	 wr	%o1, 0, %fprs			! Enable the FPU
 #endif
+
+#ifdef DEBUG
+	sethi	%hi(paginuse), %o4		! Prevent this from nesting
+	lduw	[%o4 + %lo(paginuse)], %o5
+	tst	%o5
+	tnz	%icc, 1
+	bnz,pn	%icc, pmap_zero_phys
+	 inc	%o5
+	stw	%o5, [%o4 + %lo(paginuse)]
+#endif
+
+	rdpr	%pil, %g1
+	wrpr	%g0, 15, %pil			! s = splhigh()
 	
 	fzero	%f0				! Set up FPU
 	fzero	%f2
@@ -7593,6 +7681,27 @@ ENTRY(pmap_zero_page)
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the page again 
 	membar	#Sync				! No real reason for this XXXX
 
+#ifdef DEBUG
+	!!
+	!! Use phys accesses to verify page is clear
+	!! 
+	set	NBPG, %o4
+1:	
+	DLFLUSH(%o0,%o1)
+	ldxa	[%o0] ASI_PHYS_CACHED, %o1
+	dec	8, %o4
+	tst	%o1
+	tnz	%icc, 1
+	brnz,pt	%o4, 1b
+	 inc	8, %o0
+
+	sethi	%hi(paginuse), %o4		! Prevent this from nesting
+	stw	%g0, [%o4 + %lo(paginuse)]
+	
+#endif
+	
+	wrpr	%g1, 0, %pil			! splx(s)
+	
 #ifdef PMAP_FPSTATE
 	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
 	bz,pt	%icc, 1f
@@ -7600,7 +7709,7 @@ ENTRY(pmap_zero_page)
 	call	_C_LABEL(loadfpstate)
 	 mov	%l0, %o0
 1:	
-	return
+!	return			! Does this work?
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
@@ -7705,7 +7814,7 @@ ENTRY(pmap_copy_page)
 	!! routine and nest FP use in the kernel
 	!! 
 	save	%sp, -(CC64FSZ+FS_SIZE+BLOCK_SIZE), %sp	! Allocate an fpstate
-	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE), %l0	! Calculate pointer to fpstate
+	add	%sp, (CC64FSZ+STKB+BLOCK_SIZE-1), %l0	! Calculate pointer to fpstate
 	andn	%l0, BLOCK_ALIGN, %l0		! And make it block aligned
 	rd	%fprs, %l1			! Save old fprs so we can restore it later
 	call	_C_LABEL(savefpstate)
@@ -7725,11 +7834,24 @@ ENTRY(pmap_copy_page)
 	LDPTR	[%o4 + %lo(_C_LABEL(fpproc))], %o4
 	bz,pt	%icc, 1f			! No, use fpregs
 	 bset	FPRS_FEF, %o5
-	brz,pn	%o4, pmap_zero_phys		! No userland fpstate so do this the slow way
+	brz,pn	%o4, pmap_copy_phys		! No userland fpstate so do this the slow way
 1:	
 	 wr	%o5, 0, %fprs			! Enable the FPU
 #endif
 	
+#ifdef DEBUG
+	sethi	%hi(paginuse), %o4		! Prevent this from nesting
+	lduw	[%o4 + %lo(paginuse)], %o5
+	tst	%o5
+	tnz	%icc, 1
+	bnz,pn	%icc, pmap_copy_phys
+	 inc	%o5
+	stw	%o5, [%o4 + %lo(paginuse)]
+#endif
+
+	rdpr	%pil, %g1
+	wrpr	%g0, 15, %pil			! s = splhigh();
+		
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Do the demap
 	sethi	%hi(NBPG), %o4
 	membar	#Sync				! No real reason for this XXXX
@@ -7769,7 +7891,7 @@ ENTRY(pmap_copy_page)
 
 	membar	#LoadStore
 	fmovd	%f14, %f14			! Sync 1st bank
-	stda	%f0, [%o4] ASI_BLK_P		! Store 1st bank
+	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
 	brlez,pn	%o5, 1f			! Finished? 
 	 add	%o4, 64, %o4
 	
@@ -7780,7 +7902,7 @@ ENTRY(pmap_copy_page)
 	
 	membar	#LoadStore
 	fmovd	%f30, %f30			! Sync 2nd bank
-	stda	%f16, [%o4] ASI_BLK_P		! Store 2nd bank
+	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
 	brgz,pt	%o5, 1b				! Finished? 
 	 add	%o4, 64, %o4
 
@@ -7789,7 +7911,7 @@ ENTRY(pmap_copy_page)
 	!! 
 	membar	#LoadStore
 	fmovd	%f14, %f14			! Sync 1st bank
-	stda	%f0, [%o4] ASI_BLK_P		! Store 1st bank
+	stda	%f0, [%o4] ASI_BLK_COMMIT_P	! Store 1st bank
 	ba,pt	%icc, 2f			! Finished? 
 	 add	%o4, 64, %o4
 
@@ -7799,7 +7921,7 @@ ENTRY(pmap_copy_page)
 	!!
 	membar	#LoadStore
 	fmovd	%f30, %f30			! Sync 2nd bank
-	stda	%f16, [%o4] ASI_BLK_P		! Store 2nd bank
+	stda	%f16, [%o4] ASI_BLK_COMMIT_P	! Store 2nd bank
 	add	%o4, 64, %o4
 
 2:
@@ -7810,7 +7932,37 @@ ENTRY(pmap_copy_page)
 	sub	%o3, %o4, %o3
 	stxa	%o3, [%o3] ASI_DMMU_DEMAP	! Demap the source page again 
 	membar	#Sync				! No real reason for this XXXX
+	
+#ifdef DEBUG
+	!!
+	!! Use phys accesses to verify copy
+	!! 
+	sethi	%hi(0x80000000), %o4		! Setup TTE:
+	sllx	%o4, 32, %o4			!  V = 1
+	or	%o4, TTE_CP|TTE_P|TTE_W|TTE_L, %o4	!  CP=1|P=1|W=1|L=1
+	andn	%o1, %o4, %o0			! Clear out TTE to get PADDR
+	andn	%o1, %o4, %o1			! Clear out TTE to get PADDR
+	
+	set	NBPG, %o3
+	
+1:	
+	DLFLUSH(%o0,%o4)
+	ldxa	[%o0] ASI_PHYS_CACHED, %o4
+	DLFLUSH(%o1,%o5)
+	ldxa	[%o1] ASI_PHYS_CACHED, %o5
+	dec	8, %o3
+	cmp	%o4, %o5
+	tne	%icc, 1
+	inc	8, %o0
+	brnz,pt	%o4, 1b
+	 inc	8, %o1
+	
+	sethi	%hi(paginuse), %o4		! Prevent this from nesting
+	stw	%g0, [%o4 + %lo(paginuse)]
+#endif
 
+	wrpr	%g1, 0, %pil			! splx(s)
+	
 #ifdef PMAP_FPSTATE
 	btst	FPRS_DU|FPRS_DL, %l1		! Anything to restore?
 	bz,pt	%icc, 1f
@@ -7818,7 +7970,7 @@ ENTRY(pmap_copy_page)
 	call	_C_LABEL(loadfpstate)
 	 mov	%l0, %o0
 1:	
-	return
+!	return			! Does this work?
 	 wr	%l1, 0, %fprs
 	ret
 	 restore
@@ -7914,6 +8066,7 @@ pmap_copy_phys:
 	sub	%o3, 8, %o2
 	mov	%g1, %o4		! Save g1
 1:
+	DLFLUSH(%o0,%g1)
 	ldxa	[%o0] ASI_PHYS_CACHED, %g1
 	inc	8, %o0
 	stxa	%g1, [%o1] ASI_PHYS_CACHED
@@ -7935,6 +8088,7 @@ pmap_copy_phys:
 	add	%o3, %o0, %o3
 	mov	%g1, %o4		! Save g1
 1:
+	DLFLUSH(%o0,%g1)
 	ldxa	[%o0] ASI_PHYS_CACHED, %g1
 	inc	8, %o0
 	cmp	%o0, %o3
@@ -7967,6 +8121,7 @@ ENTRY(pseg_get)
 	and	%o3, STMASK, %o3			! Index into pm_segs
 	sll	%o3, 3, %o3
 	add	%o2, %o3, %o2
+	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page directory pointer
 
 	srlx	%o1, PDSHIFT, %o3
@@ -7974,6 +8129,7 @@ ENTRY(pseg_get)
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
+	DLFLUSH(%o2,%o3)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o2		! Load page table pointer
 
 	srlx	%o1, PTSHIFT, %o3			! Convert to ptab offset
@@ -7981,6 +8137,7 @@ ENTRY(pseg_get)
 	sll	%o3, 3, %o3
 	brz,pn	%o2, 1f					! NULL entry? check somewhere else
 	 add	%o2, %o3, %o2
+	DLFLUSH(%o2,%o0)
 	ldxa	[%o2] ASI_PHYS_CACHED, %o0
 	brgez,pn %o0, 1f				! Entry invalid?  Punt
 	 btst	1, %sp
@@ -7994,6 +8151,7 @@ ENTRY(pseg_get)
 	retl						! No, generate a %o0:%o1 double
 	 srlx	%o0, 32, %o0
 #else
+	DLFLUSH(%o2,%o0)
 	retl						! No, generate a %o0:%o1 double
 	 ldda	[%o2] ASI_PHYS_CACHED, %o0
 #endif
@@ -8067,6 +8225,7 @@ ENTRY(pseg_set)
 	and	%o5, STMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
+	DLFLUSH(%o4,%o5)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load page directory pointer
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
@@ -8080,6 +8239,7 @@ ENTRY(pseg_set)
 	and	%o5, PDMASK, %o5
 	sll	%o5, 3, %o5
 	add	%o4, %o5, %o4
+	DLFLUSH(%o4,%o5)
 	ldxa	[%o4] ASI_PHYS_CACHED, %o5		! Load table directory pointer
 	
 	brnz,a,pt	%o5, 0f				! Null pointer?
