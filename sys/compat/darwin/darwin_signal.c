@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.2 2002/11/26 00:05:41 manu Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.3 2002/11/27 16:44:01 atatat Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.2 2002/11/26 00:05:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.3 2002/11/27 16:44:01 atatat Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,11 +81,11 @@ darwin_sys_sigaction(p, v, retval)
 	if (SCARG(uap, osa) != NULL)
 		osa = stackgap_alloc(p, &sg, sizeof(struct sigaction));
 
-	sa.sa_handler = dsa.sa_handler.__sa_handler;
-	native_sigset13_to_sigset(&dsa.sa_mask, &sa.sa_mask);
-	if (dsa.sa_mask & DARWIN_SA_USERTRAMP)
+	sa.sa_handler = dsa.darwin_sa_handler.__sa_handler;
+	native_sigset13_to_sigset(&dsa.darwin_sa_mask, &sa.sa_mask);
+	if (dsa.darwin_sa_mask & DARWIN_SA_USERTRAMP)
 		DPRINTF(("darwin_sys_sigaction: ignoring SA_USERTRAMP\n"));
-	sa.sa_flags = dsa.sa_mask & ~DARWIN_SA_USERTRAMP;
+	sa.sa_flags = dsa.darwin_sa_mask & ~DARWIN_SA_USERTRAMP;
 
 	if ((error = copyout(&sa, nsa, sizeof(sa))) != 0)
 		return error;
@@ -94,7 +94,7 @@ darwin_sys_sigaction(p, v, retval)
 	SCARG(&cup, nsa) = nsa;
 	if (SCARG(uap, osa) != NULL)
 		SCARG(&cup, osa) = osa;
-	SCARG(&cup, tramp) = dsa.sa_tramp;
+	SCARG(&cup, tramp) = dsa.darwin_sa_tramp;
 	SCARG(&cup, vers) = 1;
 
 	if ((error = sys___sigaction_sigtramp(p, &cup, retval)) !=0)
@@ -106,10 +106,10 @@ darwin_sys_sigaction(p, v, retval)
 	if ((error = copyin(SCARG(&cup, osa), &sa, sizeof(sa))) != 0)
 		return error;
 
-	sa13.sa_handler = sa.sa_handler;
-	sa13.sa_mask = sa.sa_mask.__bits[0];
-	native_sigset_to_sigset13(&sa.sa_mask, &sa13.sa_mask);
-	sa13.sa_flags = sa.sa_flags;
+	sa13.osa_handler = sa.sa_handler;
+	sa13.osa_mask = sa.sa_mask.__bits[0];
+	native_sigset_to_sigset13(&sa.sa_mask, &sa13.osa_mask);
+	sa13.osa_flags = sa.sa_flags;
 
 	if ((error = copyout(&sa13, SCARG(uap, osa), sizeof(sa13))) != 0)
 		return error;
