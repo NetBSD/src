@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.20 1997/08/24 22:31:32 augustss Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.21 1997/10/19 07:42:22 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -129,8 +129,6 @@ int	ad1848_commit_settings __P((void *));
 
 int	ad1848_halt_in_dma __P((void *));
 int	ad1848_halt_out_dma __P((void *));
-int	ad1848_cont_in_dma __P((void *));
-int	ad1848_cont_out_dma __P((void *));
 
 int	ad1848_intr __P((void *));
 

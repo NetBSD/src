@@ -1,5 +1,5 @@
-/*	$NetBSD: aucc.c,v 1.19 1997/10/11 12:43:51 mycroft Exp $	*/
-#undef AUDIO_DEBUG
+/*	$NetBSD: aucc.c,v 1.20 1997/10/19 07:41:33 augustss Exp $	*/
+
 /*
  * Copyright (c) 1997 Stephan Thesing
  * All rights reserved.
@@ -171,10 +171,6 @@ void	aucc_close __P((void *));
 int	aucc_set_out_sr __P((void *, u_long));
 int	aucc_query_encoding __P((void *, struct audio_encoding *));
 int	aucc_round_blocksize __P((void *, int));
-int	aucc_set_out_port __P((void *, int));
-int	aucc_get_out_port __P((void *));
-int	aucc_set_in_port __P((void *, int));
-int	aucc_get_in_port __P((void *));
 int	aucc_commit_settings __P((void *));
 int	aucc_start_output __P((void *, void *, int, void (*)(void *),
 				  void *));
@@ -182,8 +178,6 @@ int	aucc_start_input __P((void *, void *, int, void (*)(void *),
 				 void *));
 int	aucc_halt_output __P((void *));
 int	aucc_halt_input __P((void *));
-int	aucc_cont_output __P((void *));
-int	aucc_cont_input __P((void *));
 int	aucc_getdev __P((void *, struct audio_device *));
 int	aucc_set_port __P((void *, mixer_ctrl_t *));
 int	aucc_get_port __P((void *, mixer_ctrl_t *));
@@ -200,10 +194,6 @@ struct audio_hw_if sa_hw_if = {
 	aucc_query_encoding,
 	aucc_set_params,
 	aucc_round_blocksize,
-	aucc_set_out_port,
-	aucc_get_out_port,
-	aucc_set_in_port,
-	aucc_get_in_port,
 	aucc_commit_settings,
 	NULL,
 	NULL,
@@ -211,8 +201,6 @@ struct audio_hw_if sa_hw_if = {
 	aucc_start_input,
 	aucc_halt_output,
 	aucc_halt_input,
-	aucc_cont_output,
-	aucc_cont_input,
 	NULL,
 	aucc_getdev,
 	NULL,
@@ -458,47 +446,6 @@ aucc_round_blocksize(addr, blk)
 }
 
 int
-aucc_set_out_port(addr, port) /* can set channels  */ 
-	void *addr;
-	int port;
-{
-	register struct aucc_softc *sc = addr;
-
-	/* port is mask for channels 0..3 */
-	if ((port<0)||(port>15))
-		return EINVAL;
-
-	sc->sc_channelmask=port;
-
-	return(0);
-}
-
-int
-aucc_get_out_port(addr) 
-	void *addr;
-{
-	register struct aucc_softc *sc = addr;
-
-	return sc->sc_channelmask;
-}
-
-int
-aucc_set_in_port(addr, port)
-	void *addr;
-	int port;
-{
-	return(EINVAL); /* no input possible */
-
-}
-
-int
-aucc_get_in_port(addr)
-	void *addr;
-{
-	return(0);
-}
-
-int
 aucc_commit_settings(addr)
 	void *addr;
 {
@@ -681,23 +628,6 @@ aucc_halt_input(addr)
 }
 
 int
-aucc_cont_output(addr)
-	void *addr;
-{
-	DPRINTF(("aucc_cont_output: never called, what should it do?!\n"));
-	/* reenable DMA XXX */
-	return ENXIO;
-}
-
-int
-aucc_cont_input(addr)
-	void *addr;
-{
-	DPRINTF(("aucc_cont_input: never called, what should it do?!\n"));
-	return(0);
-}
-
-int
 aucc_getdev(addr, retp)
         void *addr;
         struct audio_device *retp;
@@ -826,7 +756,7 @@ aucc_query_devinfo(addr, dip)
 		dip->type = AUDIO_MIXER_VALUE;
 		dip->mixer_class = AUCC_OUTPUT_CLASS;
 		dip->prev = dip->next = AUDIO_MIXER_LAST;
-		strcpy(dip->label.name, AudioNspeaker);
+		strcpy(dip->label.name, AudioNmaster);
 		dip->un.v.num_channels = 4;
 		strcpy(dip->un.v.units.name, AudioNvolume);
 		break;
@@ -837,9 +767,9 @@ aucc_query_devinfo(addr, dip)
 		dip->next = dip->prev = AUDIO_MIXER_LAST;
 		strcpy(dip->label.name, AudioCoutputs);
 		break;
+
 	default:
 		return ENXIO;
-		/*NOTREACHED*/
 	}
 
 	DPRINTF(("AUDIO_MIXER_DEVINFO: name=%s\n", dip->label.name));

@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.32 1997/10/16 23:35:03 augustss Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.33 1997/10/19 07:42:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -110,7 +110,6 @@ struct sbdsp_softc {
 #define SB_RIGHT 1
 #define SB_LR 0
 	
-	u_int	out_port;		/* output port */
 	u_int	in_mask;		/* input ports */
 	u_int	in_port;		/* XXX needed for MI interface */
 	u_int	in_filter;		/* one of SB_TREBLE_EQ, SB_BASS_EQ, 0 */
@@ -185,10 +184,6 @@ int	sbdsp_get_monitor_gain __P((void *));
 int	sbdsp_query_encoding __P((void *, struct audio_encoding *));
 int	sbdsp_set_params __P((void *, int, int, struct audio_params *, struct audio_params *));
 int	sbdsp_round_blocksize __P((void *, int));
-int	sbdsp_set_out_port __P((void *, int));
-int	sbdsp_get_out_port __P((void *));
-int	sbdsp_set_in_port __P((void *, int));
-int	sbdsp_get_in_port __P((void *));
 int	sbdsp_get_avail_in_ports __P((void *));
 int	sbdsp_get_avail_out_ports __P((void *));
 int	sbdsp_speaker_ctl __P((void *, int));
@@ -200,7 +195,6 @@ int	sbdsp_dma_output __P((void *, void *, int, void (*)(void *), void*));
 int	sbdsp_dma_input __P((void *, void *, int, void (*)(void *), void*));
 
 int	sbdsp_haltdma __P((void *));
-int	sbdsp_contdma __P((void *));
 
 void	sbdsp_compress __P((int, u_char *, int));
 void	sbdsp_expand __P((int, u_char *, int));

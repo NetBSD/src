@@ -1,4 +1,4 @@
-/*	$NetBSD: interwave.c,v 1.4 1997/10/11 12:36:04 mycroft Exp $	*/
+/*	$NetBSD: interwave.c,v 1.5 1997/10/19 07:42:06 augustss Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -941,59 +941,6 @@ iw_mixer_line_level(sc, line, levl, levr)
 }
 
 int
-iw_set_out_port(addr, port)
-	void	*addr;
-	int	port;
-{
-	struct	iw_softc *sc = addr;
-
-	if (port != IW_OUTPORT)
-		return EINVAL;
-
-	sc->out_port = port;
-	return 0;		/* gotta check if this is correct */
-}
-
-
-int
-iw_get_out_port(addr)
-	void	*addr;
-{
-	struct	iw_softc *sc = addr;
-
-	return sc->out_port;
-}
-
-
-int
-iw_set_in_port(addr, port)
-	void	*addr;
-	int	port;
-{
-	struct	iw_softc *sc = addr;
-
-	if (port != IW_MIX_OUT_SRC || port != IW_MIC_IN_SRC ||
-	    port != IW_AUX1_SRC || port != IW_LINE_IN_SRC)
-		return EINVAL;
-
-	sc->sc_recsrcbits = (u_char) port << 6;
-	iw_mixer_line_level(sc, IW_REC, sc->sc_rec.voll, sc->sc_rec.volr);
-
-	return 0;
-}
-
-
-int
-iw_get_in_port(addr)
-	void	*addr;
-{
-	struct iw_softc *sc = addr;
-
-	return sc->in_port;
-}
-
-
-int
 iw_commit_settings(addr)
 	void	*addr;
 {
@@ -1240,37 +1187,6 @@ iw_halt_input(addr)
 	struct	iw_softc *sc = addr;
 	iw_stop_dma(sc, IW_DMA_RECORD, 0);
 	/* sc->sc_reclocked = 0; */
-	return 0;
-}
-
-
-int
-iw_cont_output(addr)
-	void	*addr;
-{
-	struct	iw_softc *sc = addr;
-#if IW_PIO
-	iw_enable_path(sc, IW_DMA_PLAYBACK);
-#else
-	iw_trigger_dma(sc, IW_DMA_PLAYBACK);
-#endif
-	sc->sc_playlocked = 1;
-	return 0;
-}
-
-
-int
-iw_cont_input(addr)
-	void	*addr;
-{
-	struct	iw_softc *sc = addr;
-
-#if IW_PIO
-	iw_enable_path(sc, IW_DMA_RECORD);
-#else
-	iw_trigger_dma(sc, IW_DMA_RECORD);
-#endif
-	sc->sc_reclocked = 1;
 	return 0;
 }
 
