@@ -1,8 +1,5 @@
-#	$NetBSD: files.mac68k,v 1.31 1995/04/27 12:10:51 christos Exp $
+#	$NetBSD: files.mac68k,v 1.32 1995/04/29 20:23:36 briggs Exp $
 
-#	@(#)files.sparc	8.1 (Berkeley) 7/19/93
-#
-# files.mac68k.newconf
 # mac68k-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.newconf
@@ -31,6 +28,8 @@ file	arch/mac68k/mac68k/fpu.c	fpu
 
 device	grf at nubus
 file	arch/mac68k/dev/grf.c		grf needs-count
+file	arch/mac68k/dev/grf_mv.c	grf
+file	arch/mac68k/dev/grf_iv.c	grf
 device	ite at mainbus
 file	arch/mac68k/dev/ite.c		ite needs-flag
 

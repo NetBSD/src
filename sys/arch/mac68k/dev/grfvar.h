@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.6 1995/04/21 03:44:19 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.7 1995/04/29 20:23:43 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,27 +42,19 @@
  *	@(#)grfvar.h	7.3 (Berkeley) 5/7/91
  */
 
-/* internal structure of lock page */
-#define GRFMAXLCK	256
-struct grf_lockpage {
-	u_char  gl_locks[GRFMAXLCK];
-};
-#define gl_lockslot gl_locks[0]
-
+#define CARD_NAME_LEN	64
 /* per display info */
 struct grf_softc {
-	struct	device sc_dev;
+	struct	device	sc_dev;
+	nubus_slot	sc_slot;
 
-	int	g_flags;	/* software flags */
-	int	g_type;		/* type of display */
-	caddr_t g_regkva;	/* KVA of registers */
-	caddr_t g_fbkva;	/* KVA of framebuffer */
-	struct	grfinfo g_display;	/* hardware description (for ioctl) */
-	struct	grf_lockpage *g_lock;	/* lock page associated with device */
-	struct	proc *g_lockp;	/* process holding lock */
-	short	*g_pid;		/* array of pids with device open */
-	int	g_lockpslot;	/* g_pid entry of g_lockp */
-	caddr_t	g_data;		/* device dependent data */
+	char		card_name[CARD_NAME_LEN];
+	struct	grfmode curr_mode;	/* hardware desc(for ioctl)	*/
+	u_int32_t	g_flags;	/* software flags		*/
+	u_int32_t	g_type;		/* index into grfdev		*/
+	u_int16_t	card_id;	/* DrHW value for nubus cards	*/
+	nubus_dir	board_dir;	/* Nubus dir for curr board	*/
+	caddr_t		g_data;		/* device dependent data	*/
 };
 
 /* flags */
@@ -74,47 +66,53 @@ struct grf_softc {
 #define GF_HPUXOPEN	0x20
 
 /* display types - indices into grfdev */
-#define	GT_MAC	0
+#define	GT_MACVIDEO		0
+#define	GT_INTERNALVIDEO	1
 
 struct grfdev {
-	int	gd_hardid;	/* secondary id returned by hardware */
-	int	gd_softid;	/* id returned by HP-UX */
+	int	gd_softid;	/* DrSW */
+	int	(*gd_probe)();	/* probe routine */
 	int	(*gd_init) ();	/* boot time initialization */
-	int	(*gd_mode) ();	/* misc functions */
+	int	(*gd_mode) ();	/* mode-change on/off/mode function */
 	char	*gd_desc;	/* text description */
 };
-/* hardware ids */
-#define GID_MAC	1
-
-/* software ids defined in grfioctl.h */
 
 /* requests to mode routine */
 #define GM_GRFON	1
 #define GM_GRFOFF	2
-#define GM_GRFOVON	3
-#define GM_GRFOVOFF	4
-
-struct grfreg {
-	char    gr_pad0;
-	u_char  gr_id;		/* +0x01 */
-	char    gr_pad1[0x13];
-	u_char  gr_id2;		/* +0x15 */
-	char    gr_pad2[0x47];
-	u_char  gr_fbomsb;	/* +0x5d */
-	char    gr_pad3;
-	u_char  gr_fbolsb;	/* +0x5f */
-};
-/* bitmapped display hardware id */
-#define GRFHWID		0x39
-
-/* internal bitmapped display address */
-#define GRFIADDR	0x560000
+#define GM_CURRMODE	3
+#define GM_LISTMODES	4
+#define GM_NEWMODE	5
 
 /* minor device interpretation */
-#define GRFOVDEV	0x10	/* overlay planes */
-#define GRFIMDEV	0x20	/* images planes */
 #define GRFUNIT(d)	((d) & 0x7)
 
-#ifdef _KERNEL
-extern struct grf_softc grf_softc[];
-#endif				/* _KERNEL */
+/*
+ * Nubus image data structure.  This is the equivalent of a PixMap in
+ * MacOS programming parlance.  One of these structures exists for each
+ * video mode that a quickdraw compatible card can fit in.
+ */
+struct image_data {
+	u_int32_t	size;
+	u_int32_t	offset;
+	u_int16_t	rowbytes;
+	u_int16_t	top;
+	u_int16_t	left;
+	u_int16_t	bottom;
+	u_int16_t	right;
+	u_int16_t	version;
+	u_int16_t	packType;
+	u_int32_t	packSize;
+	u_int32_t	hRes;
+	u_int32_t	vRes;
+	u_int16_t	pixelType;
+	u_int16_t	pixelSize;	
+	u_int16_t	cmpCount;
+	u_int16_t	cmpSize;
+	u_int32_t	planeBytes;
+};
+
+#define VID_PARAMS		1
+#define VID_TABLE_OFFSET	2
+#define VID_PAGE_CNT		3
+#define VID_DEV_TYPE		4
