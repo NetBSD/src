@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_addr_fixup.c,v 1.4 2000/07/18 11:18:04 soda Exp $	*/
+/*	$NetBSD: pci_addr_fixup.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*-
  * Copyright (c) 2000 UCHIYAMA Yasushi.  All rights reserved.
@@ -71,9 +71,9 @@ void	pciaddr_print_devid __P((pci_chipset_tag_t, pcitag_t));
 #define PCIADDR_ISAMEM_RESERVE	(16 * 1024 * 1024)
 
 void
-pci_addr_fixup(pc, bus)
+pci_addr_fixup(pc, maxbus)
 	pci_chipset_tag_t pc;
-	int bus;
+	int maxbus;
 {
 	extern paddr_t avail_end;
 #ifdef PCIBIOSVERBOSE
@@ -97,7 +97,7 @@ pci_addr_fixup(pc, bus)
 	}, *srp;
 	paddr_t start;
 	int error;
-	
+
 	pciaddr.extent_mem = extent_create("PCI I/O memory space",
 					   PCIADDR_MEM_START, 
 					   PCIADDR_MEM_END,
@@ -113,7 +113,7 @@ pci_addr_fixup(pc, bus)
 	 * 1. check & reserve system BIOS setting.
 	 */
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
-	pci_device_foreach(pc, bus, pciaddr_resource_reserve);
+	pci_device_foreach(pc, maxbus, pciaddr_resource_reserve);
 	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
 
 	/* 
@@ -149,7 +149,8 @@ pci_addr_fixup(pc, bus)
 	 */
 	PCIBIOS_PRINTV((verbose_header, "PCIBIOS fixup stage"));
 	pciaddr.nbogus = 0;
-	pci_device_foreach(pc, bus, pciaddr_resource_allocate);
+	/* XXX bus #0 only. */
+	pci_device_foreach(pc, 0, pciaddr_resource_allocate);
 	PCIBIOS_PRINTV((verbose_footer, pciaddr.nbogus));
 
 }
