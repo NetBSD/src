@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.22 1997/05/25 04:49:59 jonathan Exp $	*/
+/*	$NetBSD: dtop.c,v 1.23 1997/05/25 04:58:36 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -93,8 +93,6 @@ SOFTWARE.
 
 ********************************************************/
 
-#include "dtop.h"
-#if NDTOP > 0
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
@@ -115,8 +113,12 @@ SOFTWARE.
 #include <dev/cons.h>
 
 #include <mips/cpuregs.h>		/* mips cached->uncached */
+#include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
+
 #include <machine/pmioctl.h>
-#include <machine/dc7085cons.h>
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#include <pmax/dev/fbreg.h>
 
 #include <pmax/pmax/asic.h>
 #include <pmax/pmax/maxine.h>
@@ -127,12 +129,6 @@ SOFTWARE.
 #include <pmax/dev/lk201.h>
 #include <pmax/dev/lk201var.h>
 #include <pmax/dev/dtopvar.h>
-
-#include <machine/fbio.h>
-#include <machine/fbvar.h>
-#include <pmax/dev/fbreg.h>
-
-extern int pmax_boardtype;
 
 
 #define	DTOP_MAX_POLL	0x7fff		/* about half a sec */
@@ -934,4 +930,3 @@ dtop_keyboard_repeat(arg)
 		dev->keyboard.k_ar_state = K_AR_IDLE;
 	splx(s);
 }
-#endif
