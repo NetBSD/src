@@ -1,4 +1,4 @@
-/*	$NetBSD: bugcrt.c,v 1.3 1996/05/19 19:51:24 chuck Exp $	*/
+/*	$NetBSD: bugcrt.c,v 1.4 1999/09/18 09:39:55 scw Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -35,7 +35,12 @@ start()
 	bugargs.arg_end = arg_end;
 	bugargs.nbarg_start = nbarg_start;
 	bugargs.nbarg_end = nbarg_end;
-	*bugargs.arg_end = 0;
+
+	/*
+	 * Be sure not to de-reference NULL
+	 */
+	if ( bugargs.arg_end )
+		*bugargs.arg_end = 0;
 
 	bzero(&edata, (int)&end-(int)&edata);
 	id = mvmeprom_getbrdid();
