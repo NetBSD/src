@@ -1,4 +1,5 @@
-/* $NetBSD: ispvar.h,v 1.13 1998/09/17 22:52:54 mjacob Exp $ */
+/* $NetBSD: ispvar.h,v 1.14 1998/12/05 19:48:23 mjacob Exp $ */
+/* ispvar.h 1.21 */
 /*
  * Soft Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -47,7 +48,7 @@
 #endif
 
 #define	ISP_CORE_VERSION_MAJOR	1
-#define	ISP_CORE_VERSION_MINOR	3
+#define	ISP_CORE_VERSION_MINOR	4
 
 /*
  * Vector for MD code to provide specific services.
@@ -77,6 +78,7 @@ struct ispmdvec {
 
 #define	MAX_TARGETS	16
 #define	MAX_FC_TARG	126
+#define	DEFAULT_LOOPID	113
 
 /* queue length must be a power of two */
 #define	QENTRY_LEN			64
@@ -175,23 +177,6 @@ typedef struct {
 #define	FW_REINIT		0x0006
 #define	FW_NON_PART		0x0007
 
-static __inline char *fw_statename __P((u_int8_t x));
-static __inline char *
-fw_statename(x)
-	u_int8_t x;
-{
-	switch(x) {
-	case FW_CONFIG_WAIT:	return "Config Wait";
-	case FW_WAIT_AL_PA:	return "Waiting for AL/PA";
-	case FW_WAIT_LOGIN:	return "Wait Login";
-	case FW_READY:		return "Ready";
-	case FW_LOSS_OF_SYNC:	return "Loss Of Sync";
-	case FW_ERROR:		return "Error";
-	case FW_REINIT:		return "Re-Init";
-	case FW_NON_PART:	return "Nonparticipating";
-	default:		return "eh?";
-	}
-}
 
 /*
  * Soft Structure per host adapter
@@ -208,7 +193,7 @@ struct ispsoftc {
 	struct ispmdvec *	isp_mdvec;
 
 	/*
-	 * State, debugging, etc..
+	 * Mostly nonvolatile state, debugging, etc..
 	 */
 
 	u_int				: 8,
@@ -261,6 +246,7 @@ struct ispsoftc {
 	volatile caddr_t	isp_result;
 	u_int32_t		isp_rquest_dma;
 	u_int32_t		isp_result_dma;
+
 };
 
 /*
