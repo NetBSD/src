@@ -1,4 +1,4 @@
-/*	$NetBSD: ipftest.c,v 1.1.1.1 2004/03/28 08:56:32 martti Exp $	*/
+/*	$NetBSD: ipftest.c,v 1.1.1.2 2004/07/23 05:34:50 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
@@ -12,7 +12,7 @@
 
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.1 2004/03/19 23:07:33 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ipftest.c,v 1.44.2.2 2004/04/28 17:56:21 darrenr Exp";
 #endif
 
 extern	char	*optarg;
@@ -622,8 +622,11 @@ void dumpnat()
 	for (ipn = nat_list; ipn != NULL; ipn = ipn->in_next)
 		printnat(ipn, opts & (OPT_DEBUG|OPT_VERBOSE));
 	printf("\nList of active sessions:\n");
-	for (nat = nat_instances; nat; nat = nat->nat_next)
+	for (nat = nat_instances; nat; nat = nat->nat_next) {
 		printactivenat(nat, opts);
+		if (nat->nat_aps)
+			printaps(nat->nat_aps, opts);
+	}
 }
 
 

@@ -1,14 +1,68 @@
-/*	$NetBSD: printfr.c,v 1.1.1.1 2004/03/28 08:56:20 martti Exp $	*/
+/*	$NetBSD: printfr.c,v 1.1.1.2 2004/07/23 05:34:36 martti Exp $	*/
 
 /*
  * Copyright (C) 1993-2001 by Darren Reed.
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: printfr.c,v 1.43.2.1 2004/03/06 14:33:29 darrenr Exp
+ * Id: printfr.c,v 1.43.2.4 2004/04/20 11:51:33 darrenr Exp
  */
 
 #include "ipf.h"
+
+static void printaddr(int, int, char *, u_32_t *, u_32_t *);
+
+static void printaddr(v, type, ifname, addr, mask)
+int v, type;
+char *ifname;
+u_32_t *addr, *mask;
+{
+	char *suffix;
+
+	switch (type)
+	{
+	case FRI_BROADCAST :
+		suffix = "/bcast";
+		break;
+
+	case FRI_DYNAMIC :
+		printf("%s", ifname);
+		printmask(mask);
+		suffix = NULL;
+		break;
+
+	case FRI_NETWORK :
+		suffix = "/net";
+		break;
+
+	case FRI_NETMASKED :
+		suffix = "/netmasked";
+		break;
+
+	case FRI_PEERADDR :
+		suffix = "/peer";
+		break;
+
+	case FRI_LOOKUP :
+		suffix = NULL;
+		printlookup((i6addr_t *)addr, (i6addr_t *)mask);
+		break;
+
+	case FRI_NORMAL :
+		printhostmask(v, addr, mask);
+		suffix = NULL;
+		break;
+	default :
+		printf("<%d>", type);
+		printmask(mask);
+		suffix = NULL;
+		break;
+	}
+
+	if (suffix != NULL) {
+		printf("%s/%s", ifname, suffix);
+	}
+}
 
 
 void printlookup(addr, mask)
@@ -163,44 +217,14 @@ ioctlfunc_t	iocfunc;
 		printf("all");
 	} else if (type == FR_T_IPF) {
 		printf("from %s", fp->fr_flags & FR_NOTSRCIP ? "!" : "");
-		if (fp->fr_satype != FRI_NORMAL) {
-			if (fp->fr_satype == FRI_BROADCAST)
-				printf("%s/bcast", fp->fr_ifname);
-			else if (fp->fr_satype == FRI_NETWORK)
-				printf("%s/net", fp->fr_ifname);
-			else if (fp->fr_satype == FRI_NETMASKED)
-				printf("%s/netmasked", fp->fr_ifname);
-			else if (fp->fr_satype == FRI_PEERADDR)
-				printf("%s/peer", fp->fr_ifname);
-			else if (fp->fr_satype == FRI_LOOKUP)
-				printlookup(&fp->fr_ip.fi_src,
-					    &fp->fr_mip.fi_src);
-			else
-				printmask((u_32_t *)&fp->fr_smsk.s_addr);
-		} else
-			printhostmask(fp->fr_v, (u_32_t *)&fp->fr_src.s_addr,
-				      (u_32_t *)&fp->fr_smsk.s_addr);
+		printaddr(fp->fr_v, fp->fr_satype, fp->fr_ifname,
+			  &fp->fr_src.s_addr, &fp->fr_smsk.s_addr);
 		if (fp->fr_scmp)
 			printportcmp(pr, &fp->fr_tuc.ftu_src);
 
 		printf(" to %s", fp->fr_flags & FR_NOTDSTIP ? "!" : "");
-		if (fp->fr_datype != FRI_NORMAL) {
-			if (fp->fr_datype == FRI_BROADCAST)
-				printf("%s/bcast", fp->fr_ifname);
-			else if (fp->fr_datype == FRI_NETWORK)
-				printf("%s/net", fp->fr_ifname);
-			else if (fp->fr_datype == FRI_NETMASKED)
-				printf("%s/netmasked", fp->fr_ifname);
-			else if (fp->fr_datype == FRI_PEERADDR)
-				printf("%s/peer", fp->fr_ifname);
-			else if (fp->fr_datype == FRI_LOOKUP)
-				printlookup(&fp->fr_ip.fi_dst,
-					    &fp->fr_mip.fi_dst);
-			else
-				printmask((u_32_t *)&fp->fr_dmsk.s_addr);
-		} else
-			printhostmask(fp->fr_v, (u_32_t *)&fp->fr_dst.s_addr,
-				      (u_32_t *)&fp->fr_dmsk.s_addr);
+		printaddr(fp->fr_v, fp->fr_datype, fp->fr_ifname,
+			  &fp->fr_dst.s_addr, &fp->fr_dmsk.s_addr);
 		if (fp->fr_dcmp)
 			printportcmp(pr, &fp->fr_tuc.ftu_dst);
 
@@ -342,7 +366,7 @@ ioctlfunc_t	iocfunc;
 
 	if (fp->fr_flags & FR_KEEPSTATE) {
 		printf(" keep state");
-		if ((fp->fr_flags & (FR_STSTRICT|FR_NEWISN)) ||
+		if ((fp->fr_flags & (FR_STSTRICT|FR_NEWISN|FR_NOICMPERR)) ||
 		    (fp->fr_statemax != 0) || (fp->fr_age[0] != 0)) {
 			char *comma = "";
 			printf(" (");

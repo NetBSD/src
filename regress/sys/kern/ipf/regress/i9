@@ -1,4 +1,4 @@
-pass in from localhost to localhost with short
+pass in from localhost to localhost with short,frags
 block in from any to any with ipopts
 pass in from any to any with opt nop,rr,zsu
 pass in from any to any with opt nop,rr,zsu not opt ssrr,lsrr

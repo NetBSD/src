@@ -1,4 +1,4 @@
-/*	$NetBSD: getportproto.c,v 1.1.1.1 2004/03/28 08:56:18 martti Exp $	*/
+/*	$NetBSD: getportproto.c,v 1.1.1.2 2004/07/23 05:34:34 martti Exp $	*/
 
 #include <ctype.h>
 #include "ipf.h"
@@ -14,10 +14,8 @@ int proto;
 		return htons(atoi(name) & 65535);
 
 	p = getprotobynumber(proto);
-	if (p != NULL) {
-		s = getservbyname(name, p->p_name);
-		if (s != NULL)
-			return s->s_port;
-	}
+	s = getservbyname(name, p ? p->p_name : NULL);
+	if (s != NULL)
+		return s->s_port;
 	return 0;
 }
