@@ -1,4 +1,4 @@
-/*	$NetBSD: n_support.S,v 1.4 2002/02/24 01:06:21 matt Exp $	*/
+/*	$NetBSD: n_support.S,v 1.4.2.1 2002/06/24 13:21:05 lukem Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -80,8 +80,12 @@ Ln:	movq	4(%ap),%r0		# %r0:1 = x (zero or reserved op)
 /*
  * long finite(double x);
  */
+#ifndef __GFLOAT__
+	.globl finitef
+finitef = finite
+#endif
 ENTRY(finite, 0)
-	bicw3	$0x7f,4(%ap),%r0		# mask off the mantissa
+	bicw3	$0x7f,4(%ap),%r0	# mask off the mantissa
 	cmpw	%r0,$0x8000		# to see if x is the reserved op
 	beql	1f			# if so, return FALSE (0)
 	movl	$1,%r0			# else return TRUE (1)
