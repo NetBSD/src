@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.5 2002/07/31 17:34:26 thorpej Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6 2002/10/09 00:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ u_int isa_intr_count[ICU_LEN];
  * Fill in default interrupt table (in case of spuruious interrupt
  * during configuration of kernel, setup interrupt control unit
  */
-void
+static void
 isa_icu_init(void)
 {
 	/* initialize 8259's */
