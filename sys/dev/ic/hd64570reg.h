@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570reg.h,v 1.5 2000/01/09 14:47:43 chopps Exp $	*/
+/*	$NetBSD: hd64570reg.h,v 1.6 2001/03/01 00:40:41 itojun Exp $	*/
 
 /*
  * Copyright (c) 1998 Vixie Enterprises
@@ -60,6 +60,7 @@ struct cisco_pkt {
 #define CISCO_PKT_LEN	18	/* sizeof doesn't work right... */
 
 #define HDLC_PROTOCOL_IP	0x0800	/* IP */
+#define HDLC_PROTOCOL_IPV6	0x86dd	/* IPv6 */
 #define HDLC_PROTOCOL_ISO	0xfefe	/* LLC_ISO_LSAP dsap,ssap */
 
 struct hdlc_header {
