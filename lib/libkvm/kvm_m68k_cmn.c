@@ -1,6 +1,7 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.1 1997/03/21 18:44:24 gwr Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.2 1997/04/09 21:15:55 thorpej Exp $	*/
 
 /*-
+ * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
  * Copyright (c) 1989, 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -41,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$NetBSD: kvm_m68k_cmn.c,v 1.1 1997/03/21 18:44:24 gwr Exp $";
+static char *rcsid = "$NetBSD: kvm_m68k_cmn.c,v 1.2 1997/04/09 21:15:55 thorpej Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,10 +62,6 @@ static char *rcsid = "$NetBSD: kvm_m68k_cmn.c,v 1.1 1997/03/21 18:44:24 gwr Exp 
 #include <kvm.h>
 #include <db.h>
 
-/* XXX: Avoid <machine/pte.h> etc. (see below) */
-typedef u_int pt_entry_t;		/* page table entry */
-typedef u_int st_entry_t;		/* segment table entry */
-
 #include <m68k/cpu.h>
 #include <m68k/kcore.h>
 
@@ -82,44 +79,10 @@ struct kvm_ops _kvm_ops_cmn = {
 	_kvm_cmn_kvatop,
 	_kvm_cmn_pa2off };
 
-static int vatop_030 __P((kvm_t *, st_entry_t *, ulong, ulong *));
-static int vatop_040 __P((kvm_t *, st_entry_t *, ulong, ulong *));
+static int vatop_030 __P((kvm_t *, u_int32_t, u_long, u_long *));
+static int vatop_040 __P((kvm_t *, u_int32_t, u_long, u_long *));
 
-/*
- * XXX: I don't like this, but until all arch/.../include files
- * are exported into some user-accessable place, there is no
- * convenient alternative to copying these definitions here.
- */
-
-/* Things from param.h */
-#define PGSHIFT	13
-#define NBPG	(1<<13)
-#define PGOFSET (NBPG-1)
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)
-
-/* Things from pte.h */
-
-/* All variants */
-#define SG_V		 2
-#define	PG_NV		0x00000000
-#define PG_FRAME	0xffffe000
-
-/* MC68030 with MMU TCR set for 8/11/13 (bits) */
-#define SG3_SHIFT	24	/* a.k.a SEGSHIFT */
-#define SG3_FRAME	0xffffe000
-#define SG3_PMASK	0x00ffe000
-
-/* MC68040 with MMU set for 8K page size. */
-#define SG4_MASK1	0xfe000000
-#define SG4_SHIFT1	25
-#define SG4_MASK2	0x01fc0000
-#define SG4_SHIFT2	18
-#define SG4_MASK3	0x0003e000
-#define SG4_SHIFT3	13
-#define SG4_ADDR1	0xfffffe00
-#define SG4_ADDR2	0xffffff80
-
-
+#define	_kvm_btop(v, a)	(((unsigned)(a)) >> (v)->pgshift)
 
 #define KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
@@ -128,15 +91,14 @@ void
 _kvm_cmn_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst != 0)
-		free(kd->vmst);
+	/* No private state information to keep. */
 }
 
 int
 _kvm_cmn_initvtop(kd)
 	kvm_t *kd;
 {
-
+	/* No private state information to keep. */
 	return (0);
 }
 
@@ -146,31 +108,26 @@ _kvm_cmn_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	register cpu_kcore_hdr_t *cpu_kh;
-	int (*vtopf) __P((kvm_t *, st_entry_t *, ulong, ulong *));
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	struct vmstate *vm = kd->vmst;
+	int (*vtopf) __P((kvm_t *, u_int32_t, u_long, u_long *));
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, 0, "vatop called in live kernel!");
 		return (0);
 	}
 
-	cpu_kh = kd->cpu_data;
-	switch (cpu_kh->mmutype) {
-
-	case MMU_68030:
-		vtopf = vatop_030;
-		break;
-
-	case MMU_68040:
+	/*
+	 * 68040 and 68040 use same translation functions,
+	 * as do 68030, 68851, HP MMU.
+	 */
+	if (m->mmutype == MMU_68040 || m->mmutype == MMU_68060)
 		vtopf = vatop_040;
-		break;
+	else
+		vtopf = vatop_030;
 
-	default:
-		_kvm_err(kd, 0, "vatop unknown MMU type!");
-		return (0);
-	}
-
-	return ((*vtopf)(kd, cpu_kh->sysseg_pa, va, pa));
+	return ((*vtopf)(kd, m->sysseg_pa, va, pa));
 }
 
 /*
@@ -181,20 +138,23 @@ _kvm_cmn_pa2off(kd, pa)
 	kvm_t	*kd;
 	u_long	pa;
 {
-	off_t		off;
-	phys_ram_seg_t	*rsp;
-	register cpu_kcore_hdr_t *cpu_kh;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	phys_ram_seg_t *rsp;
+	off_t off;
+	int i;
 
-	cpu_kh = kd->cpu_data;
 	off = 0;
-	for (rsp = cpu_kh->ram_segs; rsp->size; rsp++) {
-		if (pa >= rsp->start && pa < rsp->start + rsp->size) {
+	rsp = m->ram_segs;
+	for (i = 0; i < M68K_NPHYS_RAM_SEGS && rsp[i].size != 0; i++) {
+		if (pa >= rsp[i].start &&
+		    pa < (rsp[i].start + rsp[i].size)) {
 			pa -= rsp->start;
 			break;
 		}
 		off += rsp->size;
 	}
-	return(kd->dump_off + off + pa);
+	return (kd->dump_off + off + pa);
 }
 
 /*****************************************************************
@@ -202,46 +162,50 @@ _kvm_cmn_pa2off(kd, pa)
  */
 
 static int
-vatop_030(kd, sta, va, pa)
+vatop_030(kd, stpa, va, pa)
 	kvm_t *kd;
-	st_entry_t *sta;
+	u_int32_t stpa;
 	u_long va;
 	u_long *pa;
 {
-	register cpu_kcore_hdr_t *cpu_kh;
-	register u_long addr;
-	int p, ste, pte;
-	int offset;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	struct vmstate *vm = kd->vmst;
+	u_long addr;
+	u_int32_t ste, pte;
+	u_int p, offset;
 
-	offset = va & PGOFSET;
-	cpu_kh = kd->cpu_data;
+	offset = va & vm->pgofset;
 
 	/*
-	 * If we are initializing (kernel segment table pointer not yet set)
-	 * then return pa == va to avoid infinite recursion.
+	 * We may be called before address translation is initialized.
+	 * This is typically used to find the dump magic number.  This
+	 * means we do not yet have the kernel page tables available,
+	 * so we must to a simple relocation.
 	 */
-	if (cpu_kh->sysseg_pa == 0) {
-		*pa = va + cpu_kh->kernel_pa;
-		return (NBPG - offset);
+	if (va < m->relocend) {
+		*pa = (va - h->kernbase) + m->reloc;
+		return (h->page_size - offset);
 	}
 
-	addr = (u_long)&sta[va >> SG3_SHIFT];
+	addr = stpa + ((va >> m->sg_ishift) * sizeof(u_int32_t));
+
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
 	 */
-	if (sta == cpu_kh->sysseg_pa) {
+	if (stpa == m->sysseg_pa) {
 		if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 ||
 			read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
 		goto invalid;
-	if ((ste & SG_V) == 0) {
+	if ((ste & m->sg_v) == 0) {
 		_kvm_err(kd, 0, "invalid segment (%x)", ste);
-		return((off_t)0);
+		return(0);
 	}
-	p = btop(va & SG3_PMASK);
-	addr = (ste & SG3_FRAME) + (p * sizeof(pt_entry_t));
+	p = _kvm_btop(vm, va & m->sg_pmask);
+	addr = (ste & m->sg_frame) + (p * sizeof(u_int32_t));
 
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
@@ -249,61 +213,68 @@ vatop_030(kd, sta, va, pa)
 	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
 	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
 		goto invalid;
-	addr = pte & PG_FRAME;
-	if (pte == PG_NV) {
+	addr = pte & m->pg_frame;
+	if ((pte & m->pg_v) == 0) {
 		_kvm_err(kd, 0, "page not valid");
 		return (0);
 	}
 	*pa = addr + offset;
 	
-	return (NBPG - offset);
+	return (h->page_size - offset);
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
 }
 
 static int
-vatop_040(kd, sta, va, pa)
+vatop_040(kd, stpa, va, pa)
 	kvm_t *kd;
-	st_entry_t *sta;
+	u_int32_t stpa;
 	u_long va;
 	u_long *pa;
 {
-	register cpu_kcore_hdr_t *cpu_kh;
-	register u_long addr;
-	st_entry_t *sta2;
-	int p, ste, pte;
-	int offset;
+	cpu_kcore_hdr_t *h = kd->cpu_data;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	struct vmstate *vm = kd->vmst;
+	u_long addr;
+	u_int32_t stpa2;
+	u_int32_t ste, pte;
+	u_int p, offset;
 
-	offset = va & PGOFSET;
-	cpu_kh = kd->cpu_data;
+	offset = va & vm->pgofset;
+
 	/*
-	 * If we are initializing (kernel segment table pointer not yet set)
-	 * then return pa == va to avoid infinite recursion.
+	 * We may be called before address translation is initialized.
+	 * This is typically used to find the dump magic number.  This
+	 * means we do not yet have the kernel page tables available,
+	 * so we must to a simple relocation.
 	 */
-	if (cpu_kh->sysseg_pa == 0) {
-		*pa = va + cpu_kh->kernel_pa;
-		return (NBPG - offset);
+	if (va < m->relocend) {
+		*pa = (va - h->kernbase) + m->reloc;
+		return (h->page_size - offset);
 	}
 
-	addr = (u_long)&sta[va >> SG4_SHIFT1];
+	addr = stpa + ((va >> m->sg40_shift1) * sizeof(u_int32_t));
+
 	/*
 	 * Can't use KREAD to read kernel segment table entries.
 	 * Fortunately it is 1-to-1 mapped so we don't have to. 
 	 */
-	if (sta == cpu_kh->sysseg_pa) {
+	if (stpa == m->sysseg_pa) {
 		if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 ||
 			read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
 		goto invalid;
-	if ((ste & SG_V) == 0) {
+	if ((ste & m->sg_v) == 0) {
 		_kvm_err(kd, 0, "invalid level 1 descriptor (%x)",
 				 ste);
 		return((off_t)0);
 	}
-	sta2 = (st_entry_t *)(ste & SG4_ADDR1);
-	addr = (u_long)&sta2[(va & SG4_MASK2) >> SG4_SHIFT2];
+	stpa2 = (ste & m->sg40_addr1);
+	addr = stpa2 + (((va & m->sg40_mask2) >> m->sg40_shift2) *
+	    sizeof(u_int32_t));
+
 	/*
 	 * Address from level 1 STE is a physical address,
 	 * so don't use kvm_read.
@@ -311,14 +282,14 @@ vatop_040(kd, sta, va, pa)
 	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
 		read(kd->pmfd, (char *)&ste, sizeof(ste)) < 0)
 		goto invalid;
-	if ((ste & SG_V) == 0) {
+	if ((ste & m->sg_v) == 0) {
 		_kvm_err(kd, 0, "invalid level 2 descriptor (%x)",
 				 ste);
 		return((off_t)0);
 	}
-	sta2 = (st_entry_t *)(ste & SG4_ADDR2);
-	addr = (u_long)&sta2[(va & SG4_MASK3) >> SG4_SHIFT3];
-
+	stpa2 = (ste & m->sg40_addr2);
+	addr = stpa2 + (((va & m->sg40_mask3) >> m->sg40_shift3) *
+	    sizeof(u_int32_t));
 
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
@@ -326,14 +297,15 @@ vatop_040(kd, sta, va, pa)
 	if (lseek(kd->pmfd, _kvm_cmn_pa2off(kd, addr), 0) == -1 || 
 	    read(kd->pmfd, (char *)&pte, sizeof(pte)) < 0)
 		goto invalid;
-	addr = pte & PG_FRAME;
-	if (pte == PG_NV) {
+	addr = pte & m->pg_frame;
+	if ((pte & m->pg_v) == 0) {
 		_kvm_err(kd, 0, "page not valid");
 		return (0);
 	}
 	*pa = addr + offset;
 	
-	return (NBPG - offset);
+	return (h->page_size - offset);
+
 invalid:
 	_kvm_err(kd, 0, "invalid address (%x)", va);
 	return (0);
