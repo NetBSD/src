@@ -1,4 +1,4 @@
-/*	$NetBSD: ams.c,v 1.2 1998/10/18 09:31:41 tsubai Exp $	*/
+/*	$NetBSD: ams.c,v 1.3 1998/11/18 09:11:34 tsubai Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -537,8 +537,9 @@ ms_processevent(event, msc)
 	new_event.u.m.dy = ((signed int) (event->bytes[0] & 0x3f)) -
 				((event->bytes[0] & 0x40) ? 64 : 0);
 
-	wsmouse_input(msc->sc_wsmousedev, new_event.u.m.buttons,
-		      new_event.u.m.dx, new_event.u.m.dy, 0);
+	if (msc->sc_wsmousedev)
+		wsmouse_input(msc->sc_wsmousedev, new_event.u.m.buttons,
+			      new_event.u.m.dx, new_event.u.m.dy, 0);
 #if NAED > 0
 	aed_input(&new_event);
 #endif
