@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.77 2004/05/27 02:56:38 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.78 2004/05/27 03:56:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.77 2004/05/27 02:56:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.78 2004/05/27 03:56:49 christos Exp $");
 
 #include "opt_compat_sunos.h"
 #include "pty.h"
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.77 2004/05/27 02:56:38 christos Exp $"
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
 
-#if 1
+#ifdef DEBUG_PTM
 #define DPRINTF(a) uprintf a
 #else
 #define DPRINTF(a)
