@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.72 2000/10/13 16:40:26 simonb Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.73 2000/11/27 08:39:55 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -690,6 +690,8 @@ ffs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	mp->mnt_fs_bshift = fs->fs_bshift;
+	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
 #ifdef FFS_EI
 	if (needswap)
@@ -699,6 +701,7 @@ ffs_mountfs(devvp, mp, p)
 	ump->um_dev = dev;
 	ump->um_devvp = devvp;
 	ump->um_nindir = fs->fs_nindir;
+	ump->um_lognindir = ffs(fs->fs_nindir) - 1;
 	ump->um_bptrtodb = fs->fs_fsbtodb;
 	ump->um_seqinc = fs->fs_frag;
 	for (i = 0; i < MAXQUOTAS; i++)
@@ -797,6 +800,9 @@ ffs_unmount(mp, mntflags, p)
 	if (ump->um_devvp->v_type != VBAD)
 		ump->um_devvp->v_specmountpoint = NULL;
 	vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY);
+	if (LIST_FIRST(&ump->um_devvp->v_dirtyblkhd)) {
+		panic("ffs_unmount: flush left dirty bufs %p", ump->um_devvp);
+	}
 	error = VOP_CLOSE(ump->um_devvp, fs->fs_ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	vput(ump->um_devvp);
@@ -1107,6 +1113,7 @@ ffs_vget(mp, ino, vpp)
 		ip->i_ffs_uid = ip->i_din.ffs_din.di_ouid;	/* XXX */
 		ip->i_ffs_gid = ip->i_din.ffs_din.di_ogid;	/* XXX */
 	}							/* XXX */
+	uvm_vnp_setsize(vp, ip->i_ffs_size);
 
 	*vpp = vp;
 	return (0);
