@@ -1,4 +1,4 @@
-/*      $NetBSD: adwlib.h,v 1.3 1998/12/09 08:47:18 thorpej Exp $        */
+/*      $NetBSD: adwlib.h,v 1.4 1999/02/23 20:18:16 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -682,6 +682,10 @@ typedef struct adw_dvc_cfg {
  *  this field may be set, but later if a device is found to be incapable
  *  of the feature, the field is cleared.
  */
+#define	CCB_HASH_SIZE	32	/* hash table size for phystokv */
+#define	CCB_HASH_SHIFT	9
+#define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
+
 typedef struct adw_softc {
 
 	struct device		sc_dev;
@@ -693,6 +697,8 @@ typedef struct adw_softc {
 	void			*sc_ih;
 
 	struct adw_control	*sc_control; /* control structures */
+
+	struct adw_ccb		*sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, adw_ccb)	sc_free_ccb, sc_waiting_ccb;
 	struct scsipi_link	sc_link;     /* prototype for devs */
 	struct scsipi_adapter	sc_adapter;
@@ -764,9 +770,9 @@ typedef struct adw_scsi_req_q {
 	ulong		data_addr;	/* Data buffer physical address. */
 	u_int32_t	data_cnt;	/* Data count. Ucode sets to residual. */
 	ulong		sense_addr;	/* Sense buffer physical address. */
-	ulong		ccb_ptr;	/* Driver request pointer. */
+	ulong		ccb_ptr;	/* Driver request physical address. */
 	u_int8_t	a_flag;		/* Adv Library flag field. */
-	u_int8_t	sense_len;	/* Auto-sense length. Ucode sets to residual. */
+	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
 	u_int8_t	cdb_len;	/* SCSI CDB length. */
 	u_int8_t	tag_code;	/* SCSI-2 Tag Queue Code: 00, 20-22. */
 	u_int8_t	done_status;	/* Completion status. */
@@ -775,16 +781,16 @@ typedef struct adw_scsi_req_q {
 	u_int8_t	ux_sg_ix;	/* Ucode working SG variable. */
 	u_int8_t	cdb[12];	/* SCSI command block. */
 	ulong		sg_real_addr;	/* SG list physical address. */
-	struct adw_scsi_req_q *free_scsiq_link;
+	u_int32_t	free_scsiq_link;/* Iternal pointer to ADW_SCSI_REQ_Q */
 	ulong		ux_wk_data_cnt;	/* Saved data count at disconnection. */
-	struct adw_scsi_req_q *scsiq_ptr;
-	ADW_SG_BLOCK	*sg_list_ptr;	/* SG list virtual address. */
+	ulong		ccb_scsiq_ptr;	/* Pointer to ADW_SCSI_REQ_Q */
+	u_int32_t	sg_list_ptr;	/* SG list v-address. (ADW_SG_BLOCK* - unused) */
 	/*
 	 * End of microcode structure - 60 bytes. The rest of the structure
 	 * is used by the Adv Library and ignored by the microcode.
 	 */
-	ulong		vsense_addr;	/* Sense buffer virtual address. */
-	ulong		vdata_addr;	/* Data buffer virtual address. */
+	struct scsipi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
+	u_char		*vdata_addr;	/* Data buffer virtual address. */
 	u_int8_t	orig_sense_len;	/* Original length of sense buffer. */
 	u_int8_t	pads[3];	/* padding bytes (align to long) */
 } ADW_SCSI_REQ_Q;
