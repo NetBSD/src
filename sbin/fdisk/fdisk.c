@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.45 2000/12/24 13:32:41 lukem Exp $ */
+/*	$NetBSD: fdisk.c,v 1.46 2001/04/16 10:47:15 lukem Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.45 2000/12/24 13:32:41 lukem Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.46 2001/04/16 10:47:15 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -262,7 +262,7 @@ struct part_type {
 void	usage(void);
 void	print_s0(int);
 void	print_part(int);
-void	print_mbr_partition(struct mbr_partition *, off_t, int);
+void	print_mbr_partition(struct mbr_partition *, off_t, off_t, int);
 int	read_boot(const char *, void *, size_t);
 void	init_sector0(int, int);
 void	intuit_translated_geometry(void);
@@ -540,17 +540,21 @@ print_part(int part)
 		printf("PART%dESEC=%d\n", part, MBR_PSECT(partp->mbrp_esect));
 		return;
 	}
-	print_mbr_partition(partp, 0, 0);
+	print_mbr_partition(partp, 0, 0, 0);
 }
 
 void
-print_mbr_partition(struct mbr_partition *partp, off_t offset, int indent)
+print_mbr_partition(struct mbr_partition *partp,
+		    off_t offset, off_t exoffset, int indent)
 {
 	int	empty;
 	off_t	start;
 
 	empty = (partp->mbrp_typ == 0);
-	start = (off_t)getlong(&partp->mbrp_start) + offset;
+	if (MBR_IS_EXTENDED(partp->mbrp_typ))
+		start = (off_t)getlong(&partp->mbrp_start) + exoffset;
+	else
+		start = (off_t)getlong(&partp->mbrp_start) + offset;
 	if (empty) {
 		printf("<UNUSED>\n");
 		return;
@@ -578,9 +582,12 @@ print_mbr_partition(struct mbr_partition *partp, off_t offset, int indent)
 		if (read_s0(start, &eboot) == -1)
 			return;
 		indent += 8;
+		if (exoffset == 0)
+			exoffset = start;
 		for (part = 0; part < NMBRPART; part++) {
 			printf("%*s%d: ", indent, "", part);
-			print_mbr_partition(&eboot.parts[part], start, indent);
+			print_mbr_partition(&eboot.parts[part],
+					    start, exoffset, indent);
 		}
 	}
 }
