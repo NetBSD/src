@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.8 1998/08/13 02:11:02 eeh Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.8.2.1 1999/02/25 04:17:16 chs Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -125,7 +125,6 @@ PAGE_INLINE void
 uvm_pagewire(pg)
 	struct vm_page *pg;
 {
-
 	if (pg->wire_count == 0) {
 		if (pg->pqflags & PQ_ACTIVE) {
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
@@ -156,7 +155,6 @@ PAGE_INLINE void
 uvm_pageunwire(pg)
 	struct vm_page *pg;
 {
-
 	pg->wire_count--;
 	if (pg->wire_count == 0) {
 		TAILQ_INSERT_TAIL(&uvm.page_active, pg, pageq);
@@ -226,7 +224,7 @@ uvm_pageactivate(pg)
 		 * can put it at tail.  if it wasn't active, then mark
 		 * it active and bump active count
 		 */
-		if (pg->pqflags & PQ_ACTIVE) 
+		if (pg->pqflags & PQ_ACTIVE)
 			TAILQ_REMOVE(&uvm.page_active, pg, pageq);
 		else {
 			pg->pqflags |= PQ_ACTIVE;
