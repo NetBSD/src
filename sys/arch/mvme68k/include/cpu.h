@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.8.7 2002/12/03 20:24:07 gmcgarry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.8.8 2002/12/03 22:43:30 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -204,7 +204,8 @@ void	*iomap __P((u_long, size_t));
 void	iounmap __P((void *, size_t));
 int	kvtop __P((caddr_t));
 void	savectx __P((struct pcb *));
-void	switch_exit __P((struct proc *));
+void	switch_exit __P((struct lwp *));
+void	switch_lwp_exit __P((struct lwp *));
 void	proc_trampoline __P((void));
 void	loadustp __P((paddr_t));
 
