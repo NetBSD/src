@@ -32,14 +32,14 @@
  *
  * from: @(#)boot.c	8.1 (Berkeley) 6/10/93
  *
- * $Id: boot.c,v 1.3 1994/07/01 10:46:56 pk Exp $
+ * $Id: boot.c,v 1.4 1994/07/20 20:47:10 pk Exp $
  */
 
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <a.out.h>
-#include <machine/bsd_openprom.h>
-#include "stand.h"
+
+#include "defs.h"
 
 int debug;
 int netif_debug;
@@ -50,33 +50,42 @@ int netif_debug;
 #define LOADADDR	0x4000
 extern char		*version;
 extern struct promvec	*promvec;
+char			kernel[100];
 unsigned long		esym;
 char			*strtab;
 int			strtablen;
-#if 0
-struct nlist		*nlp, *enlp;
-#endif
 
 main(pp)
 struct promvec *pp;
 {
 	int	io;
-	char	*file;
+	char	*cp;
 
 	printf(">> NetBSD BOOT [%s]\n", version);
 
-	if (promvec->pv_romvec_vers == 2)
-		file = *promvec->pv_v2bootargs.v2_bootargs;
+	if (promvec->pv_romvec_vers >= 2)
+		cp = *promvec->pv_v2bootargs.v2_bootargs;
 	else
-		file = (*promvec->pv_v0bootargs)->ba_kernel;
+		cp = (*promvec->pv_v0bootargs)->ba_kernel;
 
-	if ((io = open(file, 0)) < 0) {
-		printf("Can't open %s: %s\n", file, strerror(errno));
-		promvec->pv_halt();
+	if (cp == 0 || *cp == 0) {
+		strcpy(kernel, "netbsd");
+	} else {
+		char	*kp = kernel;
+
+		while (*cp && *cp != '-')
+			*kp++ = *cp++;
+		while (kp > kernel && *--kp == ' ');
+		*++kp = '\0';
+	}
+	while ((io = open(kernel, 0)) < 0) {
+		printf("open: %s: %s\n", kernel, strerror(errno));
+		printf("boot: ");
+		gets(kernel);
 	}
 	reset_twiddle();
 
-	printf("Booting %s @ 0x%x\n", file, LOADADDR);
+	printf("Booting %s @ 0x%x\n", kernel, LOADADDR);
 	copyunix(io, LOADADDR);
 	_rtt();
 }
@@ -93,7 +102,7 @@ copyunix(io, addr)
 	i = read(io, (char *)&x, sizeof(x));
 	if (i != sizeof(x) ||
 	    N_BADMAG(x)) {
-		printf("Bad format\n");
+		printf("%s: Bad format\n", kernel);
 		return;
 	}
 	reset_twiddle();
@@ -120,16 +129,10 @@ copyunix(io, addr)
 	if (x.a_syms != 0) {
 		bcopy(&x.a_syms, addr, sizeof(x.a_syms));
 		addr += sizeof(x.a_syms);
-#if 0
-		nlp = (struct nlist *)addr;
-#endif
 		printf(" [%d+", x.a_syms);
 		if (read(io, addr, x.a_syms) != x.a_syms)
 			goto shread;
 		addr += x.a_syms;
-#if 0
-		enlp = (struct nlist *)(strtab = addr);
-#endif
 		reset_twiddle();
 
 		if (read(io, &strtablen, sizeof(int)) != sizeof(int))
@@ -149,19 +152,6 @@ copyunix(io, addr)
 		esym = KERNBASE +
 			(((int)addr + sizeof(int) - 1) & ~(sizeof(int) - 1));
 	}
-
-#if 0
-	while (nlp < enlp) {
-		register int strx = nlp->n_un.n_strx;
-		if (strx > strtablen)
-			continue;
-		if (strcmp(strtab+strx, "_esym") == 0) {
-			*(int*)(nlp->n_value - KERNBASE) = esym;
-			break;
-		}
-		nlp++;
-	}
-#endif
 
 	printf(" start 0x%x\n", (int)entry);
 #define DDB_MAGIC ( ('D'<<24) | ('D'<<16) | ('B'<<8) | ('0') )
