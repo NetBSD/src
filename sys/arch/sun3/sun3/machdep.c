@@ -38,7 +38,7 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
  *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
- *	$Id: machdep.c,v 1.31 1994/06/01 15:39:28 gwr Exp $
+ *	$Id: machdep.c,v 1.32 1994/06/03 02:08:59 gwr Exp $
  */
 
 #include <sys/param.h>
@@ -191,9 +191,8 @@ void cpu_startup()
      * in that they usually occupy more virtual memory than physical.
      */
     size = MAXBSIZE * nbuf;
-	/* XXX - Should last arg be TRUE instead? (like hp300) -gwr */
     buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-			       &maxaddr, size, FALSE);
+			       &maxaddr, size, TRUE);
     minaddr = (vm_offset_t)buffers;
     if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
 		    &minaddr, size, FALSE) != KERN_SUCCESS)
@@ -234,7 +233,8 @@ void cpu_startup()
     /*
      * Allocate a map for physio and DVMA
      */
-    phys_map = vm_map_create(kernel_pmap, DVMA_SPACE_START, DVMA_SPACE_END, 0);
+    phys_map = vm_map_create(kernel_pmap, DVMA_SPACE_START,
+			     DVMA_SPACE_END, TRUE);
     if (phys_map == NULL)
 	panic("cpu_startup: unable to create physmap");
 
@@ -741,7 +741,6 @@ sendsig(catcher, sig, mask, code)
 #endif
 	/*
 	 * Signal trampoline code is at base of user stack.
-	 * XXX - Is cast needed for PS_STRINGS? -gwr
 	 */
 	frame->f_pc = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
