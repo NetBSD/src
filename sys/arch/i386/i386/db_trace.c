@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.37 2003/05/12 13:16:11 yamt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.36 2003/01/17 23:10:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.37 2003/05/12 13:16:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,9 +208,9 @@ db_nextframe(int **nextframe, int **retaddr, int **arg0, db_addr_t *ip,
 		*retaddr = (int *)&fp->f_retaddr;
 		*arg0 = (int *)&fp->f_arg0;
 		if (is_trap == INTERRUPT_TSS)
-			printf("--- interrupt via task gate ---\n");
+			(*pr)("--- interrupt via task gate ---\n");
 		else
-			printf("--- trap via task gate ---\n");
+			(*pr)("--- trap via task gate ---\n");
 		break;
 
 	    case TRAP:
