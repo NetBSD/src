@@ -1,4 +1,4 @@
-/*	$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $	*/
+/*	$NetBSD: nohup.c,v 1.7 1997/10/19 10:23:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -33,17 +33,18 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1989 The Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT(
+    "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
+ All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)nohup.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $";
+__RCSID("$NetBSD: nohup.c,v 1.7 1997/10/19 10:23:35 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,8 +58,9 @@ static char rcsid[] = "$NetBSD: nohup.c,v 1.6 1995/08/31 23:35:25 jtc Exp $";
 #include <string.h>
 #include <errno.h>
 
-static void dofile();
-static void usage();
+static void dofile __P((void));
+static void usage __P((void));
+int main __P((int, char **));
 
 /* nohup shall exit with one of the following values:
    126 - The utility was found but could not be invoked.
