@@ -1,4 +1,4 @@
-/* $NetBSD: fault.c,v 1.3 1996/03/13 21:41:41 mark Exp $ */
+/* $NetBSD: fault.c,v 1.4 1996/05/12 21:33:18 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -65,12 +65,11 @@
 
 #include <vm/vm_kern.h>
 
+#include <machine/frame.h>
 #include <machine/katelib.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
-
 #include <machine/irqhandler.h>
-#include <machine/frame.h>
 
 extern int pmap_debug_level;
 extern int nopagefault;
