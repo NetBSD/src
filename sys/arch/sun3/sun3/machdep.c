@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.111 1998/03/08 19:09:58 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112 1998/05/20 18:35:49 fair Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -83,6 +83,10 @@
 #include <vm/vm_map.h>
 #include <vm/vm_kern.h>
 #include <vm/vm_page.h>
+
+#if defined(UVM)
+#include <uvm/uvm.h> /* XXX: not _extern ... need vm_map_create */
+#endif 
 
 #include <sys/sysctl.h>
 
@@ -236,7 +240,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;		/* sanity */
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	return v;
 }
@@ -358,7 +364,11 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
+#if defined(UVM)
+	size = ptoa(uvmexp.free);
+#else
 	size = ptoa(cnt.v_free_count);
+#endif
 	printf("avail mem = %dK (0x%lx)\n", (size >> 10), size);
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
