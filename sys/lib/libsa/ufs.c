@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.23 1999/03/31 01:50:26 cgd Exp $	*/
+/*	$NetBSD: ufs.c,v 1.24 1999/03/31 07:43:39 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -85,16 +85,6 @@ max(a, b)
 
 #include "stand.h"
 #include "ufs.h"
-
-#if defined(UFS_NOSYMLINK) && !defined(LIBSA_NO_FS_SYMLINK)
-#define LIBSA_NO_FS_SYMLINK			/* XXX COMPAT */
-#endif
-#if defined(UFS_NOCLOSE) && !defined(LIBSA_NO_FS_CLOSE)
-#define LIBSA_NO_FS_CLOSE			/* XXX COMPAT */
-#endif
-#if defined(UFS_NOWRITE) && !defined(LIBSA_NO_FS_WRITE)
-#define LIBSA_NO_FS_WRITE			/* XXX COMPAT */
-#endif
 
 #if defined(LIBSA_FS_SINGLECOMPONENT) && !defined(LIBSA_NO_FS_SYMLINK)
 #define LIBSA_NO_FS_SYMLINK
