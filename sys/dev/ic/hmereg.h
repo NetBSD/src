@@ -1,4 +1,4 @@
-/*	$NetBSD: hmereg.h,v 1.3 1999/12/17 14:34:25 pk Exp $	*/
+/*	$NetBSD: hmereg.h,v 1.4 2000/01/28 15:52:34 pk Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -250,6 +250,9 @@
 #define HME_MIF_FO_TALSB	0x00010000	/* Turn-around LSB */
 #define HME_MIF_FO_DATA		0x0000ffff	/* data to read or write */
 
+/* Wired HME PHY addresses */
+#define	HME_PHYAD_INTERNAL	1
+#define	HME_PHYAD_EXTERNAL	0
 
 /*
  * Buffer Descriptors.
