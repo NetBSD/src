@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.8 1996/05/12 21:40:21 mark Exp $ */
+/* $NetBSD: console.c,v 1.9 1996/10/15 01:10:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -66,12 +66,13 @@
 
 #include "vt.h"
 
-#define CONSOLE_VERSION "[V203C] "
+#define CONSOLE_VERSION "[V203D] "
 
 /*
  * Externals
  */
 
+extern videomemory_t videomemory;
 extern struct tty *constty;
 extern int debug_flags;
 #define consmap_col(x) (x & 0x3)
@@ -113,7 +114,7 @@ int	physcon_switchdown	__P((void));
  * Exported variables
  */
 
-#define BLANKINIT	(10*60*60)
+#define BLANKINIT	(10*60*70)
 int vconsole_pending=0;
 int vconsole_blankinit=BLANKINIT;
 int vconsole_blankcounter=BLANKINIT;
@@ -201,7 +202,7 @@ vconsole_spawn_re(dev, vc)
 
 	MALLOC(new, struct vconsole *, sizeof(struct vconsole),
 	    M_DEVBUF,M_NOWAIT );
-
+/*	printf("spawn_re:new=%08x\n", new);*/
 	bzero ( (char *)new, sizeof(struct vconsole) );
 	*new = *vc;
 	new->number = num;
@@ -237,6 +238,7 @@ vconsole_spawn(dev, vc)
 
 	MALLOC(new, struct vconsole *, sizeof(struct vconsole),
 	    M_DEVBUF, M_NOWAIT );
+/*	printf("spawn:new=%08x\n", new);*/
 
 	bzero ( (char *)new, sizeof(struct vconsole) );
 	*new = *vc;
@@ -258,6 +260,7 @@ vconsole_spawn(dev, vc)
 
 	MALLOC (new->charmap, int *, sizeof(int)*((new->xchars)*(new->ychars)), 
 	    M_DEVBUF, M_NOWAIT );
+/*	printf("spawn:charmap=%08x\n", new->charmap);*/
 
 	if (new->charmap==0)
 		return 0;
@@ -279,6 +282,7 @@ vconsole_addcharmap(vc)
 
 	MALLOC (vc->charmap, int *, sizeof(int)*((vc->xchars)*(vc->ychars)),
 	    M_DEVBUF, M_NOWAIT );
+/*	printf("vc=%08x charmap=%08x\n", vc, vc->charmap);*/
 	for ( counter=0; counter<((vc->xchars)*(vc->ychars)); counter++ )
 		(vc->charmap)[counter]=' ';
 }
@@ -611,8 +615,33 @@ physconioctl(dev, cmd, data, flag, p)
 		return 0;
 
 	case CONSOLE_BLANKTIME:
-		vconsole_blankinit = *(int *)data;		
+		{
+		int time = (*(int *)data);
+		struct vidc_mode *vm = &((struct vidc_info *)vc->r_data)->mode;
+
+		/*
+		 * +ve set blank time
+		 * 0   force blank immediately (no time change)
+		 * -ve disable blank time
+		 */
+
+		if (vm->frame_rate)
+			time *= vm->frame_rate;
+		else
+			time *= 70;
+
+		if (time == 0) {
+			if (vc == vconsole_current)
+				vconsole_current->BLANK(vconsole_current, BLANK_OFF);
+		} else {
+			if (vc == vconsole_current)
+				vconsole_blankinit = time;
+			vc->blanktime = time;
+			if (time < 0)
+				vconsole_current->BLANK(vconsole_current, BLANK_NONE);
+		}
 		return 0;
+		}
 
 	case CONSOLE_DEBUGPRINT:
 		{
@@ -822,14 +851,16 @@ physconinit(cp)
      * undergo once time initialisation
      */
 
-	if ( physconinit_called )
+	if (physconinit_called)
 		return;
 
 	physconinit_called=1;
 
+/*	memset(videomemory.vidm_vbase, 0x6000, 0xff);*/
+
 	locked=0;
 
-	physcon_major = major ( cp->cn_dev );
+	physcon_major = major(cp->cn_dev);
 
 	/*
 	 * Create the master console
@@ -859,9 +890,9 @@ physconinit(cp)
 	 * Perform initial checking
 	 */
 
-	if ( vconsole_master->terminal_emulator->name == 0 )
+	if (vconsole_master->terminal_emulator->name == 0)
 		vconsole_master->terminal_emulator->name = undefined_string;
-	if ( vconsole_master->render_engine->name == 0 )
+	if (vconsole_master->render_engine->name == 0)
 		vconsole_master->render_engine->name = undefined_string;
 
 	/*
@@ -869,10 +900,11 @@ physconinit(cp)
 	 * or there's nothing else that can be done
 	 */
 
-	vconsole_master->R_INIT ( vconsole_master);
-	vconsole_master->SPAWN ( vconsole_master );
-	vconsole_master->TERM_INIT (vconsole_master);
+	vconsole_master->R_INIT(vconsole_master);
+	vconsole_master->SPAWN(vconsole_master);
+	vconsole_master->TERM_INIT(vconsole_master);
 	vconsole_master->flags = LOSSY;
+	vconsole_master->blanktime = BLANKINIT;
 
 	/*
 	 * Now I can do some productive verification
@@ -881,13 +913,13 @@ physconinit(cp)
 	/* Ensure there are no zeros in the termulation and render_engine */
 
 	test = (int *) vconsole_master->render_engine;
-	for ( counter=0; counter<(sizeof(struct render_engine)/4)-1; counter++ )
+	for (counter=0; counter<(sizeof(struct render_engine)/4)-1; counter++)
 		if (test[counter]==0)
 			panic ( "Render engine %s is missins a routine",
 			    vconsole_master->render_engine->name );
   
 	test = (int *) vconsole_master->terminal_emulator;
-	for ( counter=0; counter<(sizeof(struct terminal_emulator)/4)-1; counter++ )
+	for (counter=0; counter<(sizeof(struct terminal_emulator)/4)-1; counter++)
 		if (test[counter]==0)
 			panic ( "Render engine %s is missing a routine",
 			    vconsole_master->terminal_emulator->name );
@@ -996,6 +1028,10 @@ rpcconsolecnputc(dev, character)
 		RPC_BUF_FLUSH
 }
 
+void
+console_flush()
+RPC_BUF_FLUSH
+
 int
 console_switchdown()
 {
@@ -1013,8 +1049,10 @@ console_switchup()
 int
 console_unblank()
 {
-	vconsole_blankcounter = vconsole_blankinit;
-	vconsole_current->BLANK(vconsole_current, BLANK_NONE);
+	if (vconsole_current) {
+		vconsole_blankcounter = vconsole_current->blanktime;
+		vconsole_current->BLANK(vconsole_current, BLANK_NONE);
+	}
 	return 0;
 }
 
@@ -1131,6 +1169,8 @@ physcon_switch(number)
 	lastconsole = vconsole_current->number;
 	vconsole_current=vc;
 	vconsole_current->R_SWAPIN ( vc );
+
+	console_unblank();
 
 	/* Re-activate the render engine functions */
 
