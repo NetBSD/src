@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21 2002/11/29 22:17:19 fvdl Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22 2002/12/03 22:03:01 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -148,7 +148,8 @@ char cpu_model[] = "Hammer x86-64";
 char bootinfo[BOOTINFO_MAXSIZE];
 
 /* Our exported CPU info; we have only one right now. */  
-struct cpu_info cpu_info_store;
+struct cpu_info cpu_info_primary;
+struct cpu_info *cpu_info_list;
 
 struct bi_devmatch *x86_64_alldisks = NULL;
 int x86_64_ndisks = 0;
@@ -1180,6 +1181,13 @@ init_x86_64(first_avail)
 	pmap_bootstrap(VM_MIN_KERNEL_ADDRESS);
 
 	/*
+	 * ..until there's real MP code.
+	 */
+	cpu_info_primary.ci_flags |= CPUF_RUNNING;	/* XXX */
+	cpu_info_primary.ci_next = NULL;
+	cpu_info_list = &cpu_info_primary;
+
+	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
 	 */
@@ -1585,7 +1593,7 @@ init_x86_64(first_avail)
 	wrmsr(MSR_SFMASK, PSL_NT|PSL_T|PSL_I|PSL_C);
 
 	wrmsr(MSR_FSBASE, 0);
-	wrmsr(MSR_GSBASE, (u_int64_t)&cpu_info_store);
+	wrmsr(MSR_GSBASE, (u_int64_t)&cpu_info_primary);
 	wrmsr(MSR_KERNELGSBASE, 0);
 
 	setregion(&region, gdtstore, DYNSEL_START - 1);
