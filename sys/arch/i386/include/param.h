@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)param.h	5.8 (Berkeley) 6/28/91
- *	$Id: param.h,v 1.7 1993/07/05 01:12:46 deraadt Exp $
+ *	$Id: param.h,v 1.8 1993/08/03 21:51:10 mycroft Exp $
  */
 
 /*
@@ -49,7 +49,8 @@
  * for all data types (int, long, ...).   The result is u_int and
  * must be cast to any desired pointer type.
  */
-#define	ALIGN(p)	(((u_int)(p) + (sizeof(int) - 1)) &~ (sizeof(int) - 1))
+#define ALIGNBYTES	(sizeof(int) - 1)
+#define ALIGN(p)	(((u_int)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
@@ -86,19 +87,21 @@
  */
 #ifndef	MSIZE
 #define	MSIZE		128		/* size of an mbuf */
-#endif
+#endif	/* MSIZE */
+
 #ifndef	MCLSHIFT
 #define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-#endif
+#endif	/* MCLSHIFT */
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 #define	MCLOFSET	(MCLBYTES - 1)	/* offset within a m_buf cluster */
+
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
 #define	NMBCLUSTERS	512		/* map size, max cluster allocation */
 #else
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
-#endif
-#endif
+#endif	/* GATEWAY */
+#endif	/* NMBCLUSTERS */
 
 /*
  * Size of kernel malloc arena in CLBYTES-sized logical pages
