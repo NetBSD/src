@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_addr.c,v 1.6 1998/07/26 13:03:43 mycroft Exp $	*/
+/*	$NetBSD: iso_addr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iso_addr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: iso_addr.c,v 1.6 1998/07/26 13:03:43 mycroft Exp $");
+__RCSID("$NetBSD: iso_addr.c,v 1.7 1998/10/15 10:22:23 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,7 +65,7 @@ iso_addr(addr)
 	register int byte = 0, state = VIRGIN;
 	register int newaddr = 0;	/* pacify gcc */
 
-	bzero((char *)&out_addr, sizeof(out_addr));
+	(void)memset(&out_addr, 0, sizeof (out_addr));
 	do {
 		if ((*addr >= '0') && (*addr <= '9')) {
 			newaddr = *addr - '0';

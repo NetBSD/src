@@ -1,4 +1,4 @@
-/*	$NetBSD: linkaddr.c,v 1.7 1998/07/26 13:03:43 mycroft Exp $	*/
+/*	$NetBSD: linkaddr.c,v 1.8 1998/10/15 10:22:23 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)linkaddr.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: linkaddr.c,v 1.7 1998/07/26 13:03:43 mycroft Exp $");
+__RCSID("$NetBSD: linkaddr.c,v 1.8 1998/10/15 10:22:23 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,7 +68,7 @@ link_addr(addr, sdl)
 	register int byte = 0, state = NAMING;
 	register int newaddr = 0;	/* pacify gcc */
 
-	bzero((char *)&sdl->sdl_family, sdl->sdl_len - 1);
+	(void)memset(&sdl->sdl_family, 0, (size_t)sdl->sdl_len - 1);
 	sdl->sdl_family = AF_LINK;
 	do {
 		state &= ~LETTER;
@@ -142,7 +142,7 @@ link_ntoa(sdl)
 	int firsttime = 1;
 
 	if (sdl->sdl_nlen) {
-		bcopy(sdl->sdl_data, obuf, sdl->sdl_nlen);
+		(void)memcpy(obuf, sdl->sdl_data, (size_t)sdl->sdl_nlen);
 		out += sdl->sdl_nlen;
 		if (sdl->sdl_alen)
 			*out++ = ':';

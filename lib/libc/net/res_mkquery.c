@@ -1,4 +1,4 @@
-/*	$NetBSD: res_mkquery.c,v 1.12 1998/10/14 19:33:49 kleink Exp $	*/
+/*	$NetBSD: res_mkquery.c,v 1.13 1998/10/15 10:22:24 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993
@@ -59,7 +59,7 @@
 static char sccsid[] = "@(#)res_mkquery.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "Id: res_mkquery.c,v 8.5 1996/08/27 08:33:28 vixie Exp ";
 #else
-__RCSID("$NetBSD: res_mkquery.c,v 1.12 1998/10/14 19:33:49 kleink Exp $");
+__RCSID("$NetBSD: res_mkquery.c,v 1.13 1998/10/15 10:22:24 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,7 +113,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 	 */
 	if ((buf == NULL) || (buflen < sizeof(HEADER)))
 		return(-1);
-	bzero(buf, sizeof(HEADER));
+	(void)memset(buf, 0, sizeof (HEADER));
 	hp = (HEADER *) buf;
 	hp->id = htons(++_res.id);
 	hp->opcode = op;
@@ -179,7 +179,7 @@ res_mkquery(op, dname, class, type, data, datalen, newrr_in, buf, buflen)
 		__putshort(datalen, cp);
 		cp += sizeof(u_int16_t);
 		if (datalen) {
-			bcopy(data, cp, datalen);
+			(void)memcpy(cp, data, (size_t)datalen);
 			cp += datalen;
 		}
 		hp->ancount = htons(1);
