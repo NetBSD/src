@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 1995/06/26 22:41:23 pk Exp $ */
+/*	$NetBSD: machdep.c,v 1.47 1995/07/05 18:40:50 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -653,22 +653,22 @@ long	dumplo = 0;
 
 dumpconf()
 {
-	int nblks;
+	register int nblks, nmem;
+	register struct memarr *mp;
+	extern struct memarr pmemarr[];	/* XXX */
+	extern int npmemarr;		/* XXX */
 
-	dumpsize = physmem;
-#define DUMPMMU
-#undef DUMPMMU
-#ifdef DUMPMMU
-#define NPMEG 128
+	dumpsize = 0;
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
+		dumpsize += btoc(mp->len);
+
 	/*
 	 * savecore views the image in units of pages (i.e., dumpsize is in
 	 * pages) so we round the two mmu entities into page-sized chunks.
 	 * The PMEGs (32kB) and the segment table (512 bytes plus padding)
 	 * are appending to the end of the crash dump.
 	 */
-	dumpsize += btoc(sizeof(((struct ksegmap *)0)->ks_segmap)) +
-		btoc(NPMEG * NPTESG * sizeof(int));
-#endif
+	dumpsize += pmap_dumpsize();
 	if (dumpdev != NODEV && bdevsw[major(dumpdev)].d_psize) {
 		nblks = (*bdevsw[major(dumpdev)].d_psize)(dumpdev);
 		/*
@@ -690,97 +690,6 @@ dumpconf()
 	}
 }
 
-#ifdef DUMPMMU
-/* XXX */
-#include <machine/ctlreg.h>
-#define	getpte(va)		lda(va, ASI_PTE)
-#define	setsegmap(va, pmeg)	stba(va, ASI_SEGMAP, pmeg)
-
-/*
- * Write the mmu contents to the dump device.
- * This gets appended to the end of a crash dump since
- * there is no in-core copy of kernel memory mappings.
- */
-int
-dumpmmu(blkno)
-	register daddr_t blkno;
-{
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, int));
-	register int pmeg;
-	register int addr;	/* unused kernel virtual address */
-	register int i;
-	register int *pte, *ptend;
-	register int error;
-	register struct ksegmap *kpmap = &kernel_segmap_store;
-	int buffer[dbtob(1) / sizeof(int)];
-	extern int seginval;	/* from pmap.c */
-	
-
-	dump = bdevsw[major(dumpdev)].d_dump;
-
-	/*
-	 * dump page table entries
-	 *
-	 * We dump each pmeg in order (by segment number).  Since the MMU
-	 * automatically maps the given virtual segment to a pmeg we must
-	 * iterate over the segments by incrementing an unused segment slot
-	 * in the MMU.  This fixed segment number is used in the virtual
-	 * address argument to getpte().
-	 */
-
-	/* First find an unused virtual segment. */
-	i = NKSEG;
-	while (kpmap->ks_segmap[--i] != seginval)
-		if (i <= 0)
-			return (-1);
-	/*
-	 * Compute the base address corresponding to the unused segment.
-	 * Note that the kernel segments start after all the user segments
-	 * so we must account for this offset.
-	 */
-	addr = VSTOVA(i + NUSEG);
-	/*
-	 * Go through the pmegs and dump each one.
-	 */
-	pte = buffer;
-	ptend = &buffer[sizeof(buffer) / sizeof(buffer[0])];
-	for (pmeg = 0; pmeg < NPMEG; ++pmeg) {
-		register int va = addr;
-
-		setsegmap(addr, pmeg);
-		i = NPTESG;
-		do {
-			*pte++ = getpte(va);
-			if (pte >= ptend) {
-				/*
-				 * Note that we'll dump the last block
-				 * the last time through the loops because
-				 * all the PMEGs occupy 32KB which is 
-				 * a multiple of the block size.
-				 */
-				error = (*dump)(dumpdev, blkno,
-						(caddr_t)buffer,
-						dbtob(1));
-				if (error != 0)
-					return (error);
-				++blkno;
-				pte = buffer;
-			}
-			va += NBPG;
-		} while (--i > 0);
-	}
-	setsegmap(addr, seginval);
-
-	/*
-	 * dump (512 byte) segment map 
-	 * XXX assume it's a multiple of the block size
-	 */
-	error = (*dump)(dumpdev, blkno, (caddr_t)kpmap->ks_segmap,
-			sizeof(kpmap->ks_segmap));
-	return (error);
-}
-#endif
-
 #define	BYTES_PER_DUMP	(32 * 1024)	/* must be a multiple of pagesize */
 static vm_offset_t dumpspace;
 
@@ -798,11 +707,14 @@ reserve_dumppages(p)
  */
 dumpsys()
 {
-	register unsigned bytes, i, n;
-	register int maddr, psize;
+	register int psize;
 	register daddr_t blkno;
-	register int (*dump)	__P((dev_t, daddr_t, caddr_t, int));
+	register int (*dump)	__P((dev_t, daddr_t, caddr_t, size_t));
 	int error = 0;
+	register struct memarr *mp;
+	register int nmem;
+	extern struct memarr pmemarr[];
+	extern int npmemarr;
 
 	/* copy registers to memory */
 	snapshot(cpcb);
@@ -827,30 +739,36 @@ dumpsys()
 		printf("area unavailable\n");
 		return;
 	}
-	bytes = physmem << PGSHIFT;
-	maddr = 0;
 	blkno = dumplo;
 	dump = bdevsw[major(dumpdev)].d_dump;
-	for (i = 0; i < bytes; i += n) {
-		n = bytes - i;
-		if (n > BYTES_PER_DUMP)
-			 n = BYTES_PER_DUMP;
-#ifdef DEBUG
-		/* print out how many MBs we have dumped */
-		if (i && (i % (1024*1024)) == 0)
-			printf("%d ", i / (1024*1024));
-#endif
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
-		error = (*dump)(dumpdev, blkno, (caddr_t)dumpspace, (int)n);
-		if (error)
-			break;
-		maddr += n;
-		blkno += btodb(n);
+
+	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++) {
+		register unsigned i, n;
+		register maddr = mp->addr;
+
+		for (i = 0; i < mp->len; i += n) {
+			n = mp->len - i;
+			if (n > BYTES_PER_DUMP)
+				 n = BYTES_PER_DUMP;
+
+			/* print out how many MBs we have dumped */
+			if (i && (i % (1024*1024)) == 0)
+				printf("%d ", i / (1024*1024));
+
+			(void) pmap_map(dumpspace, maddr, maddr + n,
+					VM_PROT_READ);
+			error = (*dump)(dumpdev, blkno,
+					(caddr_t)dumpspace, (int)n);
+			pmap_remove(pmap_kernel(), dumpspace, dumpspace + n);
+			if (error)
+				break;
+			maddr += n;
+			blkno += btodb(n);
+		}
 	}
-#ifdef DUMPMMU
 	if (!error)
-		error = dumpmmu(blkno);
-#endif
+		error = pmap_dumpmmu(dump, blkno);
+
 	switch (error) {
 
 	case ENXIO:
