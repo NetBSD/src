@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.26 2000/03/24 11:46:47 hannken Exp $	*/
+/*	$NetBSD: kbd.c,v 1.26.4.1 2002/06/06 17:08:33 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -595,6 +595,10 @@ kbd_input_keysym(k, keysym)
 {
 	struct kbd_state *ks = &k->k_state;
 	int data;
+
+	/* Check if a recipient has been configured */
+	if (k->k_cc == NULL)
+		return (0);
 
 	switch (KEYSYM_CLASS(keysym)) {
 
