@@ -36,8 +36,11 @@ http		90/tcp
 supdup		95/tcp
 hostnames	101/tcp		hostname	# usually from sri-nic
 tsap		102/tcp				# part of ISODE.
+x400		103/tcp				# ISO Mail
+x400-snd	104/tcp
 #csnet-cs	105/?
-pop		109/tcp		postoffice
+pop-2		109/tcp				# post office protocol
+pop-3		110/tcp
 sunrpc		111/tcp
 sunrpc		111/udp
 auth		113/tcp		authentication
@@ -47,6 +50,7 @@ nntp		119/tcp		readnews untp	# USENET News Transfer Protocol
 ntp		123/udp				# network time protocol
 snmp		161/udp
 snmp-trap	162/udp
+xdmcp		177/udp				# X Display Mgr. Control Prot.
 #
 # UNIX specific services
 #
