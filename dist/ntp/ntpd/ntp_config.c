@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.c,v 1.6 2003/12/04 16:23:37 drochner Exp $	*/
+/*	$NetBSD: ntp_config.c,v 1.7 2003/12/04 17:01:32 drochner Exp $	*/
 
 /*
  * ntp_config.c - read and apply configuration information
@@ -823,10 +823,6 @@ getconfig(
 						"configuration of %s failed",
 						stoa(&peeraddr));
 			    }
-			    if (tok == CONFIG_MANYCASTCLIENT)
-				proto_config(PROTO_MULTICAST_ADD,
-				    0, 0., &peeraddr);
-	
 			} else if (errflg == -1) {
 				save_resolve(tokens[1], hmode, peerversion,
 				    minpoll, maxpoll, peerflags, ttl,
