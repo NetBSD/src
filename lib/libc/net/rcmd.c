@@ -1,4 +1,4 @@
-/*	$NetBSD: rcmd.c,v 1.29 1998/11/15 17:40:35 christos Exp $	*/
+/*	$NetBSD: rcmd.c,v 1.30 1999/03/16 18:15:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rcmd.c	8.3 (Berkeley) 3/26/94";
 #else
-__RCSID("$NetBSD: rcmd.c,v 1.29 1998/11/15 17:40:35 christos Exp $");
+__RCSID("$NetBSD: rcmd.c,v 1.30 1999/03/16 18:15:13 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: rcmd.c,v 1.29 1998/11/15 17:40:35 christos Exp $");
 #include <netdb.h>
 #include <unistd.h>
 #include <pwd.h>
+#include <grp.h>
 #include <errno.h>
 #include <stdio.h>
 #include <ctype.h>
@@ -359,7 +360,7 @@ rshrcmd(ahost, rport, locuser, remuser, cmd, fd2p, rshcmd)
 
 		/* Orphan.  Become local user for rshprog. */
 		if (setuid(pw->pw_uid)) {
-			warn("rshrcmd: setuid(%u)", pw->pw_uid);
+			warn("rshrcmd: setuid(%lu)", (u_long)pw->pw_uid);
 			_exit(1);
 		}
 
@@ -407,7 +408,7 @@ rresvport(alport)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0)
 		return (-1);
-#if 0
+#ifndef BSD4_4
 	for (;;) {
 		sin.sin_port = htons((u_short)*alport);
 		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
@@ -578,7 +579,7 @@ __ivaliduser(hostf, raddr, luser, ruser)
 			continue;
 		}
 		while (*p != '\n' && *p != ' ' && *p != '\t' && *p != '\0') {
-			*p = isupper(*p) ? tolower(*p) : *p;
+			*p = isupper((unsigned char)*p) ? tolower(*p) : *p;
 			p++;
 		}
 		if (*p == ' ' || *p == '\t') {
@@ -709,7 +710,7 @@ __icheckhost(raddr, lhost)
 	char **pp;
 
 	/* Try for raw ip address first. */
-	if (isdigit(*lhost) && inet_aton(lhost, &laddr) != 0)
+	if (isdigit((unsigned char)*lhost) && inet_aton(lhost, &laddr) != 0)
 		return (raddr == laddr.s_addr);
 
 	/* Better be a hostname. */
