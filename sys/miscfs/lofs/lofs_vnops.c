@@ -37,7 +37,7 @@
  * From:
  *	Id: lofs_vnops.c,v 4.1 1993/12/17 10:47:45 jsp Rel
  *
- *	$Id: lofs_vnops.c,v 1.3 1994/02/25 01:05:32 cgd Exp $
+ *	$Id: lofs_vnops.c,v 1.4 1994/02/25 23:41:56 cgd Exp $
  */
 
 /*
@@ -113,9 +113,11 @@ lofs_lookup(dvp, ndp, p)
 	/*
 	 * Call lookup on the looped vnode
 	 */
+	ndp->ni_makeentry = 0;		/* XXX OUCH! */
 	error = VOP_LOOKUP(targetdvp, ndp, p);
 	if (error) {
-		if (flag == CREATE || flag == RENAME || error != ENOENT) {
+		/* XXX -- the following chunk is most likely VERY wrong */
+		if (flag == CREATE || flag == RENAME) {
 		    	vrele(targetdvp);
 		} else {
 			vrele(ndp->ni_dvp);
