@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.4 2002/04/02 19:58:38 manu Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.5 2002/04/20 16:20:12 manu Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.4 2002/04/02 19:58:38 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.5 2002/04/20 16:20:12 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -112,6 +112,43 @@ irix_sys_fcntl(p, v, retval)
 
 	cmd = SCARG(uap, cmd);
 	switch (cmd) {
+	case SVR4_F_ALLOCSP:
+		cmd = SVR4_F_FREESP;
+		break;
+
+	case IRIX_F_ALLOCSP64:
+		cmd = SVR4_F_FREESP64;
+		break;
+
+	case IRIX_F_SETBSDLKW:
+		cmd = SVR4_F_SETLKW;
+		break;
+
+	case IRIX_F_SETBSDLK:
+		cmd = SVR4_F_SETLK;
+		break;
+
+	case SVR4_F_DUPFD:
+	case SVR4_F_GETFD:
+	case SVR4_F_SETFD:
+	case SVR4_F_GETFL:
+	case SVR4_F_SETFL:
+	case SVR4_F_SETLK:
+	case SVR4_F_SETLKW:
+	case SVR4_F_CHKFL:
+	case SVR4_F_FREESP:
+	case SVR4_F_GETLK:
+	case SVR4_F_RSETLK:
+	case SVR4_F_RGETLK:
+	case SVR4_F_RSETLKW:
+	case SVR4_F_GETOWN:
+	case SVR4_F_SETOWN:
+	case SVR4_F_GETLK64:
+	case SVR4_F_SETLK64:
+	case SVR4_F_SETLKW64:
+	case SVR4_F_FREESP64:
+		break;
+
 	case IRIX_F_CHKLK:
 	case IRIX_F_CHKLKW:
 	case IRIX_F_CLNLK:
@@ -137,22 +174,16 @@ irix_sys_fcntl(p, v, retval)
 	case IRIX_F_GETBMAPX:
 	case IRIX_F_SETPRIO:
 	case IRIX_F_GETPRIO:
+	default:
 		printf("Warning: unimplemented IRIX fcntl() command %d\n", 
 		    cmd);
 		return EINVAL;
 		break;
-
-	case IRIX_F_SETBSDLKW:
-		cmd = SVR4_F_SETLKW;
-	case IRIX_F_SETBSDLK:
-		cmd = SVR4_F_SETLK;
-	default:
-		SCARG(&cup, fd) = SCARG(uap, fd);
-		SCARG(&cup, cmd) = cmd;
-		SCARG(&cup, arg) = SCARG(uap, arg);
-		return svr4_sys_fcntl(p, &cup, retval);
-		break;
 	}
-	/* NOTREACHED */
+
+	SCARG(&cup, fd) = SCARG(uap, fd);
+	SCARG(&cup, cmd) = cmd;
+	SCARG(&cup, arg) = SCARG(uap, arg);
+	return svr4_sys_fcntl(p, &cup, retval);
 }
 	
