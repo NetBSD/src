@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.99 2002/11/17 08:32:44 chs Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.100 2002/11/30 11:20:51 manu Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.99 2002/11/17 08:32:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.100 2002/11/30 11:20:51 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -500,8 +500,8 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	PRELE(p1);
 
 	/*
-	* Notify any interested parties about the new process.
-	*/
+	 * Notify any interested parties about the new process.
+	 */
 	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
