@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cd9660_node.c	8.2 (Berkeley) 1/23/94
- *	$Id: cd9660_node.c,v 1.1 1994/06/08 11:22:51 mycroft Exp $
+ *	$Id: cd9660_node.c,v 1.2 1994/06/14 23:55:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -248,7 +248,7 @@ loop:
 			*ipp = 0;
 			return error;
 		}
-		isodir = (struct iso_directory_record *)bp->b_un.b_addr;
+		isodir = (struct iso_directory_record *)bp->b_data;
 	}
 	
 	ip->iso_extent = isonum_733(isodir->extent);
@@ -478,7 +478,7 @@ cd9660_defattr(isodir,inop,bp)
 		bp = bp2;
 	}
 	if (bp) {
-		ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+		ap = (struct iso_extended_attributes *)bp->b_data;
 		
 		if (isonum_711(ap->version) == 1) {
 			if (!(ap->perm[0]&0x40))
@@ -528,7 +528,7 @@ cd9660_deftstamp(isodir,inop,bp)
 		bp = bp2;
 	}
 	if (bp) {
-		ap = (struct iso_extended_attributes *)bp->b_un.b_addr;
+		ap = (struct iso_extended_attributes *)bp->b_data;
 		
 		if (isonum_711(ap->version) == 1) {
 			if (!cd9660_tstamp_conv17(ap->ftime,&inop->inode.iso_atime))
