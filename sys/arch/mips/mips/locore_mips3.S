@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.9 1999/04/24 08:10:40 simonb Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.10 1999/09/25 00:00:39 shin Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -1267,7 +1267,12 @@ LEAF(mips3_TLBFlush)
 	dmtc0	v0, MIPS_COP_0_TLB_HI		# Mark entry high as invalid
 	dmtc0	zero, MIPS_COP_0_TLB_LO0	# Zero out low entry0.
 	dmtc0	zero, MIPS_COP_0_TLB_LO1	# Zero out low entry1.
+#ifdef MIPS3_4100				/* VR4100 core */
+	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
+#else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# Zero out mask entry.
+#endif	
 /*
  * Align the starting value (t1) and the upper bound (a0).
  */
@@ -1364,7 +1369,7 @@ END(mips3_TLBFlushAddr)
 LEAF(mips3_TLBUpdate)
 	mfc0	v1, MIPS_COP_0_STATUS	# Save the status register.
 	mtc0	zero, MIPS_COP_0_STATUS	# Disable interrupts
-	and	t1, a0, 0x1000			# t1 = Even/Odd flag
+	and	t1, a0, MIPS3_PG_ODDPG	# t1 = Even/Odd flag
 	li	v0, (MIPS3_PG_HVPN | MIPS3_PG_ASID)
 	and	a0, a0, v0
 	dmfc0	t0, MIPS_COP_0_TLB_HI		# Save current PID
@@ -1396,7 +1401,12 @@ LEAF(mips3_TLBUpdate)
 	b	4f
 	nop
 1:
+#ifdef MIPS3_4100				/* VR4100 core */
+	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
+#else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
+#endif	
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	dmtc0	a1, MIPS_COP_0_TLB_LO0		# init low reg0.
 	dmtc0	a2, MIPS_COP_0_TLB_LO1		# init low reg1.
@@ -1427,7 +1437,12 @@ LEAF(mips3_TLBUpdate)
 	b	4f
 	nop
 3:
+#ifdef MIPS3_4100				/* VR4100 core */
+	lw	v0, _C_LABEL(default_pg_mask)	# default_pg_mask declared 
+	mtc0	v0, MIPS_COP_0_TLB_PG_MASK	#           in mips_machdep.c
+#else
 	mtc0	zero, MIPS_COP_0_TLB_PG_MASK	# init mask.
+#endif	
 	dmtc0	a0, MIPS_COP_0_TLB_HI		# init high reg.
 	dmtc0	a2, MIPS_COP_0_TLB_LO0		# init low reg0.
 	dmtc0	a1, MIPS_COP_0_TLB_LO1		# init low reg1.

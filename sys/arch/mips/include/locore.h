@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.20 1999/04/24 08:10:35 simonb Exp $	*/
+/*	$NetBSD: locore.h,v 1.21 1999/09/25 00:00:37 shin Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -138,8 +138,10 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 
 #if defined(MIPS3) && !defined (MIPS1)
 #define MachFlushCache		mips3_FlushCache
-#if	defined(MIPS3_L2CACHE_ABSENT) && !defined(MIPS3_L2CACHE_PRESENT)
-#define MachFlushDCache		mips52xx_FlushDCache
+#if	defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_4100)
+#define MachFlushDCache         mips3_FlushDCache		/* VR4100 */
+#elif	defined(MIPS3_L2CACHE_ABSENT) && !defined(MIPS3_L2CACHE_PRESENT)
+#define MachFlushDCache		mips52xx_FlushDCache		/* RM5200 */
 #elif	!defined(MIPS3_L2CACHE_ABSENT) && defined(MIPS3_L2CACHE_PRESENT)
 #define MachFlushDCache		mips3_FlushDCache
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.13 1999/04/24 08:10:36 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.14 1999/09/25 00:00:37 shin Exp $	*/
 
 /*
  * NOTE: SSIZE, SINCR and UPAGES must be multiples of CLSIZE.
@@ -31,9 +31,15 @@
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
 #define ALIGNED_POINTER(p,t)	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 
+#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
+#define	NBPG		(1024*16)	/* bytes/page */
+#define	PGOFSET		(NBPG-1)	/* byte offset into page */
+#define	PGSHIFT		14		/* LOG2(NBPG) */
+#else
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 #define	PGSHIFT		12		/* LOG2(NBPG) */
+#endif
 #define	NPTEPG		(NBPG/4)
 
 #define NBSEG		0x400000	/* bytes/segment */

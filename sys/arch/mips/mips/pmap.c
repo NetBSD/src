@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 1999/09/12 01:17:12 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.71 1999/09/25 00:00:39 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.70 1999/09/12 01:17:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.71 1999/09/25 00:00:39 shin Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1162,7 +1162,7 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	} else {
 		/*
 		 * Assumption: if it is not part of our managed memory
-		 * then it must be device memory which may be volitile.
+		 * then it must be device memory which may be volatile.
 		 */
 #ifdef DEBUG
 		enter_stats.unmanaged++;
@@ -1197,13 +1197,8 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 		/* enter entries into kernel pmap */
 		pte = kvtopte(va);
 
-		/*
-		 * XXX more thought... what does ROPAGE mean here?
-		 * is it correc to set all the ROPAGE bits for mips3,
-		 * but just the valid (and not read-only) bit on mips1?
-		 */
 		if (CPUISMIPS3)
-			npte |= vad_to_pfn(pa) | MIPS3_PG_ROPAGE | MIPS3_PG_G;
+			npte |= vad_to_pfn(pa) | MIPS3_PG_G;
 		else
 			npte |= vad_to_pfn(pa) | MIPS1_PG_V | MIPS1_PG_G;
 

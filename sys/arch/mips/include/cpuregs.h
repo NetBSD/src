@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.22 1999/05/21 06:37:39 nisimura Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.23 1999/09/25 00:00:37 shin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,8 +285,14 @@
 #define MIPS3_CONFIG_DC_SHIFT	6
 #define MIPS3_CONFIG_IC_MASK	0x00000e00	/* Primary I-cache size */
 #define MIPS3_CONFIG_IC_SHIFT	9
+#ifdef MIPS3_4100				/* VR4100 core */
+#define MIPS3_CONFIG_CS		0x00001000	/* cache size mode indication*/
+#define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
+	((((config)&MIPS3_CONFIG_CS)?0x400:0x1000) << (((config) & (mask)) >> (shift)))
+#else
 #define MIPS3_CONFIG_CACHE_SIZE(config, mask, shift) \
 	(0x1000 << (((config) & (mask)) >> (shift)))
+#endif
 
 /* Block ordering: 0: sequential, 1: sub-block */
 #define MIPS3_CONFIG_EB		0x00002000

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.55 1999/09/24 00:37:52 nisimura Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.55 1999/09/24 00:37:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.56 1999/09/25 00:00:39 shin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_ultrix.h"
@@ -121,6 +121,14 @@ struct	proc *fpcurproc;
 struct	pcb  *curpcb;
 
 caddr_t	msgbufaddr;
+
+#ifdef MIPS3_4100			/* VR4100 core */
+#ifdef MIPS_16K_PAGE			/* enable kernel support for 16k pages  */
+int	default_pg_mask = 0x00007800;
+#else
+int	default_pg_mask = 0x00001800;
+#endif
+#endif
 
 #ifdef MIPS1
 /*
@@ -233,7 +241,7 @@ mips3_ConfigCache()
 	mips_L1DCacheLSize = MIPS3_CONFIG_CACHE_L1_LSIZE(config,
 	    MIPS3_CONFIG_DB);
 
-	mips_CacheAliasMask = (mips_L1DCacheLSize - 1) & ~(NBPG - 1);
+	mips_CacheAliasMask = (mips_L1DCacheSize - 1) & ~(NBPG - 1);
 
 	/*
 	 * Clear out the I and D caches.
@@ -362,6 +370,12 @@ mips_vector_init()
 #if 1  /* XXX FIXME: avoid hangs in mips3_vector_init() */
 		mips3_cacheflush_bug = 1;
 #endif
+		break;
+	case MIPS_R4100:
+		cpu_arch = 3;
+		mips_num_tlb_entries = 32;
+		mips3_L1TwoWayCache = 0;
+		mips3_cacheflush_bug = 0;
 		break;
 	case MIPS_R4300:
 		cpu_arch = 3;
