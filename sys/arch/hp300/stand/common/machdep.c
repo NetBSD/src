@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 1999/07/31 00:45:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 1999/12/14 19:14:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -198,14 +198,14 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	printf("Entry point: 0x%lx\n", (u_long)entry);
 
 #ifdef EXEC_DEBUG
-	printf("\n\nReturn to boot...\n")
-	getchar();
+	printf("\n\nReturn to boot...\n");
+	(void) getchar();
 #endif
 
-	__asm __volatile ("movl %0,d7" : : "m" (howto));
-	__asm __volatile ("movl %0,d6" : : "m" (opendev));
-	__asm __volatile ("movl %0,d5" : : "m" (cons_scode));
-	__asm __volatile ("movl %0,a5" : : "a" (loadaddr));
-	__asm __volatile ("movl %0,a4" : : "a" (esym));
+	__asm __volatile ("movl %0,%%d7" : : "m" (howto) : "%d7");
+	__asm __volatile ("movl %0,%%d6" : : "m" (opendev) : "%d6");
+	__asm __volatile ("movl %0,%%d5" : : "m" (cons_scode) : "%d5");
+	__asm __volatile ("movl %0,%%a5" : : "a" (loadaddr) : "%a5");
+	__asm __volatile ("movl %0,%%a4" : : "a" (esym) : "%a4");
 	(*((int (*)())entry))();
 }
