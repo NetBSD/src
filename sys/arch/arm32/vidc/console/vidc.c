@@ -1,4 +1,4 @@
-/* $NetBSD: vidc.c,v 1.3 1996/10/15 01:05:04 mark Exp $ */
+/*	$NetBSD: vidc.c,v 1.4 1997/10/14 11:49:17 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson

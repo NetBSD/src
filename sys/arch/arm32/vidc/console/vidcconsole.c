@@ -1,4 +1,4 @@
-/* $NetBSD: vidcconsole.c,v 1.14 1997/01/28 04:20:58 mark Exp $ */
+/*	$NetBSD: vidcconsole.c,v 1.15 1997/10/14 11:49:19 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -44,8 +44,6 @@
  * Last updated : 07/02/96
  */
 
-/* woo */
-
 #include <sys/cdefs.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,17 +64,16 @@
 #include <machine/cpu.h>
 #include <machine/param.h>
 #include <machine/katelib.h>
-#include <machine/cpu.h>
 #include <machine/bootconfig.h>
-#include <machine/iomd.h>
 #include <machine/irqhandler.h>
 #include <machine/pmap.h>
 #include <machine/vidc.h>
 #include <machine/vconsole.h>
+#include <arm32/iomd/iomdreg.h>
 
-#include <arm32/dev/console/fonts/font_normal.h>
-#include <arm32/dev/console/fonts/font_bold.h>
-#include <arm32/dev/console/fonts/font_italic.h>
+#include <arm32/vidc/console/fonts/font_normal.h>
+#include <arm32/vidc/console/fonts/font_bold.h>
+#include <arm32/vidc/console/fonts/font_italic.h>
 
 #define BCOPY bcopy
 
@@ -313,9 +310,9 @@ vidcconsole_coldinit(vc)
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
     
-	WriteWord(IOMD_VIDINIT, dispstart-ptov);
-	WriteWord(IOMD_VIDSTART, dispstart-ptov);
-	WriteWord(IOMD_VIDEND, (dispend-transfersize)-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
 	return 0;
 }
 
@@ -482,7 +479,7 @@ vidcconsole_mode(vc, mode)
 		else
 			vidc_write(VIDC_EREG, 0x51<<12);
 #else
-		WriteWord(IOMD_FSIZE, vidc_currentmode->vcr
+		IOMD_WRITE_WORD(IOMD_FSIZE, vidc_currentmode->vcr
 		    + vidc_currentmode->vswr
 		    + vidc_currentmode->vber
 		    + vidc_currentmode->vbsr - 1);
@@ -799,7 +796,7 @@ vidcconsole_swapin(vc)
 	    R_DATA->font = p_font;
 	}
 /* Make the cursor blank */
-        WriteWord(IOMD_CURSINIT,p_cursor_transparent);
+        IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
 	return 0;
 
 }
@@ -864,7 +861,7 @@ vidcconsole_scrollup(vc, low, high)
 
 	high=high+1;	/* Big hack */
 
-        WriteWord(IOMD_VIDINIT, dispstart - ptov );
+        IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart - ptov );
     }
     else
     {
@@ -879,7 +876,7 @@ vidcconsole_scrollup(vc, low, high)
             dispstart+=R_DATA->bytes_per_line;
             if ( dispstart >= dispend ) dispstart -= dispsize;
 
-            WriteWord(IOMD_VIDINIT, dispstart - ptov );
+            IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart - ptov );
 
 	    if ( low!=0 )
 	    {
@@ -939,7 +936,7 @@ vidcconsole_scrolldown(vc, low, high)
         if ( dispstart < dispbase )
     	    dispstart += dispsize;
 
-        WriteWord(IOMD_VIDINIT, dispstart - ptov );
+        IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart - ptov );
     }
     else
     {
@@ -957,7 +954,7 @@ high--;
             dispstart-=R_DATA->bytes_per_line;
             if ( dispstart < dispbase )
     	        dispstart += dispsize;
-            WriteWord(IOMD_VIDINIT, dispstart - ptov );
+            IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart - ptov);
     	    start = (unsigned char *)dispstart + (low * R_DATA->bytes_per_line);
 
    	    if (low!=0)
@@ -988,9 +985,9 @@ vidcconsole_cls(vc)
 	dispstart = dispbase;
 	dispend = dispstart+dispsize;
     
-	WriteWord ( IOMD_VIDINIT, dispstart-ptov );
-	WriteWord ( IOMD_VIDSTART, dispstart-ptov );
-	WriteWord ( IOMD_VIDEND, (dispend-transfersize)-ptov );
+	IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
+	IOMD_WRITE_WORD(IOMD_VIDEND, (dispend-transfersize)-ptov);
 #endif
     
 	vidcconsolemc_cls ( (char *)dispstart, (char *)dispstart+R_DATA->screensize, R_DATA->backfillcolour );
@@ -1036,7 +1033,7 @@ vidcconsole_scrollback(vc)
 
 	vc->r_scrolledback = 1;
 
-        WriteWord(IOMD_VIDINIT, scrollback_ptr - ptov );
+        IOMD_WRITE_WORD(IOMD_VIDINIT, scrollback_ptr - ptov);
 	return 0;
 }
 
@@ -1058,13 +1055,13 @@ vidcconsole_scrollforward(vc)
 
 	if ( scrollback_ptr == dispstart )
 	{
-            WriteWord(IOMD_VIDINIT, scrollback_ptr - ptov );
+            IOMD_WRITE_WORD(IOMD_VIDINIT, scrollback_ptr - ptov);
 	    scrollback_ptr=0;
 	    vc->r_scrolledback = 0;
 	    return 0;
 	}
 
-        WriteWord(IOMD_VIDINIT, scrollback_ptr - ptov );
+        IOMD_WRITE_WORD(IOMD_VIDINIT, scrollback_ptr - ptov);
 	return 0;
 }
 
@@ -1073,7 +1070,7 @@ vidcconsole_scrollbackend(vc)
 	struct vconsole *vc;
 {
 	scrollback_ptr = 0;
-        WriteWord(IOMD_VIDINIT, dispstart - ptov );
+        IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart - ptov);
 	vc->r_scrolledback = 0;
 	return 0;
 }
@@ -1249,17 +1246,17 @@ vidcconsole_cursorintr(arg)
 #ifdef ACTIVITY_WARNING
 		if (vconsole_pending)  {
 			if ( cursor_col==0 )
-				WriteWord(IOMD_CURSINIT,p_cursor_transparent);
+				IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
 		        else
-				WriteWord(IOMD_CURSINIT,p_cursor_normal);
+				IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_normal);
 			vidc_write ( VIDC_CP1, cursor_col&0xff );
 		} else
 #endif
 		{
 			if ( cursor_col==0 )
-				WriteWord(IOMD_CURSINIT,p_cursor_transparent);
+				IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_transparent);
 			else
-				WriteWord(IOMD_CURSINIT,p_cursor_normal);
+				IOMD_WRITE_WORD(IOMD_CURSINIT,p_cursor_normal);
 			vidc_write ( VIDC_CP1, 0xffffff );
 		}
 	}
@@ -1332,7 +1329,7 @@ vidc_cursor_init(vc)
 		cursor_data = (char *)kmem_alloc(kernel_map, NBPG);
 		if (!cursor_data)
 			panic("Cannot allocate memory for hardware cursor\n");
-		WriteWord(IOMD_CURSINIT, pmap_extract(kernel_pmap,
+		IOMD_WRITE_WORD(IOMD_CURSINIT, pmap_extract(kernel_pmap,
 		    (vm_offset_t)cursor_data));
 	}
 
@@ -1445,22 +1442,22 @@ vidcconsole_textpalette(vc)
         R_DATA->forecolour = COLOUR_WHITE_8;
         R_DATA->backcolour = COLOUR_BLACK_8;
 
-        vidc_write( VIDC_PALREG , 0x00000000);
-        vidc_write( VIDC_PALETTE , VIDC_COL(  0,   0,   0));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255,   0,   0));
-        vidc_write( VIDC_PALETTE , VIDC_COL(  0, 255,   0));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 255,   0));
-        vidc_write( VIDC_PALETTE , VIDC_COL(  0,   0, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255,   0, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(  0, 255, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 255, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(128, 128, 128));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 128, 128));
-        vidc_write( VIDC_PALETTE , VIDC_COL(128, 255, 128));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 255, 128));
-        vidc_write( VIDC_PALETTE , VIDC_COL(128, 128, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 128, 255));
-        vidc_write( VIDC_PALETTE , VIDC_COL(255, 255, 255));
+        vidc_write(VIDC_PALREG, 0x00000000);
+        vidc_write(VIDC_PALETTE, VIDC_COL(  0,   0,   0));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255,   0,   0));
+        vidc_write(VIDC_PALETTE, VIDC_COL(  0, 255,   0));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 255,   0));
+        vidc_write(VIDC_PALETTE, VIDC_COL(  0,   0, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255,   0, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(  0, 255, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(128, 128, 128));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 128, 128));
+        vidc_write(VIDC_PALETTE, VIDC_COL(128, 255, 128));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 255, 128));
+        vidc_write(VIDC_PALETTE, VIDC_COL(128, 128, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 128, 255));
+        vidc_write(VIDC_PALETTE, VIDC_COL(255, 255, 255));
 
 R_DATA->fast_render = R_DATA->forecolour | (R_DATA->backcolour<<8) | (R_DATA->font->pixel_height<<16);
     return 0;
@@ -1533,7 +1530,7 @@ vidcconsole_scrollregion(vc, low, high)
 	int low;
 	int high;
 {
-    return 0;
+	return 0;
 }
 
 int
@@ -1577,31 +1574,30 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 	int error;
 	struct tty *tp;
 	struct winsize ws;
-	switch ( cmd )
-	{
-		case CONSOLE_MODE:
-    			tp = find_tp(dev);
-/*			printf ( "mode ioctl called\n" );*/
-			vidcconsole_mode ( vc, (struct vidc_mode *)data );
-    			vc->MODECHANGE ( vc );
-			ws.ws_row=vc->ychars;
-			ws.ws_col=vc->xchars;
-			error = (*linesw[tp->t_line].l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-                        error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
-			return 0;
-			break;
+	switch (cmd) {
+	case CONSOLE_MODE:
+    		tp = find_tp(dev);
+/*		printf ( "mode ioctl called\n" );*/
+		vidcconsole_mode ( vc, (struct vidc_mode *)data );
+    		vc->MODECHANGE ( vc );
+		ws.ws_row=vc->ychars;
+		ws.ws_col=vc->xchars;
+		error = (*linesw[tp->t_line].l_ioctl)(tp, TIOCSWINSZ, (char *)&ws, flag, p);
+		error = ttioctl(tp, TIOCSWINSZ, (char *)&ws, flag, p);
+		return 0;
+		break;
 
 	case CONSOLE_RESETSCREEN:
 	{
-	extern unsigned int dispbase;
-	extern unsigned int dispsize;
-	extern unsigned int ptov;
-	extern unsigned int transfersize;
+		extern unsigned int dispbase;
+		extern unsigned int dispsize;
+		extern unsigned int ptov;
+		extern unsigned int transfersize;
 
-	WriteWord ( IOMD_VIDINIT, dispbase-ptov );
-	WriteWord ( IOMD_VIDSTART, dispbase-ptov );
-	WriteWord ( IOMD_VIDEND, (dispbase+dispsize-transfersize)-ptov );
-	return 0;
+		IOMD_WRITE_WORD(IOMD_VIDINIT, dispbase-ptov);
+		IOMD_WRITE_WORD(IOMD_VIDSTART, dispbase-ptov);
+		IOMD_WRITE_WORD(IOMD_VIDEND, (dispbase+dispsize-transfersize)-ptov);
+		return 0;
         }
 	case CONSOLE_RESTORESCREEN:
 	{
@@ -1610,9 +1606,9 @@ int vidcconsole_ioctl ( struct vconsole *vc, dev_t dev, int cmd, caddr_t data,
 		extern unsigned int ptov;
 		extern unsigned int transfersize;
 
-		WriteWord ( IOMD_VIDINIT, dispstart-ptov );
-		WriteWord ( IOMD_VIDSTART, dispstart-ptov );
-		WriteWord ( IOMD_VIDEND, (dispstart+dispsize-transfersize)-ptov );
+		IOMD_WRITE_WORD(IOMD_VIDINIT, dispstart-ptov);
+		IOMD_WRITE_WORD(IOMD_VIDSTART, dispstart-ptov);
+		IOMD_WRITE_WORD(IOMD_VIDEND, (dispstart+dispsize-transfersize)-ptov);
 		vidc_stdpalette();
 		return 0;
         }
@@ -1725,132 +1721,3 @@ struct render_engine vidcconsole = {
 	vidcconsole_flash,
 	vidcconsole_cursorflash
 };
-
-
-
-
-struct vidcvideo_softc {
-	struct device device;
-	int sc_opened;
-};
-
-int
-vidcvideo_probe(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
-{
-	return 1;
-}
-
-void
-vidcvideo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
-{
-	struct vidcvideo_softc *vidcvideosoftc = (void *)self;
-	vidcvideosoftc->sc_opened=0;
-
-	printf(": vidc20 refclk=%dMHz %dKB %s\n", (VIDC_FREF / 1000000),
-	    videomemory.vidm_size / 1024,
-	    (videomemory.vidm_type == VIDEOMEM_TYPE_VRAM) ? "VRAM" : "DRAM");
-}
-
-struct cfattach vidcvideo_ca = {
-	sizeof (struct vidcvideo_softc), vidcvideo_probe, vidcvideo_attach
-};
-
-struct cfdriver vidcvideo_cd = {
-	NULL, "vidcvideo", DV_DULL
-};
-
-int
-vidcvideoopen(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
-{
-	struct vidcvideo_softc *sc;
-	struct vconsole vconsole_new;
-	int unit = minor(dev);
-	int s;
-
-	if (unit >= vidcvideo_cd.cd_ndevs)
-		return ENXIO;
-	sc = vidcvideo_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
-
-	s = spltty();
-/*	if (sc->sc_opened) {
-		(void)splx(s);
-		return(EBUSY);
-	}*/
-	++sc->sc_opened;
-	(void)splx(s);
-
-	if (sc->sc_opened == 1) {
-		vconsole_new = *vconsole_default;
-		vconsole_new.render_engine = &vidcconsole;
-		vconsole_spawn_re (
-		makedev ( physcon_major, 64 + minor(dev) ),
-		    &vconsole_new );
-	} else {
-		log(LOG_WARNING, "Multiple open of/dev/vidcvideo0 by proc %d\n", p->p_pid);
-	}
-
-	return 0;
-}
-
-int
-vidcvideoclose(dev, flags, fmt, p)
-	dev_t dev;
-	int flags;
-	int fmt;
-	struct proc *p;
-{
-	struct vidcvideo_softc *sc;
-	int unit = minor(dev);
-	int s;
-
-	if ( unit >= vidcvideo_cd.cd_ndevs )
-		return ENXIO;
-	sc = vidcvideo_cd.cd_devs[unit];
-	if (!sc)
-		return ENXIO;
-
-	s = spltty();
-	--sc->sc_opened;
-	(void)splx(s);
-
-	return 0;
-}
-
-extern int physconioctl __P(( dev_t, int, caddr_t, int,	struct proc *));
-
-int
-vidcvideoioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return ( physconioctl ( dev, cmd, data, flag, p ));
-}
-
-extern int physconmmap __P((dev_t, int, int));
-
-int
-vidcvideommap(dev, offset, prot)
-	dev_t dev;
-	int offset;
-	int prot;
-{
-	dev = makedev(physcon_major, 64 + minor(dev));
-	return(physconmmap(dev, offset, prot));
-}
-

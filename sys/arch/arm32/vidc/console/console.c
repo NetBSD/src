@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.9 1996/10/15 01:10:06 mark Exp $ */
+/*	$NetBSD: console.c,v 1.10 1997/10/14 11:49:11 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1995 Melvyn Tang-Richardson
@@ -63,10 +63,11 @@
 #include <machine/vidc.h>
 #include <machine/vconsole.h>
 #include <machine/katelib.h>
+#include <machine/bootconfig.h>
 
 #include "vt.h"
 
-#define CONSOLE_VERSION "[V203D] "
+#define CONSOLE_VERSION "[V203E]"
 
 /*
  * Externals
@@ -106,7 +107,6 @@ int	physcon_switch	__P((u_int /*number*/));
 void	physconstart	__P((struct tty */*tp*/));
 static	struct vconsole *vconsole_spawn	__P((dev_t , struct vconsole *));
 int	physconparam	__P((struct tty */*tp*/, struct termios */*t*/));
-void	consinit	__P((void));
 int	physcon_switchup __P((void));
 int	physcon_switchdown	__P((void));
 
@@ -391,7 +391,7 @@ physconopen(dev, flag, mode, p)
 		int xs;
 
 		end = msgbufp->msg_bufx-1;
-		if (end>=MSG_BSIZE) end-=MSG_BSIZE;
+		if (end>=MSGBUFSIZE) end-=MSGBUFSIZE;
 
 	/*
 	 * Try some cute things.  Count the number of lines in the msgbuf
@@ -856,8 +856,6 @@ physconinit(cp)
 
 	physconinit_called=1;
 
-/*	memset(videomemory.vidm_vbase, 0x6000, 0xff);*/
-
 	locked=0;
 
 	physcon_major = major(cp->cn_dev);
@@ -923,6 +921,7 @@ physconinit(cp)
 		if (test[counter]==0)
 			panic ( "Render engine %s is missing a routine",
 			    vconsole_master->terminal_emulator->name );
+	printf("\x0c");
 }
 
 /*
@@ -954,28 +953,10 @@ physcongetchar(void)
 }
 
 void
-consinit(void)
-{
-	static int consinit_called = 0;
-
-	if (consinit_called != 0)
-		return;
-
-	consinit_called = 1;
-	cninit();
-
-/* Ok get our start up message in early ! */
-
-	printf("\x0cRiscBSD booting...\n%s\n", version);
-}
-
-void
 rpcconsolecnprobe(cp)
 	struct consdev *cp;
 {
 	int major;
-
-/*	printf("rpcconsoleprobe: pc=%08x\n", cp);*/
 
 /*
  * Locate the major number for the physical console device
@@ -1225,7 +1206,7 @@ rpcattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
-	printf(" riscbsd generic console driver %susing %s %s\n",
+	printf(": console driver %s using %s %s\n",
 	    CONSOLE_VERSION, vconsole_master->terminal_emulator->name,
 	    vconsole_master->render_engine->name);
 
