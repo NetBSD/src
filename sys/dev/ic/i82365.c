@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.12 1998/11/05 07:55:48 msaitoh Exp $	*/
+/*	$NetBSD: i82365.c,v 1.13 1998/11/09 07:01:47 msaitoh Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1078,9 +1078,7 @@ pcic_chip_socket_enable(pch)
 
 	pcic_write(h, PCIC_PWRCTL, PCIC_PWRCTL_DISABLE_RESETDRV | PCIC_PWRCTL_OE
 			   | PCIC_PWRCTL_PWR_ENABLE);
-#if 0
 	pcic_write(h, PCIC_INTR, 0);
-#endif
 
 	/*
 	 * hold RESET at least 10us.
