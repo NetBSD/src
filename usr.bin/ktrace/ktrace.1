@@ -1,4 +1,4 @@
-.\"	$NetBSD: ktrace.1,v 1.4 1997/01/09 20:20:29 tls Exp $
+.\"	$NetBSD: ktrace.1,v 1.5 1997/02/07 03:27:22 mikel Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)ktrace.1	8.1 (Berkeley) 6/6/93
-.\"	$NetBSD: ktrace.1,v 1.4 1997/01/09 20:20:29 tls Exp $
+.\"	$NetBSD: ktrace.1,v 1.5 1997/02/07 03:27:22 mikel Exp $
 .\"
 .Dd June 6, 1993
 .Dt KTRACE 1
@@ -69,7 +69,7 @@ attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
 processes, and, if executed by root, all processes:
 .Pp
-.Dl \&$ trace -C
+.Dl \&$ ktrace -C
 .Pp
 The trace file is not human readable; use
 .Xr kdump 1
