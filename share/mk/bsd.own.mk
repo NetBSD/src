@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.355 2003/08/29 10:51:21 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.356 2003/09/01 09:38:42 uwe Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -400,9 +400,9 @@ MKGCC:= no
 .endif
 
 #
-# The sh3 port is incomplete.
+# GCC can produce PIC code for sh3 only starting with gcc3.
 #
-.if ${MACHINE_CPU} == "sh3" && !defined(HAVE_GCC3)
+.if ${MACHINE_CPU} == "sh3" && ${HAVE_GCC3} != "yes"
 NOPIC=		# defined
 .endif
 
