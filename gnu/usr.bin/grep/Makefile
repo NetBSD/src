@@ -1,31 +1,35 @@
-#	$NetBSD: Makefile,v 1.16 2000/02/28 10:00:57 enami Exp $
+#	$NetBSD: Makefile,v 1.17 2000/10/28 06:18:07 itojun Exp $
 
 .include <bsd.own.mk>
 
 PROG=		grep
-SRCS=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
-		loadmsgcat.c localealias.c textdomain.c l10nflist.c \
-		explodename.c intl-compat.c
 SRCS+=		grep.c dfa.c kwset.c obstack.c savedir.c getopt.c getopt1.c \
 		search.c stpcpy.c regex.c grepmat.c
 MAN=		grep.1
 
 DIST=		${.CURDIR}/../../dist
 
-CPPFLAGS+=	-I${DIST}/grep/src -I${DIST}/grep/intl -I${.CURDIR} \
-		-DHAVE_CONFIG_H \
-		-DGNULOCALEDIR=\"/usr/share/locale\" \
-		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
-		-DLOCALEDIR=\"/usr/share/locale\"
+CPPFLAGS+=	-DHAVE_CONFIG_H
 CLEANFILES+=    ${PROG}.1 ${PROG}.info ${PROG}.cat1
 
 .if ${MKNLS} != "no"
+SRCS+=		bindtextdom.c dcgettext.c dgettext.c gettext.c finddomain.c \
+		loadmsgcat.c localealias.c textdomain.c l10nflist.c \
+		explodename.c intl-compat.c
+CPPFLAGS+=	-I${DIST}/grep/src -I${DIST}/grep/intl -I${.CURDIR}
+CPPFLAGS+=	-DENABLE_NLS -DHAVE_LIBINTL_H=1 \
+		-DGNULOCALEDIR=\"/usr/share/locale\" \
+		-DLOCALE_ALIAS_PATH=\"/usr/share/locale:.\" \
+		-DLOCALEDIR=\"/usr/share/locale\"
+
 .for F in de.gmo el.gmo es.gmo fr.gmo ko.gmo nl.gmo no.gmo pl.gmo pt_BR.gmo \
 	ru.gmo sl.gmo sv.gmo
 FILES+=		${F}
 FILESDIR_${F}=	/usr/share/locale/${F:.gmo=}/LC_MESSAGES
 FILESNAME_${F}=	grep.mo
 .endfor
+.else
+CPPFLAGS+=	-I${DIST}/grep/src -I${.CURDIR}
 .endif
 
 TEXINFO=	grep.texi
