@@ -1,4 +1,4 @@
-/*	$NetBSD: msort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $	*/
+/*	$NetBSD: msort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #include "fsort.h"
 
 #ifndef lint
-__RCSID("$NetBSD: msort.c,v 1.3 2000/10/07 20:37:06 bjh21 Exp $");
+__RCSID("$NetBSD: msort.c,v 1.4 2000/10/15 20:46:33 jdolecek Exp $");
 __SCCSID("@(#)msort.c	8.1 (Berkeley) 6/6/93");
 #endif /* not lint */
 
@@ -196,8 +196,8 @@ insert(flist, rec, ttop, delete)
 	struct mfile **flist, **rec;
 	int delete, ttop;			/* delete = 0 or 1 */
 {
-	register struct mfile *tmprec;
-	register int top, mid, bot = 0, cmpv = 1;
+	struct mfile *tmprec;
+	int top, mid, bot = 0, cmpv = 1;
 	tmprec = *rec;
 	top = ttop;
 	for (mid = top/2; bot +1 != top; mid = (bot+top)/2) {
@@ -290,9 +290,9 @@ static int
 cmp(rec1, rec2)
 	struct recheader *rec1, *rec2;
 {
-	register int r;
-	register u_char *pos1, *pos2, *end;
-	register u_char *cwts;
+	int r;
+	u_char *pos1, *pos2, *end;
+	u_char *cwts;
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {
 		pos1 = rec1->data;
 		pos2 = rec2->data;
