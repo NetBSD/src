@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.95 1998/09/21 10:30:41 pk Exp $	*/
+/*	$NetBSD: locore.s,v 1.96 1998/09/23 11:07:28 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2380,18 +2380,17 @@ softintr_common:
 	.globl	_sparc_interrupt4m
 _sparc_interrupt4m:
 	mov	1, %l4
-	sethi	%hi(ICR_PI_PEND), %l5
-	ld	[%l5 + %lo(ICR_PI_PEND)], %l5
-	sll	%l4, %l3, %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
+	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
+	sll	%l4, %l3, %l4			! test SOFTINT bit
 	andcc	%l5, %l4, %g0
 	bne	_sparc_interrupt_common
 	 nop
 
 	! a soft interrupt; clear bit in interrupt-pending register
-	! XXX - this is CPU0's register set.
-	sethi	%hi(ICR_PI_CLR), %l6
 	sll	%l4, 16, %l5
-	st	%l5, [%l6 + %lo(ICR_PI_CLR)]
+	st	%l5, [%l6 + ICR_PI_CLR_OFFSET]
 	b,a	softintr_common
 #endif
 
@@ -2596,8 +2595,10 @@ nmi_sun4m:
 #endif
 
 	/* Read the Pending Interrupts register */
-	sethi	%hi(ICR_PI_PEND), %l5
-	ld	[%l5 + %lo(ICR_PI_PEND)], %l5
+	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l6
+	ld	[%l6 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
+
 	sethi	%hi(PINTR_SINTRLEV(15)), %o0
 	btst	%o0, %l5		! soft level 15?
 
@@ -2610,13 +2611,11 @@ nmi_sun4m:
 	st	%o1, [%o0 + %lo(ICR_SI_SET)]
 
 	/* Now clear the NMI */
-
-	sethi	%hi(ICR_PI_CLR), %o0
 	set	PINTR_IC, %o1
 	bnz,a	1f			! cond code indicates SOFTINT
 	 sll	%o1, 16, %o1		! shift to SOFTINT 15
 1:
-	st	%o1, [%o0 + %lo(ICR_PI_CLR)]
+	st	%o1, [%l6 + ICR_PI_CLR_OFFSET]
 
 	wr	%l0, PSR_ET, %psr	! okay, turn traps on again
 
