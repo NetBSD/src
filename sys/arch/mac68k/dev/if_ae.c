@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae.c,v 1.55 1997/02/28 07:52:44 scottr Exp $	*/
+/*	$NetBSD: if_ae.c,v 1.56 1997/02/28 08:56:05 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -129,7 +129,7 @@ ae_size_card_memory(bst, bsh, ofs)
 /*
  * Do bus-independent setup.
  */
-void
+int
 aesetup(sc)
 	struct ae_softc *sc;
 {
@@ -154,10 +154,12 @@ aesetup(sc)
 	bus_space_set_region_2(sc->sc_buft, sc->sc_bufh,
 	    0, 0, sc->mem_size / 2);
 
-	for (i = 0; i < sc->mem_size; ++i)
-		if (bus_space_read_1(sc->sc_buft, sc->sc_bufh, i))
-printf("%s: failed to clear shared memory - check configuration\n",
-			    sc->sc_dev.dv_xname);
+	for (i = 0; i < sc->mem_size; ++i) {
+		if (bus_space_read_1(sc->sc_buft, sc->sc_bufh, i)) {
+printf(": failed to clear shared memory - check configuration\n");
+			return 1;
+		}
+	}
 
 	/* Set interface to stopped condition (reset). */
 	aestop(sc);
@@ -184,6 +186,8 @@ printf("%s: failed to clear shared memory - check configuration\n",
 #if NBPFILTER > 0
 	bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB, sizeof(struct ether_header));
 #endif
+
+	return 0;
 }
 
 /*
