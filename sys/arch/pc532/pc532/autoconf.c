@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 1996/11/24 13:35:08 matthias Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 1996/12/23 08:35:57 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,11 +79,12 @@ configure()
 	startrtclock();
 
 	/* Find out what the hardware configuration looks like! */
-	if (config_rootfound("membus", "membus") == NULL)
-		panic("No mem bus found!");
+	if (config_rootfound("mainbus", "mainbus") == NULL)
+		panic("No mainbus found!");
 
 	for (i = 0; i < NIPL; i++)
-		printf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
+		if (*ipl_names[i])
+			printf("%s%s=%x", i?", ":"", ipl_names[i], imask[i]);
 	printf("\n");
 
 	safepri = imask[IPL_ZERO];
@@ -201,28 +202,28 @@ setroot()
 
 /* mem bus stuff */
 
-static int membusprobe();
-static void membusattach();
+static int mbprobe();
+static void mbattach();
 
-struct cfattach membus_ca = {
-	sizeof(struct device), membusprobe, membusattach
+struct cfattach mainbus_ca = {
+	sizeof(struct device), mbprobe, mbattach
 };
 
-struct cfdriver membus_cd = {
-	NULL, "membus", DV_DULL, NULL, 0
+struct cfdriver mainbus_cd = {
+	NULL, "mainbus", DV_DULL
 };
 
 static int
-membusprobe(parent, cf, aux)
-	struct device	*parent;
-	struct cfdata	*cf;
-	void		*aux;
+mbprobe(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
 {
-	return (strcmp(cf->cf_driver->cd_name, "membus") == 0);
+	return (strcmp(cf->cf_driver->cd_name, "mainbus") == 0);
 }
 
 static int
-membusprint(aux, pnp)
+mbprint(aux, pnp)
 	void *aux;
 	char *pnp;
 {
@@ -243,10 +244,11 @@ membusprint(aux, pnp)
 	return(UNCONF);
 }
 
-static void
-membusscan(parent, match)
+static int
+mbsearch(parent, match, aux)
 	struct device *parent;
 	void *match;
+	void *aux;
 {
 	struct cfdata *cf = match;
 	struct confargs ca;
@@ -256,17 +258,18 @@ membusscan(parent, match)
 	ca.ca_flags = cf->cf_flags;
 
 	while ((*cf->cf_attach->ca_match)(parent, cf, &ca) > 0) {
-		config_attach(parent, cf, &ca, membusprint);
+		config_attach(parent, cf, &ca, mbprint);
 		if (cf->cf_fstate != FSTATE_STAR)
 			break;
 	}
+	return (0);
 }
 
 static void
-membusattach(parent, self, aux)
+mbattach(parent, self, aux)
 	struct device *parent, *self;
  	void *aux;
 {
 	printf("\n");
-	config_scan(membusscan, self);
+	config_search(mbsearch, self, NULL);
 }
