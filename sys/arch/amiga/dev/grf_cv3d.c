@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.4 1997/11/23 23:26:03 veego Exp $	*/
+/*	$NetBSD: grf_cv3d.c,v 1.5 1997/12/20 21:13:13 perry Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -335,6 +335,12 @@ grfcv3dmatch(pdp, cfp, auxp)
 	/* Lets be Paranoid: Test man and prod id */
 	if (zap->manid != 8512 || zap->prodid != 67)
 		return (0);
+
+#ifndef CV3DONZORRO2
+	if (!cv3d_zorroIII) {
+		return (0);
+	}
+#endif
 
 	cv3d_boardaddr = zap->va;
 
