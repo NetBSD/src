@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 1997/03/15 18:10:10 is Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 1997/05/18 17:31:54 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -479,7 +479,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		register pt_entry_t *pte;
 		register unsigned entry;
 		register vm_offset_t pa;
-		pmap_t pmap = &p->p_vmspace->vm_pmap;
+		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 		if (!(pte = pmap_segmap(pmap, vadr)))
 			panic("trap: utlbmod: invalid segmap");
@@ -564,7 +564,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
-		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
+		       map, vm->vm_map.pmap, va, vadr, ftype, FALSE, rv, pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
