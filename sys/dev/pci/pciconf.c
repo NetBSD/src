@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.20 2002/11/27 02:53:10 simonb Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.20 2002/11/27 02:53:10 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.21 2003/03/31 21:04:40 augustss Exp $");
 
 #include "opt_pci.h"
 
@@ -220,7 +220,11 @@ probe_bus(pciconf_bus_t *pb)
 	pb->niowin = 0;
 	pb->nmemwin = 0;
 	pb->freq_66 = 1;
+#ifdef PCICONF_NO_FAST_B2B
+	pb->fast_b2b = 0;
+#else
 	pb->fast_b2b = 1;
+#endif
 	pb->prefetch = 1;
 	pb->max_mingnt = 0;	/* we are looking for the maximum */
 	pb->min_maxlat = 0x100;	/* we are looking for the minimum */
