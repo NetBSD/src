@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.2 2002/08/24 16:43:31 fredette Exp $	*/
 
 /*	$OpenBSD: sti_sgc.c,v 1.6 2001/09/11 20:05:24 miod Exp $	*/
 
@@ -59,6 +59,7 @@
 #include <hp700/dev/cpudevs.h>
 
 #define	STI_MEMSIZE	0x1000000
+#define	STI_ROMSIZE	0x0004000
 
 int  sti_sgc_probe __P((struct device *, struct cfdata *, void *));
 void sti_sgc_attach __P((struct device *, struct device *, void *));
@@ -77,7 +78,7 @@ sti_sgc_probe(parent, match, aux)
 	bus_space_handle_t ioh, romh;
 	u_int rom;
 	u_char devtype;
-	int rv = 0, romunmapped = 0;
+	int rv = 0, romh_is_subregion;
 	int pagezero_cookie;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
@@ -99,8 +100,6 @@ sti_sgc_probe(parent, match, aux)
 	pagezero_cookie = hp700_pagezero_map();
 	if (PAGE0->pd_resv2[1] < HPPA_IOBEGIN) {
 		rom = ca->ca_hpa;
-		romh = ioh;
-		romunmapped++;
 	} else
 		rom = PAGE0->pd_resv2[1];
 	hp700_pagezero_unmap(pagezero_cookie);
@@ -109,20 +108,24 @@ sti_sgc_probe(parent, match, aux)
 	printf ("sti: hpa=%x, rom=%x\n", ca->ca_hpa, rom);
 #endif
 
-	/* if it does not map, probably part of the lasi space */
-	if (rom != ca->ca_hpa &&
-	    (rv = bus_space_map(ca->ca_iot, rom, IOMOD_HPASIZE, 0, &romh))) {
+	/*
+	 * Map the ROM.
+	 */
+	if (ca->ca_hpa <= rom &&
+	    (rom + STI_ROMSIZE) <= (ca->ca_hpa + STI_MEMSIZE)) {
+		romh_is_subregion = TRUE;
+		rv = bus_space_subregion(ca->ca_iot, ioh,
+			rom - ca->ca_hpa, STI_ROMSIZE, &romh);
+	} else {
+		romh_is_subregion = FALSE;
+		rv = bus_space_map(ca->ca_iot, rom, STI_ROMSIZE, 0, &romh);
+	}
+	if (rv) {
 #ifdef STIDEBUG
 		printf ("sti: cannot map rom space (%d)\n", rv);
 #endif
-		if ((rom & HPPA_IOBEGIN) == HPPA_IOBEGIN) {
-			romh = rom;
-			romunmapped++;
-		} else {
-			/* in this case i have no freaking idea */
-			bus_space_unmap(ca->ca_iot, ioh,  STI_MEMSIZE);
-			return 0;
-		}
+		bus_space_unmap(ca->ca_iot, ioh,  STI_MEMSIZE);
+		return 0;
 	}
 
 #ifdef STIDEBUG
@@ -146,8 +149,8 @@ sti_sgc_probe(parent, match, aux)
 		rv = 1;
 
 	bus_space_unmap(ca->ca_iot, ioh,  STI_MEMSIZE);
-	if (!romunmapped)
-		bus_space_unmap(ca->ca_iot, romh, IOMOD_HPASIZE);
+	if (!romh_is_subregion)
+		bus_space_unmap(ca->ca_iot, romh, STI_ROMSIZE);
 	return rv;
 }
 
@@ -179,20 +182,22 @@ sti_sgc_attach(parent, self, aux)
 		return;
 	}
 
-	/* if it does not map, probably part of the lasi space */
-	if (addr == ca->ca_hpa)
-		sc->romh = sc->ioh;
-	else if ((rv = bus_space_map(ca->ca_iot, addr, IOMOD_HPASIZE, 0, &sc->romh))) {
+	/*
+	 * Map the ROM.
+	 */
+	if (ca->ca_hpa <= addr &&
+	    (addr + STI_ROMSIZE) <= (ca->ca_hpa + STI_MEMSIZE)) {
+		rv = bus_space_subregion(ca->ca_iot, sc->ioh,
+			addr - ca->ca_hpa, STI_ROMSIZE, &sc->romh);
+	} else {
+		rv = bus_space_map(ca->ca_iot, addr, STI_ROMSIZE, 0, &sc->romh);
+	}
+	if (rv) {
 #ifdef STIDEBUG
 		printf ("sti: cannot map rom space (%d)\n", rv);
 #endif
-		if ((addr & HPPA_IOBEGIN) == HPPA_IOBEGIN)
-			sc->romh = addr;
-		else {
-			/* in this case i have no freaking idea */
-			bus_space_unmap(ca->ca_iot, sc->ioh,  STI_MEMSIZE);
-			return;
-		}
+		bus_space_unmap(ca->ca_iot, sc->ioh,  STI_MEMSIZE);
+		return;
 	}
 
 	sc->sc_devtype = bus_space_read_1(sc->iot, sc->romh, 3);
