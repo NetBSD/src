@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380sbc.c,v 1.35 2000/03/25 15:27:57 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380sbc.c,v 1.36 2000/03/29 13:09:02 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -189,7 +189,7 @@ static __inline void ncr_sched_msgout __P((struct ncr5380_softc *, int));
 static __inline int ncr5380_wait_req(sc)
 	struct ncr5380_softc *sc;
 {
-	register int timo = ncr5380_wait_req_timo;
+	int timo = ncr5380_wait_req_timo;
 	for (;;) {
 		if (NCR5380_READ(sc, sci_bus_csr) & SCI_BUS_REQ) {
 			timo = 0;	/* return 0 */
@@ -206,7 +206,7 @@ static __inline int ncr5380_wait_req(sc)
 static __inline int ncr5380_wait_not_req(sc)
 	struct ncr5380_softc *sc;
 {
-	register int timo = ncr5380_wait_nrq_timo;
+	int timo = ncr5380_wait_nrq_timo;
 	for (;;) {
 		if ((NCR5380_READ(sc, sci_bus_csr) & SCI_BUS_REQ) == 0) {
 			timo = 0;	/* return 0 */
@@ -227,7 +227,7 @@ ncr_sched_msgout(sc, msg_code)
 {
 	/* First time, raise ATN line. */
 	if (sc->sc_msgpriq == 0) {
-		register u_char icmd;
+		u_char icmd;
 		icmd = NCR5380_READ(sc, sci_icmd) & SCI_ICMD_RMASK;
 		NCR5380_WRITE(sc, sci_icmd, (icmd | SCI_ICMD_ATN));
 		delay(2);
@@ -240,11 +240,11 @@ int
 ncr5380_pio_out(sc, phase, count, data)
 	struct ncr5380_softc *sc;
 	int phase, count;
-	unsigned char		*data;
+	unsigned char *data;
 {
-	register u_char 	icmd;
-	register int		resid;
-	register int		error;
+	u_char icmd;
+	int resid;
+	int error;
 
 	icmd = NCR5380_READ(sc, sci_icmd) & SCI_ICMD_RMASK;
 
@@ -303,9 +303,9 @@ ncr5380_pio_in(sc, phase, count, data)
 	int phase, count;
 	unsigned char			*data;
 {
-	register u_char 	icmd;
-	register int		resid;
-	register int		error;
+	u_char icmd;
+	int resid;
+	int error;
 
 	icmd = NCR5380_READ(sc, sci_icmd) & SCI_ICMD_RMASK;
 
@@ -1558,13 +1558,13 @@ success:
  */
 static int
 ncr5380_msg_in(sc)
-	register struct ncr5380_softc *sc;
+	struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
 	struct scsipi_xfer *xs = sr->sr_xs;
 	int n, phase;
 	int act_flags;
-	register u_char icmd;
+	u_char icmd;
 
 	/* acknowledge phase change */
 	NCR5380_WRITE(sc, sci_tcmd, PHASE_MSG_IN);
@@ -1795,11 +1795,11 @@ have_msg:
  */
 static int
 ncr5380_msg_out(sc)
-	register struct ncr5380_softc *sc;
+	struct ncr5380_softc *sc;
 {
 	struct sci_req *sr = sc->sc_current;
 	int act_flags, n, phase, progress;
-	register u_char icmd, msg;
+	u_char icmd, msg;
 
 	/* acknowledge phase change */
 	NCR5380_WRITE(sc, sci_tcmd, PHASE_MSG_OUT);
@@ -2494,8 +2494,8 @@ ncr5380_trace(msg, val)
 	char *msg;
 	long  val;
 {
-	register struct trace_ent *tr;
-	register int s;
+	struct trace_ent *tr;
+	int s;
 
 	s = splbio();
 
