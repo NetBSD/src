@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.1 1998/11/04 00:31:05 fvdl Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.2 1998/11/07 16:53:19 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -95,9 +95,6 @@
  */
 #define PCI_CONN		0x48    /* Connector type */
 #define PCI_CBIO		0x10    /* Configuration Base IO Address */
-#define PCI_CAPPTR		0x34
-#define PCI_CAPID		0xdc
-#define PCI_POWERCAP		0xde
 #define PCI_POWERCTL		0xe0
 
 int ex_pci_match __P((struct device *, struct cfdata *, void *));
@@ -132,7 +129,7 @@ ex_pci_match(parent, match, aux)
 		return 0;
 	}
 
-	return 1;
+	return 2; /* better than ep_pci */
 }
 
 void
@@ -198,8 +195,7 @@ ex_pci_attach(parent, self, aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* Get it out of power save mode if needed (BIOS bugs) */
-	if ((pci_conf_read(pc, pa->pa_tag, PCI_CAPPTR) & 0xff) == PCI_CAPID &&
-	    (pci_conf_read(pc, pa->pa_tag, PCI_CAPID) & 0xff) == 0x01) {
+	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, 0, 0)) {
 		pmode = pci_conf_read(pc, pa->pa_tag, PCI_POWERCTL) & 0x3;
 		if (pmode == 3) {
 			/*
