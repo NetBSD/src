@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.51 2002/03/26 23:56:45 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.52 2002/04/03 03:17:36 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.51 2002/03/26 23:56:45 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.52 2002/04/03 03:17:36 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -305,7 +305,8 @@ int	main(int, char *[]);
 int
 main(int argc, char *argv[])
 {
-	int ch, part, mib[2], len;
+	int ch, part, mib[2];
+	size_t len;
 	char *root_device;
 
 	int csysid, cstart, csize;	/* For the b_flag. */
@@ -352,7 +353,8 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			for (len = 0; len < KNOWN_SYSIDS; len++)
-				printf("%03d %s\n", len, part_types[len].name);
+				printf("%03lu %s\n", (u_long) len,
+				part_types[len].name);
 			return 0;
 		case 'u':
 			u_flag = 1;
