@@ -138,7 +138,7 @@ read_history_range (filename, from, to)
 
   buffer = (char *)NULL;
   input = history_filename (filename);
-  file = open (input, O_RDONLY|O_BINARY, 0666);
+  file = open (input, O_RDONLY|O_BINARY, 0600);
 
 
 #ifdef __MSDOS__
@@ -147,7 +147,7 @@ read_history_range (filename, from, to)
   if (file < 0 && !filename)
     {
       input[strlen (input) - 8] = '_';
-      file = open (input, O_RDONLY|O_BINARY, 0666);
+      file = open (input, O_RDONLY|O_BINARY, 0600);
     }
 #endif
   if ((file < 0) || (fstat (file, &finfo) == -1))
@@ -241,7 +241,7 @@ history_truncate_file (fname, lines)
 
   buffer = (char *)NULL;
   filename = history_filename (fname);
-  file = open (filename, O_RDONLY|O_BINARY, 0666);
+  file = open (filename, O_RDONLY|O_BINARY, 0600);
 
 #ifdef __MSDOS__
   /* MSDOS doesn't allow leading dots in file names.  Try again
@@ -249,7 +249,7 @@ history_truncate_file (fname, lines)
   if (file < 0 && !fname)
     {
       filename[strlen (filename) - 8] = '_';
-      file = open (filename, O_RDONLY|O_BINARY, 0666);
+      file = open (filename, O_RDONLY|O_BINARY, 0600);
     }
 #endif
 
