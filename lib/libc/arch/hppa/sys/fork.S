@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.1 2002/06/06 20:31:23 fredette Exp $	*/
+/*	$NetBSD: fork.S,v 1.2 2003/02/13 02:50:49 nathanw Exp $	*/
 
 /*	$OpenBSD: fork.S,v 1.7 2001/06/04 23:14:04 mickey Exp $	*/
 
@@ -36,18 +36,14 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: fork.S,v 1.1 2002/06/06 20:31:23 fredette Exp $")
+	RCSID("$NetBSD: fork.S,v 1.2 2003/02/13 02:50:49 nathanw Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef WEAK_ALIAS
-	WEAK_ALIAS(fork, _fork)
-#endif
-
-ENTRY(_fork,0)
+ENTRY(__fork,0)
 	SYSCALL(fork)
 	addi	-1, ret1, ret1
 	bv	r0(rp)
 	and	ret0, ret1, ret0
-EXIT(_fork)
+EXIT(__fork)
 
 	.end

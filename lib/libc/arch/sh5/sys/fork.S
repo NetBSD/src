@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
+/*	$NetBSD: fork.S,v 1.3 2003/02/13 02:50:50 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,15 +78,11 @@
 #if 0
 	RCSID("from: @(#)fork.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: fork.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
+	RCSID("$NetBSD: fork.S,v 1.3 2003/02/13 02:50:50 nathanw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(fork,_fork)
-#endif
-
-ENTRY(_fork)
+ENTRY(__fork)
 	SYSCALL(fork)
 	ptabs/l	r18, tr0
 	cmvne	r3, r63, r2

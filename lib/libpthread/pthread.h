@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.7 2003/01/19 20:58:00 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.8 2003/02/13 02:50:48 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #include "pthread_types.h"
 
 __BEGIN_DECLS
+int	pthread_atfork(void (*)(void), void (*)(void), void (*)(void));
 int	pthread_create(pthread_t *, const pthread_attr_t *, 
 	    void *(*)(void *), void *);
 void	pthread_exit(void *) __attribute__((__noreturn__));

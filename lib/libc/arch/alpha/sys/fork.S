@@ -1,4 +1,4 @@
-/* $NetBSD: fork.S,v 1.4 2001/05/07 17:19:18 kleink Exp $ */
+/* $NetBSD: fork.S,v 1.5 2003/02/13 02:50:48 nathanw Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -29,12 +29,8 @@
 
 #include "SYS.h"
 
-#ifdef WEAK_ALIAS
-WEAK_ALIAS(fork, _fork)
-#endif
-
-LEAF(_fork, 0)
+LEAF(__fork, 0)
 	CALLSYS_ERROR(fork)
 	cmovne	a4, zero, v0		/* a4 (rv[1]) != 0, child */
 	RET
-END(_fork)
+END(__fork)
