@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.75 2002/06/17 16:33:17 christos Exp $ */
+/*	$NetBSD: conf.c,v 1.76 2002/07/19 16:38:24 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -285,7 +285,7 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NCLCD,cdtty),	/* 124: Aurora multiport serial */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 125 clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 126: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 126: system call tracing */
 #else
 	cdev_notdef(),			/* 126: system call tracing */
 #endif

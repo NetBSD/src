@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.6 2002/07/04 23:24:43 lukem Exp $ */
+/* $NetBSD: conf.c,v 1.7 2002/07/19 16:38:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.6 2002/07/04 23:24:43 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.7 2002/07/19 16:38:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,7 +182,7 @@ struct cdevsw	cdevsw[] =
 	cdev_rnd_init(NRND,rnd),	/* 34: random source pseudo-device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 35: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 36: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 36: system call tracing */
 #else
 	cdev_notdef(),			/* 36: system call tracing */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.6 2002/06/17 16:32:57 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.7 2002/07/19 16:38:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -299,7 +299,7 @@ struct cdevsw cdevsw[] = {
 	cdev_isdntel_init(NISDNTEL, isdntel),	/* 83: isdn phone device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 84: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 85: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 85: system call tracing */
 #else
 	cdev_notdef(),			/* 85: system call tracing */
 #endif

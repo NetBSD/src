@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.44 2002/06/29 19:04:45 matt Exp $	*/
+/*	$NetBSD: conf.c,v 1.45 2002/07/19 16:38:20 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -253,7 +253,7 @@ struct cdevsw cdevsw[] = {
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 61: settimeofday driver */
 	cdev_sysmon_init(NSYSMON, sysmon),	/* 62: System Monitor */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 63: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 63: system call tracing */
 #else
 	cdev_notdef(),			/* 63: system call tracing */
 #endif

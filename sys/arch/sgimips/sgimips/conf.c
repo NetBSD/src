@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.18 2002/06/17 16:33:16 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.19 2002/07/19 16:38:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,7 +213,7 @@ struct cdevsw cdevsw[] =
 	cdev_notdef(),			/* 62: */
 #endif
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 63: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 63: system call tracing */
 #else
 	cdev_notdef(),			/* 63: system call tracing */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2002/06/17 16:33:03 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.3 2002/07/19 16:38:19 thorpej Exp $	*/
 
 /*	$OpenBSD: conf.c,v 1.15 2001/09/28 02:53:13 mickey Exp $	*/
 
@@ -214,7 +214,7 @@ struct cdevsw   cdevsw[] =
 #endif
 	cdev_altq_init(NALTQ,altq),	/* 33: ALTQ control interface */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 34: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 34: system call tracing */
 #else
 	cdev_notdef(),			/* 34 */
 #endif

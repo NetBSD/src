@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.13 2002/07/16 14:20:04 ichiro Exp $	*/
+/*	$NetBSD: conf.c,v 1.14 2002/07/19 16:38:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -507,7 +507,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ir_init(NCIR,cir),			/* 96: Consumer Ir */
 	cdev_radio_init(NRADIO,radio),		/* 97: generic radio I/O */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),	/* 98: system call tracing */
+	cdev_clonemisc_init(1, systrace),	/* 98: system call tracing */
 #else
 	cdev_notdef(),				/* 98: system call tracing */
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.24 2002/06/17 16:32:59 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.25 2002/07/19 16:38:17 thorpej Exp $	*/
 /*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
@@ -232,7 +232,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 51: OpenBSD xfs comm. device */
 	cdev_clockctl_init(NCLOCKCTL, clockctl),/* 52: clockctl pseudo device */
 #ifdef SYSTRACE
-	cdev_systrace_init(1, systrace),/* 53: system call tracing */
+	cdev_clonemisc_init(1, systrace),/* 53: system call tracing */
 #else
 	cdev_notdef(),			/* 53: system call tracing */
 #endif
