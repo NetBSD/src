@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.14 1996/03/14 19:49:04 christos Exp $ */
+/*	$NetBSD: autoconf.h,v 1.15 1996/03/31 22:12:34 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,15 +56,19 @@
  * (which `is' the CPU, in some sense) gets just the node, with a
  * fake name ("mainbus").
  */
-#define	RA_MAXVADDR	4		/* max (virtual) addresses per device */
-#define	RA_MAXREG	2		/* max # of register banks per device */
+
+#define	RA_MAXVADDR	8		/* max (virtual) addresses per device */
+#define	RA_MAXREG	16		/* max # of register banks per device */
 #define	RA_MAXINTR	8		/* max interrupts per device */
+#define RA_MAXRANGE	10		/* max # of bus translations */
+
 struct romaux {
 	const char *ra_name;		/* name from FORTH PROM */
 	int	ra_node;		/* FORTH PROM node ID */
 	void	*ra_vaddrs[RA_MAXVADDR];/* ROM mapped virtual addresses */
 	int	ra_nvaddrs;		/* # of ra_vaddrs[]s, may be 0 */
 #define ra_vaddr	ra_vaddrs[0]	/* compatibility */
+
 	struct rom_reg {
 		int	rr_iospace;	/* register space (obio, etc) */
 		void	*rr_paddr;	/* register physical address */
@@ -74,11 +78,22 @@ struct romaux {
 #define ra_iospace	ra_reg[0].rr_iospace
 #define ra_paddr	ra_reg[0].rr_paddr
 #define ra_len		ra_reg[0].rr_len
+
 	struct rom_intr {		/* interrupt information: */
 		int	int_pri;		/* priority (IPL) */
 		int	int_vec;		/* vector (always 0?) */
 	} ra_intr[RA_MAXINTR];
 	int	ra_nintr;		/* number of interrupt info elements */
+
+	struct rom_range {		/* Only used on v3 PROMs */
+		u_int32_t	cspace;		/* Client space */
+		u_int32_t	coffset;	/* Client offset */
+		u_int32_t	pspace;		/* Parent space */
+		u_int32_t	poffset;	/* Parent offset */
+		u_int32_t	size;		/* Size in bytes of this range */
+	} ra_range[RA_MAXRANGE];
+	int	ra_nrange;
+
 	struct	bootpath *ra_bp;	/* used for locating boot device */
 };
 
@@ -107,25 +122,20 @@ void	*mapdev __P((struct rom_reg *pa, int va,
 		     int offset, int size, int bustype));
 #define	mapiodev(pa, offset, size, bustype) \
 	mapdev(pa, 0, offset, size, bustype)
-#ifdef notyet
 /*
  * REG2PHYS is provided for drivers with a `d_mmap' function.
  */
 #define REG2PHYS(rr, offset, bt)				\
 	(((u_int)(rr)->rr_paddr + (offset)) |			\
-		((cputyp == CPU_SUN4M)				\
+		((CPU_ISSUN4M)					\
 			? ((rr)->rr_iospace << PMAP_SHFT4M)	\
 			: bt2pmt[bt])				\
 	)
-#else
-#define REG2PHYS(rr, offset, bt)				\
-	(((u_int)(rr)->rr_paddr + (offset)) | (bt2pmt[bt])	\
-	)
-#endif
 
-#if defined(SUN4)
-void *		bus_map __P((struct rom_reg *, int, int));
-#endif
+/* For VME and sun4/obio busses */
+void	*bus_map __P((struct rom_reg *, int, int));
+void	*bus_tmp __P((void *, int));
+void	bus_untmp __P((void));
 
 /*
  * The various getprop* functions obtain `properties' from the ROMs.
@@ -179,7 +189,7 @@ void	rominterpret __P((char *));
 
 /* Openprom V2 style boot path */
 struct bootpath {
-	char	name[8];		/* name of this node */
+	char	name[16];		/* name of this node */
 	int	val[2];			/* up to two optional values */
 };
 
@@ -204,3 +214,6 @@ struct device *getdevunit __P((char *, int));
 void   *findzs __P((int));
 int	romgetcursoraddr __P((int **, int **));
 int	findroot __P((void));
+int	findnode __P((int, const char *));
+int	opennode __P((char *));
+int	node_has_property __P((int, const char *));
