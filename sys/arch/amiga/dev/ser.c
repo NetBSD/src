@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.48 1998/07/18 20:19:33 is Exp $	*/
+/*	$NetBSD: ser.c,v 1.49 1998/07/22 19:13:02 is Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -127,8 +127,6 @@ static u_short *sbwpt = serbuf;
 static u_short sbcnt;
 static u_short sbovfl;
 static u_char serdcd;
-static u_short sercharmask, serparmask, serparoddmask, serstopmask,
-	sercharwidth;
 
 /* 
  * Since this UART is not particularly bright (to put it nicely), we'll
@@ -560,7 +558,7 @@ sereint(stat)
 	int c;
 
 	tp = ser_tty;
-	ch = stat & (sercharmask | serparmask);
+	ch = stat & 0xff;
 	c = ch;
 
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -577,9 +575,9 @@ sereint(stat)
 	 */
 	if ((stat & 0x1ff) == 0)
 		c |= TTY_FE;
-	else if (serparmask &&
-		(ch & serparmask) ^ serparoddmask ^
-		even_parity[ch & sercharmask] << sercharwidth)
+	else if ((tp->t_cflag & PARENB) &&
+		    (((ch >> 7) + even_parity[ch & 0x7f]
+		    + !!(tp->t_cflag & PARODD)) & 1))
 			c |= TTY_PE;
 
 	if (stat & SERDATRF_OVRUN)
@@ -753,25 +751,6 @@ serparam(tp, t)
 
 	cflag = t->c_cflag;
 
-	/* todo: 8[EO][12] */
-
-	if ((cflag & CSIZE) == CS8 && (cflag & PARENB))
-		return (EINVAL);	/* XXX TODO: 8bit + parity */
-
-	/*
-	 * We need 8 bits: either 8N or 7E or 7O.
-	 * 7N, 6x and 5x are invalid.
-	 */
-
-	if ((cflag & CSIZE) == CS7 && !(cflag & PARENB))
-		return (EINVAL);
-
-	if ((cflag & CSIZE) == CS6)
-		return (EINVAL);
-
-	if ((cflag & CSIZE) == CS5)
-		return (EINVAL);
-
 	if (cflag & (CLOCAL | MDMBUF))
 		serdcd = 0;
 	else
@@ -786,32 +765,6 @@ serparam(tp, t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = cflag;
 	ser_open_speed = tp->t_ispeed;
-
-	if ((tp->t_cflag & CSIZE) == CS7)
-		sercharwidth = 7;
-	else if ((tp->t_cflag & CSIZE) == CS8)
-		sercharwidth = 8;
-
-	if (cflag & CSTOPB)
-		serstopmask = 3;
-	else
-		serstopmask = 1;
-
-	serstopmask <<= sercharwidth;
-	sercharmask = ~((~0) << sercharwidth);
-
-	if (cflag & PARENB) {
-		serparmask = 1 << sercharwidth;
-		serstopmask <<= 1;
-		sercharmask <<= 1;
-	} else
-		serparmask = 0;
-
-	if (cflag & PARODD)
-		serparoddmask = serparmask;
-	else
-		serparoddmask = 0;
-
 
 	/*
 	 * enable interrupts
@@ -853,20 +806,25 @@ ser_putchar(tp, c)
 	struct tty *tp;
 	u_short c;
 {
-	c &= sercharmask;
+	if ((tp->t_cflag & CSIZE) == CS7 || (tp->t_cflag & PARENB))
+		c &= 0x7f;
 
 	/*
 	 * handle parity if necessary
 	 */
-	if (serparmask) {
+	if (tp->t_cflag & PARENB) {
 		if (even_parity[c])
-			c |= serparmask;
-		c ^= serparoddmask;
+			c |= 0x80;
+		if (tp->t_cflag & PARODD)
+			c ^= 0x80;
 	}
 	/* 
 	 * add stop bit(s)
 	 */
-	c |= serstopmask;
+	if (tp->t_cflag & CSTOPB)
+		c |= 0x300;
+	else
+		c |= 0x100;
 
 	custom.serdat = c;
 }
