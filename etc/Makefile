@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.303 2005/02/22 14:40:01 peter Exp $
+#	$NetBSD: Makefile,v 1.304 2005/02/23 02:10:33 lukem Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -16,6 +16,7 @@
 #   KERNCONFDIR is where the configuration files for kernels are found;
 #	default is ${KERNSRCDIR}/arch/${MACHINE}/conf but can be overridden.
 #   MKCRYPTO; if not `no', install crypto-related configuration
+#   MKPOSTFIX; if not `no', install postfix configuration
 #   MKSENDMAIL; if not `no', install sendmail configuration
 #   MKUNPRIVED; if not `no', allow non-root installs.
 #   MKUPDATE; if not `no', don't do a 'make clean' before kernel compile
@@ -317,9 +318,11 @@ install-etc-files: .PHONY check_DESTDIR MAKEDEV
 .if (${MKPF} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.sbin/pf configinstall
 .endif
-	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
 .if (${MKCRYPTO} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/ssh configinstall
+.endif
+.if (${MKPOSTFIX} != "no")
+	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/postfix configinstall
 .endif
 .if (${MKSENDMAIL} != "no")
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/gnu/usr.sbin/sendmail/cf/cf configinstall
