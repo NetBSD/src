@@ -1,4 +1,4 @@
-/*	$NetBSD: cp.c,v 1.15 1997/04/09 12:06:13 kleink Exp $	*/
+/*	$NetBSD: cp.c,v 1.16 1997/05/19 01:07:33 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cp.c	8.5 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$NetBSD: cp.c,v 1.15 1997/04/09 12:06:13 kleink Exp $";
+static char rcsid[] = "$NetBSD: cp.c,v 1.16 1997/05/19 01:07:33 kleink Exp $";
 #endif
 #endif /* not lint */
 
@@ -321,15 +321,15 @@ copy(argv, type, fts_options)
 				} else
 					base = curr->fts_pathlen;
 
-			if (to.target_end[-1] != '/') {
-				*to.target_end = '/';
-				*(to.target_end + 1) = 0;
-			}
 			p = &curr->fts_path[base];
 			nlen = curr->fts_pathlen - base;
 
+			if (*p != '/' && to.target_end[-1] != '/')
+				*to.target_end++ = '/';
+			*to.target_end = 0;
+
 			(void)strncat(to.target_end, p, nlen);
-			to.p_end = to.target_end + nlen + 1;
+			to.p_end = to.target_end + nlen;
 			*to.p_end = 0;
 			STRIP_TRAILING_SLASH(to);
 		}
