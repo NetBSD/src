@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.101 2003/04/21 21:45:59 fvdl Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.102 2003/04/21 22:00:42 fvdl Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.101 2003/04/21 21:45:59 fvdl Exp $
+ * $Id: aic7xxx.c,v 1.102 2003/04/21 22:00:42 fvdl Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -74,7 +74,6 @@ char *ahc_chip_names[] =
 	"aic7892",
 	"aic7899"
 };
-static const u_int num_chip_names = NUM_ELEMENTS(ahc_chip_names);
 
 /*
  * Hardware error codes.
