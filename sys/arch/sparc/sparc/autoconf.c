@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.95 1998/08/30 21:30:41 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.96 1998/08/30 21:54:25 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -754,18 +754,6 @@ st_crazymap(n)
 	return prom_st_crazymap[n];
 }
 
-#if 0
-struct devnametobdevmaj sparc_nam2blk[] = {
-	{ "xy",		3 },
-	{ "md",		5 },
-	{ "sd",		7 },
-	{ "xd",		10 },
-	{ "st",		11 },
-	{ "fd",		16 },
-	{ "cd",		18 },
-	{ NULL,		0 },
-};
-#endif
 
 /*
  * Determine mass storage and memory configuration for a machine.
