@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_fdintr.s,v 1.22 2002/12/06 15:37:55 pk Exp $ */
+/*	$NetBSD: bsd_fdintr.s,v 1.23 2003/01/31 01:26:39 mrg Exp $ */
 
 /*
  * Copyright (c) 1995 Paul Kranenburg
@@ -162,7 +162,6 @@ _C_LABEL(fdciop):
 	.seg	"text"
 	.align	4
 
-/* XXXSMP: kernel lock perimeter? */
 _ENTRY(_C_LABEL(fdchwintr))
 	set	save_l, %l7
 	std	%l0, [%l7]
@@ -308,6 +307,7 @@ resultphase1:
 ssi:
 	! set software interrupt
 	! enter here with status in %l7
+	! SMP: consider which cpu to ping?
 	st	%l7, [R_fdc + FDC_ISTATUS]
 	FD_SET_SWINTR
 
