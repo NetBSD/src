@@ -1,11 +1,11 @@
-/*	$NetBSD: vnode_if.c,v 1.36 2001/05/26 21:34:04 chs Exp $	*/
+/*	$NetBSD: vnode_if.c,v 1.36.2.1 2001/07/10 13:50:30 lukem Exp $	*/
 
 /*
  * Warning: This file is generated automatically.
  * (Modifications made here may easily be lost!)
  *
  * Created from the file:
- *	NetBSD: vnode_if.src,v 1.28 2001/05/26 21:33:11 chs Exp 
+ *	NetBSD: vnode_if.src,v 1.28.2.1 2001/07/10 13:49:49 lukem Exp 
  * by the script:
  *	NetBSD: vnode_if.sh,v 1.29 2001/05/07 08:46:02 lukem Exp 
  */
@@ -560,12 +560,41 @@ VOP_POLL(vp, events, p)
 }
 #endif
 
+const int vop_kqfilter_vp_offsets[] = {
+	VOPARG_OFFSETOF(struct vop_kqfilter_args,a_vp),
+	VDESC_NO_OFFSET
+};
+const struct vnodeop_desc vop_kqfilter_desc = {
+	16,
+	"vop_kqfilter",
+	0,
+	vop_kqfilter_vp_offsets,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	VDESC_NO_OFFSET,
+	NULL,
+};
+#ifdef VNODE_OP_NOINLINE
+int
+VOP_KQFILTER(vp, kn)
+	struct vnode *vp;
+	struct knote *kn;
+{
+	struct vop_kqfilter_args a;
+	a.a_desc = VDESC(vop_kqfilter);
+	a.a_vp = vp;
+	a.a_kn = kn;
+	return (VCALL(vp, VOFFSET(vop_kqfilter), &a));
+}
+#endif
+
 const int vop_revoke_vp_offsets[] = {
 	VOPARG_OFFSETOF(struct vop_revoke_args,a_vp),
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_revoke_desc = {
-	16,
+	17,
 	"vop_revoke",
 	0,
 	vop_revoke_vp_offsets,
@@ -594,7 +623,7 @@ const int vop_mmap_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_mmap_desc = {
-	17,
+	18,
 	"vop_mmap",
 	0,
 	vop_mmap_vp_offsets,
@@ -627,7 +656,7 @@ const int vop_fsync_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_fsync_desc = {
-	18,
+	19,
 	"vop_fsync",
 	0,
 	vop_fsync_vp_offsets,
@@ -664,7 +693,7 @@ const int vop_seek_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_seek_desc = {
-	19,
+	20,
 	"vop_seek",
 	0,
 	vop_seek_vp_offsets,
@@ -698,7 +727,7 @@ const int vop_remove_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_remove_desc = {
-	20,
+	21,
 	"vop_remove",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
 	vop_remove_vp_offsets,
@@ -730,7 +759,7 @@ const int vop_link_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_link_desc = {
-	21,
+	22,
 	"vop_link",
 	0 | VDESC_VP0_WILLPUT,
 	vop_link_vp_offsets,
@@ -764,7 +793,7 @@ const int vop_rename_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_rename_desc = {
-	22,
+	23,
 	"vop_rename",
 	0 | VDESC_VP0_WILLRELE | VDESC_VP1_WILLRELE | VDESC_VP2_WILLPUT | VDESC_VP3_WILLRELE,
 	vop_rename_vp_offsets,
@@ -801,7 +830,7 @@ const int vop_mkdir_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_mkdir_desc = {
-	23,
+	24,
 	"vop_mkdir",
 	0 | VDESC_VP0_WILLPUT,
 	vop_mkdir_vp_offsets,
@@ -835,7 +864,7 @@ const int vop_rmdir_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_rmdir_desc = {
-	24,
+	25,
 	"vop_rmdir",
 	0 | VDESC_VP0_WILLPUT | VDESC_VP1_WILLPUT,
 	vop_rmdir_vp_offsets,
@@ -866,7 +895,7 @@ const int vop_symlink_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_symlink_desc = {
-	25,
+	26,
 	"vop_symlink",
 	0 | VDESC_VP0_WILLPUT | VDESC_VPP_WILLRELE,
 	vop_symlink_vp_offsets,
@@ -901,7 +930,7 @@ const int vop_readdir_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_readdir_desc = {
-	26,
+	27,
 	"vop_readdir",
 	0,
 	vop_readdir_vp_offsets,
@@ -938,7 +967,7 @@ const int vop_readlink_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_readlink_desc = {
-	27,
+	28,
 	"vop_readlink",
 	0,
 	vop_readlink_vp_offsets,
@@ -969,7 +998,7 @@ const int vop_abortop_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_abortop_desc = {
-	28,
+	29,
 	"vop_abortop",
 	0,
 	vop_abortop_vp_offsets,
@@ -998,7 +1027,7 @@ const int vop_inactive_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_inactive_desc = {
-	29,
+	30,
 	"vop_inactive",
 	0 | VDESC_VP0_WILLUNLOCK,
 	vop_inactive_vp_offsets,
@@ -1027,7 +1056,7 @@ const int vop_reclaim_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_reclaim_desc = {
-	30,
+	31,
 	"vop_reclaim",
 	0,
 	vop_reclaim_vp_offsets,
@@ -1056,7 +1085,7 @@ const int vop_lock_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_lock_desc = {
-	31,
+	32,
 	"vop_lock",
 	0,
 	vop_lock_vp_offsets,
@@ -1085,7 +1114,7 @@ const int vop_unlock_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_unlock_desc = {
-	32,
+	33,
 	"vop_unlock",
 	0,
 	vop_unlock_vp_offsets,
@@ -1114,7 +1143,7 @@ const int vop_bmap_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_bmap_desc = {
-	33,
+	34,
 	"vop_bmap",
 	0,
 	vop_bmap_vp_offsets,
@@ -1149,7 +1178,7 @@ const int vop_print_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_print_desc = {
-	34,
+	35,
 	"vop_print",
 	0,
 	vop_print_vp_offsets,
@@ -1176,7 +1205,7 @@ const int vop_islocked_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_islocked_desc = {
-	35,
+	36,
 	"vop_islocked",
 	0,
 	vop_islocked_vp_offsets,
@@ -1203,7 +1232,7 @@ const int vop_pathconf_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_pathconf_desc = {
-	36,
+	37,
 	"vop_pathconf",
 	0,
 	vop_pathconf_vp_offsets,
@@ -1234,7 +1263,7 @@ const int vop_advlock_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_advlock_desc = {
-	37,
+	38,
 	"vop_advlock",
 	0,
 	vop_advlock_vp_offsets,
@@ -1269,7 +1298,7 @@ const int vop_blkatoff_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_blkatoff_desc = {
-	38,
+	39,
 	"vop_blkatoff",
 	0,
 	vop_blkatoff_vp_offsets,
@@ -1302,7 +1331,7 @@ const int vop_valloc_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_valloc_desc = {
-	39,
+	40,
 	"vop_valloc",
 	0,
 	vop_valloc_vp_offsets,
@@ -1335,7 +1364,7 @@ const int vop_balloc_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_balloc_desc = {
-	40,
+	41,
 	"vop_balloc",
 	0,
 	vop_balloc_vp_offsets,
@@ -1372,7 +1401,7 @@ const int vop_ballocn_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_ballocn_desc = {
-	41,
+	42,
 	"vop_ballocn",
 	0,
 	vop_ballocn_vp_offsets,
@@ -1407,7 +1436,7 @@ const int vop_reallocblks_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_reallocblks_desc = {
-	42,
+	43,
 	"vop_reallocblks",
 	0,
 	vop_reallocblks_vp_offsets,
@@ -1436,7 +1465,7 @@ const int vop_vfree_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_vfree_desc = {
-	43,
+	44,
 	"vop_vfree",
 	0,
 	vop_vfree_vp_offsets,
@@ -1467,7 +1496,7 @@ const int vop_truncate_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_truncate_desc = {
-	44,
+	45,
 	"vop_truncate",
 	0,
 	vop_truncate_vp_offsets,
@@ -1502,7 +1531,7 @@ const int vop_update_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_update_desc = {
-	45,
+	46,
 	"vop_update",
 	0,
 	vop_update_vp_offsets,
@@ -1535,7 +1564,7 @@ const int vop_lease_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_lease_desc = {
-	46,
+	47,
 	"vop_lease",
 	0,
 	vop_lease_vp_offsets,
@@ -1568,7 +1597,7 @@ const int vop_whiteout_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_whiteout_desc = {
-	47,
+	48,
 	"vop_whiteout",
 	0,
 	vop_whiteout_vp_offsets,
@@ -1599,7 +1628,7 @@ const int vop_getpages_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_getpages_desc = {
-	48,
+	49,
 	"vop_getpages",
 	0,
 	vop_getpages_vp_offsets,
@@ -1640,7 +1669,7 @@ const int vop_putpages_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_putpages_desc = {
-	49,
+	50,
 	"vop_putpages",
 	0,
 	vop_putpages_vp_offsets,
@@ -1675,7 +1704,7 @@ const int vop_size_vp_offsets[] = {
 	VDESC_NO_OFFSET
 };
 const struct vnodeop_desc vop_size_desc = {
-	50,
+	51,
 	"vop_size",
 	0,
 	vop_size_vp_offsets,
@@ -1721,6 +1750,7 @@ const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_ioctl_desc,
 	&vop_fcntl_desc,
 	&vop_poll_desc,
+	&vop_kqfilter_desc,
 	&vop_revoke_desc,
 	&vop_mmap_desc,
 	&vop_fsync_desc,
