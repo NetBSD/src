@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.26 2001/05/30 11:37:27 mrg Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.27 2001/06/14 20:32:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -114,8 +114,7 @@ linux_sys_ioctl(p, v, retval)
 			__P((dev_t, u_long, caddr_t, int, struct proc *));
 
 		fdp = p->p_fd;
-		if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-		    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+		if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 			return EBADF;
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&

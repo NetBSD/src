@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.26 2001/04/30 01:13:20 lukem Exp $	*/
+/*	$NetBSD: file.h,v 1.27 2001/06/14 20:32:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -87,6 +87,15 @@ struct file {
 };
 
 #define	FIF_WANTCLOSE		0x01	/* a close is waiting for usecount */
+#define	FIF_LARVAL		0x02	/* not fully constructed; don't use */
+
+#define	FILE_IS_USABLE(fp)	(((fp)->f_iflags &			\
+				  (FIF_WANTCLOSE|FIF_LARVAL)) == 0)
+
+#define	FILE_SET_MATURE(fp)						\
+do {									\
+	(fp)->f_iflags &= ~FIF_LARVAL;					\
+} while (/*CONSTCOND*/0)
 
 #ifdef DIAGNOSTIC
 #define	FILE_USE_CHECK(fp, str)						\

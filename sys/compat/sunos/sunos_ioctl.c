@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.36 2001/05/30 11:37:30 mrg Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.37 2001/06/14 20:32:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -421,8 +421,7 @@ sunos_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD|FWRITE)) == 0)

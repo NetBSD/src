@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.165 2001/04/16 22:41:11 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.166 2001/06/14 20:32:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1066,6 +1066,7 @@ sys_open(p, v, retval)
 	}
 	VOP_UNLOCK(vp, 0);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return (0);
 }
@@ -1235,6 +1236,7 @@ sys_fhopen(p, v, retval)
 	}
 	VOP_UNLOCK(vp, 0);
 	*retval = indx;
+	FILE_SET_MATURE(fp);
 	FILE_UNUSE(fp, p);
 	return (0);
 
@@ -1633,9 +1635,7 @@ sys_lseek(p, v, retval)
 	off_t newoff;
 	int error;
 
-	if ((u_int)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1693,10 +1693,10 @@ sys_pread(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1746,10 +1746,10 @@ sys_preadv(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FREAD) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1799,10 +1799,10 @@ sys_pwrite(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -1852,10 +1852,10 @@ sys_pwritev(p, v, retval)
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0 ||
-	    (fp->f_flag & FWRITE) == 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & FWRITE) == 0)
 		return (EBADF);
 
 	FILE_USE(fp);
@@ -3091,9 +3091,7 @@ getvnode(fdp, fd, fpp)
 	struct vnode *vp;
 	struct file *fp;
 
-	if ((u_int)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.58 2001/05/06 19:22:33 manu Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.59 2001/06/14 20:32:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -99,6 +99,7 @@ sys_socket(struct proc *p, void *v, register_t *retval)
 		ffree(fp);
 	} else {
 		fp->f_data = (caddr_t)so;
+		FILE_SET_MATURE(fp);
 		FILE_UNUSE(fp, p);
 		*retval = fd;
 	}
@@ -246,6 +247,7 @@ sys_accept(struct proc *p, void *v, register_t *retval)
 	}
 	m_freem(nam);
 	splx(s);
+	FILE_SET_MATURE(fp);
 	return (error);
 }
 
@@ -350,6 +352,8 @@ sys_socketpair(struct proc *p, void *v, register_t *retval)
 	}
 	error = copyout((caddr_t)sv, (caddr_t)SCARG(uap, rsv),
 	    2 * sizeof(int));
+	FILE_SET_MATURE(fp1);
+	FILE_SET_MATURE(fp2);
 	FILE_UNUSE(fp1, p);
 	FILE_UNUSE(fp2, p);
 	return (error);
@@ -942,6 +946,8 @@ sys_pipe(struct proc *p, void *v, register_t *retval)
 	retval[1] = fd;
 	if ((error = unp_connect2(wso, rso)) != 0)
 		goto free4;
+	FILE_SET_MATURE(rf);
+	FILE_SET_MATURE(wf);
 	FILE_UNUSE(rf, p);
 	FILE_UNUSE(wf, p);
 	return (0);
@@ -1101,9 +1107,7 @@ getsock(struct filedesc *fdp, int fdes, struct file **fpp)
 {
 	struct file	*fp;
 
-	if ((unsigned)fdes >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fdes]) == NULL ||
-	    (fp->f_iflags & FIF_WANTCLOSE) != 0)
+	if ((fp = fd_getfile(fdp, fdes)) == NULL)
 		return (EBADF);
 
 	FILE_USE(fp);

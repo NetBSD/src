@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.21 2001/01/18 20:28:25 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.22 2001/06/14 20:32:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -343,8 +343,7 @@ ibcs2_sys_ioctl(p, v, retval)
 	int (*ctl) __P((struct file *, u_long, caddr_t, struct proc *));
 	int error;
 
-	if (SCARG(uap, fd) < 0 || SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL) {
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL) {
 		DPRINTF(("ibcs2_ioctl(%d): bad fd %d ", p->p_pid,
 			 SCARG(uap, fd)));
 		return EBADF;
@@ -575,8 +574,7 @@ ibcs2_sys_gtty(p, v, retval)
 	struct ibcs2_sgttyb itb;
 	int error;
 
-	if (SCARG(uap, fd) < 0 || SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL) {
+	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL) {
 		DPRINTF(("ibcs2_sys_gtty(%d): bad fd %d ", p->p_pid,
 			 SCARG(uap, fd)));
 		return EBADF;
