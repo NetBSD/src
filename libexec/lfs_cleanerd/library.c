@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.20 2001/01/10 01:13:55 lukem Exp $	*/
+/*	$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.20 2001/01/10 01:13:55 lukem Exp $");
+__RCSID("$NetBSD: library.c,v 1.21 2001/02/04 22:12:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,6 @@ void	 get_ifile __P((FS_INFO *, int));
 int	 get_superblock __P((FS_INFO *, struct lfs *));
 int	 pseg_valid __P((FS_INFO *, SEGSUM *, daddr_t));
 int      pseg_size __P((daddr_t, FS_INFO *, SEGSUM *));
-void	 print_SEGSUM __P((struct lfs *, SEGSUM *, daddr_t));
 
 extern int debug;
 extern u_long cksum __P((void *, size_t));	/* XXX */
