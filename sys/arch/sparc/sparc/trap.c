@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.101 2001/03/15 06:10:49 chs Exp $ */
+/*	$NetBSD: trap.c,v 1.102 2001/03/18 17:11:22 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -749,7 +749,7 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	struct proc *p;
 	struct vmspace *vm;
 	vaddr_t va;
-	int rv;
+	int rv = EFAULT;
 	vm_prot_t atype;
 	int onfault;
 	u_quad_t sticks;
@@ -816,7 +816,8 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == 0)
+			rv = uvm_fault(kernel_map, va, 0, atype);
+			if (rv == 0)
 				return;
 			goto kfault;
 		}
@@ -840,6 +841,9 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	if (rv == EACCES) {
+		rv = EFAULT;
+	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -854,13 +858,10 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 		 (vaddr_t)p->p_limit->pl_rlimit[RLIMIT_STACK].rlim_cur +
 		 SUNOS_MAXSADDR_SLOP)
 #endif
-	    ) {
-		if (rv == 0) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+	    && rv == 0) {
+		vaddr_t nss = btoc(USRSTACK - va);
+		if (nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
 	}
 	if (rv == 0) {
 		/*
@@ -891,6 +892,7 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
+			tf->tf_out[0] = rv;
 			return;
 		}
 		if (rv == ENOMEM) {
@@ -924,8 +926,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	int pc, psr;
 	struct proc *p;
 	struct vmspace *vm;
-	vaddr_t va=0;
-	int rv;
+	vaddr_t va;
+	int rv = EFAULT;
 	vm_prot_t atype;
 	int onfault;
 	u_quad_t sticks;
@@ -1097,7 +1099,8 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 		if (cold)
 			goto kfault;
 		if (va >= KERNBASE) {
-			if (uvm_fault(kernel_map, va, 0, atype) == 0) {
+			rv = uvm_fault(kernel_map, va, 0, atype);
+			if (rv == 0) {
 				KERNEL_UNLOCK();
 				return;
 			}
@@ -1110,6 +1113,9 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 
 	/* alas! must call the horrible vm code */
 	rv = uvm_fault(&vm->vm_map, (vaddr_t)va, 0, atype);
+	if (rv == EACCES) {
+		rv = EFAULT;
+	}
 
 	/*
 	 * If this was a stack access we keep track of the maximum
@@ -1118,13 +1124,10 @@ mem_access_fault4m(type, sfsr, sfva, tf)
 	 * the current limit and we need to reflect that as an access
 	 * error.
 	 */
-	if ((caddr_t)va >= vm->vm_maxsaddr) {
-		if (rv == 0) {
-			unsigned nss = btoc(USRSTACK - va);
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
-		} else if (rv == EACCES)
-			rv = EFAULT;
+	if ((caddr_t)va >= vm->vm_maxsaddr && rv == 0) {
+		vaddr_t nss = btoc(USRSTACK - va);
+		if (nss > vm->vm_ssize)
+			vm->vm_ssize = nss;
 	}
 	if (rv != 0) {
 		/*
@@ -1147,6 +1150,7 @@ kfault:
 			}
 			tf->tf_pc = onfault;
 			tf->tf_npc = onfault + 4;
+			tf->tf_out[0] = rv;
 			KERNEL_UNLOCK();
 			return;
 		}
