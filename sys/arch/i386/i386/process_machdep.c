@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.30 1999/05/12 21:21:48 thorpej Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.31 2000/06/29 08:44:54 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include <sys/vnode.h>
 #include <sys/ptrace.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/psl.h>
 #include <machine/reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.29 2000/06/26 14:20:34 mrg Exp $	*/
+/*	$NetBSD: syscall.c,v 1.30 2000/06/29 08:52:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -54,8 +54,6 @@
 #ifdef KTRACE
 #include <sys/ktrace.h>
 #endif
-
-#include <vm/vm.h>
 
 #include <uvm/uvm_extern.h>
 

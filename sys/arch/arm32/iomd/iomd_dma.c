@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.5 2000/06/26 14:20:35 mrg Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.6 2000/06/29 08:53:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -41,7 +41,7 @@
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
-#include <vm/vm.h>
+#include <uvm/uvm_extern.h>
 
 #include <machine/irqhandler.h>
 #include <machine/pmap.h>

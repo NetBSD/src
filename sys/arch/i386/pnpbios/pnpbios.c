@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbios.c,v 1.19 2000/06/26 14:20:45 mrg Exp $ */
+/* $NetBSD: pnpbios.c,v 1.20 2000/06/29 08:44:58 mrg Exp $ */
 
 /*
  * Copyright (c) 2000 Jason R. Thorpe.  All rights reserved.
@@ -47,7 +47,6 @@
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 
-#include <vm/vm.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/isa_machdep.h>
