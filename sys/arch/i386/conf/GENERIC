@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.154 1998/06/07 02:34:41 enami Exp $
+#	$NetBSD: GENERIC,v 1.155 1998/06/07 02:36:53 enami Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -408,7 +408,7 @@ wss0	at isa? port 0x530 irq 10 drq 0	drq2 1	# Windows Sound System
 
 # Audio support
 audio*	at aria?
-audio*  at eap?
+audio*	at eap?
 audio*	at gus?
 audio*	at guspnp?
 audio*	at pas?
