@@ -1,4 +1,4 @@
-/*	$NetBSD: hpckbdkeymap.h,v 1.31 2005/01/18 03:59:11 uwe Exp $	*/
+/*	$NetBSD: hpckbdkeymap.h,v 1.32 2005/01/18 06:03:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #define KEY_SPECIAL_OFF		0
 #define KEY_SPECIAL_LIGHT	1
 
-const u_int8_t default_keymap[] = {
+const uint8_t default_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
 /* 1 */	UNK, UNK, UNK, UNK, UNK, UNK, UNK, UNK,
@@ -69,7 +69,7 @@ const int default_special_keymap[] = {
 };
 
 #ifdef hpcmips
-const u_int8_t tc5165_mobilon_keymap[] = {
+const uint8_t tc5165_mobilon_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	37 , 45 , 44 , UNK, 9  , 51 , 23 , UNK,
 /* 1 */	UNK, 56 , UNK, UNK, UNK, UNK, UNK, UNK,
@@ -94,7 +94,7 @@ const int tc5165_mobilon_special_keymap[] = {
 	[KEY_SPECIAL_LIGHT]	= 47
 };
 
-const u_int8_t tc5165_telios_jp_keymap[] = {
+const uint8_t tc5165_telios_jp_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	58,  15,  IGN, 1,   IGN, IGN, IGN, IGN,
 /* 1 */	IGN, IGN, IGN, IGN, 54,  42,  IGN, IGN,
@@ -114,7 +114,7 @@ const u_int8_t tc5165_telios_jp_keymap[] = {
 /*15 */	IGN, IGN, IGN, IGN, IGN, IGN, 221, IGN
 };
 
-const u_int8_t tc5165_compaq_c_jp_keymap[] = {
+const uint8_t tc5165_compaq_c_jp_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	38,  50,  49,  48,  47,  46,  45,  44, 
 /* 1 */	56,  IGN, IGN, IGN, IGN, IGN, IGN, IGN,
@@ -139,7 +139,7 @@ const int tc5165_compaq_c_jp_special_keymap[] = {
 	[KEY_SPECIAL_LIGHT]	= 51
 };
 
-const u_int8_t m38813c_keymap[] = {
+const uint8_t m38813c_keymap[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	0,   1,   2,   3,   4,   5,   6,   7,
 /* 1 */	8,   9,   10,  11,  12,  13,  14,  15,
@@ -160,7 +160,7 @@ const u_int8_t m38813c_keymap[] = {
 };
 
 /* NEC MobileGearII MCR series (Japan) */
-static u_int8_t mcr_jp_keytrans[] = {
+static uint8_t mcr_jp_keytrans[] = {
 /*00	right	ent	p	.	y	b	z	space	*/
 /*08	down	/	o	,	t	v	a	nfer	*/
 /*10	left	\	i	m	r	c	w	menu	*/
@@ -199,7 +199,7 @@ static const keysym_t mcr_jp_cmdmap[] = {
 };
 
 /* IBM WorkPad z50 */
-static u_int8_t z50_keytrans[] = {
+static uint8_t z50_keytrans[] = {
 /*00	f1	f3	f5	f7	f9	-	-	f11	*/
 /*08	f2	f4	f6	f8	f10	-	-	f12	*/
 /*10	'	[	-	0	p	;	up	/	*/
@@ -228,7 +228,7 @@ static u_int8_t z50_keytrans[] = {
 };
 
 /* Sharp Tripad PV6000 and VADEM CLIO */
-static u_int8_t tripad_keytrans[] = {
+static uint8_t tripad_keytrans[] = {
 /*00	lsh	tab	`	q	esc	1	WIN	-	*/
 /*08	ctrl	z	x	a	s	w	e	2	*/
 /*10	lalt	sp	c	v	d	f	r	3	*/
@@ -257,7 +257,7 @@ static u_int8_t tripad_keytrans[] = {
 };
 
 /* NEC Mobile Gear MCCS series */
-static u_int8_t mccs_keytrans[] = {
+static uint8_t mccs_keytrans[] = {
 /*00	caps	cr	rar	p	.	y	b	z	*/
 /*08	alt	[	dar	o	,	t	v	a	*/
 /*10	zen	@	lar	i	m	r	c	w	*/
@@ -292,7 +292,7 @@ static const keysym_t mccs_cmdmap[] = {
 	KC(57),  KS_Cmd_BacklightToggle,KS_space,
 };
 
-static u_int8_t mobilepro_keytrans[] = {
+static uint8_t mobilepro_keytrans[] = {
 /*00	space	]	\	/	left	down	enter	l	*/
 /*08	-	[	'	;	right	up	.	o	*/
 /*10	-	-	-	Windows	v	c	x	z	*/
@@ -331,7 +331,7 @@ static const keysym_t mobilepro_cmdmap[] = {
 };
 
 /* NEC MobilePro 750c by "Castor Fu" <castor@geocast.com> */
-static u_int8_t mobilepro750c_keytrans[] = {
+static uint8_t mobilepro750c_keytrans[] = {
 /*00	right	\	p	.	y	b	z	space	*/
 /*08	down	/	o	,	t	v	a	-	*/
 /*10	left	enter	i	m	r	c	w	Win	*/
@@ -360,7 +360,7 @@ static u_int8_t mobilepro750c_keytrans[] = {
 };
 
 /* NEC MobilePro 780 */
-static u_int8_t mobilepro780_keytrans[] = {
+static uint8_t mobilepro780_keytrans[] = {
 /*00	space	]	\	/	left	right	enter	l	*/
 /*08	-	[	'	;	up	down	.	o	*/
 /*10	-	-	-	Windows	v	c	x	z	*/
@@ -389,7 +389,7 @@ static u_int8_t mobilepro780_keytrans[] = {
 };
 
 /* NEC MobilePro 8x0 */
-static u_int8_t mobilepro8x0_keytrans[] = {
+static uint8_t mobilepro8x0_keytrans[] = {
 /*00	space	]	\	/	left	right	enter	l	*/
 /*08	-	[	'	;	up	down	.	o	*/
 /*10	-	-	-	Windows	v	c	x	z	*/
@@ -428,7 +428,7 @@ static const keysym_t mobilepro8x0_cmdmap[] = {
 };
 
 /* FUJITSU INTERTOP CX300 */
-static u_int8_t intertop_keytrans[] = {
+static uint8_t intertop_keytrans[] = {
 /*00	space   a2      1       tab     enter   caps    left    zenkaku	*/
 /*08	hiraga  a1      2       q       -       a       fnc     esc	*/
 /*10	ins     w       3       s       del     ]       down    x	*/
@@ -457,7 +457,7 @@ static u_int8_t intertop_keytrans[] = {
 };
 
 /* DoCoMo sigmarion (Japan) */
-static u_int8_t sigmarion_jp_keytrans[] = {
+static uint8_t sigmarion_jp_keytrans[] = {
 /*00	right	ent	p	.	y	b	z	space	*/
 /*08	down	/	o	,	t	v	a	nfer	*/
 /*10	left	\	i	m	r	c	w	menu	*/
@@ -501,7 +501,7 @@ static const keysym_t sigmarion_cmdmap[] = {
 };
 
 /* NTT DoCoMo Pocket PostPet (Japan) */
-static u_int8_t pocketpostpet_keytrans[] = {
+static uint8_t pocketpostpet_keytrans[] = {
 /*00	esc	1	q	a	ctrl	-	down	left	*/
 /*08	tab	2	w	s	z	-	right	up	*/
 /*10	pgup	3	e	d	x	shift	-	-	*/
@@ -543,7 +543,7 @@ static u_int8_t pocketpostpet_keytrans[] = {
  * HP Jornada 680/690 
  */
 /* Japanese */
-const u_int8_t jornada6x0_jp_keytrans[] = {
+const uint8_t jornada6x0_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK, /* ctrl 29 */
 /* 1 */ 60 , 46 , 32 , 18 , 4  , 42 , UNK, UNK, /* shift L 42 */
@@ -564,7 +564,7 @@ const u_int8_t jornada6x0_jp_keytrans[] = {
 };
 
 /* US/UK - Fn to the left of the space bar and missing few keys */
-const u_int8_t jornada6x0_us_keytrans[] = {
+const uint8_t jornada6x0_us_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK,
 /* 1 */ 60 , 46 , 32 , 18 , 4  , 42 , UNK, UNK,
@@ -607,7 +607,7 @@ static const keysym_t jornada6x0_us_keydesc[] = {
 
 
 /* International - AltGr to the right and extra keys in three middle rows */
-const u_int8_t jornada6x0_intl_keytrans[] = {
+const uint8_t jornada6x0_intl_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 45 , 31 , 17 , 3  , UNK, 29 , UNK,
 /* 1 */ 60 , 46 , 32 , 18 , 4  , 42 , UNK, UNK,
@@ -770,7 +770,7 @@ const int jornada6x0_special_keymap[] = {
  * HP 620LX
  */
 /* Japanese */
-const u_int8_t hp620lx_jp_keytrans[] = {
+const uint8_t hp620lx_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	2  , 16 , 112, UNK, IGN, UNK, 42 , 30 , /* REC button */
 /* 1 */	3  , 17 , 58 , 44 , UNK, 45 , 15 , 31 ,
@@ -799,7 +799,7 @@ const int hp620lx_special_keymap[] = {
  * HITACHI PERSONA HPW50PAD
  */
 /* Japanese */
-const u_int8_t persona_hpw50pad_jp_keytrans[] = {
+const uint8_t persona_hpw50pad_jp_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */ 59 , 61 , 63 , 65 , 67 , SPL, UNK, UNK, /* ON button */
 /* 1 */ 29 , UNK, 47 , 48 , 121, UNK, UNK, UNK,
@@ -828,7 +828,7 @@ const int persona_hpw50pad_special_keymap[] = {
  * HITACHI PERSONA HPW200EC
 */
 /* US */
-const u_int8_t persona_hpw200ec_keytrans[] = {
+const uint8_t persona_hpw200ec_keytrans[] = {
 /*      0    1    2    3    4    5    6    7 */       
 /* 0 */	SPL, UNK,   2,  3,  UNK,   5,   6, UNK,
 /* 1 */	UNK, UNK, UNK,  11, UNK, UNK, UNK, UNK,
@@ -864,7 +864,7 @@ const int persona_hpw200ec_special_keymap[] = {
  */
 const struct hpckbd_keymap_table {
 	platid_t	*ht_platform;
-	const u_int8_t	*ht_keymap;
+	const uint8_t	*ht_keymap;
 	const int	*ht_special;
 	struct {
 		const keysym_t	*map;
