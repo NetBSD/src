@@ -41,6 +41,9 @@
 
 #include "../dev/device.h"
 
+extern int ufs_mountroot();
+int (*mountroot)() = ufs_mountroot;
+
 /*
  * Generic configuration;  all in one
  */
@@ -66,6 +69,7 @@ struct	genericconf {
 } genericconf[] = {
 /*	{ (caddr_t)&rddriver,	"rd",	makedev(2, 0),	},*/
 	{ (caddr_t)&sddriver,	"sd",	makedev(4, 0),	},
+	{ (caddr_t)&sddriver,	"rz",	makedev(5, 0),	},
 	{ 0 },
 };
 
@@ -103,6 +107,7 @@ retry:
 		printf("\n");
 		goto retry;
 gotit:
+		cp = name + 1;
 		if (*++cp < '0' || *cp > '9') {
 			printf("bad/missing unit number\n");
 			goto retry;

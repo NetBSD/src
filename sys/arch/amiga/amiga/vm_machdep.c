@@ -165,6 +165,9 @@ physaccess(vaddr, paddr, size, prot)
 	register struct pte *pte;
 	register u_int page;
 
+	extern u_int cache_copyback;
+	if (cpu040 && (prot & PG_CI) == 0)	/* if cache not inhibited */
+		prot |= cache_copyback;		/*   set cacheable, copyback */
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
