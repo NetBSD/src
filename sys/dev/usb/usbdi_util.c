@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.38 2001/12/18 14:50:01 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.39 2001/12/27 11:24:42 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.c,v 1.14 1999/11/17 22:33:50 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.38 2001/12/18 14:50:01 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.39 2001/12/27 11:24:42 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,6 +222,25 @@ usbd_set_port_feature(usbd_device_handle dev, int port, int sel)
 	return (usbd_do_request(dev, &req, 0));
 }
 
+usbd_status
+usbd_get_protocol(usbd_interface_handle iface, u_int8_t *report)
+{
+	usb_interface_descriptor_t *id = usbd_get_interface_descriptor(iface);
+	usbd_device_handle dev;
+	usb_device_request_t req;
+
+	DPRINTFN(4, ("usbd_get_protocol: iface=%p, endpt=%d\n",
+		     iface, id->bInterfaceNumber));
+	if (id == NULL)
+		return (USBD_IOERROR);
+	usbd_interface2device_handle(iface, &dev);
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UR_GET_PROTOCOL;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, id->bInterfaceNumber);
+	USETW(req.wLength, 1);
+	return (usbd_do_request(dev, &req, report));
+}
 
 usbd_status
 usbd_set_protocol(usbd_interface_handle iface, int report)
