@@ -484,7 +484,9 @@ struct dis386 dis386_twobyte[] = {
   { "clts" },
   { "(bad)" },  
   /* 08 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "invd" },
+  { "wbinvd" },
+  { "(bad)" },  { "(bad)" },
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* 10 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
@@ -574,7 +576,7 @@ struct dis386 dis386_twobyte[] = {
   /* a0 */
   { "pushl", fs },
   { "popl", fs },
-  { "(bad)" },
+  { "cpuid" },
   { "btS", Ev, Gv },  
   { "shldS", Ev, Gv, Ib },
   { "shldS", Ev, Gv, CL },
@@ -590,8 +592,8 @@ struct dis386 dis386_twobyte[] = {
   { "(bad)" },
   { "imulS", Gv, Ev },  
   /* b0 */
-  { "(bad)" },
-  { "(bad)" },
+  { "cmpxchgb", Eb, Gb },
+  { "cmpxchgS", Ev, Gv },
   { "lssS", Gv, Mp },	/* 386 lists only Mp */
   { "btrS", Ev, Gv },  
   { "lfsS", Gv, Mp },	/* 386 lists only Mp */
@@ -608,11 +610,19 @@ struct dis386 dis386_twobyte[] = {
   { "movsbS", Gv, Eb },
   { "movswS", Gv, Ew },  
   /* c0 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "xaddb", Eb, Gb },
+  { "xaddS", Ev, Gv },
+  { "(bad)" },  { "(bad)" },
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   /* c8 */
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
-  { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
+  { "bswap", eAX },
+  { "bswap", eCX },
+  { "bswap", eDX },
+  { "bswap", eBX },
+  { "bswap", eSP },
+  { "bswap", eBP },
+  { "bswap", eSI },
+  { "bswap", eDI },
   /* d0 */
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
   { "(bad)" },  { "(bad)" },  { "(bad)" },  { "(bad)" },  
