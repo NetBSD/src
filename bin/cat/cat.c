@@ -1,4 +1,4 @@
-/* $NetBSD: cat.c,v 1.31.2.2 2002/11/03 14:22:30 he Exp $	*/
+/* $NetBSD: cat.c,v 1.31.2.3 2004/06/16 01:26:42 jmc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
@@ -47,7 +51,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)cat.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: cat.c,v 1.31.2.2 2002/11/03 14:22:30 he Exp $");
+__RCSID("$NetBSD: cat.c,v 1.31.2.3 2004/06/16 01:26:42 jmc Exp $");
 #endif
 #endif /* not lint */
 
