@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.12 2001/01/17 19:04:03 jdolecek Exp $	*/
+/*	$NetBSD: if_media.c,v 1.13 2001/02/26 09:42:00 joda Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -247,7 +247,7 @@ ifmedia_ioctl(ifp, ifr, ifm, cmd)
 				    newmedia);
 			}
 #endif
-			return (ENXIO);
+			return (EINVAL);
 		}
 
 		/*
