@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.19 2002/03/18 16:00:54 christos Exp $	*/
+/*	$NetBSD: history.c,v 1.20 2002/10/13 17:15:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.19 2002/03/18 16:00:54 christos Exp $");
+__RCSID("$NetBSD: history.c,v 1.20 2002/10/13 17:15:53 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -664,7 +664,7 @@ history_save(History *h, const char *fname)
 			ptr = h_realloc(ptr, max_size);
 		}
 		(void) strvis(ptr, ev.str, VIS_WHITE);
-		(void) fprintf(fp, "%s\n", ev.str);
+		(void) fprintf(fp, "%s\n", ptr);
 	}
 	h_free(ptr);
 	(void) fclose(fp);
