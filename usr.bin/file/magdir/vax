@@ -1,5 +1,6 @@
-#
-# magic.pdp: VAX executable/object and APL workspace
+
+#------------------------------------------------------------------------------
+# vax:  file(1) magic for VAX executable/object and APL workspace
 #
 0	lelong		0101557		VAX single precision APL workspace
 0	lelong		0101556		VAX double precision APL workspace
@@ -27,7 +28,7 @@
 #
 0	leshort		0570		VAX COFF executable
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+>22	leshort		>0		- version %ld
 0	leshort		0575		VAX COFF pure executable
 >12	lelong		>0		not stripped
-#>22	leshort		>0		- version %ld
+>22	leshort		>0		- version %ld

@@ -25,10 +25,6 @@
  * 4. This notice may not be removed or altered.
  */
 
-#ifndef lint
-static char rcsid[] = "$Id: print.c,v 1.5 1993/11/03 04:04:20 mycroft Exp $";
-#endif  /* not lint */
-
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -39,7 +35,15 @@ static char rcsid[] = "$Id: print.c,v 1.5 1993/11/03 04:04:20 mycroft Exp $";
 #endif
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include "file.h"
+
+#ifndef lint
+static char *moduleid =
+	"@(#)$Id: print.c,v 1.6 1995/03/25 22:36:34 christos Exp $";
+#endif  /* lint */
+
+#define SZOF(a)	(sizeof(a) / sizeof(a[0]))
 
 void
 mdump(m)
@@ -49,23 +53,58 @@ struct magic *m;
 				 "long", "string", "date", "beshort",
 				 "belong", "bedate", "leshort", "lelong",
 				 "ledate" };
-	printf(">>>>>>>>%d" + 8 - m->cont_level, m->offset);
+	(void) fputc('[', stderr);
+	(void) fprintf(stderr, ">>>>>>>> %d" + 8 - (m->cont_level & 7),
+		       m->offset);
+
 	if (m->flag & INDIR)
-	    printf("(%s,%d)",
-		(m->in.type >= 0 && m->in.type < 6 ?
-				typ[(unsigned char) m->in.type] : "*bad*"),
-		m->in.offset);
-	printf(" %s%s", m->flag & UNSIGNED ? "u" : "",
-		(m->type >= 0 && m->type < 13 ? 
-				typ[(unsigned char) m->type] : "*bad*"));
-	if (m->flag & MASK)
-		printf("&%d", m->mask);
-	printf(" %c", m->reln);
-	if (m->type == STRING)
-		showstr(m->value.s);
-	else
-		printf("%d", m->value.l);
-	printf(" %s\n", m->desc);
+		(void) fprintf(stderr, "(%s,%d),",
+			       (m->in.type >= 0 && m->in.type < SZOF(typ)) ? 
+					typ[(unsigned char) m->in.type] :
+					"*bad*",
+			       m->in.offset);
+
+	(void) fprintf(stderr, " %s%s", (m->flag & UNSIGNED) ? "u" : "",
+		       (m->type >= 0 && m->type < SZOF(typ)) ? 
+				typ[(unsigned char) m->type] : 
+				"*bad*");
+	if (m->mask != ~0L)
+		(void) fprintf(stderr, " & %.8x", m->mask);
+
+	(void) fprintf(stderr, ",%c", m->reln);
+
+	if (m->reln != 'x') {
+	    switch (m->type) {
+	    case BYTE:
+	    case SHORT:
+	    case LONG:
+	    case LESHORT:
+	    case LELONG:
+	    case BESHORT:
+	    case BELONG:
+		    (void) fprintf(stderr, "%d", m->value.l);
+		    break;
+	    case STRING:
+		    showstr(stderr, m->value.s, -1);
+		    break;
+	    case DATE:
+	    case LEDATE:
+	    case BEDATE:
+		    {
+			    char *rt, *pp = ctime((time_t*) &m->value.l);
+			    if ((rt = strchr(pp, '\n')) != NULL)
+				    *rt = '\0';
+			    (void) fprintf(stderr, "%s,", pp);
+			    if (rt)
+				    *rt = '\n';
+		    }
+		    break;
+	    default:
+		    (void) fputs("*bad*", stderr);
+		    break;
+	    }
+	}
+	(void) fprintf(stderr, ",\"%s\"]\n", m->desc);
 }
 
 /*

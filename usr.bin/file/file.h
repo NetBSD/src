@@ -1,7 +1,6 @@
 /*
  * file.h - definitions for file(1) program
- *
- *	$Id: file.h,v 1.4 1993/11/03 04:04:19 mycroft Exp $
+ * @(#)$Id: file.h,v 1.5 1995/03/25 22:35:51 christos Exp $
  *
  * Copyright (c) Ian F. Darwin, 1987.
  * Written by Ian F. Darwin.
@@ -27,7 +26,7 @@
  * 4. This notice may not be removed or altered.
  */
 
-#define HOWMANY	1024		/* how much of the file to look at */
+#define HOWMANY	8192		/* how much of the file to look at */
 #define MAXMAGIS 1000		/* max entries in /etc/magic */
 #define MAXDESC	50		/* max leng of text description */
 #define MAXstring 32		/* max leng of "string" types */
@@ -36,7 +35,6 @@ struct magic {
 	short flag;		
 #define INDIR	1		/* if '>(...)' appears,  */
 #define	UNSIGNED 2		/* comparison is unsigned */
-#define	MASK	4		/* this is a masked op, like & v1 = v2 */
 	short cont_level;	/* level of ">" */
 	struct {
 		char type;	/* byte short long */
@@ -88,15 +86,16 @@ extern void  ckfputs		__P((const char *, FILE *));
 struct stat;
 extern int   fsmagic		__P((const char *, struct stat *));
 extern int   is_compress	__P((const unsigned char *, int *));
-extern int   is_tar		__P((unsigned char *));
+extern int   is_tar		__P((unsigned char *, int));
 extern void  magwarn		__P((const char *, ...));
 extern void  mdump		__P((struct magic *));
 extern void  process		__P((const char *, int));
-extern void  showstr		__P((const char *));
+extern void  showstr		__P((FILE *, const char *, int));
 extern int   softmagic		__P((unsigned char *, int));
-extern void  tryit		__P((unsigned char *, int));
-extern int   uncompress		__P((const unsigned char *, unsigned char **, int));
+extern void  tryit		__P((unsigned char *, int, int));
+extern int   zmagic		__P((unsigned char *, int));
 extern void  ckfprintf		__P((FILE *, const char *, ...));
+extern unsigned long signextend	__P((struct magic *, unsigned long));
 
 
 
@@ -117,11 +116,12 @@ extern int lflag;		/* follow symbolic links?		*/
 extern int optind;		/* From getopt(3)			*/
 extern char *optarg;
 
-#if !defined(__STDC__) || defined(sun)
+#if !defined(__STDC__) || defined(sun) || defined(__sun__) || defined(__convex__)
 extern int sys_nerr;
 extern char *sys_errlist[];
 #define strerror(e) \
 	(((e) >= 0 && (e) < sys_nerr) ? sys_errlist[(e)] : "Unknown error")
+#define strtoul(a, b, c)	strtol(a, b, c)
 #endif
 
 #ifndef MAXPATHLEN

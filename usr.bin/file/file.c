@@ -24,10 +24,10 @@
  *
  * 4. This notice may not be removed or altered.
  */
-
 #ifndef	lint
-static char rcsid[] = "$Id: file.c,v 1.3 1993/08/01 18:16:27 mycroft Exp $";
-#endif /* not lint */
+static char *moduleid = 
+	"@(#)$Id: file.c,v 1.4 1995/03/25 22:35:46 christos Exp $";
+#endif	/* lint */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,15 +36,20 @@ static char rcsid[] = "$Id: file.c,v 1.3 1993/08/01 18:16:27 mycroft Exp $";
 #include <sys/param.h>	/* for MAXPATHLEN */
 #include <sys/stat.h>
 #include <fcntl.h>	/* for open() */
+#if (__COHERENT__ >= 0x420)
+#include <sys/utime.h>
+#else
 #include <utime.h>
+#endif
 #include <unistd.h>	/* for read() */
 
+#include "patchlevel.h"
 #include "file.h"
 
 #ifdef S_IFLNK
-# define USAGE  "Usage: %s [-czL] [-f namefile] [-m magicfile] file...\n"
+# define USAGE  "Usage: %s [-vczL] [-f namefile] [-m magicfile] file...\n"
 #else
-# define USAGE  "Usage: %s [-cz] [-f namefile] [-m magicfile] file...\n"
+# define USAGE  "Usage: %s [-vcz] [-f namefile] [-m magicfile] file...\n"
 #endif
 
 #ifndef MAGIC
@@ -78,15 +83,19 @@ int argc;
 char *argv[];
 {
 	int c;
-	int check = 0, didsomefiles = 0, errflg = 0, ret = 0;
+	int check = 0, didsomefiles = 0, errflg = 0, ret = 0, app = 0;
 
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
 	else
 		progname = argv[0];
 
-	while ((c = getopt(argc, argv, "cdf:Lm:z")) != EOF)
+	while ((c = getopt(argc, argv, "vcdf:Lm:z")) != EOF)
 		switch (c) {
+		case 'v':
+			(void) fprintf(stdout, "%s-%d.%d\n", progname,
+				       FILE_VERSION_MAJOR, patchlevel);
+			return 1;
 		case 'c':
 			++check;
 			break;
@@ -94,6 +103,12 @@ char *argv[];
 			++debug;
 			break;
 		case 'f':
+			if (!app) {
+				ret = apprentice(magicfile, check);
+				if (check)
+					exit(ret);
+				app = 1;
+			}
 			unwrap(optarg);
 			++didsomefiles;
 			break;
@@ -113,14 +128,18 @@ char *argv[];
 			errflg++;
 			break;
 		}
+
 	if (errflg) {
 		(void) fprintf(stderr, USAGE, progname);
 		exit(2);
 	}
 
-	ret = apprentice(magicfile, check);
-	if (check)
-		exit(ret);
+	if (!app) {
+		ret = apprentice(magicfile, check);
+		if (check)
+			exit(ret);
+		app = 1;
+	}
 
 	if (optind == argc) {
 		if (!didsomefiles) {
@@ -201,7 +220,8 @@ int wid;
 	}
 
 	if (wid > 0)
-	     (void) printf("%s:%*s ", inname, wid - strlen(inname), "");
+	     (void) printf("%s:%*s ", inname, 
+			   (int) (wid - strlen(inname)), "");
 
 	if (inname != stdname) {
 	    /*
@@ -234,8 +254,13 @@ int wid;
 	if (nbytes == 0) 
 		ckfputs("empty", stdout);
 	else {
-		buf[nbytes] = '\0';	/* null-terminate it */
-		tryit(buf, nbytes);
+		buf[nbytes++] = '\0';	/* NULL terminate */
+		if (nbytes < sizeof(union VALUETYPE)) {
+		    /* The following is to handle *very* short files */
+		    memset(buf + nbytes, 0, sizeof(union VALUETYPE) - nbytes);
+		    nbytes = sizeof(union VALUETYPE);
+		}
+		tryit(buf, nbytes, zflag);
 	}
 
 	if (inname != stdname) {
@@ -252,21 +277,24 @@ int wid;
 
 
 void
-tryit(buf, nb)
+tryit(buf, nb, zflag)
 unsigned char *buf;
-int nb;
+int nb, zflag;
 {
 	/*
-	 * try tests in /etc/magic (or surrogate magic file)
+	 * Try compression stuff
 	 */
-	if (softmagic(buf, nb) != 1)
-	    /*
-	     * try known keywords, check for ascii-ness too.
-	     */
-	    if (ascmagic(buf, nb) != 1)
+	if (!zflag || zmagic(buf, nb) != 1)
 		/*
-		 * abandon hope, all ye who remain here
+		 * try tests in /etc/magic (or surrogate magic file)
 		 */
-		ckfputs("data", stdout);
+		if (softmagic(buf, nb) != 1)
+			/*
+			 * try known keywords, check for ascii-ness too.
+			 */
+			if (ascmagic(buf, nb) != 1)
+			    /*
+			     * abandon hope, all ye who remain here
+			     */
+			    ckfputs("data", stdout);
 }
-
