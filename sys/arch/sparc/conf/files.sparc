@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.17 1996/03/17 13:21:23 cgd Exp $
+#	$NetBSD: files.sparc,v 1.18 1996/03/31 22:52:38 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -20,11 +20,11 @@ attach vmes at mainbus
 file	arch/sparc/dev/obio.c		obio | vmel | vmes
 
 device audio
-attach audio at mainbus
+attach audio at mainbus, obio
 file	arch/sparc/dev/amd7930.c		audio needs-flag
 
 device auxreg
-attach auxreg at mainbus
+attach auxreg at mainbus, obio
 file	arch/sparc/sparc/auxreg.c
 
 device clock
@@ -36,6 +36,8 @@ attach timer at mainbus, obio
 device eeprom
 attach eeprom at obio
 file	arch/sparc/sparc/clock.c
+device power
+attach power at obio
 
 device cpu
 attach cpu at mainbus
@@ -50,15 +52,20 @@ attach zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-count
 
 device fdc {}
-attach fdc at mainbus
+attach fdc at mainbus, obio
 device fd: disk
 attach fd at fdc
 file	arch/sparc/dev/fd.c			fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fd
 
+device iommu {}
+attach iommu at mainbus
+file	arch/sparc/sparc/iommu.c		iommu
+
 device sbus { slot = -1, offset = -1 }
-attach sbus at mainbus
+attach sbus at mainbus, iommu
 file	arch/sparc/dev/sbus.c		sbus
+
 
 #
 # Machine-independent SCSI drivers
