@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.87 2003/09/25 18:42:18 matt Exp $	*/
+/*	$NetBSD: trap.c,v 1.88 2003/09/25 21:58:46 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 2003/09/25 18:42:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.88 2003/09/25 21:58:46 matt Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -103,8 +103,9 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGTRAP;
 			ksi.ksi_trap = EXC_TRC;
 			ksi.ksi_addr = (void *)frame->srr0;
+			ksi.ksi_code = TRAP_TRACE;
 			KERNEL_PROC_LOCK(l);
-			trapsignal(l, &ksi);
+			(*p->p_emul->e_trapsignal)(l, &ksi);
 			KERNEL_PROC_UNLOCK(l);
 		}
 		break;
@@ -232,6 +233,8 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_DSI;
 		ksi.ksi_addr = (void *)frame->dar;
+		ksi.ksi_code =
+		    (frame->dsisr & DSISR_PROTECT ? SEGV_ACCERR : SEGV_MAPERR);
 		if (rv == ENOMEM) {
 			printf("UVM: pid %d.%d (%s), uid %d killed: "
 			       "out of swap\n",
@@ -240,7 +243,7 @@ trap(struct trapframe *frame)
 			       p->p_ucred->cr_uid : -1);
 			ksi.ksi_signo = SIGKILL;
 		}
-		trapsignal(l, &ksi);
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -290,7 +293,8 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGSEGV;
 		ksi.ksi_trap = EXC_ISI;
 		ksi.ksi_addr = (void *)frame->srr0;
-		trapsignal(l, &ksi);
+		ksi.ksi_code = SEGV_MAPERR;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		l->l_flag &= ~L_SA_PAGEFAULT;
 		KERNEL_PROC_UNLOCK(l);
 		break;
@@ -332,7 +336,8 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_trap = EXC_ALI;
 			ksi.ksi_addr = (void *)frame->dar;
-			trapsignal(l, &ksi);
+			ksi.ksi_code = BUS_ADRALN;
+			(*p->p_emul->e_trapsignal)(l, &ksi);
 		} else
 			frame->srr0 += 4;
 		KERNEL_PROC_UNLOCK(l);
@@ -359,7 +364,8 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGILL;
 		ksi.ksi_trap = EXC_PGM;
 		ksi.ksi_addr = (void *)frame->srr0;
-		trapsignal(l, &ksi);
+		ksi.ksi_code = ILL_ILLOPC;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 		break;
 #endif
@@ -375,7 +381,8 @@ trap(struct trapframe *frame)
 		ksi.ksi_signo = SIGBUS;
 		ksi.ksi_trap = EXC_MCHK;
 		ksi.ksi_addr = (void *)frame->srr0;
-		trapsignal(l, &ksi);
+		ksi.ksi_code = BUS_OBJERR;
+		(*p->p_emul->e_trapsignal)(l, &ksi);
 		KERNEL_PROC_UNLOCK(l);
 
 	case EXC_PGM|EXC_USER:
@@ -388,7 +395,8 @@ trap(struct trapframe *frame)
 				ksi.ksi_signo = SIGTRAP;
 				ksi.ksi_trap = EXC_PGM;
 				ksi.ksi_addr = (void *)frame->srr0;
-				trapsignal(l, &ksi);
+				ksi.ksi_code = TRAP_BRKPT;
+				(*p->p_emul->e_trapsignal)(l, &ksi);
 			} else {
 				/* skip the trap instruction */
 				frame->srr0 += 4;
@@ -402,7 +410,14 @@ trap(struct trapframe *frame)
 			ksi.ksi_signo = SIGILL;
 			ksi.ksi_trap = EXC_PGM;
 			ksi.ksi_addr = (void *)frame->srr0;
-			trapsignal(l, &ksi);
+			if (frame->srr1 & 0x100000) {
+				ksi.ksi_signo = SIGFPE;
+				ksi.ksi_code = 0;
+			} else if (frame->srr1 & 0x40000) {
+				ksi.ksi_code = ILL_PRVOPC;
+			} else
+				ksi.ksi_code = ILL_ILLOPC;
+			(*p->p_emul->e_trapsignal)(l, &ksi);
 		}
 		KERNEL_PROC_UNLOCK(l);
 		break;
