@@ -1,5 +1,5 @@
-/*	$NetBSD: token.l,v 1.1 2000/06/13 15:15:28 itojun Exp $	*/
-/*	$KAME: token.l,v 1.13 2000/06/07 00:29:14 itojun Exp $	*/
+/*	$NetBSD: token.l,v 1.1.2.1 2000/07/25 04:26:15 itojun Exp $	*/
+/*	$KAME: token.l,v 1.14 2000/07/15 16:08:01 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -160,17 +160,17 @@ ipcomp		{ PREPROC; yylval.num = 0; return(PR_IPCOMP); }
 {hyphen}A	{ PREPROC; return(F_AUTH); }
 hmac-md5	{ PREPROC; yylval.num = SADB_AALG_MD5HMAC; return(ALG_AUTH); }
 hmac-sha1	{ PREPROC; yylval.num = SADB_AALG_SHA1HMAC; return(ALG_AUTH); }
-keyed-md5	{ PREPROC; yylval.num = SADB_AALG_MD5; return(ALG_AUTH); }
-keyed-sha1	{ PREPROC; yylval.num = SADB_AALG_SHA; return(ALG_AUTH); }
-null		{ PREPROC; yylval.num = SADB_AALG_NULL; return(ALG_AUTH); }
+keyed-md5	{ PREPROC; yylval.num = SADB_X_AALG_MD5; return(ALG_AUTH); }
+keyed-sha1	{ PREPROC; yylval.num = SADB_X_AALG_SHA; return(ALG_AUTH); }
+null		{ PREPROC; yylval.num = SADB_X_AALG_NULL; return(ALG_AUTH); }
 
 	/* encryption alogorithm */
 {hyphen}E	{ PREPROC; return(F_ENC); }
 des-cbc		{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC); }
 3des-cbc	{ PREPROC; yylval.num = SADB_EALG_3DESCBC; return(ALG_ENC); }
 simple		{ PREPROC; yylval.num = SADB_EALG_NULL; return(ALG_ENC); }
-blowfish-cbc	{ PREPROC; yylval.num = SADB_EALG_BLOWFISHCBC; return(ALG_ENC); }
-cast128-cbc	{ PREPROC; yylval.num = SADB_EALG_CAST128CBC; return(ALG_ENC); }
+blowfish-cbc	{ PREPROC; yylval.num = SADB_X_EALG_BLOWFISHCBC; return(ALG_ENC); }
+cast128-cbc	{ PREPROC; yylval.num = SADB_X_EALG_CAST128CBC; return(ALG_ENC); }
 des-deriv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DESDERIV); }
 des-32iv	{ PREPROC; yylval.num = SADB_EALG_DESCBC; return(ALG_ENC_DES32IV); }
 
