@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14 2001/01/15 20:19:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15 2001/01/22 13:57:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14 2001/01/15 20:19:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2001/01/22 13:57:01 jdolecek Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -302,10 +302,6 @@ mach_init(argc, argv, envp, bim, bip)
 
 
 #ifdef DDB
-	/*
-	 * Initialize machine-dependent DDB commands, in case of early panic.
-	 */
-	db_machine_init();
 	/* init symbols if present */
 	if (esym)
 		ddb_init(esym - ssym, ssym, esym);

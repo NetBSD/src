@@ -1,4 +1,4 @@
-/* $NetBSD: cons_machdep.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $ */
+/* $NetBSD: cons_machdep.c,v 1.2 2001/01/22 13:57:00 jdolecek Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: cons_machdep.c,v 1.1 2000/05/09 21:55:55 bjh21 Exp $");
+__RCSID("$NetBSD: cons_machdep.c,v 1.2 2001/01/22 13:57:00 jdolecek Exp $");
 
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -63,7 +63,6 @@ consinit()
 /*       	cninit();*/
 
 #ifdef DDB
-	db_machine_init();
 	ddb_init(bootconfig.esym - bootconfig.ssym,
 		 MEMC_PHYS_BASE + bootconfig.ssym,
 		 MEMC_PHYS_BASE + bootconfig.esym);

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2001/01/18 10:55:30 jdolecek Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.34 2001/01/22 13:56:57 jdolecek Exp $	*/
 
 /* 
  * Copyright (c) 1996 Scott K. Stevens
@@ -52,6 +52,7 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 #include <dev/cons.h>
 
 static int nil;
@@ -310,7 +311,7 @@ void db_of_enter_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *
 void db_of_exit_cmd	__P((db_expr_t addr, int have_addr, db_expr_t count, char *modif));
 #endif
 
-struct db_command arm32_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "frame",	db_show_frame_cmd,	0, NULL },
 	{ "intrchain",	db_show_intrchain_cmd,	0, NULL },
 #ifdef	OFW
@@ -373,7 +374,6 @@ db_machine_init()
 	}
 
 	install_coproc_handler(0, db_trapper);
-	db_machine_commands_install(arm32_db_command_table);
 }
 
 u_int

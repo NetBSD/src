@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.54 2001/01/18 08:52:26 enami Exp $	*/
+/*	$NetBSD: db_command.c,v 1.55 2001/01/22 13:56:55 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -494,7 +494,7 @@ static struct db_command db_command_table[] = {
 	{ "examine",	db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ "kill",	db_kill_proc,		CS_OWN,		NULL },
 #ifdef DB_MACHINE_COMMANDS
-	{ "machine",    NULL,                   0,     		NULL },
+	{ "machine",    NULL,                   0, db_machine_command_table },
 #endif
 	{ "match",	db_trace_until_matching_cmd,0,		NULL },
 	{ "next",	db_trace_until_matching_cmd,0,		NULL },
@@ -517,28 +517,6 @@ static struct db_command db_command_table[] = {
 	{ "x",		db_examine_cmd,		CS_SET_DOT, 	NULL },
 	{ NULL, 	NULL,			0,		NULL }
 };
-
-#ifdef DB_MACHINE_COMMANDS
-
-/*
- * this function should be called to install the machine dependent
- * commands. It should be called before the debugger is enabled
- */
-void
-db_machine_commands_install(ptr)
-	struct db_command *ptr;
-{
-	struct db_command *cmd;
-
-	for (cmd = db_command_table; cmd != 0; cmd++) {
-		if (strcmp(cmd->name, "machine") == 0) {
-			cmd->more = ptr;
-			break;
-		}
-	}
-}
-
-#endif
 
 const struct db_command	*db_last_command = NULL;
 

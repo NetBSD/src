@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.34 2000/11/09 06:02:40 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.35 2001/01/22 13:56:57 jdolecek Exp $	*/
 
 /*
  * Mach Operating System
@@ -51,6 +51,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 #endif
 
 int	db_active = 0;
@@ -397,17 +398,11 @@ db_kvtophys_cmd(addr, have_addr, count, modif)
 		printf("not a kernel virtual address\n");
 }
 
-struct db_command mips_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "kvtop",	db_kvtophys_cmd,	0,	0 },
 	{ "tlb",	db_tlbdump_cmd,		0,	0 },
 	{ (char *)0, }
 };
-
-void
-db_machine_init()
-{
-	db_machine_commands_install(mips_db_command_table);
-}
 
 #endif	/* !KGDB */
 

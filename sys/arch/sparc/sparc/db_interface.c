@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.33 2001/01/18 10:54:29 jdolecek Exp $ */
+/*	$NetBSD: db_interface.c,v 1.34 2001/01/22 13:56:58 jdolecek Exp $ */
 
 /*
  * Mach Operating System
@@ -50,6 +50,7 @@
 #include <ddb/db_variables.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>
+#include <ddb/db_interface.h>
 #endif
 
 #include <machine/instr.h>
@@ -237,16 +238,10 @@ db_prom_cmd(addr, have_addr, count, modif)
 	prom_abort();
 }
 
-struct db_command sparc_db_command_table[] = {
+const struct db_command db_machine_command_table[] = {
 	{ "prom",	db_prom_cmd,	0,	0 },
 	{ (char *)0, }
 };
-
-void
-db_machine_init()
-{
-	db_machine_commands_install(sparc_db_command_table);
-}
 #endif /* DDB */
 
 
