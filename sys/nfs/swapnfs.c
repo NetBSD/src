@@ -33,33 +33,69 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)nfsdiskless.h	7.1 (Berkeley) 3/4/91
- *	$Id: nfsdiskless.h,v 1.4 1993/07/07 12:06:39 cgd Exp $
+ *	from: @(#)nfsswapvmunix.c	7.1 (Berkeley) 3/4/91
+ *	$Id: swapnfs.c,v 1.1 1993/07/07 12:06:40 cgd Exp $
  */
 
-#ifndef _NFS_NFSDISKLESS_H_
-#define _NFS_NFSDISKLESS_H_
-
-#define NFS_NAMELEN     256
 /*
- * Structure that must be initialized for a diskless nfs client.
- * This structure is used by nfs_mountroot() to set up the root and swap
- * vnodes plus do a partial ifconfig(8) and route(8) so that the critical net
- * interface can communicate with the server.
- * For now it is statically initialized in swapvmunix.c, but someday a primary
- * bootstrap should fill it in.
+ * Sample NFS swapvmunix configuration file.
+ * This should be filled in by the bootstrap program.
+ * See /sys/nfs/nfsdiskless.h for details of the fields.
  */
-struct nfs_diskless {
-	struct ifaliasreq myif;		/* Info. for partial ifconfig */
-	struct sockaddr	mygateway;	/* Default gateway for "route add" */
-	struct nfs_args	swap_args;	/* Mount args for swap file */
-	u_char		swap_fh[NFS_FHSIZE]; /* Swap file's file handle */
-	struct sockaddr	swap_saddr;	/* Address of swap server */
-	char		swap_hostnam[NFS_NAMELEN]; /* Host name for mount pt */
-	struct nfs_args	root_args;	/* Mount args for root fs */
-	u_char		root_fh[NFS_FHSIZE]; /* File handle of root dir */
-	struct sockaddr	root_saddr;	/* Address of root server */
-	char		root_hostnam[NFS_NAMELEN]; /* Host name for mount pt */
+
+#include "../sys/param.h"
+#include "../sys/conf.h"
+#include "../sys/socket.h"
+#include "../sys/mount.h"
+#include "../net/if.h"
+#include "../nfs/nfsv2.h"
+#include "../nfs/nfsdiskless.h"
+
+dev_t	rootdev = NODEV;
+dev_t	argdev  = NODEV;
+dev_t	dumpdev = NODEV;
+
+struct	swdevt swdevt[] = {
+	{ NODEV, 0, 0 },
+	{ 0, 0, 0 }
 };
 
-#endif /* !_NFS_NFSDISKLESS_H_ */
+extern int nfs_mountroot();
+int (*mountroot)() = nfs_mountroot;
+
+/* We start with transfer sizes of 4K during boot			*/
+/* as the WD8003 has problems to support 8K of back to back packets	*/
+struct nfs_diskless nfs_diskless = {
+	{ 0 },		/* myif */
+	{ 0 },		/* mygateway */
+	{		/* swap_args */
+	    0,		/* addr */
+	    0,		/* sotype */
+	    0,		/* proto */
+	    0,		/* fh */
+	    NFSMNT_WSIZE|NFSMNT_RSIZE,	/* flags */
+	    4096,	/* wsize */
+	    4096,	/* rsize */
+	    0,		/* timeo */
+	    0,		/* retrans */
+	    0		/* hostname */
+	},
+	{ 0 },		/* swap_fh */
+	{ 0 },		/* swap_saddr */
+	{ 0 },		/* swap_hostnam */
+	{		/* root_args */
+	    0,		/* addr */
+	    0,		/* sotype */
+	    0,		/* proto */
+	    0,		/* fh */
+	    NFSMNT_WSIZE|NFSMNT_RSIZE,	/* flags */
+	    4096,	/* wsize */
+	    4096,	/* rsize */
+	    0,		/* timeo */
+	    0,		/* retrans */
+	    0		/* hostname */
+	},
+	{ 0 },		/* root_fh */
+	{ 0 },		/* root_saddr */
+	{ 0 }		/* root_hostnam */
+};

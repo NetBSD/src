@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_bio.c	7.19 (Berkeley) 4/16/91
- *	$Id: nfs_bio.c,v 1.3 1993/06/30 03:35:07 andrew Exp $
+ *	$Id: nfs_bio.c,v 1.4 1993/07/07 12:06:32 cgd Exp $
  */
 
 #include "param.h"
@@ -234,7 +234,8 @@ nfs_write(vp, uio, ioflag, cred)
 	 * Maybe this should be above the vnode op call, but so long as
 	 * file servers have no limits, i don't think it matters
 	 */
-	if (uio->uio_offset + uio->uio_resid >
+	if (p &&
+	    uio->uio_offset + uio->uio_resid >
 	      p->p_rlimit[RLIMIT_FSIZE].rlim_cur) {
 		psignal(p, SIGXFSZ);
 		return (EFBIG);
@@ -259,6 +260,11 @@ nfs_write(vp, uio, ioflag, cred)
 		bn = lbn*(biosize/DEV_BSIZE);
 again:
 		bp = getblk(vp, bn, biosize);
+		if (bp->b_flags&B_ERROR) {
+			error = bp->b_error;
+			brelse(bp);
+			return error;
+		}
 		if (bp->b_wcred == NOCRED) {
 			crhold(cred);
 			bp->b_wcred = cred;

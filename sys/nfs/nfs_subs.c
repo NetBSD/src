@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_subs.c	7.41 (Berkeley) 5/15/91
- *	$Id: nfs_subs.c,v 1.3 1993/05/21 07:38:05 cgd Exp $
+ *	$Id: nfs_subs.c,v 1.4 1993/07/07 12:06:34 cgd Exp $
  */
 
 /*
@@ -120,15 +120,19 @@ struct mbuf *nfsm_reqh(prog, vers, procid, cred, hsiz, bpos, mb, retxid)
 	struct mbuf *m1;
 	char *ap;
 	int asiz, siz;
+	static char authnull[4*NFSX_UNSIGNED];
 
 	NFSMGETHDR(mreq);
-	asiz = ((((cred->cr_ngroups - 1) > numgrps) ? numgrps :
-		  (cred->cr_ngroups - 1)) << 2);
+	if (cred) {
+	    asiz = ((((cred->cr_ngroups - 1) > numgrps) ? numgrps :
+		      (cred->cr_ngroups - 1)) << 2);
 #ifdef FILLINHOST
-	asiz += nfsm_rndup(hostnamelen)+(9*NFSX_UNSIGNED);
+	    asiz += nfsm_rndup(hostnamelen)+(9*NFSX_UNSIGNED);
 #else
-	asiz += 9*NFSX_UNSIGNED;
+	    asiz += 9*NFSX_UNSIGNED;
 #endif
+	} else
+	    asiz = 4 * NFSX_UNSIGNED;
 
 	/* If we need a lot, alloc a cluster ?? */
 	if ((asiz+hsiz+RPC_SIZ) > MHLEN)
@@ -156,7 +160,10 @@ struct mbuf *nfsm_reqh(prog, vers, procid, cred, hsiz, bpos, mb, retxid)
 	*tl++ = procid;
 
 	/* Now we can call nfs_unixauth() and copy it in */
-	ap = nfs_unixauth(cred);
+	if (cred)
+	    ap = nfs_unixauth(cred);
+	else
+	    ap = authnull;
 	m = mreq;
 	siz = m->m_len-RPC_SIZ;
 	if (asiz <= siz) {

@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_vnops.c	7.60 (Berkeley) 5/24/91
- *	$Id: nfs_vnops.c,v 1.6 1993/06/03 01:12:44 cgd Exp $
+ *	$Id: nfs_vnops.c,v 1.7 1993/07/07 12:06:37 cgd Exp $
  */
 
 /*
@@ -337,7 +337,8 @@ nfs_dogetattr(vp, vap, cred, tryhard, p)
 	struct mbuf *mreq, *mrep, *md, *mb, *mb2;
 	
 	/* First look in the cache.. */
-	if (nfs_getattrcache(vp, vap) == 0)
+	/* cred == 0 when we are called by mountroot */
+	if (cred != 0 && nfs_getattrcache(vp, vap) == 0)
 		return (0);
 	nfsstats.rpccnt[NFSPROC_GETATTR]++;
 	nfsm_reqhead(nfs_procids[NFSPROC_GETATTR], cred, NFSX_FH);
@@ -1484,7 +1485,7 @@ nfs_bmap(vp, bn, vpp, bnp)
 	if (vpp != NULL)
 		*vpp = vp;
 	if (bnp != NULL)
-		*bnp = bn * btodb(vp->v_mount->mnt_stat.f_bsize);
+		*bnp = bn * btodb(VFSTONFS(vp->v_mount)->nm_rsize);
 	return (0);
 }
 
