@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.4 2003/10/30 08:25:19 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.5 2003/11/22 17:36:43 tsutsui Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 30, 2003
+.Dd November 23, 2003
 .Dt MAKEDEV 8
 .Os
 .Sh NAME
@@ -287,15 +287,8 @@ Com style serial ports (DraCo, HyperCom) (amiga) On the DraCo, units 0 and 1 are
 UART on first 68901 (formerly mdm01) (atari)
 . It Ar ixpcom
 IXP12x0 COM ports
-. It Ar dca#
-HP200/300 single port serial interface, see
-.Xr \&hp300/dca 4
-. It Ar dcm#
-HP200/300 4 port serial mux interface, see
-.Xr \&hp300/dcm 4
-. It Ar apci#
-HP400 4 port serial mux interface, see
-.Xr \&hp300/apci 4
+. It Ar ttyM?
+HP200/300 4 port serial mux interface (hp300)
 . It Ar ttya
 ``ttya'' system console (luna68k)
 . It Ar ttyb
@@ -345,18 +338,9 @@ UNIBUS DL11 (vax), see
 . El
 .It Terminal multiplexors :
 . Bl -tag -width 0123456789 -compact
-. It Ar apci#
-HP400 4 port serial mux interface, see
-.Xr \&hp300/apci 4
 . It Ar dc#
 4 channel serial interface (keyboard, mouse, modem, printer), see
 .Xr \&pmax/dc 4
-. It Ar dca#
-HP200/300 single port serial interface, see
-.Xr \&hp300/dca 4
-. It Ar dcm#
-HP200/300 4 port serial mux interface, see
-.Xr \&hp300/dcm 4
 . It Ar dh#
 UNIBUS DH11 and emulations (e.g. Able DMAX, Emulex CS-11), see
 .Xr \&vax/dh 4
