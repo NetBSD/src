@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1993/08/02 17:55:52 mycroft Exp $
+#	$Id: Makefile,v 1.7 1993/12/21 22:16:58 davidb Exp $
 
 .include <../../Makefile.inc>
 
@@ -16,11 +16,19 @@ DEPSRCS += astosc.OUT map3270.c mset.c
 
 PROG = mset
 
+.if exists(${.CURDIR}/../tools/mkastosc/obj.${MACHINE})
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj.${MACHINE}/mkastosc
+.elif exists(${.CURDIR}/../tools/mkastosc/obj)
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/obj/mkastosc
+.else
+MKASTOSC=	$(.CURDIR)/../tools/mkastosc/mkastosc
+.endif
+
 astosc.o: astosc.OUT
 CLEANFILES += astosc.OUT astosc.out
 astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
-	    ${.CURDIR}/../ctlr/${KBD} ${.CURDIR}/../tools/mkastosc/obj/mkastosc
-	${.CURDIR}/../tools/mkastosc/obj/mkastosc \
+	    ${.CURDIR}/../ctlr/${KBD} ${MKASTOSC}
+	${MKASTOSC} \
 		${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 		< ${.CURDIR}/../ctlr/${KBD} > ${.TARGET}
 	/bin/rm -f astosc.out
@@ -28,7 +36,7 @@ astosc.OUT: ${.CURDIR}/../ctlr/hostctlr.h ${.CURDIR}/../ctlr/function.h \
 
 # astosc.out
 
-${.CURDIR}/../tools/mkastosc/obj/mkastosc:
+${MKASTOSC}:
 	cd ${.CURDIR}/../tools/mkastosc; make
 
 
