@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.5 2005/02/09 08:19:24 he Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.6 2005/02/17 02:26:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -134,7 +134,7 @@ int dir;
 	struct ip *ip = mtod(*mp, struct ip *);
 	int rv, hlen = ip->ip_hl << 2;
 
-#if __NetBSD_Version >= 200080000
+#if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
 	 * as it's assumed by ipf code.
@@ -204,7 +204,7 @@ int dir;
 	    ifp, (dir == PFIL_OUT), mp));
 }
 # endif
-#endif /* __NetBSD_Version >= 105110000 */
+#endif /* __NetBSD_Version__ >= 105110000 */
 
 
 #if	defined(IPFILTER_LKM)
@@ -1542,7 +1542,7 @@ u_32_t fr_newisn(fin)
 fr_info_t *fin;
 {
 	u_32_t newiss;
-#if __NetBSD_Version >= 105190000	/* 1.5T */
+#if __NetBSD_Version__ >= 105190000	/* 1.5T */
 	size_t asz;
 	
 
