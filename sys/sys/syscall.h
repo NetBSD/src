@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.h,v 1.107 2000/04/17 14:33:12 mrg Exp $	*/
+/*	$NetBSD: syscall.h,v 1.108 2000/04/21 16:16:16 minoura Exp $	*/
 
 /*
  * System call numbers.
@@ -707,4 +707,7 @@
 /* syscall: "lchflags" ret: "int" args: "const char *" "u_long" */
 #define	SYS_lchflags	304
 
-#define	SYS_MAXSYSCALL	305
+/* syscall: "issetugid" ret: "int" args: */
+#define	SYS_issetugid	305
+
+#define	SYS_MAXSYSCALL	306
