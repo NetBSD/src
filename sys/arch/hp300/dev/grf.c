@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: grf.c 1.31 91/01/21
  *	from: @(#)grf.c	7.8 (Berkeley) 5/7/91
- *	$Id: grf.c,v 1.9 1994/05/04 04:05:47 mycroft Exp $
+ *	$Id: grf.c,v 1.10 1994/05/17 10:27:49 cgd Exp $
  */
 
 /*
@@ -644,7 +644,7 @@ grfunmmap(dev, addr, p)
 	if (addr == 0)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
-	rv = vm_deallocate(p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
