@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.4 1998/07/04 22:18:20 jonathan Exp $	*/
+/*	$NetBSD: scr.c,v 1.5 2000/02/12 22:40:12 kristerw Exp $	*/
 
 /*
  * Copyright 1997
@@ -2898,7 +2898,7 @@ static void ATRSM (struct scr_softc * sc,int cmd)
                     }
                     else
                     {
-                        tck = sc->pIoctlOn->atrBuf[0];
+                        tck = 0;
                         for (lc = 1; lc < sc->pIoctlOn->atrLen-1; lc++)
                         {
                             tck ^= sc->pIoctlOn->atrBuf[lc];
