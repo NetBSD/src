@@ -1,5 +1,5 @@
-# $NetBSD: md.sun3,v 1.6 1999/04/19 03:11:34 simonb Exp $
-./etc/fstab.nfs
-./etc/fstab.sd0
-./etc/ld.so.conf
-./etc/ttyaction
+# $NetBSD: md.sun3,v 1.7 2001/01/26 01:39:18 jwise Exp $
+./etc/fstab.nfs		etc-sys-etc
+./etc/fstab.sd0		etc-sys-etc
+./etc/ld.so.conf	etc-sys-etc
+./etc/ttyaction		etc-sys-etc
