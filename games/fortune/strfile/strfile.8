@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfile.8,v 1.5 1999/03/22 18:49:11 garbled Exp $
+.\"	$NetBSD: strfile.8,v 1.6 1999/08/21 07:02:46 simonb Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -115,7 +115,7 @@ unsigned long	str_flags;	/* bit field for flags */
 char str_delim;			/* delimiting character */
 .Ed
 .Pp
-All fields are written in network byte order.
+All fields are written in big-endian byte order.
 .Pp
 The purpose of
 .Nm unstr

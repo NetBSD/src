@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $	*/
+/*	$NetBSD: strfile.c,v 1.9 1999/08/21 07:02:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)strfile.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: strfile.c,v 1.8 1998/09/13 15:27:28 hubertf Exp $");
+__RCSID("$NetBSD: strfile.c,v 1.9 1999/08/21 07:02:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,15 +244,15 @@ main(ac, av)
 	}
 
 	(void) fseek(outf, (off_t) 0, 0);
-	Tbl.str_version = htonl(Tbl.str_version);
-	Tbl.str_numstr = htonl(Num_pts - 1);
-	Tbl.str_longlen = htonl(Tbl.str_longlen);
-	Tbl.str_shortlen = htonl(Tbl.str_shortlen);
-	Tbl.str_flags = htonl(Tbl.str_flags);
+	HTOBE32(Tbl.str_version);
+	Tbl.str_numstr = htobe32(Num_pts - 1);
+	HTOBE32(Tbl.str_longlen);
+	HTOBE32(Tbl.str_shortlen);
+	HTOBE32(Tbl.str_flags);
 	(void) fwrite((char *) &Tbl, sizeof Tbl, 1, outf);
 	if (STORING_PTRS) {
 		for (p = Seekpts, cnt = Num_pts; cnt--; ++p)
-			*p = htonl(*p);
+			HTOBE64(*p);
 		(void) fwrite((char *) Seekpts, sizeof *Seekpts, (int) Num_pts, outf);
 	}
 	(void) fclose(outf);
@@ -334,7 +334,7 @@ add_offset(fp, off)
 	off_t net;
 
 	if (!STORING_PTRS) {
-		net = htonl(off);
+		net = htobe64(off);
 		fwrite(&net, 1, sizeof net, fp);
 	} else {
 		ALLOC(Seekpts, Num_pts + 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: strfile.h,v 1.3 1995/03/23 08:28:49 cgd Exp $	*/
+/*	$NetBSD: strfile.h,v 1.4 1999/08/21 07:02:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,19 +38,22 @@
  *	@(#)strfile.h	8.1 (Berkeley) 5/31/93
  */
 
+#include <sys/types.h>
+#include <sys/endian.h>
+
 #define	STR_ENDSTRING(line,tbl) \
 	((line)[0] == (tbl).str_delim && (line)[1] == '\n')
 
 typedef struct {				/* information table */
 #define	VERSION		1
-	unsigned long	str_version;		/* version number */
-	unsigned long	str_numstr;		/* # of strings in the file */
-	unsigned long	str_longlen;		/* length of longest string */
-	unsigned long	str_shortlen;		/* length of shortest string */
+	u_int32_t	str_version;		/* version number */
+	u_int32_t	str_numstr;		/* # of strings in the file */
+	u_int32_t	str_longlen;		/* length of longest string */
+	u_int32_t	str_shortlen;		/* length of shortest string */
 #define	STR_RANDOM	0x1			/* randomized pointers */
 #define	STR_ORDERED	0x2			/* ordered pointers */
 #define	STR_ROTATED	0x4			/* rot-13'd text */
-	unsigned long	str_flags;		/* bit field for flags */
+	u_int32_t	str_flags;		/* bit field for flags */
 	unsigned char	stuff[4];		/* long aligned space */
 #define	str_delim	stuff[0]		/* delimiting character */
 } STRFILE;
