@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_get_ioperm.2,v 1.12 2002/02/08 01:28:13 ross Exp $
+.\"	$NetBSD: i386_get_ioperm.2,v 1.13 2002/10/01 15:58:38 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,8 +61,7 @@ sets the I/O permission bitmap from the data pointed to by
 This call is restricted to the super-user.
 .Pp
 The permission bitmap contains
-1024
-bits in 32 longwords.
+1024 bits in 32 longwords.
 If bit
 .Va n
 is clear in the bitmap, then access is granted to I/O port
@@ -80,8 +79,7 @@ Upon successful completion,
 and
 .Fn i386_set_ioperm
 return 0.
-Otherwise, a value of -1 is returned and the global
-variable
+Otherwise, a value of -1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
@@ -94,7 +92,8 @@ will fail if:
 .Ar Iomap
 points outside the process's allocated address space.
 .It Bq Er EPERM
-The caller was not the super-user, or the operation was not permitted at the current security level.
+The caller was not the super-user, or the operation was not permitted at
+the current security level.
 .El
 .Sh SEE ALSO
 .Xr i386_iopl 2
@@ -105,7 +104,6 @@ You can really hose your machine if you enable user-level I/O and
 write to hardware ports without care.
 .Sh BUGS
 The bitmap should really cover 65536 bits, but that's just too big for
-allocation in a kernel structure.  If you need access to ports beyond
-1024,
-use
+allocation in a kernel structure.
+If you need access to ports beyond 1024, use
 .Xr i386_iopl 2 .
