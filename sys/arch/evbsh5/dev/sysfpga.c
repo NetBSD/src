@@ -1,4 +1,4 @@
-/*	$NetBSD: sysfpga.c,v 1.4 2002/09/22 20:51:09 scw Exp $	*/
+/*	$NetBSD: sysfpga.c,v 1.5 2002/09/26 20:25:41 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -116,7 +116,7 @@ sysfpgamatch(struct device *parent, struct cfdata *cf, void *args)
 	if (sysfpga_sc)
 		return (0);
 
-	return (cf->cf_driver == &sysfpga_cd);
+	return (1);
 }
 
 /*ARGSUSED*/
