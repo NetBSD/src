@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmon.c,v 1.7.2.1 1997/10/30 07:16:52 mrg Exp $	*/
+/*	$NetBSD: ipmon.c,v 1.7.2.2 1997/11/17 16:27:04 mrg Exp $	*/
 
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
@@ -9,7 +9,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29 1997/10/29 12:14:17 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29.2.3 1997/11/12 10:57:25 darrenr Exp ";
 #endif
 
 #include <stdio.h>
@@ -28,6 +28,7 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29 1997/10/29 12:14:17 darr
 #include <sys/stat.h>
 #include <sys/param.h>
 #include <sys/file.h>
+#include <sys/time.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <sys/socket.h>
@@ -42,18 +43,20 @@ static const char rcsid[] = "@(#)Id: ipmon.c,v 2.0.2.29 1997/10/29 12:14:17 darr
 #include <resolv.h>
 
 #include <sys/uio.h>
-#include <sys/protosw.h>
-#include <sys/user.h>
+#ifndef linux
+# include <sys/protosw.h>
+# include <sys/user.h>
+# include <netinet/ip_var.h>
+#endif
 
-#include <netinet/ip_var.h>
 #include <netinet/tcp.h>
-#include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
 
 #include <ctype.h>
 #include <syslog.h>
 
 #include "netinet/ip_compat.h"
+#include <netinet/tcpip.h>
 #include "netinet/ip_fil.h"
 #include "netinet/ip_proxy.h"
 #include "netinet/ip_nat.h"
@@ -124,7 +127,7 @@ FILE *log;
 	nr = read(fd, buf, bufsize);
 	if (!nr)
 		return 2;
-	if (nr < 0)
+	if ((nr < 0) && (errno != EINTR))
 		return -1;
 	*lenp = nr;
 	return 0;
@@ -146,14 +149,10 @@ struct	in_addr	ip;
 }
 
 
-#ifdef __STDC__
-char	*portname(int res, char *proto, u_short port)
-#else
 char	*portname(res, proto, port)
 int	res;
 char	*proto;
 u_short	port;
-#endif
 {
 	static	char	pname[8];
 	struct	servent	*serv;
@@ -188,11 +187,11 @@ int	len;
 			t = (u_char *)line;
 			*t = '\0';
 		}
-		sprintf(t, "%02x", *s & 0xff);
+		sprintf((char *)t, "%02x", *s & 0xff);
 		t += 2;
 		if (!((j + 1) & 0xf)) {
 			s -= 15;
-			sprintf(t, "        ");
+			sprintf((char *)t, "        ");
 			t += 8;
 			for (k = 16; k; k--, s++)
 				*t++ = (isprint(*s) ? *s : '.');
@@ -209,7 +208,7 @@ int	len;
 			*t++ = ' ';
 			*t++ = ' ';
 		}
-		sprintf(t, "       ");
+		sprintf((char *)t, "       ");
 		t += 7;
 		s -= j & 0xf;
 		for (k = j & 0xf; k; k--, s++)
@@ -401,29 +400,27 @@ int	blen;
 	struct	protoent *pr;
 	struct	tcphdr	*tp;
 	struct	icmp	*ic;
-	struct	ip	*ipc;
 	struct	tm	*tm;
 	char	c[3], pname[8], *t, *proto;
 	u_short	hl, p;
-	int	i, lvl, res;
-#if !(SOLARIS || \
-	(defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
-	(defined(OpenBSD) && (OpenBSD >= 199603)))
-	int	len;
-#endif
-	struct	ip	*ip;
+	int	i, lvl, res, len;
+	ip_t	*ipc, *ip;
 	iplog_t	*ipl;
 	ipflog_t *ipf;
 
 	ipl = (iplog_t *)buf;
 	ipf = (ipflog_t *)((char *)buf + sizeof(*ipl));
-	ip = (struct ip *)((char *)ipf + sizeof(*ipf));
+	ip = (ip_t *)((char *)ipf + sizeof(*ipf));
 	res = (opts & OPT_RESOLVE) ? 1 : 0;
 	t = line;
 	*t = '\0';
 	hl = (ip->ip_hl << 2);
 	p = (u_short)ip->ip_p;
 	tm = localtime((time_t *)&ipl->ipl_sec);
+#ifdef	linux
+	ip->ip_len = ntohs(ip->ip_len);
+#endif
+
 	if (!(opts & OPT_SYSLOG)) {
 		(void) sprintf(t, "%2d/%02d/%4d ",
 			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
@@ -438,18 +435,19 @@ int	blen;
 	}
 #if (SOLARIS || \
 	(defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
-	(defined(OpenBSD) && (OpenBSD >= 199603)))
-	(void) sprintf(t, "%.*s @%hd ", (int)sizeof(ipf->fl_ifname),
-		ipf->fl_ifname, ipf->fl_rule+1);
+	(defined(OpenBSD) && (OpenBSD >= 199603))) || defined(linux)
+	len = (int)sizeof(ipf->fl_ifname);
+	(void) sprintf(t, "%*.*s", len, len, ipf->fl_ifname);
 #else
 	for (len = 0; len < 3; len++)
 		if (!ipf->fl_ifname[len])
 			break;
 	if (ipf->fl_ifname[len])
 		len++;
-	(void) sprintf(t, "%*.*s%u @%hd ", len, len, ipf->fl_ifname,
-		ipf->fl_unit, ipf->fl_rule+1);
+	(void) sprintf(t, "%*.*s%u", len, len, ipf->fl_ifname, ipf->fl_unit);
 #endif
+	t += strlen(t);
+	(void) sprintf(t, " @%hu:%hu ", ipf->fl_group, ipf->fl_rule + 1);
 	pr = getprotobynumber((int)p);
 	if (!pr) {
 		proto = pname;
@@ -581,7 +579,7 @@ int	blen;
 	else
 		(void) fprintf(log, "%s", line);
 	if (opts & OPT_HEXHDR)
-		dumphex(log, buf, sizeof(iplog_t));
+		dumphex(log, (u_char *)buf, sizeof(iplog_t));
 	if (opts & OPT_HEXBODY)
 		dumphex(log, (u_char *)ip, ipf->fl_plen + ipf->fl_hlen);
 }
