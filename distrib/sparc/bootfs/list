@@ -1,0 +1,4 @@
+#	$NetBSD: list,v 1.4 2002/05/09 05:31:14 lukem Exp $
+
+COPY	${DESTDIR}/usr/mdec/boot	boot
+COPY	${OBJDIR}/netbsd.ram.gz		netbsd
