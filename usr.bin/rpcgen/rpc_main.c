@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.17 2000/10/11 14:46:17 is Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.18 2001/02/21 00:11:12 cgd Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.17 2000/10/11 14:46:17 is Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.18 2001/02/21 00:11:12 cgd Exp $");
 #endif
 #endif
 
@@ -169,6 +169,8 @@ main(argc, argv)
 	char   *argv[];
 {
 	struct commandline cmd;
+
+	setprogname(argv[0]);
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
 	clear_args();

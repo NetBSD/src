@@ -1,4 +1,4 @@
-/*	$NetBSD: xinstall.c,v 1.42 2000/10/10 14:30:41 enami Exp $	*/
+/*	$NetBSD: xinstall.c,v 1.43 2001/02/21 00:06:22 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)xinstall.c	8.1 (Berkeley) 7/21/93";
 #else
-__RCSID("$NetBSD: xinstall.c,v 1.42 2000/10/10 14:30:41 enami Exp $");
+__RCSID("$NetBSD: xinstall.c,v 1.43 2001/02/21 00:06:22 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,6 +112,8 @@ main(argc, argv)
 	int ch, no_target;
 	char *p;
 	char *flags = NULL, *to_name, *group = NULL, *owner = NULL;
+
+	setprogname(argv[0]);
 
 	iflags = 0;
 	while ((ch = getopt(argc, argv, "cbB:df:g:l:m:o:prsS:U")) != -1)

@@ -1,4 +1,4 @@
-/* $NetBSD: mdsetimage.c,v 1.12 2001/02/19 23:22:44 cgd Exp $ */
+/* $NetBSD: mdsetimage.c,v 1.13 2001/02/21 00:07:29 cgd Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -42,7 +42,7 @@ __COPYRIGHT(
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: mdsetimage.c,v 1.12 2001/02/19 23:22:44 cgd Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.13 2001/02/21 00:07:29 cgd Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,6 +94,8 @@ main(argc, argv)
 	const char *kfile, *fsfile;
 	char *mappedkfile;
 	int ch, kfd, fsfd, rv;
+
+	setprogname(argv[0]);
 
 	while ((ch = getopt(argc, argv, "T:v")) != -1)
 		switch (ch) {
