@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.27 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: sem.c,v 1.28 2001/09/11 05:11:59 enami Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -638,7 +638,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	 */
 	l = i = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
-	if (l > 1 && *--cp >= 'a' && *cp <= 'a'+maxpartitions &&
+	if (l > 1 && *--cp >= 'a' && *cp < 'a' + maxpartitions &&
 	    isdigit(cp[-1])) {
 		l--;
 		part = *cp - 'a';
