@@ -1,4 +1,4 @@
-/*	$NetBSD: ess.c,v 1.30 1999/02/17 02:37:39 mycroft Exp $	*/
+/*	$NetBSD: ess.c,v 1.31 1999/02/20 23:28:37 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -922,13 +922,15 @@ ess_close(addr)
 
         DPRINTF(("ess_close: sc=%p\n", sc));
 
-	sc->sc_open = 0;
 	ess_speaker_off(sc);
 	sc->spkr_state = SPKR_OFF;
+
 	ess_halt_output(sc);
 	ess_halt_input(sc);
+
 	sc->sc_in.intr = 0;
 	sc->sc_out.intr = 0;
+	sc->sc_open = 0;
 
 	DPRINTF(("ess_close: closed\n"));
 }
@@ -1301,8 +1303,13 @@ ess_halt_output(addr)
 
 	DPRINTF(("ess_halt_output: sc=%p\n", sc));
 
-	ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
-	    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+	if (sc->sc_out.active) {
+		ess_clear_mreg_bits(sc, ESS_MREG_AUDIO2_CTRL1,
+		    ESS_AUDIO2_CTRL1_DAC_ENABLE |
+		    ESS_AUDIO2_CTRL1_FIFO_ENABLE);
+		isa_dmaabort(sc->sc_ic, sc->sc_out.drq);
+		sc->sc_out.active = 0;
+	}
 
 	return (0);
 }
@@ -1315,8 +1322,13 @@ ess_halt_input(addr)
 
 	DPRINTF(("ess_halt_input: sc=%p\n", sc));
 
-	ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
-	    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
+	if (sc->sc_in.active) {
+		ess_clear_xreg_bits(sc, ESS_XCMD_AUDIO1_CTRL2,
+		    ESS_AUDIO1_CTRL2_ADC_ENABLE |
+		    ESS_AUDIO1_CTRL2_FIFO_ENABLE);
+		isa_dmaabort(sc->sc_ic, sc->sc_in.drq);
+		sc->sc_in.active = 0;
+	}
 
 	return (0);
 }
@@ -1861,16 +1873,8 @@ ess_reset(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	sc->sc_in.intr = 0;
-	if (sc->sc_in.active) {
-		isa_dmaabort(sc->sc_ic, sc->sc_in.drq);
-		sc->sc_in.active = 0;
-	}
 
 	sc->sc_out.intr = 0;
-	if (sc->sc_out.active) {
-		isa_dmaabort(sc->sc_ic, sc->sc_out.drq);
-		sc->sc_out.active = 0;
-	}
 
 	EWRITE1(iot, ioh, ESS_DSP_RESET, ESS_RESET_EXT);
 	delay(10000);
