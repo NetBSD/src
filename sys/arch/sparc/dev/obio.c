@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.13 1995/04/10 16:48:34 mycroft Exp $	*/
+/*	$NetBSD: obio.c,v 1.14 1995/04/25 19:59:49 pk Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -70,7 +70,7 @@ struct cfdriver vmescd = { NULL, "vmes", busmatch, vmesattach,
 	DV_DULL, sizeof(struct bus_softc)
 };
 
-static void	busattach __P((struct device *, struct device *, void *, int));
+static int	busattach __P((struct device *, void *, void *, int));
 
 void *		bus_map __P((void *, int, int));
 void *		bus_tmp __P((void *, int));
@@ -107,91 +107,86 @@ busprint(args, obio)
 	return (UNCONF);
 }
 
-void
-busattach(parent, self, args, bustype)
-	struct device *parent, *self;
-	void *args;
+
+int
+busattach(parent, child, args, bustype)
+	struct device *parent;
+	void *args, *child;
 	int bustype;
 {
-	register struct bus_softc *sc = (struct bus_softc *)self;
-	extern struct cfdata cfdata[];
+	struct cfdata *cf = child;
+	register struct bus_softc *sc = (struct bus_softc *)parent;
 	register struct confargs *ca = args;
 	struct confargs oca;
-	register short *p;
-	struct cfdata *cf;
 	caddr_t tmp;
 
-	if (sc->sc_dev.dv_unit > 0) {
-		printf(" unsupported\n");
-		return;
+	if (bustype == BUS_OBIO && cputyp == CPU_SUN4) {
+		/*
+		 * On the 4/100 obio addresses must be mapped at
+		 * 0x0YYYYYYY, but alias higher up (we avoid the
+		 * alias condition because it causes pmap difficulties)
+		 * XXX: We also assume that 4/[23]00 obio addresses
+		 * must be 0xZYYYYYYY, where (Z != 0)
+		 */
+		if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
+			return 0;
+		if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
+			return 0;
 	}
 
-	printf("\n");
-
-	for (cf = cfdata; cf->cf_driver; cf++) {
-		if (cf->cf_fstate == FSTATE_FOUND)
-			continue;
-		if (bustype == BUS_OBIO && cputyp == CPU_SUN4) {
-			/*
-			 * On the 4/100 obio addresses must be mapped at
-			 * 0x0YYYYYYY, but alias higher up (we avoid the
-			 * alias condition because it causes pmap difficulties)
-			 * XXX: We also assume that 4/[23]00 obio addresses
-			 * must be 0xZYYYYYYY, where (Z != 0)
-			 */
-			if (cpumod==SUN4_100 && (cf->cf_loc[0] & 0xf0000000))
-				continue;
-			if (cpumod!=SUN4_100 && !(cf->cf_loc[0] & 0xf0000000))
-				continue;
-		}
-		for (p = cf->cf_parents; *p >= 0; p++)
-			if (self->dv_cfdata == &cfdata[*p]) {
-				oca.ca_ra.ra_iospace = -1;
-				oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
-				oca.ca_ra.ra_len = 0;
-				oca.ca_ra.ra_nreg = 1;
-				tmp = NULL;
-				if (oca.ca_ra.ra_paddr != (void *)-1)
-					tmp = bus_tmp(oca.ca_ra.ra_paddr,
-					    bustype);
-				oca.ca_ra.ra_vaddr = tmp;
-				oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
-				if (bustype == BUS_VME16 || bustype == BUS_VME32)
-					oca.ca_ra.ra_intr[0].int_vec = cf->cf_loc[2];
-				else
-					oca.ca_ra.ra_intr[0].int_vec = -1;
-				oca.ca_ra.ra_nintr = 1;
-				oca.ca_ra.ra_name = cf->cf_driver->cd_name;
-				if (ca->ca_ra.ra_bp != NULL &&
-				    strcmp(ca->ca_ra.ra_bp->name, "sbus") == 0)
-					oca.ca_ra.ra_bp = ca->ca_ra.ra_bp + 1;
-				else
-					oca.ca_ra.ra_bp = NULL;
-				oca.ca_bustype = bustype;
-
-				if ((*cf->cf_driver->cd_match)(self, cf, &oca) == 0)
-					continue;
-
-				/*
-				 * check if XXmatch routine replaced the
-				 * temporary mapping with a real mapping.
-				 */
-				if (tmp == oca.ca_ra.ra_vaddr)
-					oca.ca_ra.ra_vaddr = NULL;
-				/*
-				 * or if it has asked us to create a mapping..
-				 * (which won't be seen on future XXmatch calls,
-				 * so not as useful as it seems.)
-				 */
-				if (oca.ca_ra.ra_len)
-					oca.ca_ra.ra_vaddr =
-					    bus_map(oca.ca_ra.ra_paddr,
-					    oca.ca_ra.ra_len, oca.ca_bustype);
-			
-				config_attach(self, cf, &oca, busprint);
-			}
+	if (parent->dv_cfdata->cf_driver->cd_indirect) {
+		printf(" indirect devices not supported\n");
+		return 0;
 	}
-	bus_untmp();
+
+	oca.ca_ra.ra_iospace = -1;
+	oca.ca_ra.ra_paddr = (void *)cf->cf_loc[0];
+	oca.ca_ra.ra_len = 0;
+	oca.ca_ra.ra_nreg = 1;
+	tmp = NULL;
+	if (oca.ca_ra.ra_paddr)
+		tmp = bus_tmp(oca.ca_ra.ra_paddr,
+		    bustype);
+	oca.ca_ra.ra_vaddr = tmp;
+	oca.ca_ra.ra_intr[0].int_pri = cf->cf_loc[1];
+	if (bustype == BUS_VME16 || bustype == BUS_VME32)
+		oca.ca_ra.ra_intr[0].int_vec = cf->cf_loc[2];
+	else
+		oca.ca_ra.ra_intr[0].int_vec = -1;
+	oca.ca_ra.ra_nintr = 1;
+	oca.ca_ra.ra_name = cf->cf_driver->cd_name;
+	oca.ca_ra.ra_bp = ca->ca_ra.ra_bp;
+	oca.ca_bustype = bustype;
+
+	if ((*cf->cf_driver->cd_match)(parent, cf, &oca) == 0)
+		return 0;
+
+	/*
+	 * check if XXmatch routine replaced the
+	 * temporary mapping with a real mapping.
+	 */
+	if (tmp == oca.ca_ra.ra_vaddr)
+		oca.ca_ra.ra_vaddr = NULL;
+	/*
+	 * or if it has asked us to create a mapping..
+	 * (which won't be seen on future XXmatch calls,
+	 * so not as useful as it seems.)
+	 */
+	if (oca.ca_ra.ra_len)
+		oca.ca_ra.ra_vaddr =
+		    bus_map(oca.ca_ra.ra_paddr,
+		    oca.ca_ra.ra_len, oca.ca_bustype);
+
+	config_attach(parent, cf, &oca, busprint);
+	return 1;
+}
+
+int
+obio_scan(parent, child, args)
+	struct device *parent;
+	void *child, *args;
+{
+	return busattach(parent, child, args, BUS_OBIO);
 }
 
 void
@@ -199,22 +194,52 @@ obioattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
-	busattach(parent, self, args, BUS_OBIO);
+	if (self->dv_unit > 0) {
+		printf(" unsupported\n");
+		return;
+	}
+	printf("\n");
+
+	(void)config_search(obio_scan, self, args);
+	bus_untmp();
 }
 
 struct intrhand **vmeints;
+
+int
+vmes_scan(parent, child, args)
+	struct device *parent;
+	void *child, *args;
+{
+	return busattach(parent, child, args, BUS_VME16);
+}
 
 void
 vmesattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+	if (self->dv_unit > 0) {
+		printf(" unsupported\n");
+		return;
+	}
+	printf("\n");
+
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
 		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
 		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
-	busattach(parent, self, args, BUS_VME16);
+	(void)config_search(vmes_scan, self, args);
+	bus_untmp();
+}
+
+int
+vmel_scan(parent, child, args)
+	struct device *parent;
+	void *child, *args;
+{
+	return busattach(parent, child, args, BUS_VME32);
 }
 
 void
@@ -222,12 +247,19 @@ vmelattach(parent, self, args)
 	struct device *parent, *self;
 	void *args;
 {
+	if (self->dv_unit > 0) {
+		printf(" unsupported\n");
+		return;
+	}
+	printf("\n");
+
 	if (vmeints == NULL) {
 		vmeints = (struct intrhand **)malloc(256 *
 		    sizeof(struct intrhand *), M_TEMP, M_NOWAIT);
 		bzero(vmeints, 256 * sizeof(struct intrhand *));
 	}
-	busattach(parent, self, args, BUS_VME32);
+	(void)config_search(vmel_scan, self, args);
+	bus_untmp();
 }
 
 int pil_to_vme[] = {
