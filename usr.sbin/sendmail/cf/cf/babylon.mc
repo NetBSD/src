@@ -45,7 +45,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD')
+VERSIONID(`$NetBSD: babylon.mc,v 1.2 1998/05/12 00:43:08 thorpej Exp $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
