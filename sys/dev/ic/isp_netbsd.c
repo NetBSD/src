@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.45 2001/07/06 16:17:17 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.46 2001/07/07 01:44:21 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -350,6 +350,7 @@ ispcmd(struct ispsoftc *isp, XS_T *xs)
 			isp->isp_osinfo.threadwork = 0;
 			isp->isp_osinfo.blocked =
 			    isp->isp_osinfo.paused = 0;
+			if (wasblocked) {
 				scsipi_channel_thaw(&isp->isp_chanA, 1);
 			}
 		}
