@@ -3069,8 +3069,9 @@ alpha_initialize_trampoline (tramp, fnaddr, cxt, fnofs, cxtofs, jmpofs)
     }
 
 #ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-		     0, VOIDmode, 1, tramp, Pmode);
+  if (flag_hosted)
+    emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+		       0, VOIDmode, 1, tramp, Pmode);
 #endif
 
   if (jmpofs >= 0)

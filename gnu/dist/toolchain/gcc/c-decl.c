@@ -490,10 +490,6 @@ int flag_traditional;
 
 int flag_isoc9x = 0;
 
-/* Nonzero means that we have builtin functions, and main is an int */
-
-int flag_hosted = 1;
-
 /* Nonzero means to allow single precision math even if we're generally
    being traditional.  */
 int flag_allow_single_precision = 0;

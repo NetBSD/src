@@ -522,6 +522,10 @@ extern int g_switch_set;
 
 extern int inline_max_insns;
 
+/* Nonzero means environment is hosted (i.e., not freestanding) */
+
+extern int flag_hosted;
+
 /* Nonzero if we dump in VCG format, not plain text.  */
 extern int dump_for_graph;
 

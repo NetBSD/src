@@ -313,6 +313,13 @@ int mach_dep_reorg_dump = 0;
 #endif
 enum graph_dump_types graph_dump_format;
 
+/* Nonzero if we're in a hosted environment.  For C, that means that
+   we have built-in functions, and main is an int.  This also affects
+   whether or not we attempt to e.g. enable stack execution for
+   trampolines.  */
+
+int flag_hosted = 1;
+
 /* Name for output file of assembly code, specified with -o.  */
 
 char *asm_file_name;

@@ -5671,8 +5671,9 @@ sparc_initialize_trampoline (tramp, fnaddr, cxt)
     JMPL r+i,d = 10dd ddd1 1100 0rrr rr1i iiii iiii iiii
    */
 #ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-                     0, VOIDmode, 1, tramp, Pmode);
+  if (flag_hosted)
+    emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+                       0, VOIDmode, 1, tramp, Pmode);
 #endif
 
   emit_move_insn (gen_rtx_MEM (SImode, plus_constant (tramp, 0)),
@@ -5718,8 +5719,9 @@ sparc64_initialize_trampoline (tramp, fnaddr, cxt)
      rtx tramp, fnaddr, cxt;
 {
 #ifdef TRANSFER_FROM_TRAMPOLINE
-  emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
-                     0, VOIDmode, 1, tramp, Pmode);
+  if (flag_hosted)
+    emit_library_call (gen_rtx (SYMBOL_REF, Pmode, "__enable_execute_stack"),
+                       0, VOIDmode, 1, tramp, Pmode);
 #endif
 
   /*
