@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.363 2000/08/01 08:16:54 augustss Exp $
+#	$NetBSD: GENERIC,v 1.364 2000/08/04 11:51:37 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.363 $"
+#ident 		"GENERIC-$Revision: 1.364 $"
 
 maxusers	32		# estimated number of users
 
@@ -146,6 +146,7 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fullsome Pnp BIOS debugging messages
+
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
 #
@@ -759,8 +760,8 @@ mpu*	at sb?
 mpu*	at ym?
 
 # MIDI support
-#midi*	at cms?			# Creative Music System
 midi*	at clcs?		# Cirrus Logic CS4280 MIDI port
+#midi*	at cms?			# Creative Music System
 midi*	at eap?			# 137[01] MIDI port
 midi*	at mpu?			# MPU 401
 midi*	at opl?			# OPL FM synth
