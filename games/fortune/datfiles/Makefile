@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.2 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.8 1994/01/04 21:40:31 pk Exp $
+#	$Id: Makefile,v 1.9 1994/01/24 18:46:59 cgd Exp $
 
 #
 # set `OBSCENE' to "real" to have obscene fortunes installed,
@@ -15,7 +15,7 @@ DATFILES= ${NORMDAT} ${OBSDAT}
 CLEANFILES+=${DATFILES}
 
 STRFILE!=cd $(.CURDIR)/../strfile; \
-	printf "xxx:\n\techo \$${.OBJDIR}/strfile\n" | make -r -s -f - xxx
+	printf "xxx:\n\techo \$${.OBJDIR}/strfile\n" | ${MAKE} -r -s -f - xxx
 
 all: ${DATFILES}
 
