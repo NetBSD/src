@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.31 2000/07/20 13:10:04 rh Exp $
+.\"	$NetBSD: packages.7,v 1.32 2000/07/21 06:38:27 rh Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -578,15 +578,11 @@ and
 targets),
 and also sets PATCH_DEBUG as well.
 .It REINSTALL
-Use
-.Dq reinstall
-instead of
+During update, deinstall each package before calling
 .Sq ${DEPENDS_TARGET}
-as installation target for updating packages (see the
+(see the
 .Dq update
-target).  Also leave out the
-.Dq clean
-target when traversing package directories.
+target for more information).
 .El
 .Sh INSTALL VARIABLES
 This section documents variables that serve as convenient aliases.
