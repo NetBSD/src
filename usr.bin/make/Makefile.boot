@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.boot,v 1.6 1996/08/13 16:40:31 christos Exp $
+#	$NetBSD: Makefile.boot,v 1.7 1996/08/30 17:59:37 thorpej Exp $
+#
 # a very simple makefile...
-#	$Id: Makefile.boot,v 1.6 1996/08/13 16:40:31 christos Exp $
 #
 # You only want to use this if you aren't running NetBSD.
 #
