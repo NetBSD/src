@@ -1,4 +1,4 @@
-/*	$NetBSD: open.c,v 1.5 1994/10/26 05:44:57 cgd Exp $	*/
+/*	$NetBSD: open.c,v 1.6 1995/04/22 13:57:03 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -73,7 +73,7 @@ struct open_file files[SOPEN_MAX];
 
 int
 open(fname, mode)
-	char *fname;
+	const char *fname;
 	int mode;
 {
 	register struct open_file *f;
