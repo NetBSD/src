@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.12 2001/02/19 23:03:49 cgd Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.13 2001/04/07 21:03:41 tshiozak Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -243,6 +243,7 @@ send_sysex(p, l)
 		memcpy(&event.arr[2], p, n);
 		send_event(&event);
 		l -= n;
+		p += n;
 	} while (l > 0);
 }
 
