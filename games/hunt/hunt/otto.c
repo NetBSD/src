@@ -1,4 +1,4 @@
-/*	$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $	*/
+/*	$NetBSD: otto.c,v 1.3 1999/04/18 03:29:01 simonb Exp $	*/
 # ifdef OTTO
 /*
  *	otto	- a hunt otto-matic player
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $");
+__RCSID("$NetBSD: otto.c,v 1.3 1999/04/18 03:29:01 simonb Exp $");
 #endif /* not lint */
 
 # include	<sys/time.h>
@@ -41,11 +41,7 @@ __RCSID("$NetBSD: otto.c,v 1.2 1997/10/10 16:32:39 lukem Exp $");
 extern	char	screen[SCREEN_HEIGHT][SCREEN_WIDTH2];
 # define	SCREEN(y, x)	screen[y][x]
 # else
-# if defined(BSD_RELEASE) && BSD_RELEASE >= 44
-# define	SCREEN(y, x)	stdscr->lines[y]->line[x].ch
-# else
-# define	SCREEN(y, x)	stdscr->_y[y][x]
-# endif
+# define	SCREEN(y, x)	mvinch(y, x)
 # endif
 
 # ifndef DEBUG
