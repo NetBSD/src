@@ -59,6 +59,14 @@ MAN+=	BIO_ctrl.3 BIO_f_base64.3 BIO_f_buffer.3 BIO_f_cipher.3 BIO_f_md.3 \
 	openssl_lhash.3 openssl_md5.3 openssl_mdc2.3 openssl_rand.3 \
 	openssl_rc4.3 openssl_ripemd.3 openssl_rsa.3 openssl_sha.3 \
 	openssl_threads.3 ssl.3
+MAN+=	SSL_COMP_add_compression_method.3 SSL_CTX_ctrl.3 \
+	SSL_CTX_set_cert_store.3 SSL_CTX_set_cert_verify_callback.3 \
+	SSL_CTX_set_client_cert_cb.3 SSL_CTX_set_info_callback.3 \
+	SSL_CTX_set_quiet_shutdown.3 SSL_CTX_set_tmp_dh_callback.3 \
+	SSL_CTX_set_tmp_rsa_callback.3 SSL_alert_type_string.3 \
+	SSL_get_SSL_CTX.3 SSL_get_default_timeout.3 \
+	SSL_rstate_string.3 SSL_session_reused.3 SSL_state_string.3 \
+	SSL_want.3
 
 MAN+=	openssl.cnf.5
 
