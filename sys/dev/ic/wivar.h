@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.17 2002/08/11 06:13:54 thorpej Exp $	*/
+/*	$NetBSD: wivar.h,v 1.18 2002/08/11 21:50:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -92,7 +92,6 @@ struct wi_softc	{
 
 	u_int16_t		wi_txbuf[1596 / 2];
 	int                     wi_use_wep;
-	int			wi_authmode;
 	int                     wi_tx_key;
 	struct wi_ltv_keys      wi_keys;
 	struct wi_counters	wi_stats;
