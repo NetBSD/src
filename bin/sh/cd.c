@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.20 1997/01/11 02:04:28 tls Exp $	*/
+/*	$NetBSD: cd.c,v 1.21 1997/03/07 21:36:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: cd.c,v 1.20 1997/01/11 02:04:28 tls Exp $";
+static char rcsid[] = "$NetBSD: cd.c,v 1.21 1997/03/07 21:36:19 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -278,6 +278,7 @@ updatepwd(dir)
 		ckfree(prevdir);
 	prevdir = curdir;
 	curdir = savestr(stackblock());
+	setvar("PWD", curdir, VEXPORT|VTEXTFIXED);
 	INTON;
 }
 
@@ -323,8 +324,20 @@ getpwd()
 	 * /bin/pwd.
 	 */
 #if defined(__NetBSD__) || defined(__svr4__)
-	if (getcwd(buf, sizeof(buf)) == NULL)
+		
+	if (getcwd(buf, sizeof(buf)) == NULL) {
+		char *pwd = getenv("PWD");
+		struct stat stdot, stpwd;
+
+		if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&
+		    stat(pwd, &stpwd) != -1 &&
+		    stdot.st_dev == stpwd.st_dev &&
+		    stdot.st_ino == stpwd.st_ino) {
+			curdir = savestr(pwd);
+			return;
+		}
 		error("getcwd() failed: %s", strerror(errno));
+	}
 	curdir = savestr(buf);
 #else
 	{
