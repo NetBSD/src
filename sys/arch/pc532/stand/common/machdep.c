@@ -1,6 +1,6 @@
-/*	$NetBSD: machdep.c,v 1.2 1998/09/12 19:15:00 matthias Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 1999/05/03 09:19:29 matthias Exp $	*/
 
-/* 
+/*
  * Copyright (c) 1994 Philip L. Budne.
  * All rights reserved.
  *
@@ -90,13 +90,15 @@ machdep_start(entry, howto, loadaddr, ssym, esym)
 	extern u_int opendev;
 
 	load = (char *)((long)entry & 0x00ffff00);
+	/* /sys/lib/libsa/exec.c subtracts loadaddr from esym??? */
+	esym += (u_long)loadaddr;
 
 	if (load != loadaddr) {
 		memcpy(load, loadaddr, esym - loadaddr);
 		ssym += loadaddr - load;
 		esym += loadaddr - load;
 	}
-	entry = (char *)((long)entry & 0xffffff);
+	entry = (char *)((u_long)entry & 0xffffff);
 
 	printf("\n");
 
