@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.49 2001/09/08 01:29:07 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.50 2002/01/21 15:40:55 lukem Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -32,7 +32,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 17, 2001
+.Dd January 22, 2001
 .Dt RC.CONF 5
 .Os
 .\" turn off hyphenation
@@ -81,16 +81,40 @@ values, a warning will be printed.
 .Ss Overall control
 .Bl -tag -width net_interfaces
 .It Sy rc_configured
-If this is not set to
+.Sq YES
+or
+.Sq NO .
+If not set to
 .Sq YES
 then the system will drop into single-user mode during boot.
+.It Sy rc_fast_and_loose
+.Sq YES
+or
+.Sq NO .
+If set to
+.Sq YES ,
+each script in
+.Pa /etc/rc.d
+will be executed in the current shell rather than a sub shell.
+This may be faster on slow machines that have an expensive
+.Xr fork 2
+operation.
+.Bl -hang
+.It Em Note:
+Use this at your own risk!
+A rogue command or script may inadvertently prevent boot to multiuser.
+.El
 .It Sy do_rcshutdown
+.Sq YES
+or
+.Sq NO .
 If set to
 .Sq NO ,
 .Xr shutdown 8
 will not run
 .Pa /etc/rc.shutdown .
 .It Sy rcshutdown_timeout
+A number.
 If non-blank, use this as the number of seconds to run a watchdog timer for
 which will terminate
 .Pa /etc/rc.shutdown
@@ -99,25 +123,29 @@ if the timer expires before the shutdown script completes.
 .Ss Basic network configuration
 .Bl -tag -width net_interfaces
 .It Sy hostname
+A string.
 Name of host.
 If empty or not set, then the contents of
 .Pa /etc/myname
 (if it exists) are used.
+.It Sy defaultroute
+A string.
+Default network route.
+If empty or not set, then the contents of
+.Pa /etc/mygate
+(if it exists) are used.
 .It Sy domainname
+A string.
 .Tn NIS
 (YP) domain of host.
 If empty or not set, then the contents of
 .Pa /etc/defaultdomain
 (if it exists) are used.
-.It Sy defaultroute
-Default network route.
-If empty or not set, then the contents of
-.Pa /etc/mygate
-(if it exists) are used.
 .El
 .Ss Boottime file-system and swap configuration
 .Bl -tag -width net_interfaces
 .It Sy critical_filesystems_beforenet
+A string.
 File systems mounted very early in the system boot before networking
 services are available.
 Usually
@@ -126,17 +154,21 @@ is part of this, because it is needed by services such as
 .Xr dhclient 8
 which may be required to get the network operational.
 .It Sy critical_filesystems
+A string.
 File systems such as
 .Pa /usr
 that may require network services to be available to mount,
 that must be available early in the system boot for general services to use.
 .It Sy no_swap
+.Sq YES
+or
+.Sq NO .
 Set the
 .Sy no_swap
 variable to
 .Sq YES
 if you have configured your system with no swap on purpose.
-If not set, or set to anything other than
+If not set to
 .Sq YES ,
 and no swap devices
 are configured, the system will warn you.
@@ -200,6 +232,8 @@ or
 Run
 .Nm newsyslog
 to trim logfiles before syslogd starts.  Intended for laptop users.
+Passes
+.Sy newsyslog_flags .
 .El
 .Ss System security setting
 .Bl -tag -width net_interfaces
@@ -226,6 +260,9 @@ at network boot time, before any interfaces are configured.
 See
 .Xr ipf.conf 5 .
 .It Sy ipnat
+.Sq YES
+or
+.Sq NO .
 Runs
 .Xr ipnat 8
 to load in the IP network address translation (NAT) rules from
@@ -253,6 +290,13 @@ to read
 packet log information and log it to a file or the system log.
 Passes
 .Sy ipmon_flags .
+.It Sy racoon
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr racoon 8 ,
+the IKE (ISAKMP/Oakley) key management daemon.
 .It Sy auto_ifconfig
 .Sq YES
 or
@@ -266,6 +310,7 @@ with the
 flag and suppresses warnings about interfaces in this list that
 do not have an ifconfig file or variable.
 .It Sy net_interfaces
+A string.
 The list of network interfaces to be configured at boot time.
 For each interface "xxN", the system first looks for ifconfig
 parameters in
@@ -283,6 +328,7 @@ Refer to
 for more details on
 .Pa /etc/ifconfig.xxN .
 .It Sy ifaliases_*
+A string.
 List of
 .Sq Em "address netmask"
 pairs to configure additional network addresses for the given
@@ -365,14 +411,17 @@ If
 .Sy ntpdate_hosts
 is empty, it will attempt to find a list of hosts in
 .Pa /etc/ntp.conf .
+Passes
+.Sy ntpdate_flags .
 .It Sy ppp_peers
+A string.
 If
 .Sy ppp_peers
 is not empty, then
-.Pa /etc/netstart
+.Pa /etc/rc.d/ppp
 will check each word in
 .Sy ppp_peers
-for a coresponding ppp configuration file in
+for a corresponding ppp configuration file in
 .Pa /etc/ppp/peers
 and will call
 .Xr pppd 8
@@ -380,6 +429,7 @@ with the
 .Dq call Sy peer
 option.
 .It Sy ip6mode
+A string.
 An IPv6 node can be a router
 .Pq nodes that forward packet for others
 or host
@@ -426,6 +476,20 @@ Passes
 This is only for autoconfigured IPv6 host, so set
 .Sy ip6mode
 to autohost if you use it.
+.It Sy ifwatchd
+.Sq YES
+or
+.Sq NO .
+Monitor dynamic interfaces and perform actions upon address changes.
+Passes
+.Sy ifwatchd_flags .
+.It Sy altq
+.Sq YES
+or
+.Sq NO .
+ALTQ configuration/monitoring daemon.
+Passes
+.Sy altqd_flags .
 .El
 .Ss Daemons required by other daemons
 .Bl -tag -width net_interfaces
@@ -459,6 +523,8 @@ These include NFS,
 .Xr rusersd 8 ,
 and
 .Xr rwalld 8 .
+Passes
+.Sy rpcbind_flags .
 .El
 .Ss Commonly used daemons
 .Bl -tag -width net_interfaces
@@ -484,6 +550,23 @@ Runs
 .Xr named 8
 and passes
 .Sy named_flags .
+.It Sy named_chrootdir
+A string.
+If non-blank and
+.Sy named
+is
+.Sq YES ,
+run
+.Xr named 8
+as the unprivileged user and group
+.Sq named ,
+.Xr chroot 2 Ns ed
+to
+.Sy named_chrootdir .
+.Pa Sy named_chrootdir Ns /var/run/log
+will be added to the list of log sockets that
+.Xr syslogd 8
+listens to.
 .It Sy timed
 .Sq YES
 or
@@ -511,6 +594,23 @@ Runs
 .Xr ntpd 8
 and passes
 .Sy ntpd_flags .
+.It Sy ntpd_chrootdir
+A string.
+If non-blank and
+.Sy ntpd
+is
+.Sq YES ,
+run
+.Xr ntpd 8
+as the unprivileged user and group
+.Sq ntpd ,
+.Xr chroot 2 Ns ed
+to
+.Sy ntpd_chrootdir .
+.Pa Sy ntpd_chrootdir Ns /var/run/log
+will be added to the list of log sockets that
+.Xr syslogd 8
+listens to.
 .It Sy sendmail
 .Sq YES
 or
@@ -675,6 +775,15 @@ and other
 machines.
 Passes
 .Sy mopd_flags .
+.It Sy ndbootd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr ndbootd 8 ,
+the Sun Network Disk (ND) Protocol server.
+Passes
+.Sy ndbootd_flags .
 .It Sy rtadvd
 .Sq YES
 or
@@ -784,11 +893,11 @@ or
 .Sq NO .
 Runs
 .Xr rpc.lockd 8
-if either
+if
 .Sy nfs_server
-or
+and/or
 .Sy nfs_client
-is (or both are) set to
+are set to
 .Sq YES .
 Passes
 .Sy lockd_flags .
@@ -800,11 +909,11 @@ Runs
 .Xr rpc.statd 8 ,
 a status monitoring daemon used when
 .Xr rpc.lockd 8
-is running, if either
+is running, if
 .Sy nfs_server
-or
+and/or
 .Sy nfs_client
-is (or both are) set to
+are set to
 .Sq YES .
 Passes
 .Sy statd_flags .
@@ -819,6 +928,7 @@ whenever a file or directory within that filesystem is accessed.
 Passes
 .Sy amd_flags .
 .It Sy amd_dir
+A string.
 The
 .Xr amd 8
 mount directory.
@@ -829,6 +939,36 @@ is set to
 .El
 .Ss Other daemons
 .Bl -tag -width net_interfaces
+.It Sy kdc
+.Sq YES
+or
+.Sq NO .
+Runs the
+.Xr kdc 8
+Kerberos v4 and v5 server.
+This should be run on Kerberos master and slave servers.
+.It Sy isdnd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr isdnd 8 ,
+the isdn4bsd ISDN connection management daemon.
+Passes
+.Sy isdnd_flags .
+.It Sy isdn_autoupdown
+.Sq YES
+or
+.Sq NO .
+Set all configured ISDN interfaces to
+.Dq up .
+If
+.Sy isdn_interfaces
+is not blank, only the listed interfaces will be modified.
+Used only if
+.Sy isdnd
+is set to
+.Sq YES .
 .It Sy rwhod
 .Sq YES
 or
@@ -840,14 +980,6 @@ to support the
 and
 .Xr ruptime 1
 commands.
-.It Sy kdc
-.Sq YES
-or
-.Sq NO .
-Runs the
-.Xr kdc 8
-Kerberos v4 and v5 server.
-This should be run on Kerberos master and slave servers.
 .El
 .Ss Hardware daemons
 .Bl -tag -width net_interfaces
@@ -859,6 +991,17 @@ Runs
 .Xr apmd 8
 and passes
 .Sy apmd_flags .
+.It Sy poffd
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr poffd 8
+x68k shutdown daemon
+(only for
+.Nx x86k ) .
+Passes
+.Sy poffd_flags .
 .It Sy screenblank
 .Sq YES
 or
@@ -867,6 +1010,15 @@ Runs
 .Xr screenblank 1
 and passes
 .Sy screenblank_flags .
+.It Sy moused
+.Sq YES
+or
+.Sq NO .
+Runs
+.Xr moused 8 ,
+to pass serial mouse data to the wscons mouse mux.
+Passes
+.Sy moused_flags .
 .It Sy wscons
 .Sq YES
 or
