@@ -1,4 +1,4 @@
-/*	$NetBSD: qec.c,v 1.15 2001/11/15 09:48:15 lukem Exp $ */
+/*	$NetBSD: qec.c,v 1.16 2001/12/04 17:56:36 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.15 2001/11/15 09:48:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qec.c,v 1.16 2001/12/04 17:56:36 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,7 +210,7 @@ qecattach(parent, self, aux)
 	/*
 	 * Save interrupt information for use in our qec_intr_establish()
 	 * function below. Apparently, the intr level for the quad
-	 * ethernet board (qe) is stored in the QEC node rather then
+	 * ethernet board (qe) is stored in the QEC node rather than
 	 * separately in each of the QE nodes.
 	 *
 	 * XXX - qe.c should call bus_intr_establish() with `level = 0'..

@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_output.c,v 1.7 2001/11/13 00:12:57 lukem Exp $	*/
+/*	$NetBSD: llc_output.c,v 1.8 2001/12/04 17:56:37 wiz Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.7 2001/11/13 00:12:57 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_output.c,v 1.8 2001/12/04 17:56:37 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,7 +252,7 @@ llc_rawsend(linkp, m, frame, frame_kind, vs, cmdrsp, pollfinal)
 		break;
 	case LLCFT_FRMR:
 		frame->llc_control = LLC_FRMR;
-		/* get more space --- FRMR frame are longer then usual */
+		/* get more space --- FRMR frame are longer than usual */
 		LLC_SETLEN(m, LLC_FRMRLEN);
 		bcopy((caddr_t) & linkp->llcl_frmrinfo,
 		      (caddr_t) & frame->llc_frmrinfo,

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23 2000/06/29 07:51:46 mrg Exp $	*/
+/*	$NetBSD: intr.c,v 1.24 2001/12/04 17:56:36 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Matthias Pfaller.
@@ -102,7 +102,7 @@ intr_init()
 	if (sir != IR_SOFT)
 		panic("Could not allocate IR_SOFT");
 
-	/* Disable IR_SOFT in all priority levels other then IPL_ZERO. */
+	/* Disable IR_SOFT in all priority levels other than IPL_ZERO. */
 	for (i = 1; i < NIPL; i++)
 		imask[i] |= 1 << IR_SOFT;
 }
