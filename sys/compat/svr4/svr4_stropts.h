@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stropts.h,v 1.11 1998/09/04 19:54:40 christos Exp $	 */
+/*	$NetBSD: svr4_stropts.h,v 1.12 1998/10/03 22:03:07 christos Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -88,6 +88,13 @@ struct svr4_strbuf {
  */
 #define SVR4__I_BIND_RSVD    (SVR4_STR|242)
 #define SVR4__I_RELE_RSVD    (SVR4_STR|243)
+
+/*
+ * Service type definitions
+ */
+#define SVR4_T_COTS           1   /* Connection-orieted */
+#define SVR4_T_COTS_ORD       2   /* Local connection-oriented */
+#define SVR4_T_CLTS           3   /* Connectionless */
 
 /* Struct passed for SVR4_I_STR */
 struct svr4_strioctl {
