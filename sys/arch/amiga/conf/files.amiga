@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.84 1999/03/26 21:18:49 is Exp $
+#	$NetBSD: files.amiga,v 1.85 1999/04/16 11:13:38 kleink Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -401,7 +401,7 @@ major	{md = 15}	# Memory disk (for mini-kernel)
 # Compatibility modules
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
 # Linux binary compatibility (COMPAT_LINUX)
