@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.4,v 1.1.2.146 2004/04/12 05:01:12 jmc Exp $
+#	$NetBSD: CHANGES-1.5.4,v 1.1.2.147 2004/04/12 05:05:00 jmc Exp $
 
 A complete list of changes from NetBSD 1.5.3 to NetBSD 1.5.4:
 
@@ -2584,3 +2584,8 @@ sys/netinet/udp_usrreq.c			patch
 
 	Drop packet if IPv6 udp packet does not have checksum.
 	[itojun, ticket #134]
+
+usr.sbin/route6d/route6d.c			patch
+
+	Don't age non-gateway host routes. PR#22568
+	[itojun, ticket #73]
