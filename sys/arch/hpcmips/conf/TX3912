@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.23 2000/06/29 11:42:30 shin Exp $
+#	$NetBSD: TX3912,v 1.24 2000/09/21 14:17:35 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -130,7 +130,7 @@ txcsbus*	at tx39biu?	# misc unknown.
 # PHILIPS 74ALVC*1624? / TOSHIBA TC5165BFTS buffer chip (keyboard)
 tc5165buf*	at txcsbus3 iocs 3 iocsbase 0 iocssize 0x100 iocswidth 16
 tc5165buf*	at txcsbus5 iocs 4 iocsbase 0 iocssize 0x100 iocswidth 16
-skbd*		at tc5165buf?
+hpckbd*		at tc5165buf?
 
 # ITE IT8368E PCMCIA / TOSHIBA TC6345AF buffer chip (PCMCIA)
 # card/insert	... 3:2 (98)
@@ -148,7 +148,7 @@ ucbioport*	at ucbio? platform COMPAQ_C_810 id BTN_LIGHT port 5
 # WS console uses SUN or VT100 terminal emulation
 hpcfb*		at tx3912video?
 wsdisplay*	at hpcfb?
-wskbd*		at skbd? mux 1
+wskbd*		at hpckbd? mux 1
 wsmouse*	at ucbtp? mux 0
 btnmgr0		at mainbus0
 wskbd*		at btnmgr0 mux 1
