@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 1998/10/19 22:09:15 tron Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 1998/11/24 13:19:48 kleink Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,6 +144,11 @@ int	nbuf = 0;
 int	bufpages = BUFPAGES;
 #else
 int	bufpages = 0;
+#endif
+#ifdef	BUFCACHE
+int	bufcache = BUFCACHE;
+#else
+int	bufcache = 10;
 #endif
 caddr_t	msgbufaddr;
 int	maxmem;			/* max memory per process */
@@ -548,8 +553,15 @@ allocsys(v)
 	 * a flag 10%.  Insure a minimum of 16 buffers.  We allocate
 	 * 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
-		bufpages = physmem / 10 / CLSIZE;
+	if (bufpages == 0) {
+		if (bufcache < 5 || bufcache > 95) {
+			printf(
+		"WARNING: unable to set bufcache to %d%% of RAM, using 10%%",
+			    bufcache);
+			bufcache = 10;
+		}
+		bufpages = physmem * bufcache / (CLSIZE * 100);
+	}
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
