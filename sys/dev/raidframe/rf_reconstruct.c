@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.3 1999/01/26 04:40:03 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -53,10 +53,6 @@
 #include "rf_cpuutil.h"
 #include "rf_shutdown.h"
 #include "rf_sys.h"
-
-#if RF_DEMO > 0
-#include "rf_demo.h"
-#endif /* RF_DEMO > 0 */
 
 #include "rf_kintf.h"
 
@@ -333,13 +329,7 @@ int rf_ReconstructFailedDiskBasic(raidPtr, row, col)
       return(ENOSPC);
     }
 
-#if RF_DEMO > 0
-    if (!rf_demoMode) {
-#endif /* RF_DEMO > 0 */
       printf("RECON: initiating reconstruction on row %d col %d -> spare at row %d col %d\n",row, col, srow, scol);
-#if RF_DEMO > 0
-    }
-#endif /* RF_DEMO > 0 */
   }
   RF_UNLOCK_MUTEX(raidPtr->mutex);
 
@@ -353,13 +343,6 @@ int rf_ReconstructFailedDiskBasic(raidPtr, row, col)
   reconDesc->reconExecTimerRunning = 0;
   reconDesc->reconExecTicks = 0;
   reconDesc->maxReconExecTicks = 0;
-#if RF_DEMO > 0 && !defined(SIMULATE)
-  if (rf_demoMode) {
-    char cbuf[10]; 
-    printf("About to start reconstruction, hit return to continue:");
-    gets(cbuf);
-  }
-#endif /* RF_DEMO > 0 && !SIMULATE */
   rc = rf_ContinueReconstructFailedDisk(reconDesc);
   return(rc);
 }
@@ -418,13 +401,6 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
       RF_UNLOCK_MUTEX(raidPtr->mutex);
 
       RF_GETTIME(raidPtr->reconControl[row]->starttime);
-#if RF_DEMO > 0
-      if (rf_demoMode) {
-         rf_demo_update_mode(RF_DEMO_RECON);
-         rf_startup_recon_demo(rf_demoMeterVpos, raidPtr->numCol,
-           raidPtr->Layout.numDataCol+raidPtr->Layout.numParityCol, 0);
-      }
-#endif /* RF_DEMO > 0 */
 
       /* now start up the actual reconstruction: issue a read for each surviving disk */
       rf_start_cpu_monitor();
@@ -460,11 +436,7 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
 
 	if (ProcessReconEvent(raidPtr, row, event)) reconDesc->numDisksDone++;
 	raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
-#if RF_DEMO > 0
-	if (rf_prReconSched || rf_demoMode)
-#else /* RF_DEMO > 0 */
 	if (rf_prReconSched)
-#endif /* RF_DEMO > 0 */
 	{
 	  rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 	}
@@ -494,11 +466,7 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
 	
 	(void) ProcessReconEvent(raidPtr, row, event);         /* ignore return code */
 	raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
-#if RF_DEMO > 0
-	if (rf_prReconSched || rf_demoMode)
-#else /* RF_DEMO > 0 */
 	if (rf_prReconSched)
-#endif /* RF_DEMO > 0 */
 	{
 	  rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 	}
@@ -544,12 +512,6 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
 
       rf_ResumeNewRequests(raidPtr);
 
-#if RF_DEMO > 0
-      if (rf_demoMode) {
-        rf_finish_recon_demo(&elpsd);
-      }
-      else {
-#endif /* RF_DEMO > 0 */
 	printf("Reconstruction of disk at row %d col %d completed and spare disk reassigned\n", row, col);
 	xor_s = raidPtr->accumXorTimeUs/1000000;
 	xor_resid_us = raidPtr->accumXorTimeUs%1000000;
@@ -564,9 +526,6 @@ int rf_ContinueReconstructFailedDisk(reconDesc)
 	printf("Total head-sep stall count was %d\n", 
 	       (int)reconDesc->hsStallCount);
 #endif /* RF_RECON_STATS > 0 */
-#if RF_DEMO > 0
-      }
-#endif /* RF_DEMO > 0 */
       rf_FreeReconControl(raidPtr, row);
       RF_Free(raidPtr->recon_tracerecs, raidPtr->numCol * sizeof(RF_AccTraceEntry_t));
       FreeReconDesc(reconDesc);
