@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.62 1998/12/17 14:34:51 pk Exp $	*/
+/*	$NetBSD: ld.c,v 1.63 1998/12/30 15:09:04 cjs Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,6 +73,7 @@
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <sys/time.h>
+#include <sys/resource.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -87,7 +88,7 @@
 
 #ifndef lint
 /* from: "@(#)ld.c	6.10 (Berkeley) 5/22/91"; */
-__RCSID("$NetBSD: ld.c,v 1.62 1998/12/17 14:34:51 pk Exp $");
+__RCSID("$NetBSD: ld.c,v 1.63 1998/12/30 15:09:04 cjs Exp $");
 #endif /* not lint */
 
 #define GNU_BINUTIL_COMPAT	/* forwards compatiblity with binutils 2.x */
