@@ -29,7 +29,7 @@ TOUCH=	touch -f -c
 GPROF.EX=/usr/src/usr.lib/libc/csu/hp300/gmon.ex
 
 # source tree is located via $S relative to the compilation directory
-S=	../..
+S=	../../../..
 HP300=	$S/hp300
 
 INCLUDES= -I. -I$S -I$S/sys
