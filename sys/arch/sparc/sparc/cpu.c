@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.126 2002/01/25 17:40:45 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.127 2002/06/02 14:44:38 drochner Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -196,7 +196,6 @@ alloc_cpuinfo()
 	/* Allocate physical pages */
 	low = vm_first_phys;
 	high = vm_first_phys + vm_num_phys - NBPG;
-	TAILQ_INIT(&mlist);
 	if (uvm_pglistalloc(sz, low, high, NBPG, 0, &mlist, 1, 0) != 0)
 		panic("alloc_cpuinfo: no pages");
 
