@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.35 2003/06/25 15:45:22 dsl Exp $	*/
+/*	$NetBSD: install.c,v 1.36 2003/06/27 22:20:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,7 +49,6 @@
 void
 do_install(void)
 {
-	doingwhat = msg_string(MSG_install);
 
 	msg_display(MSG_installusure);
 	process_menu(MENU_noyes, NULL);
@@ -58,7 +57,7 @@ do_install(void)
 	
 	get_ramsize();
 
-	if (find_disks() < 0)
+	if (find_disks(msg_string(MSG_install)) < 0)
 		return;
 
 	if (check_swap(diskdev, 0) > 0) {

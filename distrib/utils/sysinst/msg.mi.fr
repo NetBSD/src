@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.58 2003/06/27 13:36:06 dsl Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.59 2003/06/27 22:20:16 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,9 @@
 message usage
 {utilisation : sysinst [-r version] [-f fichier de definition]
 }
+
+message sysinst_message_language
+{Installation messages in French}	/* XXX translate */
 
 message newline {\n}
 
@@ -620,9 +623,6 @@ message net_domain
 message net_host
 {Votre nom de machine}
 
-message net_ip6autoconf
-{Autoconfiguration IPv6}
-
 message net_ip
 {Votre adresse IPv4}
 
@@ -726,10 +726,6 @@ message abortunpack
 {Les composants supplémentaires n'ont pu etre décompactées.
 Vous allez devoir procéder à la main, ou choisir une source
 differente pour les composants et essayer à nouveau.
-}
-
-message openmsgbuf
-{Impossible d'ouvrir /kern/msgbuf.
 }
 
 message createfstab

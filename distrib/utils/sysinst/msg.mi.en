@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.108 2003/06/27 13:36:06 dsl Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.109 2003/06/27 22:20:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,9 @@
 message usage
 {usage: sysinst [-r release] [-f definition-file]
 }
+
+message sysinst_message_language
+{Installation messages in English}
 
 message newline {\n}
 

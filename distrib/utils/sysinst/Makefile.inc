@@ -1,9 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.22 2003/06/27 13:36:04 dsl Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2003/06/27 22:20:14 dsl Exp $
 #
 # Makefile for sysinst
 
 PROG=		sysinst
 NOMAN=		# defined
+
+SYSINSTLANG?=	en
+LANGUAGES?=	en fr pl
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
 MENUS_MD?=	menus.md.${SYSINSTLANG}
@@ -15,6 +18,7 @@ LDADD=		-lcurses -ltermcap -lutil
 LDSTATIC?=	-static
 
 UNIF_AWK=	${.CURDIR}/../../unif.awk
+MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 
 VERDEP=		${NETBSDSRCDIR}/sys/conf/osrelease.sh
 VER!=		sh ${VERDEP}
@@ -52,9 +56,8 @@ CPPFLAGS+=	-DSYSINST_CDROM_DIR=\"${SYSINST_CDROM_DIR}\"
 WARNS=		1
 
 CLEANFILES=	menu_defs.c menu_defs.h menus.def \
-		msg_defs.c msg_defs.h msg.def msgtouch
-
-SYSINSTLANG?=	en
+		msg_defs.c msg_defs.h msg.def msgtouch \
+		sysinstmsgs.*
 
 .PATH: ${.CURDIR}/../..
 
@@ -82,6 +85,17 @@ menus.def: menus.mi ${MENUS_MD} msgtouch
 	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" > ${.TARGET}
 
 menu_defs.c: msg_defs.h
+
+.for LANG in ${LANGUAGES}
+# .if ${LANG} != ${SYSINSTLANG}
+sysinstmsgs.${LANG}: msg.mi.${LANG} ${MSG_MD:S/.${SYSINSTLANG}$/.${LANG}/} msgtouch msg_defs.h
+	sed "s/@@VERSION@@/${VER}/" ${.ALLSRC:M*.${LANG}} | \
+	awk -f ${UNIF_AWK} -v defines="${MD_OPTIONS}" | \
+	sh ${MSG_XLAT_SH} > ${.TARGET}
+
+${PROG}: sysinstmsgs.${LANG}
+# .endif
+.endfor
 
 XOBJS:=${SRCS:M*.c:R:O:S/$/.o/g}
 

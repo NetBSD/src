@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2003/06/25 15:45:22 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2003/06/27 22:20:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,6 +46,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 #define MAIN
 #include "defs.h"
@@ -55,6 +56,7 @@
 #include "txtwalk.h"
 
 int main(int, char **);
+static void select_language(void);
 static void usage(void);
 static void miscsighandler(int);
 static void ttysighandler(int);
@@ -150,13 +152,110 @@ main(int argc, char **argv)
 	touchwin(stdscr);
 	refresh();
 
+	select_language();
+
 	/* Menu processing */
 	process_menu(MENU_netbsd, NULL);
 	
 	exit_cleanly = 1;
 	return 0;
 }
-	
+
+static int
+set_language(menudesc *m, menu_ent *e, void *arg)
+{
+	char **fnames = arg;
+
+	msg_file(fnames[e - m->opts]);
+	return 1;
+}
+
+static void
+select_language(void)
+{
+	DIR *dir;
+	struct dirent *dirent;
+	char **lang_msg, **fnames;
+	int max_lang = 16, num_lang = 0;
+	const char *cp;
+	menu_ent *opt = 0;
+	int lang_menu = -1;
+	int lang;
+
+	dir = opendir(".");
+	if (!dir)
+		return;
+
+	lang_msg = malloc(max_lang * sizeof *lang_msg);
+	fnames = malloc(max_lang * sizeof *fnames);
+	if (!lang_msg || !fnames)
+		goto done;
+
+	lang_msg[0] = strdup(msg_string(MSG_sysinst_message_language));
+	fnames[0] = 0;
+	num_lang = 1;
+
+	while ((dirent = readdir(dir)) != 0) {
+		if (memcmp(dirent->d_name, "sysinstmsgs.", 12))
+			continue;
+		if (msg_file(dirent->d_name))
+			continue;
+		cp = msg_string(MSG_sysinst_message_language);
+		if (!strcmp(cp, lang_msg[0]))
+			continue;
+		if (num_lang == max_lang) {
+			char **new;
+			max_lang *= 2;
+			new = realloc(lang_msg, max_lang * sizeof *lang_msg);
+			if (!new)
+				break;
+			lang_msg = new;
+			new = realloc(fnames, max_lang * sizeof *fnames);
+			if (!new)
+				break;
+			fnames = new;
+		}
+		fnames[num_lang] = strdup(dirent->d_name);
+		lang_msg[num_lang++] = strdup(cp);
+	}
+	msg_file(0);
+	closedir(dir);
+	dir = 0;
+
+	if (num_lang == 1)
+		goto done;
+
+	opt = calloc(num_lang, sizeof *opt);
+	if (!opt)
+		goto done;
+
+	for (lang = 0; lang < num_lang; lang++) {
+		opt[lang].opt_name = lang_msg[lang];
+		opt[lang].opt_menu = OPT_NOMENU;
+		opt[lang].opt_action = set_language;
+	}
+
+	lang_menu = new_menu(NULL, opt, num_lang, -1, 12, 0, 0, MC_NOEXITOPT,
+		NULL, NULL, NULL, NULL);
+
+	if (lang_menu != -1) {
+		msg_display(MSG_hello);
+		process_menu(lang_menu, fnames);
+	}
+
+    done:
+	if (dir)
+		closedir(dir);
+	if (lang_menu != -1)
+		free_menu(lang_menu);
+	free(opt);
+	while (num_lang) {
+		free(lang_msg[--num_lang]);
+		free(fnames[num_lang]);
+	}
+	free(lang_msg);
+	free(fnames);
+}
 
 /* toplevel menu handler ... */
 void

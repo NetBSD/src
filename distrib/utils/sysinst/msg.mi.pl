@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20 2003/06/27 13:36:06 dsl Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.21 2003/06/27 22:20:16 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.en,v 1.86 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -43,6 +43,9 @@
 message usage
 {uzycie: sysinst [-r wersja] [-f plik-definicji]
 }
+
+message sysinst_message_language
+{Installation messages in Polish}	/* XXX translate */
 
 message newline {\n}
 
