@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.72 2002/06/29 20:04:56 scottr Exp $	*/
+/*	$NetBSD: util.c,v 1.73 2002/07/29 03:05:17 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1104,6 +1104,15 @@ set_root_password()
 	process_menu(MENU_yesno);
 	if (yesno)
 		run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "passwd -l root");
+	return 0;
+}
+
+int
+set_root_shell()
+{
+	msg_display(MSG_rootsh);
+	process_menu(MENU_rootsh);
+	run_prog(RUN_DISPLAY|RUN_CHROOT, NULL, "chpass -s %s root", shellpath);
 	return 0;
 }
 

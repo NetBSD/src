@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.70 2002/06/06 09:53:22 lukem Exp $	*/
+/*	$NetBSD: defs.h,v 1.71 2002/07/29 03:05:16 grant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -115,6 +115,7 @@ EXTERN int layoutkind;
 EXTERN int sizemult INIT(1);
 EXTERN const char *multname; 
 EXTERN const char *doingwhat;
+EXTERN const char *shellpath;
 
 /* loging variables */
 
@@ -361,6 +362,7 @@ int	sanity_check (void);
 int	set_timezone (void);
 int	set_crypt_type (void);
 int	set_root_password (void);
+int	set_root_shell (void);
 void	scripting_fprintf(FILE *, const char *, ...);
 void	scripting_vfprintf(FILE *, const char *, va_list);
 void	add_rc_conf(const char *, ...);
