@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.68 2004/04/09 20:14:56 jmc Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.69 2004/04/09 21:16:26 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -722,3 +722,10 @@ sys/conf/files					1.665
 	more popular.  Or at least, less unpopular.
 
 	[atatat, ticket #109]
+
+dist/ipf/tools/ipf_y.y				1.3
+
+	Commit fix, for a functional regression  in the new ipf
+	return_icmp_as_dest with an argument was no longer accepted by the 
+	parser
+	[jwise, ticket #110]
