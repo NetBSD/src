@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: rtld.c,v 1.9 1993/11/10 21:37:39 pk Exp $
+ *	$Id: rtld.c,v 1.10 1993/12/08 10:28:10 pk Exp $
  */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ static struct ld_entry	ld_entry = {
 	dlopen, dlclose, dlsym
 };
 
-static void		xprintf __P((char *, ...));
+       void		xprintf __P((char *, ...));
 static void		init_brk __P((void));
 static void		load_maps __P((struct crt_ldso *));
 static void		map_object __P((struct link_object *, struct link_map *));
@@ -239,6 +239,9 @@ struct link_dynamic	*dp;
 		if (link_map_head)
 			ldp->ldd_sym_loaded = 1;
 	}
+
+	/* Close our file descriptor */
+	(void)close(crtp->crt_ldfd);
 }
 
 
@@ -291,7 +294,7 @@ struct crt_ldso	*crtp;
 			printf("\t%s => %s (%#x)\n", name, path, lmp->lm_addr);
 	}
 
-	_exit(0);
+	exit(0);
 }
 
 /*
@@ -929,7 +932,7 @@ int	*usehints;
 
 	if (!HINTS_VALID || !(*usehints)) {
 		*usehints = 0;
-		return (char *)findshlib(name, &major, &minor);
+		return (char *)findshlib(name, &major, &minor, 0);
 	}
 
 	if (ld_path != NULL) {
@@ -951,7 +954,7 @@ int	*usehints;
 
 	/* No hints available for name */
 	*usehints = 0;
-	return (char *)findshlib(name, &major, &minor);
+	return (char *)findshlib(name, &major, &minor, 0);
 }
 
 static int
@@ -1001,73 +1004,3 @@ char	*fmt;
 	va_end(ap);
 }
 
-/*
- * Private heap functions.
- */
-
-static caddr_t	curbrk;
-
-static void
-init_brk()
-{
-	struct rlimit   rlim;
-	char		*cp, **cpp = environ;
-
-	if (getrlimit(RLIMIT_STACK, &rlim) < 0) {
-		xprintf("ld.so: brk: getrlimit failure\n");
-		_exit(1);
-	}
-
-	/*
-	 * Walk to the top of stack
-	 */
-	if (*cpp) {
-		while (*cpp) cpp++;
-		cp = *--cpp;
-		while (*cp) cp++;
-	} else
-		cp = (char *)&cp;
-
-	curbrk = (caddr_t)
-		(((long)(cp - 1 - rlim.rlim_cur) + PAGSIZ) & ~(PAGSIZ - 1));
-}
-
-caddr_t
-sbrk(incr)
-int incr;
-{
-	int	fd = -1;
-	caddr_t	oldbrk;
-
-	if (curbrk == 0)
-		init_brk();
-
-#if DEBUG
-xprintf("sbrk: incr = %#x, curbrk = %#x\n", incr, curbrk);
-#endif
-	if (incr == 0)
-		return curbrk;
-
-	incr = (incr + PAGSIZ - 1) & ~(PAGSIZ - 1);
-
-#ifdef NEED_DEV_ZERO
-	fd = open("/dev/zero", O_RDWR, 0);
-	if (fd == -1)
-		perror("/dev/zero");
-#endif
-
-	if (mmap(curbrk, incr,
-			PROT_READ|PROT_WRITE,
-			MAP_ANON|MAP_FIXED|MAP_COPY, fd, 0) == (caddr_t)-1) {
-		perror("Cannot map anonymous memory");
-	}
-
-#ifdef NEED_DEV_ZERO
-	close(fd);
-#endif
-
-	oldbrk = curbrk;
-	curbrk += incr;
-
-	return oldbrk;
-}
