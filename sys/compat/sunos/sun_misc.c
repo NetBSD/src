@@ -42,7 +42,7 @@
  *	@(#)sun_misc.c	8.1 (Berkeley) 6/18/93
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
- * $Id: sun_misc.c,v 1.9.2.7 1993/11/27 03:10:31 deraadt Exp $
+ * $Id: sun_misc.c,v 1.9.2.8 1993/11/27 08:21:07 deraadt Exp $
  */
 
 /*
@@ -867,4 +867,16 @@ sun_fstatfs(p, uap, retval)
 	extern fstatfs();
 
 	return sunstatfs(p, uap, retval, fstatfs);
+}
+
+struct sun_exportfs_args {
+	char	*path;
+	char	*ex;			/* struct export * */
+};
+sun_exportfs(p, uap, retval)
+	struct proc *p;
+	struct sun_exportfs_args *uap;
+	int *retval;
+{
+	return 0;
 }
