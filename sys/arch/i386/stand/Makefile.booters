@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.12 1998/02/22 07:19:02 mycroft Exp $
+#	$NetBSD: Makefile.booters,v 1.13 1998/03/27 01:32:53 cgd Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -14,7 +14,7 @@ GENPROMDIR= ${I386_STAND_DIR}/genprom
 .PATH: ${I386_STAND_DIR}/lib/crt/dos
 DOSSTART= start_dos.o doscommain.o exec_fromdos.o
 
-CPPFLAGS += -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
+CPPFLAGS += -nostdinc -I${.OBJDIR} -I$S -I${I386_STAND_DIR}/lib -I$S/lib/libsa
 CPPFLAGS+= -D_STANDALONE
 
 CLEANFILES+= vers.c vers.o ${BASE}.list
