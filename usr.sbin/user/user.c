@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.28 2000/10/17 05:43:10 simonb Exp $ */
+/* $NetBSD: user.c,v 1.29 2000/10/18 01:45:12 assar Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -35,7 +35,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.28 2000/10/17 05:43:10 simonb Exp $");
+__RCSID("$NetBSD: user.c,v 1.29 2000/10/18 01:45:12 assar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1099,12 +1099,12 @@ moduser(char *login, char *newlogin, user_t *up)
 		colonc = (size_t)(colon - line);
 		if (strncmp(login, line, loginc) == 0 && loginc == colonc) {
 			if (up != NULL) {
-				len = (int)asprintf(&buf, "%s:%s:%d:%d::%d:%ld:%s:%s:%s\n",
+				len = (int)asprintf(&buf, "%s:%s:%d:%d::%ld:%ld:%s:%s:%s\n",
 					newlogin,
 					newpwp->pw_passwd,
 					newpwp->pw_uid,
 					newpwp->pw_gid,
-					newpwp->pw_change,
+					(long)newpwp->pw_change,
 					(long)newpwp->pw_expire,
 					newpwp->pw_gecos,
 					newpwp->pw_dir,
