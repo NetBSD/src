@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.124 1999/08/29 16:59:19 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.125 1999/09/23 16:09:13 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -427,6 +427,7 @@ sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 lmc*	at pci? dev ? function ?	# Lan Media Corp SSI/HSSI/DS3
+rl*	at pci? dev ? function ?	# Realtek 8129/8139
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
