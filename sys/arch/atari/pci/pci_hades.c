@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.1 2001/05/15 14:14:49 leo Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.2 2002/01/09 21:33:49 leo Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -48,6 +48,7 @@
 
 #include <atari/atari/device.h>
 #include <atari/pci/pci_vga.h>
+#include <atari/dev/grf_etreg.h>
 
 int
 pci_bus_maxdevs(pc, busno)
@@ -189,4 +190,57 @@ pci_intr_disestablish(pc, cookie)
 	MFP2->mf_ierb &= ~iinfo->imask;
 	(void) intr_disestablish(iinfo_p->ihand);
 	iinfo_p->ipl = -1;
+}
+
+/*
+ * XXX: Why are we repeating this everywhere! (Leo)
+ */
+#define PCI_LINMEMBASE  0x0e000000
+
+static u_char crt_tab[] = {
+	0x5f, 0x4f, 0x50, 0x82, 0x55, 0x81, 0xbf, 0x1f,
+	0x00, 0x4f, 0x0d, 0x0e, 0x00, 0x00, 0x00, 0x00,
+	0x9c, 0x8e, 0x8f, 0x28, 0x1f, 0x96, 0xb9, 0xa3,
+	0xff };
+
+static u_char seq_tab[] = {
+	0x03, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00 };
+
+static u_char attr_tab[] = {
+	0x0c, 0x00, 0x0f, 0x08, 0x00, 0x00, 0x00, 0x00 };
+
+static u_char gdc_tab[] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x0e, 0x00, 0xff };
+
+void
+ati_vga_init(pc, tag, id, ba, fb)
+	pci_chipset_tag_t	pc;
+	pcitag_t		tag;
+	int			id;
+	volatile u_char		*ba;
+	u_char			*fb;
+{
+	int			i, csr;
+
+	/* Turn on the card */
+	pci_conf_write(pc, tag, PCI_MAPREG_START, PCI_LINMEMBASE);
+	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	csr |= (PCI_COMMAND_MEM_ENABLE|PCI_COMMAND_IO_ENABLE);
+	csr |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/*
+	 * Make sure we're allowed to write all crt-registers and reload them.
+	 */
+	WCrt(ba, CRT_ID_END_VER_RETR, (RCrt(ba, CRT_ID_END_VER_RETR) & 0x7f));
+
+	for (i = 0; i < 0x18; i++)
+		WCrt(ba, i, crt_tab[i]);
+	for (i = 0; i < 8; i++)
+		WSeq(ba, i, seq_tab[i]);
+	for (i = 0; i < 9; i++)
+		WGfx(ba, i, gdc_tab[i]);
+	for (i = 0x10; i < 0x18; i++)
+		WAttr(ba, i, attr_tab[i - 0x10]);
+	WAttr(ba, 0x20, 0);
 }
