@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_yp.c,v 1.13 1998/07/05 14:26:06 mrg Exp $	*/
+/*	$NetBSD: pw_yp.c,v 1.14 1998/07/26 21:25:16 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-__RCSID("$NetBSD: pw_yp.c,v 1.13 1998/07/05 14:26:06 mrg Exp $");
+__RCSID("$NetBSD: pw_yp.c,v 1.14 1998/07/26 21:25:16 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -168,13 +168,13 @@ pw_yp(pw, uid)
 	}
 
 	/* tell rpc.yppasswdd */
-	yppasswd.newpw.pw_name	= pw->pw_name;
-	yppasswd.newpw.pw_passwd= pw->pw_passwd;
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
-	yppasswd.newpw.pw_gid	= pw->pw_gid;
-	yppasswd.newpw.pw_gecos = pw->pw_gecos;
-	yppasswd.newpw.pw_dir	= pw->pw_dir;
-	yppasswd.newpw.pw_shell	= pw->pw_shell;
+	yppasswd.newpw.pw_name	 = strdup(pw->pw_name);
+	yppasswd.newpw.pw_passwd = strdup(pw->pw_passwd);
+	yppasswd.newpw.pw_uid 	 = pw->pw_uid;
+	yppasswd.newpw.pw_gid	 = pw->pw_gid;
+	yppasswd.newpw.pw_gecos  = strdup(pw->pw_gecos);
+	yppasswd.newpw.pw_dir	 = strdup(pw->pw_dir);
+	yppasswd.newpw.pw_shell	 = strdup(pw->pw_shell);
 	
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL) {
