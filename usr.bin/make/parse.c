@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.65 2001/06/02 14:25:23 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.65 2001/06/02 14:25:23 sommerfeld Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.64 2001/06/01 20:33:38 sjg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.65 2001/06/02 14:25:23 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -885,9 +885,15 @@ ParseDoDependency (line)
 	if (!*cp) {
 	    /*
 	     * Ending a dependency line without an operator is a Bozo
-	     * no-no
+	     * no-no.  As a heuristic, this is also often triggered by
+	     * undetected conflicts from cvs/rcs merges.
 	     */
-	    Parse_Error (PARSE_FATAL, "Need an operator");
+	    if ((strncmp(line, "<<<<<<", 6) == 0) ||
+		(strncmp(line, "======", 6) == 0) ||
+		(strncmp(line, ">>>>>>", 6) == 0))
+		Parse_Error (PARSE_FATAL, "Makefile contains unresolved merge conflict");
+	    else
+		Parse_Error (PARSE_FATAL, "Need an operator");
 	    return;
 	}
 	*cp = '\0';
