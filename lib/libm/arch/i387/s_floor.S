@@ -5,9 +5,10 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_floor.S,v 1.4 1995/05/09 00:01:59 jtc Exp $")
+RCSID("$NetBSD: s_floor.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(floor)
+#ifdef __i386__
 	pushl	%ebp
 	movl	%esp,%ebp
 	subl	$8,%esp
@@ -25,4 +26,18 @@ ENTRY(floor)
 	fldcw	-12(%ebp)		/* restore original control word */
 
 	leave
+#else
+	movsd	%xmm0, -8(%rsp)
+	fstcw	-12(%rsp)
+	movw	-12(%rbp),%dx
+	orw	$0x0400,%dx
+	andw	$0xf7ff,%dx
+	movw	%dx,-16(%rsp)
+	fldcw	-16(%rsp)
+	fldl	-8(%rsp)
+	frndint
+	fldcw	-12(%rsp)
+	fstpl	-8(%rsp)
+	movsd	-8(%rsp),%xmm0
+#endif
 	ret

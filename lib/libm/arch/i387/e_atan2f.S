@@ -5,10 +5,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_atan2f.S,v 1.1 1995/05/08 23:35:10 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: e_atan2f.S,v 1.2 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(__ieee754_atan2f)
-	flds	4(%esp)
-	flds	8(%esp)
+	XMM_TWO_ARG_FLOAT_PROLOGUE
+	flds	ARG_FLOAT_ONE
+	flds	ARG_FLOAT_TWO
 	fpatan
+	XMM_FLOAT_EPILOGUE
 	ret

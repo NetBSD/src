@@ -5,14 +5,18 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_cos.S,v 1.6 1999/07/02 15:37:34 simonb Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_cos.S,v 1.7 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(cos)
-	fldl	4(%esp)
+	XMM_ONE_ARG_DOUBLE_PROLOGUE
+	fldl	ARG_DOUBLE_ONE
 	fcos
 	fnstsw	%ax
 	andw	$0x400,%ax
 	jnz	1f
+	XMM_DOUBLE_EPILOGUE
 	ret
 1:	fldpi
 	fadd	%st(0)
@@ -23,4 +27,5 @@ ENTRY(cos)
 	jnz	2b
 	fstp	%st(1)
 	fcos
+	XMM_DOUBLE_EPILOGUE
 	ret

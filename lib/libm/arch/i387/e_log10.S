@@ -5,10 +5,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: e_log10.S,v 1.4 1995/05/08 23:49:24 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: e_log10.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(__ieee754_log10)
+	XMM_ONE_ARG_DOUBLE_PROLOGUE
 	fldlg2
-	fldl	4(%esp)
+	fldl	ARG_DOUBLE_ONE
 	fyl2x
+	XMM_DOUBLE_EPILOGUE
 	ret

@@ -5,10 +5,14 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: s_logb.S,v 1.4 1995/05/09 00:14:30 jtc Exp $")
+#include "abi.h"
+
+RCSID("$NetBSD: s_logb.S,v 1.5 2001/06/19 00:26:30 fvdl Exp $")
 
 ENTRY(logb)
-	fldl	4(%esp)
+	XMM_ONE_ARG_DOUBLE_PROLOGUE
+	fldl	ARG_DOUBLE_ONE
 	fxtract
-	fstpl	%st
+	fstp	%st
+	XMM_DOUBLE_EPILOGUE
 	ret
