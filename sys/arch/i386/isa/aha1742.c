@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *      $Id: aha1742.c,v 1.32.2.2 1994/07/28 05:24:24 cgd Exp $
+ *      $Id: aha1742.c,v 1.32.2.3 1994/08/07 10:49:45 mycroft Exp $
  */
 
 /*
@@ -466,8 +466,6 @@ ahbprobe(parent, self, aux)
 #endif
 			continue;
 		}
-
-		printf("ahbprobe: resetting card\n");
 
 		outb(iobase + EISA_CONTROL, EISA_ENABLE | EISA_RESET);
 		delay(10);
