@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2000/07/24 18:39:48 jdolecek Exp $ */
+/*	$NetBSD: boot.c,v 1.7 2001/06/10 14:12:49 scw Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -43,6 +43,7 @@
 
 #include "stand.h"
 #include "libsa.h"
+#include "config.h"
 
 void main(void);
 
@@ -84,5 +85,39 @@ main()
 		exec_mvme(file, howto, part);
 		printf("boot: %s: %s\n", file, strerror(errno));
 		ask = 1;
+	}
+}
+
+/*
+ * machdep_common_ether: get ethernet address
+ */
+void
+machdep_common_ether(ether)
+	u_char *ether;
+{
+	u_char *ea;
+
+	if (bugargs.cputyp == CPU_147) {
+		ea = (u_char *) ETHER_ADDR_147;
+
+		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
+			panic("ERROR: ethernet address not set!\r\n");
+		ether[0] = 0x08;
+		ether[1] = 0x00;
+		ether[2] = 0x3e;
+		ether[3] = ea[0];
+		ether[4] = ea[1];
+		ether[5] = ea[2];
+	} else {
+		ea = (u_char *) ETHER_ADDR_16X;
+
+		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
+			panic("ERROR: ethernet address not set!\r\n");
+		ether[0] = ea[0];
+		ether[1] = ea[1];
+		ether[2] = ea[2];
+		ether[3] = ea[3];
+		ether[4] = ea[4];
+		ether[5] = ea[5];
 	}
 }
