@@ -1,9 +1,10 @@
+/*	$NetBSD: def.monst.h,v 1.4 1997/10/19 16:57:07 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: def.monst.h,v 1.3 1995/03/23 08:29:30 cgd Exp $
  */
-
+#ifndef _DEF_MONST_H_
+#define _DEF_MONST_H_
 struct monst {
 	struct monst *nmon;
 	struct permonst *data;
@@ -52,7 +53,6 @@ struct monst {
 
 extern struct monst *fmon;
 extern struct monst *fallen_down;
-struct monst *m_at();
 
 /* these are in mspeed */
 #define MSLOW 1 /* slow monster */
@@ -61,3 +61,4 @@ struct monst *m_at();
 #define	NAME(mtmp)	(((char *) mtmp->mextra) + mtmp->mxlth)
 #define	MREGEN		"TVi1"
 #define	UNDEAD		"ZVW "
+#endif /* _DEF_MONST_H_ */

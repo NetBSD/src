@@ -1,9 +1,11 @@
+/*	$NetBSD: def.permonst.h,v 1.4 1997/10/19 16:57:19 christos Exp $	*/
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
  *
- *	$NetBSD: def.permonst.h,v 1.3 1995/03/23 08:29:37 cgd Exp $
  */
-
+#ifndef _DEF_PERMONST_H_
+#define _DEF_PERMONST_H_
 struct permonst {
 	char *mname,mlet;
 	schar mlevel,mmove,ac,damn,damd;
@@ -26,3 +28,5 @@ extern struct permonst mons[];
 #define	PM_EEL		&pm_eel
 #define	PM_WIZARD	&pm_wizard
 #define	CMNUM		55		/* number of common monsters */
+
+#endif /* _DEF_PERMONST_H_ */

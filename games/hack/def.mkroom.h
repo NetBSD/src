@@ -1,9 +1,10 @@
+/*	$NetBSD: def.mkroom.h,v 1.4 1997/10/19 16:57:05 christos Exp $ */
+
 /*
  * Copyright (c) Stichting Mathematisch Centrum, Amsterdam, 1985.
- *
- *	$NetBSD: def.mkroom.h,v 1.3 1995/03/23 08:29:29 cgd Exp $
  */
-
+#ifndef _DEF_MKROOM_H_
+#define _DEF_MKROOM_H_
 struct mkroom {
 	schar lx,hx,ly,hy;	/* usually xchar, but hx may be -1 */
 	schar rtype,rlit,doorct,fdoor;
@@ -27,3 +28,4 @@ extern coord doors[DOORMAX];
 #define	SHOPBASE	8
 #define	WANDSHOP	9
 #define	GENERAL	15
+#endif /* _DEF_MKROOM_H_ */
