@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.36 2003/08/24 17:32:00 uwe Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.37 2003/08/25 17:50:25 uwe Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -78,9 +78,7 @@
 #undef CG14_CG8
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.36 2003/08/24 17:32:00 uwe Exp $");
-
-#include "opt_rcons.h"
+__KERNEL_RCSID(0, "$NetBSD: cgfourteen.c,v 1.37 2003/08/25 17:50:25 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
