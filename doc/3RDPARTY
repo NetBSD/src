@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.204 2004/04/08 12:41:44 pooka Exp $
+#	$NetBSD: 3RDPARTY,v 1.205 2004/04/14 08:54:10 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -245,7 +245,7 @@ before importing:
 
 Package:	gdb
 Version:	5.3
-Current Vers:	6.0
+Current Vers:	6.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Mailing List:	bug-gdb@gnu.org
@@ -668,7 +668,7 @@ Notes:
 
 Package:	texinfo
 Version:	4.6
-Current Vers:	4.6
+Current Vers:	4.7
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/texinfo/
 Mailing List:	bug-texinfo@gnu.org
