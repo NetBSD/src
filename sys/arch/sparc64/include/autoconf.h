@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.8 1999/11/08 05:05:26 eeh Exp $ */
+/*	$NetBSD: autoconf.h,v 1.9 2000/01/14 14:38:37 pk Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,6 @@ struct mainbus_attach_args {
 	struct upa_reg	*ma_reg;	/* "reg" properties */
 	u_int		*ma_address;	/* "address" properties -- 32 bits */
 	u_int		*ma_interrupts;	/* "interrupts" properties */
-	struct bootpath *ma_bp;		/* used for locating boot device */
 	int		ma_upaid;	/* UPA bus ID */
 	int		ma_node;	/* PROM handle */
 	int		ma_nreg;	/* Counts for those properties */
