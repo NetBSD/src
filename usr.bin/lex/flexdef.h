@@ -25,7 +25,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *	$Id: flexdef.h,v 1.3 1993/08/01 18:46:50 mycroft Exp $
+ *	$Id: flexdef.h,v 1.4 1993/11/14 13:07:22 cgd Exp $
  */
 
 #ifndef FILE
@@ -61,7 +61,7 @@
 #define SYS_V
 #endif
 
-#if defined(SYS_V) || defined(__386BSD__) || defined(__NetBSD__)
+#if defined(SYS_V) || defined(__NetBSD__)
 #include <string.h>
 #else
 
