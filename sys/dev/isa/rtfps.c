@@ -1,4 +1,4 @@
-/*	$NetBSD: rtfps.c,v 1.28.4.3 1997/09/16 03:50:24 thorpej Exp $	*/
+/*	$NetBSD: rtfps.c,v 1.28.4.4 1997/10/16 00:31:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -41,9 +41,10 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/ic/comreg.h>
+#include <dev/ic/comvar.h>
+
 #include <dev/isa/isavar.h>
-#include <dev/isa/comreg.h>
-#include <dev/isa/comvar.h>
 #include <dev/isa/com_multi.h>
 
 #define	NSLAVES	4

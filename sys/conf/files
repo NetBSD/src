@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.130.2.9 1997/10/14 10:21:59 thorpej Exp $
+#	$NetBSD: files,v 1.130.2.10 1997/10/16 00:41:07 thorpej Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -144,9 +144,9 @@ device	ne: ether, ifnet, arp, dp8390nic
 file	dev/ic/ne2000.c			ne
 
 # 8250/16[45]50-based "com" ports
+# XXX In a perfect world, this would be done with attributes
 device	com: tty
-# XXX this should be moved to dev/ic
-file	dev/isa/com.c			com needs-flag
+file	dev/ic/com.c			com needs-flag
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
