@@ -1,5 +1,5 @@
-.\"	$NetBSD: sftp.1,v 1.4 2001/04/10 08:08:01 itojun Exp $
-.\" $OpenBSD: sftp.1,v 1.14 2001/04/09 00:42:05 stevesk Exp $
+.\"	$NetBSD: sftp.1,v 1.5 2001/05/15 15:26:09 itojun Exp $
+.\" $OpenBSD: sftp.1,v 1.18 2001/05/05 13:42:51 stevesk Exp $
 .\"
 .\" Copyright (c) 2001 Damien Miller.  All rights reserved.
 .\"
@@ -34,7 +34,11 @@
 .Op Fl vC
 .Op Fl b Ar batchfile
 .Op Fl o Ar ssh_option
-.Op Ar hostname | user@hostname
+.Op Ar host
+.Nm sftp
+.Op [\fIuser\fR@]\fIhost\fR[:\fIfile\fR [\fIfile\fR]]
+.Nm sftp
+.Op [\fIuser\fR@]\fIhost\fR[:\fIdir\fR[\fI/\fR]] 
 .Sh DESCRIPTION
 .Nm
 is an interactive file transfer program, similar to
@@ -46,8 +50,14 @@ It may also use many features of ssh, such as public key authentication and
 compression.
 .Nm
 connects and logs into the specified
-.Ar hostname
+.Ar host ,
 then enters an interactive command mode.
+.Pp
+The second usage format will retrieve files automatically if a non-interactive 
+authentication method is used; otherwise it will do so after
+successful interactive authentication.
+.Pp
+The last usage format allows the sftp client to start in a remote directory.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
@@ -190,10 +200,17 @@ A synonym for help.
 .Sh AUTHORS
 Damien Miller <djm@mindrot.org>
 .Sh SEE ALSO
+.Xr scp 1 ,
 .Xr ssh 1 ,
-.Xr sftp-server 8 ,
 .Xr ssh-add 1 ,
 .Xr ssh-keygen 1 ,
-.Xr sshd 8 ,
-.Xr scp 1
-
+.Xr sftp-server 8 ,
+.Xr sshd 8
+.Rs
+.%A T. Ylonen
+.%A S. Lehtinen
+.%T "SSH File Transfer Protocol"
+.%N draft-ietf-secsh-filexfer-00.txt
+.%D January 2001
+.%O work in progress material
+.Re

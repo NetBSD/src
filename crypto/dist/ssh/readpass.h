@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.h,v 1.2 2001/04/10 08:07:59 itojun Exp $	*/
-/*	$OpenBSD: readpass.h,v 1.2 2001/01/29 01:58:17 niklas Exp $	*/
+/*	$NetBSD: readpass.h,v 1.3 2001/05/15 15:26:08 itojun Exp $	*/
+/*	$OpenBSD: readpass.h,v 1.3 2001/05/06 17:52:08 mouring Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -18,4 +18,4 @@
  * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
  * from_stdin is true, the passphrase will be read from stdin instead.
  */
-char   *read_passphrase(char *prompt, int from_stdin);
+char   *read_passphrase(const char *prompt, int from_stdin);
