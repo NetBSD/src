@@ -1,5 +1,5 @@
 /*
-**	$Id: netbsd.c,v 1.2 1994/02/04 23:18:00 cgd Exp $
+**	$Id: netbsd.c,v 1.3 1994/05/14 19:39:03 cgd Exp $
 **
 ** netbsd.c		Low level kernel access functions for NetBSD
 **
@@ -34,7 +34,7 @@
 #include <sys/file.h>
 
 #undef KERNEL
-#include <sys/kinfo.h>
+#include <sys/sysctl.h>
 
 #include <fcntl.h>
 
@@ -78,27 +78,27 @@ struct nlist nl[] =
   { "" }
 };
 
+static kvm_t *kd;
 
 static struct file *xfile;
 static int nfile;
 
 static struct inpcb tcb;
-
+  
 
 int k_open()
 {
-  int kd;
-  
   /*
   ** Open the kernel memory device
   */
-  if ((kd = kvm_openfiles(path_unix, path_kmem, NULL)))
+  if ((kd = kvm_openfiles(path_unix, path_kmem, NULL, O_RDONLY, "identd")) ==
+      NULL)
     ERROR("main: kvm_open");
   
   /*
   ** Extract offsets to the needed variables in the kernel
   */
-  if (kvm_nlist(nl) < 0)
+  if (kvm_nlist(kd, nl) < 0)
     ERROR("main: kvm_nlist");
 
   return 0;
@@ -115,7 +115,7 @@ static int getbuf(addr, buf, len, what)
   int len;
   char *what;
 {
-  if (kvm_read((caddr_t) addr, buf, len) < 0)
+  if (kvm_read(kd, addr, buf, len) < 0)
   {
     if (syslog_flag)
       syslog(LOG_ERR, "getbuf: kvm_read(%08x, %d) - %s : %m",
@@ -178,7 +178,7 @@ int k_getuid(faddr, fport, laddr, lport, uid)
 {
   long addr;
   struct socket *sockp;
-  int i;
+  int i, mib[2];
   struct ucred ucb;
   
   /* -------------------- FILE DESCRIPTOR TABLE -------------------- */
@@ -189,14 +189,21 @@ int k_getuid(faddr, fport, laddr, lport, uid)
     return -1;
 
   {
-    int siz = (nfile+10)*sizeof(struct file);
-    xfile = (struct file *) calloc(nfile+10, sizeof(struct file));
-    if (!xfile)
-      ERROR2("k_getuid: calloc(%d,%d)", nfile+10, sizeof(struct file));
+    int siz, rv;
 
-    if (!getkerninfo(KINFO_FILE, xfile, &siz, 0))
+    mib[0] = CTL_KERN;
+    mib[1] = KERN_FILE;
+    if ((rv = sysctl(mib, 2, NULL, &siz, NULL, 0)) == -1)
     {
-      ERROR("k_getuid: getkerninfo");
+      ERROR1("k_getuid: sysctl 1 (%d)", rv);
+      return -1;
+    }
+    xfile = malloc(siz);
+    if (!xfile)
+      ERROR1("k_getuid: malloc(%d)", siz);
+    if ((rv = sysctl(mib, 2, xfile, &siz, NULL, 0)) == -1)
+    {
+      ERROR1("k_getuid: sysctl 2 (%d)", rv);
       return -1;
     }
     xfile = (struct file *)((char *)xfile + sizeof(filehead));
