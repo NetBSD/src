@@ -23,9 +23,13 @@ options 	FFS
 options 	NFSSERVER
 options 	NFSCLIENT
 
+#sun3-specific options
+options		COMPAT_SUNOS
+
 # sun3 debug options
-options CONTEXT_DEBUG
-options VMFAULT_TRACE
+options 	CONTEXT_DEBUG
+options 	VMFAULT_TRACE
+options		EXEC_DEBUG
 
 include "TIMESINK.nfsdiskless"	#mega sad
 
