@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.49 1999/07/02 04:48:19 itojun Exp $	*/
+/*	$NetBSD: inetd.c,v 1.50 1999/07/04 00:31:57 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.49 1999/07/02 04:48:19 itojun Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.50 1999/07/04 00:31:57 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -365,7 +365,7 @@ void		run_service __P((int, struct servtab *));
 int		setconfig __P((void));
 void		setup __P((struct servtab *));
 #ifdef IPSEC
-void		ipsecsetup __P((struct servtab *));
+int		ipsecsetup __P((struct servtab *));
 #endif
 char	       *sskip __P((char **));
 char	       *skip __P((char **));
@@ -827,7 +827,15 @@ config(signo)
 				SWAP(char *, sep->se_argv[i], cp->se_argv[i]);
 #ifdef IPSEC
 			SWAP(char *, sep->se_policy, cp->se_policy);
-			ipsecsetup(sep);
+			if (sep->se_fd != -1) {
+				if (ipsecsetup(sep) < 0 && sep->se_policy) {
+					syslog(LOG_ERR,
+					    "%s: ipsec initialization failed",
+					    sep->se_service);
+					sep->se_checked = 0;
+					continue;
+				}
+			}
 #endif
 			SWAP(int, cp->se_type, sep->se_type);
 			SWAP(int, cp->se_max, sep->se_max);
@@ -889,13 +897,16 @@ config(signo)
 				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
-				syslog(LOG_ERR, "%s: %s",
+				syslog(LOG_ERR, "%s/%s: %s: %s",
+				    sep->se_service, sep->se_proto,
 				    sep->se_hostaddr, gai_strerror(error));
 				sep->se_checked = 0;
 				continue;
 			}
 			if (res->ai_next) {
-				syslog(LOG_ERR, "%s: resolved to multiple addr",
+				syslog(LOG_ERR,
+					"%s/%s: %s: resolved to multiple addr",
+				    sep->se_service, sep->se_proto,
 				    sep->se_hostaddr);
 				sep->se_checked = 0;
 				freeaddrinfo(res);
@@ -1049,7 +1060,12 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 		syslog(LOG_ERR, "setsockopt (SO_RCVBUF %d): %m",
 		    sep->se_rcvbuf);
 #ifdef IPSEC
-	ipsecsetup(sep);
+	if (ipsecsetup(sep) < 0 && sep->se_policy) {
+		syslog(LOG_ERR, "%s/%s: ipsec setup failed",
+		    sep->se_service, sep->se_proto);
+		close(sep->se_fd);
+		return;
+	}
 #endif
 
 	if (bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size) < 0) {
@@ -1082,7 +1098,7 @@ setsockopt(fd, SOL_SOCKET, opt, (char *)&on, sizeof (on))
 }
 
 #ifdef IPSEC
-void
+int
 ipsecsetup(sep)
 	struct servtab *sep;
 {
@@ -1090,6 +1106,7 @@ ipsecsetup(sep)
 	char *buf;
 	char *policy;
 	int level, opt;
+	int ret;
 
 	switch (sep->se_family) {
 	case AF_INET:
@@ -1101,7 +1118,7 @@ ipsecsetup(sep)
 		opt = IPV6_IPSEC_POLICY;
 		break;
 	default:	
-		return;
+		return -1;
 	}
 
 	if (!sep->se_policy || sep->se_policy[0] == '\0')
@@ -1110,15 +1127,19 @@ ipsecsetup(sep)
 		policy = sep->se_policy;
 
 	len = ipsec_get_policylen(policy);
-	if (len >= 0 && (buf = (char *)malloc(len)) != NULL) {
+	if (len < 0) {
+		syslog(LOG_ERR, "invalid security policy \"%s\"", policy);
+		return -1;
+	}
+	buf = (char *)malloc(len);
+	if (buf != NULL) {
 		ipsec_set_policy(buf, len, policy);
-		if (setsockopt(sep->se_fd, level, opt, buf, len) < 0) {
-			syslog(LOG_ERR, "setsockopt (IP_IPSEC_POLICY, %s): %m",
-				policy);
-		}
+		ret = setsockopt(sep->se_fd, level, opt, buf, len);
 		free(buf);
 	} else
-		syslog(LOG_ERR, "invalid security policy \"%s\"", policy);
+		ret = -1;
+
+	return ret;
 }
 #endif
 
