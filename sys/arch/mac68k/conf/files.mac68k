@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.66 1997/03/21 21:42:39 scottr Exp $
+#	$NetBSD: files.mac68k,v 1.67 1997/04/08 04:21:15 scottr Exp $
 
 # mac68k-specific configuration info
 
@@ -25,8 +25,8 @@ attach	adb at obio_norm
 file	arch/mac68k/dev/adb.c		adb
 file	arch/mac68k/dev/adbsys.c
 file	arch/mac68k/dev/adbsysasm.s
-file	arch/mac68k/dev/adb_direct.c	hwdirect
-file	arch/mac68k/dev/pm_direct.c	hwdirect
+file	arch/mac68k/dev/adb_direct.c
+file	arch/mac68k/dev/pm_direct.c
 
 device	asc
 attach	asc at obio_norm
