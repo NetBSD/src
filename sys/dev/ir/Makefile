@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1 2001/12/02 10:44:43 augustss Exp $
+#	$NetBSD: Makefile,v 1.2 2001/12/15 01:03:28 explorer Exp $
 
-INCSDIR= /usr/include/dev
+INCSDIR= /usr/include/dev/ir
 
 INCS=	irdaio.h
 
