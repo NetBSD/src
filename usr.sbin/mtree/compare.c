@@ -33,7 +33,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compare.c	5.10 (Berkeley) 3/31/92"; */
-static char *rcsid = "$Id: compare.c,v 1.5 1993/11/17 11:00:52 cgd Exp $";
+static char *rcsid = "$Id: compare.c,v 1.6 1994/03/27 09:09:42 cgd Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -162,7 +162,7 @@ typeerr:		LABEL;
 	}
 	if (s->flags & F_SIZE && s->st_size != p->fts_statp->st_size) {
 		LABEL;
-		(void)printf("%ssize (%ld, %ld)\n",
+		(void)printf("%ssize (%qd, %qd)\n",
 		    tab, s->st_size, p->fts_statp->st_size);
 		tab = "\t";
 	}
