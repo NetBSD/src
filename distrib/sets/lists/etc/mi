@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.73 2001/01/07 18:35:54 ad Exp $
+# $NetBSD: mi,v 1.74 2001/01/14 15:40:15 minoura Exp $
 ./.cshrc
 ./.profile
 ./dev/MAKEDEV.local
@@ -112,6 +112,7 @@
 ./etc/rc.d/nfslocking
 ./etc/rc.d/ntpd
 ./etc/rc.d/ntpdate
+./etc/rc.d/poffd
 ./etc/rc.d/postfix
 ./etc/rc.d/ppp
 ./etc/rc.d/pwcheck
