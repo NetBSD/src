@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.70 1999/11/07 16:36:16 pk Exp $	*/
+/*	$NetBSD: zs.c,v 1.71 1999/11/21 15:23:02 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -292,7 +292,8 @@ zs_attach_obio(parent, self, aux)
 		struct sbus_attach_args *sa = &uoba->uoba_sbus;
 		zsc->zsc_bustag = sa->sa_bustag;
 		zsc->zsc_dmatag = sa->sa_dmatag;
-		zs_attach(zsc, sa->sa_pri);
+		if (sa->sa_nintr != 0)
+			zs_attach(zsc, sa->sa_pri);
 	} else {
 		struct obio4_attach_args *oba = &uoba->uoba_oba4;
 		zsc->zsc_bustag = oba->oba_bustag;

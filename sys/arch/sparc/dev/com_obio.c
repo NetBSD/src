@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.3 1999/11/12 05:20:03 matt Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.4 1999/11/21 15:23:01 pk Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -185,9 +185,11 @@ com_obio_attach(parent, self, aux)
 	sc->sc_frequency = COM_FREQ;
 	com_attach_subr(sc);
 
-	(void)bus_intr_establish(sc->sc_iot, sa->sa_pri, 0, comintr, sc);
-
-	evcnt_attach(&osc->osc_com.sc_dev, "intr", &osc->osc_intrcnt);
+	if (sa->sa_nintr != 0) {
+		(void)bus_intr_establish(sc->sc_iot, sa->sa_pri,
+					 0, comintr, sc);
+		evcnt_attach(&osc->osc_com.sc_dev, "intr", &osc->osc_intrcnt);
+	}
 
 	/*
 	 * Shutdown hook for buggy BIOSs that don't recognize the UART
