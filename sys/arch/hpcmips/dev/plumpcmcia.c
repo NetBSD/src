@@ -1,4 +1,4 @@
-/*	$NetBSD: plumpcmcia.c,v 1.4 2000/09/27 17:32:34 uch Exp $ */
+/*	$NetBSD: plumpcmcia.c,v 1.5 2000/10/04 13:53:55 uch Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 UCHIYAMA Yasushi. All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/kthread.h>
 
 #include <machine/bus.h>
+#include <machine/config_hook.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -59,6 +60,8 @@ int	plumpcmcia_match(struct device *, struct cfdata *, void *);
 void	plumpcmcia_attach(struct device *, struct device *, void *);
 int	plumpcmcia_print(void *, const char *);
 int	plumpcmcia_submatch(struct device *, struct cfdata *, void *);
+
+int	plumpcmcia_power(void *, int, long, void *);
 
 struct plumpcmcia_softc;
 
@@ -119,10 +122,13 @@ struct plumpcmcia_event {
 struct plumpcmcia_softc {
 	struct device	sc_dev;
 	plum_chipset_tag_t sc_pc;
-	
+
 	/* Register space */
 	bus_space_tag_t sc_regt;
 	bus_space_handle_t sc_regh;
+
+	/* power management hook */
+	void *sc_powerhook;
 
 	/* CSC event */
 	struct proc *sc_event_thread;
@@ -211,11 +217,24 @@ plumpcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_pc	= pa->pa_pc;
 	sc->sc_regt	= pa->pa_regt;
+
+	/* map register area */
 	if (bus_space_map(sc->sc_regt, PLUM_PCMCIA_REGBASE, 
 			  PLUM_PCMCIA_REGSIZE, 0, &sc->sc_regh)) {
 		printf(": register map failed\n");
 	}
 
+	/* power control */
+	plumpcmcia_power(sc, 0, 0, (void *)PWR_RESUME);
+	/* Add a hard power hook to power saving */
+#if notyet
+	sc->sc_powerhook = config_hook(CONFIG_HOOK_PMEVENT,
+				       CONFIG_HOOK_PMEVENT_HARDPOWER,
+				       CONFIG_HOOK_SHARE,
+				       plumpcmcia_power, sc);
+	if (sc->sc_powerhook == 0)
+		printf(": WARNING unable to establish hard power hook");
+#endif
 	printf("\n");
 
 	/* Slot0/1 CSC event queue */
@@ -963,6 +982,34 @@ plumpcmcia_event_thread(void *arg)
 		splx(s);
 	}
 	/* NOTREACHED */
+}
+
+/* power XXX notyet */
+int
+plumpcmcia_power(void *ctx, int type, long id, void *msg)
+{
+	struct plumpcmcia_softc *sc = ctx;
+	bus_space_tag_t regt = sc->sc_regt;
+	bus_space_handle_t regh = sc->sc_regh;
+	int why = (int)msg;
+
+	switch (why) {
+	case PWR_RESUME:
+		DPRINTF(("%s: ON\n", sc->sc_dev.dv_xname));
+		/* power on */
+		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
+				PLUM_PCMCIA_CARDPWRCTRL_ON);
+		break;
+	case PWR_SUSPEND:
+		/* FALLTHROUGH */
+	case PWR_STANDBY:
+		plum_conf_write(regt, regh, PLUM_PCMCIA_CARDPWRCTRL,
+				PLUM_PCMCIA_CARDPWRCTRL_OFF);
+		DPRINTF(("%s: OFF\n", sc->sc_dev.dv_xname));
+		break;
+	}
+
+	return 0;
 }
 
 static void
