@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.28 2002/10/02 03:10:50 thorpej Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.29 2003/03/03 22:07:21 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.28 2002/10/02 03:10:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.29 2003/03/03 22:07:21 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,12 @@ void	wdc_isa_attach	__P((struct device *, struct device *, void *));
 CFATTACH_DECL(wdc_isa, sizeof(struct wdc_isa_softc),
     wdc_isa_probe, wdc_isa_attach, NULL, NULL);
 
+#if 0
 static void	wdc_isa_dma_setup __P((struct wdc_isa_softc *));
 static int	wdc_isa_dma_init __P((void*, int, int, void *, size_t, int));
 static void 	wdc_isa_dma_start __P((void*, int, int));
 static int	wdc_isa_dma_finish __P((void*, int, int, int));
+#endif
 
 int
 wdc_isa_probe(parent, match, aux)
@@ -165,6 +167,7 @@ wdc_isa_attach(parent, self, aux)
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq[0].ir_irq,
 	    IST_EDGE, IPL_BIO, wdcintr, &sc->wdc_channel);
 
+#if 0
 	if (ia->ia_ndrq > 0 && ia->ia_drq[0].ir_drq != ISACF_DRQ_DEFAULT) {
 		sc->sc_drq = ia->ia_drq[0].ir_drq;
 
@@ -175,6 +178,7 @@ wdc_isa_attach(parent, self, aux)
 		sc->sc_wdcdev.dma_finish = wdc_isa_dma_finish;
 		wdc_isa_dma_setup(sc);
 	}
+#endif
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_PREATA;
 	if (sc->sc_wdcdev.sc_dev.dv_cfdata->cf_flags & WDC_OPTIONS_32)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
@@ -201,6 +205,7 @@ wdc_isa_attach(parent, self, aux)
 	wdcattach(&sc->wdc_channel);
 }
 
+#if 0
 static void
 wdc_isa_dma_setup(sc)
 	struct wdc_isa_softc *sc;
@@ -256,3 +261,4 @@ wdc_isa_dma_finish(v, channel, drive, read)
 	isa_dmadone(sc->sc_ic, sc->sc_drq);
 	return 0;
 }
+#endif
