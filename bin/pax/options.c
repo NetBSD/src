@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.63 2003/03/31 20:10:08 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.64 2003/04/08 15:13:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.63 2003/03/31 20:10:08 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.64 2003/04/08 15:13:10 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -688,6 +688,7 @@ struct option tar_longopts[] = {
 	/* -e -- no corresponding long option */
 	{ "file",		required_argument,	0,	'f' },
 	{ "dereference",	no_argument,		0,	'h' },
+	{ "keep-old-files",	no_argument,		0,	'k' },
 	{ "one-file-system",	no_argument,		0,	'l' },
 	{ "modification-time",	no_argument,		0,	'm' },
 	{ "old-archive",	no_argument,		0,	'o' },
@@ -743,7 +744,6 @@ struct option tar_longopts[] = {
 	{ "ignore-zeros",	no_argument,		0,	'i' },
 	{ "ignore-failed-read",	no_argument,		0,
 						OPT_IGNORE_FAILED_READ },
-	{ "keep-old-files",	no_argument,		0,	'k' },
 	{ "starting-file",	no_argument,		0,	'K' },
 	{ "tape-length",	required_argument,	0,	'L' },
 	{ "multi-volume",	no_argument,		0,	'M' },
@@ -850,6 +850,12 @@ tar_options(int argc, char **argv)
 			 */
 			jflag = 1;
 			gzip_program = BZIP2_CMD;
+			break;
+		case 'k':
+			/*
+			 * do not clobber files that exist
+			 */
+			kflag = 1;
 			break;
 		case 'l':
 			/*
