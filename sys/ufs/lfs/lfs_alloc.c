@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.14 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.15 1998/09/01 03:26:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -47,6 +47,7 @@
 #include <sys/syslog.h>
 #include <sys/mount.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 
@@ -185,7 +186,7 @@ lfs_vcreate(mp, ino, vpp)
 	ump = VFSTOUFS(mp);
 
 	/* Initialize the inode. */
-	MALLOC(ip, struct inode *, sizeof(struct inode), M_LFSNODE, M_WAITOK);
+	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
 	lockinit(&ip->i_lock, PINOD, "lfsinode", 0, 0);
 	(*vpp)->v_data = ip;
 	ip->i_vnode = *vpp;

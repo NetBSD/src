@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.22 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.23 1998/09/01 03:26:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -53,6 +53,7 @@
 #include <sys/ioctl.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/socket.h>
 
 #include <miscfs/specfs/specdev.h>
@@ -96,6 +97,8 @@ struct vfsops lfs_vfsops = {
 	lfs_vnodeopv_descs,
 };
 
+struct pool lfs_inode_pool;
+
 /*
  * Initialize the filesystem, most work done by ufs_init.
  */
@@ -103,6 +106,13 @@ void
 lfs_init()
 {
 	ufs_init();
+
+	/*
+	 * XXX Same structure as FFS inodes?  Should we share a common pool?
+	 */
+	pool_init(&lfs_inode_pool, sizeof(struct inode), 0, 0, 0,
+	    "lfsinopl", 0, pool_page_alloc_nointr, pool_page_free_nointr,
+	    M_LFSNODE);
 }
 
 /*

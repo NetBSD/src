@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.9 1998/06/24 20:58:48 sommerfe Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.10 1998/09/01 03:26:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -50,6 +50,8 @@ struct vnode;
 struct lfs;
 struct segment;
 struct ucred;
+
+extern struct pool lfs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 /* lfs_alloc.c */
