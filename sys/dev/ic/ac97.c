@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.63 2004/10/12 14:34:41 kent Exp $ */
+/*      $NetBSD: ac97.c,v 1.64 2004/10/17 08:20:15 kent Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.63 2004/10/12 14:34:41 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.64 2004/10/17 08:20:15 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,16 +775,27 @@ ac97_restore_shadow(struct ac97_codec_if *self)
 	/* make sure chip is fully operational */
 #define	AC97_POWER_ALL	(AC97_POWER_REF | AC97_POWER_ANL | AC97_POWER_DAC \
 			| AC97_POWER_ADC)
-	for (idx = 500000; idx >= 0; idx--) {
+	for (idx = 50000; idx >= 0; idx--) {
 		ac97_read(as, AC97_REG_POWER, &val);
 		if ((val & AC97_POWER_ALL) == AC97_POWER_ALL)
 		       break;
-		DELAY(1);
+		DELAY(10);
 	}
 #undef AC97_POWER_ALL
-	printf("%s: power counter: %d\n", __func__, idx);
 
-	for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
+       /*
+	* actually try changing a value!
+	* The default value of AC97_REG_MASTER_VOLUME is 0x8000.
+	*/
+       for (idx = 50000; idx >= 0; idx--) {
+	       ac97_write(as, AC97_REG_MASTER_VOLUME, 0x1010);
+	       ac97_read(as, AC97_REG_MASTER_VOLUME, &val);
+	       if (val == 0x1010)
+		       break;
+	       DELAY(10);
+       }
+
+       for (idx = 0; idx < SOURCE_INFO_SIZE; idx++) {
 		si = &source_info[idx];
 		/* don't "restore" to the reset reg! */
 		if (si->reg != AC97_REG_RESET)
