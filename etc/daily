@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: daily,v 1.62 2004/09/28 15:03:58 erh Exp $
+#	$NetBSD: daily,v 1.63 2004/11/22 04:53:46 soren Exp $
 #	@(#)daily	8.2 (Berkeley) 1/25/94
 #
 
@@ -230,7 +230,7 @@ if checkyesno check_network; then
 				next;
 			}
 			if (!($1 in ifs)) {
-				printf("%-8s %10d %6d %10d %6d %6d\n",
+				printf("%-8s %10s %6s %10s %6s %6s\n",
 				  $1, $(NF-4), $(NF-3), $(NF-2), $(NF-1), $NF);
 				ifs[$1] = 1;
 			}
