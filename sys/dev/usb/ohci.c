@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.114 2001/11/21 02:41:18 augustss Exp $	*/
+/*	$NetBSD: ohci.c,v 1.115 2001/11/21 05:52:50 itojun Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.114 2001/11/21 02:41:18 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.115 2001/11/21 05:52:50 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1661,7 +1661,7 @@ ohci_device_request(usbd_xfer_handle xfer)
 	}
 	splx(s);
 
-#if 1
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 20) {
 		delay(10000);
 		DPRINTF(("ohci_device_request: status=%x\n",
