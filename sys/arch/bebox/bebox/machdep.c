@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.57 2000/09/13 15:00:17 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58 2001/02/24 04:35:33 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -669,53 +669,6 @@ pckbc_machdep_cnattach(kbctag, kbcslot)
 #endif
 }
 #endif
-
-/*
- * Set set up registers on exec.
- */
-void
-setregs(p, pack, stack)
-	struct proc *p;
-	struct exec_package *pack;
-	u_long stack;
-{
-	struct trapframe *tf = trapframe(p);
-	struct ps_strings arginfo;
-
-	bzero(tf, sizeof *tf);
-	tf->fixreg[1] = -roundup(-stack + 8, 16);
-
-	/*
-	 * XXX Machine-independent code has already copied arguments and
-	 * XXX environment to userland.  Get them back here.
-	 */
-	(void)copyin((char *)PS_STRINGS, &arginfo, sizeof(arginfo));
-
-	/*
-	 * Set up arguments for _start():
-	 *	_start(argc, argv, envp, obj, cleanup, ps_strings);
-	 *
-	 * Notes:
-	 *	- obj and cleanup are the auxilliary and termination
-	 *	  vectors.  They are fixed up by ld.elf_so.
-	 *	- ps_strings is a NetBSD extention, and will be
-	 * 	  ignored by executables which are strictly
-	 *	  compliant with the SVR4 ABI.
-	 *
-	 * XXX We have to set both regs and retval here due to different
-	 * XXX calling convention in trap.c and init_main.c.
-	 */
-	tf->fixreg[3] = arginfo.ps_nargvstr;
-	tf->fixreg[4] = (register_t)arginfo.ps_argvstr;
-	tf->fixreg[5] = (register_t)arginfo.ps_envstr;
-	tf->fixreg[6] = 0;			/* auxillary vector */
-	tf->fixreg[7] = 0;			/* termination vector */
-	tf->fixreg[8] = (register_t)PS_STRINGS;	/* NetBSD extension */
-
-	tf->srr0 = pack->ep_entry;
-	tf->srr1 = PSL_MBO | PSL_USERSET | PSL_FE_DFLT;
-	p->p_addr->u_pcb.pcb_flags = 0;
-}
 
 /*
  * Machine dependent system variables.
