@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.1 2002/07/05 13:31:34 scw Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.2 2002/07/10 11:02:25 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -78,7 +78,7 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.1 2002/07/05 13:31:34 scw Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.2 2002/07/10 11:02:25 scw Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,7 @@ GLOBAL(__curbrk)
 #endif
 
 #ifdef WEAK_ALIAS
-WEAK_ALIAS(sbrk, _sbrk)
+WEAK_ALIAS(sbrk,_sbrk)
 #endif
 
 ENTRY(_sbrk)
