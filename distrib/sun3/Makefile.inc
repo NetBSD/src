@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.7 1999/05/16 08:21:52 gwr Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2000/05/02 16:06:55 sjg Exp $
+
+.include "../../Makefile.inc"
 
 REV!=sh ${BSDSRCDIR}/sys/conf/osrelease.sh -s
 
 LDSTATIC=	-static		# only static compilation makes sense here
 
 # Where to find kernel images...
-BSDSRCDIR?=	/usr/src
+.include <bsd.kernobj.mk>
 SRCSYSDIR?=	${BSDSRCDIR}/sys
-KERNOBJDIR?=	${SRCSYSDIR}/arch/sun3/compile

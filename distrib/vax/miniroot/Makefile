@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2000/02/01 05:02:34 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.4 2000/05/02 16:06:56 sjg Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
 TOP=	${.CURDIR}/..
+
+.include "${TOP}/Makefile.inc"
+.include <bsd.kernobj.mk>
 
 MOUNT_POINT?=	/mnt
 VND?=		vnd0
@@ -11,7 +14,7 @@ VND_RDEV=	/dev/r${VND}a
 VND_CDEV=	/dev/${VND}c
 VND_CRDEV=	/dev/r${VND}c
 IMAGE?=		miniroot.fs
-KERN?=		${.CURDIR}/../../../sys/arch/vax/compile/INSTALL/netbsd
+KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 MDEC=		${DESTDIR}/usr/mdec
 STRIP?=		strip
 
@@ -39,6 +42,7 @@ all:	netbsd.ram.gz
 	newfs -m 0 -o space -i ${INO_BYTES} -c 80 ${VND_RDEV} ${DISKTYPE}
 	mount ${VND_DEV} ${MOUNT_POINT}
 	TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} \
+	    KERNOBJDIR=${KERNOBJDIR} \
 	    TARGDIR=${MOUNT_POINT} sh ${TOP}/runlist.sh ${LISTS}
 	@echo ""
 	@df -i ${MOUNT_POINT}
