@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2002/03/11 07:11:38 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2002/05/02 18:02:53 lukem Exp $
 #
 # boot.fs is the image for disk 1 of the two-set floppy based installation
 # method.
@@ -7,13 +7,14 @@
 # into the md based kernel built from the INSTALL kernel configuration file.
 #
 
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.include <bsd.kernobj.mk>
+
 TOP=		${.CURDIR}/..
 MINIROOT=	${.CURDIR}/../../miniroot
 
-.include "${.CURDIR}/../../Makefile.inc"
-
-.include <bsd.own.mk>	# So we use /etc/mk.conf.
-.include <bsd.kernobj.mk>
 
 KERN?=		${KERNOBJDIR}/INSTALL/netbsd
 
@@ -94,17 +95,9 @@ depend install:
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=32k
 
-.ifndef RELEASEDIR
-release:
-	@echo setenv RELEASEDIR first
-	@false
-.else
-release: $(IMAGE)
-	gzip -c -9 < $(.OBJDIR)/boot.fs \
-		> $(RELEASEDIR)/installation/bootfs/boot.fs.gz
-	gzip -c -9 < $(.OBJDIR)/netbsd.ram.aout \
-		> $(RELEASEDIR)/installation/bootfs/netbsd.ram.aout.gz
-.endif	# RELEASEDIR check
+release: check_RELEASEDIR .WAIT boot.fs netbsd.ram.aout
+	gzip -c -9 boot.fs > $(RELEASEDIR)/installation/bootfs/boot.fs.gz
+	gzip -c -9 netbsd.ram.aout > \
+	    $(RELEASEDIR)/installation/bootfs/netbsd.ram.aout.gz
 
-.include <bsd.obj.mk>
-.include <bsd.subdir.mk>
+.include <bsd.prog.mk>

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.59 2002/04/26 15:50:37 lukem Exp $
+#	$NetBSD: Makefile,v 1.60 2002/05/02 18:02:41 lukem Exp $
 
 .include <bsd.own.mk>
-.include "${NETBSDSRCDIR}/distrib/Makefile.inc"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 .include <bsd.kernobj.mk>
 
@@ -22,28 +22,17 @@ PARSELISTENV=	ARCHDIR=${ARCHDIR:Q} \
 		DISTRIBVER=${DISTRIBVER:Q} \
 		KERNOBJDIR=${KERNOBJDIR:Q}
 
+IMAGE_RELEASEDIR=	installation/miniroot
+
 .include "${ARCHDIR}/Makefile.inc"
-
-IMAGEBUILT=	image.built
-CLEANFILES+=	${IMAGEBUILT}
-IMAGE_MD_POST?=	true
-
-realall: check_DESTDIR .WAIT ${IMAGEBUILT}
-
-release: check_RELEASEDIR .WAIT ${IMAGEBUILT}
-	mkdir -p ${RELEASEDIR}/installation/miniroot
-	gzip -c -9 < ${.OBJDIR}/miniroot.fs \
-		> ${RELEASEDIR}/installation/miniroot/miniroot.fs.gz
-	${MAKESUMS} -t ${RELEASEDIR}/installation/miniroot miniroot.fs.gz
-
-${IMAGEBUILT}: ${IMAGE}
-	${IMAGE_MD_POST} \
-	&& touch ${IMAGEBUILT}
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .if defined(MAKEDEVTARGETS)
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .endif
 .include "${DISTRIBDIR}/common/Makefile.image"
+
+release: check_RELEASEDIR .WAIT
+	${MAKESUMS} -t ${RELEASEDIR}/${IMAGE_RELEASEDIR} ${IMAGE}.gz
 
 .include <bsd.prog.mk>
