@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.1.2.1 1997/07/01 16:52:06 bouyer Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.1.2.2 1997/07/01 18:23:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -73,7 +73,7 @@ void	atapicdattach __P((struct device *, struct device *, void *));
 int acd_set_mode __P(( struct cd_softc *, struct atapi_mode_data *, int));
 int acd_get_mode __P(( struct cd_softc *, struct atapi_mode_data *,
 										int, int, int));
-struct cfattach atapicd_ca = {
+struct cfattach cd_atapi_ca = {
 	sizeof(struct cd_softc), atapicdmatch, atapicdattach
 };
 
