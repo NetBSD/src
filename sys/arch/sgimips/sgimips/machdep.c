@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.51 2003/01/19 22:36:00 rafal Exp $	*/
+/*	$NetBSD: machdep.c,v 1.52 2003/03/31 00:56:53 rafal Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -939,7 +939,8 @@ void ddb_trap_hook(int where)
 			*(volatile u_int32_t *)
 			    MIPS_PHYS_TO_KSEG1(CRIME_CONTROL) \
 			        |= CRIME_CONTROL_DOG_ENABLE;
-			*(volatile u_int32_t *)0xb4000034 = 0;
+			*(volatile u_int32_t *)
+			    MIPS_PHYS_TO_KSEG1(CRIME_WATCHDOG) = 0;
 			break;
 		}
 		break;
