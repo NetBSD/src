@@ -1,7 +1,7 @@
-/*	$NetBSD: wsconsctl.h,v 1.5 2004/07/30 11:08:03 jmmv Exp $ */
+/*	$NetBSD: wsconsctl.h,v 1.6 2004/07/30 15:22:42 jmmv Exp $ */
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
