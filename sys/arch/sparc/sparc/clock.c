@@ -42,7 +42,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: clock.c,v 1.17 92/11/26 03:04:47 torek Exp  (LBL)
- * $Id: clock.c,v 1.5 1993/12/09 20:27:53 pk Exp $
+ * $Id: clock.c,v 1.6 1994/02/01 06:01:35 deraadt Exp $
  */
 
 /*
@@ -226,13 +226,17 @@ delay(n)
 	}
 }
 
+#if 1
+int	stathz, profhz;
+#endif
+
 /*
  * Set up the real-time and statistics clocks.  Leave stathz 0 only if
  * no alternative timer is available.
  *
  * The frequencies of these clocks must be an even number of microseconds.
  */
-cpu_initclocks()
+startrtclock()
 {
 	register int statint, minint;
 
@@ -241,6 +245,7 @@ cpu_initclocks()
 		hz = 100;
 		tick = 1000000 / hz;
 	}
+#if 0
 	if (stathz == 0)
 		stathz = hz;
 	if (1000000 % stathz) {
@@ -257,6 +262,9 @@ cpu_initclocks()
 	TIMERREG->t_c14.t_limit = tmr_ustolim(statint);
 	statmin = statint - (statvar >> 1);
 	ienab_bis(IE_L14 | IE_L10);
+#endif
+	TIMERREG->t_c10.t_limit = tmr_ustolim(tick);
+	ienab_bis(IE_L10);
 }
 
 /*
@@ -277,14 +285,14 @@ setstatclockrate(newhz)
  */
 int
 clockintr(cap)
-	void *cap;
+	clockframe *cap;
 {
 	volatile register int discard;
 	extern int rom_console_input;
 
 	/* read the limit register to clear the interrupt */
 	discard = TIMERREG->t_c10.t_limit;
-	hardclock((struct clockframe *)cap);
+	hardclock(cap);
 	if (rom_console_input && cnrom())
 		setsoftint();
 
@@ -298,6 +306,7 @@ int
 statintr(cap)
 	void *cap;
 {
+#if 0
 	volatile register int discard;
 	register u_long newint, r, var;
 
@@ -317,6 +326,9 @@ statintr(cap)
 	newint = statmin + r;
 
 	TIMERREG->t_c14.t_limit = tmr_ustolim(newint);
+#else
+	TIMERREG->t_c14.t_limit = 0;
+#endif
 	return (1);
 }
 

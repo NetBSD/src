@@ -42,7 +42,7 @@
  *	@(#)reg.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: reg.h,v 1.8 92/11/26 02:04:44 torek Exp 
- * $Id: reg.h,v 1.1 1993/10/02 10:23:24 deraadt Exp $
+ * $Id: reg.h,v 1.2 1994/02/01 06:01:27 deraadt Exp $
  */
 
 #ifndef _MACHINE_REG_H_
@@ -73,6 +73,11 @@ struct trapframe {
  * performance penalty).
  */
 struct rwindow {
+	int	rw_local[8];		/* %l0..%l7 */
+	int	rw_in[8];		/* %i0..%i7 */
+};
+
+struct reg {
 	int	rw_local[8];		/* %l0..%l7 */
 	int	rw_in[8];		/* %i0..%i7 */
 };

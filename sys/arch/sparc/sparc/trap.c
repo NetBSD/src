@@ -43,7 +43,7 @@
  *	@(#)trap.c	8.1 (Berkeley) 6/16/93
  *
  * from: Header: trap.c,v 1.34 93/05/28 04:34:50 torek Exp 
- * $Id: trap.c,v 1.8 1993/12/01 20:59:59 pk Exp $
+ * $Id: trap.c,v 1.9 1994/02/01 06:01:51 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -158,7 +158,7 @@ const char *trap_type[] = {
  * trap, mem_access_fault, and syscall.
  */
 static inline void
-userret(struct proc *p, int pc, u_quad_t oticks)
+userret(struct proc *p, int pc, struct timeval oticks)
 {
 	int sig;
 
@@ -169,8 +169,18 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 	if (want_ast) {
 		want_ast = 0;
 		if (p->p_flag & SOWEUPC) {
+			int ticks;
+			extern int profscale;
+			struct timeval *tv = &p->p_stime;
+
+			ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+				(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
+#ifdef PROFTIMER
+			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
+#else
+			addupc(pc, &p->p_stats->p_prof, ticks);
+#endif
 			p->p_flag &= ~SOWEUPC;
-			ADDUPROF(p);
 		}
 	}
 	if (want_resched) {
@@ -182,7 +192,7 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 		 * before we swtch()'ed, we might not be on the queue
 		 * indicated by our priority.
 		 */
-		(void) splstatclock();
+		(void) splclock();
 		setrq(p);
 		p->p_stats->p_ru.ru_nivcsw++;
 		swtch();
@@ -194,8 +204,21 @@ userret(struct proc *p, int pc, u_quad_t oticks)
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & SPROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_stats->p_prof.pr_scale) {
+		int ticks;
+		struct timeval *tv = &p->p_stime;
+
+		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
+		if (ticks) {
+#ifdef PROFTIMER
+			extern int profscale;
+			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
+#else
+			addupc(pc, &p->p_stats->p_prof, ticks);
+#endif
+		}
+	}
 
 	curpri = p->p_pri;
 }
@@ -223,7 +246,7 @@ trap(type, psr, pc, tf)
 	register struct proc *p;
 	register struct pcb *pcb;
 	register int n;
-	u_quad_t sticks;
+	struct timeval stime;
 
 	/* This steps the PC over the trap. */
 #define	ADVANCE (n = tf->tf_npc, tf->tf_pc = n, tf->tf_npc = n + 4)
@@ -247,7 +270,7 @@ trap(type, psr, pc, tf)
 	}
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
+	stime = p->p_stime;
 	pcb = &p->p_addr->u_pcb;
 	p->p_md.md_tf = tf;	/* for ptrace/signals */
 
@@ -443,7 +466,7 @@ if (pcb->pcb_nsaved) panic("trap T_WINUF");
 		trapsignal(p, SIGFPE, FPE_INTOVF_TRAP);
 		break;
 	}
-	userret(p, pc, sticks);
+	userret(p, pc, stime);
 	share_fpu(p, tf);
 #undef ADVANCE
 }
@@ -525,12 +548,12 @@ mem_access_fault(type, ser, v, pc, psr, tf)
 	register int i, rv, sig = SIGBUS;
 	vm_prot_t ftype;
 	int onfault, mmucode;
-	u_quad_t sticks;
+	struct timeval stime;
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)	/* safety check */
 		p = &proc0;
-	sticks = p->p_sticks;
+	stime = p->p_stime;
 
 	/*
 	 * Figure out what to pass the VM code, and ignore the sva register
@@ -644,7 +667,7 @@ kfault:
 	}
 out:
 	if ((psr & PSR_PS) == 0) {
-		userret(p, pc, sticks);
+		userret(p, pc, stime);
 		share_fpu(p, tf);
 	}
 }
@@ -670,7 +693,7 @@ syscall(code, tf, pc)
 		int i[8];
 	} args;
 	int rval[2];
-	u_quad_t sticks;
+	struct timeval stime;
 	extern int nsysent;
 	extern struct pcb *cpcb;
 #ifdef COMPAT_SUNOS
@@ -688,7 +711,7 @@ syscall(code, tf, pc)
 	if (tf != (struct trapframe *)((caddr_t)cpcb + UPAGES * NBPG) - 1)
 		panic("syscall trapframe");
 #endif
-	sticks = p->p_sticks;
+	stime = p->p_stime;
 	p->p_md.md_tf = tf;
 #ifdef DEBUG_SCALL
 printf("sc[%d] %s%d/X%x(", p->p_pid, p->p_emul ? "netbsd" : "sunos",
@@ -815,7 +838,7 @@ printf("errno %d", error);
 	}
 	/* else if (error == ERESTART || error == EJUSTRETURN) */
 		/* nothing to do */
-	userret(p, pc, sticks);
+	userret(p, pc, stime);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

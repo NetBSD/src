@@ -42,7 +42,7 @@
  *	@(#)genassym.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: genassym.c,v 1.15 93/04/21 06:09:30 torek Exp  (LBL)
- * $Id: genassym.c,v 1.3 1993/11/26 11:43:29 deraadt Exp $
+ * $Id: genassym.c,v 1.4 1994/02/01 06:01:38 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -108,7 +108,6 @@ main()
 	off("P_STAT", struct proc, p_stat);
 	off("P_WCHAN", struct proc, p_wchan);
 	off("P_VMSPACE", struct proc, p_vmspace);
-	off("P_RTIME", struct proc, p_rtime);
 	def("SRUN", SRUN);
 
 	/* VM structure fields */
