@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.24 2002/09/12 22:56:30 mycroft Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.25 2002/09/12 23:11:37 mycroft Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -67,7 +67,7 @@ _rtld_bind_powerpc(obj, reloff)
 
 	rela = obj->pltrela + reloff;
 
-	if (_rtld_relocate_plt_object(obj, rela, &addr, true) < 0)
+	if (_rtld_relocate_plt_object(obj, rela, &addr) < 0)
 		_rtld_die();
 
 	return addr;
