@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagutils.c,v 1.27 2004/02/29 01:24:34 oster Exp $	*/
+/*	$NetBSD: rf_dagutils.c,v 1.28 2004/02/29 01:47:45 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.27 2004/02/29 01:24:34 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagutils.c,v 1.28 2004/02/29 01:47:45 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -224,9 +224,7 @@ rf_AllocDAGHeader()
 	RF_DagHeader_t *dh;
 
 	dh = pool_get(&rf_dagh_pool, PR_WAITOK);
-	if (dh) {
-		memset((char *) dh, 0, sizeof(RF_DagHeader_t));
-	}
+	memset((char *) dh, 0, sizeof(RF_DagHeader_t));
 	return (dh);
 }
 
