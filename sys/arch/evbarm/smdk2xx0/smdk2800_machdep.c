@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.15 2003/07/15 00:25:06 lukem Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.16 2003/08/03 14:11:16 bsh Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.15 2003/07/15 00:25:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.16 2003/08/03 14:11:16 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -440,7 +440,7 @@ initarm(void *arg)
 	bus_space_write_4(&bootstrap_bs_tag, temp_softc.sc_sx.sc_intctl_ioh,
 	    INTCTL_INTMSK, 0);
 
-	s3c2800_clock_freq(&temp_softc);
+	s3c2800_clock_freq(s3c2xx0_softc);
 
 	consinit();
 #ifdef VERBOSE_INIT_ARM
