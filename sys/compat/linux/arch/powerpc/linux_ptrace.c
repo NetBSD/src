@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.1 2001/01/19 01:36:51 manu Exp $ */
+/*	$NetBSD: linux_ptrace.c,v 1.2 2001/02/04 14:24:38 manu Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 		regs->cr = linux_regs->lccr;
 		regs->xer = linux_regs->lxer;
 		regs->ctr = linux_regs->lctr;
-		regs->pc = 0; /* XXX obviously this won't work ;o) */
+		regs->pc = linux_regs->lnip; /* XXX */
 
 		error = process_write_regs(t, regs);
 		goto out;
@@ -293,8 +293,10 @@ linux_sys_ptrace_arch(p, v, retval)	/* XXX Check me! (From NetBSD/i386) */
 			return 0;
 
 	case  LINUX_PTRACE_POKEUSR:
-		/* XXX We don't do much yet... */
-		addr = SCARG(uap, addr);
+		/* 
+		 * XXX NetBSD/i386 only handle debugregs here. It seems these 
+		 * debugregs are not availlable on powerpc. Hence we do nothing.
+		 */
 		break;
 	default:
 		/* never reached */
