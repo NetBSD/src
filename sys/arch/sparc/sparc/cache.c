@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.14 1997/03/11 00:44:02 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.15 1997/03/12 15:44:28 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -150,12 +150,11 @@ viking_cache_enable()
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
 	/* Now turn on MultiCache if it exists */
-	if ((lda(SRMMU_PCR, ASI_SRMMU) & SRMMU_PCR_MB) == 0
-		&& CACHEINFO.ec_totalsize > 0) {
+	if (cpuinfo.mxcc && CACHEINFO.ec_totalsize > 0) {
 		/* Multicache controller */
 		stda(MXCC_ENABLE_ADDR, ASI_CONTROL,
-		    ldda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
-			 (u_int64_t)MXCC_ENABLE_BIT);
+		     ldda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
+		     (u_int64_t)MXCC_ENABLE_BIT);
 		CACHEINFO.ec_enabled = 1;
 	}
 	printf("cache enabled\n");
