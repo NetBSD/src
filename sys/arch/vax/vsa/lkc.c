@@ -1,4 +1,4 @@
-/*	$NetBSD: lkc.c,v 1.4 1998/06/08 15:04:26 ragge Exp $ */
+/*	$NetBSD: lkc.c,v 1.5 1998/06/20 18:42:50 ragge Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -38,6 +38,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <dev/wscons/wsksymvar.h>
 #include <dev/wscons/wscons_callbacks.h>
 
 #include <dev/dec/lk201.h>
@@ -91,9 +92,7 @@ int
 lkc_catch(line, ch)
 	int line, ch;
 {
-	extern char *q_special[];
 	int hej;
-	char c, *cp;
 
 	if (line > 1)
 		return 0;
@@ -102,11 +101,12 @@ lkc_catch(line, ch)
 		return 1;
 
 	if (hej > 255) {
+#ifdef notdef /* XXX don't handle this for now */
 		cp = q_special[hej & 255];
 		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], cp, strlen(cp));
+#endif
 	} else {
-		c = hej;
-		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], &c, 1);
+		wsdisplay_kbdinput(wsdisplay_cd.cd_devs[0], (keysym_t)hej);
 	}
 	return 1;
 }
@@ -156,7 +156,7 @@ lkc_decode(ch)
 		ch -= 86;
 		if (ch > 10)
 			ch -= 9;
-		wsdisplay_switch(wsdisplay_cd.cd_devs[0], ch);
+		wsdisplay_switch(wsdisplay_cd.cd_devs[0], ch, 0);
 		return -1;
 
 	default:
