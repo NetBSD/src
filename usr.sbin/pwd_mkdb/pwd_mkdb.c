@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.19 2000/08/07 13:19:27 ad Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.20 2000/08/08 12:08:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000\n\
 Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
 __SCCSID("from: @(#)pwd_mkdb.c	8.5 (Berkeley) 4/20/94");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.19 2000/08/07 13:19:27 ad Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.20 2000/08/08 12:08:17 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -417,7 +417,6 @@ putdbent(DB *dp, struct passwd *pw, const char *passwd, int flags,
 		M_32_SWAP(pwd.pw_gid);
 		M_32_SWAP(pwd.pw_change);
 		M_32_SWAP(pwd.pw_expire);
-		M_32_SWAP(flags);
 	}
 
 	/* Create insecure data. */
