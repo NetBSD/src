@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.28 2002/02/28 16:54:32 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.29 2002/02/28 18:18:51 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <sh3/trapreg.h>
 #include <sh3/cache.h>
 #include <sh3/mmu.h>
 #include <sh3/clock.h>
@@ -533,8 +534,10 @@ cpu_reset()
 {
 
 	_cpu_exception_suspend();
+	_reg_write_4(SH_(EXPEVT), 0x020);	/* manual reset */
 
 	goto *(u_int32_t *)0xa0000000;
-	for (;;)
+	/* NOTREACHED */
+	while (1)
 		;
 }
