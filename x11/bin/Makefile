@@ -1,22 +1,25 @@
-#	$NetBSD: Makefile,v 1.4 2003/09/14 22:33:31 lukem Exp $
+#	$NetBSD: Makefile,v 1.5 2003/09/15 08:31:01 lukem Exp $
 
-SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap cxpm dpsexec dpsinfo \
-	editres fc-cache fc-list fslsfonts fstobdf iceauth \
-	ico imake lbxproxy listres lndir luit makepsres mkcfm mkfontdir \
-	mkfontscale oclock proxymngr pswrap rgb rstart scripts setxkbmap \
-	showfont smproxy sxpm texteroids twm ucs2any viewres x11perf xauth \
-	xbiff xcalc xclock xcmsdb xclipboard xcutsel xconsole xditview \
-	xdm xdpyinfo xedit xev xeyes xf86dga xfd xfs xfindproxy xfontsel \
-	xfsinfo xfwp xgamma xgc xhost xinit xkbevd \
-	xkbcomp xkbprint xkbutils xkill xload xlsatoms xlsclients \
-	xlsfonts xlogo xmag xman xmessage xmh xmkmf xmodmap xprop xrandr xrdb \
-	xrefresh xset xsetmode xsetpointer xsetroot xsm xstdcmap \
-	xterm xtrap xvidtune xvinfo xwd xwininfo xwud
+SUBDIR=	appres bdftopcf bdftruncate beforelight bitmap \
+	ccmakedep cleanlinks cxpm dpsexec dpsinfo editres \
+	fc-cache fc-list fslsfonts fstobdf gccmakedep \
+	iceauth ico imake lbxproxy listres lndir luit \
+	makedepend makeg makepsres makestrs mergelib \
+	mkcfm mkdirhier mkfontdir mkfontscale mkhtmlindex \
+	oclock proxymngr pswrap revpath rgb rman rstart \
+	scripts setxkbmap showfont smproxy ssh-askpass sxpm \
+	texteroids twm ucs2any viewres \
+	x11perf xauth xbiff xcalc xclipboard xclock xcmsdb \
+	xconsole xcutsel xditview xdm xdpyinfo xedit xev xeyes \
+	xf86dga xfd xfindproxy xfontsel xfs xfsinfo xfwp \
+	xgamma xgc xhost xinit xkbcomp xkbevd xkbprint xkbutils \
+	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xman \
+	xmessage xmh xmkmf xmodmap xprop xrandr xrdb xrefresh xset \
+	xsetmode xsetpointer xsetroot xsm xstdcmap xsystrace xterm \
+	xtrap xvidtune xvinfo xwd xwininfo xwud
 
 .if ${MACHINE_ARCH} != "vax"	# XXX: vax is missing ceilf (etc) in libm
 SUBDIR+=glxgears glxinfo 
 .endif
-
-SUBDIR+=ssh-askpass xsystrace
 
 .include <bsd.subdir.mk>
