@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.17 2004/06/06 05:43:17 dyoung Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.18 2004/06/06 05:44:25 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -35,7 +35,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.11 2004/04/02 20:19:20 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.17 2004/06/06 05:43:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.18 2004/06/06 05:44:25 dyoung Exp $");
 #endif
 
 /*
@@ -555,7 +555,7 @@ ieee80211_media_change(struct ifnet *ifp)
 #ifdef notdef
 			if (ic->ic_curmode == IEEE80211_MODE_11G)
 				ieee80211_set11gbasicrates(
-					&ic->ic_suprates[newphymode],
+					&ic->ic_sup_rates[newphymode],
 					IEEE80211_MODE_11B);
 #endif
 			break;
