@@ -30,7 +30,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: microtime.s,v 1.4.4.1 1993/09/14 17:28:43 mycroft Exp $
+ *	$Id: microtime.s,v 1.4.4.2 1993/10/26 16:46:52 mycroft Exp $
  */
 
 #include "../include/asm.h"
@@ -98,8 +98,10 @@ ENTRY(microtime)
 	#
 	cmpl	$11890,%ebx
 	jle	2f
+#if 0
 	movl	$0x0a,%eax	# tell ICU we want IRR
 	outb	%al,$IO_ICU1
+#endif
 
 	inb	$IO_ICU1,%al	# read IRR in ICU
 	orb	_ipending,%al	# and soft intr reg
@@ -107,8 +109,10 @@ ENTRY(microtime)
 	je	1f
 	addl	$-11932,%ebx	# yes, subtract one clock period
 1:
+#if 0
 	movl	$0x0b,%eax	# tell ICU we want ISR 
 	outb	%al,$IO_ICU1	#   (rest of kernel expects this)
+#endif
 2:
 	sti			# enable interrupts
 
