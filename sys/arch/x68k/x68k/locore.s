@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.28 1998/05/24 19:32:49 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.29 1998/06/30 11:59:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_uvm.h"
+
 #include "ite.h"
 #include "spc.h"
 #include "mha.h"
@@ -57,8 +59,6 @@
 	.text
 GLOBAL(kernel_text)
 
-#include <x68k/x68k/vectors.s>
-
 /*
  * Temporary stack for a variety of purposes.
  * Try and make this the first thing is the data segment so it
@@ -68,6 +68,8 @@ GLOBAL(kernel_text)
 	.data
 	.space	NBPG
 ASLOCAL(tmpstk)
+
+#include <x68k/x68k/vectors.s>
 
 	.text
 /*
@@ -533,16 +535,24 @@ _zstrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+48
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+48
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	rte
 
 _kbdtrap:
 	INTERRUPT_SAVEREG
 	jbsr	_kbdintr
 	INTERRUPT_RESTOREREG
-	addql	#1,_intrcnt+40
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+40
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 /*	jra	rei*/
 	rte
 
@@ -555,8 +565,12 @@ _fdctrap:
 	jbsr	_C_LABEL(fdcintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _fdcdmatrap:
@@ -565,8 +579,12 @@ _fdcdmatrap:
 	jbsr	_C_LABEL(fdcdmaintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 
@@ -576,8 +594,12 @@ _fdcdmaerrtrap:
 	jbsr	_C_LABEL(fdcdmaerrintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 #ifdef SCSIDMA
@@ -587,8 +609,12 @@ _spcdmatrap:
 	jbsr	_C_LABEL(spcdmaintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 
@@ -598,8 +624,12 @@ _spcdmaerrtrap:
 	jbsr	_C_LABEL(spcdmaerrintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 #endif
 
@@ -609,8 +639,12 @@ _audiotrap:
 	jbsr	_audiointr
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+52
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+52
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _partrap:
@@ -621,8 +655,12 @@ _partrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+56
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+56
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _audioerrtrap:
@@ -631,8 +669,12 @@ _audioerrtrap:
 	jbsr	_audioerrintr
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+20
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+20
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _spctrap:
@@ -643,8 +685,12 @@ _spctrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+44
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+44
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _exspctrap:
@@ -660,8 +706,12 @@ _exspctrap:
 	addql	#4,sp
 #endif
 	INTERRUPT_RESTOREREG
-	addql	#1,_intrcnt+44
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+44
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _powtrap:
@@ -671,8 +721,12 @@ _powtrap:
 	jbsr	_C_LABEL(powintr)
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+60
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+60
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _com0trap:
@@ -684,8 +738,12 @@ _com0trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+68
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+68
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _com1trap:
@@ -696,8 +754,12 @@ _com1trap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+68
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+68
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _edtrap:
@@ -709,8 +771,12 @@ _edtrap:
 	addql	#4,sp
 	INTERRUPT_RESTOREREG
 #endif
-	addql	#1,_intrcnt+64
-	addql	#1,_cnt+V_INTR
+	addql	#1,_C_LABEL(intrcnt)+64
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _lev1intr:
@@ -721,7 +787,7 @@ _lev5intr:
 _lev6intr:
 	INTERRUPT_SAVEREG
 Lnotdma:
-	lea	_intrcnt,a0
+	lea	_C_LABEL(intrcnt),a0
 	movw	sp@(22),d0		| use vector offset
 	andw	#0xfff,d0		|   sans frame type
 	addql	#1,a0@(-0x60,d0:w)	|     to increment apropos counter
@@ -730,25 +796,33 @@ Lnotdma:
 	jbsr	_intrhand		| handle interrupt
 	addql	#4,sp			| pop SR
 	INTERRUPT_RESTOREREG
-	addql	#1,_cnt+V_INTR
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR
+#endif
 	jra	rei
 
 _timertrap:
 	movw	#SPL4,sr		| XXX?
 	moveml	#0xC0C0,sp@-		| save scratch registers
-	addql	#1,_intrcnt+28		| count hardclock interrupts
+	addql	#1,_C_LABEL(intrcnt)+28	| count hardclock interrupts
 	lea	sp@(16),a1		| a1 = &clockframe
 	movl	a1,sp@-
 	jbsr	_hardclock		| hardclock(&frame)
 	movl	#1,sp@
 	jbsr	_ms_modem		| ms_modem(1)
 	addql	#4,sp
-	addql	#1,_cnt+V_INTR		| chalk up another interrupt
+#if defined(UVM)
+	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
+#else
+	addql	#1,_C_LABEL(cnt)+V_INTR	| chalk up another interrupt
+#endif
 	moveml	sp@+,#0x0303		| restore scratch registers
 	jra	rei			| all done
 
 _lev7intr:
-	addql	#1,_intrcnt+36
+	addql	#1,_C_LABEL(intrcnt)+36
 	clrl	sp@-
 	moveml	#0xFFFF,sp@-		| save registers
 	movl	usp,a0			| and save
@@ -881,12 +955,17 @@ ASENTRY_NOPROFILE(start)
 	movel	sp@+,d5			| fphysize -- last page
 	movel	sp@,a4			| esym
 
-	lea	_edata,a0		| clear out BSS
+	RELOC(_vectab, a0)		| set Vector Base Register temporaly
+	movc	a0,vbr
+
+#if 0	/* XXX this should be done by the boot loader */
+	RELOC(_edata, a0)		| clear out BSS
 	movl	#_end-4,d0		| (must be <= 256 kB)
 	subl	#_edata,d0
 	lsrl	#2,d0
 1:	clrl	a0@+
 	dbra	d0,1b
+#endif
 
 	RELOC(tmpstk, a0)
 	movl	a0,sp			| give ourselves a temporary stack
@@ -899,7 +978,8 @@ ASENTRY_NOPROFILE(start)
 	RELOC(_lowram, a0)
 	movl	a5,a0@			| store start of physical memory
 
-	jbsr	_intr_reset		| XXX
+	RELOC(_intr_reset, a0)
+	jbsr	a0@			| XXX
 
 	movl	#CACHE_OFF,d0
 	movc	d0,cacr			| clear and disable on-chip cache(s)
@@ -1019,18 +1099,16 @@ Lstploaddone:
 	lea	0x02c00000,a1		| a1: graphic VRAM ( not JUPITER-X )
 					|     DRAM ( JUPITER-X )
 	movw	a0@,d0
-	movw	#0x000f,a0@
-	cmpw	#0x000f,a1@		| JUPITER-X?
-	jne	Ljupiter		| yes, set SUPER bit
-	clrw	a0@
-	tstw	a1@			| be sure JUPITER-X?
-	jeq	Ljupiterdone		| no, skip
-Ljupiter:
+	movw	d0,d1
+	notw	d1
+	movw	d1,a1@
+	movw	d0,a0@
+	cmpw	a1@,d1			| JUPITER-X?
+	jne	Ljupiterdone		| no, skip
 	movl	#0x0100a240,d0		| to access system register
 	.long	0x4e7b0006		| movc d0,dtt0
 	movb	#0x01,0x01800003@	| set "SUPER" bit	
 Ljupiterdone:
-	movw	d0,a0@
 #endif /* JUPITER */
 	moveq	#0,d0			| ensure TT regs are disabled
 	.long	0x4e7b0004		| movc d0,itt0
@@ -1063,9 +1141,16 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
+/* set vector base in virtual address */
+	movl	#_C_LABEL(vectab),d0	| set Vector Base Register
+	movc	d0,vbr
 /* select the software page size now */
 	lea	_ASM_LABEL(tmpstk),sp	| temporary stack
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_setpagesize)  | select software page size
+#else
 	jbsr	_C_LABEL(vm_set_page_size) | select software page size
+#endif
 /* set kernel stack, user SP, and initial pcb */
 	movl	_C_LABEL(proc0paddr),a1	| get proc0 pcb addr
 	lea	a1@(USPACE-4),sp	| set kernel stack to end of area
@@ -1142,8 +1227,13 @@ _proc_trampoline:
  */
 #include <m68k/m68k/support.s>
 
-	.globl	_whichqs,_qs,_cnt,_panic
+	.globl	_whichqs,_qs,_panic
 	.globl	_curproc,_want_resched
+#if defined(UVM)
+	.globl	_uvmexp
+#else
+	.globl	_cnt
+#endif
 
 /*
  * Use common m68k process manipulation routines.
@@ -1178,11 +1268,15 @@ ENTRY(switch_exit)
 	/* Free old process's resources. */
 	movl	#USPACE,sp@-		| size of u-area
 	movl	a0@(P_ADDR),sp@-	| address of process's u-area
-	movl	_kernel_map,sp@-	| map it was allocated in
-	jbsr	_kmem_free		| deallocate it
+	movl	_C_LABEL(kernel_map),sp@- | map it was allocated in
+#if defined(UVM)
+	jbsr	_C_LABEL(uvm_km_free)	| deallocate it
+#else
+	jbsr	_C_LABEL(kmem_free)	| deallocate it
+#endif
 	lea	sp@(12),sp		| pop args
 
-	jra	_cpu_switch
+	jra	_C_LABEL(cpu_switch)
 
 /*
  * When no processes are on the runq, Swtch branches to Idle
@@ -1835,9 +1929,12 @@ LmotommuF:
 #endif
 	clrl	sp@			| value for pmove to TC (turn off MMU)
 	pmove	sp@,tc			| disable MMU
-	movl	0x00ff0000:l,_vectab
-	movl	0x00ff0004:l,_vectab+4
-	moval	0x00ff0004:l,a0
+
+	subal	a1,a1
+	moveml	0x00ff0000,#0x0101	| get RESET vectors in ROM
+					|	(d0: ssp, a0: pc)
+	moveml	#0x0101,a1@		| put them at 0x0000 (for Xellent30)
+	movc	a1,vbr			| reset Vector Base Register
 	jmp	a0@			| reboot X680x0
 Lebootcode:
 
@@ -1845,15 +1942,18 @@ Lebootcode:
 	.globl	_machineid
 _machineid:
 	.long	0		| default to X68030
-	.globl	_mmutype,_cputype,_fputype,_ectype,_protorp
+	.globl	_mmutype,_cputype,_fputype,_protorp
 _mmutype:
 	.long	MMU_68030	| default to 030 internal MMU
 _cputype:
 	.long	CPU_68030	| default to 68030 CPU
 _fputype:
 	.long	FPU_NONE
+#ifdef M68K_MMU_HP
+	.globl	_ectype
 _ectype:
 	.long	EC_NONE		| external cache type, default to none
+#endif
 _protorp:
 	.long	0,0		| prototype root pointer
 	.globl	_cold

@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.9 1998/01/12 21:13:45 thorpej Exp $	*/
+/*	$NetBSD: ite.c,v 1.10 1998/06/30 11:59:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1319,11 +1319,8 @@ iteputchar(c, ip)
 	register int c;
 	struct ite_softc *ip;
 {
-	struct tty *kbd_tty;
 	int n, x, y;
 	char *cp;
-
-	kbd_tty = ite_tty[kbd_ite->device.dv_unit];
 
 	if (c >= 0x20 && ip->escape) {
 		switch (ip->escape) {
@@ -2225,7 +2222,7 @@ iteputchar(c, ip)
 
 	case BEL:
 #if NBELL > 0
-		if (kbd_tty && ite_tty[kbd_ite->device.dv_unit] == kbd_tty)
+		if (kbd_ite && ite_tty[kbd_ite->device.dv_unit])
 			opm_bell();
 #endif
 		break;

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.3 1998/06/26 01:54:14 lukem Exp $
+#	$NetBSD: INSTALL,v 1.4 1998/06/30 11:59:09 msaitoh Exp $
 
 #
 #	ALL -- everything that's currently supported
@@ -52,7 +52,7 @@ file-system 	FFS			# Berkeley fast file system
 file-system 	MFS			# memory file system; uses RAM and swap
 file-system 	NFS			# Network File System client
 file-system 	CD9660			# ISO 9660 CD-ROM file system, with RR
-#file-system 	MSDOSFS			# MS-DOS FAT file system
+file-system 	MSDOSFS			# MS-DOS FAT file system
 file-system 	KERNFS			# kernel file system; recommended
 
 options 	FASTLINKS		# fast symbolic links in FFS

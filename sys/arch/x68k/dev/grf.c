@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.8 1998/06/25 23:59:15 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.9 1998/06/30 11:59:10 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,6 +48,7 @@
  * Hardware access is through the machine dependent grf switch routines.
  */
 
+#include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 
 #include <sys/param.h>
@@ -78,12 +79,17 @@ extern struct emul emul_hpux;
 #include <vm/vm_page.h>
 #include <vm/vm_pager.h>
 
+#if defined(UVM)
+#include <uvm/uvm.h>
+#endif
+
 #include <miscfs/specfs/specdev.h>
 
 #include "ite.h"
 #if NITE == 0
 #define	iteon(u,f)
 #define	iteoff(u,f)
+#define	ite_reinit(u)
 #endif
 
 #ifdef DEBUG
@@ -111,18 +117,21 @@ grfopen(dev, flags, mode, p)
 	struct proc *p;
 {
 	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp = grf_cd.cd_devs[unit];
+	register struct grf_softc *gp;
 	int error = 0;
 
-	if (unit >= grf_cd.cd_ndevs || (gp->g_flags & GF_ALIVE) == 0)
-		return(ENXIO);
+	if (unit >= grf_cd.cd_ndevs ||
+	    (gp = grf_cd.cd_devs[unit]) == NULL ||
+	    (gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
+
 	if ((gp->g_flags & (GF_OPEN|GF_EXCLUDE)) == (GF_OPEN|GF_EXCLUDE))
 		return(EBUSY);
 #ifdef COMPAT_HPUX
 	/*
 	 * XXX: cannot handle both HPUX and BSD processes at the same time
 	 */
-	if (curproc->p_emul == &emul_hpux)
+	if (p->p_emul == &emul_hpux)
 		if (gp->g_flags & GF_BSDOPEN)
 			return(EBUSY);
 		else
@@ -154,6 +163,9 @@ grfclose(dev, flags, mode, p)
 {
 	register struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
+
 	(void) grfoff(dev);
 #ifdef COMPAT_HPUX
 	(void) grfunlock(gp);
@@ -174,6 +186,9 @@ grfioctl(dev, cmd, data, flag, p)
 	int unit = GRFUNIT(dev);
 	register struct grf_softc *gp = grf_cd.cd_devs[unit];
 	int error;
+
+	if ((gp->g_flags & GF_ALIVE) == 0)
+		return (ENXIO);
 
 #ifdef COMPAT_HPUX
 	if (p->p_emul == &emul_hpux)
@@ -223,11 +238,8 @@ grfpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
-	int revents = 0;
 
-	if (events & (POLLOUT | POLLWRNORM))
-		revents |= events & (POLLOUT | POLLWRNORM);
-	return (revents);
+	return (events & (POLLOUT | POLLWRNORM));
 }
 
 /*ARGSUSED*/
@@ -236,6 +248,7 @@ grfmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
+
 	return (grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off));
 }
 
@@ -300,9 +313,10 @@ grfaddr(gp, off)
 #ifdef COMPAT_HPUX
 
 /*ARGSUSED*/
+int
 hpuxgrfioctl(dev, cmd, data, flag, p)
 	dev_t dev;
-	u_long cmd;
+	int cmd;
 	caddr_t data;
 	int flag;
 	struct proc *p;
@@ -404,6 +418,7 @@ hpuxgrfioctl(dev, cmd, data, flag, p)
 	return(error);
 }
 
+int
 grflock(gp, block)
 	register struct grf_softc *gp;
 	int block;
@@ -414,8 +429,8 @@ grflock(gp, block)
 
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grflock(%d): dev %x flags %x lockpid %x\n",
-		       p->p_pid, gp-grf_softc, gp->g_flags,
+		printf("grflock(%d): flags %x lockpid %x\n",
+		       p->p_pid, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_pid) {
@@ -438,8 +453,8 @@ grflock(gp, block)
 			return(OEAGAIN);
 		do {
 			gp->g_flags |= GF_WANTED;
-			if (error = tsleep((caddr_t)&gp->g_flags,
-					   (PZERO+1) | PCATCH, devioc, 0))
+			if ((error = tsleep((caddr_t)&gp->g_flags,
+					   (PZERO+1) | PCATCH, devioc, 0)))
 				return (error);
 		} while (gp->g_lockp);
 	}
@@ -457,13 +472,14 @@ grflock(gp, block)
 	return(0);
 }
 
+int
 grfunlock(gp)
 	register struct grf_softc *gp;
 {
 #ifdef DEBUG
 	if (grfdebug & GDB_LOCK)
-		printf("grfunlock(%d): dev %x flags %x lockpid %d\n",
-		       curproc->p_pid, gp-grf_softc, gp->g_flags,
+		printf("grfunlock(%d): flags %x lockpid %d\n",
+		       curproc->p_pid, gp->g_flags,
 		       gp->g_lockp ? gp->g_lockp->p_pid : -1);
 #endif
 	if (gp->g_lockp != curproc)
@@ -493,14 +509,17 @@ grfunlock(gp)
  * XXX: This may give the wrong result for remote stats of other
  * machines where device 10 exists.
  */
+int
 grfdevno(dev)
 	dev_t dev;
 {
 	int unit = GRFUNIT(dev);
-	struct grf_softc *gp = grf_cd.cd_devs[unit];
+	struct grf_softc *gp;
 	int newdev;
 
-	if (unit >= grf_cd.cd_ndevs || (gp->g_flags&GF_ALIVE) == 0)
+	if (unit >= grf_cd.cd_ndevs ||
+	    (gp = grf_cd.cd_devs[unit]) == NULL ||
+	    (gp->g_flags&GF_ALIVE) == 0)
 		return(bsdtohpuxdev(dev));
 	/* magic major number */
 	newdev = 12 << 24;
@@ -547,9 +566,15 @@ grfmap(dev, addrp, p)
 	vn.v_type = VCHR;			/* XXX */
 	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
+#if defined(UVM)
+	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
+			 (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL,
+			 flags, (caddr_t)&vn, 0);
+#else
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
 			(vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL,
 			flags, (caddr_t)&vn, 0);
+#endif
 	if (error == 0)
 		(void) (*gp->g_sw->gd_mode)(gp, GM_MAP, *addrp);
 	return(error);
@@ -573,11 +598,17 @@ grfunmap(dev, addr, p)
 		return(EINVAL);		/* XXX: how do we deal with this? */
 	(void) (*gp->g_sw->gd_mode)(gp, GM_UNMAP, 0);
 	size = round_page(gp->g_display.gd_regsize + gp->g_display.gd_fbsize);
+#if defined(UVM)
+	rv = uvm_unmap(&p->p_vmspace->vm_map, (vm_offset_t)addr,
+	    (vm_offset_t)addr + size, FALSE);
+#else
 	rv = vm_deallocate(&p->p_vmspace->vm_map, (vm_offset_t)addr, size);
+#endif
 	return(rv == KERN_SUCCESS ? 0 : EINVAL);
 }
 
 #ifdef COMPAT_HPUX
+int
 iommap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -585,20 +616,21 @@ iommap(dev, addrp)
 
 #ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iommap(%d): addr %x\n", curproc->p_pid, *addrp);
+		printf("iommap(%d): addr %p\n", curproc->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
 
+int
 iounmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;
 {
+#ifdef DEBUG
 	int unit = minor(dev);
 
-#ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
-		printf("iounmmap(%d): id %d addr %x\n",
+		printf("iounmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(0);
@@ -611,6 +643,7 @@ iounmmap(dev, addr)
  * process ids.  Returns a slot number between 1 and GRFMAXLCK or 0 if no
  * slot is available. 
  */
+int
 grffindpid(gp)
 	struct grf_softc *gp;
 {
@@ -649,6 +682,7 @@ done:
 	return(i);
 }
 
+void
 grfrmpid(gp)
 	struct grf_softc *gp;
 {
@@ -677,6 +711,7 @@ grfrmpid(gp)
 #endif
 }
 
+int
 grflckmmap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -685,12 +720,13 @@ grflckmmap(dev, addrp)
 	struct proc *p = curproc;		/* XXX */
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckmmap(%d): addr %x\n",
+		printf("grflckmmap(%d): addr %p\n",
 		       p->p_pid, *addrp);
 #endif
 	return(EINVAL);
 }
 
+int
 grflckunmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;
@@ -699,7 +735,7 @@ grflckunmmap(dev, addr)
 	int unit = minor(dev);
 
 	if (grfdebug & (GDB_MMAP|GDB_LOCK))
-		printf("grflckunmmap(%d): id %d addr %x\n",
+		printf("grflckunmmap(%d): id %d addr %p\n",
 		       curproc->p_pid, unit, addr);
 #endif
 	return(EINVAL);
