@@ -1,9 +1,11 @@
-#	$NetBSD: FOUR_TTYS,v 1.30 2002/04/12 08:11:24 gmcgarry Exp $
+#	$NetBSD: FOUR_TTYS,v 1.31 2002/04/25 15:06:38 atatat Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
 
 include "arch/sun3/conf/std.sun3"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Machines to be supported by this kernel
 options 	FPU_EMULATE

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.51 2002/04/12 08:11:13 gmcgarry Exp $
+# $NetBSD: GENERIC,v 1.52 2002/04/25 15:06:34 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/ofppc/conf/std.ofppc"
 
-#ident 		"GENERIC-$Revision: 1.51 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.52 $"
 
 maxusers	32
 

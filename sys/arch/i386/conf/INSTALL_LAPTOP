@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LAPTOP,v 1.28 2002/04/18 12:54:14 wiz Exp $
+#	$NetBSD: INSTALL_LAPTOP,v 1.29 2002/04/25 15:06:29 atatat Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -10,6 +10,8 @@
 #
 
 include "arch/i386/conf/std.i386"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.30 2002/04/17 02:22:46 mycroft Exp $
+# $NetBSD: GENERIC,v 1.31 2002/04/25 15:06:25 atatat Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,9 @@
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.30 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.31 $"
 
 maxusers	32
 

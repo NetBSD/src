@@ -1,10 +1,12 @@
-#	$NetBSD: GENERICSBC,v 1.15 2002/04/12 08:11:05 gmcgarry Exp $
+#	$NetBSD: GENERICSBC,v 1.16 2002/04/25 15:06:30 atatat Exp $
 #
 # GENERICSBC
 
 include	"arch/mac68k/conf/std.mac68k"
 
-#ident 		"GENERICSBC-$Revision: 1.15 $"
+options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERICSBC-$Revision: 1.16 $"
 
 maxusers	16		# estimated number of users
 

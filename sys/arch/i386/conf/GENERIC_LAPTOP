@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_LAPTOP,v 1.49 2002/04/18 12:54:13 wiz Exp $
+#	$NetBSD: GENERIC_LAPTOP,v 1.50 2002/04/25 15:06:29 atatat Exp $
 #	From: NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp
 #
 #	GENERIC_LAPTOP -- GENERIC with cardbus and some USB devices enabled
@@ -6,7 +6,9 @@
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.49 $"
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
+
+#ident 		"GENERIC-$Revision: 1.50 $"
 
 maxusers	32		# estimated number of users
 

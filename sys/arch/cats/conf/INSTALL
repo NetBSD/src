@@ -1,9 +1,11 @@
-#	$NetBSD: INSTALL,v 1.18 2002/04/17 02:22:46 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.19 2002/04/25 15:06:25 atatat Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
 
 include	"arch/cats/conf/std.cats"
+
+#options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # estimated number of users
 
