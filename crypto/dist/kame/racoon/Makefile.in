@@ -1,4 +1,4 @@
-#	$KAME: Makefile.in,v 1.30 2000/12/12 16:59:32 thorpej Exp $
+#	$KAME: Makefile.in,v 1.31 2001/01/31 05:32:55 sakane Exp $
 
 @SET_MAKE@
 srcdir=	@srcdir@
@@ -31,7 +31,7 @@ OBJS=	main.o session.o isakmp.o handler.o random.o \
 	policy.o localconf.o remoteconf.o crypto_openssl.o algorithm.o \
 	proposal.o sainfo.o cfparse.o cftoken.o strnames.o \
 	vmbuf.o plog.o logger.o schedule.o str2val.o misc.o sockmisc.o \
-	safefile.o @LIBOBJS@
+	safefile.o backupsa.o @LIBOBJS@
 # under samples
 CONF=	psk.txt racoon.conf
 
