@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.181 2003/03/27 12:20:07 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.182 2003/03/29 16:48:03 perry Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.179 2003/01/16 15:18:44 kanaoka Exp 
+ *	NetBSD: pcmciadevs,v 1.181 2003/03/29 16:47:27 perry Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -1182,6 +1182,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Corega K.K.",
 	    "Corega Wireless LAN PCCB-11",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_COREGA_WIRELESS_LAN_PCCL_11,
+	    PCMCIA_CIS_COREGA_WIRELESS_LAN_PCCL_11,
+	    0,
+	    "Corega K.K.",
+	    "Corega Wireless LAN PCCL-11",	}
 	,
 	{
 	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_DIGITAL_DEPCMXX,
