@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.93 1997/12/16 21:59:41 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.94 1998/01/09 06:35:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 1997/12/16 21:59:41 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 1998/01/09 06:35:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,6 +425,11 @@ alpha_init(pfn, ptb, bim, bip)
 	PAGE_SIZE = hwrpb->rpb_page_size;
 	if (PAGE_SIZE != 8192)
 		panic("page size %d != 8192?!", PAGE_SIZE);
+
+	/*
+	 * Initialize PAGE_SIZE-dependent variables.
+	 */
+	vm_set_page_size();
 
 	/*
 	 * Find the first free page.
