@@ -64,7 +64,7 @@ file	arch/pc532/pc532/ns_cksum.c	ns
 file	arch/pc532/pc532/ntoh.s
 file	arch/pc532/pc532/oc_cksum.s	inet
 file	arch/pc532/pc532/pmap.c
-file	arch/pc532/pc532/proc_machdep.c
+file	arch/pc532/pc532/process_machdep.c
 file 	arch/pc532/pc532/random.s
 file	arch/pc532/pc532/sys_machdep.c
 file	arch/pc532/pc532/trap.c
