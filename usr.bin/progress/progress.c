@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.4 2003/01/22 04:11:34 jhawk Exp $ */
+/*	$NetBSD: progress.c,v 1.5 2003/01/22 10:44:17 agc Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.4 2003/01/22 04:11:34 jhawk Exp $");
+__RCSID("$NetBSD: progress.c,v 1.5 2003/01/22 10:44:17 agc Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -207,7 +207,8 @@ main(int argc, char *argv[])
 		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
 			if ((nw = write(outpipe[1], fb_buf + off,
 			    (size_t) nr)) < 0)
-				err(1, "writing %d bytes to output pipe", nr);
+				err(1, "writing %u bytes to output pipe",
+							(unsigned) nr);
 	close(outpipe[1]);
 
 	wait(&waitstat);
