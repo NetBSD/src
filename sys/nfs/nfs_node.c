@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.71 2003/12/07 21:15:46 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.72 2004/01/23 22:20:20 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.71 2003/12/07 21:15:46 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.72 2004/01/23 22:20:20 wrstuden Exp $");
 
 #include "opt_nfs.h"
 
@@ -238,6 +238,7 @@ nfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsmount *nmp = VFSTONFS(vp->v_mount);
 	boolean_t removed;
+	int err;
 
 	np = VTONFS(vp);
 	if (prtactive && vp->v_usecount != 0)
@@ -257,12 +258,19 @@ nfs_inactive(v)
 
 		/*
 		 * Remove the silly file that was rename'd earlier
+		 *
+		 * Just in case our thread also has the parent node locked,
+		 * we let vn_lock() fail.
 		 */
 
-		vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY);
+		err = vn_lock(sp->s_dvp, LK_EXCLUSIVE | LK_RETRY
+					| LK_RECURSEFAIL);
 		nfs_removeit(sp);
 		crfree(sp->s_cred);
-		vput(sp->s_dvp);
+		if (err != EDEADLK)
+			vput(sp->s_dvp);
+		else
+			vrele(sp->s_dvp);
 		FREE(sp, M_NFSREQ);
 	}
 
