@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.42 1998/07/17 23:00:02 thorpej Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.43 1998/07/21 10:46:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -279,8 +279,18 @@ again:
 		 * to (closed) window, and set the persist timer
 		 * if it isn't already going.  If the window didn't
 		 * close completely, just wait for an ACK.
+		 *
+		 * If we have a pending FIN, either it has already been
+		 * transmitted or it is outside the window, so drop it.
+		 * If the FIN has been transmitted, but this is not a
+		 * retransmission, then len must be -1.  Therefore we also
+		 * prevent here the sending of `gratuitous FINs'.  This
+		 * eliminates the need to check for that case below (e.g.
+		 * to back up snd_nxt before the FIN so that the sequence
+		 * number is correct).
 		 */
 		len = 0;
+		flags &= ~TH_FIN;
 		if (win == 0) {
 			TCP_TIMER_DISARM(tp, TCPT_REXMT);
 			tp->t_rxtshift = 0;
@@ -349,17 +359,9 @@ again:
 	 */
 	if (tp->t_flags & TF_ACKNOW)
 		goto send;
-	if (flags & (TH_SYN|TH_RST))
+	if (flags & (TH_SYN|TH_FIN|TH_RST))
 		goto send;
 	if (SEQ_GT(tp->snd_up, tp->snd_una))
-		goto send;
-	/*
-	 * If our state indicates that FIN should be sent
-	 * and we have not yet done so, or we're retransmitting the FIN,
-	 * then we need to send.
-	 */
-	if (flags & TH_FIN &&
-	    ((tp->t_flags & TF_SENTFIN) == 0 || tp->snd_nxt == tp->snd_una))
 		goto send;
 
 	/*
@@ -539,14 +541,6 @@ send:
 	bcopy((caddr_t)tp->t_template, (caddr_t)ti, sizeof (struct tcpiphdr));
 
 	/*
-	 * Fill in fields, remembering maximum advertised
-	 * window for use in delaying messages about window sizes.
-	 * If resending a FIN, be sure not to use a new sequence number.
-	 */
-	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN && 
-	    tp->snd_nxt == tp->snd_max)
-		tp->snd_nxt--;
-	/*
 	 * If we are doing retransmissions, then snd_nxt will
 	 * not reflect the first unsent octet.  For ACK only
 	 * packets, we do not want the sequence number of the
@@ -614,15 +608,11 @@ send:
 
 		/*
 		 * Advance snd_nxt over sequence space of this segment.
+		 * There are no states in which we send both a SYN and a FIN,
+		 * so we collapse the tests for these flags.
 		 */
-		if (flags & (TH_SYN|TH_FIN)) {
-			if (flags & TH_SYN)
-				tp->snd_nxt++;
-			if (flags & TH_FIN) {
-				tp->snd_nxt++;
-				tp->t_flags |= TF_SENTFIN;
-			}
-		}
+		if (flags & (TH_SYN|TH_FIN))
+			tp->snd_nxt++;
 		tp->snd_nxt += len;
 		if (SEQ_GT(tp->snd_nxt, tp->snd_max)) {
 			tp->snd_max = tp->snd_nxt;
