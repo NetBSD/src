@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.171 2000/05/31 05:02:31 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.172 2000/06/06 18:26:35 soren Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -46,6 +46,7 @@
 #include "opt_sysv.h"
 #include "opt_maxuprc.h"
 #include "opt_multiprocessor.h"
+#include "opt_syscall_debug.h"
 
 #include "rnd.h"
 

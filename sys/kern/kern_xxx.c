@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.42 1998/03/01 02:22:31 fvdl Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.43 2000/06/06 18:26:36 soren Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -34,6 +34,8 @@
  *
  *	@(#)kern_xxx.c	8.3 (Berkeley) 2/14/95
  */
+
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
