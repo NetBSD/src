@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.64 2003/12/14 06:11:35 sekiya Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 2003/12/15 12:48:37 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.64 2003/12/14 06:11:35 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2003/12/15 12:48:37 sekiya Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -143,11 +143,7 @@ u_int32_t clockmask;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-#ifdef IP20
-void	ip20_init(void);
-#endif
-
-#ifdef IP22
+#if defined(IP2X)
 void	ip22_init(void);
 extern void      ip22_sdcache_disable(void);
 extern void      ip22_sdcache_enable(void);
@@ -386,7 +382,7 @@ mach_init(argc, argv, magic, btinfo)
 	switch (mach_type) {
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
-#ifdef IP22
+#if defined(IP2X)
 		ip22_init();
 #else
 		unconfigured_system_type(mach_type);
@@ -709,11 +705,13 @@ cpu_reboot(howto, bootstr)
 
 	/* Clear and disable watchdog timer. */
 	switch (mach_type) {
+#if defined(IP2X)
 	case MACH_SGI_IP20:
 	case MACH_SGI_IP22:
 		*(volatile u_int32_t *)0xbfa00014 = 0;
 		*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
 		break;
+#endif
 
 #if defined(IP32)
 	case MACH_SGI_IP32:
@@ -916,11 +914,14 @@ void ddb_trap_hook(int where)
 	switch (where) {
 	case 1:		/* Entry to DDB, turn watchdog off */
 		switch (mach_type) {
+#if defined(IP2X)
 		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			*(volatile u_int32_t *)0xbfa00004 &= ~0x100;
 			break;
+#endif
+
 #if defined(IP32)
 		case MACH_SGI_IP32:
 			bus_space_write_8(crime_sc->iot, crime_sc->ioh,
@@ -936,11 +937,14 @@ void ddb_trap_hook(int where)
 
 	case 0:		/* Exit from DDB, turn watchdog back on */
 		switch (mach_type) {
+#if defined(IP2X)
 		case MACH_SGI_IP20:
 		case MACH_SGI_IP22:
 			*(volatile u_int32_t *)0xbfa00004 |= 0x100;
 			*(volatile u_int32_t *)0xbfa00014 = 0;
 			break;
+#endif
+
 #if defined(IP32)
 		case MACH_SGI_IP32:
 			scratch = bus_space_read_8(crime_sc->iot, crime_sc->ioh,
@@ -965,7 +969,7 @@ void mips_machdep_cache_config(void)
 	arcbios_tree_walk(mips_machdep_find_l2cache, NULL);
 
 	switch (MIPS_PRID_IMPL(cpu_id)) {
-#if defined(IP22)
+#if defined(IP2X)
 	case MIPS_R4600:
 		/*
 		 * R4600 is on Indy-class machines only.  Disable and
