@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.13 2004/05/30 03:43:26 toshii Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.14 2004/12/25 17:24:01 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -132,6 +132,7 @@ struct rtk_softc {
 
 	int			sc_flags;	/* misc flags */
 	int			sc_txthresh;	/* Early tx threshold */
+	int			sc_rev;		/* revision within rtk_type */
 
 	void	*sc_sdhook;			/* shutdown hook */
 	void	*sc_powerhook;			/* power management hook */
