@@ -1,4 +1,4 @@
-/*	$NetBSD: ethers.c,v 1.18 2000/04/24 10:40:24 itojun Exp $	*/
+/*	$NetBSD: ethers.c,v 1.19 2000/10/04 14:46:23 sommerfeld Exp $	*/
 
 /* 
  * ethers(3N) a la Sun.
@@ -9,7 +9,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ethers.c,v 1.18 2000/04/24 10:40:24 itojun Exp $");
+__RCSID("$NetBSD: ethers.c,v 1.19 2000/10/04 14:46:23 sommerfeld Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -203,17 +203,19 @@ ether_line(l, e, hostname)
 	char *hostname;
 {
 	u_int i[6];
-	static char buf[sizeof " %x:%x:%x:%x:%x:%x %s\\n" + 21];
-		/* XXX: 21 == strlen (ASCII representation of 2^64) */
 
+#define S2(arg) #arg
+#define S1(arg) S2(arg)
+	const static char fmt[] = " %x:%x:%x:%x:%x:%x"
+	    " %" S1(MAXHOSTNAMELEN) "s\n";
+#undef S2
+#undef S1
+	
 	_DIAGASSERT(l != NULL);
 	_DIAGASSERT(e != NULL);
 	_DIAGASSERT(hostname != NULL);
 
-	if (! buf[0])
-		snprintf(buf, sizeof buf, " %%x:%%x:%%x:%%x:%%x:%%x %%%ds\\n",
-		    MAXHOSTNAMELEN);
-	if (sscanf(l, buf,
+	if (sscanf(l, fmt,
 	    &i[0], &i[1], &i[2], &i[3], &i[4], &i[5], hostname) == 7) {
 		e->ether_addr_octet[0] = (u_char)i[0];
 		e->ether_addr_octet[1] = (u_char)i[1];
