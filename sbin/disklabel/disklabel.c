@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.93 2001/01/03 06:55:30 enami Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.94 2001/01/03 06:57:57 enami Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: disklabel.c,v 1.93 2001/01/03 06:55:30 enami Exp $");
+__RCSID("$NetBSD: disklabel.c,v 1.94 2001/01/03 06:57:57 enami Exp $");
 #endif
 #endif	/* not lint */
 
@@ -644,7 +644,7 @@ readmbr(int f)
 
 	dp = (struct mbr_partition *)&mbr[MBR_PARTOFF];
 	if (lseek(f, (off_t)MBR_BBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
+	    read(f, mbr, sizeof(mbr)) != sizeof(mbr))
 		err(4, "can't read master boot record");
 
 #if !defined(__i386__)
@@ -765,7 +765,7 @@ get_filecore_partition(int f)
 	u_int		offset;
 
 	if (lseek(f, (off_t)FILECORE_BOOT_SECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
-	    read(f, bb, sizeof(bb)) < sizeof(bb))
+	    read(f, bb, sizeof(bb)) != sizeof(bb))
 		err(4, "can't read filecore boot block");
 	fcbb = (struct filecore_bootblock *)bb;
 
@@ -793,7 +793,7 @@ get_filecore_partition(int f)
 		 */
 
 		if (lseek(f, (off_t)offset * DEV_BSIZE, SEEK_SET) < 0 ||
-		    read(f, bb, sizeof(bb)) < sizeof(bb))
+		    read(f, bb, sizeof(bb)) != sizeof(bb))
 			err(4, "can't read riscix partition table");
 		riscix_part = (struct riscix_partition_table *)bb;
 
@@ -860,7 +860,7 @@ readlabel(int f)
 #endif	/* __arm32__ */
 
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
-		    read(f, bootarea, BBSIZE) < BBSIZE)
+		    read(f, bootarea, BBSIZE) != BBSIZE)
 			err(4, "%s", specname);
 		if (!Iflag)
 			msg = "no disklabel";
@@ -928,7 +928,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 
 		sectoffset = 0;
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
-		    read(f, boot, BBSIZE) < BBSIZE)
+		    read(f, boot, BBSIZE) != BBSIZE)
 			err(4, "%s", specname);
 		(void) memset(lp, 0, sizeof(*lp));
 	}
@@ -957,7 +957,7 @@ makebootarea(char *boot, struct disklabel *dp, int f)
 #endif	/* __arm32__ */
 
 			if (lseek(f, sectoffset, SEEK_SET) < 0 ||
-			    read(f, boot, BBSIZE) < BBSIZE)
+			    read(f, boot, BBSIZE) != BBSIZE)
 				err(4, "%s", specname);
 			(void) memset(lp, 0, sizeof(*lp));
 		}
