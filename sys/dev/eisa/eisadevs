@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.9 1996/07/25 20:22:16 thorpej Exp $
+$NetBSD: eisadevs,v 1.10 1996/09/06 18:01:07 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -41,6 +41,7 @@ vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor FSI		FORE Systems
 vendor INT		Intel
+vendor ETI		Microdyne
 vendor TCM		3Com
 vendor USC		UltraStor
 
@@ -79,6 +80,9 @@ product FSI 2003	ESA-200E ATM
 
 /* Intel products */
 product INT 1010	EtherExpress 32 Flash Ethernet
+
+/* ETI products */
+product ETI 1001	NE3300 Ethernet Rev. C & D
 
 /* 3Com products */
 product TCM 5091	3C509 Ethernet
