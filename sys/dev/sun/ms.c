@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.27 2003/08/07 16:31:26 agc Exp $	*/
+/*	$NetBSD: ms.c,v 1.28 2003/09/21 19:16:57 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.27 2003/08/07 16:31:26 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms.c,v 1.28 2003/09/21 19:16:57 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,12 @@ msioctl(dev, cmd, data, flag, p)
 
 	case FIOASYNC:
 		ms->ms_events.ev_async = *(int *)data != 0;
+		return (0);
+
+	case FIOSETOWN:
+		if (-*(int *)data != ms->ms_events.ev_io->p_pgid
+		    && *(int *)data != ms->ms_events.ev_io->p_pid)
+			return (EPERM);
 		return (0);
 
 	case TIOCSPGRP:

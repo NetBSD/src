@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.33 2003/06/29 22:31:05 fvdl Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.34 2003/09/21 19:17:02 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.33 2003/06/29 22:31:05 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.34 2003/09/21 19:17:02 jdolecek Exp $");
 
 #include "wsdisplay.h"
 #include "wsmux.h"
@@ -506,6 +506,14 @@ wsmux_do_ioctl(struct device *dv, u_long cmd, caddr_t data, int flag,
 		if (evar == NULL)
 			return (EINVAL);
 		evar->async = *(int *)data != 0;
+		return (0);
+	case FIOSETOWN:
+		DPRINTF(("%s: FIOSETOWN\n", sc->sc_base.me_dv.dv_xname));
+		if (sc->sc_base.me_evp == NULL)
+			return (EINVAL);
+		if (-*(int *)data != evar->io->p_pgid
+		    && *(int *)data != evar->io->p_pid)
+			return (EPERM);
 		return (0);
 	case TIOCSPGRP:
 		DPRINTF(("%s: TIOCSPGRP\n", sc->sc_base.me_dv.dv_xname));
