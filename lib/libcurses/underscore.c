@@ -1,4 +1,4 @@
-/*	$NetBSD: underscore.c,v 1.7 2003/01/27 21:04:10 jdc Exp $	*/
+/*	$NetBSD: underscore.c,v 1.8 2004/01/20 08:31:46 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: underscore.c,v 1.7 2003/01/27 21:04:10 jdc Exp $");
+__RCSID("$NetBSD: underscore.c,v 1.8 2004/01/20 08:31:46 wiz Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -47,7 +47,7 @@ __RCSID("$NetBSD: underscore.c,v 1.7 2003/01/27 21:04:10 jdc Exp $");
 #ifndef _CURSES_USE_MACROS
 
 /*
- * underscore
+ * underscore --
  *	Enter underscore mode on stdscr.
  */
 int
@@ -70,7 +70,7 @@ underend(void)
 #endif
 
 /*
- * wunderscore
+ * wunderscore --
  *	Enter underscore mode.
  */
 int
@@ -95,7 +95,7 @@ wunderend(WINDOW *win)
 {
 	if (__tc_ue != NULL) {
 #ifdef DEBUG
-		__CTRACE("wunderuend\n");
+		__CTRACE("wunderend\n");
 #endif
 		win->wattr &= ~__UNDERSCORE;
 	}
