@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.8 1997/10/19 04:39:53 lukem Exp $	*/
+/*	$NetBSD: expr.c,v 1.8.4.1 1999/04/14 09:43:54 matthias Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,12 +41,13 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: expr.c,v 1.8 1997/10/19 04:39:53 lukem Exp $");
+__RCSID("$NetBSD: expr.c,v 1.8.4.1 1999/04/14 09:43:54 matthias Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/cdefs.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include "mdef.h"
 #include "extern.h"
@@ -106,6 +107,7 @@ __RCSID("$NetBSD: expr.c,v 1.8 1997/10/19 04:39:53 lukem Exp $");
 #define GEQ     5
 #define OCTAL   8
 #define DECIMAL 10
+#define HEX	16
 
 static char *nxtch;		       /* Parser scan pointer */
 
@@ -499,9 +501,21 @@ num()
 	base = ((c = skipws()) == '0') ? OCTAL : DECIMAL;
 	rval = 0;
 	ndig = 0;
-	while (c >= '0' && c <= (base == OCTAL ? '7' : '9')) {
+	if (base == OCTAL) {
+		c = skipws();
+		if (c == 'x' || c == 'X') {
+			base = HEX;
+			c = skipws();
+		} else
+			ndig++;
+	}
+	while ((base == HEX && isxdigit(c)) ||
+			(c >= '0' && c <= (base == OCTAL ? '7' : '9'))) {
 		rval *= base;
-		rval += (c - '0');
+		if (isalpha(c))
+			rval += (tolower(c) - 'a' + 10);
+		else
+			rval += (c - '0');
 		c = getch();
 		ndig++;
 	}
