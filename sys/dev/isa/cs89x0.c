@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.6 1998/11/12 13:03:51 mycroft Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.7 1998/11/13 09:37:46 mycroft Exp $	*/
 
 /*
  * Copyright 1997
@@ -1065,7 +1065,7 @@ cs_set_ladr_filt(sc, ec)
 
 			/* Set the bit the Logical address filter. */
 			port = (u_int16_t) (index >> 4);
-			mask = (u_int16_t) (1 << (15 - (index & 0xf)));
+			mask = (u_int16_t) (1 << (index & 0xf));
 			af[port] |= mask;
 
 			ETHER_NEXT_MULTI(step, enm);
