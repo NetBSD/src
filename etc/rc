@@ -146,13 +146,13 @@ fi
 
 # $rwhod is imported from /etc/netstart;
 # if $rwhod == YES, rwhod is run.
-if [ X${rwhod} != X"YES" ]; then
+if [ X${rwhod} == X"YES" ]; then
 	echo -n ' rwhod';	rwhod
 fi
 
 # $rwalld is imported from /etc/netstart;
 # if $rwalld == YES, rwalld is run.
-if [ X${rwalld} != X"YES" ]; then
+if [ X${rwalld} == X"YES" ]; then
 	echo -n ' rwalld';	rwalld
 fi
 
