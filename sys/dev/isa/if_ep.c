@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: if_ep.c,v 1.44 1994/07/21 03:30:18 mycroft Exp $
+ *	$Id: if_ep.c,v 1.45 1994/07/21 04:15:05 mycroft Exp $
  */
 
 #include "bpfilter.h"
@@ -192,7 +192,9 @@ epprobe(parent, self, aux)
 		}
 
 		/* find all isa cards */
+#if 0
 		outw(BASE + EP_COMMAND, GLOBAL_RESET);
+#endif
 		delay(1000);
 		elink_reset();	/* global reset to ELINK_ID_PORT */
 		delay(1000);
