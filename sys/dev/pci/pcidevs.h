@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.433.2.25 2003/09/10 19:17:09 grant Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.433.2.26 2003/10/20 04:49:35 cyber Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.428.2.29 2003/09/10 19:15:02 grant Exp 
+ *	NetBSD
  */
 
 /*
@@ -1493,6 +1493,7 @@
 #define	PCI_PRODUCT_INTEL_82845G_IGD	0x2562		/* 82845G/GL Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82865_HB	0x2570		/* 82865 Host */
 #define	PCI_PRODUCT_INTEL_82865_AGP	0x2571		/* 82865 AGP */
+#define	PCI_PRODUCT_INTEL_82865_IGD	0x2572		/* 82865G Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82801EB_HPB	0x2573		/* 82801EB Hub-to-PCI Bridge */
 #define	PCI_PRODUCT_INTEL_82875P_HB	0x2578		/* 82875P Host */
 #define	PCI_PRODUCT_INTEL_82875P_AGP	0x2579		/* 82875P AGP */
