@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.7 2002/10/23 13:16:45 scw Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.7 2002/10/23 13:16:45 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.8 2003/01/18 08:28:26 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.7 2002/10/23 13:16:45 scw Exp 
 #include <sys/ktrace.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 #include <sys/proc.h>
 
@@ -59,8 +60,8 @@ static int recvit32 __P((struct proc *, int, struct netbsd32_msghdr *, struct io
 			 register_t *));
 
 int
-netbsd32_recvmsg(p, v, retval)
-	struct proc *p;
+netbsd32_recvmsg(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -94,7 +95,7 @@ netbsd32_recvmsg(p, v, retval)
 				   iov, msg.msg_iovlen);
 	if (error)
 		goto done;
-	if ((error = recvit32(p, SCARG(uap, s), &msg, iov, (caddr_t)0,
+	if ((error = recvit32(l->l_proc, SCARG(uap, s), &msg, iov, (caddr_t)0,
 	    retval)) == 0) {
 		error = copyout((caddr_t)&msg,
 		    (caddr_t)NETBSD32PTR64(SCARG(uap, msg)), sizeof(msg));
@@ -238,8 +239,8 @@ recvit32(p, s, mp, iov, namelenp, retsize)
 }
 
 int
-netbsd32_sendmsg(p, v, retval)
-	struct proc *p;
+netbsd32_sendmsg(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -274,7 +275,7 @@ netbsd32_sendmsg(p, v, retval)
 		goto done;
 	msg.msg_iov = iov;
 	/* Luckily we can use this directly */
-	error = sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
+	error = sendit(l->l_proc, SCARG(uap, s), &msg, SCARG(uap, flags), retval);
 done:
 	if (iov != aiov)
 		FREE(iov, M_IOV);
@@ -282,8 +283,8 @@ done:
 }
 
 int
-netbsd32_recvfrom(p, v, retval)
-	struct proc *p;
+netbsd32_recvfrom(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -313,13 +314,13 @@ netbsd32_recvfrom(p, v, retval)
 	aiov.iov_len = (u_long)SCARG(uap, len);
 	msg.msg_control = 0;
 	msg.msg_flags = SCARG(uap, flags);
-	return (recvit32(p, SCARG(uap, s), &msg, &aiov,
+	return (recvit32(l->l_proc, SCARG(uap, s), &msg, &aiov,
 	    (caddr_t)NETBSD32PTR64(SCARG(uap, fromlenaddr)), retval));
 }
 
 int
-netbsd32_sendto(p, v, retval)
-	struct proc *p;
+netbsd32_sendto(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -341,5 +342,5 @@ netbsd32_sendto(p, v, retval)
 	msg.msg_control = 0;
 	aiov.iov_base = (char *)NETBSD32PTR64(SCARG(uap, buf));	/* XXX kills const */
 	aiov.iov_len = SCARG(uap, len);
-	return (sendit(p, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
+	return (sendit(l->l_proc, SCARG(uap, s), &msg, SCARG(uap, flags), retval));
 }

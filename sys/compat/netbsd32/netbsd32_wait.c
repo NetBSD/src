@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.4 2002/10/23 13:16:46 scw Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.4 2002/10/23 13:16:46 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.5 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,8 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.4 2002/10/23 13:16:46 scw Exp $"
 #include <compat/netbsd32/netbsd32_conv.h>
 
 int
-netbsd32_wait4(q, v, retval)
-	struct proc *q;
+netbsd32_wait4(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -58,6 +58,7 @@ netbsd32_wait4(q, v, retval)
 		syscallarg(int) options;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
+	struct proc *q = l->l_proc;
 	struct netbsd32_rusage ru32;
 	int nfound;
 	struct proc *p, *t;
@@ -175,8 +176,8 @@ loop:
 }
 
 int
-netbsd32_getrusage(p, v, retval)
-	struct proc *p;
+netbsd32_getrusage(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -184,6 +185,7 @@ netbsd32_getrusage(p, v, retval)
 		syscallarg(int) who;
 		syscallarg(netbsd32_rusagep_t) rusage;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct rusage *rup;
 	struct netbsd32_rusage ru;
 

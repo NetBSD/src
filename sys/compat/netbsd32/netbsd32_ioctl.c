@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.15 2002/10/23 13:16:43 scw Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.16 2003/01/18 08:28:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.15 2002/10/23 13:16:43 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.16 2003/01/18 08:28:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.15 2002/10/23 13:16:43 scw Exp 
 #include <sys/socket.h>
 #include <sys/ttycom.h>
 #include <sys/mount.h>
+#include <sys/sa.h>
 #include <sys/syscallargs.h>
 
 #ifdef __sparc__
@@ -325,8 +326,8 @@ netbsd32_from_sioc_sg_req(p, s32p)
  * on the ioctl command before and afterwards.
  */
 int
-netbsd32_ioctl(p, v, retval)
-	struct proc *p;
+netbsd32_ioctl(l, v, retval)
+	struct lwp *l;
 	void *v;
 	register_t *retval;
 {
@@ -335,6 +336,7 @@ netbsd32_ioctl(p, v, retval)
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;
 	} */ *uap = v;
+	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com;
