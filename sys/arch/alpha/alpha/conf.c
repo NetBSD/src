@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.63 2002/06/17 16:32:58 christos Exp $ */
+/* $NetBSD: conf.c,v 1.64 2002/06/27 18:35:29 ross Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.63 2002/06/17 16:32:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.64 2002/06/27 18:35:29 ross Exp $");
 
 #include "opt_systrace.h"
 #include <sys/param.h>
@@ -222,6 +222,9 @@ cdev_decl(stic);
 #include "clockctl.h"
 cdev_decl(clockctl);
 
+#include "bktr.h"
+cdev_decl(bktr);
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -309,6 +312,7 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),			/* 70: system call tracing */
 #endif
+	cdev_bktr_init(NBKTR, bktr),	/* 71: Bt848 video capture device */
 };
 int	nchrdev = sizeof (cdevsw) / sizeof (cdevsw[0]);
 
