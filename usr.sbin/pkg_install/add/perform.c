@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.29.2.1 1999/06/23 14:56:54 perry Exp $	*/
+/*	$NetBSD: perform.c,v 1.29.2.2 1999/08/25 10:26:10 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.29.2.1 1999/06/23 14:56:54 perry Exp $");
+__RCSID("$NetBSD: perform.c,v 1.29.2.2 1999/08/25 10:26:10 he Exp $");
 #endif
 #endif
 
@@ -97,7 +97,7 @@ pkg_do(char *pkg)
 
     /* make sure dbdir actually exists! */
     if (!(isdir(dbdir) || islinktodir(dbdir))) {
-	if (! vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
+	if (vsystem("/bin/mkdir -p -m 755 %s", dbdir)) {
 	    errx(1, "Database-dir %s cannot be generated, aborting.",
 		 dbdir); 
 	}
@@ -121,7 +121,7 @@ pkg_do(char *pkg)
 	 * Is it an ftp://foo.bar.baz/file.tgz or http://foo.bar.baz/file.tgz
 	 * specification?
 	 */
-	if (isURL(pkg)) {
+	if (URLlength(pkg) > 0) {
 	    if (ispkgpattern(pkg)) {
 		warnx("patterns not allowed in URLs, "
 		     "please install manually!");
@@ -189,7 +189,7 @@ pkg_do(char *pkg)
 		    if (!(isdir(p->name) || islinktodir(p->name)) && !Fake) {
 			if (Verbose)
 			    printf("Desired prefix of %s does not exist, creating.\n", p->name);
-			vsystem("mkdir -p %s", p->name);
+			(void)vsystem("mkdir -p %s", p->name);
 		    }
 		    if (chdir(p->name) == -1) {
 			warn("unable to change directory to `%s'", p->name);
@@ -230,7 +230,7 @@ pkg_do(char *pkg)
 		warnx("unable to extract `%s'!", pkg_fullname);
 		goto bomb;
 	    }
-	} /* isURL(pkg) */
+	}
 
 	/* Check for sanity and dependencies */
 	if (sanity_check(pkg))
@@ -271,10 +271,12 @@ pkg_do(char *pkg)
 	char installed[FILENAME_MAX];
 	char *s;
 
-	if ((s=strrchr(PkgName, '-')) != NULL){
-	    strcpy(buf, PkgName);
-	    buf[s-PkgName+1]='*';
-	    buf[s-PkgName+2]='\0';
+	if ((s = strrchr(PkgName, '-')) != NULL){
+	    int l;
+
+	    l = s-PkgName+1;
+	    (void) memcpy(buf, PkgName, l);
+	    (void) strcpy(&buf[l],"[0-9]*");
 
             if (findmatchingname(dbdir, buf, check_if_installed, installed) > 0) {
 		warnx("other version '%s' already installed", installed);
@@ -314,10 +316,10 @@ pkg_do(char *pkg)
 	    char path[FILENAME_MAX], *cp = NULL;
 
 	    if (!Fake) {
-		if (!isURL(pkg) && !getenv("PKG_ADD_BASE")) {
+		if (URLlength(pkg) < 0 && !getenv("PKG_ADD_BASE")) {
 		    /* install depending pkg from local disk */
 		    
-		    snprintf(path, FILENAME_MAX, "%s/%s.tgz", Home, p->name);
+		    (void) snprintf(path, sizeof(path), "%s/%s.tgz", Home, p->name);
 		    if (fexists(path))
 			cp = path;
 		    else
@@ -325,7 +327,8 @@ pkg_do(char *pkg)
 		    if (cp) {
 			if (Verbose)
 			    printf("Loading it from %s.\n", cp);
-		        if (vsystem("/usr/sbin/pkg_add %s%s %s%s",
+		        if (vsystem("%s/pkg_add %s%s %s%s",
+				     BINDIR,
                                      Prefix ? "-p " : "",
                                      Prefix ? Prefix : "",
 				     Verbose ? "-v " : "", cp)) {
@@ -439,7 +442,7 @@ pkg_do(char *pkg)
 	if (Verbose)
 	    printf("mtree -U -f %s -d -e -p %s\n", MTREE_FNAME, p ? p->name : "/");
 	if (!Fake) {
-	    if (vsystem("/usr/sbin/mtree -U -f %s -d -e -p %s", MTREE_FNAME, p ? p->name : "/"))
+	    if (vsystem("%s/mtree -U -f %s -d -e -p %s", BINDIR, MTREE_FNAME, p ? p->name : "/"))
 		warnx("mtree returned a non-zero status - continuing");
 	}
 	unlink(MTREE_FNAME);
@@ -551,7 +554,7 @@ pkg_do(char *pkg)
 	FILE *fp;
 	char buf[BUFSIZ];
 
-	snprintf(buf, sizeof buf, "%s/%s", LogDir, p->name);
+	(void) snprintf(buf, sizeof(buf), "%s/%s", LogDir, p->name);
 	fp = fopen(buf, "r");
 	if (fp) {
 	    putc('\n', stdout);
