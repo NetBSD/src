@@ -1,4 +1,4 @@
-# $NetBSD: shl.elf,v 1.23 2000/07/06 22:33:50 mjl Exp $
+# $NetBSD: shl.elf,v 1.24 2000/07/17 02:32:56 mrg Exp $
 ./usr/lib/libamu.so.1
 ./usr/lib/libasn1.so.2
 ./usr/lib/libbz2.so.0
@@ -34,7 +34,7 @@
 ./usr/lib/libskey.so.1
 ./usr/lib/libsl.so.1
 ./usr/lib/libss.so.3
-./usr/lib/libssl.so.0
+./usr/lib/libssl.so.1
 ./usr/lib/libstdc++.so.2
 ./usr/lib/libtelnet.so.3
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
