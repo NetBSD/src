@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80321,v 1.35 2004/11/24 20:49:20 bouyer Exp $
+#	$NetBSD: IQ80321,v 1.36 2005/01/31 16:54:33 hannken Exp $
 #
 #	IQ80321 -- Intel IQ80321 Evaluation Board Kernel
 #
@@ -216,6 +216,7 @@ ukphy*		at mii? phy ?			# Generic IEEE 802.3u PHYs
 # disk/mass storage pseudo-devices
 #pseudo-device	md		1	# memory disk device (ramdisk)
 pseudo-device	vnd		4	# disk-like interface to files
+#pseudo-device	fss		4	# file system snapshot device
 
 # network pseudo-devices
 pseudo-device	bpfilter	4	# Berkeley packet filter

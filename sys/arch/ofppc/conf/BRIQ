@@ -1,4 +1,4 @@
-#	$NetBSD: BRIQ,v 1.14 2005/01/17 15:28:52 cube Exp $
+#	$NetBSD: BRIQ,v 1.15 2005/01/31 16:55:01 hannken Exp $
 #
 #	BRIQ -- Total Impact briQ -- http://www.totalimpact.com
 #
@@ -7,7 +7,7 @@ include "arch/ofppc/conf/std.ofppc"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.14 $"
+#ident 		"GENERIC-$Revision: 1.15 $"
 
 maxusers	32
 
@@ -143,6 +143,7 @@ pseudo-device	vnd		4	# disk-like interface to files
 pseudo-device	ccd		4	# concatenated/striped disk devices
 #pesudo-device	raid		4	# RAIDframe disk driver
 #options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
+#pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter	8	# packet filter
