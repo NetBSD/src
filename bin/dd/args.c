@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.19 2001/11/25 10:50:06 lukem Exp $	*/
+/*	$NetBSD: args.c,v 1.20 2001/11/26 00:56:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.19 2001/11/25 10:50:06 lukem Exp $");
+__RCSID("$NetBSD: args.c,v 1.20 2001/11/26 00:56:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static const struct arg {
 	u_int set, noset;
 } args[] = {
      /* the array needs to be sorted by the first column so
-        bsearch() can be used to find commands quickly */
+	bsearch() can be used to find commands quickly */
 	{ "bs",		f_bs,		C_BS,	 C_BS|C_IBS|C_OBS|C_OSYNC },
 	{ "cbs",	f_cbs,		C_CBS,	 C_CBS },
 	{ "conv",	f_conv,		0,	 0 },
@@ -167,10 +167,10 @@ jcl(char **argv)
 	} else
 		cfunc = def;
 
-	/* Read, write and seek calls take off_t as arguments. 
+	/* Read, write and seek calls take off_t as arguments.
 	 *
 	 * The following check is not done because an off_t is a quad
-	 *  for current NetBSD implementations. 
+	 *  for current NetBSD implementations.
 	 *
 	 * if (in.offset > INT_MAX/in.dbsz || out.offset > INT_MAX/out.dbsz)
 	 *	errx(1, "seek offsets cannot be larger than %d", INT_MAX);

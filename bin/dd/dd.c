@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.24 2001/11/26 00:13:24 lukem Exp $	*/
+/*	$NetBSD: dd.c,v 1.25 2001/11/26 00:56:33 enami Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.24 2001/11/26 00:13:24 lukem Exp $");
+__RCSID("$NetBSD: dd.c,v 1.25 2001/11/26 00:56:33 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,7 @@ main(int argc, char *argv[])
 static void
 setup(void)
 {
+
 	if (in.name == NULL) {
 		in.name = "stdin";
 		in.fd = STDIN_FILENO;
@@ -413,7 +414,8 @@ dd_out(int force)
 				    out.name);
 			}
 			if (out.flags & ISTAPE)
-				errx(1, "%s: short write on tape device", out.name);
+				errx(1, "%s: short write on tape device",
+				    out.name);
 		}
 		if ((out.dbcnt -= n) < out.dbsz)
 			break;
@@ -443,5 +445,5 @@ bwrite(int fd, const void *buf, size_t len)
 	oerrno = errno;
 	(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 	errno = oerrno;
-	return rv;
+	return (rv);
 }
