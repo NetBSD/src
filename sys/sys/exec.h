@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.104 2004/02/13 11:36:23 wiz Exp $	*/
+/*	$NetBSD: exec.h,v 1.105 2004/05/01 22:42:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -116,7 +116,7 @@ struct ps_strings {
  * Below the ps_strings and sigtramp, we may require a gap on the stack
  * (used to copyin/copyout various emulation data structures).
  */
-#define	STACKGAPLEN	512	/* plenty enough for now */
+#define	STACKGAPLEN	4096	/* plenty enough for now */
 
 /*
  * the following structures allow execve() to put together processes
