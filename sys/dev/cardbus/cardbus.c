@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.6 1999/10/29 07:29:08 haya Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.7 1999/10/29 11:30:27 joda Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 and 1999
@@ -47,6 +47,8 @@
 #include <dev/cardbus/cardbusvar.h>
 #include <dev/cardbus/pccardcis.h>
 
+#include <dev/cardbus/cardbus_exrom.h>
+
 #include <dev/pci/pcivar.h>	/* XXX */
 #include <dev/pci/pcireg.h>	/* XXX */
 
@@ -75,6 +77,9 @@ static int cardbussubmatch __P((struct device *, void *, void *));
 static int cardbusprint __P((void *, const char *));
 
 static int decode_tuples __P((u_int8_t *, int));
+
+static int cardbus_read_tuples __P((struct cardbus_attach_args *,
+				    cardbusreg_t, u_int8_t *, size_t));
 
 
 struct cfattach cardbus_ca = {
@@ -166,8 +171,148 @@ cardbusattach(parent, self, aux)
   cdstatus = 0;
 }
 
+static int
+cardbus_read_tuples(ca, cis_ptr, tuples, len)
+     struct cardbus_attach_args *ca;
+     cardbusreg_t cis_ptr;
+     u_int8_t *tuples;
+     size_t len;
+{
+#ifdef CARDBUS_DEBUG
+    static const char __func__[] = "cardbus_read_tuples";
+#endif
+    cardbus_chipset_tag_t cc = ca->ca_ct->ct_cc;
+    cardbus_function_tag_t cf = ca->ca_ct->ct_cf;
+    cardbustag_t tag = ca->ca_tag;
+    cardbusreg_t command;
+    int found = 0;
+
+    int i, j;
+    int cardbus_space = cis_ptr & CARDBUS_CIS_ASIMASK;
+    bus_space_handle_t bar_memh;
+    bus_size_t bar_size;
+    bus_addr_t bar_addr;
+    
+    int reg;
+      
+    memset(tuples, 0, len);
+
+    cis_ptr = cis_ptr & CARDBUS_CIS_ADDRMASK;
+
+    switch(cardbus_space) {
+    case CARDBUS_CIS_ASI_TUPLE:
+	DPRINTF(("%s: reading CIS data from configuration space\n", __func__));
+	for (i = cis_ptr, j = 0; i < 0xff; i += 4) {
+	    u_int32_t e = (cf->cardbus_conf_read)(cc, tag, i);
+	    tuples[j] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 1] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 2] = 0xff & e;
+	    e >>= 8;
+	    tuples[j + 3] = 0xff & e;
+	    j += 4;
+	}
+	found++;
+	break;
+
+    case CARDBUS_CIS_ASI_BAR0:
+    case CARDBUS_CIS_ASI_BAR1:
+    case CARDBUS_CIS_ASI_BAR2:
+    case CARDBUS_CIS_ASI_BAR3:
+    case CARDBUS_CIS_ASI_BAR4:
+    case CARDBUS_CIS_ASI_BAR5:
+    case CARDBUS_CIS_ASI_ROM:
+	if(cardbus_space == CARDBUS_CIS_ASI_ROM) {
+	    reg = CARDBUS_ROM_REG;
+	    DPRINTF(("%s: reading CIS data from ROM\n", __func__));
+	} else {
+	    reg = CARDBUS_BASE0_REG + (cardbus_space - 1) * 4;
+	    DPRINTF(("%s: reading CIS data from BAR%d\n",
+		     __func__, cardbus_space - 1));
+	}
+
+	/* XXX zero register so mapreg_map doesn't get confused by old
+           contents */
+	cardbus_conf_write(cc, cf, tag, reg, 0);
+	if(Cardbus_mapreg_map(ca->ca_ct, reg,
+			      CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
+			      0, 
+			      NULL, &bar_memh, &bar_addr, &bar_size)) {
+	    printf("%s: failed to map memory\n", __func__);
+	    return 1;
+	}
 
 
+	if(cardbus_space == CARDBUS_CIS_ASI_ROM) {
+	    cardbusreg_t exrom;
+	    int save;
+	    struct cardbus_rom_image_head rom_image;
+	    struct cardbus_rom_image *p;
+		    
+	    save = splhigh();
+	    /* enable rom address decoder */
+	    exrom = cardbus_conf_read(cc, cf, tag, reg);
+	    cardbus_conf_write(cc, cf, tag, reg, exrom | 1);
+	    
+	    command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	    cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			       command | CARDBUS_COMMAND_MEM_ENABLE);
+
+	    printf("reg = %x\n", reg);
+	    printf("bar_addr = %lx, exrom = %x\n", bar_addr, exrom);
+	    printf("exrom = %x\n", cardbus_conf_read(cc, cf, tag, reg));
+
+	    if(cardbus_read_exrom(ca->ca_memt, bar_memh, &rom_image))
+		goto out;
+
+	    for(p = SIMPLEQ_FIRST(&rom_image);
+		p;
+		p = SIMPLEQ_NEXT(p, next)) {
+		if(p->rom_image == CARDBUS_CIS_ASI_ROM_IMAGE(cis_ptr)) {
+		    bus_space_read_region_1(p->romt, p->romh,
+					    CARDBUS_CIS_ADDR(cis_ptr),
+					    tuples, 256);
+		    found++;
+		}
+		break;
+	    }
+	    while((p = SIMPLEQ_FIRST(&rom_image)) != NULL) {
+		SIMPLEQ_REMOVE_HEAD(&rom_image, p, next);
+		free(p, M_DEVBUF);
+	    }
+	out:
+	    exrom = cardbus_conf_read(cc, cf, tag, reg);
+	    cardbus_conf_write(cc, cf, tag, reg, exrom & ~1);
+	    splx(save);
+	} else {
+	    command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	    cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			       command | CARDBUS_COMMAND_MEM_ENABLE);
+	    /* XXX byte order? */
+	    bus_space_read_region_1(ca->ca_memt, bar_memh, 
+				    cis_ptr, tuples, 256);
+	    found++;
+	}
+	command = cardbus_conf_read(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG);
+	cardbus_conf_write(cc, cf, tag, CARDBUS_COMMAND_STATUS_REG, 
+			   command & ~CARDBUS_COMMAND_MEM_ENABLE);
+	cardbus_conf_write(cc, cf, tag, reg, 0);
+#if 0
+	/* XXX unmap memory */
+	(*ca->ca_ct->ct_cf->cardbus_space_free)(ca->ca_ct, 
+						ca->ca_ct->ct_sc->sc_rbus_memt, 
+						bar_memh, bar_size);
+#endif
+	break;
+
+#ifdef DIAGNOSTIC
+    default:
+	panic("%s: bad CIS space (%d)", __func__, cardbus_space);
+#endif
+    }
+    return !found;
+}
 
 /*
  * int cardbus_attach_card(struct cardbus_softc *sc)
@@ -253,38 +398,15 @@ cardbus_attach_card(sc)
   id = cardbus_conf_read(cc, cf, tag, CARDBUS_ID_REG);
   class = cardbus_conf_read(cc, cf, tag, CARDBUS_CLASS_REG);
   cis_ptr = cardbus_conf_read(cc, cf, tag, CARDBUS_CIS_REG);
-
+  
   DPRINTF(("cardbus_attach_card: Vendor 0x%x, Product 0x%x, CIS 0x%x\n",
 	   CARDBUS_VENDOR(id), CARDBUS_PRODUCT(id), cis_ptr));
-
-  bzero(tuple, 2048);
-
-  if (CARDBUS_CIS_ASI_TUPLE == (CARDBUS_CIS_ASI(cis_ptr))) {
-				/* Tuple is in Cardbus config space */
-    int i = cis_ptr & CARDBUS_CIS_ADDRMASK;
-    int j = 0;
-
-    for (; i < 0xff; i += 4) {
-      u_int32_t e = (cf->cardbus_conf_read)(cc, tag, i);
-      tuple[j] = 0xff & e;
-      e >>= 8;
-      tuple[j + 1] = 0xff & e;
-      e >>= 8;
-      tuple[j + 2] = 0xff & e;
-      e >>= 8;
-      tuple[j + 3] = 0xff & e;
-      j += 4;
-    }
-  } else if (CARDBUS_CIS_ASI(cis_ptr) <= CARDBUS_CIS_ASI_BAR5) {
-    /*    int bar = CARDBUS_CIS_ASI_BAR(cis_ptr);*/
-  }
-
-
-  decode_tuples(tuple, 2048);
-
+  
   {
     struct cardbus_attach_args ca;
-
+    
+    /* we need to allocate the ct here, since we might 
+       need it when reading the CIS */
     if (NULL == (ct = (cardbus_devfunc_t)malloc(sizeof(struct cardbus_devfunc),
 						M_DEVBUF, M_NOWAIT))) {
       panic("no room for cardbus_tag");
@@ -314,11 +436,24 @@ cardbus_attach_card(sc)
 
     ca.ca_intrline = sc->sc_intrline;
 
+    bzero(tuple, 2048);
+
+    if(cardbus_read_tuples(&ca, cis_ptr, tuple, sizeof(tuple))) {
+      printf("cardbus_attach_card: failed to read CIS\n");
+      free(ct, M_DEVBUF);
+      return 0;
+    }
+    
+    decode_tuples(tuple, 2048);
+    
+    
     if (NULL == (csc = config_found_sm((void *)sc, &ca, cardbusprint, cardbussubmatch))) {
       /* do not match */
       cf->cardbus_power(cc, CARDBUS_VCC_0V);
       sc->sc_poweron_func = 0;	/* no functions on */
       free(cc, M_DEVBUF);
+      free(ct, M_DEVBUF);
+      *previous_next = NULL;
     } else {
       /* found */
       previous_next = &(ct->ct_next);
