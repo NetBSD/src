@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 1995/11/17 09:49:19 thorpej Exp $
+#	$NetBSD: Makefile,v 1.60 1995/11/28 20:58:08 jtc Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
 SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
@@ -21,7 +21,7 @@ SUBDIR=	apply apropos asa at banner basename bdes biff cal calendar cap_mkdb \
 	xargs xinstall xlint xstr yacc yes ypcat ypmatch ypwhich
 
 # Don't use the standard tool chain on the alpha.
-.if (${MACHINE_ARCH} != "alpha")
+.if (${MACHINE_ARCH} != "alpha" && ${MACHINE_ARCH} != "mips")
 SUBDIR+= ar gprof nm ranlib size strip
 .endif
 
