@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.580 2003/10/15 20:31:52 itojun Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.581 2003/10/18 01:33:16 lukem Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.584 2003/10/15 20:31:38 itojun Exp 
+ *	NetBSD: pcidevs,v 1.585 2003/10/18 01:32:30 lukem Exp 
  */
 
 /*
@@ -7354,18 +7354,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "Broadband Adapter",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
-	    0,
-	    "ServerWorks",
-	    "OSB4 SouthBridge",
-	},
-	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
-	    0,
-	    "ServerWorks",
-	    "CSB5 SouthBridge",
-	},
-	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_XX5,
 	    0,
 	    "ServerWorks",
@@ -7402,12 +7390,6 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CIOB30",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOBX2,
-	    0,
-	    "ServerWorks",
-	    "CIOB-X2",
-	},
-	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CMIC_HE,
 	    0,
 	    "ServerWorks",
@@ -7426,6 +7408,30 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CMIC_SL Host",
 	},
 	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CIOBX2,
+	    0,
+	    "ServerWorks",
+	    "CIOB-X2",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4,
+	    0,
+	    "ServerWorks",
+	    "OSB4 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB5,
+	    0,
+	    "ServerWorks",
+	    "CSB5 SouthBridge",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6,
+	    0,
+	    "ServerWorks",
+	    "CSB6 SouthBridge",
+	},
+	{
 	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_IDE,
 	    0,
 	    "ServerWorks",
@@ -7438,16 +7444,34 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "CSB5 IDE",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_RAID,
 	    0,
 	    "ServerWorks",
 	    "CSB6 RAID/IDE",
 	},
 	{
-	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_USB,
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IDE,
 	    0,
 	    "ServerWorks",
-	    "OSB4/CSB5 USB",
+	    "CSB6 IDE",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_OSB4_USB,
+	    0,
+	    "ServerWorks",
+	    "OSB4/CSB5 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_USB,
+	    0,
+	    "ServerWorks",
+	    "CSB6 USB Host Controller",
+	},
+	{
+	    PCI_VENDOR_SERVERWORKS, PCI_PRODUCT_SERVERWORKS_CSB6_IB,
+	    0,
+	    "ServerWorks",
+	    "CSB6 ISA bridge",
 	},
 	{
 	    PCI_VENDOR_SGI, PCI_PRODUCT_SGI_IOC3,
