@@ -1,4 +1,4 @@
-/*	$NetBSD: pcs_bus_io_common.c,v 1.1 1996/04/12 04:34:59 cgd Exp $	*/
+/*	$NetBSD: pcs_bus_io_common.c,v 1.2 1996/04/18 05:53:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -50,6 +50,14 @@ u_int32_t	__C(CHIP,_io_read_4) __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
 u_int64_t	__C(CHIP,_io_read_8) __P((void *, bus_io_handle_t,
 		    bus_io_size_t));
+void		__C(CHIP,_io_read_multi_1) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int8_t *, bus_io_size_t));
+void		__C(CHIP,_io_read_multi_2) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int16_t *, bus_io_size_t));
+void		__C(CHIP,_io_read_multi_4) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int32_t *, bus_io_size_t));
+void		__C(CHIP,_io_read_multi_8) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, u_int64_t *, bus_io_size_t));
 void		__C(CHIP,_io_write_1) __P((void *, bus_io_handle_t,
 		    bus_io_size_t, u_int8_t));
 void		__C(CHIP,_io_write_2) __P((void *, bus_io_handle_t,
@@ -58,6 +66,14 @@ void		__C(CHIP,_io_write_4) __P((void *, bus_io_handle_t,
 		    bus_io_size_t, u_int32_t));
 void		__C(CHIP,_io_write_8) __P((void *, bus_io_handle_t,
 		    bus_io_size_t, u_int64_t));
+void		__C(CHIP,_io_write_multi_1) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, const u_int8_t *, bus_io_size_t));
+void		__C(CHIP,_io_write_multi_2) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, const u_int16_t *, bus_io_size_t));
+void		__C(CHIP,_io_write_multi_4) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, const u_int32_t *, bus_io_size_t));
+void		__C(CHIP,_io_write_multi_8) __P((void *, bus_io_handle_t,
+		    bus_io_size_t, const u_int64_t *, bus_io_size_t));
 
 void
 __C(CHIP,_bus_io_init)(bc, iov)
@@ -75,10 +91,20 @@ __C(CHIP,_bus_io_init)(bc, iov)
 	bc->bc_ir4 = __C(CHIP,_io_read_4);
 	bc->bc_ir8 = __C(CHIP,_io_read_8);
 
+	bc->bc_irm1 = __C(CHIP,_io_read_multi_1);
+	bc->bc_irm2 = __C(CHIP,_io_read_multi_2);
+	bc->bc_irm4 = __C(CHIP,_io_read_multi_4);
+	bc->bc_irm8 = __C(CHIP,_io_read_multi_8);
+
 	bc->bc_iw1 = __C(CHIP,_io_write_1);
 	bc->bc_iw2 = __C(CHIP,_io_write_2);
 	bc->bc_iw4 = __C(CHIP,_io_write_4);
 	bc->bc_iw8 = __C(CHIP,_io_write_8);
+
+	bc->bc_iwm1 = __C(CHIP,_io_write_multi_1);
+	bc->bc_iwm2 = __C(CHIP,_io_write_multi_2);
+	bc->bc_iwm4 = __C(CHIP,_io_write_multi_4);
+	bc->bc_iwm8 = __C(CHIP,_io_write_multi_8);
 }
 
 int
@@ -185,6 +211,91 @@ __C(CHIP,_io_read_8)(v, ioh, off)
 }
 
 void
+__C(CHIP,_io_read_multi_1)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	u_int8_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register int offset;
+
+	wbflush();
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+		port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+		val = *port;
+		*addr++ = ((val) >> (8 * offset)) & 0xff;
+		off++;
+	}
+}
+
+void
+__C(CHIP,_io_read_multi_2)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	u_int16_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register int offset;
+
+	wbflush();
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+		port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+		val = *port;
+		*addr++ = ((val) >> (8 * offset)) & 0xffff;
+		off++;
+	}
+}
+
+void
+__C(CHIP,_io_read_multi_4)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	u_int32_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, val;
+	register int offset;
+
+	wbflush();
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+		port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+		val = *port;
+#if 0
+		*addr++ = ((val) >> (8 * offset)) & 0xffffffff;
+#else
+		*addr++ = val;
+#endif
+		off++;
+	}
+}
+
+void
+__C(CHIP,_io_read_multi_8)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	u_int64_t *addr;
+{
+
+	/* XXX XXX XXX */
+	panic("%s not implemented\n", __STRING(__C(CHIP,_io_read_multi_8)));
+}
+
+void
 __C(CHIP,_io_write_1)(v, ioh, off, val)
 	void *v;
 	bus_io_handle_t ioh;
@@ -252,4 +363,82 @@ __C(CHIP,_io_write_8)(v, ioh, off, val)
 	/* XXX XXX XXX */
 	panic("%s not implemented\n", __STRING(__C(CHIP,_io_write_8)));
 	wbflush();
+}
+
+void
+__C(CHIP,_io_write_multi_1)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	const u_int8_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+        	nval = (*addr++) << (8 * offset);
+		port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
+		*port = nval;
+		off++;
+	}
+	wbflush();
+}
+
+void
+__C(CHIP,_io_write_multi_2)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	const u_int16_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+        	nval = (*addr++) << (8 * offset);
+		port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
+		*port = nval;
+		off++;
+	}
+	wbflush();
+}
+
+void
+__C(CHIP,_io_write_multi_4)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	const u_int32_t *addr;
+{
+	register bus_io_handle_t tmpioh;
+	register u_int32_t *port, nval;
+	register int offset;
+
+	while (count--) {
+		tmpioh = ioh + off;
+		offset = tmpioh & 3;
+        	nval = (*addr++) /*<< (8 * offset)*/;
+		port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
+		*port = nval;
+		off++;
+	}
+	wbflush();
+}
+
+void
+__C(CHIP,_io_write_multi_8)(v, ioh, off, addr, count)
+	void *v;
+	bus_io_handle_t ioh;
+	bus_io_size_t off, count;
+	const u_int64_t *addr;
+{
+
+	/* XXX XXX XXX */
+	panic("%s not implemented\n", __STRING(__C(CHIP,_io_write_multi_8)));
 }
