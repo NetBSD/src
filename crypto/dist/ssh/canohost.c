@@ -1,4 +1,4 @@
-/*	$NetBSD: canohost.c,v 1.1.1.1 2000/09/28 22:09:48 thorpej Exp $	*/
+/*	$NetBSD: canohost.c,v 1.2 2000/11/07 16:06:24 is Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: canohost.c,v 1.1.1.1 2000/09/28 22:09:48 thorpej Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.2 2000/11/07 16:06:24 is Exp $");
 #endif
 
 #include "includes.h"
@@ -131,7 +131,7 @@ check_ip_options:
 		else
 			ipproto = IPPROTO_IP;
 		option_size = sizeof(options);
-		if (getsockopt(0, ipproto, IP_OPTIONS, (char *) options,
+		if (getsockopt(socket, ipproto, IP_OPTIONS, (char *) options,
 		    &option_size) >= 0 && option_size != 0) {
 			cp = text;
 			/* Note: "text" buffer must be at least 3x as big as options. */
