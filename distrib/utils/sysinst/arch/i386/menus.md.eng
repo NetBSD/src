@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.eng,v 1.15 1998/11/07 20:57:52 jonathan Exp $	*/
+/*	$NetBSD: menus.md.eng,v 1.16 1999/01/11 23:23:28 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -151,7 +151,7 @@ menu editpart, title  "  Select to change";
 menu chooseid, title  "  Partition Kind? ";
 	option "NetBSD", 	exit,	action
 	{
-		part[editpart][ID] = 165;
+		part[editpart][ID] = 169;
 		part[editpart][SET] = 1;
 	};
 	option "DOS < 32 Meg",	exit,	action

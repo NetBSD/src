@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.9 1998/11/11 16:04:41 bouyer Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.10 1999/01/11 23:23:28 tron Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -153,7 +153,7 @@ menu editpart, title  " Changement ";
 menu chooseid, title  "  Type de Partition? ";
 	option "NetBSD", 	exit,	action
 	{
-		part[editpart][ID] = 165;
+		part[editpart][ID] = 169;
 		part[editpart][SET] = 1;
 	};
 	option "DOS < 32 Meg",	exit,	action
