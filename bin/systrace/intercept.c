@@ -1,4 +1,4 @@
-/*	$NetBSD: intercept.c,v 1.13 2003/03/25 22:58:24 provos Exp $	*/
+/*	$NetBSD: intercept.c,v 1.14 2003/06/03 04:33:44 provos Exp $	*/
 /*	$OpenBSD: intercept.c,v 1.29 2002/08/28 03:30:27 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: intercept.c,v 1.13 2003/03/25 22:58:24 provos Exp $");
+__RCSID("$NetBSD: intercept.c,v 1.14 2003/06/03 04:33:44 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -82,6 +82,8 @@ void (*intercept_newimagecb)(int, pid_t, int, const char *, const char *, void *
 void *intercept_newimagecbarg = NULL;
 short (*intercept_gencb)(int, pid_t, int, const char *, int, const char *, void *, int, void *) = NULL;
 void *intercept_gencbarg = NULL;
+void (*intercept_pfreecb)(int, void*);
+void *intercept_pfreearg = NULL;
 
 int
 sccompare(struct intercept_syscall *a, struct intercept_syscall *b)
@@ -224,6 +226,15 @@ intercept_register_execcb(void (*cb)(int, pid_t, int, const char *, const char *
 {
 	intercept_newimagecb = cb;
 	intercept_newimagecbarg = arg;
+
+	return (0);
+}
+
+int
+intercept_register_pfreecb(void (*cb)(int, void *), void *arg)
+{
+	intercept_pfreecb = cb;
+	intercept_pfreearg = arg;
 
 	return (0);
 }
@@ -891,4 +902,16 @@ intercept_isvalidsystemcall(char *emulation, char *name)
 	res = intercept.getsyscallnumber(emulation, name);
 
 	return (res != -1);
+}
+
+/*
+ * Call back when a user has exhausted the number of allowed policies
+ * in the kernel.  The kernel returns the policy number of a policy
+ * that has been purged.
+ */
+
+void
+intercept_policy_free(int policynr)
+{
+	(*intercept_pfreecb)(policynr, intercept_pfreearg);
 }
