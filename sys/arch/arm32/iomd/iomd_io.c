@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_io.c,v 1.3 1998/07/05 23:31:16 mark Exp $	*/
+/*	$NetBSD: iomd_io.c,v 1.4 2000/04/17 17:39:17 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -60,6 +60,9 @@ struct bus_space iomd_bs_tag = {
 	/* allocation/deallocation */
 	iomd_bs_alloc,
 	iomd_bs_free,
+
+	/* get kernel virtual address */
+	0, /* there is no linear mapping */
 
 	/* barrier */
 	iomd_bs_barrier,
