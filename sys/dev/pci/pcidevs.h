@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.404 2002/02/02 11:58:28 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.405 2002/02/04 16:57:57 junyoung Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.399 2002/02/02 11:56:43 tsutsui Exp 
+ *	NetBSD: pcidevs,v 1.400 2002/02/04 16:56:49 junyoung Exp 
  */
 
 /*
@@ -817,7 +817,10 @@
 #define	PCI_PRODUCT_ATI_MACH64_GB	0x4742		/* Mach64 GB */
 #define	PCI_PRODUCT_ATI_MACH64_GD	0x4744		/* Mach64 GD */
 #define	PCI_PRODUCT_ATI_MACH64_GI	0x4749		/* Mach64 GI */
+#define	PCI_PRODUCT_ATI_MACH64_GL	0x474c		/* Mach64 GL */
 #define	PCI_PRODUCT_ATI_RAGEXLAGP2X	0x474d		/* Rage XL AGP 2x */
+#define	PCI_PRODUCT_ATI_MACH64_GN	0x474e		/* Mach64 GN */
+#define	PCI_PRODUCT_ATI_MACH64_GO	0x474f		/* Mach64 GO */
 #define	PCI_PRODUCT_ATI_MACH64_GP	0x4750		/* Mach64 GP */
 #define	PCI_PRODUCT_ATI_MACH64_GQ	0x4751		/* Mach64 GQ */
 #define	PCI_PRODUCT_ATI_MACH64_GR	0x4752		/* Mach64 GR */
