@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.91 2003/01/24 21:55:27 fvdl Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.92 2003/01/25 12:58:23 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.91 2003/01/24 21:55:27 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.92 2003/01/25 12:58:23 tron Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -967,7 +967,7 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 #ifdef DIAGNOSTIC
 		if (sup->su_nbytes + DINODE_SIZE * ndupino < DINODE_SIZE) {
 			printf("lfs_writeinode: negative bytes "
-			       "(segment %d short by %d, "
+			       "(segment %lld short by %d, "
 			       "oldsn=%u, cursn=%u, daddr=%d, su_nbytes=%u, "
 			       "ndupino=%d)\n",
 			       dtosn(fs, daddr),
@@ -1096,14 +1096,14 @@ loop:	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		} else {
 #ifdef DIAGNOSTIC
 			if ((bp->b_flags & (B_CALL|B_INVAL)) == B_INVAL) {
-				printf("lfs_gather: lbn %d is B_INVAL\n",
+				printf("lfs_gather: lbn %lld is B_INVAL\n",
 					bp->b_lblkno);
 				VOP_PRINT(bp->b_vp);
 			}
 			if (!(bp->b_flags & B_DELWRI))
 				panic("lfs_gather: bp not B_DELWRI");
 			if (!(bp->b_flags & B_LOCKED)) {
-				printf("lfs_gather: lbn %d blk %d"
+				printf("lfs_gather: lbn %lld blk %lld"
 				       " not B_LOCKED\n", bp->b_lblkno,
 				       dbtofsb(fs, bp->b_blkno));
 				VOP_PRINT(bp->b_vp);
@@ -1215,7 +1215,7 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[1]: warning: writing "
-				       "ino %d lbn %d at 0x%x, was 0x0\n",
+				       "ino %d lbn %lld at 0x%x, was 0x0\n",
 				       ip->i_number, lbn, off);
 			}
 #endif
@@ -1233,7 +1233,7 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[2]: warning: writing "
-				       "ino %d lbn %d at 0x%x, was 0x0\n",
+				       "ino %d lbn %lld at 0x%x, was 0x0\n",
 				       ip->i_number, lbn, off);
 			}
 #endif
@@ -1252,7 +1252,7 @@ lfs_updatemeta(struct segment *sp)
 #if DEBUG
 			if (ooff == 0) {
 				printf("lfs_updatemeta[3]: warning: writing "
-				       "ino %d lbn %d at 0x%x, was 0x0\n",
+				       "ino %d lbn %lld at 0x%x, was 0x0\n",
 				       ip->i_number, lbn, off);
 			}
 #endif
@@ -1264,7 +1264,7 @@ lfs_updatemeta(struct segment *sp)
 		}
 #ifdef DEBUG
 		if (daddr >= fs->lfs_lastpseg && daddr <= off) {
-			printf("lfs_updatemeta: ino %d, lbn %d, addr = %x "
+			printf("lfs_updatemeta: ino %d, lbn %lld, addr = %x "
 			       "in same pseg\n", VTOI(sp->vp)->i_number,
 			       sbp->b_lblkno, daddr);
 		}
@@ -1287,19 +1287,19 @@ lfs_updatemeta(struct segment *sp)
 #ifdef DIAGNOSTIC
 			if (sup->su_nbytes + DINODE_SIZE * ndupino < osize) {
 				printf("lfs_updatemeta: negative bytes "
-				       "(segment %d short by %d)\n",
+				       "(segment %lld short by %d)\n",
 				       dtosn(fs, daddr),
 				       osize - sup->su_nbytes);
-				printf("lfs_updatemeta: ino %d, lbn %d, "
-				       "addr = 0x%x\n", VTOI(sp->vp)->i_number,
-				       lbn, daddr);
+				printf("lfs_updatemeta: ino %d, lbn %lld, "
+				       "addr = 0x%llx\n",
+				       VTOI(sp->vp)->i_number, lbn, daddr);
 				printf("lfs_updatemeta: ndupino=%d\n", ndupino);
 				panic("lfs_updatemeta: negative bytes");
 				sup->su_nbytes = osize;
 			}
 #endif
 #ifdef DEBUG_SU_NBYTES
-			printf("seg %d -= %ld for ino %d lbn %d db 0x%x\n",
+			printf("seg %d -= %ld for ino %d lbn %lld db 0x%x\n",
 			       dtosn(fs, daddr), osize, VTOI(sp->vp)->i_number,
 			       lbn, daddr);
 #endif
@@ -1613,7 +1613,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		if ((*bpp)->b_vp != devvp) {
 			sup->su_nbytes += (*bpp)->b_bcount;
 #ifdef DEBUG_SU_NBYTES
-		printf("seg %d += %ld for ino %d lbn %d db 0x%x\n",
+		printf("seg %d += %ld for ino %d lbn %lld db 0x%x\n",
 		       sp->seg_number, (*bpp)->b_bcount,
 		       VTOI((*bpp)->b_vp)->i_number,
 		       (*bpp)->b_lblkno, (*bpp)->b_blkno);
@@ -1661,7 +1661,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		if (bp->b_flags & B_BUSY) {
 #ifdef DEBUG
 			printf("lfs_writeseg: avoiding potential data "
-			       "summary corruption for ino %d, lbn %d\n",
+			       "summary corruption for ino %d, lbn %lld\n",
 			       VTOI(bp->b_vp)->i_number, bp->b_lblkno);
 #endif
 			bp->b_flags |= B_WANTED;
