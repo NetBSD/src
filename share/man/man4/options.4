@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.213 2003/05/06 19:03:21 wiz Exp $
+.\"	$NetBSD: options.4,v 1.214 2003/07/02 17:33:33 heas Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,14 +30,22 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd May 2, 2003
+.Dd July 2, 2003
 .Os
 .Dt OPTIONS 4
 .Sh NAME
 .Nm options
 .Nd Miscellaneous kernel configuration options
 .Sh SYNOPSIS
-.Cd options ...
+.Cd cinclude ...
+.Cd config ...
+.Cd [no] file-system ...
+.Cd ident ...
+.Cd include ...
+.Cd [no] makeoptions ...
+.Cd maxusers ...
+.Cd [no] options ...
+.Cd [no] pseudo-device ...
 .Sh DESCRIPTION
 This manual page describes a number of miscellaneous kernel
 configuration options that may be specified in a kernel config
@@ -45,16 +53,156 @@ file.
 See
 .Xr config 8
 for information on how to configure and build kernels.
+.Pp
+The
+.Ar no
+form removes a previously specified option.
+.Ss Keywords
+The following keywords are recognized in a kernel configuration file:
+.Bl -ohang
+.It Sy cinclude Xo
+.Qq Ar filename
+.Xc
+Conditionally includes another kernel configuration file whose name is
+.Ar filename ,
+which may be double-quoted and may be an explicit path or relative to
+the kernel source directory.
+Failure to open the named file is ignored.
+.It Sy config Xo
+.Ar exec_name
+.No root on
+.Ar rootdev
+.Op type Ar fstype
+.Op dumps on Ar dumpdev
+.Xc
+Defines a configuration whose kernel executable is named
+.Ar exec_name ,
+normally
+.Dq netbsd ,
+with its root file system of type
+.Ar fstype
+on the device
+.Ar rootdev ,
+and optionally specifying the location of kernel core dumps on the device
+.Ar dumpdev .
+.Ar dev
+or
+.Ar dumpdev
+and
+.Ar fstype
+may be specified as
+.Dq \&? ,
+which is a wild card.
+The root
+.Ar fstype
+and
+.Ar dumpdev
+are optional and assumed to be wild carded if they are not specified.
+.It Ar device_instance Xo
+at
+.Ar attachment
+.Op Ar locators value Op ...
+.Op flags Ar value
+.Xc
+Define an instance of the device driver
+.Ar device_instance
+that attaches to the bus or device named
+.Ar attachment .
+An
+.Ar attachment
+may require additional information on where the device can be found, such
+as an address, channel, function, offset, and/or slot, referred to as
+.Ar locators ,
+whose
+.Ar value
+often may be a wild card,
+.Dq \&? .
+Some device drivers have one or more
+.Ar flags
+that can be adjusted to affect the way they operate.
+.It Sy file-system Xo
+.Ar fs_name Op , Ar fs_name Op ...
+.Xc
+Include support for the file-system
+.Ar fs_name .
+.It Sy ident Xo
+.Qq Ar string
+.Xc
+Sets the kernel identification string to
+.Ar string .
+.It Sy include Xo
+.Qq Ar filename
+.Xc
+Functions the same as
+.Ar cinclude ,
+except failure to open
+.Ar filename
+produces a fatal error.
+.It Sy options Xo
+.Ar option_name Op , Ar option_name=value Op ...
+.Xc
+Specifies (or sets) the option, or comma-separated list of options,
+.Ar option_name .
+Some options expect to be assigned a value, which may be an integer,
+a double-quoted word, a bare word, or an empty string
+.Pq Qq .
+.Pp
 .Em Note :
-Options are passed to the compile process as -D flags to the C
-compiler.
+Options that are not defined by device definition files are passed to
+the compile process as
+.Fl D
+flags to the C compiler.
+.It Sy makeoptions Xo
+.Ar name=value
+.Xc
+Defines a
+.Xr make 1
+macro
+.Ar name
+with the value
+.Ar value
+in the kernel Makefile.
+.It Sy maxusers Xo
+.Ar integer
+.Xc
+Set the maxusers variable in the kernel.
+.It Sy no Xo
+.Ar keyword Ar name Op Ar arguments Op ...
+.Xc
+For the
+.Xr config 8
+.Ar keywords
+file-system, makeoptions, options, and pseudo-device,
+.Ar no
+removes the file-system, makeoption, options, or pseudo-device, 
+.Ar name .
+This is useful when a kernel configuration file includes another which
+has undesired options.
+.Pp
+For example, a local configuration file that wanted the kitchen sink, but
+not COMPAT_09 or bridging, might be:
+.Bd -literal -offset indent
+include "arch/i386/conf/GENERIC"
+no options COMPAT_09
+no pseudo-device bridge
+.Ed
+.It Sy pseudo-device Xo
+.Ar name
+.Op Ar N
+.Xc
+Includes support for the pseudo-device
+.Ar name .
+Some pseudo-devices can have multiple or 
+.Ar N
+instances.
+.El
 .Ss Compatibility Options
 .Bl -ohang
 .It Cd options COMPAT_09
 Enable binary compatibility with
 .Nx 0.9 .
 This enables support for
-16-bit user, group, and process ids (following revisions support
+16-bit user, group, and process IDs (following revisions support
 32-bit identifiers),
 It also allows the use of the deprecated
 .Xr getdomainname 3 ,
@@ -62,7 +210,7 @@ It also allows the use of the deprecated
 and
 .Xr uname 3
 syscalls.
-This option also allows using numeric filesystem identifiers rather
+This option also allows using numeric file system identifiers rather
 than strings.
 Post
 .Nx 0.9
@@ -70,7 +218,7 @@ versions use string identifiers.
 .It Cd options COMPAT_10
 Enable binary compatibility with
 .Nx 1.0 .
-This option allows the use of the filesystem name of
+This option allows the use of the file system name of
 .Dq ufs
 as an alias for
 .Dq ffs .
@@ -172,8 +320,8 @@ The return values for
 .Xr getgid 2 ,
 and
 .Xr getuid 2
-syscalls are modified as well, to return the parent's pid and
-uid as well as the current process's.
+syscalls are modified as well, to return the parent's PID and
+UID as well as the current process's.
 It also enables the deprecated
 .Dv NTTYDISC
 terminal line discipline.
@@ -613,7 +761,7 @@ See
 for details.
 .It Cd file-system PORTAL
 .Em [EXPERIMENTAL]
-Includes the portal filesystem.
+Includes the portal file system.
 This permits interesting tricks like opening
 .Tn TCP
 sockets by opening files in the file system.
@@ -636,9 +784,9 @@ See
 .Xr mount_procfs 8
 for details.
 .It Cd file-system UMAPFS
-Includes a loopback file system in which user and group ids may be
+Includes a loopback file system in which user and group IDs may be
 remapped -- this can be useful when mounting alien file systems with
-different uids and gids than the local system.
+different UIDs and GIDs than the local system.
 See
 .Xr mount_umap 8
 for details.
@@ -669,7 +817,7 @@ them easier to experiment with.
 Coda is available for several UNIX and non-UNIX platforms.
 See http://www.coda.cs.cmu.edu for more details.
 NOTE: You also need to enable the pseudo-device, vcoda, for the Coda
-filesystem to work.
+file system to work.
 .El
 .Ss File System Options
 .Bl -ohang
@@ -702,13 +850,13 @@ permits them to be accessed over
 .Em NFS .
 .It Cd options FFS_EI
 Enable ``Endian-Independent'' FFS support.
-This allows a system to mount an FFS filesystem created for another
-architecture, at a small performance cost for all FFS filesystems.
+This allows a system to mount an FFS file system created for another
+architecture, at a small performance cost for all FFS file systems.
 See also
 .Xr newfs 8 ,
 .Xr fsck_ffs 8 ,
 .Xr dumpfs 8
-for filesystem byte order status and manipulation.
+for file system byte order status and manipulation.
 .It Cd options NVNODE=integer
 This option sets the size of the cache used by the name-to-inode translation
 routines, (a.k.a. the
@@ -741,7 +889,7 @@ required.
 This option changes the behavior of the APPEND and IMMUTABLE flags
 for a file on an
 .Em EXT2FS
-filesystem.
+file system.
 Without this option, the superuser or owner of the file can
 set and clear them.
 With this option, only the superuser can set them, and
@@ -775,7 +923,7 @@ The normal default is 8Kbytes.
 This option provides a way to lower the value (e.g., to 1024 bytes)
 as a workaround for buggy network interface cards or boot PROMs.
 Once booted, the read and write request sizes can be increased by
-remounting the filesystem.
+remounting the file system.
 See
 .Xr mount_nfs 8
 for details.
