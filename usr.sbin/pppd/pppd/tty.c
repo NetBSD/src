@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.1.1.1.2.3 2002/09/04 00:56:03 itojun Exp $	*/
+/*	$NetBSD: tty.c,v 1.1.1.1.2.4 2002/09/04 01:51:37 itojun Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -27,7 +27,7 @@
 #if 0
 #define RCSID	"Id: tty.c,v 1.3 2000/07/24 14:58:15 paulus Exp "
 #else
-__RCSID("$NetBSD: tty.c,v 1.1.1.1.2.3 2002/09/04 00:56:03 itojun Exp $");
+__RCSID("$NetBSD: tty.c,v 1.1.1.1.2.4 2002/09/04 01:51:37 itojun Exp $");
 #endif
 #endif
 
@@ -543,8 +543,7 @@ finish_tty()
 
 	if (tty_mode != (mode_t) -1) {
 		if (fchmod(real_ttyfd, tty_mode) != 0) {
-			/* XXX if devnam is a symlink, this will change the link */
-			chmod(devnam, tty_mode);
+		    warn("couldn't restore tty permissions: %m");
 		}
 	}
 
