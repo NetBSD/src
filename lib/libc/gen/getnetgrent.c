@@ -1,4 +1,4 @@
-/*	$NetBSD: getnetgrent.c,v 1.17 1999/01/16 07:47:19 lukem Exp $	*/
+/*	$NetBSD: getnetgrent.c,v 1.18 1999/01/18 20:38:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnetgrent.c,v 1.17 1999/01/16 07:47:19 lukem Exp $");
+__RCSID("$NetBSD: getnetgrent.c,v 1.18 1999/01/18 20:38:01 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -176,6 +176,7 @@ badhost:
 
 static int _local_lookup __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _local_lookup(rv, cb_data, ap)
 	void	*rv;
@@ -225,6 +226,7 @@ _local_lookup(rv, cb_data, ap)
 #ifdef YP
 static int _nis_lookup __P((void *, void *, va_list));
 
+/*ARGSUSED*/
 static int
 _nis_lookup(rv, cb_data, ap)
 	void	*rv;
