@@ -31,25 +31,24 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if.c	7.14 (Berkeley) 4/20/91
- *	$Id: if.c,v 1.6.2.1 1993/09/24 08:53:54 mycroft Exp $
+ *	$Id: if.c,v 1.6.2.2 1993/11/08 20:37:35 mycroft Exp $
  */
 
-#include "param.h"
-#include "mbuf.h"
-#include "systm.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "protosw.h"
-#include "proc.h"
-#include "kernel.h"
-#include "ioctl.h"
+#include <sys/param.h>
+#include <sys/mbuf.h>
+#include <sys/systm.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/protosw.h>
+#include <sys/proc.h>
+#include <sys/kernel.h>
+#include <sys/ioctl.h>
 
-#include "machine/cpu.h"
+#include <machine/cpu.h>
 
-#include "if.h"
-#include "af.h"
-#include "if_dl.h"
-#include "if_types.h"
+#include <if.h>
+#include <if_dl.h>
+#include <if_types.h>
 
 #include "ether.h"
 

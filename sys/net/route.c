@@ -31,33 +31,32 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)route.c	7.22 (Berkeley) 6/27/91
- *	$Id: route.c,v 1.4.4.2 1993/10/16 10:49:32 mycroft Exp $
+ *	$Id: route.c,v 1.4.4.3 1993/11/08 20:37:41 mycroft Exp $
  */
 
-#include "param.h"
-#include "systm.h"
-#include "proc.h"
-#include "mbuf.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "domain.h"
-#include "protosw.h"
-#include "ioctl.h"
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/proc.h>
+#include <sys/mbuf.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/ioctl.h>
 
-#include "machine/cpu.h"
+#include <net/if.h>
+#include <net/route.h>
+#include <net/raw_cb.h>
+#include <net/netisr.h>
 
-#include "if.h"
-#include "af.h"
-#include "route.h"
-#include "raw_cb.h"
-
-#include "../netinet/in.h"
-#include "../netinet/in_var.h"
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 
 #ifdef NS
-#include "../netns/ns.h"
+#include <netns/ns.h>
 #endif
-#include "netisr.h"
+
+#include <machine/cpu.h>
 
 #define	SA(p) ((struct sockaddr *)(p))
 

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)iso.c	7.14 (Berkeley) 6/27/91
- *	$Id: iso.c,v 1.2.4.1 1993/09/24 08:55:26 mycroft Exp $
+ *	$Id: iso.c,v 1.2.4.2 1993/11/08 20:36:42 mycroft Exp $
  */
 
 /***********************************************************
@@ -64,28 +64,27 @@ SOFTWARE.
  * iso.c: miscellaneous routines to support the iso address family
  */
 
-#include "types.h"
-#include "param.h"
-#include "ioctl.h"
-#include "mbuf.h"
-#include "domain.h"
-#include "protosw.h"
-#include "socket.h"
-#include "socketvar.h"
-#include "errno.h"
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/mbuf.h>
+#include <sys/domain.h>
+#include <sys/protosw.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#include <sys/errno.h>
 
-#include "machine/cpu.h"
+#include <net/if.h>
+#include <net/route.h>
 
-#include "../net/if.h"
-#include "../net/route.h"
-#include "../net/af.h"
+#include <netiso/iso.h>
+#include <netiso/iso_var.h>
+#include <netiso/iso_snpac.h>
+#include <netiso/iso_pcb.h>
+#include <netiso/clnp.h>
+#include <netiso/argo_debug.h>
 
-#include "iso.h"
-#include "iso_var.h"
-#include "iso_snpac.h"
-#include "iso_pcb.h"
-#include "clnp.h"
-#include "argo_debug.h"
+#include <machine/cpu.h>
 
 #ifdef ISO
 
