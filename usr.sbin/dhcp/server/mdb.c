@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: mdb.c,v 1.1.1.2 2000/06/10 18:05:36 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: mdb.c,v 1.1.1.2.2.1 2000/07/10 19:58:54 mellon Exp $ Copyright (c) 1996-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -74,6 +74,9 @@ isc_result_t enter_host (hd, dynamicp, commit)
 				  (hash_dereference)host_dereference, 0);
 		if (!host_name_hash)
 			log_fatal ("Can't allocate host name hash");
+		host_hash_add (host_name_hash,
+			       (unsigned char *)hd -> name,
+			       strlen (hd -> name), hd, MDL);
 	} else {
 		host_hash_lookup (&hp, host_name_hash,
 				  (unsigned char *)hd -> name,
@@ -121,25 +124,22 @@ isc_result_t enter_host (hd, dynamicp, commit)
 		} else {
 			/* If there isn't already a host decl matching this
 			   address, add it to the hash table. */
-			if (!host_hash_lookup (&hp, host_hw_addr_hash,
-					       hd -> interface.hbuf,
-					       hd -> interface.hlen, MDL)) {
-				host_hash_add (host_hw_addr_hash,
-					       hd -> interface.hbuf,
-					       hd -> interface.hlen,
-					       hd, MDL);
-			}
+			host_hash_lookup (&hp, host_hw_addr_hash,
+					  hd -> interface.hbuf,
+					  hd -> interface.hlen, MDL);
 		}
-	}
-
-	/* If there was already a host declaration for this hardware
-	   address, add this one to the end of the list. */
-
-	if (hp) {
-		for (np = hp; np -> n_ipaddr; np = np -> n_ipaddr)
-			;
-		host_reference (&np -> n_ipaddr, hd, MDL);
-		host_dereference (&hp, MDL);
+		if (!hp)
+			host_hash_add (host_hw_addr_hash, hd -> interface.hbuf,
+				       hd -> interface.hlen, hd, MDL);
+		else {
+			/* If there was already a host declaration for
+			   this hardware address, add this one to the
+			   end of the list. */
+			for (np = hp; np -> n_ipaddr; np = np -> n_ipaddr)
+				;
+			host_reference (&np -> n_ipaddr, hd, MDL);
+			host_dereference (&hp, MDL);
+		}
 	}
 
 	/* See if there's a statement that sets the client identifier.
@@ -173,6 +173,11 @@ isc_result_t enter_host (hd, dynamicp, commit)
 					  0);
 			if (!host_uid_hash)
 				log_fatal ("Can't allocate host/uid hash");
+
+			host_hash_add (host_uid_hash,
+				       hd -> client_identifier.data,
+				       hd -> client_identifier.len,
+				       hd, MDL);
 		} else {
 			/* If there's already a host declaration for this
 			   client identifier, add this one to the end of the
@@ -184,10 +189,13 @@ isc_result_t enter_host (hd, dynamicp, commit)
 				/* Don't link it in twice... */
 				if (!np) {
 					for (np = hp; np -> n_ipaddr;
-					     np = np -> n_ipaddr)
-						;
-					host_reference (&np -> n_ipaddr,
-							hd, MDL);
+					     np = np -> n_ipaddr) {
+						if (hd == np)
+						    break;
+					}
+					if (hd != np)
+					    host_reference (&np -> n_ipaddr,
+							    hd, MDL);
 				}
 				host_dereference (&hp, MDL);
 			} else {
@@ -521,18 +529,48 @@ void new_address_range (low, high, subnet, pool)
 			lease_hash_add (lease_ip_addr_hash,
 					lp -> ip_addr.iabuf,
 					lp -> ip_addr.len, lp, MDL);
+		lease_dereference (&lp, MDL);
 	}
 }
 
 
 #if defined (COMPACT_LEASES)
+struct lease *free_leases;
+
 /* If we are allocating leases in aggregations, there's really no way
    to free one, although perhaps we can maintain a free list. */
 
-isc_result_t dhcp_lease_free (omapi_object_t *lease,
+isc_result_t dhcp_lease_free (omapi_object_t *lo,
 			      const char *file, int line)
 {
+	struct lease *lease;
+	if (lo -> type != dhcp_type_lease)
+		return ISC_R_INVALIDARG;
+	lease = (struct lease *)lo;
+	if (free_leases) {
+		lease_reference (&lease -> next, free_leases, file, line);
+		lease_dereference (&free_leases, file, line);
+	}
+	lease_reference (&free_leases, lease, MDL);
 	return ISC_R_SUCCESS;
+}
+
+isc_result_t dhcp_lease_get (omapi_object_t **lp,
+			     const char *file, int line)
+{
+	struct lease **lease = (struct lease **)lp;
+
+	if (free_leases) {
+		lease_reference (lease, free_leases, file, line);
+		lease_dereference (&free_leases, file, line);
+		if ((*lease) -> next) {
+			lease_reference (&free_leases, (*lease) -> next,
+					 file, line);
+			lease_dereference (&(*lease) -> next, file, line);
+		}
+		return ISC_R_SUCCESS;
+	}
+	return ISC_R_NOMEMORY;
 }
 #endif
 
@@ -789,9 +827,12 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 		enter_hwaddr = 1;
 	
 	/* If the lease has been billed to a class, remove the billing. */
-	if (comp -> billing_class &&
-	    comp -> billing_class != lease -> billing_class)
- 		unbill_class (comp, comp -> billing_class);
+	if (comp -> billing_class != lease -> billing_class) {
+		if (comp -> billing_class)
+			unbill_class (comp, comp -> billing_class);
+		if (lease -> billing_class)
+			bill_class (comp, lease -> billing_class);
+	}
 
 	/* Copy the data files, but not the linkages. */
 	comp -> starts = lease -> starts;
@@ -966,8 +1007,9 @@ int supersede_lease (comp, lease, commit, propogate, pimmediate)
 	   the pool. */
 	if (commit &&
 	    comp -> sort_time != MIN_TIME &&
-	    comp -> sort_time < cur_time &&
-	    comp -> sort_time < comp -> pool -> next_event_time) {
+	    comp -> sort_time > cur_time &&
+	    (comp -> sort_time < comp -> pool -> next_event_time ||
+	     comp -> pool -> next_event_time == MIN_TIME)) {
 		comp -> pool -> next_event_time = comp -> sort_time;
 		add_timeout (comp -> pool -> next_event_time,
 			     pool_timer, comp -> pool,
@@ -1000,8 +1042,9 @@ void process_state_transition (struct lease *lease)
 					    (struct option_state *)0, /* XXX */
 					    &lease -> scope,
 					    lease -> on_expiry);
-			executable_statement_dereference (&lease -> on_expiry,
-							  MDL);
+			if (lease -> on_expiry)
+				executable_statement_dereference
+					(&lease -> on_expiry, MDL);
 		}
 		
 		/* No sense releasing a lease after it's expired. */
@@ -1039,6 +1082,15 @@ void process_state_transition (struct lease *lease)
 	}
 
 	lease -> binding_state = lease -> next_binding_state;
+	if (lease -> binding_state == FTS_ACTIVE ||
+	    lease -> binding_state == FTS_BACKUP) {
+#if defined (FAILOVER_PROTOCOL)
+		if (lease -> pool && lease -> pool -> failover_peer)
+			lease -> next_binding_state = FTS_EXPIRED;
+		else
+#endif
+			lease -> next_binding_state = FTS_FREE;
+	}
 }
 
 /* Copy the contents of one lease into another, correctly maintaining
@@ -1558,8 +1610,6 @@ void write_leases ()
 		      num_written);
 	}
 
-	/* XXX Write all the billing classes. */
-
 #if defined (FAILOVER_PROTOCOL)
 	/* Write all the failover states. */
 	dhcp_failover_write_all_states ();
@@ -1644,7 +1694,7 @@ int lease_enqueue (struct lease *comp)
 	/* Insertion sort the lease onto the appropriate queue. */
 	prev = (struct lease *)0;
 	for (lp = *lq; lp; lp = lp -> next) {
-		if (lp -> sort_time > comp -> sort_time)
+		if (lp -> sort_time >= comp -> sort_time)
 			break;
 		prev = lp;
 	}
@@ -1722,7 +1772,6 @@ void expire_all_pools ()
 	    for (p = s -> pools; p; p = p -> next) {
 		pool_timer (p);
 
-#if defined (FAILOVER_PROTOCOL)
 		p -> lease_count = 0;
 		p -> free_leases = 0;
 		p -> backup_leases = 0;
@@ -1742,13 +1791,14 @@ void expire_all_pools ()
 				else if (l -> binding_state == FTS_BACKUP)
 					p -> backup_leases++;
 			}
+#if defined (FAILOVER_PROTOCOL)
 			if (p -> failover_peer &&
 			    l -> tstp > l -> tsfp &&
 			    !(l -> flags & ON_UPDATE_QUEUE))
 				dhcp_failover_queue_update (l, 1);
+#endif
 		    }
 		}
-#endif
 	    }
 	}
 }

@@ -70,7 +70,7 @@ isc_result_t omapi_init (void)
 					     omapi_connection_destroy,
 					     omapi_connection_signal_handler,
 					     omapi_connection_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof
 					     (omapi_connection_object_t));
 	if (status != ISC_R_SUCCESS)
@@ -83,7 +83,7 @@ isc_result_t omapi_init (void)
 					     omapi_listener_destroy,
 					     omapi_listener_signal_handler,
 					     omapi_listener_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_listener_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -95,7 +95,7 @@ isc_result_t omapi_init (void)
 					     omapi_io_destroy,
 					     omapi_io_signal_handler,
 					     omapi_io_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_io_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -107,7 +107,7 @@ isc_result_t omapi_init (void)
 					     omapi_generic_destroy,
 					     omapi_generic_signal_handler,
 					     omapi_generic_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_generic_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -119,7 +119,7 @@ isc_result_t omapi_init (void)
 					     omapi_protocol_destroy,
 					     omapi_protocol_signal_handler,
 					     omapi_protocol_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_protocol_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -131,7 +131,8 @@ isc_result_t omapi_init (void)
 		   omapi_protocol_listener_destroy,
 		   omapi_protocol_listener_signal,
 		   omapi_protocol_listener_stuff,
-		   0, 0, 0, 0, 0, sizeof (omapi_protocol_listener_object_t)));
+		   0, 0, 0, 0, 0, 0,
+		   sizeof (omapi_protocol_listener_object_t)));
 	if (status != ISC_R_SUCCESS)
 		return status;
 
@@ -142,7 +143,7 @@ isc_result_t omapi_init (void)
 					     omapi_message_destroy,
 					     omapi_message_signal_handler,
 					     omapi_message_stuff_values,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_message_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -153,7 +154,7 @@ isc_result_t omapi_init (void)
 					     0,
 					     0,
 					     omapi_waiter_signal_handler, 0,
-					     0, 0, 0, 0, 0,
+					     0, 0, 0, 0, 0, 0,
 					     sizeof (omapi_waiter_object_t));
 	if (status != ISC_R_SUCCESS)
 		return status;
@@ -197,6 +198,9 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 					 isc_result_t (*freer)
 						(omapi_object_t *,
 						 const char *, int),
+					 isc_result_t (*allocator)
+						(omapi_object_t **,
+						 const char *, int),
 					 isc_result_t (*sizer) (size_t),
 					 size_t size)
 {
@@ -220,6 +224,7 @@ isc_result_t omapi_object_type_register (omapi_object_type_t **type,
 	t -> sizer = sizer;
 	t -> size = size;
 	t -> freer = freer;
+	t -> allocator = allocator;
 	omapi_object_types = t;
 	if (type)
 		*type = t;

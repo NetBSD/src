@@ -144,6 +144,7 @@ extern int h_errno;
 #if !defined (USE_LPF)
 # if defined (USE_DEFAULT_NETWORK)
 #  define USE_SOCKETS
+#  define SOCKET_CAN_RECEIVE_UNICAST_UNCONFIGURED
 # endif
 # define IGNORE_HOSTUNREACH
 #endif

@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: confpars.c,v 1.2 2000/06/12 19:48:46 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: confpars.c,v 1.2.2.1 2000/07/10 19:58:52 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -137,15 +137,6 @@ isc_result_t read_leases ()
 			struct lease *lease = (struct lease *)0;
 			if (parse_lease_declaration (&lease, cfile)) {
 				enter_lease (lease);
-				if (lease -> on_expiry)
-					executable_statement_dereference
-						(&lease -> on_expiry, MDL);
-				if (lease -> on_commit)
-					executable_statement_dereference
-						(&lease -> on_commit, MDL);
-				if (lease -> on_release)
-					executable_statement_dereference
-						(&lease -> on_release, MDL);
 				lease_dereference (&lease, MDL);
 			} else
 				parse_warn (cfile,
@@ -1372,8 +1363,7 @@ void parse_host_declaration (cfile, group)
 			   name, isc_result_totext (status));
 	host -> name = name;
 	if (!clone_group (&host -> group, group, MDL)) {
-		log_fatal ("can't clone group for host %s: %s",
-			   name, isc_result_totext (status));
+		log_fatal ("can't clone group for host %s", name);
 	      boom:
 		host_dereference (&host, MDL);
 		return;
@@ -1712,6 +1702,7 @@ int parse_class_declaration (cp, cfile, group, type)
 		/* Give the subclass its own group. */
 		if (!clone_group (&class -> group, class -> group, MDL))
 			log_fatal ("can't clone class group.");
+
 	}
 
 	if (!parse_lbrace (cfile)) {
@@ -2388,6 +2379,12 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 		      case TOKEN_NEXT:
 			seenbit = 128;
 			statep = &lease -> next_binding_state;
+			token = next_token (&val, cfile);
+			if (token != BINDING) {
+				parse_warn (cfile, "expecting 'binding'");
+				skip_to_semi (cfile);
+				break;
+			}
 			goto do_binding_state;
 
 		      case BINDING:
@@ -2693,6 +2690,29 @@ int parse_lease_declaration (struct lease **lp, struct parse *cfile)
 			seenmask |= seenbit;
 
 	} while (1);
+
+	/* If no binding state is specified, make one up. */
+	if (!(seenmask & 256)) {
+		if (lease -> ends > cur_time ||
+		    lease -> on_expiry || lease -> on_release)
+			lease -> binding_state = FTS_ACTIVE;
+#if defined (FAILOVER_PROTOCOL)
+		else if (lease -> pool && lease -> pool -> failover_peer)
+			lease -> binding_state = FTS_EXPIRED;
+#endif
+		else
+			lease -> binding_state = FTS_FREE;
+		if (lease -> binding_state == FTS_ACTIVE) {
+#if defined (FAILOVER_PROTOCOL)
+			if (lease -> pool && lease -> pool -> failover_peer)
+				lease -> next_binding_state = FTS_EXPIRED;
+			else
+#endif
+				lease -> next_binding_state = FTS_FREE;
+		} else
+			lease -> next_binding_state = lease -> binding_state;
+	}
+
 	lease_reference (lp, lease, MDL);
 	lease_dereference (&lease, MDL);
 	return 1;

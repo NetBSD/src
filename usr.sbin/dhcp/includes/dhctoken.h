@@ -278,6 +278,7 @@ enum dhcp_token {
 	TOKEN_RESERVED = 577,
 	TOKEN_BOOTP = 578,
 	TOKEN_NEXT = 579,
+	OMAPI = 580
 };
 
 #define is_identifier(x)	((x) >= FIRST_TOKEN &&	\

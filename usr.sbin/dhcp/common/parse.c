@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: parse.c,v 1.1.1.6 2000/06/10 18:04:50 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: parse.c,v 1.1.1.6.2.1 2000/07/10 19:58:48 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1139,18 +1139,19 @@ int parse_base64 (data, cfile)
 	const char *val;
 	int i, j;
 	unsigned acc = 0;
-	static char from64 [] = {64, 64, 64, 64, 64, 64, 64, 64, /*  \"#$%&' */
-				 64, 64, 64, 62, 64, 64, 64, 63, /* ()*+,-./ */
-				 52, 53, 54, 55, 56, 57, 58, 59, /* 01234567 */
-				 60, 61, 64, 64, 64, 64, 64, 64, /* 90:;<=>? */
-				 64, 0, 1, 2, 3, 4, 5, 6,	 /* @ABCDEFG */
-				 7, 8, 9, 10, 11, 12, 13, 14,	 /* HIJKLMNO */
-				 15, 16, 17, 18, 19, 20, 21, 22, /* PQRSTUVW */
-				 23, 24, 25, 64, 64, 64, 64, 64, /* XYZ[\]^_ */
-				 64, 26, 27, 28, 29, 30, 31, 32, /* 'abcdefg */
-				 33, 34, 35, 36, 37, 38, 39, 40, /* hijklmno */
-				 41, 42, 43, 44, 45, 46, 47, 48, /* pqrstuvw */
-				 59, 50, 51, 64, 64, 64, 64, 64};/* xyz{|}~  */
+	static unsigned char
+		from64 [] = {64, 64, 64, 64, 64, 64, 64, 64,  /*  \"#$%&' */
+			     64, 64, 64, 62, 64, 64, 64, 63,  /* ()*+,-./ */
+			     52, 53, 54, 55, 56, 57, 58, 59,  /* 01234567 */
+			     60, 61, 64, 64, 64, 64, 64, 64,  /* 90:;<=>? */
+			     64, 0, 1, 2, 3, 4, 5, 6,	      /* @ABCDEFG */
+			     7, 8, 9, 10, 11, 12, 13, 14,     /* HIJKLMNO */
+			     15, 16, 17, 18, 19, 20, 21, 22,  /* PQRSTUVW */
+			     23, 24, 25, 64, 64, 64, 64, 64,  /* XYZ[\]^_ */
+			     64, 26, 27, 28, 29, 30, 31, 32,  /* 'abcdefg */
+			     33, 34, 35, 36, 37, 38, 39, 40,  /* hijklmno */
+			     41, 42, 43, 44, 45, 46, 47, 48,  /* pqrstuvw */
+			     59, 50, 51, 64, 64, 64, 64, 64}; /* xyz{|}~  */
 	
 	token = next_token (&val, cfile);
 	if (token == STRING) {
@@ -2436,6 +2437,26 @@ int parse_non_binary (expr, cfile, lose, context)
 			}
 			*lose = 1;
 			expression_dereference (expr, MDL);
+			return 0;
+		}
+		break;
+
+	      case LPAREN:
+		token = next_token (&val, cfile);
+		if (!parse_expression (expr, cfile, lose, context,
+				       (struct expression **)0, expr_none)) {
+			if (!*lose) {
+				parse_warn (cfile, "expression expected");
+				skip_to_semi (cfile);
+			}
+			*lose = 1;
+			return 0;
+		}
+		token = next_token (&val, cfile);
+		if (token != RPAREN) {
+			*lose = 1;
+			parse_warn (cfile, "right paren expected");
+			skip_to_semi (cfile);
 			return 0;
 		}
 		break;
@@ -3885,8 +3906,8 @@ int parse_warn (struct parse *cfile, const char *fmt, ...)
 	lexbuf [lix] = 0;
 
 #ifndef DEBUG
-	syslog (log_priority | LOG_ERR, mbuf);
-	syslog (log_priority | LOG_ERR, cfile -> token_line);
+	syslog (log_priority | LOG_ERR, "%s", mbuf);
+	syslog (log_priority | LOG_ERR, "%s", cfile -> token_line);
 	if (cfile -> lexchar < 81)
 		syslog (log_priority | LOG_ERR, "%s^", lexbuf);
 #endif

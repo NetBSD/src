@@ -45,8 +45,8 @@ fi
 
 release=`uname -r`
 release=`expr $release : '\(.*\)\..*'`
-relmajor=`echo $release |sed -e 's/^\([^\.]*\)\..*$/\1/'`
-relminor=`echo $release |sed -e 's/^.*\.\([^\.]*\)$/\1/'`
+relminor=`echo $release |sed -e 's/[0-9]*\.\([0-9][0-9]*\)\(\..*\)*$/\1/'`
+relmajor=`echo $release |sed -e 's/\([0-9][0-9]*\)\..*$/\1/'`
 
 if [ x$new_broadcast_address != x ]; then
   new_broadcast_arg="broadcast $new_broadcast_address"

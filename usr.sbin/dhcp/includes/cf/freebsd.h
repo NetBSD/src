@@ -106,6 +106,7 @@ extern int h_errno;
 #if defined (USE_DEFAULT_NETWORK)
 #  define USE_BPF
 #endif
+#define HAVE_MKSTEMP
 #ifdef NEED_PRAND_CONF
 #ifndef HAVE_DEV_RANDOM
  # define HAVE_DEV_RANDOM 1

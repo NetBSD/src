@@ -50,7 +50,7 @@
 
 /*
  *	@(#)resolv.h	8.1 (Berkeley) 6/2/93
- *	$Id: resolv.h,v 1.1.1.1 2000/04/22 07:11:51 mellon Exp $
+ *	$Id: resolv.h,v 1.1.1.1.4.1 2000/07/10 19:58:50 mellon Exp $
  */
 
 #ifndef _RESOLV_H_
@@ -287,6 +287,7 @@ int		res_queriesmatch (const u_char *, const u_char *,
 const char *	p_section (int section, int opcode);
 /* Things involving a resolver context. */
 int		res_ninit (res_state);
+u_int		res_randomid(void);
 int		res_nisourserver (const res_state,
 				      const struct sockaddr_in *);
 void		fp_resstat (const res_state, FILE *);
