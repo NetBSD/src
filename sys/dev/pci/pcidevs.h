@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.19 1996/10/15 23:41:57 christos Exp 
+ *	NetBSD: pcidevs,v 1.20 1996/10/19 13:01:49 jonathan Exp 
  */
 
 /*
@@ -577,6 +577,9 @@
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
+
+/* Realtek (Creative Labs?) products */
+#define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* Ethernet */
 
 /* S3 products */
 #define	PCI_PRODUCT_S3_TRIO64	0x8811		/* Trio32/64 */
