@@ -1,4 +1,4 @@
-/*	$NetBSD: ym_isapnp.c,v 1.2 1998/05/21 19:07:10 augustss Exp $ */
+/*	$NetBSD: ym_isapnp.c,v 1.3 1998/06/09 00:05:20 thorpej Exp $ */
 
 
 /*
@@ -127,9 +127,9 @@ ym_isapnp_attach(parent, self, aux)
 	
 	sc->sc_controlioh = ipa->ipa_io[4].h; 
 	
+	sc->sc_ad1848.sc_ic  = sc->sc_ic;
 	sc->sc_ad1848.sc_iot = sc->sc_iot;
 	sc->sc_ad1848.sc_ioh = sc->sc_ioh;
-	sc->sc_ad1848.sc_isa = parent->dv_parent;
 	sc->sc_ad1848.sc_iooffs = WSS_CODEC;
 	sc->sc_ad1848.mode = 2;
 	sc->sc_ad1848.MCE_bit = MODE_CHANGE_ENABLE;

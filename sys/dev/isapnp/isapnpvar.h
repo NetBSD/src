@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.7 1997/10/28 21:28:15 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.8 1998/06/09 00:05:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -93,6 +93,7 @@ struct isapnp_softc {
 	int			sc_read_port;
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;
+	isa_chipset_tag_t	sc_ic;
 	bus_space_handle_t	sc_addr_ioh;
 	bus_space_handle_t	sc_wrdata_ioh;
 	bus_space_handle_t	sc_read_ioh;
@@ -120,7 +121,6 @@ struct isapnp_pin {
 };
 
 struct isapnp_attach_args {
-	struct device  *ipa_isa;	/* isa device */
 	bus_space_tag_t ipa_iot;	/* isa i/o space tag */
 	bus_space_tag_t ipa_memt;	/* isa mem space tag */
 	bus_dma_tag_t	ipa_dmat;	/* isa dma tag */
