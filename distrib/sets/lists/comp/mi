@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.434 2002/03/30 06:29:00 thorpej Exp $
+#	$NetBSD: mi,v 1.435 2002/04/05 18:31:07 bouyer Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -5654,6 +5654,7 @@
 ./usr/share/man/man9/mi_switch.9		comp-sys-man
 ./usr/share/man/man9/microtime.9		comp-sys-man
 ./usr/share/man/man9/mono_time.9		comp-sys-man
+./usr/share/man/man9/mstohz.9		comp-sys-man
 ./usr/share/man/man9/mtocl.9		comp-sys-man
 ./usr/share/man/man9/mtod.9		comp-sys-man
 ./usr/share/man/man9/namecache.9		comp-sys-man
