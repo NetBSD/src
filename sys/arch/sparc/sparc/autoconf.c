@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.3 1993/10/16 07:23:10 deraadt Exp $
+ * $Id: autoconf.c,v 1.4 1993/11/24 02:30:56 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -289,10 +289,10 @@ configure()
 	(void)spl0();
 	if (bootdv)
 		printf("Found boot device %s\n", bootdv->dv_xname);
-	cold = 0;
 	setroot();
 	swapconf();
 	dumpconf();
+	cold = 0;
 }
 
 /*
@@ -438,9 +438,9 @@ mainbus_attach(parent, dev, aux)
 	struct romaux ra;
 	static const char *const special[] = {
 		/* find these first (end with empty string) */
+		"memory-error",	/* as early as convenient, in case of error */
 		"eeprom",
 		"counter-timer",
-		"memory-error",
 		"",
 
 		/* ignore these (end with NULL) */
@@ -836,7 +836,7 @@ findblkmajor(dv)
 	return (-1);
 }
 
-struct device *
+static struct device *
 getdisk(str, len, defpart, devp)
 	char *str;
 	int len, defpart;
@@ -886,6 +886,7 @@ parsedisk(str, len, defpart, devp)
 		}
 	}
 
+	*cp = c;
 	return (dv);
 }
 
