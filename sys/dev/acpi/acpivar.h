@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.5 2002/06/18 08:09:22 tshiozak Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.6 2002/07/29 03:25:18 augustss Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -107,6 +107,7 @@ struct acpi_softc {
 	bus_space_tag_t sc_memt;	/* PCI MEM space tag */
 	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
 	int sc_pciflags;		/* PCI bus flags */
+	int sc_pci_bus;			/* internal PCI fixup */
 
 	void *sc_sdhook;		/* shutdown hook */
 
