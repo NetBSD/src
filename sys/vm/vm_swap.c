@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_swap.c,v 1.58 1998/08/09 21:58:53 perry Exp $	*/
+/*	$NetBSD: vm_swap.c,v 1.59 1998/08/29 13:27:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -29,6 +29,7 @@
  */
 
 #include "fs_nfs.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,12 +113,14 @@ int vmswapdebug = 0;
 #define SWAP_TO_FILES
 
 struct swapdev {
-	struct swapent		swd_se;
-#define swd_dev			swd_se.se_dev
-#define swd_flags		swd_se.se_flags
-#define swd_nblks		swd_se.se_nblks
-#define swd_inuse		swd_se.se_inuse
-#define swd_priority		swd_se.se_priority
+	struct oswapent		swd_ose;
+#define swd_dev			swd_ose.ose_dev
+#define swd_flags		swd_ose.ose_flags
+#define swd_nblks		swd_ose.ose_nblks
+#define swd_inuse		swd_ose.ose_inuse
+#define swd_priority		swd_ose.ose_priority
+	char			*swd_path;
+	int			swd_pathlen;
 	daddr_t			swd_mapoffset;
 	int			swd_mapsize;
 	struct extent		*swd_ex;
@@ -347,7 +350,8 @@ sys_swapctl(p, v, retval)
 	struct swappri *spp;
 	struct swapdev *sdp;
 	struct swapent *sep;
-	int	count, error, misc;
+	char	userpath[PATH_MAX + 1];
+	int	count, error, misc, len;
 	int	priority;
 
 	misc = SCARG(uap, misc);
@@ -362,7 +366,11 @@ sys_swapctl(p, v, retval)
 	}
 
 	/* stats on the swap devices. */
-	if (SCARG(uap, cmd) == SWAP_STATS) {
+	if (SCARG(uap, cmd) == SWAP_STATS
+#if defined(COMPAT_13)
+	    || SCARG(uap, cmd) == SWAP_OSTATS
+#endif
+	    ) {
 		sep = (struct swapent *)SCARG(uap, arg);
 		count = 0;
 
@@ -374,14 +382,38 @@ sys_swapctl(p, v, retval)
 			for (sdp = spp->spi_swapdev.cqh_first;
 			     sdp != (void *)&spp->spi_swapdev && misc-- > 0;
 			     sdp = sdp->swd_next.cqe_next) {
-				error = copyout((caddr_t)&sdp->swd_se,
-				    (caddr_t)sep, sizeof(struct swapent));
+			  	/*
+				 * backwards compatibility for system call.
+				 * note that we use 'struct oswapent' as an
+				 * overlay into both 'struct swapdev' and
+				 * the userland 'struct swapent', as we
+				 * want to retain backwards compatibility
+				 * with NetBSD 1.3.
+				 */
+				error = copyout((caddr_t)&sdp->swd_ose,
+				    (caddr_t)sep, sizeof(struct oswapent));
+
+				/* now copy out the path if necessary */
+#if defined(COMPAT_13)
+				if (error == 0 && SCARG(uap, cmd) == SWAP_STATS)
+#else
+				if (error == 0)
+#endif
+ 					error = copyout((caddr_t)sdp->swd_path,
+					    (caddr_t)&sep->se_path,
+					    sdp->swd_pathlen);
 				if (error)
-					break;
+					goto out;
 				count++;
-				sep++;
+#if defined(COMPAT_13)
+				if (SCARG(uap, cmd) == SWAP_OSTATS)
+					((struct oswapent *)sep)++;
+				else
+#endif
+					sep++;
 			}
 		}
+out:
 		(void)lockmgr(&swaplist_change_lock, LK_RELEASE, (void *)0);
 		if (error)
 			return (error);
@@ -399,9 +431,24 @@ sys_swapctl(p, v, retval)
 		vp = rootvp;
 		if (vget(vp, LK_EXCLUSIVE))
 			return (EBUSY);
+		if (SCARG(uap, cmd) == SWAP_ON &&
+		    copystr("miniroot", userpath, sizeof userpath, &len))
+			panic("swapctl: miniroot copy failed");
 	} else {
-		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, UIO_USERSPACE,
-		       SCARG(uap, arg), p);
+		int	space;
+		char	*where;
+
+		if (SCARG(uap, cmd) == SWAP_ON) {
+			if ((error = copyinstr(SCARG(uap, arg), userpath,
+			    sizeof userpath, &len)))
+				return (error);
+			space = UIO_USERSPACE;
+			where = userpath;
+		} else {
+			space = UIO_SYSSPACE;
+			where = (char *)SCARG(uap, arg);
+		}
+		NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF, space, where, p);
 		if ((error = namei(&nd)))
 			return (error);
 
@@ -450,6 +497,11 @@ sys_swapctl(p, v, retval)
 		if (vp->v_type == VREG)
 			sdp->swd_cred = crdup(p->p_ucred);
 #endif
+		sdp->swd_pathlen = len;
+		sdp->swd_path = malloc(sdp->swd_pathlen, M_VMSWAP, M_WAITOK);
+		if ((error = copystr(userpath, sdp->swd_path,
+		    sdp->swd_pathlen, 0)))
+			break;
 		insert_swapdev(sdp, priority);
 
 		/* Keep reference to vnode */
