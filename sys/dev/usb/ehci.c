@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.7 2001/11/16 15:33:13 augustss Exp $	*/
+/*	$NetBSD: ehci.c,v 1.8 2001/11/16 23:52:10 augustss Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.7 2001/11/16 15:33:13 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.8 2001/11/16 23:52:10 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -309,6 +309,17 @@ ehci_init(ehci_softc_t *sc)
 
 	/* Take over port ownership */
 	EOWRITE4(sc, EHCI_CONFIGFLAG, EHCI_CONF_CF);
+
+	for (i = 0; i < 100; i++) {
+		delay(10);
+		hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
+		if (!hcr)
+			break;
+	}
+	if (hcr) {
+		printf("%s: run timeout\n", USBDEVNAME(sc->sc_bus.bdev));
+		return (USBD_IOERROR);
+	}
 
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -597,13 +608,11 @@ OOO
 void
 ehci_shutdown(void *v)
 {
-	//ehci_softc_t *sc = v;
+	ehci_softc_t *sc = v;
 
 	DPRINTF(("ehci_shutdown: stopping the HC\n"));
-#if 0
-OOO
-	OWRITE4(sc, EHCI_CONTROL, EHCI_HCFS_RESET);
-#endif
+	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
+	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
 }
 
 usbd_status
@@ -1186,20 +1195,29 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 				ehci_disown(sc, index, 1);
 				break;
 			}
+			/* Start reset sequence. */
+			v &= ~ (EHCI_PS_PE | EHCI_PS_PR);
 			EOWRITE4(sc, port, v | EHCI_PS_PR);
-			for (i = 0; i < 10; i++) {
-				usb_delay_ms(&sc->sc_bus, 10); /* XXX */
-				v = EOREAD4(sc, port);
-				if ((v & EHCI_PS_PR) == 0)
-					break;
+			/* Wait for reset to complete. */
+			usb_delay_ms(&sc->sc_bus, USB_PORT_RESET_DELAY * 2);
+			/* Terminate reset sequence. */
+			EOWRITE4(sc, port, v);
+			/* Wait for HC to complete reset. */
+			usb_delay_ms(&sc->sc_bus, EHCI_PORT_RESET_COMPLETE * 2);
+			v = EOREAD4(sc, port);
+			DPRINTF(("ehci after reset, status=0x%08x\n", v));
+			if (v & EHCI_PS_PR) {
+				printf("%s: port reset timeout\n",
+				       USBDEVNAME(sc->sc_bus.bdev));
+				return (USBD_TIMEOUT);
 			}
-			if ((v & EHCI_PS_PE) == 0) {
+			if (!(v & EHCI_PS_PE)) {
 				/* Not a high speed device, give up ownership.*/
 				ehci_disown(sc, index, 0);
 				break;
 			}
 			sc->sc_isreset = 1;
-			DPRINTF(("ehci port %d reset, status = 0x%04x\n",
+			DPRINTF(("ehci port %d reset, status = 0x%08x\n",
 				 index, v));
 			break;
 		case UHF_PORT_POWER:
