@@ -1,4 +1,4 @@
-/*	$NetBSD: apmd.c,v 1.8 1998/07/18 05:04:39 lukem Exp $	*/
+/*	$NetBSD: apmd.c,v 1.9 1998/11/19 19:39:14 kenh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@ void resume(int ctl_fd);
 void sigexit(int signo);
 void make_noise(int howmany);
 void do_etc_file(const char *file);
+void do_ac_state(int state);
 
 void
 sigexit(int signo)
@@ -386,19 +387,28 @@ main(int argc, char *argv[])
 	setlogmask(LOG_UPTO(LOG_NOTICE));
 	daemon(0, 0);
     }
-    power_status(ctl_fd, 1, 0);
-    if (statonly)
+    if (statonly) {
+        power_status(ctl_fd, 1, 0);
 	exit(0);
+    } else {
+	struct apm_power_info pinfo;
+	power_status(ctl_fd, 1, &pinfo);
+	do_ac_state(pinfo.ac_state);
+    }
+
     (void) signal(SIGTERM, sigexit);
     (void) signal(SIGHUP, sigexit);
     (void) signal(SIGINT, sigexit);
     (void) signal(SIGPIPE, SIG_IGN);
+
 
     sock_fd = bind_socket(sockname, mode, uid, gid);
 
     FD_ZERO(&devfds);
     FD_SET(ctl_fd, &devfds);
     FD_SET(sock_fd, &devfds);
+
+
     
     for (selcopy = devfds, errno = 0, stv = tv; 
 	 (ready = select(MAX(ctl_fd,sock_fd)+1, &selcopy, 0, 0, &stv)) >= 0 ||
@@ -437,8 +447,12 @@ main(int argc, char *argv[])
 		    resumes++;
 		    break;
 		case APM_POWER_CHANGE:
-		    power_status(ctl_fd, 1, 0);
+		{
+		    struct apm_power_info pinfo;
+		    power_status(ctl_fd, 1, &pinfo);
+		    do_ac_state(pinfo.ac_state);
 		    break;
+		}
 		default:
 		    break;
 		}
@@ -515,4 +529,19 @@ do_etc_file(const char *file)
 	}
 	break;
     }
+}
+
+void do_ac_state(int state)
+{
+	switch (state) {
+	case APM_AC_OFF:
+		do_etc_file(_PATH_APM_ETC_BATTERY);
+		break;
+	case APM_AC_ON:
+	case APM_AC_BACKUP:
+		do_etc_file(_PATH_APM_ETC_LINE);
+		break;
+	default:
+		/* Silently ignore */
+	}
 }

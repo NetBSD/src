@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.3 1997/07/30 22:54:14 jtc Exp $ */
+/*	$NetBSD: pathnames.h,v 1.4 1998/11/19 19:39:14 kenh Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,5 +42,7 @@
 #define _PATH_APM_ETC_SUSPEND	_PATH_APM_ETC_DIR"/suspend"
 #define _PATH_APM_ETC_STANDBY	_PATH_APM_ETC_DIR"/standby"
 #define _PATH_APM_ETC_RESUME	_PATH_APM_ETC_DIR"/resume"
+#define _PATH_APM_ETC_LINE	_PATH_APM_ETC_DIR"/line"
+#define _PATH_APM_ETC_BATTERY	_PATH_APM_ETC_DIR"/battery"
 #define _PATH_APM_NORMAL	"/dev/apm"
 #define _PATH_DEV_SPEAKER	"/dev/speaker"
