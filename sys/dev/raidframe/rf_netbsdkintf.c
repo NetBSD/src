@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.32 1999/12/03 02:43:22 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.33 1999/12/03 03:06:44 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -757,6 +757,7 @@ raidioctl(dev, cmd, data, flag, p)
 		retcode = copyin((caddr_t) u_cfg, (caddr_t) k_cfg,
 		    sizeof(RF_Config_t));
 		if (retcode) {
+			RF_Free(k_cfg, sizeof(RF_Config_t));
 			db3_printf(("rf_ioctl: retcode=%d copyin.1\n",
 				retcode));
 			return (retcode);
@@ -766,6 +767,7 @@ raidioctl(dev, cmd, data, flag, p)
 		if (k_cfg->layoutSpecificSize) {
 			if (k_cfg->layoutSpecificSize > 10000) {
 				/* sanity check */
+				RF_Free(k_cfg, sizeof(RF_Config_t));
 				db3_printf(("rf_ioctl: EINVAL %d\n", retcode));
 				return (EINVAL);
 			}
@@ -780,6 +782,8 @@ raidioctl(dev, cmd, data, flag, p)
 			    (caddr_t) specific_buf,
 			    k_cfg->layoutSpecificSize);
 			if (retcode) {
+				RF_Free(k_cfg, sizeof(RF_Config_t));
+				RF_Free(specific_buf, k_cfg->layoutSpecificSize);
 				db3_printf(("rf_ioctl: retcode=%d copyin.2\n",
 					retcode));
 				return (retcode);
@@ -875,6 +879,7 @@ raidioctl(dev, cmd, data, flag, p)
 				  sizeof(RF_ComponentLabel_t));
 
 		if (retcode) {
+			RF_Free( component_label, sizeof(RF_ComponentLabel_t));
 			return(retcode);
 		}
 
@@ -883,6 +888,7 @@ raidioctl(dev, cmd, data, flag, p)
 
 		if ((row < 0) || (row >= raidPtrs[unit]->numRow) ||
 		    (column < 0) || (column >= raidPtrs[unit]->numCol)) {
+			RF_Free( component_label, sizeof(RF_ComponentLabel_t));
 			return(EINVAL);
 		}
 
@@ -1044,12 +1050,12 @@ raidioctl(dev, cmd, data, flag, p)
 			cfg->cols = raid->numCol;
 			cfg->ndevs = raid->numRow * raid->numCol;
 			if (cfg->ndevs >= RF_MAX_DISKS) {
-				cfg->ndevs = 0;
+				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
 				return (ENOMEM);
 			}
 			cfg->nspares = raid->numSpare;
 			if (cfg->nspares >= RF_MAX_DISKS) {
-				cfg->nspares = 0;
+				RF_Free(cfg, sizeof(RF_DeviceConfig_t));
 				return (ENOMEM);
 			}
 			cfg->maxqdepth = raid->maxQueueDepth;
