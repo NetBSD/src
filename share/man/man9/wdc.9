@@ -1,4 +1,4 @@
-.\"	$NetBSD: wdc.9,v 1.8 2001/11/28 16:48:11 wiz Exp $
+.\"	$NetBSD: wdc.9,v 1.9 2002/02/13 08:18:57 ross Exp $
 .\"
 .\" Copyright (c) 1998 Manuel Bouyer.
 .\"
@@ -37,8 +37,8 @@
 .Nm wdc
 .Nd machine-independent IDE/ATAPI driver
 .Sh SYNOPSIS
-.Fd #include <dev/ata/atavar.h>
-.Fd #include <sys/dev/ic/wdcvar.h>
+.Fd #include \*[Lt]dev/ata/atavar.h\*[Gt]
+.Fd #include \*[Lt]sys/dev/ic/wdcvar.h\*[Gt]
 .Ft int
 .Fn wdcprobe "struct channel_softc * chp"
 .Ft void

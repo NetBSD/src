@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.6 2001/12/26 00:24:16 wiz Exp $
+.\" $NetBSD: pci_intr.9,v 1.7 2002/02/13 08:18:48 ross Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Nm pci_intr_disestablish
 .Nd PCI bus interrupt manipulation functions
 .Sh SYNOPSIS
-.Fd #include <dev/pci/pcivar.h>
+.Fd #include \*[Lt]dev/pci/pcivar.h\*[Gt]
 .Ft int
 .Fn pci_intr_map "struct pci_attach_args *pa" "pci_intr_handle_t *ih"
 .Ft const char *

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ad.4,v 1.9 2002/01/15 02:03:32 wiz Exp $
+.\"	$NetBSD: ad.4,v 1.10 2002/02/13 08:18:06 ross Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@ selects which channel of the board to read.
 For example,
 .Bd -literal -offset indent
 chan = 5;
-ioctl(fd, AD_CHAN, &chan);
+ioctl(fd, AD_CHAN, \*[Am]chan);
 .Ed
 .Pp
 selects channel 5.
@@ -78,7 +78,7 @@ actually reads the data and returns it to the user
 process.
 An example is
 .Bd -literal -offset indent
-ioctl(fd, AD_READ, &data);
+ioctl(fd, AD_READ, \*[Am]data);
 .Ed
 .Sh FILES
 .Bl -tag -width /dev/adx -compact

@@ -1,4 +1,4 @@
-.\"	$NetBSD: envsys.4,v 1.9 2002/01/21 17:46:42 wiz Exp $
+.\"	$NetBSD: envsys.4,v 1.10 2002/02/13 08:17:34 ross Exp $
 .\"
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 .Nm envsys
 .Nd Environmental Systems API
 .Sh SYNOPSIS
-.Fd #include <sys/envsys.h>
+.Fd #include \*[Lt]sys/envsys.h\*[Gt]
 .Sh DESCRIPTION
 .Bd -offset center
 .Em This API is experimental and may be deprecated at
@@ -131,7 +131,7 @@ inclusive, contain sensors of type
 .Pp
 NOTE:
 .Va high
-<
+\*[Lt]
 .Va low
 implies no sensors of the unit type specified exist.
 .It Dv ENVSYS_GTREDATA (envsys_tre_data)

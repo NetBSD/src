@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.21 2001/06/24 01:04:49 wiz Exp $
+.\"	$NetBSD: diskless.8,v 1.22 2002/02/13 08:18:23 ross Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -298,8 +298,8 @@ Copy and customize at least the following files in
 # cd /export/myclient/root/etc
 # vi fstab
 # cp /etc/hosts hosts
-# echo 'hostname="myclient"' >> rc.conf
-# echo "inet 192.197.96.12" > ifconfig.le0
+# echo 'hostname="myclient"' \*[Gt]\*[Gt] rc.conf
+# echo "inet 192.197.96.12" \*[Gt] ifconfig.le0
 .Ed
 .Pp
 Note that "le0" above should be replaced with the name of

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioscall.9,v 1.5 2001/12/26 01:10:32 wiz Exp $
+.\"	$NetBSD: bioscall.9,v 1.6 2002/02/13 08:18:59 ross Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm bioscall
 .Nd call system BIOS function from real mode
 .Sh SYNOPSIS
-.Fd #include <i386/bioscall.h>
+.Fd #include \*[Lt]i386/bioscall.h\*[Gt]
 .Ft void
 .Fn bioscall "int function" "struct bioscallregs *regs"
 .Sh DESCRIPTION
@@ -95,15 +95,15 @@ through a protected-mode interface.  The BIOS returns these details in
 the registers:
 .Pp
 .Bd -literal
-#include <i386/bioscall.h>
-#include <i386/apmvar.h>
+#include \*[Lt]i386/bioscall.h\*[Gt]
+#include \*[Lt]i386/apmvar.h\*[Gt]
 struct bioscallregs regs;
 
 regs.AX = APM_BIOS_FN(APM_INSTALLATION_CHECK);
 regs.BX = APM_DEV_APM_BIOS;
 regs.CX = regs.DX = 0;
 regs.ESI = regs.EDI = regs.EFLAGS = 0;
-bioscall(APM_SYSTEM_BIOS, &regs);
+bioscall(APM_SYSTEM_BIOS, \*[Am]regs);
 .Ed
 .Sh CODE REFERENCES
 .Pa sys/arch/i386/i386/bioscall.s ,

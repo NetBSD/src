@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.14 2001/09/09 22:18:14 wiz Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.15 2002/02/13 08:18:22 ross Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -126,7 +126,7 @@ A list of things which fail to work in compatibility mode should
 be here.
 .Pp
 .Tn SunOS
-executables can not handle directory offset cookies > 32 bits.
+executables can not handle directory offset cookies \*[Gt] 32 bits.
 Should such an offset occur, you will see the message
 .Dq sunos_getdents: dir offset too large for emulated program .
 Currently, this can only

@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.9,v 1.18 2001/06/21 11:59:00 wiz Exp $
+.\"	$NetBSD: arp.9,v 1.19 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -45,7 +45,7 @@
 .Nm arpintr
 .Nd externally visible ARP functions
 .Sh SYNOPSIS
-.Fd #include <netinet/if_inarp.h>
+.Fd #include \*[Lt]netinet/if_inarp.h\*[Gt]
 .Ft void
 .Fn arp_ifinit "struct ifnet *ifp" "struct ifaddr *ifa"
 .Ft int

@@ -1,4 +1,4 @@
-.\"   $NetBSD: w95boot.8,v 1.4 2001/09/05 23:53:24 wiz Exp $
+.\"   $NetBSD: w95boot.8,v 1.5 2002/02/13 08:18:28 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@ in that directory, containing the following lines:
 .Bd -literal -offset indent
 @ECHO OFF
 IF EXIST C:\\NetBSD\\BOOTED GOTO towin
-ECHO >C:\\NetBSD\\BOOTED
+ECHO \*[Gt]C:\\NetBSD\\BOOTED
 CHOICE /C+ /N /T+,5
 C:\\NetBSD\\DOSBOOT -u
 ECHO Error booting NetBSD
@@ -99,9 +99,9 @@ CHOICE /C+ /N /T+,60
 
 :towin
 DEL C:\\NetBSD\\BOOTED
-ECHO Y >C:\\NetBSD\\Y
+ECHO Y \*[Gt]C:\\NetBSD\\Y
 CHOICE /C+ /N /T+,5
-C:\\WINDOWS\\WIN.COM <Y
+C:\\WINDOWS\\WIN.COM \*[Lt]Y
 .Ed
 .Pp
 Now, double click the icon for the

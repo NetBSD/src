@@ -1,4 +1,4 @@
-.\"	$NetBSD: leds.4,v 1.7 2001/12/07 18:58:33 wiz Exp $
+.\"	$NetBSD: leds.4,v 1.8 2002/02/13 08:18:05 ross Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Nm leds
 .Nd sun3 diagnostic Light Emitting Diodes driver
 .Sh SYNOPSIS
-.Fd #include <machine/leds.h>
+.Fd #include \*[Lt]machine/leds.h\*[Gt]
 .Sh DESCRIPTION
 With the exception of the Sun 3/80, all sun3 machines are equipped
 a diagnostic display of eight Light Emitting Diodes (LEDs), located
@@ -96,7 +96,7 @@ to display the repeating animation of a single lit LED scrolling from one end
 of the display to the other, using six clock ticks between each update.
 .Bd -ragged -offset indent
 # echo 5 8 254 253 250 247 239 223 191 127 |
-  awk '{ for (i=1;i<=NF;i++) printf("%c",$i+0); }' > /dev/leds
+  awk '{ for (i=1;i\*[Le]NF;i++) printf("%c",$i+0); }' \*[Gt] /dev/leds
 .Ed
 .Sh ERRORS
 An I/O transfer to

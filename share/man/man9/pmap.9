@@ -1,4 +1,4 @@
-.\"	$NetBSD: pmap.9,v 1.11 2002/02/07 03:15:10 ross Exp $
+.\"	$NetBSD: pmap.9,v 1.12 2002/02/13 08:18:48 ross Exp $
 .\"
 .\" Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -41,8 +41,8 @@
 .Nm pmap
 .Nd machine-dependent portion of the virtual memory system
 .Sh SYNOPSIS
-.Fd #include <sys/param.h>
-.Fd #include <uvm/uvm_extern.h>
+.Fd #include \*[Lt]sys/param.h\*[Gt]
+.Fd #include \*[Lt]uvm/uvm_extern.h\*[Gt]
 .Ft void
 .Fn "pmap_init" "void"
 .Ft void
@@ -156,7 +156,7 @@ module may use whatever optimizations it has available to reduce
 the expense of virtual-to-physical mapping synchronization.
 .Ss HEADER FILES AND DATA STRUCTURES
 Machine-dependent code must provide the header file
-.Pa <machine/pmap.h> .
+.Pa \*[Lt]machine/pmap.h\*[Gt] .
 This file contains the definition of the
 .Dv pmap
 structure:
@@ -174,7 +174,7 @@ implementation uses.
 Note that all prototypes for
 .Nm
 interface functions are provided by the header file
-.Pa <uvm/uvm_pmap.h> .
+.Pa \*[Lt]uvm/uvm_pmap.h\*[Gt] .
 It is possible to override this behavior by defining the
 C pre-processor macro
 .Dq PMAP_EXCLUDE_DECLS .
@@ -185,7 +185,7 @@ API calls, for handling different MMU types in a single
 module, for example.  If the
 .Dq PMAP_EXCLUDE_DECLS
 macro is defined,
-.Pa <machine/pmap.h>
+.Pa \*[Lt]machine/pmap.h\*[Gt]
 .Em must
 provide function prototypes in a block like so:
 .Bd -literal -offset indent
@@ -197,7 +197,7 @@ __END_DECLS
 .Ed
 .Pp
 The header file
-.Pa <uvm/uvm_pmap.h>
+.Pa \*[Lt]uvm/uvm_pmap.h\*[Gt]
 defines a structure for tracking
 .Nm
 statistics (see below).  This structure is defined as:
@@ -636,7 +636,7 @@ implementation does not delay virtual-to-physical mapping updates,
 .Fn pmap_update
 has no operation.  In this case, the call may be deleted using
 a C pre-processor macro in
-.Pa <machine/pmap.h> .
+.Pa \*[Lt]machine/pmap.h\*[Gt] .
 .It void Fn "pmap_activate" "struct proc *p"
 Activate the physical map used by process
 .Fa p .
@@ -835,7 +835,7 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_STEAL_MEMORY
 in
-.Pa <machine/pmap.h> .
+.Pa \*[Lt]machine/pmap.h\*[Gt] .
 .It vaddr_t Fn "pmap_growkernel" "vaddr_t maxkvaddr"
 Management of the kernel virtual address space is complicated by the
 fact that it is not always safe to wait for resources with which to
@@ -869,7 +869,7 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_GROWKERNEL
 in
-.Pa <machine/pmap.h> .
+.Pa \*[Lt]machine/pmap.h\*[Gt] .
 .It void Fn "pmap_fork" "pmap_t src_map" "pmap_t dst_map"
 Some
 .Nm
@@ -898,7 +898,7 @@ The
 function is enabled by defining the C pre-processor macro
 .Dq PMAP_FORK
 in
-.Pa <machine/pmap.h> .
+.Pa \*[Lt]machine/pmap.h\*[Gt] .
 .It vaddr_t Fn "PMAP_MAP_POOLPAGE" "paddr_t pa"
 This function is used by the
 .Xr pool 9
@@ -916,7 +916,7 @@ always succeed.
 The use of
 .Fn PMAP_MAP_POOLPAGE
 is enabled by defining it as a C pre-processor macro in
-.Fa <machine/pmap.h> .
+.Fa \*[Lt]machine/pmap.h\*[Gt] .
 If
 .Fn PMAP_MAP_POOLPAGE
 is defined,
@@ -942,7 +942,7 @@ provided kernel-accessible address.
 The use of
 .Fn PMAP_UNMAP_POOLPAGE
 is enabled by defining it as a C pre-processor macro in
-.Fa <machine/pmap.h> .
+.Fa \*[Lt]machine/pmap.h\*[Gt] .
 If
 .Fn PMAP_UNMAP_POOLPAGE
 is defined,

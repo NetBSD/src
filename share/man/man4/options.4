@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.162 2002/02/11 18:16:48 jdolecek Exp $
+.\"	$NetBSD: options.4,v 1.163 2002/02/13 08:17:43 ross Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -695,11 +695,11 @@ until either the namei cache hit rate improves or it is determined that
 your system does not benefit substantially from an increase in the size of
 the namei cache.
 .It Cd options NAMECACHE_ENTER_REVERSE
-Causes the namei cache to always enter a reverse mapping (vnode -> name)
+Causes the namei cache to always enter a reverse mapping (vnode -\*[Gt] name)
 as well as a normal one. Normally, this is already done for directory
 vnodes, to speed up the getcwd operation. This option will cause
 longer hash chains in the reverse cache, and thus slow down
-getcwd somewhat. However, it does make vnode -> path translations
+getcwd somewhat. However, it does make vnode -\*[Gt] path translations
 possible in some cases. For now, only useful if strict /proc/#/maps
 emulation for Linux binaries is required.
 .It Cd options EXT2FS_SYSTEM_FLAGS
@@ -1758,7 +1758,7 @@ Enable simple event debugging of the logging of the
 device.
 .It Cd options BLINK
 Enable blinking of LED.  Blink rate is full cycle every N seconds for
-N < then current load average.  See
+N \*[Lt] then current load average.  See
 .Xr getloadavg 3 .
 .\" .It Cd options COLORFONT_CACHE
 .\" this is totally fucked up.. what does this do?
@@ -1820,7 +1820,7 @@ Enable simple event debugging of the logging of the
 device.
 .It Cd options BLINK
 Enable blinking of LED.  Blink rate is full cycle every N seconds for
-N < then current load average.  See
+N \*[Lt] then current load average.  See
 .Xr getloadavg 3 .
 .El
 .Ss x68k-specific Options
