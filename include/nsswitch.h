@@ -1,4 +1,4 @@
-/*	$NetBSD: nsswitch.h,v 1.1.4.6 1999/01/15 06:31:27 lukem Exp $	*/
+/*	$NetBSD: nsswitch.h,v 1.1.4.7 1999/01/15 12:11:18 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -133,15 +133,6 @@ typedef struct ns_dtab {
 #else
 #   define NS_COMPAT_CB(F,C)	{ NSSRC_COMPAT,	NULL,	NULL }
 #endif
-
-/*
- * maximum length of a string (database or source name).
- * a sanity check more than anything else (the strings
- * are dynamically allocated; there may be bugs in the
- * lexer or yaccer with large strings, so we limit the
- * string length.
- */
-#define NS_MAXSTR	32
 
 
 #ifdef _NS_PRIVATE
