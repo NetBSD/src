@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.5 2002/06/17 16:33:21 christos Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.6 2002/06/18 08:34:57 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -223,13 +223,24 @@ netbsd32_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if (KTRPOINT(p, KTR_SYSCALL) || ISSET(p->p_flag, P_SYSTRACE)) {
+#if defined(KTRACE) || defined(SYSTRACE)
+	if (
+#ifdef KTRACE
+	    KTRPOINT(p, KTR_SYSCALL) ||
+#endif
+#ifdef SYSTRACE
+	    ISSET(p->p_flag, P_SYSTRACE)
+#else
+	0
+#endif
+	) {
 		for (i = 0; i < (argsize >> 2); i++)
 			args64[i] = args[i];
 		/* XXX we need to pass argsize << 1 here? */
 		if ((error = trace_enter(p, code, args64, rval)) != 0)
 			goto bad;
 	}
+#endif
 
 	rval[0] = 0;
 	rval[1] = 0;
