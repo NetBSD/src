@@ -1,4 +1,4 @@
-/*	$NetBSD: library.c,v 1.35 2003/04/02 10:39:22 fvdl Exp $	*/
+/*	$NetBSD: library.c,v 1.36 2003/07/13 09:44:02 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)library.c	8.3 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: library.c,v 1.35 2003/04/02 10:39:22 fvdl Exp $");
+__RCSID("$NetBSD: library.c,v 1.36 2003/07/13 09:44:02 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -276,10 +276,12 @@ get_ifile(FS_INFO *fsp, int use_mmap)
 	int count;
 
 	ifp = NULL;
-	ifile_name = malloc(strlen(fsp->fi_statfsp->f_mntonname) +
-	    strlen(IFILE_NAME)+2);
-	strcat(strcat(strcpy(ifile_name, fsp->fi_statfsp->f_mntonname), "/"),
+	asprintf(&ifile_name, "%s/%s", fsp->fi_statfsp->f_mntonname,
 	    IFILE_NAME);
+	if (!ifile_name) {
+		syslog(LOG_ERR, "get_ifile: malloc failed: %m");
+		exit(1);
+	}
 
 	if(ifile_fd == -1) {
 		/* XXX KS - Do we ever *write* to the ifile? */
