@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.55 2001/07/07 17:09:48 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.56 2001/08/22 15:39:04 hubertf Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -170,7 +170,7 @@ dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 en*	at	pci? dev ? function ?		# ENI PCI ATM (untested)
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
-ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
+ex*	at	pci? dev ? function ?		# 3COM 3c90x[BC] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
