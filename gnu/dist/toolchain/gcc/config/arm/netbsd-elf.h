@@ -32,6 +32,10 @@ Boston, MA 02111-1307, USA.  */
 #define TARGET_ENDIAN_DEFAULT 0
 #endif
 
+#ifndef CPP_ENDIAN_DEFAULT_SPEC
+#define CPP_ENDIAN_DEFAULT_SPEC "-D__ARMEL__"
+#endif
+
 #define TARGET_DEFAULT				\
   (ARM_FLAG_APCS_32				\
    | ARM_FLAG_APCS_FRAME			\
