@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.22 2003/06/18 20:51:00 christos Exp $	*/
+/*	$NetBSD: telnet.c,v 1.23 2003/07/12 14:29:35 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.22 2003/06/18 20:51:00 christos Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.23 2003/07/12 14:29:35 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -778,7 +778,7 @@ setup_term(char *tname, int fd, int *errp)
 				goto error;
 			}
 
-			strcpy(newptr, ext_tc);
+			strlcpy(newptr, ext_tc, strlen(ext_tc) + 1);
 			termbuf = newptr;
 		}
 
