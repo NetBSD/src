@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist.c,v 1.21 2004/02/25 19:56:28 jrf Exp $	*/
+/*	$NetBSD: nlist.c,v 1.22 2004/03/27 12:09:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: nlist.c,v 1.21 2004/02/25 19:56:28 jrf Exp $");
+__RCSID("$NetBSD: nlist.c,v 1.22 2004/03/27 12:09:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ int	uspace;				/* kernel USPACE value */
 	kvm_read(kd, psnl[x].n_value, (char *)&v, sizeof v) != sizeof(v)
 
 int
-donlist()
+donlist(void)
 {
 	int rval;
 	fixpt_t xccpu;
@@ -148,7 +148,7 @@ donlist()
 }
 
 int
-donlist_sysctl()
+donlist_sysctl(void)
 {
 	int mib[2];
 	size_t size;
@@ -201,8 +201,7 @@ donlist_sysctl()
 }
 
 void
-nlisterr(nl)
-	struct nlist nl[];
+nlisterr(struct nlist nl[])
 {
 	int i;
 

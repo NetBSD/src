@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.51 2004/01/11 18:55:33 jdolecek Exp $	*/
+/*	$NetBSD: ps.c,v 1.52 2004/03/27 12:09:28 simonb Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.51 2004/01/11 18:55:33 jdolecek Exp $");
+__RCSID("$NetBSD: ps.c,v 1.52 2004/03/27 12:09:28 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,15 +126,15 @@ int	needcomm, needenv, commandonly;
 uid_t	myuid;
 
 static struct kinfo_lwp
-		*pick_representative_lwp __P((struct kinfo_proc2 *, 
-		    struct kinfo_lwp *, int));
+		*pick_representative_lwp(struct kinfo_proc2 *,
+		    struct kinfo_lwp *, int);
 static struct kinfo_proc2
-		*getkinfo_kvm __P((kvm_t *, int, int, int *));
-static char	*kludge_oldps_options __P((char *));
-static int	 pscomp __P((const void *, const void *));
-static void	 scanvars __P((void));
-static void	 usage __P((void));
-int		 main __P((int, char *[]));
+		*getkinfo_kvm(kvm_t *, int, int, int *);
+static char	*kludge_oldps_options(char *);
+static int	 pscomp(const void *, const void *);
+static void	 scanvars(void);
+static void	 usage(void);
+int		 main(int, char *[]);
 
 char dfmt[] = "pid tt state time command";
 char jfmt[] = "user pid ppid pgid sess jobc state tt time command";
@@ -148,9 +148,7 @@ char vfmt[] = "pid state time sl re pagein vsz rss lim tsiz %cpu %mem command";
 kvm_t *kd;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct varent *vent;
 	struct winsize ws;
@@ -353,7 +351,7 @@ main(argc, argv)
 		donlist_sysctl();
 	} else
 		kd = kvm_openfiles(nlistf, memf, swapf, O_RDONLY, errbuf);
-		
+
 	if (kd == 0)
 		errx(1, "%s", errbuf);
 
@@ -414,7 +412,7 @@ main(argc, argv)
 				 */
 				for (vent = vhead; vent; vent = vent->next)
 					for (j = 0; j < nlwps; j++)
-						OUTPUT(vent, ki, &kl[j], 
+						OUTPUT(vent, ki, &kl[j],
 						    WIDTHMODE);
 			}
 		}
@@ -472,17 +470,14 @@ main(argc, argv)
 }
 
 static struct kinfo_lwp *
-pick_representative_lwp(ki, kl, nlwps)
-	struct kinfo_proc2 *ki;
-	struct kinfo_lwp *kl;
-	int nlwps;
+pick_representative_lwp(struct kinfo_proc2 *ki, struct kinfo_lwp *kl, int nlwps)
 {
 	int i, onproc, running, sleeping, stopped, suspended;
 	static struct kinfo_lwp zero_lwp;
 
 	if (kl == 0)
 		return &zero_lwp;
-		
+
 	/* Trivial case: only one LWP */
 	if (nlwps == 1)
 		return kl;
@@ -531,19 +526,18 @@ pick_representative_lwp(ki, kl, nlwps)
 	warnx("Inconsistent LWP state for process %d\n", ki->p_pid);
 	return kl;
 }
-	 
+
 
 static struct kinfo_proc2 *
-getkinfo_kvm(kdp, what, flag, nentriesp)
-	kvm_t *kdp;
-	int what, flag, *nentriesp;
+getkinfo_kvm(kvm_t *kdp, int what, int flag, int *nentriesp)
 {
+
 	return (kvm_getproc2(kdp, what, flag, sizeof(struct kinfo_proc2),
 	    nentriesp));
 }
 
 static void
-scanvars()
+scanvars(void)
 {
 	struct varent *vent;
 	VAR *v;
@@ -673,8 +667,7 @@ pscomp(const void *a, const void *b)
  * feature is available with the option 'T', which takes no argument.
  */
 static char *
-kludge_oldps_options(s)
-	char *s;
+kludge_oldps_options(char *s)
 {
 	size_t len;
 	char *newopts, *ns, *cp;
@@ -725,7 +718,7 @@ kludge_oldps_options(s)
 }
 
 static void
-usage()
+usage(void)
 {
 
 	(void)fprintf(stderr,
