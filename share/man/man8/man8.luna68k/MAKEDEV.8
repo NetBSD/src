@@ -6,7 +6,7 @@
 .\" *** DO NOT EDIT - any changes will be lost!!!
 .\" *** ------------------------------------------------------------------
 .\"
-.\" $NetBSD: MAKEDEV.8,v 1.1 2001/06/08 14:32:09 wiz Exp $
+.\" $NetBSD: MAKEDEV.8,v 1.2 2001/06/26 02:11:57 hubertf Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,22 +95,22 @@ digits when calling
 . Bl -tag -width 0123456789 -compact
 . It Ar ccd#
 Concatenated disk driver, see
-.Xr ccd 4
+.Xr c\&cd 4
 . It Ar cd#
 SCSI CD-ROM, see
-.Xr cd 4
+.Xr c\&d 4
 . It Ar md#
 ``memory disk'' pseudo-disks, see
-.Xr md 4
+.Xr m\&d 4
 . It Ar sd#
 SCSI disks, see
-.Xr sd 4
+.Xr s\&d 4
 . It Ar vnd#
 ``file'' pseudo-disks, see
-.Xr vnd 4
+.Xr v\&nd 4
 . It Ar raid#
 RAIDframe disk driver, see
-.Xr raid 4
+.Xr r\&aid 4
 . El
 .It Terminals:
 . Bl -tag -width 0123456789 -compact
@@ -123,48 +123,48 @@ Workstation console (``wscons'') glass-tty emulation
 . Bl -tag -width 0123456789 -compact
 . It Ar pty#
 Set of 16 master and slave pseudo terminals, see
-.Xr pty 4
+.Xr p\&ty 4
 . El
 .It Tapes:
 . Bl -tag -width 0123456789 -compact
 . It Ar st#
 SCSI tape, see
-.Xr st 4
+.Xr s\&t 4
 . El
 .It Special purpose devices:
 . Bl -tag -width 0123456789 -compact
 . It Ar bpf#
 Packet filter, see
-.Xr bpf 4
+.Xr b\&pf 4
 . It Ar ch#
 SCSI media changer, see
-.Xr ch 4
+.Xr c\&h 4
 . It Ar fd
 File descriptor device
 . It Ar ipl
 IP filter
 . It Ar lkm
 Loadable kernel modules interface, see
-.Xr lkm 4
+.Xr l\&km 4
 . It Ar random
 Random number generator
 . It Ar scsibus#
 SCSI busses
 . It Ar ss#
 SCSI scanner, see
-.Xr ss 4
+.Xr s\&s 4
 . It Ar tun#
 Network tunnel driver, see
-.Xr tun 4
+.Xr t\&un 4
 . It Ar uk#
 SCSI unknown, see
-.Xr uk 4
+.Xr u\&k 4
 . It Ar wskbd0
 Workstation console (``wscons'') keyboard, see
-.Xr wskbd 4
+.Xr w\&skbd 4
 . It Ar wsmouse0
 Workstation console (``wscons'') mouse, see
-.Xr wsmouse 4
+.Xr w\&smouse 4
 . El
 .El
 .Sh FILES
