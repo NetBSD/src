@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.13 1995/05/14 08:23:03 cgd Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.14 1995/06/12 00:47:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -54,13 +54,13 @@ struct ipovly {
  * be reclaimed if memory becomes tight.
  */
 struct ipq {
-	struct	  ipq *next,*prev;	/* to other reass headers */
+	struct	  ipq *next, *prev;	/* to other reass headers */
 	u_int8_t  ipq_ttl;		/* time for reass q to live */
 	u_int8_t  ipq_p;		/* protocol of this fragment */
 	u_int16_t ipq_id;		/* sequence id for reassembly */
-	struct	  ipasfrag *ipq_next,*ipq_prev;
+	struct	  ipasfrag *ipq_next, *ipq_prev;
 					/* to ip headers of fragments */
-	struct	  in_addr ipq_src,ipq_dst;
+	struct	  in_addr ipq_src, ipq_dst;
 };
 
 /*
@@ -86,8 +86,8 @@ struct	ipasfrag {
 	u_int8_t  ip_ttl;
 	u_int8_t  ip_p;
 	u_int16_t ip_sum;
-	struct	  ipasfrag *ipf_next;	/* next fragment */
-	struct	  ipasfrag *ipf_prev;	/* previous fragment */
+	struct	  ipasfrag *ipf_next, *ipf_prev;
+					/* list of fragments */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_timer.c,v 1.10 1995/04/13 06:36:49 cgd Exp $	*/
+/*	$NetBSD: tcp_timer.c,v 1.11 1995/06/12 00:47:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -72,11 +72,11 @@ tcp_fasttimo()
 {
 	register struct inpcb *inp;
 	register struct tcpcb *tp;
-	int s = splnet();
+	int s;
 
-	inp = tcb.inp_next;
-	if (inp)
-	for (; inp != &tcb; inp = inp->inp_next)
+	s = splnet();
+	for (inp = tcbtable.inpt_list.lh_first; inp != 0;
+	    inp = inp->inp_list.le_next) {
 		if ((tp = (struct tcpcb *)inp->inp_ppcb) &&
 		    (tp->t_flags & TF_DELACK)) {
 			tp->t_flags &= ~TF_DELACK;
@@ -84,6 +84,7 @@ tcp_fasttimo()
 			tcpstat.tcps_delack++;
 			(void) tcp_output(tp);
 		}
+	}
 	splx(s);
 }
 
@@ -97,20 +98,16 @@ tcp_slowtimo()
 {
 	register struct inpcb *ip, *ipnxt;
 	register struct tcpcb *tp;
-	int s = splnet();
+	int s;
 	register long i;
 
+	s = splnet();
 	tcp_maxidle = TCPTV_KEEPCNT * tcp_keepintvl;
 	/*
 	 * Search through tcb's and update active timers.
 	 */
-	ip = tcb.inp_next;
-	if (ip == 0) {
-		splx(s);
-		return;
-	}
-	for (; ip != &tcb; ip = ipnxt) {
-		ipnxt = ip->inp_next;
+	for (ip = tcbtable.inpt_list.lh_first; ip != 0; ip = ipnxt) {
+		ipnxt = ip->inp_list.le_next;
 		tp = intotcpcb(ip);
 		if (tp == 0)
 			continue;
@@ -119,7 +116,8 @@ tcp_slowtimo()
 				(void) tcp_usrreq(tp->t_inpcb->inp_socket,
 				    PRU_SLOWTIMO, (struct mbuf *)0,
 				    (struct mbuf *)i, (struct mbuf *)0);
-				if (ipnxt->inp_prev != ip)
+				if (ipnxt->inp_list.le_prev !=
+				    &ip->inp_list.le_next)
 					goto tpgone;
 			}
 		}

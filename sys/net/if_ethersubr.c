@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.12 1995/04/07 22:19:29 mycroft Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.13 1995/06/12 00:46:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -504,7 +504,8 @@ ether_ifattach(ifp)
 	ifp->if_hdrlen = 14;
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
-	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
+	for (ifa = ifp->if_addrlist.tqh_first; ifa != 0;
+	    ifa = ifa->ifa_list.tqe_next)
 		if ((sdl = (struct sockaddr_dl *)ifa->ifa_addr) &&
 		    sdl->sdl_family == AF_LINK) {
 			sdl->sdl_type = IFT_ETHER;
@@ -513,6 +514,7 @@ ether_ifattach(ifp)
 			      LLADDR(sdl), ifp->if_addrlen);
 			break;
 		}
+	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };
@@ -595,8 +597,7 @@ ether_addmulti(ifr, ac)
 	bcopy(addrhi, enm->enm_addrhi, 6);
 	enm->enm_ac = ac;
 	enm->enm_refcount = 1;
-	enm->enm_next = ac->ac_multiaddrs;
-	ac->ac_multiaddrs = enm;
+	LIST_INSERT_HEAD(&ac->ac_multiaddrs, enm, enm_list);
 	ac->ac_multicnt++;
 	splx(s);
 	/*
@@ -670,11 +671,7 @@ ether_delmulti(ifr, ac)
 	/*
 	 * No remaining claims to this record; unlink and free it.
 	 */
-	for (p = &enm->enm_ac->ac_multiaddrs;
-	     *p != enm;
-	     p = &(*p)->enm_next)
-		continue;
-	*p = (*p)->enm_next;
+	LIST_REMOVE(enm, enm_list);
 	free(enm, M_IFMADDR);
 	ac->ac_multicnt--;
 	splx(s);
