@@ -1,4 +1,4 @@
-/*	$NetBSD: getmntopts.c,v 1.1 2003/03/22 12:44:04 jdolecek Exp $	*/
+/*	$NetBSD: getmntopts.c,v 1.2 2003/04/11 17:37:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)getmntopts.c	8.3 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: getmntopts.c,v 1.1 2003/03/22 12:44:04 jdolecek Exp $");
+__RCSID("$NetBSD: getmntopts.c,v 1.2 2003/04/11 17:37:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,23 +55,107 @@ __RCSID("$NetBSD: getmntopts.c,v 1.1 2003/03/22 12:44:04 jdolecek Exp $");
 
 int getmnt_silent = 0;
 
-void
-getmntopts(options, m0, flagp, altflagp)
+static const char errmsg[] = "-o %s: option not supported";
+
+struct mntoptparse {
 	const char *options;
-	const struct mntopt *m0;
-	int *flagp;
-	int *altflagp;
+	const struct mntopt *mopts;
+	char *optbuf;
+	char **optarg;
+};
+
+const char *
+getmntoptstr(mntoptparse_t mp, const char *opt)
+{
+	const struct mntopt *m;
+
+	for (m = mp->mopts; m->m_option != NULL; m++)
+		if (strcasecmp(opt, m->m_option) == 0)
+			break;
+
+	if (m->m_option == NULL) {
+		if (getmnt_silent == 0)
+			errx(1, errmsg, opt);
+		else
+			return NULL;
+	}
+
+	return mp->optarg[m - mp->mopts];
+}
+
+long
+getmntoptnum(mntoptparse_t mp, const char *opt)
+{
+	char *ep;
+	long rv;
+	void (*fun)(int, const char *, ...) = NULL;
+	const char *val = getmntoptstr(mp, opt);
+
+	if (val == NULL) {
+		if (getmnt_silent == 0)
+			errx(1, "Missing %s argument", opt);
+		else
+			return -1;
+	}
+
+	errno = 0;
+	rv = strtol(val, &ep, 0);
+
+	if (*ep)
+		fun = errx;
+
+	if (errno == ERANGE && (rv == LONG_MAX || rv == LONG_MIN))
+		fun = err;
+
+	if (fun) {
+		if (getmnt_silent != 0)
+			return -1;
+		(*fun)(1, "Invalid %s argument `%s'", opt, val);
+	}
+	return rv;
+}
+
+void
+freemntopts(mntoptparse_t mp)
+{
+	free(mp->optbuf);
+	free(mp->optarg);
+	free(mp);
+}
+
+mntoptparse_t
+getmntopts(const char *options, const struct mntopt *m0, int *flagp,
+    int *altflagp)
 {
 	const struct mntopt *m;
 	int negative;
-	char *opt, *optbuf, *p;
+	char *opt, *p;
 	int *thisflagp;
+	size_t nopts;
+	mntoptparse_t mp;
+
+	for (nopts = 0, m = m0; m->m_option != NULL; ++m, nopts++)
+		continue;
+	
+	if ((mp = malloc(sizeof(struct mntoptparse))) == NULL)
+		return NULL;
 
 	/* Copy option string, since it is about to be torn asunder... */
-	if ((optbuf = strdup(options)) == NULL)
-		err(1, NULL);
+	if ((mp->optbuf = strdup(options)) == NULL) {
+		free(mp);
+		return NULL;
+	}
 
-	for (opt = optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
+	if ((mp->optarg = calloc(nopts, sizeof(char *))) == NULL) {
+		free(mp->optbuf);
+		free(mp);
+		return NULL;
+	}
+
+	mp->mopts = m0;
+	mp->options = options;
+
+	for (opt = mp->optbuf; (opt = strtok(opt, ",")) != NULL; opt = NULL) {
 		/* Check for "no" prefix. */
 		if (opt[0] == 'n' && opt[1] == 'o') {
 			negative = 1;
@@ -84,8 +168,9 @@ getmntopts(options, m0, flagp, altflagp)
 		 * ignore the assignment as it's handled elsewhere
 		 */
 		p = strchr(opt, '=');
-		if (p)
-			 *p = '\0';
+		if (p) {
+			 *p++ = '\0';
+		}
 
 		/* Scan option table. */
 		for (m = m0; m->m_option != NULL; ++m)
@@ -94,15 +179,15 @@ getmntopts(options, m0, flagp, altflagp)
 
 		/* Save flag, or fail if option is not recognised. */
 		if (m->m_option) {
+			mp->optarg[m - m0] = p;
 			thisflagp = m->m_altloc ? altflagp : flagp;
 			if (negative == m->m_inverse)
 				*thisflagp |= m->m_flag;
 			else
 				*thisflagp &= ~m->m_flag;
 		} else if (!getmnt_silent) {
-			errx(1, "-o %s: option not supported", opt);
+			errx(1, errmsg, opt);
 		}
 	}
-
-	free(optbuf);
+	return mp;
 }
