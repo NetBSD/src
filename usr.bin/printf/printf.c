@@ -1,4 +1,4 @@
-/*	$NetBSD: printf.c,v 1.23 2002/06/14 01:12:15 wiz Exp $	*/
+/*	$NetBSD: printf.c,v 1.24 2002/06/14 11:32:15 tron Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printf.c	8.2 (Berkeley) 3/22/95";
 #else
-__RCSID("$NetBSD: printf.c,v 1.23 2002/06/14 01:12:15 wiz Exp $");
+__RCSID("$NetBSD: printf.c,v 1.24 2002/06/14 11:32:15 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,7 +125,7 @@ warnx(const char *fmt, ...)
 
 int
 #ifdef BUILTIN
-progprintf(argc, argv)
+progprintf(int argc, char **argv)
 #else
 main(int argc, char **argv)
 #endif
