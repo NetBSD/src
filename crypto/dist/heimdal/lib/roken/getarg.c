@@ -33,8 +33,10 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#ifdef __RCSID
 __RCSID("$Heimdal: getarg.c,v 1.46 2002/08/20 16:23:07 joda Exp $"
-        "$NetBSD: getarg.c,v 1.1.1.6 2002/09/12 12:41:42 joda Exp $");
+        "$NetBSD: getarg.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 #endif
 
 #include <stdio.h>

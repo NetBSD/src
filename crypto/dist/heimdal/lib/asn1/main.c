@@ -34,8 +34,10 @@
 #include "gen_locl.h"
 #include <getarg.h>
 
+#ifdef __RCSID
 __RCSID("$Heimdal: main.c,v 1.11 2001/02/20 01:44:52 assar Exp $"
-        "$NetBSD: main.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+        "$NetBSD: main.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+#endif
 
 extern FILE *yyin;
 
