@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.h,v 1.2 2001/08/20 23:08:10 bjh21 Exp $	*/
+/*	$NetBSD: fiq_util.S,v 1.1 2001/08/20 23:08:10 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -27,39 +27,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM26_FIQ_H_
-#define _ARM26_FIQ_H_
+#include <machine/asm.h>
+
+RCSID("$NetBSD: fiq_util.S,v 1.1 2001/08/20 23:08:10 bjh21 Exp $")
+
+#include <machine/memcreg.h>
 #include <arch/arm26/iobus/iocreg.h>
 
 /*
- * These definitions specify how the devices are wired to the IOC
- * interrupt lines.
+ * fiq_downgrade should be called in FIQ mode.  It uses R12_fiq and R13_fiq
+ * as scratch registers.  When finished, it returns from the FIQ.
  */
-/* All systems */
-#define FIQ_EFIQ	IOC_FIQ_FL	/* Econet interrupt request */
-#define FIQ_PFIQ	IOC_FIQ_IL0	/* Podule FIQ request */
-/* Archimedes systems */
-#define FIQ_FFDQ	IOC_FIQ_FH0	/* Floppy disc data request */
-#define FIQ_FFIQ	IOC_FIQ_FH1	/* Floppy disc interrupt request */
-/* IOEB systems */
-#define FIQ_FDDRQ	IOC_FIQ_FH0	/* Floppy disc data request */
-#define FIQ_SINTR	IOC_FIQ_C4	/* Serial line interrupt */
-
-struct fiq_regs {
-	register_t	r8_fiq;
-	register_t	r9_fiq;
-	register_t	r10_fiq;
-	register_t	r11_fiq;
-	register_t	r12_fiq;
-	register_t	r13_fiq;
-};
-
-extern int fiq_claim(void *, size_t);
-extern void fiq_release(void);
-extern void fiq_enable(int);
-extern void fiq_disable(void);
-extern void fiq_setregs(const struct fiq_regs *);
-extern void fiq_getregs(struct fiq_regs *);
-extern void (*fiq_downgrade_handler)(void);
-
-#endif
+ENTRY(fiq_downgrade)
+	ldr	r12, Lioc_base
+	ldrb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	orr	r13, r13, #(1 <<IOC_IRQ_1)
+	strb	r13, [r12, #(IOC_IRQMSKA << 2)]
+	mov	r13, #0
+	strb	r13, [r12, #(IOC_FIQMSK << 2)]
+	subs	pc, r14, #4
+Lioc_base:
+	.word	0x03200000
