@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.176 1999/12/17 01:02:03 soren Exp $
+$NetBSD: pcidevs,v 1.177 1999/12/17 01:04:29 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -927,7 +927,7 @@ product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product EFFICIENTNETS ENI25P	0x0003	SpeedStream ENI-25p
 product EFFICIENTNETS SS3000	0x0005	SpeedStream 3000
 
-/* Galileo Technology */
+/* Galileo Technology products */
 product GALILEO		0x0146	GT-64010A System Controller
 product GALILEO		0x4111	GT-64115 System Controller
 product GALILEO		0x4146	GT-64011/GT-64111 System Controller
