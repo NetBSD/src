@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.13 1996/04/15 23:45:29 jtc Exp $	*/
+/*	$NetBSD: verr.c,v 1.1 1996/04/15 23:45:35 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,11 +37,15 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: err.c,v 1.13 1996/04/15 23:45:29 jtc Exp $";
+static char rcsid[] = "$NetBSD: verr.c,v 1.1 1996/04/15 23:45:35 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __STDC__
 #include <stdarg.h>
@@ -49,25 +53,22 @@ static char rcsid[] = "$NetBSD: err.c,v 1.13 1996/04/15 23:45:29 jtc Exp $";
 #include <varargs.h>
 #endif
 
+extern char *__progname;		/* Program name, from crt0. */
+
 __dead void
-#ifdef __STDC__
-_err(int eval, const char *fmt, ...)
-#else
-_err(va_alist)
-	va_dcl
-#endif
-{
-	va_list ap;
-#if __STDC__
-	va_start(ap, fmt);
-#else
+_verr(eval, fmt, ap)
 	int eval;
 	const char *fmt;
+	va_list ap;
+{
+	int sverrno;
 
-	va_start(ap);
-	eval = va_arg(ap, int);
-	fmt = va_arg(ap, const char *);
-#endif
-	_verr(eval, fmt, ap);
-	va_end(ap);
+	sverrno = errno;
+	(void)fprintf(stderr, "%s: ", __progname);
+	if (fmt != NULL) {
+		(void)vfprintf(stderr, fmt, ap);
+		(void)fprintf(stderr, ": ");
+	}
+	(void)fprintf(stderr, "%s\n", strerror(sverrno));
+	exit(eval);
 }
