@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.19 1999/04/21 00:00:06 thorpej Exp $	*/
+/*	$NetBSD: db_run.c,v 1.20 2000/03/30 11:31:27 augustss Exp $	*/
 
 /* 
  * Mach Operating System
@@ -76,8 +76,8 @@ db_stop_at_pc(regs, is_breakpoint)
 	db_regs_t *regs;
 	boolean_t	*is_breakpoint;
 {
-	register db_addr_t	pc;
-	register db_breakpoint_t bkpt;
+	db_addr_t	pc;
+	db_breakpoint_t bkpt;
 
 	pc = PC_REGS(regs);
 
@@ -151,7 +151,7 @@ db_stop_at_pc(regs, is_breakpoint)
 		(!inst_return(ins) || --db_call_depth != 0)) {
 		if (db_sstep_print) {
 		    if (inst_call(ins) || inst_return(ins)) {
-			register int i;
+			int i;
 
 			db_printf("[after %6d]     ", db_inst_count);
 			for (i = db_call_depth; --i > 0; )
@@ -185,7 +185,7 @@ db_restart_at_pc(regs, watchpt)
 	db_regs_t *regs;
 	boolean_t watchpt;
 {
-	register db_addr_t pc = PC_REGS(regs);
+	db_addr_t pc = PC_REGS(regs);
 
 	if ((db_run_mode == STEP_COUNT) ||
 	    (db_run_mode == STEP_RETURN) ||
@@ -383,7 +383,7 @@ db_continue_cmd(addr, have_addr, count, modif)
 
 void
 db_set_single_step(regs)
-	register db_regs_t *regs;
+	db_regs_t *regs;
 {
 	db_addr_t pc = PC_REGS(regs), brpc = pc;
 	boolean_t unconditional;
