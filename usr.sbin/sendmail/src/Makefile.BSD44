@@ -1,4 +1,9 @@
-#	@(#)Makefile	8.3 (Berkeley) 12/20/93
+#
+#  NetBSD Makefile
+#
+#	@(#)Makefile.NetBSD	8.1 (Berkeley) 2/26/94
+#	@Id: Makefile.NetBSD,v 1.3 1994/02/01 05:33:44 glass Exp $
+#
 
 PROG=	sendmail
 
@@ -10,26 +15,25 @@ PROG=	sendmail
 # databases are read, but the new format will be used on any rebuilds.  On
 # really gnarly systems, you can set this to null; it will crawl like a high
 # spiral snail, but it will work.
-DBMDEF=	-DNEWDB -DNDBM
+DBMDEF=	-DNEWDB -DNIS
 
-CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
+#nasty warning about gcc 2.4.x caused bugs 
+CFLAGS=-I${.CURDIR} ${DBMDEF} -DNETISO
+#CFLAGS+=-I${.CURDIR} ${DBMDEF} -DNETISO
 
 SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	deliver.c domain.c envelope.c err.c headers.c macro.c main.c map.c \
 	mci.c parseaddr.c queue.c readcf.c recipient.c savemail.c srvrsmtp.c \
 	stab.c stats.c sysexits.c trace.c udb.c usersmtp.c \
 	util.c version.c
-DPADD=	
-LDADD=	
-MAN1=	newaliases.0
+MAN1=	mailq.0 newaliases.0
 MAN5=	aliases.0
 MAN8=	sendmail.0 
 LINKS=	/usr/sbin/sendmail /usr/bin/newaliases \
 	/usr/sbin/sendmail /usr/bin/mailq
 BINDIR=	/usr/sbin
 BINOWN=	root
-BINGRP=	kmem
-BINMODE=6555
+BINMODE=4555
 
 beforeinstall:
 #	install -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
