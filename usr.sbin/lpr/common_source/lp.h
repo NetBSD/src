@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.h,v 1.10 1997/10/05 11:52:21 mrg Exp $	*/
+/*	$NetBSD: lp.h,v 1.11 1997/10/05 15:12:02 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -125,6 +125,6 @@ void     rmjob __P((void));
 void     rmremote __P((void));
 void     show __P((char *, char *, int));
 int      startdaemon __P((char *));
-void     warn __P((void));
+void     nodaemon __P((void));
 void     delay __P((int));
 __END_DECLS

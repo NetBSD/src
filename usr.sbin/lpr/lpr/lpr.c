@@ -1,4 +1,5 @@
-/*	$NetBSD: lpr.c,v 1.14 1997/10/05 11:52:40 mrg Exp $	*/
+/*	$NetBSD: lpr.c,v 1.15 1997/10/05 15:12:20 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,14 +39,15 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
+#if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: lpr.c,v 1.15 1997/10/05 15:12:20 mrg Exp $");
+#endif
 #endif /* not lint */
 
 /*
@@ -71,6 +73,8 @@ static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <err.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -111,6 +115,8 @@ static char	*lmktemp __P((char *, int, int));
 static void	 mktemps __P((void));
 static int	 nfile __P((char *));
 static int	 test __P((char *));
+static void	 usage __P((void));
+int		 main __P((int, char *[]));
 
 uid_t	uid, euid;
 
@@ -121,10 +127,9 @@ main(argc, argv)
 {
 	struct passwd *pw;
 	struct group *gptr;
-	extern char *itoa();
-	register char *arg, *cp;
-	char buf[BUFSIZ];
-	int i, f;
+	char *arg, *cp;
+	char buf[MAXPATHLEN];
+	int i, f, errs, c;
 	struct stat stb;
 
 	euid = geteuid();
@@ -144,121 +149,110 @@ main(argc, argv)
 	gethostname(host, sizeof (host));
 	openlog("lpd", 0, LOG_LPR);
 
-	while (argc > 1 && argv[1][0] == '-') {
-		argc--;
-		arg = *++argv;
-		switch (arg[1]) {
+	errs = 0;
+	while ((c = getopt(argc, argv,
+	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lnmprstvw:")) != -1) {
+		switch (c) {
 
-		case 'P':		/* specifiy printer name */
-			if (arg[2])
-				printer = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				printer = *++argv;
+		case '#':		/* n copies */
+			if (isdigit(*optarg)) {
+				i = atoi(optarg);
+				if (i > 0)
+					ncopies = i;
 			}
+
+		case '4':		/* troff fonts */
+		case '3':
+		case '2':
+		case '1':
+			fonts[optopt - '1'] = optarg;
 			break;
 
 		case 'C':		/* classification spec */
 			hdr++;
-			if (arg[2])
-				class = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				class = *++argv;
-			}
-			break;
-
-		case 'U':		/* user name */
-			hdr++;
-			if (arg[2])
-				person = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				person = *++argv;
-			}
+			class = optarg;
 			break;
 
 		case 'J':		/* job name */
 			hdr++;
-			if (arg[2])
-				jobname = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				jobname = *++argv;
-			}
+			jobname = optarg;
+			break;
+
+		case 'P':		/* specifiy printer name */
+			printer = optarg;
 			break;
 
 		case 'T':		/* pr's title line */
-			if (arg[2])
-				title = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				title = *++argv;
-			}
+			title = optarg;
 			break;
 
-		case 'l':		/* literal output */
-		case 'p':		/* print using ``pr'' */
-		case 't':		/* print troff output (cat files) */
-		case 'n':		/* print ditroff output */
+		case 'U':		/* user name */
+			hdr++;
+			person = optarg;
+			break;
+
+		case 'c':		/* print cifplot output */
 		case 'd':		/* print tex output (dvi files) */
 		case 'g':		/* print graph(1G) output */
-		case 'c':		/* print cifplot output */
+		case 'l':		/* literal output */
+		case 'n':		/* print ditroff output */
+		case 'p':		/* print using ``pr'' */
+		case 't':		/* print troff output (cat files) */
 		case 'v':		/* print vplot output */
-			format = arg[1];
+			format = optopt;
 			break;
 
 		case 'f':		/* print fortran output */
 			format = 'r';
 			break;
 
-		case '4':		/* troff fonts */
-		case '3':
-		case '2':
-		case '1':
-			if (argc > 1) {
-				argc--;
-				fonts[arg[1] - '1'] = *++argv;
-			}
+		case 'h':		/* toggle want of header page */
+			hdr = !hdr;
 			break;
 
-		case 'w':		/* versatec page width */
-			width = arg+2;
-			break;
-
-		case 'r':		/* remove file when done */
-			rflag++;
+		case 'i':		/* indent output */
+			iflag++;
+			indent = atoi(optarg);
+			if (indent < 0)
+				indent = 8;
 			break;
 
 		case 'm':		/* send mail when done */
 			mailflg++;
 			break;
 
-		case 'h':		/* toggle want of header page */
-			hdr = !hdr;
+		case 'q':		/* just q job */
+			qflag++;
+			break;
+
+		case 'r':		/* remove file when done */
+			rflag++;
 			break;
 
 		case 's':		/* try to link files */
 			sflag++;
 			break;
 
-		case 'q':		/* just q job */
-			qflag++;
+		case 'w':		/* versatec page width */
+			width = optarg;
 			break;
 
-		case 'i':		/* indent output */
-			iflag++;
-			indent = arg[2] ? atoi(&arg[2]) : 8;
+		case ':':               /* catch "missing argument" error */
+			if (optopt == 'i') {
+				iflag++; /* -i without args is valid */
+				indent = 8;
+			} else
+				errs++;
 			break;
 
-		case '#':		/* n copies */
-			if (isdigit(arg[2])) {
-				i = atoi(&arg[2]);
-				if (i > 0)
-					ncopies = i;
-			}
+		default:
+			errs++;
 		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (errs)
+		usage();
 	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
 		printer = DEFLP;
 	chkprinter(printer);
@@ -295,7 +289,7 @@ main(argc, argv)
 	/*
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
-	(void)snprintf(buf, BUFSIZ, "%s/%s", SD, LO);
+	(void)snprintf(buf, sizeof buf, "%s/%s", SD, LO);
 	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		fatal2("Printer queue is disabled");
 	/*
@@ -310,10 +304,11 @@ main(argc, argv)
 	card('P', person);
 	if (hdr) {
 		if (jobname == NULL) {
-			if (argc == 1)
+			if (argc == 0)
 				jobname = "stdin";
 			else
-				jobname = (arg = rindex(argv[1], '/')) ? arg+1 : argv[1];
+				jobname = (arg = strrchr(argv[0], '/')) ?
+				    arg+1 : argv[0];
 		}
 		card('J', jobname);
 		card('C', class);
@@ -333,14 +328,20 @@ main(argc, argv)
 	/*
 	 * Read the files and spool them.
 	 */
-	if (argc == 1)
+	if (argc == 0)
 		copy(0, " ");
-	else while (--argc) {
-		if ((f = test(arg = *++argv)) < 0)
+	else while (argc--) {
+		if (argv[0][0] == '-' && argv[0][1] == '\0') {
+			/* use stdin */
+			copy(0, " ");
+			argv++;
+			continue;
+		}
+		if ((f = test(arg = *argv++)) < 0)
 			continue;	/* file unreasonable */
 
 		if (sflag && (cp = linked(arg)) != NULL) {
-			(void)snprintf(buf, BUFSIZ,
+			(void)snprintf(buf, sizeof buf,
 					"%d %d", statb.st_dev, statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
@@ -362,11 +363,12 @@ main(argc, argv)
 			seteuid(uid);
 			printf("%s: cannot open %s\n", name, arg);
 			continue;
+		} else {
+			copy(i, arg);
+			(void)close(i);
+			if (f && unlink(arg) < 0)
+				printf("%s: %s: not removed\n", name, arg);
 		}
-		copy(i, arg);
-		(void)close(i);
-		if (f && unlink(arg) < 0)
-			printf("%s: %s: not removed\n", name, arg);
 		seteuid(uid);
 	}
 
@@ -403,6 +405,9 @@ main(argc, argv)
 		exit(0);
 	}
 	cleanup(0);
+#ifdef __GNUC__
+	return (0);
+#endif
 	/* NOTREACHED */
 }
 
@@ -414,8 +419,8 @@ copy(f, n)
 	int f;
 	char n[];
 {
-	register int fd, i, nr, nc;
-	char buf[BUFSIZ];
+	int fd, i, nr, nc;
+	char buf[MAXPATHLEN];
 
 	if (format == 'p')
 		card('T', title ? title : n);
@@ -425,17 +430,18 @@ copy(f, n)
 	card('N', n);
 	fd = nfile(dfname);
 	nr = nc = 0;
-	while ((i = read(f, buf, BUFSIZ)) > 0) {
+	while ((i = read(f, buf, sizeof buf)) > 0) {
 		if (write(fd, buf, i) != i) {
 			printf("%s: %s: temp file write error\n", name, n);
 			break;
 		}
 		nc += i;
-		if (nc >= BUFSIZ) {
-			nc -= BUFSIZ;
+		if (nc >= sizeof buf) {
+			nc -= sizeof buf;
 			nr++;
 			if (MX > 0 && nr > MX) {
-				printf("%s: %s: copy file is too large\n", name, n);
+				printf("%s: %s: copy file is too large\n",
+				    name, n);
 				break;
 			}
 		}
@@ -453,17 +459,16 @@ copy(f, n)
  */
 static char *
 linked(file)
-	register char *file;
+	char *file;
 {
-	register char *cp;
+	char *cp;
 	static char buf[BUFSIZ];
-	register int ret;
+	int ret;
 
 	if (*file != '/') {
 		/* XXX: 2 and file for "/file" */
-		if (getcwd(buf, BUFSIZ - 2 - strlen(file)) == NULL) {
+		if (getcwd(buf, BUFSIZ - 2 - strlen(file)) == NULL)
 			return(NULL);
-		}
 		while (file[0] == '.') {
 			switch (file[1]) {
 			case '/':
@@ -471,7 +476,7 @@ linked(file)
 				continue;
 			case '.':
 				if (file[2] == '/') {
-					if ((cp = rindex(buf, '/')) != NULL)
+					if ((cp = strrchr(buf, '/')) != NULL)
 						*cp = '\0';
 					file += 3;
 					continue;
@@ -494,15 +499,15 @@ linked(file)
  */
 static void
 card(c, p2)
-	register int c;
-	register char *p2;
+	int c;
+	char *p2;
 {
 	char buf[BUFSIZ];
-	register char *p1 = buf;
-	register int len = 2;
+	char *p1 = buf;
+	int len = 2;
 
 	if (strlen(p2) > BUFSIZ - 2)
-	  errx(1, "Internal error:  String longer than %d", BUFSIZ);
+		errx(1, "Internal error:  String longer than %d", BUFSIZ);
 
 	*p1++ = c;
 	while ((c = *p2++) != '\0') {
@@ -520,7 +525,7 @@ static int
 nfile(n)
 	char *n;
 {
-	register int f;
+	int f;
 	int oldumask = umask(0);		/* should block signals */
 
 	seteuid(euid);
@@ -553,7 +558,7 @@ static void
 cleanup(signo)
 	int signo;
 {
-	register i;
+	int i;
 
 	signal(SIGHUP, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -589,8 +594,8 @@ test(file)
 	char *file;
 {
 	struct exec execb;
-	register int fd;
-	register char *cp;
+	int fd;
+	char *cp;
 
 	seteuid(uid);
 	if (access(file, 4) < 0) {
@@ -622,7 +627,7 @@ test(file)
 	}
 	(void)close(fd);
 	if (rflag) {
-		if ((cp = rindex(file, '/')) == NULL) {
+		if ((cp = strrchr(file, '/')) == NULL) {
 			if (access(".", 2) == 0)
 				return(1);
 		} else {
@@ -649,10 +654,10 @@ bad:
  */
 static char *
 itoa(i)
-	register int i;
+	int i;
 {
 	static char b[10] = "########";
-	register char *p;
+	char *p;
 
 	p = &b[8];
 	do
@@ -694,10 +699,9 @@ chkprinter(s)
 static void
 mktemps()
 {
-	register int len, fd, n;
-	register char *cp;
+	int len, fd, n;
+	char *cp;
 	char buf[BUFSIZ];
-	char *lmktemp();
 
 	(void)snprintf(buf, BUFSIZ, "%s/.seq", SD);
 	seteuid(euid);
@@ -738,7 +742,7 @@ lmktemp(id, num, len)
 	char	*id;
 	int	num, len;
 {
-	register char *s;
+	char *s;
 
 	if ((s = malloc(len)) == NULL)
 		fatal2("out of memory");
@@ -746,14 +750,14 @@ lmktemp(id, num, len)
 	return(s);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 static void
-#if __STDC__
+#ifdef __STDC__
 fatal2(const char *msg, ...)
 #else
 fatal2(msg, va_alist)
@@ -762,7 +766,7 @@ fatal2(msg, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, msg);
 #else
 	va_start(ap);
@@ -771,5 +775,16 @@ fatal2(msg, va_alist)
 	vprintf(msg, ap);
 	putchar('\n');
 	va_end(ap);
+	exit(1);
+}
+
+static void
+usage()
+{
+
+	fprintf(stderr, "%s\n%s\n",
+	    "usage: lpr [-Pprinter] [-#num] [-C class] [-J job] [-T title] "
+	    "[-U user]",
+	    "[-i[numcols]] [-1234 font] [-wnum] [-cdfghlnmprstv] [name ...]");
 	exit(1);
 }

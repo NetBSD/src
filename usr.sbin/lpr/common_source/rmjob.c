@@ -1,4 +1,4 @@
-/*	$NetBSD: rmjob.c,v 1.12 1997/10/05 11:52:24 mrg Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.13 1997/10/05 15:12:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD";
+__RCSID("$NetBSD: rmjob.c,v 1.13 1997/10/05 15:12:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +81,7 @@ static	void	do_unlink __P((char *));
 void
 rmjob()
 {
-	register int i, nitems;
+	int i, nitems;
 	int assasinated = 0;
 	struct dirent **files;
 	char *cp;
@@ -166,8 +167,8 @@ int
 lockchk(s)
 	char *s;
 {
-	register FILE *fp;
-	register int i, n;
+	FILE *fp;
+	int i, n;
 
 	seteuid(euid);
 	if ((fp = fopen(s, "r")) == NULL) {
@@ -216,6 +217,8 @@ process(file)
 	while (getline(cfp)) {
 		switch (line[0]) {
 		case 'U':  /* unlink associated files */
+			if (strchr(line+1, '/') || strncmp(line+1, "df", 2))
+				break;
 			do_unlink(line+1);
 		}
 	}
@@ -244,8 +247,8 @@ int
 chk(file)
 	char *file;
 {
-	register int *r, n;
-	register char **u, *cp;
+	int *r, n;
+	char **u, *cp;
 	FILE *cfp;
 
 	/*
@@ -318,8 +321,8 @@ isowner(owner, file)
 void
 rmremote()
 {
-	register char *cp, *s;
-	register int i, rem, len;
+	char *cp, *s;
+	int i, rem, len;
 
 	if (!remote)
 		return;	/* not sending to a remote machine */

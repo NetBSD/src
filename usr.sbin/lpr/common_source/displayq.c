@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.11 1997/10/05 11:52:19 mrg Exp $	*/
+/*	$NetBSD: displayq.c,v 1.12 1997/10/05 15:12:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: displayq.c,v 1.11 1997/10/05 11:52:19 mrg Exp $";
+__RCSID("$NetBSD: displayq.c,v 1.12 1997/10/05 15:12:01 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,9 +94,9 @@ void
 displayq(format)
 	int format;
 {
-	register struct queue *q;
-	register int i, nitems, fd, ret, c;
-	register char	*cp;
+	struct queue *q;
+	int i, nitems, fd, ret;
+	char *cp;
 	struct queue **queue;
 	struct stat statb;
 	FILE *fp;
@@ -164,12 +165,12 @@ displayq(format)
 		fp = fopen(LO, "r");
 		seteuid(uid);
 		if (fp == NULL)
-			warn();
+			nodaemon();
 		else {
 			/* get daemon pid */
 			cp = current;
-			while ((c = getc(fp)) != EOF && (*cp = c) != '\n')
-				cp++;
+			while ((i = getc(fp)) != EOF && i != '\n')
+				*cp++ = i;
 			*cp = '\0';
 			i = atoi(current);
 			if (i <= 0) {
@@ -180,13 +181,12 @@ displayq(format)
 				seteuid(uid);
 			}
 			if (ret < 0) {
-				warn();
+				nodaemon();
 			} else {
 				/* read current file name */
 				cp = current;
-				while ((c = getc(fp)) != EOF &&
-				    (*cp = c) != '\n')
-					cp++;
+				while ((i = getc(fp)) != EOF && i != '\n')
+					*cp++ = i;
 				*cp = '\0';
 				/*
 				 * Print the status file.
@@ -233,11 +233,12 @@ displayq(format)
 		putchar('\n');
 	(void)snprintf(line, sizeof(line), "%c%s", format + '\3', RP);
 	cp = line;
-	for (i = 0; i < requests; i++) {
+	for (i = 0; i < requests && cp-line+10 < sizeof(line) - 1; i++) {
 		cp += strlen(cp);
 		(void)snprintf(cp, line - cp, " %d", requ[i]);
 	}
-	for (i = 0; i < users; i++) {
+	for (i = 0; i < users && cp - line + 1 + strlen(user[i]) <
+	    sizeof(line) - 1; i++) {
 		cp += strlen(cp);
 		if (cp - line > sizeof(line) - 1)
 			break;
@@ -265,7 +266,7 @@ displayq(format)
  * Print a warning message if there is no daemon present.
  */
 void
-warn()
+nodaemon()
 {
 	if (remote)
 		printf("\n%s: ", host);
@@ -289,7 +290,7 @@ void
 inform(cf)
 	char *cf;
 {
-	register int j;
+	int j;
 	FILE *cfp;
 
 	/*
@@ -331,8 +332,10 @@ inform(cf)
 		default: /* some format specifer and file name? */
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
-			if (j == 0 || strcmp(file, line+1) != 0)
+			if (j == 0 || strcmp(file, line+1) != 0) {
 				(void)strncpy(file, line+1, sizeof(file) - 1);
+				file[sizeof(file) - 1] = '\0';
+			}
 			j++;
 			continue;
 		case 'N':
@@ -353,8 +356,8 @@ int
 inlist(name, file)
 	char *name, *file;
 {
-	register int *r, n;
-	register char **u, *cp;
+	int *r, n;
+	char **u, *cp;
 
 	if (users == 0 && requests == 0)
 		return(1);
@@ -377,7 +380,7 @@ inlist(name, file)
 
 void
 show(nfile, file, copies)
-	register char *nfile, *file;
+	char *nfile, *file;
 	int copies;
 {
 	if (strcmp(nfile, " ") == 0)
@@ -393,7 +396,7 @@ show(nfile, file, copies)
  */
 void
 blankfill(n)
-	register int n;
+	int n;
 {
 	while (col++ < n)
 		putchar(' ');
@@ -407,7 +410,7 @@ dump(nfile, file, copies)
 	char *nfile, *file;
 	int copies;
 {
-	register short n, fill;
+	short n, fill;
 	struct stat lbuf;
 
 	/*
@@ -450,7 +453,7 @@ ldump(nfile, file, copies)
 	else
 		printf("%-32s", nfile);
 	if (*file && !stat(file, &lbuf))
-		printf(" %ld bytes", (long)lbuf.st_size);
+		printf(" %qd bytes", lbuf.st_size);
 	else
 		printf(" ??? bytes");
 	putchar('\n');

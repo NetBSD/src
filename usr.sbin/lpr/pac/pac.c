@@ -1,4 +1,5 @@
-/*	$NetBSD: pac.c,v 1.9 1997/07/11 06:43:51 mikel Exp $	*/
+/*	$NetBSD: pac.c,v 1.10 1997/10/05 15:12:25 mrg Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -33,17 +34,14 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #if 0
 static char sccsid[] = "@(#)pac.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: pac.c,v 1.9 1997/07/11 06:43:51 mikel Exp $";
+__RCSID("$NetBSD: pac.c,v 1.10 1997/10/05 15:12:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +59,8 @@ static char rcsid[] = "$NetBSD: pac.c,v 1.9 1997/07/11 06:43:51 mikel Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
+
 #include "lp.h"
 #include "lp.local.h"
 
@@ -105,14 +105,16 @@ static struct	hent *enter __P((char []));
 static struct	hent *lookup __P((char []));
 static int	qucmp __P((const void *, const void *));
 static void	rewrite __P((void));
+static void	usage __P((void));
+int		main __P((int, char *[]));
 
 int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	register FILE *acct;
-	register char *cp;
+	FILE *acct;
+	char *cp;
 
 	euid = geteuid();	/* these aren't used in pac(1) */
 	uid = getuid();
@@ -164,8 +166,7 @@ main(argc, argv)
 				continue;
 
 			default:
-fprintf(stderr,
-    "usage: pac [-Pprinter] [-pprice] [-s] [-c] [-r] [-m] [user ...]\n");
+				usage();
 				exit(1);
 			}
 		}
@@ -179,10 +180,8 @@ fprintf(stderr,
 		exit(2);
 	}
 
-	if ((acct = fopen(acctfile, "r")) == NULL) {
-		perror(acctfile);
-		exit(1);
-	}
+	if ((acct = fopen(acctfile, "r")) == NULL)
+		err(1, "%s", acctfile);
 	account(acct);
 	fclose(acct);
 	if ((acct = fopen(sumfile, "r")) != NULL) {
@@ -206,13 +205,13 @@ fprintf(stderr,
  */
 static void
 account(acct)
-	register FILE *acct;
+	FILE *acct;
 {
 	char linebuf[BUFSIZ];
 	double t;
-	register char *cp, *cp2;
-	register struct hent *hp;
-	register int ic;
+	char *cp, *cp2;
+	struct hent *hp;
+	int ic;
 
 	while (fgets(linebuf, BUFSIZ, acct) != NULL) {
 		cp = linebuf;
@@ -227,8 +226,8 @@ account(acct)
 			;
 		ic = atoi(cp2);
 		*cp2 = '\0';
-		if (mflag && index(cp, ':'))
-		    cp = index(cp, ':') + 1;
+		if (mflag && strchr(cp, ':'))
+		    cp = strchr(cp, ':') + 1;
 		hp = lookup(cp);
 		if (hp == NULL) {
 			if (!allflag)
@@ -251,13 +250,15 @@ static void
 dumpit()
 {
 	struct hent **base;
-	register struct hent *hp, **ap;
-	register int hno, c, runs;
+	struct hent *hp, **ap;
+	int hno, c, runs;
 	float feet;
 
 	hp = hashtab[0];
 	hno = 1;
 	base = (struct hent **) calloc(sizeof hp, hcount);
+	if (base == NULL)
+		err(1, "calloc");
 	for (ap = base, c = hcount; c--; ap++) {
 		while (hp == NULL)
 			hp = hashtab[hno++];
@@ -288,12 +289,12 @@ dumpit()
 static void
 rewrite()
 {
-	register struct hent *hp;
-	register int i;
-	register FILE *acctf;
+	struct hent *hp;
+	int i;
+	FILE *acctf;
 
 	if ((acctf = fopen(sumfile, "w")) == NULL) {
-		perror(sumfile);
+		warn("%s", sumfile);
 		errs++;
 		return;
 	}
@@ -307,12 +308,12 @@ rewrite()
 	}
 	fflush(acctf);
 	if (ferror(acctf)) {
-		perror(sumfile);
+		warn("%s", sumfile);
 		errs++;
 	}
 	fclose(acctf);
 	if ((acctf = fopen(acctfile, "w")) == NULL)
-		perror(acctfile);
+		warn("%s", acctfile);
 	else
 		fclose(acctf);
 }
@@ -329,15 +330,19 @@ static struct hent *
 enter(name)
 	char name[];
 {
-	register struct hent *hp;
-	register int h;
+	struct hent *hp;
+	int h;
 
 	if ((hp = lookup(name)) != NULL)
 		return(hp);
 	h = hash(name);
 	hcount++;
 	hp = (struct hent *) calloc(sizeof *hp, 1);
+	if (hp == NULL)
+		err(1, "calloc");
 	hp->h_name = strdup(name);
+	if (hp->h_name == NULL)
+		err(1, "malloc");
 	hp->h_feetpages = 0.0;
 	hp->h_count = 0;
 	hp->h_link = hashtab[h];
@@ -354,8 +359,8 @@ static struct hent *
 lookup(name)
 	char name[];
 {
-	register int h;
-	register struct hent *hp;
+	int h;
+	struct hent *hp;
 
 	h = hash(name);
 	for (hp = hashtab[h]; hp != NULL; hp = hp->h_link)
@@ -372,8 +377,8 @@ static int
 hash(name)
 	char name[];
 {
-	register int h;
-	register char *cp;
+	int h;
+	char *cp;
 
 	for (cp = name, h = 0; *cp; h = (h << 2) + *cp++)
 		;
@@ -388,8 +393,8 @@ any(ch, str)
 	int ch;
 	char str[];
 {
-	register int c = ch;
-	register char *cp = str;
+	int c = ch;
+	char *cp = str;
 
 	while (*cp)
 		if (*cp++ == c)
@@ -406,8 +411,8 @@ static int
 qucmp(a, b)
 	const void *a, *b;
 {
-	register struct hent *h1, *h2;
-	register int r;
+	struct hent *h1, *h2;
+	int r;
 
 	h1 = *(struct hent **)a;
 	h2 = *(struct hent **)b;
@@ -424,7 +429,7 @@ qucmp(a, b)
  */
 static int
 chkprinter(s)
-	register char *s;
+	char *s;
 {
 	int stat;
 
@@ -443,11 +448,17 @@ chkprinter(s)
 	if (!pflag && (cgetnum(bp, "pc", &price100) == 0))
 		price = price100/10000.0;
 	sumfile = (char *) calloc(sizeof(char), strlen(acctfile)+5);
-	if (sumfile == NULL) {
-		perror("pac");
-		exit(1);
-	}
+	if (sumfile == NULL)
+		err(1, "pac");
 	strcpy(sumfile, acctfile);	/* XXX: strcpy is safe */
 	strcat(sumfile, "_sum");	/* XXX: strcat is safe */
 	return(1);
+}
+
+static void
+usage()
+{
+
+	fprintf(stderr,
+	    "usage: pac [-Pprinter] [-pprice] [-s] [-c] [-r] [-m] [user ...]\n");
 }

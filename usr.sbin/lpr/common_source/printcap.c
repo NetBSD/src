@@ -1,4 +1,4 @@
-/*	$NetBSD: printcap.c,v 1.9 1997/10/05 11:52:22 mrg Exp $	*/
+/*	$NetBSD: printcap.c,v 1.10 1997/10/05 15:12:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,8 +33,13 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)printcap.c	8.2 (Berkeley) 4/28/95";
+#else
+__RCSID("$NetBSD: printcap.c,v 1.10 1997/10/05 15:12:03 mrg Exp $");
+#endif
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +70,7 @@ extern char line[];		/* buffer for printcap entries */
 
 int
 cgetnext(bp, db_array)
-        register char **bp;
+        char **bp;
 	char **db_array;
 {
 	int ret;
@@ -178,9 +183,9 @@ static char *tdecode __P((char *, char **));
  */
 int
 getprent(bp)
-	register char *bp;
+	char *bp;
 {
-	register int c, skip = 0;
+	int c, skip = 0;
 
 	if (pfp == NULL) {
 		seteuid(euid);
@@ -250,9 +255,9 @@ int
 tgetent(bp, name)
 	char *bp, *name;
 {
-	register char *cp;
-	register int c;
-	register int i = 0, cnt = 0;
+	char *cp;
+	int c;
+	int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
 
 	tbuf = bp;
@@ -341,7 +346,7 @@ tgetent(bp, name)
 int
 tnchktc()
 {
-	register char *p, *q;
+	char *p, *q;
 	char tcname[16];	/* name of similar terminal */
 	char tcbuf[BUFSIZ];
 	char *holdtbuf = tbuf;
@@ -390,7 +395,7 @@ int
 tnamatch(np)
 	char *np;
 {
-	register char *Np, *Bp;
+	char *Np, *Bp;
 
 	Bp = tbuf;
 	if (*Bp == '#')
@@ -415,7 +420,7 @@ tnamatch(np)
  */
 static char *
 tskip(bp)
-	register char *bp;
+	char *bp;
 {
 
 	while (*bp && *bp != ':')
@@ -437,8 +442,8 @@ int
 tgetnum(id)
 	char *id;
 {
-	register int i, base;
-	register char *bp = tbuf;
+	int i, base;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -471,7 +476,7 @@ int
 tgetflag(id)
 	char *id;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -498,7 +503,7 @@ char *
 tgetstr(id, area)
 	char *id, **area;
 {
-	register char *bp = tbuf;
+	char *bp = tbuf;
 
 	for (;;) {
 		bp = tskip(bp);
@@ -521,12 +526,12 @@ tgetstr(id, area)
  */
 static char *
 tdecode(str, area)
-	register char *str;
+	char *str;
 	char **area;
 {
-	register char *cp;
-	register int c;
-	register char *dp;
+	char *cp;
+	int c;
+	char *dp;
 	int i;
 
 	cp = *area;
