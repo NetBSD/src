@@ -80,6 +80,7 @@ main()
 	def("P_RLINK", &p->p_rlink);
 	def("P_STAT", &p->p_stat);
 	def("P_WCHAN", &p->p_wchan);
+	def("P_VMSPACE", &p->p_vmspace);
 
 	def("V_TRAP", &vm->v_trap);
 	def("V_INTR", &vm->v_intr);
