@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_match.c,v 1.9 1997/07/21 14:09:29 jtc Exp $	 */
+/*	$NetBSD: yp_match.c,v 1.10 1998/03/30 15:05:20 kleink Exp $	 */
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: yp_match.c,v 1.9 1997/07/21 14:09:29 jtc Exp $");
+__RCSID("$NetBSD: yp_match.c,v 1.10 1998/03/30 15:05:20 kleink Exp $");
 #endif
 
 #include "namespace.h"
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
