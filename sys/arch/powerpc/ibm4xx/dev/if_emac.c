@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.19 2004/10/30 18:08:35 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.20 2005/01/21 15:15:20 simonb Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.19 2004/10/30 18:08:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.20 2005/01/21 15:15:20 simonb Exp $");
 
 #include "bpfilter.h"
 
@@ -1163,14 +1163,17 @@ emac_serr_intr(void *arg)
 static int
 emac_txeob_intr(void *arg)
 {
-#ifdef EMAC_EVENT_COUNTERS
 	struct emac_softc *sc = arg;
-#endif
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int handled;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txintr);
-	emac_txreap(arg);
+	handled = emac_txreap(arg);
 
-	return (0);
+	/* try to get more packets going */
+	emac_start(ifp);
+
+	return (handled);
 	
 }
 
@@ -1182,10 +1185,11 @@ emac_txreap(struct emac_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct emac_txsoft *txs;
-	int i;
+	int handled, i;
 	u_int32_t txstat;
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_txreap);
+	handled = 0;
 
 	/* Clear the interrupt */
 	mtdcr(DCR_MAL0_TXEOBISR, mfdcr(DCR_MAL0_TXEOBISR));
@@ -1207,6 +1211,8 @@ emac_txreap(struct emac_softc *sc)
 		txstat = sc->sc_txdescs[txs->txs_lastdesc].md_stat_ctrl;
 		if (txstat & MAL_TX_READY)
 			break;
+
+		handled = 1;
 
 		/*
 		 * Check for errors and collisions.
@@ -1258,7 +1264,7 @@ emac_txreap(struct emac_softc *sc)
 	if (sc->sc_txsfree == EMAC_TXQUEUELEN)
 		ifp->if_timer = 0;
 
-	return (0);
+	return (handled);
 }
 
 /*
