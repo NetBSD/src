@@ -1,4 +1,4 @@
-/*	$NetBSD: db_watch.c,v 1.6 1994/10/09 08:19:43 mycroft Exp $	*/
+/*	$NetBSD: db_watch.c,v 1.7 1994/10/09 08:30:15 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,6 +32,9 @@
 #include <sys/param.h>
 #include <sys/proc.h>
 
+#include <machine/db_machdep.h>
+
+#include <ddb/db_break.h>
 #include <ddb/db_watch.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_access.h>

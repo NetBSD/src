@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.h,v 1.5 1994/10/09 08:19:30 mycroft Exp $	*/
+/*	$NetBSD: db_access.h,v 1.6 1994/10/09 08:29:57 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -32,8 +32,6 @@
 /*
  * Data access functions for debugger.
  */
-#include <machine/db_machdep.h>		/* expression types */
-
 db_expr_t db_get_value __P((db_addr_t, size_t, boolean_t));
 void db_put_value __P((db_addr_t, size_t, db_expr_t));
 
