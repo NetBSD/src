@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsend.c,v 1.4.2.1 1997/10/30 07:17:24 mrg Exp $	*/
+/*	$NetBSD: ipsend.c,v 1.4.2.2 1998/07/23 01:34:18 mellon Exp $	*/
 
 /*
  * ipsend.c (C) 1995-1997 Darren Reed
@@ -14,7 +14,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
-static const char rcsid[] = "@(#)Id: ipsend.c,v 2.0.2.19 1997/10/12 09:48:38 darrenr Exp ";
+static const char rcsid[] = "@(#)Id: ipsend.c,v 2.0.2.19.2.1 1998/05/14 14:01:19 darrenr Exp ";
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -178,7 +178,8 @@ char	**argv;
 	struct	in_addr	gwip;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
-	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
+	char	*name =  argv[0], host[MAXHOSTNAMELEN];
+	char	*gateway = NULL, *dev = NULL;
 	char	*src = NULL, *dst, *s;
 	int	mtu = 1500, olen = 0, c, nonl = 0;
 
@@ -318,6 +319,7 @@ char	**argv;
 	if (!src)
 	    {
 		gethostname(host, sizeof(host));
+		host[sizeof(host) - 1] = '\0';
 		src = host;
 	    }
 
@@ -359,7 +361,7 @@ char	**argv;
 	    }
 
 	if (ip->ip_p == IPPROTO_TCP)
-		for (s = argv[optind]; (c = *s); s++)
+		for (s = argv[optind]; s && (c = *s); s++)
 			switch(c)
 			{
 			case 'S' : case 's' :
