@@ -1,5 +1,5 @@
 # Area Code : City : State/Province : State/Province Abbrev.
-#	$NetBSD: na.phone,v 1.10 1997/10/15 00:34:46 fair Exp $
+#	$NetBSD: na.phone,v 1.11 1997/10/15 14:02:04 sommerfe Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 201:Ashbury Park:New Jersey:NJ
 201:Newark:New Jersey:NJ
@@ -152,6 +152,8 @@
 506:Fredericton:New Brunswick:NB
 507:Austin:Minnesota:MN
 507:Rochester:Minnesota:MN
+508:Foxboro:Massachusetts:MA
+508:Framingham:Massachusetts:MA
 508:New Bedford:Massachusetts:MA
 508:Worcester:Massachusetts:MA
 509:Pullman:Washington:WA
@@ -215,10 +217,8 @@
 615:Nashville:Tennessee:TN
 616:Battle Creek:Michigan:MI
 616:Grand Rapids:Michigan:MI
-617:Arlington:Massachusetts:MA
 617:Boston:Massachusetts:MA
 617:Cambridge:Massachusetts:MA
-617:Winchester:Massachusetts:MA
 618:Alton:Illinois:IL
 618:Centralia:Illinois:IL
 618:Madison:Illinois:IL
@@ -278,6 +278,15 @@
 765:Kokomo:Indiana:IN
 770:Atlanta:Georgia:GA
 773:Chicago:Illinois:IL
+781:Arlington:Massachusetts:MA
+781:Bedford:Massachusetts:MA
+781:Lexington:Massachusetts:MA
+781:Lynn:Massachusetts:MA
+781:Nahant:Massachusetts:MA
+781:Wellesley:Massachusetts:MA
+781:Waltham:Massachusetts:MA
+781:Weymouth:Massachusetts:MA
+781:Winchester:Massachusetts:MA
 787::Puerto Rico:PR
 801::Utah:UT
 802::Vermont:VT
@@ -390,3 +399,11 @@
 970:Grand Junction:Colorado:CO
 970:Vail:Colorado:CO
 972:Dallas:Texas:TX
+978:Acton:Massachusetts:MA
+978:Ayer:Massachusetts:MA
+978:Boxborough:Massachusetts:MA
+978:Concord:Massachusetts:MA
+978:Fitchburg:Massachusetts:MA
+978:Gloucester:Massachusetts:MA
+978:Lowell:Massachusetts:MA
+978:Maynard:Massachusetts:MA
