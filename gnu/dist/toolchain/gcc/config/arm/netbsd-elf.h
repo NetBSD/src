@@ -45,6 +45,13 @@ Boston, MA 02111-1307, USA.  */
 /* This gets redefined in config/netbsd.h.  */
 #undef TARGET_MEM_FUNCTIONS
 
+/* How large values are returned */
+/* We override the default here because the default is to follow the
+   APCS rules and we want to follow the (simpler) ATPCS rules. */
+#undef RETURN_IN_MEMORY
+#define RETURN_IN_MEMORY(TYPE) \
+	(AGGREGATE_TYPE_P (TYPE) && int_size_in_bytes (TYPE) > 4)
+
 #define NETBSD_ELF
 
 #include <netbsd.h>
