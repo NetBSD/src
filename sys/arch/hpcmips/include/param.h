@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.6 2001/09/15 15:04:45 uch Exp $	*/
+/*	$NetBSD: param.h,v 1.7 2002/02/11 19:10:30 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
 #define MID_MACHINE MID_HPCMIPS
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
-#define KERNTEXTOFF	0x80030000	/* start of kernel text for kvm_mkdb */
+#define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
