@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.76 2004/01/21 02:11:20 atatat Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.77 2004/02/26 02:30:04 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.76 2004/01/21 02:11:20 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.77 2004/02/26 02:30:04 itojun Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -679,8 +679,7 @@ m_cat(struct mbuf *m, struct mbuf *n)
 	while (m->m_next)
 		m = m->m_next;
 	while (n) {
-		if (m->m_flags & M_EXT ||
-		    m->m_data + m->m_len + n->m_len >= &m->m_dat[MLEN]) {
+		if (M_READONLY(m) || n->m_len > M_TRAILINGSPACE(m)) {
 			/* just join the two chains */
 			m->m_next = n;
 			return;
