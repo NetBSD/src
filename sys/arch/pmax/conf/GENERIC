@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: GENERIC,v 1.40 1999/04/13 18:53:28 ad Exp $
+# 	$NetBSD: GENERIC,v 1.41 1999/04/20 05:54:44 simonb Exp $
 #
 # Distribution kernel (any model) kernel config file
 #
@@ -97,8 +97,7 @@ options 	COMPAT_ULTRIX	# Ultrix compatibility
 options 	EXEC_ECOFF	# Ultrix RISC binaries are ECOFF format
 options 	"HZ=256"	# RTC rate required
 
-# The pmax proms need bootp anyway, so just use bootp.
-options 	NFS_BOOT_BOOTP
+options 	NFS_BOOT_DHCP	# superset of BOOTP
 
 config		netbsd		root on ? type ?
 config		nfsnetbsd	root on ? type nfs
