@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.4 2002/08/16 21:16:48 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.5 2002/08/16 22:51:43 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -102,7 +102,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4 2002/08/16 21:16:48 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.5 2002/08/16 22:51:43 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -424,7 +424,6 @@ void
 pmap_activate(struct proc *p)
 {
 	pmap_t pmap;
-	int i;
 	UVMHIST_FUNC("pmap_activate");
 
 	UVMHIST_CALLED(pmaphist);
@@ -438,9 +437,6 @@ pmap_activate(struct proc *p)
 
 	active_pmap = pmap;
 	pmap->pm_flags |= PM_ACTIVE;
-	for (i = 0; i < 1024; i++)
-		if (pmap->pm_entries[i] != NULL)
-			MEMC_WRITE(pmap->pm_entries[i]->pv_activate);
 }
 
 void
