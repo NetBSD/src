@@ -1,4 +1,4 @@
-/*	$NetBSD: findfp.c,v 1.7 1997/07/13 20:14:58 christos Exp $	*/
+/*	$NetBSD: findfp.c,v 1.8 1998/01/22 08:21:47 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)findfp.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: findfp.c,v 1.7 1997/07/13 20:14:58 christos Exp $");
+__RCSID("$NetBSD: findfp.c,v 1.8 1998/01/22 08:21:47 jtc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: findfp.c,v 1.7 1997/07/13 20:14:58 christos Exp $");
 #include <string.h>
 #include "local.h"
 #include "glue.h"
+#include "reentrant.h"
 
 int	__sdidinit;
 
@@ -75,6 +76,10 @@ struct glue __sglue = { &uglue, 3, __sF };
 
 static struct glue *moreglue __P((int));
 void f_prealloc __P((void));
+
+#ifdef _REENT
+rwlock_t __sfp_lock = RWLOCK_INITIALIZER;
+#endif
 
 static struct glue *
 moreglue(n)
@@ -108,6 +113,8 @@ __sfp()
 
 	if (!__sdidinit)
 		__sinit();
+
+	rwlock_wrlock(&__sfp_lock);
 	for (g = &__sglue;; g = g->next) {
 		for (fp = g->iobs, n = g->niobs; --n >= 0; fp++)
 			if (fp->_flags == 0)
@@ -115,6 +122,7 @@ __sfp()
 		if (g->next == NULL && (g->next = moreglue(NDYNAMIC)) == NULL)
 			break;
 	}
+	rwlock_unlock(&__sfp_lock);
 	return (NULL);
 found:
 	fp->_flags = 1;		/* reserve this slot; caller sets real flags */
@@ -130,6 +138,7 @@ found:
 	fp->_ub._size = 0;
 	fp->_lb._base = NULL;	/* no line buffer */
 	fp->_lb._size = 0;
+	rwlock_unlock(&__sfp_lock);
 	return (fp);
 }
 
