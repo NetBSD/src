@@ -1,4 +1,4 @@
-/* $NetBSD: vconsole.h,v 1.1 1996/01/31 23:23:29 mark Exp $ */
+/* $NetBSD: vconsole.h,v 1.2 1996/06/03 21:58:25 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Melvyn Tang-Richardson
@@ -40,9 +40,6 @@
  * Virtual console header
  *
  * Created      : 18/09/94
- * Last updated : 10/01/96
- *
- *    $Id: vconsole.h,v 1.1 1996/01/31 23:23:29 mark Exp $
  */
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.1 1996/01/31 23:23:37 mark Exp $ */
+/* $NetBSD: vmparam.h,v 1.2 1996/06/03 21:58:28 mark Exp $ */
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$Id: vmparam.h,v 1.1 1996/01/31 23:23:37 mark Exp $
  */
 
 #ifndef	_ARM32_VMPARAM_H_
