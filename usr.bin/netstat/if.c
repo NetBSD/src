@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.55 2003/08/07 11:15:18 agc Exp $	*/
+/*	$NetBSD: if.c,v 1.56 2003/08/19 12:52:13 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.55 2003/08/07 11:15:18 agc Exp $");
+__RCSID("$NetBSD: if.c,v 1.56 2003/08/19 12:52:13 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,8 @@ intpr(interval, ifnetaddr, pfunc)
 			}
 #define CP(x) ((char *)(x))
 			cp = (CP(ifaddr.ifa.ifa_addr) - CP(ifaddraddr)) +
-				CP(&ifaddr); sa = (struct sockaddr *)cp;
+			    CP(&ifaddr);
+			sa = (struct sockaddr *)cp;
 			switch (sa->sa_family) {
 			case AF_UNSPEC:
 				printf("%-13.13s ", "none");
