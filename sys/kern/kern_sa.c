@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sa.c,v 1.1.2.30 2002/08/29 17:46:02 nathanw Exp $	*/
+/*	$NetBSD: kern_sa.c,v 1.1.2.31 2002/08/31 00:05:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -115,6 +115,7 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 	struct sys_sa_register_args /* {
 		syscallarg(sa_upcall_t) new;
 		syscallarg(sa_upcall_t *) old;
+		syscallarg(int) flags;
 	} */ *uap = v;
 	struct proc *p = l->l_proc;
 	struct sadata *sa;
@@ -127,13 +128,17 @@ sys_sa_register(struct lwp *l, void *v, register_t *retval)
 		/* Initialize. */
 		memset(sa, 0, sizeof(*sa));
 		simple_lock_init(&sa->sa_lock);
-		sa->sa_flag = 0;
+		sa->sa_flag = SCARG(uap, flags) & SA_FLAG_ALL;
 		sa->sa_vp = NULL;
 		sa->sa_idle = NULL;
+		sa->sa_woken = NULL;
 		sa->sa_concurrency = 1;
 		sa->sa_stacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
 		    M_SA, M_WAITOK);
-		sa->sa_nstackentries = SA_NUMSTACKS;
+		sa->sa_rstacks = malloc(sizeof(stack_t) * SA_NUMSTACKS,
+		    M_SA, M_WAITOK);
+		sa->sa_nstacks = 0;
+		sa->sa_nrstacks = 0;
 		LIST_INIT(&sa->sa_lwpcache);
 		SIMPLEQ_INIT(&sa->sa_upcalls);
 		p->p_sa = sa;
@@ -170,7 +175,7 @@ sys_sa_stacks(struct lwp *l, void *v, register_t *retval)
 	count = SCARG(uap, num);
 	if (count < 0)
 		return (EINVAL);
-	count = min(count, sa->sa_nstackentries - sa->sa_nstacks);
+	count = min(count, SA_NUMSTACKS - sa->sa_nstacks);
 
 	error = copyin(SCARG(uap, stacks), sa->sa_stacks + sa->sa_nstacks,
 	    sizeof(stack_t) * count);
@@ -249,13 +254,24 @@ int
 sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
+
+	if (p->p_sa == NULL || !(p->p_flag & P_SA))
+		return (EINVAL);
+
+	sa_yield(l);
+
+	return (0);
+}
+
+void
+sa_yield(struct lwp *l)
+{
+	struct lwp *l2;
+	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 	int s;
 
 	DPRINTFN(1,("sa_yield(%d.%d)\n", p->p_pid, l->l_lid));
-
-	if (sa == NULL || !(p->p_flag & P_SA))
-		return (EINVAL);
 
 	/*
 	 * If we're the last running LWP, stick around to recieve
@@ -287,10 +303,14 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 		splx(s);
 	} else {
 		SCHED_LOCK(s);
+		l2 = sa->sa_woken;
+		sa->sa_woken = NULL;
 		sa->sa_vp = NULL;
 		p->p_nrlwps--;
 		sa_putcachelwp(p, l);
-		mi_switch(l, NULL);
+		KDASSERT((l2 == NULL) || (l2->l_proc == l->l_proc));
+		KDASSERT((l2 == NULL) || (l2->l_stat == LSRUN));
+		mi_switch(l, l2);
 		/*
 		 * This isn't quite a NOTREACHED; we may get here if
 		 * the process exits before this LWP is reused. In
@@ -298,9 +318,8 @@ sys_sa_yield(struct lwp *l, void *v, register_t *retval)
 		 * be done by the userret() hooks.
 		 */
 		KDASSERT(p->p_flag & P_WEXIT);
-		/* NOTREACHED */
+		/* mostly NOTREACHED */
 	}
-	return (0);
 }
 
 
@@ -320,7 +339,7 @@ sa_preempt(struct lwp *l)
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
 
-	if (sa->sa_flag & SA_PREEMPT)
+	if (sa->sa_flag & SA_FLAG_PREEMPT)
 		sa_upcall(l, SA_UPCALL_PREEMPTED, l, NULL, 0, NULL);
 } 
 
@@ -336,18 +355,27 @@ sa_upcall(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	size_t argsize, void *arg)
 {
 	struct sadata_upcall *sau;
+	struct sadata *sa = l->l_proc->p_sa;
+	stack_t st;
 
 	l->l_flag &= ~L_SA; /* XXX prevent recursive upcalls if we sleep for 
 			      memory */
 	sau = sadata_upcall_alloc(1);
 	l->l_flag |= L_SA;
 
-	return (sa_upcall0(l, type, event, interrupted, argsize, arg, sau));
+	if (sa->sa_nstacks == 0) {
+		sau->sau_arg = arg; /* assign to assure that it gets freed */
+		sadata_upcall_free(sau);
+		return (ENOMEM);
+	}
+	st = sa->sa_stacks[--sa->sa_nstacks];
+
+	return sa_upcall0(l, type, event, interrupted, argsize, arg, sau, &st);
 }
 
 int
 sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
-    size_t argsize, void *arg, struct sadata_upcall *sau)
+    size_t argsize, void *arg, struct sadata_upcall *sau, stack_t *st)
 {
 	struct proc *p = l->l_proc;
 	struct sadata *sa = p->p_sa;
@@ -359,13 +387,7 @@ sa_upcall0(struct lwp *l, int type, struct lwp *event, struct lwp *interrupted,
 	sau->sau_arg = arg;
 	sau->sau_event.sa_context = NULL;
 	sau->sau_interrupted.sa_context = NULL;
-
-	/* Grab a stack */
-	if (!sa->sa_nstacks) {
-		sadata_upcall_free(sau);
-		return (ENOMEM);
-	}
-	sau->sau_stack = sa->sa_stacks[--sa->sa_nstacks];
+	sau->sau_stack = *st;
 
 	if (event) {
 		getucontext(event, &sau->sau_e_ctx);
@@ -403,33 +425,25 @@ sa_switch(struct lwp *l, int type)
 	struct sadata *sa = p->p_sa;
 	struct sadata_upcall *sau;
 	struct lwp *l2;
+	stack_t st;
 	int error;
 
-	DPRINTFN(4,("sa_switch(%d.%d type %d)\n", p->p_pid, l->l_lid,
-	    type));
+	DPRINTFN(4,("sa_switch(%d.%d type %d VP %d)\n", p->p_pid, l->l_lid,
+	    type, sa->sa_vp ? sa->sa_vp->l_lid : 0));
 	SCHED_ASSERT_LOCKED();
 
-	if (l->l_flag & L_SA_BLOCKING) {
+	if (sa->sa_vp == l) {
 		/*
-		 * We've already sent a BLOCKED upcall, but the LWP
-		 * has been woken up and put to sleep again without
-		 * returning to userland. We don't want to send a
-		 * second BLOCKED upcall.
-		 *
-		 * Instead, simply let the LWP that was running before
-		 * we woke up have another go.
+		 * Case 1: we're blocking for the first time; generate
+		 * a SA_BLOCKED upcall and allocate resources for the
+		 * UNBLOCKED upcall.
 		 */
-		l2 = sa->sa_vp;
-	} else {
 		/*
-		 * Get a LWP.
-		 *
 		 * The process of allocating a new LWP could cause
 		 * sleeps. We're called from inside sleep, so that
 		 * would be Bad. Therefore, we must use a cached new
 		 * LWP. The first thing that this new LWP must do is
-		 * allocate another LWP for the cache.  
-		 */
+		 * allocate another LWP for the cache.  */
 		l2 = sa_getcachelwp(p);
 		if (l2 == NULL) {
 			/* XXXSMP */
@@ -439,7 +453,7 @@ sa_switch(struct lwp *l, int type)
 			 * XXX more thought.
 			 */
 #ifdef DIAGNOSTIC
-			printf("sa_switch(%d.%d): out of upcall resources\n",
+			printf("sa_switch(%d.%d): no cached LWP for upcall.\n",
 			    p->p_pid, l->l_lid);
 #endif
 			mi_switch(l, NULL);
@@ -453,20 +467,44 @@ sa_switch(struct lwp *l, int type)
 		 * XXX allocate the sadata_upcall structure on the stack, here.
 		 */
 
-		sau = sadata_upcall_alloc(0);
-		if (sau == NULL)
+		/*
+		 * Take one stack and reserve a second one; the reserved one
+		 * will be used for the UNBLOCKED upcall.
+		 */
+		if (sa->sa_nstacks < 2) {
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d): Not enough stacks.\n",
+			    p->p_pid, l->l_lid, error);
+#endif
 			goto sa_upcall_failed;
+		}
 
+		st = sa->sa_stacks[--sa->sa_nstacks];
+		DPRINTFN(9, ("sa_switch(%d.%d) nrstacks++ from %d\n",
+		    p->p_pid, l->l_lid, sa->sa_nrstacks));
+		sa->sa_rstacks[sa->sa_nrstacks++] = 
+		    sa->sa_stacks[--sa->sa_nstacks];
+
+		sau = sadata_upcall_alloc(0);
+		if (sau == NULL) {
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d): "
+			    "couldn't allocate upcall data.\n",
+			    p->p_pid, l->l_lid, error);
+
+#endif
+			goto sa_upcall_failed;
+		}
 		cpu_setfunc(l2, sa_switchcall, NULL);
 		error = sa_upcall0(l2, SA_UPCALL_BLOCKED, l, NULL, 0, NULL, 
-		    sau);
+		    sau, &st);
 		if (error) {
-		sa_upcall_failed:
-			/* Put the lwp back */
 #ifdef DIAGNOSTIC
 			printf("sa_switch(%d.%d): Error %d from sa_upcall()\n",
 			    p->p_pid, l->l_lid, error);
 #endif
+		sa_upcall_failed:
+			/* Put the lwp back */
 			sa_putcachelwp(p, l2);
 			mi_switch(l, NULL);
 			return;
@@ -478,28 +516,62 @@ sa_switch(struct lwp *l, int type)
 		PRELE(l2); /* Remove the artificial hold-count */
 		
 		KDASSERT(l2 != l);
+	} else if (sa->sa_vp != NULL) {
+		/*
+		 * Case 2: We've been woken up while another LWP was
+		 * on the VP, but we're going back to sleep without
+		 * having returned to userland and delivered the
+		 * SA_UNBLOCKED upcall (select and poll cause this
+		 * kind of behavior a lot). We just switch back to the
+		 * LWP that had been running and let it have another
+		 * go. If the LWP on the VP was idling, don't make it
+		 * run again, though.
+		 */
+		if (sa->sa_idle)
+			l2 = NULL;
+		else
+			l2 = sa->sa_vp;
+	} else {
+		/*
+		 * Case 3: The VP is empty. As in case 2, we were
+		 * woken up and called tsleep again, but additionally,
+		 * the running LWP called sa_yield() between our wakeup() and
+		 * when we got to run again (in fact, it probably was
+		 * responsible for switching to us, via sa_woken).
+		 * The right thing is to pull a LWP off the cache and have
+		 * it jump straight back into sa_yield.
+		 */
+		l2 = sa_getcachelwp(p);
+		if (l2 == NULL) {
+#ifdef DIAGNOSTIC
+			printf("sa_switch(%d.%d): no cached LWP for reidling.\n",
+			    p->p_pid, l->l_lid);
+#endif
+			mi_switch(l, NULL);
+			return;
+		}
+		cpu_setfunc(l2, sa_yieldcall, l2);
+
+		l2->l_priority = l2->l_usrpri;
+		setrunnable(l2);
+		PRELE(l2); /* Remove the artificial hold-count */
 	}
 
-	if (sa->sa_idle) {
-		DPRINTFN(4,("sa_switch(%d.%d) switching to NULL (idle)\n",
-		    p->p_pid, l->l_lid));
-		mi_switch(l, NULL);
-	} else {
-		DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d(%x).\n",
-		    p->p_pid, l->l_lid, l2->l_lid, l2->l_flag));
-		sa->sa_vp = l2;
-		mi_switch(l, l2);
-	}
+
+	DPRINTFN(4,("sa_switch(%d.%d) switching to LWP %d.\n",
+	    p->p_pid, l->l_lid, l2 ? l2->l_lid : 0));
+	mi_switch(l, l2);
 
 	DPRINTFN(4,("sa_switch(%d.%d) returned.\n", p->p_pid, l->l_lid));
 	KDASSERT(l->l_wchan == 0);
 
 	SCHED_ASSERT_UNLOCKED();
+	if (sa->sa_woken == l)
+		sa->sa_woken = NULL;
 
 	/*
 	 * Okay, now we've been woken up. This means that it's time
-	 * for a SA_UNBLOCKED upcall when we get back to userlevel. 
-	 */
+	 * for a SA_UNBLOCKED upcall when we get back to userlevel.  */
 
 	/* 
 	 * ... unless we're trying to exit. In this case, the last thing
@@ -523,6 +595,7 @@ sa_switchcall(void *arg)
 	l = curlwp;
 	p = l->l_proc;
 	sa = p->p_sa;
+	sa->sa_vp = l;
 	DPRINTFN(6,("sa_switchcall(%d.%d)\n", p->p_pid, l->l_lid));
 
 	if (LIST_EMPTY(&sa->sa_lwpcache)) {
@@ -532,6 +605,20 @@ sa_switchcall(void *arg)
 		sa_newcachelwp(l);
 	}
 	upcallret(l);
+}
+
+void
+sa_yieldcall(void *arg)
+{
+	struct lwp *l;
+	struct sadata *sa;
+
+	l = arg;
+	sa = l->l_proc->p_sa;
+	
+	sa->sa_vp = l;
+
+	sa_yield(l);
 }
 
 static int
@@ -626,6 +713,7 @@ sa_upcall_userret(struct lwp *l)
 	struct sadata_upcall *sau;
 	struct sa_t self_sa;
 	struct sa_t *sas[3];
+	stack_t st;
 	void *stack, *ap;
 	ucontext_t u, *up;
 	int i, nsas, nint, nevents, type;
@@ -671,7 +759,17 @@ sa_upcall_userret(struct lwp *l)
 			sa_putcachelwp(p, l2);
 			SCHED_UNLOCK(s);
 		}
-		if (sa_upcall(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL) != 0) {
+		
+		l->l_flag &= ~L_SA;
+		sau = sadata_upcall_alloc(1);
+		l->l_flag |= L_SA;
+		
+		KDASSERT(sa->sa_nrstacks > 0);
+		DPRINTFN(9, ("sa_userret(%d.%d) decrementing nrstacks from %d\n",
+		    p->p_pid, l->l_lid, sa->sa_nrstacks));
+		st = sa->sa_rstacks[--sa->sa_nrstacks];
+		if (sa_upcall0(l, SA_UPCALL_UNBLOCKED, l, l2, 0, NULL, sau, 
+		    &st) != 0) {
 			/*
 			 * We were supposed to deliver an UNBLOCKED
 			 * upcall, but don't have resources to do so.
