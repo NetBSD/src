@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.22 2001/05/26 21:27:12 chs Exp $ */
+/* $NetBSD: bus_dma.c,v 1.23 2001/05/28 22:11:45 chs Exp $ */
 
 /*
  * This file was taken from from alpha/common/bus_dma.c
@@ -46,7 +46,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.22 2001/05/26 21:27:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23 2001/05/28 22:11:45 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,6 +157,7 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
 	vaddr_t vaddr = (vaddr_t)buf;
 	int seg;
+	boolean_t rv;
 
 	lastaddr = *lastaddrp;
 	bmask = ~(map->_dm_boundary - 1);
@@ -166,10 +167,11 @@ _bus_dmamap_load_buffer_direct_common(t, map, buf, buflen, p, flags,
 		 * Get the physical address for this segment.
 		 */
 		if (p != NULL)
-			(void) pmap_extract(p->p_vmspace->vm_map.pmap,
+			rv = pmap_extract(p->p_vmspace->vm_map.pmap,
 			    vaddr, &curaddr);
 		else
-			(void) pmap_extract(pmap_kernel(),vaddr, &curaddr);
+			rv = pmap_extract(pmap_kernel(), vaddr, &curaddr);
+		KASSERT(rv);
 
 		/*
 		 * Compute the segment size, and adjust counts.
