@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_ioasic.c,v 1.12 1998/01/12 09:51:30 thorpej Exp $	*/
+/*	$NetBSD: asc_ioasic.c,v 1.13 1998/05/27 04:30:07 thorpej Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -38,6 +38,8 @@
 extern int pmax_boardtype;
 
 extern vm_offset_t kvtophys __P((vm_offset_t));
+
+extern tc_addr_t ioasic_base;	/* XXX */
 
 /*
  * Autoconfiguration data for config.
