@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:49:29 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2004/09/28 15:06:15 erh Exp $
 
 FILES=	form help
 FILESDIR=${BINDIR}/sushi/system/dailyconf
-SCRIPTS= script script1 script3
+SCRIPTS= script script1 script2 script3
 SCRIPTSDIR=${BINDIR}/sushi/system/dailyconf
 NOOBJ=	# defined
 
