@@ -1,4 +1,4 @@
-/*	$NetBSD: mba.c,v 1.16 2000/01/17 04:57:31 matt Exp $ */
+/*	$NetBSD: mba.c,v 1.17 2000/01/21 23:39:56 thorpej Exp $ */
 /*
  * Copyright (c) 1994, 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -189,7 +189,7 @@ mbaintr(mba)
 		return;	/* During autoconfig */
 
 	md = sc->sc_first;
-	bp = md->md_q.b_actf;
+	bp = BUFQ_FIRST(&md->md_q);
 	/*
 	 * A data-transfer interrupt. Current operation is finished,
 	 * call that device's finish routine to see what to do next.
@@ -206,13 +206,13 @@ mbaintr(mba)
 			 * If more to transfer, start the adapter again
 			 * by calling mbastart().
 			 */
-			md->md_q.b_actf = bp->b_actf;
+			BUFQ_REMOVE(&md->md_q, bp);
 			sc->sc_first = md->md_back;
 			md->md_back = 0;
 			if (sc->sc_first == 0)
 				sc->sc_last = (void *)&sc->sc_first;
 
-			if (md->md_q.b_actf) {
+			if (BUFQ_FIRST(&md->md_q) != NULL) {
 				sc->sc_last->md_back = md;
 				sc->sc_last = md;
 			}
@@ -287,9 +287,10 @@ mbastart(sc)
 {
 	struct	mba_device *md = sc->sc_first;
 	volatile struct	mba_regs *mr = sc->sc_mbareg;
-	struct	buf *bp = md->md_q.b_actf;
+	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 
-	disk_reallymapin(md->md_q.b_actf, sc->sc_mbareg->mba_map, 0, PG_V);
+	disk_reallymapin(BUFQ_FIRST(&md->md_q), sc->sc_mbareg->mba_map,
+	    0, PG_V);
 
 	sc->sc_state = SC_ACTIVE;
 	mr->mba_var = ((u_int)bp->b_un.b_addr & VAX_PGOFSET);

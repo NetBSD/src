@@ -1,4 +1,4 @@
-/*	$NetBSD: hp.c,v 1.19 1999/08/14 11:33:09 ragge Exp $ */
+/*	$NetBSD: hp.c,v 1.20 2000/01/21 23:39:56 thorpej Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -134,6 +134,7 @@ hpattach(parent, self, aux)
 	/*
 	 * Init the common struct for both the adapter and its slaves.
 	 */
+	BUFQ_INIT(&sc->sc_md.md_q);
 	sc->sc_md.md_softc = (void *)sc;	/* Pointer to this softc */
 	sc->sc_md.md_mba = (void *)parent;	/* Pointer to parent softc */
 	sc->sc_md.md_start = hpstart;		/* Disk start routine */
@@ -191,8 +192,8 @@ hpstrategy(bp)
 		goto done;
 	s = splbio();
 
-	gp = sc->sc_md.md_q.b_actf;
-	disksort(&sc->sc_md.md_q, bp);
+	gp = BUFQ_FIRST(&sc->sc_md.md_q);
+	disksort_blkno(&sc->sc_md.md_q, bp);	/* XXX disksort_cylinder */
 	if (gp == 0)
 		mbaqueue(&sc->sc_md);
 
@@ -215,7 +216,7 @@ hpstart(md)
 	struct	mba_regs *mr = md->md_mba->sc_mbareg;
 	volatile struct	hp_regs *hr;
 	struct	disklabel *lp = sc->sc_disk.dk_label;
-	struct	buf *bp = md->md_q.b_actf;
+	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 	unsigned bn, cn, sn, tn;
 	int	part = DISKPART(bp->b_dev);
 
@@ -368,7 +369,7 @@ hpfinish(md, mbasr, attn)
 	int	mbasr, *attn;
 {
 	struct	hp_softc *sc = md->md_softc;
-	struct	buf *bp = md->md_q.b_actf;
+	struct	buf *bp = BUFQ_FIRST(&md->md_q);
 	volatile struct  mba_regs *mr = md->md_mba->sc_mbareg;
 	volatile struct	hp_regs *hr = (void *)&mr->mba_md[DISKUNIT(bp->b_dev)];
 	int	er1, er2;
@@ -407,8 +408,8 @@ hper2:
 		printf("massbuss error :%s %x\n",
 		    sc->sc_dev.dv_xname, mbasr);
 
-	md->md_q.b_actf->b_resid = 0;
-	disk_unbusy(&sc->sc_disk, md->md_q.b_actf->b_bcount);
+	BUFQ_FIRST(&md->md_q)->b_resid = 0;
+	disk_unbusy(&sc->sc_disk, BUFQ_FIRST(&md->md_q)->b_bcount);
 	return XFER_FINISH;
 }
 

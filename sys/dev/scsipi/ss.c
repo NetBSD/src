@@ -1,4 +1,4 @@
-/*	$NetBSD: ss.c,v 1.28 2000/01/19 01:00:07 abs Exp $	*/
+/*	$NetBSD: ss.c,v 1.29 2000/01/21 23:40:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -159,9 +159,7 @@ ssattach(parent, self, aux)
 	/*
 	 * Set up the buf queue for this device
 	 */
-	ss->buf_queue.b_active = 0;
-	ss->buf_queue.b_actf = 0;
-	ss->buf_queue.b_actb = &ss->buf_queue.b_actf;
+	BUFQ_INIT(&ss->buf_queue);
 	ss->flags &= ~SSF_AUTOCONF;
 }
 
@@ -332,7 +330,6 @@ ssstrategy(bp)
 	struct buf *bp;
 {
 	struct ss_softc *ss = ss_cd.cd_devs[SSUNIT(bp->b_dev)];
-	struct buf *dp;
 	int s;
 
 	SC_DEBUG(ss->sc_link, SDEV_DB1,
@@ -361,11 +358,7 @@ ssstrategy(bp)
 	 * at the end (a bit silly because we only have on user..
 	 * (but it could fork()))
 	 */
-	dp = &ss->buf_queue;
-	bp->b_actf = NULL;
-	bp->b_actb = dp->b_actb;
-	*dp->b_actb = bp;
-	dp->b_actb = &bp->b_actf;
+	BUFQ_INSERT_TAIL(&ss->buf_queue, bp);
 
 	/*
 	 * Tell the device to get going on the transfer if it's
@@ -405,7 +398,7 @@ ssstart(v)
 {
 	struct ss_softc *ss = v;
 	struct scsipi_link *sc_link = ss->sc_link;
-	register struct buf *bp, *dp;
+	register struct buf *bp;
 
 	SC_DEBUG(sc_link, SDEV_DB2, ("ssstart "));
 	/*
@@ -423,14 +416,9 @@ ssstart(v)
 		/*
 		 * See if there is a buf with work for us to do..
 		 */
-		dp = &ss->buf_queue;
-		if ((bp = dp->b_actf) == NULL)
+		if ((bp = BUFQ_FIRST(&ss->buf_queue)) == NULL)
 			return;
-		if ((dp = bp->b_actf) != NULL)
-			dp->b_actb = bp->b_actb;
-		else
-			ss->buf_queue.b_actb = bp->b_actb;
-		*bp->b_actb = dp;
+		BUFQ_REMOVE(&ss->buf_queue, bp);
 
 		if (ss->special && ss->special->read) {
 			(ss->special->read)(ss, bp);
