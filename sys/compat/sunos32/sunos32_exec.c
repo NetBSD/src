@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.c,v 1.8 2001/09/18 19:36:41 jdolecek Exp $	 */
+/*	$NetBSD: sunos32_exec.c,v 1.9 2001/09/20 20:52:26 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -38,6 +38,7 @@
 
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscall.h>
+#include <compat/sunos32/sunos32_exec.h>
 
 extern int nsunos32_sysent;
 extern struct sysent sunos32_sysent[];
@@ -64,7 +65,7 @@ struct emul emul_sunos = {
 	trapsignal,
 	sunos_sigcode,
 	sunos_esigcode,
-	netbsd32_setregs,
+	sunos32_setregs,
 	NULL,
 	NULL,
 	NULL,
