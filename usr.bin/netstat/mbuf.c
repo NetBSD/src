@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.22 2003/10/18 12:26:26 enami Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.22.2.1 2004/04/09 20:12:55 jmc Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.22 2003/10/18 12:26:26 enami Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.22.2.1 2004/04/09 20:12:55 jmc Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ dump_drain:
 
 	if (sysctl(mowners_ctl, sizeof(mowners_ctl)/sizeof(mowners_ctl[0]),
 		    NULL, &len, NULL, 0) < 0) {
-		if (errno == ENOPROTOOPT)
+		if (errno == ENOENT)
 			return;
 		warn("mowners: sysctl test");
 		return;
