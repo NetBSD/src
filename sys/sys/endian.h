@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.11 2004/09/13 01:24:46 thorpej Exp $	*/
+/*	$NetBSD: endian.h,v 1.12 2004/09/13 01:46:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -253,8 +253,8 @@ be64enc(void *buf, uint64_t u)
 {
 	uint8_t *p = buf;
 
-	be32enc(p, u >> 32);
-	be32enc(p + 4, u & 0xffffffffU);
+	be32enc(p, (uint32_t)(u >> 32));
+	be32enc(p + 4, (uint32_t)(u & 0xffffffffULL));
 }
 
 static __inline void __unused
@@ -262,8 +262,8 @@ le64enc(void *buf, uint64_t u)
 {
 	uint8_t *p = buf;
 
-	le32enc(p, u & 0xffffffffU);
-	le32enc(p + 4, u >> 32);
+	le32enc(p, (uint32_t)(u & 0xffffffffULL));
+	le32enc(p + 4, (uint32_t)(u >> 32));
 }
 
 static __inline uint64_t __unused
