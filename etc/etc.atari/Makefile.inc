@@ -1,5 +1,5 @@
 #
-#	$NetBSD: Makefile.inc,v 1.3 1998/06/28 09:38:42 fair Exp $
+#	$NetBSD: Makefile.inc,v 1.4 1998/10/09 10:41:24 itohy Exp $
 #
 #	etc.atari/Makefile.inc -- atari-specific etc Makefile targets
 #
@@ -19,7 +19,8 @@ snap_md:
 		-b ${KERNOBJDIR}/${kernel} \
 		-s ${KERNSRCDIR} \
 		${kernel}
-	cd ${KERNOBJDIR}/${kernel} && make clean && make depend && make && \
+	cd ${KERNOBJDIR}/${kernel} &&	\
+		${MAKE} clean && ${MAKE} depend && ${MAKE} &&	\
 		gzip -c -9 netbsd > ${DESTDIR}/snapshot/netbsd.${kernel}.gz
 .endfor
 
