@@ -1,4 +1,4 @@
-/*	$NetBSD: bad144.c,v 1.14 1998/03/01 02:25:44 fvdl Exp $	*/
+/*	$NetBSD: bad144.c,v 1.15 1998/10/20 01:48:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)bad144.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: bad144.c,v 1.14 1998/03/01 02:25:44 fvdl Exp $");
+__RCSID("$NetBSD: bad144.c,v 1.15 1998/10/20 01:48:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ main(argc, argv)
 		(*argv)++;
 		while (**argv) {
 			switch (**argv) {
-#if vax
+#if __vax__
 			    case 'f':
 				fflag++;
 				break;
@@ -312,7 +312,7 @@ usage:
 		if (badfile != -1)
 			break;
 	}
-#ifdef vax
+#ifdef __vax__
 	if (nflag == 0 && fflag)
 		for (i = nbad - new; i < nbad; i++)
 			format(f, bn[i]);
@@ -536,7 +536,7 @@ badsn(bt)
 		+ (bt->bt_trksec & 0xff));
 }
 
-#ifdef vax
+#ifdef __vax__
 
 struct rp06hdr {
 	short	h_cyl;
