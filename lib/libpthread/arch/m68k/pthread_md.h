@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2003/01/18 10:34:19 thorpej Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2003/11/25 21:27:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,27 +98,5 @@ pthread__sp(void)
 	(uc)->uc_mcontext.__fpregs.__fp_piaddr = (freg)->r_fpiar;      	\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
-
-#ifdef __PTHREAD_SIGNAL_PRIVATE
-
-#define	__M68K_SIGNAL_PRIVATE
-#define	__M68K_MCONTEXT_PRIVATE
-
-/*
- * We need to include signal.h early so that __M68K_SIGNAL_PRIVATE
- * is noticed in time.
- */
-#include <signal.h>
-
-#define	PTHREAD_SIGCONTEXT_EXTRA					\
-	struct sigstate psc_state;
-
-#define	PTHREAD_UCONTEXT_TO_SIGCONTEXT(mask, uc, psc)			\
-	pthread__ucontext_to_sigcontext((mask), (uc), (psc))
-
-#define	PTHREAD_SIGCONTEXT_TO_UCONTEXT(psc, uc)				\
-	pthread__sigcontext_to_ucontext((psc), (uc))
-
-#endif /* __PTHREAD_SIGNAL_PRIVATE */
 
 #endif /* _LIB_PTHREAD_M68K_MD_H */
