@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.24.2.5 1998/06/05 16:15:27 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.24.2.6 1998/06/09 13:01:27 bouyer Exp $ */
 
 
 /*
@@ -685,7 +685,7 @@ wdc_probe_caps(drvp)
 		ata_get_params(drvp, AT_POLL, &params2);
 		if (memcmp(&params, &params2, sizeof(struct ataparams)) != 0) {
 			/* Not good. fall back to 16bits */
-			drvp->drive_flags &= DRIVE_CAP32;
+			drvp->drive_flags &= ~DRIVE_CAP32;
 		} else {
 			printf("%s: using 32-bits pio transferts\n",
 			    drv_dev->dv_xname);
@@ -707,10 +707,16 @@ wdc_probe_caps(drvp)
 		for (i = 4; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
 				continue;
-			/* See if mode is accepted. */
-			if (ata_set_mode(drvp, 0x08 | (i + 3),
-				AT_POLL) != CMD_OK)
-				continue;
+			/*
+			 * See if mode is accepted.
+			 * If the controller can't set its PIO mode,
+			 * assume the defaults are good, so don't try
+			 * to set it
+			 */
+			if ((wdc->cap & WDC_CAPABILITY_PIO) != 0)
+				if (ata_set_mode(drvp, 0x08 | (i + 3),
+				   AT_POLL) != CMD_OK)
+					continue;
 			if (!printed) { 
 				printf(" PIO mode %d", i + 3);
 				sep = ",";
@@ -718,8 +724,7 @@ wdc_probe_caps(drvp)
 			}
 			/*
 			 * If controller's driver can't set its PIO mode,
-			 * get the highter one for the drive. This should
-			 * work even if the controller can't go that fast.
+			 * get the highter one for the drive.
 			 */
 			if ((wdc->cap & WDC_CAPABILITY_PIO) == 0 ||
 			    wdc->pio_mode >= i + 3) {
@@ -731,19 +736,22 @@ wdc_probe_caps(drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_dmamode_supp & (1 << i)) == 0)
 				continue;
-			if (ata_set_mode(drvp, 0x20 | i, AT_POLL) != CMD_OK)
-				continue;
+			if (wdc->cap & WDC_CAPABILITY_DMA)
+				if (ata_set_mode(drvp, 0x20 | i, AT_POLL)
+				    != CMD_OK)
+					continue;
 			if (!printed) {
 				printf("%s DMA mode %d", sep, i);
 				sep = ",";
 				printed = 1;
 			}
-			if (wdc->cap & WDC_CAPABILITY_DMA &&
-			    wdc->dma_mode >= i) {
+			if (wdc->cap & WDC_CAPABILITY_DMA) {
+				if (wdc->dma_mode < i)
+					continue;
 				drvp->DMA_mode = i;
 				drvp->drive_flags |= DRIVE_DMA;
-				break;
 			}
+			break;
 		}
 		if (params.atap_extensions & WDC_EXT_UDMA_MODES) {
 			for (i = 7; i >= 0; i--) {
