@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 1997/01/16 15:41:39 gwr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 1997/01/27 17:45:50 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -93,12 +93,18 @@
 #include <machine/dvma.h>
 #include <machine/kcore.h>
 #include <machine/db_machdep.h>
+#include <machine/machdep.h>
 
-#include "machdep.h"
+#include <sun3/sun3/sunmon.h>
 
 extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
+
+/* Defined in locore.s */
+extern char kernel_text[];
+/* Defined by the linker */
+extern char etext[];
 
 int	physmem;
 int	fpu_type;
@@ -241,9 +247,15 @@ cpu_startup()
 	vm_offset_t minaddr, maxaddr;
 
 	/*
-	 * The msgbuf was set up earlier (in sun3_startup.c)
-	 * just because it was more convenient to do there.
+	 * Initialize message buffer (for kernel printf).
+	 * This is put in physical page zero so it will
+	 * always be in the same place after a reboot.
+	 * Its mapping was prepared in pmap_bootstrap().
+	 * Also, offset some to avoid PROM scribbles.
 	 */
+	v = (caddr_t) KERNBASE;
+	msgbufp = (struct msgbuf *)(v + 0x1000);
+	msgbufmapped = 1;
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -330,9 +342,19 @@ cpu_startup()
 		callout[i-1].c_next = &callout[i];
 	callout[i-1].c_next = NULL;
 
-	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("avail mem = %d\n", (int) ptoa(cnt.v_free_count));
 	printf("using %d buffers containing %d bytes of memory\n",
 		   nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Tell the VM system that writing to kernel text isn't allowed.
+	 * If we don't, we might end up COW'ing the text segment!
+	 */
+	if (vm_map_protect(kernel_map, (vm_offset_t) kernel_text,
+					   sun3_trunc_page((vm_offset_t) etext),
+					   VM_PROT_READ|VM_PROT_EXECUTE, TRUE)
+		!= KERN_SUCCESS)
+		panic("can't protect kernel text");
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -409,7 +431,7 @@ identifycpu()
     /* should eventually include whether it has a VAC, mc6888x version, etc */
 	strcat(cpu_model, cpu_string);
 
-	printf("Model: %s (hostid %x)\n", cpu_model, hostid);
+	printf("Model: %s (hostid %x)\n", cpu_model, (int) hostid);
 }
 
 /*
@@ -831,7 +853,7 @@ boot(howto, user_boot_string)
 	if (howto & RB_HALT) {
 	haltsys:
 		printf("Kernel halted.\n");
-		sun3_mon_halt();
+		sunmon_halt();
 	}
 
 	/*
@@ -861,7 +883,7 @@ boot(howto, user_boot_string)
 		}
 	}
 	printf("Kernel rebooting...\n");
-	sun3_mon_reboot(bs);
+	sunmon_reboot(bs);
 	for (;;) ;
 	/*NOTREACHED*/
 }
@@ -965,7 +987,8 @@ dumpsys()
 		return;
 	}
 
-	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	printf("\ndumping to dev %x, offset %d\n",
+		   (int) dumpdev, (int) dumplo);
 
 	/*
 	 * Write the dump header, including MMU state.
