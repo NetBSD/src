@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.59 2001/11/07 16:38:58 tsutsui Exp $
+.\"	$NetBSD: pci.4,v 1.60 2001/11/16 17:08:13 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -286,6 +286,8 @@ expansion backplanes.
 .Bl -tag -width pcdisplay -offset indent
 .It bktr
 Brooktree 848 compatible TV cards.
+.It ehci
+USB EHCI host controllers.
 .It iop
 I2O I/O processors.
 .It ohci
@@ -328,6 +330,7 @@ VGA graphics boards.
 .Xr de 4 ,
 .Xr dpt 4 ,
 .Xr eap 4 ,
+.Xr ehci 4 ,
 .Xr emuxki 4 ,
 .Xr en 4 ,
 .Xr ep 4 ,
