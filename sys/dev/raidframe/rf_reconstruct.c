@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.70 2004/03/03 16:59:54 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.71 2004/03/03 17:14:46 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.70 2004/03/03 16:59:54 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.71 2004/03/03 17:14:46 oster Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -1278,10 +1278,10 @@ ReconWriteDoneProc(void *arg, int status)
 	Dprintf2("Reconstruction completed on psid %ld ru %d\n", rbuf->parityStripeID, rbuf->which_ru);
 	if (status) {
 		printf("raid%d: Recon write failed!\n", rbuf->raidPtr->raidid);
-		rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITE_FAILED);
+		rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITE_FAILED);
 		return(0);
 	}
-	rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITEDONE);
+	rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, arg, RF_REVENT_WRITEDONE);
 	return (0);
 }
 
@@ -1559,9 +1559,9 @@ ForceReconReadDoneProc(void *arg, int status)
 
 	if (status) {
 		printf("raid%d: Forced recon read failed!\n", rbuf->raidPtr->raidid);
-		rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREAD_FAILED);
+		rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREAD_FAILED);
 	}
-	rf_CauseReconEvent((RF_Raid_t *) rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREADDONE);
+	rf_CauseReconEvent(rbuf->raidPtr, rbuf->col, (void *) rbuf, RF_REVENT_FORCEDREADDONE);
 }
 /* releases a block on the reconstruction of the indicated stripe */
 int 
