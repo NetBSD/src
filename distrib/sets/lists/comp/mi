@@ -62,6 +62,8 @@
 ./usr/include/dev/ic/nec765reg.h
 ./usr/include/dev/ic/ns16450reg.h
 ./usr/include/dev/ic/ns16550reg.h
+./usr/include/dev/ic/pdqreg.h
+./usr/include/dev/ic/pdqvar.h
 ./usr/include/dev/ic/z8530reg.h
 ./usr/include/dev/isa
 ./usr/include/dev/isa/ad1848var.h
@@ -77,7 +79,8 @@
 ./usr/include/dev/isa/if_fereg.h
 ./usr/include/dev/isa/if_ie507.h
 ./usr/include/dev/isa/if_ieatt.h
-./usr/include/dev/isa/if_lereg.h
+./usr/include/dev/isa/if_iee16.h
+./usr/include/dev/isa/if_levar.h
 ./usr/include/dev/isa/isadmareg.h
 ./usr/include/dev/isa/isadmavar.h
 ./usr/include/dev/isa/isareg.h
@@ -98,6 +101,10 @@
 ./usr/include/dev/pci/pcidevs_data.h
 ./usr/include/dev/pci/pcireg.h
 ./usr/include/dev/pci/pcivar.h
+./usr/include/dev/rcons
+./usr/include/dev/rcons/gallant19.h
+./usr/include/dev/rcons/raster.h
+./usr/include/dev/rcons/rcons.h
 ./usr/include/dev/vndioctl.h
 ./usr/include/dirent.h
 ./usr/include/disktab.h
@@ -294,6 +301,7 @@
 ./usr/include/net/if.h
 ./usr/include/net/if_arp.h
 ./usr/include/net/if_dl.h
+./usr/include/net/if_fddi.h
 ./usr/include/net/if_llc.h
 ./usr/include/net/if_ppp.h
 ./usr/include/net/if_pppvar.h
@@ -1497,7 +1505,18 @@
 ./usr/share/man/cat3/y0.0
 ./usr/share/man/cat3/y1.0
 ./usr/share/man/cat3/yn.0
+./usr/share/man/cat3/yp_all.0
+./usr/share/man/cat3/yp_bind.0
+./usr/share/man/cat3/yp_first.0
+./usr/share/man/cat3/yp_get_default_domain.0
+./usr/share/man/cat3/yp_master.0
+./usr/share/man/cat3/yp_match.0
+./usr/share/man/cat3/yp_next.0
+./usr/share/man/cat3/yp_order.0
+./usr/share/man/cat3/yp_unbind.0
 ./usr/share/man/cat3/ypclnt.0
+./usr/share/man/cat3/yperr_string.0
+./usr/share/man/cat3/ypprot_err.0
 ./usr/share/man/cat7/operator.0
 ./usr/share/man/cat8/config.0
 ./usr/share/man/cat8/kgmon.0
