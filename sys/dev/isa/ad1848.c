@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.37 1997/08/04 19:05:27 augustss Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.38 1997/08/19 23:35:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -494,7 +494,7 @@ ad1848_attach(sc)
     int i;
     struct ad1848_volume vol_mid = {220, 220};
     struct ad1848_volume vol_0   = {0, 0};
-    struct audio_params xparams;
+    struct audio_params params, xparams;
     
     sc->sc_locked = 0;
     sc->sc_playrun = NOTRUNNING;
@@ -529,8 +529,10 @@ ad1848_attach(sc)
     }
     ad1848_reset(sc);
 
-    (void) ad1848_set_params(sc, AUMODE_RECORD, &audio_default, &xparams);
-    (void) ad1848_set_params(sc, AUMODE_PLAY,   &audio_default, &xparams);
+    params = audio_default;
+    (void) ad1848_set_params(sc, AUMODE_RECORD, &params, &xparams);
+    params = audio_default;
+    (void) ad1848_set_params(sc, AUMODE_PLAY,   &params, &xparams);
 
     /* Set default gains */
     (void) ad1848_set_rec_gain(sc, &vol_mid);

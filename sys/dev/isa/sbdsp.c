@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.66 1997/08/11 01:08:13 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.67 1997/08/19 23:35:44 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -316,7 +316,7 @@ void
 sbdsp_attach(sc)
 	struct sbdsp_softc *sc;
 {
-	struct audio_params xparams;
+	struct audio_params params, xparams;
         int i;
         u_int v;
 
@@ -340,8 +340,10 @@ sbdsp_attach(sc)
 		}
 	}
 
-        sbdsp_set_params(sc, AUMODE_RECORD, &audio_default, &xparams);
-        sbdsp_set_params(sc, AUMODE_PLAY,   &audio_default, &xparams);
+	params = audio_default;
+        sbdsp_set_params(sc, AUMODE_RECORD, &params, &xparams);
+	params = audio_default;
+        sbdsp_set_params(sc, AUMODE_PLAY,   &params, &xparams);
 
 	sbdsp_set_in_port(sc, SB_MIC_VOL);
 	sbdsp_set_out_port(sc, SB_MASTER_VOL);
