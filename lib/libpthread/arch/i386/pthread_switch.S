@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_switch.S,v 1.1.2.14 2002/09/06 17:37:53 nathanw Exp $	*/
+/*	$NetBSD: pthread_switch.S,v 1.1.2.15 2002/09/16 17:24:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@ ENTRY(pthread__switch)
  * it any earlier, it's possible (epecially on a multiprocessor
  * system) that the original thread could get taken off the queue and
  * restarted while we're still using its stack, which would be bad
- * ("Important saftey tip. Thanks, Egon").
+ * ("Important safety tip. Thanks, Egon").
  *
  * The subtlety comes from the contents of the stack of the thread
  * being switched to. Our convention is that the ucontext_t of the
