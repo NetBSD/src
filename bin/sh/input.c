@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.22 1997/01/11 02:04:34 tls Exp $	*/
+/*	$NetBSD: input.c,v 1.23 1997/03/13 20:07:49 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-static char rcsid[] = "$NetBSD: input.c,v 1.22 1997/01/11 02:04:34 tls Exp $";
+static char rcsid[] = "$NetBSD: input.c,v 1.23 1997/03/13 20:07:49 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -407,6 +407,7 @@ void
 setinputfd(fd, push)
 	int fd, push;
 {
+	(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	if (push) {
 		pushfile();
 		parsefile->buf = ckmalloc(BUFSIZ);
