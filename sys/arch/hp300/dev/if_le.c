@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.41 1997/04/14 02:33:20 thorpej Exp $	*/
+/*	$NetBSD: if_le.c,v 1.42 1997/05/03 07:09:57 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -207,9 +207,9 @@ leintr(arg)
 	void *arg;
 {
 	struct am7990_softc *sc = arg;
+#ifdef USELEDS
 	u_int16_t isr;
 
-#ifdef USELEDS
 	isr = lerdcsr(sc, LE_CSR0);
 
 	if ((isr & LE_C0_INTR) == 0)
