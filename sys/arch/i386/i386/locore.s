@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.85 1994/10/09 09:19:29 mycroft Exp $
+ *	$Id: locore.s,v 1.86 1994/10/25 14:31:24 mycroft Exp $
  */
 
 /*
@@ -360,24 +360,25 @@ try586:	/* Use the `cpuid' instruction. */
 	stosl
 
 	/* Find end of kernel image. */
-	movl	$(_end-KERNBASE),%ecx
+	movl	$(_end-KERNBASE),%edi
 #if defined(DDB) && !defined(SYMTAB_SPACE)
 	/* Save the symbols (if loaded). */
 	movl	_esym-KERNBASE,%eax
 	testl	%eax,%eax
 	jz	1f
-	movl	%eax,%ecx
-	subl	$KERNBASE,%ecx
+	subl	$KERNBASE,%eax
+	movl	%eax,%edi
 1:
 #endif
-	movl	%ecx,%edi			# edi = esym ?: end
-	addl	$PGOFSET,%ecx			# page align up
-	andl	$(~PGOFSET),%ecx
-	movl	%ecx,%esi			# esi = start of tables
-	subl	%edi,%ecx
-	addl	$((NKPDE+UPAGES+2)*NBPG),%ecx	# size of tables
-	
+
+	/* Calculate where to start the bootstrap tables. */
+	movl	%edi,%esi			# edi = esym ?: end
+	addl	$PGOFSET,%esi			# page align up
+	andl	$~PGOFSET,%esi
+
 	/* Clear memory for bootstrap tables. */
+	leal	((2+UPAGES+NKPDE)*NBPG)(%esi),%ecx	# end of tables
+	subl	%edi,%ecx			# size of tables
 	shrl	$2,%ecx
 	xorl	%eax,%eax
 	cld
@@ -401,53 +402,71 @@ try586:	/* Use the `cpuid' instruction. */
 /*
  * Build initial page tables.
  */
-	/* First, map the kernel text, data, and BSS. */
-	movl	%esi,%ecx		# this much memory,
-	shrl	$PGSHIFT,%ecx		# for this many pte s
-	addl	$(NKPDE+UPAGES+2),%ecx	# including our early context
-	movl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	leal	((UPAGES+2)*NBPG)(%esi),%ebx	#   physical address of KPT in proc 0,
-	movl	%ebx,_KPTphys-KERNBASE	#    in the kernel page table,
+	leal	((2+UPAGES)*NBPG)(%esi),%ebx		#   physical address of KPT in proc 0,
+	movl	%ebx,_KPTphys-KERNBASE			#    in the kernel page table,
+
+	/* XXX Map the first MB of memory read-write. */
+	movl	$(0+PG_V|PG_KW),%eax			#  having these bits set,
+	movl	$(KERNTEXTOFF-KERNBASE),%ecx
+	shrl	$PGSHIFT,%ecx
+	fillkpt
+
+	/* Calculate end of text segment, rounded to a page. */
+	leal	(_etext-KERNBASE+PGOFSET),%edx
+	andl	$~PGOFSET,%edx
+	
+	/* Map the kernel text read-only. */
+	leal	(KERNBASE-KERNTEXTOFF)(%edx),%ecx
+	shrl	$PGSHIFT,%ecx
+	andl	$PG_FRAME,%eax
+#ifdef DDB
+	orl	$(PG_V|PG_KW),%eax
+#else
+	orl	$(PG_V|PG_KR),%eax
+#endif
+	fillkpt
+
+	/* Map the data, BSS, and bootstrap tables read-write. */
+	leal	((2+UPAGES+NKPDE)*NBPG)(%esi),%ecx	# end of tables
+	subl	%edx,%ecx				# subtract end of text
+	shrl	$PGSHIFT,%ecx
+	andl	$PG_FRAME,%eax
+	orl	$(PG_V|PG_KW),%eax
 	fillkpt
 
 	/* Map ISA I/O memory. */
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx	# for this many pte s,
-	movl	$(IOM_BEGIN|PG_V|PG_UW/*|PG_N*/),%eax	# having these bits set
-	movl	%ebx,_atdevphys-KERNBASE	# remember phys addr of ptes
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
+	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax	# having these bits set
+	movl	%ebx,_atdevphys-KERNBASE		# remember phys addr of ptes
 	fillkpt
 
 	/* Map proc 0's kernel stack into user page table page. */
-	movl	$UPAGES,%ecx		# for this many pte s,
-	leal	(2*NBPG)(%esi),%eax	# physical address in proc 0
-	leal	(KERNBASE)(%eax),%edx
-	movl	%edx,_proc0paddr-KERNBASE	# remember VA for 0th process init
-	orl	$(PG_V|PG_KW),%eax	#  having these bits set,
-	leal	(1*NBPG)(%esi),%ebx	# physical address of stack pt in proc 0
-	addl	$((NPTEPD-UPAGES)*4),%ebx
+	movl	$UPAGES,%ecx				# for this many pte s,
+	leal	(2*NBPG+KERNBASE)(%esi),%edx
+	movl	%edx,_proc0paddr-KERNBASE		# remember VA for 0th process init
+	leal	(2*NBPG+PG_V|PG_KW)(%esi),%eax		# physical address in proc 0
+	leal	(2*NBPG-UPAGES*4)(%esi),%ebx		# physical address of stack pt in proc 0
 	fillkpt
 
 /*
  * Construct a page table directory.
  */
 	/* Install a PDE for temporary double map of kernel text. */
-	movl	_KPTphys-KERNBASE,%eax	# physical address of kernel page tables
-	orl     $(PG_V|PG_UW),%eax	# pde entry is valid
-	movl	%eax,(%esi)		# which is where temp maps!
+	leal	((2+UPAGES)*NBPG+PG_V|PG_KW)(%esi),%eax	#   pte for KPT in proc 0,
+	movl	%eax,(%esi)				# which is where temp maps!
 
 	/* Map kernel PDEs. */
-	movl	$NKPDE,%ecx		# for this many pde s,
-	leal	(KPTDI*4)(%esi),%ebx	# offset of pde for kernel
+	movl	$NKPDE,%ecx				# for this many pde s,
+	leal	(KPTDI*4)(%esi),%ebx			# offset of pde for kernel
 	fillkpt
 
 	/* Install a PDE recursively mapping page directory as a page table! */
-	movl	%esi,%eax		# phys address of ptd in proc 0
-	orl	$(PG_V|PG_UW),%eax	# pde entry is valid
-	movl	%eax,(PTDPTDI*4)(%esi)	# which is where PTmap maps!
+	leal	(0*NBPG+PG_V|PG_KW)(%esi),%eax		# pte for ptd
+	movl	%eax,(PTDPTDI*4)(%esi)			# which is where PTmap maps!
 
 	/* Install a PDE to map kernel stack for proc 0. */
-	leal	(1*NBPG)(%esi),%eax	# physical address of pt in proc 0
-	orl	$(PG_V|PG_KW),%eax	# pde entry is valid
-	movl	%eax,(UPTDI*4)(%esi)	# which is where kernel stack maps!
+	leal	(1*NBPG+PG_V|PG_KW)(%esi),%eax		# pte for pt in proc 0
+	movl	%eax,(UPTDI*4)(%esi)			# which is where kernel stack maps!
 
 #ifdef BDB
 	/* Copy and convert stuff from old GDT and IDT for debugger. */
