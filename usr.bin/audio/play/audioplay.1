@@ -1,4 +1,4 @@
-.\"	$NetBSD: audioplay.1,v 1.15 2002/01/15 09:21:35 wiz Exp $
+.\"	$NetBSD: audioplay.1,v 1.16 2002/02/02 20:20:23 jdolecek Exp $
 .\"
 .\" Copyright (c) 1998-2002 Matthew R. Green
 .\" All rights reserved.
@@ -39,7 +39,6 @@
 .Op Fl b Ar balance
 .Op Fl p Ar port
 .Op Fl d Ar device
-.Op Fl C Ar ctl
 .Oo
 .Fl f
 .Op Fl c Ar channels
@@ -90,11 +89,6 @@ Set the audio device to be
 .Ar device .
 The default is
 .Pa /dev/audio0 .
-.It Fl C
-Set the audio control device to be
-.Ar ctl .
-The default is
-.Pa /dev/audioctl0 .
 .It Fl f
 Force playing, even if the format is unknown.  The
 .Fl f
