@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.90 1999/11/13 00:32:20 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.91 1999/12/11 17:51:34 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -165,12 +165,9 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), avail_end);
 	printf("total memory = %s\n", pbuf);
-	physmem = btoc(avail_end);
 	panicstr = NULL;
 	mtpr(AST_NO, PR_ASTLVL);
 	spl0();
-
-	dumpsize = physmem + 1;
 
 	/*
 	 * Find out how much space we need, allocate it, and then give
@@ -216,7 +213,7 @@ cpu_startup()
 		 * physical memory allocated for it.
 		 */
 		curbuf = (vm_offset_t) buffers + i * MAXBSIZE;
-		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
+		curbufsize = NBPG * (i < residual ? base + 1 : base);
 		while (curbufsize) {
 			pg = uvm_pagealloc(NULL, 0, NULL, 0);
 			if (pg == NULL)
@@ -225,17 +222,18 @@ cpu_startup()
 			pmap_enter(kernel_map->pmap, curbuf,
 			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
 			    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-			curbuf += CLBYTES;
-			curbufsize -= CLBYTES;
+			curbuf += NBPG;
+			curbufsize -= NBPG;
 		}
 	}
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively limits
 	 * the number of processes exec'ing at any time.
+	 * At most one process with the full length is allowed.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+				 NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Initialize callouts
@@ -248,7 +246,7 @@ cpu_startup()
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
-	format_bytes(pbuf, sizeof(pbuf), bufpages * CLBYTES);
+	format_bytes(pbuf, sizeof(pbuf), bufpages * NBPG);
 	printf("using %d buffers containing %s of memory\n", nbuf, pbuf);
 
 	/*
@@ -278,11 +276,11 @@ cpu_dumpconf()
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
 	/*
-	 * Don't dump on the first CLBYTES (why CLBYTES?) in case the dump
+	 * Don't dump on the first NBPG (why NBPG?) in case the dump
 	 * device includes a disk label.
 	 */
-	if (dumplo < btodb(CLBYTES))
-		dumplo = btodb(CLBYTES);
+	if (dumplo < btodb(NBPG))
+		dumplo = btodb(NBPG);
 }
 
 int
@@ -636,7 +634,8 @@ process_write_regs(p, regs)
 	tf->fp = regs->fp;
 	tf->sp = regs->sp;
 	tf->pc = regs->pc;
-	tf->psl = regs->psl;
+	tf->psl = (regs->psl|PSL_U|PSL_PREVU) &
+	    ~(PSL_MBZ|PSL_IS|PSL_IPL1F|PSL_CM); /* Allow compat mode? */
 	return 0;
 }
 
