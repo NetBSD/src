@@ -1,5 +1,5 @@
-/*	$NetBSD: ah_input.c,v 1.11 2000/02/26 11:49:44 itojun Exp $	*/
-/*	$KAME: ah_input.c,v 1.21 2000/02/26 11:37:24 itojun Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.12 2000/03/21 23:53:30 itojun Exp $	*/
+/*	$KAME: ah_input.c,v 1.22 2000/03/09 21:51:39 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -389,7 +389,7 @@ ah4_input(m, va_alist)
 			goto fail;
 		}
 
-#if 0 /* XXX should call ipfw rather than ipsec_inn_reject, shouldn't it ? */
+#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
 		/* drop it if it does not match the default policy */
 		if (ipsec4_in_reject(m, NULL)) {
 			ipsecstat.in_polvio++;
@@ -457,9 +457,8 @@ ah4_input(m, va_alist)
 		m->m_pkthdr.len -= stripsiz;
 #else
 		/*
-		 * in m_pulldown case, we don't really need to strip off AH.
-		 * however, upper-layer protocols (for example, ICMPv4)
-		 * chokes if we don't.
+		 * even in m_pulldown case, we need to strip off AH so that
+		 * we can compute checksum for multiple AH correctly.
 		 */
 		if (m->m_len >= stripsiz + off) {
 			ovbcopy((caddr_t)ip, ((caddr_t)ip) + stripsiz, off);
@@ -795,7 +794,7 @@ ah6_input(mp, offp, proto)
 			goto fail;
 		}
 
-#if 0 /* XXX should call ipfw rather than ipsec_inn_reject, shouldn't it ? */
+#if 0 /* XXX should we call ipfw rather than ipsec_in_reject? */
 		/* drop it if it does not match the default policy */
 		if (ipsec6_in_reject(m, NULL)) {
 			ipsec6stat.in_polvio++;
@@ -831,7 +830,6 @@ ah6_input(mp, offp, proto)
 		 * the packet is placed in a single mbuf.
 		 */
 		size_t stripsiz = 0;
-#ifndef PULLDOWN_TEST
 		char *prvnxtp;
 
 		/*
@@ -841,7 +839,6 @@ ah6_input(mp, offp, proto)
 		 */
 		prvnxtp = ip6_get_prevhdr(m, off); /* XXX */
 		*prvnxtp = nxt;
-#endif
 
 		if (sav->flags & SADB_X_EXT_OLD) {
 			/* RFC 1826 */
@@ -851,19 +848,43 @@ ah6_input(mp, offp, proto)
 			stripsiz = sizeof(struct newah) + siz1;
 		}
 
-#ifndef PULLDOWN_TEST
 		ip6 = mtod(m, struct ip6_hdr *);
-		ovbcopy((caddr_t)ip6, (caddr_t)(((u_char *)ip6) + stripsiz),
-			off);
+#ifndef PULLDOWN_TEST
+		ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
 		m->m_data += stripsiz;
 		m->m_len -= stripsiz;
 		m->m_pkthdr.len -= stripsiz;
-
-		ip6 = mtod(m, struct ip6_hdr *);
-		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 #else
-		off += stripsiz;
+		/*
+		 * even in m_pulldown case, we need to strip off AH so that
+		 * we can compute checksum for multiple AH correctly.
+		 */
+		if (m->m_len >= stripsiz + off) {
+			ovbcopy((caddr_t)ip6, ((caddr_t)ip6) + stripsiz, off);
+			m->m_data += stripsiz;
+			m->m_len -= stripsiz;
+			m->m_pkthdr.len -= stripsiz;
+		} else {
+			/* 
+			 * this comes with no copy if the boundary is on
+			 * cluster
+			 */
+			struct mbuf *n;
+
+			n = m_split(m, off, M_DONTWAIT);
+			if (n == NULL) {
+				/* m is retained by m_split */
+				goto fail;
+			}
+			m_adj(n, stripsiz);
+			m_cat(m, n);
+			/* m_cat does not update m_pkthdr.len */
+			m->m_pkthdr.len += n->m_pkthdr.len;
+		}
 #endif
+		ip6 = mtod(m, struct ip6_hdr *);
+		/* XXX jumbogram */
+		ip6->ip6_plen = htons(ntohs(ip6->ip6_plen) - stripsiz);
 
 		key_sa_recordxfer(sav, m);
 	}
