@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.24 2005/02/01 03:08:16 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.25 2005/02/01 03:24:29 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.24 2005/02/01 03:08:16 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.25 2005/02/01 03:24:29 briggs Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -67,34 +67,21 @@ extern int adb_polling;		/* Are we polling?  (Debugger mode) */
 
 /* hardware dependent values */
 #define ADBDelay 100		/* XXX */
-#define HwCfgFlags3 0x20000	/* XXX */
-
-/* define the types of the Power Manager */
-#define PM_HW_UNKNOWN		0x00	/* don't know */
-#define PM_HW_PB1XX		0x01	/* PowerBook 1XX series */
-#define	PM_HW_PB5XX		0x02	/* PowerBook Duo and 5XX series */
 
 /* useful macros */
 #define PM_SR()			read_via_reg(VIA1, vSR)
 #define PM_VIA_INTR_ENABLE()	write_via_reg(VIA1, vIER, 0x90)
 #define PM_VIA_INTR_DISABLE()	write_via_reg(VIA1, vIER, 0x10)
 #define PM_VIA_CLR_INTR()	write_via_reg(VIA1, vIFR, 0x90)
-#if 0
-#define PM_SET_STATE_ACKON()	via_reg_or(VIA2, vBufB, 0x04)
-#define PM_SET_STATE_ACKOFF()	via_reg_and(VIA2, vBufB, ~0x04)
-#define PM_IS_ON		(0x02 == (read_via_reg(VIA2, vBufB) & 0x02))
-#define PM_IS_OFF		(0x00 == (read_via_reg(VIA2, vBufB) & 0x02))
-#else
+
 #define PM_SET_STATE_ACKON()	via_reg_or(VIA2, vBufB, 0x10)
 #define PM_SET_STATE_ACKOFF()	via_reg_and(VIA2, vBufB, ~0x10)
 #define PM_IS_ON		(0x08 == (read_via_reg(VIA2, vBufB) & 0x08))
 #define PM_IS_OFF		(0x00 == (read_via_reg(VIA2, vBufB) & 0x08))
-#endif
 
 /*
  * Variables for internal use
  */
-int	pmHardware = PM_HW_UNKNOWN;
 u_short	pm_existent_ADB_devices = 0x0;	/* each bit expresses the existent ADB device */
 u_int	pm_LCD_brightness = 0x0;
 u_int	pm_LCD_contrast = 0x0;
@@ -190,17 +177,8 @@ void	pm_printerr __P((char *, int, int, char *));
 int	pm_wait_busy __P((int));
 int	pm_wait_free __P((int));
 
-/* these functions are for the PB1XX series */
-int	pm_receive_pm1 __P((u_char *));
-int	pm_send_pm1 __P((u_char,int));
-int	pm_pmgrop_pm1 __P((PMData *));
-int	pm_intr_pm1 __P((void *));
-
-/* these functions are for the PB Duo series and the PB 5XX series */
-int	pm_receive_pm2 __P((u_char *));
-int	pm_send_pm2 __P((u_char));
-int	pm_pmgrop_pm2 __P((PMData *));
-int	pm_intr_pm2 __P((void *));
+static int	pm_receive __P((u_char *));
+static int	pm_send __P((u_char));
 
 /* these functions are called from adb_direct.c */
 void	pm_setup_adb __P((void));
@@ -210,7 +188,6 @@ int	pm_adb_op __P((u_char *, void *, void *, int));
 /* these functions also use the variables of adb_direct.c */
 void	pm_adb_get_TALK_result __P((PMData *));
 void	pm_adb_get_ADB_data __P((PMData *));
-void	pm_adb_poll_next_device_pm1 __P((PMData *));
 
 
 /*
@@ -272,7 +249,6 @@ pm_printerr(ttl, rval, num, data)
 void
 pm_setup_adb()
 {
-	pmHardware = PM_HW_PB5XX;	/* XXX */
 }
 
 static int
@@ -413,296 +389,10 @@ pm_wait_free(delay)
 
 
 /*
- * Functions for the PB1XX series
+ * Receive data from PMU
  */
-
-/*
- * Receive data from PM for the PB1XX series
- */
-int
-pm_receive_pm1(data)
-	u_char *data;
-{
-#if 0
-	int rval = 0xffffcd34;
-
-	via_reg(VIA2, vDirA) = 0x00;
-
-	switch (1) {
-	default:
-		if (pm_wait_busy(0x40) != 0)
-			break;			/* timeout */
-
-		PM_SET_STATE_ACKOFF();
-		*data = via_reg(VIA2, 0x200);
-
-		rval = 0xffffcd33;
-		if (pm_wait_free(0x40) == 0)
-			break;			/* timeout */
-
-		rval = 0x00;
-		break;
-	}
-
-	PM_SET_STATE_ACKON();
-	via_reg(VIA2, vDirA) = 0x00;
-
-	return rval;
-#else
-	panic("pm_receive_pm1");
-#endif
-}
-
-
-
-/*
- * Send data to PM for the PB1XX series
- */
-int
-pm_send_pm1(data, delay)
-	u_char data;
-	int delay;
-{
-#if 0
-	int rval;
-
-	via_reg(VIA2, vDirA) = 0xff;
-	via_reg(VIA2, 0x200) = data;
-
-	PM_SET_STATE_ACKOFF();
-	if (pm_wait_busy(0x400) != 0) {
-		PM_SET_STATE_ACKON();
-		via_reg(VIA2, vDirA) = 0x00;
-
-		return 0xffffcd36;
-	}
-
-	rval = 0x0;
-	PM_SET_STATE_ACKON();
-	if (pm_wait_free(0x40) == 0)
-		rval = 0xffffcd35;
-
-	PM_SET_STATE_ACKON();
-	via_reg(VIA2, vDirA) = 0x00;
-
-	return rval;
-#else
-	panic("pm_send_pm1");
-#endif
-}
-
-
-/*
- * My PMgrOp routine for the PB1XX series
- */
-int
-pm_pmgrop_pm1(pmdata)
-	PMData *pmdata;
-{
-#if 0
-	int i;
-	int s = 0x81815963;
-	u_char via1_vIER, via1_vDirA;
-	int rval = 0;
-	int num_pm_data = 0;
-	u_char pm_cmd;	
-	u_char pm_data;
-	u_char *pm_buf;
-
-	/* disable all inetrrupts but PM */
-	via1_vIER = via_reg(VIA1, vIER);
-	PM_VIA_INTR_DISABLE();
-
-	via1_vDirA = via_reg(VIA1, vDirA);
-
-	switch (pmdata->command) {
-	default:
-		for (i = 0; i < 7; i++) {
-			via_reg(VIA2, vDirA) = 0x00;	
-
-			/* wait until PM is free */
-			if (pm_wait_free(ADBDelay) == 0) {	/* timeout */
-				via_reg(VIA2, vDirA) = 0x00;
-				/* restore formar value */
-				via_reg(VIA1, vDirA) = via1_vDirA;
-				via_reg(VIA1, vIER) = via1_vIER;
-				return 0xffffcd38;
-			}
-
-			switch (mac68k_machine.machineid) {
-				case MACH_MACPB160:
-				case MACH_MACPB165:
-				case MACH_MACPB165C:
-				case MACH_MACPB180:
-				case MACH_MACPB180C:
-					{
-						int delay = ADBDelay * 16;
-
-						via_reg(VIA2, vDirA) = 0x00;
-						while ((via_reg(VIA2, 0x200) == 0x7f) && (delay >= 0))
-							delay--;
-
-						if (delay < 0) {	/* timeout */
-							via_reg(VIA2, vDirA) = 0x00;
-							/* restore formar value */
-							via_reg(VIA1, vIER) = via1_vIER;
-							return 0xffffcd38;
-						}
-					}
-			} /* end switch */
-
-			s = splhigh();
-
-			via1_vDirA = via_reg(VIA1, vDirA);
-			via_reg(VIA1, vDirA) &= 0x7f;
-
-			pm_cmd = (u_char)(pmdata->command & 0xff);
-			if ((rval = pm_send_pm1(pm_cmd, ADBDelay * 8)) == 0)
-				break;	/* send command succeeded */
-
-			via_reg(VIA1, vDirA) = via1_vDirA;
-			splx(s);
-		} /* end for */
-
-		/* failed to send a command */
-		if (i == 7) {
-			via_reg(VIA2, vDirA) = 0x00;
-			/* restore formar value */
-			via_reg(VIA1, vDirA) = via1_vDirA;
-			via_reg(VIA1, vIER) = via1_vIER;
-			if (s != 0x81815963)
-				splx(s);
-			return 0xffffcd38;
-		}
-
-		/* send # of PM data */
-		num_pm_data = pmdata->num_data;
-		if ((rval = pm_send_pm1((u_char)(num_pm_data & 0xff), ADBDelay * 8)) != 0)
-			break;			/* timeout */
-
-		/* send PM data */
-		pm_buf = (u_char *)pmdata->s_buf;
-		for (i = 0; i < num_pm_data; i++)
-			if ((rval = pm_send_pm1(pm_buf[i], ADBDelay * 8)) != 0)
-				break;		/* timeout */
-		if ((i != num_pm_data) && (num_pm_data != 0))
-			break;			/* timeout */
-
-		/* Will PM IC return data? */
-		if ((pm_cmd & 0x08) == 0) {
-			rval = 0;
-			break;			/* no returned data */
-		}
-
-		rval = 0xffffcd37;
-		if (pm_wait_busy(ADBDelay) != 0)
-			break;			/* timeout */
-
-		/* receive PM command */
-		if ((rval = pm_receive_pm1(&pm_data)) != 0)
-			break;
-
-		pmdata->command = pm_data;
-
-		/* receive number of PM data */
-		if ((rval = pm_receive_pm1(&pm_data)) != 0)
-			break;			/* timeout */
-		num_pm_data = pm_data;
-		pmdata->num_data = num_pm_data;
-
-		/* receive PM data */
-		pm_buf = (u_char *)pmdata->r_buf;
-		for (i = 0; i < num_pm_data; i++) {
-			if ((rval = pm_receive_pm1(&pm_data)) != 0)
-				break;		/* timeout */
-			pm_buf[i] = pm_data;
-		}
-
-		rval = 0;
-	}
-
-	via_reg(VIA2, vDirA) = 0x00;	
-
-	/* restore formar value */
-	via_reg(VIA1, vDirA) = via1_vDirA;
-	via_reg(VIA1, vIER) = via1_vIER;
-	if (s != 0x81815963)
-		splx(s);
-
-	return rval;
-#else
-	panic("pm_pmgrop_pm1");
-#endif
-}
-
-
-/*
- * My PM interrupt routine for PB1XX series
- */
-int
-pm_intr_pm1(void *arg)
-{
-#if 0
-	int s;
-	int rval;
-	PMData pmdata;
-
-	s = splhigh();
-
-	PM_VIA_CLR_INTR();				/* clear VIA1 interrupt */
-
-	/* ask PM what happend */
-	pmdata.command = PMU_INT_ACK;
-	pmdata.num_data = 0;
-	pmdata.data[0] = pmdata.data[1] = 0;
-	pmdata.s_buf = &pmdata.data[2];
-	pmdata.r_buf = &pmdata.data[2];
-	rval = pm_pmgrop_pm1(&pmdata);
-	if (rval != 0) {
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			printf("pm: PM is not ready. error code=%08x\n", rval);
-#endif
-		splx(s);
-	}
-
-	if ((pmdata.data[2] & 0x10) == 0x10) {
-		if ((pmdata.data[2] & 0x0f) == 0) {
-			/* ADB data that were requested by TALK command */
-			pm_adb_get_TALK_result(&pmdata);
-		} else if ((pmdata.data[2] & 0x08) == 0x8) {
-			/* PM is requesting to poll  */
-			pm_adb_poll_next_device_pm1(&pmdata);
-		} else if ((pmdata.data[2] & 0x04) == 0x4) {
-			/* ADB device event */
-			pm_adb_get_ADB_data(&pmdata);
-		}
-	} else {
-#ifdef ADB_DEBUG
-		if (adb_debug)
-			pm_printerr("driver does not support this event.",
-			    rval, pmdata.num_data, pmdata.data);
-#endif
-	}
-
-	splx(s);
-#else
-	panic("pm_intr_pm1");
-#endif
-	return 1;
-}
-
-
-
-/*
- * Functions for the PB Duo series and the PB 5XX series
- */
-
-/*
- * Receive data from PM for the PB Duo series and the PB 5XX series
- */
-int
-pm_receive_pm2(data)
+static int
+pm_receive(data)
 	u_char *data;
 {
 	int i;
@@ -741,10 +431,10 @@ pm_receive_pm2(data)
 
 
 /*
- * Send data to PM for the PB Duo series and the PB 5XX series
+ * Send data to PMU
  */
-int
-pm_send_pm2(data)
+static int
+pm_send(data)
 	u_char data;
 {
 	int rval;
@@ -776,10 +466,10 @@ pm_send_pm2(data)
 
 
 /*
- * My PMgrOp routine for the PB Duo series and the PB 5XX series
+ * The PMgrOp routine
  */
 int
-pm_pmgrop_pm2(pmdata)
+pmgrop(pmdata)
 	PMData *pmdata;
 {
 	int i;
@@ -809,41 +499,21 @@ pm_pmgrop_pm2(pmdata)
 		if (pm_wait_free(ADBDelay * 4) == 0)
 			break;			/* timeout */
 
-		if (HwCfgFlags3 & 0x00200000) {	
-			/* PB 160, PB 165(c), PB 180(c)? */
-			int delay = ADBDelay * 16;
-
-			write_via_reg(VIA2, vDirA, 0x00);
-			while ((read_via_reg(VIA2, 0x200) == 0x07) &&
-			    (delay >= 0))
-				delay--;
-
-			if (delay < 0) {
-				rval = 0xffffcd38;
-				break;		/* timeout */
-			}
-		}
-
 		/* send PM command */
-		if ((rval = pm_send_pm2((u_char)(pm_cmd & 0xff))))
+		if ((rval = pm_send((u_char)(pm_cmd & 0xff))))
 			break;				/* timeout */
 
 		/* send number of PM data */
 		num_pm_data = pmdata->num_data;
-		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-			if (pm_send_cmd_type[pm_cmd] < 0) {
-				if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
-					break;		/* timeout */
-				pmdata->command = 0;
-			}
-		} else {				/* PB 1XX series ? */
-			if ((rval = pm_send_pm2((u_char)(num_pm_data & 0xff))) != 0)
-				break;			/* timeout */
-		}			
+		if (pm_send_cmd_type[pm_cmd] < 0) {
+			if ((rval = pm_send((u_char)(num_pm_data & 0xff))) != 0)
+				break;		/* timeout */
+			pmdata->command = 0;
+		}
 		/* send PM data */
 		pm_buf = (u_char *)pmdata->s_buf;
 		for (i = 0 ; i < num_pm_data; i++)
-			if ((rval = pm_send_pm2(pm_buf[i])) != 0)
+			if ((rval = pm_send(pm_buf[i])) != 0)
 				break;			/* timeout */
 		if (i != num_pm_data)
 			break;				/* timeout */
@@ -859,42 +529,27 @@ pm_pmgrop_pm2(pmdata)
 
 		/* receive PM command */
 		pm_data = pmdata->command;
-		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-			pm_num_rx_data--;
-			if (pm_num_rx_data == 0)
-				if ((rval = pm_receive_pm2(&pm_data)) != 0) {
-					rval = 0xffffcd37;
-					break;
-				}
-			pmdata->command = pm_data;
-		} else {				/* PB 1XX series ? */
-			if ((rval = pm_receive_pm2(&pm_data)) != 0) {
+		pm_num_rx_data--;
+		if (pm_num_rx_data == 0)
+			if ((rval = pm_receive(&pm_data)) != 0) {
 				rval = 0xffffcd37;
 				break;
 			}
-			pmdata->command = pm_data;
-		}
+		pmdata->command = pm_data;
 
 		/* receive number of PM data */
-		if (HwCfgFlags3 & 0x00020000) {		/* PB Duo, PB 5XX */
-			if (pm_num_rx_data < 0) {
-				if ((rval = pm_receive_pm2(&pm_data)) != 0)
-					break;		/* timeout */
-				num_pm_data = pm_data;
-			} else
-				num_pm_data = pm_num_rx_data;
-			pmdata->num_data = num_pm_data;
-		} else {				/* PB 1XX serias ? */
-			if ((rval = pm_receive_pm2(&pm_data)) != 0)
-				break;			/* timeout */
+		if (pm_num_rx_data < 0) {
+			if ((rval = pm_receive(&pm_data)) != 0)
+				break;		/* timeout */
 			num_pm_data = pm_data;
-			pmdata->num_data = num_pm_data;
-		}
+		} else
+			num_pm_data = pm_num_rx_data;
+		pmdata->num_data = num_pm_data;
 
 		/* receive PM data */
 		pm_buf = (u_char *)pmdata->r_buf;
 		for (i = 0; i < num_pm_data; i++) {
-			if ((rval = pm_receive_pm2(&pm_data)) != 0)
+			if ((rval = pm_receive(&pm_data)) != 0)
 				break;			/* timeout */
 			pm_buf[i] = pm_data;
 		}
@@ -911,10 +566,10 @@ pm_pmgrop_pm2(pmdata)
 
 
 /*
- * My PM interrupt routine for the PB Duo series and the PB 5XX series
+ * My PMU interrupt routine
  */
 int
-pm_intr_pm2(void *arg)
+pm_intr(void *arg)
 {
 	int s;
 	int rval;
@@ -928,7 +583,7 @@ pm_intr_pm2(void *arg)
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];
 	pmdata.r_buf = &pmdata.data[2];
-	rval = pm_pmgrop_pm2(&pmdata);
+	rval = pmgrop(&pmdata);
 	if (rval != 0) {
 #ifdef ADB_DEBUG
 		if (adb_debug)
@@ -948,17 +603,8 @@ pm_intr_pm2(void *arg)
 		/* get brightness and contrast of the LCD */
 		pm_LCD_brightness = (u_int)pmdata.data[3] & 0xff;
 		pm_LCD_contrast = (u_int)pmdata.data[4] & 0xff;
-/*
-		pm_printerr("#08", rval, pmdata.num_data, pmdata.data);
-		pmdata.command = 0x33;
-		pmdata.num_data = 1;
-		pmdata.s_buf = pmdata.data;
-		pmdata.r_buf = pmdata.data;
-		pmdata.data[0] = pm_LCD_contrast;
-		rval = pm_pmgrop_pm2(&pmdata);
-		pm_printerr("#33", rval, pmdata.num_data, pmdata.data);
-*/
-		/* this is an experimental code */
+
+		/* this is experimental code */
 		pmdata.command = PMU_SET_BRIGHTNESS;
 		pmdata.num_data = 1;
 		pmdata.s_buf = pmdata.data;
@@ -969,8 +615,9 @@ pm_intr_pm2(void *arg)
 		if (pm_LCD_brightness > 0x78)
 			pm_LCD_brightness = 0x78;
 		pmdata.data[0] = pm_LCD_brightness;
-		rval = pm_pmgrop_pm2(&pmdata);
+		rval = pmgrop(&pmdata);
 		break;
+
 	case 0x10:		/* ADB data requested by TALK command */
 	case 0x14:
 		pm_adb_get_TALK_result(&pmdata);
@@ -994,48 +641,6 @@ pm_intr_pm2(void *arg)
 
 	return 1;
 }
-
-
-/*
- * My PMgrOp routine
- */
-int
-pmgrop(pmdata)
-	PMData *pmdata;
-{
-	switch (pmHardware) {
-	case PM_HW_PB1XX:
-		return (pm_pmgrop_pm1(pmdata));
-		break;
-	case PM_HW_PB5XX:
-		return (pm_pmgrop_pm2(pmdata));
-		break;
-	default:
-		/* return (pmgrop_mrg(pmdata)); */
-		return 1;
-	}
-}
-
-
-/*
- * My PM interrupt routine
- */
-int
-pm_intr(void *arg)
-{
-	switch (pmHardware) {
-	case PM_HW_PB1XX:
-		return pm_intr_pm1(arg);
-		break;
-	case PM_HW_PB5XX:
-		return pm_intr_pm2(arg);
-		break;
-	default:
-		break;
-	}
-	return 0;
-}
-
 
 
 /*
@@ -1152,24 +757,14 @@ pm_adb_op(buffer, compRout, data, command)
 	}
 
 	/* this command enables the interrupt by operating ADB devices */
-	if (HwCfgFlags3 & 0x00020000) {		/* PB Duo series, PB 5XX series */
-		pmdata.command = PMU_ADB_CMD;
-		pmdata.num_data = 4;
-		pmdata.s_buf = pmdata.data;
-		pmdata.r_buf = pmdata.data;
-		pmdata.data[0] = 0x00;	
-		pmdata.data[1] = 0x86;	/* magic spell for awaking the PM */
-		pmdata.data[2] = 0x00;	
-		pmdata.data[3] = 0x0c;	/* each bit may express the existent ADB device */
-	} else {				/* PB 1XX series */
-		pmdata.command = PMU_ADB_CMD;
-		pmdata.num_data = 3;
-		pmdata.s_buf = pmdata.data;
-		pmdata.r_buf = pmdata.data;
-		pmdata.data[0] = (u_char)(command & 0xf0) | 0xc;
-		pmdata.data[1] = 0x04;
-		pmdata.data[2] = 0x00;
-	}
+	pmdata.command = PMU_ADB_CMD;
+	pmdata.num_data = 4;
+	pmdata.s_buf = pmdata.data;
+	pmdata.r_buf = pmdata.data;
+	pmdata.data[0] = 0x00;	
+	pmdata.data[1] = 0x86;	/* magic spell for awaking the PM */
+	pmdata.data[2] = 0x00;	
+	pmdata.data[3] = 0x0c;	/* each bit may express the existent ADB device */
 	rval = pmgrop(&pmdata);
 
 	splx(s);
@@ -1233,35 +828,6 @@ pm_adb_get_ADB_data(pmdata)
 	adb_pass_up(&packet);
 }
 
-
-void
-pm_adb_poll_next_device_pm1(pmdata)
-	PMData *pmdata;
-{
-	int i;
-	int ndid;
-	u_short bendid = 0x1;
-	int rval;
-	PMData tmp_pmdata;
-
-	/* find another existent ADB device to poll */
-	for (i = 1; i < 16; i++) {
-		ndid = (ADB_CMDADDR(pmdata->data[3]) + i) & 0xf;
-		bendid <<= ndid;
-		if ((pm_existent_ADB_devices & bendid) != 0)
-			break;
-	}
-
-	/* poll the other device */
-	tmp_pmdata.command = PMU_ADB_CMD;
-	tmp_pmdata.num_data = 3;
-	tmp_pmdata.s_buf = tmp_pmdata.data;
-	tmp_pmdata.r_buf = tmp_pmdata.data;
-	tmp_pmdata.data[0] = (u_char)(ndid << 4) | 0xc;
-	tmp_pmdata.data[1] = 0x04;	/* magic spell for awaking the PM */
-	tmp_pmdata.data[2] = 0x00;
-	rval = pmgrop(&tmp_pmdata);
-}
 
 void
 pm_adb_restart()
