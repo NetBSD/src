@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4.c,v 1.6 2002/12/31 16:45:53 pk Exp $	*/
+/*	$NetBSD: timer_sun4.c,v 1.7 2003/01/06 12:50:46 pk Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,9 +128,8 @@ statintr_4(void *cap)
 	timerreg4->t_c14.t_limit = tmr_ustolim(newint);
 
 	/*
-	 * The factor 8 is only valid for stathz==100. For other
-	 * values we should compute a mask, approx.
-	 *	mask = round_power2(stathz / schedhz) - 1
+	 * The factor 8 is only valid for stathz==100.
+	 * See also clock.c
 	 */
 	if (curproc && (++cpuinfo.ci_schedstate.spc_schedticks & 7) == 0)
 		softintr_schedule(sched_cookie);

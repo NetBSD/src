@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2003/01/03 16:21:05 mrg Exp $ */
+/*	$NetBSD: cpu.h,v 1.56 2003/01/06 12:50:43 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -188,6 +188,7 @@ caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;
 void	lo_microtime(struct timeval *);
+void	schedintr(void *);
 /* locore.s */
 struct fpstate;
 void	savefpstate(struct fpstate *);

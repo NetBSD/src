@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.89 2002/05/02 13:01:45 martin Exp $ */
+/*	$NetBSD: clock.c,v 1.90 2003/01/06 12:50:45 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -213,6 +213,15 @@ cpu_initclocks()
 
 	if (timer_init != NULL)
 		(*timer_init)();
+
+	/*
+	 * The scheduler clock runs every 8 statclock ticks,
+	 * assuming stathz == 100. If it's not, compute a mask
+	 * for use in the various statintr() functions approx.
+	 * like this:
+	 *	mask = round_power2(stathz / schedhz) - 1
+	 */
+	schedhz = 12;
 }
 
 /*
@@ -226,6 +235,19 @@ setstatclockrate(newhz)
 	/* nothing */
 }
 
+
+/*
+ * Scheduler pseudo-clock interrupt handler.
+ * Runs off a soft interrupt at IPL_SCHED, scheduled by statintr().
+ */
+void schedintr(void *v)
+{
+	struct proc *p = curproc;
+
+	/* XXX - should consult a cpuinfo.schedtickpending */
+	if (p != NULL)
+		schedclock(p);
+}
 
 /*
  * `sparc_clock_time_is_ok' is used in cpu_reboot() to determine
