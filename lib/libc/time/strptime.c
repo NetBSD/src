@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.13 1998/03/19 16:21:35 tv Exp $	*/
+/*	$NetBSD: strptime.c,v 1.14 1998/05/05 14:15:32 tv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.13 1998/03/19 16:21:35 tv Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.14 1998/05/05 14:15:32 tv Exp $");
 #endif
 
 #include "namespace.h"
@@ -97,10 +97,9 @@ strptime(buf, fmt, tm)
 again:		switch (c = *fmt++) {
 		case '%':	/* "%%" is converted to "%". */
 literal:
-		if (c != *bp++)
-			return (0);
-
-		break;
+			if (c != *bp++)
+				return (0);
+			break;
 
 		/*
 		 * "Alternative" modifiers. Just set the appropriate flag
@@ -170,12 +169,12 @@ literal:
 			for (i = 0; i < 7; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(day[i]));
-				if (strncmp(_ctloc(day[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(day[i]), bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abday[i]));
-				if (strncmp(_ctloc(abday[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abday[i]), bp, len) == 0)
 					break;
 			}
 
@@ -194,12 +193,12 @@ literal:
 			for (i = 0; i < 12; i++) {
 				/* Full name. */
 				len = strlen(_ctloc(mon[i]));
-				if (strncmp(_ctloc(mon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(mon[i]), bp, len) == 0)
 					break;
 
 				/* Abbreviated name. */
 				len = strlen(_ctloc(abmon[i]));
-				if (strncmp(_ctloc(abmon[i]), bp, len) == 0)
+				if (strncasecmp(_ctloc(abmon[i]), bp, len) == 0)
 					break;
 			}
 
@@ -274,7 +273,7 @@ literal:
 		case 'p':	/* The locale's equivalent of AM/PM. */
 			_LEGAL_ALT(0);
 			/* AM? */
-			if (strcmp(_ctloc(am_pm[0]), bp) == 0) {
+			if (strcasecmp(_ctloc(am_pm[0]), bp) == 0) {
 				if (tm->tm_hour > 11)
 					return (0);
 
@@ -282,7 +281,7 @@ literal:
 				break;
 			}
 			/* PM? */
-			else if (strcmp(_ctloc(am_pm[1]), bp) == 0) {
+			else if (strcasecmp(_ctloc(am_pm[1]), bp) == 0) {
 				if (tm->tm_hour > 11)
 					return (0);
 
