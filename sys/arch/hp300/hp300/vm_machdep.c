@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	from: @(#)vm_machdep.c	8.6 (Berkeley) 1/12/94
- *	$Id: vm_machdep.c,v 1.14 1994/07/19 21:43:57 mycroft Exp $
+ *	$Id: vm_machdep.c,v 1.15 1994/09/09 23:53:42 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -194,13 +194,13 @@ physaccess(vaddr, paddr, size, prot)
 	caddr_t vaddr, paddr;
 	register int size, prot;
 {
-	register struct pte *pte;
+	register pt_entry_t *pte;
 	register u_int page;
 
 	pte = kvtopte(vaddr);
 	page = (u_int)paddr & PG_FRAME;
 	for (size = btoc(size); size; size--) {
-		*(int *)pte++ = PG_V | prot | page;
+		*pte++ = PG_V | prot | page;
 		page += NBPG;
 	}
 	TBIAS();
@@ -210,11 +210,11 @@ physunaccess(vaddr, size)
 	caddr_t vaddr;
 	register int size;
 {
-	register struct pte *pte;
+	register pt_entry_t *pte;
 
 	pte = kvtopte(vaddr);
 	for (size = btoc(size); size; size--)
-		*(int *)pte++ = PG_NV;
+		*pte++ = PG_NV;
 	TBIAS();
 }
 
@@ -231,7 +231,7 @@ physunaccess(vaddr, size)
  */
 /*ARGSUSED*/
 setredzone(pte, vaddr)
-	struct pte *pte;
+	pt_entry_t *pte;
 	caddr_t vaddr;
 {
 }

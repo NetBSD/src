@@ -38,13 +38,17 @@
  * from: Utah $Hdr: pte.h 1.13 92/01/20$
  *
  *	from: @(#)pte.h	8.1 (Berkeley) 6/10/93
- *	$Id: pte.h,v 1.2 1994/05/23 06:21:54 mycroft Exp $
+ *	$Id: pte.h,v 1.3 1994/09/09 23:56:18 mycroft Exp $
  */
+
+#ifndef	_HP300_PTE_H_
+#define	_HP300_PTE_H_
 
 /*
  * HP300 hardware segment/page table entries
  */
 
+#if 0
 struct ste {
 	unsigned int	sg_pfnum:20;	/* page table frame number */
 	unsigned int	:8;		/* reserved at 0 */
@@ -73,9 +77,10 @@ struct pte {
 	unsigned int	pg_prot:1;	/* write protect bit */
 	unsigned int	pg_v:2;		/* valid bit */
 };
+#endif
 
-typedef struct ste	st_entry_t;	/* segment table entry */
-typedef struct pte	pt_entry_t;	/* Mach page table entry */
+typedef int	st_entry_t;	/* segment table entry */
+typedef int	pt_entry_t;	/* Mach page table entry */
 
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 #define	ST_ENTRY_NULL	((st_entry_t *) 0)
@@ -143,3 +148,4 @@ typedef struct pte	pt_entry_t;	/* Mach page table entry */
 #define	kvtophys(va) \
 	((kvtopte(va)->pg_pfnum << PGSHIFT) | ((int)(va) & PGOFSET))
 
+#endif /* !_HP300_PTE_H_ */

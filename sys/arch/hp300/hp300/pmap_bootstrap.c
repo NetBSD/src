@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap_bootstrap.c	8.1 (Berkeley) 6/10/93
- *	$Id: pmap_bootstrap.c,v 1.2 1994/05/23 08:42:50 mycroft Exp $
+ *	$Id: pmap_bootstrap.c,v 1.3 1994/09/09 23:52:53 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -52,8 +52,8 @@
 extern char *etext;
 extern int Sysptsize;
 extern char *extiobase, *proc0paddr;
-extern struct ste *Sysseg;
-extern struct pte *Sysptmap, *Sysmap;
+extern st_entry_t *Sysseg;
+extern pt_entry_t *Sysptmap, *Sysmap;
 extern vm_offset_t Umap, CLKbase, MMUbase;
 
 extern int maxmem, physmem;
@@ -84,7 +84,7 @@ struct msgbuf	*msgbufp;
  * memory address.  Returns an updated first PA reflecting the memory we
  * have allocated.  MMU is still off when we return.
  *
- * XXX assumes sizeof(u_int) == sizeof(struct pte)
+ * XXX assumes sizeof(u_int) == sizeof(pt_entry_t)
  * XXX a PIC compiler would make this much easier.
  */
 void
@@ -94,7 +94,8 @@ pmap_bootstrap(nextpa, firstpa)
 {
 	vm_offset_t kstpa, kptpa, iiopa, eiopa, kptmpa, lkptpa, p0upa;
 	u_int nptpages, kstsize;
-	register u_int protoste, protopte, *ste, *pte, *epte;
+	register st_entry_t protoste, *ste;
+	register pt_entry_t protopte, *pte, *epte;
 
 	/*
 	 * Calculate important physical addresses:
@@ -134,8 +135,8 @@ pmap_bootstrap(nextpa, firstpa)
 	nptpages = RELOC(Sysptsize, int) +
 		(IIOMAPSIZE + EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * NBPG;
-	eiopa = nextpa - EIOMAPSIZE * sizeof(struct pte);
-	iiopa = eiopa - IIOMAPSIZE * sizeof(struct pte);
+	eiopa = nextpa - EIOMAPSIZE * sizeof(pt_entry_t);
+	iiopa = eiopa - IIOMAPSIZE * sizeof(pt_entry_t);
 	kptmpa = nextpa;
 	nextpa += NBPG;
 	lkptpa = nextpa;
@@ -196,7 +197,7 @@ pmap_bootstrap(nextpa, firstpa)
 		protoste = kptpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
 			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(struct ste));
+			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize level 1 descriptors.  We need:
@@ -208,7 +209,7 @@ pmap_bootstrap(nextpa, firstpa)
 		protoste = (u_int)&pte[SG4_LEV1SIZE] | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
 			*pte++ = protoste;
-			protoste += (SG4_LEV2SIZE * sizeof(struct ste));
+			protoste += (SG4_LEV2SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize the final level 1 descriptor to map the last
@@ -226,7 +227,7 @@ pmap_bootstrap(nextpa, firstpa)
 		protoste = lkptpa | SG_U | SG_RW | SG_V;
 		while (pte < epte) {
 			*pte++ = protoste;
-			protoste += (SG4_LEV3SIZE * sizeof(struct ste));
+			protoste += (SG4_LEV3SIZE * sizeof(st_entry_t));
 		}
 		/*
 		 * Initialize Sysptmap
@@ -341,26 +342,26 @@ pmap_bootstrap(nextpa, firstpa)
 	/*
 	 * Sysseg: base of kernel segment table
 	 */
-	RELOC(Sysseg, struct ste *) =
-		(struct ste *)(kstpa - firstpa);
+	RELOC(Sysseg, st_entry_t *) =
+		(st_entry_t *)(kstpa - firstpa);
 	/*
 	 * Sysptmap: base of kernel page table map
 	 */
-	RELOC(Sysptmap, struct pte *) =
-		(struct pte *)(kptmpa - firstpa);
+	RELOC(Sysptmap, pt_entry_t *) =
+		(pt_entry_t *)(kptmpa - firstpa);
 	/*
 	 * Sysmap: kernel page table (as mapped through Sysptmap)
 	 * Immediately follows `nptpages' of static kernel page table.
 	 */
-	RELOC(Sysmap, struct pte *) =
-		(struct pte *)hp300_ptob(nptpages * NPTEPG);
+	RELOC(Sysmap, pt_entry_t *) =
+		(pt_entry_t *)hp300_ptob(nptpages * NPTEPG);
 	/*
 	 * Umap: first of UPAGES PTEs (in Sysmap) for fixed-address u-area.
 	 * HIGHPAGES PTEs from the end of Sysmap.
 	 */
 	RELOC(Umap, vm_offset_t) =
-		(vm_offset_t)RELOC(Sysmap, struct pte *) +
-			(HP_MAX_PTSIZE - HIGHPAGES * sizeof(struct pte));
+		(vm_offset_t)RELOC(Sysmap, pt_entry_t *) +
+			(HP_MAX_PTSIZE - HIGHPAGES * sizeof(pt_entry_t));
 	/*
 	 * intiobase, intiolimit: base and end of internal (DIO) IO space.
 	 * IIOMAPSIZE pages prior to external IO space at end of static
@@ -465,11 +466,11 @@ pmap_bootstrap(nextpa, firstpa)
 	{
 		struct pmap *kpm = &RELOC(kernel_pmap_store, struct pmap);
 
-		kpm->pm_stab = RELOC(Sysseg, struct ste *);
-		kpm->pm_ptab = RELOC(Sysmap, struct pte *);
+		kpm->pm_stab = RELOC(Sysseg, st_entry_t *);
+		kpm->pm_ptab = RELOC(Sysmap, pt_entry_t *);
 		simple_lock_init(&kpm->pm_lock);
 		kpm->pm_count = 1;
-		kpm->pm_stpa = (struct ste *)kstpa;
+		kpm->pm_stpa = (st_entry_t *)kstpa;
 		/*
 		 * For the 040 we also initialize the free level 2
 		 * descriptor mask noting that we have used:
@@ -500,15 +501,15 @@ pmap_bootstrap(nextpa, firstpa)
 		vm_offset_t va = RELOC(virtual_avail, vm_offset_t);
 
 		RELOC(CADDR1, caddr_t) = (caddr_t)va;
-		va += HP_PAGE_SIZE;
+		va += NBPG;
 		RELOC(CADDR2, caddr_t) = (caddr_t)va;
-		va += HP_PAGE_SIZE;
+		va += NBPG;
 		RELOC(vmmap, caddr_t) = (caddr_t)va;
-		va += HP_PAGE_SIZE;
+		va += NBPG;
 		RELOC(ledbase, caddr_t) = (caddr_t)va;
-		va += HP_PAGE_SIZE;
+		va += NBPG;
 		RELOC(msgbufp, struct msgbuf *) = (struct msgbuf *)va;
-		va += HP_PAGE_SIZE;
+		va += NBPG;
 		RELOC(virtual_avail, vm_offset_t) = va;
 	}
 }
