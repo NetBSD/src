@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.90 1998/07/27 13:39:52 bouyer Exp $
+#	$NetBSD: INSTALL,v 1.91 1998/07/27 18:38:08 bouyer Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -207,6 +207,7 @@ pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
 
 # Keyboard layout configuration for pccons
 #options        FRENCH_KBD
+#options 	FINNISH_KBD
 #options        GERMAN_KBD
 #options        NORVEGIAN_KBD
 
