@@ -44,7 +44,6 @@
 ./usr/include/machine/signal.h
 ./usr/include/machine/stdarg.h
 ./usr/include/machine/tc_machdep.h
-./usr/include/machine/testme.h
 ./usr/include/machine/trap.h
 ./usr/include/machine/types.h
 ./usr/include/machine/varargs.h
