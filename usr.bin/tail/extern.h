@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.4 1999/07/21 06:38:49 cgd Exp $	*/
+/*	$NetBSD: extern.h,v 1.5 2000/10/11 14:46:19 is Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,8 @@ void reverse __P((FILE *, enum STYLE, long, struct stat *));
 int bytes __P((FILE *, off_t));
 int lines __P((FILE *, off_t));
 
-void err __P((int fatal, const char *fmt, ...));
+void err __P((int fatal, const char *fmt, ...))
+     __attribute__((__format__(__printf__, 2, 3)));
 void ierr __P((void));
 void oerr __P((void));
 
