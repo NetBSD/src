@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.59 2001/12/04 00:05:05 darrenr Exp $ */
+/*	$NetBSD: pmap.h,v 1.60 2002/07/17 14:31:46 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -109,7 +109,7 @@
  * no software copies.  Its mmu entries are nonetheless kept on lists
  * so that the code that fiddles with mmu lists has something to fiddle.
  *
- ** FOR THE SUN4M
+ ** FOR THE SUN4M/SUN4D
  *
  * On this architecture, the virtual-to-physical translation (page) tables
  * are *not* stored within the MMU as they are in the earlier Sun architect-
@@ -230,7 +230,8 @@ extern psize_t		vm_num_phys;
 #define PMAP_IOENC_SRMMU(io)	((io) << PMAP_SHFT_SRMMU)
 
 /* Encode IO space for pmap_enter() */
-#define PMAP_IOENC(io)	(CPU_ISSUN4M ? PMAP_IOENC_SRMMU(io) : PMAP_IOENC_4(io))
+#define PMAP_IOENC(io)	(CPU_HAS_SRMMU ? PMAP_IOENC_SRMMU(io) \
+				       : PMAP_IOENC_4(io))
 
 int             pmap_dumpsize __P((void));
 int             pmap_dumpmmu __P((int (*)__P((dev_t, daddr_t, caddr_t, size_t)),
@@ -290,11 +291,11 @@ void		pmap_protect4_4c __P((pmap_t, vaddr_t, vaddr_t, vm_prot_t));
 void		pmap_zero_page4_4c __P((paddr_t));
 void		pmap_changeprot4_4c __P((pmap_t, vaddr_t, vm_prot_t, int));
 
-#endif
+#endif /* defined SUN4 || defined SUN4C */
 
-/* SIMILAR DECLARATIONS FOR SUN4M MODULE */
+/* SIMILAR DECLARATIONS FOR SUN4M/SUN4D MODULE */
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 boolean_t	pmap_clear_modify4m __P((struct vm_page *));
 boolean_t	pmap_clear_reference4m __P((struct vm_page *));
 void		pmap_copy_page4m __P((paddr_t, paddr_t));
@@ -314,9 +315,9 @@ void		pmap_zero_page_viking_mxcc(paddr_t);
 void		pmap_zero_page_hypersparc(paddr_t);
 void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 
-#endif /* defined SUN4M */
+#endif /* defined SUN4M || defined SUN4D */
 
-#if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
+#if !(defined(SUN4M) || defined(SUN4D)) && (defined(SUN4) || defined(SUN4C))
 
 #define		pmap_clear_modify	pmap_clear_modify4_4c
 #define		pmap_clear_reference	pmap_clear_reference4_4c
@@ -330,7 +331,7 @@ void		pmap_changeprot4m __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_protect		pmap_protect4_4c
 #define		pmap_changeprot		pmap_changeprot4_4c
 
-#elif defined(SUN4M) && !(defined(SUN4) || defined(SUN4C))
+#elif (defined(SUN4M) || defined(SUN4D)) && !(defined(SUN4) || defined(SUN4C))
 
 #define		pmap_clear_modify	pmap_clear_modify4m
 #define		pmap_clear_reference	pmap_clear_reference4m
@@ -377,7 +378,7 @@ extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define		pmap_zero_page		(*cpuinfo.zero_page)
 #define		pmap_copy_page		(*cpuinfo.copy_page)
 
-#if defined(SUN4M)
+#if defined(SUN4M) || defined(SUN4D)
 /*
  * Macros which implement SRMMU TLB flushing/invalidation
  */
@@ -393,7 +394,7 @@ extern void	(*pmap_changeprot_p) __P((pmap_t, vaddr_t, vm_prot_t, int));
 #define tlb_flush_context_real()	sta(ASI_SRMMUFP_L0, ASI_SRMMUFP, 0)
 #define tlb_flush_all_real()		sta(ASI_SRMMUFP_LN, ASI_SRMMUFP, 0)
 
-#endif /* SUN4M */
+#endif /* SUN4M || SUN4D */
 
 #endif /* _KERNEL */
 
