@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2001/10/31 01:51:46 thorpej Exp $
+#	$NetBSD: Makefile,v 1.35 2001/11/14 23:01:15 tv Exp $
 
 LIB=sa
 
@@ -49,6 +49,8 @@ SRCS+= ${S}/arch/sun3/sun3/ctrlsp.S
 # only needed during build
 libinstall::
 
+.include <bsd.own.mk>
+.undef DESTDIR
 .include <bsd.lib.mk>
 
 # Nuke these...

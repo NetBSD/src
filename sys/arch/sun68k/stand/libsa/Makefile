@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2001/10/31 01:51:46 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 2001/11/14 23:01:16 tv Exp $
 
 LIB=sa
 
@@ -58,6 +58,8 @@ ${LIBGCC_OBJS}:
 OBJS+= ${LIBGCC_OBJS}
 .endif
 
+.include <bsd.own.mk>
+.undef DESTDIR=
 .include <bsd.lib.mk>
 
 # Nuke these...
