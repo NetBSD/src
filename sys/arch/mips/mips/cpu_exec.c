@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.40.2.1 2003/07/02 15:25:25 darrenr Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.40.2.2 2003/07/03 02:01:19 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -212,7 +212,7 @@ mips_elf_makecmds (l, epp)
 		if ((error = vn_rdwr(UIO_READ, epp->ep_vp, (caddr_t)&ph,
 				    sizeof ph, ex->e_phoff + i * sizeof ph,
 				    UIO_SYSSPACE, IO_NODELOCKED,
-				    p->p_ucred, &resid, p))
+				    l->l_proc->p_ucred, &resid, l))
 		    != 0)
 			return error;
 
@@ -287,7 +287,7 @@ mips_elf_makecmds (l, epp)
 
 	epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
 	epp->ep_minsaddr = USRSTACK;
-	epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+	epp->ep_ssize = l->l_proc->p_rlimit[RLIMIT_STACK].rlim_cur;
 
 	/*
 	 * set up commands for stack.  note that this takes *two*, one to
