@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.26 2001/04/16 14:12:12 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.27 2001/04/17 03:42:25 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -584,6 +584,7 @@ nextdma_intr(arg)
 					result |= 0x02;
 				}
 				if (nd->_nd_map_cont == NULL) {
+					KASSERT(nd->_nd_idx+1 == nd->_nd_map->dm_nsegs);
 					/* Expecting a shutdown, didn't SETSUPDATE last turn */
 					result |= 0x04;
 				}
@@ -594,7 +595,11 @@ nextdma_intr(arg)
 				switch (result) {
 				case 0x00: /* !BUSEXC && !expecting && !SUPDATE && !ENABLE */
 				case 0x08: /* BUSEXC && !expecting && !SUPDATE && !ENABLE */
-					slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+					if (nd->nd_intr == NEXT_I_SCSI_DMA) {
+						slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_LIMIT);
+					} else {
+						slimit = bus_space_read_4(nd->nd_bst, nd->nd_bsh, DD_SAVED_LIMIT);
+					}
 					break;
 				case 0x01: /* !BUSEXC && !expecting && !SUPDATE && ENABLE */
 				case 0x09: /* BUSEXC && !expecting && !SUPDATE && ENABLE */
@@ -672,6 +677,9 @@ nextdma_intr(arg)
 			if ((nd->_nd_idx+1) == nd->_nd_map->dm_nsegs) {
 				if (nd->nd_completed_cb) 
 					(*nd->nd_completed_cb)(nd->_nd_map, nd->nd_cb_arg);
+			} else {
+				KASSERT(nd->_nd_map == nd->_nd_map_cont);
+				KASSERT(nd->_nd_idx+1 == nd->_nd_idx_cont);
 			}
 			nd->_nd_map = 0;
 			nd->_nd_idx = 0;
@@ -692,6 +700,7 @@ nextdma_intr(arg)
 				}
 
 				if (nd->_nd_map_cont == NULL) {
+					KASSERT(nd->_nd_idx+1 == nd->_nd_map->dm_nsegs);
 					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
 							DMACSR_CLRCOMPLETE | dmadir);
 				} else {
@@ -722,7 +731,7 @@ nextdma_intr(arg)
 				u_long dmadir;								/* 	DMACSR_SETREAD or DMACSR_SETWRITE */
 
 				next_dma_rotate(nd);
-				
+
 				if (state & DMACSR_READ) {
 					dmadir = DMACSR_SETREAD;
 				} else {
@@ -737,6 +746,7 @@ nextdma_intr(arg)
 				next_dma_setup_cont_regs(nd);
 
 				if (nd->_nd_map_cont == NULL) {
+					KASSERT(nd->_nd_idx+1 == nd->_nd_map->dm_nsegs);
 					bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR, 
 							DMACSR_SETENABLE | dmadir);
 				} else {
