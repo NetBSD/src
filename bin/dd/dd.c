@@ -1,4 +1,4 @@
-/*	$NetBSD: dd.c,v 1.31 2003/08/07 09:05:10 agc Exp $	*/
+/*	$NetBSD: dd.c,v 1.32 2003/08/20 14:25:54 jschauma Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: dd.c,v 1.31 2003/08/07 09:05:10 agc Exp $");
+__RCSID("$NetBSD: dd.c,v 1.32 2003/08/20 14:25:54 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -305,6 +305,12 @@ dd_in(void)
 			    lseek(in.fd, (off_t)in.dbsz, SEEK_CUR))
 				warn("%s", fn);
 
+			/*
+			 * Free memory from printescaped() before possible
+			 * continue
+			 */
+			free(fn);
+
 			/* If sync not specified, omit block and continue. */
 			if (!(ddflags & C_SYNC))
 				continue;
@@ -312,8 +318,6 @@ dd_in(void)
 			/* Read errors count as full blocks. */
 			in.dbcnt += in.dbrcnt = in.dbsz;
 			++st.in_full;
-
-			free(fn);
 
 		/* Handle full input blocks. */
 		} else if (n == in.dbsz) {
@@ -440,11 +444,14 @@ dd_out(int force)
 					++st.out_part;
 				else
 					++st.out_full;
+				free(fn);
 				break;
 			}
 			++st.out_part;
-			if (nw == cnt)
+			if (nw == cnt) {
+				free(fn);
 				break;
+			}
 			if (out.flags & ISCHR && !warned) {
 				warned = 1;
 				warnx("%s: short write on character device", fn);
