@@ -23,13 +23,21 @@
 
 #define HAVE_I387_REGS
 
-#include "i386/tm-i386bsd.h"
+#include "i386/tm-i386.h"
 #include "tm-nbsd.h"
 
 extern use_struct_convention_fn i386nbsd_use_struct_convention;
 #define USE_STRUCT_CONVENTION(gcc_p, type) \
 	i386nbsd_use_struct_convention(gcc_p, type)
 
+/* On NetBSD, sigtramp is above the user stack and immediately below
+   the user area. Using constants here allows for cross debugging. */
+#define SIGTRAMP_END(pc)	0xefbfe000	/* USRSTACK */
+#define SIGTRAMP_START(pc)	(SIGTRAMP_END(pc) - 64)
+
+/* Saved Pc.  Get it from sigcontext if within sigtramp.  */
+/* Offset to saved PC in sigcontext, from <sys/signal.h>.  */
+#define SIGCONTEXT_PC_OFFSET 44
 
 #define JB_ELEMENT_SIZE sizeof(int)	/* jmp_buf[_JBLEN] is array of ints */
 #define JB_PC	0		/* Setjmp()'s return PC saved here */
