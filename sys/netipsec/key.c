@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.11.2.4 2004/05/29 21:17:42 tron Exp $	*/
+/*	$NetBSD: key.c,v 1.11.2.5 2004/05/29 21:20:44 tron Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/key.c,v 1.3.2.2 2003/07/01 01:38:13 sam Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.4 2004/05/29 21:17:42 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.11.2.5 2004/05/29 21:20:44 tron Exp $");
 
 /*
  * This code is referd to RFC 2367
@@ -489,6 +489,9 @@ static const char *key_getfqdn __P((void));
 static const char *key_getuserfqdn __P((void));
 #endif
 static void key_sa_chgstate __P((struct secasvar *, u_int8_t));
+static  __inline void key_sp_dead __P((struct secpolicy *));
+static void key_sp_unlink __P((struct secpolicy *sp));
+
 static struct mbuf *key_alloc_mbuf __P((int));
 struct callout key_timehandler_ch;
 
@@ -513,6 +516,28 @@ struct callout key_timehandler_ch;
 		("SP refcnt underflow at %s:%u", __FILE__, __LINE__));	\
 	(p)->refcnt--;							\
 } while (0)
+
+
+static __inline void
+key_sp_dead(struct secpolicy *sp)
+{
+
+	/* mark the SP dead */
+	sp->state = IPSEC_SPSTATE_DEAD;
+}
+
+static void
+key_sp_unlink(struct secpolicy *sp)
+{
+
+	/* remove from SP index */
+	if (__LIST_CHAINED(sp)) {
+		LIST_REMOVE(sp, chain);
+		/* Release refcount held just for being on chain */
+		KEY_FREESP(&sp);
+	}
+}
+
 
 /*
  * Return 0 when there are known to be no SP's for the specified
@@ -1188,16 +1213,13 @@ key_delsp(struct secpolicy *sp)
 
 	IPSEC_ASSERT(sp != NULL, ("key_delsp: null sp"));
 
-	sp->state = IPSEC_SPSTATE_DEAD;
+	key_sp_dead(sp);
 
 	IPSEC_ASSERT(sp->refcnt == 0,
 		("key_delsp: SP with references deleted (refcnt %u)",
 		sp->refcnt));
 
 	s = splsoftnet();	/*called from softclock()*/
-	/* remove from SP index */
-	if (__LIST_CHAINED(sp))
-		LIST_REMOVE(sp, chain);
 
     {
 	struct ipsecrequest *isr = sp->req, *nextisr;
@@ -1812,8 +1834,10 @@ key_spdadd(so, m, mhp)
 	newsp = key_getsp(&spidx);
 	if (mhp->msg->sadb_msg_type == SADB_X_SPDUPDATE) {
 		if (newsp) {
-			newsp->state = IPSEC_SPSTATE_DEAD;
+			key_sp_dead(newsp);
+			key_sp_unlink(newsp);	/* XXX jrs ordering */
 			KEY_FREESP(&newsp);
+			newsp = NULL;
 		}
 	} else {
 		if (newsp != NULL) {
@@ -2051,8 +2075,9 @@ key_spddelete(so, m, mhp)
 	/* save policy id to buffer to be returned. */
 	xpl0->sadb_x_policy_id = sp->id;
 
-	sp->state = IPSEC_SPSTATE_DEAD;
-	KEY_FREESP(&sp);
+	key_sp_dead(sp);
+	key_sp_unlink(sp);	/* XXX jrs ordering */
+	KEY_FREESP(&sp);	/* ref gained by key_getspbyid */
 
 #if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
@@ -2120,8 +2145,10 @@ key_spddelete2(so, m, mhp)
 		key_senderror(so, m, EINVAL);
 	}
 
-	sp->state = IPSEC_SPSTATE_DEAD;
-	KEY_FREESP(&sp);
+	key_sp_dead(sp);
+	key_sp_unlink(sp);	/* XXX jrs ordering */
+	KEY_FREESP(&sp);	/* ref gained by key_getsp */
+	sp = NULL;
 
 #if defined(__NetBSD__)
 	/* Invalidate all cached SPD pointers in the PCBs. */
@@ -2334,8 +2361,18 @@ key_spdflush(so, m, mhp)
 		return key_senderror(so, m, EINVAL);
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
-		LIST_FOREACH(sp, &sptree[dir], chain) {
-			sp->state = IPSEC_SPSTATE_DEAD;
+		struct secpolicy * nextsp;
+		for (sp = LIST_FIRST(&sptree[dir]);
+		     sp != NULL;
+		     sp = nextsp) {
+
+ 			nextsp = LIST_NEXT(sp, chain);
+			if (sp->state == IPSEC_SPSTATE_DEAD)
+				continue;
+			key_sp_dead(sp);
+			key_sp_unlink(sp);
+			/* 'sp' dead; continue transfers to 'sp = nextsp' */
+			continue;
 		}
 	}
 
@@ -4115,7 +4152,11 @@ key_timehandler(void* arg)
 			nextsp = LIST_NEXT(sp, chain);
 
 			if (sp->state == IPSEC_SPSTATE_DEAD) {
-				KEY_FREESP(&sp);
+				key_sp_unlink(sp);	/*XXX*/
+
+				/* 'sp' dead; continue transfers to
+				 * 'sp = nextsp'
+				 */
 				continue;
 			}
 
@@ -4125,7 +4166,7 @@ key_timehandler(void* arg)
 			/* the deletion will occur next time */
 			if ((sp->lifetime && now - sp->created > sp->lifetime)
 			 || (sp->validtime && now - sp->lastused > sp->validtime)) {
-				sp->state = IPSEC_SPSTATE_DEAD;
+			  	key_sp_dead(sp);
 				key_spdexpire(sp);
 				continue;
 			}
