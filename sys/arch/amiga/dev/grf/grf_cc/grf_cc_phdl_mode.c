@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grf_cc_phdl_mode.c,v 1.2 1994/01/29 07:00:30 chopps Exp $
+ *	$Id: grf_cc_phdl_mode.c,v 1.3 1994/01/30 08:25:12 chopps Exp $
  */
 #if defined (GRF_A2024) && defined (GRF_PAL)
 
@@ -110,7 +110,7 @@ cc_init_pal_hires_dlace (void)
 	bcopy (std_dlace_copper_list, this_data->frames[F_LONG], std_dlace_copper_list_size);
 	bcopy (std_dlace_copper_list, this_data->frames[F_SHORT], std_dlace_copper_list_size);
 	
-	this_data->bplcon0 = 0x8204;		  /* hires, color composite enable, dlace. */
+	this_data->bplcon0 = 0x8204|USE_CON3;		  /* hires, color composite enable, dlace. */
 	this_data->std_start_x = STANDARD_VIEW_X;
 	this_data->std_start_y = STANDARD_VIEW_Y;
 	this_data->vbl_handler = (vbl_handler_func *) pal_hires_dlace_mode_vbl_handler;

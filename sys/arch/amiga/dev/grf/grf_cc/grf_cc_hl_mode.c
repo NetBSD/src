@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: grf_cc_hl_mode.c,v 1.2 1994/01/29 07:00:24 chopps Exp $
+ *	$Id: grf_cc_hl_mode.c,v 1.3 1994/01/30 08:25:08 chopps Exp $
  */
 #if defined (GRF_NTSC)
 
@@ -102,7 +102,7 @@ cc_init_ntsc_hires_lace (void)
 	bcopy (std_copper_list, this_data->frames[F_LONG], std_copper_list_size);
 	bcopy (std_copper_list, this_data->frames[F_SHORT], std_copper_list_size);
 	
-	this_data->bplcon0 = 0x8204;		  /* hires, color composite enable, lace. */
+	this_data->bplcon0 = 0x8204|USE_CON3;		  /* hires, color composite enable, lace. */
 	this_data->std_start_x = STANDARD_VIEW_X;
 	this_data->std_start_y = STANDARD_VIEW_Y;
 	this_data->vbl_handler = (vbl_handler_func *) hires_lace_mode_vbl_handler;
