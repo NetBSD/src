@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.118 2002/12/26 12:14:31 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.119 2002/12/31 13:17:23 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -551,8 +551,9 @@ badtrap:
 			panic("trap T_RWRET 1");
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, tf->tf_out[6]);
+			printf("cpu%d:%s[%d]: rwindow: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				tf->tf_out[6]);
 #endif
 		if (read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
@@ -575,16 +576,18 @@ badtrap:
 		KERNEL_PROC_LOCK(p);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, tf->tf_out[6]);
+			printf("cpu%d:%s[%d]: rwindow: T_WINUF 0: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				tf->tf_out[6]);
 #endif
 		write_user_windows();
 		if (rwindow_save(p) || read_rw(tf->tf_out[6], &pcb->pcb_rw[0]))
 			sigexit(p, SIGILL);
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf("%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
-				p->p_comm, p->p_pid, pcb->pcb_rw[0].rw_in[6]);
+			printf("cpu%d:%s[%d]: rwindow: T_WINUF 1: pcb<-stack: 0x%x\n",
+				cpuinfo.ci_cpuid, p->p_comm, p->p_pid,
+				pcb->pcb_rw[0].rw_in[6]);
 #endif
 		if (read_rw(pcb->pcb_rw[0].rw_in[6], &pcb->pcb_rw[1]))
 			sigexit(p, SIGILL);
@@ -728,12 +731,13 @@ rwindow_save(p)
 		return (0);
 #ifdef DEBUG
 	if (rwindow_debug)
-		printf("%s[%d]: rwindow: pcb->stack:", p->p_comm, p->p_pid);
+		printf("cpu%d:%s[%d]: rwindow: pcb->stack:",
+			cpuinfo.ci_cpuid, p->p_comm, p->p_pid);
 #endif
 	do {
 #ifdef DEBUG
 		if (rwindow_debug)
-			printf(" 0x%x", rw[1].rw_in[6]);
+			printf(" [%d]0x%x", cpuinfo.ci_cpuid, rw[1].rw_in[6]);
 #endif
 		if (copyout((caddr_t)rw, (caddr_t)rw[1].rw_in[6],
 		    sizeof *rw))
@@ -946,7 +950,7 @@ out:
 		userret(p, pc, sticks);
 		share_fpu(p, tf);
 	}
-#endif /* Sun4/Sun4C */
+#endif /* SUN4 || SUN4C */
 }
 
 #if defined(SUN4M)	/* 4m version of mem_access_fault() follows */
@@ -1209,7 +1213,7 @@ out_nounlock:
 	else
 		KERNEL_UNLOCK();
 }
-#endif
+#endif /* SUN4M */
 
 /*
  * System calls.  `pc' is just a copy of tf->tf_pc.
