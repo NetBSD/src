@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.114 2004/06/23 02:30:52 mycroft Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.115 2004/06/23 05:23:19 mycroft Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.114 2004/06/23 02:30:52 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.115 2004/06/23 05:23:19 mycroft Exp $");
 
 #include "opt_usbverbose.h"
 
@@ -163,7 +163,7 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	req.bRequest = UR_GET_DESCRIPTOR;
 	USETW2(req.wValue, UDESC_STRING, sindex);
 	USETW(req.wIndex, langid);
-	USETW(req.wLength, USB_MAX_STRING_LEN);
+	USETW(req.wLength, USB_MAX_STRING_DESC);
 	return (usbd_do_request_flags(dev, &req, sdesc, USBD_SHORT_XFER_OK,
 		sizep, USBD_DEFAULT_TIMEOUT));
 }
