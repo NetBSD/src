@@ -18,7 +18,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.6 1994/06/14 03:21:56 paulus Exp $";
+static char rcsid[] = "$Id: lcp.c,v 1.7 1994/06/28 04:32:16 paulus Exp $";
 #endif
 
 /*
@@ -812,7 +812,7 @@ lcp_nakci(f, p, len)
     if (f->state != OPENED) {
 	*go = try;
 	if (looped_back && try.numloops % lcp_warnloops == 0)
-	    LCPDEBUG((LOG_INFO, "The line appears to be looped back."));
+	    syslog(LOG_WARNING, "The line appears to be looped back.");
     }
 
     return 1;
