@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.l,v 1.8 2003/03/25 23:17:30 provos Exp $	*/
+/*	$NetBSD: lex.l,v 1.9 2003/05/20 22:45:13 provos Exp $	*/
 /*	$OpenBSD: lex.l,v 1.9 2002/08/04 04:15:50 provos Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 
 %{
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lex.l,v 1.8 2003/03/25 23:17:30 provos Exp $");
+__RCSID("$NetBSD: lex.l,v 1.9 2003/05/20 22:45:13 provos Exp $");
 
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -104,6 +104,8 @@ as		{ return AS; }
 ","		{ return COMMA; }
 "="		{ return EQUAL; }
 "!="		{ return NEQUAL; }
+"<"		{ return LESSER; }
+">"		{ return GREATER; }
 [\$A-Za-z][\.\(\)\/A-Za-z_\-0-9]* { yylval.string = strdup(yytext); return STRING; }
 [0-9]+		{ yylval.number = atoi(yytext); return NUMBER; }
 \"[^\"]*\" { char line[1024];

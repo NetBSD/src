@@ -1,4 +1,4 @@
-/*	$NetBSD: filter.c,v 1.19 2003/04/23 17:44:59 provos Exp $	*/
+/*	$NetBSD: filter.c,v 1.20 2003/05/20 22:45:13 provos Exp $	*/
 /*	$OpenBSD: filter.c,v 1.16 2002/08/08 21:18:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filter.c,v 1.19 2003/04/23 17:44:59 provos Exp $");
+__RCSID("$NetBSD: filter.c,v 1.20 2003/05/20 22:45:13 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -137,19 +137,36 @@ filter_match(struct intercept_pid *icpid, struct intercept_tlq *tls,
 int
 filter_predicate(struct intercept_pid *icpid, struct predicate *pdc)
 {
-	int negative;
+	int pidnr, pdcnr;
 	int res = 0;
 
 	if (!pdc->p_flags)
 		return (1);
 
-	negative = pdc->p_flags & PREDIC_NEGATIVE;
-	if (pdc->p_flags & PREDIC_UID)
-		res = icpid->uid == pdc->p_uid;
-	else if (pdc->p_flags & PREDIC_GID)
-		res = icpid->gid == pdc->p_gid;
+	if (pdc->p_flags & PREDIC_UID) {
+		pidnr = icpid->uid;
+		pdcnr = pdc->p_uid;
+	} else {
+		pidnr = icpid->gid;
+		pdcnr = pdc->p_gid;
+	}
 
-	return (negative ? !res : res);
+	switch (pdc->p_flags & PREDIC_MASK) {
+	case PREDIC_NEGATIVE:
+		res = pidnr != pdcnr;
+		break;
+	case PREDIC_LESSER:
+		res = pidnr < pdcnr;
+		break;
+	case PREDIC_GREATER:
+		res = pidnr > pdcnr;
+		break;
+	default:
+		res = pidnr == pdcnr;
+		break;
+	}
+
+	return (res);
 }
 
 short

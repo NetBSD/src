@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.22 2003/04/16 10:17:26 wiz Exp $
+.\"	$NetBSD: systrace.1,v 1.23 2003/05/20 22:45:13 provos Exp $
 .\"	$OpenBSD: systrace.1,v 1.27 2002/08/05 23:27:53 provos Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -229,7 +229,7 @@ system call.
 Policy entries may contain an appended predicate.
 Predicates have the following format:
 .Bd -literal -offset 4
-", if" {"user", "group"} {"=", "!="} string
+", if" {"user", "group"} {"=", "!=", "<", ">" } {number, string}
 .Ed
 .Pp
 A rule is added to the configured policy only if its predicate
