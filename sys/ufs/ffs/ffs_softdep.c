@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.2.2.4 2000/08/17 18:50:53 fvdl Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.2.2.5 2000/12/14 23:36:40 he Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -636,7 +636,7 @@ softdep_flushfiles(oldmnt, flags, p)
 				break;
 		}
 		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
-		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, p);
+		error = VOP_FSYNC(devvp, p->p_ucred, FSYNC_WAIT, 0, 0, p);
 		VOP_UNLOCK(devvp, 0);
 		if (error)
 			break;
@@ -3869,6 +3869,8 @@ softdep_sync_metadata(v)
 		struct vnode *a_vp;
 		struct ucred *a_cred;
 		int a_waitfor;
+		off_t offhi;
+		off_t offlo;
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
@@ -4279,8 +4281,8 @@ flush_pagedep_deps(pvp, mp, diraddhdp)
 			ipflag = vn_setrecurse(pvp);	/* XXX */
 			if ((error = VFS_VGET(mp, inum, &vp)) != 0)
 				break;
-			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, p)) ||
-			    (error = VOP_FSYNC(vp, p->p_ucred, 0, p))) {
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)) ||
+			    (error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p))) {
 				vput(vp);
 				break;
 			}
@@ -4470,7 +4472,7 @@ clear_remove(p)
 				softdep_error("clear_remove: vget", error);
 				return;
 			}
-			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, p)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)))
 				softdep_error("clear_remove: fsync", error);
 			drain_output(vp, 0);
 			vput(vp);
@@ -4539,10 +4541,11 @@ clear_inodedeps(p)
 			return;
 		}
 		if (ino == lastino) {
-			if ((error = VOP_FSYNC(vp, p->p_ucred, FSYNC_WAIT, p)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, FSYNC_WAIT,
+				    0, 0, p)))
 				softdep_error("clear_inodedeps: fsync1", error);
 		} else {
-			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, p)))
+			if ((error = VOP_FSYNC(vp, p->p_ucred, 0, 0, 0, p)))
 				softdep_error("clear_inodedeps: fsync2", error);
 			drain_output(vp, 0);
 		}
