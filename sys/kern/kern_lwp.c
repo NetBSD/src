@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.21 2004/02/06 08:08:46 junyoung Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.22 2004/02/09 13:02:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.21 2004/02/06 08:08:46 junyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.22 2004/02/09 13:02:48 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -588,6 +588,7 @@ lwp_exit2(struct lwp *l)
 {
 	struct proc *p;
 
+	KERNEL_LOCK(LK_EXCLUSIVE);
 	/*
 	 * Free the VM resources we're still holding on to.
 	 */
@@ -604,9 +605,11 @@ lwp_exit2(struct lwp *l)
 		}
 
 		pool_put(&lwp_pool, l);
+		KERNEL_UNLOCK();
 	} else {
 		p = l->l_proc;
 		p->p_nzlwps++;
+		KERNEL_UNLOCK();
 		wakeup(&p->p_nlwps);
 	}
 }
