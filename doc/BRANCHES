@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.22 2005/02/13 21:38:43 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.23 2005/02/14 16:08:23 is Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -261,10 +261,10 @@ Scope:		kernel
 Notes:		merge pcred and ucred and poolify
 
 Branch:		is-newarp
-Description:	?
-Status:		?
-Start Date:
-End Date:
+Description:	ARP for non-Ethernet
+Status:		Terminated; merged before NetBSD 1.3
+Start Date:	1996/10/13
+End Date:	1997/03/15
 Base Tag:	is-newarp-base
 Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
