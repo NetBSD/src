@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.58.2.2 1997/06/16 00:05:20 cjs Exp $
+#	$NetBSD: Makefile.inc,v 1.58.2.3 1997/10/13 00:18:26 cjs Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 .include <bsd.own.mk>	# for BUILDDIR
@@ -13,7 +13,8 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
-SRCS+=	ftruncate.c lseek.c mmap.c semctl.c truncate.c
+SRCS+=	ftruncate.c lseek.c mmap.c semctl.c swapon.c truncate.c \
+	getdirentries.c
 
 # "stub" POSIX.1b interfaces which return -1 and set errno to ENOSYS, so
 # we can avoid bumping libc's minor number as functions are added to the
@@ -28,12 +29,14 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	close.o connect.o dup.o dup2.o execve.o fchdir.o \
 	fchflags.o fchmod.o fchown.o fcntl.o flock.o fpathconf.o fstat.o \
 	fstatfs.o fsync.o futimes.o \
-	getdirentries.o getfh.o getfsstat.o \
+	getdents.o getfh.o getfsstat.o \
 	getgroups.o getitimer.o __getlogin.o getpeername.o getpgid.o \
 	getpgrp.o getpriority.o getrlimit.o getrusage.o \
 	getsockname.o getsockopt.o gettimeofday.o ioctl.o kill.o \
-	ktrace.o lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
-	listen.o lstat.o madvise.o mincore.o mkdir.o mkfifo.o mknod.o mlock.o \
+	ktrace.o lchmod.o lchown.o \
+	lfs_bmapv.o lfs_markv.o lfs_segclean.o lfs_segwait.o link.o \
+	listen.o lstat.o lutimes.o madvise.o mincore.o minherit.o \
+	mkdir.o mkfifo.o mknod.o mlock.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munmap.o nanosleep.o nfssvc.o ntp_adjtime.o ntp_gettime.o \
 	open.o pathconf.o poll.o \
@@ -94,7 +97,7 @@ ${ASM}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
 ${LASM} ${LNOERR}: ${BUILDDIR}/usr/include/sys/syscall.h \
     ${.CURDIR}/sys/makelintstub
 	@echo creating ${.TARGET}
-	@${.CURDIR}/sys/makelintstub ${.PREFIX} | \
+	@sh ${.CURDIR}/sys/makelintstub ${.PREFIX} | \
 	    ${LINT} -z ${LINTFLAGS} ${CFLAGS:M-[IDU]*} -i -o ${.TARGET} -
 
 ${PNOERR}: ${.CURDIR}/arch/${MACHINE_ARCH}/SYS.h \
@@ -159,11 +162,12 @@ ${LPSEUDONOERR}: ${BUILDDIR}/usr/include/sys/syscall.h \
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 close.2 connect.2 dup.2 execve.2 _exit.2 \
-	fcntl.2 flock.2 fork.2 fsync.2 getdirentries.2 getfh.2 getfsstat.2 \
-	getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 getpgrp.2 \
-	getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
+	fcntl.2 flock.2 fork.2 fsync.2 getdents.2 getdirentries.2 getfh.2 \
+	getfsstat.2 getgid.2 getgroups.2 getitimer.2 getlogin.2 getpeername.2 \
+	getpgrp.2 getpid.2 getpriority.2 getrlimit.2 getrusage.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 kill.2 ktrace.2 \
-	link.2 listen.2 lseek.2 mkdir.2 mkfifo.2 mknod.2 madvise.2 mincore.2 \
+	link.2 listen.2 lseek.2 mkdir.2 \
+	mkfifo.2 mknod.2 madvise.2 mincore.2 minherit.2 \
 	mlock.2 mmap.2 mount.2 mprotect.2 msgctl.2 msgget.2 msgrcv.2 \
 	msgsnd.2 msync.2 munmap.2 nanosleep.2 nfssvc.2 open.2 pathconf.2 \
 	pipe.2 poll.2 \
@@ -180,8 +184,8 @@ MLINKS+=brk.2 sbrk.2
 MLINKS+=dup.2 dup2.2
 MLINKS+=chdir.2 fchdir.2
 MLINKS+=chflags.2 fchflags.2
-MLINKS+=chmod.2 fchmod.2
-MLINKS+=chown.2 fchown.2
+MLINKS+=chmod.2 fchmod.2 chmod.2 lchmod.2
+MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=getgid.2 getegid.2
 MLINKS+=getitimer.2 setitimer.2
 MLINKS+=getlogin.2 setlogin.2
@@ -205,8 +209,9 @@ MLINKS+=setuid.2 setegid.2 setuid.2 seteuid.2 setuid.2 setgid.2
 MLINKS+=shmat.2 shmdt.2
 MLINKS+=stat.2 fstat.2 stat.2 lstat.2
 MLINKS+=statfs.2 fstatfs.2
+MLINKS+=swapctl.2 swapon.2
 MLINKS+=syscall.2 __syscall.2
 MLINKS+=truncate.2 ftruncate.2
-MLINKS+=utimes.2 futimes.2
+MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2
 MLINKS+=wait.2 wait3.2 wait.2 wait4.2 wait.2 waitpid.2
 MLINKS+=write.2 writev.2
