@@ -33,7 +33,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)getinfo.c	5.26 (Berkeley) 3/21/91";*/
-static char rcsid[] = "$Id: getinfo.c,v 1.2 1993/08/01 17:58:14 mycroft Exp $";
+static char rcsid[] = "$Id: getinfo.c,v 1.3 1994/12/23 16:55:47 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -56,6 +56,7 @@ static char rcsid[] = "$Id: getinfo.c,v 1.2 1993/08/01 17:58:14 mycroft Exp $";
 #include <arpa/inet.h>
 #include <resolv.h>
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include "res.h"
 
