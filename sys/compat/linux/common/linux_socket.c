@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.19 1999/03/25 04:26:45 sommerfe Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.19.2.1 2000/01/15 16:15:40 he Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -54,6 +54,8 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <sys/mount.h>
@@ -74,6 +76,10 @@
 
 #include <compat/linux/linux_syscallargs.h>
 
+#ifndef MIN
+#define	MIN(a,b) (((a)<(b))?(a):(b))
+#endif
+
 /*
  * The calls in this file are entered either via the linux_socketcall()
  * interface or, on the Alpha, as individual syscalls.  The
@@ -88,6 +94,7 @@ int linux_to_bsd_so_sockopt __P((int));
 int linux_to_bsd_ip_sockopt __P((int));
 int linux_to_bsd_tcp_sockopt __P((int));
 int linux_to_bsd_udp_sockopt __P((int));
+int linux_getifhwaddr __P((struct proc *, register_t *, u_int, void *));
 
 /*
  * Convert between Linux and BSD socket domain values
@@ -442,6 +449,109 @@ linux_sys_getsockopt(p, v, retval)
 	return sys_getsockopt(p, &bga, retval);
 }
 
+#define IF_NAME_LEN 16
+
+int
+linux_getifhwaddr(p, retval, fd, data)
+	struct proc *p;
+	register_t *retval;
+	u_int fd;
+	void *data;
+{
+	/* Not the full structure, just enough to map what we do here */
+	struct linux_ifreq {
+		char if_name[IF_NAME_LEN];
+		struct osockaddr hwaddr;
+	} lreq;
+	struct filedesc *fdp;
+	struct file *fp;
+	struct ifaddr *ifa;
+	struct ifnet *ifp;
+	struct sockaddr_dl *sadl;
+	int error, found;
+	int index, ifnum;
+
+	/*
+	 * We can't emulate this ioctl by calling sys_ioctl() to run
+	 * SIOCGIFCONF, because the user buffer is not of the right
+	 * type to take those results.  We can't use kernel buffers to
+	 * receive the results, as the implementation of sys_ioctl()
+	 * and ifconf() [which implements SIOCGIFCONF] use
+	 * copyin()/copyout() which will fail on kernel addresses.
+	 *
+	 * So, we must duplicate code from sys_ioctl() and ifconf().  Ugh.
+	 */
+
+	fdp = p->p_fd;
+	if (fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
+		return (EBADF);
+
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		error = EBADF;
+		goto out;
+	}
+
+	error = copyin(data, (caddr_t)&lreq, sizeof(lreq));
+	if (error)
+		goto out;
+	lreq.if_name[IF_NAME_LEN-1] = '\0';		/* just in case */
+
+	/*
+	 * Only support finding addresses for "ethX".  Should we
+	 * do otherwise? XXX
+	 */
+	if (lreq.if_name[0] == 'e' &&
+	    lreq.if_name[1] == 't' &&
+	    lreq.if_name[2] == 'h') {
+		for (ifnum = 0, index = 3;
+		     lreq.if_name[index] != '\0' && index < IF_NAME_LEN;
+		     index++) {
+			ifnum *= 10;
+			ifnum += lreq.if_name[index] - '0';
+		}
+
+		error = EINVAL;			/* in case we don't find one */
+		for (ifp = ifnet.tqh_first, found = 0;
+		     ifp != 0 && !found;
+		     ifp = ifp->if_list.tqe_next) {
+			memcpy(lreq.if_name, ifp->if_xname,
+			       MIN(IF_NAME_LEN, IFNAMSIZ));
+			if ((ifa = ifp->if_addrlist.tqh_first) == 0)
+				/* no addresses on this interface */
+				continue;
+			else 
+				for (; ifa != 0; ifa = ifa->ifa_list.tqe_next) {
+					sadl = (struct sockaddr_dl *)ifa->ifa_addr;
+					/* only return ethernet addresses */
+					/* XXX what about FDDI, etc. ? */
+					if (sadl->sdl_family != AF_LINK ||
+					    sadl->sdl_type != IFT_ETHER)
+						continue;
+					if (ifnum--)
+						/* not the reqested iface */
+						continue;
+					memcpy((caddr_t)&lreq.hwaddr.sa_data,
+					       LLADDR(sadl),
+					       MIN(sadl->sdl_alen,
+						   sizeof(lreq.hwaddr.sa_data)));
+					lreq.hwaddr.sa_family =
+						sadl->sdl_family;
+					error = copyout((caddr_t)&lreq, data,
+							sizeof(lreq));
+					found = 1;
+					break;
+				}
+		}
+	} else
+		/* not an "eth*" name */
+		error = EINVAL;
+    
+out:
+	return error;
+}
+#undef IF_NAME_LEN 16
+
 int
 linux_ioctl_socket(p, uap, retval)
 	register struct proc *p;
@@ -483,6 +593,9 @@ linux_ioctl_socket(p, uap, retval)
 	case LINUX_SIOCDELMULTI:
 		SCARG(&ia, com) = SIOCDELMULTI;
 		break;
+	case LINUX_SIOCGIFHWADDR:
+	        return linux_getifhwaddr(p, retval, SCARG(uap, fd),
+					 SCARG(uap, data));
 	default:
 		return EINVAL;
 	}
