@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2003/08/18 00:25:24 martin Exp $
+#	$NetBSD: Makefile,v 1.3 2003/08/18 22:49:17 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,9 @@ LIB=		opcodes
 SRCS=		${G_OPCODES_OBJS:.o=.c}
 CPPFLAGS=	-I${.CURDIR}  -I${.CURDIR}/../arch/${MACHINE_ARCH} \
 		-I${DIST}/include -I${.CURDIR}/../bfd \
-		-DHAVE_CONFIG_H \
+		-DHAVE_CONFIG_H
 
+libinstall::
 
 .endif
 
