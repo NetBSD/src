@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.42 2001/07/08 16:32:15 abs Exp $
+#	$NetBSD: SHARK,v 1.43 2001/10/19 00:12:24 phil Exp $
 # From: NetBSD: GENERIC,v 1.72 2000/08/04 02:17:46 hubertf Exp
 #
 #	SHARK
@@ -6,7 +6,7 @@
 
 include	"arch/arm32/conf/std.arm32"
 
-#ident		"GENERIC-$Revision: 1.42 $"
+#ident		"GENERIC-$Revision: 1.43 $"
 
 # estimated number of users
 maxusers	32
@@ -57,6 +57,7 @@ file-system	KERNFS		# /kern
 #file-system	PROCFS		# /proc
 #file-system	UMAPFS		# NULLFS + uid and gid remapping
 #file-system	UNION		# union file system
+#file-system	CODA		# Coda file system (needs vcoda below)
 
 # File system options
 #options 	QUOTA		# UFS quotas
@@ -222,3 +223,4 @@ pseudo-device	rnd			# /dev/random and /dev/urandom
 #pseudo-device	profiler 1		# fiq based profiling device
 pseudo-device	sequencer 1		# MIDI sequencer
 pseudo-device	openfirm		# /dev/openfirm
+#pseudo-device	vcoda	4		# coda kernel <-> cachemanager
