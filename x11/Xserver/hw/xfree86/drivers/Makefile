@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2004/07/13 09:29:45 sekiya Exp $
+#	$NetBSD: Makefile,v 1.9 2004/11/11 20:05:23 nathanw Exp $
 
 SUBDIR=	ati atimisc chips fbdev glint imstt mga nv r128 radeon \
-	s3 s3virge savage sis tdfx trident vga
+	s3 s3virge savage sis tdfx trident vga wsfb
 
 .if ${MACHINE} == "i386"
 SUBDIR+=	i740 i810 neomagic via vmware
