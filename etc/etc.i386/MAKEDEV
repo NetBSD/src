@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.82 1999/03/09 19:31:00 he Exp $
+#	$NetBSD: MAKEDEV,v 1.83 1999/03/26 04:37:29 mrg Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -86,7 +86,7 @@
 #	random	Random number generator
 #	speaker	pc speaker				(XXX - installed)
 #	lkm	loadable kernel modules interface
-#	audio	audio device
+#	audio*	audio devices
 #	apm	power management device
 #	tun*	network tunnel driver
 #	joy*	joystick device
@@ -117,6 +117,7 @@ all)
 	sh $0 lpt0 lpt1 lpt2 ttyv0 tun0 tun1 ipl
 	sh $0 ccd0 ccd1 ccd2 ccd3 md0 ss0 ch0 uk0 uk1 random
 	sh $0 speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local satlink0
+	sh $0 audio0 audio1 audio2 audio3
 	sh $0 ttyv0 ttyv1 ttyv2 ttyv3 ttyv4 ttyv5 ttyv6 ttyv7
 	sh $0 usbs
 	sh $0 music rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7
