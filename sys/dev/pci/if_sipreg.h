@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sipreg.h,v 1.8 2001/12/20 03:32:31 thorpej Exp $	*/
+/*	$NetBSD: if_sipreg.h,v 1.9 2002/02/09 21:04:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -249,6 +249,9 @@ struct sip_desc {
 #else
 #define	CFG_EUPHCOMP	0x00000100	/* 83810 descriptor compat (83815) */
 #endif /* DP83820 */
+#define	CFG_EDBMASTEN	0x00002000	/* 635,900B ?? from linux driver */
+#define	CFG_RNDCNT	0x00000400	/* 635,900B ?? from linux driver */
+#define	CFG_FAIRBO	0x00000200	/* 635,900B ?? from linux driver */
 #define	CFG_REQALG	0x00000080	/* PCI bus request alg. */
 #define	CFG_SB		0x00000040	/* single backoff */
 #define	CFG_POW		0x00000020	/* program out of window timer */
@@ -519,6 +522,15 @@ struct sip_desc {
 #define	RFCR_RFADDR_MC5	  0x00090000	/* multicast hash word 5 */
 #define	RFCR_RFADDR_MC6	  0x000a0000	/* multicast hash word 6 */
 #define	RFCR_RFADDR_MC7	  0x000b0000	/* multicast hash word 7 */
+/* For SiS900B and 635/735 only */
+#define	RFCR_RFADDR_MC8	  0x000c0000	/* multicast hash word 8 */
+#define	RFCR_RFADDR_MC9	  0x000d0000	/* multicast hash word 9 */
+#define	RFCR_RFADDR_MC10  0x000e0000	/* multicast hash word 10 */
+#define	RFCR_RFADDR_MC11  0x000f0000	/* multicast hash word 11 */
+#define	RFCR_RFADDR_MC12  0x00100000	/* multicast hash word 12 */
+#define	RFCR_RFADDR_MC13  0x00110000	/* multicast hash word 13 */
+#define	RFCR_RFADDR_MC14  0x00120000	/* multicast hash word 14 */
+#define	RFCR_RFADDR_MC15  0x00130000	/* multicast hash word 15 */
 
 #define	RFCR_NS_RFADDR_PMATCH0	0x0000	/* perfect match octets 1-0 */
 #define	RFCR_NS_RFADDR_PMATCH2	0x0002	/* perfect match octets 3-2 */
@@ -691,9 +703,11 @@ struct sip_desc {
 /*
  * Revision codes for the SiS 630 chipset built-in Ethernet.
  */
+#define	SIS_REV_900B	0x03
 #define	SIS_REV_630E	0x81
 #define	SIS_REV_630S	0x82
 #define	SIS_REV_630EA1	0x83
+#define	SIS_REV_635	0x90	/* same for 735 (745?) */
 
 /*
  * Serial EEPROM opcodes, including the start bit.
