@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.185 2001/04/14 06:49:31 thorpej Exp $
+#	$NetBSD: files.i386,v 1.186 2001/04/19 17:32:41 uch Exp $
 #
 # new style config file for i386 architecture
 #
@@ -149,6 +149,7 @@ file	arch/i386/pci/opti82c558.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/opti82c700.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/sis85c503.c	pcibios & pcibios_intr_fixup
 file	arch/i386/pci/via82c586.c	pcibios & pcibios_intr_fixup
+file	arch/i386/pci/amd756.c		pcibios & pcibios_intr_fixup
 file	arch/i386/pci/pci_bus_fixup.c	pcibios & pcibios_bus_fixup
 file	arch/i386/pci/pci_addr_fixup.c	pcibios & pcibios_addr_fixup
 defopt	PCI_CONF_MODE
