@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.1.2.4 2002/11/24 07:01:27 wdk Exp $ */
+/*	$NetBSD: SYS.h,v 1.1.2.5 2002/12/01 10:03:19 wdk Exp $ */
 
 /*-
  * Copyright (c) 1996 Jonathan Stone
@@ -89,8 +89,6 @@
 #define PIC_CALL(l,sr)		  \
 	la sr, _C_LABEL(l)	; \
 	jalr sr			; \
-	nop
-
 
 #ifdef __STDC__
 # define SYSTRAP(x)	li v0,SYS_ ## x; syscall;
