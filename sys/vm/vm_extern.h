@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_extern.h,v 1.29 1998/01/03 02:53:00 thorpej Exp $	*/
+/*	$NetBSD: vm_extern.h,v 1.30 1998/01/31 04:02:39 ross Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -91,13 +91,9 @@ void		 swapout __P((struct proc *));
 void		 swapout_threads __P((void));
 int		 swfree __P((struct proc *, int));
 void		 swstrategy __P((struct buf *));
-void		 thread_block __P((void));
+void		 thread_block __P((char *));
 void		 thread_sleep_msg __P((void *, simple_lock_t,
-		     boolean_t, char *));
-
-/* backwards compatibility */
-#define	thread_sleep(event, lock, ruptible)	\
-		thread_sleep_msg((event), (lock), (ruptible), "thrd_sleep")
+		     boolean_t, char *, int));
 
 /*
  * This define replaces the thread_wakeup prototype, as thread_wakeup
