@@ -1,4 +1,4 @@
-/*	$NetBSD: p_nec_r94.c,v 1.1 2001/06/13 15:36:04 soda Exp $	*/
+/*	$NetBSD: p_nec_r94.c,v 1.2 2002/11/30 14:38:06 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -37,8 +37,8 @@ struct platform platform_nec_r94 = {
 	"NEC-R94",
 	"NEC W&S",
 	" (R94)",
+	"RISCstation 2200",
 	"NEC",
-	"NEC RISCstation 2200",
 	200, /* MHz ?? */
 	c_jazz_eisa_mainbusdevs,
 	platform_generic_match,
