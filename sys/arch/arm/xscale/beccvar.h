@@ -1,7 +1,7 @@
-/*	$NetBSD: beccvar.h,v 1.2 2003/03/25 19:45:52 thorpej Exp $	*/
+/*	$NetBSD: beccvar.h,v 1.3 2003/03/25 19:47:30 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2002 Wasabi Systems, Inc.
+ * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
  * All rights reserved.
  *
  * Written by Jason R. Thorpe for Wasabi Systems, Inc.
