@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.subdir.mk,v 1.28 1997/10/11 08:43:35 mycroft Exp $
+#	$NetBSD: bsd.subdir.mk,v 1.29 1997/10/27 19:41:08 drochner Exp $
 #	@(#)bsd.subdir.mk	8.1 (Berkeley) 6/8/93
 
 .if !target(__initialized__)
@@ -25,7 +25,8 @@ ${targ}-${dir}: .MAKE
 	@echo "===> ${_THISDIR_}${dir}"
 	@cd ${.CURDIR}/${dir}; \
 	${MAKE} "_THISDIR_=${_THISDIR_}${dir}/" ${targ}
-${targ}: ${targ}-${dir}
+subdir-${targ}: ${targ}-${dir}
+${targ}: subdir-${targ}
 .endfor
 
 # Backward-compatibility with the old rules.  If this went away,
