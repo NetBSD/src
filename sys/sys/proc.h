@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.143 2002/08/06 13:58:09 pooka Exp $	*/
+/*	$NetBSD: proc.h,v 1.144 2002/08/28 07:16:33 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -88,6 +88,7 @@ struct pgrp {
  */
 struct exec_package;
 struct ps_strings;
+struct ras;
 
 struct emul {
 	const char	*e_name;	/* Symbolic name */
@@ -173,6 +174,10 @@ struct proc {
 	struct proc	*p_pptr;	/* Pointer to parent process */
 	LIST_ENTRY(proc) p_sibling;	/* List of sibling processes */
 	LIST_HEAD(, proc) p_children;	/* Pointer to list of children */
+
+	LIST_HEAD(, ras) p_raslist;	/* Pointer to RAS queue */
+	u_int p_nras;			/* number of RASs */
+	struct simplelock p_raslock;	/* Lock for RAS queue */
 
 /*
  * The following fields are all zeroed upon creation in fork.

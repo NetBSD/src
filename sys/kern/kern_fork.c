@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.91 2002/08/06 13:58:08 pooka Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.92 2002/08/28 07:16:37 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.91 2002/08/06 13:58:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.92 2002/08/28 07:16:37 gmcgarry Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.91 2002/08/06 13:58:08 pooka Exp $")
 #include <sys/pool.h>
 #include <sys/mount.h>
 #include <sys/proc.h>
+#include <sys/ras.h>
 #include <sys/resourcevar.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
@@ -373,6 +374,13 @@ fork1(struct proc *p1, int flags, int exitsig, void *stack, size_t stacksize,
 	memcpy(p2->p_cred, p1->p_cred, sizeof(*p2->p_cred));
 	p2->p_cred->p_refcnt = 1;
 	crhold(p1->p_ucred);
+
+	LIST_INIT(&p2->p_raslist);
+	p2->p_nras = 0;
+	simple_lock_init(&p2->p_raslock);
+#if defined(__HAVE_RAS)
+	ras_fork(p1, p2);
+#endif
 
 	/* bump references to the text vnode (for procfs) */
 	p2->p_textvp = p1->p_textvp;
