@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.5 1998/10/13 15:02:41 bouyer Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.6 1998/10/13 15:18:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -585,6 +585,9 @@ again:
 	case PIOMODE:
 		/* Don't try to set modes if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
+			goto geometry;
+		/* Also don't try if the drive didn't report its mode */
+		if ((drvp->drive_flags & DRIVE_MODE) == 0)
 			goto geometry;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);

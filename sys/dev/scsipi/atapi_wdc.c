@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.5 1998/10/13 15:02:43 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.6 1998/10/13 15:18:48 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -607,6 +607,9 @@ again:
 		/* Don't try to set mode if controller can't be adjusted */
 		if ((chp->wdc->cap & WDC_CAPABILITY_MODE) == 0)
 			goto ready;
+		/* Also don't try if the drive didn't report its mode */
+		if ((drvp->drive_flags & DRIVE_MODE) == 0)
+			goto ready;;
 		wdccommand(chp, drvp->drive, SET_FEATURES, 0, 0, 0,
 		    0x08 | drvp->PIO_mode, WDSF_SET_MODE);
 		drvp->state = PIOMODE_WAIT;
