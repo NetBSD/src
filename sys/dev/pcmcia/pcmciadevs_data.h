@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.57 1999/11/06 00:59:56 enami Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.58 1999/11/20 18:32:32 jtk Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.56 1999/11/06 00:58:32 enami Exp 
+ *	NetBSD: pcmciadevs,v 1.57 1999/11/20 18:32:08 jtk Exp 
  */
 
 /*-
@@ -344,6 +344,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "TDK Corporation",
 	    "Xircom CreditCard CE2 Ethernet"	},
+	},
+	{
+	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CE3_10_100,
+	    PCMCIA_CIS_TDK_XIR_CE3_10_100,
+	    0,
+	    "TDK Corporation",
+	    "Xircom CreditCard CE3 10/100 Ethernet"	},
 	},
 	{
 	    PCMCIA_VENDOR_TDK, PCMCIA_PRODUCT_TDK_XIR_CNW,
