@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.161 1999/09/27 00:14:52 perry Exp $
+# $NetBSD: mi,v 1.162 1999/09/29 15:46:52 jdolecek Exp $
 ./sys
 ./usr/bin/ar
 ./usr/bin/as
@@ -720,10 +720,8 @@
 ./usr/include/nl_types.h
 ./usr/include/nlist.h
 ./usr/include/nsswitch.h
-./usr/include/ntfs
 ./usr/include/ntfs/ntfs.h
 ./usr/include/ntfs/ntfs_compr.h
-./usr/include/ntfs/ntfs_extern.h
 ./usr/include/ntfs/ntfs_ihash.h
 ./usr/include/ntfs/ntfs_inode.h
 ./usr/include/ntfs/ntfs_subr.h
