@@ -1,4 +1,4 @@
-#	$NetBSD: disktab,v 1.4.2.1 1997/11/09 20:04:40 mellon Exp $
+#	$NetBSD: disktab,v 1.4.2.2 1998/12/01 04:11:20 cgd Exp $
 #
 #	from: @(#)disktab	8.1 (Berkeley) 6/9/93
 #
@@ -37,6 +37,12 @@
 # has the same amount for all disks (currently 65536 sectors or 32megs).
 * The `b' partition is approx 48 megs while `c' is always the entire disk. T
 # The  sum of `d', `e', and `f' is equal to `g' which is everything else.
+
+miniroot:install diskimage\
+	:dt=SCSI:ns#53:nt#15:nc#82:\
+	:se#512:su#131072:rm#3600:\
+	:pa#65536:oa#0:ba#8192:fa#1024:\
+	:pc#65536:oc#0:bc#8192:fc#1024:
 
 rz22|RZ22|DEC RZ22 Winchester:\
 	:dt=SCSI:ty=winchester:ns#33:nt#4:nc#776:\
