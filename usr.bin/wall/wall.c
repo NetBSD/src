@@ -1,4 +1,4 @@
-/*	$NetBSD: wall.c,v 1.21 2003/03/27 13:16:19 lukem Exp $	*/
+/*	$NetBSD: wall.c,v 1.22 2003/03/27 13:21:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wall.c	8.2 (Berkeley) 11/16/93";
 #endif
-__RCSID("$NetBSD: wall.c,v 1.21 2003/03/27 13:16:19 lukem Exp $");
+__RCSID("$NetBSD: wall.c,v 1.22 2003/03/27 13:21:48 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -159,9 +159,9 @@ addgroup(char *name)
 	struct group *grp;
 	struct wallgroup *g;
 
-	grp = getgrnam(optarg);
-	if ((grp = getgrnam(optarg)) == NULL)
-		errx(1, "unknown group `%s'", optarg);
+	grp = getgrnam(name);
+	if ((grp = getgrnam(name)) == NULL)
+		errx(1, "unknown group `%s'", name);
 	for (i = 0; grp->gr_mem[i]; i++)
 		continue;
 
