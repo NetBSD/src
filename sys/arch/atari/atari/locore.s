@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.15 1996/02/02 02:36:20 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.16 1996/03/27 10:20:44 leo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -522,6 +522,19 @@ mfp_timc:
 	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
 	jra	rei			|  all done
 #endif /* STATCLOCK */
+
+	/* MFP BUSYY handler --- printer --- */
+mfp_lpt:
+	addql	#1,_intrcnt+40		|  add another printer interrupt
+
+	moveml	d0-d1/a0-a1,sp@-	|  Save scratch registers
+	movw	sp@(16),sp@-		|  push previous SR value
+	clrw	sp@-			|     padded to longword
+	jbsr	_lptintr		|  handle interrupt
+	addql	#4,sp			|  pop SR
+	moveml	sp@+,d0-d1/a0-a1
+	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
+	jra	rei
 
 	/* MFP ACIA handler --- keyboard/midi --- */
 mfp_kbd:
@@ -1899,8 +1912,9 @@ _intrnames:
 	.asciz	"nmi"
 	.asciz	"8530-SCC"
 	.asciz	"statclock"
+	.asciz	"printer"
 _eintrnames:
 	.even
 _intrcnt:
-	.long	0,0,0,0,0,0,0,0,0,0
+	.long	0,0,0,0,0,0,0,0,0,0,0
 _eintrcnt:
