@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.4 1997/10/17 10:15:19 lukem Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.5 1997/10/18 08:49:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.4 1997/10/17 10:15:19 lukem Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.5 1997/10/18 08:49:32 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,7 +81,7 @@ create_knlist_aout(name, db)
 	const char *name;
 	DB *db;
 {
-	register int nsyms;
+	int nsyms;
 	struct exec ebuf;
 	FILE *fp;
 	NLIST nbuf;
@@ -243,7 +243,7 @@ get_kerntext(name)
 {
 	struct nlist nl[2];
 
-	bzero((caddr_t)nl, sizeof(nl));
+	memset((caddr_t)nl, 0, sizeof(nl));
 	nl[0].n_un.n_name = "_kernel_text";
 
 	if (nlist(name, nl) != 0)

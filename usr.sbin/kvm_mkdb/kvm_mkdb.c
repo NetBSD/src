@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.13 1997/10/17 10:15:09 lukem Exp $	*/
+/*	$NetBSD: kvm_mkdb.c,v 1.14 1997/10/18 08:49:30 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.13 1997/10/17 10:15:09 lukem Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.14 1997/10/18 08:49:30 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -102,7 +102,7 @@ main(argc, argv)
 	if (testdb())
 		exit(0);
 
-#define	basename(cp)	((p = rindex((cp), '/')) != NULL ? p + 1 : (cp))
+#define	basename(cp)	((p = strrchr((cp), '/')) != NULL ? p + 1 : (cp))
 	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
 	nlistname = basename(nlistpath);
 
