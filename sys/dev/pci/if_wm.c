@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.94 2005/02/20 15:55:54 jdolecek Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.95 2005/02/21 02:12:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.94 2005/02/20 15:55:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.95 2005/02/21 02:12:48 thorpej Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1379,7 +1379,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		return (0);
 	}
 
-	iphl = m0->m_pkthdr.csum_data >> 16;
+	iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 
 	/*
 	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
@@ -1401,7 +1401,7 @@ wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
 		fields |= WTX_TXSM;
 		tucs = WTX_TCPIP_TUCSS(offset) |
-		   WTX_TCPIP_TUCSO(offset + (m0->m_pkthdr.csum_data & 0xffff)) |
+		   WTX_TCPIP_TUCSO(offset + M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
 		   WTX_TCPIP_TUCSE(0) /* rest of packet */;
 	} else {
 		/* Just initialize it to a valid TCP context. */

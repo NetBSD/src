@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.46 2005/02/18 00:40:32 heas Exp $	*/
+/*	$NetBSD: hme.c,v 1.47 2005/02/21 02:12:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.46 2005/02/18 00:40:32 heas Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.47 2005/02/21 02:12:48 thorpej Exp $");
 
 /* #define HMEDEBUG */
 
@@ -947,8 +947,9 @@ hme_start(ifp)
 				m_free(m);
 				continue;
 			}
-			start += m->m_pkthdr.csum_data >> 16;
-			offset = (m->m_pkthdr.csum_data & 0xffff) + start;
+			start += M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+			offset = M_CSUM_DATA_IPv4_OFFSET(m->m_pkthdr.csum_data)
+			    + start;
 			txflags = HME_XD_TXCKSUM |
 				  (offset << HME_XD_TXCSSTUFFSHIFT) |
 		  		  (start << HME_XD_TXCSSTARTSHIFT);
