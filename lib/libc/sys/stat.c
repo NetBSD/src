@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.2 1997/10/22 00:56:39 fvdl Exp $	*/
+/*	$NetBSD: stat.c,v 1.3 1998/12/02 19:47:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Frank van der Linden
@@ -35,6 +35,15 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+__warn_references(stat,
+    "warning: reference to compatibility stat(); include <sys/stat.h> to generate correct reference")
+
+__warn_references(fstat,
+    "warning: reference to compatibility fstat(); include <sys/stat.h> to generate correct reference")
+
+__warn_references(lstat,
+    "warning: reference to compatibility lstat(); include <sys/stat.h> to generate correct reference")
 
 /*
  * Convert from a new to an old stat structure.
