@@ -1,4 +1,4 @@
-/*	$NetBSD: isinf.c,v 1.4 1998/10/13 14:43:37 kleink Exp $	*/
+/*	$NetBSD: isinf.c,v 1.5 1998/11/14 19:31:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)isinf.c	5.1 (Berkeley) 3/18/91";
 #else
-__RCSID("$NetBSD: isinf.c,v 1.4 1998/10/13 14:43:37 kleink Exp $");
+__RCSID("$NetBSD: isinf.c,v 1.5 1998/11/14 19:31:01 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -60,7 +60,7 @@ isnan(d)
 		u_int manh : 20;
 		u_int  exp : 11;
 		u_int sign :  1;
-	} *p = (struct IEEEdp *)&d;
+	} *p = (struct IEEEdp *)(void *)&d;
 
 	return(p->exp == 2047 && (p->manh || p->manl));
 }
@@ -74,7 +74,7 @@ isinf(d)
 		u_int manh : 20;
 		u_int  exp : 11;
 		u_int sign :  1;
-	} *p = (struct IEEEdp *)&d;
+	} *p = (struct IEEEdp *)(void *)&d;
 
 	return(p->exp == 2047 && !p->manh && !p->manl);
 }
