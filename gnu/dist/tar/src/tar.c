@@ -200,6 +200,7 @@ static struct option long_options[] =
   {"exclude", required_argument, 0, EXCLUDE_OPTION},
   {"exclude-from", required_argument, 0, 'X'},
   {"extract", no_argument, 0, 'x'},
+  {"fast-read", no_argument, 0, 0},
   {"file", required_argument, 0, 'f'},
   {"files-from", required_argument, 0, 'T'},
   {"force-local", no_argument, &force_local_option, 1},
