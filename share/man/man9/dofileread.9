@@ -1,4 +1,4 @@
-.\"     $NetBSD: dofileread.9,v 1.2 2002/10/20 10:46:57 wiz Exp $
+.\"     $NetBSD: dofileread.9,v 1.3 2002/10/20 11:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,8 +39,8 @@
 .Os
 .Sh NAME
 .Nm dofileread ,
-.Nm dofilewrite ,
 .Nm dofilereadv ,
+.Nm dofilewrite ,
 .Nm dofilewritev ,
 .Nd high-level file operations
 .Sh SYNOPSIS
@@ -61,19 +61,19 @@
 "const struct iovec *iovp" "int iovcnt" "off_t *offset" "int flags" \
 "register_t *retval"
 .Sh DESCRIPTION
-The function implement the underlying functionality of the
+The functions implement the underlying functionality of the
 .Xr read 2 ,
 .Xr write 2 ,
 .Xr readv 2 ,
 and
 .Xr writev 2
-system calls.  They are also used throughout the kernel as high-level
-access routines for file I/O.
+system calls.
+They are also used throughout the kernel as high-level access routines
+for file I/O.
 .Pp
 The
 .Fn dofileread
-function
-attempts to read
+function attempts to read
 .Fa nbytes
 of data from the object referenced by file entry
 .Fa fp
@@ -81,8 +81,7 @@ into the buffer pointed to by
 .Fa buf .
 The
 .Fn dofilewrite
-function
-attempts to write
+function attempts to write
 .Fa nbytes
 of data to the object referenced by file entry
 .Fa fp
@@ -93,7 +92,7 @@ The
 .Fn dofilereadv
 and
 .Fn dofilewritev
-functions perform the same operations, but scatters the data with the
+functions perform the same operations, but scatter the data with the
 .Fa iovcnt
 buffers specified by the members of the
 .Fa iov
@@ -119,13 +118,14 @@ Upon successful completion the number of bytes which were transferred
 is returned in
 .Fa *retval .
 .Sh RETURN VALUES
-Upon successful complete zero is returned, otherwise and appropriate
+Upon successful completion zero is returned, otherwise an appropriate
 error is returned.
 .Sh CODE REFERENCES
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising these file
-operations can be found.  All pathnames are relative to
+operations can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The framework for these file operations is implemented within the file

@@ -1,4 +1,4 @@
-.\"     $NetBSD: file.9,v 1.2 2002/10/20 10:46:58 wiz Exp $
+.\"     $NetBSD: file.9,v 1.3 2002/10/20 11:04:52 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,10 +62,11 @@
 .Fn FILE_SET_MATURE "struct file *fp"
 .Sh DESCRIPTION
 The file descriptor table of a process references a file entry for
-each file used by the kernel.  See
+each file used by the kernel.
+See
 .Xr filedesc 9
-for details of the file descriptor table.  Each file entry is given
-by:
+for details of the file descriptor table.
+Each file entry is given by:
 .Pp
 .Bd -literal
 struct file {
@@ -98,95 +99,102 @@ struct file {
 .Ed
 .Pp
 .Nx
-treats file entries in an object-oriented fashion after they are
-created.  Each entry specifies the object type,
+treats file entries in an object-oriented fashion after they are created.
+Each entry specifies the object type,
 .Em f_type ,
-which can have the values DTYPE_VNODE, DTYPE_SOCKET, DTYPE_PIPE and
-DTYPE_MISC.  The file entry also has a pointer
-to a data structure,
+which can have the values
+.Dv DTYPE_VNODE ,
+.Dv DTYPE_SOCKET ,
+.Dv DTYPE_PIPE
+and
+.Dv DTYPE_MISC .
+The file entry also has a pointer to a data structure,
 .Em f_data ,
-that contains information specific to the instance of the underlying
-object.  The data structure is opaque to the routines that manipulate
-the file entry.  Each entry also contains an array of function
-pointers,
+that contains information specific to the instance of the underlying object.
+The data structure is opaque to the routines that manipulate the file entry.
+Each entry also contains an array of function pointers,
 .Em f_ops ,
 that translate the generic operations on a file descriptor into the
-specific action associated with its type.  A reference to the data
-structure is passed as the first parameter to a function that
-implements a file operation.  The operations that must be implemented
-for each descriptor type are read, write, ioctl, fcntl, poll, stat and
-close.  All state associated with an instance of an object must be
-stored in that instance's data structure; the underlying objects are
-not permitted to manipulate the file entry themselves.
+specific action associated with its type.
+A reference to the data structure is passed as the first parameter to a
+function that implements a file operation.
+The operations that must be implemented for each descriptor type are
+read, write, ioctl, fcntl, poll, stat, and close.
+All state associated with an instance of an object must be stored in
+that instance's data structure; the underlying objects are not permitted
+to manipulate the file entry themselves.
 .Pp
 For data files, the file entry points to a
 .Xr vnode 9
-structure.  Pipes and sockets do not have data blocks allocated on the
-disk and are handled by the special-device filesystem that calls
-appropriate drivers to handle I/O for them.  For pipes, the file entry
-points to system block that is used during data transfer.  For
-sockets, the file entry points to a system block that is used in doing
-interprocess communications.
+structure.
+Pipes and sockets do not have data blocks allocated on the disk and
+are handled by the special-device filesystem that calls appropriate
+drivers to handle I/O for them.
+For pipes, the file entry points to a system block that is used during
+data transfer.
+For sockets, the file entry points to a system block that is used in
+doing interprocess communications.
 .Pp
 The descriptor table of a process (and thus access to the objects to
 which the descriptors refer) is inherited from its parent, so several
-different processes may reference the same file entry.  Thus, each
-file entry has a reference count,
+different processes may reference the same file entry.
+Thus, each file entry has a reference count,
 .Em f_count .
-Each time a new reference is created, the reference count is
-incremented.  When a descriptor is closed, the reference count is
-decremented.  When the reference count drops to zero, the file emtry
-is freed.
+Each time a new reference is created, the reference count is incremented.
+When a descriptor is closed, the reference count is decremented.
+When the reference count drops to zero, the file entry is freed.
 .Pp
 Some file descriptor semantics can be altered through the
 .Ar flags
 argument to the
 .Xr open 2
-system call.  These flags are recorded in
+system call.
+These flags are recorded in
 .Em f_flags
-member of the file entry.  For example, the flags record whether the
-descriptor is open for reading, writing, or both reading and writing.
+member of the file entry.
+For example, the flags record whether the descriptor is open for
+reading, writing, or both reading and writing.
 The following flags and their corresponding
 .Xr open 2
 flags are:
 .Pp
 .Bl -tag -offset indent -width FNONBLOCK -compact
 .It FAPPEND
-O_APPEND
+.Dv O_APPEND
 .It FASYNC
-O_ASYNC
+.Dv O_ASYNC
 .It O_FSYNC
-O_SYNC
+.Dv O_SYNC
 .It FNDELAY
-O_NONBLOCK
+.Dv O_NONBLOCK
 .It O_NDELAY
-O_NONBLOCK
+.Dv O_NONBLOCK
 .It FNONBLOCK
-O_NONBLOCK
+.Dv O_NONBLOCK
 .It FFSYNC
-O_SYNC
+.Dv O_SYNC
 .It FDSYNC
-O_DSYNC
+.Dv O_DSYNC
 .It FRSYNC
-O_RSYNC
+.Dv O_RSYNC
 .It FALTIO
-O_ALT_IO
+.Dv O_ALT_IO
 .El
 .Pp
 Some additional state-specific flags are recorded in the
 .Em f_iflags
-member.  Valid values include:
+member.
+Valid values include:
 .Pp
 .Bl -tag -offset indent -width FIF_WANTCLOSE -compact
 .It FIF_WANTCLOSE
 If set, then the reference count on the file is zero, but there were
-multiple users of the file.  This can happen if a file descriptor
-table is shared by multiple processes.  This flag notifies potential
-users that the file is closing and will prevent them from adding
-additional uses to the file.
+multiple users of the file.
+This can happen if a file descriptor table is shared by multiple processes.
+This flag notifies potential users that the file is closing and will
+prevent them from adding additional uses to the file.
 .It FIF_LARVAL
-The file entry is not fully constructed (mature) and should not be
-used.
+The file entry is not fully constructed (mature) and should not be used.
 .El
 .Pp
 The
@@ -196,10 +204,10 @@ and
 system calls do not take an offset in the file as an argument.
 Instead, each read or write updates the current file offset,
 .Em f_offset
-in the file according to the number of bytes transferred.  Since more
-than one process may open the same file and each needs its own offset
-in the file, the offset cannot be stored in the per-object data
-structure.
+in the file according to the number of bytes transferred.
+Since more than one process may open the same file and each needs its
+own offset in the file, the offset cannot be stored in the per-object
+data structure.
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .It Fn closef "fp" "p"
@@ -242,7 +250,8 @@ the FIF_LARVAL flag in
 This section describes places within the
 .Nx
 source tree where actual code implementing or utilising file entries
-can be found.  All pathnames are relative to
+can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The framework for file entry handling is implemented within the file
