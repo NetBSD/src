@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.18 1998/05/27 14:01:02 matt Exp $	*/
+/*	$NetBSD: pdq.c,v 1.19 1998/05/28 03:07:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -1014,9 +1014,9 @@ pdq_process_transmitted_data(
     }
     if (tx->tx_completion != completion) {
 	tx->tx_completion = completion;
-	pdq_os_restart_transmitter(pdq);
 	pdq->pdq_intrmask &= ~PDQ_HOST_INT_TX_ENABLE;
 	PDQ_CSR_WRITE(&pdq->pdq_csrs, csr_host_int_enable, pdq->pdq_intrmask);
+	pdq_os_restart_transmitter(pdq);
     }
     PDQ_DO_TYPE2_PRODUCER(pdq);
 }
