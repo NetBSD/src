@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.18 2001/10/05 15:14:18 simonb Exp $
+#	$NetBSD: Makefile.mips,v 1.19 2001/10/08 10:14:20 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -61,7 +61,8 @@ CFLAGS=		${ENDIAN} ${DEBUG} ${COPTS} ${CWARNFLAGS} ${GP} \
 		-mno-abicalls -mno-half-pic
 AFLAGS=		${ENDIAN} -x assembler-with-cpp -traditional-cpp -D_LOCORE
 LD+=		${ENDIAN}
-LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP} -T ${MIPS}/conf/kern.ldscript
+KERNLDSCRIPT?=	${MIPS}/conf/kern.ldscript
+LINKFLAGS+=	-Ttext ${TEXTADDR} -e start ${GP} -T ${KERNLDSCRIPT}
 .if (${ENDIAN} == "-EB")
 LINKFLAGS+=	--oformat elf32-bigmips
 .else
