@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.31 2003/09/14 19:20:17 jschauma Exp $ */
+/* $NetBSD: chmod.c,v 1.32 2004/01/04 03:34:01 jschauma Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.31 2003/09/14 19:20:17 jschauma Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.32 2004/01/04 03:34:01 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,9 +57,6 @@ __RCSID("$NetBSD: chmod.c,v 1.31 2003/09/14 19:20:17 jschauma Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <vis.h>
-
-int stdout_ok;
 
 int	main(int, char *[]);
 void	usage(void);
@@ -130,8 +127,6 @@ done:	argv += optind;
 
 	if (argc < 2)
 		usage();
-
-	stdout_ok = isatty(STDOUT_FILENO);
 
 	fts_options = FTS_PHYSICAL;
 	if (Rflag) {
