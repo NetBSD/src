@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.31 1996/09/09 17:14:04 mycroft Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.32 1996/09/14 12:35:07 mrg Exp $	*/
 
 /*
  * IP multicast forwarding procedures
@@ -1648,7 +1648,6 @@ tbf_dq_sel(vifp, ip)
 	register struct vif *vifp;
 	register struct ip *ip;
 {
-	register int i;
 	register u_int p;
 	register struct mbuf **mp, *m;
 	register int s = splsoftnet();
