@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.141 2003/10/19 15:41:23 bouyer Exp $
+#	$NetBSD: DEVNAMES,v 1.142 2003/10/21 00:33:12 uwe Exp $
 #
 # This file contains all used device names and defined attributes in 
 # alphabetical order. New devices added to the system somewhere should first 
@@ -27,6 +27,7 @@ ad			vax
 ad1848			MI		Attribute
 adb			mac68k
 adb			macppc
+adc			hpcsh
 ade			alpha
 adv			MI		
 adw			MI		
@@ -224,6 +225,7 @@ cpu			evbmips
 cpu			evbppc
 cpu			hpcarm
 cpu			hpcmips
+cpu			hpcsh
 cpu			macppc
 cpu			mipsco
 cpu			netwinder
@@ -463,6 +465,12 @@ hb			news68k
 hb			newsmips
 hcsc			MI
 hd44780			MI		Attribute
+hd64461if		hpcsh
+hd64461pcmcia		hpcsh
+hd64461video		hpcsh
+hd64465if		hpcsh
+hd64465pcmcia		hpcsh
+hd64465video		hpcsh
 hd64570			MI		Attribute
 hdc			vax
 hdfd			atari
@@ -473,7 +481,11 @@ hme			MI
 hp			vax
 hpc			sgimips
 hpcfb			hpcmips
+hpcfb			hpcsh
 hpcfbif			hpcmips		Attribute
+hpcfbif			hpcsh		Attribute
+hpckbd			hpcsh
+hpckbdif		hpcsh		Attribute
 hpibbus			hp300
 hpibdev			hp300		Attribute
 hptide			MI
@@ -568,6 +580,8 @@ ixpclk			evbarm
 ixpio			evbarm
 ixpsip			evbarm
 iy			MI		
+j6x0pwr			hpcsh
+j6x0tp			hpcsh
 joy			arc
 joy			bebox
 joy			cats
@@ -646,6 +660,7 @@ mainbus			evbppc
 mainbus			hp300
 mainbus			hpcarm
 mainbus			hpcmips
+mainbus			hpcsh
 mainbus			i386
 mainbus			i386		Attribute
 mainbus			luna68k
@@ -900,6 +915,7 @@ pcscp			MI
 pdcide			MI
 pdq			MI		Attribute
 pfb			bebox
+pfckbd			hpcsh
 pica			arc
 piixide			MI
 pioc			acorn32
@@ -1015,6 +1031,7 @@ sci			amiga		Attribute
 sci			amigappc	Attribute
 sci			evbsh3
 scif			evbsh3
+scif			hpcsh
 scn			pc532
 scr			shark
 scsi			MI		Attribute
@@ -1037,6 +1054,7 @@ sfb			alpha
 sfb			pmax
 sgec			MI		Attribute
 shb			evbsh3
+shb			hpcsh
 shb			mmeye
 shpcic			evbsh3
 shpcic			mmeye
@@ -1123,7 +1141,9 @@ todclock		netwinder
 todservice		cats		Attribute
 token			MI		Attribute
 topcat			hp300
+tpcalib			hpcarm		Attribute
 tpcalib			hpcmips		Attribute
+tpcalib			hpcsh		Attribute
 tpcic			sparc
 tqphy			MI		
 tr			MI		
