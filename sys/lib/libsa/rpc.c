@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc.c,v 1.2 1994/10/26 05:45:01 cgd Exp $	*/
+/*	$NetBSD: rpc.c,v 1.3 1995/02/19 23:52:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -112,7 +112,7 @@ callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 #ifdef RPC_DEBUG
 	if (debug)
-	    printf("callrpc: called\n");
+		printf("callrpc: called\n");
 #endif
 	if (rlen > sizeof(rbuf.ru.data))
 		panic("callrpc: huge read (%d > %d)",
@@ -133,6 +133,14 @@ callrpc(d, prog, vers, proc, sdata, slen, rdata, rlen)
 
 	cc = sendrecv(d, sendudp, rpc, sizeof(*rpc) + slen, recvrpc,
 	    ((u_char *)&rbuf.rrpc) - HEADER_SIZE, sizeof(rbuf) - HEADER_SIZE);
+#ifdef RPC_DEBUG
+	if (debug)
+		printf("callrpc: cc=%d rlen=%d, rp_stat=%d\n", cc, rlen,
+		    rbuf.rrpc.rp_stat);
+#endif
+
+	/* Bump xid so next request will be unique */
+	++d->xid;
 
 	if (cc < rlen) {
 		/* Check for an error return */
@@ -161,7 +169,7 @@ recvrpc(d, pkt, len)
 	errno = 0;
 #ifdef RPC_DEBUG
 	if (debug)
-	    printf("recvrpc: called\n");
+		printf("recvrpc: called len=%d\n", len);
 #endif
 	rpc = (struct rpc_reply *)checkudp(d, pkt, &len);
 	if (rpc == NULL || len < sizeof(*rpc)) {
@@ -172,6 +180,10 @@ recvrpc(d, pkt, len)
 #endif
 		return (-1);
 	}
+#ifdef RPC_DEBUG
+	if (debug)
+		printf("recvrpc: got response len=%d\n", len);
+#endif
 
 	NTOHL(rpc->rp_direction);
 	NTOHL(rpc->rp_stat);
@@ -191,9 +203,6 @@ recvrpc(d, pkt, len)
 #endif
 		return (-1);
 	}
-
-	/* Bump xid so next request will be unique */
-	++d->xid;
 
 	/* Return data count (thus indicating success) */
 	return (len - sizeof(*rpc));
