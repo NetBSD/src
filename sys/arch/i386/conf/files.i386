@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.88 1997/09/11 23:06:34 mycroft Exp $
+#	$NetBSD: files.i386,v 1.89 1997/10/14 03:55:51 jtk Exp $
 #
 # new style config file for i386 architecture
 #
@@ -53,6 +53,11 @@ define mainbus { }
 device	mainbus: isabus, eisabus, pcibus, mainbus
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
+
+# attribute used to bring in BIOS trampoline code for real-mode probing
+# of certain devices/BIOS features
+define bioscall
+file	arch/i386/i386/bioscall.s	bioscall needs-flag
 
 #device	mca at root {...}
 
@@ -171,9 +176,10 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 #
 
 # Advanced Power Management support (APM)
-device apm
+device apm: bioscall
 attach apm at mainbus
 file	arch/i386/i386/apm.c		apm needs-count
+file	arch/i386/i386/apmcall.s	apm
 
 #
 # Compatibility modules
