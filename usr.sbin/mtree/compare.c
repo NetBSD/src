@@ -1,4 +1,4 @@
-/*	$NetBSD: compare.c,v 1.23 2001/01/05 03:27:27 lukem Exp $	*/
+/*	$NetBSD: compare.c,v 1.24 2001/03/09 03:09:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,26 +38,28 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: compare.c,v 1.23 2001/01/05 03:27:27 lukem Exp $");
+__RCSID("$NetBSD: compare.c,v 1.24 2001/03/09 03:09:45 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
-#include <errno.h>
 #include <md5.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "mtree.h"
 #include "extern.h"
 
 extern int iflag, mflag, tflag, uflag;
 
-static char *ftype __P((u_int));
+static char *ftype(u_int);
 
 #define	INDENTNAMELEN	8
 #define MARK                                                                  \
@@ -112,10 +114,7 @@ do {                                                                          \
 } while (0)
 
 int
-compare(name, s, p)
-	char *name;
-	NODE *s;
-	FTSENT *p;
+compare(char *name, NODE *s, FTSENT *p)
 {
 	u_int32_t len, val, flags;
 	int fd, label;
@@ -351,9 +350,9 @@ typeerr:		LABEL;
 }
 
 char *
-inotype(type)
-	u_int type;
+inotype(u_int type)
 {
+
 	switch(type & S_IFMT) {
 	case S_IFBLK:
 		return ("block");
@@ -376,9 +375,9 @@ inotype(type)
 }
 
 static char *
-ftype(type)
-	u_int type;
+ftype(u_int type)
 {
+
 	switch(type) {
 	case F_BLOCK:
 		return ("block");
@@ -401,8 +400,7 @@ ftype(type)
 }
 
 char *
-rlink(name)
-	char *name;
+rlink(char *name)
 {
 	static char lbuf[MAXPATHLEN];
 	int len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.28 2001/02/20 19:45:51 hubertf Exp $	*/
+/*	$NetBSD: create.c,v 1.29 2001/03/09 03:09:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,12 +38,13 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.28 2001/02/20 19:45:51 hubertf Exp $");
+__RCSID("$NetBSD: create.c,v 1.29 2001/03/09 03:09:45 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -51,11 +52,13 @@ __RCSID("$NetBSD: create.c,v 1.28 2001/02/20 19:45:51 hubertf Exp $");
 #include <grp.h>
 #include <md5.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
 #include <vis.h>
+
 #include "mtree.h"
 #include "extern.h"
 
@@ -75,15 +78,14 @@ static u_long flags;
 static char codebuf[4*MAXPATHLEN + 1];
 static const char extra[] = { ' ', '\t', '\n', '\\', '#', '\0' };
 
-static int	dsort __P((const FTSENT **, const FTSENT **));
-static void	output __P((int *, const char *, ...))
+static int	dsort(const FTSENT **, const FTSENT **);
+static void	output(int *, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
-static int	statd __P((FTS *, FTSENT *, uid_t *, gid_t *, mode_t *,
-			   u_long *));
-static void	statf __P((FTSENT *));
+static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *, u_long *);
+static void	statf(FTSENT *);
 
 void
-cwalk()
+cwalk(void)
 {
 	FTS *t;
 	FTSENT *p;
@@ -131,8 +133,7 @@ cwalk()
 }
 
 static void
-statf(p)
-	FTSENT *p;
+statf(FTSENT *p)
 {
 	struct group *gr;
 	struct passwd *pw;
@@ -214,13 +215,8 @@ statf(p)
 #define	MTREE_MAXS 16
 
 static int
-statd(t, parent, puid, pgid, pmode, pflags)
-	FTS *t;
-	FTSENT *parent;
-	uid_t *puid;
-	gid_t *pgid;
-	mode_t *pmode;
-	u_long *pflags;
+statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
+      u_long *pflags)
 {
 	FTSENT *p;
 	gid_t sgid;
@@ -309,9 +305,9 @@ statd(t, parent, puid, pgid, pmode, pflags)
 }
 
 static int
-dsort(a, b)
-	const FTSENT **a, **b;
+dsort(const FTSENT **a, const FTSENT **b)
 {
+
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
 		if (!S_ISDIR((*b)->fts_statp->st_mode))
 			return (1);
@@ -320,29 +316,13 @@ dsort(a, b)
 	return (strcmp((*a)->fts_name, (*b)->fts_name));
 }
 
-#if __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
 void
-#if __STDC__
 output(int *offset, const char *fmt, ...)
-#else
-output(offset, fmt, va_alist)
-	int *offset;
-	char *fmt;
-        va_dcl
-#endif
 {
 	va_list ap;
 	char buf[1024];
-#if __STDC__
+
 	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 

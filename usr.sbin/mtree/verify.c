@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.17 1999/02/11 15:32:24 mrg Exp $	*/
+/*	$NetBSD: verify.c,v 1.18 2001/03/09 03:09:46 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,18 +38,20 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: verify.c,v 1.17 1999/02/11 15:32:24 mrg Exp $");
+__RCSID("$NetBSD: verify.c,v 1.18 2001/03/09 03:09:46 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+
 #include <dirent.h>
-#include <fts.h>
-#include <fnmatch.h>
-#include <unistd.h>
 #include <errno.h>
+#include <fnmatch.h>
+#include <fts.h>
 #include <stdio.h>
+#include <unistd.h>
+
 #include "mtree.h"
 #include "extern.h"
 
@@ -60,11 +62,11 @@ extern char fullpath[MAXPATHLEN];
 static NODE *root;
 static char path[MAXPATHLEN];
 
-static void	miss __P((NODE *, char *));
-static int	vwalk __P((void));
+static void	miss(NODE *, char *);
+static int	vwalk(void);
 
 int
-verify()
+verify(void)
 {
 	int rval;
 
@@ -75,7 +77,7 @@ verify()
 }
 
 static int
-vwalk()
+vwalk(void)
 {
 	FTS *t;
 	FTSENT *p;
@@ -153,9 +155,7 @@ vwalk()
 }
 
 static void
-miss(p, tail)
-	NODE *p;
-	char *tail;
+miss(NODE *p, char *tail)
 {
 	int create;
 	char *tp;

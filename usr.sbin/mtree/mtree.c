@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.14 1999/02/11 15:32:24 mrg Exp $	*/
+/*	$NetBSD: mtree.c,v 1.15 2001/03/09 03:09:45 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,16 +43,18 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mtree.c,v 1.14 1999/02/11 15:32:24 mrg Exp $");
+__RCSID("$NetBSD: mtree.c,v 1.15 2001/03/09 03:09:45 simonb Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+
 #include <errno.h>
-#include <unistd.h>
-#include <stdio.h>
 #include <fts.h>
+#include <stdio.h>
+#include <unistd.h>
+
 #include "mtree.h"
 #include "extern.h"
 
@@ -63,13 +65,11 @@ int cflag, dflag, eflag, iflag, mflag, rflag, sflag, tflag, uflag, Uflag;
 int keys;
 char fullpath[MAXPATHLEN];
 
-	int	main __P((int, char **));
-static	void	usage __P((void));
+	int	main(int, char **);
+static	void	usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	int ch;
 	char *dir, *p;
@@ -163,10 +163,10 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr,
-"usage: mtree [-cderUux] [-i|-m] [-f spec] [-K key] [-k key] [-p path]"
-    " [-s seed]\n");
+
+	(void)fprintf(stderr, "usage: mtree [-cderUux] [-i|-m] [-f spec]"
+	    " [-K key] [-k key] [-p path] [-s seed]\n");
 	exit(1);
 }
