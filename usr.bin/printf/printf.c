@@ -32,14 +32,16 @@
  */
 
 #ifndef lint
+#if !defined(SHELL) && !defined(BUILTIN)
 char copyright[] =
 "@(#) Copyright (c) 1989 The Regents of the University of California.\n\
  All rights reserved.\n";
+#endif
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)printf.c	5.9 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: printf.c,v 1.4 1993/11/05 20:12:40 jtc Exp $";
+static char rcsid[] = "$Id: printf.c,v 1.5 1993/11/19 20:30:57 jtc Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -50,22 +52,59 @@ static char rcsid[] = "$Id: printf.c,v 1.4 1993/11/05 20:12:40 jtc Exp $";
 #include <locale.h>
 #include <err.h>
 
-void	do_printf();
-void	print_escape_str();
-int	print_escape();
+static void	 do_printf __P((char *));
+static void	 print_escape_str();
+static int	 print_escape();
 
-int	getchr();
-int	getint();
-long	getlong();
-double	getdouble();
-char   *getstr();
+static int	 getchr __P((void));
+static double	 getdouble __P((void));
+static int	 getint __P((void));
+static long	 getlong __P((void));
+static char	*getstr __P((void));
+static char	*mklong __P((char *, int)); 
+static void	 usage __P((void)); 
      
-int	rval;
-char  **gargv;
+static int	rval;
+static char  **gargv;
 
 #define isodigit(c)	((c) >= '0' && (c) <= '7')
 #define octtobin(c)	((c) - '0')
 #define hextobin(c)	((c) >= 'A' && 'c' <= 'F' ? c - 'A' + 10 : (c) >= 'a' && (c) <= 'f' ? c - 'a' + 10 : c - '0')
+
+#ifdef SHELL
+#define main printfcmd
+#include "../../bin/sh/bltin/bltin.h"
+
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <vararg.h>
+#endif
+
+static void 
+#ifdef __STDC__
+warnx(const char *fmt, ...)
+#else
+warnx(fmt, va_alist)
+	const char *fmt;
+	va_dcl
+#endif
+{
+	
+	char buf[64];
+	va_list ap;
+
+#ifdef __STDC__
+	va_start(ap, fmt);
+#else
+	va_start(ap);
+#endif
+	vsprintf(buf, fmt, ap);
+	va_end(ap);
+
+	error(buf);
+}
+#endif /* SHELL */
 
 #define PF(f, func) { \
 	if (fieldwidth) \
@@ -80,37 +119,55 @@ char  **gargv;
 }
 
 int
+#ifdef BUILTIN
+progprintf(argc, argv)
+#else
 main(argc, argv)
+#endif
 	int argc;
 	char **argv;
 {
 	char *format;
+	int ch;
 
+#if !defined(SHELL) && !defined(BUILTIN)
 	setlocale (LC_ALL, "");
+#endif
 
-	if (argc < 2) {
-		fprintf(stderr, "usage: printf format [arg ...]\n");
-		exit(1);
+	while ((ch = getopt(argc, argv, "")) != -1) {
+		switch (ch) {
+		case '?':
+		default:
+			usage();
+			return (1);
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	if (argc < 1) {
+		usage();
+		return (1);
 	}
 
-	format = argv[1];
-	gargv  = argv + 2;
+	format = *argv;
+	gargv = ++argv;
 
 	do {
 		do_printf(format);
-	} while (*gargv);
+	} while (gargv > argv && *gargv);
 
-	exit (rval);
+	return (rval);
 }
 
-void
+static void
 do_printf(format)
 	char *format;
 {
 	static char *skip1, *skip2;
 	register char *fmt, *start;
 	register int fieldwidth, precision;
-	char convch, nextch, *mklong();
+	char convch, nextch;
 
 	/*
 	 * Basic algorithm is to scan the format string for conversion
@@ -150,7 +207,7 @@ do_printf(format)
 
 			for (; index(skip2, *fmt); ++fmt);
 			if (!*fmt) {
-			        warnx ("missing format character");
+				warnx ("missing format character");
 				rval = 1;
 				return;
 			}
@@ -182,8 +239,8 @@ do_printf(format)
 				break;
 			}
 			default:
-			        warnx ("%s: invalid directive", start);
-			        rval = 1;
+				warnx ("%s: invalid directive", start);
+				rval = 1;
 			}
 			*(fmt + 1) = nextch;
 			break;
@@ -203,7 +260,7 @@ do_printf(format)
 /*
  * Print SysV echo(1) style escape string 
  */
-void
+static void
 print_escape_str(str)
 	register char *str;
 {
@@ -242,7 +299,7 @@ print_escape_str(str)
 /*
  * Print "standard" escape characters 
  */
-int
+static int
 print_escape(str)
 	register char *str;
 {
@@ -338,27 +395,22 @@ print_escape(str)
 	return 1;
 }
 
-
-char *
+static char *
 mklong(str, ch)
 	char *str, ch;
 {
-	int len;
-	char *copy;
+	static char copy[64];
+	int len;	
 
 	len = strlen(str) + 2;
-	if (!(copy = malloc((unsigned int)len))) {
-	        err(1, NULL);
-		/* NOTREACHED */
-	}
-	bcopy(str, copy, len - 3);
+	memmove(copy, str, len - 3);
 	copy[len - 3] = 'l';
 	copy[len - 2] = ch;
 	copy[len - 1] = '\0';
-	return(copy);
+	return (copy);	
 }
 
-int
+static int
 getchr()
 {
 	if (!*gargv)
@@ -366,7 +418,7 @@ getchr()
 	return((int)**gargv++);
 }
 
-char *
+static char *
 getstr()
 {
 	if (!*gargv)
@@ -375,7 +427,7 @@ getstr()
 }
 
 static char *number = "+-.0123456789";
-int
+static int
 getint()
 {
 	if (!*gargv)
@@ -387,7 +439,7 @@ getint()
 	return 0;
 }
 
-long
+static long
 getlong()
 {
 	long val;
@@ -412,7 +464,7 @@ getlong()
 	return val;
 }
 
-double
+static double
 getdouble()
 {
 	double val;
@@ -435,4 +487,10 @@ getdouble()
 
 	gargv++;
 	return val;
+}
+
+static void
+usage()
+{
+	(void)fprintf(stderr, "usage: printf format [arg ...]\n");
 }
