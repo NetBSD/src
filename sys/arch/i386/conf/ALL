@@ -1,7 +1,7 @@
 #
 #	ALL -- everything that's currently supported
 #
-#	$Id: ALL,v 1.16 1993/08/27 23:55:28 brezak Exp $
+#	$Id: ALL,v 1.17 1993/08/29 01:54:25 mycroft Exp $
 #
 machine		"i386"
 cpu		"I386_CPU"
@@ -95,7 +95,7 @@ device is0 at isa? port 0x280 net irq 10 drq 7 vector isintr
 device ec0 at isa? port 0x250 net irq 9 iomem 0xd8000 iosiz 8192 vector ecintr
 
 #pseudo-devices
-pseudo-device pty8
+pseudo-device pty32
 #pseudo-device tb2	was never ported to 4.4
 pseudo-device devpager
 pseudo-device swappager
