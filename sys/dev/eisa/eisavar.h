@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.10 1996/10/21 22:31:03 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.10.8.1 1997/05/13 03:01:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -72,6 +72,7 @@ struct eisabus_attach_args {
 	char	*eba_busname;		/* XXX should be common */
 	bus_space_tag_t eba_iot;	/* eisa i/o space tag */
 	bus_space_tag_t eba_memt;	/* eisa mem space tag */
+	bus_dma_tag_t eba_dmat;		/* DMA tag */
 	eisa_chipset_tag_t eba_ec;
 };
 
@@ -81,6 +82,7 @@ struct eisabus_attach_args {
 struct eisa_attach_args {
 	bus_space_tag_t ea_iot;		/* eisa i/o space tag */
 	bus_space_tag_t ea_memt;	/* eisa mem space tag */
+	bus_dma_tag_t ea_dmat;		/* DMA tag */
 	eisa_chipset_tag_t ea_ec;
 
 	eisa_slot_t	ea_slot;
