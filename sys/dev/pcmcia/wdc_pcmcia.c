@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.72 2004/08/10 02:56:42 mycroft Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.73 2004/08/10 03:00:29 mycroft Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.72 2004/08/10 02:56:42 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.73 2004/08/10 03:00:29 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,23 +86,20 @@ CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
 const struct wdc_pcmcia_product {
 	u_int32_t	wpp_vendor;	/* vendor ID */
 	u_int32_t	wpp_product;	/* product ID */
-	int		wpp_quirk_flag;	/* Quirk flags */
-#define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
 	const char	*wpp_cis_info[4];	/* XXX necessary? */
 } wdc_pcmcia_products[] = {
 
 	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
-	  0, {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
+	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
 
 	{ PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	  0, {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
+	  {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
 	  PCMCIA_PRODUCT_TEAC_IDECARDII,
-	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII },
 
 	/*
@@ -111,42 +108,41 @@ const struct wdc_pcmcia_product {
 	 */
 	{ PCMCIA_VENDOR_PANASONIC,
 	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
-	  0,
 	  PCMCIA_CIS_PANASONIC_KXLC005 },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
 	 * Does not have a vendor ID or product ID.
 	 */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  PCMCIA_CIS_EXP_EXPMULTIMEDIA },
 
 	/* Mobile Dock 2, neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} },
 
 	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
 
 	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
-	{ -1, -1, 0,
+	{ -1, -1,
 	  {"PCMCIA", "CD-ROM", NULL, NULL} },
 
 	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  PCMCIA_CIS_IODATA_CBIDE2 },
 
 	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
 	/*  with neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
 
 	/* 
 	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
 	 * with neither vendor ID nor product ID
 	 */
-	{ -1, -1, 0,
+	{ -1, -1,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} },
 };
 
@@ -239,7 +235,7 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct pcmcia_config_entry *cfe;
 	const struct wdc_pcmcia_product *wpp;
 	bus_size_t offset;
-	int quirks, i;
+	int i;
 	int error;
 
 	aprint_normal("\n");
@@ -301,10 +297,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	}
 
 	wpp = wdc_pcmcia_lookup(pa);
-	if (wpp != NULL)
-		quirks = wpp->wpp_quirk_flag;
-	else
-		quirks = 0;
 
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
 		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
@@ -326,10 +318,6 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_channel = 0;
 	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
-#if 0
-	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
-#endif
 
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
