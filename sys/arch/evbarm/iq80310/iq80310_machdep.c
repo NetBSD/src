@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_machdep.c,v 1.30 2002/02/23 05:55:26 thorpej Exp $	*/
+/*	$NetBSD: iq80310_machdep.c,v 1.31 2002/02/23 05:58:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -794,7 +794,7 @@ initarm(void *arg)
 	__asm __volatile("mrc p15, 0, %0, c1, c0, 0"
 		: "=r" (tmp));
 	tmp |= CPU_CONTROL_MMU_ENABLE;
-	__asm __volatile("mcr p15, 0, %0, c1, c0, 0"
+	__asm __volatile("mcr p15, 0, %0, c1, c0, 0; nop; nop; nop"
 		:
 		: "r" (tmp));
 	}
