@@ -1,4 +1,4 @@
-/*	$NetBSD: ms.c,v 1.2 1996/05/21 15:32:31 oki Exp $ */
+/*	$NetBSD: ms.c,v 1.3 1996/11/23 09:44:56 oki Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -324,13 +324,13 @@ msioctl(dev, cmd, data, flag, p)
 }
 
 int
-msselect(dev, rw, p)
+mspoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 
-	return (ev_select(&ms_softc.ms_events, rw, p));
+	return (ev_poll(&ms_softc.ms_events, events, p));
 }
 
 void
