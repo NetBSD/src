@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.62 1998/04/30 06:18:46 mycroft Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.63 1998/05/04 05:51:35 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.57 1998/04/30 06:18:11 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.58 1998/05/04 05:51:19 thorpej Exp 
  */
 
 /*
@@ -1580,6 +1580,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Standard Microsystems",
 	    "83C170 (\"EPIC/100\") Fast Ethernet",
+	},
+	{
+	    PCI_VENDOR_STB2, PCI_PRODUCT_STB2_VELOCITY128,
+	    0,
+	    "STB Systems (2nd PCI Vendor ID)",
+	    "Velocity128 (AGP)",
 	},
 	{
 	    PCI_VENDOR_SYMPHONY, PCI_PRODUCT_SYMPHONY_82C101,
@@ -4759,6 +4765,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_PICTUREEL, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Picture Elements",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_STB2, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "STB Systems (2nd PCI Vendor ID)",
 	    NULL,
 	},
 	{

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.63 1998/04/30 06:18:45 mycroft Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.64 1998/05/04 05:51:35 thorpej Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.57 1998/04/30 06:18:11 mycroft Exp 
+ *	NetBSD: pcidevs,v 1.58 1998/05/04 05:51:19 thorpej Exp 
  */
 
 /*
@@ -498,6 +498,7 @@
 #define	PCI_VENDOR_ROCKWELL	0x127a		/* Rockwell Semiconductor Systems */
 #define	PCI_VENDOR_KOFAX	0x1296		/* Kofax Image Products */
 #define	PCI_VENDOR_PICTUREEL	0x12c5		/* Picture Elements */
+#define	PCI_VENDOR_STB2	0x12d2		/* STB Systems (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram Technology (2nd PCI Vendor ID) */
 #define	PCI_VENDOR_3DLABS	0x3d3d		/* 3D Labs */
@@ -909,6 +910,9 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (\"EPIC/100\") Fast Ethernet */
+
+/* STB Systems products */
+#define	PCI_PRODUCT_STB2_VELOCITY128	0x0018		/* Velocity128 (AGP) */
 
 /* Symphony Labs products */
 #define	PCI_PRODUCT_SYMPHONY_82C101	0x0001		/* 82C101 */
