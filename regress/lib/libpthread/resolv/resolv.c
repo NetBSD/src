@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.c,v 1.4 2004/05/13 19:27:47 christos Exp $	*/
+/*	$NetBSD: resolv.c,v 1.5 2004/05/13 21:32:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resolv.c,v 1.4 2004/05/13 19:27:47 christos Exp $");
+__RCSID("$NetBSD: resolv.c,v 1.5 2004/05/13 21:32:36 christos Exp $");
 
 #include <pthread.h>
 #include <stdio.h>
@@ -52,6 +52,9 @@ __RCSID("$NetBSD: resolv.c,v 1.4 2004/05/13 19:27:47 christos Exp $");
 #define WS		" \t\n\r"
 
 static StringList *hosts = NULL;
+static int debug = 0;
+static int *ask = NULL;
+static int *got = NULL;
 
 static void usage(void)  __attribute__((__noreturn__));
 static void load(const char *);
@@ -59,11 +62,13 @@ static void resolvone(int);
 static void *resolvloop(void *);
 static void run(int *);
 
+static pthread_mutex_t stats = PTHREAD_MUTEX_INITIALIZER;
+
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-h <nhosts>] [-n <nthreads>] <file> ...\n",
+	    "Usage: %s [-d] [-h <nhosts>] [-n <nthreads>] <file> ...\n",
 	    getprogname());
 	exit(1);
 }
@@ -98,13 +103,21 @@ resolvone(int n)
 	char *host = hosts->sl_str[i];
 	struct addrinfo *res;
 	int error, len;
-	len = snprintf(buf, sizeof(buf), "%p: %d resolving %s %d\n", self, n,
-	    host, (int)i);
-	(void)write(STDOUT_FILENO, buf, len);
+	if (debug) {
+		len = snprintf(buf, sizeof(buf), "%p: %d resolving %s %d\n",
+		    self, n, host, (int)i);
+		(void)write(STDOUT_FILENO, buf, len);
+	}
 	error = getaddrinfo(host, NULL, NULL, &res);
-	len = snprintf(buf, sizeof(buf), "%p: host %s %s\n",
-	    self, host, error ? "not found" : "ok");
-	(void)write(STDOUT_FILENO, buf, len);
+	if (debug) {
+		len = snprintf(buf, sizeof(buf), "%p: host %s %s\n",
+		    self, host, error ? "not found" : "ok");
+		(void)write(STDOUT_FILENO, buf, len);
+	}
+	pthread_mutex_lock(&stats);
+	ask[i]++;
+	got[i] += error == 0;
+	pthread_mutex_unlock(&stats);
 	if (error == 0)
 		freeaddrinfo(res);
 }
@@ -112,10 +125,9 @@ resolvone(int n)
 static void *
 resolvloop(void *p)
 {
-	int nhosts = *(int *)p;
-	printf("nhosts = %d\n", nhosts);
-	while (nhosts--)
-		resolvone(nhosts);
+	int *nhosts = (int *)p;
+	while (--(*nhosts))
+		resolvone(*nhosts);
 	return NULL;
 }
 
@@ -132,13 +144,16 @@ main(int argc, char *argv[])
 {
 	int nthreads = NTHREADS;
 	int nhosts = NHOSTS;
-	int i, c;
+	int i, c, done, *nleft;
 	hosts = sl_init();
 
 	srandom(1234);
 
-	while ((c = getopt(argc, argv, "h:t:")) != -1)
+	while ((c = getopt(argc, argv, "dh:t:")) != -1)
 		switch (c) {
+		case 'd':
+			debug++;
+			break;
 		case 'h':
 			nhosts = atoi(optarg);
 			break;
@@ -148,13 +163,47 @@ main(int argc, char *argv[])
 		default:
 			usage();
 		}
+
 	for (i = optind; i < argc; i++)
 		load(argv[i]);
 
 	if (hosts->sl_cur == 0)
 		usage();
-	for (i = 0; i < nthreads; i++)
-		run(&nhosts);
-	sleep(100000);
-	return 0;
+
+	if ((nleft = malloc(nthreads * sizeof(int))) == NULL)
+		err(1, "malloc");
+	if ((ask = calloc(nhosts, sizeof(int))) == NULL)
+		err(1, "calloc");
+	if ((got = calloc(nhosts, sizeof(int))) == NULL)
+		err(1, "calloc");
+
+
+	for (i = 0; i < nthreads; i++) {
+		nleft[i] = nhosts;
+		run(&nleft[i]);
+	}
+
+	for (done = 0; !done;) {
+		done = 1;
+		for (i = 0; i < nthreads; i++) {
+			if (nleft[i] != 0) {
+				done = 0;
+				break;
+			}
+		}
+		sleep(1);
+	}
+	c = 0;
+	for (i = 0; i < hosts->sl_cur; i++) {
+		if (ask[i] != got[i] && got[i] != 0) {
+			warnx("Error: host %s ask %d got %d\n",
+			    hosts->sl_str[i], ask[i], got[i]);
+			c++;
+		}
+	}
+	free(nleft);
+	free(ask);
+	free(got);
+	sl_free(hosts, 1);
+	return c;
 }
