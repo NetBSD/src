@@ -1,11 +1,11 @@
-/*	$NetBSD: reentrant.h,v 1.6.4.5 2002/05/02 16:56:34 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.6.4.6 2003/01/08 19:34:20 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997,98 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by J.T. Conklin.
+ * by J.T. Conklin, by Nathan J. Williams, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,103 +71,154 @@
  * 
  * Implementation Details:
  * 
- * The mutex primitives used by the library (mutex_t, mutex_lock, etc.)
+ * The thread primitives used by the library (mutex_t, mutex_lock, etc.)
  * are macros which expand to the cooresponding primitives provided by
  * the thread engine or to nothing.  The latter is used so that code is
  * not unreasonably cluttered with #ifdefs when all thread safe support
  * is removed.
  * 
- * The mutex macros can be directly mapped to the mutex primitives from
+ * The thread macros can be directly mapped to the mutex primitives from
  * pthreads, however it should be reasonably easy to wrap another mutex
  * implementation so it presents a similar interface.
  * 
- * The mutex functions operate by dispatching through a vector of function
- * pointers; the pointer to this is defined in thread-stub/pthread-stub.c.
- * The pointer initially points to a set of no-op functions for non-threaded
- * use (most uses of thread operations are conditional on __isthreaded, but
- * a few aren't, so we have to have a vector of stub operations rather than
- * just leaving the vector pointer NULL).
+ * The thread functions operate by dispatching to symbols which are, by
+ * default, weak-aliased to no-op functions in thread-stub/thread-stub.c
+ * (some uses of thread operations are conditional on __isthreaded, but
+ * not all of them are).
  *
- * When a thread library is linked in, the library's initialization routine
- * will set the vector pointer to point to real thread operations.
+ * When the thread library is linked in, it provides strong-alias versions
+ * of those symbols which dispatch to its own real thread operations.
  */
 
 #ifdef _REENTRANT
 
 #include <pthread.h>
 
-#define mutex_t			pthread_mutex_t
-#define MUTEX_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
+#define	mutex_t			pthread_mutex_t
+#define	MUTEX_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
-#define cond_t			pthread_cond_t
-#define COND_INITIALIZER	PTHREAD_COND_INITIALIZER
+#define	mutexattr_t		pthread_mutexattr_t
 
-#define rwlock_t		pthread_mutex_t
-#define RWLOCK_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
+#define	cond_t			pthread_cond_t
+#define	COND_INITIALIZER	PTHREAD_COND_INITIALIZER
 
-#define thread_key_t		pthread_key_t
+#define	condattr_t		pthread_condattr_t
 
-#define thr_t			pthread_t
+#define	rwlock_t		pthread_mutex_t
+#define	RWLOCK_INITIALIZER	PTHREAD_MUTEX_INITIALIZER
 
-#define once_t			pthread_once_t
-#define ONCE_INITIALIZER	PTHREAD_ONCE_INIT
+#define	rwlockattr_t		pthread_rwlockattr_t
 
-extern pthread_ops_t *__libc_pthread_ops;
+#define	thread_key_t		pthread_key_t
 
-#define mutex_init(m, a)	((__libc_pthread_ops->mutex_init)((m),(a)))
-#define mutex_lock(m)		((__libc_pthread_ops->mutex_lock)((m)))
-#define mutex_unlock(m)		((__libc_pthread_ops->mutex_unlock)((m)))
+#define	thr_t			pthread_t
 
-#define cond_init(c, t, a)     	((__libc_pthread_ops->cond_init)((c), (a)))
-#define cond_signal(m)		((__libc_pthread_ops->cond_signal)((m)))
-#define cond_wait(c, m)		((__libc_pthread_ops->cond_wait)((c), (m)))
+#define	once_t			pthread_once_t
+#define	ONCE_INITIALIZER	PTHREAD_ONCE_INIT
 
-#define rwlock_init(l, a)	((__libc_pthread_ops->mutex_init)((l), (a)))
-#define rwlock_rdlock(l)	((__libc_pthread_ops->mutex_lock)((l)))
-#define rwlock_wrlock(l)	((__libc_pthread_ops->mutex_lock)((l)))
-#define rwlock_unlock(l)	((__libc_pthread_ops->mutex_unlock)((l)))
+#ifndef __LIBC_THREAD_STUBS
 
-#define thr_keycreate(k, d)	((__libc_pthread_ops->thr_keycreate)((k), (d)))
-#define thr_setspecific(k, p)	((__libc_pthread_ops->thr_setspecific)((k), (p)))
-#define thr_getspecific(k)	((__libc_pthread_ops->thr_getspecific)((k)))
+int	__libc_mutex_init(mutex_t *, const mutexattr_t *);
+int	__libc_mutex_lock(mutex_t *);
+int	__libc_mutex_trylock(mutex_t *);
+int	__libc_mutex_unlock(mutex_t *);
+int	__libc_mutex_destroy(mutex_t *);
 
-#define thr_sigsetmask(f, n, o)	((__libc_pthread_ops->thr_sigsetmask)((f), (n), (o)))
+#define	mutex_init(m, a)	__libc_mutex_init((m), (a))
+#define	mutex_lock(m)		__libc_mutex_lock((m))
+#define	mutex_trylock(m)	__libc_mutex_trylock((m))
+#define	mutex_unlock(m)		__libc_mutex_unlock((m))
+#define	mutex_destroy(m)	__libc_mutex_destroy((m))
 
-#define thr_once(o,f)		((__libc_pthread_ops->thr_once)((o),(f)))
+int	__libc_cond_init(cond_t *, const condattr_t *);
+int	__libc_cond_signal(cond_t *);
+int	__libc_cond_broadcast(cond_t *);
+int	__libc_cond_wait(cond_t *, mutex_t *);
+int	__libc_cond_timedwait(cond_t *, mutex_t *, const struct timespec *);
+int	__libc_cond_destroy(cond_t *);
 
-#define thr_self()		((__libc_pthread_ops->thr_self)())
+#define	cond_init(c, t, a)     	__libc_cond_init((c), (a))
+#define	cond_signal(c)		__libc_cond_signal((c))
+#define	cond_broadcast(c)	__libc_cond_broadcast((c))
+#define	cond_wait(c, m)		__libc_cond_wait((c), (m))
+#define	cond_timedwait(c, m, t)	__libc_cond_timedwait((c), (m), (t))
+#define	cond_destroy(c)		__libc_cond_destroy((c))
 
-#define thr_errno()		((__libc_pthread_ops->thr_errno)())
+int	__libc_rwlock_init(rwlock_t *, const rwlockattr_t *);
+int	__libc_rwlock_rdlock(rwlock_t *);
+int	__libc_rwlock_wrlock(rwlock_t *);
+int	__libc_rwlock_tryrdlock(rwlock_t *);
+int	__libc_rwlock_trywrlock(rwlock_t *);
+int	__libc_rwlock_unlock(rwlock_t *);
+int	__libc_rwlock_destroy(rwlock_t *);
 
-#define FLOCKFILE(fp)		flockfile(fp)
-#define FUNLOCKFILE(fp)		funlockfile(fp)
+#define	rwlock_init(l, a)	__libc_rwlock_init((l), (a))
+#define	rwlock_rdlock(l)	__libc_rwlock_rdlock((l))
+#define	rwlock_wrlock(l)	__libc_rwlock_wrlock((l))
+#define	rwlock_tryrdlock(l)	__libc_rwlock_tryrdlock((l))
+#define	rwlock_trywrlock(l)	__libc_rwlock_trywrlock((l))
+#define	rwlock_unlock(l)	__libc_rwlock_unlock((l))
+#define	rwlock_destroy(l)	__libc_rwlock_destroy((l))
 
-#else
+int	__libc_thr_keycreate(thread_key_t *, void (*)(void *));
+int	__libc_thr_setspecific(thread_key_t, const void *);
+void	*__libc_thr_getspecific(thread_key_t);
+int	__libc_thr_keydelete(thread_key_t);
 
-#define mutex_init(m, a)	
-#define mutex_lock(m)		
-#define mutex_unlock(m)		
+#define	thr_keycreate(k, d)	__libc_thr_keycreate((k), (d))
+#define	thr_setspecific(k, p)	__libc_thr_setspecific((k), (p))
+#define	thr_getspecific(k)	__libc_thr_getspecific((k))
+#define	thr_keydelete(k)	__libc_thr_keydelete((k))
 
-#define cond_signal(m)
-#define cond_wait(c, m)
-#define cond_init(c, a, p)
+int	__libc_thr_once(once_t *, void (*)(void));
+int	__libc_thr_sigsetmask(int, const sigset_t *, sigset_t *);
+thr_t	__libc_thr_self(void);
+int	*__libc_thr_errno(void);
 
-#define rwlock_init(l, a)	
-#define rwlock_rdlock(l)	
-#define rwlock_wrlock(l)	
-#define rwlock_unlock(l)	
+#define	thr_once(o, f)		__libc_thr_once((o), (f))
+#define	thr_sigsetmask(f, n, o)	__libc_thr_sigsetmask((f), (n), (o))
+#define	thr_self()		__libc_thr_self()
+#define	thr_errno()		__libc_thr_errno()
 
-#define thr_keycreate(k, d)
-#define thr_setspecific(k, p)
-#define thr_getspecific(k)
+#define	FLOCKFILE(fp)		flockfile(fp)
+#define	FUNLOCKFILE(fp)		funlockfile(fp)
 
-#define thr_sigsetmask(f, n, o)
+#endif /* __LIBC_THREAD_STUBS */
 
-#define thr_once(o, f)
+#else /* _REENTRANT */
 
-#define thr_errno()
+#define	mutex_init(m, a)
+#define	mutex_lock(m)
+#define	mutex_trylock(m)
+#define	mutex_unlock(m)
+#define	mutex_destroy(m)
 
-#define FLOCKFILE(fp)		
-#define FUNLOCKFILE(fp)		
+#define	cond_init(c, t, a)
+#define	cond_signal(c)
+#define	cond_broadcast(c)
+#define	cond_wait(c, m)
+#define	cond_timedwait(c, m, t)
+#define	cond_destroy(c)
 
-#endif
+#define	rwlock_init(l, a)
+#define	rwlock_rdlock(l)
+#define	rwlock_wrlock(l)
+#define	rwlock_tryrdlock(l)
+#define	rwlock_trywrlock(l)
+#define	rwlock_unlock(l)
+#define	rwlock_destroy(l)
+
+#define	thr_keycreate(k, d)
+#define	thr_setspecific(k, p)
+#define	thr_getspecific(k)
+#define	thr_keydelete(k)
+
+#define	thr_once(o, f)
+#define	thr_sigsetmask(f, n, o)
+#define	thr_self()
+#define	thr_errno()
+
+#define	FLOCKFILE(fp)		
+#define	FUNLOCKFILE(fp)		
+
+#endif /* _REENTRANT */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.1.2.18 2003/01/07 17:25:35 thorpej Exp $	*/
+/*	$NetBSD: pthread.h,v 1.1.2.19 2003/01/08 19:34:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -179,39 +179,5 @@ __END_DECLS
 #define PTHREAD_KEYS_MAX	256
 #define PTHREAD_STACK_MIN	4096 /* XXX Pulled out of my butt */
 #define PTHREAD_THREADS_MAX	64		/* Min. required */
-
-typedef struct pthread_ops_st {
-	int (*mutex_init)(pthread_mutex_t *, const pthread_mutexattr_t *);
-	int (*mutex_lock)(pthread_mutex_t *);
-	int (*mutex_trylock)(pthread_mutex_t *);
-	int (*mutex_unlock)(pthread_mutex_t *);
-	int (*mutex_destroy)(pthread_mutex_t *);
-       	int (*mutexattr_init)(pthread_mutexattr_t *);
-	int (*mutexattr_destroy)(pthread_mutexattr_t *);
-	
-	int (*cond_init)(pthread_cond_t *, const pthread_condattr_t *);
-	int (*cond_signal)(pthread_cond_t *);
-	int (*cond_broadcast)(pthread_cond_t *);
-	int (*cond_wait)(pthread_cond_t *, pthread_mutex_t *);
-	int (*cond_timedwait)(pthread_cond_t *, pthread_mutex_t *, 
-	    const struct timespec *);
-	int (*cond_destroy)(pthread_cond_t *);
-       	int (*condattr_init)(pthread_condattr_t *);
-	int (*condattr_destroy)(pthread_condattr_t *);
-
-	int (*thr_keycreate)(pthread_key_t *, void (*)(void *));
-	int (*thr_setspecific)(pthread_key_t, const void *);
-	void *(*thr_getspecific)(pthread_key_t);
-	int (*thr_keydelete)(pthread_key_t);
-
-	int (*thr_once)(pthread_once_t *, void (*)(void));
-
-	pthread_t (*thr_self)(void);
-
-	int (*thr_sigsetmask)(int, const sigset_t *, sigset_t *);
-
-	int *(*thr_errno)(void);
-} pthread_ops_t;
-
 
 #endif /* _LIB_PTHREAD_H */

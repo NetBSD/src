@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.1.2.24 2003/01/03 22:04:56 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.1.2.25 2003/01/08 19:34:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ static pthread_cond_t pt_sigsuspended_cond = PTHREAD_COND_INITIALIZER;
 static void 
 pthread__signal_tramp(int, int, struct sigaction *, ucontext_t *, sigset_t *,
     int, struct pthread_queue_t *, pthread_spin_t *);
+
+__strong_alias(__libc_thr_sigsetmask,pthread_sigmask);
 
 void
 pthread__signal_init(void)
