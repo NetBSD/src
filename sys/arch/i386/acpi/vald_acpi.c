@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: vald_acpi.c,v 1.18 2004/03/24 11:26:46 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.17 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.18 2004/03/24 11:26:46 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,7 @@ struct vald_acpi_softc {
 	int lcd_num;			/* size of lcd brightness table */ 
 	int lcd_index;			/* index of lcd brightness table */
 
-	int	sc_ac_status;		/* AC adaptor status when attach */
+	ACPI_INTEGER sc_ac_status;	/* AC adaptor status when attach */
 };
 
 static const char * const vald_acpi_hids[] = {
