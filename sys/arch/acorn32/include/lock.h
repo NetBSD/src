@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.2 2002/10/07 23:23:53 bjh21 Exp $	*/
+/*	$NetBSD: lock.h,v 1.2.2.1 2002/10/24 22:34:46 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -94,6 +94,8 @@ __cpu_simple_unlock(__cpu_simple_lock_t *alp)
 
 	*alp = __SIMPLELOCK_UNLOCKED;
 }
+
+#define	SPINLOCK_SPIN_HOOK	cpu_idcache_wbinv_all()
 
 #else /* !(_KERNEL && MULTIPROCESSOR) */
 #include <arm/lock.h>

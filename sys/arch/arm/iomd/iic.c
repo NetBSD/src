@@ -1,4 +1,4 @@
-/*	$NetBSD: iic.c,v 1.5 2002/09/27 03:17:44 thorpej Exp $	*/
+/*	$NetBSD: iic.c,v 1.5.2.1 2002/10/24 22:33:50 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -51,6 +51,7 @@
 #include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/event.h>
 
 #include <machine/bus.h>
 #include <machine/cpu.h>
@@ -86,7 +87,7 @@ dev_type_close(iicclose);
 
 const struct cdevsw iic_cdevsw = {
 	iicopen, iicclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap,
+	nostop, notty, nopoll, nommap, nokqfilter,
 };
 
 /*
