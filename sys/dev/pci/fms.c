@@ -1,4 +1,4 @@
-/*	$NetBSD: fms.c,v 1.20 2004/10/29 12:57:18 yamt Exp $	*/
+/*	$NetBSD: fms.c,v 1.21 2004/11/09 16:28:14 kent Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.20 2004/10/29 12:57:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fms.c,v 1.21 2004/11/09 16:28:14 kent Exp $");
 
 #include "mpu.h"
 
@@ -247,8 +247,6 @@ fms_attach(parent, self, aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcitag_t pt = pa->pa_tag;
 	pci_intr_handle_t ih;
-	int i;
-	
 	u_int16_t k1;
 
 	aprint_naive(": Audio controller\n");
@@ -322,24 +320,6 @@ fms_attach(parent, self, aux)
 
 	if (ac97_attach(&sc->host_if) != 0)
 		return;
-	
-	/* Turn mute off */
-	for (i = 0; i < 3; i++) {
-		static struct {
-			char *class, *device;
-		} d[] = {
-			{ AudioCoutputs, AudioNmaster },
-			{ AudioCinputs, AudioNdac },
-			{ AudioCrecord, AudioNvolume }
-		};
-		struct mixer_ctrl ctl;
-		
-		ctl.type = AUDIO_MIXER_ENUM;
-		ctl.un.ord = 0;
-		ctl.dev = sc->codec_if->vtbl->get_portnum_by_name(sc->codec_if,
-			d[i].class, d[i].device, AudioNmute);
-		fms_set_port(sc, &ctl);
-	}
 
 	audio_attach_mi(&fms_hw_if, sc, &sc->sc_dev);
 
