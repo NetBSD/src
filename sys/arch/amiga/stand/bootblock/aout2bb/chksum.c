@@ -1,7 +1,7 @@
-/* $NetBSD: chksum.c,v 1.2 1999/02/16 22:46:55 is Exp $ */
+/* $NetBSD: chksum.c,v 1.3 1999/02/16 23:34:10 is Exp $ */
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
