@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.26 2002/10/23 13:18:17 scw Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.27 2002/11/01 20:41:16 jdolecek Exp $ */
 
 /*
  * System call numbers.
@@ -717,3 +717,4 @@
 #define	netbsd32_SYS_netbsd32___sigaction_sigtramp	340
 
 #define	netbsd32_SYS_MAXSYSCALL	341
+#define	netbsd32_SYS_NSYSENT	512
