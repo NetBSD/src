@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcs.c,v 1.13 1997/02/11 08:43:23 mrg Exp $	*/
+/*	$NetBSD: ipcs.c,v 1.14 1997/10/19 03:23:48 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -43,15 +43,20 @@
 
 #include <err.h>
 #include <fcntl.h>
+#include <grp.h>
 #include <kvm.h>
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
+#include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+void	cvt_time __P((time_t, char *, int));
+char   *fmt_perm __P((u_short));
+int	main __P((int, char **));
 int	semconfig __P((int, ...));
 void	usage __P((void));
 
@@ -138,7 +143,7 @@ main(argc, argv)
 	char	errbuf[_POSIX2_LINE_MAX];
 	int     i;
 
-	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != EOF)
+	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
 		switch (i) {
 		case 'M':
 			display = SHMTOTAL;
@@ -279,9 +284,9 @@ main(argc, argv)
 					cvt_time(msqptr->msg_ctime, ctime_buf,
 					    sizeof ctime_buf);
 
-					printf("q %6d %10d %s %8s %8s",
+					printf("q %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
-					    msqptr->msg_perm.key,
+					    (long)msqptr->msg_perm.key,
 					    fmt_perm(msqptr->msg_perm.mode),
 					    user_from_uid(msqptr->msg_perm.uid, 0),
 					    group_from_gid(msqptr->msg_perm.gid, 0));
@@ -292,13 +297,13 @@ main(argc, argv)
 						    group_from_gid(msqptr->msg_perm.cgid, 0));
 
 					if (option & OUTSTANDING)
-						printf(" %6d %6d",
-						    msqptr->msg_cbytes,
-						    msqptr->msg_qnum);
+						printf(" %6ld %6ld",
+						    (long)msqptr->msg_cbytes,
+						    (long)msqptr->msg_qnum);
 
 					if (option & BIGGEST)
-						printf(" %6d",
-						    msqptr->msg_qbytes);
+						printf(" %6ld",
+						    (long)msqptr->msg_qbytes);
 
 					if (option & PID)
 						printf(" %6d %6d",
@@ -381,9 +386,9 @@ main(argc, argv)
 					cvt_time(shmptr->shm_ctime, ctime_buf,
 					    sizeof ctime_buf);
 
-					printf("m %6d %10d %s %8s %8s",
+					printf("m %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
-					    shmptr->shm_perm.key,
+					    (long)shmptr->shm_perm.key,
 					    fmt_perm(shmptr->shm_perm.mode),
 					    user_from_uid(shmptr->shm_perm.uid, 0),
 					    group_from_gid(shmptr->shm_perm.gid, 0));
@@ -483,17 +488,15 @@ main(argc, argv)
 				if ((xsema[i].sem_perm.mode & SEM_ALLOC) != 0) {
 					char    ctime_buf[100], otime_buf[100];
 					struct semid_ds *semaptr = &xsema[i];
-					int     j, value;
-					union semun junk;
 
 					cvt_time(semaptr->sem_otime, otime_buf,
 					    sizeof otime_buf);
 					cvt_time(semaptr->sem_ctime, ctime_buf,
 					    sizeof ctime_buf);
 
-					printf("s %6d %10d %s %8s %8s",
+					printf("s %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
-					    semaptr->sem_perm.key,
+					    (long)semaptr->sem_perm.key,
 					    fmt_perm(semaptr->sem_perm.mode),
 					    user_from_uid(semaptr->sem_perm.uid, 0),
 					    group_from_gid(semaptr->sem_perm.gid, 0));
