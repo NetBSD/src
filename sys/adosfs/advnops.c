@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.61 2001/09/15 20:36:32 chs Exp $	*/
+/*	$NetBSD: advnops.c,v 1.62 2001/11/12 22:59:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.62 2001/11/12 22:59:18 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
