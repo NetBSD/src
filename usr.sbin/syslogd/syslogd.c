@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.69.2.14 2004/11/17 02:11:28 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.69.2.15 2004/11/17 02:15:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.69.2.14 2004/11/17 02:11:28 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.69.2.15 2004/11/17 02:15:50 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,6 +862,7 @@ logmsg(int pri, char *msg, char *from, int flags)
 		f->f_file = open(ctty, O_WRONLY, 0);
 
 		if (f->f_file >= 0) {
+			(void)strncpy(f->f_lasttime, timestamp, 15);
 			fprintlog(f, flags, msg);
 			(void)close(f->f_file);
 		}
