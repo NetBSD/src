@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.5 1997/04/19 02:59:29 cgd Exp $
+# $Id: Makefile,v 1.6 1997/05/07 16:20:32 mycroft Exp $
 
 LIB=		bfd
 NOPROFILE=
@@ -20,7 +20,7 @@ SRCS=		archive.c archures.c bfd.c cache.c coffgen.c core.c ctor.c \
 targets.o archures.o: $(.CURDIR)/$(.TARGET:S/.o$/.c/)
 	${COMPILE.c} $(VECTORS) -o $(.TARGET) $(.IMPSRC)
 
-
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1997/03/13 17:52:46 gwr Exp $
+#	$NetBSD: Makefile,v 1.3 1997/05/07 16:20:44 mycroft Exp $
 
 LIB=sa
 
@@ -38,6 +38,7 @@ CFLAGS= -O ${COPTS} ${DEFS} ${DBG} ${INCL}
 
 all: libsa.a SRT0.o SRT1.o
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>

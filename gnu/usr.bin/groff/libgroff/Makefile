@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1993/10/05 21:39:25 pk Exp $
+#	$Id: Makefile,v 1.7 1997/05/07 16:20:37 mycroft Exp $
 
 LIB=		groff
 SRCS=		assert.cc change_lf.cc cmap.cc cset.cc device.cc errarg.cc\
@@ -18,7 +18,8 @@ version.cc: $(.CURDIR)/../VERSION
 	@echo Making version.cc
 	@echo const char \*version_string = \"`cat $(.CURDIR)/../VERSION`\"\; >$@
 
-install:
+# only needed during build
+libinstall::
 
 .include "../Makefile.cfg"
 .include <bsd.lib.mk>

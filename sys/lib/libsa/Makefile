@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1997/02/16 21:25:20 cgd Exp $
+#	$NetBSD: Makefile,v 1.17 1997/05/07 16:20:48 mycroft Exp $
 
 LIB=	sa
 NOPIC=
@@ -36,7 +36,8 @@ SRCS+=	bootp.c rarp.c bootparam.c
 # boot filesystems
 SRCS+=	ufs.c nfs.c cd9660.c
 
-install:
+# only needed during build
+libinstall::
 
 .include <bsd.lib.mk>
 
