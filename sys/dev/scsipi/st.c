@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.138 2001/05/14 20:35:29 bouyer Exp $ */
+/*	$NetBSD: st.c,v 1.139 2001/05/15 14:03:27 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1704,7 +1704,7 @@ st_cmprss(st, onoff)
 	struct scsi_select {
 		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
-		u_char pdata[max(sizeof(struct scsi_tape_dev_conf_page),
+		u_char pdata[MAX(sizeof(struct scsi_tape_dev_conf_page),
 		    sizeof(struct scsi_tape_dev_compression_page))];
 	} scsi_pdata;
 	struct scsi_tape_dev_conf_page *ptr;
