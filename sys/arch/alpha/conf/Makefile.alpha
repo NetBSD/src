@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.alpha,v 1.36 1997/09/30 22:39:49 christos Exp $
+# $NetBSD: Makefile.alpha,v 1.37 1997/10/04 17:20:07 gwr Exp $
 
 # Makefile for NetBSD
 #
@@ -100,8 +100,8 @@ LINKFLAGS+=	-S
 %LOAD
 
 # Use awk to cross-build assym.h from the genassym.s file.
-assym.h: genassym.o ${ALPHA}/alpha/genassym.awk
-	awk -f ${ALPHA}/alpha/genassym.awk < genassym.s > $@
+assym.h: genassym.o $S/kern/genassym.awk
+	awk -f $S/kern/genassym.awk < genassym.s > $@
 
 # The above rule lists genassym.o as a prerequisite so that the
 # generated .depend rule is effective, even though we actually
