@@ -917,19 +917,6 @@ logsender(e, msgid)
 	p = macvalue('r', e);
 	if (p != NULL)
 	{
-		(void) snprintf(sbp, SPACELEFT(sbuf, sbp), ", proto=%.20s", p);
-		sbp += strlen(sbp);
-	}
-	p = macvalue(macid("{daemon_name}", NULL), e);
-	if (p != NULL)
-	{
-		(void) snprintf(sbp, SPACELEFT(sbuf, sbp), ", daemon=%.20s", p);
-		sbp += strlen(sbp);
-	}
-# if SASL
-	p = macvalue(macid("{auth_type}", NULL), e);
-	if (p != NULL)
-	{
 		(void) sm_snprintf(sbp, SPACELEFT(sbuf, sbp),
 				", proto=%.20s", p);
 		sbp += strlen(sbp);
