@@ -1,5 +1,5 @@
 /* Configuration for NetBSD Sparc */
-/* $Id: tm.h,v 1.1 1993/11/30 23:09:15 pk Exp $ */
+/* $Id: tm.h,v 1.2 1993/12/03 20:55:55 pk Exp $ */
 
 #include "sparc/sparc.h"
 
@@ -12,6 +12,9 @@
 
 #define LINK_SPEC \
  "%{!nostdlib:%{!r*:%{!e*:-e start}}} -dc -dp %{static:-Bstatic} %{assert*}"
+
+#undef SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
 
 #define HAVE_ATEXIT
 
