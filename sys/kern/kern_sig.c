@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.113 2001/06/06 21:37:19 mrg Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.114 2001/06/13 16:06:28 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -63,7 +63,6 @@
 #include <sys/syslog.h>
 #include <sys/stat.h>
 #include <sys/core.h>
-#include <sys/ptrace.h>
 #include <sys/filedesc.h>
 #include <sys/malloc.h>
 #include <sys/pool.h>
@@ -1030,13 +1029,11 @@ issignal(struct proc *p)
 			p->p_xstat = signum;
 			if ((p->p_flag & P_FSTRACE) == 0)
 				psignal(p->p_pptr, SIGCHLD);
-			do {
-				SCHED_LOCK(s);
-				proc_stop(p);
-				mi_switch(p);
-				SCHED_ASSERT_UNLOCKED();
-				splx(s);
-			} while (!trace_req(p) && p->p_flag & P_TRACED);
+			SCHED_LOCK(s);
+			proc_stop(p);
+			mi_switch(p);
+			SCHED_ASSERT_UNLOCKED();
+			splx(s);
 
 			/*
 			 * If we are no longer being traced, or the parent
