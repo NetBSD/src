@@ -1,4 +1,4 @@
-/*	$NetBSD: include.h,v 1.3 1995/03/21 15:04:08 cgd Exp $	*/
+/*	$NetBSD: include.h,v 1.4 1995/04/24 12:21:46 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -48,6 +48,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <pwd.h>
@@ -61,7 +63,6 @@
 #ifdef SYSV
 #include <fcntl.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/utsname.h>
 #endif
 

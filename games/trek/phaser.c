@@ -1,4 +1,4 @@
-/*	$NetBSD: phaser.c,v 1.3 1995/04/22 10:59:17 cgd Exp $	*/
+/*	$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)phaser.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: phaser.c,v 1.3 1995/04/22 10:59:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: phaser.c,v 1.4 1995/04/24 12:26:02 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -144,7 +144,7 @@ phaser()
 	if (!manual)
 	{
 		ptr = getcodpar("Manual or automatic", Matab);
-		manual = (int) ptr->value;
+		manual = (long) ptr->value;
 	}
 	if (!manual && damaged(COMPUTER))
 	{

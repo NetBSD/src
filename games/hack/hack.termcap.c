@@ -3,10 +3,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.3 1995/03/23 08:31:36 cgd Exp $";
+static char rcsid[] = "$NetBSD: hack.termcap.c,v 1.4 1995/04/24 12:23:34 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include "config.h"	/* for ROWNO and COLNO */
 #include "def.flag.h"	/* for flags.nonull */
 extern char *tgetstr(), *tgoto(), *getenv();

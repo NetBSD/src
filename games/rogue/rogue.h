@@ -1,4 +1,4 @@
-/*	$NetBSD: rogue.h,v 1.3 1995/04/22 10:28:14 cgd Exp $	*/
+/*	$NetBSD: rogue.h,v 1.4 1995/04/24 12:25:04 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -428,9 +428,7 @@ extern object level_monsters;
 
 /* external routine declarations.
  */
-char *strcpy();
-char *strncpy();
-char *strcat();
+#include <string.h>
 
 char *mon_name();
 char *get_ench_color();

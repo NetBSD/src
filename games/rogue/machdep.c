@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 1995/04/22 10:27:39 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: machdep.c,v 1.3 1995/04/22 10:27:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: machdep.c,v 1.4 1995/04/24 12:25:01 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ md_gct(rt_buf)
 struct rogue_time *rt_buf;
 {
 	struct tm *t, *localtime();
-	long seconds;
+	time_t seconds;
 
 	time(&seconds);
 	t = localtime(&seconds);
@@ -338,7 +338,7 @@ char *fname;
 struct rogue_time *rt_buf;
 {
 	struct stat sbuf;
-	long seconds;
+	time_t seconds;
 	struct tm *t;
 
 	stat(fname, &sbuf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcd.c,v 1.5 1995/03/21 15:08:15 cgd Exp $	*/
+/*	$NetBSD: bcd.c,v 1.6 1995/04/24 12:22:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -79,6 +79,7 @@ static char sccsid[] = "@(#)bcd.c	8.2 (Berkeley) 3/20/94";
 #include <sys/types.h>
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 
 u_short holes[256] = {

@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: scores.c,v 1.4 1995/03/23 08:34:15 cgd Exp $";
+static char rcsid[] = "$NetBSD: scores.c,v 1.5 1995/04/24 12:24:08 cgd Exp $";
 #endif /* not lint */
 
 /* scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -29,6 +29,7 @@ static char rcsid[] = "$NetBSD: scores.c,v 1.4 1995/03/23 08:34:15 cgd Exp $";
 #include <sys/times.h>
 #include <sys/stat.h>
 #include "header.h"
+#include <string.h>
 
 struct scofmt			/*	This is the structure for the scoreboard 		*/
 	{
@@ -55,7 +56,7 @@ struct wscofmt			/* This is the structure for the winning scoreboard */
 struct log_fmt			/* 102 bytes struct for the log file 				*/
 	{
 	long score;			/* the players score 								*/
-	long diedtime;		/* time when game was over 							*/
+	time_t diedtime;	/* time when game was over 							*/
 	short cavelev;		/* level in caves 									*/
 	short diff;			/* difficulty player played at 						*/
 #ifdef EXTRA
@@ -472,7 +473,8 @@ died(x)
 	{
 	register int f,win;
 	char ch,*mod;
-	long zzz,i;
+	time_t zzz;
+	long i;
 	struct tms cputime;
 	if (c[LIFEPROT]>0) /* if life protection */
 		{

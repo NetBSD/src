@@ -1,4 +1,4 @@
-/*	$NetBSD: canfield.c,v 1.5 1995/03/21 15:08:32 cgd Exp $	*/
+/*	$NetBSD: canfield.c,v 1.6 1995/04/24 12:22:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)canfield.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: canfield.c,v 1.5 1995/03/21 15:08:32 cgd Exp $";
+static char rcsid[] = "$NetBSD: canfield.c,v 1.6 1995/04/24 12:22:54 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ static char rcsid[] = "$NetBSD: canfield.c,v 1.5 1995/03/21 15:08:32 cgd Exp $";
 #include <termios.h>
 #include <ctype.h>
 #include <signal.h>
+#include <string.h>
 #include <termios.h>
 
 #include "pathnames.h"

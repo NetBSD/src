@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.6 1995/04/22 10:18:17 cgd Exp $	*/
+/*	$NetBSD: snake.c,v 1.7 1995/04/24 12:25:34 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: snake.c,v 1.6 1995/04/22 10:18:17 cgd Exp $";
+static char rcsid[] = "$NetBSD: snake.c,v 1.7 1995/04/24 12:25:34 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ char ch, savec;
 char *kl, *kr, *ku, *kd;
 int fast=1;
 int repeat=1;
-long tv;
+time_t tv;
 char *tn;
 
 main(argc,argv)
@@ -887,7 +887,7 @@ logit(msg)
 char *msg;
 {
 	FILE *logfile;
-	long t;
+	time_t t;
 
 	if ((logfile=fopen(_PATH_LOGFILE, "a")) != NULL) {
 		time(&t);

@@ -1,12 +1,12 @@
-/*	$NetBSD: setup.c,v 1.3 1995/03/24 04:00:51 cgd Exp $	*/
+/*	$NetBSD: setup.c,v 1.4 1995/04/24 12:24:41 cgd Exp $	*/
 
 /*
  * setup.c - set up all files for Phantasia
  */
-#include "include.h"
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <stdlib.h>
+#include "include.h"
 /**/
 /************************************************************************
 /
@@ -77,7 +77,7 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-    srandom((unsigned) time((long *) NULL));	/* prime random numbers */
+    srandom((unsigned) time(NULL));	/* prime random numbers */
 
     umask(0117);		/* only owner can read/write created files */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: snscore.c,v 1.4 1995/04/22 08:34:43 cgd Exp $	*/
+/*	$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)snscore.c	8.1 (Berkeley) 7/19/93";
 #else
-static char rcsid[] = "$NetBSD: snscore.c,v 1.4 1995/04/22 08:34:43 cgd Exp $";
+static char rcsid[] = "$NetBSD: snscore.c,v 1.5 1995/04/24 12:25:43 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: snscore.c,v 1.4 1995/04/22 08:34:43 cgd Exp $";
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pathnames.h"
 
 char *recfile = _PATH_RAWSCORES;

@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/03/23 08:33:38 cgd Exp $";
+static char rcsid[] = "$NetBSD: io.c,v 1.4 1995/04/24 12:23:57 cgd Exp $";
 #endif /* not lint */
 
 /* io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -60,6 +60,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/03/23 08:33:38 cgd Exp $";
  */
 
 #include "header.h"
+#include <string.h>
 
 #ifdef SYSV	/* system III or system V */
 #include <termio.h>
@@ -851,15 +852,15 @@ lflush()
 #endif VT100
 
 #ifndef VT100
-static int index=0;
+static int vindex=0;
 /*
  * putchar(ch)		Print one character in decoded output buffer.
  */
 int putchar(c)
 int c;
 	{
-	outbuf[index++] = c;
-	if (index >= BUFBIG)  flush_buf();
+	outbuf[vindex++] = c;
+	if (vindex >= BUFBIG)  flush_buf();
 	}
 
 /*
@@ -867,8 +868,8 @@ int c;
  */
 flush_buf()
 	{
-	if (index) write(lfd, outbuf, index);
-	index = 0;
+	if (vindex) write(lfd, outbuf, vindex);
+	vindex = 0;
 	}
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: computer.c,v 1.3 1995/04/22 10:58:39 cgd Exp $	*/
+/*	$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)computer.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: computer.c,v 1.3 1995/04/22 10:58:39 cgd Exp $";
+static char rcsid[] = "$NetBSD: computer.c,v 1.4 1995/04/24 12:25:51 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ computer()
 	while (1)
 	{
 		r = getcodpar("\nRequest", Cputab);
-		switch ((int)r->value)
+		switch ((long)r->value)
 		{
 
 		  case 1:			/* star chart */

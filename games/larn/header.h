@@ -1,4 +1,4 @@
-/*	$NetBSD: header.h,v 1.6 1995/04/22 07:34:05 cgd Exp $	*/
+/*	$NetBSD: header.h,v 1.7 1995/04/24 12:23:54 cgd Exp $	*/
 
 /*	header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -355,7 +355,7 @@ extern struct _itm itm[];
 
 char *fortune(),*getenv(),*getlogin(),*lgetw(),*lgetl(),*ctime();
 char *tmcapcnv(),*tgetstr(),*tgoto();
-long paytaxes(),lgetc(),lrint(),time();
+long paytaxes(),lgetc(),lrint();
 unsigned long readnum();
 void *malloc();
 

@@ -3,10 +3,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: makedefs.c,v 1.3 1995/03/23 08:32:24 cgd Exp $";
+static char rcsid[] = "$NetBSD: makedefs.c,v 1.4 1995/04/24 12:23:39 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 
 /* construct definitions of object constants */
 #define	LINSZ	1000

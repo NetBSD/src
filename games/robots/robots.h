@@ -1,4 +1,4 @@
-/*	$NetBSD: robots.h,v 1.4 1995/04/22 10:09:11 cgd Exp $	*/
+/*	$NetBSD: robots.h,v 1.5 1995/04/24 12:24:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,6 +37,7 @@
 
 # include	<curses.h>
 # include	<setjmp.h>
+# include	<string.h>
 
 /*
  * miscellaneous constants

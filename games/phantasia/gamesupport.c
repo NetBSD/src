@@ -1,4 +1,4 @@
-/*	$NetBSD: gamesupport.c,v 1.2 1995/03/24 03:58:43 cgd Exp $	*/
+/*	$NetBSD: gamesupport.c,v 1.3 1995/04/24 12:24:28 cgd Exp $	*/
 
 /*
  * gamesupport.c - auxiliary routines for support of Phantasia
@@ -63,7 +63,7 @@ int	c;			/* input */
 int	today;			/* day of year of today */
 int	temp;			/* temporary variable */
 long	loc;			/* location in player file */
-long	now;			/* time now */
+time_t	now;			/* time now */
 double	dtemp;			/* temporary variable */
 bool	*bptr;			/* pointer to bool item to change */
 double	*dptr;			/* pointer to double item to change */
@@ -626,7 +626,7 @@ purgeoldplayers()
 {
 int	today;		/* day of year for today */
 int	daysold;	/* how many days since the character has been used */
-long	ltime;		/* time in seconds */
+time_t	ltime;		/* time in seconds */
 long	loc = 0L;	/* location in file */
 
     time(&ltime);

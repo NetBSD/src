@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.2 1995/03/21 12:14:40 cgd Exp $	*/
+/*	$NetBSD: mach.c,v 1.3 1995/04/24 12:22:41 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-static char rcsid[] = "$NetBSD: mach.c,v 1.2 1995/03/21 12:14:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: mach.c,v 1.3 1995/04/24 12:22:41 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$NetBSD: mach.c,v 1.2 1995/03/21 12:14:40 cgd Exp $";
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <time.h>
 
 #include "bog.h"
@@ -85,7 +86,7 @@ static void	winch_catcher __P((int));
 int
 setup(sflag, seed)
 	int sflag;
-	long seed;
+	time_t seed;
 {
 	extern int debug;
 
@@ -291,8 +292,8 @@ static int gone;
 void
 stoptime()
 {
-	extern long start_t;
-	long t;
+	extern time_t start_t;
+	time_t t;
 
 	(void)time(&t);
 	gone = (int) (t - start_t);
@@ -304,8 +305,8 @@ stoptime()
 void
 starttime()
 {
-	extern long start_t;
-	long t;
+	extern time_t start_t;
+	time_t t;
 
 	(void)time(&t);
 	start_t = t - (long) gone;

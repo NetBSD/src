@@ -1,4 +1,4 @@
-/*	$NetBSD: hangman.h,v 1.4 1995/03/23 08:32:48 cgd Exp $	*/
+/*	$NetBSD: hangman.h,v 1.5 1995/04/24 12:23:44 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,6 +40,7 @@
 # include	<sys/stat.h>
 # include	<ctype.h>
 # include	<signal.h>
+# include	<string.h>
 # include	"pathnames.h"
 
 # define	MINLEN	6

@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$NetBSD: diag.c,v 1.5 1995/03/23 08:33:20 cgd Exp $";
+static char rcsid[] = "$NetBSD: diag.c,v 1.6 1995/04/24 12:23:49 cgd Exp $";
 #endif /* not lint */
 
 /*	diag.c		Larn is copyrighted 1986 by Noah Morgan. */
@@ -148,7 +148,7 @@ diagdrawscreen()
 /*
 	to save the game in a file
  */
-static long int zzz=0;
+static time_t zzz=0;
 savegame(fname)
 	char *fname;
 	{

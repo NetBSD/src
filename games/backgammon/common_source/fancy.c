@@ -1,4 +1,4 @@
-/*	$NetBSD: fancy.c,v 1.3 1995/03/21 15:05:40 cgd Exp $	*/
+/*	$NetBSD: fancy.c,v 1.4 1995/04/24 12:22:09 cgd Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fancy.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: fancy.c,v 1.3 1995/03/21 15:05:40 cgd Exp $";
+static char rcsid[] = "$NetBSD: fancy.c,v 1.4 1995/04/24 12:22:09 cgd Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ int	realr;
 int	realc;
 
 void	addbuf();
+extern char *tgoto(), *tgetstr();
 
 fboard ()  {
 	register int	i, j, l;

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.4 1995/03/21 15:07:25 cgd Exp $	*/
+/*	$NetBSD: externs.h,v 1.5 1995/04/24 12:22:18 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,6 +37,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 
 #define BITS (8 * sizeof (int))
 

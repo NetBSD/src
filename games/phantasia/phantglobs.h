@@ -1,4 +1,4 @@
-/*	$NetBSD: phantglobs.h,v 1.2 1995/03/24 03:59:38 cgd Exp $	*/
+/*	$NetBSD: phantglobs.h,v 1.3 1995/04/24 12:24:39 cgd Exp $	*/
 
 /*
  * phantglobs.h - global declarations for Phantasia
@@ -59,7 +59,7 @@ extern	char	Somebetter[];
 extern	char	Nobetter[];
 
 /* library functions and system calls */
-extern	long	time();
+/* extern	long	time(); */
 extern	char	*getlogin();
 extern	char	*getpass();
 extern	char	*strchr();
