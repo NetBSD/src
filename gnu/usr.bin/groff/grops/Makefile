@@ -1,10 +1,10 @@
-#	$Id: Makefile,v 1.6 1993/08/02 17:43:13 mycroft Exp $
+#	$Id: Makefile,v 1.7 1995/10/26 00:58:57 jtc Exp $
 
 PROG=		grops
 SRCS=		ps.cc psrm.cc
 CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
-DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBMATH)
+DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBM)
 
 .include "../../Makefile.inc"
 .include "../Makefile.cfg"

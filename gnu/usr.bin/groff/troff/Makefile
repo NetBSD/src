@@ -1,11 +1,11 @@
-#	$Id: Makefile,v 1.9 1995/01/15 21:59:34 jtc Exp $
+#	$Id: Makefile,v 1.10 1995/10/26 00:59:18 jtc Exp $
 
 PROG=		troff
 SRCS=		env.cc node.cc input.cc div.cc symbol.cc dictionary.cc reg.cc \
 		number.cc majorminor.cc
 CFLAGS+=	-I$(.CURDIR)/../include
 LDADD+=		$(LIBGROFF) -lm
-DPADD+=		$(LIBGROFF) $(LIBMATH)
+DPADD+=		$(LIBGROFF) $(LIBM)
 
 CLEANFILES+=	majorminor.cc
 majorminor.cc: $(.CURDIR)/../VERSION
