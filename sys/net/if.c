@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.105 2002/05/23 21:34:39 matt Exp $	*/
+/*	$NetBSD: if.c,v 1.106 2002/05/27 02:53:49 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.105 2002/05/23 21:34:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.106 2002/05/27 02:53:49 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -359,6 +359,7 @@ if_attach(ifp)
 {
 	static size_t if_indexlim = 0;
 	int indexlim = 0;
+	struct domain *dp;
 
 	if (if_indexlim == 0) {
 		TAILQ_INIT(&ifnet);
@@ -464,6 +465,14 @@ if_attach(ifp)
 		printf("%s: WARNING: unable to register pfil hook\n",
 		    ifp->if_xname);
 #endif
+
+	/* address family dependent data region */
+	memset(ifp->if_afdata, 0, sizeof(ifp->if_afdata));
+	for (dp = domains; dp; dp = dp->dom_next) {
+		if (dp->dom_ifattach)
+			ifp->if_afdata[dp->dom_family] =
+			    (*dp->dom_ifattach)(ifp);
+	}
 
 	/* Announce the interface. */
 	rt_ifannouncemsg(ifp, IFAN_ARRIVAL);
@@ -597,6 +606,12 @@ if_detach(ifp)
 	for (i = 0; i <= AF_MAX; i++) {
 		if ((rnh = rt_tables[i]) != NULL)
 			(void) (*rnh->rnh_walktree)(rnh, if_rt_walktree, ifp);
+	}
+
+	for (dp = domains; dp; dp = dp->dom_next) {
+		if (dp->dom_ifdetach && ifp->if_afdata[dp->dom_family])
+			(*dp->dom_ifdetach)(ifp,
+			    ifp->if_afdata[dp->dom_family]);
 	}
 
 	/* Announce that the interface is gone. */
