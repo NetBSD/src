@@ -1,5 +1,5 @@
 #ifndef lint
-static char rcsid[] = "$Id: crontab.c,v 1.7 1993/12/18 02:42:17 cgd Exp $";
+static char rcsid[] = "$Id: crontab.c,v 1.8 1993/12/25 02:54:36 deraadt Exp $";
 #endif /* not lint */
 
 #define	MAIN_PROGRAM
@@ -178,7 +178,7 @@ parse_args(argc, argv)
 				perror(Filename);
 				exit(ERROR_EXIT);
 			}
-			setreuid(getuid(), geteuid());
+			setreuid(geteuid(), getuid());
 		}
 	}
 
