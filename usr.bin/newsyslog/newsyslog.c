@@ -1,4 +1,4 @@
-/*	$NetBSD: newsyslog.c,v 1.19 1999/10/05 12:11:28 ad Exp $	*/
+/*	$NetBSD: newsyslog.c,v 1.20 1999/10/06 13:26:28 ad Exp $	*/
 
 /*
  * This file contains changes from the Open Software Foundation.
@@ -29,7 +29,7 @@ provided "as is" without express or implied warranty.
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newsyslog.c,v 1.19 1999/10/05 12:11:28 ad Exp $");
+__RCSID("$NetBSD: newsyslog.c,v 1.20 1999/10/06 13:26:28 ad Exp $");
 #endif /* not lint */
 
 #ifndef CONF
@@ -81,7 +81,8 @@ struct conf_entry {
         int     size;           /* Size cutoff to trigger trimming the log */
         int     hours;          /* Hours between log trimming */
         int     permissions;    /* File permissions on the log */
-        int     flags;          /* Flags (CE_COMPACT & CE_BINARY)  */
+        int     flags;          /* Flags (CE_COMPACT & CE_BINARY) */
+        char	*pidfile;	/* Name of file containing PID to signal */
         struct conf_entry       *next; /* Linked list pointer */
 };
 
@@ -101,7 +102,7 @@ char    *daytime;               /* timenow in human readable form */
 void	PRS __P((int, char **));
 int	age_old_log __P((char *));
 void	compress_log __P((char *));
-void	dotrim __P((char *, int, int, int, int, int));
+void	dotrim __P((char *, int, int, int, int, int, char *));
 void	do_entry __P((struct conf_entry *));
 int	isnumber __P((char *));
 int	log_trim __P((char *));
@@ -171,7 +172,8 @@ do_entry(ent)
                                                ent->log,ent->numlogs);
                         }
                         dotrim(ent->log, ent->numlogs, ent->flags,
-                               ent->permissions, ent->uid, ent->gid);
+                               ent->permissions, ent->uid, ent->gid,
+                               ent->pidfile);
                 } else {
                         if (verbose)
                                 printf("--> skipping\n");
@@ -364,6 +366,12 @@ parse_file()
                         }
                         q++;
                 }
+
+                if ((q = parse = sob(++parse)) != NULL && q[0] != '\0') {
+                	*(parse = son(parse)) = '\0';
+               		working->pidfile = strdup(q);
+               	} else
+               		working->pidfile = NULL;
                 
                 free(errline);
         }
@@ -386,19 +394,23 @@ missing_field(p,errline)
 }
 
 void
-dotrim(log,numdays,flags,perm,owner_uid,group_gid)
+dotrim(log,numdays,flags,perm,owner_uid,group_gid,pidfile)
         char    *log;
         int     numdays;
         int     flags;
         int     perm;
         int     owner_uid;
         int     group_gid;
+        char	*pidfile;
 {
         char    file1[128], file2[128];
         char    zfile1[128], zfile2[128];
+	char    line[BUFSIZ];
         int     fd;
         struct  stat st;
         int     ngen = numdays;
+        FILE    *f;
+        pid_t   pid;
 
 #ifdef _IBMR2
 /* AIX 3.1 has a broken fchown- if the owner_uid is -1, it will actually */
@@ -407,6 +419,20 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
                 if (owner_uid == -1)
                   owner_uid = geteuid();
 #endif
+
+        if (pidfile != NULL && pidfile[0] != '\0') {
+       		if ((f = fopen(pidfile,"r")) == NULL) {
+       			(void) fprintf(stderr,"%s: ",progname);
+                	perror(conf);
+                	return;
+                }
+       		
+       		if (fgets(line,BUFSIZ,f))
+       	        	pid = atoi(line);
+		if (f)
+			(void)fclose(f);
+	} else
+		pid = syslog_pid;
 
         /* Remove oldest log */
         (void) sprintf(file1,"%s.%d",log,numdays);
@@ -481,14 +507,14 @@ dotrim(log,numdays,flags,perm,owner_uid,group_gid)
         else
                 (void) chmod(log,perm);
         if (noaction)
-                printf("kill -HUP %d (syslogd)\n",syslog_pid);
+                printf("kill -HUP %d\n",pid);
         else
-	if (syslog_pid < MIN_PID || syslog_pid > MAX_PID) {
+	if (pid < MIN_PID || pid > MAX_PID) {
 		fprintf(stderr,"%s: preposterous process number: %d\n",
-				progname, syslog_pid);
-        } else if (kill(syslog_pid,SIGHUP)) {
+				progname, pid);
+        } else if (kill(pid,SIGHUP)) {
                         fprintf(stderr,"%s: ",progname);
-                        perror("warning - could not restart syslogd");
+                        perror("warning - could not restart daemon");
                 }
         if (flags & CE_COMPACT) {
                 if (noaction)

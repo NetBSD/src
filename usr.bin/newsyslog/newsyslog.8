@@ -3,7 +3,7 @@
 .\" This file contains changes from the Open Software Foundation.
 .\"
 .\"	from: @(#)newsyslog.8
-.\"	$NetBSD: newsyslog.8,v 1.9 1999/10/05 12:11:27 ad Exp $
+.\"	$NetBSD: newsyslog.8,v 1.10 1999/10/06 13:26:28 ad Exp $
 .\"
 .\" Copyright 1988, 1989 by the Massachusetts Institute of Technology
 .\" 
@@ -77,6 +77,8 @@ follows:
 	archive interval
 .br
 	flags (optional)
+.br
+	path to pid file (optional)
 .PP
 The
 .I logfile name
@@ -126,6 +128,13 @@ means that the file is a binary file, and so the ascii message which
 inserts to indicate the fact that the logs have been turned over
 should not be included.
 .PP
+The
+.I path to pid file
+entry specifies a file to read to obtain the daemon process ID. If found, a
+hang-up (SIGHUP) signal will be sent to this process after the log file is
+trimmed. By default the signal is sent to
+.IR syslogd .
+.PP
 .SH OPTIONS
 The following options can be used with newsyslog:
 .TP
@@ -152,7 +161,8 @@ removes the restriction that
 must be running as root.  Of course, 
 .I newsyslog
 will not be able to send a HUP signal to
-.IR syslogd ,
+.IR syslogd 
+(or other daemons not owned by the user),
 so this option should only be used in debugging.
 .SH FILES
 /etc/newsyslog.conf
