@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2003/09/26 22:46:01 nathanw Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2003/12/07 20:01:58 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -53,11 +53,7 @@ typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
 
-#ifndef _LP64
-typedef unsigned long long	register_t;
-#else
-typedef unsigned long		register_t;
-#endif
+typedef __uint64_t	register_t;
 
 #if defined(_KERNEL)
 /*
@@ -75,11 +71,7 @@ typedef struct label_t {
 } label_t;
 #endif
 
-#ifndef _LP64
-typedef	__volatile long long	__cpu_simple_lock_t;
-#else
-typedef __volatile long		__cpu_simple_lock_t;
-#endif
+typedef	__volatile __int64_t	__cpu_simple_lock_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
