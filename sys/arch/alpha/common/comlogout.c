@@ -1,4 +1,4 @@
-/* $NetBSD: comlogout.c,v 1.2 1999/02/12 06:32:12 thorpej Exp $ */
+/* $NetBSD: comlogout.c,v 1.3 2000/03/29 03:43:31 simonb Exp $ */
 /*
  * Copyright (c) 1998 by Matthew Jacob
  * NASA AMES Research Center.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.2 1999/02/12 06:32:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.3 2000/03/29 03:43:31 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: comlogout.c,v 1.2 1999/02/12 06:32:12 thorpej Exp $"
 
 #include <machine/rpb.h>
 #include <machine/autoconf.h>
-#include <machine/conf.h>
 #include <machine/bus.h>
 #include <machine/frame.h>
 #include <machine/cpuconf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.13 1998/09/16 21:30:58 is Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.14 2000/03/29 03:43:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,6 @@
 #include <sys/tty.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>

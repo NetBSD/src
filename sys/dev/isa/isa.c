@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.106 1999/02/19 16:15:06 mycroft Exp $	*/
+/*	$NetBSD: isa.c,v 1.107 2000/03/29 03:43:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 

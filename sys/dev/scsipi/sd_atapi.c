@@ -1,4 +1,4 @@
-/*	$NetBSD: sd_atapi.c,v 1.5 1999/09/30 22:57:54 thorpej Exp $	*/
+/*	$NetBSD: sd_atapi.c,v 1.6 2000/03/29 03:43:32 simonb Exp $	*/
 
 /*
  * Copyright 1998
@@ -48,7 +48,6 @@
 #include <sys/errno.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-#include <sys/conf.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipi_disk.h>

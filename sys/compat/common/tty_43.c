@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_43.c,v 1.8 1998/03/01 02:22:41 fvdl Exp $	*/
+/*	$NetBSD: tty_43.c,v 1.9 2000/03/29 03:43:31 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -45,7 +45,6 @@
 #include <sys/tty.h>
 #include <sys/termios.h>
 #include <sys/file.h>
-#include <sys/conf.h>
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/ioctl_compat.h>
