@@ -201,6 +201,7 @@
 ./usr/bin/ident
 ./usr/bin/indent
 ./usr/bin/info
+./usr/bin/innetgr
 ./usr/bin/install
 ./usr/bin/install-info
 ./usr/bin/install-sid
@@ -245,6 +246,7 @@
 ./usr/bin/more
 ./usr/bin/mset
 ./usr/bin/msgs
+./usr/bin/netgroup
 ./usr/bin/netstat
 ./usr/bin/newaliases
 ./usr/bin/newsyslog
@@ -429,6 +431,8 @@
 ./usr/libexec/makewhatis
 ./usr/libexec/named-xfer
 ./usr/libexec/ntalkd
+./usr/libexec/postfix
+./usr/libexec/sendmail/sendmail
 ./usr/libexec/rexecd
 ./usr/libexec/rlogind
 ./usr/libexec/rmail
@@ -520,6 +524,7 @@
 ./usr/sbin/lpc
 ./usr/sbin/lpd
 ./usr/sbin/lptest
+./usr/sbin/mailwrapper
 ./usr/sbin/mailstats
 ./usr/sbin/makedbm
 ./usr/sbin/makemap
@@ -1556,6 +1561,8 @@
 ./var/spool/lpd
 ./var/spool/mqueue
 ./var/spool/output
+./var/spool/postfix
+./var/spool/postfix/etc
 ./var/spool/sockets
 ./var/spool/uucp
 ./var/spool/uucppublic
