@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.66 1998/07/30 00:44:16 mycroft Exp $	*/
+/*	$NetBSD: unistd.h,v 1.67 1998/11/06 05:58:09 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -277,6 +277,7 @@ int	 select __P((int, fd_set *, fd_set *, fd_set *, struct timeval *));
     (_XOPEN_SOURCE - 0) >= 500
 ssize_t	 pread __P((int, void *, size_t, off_t));
 ssize_t	 pwrite __P((int, const void *, size_t, off_t));
+pid_t	 getpgid __P((pid_t));
 #endif
 
 
