@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.14 1999/08/23 08:24:37 kleink Exp $	*/
+/*	$NetBSD: asm.h,v 1.15 1999/09/27 09:47:45 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -89,8 +89,13 @@
 	.text; _ALIGN_TEXT; .globl x; .type x,@function; x:
 
 #ifdef GPROF
-# define _PROF_PROLOGUE	\
+# ifdef __ELF__
+#  define _PROF_PROLOGUE	\
+	pushl %ebp; movl %esp,%ebp; call PIC_PLT(__mcount); popl %ebp
+# else 
+#  define _PROF_PROLOGUE	\
 	pushl %ebp; movl %esp,%ebp; call PIC_PLT(mcount); popl %ebp
+# endif
 #else
 # define _PROF_PROLOGUE
 #endif
