@@ -1,4 +1,4 @@
-/*	$NetBSD: warnings.c,v 1.20 1998/01/05 22:01:01 cgd Exp $	*/
+/*	$NetBSD: warnings.c,v 1.21 1998/09/04 09:50:47 pk Exp $	*/
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,9 +102,7 @@ print_symbols(outfile)
 	fprintf(outfile, "\nGlobal symbols:\n\n");
 	FOR_EACH_SYMBOL(i, sp) {
 		fprintf(outfile, "  %s: ", sp->name);
-		if (!(sp->flags & GS_REFERENCED))
-			fprintf(outfile, "unreferenced");
-		else if (sp->so_defined)
+		if (sp->so_defined)
 			fprintf(outfile, "sodefined");
 		else if (!sp->defined)
 			fprintf(outfile, "undefined");
@@ -113,6 +111,8 @@ print_symbols(outfile)
 		else
 			fprintf(outfile, "type %d, value %#x, size %#x",
 				sp->defined, sp->value, sp->size);
+		if (!(sp->flags & GS_REFERENCED))
+			fprintf(outfile, ", unreferenced");
 		if (sp->alias)
 			fprintf(outfile, ", aliased to %s", sp->alias->name);
 		fprintf(outfile, "\n");
