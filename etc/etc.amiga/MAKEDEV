@@ -31,7 +31,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-#	$Id: MAKEDEV,v 1.15 1995/08/19 17:28:22 chopps Exp $
+#	$Id: MAKEDEV,v 1.16 1995/09/30 07:11:20 chopps Exp $
 #
 #	from:
 #	hp300/MAKEDEV (1/15/94), from:
@@ -72,7 +72,8 @@
 #	par*	motherboard parallel port
 #
 # Special purpose devices:
-#	grf*	custom chip (grf0) or Retina (grf1) video
+#	grf*	custom chip (grf0) or Retina Z2/Z3 (grf1/grf2),
+#		Cirrus boards (grf3) or A2410 (grf4) video
 #	kbd	Amiga keyboard
 #	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
@@ -96,9 +97,10 @@ all)
 	;;
 
 floppy)
-	sh MAKEDEV std st0 ttye0 ttye1 ttye2 ttye3 ttye4 tty00 grf0 grf1
-	sh MAKEDEV grf2 grf3 grf4 kbd
-	sh MAKEDEV sd0 sd1 sd2 sd3 sd4 sd5 sd6 cd0 fd0 fd1
+	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 tun0 tun1
+	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 ttye0 ttye1 ttye2 ttye3 ttye4
+	sh MAKEDEV cd0 sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9 st0
+	sh MAKEDEV fd0 fd1 fd2 fd3 
 	;;
 
 std)
@@ -261,7 +263,7 @@ cd*)
 tty0*|ttyA*)
 	type=`expr $i : 'tty\(.\).'`
 	unit=`expr $i : 'tty.\(.\)'`
-	rm -f ser${unit} tty0${unit} ttym${unit}
+	rm -f ser${unit}
 	case $type in
 	0)	case $unit in
 		0)	
@@ -406,7 +408,7 @@ bpf*)
 tun*)
 	unit=`expr $i : 'tun\(.*\)'`
 	rm -f tun$unit
-	mknod tun$unit c 40 $unit
+	mknod tun$unit c 23 $unit
 	chmod 600 tun$unit
 	chown root.wheel tun$unit
 	;;
