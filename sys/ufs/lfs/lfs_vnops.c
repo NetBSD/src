@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.50.2.14 2003/01/08 17:04:02 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.50.2.15 2003/01/08 17:17:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.14 2003/01/08 17:04:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.50.2.15 2003/01/08 17:17:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,17 +663,6 @@ lfs_remove(void *v)
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(vp);
 
-	/*
-	 * If ufs_remove failed, vp doesn't need to be VDIROP any more.
-	 * If it succeeded, we can go ahead and wipe out vp, since
-	 * its loss won't appear on disk until checkpoint, and by then
-	 * dvp will have been written, completing the dirop.
-	 */
-	--lfs_dirvcount;
-	vp->v_flag &= ~VDIROP;
-	wakeup(&lfs_dirvcount);
-	vrele(vp);
-
 	SET_ENDOP2(VTOI(dvp)->i_lfs, dvp, vp, "remove");
 	return (error);
 }
@@ -701,17 +690,6 @@ lfs_rmdir(void *v)
 	error = ufs_rmdir(ap);
 	UNMARK_VNODE(ap->a_dvp);
 	UNMARK_VNODE(ap->a_vp);
-
-	/*
-	 * If ufs_rmdir failed, vp doesn't need to be VDIROP any more.
-	 * If it succeeded, we can go ahead and wipe out vp, since
-	 * its loss won't appear on disk until checkpoint, and by then
-	 * dvp will have been written, completing the dirop.
-	 */
-	--lfs_dirvcount;
-	ap->a_vp->v_flag &= ~VDIROP;
-	wakeup(&lfs_dirvcount);
-	vrele(ap->a_vp);
 
 	SET_ENDOP2(VTOI(ap->a_dvp)->i_lfs, ap->a_dvp, ap->a_vp, "rmdir");
 	return (error);
