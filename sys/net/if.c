@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.117 2003/02/01 06:23:46 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.118 2003/05/16 16:57:09 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.117 2003/02/01 06:23:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.118 2003/05/16 16:57:09 itojun Exp $");
 
 #include "opt_inet.h"
 
@@ -538,7 +538,7 @@ if_detach(ifp)
 	struct ifnet *ifp;
 {
 	struct socket so;
-	struct ifaddr *ifa;
+	struct ifaddr *ifa, *next;
 #ifdef IFAREF_DEBUG
 	struct ifaddr *last_ifa = NULL;
 #endif
@@ -571,13 +571,12 @@ if_detach(ifp)
 	(void) pfil_head_unregister(&ifp->if_pfil);
 #endif
 
-	if_free_sadl(ifp);
-
 	/*
 	 * Rip all the addresses off the interface.  This should make
 	 * all of the routes go away.
 	 */
-	while ((ifa = TAILQ_FIRST(&ifp->if_addrlist)) != NULL) {
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
+		next = TAILQ_NEXT(ifa, ifa_list);
 		family = ifa->ifa_addr->sa_family;
 #ifdef IFAREF_DEBUG
 		printf("if_detach: ifaddr %p, family %d, refcnt %d\n",
@@ -586,42 +585,36 @@ if_detach(ifp)
 			panic("if_detach: loop detected");
 		last_ifa = ifa;
 #endif
-		if (family == AF_LINK) {
-			/*
-			 * XXX This case may now be obsolete by
-			 * XXX the call to if_free_sadl().
-			 */
-			rtinit(ifa, RTM_DELETE, 0);
-			TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
-			IFAFREE(ifa);
-		} else {
-			dp = pffinddomain(family);
+		if (family == AF_LINK)
+			continue;
+		dp = pffinddomain(family);
 #ifdef DIAGNOSTIC
-			if (dp == NULL)
-				panic("if_detach: no domain for AF %d",
-				    family);
+		if (dp == NULL)
+			panic("if_detach: no domain for AF %d",
+			    family);
 #endif
-			purged = 0;
-			for (pr = dp->dom_protosw;
-			     pr < dp->dom_protoswNPROTOSW; pr++) {
-				so.so_proto = pr;
-				if (pr->pr_usrreq != NULL) {
-					(void) (*pr->pr_usrreq)(&so,
-					    PRU_PURGEIF, NULL, NULL,
-					    (struct mbuf *) ifp, curproc);
-					purged = 1;
-				}
-			}
-			if (purged == 0) {
-				/*
-				 * XXX What's really the best thing to do
-				 * XXX here?  --thorpej@netbsd.org
-				 */
-				printf("if_detach: WARNING: AF %d not purged\n",
-				    family);
+		purged = 0;
+		for (pr = dp->dom_protosw;
+		     pr < dp->dom_protoswNPROTOSW; pr++) {
+			so.so_proto = pr;
+			if (pr->pr_usrreq != NULL) {
+				(void) (*pr->pr_usrreq)(&so,
+				    PRU_PURGEIF, NULL, NULL,
+				    (struct mbuf *) ifp, curproc);
+				purged = 1;
 			}
 		}
+		if (purged == 0) {
+			/*
+			 * XXX What's really the best thing to do
+			 * XXX here?  --thorpej@netbsd.org
+			 */
+			printf("if_detach: WARNING: AF %d not purged\n",
+			    family);
+		}
 	}
+
+	if_free_sadl(ifp);
 
 	/* Walk the routing table looking for straglers. */
 	for (i = 0; i <= AF_MAX; i++) {
