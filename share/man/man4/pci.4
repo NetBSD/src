@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.56 2001/09/22 15:58:13 wiz Exp $
+.\"	$NetBSD: pci.4,v 1.57 2001/10/13 17:20:49 augustss Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -225,6 +225,8 @@ interfaces.
 VIA VT3043 (Rhine) and VT86C100A (Rhine-II)
 .Tn Ethernet
 interfaces.
+.It wi
+WaveLAN/IEEE and PRISM-II 802.11 wireless interfaces.
 .El
 .Ss Serial interfaces
 .Bl -tag -width pcdisplay -offset indent
@@ -364,6 +366,7 @@ VGA graphics boards.
 .Xr vga 4 ,
 .Xr viapm 4 ,
 .Xr vr 4 ,
+.Xr wi 4 ,
 .Xr wscons 4 ,
 .Xr yds 4
 .Sh HISTORY

@@ -1,4 +1,4 @@
-.\"     $NetBSD: wi.4,v 1.18 2001/10/13 16:56:17 ichiro Exp $
+.\"     $NetBSD: wi.4,v 1.19 2001/10/13 17:20:48 augustss Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: wi.4,v 1.18 2001/10/13 16:56:17 ichiro Exp $
+.\"	$Id: wi.4,v 1.19 2001/10/13 17:20:48 augustss Exp $
 .\"
 .Dd January 11, 2001
 .Dt WI 4
@@ -38,7 +38,7 @@
 .Sh NAME
 .Nm wi
 .Nd
-WaveLAN/IEEE and PRISM-II 802.11 PCMCIA wireless network driver
+WaveLAN/IEEE and PRISM-II 802.11 wireless network driver
 .Sh SYNOPSIS
 .Cd "wi* at pcmcia? function ?"
 .Cd "wi* at pci? dev ? function ?"
@@ -147,6 +147,8 @@ One reason can be that the board is mis-configured, see
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
 .Xr netintro 4 ,
+.Xr pcmcia 4 ,
+.Xr pci 4 ,
 .Xr ifconfig 8 ,
 .Xr wiconfig 8
 .Rs
