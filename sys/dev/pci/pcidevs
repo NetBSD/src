@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.109 1999/03/11 05:17:24 sakamoto Exp $
+$NetBSD: pcidevs,v 1.110 1999/03/16 21:24:46 mjacob Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -977,6 +977,8 @@ product PROMISE ULTRA33	0x4d33	Ultra DMA/ATA Bus Master IDE Accelerator
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
 product QLOGIC ISP1022	0x1022	ISP1022
+product QLOGIC ISP1080	0x1080	ISP1080
+product QLOGIC ISP1240	0x1240	ISP1240
 product QLOGIC ISP2100	0x2100	ISP2100
 
 /* Quantum Designs products */
