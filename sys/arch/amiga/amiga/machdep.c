@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.127 1998/11/28 16:39:26 is Exp $	*/
+/*	$NetBSD: machdep.c,v 1.128 1998/12/12 20:05:07 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -1550,7 +1550,7 @@ remove_isr(isr)
 #else
 	p = isr->isr_ipl == 6 ? &isr_exter : &isr_ports;
 #endif
-	if (*p == NULL)
+	if (*p == NULL) {
 #ifdef DRACO
 		if (is_draco()) {
 			switch(isr->isr_ipl) {
@@ -1569,6 +1569,7 @@ remove_isr(isr)
 #endif
 			custom.intena = isr->isr_ipl == 6 ? 
 			    INTF_EXTER : INTF_PORTS;
+	}
 }
 
 void
