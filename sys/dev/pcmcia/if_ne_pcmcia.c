@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.134 2004/08/12 17:13:54 mycroft Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.135 2004/08/12 17:33:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.134 2004/08/12 17:13:54 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.135 2004/08/12 17:33:17 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,6 @@ u_int8_t *
 u_int8_t *
 	ne_pcmcia_dl10019_get_enaddr __P((struct ne_pcmcia_softc *,
 	    u_int8_t [ETHER_ADDR_LEN]));
-int	ne_pcmcia_ax88190_set_iobase __P((struct ne_pcmcia_softc *));
 
 CFATTACH_DECL(ne_pcmcia, sizeof(struct ne_pcmcia_softc),
     ne_pcmcia_match, ne_pcmcia_attach, ne_pcmcia_detach, dp8390_activate);
@@ -645,7 +644,8 @@ found:
 	if ((ne_dev->flags & NE2000DVF_AX88190) != 0) {
 		u_int8_t test;
 
-		if (ne_pcmcia_ax88190_set_iobase(psc)) {
+		/* XXX This is highly bogus. */
+		if ((pa->pf->ccr_mask & (1 << PCMCIA_CCR_IOBASE0)) == 0) {
 			++i;
 			goto again;
 		}
@@ -737,32 +737,21 @@ ne_pcmcia_enable(dsc)
 	struct dp8390_softc *dsc;
 {
 	struct ne_pcmcia_softc *psc = (struct ne_pcmcia_softc *)dsc;
-	struct ne2000_softc *nsc = &psc->sc_ne2000;
+	int error;
 
 	/* set up the interrupt */
 	psc->sc_ih = pcmcia_intr_establish(psc->sc_pf, IPL_NET, dp8390_intr,
 	    dsc);
 	if (!psc->sc_ih)
-		goto fail_1;
+		return (EIO);
 
-	if (pcmcia_function_enable(psc->sc_pf))
-		goto fail_2;
-
-	if (nsc->sc_type == NE2000_TYPE_AX88190 ||
-	    nsc->sc_type == NE2000_TYPE_AX88790) {
-		if (ne_pcmcia_ax88190_set_iobase(psc))
-			goto fail_3;
+	error = pcmcia_function_enable(psc->sc_pf);
+	if (error) {
+		pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
+		psc->sc_ih = 0;
 	}
 
-	return (0);
-
-fail_3:
-	pcmcia_function_disable(psc->sc_pf);
-fail_2:
-	pcmcia_intr_disestablish(psc->sc_pf, psc->sc_ih);
-	psc->sc_ih = 0;
-fail_1:
-	return (1);
+	return (error);
 }
 
 void
@@ -835,30 +824,4 @@ ne_pcmcia_dl10019_get_enaddr(psc, myea)
 		    nsc->sc_asich, PAR0 + j);
 #undef PAR0
 	return (myea);
-}
-
-int
-ne_pcmcia_ax88190_set_iobase(psc)
-	struct ne_pcmcia_softc *psc;
-{
-	struct pcmcia_function *pf = psc->sc_pf;
-	bus_addr_t iobase = pf->cfe->iospace[0].handle.addr;
-	bus_addr_t oldiobase, newiobase;
-
-	oldiobase = (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE0) << 0) |
-		    (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE1) << 8);
-	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0, (iobase >> 0) & 0xff);
-	pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1, (iobase >> 8) & 0xff);
-	newiobase = (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE0) << 0) |
-		    (pcmcia_ccr_read(pf, PCMCIA_CCR_IOBASE1) << 8);
-
-#ifdef DIAGNOSTIC
-	printf("%s: iobase %lx -> %lx -> %lx\n",
-	    psc->sc_ne2000.sc_dp8390.sc_dev.dv_xname,
-	    (long)oldiobase, (long)iobase, (long)newiobase);
-#endif
-
-	if (oldiobase == iobase || oldiobase != newiobase)
-		return (0);
-	return (EIO);
 }
