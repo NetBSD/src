@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2003/08/07 16:28:29 agc Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34 2004/04/26 22:25:54 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -151,6 +151,18 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFF000000)
 #else
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xFFFFC000)
+#endif
+
+/*
+ * The address to which unspecified mapping requests default
+ */
+#ifdef _KERNEL_OPT
+#include "opt_uvm.h"
+#endif
+#define __HAVE_TOPDOWN_VM
+#ifdef USE_TOPDOWN_VM
+#define VM_DEFAULT_ADDRESS(da, sz) \
+	trunc_page(USRSTACK - MAXSSIZ - (sz))
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */
