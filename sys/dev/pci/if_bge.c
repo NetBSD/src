@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.15 2002/07/13 01:23:27 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.16 2002/07/13 22:21:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -1512,6 +1512,83 @@ bge_blockinit(sc)
 	return(0);
 }
 
+static const struct bge_revision {
+	uint32_t		br_asicrev;
+	uint32_t		br_quirks;
+	const char		*br_name;
+} bge_revisions[] = {
+	{ BGE_ASICREV_BCM5700_A0,
+	  0,
+	  "BCM5700 A0" },
+
+	{ BGE_ASICREV_BCM5700_A1,
+	  0,
+	  "BCM5700 A1" },
+
+	{ BGE_ASICREV_BCM5700_B0,
+	  0,
+	  "BCM5700 B0" },
+
+	{ BGE_ASICREV_BCM5700_B1,
+	  0,
+	  "BCM5700 B1" },
+
+	{ BGE_ASICREV_BCM5700_B2,
+	  0,
+	  "BCM5700 B2" },
+
+	{ BGE_ASICREV_BCM5700_ALTIMA,
+	  0,
+	  "BCM5700 Altima" },
+
+	{ BGE_ASICREV_BCM5700_C0,
+	  0,
+	  "BCM5700 C0" },
+
+	{ BGE_ASICREV_BCM5701_A0,
+	  0,
+	  "BCM5701 A0" },
+
+	{ BGE_ASICREV_BCM5701_B0,
+	  0,
+	  "BCM5701 B0" },
+
+	{ BGE_ASICREV_BCM5701_B2,
+	  0,
+	  "BCM5701 B2" },
+
+	{ BGE_ASICREV_BCM5701_B5,
+	  0,
+	  "BCM5701 B5" },
+
+	{ BGE_ASICREV_BCM5703_A0,
+	  0,
+	  "BCM5703 A0" },
+
+	{ BGE_ASICREV_BCM5703_A1,
+	  0,
+	  "BCM5703 A1" },
+
+	{ BGE_ASICREV_BCM5703_A2,
+	  0,
+	  "BCM5703 A2" },
+
+	{ 0, 0, NULL }
+};
+
+static const struct bge_revision *
+bge_lookup_rev(uint32_t asicrev)
+{
+	const struct bge_revision *br;
+
+	for (br = bge_revisions; br->br_name != NULL; br++) {
+		if (br->br_asicrev == asicrev)
+			return (br);
+	}
+
+	return (NULL);
+}
+
 static const struct bge_product {
 	pci_vendor_id_t		bp_vendor;
 	pci_product_id_t	bp_product;
@@ -1604,6 +1681,7 @@ bge_attach(parent, self, aux)
 	struct bge_softc	*sc = (struct bge_softc *)self;
 	struct pci_attach_args	*pa = aux;
 	const struct bge_product *bp;
+	const struct bge_revision *br;
 	pci_chipset_tag_t	pc = pa->pa_pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
@@ -1624,7 +1702,7 @@ bge_attach(parent, self, aux)
 
 	sc->bge_pa = *pa;
 
-	printf(": %s, rev. 0x%02x\n", bp->bp_name, PCI_REVISION(pa->pa_class));
+	printf(": %s\n", bp->bp_name);
 
 	/*
 	 * Map control/status registers.
@@ -1701,10 +1779,23 @@ bge_attach(parent, self, aux)
 	}
 
 	/*
-	 * A Broadcom chip was detected. Inform the world.
+	 * Save ASIC rev.  Look up any quirks associated with this
+	 * ASIC.
 	 */
-	printf("%s: Ethernet address %s\n", sc->bge_dev.dv_xname,
-	    ether_sprintf(eaddr));
+	sc->bge_asicrev =
+	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
+	    BGE_PCIMISCCTL_ASICREV;
+	br = bge_lookup_rev(sc->bge_asicrev);
+
+	printf("%s: ", sc->bge_dev.dv_xname);
+	if (br == NULL) {
+		printf("unknown ASIC 0x%08x", sc->bge_asicrev);
+		sc->bge_quirks = 0;
+	} else {
+		printf("ASIC %s", br->br_name);
+		sc->bge_quirks = br->br_quirks;
+	}
+	printf(", Ethernet address %s\n", ether_sprintf(eaddr));
 
 	/* Allocate the general information block and ring buffers. */
 	sc->bge_dmatag = pa->pa_dmat;
@@ -1789,12 +1880,6 @@ bge_attach(parent, self, aux)
 	sc->bge_mii.mii_readreg = bge_miibus_readreg;
 	sc->bge_mii.mii_writereg = bge_miibus_writereg;
 	sc->bge_mii.mii_statchg = bge_miibus_statchg;
-
-	/* Save ASIC rev. */
-
-	sc->bge_asicrev =
-	    pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL) &
-	    BGE_PCIMISCCTL_ASICREV;
 
 	/*
 	 * Figure out what sort of media we have by checking the
