@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.88 2003/05/10 21:10:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.89 2003/06/01 09:26:10 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.88 2003/05/10 21:10:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.89 2003/06/01 09:26:10 wiz Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -574,7 +574,7 @@ uvm_page_physget_freelist(paddrp, freelist)
 			if (vm_physmem[lcv].avail_start ==
 			    vm_physmem[lcv].end) {
 				if (vm_nphysseg == 1)
-				    panic("vum_page_physget: out of memory!");
+				    panic("uvm_page_physget: out of memory!");
 				vm_nphysseg--;
 				for (x = lcv ; x < vm_nphysseg ; x++)
 					/* structure copy */
