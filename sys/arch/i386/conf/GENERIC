@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.274 1999/11/13 17:57:28 perry Exp $
+#	$NetBSD: GENERIC,v 1.275 1999/11/14 13:31:04 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -155,6 +155,7 @@ options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USBVERBOSE	# verbose USB device autoconfig messages
+#options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -581,6 +582,26 @@ uaudio*	at uhub? port ? configuration ?
 
 # USB Generic driver
 ugen*	at uhub? port ?
+
+
+# Plug-and-Play BIOS and attached devices
+
+#pnpbios0 at mainbus0
+
+# mainboard audio chips
+#sb*	at pnpbios0 index ?	# NeoMagic 256AV in sb mode
+#wss*	at pnpbios0 index ?	# NeoMagic 256AV in wss mode
+#ym*	at pnpbios0 index ?	# OPL3-SA3
+
+# com port
+#com*	at pnpbios0 index ?
+
+# parallel port
+#lpt*	at pnpbios0 index ?
+
+# IDE controller on Toshiba Portege 3000 series (crippled PCI device)
+#pciide* at pnpbios0 index ?
+
 
 # Audio Devices
 
