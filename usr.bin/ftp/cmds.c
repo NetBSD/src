@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.52 1999/06/29 10:43:16 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.53 1999/06/29 12:41:22 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.52 1999/06/29 10:43:16 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.53 1999/06/29 12:41:22 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -2099,7 +2099,7 @@ usage:
 		}
 		if (!cmdlineopt || verbose)
 			fprintf(ttyout,
-		    "Get xfer rate throttle: %s; maximum: %d; increment %d.\n",
+		"Get transfer rate throttle: %s; maximum: %d; increment %d.\n",
 			    onoff(rate_get), rate_get, rate_get_incr);
 	}
 	if (dir & RATE_PUT) {
@@ -2109,7 +2109,7 @@ usage:
 		}
 		if (!cmdlineopt || verbose)
 			fprintf(ttyout,
-		    "Put xfer rate throttle: %s; maximum: %d; increment %d.\n",
+		"Put transfer rate throttle: %s; maximum: %d; increment %d.\n",
 			    onoff(rate_put), rate_put, rate_put_incr);
 	}
 	(void)signal(SIGUSR1, oldusr1);
