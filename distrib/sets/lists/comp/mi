@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.219 2000/05/25 04:20:46 shin Exp $
+#	$NetBSD: mi,v 1.220 2000/05/28 19:49:50 ragge Exp $
 ./sys			comp-sysutil-root
 ./usr/bin/addr2line	comp-miscutil-bin
 ./usr/bin/ar		comp-util-bin
@@ -967,7 +967,6 @@
 ./usr/include/sys/vmmeter.h		comp-c-include
 ./usr/include/sys/vnode.h		comp-c-include
 ./usr/include/sys/vnode_if.h		comp-c-include
-./usr/include/sys/vsio.h		comp-c-include
 ./usr/include/sys/wait.h		comp-c-include
 ./usr/include/sysexits.h		comp-c-include
 ./usr/include/syslog.h		comp-c-include
