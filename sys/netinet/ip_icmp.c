@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.41 2000/02/17 10:59:35 darrenr Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.42 2000/02/24 09:54:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,10 +184,13 @@ icmp_error(n, type, code, dest, destifp)
 	if (type != ICMP_REDIRECT)
 		icmpstat.icps_error++;
 	/*
+	 * Don't send error if the original packet was encrypted.
 	 * Don't send error if not the first fragment of message.
 	 * Don't error if the old packet protocol was ICMP
 	 * error message, only known informational types.
 	 */
+	if (n->m_flags & M_DECRYPTED)
+		goto freeit;
 	if (oip->ip_off &~ (IP_MF|IP_DF))
 		goto freeit;
 	if (oip->ip_p == IPPROTO_ICMP && type != ICMP_REDIRECT &&
