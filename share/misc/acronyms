@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.127 2003/10/10 12:16:05 jmmv Exp $
+$NetBSD: acronyms,v 1.128 2003/11/22 17:34:40 jschauma Exp $
 
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -135,6 +135,7 @@ OIC	oh, I see
 OMG	oh, my god
 OT	off topic
 OTL	out to lunch
+OTP	one time password
 OTOH	on the other hand
 OTT	over the top
 OTTOMH	off the top of my head
