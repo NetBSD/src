@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.6 2002/01/29 18:53:24 uch Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.7 2002/02/11 17:21:48 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_kgdb.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
@@ -45,6 +47,7 @@
 
 #include <machine/bus.h>
 #include <machine/intr.h>
+#include <machine/console.h>
 
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
@@ -54,6 +57,8 @@
 #include <hpcsh/dev/hd64461/hd64461var.h>
 #include <hpcsh/dev/hd64461/hd64461reg.h>
 #include <hpcsh/dev/hd64461/hd64461intcvar.h>
+#include <hpcsh/dev/hd64461/hd64461uartvar.h>
+#include <hpcsh/dev/hd64461/hd64461uartreg.h>
 
 STATIC struct hd64461uart_chip {
 	struct hpcsh_bus_space __tag_body;
@@ -112,7 +117,15 @@ comcninit(struct consdev *cp)
 
 	hd64461uart_init();
 
-	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ, 
+#ifdef KGDB
+	if (strcmp(kgdb_devname, "hd64461uart") == 0) {
+		if (com_kgdb_attach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED,
+		    COM_FREQ, CONMODE) == 0) {
+			return;
+		}
+	}
+#endif /* KGDB */
+	comcnattach(hd64461uart_chip.io_tag, 0x0, COMCN_SPEED, COM_FREQ,
 	    CONMODE);	
 
 	hd64461uart_chip.console = 1;
@@ -188,7 +201,7 @@ u_int8_t
 hd64461uart_read_1(void *t, bus_space_handle_t h, bus_size_t ofs)
 {
 
-	return *(volatile u_int8_t *)(h + (ofs << 1));
+	return *(__volatile__ u_int8_t *)(h + (ofs << 1));
 }
 
 void
@@ -196,5 +209,5 @@ hd64461uart_write_1(void *t, bus_space_handle_t h, bus_size_t ofs,
     u_int8_t val)
 {
 
-	*(volatile u_int8_t *)(h + (ofs << 1)) = val;	
+	*(__volatile__ u_int8_t *)(h + (ofs << 1)) = val;	
 }
