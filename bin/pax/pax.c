@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.23 2002/12/10 18:33:26 christos Exp $	*/
+/*	$NetBSD: pax.c,v 1.24 2002/12/12 05:00:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.23 2002/12/10 18:33:26 christos Exp $");
+__RCSID("$NetBSD: pax.c,v 1.24 2002/12/12 05:00:42 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -302,8 +302,10 @@ main(int argc, char **argv)
 		 * Check if we tried to append on an empty file and
 		 * turned into ARCHIVE mode.
 		 */
-		if (act == ARCHIVE)
+		if (act == -ARCHIVE) {
+			act = ARCHIVE;
 			archive();
+		}
 		break;
 	case COPY:
 		copy();
