@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15.6.17 2002/08/02 08:39:03 gmcgarry Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.15.6.18 2002/08/02 20:58:04 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -278,20 +278,18 @@ cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
 	void *sas, *ap, *sp;
 	sa_upcall_t upcall;
 {
-	extern char sigcode[], upcallcode[];
-	struct proc *p = l->l_proc;
 	struct saframe *sfp, sf;
 	struct frame *frame;
 
 	frame = (struct frame *)l->l_md.md_regs;
 
 	/* Finally, copy out the rest of the frame */
+	sf.sa_ra = 0;
 	sf.sa_type = type;
 	sf.sa_sas = sas;
 	sf.sa_events = nevents;
 	sf.sa_interrupted = ninterrupted;
 	sf.sa_arg = ap;
-	sf.sa_upcall = upcall;
 	
 	sfp = (struct saframe *)sp - 1;
 	if (copyout(&sf, sfp, sizeof(sf)) != 0) {
@@ -300,9 +298,7 @@ cpu_upcall(l, type, nevents, ninterrupted, sas, ap, sp, upcall)
 		/* NOTREACHED */
 	}
 
-	/* XXX hack-o-matic */
-	frame->f_pc = (int)((caddr_t) p->p_sigctx.ps_sigcode + (
-		(caddr_t)upcallcode - (caddr_t)sigcode));
+	frame->f_pc = (int)upcall;
 	frame->f_regs[SP] = (int) sfp;
 	frame->f_regs[A6] = 0; /* indicate call-frame-top to debuggers */
 	frame->f_sr &= ~PSL_T;
