@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.144 2004/04/28 07:08:13 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.145 2004/04/29 04:04:42 jmc Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -1487,3 +1487,8 @@ sys/dev/pci/if_fxp_pci.c			1.38
 	switch statement isn't updated to match.  Addresses PR kern/18019.
 	[briggs, ticket #220]
 
+
+share/man/man4/options.4			1.237-1.238
+
+	Document the sysctl related options.
+	[atatat, ticket #205]
