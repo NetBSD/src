@@ -11,6 +11,8 @@ are no longer broken.
 on BSP] and cpu initialization [runs on new cpu]; finish banishing
 most global variables containing cpu configuration information.
 
+ - figure out why ahc on serverworks fails to find its interrupt.
+
  - careful code review of all diffs from -current
 
 "would be nice":
