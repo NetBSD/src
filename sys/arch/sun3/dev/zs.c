@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.44 1997/01/18 19:17:28 gwr Exp $	*/
+/*	$NetBSD: zs.c,v 1.45 1997/01/18 19:49:01 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -263,7 +263,6 @@ zsc_attach(parent, self, aux)
 	volatile struct zschan *zc;
 	struct zs_chanstate *cs;
 	int s, zsc_unit, channel;
-	static int didintr;
 
 	zsc_unit = zsc->zsc_dev.dv_unit;
 
@@ -319,7 +318,7 @@ zsc_attach(parent, self, aux)
 			/* No sub-driver.  Just reset it. */
 			u_char reset = (channel == 0) ?
 				ZSWR9_A_RESET : ZSWR9_B_RESET;
-			s = splzs();
+			s = splhigh();
 			zs_write_reg(cs,  9, reset);
 			splx(s);
 		}
@@ -330,8 +329,7 @@ zsc_attach(parent, self, aux)
 	 * to the interrupt handlers aren't used.  Note, we only do this
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
-	if (!didintr) {
-		didintr = 1;
+	if (zsc_unit == 0) {
 		isr_add_autovect(zssoft, NULL, ZSSOFT_PRI);
 		isr_add_autovect(zshard, NULL, ca->ca_intpri);
 	}
@@ -341,12 +339,23 @@ zsc_attach(parent, self, aux)
 	 * (common to both channels, do it on A)
 	 */
 	cs = zsc->zsc_cs[0];
-	s = splzs();
+	s = splhigh();
 	/* interrupt vector */
 	zs_write_reg(cs, 2, zs_init_reg[2]);
 	/* master interrupt control (enable) */
 	zs_write_reg(cs, 9, zs_init_reg[9]);
 	splx(s);
+
+	/*
+	 * XXX: L1A hack - We would like to be able to break into
+	 * the debugger during the rest of autoconfiguration, so
+	 * lower interrupts just enough to let zs interrupts in.
+	 * This is done after both zsc devices are attached.
+	 */
+	if (zsc_unit == 1) {
+		printf("zsc1: enabling zs interrupts\n");
+		(void)spl5(); /* splzs - 1 */
+	}
 }
 
 static int
