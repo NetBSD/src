@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.4 1998/12/02 10:52:25 bouyer Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.5 1999/08/29 17:20:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -67,6 +67,11 @@
 		((drive) == 0) ? 0x54: 0x56 \
 		: \
 		((drive) == 0) ? 0x58 : 0x5b)
+
+/* secondary channel status and addr timings */
+#define CMD_ARTTIM23	0x57
+#define CMD_ARTTIM23_IRQ	0x10
+#define CMD_ARTTIM23_RHAEAD(d)	((0x4) << (d))
 
 /* DMA master read mode select */
 #define CMD_DMA_MODE 0x71
