@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.65 2002/02/22 04:30:39 enami Exp $	*/
+/*	$NetBSD: pstat.c,v 1.66 2002/02/22 04:58:39 enami Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.65 2002/02/22 04:30:39 enami Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.66 2002/02/22 04:58:39 enami Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,29 +162,47 @@ struct {
 	}								\
 } while (/* CONSTCOND */0)
 
+#if 1				/* This is copied from vmstat/vmstat.c */
+/*
+ * Print single word.  `ovflow' is number of characters didn't fit
+ * on the last word.  `fmt' is a format string to print this word.
+ * It must contain asterisk for field width.  `width' is a width
+ * occupied by this word.  `fixed' is a number of constant chars in
+ * `fmt'.  `val' is a value to be printed using format string `fmt'.
+ */
+#define	PRWORD(ovflw, fmt, width, fixed, val) do {	\
+	(ovflw) += printf((fmt),			\
+	    (width) - (fixed) - (ovflw) > 0 ?		\
+	    (width) - (fixed) - (ovflw) : 0,		\
+	    (val)) - (width);				\
+	if ((ovflw) < 0)				\
+		(ovflw) = 0;				\
+} while (/* CONSTCOND */0)
+#endif
+
 void	filemode __P((void));
 int	getfiles __P((char **, int *));
 struct mount *
 	getmnt __P((struct mount *));
 char *	kinfo_vnodes __P((int *));
 void	layer_header __P((void));
-int	layer_print __P((struct vnode *));
+int	layer_print __P((struct vnode *, int));
 char *	loadvnodes __P((int *));
 int	main __P((int, char **));
 void	mount_print __P((struct mount *));
 void	nfs_header __P((void));
-int	nfs_print __P((struct vnode *));
+int	nfs_print __P((struct vnode *, int));
 void	ttymode __P((void));
 void	ttyprt __P((struct tty *));
 void	ufs_getflags __P((struct vnode *, struct inode *, char *));
 void	ufs_header __P((void));
-int	ufs_print __P((struct vnode *));
-int	ext2fs_print __P((struct vnode *));
+int	ufs_print __P((struct vnode *, int));
+int	ext2fs_print __P((struct vnode *, int));
 void	union_header __P((void));
-int	union_print __P((struct vnode *));
+int	union_print __P((struct vnode *, int));
 void	usage __P((void));
 void	vnode_header __P((void));
-void	vnode_print __P((struct vnode *, struct vnode *));
+int	vnode_print __P((struct vnode *, struct vnode *));
 void	vnodemode __P((void));
 
 int
@@ -285,8 +303,9 @@ vnodemode()
 	char *e_vnodebase, *endvnode, *evp;
 	struct vnode *vp;
 	struct mount *maddr, *mp;
-	int numvnodes;
-	int (*vnode_fsprint) __P((struct vnode *)); /* per-fs data printer */
+	int numvnodes, ovflw;
+	int (*vnode_fsprint)
+	    __P((struct vnode *, int)); /* per-fs data printer */
 
 	mp = NULL;
 	e_vnodebase = loadvnodes(&numvnodes);
@@ -335,9 +354,9 @@ vnodemode()
 				vnode_fsprint = NULL;
 			(void)printf("\n");
 		}
-		vnode_print(*(struct vnode **)evp, vp);
+		ovflw = vnode_print(*(struct vnode **)evp, vp);
 		if (VTOI(vp) != NULL && vnode_fsprint != NULL)
-			(*vnode_fsprint)(vp);
+			(*vnode_fsprint)(vp, ovflw);
 		(void)printf("\n");
 	}
 	free(e_vnodebase);
@@ -347,17 +366,18 @@ void
 vnode_header()
 {
 
-	(void)printf("ADDR     TYP VFLAG  USE HOLD TAG NPAGE");
+	(void)printf("%-*s TYP VFLAG  USE HOLD TAG NPAGE",
+	    (int)sizeof(void *) * 2, "ADDR");
 }
 
-void
+int
 vnode_print(avnode, vp)
 	struct vnode *avnode;
 	struct vnode *vp;
 {
 	char *type, flags[16];
 	char *fp = flags;
-	int flag;
+	int flag, ovflw;
 
 	/*
 	 * set type
@@ -415,9 +435,16 @@ vnode_print(avnode, vp)
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
-	(void)printf("%8lx %s %5s %4ld %4ld %3d %5d",
-	    (long)avnode, type, flags, (long)vp->v_usecount,
-	    (long)vp->v_holdcnt, vp->v_tag, vp->v_uobj.uo_npages);
+
+	ovflw = 0;
+	PRWORD(ovflw, "%*lx", (int)sizeof(void *) * 2, 0, (long)avnode);
+	PRWORD(ovflw, " %*s", 4, 1, type);
+	PRWORD(ovflw, " %*s", 6, 1, flags);
+	PRWORD(ovflw, " %*ld", 5, 1, (long)vp->v_usecount);
+	PRWORD(ovflw, " %*ld", 5, 1, (long)vp->v_holdcnt);
+	PRWORD(ovflw, " %*d", 4, 1, vp->v_tag);
+	PRWORD(ovflw, " %*d", 6, 1, vp->v_uobj.uo_npages);
+	return (ovflw);
 }
 
 void
@@ -468,52 +495,56 @@ ufs_header()
 }
 
 int
-ufs_print(vp)
+ufs_print(vp, ovflw)
 	struct vnode *vp;
+	int ovflw;
 {
 	struct inode inode, *ip = &inode;
-	char flagbuf[16];
-	char *name;
+	char buf[16], *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
-	ufs_getflags(vp, ip, flagbuf);
-	(void)printf(" %6d %5s", ip->i_number, flagbuf);
+	ufs_getflags(vp, ip, buf);
+	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
+	PRWORD(ovflw, " %*s", 6, 1, buf);
 	type = ip->i_ffs_mode & S_IFMT;
-	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode))
+	if (S_ISCHR(ip->i_ffs_mode) || S_ISBLK(ip->i_ffs_mode)) {
 		if (usenumflag ||
-		    (name = devname(ip->i_ffs_rdev, type)) == NULL)
-			(void)printf("   %2d,%-2d",
+		    (name = devname(ip->i_ffs_rdev, type)) == NULL) {
+			snprintf(buf, sizeof(buf), "%d,%d",
 			    major(ip->i_ffs_rdev), minor(ip->i_ffs_rdev));
-		else
-			(void)printf(" %7s", name);
-	else
-		(void)printf(" %7lld", (long long)ip->i_ffs_size);
+			name = buf;
+		}
+		PRWORD(ovflw, " %*s", 8, 1, name);
+	} else
+		PRWORD(ovflw, " %*lld", 8, 1, (long long)ip->i_ffs_size);
 	return (0);
 }
 
 int
-ext2fs_print(vp)
+ext2fs_print(vp, ovflw)
 	struct vnode *vp;
+	int ovflw;
 {
 	struct inode inode, *ip = &inode;
-	char flagbuf[16];
-	char *name;
+	char buf[16], *name;
 	mode_t type;
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
-	ufs_getflags(vp, ip, flagbuf);
-	(void)printf(" %6d %5s", ip->i_number, flagbuf);
+	ufs_getflags(vp, ip, buf);
+	PRWORD(ovflw, " %*d", 7, 1, ip->i_number);
+	PRWORD(ovflw, " %*s", 6, 1, buf);
 	type = ip->i_e2fs_mode & S_IFMT;
-	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode))
+	if (S_ISCHR(ip->i_e2fs_mode) || S_ISBLK(ip->i_e2fs_mode)) {
 		if (usenumflag ||
-		    (name = devname(ip->i_e2fs_rdev, type)) == NULL)
-			(void)printf("   %2d,%-2d",
+		    (name = devname(ip->i_e2fs_rdev, type)) == NULL) {
+			snprintf(buf, sizeof(buf), "%d,%d",
 			    major(ip->i_e2fs_rdev), minor(ip->i_e2fs_rdev));
-		else
-			(void)printf(" %7s", name);
-	else
-		(void)printf(" %7u", (u_int)ip->i_e2fs_size);
+			name = buf;
+		}
+		PRWORD(ovflw, " %*s", 8, 1, name);
+	} else
+		PRWORD(ovflw, " %*u", 8, 1, (u_int)ip->i_e2fs_size);
 	return (0);
 }
 
@@ -525,11 +556,12 @@ nfs_header()
 }
 
 int
-nfs_print(vp)
+nfs_print(vp, ovflw)
 	struct vnode *vp;
+	int ovflw;
 {
 	struct nfsnode nfsnode, *np = &nfsnode;
-	char flagbuf[16], *flags = flagbuf;
+	char buf[16], *flags = buf;
 	int flag;
 	struct vattr va;
 	char *name;
@@ -562,7 +594,8 @@ nfs_print(vp)
 	*flags = '\0';
 
 	KGETRET(np->n_vattr, &va, sizeof(va), "vnode attr");
-	(void)printf(" %6ld %5s", (long)va.va_fileid, flagbuf);
+	PRWORD(ovflw, " %*ld", 7, 1, (long)va.va_fileid);
+	PRWORD(ovflw, " %*s", 6, 1, buf);
 	switch (va.va_type) {
 	case VCHR:
 		type = S_IFCHR;
@@ -571,14 +604,15 @@ nfs_print(vp)
 	case VBLK:
 		type = S_IFBLK;
 	device:
-		if (usenumflag || (name = devname(va.va_rdev, type)) == NULL)
-			(void)printf("   %2d,%-2d",
+		if (usenumflag || (name = devname(va.va_rdev, type)) == NULL) {
+			(void)snprintf(buf, sizeof(buf), "%d,%d",
 			    major(va.va_rdev), minor(va.va_rdev));
-		else
-			(void)printf(" %7s", name);
+			name = buf;
+		}
+		PRWORD(ovflw, " %*s", 8, 1, name);
 		break;
 	default:
-		(void)printf(" %7lld", (long long)np->n_size);
+		PRWORD(ovflw, " %*lld", 8, 1, (long long)np->n_size);
 		break;
 	}
 	return (0);
@@ -592,14 +626,16 @@ layer_header()
 }
 
 int
-layer_print(vp)
+layer_print(vp, ovflw)
 	struct vnode *vp;
+	int ovflw;
 {
 	struct layer_node lnode, *lp = &lnode;
 
 	KGETRET(VTOLAYER(vp), &lnode, sizeof(lnode), "layer vnode");
 
-	(void)printf(" %8lx", (long)lp->layer_lowervp);
+	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
+	    (long)lp->layer_lowervp);
 	return (0);
 }
 
@@ -611,14 +647,18 @@ union_header()
 }
 
 int
-union_print(vp)
+union_print(vp, ovflw)
 	struct vnode *vp;
+	int ovflw;
 {
 	struct union_node unode, *up = &unode;
 
 	KGETRET(VTOUNION(vp), &unode, sizeof(unode), "vnode's unode");
 
-	(void)printf(" %8lx %8lx", (long)up->un_uppervp, (long)up->un_lowervp);
+	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
+	    (long)up->un_uppervp);
+	PRWORD(ovflw, " %*lx", (int)sizeof(void *) * 2 + 1, 1,
+	    (long)up->un_lowervp);
 	return (0);
 }
 
