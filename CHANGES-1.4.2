@@ -1,76 +1,9 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.4 1999/08/22 18:29:58 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.5 1999/08/23 08:58:32 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
-File						Version(s)
+File						Revision(s)
 ----						--------
-
-usr.sbin/pkg_install/Makefile.inc		1.8
-usr.sbin/pkg_install/add/extract.c		1.19
-usr.sbin/pkg_install/add/main.c			1.10
-usr.sbin/pkg_install/add/perform.c		1.31-1.36
-usr.sbin/pkg_install/add/pkg_add.1		1.15-1.16
-usr.sbin/pkg_install/admin/main.c		1.6
-usr.sbin/pkg_install/create/perform.c		1.18
-usr.sbin/pkg_install/create/pkg_create.1	1.18
-usr.sbin/pkg_install/create/pl.c		1.15
-usr.sbin/pkg_install/delete/delete.h		1.5
-usr.sbin/pkg_install/delete/main.c		1.12
-usr.sbin/pkg_install/info/info.h		1.10
-usr.sbin/pkg_install/info/main.c		1.17
-usr.sbin/pkg_install/info/pkg_info.1		1.18
-usr.sbin/pkg_install/delete/perform.c		1.25
-usr.sbin/pkg_install/delete/pkg_delete.1	1.14
-usr.sbin/pkg_install/info/perform.c		1.26
-usr.sbin/pkg_install/info/show.c		1.15
-usr.sbin/pkg_install/lib/file.c			1.30
-usr.sbin/pkg_install/lib/lib.h			1.23
-usr.sbin/pkg_install/lib/plist.c		1.21
-usr.sbin/pkg_install/lib/str.c			1.16
-
-  Update in-tree pkg tools:
-
-  o Pass & use BINDIR instead of hardcoding /usr/sbin.
-  o Make this work on Solaris "out of the box".
-  o Treat absolute paths in PLIST properly, i.e. do not allow them
-    at all.
-  o Clean up URL handling.
-  o Fix conflict checking for package names with hyphens in their name
-    by using "pkg-[0-9]*" instead of "pkg-*" for detecting conflicting
-    packages.
-  o Document PKG_TMPDIR environment variable.
-  o De-linting and some code cleanup.
-  o @srcdir was renamed to @src a long time ago (fixing PR7555).
-  o Message files in binary packages are not displayed with more(1).
-  o Allow specifying a package name without a version.
-  o Call deinstall-script again after files are removed, with
-    POST-DEINSTALL argument.
-  o Disable annoying "key not present" warning.
-
-  (hubertf)
-
-sys/dev/eisa/eisadevs				1.16
-sys/dev/eisa/eisadevs.h				regen
-sys/dev/eisa/eisadevs_data.h			regen
-sys/dev/eisa/if_ep_eisa.c			1.20-1.21
-
-  Recognize a 3Com 3c509 Combo configured in EISA mode, fixing PR8234.
-  (tron)
-
-lib/libc/sys/connect.2				1.14
-
-  Explain how to get status information for non-blocking connects,
-  fixing PR8208.  (sommerfeld)
-
-sys/dev/rnd.c					patch
-
-  A more consistent branch-specific fix for the data extraction locking
-  bug previously fixed.  (ross)
-
-distrib/sets/lists/comp/md.arm32		1.25
-
-  Add "usr/include/machine/devmap.h" so that the X server can be built.
-  (mrg)
 
 bin/pax/tar.c					1.15
 
@@ -127,3 +60,71 @@ usr.bin/find/option.c				1.13
   not identically) to the GNU find primaries of the same names.  (The
   differences are caused by differences in the Basic Regular
   Expression implementations.)  (cgd)
+
+distrib/sets/lists/comp/md.arm32		1.25
+
+  Add "usr/include/machine/devmap.h" so that the X server can be built.
+  (mrg)
+
+sys/dev/rnd.c					patch
+
+  A more consistent branch-specific fix for the data extraction locking
+  bug previously fixed.  (ross)
+
+lib/libc/sys/connect.2				1.14
+
+  Explain how to get status information for non-blocking connects,
+  fixing PR#8208.  (sommerfeld)
+
+sys/dev/eisa/eisadevs				1.16
+sys/dev/eisa/eisadevs.h				regen
+sys/dev/eisa/eisadevs_data.h			regen
+sys/dev/eisa/if_ep_eisa.c			1.21
+
+  Recognize a 3Com 3c509 Combo configured in EISA mode, fixing PR#8234.
+  (tron)
+
+usr.sbin/pkg_install/Makefile.inc		1.6-1.8
+usr.sbin/pkg_install/add/extract.c		1.17-1.19
+usr.sbin/pkg_install/add/main.c			1.10
+usr.sbin/pkg_install/add/perform.c		1.32-1.36
+usr.sbin/pkg_install/add/pkg_add.1		1.16
+usr.sbin/pkg_install/admin/main.c		1.4-1.6
+usr.sbin/pkg_install/create/perform.c		1.18
+usr.sbin/pkg_install/create/pkg_create.1	1.17-1.18
+usr.sbin/pkg_install/create/pl.c		1.12-1.15
+usr.sbin/pkg_install/delete/delete.h		1.5
+usr.sbin/pkg_install/delete/main.c		1.12
+usr.sbin/pkg_install/delete/perform.c		1.24-1.25
+usr.sbin/pkg_install/delete/pkg_delete.1	1.13-1.14
+usr.sbin/pkg_install/info/info.h		1.10
+usr.sbin/pkg_install/info/main.c		1.17
+usr.sbin/pkg_install/info/perform.c		1.24-1.26
+usr.sbin/pkg_install/info/show.c		1.13-1.15
+usr.sbin/pkg_install/info/pkg_info.1		1.18
+usr.sbin/pkg_install/lib/file.c			1.28-1.30
+usr.sbin/pkg_install/lib/lib.h			1.22-1.23
+usr.sbin/pkg_install/lib/plist.c		1.19-1.21
+usr.sbin/pkg_install/lib/str.c			1.16
+
+  Update in-tree pkg tools:
+
+  o Pass & use BINDIR instead of hardcoding /usr/sbin.
+  o Adapt this to work better on Solaris.
+  o Treat absolute paths in PLIST properly, i.e. do not allow them
+    at all.
+  o Clean up URL handling.
+  o Fix conflict checking for package names with hyphens in their name
+    by using "pkg-[0-9]*" instead of "pkg-*" for detecting conflicting
+    packages.
+  o Document PKG_TMPDIR environment variable.
+  o De-linting and some code cleanup.
+  o @srcdir was renamed to @src a long time ago (fixing PR#7555).
+  o Message files in binary packages are not displayed with more(1).
+  o Allow specifying a package name without a version.
+  o Call deinstall-script again after files are removed, with
+    POST-DEINSTALL argument.
+  o Disable annoying "key not present" warning.
+
+  (hubertf)
+
