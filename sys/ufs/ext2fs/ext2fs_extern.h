@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.5 1998/06/24 20:58:47 sommerfe Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.6 1998/09/01 03:20:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -52,6 +52,8 @@ struct uio;
 struct vnode;
 struct mbuf;
 struct componentname;
+
+extern struct pool ext2fs_inode_pool;		/* memory pool for inodes */
 
 __BEGIN_DECLS
 
