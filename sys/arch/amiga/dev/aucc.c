@@ -1,4 +1,4 @@
-/*	$NetBSD: aucc.c,v 1.35 2004/10/29 12:57:15 yamt Exp $ */
+/*	$NetBSD: aucc.c,v 1.35.2.1 2005/01/03 16:42:02 kent Exp $ */
 
 /*
  * Copyright (c) 1999 Bernardo Innocenti
@@ -53,7 +53,7 @@
 #if NAUCC > 0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.35 2004/10/29 12:57:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aucc.c,v 1.35.2.1 2005/01/03 16:42:02 kent Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ unsigned char mulaw_to_lin[] = {
  */
 int	aucc_open(void *, int);
 void	aucc_close(void *);
-int	aucc_set_out_sr(void *, u_long);
+int	aucc_set_out_sr(void *, u_int);
 int	aucc_query_encoding(void *, struct audio_encoding *);
 int	aucc_round_blocksize(void *, int);
 int	aucc_commit_settings(void *);
@@ -202,8 +202,8 @@ int	aucc_set_port(void *, mixer_ctrl_t *);
 int	aucc_get_port(void *, mixer_ctrl_t *);
 int	aucc_query_devinfo(void *, mixer_devinfo_t *);
 void	aucc_encode(int, int, int, int, u_char *, u_short **);
-int	aucc_set_params(void *, int, int, struct audio_params *,
-			struct audio_params *);
+int	aucc_set_params(void *, int, int, audio_params_t *, audio_params_t *,
+			stream_filter_list_t *, stream_filter_list_t *);
 int	aucc_get_props(void *);
 
 
@@ -383,7 +383,7 @@ aucc_close(void *addr)
 }
 
 int
-aucc_set_out_sr(void *addr, u_long sr)
+aucc_set_out_sr(void *addr, u_int sr)
 {
 	struct aucc_softc *sc=addr;
 	u_long per;
@@ -455,8 +455,9 @@ aucc_query_encoding(void *addr, struct audio_encoding *fp)
 }
 
 int
-aucc_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
-                struct audio_params *r)
+aucc_set_params(void *addr, int setmode, int usemode,
+		audio_params_t *p, audio_params_t *r,
+		stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
 	struct aucc_softc *sc = addr;
 
@@ -465,7 +466,7 @@ aucc_set_params(void *addr, int setmode, int usemode, struct audio_params *p,
 
 #ifdef AUCCDEBUG
 	printf("aucc_set_params(setmode 0x%x, usemode 0x%x, "
-		"enc %d, bits %d, chn %d, sr %ld)\n", setmode, usemode,
+		"enc %u, bits %u, chn %u, sr %u)\n", setmode, usemode,
 		p->encoding, p->precision, p->channels, p->sample_rate);
 #endif
 

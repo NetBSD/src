@@ -1,4 +1,4 @@
-/*	$NetBSD: repulse.c,v 1.11 2004/11/09 16:18:58 kent Exp $ */
+/*	$NetBSD: repulse.c,v 1.11.2.1 2005/01/03 16:42:02 kent Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.11 2004/11/09 16:18:58 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: repulse.c,v 1.11.2.1 2005/01/03 16:42:02 kent Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,8 +87,8 @@ int rep_get_props(void *);
 int rep_halt_output(void *);
 int rep_halt_input(void *);
 int rep_query_encoding(void *, struct audio_encoding *);
-int rep_set_params(void *, int, int, struct audio_params *,
-    struct audio_params *);
+int rep_set_params(void *, int, int, audio_params_t *,
+    audio_params_t *, stream_filter_list_t *, stream_filter_list_t *);
 int rep_round_blocksize(void *, int);
 int rep_set_port(void *, mixer_ctrl_t *);
 int rep_get_port(void *, mixer_ctrl_t *);
@@ -317,7 +317,7 @@ repulse_attach(struct device *parent, struct device *self, void *aux) {
 	sc->sc_achost.attach = repac_attach;
 	sc->sc_achost.flags = 0;
 
-	if (ac97_attach(&sc->sc_achost)) {
+	if (ac97_attach(&sc->sc_achost, self)) {
 		printf("%s: error attaching codec\n", self->dv_xname);
 		return;
 	}
@@ -570,10 +570,12 @@ rep_round_buffersize(void *arg, int direction, size_t size)
 
 int
 rep_set_params(void *addr, int setmode, int usemode,
-	struct audio_params *play, struct audio_params *rec)
+	audio_params_t *play, audio_params_t *rec,
+	stream_filter_list_t *pfil, stream_filter_list_t *rfil)
 {
+	audio_params_t hw;
 	struct repulse_softc *sc = addr;
-	struct audio_params *p;
+	audio_params_t *p;
 	int mode, reg;
 	unsigned  flags;
 	u_int16_t a;
@@ -605,8 +607,7 @@ rep_set_params(void *addr, int setmode, int usemode,
 		else
 			sc->sc_captscale = p->channels * p->precision / 8;
 
-		p->factor = 1;
-		p->sw_code = 0;
+		hw = *p;
 
 		/* everything else is software, alas... */
 		/* XXX TBD signed/unsigned, *law, etc */
@@ -629,8 +630,9 @@ rep_set_params(void *addr, int setmode, int usemode,
 					rep_write_16_stereo;
 				sc->sc_playflags = 0;
 				sc->sc_playscale = p->channels * 2;
-				p->sw_code = mulaw_to_slinear16_be;
-				p->factor = 2;
+				hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
+				hw.precision = hw.validbits = 16;
+				pfil->append(pfil, mulaw_to_linear16, &hw);
 			} else
 			if (p->encoding == AUDIO_ENCODING_ALAW) {
 				sc->sc_playfun = p->channels == 1 ?
@@ -638,8 +640,9 @@ rep_set_params(void *addr, int setmode, int usemode,
 					rep_write_16_stereo;
 				sc->sc_playflags = 0;
 				sc->sc_playscale = p->channels * 2;
-				p->sw_code = alaw_to_slinear16_be;
-				p->factor = 2;
+				hw.encoding = AUDIO_ENCODING_SLINEAR_BE;
+				hw.precision = hw.validbits = 16;
+				pfil->append(pfil, alaw_to_linear16, &hw);
 			} else
 			if (p->precision == 8 && p->channels == 1)
 				sc->sc_playfun = rep_write_8_mono;
@@ -656,16 +659,15 @@ rep_set_params(void *addr, int setmode, int usemode,
 					rep_read_8_mono :
 					rep_read_8_stereo;
 				sc->sc_captflags = 0;
-				p->sw_code = slinear8_to_mulaw;
-				p->factor = 1;
+				hw.encoding = AUDIO_ENCODING_SLINEAR_LE;
+				rfil->append(rfil, linear8_to_mulaw, &hw);
 			} else
 			if (p->encoding == AUDIO_ENCODING_ALAW) {
 				sc->sc_captfun = p->channels == 1 ?
 					rep_read_8_mono :
 					rep_read_8_stereo;
 				sc->sc_captflags = 0;
-				p->sw_code = slinear8_to_alaw;
-				p->factor = 1;
+				rfil->append(rfil, linear8_to_alaw, &hw);
 			} else
 			if (p->precision == 8 && p->channels == 1)
 				sc->sc_captfun = rep_read_8_mono;
