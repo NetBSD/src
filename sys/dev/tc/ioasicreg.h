@@ -1,4 +1,4 @@
-/* $NetBSD: ioasicreg.h,v 1.5 2000/07/17 02:17:13 thorpej Exp $ */
+/* $NetBSD: ioasicreg.h,v 1.6 2000/07/17 02:18:17 thorpej Exp $ */
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995 Carnegie Mellon University
@@ -182,6 +182,7 @@
 
 #define	IOASIC_DMA_ADDR(p) \
     ((((p) << 3) & ~0x1f) | (((p) >> 29) & 0x1f))
+#define	IOASIC_DMA_BLOCKSIZE		0x1000
 
 /* For the LANCE DMA pointer register initialization the above suffices */
 
