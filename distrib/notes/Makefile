@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2002/03/24 22:14:23 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.21 2002/03/30 07:00:04 thorpej Exp $
 #
 
 TARGETS+= release
@@ -8,9 +8,30 @@ TARGETS+= release
 SUBDIR=	${MACHINE}
 .endif
 .else
-SUBDIR=	alpha amiga acorn26 acorn32 atari hp300 hpcmips i386
-SUBDIR+=mac68k macppc mvme68k news68k next68k pc532 pmax sparc
-SUBDIR+=sparc64 sun2 sun3 vax x68k
+SUBDIR+= acorn26
+SUBDIR+= acorn32
+SUBDIR+= alpha
+SUBDIR+= amiga
+SUBDIR+= arc
+SUBDIR+= atari
+SUBDIR+= evbarm
+SUBDIR+= hp300
+SUBDIR+= hpcmips
+SUBDIR+= i386
+SUBDIR+= mac68k
+SUBDIR+= macppc
+SUBDIR+= mvme68k
+SUBDIR+= news68k
+SUBDIR+= next68k
+SUBDIR+= pc532
+SUBDIR+= pmax
+SUBDIR+= sandpoint
+SUBDIR+= sparc
+SUBDIR+= sparc64
+SUBDIR+= sun2
+SUBDIR+= sun3
+SUBDIR+= vax
+SUBDIR+= x68k
 .endif
 
 .include <bsd.subdir.mk>
