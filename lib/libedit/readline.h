@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.4 2000/12/23 22:02:20 jdolecek Exp $	*/
+/*	$NetBSD: readline.h,v 1.5 2001/01/01 15:52:26 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -70,6 +70,8 @@ extern CPFunction	*rl_completion_entry_function;
 extern CPPFunction	*rl_attempted_completion_function;
 extern int		rl_completion_type;
 extern int		rl_completion_query_items;
+extern char		*rl_special_prefixes;
+extern int		rl_completion_append_character;
 
 /* supported functions */
 char		*readline(const char *);
