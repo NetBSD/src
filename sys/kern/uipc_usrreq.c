@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.38 1998/12/21 23:12:19 thorpej Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.39 1999/03/22 17:54:39 sommerfe Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -339,6 +339,12 @@ uipc_usrreq(so, req, m, nam, control, p)
 
 	case PRU_ABORT:
 		unp_drop(unp, ECONNABORTED);
+
+#ifdef DIAGNOSTIC
+		if (so->so_pcb == 0)
+			panic("uipc 5: drop killed pcb");
+#endif
+		unp_detach(unp);
 		break;
 
 	case PRU_SENSE:
@@ -798,21 +804,48 @@ unp_externalize(rights)
 	struct proc *p = curproc;		/* XXX */
 	register struct cmsghdr *cm = mtod(rights, struct cmsghdr *);
 	register int i, *fdp = (int *)(cm + 1);
-	register struct file **rp = (struct file **)ALIGN(cm + 1);
+	register struct file **rp;
 	register struct file *fp;
 	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof(struct file *);
-	int f;
+	int f, error = 0;
 
+	/* Make sure the recipient should be able to see the descriptors.. */
+	if (p->p_fd->fd_rdir != NULL) {
+		rp = (struct file **)ALIGN(cm + 1);
+		for (i = 0; i < nfds; i++) {
+			fp = *rp++;
+			/*
+			 * If we are in a chroot'ed directory, and
+			 * someone wants to pass us a directory, make
+			 * sure it's inside the subtree we're allowed
+			 * to access.
+			 */
+			if (fp->f_type == DTYPE_VNODE) {
+				struct vnode *vp = (struct vnode *)fp->f_data;
+				if ((vp->v_type == VDIR) &&
+				    !vn_isunder(vp, p->p_fd->fd_rdir, p)) {
+					error = EPERM;
+					break;
+				}
+			}
+		}
+	}
+	rp = (struct file **)ALIGN(cm + 1);
+	
 	/* Make sure that the recipient has space */
-	if (!fdavail(p, nfds)) {
+	if (error || (!fdavail(p, nfds))) {
 		for (i = 0; i < nfds; i++) {
 			fp = *rp;
-			unp_discard(fp);
+			/*
+			 * zero the pointer before calling unp_discard,
+			 * since it may end up in unp_gc()..
+			 */
 			*rp++ = 0;
+			unp_discard(fp);
 		}
-		return (EMSGSIZE);
+		return (error ? error : EMSGSIZE);
 	}
-
+	
 	/*
 	 * Add file to the recipient's open file table, converting them
 	 * to integer file descriptors as we go.  Done in forward order
@@ -820,12 +853,13 @@ unp_externalize(rights)
 	 * its corresponding struct file pointer.
 	 */
 	for (i = 0; i < nfds; i++) {
-		if (fdalloc(p, 0, &f))
-			panic("unp_externalize");
 		fp = *rp++;
-		p->p_fd->fd_ofiles[f] = fp;
 		fp->f_msgcount--;
 		unp_rights--;
+		
+		if (fdalloc(p, 0, &f))
+			panic("unp_externalize");
+		p->p_fd->fd_ofiles[f] = fp;
 		*fdp++ = f;
 	}
 
@@ -975,11 +1009,37 @@ unp_addsockcred(p, control)
 int	unp_defer, unp_gcing;
 extern	struct domain unixdomain;
 
+/*
+ * Comment added long after the fact explaining what's going on here.
+ * Do a mark-sweep GC of file descriptors on the system, to free up
+ * any which are caught in flight to an about-to-be-closed socket.
+ *
+ * Traditional mark-sweep gc's start at the "root", and mark
+ * everything reachable from the root (which, in our case would be the
+ * process table).  The mark bits are cleared during the sweep.
+ *
+ * XXX For some inexplicable reason (perhaps because the file
+ * descriptor tables used to live in the u area which could be swapped
+ * out and thus hard to reach), we do multiple scans over the set of
+ * descriptors, using use *two* mark bits per object (DEFER and MARK).
+ * Whenever we find a descriptor which references other descriptors,
+ * the ones it references are marked with both bits, and we iterate
+ * over the whole file table until there are no more DEFER bits set.
+ * We also make an extra pass *before* the GC to clear the mark bits,
+ * which could have been cleared at almost no cost during the previous
+ * sweep.
+ *
+ * XXX MP: this needs to run with locks such that no other thread of
+ * control can create or destroy references to file descriptors. it
+ * may be necessary to defer the GC until later (when the locking
+ * situation is more hospitable); it may be necessary to push this
+ * into a separate thread.
+ */
 void
 unp_gc()
 {
 	register struct file *fp, *nextfp;
-	register struct socket *so;
+	register struct socket *so, *so1;
 	struct file **extra_ref, **fpp;
 	int nunref, i;
 
@@ -987,22 +1047,35 @@ unp_gc()
 		return;
 	unp_gcing = 1;
 	unp_defer = 0;
+
+	/* Clear mark bits */
 	for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next)
 		fp->f_flag &= ~(FMARK|FDEFER);
+
+	/*
+	 * Iterate over the set of descriptors, marking ones believed
+	 * (based on refcount) to be referenced from a process, and
+	 * marking for rescan descriptors which are queued on a socket.
+	 */
 	do {
 		for (fp = filehead.lh_first; fp != 0; fp = fp->f_list.le_next) {
-			if (fp->f_count == 0)
-				continue;
 			if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
+#ifdef DIAGNOSTIC
+				if (fp->f_count == 0)
+					panic("unp_gc: deferred unreferenced socket");
+#endif
 			} else {
+				if (fp->f_count == 0)
+					continue;
 				if (fp->f_flag & FMARK)
 					continue;
 				if (fp->f_count == fp->f_msgcount)
 					continue;
-				fp->f_flag |= FMARK;
 			}
+			fp->f_flag |= FMARK;
+
 			if (fp->f_type != DTYPE_SOCKET ||
 			    (so = (struct socket *)fp->f_data) == 0)
 				continue;
@@ -1025,10 +1098,28 @@ unp_gc()
 				goto restart;
 			}
 #endif
-			unp_scan(so->so_rcv.sb_mb, unp_mark);
+			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
+			/*
+			 * mark descriptors referenced from sockets queued on the accept queue as well.
+			 */
+			if (so->so_options & SO_ACCEPTCONN) {
+				for (so1 = so->so_q0.tqh_first;
+				     so1 != 0;
+				     so1 = so1->so_qe.tqe_next) {
+					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
+				}
+				for (so1 = so->so_q.tqh_first;
+				     so1 != 0;
+				     so1 = so1->so_qe.tqe_next) {
+					unp_scan(so1->so_rcv.sb_mb, unp_mark, 0);
+				}
+			}
+			
 		}
 	} while (unp_defer);
 	/*
+	 * Sweep pass.  Find unmarked descriptors, and free them.
+	 *
 	 * We grab an extra reference to each of the file table entries
 	 * that are not otherwise accessible and then free the rights
 	 * that are stored in messages on them.
@@ -1059,11 +1150,12 @@ unp_gc()
 	 * SS_NOFDREF, and soclose panics at this point.
 	 *
 	 * Here, we first take an extra reference to each inaccessible
-	 * descriptor.  Then, we call sorflush ourself, since we know
-	 * it is a Unix domain socket anyhow.  After we destroy all the
-	 * rights carried in messages, we do a last closef to get rid
-	 * of our extra reference.  This is the last close, and the
-	 * unp_detach etc will shut down the socket.
+	 * descriptor.  Then, if the inaccessible descriptor is a
+	 * socket, we call sorflush in case it is a Unix domain
+	 * socket.  After we destroy all the rights carried in
+	 * messages, we do a last closef to get rid of our extra
+	 * reference.  This is the last close, and the unp_detach etc
+	 * will shut down the socket.
 	 *
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
@@ -1079,8 +1171,11 @@ unp_gc()
 			fp->f_count++;
 		}
 	}
-	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
-		sorflush((struct socket *)(*fpp)->f_data);
+	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
+		fp = *fpp;
+		if (fp->f_type == DTYPE_SOCKET)
+			sorflush((struct socket *)fp->f_data);
+	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp)
 		(void) closef(*fpp, (struct proc *)0);
 	free((caddr_t)extra_ref, M_FILE);
@@ -1093,13 +1188,14 @@ unp_dispose(m)
 {
 
 	if (m)
-		unp_scan(m, unp_discard);
+		unp_scan(m, unp_discard, 1);
 }
 
 void
-unp_scan(m0, op)
+unp_scan(m0, op, discard)
 	register struct mbuf *m0;
 	void (*op) __P((struct file *));
+	int discard;
 {
 	register struct mbuf *m;
 	register struct file **rp;
@@ -1118,8 +1214,13 @@ unp_scan(m0, op)
 				qfds = (cm->cmsg_len - ALIGN(sizeof(*cm)))
 						/ sizeof(struct file *);
 				rp = (struct file **)(cm + 1);
-				for (i = 0; i < qfds; i++)
-					(*op)(*rp++);
+				for (i = 0; i < qfds; i++) {
+					struct file *fp = *rp;
+					if (discard)
+						*rp = 0;
+					(*op)(fp);
+					rp++;
+				}
 				break;		/* XXX, but saves time */
 			}
 		m0 = m0->m_act;
@@ -1130,18 +1231,39 @@ void
 unp_mark(fp)
 	struct file *fp;
 {
-
+	if (fp == NULL)
+		return;
+	
 	if (fp->f_flag & FMARK)
 		return;
-	unp_defer++;
-	fp->f_flag |= (FMARK|FDEFER);
+
+	/* If we're already deferred, don't screw up the defer count */
+	if (fp->f_flag & FDEFER)
+		return;
+
+	/*
+	 * Minimize the number of deferrals...  Sockets are the only
+	 * type of descriptor which can hold references to another
+	 * descriptor, so just mark other descriptors, and defer
+	 * unmarked sockets for the next pass.
+	 */
+	if (fp->f_type == DTYPE_SOCKET) {
+		unp_defer++;
+		if (fp->f_count == 0)
+			panic("unp_mark: queued unref");
+		fp->f_flag |= FDEFER;
+	} else {
+		fp->f_flag |= FMARK;
+	}
+	return;
 }
 
 void
 unp_discard(fp)
 	struct file *fp;
 {
-
+	if (fp == NULL)
+		return;
 	fp->f_msgcount--;
 	unp_rights--;
 	(void) closef(fp, (struct proc *)0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.20 1999/03/10 12:58:00 kleink Exp $	*/
+/*	$NetBSD: un.h,v 1.21 1999/03/22 17:54:38 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -66,7 +66,7 @@ void	unp_disconnect __P((struct unpcb *unp));
 void	unp_drop __P((struct unpcb *unp, int errno));
 void	unp_gc __P((void));
 void	unp_mark __P((struct file *fp));
-void	unp_scan __P((struct mbuf *m0, void (*op)(struct file *)));
+void	unp_scan __P((struct mbuf *m0, void (*op)(struct file *), int));
 void	unp_shutdown __P((struct unpcb *unp));
 int 	unp_externalize __P((struct mbuf *));
 int	unp_internalize __P((struct mbuf *, struct proc *));
