@@ -1,4 +1,4 @@
-/* $NetBSD: tgareg.h,v 1.1 1998/04/15 20:16:33 drochner Exp $ */
+/* $NetBSD: tgareg.h,v 1.2 1998/04/29 02:11:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -155,5 +155,20 @@ typedef u_int32_t tga_reg_t;
 #define	TGA_REG_SCSR	0x07e		/* Command Status */
 
 /*	reserved	0x07f */
+
+/*
+ * Video Valid Register
+ */
+#define	VVR_VIDEOVALID	0x00000001	/* 0 VGA, 1 TGA2 (TGA2 only) */
+#define	VVR_BLANK	0x00000002	/* 0 active, 1 blank */
+#define	VVR_CURSOR	0x00000004	/* 0 disable, 1 enable (TGA2 R/O) */
+#define	VVR_INTERLACE	0x00000008	/* 0 N/Int, 1 Int. (TGA2 R/O) */
+#define	VVR_DPMS_MASK	0x00000030	/* See "DMPS mask" below */
+#define	VVR_DPMS_SHIFT	4
+#define	VVR_DDC		0x00000040	/* DDC-in pin value (R/O) */
+#define	VVR_TILED	0x00000400	/* 0 linear, 1 tiled (not on TGA2) */
+#define	VVR_LDDLY_MASK	0x01ff0000	/* load delay in quad pixel clock ticks
+					   (not on TGA2) */
+#define	VVR_LDDLY_SHIFT	16
 
 #endif /* _ALPHA_INCLUDE_TGAREG_H_ */
