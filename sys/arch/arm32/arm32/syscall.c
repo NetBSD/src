@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.32 2000/12/12 05:21:02 mycroft Exp $	*/
+/*	$NetBSD: syscall.c,v 1.33 2000/12/12 05:26:38 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,6 @@
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
-#include "opt_pmap_debug.h"
 #include "opt_syscall_debug.h"
 
 #include <sys/param.h>
@@ -63,17 +62,7 @@
 
 #include <arm32/arm32/disassem.h>
 
-#ifdef PMAP_DEBUG
-extern int pmap_debug_level;
-#endif
-
 u_int arm700bugcount = 0;
-
-/* Macors to simplify the switch statement below */
-
-#define SYSCALL_SPECIAL_RETURN			\
-	userret(p);				\
-	return;
 
 /*
  * syscall(frame):
