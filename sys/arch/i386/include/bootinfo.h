@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 1999/01/27 20:54:57 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 1999/01/28 20:10:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -44,6 +44,7 @@ struct btinfo_common {
 #define BTINFO_NETIF 4
 #define BTINFO_CONSOLE 6
 #define BTINFO_BIOSGEOM 7
+#define BTINFO_SYMTAB 8
 
 struct btinfo_bootpath {
 	struct btinfo_common common;
@@ -78,6 +79,13 @@ struct btinfo_console {
 	char devname[16];
 	int addr;
 	int speed;
+};
+
+struct btinfo_symtab {
+	struct btinfo_common common;
+	int nsym;
+	int ssym;
+	int esym;
 };
 
 #include <sys/disklabel_mbr.h>
