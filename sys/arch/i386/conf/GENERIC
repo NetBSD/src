@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.414 2001/07/30 19:59:05 ad Exp $
+#	$NetBSD: GENERIC,v 1.415 2001/08/14 13:15:45 augustss Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
 
 include "arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.414 $"
+#ident 		"GENERIC-$Revision: 1.415 $"
 
 maxusers	32		# estimated number of users
 
@@ -152,7 +152,7 @@ options 	USBVERBOSE	# verbose USB device autoconfig messages
 #options 	PNPBIOSVERBOSE	# verbose PnP BIOS messages
 #options	PNPBIOSDEBUG	# more fulsome PnP BIOS debugging messages
 options 	I2OVERBOSE	# verbose I2O driver messages
-options		MCAVERBOSE	# verbose MCA device autoconfig messages
+options 	MCAVERBOSE	# verbose MCA device autoconfig messages
 
 options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 
@@ -467,8 +467,8 @@ scsibus* at esp?
 scsibus* at iha?
 scsibus* at iopsp?
 scsibus* at isp?
-#scsibus* at nca?
 scsibus* at mly?
+#scsibus* at nca?
 scsibus* at pcscp?
 scsibus* at sea?
 scsibus* at siop?
@@ -667,11 +667,11 @@ le*	at mca? slot ?			# SKNET Personal/MC2+
 # MII/PHY support
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
+gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS1890
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
-gphyter* at mii? phy ?			# NS83861 Gig-E PHY
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
