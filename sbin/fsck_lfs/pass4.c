@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.5 2001/09/25 00:03:25 wiz Exp $	 */
+/* $NetBSD: pass4.c,v 1.6 2003/03/28 08:09:54 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -35,24 +35,36 @@
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <ufs/ufs/dinode.h>
 #include <sys/mount.h>
+#include <ufs/ufs/inode.h>
+
+#define vnode uvnode
+#define buf ubuf
+#define panic call_panic
 #include <ufs/lfs/lfs.h>
+
+#include <err.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "bufcache.h"
+#include "vnode.h"
+#include "lfs.h"
 
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
 
+extern SEGUSE *seg_table;
+
 void
 pass4()
 {
-	register ino_t  inumber;
+	register ino_t inumber;
 	register struct zlncnt *zlnp;
-	struct dinode  *dp;
-	struct inodesc  idesc;
-	int             n;
+	struct dinode *dp;
+	struct inodesc idesc;
+	int n;
 
 	memset(&idesc, 0, sizeof(struct inodesc));
 	idesc.id_type = ADDR;
@@ -65,14 +77,14 @@ pass4()
 		case DFOUND:
 			n = lncntp[inumber];
 			if (n)
-				adjust(&idesc, (short)n);
+				adjust(&idesc, (short) n);
 			else {
 				for (zlnp = zlnhead; zlnp; zlnp = zlnp->next)
 					if (zlnp->zlncnt == inumber) {
 						zlnp->zlncnt = zlnhead->zlncnt;
 						zlnp = zlnhead;
 						zlnhead = zlnhead->next;
-						free((char *)zlnp);
+						free((char *) zlnp);
 						clri(&idesc, "UNREF", 1);
 						break;
 					}
@@ -98,8 +110,8 @@ pass4()
 			break;
 
 		default:
-			errexit("BAD STATE %d FOR INODE I=%d\n",
-				statemap[inumber], inumber);
+			err(8, "BAD STATE %d FOR INODE I=%d\n",
+			    statemap[inumber], inumber);
 		}
 	}
 }
@@ -108,10 +120,13 @@ int
 pass4check(struct inodesc * idesc)
 {
 	register struct dups *dlp;
-	int             ndblks, res = KEEPON;
-	daddr_t         blkno = idesc->id_blkno;
+	int ndblks, res = KEEPON;
+	daddr_t blkno = idesc->id_blkno;
+	SEGUSE *sup;
+	struct ubuf *bp;
+	int sn;
 
-	for (ndblks = fragstodb(&sblock, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
+	for (ndblks = fragstofsb(fs, idesc->id_numfrags); ndblks > 0; blkno++, ndblks--) {
 		if (chkrange(blkno, 1)) {
 			res = SKIP;
 		} else if (testbmap(blkno)) {
@@ -121,11 +136,17 @@ pass4check(struct inodesc * idesc)
 				dlp->dup = duplist->dup;
 				dlp = duplist;
 				duplist = duplist->next;
-				free((char *)dlp);
+				free((char *) dlp);
 				break;
 			}
 			if (dlp == 0) {
+				sn = dtosn(fs, blkno);
 				clrbmap(blkno);
+				LFS_SEGENTRY(sup, fs, sn, bp);
+				sup->su_nbytes -= fsbtob(fs, 1);
+				VOP_BWRITE(bp);
+				seg_table[sn].su_nbytes -= fsbtob(fs, 1);
+				++fs->lfs_bfree;
 				n_blks--;
 			}
 		}
