@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795.c,v 1.16 1999/08/28 09:19:05 dbj Exp $	*/
+/*	$NetBSD: mb8795.c,v 1.17 1999/08/29 05:51:45 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -94,12 +94,13 @@
 #include "mb8795reg.h"
 #include "mb8795var.h"
 
-#if 0
+#if 1
 #define XE_DEBUG
 #endif
 
 #ifdef XE_DEBUG
-#define DPRINTF(x) printf x;
+int xe_debug = 0;
+#define DPRINTF(x) if (xe_debug) printf x;
 #else
 #define DPRINTF(x)
 #endif
@@ -278,8 +279,8 @@ mb8795_rint(sc)
 	bus_space_write_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT, XE_RXSTAT_CLEAR);
 
 #if 0
-	DPRINTF(("%s: rx interrupt, rxstat = %b\n",
-			sc->sc_dev.dv_xname, rxstat, XE_RXSTAT_BITS));
+	printf("%s: rx interrupt, rxstat = %b\n",
+			sc->sc_dev.dv_xname, rxstat, XE_RXSTAT_BITS);
 #endif
 
 	if (rxstat & XE_RXSTAT_RESET) {
@@ -380,17 +381,13 @@ mb8795_rint(sc)
 	DPRINTF(("%s: rx interrupt, rxstat = %b\n",
 			sc->sc_dev.dv_xname, rxstat, XE_RXSTAT_BITS));
 
-#if 0 && defined(XE_DEBUG)
-	{
-		DPRINTF(("rxstat = 0x%b\n",
-				bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT), XE_RXSTAT_BITS));
-		DPRINTF(("rxmask = 0x%b\n",
-				bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK), XE_RXMASK_BITS));
-		DPRINTF(("rxmode = 0x%b\n",
-				bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE), XE_RXMODE_BITS));
-	}
-#endif
-	
+	DPRINTF(("rxstat = 0x%b\n",
+			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXSTAT), XE_RXSTAT_BITS));
+	DPRINTF(("rxmask = 0x%b\n",
+			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMASK), XE_RXMASK_BITS));
+	DPRINTF(("rxmode = 0x%b\n",
+			bus_space_read_1(sc->sc_bst,sc->sc_bsh, XE_RXMODE), XE_RXMODE_BITS));
+
 	return;
 }
 
@@ -402,7 +399,6 @@ mb8795_tint(sc)
      struct mb8795_softc *sc;
 	
 {
-	int reset = 0;
 	u_char txstat;
 	u_char txmask;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -431,11 +427,6 @@ mb8795_tint(sc)
 		printf("%s: tx 16th collision\n", sc->sc_dev.dv_xname);
 		ifp->if_oerrors++;
 		ifp->if_collisions += 16;
-	}
-
-	if (reset) {
-		mb8795_reset(sc);
-		return;
 	}
 
 #if 0
@@ -1031,7 +1022,7 @@ mb8795_rxdma_continue(arg)
 	}
 #if (defined(DIAGNOSTIC))
 	else {
-		printf("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname);
+		panic("%s: out of receive DMA buffers\n",sc->sc_dev.dv_xname);
 	}
 #endif
 
