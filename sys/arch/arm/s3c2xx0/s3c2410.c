@@ -1,7 +1,7 @@
-/*	$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $ */
+/*	$NetBSD: s3c2410.c,v 1.6 2005/03/13 16:53:08 bsh Exp $ */
 
 /*
- * Copyright (c) 2003  Genetec corporation.  All rights reserved.
+ * Copyright (c) 2003, 2005  Genetec corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec corporation.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.5 2004/06/22 11:18:32 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410.c,v 1.6 2005/03/13 16:53:08 bsh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,11 +152,11 @@ s3c2410_attach(struct device *parent, struct device *self, void *aux)
 
 	/* calculate current clock frequency */
 	s3c24x0_clock_freq(&sc->sc_sx);
-	printf(": fclk %d MHz hclk %d MHz pclk %d MHz",
+	aprint_normal(": fclk %d MHz hclk %d MHz pclk %d MHz\n",
 	       sc->sc_sx.sc_fclk / 1000000, sc->sc_sx.sc_hclk / 1000000,
 	       sc->sc_sx.sc_pclk / 1000000);
 
-	printf("\n");
+	aprint_naive("\n");
 
 	/* get busdma tag for the platform */
 	sc->sc_sx.sc_dmat = s3c2xx0_bus_dma_init(&s3c2xx0_bus_dma);
