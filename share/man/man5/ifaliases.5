@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifaliases.5,v 1.4.10.1 2000/07/19 16:53:36 jhawk Exp $
+.\"	$NetBSD: ifaliases.5,v 1.4.10.2 2000/07/25 19:17:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -59,7 +59,7 @@ is the network interface the alias will be configured on.
 .Pp
 The
 .Em netmask
-is the netmask of the alias's network address. This item is optional.
+is the netmask of the alias's network address.
 .Sh FILES
 .Pa /etc/rc.d/network
 .Pa /etc/ifaliases
@@ -68,3 +68,7 @@ The
 .Nm
 file appeared in
 .Nx 1.2 .
+.Sh NOTES
+Though the format without netmask is still supported
+for compatibility, it's usage is discouradged - you should
+always specify netmask explicitly.
