@@ -1,4 +1,4 @@
-/*	$NetBSD: remcap.c,v 1.4 1994/12/08 09:31:01 jtc Exp $	*/
+/*	$NetBSD: remcap.c,v 1.5 1994/12/24 17:56:29 cgd Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)remcap.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: remcap.c,v 1.4 1994/12/08 09:31:01 jtc Exp $";
+static char rcsid[] = "$NetBSD: remcap.c,v 1.5 1994/12/24 17:56:29 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -48,8 +48,8 @@ static char rcsid[] = "$NetBSD: remcap.c,v 1.4 1994/12/08 09:31:01 jtc Exp $";
 #include <sys/types.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include "pathnames.h"
 
 #ifndef BUFSIZ

@@ -1,4 +1,4 @@
-/*	$NetBSD: uucplock.c,v 1.4 1994/12/08 09:31:14 jtc Exp $	*/
+/*	$NetBSD: uucplock.c,v 1.5 1994/12/24 17:56:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,10 +37,11 @@
 #if 0
 static char sccsid[] = "@(#)uucplock.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: uucplock.c,v 1.4 1994/12/08 09:31:14 jtc Exp $";
+static char rcsid[] = "$NetBSD: uucplock.c,v 1.5 1994/12/24 17:56:30 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/dir.h>
