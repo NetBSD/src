@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.9 2000/03/06 21:36:05 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.10 2000/03/23 01:04:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.9 2000/03/06 21:36:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.10 2000/03/23 01:04:11 thorpej Exp $");
 
 /*
  * Zilog Z8530 Dual UART driver (machine-dependent part).  This driver
@@ -443,7 +443,7 @@ zs_ioasic_hardintr(arg)
 	softreq = zs->zsc_cs[0]->cs_softreq | zs->zsc_cs[1]->cs_softreq;
 	if (softreq && (zs_ioasic_soft_scheduled == 0)) {
 		zs_ioasic_soft_scheduled = 1;
-		timeout(zs_ioasic_softintr, (void *)zs, 1);
+		setsoftserial();
 	}
 	return (1);
 }
@@ -452,15 +452,26 @@ zs_ioasic_hardintr(arg)
  * Software-level interrupt (character processing, lower priority).
  */
 void
-zs_ioasic_softintr(arg)
-	void *arg;
+zs_ioasic_softintr()
 {
-	struct zsc_softc *zs = arg;
-	int s;
+	struct zsc_softc *zsc;
+	int i, s;
 
 	s = spltty();
+
+	if (zs_ioasic_soft_scheduled == 0) {
+		splx(s);
+		return;
+	}
+
 	zs_ioasic_soft_scheduled = 0;
-	(void) zsc_intr_soft(zs);
+
+	for (i = 0; i < zsc_cd.cd_ndevs; i++) {
+		zsc = zsc_cd.cd_devs[i];
+		if (zsc == NULL)
+			continue;
+		(void) zsc_intr_soft(zsc);
+	}
 	splx(s);
 }
 
