@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.15 1998/07/06 07:50:19 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.16 1998/07/12 03:20:14 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.15 1998/07/06 07:50:19 mrg Exp $");
+__RCSID("$NetBSD: main.c,v 1.16 1998/07/12 03:20:14 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,6 @@ static void usage __P((void));
 static struct protox *name2protox __P((char *));
 static struct protox *knownname __P((char *));
 
-
 kvm_t *kvmd;
 
 int
@@ -258,12 +257,9 @@ main(argc, argv)
 				af = AF_ISO;
 			else if (strcmp(optarg, "atalk") == 0)
 				af = AF_APPLETALK;
-			else {
-				(void)fprintf(stderr,
-				    "%s: %s: unknown address family\n",
-				    __progname, optarg);
-				exit(1);
-			}
+			else
+				errx(1, "%s: unknown address family",
+				    optarg);
 			break;
 		case 'g':
 			gflag = 1;
@@ -289,21 +285,15 @@ main(argc, argv)
 			break;
 		case 'P':
 			pcbaddr = strtoul(optarg, &cp, 16);
-			if (*cp != '\0' || errno == ERANGE) {
-				(void)fprintf(stderr,
-				    "%s: invalid PCB address %s\n",
-				    __progname, optarg);
-				exit(1);
-			}
+			if (*cp != '\0' || errno == ERANGE)
+				errx(1, "invalid PCB address %s",
+				    optarg);
 			Pflag = 1;
 			break;
 		case 'p':
-			if ((tp = name2protox(optarg)) == NULL) {
-				(void)fprintf(stderr,
-				    "%s: %s: unknown or uninstrumented protocol\n",
-				    __progname, optarg);
-				exit(1);
-			}
+			if ((tp = name2protox(optarg)) == NULL)
+				errx(1, "%s: unknown or uninstrumented protocol",
+				    optarg);
 			pflag = 1;
 			break;
 		case 'r':
@@ -362,16 +352,15 @@ main(argc, argv)
 	    buf)) == NULL)
 		errx(1, "%s", buf);
 
+	/* do this now anyway */
 	if (nlistf == NULL && memf == NULL)
 		(void)setgid(getgid());
 
 	if (kvm_nlist(kvmd, nl) < 0 || nl[0].n_type == 0) {
 		if (nlistf)
-			fprintf(stderr, "%s: %s: no namelist\n", __progname,
-			    nlistf);
+			errx(1, "%s: no namelist", nlistf);
 		else
-			fprintf(stderr, "%s: no namelist\n", __progname);
-		exit(1);
+			errx(1, "no namelist");
 	}
 	if (mflag) {
 		mbpr(nl[N_MBSTAT].n_value,  nl[N_MSIZE].n_value,
@@ -488,8 +477,7 @@ kread(addr, buf, size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
-		(void)fprintf(stderr, "%s: %s\n", __progname,
-		    kvm_geterr(kvmd));
+		warnx("%s\n", kvm_geterr(kvmd));
 		return (-1);
 	}
 	return (0);
@@ -499,6 +487,7 @@ char *
 plural(n)
 	int n;
 {
+
 	return (n != 1 ? "s" : "");
 }
 
@@ -506,6 +495,7 @@ char *
 plurales(n)
 	int n;
 {
+
 	return (n != 1 ? "es" : "");
 }
 
