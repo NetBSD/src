@@ -1,5 +1,5 @@
 /*
- *	$Id: psl.h,v 1.2 1994/01/08 19:08:51 cgd Exp $
+ *	$Id: psl.h,v 1.3 1994/02/04 08:20:05 glass Exp $
  */
 
 /* Just use the common m68k definition */

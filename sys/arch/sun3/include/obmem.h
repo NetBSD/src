@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/obmem.h,v 1.2 1993/08/28 15:36:25 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/Attic/obmem.h,v 1.3 1994/02/04 08:20:03 glass Exp $
  */
 
 /* put something in here about framebuffers... */

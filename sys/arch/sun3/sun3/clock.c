@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.11 1993/11/23 05:29:06 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/clock.c,v 1.12 1994/02/04 08:20:52 glass Exp $
  */
 /*
  * machine-dependent clock routines; intersil7170
@@ -223,6 +223,7 @@ void clockattach(parent, self, args)
     printf("\n");
 }
 
+#if 0
 /*
  * Set up the real-time clock.  Leave stathz 0 since there is no secondary
  * clock available.
@@ -257,11 +258,37 @@ setstatclockrate(newhz)
 	/* nothing */
 }
 
+#endif
+
+void startrtclock()
+{
+    char dummy;
+  
+    if (!intersil_softc)
+	panic("clock: not initialized");
+    
+    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
+    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
+ 						   INTERSIL_CMD_IDISABLE);
+    dummy = intersil_clear();
+}
+
+void enablertclock()
+{
+    unsigned char dummy;
+	/* make sure irq5/7 stuff is resolved :) */
+ 
+    dummy = intersil_clear();
+    dummy++;
+    intersil_clock->interrupt_reg = INTERSIL_INTER_CSECONDS;
+    intersil_clock->command_reg = intersil_command(INTERSIL_CMD_RUN,
+ 						   INTERSIL_CMD_IENABLE);
+}
 
 int clock_count = 0;
 
 void clock_intr(frame)
-     struct clockframe frame;
+     clockframe frame;
 {
     static unsigned char led_pattern = 0;
 

@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.13 1993/10/12 05:26:27 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/locore.s,v 1.14 1994/02/04 08:21:00 glass Exp $
  */
 #include "assym.s"
 #include "../include/asm.h"
@@ -156,7 +156,6 @@ eicode:
 _szicode:
 	.long	_szicode-_icode
 #include "lib.s"
-#include "copy.s"
 #include "m68k.s"
 #include "signal.s"
 #include "process.s"

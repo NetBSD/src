@@ -52,7 +52,7 @@
 	
 .globl _buserr, _addrerr, _illinst, _zerodiv, _chkinst, _trapvinst
 .globl _privinst, _trace, _fpfline, _badtrap, _coperr, _fmterr, _trap0,
-.globl _trap1, _trap2, _trap15
+.globl _trap1, _trap2, _trap12, _trap15
 .globl _fpunsupp
 
 	.globl	_trap, _nofault, _longjmp

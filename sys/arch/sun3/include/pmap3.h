@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/pmap3.h,v 1.5 1993/08/28 15:36:36 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/pmap3.h,v 1.6 1994/02/04 08:20:04 glass Exp $
  */
 
 #ifndef	_PMAP_MACHINE_

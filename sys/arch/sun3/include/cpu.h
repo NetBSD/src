@@ -53,16 +53,6 @@
  */
 #define	COPY_SIGCODE		/* copy sigcode above user stack in exec */
 
-/*
- * function vs. inline configuration;
- * these are defined to get generic functions
- * rather than inline or machine-dependent implementations
- */
-#define	NEED_MINMAX		/* need {,i,l,ul}{min,max} functions */
-#undef	NEED_FFS		/* don't need ffs function */
-#undef	NEED_BCMP		/* don't need bcmp function */
-#undef	NEED_STRLEN		/* don't need strlen function */
-
 #define	cpu_exec(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 
@@ -82,6 +72,7 @@ struct clockframe {
 #define	CLKF_PC(framep)		((framep)->pc)
 #define	CLKF_INTR(framep)	(0) /* XXX laziness */
 
+typedef struct clockframe clockframe;
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
@@ -93,7 +84,7 @@ struct clockframe {
  * interrupt.  On hp300, request an ast to send us through trap(),
  * marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= SOWEUPC, aston())
+#define	profile_tick(p, framep)	{ (p)->p_flag |= SOWEUPC; aston();}
 
 /*
  * Notify the current process (p) that it has a signal pending,
@@ -139,5 +130,7 @@ extern	char *intiobase, *intiolimit;
 #define	IC_FREEZE	0x0002	/* freeze instruction cache */
 #define	IC_CE		0x0004	/* clear instruction cache entry */
 #define	IC_CLR		0x0008	/* clear entire instruction cache */
+
+#define IC_CLEAR (IC_CLR|IC_ENABLE)
 
 #endif

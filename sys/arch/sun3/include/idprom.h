@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/include/idprom.h,v 1.6 1993/08/28 15:36:08 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/include/idprom.h,v 1.7 1994/02/04 08:19:58 glass Exp $
  */
 
 /*

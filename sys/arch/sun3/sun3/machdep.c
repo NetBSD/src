@@ -167,7 +167,7 @@ void cpu_startup()
      * in that they usually occupy more virtual memory than physical.
      */
     size = MAXBSIZE * nbuf;
-    buffer_map = kmem_suballoc(kernel_map, (vm_offset_t)&buffers,
+    buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
 			       &maxaddr, size, FALSE);
     minaddr = (vm_offset_t)buffers;
     if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
@@ -220,7 +220,7 @@ void cpu_startup()
     mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
 			       M_MBUF, M_NOWAIT);
     bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-    mb_map = kmem_suballoc(kernel_map, (vm_offset_t)&mbutl, &maxaddr,
+    mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
 			   VM_MBUF_SIZE, FALSE);
 
     /*
@@ -759,7 +759,7 @@ sun_sendsig(catcher, sig, mask, code)
 
 	/* have the user-level trampoline code sort out what registers it
 	   has to preserve. */
-	frame->f_pc = catcher;
+	frame->f_pc = (u_int) catcher;
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sun_sendsig(%d): sig %d returns\n",
@@ -1110,49 +1110,6 @@ straytrap(pc, evec)
 	       evec & 0xFFF, pc);
 }
 
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- * 
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- */
-cpu_exec_aout_makecmds(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
-{
-#ifdef COMPAT_SUNOS
-struct sunos_aout_magic {
-	u_char	a_dynamic:1;	/* has a __DYNAMIC */
-	u_char	a_toolversion:7;/* version of toolset used to create this file */
-	u_char	a_machtype;	/* machine type */
-
-	u_short	a_magic;	/* magic number */
-};
-
-	struct sunos_aout_magic sunmag;
-
-	bcopy(&epp->ep_execp->a_midmag, &sunmag, sizeof(sunmag));
-	if((sunmag.a_machtype != MID_SUN010) &&
-	   (sunmag.a_machtype != MID_SUN020))
-		return (ENOEXEC);
-	epp->ep_emul = EMUL_SUNOS;
-	switch (sunmag.a_magic) {
-	case ZMAGIC:
-		return sun_exec_aout_prep_zmagic(p, epp);
-	case NMAGIC:
-		return sun_exec_aout_prep_nmagic(p, epp);
-	case OMAGIC:
-		return sun_exec_aout_prep_omagic(p, epp);
-	default:
-		break;
-	}
-#endif /* COMPAT_SUNOS */
-	return ENOEXEC;
-}
-
 struct sysarch_args {
 	int op;
 	char *parms;
@@ -1200,4 +1157,18 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
+}
+
+cpu_exec_aout_makecmds(p, epp)
+	struct proc *p;
+	struct exec_package *epp;
+{
+	int error = ENOEXEC;
+
+#ifdef COMPAT_SUNOS
+	extern sun_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	if ((error = sun_exec_aout_makecmds(p, epp)) == 0)
+		return 0;
+#endif
+	return error;
 }

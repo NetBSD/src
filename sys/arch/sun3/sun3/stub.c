@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/stub.c,v 1.6 1993/08/28 15:38:20 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/stub.c,v 1.7 1994/02/04 08:21:06 glass Exp $
  */
 
 char	*memcpy(char *to, char *from, unsigned int size)

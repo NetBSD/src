@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.h,v 1.4 1993/10/12 05:28:26 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/Attic/vector.h,v 1.5 1994/02/04 08:21:12 glass Exp $
  */
 
 #define COPY_ENTRY 0

@@ -1,5 +1,5 @@
 /*
- *	$Id: float.h,v 1.2 1994/01/08 19:08:49 cgd Exp $
+ *	$Id: float.h,v 1.3 1994/02/04 08:19:56 glass Exp $
  */
 
 /* Just use the common m68k definition */

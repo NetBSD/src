@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Header: /cvsroot/src/sys/arch/sun3/sun3/buserr.h,v 1.1 1993/10/12 05:24:52 glass Exp $
+ * $Header: /cvsroot/src/sys/arch/sun3/sun3/buserr.h,v 1.2 1994/02/04 08:20:50 glass Exp $
  */
 
 #define BUSERR_WATCHDOG   0x01

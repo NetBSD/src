@@ -152,7 +152,7 @@ pcbflag:
 ENTRY(swtch_exit)
 	movl	#nullpcb,_curpcb	| save state into garbage pcb
 	lea	tmpstk,sp		| goto a tmp stack
-	jra	_cpu_swtch
+	jra	_swtch
 
 /*
  * When no processes are on the runq, Swtch branches to idle
@@ -178,11 +178,11 @@ Lbadsw:
 
 .globl _load_u_area;
 /*
- * cpu_swtch()
+ * Swtch()
  *
  * Hacked for sun3	
  */
-ENTRY(cpu_swtch)
+ENTRY(swtch)
 	movl	_curpcb,a0		| current pcb
 	movw	sr,a0@(PCB_PS)		| save sr before changing ipl
 #ifdef notyet

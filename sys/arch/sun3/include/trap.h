@@ -1,5 +1,5 @@
 /*
- *	$Id: trap.h,v 1.4 1994/01/08 19:08:56 cgd Exp $
+ *	$Id: trap.h,v 1.5 1994/02/04 08:20:09 glass Exp $
  */
 
 /* Just use the common m68k definition */

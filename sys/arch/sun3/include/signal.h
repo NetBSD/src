@@ -1,5 +1,5 @@
 /*
- *	$Id: signal.h,v 1.2 1994/01/08 19:08:54 cgd Exp $
+ *	$Id: signal.h,v 1.3 1994/02/04 08:20:08 glass Exp $
  */
 
 /* Just use the common m68k definition */

@@ -126,7 +126,7 @@ int mmudebug = 0;
 void userret(p, pc, oticks)
 	struct proc *p;
 	int pc;
-	u_quad_t oticks;
+	struct timeval oticks;
 {
         int sig;
     
@@ -150,11 +150,25 @@ void userret(p, pc, oticks)
 		while ((sig = CURSIG(p)) != 0)
 			psig(sig);
 	}
+
 	/*
 	 * If profiling, charge recent system time to the trapped pc.
 	 */
-	if (p->p_flag & SPROFIL)
-		addupc_task(p, pc, (int)(p->p_sticks - oticks));
+	if (p->p_stats->p_prof.pr_scale) {
+		int ticks;
+		struct timeval *tv = &p->p_stime;
+
+		ticks = ((tv->tv_sec - oticks.tv_sec) * 1000 +
+			(tv->tv_usec - oticks.tv_usec) / 1000) / (tick / 1000);
+		if (ticks) {
+#ifdef PROFTIMER
+			extern int profscale;
+			addupc(pc, &p->p_stats->p_prof, ticks * profscale);
+#else
+			addupc(pc, &p->p_stats->p_prof, ticks);
+#endif
+		}
+	}
 
 	curpri = p->p_pri;
 }
@@ -173,14 +187,14 @@ trap(type, code, v, frame)
 	register int i = 0;
 	unsigned ucode = 0;
 	register struct proc *p = curproc;
-	u_quad_t sticks;
+	struct timeval stime;
 	unsigned ncode;
 	int s;
 
 	cnt.v_trap++;
 	if ((p = curproc) == NULL)
 		p = &proc0;
-	sticks = p->p_sticks;
+	stime = p->p_stime;
 	if (USERMODE(frame.f_sr)) {
 		type |= T_USER;
 		p->p_regs = frame.f_regs;
@@ -481,7 +495,7 @@ copyfault:
 	if (i)
 	    trapsignal(p, i, ucode);
 out:
-	userret(p, frame.f_pc, sticks);
+	userret(p, frame.f_pc, stime);
 }
 
 /*
@@ -496,7 +510,7 @@ syscall(code, frame)
 	register struct sysent *callp;
 	register struct proc *p = curproc;
 	int error, opc, numsys, s;
-	u_quad_t sticks;
+	struct timeval stime;
 	struct args {
 		int i[8];
 	} args;
@@ -509,7 +523,7 @@ syscall(code, frame)
 #endif
 
 	cnt.v_syscall++;
-	sticks = p->p_sticks;
+	stime = p->p_stime;
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p->p_regs = frame.f_regs;
@@ -623,7 +637,7 @@ done:
 	    p->p_md.md_flags &= ~MDP_STACKADJ;
 	  }
 #endif
-	userret(p, opc, sticks);
+	userret(p, opc, stime);
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, code, error, rval[0]);

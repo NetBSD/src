@@ -89,6 +89,7 @@ main()
     printf("#define\tFC_CONTROL %d\n",  FC_CONTROL);
     printf("#define\tFC_SUPERD %d\n",  FC_SUPERD);
     printf("#define\tFC_USERD %d\n",  FC_USERD);
+    printf("#define\tIC_CLEAR %d\n", IC_CLEAR);
 
 				/* sun3 control space isms */
     printf("#define\tCONTEXT_0 %d\n",   CONTEXT_0);
