@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.29 2000/06/26 04:56:19 simonb Exp $ */
+/* $NetBSD: vga.c,v 1.30 2000/07/15 18:47:54 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -207,6 +207,21 @@ const struct wsscreen_descr vga_stdscreen = {
 	&vga_emulops,
 	8, 8,
 	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+}, vga_24lscreen = {
+	"80x24", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+}, vga_24lscreen_mono = {
+	"80x24", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+}, vga_24lscreen_bf = {
+	"80x24bf", 80, 24,
+	&vga_emulops,
+	8, 16,
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
 };
 
 #define VGA_SCREEN_CANTWOFONTS(type) (!((type)->capabilities & WSSCREEN_HILIT))
@@ -218,11 +233,14 @@ const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_40lscreen_bf,
 	&vga_50lscreen,
 	&vga_50lscreen_bf,
+	&vga_24lscreen,
+	&vga_24lscreen_bf,
 	/* XXX other formats, graphics screen? */
 }, *_vga_scrlist_mono[] = {
 	&vga_stdscreen_mono,
 	&vga_40lscreen_mono,
 	&vga_50lscreen_mono,
+	&vga_24lscreen_mono,
 	/* XXX other formats, graphics screen? */
 };
 
