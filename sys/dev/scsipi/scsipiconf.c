@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.21 2004/08/21 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.22 2004/08/21 21:30:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.21 2004/08/21 21:29:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipiconf.c,v 1.22 2004/08/21 21:30:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ scsipi_inqmatch(struct scsipi_inquiry_pattern *inqbuf, caddr_t base,
 	return (bestmatch);
 }
 
-char *
+const char *
 scsipi_dtype(int type)
 {
 	char *dtype;
