@@ -1,4 +1,4 @@
-/* $NetBSD: if_eb.c,v 1.22 1999/05/18 23:52:52 thorpej Exp $ */
+/* $NetBSD: if_eb.c,v 1.23 1999/11/30 00:02:51 tron Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe
@@ -1364,6 +1364,7 @@ ebread(sc, buf, len)
 	}
 #endif
 
+	ifp->if_ipackets++;
 	(*ifp->if_input)(ifp, m);
 }
 
