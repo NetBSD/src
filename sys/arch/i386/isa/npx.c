@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.95 2003/09/06 23:15:35 christos Exp $	*/
+/*	$NetBSD: npx.c,v 1.96 2003/10/07 14:35:37 skd Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.95 2003/09/06 23:15:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.96 2003/10/07 14:35:37 skd Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -143,6 +143,7 @@ static int	npxdna_s87(struct cpu_info *);
 #ifdef I686_CPU
 static int	npxdna_xmm(struct cpu_info  *);
 #endif /* I686_CPU */
+static int	x86fpflags_to_ksiginfo(u_int32_t flags);
 
 #ifdef I686_CPU
 #define	fxsave(addr)		__asm("fxsave %0" : "=m" (*addr))
@@ -361,7 +362,6 @@ npxintr(void *arg, struct intrframe iframe)
 	union savefpu *addr;
 	struct intrframe *frame = &iframe;
 	struct npx_softc *sc;
-	int code;
 	ksiginfo_t ksi;
 
 	sc = npx_softc;
@@ -451,15 +451,22 @@ npxintr(void *arg, struct intrframe iframe)
 		 * just before it is used).
 		 */
 		l->l_md.md_regs = (struct trapframe *)&frame->if_gs;
-#ifdef notyet
+
 		/*
 		 * Encode the appropriate code for detailed information on
 		 * this exception.
 		 */
-		code = XXX_ENCODE(addr->sv_ex_sw);
-#else
-		code = 0;	/* XXX */
-#endif
+
+		if (i386_use_fxsave) {
+			ksi.ksi_code =
+				x86fpflags_to_ksiginfo(addr->sv_xmm.sv_ex_sw);
+			ksi.ksi_trap = (int)addr->sv_xmm.sv_ex_sw;
+		} else {
+			ksi.ksi_code =
+				x86fpflags_to_ksiginfo(addr->sv_87.sv_ex_sw);
+			ksi.ksi_trap = (int)addr->sv_87.sv_ex_sw;
+		}
+
 		trapsignal(l, &ksi);
 	} else {
 		/*
@@ -475,6 +482,32 @@ npxintr(void *arg, struct intrframe iframe)
 	}
 
 	return (1);
+}
+
+/* map x86 fp flags to ksiginfo fp codes 		*/
+/* see table 8-4 of the IA-32 Intel Architecture	*/
+/* Software Developer's Manual, Volume 1		*/
+/* XXX punting on the stack fault with FLTINV		*/
+static int
+x86fpflags_to_ksiginfo(u_int32_t flags)
+{
+	int i;
+	static int x86fp_ksiginfo_table[] = {
+		FPE_FLTINV, /* bit 0 - invalid operation */
+		FPE_FLTRES, /* bit 1 - denormal operand */
+		FPE_FLTDIV, /* bit 2 - divide by zero	*/
+		FPE_FLTOVF, /* bit 3 - fp overflow	*/
+		FPE_FLTUND, /* bit 4 - fp underflow	*/ 
+		FPE_FLTRES, /* bit 5 - fp precision	*/
+		FPE_FLTINV, /* bit 6 - stack fault	*/
+	};
+					     
+	for(i=0;i < sizeof(x86fp_ksiginfo_table)/sizeof(int); i++) {
+		if (flags & (1 << i))
+			return(x86fp_ksiginfo_table[i]);
+	}
+	/* punt if flags not set */
+	return(0);
 }
 
 /*
