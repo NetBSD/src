@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd_openprom.h,v 1.2 1994/11/20 20:52:55 deraadt Exp $ */
+/*	$NetBSD: bsd_openprom.h,v 1.3 1995/09/04 09:53:53 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -90,7 +90,11 @@ struct v0devops {
  * the device state).
  */
 struct v2devops {
-	int	(*v2_xxx1)(int d);	/* ??? convert fd to something */
+	/*
+	 * Convert an `instance handle' (acquired through v2_open()) to
+	 * a `package handle', a.k.a. a `node'.
+	 */
+	int	(*v2_fd_phandle)(int d);
 
 	/* Memory allocation and release. */
 	caddr_t	(*v2_malloc)(caddr_t va, u_int sz);
