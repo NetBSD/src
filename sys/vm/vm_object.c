@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_object.c	7.4 (Berkeley) 5/7/91
- *	$Id: vm_object.c,v 1.18 1994/04/15 07:04:53 cgd Exp $
+ *	$Id: vm_object.c,v 1.19 1994/04/15 22:49:15 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -380,12 +380,25 @@ vm_object_terminate(object)
 	 *	We can't free the pages yet, because the
 	 *	object's pager may have to write them out
 	 *	before deallocating the paging space.
+	 *
+	 *	XXX
 	 */
 
 	for (p = object->memq.tqh_first; p != NULL; p = p->listq.tqe_next) {
 		VM_PAGE_CHECK(p);
+
 		vm_page_lock_queues();
-		vm_page_free(p);
+		if (p->flags & PG_ACTIVE) {
+			TAILQ_REMOVE(&vm_page_queue_active, p, pageq);
+			p->flags &= ~PG_ACTIVE;
+			cnt.v_active_count--;
+		}
+		if (p->flags & PG_INACTIVE) {
+			TAILQ_REMOVE(&vm_page_queue_inactive, p, pageq);
+			p->flags &= ~PG_INACTIVE;
+			cnt.v_inactive_count--;
+		}
+		/* vm_page_free(p); XXX */
 		vm_page_unlock_queues();
 	}
 
