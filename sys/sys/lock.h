@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.14 1998/11/04 06:19:56 chs Exp $	*/
+/*	$NetBSD: lock.h,v 1.15 1999/02/28 14:09:45 fvdl Exp $	*/
 
 /* 
  * Copyright (c) 1995
@@ -87,6 +87,7 @@ struct lock {
 	const char *lk_wmesg;		/* resource sleeping (for tsleep) */
 	int	lk_timo;		/* maximum sleep time (for tsleep) */
 	pid_t	lk_lockholder;		/* pid of exclusive lock holder */
+	short	lk_recurselevel;	/* lvl above which recursion ok */
 };
 /*
  * Lock request types:
@@ -136,11 +137,12 @@ struct lock {
  * or passed in as arguments to the lock manager. The LK_REENABLE flag may be
  * set only at the release of a lock obtained by drain.
  */
-#define LK_EXTFLG_MASK	0x00000070	/* mask of external flags */
+#define LK_EXTFLG_MASK	0x00000170	/* mask of external flags */
 #define LK_NOWAIT	0x00000010	/* do not sleep to await lock */
 #define LK_SLEEPFAIL	0x00000020	/* sleep, then return failure */
-#define LK_CANRECURSE	0x00000040	/* allow recursive exclusive lock */
+#define LK_CANRECURSE	0x00000040	/* this may be recursive lock attempt */
 #define LK_REENABLE	0x00000080	/* lock is be reenabled after drain */
+#define LK_SETRECURSE	0x00000100	/* other locks while we have it OK */
 /*
  * Internal lock flags.
  *
