@@ -1,0 +1,58 @@
+Things to do ....
+
+Phil:
+	-- Make sure booting from ramdisk and fixed disk does the proper
+           thing.  (Possibly adding a -m flag that says it is running in
+           a memory disk root environment ... that could be set from the
+           .profile on the ram disk.)  Things like having config_network()
+           possibly use the information on the fixed disk instead of having
+           to ask everything.
+
+        -- Build the disktab as a profile, not a true /etc/disktab so it
+           doesn't overwrite the real disktab.
+
+        -- Have both ftp and floppy gets get the file, extract the file,
+           and then remove the file before going on to the next set to
+           save disk space.
+
+        -- Add setting timezone
+
+        -- A little more clean-up of the run_prog suite so things worke
+           nicely for all ports.
+
+        -- Check-in of files for amiga and other ports that will use
+           sysinst for 1.3.
+
+Jonathan:
+
+    -- Clean up my DISKLABEL_CMD hack, make #define DISKLABEL_CMD
+       properly MD, or at least provide a way to  not write disklabels 
+       at on Amigas -- I assume Michael has something in his tree for that.
+
+    -- fix "disklabel -r -w" vs. "disklabel -w": I still don't grok why
+	the  -r, and the manpage says it will lose totally on sparcs.
+	Phil, was there some reason to bypass the incore label on i386?
+	Can we jst do "disklabel -w" everywhere?
+
+    -- Make sure the in-memory disklabel structs are big enough
+     	for the largest possible value of getmaxpartitions().
+	Maybe allocate 32 entries and check at runtime that
+	getmaxparitions < 32?
+	(Yes, i forgot to check that when I first edited the code. Sorry.)
+
+
+    -- add sanity-check  code that checks  that the
+           installed/upgraded  target  disk has minimal
+           prerequisites to boot.
+
+          Check for the following in the target root, in order of paranoia:
+
+          /netbsd
+          /sbin
+          /sbin/init
+          /sbin/mount
+          /bin/
+          /bin/sh
+          /sbin/mount{ffs,nfs,maybe others that appear in target fstab?}
+          /etc/
+          /etc/fstab
