@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.17 2003/02/24 18:41:04 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.18 2003/02/25 09:09:31 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -33,6 +33,9 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_vfsops.c,v 1.5 2001/12/13 13:08:34 sheldonh Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.18 2003/02/25 09:09:31 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

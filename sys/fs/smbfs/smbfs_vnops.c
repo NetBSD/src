@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.13 2003/02/24 19:09:02 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.14 2003/02/25 09:09:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -69,6 +69,10 @@
  *
  * FreeBSD: src/sys/fs/smbfs/smbfs_vnops.c,v 1.15 2001/12/20 15:56:45 bp Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.14 2003/02/25 09:09:32 jdolecek Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
