@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.74 1999/03/25 04:45:56 sommerfe Exp $	*/
+/*	$NetBSD: proc.h,v 1.74.2.1 2000/04/30 12:07:06 he Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -148,6 +148,7 @@ struct	proc {
 	const char *p_wmesg;	 /* Reason for sleep. */
 	u_int	p_swtime;	 /* Time swapped in or out. */
 	u_int	p_slptime;	 /* Time since last blocked. */
+	int	p_schedflags;	 /* PSCHED_* flags */
 
 	struct	itimerval p_realtimer;	/* Alarm timer. */
 	struct	timeval p_rtime;	/* Real time. */
@@ -228,6 +229,21 @@ struct	proc {
 #define	P_OWEUPC	0x08000	/* Owe process an addupc() call at next ast. */
 #define	P_FSTRACE	0x10000	/* Debugger process being traced by procfs */
 #define	P_NOCLDWAIT	0x20000	/* No zombies if child dies */
+
+/*
+ * These flags are kept in p_schedflags.  p_schedflags may be modified
+ * only at splstatclock().
+ */
+#define	PSCHED_SEENRR		0x0001	/* process has been in roundrobin() */
+#define	PSCHED_SHOULDYIELD	0x0002	/* process should yield */
+
+#define	PSCHED_SWITCHCLEAR	(PSCHED_SEENRR|PSCHED_SHOULDYIELD)
+
+/*
+ * Macro to compute the exit signal to be delivered.
+ */
+#define	P_EXITSIG(p)	(((p)->p_flag & (P_TRACED|P_FSTRACE)) ? SIGCHLD : \
+			 p->p_exitsig)
 
 /*
  * MOVE TO ucred.h?
@@ -330,6 +346,8 @@ int	enterpgrp __P((struct proc *p, pid_t pgid, int mksess));
 void	fixjobc __P((struct proc *p, struct pgrp *pgrp, int entering));
 int	inferior __P((struct proc *p));
 int	leavepgrp __P((struct proc *p));
+void	yield __P((void));
+void	preempt __P((struct proc *));
 void	mi_switch __P((void));
 void	pgdelete __P((struct pgrp *pgrp));
 void	procinit __P((void));
