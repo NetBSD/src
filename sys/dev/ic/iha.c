@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.9 2001/09/27 15:26:57 tsutsui Exp $ */
+/*	$NetBSD: iha.c,v 1.10 2001/09/29 14:23:37 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -395,13 +395,12 @@ iha_attach(sc)
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;
 		scb->sgoffset = IHA_SG_SIZE * i;
-		scb->sglist = &sc->sc_sglist[i].sg_element[0];
+		scb->sglist = sc->sc_sglist + IHA_MAX_SG_ENTRIES * i;
 		scb->sg_addr =
 		    sc->sc_dmamap->dm_segs[0].ds_addr + scb->sgoffset;
 
 		error = bus_dmamap_create(sc->sc_dmat,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, IHA_MAX_SG_ENTRIES,
-		    (IHA_MAX_SG_ENTRIES - 1) * PAGE_SIZE, 0,
+		    MAXPHYS, IHA_MAX_SG_ENTRIES, MAXPHYS, 0,
 		    BUS_DMA_NOWAIT, &scb->dmap);
 
 		if (error != 0) {
