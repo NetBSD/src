@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.24 2003/10/16 06:56:17 itojun Exp $	*/
+/*	$NetBSD: join.c,v 1.25 2004/07/13 11:53:57 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.24 2003/10/16 06:56:17 itojun Exp $");
+__RCSID("$NetBSD: join.c,v 1.25 2004/07/13 11:53:57 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -632,8 +632,9 @@ enomem()
 void
 usage()
 {
-	(void)fprintf(stderr, "%s%s\n",
-	    "usage: join [-a fileno | -v fileno ] [-e string] [-1 field] ",
-	    "[-2 field]\n            [-o list] [-t char] file1 file2");
+	(void)fprintf(stderr,
+	    "usage: %s [-a fileno | -v fileno] [-e string] [-j fileno field]\n"
+	    "            [-o list] [-t char] [-1 field] [-2 field] file1 file2\n",
+	    getprogname());
 	exit(1);
 }
