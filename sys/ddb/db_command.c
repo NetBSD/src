@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.32 1999/10/28 06:37:32 lukem Exp $	*/
+/*	$NetBSD: db_command.c,v 1.33 1999/11/02 23:53:31 jdolecek Exp $	*/
 
 /* 
  * Mach Operating System
@@ -144,7 +144,7 @@ void
 db_cmd_list(table)
 	struct db_command *table;
 {
-	int	 i, j, w, columns, lines, width, items, numcmds;
+	int	 i, j, w, columns, lines, width=0, items, numcmds;
 	char	*p;
 
 	for (numcmds = 0; table[numcmds].name != NULL; numcmds++) {
