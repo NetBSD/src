@@ -1,4 +1,4 @@
-/*	$NetBSD: setjmp.S,v 1.6 1997/04/25 00:59:00 thorpej Exp $	*/
+/*	$NetBSD: setjmp.S,v 1.7 1997/12/05 02:09:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,7 @@
 #if 0
 	RCSID("from: @(#)setjmp.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: setjmp.S,v 1.6 1997/04/25 00:59:00 thorpej Exp $")
+	RCSID("$NetBSD: setjmp.S,v 1.7 1997/12/05 02:09:49 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,7 +62,7 @@ ENTRY(setjmp)
 	subl	#12,sp		/* space for sigstack args/rvals */
 	clrl	sp@		/* don't change it... */
 	movl	sp,sp@(4)	/* ...but return the current val */
-	jbsr	_sigaltstack	/* note: flags returned in sp@(8) */
+	jbsr	___sigaltstack14 /* note: flags returned in sp@(8) */
 	clrl	sp@		/* don't change mask, just return */
 	jbsr	_sigblock	/*   old value */
 	movl	sp@(8),d1	/* old flags value */

@@ -33,7 +33,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 	/* .asciz "@(#)setjmp.s	8.1 (Berkeley) 6/4/93" */
-	.asciz "$NetBSD: setjmp.S,v 1.1 1995/04/17 12:23:46 ragge Exp $"
+	.asciz "$NetBSD: setjmp.S,v 1.2 1997/12/05 02:11:39 thorpej Exp $"
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -54,7 +54,7 @@ ENTRY(setjmp, R6)
 	subl2	$12,sp			# space for current struct sigstack
 	pushl	sp			# get current values
 	pushl	$0			# no new values
-	calls	$4,_sigaltstack		# pop args plus signal stack value
+	calls	$4,___sigaltstack14	# pop args plus signal stack value
 	movl	(sp)+,(r6)+		# save onsigstack status of caller
 	pushl	$0
 	calls	$1,_sigblock		# get signal mask
