@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.205.2.1 2001/05/01 12:27:11 he Exp $ */
+/*	$NetBSD: wd.c,v 1.205.2.2 2001/05/06 20:48:42 he Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -382,7 +382,7 @@ wddetach(self, flags)
 {
 	struct wd_softc *sc = (struct wd_softc *)self;
 	struct buf *bp;
-	int s, bmaj, cmaj, mn;
+	int s, bmaj, cmaj, i, mn;
 
 	/* locate the major number */
 	for (bmaj = 0; bmaj < nblkdev; bmaj++)
@@ -406,9 +406,11 @@ wddetach(self, flags)
 	splx(s);
 
 	/* Nuke the vnodes for any open instances. */
-	mn = WDMINOR(self->dv_unit, 0);
-	vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-	vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
+	for (i = 0; i < MAXPARTITIONS; i++) {
+		mn = WDMINOR(self->dv_unit, i);
+		vdevgone(bmaj, mn, mn, VBLK);
+		vdevgone(cmaj, mn, mn, VCHR);
+	}
 
 	/* Detach disk. */
 	disk_detach(&sc->sc_dk);
