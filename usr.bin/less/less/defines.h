@@ -1,4 +1,4 @@
-/*	$NetBSD: defines.h,v 1.4 2001/07/26 13:43:44 mrg Exp $	*/
+/*	$NetBSD: defines.h,v 1.5 2002/03/05 12:28:32 mrg Exp $	*/
 
 /* defines.h.  Generated automatically by configure.  */
 /* defines.h.in.  Generated automatically from configure.in by autoheader.  */
@@ -108,7 +108,7 @@
  * (in the HOME directory).
  */
 #define	LESSKEYFILE		".less"
-#define	LESSKEYFILE_SYS		"/etc/less.sys"
+#define	LESSKEYFILE_SYS		SYSDIR "/sysless"
 #define	DEF_LESSKEYINFILE	".lesskey"
 
 
@@ -153,7 +153,7 @@
 /*
  * Default shell metacharacters and meta-escape character.
  */
-#define	DEF_METACHARS	"; \t\n'\"()<>|&^`\\"
+#define	DEF_METACHARS	"; *?\t\n'\"()<>|&^`#\\"
 #define	DEF_METAESCAPE	"\\"
 
 /* 
@@ -172,6 +172,7 @@
 #define	TERMBUF_SIZE	2048	/* Termcap buffer for tgetent */
 #define	TERMSBUF_SIZE	1024	/* Buffer to hold termcap strings */
 #define	TAGLINE_SIZE	512	/* Max size of line in tags file */
+#define	TABSTOP_MAX	32	/* Max number of custom tab stops */
 
 /* Settings automatically determined by configure.  */
 
@@ -255,6 +256,9 @@
 
 /* Define if you have the _setjmp function.  */
 #define HAVE__SETJMP 1
+
+/* Define if you have the fsync function.  */
+#define HAVE_FSYNC 1
 
 /* Define if you have the memcpy function.  */
 #define HAVE_MEMCPY 1
