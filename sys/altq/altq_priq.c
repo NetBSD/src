@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_priq.c,v 1.5 2001/11/12 23:14:22 lukem Exp $	*/
+/*	$NetBSD: altq_priq.c,v 1.6 2003/01/06 03:44:24 christos Exp $	*/
 /*	$KAME: altq_priq.c,v 1.2 2001/10/26 04:56:11 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.5 2001/11/12 23:14:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_priq.c,v 1.6 2003/01/06 03:44:24 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -93,7 +93,8 @@ static int priqcmd_modify_class __P((struct priq_modify_class *));
 static int priqcmd_add_filter __P((struct priq_add_filter *));
 static int priqcmd_delete_filter __P((struct priq_delete_filter *));
 static int priqcmd_class_stats __P((struct priq_class_stats *));
-static void get_class_stats __P((struct class_stats *, struct priq_class *));
+static void get_class_stats __P((struct priq_basic_class_stats *,
+    struct priq_class *));
 static struct priq_class *clh_to_clp __P((struct priq_if *, u_long));
 static u_long clp_to_clh __P((struct priq_class *));
 
@@ -782,7 +783,7 @@ priqcmd_class_stats(ap)
 {
 	struct priq_if *pif;
 	struct priq_class *cl;
-	struct class_stats stats, *usp;
+	struct priq_basic_class_stats stats, *usp;
 	int	pri, error;
 	
 	if ((pif = altq_lookup(ap->iface.ifname, ALTQT_PRIQ)) == NULL)
@@ -806,7 +807,7 @@ priqcmd_class_stats(ap)
 }
 
 static void get_class_stats(sp, cl)
-	struct class_stats *sp;
+	struct priq_basic_class_stats *sp;
 	struct priq_class *cl;
 {
 	sp->class_handle = clp_to_clh(cl);

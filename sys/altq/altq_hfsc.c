@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_hfsc.c,v 1.6 2002/05/18 22:53:25 itojun Exp $	*/
+/*	$NetBSD: altq_hfsc.c,v 1.7 2003/01/06 03:44:23 christos Exp $	*/
 /*	$KAME: altq_hfsc.c,v 1.9 2001/10/26 04:56:11 kjc Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.6 2002/05/18 22:53:25 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_hfsc.c,v 1.7 2003/01/06 03:44:23 christos Exp $");
 
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include "opt_altq.h"
@@ -144,7 +144,8 @@ static int hfsccmd_modify_class __P((struct hfsc_modify_class *));
 static int hfsccmd_add_filter __P((struct hfsc_add_filter *));
 static int hfsccmd_delete_filter __P((struct hfsc_delete_filter *));
 static int hfsccmd_class_stats __P((struct hfsc_class_stats *));
-static void get_class_stats __P((struct class_stats *, struct hfsc_class *));
+static void get_class_stats __P((struct hfsc_basic_class_stats *,
+    struct hfsc_class *));
 static struct hfsc_class *clh_to_clp __P((struct hfsc_if *, u_long));
 static u_long clp_to_clh __P((struct hfsc_class *));
 
@@ -1691,7 +1692,7 @@ hfsccmd_class_stats(ap)
 {
 	struct hfsc_if *hif;
 	struct hfsc_class *cl;
-	struct class_stats stats, *usp;
+	struct hfsc_basic_class_stats stats, *usp;
 	int	n, nclasses, error;
 	
 	if ((hif = altq_lookup(ap->iface.hfsc_ifname, ALTQT_HFSC)) == NULL)
@@ -1727,7 +1728,7 @@ hfsccmd_class_stats(ap)
 }
 
 static void get_class_stats(sp, cl)
-	struct class_stats *sp;
+	struct hfsc_basic_class_stats *sp;
 	struct hfsc_class *cl;
 {
 	sp->class_id = cl->cl_id;
