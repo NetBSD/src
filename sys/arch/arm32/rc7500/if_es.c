@@ -1,4 +1,4 @@
-/* $NetBSD: if_es.c,v 1.5 1996/10/13 03:06:18 christos Exp $ */
+/* $NetBSD: if_es.c,v 1.6 1997/02/04 02:23:35 mark Exp $ */
 
 /*
  * Copyright (c) 1996, Danny C Tsen.
@@ -116,7 +116,7 @@ int	estxint4 = 0;	/* ~TEMPTY counts */
 int	estxint5 = 0;	/* IST_TX_EMPTY interrupts */
 #endif
 
-static int esintr __P((struct es_softc *));
+static int esintr __P((void *));
 static void estint __P((struct ifnet *));
 static void esstart __P((struct ifnet *));
 static void eswatchdog __P((struct ifnet *));
@@ -326,9 +326,10 @@ esinit(sc)
 }
 
 static int
-esintr(sc)
-	struct es_softc *sc;
+esintr(arg)
+	void *arg;
 {
+	struct es_softc *sc = arg;
 	u_int intsts, intact;
 	register u_int iobase;
 	int n = 4;
