@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.91 1999/10/14 16:09:31 phil Exp $
+# 	$NetBSD: GENERIC,v 1.92 1999/11/13 20:56:14 matt Exp $
 
 include "arch/sparc/conf/std.sparc"
 
@@ -151,7 +151,6 @@ options 	QUOTA		# FFS quotas
 
 ## Network protocol support.  In most environments, INET is required.
 options 	INET		# IP (Internet Protocol) v4
-options 	TCP_COMPAT_42	# 4.2BSD IP implementation compatibility
 #options 	GATEWAY		# packet forwarding ("router switch")
 #options 	MROUTING	# packet forwarding of multicast packets
 #options 	DIRECTED_BROADCAST	# allow broadcasts through routers
