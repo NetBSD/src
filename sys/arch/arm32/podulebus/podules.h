@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: podules,v 1.1 1996/10/14 23:16:08 mark Exp 
+ *	NetBSD: podules,v 1.2 1996/11/23 03:23:49 mark Exp 
  */
 
 /*
@@ -41,7 +41,10 @@
  */
 
 #define	MANUFACTURER_ACORN	0x0000		/* Acorn Computers */
+#define	MANUFACTURER_OLIVETTI	0x0002		/* Olivetti */
+#define	MANUFACTURER_WATFORD	0x0003		/* Watford */
 #define	MANUFACTURER_CCONCEPTS	0x0004		/* Computer Concepts */
+#define	MANUFACTURER_ARMADILLO	0x0007		/* Armadillo Systems */
 #define	MANUFACTURER_WILDVISION	0x0009		/* Wild Vision */
 #define	MANUFACTURER_ATOMWIDE	0x0011		/* Atomwide */
 #define	MANUFACTURER_LINGENUITY	0x001a		/* Lingenuity */
@@ -49,6 +52,7 @@
 #define	MANUFACTURER_OAK	0x0021		/* Oak Solutions */
 #define	MANUFACTURER_MORLEY	0x002b		/* Morley */
 #define	MANUFACTURER_CUMANA	0x003a		/* Cumana */
+#define	MANUFACTURER_ICS	0x003c		/* ICS */
 #define	MANUFACTURER_ARXE	0x0041		/* ARXE */
 #define	MANUFACTURER_ALEPH1	0x0042		/* Aleph 1 */
 #define	MANUFACTURER_ICUBED	0x0046		/* I-Cubed */
@@ -61,18 +65,22 @@
  * List of known podules.  Grouped by vendor.
  */
 
-/* Acorn podules */
 #define	PODULE_ACORN_SCSI	0x0002		/* SCSI 1 interface */
 #define	PODULE_ACORN_ETHER1	0x0003		/* ether 1 interface */
+#define	PODULE_ACORN_RAMROM	0x0005		/* RAM/ROM podule */
+#define	PODULE_ACORN_BBCIO	0x0006		/* BBC IO interface */
+#define	PODULE_ACORN_MIDI	0x0013		/* MIDI interface */
 #define	PODULE_ACORN_ETHER2	0x0061		/* ether 2 interface */
 
 #define	PODULE_CCONCEPTS_LASERDIRECT	0x0014		/* laser direct (Canon LBP-4) */
 
-#define	PODULE_WILDVISION_HAWKV9	0x0052		/* hawk V9 mark2 */
-#define	PODULE_WILDVISION_SCANLIGHTV256	0x00cb		/* scanlight Video 256 */
+#define	PODULE_ARMADILLO_A448	0x0016		/* A447 sound sampler */
+
+#define	PODULE_WILDVISION_HAWKV9	0x0052		/* hawk v9 mark2 */
+#define	PODULE_WILDVISION_SCANLIGHTV256	0x00cb		/* scanlight video 256 */
 #define	PODULE_WILDVISION_EAGLEM2	0x00cc		/* eagle M2 */
 #define	PODULE_WILDVISION_LARKA16	0x00ce		/* lark A16 */
-#define	PODULE_WILDVISION_MIDIMAX	0x0200		/* MIDI Max */
+#define	PODULE_WILDVISION_MIDIMAX	0x0200		/* MIDI max */
 
 #define	PODULE_ATOMWIDE_ETHER3	0x00A4		/* ether 3/5 interface */
 
@@ -85,13 +93,17 @@
 #define	PODULE_MORLEY_SCSI	0x0067		/* SCSI interface */
 
 #define	PODULE_CUMANA_SCSI2	0x003a		/* SCSI II interface */
+#define	PODULE_CUMANA_SCSI1	0x00a0		/* SCSI I interface */
 #define	PODULE_CUMANA_SLCD	0x00dd		/* CDFS & SLCD expansion card */
+
+#define	PODULE_ICS_IDE	0x00ae		/* IDE Interface */
 
 #define	PODULE_ARXE_SCSI	0x0041		/* 16 bit SCSI interface */
 
 #define	PODULE_ALEPH1_PCCARD	0x00ea		/* PC card */
 
 #define	PODULE_ICUBED_ETHERH	0x00ec		/* etherlan 600 network slot interface */
+#define	PODULE_ICUBED_ETHERHFLASH	0x011e		/* etherlan 600 network slot interface */
 
 #define	PODULE_BRINI_PORT	0x0000		/* BriniPort intelligent I/O interface */
 #define	PODULE_BRINI_LINK	0x00df		/* BriniLink transputer link adapter */
@@ -99,6 +111,6 @@
 #define	PODULE_ANT_ETHER3	0x00a4		/* ether 3/5 interface */
 #define	PODULE_ANT_ETHERB	0x00e4		/* ether B network slot interface */
 
-#define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI 1 / SCSI 2 host adapter */
+#define	PODULE_ALSYSTEMS_SCSI	0x0107		/* SCSI II host adapter */
 
-#define	PODULE_MCS_SCSI	0x0125		/* Connect32 SCSI interface */
+#define	PODULE_MCS_SCSI	0x0125		/* Connect32 SCSI II interface */
