@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_inode.c,v 1.51 2001/12/18 10:57:21 fvdl Exp $	*/
+/*	$NetBSD: ffs_inode.c,v 1.51.10.1 2003/06/24 09:44:19 grant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.51 2001/12/18 10:57:21 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_inode.c,v 1.51.10.1 2003/06/24 09:44:19 grant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -299,9 +299,9 @@ ffs_truncate(v)
 			    0, 0, ap->a_p)) != 0) {
 				lockmgr(&gp->g_glock, LK_RELEASE, NULL);
 				return (error);
+			}
 			if (oip->i_flag & IN_SPACECOUNTED)
 				fs->fs_pendingblocks -= oip->i_ffs_blocks;
-			}
 		} else {
 			uvm_vnp_setsize(ovp, length);
 #ifdef QUOTA
