@@ -1,4 +1,4 @@
-/*      $NetBSD: ac97.c,v 1.21 2001/11/13 13:14:31 lukem Exp $ */
+/*      $NetBSD: ac97.c,v 1.22 2002/01/06 17:03:17 jmcneill Exp $ */
 /*	$OpenBSD: ac97.c,v 1.8 2000/07/19 09:01:35 csapuntz Exp $	*/
 
 /*
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.21 2001/11/13 13:14:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ac97.c,v 1.22 2002/01/06 17:03:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,6 +311,7 @@ static const struct ac97_codecid {
 	{ AC97_CODEC_ID('T', 'R', 'A', 35),	"TriTech unknown",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 0),	"Wolfson WM9704",	},
 	{ AC97_CODEC_ID('W', 'M', 'L', 3),	"Wolfson WM9707",	},
+	{ 0x45838308,				"ESS Technology ES1921", },
 	{ 0x83847600,				"SigmaTel STAC9700",	},
 	{ 0x83847604,				"SigmaTel STAC9701/3/4/5", },
 	{ 0x83847605,				"SigmaTel STAC9704", 	},
