@@ -3,7 +3,7 @@
    DHCP/BOOTP Relay Agent. */
 
 /*
- * Copyright (c) 1997-2000 Internet Software Consortium.
+ * Copyright (c) 1997-2001 Internet Software Consortium.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.4.2.3 2001/04/04 20:56:40 he Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.4.2.4 2001/04/21 19:43:32 he Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -123,6 +123,16 @@ int main (argc, argv, envp)
 	int quiet = 0;
 	isc_result_t status;
 	char *s;
+
+	/* Make sure we have stdin, stdout and stderr. */
+	i = open ("/dev/null", O_RDWR);
+	if (i == 0)
+		i = open ("/dev/null", O_RDWR);
+	if (i == 1) {
+		i = open ("/dev/null", O_RDWR);
+		log_perror = 0; /* No sense logging to /dev/null. */
+	} else if (i != -1)
+		close (i);
 
 #ifdef SYSLOG_4_2
 	openlog ("dhcrelay", LOG_NDELAY);
