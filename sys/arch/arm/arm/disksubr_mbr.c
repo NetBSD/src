@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.4 2003/10/08 04:25:44 lukem Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.5 2004/11/03 12:21:04 scw Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.4 2003/10/08 04:25:44 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr_mbr.c,v 1.5 2004/11/03 12:21:04 scw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,7 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	int cyl, mbrpartoff, i;
 	struct mbr_partition *ourmbrp = NULL;
 	struct buf *bp;
-	int rv = 1;
+	int rv;
 
 	/* get a buffer and initialize it */
         bp = geteblk((int)lp->d_secsize);
@@ -269,6 +269,7 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 
 	*cylp = cyl;
 	*netbsd_label_offp = mbrpartoff;
+	rv = 1;
 out:
         brelse(bp);
 	return (rv);
