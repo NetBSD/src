@@ -1,18 +1,17 @@
-/* $NetBSD: isp.c,v 1.53.2.2 2000/08/28 17:45:07 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.53.2.3 2001/01/25 18:25:39 jhawk Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
  *	sys/dev/ic/isp.c
- *	sys/dev/ic/ic/isp.c
- *	sys/dev/ic/ic/isp_inline.h
- *	sys/dev/ic/ic/isp_netbsd.c
- *	sys/dev/ic/ic/isp_netbsd.h
- *	sys/dev/ic/ic/isp_target.c
- *	sys/dev/ic/ic/isp_target.h
- *	sys/dev/ic/ic/isp_tpublic.h
- *	sys/dev/ic/ic/ispmbox.h
- *	sys/dev/ic/ic/ispreg.h
- *	sys/dev/ic/ic/ispvar.h
+ *	sys/dev/ic/isp_inline.h
+ *	sys/dev/ic/isp_netbsd.c
+ *	sys/dev/ic/isp_netbsd.h
+ *	sys/dev/ic/isp_target.c
+ *	sys/dev/ic/isp_target.h
+ *	sys/dev/ic/isp_tpublic.h
+ *	sys/dev/ic/ispmbox.h
+ *	sys/dev/ic/ispreg.h
+ *	sys/dev/ic/ispvar.h
  *	sys/microcode/isp/asm_sbus.h
  *	sys/microcode/isp/asm_1040.h
  *	sys/microcode/isp/asm_1080.h
@@ -42,10 +41,7 @@
  * 1. Redistributions of source code must retain the above copyright
  *    notice immediately at the beginning of the file, without modification,
  *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 2. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
@@ -121,7 +117,7 @@ static char *ldumped =
     "Target %d (Loop ID 0x%x) Port 0x%x dumped after login info mismatch";
 #endif
 static char *notresp =
-  "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d)";
+  "Not RESPONSE in RESPONSE Queue (type 0x%x) @ idx %d (next %d) nlooked %d";
 static char *xact1 =
     "HBA attempted queued transaction with disconnect not set for %d.%d.%d";
 static char *xact2 =
@@ -218,7 +214,7 @@ isp_reset(isp)
 			 */
 			ISP_WRITE(isp, HCCR, HCCR_CMD_RELEASE);
 			mbs.param[0] = MBOX_ABOUT_FIRMWARE;
-			isp_mboxcmd(isp, &mbs, MBLOGNONE);
+			isp_mboxcmd(isp, &mbs, MBOX_COMMAND_ERROR);
 			/*
 			 * This *shouldn't* fail.....
 			 */
@@ -406,6 +402,11 @@ isp_reset(isp)
 		}
 
 	}
+
+	/*
+	 * Clear instrumentation
+	 */
+	isp->isp_intcnt = isp->isp_intbogus = 0;
 
 	/*
 	 * Do MD specific pre initialization
@@ -641,7 +642,7 @@ again:
 	mbs.param[1] = ISP_CODE_ORG;
 	isp_mboxcmd(isp, &mbs, MBLOGNONE);
 	/* give it a chance to start */
-	USEC_DELAY(500);
+	USEC_SLEEP(isp, 500);
 
 	if (IS_SCSI(isp)) {
 		/*
@@ -756,10 +757,12 @@ isp_init(isp)
 	if (IS_DUALBUS(isp)) {
 		isp_setdfltparm(isp, 1);
 	}
-	if (IS_FC(isp)) {
-		isp_fibre_init(isp);
-	} else {
-		isp_scsi_init(isp);
+	if ((isp->isp_confopts & ISP_CFG_NOINIT) == 0) {
+		if (IS_FC(isp)) {
+			isp_fibre_init(isp);
+		} else {
+			isp_scsi_init(isp);
+		}
 	}
 }
 
@@ -878,19 +881,18 @@ isp_scsi_init(isp)
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		return;
 	}
-	isp->isp_residx = 0;
+	isp->isp_residx = mbs.param[5];
 
 	mbs.param[0] = MBOX_INIT_REQ_QUEUE;
 	mbs.param[1] = RQUEST_QUEUE_LEN(isp);
 	mbs.param[2] = DMA_MSW(isp->isp_rquest_dma);
 	mbs.param[3] = DMA_LSW(isp->isp_rquest_dma);
 	mbs.param[4] = 0;
-	mbs.param[5] = 0;
 	isp_mboxcmd(isp, &mbs, MBLOGALL);
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		return;
 	}
-	isp->isp_reqidx = isp->isp_reqodx = 0;
+	isp->isp_reqidx = isp->isp_reqodx = mbs.param[4];
 
 	/*
 	 * Turn on Fast Posting, LVD transitions
@@ -943,6 +945,8 @@ isp_scsi_channel_init(isp, channel)
 	if (mbs.param[0] != MBOX_COMMAND_COMPLETE) {
 		return;
 	}
+	isp_prt(isp, ISP_LOGINFO, "Initiator ID is %d", sdp->isp_initiator_id);
+
 
 	/*
 	 * Set current per-target parameters to a safe minimum.
@@ -1032,6 +1036,7 @@ isp_fibre_init(isp)
 	isp_icb_t *icbp;
 	mbreg_t mbs;
 	int loopid;
+	u_int64_t nwwn, pwwn;
 
 	fcp = isp->isp_param;
 
@@ -1108,17 +1113,36 @@ isp_fibre_init(isp)
 		/*
 		 * Prefer or force Point-To-Point instead Loop?
 		 */
-		if (isp->isp_confopts & ISP_CFG_NPORT)
+		switch(isp->isp_confopts & ISP_CFG_PORT_PREF) {
+		case ISP_CFG_NPORT:
 			icbp->icb_xfwoptions = ICBXOPT_PTP_2_LOOP;
-		else
+			break;
+		case ISP_CFG_NPORT_ONLY:
+			icbp->icb_xfwoptions = ICBXOPT_PTP_ONLY;
+			break;
+		case ISP_CFG_LPORT_ONLY:
+			icbp->icb_xfwoptions = ICBXOPT_LOOP_ONLY;
+			break;
+		default:
 			icbp->icb_xfwoptions = ICBXOPT_LOOP_2_PTP;
+			break;
+		}
 	}
 	icbp->icb_logintime = 60;	/* 60 second login timeout */
 
-	if (fcp->isp_nodewwn) {
-		MAKE_NODE_NAME_FROM_WWN(icbp->icb_nodename, fcp->isp_nodewwn);
-		MAKE_NODE_NAME_FROM_WWN(icbp->icb_portname, fcp->isp_portwwn);
+	nwwn = ISP_NODEWWN(isp);
+	pwwn = ISP_PORTWWN(isp);
+	if (nwwn && pwwn) {
+		MAKE_NODE_NAME_FROM_WWN(icbp->icb_nodename, nwwn);
+		MAKE_NODE_NAME_FROM_WWN(icbp->icb_portname, pwwn);
+		isp_prt(isp, ISP_LOGDEBUG1,
+		    "Setting ICB Node 0x%08x%08x Port 0x%08x%08x",
+		    ((u_int32_t) (nwwn >> 32)),
+		    ((u_int32_t) (nwwn & 0xffffffff)),
+		    ((u_int32_t) (pwwn >> 32)),
+		    ((u_int32_t) (pwwn & 0xffffffff)));
 	} else {
+		isp_prt(isp, ISP_LOGDEBUG1, "Not using any WWNs");
 		fcp->isp_fwoptions &= ~(ICBOPT_USE_PORTNAME|ICBOPT_FULL_LOGIN);
 	}
 	icbp->icb_rqstqlen = RQUEST_QUEUE_LEN(isp);
@@ -1312,11 +1336,11 @@ isp_fclink_test(isp, usdelay)
 			count += 1000;
 			enano = (1000 * 1000) - enano;
 			while (enano > (u_int64_t) 4000000000U) {
-				USEC_DELAY(4000000);
+				USEC_SLEEP(isp, 4000000);
 				enano -= (u_int64_t) 4000000000U;
 			}
 			wrk = enano;
-			USEC_DELAY(wrk/1000);
+			USEC_SLEEP(isp, wrk/1000);
 		} else {
 			while (enano > (u_int64_t) 4000000000U) {
 				count += 4000000;
@@ -2508,7 +2532,9 @@ isp_intr(arg)
 	isp_prt(isp, ISP_LOGDEBUG3, "isp_intr isr %x sem %x", isr, sema);
 	isr &= INT_PENDING_MASK(isp);
 	sema &= BIU_SEMA_LOCK;
+	isp->isp_intcnt++;
 	if (isr == 0 && sema == 0) {
+		isp->isp_intbogus++;
 		return (0);
 	}
 
@@ -2535,7 +2561,7 @@ isp_intr(arg)
 			int obits, i = 0;
 			if ((obits = isp->isp_mboxbsy) != 0) {
 				isp->isp_mboxtmp[i++] = mbox;
-				for (i = 1; i < 8; i++) {
+				for (i = 1; i < MAX_MAILBOX; i++) {
 					if ((obits & (1 << i)) == 0) {
 						continue;
 					}
@@ -2643,7 +2669,12 @@ isp_intr(arg)
 			 */
 			if (sp->req_header.rqs_entry_type != RQSTYPE_REQUEST) {
 				isp_prt(isp, ISP_LOGERR, notresp,
-				    sp->req_header.rqs_entry_type, oop, optr);
+				    sp->req_header.rqs_entry_type, oop, optr,
+				    nlooked);
+				if (isp->isp_dblev & ISP_LOGDEBUG0) {
+					isp_print_bytes(isp, "Queue Entry",
+					    QENTRY_LEN, sp);
+				}
 				MEMZERO(sp, sizeof (isphdr_t));
 				continue;
 			}
@@ -2871,6 +2902,9 @@ isp_parse_async(isp, mbox)
 		isp_prt(isp, ISP_LOGERR,
 		    "Internal FW Error @ RISC Addr 0x%x", mbox);
 		isp_reinit(isp);
+#ifdef	ISP_TARGET_MODE
+		isp_target_async(isp, bus, mbox);
+#endif
 		/* no point continuing after this */
 		return (-1);
 
@@ -3075,6 +3109,9 @@ isp_parse_async(isp, mbox)
 		case ISP_CONN_FATAL:
 			isp_prt(isp, ISP_LOGERR, "FATAL CONNECTION ERROR");
 			isp_reinit(isp);
+#ifdef	ISP_TARGET_MODE
+			isp_target_async(isp, bus, ASYNC_SYSTEM_ERROR);
+#endif
 			/* no point continuing after this */
 			return (-1);
 
@@ -3148,7 +3185,7 @@ isp_parse_status(isp, sp, xs)
 		if ((sp->req_state_flags & RQSF_GOT_TARGET) == 0) {
 			isp_prt(isp, ISP_LOGDEBUG1,
 			    "Selection Timeout for %d.%d.%d",
-			    XS_TGT(xs), XS_LUN(xs), XS_CHANNEL(xs));
+			    XS_CHANNEL(xs), XS_TGT(xs), XS_LUN(xs));
 			if (XS_NOERR(xs)) {
 				XS_SETERR(xs, HBA_SELTIMEOUT);
 			}
@@ -4017,12 +4054,6 @@ isp_mboxcmd(isp, mbp, logmask)
 	ISP_WRITE(isp, HCCR, HCCR_CMD_SET_HOST_INT);
 
 	/*
-	 * Give the f/w a chance to pick this up.
-	 */
-	USEC_DELAY(250);
-
-
-	/*
 	 * While we haven't finished the command, spin our wheels here.
 	 */
 	MBOX_WAIT_COMPLETE(isp);
@@ -4304,6 +4335,8 @@ isp_setdfltparm(isp, channel)
 			    (u_int32_t) (fcp->isp_portwwn >> 32),
 			    (u_int32_t) (fcp->isp_portwwn & 0xffffffff));
 		}
+		fcp->isp_nodewwn = ISP_NODEWWN(isp);
+		fcp->isp_portwwn = ISP_PORTWWN(isp);
 		return;
 	}
 
@@ -4932,36 +4965,61 @@ isp_parse_nvram_2100(isp, nvram_data)
 	u_int64_t wwn;
 
 	/*
-	 * There is supposed to be WWNN storage as distinct
-	 * from WWPN storage in NVRAM, but it doesn't appear
-	 * to be used sanely across all cards.
+	 * There is NVRAM storage for both Port and Node entities-
+	 * but the Node entity appears to be unused on all the cards
+	 * I can find. However, we should account for this being set
+	 * at some point in the future.
+	 *
+	 * Qlogic WWNs have an NAA of 2, but usually nothing shows up in
+	 * bits 48..60. In the case of the 2202, it appears that they do
+	 * use bit 48 to distinguish between the two instances on the card.
+	 * The 2204, which I've never seen, *probably* extends this method.
 	 */
-
 	wwn = ISP2100_NVRAM_PORT_NAME(nvram_data);
-	if (wwn != 0LL) {
-		switch ((int) (wwn >> 60)) {
-		case 0:
-			/*
-			 * Broken PTI cards with nothing in the top nibble. Pah.
-			 */
-			wwn |= (2LL << 60); 
-			/* FALLTHROUGH */
-		case 2:
-			fcp->isp_nodewwn = wwn;
-			fcp->isp_nodewwn &= ~((0xfffLL) << 48);
-			fcp->isp_portwwn =
-			    PORT_FROM_NODE_WWN(isp, fcp->isp_nodewwn);
-			break;
-		default:
-			fcp->isp_portwwn = fcp->isp_nodewwn = wwn;
+	if (wwn) {
+		isp_prt(isp, ISP_LOGCONFIG, "NVRAM Port WWN 0x%08x%08x",
+		    (u_int32_t) (wwn >> 32), (u_int32_t) (wwn & 0xffffffff));
+		if ((wwn >> 60) == 0) {
+			wwn |= (((u_int64_t) 2)<< 60); 
 		}
 	}
-	isp_prt(isp, ISP_LOGCONFIG, "NVRAM Derived Node WWN 0x%08x%08x",
-	    (u_int32_t) (fcp->isp_nodewwn >> 32),
-	    (u_int32_t) (fcp->isp_nodewwn & 0xffffffff));
-	isp_prt(isp, ISP_LOGCONFIG, "NVRAM Derived Port WWN 0x%08x%08x",
-	    (u_int32_t) (fcp->isp_portwwn >> 32),
-	    (u_int32_t) (fcp->isp_portwwn & 0xffffffff));
+	fcp->isp_portwwn = wwn;
+	wwn = ISP2100_NVRAM_NODE_NAME(nvram_data);
+	if (wwn) {
+		isp_prt(isp, ISP_LOGCONFIG, "NVRAM Node WWN 0x%08x%08x",
+		    (u_int32_t) (wwn >> 32), (u_int32_t) (wwn & 0xffffffff));
+		if ((wwn >> 60) == 0) {
+			wwn |= (((u_int64_t) 2)<< 60); 
+		}
+	}
+	fcp->isp_nodewwn = wwn;
+
+	/*
+	 * Make sure we have both Node and Port as non-zero values.
+	 */
+	if (fcp->isp_nodewwn != 0 && fcp->isp_portwwn == 0) {
+		fcp->isp_portwwn = fcp->isp_nodewwn;
+	} else if (fcp->isp_nodewwn == 0 && fcp->isp_portwwn != 0) {
+		fcp->isp_nodewwn = fcp->isp_portwwn;
+	}
+
+	/*
+	 * Make the Node and Port values sane if they're NAA == 2.
+	 * This means to clear bits 48..56 for the Node WWN and
+	 * make sure that there's some non-zero value in 48..56
+	 * for the Port WWN.
+	 */
+	if (fcp->isp_nodewwn && fcp->isp_portwwn) {
+		if ((fcp->isp_nodewwn & (((u_int64_t) 0xfff) << 48)) != 0 &&
+		    (fcp->isp_nodewwn >> 60) == 2) {
+			fcp->isp_nodewwn &= ~((u_int64_t) 0xfff << 48);
+		}
+		if ((fcp->isp_portwwn & (((u_int64_t) 0xfff) << 48)) == 0 &&
+		    (fcp->isp_portwwn >> 60) == 2) {
+			fcp->isp_portwwn |= ((u_int64_t) 1 << 56);
+		}
+	}
+
 	fcp->isp_maxalloc =
 		ISP2100_NVRAM_MAXIOCBALLOCATION(nvram_data);
 	fcp->isp_maxfrmlen =
@@ -4975,4 +5033,6 @@ isp_parse_nvram_2100(isp, nvram_data)
 	fcp->isp_execthrottle =
 		ISP2100_NVRAM_EXECUTION_THROTTLE(nvram_data);
 	fcp->isp_fwoptions = ISP2100_NVRAM_OPTIONS(nvram_data);
+	isp_prt(isp, ISP_LOGDEBUG0,
+	    "fwoptions from nvram are 0x%x", fcp->isp_fwoptions);
 }
