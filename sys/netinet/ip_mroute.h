@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.h,v 1.18 2000/03/23 07:03:29 thorpej Exp $	*/
+/*	$NetBSD: ip_mroute.h,v 1.18.4.1 2003/11/30 19:00:27 he Exp $	*/
 
 /*
  * Definitions for IP multicast forwarding.
@@ -206,6 +206,7 @@ int ip_mrouter_set __P((struct socket *, int, struct mbuf **));
 int ip_mrouter_get __P((struct socket *, int, struct mbuf **));
 int mrt_ioctl __P((struct socket *, u_long, caddr_t));
 int ip_mrouter_done __P((void));
+void ip_mrouter_detach __P((struct ifnet *));
 void reset_vif __P((struct vif *));
 #ifdef RSVP_ISI
 int ip_mforward __P((struct mbuf *, struct ifnet *, struct ip_moptions *));
