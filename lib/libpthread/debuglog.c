@@ -1,4 +1,4 @@
-/*	$NetBSD: debuglog.c,v 1.1.2.3 2001/07/31 00:15:37 nathanw Exp $	*/
+/*	$NetBSD: debuglog.c,v 1.1.2.4 2002/05/20 17:00:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,9 @@
 #include "pthread_int.h"
 
 
-void pthread__debuglog_read(int);
+void pthread__debuglog_read(int, int);
+void pthread__debuglog_rawdump(void);
+
 void usage(void);
 
 
@@ -60,13 +62,21 @@ main(int argc, char *argv[])
 	extern int optind;
 	extern char *optarg;
 
-	int follow, initialize;
+	int follow, initialize, raw, keep;
 
 	follow = 0;
 	initialize = 0;
+	raw = 0;
+	keep = 0;
 
-	while ((ch = getopt(argc, argv, "fi")) != -1)
+	while ((ch = getopt(argc, argv, "rfik")) != -1)
 		switch (ch) {           
+		case 'k':
+			keep = 1;
+			break;
+		case 'r':
+			raw = 1;
+			break;
 		case 'f': 
 			follow = 1;
 			break;
@@ -87,13 +97,29 @@ main(int argc, char *argv[])
 
 	debugbuf = pthread__debuglog_init(initialize);
 
-	pthread__debuglog_read(follow);
+	if (raw)
+		pthread__debuglog_rawdump();
+	else
+		pthread__debuglog_read(follow, !keep);
 	
 	return 0;
 }
 
 void
-pthread__debuglog_read(int follow)
+pthread__debuglog_rawdump(void)
+{
+
+	printf("Debug log raw dump\n");
+	printf("Magic: %06x\n", debugbuf->msg_magic);
+	printf("Size: %06lx\n", debugbuf->msg_bufs);
+	printf("Read start: %ld   Write start: %ld\n\n",
+	    debugbuf->msg_bufr, debugbuf->msg_bufw);
+
+	fwrite(&debugbuf->msg_bufc[0], debugbuf->msg_bufs, 1, stdout);
+}
+
+void
+pthread__debuglog_read(int follow, int trunc)
 {
 
 	int readp, writep;
@@ -104,15 +130,16 @@ pthread__debuglog_read(int follow)
 		writep = debugbuf->msg_bufw;
 
 		if (readp < writep) {
-			printf("%.*s", writep - readp, 
-			    &debugbuf->msg_bufc[readp]);
+			fwrite(&debugbuf->msg_bufc[readp], writep - readp,
+			    1, stdout);
 		} else if (readp > writep) {
-			printf("%.*s", (int)debugbuf->msg_bufs - readp, 
-			    &debugbuf->msg_bufc[readp]);
-			printf("%.*s", writep, &debugbuf->msg_bufc[0]);
+			fwrite(&debugbuf->msg_bufc[readp], 
+			    debugbuf->msg_bufs - readp, 1, stdout);
+			fwrite(&debugbuf->msg_bufc[0], writep, 1, stdout); 
 		}
-
-		debugbuf->msg_bufr = writep;
+		
+		if (trunc)
+			debugbuf->msg_bufr = writep;
 
 		if (follow)
 			sleep(1);
