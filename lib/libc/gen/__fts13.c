@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.35 2001/07/09 21:33:03 christos Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.36 2001/11/28 22:31:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.35 2001/07/09 21:33:03 christos Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.36 2001/11/28 22:31:39 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -89,7 +89,7 @@ __warn_references(fts_set,
     " include <fts.h> for correct reference")
 #endif
 
-static FTSENT	*fts_alloc __P((FTS *, char *, size_t));
+static FTSENT	*fts_alloc __P((FTS *, const char *, size_t));
 static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
 static void	 fts_load __P((FTS *, FTSENT *));
@@ -992,7 +992,7 @@ fts_sort(sp, head, nitems)
 static FTSENT *
 fts_alloc(sp, name, namelen)
 	FTS *sp;
-	char *name;
+	const char *name;
 	size_t namelen;
 {
 	FTSENT *p;
