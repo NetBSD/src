@@ -1,7 +1,7 @@
-/*	$NetBSD: db_memrw.c,v 1.2 1998/08/28 23:05:54 dbj Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.3 1999/01/13 09:25:59 abs Exp $	*/
 
 /*
- * This file was taken from from mvme68k/mvme68k/db_memrw.c
+ * This file was taken from mvme68k/mvme68k/db_memrw.c
  * should probably be re-synced when needed.
  * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
  * original cvs id: NetBSD: db_memrw.c,v 1.4 1998/08/22 10:55:34 scw Exp 
