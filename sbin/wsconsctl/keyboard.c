@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.3.4.1 2004/06/07 09:44:13 tron Exp $ */
+/*	$NetBSD: keyboard.c,v 1.3.4.2 2004/07/02 17:50:13 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/wscons/wsconsio.h>
 #include <err.h>
+#include <errno.h>
 #include "wsconsctl.h"
 
 static int kbtype;
@@ -55,6 +56,7 @@ static struct wskbd_keyrepeat_data dfrepeat;
 static struct wskbd_scroll_data scroll;
 static int ledstate;
 static kbd_t kbdencoding;
+static int havescroll = 1;
 
 struct field keyboard_field_tab[] = {
     { "type",			&kbtype,	FMT_KBDTYPE,	FLG_RDONLY },
@@ -150,9 +152,14 @@ keyboard_get_values(fd)
 		scroll.which |= WSKBD_SCROLL_DOMODE;
 	if (field_by_value(&scroll.modifier)->flags & FLG_GET)
 		scroll.which |= WSKBD_SCROLL_DOMODIFIER;
-	if (scroll.which != 0 && 
-		ioctl(fd, WSKBDIO_GETSCROLL, &scroll) < 0)
-			err(1, "WSKBDIO_GETSCROLL");
+	if (scroll.which != 0) {
+		if (ioctl(fd, WSKBDIO_GETSCROLL, &scroll) == -1) {
+			if (errno != ENODEV)
+				err(1, "WSKBDIO_GETSCROLL");
+			else
+				havescroll = 0;
+		}
+	}
 }
 
 void
@@ -243,6 +250,9 @@ keyboard_put_values(fd)
 	}
 
 
+	if (havescroll == 0)
+		return;
+
 	scroll.which = 0;
 	if (field_by_value(&scroll.mode)->flags & FLG_SET)
 		scroll.which |= WSKBD_SCROLL_DOMODE;
@@ -253,8 +263,15 @@ keyboard_put_values(fd)
 		pr_field(field_by_value(&scroll.mode), " -> ");
 	if (scroll.which & WSKBD_SCROLL_DOMODIFIER)
 		pr_field(field_by_value(&scroll.modifier), " -> ");
-	if (scroll.which != 0 &&
-		ioctl(fd, WSKBDIO_SETSCROLL, &scroll) < 0)
-		err (1, "WSKBDIO_SETSCROLL");
+	if (scroll.which != 0) {
+		if (ioctl(fd, WSKBDIO_SETSCROLL, &scroll) == -1) {
+			if (errno != ENODEV)
+				err(1, "WSKBDIO_SETSCROLL");
+			else {
+				warnx("scrolling is not supported by this kernel");
+				havescroll = 0;
+			}
+		}
+	}
 }
 
