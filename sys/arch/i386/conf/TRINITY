@@ -1,7 +1,7 @@
 #
 # TRINITY -- Mycroft's 386 box
 #
-#	$Id: TRINITY,v 1.10 1993/06/09 00:11:48 mycroft Exp $
+#	$Id: TRINITY,v 1.11 1993/06/14 15:29:57 mycroft Exp $
 #
 
 machine		"i386"
@@ -12,11 +12,11 @@ maxusers	16
 options		INET,NFSCLIENT
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		"COMPAT_NOMID"
 options		XSERVER,UCONSOLE
-options		PCFS,KERNFS
+options		KERNFS
 options		SCSI
 options		DDB
-options		"COMPAT_NOMID"
 
 config		netbsd	root on sd0 swap on sd0
 
@@ -35,18 +35,19 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 device		com0	at isa? port "IO_COM1" tty irq 4 vector comintr
 device		com1	at isa? port "IO_COM2" tty irq 3 vector comintr
 
+device		lms0	at isa? port "IO_BMS1" tty irq 5 vector lmsintr
+
 device		ne0	at isa? port 0x300 net irq 9 vector neintr
 
 #device we0 at isa? port 0x280 net irq 9 iomem 0xd0000 iosiz 8192 vector weintr
 
-#device		wt0	at isa? port 0x300 bio irq 5 drq 1 vector wtintr
-
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device	sl	1
+pseudo-device	bpfilter 4
 pseudo-device	log
 pseudo-device	pty	32
 
 pseudo-device	swappager
 pseudo-device	vnodepager
 pseudo-device	devpager
+ager
