@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.76 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.77 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -241,6 +241,9 @@ Changes from NetBSD 1.6 to NetBSD 1.7:
 	sparc,sparc64: The nell (STP4020) pcmcia bridge driver is now
 		finished.  [martin 20030107]
 	sparc: MULTIPROCESSOR support works.  [pk & mrg 20030111]
-	cvs(1): upgrade to 1.11.4 [wiz 20030116]
+	cvs(1): upgraded to 1.11.4 [wiz 20030116]
 	auich(4): Added support for nForce2 MCP-T.  [gendalia 20030116]
 	ex(4): Added support for 3c905CX-TX.  [gendalia 20030116]
+	texinfo(1): upgraded to 4.3 [wiz 20030117]
+	cpio(1): removed GNU cpio (replaced by pax frontend) [wiz 20030118]
+	tar(1): removed GNU tar (replaced by pax frontend) [wiz 20030118]
