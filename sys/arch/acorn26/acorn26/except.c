@@ -1,4 +1,4 @@
-/* $NetBSD: except.c,v 1.6 2003/11/29 22:03:21 bjh21 Exp $ */
+/* $NetBSD: except.c,v 1.7 2003/11/30 13:22:32 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.6 2003/11/29 22:03:21 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: except.c,v 1.7 2003/11/30 13:22:32 bjh21 Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ktrace.h"
@@ -444,7 +444,14 @@ address_exception_handler(struct trapframe *tf)
 		l = &lwp0;
 	if ((tf->tf_r15 & R15_MODE) == R15_MODE_USR)
 		l->l_addr->u_pcb.pcb_tf = tf;
-	
+
+	if (curpcb->pcb_onfault != NULL) {
+		tf->tf_r0 = EFAULT;
+		tf->tf_r15 = (tf->tf_r15 & ~R15_PC) |
+		    (register_t)curpcb->pcb_onfault;
+		return;
+	}
+
 	pc = tf->tf_r15 & R15_PC;
 
 	if ((tf->tf_r15 & R15_MODE) != R15_MODE_USR) {
