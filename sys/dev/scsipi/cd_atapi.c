@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_atapi.c,v 1.1.2.5 1997/07/01 22:23:01 thorpej Exp $	*/
+/*	$NetBSD: cd_atapi.c,v 1.1.2.6 1997/07/01 23:45:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -142,8 +142,6 @@ cd_atapibus_attach(parent, self, aux)
 	cdattach(parent, cd, sc_link, &cd_atapibus_ops);
 
 	/* XXX should I get the ATAPI_CAP_PAGE here ? */
-
-	printf("\n");
 }
 
 int
