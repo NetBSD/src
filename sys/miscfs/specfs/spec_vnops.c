@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.73 2003/11/25 12:52:10 pk Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.74 2003/11/26 11:33:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.73 2003/11/25 12:52:10 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.74 2003/11/26 11:33:50 pk Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -674,8 +674,6 @@ spec_close(v)
 		    vp == (sess = ap->a_p->p_session)->s_ttyvp) {
 			sess->s_ttyvp = NULL;
 			if (sess->s_ttyp->t_session != NULL) {
-				if (sess->s_ttyp->t_pgrp == NULL)
-					panic("spec_close: no pgrp");
 				sess->s_ttyp->t_pgrp = NULL;
 				sess->s_ttyp->t_session = NULL;
 				SESSRELE(sess);
