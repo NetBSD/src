@@ -46,14 +46,14 @@ and
 .Xr whatis 1
 commands
 search for manual pages or their database files as specified by the
-.Nm man.conf
+.Nm
 file.
 Manual pages are normally expected to be preformatted (see
 .Xr nroff 1 )
 and named with a trailing ``.0''.
 .Pp
 The
-.Nm man.conf
+.Nm
 file contains two types of lines.
 .Pp
 The first type of line is a ``section'' line, which contains a
@@ -74,7 +74,7 @@ Before searching any directory for a manual page, the
 command always searches the subdirectory with the same name
 as the current machine type, if it exists.
 No specification of these subdirectories is necessary in the
-.Nm man.conf
+.Nm
 file.
 .Pp
 Section names are unrestricted except for the reserved words specified
@@ -140,7 +140,7 @@ Empty lines or lines whose first non-whitespace character is a hash
 mark (``#'') are ignored.
 .Sh EXAMPLES
 Given the following
-.Nm man.conf
+.Nm
 file:
 .Bd -literal -offset indent
 _version	BSD.2
