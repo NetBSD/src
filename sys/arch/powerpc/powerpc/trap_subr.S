@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.39 2003/07/09 22:51:51 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.40 2003/07/31 06:21:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -109,10 +109,10 @@
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
 _C_LABEL(trapcode):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
-	mfsprg	1,1			/* restore SP */
+	mfsprg1	1			/* restore SP */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 /* Test whether we already had PR set */
@@ -127,13 +127,13 @@ _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 /* LINTSTUB: Var: int alicode[1], alisize[1]; */
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mfdar	30
 	mfdsisr	31
 	stmw	30,CI_TEMPSAVE+16(1)
-	mfsprg	1,1			/* restore SP */
+	mfsprg1	1			/* restore SP */
 	mflr	28			/* save LR */
 	mfcr	29			/* save CR */
 /* Test whether we already had PR set */
@@ -150,13 +150,13 @@ _C_LABEL(alisize) = .-_C_LABEL(alitrap)
 /* LINTSTUB: Var: int dsicode[1], dsisize[1]; */
 	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
 _C_LABEL(dsitrap):
-	mtsprg	1,1
+	mtsprg1	1
 	GET_CPUINFO(1)
 	stmw	28,CI_DISISAVE(1)	/* free r28-r31 */
-	mfsprg	1,1
+	mfsprg1	1
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	mtsprg	2,30			/* in SPRG2 */
+	mtsprg2	30			/* in SPRG2 */
 	mfsrr1	31			/* test kernel mode */
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
@@ -182,17 +182,17 @@ _C_LABEL(dsitrap):
 	mtdbatu	3,30
 	mtdbatl	3,31
 3:
-	mfsprg	30,2			/* restore XER */
+	mfsprg2	30			/* restore XER */
 	mtxer	30
 	mtcr	29			/* restore CR */
-	mtsprg	1,1
+	mtsprg1	1
 	GET_CPUINFO(1)
 	lmw	28,CI_DISISAVE(1)	/* restore r28-r31 */
-	mfsprg	1,1
+	mfsprg1	1
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	bla	disitrap
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
@@ -204,13 +204,13 @@ _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 /* LINTSTUB: Var: int dsi601code[1], dsi601size[1]; */
 	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
 _C_LABEL(dsi601trap):
-	mtsprg	1,1
+	mtsprg1	1
 	GET_CPUINFO(1)
 	stmw	28,CI_DISISAVE(1)	/* free r28-r31 */
-	mfsprg	1,1
+	mfsprg1	1
 	mfcr	29			/* save CR */
 	mfxer	30			/* save XER */
-	mtsprg	2,30			/* in SPRG2 */
+	mtsprg2	30			/* in SPRG2 */
 	mfsrr1	31			/* test kernel mode */
 	mtcr	31
 	bc	12,17,1f		/* branch if PSL_PR is set */
@@ -237,17 +237,17 @@ _C_LABEL(dsi601trap):
 	mtibatu	3,31
 	mtibatl	3,30
 3:
-	mfsprg	30,2			/* restore XER */
+	mfsprg2	30			/* restore XER */
 	mtxer	30
 	mtcr	29			/* restore CR */
-	mtsprg	1,1
+	mtsprg1	1
 	GET_CPUINFO(1)
 	lmw	28,CI_DISISAVE(1)	/* restore r28-r31 */
-	mfsprg	1,1
+	mfsprg1	1
 	rfi				/* return to trapped code */
 1:
 	mflr	28			/* save LR */
-	mtsprg	1,1
+	mtsprg1	1
 	bla	disitrap
 _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 
@@ -257,7 +257,7 @@ _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 /* LINTSTUB: Var: int extint[1], extsize[1]; */
 	.globl	_C_LABEL(extint),_C_LABEL(extsize)
 _C_LABEL(extint):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -268,7 +268,7 @@ _C_LABEL(extint):
 	stw	31,CI_INTRDEPTH(1)
 	lwz	1,CI_INTSTK(1)		/* get interrupt stack */
 	beq	1f
-	mfsprg	1,1			/* yes, get old SP */
+	mfsprg1	1			/* yes, get old SP */
 1:
 	ba	extintr
 _C_LABEL(extsize) = .-_C_LABEL(extint)
@@ -279,7 +279,7 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 /* LINTSTUB: Var: int decrint[1], decrsize[1]; */
 	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
 _C_LABEL(decrint):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -290,7 +290,7 @@ _C_LABEL(decrint):
 	stw	31,CI_INTRDEPTH(1)
 	lwz	1,CI_INTSTK(1)		/* get interrupt stack */
 	beq	1f
-	mfsprg	1,1			/* yes, get old SP */
+	mfsprg1	1			/* yes, get old SP */
 1:
 	ba	decrintr
 _C_LABEL(decrsize) = .-_C_LABEL(decrint)
@@ -514,7 +514,7 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 /* LINTSTUB: Var: int ddblow[1], ddbsize[1]; */
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_DDBSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -537,7 +537,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 /* LINTSTUB: Var: int ipkdblow[1], ipkdbsize[1]; */
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_IPKDBSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -600,7 +600,7 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	ori	30,30,(PSL_DR|PSL_IR);	/* turn on relocation */	\
 	mtmsr	30;			/* stack can be accesed now */	\
 	isync;								\
-	mfsprg	31,1;			/* get saved SP */		\
+	mfsprg1	31;			/* get saved SP */		\
 	stwu	31,-FRAMELEN(1);	/* save it in the callframe */	\
 	stw	0,FRAME_0+8(1);		/* save R0 in the trapframe */	\
 	stw	31,FRAME_1+8(1);	/* save SP in the trapframe */	\
@@ -641,12 +641,12 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtctr	4;							\
 	mtxer	5;							\
 	mtlr	6;							\
-	mtsprg	1,7;			/* save cr */			\
+	mtsprg1	7;			/* save cr */			\
 	lmw	2,FRAME_2+8(1);						\
 	lwz	0,FRAME_0+8(1);		/* restore r0 */		\
 	lwz	1,FRAME_1+8(1);		/* restore old sp in r1 */	\
-	mtsprg	2,2;			/* save r2 & r3 */		\
-	mtsprg	3,3;							\
+	mtsprg2	2;			/* save r2 & r3 */		\
+	mtsprg3	3;							\
 /* Disable translation, machine check and recoverability: */		\
 	mfmsr	2;							\
 	andi.	2,2,~(PSL_DR|PSL_IR|PSL_ME|PSL_RI)@l;			\
@@ -660,15 +660,15 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 /* Restore user SRs */							\
 	CPU601_KERN_LEAVE(2,3);						\
 	RESTORE_USER_SRS(2,3);						\
-1:	mfsprg	2,1;			/* restore cr */		\
+1:	mfsprg1	2;			/* restore cr */		\
 	mtcr	2;							\
 	GET_CPUINFO(2);							\
 	lwz	3,savearea(2);						\
 	mtsrr0	3;							\
 	lwz	3,savearea+4(2);					\
 	mtsrr1	3;							\
-	mfsprg	2,2;			/* restore r2 & r3 */		\
-	mfsprg	3,3
+	mfsprg2	2;			/* restore r2 & r3 */		\
+	mfsprg3	3
 
 /*
  * Preamble code for DSI/ISI traps
@@ -688,7 +688,7 @@ realtrap:
 /* Test whether we already had PR set */
 	mfsrr1	1
 	mtcr	1
-	mfsprg	1,1			/* restore SP (might have been
+	mfsprg1	1			/* restore SP (might have been
 					   overwritten) */
 s_trap:
 	bc	4,17,k_trap		/* branch if PSL_PR is false */
@@ -742,7 +742,7 @@ trapexit:
 /* LINTSTUB: Var: int sctrap[1], scsize[1]; */
 	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
-	mtsprg	1,1			/* save SP */
+	mtsprg1	1			/* save SP */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)	/* free r28-r31 */
 	mflr	28			/* save LR */
@@ -794,7 +794,7 @@ _C_LABEL(sctrapexit):
 /* Save non-volatile registers: */					\
 	stwu	1,-IFRAMELEN(1);	/* temporarily */		\
 	stw	0,IFRAME_R0(1);						\
-	mfsprg	0,1;			/* get original SP */		\
+	mfsprg1	0;			/* get original SP */		\
 	stw	0,IFRAME_R1(1);		/* and store it */		\
 	stw	3,IFRAME_R3(1);						\
 	stw	4,IFRAME_R4(1);						\
@@ -876,7 +876,7 @@ intr_exit:
 
 /* Setup for entry to realtrap: */
 	lwz	3,IFRAME_R1(1)		/* get saved SP */
-	mtsprg	1,3
+	mtsprg1	3
 	li	6,EXC_AST
 	stmw	28,CI_TEMPSAVE(5)	/* establish tempsave again */
 	mtlr	6
@@ -917,7 +917,7 @@ decrintr:
  */
 	.globl	_C_LABEL(ddb_trap)
 _C_LABEL(ddb_trap):
-	mtsprg	1,1
+	mtsprg1	1
 	mfmsr	3
 	mtsrr1	3
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
@@ -948,14 +948,14 @@ ddbtrap:
 	GET_CPUINFO(4)
 	stw	3,CI_DDBSAVE+8(4)
 	FRAME_LEAVE(CI_DDBSAVE)
-	mtsprg	1,1			/* prepare for entrance to realtrap */
+	mtsprg1	1			/* prepare for entrance to realtrap */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)
 	mflr	28
 	mfcr	29
 	lwz	31,CI_DDBSAVE+8(1)
 	mtlr	31
-	mfsprg	1,1
+	mfsprg1	1
 	b	realtrap
 ddbleave:
 	FRAME_LEAVE(CI_DDBSAVE)
@@ -968,7 +968,7 @@ ddbleave:
  */
 	.globl	_C_LABEL(ipkdb_trap)
 _C_LABEL(ipkdb_trap):
-	mtsprg	1,1
+	mtsprg1	1
 	mfmsr	3
 	mtsrr1	3
 	andi.	3,3,~(PSL_EE|PSL_ME)@l
@@ -997,14 +997,14 @@ ipkdbtrap:
 	GET_CPUINFO(4)
 	stw	3,CI_IPKDBSAVE+8(4)
 	FRAME_LEAVE(CI_IPKDBSAVE)
-	mtsprg	1,1			/* prepare for entrance to realtrap */
+	mtsprg1	1			/* prepare for entrance to realtrap */
 	GET_CPUINFO(1)
 	stmw	28,CI_TEMPSAVE(1)
 	mflr	28
 	mfcr	29
 	lwz	31,CI_IPKDBSAVE+8(1)
 	mtlr	31
-	mfsprg	1,1
+	mfsprg1	1
 	b	realtrap
 ipkdbleave:
 	FRAME_LEAVE(CI_IPKDBSAVE)
