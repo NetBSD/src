@@ -1,5 +1,5 @@
 #
-#	$NetBSD: MILAN.in,v 1.13 2003/10/08 11:52:50 bouyer Exp $
+#	$NetBSD: MILAN.in,v 1.14 2003/12/13 23:13:40 thorpej Exp $
 #
 # Milan
 #
@@ -86,6 +86,7 @@ hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
 optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 piixide* 	at pci? dev ? function ?	# Intel IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
+satalink*	at pci? dev ? function ?	# SiI SATALink controllers
 siside* 	at pci? dev ? function ?	# SiS IDE controllers
 slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
@@ -98,6 +99,7 @@ atabus* 	at hptide? channel ?
 atabus* 	at optiide? channel ?
 atabus* 	at piixide? channel ?
 atabus* 	at pdcide? channel ?
+atabus* 	at satalink? channel ?
 atabus* 	at siside? channel ?
 atabus* 	at slide? channel ?
 atabus* 	at viaide? channel ?

@@ -1,4 +1,4 @@
-#	$NetBSD: P4032,v 1.19 2003/12/13 01:30:50 sekiya Exp $
+#	$NetBSD: P4032,v 1.20 2003/12/13 23:13:40 thorpej Exp $
 #
 # Algorithmics P-4032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P4032-$Revision: 1.19 $"
+#ident 		"P4032-$Revision: 1.20 $"
 
 maxusers 32
 
@@ -156,6 +156,7 @@ pci*	at	vtpbc?
 #optiide* at pci? dev ? function ?		# Opti IDE controllers
 #piixide* at pci? dev ? function ?		# Intel IDE controllers
 #pdcide* at pci? dev ? function ?		# Promise IDE controllers
+#satalink* at pci? dev ? function ?		# SiI SATALink controllers
 #siside* at pci? dev ? function ?		# SiS IDE controllers
 #slide* at pci? dev ? function ?		# Symphony Labs IDE controllers
 #viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers

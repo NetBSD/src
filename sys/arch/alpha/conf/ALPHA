@@ -1,4 +1,4 @@
-# $NetBSD: ALPHA,v 1.188 2003/11/27 03:57:57 simonb Exp $
+# $NetBSD: ALPHA,v 1.189 2003/12/13 23:13:40 thorpej Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
@@ -6,7 +6,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"ALPHA-$Revision: 1.188 $"
+ident		"ALPHA-$Revision: 1.189 $"
 
 maxusers 32
 
@@ -308,6 +308,7 @@ hptide* at pci? dev ? function ?		# Triones/HighPoint IDE controllers
 optiide* at pci? dev ? function ?		# Opti IDE controllers
 piixide* at pci? dev ? function ?		# Intel IDE controllers
 pdcide* at pci? dev ? function ?		# Promise IDE controllers
+satalink* at pci? dev ? function ?		# SiI SATALink controllers
 siside* at pci? dev ? function ?		# SiS IDE controllers
 slide*  at pci? dev ? function ?		# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers

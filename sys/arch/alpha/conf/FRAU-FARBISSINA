@@ -1,4 +1,4 @@
-# $NetBSD: FRAU-FARBISSINA,v 1.26 2003/10/18 08:30:12 lukem Exp $
+# $NetBSD: FRAU-FARBISSINA,v 1.27 2003/12/13 23:13:40 thorpej Exp $
 #
 # frau-farbissina.shagadelic.org -- thorpej's AlphaServer 1200 MP hacking
 # box
@@ -7,7 +7,7 @@ include	"arch/alpha/conf/std.alpha"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FRAU-FARBISSINA-$Revision: 1.26 $"
+#ident 		"FRAU-FARBISSINA-$Revision: 1.27 $"
 
 maxusers 64
 
@@ -210,6 +210,7 @@ pceb*	at	pci? dev ? function ?		# Intel PCI-EISA Bridges
 #optiide* at pci? dev ? function ?		# Opti IDE controllers
 #piixide* at pci? dev ? function ?		# Intel IDE controllers
 #pdcide* at pci? dev ? function ?		# Promise IDE controllers
+#satalink* at pci? dev ? function ?		# SiI SATALink controllers
 #siside* at pci? dev ? function ?		# SiS IDE controllers
 #slide* at pci? dev ? function ?		# Symphony Labs IDE controllers
 #viaide* at pci? dev ? function ?		# VIA/AMD/Nvidia IDE controllers
