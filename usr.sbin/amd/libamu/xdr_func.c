@@ -1,3 +1,5 @@
+/*	$NetBSD: xdr_func.c,v 1.1.1.3 1997/10/26 00:02:20 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: xdr_func.c,v 1.1.1.2 1997/09/26 16:06:04 christos Exp $
+ * Id: xdr_func.c,v 5.2.2.1 1992/02/09 15:08:40 jsp beta 
  *
  */
 

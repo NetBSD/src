@@ -1,3 +1,4 @@
+$NetBSD: am-utils.info-2,v 1.1.1.2 1997/10/26 00:03:41 christos Exp $
 This is Info file am-utils.info, produced by Makeinfo version 1.68 from
 the input file am-utils.texi.
 
@@ -528,16 +529,17 @@ output is of the form:
      Copyright (c) 1990 Jan-Simon Pendry
      Copyright (c) 1990 Imperial College of Science, Technology & Medicine
      Copyright (c) 1990 The Regents of the University of California.
-     am-utils version 6.0a10 (build 18).
-     Built by ezk@cs.columbia.edu on date Fri Aug 22 15:21:03 EDT 1997.
+     am-utils version 6.0a13 (build 18).
+     Built by ezk@cs.columbia.edu on date Wed Oct 22 15:21:03 EDT 1997.
      cpu=sparc (big-endian), arch=sun4, karch=sun4u.
      full_os=solaris2.5.1, os=sos5, osver=5.5.1, vendor=sun.
      Map support for: root, passwd, union, nisplus, nis, ndbm, file, error.
      AMFS: nfs, link, nfsx, host, linkx, program, union, inherit, ufs, lofs,
            cdfs, pcfs, auto, direct, toplvl, autofs, error.
      FS: autofs, cachefs, cdfs, lofs, nfs, nfs3, pcfs, tfs, tmpfs, ufs.
-     Primary network: primnetname="cucs-net" (primnetnum=128.59.16).
-     No Subsidiary network.
+     Network 1: wire="mcl-lab-net.cs.columbia.edu" (netnumber=128.59.13).
+     Network 2: wire="14-net.cs.columbia.edu" (netnumber=128.59.14).
+     Network 3: wire="old-net.cs.columbia.edu" (netnumber=128.59.16).
 
    The information includes the version number, number of times Amd was
 compiled on the local system, release date and name of the release.
@@ -548,10 +550,9 @@ next line lists the full name of the system, the variables `${os}' and
 
    Then come a list of map types supported, filesystems internally
 supported by Amd (AMFS), and generic filesystems available (FS).
-Finally the first two networks (if any) of this host are listed by name
-and number.  The latter are available via the variables
-`${primnetname}', `${primnetnum}', `${subsnetname}', and
-`${subsnetnum}'. *Note Selectors::.
+Finally all known networks (if any) of this host are listed by name and
+number.  The primary (first) listed are available via the variables
+`${wire}' or `${network}', and `${netnumber}'. *Note Selectors::.
 
 
 File: am-utils.info,  Node: -w Option,  Next: -x Option,  Prev: -v Option,  Up: Amd Command Line Options

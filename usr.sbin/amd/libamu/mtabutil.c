@@ -1,3 +1,5 @@
+/*	$NetBSD: mtabutil.c,v 1.1.1.3 1997/10/26 00:02:24 christos Exp $	*/
+
 /*
  * Copyright (c) 1997 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -38,7 +40,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * $Id: mtabutil.c,v 1.1.1.2 1997/09/22 21:11:24 christos Exp $
+ * Id: mtab_bsd.c,v 5.2.2.2 1992/11/12 23:29:14 jsp Exp 
  *
  */
 

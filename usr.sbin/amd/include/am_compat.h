@@ -1,3 +1,5 @@
+/*	$NetBSD: am_compat.h,v 1.1.1.3 1997/10/26 00:02:25 christos Exp $	*/
+
 /*
  * am_compat.h:
  *
