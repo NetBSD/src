@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2001/12/12 01:49:03 tv Exp $
+#	$NetBSD: Makefile,v 1.6 2001/12/12 23:53:31 lukem Exp $
+
+NOMAN=	# defined
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -6,7 +8,5 @@ SCRIPTS=	rcs2log.sh
 
 DIST=${IDIST}/contrib
 .PATH: ${DIST}
-
-NOMAN=	# defined
 
 .include <bsd.prog.mk>
