@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho_bus.c,v 1.6 2000/03/13 23:52:34 soren Exp $	*/
+/*	$NetBSD: psycho_bus.c,v 1.7 2000/04/05 03:08:03 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -113,6 +113,8 @@
  * copied from the sbus code.
  */
 
+#include "opt_ddb.h"
+
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
@@ -142,7 +144,7 @@
 #define PDB_BUSMAP	0x1
 #define PDB_BUSDMA	0x2
 #define PDB_INTR	0x4
-int psycho_busdma_debug = 0;
+int psycho_busdma_debug = 0x3;
 #define DPRINTF(l, s)   do { if (psycho_busdma_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -152,10 +154,6 @@ int psycho_busdma_debug = 0;
  * here are our bus space and bus dma routines.  this is copied from the sbus
  * code.
  */
-void psycho_enter __P((struct psycho_pbm *, vaddr_t, int64_t, int));
-void psycho_remove __P((struct psycho_pbm *, vaddr_t, size_t));
-int psycho_flush __P((struct psycho_softc *sc));
-
 static int psycho_bus_mmap __P((bus_space_tag_t, bus_type_t, bus_addr_t,
 				int, bus_space_handle_t *));
 static int _psycho_bus_map __P((bus_space_tag_t, bus_type_t, bus_addr_t,
@@ -507,152 +505,6 @@ psycho_intr_establish(t, level, flags, handler, arg)
 /* XXXMRG XXXMRG XXXMRG everything below here looks OK .. needs testing etc..*/
 
 /*
- * Here are the iommu control routines. 
- */
-void
-psycho_enter(pp, va, pa, flags)
-	struct psycho_pbm *pp;
-	vaddr_t va;
-	int64_t pa;
-	int flags;
-{
-	struct psycho_softc *sc = pp->pp_sc;
-	int64_t tte;
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("psycho_enter: va 0x%lx not in DVMA space",va);
-#endif
-
-	tte = MAKEIOTTE(pa, !(flags&BUS_DMA_NOWRITE), !(flags&BUS_DMA_NOCACHE), 
-			!(flags&BUS_DMA_COHERENT));
-	
-	/* Is the streamcache flush really needed? */
-	bus_space_write_8(sc->sc_bustag,
-	    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-	psycho_flush(sc);
-	DPRINTF(PDB_BUSDMA, ("Clearing TSB slot %d for va %p\n", (int)IOTSBSLOT(va,sc->sc_is.is_tsbsize), va));
-	sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = tte;
-	bus_space_write_8(sc->sc_bustag,
-	    &sc->sc_regs->psy_iommu.iommu_flush, 0, va);
-	DPRINTF(PDB_BUSDMA, ("psycho_enter: va %lx pa %lx TSB[%lx]@%p=%lx\n",
-		       va, (long)pa, IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		       &sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		       (long)tte));
-}
-
-/*
- * psycho_clear: clears mappings created by psycho_enter
- *
- * Only demap from IOMMU if flag is set.
- */
-void
-psycho_remove(pp, va, len)
-	struct psycho_pbm *pp;
-	vaddr_t va;
-	size_t len;
-{
-	struct psycho_softc *sc = pp->pp_sc;
-
-#ifdef DIAGNOSTIC
-	if (va < sc->sc_is.is_dvmabase)
-		panic("psycho_remove: va 0x%lx not in BUSDMA space", (long)va);
-	if ((long)(va + len) < (long)va)
-		panic("psycho_remove: va 0x%lx + len 0x%lx wraps", 
-		      (long) va, (long) len);
-	if (len & ~0xfffffff) 
-		panic("psycho_remove: rediculous len 0x%lx", (long)len);
-#endif
-
-	va = trunc_page(va);
-	while (len > 0) {
-
-		/*
-		 * Streaming buffer flushes:
-		 * 
-		 *   1 Tell strbuf to flush by storing va to strbuf_pgflush
-		 * If we're not on a cache line boundary (64-bits):
-		 *   2 Store 0 in flag
-		 *   3 Store pointer to flag in flushsync
-		 *   4 wait till flushsync becomes 0x1
-		 *
-		 * If it takes more than .5 sec, something went wrong.
-		 */
-		DPRINTF(PDB_BUSDMA, ("psycho_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-		    (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		    (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		    (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-		    (u_long)len));
-		bus_space_write_8(sc->sc_bustag,
-		    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
-		if (len <= NBPG) {
-			psycho_flush(sc);
-			len = 0;
-		} else len -= NBPG;
-		DPRINTF(PDB_BUSDMA, ("psycho_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
-		    (long)va, (long)IOTSBSLOT(va,sc->sc_is.is_tsbsize), 
-		    (long)&sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)],
-		    (long)(sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)]), 
-		    (u_long)len));
-
-		sc->sc_is.is_tsb[IOTSBSLOT(va,sc->sc_is.is_tsbsize)] = 0;
-		bus_space_write_8(sc->sc_bustag,
-		     &sc->sc_regs->psy_iommu.iommu_flush, 0, va);
-		va += NBPG;
-	}
-}
-
-int 
-psycho_flush(sc)
-	struct psycho_softc *sc;
-{
-	struct iommu_state *is = &sc->sc_is;
-	struct timeval cur, flushtimeout;
-
-#define BUMPTIME(t, usec) { \
-	register volatile struct timeval *tp = (t); \
-	register long us; \
- \
-	tp->tv_usec = us = tp->tv_usec + (usec); \
-	if (us >= 1000000) { \
-		tp->tv_usec = us - 1000000; \
-		tp->tv_sec++; \
-	} \
-}
-
-	is->is_flush = 0;
-	membar_sync();
-	bus_space_write_8(sc->sc_bustag, &is->is_sb->strbuf_flushsync, 0, is->is_flushpa);
-	membar_sync();
-
-	microtime(&flushtimeout); 
-	cur = flushtimeout;
-	BUMPTIME(&flushtimeout, 500000); /* 1/2 sec */
-
-	DPRINTF(PDB_BUSDMA, ("psycho_flush: flush = %lx at va = %lx pa = %lx now=%lx:%lx until = %lx:%lx\n", 
-	    (long)is->is_flush, (long)&is->is_flush, 
-	    (long)is->is_flushpa, cur.tv_sec, cur.tv_usec, 
-	    flushtimeout.tv_sec, flushtimeout.tv_usec));
-	/* Bypass non-coherent D$ */
-	while (!ldxa(is->is_flushpa, ASI_PHYS_CACHED) && 
-	       ((cur.tv_sec <= flushtimeout.tv_sec) && 
-		(cur.tv_usec <= flushtimeout.tv_usec)))
-		microtime(&cur);
-
-#ifdef DIAGNOSTIC
-	if (!is->is_flush) {
-		printf("psycho_flush: flush timeout %p at %p\n", (long)is->is_flush, 
-		       (long)is->is_flushpa); /* panic? */
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
-	DPRINTF(PDB_BUSDMA, ("psycho_flush: flushed\n"));
-	return (is->is_flush);
-}
-
-/*
  * bus dma support -- XXXMRG this looks mostly OK.
  */
 int
@@ -756,7 +608,7 @@ psycho_dmamap_load(t, map, buf, buflen, p, flags)
 
 		DPRINTF(PDB_BUSDMA, ("psycho_dmamap_load: map %p loading va %lx at pa %lx\n",
 		    map, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-		psycho_enter(pp, trunc_page(dvmaddr), trunc_page(curaddr), flags);
+		iommu_enter(&sc->sc_is, trunc_page(dvmaddr), trunc_page(curaddr), flags);
 			
 		dvmaddr += PAGE_SIZE;
 		vaddr += sgsize;
@@ -788,7 +640,7 @@ psycho_dmamap_unload(t, map)
 
 	DPRINTF(PDB_BUSDMA, ("psycho_dmamap_unload: map %p removing va %lx size %lx\n",
 	    map, (long)addr, (long)len));
-	psycho_remove(pp, addr, len);
+	iommu_remove(&sc->sc_is, addr, len);
 #if 1
 	dvmaddr = (map->dm_segs[0].ds_addr & ~PGOFSET);
 	sgsize = map->dm_segs[0].ds_len;
@@ -856,7 +708,7 @@ psycho_dmamap_sync(t, map, offset, len, ops)
 			bus_space_write_8(sc->sc_bustag,
 			    &sc->sc_is.is_sb->strbuf_pgflush, 0, va);
 			if (len <= NBPG) {
-				psycho_flush(sc);
+				iommu_flush(&sc->sc_is);
 				len = 0;
 			} else
 				len -= NBPG;
@@ -930,7 +782,7 @@ psycho_dmamem_alloc(t, size, alignment, boundary, segs, nsegs, rsegs, flags)
 			curaddr = VM_PAGE_TO_PHYS(m);
 			DPRINTF(PDB_BUSDMA, ("psycho_dmamem_alloc: map %p loading va %lx at pa %lx\n",
 			    (long)m, (long)dvmaddr, (long)(curaddr & ~(NBPG-1))));
-			psycho_enter(pp, dvmaddr, curaddr, flags);
+			iommu_enter(&sc->sc_is, dvmaddr, curaddr, flags);
 			dvmaddr += PAGE_SIZE;
 		}
 	}
@@ -952,7 +804,7 @@ psycho_dmamem_free(t, segs, nsegs)
 	for (n = 0; n < nsegs; n++) {
 		addr = segs[n].ds_addr;
 		len = segs[n].ds_len;
-		psycho_remove(pp, addr, len);
+		iommu_remove(&sc->sc_is, addr, len);
 #if 1
 		s = splhigh();
 		error = extent_free(sc->sc_is.is_dvmamap, addr, len, EX_NOWAIT);
