@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.17 1998/07/01 00:03:23 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.18 1998/08/31 23:55:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -97,6 +97,8 @@ int	dofilereadv __P((struct proc *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *));
 int	dofilewritev __P((struct proc *, int, struct file *,
 	    const struct iovec *, int, off_t *, int, register_t *));
+
+void	finit __P((void));
 
 #endif /* _KERNEL */
 

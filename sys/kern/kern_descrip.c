@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.54 1998/08/13 10:06:31 kleink Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.55 1998/08/31 23:55:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -55,6 +55,7 @@
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/unistd.h>
 #include <sys/resourcevar.h>
@@ -70,6 +71,7 @@
  */
 struct filelist filehead;	/* head of list of open files */
 int nfiles;			/* actual number of open files */
+struct pool file_pool;		/* memory pool for file structures */
 
 static __inline void fd_used __P((struct filedesc *, int));
 static __inline void fd_unused __P((struct filedesc *, int));
@@ -573,6 +575,17 @@ fdavail(p, n)
 }
 
 /*
+ * Initialize the data structures necessary for managing files.
+ */
+void
+finit()
+{
+
+	pool_init(&file_pool, sizeof(struct file), 0, 0, 0, "filepl",
+	    0, pool_page_alloc_nointr, pool_page_free_nointr, M_FILE);
+}
+
+/*
  * Create a new open file structure and allocate
  * a file decriptor for the process that refers to it.
  */
@@ -598,7 +611,7 @@ falloc(p, resultfp, resultfd)
 	 * the list of open files.
 	 */
 	nfiles++;
-	MALLOC(fp, struct file *, sizeof(struct file), M_FILE, M_WAITOK);
+	fp = pool_get(&file_pool, PR_WAITOK);
 	memset(fp, 0, sizeof(struct file));
 	if ((fq = p->p_fd->fd_ofiles[0]) != NULL) {
 		LIST_INSERT_AFTER(fq, fp, f_list);
@@ -629,7 +642,7 @@ ffree(fp)
 	fp->f_count = 0;
 #endif
 	nfiles--;
-	FREE(fp, M_FILE);
+	pool_put(&file_pool, fp);
 }
 
 /*
