@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.pl,v 1.7 2002/06/02 15:05:24 zuntum Exp $	*/
+/*	$NetBSD: menus.mi.pl,v 1.8 2002/07/29 03:24:48 grant Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.mi.en,v 1.49 2002/04/04 14:26:44 ad Exp 	*/
 
@@ -283,7 +283,10 @@ menu ftpsource, title "Zmien";
 	option "Katalog", action
 		{ msg_prompt (MSG_dir, ftp_dir, ftp_dir, 255); };
 	option "Uzytkownik", action
-		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255); };
+		{ msg_prompt (MSG_user, ftp_user, ftp_user, 255);
+		  if (strcmp(ftp_user, "ftp") == 0)
+			ftp_pass[0] = '\0';
+		}; 
 	option "Haslo", action
 		{ if (strcmp(ftp_user, "ftp") == 0)
 			msg_prompt (MSG_email, ftp_pass, ftp_pass, 255);
