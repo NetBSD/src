@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipsec,v 1.7 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: ipsec,v 1.8 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: ipsec
@@ -9,7 +9,7 @@
 
 #	it does not really require beforenetlkm.
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="ipsec"
 rcvar=$name

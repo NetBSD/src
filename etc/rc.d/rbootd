@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: rbootd,v 1.6 2002/03/22 04:34:00 thorpej Exp $
+# $NetBSD: rbootd,v 1.7 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: rbootd
 # REQUIRE: DAEMON
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="rbootd"
 rcvar=$name

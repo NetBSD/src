@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: quota,v 1.4 2004/06/03 16:27:44 abs Exp $
+# $NetBSD: quota,v 1.5 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: quota
 # REQUIRE: mountall
 # BEFORE:  DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="quota"
 rcvar="quota"

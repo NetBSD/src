@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: sysdb,v 1.13 2003/05/11 18:17:30 ragge Exp $
+# $NetBSD: sysdb,v 1.14 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: sysdb
 # REQUIRE: mountcritremote
 # BEFORE:  DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="sysdb"
 start_cmd="sysdb_start"

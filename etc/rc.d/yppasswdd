@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: yppasswdd,v 1.6 2002/03/22 04:34:01 thorpej Exp $
+# $NetBSD: yppasswdd,v 1.7 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: yppasswdd
 # REQUIRE: ypserv ypbind
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="yppasswdd"
 rcvar=$name

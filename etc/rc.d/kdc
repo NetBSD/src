@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: kdc,v 1.5 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: kdc,v 1.6 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: kdc
 # REQUIRE: NETWORKING
 # BEFORE:  SERVERS
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="kdc"
 rcvar=$name

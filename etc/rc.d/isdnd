@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: isdnd,v 1.9 2002/04/10 23:37:13 martin Exp $
+# $NetBSD: isdnd,v 1.10 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: isdnd
@@ -11,7 +11,7 @@
 #	any isdn addresses.  This is considered a feature.
 #
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="isdnd"
 rcvar=$name

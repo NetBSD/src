@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: cleartmp,v 1.4 2002/03/22 04:33:58 thorpej Exp $
+# $NetBSD: cleartmp,v 1.5 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: cleartmp
 # REQUIRE: mountall
 # BEFORE:  DAEMON
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="cleartmp"
 rcvar="clear_tmp"

@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.63 2004/05/03 14:52:26 lukem Exp $
+# $NetBSD: rc.subr,v 1.64 2004/08/13 18:08:03 mycroft Exp $
 #
 # Copyright (c) 1997-2002 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -884,3 +884,5 @@ backup_file()
 		esac
 	fi
 }
+
+_rc_subr_loaded=:

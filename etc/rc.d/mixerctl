@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: mixerctl,v 1.7 2004/01/11 13:57:56 uebayasi Exp $
+# $NetBSD: mixerctl,v 1.8 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: mixerctl
 # REQUIRE: mountcritremote
 # KEYWORD: shutdown
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="mixerctl"
 rcvar=$name

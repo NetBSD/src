@@ -1,13 +1,13 @@
 #!/bin/sh
 #
-# $NetBSD: motd,v 1.8 2002/03/22 04:33:59 thorpej Exp $
+# $NetBSD: motd,v 1.9 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: motd
 # REQUIRE: mountcritremote
 # BEFORE:  LOGIN
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="motd"
 rcvar="update_motd"

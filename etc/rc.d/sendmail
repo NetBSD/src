@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sendmail,v 1.19 2004/08/08 17:41:15 atatat Exp $
+# $NetBSD: sendmail,v 1.20 2004/08/13 18:08:03 mycroft Exp $
 #
 
 # PROVIDE: mail
@@ -8,7 +8,7 @@
 #	we make mail start late, so that things like .forward's are not
 #	processed until the system is fully operational
 
-. /etc/rc.subr
+$_rc_subr_loaded . /etc/rc.subr
 
 name="sendmail"
 rcvar=$name
