@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.52 1998/04/22 07:57:52 leo Exp $
+#	$NetBSD: files.atari,v 1.53 1998/04/22 08:01:17 leo Exp $
 
 maxpartitions 16
 
@@ -163,6 +163,7 @@ file	dev/cons.c				ite
 file	dev/cninit.c				ite
 file	arch/atari/atari/atari_init.c
 file	arch/atari/atari/autoconf.c
+file	arch/atari/atari/be_bus.c		vme
 file	arch/atari/atari/bus.c
 file	arch/atari/atari/conf.c
 file	arch/atari/atari/disksubr.c
