@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.8 1997/10/12 18:06:24 oki Exp $	*/
+/*	$NetBSD: ite.c,v 1.8.2.1 1998/10/13 21:51:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -284,9 +284,10 @@ iteon(dev, flag)
 	int flag;
 {
 	int unit = UNIT(dev);
-	struct ite_softc *ip = getitesp(unit);
+	struct ite_softc *ip;
 
-	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
+	if (unit >= ite_cd.cd_ndevs ||
+	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return(ENXIO);
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -318,10 +319,11 @@ iteoff(dev, flag)
 	int flag;
 {
 	int unit = UNIT(dev);
-	register struct ite_softc *ip = getitesp(unit);
+	register struct ite_softc *ip;
 
 	/* XXX check whether when call from grf.c */
-	if (unit < 0 || unit >= ite_cd.cd_ndevs || (ip->flags&ITE_ALIVE) == 0)
+	if (unit >= ite_cd.cd_ndevs ||
+	    (ip = getitesp(unit)) == NULL || (ip->flags&ITE_ALIVE) == 0)
 		return;
 	if (flag & 2)
 		ip->flags |= ITE_INGRF;
@@ -360,7 +362,8 @@ iteopen(dev, mode, devtype, p)
 	register int error;
 	int first = 0;
 
-	ip = getitesp(dev);
+	if (unit >= ite_cd.cd_ndevs || (ip = getitesp(dev)) == NULL)
+		return (ENXIO);
 	if (!ite_tty[unit]) {
 		tp = ite_tty[unit] = ttymalloc();
 		tty_attach(tp);
@@ -568,10 +571,9 @@ ite_reinit(dev)
 	int unit = UNIT(dev);
 
 	/* XXX check whether when call from grf.c */
-	if (unit < 0 || unit >= ite_cd.cd_ndevs)
+	if (unit >= ite_cd.cd_ndevs || (ip = getitesp(unit)) == NULL)
 		return;
 
-	ip = getitesp(dev);
 	ip->flags &= ~ITE_INITED;
 	iteinit(dev);
 }
@@ -1321,11 +1323,8 @@ iteputchar(c, ip)
 	register int c;
 	struct ite_softc *ip;
 {
-	struct tty *kbd_tty;
 	int n, x, y;
 	char *cp;
-
-	kbd_tty = ite_tty[kbd_ite->device.dv_unit];
 
 	if (c >= 0x20 && ip->escape) {
 		switch (ip->escape) {
@@ -2227,7 +2226,7 @@ iteputchar(c, ip)
 
 	case BEL:
 #if NBELL > 0
-		if (kbd_tty && ite_tty[kbd_ite->device.dv_unit] == kbd_tty)
+		if (kbd_ite && ite_tty[kbd_ite->device.dv_unit])
 			opm_bell();
 #endif
 		break;
