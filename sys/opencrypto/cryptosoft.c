@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.1 2003/07/25 21:12:45 jonathan Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.2 2003/07/26 22:53:44 jonathan Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.1 2003/07/25 21:12:45 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.2 2003/07/26 22:53:44 jonathan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,6 +583,19 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 			return err;
 		break;
 	case CRYPTO_BUF_IOV:
+#ifdef __FreeBSD__
+		/*XXX FIXME: handle iov case*/
+		return EINVAL;
+#else
+		err = cuio_apply((struct uio *) buf, crd->crd_skip,
+		    crd->crd_len,
+		    (int (*)(caddr_t, caddr_t, unsigned int)) axf->Update,
+		    (caddr_t) &ctx);
+		if (err) {
+			return err;
+		}
+#endif
+		break;
 	default:
 		return EINVAL;
 	}
@@ -618,11 +631,20 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	}
 
 	/* Inject the authentication data */
-	if (outtype == CRYPTO_BUF_CONTIG)
+	switch (outtype) {
+	case CRYPTO_BUF_CONTIG:
 		bcopy(aalg, buf + crd->crd_inject, axf->authsize);
-	else
+		break;
+	case CRYPTO_BUF_MBUF:
 		m_copyback((struct mbuf *) buf, crd->crd_inject,
 		    axf->authsize, aalg);
+		break;
+	case CRYPTO_BUF_IOV:
+		bcopy(aalg, crp->crp_mac, axf->authsize);
+		break;
+	default:
+		return EINVAL;
+	}
 	return 0;
 }
 
