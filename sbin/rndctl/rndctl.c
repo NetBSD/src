@@ -1,4 +1,4 @@
-/*	$NetBSD: rndctl.c,v 1.10 2001/09/08 23:29:05 enami Exp $	*/
+/*	$NetBSD: rndctl.c,v 1.11 2001/09/11 05:52:37 enami Exp $	*/
 
 /*-
  * Copyright (c) 1997 Michael Graff.
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+#include <sys/ioctl.h>
+#include <sys/rnd.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -36,10 +40,6 @@
 #include <errno.h>
 #include <err.h>
 #include <string.h>
-
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/rnd.h>
 
 typedef struct {
 	char *a_name;
@@ -53,6 +53,7 @@ arg_t source_types[] = {
 	{ "net",     RND_TYPE_NET },
 	{ "tape",    RND_TYPE_TAPE },
 	{ "tty",     RND_TYPE_TTY },
+	{ "rng",     RND_TYPE_RNG },
 	{ NULL,      0 }
 };
 
@@ -68,8 +69,10 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: rndctl -CEce [-t devtype] [-d devname]\n");
-	fprintf(stderr, "       rndctl -ls [-t devtype] [-d devname]\n");
+	fprintf(stderr, "usage: %s -CEce [-t devtype] [-d devname]\n",
+	    getprogname());
+	fprintf(stderr, "       %s -ls [-t devtype] [-d devname]\n",
+	    getprogname());
 	exit(1);
 }
 
