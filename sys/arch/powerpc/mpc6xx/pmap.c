@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2002/08/18 19:18:33 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2002/08/21 18:36:55 matt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -117,16 +117,10 @@ paddr_t pmap_memlimit = -NBPG;		/* there is no limit */
 struct pmap kernel_pmap_;
 unsigned int pmap_pages_stolen;
 u_long pmap_pte_valid;
-u_long pmap_pte_overflow;
-u_long pmap_pte_replacements;
-u_long pmap_pvo_entries;
-u_long pmap_pvo_enter_calls;
-u_long pmap_pvo_remove_calls;
 #if defined(DIAGNOSTIC) || defined(DEBUG) || defined(PMAPCHECK)
 u_long pmap_pvo_enter_depth;
 u_long pmap_pvo_remove_depth;
 #endif
-u_int64_t pmap_pte_spills = 0;
 
 int physmem;
 #ifndef MSGBUFADDR
@@ -273,6 +267,8 @@ unsigned int pmapdebug = 0;
 
 #ifdef PMAPCOUNTERS
 #define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)
+#define	PMAPCOUNT2(ev)	((ev).ev_count++)
+
 struct evcnt pmap_evcnt_mappings =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
 	    "pmap", "pages mapped");
@@ -289,7 +285,7 @@ struct evcnt pmap_evcnt_kernel_unmappings =
 
 struct evcnt pmap_evcnt_mappings_replaced =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
-	    "pmap", "pages mappings replaced");
+	    "pmap", "page mappings replaced");
 
 struct evcnt pmap_evcnt_exec_mappings =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
@@ -317,6 +313,71 @@ struct evcnt pmap_evcnt_exec_uncached_zero_page =
 struct evcnt pmap_evcnt_exec_uncached_copy_page =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
 	    "pmap", "exec pages uncached (CP)");
+
+struct evcnt pmap_evcnt_updates =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "updates");
+struct evcnt pmap_evcnt_collects =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "collects");
+struct evcnt pmap_evcnt_copies =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "copies");
+
+struct evcnt pmap_evcnt_ptes_spilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes spilled from overflow");
+struct evcnt pmap_evcnt_ptes_unspilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes not spilled");
+struct evcnt pmap_evcnt_ptes_evicted =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes evicted");
+
+struct evcnt pmap_evcnt_ptes_primary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_secondary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_removed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes removed");
+struct evcnt pmap_evcnt_ptes_changed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes changed");
 
 /*
  * From pmap_subr.c
@@ -690,8 +751,6 @@ pmap_pte_spill(vaddr_t addr)
 	volatile pteg_t *pteg;
 	volatile pte_t *pt;
 
-	pmap_pte_spills++;
-
 	sr = MFSRIN(addr);
 	ptegidx = va_to_pteg(sr, addr);
 
@@ -720,8 +779,11 @@ pmap_pte_spill(vaddr_t addr)
 			j = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 			if (j >= 0) {
 				PVO_PTEGIDX_SET(pvo, j);
-				pmap_pte_overflow--;
 				PMAP_PVO_CHECK(pvo);	/* sanity check */
+				PMAPCOUNT(ptes_spilled);
+				PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+				    ? pmap_evcnt_ptes_secondary
+				    : pmap_evcnt_ptes_primary)[j]);
 				return 1;
 			}
 			source_pvo = pvo;
@@ -741,6 +803,7 @@ pmap_pte_spill(vaddr_t addr)
 	}
 
 	if (source_pvo == NULL)
+		PMAPCOUNT(ptes_unspilled);
 		return 0;
 
 	if (victim_pvo == NULL) {
@@ -781,7 +844,10 @@ pmap_pte_spill(vaddr_t addr)
 
 	PVO_PTEGIDX_CLR(victim_pvo);
 	PVO_PTEGIDX_SET(source_pvo, i);
-	pmap_pte_replacements++;
+	PMAPCOUNT2(pmap_evcnt_ptes_primary[i]);
+	PMAPCOUNT(ptes_spilled);
+	PMAPCOUNT(ptes_evicted);
+	PMAPCOUNT(ptes_removed);
 
 	PMAP_PVO_CHECK(victim_pvo);
 	PMAP_PVO_CHECK(source_pvo);
@@ -871,6 +937,32 @@ pmap_init(void)
 	evcnt_attach_static(&pmap_evcnt_zeroed_pages);
 	evcnt_attach_static(&pmap_evcnt_copied_pages);
 	evcnt_attach_static(&pmap_evcnt_idlezeroed_pages);
+
+	evcnt_attach_static(&pmap_evcnt_updates);
+	evcnt_attach_static(&pmap_evcnt_collects);
+	evcnt_attach_static(&pmap_evcnt_copies);
+
+	evcnt_attach_static(&pmap_evcnt_ptes_spilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_unspilled);
+	evcnt_attach_static(&pmap_evcnt_ptes_evicted);
+	evcnt_attach_static(&pmap_evcnt_ptes_removed);
+	evcnt_attach_static(&pmap_evcnt_ptes_changed);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_primary[7]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[0]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[1]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[2]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[3]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[4]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[5]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[6]);
+	evcnt_attach_static(&pmap_evcnt_ptes_secondary[7]);
 #endif
 }
 
@@ -1010,6 +1102,7 @@ void
 pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 	vsize_t len, vaddr_t src_addr)
 {
+	PMAPCOUNT(copies);
 }
 
 /*
@@ -1019,6 +1112,7 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr,
 void
 pmap_update(struct pmap *pmap)
 {
+	PMAPCOUNT(updates);
 	TLBSYNC();
 }
 
@@ -1033,6 +1127,7 @@ pmap_update(struct pmap *pmap)
 void
 pmap_collect(pmap_t pm)
 {
+	PMAPCOUNT(collects);
 }
 
 static __inline int
@@ -1227,7 +1322,7 @@ pmap_pvo_check(const struct pvo_entry *pvo)
 			    pt->pte_lo & (PTE_PP|PTE_WIMG|PTE_RPGN));
 			failed = 1;
 		}
-		if (pmap_pte_to_va(pt) != PVO_VADDR(pvo)) {
+		if ((pmap_pte_to_va(pt) ^ PVO_VADDR(pvo)) & 0x0fffffff) {
 			printf("pmap_pvo_check: pvo %p: PTE %p derived VA %#lx"
 			    " doesn't not match PVO's VA %#lx\n",
 			    pvo, pt, pmap_pte_to_va(pt), PVO_VADDR(pvo));
@@ -1321,7 +1416,6 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 		}
 #endif
 	}
-	pmap_pvo_entries++;
 	pvo->pvo_vaddr = va;
 	pvo->pvo_pmap = pm;
 	LIST_INSERT_HEAD(&pmap_pvo_table[ptegidx], pvo, pvo_olink);
@@ -1356,8 +1450,10 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 	i = pmap_pte_insert(ptegidx, &pvo->pvo_pte);
 	if (i >= 0) {
 		PVO_PTEGIDX_SET(pvo, i);
+		PMAPCOUNT2(((pvo->pvo_pte.pte_hi & PTE_HID)
+		    ? pmap_evcnt_ptes_secondary : pmap_evcnt_ptes_primary)[i]);
 	} else {
-		pmap_pte_overflow++;
+		PMAPCOUNT(ptes_evicted);
 #if 0
 		if ((flags & (VM_PROT_READ|VM_PROT_WRITE)) != VM_PROT_NONE)
 			pmap_pte_evict(pvo, ptegidx, MFTB() & 7);
@@ -1390,8 +1486,7 @@ pmap_pvo_remove(struct pvo_entry *pvo, int pteidx)
 	if (pt != NULL) {
 		pmap_pte_unset(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
 		PVO_PTEGIDX_CLR(pvo);
-	} else {
-		pmap_pte_overflow--;
+		PMAPCOUNT(ptes_removed);
 	}
 
 	/*
@@ -1732,8 +1827,10 @@ pmap_protect(pmap_t pm, vaddr_t va, vaddr_t endva, vm_prot_t prot)
 		 * If the PVO is in the page table, update
 		 * that pte at well.
 		 */
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
@@ -1843,8 +1940,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pt = pmap_pvo_to_pte(pvo, -1);
 		pvo->pvo_pte.pte_lo &= ~PTE_PP;
 		pvo->pvo_pte.pte_lo |= PTE_BR;
-		if (pt != NULL)
+		if (pt != NULL) {
 			pmap_pte_change(pt, &pvo->pvo_pte, pvo->pvo_vaddr);
+			PMAPCOUNT(ptes_changed);
+		}
 		PMAP_PVO_CHECK(pvo);		/* sanity check */
 	}
 
