@@ -1,4 +1,4 @@
-/*	$NetBSD: if_csvar.h,v 1.5 1998/07/21 00:20:35 thorpej Exp $	*/
+/*	$NetBSD: if_csvar.h,v 1.6 1998/07/21 00:22:30 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -76,7 +76,6 @@ struct cs_softc {
 	bus_space_handle_t sc_ioh;	/* bus space handles */
 	bus_space_handle_t sc_memh;
 	isa_chipset_tag_t sc_ic;	/* ISA chipset */
-	u_int16_t sc_iobase;		/* base IO port address */
    	u_int16_t  sc_int;		/* interrupt level */ 
 	int pPacketPagePhys;		/* physical io address */
    	u_int16_t  mediaType;		/* 10BaseT, thin wire */
