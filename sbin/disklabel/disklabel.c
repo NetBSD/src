@@ -43,7 +43,7 @@ char copyright[] =
 #ifndef lint
 /*static char sccsid[] = "from: @(#)disklabel.c	1.2 (Symmetric) 11/28/85";*/
 /*static char sccsid[] = "from: @(#)disklabel.c	5.20 (Berkeley) 2/9/91";*/
-static char rcsid[] = "$Id: disklabel.c,v 1.8 1993/10/13 06:26:14 mycroft Exp $";
+static char rcsid[] = "$Id: disklabel.c,v 1.9 1993/12/02 04:57:27 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -387,15 +387,15 @@ writelabel(f, boot, lp)
 			lbl_off = pp->p_offset;
 		} else {
 			if (dosdp) {
-				char c;
+				int c;
 
-				printf("overwriting disk with DOS partition table? (n):");
+				printf("overwriting disk with DOS partition table? (n): ");
 				fflush(stdout);
 				c = getchar();
-				if (c != EOF && c != (int)'\n')
-					while (getchar() != (int)'\n')
+				if (c != EOF && c != '\n')
+					while (getchar() != '\n')
 						;
-				if  (c == (int)'n')
+				if  (c != 'y' && c != 'Y')
 					exit(0);
 			}
 			lbl_off = 0;
