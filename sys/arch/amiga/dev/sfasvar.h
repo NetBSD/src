@@ -289,7 +289,7 @@ struct	sfas_softc {
 #define SFAS_SLOW_START	 0x10	/* There are slow starters on the bus */
 
 void	sfasinitialize __P((struct sfas_softc *sc));
-void	sfas_minphys   __P((struct buf *bp));
+u_int	sfas_minphys   __P((struct buf *bp));
 int	sfas_scsicmd   __P((struct scsi_xfer *));
 
 #endif /* _SFASVAR_H_ */
