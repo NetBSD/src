@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2004/05/16 15:44:10 wiz Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2004/08/28 17:53:01 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2004/05/16 15:44:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2004/08/28 17:53:01 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -701,17 +701,10 @@ trap(type, code, v, frame)
 		 * the current limit and we need to reflect that as an access
 		 * error.
 		 */
-		if ((vm != NULL && (caddr_t)va >= vm->vm_maxsaddr)
-		    && map != kernel_map) {
-			if (rv == 0) {
-				unsigned nss;
-
-				nss = btoc(USRSTACK-(unsigned)va);
-				if (nss > vm->vm_ssize)
-					vm->vm_ssize = nss;
-			}
-		}
 		if (rv == 0) {
+			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+				uvm_grow(p, va);
+
 			if (type == T_MMUFLT) {
 #ifdef M68040
 #if defined(M68030) || defined(M68060)

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.64 2004/03/14 01:08:48 cl Exp $	*/
+/*	$NetBSD: trap.c,v 1.65 2004/08/28 17:53:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.64 2004/03/14 01:08:48 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2004/08/28 17:53:02 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -433,7 +433,6 @@ trap(frame)
 		int rv, sig;
 		vm_prot_t ftype;
 		extern struct vm_map *kernel_map;
-		unsigned nss;
 
 		va = trunc_page((vaddr_t)frame.tf_tear);
 		/*
@@ -467,21 +466,11 @@ trap(frame)
 		}
 #endif
 
-		nss = 0;
-		if ((caddr_t)va >= vm->vm_maxsaddr
-		    && (caddr_t)va < (caddr_t)VM_MAXUSER_ADDRESS
-		    && map != kernel_map) {
-			nss = btoc(USRSTACK-(unsigned)va);
-			if (nss > btoc(p->p_rlimit[RLIMIT_STACK].rlim_cur)) {
-				nss = 0;
-			}
-		}
-
 		/* Fault the original page in. */
 		rv = uvm_fault(map, va, 0, ftype);
 		if (rv == 0) {
-			if (nss > vm->vm_ssize)
-				vm->vm_ssize = nss;
+			if (map != kernel_map && (caddr_t)va >= vm->vm_maxsaddr)
+				uvm_grow(p, va);
 
 			if (type == T_ABT)
 				return;
