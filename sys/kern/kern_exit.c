@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.104 2002/11/28 21:41:29 jdolecek Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.105 2002/11/30 09:54:43 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.104 2002/11/28 21:41:29 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.105 2002/11/30 09:54:43 jdolecek Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -273,7 +273,8 @@ exit1(struct proc *p, int rv)
 				struct proc *t = q->p_opptr;
 				proc_reparent(q, t ? t : initproc);
 				q->p_opptr = NULL;
-			}
+			} else
+				proc_reparent(q, initproc);
 			q->p_flag &= ~(P_TRACED|P_WAITED|P_FSTRACE);
 			psignal(q, SIGKILL);
 		} else {
