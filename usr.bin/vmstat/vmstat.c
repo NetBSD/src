@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.45 1998/02/13 05:10:32 thorpej Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.46 1998/03/05 02:47:05 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.45 1998/02/13 05:10:32 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.46 1998/03/05 02:47:05 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -466,7 +466,7 @@ dovmstat(interval, reps)
 #if defined(UVM)
 		(void)printf("%4lu ", rate(uvmexp.faults - ouvmexp.faults));
 		(void)printf("%3lu ", rate(uvmexp.pdreact - ouvmexp.pdreact));
-		(void)printf("%3lu ", rate(uvmexp.pgswapin - ouvmexp.pgswapin));
+		(void)printf("%3lu ", rate(uvmexp.pageins - ouvmexp.pageins));
 		(void)printf("%4lu ",
 		    rate(uvmexp.pgswapout - ouvmexp.pgswapout));
 		(void)printf("%4lu ", rate(uvmexp.pdfreed - ouvmexp.pdfreed));
