@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vmparam.h 1.16 91/01/18$
  *
  *	@(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.6 1994/02/17 09:11:52 chopps Exp $
+ *	$Id: vmparam.h,v 1.7 1994/02/23 06:47:39 chopps Exp $
  */
 
 
@@ -61,8 +61,7 @@
 #define	USRTEXT		0x2000
 #define	USRSTACK	0x0E000000
 #define	LOWPAGES	btoc(USRTEXT)
-#define	HIGHPAGES	0
-
+#define KUSER_AREA	(-UPAGES*NBPG)
 /*
  * Virtual memory related constants, all in bytes
  */
