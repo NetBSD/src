@@ -1,4 +1,4 @@
-/*	$NetBSD: utils.c,v 1.9 1997/10/19 12:28:01 enami Exp $	*/
+/*	$NetBSD: utils.c,v 1.10 1997/10/19 12:50:47 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utils.c	8.3 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: utils.c,v 1.9 1997/10/19 12:28:01 enami Exp $");
+__RCSID("$NetBSD: utils.c,v 1.10 1997/10/19 12:50:47 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -250,7 +250,7 @@ setfile(fs, fd)
 
 	TIMESPEC_TO_TIMEVAL(&tv[0], &fs->st_atimespec);
 	TIMESPEC_TO_TIMEVAL(&tv[1], &fs->st_mtimespec);
-	if (lutimes(to.p_path, tv)) {
+	if (fd ? futimes(fd, tv) : lutimes(to.p_path, tv)) {
 		warn("utimes: %s", to.p_path);
 		rval = 1;
 	}
@@ -269,7 +269,7 @@ setfile(fs, fd)
 		fs->st_mode &= ~(S_ISUID | S_ISGID);
 	}
 	if (fd ? fchmod(fd, fs->st_mode) : lchmod(to.p_path, fs->st_mode)) {
-		warn("chown: %s", to.p_path);
+		warn("chmod: %s", to.p_path);
 		rval = 1;
 	}
 
