@@ -1,4 +1,4 @@
-/* $NetBSD: spl.h,v 1.3 2000/06/08 23:26:10 bjh21 Exp $ */
+/* $NetBSD: spl.h,v 1.4 2000/08/16 23:58:29 bjh21 Exp $ */
 /*-
  * Copyright (c) 1998 Ben Harris
  * All rights reserved.
@@ -43,9 +43,11 @@
 #define IPL_NONE	0
 #define IPL_SOFTCLOCK	1
 #define IPL_SOFTNET	2
+#define IPL_SOFTSERIAL	IPL_SOFTNET
 #define IPL_BIO		3
 #define IPL_NET		4
 #define IPL_TTY		5
+#define IPL_LPT		IPL_TTY
 #define IPL_IMP		6
 #define IPL_AUDIO	7
 #define IPL_SERIAL	8
@@ -57,12 +59,15 @@
 
 #define splsoftnet()	raisespl(IPL_SOFTNET)
 #define splsoft()	splsoftnet()
+#define splsoftserial()	splsoftnet()
 #define splsoftclock()	raisespl(IPL_SOFTCLOCK)
 #define splbio()	raisespl(IPL_BIO)
 #define splnet()	raisespl(IPL_NET)
 #define spltty()	raisespl(IPL_TTY)
+#define spllpt()	raisespl(IPL_LPT)
 #define splimp()	raisespl(IPL_IMP)
 #define	splaudio()	raisespl(IPL_AUDIO)
+#define splserial()	raisespl(IPL_SERIAL)
 #define splclock()	raisespl(IPL_CLOCK)
 #define splstatclock()	raisespl(IPL_STATCLOCK)
 #define splhigh()	raisespl(IPL_HIGH)
