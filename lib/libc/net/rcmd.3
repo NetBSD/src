@@ -1,4 +1,4 @@
-.\"	$NetBSD: rcmd.3,v 1.9 1996/05/28 02:07:39 mrg Exp $
+.\"	$NetBSD: rcmd.3,v 1.10 1997/05/28 04:01:06 mrg Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,6 +47,8 @@
 .Ft int
 .Fn rcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
 .Ft int
+.Fn orcmd "char **ahost" "int inport" "const char *locuser" "const char *remuser" "const char *cmd" "int *fd2p"
+.Ft int
 .Fn rresvport "int *port"
 .Ft int
 .Fn iruserok "u_int32_t raddr" "int superuser" "const char *ruser" "const char *luser"
@@ -55,6 +57,19 @@
 .Sh DESCRIPTION
 The
 .Fn rcmd
+function is available for use by anyone to run commands on a
+remote system.  It acts like the
+.Fn orcmd
+command, with the exception that it makes a call out to the
+.Xr rcmd 1
+command, or any other user-specified command, to perform the
+actual connection (thus not requiring
+that the caller be running as the super-user), and is only
+available for the
+.Dq shell/tcp
+port.
+The
+.Fn orcmd
 function
 is used by the super-user to execute a command on
 a remote machine using an authentication scheme based
@@ -71,7 +86,7 @@ and
 functions are used by servers
 to authenticate clients requesting service with
 .Fn rcmd .
-All four functions are present in the same file and are used
+All five functions are present in the same file and are used
 by the
 .Xr rshd 8
 server (among others).
@@ -190,15 +205,37 @@ set according to the reason for failure.
 The error code
 .Dv EAGAIN
 is overloaded to mean ``All network ports in use.''
+.Sh ENVIRONMENT
+.Bl -tag -width RCMD_CMDxx -compact
+.It Ev RCMD_CMD
+When using the
+.Fn rcmd
+function, this variable is used as the program to run instead of
+.Xr rcmd 1 .
+.El
 .Sh SEE ALSO
 .Xr rlogin 1 ,
 .Xr rsh 1 ,
+.Xr rcmd 1 ,
 .Xr intro 2 ,
 .Xr rexec 3 ,
 .Xr rexecd 8 ,
 .Xr rlogind 8 ,
-.Xr rshd 8
+.Xr rshd 8 .
 .Sh HISTORY
-These
+The
+.Fn orcmd ,
+.Fn rresvport ,
+.Fn iruserok
+and
+.Fn ruserok
 functions appeared in 
-.Bx 4.2 .
+.Bx 4.2 ,
+where the
+.Fn orcmd
+function was called
+.Fn rcmd.
+The (newer)
+.Fn rcmd
+function appeared in
+.Nx 1.3 .
