@@ -647,8 +647,8 @@ do_create_partition(partition_map_header *map, int get_type)
 {
     long base;
     long length;
-    char *name;
-    char *type_name;
+    char *name = 0;
+    char *type_name = 0;
 
     if (map == NULL) {
 	bad_input("No partition map exists");
@@ -697,9 +697,11 @@ do_create_partition(partition_map_header *map, int get_type)
 #endif
     }
 xit2:
-    free(type_name);
+    if (type_name)
+        free(type_name);
 xit1:
-    free(name);
+    if (name)
+        free(name);
     return;
 }
 
