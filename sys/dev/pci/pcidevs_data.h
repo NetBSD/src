@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.521 2003/04/11 02:50:07 explorer Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.522 2003/04/12 08:41:21 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.520 2003/04/11 02:49:40 explorer Exp 
+ *	NetBSD: pcidevs,v 1.521 2003/04/12 08:40:48 christos Exp 
  */
 
 /*
@@ -6590,6 +6590,228 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Sigma Designs",
 	    "REALmagic Hollywood-Plus MPEG-2 Decoder",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x I/O 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x I/O 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_IO850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x I/O 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_P,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Parallel PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2P,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Parallel Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial Dual 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial Dual 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x Serial Dual 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 2S1P 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 2S1P 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_2S1P850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 2S1P 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 4S 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 4S 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER10_4S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber10x 4S 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x I/O 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x I/O 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_IO850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x I/O 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_P,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Parallel PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Parallel Dual PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial Dual 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial Dual 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x Serial Dual 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2P1S 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2P1S 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2P1S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2P1S 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 4S 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 4S 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_4S850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 4S 16850 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P550,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2S1P 16550 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P650,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2S1P 16650 PCI",
+	},
+	{
+	    PCI_VENDOR_SIIG, PCI_PRODUCT_SIIG_CYBER20_2S1P850,
+	    0,
+	    "Siig, Inc.",
+	    "Cyber20x 2S1P 16850 PCI",
 	},
 	{
 	    PCI_VENDOR_SIS, PCI_PRODUCT_SIS_86C201,
