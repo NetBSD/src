@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: hdb_locl.h,v 1.18 2002/09/10 20:03:48 joda Exp $
-   $NetBSD: hdb_locl.h,v 1.1.1.6 2002/09/12 12:41:40 joda Exp $ */
+/* $Heimdal: hdb_locl.h,v 1.18.4.1 2003/09/10 22:04:39 lha Exp $
+   $NetBSD: hdb_locl.h,v 1.1.1.6.2.1 2004/04/21 04:55:41 jmc Exp $ */
 
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__
@@ -54,6 +54,9 @@
 #endif
 #ifdef HAVE_SYS_FILE_H
 #include <sys/file.h>
+#endif
+#ifdef HAVE_LIMITS_H
+#include <limits.h>
 #endif
 #include <roken.h>
 

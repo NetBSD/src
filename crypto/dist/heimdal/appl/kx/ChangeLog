@@ -1,3 +1,27 @@
+2004-03-16  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* krb5.c: 1.12: (krb5_destroy): free allocated memory, not
+	something else
+
+2004-02-18  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* krb4.c: 1.12: remove dup on
+	
+2004-01-08  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* krb5.c: 1.10->1.11: clean up krb5 support, log to syslog instead
+	of stdout
+	(very confusing for the other end tcp connection), patch originally
+	from joda
+
+2003-05-15  Love Hörquist Åstrand  <lha@it.su.se>
+
+	* kxd.c: 1.71->1.74:
+	(recv_conn): pass pointer to sockaddr, not pointer to pointer
+	(recv_conn): if getnameinfo failes, send error to client (and syslog)
+	(recv_conn): get sizeof of the sockaddr_storage, not the sockaddr
+	pointer
+
 2003-04-16  Johan Danielsson  <joda@pdc.kth.se>
 
 	* kx.c (doit_{passive,active}): use kc->thataddr directly

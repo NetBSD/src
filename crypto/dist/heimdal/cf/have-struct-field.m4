@@ -1,11 +1,11 @@
-dnl $Heimdal: have-struct-field.m4,v 1.6 1999/07/29 01:44:32 assar Exp $
-dnl $NetBSD: have-struct-field.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: have-struct-field.m4,v 1.6.22.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: have-struct-field.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl check for fields in a structure
 dnl
 dnl AC_HAVE_STRUCT_FIELD(struct, field, headers)
 
-AC_DEFUN(AC_HAVE_STRUCT_FIELD, [
+AC_DEFUN([AC_HAVE_STRUCT_FIELD], [
 define(cache_val, translit(ac_cv_type_$1_$2, [A-Z ], [a-z_]))
 AC_CACHE_CHECK([for $2 in $1], cache_val,[
 AC_TRY_COMPILE([$3],[$1 x; x.$2;],

@@ -1,11 +1,11 @@
-dnl $Heimdal: krb-version.m4,v 1.3 2002/08/20 15:49:58 joda Exp $
-dnl $NetBSD: krb-version.m4,v 1.1.1.4 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: krb-version.m4,v 1.3.6.1 2004/04/01 07:27:34 joda Exp $
+dnl $NetBSD: krb-version.m4,v 1.1.1.4.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl
 dnl output a C header-file with some version strings
 dnl
 
-AC_DEFUN(AC_KRB_VERSION,[
+AC_DEFUN([AC_KRB_VERSION],[
 cat > include/newversion.h.in <<FOOBAR
 const char *${PACKAGE_TARNAME}_long_version = "@(#)\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
 const char *${PACKAGE_TARNAME}_version = "$PACKAGE_STRING";

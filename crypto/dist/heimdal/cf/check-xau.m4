@@ -1,9 +1,9 @@
-dnl $Heimdal: check-xau.m4,v 1.3 1999/05/14 01:17:06 assar Exp $
-dnl $NetBSD: check-xau.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: check-xau.m4,v 1.3.34.1 2004/04/01 07:27:33 joda Exp $
+dnl $NetBSD: check-xau.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl check for Xau{Read,Write}Auth and XauFileName
 dnl
-AC_DEFUN(AC_CHECK_XAU,[
+AC_DEFUN([AC_CHECK_XAU],[
 save_CFLAGS="$CFLAGS"
 CFLAGS="$X_CFLAGS $CFLAGS"
 save_LIBS="$LIBS"

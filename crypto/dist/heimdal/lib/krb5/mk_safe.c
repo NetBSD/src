@@ -33,8 +33,8 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: mk_safe.c,v 1.28 2002/09/04 16:26:05 joda Exp $"
-        "$NetBSD: mk_safe.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: mk_safe.c,v 1.28.4.1 2004/03/07 12:46:43 lha Exp $"
+        "$NetBSD: mk_safe.c,v 1.1.1.6.2.1 2004/04/21 04:55:41 jmc Exp $");
 
 krb5_error_code
 krb5_mk_safe(krb5_context context,
@@ -70,7 +70,7 @@ krb5_mk_safe(krb5_context context,
 
   sec2                   = sec;
   s.safe_body.timestamp  = &sec2;
-  usec2                  = usec2;
+  usec2                  = usec;
   s.safe_body.usec       = &usec2;
   if (auth_context->flags & KRB5_AUTH_CONTEXT_DO_SEQUENCE) {
       tmp_seq = auth_context->local_seqnumber;

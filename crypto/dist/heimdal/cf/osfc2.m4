@@ -1,9 +1,9 @@
-dnl $Heimdal: osfc2.m4,v 1.3 2002/04/30 16:46:18 joda Exp $
-dnl $NetBSD: osfc2.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: osfc2.m4,v 1.3.8.1 2004/04/01 07:27:35 joda Exp $
+dnl $NetBSD: osfc2.m4,v 1.1.1.3.2.1 2004/04/21 04:55:38 jmc Exp $
 dnl
 dnl enable OSF C2 stuff
 
-AC_DEFUN(AC_CHECK_OSFC2,[
+AC_DEFUN([AC_CHECK_OSFC2],[
 AC_ARG_ENABLE(osfc2,
 	AC_HELP_STRING([--enable-osfc2],[enable some OSF C2 support]))
 LIB_security=

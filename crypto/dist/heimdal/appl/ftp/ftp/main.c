@@ -34,8 +34,8 @@
 #include "ftp_locl.h"
 #include <getarg.h>
 
-__RCSID("$Heimdal: main.c,v 1.33 2002/10/29 09:47:51 joda Exp $"
-        "$NetBSD: main.c,v 1.2 2003/08/07 09:15:19 agc Exp $");
+__RCSID("$Heimdal: main.c,v 1.33.2.1 2003/08/20 16:43:14 lha Exp $"
+        "$NetBSD: main.c,v 1.2.2.1 2004/04/21 04:55:36 jmc Exp $");
 
 static int help_flag;
 static int version_flag;
@@ -56,6 +56,10 @@ struct getargs getargs[] = {
       "passive mode", NULL},
     { NULL,	't', arg_counter, &trace,
       "Packet tracing", NULL},
+#ifdef KRB5
+    { "gss-bindings", 0,  arg_negative_flag, &ftp_do_gss_bindings,
+      "Use GSS-API bindings", NULL},
+#endif
     { NULL,	'v', arg_counter, &verbose,
       "verbosity", NULL},
     { NULL,	'K', arg_negative_flag, &use_kerberos,
@@ -93,6 +97,9 @@ main(int argc, char **argv)
 	lineedit = 1;
 	passivemode = 0; /* passive mode not active */
         use_kerberos = 1;
+#ifdef KRB5
+	ftp_do_gss_bindings = 1;
+#endif
 
 	if(getarg(getargs, num_args, argc, argv, &optind))
 		usage(1);
