@@ -42,7 +42,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfsd.c	5.10 (Berkeley) 4/24/91";*/
-static char rcsid[] = "$Id: nfsd.c,v 1.7 1993/08/01 18:26:02 mycroft Exp $";
+static char rcsid[] = "$Id: nfsd.c,v 1.8 1993/10/05 00:36:28 cgd Exp $";
 #endif not lint
 
 #include <sys/types.h>
@@ -63,7 +63,6 @@ static char rcsid[] = "$Id: nfsd.c,v 1.7 1993/08/01 18:26:02 mycroft Exp $";
 #include <rpc/pmap_prot.h>
 #include <nfs/rpcv2.h>
 #include <nfs/nfsv2.h>
-#include <err.h>
 
 #include <machine/vmparam.h>	/* these are for PS_STRINGS */
 #include <sys/exec.h>
@@ -205,8 +204,10 @@ main(argc, argv, envp)
 	}
 	signal(SIGCHLD, reapchild);
 	signal(SIGSYS, not_nfsserver);
-	if (nfssvc(-1, NULL, 0, NULL, 0) >= 0)
-	    err(1, "bad arguments didn't cause error");
+	if (nfssvc(-1, NULL, 0, NULL, 0) >= 0) {
+		syslog(LOG_ERR, "bad arguments didn't cause error");
+		exit(1);
+	}
 	if (reregister) {
 		if (udpflag && !pmap_set(RPCPROG_NFS, NFS_VER2, IPPROTO_UDP,
 		    NFS_PORT)) {
@@ -367,5 +368,6 @@ setproctitle(a, sin)
 
 void not_nfsserver()
 {
-    err(1, "not configured as NFS server\n");
+	syslog(LOG_ERR, "not configured as NFS server");
+	exit(1);
 }
