@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.31 1999/09/13 19:18:18 augustss Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.32 1999/09/13 19:49:41 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,8 +98,8 @@ struct usbd_bus {
 	char			use_polling;
 	struct usb_softc       *usbctl;
 	struct usb_device_stats	stats;
-	u_char 			intr_context;
-	int			no_intrs;
+	int 			intr_context;
+	u_int			no_intrs;
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_dma_tag_t		dmatag;	/* DMA tag */
 #endif
