@@ -1,4 +1,4 @@
-.\" $NetBSD: macros,v 1.2.2.1 1999/04/23 23:16:45 perry Exp $
+.\" $NetBSD: macros,v 1.2.2.2 1999/05/05 01:15:42 perry Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" second-level subsection macro (third-level section)
 .
 .de Ss2
-.	ie rHTML <h5>\\$*</h5>
+.	ie rHTML <h5><a name="\\$*">\\$*</a></h5>
 .	el \{\
 .		br
 .		if t .ne 7P
