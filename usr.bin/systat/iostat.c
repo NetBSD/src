@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.23 2002/11/01 12:47:57 mrg Exp $	*/
+/*	$NetBSD: iostat.c,v 1.24 2002/12/06 03:13:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.23 2002/11/01 12:47:57 mrg Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.24 2002/12/06 03:13:14 thorpej Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -179,8 +179,8 @@ barlabels(int row)
 		if (cur.dk_select[i]) {
 			if (row > getmaxy(wnd) - linesperregion)
 				break;
-			mvwprintw(wnd, row++, 0, "%7.7s  kBps|", cur.dk_name[i],
-			    read_write ? ' ' : 'r');
+			mvwprintw(wnd, row++, 0, "%7.7s  kBps|",
+			    cur.dk_name[i]);
 			mvwaddstr(wnd, row++, 0, "          tps|");
 			if (read_write) {
 				mvwprintw(wnd, row++, 0, " (write) kBps|");
