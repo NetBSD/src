@@ -1,4 +1,4 @@
-.\"	$NetBSD: installboot.8,v 1.13 2001/09/05 23:53:23 wiz Exp $
+.\"	$NetBSD: installboot.8,v 1.14 2001/09/10 23:32:29 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ boot program in the bootblock area on
 .Bd -literal -offset indent
 installboot /usr/mdec/xxboot /dev/rsd0a
 .Ed
-.Sh CAVEATS
+.Sh BUGS
 If
 .Nm
 is accidentally used on the whole disk partition, the RDB will be overwritten,
@@ -113,7 +113,7 @@ Most 68060 boards, unlike the DraCo, don't set the SysBase->AttnFlags
 bit for the 68060 CPU (a patch program which is called during
 AmigaOS startup does this). You need to add options BB060STUPIDROM
 to your kernel to boot on such a machine.
-.Sh BUGS
+.Pp
 There is currently no easy way to edit the RDB from within
 .Nx .
 Therefore, you have to use HDTOOLBOX or a similar tool to
