@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.44 2003/08/04 22:29:59 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.45 2003/08/06 07:18:56 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -802,8 +802,8 @@ disitrap:
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_DAR)(%r1)
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_DSISR)(%r1)
 
-	mfsrr1	%r30
-	mtcr	%r30
+	mfsrr1	%r31
+	mtcr	%r31
 
 	bt	17,u_trap		/* branch if PSL_PR is true */
 	mfsprg1	%r1			/* restore [K]SP */
