@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.9 1998/03/21 10:02:40 ragge Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.10 1998/04/13 12:10:27 ragge Exp $	*/
 
 /* 
  * Mach Operating System
@@ -38,6 +38,8 @@
 #include <sys/systm.h> /* just for boothowto --eichin */
 
 #include <vm/vm.h>
+
+#include <dev/cons.h>
 
 #include <machine/db_machdep.h>
 #include <machine/trap.h>
@@ -213,7 +215,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
         db_expr_t       count;
         char            *modif;
 {
-	printf("db_stack_trace_cmd - addr %x, have_addr %x, count %x, modif %x\n",addr, have_addr, count, (int)modif);
+	printf("db_stack_trace_cmd - addr %lx, have_addr %x, count %lx, modif %x\n",addr, have_addr, count, (int)modif);
 }
 
 static int ddbescape = 0;

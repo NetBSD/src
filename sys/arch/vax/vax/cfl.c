@@ -1,4 +1,4 @@
-/*	$NetBSD: cfl.c,v 1.1 1997/06/13 14:55:07 ragge Exp $	*/
+/*	$NetBSD: cfl.c,v 1.2 1998/04/13 12:10:26 ragge Exp $	*/
 /*-
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -199,6 +199,8 @@ cflstart()
 #endif
 }
 
+void cfltint __P((int));
+
 void
 cfltint(arg)
 	int arg;
@@ -213,7 +215,7 @@ cfltint(arg)
 		break;
 
 	case CFL_SECTOR:/* send sector */
-		mtpr(FLOP_DATA | (int)bp->b_blkno % CFL_SECTORS + 1, PR_TXDB);
+		mtpr(FLOP_DATA | (int)bp->b_blkno % (CFL_SECTORS + 1), PR_TXDB);
 		cfltab.cfl_active = CFL_TRACK;
 		break;
 
@@ -230,6 +232,8 @@ cfltint(arg)
 
 	}
 }
+
+void cflrint __P((int));
 
 void
 cflrint(ch)

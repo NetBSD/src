@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.8 1997/11/02 14:07:15 ragge Exp $	*/
+/*	$NetBSD: ka630.c,v 1.9 1998/04/13 12:10:27 ragge Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,6 +39,7 @@
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -119,6 +120,7 @@ struct mc78032frame {
 	int	mc63_psl;		/* trapped psl */
 };
 
+int
 ka630_mchk(cmcf)
 	caddr_t cmcf;
 {
@@ -132,11 +134,11 @@ ka630_mchk(cmcf)
 	    mcf->mc63_mrvaddr, mcf->mc63_istate,
 	    mcf->mc63_pc, mcf->mc63_psl);
 	if (uvaxIIcpu_ptr && uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_MERR) {
-		printf("\tmser=0x%x ", uvaxIIcpu_ptr->uvaxII_mser);
+		printf("\tmser=0x%lx ", uvaxIIcpu_ptr->uvaxII_mser);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_CPUE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_cear);
+			printf("page=%ld", uvaxIIcpu_ptr->uvaxII_cear);
 		if (uvaxIIcpu_ptr->uvaxII_mser & UVAXIIMSER_DQPE)
-			printf("page=%d", uvaxIIcpu_ptr->uvaxII_dear);
+			printf("page=%ld", uvaxIIcpu_ptr->uvaxII_dear);
 		printf("\n");
 	}
 	return (-1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.15 1998/03/21 22:53:00 mycroft Exp $	*/
+/*	$NetBSD: gencons.c,v 1.16 1998/04/13 12:10:27 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -57,6 +57,8 @@ struct	tty *gencn_tty[1];
 int	consinied = 0;
 int	consopened = 0;
 
+cons_decl(gen);
+
 int	gencnparam __P((struct tty *, struct termios *));
 void	gencnstart __P((struct tty *));
 int	gencnopen __P((dev_t, int, int, struct proc *));
@@ -64,9 +66,6 @@ int	gencnclose __P((dev_t, int, int, struct proc *));
 int	gencnread __P((dev_t, struct uio *, int));
 int	gencnwrite __P((dev_t, struct uio *, int));
 int	gencnioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
-int	gencngetc __P((dev_t));
-void	gencnprobe __P((struct consdev *));
-void	gencninit __P((struct consdev *));
 struct tty *gencntty __P((dev_t));
 void	gencnrint __P((void));
 void	gencntint __P((void));
@@ -259,8 +258,6 @@ void
 gencnprobe(cndev)
 	struct	consdev *cndev;
 {
-	int i;
-
 	if ((vax_cputype < VAX_TYP_UV1) || /* All older has MTPR console */
 	    (vax_boardtype == VAX_BTYP_630) ||
 	    (vax_boardtype == VAX_BTYP_650)) {

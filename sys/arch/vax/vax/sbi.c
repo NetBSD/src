@@ -1,4 +1,4 @@
-/*	$NetBSD: sbi.c,v 1.17 1998/01/24 14:16:19 ragge Exp $ */
+/*	$NetBSD: sbi.c,v 1.18 1998/04/13 12:10:28 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -82,7 +82,7 @@ sbi_attach(parent, self, aux)
 	struct	device	*parent, *self;
 	void	*aux;
 {
-	u_int	nexnum, maxnex, minnex;
+	u_int	nexnum, minnex;
 	struct	sbi_attach_args sa;
 
 	printf("\n");

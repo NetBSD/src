@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 1998/02/08 14:06:22 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 1998/04/13 12:10:26 ragge Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -285,7 +285,7 @@ cpu_attach(parent, self, aux)
 	(*dep_call->cpu_conf)(parent, self, aux);
 }
 
-int	mem_match __P((struct  device  *, struct cfdata	*, void *));
+int	mem_match __P((struct  device  *, struct cfdata *, void *));
 void	mem_attach __P((struct	device	*, struct  device  *, void *));
 
 int
@@ -336,6 +336,9 @@ mem_match(parent, cf, aux)
 	}
 	return 1;
 }
+
+void	ka86_memenable __P((int, int));		/* XXX */
+void	ka780_memenable __P((void *, void *));	/* XXX */
 
 void
 mem_attach(parent, self, aux)

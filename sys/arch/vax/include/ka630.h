@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.h,v 1.2 1997/07/26 10:12:41 ragge Exp $ */
+/*	$NetBSD: ka630.h,v 1.3 1998/04/13 12:12:59 ragge Exp $ */
 /*-
  * Copyright (c) 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -120,7 +120,4 @@ struct ka630clock {
 };
 
 #endif
-static int ka630_clkread __P((time_t));
-static void ka630_clkwrite __P((void));
-
 #endif

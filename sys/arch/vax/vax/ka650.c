@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.11 1997/11/02 14:07:18 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.12 1998/04/13 12:10:27 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -113,17 +113,15 @@ uvaxIII_conf(parent, self, aux)
 void
 uvaxIII_steal_pages()
 {
-	extern	vm_offset_t avail_start, virtual_avail, avail_end;
+	extern	vm_offset_t avail_start, virtual_avail;
 	int	junk, *jon;
 
 	/*
-	 * MicroVAX III: We steal away 64 pages from top of memory,
-	 * map in SCB, interrupt vectors, Qbus map registers, memory
+	 * MicroVAX III: We map in SCB, interrupt vectors,
+	 * Qbus map registers, memory
 	 * error registers, cache control registers, SSC registers,
 	 * interprocessor registers and cache diag space.
 	 */
-/*	avail_end -= 64 * NBPG; */
-
 	MAPPHYS(junk, 2, VM_PROT_READ|VM_PROT_WRITE); /* SCB & vectors */
 	MAPVIRT(nexus, btoc(0x400000)); /* Qbus map registers */
 	pmap_map((vm_offset_t)nexus, 0x20088000, 0x20090000,
