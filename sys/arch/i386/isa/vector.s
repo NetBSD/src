@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.s,v 1.51 2002/10/01 12:57:14 fvdl Exp $	*/
+/*	$NetBSD: vector.s,v 1.52 2002/10/03 15:58:56 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -240,14 +240,14 @@ XINTR(irq_num):								;\
 	MASK(irq_num, icu)		/* mask it in hardware */	;\
 	ack(irq_num)			/* and allow other intrs */	;\
 	incl	MY_COUNT+V_INTR		/* statistical info */		;\
-	movl	_C_LABEL(ilevel) + (irq_num) * 4, %eax			;\
+	movl	_C_LABEL(iminlevel) + (irq_num) * 4, %eax		;\
 	movzbl	CPL,%ebx		/* XXX tuneme */		;\
 	cmpl	%eax,%ebx		/* XXX tuneme */		;\
 	jae	XHOLD(irq_num)		/* currently masked; hold it */	;\
 XRESUME_VEC(irq_num)						\
 	movzbl	CPL,%eax		/* cpl to restore on exit */	;\
 	pushl	%eax			/* XXX tuneme	*/		;\
-	movl	_C_LABEL(ilevel) + (irq_num) * 4, %eax	/* XXXtuneme */	;\
+	movl	_C_LABEL(imaxlevel) + (irq_num) * 4, %eax/* XXXtuneme */ ;\
 	movl	%eax,CPL		/* XXX tuneme		 */	;\
 	sti				/* safe to take intrs now */	;\
 	movl	_C_LABEL(intrhand) + (irq_num) * 4,%ebx	/* head of chain */ ;\
