@@ -1,4 +1,4 @@
-.\"	$NetBSD: scsipi.9,v 1.5 2001/09/04 02:51:16 wiz Exp $
+.\"	$NetBSD: scsipi.9,v 1.6 2001/10/14 21:12:52 bouyer Exp $
 .\"
 .\"
 .\" Copyright (c) 2001 Manuel Bouyer.
@@ -331,7 +331,8 @@ ask the adapter to increase resources of the channel (grow
 .Va adapt_openings
 or
 .Va chan_openings )
-if possible.  Support of this feature is optional.
+if possible.  Support of this feature is optional.  This request is called from
+the kernel completion thread.
 .Fa arg
 must be ignored.
 .It Dv ADAPTER_REQ_SET_XFER_MODE
@@ -548,11 +549,11 @@ will be called with
 .Fa chan
 and
 .Fa arg
-as arguments, from the channel completion thread. The callback is run at
+as arguments, from the channel completion thread.  The callback is run at
 splbio.
 .Fn scsipi_thread_call_callback
 will freeze the channel by one, it's up to the caller to thaw it when
-appropriate. returns 0 if the callback was properly recorded, or EBUSY if the
+appropriate.  Returns 0 if the callback was properly recorded, or EBUSY if the
 channel has already a callback pending.
 .El
 .Sh EXAMPLES
