@@ -1,3 +1,0 @@
-# $NetBSD: md.next68k,v 1.4 2001/01/26 01:39:18 jwise Exp $
-./etc/fstab.nfs		etc-sys-etc
-./etc/ld.so.conf	etc-sys-etc
