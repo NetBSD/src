@@ -1,4 +1,4 @@
-.\" $NetBSD: ef.4,v 1.2 2001/03/16 23:08:11 jdolecek Exp $
+.\" $NetBSD: elmc.4,v 1.1 2001/03/16 23:08:11 jdolecek Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,25 +31,25 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 4, 1999
+.Dd Match 2, 2001
 .Dt EF 4
 .Os
 .Sh NAME
-.Nm ef
+.Nm elmc
 .Nd
 .Tn 3Com
-EtherLink II (3c507)
-.Tn ISA
+EtherLink/MC (3c523)
+.Tn MCA
 .Tn Ethernet
 driver
 .Sh SYNOPSIS
-.Cd "ef0 at isa? port 0x360 iomem 0xd0000 irq 7"
+.Cd "elmc0 at mca? slot ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver supports
 .Tn 3Com
-EtherLink II (3c507) 10Mb/s
+EtherLink/MC (3c523) 10Mb/s
 .Tn Ethernet
 NIC based on the
 .Tn Intel
@@ -58,13 +58,14 @@ NIC based on the
 chip.
 .Sh SEE ALSO
 .Xr ai 4 ,
-.Xr elmc 4 ,
+.Xr ef 4 ,
 .Xr ix 4 ,
 .Xr ifmedia 4 ,
 .Xr intro 4 ,
-.Xr isa 4 ,
+.Xr mca 4 ,
 .Xr ifconfig 8
 .Pp
 .Pa http://www.3com.com/
 .Sh AUTHOR
-Rafal K. Boni
+The driver was written by
+.An Jaromir Dolecek Aq jdolecek@NetBSD.org .
