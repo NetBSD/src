@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.20 1999/09/16 00:54:15 mycroft Exp $	*/
+/*	$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: targ.c,v 1.20 1999/09/16 00:54:15 mycroft Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.20 1999/09/16 00:54:15 mycroft Exp $");
+__RCSID("$NetBSD: targ.c,v 1.21 2001/01/14 05:34:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -219,6 +219,8 @@ Targ_NewGN (name)
     Hash_InitTable(&gn->context, 0);
     gn->commands =  	Lst_Init (FALSE);
     gn->suffix =	NULL;
+    gn->lineno =	0;
+    gn->fname = 	NULL;
 
 #ifdef CLEANUP
     if (allGNs == NULL)
@@ -254,6 +256,8 @@ TargFreeGN (gnp)
 	free(gn->uname);
     if (gn->path)
 	free(gn->path);
+    if (gn->fname)
+	free(gn->fname);
 
     Lst_Destroy(gn->iParents, NOFREE);
     Lst_Destroy(gn->cohorts, NOFREE);

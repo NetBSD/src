@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.58 2001/01/13 20:36:58 cgd Exp $	*/
+/*	$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: parse.c,v 1.58 2001/01/13 20:36:58 cgd Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.58 2001/01/13 20:36:58 cgd Exp $");
+__RCSID("$NetBSD: parse.c,v 1.59 2001/01/14 05:34:06 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -126,7 +126,7 @@ typedef struct {
     char *ptr;
 } PTR;
 
-static char    	    *fname;	/* name of current file (for errors) */
+static char        *fname;	/* name of current file (for errors) */
 static int          lineno;	/* line number in current file */
 static FILE   	    *curFILE = NULL; 	/* current makefile */
 
@@ -275,6 +275,7 @@ static int ParseEOF __P((int));
 static char *ParseReadLine __P((void));
 static char *ParseSkipLine __P((int));
 static void ParseFinishLine __P((void));
+static void ParseMark __P((GNode *));
 
 extern int  maxJobs;
 
@@ -1594,12 +1595,16 @@ ParseAddCmd(gnp, cmd)
     /* if target already supplied, ignore commands */
     if ((gn->type & OP_DOUBLEDEP) && !Lst_IsEmpty (gn->cohorts))
 	gn = (GNode *) Lst_Datum (Lst_Last (gn->cohorts));
-    if (!(gn->type & OP_HAS_COMMANDS))
+    if (!(gn->type & OP_HAS_COMMANDS)) {
 	(void)Lst_AtEnd(gn->commands, cmd);
-    else
+	ParseMark(gn);
+    } else {
+	(void)Lst_AtEnd(gn->commands, cmd);
 	Parse_Error (PARSE_WARNING,
-		     "duplicate script for target \"%s\" ignored",
-		     gn->name);
+		     "overriding commands for target \"%s\" ignored; "
+		     "previous commands defined at %s: %d",
+		     gn->name, gn->fname, gn->lineno);
+    }
     return(0);
 }
 
@@ -2766,4 +2771,23 @@ Parse_MainName()
     else
 	(void) Lst_AtEnd (mainList, (ClientData)mainNode);
     return (mainList);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * ParseMark --
+ *	Add the filename and lineno to the GNode so that we remember
+ *	where it was first defined.
+ *
+ * Side Effects:
+ *	None.
+ *
+ *-----------------------------------------------------------------------
+ */
+static void
+ParseMark(gn)
+    GNode *gn;
+{
+    gn->fname = strdup(fname);
+    gn->lineno = lineno;
 }
