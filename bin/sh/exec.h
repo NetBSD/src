@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.12 1997/02/06 23:24:53 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.13 1997/07/20 21:27:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,9 @@ struct cmdentry {
 	} u;
 };
 
+
+#define DO_ERR	1		/* find_command prints errors */
+#define DO_ABS	2		/* find_command checks absolute paths */
 
 extern char *pathopt;		/* set by padvance */
 extern int exerrno;		/* last exec error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.23 1997/07/04 21:01:59 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.24 1997/07/20 21:27:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.23 1997/07/04 21:01:59 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.24 1997/07/20 21:27:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -359,7 +359,7 @@ hashcmd(argc, argv)
 		 && (cmdp->cmdtype == CMDNORMAL
 		     || (cmdp->cmdtype == CMDBUILTIN && builtinloc >= 0)))
 			delete_cmd_entry();
-		find_command(name, &entry, 1, pathval());
+		find_command(name, &entry, DO_ERR, pathval());
 		if (verbose) {
 			if (entry.cmdtype != CMDUNKNOWN) {	/* if no error msg */
 				cmdp = cmdlookup(name, 0);
@@ -420,10 +420,10 @@ printentry(cmdp, verbose)
  */
 
 void
-find_command(name, entry, printerr, path)
+find_command(name, entry, act, path)
 	char *name;
 	struct cmdentry *entry;
-	int printerr;
+	int act;
 	char *path;
 {
 	struct tblentry *cmdp;
@@ -436,6 +436,22 @@ find_command(name, entry, printerr, path)
 
 	/* If name contains a slash, don't use the hash table */
 	if (strchr(name, '/') != NULL) {
+		if (act & DO_ABS) {
+			while (stat(name, &statb) < 0) {
+	#ifdef SYSV
+				if (errno == EINTR)
+					continue;
+	#endif
+				if (errno != ENOENT && errno != ENOTDIR)
+					e = errno;
+				entry->cmdtype = CMDUNKNOWN;
+				entry->u.index = -1;
+				return;
+			}
+			entry->cmdtype = CMDNORMAL;
+			entry->u.index = -1;
+			return;
+		}
 		entry->cmdtype = CMDNORMAL;
 		entry->u.index = 0;
 		return;
@@ -537,7 +553,7 @@ loop:
 	/* We failed.  If there was an entry for this command, delete it */
 	if (cmdp)
 		delete_cmd_entry();
-	if (printerr)
+	if (act & DO_ERR)
 		outfmt(out2, "%s: %s\n", name, errmsg(e, E_EXEC));
 	entry->cmdtype = CMDUNKNOWN;
 	return;
@@ -888,17 +904,21 @@ typecmd(argc, argv)
 		}
 		else {
 			/* Finally use brute force */
-			find_command(argv[i], &entry, 0, pathval());
+			find_command(argv[i], &entry, DO_ABS, pathval());
 		}
 
 		switch (entry.cmdtype) {
 		case CMDNORMAL: {
 			int j = entry.u.index;
 			char *path = pathval(), *name;
-			do { 
-				name = padvance(&path, argv[i]);
-				stunalloc(name);
-			} while (--j >= 0);
+			if (j == -1) 
+				name = argv[i];
+			else {
+				do { 
+					name = padvance(&path, argv[i]);
+					stunalloc(name);
+				} while (--j >= 0);
+			}
 			out1fmt(" is%s %s\n",
 			    cmdp ? " a tracked alias for" : "", name);
 			break;
