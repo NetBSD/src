@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.142 2001/10/18 17:44:32 uch Exp $
+.\"	$NetBSD: main,v 1.143 2001/11/15 12:16:37 someya Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1627,6 +1627,7 @@ them, and would like to mentioned, tell us!)
 .It Ta Chuck Silvers Ta Mt chs@netbsd.org
 .It Ta Thor Lancelot Simon Ta Mt tls@netbsd.org
 .It Ta Jeff Smith Ta Mt jeffs@netbsd.org
+.It Ta SOMEYA Yoshihiko Ta Mt someya@netbsd.org
 .It Ta Bill Sommerfeld Ta Mt sommerfeld@netbsd.org
 .It Ta Bill Squier Ta Mt groo@netbsd.org
 .It Ta Bill Studenmund Ta Mt wrstuden@netbsd.org
