@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.184 1999/12/16 07:08:10 lukem Exp $
+# $NetBSD: mi,v 1.185 1999/12/20 05:50:47 itojun Exp $
 ./usr/share/info/am-utils.info
 ./usr/share/info/awk.info
 ./usr/share/info/bfd.info
@@ -400,6 +400,7 @@
 ./usr/share/man/cat4/gus.0
 ./usr/share/man/cat4/guspnp.0
 ./usr/share/man/cat4/icmp.0
+./usr/share/man/cat4/icmp6.0
 ./usr/share/man/cat4/icsphy.0
 ./usr/share/man/cat4/idp.0
 ./usr/share/man/cat4/ifmedia.0
@@ -408,6 +409,7 @@
 ./usr/share/man/cat4/inphy.0
 ./usr/share/man/cat4/iophy.0
 ./usr/share/man/cat4/ip.0
+./usr/share/man/cat4/ip6.0
 ./usr/share/man/cat4/ipf.0
 ./usr/share/man/cat4/ipfilter.0
 ./usr/share/man/cat4/ipip.0
