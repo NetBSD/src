@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.28 2004/07/21 01:37:57 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.29 2004/07/25 07:54:54 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.28 2004/07/21 01:37:57 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.29 2004/07/25 07:54:54 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/signal.h>
 #include <sys/mount.h> 
@@ -78,6 +79,7 @@ static void darwin_fill_kproc(struct proc *, struct darwin_kinfo_proc *);
 static void native_to_darwin_pflag(int *, int);
 static int darwin_sysctl_procargs(SYSCTLFN_PROTO);
 static int darwin_sysctl_net(SYSCTLFN_PROTO);
+static int darwin_sysctl_kdebug(SYSCTLFN_PROTO);
 
 static struct sysctlnode darwin_sysctl_root = {
 	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_ROOT|CTLTYPE_NODE,
@@ -225,6 +227,11 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 		       CTLTYPE_INT, "maxpartitions", NULL,
 		       darwin_sysctl_redispatch, 0, NULL, 0,
 		       DARWIN_CTL_KERN, DARWIN_KERN_MAXPARTITIONS, CTL_EOL);
+	sysctl_createv(clog, 0, &_root, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "kdebug", NULL,
+		       darwin_sysctl_kdebug, 0, NULL, 0,
+		       DARWIN_CTL_KERN, DARWIN_KERN_KDEBUG, CTL_EOL);
 
 	sysctl_createv(clog, 0, &_root, NULL,
 		       CTLFLAG_PERMANENT,
@@ -452,6 +459,83 @@ darwin_sys_getpid(l, v, retval)
 	else
 		*retval = p->p_pid;
 
+	return 0;
+}
+
+#define DARWIN_ENTROPYMAX	65536
+static int
+darwin_sysctl_kdebug(SYSCTLFN_ARGS) 
+{
+	if (namelen < 1)
+		return EINVAL;
+
+	switch (name[0]) {
+	/*
+	 * Get random dates between now and mstimeout (miliseconds)
+	 */
+	case DARWIN_KERN_KDGETENTROPY: {
+		int count;
+		int mstimeout;
+		int error;
+		struct timespec *buf;
+		struct timeval now, last, timeout;
+		unsigned long long lnow, ltimeout;
+		int i;
+
+		if (namelen != 2)
+			return EINVAL;
+
+		if (name[1] < 10)
+			mstimeout = 10;
+		else
+			mstimeout = name[1];
+
+		if (*oldlenp > DARWIN_ENTROPYMAX)
+			return ENOMEM;
+
+		count = *oldlenp;
+
+		buf = malloc(sizeof(*buf) * count, M_TEMP, M_ZERO|M_WAITOK);
+
+		microtime(&now);
+		last.tv_sec = now.tv_sec;
+		last.tv_usec = now.tv_usec;
+		timeout.tv_sec = mstimeout / 1000;
+		timeout.tv_usec = (mstimeout % 1000) * 1000;
+		lnow = (now.tv_sec * 1000000) + now.tv_usec;
+		ltimeout = (timeout.tv_sec * 1000000) + timeout.tv_usec;
+		
+		for (i = 0; i < count; i++) {
+			unsigned long long rnd = random();
+			struct timeval item, new;
+
+			rnd *= (ltimeout / count);
+			rnd >>= 32;
+
+			item.tv_sec = rnd / 1000;
+			item.tv_usec = rnd % 1000;
+			
+			timeradd(&last, &item, &new);
+			TIMEVAL_TO_TIMESPEC(&new, &buf[i]);
+
+			last.tv_sec = new.tv_sec;
+			last.tv_usec = new.tv_usec;
+		}
+
+		tsleep(&timeout, PZERO|PCATCH, "darwin_entropy", 
+			(mstimeout * hz / 1000));
+
+		error = copyout(buf, oldp, sizeof(*buf) * count);
+		free(buf, M_TEMP);
+		return error;
+
+		break;
+	}
+
+	default:
+		return EINVAL;
+		break;
+	} 
 	return 0;
 }
 
