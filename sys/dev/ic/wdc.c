@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.166 2004/01/01 20:25:22 thorpej Exp $ */
+/*	$NetBSD: wdc.c,v 1.167 2004/01/01 21:18:28 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.166 2004/01/01 20:25:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.167 2004/01/01 21:18:28 thorpej Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -143,15 +143,14 @@ const struct ata_bustype wdc_ata_bustype = {
 };
 #endif
 
-int wdcprobe1 __P((struct channel_softc*, int));
-static void  __wdcerror	  __P((struct channel_softc*, char *));
-static int   __wdcwait_reset  __P((struct channel_softc *, int, int));
-void  __wdccommand_done __P((struct channel_softc *, struct ata_xfer *));
-void  __wdccommand_start __P((struct channel_softc *, struct ata_xfer *));	
-int   __wdccommand_intr __P((struct channel_softc *, struct ata_xfer *, int));
-int   __wdcwait __P((struct channel_softc *, int, int, int));
-void wdc_finish_attach __P((struct device *));
-void wdc_channel_attach __P((struct channel_softc *));
+static int	wdcprobe1(struct channel_softc*, int);
+static void	__wdcerror(struct channel_softc*, char *);
+static int	__wdcwait_reset(struct channel_softc *, int, int);
+static void	__wdccommand_done(struct channel_softc *, struct ata_xfer *);
+static void	__wdccommand_start(struct channel_softc *, struct ata_xfer *);
+static int	__wdccommand_intr(struct channel_softc *, struct ata_xfer *,
+				  int);
+static int	__wdcwait(struct channel_softc *, int, int, int);
 
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
@@ -471,7 +470,7 @@ wdcprobe(struct channel_softc *chp)
 	return (wdcprobe1(chp, 1));
 }
 
-int
+static int
 wdcprobe1(struct channel_softc *chp, int poll)
 {
 	u_int8_t st0, st1, sc, sn, cl, ch;
@@ -528,8 +527,8 @@ wdcprobe1(struct channel_softc *chp, int poll)
 			if (bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_cyl_lo], 0) != 0x01)
 				ret_value &= ~0x01;
-			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sector],
-			    0, 0x01);
+			bus_space_write_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0, 0x01);
 			if (bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0) != 0x01)
 				ret_value &= ~0x01;
@@ -548,8 +547,8 @@ wdcprobe1(struct channel_softc *chp, int poll)
 			     chp->wdc->select(chp,1);
 			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sdh],
 			     0, WDSD_IBM | 0x10);
-			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_cyl_lo],
-			    0, 0x02);
+			bus_space_write_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_cyl_lo], 0, 0x02);
 			if (bus_space_read_1(chp->cmd_iot,
 			     chp->cmd_iohs[wd_cyl_lo], 0) != 0x02)
 				ret_value &= ~0x02;
@@ -563,8 +562,8 @@ wdcprobe1(struct channel_softc *chp, int poll)
 			if (bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0) != 0x01)
 				ret_value &= ~0x02;
-			bus_space_write_1(chp->cmd_iot, chp->cmd_iohs[wd_sector],
-			    0, 0x02);
+			bus_space_write_1(chp->cmd_iot,
+			    chp->cmd_iohs[wd_sector], 0, 0x02);
 			if (bus_space_read_1(chp->cmd_iot,
 			    chp->cmd_iohs[wd_sector], 0) != 0x02)
 				ret_value &= ~0x02;
@@ -605,10 +604,10 @@ wdcprobe1(struct channel_softc *chp, int poll)
 		return 0;
 
 	/*
-	 * Test presence of drives. First test register signatures looking for
-	 * ATAPI devices. If it's not an ATAPI and reset said there may be
-	 * something here assume it's ATA or OLD. Ghost will be killed later in
-	 * attach routine.
+	 * Test presence of drives. First test register signatures looking
+	 * for ATAPI devices. If it's not an ATAPI and reset said there may
+	 * be something here assume it's ATA or OLD.  Ghost will be killed
+	 * later in attach routine.
 	 */
 	for (drive = 0; drive < 2; drive++) {
 		if ((ret_value & (0x01 << drive)) == 0)
@@ -997,7 +996,7 @@ end:
  * Wait for a drive to be !BSY, and have mask in its status register.
  * return -1 for a timeout after "timeout" ms.
  */
-int
+static int
 __wdcwait(struct channel_softc *chp, int mask, int bits, int timeout)
 {
 	u_char status;
@@ -1491,7 +1490,7 @@ wdc_exec_command(struct ata_drive_datas *drvp, struct wdc_command *wdc_c)
 	return ret;
 }
 
-void
+static void
 __wdccommand_start(struct channel_softc *chp, struct ata_xfer *xfer)
 {   
 	int drive = xfer->c_drive;
@@ -1538,7 +1537,7 @@ __wdccommand_start(struct channel_softc *chp, struct ata_xfer *xfer)
 	__wdccommand_intr(chp, xfer, 0);
 }
 
-int
+static int
 __wdccommand_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
 {
 	struct wdc_command *wdc_c = xfer->c_cmd;
@@ -1636,7 +1635,7 @@ __wdccommand_intr(struct channel_softc *chp, struct ata_xfer *xfer, int irq)
 	return 1;
 }
 
-void
+static void
 __wdccommand_done(struct channel_softc *chp, struct ata_xfer *xfer)
 {
 	struct wdc_command *wdc_c = xfer->c_cmd;
