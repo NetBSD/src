@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2001/11/04 23:14:35 atatat Exp $	
+#	$NetBSD: Makefile,v 1.13 2003/05/15 14:34:39 itojun Exp $	
 
 PROG=	traceroute
 MAN=	traceroute.8 
@@ -14,7 +14,7 @@ DPADD+=	${LIBIPSEC}
 BINOWN= root
 BINMODE=4555
 
-SRCS=	traceroute.c savestr.c ifaddrlist.c 
+SRCS=	traceroute.c ifaddrlist.c 
 SRCS+= version.c as.c
 
 AWKS=	median.awk mean.awk 
