@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.22 1998/05/14 07:44:09 tron Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.23 1999/06/25 19:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.22 1998/05/14 07:44:09 tron Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.23 1999/06/25 19:28:37 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -205,7 +205,7 @@ main(argc, argv)
 	struct nfs_args nfsargs;
 	struct nfsd_cargs ncd;
 	int mntflags, altflags, i, nfssvc_flag, num;
-	char *name, *p, *spec;
+	char *name, *p, *spec, *ospec;
 #ifdef NFSKERB
 	uid_t last_ruid;
 
@@ -431,11 +431,14 @@ main(argc, argv)
 
 	spec = *argv++;
 	name = *argv;
+	if((ospec = strdup(spec))==NULL) {
+		err(1,"strdup");
+	}
 
 	if (!getnfsargs(spec, nfsargsp))
 		exit(1);
 	if (mount(MOUNT_NFS, name, mntflags, nfsargsp))
-		err(1, "%s", name);
+		err(1, "%s on %s", ospec, name);
 	if (nfsargsp->flags & (NFSMNT_NQNFS | NFSMNT_KERB)) {
 		if ((opflags & ISBGRND) == 0) {
 			if ((i = fork()) != 0) {

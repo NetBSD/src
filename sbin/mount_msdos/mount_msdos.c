@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_msdos.c,v 1.19 1998/03/01 02:20:45 fvdl Exp $	*/
+/*	$NetBSD: mount_msdos.c,v 1.20 1999/06/25 19:28:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_msdos.c,v 1.19 1998/03/01 02:20:45 fvdl Exp $");
+__RCSID("$NetBSD: mount_msdos.c,v 1.20 1999/06/25 19:28:36 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -146,7 +146,7 @@ main(argc, argv)
 	}
 
 	if (mount(MOUNT_MSDOS, dir, mntflags, &args) < 0)
-		err(1, "mount");
+		err(1, "%s on %s", dev, dir);
 
 	exit (0);
 }
