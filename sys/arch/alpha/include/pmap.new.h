@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.new.h,v 1.4 1997/04/06 08:47:34 cgd Exp $ */
+/* $NetBSD: pmap.new.h,v 1.5 1997/05/16 21:35:30 gwr Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1996 Carnegie Mellon University
@@ -357,5 +357,7 @@ pt_entry_t	*pmap_pte(pmap_t, vm_offset_t);
  *	Data structures this module exports
  */
 extern pmap_t		kernel_pmap;	/* pointer to the kernel pmap	*/
+
+#define	__VM_PMAP_HACK
 
 #endif	_PMAP_MACHINE_

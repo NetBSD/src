@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.5 1997/01/26 01:34:45 mark Exp $ */
+/* $NetBSD: pmap.h,v 1.6 1997/05/16 21:35:34 gwr Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -127,6 +127,9 @@ pmap_phys_address(int ppn)
 }
 
 #endif	/* _KERNEL */
+
+#define	__VM_PMAP_HACK
+
 #endif	/* _ARM32_PMAP_H_ */
 
 /* End of pmap.h */

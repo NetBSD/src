@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2 1997/05/16 21:35:41 gwr Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -74,4 +74,7 @@ void pmap_bootstrap __P((u_int kernelstart, u_int kernelend));
 
 #endif	/* _KERNEL */
 #endif	/* _LOCORE */
+
+#define	__VM_PMAP_HACK
+
 #endif	/* _MACHINE_PMAP_H_ */
