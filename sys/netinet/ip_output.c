@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.33 1996/10/11 18:19:08 is Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.34 1996/10/22 11:27:07 veego Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -308,9 +308,10 @@ ip_output(m0, va_alist)
 		if (pfh->pfil_func) {
 		    	if (pfh->pfil_func(ip, hlen, m->m_pkthdr.rcvif, 1, &m1)) {
 				error = EHOSTUNREACH;
-				goto bad;
+				goto done;
+			} else {
+				ip = mtod(m = m1, struct ip *);
 			}
-			ip = mtod(m = m1, struct ip *);
 		}
 #endif /* PFIL_HOOKS */
 sendit:
