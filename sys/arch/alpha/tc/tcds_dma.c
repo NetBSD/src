@@ -1,4 +1,4 @@
-/*	$NetBSD: tcds_dma.c,v 1.10 1996/09/09 18:10:39 cgd Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.11 1996/09/15 17:16:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -241,7 +241,7 @@ tcds_dma_setup(sc, addr, len, datain, dmasize)
 	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
 		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
 	} else {
-		*sc->sc_sda = k0segtophys((u_long)*addr) >> 2;
+		*sc->sc_sda = ALPHA_K0SEG_TO_PHYS((u_long)*addr) >> 2;
 	}
 	alpha_mb();
 	dic = *sc->sc_dic;
