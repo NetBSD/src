@@ -1,4 +1,4 @@
-#	$NetBSD: TDR,v 1.22 1994/12/07 14:46:04 deraadt Exp $
+#	$NetBSD: SUN4C,v 1.1 1994/12/07 14:46:00 deraadt Exp $
 
 # Kernel for Theo's wimpy sparcstation IPC
 
@@ -87,7 +87,6 @@ cgsix* at sbus? slot ? offset ?
 
 scsibus* at esp?
 
-# drives here, drives there...
 sd*	at scsibus? target ? drive ?
 st*	at scsibus? target ? drive ?
 cd*	at scsibus? target ? drive ?

@@ -1,16 +1,14 @@
-#	$NetBSD: TDR,v 1.22 1994/12/07 14:46:04 deraadt Exp $
-
-# Kernel for Theo's wimpy sparcstation IPC
+#	$NetBSD: SUN4M,v 1.1 1994/12/07 14:46:01 deraadt Exp $
 
 machine		sparc
-options		"SUN4C"
+options		"SUN4M", "SUN4C"
 
 # obsolete timezone spec
 options		TIMEZONE=0, DST=0
 
 # Standard system options
 options		SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
-#options	DEBUG, DIAGNOSTIC	# extra kernel debugging
+options		DEBUG, DIAGNOSTIC	# extra kernel debugging
 options		KTRACE			# system call tracing support
 #options	KGDB			# support for kernel gdb
 #options	KGDBDEV=0xc01, KGDBRATE=38400	# device & baud rate
@@ -22,7 +20,7 @@ options		"COMPAT_09", "COMPAT_10"
 options		FFS
 options		NFSSERVER	# Sun NFS-compatible filesystem
 options		NFSCLIENT	# Sun NFS-compatible filesystem
-options		KERNFS		# kernel data-structure filesystem
+#options	KERNFS		# kernel data-structure filesystem
 #options	FIFO		# POSIX fifo support (in all filesystems)
 #options	QUOTA		# fast filesystem with user and group quotas
 #options	MFS		# memory-based filesystem
@@ -68,13 +66,6 @@ espdma*	at sbus0 slot ? offset ?
 esp0	at espdma? slot ? offset ?
 esp*	at espdma? slot ? offset ?
 
-# old sun4c SCSI
-dma0	at sbus0 slot ? offset ?
-dma*	at sbus0 slot ? offset ?
-esp0	at sbus0 slot ? offset ?
-esp*	at sbus0 slot ? offset ?
-
-# old sun4c
 le0	at sbus? slot ? offset ?
 le*	at sbus? slot ? offset ?
 
