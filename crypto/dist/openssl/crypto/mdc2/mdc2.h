@@ -65,6 +65,7 @@
 extern "C" {
 #endif
 
+
 #define MDC2_BLOCK              8
 #define MDC2_DIGEST_LENGTH      16
  
