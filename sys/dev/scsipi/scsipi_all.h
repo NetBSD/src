@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_all.h,v 1.12.8.1 1999/10/19 17:39:35 thorpej Exp $	*/
+/*	$NetBSD: scsipi_all.h,v 1.12.8.2 2000/11/20 09:59:26 bouyer Exp $	*/
 
 /*
  * SCSI and SCSI-like general interface description
@@ -154,13 +154,12 @@ struct scsipi_sense_data_unextended {
 #define	T_FIXED		0	/* device is not removable */
 
 /*
- * XXX
- * Actually I think some SCSI driver expects this structure to be 32 bytes, so
- * don't change it unless you really know what you are doing
+ * According to SPC-2r16, in order to know if a U3W device support PPR,
+ * Inquiry Data structure should be at least 57 Bytes
  */
 
 struct scsipi_inquiry_data {
-	u_int8_t device;
+/* 1*/	u_int8_t device;
 #define	SID_TYPE		0x1f	/* device type mask */
 #define	SID_QUAL		0xe0	/* device qualifier mask */
 #define	SID_QUAL_LU_PRESENT	0x00	/* logical unit present */
@@ -178,29 +177,40 @@ struct scsipi_inquiry_data {
 #define	T_OPTICAL 		0x07	/* optical memory device */
 #define	T_CHANGER		0x08	/* medium changer device */
 #define	T_COMM			0x09	/* communication device */
-#define	T_IT8_1			0x0a	/* ??? */
-#define	T_IT8_2			0x0b	/* ??? */
+#define	T_IT8_1			0x0a	/* Defined by ASC IT8... */
+#define	T_IT8_2			0x0b	/* ...(Graphic arts pre-press devices) */
 #define	T_STORARRAY		0x0c	/* storage array device */
 #define	T_ENCLOSURE		0x0d	/* enclosure services device */
+#define	T_SIMPLE_DIRECT		0x0E	/* Simplified direct-access device */
+#define	T_OPTIC_CARD_RW		0x0F	/* Optical card reader/writer device */
+#define	T_OBJECT_STORED		0x11	/* Object-based Storage Device */
 #define	T_NODEVICE		0x1f
 
 	u_int8_t dev_qual2;
 #define	SID_QUAL2		0x7F
 #define	SID_REMOVABLE		0x80
 
-	u_int8_t version;
+/* 3*/	u_int8_t version;
 #define	SID_ANSII	0x07
 #define	SID_ECMA	0x38
 #define	SID_ISO		0xC0
 
-	u_int8_t response_format;
+/* 4*/	u_int8_t response_format;
+#define	SID_RespDataFmt	0x0F
 #define	SID_FORMAT_SCSI1	0x00	/* SCSI-1 format */
 #define	SID_FORMAT_CCS		0x01	/* SCSI CCS format */
 #define	SID_FORMAT_ISO		0x02	/* ISO format */
 
-	u_int8_t additional_length;
-	u_int8_t unused[2];
-	u_int8_t flags;
+/* 5*/	u_int8_t additional_length;	/* n-4 */
+/* 6*/	u_int8_t flags1;
+#define	SID_SCC		0x80
+/* 7*/	u_int8_t flags2;
+#define	SID_Addr16	0x01
+#define SID_MChngr	0x08
+#define	SID_MultiPort	0x10
+#define	SID_EncServ	0x40
+#define	SID_BasQue	0x80
+/* 8*/	u_int8_t flags3;
 #define	SID_SftRe	0x01
 #define	SID_CmdQue	0x02
 #define	SID_Linked	0x08
@@ -208,11 +218,19 @@ struct scsipi_inquiry_data {
 #define	SID_WBus16	0x20
 #define	SID_WBus32	0x40
 #define	SID_RelAdr	0x80
-
-	char	vendor[8];
-	char	product[16];
-	char	revision[4];
-	u_int8_t extra[8];
-};
+/* 9*/	char    vendor[8];
+/*17*/	char    product[16];
+/*33*/	char    revision[4];
+/*37*/	u_int8_t vendor_specific[20];
+/*57*/	u_int8_t flags4;
+#define        SID_IUS         0x01
+#define        SID_QAS         0x02
+#define        SID_Clocking    0x0C
+#define	SID_CLOCKING_ST_ONLY  0x00
+#define	SID_CLOCKING_DT_ONLY  0x04
+#define	SID_CLOCKING_SD_DT    0x0C
+/*58*/	u_int8_t reserved;
+/*59*/	char    version_descriptor[8][2];
+}; /* 74 Bytes */
 
 #endif /* _DEV_SCSIPI_SCSIPI_ALL_H_ */

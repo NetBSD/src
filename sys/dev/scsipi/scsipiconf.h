@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.7 2000/02/04 23:01:55 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.8 2000/11/20 09:59:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,8 +59,8 @@
 
 typedef	int	boolean;
 
+#include <sys/callout.h>
 #include <sys/queue.h>
-#include <machine/cpu.h>
 #include <dev/scsipi/scsipi_debug.h>
 
 struct buf;
@@ -172,6 +172,8 @@ struct scsipi_periphsw {
 	void	(*psw_done) __P((struct scsipi_xfer *));
 };
 
+struct disk_parms;
+struct scsipi_inquiry_pattern;
 
 /*
  * scsipi_adapter:
@@ -200,6 +202,10 @@ struct scsipi_adapter {
 	int	(*adapt_ioctl) __P((struct scsipi_channel *, u_long,
 		    caddr_t, int, struct proc *));
 	int	(*adapt_enable) __P((struct device *, int));
+	int	(*adapt_getgeom) __P((struct scsipi_periph *,
+			struct disk_parms *, u_long));
+	int	(*adapt_accesschk) __P((struct scsipi_periph *,
+			struct scsipi_inquiry_pattern *));
 };
 
 #define	scsipi_adapter_minphys(chan, bp)				\
@@ -244,6 +250,11 @@ struct scsipi_bustype {
  *	regarding the resource counter.
  */
 struct scsipi_channel {
+	int type; /* XXX will die, compat with ata_atapi_attach for umass */
+#define BUS_SCSI                0
+#define BUS_ATAPI               1
+/*define BUS_ATA                2*/
+
 	struct scsipi_adapter *chan_adapter; /* pointer to our adapter */
 
 	const struct scsipi_bustype *chan_bustype; /* channel's bus type */
@@ -265,6 +276,8 @@ struct scsipi_channel {
 	int	chan_nluns;		/* number of luns */
 	int	chan_id;		/* adapter's ID for this channel */
 
+	int	chan_defquirks;		/* default device's quirks */
+
 	struct proc *chan_thread;	/* completion thread */
 
 	int	chan_qfreeze;		/* freeze count for queue */
@@ -285,18 +298,6 @@ struct scsipi_channel {
 	(((chan)->chan_flags & SCSIPI_CHAN_OPENINGS) ?			\
 	 (chan)->chan_max_periph : (chan)->chan_adapter->adapt_max_periph)
 
-
-/*
- * Macro to issue a SCSIPI command.  Treat it like a function:
- *
- *	int scsipi_periph_command __P((struct scsipi_periph *periph,
- *	    struct scsipi_generic *cmd, int cmdlen,
- *	    void *data, size_t datalen, int retries,
- *	    int timeout, struct buf *bp, int flags));
- */
-#define	scsipi_command(p, c, cl, da, dl, r, t, b, f)			\
-	(*(p)->periph_channel->chan_bustype->bustype_cmd)((p), (c),	\
-	    (cl), (da), (dl), (r), (t), (b), (f))
 
 #define	scsipi_printaddr(periph)					\
 	(*(periph)->periph_channel->chan_bustype->bustype_printaddr)((periph))
@@ -361,6 +362,7 @@ struct scsipi_periph {
 
 	/* Pending scsipi_xfers on this peripherial. */
 	struct scsipi_xfer_queue periph_xferq;
+	struct callout periph_callout;
 };
 
 /*
@@ -394,6 +396,7 @@ struct scsipi_periph {
 #define	PERIPH_MODE_VALID	0x0040	/* periph_mode is valid */
 #define	PERIPH_RECOVERING	0x0080	/* periph is recovering */
 #define	PERIPH_RECOVERY_ACTIVE	0x0100	/* a recovery command is active */
+#define PERIPH_KEEP_LABEL	0x0200	/* retain label after 'full' close */
 
 /* periph_quirks */
 #define	PQUIRK_AUTOSAVE		0x00000001	/* do implicit SAVE POINTERS */
@@ -414,6 +417,7 @@ struct scsipi_periph {
 #define	PQUIRK_NOTUR		0x00001000	/* no TEST UNIT READY */
 #define	PQUIRK_NODOORLOCK	0x00002000	/* can't lock door */
 #define	PQUIRK_NOSENSE		0x00004000	/* can't REQUSET SENSE */
+#define PQUIRK_ONLYBIG		0x00008000	/* only use SCSI_{R,W}_BIG */
 
 
 /*
@@ -449,6 +453,7 @@ typedef enum {
 struct scsipi_xfer {
 	TAILQ_ENTRY(scsipi_xfer) channel_q; /* entry on channel queue */
 	TAILQ_ENTRY(scsipi_xfer) device_q;  /* device's pending xfers */
+	struct callout xs_callout;	/* callout for adapter use */
 	int	xs_control;		/* control flags */
 	__volatile int xs_status;	/* status flags */
 	struct scsipi_periph *xs_periph;/* peripherial doing the xfer */
@@ -521,6 +526,7 @@ struct scsipi_xfer {
 #define	XS_CTL_HEAD_TAG		0x00040000	/* use a Head of Queue Tag */
 #define	XS_CTL_THAW_PERIPH	0x00080000	/* thaw periph once enqueued */
 #define	XS_CTL_FREEZE_PERIPH	0x00100000	/* freeze periph when done */
+#define XS_CTL_DATA_ONSTACK	0x00200000	/* data is alloc'ed on stack */
 
 #define	XS_CTL_TAGMASK	(XS_CTL_SIMPLE_TAG|XS_CTL_ORDERED_TAG|XS_CTL_HEAD_TAG)
 
@@ -530,6 +536,7 @@ struct scsipi_xfer {
  * scsipi_xfer status flags
  */
 #define	XS_STS_DONE		0x00000001	/* scsipi_xfer is done */
+#define	XS_STS_PRIVATE		0xf0000000	/* reserved for HBA's use */
 
 /*
  * This describes matching information for scsipi_inqmatch().  The more things
@@ -550,6 +557,7 @@ struct scsipi_inquiry_pattern {
 struct scsipibus_attach_args {
 	struct scsipi_periph *sa_periph;
 	struct scsipi_inquiry_pattern sa_inqbuf;
+	struct scsipi_inquiry_data *sa_inqptr;
 	union {				/* bus-type specific infos */
 		u_int8_t scsi_version;	/* SCSI version */
 	} scsipi_info;
@@ -563,8 +571,17 @@ struct scsi_quirk_inquiry_pattern {
 	int quirks;
 };
 
+/*
+ * Default number of retries, used for generic routines.
+ */
+#define SCSIPIRETRIES 4
+
+
 #ifdef _KERNEL
 void	scsipi_init __P((void));
+int	scsipi_command __P((struct scsipi_periph *,
+	    struct scsipi_generic *, int, u_char *, int,
+	    int, int, struct buf *, int));
 void	scsipi_create_completion_thread __P((void *));
 caddr_t	scsipi_inqmatch __P((struct scsipi_inquiry_pattern *, caddr_t,
 	    int, int, int *));
@@ -582,6 +599,7 @@ void	scsipi_user_done __P((struct scsipi_xfer *));
 int	scsipi_interpret_sense __P((struct scsipi_xfer *));
 void	scsipi_wait_drain __P((struct scsipi_periph *));
 void	scsipi_kill_pending __P((struct scsipi_periph *));
+struct scsipi_periph *scsipi_alloc_periph __P((int));
 #ifdef SCSIVERBOSE
 void	scsipi_print_sense __P((struct scsipi_xfer *, int));
 void	scsipi_print_sense_data __P((struct scsipi_sense_data *, int));
@@ -690,7 +708,7 @@ static __inline u_int32_t
 _2btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 8) |
 	     bytes[1];
@@ -701,7 +719,7 @@ static __inline u_int32_t
 _3btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 16) |
 	     (bytes[1] << 8) |
@@ -713,7 +731,7 @@ static __inline u_int32_t
 _4btol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = (bytes[0] << 24) |
 	     (bytes[1] << 16) |
@@ -759,7 +777,7 @@ static __inline u_int32_t
 _2ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8);
@@ -770,7 +788,7 @@ static __inline u_int32_t
 _3ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |
@@ -782,7 +800,7 @@ static __inline u_int32_t
 _4ltol(bytes)
 	const u_int8_t *bytes;
 {
-	register u_int32_t rv;
+	u_int32_t rv;
 
 	rv = bytes[0] |
 	     (bytes[1] << 8) |

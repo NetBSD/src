@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.40.2.1 1999/10/19 17:39:30 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.40.2.2 2000/11/20 09:59:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -135,7 +135,7 @@ int	ch_ousergetelemstatus __P((struct ch_softc *, int, u_int8_t *));
 int	ch_usergetelemstatus __P((struct ch_softc *,
 	    struct changer_element_status_request *));
 int	ch_getelemstatus __P((struct ch_softc *, int, int, void *,
-	    size_t, int));
+	    size_t, int, int));
 int	ch_setvoltag __P((struct ch_softc *,
 	    struct changer_set_voltag_request *));
 int	ch_get_params __P((struct ch_softc *, int));
@@ -408,6 +408,9 @@ chioctl(dev, cmd, data, flags, p)
 
 	case CHIOIELEM:
 		error = ch_ielem(sc);
+		if (error == 0) {
+			sc->sc_periph->periph_flags |= PERIPH_MEDIA_LOADED;
+		}
 		break;
 
 	case OCHIOGSTATUS:
@@ -470,62 +473,55 @@ ch_interpret_sense(xs)
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
 	struct ch_softc *sc = (void *)periph->periph_dev;
-	int s, error, retval = EJUSTRETURN;
+	u_int16_t asc_ascq;
 
 	/*
 	 * If the periph is already recovering, just do the
 	 * normal error recovering.
 	 */
 	if (periph->periph_flags & PERIPH_RECOVERING)
-		return (retval);
+		return (EJUSTRETURN);
 
 	/*
-	 * If it isn't an extended or extended/defered error, let
+	 * If it isn't an extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
 	    (sense->error_code & SSD_ERRCODE) != 0x71)
-		return (retval);
+		return (EJUSTRETURN);
 
-	if ((sense->flags & SSD_KEY) == SKEY_UNIT_ATTENTION) {
+	/*
+	 * We're only interested in condtions that
+	 * indicate potential inventory violation.
+	 *
+	 * We use ASC/ASCQ codes for this.
+	 */
+
+	asc_ascq = (((u_int16_t) sense->add_sense_code) << 8) |
+	    sense->add_sense_code_qual;
+
+	switch (asc_ascq) {
+	case 0x2800:
+		/* "Not Ready To Ready Transition (Medium May Have Changed)" */
+	case 0x2900:
+		/* "Power On, Reset, or Bus Device Reset Occurred" */
+		sc->sc_periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 		/*
-		 * The element status has possibly changed, usually because
-		 * an operator has opened the door.  We need to initialize
-		 * the element status.  If we haven't gotten our params yet,
-		 * then we are about to (we are getting here via chopen()).
-		 * Just notify ch_get_params() that we need to do an
-		 * Init-Element-Status.  Otherwise, we need to call
-		 * ch_get_params() ourselves.
+		 * Enqueue an Element-Status-Changed event, and
+		 * wake up any processes waiting for them.
 		 */
-		s = splbio();
-		periph->periph_flags |= PERIPH_RECOVERING;
-		splx(s);
-		retval = ERESTART;
-		if (periph->periph_flags & PERIPH_MEDIA_LOADED) {
-			periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
-			if ((xs->xs_control &
-			     XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
-				error = ch_get_params(sc,
-				    XS_CTL_URGENT|XS_CTL_HEAD_TAG|
-				    XS_CTL_THAW_PERIPH|
-				    XS_CTL_FREEZE_PERIPH);
-				if (error)
-					retval = error;
-			}
-		}
-		s = splbio();
-		periph->periph_flags &= ~PERIPH_RECOVERING;
-		splx(s);
-
 		/*
 		 * Enqueue an Element-Status-Changed event, and wake up
 		 * any processes waiting for them.
 		 */
 		if ((xs->xs_control & XS_CTL_IGNORE_MEDIA_CHANGE) == 0)
 			ch_event(sc, CHEV_ELEMENT_STATUS_CHANGED);
+		break;
+	default:
+		break;
 	}
 
-	return (retval);
+	return (EJUSTRETURN);
 }
 
 void
@@ -714,7 +710,8 @@ ch_ousergetelemstatus(sc, chet, uptr)
 	 * order to read all data.
 	 */
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr), 0);
+	    sc->sc_counts[chet], &st_hdr, sizeof(st_hdr),
+	    XS_CTL_DATA_ONSTACK, 0);
 	if (error)
 		return (error);
 
@@ -735,7 +732,7 @@ ch_ousergetelemstatus(sc, chet, uptr)
 	 */
 	data = malloc(size, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[chet],
-	    sc->sc_counts[chet], data, size, 0);
+	    sc->sc_counts[chet], data, size, 0, 0);
 	if (error)
 		goto done;
 
@@ -810,7 +807,7 @@ ch_usergetelemstatus(sc, cesr)
 	 * in order to read all the data.
 	 */
 	error = ch_getelemstatus(sc, sc->sc_firsts[cesr->cesr_type] +
-	    cesr->cesr_unit, cesr->cesr_count, &st_hdr, sizeof(st_hdr),
+	    cesr->cesr_unit, cesr->cesr_count, &st_hdr, sizeof(st_hdr), 0,
 	    cesr->cesr_flags);
 	if (error)
 		return (error);
@@ -832,7 +829,8 @@ ch_usergetelemstatus(sc, cesr)
 	 */
 	data = malloc(size, M_DEVBUF, M_WAITOK);
 	error = ch_getelemstatus(sc, sc->sc_firsts[cesr->cesr_type] +
-	    cesr->cesr_unit, cesr->cesr_count, data, size, cesr->cesr_flags);
+	    cesr->cesr_unit, cesr->cesr_count, data, size, 0,
+	    cesr->cesr_flags);
 	if (error)
 		goto done;
 
@@ -997,11 +995,12 @@ ch_usergetelemstatus(sc, cesr)
 }
 
 int
-ch_getelemstatus(sc, first, count, data, datalen, flags)
+ch_getelemstatus(sc, first, count, data, datalen, scsiflags, flags)
 	struct ch_softc *sc;
 	int first, count;
 	void *data;
 	size_t datalen;
+	int scsiflags;
 	int flags;
 {
 	struct scsi_read_element_status cmd;
@@ -1023,7 +1022,8 @@ ch_getelemstatus(sc, first, count, data, datalen, flags)
 	 */
 	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
-	    (u_char *)data, datalen, CHRETRIES, 100000, NULL, XS_CTL_DATA_IN));
+	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
+	    scsiflags | XS_CTL_DATA_IN));
 }
 
 int
@@ -1091,7 +1091,7 @@ ch_setvoltag(sc, csvr)
 	return (scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd),
 	    (u_char *)data, datalen, CHRETRIES, 100000, NULL,
-	    datalen ? XS_CTL_DATA_OUT : 0));
+	    datalen ? XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK : 0));
 }
 
 int
@@ -1164,7 +1164,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error) {
 		printf("%s: could not sense element address page\n",
 		    sc->sc_dev.dv_xname);
@@ -1180,7 +1180,7 @@ ch_get_params(sc, scsiflags)
 	sc->sc_firsts[CHET_DT] = _2btol(sense_data.pages.ea.fdtea);
 	sc->sc_counts[CHET_DT] = _2btol(sense_data.pages.ea.ndte);
 
-	/* XXX ask for page trasport geom */
+	/* XXX ask for transport geometry page XXX */
 
 	/*
 	 * Grab info from the capabilities page.
@@ -1197,7 +1197,7 @@ ch_get_params(sc, scsiflags)
 	error = scsipi_command(sc->sc_periph,
 	    (struct scsipi_generic *)&cmd, sizeof(cmd), (u_char *)&sense_data,
 	    sizeof(sense_data), CHRETRIES, 6000, NULL,
-	    scsiflags | XS_CTL_DATA_IN);
+	    scsiflags | XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 	if (error) {
 		printf("%s: could not sense capabilities page\n",
 		    sc->sc_dev.dv_xname);
@@ -1213,9 +1213,10 @@ ch_get_params(sc, scsiflags)
 		sc->sc_exchangemask[from] = exchanges[from];
 	}
 
+#ifdef CH_AUTOMATIC_IELEM_POLICY
 	/*
-	 * If we need to do an Init-Element-Status, do that now that
-	 * we know what's in the changer.
+	 * If we need to do an Init-Element-Status,
+	 * do that now that we know what's in the changer.
 	 */
 	if ((scsiflags & XS_CTL_IGNORE_MEDIA_CHANGE) == 0) {
 		if ((sc->sc_periph->periph_flags & PERIPH_MEDIA_LOADED) == 0)
@@ -1225,6 +1226,7 @@ ch_get_params(sc, scsiflags)
 		else
 			sc->sc_periph->periph_flags &= ~PERIPH_MEDIA_LOADED;
 	}
+#endif
 	return (error);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.5 2000/02/04 23:01:54 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.6 2000/11/20 09:59:25 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -135,6 +135,9 @@ scsibusmatch(parent, cf, aux)
 {
 	struct scsipi_channel *chan = aux;
 
+	if (chan->type != BUS_SCSI)
+		return 0;
+
 	if (cf->cf_loc[SCSICF_CHANNEL] != chan->chan_channel &&
 	    cf->cf_loc[SCSICF_CHANNEL] != SCSICF_CHANNEL_DEFAULT)
 		return (0);
@@ -171,11 +174,9 @@ scsibus_config_interrupts(self)
 {
 	struct scsibus_softc *sc = (void *) self;
 
-#if defined(SCSI_DELAY) && SCSI_DELAY > 2
-#else	/* SCSI_DELAY > 2 */
-#undef	SCSI_DELAY
+#ifndef SCSI_DELAY
 #define SCSI_DELAY 2
-#endif	/* SCSI_DELAY */
+#endif
 
 	if (SCSI_DELAY > 0) {
 		printf("%s: waiting %d seconds for devices to settle...\n",
@@ -415,6 +416,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_CDROM, T_REMOV,
 	 "DENON   ", "DRD-25X         ", "V"},    PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
+	 "GENERIC ", "CRD-BP2         ", ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
 	 "HP      ", "C4324/C4325     ", ""},     PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "IMS     ", "CDD521/10       ", "2.06"}, PQUIRK_NOLUNS},
@@ -460,6 +463,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"},   PQUIRK_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "JVC     ", "R2626",            ""},     PQUIRK_NOLUNS},
+	{{T_CDROM, T_REMOV,
+	 "YAMAHA", "CRW8424S",           ""},     PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "MICROP  ", "1588-15MBSUN0669", ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -469,6 +474,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_DIRECT, T_FIXED,
 	 "TOSHIBA ","CD-ROM XM-3401TA", "0283"},  PQUIRK_CDROM|PQUIRK_NOLUNS},
+	{{T_DIRECT, T_FIXED,
+	 "TOSHIBA ", "CD-ROM DRIVE:XM", "1971"}, PQUIRK_CDROM|PQUIRK_NOLUNS},
 	{{T_DIRECT, T_FIXED,
 	 "ADAPTEC ", "AEC-4412BD",       "1.2A"}, PQUIRK_NOMODESENSE},
 	{{T_DIRECT, T_FIXED,
@@ -555,6 +562,11 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_REMOV,
 	 "TEAC", "FC-1",		 ""},	  PQUIRK_NOSTARTUNIT},
 
+	{{T_DIRECT, T_REMOV,
+	 "Y-E DATA", "USB-FDU",          "3.04"}, PQUIRK_NOMODESENSE},
+	{{T_DIRECT, T_REMOV,
+	 "TEAC", "FD-05PUB",             "1026"}, PQUIRK_NOMODESENSE},
+
 	/* XXX: QIC-36 tape behind Emulex adapter.  Very broken. */
 	{{T_SEQUENTIAL, T_REMOV,
 	 "        ", "                ", "    "}, PQUIRK_NOLUNS},
@@ -592,6 +604,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "WangDAT ", "Model 2600      ", "01.7"}, PQUIRK_NOSYNC|PQUIRK_NOWIDE},
 	{{T_SEQUENTIAL, T_REMOV,
 	 "WangDAT ", "Model 3200      ", "02.2"}, PQUIRK_NOSYNC|PQUIRK_NOWIDE},
+	{{T_SEQUENTIAL, T_REMOV,
+	 "TEAC    ", "MT-2ST/N50      ", ""},     PQUIRK_NOLUNS},
 
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS60            ", "1R08"}, PQUIRK_NOLUNS},
@@ -603,15 +617,16 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "UMAX    ", "UMAX S-6E       ", "V2.0"}, PQUIRK_NOLUNS},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UMAX S-12       ", "V2.1"}, PQUIRK_NOLUNS},
-
+	{{T_SCANNER, T_FIXED,
+	 "ULTIMA  ", "A6000C          ", ""}, PQUIRK_NOLUNS},
+	{{T_PROCESSOR, T_FIXED,
+	 "SYMBIOS", "", ""},     PQUIRK_NOLUNS},
 	{{T_PROCESSOR, T_FIXED,
 	 "LITRONIC", "PCMCIA          ", ""},     PQUIRK_NOLUNS},
-
 	{{T_CHANGER, T_REMOV,
 	 "SONY    ", "CDL1100         ", ""},     PQUIRK_NOLUNS},
-
 	{{T_ENCLOSURE, T_FIXED,
-	 "SUN     ", "SENA            ", "1.07"}, PQUIRK_NOLUNS},
+	 "SUN     ", "SENA            ", ""}, PQUIRK_NOLUNS},
 };
 
 /*
@@ -628,7 +643,7 @@ scsi_probe_device(sc, target, lun)
 	struct scsipi_periph *periph;
 	struct scsipi_inquiry_data inqbuf;
 	struct scsi_quirk_inquiry_pattern *finger;
-	int i, checkdtype, priority, docontinue, quirks;
+	int checkdtype, priority, docontinue, quirks;
 	struct scsipibus_attach_args sa;
 	struct cfdata *cf;
 
@@ -644,27 +659,13 @@ scsi_probe_device(sc, target, lun)
 	if (scsipi_lookup_periph(chan, target, lun) != NULL)
 		return (docontinue);
 
-	periph = malloc(sizeof(*periph), M_DEVBUF, M_WAITOK);
-	memset(periph, 0, sizeof(*periph));
-
-	periph->periph_dev = NULL;
+	periph = scsipi_alloc_periph(M_WAITOK);
 	periph->periph_channel = chan;
 	periph->periph_switch = &scsi_probe_dev;
 
-	/*
-	 * Start with one command opening.  The periph driver
-	 * will grow this if it knows it can take advantage of it.
-	 */
-	periph->periph_openings = 1;
-	periph->periph_active = 0;
-
 	periph->periph_target = target;
 	periph->periph_lun = lun;
-
-	for (i = 0; i < PERIPH_NTAGWORDS; i++)
-		periph->periph_freetags[i] = 0xffffffff;
-
-	TAILQ_INIT(&periph->periph_xferq);
+	periph->periph_quirks = chan->chan_defquirks;
 
 #ifdef SCSIPI_DEBUG
 	if (SCSIPI_DEBUG_TYPE == SCSIPI_BUSTYPE_SCSI &&
@@ -688,14 +689,24 @@ scsi_probe_device(sc, target, lun)
 
 	/* Now go ask the device all about itself. */
 	memset(&inqbuf, 0, sizeof(inqbuf));
-	if (scsipi_inquire(periph, &inqbuf, XS_CTL_DISCOVERY) != 0)
+	if (scsipi_inquire(periph, &inqbuf,
+	    XS_CTL_DISCOVERY | XS_CTL_DATA_ONSTACK) != 0)
 		goto bad;
 	{
+		u_int8_t *extension = &inqbuf.flags1;
 		int len = inqbuf.additional_length;
 		while (len < 3)
-			inqbuf.unused[len++] = '\0';
+			extension[len++] = '\0';
 		while (len < 3 + 28)
-			inqbuf.unused[len++] = ' ';
+			extension[len++] = ' ';
+		while (len < 3 + 28 + 20)
+			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1)
+			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1 + 1)
+			extension[len++] = '\0';
+		while (len < 3 + 28 + 20 + 1 + 1 + (8*2))
+			extension[len++] = ' ';
 	}
 
 	periph->periph_type = inqbuf.device & SID_TYPE;
@@ -722,6 +733,12 @@ scsi_probe_device(sc, target, lun)
 	default:
 		break;
 	}
+
+	/* Let the adapter driver handle the device separatley if it wants. */
+	if (chan->chan_adapter->adapt_accesschk != NULL &&
+	    (*chan->chan_adapter->adapt_accesschk)(periph, &sa.sa_inqbuf))
+		goto bad;
+
 	if (checkdtype) {
 		switch (periph->periph_type) {
 		case T_DIRECT:
@@ -738,6 +755,9 @@ scsi_probe_device(sc, target, lun)
 		case T_IT8_2:
 		case T_STORARRAY:
 		case T_ENCLOSURE:
+		case T_SIMPLE_DIRECT:
+		case T_OPTIC_CARD_RW:
+		case T_OBJECT_STORED:
 		default:
 			break;
 		case T_NODEVICE:
@@ -753,6 +773,7 @@ scsi_probe_device(sc, target, lun)
 	sa.sa_inqbuf.product = inqbuf.product;
 	sa.sa_inqbuf.revision = inqbuf.revision;
 	sa.scsipi_info.scsi_version = inqbuf.version;
+	sa.sa_inqptr = &inqbuf;
 
 	finger = (struct scsi_quirk_inquiry_pattern *)scsipi_inqmatch(
 	    &sa.sa_inqbuf, (caddr_t)scsi_quirk_patterns,
@@ -768,23 +789,23 @@ scsi_probe_device(sc, target, lun)
 	 * Determine the operating mode capabilities of the device.
 	 */
 	if (periph->periph_version >= 2) {
-		if ((inqbuf.flags & SID_CmdQue) != 0 &&
+		if ((inqbuf.flags3 & SID_CmdQue) != 0 &&
 		    (quirks & PQUIRK_NOTAG) == 0)
 			periph->periph_cap |= PERIPH_CAP_TQING;
-		if ((inqbuf.flags & SID_Linked) != 0)
+		if ((inqbuf.flags3 & SID_Linked) != 0)
 			periph->periph_cap |= PERIPH_CAP_LINKCMDS;
-		if ((inqbuf.flags & SID_Sync) != 0 &&
+		if ((inqbuf.flags3 & SID_Sync) != 0 &&
 		    (quirks & PQUIRK_NOSYNC) == 0)
 			periph->periph_cap |= PERIPH_CAP_SYNC;
-		if ((inqbuf.flags & SID_WBus16) != 0 &&
+		if ((inqbuf.flags3 & SID_WBus16) != 0 &&
 		    (quirks & PQUIRK_NOWIDE) == 0)
 			periph->periph_cap |= PERIPH_CAP_WIDE16;
-		if ((inqbuf.flags & SID_WBus32) != 0 &&
+		if ((inqbuf.flags3 & SID_WBus32) != 0 &&
 		    (quirks & PQUIRK_NOWIDE) == 0)
 			periph->periph_cap |= PERIPH_CAP_WIDE32;
-		if ((inqbuf.flags & SID_SftRe) != 0)
+		if ((inqbuf.flags3 & SID_SftRe) != 0)
 			periph->periph_cap |= PERIPH_CAP_SFTRESET;
-		if ((inqbuf.flags & SID_RelAdr) != 0)
+		if ((inqbuf.flags3 & SID_RelAdr) != 0)
 			periph->periph_cap |= PERIPH_CAP_RELADR;
 	}
 
@@ -795,6 +816,13 @@ scsi_probe_device(sc, target, lun)
 	if (periph->periph_version == 0 &&
 	    (periph->periph_quirks & PQUIRK_FORCELUNS) == 0)
 		periph->periph_quirks |= PQUIRK_NOLUNS;
+
+	if (periph->periph_quirks & PQUIRK_CDROM) {
+		periph->periph_quirks ^= PQUIRK_CDROM;
+		inqbuf.dev_qual2 |= SID_REMOVABLE;
+		sa.sa_inqbuf.type = inqbuf.device = ((inqbuf.device & ~SID_REMOVABLE) | T_CDROM);
+		sa.sa_inqbuf.removable = T_REMOV;
+	}
 
 	if ((periph->periph_quirks & PQUIRK_NOLUNS) == 0)
 		docontinue = 1;
@@ -815,7 +843,7 @@ scsi_probe_device(sc, target, lun)
 
 	return (docontinue);
 
- bad:
+bad:
 	free(periph, M_DEVBUF);
 	return (docontinue);
 }

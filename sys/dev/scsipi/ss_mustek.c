@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_mustek.c,v 1.11.2.3 1999/11/01 22:54:21 thorpej Exp $	*/
+/*	$NetBSD: ss_mustek.c,v 1.11.2.4 2000/11/20 09:59:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Joachim Koenig-Baltes.  All rights reserved.
@@ -329,7 +329,7 @@ mustek_trigger_scanner(ss)
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &window_cmd,
 	    sizeof(window_cmd), (u_char *) &window_data, sizeof(window_data),
-	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
+	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -369,7 +369,7 @@ mustek_trigger_scanner(ss)
 	error = scsipi_command(periph,
 	    (struct scsipi_generic *) &mode_cmd,
 	    sizeof(mode_cmd), (u_char *) &mode_data, sizeof(mode_data),
-	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT);
+	    MUSTEK_RETRIES, 5000, NULL, XS_CTL_DATA_OUT | XS_CTL_DATA_ONSTACK);
 	if (error)
 		return (error);
 
@@ -533,7 +533,7 @@ mustek_get_status(ss, timeout, update)
 		error = scsipi_command(periph,
 		    (struct scsipi_generic *) &cmd, sizeof(cmd),
 		    (u_char *) &data, sizeof(data), MUSTEK_RETRIES,
-		    5000, NULL, XS_CTL_DATA_IN);
+		    5000, NULL, XS_CTL_DATA_IN | XS_CTL_DATA_ONSTACK);
 		if (error)
 			return (error);
 		if ((data.ready_busy == MUSTEK_READY) ||

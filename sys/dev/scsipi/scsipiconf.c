@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.c,v 1.8.10.2 1999/11/01 22:54:20 thorpej Exp $	*/
+/*	$NetBSD: scsipiconf.c,v 1.8.10.3 2000/11/20 09:59:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -59,9 +59,75 @@
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
+#include <sys/proc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsipiconf.h>
+
+int
+scsipi_command(periph, cmd, cmdlen, data_addr, datalen, retries, timeout, bp,
+     flags)
+	struct scsipi_periph *periph;
+	struct scsipi_generic *cmd;
+	int cmdlen;
+	u_char *data_addr;
+	int datalen;
+	int retries;
+	int timeout;
+	struct buf *bp;
+	int flags;
+{
+	int error;
+ 
+	if ((flags & XS_CTL_DATA_ONSTACK) != 0) {
+		/*
+		 * If the I/O buffer is allocated on stack, the
+		 * process must NOT be swapped out, as the device will
+		 * be accessing the stack.
+		 */
+		PHOLD(curproc);
+	}
+	error = (*periph->periph_channel->chan_bustype->bustype_cmd)(periph,
+	    cmd, cmdlen, data_addr, datalen, retries, timeout, bp, flags);
+	if ((flags & XS_CTL_DATA_ONSTACK) != 0)
+		PRELE(curproc);
+	return (error);
+}
+
+/*
+ * allocate and init a scsipi_periph structure for a new device.
+ */
+struct scsipi_periph *
+scsipi_alloc_periph(malloc_flag)
+	int malloc_flag;
+{
+	struct scsipi_periph *periph;
+	int i;
+
+	periph = malloc(sizeof(*periph), M_DEVBUF, malloc_flag);
+	if (periph == NULL)
+		return NULL;
+	memset(periph, 0, sizeof(*periph));
+
+	periph->periph_dev = NULL;
+
+	/*
+	 * Start with one command opening.  The periph driver
+	 * will grow this if it knows it can take advantage of it.
+	 */
+	periph->periph_openings = 1; 
+	periph->periph_active = 0;   
+
+	for (i = 0; i < PERIPH_NTAGWORDS; i++)
+		periph->periph_freetags[i] = 0xffffffff;
+
+	TAILQ_INIT(&periph->periph_xferq);
+	callout_init(&periph->periph_callout);
+
+	return periph;
+}
 
 /*
  * Return a priority based on how much of the inquiry data matches
@@ -155,13 +221,22 @@ scsipi_dtype(type)
 		break;
 	case T_IT8_1:
 	case T_IT8_2:
-		dtype = "it8";		/* ??? */
+		dtype = "graphic arts pre-press";
 		break;
 	case T_STORARRAY:
 		dtype = "storage array";
 		break;
 	case T_ENCLOSURE:
 		dtype = "enclosure services";
+		break;
+	case T_SIMPLE_DIRECT:
+		dtype = "simplified direct";
+		break;
+	case T_OPTIC_CARD_RW:
+		dtype = "optical card r/w";
+		break;
+	case T_OBJECT_STORED:
+		dtype = "object-based storage";
 		break;
 	case T_NODEVICE:
 		panic("scsipi_dtype: impossible device type");
