@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.521 2003/01/21 12:41:27 wiz Exp $
+#	$NetBSD: mi,v 1.522 2003/01/23 17:37:31 christos Exp $
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
 ./usr/bin/as			comp-util-bin
@@ -20,6 +20,7 @@
 ./usr/bin/g++			comp-cxx-bin
 ./usr/bin/g77			comp-fortran-bin
 ./usr/bin/gcc			comp-c-bin
+./usr/bin/gcore			comp-debug-bin
 ./usr/bin/gcov			comp-debug-bin
 ./usr/bin/gdb			comp-debug-bin
 ./usr/bin/gettext		comp-c-bin
