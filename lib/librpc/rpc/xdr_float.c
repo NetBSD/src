@@ -49,10 +49,10 @@ static char sccsid[] = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 
 /*
  * NB: Not portable.
- * This routine works on Suns (Sky / 68000's), i386's, MIPS and Vaxen.
+ * This routine works on Suns (Sky / 68000's), i386's, MIPS, NS32k and Vaxen.
  */
 
-#if defined(mc68000) || defined(sparc) || defined(i386) || defined(mips)
+#if defined(mc68000)||defined(sparc)||defined(i386)||defined(mips)||defined(ns32000)
 #define IEEEFP
 #endif
 
