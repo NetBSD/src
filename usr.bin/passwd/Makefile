@@ -1,4 +1,5 @@
-#	@(#)Makefile	5.11 (Berkeley) 2/19/91
+#	from: @(#)Makefile	5.11 (Berkeley) 2/19/91
+#	$Id: Makefile,v 1.5 1993/07/31 00:21:12 mycroft Exp $
 
 PROG=	passwd
 SRCS=	local_passwd.c yp_passwd.c passwd.c pw_copy.c pw_util.c getpwent.c
