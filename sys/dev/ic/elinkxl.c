@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.38 2000/08/29 08:54:50 haya Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.39 2000/08/31 08:42:29 haya Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -672,7 +672,7 @@ ex_init(sc)
 			cbcard_config |= 0x4000; /* turn on PHY power */
 		}
 		if (sc->ex_conf & EX_CONF_INV_LED_POLARITY) {
-			cbcard_config |= 0x0020; /* invert LED polarity */
+			cbcard_config |= 0x0010; /* invert LED polarity */
 		}
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, 0x0c, cbcard_config);
 
