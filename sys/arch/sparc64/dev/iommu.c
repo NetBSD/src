@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.4 2000/04/05 05:59:03 mrg Exp $	*/
+/*	$NetBSD: iommu.c,v 1.5 2000/04/05 14:26:51 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -202,8 +202,13 @@ iommu_reset(is)
 	/* Need to do 64-bit stores */
 	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_cr, 0, is->is_cr);
 	bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_tsb, 0, is->is_ptsb);
+
 	/* Enable diagnostics mode? */
 	bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_ctl, 0, STRBUF_EN);
+
+	/* No streaming buffers? Disable them */
+	if (bus_space_read_8(is->is_bustag, &is->is_sb->strbuf_ctl, 0) == 0)
+		is->is_sb = 0;
 }
 
 /*
@@ -227,9 +232,11 @@ iommu_enter(is, va, pa, flags)
 			!(flags&BUS_DMA_COHERENT));
 	
 	/* Is the streamcache flush really needed? */
-	bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_pgflush,
-			  0, va);
-	iommu_flush(is);
+	if (is->is_sb) {
+		bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_pgflush, 0,
+		    va);
+		iommu_flush(is);
+	}
 	DPRINTF(IDB_DVMA, ("Clearing TSB slot %d for va %p\n", 
 		       (int)IOTSBSLOT(va,is->is_tsbsize), va));
 	is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = tte;
@@ -277,21 +284,24 @@ iommu_remove(is, va, len)
 		 *
 		 * If it takes more than .5 sec, something went wrong.
 		 */
-		DPRINTF(IDB_DVMA, ("iommu_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
+		if (is->is_sb) {
+			DPRINTF(IDB_DVMA, ("iommu_remove: flushing va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
-		bus_space_write_8(is->is_bustag, &is->is_sb->strbuf_pgflush, 0, va);
-		if (len <= NBPG) {
-			iommu_flush(is);
-			len = 0;
-		} else len -= NBPG;
-		DPRINTF(IDB_DVMA, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
+			bus_space_write_8(is->is_bustag,
+			    &is->is_sb->strbuf_pgflush, 0, va);
+			if (len <= NBPG) {
+				iommu_flush(is);
+				len = 0;
+			} else len -= NBPG;
+			DPRINTF(IDB_DVMA, ("iommu_remove: flushed va %p TSB[%lx]@%p=%lx, %lu bytes left\n", 	       
 			       (long)va, (long)IOTSBSLOT(va,is->is_tsbsize), 
 			       (long)&is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)],
 			       (long)(is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)]), 
 			       (u_long)len));
+		}
 		is->is_tsb[IOTSBSLOT(va,is->is_tsbsize)] = 0;
 		bus_space_write_8(is->is_bustag, &is->is_iommu->iommu_flush, 0, va);
 		va += NBPG;
@@ -314,6 +324,9 @@ iommu_flush(is)
 		tp->tv_sec++; \
 	} \
 }
+
+	if (!is->is_sb)
+		return (0);
 
 	is->is_flush = 0;
 	membar_sync();
