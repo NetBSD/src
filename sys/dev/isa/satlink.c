@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.11.4.2 2001/09/11 21:53:09 thorpej Exp $	*/
+/*	$NetBSD: satlink.c,v 1.11.4.3 2001/09/12 00:47:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -507,7 +507,7 @@ satlinktimeout(arg)
 	}
 
 	/* Wake up anyone blocked in poll... */
-	selwakeup(&sc->sc_selq);
+	selnotify(&sc->sc_selq, 0);
 
  out:
 	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
