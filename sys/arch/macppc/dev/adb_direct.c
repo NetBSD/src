@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.1 1998/05/15 10:15:47 tsubai Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.2 1998/06/26 14:18:08 tsubai Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -2066,6 +2066,24 @@ powermac_restart()
 	output[0] = 0x02;	/* 2 byte message */
 	output[1] = 0x01;	/* to pram/rtc/soft-power device */
 	output[2] = 0x11;	/* restart */
+	result = send_adb_cuda((u_char *)output, (u_char *)0,
+		(void *)0, (void *)0, (int)0);
+	if (result != 0)	/* exit if not sent */
+		return;
+
+	while (1);		/* not return */
+}
+
+void
+powermac_powerdown()
+{
+	volatile int flag = 0;
+	int result;
+	u_char output[16];
+
+	output[0] = 0x02;	/* 2 byte message */
+	output[1] = 0x01;	/* to pram/rtc/soft-power device */
+	output[2] = 0x0a;	/* powerdown */
 	result = send_adb_cuda((u_char *)output, (u_char *)0,
 		(void *)0, (void *)0, (int)0);
 	if (result != 0)	/* exit if not sent */
