@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.42 2002/03/24 22:21:07 bjh21 Exp $
+# $NetBSD: obsolete.mi,v 1.43 2002/04/04 23:11:08 lukem Exp $
 /usr/share/man/cat1/amq.0
 /usr/share/man/cat1/g711conv.0
 /usr/share/man/cat1/i386
@@ -107,6 +107,7 @@
 /usr/share/man/cat8/nfsiod.0
 /usr/share/man/cat8/pim6dd.0
 /usr/share/man/cat8/pim6sd.0
+/usr/share/man/cat8/pmax/installboot.0
 /usr/share/man/cat8/portmap.0
 /usr/share/man/cat8/pppd.cbcp.0
 /usr/share/man/cat8/rdconfig.0
@@ -207,8 +208,8 @@
 /usr/share/man/man5/uuencode.format.5
 /usr/share/man/man5/ypserv.acl.5
 /usr/share/man/man8/arm26/BBBB.8
-/usr/share/man/man8/arm26/bbbb.8
 /usr/share/man/man8/arm26/MAKEDEV.8
+/usr/share/man/man8/arm26/bbbb.8
 /usr/share/man/man8/arm26/boot.8
 /usr/share/man/man8/arm26/boot26.8
 /usr/share/man/man8/arm26/makedev.8
@@ -227,6 +228,7 @@
 /usr/share/man/man8/nfsiod.8
 /usr/share/man/man8/pim6dd.8
 /usr/share/man/man8/pim6sd.8
+/usr/share/man/man8/pmax/installboot.8
 /usr/share/man/man8/portmap.8
 /usr/share/man/man8/pppd.cbcp.8
 /usr/share/man/man8/rdconfig.8
