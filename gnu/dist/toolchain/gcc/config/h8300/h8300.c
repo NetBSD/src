@@ -1,6 +1,6 @@
 /* Subroutines for insn-output.c for Hitachi H8/300.
-   Copyright (C) 1992, 93, 94, 95, 96, 97, 1998, 1999 Free Software
-   Foundation, Inc. 
+   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+   Free Software Foundation, Inc. 
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -396,7 +396,7 @@ function_epilogue (file, size)
   if (GET_CODE (insn) == NOTE)
     insn = prev_nonnote_insn (insn);
   if (insn && GET_CODE (insn) == BARRIER)
-    return;
+    goto out;
 
   /* Pop the saved registers. */
   for (idx = 0; idx < FIRST_PSEUDO_REGISTER; idx++)
@@ -2313,9 +2313,9 @@ get_shift_alg (cpu, shift_type, mode, count, assembler_p,
 	      if (TARGET_H8300)
 		*assembler_p = "mov.b\t%t0,%s0\n\tbld\t#7,%s0\n\tsubx\t%t0,%t0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0";
 	      else if (TARGET_H8300H)
-		*assembler_p = "mov.b\t%t0,%s0\n\textw.w\t%T0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0";
+		*assembler_p = "mov.b\t%t0,%s0\n\texts.w\t%T0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0\n\tshar.b\t%s0";
 	      else if (TARGET_H8300S)
-		*assembler_p = "mov.b\t%t0,%s0\n\textw.w\t%T0\n\tshar.b\t#2,%s0\n\tshar.b\t#2,%s0";
+		*assembler_p = "mov.b\t%t0,%s0\n\texts.w\t%T0\n\tshar.b\t#2,%s0\n\tshar.b\t#2,%s0";
 	      *cc_valid_p = 0;
 	      return SHIFT_SPECIAL;
 	    }
