@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.19.2.2 1997/05/26 16:33:32 lukem Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.19.2.3 1997/06/02 04:57:37 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.2 1997/05/26 16:33:32 lukem Exp $";
+static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.3 1997/06/02 04:57:37 lukem Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,9 +63,10 @@ static char rcsid[] = "$NetBSD: getgrent.c,v 1.19.2.2 1997/05/26 16:33:32 lukem 
 static FILE		*_gr_fp;
 static struct group	_gr_group;
 static int		_gr_stayopen;
+static int		_gr_nomore;
 
-static int grscan	__P((int, int, const char *));
-static int matchline	__P((int, int, const char *));
+static int grscan	__P((int, gid_t, const char *));
+static int matchline	__P((int, gid_t, const char *));
 static int start_gr	__P((void));
 
 #define	MAXGRP		200
@@ -82,15 +83,16 @@ static int		 __ypcurrentlen;
 #endif
 
 #ifdef HESIOD
-static int	__hesindex;
+static int	__gr_hesnum;
 #endif
 
 struct group *
 getgrent()
 {
-	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL))
-		return(NULL);
-	return(&_gr_group);
+	_gr_nomore = 0;
+	if ((!_gr_fp && !start_gr()) || !grscan(0, 0, NULL) || _gr_nomore)
+		return NULL;
+	return &_gr_group;
 }
 
 struct group *
@@ -100,11 +102,11 @@ getgrnam(name)
 	int rval;
 
 	if (!start_gr())
-		return(NULL);
+		return NULL;
 	rval = grscan(1, 0, name);
 	if (!_gr_stayopen)
 		endgrent();
-	return(rval ? &_gr_group : NULL);
+	return (rval) ? &_gr_group : NULL;
 }
 
 struct group *
@@ -114,11 +116,11 @@ getgrgid(gid)
 	int rval;
 
 	if (!start_gr())
-		return(NULL);
+		return NULL;
 	rval = grscan(1, gid, NULL);
 	if (!_gr_stayopen)
 		endgrent();
-	return(rval ? &_gr_group : NULL);
+	return (rval) ? &_gr_group : NULL;
 }
 
 static int
@@ -131,13 +133,13 @@ start_gr()
 	__ypcurrent = NULL;
 #endif
 #ifdef HESIOD
-	__hesindex = 0;
+	__gr_hesnum = 0;
 #endif
 	if (_gr_fp) {
 		rewind(_gr_fp);
-		return(1);
+		return 1;
 	}
-	return((_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0);
+	return (_gr_fp = fopen(_PATH_GROUP, "r")) ? 1 : 0;
 }
 
 void
@@ -151,9 +153,9 @@ setgroupent(stayopen)
 	int stayopen;
 {
 	if (!start_gr())
-		return(0);
+		return 0;
 	_gr_stayopen = stayopen;
-	return(1);
+	return 1;
 }
 
 void
@@ -166,7 +168,7 @@ endgrent()
 	__ypcurrent = NULL;
 #endif
 #ifdef HESIOD
-	__hesindex = 0;
+	__gr_hesnum = 0;
 #endif
 	if (_gr_fp) {
 		(void)fclose(_gr_fp);
@@ -181,12 +183,17 @@ _local_grscan(rv, cb_data, ap)
 	va_list	 ap;
 {
 	int		 search = va_arg(ap, int);
-	int		 gid = va_arg(ap, int);
+	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
 	for (;;) {
-		if (!fgets(line, sizeof(line), _gr_fp))
-			return(NS_NOTFOUND);
+		if (!fgets(line, sizeof(line), _gr_fp)) {
+			if (!search) {
+				_gr_nomore = 1;
+				return NS_SUCCESS;
+			}
+			return NS_NOTFOUND;
+		}
 		/* skip lines that are too big */
 		if (!strchr(line, '\n')) {
 			int ch;
@@ -196,7 +203,7 @@ _local_grscan(rv, cb_data, ap)
 			continue;
 		}
 		if (matchline(search, gid, name))
-			return(NS_SUCCESS);
+			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
 }
@@ -209,7 +216,7 @@ _dns_grscan(rv, cb_data, ap)
 	va_list	 ap;
 {
 	int		 search = va_arg(ap, int);
-	int		 gid = va_arg(ap, int);
+	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
 	char		**hp;
@@ -221,8 +228,8 @@ _dns_grscan(rv, cb_data, ap)
 			else
 				snprintf(line, sizeof(line), "%u", gid);
 		} else {
-			snprintf(line, sizeof(line), "group-%u", __hesindex);
-			__hesindex++;
+			snprintf(line, sizeof(line), "group-%u", __gr_hesnum);
+			__gr_hesnum++;
 		}
 
 		line[sizeof(line) - 1] = '\0';
@@ -230,13 +237,16 @@ _dns_grscan(rv, cb_data, ap)
 		if (hp == NULL) {
 			switch (hes_error()) {
 			case HES_ER_NOTFOUND:
-				if (! search)
-					__hesindex = 0;
-				return(NS_NOTFOUND);
+				if (!search) {
+					__gr_hesnum = 0;
+					_gr_nomore = 1;
+					return NS_SUCCESS;
+				}
+				return NS_NOTFOUND;
 			case HES_ER_OK:
 				abort();
 			default:
-				return(NS_UNAVAIL);
+				return NS_UNAVAIL;
 			}
 		}
 
@@ -245,9 +255,9 @@ _dns_grscan(rv, cb_data, ap)
 		line[sizeof(line) - 1] = '\0';
 		hes_free(hp);
 		if (matchline(search, gid, name))
-			return(NS_SUCCESS);
+			return NS_SUCCESS;
 		else if (search)
-			return(NS_NOTFOUND);
+			return NS_NOTFOUND;
 	}
 }
 #endif
@@ -260,7 +270,7 @@ _nis_grscan(rv, cb_data, ap)
 	va_list	 ap;
 {
 	int		 search = va_arg(ap, int);
-	int		 gid = va_arg(ap, int);
+	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
 	char	*key, *data;
@@ -272,9 +282,9 @@ _nis_grscan(rv, cb_data, ap)
 		case 0:
 			break;
 		case YPERR_RESRC:
-			return(NS_TRYAGAIN);
+			return NS_TRYAGAIN;
 		default:
-			return(NS_UNAVAIL);
+			return NS_UNAVAIL;
 		}
 	}
 
@@ -294,23 +304,23 @@ _nis_grscan(rv, cb_data, ap)
 		case YPERR_KEY:
 			if (data)
 				free(data);
-			return(NS_NOTFOUND);
+			return NS_NOTFOUND;
 		default:
 			if (data)
 				free(data);
-			return(NS_UNAVAIL);
+			return NS_UNAVAIL;
 		}
 		data[datalen] = '\0';			/* clear trailing \n */
 		strncpy(line, data, sizeof(line));
 		line[sizeof(line) - 1] = '\0';
 		free(data);
 		if (matchline(search, gid, name))
-			return(NS_SUCCESS);
+			return NS_SUCCESS;
 		else
-			return(NS_NOTFOUND);
+			return NS_NOTFOUND;
 	}
 
-	for (;;) {
+	for (;;) {			/* ! search */
 		data = NULL;
 		if(__ypcurrent) {
 			key = NULL;
@@ -327,13 +337,14 @@ _nis_grscan(rv, cb_data, ap)
 					free(key);
 				if (data)
 					free(data);
-				return(NS_NOTFOUND);
+				_gr_nomore = 1;
+				return NS_SUCCESS;
 			default:
 				if (key)
 					free(key);
 				if (data)
 					free(data);
-				return(NS_UNAVAIL);
+				return NS_UNAVAIL;
 			}
 			__ypcurrent = key;
 			__ypcurrentlen = keylen;
@@ -343,7 +354,7 @@ _nis_grscan(rv, cb_data, ap)
 					&data, &datalen)) {
 				if (data);
 					free(data);
-				return(NS_UNAVAIL);
+				return NS_UNAVAIL;
 			}
 		}
 		data[datalen] = '\0';			/* clear trailing \n */
@@ -351,7 +362,7 @@ _nis_grscan(rv, cb_data, ap)
 		line[sizeof(line) - 1] = '\0';
 		free(data);
 		if (matchline(search, gid, name))
-			return(NS_SUCCESS);
+			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
 }
@@ -384,7 +395,8 @@ _bad_grscan(rv, cb_data, ap)
  */
 static int
 __grscancompat(search, gid, name)
-	int		 search, gid;
+	int		 search;
+	gid_t		 gid;
 	const char	*name;
 {
 	static ns_dtab	dtab;
@@ -407,7 +419,7 @@ _compat_grscan(rv, cb_data, ap)
 	va_list	 ap;
 {
 	int		 search = va_arg(ap, int);
-	int		 gid = va_arg(ap, int);
+	gid_t		 gid = va_arg(ap, gid_t);
 	const char	*name = va_arg(ap, const char *);
 
 	static char	*grname = NULL;
@@ -420,7 +432,7 @@ _compat_grscan(rv, cb_data, ap)
 			case GRMODE_FULL:
 				r = __grscancompat(search, gid, name);
 				if (r == NS_SUCCESS)
-					return(r);
+					return r;
 				__grmode = GRMODE_NONE;
 				break;
 			case GRMODE_NAME:
@@ -450,7 +462,7 @@ _compat_grscan(rv, cb_data, ap)
 		}
 
 		if (!fgets(line, sizeof(line), _gr_fp))
-			return(NS_NOTFOUND);
+			return NS_NOTFOUND;
 		/* skip lines that are too big */
 		if (!strchr(line, '\n')) {
 			int ch;
@@ -479,7 +491,7 @@ _compat_grscan(rv, cb_data, ap)
 			continue;
 		}
 		if (matchline(search, gid, name))
-			return(NS_SUCCESS);
+			return NS_SUCCESS;
 	}
 	/* NOTREACHED */
 }
@@ -487,7 +499,8 @@ _compat_grscan(rv, cb_data, ap)
 
 static int
 grscan(search, gid, name)
-	int		 search, gid;
+	int		 search;
+	gid_t		 gid;
 	const char	*name;
 {
 	int		r;
@@ -506,7 +519,8 @@ grscan(search, gid, name)
 
 static int
 matchline(search, gid, name)
-	int		 search, gid;
+	int		 search;
+	gid_t		 gid;
 	const char	*name;
 {
 	unsigned long	id;
@@ -514,23 +528,23 @@ matchline(search, gid, name)
 	char		*bp, *ep;
 
 	if (line[0] == '+')
-		return(0);	/* sanity check to prevent recursion */
+		return 0;	/* sanity check to prevent recursion */
 	bp = line;
 	_gr_group.gr_name = strsep(&bp, ":\n");
 	if (search && name && strcmp(_gr_group.gr_name, name))
-		return(0);
+		return 0;
 	_gr_group.gr_passwd = strsep(&bp, ":\n");
 	if (!(cp = strsep(&bp, ":\n")))
-		return(0);
+		return 0;
 	id = strtoul(cp, &ep, 10);
 	if (id > GID_MAX || *ep != '\0')
-		return(0);
+		return 0;
 	_gr_group.gr_gid = (gid_t)id;
 	if (search && name == NULL && _gr_group.gr_gid != gid)
-		return(0);
+		return 0;
 	cp = NULL;
 	if (bp == NULL)
-		return(0);
+		return 0;
 	for (m = _gr_group.gr_mem = members;; bp++) {
 		if (m == &members[MAXGRP - 1])
 			break;
@@ -550,5 +564,5 @@ matchline(search, gid, name)
 			cp = bp;
 	}
 	*m = NULL;
-	return(1);
+	return 1;
 }
