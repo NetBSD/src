@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.3 2000/09/23 15:13:02 bjh21 Exp $ */
+/* $NetBSD: seeq8005.c,v 1.4 2000/10/01 23:32:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 Ben Harris
@@ -58,7 +58,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 
-__RCSID("$NetBSD: seeq8005.c,v 1.3 2000/09/23 15:13:02 bjh21 Exp $");
+__RCSID("$NetBSD: seeq8005.c,v 1.4 2000/10/01 23:32:42 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/endian.h>
@@ -1068,7 +1068,6 @@ eagetpackets(struct seeq8005_softc *sc)
 static void
 earead(struct seeq8005_softc *sc, int addr, int len)
 {
-	register struct ether_header *eh;
 	struct mbuf *m;
 	struct ifnet *ifp;
 
@@ -1078,7 +1077,6 @@ earead(struct seeq8005_softc *sc, int addr, int len)
 	m = eaget(sc, addr, len, ifp);
 	if (m == 0)
 		return;
-	eh = mtod(m, struct ether_header *);
 
 #ifdef EA_RX_DEBUG
 	dprintf(("%s-->", ether_sprintf(eh->ether_shost)));
@@ -1090,22 +1088,8 @@ earead(struct seeq8005_softc *sc, int addr, int len)
 	 * Check if there's a BPF listener on this interface.
 	 * If so, hand off the raw packet to bpf.
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_mtap(ifp->if_bpf, m);
-
-		/*
-		 * Note that the interface cannot be in promiscuous mode if
-		 * there are no BPF listeners.  And if we are in promiscuous
-		 * mode, we have to check if this packet is really ours.
-		 */
-		if ((ifp->if_flags & IFF_PROMISC) &&
-		    !ETHER_IS_MULTICAST(eh->ether_dhost) &&
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-			    sizeof(eh->ether_dhost)) != 0) {
-			m_freem(m);
-			return;
-		}
-	}
 #endif
 
 	(*ifp->if_input)(ifp, m);

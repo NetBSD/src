@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.35 2000/09/05 22:37:33 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.36 2000/10/01 23:32:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -943,36 +943,21 @@ tl_intr(v)
 
 			/* deliver packet */
 			if (m) {
-				struct ether_header *eh;
 				if (size < sizeof(struct ether_header)) {
 					m_freem(m);
 					continue;
 				}
 				m->m_pkthdr.rcvif = ifp;
 				m->m_pkthdr.len = m->m_len = size;
-				eh = mtod(m, struct ether_header *);
 #ifdef TLDEBUG_RX
+				{ struct ether_header *eh =
+				    mtod(m, struct ether_header *);
 				printf("tl_intr: Rx packet:\n");
-				ether_printheader(eh);
+				ether_printheader(eh); }
 #endif
 #if NBPFILTER > 0
-				if (ifp->if_bpf) {
-					bpf_tap(ifp->if_bpf,
-					    mtod(m, caddr_t), size);
-					/*
-				 	 * Only pass this packet up
-				 	 * if it is for us.
-				 	 */
-					if ((ifp->if_flags & IFF_PROMISC) &&
-					    /* !mcast and !bcast */
-					    (eh->ether_dhost[0] & 1) == 0 &&
-					    bcmp(eh->ether_dhost,
-						LLADDR(ifp->if_sadl),
-						sizeof(eh->ether_dhost)) != 0) {
-						m_freem(m);
-						continue;
-					}
-				}
+				if (ifp->if_bpf)
+					bpf_mtap(ifp->if_bpf, m);
 #endif /* NBPFILTER > 0 */
 				(*ifp->if_input)(ifp, m);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.4 2000/06/29 07:59:29 mrg Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.5 2000/10/01 23:32:41 thorpej Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -1081,13 +1081,7 @@ sonic_read(sc, pkt, len)
 	int len;
 {
 	struct ifnet *ifp = &sc->sc_if;
-	struct ether_header *eh;
 	struct mbuf *m;
-
-	/*
-	 * Get pointer to ethernet header (in input buffer).
-	 */
-	eh = (struct ether_header *)pkt;
 
 #ifdef SNDEBUG
 	{
@@ -1111,14 +1105,8 @@ sonic_read(sc, pkt, len)
 	 * If so, hand off the raw packet to enet, then discard things
 	 * not destined for us (but be sure to keep broadcast/multicast).
 	 */
-	if (ifp->if_bpf) {
+	if (ifp->if_bpf)
 		bpf_tap(ifp->if_bpf, pkt, len);
-		if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-		    (eh->ether_dhost[0] & 1) == 0 && /* !mcast and !bcast */
-		    bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-		    sizeof(eh->ether_dhost)) != 0)
-			return (0);
-	}
 #endif
 	m = sonic_get(sc, pkt, len);
 	if (m == NULL)

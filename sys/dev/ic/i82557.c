@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.37 2000/09/28 10:10:14 tsutsui Exp $	*/
+/*	$NetBSD: i82557.c,v 1.38 2000/10/01 23:32:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -874,7 +874,6 @@ fxp_intr(arg)
 	struct mbuf *m, *m0;
 	bus_dmamap_t rxmap;
 	struct fxp_rfa *rfa;
-	struct ether_header *eh;
 	int i, claimed = 0;
 	u_int16_t len, rxstat, txstat;
 	u_int8_t statack;
@@ -972,24 +971,15 @@ fxp_intr(arg)
 
 			m->m_pkthdr.rcvif = ifp;
 			m->m_pkthdr.len = m->m_len = len;
-			eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
 			 * pass it up the stack it its for us.
 			 */
-			if (ifp->if_bpf) {
+			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
-
-				if ((ifp->if_flags & IFF_PROMISC) != 0 &&
-				    (rxstat & FXP_RFA_STATUS_IAMATCH) != 0 &&
-				    (eh->ether_dhost[0] & 1) == 0) {
-					m_freem(m);
-					goto rcvloop;
-				}
-			}
-#endif /* NBPFILTER > 0 */
+#endif
 
 			/* Pass it on. */
 			(*ifp->if_input)(ifp, m);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.10 2000/09/24 14:19:52 martin Exp $ */
+/* $NetBSD: if_ti.c,v 1.11 2000/10/01 23:32:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1852,7 +1852,6 @@ static void ti_rxeof(sc)
 	while(sc->ti_rx_saved_considx != sc->ti_return_prodidx.ti_idx) {
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
-		struct ether_header	*eh;
 		struct mbuf		*m = NULL;
 #if NVLAN > 0
 		u_int16_t		vlan_tag = 0;
@@ -1928,7 +1927,6 @@ static void ti_rxeof(sc)
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
@@ -1938,16 +1936,8 @@ static void ti_rxeof(sc)
 	 	 * a broadcast packet, multicast packet, matches our ethernet
 	 	 * address or the interface is in promiscuous mode.
 	 	 */
-		if (ifp->if_bpf) {
+		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
-			if (ifp->if_flags & IFF_PROMISC &&
-				(bcmp(eh->ether_dhost, LLADDR(ifp->if_sadl),
-		 			ETHER_ADDR_LEN) &&
-					(eh->ether_dhost[0] & 1) == 0)) {
-				m_freem(m);
-				continue;
-			}
-		}
 #endif
 
 #ifdef TI_CSUM_OFFLOAD /* XXX NetBSD: broken because m points to ether pkt */
