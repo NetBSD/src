@@ -1,4 +1,4 @@
-.\"	$NetBSD: i386_vm86.2,v 1.9 2002/10/01 15:58:39 wiz Exp $
+.\"	$NetBSD: i386_vm86.2,v 1.10 2002/10/01 16:02:42 wiz Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -93,7 +93,7 @@ register is
 This routine does not normally return: 32-bit mode will be restored by
 the delivery of a signal to the process.
 In case of an error in setting
-the VM86 mode, a value of -1 is returned and the global variable
+the VM86 mode, a value of \-1 is returned and the global variable
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

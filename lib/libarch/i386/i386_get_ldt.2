@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)fork.2	6.5 (Berkeley) 3/10/91
-.\"	$NetBSD: i386_get_ldt.2,v 1.9 2002/02/08 01:28:13 ross Exp $
+.\"	$NetBSD: i386_get_ldt.2,v 1.10 2002/10/01 16:02:42 wiz Exp $
 .\"
 .Dd September 20, 1993
 .Dt I386_GET_LDT 2 i386
@@ -76,7 +76,7 @@ Upon successful completion,
 returns the number of descriptors currently in the LDT.
 .Fn i386_set_ldt
 returns the first selector set.
-Otherwise, a value of -1 is returned and the global
+Otherwise, a value of \-1 is returned and the global
 variable
 .Va errno
 is set to indicate the error.
