@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.228 2000/05/30 00:21:10 matt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.229 2000/06/05 11:31:16 kleink Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.224 2000/05/30 00:20:41 matt Exp 
+ *	NetBSD: pcidevs,v 1.225 2000/06/05 11:29:28 kleink Exp 
  */
 
 /*
@@ -1630,10 +1630,16 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RoadRunner Gig-E Interface",
 	},
 	{
+	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO1,
+	    0,
+	    "ESS Technology Inc",
+	    "Maestro 1 PCI Audio Accelerator",
+	},
+	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2,
 	    0,
 	    "ESS Technology Inc",
-	    "Maestro 2",
+	    "Maestro 2 PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_SOLO1,
@@ -1645,7 +1651,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ESSTECH, PCI_PRODUCT_ESSTECH_MAESTRO2E,
 	    0,
 	    "ESS Technology Inc",
-	    "Maestro 2E",
+	    "Maestro 2E PCI Audio Accelerator",
 	},
 	{
 	    PCI_VENDOR_O2MICRO, PCI_PRODUCT_O2MICRO_OZ6832,
