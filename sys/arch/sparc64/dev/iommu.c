@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.28 2001/01/27 03:40:39 eeh Exp $	*/
+/*	$NetBSD: iommu.c,v 1.29 2001/01/28 01:26:57 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -693,6 +693,11 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 		 * load each segment individually.
 		 */
 
+		/* We'll never end up with less segments than we got as input.
+		   this gives us a chance to fail quickly */
+		if (nsegs > map->_dm_segcnt)
+			return (E2BIG);
+
 		i = 0;
 		dvmaddr += (segs[i].ds_addr & PGOFSET);
 		map->dm_segs[i].ds_addr = dvmaddr;
@@ -737,6 +742,8 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 		}
 		map->dm_nsegs = i;
 
+		/* bail out if we created more segments than the dmamap is
+		   allowed to carry */
 		if (i > map->_dm_segcnt) {
 			iommu_dvmamap_unload(t, is, map);
 			return (E2BIG);
