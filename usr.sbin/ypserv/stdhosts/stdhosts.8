@@ -1,4 +1,4 @@
-.\"	$NetBSD: stdhosts.8,v 1.5 1999/03/07 11:58:26 mycroft Exp $
+.\"	$NetBSD: stdhosts.8,v 1.6 2000/07/30 02:25:08 itojun Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nd a YP filter program
 .Sh SYNOPSIS
 .Nm ""
+.Op Fl n
 .Op Ar file
 .Sh DESCRIPTION
 .Nm
@@ -44,7 +45,7 @@ parses the
 .Xr hosts 5
 style input stream (stdin, or
 .Ar file
-if given), and outputs lines containing only the IP address and host name.
+if given), and outputs lines containing only the IPv4 address and host name.
 .Pp
 .Nm
 is used by other
@@ -52,6 +53,9 @@ is used by other
 programs when creating some of the
 .Tn YP
 maps.
+.Pp
+.Fl n
+allows other address types in the output, including IPv6 addresses.
 .Sh SEE ALSO
 .Xr yp 8 ,
 .Xr ypserv 8 
