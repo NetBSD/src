@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.168 2004/03/25 22:16:04 atatat Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.169 2004/03/27 04:26:23 atatat Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.168 2004/03/25 22:16:04 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.169 2004/03/27 04:26:23 atatat Exp $");
 
 #include "opt_defcorename.h"
 #include "opt_insecure.h"
@@ -741,6 +741,11 @@ sysctl_create(SYSCTLFN_RWARGS)
 	 */
 	if (SYSCTL_TYPE(rnode->sysctl_flags) != CTLTYPE_NODE)
 		return (ENOTDIR);
+	if (rnode->sysctl_flags & CTLFLAG_ALIAS) {
+		printf("sysctl_create: attempt to add node to aliased "
+		       "node %p\n", rnode);
+		return (EINVAL);
+	}
 	pnode = rnode;
 
 	if (newp == NULL)
@@ -1821,13 +1826,8 @@ sysctl_createv(struct sysctllog **log, int cflags,
 {
 	va_list ap;
 	int error, ni, namelen, name[CTL_MAXNAME];
-	struct sysctlnode *pnode, nnode, onode;
+	struct sysctlnode *pnode, nnode, onode, *root;
 	size_t sz;
-
-	if (cnode != NULL)
-		*cnode = NULL;
-	if (cflags != 0)
-		return (EINVAL);
 
 	/*
 	 * where are we putting this?
@@ -1836,6 +1836,11 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		printf("sysctl_createv: rnode NULL\n");
 		return (EINVAL);
 	}
+	root = rnode ? *rnode : NULL;
+	if (cnode != NULL)
+		*cnode = NULL;
+	if (cflags != 0)
+		return (EINVAL);
 
 	/*
 	 * what is it?
@@ -1919,7 +1924,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 	 * find it, add the new node.
 	 */
 	sz = sizeof(onode);
-	pnode = rnode ? *rnode : NULL;
+	pnode = root;
 	error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 	if (error) {
 		sysctl_unlock(NULL);
@@ -1964,7 +1969,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 		 * sysctl_create() gave us back a copy of the node,
 		 * but we need to know where it actually is...
 		 */
-		pnode = rnode ? *rnode : NULL;
+		pnode = root;
 		error = sysctl_locate(NULL, &name[0], namelen - 1, &pnode, &ni);
 
 		/*
