@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,64 +32,73 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)verify.c	5.9 (Berkeley) 3/12/91";
+static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fts.h>
+#include <fnmatch.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdio.h>
 #include "mtree.h"
+#include "extern.h"
 
-extern NODE *root;
+extern int crc_total, ftsoptions;
+extern int dflag, eflag, rflag, sflag, uflag;
+extern char fullpath[MAXPATHLEN];
 
+static NODE *root;
 static char path[MAXPATHLEN];
 
+static void	miss __P((NODE *, char *));
+static int	vwalk __P((void));
+
+int
 verify()
 {
-	vwalk();
+	int rval;
+
+	root = spec();
+	rval = vwalk();
 	miss(root, path);
+	return (rval);
 }
 
+static int
 vwalk()
 {
-	extern int ftsoptions, dflag, eflag, rflag;
 	register FTS *t;
 	register FTSENT *p;
 	register NODE *ep, *level;
+	int ftsdepth, specdepth, rval;
 	char *argv[2];
-	int ftsdepth = 0, specdepth = 0;
 
 	argv[0] = ".";
-	argv[1] = (char *)NULL;
-	if (!(t = fts_open(argv, ftsoptions, (int (*)())NULL))) {
-		(void)fprintf(stderr,
-		    "mtree: fts_open: %s.\n", strerror(errno));
-		exit(1);
-	}
+	argv[1] = NULL;
+	if ((t = fts_open(argv, ftsoptions, NULL)) == NULL)
+		err("fts_open: %s", strerror(errno));
 	level = root;
+	ftsdepth = specdepth = rval = 0;
 	while (p = fts_read(t)) {
 		switch(p->fts_info) {
 		case FTS_D:
-			if (!strcmp(p->fts_name, "."))
-				continue;
-			ftsdepth++; 
+			++ftsdepth; 
 			break;
 		case FTS_DP:
-			ftsdepth--; 
+			--ftsdepth; 
 			if (specdepth > ftsdepth) {
 				for (level = level->parent; level->prev;
 				      level = level->prev);  
-				specdepth--;
+				--specdepth;
 			}
 			continue;
 		case FTS_DNR:
 		case FTS_ERR:
 		case FTS_NS:
-			(void)fprintf(stderr, "mtree: %s: %s.\n",
+			(void)fprintf(stderr, "mtree: %s: %s\n",
 			    RP(p), strerror(errno));
 			continue;
 		default:
@@ -98,19 +107,18 @@ vwalk()
 		}
 
 		for (ep = level; ep; ep = ep->next)
-			if (ep->flags & F_MAGIC && fnmatch(ep->name,
-			    p->fts_name, FNM_PATHNAME|FNM_QUOTE) ||
+			if (ep->flags & F_MAGIC &&
+			    !fnmatch(ep->name, p->fts_name, FNM_PATHNAME) ||
 			    !strcmp(ep->name, p->fts_name)) {
 				ep->flags |= F_VISIT;
-				if (ep->flags & F_IGN) {
+				if (compare(ep->name, ep, p))
+					rval = MISMATCHEXIT;
+				if (ep->flags & F_IGN)
 					(void)fts_set(t, p, FTS_SKIP);
-					continue;
-				}
-				compare(ep->name, ep, p);
-				if (ep->child && ep->type == F_DIR &&
+				else if (ep->child && ep->type == F_DIR &&
 				    p->fts_info == FTS_D) {
 					level = ep->child;
-					specdepth++;
+					++specdepth;
 				}
 				break;
 			}
@@ -131,13 +139,17 @@ vwalk()
 		(void)fts_set(t, p, FTS_SKIP);
 	}
 	(void)fts_close(t);
+	if (sflag)
+		(void)fprintf(stderr,
+		    "mtree: %s checksum: %lu\n", fullpath, crc_total);
+	return (rval);
 }
 
+static void
 miss(p, tail)
 	register NODE *p;
 	register char *tail;
 {
-	extern int dflag, uflag;
 	register int create;
 	register char *tp;
 
@@ -154,9 +166,12 @@ miss(p, tail)
 
 		create = 0;
 		if (!(p->flags & F_VISIT) && uflag)
-#define	MINBITS	(F_GROUP|F_MODE|F_OWNER)
-			if ((p->flags & MINBITS) != MINBITS)
-				(void)printf(" (not created -- group, mode or owner not specified)");
+			if (!(p->flags & (F_UID | F_UNAME)))
+			    (void)printf(" (not created: user not specified)");
+			else if (!(p->flags & (F_GID | F_GNAME)))
+			    (void)printf(" (not created: group not specified)");
+			else if (!(p->flags & F_MODE))
+			    (void)printf(" (not created: mode not specified)");
 			else if (mkdir(path, S_IRWXU))
 				(void)printf(" (not created: %s)",
 				    strerror(errno));
@@ -176,7 +191,7 @@ miss(p, tail)
 		if (!create)
 			continue;
 		if (chown(path, p->st_uid, p->st_gid)) {
-			(void)printf("%s: owner/group/mode not modified: %s\n",
+			(void)printf("%s: user/group/mode not modified: %s\n",
 			    path, strerror(errno));
 			continue;
 		}

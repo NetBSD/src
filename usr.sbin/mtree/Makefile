@@ -1,7 +1,8 @@
-#	@(#)Makefile	5.4 (Berkeley) 5/25/90
+#	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	mtree
-SRCS=	compare.c create.c mtree.c spec.c verify.c
-.PATH:	${.CURDIR}
+#CFLAGS+=-DDEBUG
+SRCS=	compare.c crc.c create.c misc.c mtree.c spec.c verify.c
+.PATH:	${.CURDIR}/../../usr.bin/cksum
 
 .include <bsd.prog.mk>
