@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.6 2003/01/19 22:29:24 ragge Exp $	   */
+/*	$NetBSD: subr.S,v 1.7 2003/01/20 04:45:57 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -425,7 +425,7 @@ JSBENTRY(Swtchto)
 	# New LWP already in %r2
 	mfpr	$PR_SSP,%r1		# Get ptr to this cpu_info struct
 #if defined(MULTIPROCESSOR)
-	movl	r1,L_CPU(%r2)		# l->l_cpu = curcpu();
+	movl	%r1,L_CPU(%r2)		# l->l_cpu = curcpu();
 #endif
 	movb	$LSONPROC,L_STAT(%r2)	# l->l_stat = LSONPROC;
 	movl	%r2,CI_CURLWP(%r1)	# set new process running
