@@ -10,7 +10,7 @@ RM=	rm -f
 
 .mc.cf:
 	$(RM) $@
-	(cd ${.CURDIR} && $(M4) ${@:R}.mc > obj/$@)
+	(cd ${.CURDIR} && $(M4) ${@:R}.mc) > $@
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	cs-hidden.cf cs-exposed.cf \
@@ -20,8 +20,8 @@ ALL=	cs-hidden.cf cs-exposed.cf \
 	ultrix4.1-cs-exposed.cf ultrix4.1-cs-hidden.cf \
 	mail.cs.cf mail.eecs.cf ucbvax.cf vangogh.cf \
 	chez.cf knecht.cf cogsci.cf alpha.cf s2k.cf auspex.cf \
-	python.cf \
-	tcpproto.cf uucpproto.cf
+	python.cf sun-lamp.cf \
+	tcpproto.cf uucpproto.cf 
 
 all: $(ALL)
 
