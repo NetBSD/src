@@ -1,9 +1,6 @@
-#	$NetBSD: gcc.shl,v 1.8 2004/08/12 16:07:07 lukem Exp $
+#	$NetBSD: gcc.shl,v 1.9 2004/08/13 01:02:24 lukem Exp $
 ./usr/lib/libbfd.so.6				comp-c-shlib		bfd
 ./usr/lib/libbfd.so.6.0				comp-c-shlib		bfd
-./usr/lib/libg2c.so				comp-fortran-lib
-./usr/lib/libg2c.so.2				comp-fortran-shlib
-./usr/lib/libg2c.so.2.0				comp-fortran-shlib
 ./usr/lib/libg2c_pic.a				comp-fortran-lib
 ./usr/lib/libgcc_eh.a				comp-c-lib
 ./usr/lib/libgcc_eh_p.a				comp-c-proflib		profile
