@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 1999/06/17 00:22:41 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 1999/06/26 09:09:51 matthias Exp $	*/
 
 /*
  *
@@ -481,7 +481,15 @@ paddr_t pa;
 vm_prot_t prot;
   
 {
+  struct pmap *pm = pmap_kernel();
   pt_entry_t *pte, opte;                     
+  int s;
+
+  s = splimp();
+  simple_lock(&pm->pm_obj.vmobjlock);
+  pm->pm_stats.resident_count++;
+  simple_unlock(&pm->pm_obj.vmobjlock);
+  splx(s);
 
   pte = vtopte(va);     
   opte = *pte;           
