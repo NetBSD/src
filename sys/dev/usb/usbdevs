@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.88 2000/04/03 12:09:43 augustss Exp $
+$NetBSD: usbdevs,v 1.89 2000/04/07 18:59:58 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -146,6 +146,7 @@ vendor LINKSYS		0x066b	Linksys, Inc.
 vendor ACERSA		0x066e	Acer Semiconductor America, Inc.
 vendor AIWA		0x0677	Aiwa Co., Ltd.
 vendor ACARD		0x0678	ACARD Technology Corp.
+vendor PROLIFIC		0x067b	Prolific Technology Inc.
 vendor ADVANCELOGIC	0x0680	Avance Logic, Inc.
 vendor ASKEY		0x069a	Askey Computer Corp.
 vendor ALCATELT		0x06b9	Alcatel Telecom
@@ -525,6 +526,9 @@ product PLX TESTBOARD		0x9060	test board
 product PRIMAX COMFORT		0x4d01	Comfort
 product PRIMAX MOUSEINABOX	0x4d02	Mouse-in-a-Box
 product PRIMAX PCGAUMS1		0x4d04	Sony PCGA-UMS1
+
+/* Prolific products */
+product PROLIFIC PL2302		0x0000	PL2302 Host-Host interface
 
 /* Quickshot products */
 product QUICKSHOT STRIKEPAD	0x6238	USB StrikePad
