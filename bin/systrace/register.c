@@ -1,4 +1,4 @@
-/*	$NetBSD: register.c,v 1.1 2002/07/30 16:29:31 itojun Exp $	*/
+/*	$NetBSD: register.c,v 1.2 2002/08/01 08:47:03 itojun Exp $	*/
 /*	$OpenBSD: register.c,v 1.8 2002/07/30 06:07:06 itojun Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -248,6 +248,7 @@ systrace_initcb(void)
 	intercept_register_translation("native", "setegid", 0, &gidt);
 #endif
 
+#if !(defined(__NetBSD__) && !defined(HAVE_LINUX_FCNTL_H))
 	X(intercept_register_sccb("linux", "open", trans_cb, NULL));
 	tl = intercept_register_translink("linux", "open", 0);
 	intercept_register_translation("linux", "open", 1, &linux_oflags);
@@ -296,6 +297,7 @@ systrace_initcb(void)
 	X(intercept_register_sccb("linux", "chmod", trans_cb, NULL));
 	intercept_register_translink("linux", "chmod", 0);
 	intercept_register_translation("linux", "chmod", 1, &modeflags);
+#endif
 
 	X(intercept_register_execcb(execres_cb, NULL));
 }
