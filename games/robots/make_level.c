@@ -1,4 +1,4 @@
-/*	$NetBSD: make_level.c,v 1.5 1997/10/12 14:16:27 lukem Exp $	*/
+/*	$NetBSD: make_level.c,v 1.6 1999/05/15 23:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)make_level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: make_level.c,v 1.5 1997/10/12 14:16:27 lukem Exp $");
+__RCSID("$NetBSD: make_level.c,v 1.6 1999/05/15 23:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,6 +78,8 @@ make_level()
 	if ((i = Level * 10) > MAXROBOTS)
 		i = MAXROBOTS;
 	Num_robots = i;
+	memset(Scrap, 0, sizeof(Scrap[0]) * MAXROBOTS);
+	Num_scrap = 0;
 	while (i-- > 0) {
 		cp = rnd_pos();
 		Robots[i] = *cp;

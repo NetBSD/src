@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 1997/10/12 14:16:26 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1999/05/15 23:56:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 1997/10/12 14:16:26 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 1999/05/15 23:56:36 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ main(ac, av)
 	extern int	Max_per_uid;
 
 	show_only = FALSE;
+	Num_games = 1;
 	if (ac > 1) {
 		bad_arg = FALSE;
 		for (++av; ac > 1 && *av[0]; av++, ac--)
@@ -88,6 +89,9 @@ main(ac, av)
 			else
 				for (sp = &av[0][1]; *sp; sp++)
 					switch (*sp) {
+					  case 'A':
+						Auto_bot = TRUE;
+						break;
 					  case 's':
 						show_only = TRUE;
 						break;
@@ -97,12 +101,16 @@ main(ac, av)
 					  case 'a':
 						Start_level = 4;
 						break;
+					  case 'n':
+						Num_games++;
+						break;
 					  case 'j':
 						Jump = TRUE;
 						break;
 					  case 't':
 						Teleport = TRUE;
 						break;
+					  
 					  default:
 						fprintf(stderr, "robots: uknown option: %c\n", *sp);
 						bad_arg = TRUE;
@@ -140,16 +148,25 @@ main(ac, av)
 	if (Real_time)
 		signal(SIGALRM, move_robots);
 	do {
-		init_field();
-		for (Level = Start_level; !Dead; Level++) {
-			make_level();
-			play_level();
+		while (Num_games--) {
+			init_field();
+			for (Level = Start_level; !Dead; Level++) {
+				make_level();
+				play_level();
+				if (Auto_bot)
+					sleep(1);
+			}
+			move(My_pos.y, My_pos.x);
+			printw("AARRrrgghhhh....");
+			refresh();
+			if (Auto_bot)
+				sleep(1);
+			score();
+			if (Auto_bot)
+				sleep(1);
+			refresh();
 		}
-		move(My_pos.y, My_pos.x);
-		printw("AARRrrgghhhh....");
-		refresh();
-		score();
-	} while (another());
+	} while (!Auto_bot && another());
 	quit(0);
 	/* NOTREACHED */
 	return(0);
