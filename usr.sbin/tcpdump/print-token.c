@@ -21,7 +21,7 @@
 
 #if 0
 static  char rcsid[] =
-	"@(#)$Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-token.c,v 1.1 1999/03/23 00:02:25 bad Exp $ (LBL)";
+	"@(#)$Header: /cvsroot/src/usr.sbin/tcpdump/Attic/print-token.c,v 1.2 1999/03/25 05:07:34 itohy Exp $ (LBL)";
 #endif
 
 #ifdef HAVE_TOKEN
@@ -140,7 +140,7 @@ token_if_print(u_char *pcap, const struct pcap_pkthdr *h,
 		struct token_rif	*rif;
 
 		rif = TOKEN_RIF(trp);
-		riflen = (NTOHS(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
+		riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 /*
  * XXX if (vflag && eflag) print RIF ???
  */
