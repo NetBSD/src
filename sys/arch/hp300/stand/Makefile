@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.10 1994/08/04 19:42:16 brezak Exp $
+#	     $Id: Makefile,v 1.11 1994/08/15 06:42:04 mycroft Exp $
 
 # RELOC=FFF00000 allows for boot prog up to FF000 (1044480) bytes long
 RELOC=	FFF00000
@@ -158,5 +158,7 @@ install: mkboot installboot ${ALL}
 
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
+# XXX This should not be necessary.
+.include <bsd.subdir.mk>
 
 FRC:
