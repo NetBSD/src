@@ -23,7 +23,7 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  *
- *	$Id: db_trace.c,v 1.13 1994/10/09 15:40:51 mycroft Exp $
+ *	$Id: db_trace.c,v 1.14 1994/10/09 15:49:10 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -213,7 +213,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	}
 
 	lastframe = 0;
-	while (count-- && frame != 0) {
+	while (count && frame != 0) {
 		int		narg;
 		char *	name;
 		db_expr_t	offset;
@@ -324,6 +324,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 				break;
 			}
 		}
+		--count;
 	}
 
 	if (count && is_trap != NONE) {
