@@ -1,8 +1,16 @@
-#	$NetBSD: AKF60,v 1.1 2001/10/05 22:27:47 reinoud Exp $
-#
-# Modefile written by !MakeModes version 0.19 (22-Aug-1994)
+#       $NetBSD: AKF60,v 1.2 2003/06/04 23:24:56 reinoud Exp $
 # Monitor description file for Acorn AKF60 monitor
 # Line rate: 30 - 50 kHz
+
+# Version history
+# 1.00: TMD 16-Nov-93   Created from previous efforts, and applying all ARM Ltd restrictions
+#                       except for DRAM-based right-hand-border limitations
+# 1.01: TMD 22-Nov-93   Adjusted centering of high band modes based on assumption that
+#                       (back porch - front porch)/total determines positioning
+# 1.02: TMD 08-Dec-93   More centering adjustments
+# 1.03: TMD 13-Dec-93   Removed mode names from modes not appearing in DisplayManager menu
+# 1.04: TMD 27-Jan-94   Reinstated 480 x 352 onto the menu, so that no-VRAM machines have a 16bpp mode
+# 1.05: TMD 04-Feb-94   Added 240 x 352 for Replay.
 
 file_format:1
 monitor_title:Acorn AKF60
@@ -358,5 +366,16 @@ pixel_rate:99000
 h_timings:160,92,84,1600,84,92
 #    VESA:160,320,0,1600,0,32
 v_timings:3,21,0,600,0,1
+sync_pol:0
+endmode
+
+# 416 x 208 (80Hz)
+startmode
+mode_name:416 x 208
+x_res:416
+y_res:208
+pixel_rate:15000
+h_timings:14,18,40,416,12,0
+v_timings:3,12,70,208,70,2
 sync_pol:0
 endmode
