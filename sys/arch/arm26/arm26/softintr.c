@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.8 2001/01/15 20:19:52 thorpej Exp $ */
+/* $NetBSD: softintr.c,v 1.9 2001/08/25 17:45:32 bjh21 Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.8 2001/01/15 20:19:52 thorpej Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.9 2001/08/25 17:45:32 bjh21 Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -113,6 +113,7 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 	new->sh_ipl = ipl;
 	new->sh_func = func;
 	new->sh_arg = arg;
+	new->sh_pending = 0;
 	if (LIST_FIRST(&sh_head) == NULL ||
 	    LIST_FIRST(&sh_head)->sh_ipl <= ipl)
 		/* XXX This shouldn't need to be a special case */
