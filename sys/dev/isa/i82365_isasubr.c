@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.17 2000/02/27 00:14:27 mycroft Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.18 2000/02/27 03:08:00 mycroft Exp $	*/
 
 #define	PCICISADEBUG
 
@@ -156,11 +156,11 @@ pcic_isa_count_intr(arg)
 	 * unhandled level interupts
 	 */
 	if (++sc->intr_false > 40) {
-		pcic_write(h, PCIC_CSC_INTR, 0);
-		delay(10);
-
 		isa_intr_disestablish(isc->sc_ic, sc->ih);
 		sc->ih = 0;
+
+		pcic_write(h, PCIC_CSC_INTR, 0);
+		delay(10);
 	}
 
 #ifdef PCICISADEBUG
@@ -225,14 +225,17 @@ pcic_isa_probe_interrupts(sc, h)
 			continue;
 		}
 
-		if ((sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
-		    pcic_isa_count_intr, h)) == NULL)
-			panic("cant get interrupt");
-
 		cscintr = PCIC_CSC_INTR_CD_ENABLE;
 		cscintr |= (irq << PCIC_CSC_INTR_IRQ_SHIFT);
 		pcic_write(h, PCIC_CSC_INTR, cscintr);
 		delay(10);
+
+		/* Clear any pending interrupt. */
+		(void) pcic_read(h, PCIC_CSC);
+
+		if ((sc->ih = isa_intr_establish(ic, irq, IST_EDGE, IPL_TTY,
+		    pcic_isa_count_intr, h)) == NULL)
+			panic("cant get interrupt");
 
 		/* interrupt 40 times */
 		sc->intr_detect = 0;
@@ -252,11 +255,11 @@ pcic_isa_probe_interrupts(sc, h)
 		}
 
 		if (sc->ih) {
-			pcic_write(h, PCIC_CSC_INTR, 0);
-			delay(10);
-
 			isa_intr_disestablish(ic, sc->ih);
 			sc->ih = 0;
+
+			pcic_write(h, PCIC_CSC_INTR, 0);
+			delay(10);
 		}
 	}
 	sc->intr_mask[h->chip] = mask;
