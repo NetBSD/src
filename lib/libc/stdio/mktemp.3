@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.11 1998/06/08 12:41:42 lukem Exp $
+.\"	$NetBSD: mktemp.3,v 1.12 1998/07/27 16:41:40 mycroft Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,8 +38,9 @@
 .Os
 .Sh NAME
 .Nm mktemp ,
-.Nm mkstemp
-.Nd make temporary file name (unique)
+.Nm mkstemp ,
+.Nm mkdtemp
+.Nd make unique temporary file or directory name
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -48,6 +49,8 @@
 .Fn mktemp "char *template"
 .Ft int
 .Fn mkstemp "char *template"
+.Ft char *
+.Fn mkdtemp "char *template"
 .Sh DESCRIPTION
 The
 .Fn mktemp
@@ -83,11 +86,20 @@ makes the same replacement to the template and creates the template file,
 mode 0600, returning a file descriptor opened for reading and writing.
 This avoids the race between testing for a file's existence and opening it
 for use.
+.Pp
+The
+.Fn mkdtemp
+function
+is similar to
+.Fn mkstemp ,
+but it creates a mode 0700 directory instead and returns the path.
 .Sh RETURN VALUES
 The
 .Fn mktemp
-function
-returns a pointer to the template on success and
+and
+.Fn mkdtemp
+functions
+return a pointer to the template on success and
 .Dv NULL
 on failure.
 The
@@ -98,9 +110,10 @@ If either call fails an error code is placed in the global variable
 .Va errno .
 .Sh ERRORS
 The
-.Fn mktemp
-and
+.Fn mktemp ,
 .Fn mkstemp
+and
+.Fn mkdtemp
 functions
 may set
 .Va errno
@@ -111,9 +124,10 @@ The pathname portion of the template is not an existing directory.
 .El
 .Pp
 The
-.Fn mktemp
-and
+.Fn mktemp ,
 .Fn mkstemp
+and
+.Fn mkdtemp
 functions
 may also set
 .Va errno
@@ -128,6 +142,15 @@ may also set
 .Va errno
 to any value specified by the
 .Xr open 2
+function.
+.Pp
+The
+.Fn mkdtemp
+function
+may also set
+.Va errno
+to any value specified by the
+.Xr mkdir 2
 function.
 .Sh SEE ALSO
 .Xr chmod 2 ,
@@ -146,6 +169,8 @@ should generally be avoided, as a hostile process can exploit a race
 condition in the time between the generation of a temporary filename by
 .Fn mktemp
 and the invoker's use of the temporary name.
-A link-time warning will be issued to advise the use of
+A link-time warning will be issued advising the use of
 .Fn mkstemp
+or
+.Fn mkdtemp
 instead.
