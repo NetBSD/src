@@ -48,7 +48,9 @@
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
+#ifdef KERNEL
 #include <machine/cpu.h>
+#endif
 
 #define MACHINE 	"pc532"
 #define MACHINE_ARCH	"ns32k"
