@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.15 1997/06/22 07:43:01 jonathan Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.16 1997/06/22 12:22:37 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -237,8 +237,6 @@ mips_vector_init()
 void
 cpu_identify()
 {
-
-
 	/* Work out what kind of CPU and FPU are present. */
 
 	switch(cpu_id.cpu.cp_imp) {
@@ -371,11 +369,12 @@ cpu_identify()
 	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
 	printf("\n");
 
-#ifdef MIPS3
-	printf("        Primary cache size: %dkb Instruction, %dkb Data, %dkb Secondary.\n",
+	printf("        L1 cache: %dkb Instruction, %dkb Data.",
 	    mips_L1InstCacheSize / 1024,
-	    mips_L1DataCacheSize / 1024,
-	    mips_L2CacheSize / 1024);
-#endif
+	    mips_L1DataCacheSize / 1024);
+	if (mips_L2CacheSize)
+		printf(" L2 cache: %dkb mixed.\n", mips_L2CacheSize / 1024);
+	else
+		printf("\n");
 /* XXX cache sizes for MIPS1? */
 }
