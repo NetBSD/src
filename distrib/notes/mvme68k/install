@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.3 1998/01/09 18:46:51 perry Exp $	
+
 Installing NetBSD is a relatively complex process, but if you have
 this document in hand it should not be too difficult.
 
@@ -42,7 +44,7 @@ Loading: Operating System
 Volume: NBSD
 
 IPL loaded at:  $003F0000
->> BSD MVME147 tapeboot [$Revision: 1.2 $]
+>> BSD MVME147 tapeboot [$Revision: 1.3 $]
 578616+422344+55540+[46032+51284]=0x11a6e4
 Start @ 0x8000 ...
 Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.  All rights reserved.
@@ -315,7 +317,7 @@ from the server:
         4800 
         Download was a success!
         Start @ 0x8000 ... 
-        >> BSD MVME147 netboot (via sboot) [$Revision: 1.2 $]
+        >> BSD MVME147 netboot (via sboot) [$Revision: 1.3 $]
         device: le0 attached to 08:00:3e:20:cb:87
         boot: client IP address: 192.168.1.4
         boot: client name: soapy

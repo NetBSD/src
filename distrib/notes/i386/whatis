@@ -1,3 +1,5 @@
+	$NetBSD: whatis,v 1.6 1998/01/09 18:46:35 perry Exp $	
+
 i386-specific enhancements include a number of new device drivers, such
 as the Intel Etherexpress FE drivers, ATAPI support, and others.
 See the hardware compatibility list for supported devices.

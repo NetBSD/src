@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.4 1998/01/09 18:46:10 perry Exp $	
+
 Note you will be modifying your HD's if you mess something up here you
 could lose everything on all the drives that you mess with.  It is
 therefore advised that you:

@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.2 1998/01/09 18:48:06 perry Exp $	
+
 NOTE: If you wish to install NetBSD on your whole disk, i.e. you do
 not want DOS or any other operating system to reside on your hard
 disk, you can skip this section and go on to the section that

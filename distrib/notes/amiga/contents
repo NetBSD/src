@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.10 1998/01/09 18:45:42 perry Exp $	
+
 The Amiga-specific portion of the NetBSD _VER release is found in the
 "amiga" subdirectory of the distribution.  That subdirectory is laid
 out as follows:

@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.2 1998/01/09 18:47:45 perry Exp $	
+
 Sun3x machines usually need little or no preparation before installing
 NetBSD, other than the usual, well advised precaution of BACKING UP
 ALL DATA on any attached storage devices.

@@ -1,3 +1,5 @@
+	$NetBSD: whatis,v 1.2 1998/01/09 18:46:02 perry Exp $	
+
 NetBSD/arm32 _VER is the first official binary release of NetBSD for the
 arm32 platform, although binary release have been available in the past
 under a different name (RiscBSD).

@@ -1,3 +1,5 @@
+	$NetBSD: upgrade,v 1.4 1998/01/09 18:47:06 perry Exp $	
+
 The upgrade to NetBSD 1.2 is a binary upgrade; it would be prohibitive
 to make users upgrade by compiling and installing the 1.2 sources, and
 it would be very difficult to even compile a set of instructions that

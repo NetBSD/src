@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.4 1998/01/09 18:47:33 perry Exp $	
+
 NetBSD/sun3 _VER runs on most Sun3 machines, including:
 		3/50, 3/60, 3/110
 		3/75, 3/150, 3/160

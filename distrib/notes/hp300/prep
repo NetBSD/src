@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.6 1998/01/09 18:46:20 perry Exp $	
+
 Currently, only installing the miniroot from the network is supported.
 This may change in a future release.
 

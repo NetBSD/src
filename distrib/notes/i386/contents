@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.15 1998/01/09 18:46:27 perry Exp $	
+
 The i386-specific portion of the NetBSD _VER release is found in the
 "i386" subdirectory of the distribution.  That subdirectory is laid
 out as follows:

@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.2 1998/01/09 18:45:55 perry Exp $	
+
 NetBSD/arm32 _VER runs on several systems with ARM6 or above processors,
 with or without FPU coprocessor.  The minimal configuration is said to
 require 8M of RAM and 50M of disk space, though we do not know of anyone

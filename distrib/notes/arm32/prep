@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.2 1998/01/09 18:45:59 perry Exp $	
+
 First and foremost, before beginning the installation process, MAKE
 SURE YOU HAVE A RELIABLE BACKUP of any data on your hard disk that you
 wish to keep.  Repartitioning your hard disk is an excellent way to

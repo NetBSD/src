@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.2 1998/01/09 18:46:49 perry Exp $	
+
 NetBSD/mvme68k _VER runs on Motorola MVME147 boards.
 
 The minimal configuration requires 4M of RAM and ~100MB of disk space.

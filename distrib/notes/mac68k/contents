@@ -1,3 +1,5 @@
+	$NetBSD: contents,v 1.11 1998/01/09 18:46:38 perry Exp $	
+
 The mac68k-specific portion of the NetBSD _VER release is found in the
 "mac68k" subdirectory of the distribution.  That subdirectory is laid
 out as follows:

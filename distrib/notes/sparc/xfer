@@ -1,3 +1,5 @@
+	$NetBSD: xfer,v 1.5 1998/01/09 18:47:29 perry Exp $	
+
 Installation is supported from several media types, including:
 	NFS partitions
 	FTP

@@ -1,3 +1,5 @@
+	$NetBSD: upgrade,v 1.6 1998/01/09 18:46:23 perry Exp $	
+
 It is possible to easily upgrade your existing NetBSD/hp300 system
 using the upgrade program in the miniroot.  If you wish to upgrade
 your system by this method, simply select the `upgrade' option once

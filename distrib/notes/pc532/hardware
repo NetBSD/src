@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.4 1998/01/09 18:47:01 perry Exp $	
+
 NetBSD/pc532 1.2 runs on a PC532 computer.  It supports a subset of the
 "standard" hardware to date.  This is defined as:
 

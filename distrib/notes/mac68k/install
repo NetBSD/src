@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.16 1998/01/09 18:46:40 perry Exp $	
+
 The installation can be broken down into three basic steps:
 	* Run Mkfs to build a filesystem or filesystems.
 	* Run the Installer to load the files onto your filesystems.

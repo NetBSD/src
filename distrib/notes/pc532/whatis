@@ -1,3 +1,5 @@
+	$NetBSD: whatis,v 1.4 1998/01/09 18:47:07 perry Exp $	
+
 For the pc532 port, there are a few known problems.  They include:
 
   a) ppp reports a lot of input errors on some machines.

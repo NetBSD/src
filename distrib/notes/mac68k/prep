@@ -1,3 +1,5 @@
+	$NetBSD: prep,v 1.6 1998/01/09 18:46:42 perry Exp $	
+
 Find your favorite disk partitioning utility.  Any formatter capable of
 partitioning a SCSI disk should work.  Some of the ones that have been
 tried and seem to work are:

@@ -1,3 +1,5 @@
+	$NetBSD: upgrade,v 1.4 1998/01/09 18:46:11 perry Exp $	
+
 Before updating, you probably would want to backup your original
 filesystems!
 

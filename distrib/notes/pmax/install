@@ -1,3 +1,5 @@
+	$NetBSD: install,v 1.7 1998/01/09 18:47:12 perry Exp $	
+
 Reminder:
 	Always back up files before installing or upgrading.
 	If installing from source,  always install and boot a new kernel

@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.4 1998/01/09 18:47:11 perry Exp $	
+
 NetBSD/pmax _VER runs on the following classes of machines:
 	- Decstation 2100 and 3100, also known as "pmin" and  "pmax" 
 	- Personal Decstations (5000/20, and /25)  also known as "MAXINE"

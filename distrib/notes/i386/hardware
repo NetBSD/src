@@ -1,3 +1,5 @@
+	$NetBSD: hardware,v 1.26 1998/01/09 18:46:28 perry Exp $	
+
 NetBSD/i386 _VER runs on ISA (AT-Bus), EISA, PCI, and VL-bus systems
 with 386-family processors, with or without math coprocessors.  It
 does NOT support MCA systems, such as some IBM PS/2 systems.  The

@@ -1,3 +1,5 @@
+	$NetBSD: xfer,v 1.12 1998/01/09 18:46:46 perry Exp $	
+
 Installation is currently only supported from the local Macintosh hard
 drive or from an AppleShare volume (however, you may upgrade a system from
 within NetBSD; see the section on upgrading for more details).  This means
