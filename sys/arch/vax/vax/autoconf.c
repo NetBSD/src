@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.56 2000/05/26 21:05:23 ragge Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.57 2000/05/31 23:55:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -65,7 +65,7 @@ void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
 int	mastercpu;	/* chief of the system */
-struct device *booted_from;
+struct device *booted_device;
 
 #define MAINBUS	0
 
@@ -87,15 +87,12 @@ cpu_configure()
 void
 cpu_rootconf()
 {
-	struct device *booted_device = NULL;
 	int booted_partition = 0;
 
 	/*
 	 * The device we booted from are looked for during autoconfig.
-	 * There can only be one match.
+	 * If there has been a match, it's already been done.
 	 */
-	if (rpb.rpb_base != (void *)-1)
-		booted_device = booted_from;
 
 #ifdef DEBUG
 	printf("booted from type %d unit %d csr 0x%lx adapter %lx slave %d\n",
@@ -211,9 +208,13 @@ device_register(struct device *dev, void *aux)
 {
 	int (**dp)(struct device *, void *) = devreg;
 
+	/* If there's a synthetic RPB, we can't trust it */
+	if (rpb.rpb_base == (void *)-1)
+		return;
+
 	while (*dp) {
 		if ((*dp)(dev, aux)) {
-			booted_from = dev;
+			booted_device = dev;
 			break;
 		}
 		dp++;
