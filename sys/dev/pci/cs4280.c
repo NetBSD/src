@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.4.4.1 2000/06/30 16:27:49 simonb Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.4.4.2 2000/07/19 19:22:36 augustss Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -37,23 +37,16 @@
  * http://www.cirrus.com/ftp/pubs/4297.pdf
  * ftp://ftp.alsa-project.org/pub/manuals/cirrus/embedded_audio_spec.pdf
  * ftp://ftp.alsa-project.org/pub/manuals/cirrus/embedded_audio_spec.doc
+ *
+ * Note:  CS4610 + CS423x ISA codec should be worked with
+ *	 wss* at pnpbios?
+ *
  */
 
 /*
  * TODO
- * Implement MIDI
  * Joystick support
  */
-
-#ifdef CS4280_DEBUG
-#ifndef MIDI_READY
-#define MIDI_READY
-#endif /* ! MIDI_READY */
-#endif
-
-#ifdef MIDI_READY
-#include "midi.h"
-#endif
 
 #if defined(CS4280_DEBUG)
 #define DPRINTF(x)	    if (cs4280debug) printf x
@@ -63,6 +56,8 @@ int cs4280debug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
 #endif
+
+#include "midi.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,10 +298,8 @@ cs4280_match(parent, match, aux)
 #if 0  /* I can't confirm */
 	    || PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CIRRUS_CS4610
 #endif
-	   
-	   ) {
+	    )
 		return (1);
-	}
 	return (0);
 }
 
@@ -821,7 +814,7 @@ cs4280_intr(p)
 #endif
 	/* Throw EOI */
 	BA0WRITE4(sc, CS4280_HICR, HICR_CHGM | HICR_IEV);
-	return (0);
+	return (1);
 }
 
 
@@ -1632,7 +1625,7 @@ cs4280_init(sc, init)
 	BA0WRITE4(sc, CS4280_SERMC1, 0);
 
 	/* Specify type of CODEC */
-/* XXX should no be here */
+/* XXX should not be here */
 #define SERACC_CODEC_TYPE_1_03
 #ifdef	SERACC_CODEC_TYPE_1_03
 	BA0WRITE4(sc, CS4280_SERACC, SERACC_HSP | SERACC_CTYPE_1_03); /* AC 97 1.03 */
@@ -1801,7 +1794,7 @@ cs4280_power(why, v)
 		for(i = 1; i <= CS4280_SAVE_REG_MAX; i++) {
 			if(i == 0x04) /* AC97_REG_MASTER_TONE */
 				continue;
-			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i>>1]);
+			cs4280_read_codec(sc, 2*i, &sc->ac97_reg[i]);
 		}
 		/* should I powerdown here ? */
 		cs4280_write_codec(sc, AC97_REG_POWER, CS4280_POWER_DOWN_ALL);
@@ -1920,11 +1913,13 @@ cs4280_midi_output(addr, d)
 			mem |= d & MIDWP_MASK;
 			DPRINTFN(5,("midi_output d=0x%08x",d));
 			BA0WRITE4(sc, CS4280_MIDWP, mem);
+#ifdef DIAGNOSTIC 
 			if (mem != BA0READ4(sc, CS4280_MIDWP)) {
 				DPRINTF(("Bad write data: %d %d",
 					 mem, BA0READ4(sc, CS4280_MIDWP)));
 				return(EIO);
 			}
+#endif
 			return (0);
 		}
 		delay(MIDI_BUSY_DELAY);
