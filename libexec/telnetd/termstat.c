@@ -1,4 +1,4 @@
-/*	$NetBSD: termstat.c,v 1.9 2001/07/22 13:34:01 wiz Exp $	*/
+/*	$NetBSD: termstat.c,v 1.10 2001/08/01 16:41:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termstat.c	8.2 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: termstat.c,v 1.9 2001/07/22 13:34:01 wiz Exp $");
+__RCSID("$NetBSD: termstat.c,v 1.10 2001/08/01 16:41:14 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,7 +446,7 @@ clientstat(code, parm1, parm2)
 				useeditmode = 0;
 				if (tty_isediting())
 					useeditmode |= MODE_EDIT;
-				if (tty_istrapsig)
+				if (tty_istrapsig())
 					useeditmode |= MODE_TRAPSIG;
 				if (tty_issofttab())
 					useeditmode |= MODE_SOFT_TAB;
