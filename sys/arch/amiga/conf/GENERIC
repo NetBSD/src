@@ -1,7 +1,7 @@
 #
 # GENERIC AMIGA
 #
-#	$Id: GENERIC,v 1.23 1994/07/16 02:29:24 chopps Exp $
+#	$Id: GENERIC,v 1.24 1994/07/18 08:05:36 chopps Exp $
 #
 # This configuration file contains all possible options
 #
@@ -55,7 +55,7 @@ options		FDESC		# /dev/fd filesystem
 options		NULLFS		# Loopback filesystem
 options		FIFO		# FIFO operations on vnodes (Recommended)
 options		ADOSFS		# AmigaDOS file system
-#options	ISOFS		# ISO 9660 file system, with Rock Ridge
+options		"CD9660"	# ISO 9660 file system, with Rock Ridge
 #options	PORTAL		# Portal filesystem
 #options	MSDOSFS		# MS-DOS filesystem
 
@@ -90,7 +90,7 @@ options		"NKMEMCLUSTERS=256"	# Size of kernel malloc area
 # Misc. debuging options
 #
 options		PANICWAIT	# Require keystroke to dump/reboot
-options		DEBUG		# Add debugging statements
+#options	DEBUG		# Add debugging statements
 options		DDB		# Kernel debugger
 #options	SYSCALL_DEBUG	# debug all syscalls.
 #options	SCSIDEBUG	# Add SCSI debugging statements
