@@ -929,11 +929,8 @@ case "${target}" in
   vax-*-vms)
     noconfigdirs="$noconfigdirs bfd binutils gdb ld target-newlib opcodes target-libgloss target-libffi"
     ;;
-  vax-*-netbsdelf*)
+  vax-*-netbsd* | vax1k-*-netbsd*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss"
-    ;;
-  vax-*-netbsd* | vax1k-*-netbsd*) # (a.out)
-    noconfigdirs="$noconfigdirs ld target-newlib target-libgloss"
     ;;
   vax-*-*)
     noconfigdirs="$noconfigdirs target-newlib target-libgloss target-libffi"
