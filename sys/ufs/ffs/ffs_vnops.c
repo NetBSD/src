@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.35 2000/11/27 08:39:55 chs Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.36 2000/12/10 19:41:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -272,7 +272,7 @@ ffs_fsync(v)
 
 	simple_lock(&vp->v_uvm.u_obj.vmobjlock);
 	(vp->v_uvm.u_obj.pgops->pgo_flush)(&vp->v_uvm.u_obj,
-	    ap->a_offlo, ap->a_offhi - ap->a_offlo, PGO_CLEANIT|PGO_SYNCIO);
+	    ap->a_offlo, ap->a_offhi, PGO_CLEANIT|PGO_SYNCIO);
 	simple_unlock(&vp->v_uvm.u_obj.vmobjlock);
 
 	/*
