@@ -1,4 +1,4 @@
-/* $NetBSD: installboot.c,v 1.9 1998/11/25 21:19:35 ross Exp $ */
+/* $NetBSD: installboot.c,v 1.10 1999/04/02 02:47:45 cgd Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -367,7 +367,7 @@ loadprotoblocks(fname, size)
 	char *fname;
 	long *size;
 {
-	int	fd, sz;
+	int	fd, sz, tdb_size;
 	char	*bp;
 	struct	stat statbuf;
 	u_int64_t *matchp;
@@ -415,13 +415,24 @@ loadprotoblocks(fname, size)
 
 	if (bbinfolocp == NULL) {
 		warnx("%s: not a valid boot block?", fname);
+		free(bp);
 		return NULL;
 	}
 
-	bbinfop = (struct bbinfo *)(bp + bbinfolocp->end - bbinfolocp->start);	
-	memset(bbinfop, 0, sz - (bbinfolocp->end - bbinfolocp->start));
-	max_block_count =
-	    ((char *)bbinfop->blocks - bp) / sizeof (bbinfop->blocks[0]);
+	tdb_size = bbinfolocp->end - bbinfolocp->start;	 /* text, data, bss */
+
+	if ((sz - tdb_size) < sizeof (struct bbinfo)) {
+		warnx("%s: no space for boot block info structure", fname);
+		free(bp);
+		return NULL;
+	}
+
+	bbinfop = (struct bbinfo *)(bp + tdb_size);
+	memset(bbinfop, 0, sz - tdb_size);
+
+	/* + 1 because the bbinfo struct contains one block already. */
+	max_block_count = ((sz - tdb_size - sizeof (struct bbinfo)) /
+	    sizeof (bbinfop->blocks[0])) + 1;
 
 	if (verbose) {
 		printf("boot block info locator at offset 0x%lx\n",
