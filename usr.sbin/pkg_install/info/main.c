@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.11 1998/10/13 17:08:30 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.12 1998/10/21 09:54:09 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.11 1998/10/13 17:08:30 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.12 1998/10/21 09:54:09 agc Exp $");
 #endif
 #endif
 
@@ -34,7 +34,7 @@ __RCSID("$NetBSD: main.c,v 1.11 1998/10/13 17:08:30 agc Exp $");
 #include "lib.h"
 #include "info.h"
 
-static char Options[] = "abcDde:fIikLl:mpqRrvh";
+static char Options[] = "aBbcDde:fIikLl:mpqRrvh";
 
 int	Flags		= 0;
 Boolean AllInstalled	= FALSE;
@@ -48,7 +48,7 @@ static void
 usage(void)
 {
     fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-bcDdfIikLmpqRrvh] [-e package] [-l prefix]",
+	"usage: pkg_info [-BbcDdfIikLmpqRrvh] [-e package] [-l prefix]",
 	"                pkg-name [pkg-name ...]",
 	"       pkg_info -a [flags]");
     exit(1);
@@ -66,6 +66,10 @@ main(int argc, char **argv)
 	case 'a':
 	    AllInstalled = TRUE;
 	    break;
+
+	    case 'B':
+		Flags |= SHOW_BUILD_INFO;
+		break;
 
 	    case 'b':
 		Flags |= SHOW_BUILD_VERSION;

@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.11 1998/10/13 17:08:32 agc Exp $
+.\" $NetBSD: pkg_info.1,v 1.12 1998/10/21 09:54:09 agc Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -25,7 +25,7 @@
 .Nd a utility for displaying information on software packages
 .Sh SYNOPSIS
 .Nm pkg_info
-.Op Fl bcDdfIikLmpqRrvh
+.Op Fl BbcDdfIikLmpqRrvh
 .Op Fl e Ar package
 .Op Fl l Ar prefix
 .Ar pkg-name [pkg-name ...]
@@ -48,6 +48,9 @@ The following command-line options are supported:
 .Bl -tag -width indent
 .It Fl a
 Show information for all currently installed packages.
+.It Fl B
+Show some of the important definitions used when building
+the binary package (the "Build information") for each package.
 .It Fl b
 Show the NetBSD RCS Id strings from the files used in the construction
 of the binary package (the "Build version") for each package. These files are the

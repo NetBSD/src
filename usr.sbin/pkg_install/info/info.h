@@ -1,4 +1,4 @@
-/* $NetBSD: info.h,v 1.5 1998/10/13 17:08:28 agc Exp $ */
+/* $NetBSD: info.h,v 1.6 1998/10/21 09:54:09 agc Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
 
@@ -46,6 +46,7 @@
 #define SHOW_REQBY		0x0400
 #define SHOW_MTREE		0x0800
 #define SHOW_BUILD_VERSION	0x1000
+#define SHOW_BUILD_INFO		0x2000
 
 extern int Flags;
 extern Boolean AllInstalled;
