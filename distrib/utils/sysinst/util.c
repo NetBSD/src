@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.37 1999/04/13 20:17:48 bouyer Exp $	*/
+/*	$NetBSD: util.c,v 1.38 1999/04/14 12:47:27 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -640,7 +640,7 @@ cleanup_dist(name)
 			    "obsolete file\n", current->name, current->type);
 	}
 	if (head == NULL)
-		return 0;
+		return 1;
 #if 0
 	/* XXX doesn't work, too many files printed ! */
 	msg_display(MSG_deleting_files);
