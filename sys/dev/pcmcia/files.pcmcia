@@ -22,3 +22,12 @@ file	dev/pcmcia/aic_pcmcia.c			aic_pcmcia
 
 attach	com at pcmcia with com_pcmcia
 file	dev/pcmcia/com_pcmcia.c			com_pcmcia
+
+# Digital RoamAbout / Lucent WaveLAN PCMCIA card
+device	wl: arp, ether, ifnet
+attach	wl at pcmcia with wl_pcmcia
+file	dev/pcmcia/if_wl_pcmcia.c		wl_pcmcia
+
+# PCMCIA hard drive / cdrom (IDE) controller
+#attach	wdc at pcmcia with wdc_pcmcia
+#file	dev/pcmcia/wdc_pcmcia.c			wdc_pcmcia
