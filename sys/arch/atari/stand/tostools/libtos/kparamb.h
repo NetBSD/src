@@ -1,4 +1,4 @@
-/*	$NetBSD: kparamb.h,v 1.6 2001/10/10 14:19:52 leo Exp $	*/
+/*	$NetBSD: kparamb.h,v 1.7 2001/10/11 07:07:42 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 L. Weppelman
@@ -83,4 +83,4 @@ struct kparamb {
 #define	RB_KDB		0x40
 
 #endif	/* TOSTOOLS */
-#endif /* _LIBTOS_KPARAMB_H */
+#endif /* !_LIBTOS_KPARAMB_H */
