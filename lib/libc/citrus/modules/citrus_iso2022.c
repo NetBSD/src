@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iso2022.c,v 1.7 2003/06/25 09:51:44 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iso2022.c,v 1.8 2003/06/26 12:09:58 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)1999, 2002 Citrus Project,
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_iso2022.c,v 1.7 2003/06/25 09:51:44 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_iso2022.c,v 1.8 2003/06/26 12:09:58 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -1150,9 +1150,8 @@ sideok:
 		i = isthree(cs.final) ? 3 : 2;
 		break;
 	}
-	if (wc != 0)
-		while (i-- > 0)
-			*p++ = ((wc >> (i << 3)) & 0x7f) | mask;
+	while (i-- > 0)
+		*p++ = ((wc >> (i << 3)) & 0x7f) | mask;
 
 	/* reset single shift state */
 	psenc->singlegl = psenc->singlegr = -1;
@@ -1167,6 +1166,42 @@ sideok:
 		memcpy(string, tmp, len);
 	}
 	return len;
+}
+
+static int
+_citrus_ISO2022_put_state_reset(_ISO2022EncodingInfo * __restrict ei,
+				char * __restrict s, size_t n,
+				_ISO2022State * __restrict psenc,
+				size_t * __restrict nresult)
+{
+	char buf[MB_LEN_MAX];
+	char *result;
+	int len, ret;
+
+	_DIAGASSERT(ei != NULL);
+	_DIAGASSERT(nresult != 0);
+	_DIAGASSERT(s != NULL);
+
+	/* XXX state will be modified after this operation... */
+	len = _ISO2022_sputwchar(ei, L'\0', buf, sizeof(buf), &result, psenc);
+	if (len==0) {
+		ret = EINVAL;
+		goto err;
+	}
+	if (sizeof(buf) < len || n < len-1) {
+		/* XXX should recover state? */
+		ret = E2BIG;
+		goto err;
+	}
+
+	memcpy(s, buf, len-1);
+	*nresult = (size_t)(len-1);
+	return (0);
+
+err:
+	/* bound check failure */
+	*nresult = (size_t)-1;
+	return ret;
 }
 
 static int

@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf1632.c,v 1.1 2003/06/25 09:51:49 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_utf1632.c,v 1.2 2003/06/26 12:09:58 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -248,12 +248,6 @@ _citrus_UTF1632_wcrtomb_priv(_UTF1632EncodingInfo *ei, char *s, size_t n,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
-
-	/* reset state */
-	if (wc == 0) {
-		*nresult = 0; /* stateless */
-		return 0;
-	}
 
 	wc2 = 0;
 	if ((ei->mode & _MODE_UTF32)==0) {

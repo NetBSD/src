@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_euc.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $	*/
+/*	$NetBSD: citrus_euc.c,v 1.7 2003/06/26 12:09:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_euc.c,v 1.6 2003/06/25 09:51:42 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_euc.c,v 1.7 2003/06/26 12:09:57 tshiozak Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -308,12 +308,6 @@ _citrus_EUC_wcrtomb_priv(_EUCEncodingInfo *ei, char *s, size_t n, wchar_t wc,
 	_DIAGASSERT(ei != NULL);
 	_DIAGASSERT(nresult != 0);
 	_DIAGASSERT(s != NULL);
-
-	/* reset state */
-	if (wc == 0) {
-		*nresult = 0; /* stateless */
-		return 0;
-	}
 
 	m = wc & ei->mask;
 	nm = wc & ~m;

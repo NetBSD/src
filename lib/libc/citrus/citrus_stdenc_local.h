@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_local.h,v 1.1 2003/06/25 09:51:40 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc_local.h,v 1.2 2003/06/26 12:09:57 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -60,7 +60,10 @@ static int	_citrus_##_e_##_stdenc_mbtowc				\
 	 void * __restrict, size_t * __restrict);			\
 static int	_citrus_##_e_##_stdenc_wctomb				\
 	(struct _citrus_stdenc * __restrict, char * __restrict, size_t,	\
-	 _citrus_wc_t, void * __restrict, size_t * __restrict)
+	 _citrus_wc_t, void * __restrict, size_t * __restrict);		\
+static int	_citrus_##_e_##_stdenc_put_state_reset			\
+	(struct _citrus_stdenc * __restrict, char * __restrict, size_t,	\
+	 void * __restrict, size_t * __restrict)
 
 #define _CITRUS_STDENC_DEF_OPS(_e_)					\
 struct _citrus_stdenc_ops _citrus_##_e_##_stdenc_ops = {		\
@@ -72,6 +75,7 @@ struct _citrus_stdenc_ops _citrus_##_e_##_stdenc_ops = {		\
 	/* eo_cstomb */		&_citrus_##_e_##_stdenc_cstomb,		\
 	/* eo_mbtowc */		&_citrus_##_e_##_stdenc_mbtowc,		\
 	/* eo_wctomb */		&_citrus_##_e_##_stdenc_wctomb,		\
+	/* eo_put_state_reset */&_citrus_##_e_##_stdenc_put_state_reset \
 }
 
 typedef int	(*_citrus_stdenc_init_t)
@@ -97,6 +101,9 @@ typedef int	(*_citrus_stdenc_mbtowc_t)
 typedef int	(*_citrus_stdenc_wctomb_t)
 	(struct _citrus_stdenc *__restrict, char * __restrict, size_t,
 	 _citrus_wc_t, void * __restrict, size_t * __restrict);
+typedef int	(*_citrus_stdenc_put_state_reset_t)
+	(struct _citrus_stdenc *__restrict, char * __restrict, size_t,
+	 void * __restrict, size_t * __restrict);
 
 /*
  * ABI version change log
@@ -114,6 +121,7 @@ struct _citrus_stdenc_ops {
 	_citrus_stdenc_cstomb_t		eo_cstomb;
 	_citrus_stdenc_mbtowc_t		eo_mbtowc;
 	_citrus_stdenc_wctomb_t		eo_wctomb;
+	_citrus_stdenc_put_state_reset_t eo_put_state_reset;
 };
 
 struct _citrus_stdenc_traits {

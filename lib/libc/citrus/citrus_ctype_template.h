@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.22 2003/06/25 09:51:28 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.23 2003/06/26 12:09:56 tshiozak Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -71,7 +71,7 @@
  * you need to define the macros below:
  *
  *   _FUNCNAME(method) :
- *   	It should convine the real function name for the method.
+ *     It should convine the real function name for the method.
  *      e.g. _FUNCNAME(mbrtowc) should be expanded to
  *             _EUC_ctype_mbrtowc
  *           for EUC locale.
@@ -132,7 +132,12 @@ static void _FUNCNAME(pack_state)(_ENCODING_INFO * __restrict,
 static void _FUNCNAME(unpack_state)(_ENCODING_INFO * __restrict,
 				    _ENCODING_STATE * __restrict,
 				    const void * __restrict);
-
+#if _ENCODING_IS_STATE_DEPENDENT
+static int _FUNCNAME(put_state_reset)(_ENCODING_INFO * __restrict,
+				      char * __restrict, size_t,
+				      _ENCODING_STATE * __restrict,
+				      size_t * __restrict);
+#endif
 
 /*
  * standard form of mbrtowc_priv.
@@ -537,7 +542,8 @@ _FUNCNAME(ctype_mbstowcs)(void * __restrict cl, wchar_t * __restrict pwcs,
 
 	ei = _CEI_TO_EI(_TO_CEI(cl));
 	_FUNCNAME(init_state)(ei, &state);
-	err = _FUNCNAME(mbsrtowcs_priv)(ei, pwcs, (const char **)&s, n, &state, nresult);
+	err = _FUNCNAME(mbsrtowcs_priv)(ei, pwcs, (const char **)&s, n,
+					&state, nresult);
 	if (*nresult == (size_t)-2) {
 		err = EILSEQ;
 		*nresult = (size_t)-1;
@@ -570,6 +576,7 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	_ENCODING_STATE *psenc;
 	char buf[MB_LEN_MAX];
 	int err = 0;
+	size_t sz;
 
 	_DIAGASSERT(cl != NULL);
 
@@ -582,9 +589,24 @@ _FUNCNAME(ctype_wcrtomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 	}
 
 	_RESTART_BEGIN(wcrtomb, _TO_CEI(cl), pspriv, psenc);
-	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s,
-			    _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl))),
-			    wc, psenc, nresult);
+	sz = _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl)));
+#if _ENCODING_IS_STATE_DEPENDENT
+	if (wc == L'\0') {
+		size_t rsz;
+		/* reset state */
+		err = _FUNCNAME(put_state_reset)(_CEI_TO_EI(_TO_CEI(cl)), s,
+						 sz, psenc, &rsz);
+		if (err)
+			goto quit;
+		s += rsz;
+		sz -= rsz;
+	}
+#endif
+	err = _FUNCNAME(wcrtomb_priv)(_CEI_TO_EI(_TO_CEI(cl)), s, sz,
+				      wc, psenc, nresult);
+#if _ENCODING_IS_STATE_DEPENDENT
+quit:
+#endif
 	if (err == E2BIG)
 		err = EINVAL;
 	_RESTART_END(wcrtomb, _TO_CEI(cl), pspriv, psenc);
@@ -639,7 +661,7 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 {
 	_ENCODING_STATE *psenc;
 	_ENCODING_INFO *ei;
-	size_t nr;
+	size_t nr, sz;
 	int err = 0;
 
 	_DIAGASSERT(cl != NULL);
@@ -653,9 +675,22 @@ _FUNCNAME(ctype_wctomb)(void * __restrict cl, char * __restrict s, wchar_t wc,
 		*nresult = _ENCODING_IS_STATE_DEPENDENT;
 		return 0;
 	}
-
-	err = _FUNCNAME(wcrtomb_priv)(ei, s, _ENCODING_MB_CUR_MAX(ei), wc,
-	    psenc, &nr);
+	sz = _ENCODING_MB_CUR_MAX(_CEI_TO_EI(_TO_CEI(cl)));
+#if _ENCODING_IS_STATE_DEPENDENT
+	if (wc == L'\0') {
+		size_t rsz;
+		/* reset state */
+		err = _FUNCNAME(put_state_reset)(_CEI_TO_EI(_TO_CEI(cl)), s,
+						 sz, psenc, &rsz);
+		if (err) {
+			*nresult = -1;
+			return err;
+		}
+		s += rsz;
+		sz -= rsz;
+	}
+#endif
+	err = _FUNCNAME(wcrtomb_priv)(ei, s, sz, wc, psenc, &nr);
 	*nresult = (int)nr;
 
 	return 0;
