@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.9.2.2 2003/09/18 01:47:54 christos Exp $	*/
-/*	$NetBSD: misc.c,v 1.9.2.2 2003/09/18 01:47:54 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.9.2.3 2003/09/18 01:49:02 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.9.2.3 2003/09/18 01:49:02 christos Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -316,7 +316,7 @@ addargs(arglist *args, char *fmt, ...)
 	} else if (args->num+2 >= args->nalloc)
 		nalloc = args->nalloc * 2;
 	else
-		nalloc = args.nalloc;
+		nalloc = args->nalloc;
 
 	args->list = xrealloc(args->list, nalloc * sizeof(char *));
 	args->nalloc = nalloc;
