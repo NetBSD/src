@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.44 1999/12/13 15:17:19 itojun Exp $	*/
+/*	$NetBSD: in.h,v 1.45 2000/02/09 00:54:55 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -368,7 +368,9 @@ struct ip_mreq {
 #endif /* !_XOPEN_SOURCE */
 
 /* INET6 stuff */
+#define __KAME_NETINET_IN_H_INCLUDED_
 #include <netinet6/in6.h>
+#undef __KAME_NETINET_IN_H_INCLUDED_
 
 #ifdef _KERNEL
 extern	struct in_addr zeroin_addr;
