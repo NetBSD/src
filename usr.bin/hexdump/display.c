@@ -1,4 +1,4 @@
-/*	$NetBSD: display.c,v 1.11 2001/12/07 13:37:39 bjh21 Exp $	*/
+/*	$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)display.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: display.c,v 1.11 2001/12/07 13:37:39 bjh21 Exp $");
+__RCSID("$NetBSD: display.c,v 1.12 2001/12/07 15:14:29 bjh21 Exp $");
 #endif
 #endif /* not lint */
 
@@ -334,7 +334,7 @@ next(argv)
 
 void
 doskip(fname, statok)
-	char *fname;
+	const char *fname;
 	int statok;
 {
 	int cnt;
@@ -364,14 +364,14 @@ doskip(fname, statok)
 }
 
 void *
-emalloc(size)
-	int size;
+emalloc(allocsize)
+	int allocsize;
 {
 	void *p;
 
-	if ((p = malloc((u_int)size)) == NULL)
+	if ((p = malloc((u_int)allocsize)) == NULL)
 		nomem();
-	memset(p, 0, size);
+	memset(p, 0, allocsize);
 	return(p);
 }
 
