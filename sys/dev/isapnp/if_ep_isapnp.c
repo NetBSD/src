@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isapnp.c,v 1.20 2001/07/08 17:58:29 thorpej Exp $	*/
+/*	$NetBSD: if_ep_isapnp.c,v 1.21 2001/07/27 02:13:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone <jonathan@NetBSD.org>
@@ -88,6 +88,7 @@ ep_isapnp_attach(parent, self, aux)
 {
 	struct ep_softc *sc = (void *)self;
 	struct isapnp_attach_args *ipa = aux;
+	int chipset;
 
 	printf("\n");
 
@@ -110,7 +111,13 @@ ep_isapnp_attach(parent, self, aux)
 	sc->disable = NULL;
 	sc->enabled = 1;
 
-	/* XXX 3c515 */
+	if (strcmp(ipa->ipa_devlogic, "TCM5051") == 0) {
+		/* 3c515 */
+		chipset = ELINK_CHIPSET_CORKSCREW;
+	} else {
+		/* 3c509 */
+		chipset = ELINK_CHIPSET_3C509;
+	}
 
-	epconfig(sc, ELINK_CHIPSET_3C509, NULL);
+	epconfig(sc, chipset, NULL);
 }
