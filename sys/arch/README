@@ -42,3 +42,12 @@ vax:		Digital Equipment Corp. VAX machines (vax)
 walnut:		IBM's PowerPC 405GP Reference Board (powerpc)
 x68k:		Sharp X68000, X68030 (m68k)
 x86_64:		AMD's x86 64 bit architecture on the simics simulator (x86_64)
+
+Generic architectural features shared among multiple ports
+arm:		ARM cpu based platform files
+hpc:		Handheld PC reference platform files
+m68k:		Motorola 680x0 cpu based platform files
+mips:		MIPS cpu based platform files
+powerpc:	PowerPC cpu based platform files
+sh3:		Hitachi SuperH cpu based platform files
+sun68k:		Sun68k cpu based platform files
