@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.9.6.4 2002/01/08 00:28:11 nathanw Exp $	*/
+/*	$NetBSD: locore.s,v 1.9.6.5 2002/10/05 07:11:56 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -147,7 +147,7 @@ L_high_code:
 	lea	%sp@(-64),%sp		| tf_regs[16]
 	movl	%sp,%a1			| %a1=trapframe
 	lea	_C_LABEL(proc0),%a0	| proc0.p_md.md_regs = 
-	movl	%a1,%a0@(P_MDREGS)	|   trapframe
+	movl	%a1,%a0@(L_MD_REGS)	|   trapframe
 	movl	%a2,%a1@(FR_SP)		| a2 == usp (from above)
 	pea	%a1@			| push &trapframe
 	jbsr	_C_LABEL(main)		| main(&trapframe)

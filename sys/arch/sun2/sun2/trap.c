@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.4.6.10 2002/09/26 20:04:53 nathanw Exp $	*/
+/*	$NetBSD: trap.c,v 1.4.6.11 2002/10/05 07:11:57 gmcgarry Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -167,7 +167,7 @@ int mmupid = -1;
  */
 static void
 userret(l, tf, oticks)
-	struct lwp *p;
+	struct lwp *l;
 	struct trapframe *tf;
 	u_quad_t oticks;
 {
@@ -195,7 +195,7 @@ userret(l, tf, oticks)
 		            (int)(p->p_sticks - oticks) * psratio);
 	}
 
-	curcpu()->ci_schedstate.spc_curpriority = p->p_priority = l->l_usrpri;
+	curcpu()->ci_schedstate.spc_curpriority = l->l_priority = l->l_usrpri;
 }
 
 /*
