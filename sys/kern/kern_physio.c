@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.59 2004/02/17 11:36:01 simonb Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.60 2004/03/23 13:22:33 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.59 2004/02/17 11:36:01 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.60 2004/03/23 13:22:33 junyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.59 2004/02/17 11:36:01 simonb Exp 
  * I/O, so raw I/O requests don't have to be single-threaded.
  */
 
-struct buf *getphysbuf __P((void));
-void putphysbuf __P((struct buf *bp));
+struct buf *getphysbuf(void);
+void putphysbuf(struct buf *bp);
 
 /*
  * Do "physical I/O" on behalf of a user.  "Physical I/O" is I/O directly
@@ -103,11 +103,11 @@ void putphysbuf __P((struct buf *bp));
  */
 int
 physio(strategy, bp, dev, flags, min_phys, uio)
-	void (*strategy) __P((struct buf *));
+	void (*strategy)(struct buf *);
 	struct buf *bp;
 	dev_t dev;
 	int flags;
-	void (*min_phys) __P((struct buf *));
+	void (*min_phys)(struct buf *);
 	struct uio *uio;
 {
 	struct iovec *iovp;
@@ -124,7 +124,7 @@ physio(strategy, bp, dev, flags, min_phys, uio)
 
 		bp = getphysbuf();
 		/* bp was just malloc'd so can't already be busy */
-		bp->b_flags |= B_BUSY; 
+		bp->b_flags |= B_BUSY;
 
 	} else {
 
