@@ -1,4 +1,4 @@
-#	$NetBSD: RAQ,v 1.2 2000/03/22 00:58:19 cgd Exp $
+#	$NetBSD: RAQ,v 1.3 2000/03/24 13:08:30 soren Exp $
 
 include		"arch/cobalt/conf/std.cobalt"
 
@@ -48,9 +48,10 @@ options 	TLP_MATCH_21142
 lxtphy* 	at mii? phy ?
 #uhci* 		at pci? dev ? function ?
 ncr* 		at pci? dev ? function ?
-#scsibus* 	at ncr?
-#sd* 		at scsibus?
-#st* 		at scsibus?
+options 	NCR_IOMAPPED
+scsibus* 	at ncr?
+sd* 		at scsibus?
+st* 		at scsibus?
 pciide* 	at pci? dev ? function ?
 wd* 		at pciide? channel ? drive ?
 
