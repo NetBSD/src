@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	7.2 (Berkeley) 5/12/91
- *	$Id: clock.c,v 1.8 1993/06/15 21:37:14 mycroft Exp $
+ *	$Id: clock.c,v 1.9 1993/06/27 06:42:19 andrew Exp $
  */
 
 /*
@@ -50,9 +50,13 @@
 #include "i386/isa/rtc.h"
 #include "i386/isa/timerreg.h"
 
+/* XXX all timezone stuff should be moved out of the kernel */
+#if 1
 #define DAYST 119
 #define DAYEN 303
+#endif
 
+void
 startrtclock() {
 	int s;
 
@@ -180,6 +184,7 @@ inittodr(base)
 	sec += bcd(rtcin(RTC_MIN)) * 60;			/* minutes */
 	sec += bcd(rtcin(RTC_SEC));				/* seconds */
 
+#ifdef DAYST
 	/* XXX off by one? Need to calculate DST on SUNDAY */
 	/* Perhaps we should have the RTC hold GMT time to save */
 	/* us the bother of converting. */
@@ -187,6 +192,7 @@ inittodr(base)
 	if ((yd >= DAYST) && ( yd <= DAYEN)) {
 		sec -= 60*60;
 	}
+#endif
 	sec += tz.tz_minuteswest * 60;
 
 	time.tv_sec = sec;
@@ -221,6 +227,7 @@ test_inittodr(base)
 /*
  * Restart the clock.
  */
+void
 resettodr()
 {
 }
@@ -230,6 +237,7 @@ resettodr()
  */
 #define V(s)	__CONCAT(V, s)
 extern V(clk)();
+void
 enablertclock() {
 	setidt(ICU_OFFSET+0, &V(clk), SDT_SYS386IGT, SEL_KPL);
 	INTREN(IRQ0);
