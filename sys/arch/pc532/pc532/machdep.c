@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 1998/07/05 22:48:06 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 1998/07/06 09:42:56 matthias Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -1126,7 +1126,7 @@ init532()
 #endif
 		avail_start = kppa(end);
 
-	avail_end   = ram_size((void *)avail_start);
+	avail_end = ram_size((void *)avail_start);
 	if (maxphysmem != 0 && avail_end > maxphysmem)
 		avail_end = maxphysmem;
 	physmem     = btoc(avail_end);
@@ -1335,7 +1335,7 @@ cpu_reset()
 #else
 	PTD[0] = PTD[pdei(KERNBASE)];
 #endif
-	pmap_update();
+	tlbflush();
 
 	/* Jump to low memory. */
 	__asm __volatile(
