@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_r2000.S,v 1.8 1994/12/15 15:18:29 mycroft Exp $	*/
+/*	$NetBSD: locore_r2000.S,v 1.9 1995/01/18 06:45:29 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -96,7 +96,9 @@ start:
 	tlbwi					# Write the TLB entry.
 
 	la	sp, start - START_FRAME
- #	la	gp, _C_LABEL(gp)
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)
+#endif
 	sw	zero, START_FRAME - 4(sp)	# Zero out old ra for debugger
 	jal	_C_LABEL(mach_init)		# mach_init(argc, argv, envp)
 	sw	zero, START_FRAME - 8(sp)	# Zero out old fp for debugger
@@ -1414,7 +1416,9 @@ NNON_LEAF(MachUserGenException, STAND_FRAME_SIZE, ra)
 	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
 	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
 	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
- #	la	gp, _C_LABEL(gp)		# switch to kernel GP
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+#endif
 	sw	a3, UADDR+U_PCB_REGS+(PC * 4)
 	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
 	.set	at
@@ -1489,7 +1493,8 @@ END(MachUserGenException)
 #define KINTR_SR_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE)
 #define KINTR_MULT_LO_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 4)
 #define KINTR_MULT_HI_OFFSET	(STAND_FRAME_SIZE + KERN_REG_SIZE + 8)
-#define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
+#define KINTR_GP_OFFSET		(STAND_FRAME_SIZE + KERN_REG_SIZE + 12)
+#define	KINTR_FRAME_SIZE	(STAND_FRAME_SIZE + KERN_REG_SIZE + 16)
 
 NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
 	.set	noat
@@ -1497,7 +1502,7 @@ NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
 	.mask	0x80000000, (STAND_RA_OFFSET - KINTR_FRAME_SIZE)
 /*
  * Save the relevant kernel registers onto the stack.
- * We don't need to save s0 - s8, sp and gp because
+ * We don't need to save s0 - s8 and sp because
  * the compiler does it for us.
  */
 	sw	AT, KINTR_REG_OFFSET + 0(sp)
@@ -1526,6 +1531,10 @@ NNON_LEAF(MachKernIntr, KINTR_FRAME_SIZE, ra)
 	sw	v0, KINTR_MULT_LO_OFFSET(sp)
 	sw	v1, KINTR_MULT_HI_OFFSET(sp)
 	sw	a0, KINTR_SR_OFFSET(sp)
+	sw	gp, KINTR_GP_OFFSET(sp)
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+#endif
 /*
  * Call the interrupt handler.
  */
@@ -1622,7 +1631,9 @@ NNON_LEAF(MachUserIntr, STAND_FRAME_SIZE, ra)
 	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
 	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
 	sw	a2, UADDR+U_PCB_REGS+(PC * 4)
- #	la	gp, _C_LABEL(gp)		# switch to kernel GP
+#ifdef __GP_SUPPORT__
+	la	gp, _C_LABEL(_gp)		# switch to kernel GP
+#endif
 	.set	at
 	and	t0, a0, ~MACH_SR_COP_1_BIT	# Turn off the FPU.
 	.set	noat
@@ -1845,39 +1856,57 @@ END(MachTLBMissException)
 /*
  * Set/clear software interrupt routines.
  */
-
 LEAF(setsoftclock)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# save status register
+	mtc0	zero, MACH_COP_0_STATUS_REG	# disable interrupts (2 cycles)
+	nop
 	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
 	nop
 	or	v0, v0, MACH_SOFT_INT_MASK_0	# set soft clock interrupt
 	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	mtc0	v1, MACH_COP_0_STATUS_REG
 	j	ra
 	nop
 END(setsoftclock)
 
 LEAF(clearsoftclock)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# save status register
+	mtc0	zero, MACH_COP_0_STATUS_REG	# disable interrupts (2 cycles)
+	nop
+	nop
 	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
 	nop
 	and	v0, v0, ~MACH_SOFT_INT_MASK_0	# clear soft clock interrupt
 	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	mtc0	v1, MACH_COP_0_STATUS_REG
 	j	ra
 	nop
 END(clearsoftclock)
 
 LEAF(setsoftnet)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# save status register
+	mtc0	zero, MACH_COP_0_STATUS_REG	# disable interrupts (2 cycles)
+	nop
+	nop
 	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
 	nop
 	or	v0, v0, MACH_SOFT_INT_MASK_1	# set soft net interrupt
 	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	mtc0	v1, MACH_COP_0_STATUS_REG
 	j	ra
 	nop
 END(setsoftnet)
 
 LEAF(clearsoftnet)
+	mfc0	v1, MACH_COP_0_STATUS_REG	# save status register
+	mtc0	zero, MACH_COP_0_STATUS_REG	# disable interrupts (2 cycles)
+	nop
+	nop
 	mfc0	v0, MACH_COP_0_CAUSE_REG	# read cause register
 	nop
 	and	v0, v0, ~MACH_SOFT_INT_MASK_1	# clear soft net interrupt
 	mtc0	v0, MACH_COP_0_CAUSE_REG	# save it
+	mtc0	v1, MACH_COP_0_STATUS_REG
 	j	ra
 	nop
 END(clearsoftnet)
