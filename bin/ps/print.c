@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.74 2002/06/19 08:11:55 jdolecek Exp $	*/
+/*	$NetBSD: print.c,v 1.75 2003/01/06 13:04:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.74 2002/06/19 08:11:55 jdolecek Exp $");
+__RCSID("$NetBSD: print.c,v 1.75 2003/01/06 13:04:54 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ state(k, ve, mode)
 		break;
 
 	case SSLEEP:
-		if (flag & P_SINTR)	/* interuptable (long) */
+		if (flag & P_SINTR)	/* interruptable (long) */
 			*cp = k->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';

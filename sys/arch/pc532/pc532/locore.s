@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2002/11/22 13:26:41 simonb Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2003/01/06 13:05:05 wiz Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -1028,7 +1028,7 @@ TRAP(trap_dbg,	    T_DBG)	/* 14 debug trap */
 TRAP(trap_reserved, T_RESERVED)	/* 15 reserved */
 
 /*
- * The following handles all synchronous traps and non maskable interupts.
+ * The following handles all synchronous traps and non maskable interrupts.
  */
 ENTRY_NOPROFILE(handle_trap)
 	lprd    sb,0			/* Kernel code expects sb to be 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0var.h,v 1.3 2002/05/21 02:47:04 augustss Exp $	*/
+/*	$NetBSD: cs89x0var.h,v 1.4 2003/01/06 13:05:10 wiz Exp $	*/
 
 /*
  * Copyright 1997
@@ -70,7 +70,7 @@ struct cs_softc {
 	struct ethercom sc_ethercom;	/* Ethernet common */
 	struct ifmedia sc_media;	/* media control structures */
 
-	void	*sc_ih;			/* interupt handler */
+	void	*sc_ih;			/* interrupt handler */
 	void 	*sc_sh;			/* shutdown hook */
 
 	bus_space_tag_t sc_iot;		/* bus space tag for IO */

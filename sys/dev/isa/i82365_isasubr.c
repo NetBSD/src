@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365_isasubr.c,v 1.30 2001/11/15 09:48:09 lukem Exp $	*/
+/*	$NetBSD: i82365_isasubr.c,v 1.31 2003/01/06 13:05:13 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.30 2001/11/15 09:48:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82365_isasubr.c,v 1.31 2003/01/06 13:05:13 wiz Exp $");
 
 #define	PCICISADEBUG
 
@@ -153,7 +153,7 @@ pcic_isa_count_intr(arg)
 
 	/*
 	 * make sure we don't get stuck in a loop due to
-	 * unhandled level interupts
+	 * unhandled level interrupts
 	 */
 	if (++sc->intr_false > 40) {
 		isa_intr_disestablish(isc->sc_ic, sc->ih);

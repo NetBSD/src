@@ -1,4 +1,4 @@
-/*      $NetBSD: ps.c,v 1.20 2002/05/04 18:44:27 thorpej Exp $  */
+/*      $NetBSD: ps.c,v 1.21 2003/01/06 13:05:16 wiz Exp $  */
 
 /*-
  * Copyright (c) 1999
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ps.c,v 1.20 2002/05/04 18:44:27 thorpej Exp $");
+__RCSID("$NetBSD: ps.c,v 1.21 2003/01/06 13:05:16 wiz Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -169,7 +169,7 @@ state2str(struct kinfo_proc2 *kp)
 		break;
 
 	case SSLEEP:
-		if (flag & P_SINTR)     /* interuptable (long) */
+		if (flag & P_SINTR)     /* interruptable (long) */
 			*cp = kp->p_slptime >= maxslp ? 'I' : 'S';
 		else
 			*cp = 'D';

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.7 2002/10/13 14:54:49 bjh21 Exp $	*/
+/*	$NetBSD: exception.S,v 1.8 2003/01/06 13:05:00 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -100,7 +100,7 @@ Lexception_exit_loop:
 	b	Lexception_exit_loop	/* Try and exit again */
 
 .Ldo_exit:
-	orr     r0, r4, #(I32_bit)	/* Disable interupts */
+	orr     r0, r4, #(I32_bit)	/* Disable interrupts */
 	msr     cpsr_all, r0
 
 	PULLFRAMEFROMSVCANDEXIT		/* Restore the trap frame and exit */

@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.17 2002/10/02 04:55:49 thorpej Exp $ */
+/*	$NetBSD: com_supio.c,v 1.18 2003/01/06 13:04:57 wiz Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.17 2002/10/02 04:55:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.18 2003/01/06 13:04:57 wiz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 
 	com_attach_subr(csc);
 
-	/* XXX this should be really in the interupt stuff */
+	/* XXX this should be really in the interrupt stuff */
 	needpsl = PSL_S | (supa->supio_ipl << 8);
 
 	if (amiga_serialspl < needpsl) {
