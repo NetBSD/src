@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.27 2000/05/08 13:17:14 blymn Exp $	*/
+/*	$NetBSD: termcap.c,v 1.28 2000/05/12 15:25:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.27 2000/05/08 13:17:14 blymn Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.28 2000/05/12 15:25:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ t_getent(bp, name)
 				/* set up default */
 				p += strlen(home);	/* path, looking in */
 				(void)strncpy(pathbuf, home,
-				    sizeof(pathbuf) - 1);	/* $HOME first */
+				    sizeof(pathbuf) - 1); /* $HOME first */
 				*p++ = '/';
 			}	/* if no $HOME look in current directory */
 			strncpy(p, _PATH_DEF, PBUFSIZ - (size_t)(p - pathbuf));
@@ -145,17 +145,17 @@ t_getent(bp, name)
 		}
 	*fname = (char *) 0;			/* mark end of vector */
 
-	  /*
-	   * try ignoring TERMCAP if it has a ZZ in it, we do this
-	   * because a TERMCAP with ZZ in it indicates the entry has been
-	   * exported by another program using the "old" interface, the
-	   * termcap entry has been truncated and ZZ points to an address
-	   * in the exporting programs memory space which is of no use
-	   * here - anyone who is exporting the termcap entry and then
-	   * reading it back again in the same program deserves to be
-	   * taken out, beaten up, dragged about, shot and then hurt some
-	   * more.
-	   */
+	/*
+	 * try ignoring TERMCAP if it has a ZZ in it, we do this
+	 * because a TERMCAP with ZZ in it indicates the entry has been
+	 * exported by another program using the "old" interface, the
+	 * termcap entry has been truncated and ZZ points to an address
+	 * in the exporting programs memory space which is of no use
+	 * here - anyone who is exporting the termcap entry and then
+	 * reading it back again in the same program deserves to be
+	 * taken out, beaten up, dragged about, shot and then hurt some
+	 * more.
+	 */
 	did_getset = 0;
 	if (cp && *cp && *cp != '/' && strstr(cp, ":ZZ") == NULL) {
 		did_getset = 1;
@@ -171,11 +171,11 @@ t_getent(bp, name)
  	(*bp)->info = NULL;
  	i = cgetent(&((*bp)->info), pathvec, name);      
 
-	  /*
-	   * if we get an error and we skipped doing the cgetset before
-	   * we try with TERMCAP in place - we may be using a truncated
-	   * termcap entry but what else can one do?
-	   */
+	/*
+	 * if we get an error and we skipped doing the cgetset before
+	 * we try with TERMCAP in place - we may be using a truncated
+	 * termcap entry but what else can one do?
+	 */
 	if ((i < 0) && (did_getset == 0)) {
 		if (cp && *cp && *cp != '/')
 			if (cgetset(cp) < 0)
@@ -203,18 +203,20 @@ tgetent(bp, name)
 	i = t_getent(&fbuf, name);
 	
 	if (i == 1) {
-		  /* stash the full buffer pointer as the ZZ capability
-		     in the termcap buffer passed.
-		  */
+		/*
+		 * stash the full buffer pointer as the ZZ capability
+		 * in the termcap buffer passed.
+		 */
                 plen = asprintf(&ptrbuf, ":ZZ=%p", fbuf->info);
 		strncpy(bp, fbuf->info, 1024);
 		bp[1023] = '\0';
                 elen = strlen(bp);
-		  /* backup over the entry if the addition of the full
-		     buffer pointer will overflow the buffer passed.  We
-		     want to truncate the termcap entry on a capability
-		     boundary.
-		  */
+		/*
+		 * backup over the entry if the addition of the full
+		 * buffer pointer will overflow the buffer passed.  We
+		 * want to truncate the termcap entry on a capability
+		 * boundary.
+		 */
                 if ((elen + plen) > 1023) {
 			bp[1023 - plen] = '\0';
 			for (c = (elen - plen); c > 0; c--) {
@@ -241,13 +243,13 @@ tgetent(bp, name)
  * Note that we handle octal numbers beginning with 0.
  */
 int
-
 t_getnum(info, id)
 	struct tinfo *info;
 	const char *id;
 {
 	long num;
 
+	_DIAGASSERT(info != NULL);
 	_DIAGASSERT(id != NULL);
 
 	if (cgetnum(info->info, id, &num) == 0)
@@ -273,6 +275,9 @@ int t_getflag(info, id)
 	struct tinfo *info;
 	const char *id;
 {
+	_DIAGASSERT(info != NULL);
+	_DIAGASSERT(id != NULL);
+
 	return (cgetcap(info->info, id, ':') != NULL);
 }
 
@@ -280,9 +285,6 @@ int
 tgetflag(id)
 	const char *id;
 {
-
-	_DIAGASSERT(id != NULL);
-
 	return t_getflag(fbuf, id);
 }
 
@@ -302,23 +304,15 @@ t_getstr(info, id, area, limit)
 	char **area;
 	size_t *limit;
 {
-	char ids[3];
 	char *s;
 	int i;
 
+	_DIAGASSERT(info != NULL);
 	_DIAGASSERT(id != NULL);
 	_DIAGASSERT(area != NULL);
 
-	/*
-	 * XXX
-	 * This is for all the boneheaded programs that relied on tgetstr
-	 * to look only at the first 2 characters of the string passed...
-	 */
-	*ids = *id;
-	ids[1] = id[1];
-	ids[2] = '\0';
 
-	if ((i = cgetstr(info->info, ids, &s)) < 0) {
+	if ((i = cgetstr(info->info, id, &s)) < 0) {
 		errno = ENOENT;
 		if ((area == NULL) && (limit != NULL))
 			*limit = 0;
@@ -326,7 +320,10 @@ t_getstr(info, id, area, limit)
 	}
 	
 	if (area != NULL) {
-		  /* check if there is room for the new entry to be put into area */
+		/*
+		 * check if there is room for the new entry to be put into
+		 * area
+		 */
 		if (limit != NULL && (*limit < i)) {
 			errno = E2BIG;
 			return NULL;
@@ -338,6 +335,7 @@ t_getstr(info, id, area, limit)
   	
 		return (s);
 	} else {
+		_DIAGASSERT(limit != NULL);
 		*limit = i;
 		return NULL;
 	}
@@ -357,13 +355,24 @@ tgetstr(id, area)
 	char **area;
 {
 	struct tinfo dummy;
+	char ids[3];
+
+	_DIAGASSERT(id != NULL);
+	/*
+	 * XXX
+	 * This is for all the boneheaded programs that relied on tgetstr
+	 * to look only at the first 2 characters of the string passed...
+	 */
+	ids[0] = id[0];
+	ids[1] = id[1];
+	ids[2] = '\0';
 
 	if ((id[0] == 'Z') && (id[1] == 'Z')) {
 		dummy.info = tbuf;
-		return t_getstr(&dummy, id, area, NULL);
+		return t_getstr(&dummy, ids, area, NULL);
 	}
 	else
-		return t_getstr(fbuf, id, area, NULL);
+		return t_getstr(fbuf, ids, area, NULL);
 }
 
 /*
@@ -374,6 +383,7 @@ void
 t_freent(info)
 	struct tinfo *info;
 {
+	_DIAGASSERT(info != NULL);
 	free(info->info);
 	free(info);
 }
@@ -383,12 +393,16 @@ t_freent(info)
  *
  */
 int
-t_getterm(struct tinfo *info, char **area, size_t *limit)
+t_getterm(info, area, limit)
+	struct tinfo *info;
+	char **area;
+	size_t *limit;
 {
 	char *endp;
 	size_t count;
 
-	if ((endp = index(info->info, ':')) == NULL) {
+	_DIAGASSERT(info != NULL);
+	if ((endp = strchr(info->info, ':')) == NULL) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -396,6 +410,7 @@ t_getterm(struct tinfo *info, char **area, size_t *limit)
 
 	count = endp - info->info + 1;
 	if (area == NULL) {
+		_DIAGASSERT(limit != NULL);
 		*limit = count;
 		return 0;
 	} else {
@@ -412,5 +427,3 @@ t_getterm(struct tinfo *info, char **area, size_t *limit)
 
 	return 0;
 }
-
-		
