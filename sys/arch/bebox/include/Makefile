@@ -1,11 +1,13 @@
-#	$NetBSD: Makefile,v 1.20 2003/10/20 00:12:09 matt Exp $
+#	$NetBSD: Makefile,v 1.21 2003/10/24 18:21:52 matt Exp $
 
 INCSDIR= /usr/include/bebox
 
-INCS=   bootinfo.h
+INCS=   bootinfo.h \
 	disklabel.h \
 	intr.h \
+	mouse.h \
 	pccons.h \
+	spkr.h \
 	vmparam.h
 
 .include "../../powerpc/include/Makefile"
