@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.17 2000/05/27 04:52:42 thorpej Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.17.4.1 2000/07/05 17:18:27 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -752,7 +752,8 @@ dqget(vp, id, ump, type, dqp)
 		numdquot++;
 	} else {
 		if ((dq = dqfreelist.tqh_first) == NULL) {
-			tablefull("dquot");
+			tablefull("dquot",
+			    "increase kern.maxvnodes or NVNODE");
 			*dqp = NODQUOT;
 			return (EUSERS);
 		}
