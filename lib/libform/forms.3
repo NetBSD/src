@@ -1,4 +1,4 @@
-.\"	$NetBSD: forms.3,v 1.14 2004/04/21 11:45:42 wiz Exp $
+.\"	$NetBSD: forms.3,v 1.15 2004/11/24 11:57:09 blymn Exp $
 .\"
 .\" Copyright (c) 2001
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -226,6 +226,10 @@ buffer via the form driver and correctly calculates the cursor
 position allowing for expansion of the TAB character.
 .It set_field_printf
 This function is a
+.Nx
+extension and must not be used in portable code.
+.It O_REFORMAT
+This field option is a
 .Nx
 extension and must not be used in portable code.
 .El

@@ -1,4 +1,4 @@
-/*	$NetBSD: type_enum.c,v 1.9 2004/04/23 02:58:27 simonb Exp $	*/
+/*	$NetBSD: type_enum.c,v 1.10 2004/11/24 11:57:09 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: type_enum.c,v 1.9 2004/04/23 02:58:27 simonb Exp $");
+__RCSID("$NetBSD: type_enum.c,v 1.10 2004/11/24 11:57:09 blymn Exp $");
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -65,7 +65,7 @@ trim_blanks(char *field)
 {
 	int i;
 
-	i = strlen(field);
+	i = (int) strlen(field);
 	if (i > 0)
 		i--;
 	else
@@ -166,7 +166,8 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 	end = trim_blanks(this);
 
 	if (end >= start)
-		blen = strlen(&this[start]) - strlen(&this[end]) + 1;
+		blen = (unsigned) (strlen(&this[start])
+				   - strlen(&this[end]) + 1);
 	else
 		blen = 0;
 
@@ -178,8 +179,8 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 		enum_end = trim_blanks(choices[i]);
 
 		if (enum_end >= enum_start)
-			elen = strlen(&choices[i][enum_start])
-				- strlen(&choices[i][enum_end]) + 1;
+			elen = (unsigned) (strlen(&choices[i][enum_start])
+				- strlen(&choices[i][enum_end]) + 1);
 		else
 			elen = 0;
 		
@@ -207,11 +208,13 @@ match_enum(char **choices, unsigned num_choices, bool ignore_case,
 		
 		if (ignore_case)
 			cur_match = (strncasecmp(&choices[i][enum_start],
-						 &this[start], blen) == 0) ?
+						 &this[start],
+						 (size_t)blen) == 0) ?
 				TRUE : FALSE;
 		else
 			cur_match = (strncmp(&choices[i][enum_start],
-					     &this[start], blen) == 0) ?
+					     &this[start],
+					     (size_t) blen) == 0) ?
 				TRUE : FALSE;
 
 #ifdef DEBUG
