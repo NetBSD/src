@@ -1,4 +1,4 @@
-/*	$NetBSD: st_scsi.c,v 1.17 2005/01/31 21:13:16 reinoud Exp $ */
+/*	$NetBSD: st_scsi.c,v 1.18 2005/01/31 23:06:42 reinoud Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.17 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st_scsi.c,v 1.18 2005/01/31 23:06:42 reinoud Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -184,7 +184,7 @@ st_scsibus_read_block_limits(struct st_softc *st, int flags)
 static int
 st_scsibus_mode_sense(struct st_softc *st, int flags)
 {
-	u_int scsipi_sense_len;
+	uint scsipi_sense_len;
 	int error;
 	struct scsipi_sense {
 		struct scsipi_mode_header header;
@@ -235,7 +235,7 @@ st_scsibus_mode_sense(struct st_softc *st, int flags)
 static int
 st_scsibus_mode_select(struct st_softc *st, int flags)
 {
-	u_int scsi_select_len;
+	uint scsi_select_len;
 	struct scsi_select {
 		struct scsipi_mode_header header;
 		struct scsi_blk_desc blk_desc;
@@ -284,7 +284,7 @@ st_scsibus_mode_select(struct st_softc *st, int flags)
 static int
 st_scsibus_cmprss(struct st_softc *st, int flags, int onoff)
 {
-	u_int scsi_dlen;
+	uint scsi_dlen;
 	int byte2, page;
 	struct scsi_select {
 		struct scsipi_mode_header header;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.38 2005/01/31 21:13:16 reinoud Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.39 2005/01/31 23:06:42 reinoud Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.38 2005/01/31 21:13:16 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.39 2005/01/31 23:06:42 reinoud Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,8 +66,8 @@ static int	scanjet_trigger_scanner(struct ss_softc *);
 static int	scanjet_read(struct ss_softc *, struct buf *);
 
 /* only used internally */
-static int	scanjet_ctl_write(struct ss_softc *, char *, u_int);
-static int	scanjet_ctl_read(struct ss_softc *, char *, u_int);
+static int	scanjet_ctl_write(struct ss_softc *, char *, uint);
+static int	scanjet_ctl_read(struct ss_softc *, char *, uint);
 static int	scanjet_set_window(struct ss_softc *);
 static int	scanjet_compute_sizes(struct ss_softc *);
 
@@ -315,7 +315,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
  * Do a synchronous write.  Used to send control messages.
  */
 static int 
-scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
+scanjet_ctl_write(struct ss_softc *ss, char *buf, uint size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;
@@ -338,7 +338,7 @@ scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
  * Do a synchronous read.  Used to read responses to control messages.
  */
 static int
-scanjet_ctl_read(struct ss_softc *ss, char *buf, u_int size)
+scanjet_ctl_read(struct ss_softc *ss, char *buf, uint size)
 {
 	struct scsi_rw_scanner cmd;
 	int flags;

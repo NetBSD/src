@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_tape.h,v 1.20 2001/04/25 17:53:39 bouyer Exp $	*/
+/*	$NetBSD: scsi_tape.h,v 1.21 2005/01/31 23:06:41 reinoud Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,93 +64,93 @@
 #define	READ			0x08
 #define WRITE			0x0a
 struct scsi_rw_tape {
-	u_int8_t opcode;
-	u_int8_t byte2;
+	uint8_t opcode;
+	uint8_t byte2;
 #define	SRW_FIXED		0x01
-	u_int8_t len[3];
-	u_int8_t control;
+	uint8_t len[3];
+	uint8_t control;
 };
 
 #define	SPACE			0x11
 struct scsi_space {
-	u_int8_t opcode;
-	u_int8_t byte2;
+	uint8_t opcode;
+	uint8_t byte2;
 #define	SS_CODE			0x03
 #define SP_BLKS			0x00
 #define SP_FILEMARKS		0x01
 #define SP_SEQ_FILEMARKS	0x02
 #define	SP_EOM			0x03
-	u_int8_t number[3];
-	u_int8_t control;
+	uint8_t number[3];
+	uint8_t control;
 };
 
 #define	WRITE_FILEMARKS		0x10
 struct scsi_write_filemarks {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t number[3];
-	u_int8_t control;
+	uint8_t opcode;
+	uint8_t byte2;
+	uint8_t number[3];
+	uint8_t control;
 };
 
 #define REWIND			0x01
 struct scsi_rewind {
-	u_int8_t opcode;
-	u_int8_t byte2;
+	uint8_t opcode;
+	uint8_t byte2;
 #define	SR_IMMED		0x01
-	u_int8_t unused[3];
-	u_int8_t control;
+	uint8_t unused[3];
+	uint8_t control;
 };
 
 #define LOAD			0x1b
 struct scsi_load {
-	u_int8_t opcode;
-	u_int8_t byte2;
+	uint8_t opcode;
+	uint8_t byte2;
 #define	SL_IMMED		0x01
-	u_int8_t unused[2];
-	u_int8_t how;
+	uint8_t unused[2];
+	uint8_t how;
 #define LD_UNLOAD		0x00
 #define LD_LOAD			0x01
 #define LD_RETENSION		0x02
-	u_int8_t control;
+	uint8_t control;
 };
 
 #define	ERASE			0x19
 struct scsi_erase {
-	u_int8_t opcode;
-	u_int8_t byte2;
+	uint8_t opcode;
+	uint8_t byte2;
 #define	SE_LONG			0x01
 #define	SE_IMMED		0x02
-	u_int8_t unused[3];
-	u_int8_t control;
+	uint8_t unused[3];
+	uint8_t control;
 };
 
 #define	READ_BLOCK_LIMITS	0x05
 struct scsi_block_limits {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t unused[3];
-	u_int8_t control;
+	uint8_t opcode;
+	uint8_t byte2;
+	uint8_t unused[3];
+	uint8_t control;
 };
 
 struct scsi_block_limits_data {
-	u_int8_t reserved;
-	u_int8_t max_length[3];		/* Most significant */
-	u_int8_t min_length[2];		/* Most significant */
+	uint8_t reserved;
+	uint8_t max_length[3];		/* Most significant */
+	uint8_t min_length[2];		/* Most significant */
 };
 
 /* See SCSI-II spec 9.3.3.1 */
 struct scsi_tape_dev_conf_page {
-	u_int8_t pagecode;	/* 0x10 */
-	u_int8_t pagelength;	/* 0x0e */
-	u_int8_t byte2;
+	uint8_t pagecode;	/* 0x10 */
+	uint8_t pagelength;	/* 0x0e */
+	uint8_t byte2;
 #define	SMT_CAP			0x40	/* change active partition */
 #define	SMT_CAF			0x20	/* change active format */
 #define	SMT_AFMASK		0x1f	/* active format mask */
-	u_int8_t active_partition;
-	u_int8_t wb_full_ratio;
-	u_int8_t rb_empty_ratio;
-	u_int8_t wrdelay_time[2];
-	u_int8_t byte8;
+	uint8_t active_partition;
+	uint8_t wb_full_ratio;
+	uint8_t rb_empty_ratio;
+	uint8_t wrdelay_time[2];
+	uint8_t byte8;
 #define	SMT_DBR			0x80	/* data buffer recovery */
 #define	SMT_BIS			0x40	/* block identifiers supported */
 #define	SMT_RSMK		0x20	/* report setmarks */
@@ -158,35 +158,35 @@ struct scsi_tape_dev_conf_page {
 #define SMT_SOCF_MASK		0xc0	/* stop on consecutive formats */
 #define	SMT_RBO			0x20	/* recover buffer order */
 #define	SMT_REW			0x10	/* report early warning */
-	u_int8_t gap_size;
-	u_int8_t byte10;
+	uint8_t gap_size;
+	uint8_t byte10;
 #define	SMT_EODDEFINED		0xe0	/* EOD defined */
 #define	SMT_EEG			0x10	/* enable EOD generation */
 #define	SMT_SEW			0x80	/* synchronize at early warning */
-	u_int8_t ew_bufsize[3];
-	u_int8_t sel_comp_alg;
+	uint8_t ew_bufsize[3];
+	uint8_t sel_comp_alg;
 #define	SMT_COMP_NONE		0x00
 #define	SMT_COMP_DEFAULT	0x01
-	u_int8_t reserved;
+	uint8_t reserved;
 };
 
 /* from SCSI-3: SSC-Rev10 (6/97) */
 struct scsi_tape_dev_compression_page {
-	u_int8_t pagecode;	/* 0x0f */
-	u_int8_t pagelength;	/* 0x0e */
-	u_int8_t dce_dcc;
+	uint8_t pagecode;	/* 0x0f */
+	uint8_t pagelength;	/* 0x0e */
+	uint8_t dce_dcc;
 #define	DCP_DCE			0x80	/* enable compression */
 #define	DCP_DCC			0x40	/* compression capable */
-	u_int8_t dde_red;
+	uint8_t dde_red;
 #define	DCP_DDE			0x80	/* enable decompression */
 /* There's a lot of gup about bits 5,6 for reporting exceptions */
 /* in transitions between compressed and uncompressed data- but */
 /* mostly we want the default (0), which is to report a MEDIUM	*/
 /* ERROR when a read transitions into data that can't be de-	*/
 /* compressed */
-	u_int8_t comp_alg[4];		/* compression algorithm */
-	u_int8_t decomp_alg[4];		/* de-"" */
-	u_int8_t reserved[4];
+	uint8_t comp_alg[4];		/* compression algorithm */
+	uint8_t decomp_alg[4];		/* de-"" */
+	uint8_t reserved[4];
 };
 
 /* defines for the device specific byte in the mode select/sense header */
@@ -199,11 +199,11 @@ struct scsi_tape_dev_compression_page {
 
 /* A special for the CIPHER ST150S(old drive) */
 struct block_desc_cipher {
-	u_int8_t density;
-	u_int8_t nblocks[3];
-	u_int8_t reserved;
-	u_int8_t blklen[3];
-	u_int8_t other;
+	uint8_t density;
+	uint8_t nblocks[3];
+	uint8_t reserved;
+	uint8_t blklen[3];
+	uint8_t other;
 #define ST150_SEC		0x01	/* soft error count */
 #define	SR150_AUI		0x02	/* autoload inhibit */
 };
@@ -211,20 +211,20 @@ struct block_desc_cipher {
 
 #define	READ_POSITION	0x34
 struct scsi_tape_read_position {
-	u_int8_t opcode;		/* READ_POSITION */
-	u_int8_t byte1;			/* set LSB to read hardware block pos */
-	u_int8_t reserved[8];
+	uint8_t opcode;		/* READ_POSITION */
+	uint8_t byte1;			/* set LSB to read hardware block pos */
+	uint8_t reserved[8];
 };
 
 #define	LOCATE		0x2B
 struct scsi_tape_locate {
-	u_int8_t opcode;
-	u_int8_t byte2;
-	u_int8_t reserved1;
-	u_int8_t blkaddr[4];
-	u_int8_t reserved2;
-	u_int8_t partition;
-	u_int8_t control;
+	uint8_t opcode;
+	uint8_t byte2;
+	uint8_t reserved1;
+	uint8_t blkaddr[4];
+	uint8_t reserved2;
+	uint8_t partition;
+	uint8_t control;
 };
 
 #define	HALFINCH_800	0x01
