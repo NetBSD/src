@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.43 1998/02/23 14:12:18 drochner Exp $	*/
+/*	$NetBSD: wss.c,v 1.44 1998/03/12 12:28:52 augustss Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -129,6 +129,7 @@ wssattach(sc)
         ad1848_intr, &sc->sc_ad1848);
 
     ad1848_attach(&sc->sc_ad1848);
+    printf(": %s", sc->sc_ad1848.chip_name);
     
     version = bus_space_read_1(sc->sc_iot, sc->sc_ioh, WSS_STATUS) & WSS_VERSMASK;
     printf(" (vers %d)", version);
