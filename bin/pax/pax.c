@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.19 2002/10/13 00:31:28 mrg Exp $	*/
+/*	$NetBSD: pax.c,v 1.20 2002/10/15 16:16:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.19 2002/10/13 00:31:28 mrg Exp $");
+__RCSID("$NetBSD: pax.c,v 1.20 2002/10/15 16:16:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ char	*tempbase;		/* basename of tempfile to use for mkstemp(3) */
 int	forcelocal;		/* force local operation even if the name 
 				 * contains a :
 				 */
+int	secure = 1;		/* don't extract names that contain .. */
 
 /*
  *	PAX - Portable Archive Interchange

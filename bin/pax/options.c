@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.46 2002/10/15 14:58:53 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.47 2002/10/15 16:16:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.46 2002/10/15 14:58:53 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.47 2002/10/15 16:16:29 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,6 +97,25 @@ static int getline_error;
 
 #define GZIP_CMD	"gzip"		/* command to run as gzip */
 #define COMPRESS_CMD	"compress"	/* command to run as compress */
+
+/*
+ * Long options.
+ */
+#define	OPT_USE_COMPRESS_PROGRAM	0
+#define	OPT_CHECKPOINT			1
+#define	OPT_UNLINK			2
+#define	OPT_HELP			3
+#define	OPT_ATIME_PRESERVE		4
+#define	OPT_IGNORE_FAILED_READ		5
+#define	OPT_REMOVE_FILES		6
+#define	OPT_NULL			7
+#define	OPT_TOTALS			8
+#define	OPT_VERSION			9
+#define	OPT_EXCLUDE			10
+#define	OPT_BLOCK_COMPRESS		11
+#define	OPT_NORECURSE			12
+#define	OPT_FORCE_LOCAL			13
+#define	OPT_INSECURE			14
 
 /*
  *	Format specific routine table - MUST BE IN SORTED ORDER BY NAME
@@ -181,6 +200,11 @@ options(int argc, char **argv)
 	}
 }
 
+struct option pax_longopts[] = {
+	{ "insecure",		no_argument,		0,
+						OPT_INSECURE },
+};
+
 /*
  * pax_options()
  *	look at the user specified flags. set globals as required and check if
@@ -200,8 +224,9 @@ pax_options(int argc, char **argv)
 	/*
 	 * process option flags
 	 */
-	while ((c = getopt(argc, argv,
-	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ")) != -1) {
+	while ((c = getopt_long(argc, argv,
+	    "ab:cdf:iklno:p:rs:tuvwx:zAB:DE:G:HLMN:OPT:U:XYZ",
+	    pax_longopts, NULL)) != -1) {
 		switch (c) {
 		case 'a':
 			/*
@@ -555,6 +580,9 @@ pax_options(int argc, char **argv)
 			Zflag = 1;
 			flg |= CZF;
 			break;
+		case OPT_INSECURE:
+			secure = 0;
+			break;
 		case '?':
 		default:
 			pax_usage();
@@ -638,21 +666,6 @@ pax_options(int argc, char **argv)
  *	the user specified a legal set of flags. If not, complain and exit
  */
 
-#define	OPT_USE_COMPRESS_PROGRAM	0
-#define	OPT_CHECKPOINT			1
-#define	OPT_UNLINK			2
-#define	OPT_HELP			3
-#define	OPT_ATIME_PRESERVE		4
-#define	OPT_IGNORE_FAILED_READ		5
-#define	OPT_REMOVE_FILES		6
-#define	OPT_NULL			7
-#define	OPT_TOTALS			8
-#define	OPT_VERSION			9
-#define	OPT_EXCLUDE			10
-#define	OPT_BLOCK_COMPRESS		11
-#define	OPT_NORECURSE			12
-#define	OPT_FORCE_LOCAL			13
-
 struct option tar_longopts[] = {
 	{ "block-size",		required_argument,	0,	'b' },
 	{ "create",		no_argument,		0,	'c' },	/* F */
@@ -693,6 +706,8 @@ struct option tar_longopts[] = {
 						OPT_USE_COMPRESS_PROGRAM },
 	{ "force-local",	no_argument,		0,
 						OPT_FORCE_LOCAL },
+	{ "insecure",		no_argument,		0,
+						OPT_INSECURE },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -996,6 +1011,9 @@ tar_options(int argc, char **argv)
 		case OPT_FORCE_LOCAL:
 			forcelocal = 1;
 			break;
+		case OPT_INSECURE:
+			secure = 0;
+			break;
 		default:
 			tar_usage();
 			break;
@@ -1222,10 +1240,12 @@ struct option cpio_longopts[] = {
 	{ "pattern-file",	required_argument,	0,	'E' },
 	{ "file",		required_argument,	0,	'F' },
 	{ "force-local",	no_argument,		0,
-						    OPT_FORCE_LOCAL },
+						OPT_FORCE_LOCAL },
 	{ "format",		required_argument,	0,	'H' },
 	{ "dereference",	no_argument,		0,	'L' },
 	{ "swap-halfwords",	no_argument,		0,	'S' },
+	{ "insecure",		no_argument,		0,
+						OPT_INSECURE },
 
 #ifdef notyet
 /* Not implemented */
@@ -1237,19 +1257,19 @@ struct option cpio_longopts[] = {
 	{ "owner",		required_argument,	0	'R' },
 	{ "dot",		no_argument,		0,	'V' },
 	{ "block-size",		required_argument,	0,
-						    OPT_BLOCK_SIZE },
+						OPT_BLOCK_SIZE },
 	{ "no-absolute-pathnames", no_argument,		0,
-						    OPT_NO_ABSOLUTE_PATHNAMES },
+						OPT_NO_ABSOLUTE_PATHNAMES },
 	{ "no-preserve-owner",	no_argument,		0,
-						    OPT_NO_PRESERVE_OWNER },
+						OPT_NO_PRESERVE_OWNER },
 	{ "only-verify-crc",	no_argument,		0,
-						    OPT_ONLY_VERIFY_CRC },
+						OPT_ONLY_VERIFY_CRC },
 	{ "rsh-command",	required_argument,	0,
-						    OPT_RSH_COMMAND },
+						OPT_RSH_COMMAND },
 	{ "sparce",		no_argument,		0,
-						    OPT_SPARSE },
+						OPT_SPARSE },
 	{ "version",		no_argument,		0,
-						    OPT_VERSION },
+						OPT_VERSION },
 #endif
 };
 
@@ -1282,7 +1302,7 @@ cpio_options(int argc, char **argv)
 	 * process option flags
 	 */
 	while ((c = getoldopt(argc, argv,
-	    "abcdfiklmoprstuvzABC:E:F:H:I:LM:O:R:SVZ6",
+	    "+abcdfiklmoprstuvzABC:E:F:H:I:LM:O:R:SVZ6",
 	    cpio_longopts, NULL)) != -1) {
 		switch(c) {
 		case 'a':
@@ -1512,6 +1532,9 @@ cpio_options(int argc, char **argv)
 			frmt = &(fsub[F_BCPIO]);
 		case OPT_FORCE_LOCAL:
 			forcelocal = 1;
+			break;
+		case OPT_INSECURE:
+			secure = 0;
 			break;
 		default:
 			cpio_usage();
