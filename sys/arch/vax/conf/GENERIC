@@ -1,11 +1,11 @@
-#	$NetBSD: GENERIC,v 1.71.2.1 2000/06/23 14:36:15 fvdl Exp $
+#	$NetBSD: GENERIC,v 1.71.2.2 2000/06/28 13:52:49 ragge Exp $
 #
 # GENERIC VAX configuration file; all supported devices.
 #
 
 include		"arch/vax/conf/std.vax"
 
-#ident 		"GENERIC-$Revision: 1.71.2.1 $"
+#ident 		"GENERIC-$Revision: 1.71.2.2 $"
 
 # Here are all different supported CPU types listed.
 options 	"VAX8600"
@@ -114,7 +114,7 @@ le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
 ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 dz0		at vsbus0 csr 0x25000000 # VS4000/90 serial line
-#hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
+hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
 asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 asc0		at vsbus0 csr 0x26000080 # VS4000/90 SCSI-ctlr
@@ -122,7 +122,7 @@ si1		at vsbus0 csr 0x200c0180 # VS2000/3100 SCSI-ctlr
 smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 
-#rd*		at hdc0 drive?		# RD5x disks
+rd*		at hdc0 drive?		# RD5x disks
 #ry*		at hdc0 drive?		# RX floppies
 
 # Ibus, the internal bus on most Microvaxen
