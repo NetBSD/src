@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.79 2000/06/28 03:30:42 mrg Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.80 2000/08/03 06:15:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1750,7 +1750,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	if (error || len == 0) {
 		FREE(buf, M_TEMP);
 		if (cookies)
-			FREE(cookies, M_TEMP);
+			free(cookies, M_TEMP);
 		return;
 	}
 
@@ -1774,7 +1774,7 @@ nfs_cookieheuristic(vp, flagp, p, cred)
 	}
 
 	FREE(buf, M_TEMP);
-	FREE(cookies, M_TEMP);
+	free(cookies, M_TEMP);
 }
 #endif /* NFS */
 

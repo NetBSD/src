@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.55 2000/06/27 17:52:32 mrg Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.56 2000/08/03 06:15:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -670,8 +670,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 				m2 = m;
 			}
 		}
-		MALLOC(iv, struct iovec *, i * sizeof (struct iovec),
-		       M_TEMP, M_WAITOK);
+		iv = malloc(i * sizeof (struct iovec), M_TEMP, M_WAITOK);
 		uiop->uio_iov = iv2 = iv;
 		m = mb;
 		left = cnt;
@@ -697,7 +696,7 @@ nfsrv_read(nfsd, slp, procp, mrq)
 		uiop->uio_segflg = UIO_SYSSPACE;
 		error = VOP_READ(vp, uiop, IO_NODELOCKED, cred);
 		off = uiop->uio_offset;
-		FREE((caddr_t)iv2, M_TEMP);
+		free((caddr_t)iv2, M_TEMP);
 		if (error || (getret = VOP_GETATTR(vp, &va, cred, procp)) != 0){
 			if (!error)
 				error = getret;
@@ -844,8 +843,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 
 	if (len > 0) {
-	    MALLOC(ivp, struct iovec *, cnt * sizeof (struct iovec), M_TEMP,
-		M_WAITOK);
+	    ivp = malloc(cnt * sizeof (struct iovec), M_TEMP, M_WAITOK);
 	    uiop->uio_iov = iv = ivp;
 	    uiop->uio_iovcnt = cnt;
 	    mp = mrep;
@@ -878,7 +876,7 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	    uiop->uio_offset = off;
 	    error = VOP_WRITE(vp, uiop, ioflags, cred);
 	    nfsstats.srvvop_writes++;
-	    FREE((caddr_t)iv, M_TEMP);
+	    free((caddr_t)iv, M_TEMP);
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
@@ -1123,8 +1121,7 @@ loop1:
 			mp = mp->m_next;
 		    }
 		    uiop->uio_iovcnt = i;
-		    MALLOC(iov, struct iovec *, i * sizeof (struct iovec), 
-			M_TEMP, M_WAITOK);
+		    iov = malloc(i * sizeof (struct iovec), M_TEMP, M_WAITOK);
 		    uiop->uio_iov = ivp = iov;
 		    mp = mrep;
 		    while (mp) {
@@ -1139,7 +1136,7 @@ loop1:
 			error = VOP_WRITE(vp, uiop, ioflags, cred);
 			nfsstats.srvvop_writes++;
 		    }
-		    FREE((caddr_t)iov, M_TEMP);
+		    free((caddr_t)iov, M_TEMP);
 		}
 		m_freem(mrep);
 		if (vp) {
@@ -2117,7 +2114,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	if (v3)
 		nfsm_srvsattr(&va);
 	nfsm_strsiz(len2, NFS_MAXPATHLEN);
-	MALLOC(pathcp, caddr_t, len2 + 1, M_TEMP, M_WAITOK);
+	pathcp = malloc(len2 + 1, M_TEMP, M_WAITOK);
 	iv.iov_base = pathcp;
 	iv.iov_len = len2;
 	io.uio_resid = len2;
@@ -2172,7 +2169,7 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 	}
 out:
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	if (dirp) {
 		diraft_ret = VOP_GETATTR(dirp, &diraft, cred, procp);
 		vrele(dirp);
@@ -2201,7 +2198,7 @@ nfsmout:
 	if (nd.ni_vp)
 		vrele(nd.ni_vp);
 	if (pathcp)
-		FREE(pathcp, M_TEMP);
+		free(pathcp, M_TEMP);
 	return (error);
 }
 
@@ -2537,7 +2534,7 @@ nfsrv_readdir(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	VOP_UNLOCK(vp, 0);
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2565,7 +2562,7 @@ again:
 	VOP_UNLOCK(vp, 0);
 	if (error) {
 		vrele(vp);
-		FREE((caddr_t)rbuf, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP);
 		if (cookies)
 			free((caddr_t)cookies, M_TEMP);
 		nfsm_reply(NFSX_POSTOPATTR(v3));
@@ -2592,8 +2589,8 @@ again:
 				nfsm_build(tl, u_int32_t *, 2 * NFSX_UNSIGNED);
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)rbuf, M_TEMP);
-			FREE((caddr_t)cookies, M_TEMP);
+			free((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
 			return (0);
 		}
 	}
@@ -2712,8 +2709,8 @@ again:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)rbuf, M_TEMP);
-	FREE((caddr_t)cookies, M_TEMP);
+	free((caddr_t)rbuf, M_TEMP);
+	free((caddr_t)cookies, M_TEMP);
 	nfsm_srvdone;
 }
 
@@ -2796,7 +2793,7 @@ nfsrv_readdirplus(nfsd, slp, procp, mrq)
 	}
 	VOP_UNLOCK(vp, 0);
 
-	MALLOC(rbuf, caddr_t, siz, M_TEMP, M_WAITOK);
+	rbuf = malloc(siz, M_TEMP, M_WAITOK);
 again:
 	iv.iov_base = rbuf;
 	iv.iov_len = fullsiz;
@@ -2840,8 +2837,8 @@ again:
 	if (error) {
 		vrele(vp);
 		if (cookies)
-			FREE((caddr_t)cookies, M_TEMP);
-		FREE((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
+		free((caddr_t)rbuf, M_TEMP);
 		nfsm_reply(NFSX_V3POSTOPATTR);
 		nfsm_srvpostop_attr(getret, &at);
 		return (0);
@@ -2863,8 +2860,8 @@ again:
 			tl += 2;
 			*tl++ = nfs_false;
 			*tl = nfs_true;
-			FREE((caddr_t)cookies, M_TEMP);
-			FREE((caddr_t)rbuf, M_TEMP);
+			free((caddr_t)cookies, M_TEMP);
+			free((caddr_t)rbuf, M_TEMP);
 			return (0);
 		}
 	}
@@ -3021,8 +3018,8 @@ invalid:
 			mp->m_len = bp - mtod(mp, caddr_t);
 	} else
 		mp->m_len += bp - bpos;
-	FREE((caddr_t)cookies, M_TEMP);
-	FREE((caddr_t)rbuf, M_TEMP);
+	free((caddr_t)cookies, M_TEMP);
+	free((caddr_t)rbuf, M_TEMP);
 	nfsm_srvdone;
 }
 
