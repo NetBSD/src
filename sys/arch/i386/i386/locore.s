@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.16 2000/12/31 18:01:21 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.17 2001/01/07 18:17:28 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,6 @@
 #include "opt_compat_svr4.h"
 #include "opt_multiprocessor.h"
 #include "opt_compat_oldboot.h"
-#include "opt_multiprocessor.h"
 
 #include "npx.h"
 #include "assym.h"
