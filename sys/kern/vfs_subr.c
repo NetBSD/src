@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.169 2002/02/05 07:50:58 chs Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.170 2002/03/04 02:25:23 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.169 2002/02/05 07:50:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.170 2002/03/04 02:25:23 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -2545,7 +2545,6 @@ fail:
 int
 vfs_mountroot()
 {
-	extern int (*mountroot) __P((void));
 	struct vfsops *v;
 
 	if (root_device == NULL)
