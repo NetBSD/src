@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_3000_500.c,v 1.1 1995/02/13 23:09:08 cgd Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.2 1995/08/03 00:52:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -116,7 +116,7 @@ tc_3000_500_intr_setup()
 	 * The MACH code appears to enable them by setting them to 1.  !?!?!
 	 */
 	*(volatile u_int32_t *)TC_3000_500_IMR_WRITE = 0;
-	MB();
+	wbflush();
 }
 
 void
@@ -182,9 +182,9 @@ tc_3000_500_iointr(framep, vec)
 
 	do {
 		MAGIC_READ;
-		MB();
+		wbflush();
 		ir = *(volatile u_int32_t *)TC_3000_500_IR_CLEAR;
-		MB();
+		wbflush();
 
 		ifound = 0;
 #define	CHECKINTR(slot, bits)						\
@@ -265,6 +265,6 @@ tc_3000_500_ioslot(slot, flags, set)
 		ios &= ~flags;
 	s = splhigh();
 	*iosp = ios;
-	MB();
+	wbflush();
 	splx(s);
 }
