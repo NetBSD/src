@@ -1,4 +1,40 @@
-/* $NetBSD: apecs.c,v 1.36 1999/11/04 19:15:22 thorpej Exp $ */
+/* $NetBSD: apecs.c,v 1.37 2000/02/26 18:53:12 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +70,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.36 1999/11/04 19:15:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.37 2000/02/26 18:53:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: apecs.c,v 1.36 1999/11/04 19:15:22 thorpej Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
+#include <machine/sysarch.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -76,6 +113,9 @@ struct cfattach apecs_ca = {
 extern struct cfdriver apecs_cd;
 
 static int	apecsprint __P((void *, const char *pnp));
+
+int	apecs_bus_get_window __P((int, int,
+	    struct alpha_bus_space_translation *));
 
 /* There can be only one. */
 int apecsfound;
@@ -121,10 +161,18 @@ apecs_init(acp, mallocsafe)
 		/* don't do these twice since they set up extents */
 		apecs_bus_io_init(&acp->ac_iot, acp);
 		apecs_bus_mem_init(&acp->ac_memt, acp);
+
+		/*
+		 * We have two I/O windows and 3 MEM windows.
+		 */
+		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_IO] = 2;
+		alpha_bus_window_count[ALPHA_BUS_TYPE_PCI_MEM] = 3;
+		alpha_bus_get_window = apecs_bus_get_window;
 	}
 	acp->ac_mallocsafe = mallocsafe;
 
 	apecs_pci_init(&acp->ac_pc, acp);
+	alpha_pci_chipset = &acp->ac_pc;
 
 	acp->ac_initted = 1;
 }
@@ -216,4 +264,28 @@ apecsprint(aux, pnp)
 		printf("%s at %s", pba->pba_busname, pnp);
 	printf(" bus %d", pba->pba_bus);
 	return (UNCONF);
+}
+
+int
+apecs_bus_get_window(type, window, abst)
+	int type, window;
+	struct alpha_bus_space_translation *abst;
+{
+	struct apecs_config *acp = &apecs_configuration;
+	bus_space_tag_t st;
+
+	switch (type) {
+	case ALPHA_BUS_TYPE_PCI_IO:
+		st = &acp->ac_iot;
+		break;
+
+	case ALPHA_BUS_TYPE_PCI_MEM:
+		st = &acp->ac_memt;
+		break;
+
+	default:
+		panic("apecs_bus_get_window");
+	}
+
+	return (alpha_bus_space_get_window(st, window, abst));
 }

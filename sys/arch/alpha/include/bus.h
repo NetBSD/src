@@ -1,4 +1,4 @@
-/* $NetBSD: bus.h,v 1.34 2000/02/25 01:16:41 thorpej Exp $ */
+/* $NetBSD: bus.h,v 1.35 2000/02/26 18:53:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -131,6 +131,8 @@ struct alpha_bus_space {
 	/* ALPHA SPECIFIC MAPPING METHOD */
 	int		(*abs_translate) __P((void *, bus_addr_t, bus_size_t,
 			    int, struct alpha_bus_space_translation *));
+	int		(*abs_get_window) __P((void *, int,
+			    struct alpha_bus_space_translation *));
 
 	/* allocation/deallocation */
 	int		(*abs_alloc) __P((void *, bus_addr_t, bus_addr_t,
@@ -302,9 +304,10 @@ do {									\
 #define	bus_space_subregion(t, h, o, s, hp)				\
 	(*(t)->abs_subregion)((t)->abs_cookie, (h), (o), (s), (hp))
 
-#define	alpha_bus_space_translate(t, a, s, d, bs, be, ss, se, sh)	\
-	(*(t)->abs_translate)((t)->abs_cookie, (a), (s), (d), (bs), (be), \
-	    (ss), (se), (sh))
+#define	alpha_bus_space_translate(t, a, s, f, abst)			\
+	(*(t)->abs_translate)((t)->abs_cookie, (a), (s), (f), (abst))
+#define	alpha_bus_space_get_window(t, w, abst)				\
+	(*(t)->abs_get_window)((t)->abs_cookie, (w), (abst))
 #endif /* _KERNEL */
 
 #define	BUS_SPACE_MAP_CACHEABLE		0x01
