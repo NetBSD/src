@@ -1,4 +1,4 @@
-/*	$KAME: ipsec_doi.c,v 1.122 2000/12/15 13:43:55 sakane Exp $	*/
+/*	$KAME: ipsec_doi.c,v 1.123 2001/01/02 05:06:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3092,7 +3092,7 @@ ipsecdoi_setid1(iph1)
 			if (oakley_getmycert(iph1) < 0) {
 				plog(LLV_ERROR, LOCATION, NULL,
 					"failed to get own CERT.\n");
-				return NULL;
+				return 0;
 			}
 			ident = eay_get_x509asn1subjectname(&iph1->cert->cert);
 		}
@@ -3130,7 +3130,7 @@ ipsecdoi_setid1(iph1)
 		if (!ident) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"failed to get ID buffer.\n");
-			return NULL;
+			return 0;
 		}
 		memcpy(ident->v, p, ident->l);
 	    }
@@ -3138,7 +3138,7 @@ ipsecdoi_setid1(iph1)
 	if (!ident) {
 		plog(LLV_ERROR, LOCATION, NULL,
 			"failed to get ID buffer.\n");
-		return NULL;
+		return 0;
 	}
 
 	ret = vmalloc(sizeof(id_b) + ident->l);
