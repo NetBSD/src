@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.37 2000/07/18 22:33:55 eeh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.38 2000/07/19 15:01:16 thorpej Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -368,10 +368,14 @@ _rtld(sp)
 
 	/* Initialize and relocate ourselves. */
 	assert(pAUX_base != NULL);
-	_rtld_init((caddr_t) pAUX_base->a_v, (pAUX_pagesz)?(int)pAUX_pagesz->a_v:0);
-
 #ifdef	VARPSZ
 	assert(pAUX_pagesz != NULL);
+	_rtld_init((caddr_t) pAUX_base->a_v, (int)pAUX_pagesz->a_v);
+#else
+	_rtld_init((caddr_t) pAUX_base->a_v, 0);
+#endif
+
+#ifdef	VARPSZ
 	_rtld_pagesz = (int)pAUX_pagesz->a_v;
 #endif
 
