@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.22 2000/10/11 04:57:42 briggs Exp $	*/
+/*	$NetBSD: tape.c,v 1.23 2000/10/11 20:25:29 he Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.22 2000/10/11 04:57:42 briggs Exp $");
+__RCSID("$NetBSD: tape.c,v 1.23 2000/10/11 20:25:29 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -262,10 +262,11 @@ do_stats()
 	blocks = iswap32(spcl.c_tapea) - tapea_volume;
 	msg("Volume %d completed at: %s", tapeno, ctime(&tnow));
 	if (ttaken > 0) {
-		msg("Volume %d took %ld:%02ld:%02ld\n", tapeno,
-		    ttaken / 3600, (ttaken % 3600) / 60, ttaken % 60); 
-		msg("Volume %d transfer rate: %ld KB/s\n", tapeno,
-		    blocks / ttaken);
+		msg("Volume %d took %d:%02d:%02d\n", tapeno,
+		    (int) (ttaken / 3600), (int) ((ttaken % 3600) / 60),
+		    (int) (ttaken % 60)); 
+		msg("Volume %d transfer rate: %d KB/s\n", tapeno,
+		    (int) (blocks / ttaken));
 		xferrate += blocks / ttaken;
 	}
 	return(tnow);
