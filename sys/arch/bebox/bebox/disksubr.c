@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1998/05/28 08:44:57 sakamoto Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1998/06/22 21:12:51 sommerfe Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -40,6 +40,8 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
+
+#include "opt_mbr.h"
 
 #define	b_cylin	b_resid
 

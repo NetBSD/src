@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.3 1998/03/02 16:18:17 drochner Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.4 1998/06/22 21:12:52 sommerfe Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -41,6 +41,8 @@
 #include <sys/malloc.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
+
+#include "opt_mbr.h"
 
 static inline unsigned short get_short __P((void *p));
 static inline unsigned long get_long __P((void *p));
