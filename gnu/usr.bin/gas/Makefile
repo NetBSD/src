@@ -1,8 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 1997/06/23 13:25:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 1997/06/23 13:30:51 mrg Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 
-
-.elif	(${MACHINE_ARCH} == "i386") || \
+.if	(${MACHINE_ARCH} == "i386") || \
 	(${MACHINE_ARCH} == "m68k") || \
 	(${MACHINE_ARCH} == "ns32k") || \
 	(${MACHINE_ARCH} == "sparc") || \
