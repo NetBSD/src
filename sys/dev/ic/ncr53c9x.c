@@ -1,7 +1,7 @@
-/*	$NetBSD: ncr53c9x.c,v 1.100 2002/09/25 05:19:20 mycroft Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.101 2002/09/25 06:23:29 mycroft Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.100 2002/09/25 05:19:20 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr53c9x.c,v 1.101 2002/09/25 06:23:29 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
