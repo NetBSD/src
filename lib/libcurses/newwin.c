@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.14 2000/04/12 21:48:46 jdc Exp $	*/
+/*	$NetBSD: newwin.c,v 1.15 2000/04/14 17:35:15 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.14 2000/04/12 21:48:46 jdc Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.15 2000/04/14 17:35:15 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,6 +48,8 @@ __RCSID("$NetBSD: newwin.c,v 1.14 2000/04/12 21:48:46 jdc Exp $");
 #include "curses_private.h"
 
 #undef	nl			/* Don't need it here, and it interferes. */
+
+extern struct __winlist	*winlistp;
 
 static WINDOW *__makenew __P((int, int, int, int, int));
 
@@ -164,9 +166,10 @@ __makenew(nl, nc, by, bx, sub)
 	int     by, bx, nl, nc;
 	int     sub;
 {
-	WINDOW *win;
-	__LINE *lp;
-	int     i;
+	WINDOW			*win;
+	__LINE			*lp;
+	struct __winlist	*wlp, *wlp2;
+	int			 i;
 
 
 #ifdef	DEBUG
@@ -199,6 +202,26 @@ __makenew(nl, nc, by, bx, sub)
 			free(win->lspace);
 			free(win);
 			return NULL;
+		}
+		/*
+		 * Append window to window list.
+		 */
+		if ((wlp = malloc(sizeof(struct __winlist))) == NULL) {
+			free(win->wspace);
+			free(win->lines);
+			free(win->lspace);
+			free(win);
+			return NULL;
+		}
+		wlp->winp = win;
+		wlp->nextp = NULL;
+		if (__winlistp == NULL)
+			__winlistp = wlp;
+		else {
+			wlp2 = __winlistp;
+			while (wlp2->nextp != NULL)
+				wlp2 = wlp2->nextp;
+			wlp2->nextp = wlp;
 		}
 		/*
 		 * Point line pointers to line space, and lines themselves into
