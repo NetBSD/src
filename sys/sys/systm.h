@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.98 1999/11/22 16:53:59 jdolecek Exp $	*/
+/*	$NetBSD: systm.h,v 1.99 1999/11/22 18:05:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -306,8 +306,8 @@ void	kmstartup __P((void));
 #endif
 
 #ifdef _KERNEL
-#if defined(DDB) || defined(_SUN3_)
-/* note that cpu_Debugger() is always available on sun3 */
+#if defined(DDB) || defined(_SUN3_) || defined(_SUN3X_)
+/* note that cpu_Debugger() is always available on sun3/sun3x */
 void	cpu_Debugger __P((void));
 #define Debugger	cpu_Debugger
 #endif
