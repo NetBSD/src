@@ -1,3 +1,5 @@
+/*	$NetBSD: telnetd.c,v 1.17 1999/07/11 03:00:07 thorpej Exp $	*/
+
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
  * All rights reserved.
@@ -26,8 +28,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-/*	$NetBSD: telnetd.c,v 1.16 1999/07/02 06:32:08 itojun Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -69,7 +69,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.16 1999/07/02 06:32:08 itojun Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.17 1999/07/11 03:00:07 thorpej Exp $");
 #endif
 #endif /* not lint */
 
