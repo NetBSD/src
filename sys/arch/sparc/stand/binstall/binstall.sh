@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: binstall.sh,v 1.1 1997/06/01 03:39:24 mrg Exp $
+#	$NetBSD: binstall.sh,v 1.1.8.1 1997/11/04 22:36:57 mellon Exp $
 #
 
 vecho () {
@@ -99,17 +99,8 @@ case $WHAT in
 
 "net")
 	TARGET=$DEST/boot.sparc.netbsd
-	TMP=/tmp/boot.$$
 	vecho Target: $TARGET
-	vecho Copying to temporary file.
-	cp ${MDEC}/boot $TMP; chmod +w $TMP
-	vecho Stripping $TMP
-	strip $TMP
-	vecho Creating header magic.
-	printf '\01\03\01\07\060\200\0\07' | dd of=$TARGET bs=32 conv=sync
-	vecho Concatenating boot code.
-	dd if=$TMP of=$TARGET bs=32 skip=1 seek=1
-	rm $TMP
+	cp -f ${MDEC}/boot.net $TARGET
 	;;
 
 *)
