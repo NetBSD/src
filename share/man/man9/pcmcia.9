@@ -1,4 +1,4 @@
-.\"     $NetBSD: pcmcia.9,v 1.12 2003/05/01 08:42:08 uebayasi Exp $
+.\"     $NetBSD: pcmcia.9,v 1.13 2003/06/30 12:33:41 wiz Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,7 +112,7 @@
 .Fn pcmcia_cis_read_n "struct pcmcia_tuple *tuple" "int number" "int index"
 .Ft int
 .Fn pcmcia_scan_cis "struct device *dev" \
-"int (*func)(struct pcmcia_tuple *, void *)" "void *arg";
+"int (*func)(struct pcmcia_tuple *, void *)" "void *arg"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
