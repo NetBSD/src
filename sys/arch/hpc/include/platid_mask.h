@@ -1,4 +1,4 @@
-/*	$NetBSD: platid_mask.h,v 1.14 2004/03/17 04:18:38 uwe Exp $	*/
+/*	$NetBSD: platid_mask.h,v 1.15 2004/06/28 14:43:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -784,6 +784,10 @@ extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW230JC;
 extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW50PAD;
 #ifdef PLATID_DEFINE_MASK_NICKNAME
 #  define HITACHI_PERSONA_HPW50PAD ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW50PAD)
+#endif
+extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW200EC;
+#ifdef PLATID_DEFINE_MASK_NICKNAME
+#  define HITACHI_PERSONA_HPW200EC ((int)&platid_mask_MACH_HITACHI_PERSONA_HPW200EC)
 #endif
 extern platid_t platid_mask_MACH_HITACHI_PERSONA_HPW650PA;
 #ifdef PLATID_DEFINE_MASK_NICKNAME

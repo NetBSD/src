@@ -1,4 +1,4 @@
-/*	$NetBSD: platid.def,v 1.15 2004/03/17 04:14:08 uwe Exp $	*/
+/*	$NetBSD: platid.def,v 1.16 2004/06/28 14:43:42 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -332,6 +332,7 @@ HITACHI {
 		CPU=SH_3_7709
 			HPW230JC
 			HPW50PAD
+			HPW200EC
 		CPU=SH_4_7750
 			HPW650PA
 	}
