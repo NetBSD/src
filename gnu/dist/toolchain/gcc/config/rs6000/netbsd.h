@@ -38,7 +38,11 @@
 #undef ASM_SPEC
 #define ASM_SPEC \
   "-u \
-%{mcpu=601: -m601} %{!mcpu=601: -mppc} \
+%{!mcpu*: -mppc} \
+%{mcpu=403: -m403} \
+%{mcpu=601: -m601} \
+%{mcpu=603e: -mppc} \
+%{mcpu=604e: -mppc} \
 %{V} %{v:%{!V:-V}} %{Qy:} %{!Qn:-Qy} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*} \
 %{mrelocatable} \
 %{mlittle} %{mlittle-endian} %{mbig} %{mbig-endian}"
