@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.25 2002/08/14 15:38:40 matt Exp $	*/
+/*	$NetBSD: spr.h,v 1.26 2003/02/26 21:10:51 jklos Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -409,8 +409,47 @@
 #define	  L2CR_L2IP		  0x00000001 /* 31: L2 global invalidate in */
 					     /*     progress (read only). */
 #define	SPR_L3CR		0x3fa	/* .6. L3 Control Register */
-#define	  L3CR_L3E		  0x80000000 /*  0: L3 enable */
-#define	  L3CR_L3SIZ		  0x10000000 /*  3: L3 size (0=1MB, 1=2MB) */
+#define	  L3CR_RESERVED		  0x0438003a /* Reserved bits in L3CR */
+#define	  L3CR_L3E		  0x80000000 /* 0: L3 enable */
+#define	  L3CR_L3PE		  0x40000000 /* 1: L3 data parity checking enable */
+#define	  L3CR_L3APE		  0x20000000 /* 2: L3 address parity checking enable */
+#define	  L3CR_L3SIZ		  0x10000000 /* 3: L3 size (0=1MB, 1=2MB) */
+#define	   L3SIZ_1M		  0x00000000
+#define	   L3SIZ_2M		  0x10000000
+#define	  L3CR_L3CLKEN		  0x08000000 /* 4: Enables the L3_CLK[0:1] signals */
+#define	  L3CR_L3CLK		  0x03800000 /* 6-8: L3 clock ratio */
+#define	   L3CLK_60		  0x00000000 /* core clock / 6   */
+#define	   L3CLK_20		  0x01000000 /*            / 2   */
+#define	   L3CLK_25		  0x01800000 /*            / 2.5 */
+#define	   L3CLK_30		  0x02000000 /*            / 3   */
+#define	   L3CLK_35		  0x02800000 /*            / 3.5 */
+#define	   L3CLK_40		  0x03000000 /*            / 4   */
+#define	   L3CLK_50		  0x03800000 /*            / 5   */
+#define	  L3CR_L3IO		  0x00400000 /* 9: L3 instruction-only mode */
+#define	  L3CR_L3SPO		  0x00040000 /* 13: L3 sample point override */
+#define	  L3CR_L3CKSP		  0x00030000 /* 14-15: L3 clock sample point */
+#define	   L3CKSP_2		  0x00000000 /* 2 clocks */
+#define	   L3CKSP_3		  0x00010000 /* 3 clocks */
+#define	   L3CKSP_4		  0x00020000 /* 4 clocks */
+#define	   L3CKSP_5		  0x00030000 /* 5 clocks */
+#define	  L3CR_L3PSP		  0x0000e000 /* 16-18: L3 P-clock sample point */
+#define	   L3PSP_0		  0x00000000 /* 0 clocks */
+#define	   L3PSP_1		  0x00002000 /* 1 clocks */
+#define	   L3PSP_2		  0x00004000 /* 2 clocks */
+#define	   L3PSP_3		  0x00006000 /* 3 clocks */
+#define	   L3PSP_4		  0x00008000 /* 4 clocks */
+#define	   L3PSP_5		  0x0000a000 /* 5 clocks */
+#define	  L3CR_L3REP		  0x00001000 /* 19: L3 replacement algorithm (0=default, 1=alternate) */
+#define	  L3CR_L3HWF		  0x00000800 /* 20: L3 hardware flush */
+#define	  L3CR_L3I		  0x00000400 /* 21: L3 global invalidate */
+#define	  L3CR_L3RT		  0x00000300 /* 22-23: L3 SRAM type */
+#define	   L3RT_MSUG2_DDR	  0x00000000 /* MSUG2 DDR SRAM */
+#define	   L3RT_PIPELINE_LATE	  0x00000100 /* Pipelined (register-register) synchronous late-write SRAM */
+#define	   L3RT_PB2_SRAM	  0x00000300 /* PB2 SRAM */
+#define	  L3CR_L3NIRCA		  0x00000080 /* 24: L3 non-integer ratios clock adjustment for the SRAM */
+#define	  L3CR_L3DO		  0x00000040 /* 25: L3 data-only mode */
+#define	  L3CR_PMEN		  0x00000004 /* 29: Private memory enable */
+#define	  L3CR_PMSIZ		  0x00000004 /* 31: Private memory size (0=1MB, 1=2MB) */
 #define	SPR_DCCR		0x3fa	/* 4.. Data Cache Cachability Register */
 #define	SPR_ICCR		0x3fb	/* 4.. Instruction Cache Cachability Register */
 #define	SPR_THRM1		0x3fc	/* .6. Thermal Management Register */
