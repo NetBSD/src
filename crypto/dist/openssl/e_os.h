@@ -82,6 +82,12 @@ extern "C" {
 #define DEVRANDOM "/dev/urandom"
 #endif
 
+#if defined(VXWORKS)
+#  define NO_SYS_PARAM_H
+#  define NO_CHMOD
+#  define NO_SYSLOG
+#endif
+  
 #if defined(__MWERKS__) && defined(macintosh)
 # if macintosh==1
 #  ifndef MAC_OS_GUSI_SOURCE
@@ -148,6 +154,13 @@ extern "C" {
 #define closesocket(s)		MacSocket_close(s)
 #define readsocket(s,b,n)	MacSocket_recv((s),(b),(n),true)
 #define writesocket(s,b,n)	MacSocket_send((s),(b),(n))
+#elif defined(VMS)
+#define get_last_socket_error() errno
+#define clear_socket_error()    errno=0
+#define ioctlsocket(a,b,c)      ioctl(a,b,c)
+#define closesocket(s)          close(s)
+#define readsocket(s,b,n)       recv((s),(b),(n),0)
+#define writesocket(s,b,n)      send((s),(b),(n),0)
 #else
 #define get_last_socket_error()	errno
 #define clear_socket_error()	errno=0
@@ -338,7 +351,9 @@ extern HINSTANCE _hInstance;
 #    ifndef NO_SYS_PARAM_H
 #      include <sys/param.h>
 #    endif
-#    ifndef MPE
+#    ifdef VXWORKS
+#      include <time.h> 
+#    elif !defined(MPE)
 #      include <sys/time.h> /* Needed under linux for FD_XXX */
 #    endif
 
@@ -403,13 +418,10 @@ extern HINSTANCE _hInstance;
 #  endif
 #endif
 
-#if defined(THREADS) || defined(sun)
-#ifndef _REENTRANT
-#define _REENTRANT
-#endif
-#endif
-
 #if defined(sun) && !defined(__svr4__) && !defined(__SVR4)
+  /* include headers first, so our defines don't break it */
+#include <stdlib.h>
+#include <string.h>
   /* bcopy can handle overlapping moves according to SunOS 4.1.4 manpage */
 # define memmove(s1,s2,n) bcopy((s2),(s1),(n))
 # define strtoul(s,e,b) ((unsigned long int)strtol((s),(e),(b)))
