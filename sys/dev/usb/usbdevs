@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.143 2001/01/21 02:28:30 augustss Exp $
+$NetBSD: usbdevs,v 1.144 2001/01/21 15:57:41 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -680,6 +680,9 @@ product PHILIPS DSS		0x0104	DSS XXX Digital Speaker System
 product PHILIPS HUB		0x0201	hub
 product PHILIPS PCVC680K	0x0308	PCVC680K Vesta Pro PC Camera
 product PHILIPS DSS150		0x0471	DSS 150 Digital Speaker System
+
+/* Philips Semiconductor products */
+product PHILIPSSEMI HUB1122	0x1122	hub
 
 /* P.I. Engineering products */
 product PIENGINEERING PS2USB	0x020b	PS2 to Mac USB Adapter
