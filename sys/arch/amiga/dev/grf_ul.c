@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_ul.c,v 1.9 1995/12/27 07:21:07 chopps Exp $	*/
+/*	$NetBSD: grf_ul.c,v 1.10 1995/12/27 07:24:27 chopps Exp $	*/
 #define UL_DEBUG
 
 /*
@@ -59,6 +59,7 @@ int ul_ioctl __P((struct grf_softc *, u_long, void *, dev_t));
 int ul_getcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
 int ul_putcmap __P((struct grf_softc *, struct grf_colormap *, dev_t));
 int ul_bitblt __P((struct grf_softc *, struct grf_bitblt *, dev_t));
+int ul_blank __P((struct grf_softc *, int *, dev_t));
 
 /*
  * marked true early so that ulowell_cnprobe() can tell if we are alive. 
@@ -751,6 +752,9 @@ ul_ioctl (gp, cmd, data, dev)
 
 	case GRFIOCBITBLT:
 		return ul_bitblt (gp, (struct grf_bitblt *) data, dev);
+
+	case GRFIOCBLANK:
+		return ul_blank (gp, (int *) data, dev);
 	}
 
 	return EINVAL;
@@ -878,6 +882,24 @@ ul_putcmap (gp, cmap, dev)
 	return 0;
 }
 
+int
+ul_blank(gp, onoff, dev)
+	struct grf_softc *gp;
+	int *onoff;
+	dev_t dev;
+{
+	struct gspregs *gsp;
+	gsp = (struct gspregs *)gp->g_regkva;
+	gsp->ctrl = (gsp->ctrl & ~(INCR|INCW) | LBL);
+	gsp->hstadrh = 0xC000;
+	gsp->hstadrl = 0x0080;
+	if (*onoff)
+		gsp->data |= 0x9000;
+	else
+		gsp->data &= ~0x9000;
+		
+	return 0;
+}
 /*
  * !!! THIS AREA UNDER CONSTRUCTION !!!
  */
