@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.63.2.7 2002/11/24 22:22:42 tron Exp $	*/
+/*	$NetBSD: perform.c,v 1.63.2.8 2002/11/24 22:23:34 tron Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.63.2.7 2002/11/24 22:22:42 tron Exp $");
+__RCSID("$NetBSD: perform.c,v 1.63.2.8 2002/11/24 22:23:34 tron Exp $");
 #endif
 #endif
 
@@ -720,7 +720,7 @@ pkg_perform(lpkg_head_t *pkgs)
 		while ((lpp = TAILQ_FIRST(pkgs)) != NULL) {
 			path_prepend_from_pkgname(lpp->lp_name);
 			err_cnt += pkg_do(lpp->lp_name);
-			path_remove_first();
+			path_prepend_clear();
 			TAILQ_REMOVE(pkgs, lpp, lp_link);
 			free_lpkg(lpp);
 		}
