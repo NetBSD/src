@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 1997/10/19 14:25:30 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.9 1999/01/31 10:02:25 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.8 1997/10/19 14:25:30 mycroft Exp $");
+__RCSID("$NetBSD: main.c,v 1.9 1999/01/31 10:02:25 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,10 +73,10 @@ int	iamremote;	/* act as remote server for transfering files */
 
 FILE	*fin = NULL;	/* input file pointer */
 int	rem = -1;	/* file descriptor to remote source/sink process */
-char	host[32];	/* host name */
+char	host[MAXHOSTNAMELEN + 1];	/* host name */
 int	nerrs;		/* number of errors while sending/receiving */
-char	user[10];	/* user's name */
-char	homedir[128];	/* user's home directory */
+char	user[34];	/* user's name */
+char	homedir[PATH_MAX];	/* user's home directory */
 uid_t	userid;		/* user's user ID */
 gid_t	groupid;	/* user's group ID */
 
@@ -105,6 +105,7 @@ main(argc, argv)
 	strcpy(homedir, pw->pw_dir);
 	groupid = pw->pw_gid;
 	gethostname(host, sizeof(host));
+	host[sizeof(host) - 1] = '\0';
 	strcpy(tempfile, _PATH_TMP);
 	strcat(tempfile, _RDIST_TMP);
 	if ((tempname = strrchr(tempfile, '/')) != 0)
