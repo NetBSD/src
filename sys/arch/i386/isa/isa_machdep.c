@@ -1,6 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.51 2001/01/10 01:15:32 thorpej Exp $	*/
-
-#define ISA_DMA_STATS
+/*	$NetBSD: isa_machdep.c,v 1.52 2001/11/15 07:03:32 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -76,6 +74,11 @@
  *
  *	@(#)isa.c	7.2 (Berkeley) 5/13/91
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.52 2001/11/15 07:03:32 lukem Exp $");
+
+#define ISA_DMA_STATS
 
 #include <sys/param.h>
 #include <sys/systm.h>
