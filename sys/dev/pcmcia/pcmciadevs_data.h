@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.153 2001/12/16 05:43:16 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.154 2001/12/18 11:23:49 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.152 2001/12/16 05:42:46 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.153 2001/12/18 11:23:24 ichiro Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -349,13 +349,6 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Fujitsu Corporation",
 	    "Fujitsu Compact Flash Ethernet",	}
-	,
-	{
-	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
-	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
-	    0,
-	    "Fujitsu Corporation",
-	    "Fujitsu J182A Compact Flash Ethernet",	}
 	,
 	{
 	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_LA501,
@@ -1322,6 +1315,34 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "",
 	    "Zoom Air-4000",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J181,
+	    PCMCIA_CIS_FUJITSU_FMV_J181,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J181 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182,
+	    PCMCIA_CIS_FUJITSU_FMV_J182,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182 PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_FMV_J182A,
+	    PCMCIA_CIS_FUJITSU_FMV_J182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU FMV-J182A PCMCIA Card",	}
+	,
+	{
+	    PCMCIA_VENDOR_UNKNOWN, PCMCIA_PRODUCT_FUJITSU_ITCFJ182A,
+	    PCMCIA_CIS_FUJITSU_ITCFJ182A,
+	    0,
+	    "Fujitsu Corporation",
+	    "FUJITSU ITCFJ182A CompactCard",	}
 	,
 	{
 	    PCMCIA_VENDOR_FUJITSU,
