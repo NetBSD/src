@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.37 1999/03/09 13:14:36 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.38 1999/08/17 05:20:23 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -203,6 +203,7 @@
 #define getservbyname		_getservbyname
 #define getservbyport		_getservbyport
 #define getservent		_getservent
+#define	getsubopt		_getsubopt
 #define getttyent		_getttyent
 #define getttynam		_getttynam
 #define getusershell		_getusershell
