@@ -1,7 +1,8 @@
-/*	$NetBSD: vga_raster.c,v 1.13 2004/07/30 21:46:01 jmmv Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.14 2004/07/30 22:36:39 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
+ * Copyright (c) 2004 Julio M. Merino Vidal
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.13 2004/07/30 21:46:01 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.14 2004/07/30 22:36:39 jmmv Exp $");
+
+#include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -182,6 +185,9 @@ static void vga_raster_erasecols(void *, int, int, int, long);
 static void vga_raster_copyrows(void *, int, int, int);
 static void vga_raster_eraserows(void *, int, int, long);
 static int  vga_raster_allocattr(void *, int, int, int, long *);
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+static void vga_raster_replaceattr(void *, long, long);
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 
 const struct wsdisplay_emulops vga_raster_emulops = {
 	vga_raster_cursor,
@@ -192,6 +198,11 @@ const struct wsdisplay_emulops vga_raster_emulops = {
 	vga_raster_copyrows,
 	vga_raster_eraserows,
 	vga_raster_allocattr,
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+	vga_raster_replaceattr,
+#else /* WSDISPLAY_CUSTOM_OUTPUT */
+	NULL,
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
 };
 
 /*
@@ -1417,3 +1428,22 @@ vga_raster_setscreentype(struct vga_config *vc,
 	vga_setup_regs((struct videomode *)type->modecookie, &moderegs);
 	vga_set_mode(vh, &moderegs);
 }
+
+#ifdef WSDISPLAY_CUSTOM_OUTPUT
+void
+vga_raster_replaceattr(void *id, long oldattr, long newattr)
+{
+	struct vgascreen *scr = id;
+	const struct wsscreen_descr *type = scr->type;
+	int off;
+
+	for (off = 0; off < type->nrows * type->ncols; off++) {
+		if (scr->mem[off].attr == oldattr)
+			scr->mem[off].attr = newattr;
+	}
+
+	/* Repaint the whole screen, if needed */
+	if (scr->active)
+		vga_restore_screen(scr, type, scr->mem);
+}
+#endif /* WSDISPLAY_CUSTOM_OUTPUT */
