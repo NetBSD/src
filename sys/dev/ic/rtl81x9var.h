@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.1 2000/04/26 14:02:35 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.2 2000/04/30 12:00:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -130,8 +130,8 @@ struct rl_softc {
 #define RL_PME_STATUS		0x8000
 
 #ifdef _KERNEL
-void	rl_attach	__P((struct rl_softc *, const u_int8_t *));
-int	rl_intr		__P((void *));
-void	rl_read_eeprom	__P((struct rl_softc *, caddr_t, int, int, int));
-void	rl_reset	__P((struct rl_softc *));
+void	rl_attach __P((struct rl_softc *, const u_int8_t *));
+int	rl_intr __P((void *));
+u_int16_t rl_read_eeprom __P((struct rl_softc *, int, int));
+void	rl_reset __P((struct rl_softc *));
 #endif /* _KERNEL */
