@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2003/04/06 16:12:44 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2003/04/17 19:30:19 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,7 +70,8 @@
 EXTERN distinfo dist_list[]
 #ifdef MAIN
 = {
-    {"kern",			1, "Kernel        : "},
+    {"kern-GENERIC",		1, "Kernel        : "},
+    {"kern-GENERIC.MP",		0, "Kernel        : "},
     {"base",			1, "Base          : "},
     {"etc",			1, "System (/etc) : "},
     {"comp",			1, "Compiler      : "},
@@ -78,14 +79,13 @@ EXTERN distinfo dist_list[]
     {"man",			1, "Manuals       : "},
     {"misc",			1, "Miscellaneous : "},
     {"text",			1, "Text tools    : "},
-#if 0
     {"xbase",			1, "X11 clients   : "},
     {"xfont",			1, "X11 fonts     : "},
     {"xserver",			1, "X11 servers   : "},
     {"xcontrib",		1, "X11 contrib   : "},
     {"xcomp",			1, "X programming : "},
     {"xmisc",			1, "X11 Misc.     : "},
-#endif
+    {"toolchain",		1, "GNU toolchain : "},
     { NULL,			0, NULL }
 }
 #endif
