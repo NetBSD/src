@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)in_pcb.c	7.14 (Berkeley) 4/20/91
- *	$Id: in_pcb.c,v 1.4 1993/06/10 05:17:53 deraadt Exp $
+ *	$Id: in_pcb.c,v 1.5 1993/06/11 09:12:21 deraadt Exp $
  */
 
 #include "param.h"
@@ -436,12 +436,6 @@ in_pcblookup(head, faddr, fport, laddr, lport, flags)
 			match = inp;
 			matchwild = wildcard;
 			if (matchwild == 0)
-				break;
-		}
-	}
-	return (match);
-}
-ld == 0)
 				break;
 		}
 	}
