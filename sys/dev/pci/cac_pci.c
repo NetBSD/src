@@ -1,4 +1,4 @@
-/*	$NetBSD: cac_pci.c,v 1.5 2000/09/01 12:13:08 ad Exp $	*/
+/*	$NetBSD: cac_pci.c,v 1.6 2000/09/26 11:38:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ static void
 cac_pci_l0_intr_enable(struct cac_softc *sc, int state)
 {
 
-	cac_outl(sc, CAC_REG_INTR_MASK, (state ? 0 : 8));	/* XXX */
+	cac_outl(sc, CAC_42REG_INTR_MASK, (state ? 0 : 8));	/* XXX */
 }
 
 static int
