@@ -1,4 +1,4 @@
-#	$NetBSD: files.cardbus,v 1.14 2001/03/08 06:56:22 thorpej Exp $
+#	$NetBSD: files.cardbus,v 1.15 2001/05/09 12:07:40 augustss Exp $
 #
 # files.cardbus
 #
@@ -45,6 +45,12 @@ file	dev/cardbus/if_tlp_cardbus.c	tlp_cardbus
 #
 attach	ohci at cardbus with ohci_cardbus
 file	dev/cardbus/ohci_cardbus.c	ohci_cardbus
+
+#
+# OHCI IEEE 1394 controller
+#
+attach	fwohci at cardbus with fwohci_cardbus
+file	dev/cardbus/fwohci_cardbus.c	fwohci_cardbus
 
 #
 # Adaptec ADP-1480 SCSI controller
