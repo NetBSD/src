@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.39 2000/04/10 00:28:05 thorpej Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.40 2000/04/24 17:12:00 thorpej Exp $	*/
 
 /*
  *
@@ -176,6 +176,7 @@ struct uvmexp {
 	int inactive;   /* number of pages that we free'd but may want back */
 	int paging;	/* number of pages in the process of being paged out */
 	int wired;      /* number of wired pages */
+	int zeropages;	/* number of zero'd pages */
 	int reserve_pagedaemon; /* number of pages reserved for pagedaemon */
 	int reserve_kernel; /* number of pages reserved for kernel */
 
@@ -212,6 +213,10 @@ struct uvmexp {
 	int forks;  		/* forks */
 	int forks_ppwait;	/* forks where parent waits */
 	int forks_sharevm;	/* forks where vmspace is shared */
+	int pga_zerohit;	/* pagealloc where zero wanted and zero
+				   was available */
+	int pga_zeromiss;	/* pagealloc where zero wanted and zero
+				   not available */
 
 	/* fault subcounters */
 	int fltnoram;	/* number of times fault was out of ram */
