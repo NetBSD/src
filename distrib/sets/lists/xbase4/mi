@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.11 2003/12/29 03:13:29 lukem Exp $
+# $NetBSD: mi,v 1.12 2004/01/14 12:53:52 minoura Exp $
 ./etc/X11
 ./etc/fonts
 ./etc/fonts/fonts.conf
@@ -561,6 +561,7 @@
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/O2
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indigo
 ./usr/X11R6/lib/X11/xkb/geometry/sgi/indy
+./usr/X11R6/lib/X11/xkb/geometry/sharp
 ./usr/X11R6/lib/X11/xkb/geometry/sony
 ./usr/X11R6/lib/X11/xkb/geometry/sun
 ./usr/X11R6/lib/X11/xkb/geometry/winbook
@@ -584,6 +585,7 @@
 ./usr/X11R6/lib/X11/xkb/keycodes/sgi/iris
 ./usr/X11R6/lib/X11/xkb/keycodes/sony
 ./usr/X11R6/lib/X11/xkb/keycodes/sun
+./usr/X11R6/lib/X11/xkb/keycodes/x68k
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree86
 ./usr/X11R6/lib/X11/xkb/keycodes/xfree98
 ./usr/X11R6/lib/X11/xkb/keymap
@@ -634,6 +636,7 @@
 ./usr/X11R6/lib/X11/xkb/keymap/sun/se
 ./usr/X11R6/lib/X11/xkb/keymap/sun/uk
 ./usr/X11R6/lib/X11/xkb/keymap/sun/us
+./usr/X11R6/lib/X11/xkb/keymap/x68k
 ./usr/X11R6/lib/X11/xkb/keymap/xfree86
 ./usr/X11R6/lib/X11/xkb/keymap/xfree98
 ./usr/X11R6/lib/X11/xkb/rules
@@ -836,6 +839,8 @@
 ./usr/X11R6/lib/X11/xkb/symbols/se_SE
 ./usr/X11R6/lib/X11/xkb/symbols/sgi
 ./usr/X11R6/lib/X11/xkb/symbols/sgi/jp
+./usr/X11R6/lib/X11/xkb/symbols/sharp
+./usr/X11R6/lib/X11/xkb/symbols/sharp/jp
 ./usr/X11R6/lib/X11/xkb/symbols/si
 ./usr/X11R6/lib/X11/xkb/symbols/sk
 ./usr/X11R6/lib/X11/xkb/symbols/sk_qwerty
