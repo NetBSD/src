@@ -1,4 +1,4 @@
-/*	$NetBSD: cerror.S,v 1.12 2000/02/19 21:04:58 mycroft Exp $	*/
+/*	$NetBSD: cerror.S,v 1.13 2000/04/03 04:20:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,41 +40,23 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: cerror.S,v 1.12 2000/02/19 21:04:58 mycroft Exp $")
+	RCSID("$NetBSD: cerror.S,v 1.13 2000/04/03 04:20:44 mycroft Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
 
-#ifdef _REENTRANT
 	.globl	_C_LABEL(__errno)
-#else
-	.globl	_C_LABEL(errno)
-#endif
+
 _ENTRY(CERROR)
+	pushl	%eax
 #ifdef PIC
 	PIC_PROLOGUE
-#endif
-
-#ifdef _REENTRANT
-	pushl	%eax
-# ifdef PIC
 	call	PIC_PLT(_C_LABEL(__errno))
-# else
-	call	_C_LABEL(__errno)
-# endif /* PIC */
-	popl	(%eax)
-#else
-# ifdef PIC
-	movl	PIC_GOT(_C_LABEL(errno)),%ecx
-	movl	%eax,(%ecx)
-# else
-	movl	%eax,_C_LABEL(errno)
-# endif /* PIC */
-#endif /* _REENTRANT */
-
-#ifdef PIC
 	PIC_EPILOGUE
-#endif
+#else
+	call	_C_LABEL(__errno)
+#endif /* PIC */
+	popl	(%eax)
 	movl	$-1,%eax
 	movl	$-1,%edx
 	ret
