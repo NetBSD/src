@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.6 2001/05/01 16:46:11 aymeric Exp $	*/
+/*	$NetBSD: msg.c,v 1.7 2001/10/17 07:38:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -48,7 +48,7 @@ static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
  */
 void
 #ifdef __STDC__
-msgq(SCR *sp, mtype_t mt, const char *fmt, ...)
+msgq(SCR *sp, mtype_t mt, const char *fmt0, ...)
 #else
 msgq(sp, mt, fmt, va_alist)
 	SCR *sp;
@@ -71,6 +71,9 @@ msgq(sp, mt, fmt, va_alist)
 	const char *t, *u;
 	char *rbp, *s_rbp;
 	size_t cnt1, cnt2, soff;
+#endif
+#ifdef __STDC__
+	const char *fmt = fmt0;
 #endif
 	static int reenter;		/* STATIC: Re-entrancy check. */
 	GS *gp;
@@ -283,7 +286,7 @@ format:
 #endif
 	/* Format the arguments into the string. */
 #ifdef __STDC__
-        va_start(ap, fmt);
+        va_start(ap, fmt0);
 #else
         va_start(ap);
 #endif

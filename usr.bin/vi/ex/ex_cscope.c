@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cscope.c,v 1.4 2001/05/02 21:15:19 windsor Exp $	*/
+/*	$NetBSD: ex_cscope.c,v 1.5 2001/10/17 07:38:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1996
@@ -234,14 +234,14 @@ cscope_add(sp, cmdp, dname)
 	 * name regardless so that we can use it as a base for searches.
 	 */
 	if (stat(dname, &sb)) {
-		msgq(sp, M_SYSERR, dname);
+		msgq(sp, M_SYSERR, "%s", dname);
 		return (1);
 	}
 	if (S_ISDIR(sb.st_mode)) {
 		(void)snprintf(path, sizeof(path),
 		    "%s/%s", dname, CSCOPE_DBFILE);
 		if (stat(path, &sb)) {
-			msgq(sp, M_SYSERR, path);
+			msgq(sp, M_SYSERR, "%s", path);
 			return (1);
 		}
 		dbname = CSCOPE_DBFILE;
@@ -764,7 +764,7 @@ parse(sp, csc, tqp, matchesp)
 
 io_err:	if (feof(csc->from_fp))
 		errno = EIO;
-	msgq_str(sp, M_SYSERR, "%s", csc->dname);
+	msgq_str(sp, M_SYSERR, csc->dname, "%s");
 	terminate(sp, csc, 0);
 	return (1);
 }
