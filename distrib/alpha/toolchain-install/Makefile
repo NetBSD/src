@@ -1,3 +1,5 @@
+# $NetBSD: Makefile,v 1.3 1998/12/09 00:22:03 ross Exp $
+#
 # XXX this is evil
 
 TC_SRC_DIR=/ide/rossDec97/toolchain
