@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.8 1995/04/22 13:57:26 cgd Exp $	*/
+/*	$NetBSD: stand.h,v 1.9 1995/04/30 03:57:54 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -117,7 +117,7 @@ __dead void	panic __P((const char *, ...))
 			__attribute__((noreturn));
 int	getchar __P((void));
 void	exec __P((char *, char *, int));
-int	open __P((char *,int));
+int	open __P((const char *,int));
 int	close __P((int));
 int	read __P((int, void *, u_int));
 int	write __P((int, void *, u_int));
