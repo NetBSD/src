@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.5 1997/10/14 09:20:01 mark Exp $	*/
+/*	$NetBSD: asm.h,v 1.6 1997/10/17 18:27:30 mark Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -56,7 +56,7 @@
 #endif
 #define	_ASM_FUNC(x)	x
 
-#define _ENTRY(x)	.globl x; .type x,@function; x:
+#define _ENTRY(x)	.globl x; .type x,#function; x:
 
 #define	ENTRY(y)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _END_ENTRY
 #define	TWOENTRY(y,z)	_BEGIN_ENTRY; _ENTRY(_C_FUNC(y)); _ENTRY(_C_FUNC(z)); \
