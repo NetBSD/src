@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: osrelease.sh,v 1.54 2000/10/11 16:55:12 thorpej Exp $
+#	$NetBSD: osrelease.sh,v 1.55 2000/11/02 01:15:12 eeh Exp $
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 
 # Release number to use
 # Also check __NetBSD_Version__ in sys/sys/param.h if you change this!
-release=1.5H
+release=1.5I
 
 case $1 in
 -s)
