@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.7 2002/09/20 20:57:58 jschauma Exp $
+.\" $NetBSD: ksh.Man,v 1.8 2002/09/25 02:55:03 provos Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2170,7 +2170,7 @@ If this option is not set, characters in the range
 T}
 	vi-tabcomplete	T{
 In vi command line editing, do command / file name completion when
-tab (^I) is entered in insert mode.
+tab (^I) is entered in insert mode.  This is the default.
 T}
 .TE
 .sp
@@ -2923,6 +2923,7 @@ are removed and the cursor is placed at the beginning of the line.
 .\"}}}
 .\"{{{  complete ^[^[
 .IP "\fBcomplete ^[^[\fP"
+.IP "\fBcomplete ^I\fP"
 Automatically completes as much as is unique of the command name
 or the file name containing the cursor.  If the entire remaining command
 or file name is unique a space is printed after its completion, unless
