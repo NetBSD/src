@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.34 1994/11/28 19:17:12 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.35 1994/12/02 06:20:54 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -105,7 +105,7 @@ char	*trap_type[] = {
 	"Coprocessor violation",
 	"Async system trap"
 };
-int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
+u_int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -228,11 +228,12 @@ trap(type, code, v, frame)
 	switch (type) {
 	default:
 	dopanic:
-		if (panicstr == NULL) {
-			printf("trap type %x, code=%x, v=%x\n", type, code, v);
-			regdump(&frame, 128);
-		}
 		type &= ~T_USER;
+		printf("trap type=%d, code=0x%x, v=0x%x\n", type, code, v);
+#ifdef	DDB
+		kdb_trap(type, &frame);
+#endif
+		regdump(&frame, 128);
 		if ((u_int)type < trap_types)
 			panic(trap_type[type]);
 		panic("trap type 0x%x", type);
