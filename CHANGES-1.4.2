@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.56 1999/10/12 19:58:59 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.57 1999/10/12 21:42:55 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -749,9 +749,10 @@ usr.sbin/tcpdump/print-telnet.c			1.1 (new)
 
   Add telnet option printing and hex/ascii dumps to tcpdump.
 
+bin/ps/print.c					1.44
 usr.sbin/ac/ac.c				1.9
 usr.bin/systat/ps.c				1.6
 usr.bin/w/w.c					1.32
 
-  Fix "dty" vs "tty" problems that have existed since "dty"s were
-  invented sometime before 1.4 was released.
+  Make various utilities skip "dty" as well as "tty" on terminals,
+  so that the actually used tty is visiable instead of just 'dt'.
