@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.15 2003/09/30 19:56:54 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.16 2003/10/18 13:27:17 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.15 2003/09/30 19:56:54 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.16 2003/10/18 13:27:17 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -103,7 +103,7 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	NULL,
 	darwin_iohidsystem_connect_method_scalari_scalaro,
 	NULL,
-	NULL,
+	darwin_iohidsystem_connect_method_structi_structo,
 	NULL,
 	darwin_iohidsystem_connect_map_memory,
 	"IOHIDSystem",
@@ -238,6 +238,84 @@ darwin_iohidsystem_connect_method_scalari_scalaro(args)
 }
 
 int
+darwin_iohidsystem_connect_method_structi_structo(args)
+	struct mach_trap_args *args;
+{
+	mach_io_connect_method_structi_structo_request_t *req = args->smsg;
+	mach_io_connect_method_structi_structo_reply_t *rep = args->rmsg;
+	size_t *msglen = args->rsize;
+	struct proc *p = args->l->l_proc;
+	int maxoutcount;
+	int error;
+
+#ifdef DEBUG_DARWIN
+	printf("darwin_iohidsystem_connect_method_structi_structo()\n");
+#endif
+	rep->rep_msgh.msgh_bits =
+	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE);
+	rep->rep_msgh.msgh_size = sizeof(*rep) - sizeof(rep->rep_trailer);
+	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
+	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
+	rep->rep_outcount = 0;
+
+	/* Sanity check req->req_incount */
+	if (MACH_REQMSG_OVERFLOW(args, req->req_in[req->req_incount]))
+		return mach_msg_error(args, EINVAL);
+
+	maxoutcount = req->req_in[req->req_incount]; 
+
+	switch (req->req_selector) {
+	case DARWIN_IOHIDSETMOUSELOCATION: {
+		struct wscons_event wsevt;
+		dev_t dev;
+		const struct cdevsw *wsmux;
+		darwin_iogpoint *pt = (darwin_iogpoint *)&req->req_in[0];
+
+#ifdef DEBUG_DARWIN
+		printf("DARWIN_IOHIDSETMOUSELOCATION: %d,%d\n", pt->x, pt->y);
+#endif
+		/* 
+		 * Use the wsmux given by sysctl emul.darwin.iohidsystem_mux 
+		 */
+		error = darwin_findwsmux(&dev, darwin_iohidsystem_mux);
+		if (error != 0)
+			return mach_msg_error(args, error);
+
+		if ((wsmux = cdevsw_lookup(dev)) == NULL)
+			return mach_msg_error(args, ENXIO);
+
+		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_X;
+		wsevt.value = pt->x;
+		if ((error = (wsmux->d_ioctl)(dev, 
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0,  p)) != 0)
+			return mach_msg_error(args, error); 
+
+		wsevt.type = WSCONS_EVENT_MOUSE_ABSOLUTE_Y;
+		wsevt.value = pt->y;
+		if ((error = (wsmux->d_ioctl)(dev, 
+		    WSMUXIO_INJECTEVENT, (caddr_t)&wsevt, 0, p)) != 0)
+			return mach_msg_error(args, error); 
+
+		rep->rep_outcount = 0;
+		break;
+	}
+
+	default:
+#ifdef DEBUG_DARWIN
+		printf("Unknown selector %d\n", req->req_selector);
+#endif
+		return mach_msg_error(args, EINVAL);
+		break;
+	}
+
+	rep->rep_out[rep->rep_outcount + 1] = 8; /* XXX Trailer */
+
+	*msglen = sizeof(*rep) - (4096 - rep->rep_outcount);
+	rep->rep_msgh.msgh_size = *msglen - sizeof(rep->rep_trailer);
+	return 0;
+}
+
+int
 darwin_iohidsystem_connect_map_memory(args)
 	struct mach_trap_args *args;
 {
@@ -294,6 +372,7 @@ darwin_iohidsystem_thread(args)
 	darwin_iohidsystem_event_item *diei;
 	darwin_iohidsystem_event *die;
 	dev_t dev;
+	const struct cdevsw *wsmux;
 	struct uio auio;
 	struct iovec aiov;
 	struct wscons_event wsevt;
@@ -324,7 +403,12 @@ darwin_iohidsystem_thread(args)
 	if ((error = darwin_findwsmux(&dev, darwin_iohidsystem_mux)) != 0)
 		goto exit;		
 
-	if ((error = (*wsmux_cdevsw.d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
+	if ((wsmux = cdevsw_lookup(dev)) == NULL) {
+		error = ENXIO;
+		goto exit;
+	}
+
+	if ((error = (wsmux->d_open)(dev, FREAD|FWRITE, 0, p)) != 0)
 		goto exit;
 	
 	while(1) {
@@ -338,10 +422,10 @@ darwin_iohidsystem_thread(args)
 		auio.uio_rw = UIO_READ;
 		auio.uio_procp = p;
 
-		if ((error = (*wsmux_cdevsw.d_read)(dev, &auio, 0)) != 0)
+		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0)
 			goto exit;
 
-		if ((error = (*wsmux_cdevsw.d_read)(dev, &auio, 0)) != 0)
+		if ((error = (wsmux->d_read)(dev, &auio, 0)) != 0)
 		diei = &evg->evg_evqueue[evg->evg_event_last];
 		while (diei->diei_sem != 0)
 			tsleep((void *)&diei->diei_sem, PZERO, "iohid_lock", 1);
