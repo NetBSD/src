@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.5 1995/01/10 19:01:40 jtc Exp $	*/
+/*	$NetBSD: signal.h,v 1.6 1995/01/18 06:42:01 mellon Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,8 @@ struct	sigcontext {
 	int	sc_onstack;	/* sigstack state to restore */
 	int	sc_mask;	/* signal mask to restore */
 	int	sc_pc;		/* pc at time of signal */
-	int	sc_regs[34];	/* processor regs 0 to 31, mullo, mullhi */
+	int	sc_regs[32];	/* processor regs 0 to 31 */
+	int	mullo, mulhi;	/* mullo and mulhi registers... */
 	int	sc_fpused;	/* fp has been used */
 	int	sc_fpregs[33];	/* fp regs 0 to 31 and csr */
 	int	sc_fpc_eir;	/* floating point exception instruction reg */
