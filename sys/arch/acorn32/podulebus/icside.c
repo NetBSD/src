@@ -1,4 +1,4 @@
-/*	$NetBSD: icside.c,v 1.7 2002/09/27 20:29:16 thorpej Exp $	*/
+/*	$NetBSD: icside.c,v 1.8 2002/10/01 22:38:56 bjh21 Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -42,7 +42,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.7 2002/09/27 20:29:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icside.c,v 1.8 2002/10/01 22:38:56 bjh21 Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -125,7 +125,7 @@ struct ide_version {
 	int		auxregs[MAX_CHANNELS];	/* AUXSTAT register */
 	int		irqregs[MAX_CHANNELS];	/* IRQ register */
 	int		irqstatregs[MAX_CHANNELS];
-} ide_versions[] = {
+} const ide_versions[] = {
 	/* A3IN - Unsupported */
 /*	{ 0,  0, 0, NULL, { 0, 0 }, { 0, 0 }, { 0, 0 }, { 0, 0 } },*/
 	/* A3USER - Unsupported */
@@ -173,7 +173,7 @@ icside_attach(struct device *parent, struct device *self, void *aux)
 	struct podule_attach_args *pa = (void *)aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-	struct ide_version *ide = NULL;
+	const struct ide_version *ide = NULL;
 	u_int iobase;
 	int channel;
 	struct icside_channel *icp;
