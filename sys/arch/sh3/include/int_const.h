@@ -1,4 +1,4 @@
-/*	$NetBSD: int_const.h,v 1.1 2001/04/14 22:38:42 kleink Exp $	*/
+/*	$NetBSD: int_const.h,v 1.2 2002/04/28 17:10:35 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _SH3_INT_CONST_H_
-#define _SH3_INT_CONST_H_
+#define	_SH3_INT_CONST_H_
 
 /*
  * 7.18.4 Macros for integer constants

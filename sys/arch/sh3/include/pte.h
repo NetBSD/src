@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.6 2002/02/17 20:55:52 uch Exp $	*/
+/*	$NetBSD: pte.h,v 1.7 2002/04/28 17:10:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  *  T.Horiuchi Brains Corp. 05/26/1998
  */
 #ifndef _SH3_PTE_H_
-#define _SH3_PTE_H_
+#define	_SH3_PTE_H_
 
 #define	PDSHIFT		22		/* LOG2(NBPDR) */
 #define	NBPD		(1 << PDSHIFT)	/* bytes/page dir */
@@ -79,7 +79,7 @@ typedef int	pt_entry_t;		/* Mach page table entry */
  * + SH4 WT bit is not stored in PTE. U0 is always write-back. and
  *   P3 is always write-thurogh. (see sh3/trap.c::__setup_pte_sh4())
  *   We use WT bit as SW bit.
- * 
+ *
  * Software bit assign
  *   [11:9] - SH4 PCMCIA Assistant bit. (space attribute bit only)
  *   [7]    - Wired page bit.
@@ -101,26 +101,26 @@ typedef int	pt_entry_t;		/* Mach page table entry */
 #define	PG_G			0x00000002	/* share status */
 #define	PG_WT			0x00000001	/* write through (SH4) */
 
-#define PG_HW_BITS		0x1ffff17e	/* [28:12][8][6:1] */
+#define	PG_HW_BITS		0x1ffff17e	/* [28:12][8][6:1] */
 
 /*
  * Software bits
  */
 /* XXX referece bit is not emulated. */
-#define PG_U			0		/* referenced bit */
+#define	PG_U			0		/* referenced bit */
 #define	PG_W			0x00000080	/* page is wired */
 #define	PG_PVLIST		0x00000001	/* mapping has entry on pvlist */
 /* SH4 PCMCIA MMU support bits */
 /* PTEA SA (Space Attribute bit) */
-#define _PG_PCMCIA		0x00000e00
-#define _PG_PCMCIA_SHIFT	9
-#define _PG_PCMCIA_NONE		0x00000000	/* Non PCMCIA space */
-#define _PG_PCMCIA_IO		0x00000200	/* IOIS16 signal */
-#define _PG_PCMCIA_IO8		0x00000400	/* 8 bit I/O  */
-#define _PG_PCMCIA_IO16		0x00000600	/* 16 bit I/O  */
-#define _PG_PCMCIA_MEM8		0x00000800	/* 8 bit common memory */
-#define _PG_PCMCIA_MEM16	0x00000a00	/* 16 bit common memory */
-#define _PG_PCMCIA_ATTR8	0x00000c00	/* 8 bit attribute */
-#define _PG_PCMCIA_ATTR16	0x00000e00	/* 16 bit attribute */
+#define	_PG_PCMCIA		0x00000e00
+#define	_PG_PCMCIA_SHIFT	9
+#define	_PG_PCMCIA_NONE		0x00000000	/* Non PCMCIA space */
+#define	_PG_PCMCIA_IO		0x00000200	/* IOIS16 signal */
+#define	_PG_PCMCIA_IO8		0x00000400	/* 8 bit I/O  */
+#define	_PG_PCMCIA_IO16		0x00000600	/* 16 bit I/O  */
+#define	_PG_PCMCIA_MEM8		0x00000800	/* 8 bit common memory */
+#define	_PG_PCMCIA_MEM16	0x00000a00	/* 16 bit common memory */
+#define	_PG_PCMCIA_ATTR8	0x00000c00	/* 8 bit attribute */
+#define	_PG_PCMCIA_ATTR16	0x00000e00	/* 16 bit attribute */
 
 #endif /* !_SH3_PTE_H_ */

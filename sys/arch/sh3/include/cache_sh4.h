@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.h,v 1.4 2002/03/17 17:55:24 uch Exp $	*/
+/*	$NetBSD: cache_sh4.h,v 1.5 2002/04/28 17:10:33 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,66 +41,66 @@
  */
 
 #ifndef _SH3_CACHE_SH4_H_
-#define _SH3_CACHE_SH4_H_
+#define	_SH3_CACHE_SH4_H_
 #include <sh3/devreg.h>
 #ifdef _KERNEL
 
-#define SH4_ICACHE_SIZE		8192
-#define SH4_DCACHE_SIZE		16384
-#define SH4_CACHE_LINESZ	32
+#define	SH4_ICACHE_SIZE		8192
+#define	SH4_DCACHE_SIZE		16384
+#define	SH4_CACHE_LINESZ	32
 
-#define SH4_CCR			0xff00001c
-#define   SH4_CCR_IIX		  0x00008000
-#define   SH4_CCR_ICI		  0x00000800
-#define   SH4_CCR_ICE		  0x00000100
-#define   SH4_CCR_OIX		  0x00000080
-#define   SH4_CCR_ORA		  0x00000020
-#define   SH4_CCR_OCI		  0x00000008
-#define   SH4_CCR_CB		  0x00000004
-#define   SH4_CCR_WT		  0x00000002
-#define   SH4_CCR_OCE		  0x00000001
+#define	SH4_CCR			0xff00001c
+#define	  SH4_CCR_IIX		  0x00008000
+#define	  SH4_CCR_ICI		  0x00000800
+#define	  SH4_CCR_ICE		  0x00000100
+#define	  SH4_CCR_OIX		  0x00000080
+#define	  SH4_CCR_ORA		  0x00000020
+#define	  SH4_CCR_OCI		  0x00000008
+#define	  SH4_CCR_CB		  0x00000004
+#define	  SH4_CCR_WT		  0x00000002
+#define	  SH4_CCR_OCE		  0x00000001
 
-#define SH4_QACR0		0xff000038
-#define SH4_QACR1		0xff00003c
-#define   SH4_QACR_AREA_SHIFT	  2
-#define   SH4_QACR_AREA_MASK	  0x0000001c
+#define	SH4_QACR0		0xff000038
+#define	SH4_QACR1		0xff00003c
+#define	  SH4_QACR_AREA_SHIFT	  2
+#define	  SH4_QACR_AREA_MASK	  0x0000001c
 
 /* I-cache address/data array  */
-#define SH4_CCIA		0xf0000000
+#define	SH4_CCIA		0xf0000000
 /* address specification */
-#define   CCIA_A		  0x00000008	/* associate bit */
-#define   CCIA_ENTRY_SHIFT	  5		/* line size 32B */
-#define   CCIA_ENTRY_MASK	  0x00001fe0	/* [12:5] 256-entries */
+#define	  CCIA_A		  0x00000008	/* associate bit */
+#define	  CCIA_ENTRY_SHIFT	  5		/* line size 32B */
+#define	  CCIA_ENTRY_MASK	  0x00001fe0	/* [12:5] 256-entries */
 /* data specification */
-#define   CCIA_V		  0x00000001
-#define   CCIA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
+#define	  CCIA_V		  0x00000001
+#define	  CCIA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
 
-#define SH4_CCID		0xf1000000
+#define	SH4_CCID		0xf1000000
 /* address specification */
-#define   CCID_L_SHIFT		  2
-#define   CCID_L_MASK		  0x1c		/* line-size is 32B */
-#define   CCID_ENTRY_MASK	  0x00001fe0	/* [12:5] 128-entries */
+#define	  CCID_L_SHIFT		  2
+#define	  CCID_L_MASK		  0x1c		/* line-size is 32B */
+#define	  CCID_ENTRY_MASK	  0x00001fe0	/* [12:5] 128-entries */
 
 /* D-cache address/data array  */
-#define SH4_CCDA		0xf4000000
+#define	SH4_CCDA		0xf4000000
 /* address specification */
-#define   CCDA_A		  0x00000008	/* associate bit */
-#define   CCDA_ENTRY_SHIFT	  5		/* line size 32B */
-#define   CCDA_ENTRY_MASK	  0x00003fe0	/* [13:5] 512-entries */
+#define	  CCDA_A		  0x00000008	/* associate bit */
+#define	  CCDA_ENTRY_SHIFT	  5		/* line size 32B */
+#define	  CCDA_ENTRY_MASK	  0x00003fe0	/* [13:5] 512-entries */
 /* data specification */
-#define   CCDA_V		  0x00000001
-#define   CCDA_U		  0x00000002
-#define   CCDA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
+#define	  CCDA_V		  0x00000001
+#define	  CCDA_U		  0x00000002
+#define	  CCDA_TAGADDR_MASK	  0xfffffc00	/* [31:10] */
 
-#define SH4_CCDD		0xf5000000
+#define	SH4_CCDD		0xf5000000
 
 /* Store Queue */
-#define SH4_SQ			0xe0000000
+#define	SH4_SQ			0xe0000000
 
 /*
  * cache flush macro for locore level code.
  */
-#define SH4_CACHE_FLUSH()						\
+#define	SH4_CACHE_FLUSH()						\
 do {									\
 	u_int32_t __e, __a;						\
 									\
@@ -116,8 +116,8 @@ do {									\
 	}								\
 } while(/*CONSTCOND*/0)
 
-#define SH7750_CACHE_FLUSH()		SH4_CACHE_FLUSH()
-#define SH7750S_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7750_CACHE_FLUSH()		SH4_CACHE_FLUSH()
+#define	SH7750S_CACHE_FLUSH()		SH4_CACHE_FLUSH()
 
 #ifndef _LOCORE
 extern void sh4_cache_config(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh3.c,v 1.3 2002/03/17 14:03:09 uch Exp $	*/
+/*	$NetBSD: mmu_sh3.c,v 1.4 2002/04/28 17:10:39 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ sh3_tlb_invalidate_asid(int asid)
 {
 	u_int32_t aw, a;
 	int e, w;
-	
+
 	/* Invalidate entry attribute to ASID */
 	for (w = 0; w < SH3_MMU_WAY; w++) {
 		aw = (w << SH3_MMU_WAY_SHIFT);
@@ -107,7 +107,7 @@ sh3_tlb_invalidate_all()
 		for (e = 0; e < SH3_MMU_ENTRY; e++) {
 			a = aw | (e << SH3_MMU_VPN_SHIFT);
 			_reg_write_4(SH3_MMUAA | a, 0);
-			_reg_write_4(SH3_MMUDA | a, 0);		
+			_reg_write_4(SH3_MMUDA | a, 0);
 		}
 	}
 }
@@ -124,7 +124,7 @@ sh3_tlb_reset()
 		for (e = 0; e < SH3_MMU_ENTRY; e++) {
 			a = aw | (e << SH3_MMU_VPN_SHIFT);
 			_reg_write_4(SH3_MMUAA | a, 0);
-			_reg_write_4(SH3_MMUDA | a, 0);		
+			_reg_write_4(SH3_MMUDA | a, 0);
 		}
 	}
 }

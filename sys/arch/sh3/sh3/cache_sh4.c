@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.4 2002/03/17 14:02:43 uch Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.5 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ sh4_cache_config()
 	 * For now, P0, U0, P3 write-through P1 write-through
 	 * because..
 	 *	+ P3 page-mapping is always write-through. XXX
-	 *	+ PTE is access from P2. XXX			
+	 *	+ PTE is access from P2. XXX
 	 */
 	sh4_icache_sync_all();
 	RUN_P2;
@@ -220,7 +220,7 @@ sh4_dcache_wbinv_range(vaddr_t va, vsize_t sz)
 {
 	vaddr_t eva = round_line(va + sz);
 	va = trunc_line(va);
-	
+
 	while (va < eva) {
 		__asm__ __volatile__("ocbp @%0" : : "r"(va));
 		va += 32;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.6 2002/03/02 22:26:27 uch Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.7 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ kvacc(vaddr_t kva)
 
 	if (kva < SH3_P2SEG_BASE)
 		return (1);
-	
+
 	if (kva >= VM_MAX_KERNEL_ADDRESS)
 		return (0);
 
@@ -149,7 +149,7 @@ kgdb_acc(vaddr_t va, size_t len)
  * Translate a trap number into a unix compatible signal value.
  * (gdb only understands unix signal numbers).
  */
-int 
+int
 kgdb_signal(int type)
 {
 

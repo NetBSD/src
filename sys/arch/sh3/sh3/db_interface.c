@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.15 2002/04/22 18:57:43 uch Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.16 2002/04/28 17:10:38 uch Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -154,16 +154,16 @@ cpu_Debugger()
 }
 #endif /* !KGDB */
 
-#define M_BSR	0xf000
-#define I_BSR	0xb000
-#define M_BSRF	0xf0ff
-#define I_BSRF	0x0003
-#define M_JSR	0xf0ff
-#define I_JSR	0x400b
-#define M_RTS	0xffff
-#define I_RTS	0x000b
-#define M_RTE	0xffff
-#define I_RTE	0x002b
+#define	M_BSR	0xf000
+#define	I_BSR	0xb000
+#define	M_BSRF	0xf0ff
+#define	I_BSRF	0x0003
+#define	M_JSR	0xf0ff
+#define	I_JSR	0x400b
+#define	M_RTS	0xffff
+#define	I_RTS	0x000b
+#define	M_RTE	0xffff
+#define	I_RTE	0x002b
 
 boolean_t
 inst_call(int inst)
@@ -217,12 +217,12 @@ db_clear_single_step(db_regs_t *regs)
 /*
  * MMU
  */
-#define ON(x, c)	((x) & (c) ? '|' : '.')
+#define	ON(x, c)	((x) & (c) ? '|' : '.')
 void
 db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
 	static const char *pr[] = { "_r", "_w", "rr", "ww" };
-	static const char title[] = 
+	static const char title[] =
 	    "   VPN    ASID    PFN  AREA VDCGWtPR  SZ";
 	static const char title2[] = "\t\t\t      (user/kernel)";
 	u_int32_t r, e;
@@ -292,7 +292,7 @@ db_tlbdump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 			__db_tlbdump_page_size_sh4(r);
 			r = _reg_read_4(SH4_ITLB_DA2 | e);
 			db_printf(" %c  %d\n",
-			    ON(r, SH4_ITLB_DA2_TC), 
+			    ON(r, SH4_ITLB_DA2_TC),
 			    r & SH4_ITLB_DA2_SA_MASK);
 		}
 		/* Dump UTLB */
@@ -359,7 +359,7 @@ __db_tlbdump_page_size_sh4(u_int32_t r)
 void
 db_cachedump_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 {
-#ifdef SH3	
+#ifdef SH3
 	if (CPU_IS_SH3)
 		__db_cachedump_sh3(have_addr ? addr : 0);
 #endif
@@ -420,7 +420,7 @@ __db_cachedump_sh4(vaddr_t va)
 {
 	u_int32_t r, e;
 	int i, istart, iend;
-	
+
 	RUN_P2; /* must access from P2 */
 
 	/* disable I/D-cache */
@@ -434,7 +434,7 @@ __db_cachedump_sh4(vaddr_t va)
 		istart = 0;
 		iend = SH4_ICACHE_SIZE / SH4_CACHE_LINESZ;
 	}
-		
+
 	db_printf("[I-cache]\n");
 	db_printf("  Entry             V           V           V           V\n");
 	for (i = istart; i < iend; i++) {
@@ -456,7 +456,7 @@ __db_cachedump_sh4(vaddr_t va)
 
 	}
 	db_printf("\n");
-	
+
 	_reg_write_4(SH4_CCR,
 	    _reg_read_4(SH4_CCR) | SH4_CCR_ICE | SH4_CCR_OCE);
 	sh_icache_sync_all();
@@ -483,7 +483,7 @@ db_frame_cmd(db_expr_t addr, int have_addr, db_expr_t count, char *modif)
 	SF(r12);
 	SF(r11);
 	SF(r10);
-	SF(r9);	
+	SF(r9);
 	SF(r8);
 	SF(pr);
 #undef	SF

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.5 2002/03/17 17:55:25 uch Exp $	*/
+/*	$NetBSD: pcb.h,v 1.6 2002/04/28 17:10:36 uch Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #ifndef _SH3_PCB_H_
-#define _SH3_PCB_H_
+#define	_SH3_PCB_H_
 
 #include <sh3/frame.h>
 
