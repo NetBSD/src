@@ -23,7 +23,6 @@
  * any improvements or extensions that they make and grant Carnegie Mellon 
  * the rights to redistribute these changes.
  */
- * 
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -35,7 +34,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
-struct jmp_buf	*db_recover;
+jmp_buf	*db_recover;
 
 /*
  * Register list
@@ -237,8 +236,8 @@ findentry(sp)
 	register	instruc;
 	register	val;
 	db_addr_t	addr, calladdr, nextword;
-	jmp_buf_t	db_jmpbuf;
-	jmp_buf_t	*savejmp = db_recover;
+	jmp_buf		db_jmpbuf;
+	jmp_buf		*savejmp = db_recover;
 
 	if (setjmp(db_recover = &db_jmpbuf)) {
 		/* oops -- we touched something we ought not to have */
