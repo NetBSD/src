@@ -2036,7 +2036,7 @@ pmap_remove_mapping(pmap, va, pte, flags)
 			pmap_check_wiring("remove", ptpva);
 #endif
 		/*
-		 * If reference count drops to 1, and we're not instructed
+		 * If reference count drops to 0, and we're not instructed
 		 * to keep it around, free the PT page.
 		 */
 		if (refs == 0 && (flags & PRM_KEEPPTPAGE) == 0) {
