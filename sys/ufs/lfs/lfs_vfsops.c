@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.28.2.7 2000/03/29 20:22:02 he Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.28.2.8 2000/03/29 20:51:33 he Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,7 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #include <sys/mbuf.h>
 #include <sys/file.h>
 #include <sys/disklabel.h>
