@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.40 2002/05/28 03:04:06 itojun Exp $	*/
+/*	$NetBSD: in6.h,v 1.41 2002/06/08 21:22:31 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -358,6 +358,15 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IN6_IS_SCOPE_LINKLOCAL(a)	\
 	((IN6_IS_ADDR_LINKLOCAL(a)) ||	\
 	 (IN6_IS_ADDR_MC_LINKLOCAL(a)))
+
+#define IFA6_IS_DEPRECATED(a) \
+	((a)->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME && \
+	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (a)->ia6_lifetime.ia6t_pltime)
+#define IFA6_IS_INVALID(a) \
+	((a)->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME && \
+	 (u_int32_t)((time.tv_sec - (a)->ia6_updatetime)) > \
+	 (a)->ia6_lifetime.ia6t_vltime)
 #endif
 
 /*
@@ -616,7 +625,7 @@ in6_cksum_phdr(const struct in6_addr *src, const struct in6_addr *dst,
 	if (!IN6_IS_SCOPE_LINKLOCAL(src))
 		sum += w[1];
 	sum += w[2]; sum += w[3]; sum += w[4]; sum += w[5];
-	sum += w[6]; sum += w[7]; 
+	sum += w[6]; sum += w[7];
 
 	/*LINTED*/
 	w = (const u_int16_t *) dst;

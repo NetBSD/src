@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.53 2002/06/07 22:03:02 itojun Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.54 2002/06/08 21:22:33 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.53 2002/06/07 22:03:02 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.54 2002/06/08 21:22:33 itojun Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -433,7 +433,7 @@ skip_ipsec2:;
 
 	/* Source address validation */
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) &&
-	    (flags & IPV6_DADOUTPUT) == 0) {
+	    (flags & IPV6_UNSPECSRC) == 0) {
 		error = EOPNOTSUPP;
 		ip6stat.ip6s_badscope++;
 		goto bad;
