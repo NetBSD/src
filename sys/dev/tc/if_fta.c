@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fta.c,v 1.1.1.1 1996/05/20 00:20:50 thorpej Exp $	*/
+/*	$NetBSD: if_fta.c,v 1.2 1996/05/20 00:35:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matt Thomas <matt@3am-software.com>
@@ -90,6 +90,8 @@ pdq_tc_attach(
     bcopy(sc->sc_dev.dv_xname, sc->sc_if.if_xname, IFNAMSIZ);
     sc->sc_if.if_flags = 0;
     sc->sc_if.if_softc = sc;
+
+    printf(": DEFTA FDDI Controller\n");
 
     if (bus_mem_map(sc->sc_bc, ta->ta_addr + PDQ_TC_CSR_OFFSET,
 		    PDQ_TC_CSR_SPACE, 0, &sc->sc_membase))
