@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2004/12/12 12:42:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2005/01/14 07:46:56 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ INSTALL_TARGET=	install-binutils install-gas install-ld
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 
-CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib
+CCADDFLAGS=	-I${DESTDIR}/usr/include -L${DESTDIR}/lib -L${DESTDIR}/usr/lib -B${DESTDIR}/usr/lib/
 
 NEWCONFIGDIR?=	${.CURDIR}/../..
 MKNATIVE?=	${.CURDIR}/mknative-binutils
@@ -32,8 +32,7 @@ native-binutils: .native/.configure_done
 			CC=${CC:Q}' '${CCADDFLAGS:Q} \
 			CXX=${CXX:Q}' '${CCADDFLAGS:Q} \
 			CPP=${CPP:Q}' '-I${DESTDIR}/usr/include \
-			CFLAGS=-B${DESTDIR}/usr/lib/ CPPFLAGS= CXXFLAGS= \
-			LDFLAGS= \
+			CFLAGS= CPPFLAGS= CXXFLAGS= LDFLAGS= \
 			MSGFMT=${TOOLDIR}/bin/${_TOOL_PREFIX}msgfmt \
 			XGETTEXT=${TOOLDIR}/bin/${_TOOL_PREFIX}xgettext \
 			LIBS=-lintl \
