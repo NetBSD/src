@@ -1,4 +1,4 @@
-/*	$NetBSD: bootufs.c,v 1.1 1997/10/19 11:01:04 oki Exp $	*/
+/*	$NetBSD: bootufs.c,v 1.2 1998/06/30 11:59:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -54,8 +54,8 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <ufs/ufs/quota.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #include <a.out.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 1998/06/25 23:59:17 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 1998/06/30 11:59:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
  */
 
 #include "opt_ktrace.h"
+#include "opt_uvm.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_hpux.h"
 
@@ -68,6 +69,10 @@
 
 #include <vm/vm.h>
 #include <vm/pmap.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #ifdef FPU_EMULATE
 #include <m68k/fpe/fpu_emulate.h>
@@ -243,7 +248,7 @@ again:
 		"pid %d(%s): writeback aborted in sigreturn, pc=%x\n",
 				    p->p_pid, p->p_comm, fp->f_pc, faultaddr);
 #endif
-		} else if (sig = writeback(fp, fromtrap)) {
+		} else if ((sig = writeback(fp, fromtrap))) {
 			beenhere = 1;
 			oticks = p->p_sticks;
 			trapsignal(p, sig, faultaddr);
@@ -273,7 +278,11 @@ trap(type, code, v, frame)
 	u_int ucode;
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.traps++;
+#else
 	cnt.v_trap++;
+#endif
 	p = curproc;
 	ucode = 0;
 
@@ -311,7 +320,9 @@ trap(type, code, v, frame)
 #ifdef DDB
 		(void)kdb_trap(type, (db_regs_t *)&frame);
 #endif
+#ifdef KGDB
 	kgdb_cont:
+#endif
 		splx(s);
 		if (panicstr) {
 			printf("trap during panic!\n");
@@ -376,12 +387,12 @@ trap(type, code, v, frame)
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
 	/*
-	 * We pass along the 68881 status register which locore stashed
+	 * We pass along the 68881 status which locore stashed
 	 * in code for us.  Note that there is a possibility that the
-	 * bit pattern of this register will conflict with one of the
+	 * bit pattern of this will conflict with one of the
 	 * FPE_* codes defined in signal.h.  Fortunately for us, the
 	 * only such codes we use are all in the range 1-7 and the low
-	 * 3 bits of the status register are defined as 0 so there is
+	 * 3 bits of the status are defined as 0 so there is
 	 * no clash.
 	 */
 		ucode = code;
@@ -522,17 +533,29 @@ trap(type, code, v, frame)
 	case T_SSIR|T_USER:
 		if (ssir & SIR_NET) {
 			siroff(SIR_NET);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 			netintr();
 		}
 		if (ssir & SIR_CLOCK) {
 			siroff(SIR_CLOCK);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 			softclock();
 		}
 		if (ssir & SIR_SERIAL) {
 			siroff(SIR_SERIAL);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 #include "zs.h"
 #if NZS > 0
 			zssoft(0);
@@ -540,14 +563,22 @@ trap(type, code, v, frame)
 		}
 		if (ssir & SIR_KBD) {
 			siroff(SIR_KBD);
+#if defined(UVM)
+			uvmexp.softs++;
+#else
 			cnt.v_soft++;
+#endif
 			kbdsoftint();
 		}
 		/*
 		 * If this was not an AST trap, we are all done.
 		 */
 		if (type != (T_ASTFLT|T_USER)) {
+#if defined(UVM)
+			uvmexp.traps--;
+#else
 			cnt.v_trap--;
+#endif
 			return;
 		}
 		spl0();
@@ -611,23 +642,37 @@ trap(type, code, v, frame)
 
 #ifdef COMPAT_HPUX
 		if (ISHPMMADDR(va)) {
+			int pmap_mapmulti __P((pmap_t, vm_offset_t));
 			vm_offset_t bva;
 
 			rv = pmap_mapmulti(map->pmap, va);
 			if (rv != KERN_SUCCESS) {
 				bva = HPMMBASEADDR(va);
+#if defined(UVM)
+				rv = uvm_fault(map, bva, 0, ftype);
+#else
 				rv = vm_fault(map, bva, ftype, FALSE);
+#endif
 				if (rv == KERN_SUCCESS)
 					(void) pmap_mapmulti(map->pmap, va);
 			}
 		} else
 #endif
+#if defined(UVM)
+		rv = uvm_fault(map, va, 0, ftype);
+#ifdef DEBUG
+		if (rv && MDB_ISPID(p->p_pid))
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			    map, va, ftype, rv);
+#endif
+#else /* ! UVM */
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef DEBUG
 		if (rv && MDB_ISPID(p->p_pid))
-			printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
 #endif
+#endif /* UVM */
 		/*
 		 * If this was a stack access we keep track of the maximum
 		 * accessed stack size.  Also, if vm_fault gets a protection
@@ -659,8 +704,13 @@ trap(type, code, v, frame)
 		if (type == T_MMUFLT) {
 			if (p->p_addr->u_pcb.pcb_onfault)
 				goto copyfault;
-			printf("vm_fault(%x, %lx, %x, 0) -> %x\n",
+#if defined(UVM)
+			printf("uvm_fault(%p, 0x%lx, 0, 0x%x) -> 0x%x\n",
+			    map, va, ftype, rv);
+#else
+			printf("vm_fault(%p, %lx, %x, 0) -> %x\n",
 			       map, va, ftype, rv);
+#endif
 			printf("  type %x, code [mmu,,ssw]: %x\n",
 			       type, code);
 			goto dopanic;
@@ -993,7 +1043,11 @@ syscall(code, frame)
 	register_t args[8], rval[2];
 	u_quad_t sticks;
 
+#if defined(UVM)
+	uvmexp.syscalls++;
+#else
 	cnt.v_syscall++;
+#endif
 	if (!USERMODE(frame.f_sr))
 		panic("syscall");
 	p = curproc;
