@@ -15,7 +15,7 @@
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  * major changes by Julian Elischer (julian@jules.dialix.oz.au) May 1993
  *
- *      $Id: st.c,v 1.16.2.3 1993/11/25 05:21:53 mycroft Exp $
+ *      $Id: st.c,v 1.16.2.4 1993/11/25 07:48:54 mycroft Exp $
  */
 
 /*
@@ -273,9 +273,9 @@ stattach(parent, self, aux)
 	 * request must specify this.
 	 */
 	if (st_mode_sense(st, SCSI_NOSLEEP | SCSI_NOMASK | SCSI_SILENT)) {
-		printf("%s: drive offline\n", st->sc_dev.dv_xname);
+		printf(": drive offline\n", st->sc_dev.dv_xname);
 	} else {
-		printf("%s: density code 0x%x, ", st->sc_dev.dv_xname,
+		printf(": density code 0x%x, ", st->sc_dev.dv_xname,
 		       st->media_density);
 		if (!scsi_test_unit_ready(sc_link, SCSI_NOSLEEP | SCSI_NOMASK | SCSI_SILENT)) {
 			if (st->media_blksiz)
@@ -285,7 +285,7 @@ stattach(parent, self, aux)
 			printf(" blocks, write-%s\n",
 			    (st->flags & ST_READONLY) ? "protected" : "enabled");
 		} else {
-			printf(" drive empty\n");
+			printf("drive empty\n");
 		}
 	}
 	/*
@@ -635,7 +635,7 @@ st_mount_tape(dev, flags)
 			return error;
 	}
 	if (error = st_mode_select(st, 0)) {
-		printf("%s: cannot set selected mode", st->sc_dev.dv_xname);
+		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		return error;
 	}
 	scsi_prevent(sc_link, PR_PREVENT, 0);	/* who cares if it fails? */
@@ -1169,7 +1169,7 @@ try_new_value:
 	 * drive. If not, put it back the way it was.
 	 */
 	if (error = st_mode_select(st, 0)) {	/* put it back as it was */
-		printf("%s: cannot set selected mode", st->sc_dev.dv_xname);
+		printf("%s: cannot set selected mode\n", st->sc_dev.dv_xname);
 		st->density = hold_density;
 		st->blksiz = hold_blksiz;
 		if (st->blksiz)
