@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.5 2001/11/23 19:36:50 thorpej Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.6 2001/12/01 06:15:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,6 +48,8 @@
 #include <machine/cpu.h>
 #include <arm/cpufunc.h>
 
+#include <arm/xscale/i80200reg.h>
+
 #include <evbarm/iq80310/iq80310reg.h>
 #include <evbarm/iq80310/iq80310var.h>
 #include <evbarm/iq80310/obiovar.h>
@@ -61,6 +63,8 @@ u_int intr_current_mask;	/* Interrupts currently allowable */
 u_int spl_mask;
 u_int irqmasks[IPL_LEVELS];
 u_int irqblock[NIRQS];
+
+u_int iq80310_intrmask;		/* actual interrupts currently enabled */
 
 extern u_int soft_interrupts;   /* Only so we can initialise it */
 
@@ -106,8 +110,21 @@ irq_init(void)
 	set_spl_masks();
 	irq_setmasks();
 
-	/* Enable IRQs and FIQs. */
-	enable_interrupts(I32_bit | F32_bit);
+	/* Steer PMU and BCU interrupts to IRQ. */
+	__asm __volatile("mcr p13, 0, %0, c2, c0, 0"
+		:
+		: "r" (0));
+
+	/*
+	 * Enable external IRQs, disable external FIQs and
+	 * the PMU and BCU interrupts.
+	 */
+	__asm __volatile("mcr p13, 0, %0, c0, c0, 0"
+		:
+		: "r" (INTCTL_IM));
+
+	/* Enable IRQs. */
+	enable_interrupts(I32_bit);
 }
 
 uint32_t
@@ -119,8 +136,12 @@ iq80310_intstat_read(void)
 	if (1/*rev F or later board*/)
 		intstat |= (CPLD_READ(IQ80310_XINT0_STATUS) & 0x7) << 5;
 
-	/* XXX Why do we have to mask off? */
-	return (intstat & intr_current_mask);
+	/*
+	 * Yuck.  Even if the interrupt is disabled, the bit will
+	 * still light up in the interrupt status register (it
+	 * just won't assert IRQ#).
+	 */
+	return (intstat & iq80310_intrmask);
 }
 
 __inline void
@@ -128,10 +149,13 @@ irq_setmasks_nointr(void)
 {
 	u_int disabled;
 
+	/* The actual mask of IRQs actually right *right now*. */
+	iq80310_intrmask = (intr_current_mask & spl_mask) & IRQ_BITS;
+
 	/*
 	 * The XINT_MASK register sets a bit to *disable*.
 	 */
-	disabled = (~(intr_current_mask & spl_mask)) & IRQ_BITS;
+	disabled = ~iq80310_intrmask;
 
 	/*
 	 * The PCI interrupts are all masked by a single
