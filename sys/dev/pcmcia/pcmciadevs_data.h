@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.34 1999/02/19 00:44:16 nathanw Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.35 1999/02/19 02:53:06 nathanw Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.30 1999/01/01 19:30:03 christos Exp 
+ *	NetBSD: pcmciadevs,v 1.31 1999/02/19 00:43:00 nathanw Exp 
  */
 
 /*-
@@ -115,10 +115,10 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    "Digital Mobile Media CD-ROM"	},
 	},
 	{
-	    PCMCIA_VENDOR_FUJUTSU, PCMCIA_PRODUCT_FUJUTSU_SCSI600,
-	    PCMCIA_CIS_FUJUTSU_SCSI600,
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_SCSI600,
+	    PCMCIA_CIS_FUJITSU_SCSI600,
 	    0,
-	    "",
+	    "Fujitsu Corporation",
 	    "Fujitsu SCSI 600 Interface"	},
 	},
 	{
