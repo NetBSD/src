@@ -1,4 +1,4 @@
-.\"	$NetBSD: yp.8,v 1.18 2001/06/19 12:59:13 wiz Exp $
+.\"	$NetBSD: yp.8,v 1.19 2001/11/25 23:42:36 wiz Exp $
 .\"
 .\" Copyright (c) 1992/3 Theo de Raadt <deraadt@fsa.ca>
 .\" All rights reserved.
@@ -141,6 +141,33 @@ subsystem is conditionally started in
 See the
 .Pa /etc/rc.conf
 file for configuration variables.
+.Sh SEE ALSO
+.Xr domainname 1 ,
+.Xr ypcat 1 ,
+.Xr ypmatch 1 ,
+.Xr ypwhich 1 ,
+.Xr ypclnt 3 ,
+.Xr group 5 ,
+.Xr hosts_access 5 ,
+.Xr nsswitch.conf 5 ,
+.Xr passwd 5 ,
+.Xr rc.conf 5 ,
+.Xr rc 8 ,
+.Xr ypbind 8 ,
+.Xr ypinit 8 ,
+.Xr yppoll 8 ,
+.Xr yppush 8 ,
+.Xr ypserv 8 ,
+.Xr ypset 8 ,
+.Xr yptest 8 ,
+.Xr ypxfr 8
+.Sh HISTORY
+The
+.Tn NIS
+client subsystem was originally written by Theo de Raadt
+to be compatible with Sun's implementation.  The
+.Tn NIS
+server suite was originally written by Mats O Jansson.
 .Sh BUGS
 If
 .Xr ypbind 8
@@ -151,30 +178,3 @@ The
 .Sq secure map
 feature is not compatible with non-BSD implementations as found
 e.g. in Solaris.
-.Sh SEE ALSO
-.Xr domainname 1 ,
-.Xr ypcat 1 ,
-.Xr ypmatch 1 ,
-.Xr group 5 ,
-.Xr hosts_access 5 ,
-.Xr nsswitch.conf 5 ,
-.Xr passwd 5 ,
-.Xr rc 8 ,
-.Xr rc.conf 5 ,
-.Xr ypbind 8 ,
-.Xr yppoll 8 ,
-.Xr ypset 8 ,
-.Xr ypwhich 1 ,
-.Xr ypserv 8 ,
-.Xr yppush 8 ,
-.Xr ypxfr 8 ,
-.Xr ypinit 8 ,
-.Xr yptest 8 ,
-.Xr ypclnt 3
-.Sh HISTORY
-The
-.Tn NIS
-client subsystem was originally written by Theo de Raadt
-to be compatible with Sun's implementation.  The
-.Tn NIS
-server suite was originally written by Mats O Jansson.
