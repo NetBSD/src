@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.23 1994/12/22 03:24:07 phil Exp $	*/
+/*	$NetBSD: locore.s,v 1.24 1995/01/18 08:14:32 phil Exp $	*/
 
 /*
  * Copyright (c) 1993 Philip A. Nelson.
@@ -45,6 +45,7 @@
 #include <machine/asm.h>
 #include <machine/icu.h>
 #include "assym.h"
+#include "lpt.h"
 #include "aic.h"
 #include "dp.h"
 #include "ncr.h"
@@ -138,7 +139,11 @@ _int_table:		/* Here is the fixed jump table for interrupts! */
 	.long __int_scsi1	/* 4 - NCR DP8490 */
 	.long __int_scsi0	/* 5 - Adaptec 6250 */
 	.long __int_bad		/* 6 */
+#if NLPT > 0
+	.long __int_lpt		/* 7 - i8255 */
+#else
 	.long __int_uart3	/* 7 - uart 3*/
+#endif
 	.long __int_bad		/* 8 */
 	.long __int_uart2	/* 9  - uart 2*/
 	.long __int_bad		/* 10 */
@@ -1115,6 +1120,17 @@ ENTRY(_int_uart3)
 	movqd	3,tos
 	bsr _scnintr
 	br	exit_int
+#if NLPT > 0
+ENTRY(_int_lpt)
+	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
+	sprd	usp, REGS_USP(sp)
+	sprd	sb, REGS_SB(sp)
+	lprd	sb, 0
+	movd	Cur_pl(pc), tos
+	movqd	0,tos
+	bsr _lptintr
+	br	exit_int
+#endif
 ENTRY(_int_bad)
 	enter	[r0,r1,r2,r3,r4,r5,r6,r7],8
 	sprd	usp, REGS_USP(sp)
