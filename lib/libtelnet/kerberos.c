@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos.c,v 1.13 2003/08/07 16:44:55 agc Exp $	*/
+/*	$NetBSD: kerberos.c,v 1.14 2003/10/21 01:10:47 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)kerberos.c	8.3 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: kerberos.c,v 1.13 2003/08/07 16:44:55 agc Exp $");
+__RCSID("$NetBSD: kerberos.c,v 1.14 2003/10/21 01:10:47 fvdl Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ kerberos4_is(ap, data, cnt)
 		}
 		instance[0] = '*'; instance[1] = 0;
 		if ((r = krb_rd_req(&auth, KRB_SERVICE_NAME,
-				   instance, 0, &adat, "")) != NULL) {
+				   instance, 0, &adat, "")) != 0) {
 			if (auth_debug_mode)
 				printf("Kerberos failed him as %s\r\n", name);
 			Data(ap, KRB_REJECT, (void *)krb_err_txt[r], -1);
