@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)df.1	6.10 (Berkeley) 3/1/92
-.\"	$Id: df.1,v 1.5 1993/08/06 17:05:09 mycroft Exp $
+.\"	$Id: df.1,v 1.6 1994/03/11 03:07:27 mycroft Exp $
 .\"
 .Dd March 1, 1992
 .Dt DF 1
@@ -40,7 +40,7 @@
 .Nd display free disk space
 .Sh SYNOPSIS
 .Nm df
-.Op Fl ikn
+.Op Fl ikln
 .Op Ar file | Ar filesystem ...
 .Sh DESCRIPTION
 .Nm Df
@@ -61,6 +61,9 @@ By default, all sizes are reported in 512-byte block counts.
 The
 .Fl k
 option causes the numbers to be reported in kilobyte counts.
+.It Fl l
+Display statistics only about mounted filesystems with the MNT_LOCAL
+flag set.
 .It Fl n
 Print out the previously obtained statistics from the filesystems.
 This option should be used if it is possible that one or more
@@ -81,10 +84,6 @@ is set, and the
 option is not specified, the block counts will be displayed in units of that
 size block.
 .El
-.Sh BUGS
-The
-.Fl n
-flag is ignored if a file or filesystem is specified.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr statfs 2 ,
