@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.7.8.2 1997/05/17 00:25:24 thorpej Exp $	*/
+/*	$NetBSD: bus.h,v 1.7.8.3 1997/05/25 02:10:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -449,7 +449,70 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * by tag/handle/offset `count' times.
  */
 
-	/* XXX IMPLEMENT bus_space_set_multi_N() XXX */
+static __inline void bus_space_set_multi_1 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
+static __inline void bus_space_set_multi_2 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
+static __inline void bus_space_set_multi_4 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
+
+static __inline void
+bus_space_set_multi_1(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int8_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		while (c--)
+			outb(addr, v);
+	else
+		while (c--)
+			*(volatile u_int8_t *)(addr) = v;
+}
+
+static __inline void
+bus_space_set_multi_2(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		while (c--)
+			outw(addr, v);
+	else
+		while (c--)
+			*(volatile u_int16_t *)(addr) = v;
+}
+
+static __inline void
+bus_space_set_multi_4(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int32_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		while (c--)
+			outl(addr, v);
+	else
+		while (c--)
+			*(volatile u_int32_t *)(addr) = v;
+}
+
+#if 0	/* Cause a link error for bus_space_set_multi_8 */
+#define	bus_space_set_multi_8 !!! bus_space_set_multi_8 unimplemented !!!
+#endif
 
 /*
  *	void bus_space_set_region_N __P((bus_space_tag_t tag,
@@ -460,7 +523,70 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * by tag/handle starting at `offset'.
  */
 
-	/* XXX IMPLEMENT bus_space_set_region_N() XXX */
+static __inline void bus_space_set_region_1 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int8_t, size_t));
+static __inline void bus_space_set_region_2 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int16_t, size_t));
+static __inline void bus_space_set_region_4 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, u_int32_t, size_t));
+
+static __inline void
+bus_space_set_region_1(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int8_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr++)
+			outb(addr, v);
+	else
+		for (; c != 0; c--, addr++)
+			*(volatile u_int8_t *)(addr) = v;
+}
+
+static __inline void
+bus_space_set_region_2(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int16_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr += 2)
+			outw(addr, v);
+	else
+		for (; c != 0; c--, addr += 2)
+			*(volatile u_int16_t *)(addr) = v;
+}
+
+static __inline void
+bus_space_set_region_4(t, h, o, v, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h;
+	bus_size_t o;
+	u_int32_t v;
+	size_t c;
+{
+	bus_addr_t addr = h + o;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr += 4)
+			outl(addr, v);
+	else
+		for (; c != 0; c--, addr += 4)
+			*(volatile u_int32_t *)(addr) = v;
+}
+
+#if 0	/* Cause a link error for bus_space_set_region_8 */
+#define	bus_space_set_region_8	!!! bus_space_set_region_8 unimplemented !!!
+#endif
 
 /*
  *	void bus_space_copy_N __P((bus_space_tag_t tag,
@@ -472,7 +598,82 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
  * at tag/bsh1/off1 to bus space starting at tag/bsh2/off2.
  */
 
-	/* XXX IMPLEMENT bus_space_copy_N() XXX */
+static __inline void bus_space_copy_1 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
+static __inline void bus_space_copy_2 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
+static __inline void bus_space_copy_4 __P((bus_space_tag_t,
+	bus_space_handle_t, bus_size_t, bus_space_handle_t,
+	bus_size_t, size_t));
+
+static __inline void
+bus_space_copy_1(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr1++, addr2++)
+			outb(addr2, inb(addr1));
+	else
+		for (; c != 0; c--, addr1++, addr2++)
+			*(volatile u_int8_t *)(addr2) =
+			    *(volatile u_int8_t *)(addr1);
+}
+
+static __inline void
+bus_space_copy_2(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr1 += 2, addr2 += 2)
+			outw(addr2, inw(addr1));
+	else
+		for (; c != 0; c--, addr1 += 2, addr2 += 2)
+			*(volatile u_int16_t *)(addr2) =
+			    *(volatile u_int16_t *)(addr1);
+}
+
+static __inline void
+bus_space_copy_4(t, h1, o1, h2, o2, c)
+	bus_space_tag_t t;
+	bus_space_handle_t h1;
+	bus_size_t o1;
+	bus_space_handle_t h2;
+	bus_size_t o2;
+	size_t c;
+{
+	bus_addr_t addr1 = h1 + o1;
+	bus_addr_t addr2 = h2 + o2;
+
+	if (t == I386_BUS_SPACE_IO)
+		for (; c != 0; c--, addr1 += 4, addr2 += 4)
+			outl(addr2, inl(addr1));
+	else
+		for (; c != 0; c--, addr1 += 4, addr2 += 4)
+			*(volatile u_int32_t *)(addr2) =
+			    *(volatile u_int32_t *)(addr1);
+}
+
+#if 0	/* Cause a link error for bus_space_copy_8 */
+#define	bus_space_copy_8	!!! bus_space_copy_8 unimplemented !!!
+#endif
 
 /*
  * Bus read/write barrier methods.
