@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2005/02/20 00:31:01 christos Exp $
+# $NetBSD: Makefile,v 1.4 2005/02/20 00:32:18 christos Exp $
 
 USE_SHLIBDIR=	yes
 .include <bsd.own.mk>
@@ -15,6 +15,7 @@ CPPFLAGS+=	-DWITH_SSL
 
 SRCS=	radlib.c
 INCS=	radlib.h radlib_vs.h
+INCSDIR=/usr/include
 
 MAN=	libradius.3 radius.conf.5
 
