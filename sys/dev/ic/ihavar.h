@@ -1,4 +1,4 @@
-/*	$NetBSD: ihavar.h,v 1.5 2001/09/29 14:23:37 tsutsui Exp $ */
+/*	$NetBSD: ihavar.h,v 1.6 2001/11/17 21:26:12 tsutsui Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -85,9 +85,11 @@ struct iha_scsi_req_q {
 	int nextstat;			/* Next state function to apply	*/
 	int sg_index;			/* Scatter/Gather Index		*/
 	int sg_max;			/* Scatter/Gather # valid entries */
-	int flags;			/* SCB Flags (xs->flags + private)*/
-#define  FLAG_RSENS	0x00010000	/*  Request Sense sent		*/
-#define  FLAG_SG	0x00020000	/*  Scatter/Gather used		*/
+	int flags;			/* SCB Flags			*/
+#define  FLAG_DATAIN	0x00000001	/*  Data In			*/
+#define  FLAG_DATAOUT	0x00000002	/*  Data Out			*/
+#define  FLAG_RSENS	0x00000004	/*  Request Sense sent		*/
+#define  FLAG_SG	0x00000008	/*  Scatter/Gather used		*/
 	int target;			/* Target Id			*/
 	int lun;			/* Lun				*/
 
@@ -103,7 +105,6 @@ struct iha_scsi_req_q {
 #define  HOST_SCSI_RST	0x1B		/*  SCSI bus was reset		*/
 #define  HOST_DEV_RST	0x1C		/*  Device was reset		*/
 	int ta_stat;			/* SCSI Status Byte		*/
-	int timeout;			/* in milliseconds		*/
 
 	struct scsipi_xfer *xs;		/* xs this SCB is executing	*/
 	struct tcs *tcs;		/* tcs for SCB_Target	   	*/
