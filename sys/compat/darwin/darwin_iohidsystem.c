@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.c,v 1.19 2003/11/01 00:32:44 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.c,v 1.20 2003/11/01 00:42:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.19 2003/11/01 00:32:44 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.20 2003/11/01 00:42:04 manu Exp $");
 
 #include "ioconf.h"
 #include "wsmux.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_iohidsystem.c,v 1.19 2003/11/01 00:32:44 manu
 #include <compat/darwin/darwin_iokit.h>
 #include <compat/darwin/darwin_sysctl.h>
 #include <compat/darwin/darwin_iohidsystem.h>
-#include <compat/darwin/darwin_ioresources.h>
 
 /* Redefined from sys/dev/wscons/wsmux.c */
 extern const struct cdevsw wsmux_cdevsw;
@@ -114,7 +113,7 @@ struct mach_iokit_devclass darwin_iohidsystem_devclass = {
 	"<dict ID=\"0\"><key>IOProviderClass</key>"
 	    "<string ID=\"1\">IOHIDSystem</string></dict>",
 	&darwin_iokbd_devclass,
-	NULL,
+	darwin_iokbd_properties,
 	NULL,
 	darwin_iohidsystem_connect_method_scalari_scalaro,
 	NULL,

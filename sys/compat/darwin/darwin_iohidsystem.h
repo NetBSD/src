@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_iohidsystem.h,v 1.9 2003/10/25 10:41:53 manu Exp $ */
+/*	$NetBSD: darwin_iohidsystem.h,v 1.10 2003/11/01 00:42:04 manu Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #define	_DARWIN_IOHIDSYSTEM_H_
 
 extern struct mach_iokit_devclass darwin_iohidsystem_devclass;
+extern struct mach_iokit_devclass darwin_iokbd_devclass;
 
 /* Events and event queue */
 #define DARWIN_NX_NULLEVENT	0
