@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_stat.c,v 1.41 2000/12/01 12:28:36 jdolecek Exp $	 */
+/*	$NetBSD: svr4_stat.c,v 1.42 2001/02/21 23:53:01 eeh Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -128,9 +128,12 @@ bsd_to_svr4_xstat(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec;
-	st4->st_mtim = st->st_mtimespec;
-	st4->st_ctim = st->st_ctimespec;
+	st4->st_atim.tv_sec = st->st_atimespec.tv_sec;
+	st4->st_atim.tv_nsec = st->st_atimespec.tv_nsec;
+	st4->st_mtim.tv_sec = st->st_mtimespec.tv_sec;
+	st4->st_mtim.tv_nsec = st->st_mtimespec.tv_nsec;
+	st4->st_ctim.tv_sec = st->st_ctimespec.tv_sec;
+	st4->st_ctim.tv_nsec = st->st_ctimespec.tv_nsec;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
 	strcpy(st4->st_fstype, "unknown");
@@ -151,9 +154,12 @@ bsd_to_svr4_stat64(st, st4)
 	st4->st_gid = st->st_gid;
 	st4->st_rdev = bsd_to_svr4_dev_t(st->st_rdev);
 	st4->st_size = st->st_size;
-	st4->st_atim = st->st_atimespec;
-	st4->st_mtim = st->st_mtimespec;
-	st4->st_ctim = st->st_ctimespec;
+	st4->st_atim.tv_sec = st->st_atimespec.tv_sec;
+	st4->st_atim.tv_nsec = st->st_atimespec.tv_nsec;
+	st4->st_mtim.tv_sec = st->st_mtimespec.tv_sec;
+	st4->st_mtim.tv_nsec = st->st_mtimespec.tv_nsec;
+	st4->st_ctim.tv_sec = st->st_ctimespec.tv_sec;
+	st4->st_ctim.tv_nsec = st->st_ctimespec.tv_nsec;
 	st4->st_blksize = st->st_blksize;
 	st4->st_blocks = st->st_blocks;
 	strcpy(st4->st_fstype, "unknown");
