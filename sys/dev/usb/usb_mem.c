@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.9 1999/08/16 20:19:55 augustss Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.10 1999/08/19 21:29:04 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@ usb_block_allocmem(tag, size, align, dmap)
 
 #ifdef DIAGNOSTIC
 	if (!curproc) {
-		printf("usb_block_allocmem: in interrupt context, size=%u\n",
-		       size);
+		printf("usb_block_allocmem: in interrupt context, size=%lu\n",
+		    (unsigned long) size);
 	}
 #endif
 
