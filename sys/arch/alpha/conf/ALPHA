@@ -1,10 +1,10 @@
-# $NetBSD: ALPHA,v 1.150 2001/07/07 17:09:47 tsutsui Exp $
+# $NetBSD: ALPHA,v 1.151 2001/07/08 16:32:12 abs Exp $
 #
 # Alpha kernel with all the options you'd want, and more.
 
 include	"arch/alpha/conf/std.alpha"
 
-ident		"ALPHA-$Revision: 1.150 $"
+ident		"ALPHA-$Revision: 1.151 $"
 
 maxusers 32
 
@@ -81,9 +81,9 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 options 	IPFILTER_LOG	# ipmon(8) log support
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not suggested.
-#options 	TCP_COMPAT_42
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # 4.3BSD compatibility.  Should be optional, but necessary for now.
 options 	COMPAT_43

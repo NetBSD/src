@@ -1,8 +1,8 @@
-#	$NetBSD: GENERIC,v 1.16 2001/06/30 11:00:33 darcy Exp $
+#	$NetBSD: GENERIC,v 1.17 2001/07/08 16:32:16 abs Exp $
 
 include 	"arch/cobalt/conf/std.cobalt"
 
-#ident 		"GENERIC-$Revision: 1.16 $"
+#ident 		"GENERIC-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -38,6 +38,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 #options 	COMPAT_14	# NetBSD 1.4 binary compatibility
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # File systems
 file-system	FFS		# Berkeley Fast Filesystem
@@ -84,9 +85,7 @@ options 	INET		# Internet protocols
 #options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	PFIL_HOOKS	# pfil(9) packet filter hooks
 #options 	IPFILTER_LOG	# ipmon(8) log support
-
-# Compatibility with 4.2BSD implementation of TCP/IP.  Not recommended.
-#options 	TCP_COMPAT_42
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!

@@ -1,4 +1,4 @@
-#	$NetBSD: STEELHEAD,v 1.27 2000/09/24 15:59:36 jdolecek Exp $
+#	$NetBSD: STEELHEAD,v 1.28 2001/07/08 16:32:22 abs Exp $
 #
 # STEELHEAD: Phil Nelson's pc532
 #
@@ -18,13 +18,13 @@ options 	SYSVSHM			# System V shared memory
 
 # compatibility options
 options 	"COMPAT_43"		# 4.3 system calls
-options 	"TCP_COMPAT_42"		# 4.2 networking ABI
 options 	"COMPAT_09"		# NetBSD-0.9
 options 	"COMPAT_10"		# NetBSD-1.0
 options 	COMPAT_11
 options 	COMPAT_12
 options 	COMPAT_13
 options 	COMPAT_14
+#options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # file system options
 file-system 	FFS			# Berkeley fast file system
@@ -47,6 +47,7 @@ options 	INET			# IP
 #options 	ISO			# OSI
 #options 	TPIP			# ?
 #options 	EON			# ?
+#options 	TCP_DEBUG	# Record last TCP_NDEBUG packets with SO_DEBUG
 
 # pc532 specific options
 options 	"CONSOLE_SPEED=B19200"	# default baud on the console (tty00)
