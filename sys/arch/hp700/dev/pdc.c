@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.1 2002/06/06 19:48:04 fredette Exp $	*/
+/*	$NetBSD: pdc.c,v 1.2 2002/08/05 20:38:35 fredette Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -347,7 +347,7 @@ pdctimeout(v)
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}
-	callout_reset(&sc->sc_to, 1, pdctimeout, sc);
+	callout_reset(&sc->sc_to, 10, pdctimeout, sc);
 }
 
 struct tty *
