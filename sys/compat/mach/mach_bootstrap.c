@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_bootstrap.c,v 1.3 2002/12/17 18:42:55 manu Exp $ */
+/*	$NetBSD: mach_bootstrap.c,v 1.4 2003/01/02 12:46:06 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.3 2002/12/17 18:42:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.4 2003/01/02 12:46:06 manu Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_bootstrap.c,v 1.3 2002/12/17 18:42:55 manu Exp 
 
 #include <compat/mach/mach_types.h>
 #include <compat/mach/mach_message.h>
+#include <compat/mach/mach_port.h>
 #include <compat/mach/mach_bootstrap.h>
 #include <compat/mach/mach_errno.h>
 
@@ -56,15 +57,19 @@ mach_bootstrap_look_up(args)
 {
 	mach_bootstrap_look_up_request_t *req = args->smsg;
 	mach_bootstrap_look_up_reply_t *rep = args->rmsg;
+	struct proc *p = args->p;
 	size_t *msglen = args->rsize;
 	const char service_name[] = "lookup\21"; /* XXX Why */
 	int service_name_len;
+	struct mach_right *mr;
 
 	/* The trailer is word aligned  */
 	service_name_len = (sizeof(service_name) + 1) & ~0x7UL; 
 	*msglen = sizeof(rep->rep_msgh) + sizeof(rep->rep_count) + 
 	    sizeof(rep->rep_bootstrap_port) + service_name_len *
 	    sizeof(rep->rep_trailer);
+
+	mr = mach_right_get(NULL, p, MACH_PORT_TYPE_DEAD_NAME, 0);
 
 	rep->rep_msgh.msgh_bits =
 	    MACH_MSGH_REPLY_LOCAL_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE) |
@@ -73,7 +78,7 @@ mach_bootstrap_look_up(args)
 	rep->rep_msgh.msgh_local_port = req->req_msgh.msgh_local_port;
 	rep->rep_msgh.msgh_id = req->req_msgh.msgh_id + 100;
 	rep->rep_count = 1; /* XXX Why? */
-	rep->rep_bootstrap_port = 0x21b; /* XXX Why? */
+	rep->rep_bootstrap_port = mr->mr_name;
 	strcpy((char *)&rep->rep_service_name, service_name); 
 	/* XXX This is the trailer. We should find something better */
 	rep->rep_service_name[service_name_len + 7] = 8;

@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_message.c,v 1.18 2002/12/31 15:47:37 manu Exp $ */
+/*	$NetBSD: mach_message.c,v 1.19 2003/01/02 12:46:06 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.18 2002/12/31 15:47:37 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.19 2003/01/02 12:46:06 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -70,9 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.18 2002/12/31 15:47:37 manu Exp $
 /* Mach message pool */
 static struct pool mach_message_pool;
 
-static int mach_move_right(int, mach_msg_header_t *, struct mach_right *, 
-			   struct mach_right *, struct proc *);
-
 int
 mach_sys_msg_overwrite_trap(p, v, retval)
 	struct proc *p;
@@ -92,9 +89,10 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 	} */ *uap = v;
 	struct mach_emuldata *med;
 	struct mach_port *mp;
-	struct mach_right *mr;
 	size_t send_size, rcv_size;
 	int error = 0;
+
+	*retval = 0;
 
 	send_size = SCARG(uap, send_size);
 	rcv_size = SCARG(uap, rcv_size);
@@ -150,9 +148,8 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		ln = sm->msgh_local_port;
 		rn = sm->msgh_remote_port;
 
-		lr = mach_right_check_all(ln, MACH_PORT_TYPE_ALL_RIGHTS);
-
-		rr = mach_right_check_all(rn, MACH_PORT_TYPE_ALL_RIGHTS);
+		lr = mach_right_check(ln, p, MACH_PORT_TYPE_ALL_RIGHTS);
+		rr = mach_right_check(rn, p, MACH_PORT_TYPE_ALL_RIGHTS);
 		if (rr == NULL) {
 #ifdef DEBUG_MACH
 			printf("msg id %d: invalid dest\n", sm->msgh_id);
@@ -161,13 +158,6 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			goto out1;
 		}
 
-		bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
-		if ((*retval = mach_move_right(bits, sm, lr, rr, p)) != 0)
-			goto out1;
-
-		bits = MACH_MSGH_REMOTE_BITS(sm->msgh_bits);
-		if ((*retval = mach_move_right(bits, sm, rr, rr, p)) != 0)
-			goto out1;
 
 		/* 
 		 * Check that the process has send a send right on 
@@ -190,6 +180,15 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 		    (mp == mach_saved_bootstrap_port)) {
 			struct mach_trap_args args;
 			mach_msg_header_t *rm;
+
+			/*
+			 * Check that the local port is valid, else
+			 * we will not be able to send the reply
+			 */
+			if (lr == NULL) {
+				*retval = MACH_SEND_INVALID_REPLY;
+				goto out3;
+			}
 
 			/* 
 			 * Look for the function that will handle it,
@@ -248,7 +247,7 @@ mach_sys_msg_overwrite_trap(p, v, retval)
 			 * Queue the reply
 			 */
 			mp = lr->mr_port;
-			(void)mach_message_get(rm, rcv_size, mp);
+			(void)mach_message_get(rm, rcv_size, mp, NULL);
 #ifdef DEBUG_MACH_MSG
 			printf("pid %d: message queued on port %p (%d) [%p]\n", 
 			    p->p_pid, mp, rm->msgh_id,
@@ -265,28 +264,69 @@ out3:			free(sm, M_EMULDATA);
 		} else {
 			/* 
 			 * The message is not to be handled by the kernel. 
-			 * First, swap local and remote ports.
-		 	 */
-			
-			sm->msgh_local_port = rn;
-			sm->msgh_remote_port = ln;
-
-			/*
-			 * Queue the message in the remote port, and wakeup 
-			 * any process that would be sleeping for it.
+			 * Queue the message in the remote port.
 			 */
 			mp = rr->mr_port;
-			(void)mach_message_get(sm, send_size, mp);
+			(void)mach_message_get(sm, send_size, mp, p);
 #ifdef DEBUG_MACH_MSG
 			printf("pid %d: message queued on port %p (%d) [%p]\n", 
 			    p->p_pid, mp, sm->msgh_id, 
 			    mp->mp_recv->mr_sethead);
 #endif
+			/*
+			 * Drop any right carried by the message
+			 */
+			bits = MACH_MSGH_LOCAL_BITS(sm->msgh_bits);
+			switch (bits) {
+			case MACH_MSG_TYPE_MOVE_SEND:
+				rights = MACH_PORT_TYPE_SEND;
+				break;
+			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+				rights = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+			case MACH_MSG_TYPE_MOVE_RECEIVE:
+				rights = MACH_PORT_TYPE_RECEIVE;
+				break;
+			case MACH_MSG_TYPE_MAKE_SEND:
+			case MACH_MSG_TYPE_COPY_SEND:
+			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+			default:
+				rights = 0;
+				break;
+			}
+			if ((lr != NULL) && (rights != 0))
+				mach_right_put(lr, rights);
+
+			bits = MACH_MSGH_REMOTE_BITS(sm->msgh_bits);
+			switch (bits) {
+			case MACH_MSG_TYPE_MOVE_SEND:
+				rights = MACH_PORT_TYPE_SEND;
+				break;
+			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+				rights = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+			case MACH_MSG_TYPE_MOVE_RECEIVE:
+				rights = MACH_PORT_TYPE_RECEIVE;
+				break;
+			case MACH_MSG_TYPE_MAKE_SEND:
+			case MACH_MSG_TYPE_COPY_SEND:
+			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+			default:
+				rights = 0;
+				break;
+			}
+			if ((rr != NULL) && (rights != 0))
+				mach_right_put(rr, rights);
+
+
+			/*
+			 * Wakeup any process awaiting for this message
+			 */
 			wakeup(mp->mp_recv->mr_sethead);
 		}
 
 out1:
-		if (error != 0) {
+		if (*retval != 0) {
 			free(sm, M_EMULDATA);
 			return 0;
 		}
@@ -298,9 +338,13 @@ out1:
 	if (SCARG(uap, option) & MACH_RCV_MSG) {
 		struct mach_message *mm;
 		mach_port_t mn;
+		mach_port_t tmp;
 		struct mach_right *cmr;
+		struct mach_right *mr;
+		struct mach_right *nmr;
 		mach_msg_header_t *urm;
 		int timeout;
+		int bits, nr, or;
 
 		/* 
 		 * Find a buffer for the reply
@@ -495,6 +539,124 @@ out1:
 			goto unlock;
 		}
 
+		/* 
+		 * Get rights carried by the message if it is not a
+		 * reply from the kernel.
+		 */
+		if (mm->mm_p != NULL) {
+#ifdef DEBUG_MACH
+			printf("mach_msg: non kernel-reply message\n");
+#endif
+			bits = MACH_MSGH_LOCAL_BITS(mm->mm_msg->msgh_bits);
+			switch (bits) {
+			case MACH_MSG_TYPE_MAKE_SEND:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_SEND;
+				break;
+
+			case MACH_MSG_TYPE_COPY_SEND:
+			case MACH_MSG_TYPE_MOVE_SEND:
+				or = MACH_PORT_TYPE_SEND;
+				nr = MACH_PORT_TYPE_SEND;
+				break;
+
+			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+
+			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+				or = MACH_PORT_TYPE_SEND_ONCE;
+				nr = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+
+			case MACH_MSG_TYPE_MOVE_RECEIVE:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_RECEIVE;
+				break;
+
+			default:
+				or = 0;
+				nr = 0;
+				break;
+			}
+
+			mr = NULL;
+			if (nr != 0) {
+				mn = mm->mm_msg->msgh_local_port;
+				mr = mach_right_check(mn, mm->mm_p, or);
+			}
+
+			if (mr != NULL) {
+				nmr = mach_right_get(mr->mr_port, p, nr, 0);
+				mm->mm_msg->msgh_local_port = nmr->mr_name;
+			} else {
+				mm->mm_msg->msgh_local_port = 0;
+			}
+
+			bits = MACH_MSGH_REMOTE_BITS(mm->mm_msg->msgh_bits);
+			switch (bits) {
+			case MACH_MSG_TYPE_MAKE_SEND:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_SEND;
+				break;
+
+			case MACH_MSG_TYPE_COPY_SEND:
+			case MACH_MSG_TYPE_MOVE_SEND:
+				or = MACH_PORT_TYPE_SEND;
+				nr = MACH_PORT_TYPE_SEND;
+				break;
+
+			case MACH_MSG_TYPE_MAKE_SEND_ONCE:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+
+			case MACH_MSG_TYPE_MOVE_SEND_ONCE:
+				or = MACH_PORT_TYPE_SEND_ONCE;
+				nr = MACH_PORT_TYPE_SEND_ONCE;
+				break;
+
+			case MACH_MSG_TYPE_MOVE_RECEIVE:
+				or = MACH_PORT_TYPE_RECEIVE;
+				nr = MACH_PORT_TYPE_RECEIVE;
+				break;
+
+			default:
+				or = 0;
+				nr = 0;
+				break;
+			}
+			
+			mr = NULL;
+			if (nr != 0) {
+				mn = mm->mm_msg->msgh_remote_port;
+				mr = mach_right_check(mn, mm->mm_p, or);
+			}
+
+			if (mr != NULL) {
+				nmr = mach_right_get(mr->mr_port, p, nr, 0);
+				mm->mm_msg->msgh_remote_port = nmr->mr_name;
+			} else {
+				mm->mm_msg->msgh_remote_port = 0;
+			}
+
+			/*
+			 * swap local and remote ports, and 
+			 * corresponding bits as well.
+			 */
+			bits = (bits & 0xffff0000) | 
+			    ((bits & 0xff00) >> 8) |
+			    ((bits & 0x00ff) << 8);
+			tmp = mm->mm_msg->msgh_remote_port;
+			mm->mm_msg->msgh_remote_port = 
+			    mm->mm_msg->msgh_local_port;
+			mm->mm_msg->msgh_local_port = tmp;
+		}
+
+		/*
+		 * Copy the message to userland
+		 */
 		if ((error = copyout(mm->mm_msg, urm, mm->mm_size)) != 0) {
 			*retval = MACH_RCV_INVALID_DATA;
 			goto unlock;
@@ -553,10 +715,11 @@ mach_message_init(void)
 }
 
 struct mach_message *
-mach_message_get(msgh, size, mp)
+mach_message_get(msgh, size, mp, p)
 	mach_msg_header_t *msgh;
 	size_t size;
 	struct mach_port *mp;
+	struct proc *p;
 {
 	struct mach_message *mm;
 
@@ -565,6 +728,7 @@ mach_message_get(msgh, size, mp)
 	mm->mm_msg = msgh;
 	mm->mm_size = size;
 	mm->mm_port = mp;
+	mm->mm_p = p;
 	
 	lockmgr(&mp->mp_msglock, LK_EXCLUSIVE, NULL);
 	TAILQ_INSERT_TAIL(&mp->mp_msglist, mm, mm_list);
@@ -618,137 +782,6 @@ mach_message_put_exclocked(mm)
 	pool_put(&mach_message_pool, mm);
 
 	return;
-}
-
-/* 
- * Move port according to what was specified in the message. 
- */
-static int
-mach_move_right(bits, msgh, mr, tr, p)
-	int bits;
-	mach_msg_header_t *msgh;
-	struct mach_right *mr;
-	struct mach_right *tr;
-	struct proc *p;
-{
-	struct mach_right *nmr;
-	struct mach_port *mp;
-	mach_port_t mn;
-	struct proc *tp;
-	int rights;
-
-	if (mr == NULL) {
-#ifdef DEBUG_MACH_RIGHT
-		printf("mach_move_right: mr = NULL\n");
-#endif
-		return 0;
-	}
-
-	if ((tr->mr_port == NULL) || 
-	    (tr->mr_port->mp_recv == NULL) ||
-	    (tr->mr_port->mp_recv->mr_p == NULL)) {
-#ifdef DEBUG_MACH_RIGHT
-		printf("mach_move_right: cannot find target proc, "
-		    "msg id %d, tr = %p, tr->mr_port = %p ", 
-		    msgh->msgh_id, tr, tr->mr_port);
-
-		if (tr->mr_port == NULL)
-			goto cr;
-		printf("tr->mr_port->mp_recv = %p ",
-		    tr->mr_port->mp_recv);
-
-		if (tr->mr_port->mp_recv == NULL)
-			goto cr;
-		printf("tr->mr_port->mp_recv->mr_p = %p ",
-		    tr->mr_port->mp_recv->mr_p);
-cr:
-		printf("\n");
-#endif
-		return 0;
-	}
-	tp = tr->mr_port->mp_recv->mr_p;
-#ifdef DEBUG_MACH_RIGHT
-	printf("mach_move_right: msg id %d, local pid = %d, target pid = %d\n",
-	    msgh->msgh_id, p->p_pid, tp->p_pid);
-#endif
-
-	switch (bits) {
-	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-	case MACH_MSG_TYPE_MAKE_SEND:
-	case MACH_MSG_TYPE_MOVE_RECEIVE:
-		rights = MACH_PORT_TYPE_RECEIVE;
-		break;
-
-	case MACH_MSG_TYPE_COPY_SEND:
-		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_DEAD_NAME);
-		break;
-
-	case MACH_MSG_TYPE_MOVE_SEND:
-		rights = (MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_DEAD_NAME);
-		break;
-
-	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-		rights = (MACH_PORT_TYPE_SEND_ONCE | MACH_PORT_TYPE_DEAD_NAME);
-		break;
-
-	default:
-		return MACH_SEND_INVALID_HEADER;
-		break;
-	}
-
-	if ((mr->mr_type & rights) == 0) {
-#ifdef DEBUG_MACH_RIGHT
-		printf("mach_move_right: right %x missing for %p in pid %d\n", 
-		    rights, mr, p->p_pid);
-#endif
-		return 0;
-	}
-
-	mp = mr->mr_port;
-	mn = mr->mr_name;
-
-	switch (bits) {
-	case MACH_MSG_TYPE_MAKE_SEND:
-	case MACH_MSG_TYPE_COPY_SEND:
-		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND, mn);
-		break;
-
-	case MACH_MSG_TYPE_MOVE_SEND:
-		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND, mn);
-		/* mach_right_put(mr); */
-		break;
-
-	case MACH_MSG_TYPE_MAKE_SEND_ONCE:
-		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE, mn);
-		break;
-
-	case MACH_MSG_TYPE_MOVE_SEND_ONCE:
-		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_SEND_ONCE, mn);
-		/* mach_right_put(mr); */
-		break;
-
-	case MACH_MSG_TYPE_MOVE_RECEIVE:
-		nmr = mach_right_get(mp, tp, MACH_PORT_TYPE_RECEIVE, mn);
-		mach_right_put(mr);
-		break;
-
-	default:
-#ifdef DEBUG_MACH_RIGHT
-		printf("mach_move_right, invalid bits = %d\n", bits);
-#endif
-		return MACH_SEND_INVALID_HEADER;
-		break;
-	}
-#ifdef DEBUG_MACH_RIGHT
-	printf("mach_move_right finished, nmr = %p(%x)", nmr, nmr->mr_type);
-	if (nmr->mr_port != NULL)
-		printf("=>%p", nmr->mr_port);
-	if (nmr->mr_port->mp_recv != NULL)
-		printf("[%p]", nmr->mr_port->mp_recv->mr_sethead);
-	printf("\n");
-#endif
-
-	return 0;
 }
 
 #ifdef DEBUG_MACH

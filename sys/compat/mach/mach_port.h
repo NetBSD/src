@@ -1,7 +1,7 @@
-/*	$NetBSD: mach_port.h,v 1.14 2002/12/31 15:47:38 manu Exp $ */
+/*	$NetBSD: mach_port.h,v 1.15 2003/01/02 12:46:07 manu Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -236,11 +236,10 @@ struct mach_right {
 mach_port_t mach_right_newname(struct proc *, mach_port_t);
 struct mach_right *mach_right_get(struct mach_port *, 
     struct proc *, int, mach_port_t);
-void mach_right_put(struct mach_right *);
-void mach_right_put_shlocked(struct mach_right *);
-void mach_right_put_exclocked(struct mach_right *);
+void mach_right_put(struct mach_right *, int);
+void mach_right_put_shlocked(struct mach_right *, int);
+void mach_right_put_exclocked(struct mach_right *, int);
 struct mach_right *mach_right_check(mach_port_t, struct proc *, int);
-struct mach_right *mach_right_check_all(mach_port_t, int);
 
 /* In-kernel Mach port description */
 struct mach_port {
