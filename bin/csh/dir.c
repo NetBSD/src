@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.22 2003/08/07 09:05:04 agc Exp $ */
+/* $NetBSD: dir.c,v 1.23 2004/05/10 19:11:31 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dir.c,v 1.22 2003/08/07 09:05:04 agc Exp $");
+__RCSID("$NetBSD: dir.c,v 1.23 2004/05/10 19:11:31 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -676,8 +676,8 @@ dcanon(Char *cp, Char *p)
 	    if (sp != cp && !adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink,
 			       sizeof(tlink) - 1)) >= 0) {
+		tlink[cc] = '\0';
 		(void)Strcpy(slink, str2short(tlink));
-		slink[cc] = '\0';
 
 		if (slash)
 		    *p = '/';
@@ -759,8 +759,8 @@ dcanon(Char *cp, Char *p)
 	    if (sp != cp && adrof(STRchase_symlinks) &&
 		!adrof(STRignore_symlinks) &&
 		(cc = readlink(short2str(cp), tlink, sizeof(tlink)-1)) >= 0) {
+		tlink[cc] = '\0';
 		(void)Strcpy(slink, str2short(tlink));
-		slink[cc] = '\0';
 
 		/*
 		 * restore the '/'.
