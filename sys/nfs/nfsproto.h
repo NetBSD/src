@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.1 1996/02/18 11:54:06 fvdl Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.2 1997/05/08 16:20:30 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -232,8 +232,8 @@
 #define	vtonfsv2_mode(t,m) \
 		txdr_unsigned(((t) == VFIFO) ? MAKEIMODE(VCHR, (m)) : \
 				MAKEIMODE((t), (m)))
-#define vtonfsv3_mode(m)	txdr_unsigned((m) & 07777)
-#define	nfstov_mode(a)		(fxdr_unsigned(u_int16_t, (a))&07777)
+#define vtonfsv3_mode(m)	txdr_unsigned((m) & ALLPERMS)
+#define	nfstov_mode(a)		(fxdr_unsigned(u_int16_t, (a)) & ALLPERMS)
 #define	vtonfsv2_type(a)	txdr_unsigned(nfsv2_type[((int32_t)(a))])
 #define	vtonfsv3_type(a)	txdr_unsigned(nfsv3_type[((int32_t)(a))])
 #define	nfsv2tov_type(a)	nv2tov_type[fxdr_unsigned(u_int32_t,(a))&0x7]

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.38 1997/01/24 00:27:35 cgd Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.39 1997/05/08 16:20:02 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -159,8 +159,8 @@ cd9660_access(v)
 	} */ *ap = v;
 	struct iso_node *ip = VTOI(ap->a_vp);
 
-	return (vaccess(ip->inode.iso_mode, ip->inode.iso_uid,
-	    ip->inode.iso_gid, ap->a_mode, ap->a_cred));
+	return (vaccess(vp->v_type, ip->inode.iso_mode & ALLPERMS,
+	    ip->inode.iso_uid, ip->inode.iso_gid, ap->a_mode, ap->a_cred));
 }
 
 int
@@ -180,7 +180,7 @@ cd9660_getattr(v)
 	vap->va_fsid	= ip->i_dev;
 	vap->va_fileid	= ip->i_number;
 
-	vap->va_mode	= ip->inode.iso_mode;
+	vap->va_mode	= ip->inode.iso_mode & ALLPERMS;
 	vap->va_nlink	= ip->inode.iso_links;
 	vap->va_uid	= ip->inode.iso_uid;
 	vap->va_gid	= ip->inode.iso_gid;
@@ -190,7 +190,7 @@ cd9660_getattr(v)
 	vap->va_rdev	= ip->inode.iso_rdev;
 
 	vap->va_size	= (u_quad_t) ip->i_size;
-	if (ip->i_size == 0 && (vap->va_mode & S_IFMT) == S_IFLNK) {
+	if (ip->i_size == 0 && vp->v_type == VLNK) {
 		struct vop_readlink_args rdlnk;
 		struct iovec aiov;
 		struct uio auio;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.67 1997/05/08 10:21:35 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.68 1997/05/08 16:20:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
@@ -126,7 +126,7 @@ int vfs_mountedon __P((struct vnode *));
 int vfs_export __P((struct mount *, struct netexport *, struct export_args *));
 struct netcred *vfs_export_lookup __P((struct mount *, struct netexport *,
 				       struct mbuf *));
-int vaccess __P((mode_t, uid_t, gid_t, mode_t, struct ucred *));
+int vaccess __P((enum vtype, mode_t, uid_t, gid_t, mode_t, struct ucred *));
 void vfs_unmountall __P((void));
 void vfs_shutdown __P((void));
 
@@ -1500,7 +1500,8 @@ vfs_export_lookup(mp, nep, nam)
  * while acc_mode and cred are from the VOP_ACCESS parameter list
  */
 int
-vaccess(file_mode, uid, gid, acc_mode, cred)
+vaccess(type, file_mode, uid, gid, acc_mode, cred)
+	enum vtype type;
 	mode_t file_mode;
 	uid_t uid;
 	gid_t gid;
@@ -1514,18 +1515,17 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	 * on at least one execute bit being set.
 	 */
 	if (cred->cr_uid == 0) {
-		if (acc_mode & VEXEC &&
-		    (file_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0)
+		if ((acc_mode & VEXEC) && type == VDIR &&
+		    (file_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0)
 			return (EACCES);
-		else
-			return (0);
+		return (0);
 	}
 	
 	mask = 0;
 	
 	/* Otherwise, check the owner. */
 	if (cred->cr_uid == uid) {
-		if (acc_mode & (VEXEC|VLOOKUP))
+		if (acc_mode & VEXEC)
 			mask |= S_IXUSR;
 		if (acc_mode & VREAD)
 			mask |= S_IRUSR;
@@ -1536,7 +1536,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	
 	/* Otherwise, check the groups. */
 	if (cred->cr_gid == gid || groupmember(gid, cred)) {
-		if (acc_mode & (VEXEC|VLOOKUP))
+		if (acc_mode & VEXEC)
 			mask |= S_IXGRP;
 		if (acc_mode & VREAD)
 			mask |= S_IRGRP;
@@ -1546,7 +1546,7 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	}
 	
 	/* Otherwise, check everyone else. */
-	if (acc_mode & (VEXEC|VLOOKUP))
+	if (acc_mode & VEXEC)
 		mask |= S_IXOTH;
 	if (acc_mode & VREAD)
 		mask |= S_IROTH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
+/*	$NetBSD: procfs.h,v 1.18 1997/05/08 16:20:19 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993 Jan-Simon Pendry
@@ -64,7 +64,7 @@ struct pfsnode {
 	struct vnode	*pfs_vnode;	/* vnode associated with this pfsnode */
 	pfstype		pfs_type;	/* type of procfs node */
 	pid_t		pfs_pid;	/* associated process */
-	u_short		pfs_mode;	/* mode bits for stat() */
+	mode_t		pfs_mode;	/* mode bits for stat() */
 	u_long		pfs_flags;	/* open flags */
 	u_long		pfs_fileno;	/* unique file id */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.77 1997/05/08 10:57:27 mycroft Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.78 1997/05/08 16:19:54 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -686,7 +686,7 @@ sunos_sys_fchroot(p, v, retval)
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
-		error = VOP_ACCESS(vp, VLOOKUP, p->p_ucred, p);
+		error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p);
 	VOP_UNLOCK(vp);
 	if (error)
 		return (error);
