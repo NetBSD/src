@@ -1,4 +1,4 @@
-/* $NetBSD: darwin_sysent.c,v 1.14 2002/12/08 21:53:58 manu Exp $ */
+/* $NetBSD: darwin_sysent.c,v 1.15 2002/12/24 12:15:46 manu Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.14 2002/12/08 21:53:58 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysent.c,v 1.15 2002/12/24 12:15:46 manu Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_nfsserver.h"
@@ -72,13 +72,8 @@ struct sysent darwin_sysent[] = {
 	    sys_getfsstat },			/* 18 = getfsstat */
 	{ 3, s(struct sys_lseek_args), 0,
 	    sys_lseek },			/* 19 = olseek */
-#ifdef COMPAT_43
 	{ 0, 0, 0,
-	    sys_getpid_with_ppid },		/* 20 = getpid */
-#else
-	{ 0, 0, SYCALL_MPSAFE | 0,
-	    sys_getpid },			/* 20 = getpid */
-#endif
+	    darwin_sys_getpid },		/* 20 = getpid */
 	{ 4, s(struct bsd_sys_mount_args), 0,
 	    bsd_sys_mount },			/* 21 = mount */
 	{ 2, s(struct bsd_sys_unmount_args), 0,

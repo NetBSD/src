@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.h,v 1.1 2002/11/23 02:18:55 manu Exp $ */
+/*	$NetBSD: darwin_sysctl.h,v 1.2 2002/12/24 12:15:46 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,19 @@
 
 #ifndef	_DARWIN_SYSCTL_H_
 #define	_DARWIN_SYSCTL_H_
+
+extern pid_t darwin_init_pid;
+
+#define EMUL_DARWIN_INIT_PID	1
+#define EMUL_DARWIN_MAXID	2
+
+#define EMUL_DARWIN_NAMES { \
+	{ 0, 0 }, \
+	{ "init_pid", CTLTYPE_INT }, \
+}
+
+int darwin_sysctl(int *, u_int, void *, 
+    size_t *, void *, size_t, struct proc *);
 
 #define DARWIN_CTL_UNSPEC	0
 #define DARWIN_CTL_KERN		1

@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.8 2002/12/24 12:15:45 manu Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.8 2002/12/24 12:15:45 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $")
 #include <sys/exec.h>
 #include <sys/malloc.h>
 #include <sys/syscall.h>
+#include <sys/sysctl.h>
 #include <sys/exec_macho.h>
 
 #include <uvm/uvm_extern.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.7 2002/12/07 15:33:03 manu Exp $")
 #include <compat/darwin/darwin_exec.h>
 #include <compat/darwin/darwin_signal.h>
 #include <compat/darwin/darwin_syscall.h>
+#include <compat/darwin/darwin_sysctl.h>
 
 static void darwin_e_proc_exec(struct proc *, struct exec_package *);
 static void darwin_e_proc_fork(struct proc *, struct proc *);
@@ -101,7 +103,7 @@ const struct emul emul_darwin = {
 #else
 	syscall,
 #endif
-	NULL,
+	darwin_sysctl,
 	NULL,
 };
 

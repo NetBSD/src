@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.8 2002/12/08 21:53:18 manu Exp $
+	$NetBSD: syscalls.master,v 1.9 2002/12/24 12:15:46 manu Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -92,11 +92,7 @@
 			    int flags); }
 19	NOARGS		{ long sys_lseek(int fd, long offset, int whence); } \
 			    olseek
-#ifdef COMPAT_43
-20	NOARGS 		{ pid_t sys_getpid_with_ppid(void); } getpid
-#else
-20	NOARGS MPSAFE	{ pid_t sys_getpid(void); }
-#endif
+20	STD		{ pid_t darwin_sys_getpid(void); }
 21	NODEF		{ int bsd_sys_mount(const char *type, \
 			    const char *path, int flags, void *data); }
 22	NODEF		{ int bsd_sys_unmount(const char *path, int flags); }

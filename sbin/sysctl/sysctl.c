@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.61 2002/11/30 03:10:54 lukem Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.62 2002/12/24 12:15:46 manu Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.61 2002/11/30 03:10:54 lukem Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.62 2002/12/24 12:15:46 manu Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.61 2002/11/30 03:10:54 lukem Exp $");
 
 #include "../../sys/compat/linux/common/linux_exec.h"
 #include "../../sys/compat/irix/irix_sysctl.h"
+#include "../../sys/compat/darwin/darwin_sysctl.h"
 
 #ifdef IPSEC
 #include <net/route.h>
@@ -204,6 +205,7 @@ struct list tkstatvars = { tkstatnames, KERN_TKSTAT_MAXID };
 
 static int sysctl_linux(char *, char **, int[], int, int *);
 static int sysctl_irix(char *, char **, int[], int, int *);
+static int sysctl_darwin(char *, char **, int[], int, int *);
 static int findname(char *, char *, char **, struct list *);
 static void usage(void);
 
@@ -537,9 +539,15 @@ parse(char *string, int flags)
 		case EMUL_IRIX:
 		    len = sysctl_irix(string, &bufp, mib, flags, &type);
 		    break;
+
 		case EMUL_LINUX:
 		    len = sysctl_linux(string, &bufp, mib, flags, &type);
 		    break;
+
+		case EMUL_DARWIN:
+		    len = sysctl_darwin(string, &bufp, mib, flags, &type);
+		    break;
+
 		default:
 		    warnx("Illegal emul level value: %d", mib[0]);
 		    break;
@@ -1143,6 +1151,27 @@ sysctl_irix(char *string, char **bufpp, int mib[], int flags, int *typep)
 	mib[3] = indx;
 	*typep = lp->list[indx].ctl_type;
 	return (4);
+}
+
+struct ctlname darwinnames[] = EMUL_DARWIN_NAMES;
+struct list darwinvars = { darwinnames, EMUL_DARWIN_MAXID };
+
+static int
+sysctl_darwin(char *string, char **bufpp, int mib[], int flags, int *typep)
+{
+	struct list *lp = &darwinvars;
+	int indx;
+
+	if (*bufpp == NULL) {
+		listall(string, &darwinvars);
+		return (-1);
+	}
+	if ((indx = findname(string, "third", bufpp, lp)) == -1)
+		return (-1);
+	mib[2] = indx;
+	lp = &darwinvars;
+	*typep = lp->list[indx].ctl_type;
+	return (3);
 }
 
 /*
