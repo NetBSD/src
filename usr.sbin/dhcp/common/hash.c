@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: hash.c,v 1.2 2000/04/23 02:47:58 sommerfeld Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: hash.c,v 1.2.2.1 2000/06/22 18:00:46 minoura Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -119,11 +119,13 @@ static int do_hash (name, len, size)
 	return accum % size;
 }
 
-void add_hash (table, name, len, pointer)
+void add_hash (table, name, len, pointer, file, line)
 	struct hash_table *table;
 	unsigned len;
 	const unsigned char *name;
-	void *pointer;
+	hashed_object_t *pointer;
+	const char *file;
+	int line;
 {
 	int hashno;
 	struct hash_bucket *bp;
@@ -136,7 +138,7 @@ void add_hash (table, name, len, pointer)
 		len = strlen ((const char *)name);
 
 	hashno = (*table -> do_hash) (name, len, table -> hash_count);
-	bp = new_hash_bucket (MDL);
+	bp = new_hash_bucket (file, line);
 
 	if (!bp) {
 		log_error ("Can't add %s to hash table.", name);
@@ -145,7 +147,7 @@ void add_hash (table, name, len, pointer)
 	bp -> name = name;
 	if (table -> referencer) {
 		foo = &bp -> value;
-		(*(table -> referencer)) (foo, pointer, MDL);
+		(*(table -> referencer)) (foo, pointer, file, line);
 	} else
 		bp -> value = pointer;
 	bp -> next = table -> buckets [hashno];
@@ -153,10 +155,12 @@ void add_hash (table, name, len, pointer)
 	table -> buckets [hashno] = bp;
 }
 
-void delete_hash_entry (table, name, len)
+void delete_hash_entry (table, name, len, file, line)
 	struct hash_table *table;
 	unsigned len;
 	const unsigned char *name;
+	const char *file;
+	int line;
 {
 	int hashno;
 	struct hash_bucket *bp, *pbp = (struct hash_bucket *)0;
@@ -184,25 +188,28 @@ void delete_hash_entry (table, name, len)
 			}
 			if (table -> dereferencer) {
 				foo = &bp -> value;
-				(*(table -> dereferencer)) (foo, MDL);
+				(*(table -> dereferencer)) (foo, file, line);
 			}
-			free_hash_bucket (bp, MDL);
+			free_hash_bucket (bp, file, line);
 			break;
 		}
 		pbp = bp;	/* jwg, 9/6/96 - nice catch! */
 	}
 }
 
-void *hash_lookup (table, name, len)
+int hash_lookup (vp, table, name, len, file, line)
+	hashed_object_t **vp;
 	struct hash_table *table;
 	const unsigned char *name;
 	unsigned len;
+	const char *file;
+	int line;
 {
 	int hashno;
 	struct hash_bucket *bp;
 
 	if (!table)
-		return (unsigned char *)0;
+		return 0;
 	if (!len)
 		len = strlen ((const char *)name);
 
@@ -210,13 +217,40 @@ void *hash_lookup (table, name, len)
 
 	for (bp = table -> buckets [hashno]; bp; bp = bp -> next) {
 		if (len == bp -> len
-		    && !(*table -> cmp) (bp -> name, name, len))
-			return bp -> value;
+		    && !(*table -> cmp) (bp -> name, name, len)) {
+			if (table -> referencer)
+				(*table -> referencer) (vp, bp -> value,
+							file, line);
+			else
+				*vp = bp -> value;
+			return 1;
+		}
 	}
-	return (unsigned char *)0;
+	return 0;
 }
 
-int casecmp (const void *v1, const void *v2, size_t len)
+int hash_foreach (struct hash_table *table, hash_foreach_func func)
+{
+	int i;
+	struct hash_bucket *bp, *next;
+	int count = 0;
+
+	if (!table)
+		return 0;
+
+	for (i = 0; i < table -> hash_count; i++) {
+		bp = table -> buckets [i];
+		while (bp) {
+			next = bp -> next;
+			(*func) (bp -> name, bp -> len, bp -> value);
+			bp = next;
+			count++;
+		}
+	}
+	return count;
+}
+
+int casecmp (const void *v1, const void *v2, unsigned long len)
 {
 	unsigned i;
 	const char *s = v1;
@@ -242,3 +276,7 @@ int casecmp (const void *v1, const void *v2, size_t len)
 	}
 	return 0;
 }
+
+HASH_FUNCTIONS (group, const char *, struct group_object)
+HASH_FUNCTIONS (universe, const char *, struct universe)
+HASH_FUNCTIONS (option, const char *, struct option)

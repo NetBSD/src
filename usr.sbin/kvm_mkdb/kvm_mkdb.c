@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $	*/
+/* $NetBSD: kvm_mkdb.c,v 1.16.4.1 2000/06/22 18:01:02 minoura Exp $ */
 
 /*-
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: kvm_mkdb.c,v 1.16 1999/10/23 04:02:09 msaitoh Exp $");
+__RCSID("$NetBSD: kvm_mkdb.c,v 1.16.4.1 2000/06/22 18:01:02 minoura Exp $");
 #endif
 #endif /* not lint */
 

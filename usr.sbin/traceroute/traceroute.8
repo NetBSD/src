@@ -1,4 +1,4 @@
-.\" $NetBSD: traceroute.8,v 1.9 1998/07/17 23:45:24 is Exp $
+.\" $NetBSD: traceroute.8,v 1.9.8.1 2000/06/22 18:01:15 minoura Exp $
 .\"
 .\" Copyright (c) 1989, 1995, 1996, 1997
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,36 +32,37 @@ traceroute \- print the route packets take to network host
 ] [
 .B \-g
 .I gateway
-] [
-.B \-i
-.I iface
 ]
 .br
 .ti +8
 [
+.B \-i
+.I iface
+] [
 .B \-m
 max_ttl
 ] [
 .B \-p
 .I port
-] [
-.B \-q
-.I nqueries
 ]
 .br
 .ti +8
 [
+.B \-q
+.I nqueries
+] [
 .B \-s
 .I src_addr
 ] [
 .B \-t
 .I tos
-] [
-.B \-w
-.I waittime
 ]
 .br
 .ti +8
+[
+.B \-w
+.I waittime
+]
 .I host
 [
 .I packetlen

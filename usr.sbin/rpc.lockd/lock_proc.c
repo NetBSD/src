@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_proc.c,v 1.3 2000/02/02 18:17:42 bouyer Exp $	*/
+/*	$NetBSD: lock_proc.c,v 1.3.2.1 2000/06/22 18:01:10 minoura Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: lock_proc.c,v 1.3 2000/02/02 18:17:42 bouyer Exp $");
+__RCSID("$NetBSD: lock_proc.c,v 1.3.2.1 2000/06/22 18:01:10 minoura Exp $");
 #endif
 
 #include <sys/param.h>
@@ -48,21 +48,21 @@ __RCSID("$NetBSD: lock_proc.c,v 1.3 2000/02/02 18:17:42 bouyer Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <syslog.h>
+#include <netconfig.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/sm_inter.h>
 
 #include "lockd.h"
 #include "nlm_prot.h"
+#include "lockd_lock.h"
 
 
 #define	CLIENT_CACHE_SIZE	64	/* No. of client sockets cached */
 #define	CLIENT_CACHE_LIFETIME	120	/* In seconds */
 
-static CLIENT  *get_client __P((struct sockaddr_in *));
 static void	log_from_addr __P((char *, struct svc_req *));
-static void	transmit_result __P((int, nlm_res *, struct svc_req *));
-static void	transmit4_result __P((int, nlm4_res *, struct svc_req *));
+static int	addrcmp __P((struct sockaddr *, struct sockaddr *));
 
 /* log_from_addr ----------------------------------------------------------- */
 /*
@@ -71,22 +71,18 @@ static void	transmit4_result __P((int, nlm4_res *, struct svc_req *));
  * Notes:	Extracts the source address from the transport handle
  *		passed in as part of the called procedure specification
  */
-static void 
+static void
 log_from_addr(fun_name, req)
 	char *fun_name;
 	struct svc_req *req;
 {
-	struct sockaddr_in *addr;
-	struct hostent *host;
-	char hostname_buf[40];
+	struct sockaddr *addr;
+	char hostname_buf[NI_MAXHOST];
 
-	addr = svc_getcaller(req->rq_xprt);
-	host = gethostbyaddr((char *)&(addr->sin_addr), addr->sin_len, AF_INET);
-	if (host) {
-		strncpy(hostname_buf, host->h_name, sizeof(hostname_buf));
-		hostname_buf[sizeof(hostname_buf) - 1] = '\0';
-	} else		/* No hostname available - print raw address */
-		strcpy(hostname_buf, inet_ntoa(addr->sin_addr));
+	addr = svc_getrpccaller(req->rq_xprt)->buf;
+	if (getnameinfo(addr , addr->sa_len, hostname_buf, sizeof hostname_buf,
+	    NULL, 0, 0) != 0)
+		return;
 
 	syslog(LOG_DEBUG, "%s from %s", fun_name, hostname_buf);
 }
@@ -122,16 +118,49 @@ log_from_addr(fun_name, req)
  */
 static CLIENT *clnt_cache_ptr[CLIENT_CACHE_SIZE];
 static long clnt_cache_time[CLIENT_CACHE_SIZE];	/* time entry created */
-static struct in_addr clnt_cache_addr[CLIENT_CACHE_SIZE];
+static struct sockaddr_storage clnt_cache_addr[CLIENT_CACHE_SIZE];
 static int clnt_cache_next_to_use = 0;
 
-static CLIENT *
-get_client(host_addr)
-	struct sockaddr_in *host_addr;
+static int
+addrcmp(sa1, sa2)
+	struct sockaddr *sa1;
+	struct sockaddr *sa2;
+{
+	int len;
+	void *p1, *p2;
+
+	if (sa1->sa_family != sa2->sa_family)
+		return -1;
+
+	switch (sa1->sa_family) {
+	case AF_INET:
+		p1 = &((struct sockaddr_in *)sa1)->sin_addr;
+		p2 = &((struct sockaddr_in *)sa2)->sin_addr;
+		len = 4;
+		break;
+	case AF_INET6:
+		p1 = &((struct sockaddr_in6 *)sa1)->sin6_addr;
+		p2 = &((struct sockaddr_in6 *)sa2)->sin6_addr;
+		len = 16;
+		break;
+	default:
+		return -1;
+	}
+
+	return memcmp(p1, p2, len);
+}
+
+CLIENT *
+get_client(host_addr, vers)
+	struct sockaddr *host_addr;
+	rpcvers_t vers;
 {
 	CLIENT *client;
 	struct timeval retry_time, time_now;
-	int i, sock_no;
+	int i;
+	char *netid;
+	struct netconfig *nconf;
+	char host[NI_MAXHOST];
 
 	gettimeofday(&time_now, NULL);
 
@@ -151,8 +180,8 @@ get_client(host_addr)
 			clnt_cache_ptr[i] = NULL;
 			client = NULL;
 		}
-		if (client && !memcmp(&clnt_cache_addr[i],
-		    &host_addr->sin_addr, sizeof(struct in_addr))) {
+		if (client && !addrcmp((struct sockaddr *)&clnt_cache_addr[i],
+		    host_addr)) {
 			/* Found it! */
 			if (debug_level > 3)
 				syslog(LOG_DEBUG, "Found CLIENT* in cache");
@@ -166,23 +195,47 @@ get_client(host_addr)
 		clnt_cache_ptr[clnt_cache_next_to_use] = NULL;
 	}
 
-	/* Create the new client handle */
-	sock_no = RPC_ANYSOCK;
-	retry_time.tv_sec = 5;
-	retry_time.tv_usec = 0;
-	host_addr->sin_port = 0; /* Force consultation with portmapper */
-	client = clntudp_create(host_addr, NLM_PROG, NLM_VERS,
-	    retry_time, &sock_no);
+	/*
+	 * Need a host string for clnt_tp_create. Use NI_NUMERICHOST
+	 * to avoid DNS lookups.
+	 */
+	if (getnameinfo(host_addr, host_addr->sa_len, host, sizeof host,
+	    NULL, 0, NI_NUMERICHOST) != 0) {
+		syslog(LOG_ERR, "unable to get name string for caller");
+		return NULL;
+	}
+
+#if 1
+	if (host_addr->sa_family == AF_INET6)
+		netid = "udp6";
+	else
+		netid = "udp";
+#else 
+	if (host_addr->sa_family == AF_INET6)
+		netid = "tcp6";
+	else
+		netid = "tcp";
+#endif
+	nconf = getnetconfigent(netid);
+	if (nconf == NULL) {
+		syslog(LOG_ERR, "could not get netconfig info for '%s': "
+				"no /etc/netconfig file?", netid);
+		return NULL;
+	}
+
+	client = clnt_tp_create(host, NLM_PROG, vers, nconf);
+	freenetconfigent(nconf);
+
 	if (!client) {
 		syslog(LOG_ERR, clnt_spcreateerror("clntudp_create"));
-		syslog(LOG_ERR, "Unable to return result to %s",
-		    inet_ntoa(host_addr->sin_addr));
+		syslog(LOG_ERR, "Unable to return result to %s", host);
 		return NULL;
 	}
 
 	/* Success - update the cache entry */
 	clnt_cache_ptr[clnt_cache_next_to_use] = client;
-	clnt_cache_addr[clnt_cache_next_to_use] = host_addr->sin_addr;
+	memcpy(&clnt_cache_addr[clnt_cache_next_to_use], host_addr,
+	    host_addr->sa_len);
 	clnt_cache_time[clnt_cache_next_to_use] = time_now.tv_sec;
 	if (++clnt_cache_next_to_use > CLIENT_CACHE_SIZE)
 		clnt_cache_next_to_use = 0;
@@ -197,8 +250,7 @@ get_client(host_addr)
 	clnt_control(client, CLSET_TIMEOUT, (char *)&retry_time);
 
 	if (debug_level > 3)
-		syslog(LOG_DEBUG, "Created CLIENT* for %s",
-		    inet_ntoa(host_addr->sin_addr));
+		syslog(LOG_DEBUG, "Created CLIENT* for %s", host);
 	return client;
 }
 
@@ -211,20 +263,18 @@ get_client(host_addr)
  *		calling it with timeout 0 as a hack to just issue a datagram
  *		without expecting a result
  */
-static void 
-transmit_result(opcode, result, req)
+void
+transmit_result(opcode, result, addr)
 	int opcode;
 	nlm_res *result;
-	struct svc_req *req;
+	struct sockaddr *addr;
 {
 	static char dummy;
-	struct sockaddr_in *addr;
 	CLIENT *cli;
 	struct timeval timeo;
 	int success;
 
-	addr = svc_getcaller(req->rq_xprt);
-	if ((cli = get_client(addr)) != NULL) {
+	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -232,7 +282,8 @@ transmit_result(opcode, result, req)
 		    &dummy, timeo);
 
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d(%s)",
+			    success, clnt_sperrno(success));
 	}
 }
 /* transmit4_result --------------------------------------------------------- */
@@ -243,20 +294,18 @@ transmit_result(opcode, result, req)
  *		calling it with timeout 0 as a hack to just issue a datagram
  *		without expecting a result
  */
-static void 
-transmit4_result(opcode, result, req)
+void
+transmit4_result(opcode, result, addr)
 	int opcode;
 	nlm4_res *result;
-	struct svc_req *req;
+	struct sockaddr *addr;
 {
 	static char dummy;
-	struct sockaddr_in *addr;
 	CLIENT *cli;
 	struct timeval timeo;
 	int success;
 
-	addr = svc_getcaller(req->rq_xprt);
-	if ((cli = get_client(addr)) != NULL) {
+	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -264,8 +313,23 @@ transmit4_result(opcode, result, req)
 		    &dummy, timeo);
 
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d(%s)",
+			    success, clnt_sperrno(success));
 	}
+}
+
+/*
+ * converts a struct nlm_lock to struct nlm4_lock
+ */
+static void nlmtonlm4 __P((struct nlm_lock *, struct nlm4_lock *));
+static void
+nlmtonlm4(arg, arg4)
+	struct nlm_lock *arg;
+	struct nlm4_lock *arg4;
+{
+	memcpy(arg4, arg, sizeof(nlm_lock));
+	arg4->l_offset = arg->l_offset;
+	arg4->l_len = arg->l_len;
 }
 /* ------------------------------------------------------------------------- */
 /*
@@ -306,10 +370,14 @@ nlm_test_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_testres res;
+	struct nlm4_lock arg4;
+	struct nlm4_holder *holder;
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_test", rqstp);
 
+	holder = testlock(&arg4, 0);
 	/*
 	 * Copy the cookie from the argument into the result.  Note that this
 	 * is slightly hazardous, as the structure contains a pointer to a
@@ -318,7 +386,15 @@ nlm_test_1_svc(arg, rqstp)
 	 * so it is in fact safe.
 	 */
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm_granted;
+	if (holder == NULL) {
+		res.stat.stat = nlm_granted;
+	} else {
+		res.stat.stat = nlm_denied;
+		memcpy(&res.stat.nlm_testrply_u.holder, holder,
+		    sizeof(struct nlm_holder));
+		res.stat.nlm_testrply_u.holder.l_offset = holder->l_offset;
+		res.stat.nlm_testrply_u.holder.l_len = holder->l_len;
+	}
 	return (&res);
 }
 
@@ -329,23 +405,37 @@ nlm_test_msg_1_svc(arg, rqstp)
 {
 	nlm_testres res;
 	static char dummy;
-	struct sockaddr_in *addr;
+	struct sockaddr *addr;
 	CLIENT *cli;
 	int success;
 	struct timeval timeo;
+	struct nlm4_lock arg4;
+	struct nlm4_holder *holder;
+
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_test_msg", rqstp);
 
+	holder = testlock(&arg4, 0);
+
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm_granted;
+	if (holder == NULL) {
+		res.stat.stat = nlm_granted;
+	} else {
+		res.stat.stat = nlm_denied;
+		memcpy(&res.stat.nlm_testrply_u.holder, holder,
+		    sizeof(struct nlm_holder));
+		res.stat.nlm_testrply_u.holder.l_offset = holder->l_offset;
+		res.stat.nlm_testrply_u.holder.l_len = holder->l_len;
+	}
 
 	/*
 	 * nlm_test has different result type to the other operations, so
 	 * can't use transmit_result() in this case
 	 */
-	addr = svc_getcaller(rqstp->rq_xprt);
-	if ((cli = get_client(addr)) != NULL) {
+	addr = svc_getrpccaller(rqstp->rq_xprt)->buf;
+	if ((cli = get_client(addr, NLM_VERS)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -353,7 +443,7 @@ nlm_test_msg_1_svc(arg, rqstp)
 		    &res, xdr_void, &dummy, timeo);
 
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d", success);
 	}
 	return (NULL);
 }
@@ -370,6 +460,13 @@ nlm_lock_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lockargs arg4;
+	nlmtonlm4(&arg->alock, &arg4.alock);
+	arg4.cookie = arg->cookie;
+	arg4.block = arg->block;
+	arg4.exclusive = arg->exclusive;
+	arg4.reclaim = arg->reclaim;
+	arg4.state = arg->state;
 
 	if (debug_level)
 		log_from_addr("nlm_lock", rqstp);
@@ -377,7 +474,7 @@ nlm_lock_1_svc(arg, rqstp)
 	/* copy cookie from arg to result.  See comment in nlm_test_1() */
 	res.cookie = arg->cookie;
 
-	res.stat.stat = nlm_granted;
+	res.stat.stat = getlock(&arg4, rqstp, LOCK_MON);
 	return (&res);
 }
 
@@ -387,13 +484,22 @@ nlm_lock_msg_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lockargs arg4;
+
+	nlmtonlm4(&arg->alock, &arg4.alock);
+	arg4.cookie = arg->cookie;
+	arg4.block = arg->block;
+	arg4.exclusive = arg->exclusive;
+	arg4.reclaim = arg->reclaim;
+	arg4.state = arg->state;
 
 	if (debug_level)
 		log_from_addr("nlm_lock_msg", rqstp);
 
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm_granted;
-	transmit_result(NLM_LOCK_RES, &res, rqstp);
+	res.stat.stat = getlock(&arg4, rqstp, LOCK_ASYNC | LOCK_MON);
+	transmit_result(NLM_LOCK_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 
 	return (NULL);
 }
@@ -410,6 +516,9 @@ nlm_cancel_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lock arg4;
+
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_cancel", rqstp);
@@ -421,7 +530,7 @@ nlm_cancel_1_svc(arg, rqstp)
 	 * Since at present we never return 'nlm_blocked', there can never be
 	 * a lock to cancel, so this call always fails.
 	 */
-	res.stat.stat = nlm_denied;
+	res.stat.stat = unlock(&arg4, LOCK_CANCEL);
 	return (&res);
 }
 
@@ -431,6 +540,9 @@ nlm_cancel_msg_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lock arg4;
+
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_cancel_msg", rqstp);
@@ -440,8 +552,9 @@ nlm_cancel_msg_1_svc(arg, rqstp)
 	 * Since at present we never return 'nlm_blocked', there can never be
 	 * a lock to cancel, so this call always fails.
 	 */
-	res.stat.stat = nlm_denied;
-	transmit_result(NLM_CANCEL_RES, &res, rqstp);
+	res.stat.stat = unlock(&arg4, LOCK_CANCEL);
+	transmit_result(NLM_CANCEL_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 	return (NULL);
 }
 
@@ -459,11 +572,14 @@ nlm_unlock_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lock arg4;
+
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_unlock", rqstp);
 
-	res.stat.stat = nlm_granted;
+	res.stat.stat = unlock(&arg4, 0);
 	res.cookie = arg->cookie;
 
 	return (&res);
@@ -475,14 +591,18 @@ nlm_unlock_msg_1_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm_res res;
+	struct nlm4_lock arg4;
+
+	nlmtonlm4(&arg->alock, &arg4);
 
 	if (debug_level)
 		log_from_addr("nlm_unlock_msg", rqstp);
 
-	res.stat.stat = nlm_granted;
+	res.stat.stat = unlock(&arg4, 0);
 	res.cookie = arg->cookie;
 
-	transmit_result(NLM_UNLOCK_RES, &res, rqstp);
+	transmit_result(NLM_UNLOCK_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 	return (NULL);
 }
 
@@ -533,7 +653,8 @@ nlm_granted_msg_1_svc(arg, rqstp)
 
 	res.cookie = arg->cookie;
 	res.stat.stat = nlm_granted;
-	transmit_result(NLM_GRANTED_RES, &res, rqstp);
+	transmit_result(NLM_GRANTED_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 	return (NULL);
 }
 
@@ -727,9 +848,12 @@ nlm4_test_4_svc(arg, rqstp)
 	struct svc_req *rqstp;
 {
 	static nlm4_testres res;
+	struct nlm4_holder *holder;
 
 	if (debug_level)
 		log_from_addr("nlm4_test", rqstp);
+
+	holder = testlock(&arg->alock, LOCK_V4);
 
 	/*
 	 * Copy the cookie from the argument into the result.  Note that this
@@ -739,7 +863,13 @@ nlm4_test_4_svc(arg, rqstp)
 	 * so it is in fact safe.
 	 */
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm4_granted;
+	if (holder == NULL) {
+		res.stat.stat = nlm4_granted;
+	} else {
+		res.stat.stat = nlm4_denied;
+		memcpy(&res.stat.nlm4_testrply_u.holder, holder,
+		    sizeof(struct nlm4_holder));
+	}
 	return (&res);
 }
 
@@ -750,23 +880,32 @@ nlm4_test_msg_4_svc(arg, rqstp)
 {
 	nlm4_testres res;
 	static char dummy;
-	struct sockaddr_in *addr;
+	struct sockaddr *addr;
 	CLIENT *cli;
 	int success;
 	struct timeval timeo;
+	struct nlm4_holder *holder;
 
 	if (debug_level)
 		log_from_addr("nlm4_test_msg", rqstp);
 
+	holder = testlock(&arg->alock, LOCK_V4);
+
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm4_granted;
+	if (holder == NULL) {
+		res.stat.stat = nlm4_granted;
+	} else {
+		res.stat.stat = nlm4_denied;
+		memcpy(&res.stat.nlm4_testrply_u.holder, holder,
+		    sizeof(struct nlm4_holder));
+	}
 
 	/*
 	 * nlm_test has different result type to the other operations, so
 	 * can't use transmit4_result() in this case
 	 */
-	addr = svc_getcaller(rqstp->rq_xprt);
-	if ((cli = get_client(addr)) != NULL) {
+	addr = svc_getrpccaller(rqstp->rq_xprt)->buf;
+	if ((cli = get_client(addr, NLM_VERS4)) != NULL) {
 		timeo.tv_sec = 0; /* No timeout - not expecting response */
 		timeo.tv_usec = 0;
 
@@ -774,7 +913,7 @@ nlm4_test_msg_4_svc(arg, rqstp)
 		    &res, xdr_void, &dummy, timeo);
 
 		if (debug_level > 2)
-			syslog(LOG_DEBUG, "clnt_call returns %d\n", success);
+			syslog(LOG_DEBUG, "clnt_call returns %d", success);
 	}
 	return (NULL);
 }
@@ -798,7 +937,7 @@ nlm4_lock_4_svc(arg, rqstp)
 	/* copy cookie from arg to result.  See comment in nlm_test_4() */
 	res.cookie = arg->cookie;
 
-	res.stat.stat = nlm4_granted;
+	res.stat.stat = getlock(arg, rqstp, LOCK_MON | LOCK_V4);
 	return (&res);
 }
 
@@ -813,8 +952,9 @@ nlm4_lock_msg_4_svc(arg, rqstp)
 		log_from_addr("nlm4_lock_msg", rqstp);
 
 	res.cookie = arg->cookie;
-	res.stat.stat = nlm4_granted;
-	transmit4_result(NLM4_LOCK_RES, &res, rqstp);
+	res.stat.stat = getlock(arg, rqstp, LOCK_MON | LOCK_ASYNC | LOCK_V4);
+	transmit4_result(NLM4_LOCK_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 
 	return (NULL);
 }
@@ -842,7 +982,7 @@ nlm4_cancel_4_svc(arg, rqstp)
 	 * Since at present we never return 'nlm_blocked', there can never be
 	 * a lock to cancel, so this call always fails.
 	 */
-	res.stat.stat = nlm4_denied;
+	res.stat.stat = unlock(&arg->alock, LOCK_CANCEL);
 	return (&res);
 }
 
@@ -861,8 +1001,9 @@ nlm4_cancel_msg_4_svc(arg, rqstp)
 	 * Since at present we never return 'nlm_blocked', there can never be
 	 * a lock to cancel, so this call always fails.
 	 */
-	res.stat.stat = nlm4_denied;
-	transmit4_result(NLM4_CANCEL_RES, &res, rqstp);
+	res.stat.stat = unlock(&arg->alock, LOCK_CANCEL | LOCK_V4);
+	transmit4_result(NLM4_CANCEL_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 	return (NULL);
 }
 
@@ -884,7 +1025,7 @@ nlm4_unlock_4_svc(arg, rqstp)
 	if (debug_level)
 		log_from_addr("nlm4_unlock", rqstp);
 
-	res.stat.stat = nlm4_granted;
+	res.stat.stat = unlock(&arg->alock, LOCK_V4);
 	res.cookie = arg->cookie;
 
 	return (&res);
@@ -900,10 +1041,11 @@ nlm4_unlock_msg_4_svc(arg, rqstp)
 	if (debug_level)
 		log_from_addr("nlm4_unlock_msg", rqstp);
 
-	res.stat.stat = nlm4_granted;
+	res.stat.stat = unlock(&arg->alock, LOCK_V4);
 	res.cookie = arg->cookie;
 
-	transmit4_result(NLM4_UNLOCK_RES, &res, rqstp);
+	transmit4_result(NLM4_UNLOCK_RES, &res,
+	    (struct sockaddr *)svc_getcaller(rqstp->rq_xprt));
 	return (NULL);
 }
 
@@ -954,7 +1096,8 @@ nlm4_granted_msg_4_svc(arg, rqstp)
 
 	res.cookie = arg->cookie;
 	res.stat.stat = nlm4_granted;
-	transmit4_result(NLM4_GRANTED_RES, &res, rqstp);
+	transmit4_result(NLM4_GRANTED_RES, &res,
+	    (struct sockaddr *)svc_getrpccaller(rqstp->rq_xprt)->buf);
 	return (NULL);
 }
 
@@ -1034,20 +1177,6 @@ nlm4_granted_res_4_svc(arg, rqstp)
 	return (NULL);
 }
 
-/* nlm4_null --------------------------------------------------------- */
-/*
- * Purpose:	Allows to test server response and timing
- * Returns:	Nothing
- */
-void *
-nlm4_null_4_svc(arg, rqstp)
-	void *arg;
-	struct svc_req *rqstp;
-{
-	if (debug_level)
-		log_from_addr("nlm4_null", rqstp);
-	return (NULL);
-}
 /* ------------------------------------------------------------------------- */
 /*
  * Calls for PCNFS locking (aka non-monitored locking, no involvement
@@ -1149,3 +1278,17 @@ nlm4_free_all_4_svc(arg, rqstp)
 	return (&dummy);
 }
 
+/* nlm_sm_notify --------------------------------------------------------- */
+/*
+ * Purpose:	called by rpc.statd when a monitored host state changes.
+ * Returns:	Nothing
+ */
+void *
+nlm_sm_notify_0_svc(arg, rqstp)
+	struct nlm_sm_status *arg;
+	struct svc_req *rqstp;
+{
+	static char dummy;
+	notify(arg->mon_name, arg->state);
+	return (&dummy);
+}

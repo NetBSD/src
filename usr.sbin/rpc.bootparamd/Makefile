@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 1999/06/06 02:47:47 thorpej Exp $
+#	$NetBSD: Makefile,v 1.16.6.1 2000/06/22 18:01:09 minoura Exp $
 
 PROG=	rpc.bootparamd
 SRCS=	bootparamd.c bootparam_prot_svc.c
@@ -9,11 +9,15 @@ CPPFLAGS+=-DYP
 DPADD=	${LIBRPCSVC} ${LIBUTIL}
 LDADD=	-lrpcsvc -lutil
 
-bootparam_prot_svc.c: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.x
-	rm -f bootparam_prot.x
-	ln -s ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.x .
-	rm -f bootparam_prot.h
-	ln -s ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.h .
+bootparam_prot.x: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.x
+	rm -f ${.TARGET}
+	ln -s ${.ALLSRC} ${.TARGET}
+
+bootparam_prot.h: ${DESTDIR}/usr/include/rpcsvc/bootparam_prot.h
+	rm -f ${.TARGET}
+	ln -s ${.ALLSRC} ${.TARGET}
+
+bootparam_prot_svc.c: bootparam_prot.x bootparam_prot.h
 	rpcgen -C -L -m -o ${.TARGET} bootparam_prot.x
 
 CLEANFILES += bootparam_prot_svc.c bootparam_prot.x bootparam_prot.h

@@ -69,11 +69,8 @@ typedef struct {
 	omapi_handle_t remote_handle;
 } dhcpctl_remote_object_t;
 
-#ifndef __cplusplus
-/* for some reason, these cause problems when included in C++ classes */
-omapi_object_type_t *dhcpctl_callback_type;
-omapi_object_type_t *dhcpctl_remote_type;
-#endif
+extern omapi_object_type_t *dhcpctl_callback_type;
+extern omapi_object_type_t *dhcpctl_remote_type;
 
 dhcpctl_status dhcpctl_initialize (void);
 dhcpctl_status dhcpctl_connect (dhcpctl_handle *,

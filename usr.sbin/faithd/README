@@ -1,8 +1,8 @@
 Configuring FAITH IPv6-to-IPv4 TCP relay
 
 Kazu Yamamoto and Jun-ichiro itojun Hagino
-$NetBSD: README,v 1.5 2000/02/25 10:05:01 itojun Exp $
-KAME Id: README,v 1.2 1999/12/21 01:37:06 itojun Exp
+$NetBSD: README,v 1.5.2.1 2000/06/22 18:00:56 minoura Exp $
+$KAME: README,v 1.4 2000/05/31 03:16:14 itojun Exp $
 
 
 Introduction
@@ -130,10 +130,10 @@ for the reader.
 By doing this, you will be able to provide your IPv4 web server to outside
 IPv6 customers, without risks of unwanted open relays.
 
-	[[[[ IPv6 network outside ]]]]			| 
+	[[[[ IPv6 network outside ]]]]			|
 		|					| connection
 	node that runs FAITH-daemon (usually a router)	v
 		|
-	========+======== IPv4/v6 network in your site 
+	========+======== IPv4/v6 network in your site
 		|			(123.0.0.0/8)
 	IPv4 web server

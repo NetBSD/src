@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dispatch.c,v 1.3 2000/04/22 08:18:14 mellon Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dispatch.c,v 1.3.2.1 2000/06/22 18:00:46 minoura Exp $ Copyright (c) 1995-2000 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -78,6 +78,8 @@ void dispatch ()
 				t = timeouts;
 				timeouts = timeouts -> next;
 				(*(t -> func)) (t -> what);
+				if (t -> unref)
+					(*t -> unref) (&t -> what, MDL);
 				t -> next = free_timeouts;
 				free_timeouts = t;
 				goto another;
@@ -95,10 +97,12 @@ void dispatch ()
 		   isc_result_totext (status));
 }
 
-void add_timeout (when, where, what)
+void add_timeout (when, where, what, ref, unref)
 	TIME when;
 	void (*where) PROTO ((void *));
 	void *what;
+	tvref_t ref;
+	tvunref_t unref;
 {
 	struct timeout *t, *q;
 
@@ -122,16 +126,20 @@ void add_timeout (when, where, what)
 		if (free_timeouts) {
 			q = free_timeouts;
 			free_timeouts = q -> next;
-			q -> func = where;
-			q -> what = what;
 		} else {
 			q = ((struct timeout *)
 			     dmalloc (sizeof (struct timeout), MDL));
 			if (!q)
 				log_fatal ("add_timeout: no memory!");
-			q -> func = where;
-			q -> what = what;
 		}
+		memset (q, 0, sizeof *q);
+		q -> func = where;
+		q -> ref = ref;
+		q -> unref = unref;
+		if (q -> ref)
+			(*q -> ref)(&q -> what, what, MDL);
+		else
+			q -> what = what;
 	}
 
 	q -> when = when;
@@ -180,6 +188,8 @@ void cancel_timeout (where, what)
 
 	/* If we found the timeout, put it on the free list. */
 	if (q) {
+		if (q -> unref)
+			(*q -> unref) (&q -> what, MDL);
 		q -> next = free_timeouts;
 		free_timeouts = q;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 1999/06/06 02:52:16 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7.6.1 2000/06/22 18:01:11 minoura Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
@@ -12,11 +12,15 @@ LDADD=	-lrpcsvc -lutil
 
 CLEANFILES+= sm_inter_svc.c sm_inter.x sm_inter.h test
 
-sm_inter_svc.c: ${RPCSRC} ${DESTDIR}/usr/include/rpcsvc/sm_inter.x
-	rm -f sm_inter.x
-	ln -s ${DESTDIR}/usr/include/rpcsvc/sm_inter.x .
-	rm -f sm_inter.h
-	ln -s ${DESTDIR}/usr/include/rpcsvc/sm_inter.h .
+sm_inter.x: ${DESTDIR}/usr/include/rpcsvc/sm_inter.x
+	rm -f ${.TARGET}
+	ln -s ${.ALLSRC} ${.TARGET}
+
+sm_inter.h: ${DESTDIR}/usr/include/rpcsvc/sm_inter.h
+	rm -f ${.TARGET}
+	ln -s ${.ALLSRC} ${.TARGET}
+
+sm_inter_svc.c: sm_inter.x sm_inter.h
 	rpcgen -C -L -m -o ${.TARGET} sm_inter.x
 
 test: ${.CURDIR}/test.c

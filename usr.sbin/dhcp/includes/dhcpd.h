@@ -234,16 +234,27 @@ struct hardware {
 	u_int8_t hbuf [17];
 };
 
+/* Lease states: */
+typedef enum {
+	FTS_FREE = 1,
+	FTS_ACTIVE = 2,
+	FTS_EXPIRED = 3,
+	FTS_RELEASED = 4,
+	FTS_ABANDONED = 5,
+	FTS_RESET = 6,
+	FTS_BACKUP = 7,
+	FTS_RESERVED = 8,
+	FTS_BOOTP = 9
+} binding_state_t;
+
 /* A dhcp lease declaration structure. */
 struct lease {
 	OMAPI_OBJECT_PREAMBLE;
 	struct lease *next;
-	struct lease *prev;
 	struct lease *n_uid, *n_hw;
-	struct lease *waitq_next;
 
 	struct iaddr ip_addr;
-	TIME starts, ends, timestamp;
+	TIME starts, ends, timestamp, sort_time;
 	unsigned char *uid;
 	unsigned uid_len;
 	unsigned uid_max;
@@ -261,21 +272,23 @@ struct lease {
 	struct executable_statement *on_commit;
 	struct executable_statement *on_release;
 
-	int flags;
+	u_int16_t flags;
 #       define STATIC_LEASE		1
-#       define BOOTP_LEASE		2
 #	define PERSISTENT_FLAGS		(0)
 #	define MS_NULL_TERMINATION	8
-#	define ABANDONED_LEASE		16
-#	define PEER_IS_OWNER		32
-#	define EPHEMERAL_FLAGS		(BOOTP_LEASE | MS_NULL_TERMINATION | \
-					 ABANDONED_LEASE)
-
+#	define ON_UPDATE_QUEUE		16
+#	define ON_ACK_QUEUE		32
+#	define EPHEMERAL_FLAGS		(MS_NULL_TERMINATION | \
+					 ON_ACK_QUEUE | ON_UPDATE_QUEUE)
+	binding_state_t binding_state;	/* See failover.h, FTS_*. */
+	binding_state_t next_binding_state;	/* See failover.h, FTS_*. */
+	
 	struct lease_state *state;
 
 	TIME tstp;	/* Time sent to partner. */
 	TIME tsfp;	/* Time sent from partner. */
 	TIME cltt;	/* Client last transaction time. */
+	struct lease *next_pending;
 };
 
 struct lease_state {
@@ -356,6 +369,11 @@ struct lease_state {
 #define SV_DUPLICATES			28
 #define SV_DECLINES			29
 #define SV_DDNS_UPDATES			30
+#define SV_OMAPI_PORT			31
+#define SV_LOCAL_PORT			32
+#define SV_LIMITED_BROADCAST_ADDRESS	33
+#define SV_REMOTE_PORT			34
+#define SV_LOCAL_ADDRESS		35
 
 #if !defined (DEFAULT_DEFAULT_LEASE_TIME)
 # define DEFAULT_DEFAULT_LEASE_TIME 43200
@@ -444,6 +462,7 @@ struct group_object {
 struct group {
 	struct group *next;
 
+	int refcnt;
 	struct group_object *object;
 	struct subnet *subnet;
 	struct shared_network *shared_network;
@@ -490,14 +509,16 @@ struct pool {
 	struct shared_network *shared_network;
 	struct permit *permit_list;
 	struct permit *prohibit_list;
-	struct lease *leases;
-	struct lease *insertion_point;
-	struct lease *last_lease;
-	struct lease *next_expiry;
-#if defined (FAILOVER_PROTOCOL)
+	struct lease *active;
+	struct lease *expired;
+	struct lease *free;
+	struct lease *backup;
+	struct lease *abandoned;
+	TIME next_event_time;
 	int lease_count;
-	int local_leases;
-	int peer_leases;
+	int free_leases;
+	int backup_leases;
+#if defined (FAILOVER_PROTOCOL)
 	dhcp_failover_state_t *failover_peer;
 #endif
 };
@@ -505,7 +526,7 @@ struct pool {
 struct shared_network {
 	OMAPI_OBJECT_PREAMBLE;
 	struct shared_network *next;
-	const char *name;
+	char *name;
 	struct subnet *subnets;
 	struct interface_info *interface;
 	struct pool *pools;
@@ -729,11 +750,15 @@ struct hardware_link {
 	struct hardware address;
 };
 
+typedef void (*tvref_t)(void *, void *, const char *, int);
+typedef void (*tvunref_t)(void *, const char *, int);
 struct timeout {
 	struct timeout *next;
 	TIME when;
 	void (*func) PROTO ((void *));
 	void *what;
+	tvref_t ref;
+	tvunref_t unref;
 };
 
 struct protocol {
@@ -931,11 +956,6 @@ int nwip_option_space_encapsulate PROTO ((struct data_string *,
 
 /* dhcpd.c */
 extern TIME cur_time;
-extern struct group root_group;
-extern struct in_addr limited_broadcast;
-
-extern u_int16_t local_port;
-extern u_int16_t remote_port;
 
 extern const char *path_dhcpd_conf;
 extern const char *path_dhcpd_db;
@@ -947,6 +967,7 @@ int main PROTO ((int, char **, char **));
 void cleanup PROTO ((void));
 void lease_pinged PROTO ((struct iaddr, u_int8_t *, int));
 void lease_ping_timeout PROTO ((void *));
+int dhcpd_interface_setup_hook (struct interface_info *ip, struct iaddr *ia);
 
 /* conflex.c */
 isc_result_t new_parse PROTO ((struct parse **, int,
@@ -957,25 +978,30 @@ enum dhcp_token peek_token PROTO ((const char **, struct parse *));
 
 /* confpars.c */
 isc_result_t readconf PROTO ((void));
+isc_result_t parse_conf_file (const char *, struct group *, int);
 isc_result_t read_leases PROTO ((void));
 int parse_statement PROTO ((struct parse *,
 			    struct group *, int, struct host_decl *, int));
+#if defined (FAILOVER_PROTOCOL)
 void parse_failover_peer PROTO ((struct parse *, struct group *, int));
+void parse_failover_state_declaration (struct parse *,
+				       dhcp_failover_state_t *);
 void parse_failover_state PROTO ((struct parse *,
 				  enum failover_state *, TIME *));
+#endif
 void parse_pool_statement PROTO ((struct parse *, struct group *, int));
 int parse_boolean PROTO ((struct parse *));
 int parse_lbrace PROTO ((struct parse *));
 void parse_host_declaration PROTO ((struct parse *, struct group *));
-struct class *parse_class_declaration PROTO ((struct parse *,
-					      struct group *, int));
+int parse_class_declaration PROTO ((struct class **, struct parse *,
+				    struct group *, int));
 void parse_shared_net_declaration PROTO ((struct parse *, struct group *));
 void parse_subnet_declaration PROTO ((struct parse *,
 				      struct shared_network *));
 void parse_group_declaration PROTO ((struct parse *, struct group *));
 int parse_fixed_addr_param PROTO ((struct option_cache **, struct parse *));
 TIME parse_timestamp PROTO ((struct parse *));
-struct lease *parse_lease_declaration PROTO ((struct parse *));
+int parse_lease_declaration PROTO ((struct lease **, struct parse *));
 void parse_address_range PROTO ((struct parse *,
 				 struct group *, int, struct pool *));
 
@@ -1134,14 +1160,15 @@ void nak_lease PROTO ((struct packet *, struct iaddr *cip));
 void ack_lease PROTO ((struct packet *, struct lease *,
 		       unsigned int, TIME, char *, int));
 void dhcp_reply PROTO ((struct lease *));
-struct lease *find_lease PROTO ((struct packet *,
-				 struct shared_network *, int *));
-struct lease *mockup_lease PROTO ((struct packet *,
-				   struct shared_network *,
-				   struct host_decl *));
+int find_lease PROTO ((struct lease **, struct packet *,
+		       struct shared_network *, int *, const char *, int));
+int mockup_lease PROTO ((struct lease **, struct packet *,
+			 struct shared_network *,
+			 struct host_decl *));
 void static_lease_dereference PROTO ((struct lease *, const char *, int));
 
-struct lease *allocate_lease PROTO ((struct packet *, struct pool *, int));
+int allocate_lease PROTO ((struct lease **, struct packet *,
+			   struct pool *, int *));
 int permitted PROTO ((struct packet *, struct permit *));
 int locate_network PROTO ((struct packet *));
 int parse_agent_information_option PROTO ((struct packet *, int, u_int8_t *));
@@ -1153,24 +1180,42 @@ unsigned cons_agent_information_options PROTO ((struct option_state *,
 void bootp PROTO ((struct packet *));
 
 /* memory.c */
-struct group *clone_group PROTO ((struct group *, const char *, int));
+int (*group_write_hook) (struct group_object *);
+extern struct group *root_group;
+extern struct hash_table *group_name_hash;
+isc_result_t delete_group (struct group_object *, int);
+isc_result_t supersede_group (struct group_object *, int);
+int clone_group (struct group **, struct group *, const char *, int);
+int write_group PROTO ((struct group_object *));
+
+/* salloc.c */
+struct lease *new_leases PROTO ((unsigned, const char *, int));
+OMAPI_OBJECT_ALLOC_DECL (lease, struct lease, dhcp_type_lease)
+OMAPI_OBJECT_ALLOC_DECL (class, struct class, dhcp_type_class)
+OMAPI_OBJECT_ALLOC_DECL (pool, struct pool, dhcp_type_pool)
+OMAPI_OBJECT_ALLOC_DECL (host, struct host_decl, dhcp_type_host)
 
 /* alloc.c */
+OMAPI_OBJECT_ALLOC_DECL (subnet, struct subnet, dhcp_type_subnet)
+OMAPI_OBJECT_ALLOC_DECL (shared_network, struct shared_network,
+			 dhcp_type_shared_network)
+OMAPI_OBJECT_ALLOC_DECL (group_object, struct group_object, dhcp_type_group)
+
+int group_allocate (struct group **, const char *, int);
+int group_reference (struct group **, struct group *, const char *, int);
+int group_dereference (struct group **, const char *, int);
 struct dhcp_packet *new_dhcp_packet PROTO ((const char *, int));
 struct hash_table *new_hash_table PROTO ((int, const char *, int));
 struct hash_bucket *new_hash_bucket PROTO ((const char *, int));
-struct lease *new_lease PROTO ((const char *, int));
-struct lease *new_leases PROTO ((unsigned, const char *, int));
-struct subnet *new_subnet PROTO ((const char *, int));
-struct class *new_class PROTO ((const char *, int));
-struct shared_network *new_shared_network PROTO ((const char *, int));
-struct group *new_group PROTO ((const char *, int));
 struct protocol *new_protocol PROTO ((const char *, int));
 struct lease_state *new_lease_state PROTO ((const char *, int));
 struct domain_search_list *new_domain_search_list PROTO ((const char *, int));
 struct name_server *new_name_server PROTO ((const char *, int));
 void free_name_server PROTO ((struct name_server *, const char *, int));
 struct option *new_option PROTO ((const char *, int));
+int group_allocate (struct group **, const char *, int);
+int group_reference (struct group **, struct group *, const char *, int);
+int group_dereference (struct group **, const char *, int);
 void free_option PROTO ((struct option *, const char *, int));
 struct universe *new_universe PROTO ((const char *, int));
 void free_universe PROTO ((struct universe *, const char *, int));
@@ -1178,18 +1223,11 @@ void free_domain_search_list PROTO ((struct domain_search_list *,
 				     const char *, int));
 void free_lease_state PROTO ((struct lease_state *, const char *, int));
 void free_protocol PROTO ((struct protocol *, const char *, int));
-void free_group PROTO ((struct group *, const char *, int));
-void free_shared_network PROTO ((struct shared_network *, const char *, int));
-void free_class PROTO ((struct class *, const char *, int));
-void free_subnet PROTO ((struct subnet *, const char *, int));
-void free_lease PROTO ((struct lease *, const char *, int));
 void free_hash_bucket PROTO ((struct hash_bucket *, const char *, int));
 void free_hash_table PROTO ((struct hash_table *, const char *, int));
 void free_dhcp_packet PROTO ((struct dhcp_packet *, const char *, int));
 struct client_lease *new_client_lease PROTO ((const char *, int));
 void free_client_lease PROTO ((struct client_lease *, const char *, int));
-struct pool *new_pool PROTO ((const char *, int));
-void free_pool PROTO ((struct pool *, const char *, int));
 struct auth_key *new_auth_key PROTO ((unsigned, const char *, int));
 void free_auth_key PROTO ((struct auth_key *, const char *, int));
 struct permit *new_permit PROTO ((const char *, int));
@@ -1443,6 +1481,16 @@ extern struct interface_info *interfaces,
 	*dummy_interfaces, *fallback_interface;
 extern struct protocol *protocols;
 extern int quiet_interface_discovery;
+
+extern struct in_addr limited_broadcast;
+extern struct in_addr local_address;
+
+extern u_int16_t local_port;
+extern u_int16_t remote_port;
+extern int (*dhcp_interface_setup_hook) (struct interface_info *,
+					 struct iaddr *);
+extern int (*dhcp_interface_discovery_hook) (struct interface_info *);
+
 extern void (*bootp_packet_handler) PROTO ((struct interface_info *,
 					    struct dhcp_packet *, unsigned,
 					    unsigned int,
@@ -1450,7 +1498,7 @@ extern void (*bootp_packet_handler) PROTO ((struct interface_info *,
 extern struct timeout *timeouts;
 extern omapi_object_type_t *dhcp_type_interface;
 void discover_interfaces PROTO ((int));
-struct interface_info *setup_fallback PROTO ((void));
+int setup_fallback (struct interface_info **, const char *, int);
 int if_readsocket PROTO ((omapi_object_t *));
 void reinitialize_interfaces PROTO ((void));
 void dispatch PROTO ((void));
@@ -1466,23 +1514,31 @@ isc_result_t interface_stuff_values (omapi_object_t *,
 				     omapi_object_t *,
 				     omapi_object_t *);
 
-void add_timeout PROTO ((TIME, void (*) PROTO ((void *)), void *));
+void add_timeout PROTO ((TIME, void (*) PROTO ((void *)), void *,
+			 tvref_t, tvunref_t));
 void cancel_timeout PROTO ((void (*) PROTO ((void *)), void *));
 struct protocol *add_protocol PROTO ((const char *, int,
 				      void (*) PROTO ((struct protocol *)),
 				      void *));
 
 void remove_protocol PROTO ((struct protocol *));
+OMAPI_OBJECT_ALLOC_DECL (interface,
+			 struct interface_info, dhcp_type_interface)
 
 /* hash.c */
 struct hash_table *new_hash PROTO ((hash_reference, hash_dereference, int));
 void add_hash PROTO ((struct hash_table *,
-		      const unsigned char *, unsigned, void *));
-void delete_hash_entry PROTO ((struct hash_table *,
-			       const unsigned char *, unsigned));
-void *hash_lookup PROTO ((struct hash_table *,
-			  const unsigned char *, unsigned));
-int casecmp (const void *s, const void *t, size_t len);
+		      const unsigned char *, unsigned, hashed_object_t *,
+		      const char *, int));
+void delete_hash_entry PROTO ((struct hash_table *, const unsigned char *,
+			       unsigned, const char *, int));
+int hash_lookup PROTO ((hashed_object_t **, struct hash_table *,
+			const unsigned char *, unsigned, const char *, int));
+int hash_foreach (struct hash_table *, hash_foreach_func);
+int casecmp (const void *s, const void *t, unsigned long len);
+HASH_FUNCTIONS_DECL (group, const char *, struct group_object)
+HASH_FUNCTIONS_DECL (universe, const char *, struct universe)
+HASH_FUNCTIONS_DECL (option, const char *, struct option)
 
 /* tables.c */
 extern struct universe dhcp_universe;
@@ -1499,13 +1555,15 @@ struct universe *config_universe;
 
 /* stables.c */
 #if defined (FAILOVER_PROTOCOL)
-failover_option_t null_failover_option;
-failover_option_t skip_failover_option;
-struct failover_option_info ft_options [0];
-u_int32_t fto_allowed [0];
-int ft_sizes [0];
-const char *dhcp_flink_state_names [0];
+extern failover_option_t null_failover_option;
+extern failover_option_t skip_failover_option;
+extern struct failover_option_info ft_options [];
+extern u_int32_t fto_allowed [];
+extern int ft_sizes [];
+extern const char *dhcp_flink_state_names [];
 #endif
+extern const char *binding_state_names [];
+
 extern struct universe agent_universe;
 extern struct option agent_options [256];
 extern struct universe server_universe;
@@ -1573,8 +1631,8 @@ void make_release PROTO ((struct client_state *, struct client_lease *));
 
 void destroy_client_lease PROTO ((struct client_lease *));
 void rewrite_client_leases PROTO ((void));
-void write_client_lease PROTO ((struct client_state *,
-				 struct client_lease *, int));
+int write_client_lease PROTO ((struct client_state *,
+			       struct client_lease *, int, int));
 char *dhcp_option_ev_name PROTO ((struct option *));
 
 void script_init PROTO ((struct client_state *, const char *,
@@ -1588,17 +1646,22 @@ void go_daemon PROTO ((void));
 void write_client_pid_file PROTO ((void));
 void client_location_changed PROTO ((void));
 void do_release PROTO ((struct client_state *));
+int dhclient_interface_shutdown_hook (struct interface_info *);
+int dhclient_interface_discovery_hook (struct interface_info *);
 
 /* db.c */
 int write_lease PROTO ((struct lease *));
 int write_host PROTO ((struct host_decl *));
-int write_group PROTO ((struct group_object *));
+#if defined (FAILOVER_PROTOCOL)
+int write_failover_state (dhcp_failover_state_t *);
+#endif
 int db_printable PROTO ((const char *));
 int db_printable_len PROTO ((const unsigned char *, unsigned));
 int write_billing_class PROTO ((struct class *));
 int commit_leases PROTO ((void));
 void db_startup PROTO ((int));
 void new_lease_file PROTO ((void));
+int group_writer (struct group_object *);
 
 /* packet.c */
 u_int32_t checksum PROTO ((unsigned char *, unsigned, u_int32_t));
@@ -1675,7 +1738,7 @@ int parse_X PROTO ((struct parse *, u_int8_t *, unsigned));
 void parse_option_list PROTO ((struct parse *, u_int32_t **));
 void parse_interface_declaration PROTO ((struct parse *,
 					 struct client_config *, char *));
-struct interface_info *interface_or_dummy PROTO ((const char *));
+int interface_or_dummy PROTO ((struct interface_info **, const char *));
 void make_client_state PROTO ((struct client_state **));
 void make_client_config PROTO ((struct client_state *,
 				struct client_config *));
@@ -1711,7 +1774,7 @@ isc_result_t icmp_echoreply PROTO ((omapi_object_t *));
 
 /* dns.c */
 #if defined (NSUPDATE)
-isc_result_t find_tsig_key (ns_tsig_key **, const char *);
+isc_result_t find_tsig_key (ns_tsig_key **, const char *, struct dns_zone *);
 void tkey_free (ns_tsig_key **);
 #endif
 isc_result_t enter_dns_zone (struct dns_zone *);
@@ -1720,9 +1783,13 @@ isc_result_t enter_tsig_key (struct tsig_key *);
 isc_result_t tsig_key_lookup (struct tsig_key **, const char *);
 int dns_zone_dereference PROTO ((struct dns_zone **, const char *, int));
 #if defined (NSUPDATE)
-int find_cached_zone (const char *, ns_class,
-		      char *, size_t, struct in_addr *, int);
+int find_cached_zone (const char *, ns_class, char *,
+		      size_t, struct in_addr *, int, struct dns_zone **);
+void forget_zone (struct dns_zone **);
+void repudiate_zone (struct dns_zone **);
 #endif /* NSUPDATE */
+HASH_FUNCTIONS_DECL (dns_zone, const char *, struct dns_zone)
+HASH_FUNCTIONS_DECL (tsig_key, const char *, struct tsig_key)
 
 /* resolv.c */
 extern char path_resolv_conf [];
@@ -1750,7 +1817,8 @@ void classify_client PROTO ((struct packet *));
 int check_collection PROTO ((struct packet *, struct lease *,
 			     struct collection *));
 void classify PROTO ((struct packet *, struct class *));
-struct class *find_class PROTO ((const char *));
+isc_result_t find_class PROTO ((struct class **, const char *,
+				const char *, int));
 int unbill_class PROTO ((struct lease *, struct class *));
 int bill_class PROTO ((struct lease *, struct class *));
 
@@ -1781,13 +1849,78 @@ struct executable_statement *find_matching_case PROTO ((struct packet *,
 void enter_auth_key PROTO ((struct data_string *, struct auth_key *));
 const struct auth_key *auth_key_lookup PROTO ((struct data_string *));
 
-/* omapi.c */
+/* comapi.c */
 extern omapi_object_type_t *dhcp_type_interface;
-extern omapi_object_type_t *dhcp_type_lease;
 extern omapi_object_type_t *dhcp_type_group;
-extern omapi_object_type_t *dhcp_type_pool;
 extern omapi_object_type_t *dhcp_type_shared_network;
 extern omapi_object_type_t *dhcp_type_subnet;
+
+void dhcp_common_objects_setup (void);
+
+isc_result_t dhcp_group_set_value  (omapi_object_t *, omapi_object_t *,
+				    omapi_data_string_t *,
+				    omapi_typed_data_t *);
+isc_result_t dhcp_group_get_value (omapi_object_t *, omapi_object_t *,
+				   omapi_data_string_t *,
+				   omapi_value_t **); 
+isc_result_t dhcp_group_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_group_signal_handler (omapi_object_t *,
+					const char *, va_list);
+isc_result_t dhcp_group_stuff_values (omapi_object_t *,
+				      omapi_object_t *,
+				      omapi_object_t *);
+isc_result_t dhcp_group_lookup (omapi_object_t **,
+				omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_group_create (omapi_object_t **,
+				omapi_object_t *);
+isc_result_t dhcp_group_remove (omapi_object_t *,
+				omapi_object_t *);
+
+isc_result_t dhcp_subnet_set_value  (omapi_object_t *, omapi_object_t *,
+				     omapi_data_string_t *,
+				     omapi_typed_data_t *);
+isc_result_t dhcp_subnet_get_value (omapi_object_t *, omapi_object_t *,
+				    omapi_data_string_t *,
+				    omapi_value_t **); 
+isc_result_t dhcp_subnet_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_subnet_signal_handler (omapi_object_t *,
+					 const char *, va_list);
+isc_result_t dhcp_subnet_stuff_values (omapi_object_t *,
+				       omapi_object_t *,
+				       omapi_object_t *);
+isc_result_t dhcp_subnet_lookup (omapi_object_t **,
+				 omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_subnet_create (omapi_object_t **,
+				 omapi_object_t *);
+isc_result_t dhcp_subnet_remove (omapi_object_t *,
+				 omapi_object_t *);
+
+isc_result_t dhcp_shared_network_set_value  (omapi_object_t *,
+					     omapi_object_t *,
+					     omapi_data_string_t *,
+					     omapi_typed_data_t *);
+isc_result_t dhcp_shared_network_get_value (omapi_object_t *,
+					    omapi_object_t *,
+					    omapi_data_string_t *,
+					    omapi_value_t **); 
+isc_result_t dhcp_shared_network_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_shared_network_signal_handler (omapi_object_t *,
+						 const char *, va_list);
+isc_result_t dhcp_shared_network_stuff_values (omapi_object_t *,
+					       omapi_object_t *,
+					       omapi_object_t *);
+isc_result_t dhcp_shared_network_lookup (omapi_object_t **,
+					 omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_shared_network_create (omapi_object_t **,
+					 omapi_object_t *);
+isc_result_t dhcp_shared_network_remove (omapi_object_t *,
+					 omapi_object_t *);
+
+/* omapi.c */
+extern int (*dhcp_interface_shutdown_hook) (struct interface_info *);
+
+extern omapi_object_type_t *dhcp_type_lease;
+extern omapi_object_type_t *dhcp_type_pool;
 extern omapi_object_type_t *dhcp_type_class;
 
 #if defined (FAILOVER_PROTOCOL)
@@ -1870,6 +2003,24 @@ isc_result_t dhcp_pool_create (omapi_object_t **,
 			       omapi_object_t *);
 isc_result_t dhcp_pool_remove (omapi_object_t *,
 			       omapi_object_t *);
+isc_result_t dhcp_class_set_value  (omapi_object_t *, omapi_object_t *,
+				    omapi_data_string_t *,
+				    omapi_typed_data_t *);
+isc_result_t dhcp_class_get_value (omapi_object_t *, omapi_object_t *,
+				   omapi_data_string_t *,
+				   omapi_value_t **); 
+isc_result_t dhcp_class_destroy (omapi_object_t *, const char *, int);
+isc_result_t dhcp_class_signal_handler (omapi_object_t *,
+					const char *, va_list);
+isc_result_t dhcp_class_stuff_values (omapi_object_t *,
+				      omapi_object_t *,
+				      omapi_object_t *);
+isc_result_t dhcp_class_lookup (omapi_object_t **,
+				omapi_object_t *, omapi_object_t *);
+isc_result_t dhcp_class_create (omapi_object_t **,
+				omapi_object_t *);
+isc_result_t dhcp_class_remove (omapi_object_t *,
+				omapi_object_t *);
 isc_result_t dhcp_shared_network_set_value  (omapi_object_t *,
 					     omapi_object_t *,
 					     omapi_data_string_t *,
@@ -1919,35 +2070,58 @@ isc_result_t dhcp_class_lookup (omapi_object_t **,
 				omapi_object_t *, omapi_object_t *);
 isc_result_t dhcp_class_create (omapi_object_t **,
 				omapi_object_t *);
+isc_result_t dhcp_interface_set_value (omapi_object_t *,
+				       omapi_object_t *,
+				       omapi_data_string_t *,
+				       omapi_typed_data_t *);
+isc_result_t dhcp_interface_get_value (omapi_object_t *,
+				       omapi_object_t *,
+				       omapi_data_string_t *,
+				       omapi_value_t **);
+isc_result_t dhcp_interface_destroy (omapi_object_t *,
+				     const char *, int);
+isc_result_t dhcp_interface_signal_handler (omapi_object_t *,
+					    const char *,
+					    va_list ap);
+isc_result_t dhcp_interface_stuff_values (omapi_object_t *,
+					  omapi_object_t *,
+					  omapi_object_t *);
+isc_result_t dhcp_interface_lookup (omapi_object_t **,
+				    omapi_object_t *,
+				    omapi_object_t *);
+isc_result_t dhcp_interface_create (omapi_object_t **,
+				    omapi_object_t *);
+isc_result_t dhcp_interface_remove (omapi_object_t *,
+				    omapi_object_t *);
 
 /* mdb.c */
 
+extern struct subnet *subnets;
+extern struct shared_network *shared_networks;
 extern struct hash_table *host_hw_addr_hash;
 extern struct hash_table *host_uid_hash;
 extern struct hash_table *host_name_hash;
 extern struct hash_table *lease_uid_hash;
 extern struct hash_table *lease_ip_addr_hash;
 extern struct hash_table *lease_hw_addr_hash;
-extern struct hash_table *group_name_hash;
 
 extern omapi_object_type_t *dhcp_type_host;
 
-
 isc_result_t enter_host PROTO ((struct host_decl *, int, int));
 isc_result_t delete_host PROTO ((struct host_decl *, int));
-struct host_decl *find_hosts_by_haddr PROTO ((int, const unsigned char *,
-					      unsigned));
-struct host_decl *find_hosts_by_uid PROTO ((const unsigned char *, unsigned));
-struct subnet *find_host_for_network PROTO ((struct host_decl **,
-					     struct iaddr *,
-					     struct shared_network *));
-isc_result_t delete_group (struct group_object *, int);
-isc_result_t supersede_group (struct group_object *, int);
+int find_hosts_by_haddr PROTO ((struct host_decl **, int,
+				const unsigned char *, unsigned,
+				const char *, int));
+int find_hosts_by_uid PROTO ((struct host_decl **, const unsigned char *,
+			      unsigned, const char *, int));
+int find_host_for_network PROTO ((struct subnet **, struct host_decl **,
+				  struct iaddr *, struct shared_network *));
 void new_address_range PROTO ((struct iaddr, struct iaddr,
 			       struct subnet *, struct pool *));
-extern struct subnet *find_grouped_subnet PROTO ((struct shared_network *,
-						  struct iaddr));
-extern struct subnet *find_subnet PROTO ((struct iaddr));
+isc_result_t dhcp_lease_free (omapi_object_t *, const char *, int);
+int find_grouped_subnet PROTO ((struct subnet **, struct shared_network *,
+				struct iaddr, const char *, int));
+int find_subnet (struct subnet **, struct iaddr, const char *, int);
 void enter_shared_network PROTO ((struct shared_network *));
 void new_shared_network_interface PROTO ((struct parse *,
 					  struct shared_network *,
@@ -1955,21 +2129,31 @@ void new_shared_network_interface PROTO ((struct parse *,
 int subnet_inner_than PROTO ((struct subnet *, struct subnet *, int));
 void enter_subnet PROTO ((struct subnet *));
 void enter_lease PROTO ((struct lease *));
-int supersede_lease PROTO ((struct lease *, struct lease *, int));
+int supersede_lease PROTO ((struct lease *, struct lease *, int, int, int));
+void process_state_transition (struct lease *);
+int lease_copy PROTO ((struct lease **, struct lease *, const char *, int));
 void release_lease PROTO ((struct lease *, struct packet *));
 void abandon_lease PROTO ((struct lease *, const char *));
 void dissociate_lease PROTO ((struct lease *));
 void pool_timer PROTO ((void *));
-struct lease *find_lease_by_uid PROTO ((const unsigned char *, unsigned));
-struct lease *find_lease_by_hw_addr PROTO ((const unsigned char *, unsigned));
-struct lease *find_lease_by_ip_addr PROTO ((struct iaddr));
+int find_lease_by_uid PROTO ((struct lease **, const unsigned char *,
+			      unsigned, const char *, int));
+int find_lease_by_hw_addr PROTO ((struct lease **, const unsigned char *,
+				  unsigned, const char *, int));
+int find_lease_by_ip_addr PROTO ((struct lease **, struct iaddr,
+				  const char *, int));
 void uid_hash_add PROTO ((struct lease *));
 void uid_hash_delete PROTO ((struct lease *));
 void hw_hash_add PROTO ((struct lease *));
 void hw_hash_delete PROTO ((struct lease *));
 void write_leases PROTO ((void));
+int lease_enqueue (struct lease *);
+void lease_instantiate (const unsigned char *, unsigned, struct lease *);
 void expire_all_pools PROTO ((void));
 void dump_subnets PROTO ((void));
+HASH_FUNCTIONS_DECL (lease, const unsigned char *, struct lease)
+HASH_FUNCTIONS_DECL (host, const unsigned char *, struct host_decl)
+HASH_FUNCTIONS_DECL (class, const char *, struct class)
 
 /* nsupdate.c */
 char *ddns_rev_name (struct lease *, struct lease_state *, struct packet *);
@@ -1988,8 +2172,11 @@ int deletePTR (const struct data_string *, const struct data_string *,
 
 /* failover.c */
 #if defined (FAILOVER_PROTOCOL)
-void enter_failover_peer PROTO ((dhcp_failover_state_t *));
-isc_result_t find_failover_peer PROTO ((dhcp_failover_state_t **, char *));
+void dhcp_failover_startup PROTO ((void));
+void dhcp_failover_write_all_states (void);
+isc_result_t enter_failover_peer PROTO ((dhcp_failover_state_t *));
+isc_result_t find_failover_peer PROTO ((dhcp_failover_state_t **,
+					const char *, const char *, int));
 isc_result_t dhcp_failover_link_initiate PROTO ((omapi_object_t *));
 isc_result_t dhcp_failover_link_signal PROTO ((omapi_object_t *,
 					       const char *, va_list));
@@ -2027,10 +2214,25 @@ isc_result_t dhcp_failover_listener_stuff PROTO ((omapi_object_t *,
 isc_result_t dhcp_failover_register PROTO ((omapi_object_t *));
 isc_result_t dhcp_failover_state_signal PROTO ((omapi_object_t *,
 						const char *, va_list));
+isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *,
+					     const char *);
+isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *,
+				      enum failover_state);
+int dhcp_failover_pool_rebalance (dhcp_failover_state_t *);
+int dhcp_failover_pool_check (struct pool *);
+int dhcp_failover_state_pool_check (dhcp_failover_state_t *);
+void dhcp_failover_timeout (void *);
+void dhcp_failover_send_contact (void *);
+isc_result_t dhcp_failover_send_updates (dhcp_failover_state_t *);
+int dhcp_failover_queue_update (struct lease *, int);
+void dhcp_failover_ack_queue_remove (dhcp_failover_state_t *, struct lease *);
 isc_result_t dhcp_failover_state_set_value PROTO ((omapi_object_t *,
 						   omapi_object_t *,
 						   omapi_data_string_t *,
 						   omapi_typed_data_t *));
+void dhcp_failover_keepalive (void *);
+void dhcp_failover_reconnect (void *);
+void dhcp_failover_listener_restart (void *);
 isc_result_t dhcp_failover_state_get_value PROTO ((omapi_object_t *,
 						   omapi_object_t *,
 						   omapi_data_string_t *,
@@ -2047,40 +2249,47 @@ isc_result_t dhcp_failover_state_create PROTO ((omapi_object_t **,
 						omapi_object_t *));
 isc_result_t dhcp_failover_state_remove PROTO ((omapi_object_t *,
 					       omapi_object_t *));
-failover_option_t *dhcp_failover_make_option PROTO ((unsigned, char *,
-						     unsigned *,
-						     unsigned, ...));
-isc_result_t dhcp_failover_put_message PROTO ((dhcp_failover_link_t *,
-					       omapi_object_t *,
-					       int, ...));
+int dhcp_failover_state_match (dhcp_failover_state_t *, u_int8_t *, unsigned);
+const char *dhcp_failover_reject_reason_print (int);
+const char *dhcp_failover_state_name_print (enum failover_state);
+failover_option_t *dhcp_failover_option_printf (unsigned, char *,
+						unsigned *,
+						unsigned, 
+						const char *, ...)
+	__attribute__((__format__(__printf__,5,6)));
+failover_option_t *dhcp_failover_make_option (unsigned, char *,
+					      unsigned *, unsigned, ...);
+isc_result_t dhcp_failover_put_message (dhcp_failover_link_t *,
+					omapi_object_t *, int, ...);
 isc_result_t dhcp_failover_send_connect PROTO ((omapi_object_t *));
-isc_result_t dhcp_failover_update_peer (struct lease *, int);
+isc_result_t dhcp_failover_send_connectack PROTO ((omapi_object_t *,
+						   dhcp_failover_state_t *,
+						   int, const char *));
+isc_result_t dhcp_failover_send_disconnect PROTO ((omapi_object_t *,
+						   int, const char *));
+isc_result_t dhcp_failover_send_bind_update (dhcp_failover_state_t *,
+					     struct lease *);
+isc_result_t dhcp_failover_send_bind_ack (dhcp_failover_state_t *,
+					  struct lease *, failover_message_t *,
+					  int, const char *);
+isc_result_t dhcp_failover_send_poolreq (dhcp_failover_state_t *);
+isc_result_t dhcp_failover_send_poolresp (dhcp_failover_state_t *, int);
+isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *,
+						failover_message_t *);
+isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *,
+					     failover_message_t *);
 void failover_print PROTO ((char *, unsigned *, unsigned, const char *));
 void update_partner PROTO ((struct lease *));
-#endif /* FAILOVER_PROTOCOL */
+int load_balance_mine (struct packet *, dhcp_failover_state_t *);
+binding_state_t binding_state_transition_check (struct lease *,
+						dhcp_failover_state_t *,
+						binding_state_t);
+int lease_mine_to_extend (struct lease *);
 
-/* client/omapi.c */
-void dhclient_db_objects_setup PROTO ((void));
-isc_result_t dhclient_interface_set_value (omapi_object_t *,
-					   omapi_object_t *,
-					   omapi_data_string_t *,
-					   omapi_typed_data_t *);
-isc_result_t dhclient_interface_get_value (omapi_object_t *,
-					   omapi_object_t *,
-					   omapi_data_string_t *,
-					   omapi_value_t **);
-isc_result_t dhclient_interface_destroy (omapi_object_t *,
-					       const char *, int);
-isc_result_t dhclient_interface_signal_handler (omapi_object_t *,
-						const char *,
-						va_list ap);
-isc_result_t dhclient_interface_stuff_values (omapi_object_t *,
-					      omapi_object_t *,
-					      omapi_object_t *);
-isc_result_t dhclient_interface_lookup (omapi_object_t **,
-					omapi_object_t *,
-					omapi_object_t *);
-isc_result_t dhclient_interface_create (omapi_object_t **,
-					omapi_object_t *);
-isc_result_t dhclient_interface_remove (omapi_object_t *,
-					omapi_object_t *);
+OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_state, dhcp_failover_state_t,
+			 dhcp_type_failover_state)
+OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_listener, dhcp_failover_listener_t,
+			 dhcp_type_failover_listener)
+OMAPI_OBJECT_ALLOC_DECL (dhcp_failover_link, dhcp_failover_link_t,
+			 dhcp_type_failover_link)
+#endif /* FAILOVER_PROTOCOL */

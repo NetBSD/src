@@ -1,12 +1,14 @@
 #!/bin/sh
 #
-#	$NetBSD: itest,v 1.5 2000/02/06 13:05:27 veego Exp $
+#	$NetBSD: itest,v 1.5.2.1 2000/06/22 18:01:00 minoura Exp $
 #
 
 echo "$1...";
+TESTDIR=$2;
+[ -z "$2" ] && TESTDIR=$PWD'/../../../../dist/ipf/test';
 /bin/cp /dev/null results/$1
-ipf -nvf ../../../../dist/ipf/test/regress/$1 2>/dev/null > results/$1
-cmp ../../../../dist/ipf/test/expected/$1 results/$1
+ipf -nvf $TESTDIR/regress/$1 2>/dev/null > results/$1
+cmp $TESTDIR/expected/$1 results/$1
 status=$?
 if [ $status = 0 ] ; then
 	touch $1

@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The Internet Software Consortium nor the names
+ * 3. Neither the name of Internet Software Consortium nor the names
  *    of its contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
@@ -43,7 +43,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhcrelay.c,v 1.3 2000/04/22 08:18:16 mellon Exp $ Copyright (c) 1997-2000The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhcrelay.c,v 1.3.2.1 2000/06/22 18:00:52 minoura Exp $ Copyright (c) 1997-2000 Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -108,7 +108,7 @@ struct server_list {
 } *servers;
 
 static char copyright [] =
-"Copyright 1997, 1998, 1999 The Internet Software Consortium.";
+"Copyright 1997, 1998, 1999 Internet Software Consortium.";
 static char arr [] = "All rights reserved.";
 static char message [] = "Internet Software Consortium DHCP Relay Agent";
 static char contrib [] = "\nPlease contribute if you find this software useful.";
@@ -325,11 +325,6 @@ void relay (ip, packet, length, from_port, from, hfrom)
 		return;
 	}
 
-	/* XXX Dave:
-	   If you're using the circuit ID to figure out where to
-	   send the reply, you can delete the following code,
-	   but you still need to validate the giaddr and drop the
-	   packet if it's bogus. */
 	/* Find the interface that corresponds to the giaddr
 	   in the packet. */
 	if (packet -> giaddr.s_addr) {
@@ -467,10 +462,10 @@ void dhcp (packet)
 {
 }
 
-struct subnet *find_subnet (addr)
-	struct iaddr addr;
+int find_subnet (struct subnet **sp,
+		 struct iaddr addr, const char *file, int line)
 {
-	return (struct subnet *)0;
+	return 0;
 }
 
 /* Strip any Relay Agent Information options from the DHCP packet

@@ -1,4 +1,4 @@
-/*      $NetBSD: catman.c,v 1.14 2000/01/09 04:54:54 tsutsui Exp $       */
+/*      $NetBSD: catman.c,v 1.14.2.1 2000/06/22 18:00:42 minoura Exp $       */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,8 +65,10 @@ int f_ignerr = 0;
 int f_noprint = 0;
 int dowhatis = 0;
 
-int		main __P((int, char **));
-static void	setdefentries __P((char *, char *, char *));
+TAG *defp;	/* pointer to _default list */
+
+int		main __P((int, char * const *));
+static void	setdefentries __P((char *, char *, const char *));
 static void	uniquepath __P((void));
 static void	catman __P((void));
 static void	scanmandir __P((const char *, const char *));
@@ -82,7 +84,7 @@ static void	usage __P((void));
 int
 main(argc, argv)
 	int argc;
-	char **argv;
+	char * const *argv;
 {
 	char *m_path = NULL;
 	char *m_add = NULL;
@@ -128,7 +130,7 @@ main(argc, argv)
 		usage();
 
 	config(_PATH_MANCONF);
-	setdefentries(m_path, m_add, (argc == 0)? NULL : argv[argc-1]);
+	setdefentries(m_path, m_add, (argc == 0) ? NULL : argv[argc-1]);
 	uniquepath();
 
 	if (f_noformat == 0 || f_nowhatis == 0)
@@ -143,12 +145,12 @@ static void
 setdefentries(m_path, m_add, sections)
 	char *m_path;
 	char *m_add;
-	char *sections;
+	const char *sections;
 {
-	TAG *defp, *defnewp, *sectnewp, *subp;
-	ENTRY *e_defp, *e_sectp, *e_subp, *ep;
-	char *p, *slashp, *machine;
-	char section[10];
+	TAG *defnewp, *sectnewp, *subp;
+	ENTRY *e_defp, *e_subp;
+	const char *p;
+	char *slashp, *machine;
 	char buf[MAXPATHLEN * 2];
 	int i;
 
@@ -167,25 +169,21 @@ setdefentries(m_path, m_add, sections)
 	if ((defp = getlist("_default")) == NULL)
 		defp = addlist("_default");
 
+	subp = getlist("_subdir");
+
 	/*
 	 * 0: If one or more sections was specified, rewrite _subdir list.
 	 */
 	if (sections != NULL) {
 		sectnewp = addlist("_section_new");
 		for(p=sections; *p;) {
-			section[0] = *p++;
-			for(i=1; *p && !isdigit(*p) && i<10; i++)
-				section[i] = *p++;
-			section[i] = '\0';
-			snprintf(buf, sizeof(buf), "man%s", section);
-			if(!(e_sectp = malloc(sizeof(ENTRY))))
-				err(1, "malloc");
-			if(!(e_sectp->s = strdup(buf)))
-				err(1, "malloc");
-			TAILQ_INSERT_TAIL(&sectnewp->list, e_sectp, q);
+			i = snprintf(buf, sizeof(buf), "man%c", *p++);
+			for(; *p && !isdigit(*p) && i<sizeof(buf)-1; i++)
+				buf[i] = *p++;
+			buf[i] = '\0';
+			addentry(sectnewp, buf, 0);
 		}
-		removelist("_subdir");
-		renamelist("_section_new", "_subdir");
+		subp = sectnewp;
 	}
 
 	/*
@@ -203,17 +201,13 @@ setdefentries(m_path, m_add, sections)
 		for (p = strtok(m_path, ":");
 		    p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
+			e_subp = subp == NULL ?  NULL : subp->list.tqh_first;
 			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&defp->list, ep, q);
+				addentry(defp, buf, 0);
 			}
 		}
 	}
@@ -224,27 +218,22 @@ setdefentries(m_path, m_add, sections)
 	 */
 	if (m_path == NULL) {
 		defp = getlist("_default");
-		defnewp = addlist("_default_new");
+		defnewp = addlist("_default_new1");
 		e_defp =
 		    defp->list.tqh_first == NULL ? NULL : defp->list.tqh_first;
 		for (; e_defp; e_defp = e_defp->q.tqe_next) {
 			slashp =
 			    e_defp->s[strlen(e_defp->s) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
+			e_subp = subp == NULL ? NULL : subp->list.tqh_first;
 			for (; e_subp; e_subp = e_subp->q.tqe_next) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
-				e_defp->s, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_TAIL(&defnewp->list, ep, q);
+					e_defp->s, slashp, e_subp->s, machine);
+				addentry(defnewp, buf, 0);
 			}
 		}
-		removelist("_default");
-		renamelist("_default_new", "_default");
+		defp = defnewp;
 	}
 
 	/*
@@ -255,17 +244,13 @@ setdefentries(m_path, m_add, sections)
 	if (m_add != NULL)
 		for (p = strtok(m_add, ":"); p != NULL; p = strtok(NULL, ":")) {
 			slashp = p[strlen(p) - 1] == '/' ? "" : "/";
-			e_subp = (subp = getlist("_subdir")) == NULL ?
-			    NULL : subp->list.tqh_first;
+			e_subp = subp == NULL ? NULL : subp->list.tqh_first;
 			for (; e_subp != NULL; e_subp = e_subp->q.tqe_next) {
 				if(!strncmp(e_subp->s, "cat", 3))
 					continue;
 				(void)snprintf(buf, sizeof(buf), "%s%s%s{/%s,}",
 				    p, slashp, e_subp->s, machine);
-				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
-				    (ep->s = strdup(buf)) == NULL)
-					err(1, "malloc");
-				TAILQ_INSERT_HEAD(&defp->list, ep, q);
+				addentry(defp, buf, 1);
 			}
 		}
 }
@@ -280,7 +265,7 @@ setdefentries(m_path, m_add, sections)
 static void
 uniquepath(void)
 {
-	TAG *defp, *defnewp;
+	TAG *defnewp;
 	ENTRY *e_defp;
 	glob_t manpaths;
 	struct stat st1;
@@ -290,7 +275,6 @@ uniquepath(void)
 	char path[PATH_MAX], *p;
 
 
-	defp = getlist("_default");
 	e_defp = defp->list.tqh_first;
 	glob(e_defp->s, GLOB_BRACE | GLOB_NOSORT, NULL, &manpaths);
 	for(e_defp = e_defp->q.tqe_next; e_defp; e_defp = e_defp->q.tqe_next) {
@@ -298,20 +282,20 @@ uniquepath(void)
 				&manpaths);
 	}
 
-	defnewp = addlist("_default_new");
+	defnewp = addlist("_default_new2");
 
 	for(i=0; i<manpaths.gl_pathc; i++) {
 		lnk = 0;
 		lstat(manpaths.gl_pathv[i], &st1);
 		for(j=0; j<manpaths.gl_pathc; j++) {
-			if(i!=j) {
+			if (i != j) {
 				lstat(manpaths.gl_pathv[j], &st2);
-				if(st1.st_ino == st2.st_ino) {
+				if (st1.st_ino == st2.st_ino) {
 					strcpy(path, manpaths.gl_pathv[i]);
 					for(p = path; *(p+1) != '\0';) {
 						p = dirname(p);
 						lstat(p, &st3);
-						if(S_ISLNK(st3.st_mode)) {
+						if (S_ISLNK(st3.st_mode)) {
 							lnk = 1;
 							break;
 						}
@@ -319,28 +303,23 @@ uniquepath(void)
 				} else {
 					len = readlink(manpaths.gl_pathv[i],
 							path, PATH_MAX);
-					if(len == -1)
+					if (len == -1)
 						continue;
-					if(!strcmp(path, manpaths.gl_pathv[j]))
+					if (!strcmp(path, manpaths.gl_pathv[j]))
 						lnk = 1;
 				}
-				if(lnk)
+				if (lnk)
 					break;
 			}
 		}
-		if(!lnk) {
-			if(!(e_defp = malloc(sizeof(ENTRY))))
-				err(1, "malloc");
-			if(!(e_defp->s = strdup(manpaths.gl_pathv[i])))
-				err(1, "malloc");
-			TAILQ_INSERT_TAIL(&defnewp->list, e_defp, q);
-		}
+
+		if (!lnk)
+			addentry(defnewp, manpaths.gl_pathv[i], 0);
 	}
 
 	globfree(&manpaths);
 
-	removelist("_default");
-	renamelist("_default_new", "_default");
+	defp = defnewp;
 }
 
 static void
@@ -348,7 +327,7 @@ catman(void)
 {
 	TAG *pathp;
 	ENTRY *e_path;
-	char *mandir;
+	const char *mandir;
 	char catdir[PATH_MAX], *cp;
 
 
@@ -356,7 +335,7 @@ catman(void)
 	for(e_path = pathp->list.tqh_first; e_path;
 				e_path = e_path->q.tqe_next) {
 		mandir = e_path->s;
-		strcpy(catdir,mandir);
+		strcpy(catdir, mandir);
 		if(!(cp = strstr(catdir, "man/man")))
 			continue;
 		cp+=4; *cp++ = 'c'; *cp++ = 'a'; *cp = 't';
@@ -432,7 +411,7 @@ scanmandir(catdir, mandir)
 
 		e_crunch = NULL;
 		crunchp = getlist("_crunch");
-		if(crunchp) {
+		if (crunchp) {
 			for(e_crunch = crunchp->list.tqh_first; e_crunch;
 					e_crunch=e_crunch->q.tqe_next) {
 				splitentry(e_crunch->s, crunchsuff, crunchcmd);
@@ -532,7 +511,7 @@ scanmandir(catdir, mandir)
 							continue;
 						}
 
-						if(symlink(catpage, linkname)
+						if (symlink(catpage, linkname)
 								== -1) {
 							warn("can't create"
 								" symbolic"

@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.20 1999/09/13 16:59:54 tron Exp $	*/
+/*	$NetBSD: iostat.c,v 1.20.6.1 2000/06/22 18:00:58 minoura Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,11 +75,12 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.20 1999/09/13 16:59:54 tron Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.20.6.1 2000/06/22 18:00:58 minoura Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/sched.h>
 #include <sys/dkstat.h>
 #include <sys/time.h>
 
@@ -385,7 +386,7 @@ cpustats()
 		time = 1.0;
 			/* States are generally never 100% and can use %3.0f. */
 	for (state = 0; state < CPUSTATES; ++state)
-		printf("%3.0f", 100. * cur.cp_time[state] / time);
+		printf(" %2.0f", 100. * cur.cp_time[state] / time);
 }
 
 static void
