@@ -1,4 +1,4 @@
-/* $NetBSD: ciareg.h,v 1.17 1998/06/04 01:04:11 thorpej Exp $ */
+/* $NetBSD: ciareg.h,v 1.18 1998/06/04 01:18:22 thorpej Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -81,6 +81,8 @@
 #define	CIA_PCI_TBIA_LOCKED	1	/* invalidate and unlock locked tags */
 #define	CIA_PCI_TBIA_UNLOCKED	2	/* invalidate unlocked tags */
 #define	CIA_PCI_TBIA_ALL	3	/* invalidate and unlock all tags */
+
+#define	CIA_TLB_NTAGS		8	/* number of TLB entries */
 
 /*
  * Values for CIA_PCI_WnBASE
