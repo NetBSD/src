@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.14 1998/12/16 10:08:35 christos Exp $	*/
+/*	$NetBSD: wait.h,v 1.15 1999/05/13 00:59:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -78,8 +78,14 @@
  * this option is done, it is as though they were still running... nothing
  * about them is returned.
  */
-#define WNOHANG		1	/* don't hang in wait */
-#define WUNTRACED	2	/* tell about stopped, untraced children */
+#define WNOHANG		0x00000001	/* don't hang in wait */
+#define WUNTRACED	0x00000002	/* tell about stopped,
+					   untraced children */
+#ifndef _POSIX_SOURCE
+#define	WALTSIG		0x00000004	/* wait for processes that exit
+					   with an alternate signal (i.e.
+					   not SIGCHLD) */
+#endif
 
 #ifndef _POSIX_SOURCE
 /* POSIX extensions and 4.2/4.3 compatability: */
