@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2004/01/06 12:30:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2004/01/07 13:07:49 minoura Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,10 @@ SUBDIR+=	Xsun Xsun24 XsunMono
 
 .if ${XSERVER_XHPC} == "yes" 
 SUBDIR+=	Xhpc
+.endif
+
+.if ${XSERVER_X68K} == "yes" 
+SUBDIR+=	X68k
 .endif
 
 .if ${XSERVER_XFREE86} == "yes" 
