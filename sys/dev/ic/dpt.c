@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.34 2002/12/09 15:24:28 ad Exp $	*/
+/*	$NetBSD: dpt.c,v 1.35 2002/12/10 20:06:43 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.34 2002/12/09 15:24:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.35 2002/12/10 20:06:43 fvdl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,8 @@ static struct dpt_sig dpt_sig = {
 	PROC_MIPS,
 #elif defined(sparc64)
 	PROC_ULTRASPARC,
+#else
+	0xff,
 #endif
 #if defined(i386)
 	PROC_386 | PROC_486 | PROC_PENTIUM | PROC_SEXIUM,
