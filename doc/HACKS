@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.31 2004/03/21 13:17:14 martin Exp $
+# $NetBSD: HACKS,v 1.32 2004/03/22 00:46:06 martin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -368,7 +368,8 @@ port	sparc64
 	hack	disable optimzations for uvm_bio.c on 32 bit kernels
 	cdate	Sun Mar 21 14:14:04 MET 2004
 	who	martin
-	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53
+	file	sys/arch/sparc64/conf/Makefile.sparc64 : 1.53-1.54
+	file	sys/arch/sparc64/conf/files.sparc64 : 1.93
 	descr
 		The sparc compiler miscompiles uvm_bio.c when using
 		any optimization. This results in ubc_release panics.
