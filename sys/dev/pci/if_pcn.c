@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.1 2001/08/27 19:42:18 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.2 2001/08/28 14:15:18 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -1961,7 +1961,7 @@ do {									\
 		ADD("10baseT-FDX", IFM_10_T|IFM_FDX, PORTSEL_10T);
 	ADD("auto", IFM_AUTO, 0);
 	if (sc->sc_variant->pcv_chipid == PARTID_Am79c970A)
-		ADD("auto", IFM_AUTO|IFM_FDX, 0);
+		ADD("auto-FDX", IFM_AUTO|IFM_FDX, 0);
 	printf("\n");
 
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
