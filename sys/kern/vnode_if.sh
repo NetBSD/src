@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.33 2003/08/07 16:32:05 agc Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.34 2004/01/25 18:02:04 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -236,8 +236,6 @@ END	{
 	argtype[0]="struct buf *";
 	argname[0]="bp";
 	arg0special="->b_vp";
-	name="vop_strategy";
-	doit();
 	name="vop_bwrite";
 	doit();
 
@@ -390,8 +388,6 @@ BEGIN	{
 	argname[0]="bp";
 	arg0special="->b_vp";
 	willrele[0]=0;
-	name="vop_strategy";
-	doit();
 	name="vop_bwrite";
 	doit();
 	printf("\n/* End of special cases */\n");
@@ -409,7 +405,6 @@ echo '
 echo '
 const struct vnodeop_desc * const vfs_op_descs[] = {
 	&vop_default_desc,	/* MUST BE FIRST */
-	&vop_strategy_desc,	/* XXX: SPECIAL CASE */
 	&vop_bwrite_desc,	/* XXX: SPECIAL CASE */
 '
 
