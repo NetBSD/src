@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2002/07/05 13:32:00 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.2 2002/07/11 14:08:45 scw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -49,6 +49,12 @@
 #if defined(_KERNEL)
 #include <machine/cpu.h>
 #include <machine/intr.h>
+#endif
+
+#ifndef _LP64
+#define	MID_MACHINE	MID_SH5_32
+#else
+#define	MID_MACHINE	MID_SH5_64
 #endif
 
 /* NetBSD/sh5 is 4KB page */
