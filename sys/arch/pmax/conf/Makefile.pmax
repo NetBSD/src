@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.69 1999/03/25 03:34:28 simonb Exp $
+#	$NetBSD: Makefile.pmax,v 1.70 1999/03/27 08:15:29 simonb Exp $
 
 # Makefile for NetBSD
 #
@@ -44,7 +44,7 @@ S=	../../../..
 PMAX=	$S/arch/pmax
 MIPS=	$S/arch/mips
 
-HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo 
+HAVE_GCC28!=	${CC} --version | egrep "^(2\.8|egcs)" ; echo
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dpmax
 CWARNFLAGS?=	-Wall -Werror -Wstrict-prototypes -Wmissing-prototypes \
@@ -180,7 +180,7 @@ SRCS=	${MIPS}/mips/locore.S ${MIPS}/mips/fp.S \
 depend: .depend
 .depend: ${SRCS} assym.h param.c
 	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MIPS}/mips/locore.S ${MIPS}/mips/fp.S
-	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S 
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${PMAX}/pmax/locore_machdep.S
 	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
 .if (${SFILES} != "")
 	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
@@ -193,14 +193,14 @@ depend: .depend
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
- 
-# depend on network or filesystem configuration 
-uipc_proto.o vfs_conf.o: Makefile 
+
+# depend on network or filesystem configuration
+uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
 
-# depend on CPU configuration 
+# depend on CPU configuration
 machdep.o mainbus.o trap.o: Makefile
 
 # depend on System V IPC/shmem options
