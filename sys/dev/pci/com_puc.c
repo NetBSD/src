@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.7 2002/10/02 16:51:06 thorpej Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.8 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.7 2002/10/02 16:51:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.8 2003/01/31 00:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,8 @@ com_puc_attach(parent, self, aux)
 	 * XXX directly on PCI.
 	 */
 
+	aprint_naive(": Serial port\n");
+
 	sc->sc_iobase = aa->a;
 	sc->sc_iot = aa->t;
 	sc->sc_ioh = aa->h;
@@ -115,14 +117,14 @@ com_puc_attach(parent, self, aux)
 	psc->sc_ih = pci_intr_establish(aa->pc, aa->intrhandle, IPL_SERIAL,
 	    comintr, sc);
 	if (psc->sc_ih == NULL) {
-		printf(": couldn't establish interrupt");
+		aprint_error(": couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf(": interrupting at %s\n", intrstr);
-	printf("%s", sc->sc_dev.dv_xname);
+	aprint_normal(": interrupting at %s\n", intrstr);
+	aprint_normal("%s", sc->sc_dev.dv_xname);
 
 	com_attach_subr(sc);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.14 2003/01/01 00:36:29 tron Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.14 2003/01/01 00:36:29 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.15 2003/01/31 00:07:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -361,14 +361,16 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	pci_intr_handle_t ih;
 	const char     *intrstr;
 
+	aprint_naive(": Audio controller\n");
+
 	if (pci_mapreg_map(pa, EMU_PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &(sc->sc_iot), &(sc->sc_ioh), &(sc->sc_iob),
 			   &(sc->sc_ios))) {
-		printf(": can't map iospace\n");
+		aprint_error(": can't map iospace\n");
 		return;
 	}
 	pci_devinfo(pa->pa_id, pa->pa_class, 1, devinfo);
-	printf(": %s\n", devinfo);
+	aprint_normal(": %s\n", devinfo);
 
 	sc->sc_pc   = pa->pa_pc;
 	sc->sc_dmat = pa->pa_dmat;
@@ -377,7 +379,7 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 		(PCI_COMMAND_STATUS_REG) | PCI_COMMAND_MASTER_ENABLE));
 
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n",
+		aprint_error("%s: couldn't map interrupt\n",
 			sc->sc_dev.dv_xname);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
@@ -387,14 +389,15 @@ emuxki_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_AUDIO, emuxki_intr,
 		sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	if (emuxki_scinit(sc) || emuxki_ac97_init(sc) ||
 	    (sc->sc_audev = audio_attach_mi(&emuxki_hw_if, sc, self)) == NULL)

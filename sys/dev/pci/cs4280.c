@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.24 2002/12/23 02:58:36 tsutsui Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.24 2002/12/23 02:58:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.25 2003/01/31 00:07:41 thorpej Exp $");
 
 #include "midi.h"
 
@@ -216,20 +216,23 @@ cs4280_attach(parent, self, aux)
 	u_int32_t mem;
 	int pci_pwrmgmt_cap_reg, pci_pwrmgmt_csr_reg;
 
+	aprint_naive(": Audio controller\n");
+
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf(": %s (rev. 0x%02x)\n", devinfo, PCI_REVISION(pa->pa_class));
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
+	    PCI_REVISION(pa->pa_class));
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_BA0, 
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->ba0t, &sc->ba0h, NULL, NULL)) {
-		printf("%s: can't map BA0 space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map BA0 space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 	if (pci_mapreg_map(pa, PCI_BA1,
 	    PCI_MAPREG_TYPE_MEM|PCI_MAPREG_MEM_TYPE_32BIT, 0,
 	    &sc->ba1t, &sc->ba1h, NULL, NULL)) {
-		printf("%s: can't map BA1 space\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: can't map BA1 space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -265,20 +268,22 @@ cs4280_attach(parent, self, aux)
 	
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't map interrupt\n",
+		    sc->sc_dev.dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, cs4280_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",sc->sc_dev.dv_xname);
+		aprint_error("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* Initialization */
 	if(cs4280_init(sc, 1) != 0)
@@ -300,7 +305,7 @@ cs4280_attach(parent, self, aux)
 	sc->host_if.write  = cs428x_write_codec;
 	sc->host_if.reset  = cs4280_reset_codec;
 	if (ac97_attach(&sc->host_if) != 0) {
-		printf("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
+		aprint_error("%s: ac97_attach failed\n", sc->sc_dev.dv_xname);
 		return;
 	}
 

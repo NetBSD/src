@@ -1,4 +1,4 @@
-/*	$NetBSD: amr.c,v 1.7 2003/01/01 00:10:22 thorpej Exp $	*/
+/*	$NetBSD: amr.c,v 1.8 2003/01/31 00:07:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.7 2003/01/01 00:10:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amr.c,v 1.8 2003/01/31 00:07:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,6 +244,8 @@ amr_attach(struct device *parent, struct device *self, void *aux)
         bus_dma_segment_t seg;
         struct amr_ccb *ac;
 
+	aprint_naive(": RAID controller\n");
+
 	amr = (struct amr_softc *)self;
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
@@ -285,7 +287,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		amr->amr_iot = iot;
 		amr->amr_ioh = ioh;
 	} else {
-		printf("can't map control registers\n");
+		aprint_error("can't map control registers\n");
 		return;
 	}
 
@@ -298,16 +300,16 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("can't map interrupt\n");
+		aprint_error("can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	amr->amr_ih = pci_intr_establish(pc, ih, IPL_BIO, amr_intr, amr);
 	if (amr->amr_ih == NULL) {
-		printf("can't establish interrupt");
+		aprint_error("can't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_normal(" at %s", intrstr);
+		aprint_normal("\n");
 		return;
 	}
 
@@ -324,7 +326,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 
 	if ((rv = bus_dmamem_alloc(amr->amr_dmat, size, PAGE_SIZE, NULL, &seg,
 	    1, &rseg, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to allocate buffer, rv = %d\n",
+		aprint_error("%s: unable to allocate buffer, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
 		return;
 	}
@@ -332,21 +334,21 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	if ((rv = bus_dmamem_map(amr->amr_dmat, &seg, rseg, size, 
 	    (caddr_t *)&amr->amr_mbox,
 	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
-		printf("%s: unable to map buffer, rv = %d\n",
+		aprint_error("%s: unable to map buffer, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_create(amr->amr_dmat, size, 1, size, 0, 
 	    BUS_DMA_NOWAIT, &amr->amr_dmamap)) != 0) {
-		printf("%s: unable to create buffer DMA map, rv = %d\n",
+		aprint_error("%s: unable to create buffer DMA map, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
 		return;
 	}
 
 	if ((rv = bus_dmamap_load(amr->amr_dmat, amr->amr_dmamap,
 	    amr->amr_mbox, size, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf("%s: unable to load buffer DMA map, rv = %d\n",
+		aprint_error("%s: unable to load buffer DMA map, rv = %d\n",
 		    amr->amr_dv.dv_xname, rv);
 		return;
 	}
@@ -378,7 +380,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 		SLIST_INSERT_HEAD(&amr->amr_ccb_freelist, ac, ac_chain.slist);
 	}
 	if (i != AMR_MAX_CMDS)
-		printf("%s: %d/%d CCBs created\n", amr->amr_dv.dv_xname,
+		aprint_error("%s: %d/%d CCBs created\n", amr->amr_dv.dv_xname,
 		    i, AMR_MAX_CMDS);
 
 	/*
@@ -405,7 +407,7 @@ amr_attach(struct device *parent, struct device *self, void *aux)
 	 * Retrieve parameters, and tell the world about us.
 	 */
 	amr->amr_maxqueuecnt = i;
-	printf(": AMI RAID ");
+	aprint_normal(": AMI RAID ");
 	if (amr_init(amr, intrstr, pa) != 0)
 		return;
 
@@ -486,11 +488,11 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	 */
 	ap = amr_enquire(amr, AMR_CMD_CONFIG, AMR_CONFIG_PRODUCT_INFO, 0);
 	if (ap != NULL) {
-		printf("<%.80s>\n", ap->ap_product);
+		aprint_normal("<%.80s>\n", ap->ap_product);
 		if (intrstr != NULL)
-			printf("%s: interrupting at %s\n",
+			aprint_normal("%s: interrupting at %s\n",
 			    amr->amr_dv.dv_xname, intrstr);
-		printf("%s: firmware %.16s, BIOS %.16s, %dMB RAM\n",
+		aprint_normal("%s: firmware %.16s, BIOS %.16s, %dMB RAM\n",
 		    amr->amr_dv.dv_xname, ap->ap_firmware, ap->ap_bios,
 		    le16toh(ap->ap_memsize));
 
@@ -503,12 +505,14 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		aex = amr_enquire(amr, AMR_CMD_CONFIG, AMR_CONFIG_ENQ3,
 		    AMR_CONFIG_ENQ3_SOLICITED_FULL);
 		if (aex == NULL) {
-			printf("%s ENQUIRY3 failed\n", amr->amr_dv.dv_xname);
+			aprint_error("%s ENQUIRY3 failed\n",
+			    amr->amr_dv.dv_xname);
 			return (-1);
 		}
 
 		if (aex->ae_numldrives > AMR_MAX_UNITS) {
-			printf("%s: adjust AMR_MAX_UNITS to %d (currently %d)"
+			aprint_error(
+			    "%s: adjust AMR_MAX_UNITS to %d (currently %d)"
 			    "\n", amr->amr_dv.dv_xname,
 			    ae->ae_ldrv.al_numdrives, AMR_MAX_UNITS);
 			amr->amr_numdrives = AMR_MAX_UNITS;
@@ -546,7 +550,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 			prodstr = amr_typestr[i].at_str;
 	} else {
 		if ((ae = amr_enquire(amr, AMR_CMD_ENQUIRY, 0, 0)) == NULL) {
-			printf("%s: unsupported controller\n",
+			aprint_error("%s: unsupported controller\n",
 			    amr->amr_dv.dv_xname);
 			return (-1);
 		}
@@ -566,11 +570,11 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 		}
 	}
 
-	printf("<%s>\n", prodstr);
+	aprint_normal("<%s>\n", prodstr);
 	if (intrstr != NULL)
-		printf("%s: interrupting at %s\n", amr->amr_dv.dv_xname,
+		aprint_normal("%s: interrupting at %s\n", amr->amr_dv.dv_xname,
 		    intrstr);
-	printf("%s: firmware <%.4s>, BIOS <%.4s>, %dMB RAM\n",
+	aprint_normal("%s: firmware <%.4s>, BIOS <%.4s>, %dMB RAM\n",
 	    amr->amr_dv.dv_xname, ae->ae_adapter.aa_firmware,
 	    ae->ae_adapter.aa_bios, ae->ae_adapter.aa_memorysize);
 
@@ -580,7 +584,7 @@ amr_init(struct amr_softc *amr, const char *intrstr,
 	 * Record state of logical drives.
 	 */
 	if (ae->ae_ldrv.al_numdrives > AMR_MAX_UNITS) {
-		printf("%s: adjust AMR_MAX_UNITS to %d (currently %d)\n",
+		aprint_error("%s: adjust AMR_MAX_UNITS to %d (currently %d)\n",
 		    amr->amr_dv.dv_xname, ae->ae_ldrv.al_numdrives,
 		    AMR_MAX_UNITS);
 		amr->amr_numdrives = AMR_MAX_UNITS;
