@@ -1,4 +1,4 @@
-/* $NetBSD: grtwo.c,v 1.1 2004/03/18 08:52:04 sekiya Exp $	 */
+/* $NetBSD: grtwo.c,v 1.2 2004/07/06 23:51:40 sekiya Exp $	 */
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.1 2004/03/18 08:52:04 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grtwo.c,v 1.2 2004/07/06 23:51:40 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,9 @@ static void     grtwo_free_screen(void *, void *);
 static int
                 grtwo_show_screen(void *, void *, int, void (*) (void *, int, int), void *);
 
+static int	grtwo_intr0(void *);
+static int	grtwo_intr6(void *);
+
 static const struct wsdisplay_emulops grtwo_textops = {
 	.cursor = grtwo_cursor,
 	.mapchar = grtwo_mapchar,
@@ -130,7 +133,7 @@ static const struct wsdisplay_accessops grtwo_accessops = {
 static const struct wsscreen_descr grtwo_screen = {
 	.name = "1280x1024",
 	.ncols = 160,
-	.nrows = 64,
+	.nrows = 64, /* 40 */
 	.textops = &grtwo_textops,
 	.fontwidth = 8,
 	.fontheight = 16,
@@ -241,66 +244,103 @@ grtwo_wait_gfifo(struct grtwo_devconfig * dc)
 	int2_wait_fifo(1);
 }
 
+static inline void
+grtwo_set_color(bus_space_tag_t iot, bus_space_handle_t ioh, int color)
+{
+	bus_space_write_4(iot, ioh, GR2_FIFO_COLOR, color);
+}
+
 /* Helper functions */
 static void
 grtwo_fill_rectangle(struct grtwo_devconfig * dc, int x1, int y1, int x2,
 		     int y2, u_int8_t color)
 {
-	/* gr2 sees coordinate 0,0 as the lower left corner of the screen */
-	y1 = dc->yres - y1;
-	y2 = dc->yres - y2;
+	int remaining;
+	int from_y;
+	int to_y;
+
+	/* gr2 sees coordinate 0,0 as the lower left corner, and 1279,1023
+	   as the upper right.  To keep things consistent, we shall flip the
+	   y axis. */
+
+	/* There appears to be a limit to the number of vertical lines that we
+	   can run through the the graphics engine at one go.  This probably has
+	   something to do with vertical refresh.  Single-row fills are okay,
+	   multiple-row screw up the board in exciting ways.  The copy_rectangle
+	   workaround doesn't work for fills. */
+
+	/* Coordinates, not length.  Remember that! */
+
+	to_y = min(dc->yres - 1 - y1, dc->yres - 1 - y2);
+	from_y = max(dc->yres - 1 - y1, dc->yres - 1 - y2);
+
+	remaining = to_y - from_y;
 
 	grtwo_wait_gfifo(dc);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_COLOR, color);
-	grtwo_wait_gfifo(dc);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTI2D, x1);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, y1);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x2);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, y2);
+	grtwo_set_color(dc->iot, dc->ioh, color);
+
+	while (remaining) {
+		if (remaining <= 32)
+		{
+			delay(10000);
+			grtwo_wait_gfifo(dc);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTI2D, x1);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, from_y);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x2);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, from_y + remaining);
+			break;
+		} else {
+			delay(100000);
+			grtwo_wait_gfifo(dc);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTI2D, x1);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, from_y);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x2);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, from_y + remaining);
+			from_y += 32;
+			remaining -=32;
+		}
+	}
 }
 
 static void
 grtwo_copy_rectangle(struct grtwo_devconfig * dc, int x1, int y1, int x2,
-		     int y2, int dx, int dy)
+		     int y2, int width, int height)
 {
-	int             length = (dx + 3) >> 2;
+	int             length = (width + 3) >> 2;
 	int             lines = 4864 / length;
 	int             from_y;
 	int             to_y;
-	int             height;
+	int		temp_height;
 
-	y1 = dc->yres - y1 - dy;
-	y2 = dc->yres - y2 - dy;
-
-	if ((y2 <= y1) || (dy < lines)) {
+	if ((y2 <= y1) || (height < lines)) {
 		grtwo_wait_gfifo(dc);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTCOPY, length);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, lines);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x1);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, y1);
-		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, dx);
-		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, dy);
+		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, width);
+		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, height);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x2);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, y2);
 	} else {
-		from_y = y1 + dy - lines;
-		to_y = y2 + dy - lines;
-		height = MIN(dy, lines);
+		from_y = y1 + height - lines;
+		to_y = y2 + height - lines;
+		temp_height = MIN(height, lines);
 
-		while (height) {
+		while (temp_height) {
 			grtwo_wait_gfifo(dc);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_RECTCOPY, length);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, lines);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x1);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, from_y);
-			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, dx);
-			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, height);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, width);
+			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, temp_height);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, x2);
 			bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, to_y);
-			dy -= height;
-			height = MIN(dy, lines);
-			from_y -= height;
-			to_y -= height;
+			height -= temp_height;
+			height = MIN(height, lines);
+			from_y -= temp_height;
+			to_y -= temp_height;
 		}
 	}
 }
@@ -308,16 +348,14 @@ grtwo_copy_rectangle(struct grtwo_devconfig * dc, int x1, int y1, int x2,
 static void
 grtwo_cmap_setrgb(struct grtwo_devconfig * dc, int index, u_int8_t r, u_int8_t g, u_int8_t b)
 {
-	/* index += 0x1000; */
-
 	grtwo_wait_gfifo(dc);
-	bus_space_write_4(dc->iot, dc->ioh, XMAPALL_ADDRHI,
-			  (index & 0x1f00) >> 8);
-	bus_space_write_4(dc->iot, dc->ioh, XMAPALL_ADDRLO,
+	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_ADDRHI,
+			  ((index & 0x1f00) >> 8) );
+	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_ADDRLO,
 			  (index & 0xff));
-	bus_space_write_4(dc->iot, dc->ioh, XMAPALL_CLUT, r);
-	bus_space_write_4(dc->iot, dc->ioh, XMAPALL_CLUT, g);
-	bus_space_write_4(dc->iot, dc->ioh, XMAPALL_CLUT, b);
+	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, r);
+	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, g);
+	bus_space_write_1(dc->iot, dc->ioh, XMAPALL_CLUT, b);
 }
 
 static void
@@ -426,6 +464,8 @@ grtwo_attach_common(struct grtwo_devconfig * dc, struct gio_attach_args * ga)
 
 	dc->iot = ga->ga_iot;
 	dc->ioh = ga->ga_ioh;
+	dc->fifo_busy = 0;
+	int i = 0;
 
 	wsfont_init();
 
@@ -440,7 +480,13 @@ grtwo_attach_common(struct grtwo_devconfig * dc, struct gio_attach_args * ga)
 
 	grtwo_setup_hw(dc);
 
-	grtwo_fill_rectangle(dc, 0, 0, dc->xres, dc->yres, 0);
+	/* Large fills are broken.  For now, clear the screen line-by-line. */
+	for (i = 0; i < 64; i++)
+		grtwo_eraserows(dc, i, 1, 0);
+
+	/* If large fills worked, we'd do this instead:
+	grtwo_fill_rectangle(dc, 0, 0, dc->xres - 1, dc->yres - 1, 0);
+	*/
 }
 
 static void
@@ -471,6 +517,12 @@ grtwo_attach(struct device * parent, struct device * self, void *aux)
 	wa.scrdata = &grtwo_screenlist;
 	wa.accessops = &grtwo_accessops;
 	wa.accesscookie = sc->sc_dc;
+
+        if ((cpu_intr_establish(0, IPL_TTY, grtwo_intr0, sc)) == NULL)
+                printf(": unable to establish interrupt!\n");
+
+        if ((cpu_intr_establish(6, IPL_TTY, grtwo_intr6, sc)) == NULL)
+                printf(": unable to establish interrupt!\n");
 
 	config_found(&sc->sc_dev, &wa, wsemuldisplaydevprint);
 }
@@ -548,7 +600,7 @@ grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
 {
 	struct grtwo_devconfig *dc = (void *) c;
 	struct wsdisplay_font *font = dc->dc_fontdata;
-	u_int8_t        *bitmap = (u_int8_t *) font->data + (ch - font->firstchar) * font->fontheight * font->stride;
+	u_int8_t        *bitmap = (u_int8_t *) font->data + (ch - font->firstchar + 1) * font->fontheight * font->stride;
 	u_int32_t        pattern;
 	int             i;
 	int             x = col * font->fontwidth;
@@ -556,17 +608,19 @@ grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
 
 	/* Set the drawing color */
 	grtwo_wait_gfifo(dc);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_COLOR, attr);
+	grtwo_set_color(dc->iot, dc->ioh, (((attr) >> 8) & 0xff));
+	grtwo_wait_gfifo(dc);
 
 	/* Set drawing coordinates */
 	grtwo_wait_gfifo(dc);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_CMOV2I, x);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, y);
 
+	/* This works for font sizes < 18 */
 	grtwo_wait_gfifo(dc);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DRAWCHAR, font->fontwidth);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, font->fontheight);
-	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, 1);
+	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, 2);
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, 0); /* x offset */
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, 0); /* y offset */
 	bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, 0);
@@ -577,7 +631,7 @@ grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
 		   two times" sort of thing?  Thanks, SGI */
 		pattern = *bitmap | (*bitmap << 8);
 		bus_space_write_4(dc->iot, dc->ioh, GR2_FIFO_DATA, pattern);
-		bitmap += font->stride;
+		bitmap -= font->stride;
 	}
 
 	/* pad up to 18 */
@@ -588,16 +642,19 @@ grtwo_putchar(void *c, int row, int col, u_int ch, long attr)
 static void
 grtwo_copycols(void *c, int row, int srccol, int dstcol, int ncols)
 {
+#if 1
+	printf("grtwo_copycols: %i %i %i %i\n", row, srccol, dstcol, ncols);
+#else
 	struct grtwo_devconfig *dc = (void *) c;
 	struct wsdisplay_font *font = dc->dc_fontdata;
-
 	grtwo_copy_rectangle(dc,
 			     srccol * font->fontwidth,	/* x1 */
-			     row * font->fontheight,	/* y1 */
-			     (srccol + ncols + 1) * font->fontwidth - 1,	/* x2 */
-			     (row + 1) * font->fontheight - 1,	/* y2 */
-			     dstcol * font->fontheight,	/* dx */
-			     row * font->fontheight);	/* dy */
+			     0,	/* y1 */
+			     dstcol * font->fontwidth,	/* x2 */
+			     0,	/* y2 */
+			     ncols * font->fontwidth,	/* dx */
+			     dc->yres );	/* dy */
+#endif
 }
 
 static void
@@ -608,9 +665,9 @@ grtwo_erasecols(void *c, int row, int startcol, int ncols, long attr)
 
 	grtwo_fill_rectangle(dc,
 			     startcol * font->fontwidth,	/* x1 */
-			     row * font->fontheight,	/* y1 */
-			     (startcol + ncols + 1) * font->fontwidth - 1,	/* x2 */
-			     (row + 1) * font->fontheight - 1,	/* y2 */
+			     0,	/* y1 */
+			     (startcol * font->fontwidth) + ncols * font->fontwidth,	/* x2 */
+			     dc->yres,	/* y2 */
 			     GR2_ATTR_BG(attr));
 }
 
@@ -623,10 +680,10 @@ grtwo_copyrows(void *c, int srcrow, int dstrow, int nrows)
 	grtwo_copy_rectangle(dc,
 			     0,	/* x1 */
 			     srcrow * font->fontheight,	/* y1 */
-			     dc->xres,	/* x2 */
-			     (srcrow + nrows + 1) * font->fontheight - 1,	/* y2 */
-			     0,	/* dx */
-			     dstrow * font->fontheight);	/* dy */
+			     0, /* x2 */
+			     dstrow * font->fontheight,	/* y2 */
+			     dc->xres,	/* dx */
+			     nrows * font->fontheight);
 }
 
 static void
@@ -634,12 +691,11 @@ grtwo_eraserows(void *c, int startrow, int nrows, long attr)
 {
 	struct grtwo_devconfig *dc = (void *) c;
 	struct wsdisplay_font *font = dc->dc_fontdata;
-
 	grtwo_fill_rectangle(dc,
 			     0,	/* x1 */
 			     startrow * font->fontheight,	/* y1 */
 			     dc->xres,	/* x2 */
-			     (startrow + nrows + 1) * font->fontheight - 1,	/* y2 */
+			     (startrow * font->fontheight) + nrows * font->fontheight,	/* y2 */
 			     GR2_ATTR_BG(attr));
 }
 
@@ -723,3 +779,19 @@ grtwo_show_screen(void *c, void *cookie, int waitok,
 {
 	return 0;
 }
+
+static int
+grtwo_intr0(void *arg)
+{
+	/* struct grtwo_devconfig *dc = arg; */
+	return 1;
+}
+	
+
+static int
+grtwo_intr6(void *arg)
+{
+	/* struct grtwo_devconfig *dc = arg; */
+	return 1;
+}
+	
