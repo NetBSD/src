@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.2 2004/05/20 20:35:05 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.3 2004/05/21 04:24:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.3.2.1.4.4 2004/03/17 01:13:36 marka Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.2 2004/05/20 20:35:05 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.3 2004/05/21 04:24:53 christos Exp $");
 #endif
 #endif
 
@@ -466,7 +466,11 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			goto formerr;
 
 		/* Key flags, Protocol, Algorithm. */
+#ifndef _LIBC
 		key_id = dst_s_dns_key_id(rdata, edata-rdata);
+#else
+		key_id = 0;
+#endif
 		keyflags = ns_get16(rdata);  rdata += NS_INT16SZ;
 		protocol = *rdata++;
 		algorithm = *rdata++;
