@@ -1,5 +1,5 @@
 #! /bin/sh
-#  $NetBSD: build.sh,v 1.3 2001/10/19 16:43:47 tv Exp $
+#  $NetBSD: build.sh,v 1.4 2001/10/24 02:39:56 tv Exp $
 #
 # Top level build wrapper, for a system containing no tools.
 #
@@ -44,41 +44,91 @@ getarch () {
 		dreamcast|evbsh3|hpcsh)
 			MACHINE_ARCH=sh3el;;
 
-		*)	MACHINE_ARCH=$MACHINE;;
+		alpha|arm26|i386|sparc|sparc64|vax|x86_64)
+			MACHINE_ARCH=$MACHINE;;
+
+		*)	bomb "unknown target MACHINE: $MACHINE";;
 	esac
+}
+
+# Emulate "mkdir -p" for systems that have an Old "mkdir".
+mkdirp () {
+	IFS=/; set -- $@; unset IFS
+	_d=
+	if [ "$1" = "" ]; then _d=/; shift; fi
+
+	for _f in "$@"; do
+		if [ "$_f" != "" ]; then
+			[ -d "$_d$_f" ] || mkdir "$_d$_f" || return 1
+			_d="$_d$_f/"
+		fi
+	done
 }
 
 usage () {
 	echo "Usage:"
-	echo "$0 [-r] [-j njob] [-m mach] [-D dest] [-R release] [-T tools]"
+	echo "$0 [-r] [-a arch] [-j njob] [-m mach] [-D dest] [-R release] [-T tools]"
+	echo "    -m: set target MACHINE to mach (REQUIRED, or set in environment)"
+	echo "    -D: set DESTDIR to dest (REQUIRED, or set in environment)"
+	echo "    -T: set TOOLDIR to tools (REQUIRED, or set in environment)"
+	echo ""
+	echo "    -a: set target MACHINE_ARCH to arch (otherwise deduced from MACHINE)"
 	echo "    -j: set NBUILDJOBS to njob"
-	echo "    -m: set target MACHINE to mach"
 	echo "    -r: remove TOOLDIR and DESTDIR before the build"
-	echo "    -D: set DESTDIR to dest"
-	echo "    -R: build a release to release"
-	echo "    -T: set TOOLDIR to tools"
+	echo "    -R: build a release (set RELEASEDIR) to release"
 	exit 1
 }
 
-while getopts hj:m:rD:R:T: opt; do case $opt in
-	j)	buildjobs="NBUILDJOBS=$OPTARG";;
+opts='a:hj:m:rD:R:T:'
 
-	m)	MACHINE=$OPTARG; getarch;; # getarch overrides MACHINE_ARCH
+if type getopts >/dev/null 2>&1; then
+	# Use POSIX getopts.
+	getoptcmd='getopts $opts opt && opt=-$opt'
+	optargcmd=':'
+else
+	type getopt >/dev/null 2>&1 || bomb "/bin/sh shell is too old; try ksh"
 
-	r)	removedirs=true;;
+	# Use old-style getopt(1) (doesn't handle whitespace in args).
+	args="`getopt $opts $*`"
+	[ $? = 0 ] || usage
+	set -- $args
 
-	D)	DESTDIR="$OPTARG";;
+	getoptcmd='[ $# -gt 0 ] && opt="$1" && shift'
+	optargcmd='OPTARG="$1"; shift'
+fi
+	
+opt_a=no
+while eval $getoptcmd; do case $opt in
+	-a)	eval $optargcmd
+		MACHINE_ARCH=$OPTARG; opt_a=yes;;
 
-	R)	releasedir="RELEASEDIR=$OPTARG"; buildtarget=release;;
+	-j)	eval $optargcmd
+		buildjobs="NBUILDJOBS=$OPTARG";;
 
-	T)	TOOLDIR="$OPTARG";;
+	# -m overrides MACHINE_ARCH unless "-a" is specified
+	-m)	eval $optargcmd
+		MACHINE=$OPTARG; [ "$opt_a" != "yes" ] && getarch;;
 
-	'?'|h)	usage;;
+	-r)	removedirs=true;;
+
+	-D)	eval $optargcmd
+		DESTDIR="$OPTARG";;
+
+	-R)	eval $optargcmd
+		releasedir="RELEASEDIR=$OPTARG"; buildtarget=release;;
+
+	-T)	eval $optargcmd
+		TOOLDIR="$OPTARG";;
+
+	--)		break;;
+	-'?'|-h)	usage;;
 esac; done
 
-for var in DESTDIR TOOLDIR MACHINE; do
-	eval 'test -n "$'$var'"' || \
-		bomb "$var must be set in the environment before running build.sh"
+for var in MACHINE DESTDIR TOOLDIR; do
+	if ! eval 'test -n "$'$var'"'; then
+		echo "$var must be set in the environment before running build.sh."
+		echo ""; usage
+	fi
 done
 
 # Set up environment.
@@ -91,12 +141,12 @@ if ${removedirs-false}; then
 	rm -rf $DESTDIR $TOOLDIR
 fi
 
-[ -d $TOOLDIR/bin ] || mkdir -p $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
+mkdirp $TOOLDIR/bin || bomb "mkdir of $TOOLDIR/bin failed"
 
-# Test make source file timestamps against installed bmake binary.
-if [ -x $TOOLDIR/bin/bmake ]; then
+# Test make source file timestamps against installed nbmake binary.
+if [ -x $TOOLDIR/bin/nbmake ]; then
 	for f in usr.bin/make/*.[ch] usr.bin/make/lst.lib/*.[ch]; do
-		if [ $f -nt $TOOLDIR/bin/bmake ]; then
+		if [ $f -nt $TOOLDIR/bin/nbmake ]; then
 			rebuildmake=true; break
 		fi
 	done
@@ -104,28 +154,49 @@ else
 	rebuildmake=true
 fi
 
-# Build $TOOLDIR/bin/bmake.
+# Build $TOOLDIR/bin/nbmake.
 if ${rebuildmake-false}; then
-	echo "Building bmake...."
+	echo "Building nbmake...."
 
 	# Go to a temporary directory in case building .o's happens.
 	srcdir=`pwd`
-	cd ${TMPDIR-/tmp}
+	tmpdir=${TMPDIR-/tmp}/nbbuild$$
+
+	mkdir $tmpdir || bomb "cannot mkdir: $tmpdir"
+	trap "rm -r -f $tmpdir" 0
+	trap "exit 1" 1 2 3 15
+	cd $tmpdir
 
 	${HOST_CC-cc} ${HOST_CFLAGS} -DMAKE_BOOTSTRAP \
-		-o $TOOLDIR/bin/bmake -I$srcdir/usr.bin/make \
+		-o $TOOLDIR/bin/nbmake -I$srcdir/usr.bin/make \
 		$srcdir/usr.bin/make/*.c $srcdir/usr.bin/make/lst.lib/*.c \
-		|| bomb "build of bmake failed"
+		|| bomb "build of nbmake failed"
 
 	# Clean up.
-	rm -f *.o
 	cd $srcdir
+	rm -r -f $tmpdir
+	trap 0 1 2 3 15
 
 	# Some compilers are just *that* braindead.
 	rm -f $srcdir/usr.bin/make/*.o $srcdir/usr.bin/make/lst.lib/*.o
 fi
 
-$TOOLDIR/bin/bmake ${buildtarget-build} -m `pwd`/share/mk \
+# Build a nbmake wrapper script, usable by hand as well as by build.sh.
+makeprog=$TOOLDIR/bin/nbmake-$MACHINE
+
+if ${rebuildmake-false} || [ ! -f $makeprog ] || [ $makeprog -ot build.sh ]; then
+	rm -f $makeprog
+	cat >$makeprog <<EOF
+#! /bin/sh
+# Set proper variables to allow easy "make" building of a NetBSD subtree.
+# Generated from:  \$NetBSD: build.sh,v 1.4 2001/10/24 02:39:56 tv Exp $
+#
+exec $TOOLDIR/bin/nbmake MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
+USETOOLS=yes USE_NEW_TOOLCHAIN=yes \${1+\$@}
+EOF
+	chmod +x $makeprog
+fi
+
+exec $makeprog -m `pwd`/share/mk ${buildtarget-build} \
 	MKTOOLS=yes DESTDIR="$DESTDIR" TOOLDIR="$TOOLDIR" \
-	MACHINE=$MACHINE MACHINE_ARCH=$MACHINE_ARCH \
 	$buildjobs $releasedir
