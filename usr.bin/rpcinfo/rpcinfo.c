@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.14 2000/07/07 15:00:57 itojun Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.15 2000/10/04 20:09:05 mjl Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -174,9 +174,9 @@ main(argc, argv)
 	function = NONE;
 	errflg = 0;
 #ifdef PORTMAP
-	while ((c = getopt(argc, argv, "a:bdlmn:pstT:u")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bdlmn:pstT:u")) != -1) {
 #else
-	while ((c = getopt(argc, argv, "a:bdlmn:sT:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:bdlmn:sT:")) != -1) {
 #endif
 		switch (c) {
 #ifdef PORTMAP
