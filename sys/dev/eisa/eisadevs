@@ -1,4 +1,4 @@
-$NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $
+$NetBSD: eisadevs,v 1.2 1996/03/17 00:13:56 cgd Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -36,6 +36,7 @@ $NetBSD: eisadevs,v 1.1 1996/02/26 23:46:22 cgd Exp $
  */
 
 vendor ADP		Adaptec
+vendor AMI		AMI
 vendor BUS		BusLogic
 vendor DEC		Digital Equipment
 vendor TCM		3Com
@@ -54,8 +55,12 @@ product ADP 7771	AHA-274x
 product ADP 7756	AHA-284x (BIOS enabled)
 product ADP 7757	AHA-284x (BIOS disabled)
 
+/* AMI products */
+product AMI 4801	4801
+
 /* BusLogic products */
-/* XXX */
+product BUS 4201	Bt74xB
+product BUS 4202	Bt74xC
 
 /* Digital Equipment products */
 product DEC 4250	DE425
