@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.11 2000/04/05 03:21:31 enami Exp $
+.\"	$NetBSD: uvm.9,v 1.12 2000/04/05 03:29:06 enami Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -69,10 +69,7 @@ swapper process swaps in runnable processes that are currently swapped out,
 if there is room.
 .Pp
 There are also several miscellaneous functions.
-
-.Pp
 .Sh INITIALISATION
-
 .nr nS 1
 .Pp
 .Ft void
@@ -84,7 +81,6 @@ There are also several miscellaneous functions.
 .Ft void
 .Fn uvm_swap_init
 .nr nS 0
-
 .Pp
 .Fn uvm_init
 sets up the UVM system at system boot time, after the
@@ -93,13 +89,11 @@ global state, the page, map, kernel virtual memory state,
 machine-dependent physical map, kernel memory allocator,
 pager and anonymous memory sub-systems, and then enables
 paging of kernel objects.
-
 .Pp
 .Fn uvm_init_limits
 initialises process limits for the named process.  This is for use by
 the system startup for process zero, before any other processes are
 created.
-
 .Pp
 .Fn uvm_setpagesize
 initialises the uvmexp members pagesize (if not already done by
@@ -107,14 +101,10 @@ machine-dependent code), pageshift and pagemask.  It should be called by
 machine-dependent code early in the
 .Xr pmap_init 9
 call.
-
 .Pp
 .Fn uvm_swap_init
 initialises the swap sub-system.
-
-.Pp
 .Sh VIRTUAL ADDRESS SPACE MANAGEMENT
-
 .Pp
 .nr nS 1
 .Ft int
@@ -141,7 +131,6 @@ initialises the swap sub-system.
 .Ft void
 .Fn uvmspace_unshare "struct proc *p"
 .nr nS 0
-
 .Pp
 .Fn uvm_map
 establishes a valid mapping in map
@@ -262,7 +251,6 @@ macros return the protection, inheritance, maximum protection and advice,
 respectively.
 .Fn uvm_map
 returns a standard UVM return value.
-
 .Pp
 .Fn uvm_map_pageable
 changes the pageability of the pages in the range from
@@ -275,7 +263,6 @@ to
 .Fa new_pageable .
 .Fn uvm_map_pageable
 returns a standard UVM return value.
-
 .Pp
 .Fn uvm_map_checkprot
 checks the protection of the range from
@@ -290,7 +277,6 @@ This returns either
 .Dv TRUE
 or
 .Dv FALSE .
-
 .Pp
 .Fn uvm_map_protect
 changes the protection 
@@ -306,7 +292,6 @@ also setting the maximum protection to the region to
 if
 .Fa set_max
 is non-zero.  This function returns a standard UVM return value.
-
 .Pp
 .Fn uvm_deallocate
 deallocates kernel memory in map
@@ -315,7 +300,6 @@ from address
 .Fa start
 to
 .Fa start + size .
-
 .Pp
 .Fn uvmspace_alloc
 allocates and returns a new address space, with ranges from
@@ -324,7 +308,6 @@ to
 .Fa max ,
 setting the pageability of the address space to
 .Fa pageable.
-
 .Pp
 .Fn uvmspace_exec
 either reuses the address space of process
@@ -332,27 +315,23 @@ either reuses the address space of process
 if there are no other references to it, or creates
 a new one with
 .Fn uvmspace_alloc .
-
 .Pp
 .Fn uvmspace_fork
 creates and returns a new address space based upon the
 .Fa vm1
 address space, typically used when allocating an address space for a
 child process.
-
 .Pp
 .Fn uvmspace_free
 lowers the reference count on the address space
 .Fa vm ,
 freeing the data structures if there are no other references.
-
 .Pp
 .Fn uvmspace_share
 causes process
 .Pa p2
 to share the address space of
 .Fa p1 .
-
 .Pp
 .Fn uvmspace_unshare
 ensures that process
@@ -360,10 +339,7 @@ ensures that process
 has its own, unshared address space, by creating a new one if
 necessary by calling
 .Fn uvmspace_fork .
-
-.Pp
 .Sh PAGE FAULT HANDLING
-
 .Pp
 .nr nS 1
 .Ft int
@@ -382,10 +358,7 @@ describing the type of fault, and
 describing the type of access requested.
 .Fn uvm_fault
 returns a standard UVM return value.
-
-.Pp
 .Sh MEMORY MAPPING FILES AND DEVICES
-
 .Pp
 .nr nS 1
 .Ft struct uvm_object *
@@ -399,13 +372,11 @@ returns a standard UVM return value.
 .Ft boolean_t
 .Fn uvm_vnp_uncache "struct vnode *vp"
 .nr nS 0
-
 .Pp
 .Fn uvn_attach
 attaches a UVM object to vnode
 .Fa arg ,
 creating the object if necessary.  The object is returned.
-
 .Pp
 .Fn uvm_vnp_setsize
 sets the size of vnode
@@ -415,7 +386,6 @@ to
 Caller must hold a reference to the vnode.  If the vnode shrinks, pages
 no longer used are discarded.  This function will be removed when the
 filesystem and VM buffer caches are merged.
-
 .Pp
 .Fn uvm_vnp_sync
 flushes dirty vnodes from either the mount point passed in
@@ -426,7 +396,6 @@ is
 .Dv NULL .
 This function will be removed when the filesystem and VM buffer caches
 are merged.
-
 .Pp
 .Fn uvm_vnp_terminate
 frees all VM resources allocated to vnode
@@ -434,7 +403,6 @@ frees all VM resources allocated to vnode
 If the vnode still has references, it will not be destroyed; however
 all future operations using this vnode will fail.  This function will be
 removed when the filesystem and VM buffer caches are merged.
-
 .Pp
 .Fn uvm_vnp_uncache
 disables vnode
@@ -442,26 +410,19 @@ disables vnode
 from persisting when all references are freed.  This function will be
 removed when the file-system and UVM caches are unified.  Returns
 true if there is no active vnode.
-
-.Pp
 .Sh VIRTUAL MEMORY I/O
-
 .Pp
 .nr nS 1
 .Ft int
 .Fn uvm_io "vm_map_t map" "struct uio *uio"
 .nr nS 0
-
 .Pp
 .Fn uvm_io
 performs the I/O described in
 .Fa uio
 on the memory described in
 .Fa map .
-
-.Pp
 .Sh ALLOCATION OF KERNEL MEMORY
-
 .Pp
 .nr nS 1
 .Ft vaddr_t
@@ -483,7 +444,6 @@ on the memory described in
 .Ft void
 .Fn uvm_km_free_wakeup "vm_map_t map" "vaddr_t addr" "vsize_t size"
 .nr nS 0
-
 .Pp
 .Fn uvm_km_alloc
 and
@@ -499,7 +459,6 @@ terms of
 .Fn uvm_km_alloc1 ,
 and should almost always be used in preference to
 .Fn uvm_km_alloc1 .
-
 .Pp
 .Fn uvm_km_alloc1
 allocates and returns
@@ -507,7 +466,6 @@ allocates and returns
 bytes of wired memory in the kernel map, zeroing the memory if the
 .Fa zeroit
 argument is non-zero.
-
 .Pp
 .Fn uvm_km_kmemalloc
 allocates and returns
@@ -533,7 +491,6 @@ causes
 to use
 .Fn simple_lock_try
 when locking maps.
-
 .Pp
 .Fn uvm_km_valloc
 and
@@ -543,10 +500,7 @@ return a newly allocated zero-filled address in the kernel map of size
 .Fn uvm_km_valloc_wait
 will also wait for kernel memory to become available, if there is a
 memory shortage.
-
-.Pp
 .Sh ALLOCATION OF PHYSICAL MEMORY
-
 .Pp
 .nr nS 1
 .Ft struct vm_page *
@@ -562,7 +516,6 @@ memory shortage.
 .Ft void
 .Fn uvm_page_physload "vaddr_t start" "vaddr_t end" "vaddr_t avail_start" "vaddr_t avail_end"
 .nr nS 0
-
 .Pp
 .Fn uvm_pagealloc
 allocates a page of memory at virtual address
@@ -580,7 +533,6 @@ can be non
 Returns
 .Dv NULL
 when no page can be found.
-
 .Pp
 .Fn uvm_pagerealloc
 reallocates page
@@ -589,12 +541,10 @@ to a new object
 .Fa newobj ,
 at a new offset
 .Fa newoff .
-
 .Pp
 .Fn uvm_pagefree
 free's the physical page
 .Fa pg .
-
 .Pp
 .Fn uvm_pglistalloc
 allocates a list of pages for size
@@ -615,12 +565,10 @@ The
 and
 .Fa waitok
 arguments are currently ignored.
-
 .Pp
 .Fn uvm_pglistfree
 frees the list of pages pointed to by
 .Fa list .
-
 .Pp
 .Fn uvm_page_physload
 loads physical memory segments into VM space.  It must be called at system
@@ -632,7 +580,6 @@ and
 of the physical addresses of the segment, and the available start and end
 addresses of pages not already in use.
 .\" XXX expand on "system boot time"!
-
 .Pp
 .Fn uvm_km_suballoc
 allocates submap from
@@ -658,7 +605,6 @@ and
 If
 .Fa pageable
 is non-zero, entries in the map may be paged out.
-
 .Pp
 .Fn uvm_km_free
 and
@@ -671,10 +617,7 @@ bytes of memory in the kernal map, starting at address
 calls
 .Fn thread_wakeup
 on the map before unlocking the map.
-
-.Pp
 .Sh PROCESSES
-
 .Pp
 .nr nS 1
 .Ft void
@@ -684,25 +627,19 @@ on the map before unlocking the map.
 .Ft void
 .Fn uvm_swapin "struct proc *p"
 .nr nS 0
-
 .Pp
 .Fn uvm_pageout
 is the main loop for the page daemon.
-
 .Pp
 .Fn uvm_scheduler
 is the process zero main loop, which is to be called after the
 system has finished starting other processes.  It handles the
 swapping in of runnable, swapped out processes in priority
 order.
-
 .Pp
 .Fn uvm_swapin
 swaps in the named process.
-
-.Pp
 .Sh MISCELLANEOUS FUNCTIONS
-
 .nr nS 1
 .Pp
 .Ft struct uvm_object *
@@ -736,7 +673,6 @@ swaps in the named process.
 .Ft int
 .Fn uvm_coredump "struct proc *p" "struct vnode *vp" "struct ucred *cred" "struct core *chdr"
 .nr nS 0
-
 .Pp
 The
 .Fn uao_create ,
@@ -760,7 +696,6 @@ creates an additional reference to the named anonymous memory object.
 .Fn uao_detach
 removes a reference from the named anonymous memory object, destroying
 it if removing the last reference.
-
 .Pp
 .Fn uvm_chgkprot
 changes the protection of kernel memory from
@@ -772,7 +707,6 @@ to the value of
 This is primarily useful for debuggers, for setting breakpoints.
 This function is only available with options
 .Dv KGDB .
-
 .Pp
 .Fn uvm_kernacc
 and
@@ -785,7 +719,6 @@ for
 .Fa rw
 access, in the kernel address space, and the current process'
 address space respectively.
-
 .Pp
 .Fn uvm_vslock
 and
@@ -797,11 +730,9 @@ from
 to
 .Fa addr + len .
 These functions are normally used to wire memory for I/O.
-
 .Pp
 .Fn uvm_meter
 calculates the load average and wakes up the swapper if necessary.
-
 .Pp
 .Fn uvm_sysctl
 provides support for the
@@ -902,7 +833,6 @@ int pdpageouts; /* number of times daemon started a pageout */
 int pdpending;  /* number of times daemon got a pending pagout */
 int pddeact;    /* number of pages daemon deactivates */
 .Ed
-
 .Pp
 .Fn uvm_fork
 forks a virtual address space for process' (old)
@@ -916,14 +846,12 @@ otherwise a new address space is created.  This function
 currently has no return value, and thus cannot fail.  In
 the future, this function will changed to allowed it to
 fail in low memory conditions.
-
 .Pp
 .Fn uvm_grow
 increases the stack segment of process
 .Fa p
 to include
 .Fa sp .
-
 .Pp
 .Fn uvm_coredump
 generates a coredump on vnode
@@ -934,7 +862,6 @@ with credentials
 .Fa cred
 and core header description in
 .Fa chdr .
-
 .Sh STANDARD UVM RETURN VALUES
 This section documents the standard return values that callers of UVM
 functions can expect.  They are derived from the Mach VM values
@@ -957,7 +884,6 @@ Note that
 and
 .Dv KERN_PAGES_LOCKED
 values are not actually returned by the UVM code.
-
 .Sh NOTES
 These functions are only available with options
 .Dv UVM .
@@ -974,7 +900,6 @@ and types whose names begin with ``vm_'' will be renamed to ``uvm_''.
 The
 .Xr pmap 9
 manual page is not yet written.
-
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).  UVM's roots lie partly in the Mach-based
@@ -992,7 +917,6 @@ further documented in August 1998 in a dissertation by Charles D. Cranor.
 .Pp
 UVM appeared in
 .Nx 1.4 .
-
 .Sh AUTHOR
 Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
 .Pp
@@ -1002,7 +926,6 @@ NetBSD source tree.
 .Pp
 Chuck Silvers <chuq@chuq.com> implemented the aobj pager, thus allowing
 UVM to support System V shared memory and process swapping.
-
 .Sh SEE ALSO
 .Xr getloadavg 3 ,
 .Xr kvm 3 ,
