@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.23 2000/04/14 05:52:58 simonb Exp $	*/
+/*	$NetBSD: histedit.c,v 1.24 2000/11/06 04:21:14 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.23 2000/04/14 05:52:58 simonb Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.24 2000/11/06 04:21:14 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -132,6 +132,7 @@ bad:
 				el_set(el, EL_EDITOR, "vi");
 			else if (Eflag)
 				el_set(el, EL_EDITOR, "emacs");
+			el_source(el, NULL);
 		}
 	} else {
 		INTOFF;
