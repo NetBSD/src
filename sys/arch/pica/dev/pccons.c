@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.2 1996/03/17 01:42:18 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.3 1996/03/27 10:02:56 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -153,7 +153,7 @@ int pmsprobe __P((struct device *, void *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 int pmsintr __P((void *));
 
-struct cfattch pms_ca = {
+struct cfattach pms_ca = {
 	sizeof(struct pms_softc), pmsprobe, pmsattach
 };
 
@@ -1867,7 +1867,7 @@ pc_xmode_off()
 #endif
 	async_update();
 }
-/*	$NetBSD: pccons.c,v 1.2 1996/03/17 01:42:18 thorpej Exp $	*/
+/*	$NetBSD: pccons.c,v 1.3 1996/03/27 10:02:56 jonathan Exp $	*/
 
 #include <machine/mouse.h>
 
