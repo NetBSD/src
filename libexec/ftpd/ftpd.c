@@ -1,4 +1,4 @@
-/*	$NetBSD: ftpd.c,v 1.39 1997/10/19 18:16:19 mycroft Exp $	*/
+/*	$NetBSD: ftpd.c,v 1.39.2.1 1997/11/11 06:38:28 mrg Exp $	*/
 
 /*
  * Copyright (c) 1985, 1988, 1990, 1992, 1993, 1994
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)ftpd.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: ftpd.c,v 1.39 1997/10/19 18:16:19 mycroft Exp $");
+__RCSID("$NetBSD: ftpd.c,v 1.39.2.1 1997/11/11 06:38:28 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,7 @@ __RCSID("$NetBSD: ftpd.c,v 1.39 1997/10/19 18:16:19 mycroft Exp $");
 #include <varargs.h>
 #endif
 
-static char version[] = "Version 7.01";
+static char version[] = "Version 7.02";
 
 extern	off_t restart_point;
 extern	char cbuf[];
