@@ -1,4 +1,4 @@
-/*	$NetBSD: flt_rounds.c,v 1.2 1997/10/06 00:22:40 mark Exp $	*/
+/*	$NetBSD: flt_rounds.c,v 1.3 1997/10/13 21:24:39 mark Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -32,6 +32,7 @@
  */
 
 #include <sys/types.h>
+#include <ieeefp.h>
 
 static const int map[] = {
 	1,	/* round to nearest */
@@ -65,6 +66,8 @@ static const int map[] = {
  * This could change in the future with new floating point emulators or
  * soft float FP libraries.
  */
+
+int __flt_rounds(void);
 
 int
 __flt_rounds()
