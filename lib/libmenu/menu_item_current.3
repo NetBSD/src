@@ -1,4 +1,4 @@
-.\"	$NetBSD: menu_item_current.3,v 1.2 1999/11/24 12:43:17 kleink Exp $
+.\"	$NetBSD: menu_item_current.3,v 1.3 2000/04/20 12:17:57 blymn Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -72,12 +72,16 @@ displayed menu.
 .Sh RETURN VALUES
 .Fn current_item
 returns NULL if no items are attached to the menu.
+.Pp
+.ta 20
+.nf
 E_OK			The function was successful
 E_BAD_ARGUMENT		One or more of the arguments passed to the function
 			was incorrect.
 E_BAD_STATE		The function was called from within an initialisation
 			or termination routine.
 E_NOT_CONNECTED		The item is not connected to a menu.
+.fi
 .Sh SEE ALSO
 .Xr curses 3 ,
 .Xr menus 3

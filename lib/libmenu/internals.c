@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.5 2000/03/13 22:59:22 soren Exp $	*/
+/*	$NetBSD: internals.c,v 1.6 2000/04/20 12:17:57 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -34,9 +34,10 @@
 
 /* internal function prototypes */
 static void
-_menui_calc_neighbours(MENU *, int, int, int, int, ITEM **, ITEM **,
-			ITEM **, ITEM **);
-static void _menui_redraw_menu __P((MENU *, int, int));
+_menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
+		       int item_cols, ITEM **next, ITEM **prev,
+			ITEM **major_next, ITEM **major_prev);
+static void _menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item);
 
   /*
    * Link all the menu items together to speed up navigation.  We need
@@ -46,8 +47,7 @@ static void _menui_redraw_menu __P((MENU *, int, int));
    * calculated and the item structures updated.
    */
 int
-_menui_stitch_items(menu)
-	MENU *menu;
+_menui_stitch_items(MENU *menu)
 {
 	int i, cycle, row_major;
 
@@ -114,17 +114,9 @@ _menui_stitch_items(menu)
    * order the caller can generate the neighbours for either menu layout style.
    */
 static void
-_menui_calc_neighbours(menu, item_no, cycle, item_rows, item_cols, next, prev,
-			major_next, major_prev)
-	MENU *menu;
-	int item_no;
-	int cycle;
-	int item_rows;
-	int item_cols;
-	ITEM **next;
-	ITEM **prev;
-	ITEM **major_next;
-	ITEM **major_prev;
+_menui_calc_neighbours(MENU *menu, int item_no, int cycle, int item_rows,
+		       int item_cols, ITEM **next, ITEM **prev,
+		       ITEM **major_next, ITEM **major_prev)
 {
 	int neighbour;
 
@@ -237,10 +229,7 @@ _menui_calc_neighbours(menu, item_no, cycle, item_rows, item_cols, next, prev,
  * accordingly.  Call the term and init functions if required.
  */
 int
-_menui_goto_item(menu, item, new_top_row)
-	MENU *menu;
-	ITEM *item;
-	int new_top_row;
+_menui_goto_item(MENU *menu, ITEM *item, int new_top_row)
 {
 	int old_top_row = menu->top_row, old_cur_item = menu->cur_item;
 	
@@ -286,10 +275,7 @@ _menui_goto_item(menu, item, new_top_row)
  * otherwise return E_NO_MATCH
  */
 int
-_menui_match_items(menu, direction, item_matched)
-	MENU *menu;
-	int direction;
-	int *item_matched;
+_menui_match_items(MENU *menu, int direction, int *item_matched)
 {
 	int i, caseless;
 
@@ -345,11 +331,7 @@ _menui_match_items(menu, direction, item_matched)
  * index of the item that matched the pattern.
  */
 int
-_menui_match_pattern(menu, c, direction, item_matched)
-	MENU *menu;
-	char c;
-	int direction;
-	int *item_matched;
+_menui_match_pattern(MENU *menu, char c, int direction, int *item_matched)
 {
 	if (menu == NULL)
 		return E_BAD_ARGUMENT;
@@ -396,9 +378,7 @@ _menui_match_pattern(menu, c, direction, item_matched)
  * Draw an item in the subwindow complete with appropriate highlighting.
  */
 void
-_menui_draw_item(menu, item)
-	MENU *menu;
-	int item;
+_menui_draw_item(MENU *menu, int item)
 {
 	int j, pad_len, mark_len;
 	
@@ -406,10 +386,10 @@ _menui_draw_item(menu, item)
 	
 	wmove(menu->menu_subwin,
 	      menu->items[item]->row - menu->top_row,
-	      menu->items[item]->col * (menu->col_width + 1));
-			
+	      menu->items[item]->col * menu->col_width);
+
 	if ((menu->cur_item == item) || (menu->items[item]->selected == 1))
-		wattron(menu->menu_subwin, menu->fore);
+		wattrset(menu->menu_subwin, menu->fore);
 	if ((menu->items[item]->opts & O_SELECTABLE) != O_SELECTABLE)
 		wattron(menu->menu_subwin, menu->grey);
 
@@ -460,6 +440,19 @@ _menui_draw_item(menu, item)
 			waddch(menu->menu_subwin, ' ');
 	}
 	menu->items[item]->visible = 1;
+	
+	  /*
+	   * Fill in the spacing between items, annoying but it looks
+	   * odd if the menu items are inverse because the spacings do not
+	   * have the same attributes as the items.
+	   */
+	if (menu->items[item]->col > 0) {
+		wmove(menu->menu_subwin,
+		      menu->items[item]->row - menu->top_row,
+		      menu->items[item]->col * menu->col_width - 1);
+		waddch(menu->menu_subwin, ' ');
+	}
+	
 	  /* kill any special attributes... */
 	wattrset(menu->menu_subwin, menu->back);
 
@@ -471,8 +464,7 @@ _menui_draw_item(menu, item)
  * Draw the menu in the subwindow provided.
  */
 int
-_menui_draw_menu(menu)
-	MENU *menu;
+_menui_draw_menu(MENU *menu)
 {
 	int rowmajor, i, j, max_items, last_item, row = -1, col = -1;
 	
@@ -488,9 +480,6 @@ _menui_draw_menu(menu)
 
 	menu->col_width = getmaxx(menu->menu_subwin) / menu->cols;
 
-	  /*if ((menu->opts & O_SHOWDESC) == O_SHOWDESC)
-	    menu->col_width++;*/
-		
 	max_items = menu->rows * menu->cols;
 	last_item = ((max_items + i) > menu->item_count) ? menu->item_count :
 		(max_items + i);
@@ -498,7 +487,7 @@ _menui_draw_menu(menu)
 	for (; i < last_item; i++) {
 		if (i > menu->item_count) {
 			  /* no more items to draw, write background blanks */
-			wattron(menu->menu_subwin, menu->back);
+			wattrset(menu->menu_subwin, menu->back);
 			if (row < 0) {
 				row = menu->items[menu->item_count - 1]->row;
 				col = menu->items[menu->item_count - 1]->col;
@@ -518,7 +507,7 @@ _menui_draw_menu(menu)
 				}
 			}
 			wmove(menu->menu_subwin, row,
-			      col * (menu->col_width + 1));
+			      col * menu->col_width);
 			for (j = 0; j < menu->col_width; j++)
 				waddch(menu->menu_subwin, ' ');
 		} else {
@@ -542,8 +531,7 @@ _menui_draw_menu(menu)
  *
  */
 void
-_menui_max_item_size(menu)
-	MENU *menu;
+_menui_max_item_size(MENU *menu)
 {
 	int i, with_desc, width;
 
@@ -565,10 +553,7 @@ _menui_max_item_size(menu)
  * unhighlight the old item and highlight the new one.
  */
 static void
-_menui_redraw_menu(menu, old_top_row, old_cur_item)
-	MENU *menu;
-	int old_top_row;
-	int old_cur_item;
+_menui_redraw_menu(MENU *menu, int old_top_row, int old_cur_item)
 {
 
 	if (menu->top_row != old_top_row) {
