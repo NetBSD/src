@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.61.2.22 2001/05/01 16:37:44 he Exp $
+.\"	$NetBSD: main,v 1.61.2.23 2001/05/02 22:31:35 he Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -190,7 +190,8 @@ A driver for the Aironet/Cisco wireless PCMCIA cards has been added;
 see
 .Xr an 4 .
 .It
-NFS performance has been increased, possibly by as much as 100%.
+NFS client performance has been improved, typically by 40% for
+writes but possibly up to 100% in certain setups.
 .It
 The
 .Xr siop 4
