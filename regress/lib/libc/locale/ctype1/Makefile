@@ -1,5 +1,8 @@
-PROG=		ctype1
+#	$NetBSD: Makefile,v 1.2 2002/09/18 05:41:40 lukem Exp $
+
 NOMAN=		# defined
+
+PROG=		ctype1
 
 TESTS=		en_US.UTF-8 ja_JP.ISO2022-JP ja_JP.SJIS ja_JP.eucJP
 

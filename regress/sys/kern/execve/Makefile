@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.16 2001/12/12 01:24:15 tv Exp $
+#	$NetBSD: Makefile,v 1.17 2002/09/18 05:41:53 lukem Exp $
 
-PROG=		doexec
 NOMAN=		# defined
 LDSTATIC=	-static		# only static compilation makes sense here
+
+PROG=		doexec
 
 .include <bsd.own.mk>		# May define DESTDIR in mk.conf..
 .if defined(DESTDIR)
