@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.21 2004/04/21 19:01:17 christos Exp $	*/
+/*	$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: table.c,v 1.21 2004/04/21 19:01:17 christos Exp $");
+__RCSID("$NetBSD: table.c,v 1.22 2004/07/06 23:36:24 mycroft Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -1740,8 +1740,6 @@ rtadd(naddr	dst,
 	rt->rt_poison_metric = HOPCNT_INFINITY;
 	rt->rt_seqno = update_seqno;
 
-	if (++total_routes == MAX_ROUTES)
-		msglog("have maximum (%d) routes", total_routes);
 	if (TRACEACTIONS)
 		trace_add_del("Add", rt);
 
@@ -1753,6 +1751,9 @@ rtadd(naddr	dst,
 		msglog("rnh_addaddr() failed for %s mask=%#lx",
 		       naddr_ntoa(dst), (u_long)mask);
 		free(rt);
+	} else {
+		if (++total_routes == MAX_ROUTES)
+			msglog("have maximum (%d) routes", total_routes);
 	}
 }
 
