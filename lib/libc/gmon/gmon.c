@@ -32,7 +32,8 @@
  */
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
+/* from: static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93"; */
+static char *rcsid = "$Id: gmon.c,v 1.2 1994/05/14 06:31:15 cgd Exp $";
 #endif
 
 #include <sys/param.h>
@@ -102,7 +103,7 @@ monstartup(lowpc, highpc)
 
 	o = p->highpc - p->lowpc;
 	if (p->kcountsize < o) {
-#ifndef hp300
+#ifndef notdef
 		s_scale = ((float)p->kcountsize / o ) * SCALE_1_TO_1;
 #else /* avoid floating point */
 		int quot = o / p->kcountsize;
