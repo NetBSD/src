@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_12.c,v 1.4 1997/06/12 22:04:50 mrg Exp $	*/
+/*	$NetBSD: vm_12.c,v 1.5 1997/06/13 17:28:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -39,7 +39,6 @@
 
 #include <vm/vm_swap.h>
 
-#ifdef COMPAT_12
 int
 compat_12_sys_swapon(p, v, retval)
 	struct proc *p;
@@ -56,4 +55,3 @@ compat_12_sys_swapon(p, v, retval)
 	SCARG(&ua, misc) = 0;	/* priority */
 	return (sys_swapctl(p, &ua, retval));
 }
-#endif
