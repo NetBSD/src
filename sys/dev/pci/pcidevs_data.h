@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.662 2004/11/14 15:24:05 soren Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.663 2004/11/16 09:18:20 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.663 2004/11/14 15:23:42 soren Exp 
+ *	NetBSD: pcidevs,v 1.664 2004/11/16 09:17:20 skrll Exp 
  */
 
 /*
@@ -6168,6 +6168,10 @@ const struct pci_product pci_products[] = {
 	    "82830MP CPU to I/O Bridge 2",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
+	    "PRO/Wireless LAN 2200BG Mini-PCI Adapter",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80312_ATU,
 	    "80310 ATU",
 	},
@@ -9820,4 +9824,4 @@ const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 1878;
+const int pci_nproducts = 1879;
