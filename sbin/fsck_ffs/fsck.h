@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.17 1998/03/18 17:01:23 bouyer Exp $	*/
+/*	$NetBSD: fsck.h,v 1.18 1998/10/23 01:13:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,6 @@ struct bufarea {
 		ufs_daddr_t *b_indir;		/* indirect block */
 		struct fs *b_fs;		/* super block */
 		struct cg *b_cg;		/* cylinder group */
-		struct dinode *b_dinode;	/* inode block */
 	} b_un;
 	char b_dirty;
 };

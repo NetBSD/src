@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.24 1998/03/18 17:01:24 bouyer Exp $	*/
+/*	$NetBSD: pass2.c,v 1.25 1998/10/23 01:13:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.24 1998/03/18 17:01:24 bouyer Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.25 1998/10/23 01:13:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -160,7 +160,7 @@ pass2()
 			} else
 				markclean = 0;
 			}
-		memset(&dino, 0, sizeof(struct dinode));
+		memset(&dino, 0, DINODE_SIZE);
 		dino.di_mode = iswap16(IFDIR);
 		dino.di_size = iswap64(inp->i_isize);
 		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);
@@ -178,7 +178,7 @@ pass2()
 			inp = *inpp;
 			if (inp->i_isize == 0)
 				continue;
-		memset(&dino, 0, sizeof(struct dinode));
+		memset(&dino, 0, DINODE_SIZE);
 			dino.di_mode = iswap16(IFDIR);
 			dino.di_size = iswap64(inp->i_isize);
 		memmove(&dino.di_db[0], &inp->i_blks[0], (size_t)inp->i_numblks);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.29 1998/07/28 19:22:55 mycroft Exp $	*/
+/*	$NetBSD: inode.c,v 1.30 1998/10/23 01:13:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.29 1998/07/28 19:22:55 mycroft Exp $");
+__RCSID("$NetBSD: inode.c,v 1.30 1998/10/23 01:13:33 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -299,6 +299,7 @@ ginode(inumber)
 	ino_t inumber;
 {
 	ufs_daddr_t iblk;
+	int blkoff;
 
 	if (inumber < ROOTINO || inumber > maxino)
 		errx(EEXIT, "bad inode number %d to ginode", inumber);
@@ -310,7 +311,8 @@ ginode(inumber)
 		pbp = getdatablk(iblk, sblock->fs_bsize);
 		startinum = (inumber / INOPB(sblock)) * INOPB(sblock);
 	}
-	return (&pbp->b_un.b_dinode[inumber % INOPB(sblock)]);
+	blkoff = (inumber % INOPB(sblock)) * DINODE_SIZE;
+	return ((struct dinode *)((caddr_t)pbp->b_un.b_buf + blkoff));
 }
 
 /*
@@ -369,10 +371,10 @@ resetinodebuf()
 	lastinum = 0;
 	readcnt = 0;
 	inobufsize = blkroundup(sblock, INOBUFSIZE);
-	fullcnt = inobufsize / sizeof(struct dinode);
+	fullcnt = inobufsize / DINODE_SIZE;
 	readpercg = sblock->fs_ipg / fullcnt;
 	partialcnt = sblock->fs_ipg % fullcnt;
-	partialsize = partialcnt * sizeof(struct dinode);
+	partialsize = partialcnt * DINODE_SIZE;
 	if (partialcnt != 0) {
 		readpercg++;
 	} else {
