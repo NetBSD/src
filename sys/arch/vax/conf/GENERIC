@@ -1,0 +1,28 @@
+#
+# GENERIC VAX, currently only supports 11/750 anyway.
+#	$Id: GENERIC,v 1.1 1994/08/02 20:19:21 ragge Exp $
+#
+
+include "std.vax"
+
+options         "VAX750"
+
+options		SWAPPAGER, DEVPAGER, VNODEPAGER
+options         INET
+options		FFS
+options		COMPAT_09
+maxusers	16
+
+options           GENERIC
+
+config          vmunix          swap generic
+
+uba0		at nexus ?
+
+uda0		at uba?	csr 0172150
+ra0		at uda0 drive 0
+
+de0		at uba? csr 0174510
+
+pseudo-device   loop
+pseudo-device   pty	48

@@ -1,0 +1,10 @@
+#
+# Std vaxfiles, will be completed with Abus etc. later.
+#	$Id: std.vax,v 1.1 1994/08/02 20:19:27 ragge Exp $
+#
+machine	vax
+
+nexus0	at root
+
+options	MAXFDESCS=2048
+options	TIMEZONE=-60, DST=1
