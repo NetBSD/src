@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.37 2003/05/08 20:08:52 itojun Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.38 2003/05/14 06:47:45 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.37 2003/05/08 20:08:52 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.38 2003/05/14 06:47:45 itojun Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,16 +136,11 @@ nd6_rs_input(m, off, icmp6len)
 	if (IN6_IS_ADDR_UNSPECIFIED(&saddr6))
 		goto freeit;
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, icmp6len,);
-	nd_rs = (struct nd_router_solicit *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(nd_rs, struct nd_router_solicit *, m, off, icmp6len);
 	if (nd_rs == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 
 	icmp6len -= sizeof(*nd_rs);
 	nd6_option_init(nd_rs + 1, icmp6len, &ndopts);
@@ -231,16 +226,11 @@ nd6_ra_input(m, off, icmp6len)
 		goto bad;
 	}
 
-#ifndef PULLDOWN_TEST
-	IP6_EXTHDR_CHECK(m, off, icmp6len,);
-	nd_ra = (struct nd_router_advert *)((caddr_t)ip6 + off);
-#else
 	IP6_EXTHDR_GET(nd_ra, struct nd_router_advert *, m, off, icmp6len);
 	if (nd_ra == NULL) {
 		icmp6stat.icp6s_tooshort++;
 		return;
 	}
-#endif
 
 	icmp6len -= sizeof(*nd_ra);
 	nd6_option_init(nd_ra + 1, icmp6len, &ndopts);
