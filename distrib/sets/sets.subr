@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.34 2004/07/23 15:11:26 erh Exp $
+#	$NetBSD: sets.subr,v 1.35 2005/01/07 18:56:40 tron Exp $
 #
 
 #
@@ -72,10 +72,8 @@ all:
 .endfor
 .if (\${MKX11:Uno} != "no")
 	@echo x11_version=""
-.elif (\${USE_XF86_4:Uno} != "no")
-	@echo x11_version=4
 .else
-	@echo x11_version=3
+	@echo x11_version=4
 .endif
 
 EOMAKE
@@ -120,7 +118,7 @@ fi
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.34 2004/07/23 15:11:26 erh Exp $
+# 	# $NetBSD: sets.subr,v 1.35 2005/01/07 18:56:40 tron Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
