@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365reg.h,v 1.5 2000/02/01 22:39:51 chopps Exp $	*/
+/*	$NetBSD: i82365reg.h,v 1.6 2000/02/28 07:33:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -82,17 +82,15 @@
 #define	PCIC_PWRCTL_AUTOSWITCH_ENABLE		0x20
 #define	PCIC_PWRCTL_PWR_ENABLE			0x10
 #define	PCIC_PWRCTL_VPP2_MASK			0x0C
-/* XXX these are a little unclear from the data sheet */
 #define	PCIC_PWRCTL_VPP2_RESERVED		0x0C
-#define	PCIC_PWRCTL_VPP2_EN1			0x08
-#define	PCIC_PWRCTL_VPP2_EN0			0x04
-#define	PCIC_PWRCTL_VPP2_ENX			0x00
+#define	PCIC_PWRCTL_VPP2_12V			0x08
+#define	PCIC_PWRCTL_VPP2_VCC			0x04
+#define	PCIC_PWRCTL_VPP2_OFF			0x00
 #define	PCIC_PWRCTL_VPP1_MASK			0x03
-/* XXX these are a little unclear from the data sheet */
 #define	PCIC_PWRCTL_VPP1_RESERVED		0x03
-#define	PCIC_PWRCTL_VPP1_EN1			0x02
-#define	PCIC_PWRCTL_VPP1_EN0			0x01
-#define	PCIC_PWRCTL_VPP1_ENX			0x00
+#define	PCIC_PWRCTL_VPP1_12V			0x02
+#define	PCIC_PWRCTL_VPP1_VCC			0x01
+#define	PCIC_PWRCTL_VPP1_OFF			0x00
 
 #define	PCIC_CSC				0x04	/* RW */
 #define	PCIC_CSC_ZERO				0xE0
