@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.21 2001/02/20 23:52:55 cgd Exp $	*/
+/*	$NetBSD: mdb.c,v 1.22 2001/10/15 22:20:03 bjh21 Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,6 +43,7 @@
 #include <string.h>
 #include "mdb.h"
 #include "defs.h"
+#include "pathnames.h"
 
 /* Data */
 #define MAX 1000
@@ -128,7 +129,7 @@ write_menu_file (char *initcode)
 	/* Open the menu_sys file first. */
 	sys_prefix = getenv ("MENUDEF");
 	if (sys_prefix == NULL)
-		sys_prefix = "/usr/share/misc";
+		sys_prefix = _PATH_DEFSYSPREFIX;
 	snprintf (sname, 1024, "%s/%s", sys_prefix, sys_name);
 	sys_file = fopen (sname, "r");
 	if (sys_file == NULL) {
