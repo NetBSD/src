@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.142 2002/12/21 11:48:55 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.143 2002/12/22 02:17:24 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -95,8 +95,9 @@ struct cpu_softc {
 /* The following are used externally (sysctl_hw). */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-char	cpu_model[100];
 int	cpu_arch;			/* sparc architecture version */
+char	cpu_model[100];			/* machine model (primary cpu) */
+extern char machine_model[];
 
 int	ncpu;				/* # of CPUs detected by PROM */
 struct	cpu_info **cpus;
@@ -170,7 +171,7 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	if (ismaster == 0) {
 		/*
 		 * While we're here, allocate a per-CPU idle PCB and
-		 * interrupt stack as well.
+		 * interrupt stack as well (8KB + 16KB).
 		 */
 		sz += USPACE;		/* `idle' u-area for this CPU */
 		sz += INT_STACK_SIZE;	/* interrupt stack for this CPU */
@@ -399,10 +400,14 @@ static	struct cpu_softc *bootcpu;
 
 
 	if (cpi->master) {
+		char buf[100];
+
 		cpu_setup(sc);
-		sprintf(cpu_model, "%s @ %s MHz, %s FPU",
+		snprintf(buf, sizeof buf, "%s @ %s MHz, %s FPU",
 			cpi->cpu_name, clockfreq(cpi->hz), cpi->fpu_name);
-		printf(": %s\n", cpu_model);
+		printf(": %s\n", buf);
+		snprintf(cpu_model, sizeof cpu_model, "%s (%s)",
+			machine_model, buf);
 		cache_print(sc);
 		return;
 	}
