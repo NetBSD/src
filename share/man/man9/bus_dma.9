@@ -1,4 +1,4 @@
-.\" $NetBSD: bus_dma.9,v 1.17 2001/07/19 15:32:06 thorpej Exp $
+.\" $NetBSD: bus_dma.9,v 1.18 2001/09/03 00:29:35 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -91,7 +91,7 @@
 .Fn bus_dmamem_unmap "bus_dma_tag_t tag" "caddr_t kva" "size_t size"
 .Ft int
 .Fn bus_dmamem_mmap "bus_dma_tag_t tag" "bus_dma_segment_t *segs" \
-"int nsegs" "int off" "int prot" "int flags"
+"int nsegs" "off_t off" "int prot" "int flags"
 .Sh DESCRIPTION
 Provide a bus- and machine-independent "DMA mapping interface."
 .Sh NOTES
