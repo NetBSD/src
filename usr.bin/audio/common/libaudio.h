@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.8 2002/01/01 08:07:28 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.9 2002/01/15 08:19:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -27,6 +27,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/*
+ * audio formats
+ */
+#define AUDIO_FORMAT_NONE	1
+#define AUDIO_FORMAT_SUN	2
+#define AUDIO_FORMAT_WAV	3
+
+int	audio_format_from_str (char *);
 
 /*
  * We copy the Sun/NeXT on-disk audio header format and document what
@@ -112,6 +121,8 @@ int	audio_encoding_to_sun (int, int, int *);
 #define IBM_FORMAT_ALAW			(0x0102)
 #define IBM_FORMAT_ADPCM		(0x0103)
 
+char *wav_enc_from_val (int);
+
 typedef struct {
 	char		name[4];
 	u_int32_t	len;
@@ -127,7 +138,7 @@ typedef struct {
 } wav_audioheaderfmt __attribute__((__packed__));
 
 /* returns size of header, or -ve for failure */
-ssize_t audio_parse_wav_hdr (void *, size_t, int *, int *, int *, int *, size_t *);
+ssize_t audio_wav_parse_hdr (void *, size_t, int *, int *, int *, int *, size_t *);
 
 /*
  * audio routine error codes
@@ -137,6 +148,7 @@ ssize_t audio_parse_wav_hdr (void *, size_t, int *, int *, int *, int *, size_t 
 #define AUDIO_EWAVUNSUPP	-3		/* WAV: unsupported file */
 #define AUDIO_EWAVBADPCM	-4		/* WAV: bad PCM bps */
 #define AUDIO_EWAVNODATA	-5		/* WAV: missing data */
+#define AUDIO_EINTERNAL		-6		/* internal error */
 
 #define AUDIO_MAXERRNO		5
 
@@ -164,11 +176,21 @@ void	decode_encoding (const char *, int *);
 #define getbe16(v)	(v)
 #define getbe32(v)	(v)
 
+#define putle16(x,v)	(x) = bswap16(v)
+#define putle32(x,v)	(x) = bswap32(v)
+#define putbe16(x,v)	(x) = (v)
+#define putbe32(x,v)	(x) = (v)
+
 #else
 
 #define getle16(v)	(v)
 #define getle32(v)	(v)
 #define getbe16(v)	bswap16(v)
 #define getbe32(v)	bswap32(v)
+
+#define putle16(x,v)	(x) = (v)
+#define putle32(x,v)	(x) = (v)
+#define putbe16(x,v)	(x) = bswap16(v)
+#define putbe32(x,v)	(x) = bswap32(v)
 
 #endif

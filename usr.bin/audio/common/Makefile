@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2001/12/12 01:48:44 tv Exp $
+#	$NetBSD: Makefile,v 1.3 2002/01/15 08:19:36 mrg Exp $
 
 LIB=	audio
-SRCS=	audio.c
+SRCS=	audio.c wav.c sun.c
 
 NOPROFILE=      # defined
 NOPIC=          # defined

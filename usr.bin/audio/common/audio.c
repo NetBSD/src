@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.13 2002/01/01 08:07:28 mrg Exp $	*/
+/*	$NetBSD: audio.c,v 1.14 2002/01/15 08:19:37 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -44,6 +44,37 @@
 #include <string.h>
 
 #include "libaudio.h"
+
+/* what format am i? */
+
+struct {
+	char *fname;
+	int fno;
+} formats[] = {
+	{ "sunau",		AUDIO_FORMAT_SUN },
+	{ "au",			AUDIO_FORMAT_SUN },
+	{ "sun",		AUDIO_FORMAT_SUN },
+	{ "wav",		AUDIO_FORMAT_WAV },
+	{ "wave",		AUDIO_FORMAT_WAV },
+	{ "riff",		AUDIO_FORMAT_WAV },
+	{ "no",			AUDIO_FORMAT_NONE },
+	{ "none",		AUDIO_FORMAT_NONE },
+	{ NULL, -1 }
+};
+
+int
+audio_format_from_str(str)
+	char *str;
+{
+	int	i;
+
+	for (i = 0; formats[i].fname; i++)
+		if (strcasecmp(formats[i].fname, str) == 0)
+			break;
+	return (formats[i].fno);
+}
+
+
 
 /* back and forth between encodings */
 struct {
@@ -98,194 +129,9 @@ audio_enc_to_val(enc)
 	if (encs[i].ename)
 		return (encs[i].eno);
 	else
-		return (-1);
-}
-
-/*
- * SunOS/NeXT .au format helpers
- */
-struct {
-	int	file_encoding;
-	int	encoding;
-	int	precision;
-} file2sw_encodings[] = {
-	{ AUDIO_FILE_ENCODING_MULAW_8,		AUDIO_ENCODING_ULAW,	8 },
-	{ AUDIO_FILE_ENCODING_LINEAR_8,		AUDIO_ENCODING_ULINEAR_BE, 8 },
-	{ AUDIO_FILE_ENCODING_LINEAR_16,	AUDIO_ENCODING_ULINEAR_BE, 16 },
-	{ AUDIO_FILE_ENCODING_LINEAR_24,	AUDIO_ENCODING_ULINEAR_BE, 24 },
-	{ AUDIO_FILE_ENCODING_LINEAR_32,	AUDIO_ENCODING_ULINEAR_BE, 32 },
-#if 0
-	/*
-	 * we should make some of these available.  the, eg ultrasparc, port
-	 * can use the VIS instructions (if available) do do some of these
-	 * mpeg ones.
-	 */
-	{ AUDIO_FILE_ENCODING_FLOAT,		AUDIO_ENCODING_ULAW,	32 },
-	{ AUDIO_FILE_ENCODING_DOUBLE,		AUDIO_ENCODING_ULAW,	64 },
-	{ AUDIO_FILE_ENCODING_ADPCM_G721,	AUDIO_ENCODING_ULAW,	4 },
-	{ AUDIO_FILE_ENCODING_ADPCM_G722,	AUDIO_ENCODING_ULAW,	0 },
-	{ AUDIO_FILE_ENCODING_ADPCM_G723_3,	AUDIO_ENCODING_ULAW,	3 },
-	{ AUDIO_FILE_ENCODING_ADPCM_G723_5,	AUDIO_ENCODING_ULAW,	5 },
-#endif
-	{ AUDIO_FILE_ENCODING_ALAW_8,		AUDIO_ENCODING_ALAW,	8 },
-	{ -1, -1 }
-};
-
-int
-audio_sun_to_encoding(sun_encoding, encp, precp)
-	int	sun_encoding;
-	int	*encp;
-	int	*precp;
-{
-	int i;
-
-	for (i = 0; file2sw_encodings[i].file_encoding != -1; i++)
-		if (file2sw_encodings[i].file_encoding == sun_encoding) {
-			*precp = file2sw_encodings[i].precision;
-			*encp = file2sw_encodings[i].encoding;
-			return (0);
-		}
-	return (1);
-}
-
-int
-audio_encoding_to_sun(encoding, precision, sunep)
-	int	encoding;
-	int	precision;
-	int	*sunep;
-{
-	int i;
-
-	for (i = 0; file2sw_encodings[i].file_encoding != -1; i++)
-		if (file2sw_encodings[i].encoding == encoding &&
-		    file2sw_encodings[i].precision == precision) {
-			*sunep = file2sw_encodings[i].file_encoding;
-			return (0);
-		}
-	return (1);
-}
-
-/*
- * sample header is:
- *
- *   RIFF\^@^C^@WAVEfmt ^P^@^@^@^A^@^B^@D<AC>^@^@^P<B1>^B^@^D^@^P^@data^@^@^C^@^@^@^@^@^@^@^@^@^@
- *
- */
-/*
- * WAV format helpers
- */
-/*
- * find a .wav header, etc. returns header length on success
- */
-ssize_t
-audio_parse_wav_hdr(hdr, sz, enc, prec, sample, channels, datasize)
-	void	*hdr;
-	size_t	sz;
-	int	*enc;
-	int	*prec;
-	int	*sample;
-	int	*channels;
-	size_t *datasize;
-{
-	char	*where = hdr;
-	wav_audioheaderpart *part;
-	wav_audioheaderfmt *fmt;
-	char	*end = (((char *)hdr) + sz);
-	int	newenc, newprec;
-
-	if (sz < 32)
 		return (AUDIO_ENOENT);
-
-	if (strncmp(where, "RIFF", 4))
-		return (AUDIO_ENOENT);
-	where += 8;
-	if (strncmp(where,  "WAVE", 4))
-		return (AUDIO_ENOENT);
-	where += 4;
-
-	do {
-		part = (wav_audioheaderpart *)where;
-		where += getle32(part->len) + 8;
-	} while (where < end && strncmp(part->name, "fmt ", 4));
-
-	/* too short ? */
-	if (where + 16 > end)
-		return (AUDIO_ESHORTHDR);
-
-	fmt = (wav_audioheaderfmt *)(part + 1);
-
-#if 0
-printf("fmt header is:\n\t%d\ttag\n\t%d\tchannels\n\t%d\tsample rate\n\t%d\tavg_bps\n\t%d\talignment\n\t%d\tbits per sample\n", getle16(fmt->tag), getle16(fmt->channels), getle32(fmt->sample_rate), getle32(fmt->avg_bps), getle16(fmt->alignment), getle16(fmt->bits_per_sample));
-#endif
-
-	switch (getle16(fmt->tag)) {
-	case WAVE_FORMAT_UNKNOWN:
-	case WAVE_FORMAT_ADPCM:
-	case WAVE_FORMAT_OKI_ADPCM:
-	case WAVE_FORMAT_DIGISTD:
-	case WAVE_FORMAT_DIGIFIX:
-	case IBM_FORMAT_MULAW:
-	case IBM_FORMAT_ALAW:
-	case IBM_FORMAT_ADPCM:
-	default:
-		return (AUDIO_EWAVUNSUPP);
-
-	case WAVE_FORMAT_PCM:
-		switch (getle16(fmt->bits_per_sample)) {
-		case 8:
-			newprec = 8;
-			break;
-		case 16:
-			newprec = 16;
-			break;
-		case 24:
-			newprec = 24;
-			break;
-		case 32:
-			newprec = 32;
-			break;
-		default:
-			return (AUDIO_EWAVBADPCM);
-		}
-		if (newprec == 8)
-			newenc = AUDIO_ENCODING_ULINEAR_LE;
-		else
-			newenc = AUDIO_ENCODING_SLINEAR_LE;
-		break;
-	case WAVE_FORMAT_ALAW:
-		newenc = AUDIO_ENCODING_ALAW;
-		newprec = 8;
-		break;
-	case WAVE_FORMAT_MULAW:
-		newenc = AUDIO_ENCODING_ULAW;
-		newprec = 8;
-		break;
-	}
-
-	do {
-		part = (wav_audioheaderpart *)where;
-#if 0
-printf("part `%c%c%c%c' len = %d\n", part->name[0], part->name[1], part->name[2], part->name[3], getle32(part->len));
-#endif
-		where += (getle32(part->len) + 8);
-	} while ((char *)where < end && strncmp(part->name, "data", 4));
-
-	if ((where - getle32(part->len)) <= end) {
-		*channels = getle16(fmt->channels);
-		*sample = getle32(fmt->sample_rate);
-		*enc = newenc;
-		*prec = newprec;
-		if (datasize)
-			*datasize = (size_t)getle32(part->len);
-		part++;
-		return ((char *)part - (char *)hdr);
-	}
-	return (AUDIO_EWAVNODATA);
 }
 
-/*
- * these belong elsewhere??
- */
 void
 decode_int(arg, intp)
 	const char *arg;
@@ -382,6 +228,7 @@ const char *const audio_errlist[] = {
 	"unsupported WAV format",		/* AUDIO_EWAVUNSUPP */
 	"bad (unsupported) WAV PCM format",	/* AUDIO_EWAVBADPCM */
 	"no WAV audio data",			/* AUDIO_EWAVNODATA */
+	"internal error",			/* AUDIO_EINTERNAL */
 };
 
 const char *

@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.28 2002/01/13 04:48:33 ross Exp $	*/
+/*	$NetBSD: play.c,v 1.29 2002/01/15 08:19:38 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -206,6 +206,11 @@ play(file)
 	ssize_t	hdrlen;
 	int fd;
 
+	if (file[0] == '-' && file[1] == 0) {
+		play_fd("standard input", STDIN_FILENO);
+		return;
+	}
+
 	fd = open(file, O_RDONLY);
 	if (fd < 0) {
 		if (!qflag)
@@ -291,6 +296,7 @@ play_fd(file, fd)
 
 	if (buffer == NULL)
 		err(1, "malloc of read buffer failed");
+
 	nr = read(fd, buffer, bufsize);
 	if (nr < 0)
 		goto read_error;
@@ -312,7 +318,7 @@ play_fd(file, fd)
 		memmove(buffer, buffer + hdrlen, nr - hdrlen);
 		nr -= hdrlen;
 	}
-	while(datasize == 0 || dataout < datasize) {
+	while (datasize == 0 || dataout < datasize) {
 		if (datasize != 0 && dataout + nr > datasize)
 			nr = datasize - dataout;
 		nw = write(audiofd, buffer, nr);
@@ -372,8 +378,9 @@ audioctl_write_fromhdr(hdr, fsz, fd, datasize)
 		goto set_audio_mode;
 	}
 
-	hdr_len = audio_parse_wav_hdr(hdr, fsz, &info.play.encoding,
-	    &info.play.precision, &info.play.sample_rate, &info.play.channels, datasize);
+	hdr_len = audio_wav_parse_hdr(hdr, fsz, &info.play.encoding,
+	    &info.play.precision, &info.play.sample_rate, &info.play.channels,
+	    datasize);
 
 	switch (hdr_len) {
 	case AUDIO_ESHORTHDR:
