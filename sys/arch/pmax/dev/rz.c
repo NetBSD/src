@@ -1,4 +1,4 @@
-/*	$NetBSD: rz.c,v 1.15 1996/04/10 16:33:46 jonathan Exp $	*/
+/*	$NetBSD: rz.c,v 1.16 1996/06/16 16:57:31 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -341,6 +341,9 @@ rzprobe(xxxsd)
 	register int i;
 	ScsiInquiryData inqbuf;
 
+	if (sd->sd_unit >= NRZ)
+		return (0);
+
 	/* init some parameters that don't change */
 	sc->sc_sd = sd;
 	sc->sc_cmd.sd = sd;
@@ -397,7 +400,7 @@ rzprobe(xxxsd)
 	printf("rz%d at %s%d drive %d slave %d", sd->sd_unit,
 		sd->sd_cdriver->d_name, sd->sd_ctlr, sd->sd_drive,
 		sd->sd_slave);
-	if (inqbuf.version > 1 || i < 36)
+	if (inqbuf.version < 1 || i < 36)
 		printf(" type 0x%x, qual 0x%x, ver %d",
 			inqbuf.type, inqbuf.qualifier, inqbuf.version);
 	else {
@@ -702,7 +705,7 @@ rzdone(unit, error, resid, status)
 	if (sd->sd_dk >= 0)
 		dk_busy &= ~(1 << sd->sd_dk);
 
-	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - bp->b_resid));
+	disk_unbusy(&sc->sc_dkdev, (bp->b_bcount - resid));
 
 	if (sc->sc_flags & RZF_SENSEINPROGRESS) {
 		sc->sc_flags &= ~RZF_SENSEINPROGRESS;
