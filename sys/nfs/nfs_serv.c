@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.59 2000/11/27 08:39:49 chs Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.60 2001/07/24 15:39:33 assar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1417,14 +1417,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 				vrele(nd.ni_startdir);
 				nfsm_reply(0);
 			}
-			nd.ni_cnd.cn_nameiop = LOOKUP;
-			nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
-			nd.ni_cnd.cn_proc = procp;
-			nd.ni_cnd.cn_cred = cred;
-			if ((error = lookup(&nd)) != 0) {
-				PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
-				nfsm_reply(0);
-			}
 			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
@@ -1618,11 +1610,6 @@ nfsrv_mknod(nfsd, slp, procp, mrq)
 			vrele(nd.ni_startdir);
 			goto out;
 		}
-		nd.ni_cnd.cn_nameiop = LOOKUP;
-		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART);
-		nd.ni_cnd.cn_proc = procp;
-		nd.ni_cnd.cn_cred = procp->p_ucred;
-		error = lookup(&nd);
 		PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 		if (error)
 			goto out;
@@ -2146,23 +2133,17 @@ nfsrv_symlink(nfsd, slp, procp, mrq)
 		vrele(nd.ni_startdir);
 	else {
 	    if (v3) {
-		nd.ni_cnd.cn_nameiop = LOOKUP;
-		nd.ni_cnd.cn_flags &= ~(LOCKPARENT | SAVESTART | FOLLOW);
-		nd.ni_cnd.cn_flags |= (NOFOLLOW | LOCKLEAF);
-		nd.ni_cnd.cn_proc = procp;
-		nd.ni_cnd.cn_cred = cred;
-		error = lookup(&nd);
-		if (!error) {
-			memset((caddr_t)fhp, 0, sizeof(nfh));
-			fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
-			error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
-			if (!error)
-				error = VOP_GETATTR(nd.ni_vp, &va, cred,
+		memset((caddr_t)fhp, 0, sizeof(nfh));
+		fhp->fh_fsid = nd.ni_vp->v_mount->mnt_stat.f_fsid;
+		error = VFS_VPTOFH(nd.ni_vp, &fhp->fh_fid);
+		if (!error)
+		    error = VOP_GETATTR(nd.ni_vp, &va, cred,
 					procp);
-			vput(nd.ni_vp);
-		}
-	    } else
+		vput(nd.ni_vp);
+	    } else {
 		vrele(nd.ni_startdir);
+		vput(nd.ni_vp);
+	    }
 	    PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 	}
 out:

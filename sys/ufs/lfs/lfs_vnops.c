@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.51 2001/07/13 20:30:25 perseant Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.52 2001/07/24 15:39:34 assar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -450,6 +450,8 @@ lfs_mknod(void *v)
         struct vnode **vpp = ap->a_vpp;
         struct inode *ip;
         int error;
+	struct mount	*mp;	
+	ino_t		ino;
 
 	if ((error = SET_DIROP(ap->a_dvp)) != 0) {
 		vput(ap->a_dvp);
@@ -469,6 +471,8 @@ lfs_mknod(void *v)
 		return (error);
 
         ip = VTOI(*vpp);
+	mp  = (*vpp)->v_mount;
+	ino = ip->i_number;
         ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
         if (vap->va_rdev != VNOVAL) {
                 /*
@@ -505,7 +509,11 @@ lfs_mknod(void *v)
 	lfs_vunref(*vpp);
         (*vpp)->v_type = VNON;
         vgone(*vpp);
-        *vpp = 0;
+	error = VFS_VGET(mp, ino, vpp);
+	if (error != 0) {
+		*vpp = NULL;
+		return (error);
+	}
         return (0);
 }
 

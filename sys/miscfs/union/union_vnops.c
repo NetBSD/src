@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.53 2001/07/04 21:38:00 chs Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.54 2001/07/24 15:39:32 assar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995 Jan-Simon Pendry.
@@ -610,12 +610,10 @@ union_mknod(v)
 		if (error)
 			return (error);
 
-		if (vp != NULLVP) {
-			error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
-					cnp, vp, NULLVP, 1);
-			if (error)
-				vput(vp);
-		}
+		error = union_allocvp(ap->a_vpp, mp, NULLVP, NULLVP,
+				      cnp, vp, NULLVP, 1);
+		if (error)
+		    vput(vp);
 		return (error);
 	}
 
@@ -1527,14 +1525,13 @@ union_symlink(v)
 
 	if (dvp != NULLVP) {
 		int error;
-		struct vnode *vp;
 
 		FIXUP(un);
 		VREF(dvp);
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_dvp);
-		error = VOP_SYMLINK(dvp, &vp, cnp, ap->a_vap, ap->a_target);
-		*ap->a_vpp = NULLVP;
+		error = VOP_SYMLINK(dvp, ap->a_vpp, cnp, ap->a_vap,
+				    ap->a_target);
 		return (error);
 	}
 

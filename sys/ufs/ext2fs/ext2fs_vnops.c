@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.33 2001/03/23 21:11:08 fvdl Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.34 2001/07/24 15:39:34 assar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -132,11 +132,15 @@ ext2fs_mknod(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct inode *ip;
 	int error;
+	struct mount	*mp;	
+	ino_t		ino;
 
 	if ((error = ext2fs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 		    ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
 	ip = VTOI(*vpp);
+	mp  = (*vpp)->v_mount;
+	ino = ip->i_number;
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
 		/*
@@ -153,7 +157,11 @@ ext2fs_mknod(v)
 	vput(*vpp);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
-	*vpp = 0;
+	error = VFS_VGET(mp, ino, vpp);
+	if (error != 0) {
+		*vpp = NULL;
+		return (error);
+	}
 	return (0);
 }
 
@@ -1206,7 +1214,8 @@ ext2fs_symlink(v)
 		error = vn_rdwr(UIO_WRITE, vp, ap->a_target, len, (off_t)0,
 		    UIO_SYSSPACE, IO_NODELOCKED, ap->a_cnp->cn_cred,
 		    (size_t *)0, (struct proc *)0);
-	vput(vp);
+	if (error)
+		vput(vp);
 	return (error);
 }
 

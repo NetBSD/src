@@ -6,7 +6,7 @@ mkdir
 rmdir
 symlink
 */
-/*	$NetBSD: coda_vnops.c,v 1.25 2001/07/03 06:46:52 chs Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.26 2001/07/24 15:39:30 assar Exp $	*/
 
 /*
  * 
@@ -1652,21 +1652,6 @@ coda_symlink(v)
 	vput(tdvp);
 	error = lookup(&nd);
 	*ap->a_vpp = nd.ni_vp;
-    }
-
-    /* 
-     * Okay, now we have to drop locks on dvp.  vpp is unlocked, but
-     * ref'd.  It doesn't matter what happens in either symlink or
-     * lookup.  Furthermore, there isn't any way for (dvp == *vpp), so
-     * we don't bother checking.  
-     */
-/*  vput(ap->a_dvp);		released earlier */
-    if (*ap->a_vpp) {
-    	VOP_UNLOCK(*ap->a_vpp, 0);	/* this line is new!! It is necessary because lookup() calls
-				   VOP_LOOKUP (coda_lookup) which returns vpp locked.  cfs_nb_lookup
-				   merged with coda_lookup() to become coda_lookup so UNLOCK is
-				   necessary */
-    	vrele(*ap->a_vpp);
     }
 
     /* 
