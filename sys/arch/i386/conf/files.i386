@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.203 2002/01/21 21:57:04 jdolecek Exp $
+#	$NetBSD: files.i386,v 1.204 2002/02/02 18:37:43 jdolecek Exp $
 #
 # new style config file for i386 architecture
 #
@@ -193,12 +193,7 @@ attach	pcmb at pci
 file	arch/i386/pci/pcmb.c		pcmb
 
 # Game adapter (joystick)
-device	joy
-file	arch/i386/isa/joy.c		joy needs-flag
-
-# PCI joysticks
-attach	joy at pci with pci_joy
-file	arch/i386/pci/joy_pci.c		pci_joy
+file	arch/i386/isa/joy_timer.c	joy
 
 #
 # ISA and mixed ISA+EISA or ISA+PCI drivers
@@ -277,9 +272,6 @@ device	fd: disk
 attach	fd at fdc
 major	{fd = 2}
 
-attach	joy at isa with joy_isa
-file	arch/i386/isa/joy_isa.c		joy_isa
-
 # Adaptec AHA-284x VL SCSI controllers
 # device declaration in sys/conf/files
 attach	ahc at isa with ahc_isa: ahc_aic77xx, smc93cx6
@@ -304,9 +296,6 @@ major	{ ed = 20 }
 
 # ISA Plug 'n Play devices
 file	arch/i386/isa/isapnp_machdep.c	isapnp
-
-attach	joy at isapnp with joy_isapnp
-file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 
 #
 # VME support
