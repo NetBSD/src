@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.207 2001/12/10 03:36:12 augustss Exp $
+$NetBSD: usbdevs,v 1.208 2001/12/12 15:36:59 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -202,6 +202,7 @@ vendor AVISION		0x0638	Avision
 vendor TEAC		0x0644	TEAC
 vendor LINKSYS		0x066b	Linksys
 vendor ACERSA		0x066e	Acer Semiconductor America
+vendor SIGMATEL		0x066f	Sigmatel
 vendor AIWA		0x0677	Aiwa
 vendor ACARD		0x0678	ACARD Technology
 vendor PROLIFIC		0x067b	Prolific Technology
@@ -672,6 +673,7 @@ product JATON EDA		0x5704	Ethernet Device Adapter
 
 /* Kawatsu products */
 product KAWATSU MH4000P		0x0003	MiniHub 4000P
+product KAWATSU KC180		0x0180	KC-180 IrDA
 
 /* Keisokugiken Corp. products */
 product KEISOKUGIKEN USBDAQ	0x0068	HKS-0200 USBDAQ
@@ -966,6 +968,9 @@ product SHUTTLE CF		0x000a	eUSB CompactFlash Adapter
 product SHUTTLE EUSCSI_B	0x000b	eUSCSI Bridge
 product SHUTTLE EUSCSI_C	0x000c	eUSCSI Bridge
 product SHUTTLE CDRW		0x0101	CD-RW Device
+
+/* Sigmatel products */
+product SIGMATEL IRDA		0x4200	IrDA
 
 /* SIIG products */
 product SIIG DIGIFILMREADER	0x0004	DigiFilm-Combo Reader
