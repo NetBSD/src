@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.10 1995/02/03 16:18:51 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.11 1995/04/15 01:56:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -429,6 +429,7 @@ portal_getattr(ap)
 {
 	struct vnode *vp = ap->a_vp;
 	struct vattr *vap = ap->a_vap;
+	struct timeval tv;
 
 	bzero(vap, sizeof(*vap));
 	vattr_null(vap);
@@ -437,7 +438,8 @@ portal_getattr(ap)
 	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid.val[0];
 	vap->va_size = DEV_BSIZE;
 	vap->va_blocksize = DEV_BSIZE;
-	microtime(&vap->va_atime);
+	microtime(&tv);
+	TIMEVAL_TO_TIMESPEC(&tv, &vap->va_atime);
 	vap->va_mtime = vap->va_atime;
 	vap->va_ctime = vap->va_ctime;
 	vap->va_gen = 0;
