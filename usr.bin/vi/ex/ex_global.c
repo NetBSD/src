@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_global.c,v 1.8 2000/03/17 02:23:17 christos Exp $	*/
+/*	$NetBSD: ex_global.c,v 1.9 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_global.c	10.20 (Berkeley) 5/3/96";
+static const char sccsid[] = "@(#)ex_global.c	10.22 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ ex_g_setup(sp, cmdp, cmd)
 	EXCMD *cmdp;
 	enum which cmd;
 {
+	CHAR_T *ptrn, *p, *t;
 	EXCMD *ecp;
 	MARK abs;
 	RANGE *rp;
@@ -81,7 +82,7 @@ ex_g_setup(sp, cmdp, cmd)
 	regmatch_t match[1];
 	size_t len;
 	int cnt, delim, eval;
-	char *ptrn, *p, *t;
+	char *dbp;
 #ifndef REG_STARTEND
 	char c;
 #endif
@@ -142,14 +143,14 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			return (1);
 		}
 
-		/* Compile the RE if necessary. */
-		if (!F_ISSET(sp, SC_RE_SEARCH) &&
-		    re_compile(sp, sp->re, NULL, NULL, &sp->re_c, RE_C_SEARCH))
+		/* Re-compile the RE if necessary. */
+		if (!F_ISSET(sp, SC_RE_SEARCH) && re_compile(sp,
+		    sp->re, sp->re_len, NULL, NULL, &sp->re_c, RE_C_SEARCH))
 			return (1);
 	} else {
 		/* Compile the RE. */
-		if (re_compile(sp,
-		    ptrn, &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
+		if (re_compile(sp, ptrn, t - ptrn,
+		    &sp->re, &sp->re_len, &sp->re_c, RE_C_SEARCH))
 			return (1);
 
 		/*
@@ -177,16 +178,15 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 	 * because the ex parser may step on the command string when it's
 	 * parsing it.
 	 */
-	if ((len = strlen(p)) == 0) {
+	if ((len = cmdp->argv[0]->len - (p - cmdp->argv[0]->bp)) == 0) {
 		p = "pp";
 		len = 1;
 	}
 
-	/* See ex.h for a discussion of SEARCH_TERMINATION. */
-	MALLOC_RET(sp, ecp->cp, char *, len * 2 + SEARCH_TERMINATION);
+	MALLOC_RET(sp, ecp->cp, char *, len * 2);
 	ecp->o_cp = ecp->cp;
 	ecp->o_clen = len;
-	memmove(ecp->cp + len + SEARCH_TERMINATION, p, len);
+	memcpy(ecp->cp + len, p, len);
 	ecp->range_lno = OOBLNO;
 	FL_SET(ecp->agv_flags, cmd == GLOBAL ? AGV_GLOBAL : AGV_V);
 	LIST_INSERT_HEAD(&sp->gp->ecq, ecp, q);
@@ -218,17 +218,17 @@ usage:		ex_emsg(sp, cmdp->cmd->usage, EXM_USAGE);
 			btype = BUSY_UPDATE;
 			cnt = INTERRUPT_CHECK;
 		}
-		if (db_get(sp, start, DBG_FATAL, &p, &len))
+		if (db_get(sp, start, DBG_FATAL, &dbp, &len))
 			return (1);
 #ifdef REG_STARTEND
 		match[0].rm_so = 0;
 		match[0].rm_eo = len;
-		eval = regexec(&sp->re_c, p, 0, match, REG_STARTEND);
+		eval = regexec(&sp->re_c, dbp, 0, match, REG_STARTEND);
 #else
-		c = p[len];
-		p[len] = '\0';
-		eval = regexec(&sp->re_c, p, 0, match, 0);
-		p[len] = c;
+		c = dbp[len];
+		dbp[len] = '\0';
+		eval = regexec(&sp->re_c, dbp, 0, match, 0);
+		dbp[len] = c;
 #endif
 		switch (eval) {
 		case 0:

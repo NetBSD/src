@@ -1,4 +1,4 @@
-/*	$NetBSD: ex.h,v 1.3 1999/01/08 06:16:55 abs Exp $	*/
+/*	$NetBSD: ex.h,v 1.4 2001/03/31 11:37:49 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -8,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)ex.h	10.22 (Berkeley) 5/16/96
+ *	@(#)ex.h	10.24 (Berkeley) 8/12/96
  */
 
 #define	PROMPTCHAR	':'		/* Prompt using a colon. */
@@ -62,17 +62,6 @@ extern EXCMDLIST const cmds[];		/* Table of ex commands. */
 		return (1);						\
 	}								\
 }
-
-/*
- * XXX
- * There's a chance that the last command in the string, source file or the @
- * buffer or global or v commands is a search command.  All search commands
- * must be nul-terminated -- the supporting RE routines require it for historic
- * reasons, and we don't want our mid-level routines to copy the strings before
- * performing searches.  So, we allocate an extra character in various places,
- * and make it a nul.
- */
-#define	SEARCH_TERMINATION	1
 
 /* Range structures for global and @ commands. */
 typedef struct _range RANGE;
@@ -162,19 +151,13 @@ struct _excmd {
 #define	E_MODIFY	0x00200000	/* File name expansion modified arg. */
 #define	E_MOVETOEND	0x00400000	/* Move to the end of the file first. */
 #define	E_NEWLINE	0x00800000	/* Found ending <newline>. */
-#define	E_USELASTCMD	0x01000000	/* Use the last command. */
-#define	E_VISEARCH	0x02000000	/* It's really a vi search command. */
+#define	E_SEARCH_WMSG	0x01000000	/* Display search-wrapped message. */
+#define	E_USELASTCMD	0x02000000	/* Use the last command. */
+#define	E_VISEARCH	0x04000000	/* It's really a vi search command. */
 #ifdef GTAGS
-#define	E_REFERENCE	0x04000000	/* locate function references */
+#define	E_REFERENCE	0x08000000	/* locate function references */
 #endif
 	u_int32_t flags;		/* Current flags. */
-};
-
-/* Cd paths. */
-typedef struct _cdpath CDPATH;
-struct _cdpath {			/* Cd path structure. */
-	TAILQ_ENTRY(_cdpath) q;		/* Linked list of cd paths. */
-	char *path;			/* Path. */
 };
 
 /* Ex private, per-screen memory. */
@@ -183,8 +166,6 @@ typedef struct _ex_private {
 	TAILQ_HEAD(_tagfh, _tagf) tagfq;/* Tag file list. */
 	LIST_HEAD(_csch, _csc) cscq;    /* Cscope connection list. */
 	char	*tag_last;		/* Saved last tag string. */
-
-	TAILQ_HEAD(_cdh, _cdpath) cdq;	/* Cd path list. */
 
 	CHAR_T	*lastbcomm;		/* Last bang command. */
 

@@ -1,5 +1,4 @@
-/*	$NetBSD: options_f.c,v 1.2 1998/01/09 08:07:01 perry Exp $	*/
-
+/*	$NetBSD: options_f.c,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -12,7 +11,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)options_f.c	10.23 (Berkeley) 5/4/96";
+static const char sccsid[] = "@(#)options_f.c	10.25 (Berkeley) 7/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>

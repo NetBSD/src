@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.3 1999/02/19 21:25:02 abs Exp $	*/
+/*	$NetBSD: cl_main.c,v 1.4 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)cl_main.c	10.27 (Berkeley) 4/28/96";
+static const char sccsid[] = "@(#)cl_main.c	10.36 (Berkeley) 10/14/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -30,17 +30,22 @@ static const char sccsid[] = "@(#)cl_main.c	10.27 (Berkeley) 4/28/96";
 #include <unistd.h>
 
 #include "../common/common.h"
+#ifdef RUNNING_IP
+#include "../ip/ip.h"
+#endif
 #include "cl.h"
 #include "pathnames.h"
 
 GS *__global_list;				/* GLOBAL: List of screens. */
 sigset_t __sigblockset;				/* GLOBAL: Blocked signals. */
 
-static GS	*gs_init __P((char *));
-static void	 nomem __P((char *));
-static int	 setsig __P((int, struct sigaction *, void (*)(int)));
-static void	 sig_end __P((GS *));
-static void	 term_init __P((char *, char *));
+static void	   cl_func_std __P((GS *));
+static CL_PRIVATE *cl_init __P((GS *));
+static GS	  *gs_init __P((char *));
+static void	   perr __P((char *, char *));
+static int	   setsig __P((int, struct sigaction *, void (*)(int)));
+static void	   sig_end __P((GS *));
+static void	   term_init __P((char *, char *));
 
 /*
  * main --
@@ -56,7 +61,7 @@ main(argc, argv)
 	GS *gp;
 	size_t rows, cols;
 	int rval;
-	char **p_av, **t_av, *ttype;
+	char *ip_arg, **p_av, **t_av, *ttype;
 
 	/* If loaded at 0 and jumping through a NULL pointer, stop. */
 	if (reenter++)
@@ -64,22 +69,52 @@ main(argc, argv)
 
 	/* Create and initialize the global structure. */
 	__global_list = gp = gs_init(argv[0]);
-	clp = GCLP(gp);
 
-#ifdef NOT_NEEDED_FOR_CURSES
 	/*
 	 * Strip out any arguments that vi isn't going to understand.  There's
 	 * no way to portably call getopt twice, so arguments parsed here must
 	 * be removed from the argument list.
 	 */
+#ifdef RUNNING_IP
+	ip_arg = NULL;
 	for (p_av = t_av = argv;;) {
 		if (*t_av == NULL) {
 			*p_av = NULL;
 			break;
 		}
+		if (!strcmp(*t_av, "--")) {
+			while ((*p_av++ = *t_av++) != NULL);
+			break;
+		}
+		if (!memcmp(*t_av, "-I", sizeof("-I") - 1)) {
+			if (t_av[0][2] != '\0') {
+				ip_arg = t_av[0] + 2;
+				++t_av;
+				--argc;
+				continue;
+			}
+			if (t_av[1] != NULL) {
+				ip_arg = t_av[1];
+				t_av += 2;
+				argc -= 2;
+				continue;
+			}
+		}
 		*p_av++ = *t_av++;
 	}
+
+	/*
+	 * If we're being called as an editor library, we're done here, we
+	 * get loaded with the curses screen, we don't share much code.
+	 */
+	if (ip_arg != NULL)
+		exit (ip_main(argc, argv, gp, ip_arg));
+#else
+	ip_arg = argv[0];
 #endif
+		
+	/* Create and initialize the CL_PRIVATE structure. */
+	clp = cl_init(gp);
 
 	/*
 	 * Initialize the terminal information.
@@ -96,7 +131,7 @@ main(argc, argv)
 	/* Add the terminal type to the global structure. */
 	if ((OG_D_STR(gp, GO_TERM) =
 	    OG_STR(gp, GO_TERM) = strdup(ttype)) == NULL)
-		nomem(gp->progname);
+		perr(gp->progname, NULL);
 
 	/* Figure out how big the screen is. */
 	if (cl_ssize(NULL, 0, &rows, &cols, NULL))
@@ -129,6 +164,15 @@ main(argc, argv)
 	if (clp->tgw != TGW_UNKNOWN)
 		(void)cl_omesg(NULL, clp, clp->tgw == TGW_SET);
 
+	/*
+	 * XXX
+	 * Reset the X11 xterm icon/window name.
+	 */
+	if (F_ISSET(clp, CL_RENAME)) {
+		(void)printf(XTERM_RENAME, ttype);
+		(void)fflush(stdout);
+	}
+
 	/* If a killer signal arrived, pretend we just got it. */
 	if (clp->killersig) {
 		(void)signal(clp->killersig, SIG_DFL);
@@ -155,7 +199,6 @@ gs_init(name)
 {
 	CL_PRIVATE *clp;
 	GS *gp;
-	int fd;
 	char *p;
 
 	/* Figure out what our name is. */
@@ -164,62 +207,61 @@ gs_init(name)
 
 	/* Allocate the global structure. */
 	CALLOC_NOMSG(NULL, gp, GS *, 1, sizeof(GS));
+	if (gp == NULL)
+		perr(name, NULL);
+
+
+	gp->progname = name;
+	return (gp);
+}
+
+/*
+ * cl_init --
+ *	Create and partially initialize the CL structure.
+ */
+static CL_PRIVATE *
+cl_init(gp)
+	GS *gp;
+{
+	CL_PRIVATE *clp;
+	int fd;
 
 	/* Allocate the CL private structure. */
-	if (gp != NULL)
-		CALLOC_NOMSG(NULL, clp, CL_PRIVATE *, 1, sizeof(CL_PRIVATE));
-	if (gp == NULL || clp == NULL)
-		nomem(name);
+	CALLOC_NOMSG(NULL, clp, CL_PRIVATE *, 1, sizeof(CL_PRIVATE));
+	if (clp == NULL)
+		perr(gp->progname, NULL);
 	gp->cl_private = clp;
 
-	/* Initialize the list of curses functions. */
-	gp->scr_addstr = cl_addstr;
-	gp->scr_attr = cl_attr;
-	gp->scr_baud = cl_baud;
-	gp->scr_bell = cl_bell;
-	gp->scr_busy = NULL;
-	gp->scr_clrtoeol = cl_clrtoeol;
-	gp->scr_cursor = cl_cursor;
-	gp->scr_deleteln = cl_deleteln;
-	gp->scr_event = cl_event;
-	gp->scr_ex_adjust = cl_ex_adjust;
-	gp->scr_fmap = cl_fmap;
-	gp->scr_insertln = cl_insertln;
-	gp->scr_keyval = cl_keyval;
-	gp->scr_move = cl_move;
-	gp->scr_msg = NULL;
-	gp->scr_optchange = cl_optchange;
-	gp->scr_refresh = cl_refresh;
-	gp->scr_rename = cl_rename;
-	gp->scr_screen = cl_screen;
-	gp->scr_suspend = cl_suspend;
-	gp->scr_usage = cl_usage;
-
 	/*
-	 * Set the G_STDIN_TTY flag.  It's purpose is to avoid setting and
-	 * resetting the tty if the input isn't from there.
+	 * Set the CL_STDIN_TTY flag.  It's purpose is to avoid setting
+	 * and resetting the tty if the input isn't from there.  We also
+	 * use the same test to determine if we're running a script or
+	 * not.
 	 */
 	if (isatty(STDIN_FILENO))
-		F_SET(gp, G_STDIN_TTY);
+		F_SET(clp, CL_STDIN_TTY);
+	else
+		F_SET(gp, G_SCRIPTED);
 
 	/*
 	 * We expect that if we've lost our controlling terminal that the
 	 * open() (but not the tcgetattr()) will fail.
 	 */
-	if (F_ISSET(gp, G_STDIN_TTY)) {
+	if (F_ISSET(clp, CL_STDIN_TTY)) {
 		if (tcgetattr(STDIN_FILENO, &clp->orig) == -1)
 			goto tcfail;
 	} else if ((fd = open(_PATH_TTY, O_RDONLY, 0)) != -1) {
 		if (tcgetattr(fd, &clp->orig) == -1) {
-tcfail:			(void)fprintf(stderr,
-			    "%s: tcgetattr: %s\n", name, strerror(errno));
+tcfail:			perr(gp->progname, "tcgetattr");
 			exit (1);
 		}
 		(void)close(fd);
 	}
 
-	gp->progname = name;
-	return (gp);
+	/* Initialize the list of curses functions. */
+	cl_func_std(gp);
+
+	return (clp);
 }
 
 /*
@@ -309,18 +351,25 @@ sig_init(gp, sp)
 		    sigaddset(&__sigblockset, SIGINT) ||
 		    setsig(SIGINT, &clp->oact[INDX_INT], h_int) ||
 		    sigaddset(&__sigblockset, SIGTERM) ||
-		    setsig(SIGTERM, &clp->oact[INDX_TERM], h_term) ||
+		    setsig(SIGTERM, &clp->oact[INDX_TERM], h_term)
+#ifdef SIGWINCH
+		    ||
 		    sigaddset(&__sigblockset, SIGWINCH) ||
-		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)) {
-			(void)fprintf(stderr,
-			    "%s: %s\n", gp->progname, strerror(errno));
+		    setsig(SIGWINCH, &clp->oact[INDX_WINCH], h_winch)
+#endif
+		    ) {
+			perr(gp->progname, NULL);
 			return (1);
 		}
 	} else
 		if (setsig(SIGHUP, NULL, h_hup) ||
 		    setsig(SIGINT, NULL, h_int) ||
-		    setsig(SIGTERM, NULL, h_term) ||
-		    setsig(SIGWINCH, NULL, h_winch)) {
+		    setsig(SIGTERM, NULL, h_term)
+#ifdef SIGWINCH
+		    ||
+		    setsig(SIGWINCH, NULL, h_winch)
+#endif
+		    ) {
 			msgq(sp, M_SYSERR, "signal-reset");
 		}
 	return (0);
@@ -374,17 +423,53 @@ sig_end(gp)
 	(void)sigaction(SIGHUP, NULL, &clp->oact[INDX_HUP]);
 	(void)sigaction(SIGINT, NULL, &clp->oact[INDX_INT]);
 	(void)sigaction(SIGTERM, NULL, &clp->oact[INDX_TERM]);
+#ifdef SIGWINCH
 	(void)sigaction(SIGWINCH, NULL, &clp->oact[INDX_WINCH]);
+#endif
 }
 
 /*
- * nomem --
- *	No memory error.
+ * cl_func_std --
+ *	Initialize the standard curses functions.
  */
 static void
-nomem(name)
-	char *name;
+cl_func_std(gp)
+	GS *gp;
 {
-	(void)fprintf(stderr, "%s: %s\n", name, strerror(errno));
+	gp->scr_addstr = cl_addstr;
+	gp->scr_attr = cl_attr;
+	gp->scr_baud = cl_baud;
+	gp->scr_bell = cl_bell;
+	gp->scr_busy = NULL;
+	gp->scr_clrtoeol = cl_clrtoeol;
+	gp->scr_cursor = cl_cursor;
+	gp->scr_deleteln = cl_deleteln;
+	gp->scr_event = cl_event;
+	gp->scr_ex_adjust = cl_ex_adjust;
+	gp->scr_fmap = cl_fmap;
+	gp->scr_insertln = cl_insertln;
+	gp->scr_keyval = cl_keyval;
+	gp->scr_move = cl_move;
+	gp->scr_msg = NULL;
+	gp->scr_optchange = cl_optchange;
+	gp->scr_refresh = cl_refresh;
+	gp->scr_rename = cl_rename;
+	gp->scr_screen = cl_screen;
+	gp->scr_suspend = cl_suspend;
+	gp->scr_usage = cl_usage;
+}
+
+/*
+ * perr --
+ *	Print system error.
+ */
+static void
+perr(name, msg)
+	char *name, *msg;
+{
+	(void)fprintf(stderr, "%s:", name);
+	if (msg != NULL)
+		(void)fprintf(stderr, "%s:", msg);
+	(void)fprintf(stderr, "%s\n", strerror(errno));
 	exit(1);
 }

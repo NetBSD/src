@@ -1,6 +1,6 @@
-/*	$NetBSD: pathnames.h,v 1.2 1998/01/09 08:06:13 perry Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.3 2001/03/31 11:37:44 aymeric Exp $	*/
 
-/* @(#)pathnames.h.in	8.3 (Berkeley) 4/22/96 */
+/* @(#)pathnames.h.in	8.4 (Berkeley) 6/26/96 */
 
 #ifndef	_PATH_BSHELL
 #define	_PATH_BSHELL	"/bin/sh"

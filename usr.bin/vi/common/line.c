@@ -1,4 +1,4 @@
-/*	$NetBSD: line.c,v 1.2 1998/01/09 08:06:43 perry Exp $	*/
+/*	$NetBSD: line.c,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)line.c	10.20 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)line.c	10.21 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -22,7 +22,6 @@ static const char sccsid[] = "@(#)line.c	10.20 (Berkeley) 4/27/96";
 #include <bitstring.h>
 #include <errno.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -523,7 +522,7 @@ db_last(sp, lnop)
 	}
 
 	/* Fill the cache. */
-	memmove(&lno, key.data, sizeof(lno));
+	memcpy(&lno, key.data, sizeof(lno));
 	ep->c_nlines = ep->c_lno = lno;
 	ep->c_len = data.size;
 	ep->c_lp = data.data;

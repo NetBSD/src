@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.7 1998/01/09 08:08:01 perry Exp $	*/
+/*	$NetBSD: ex_script.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -15,7 +15,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_script.c	10.29 (Berkeley) 5/12/96";
+static const char sccsid[] = "@(#)ex_script.c	10.30 (Berkeley) 9/24/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -195,7 +195,7 @@ err:		if (sc->sh_master != -1)
 		return (1);
 
 	F_SET(sp, SC_SCRIPT);
-	F_SET(sp->gp, G_SCRIPT);
+	F_SET(sp->gp, G_SCRWIN);
 	return (0);
 }
 
@@ -621,10 +621,10 @@ sscr_check(sp)
 	gp = sp->gp;
 	for (sp = gp->dq.cqh_first; sp != (void *)&gp->dq; sp = sp->q.cqe_next)
 		if (F_ISSET(sp, SC_SCRIPT)) {
-			F_SET(gp, G_SCRIPT);
+			F_SET(gp, G_SCRWIN);
 			return;
 		}
-	F_CLR(gp, G_SCRIPT);
+	F_CLR(gp, G_SCRWIN);
 }
 
 #ifdef HAVE_SYS5_PTY

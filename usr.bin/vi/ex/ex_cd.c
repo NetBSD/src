@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_cd.c,v 1.9 2000/03/13 23:22:52 soren Exp $	*/
+/*	$NetBSD: ex_cd.c,v 1.10 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_cd.c	10.9 (Berkeley) 3/30/96";
+static const char sccsid[] = "@(#)ex_cd.c	10.10 (Berkeley) 8/12/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -42,9 +42,9 @@ ex_cd(sp, cmdp)
 {
 	struct passwd *pw;
 	ARGS *ap;
-	CDPATH *cdp;
-	const char *dir;	/* XXX END OF THE STACK, DON'T TRUST GETCWD. */
-	char buf[MAXPATHLEN * 2];
+	CHAR_T savech;
+	const char *dir, *t;	/* XXX: END OF THE STACK, DON'T TRUST GETCWD. */
+	char *p, buf[MAXPATHLEN * 2];
 
 	/*
 	 * !!!
@@ -80,9 +80,9 @@ ex_cd(sp, cmdp)
 	}
 
 	/*
-	 * Try the current directory first.  If this succeeds, don't
-	 * display a message, vi didn't historically, and it's real
-	 * obvious to the user where they are.
+	 * Try the current directory first.  If this succeeds, don't display
+	 * a message, vi didn't historically, and it should be obvious to the
+	 * user where they are.
 	 */
 	if (!chdir(dir))
 		return (0);
@@ -98,109 +98,34 @@ ex_cd(sp, cmdp)
 	    (ap->bp[2] == '/' || ap->bp[2] == '\0'))
 		goto err;
 
-	/* If the user has a CDPATH variable, try its elements. */
-	for (cdp = EXP(sp)->cdq.tqh_first; cdp != NULL; cdp = cdp->q.tqe_next) {
-		(void)snprintf(buf, sizeof(buf), "%s/%s", cdp->path, dir);
-		if (!chdir(buf)) {
-			if (getcwd(buf, sizeof(buf)) != NULL)
-				msgq_str(sp, M_INFO, buf,
-				    "122|New current directory: %s");
-			return (0);
-		}
-	}
-err:	msgq_str(sp, M_SYSERR, dir, "%s");
-	return (1);
-}
-
-#define	FREE_CDPATH(cdp) {						\
-	TAILQ_REMOVE(&exp->cdq, (cdp), q);				\
-	free((cdp)->path);						\
-	free(cdp);							\
-}
-
-/*
- * ex_cdalloc --
- *	Create a new list of cd paths.
- *
- * PUBLIC: int ex_cdalloc __P((SCR *, char *));
- */
-int
-ex_cdalloc(sp, str)
-	SCR *sp;
-	char *str;
-{
-	EX_PRIVATE *exp;
-	CDPATH *cdp;
-	size_t len;
-	int founddot;
-	char *p, *t;
-
-	/* Free current queue. */
-	exp = EXP(sp);
-	while ((cdp = exp->cdq.tqh_first) != NULL)
-		FREE_CDPATH(cdp);
-
-	/*
-	 * Create new queue.  The CDPATH environmental variable (and the
-	 * user's manual entry) are delimited by colon characters.
-	 */
-	for (p = t = str, founddot = 0;; ++p) {
+	/* Try the O_CDPATH option values. */
+	for (t = p = O_STR(sp, O_CDPATH);; ++p)
 		if (*p == '\0' || *p == ':') {
 			/*
 			 * Empty strings specify ".".  The only way to get an
 			 * empty string is a leading colon, colons in a row,
 			 * or a trailing colon.  Or, to put it the other way,
-			 * if the length is zero, then it's either ":XXX",
-			 * "XXX::XXXX" , "XXX:", or "", and the only failure
-			 * mode is the last one.  Note, the string ":" gives
-			 * us two entries of '.', so we only include one of
-			 * them.
+			 * if the length is 1 or less, then we're dealing with
+			 * ":XXX", "XXX::XXXX" , "XXX:", or "".  Since we've
+			 * already tried dot, we ignore tham all.
 			 */
-			if ((len = p - t) == 0) {
-				if (p == str && *p == '\0')
-					break;
-				if (founddot) {
-					if (*p == '\0')
-						break;
-					continue;
+			if (t < p - 1) {
+				savech = *p;
+				*p = '\0';
+				(void)snprintf(buf,
+				    sizeof(buf), "%s/%s", t, dir);
+				*p = savech;
+				if (!chdir(buf)) {
+					if (getcwd(buf, sizeof(buf)) != NULL)
+		msgq_str(sp, M_INFO, buf, "122|New current directory: %s");
+					return (0);
 				}
-				len = 1;
-				t = ".";
-				founddot = 1;
 			}
-			MALLOC_RET(sp, cdp, CDPATH *, sizeof(CDPATH));
-			MALLOC(sp, cdp->path, char *, len + 1);
-			if (cdp->path == NULL) {
-				free(cdp);
-				return (1);
-			}
-			memmove(cdp->path, t, len);
-			cdp->path[len] = '\0';
-			TAILQ_INSERT_TAIL(&exp->cdq, cdp, q);
 			t = p + 1;
+			if (*p == '\0')
+				break;
 		}
-		if (*p == '\0')
-			 break;
-	}
-	return (0);
-}
-						/* Free previous queue. */
-/*
- * ex_cdfree --
- *	Free the cd path list.
- *
- * PUBLIC: int ex_cdfree __P((SCR *));
- */
-int
-ex_cdfree(sp)
-	SCR *sp;
-{
-	EX_PRIVATE *exp;
-	CDPATH *cdp;
 
-	/* Free up cd path information. */
-	exp = EXP(sp);
-	while ((cdp = exp->cdq.tqh_first) != NULL)
-		FREE_CDPATH(cdp);
-	return (0);
+err:	msgq_str(sp, M_SYSERR, dir, "%s");
+	return (1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: v_replace.c,v 1.7 1998/01/09 08:08:35 perry Exp $	*/
+/*	$NetBSD: v_replace.c,v 1.8 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_replace.c	10.16 (Berkeley) 4/27/96";
+static const char sccsid[] = "@(#)v_replace.c	10.17 (Berkeley) 6/30/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,6 +130,10 @@ next:		if (v_event_get(sp, &ev, 0, 0))
 			return (1);
 		case E_INTERRUPT:
 			/* <interrupt> means they changed their minds. */
+			return (0);
+		case E_WRESIZE:
+			/* <resize> interrupts the input mode. */
+			v_emsg(sp, NULL, VIM_WRESIZE);
 			return (0);
 		case E_REPAINT:
 			if (vs_repaint(sp, &ev))

@@ -1,16 +1,18 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:07:20 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/31 11:37:48 aymeric Exp $
 #
-#	@(#)Makefile	8.5 (Berkeley) 7/16/94
+# @(#)Makefile	8.7 (Berkeley) 8/18/96
 
-SRCS=	vi.1
-DOCS=	vi.0 vi.0.ps
+ROFF=	groff
 
-all: ${DOCS}
+all: vi.0 vi.0.ps
 
 vi.0: vi.1
-	groff -man -Tascii < vi.1 > $@
+	${ROFF} -man -Tascii < vi.1 > $@
+	chmod 444 $@
+
 vi.0.ps: vi.1
-	groff -man < vi.1 > $@
+	${ROFF} -man < vi.1 > $@
+	chmod 444 $@
 
 clean:
-	rm -f ${DOCS}
+	rm -f vi.0 vi.0.ps

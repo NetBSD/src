@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.4 2000/06/19 20:09:37 aymeric Exp $	*/
+/*	$NetBSD: options.c,v 1.5 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)options.c	10.43 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)options.c	10.51 (Berkeley) 10/14/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -83,8 +83,8 @@ OPTLIST const optlist[] = {
 /* O_FLASH	    HPUX */
 	{"flash",	NULL,		OPT_1BOOL,	0},
 #ifdef GTAGS
-/* O_GTAGSMODE      FreeBSD, NetBSD */
-	{"gtagsmode",   NULL,           OPT_0BOOL,      0},
+/* O_GTAGSMODE	    FreeBSD, NetBSD */
+	{"gtagsmode",	NULL,		OPT_0BOOL,	0},
 #endif
 /* O_HARDTABS	    4BSD */
 	{"hardtabs",	NULL,		OPT_NUM,	0},
@@ -141,6 +141,8 @@ OPTLIST const optlist[] = {
 	{"optimize",	NULL,		OPT_1BOOL,	0},
 /* O_PARAGRAPHS	    4BSD */
 	{"paragraphs",	f_paragraph,	OPT_STR,	0},
+/* O_PATH	  4.4BSD */
+	{"path",	NULL,		OPT_STR,	0},
 /* O_PRINT	  4.4BSD */
 	{"print",	f_print,	OPT_STR,	OPT_EARLYSET},
 /* O_PROMPT	    4BSD */
@@ -220,6 +222,8 @@ OPTLIST const optlist[] = {
 	{"warn",	NULL,		OPT_1BOOL,	0},
 /* O_WINDOW	    4BSD */
 	{"window",	f_window,	OPT_NUM,	0},
+/* O_WINDOWNAME	    4BSD */
+	{"windowname",	NULL,		OPT_0BOOL,	0},
 /* O_WRAPLEN	  4.4BSD */
 	{"wraplen",	NULL,		OPT_NUM,	0},
 /* O_WRAPMARGIN	    4BSD */
@@ -263,6 +267,7 @@ static OABBREV const abbrev[] = {
 	{"sh",		O_SHELL},		/*     4BSD */
 	{"slow",	O_SLOWOPEN},		/*     4BSD */
 	{"sm",		O_SHOWMATCH},		/*     4BSD */
+	{"smd",		O_SHOWMODE},		/*     4BSD */
 	{"sw",		O_SHIFTWIDTH},		/*     4BSD */
 	{"tag",		O_TAGS},		/*     4BSD (undocumented) */
 	{"tl",		O_TAGLENGTH},		/*     4BSD */
@@ -352,6 +357,8 @@ opts_init(sp, oargs)
 	OI(O_MSGCAT, b1);
 	OI(O_REPORT, "report=5");
 	OI(O_PARAGRAPHS, "paragraphs=IPLPPPQPP LIpplpipbp");
+	(void)snprintf(b1, sizeof(b1), "path=%s", "");
+	OI(O_PATH, b1);
 	(void)snprintf(b1, sizeof(b1), "recdir=%s", _PATH_PRESERVE);
 	OI(O_RECDIR, b1);
 	OI(O_SECTIONS, "sections=NHSHH HUnhsh");
@@ -396,8 +403,8 @@ opts_init(sp, oargs)
 	OI(O_WINDOW, b1);
 
 	/*
-	 * Set boolean default values, and copy all settings into the
-	 * the default information.
+	 * Set boolean default values, and copy all settings into the default
+	 * information.  OS_NOFREE is set, we're copying, not replacing.
 	 */
 	for (op = optlist, cnt = 0; op->name != NULL; ++op, ++cnt)
 		switch (op->type) {
@@ -411,8 +418,8 @@ opts_init(sp, oargs)
 			o_set(sp, cnt, OS_DEF, NULL, O_VAL(sp, cnt));
 			break;
 		case OPT_STR:
-			if (O_STR(sp, cnt) != NULL && o_set(sp,
-			    cnt, OS_DEF | OS_STRDUP, O_STR(sp, cnt), 0))
+			if (O_STR(sp, cnt) != NULL && o_set(sp, cnt,
+			    OS_DEF | OS_NOFREE | OS_STRDUP, O_STR(sp, cnt), 0))
 				goto err;
 			break;
 		default:
@@ -496,10 +503,8 @@ opts_set(sp, argv, usage)
 			name += 2;
 			op = opts_search(name);
 		}
-
 		if (op == NULL) {
-			msgq_str(sp, M_ERR, name,
-		    "033|set: no %s option: 'set all' gives all option values");
+			opts_nomatch(sp, name);
 			rval = 1;
 			continue;
 		}
@@ -709,8 +714,7 @@ badnum:				p = msg_print(sp, name, &nf);
 
 			if (F_ISSET(op, OPT_EARLYSET)) {
 			    /* Set the value. */
-			    if (o_set(sp, offset,
-					OS_FREE | OS_STRDUP, sep, 0)) {
+			    if (o_set(sp, offset, OS_STRDUP, sep, 0)) {
 				rval = 1;
 				break;
 			    }
@@ -728,7 +732,7 @@ badnum:				p = msg_print(sp, name, &nf);
 
 			if (!F_ISSET(op, OPT_EARLYSET)) {
 			    /* Set the value. */
-			    if (o_set(sp, offset, OS_FREE | OS_STRDUP, sep, 0))
+			    if (o_set(sp, offset, OS_STRDUP, sep, 0))
 				rval = 1;
 			}
 			break;
@@ -767,23 +771,21 @@ o_set(sp, opt, flags, str, val)
 		return (1);
 	}
 
-
 	/* Free the previous string, if requested, and set the value. */
-	if LF_ISSET(OS_DEF) {
-		if (LF_ISSET(OS_FREE) && op->o_def.str != NULL)
-			free(op->o_def.str);
-		if (LF_ISSET(OS_STR | OS_STRDUP))
+	if LF_ISSET(OS_DEF)
+		if (LF_ISSET(OS_STR | OS_STRDUP)) {
+			if (!LF_ISSET(OS_NOFREE) && op->o_def.str != NULL)
+				free(op->o_def.str);
 			op->o_def.str = str;
-		else
+		} else
 			op->o_def.val = val;
-	} else {
-		if (LF_ISSET(OS_FREE) && op->o_cur.str != NULL)
-			free(op->o_cur.str);
-		if (LF_ISSET(OS_STR | OS_STRDUP))
+	else
+		if (LF_ISSET(OS_STR | OS_STRDUP)) {
+			if (!LF_ISSET(OS_NOFREE) && op->o_cur.str != NULL)
+				free(op->o_cur.str);
 			op->o_cur.str = str;
-		else
+		} else
 			op->o_cur.val = val;
-	}
 	return (0);
 }
 
@@ -1078,6 +1080,21 @@ opts_search(name)
 	return (found);
 }
 
+/* 
+ * opts_nomatch --
+ *	Standard nomatch error message for options.
+ *
+ * PUBLIC: void opts_nomatch __P((SCR *, char *));
+ */
+void
+opts_nomatch(sp, name)
+	SCR *sp;
+	char *name;
+{
+	msgq_str(sp, M_ERR, name,
+	    "033|set: no %s option: 'set all' gives all option values");
+}
+
 static int
 opts_abbcmp(a, b)
         const void *a, *b;
@@ -1105,7 +1122,7 @@ opts_copy(orig, sp)
 	int cnt, rval;
 
 	/* Copy most everything without change. */
-	memmove(sp->opts, orig->opts, sizeof(orig->opts));
+	memcpy(sp->opts, orig->opts, sizeof(orig->opts));
 
 	/* Copy the string edit options. */
 	for (cnt = rval = 0; cnt < O_OPTIONCOUNT; ++cnt) {
@@ -1118,20 +1135,20 @@ opts_copy(orig, sp)
 		 * screens referencing the same memory.
 		 */
 		if (rval || O_STR(sp, cnt) == NULL) {
-			o_set(sp, cnt, OS_STR, NULL, 0);
-			o_set(sp, cnt, OS_DEF | OS_STR, NULL, 0);
+			o_set(sp, cnt, OS_NOFREE | OS_STR, NULL, 0);
+			o_set(sp, cnt, OS_DEF | OS_NOFREE | OS_STR, NULL, 0);
 			continue;
 		}
 
 		/* Copy the current string. */
-		if (o_set(sp, cnt, OS_STRDUP, O_STR(sp, cnt), 0)) {
-			o_set(sp, cnt, OS_DEF | OS_STR, NULL, 0);
+		if (o_set(sp, cnt, OS_NOFREE | OS_STRDUP, O_STR(sp, cnt), 0)) {
+			o_set(sp, cnt, OS_DEF | OS_NOFREE | OS_STR, NULL, 0);
 			goto nomem;
 		}
 
 		/* Copy the default string. */
-		if (O_D_STR(sp, cnt) != NULL &&
-		    o_set(sp, cnt, OS_DEF | OS_STRDUP, O_D_STR(sp, cnt), 0)) {
+		if (O_D_STR(sp, cnt) != NULL && o_set(sp, cnt,
+		    OS_DEF | OS_NOFREE | OS_STRDUP, O_D_STR(sp, cnt), 0)) {
 nomem:			msgq(orig, M_SYSERR, NULL);
 			rval = 1;
 		}

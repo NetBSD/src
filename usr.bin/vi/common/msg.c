@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.4 2000/10/11 14:46:21 is Exp $	*/
+/*	$NetBSD: msg.c,v 1.5 2001/03/31 11:37:46 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.36 (Berkeley) 5/15/96";
+static const char sccsid[] = "@(#)msg.c	10.48 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -148,7 +148,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 		p = msg_cat(sp, "020|Error: ", &len);
 		if (REM < len)
 			goto retry;
-		memmove(mp, p, len);
+		memcpy(mp, p, len);
 		mp += len;
 		mlen += len;
 	}
@@ -383,7 +383,7 @@ msgq_str(sp, mtype, str, fmt)
 }
 
 /*
- * msgq_rpt --
+ * mod_rpt --
  *	Report on the lines that changed.
  *
  * !!!
@@ -400,10 +400,10 @@ msgq_str(sp, mtype, str, fmt)
  * the command 2d}, from the 'b' would report that two lines were deleted,
  * not one.
  *
- * PUBLIC: void msgq_rpt __P((SCR *));
+ * PUBLIC: void mod_rpt __P((SCR *));
  */
 void
-msgq_rpt(sp)
+mod_rpt(sp)
 	SCR *sp;
 {
 	static char * const action[] = {
@@ -474,19 +474,18 @@ msgq_rpt(sp)
 				*p++ = ' ';
 				tlen += 2;
 			}
-			len = snprintf(p, MAXNUM, "%lu ", 
-				       (long)sp->rptlines[cnt]);
+			len = snprintf(p, MAXNUM, "%lu ", sp->rptlines[cnt]);
 			p += len;
 			tlen += len;
 			t = msg_cat(sp,
 			    lines[sp->rptlines[cnt] == 1 ? 0 : 1], &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			tlen += len;
 			*p++ = ' ';
 			++tlen;
 			t = msg_cat(sp, *ap, &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			tlen += len;
 			sp->rptlines[cnt] = 0;
@@ -519,21 +518,40 @@ msgq_status(sp, lno, flags)
 	recno_t lno;
 	u_int flags;
 {
+	static int poisoned;
 	recno_t last;
-	const char *t;
-	char *bp, *np, *p, *s;
-	int needsep;
 	size_t blen, len;
+	int cnt, needsep;
+	const char *t;
+	char **ap, *bp, *np, *p, *s;
 
+	/* Get sufficient memory. */
 	len = strlen(sp->frp->name);
-	GET_SPACE_GOTO(sp, bp, blen, len + 128);
+	GET_SPACE_GOTO(sp, bp, blen, len * MAX_CHARACTER_COLUMNS + 128);
 	p = bp;
 
-	memmove(p, sp->frp->name, len);
-	p += len;
+	/* Copy in the filename. */
+	for (p = bp, t = sp->frp->name; *t != '\0'; ++t) {
+		len = KEY_LEN(sp, *t);
+		memcpy(p, KEY_NAME(sp, *t), len);
+		p += len;
+	}
 	np = p;
 	*p++ = ':';
 	*p++ = ' ';
+
+	/* Copy in the argument count. */
+	if (F_ISSET(sp, SC_STATUS_CNT) && sp->argv != NULL) {
+		for (cnt = 0, ap = sp->argv; *ap != NULL; ++ap, ++cnt);
+		if (cnt > 1) {
+			(void)sprintf(p,
+			    msg_cat(sp, "317|%d files to edit", NULL), cnt);
+			p += strlen(p);
+			*p++ = ':';
+			*p++ = ' ';
+		}
+		F_CLR(sp, SC_STATUS_CNT);
+	}
 
 	/*
 	 * See nvi/exf.c:file_init() for a description of how and when the
@@ -546,13 +564,13 @@ msgq_status(sp, lno, flags)
 	if (F_ISSET(sp->frp, FR_NEWFILE)) {
 		F_CLR(sp->frp, FR_NEWFILE);
 		t = msg_cat(sp, "021|new file", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	} else {
 		if (F_ISSET(sp->frp, FR_NAMECHANGE)) {
 			t = msg_cat(sp, "022|name changed", &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			needsep = 1;
 		}
@@ -564,7 +582,7 @@ msgq_status(sp, lno, flags)
 			t = msg_cat(sp, "023|modified", &len);
 		else
 			t = msg_cat(sp, "024|unmodified", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -574,7 +592,7 @@ msgq_status(sp, lno, flags)
 			*p++ = ' ';
 		}
 		t = msg_cat(sp, "025|UNLOCKED", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -584,7 +602,7 @@ msgq_status(sp, lno, flags)
 			*p++ = ' ';
 		}
 		t = msg_cat(sp, "026|readonly", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -597,7 +615,7 @@ msgq_status(sp, lno, flags)
 			return;
 		if (last == 0) {
 			t = msg_cat(sp, "028|empty file", &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 		} else {
 			t = msg_cat(sp, "027|line %lu of %lu [%ld%%]", &len);
@@ -614,6 +632,7 @@ msgq_status(sp, lno, flags)
 	p += strlen(p);
 #endif
 	*p++ = '\n';
+	len = p - bp;
 
 	/*
 	 * There's a nasty problem with long path names.  Cscope and tags files
@@ -622,21 +641,26 @@ msgq_status(sp, lno, flags)
 	 * has already typed ahead, and chaos results.  If we assume that the
 	 * characters in the filenames and informational messages only take a
 	 * single screen column each, we can trim the filename.
+	 *
+	 * XXX
+	 * Status lines get put up at fairly awkward times.  For example, when
+	 * you do a filter read (e.g., :read ! echo foo) in the top screen of a
+	 * split screen, we have to repaint the status lines for all the screens
+	 * below the top screen.  We don't want users having to enter continue
+	 * characters for those screens.  Make it really hard to screw this up.
 	 */
 	s = bp;
-	if (LF_ISSET(MSTAT_TRUNCATE))
-		if ((p - s) >= sp->cols) {
-			for (; s < np &&
-			    (*s != '/' || (p - s) > sp->cols - 3); ++s);
-			if (s == np)
-				s = bp;
-			else {
-				*--s = '.';
-				*--s = '.';
-				*--s = '.';
-			}
+	if (LF_ISSET(MSTAT_TRUNCATE) && len > sp->cols) {
+		for (; s < np && (*s != '/' || (p - s) > sp->cols - 3); ++s);
+		if (s == np) {
+			s = p - (sp->cols - 5);
+			*--s = ' ';
 		}
-	len = p - s;
+		*--s = '.';
+		*--s = '.';
+		*--s = '.';
+		len = p - s;
+	}
 
 	/* Flush any waiting ex messages. */
 	(void)ex_fflush(sp);
@@ -675,9 +699,9 @@ msg_open(sp, file)
 	char *p, *t, buf[MAXPATHLEN];
 
 	if ((p = strrchr(file, '/')) != NULL && p[1] == '\0' &&
-	    ((t = getenv("LANG")) != NULL && t[0] != '\0' ||
-	    (t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0')) {
-		(void)snprintf(buf, sizeof(buf), "%svi_%s", file, t);
+	    ((t = getenv("LC_MESSAGES")) != NULL && t[0] != '\0' ||
+	    (t = getenv("LANG")) != NULL && t[0] != '\0')) {
+		(void)snprintf(buf, sizeof(buf), "%s%s", file, t);
 		p = buf;
 	} else
 		p = file;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vs_refresh.c,v 1.6 2001/03/21 03:19:35 simonb Exp $	*/
+/*	$NetBSD: vs_refresh.c,v 1.7 2001/03/31 11:37:53 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)vs_refresh.c	10.35 (Berkeley) 5/7/96";
+static const char sccsid[] = "@(#)vs_refresh.c	10.44 (Berkeley) 10/13/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -68,20 +68,24 @@ vs_refresh(sp, forcepaint)
 	SCR *sp;
 	int forcepaint;
 {
+	GS *gp;
 	SCR *tsp;
+	int need_refresh;
 	u_int priv_paint, pub_paint;
+
+	gp = sp->gp;
 
 	/*
 	 * 1: Refresh the screen.
 	 *
 	 * If SC_SCR_REDRAW is set in the current screen, repaint everything
-	 * that we can find.
+	 * that we can find, including status lines.
 	 */
 	if (F_ISSET(sp, SC_SCR_REDRAW))
-		for (tsp = sp->gp->dq.cqh_first;
-		    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+		for (tsp = gp->dq.cqh_first;
+		    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
 			if (tsp != sp)
-				F_SET(tsp, SC_SCR_REDRAW);
+				F_SET(tsp, SC_SCR_REDRAW | SC_STATUS);
 
 	/*
 	 * 2: Related or dirtied screens, or screens with messages.
@@ -96,8 +100,8 @@ vs_refresh(sp, forcepaint)
 	priv_paint = VIP_CUR_INVALID | VIP_N_REFRESH;
 	if (O_ISSET(sp, O_NUMBER))
 		priv_paint |= VIP_N_RENUMBER;
-	for (tsp = sp->gp->dq.cqh_first;
-	    tsp != (void *)&sp->gp->dq; tsp = tsp->q.cqe_next)
+	for (tsp = gp->dq.cqh_first;
+	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
 		if (tsp != sp && !F_ISSET(tsp, SC_EXIT | SC_EXIT_FORCE) &&
 		    (F_ISSET(tsp, pub_paint) ||
 		    F_ISSET(VIP(tsp), priv_paint))) {
@@ -117,6 +121,29 @@ vs_refresh(sp, forcepaint)
 	if (vs_paint(sp, UPDATE_CURSOR | (!forcepaint &&
 	    F_ISSET(sp, SC_SCR_VI) && KEYS_WAITING(sp) ? 0 : UPDATE_SCREEN)))
 		return (1);
+
+	/*
+	 * 4: Paint any missing status lines.
+	 *
+	 * XXX
+	 * This is fairly evil.  Status lines are written using the vi message
+	 * mechanism, since we have no idea how long they are.  Since we may be
+	 * painting screens other than the current one, we don't want to make
+	 * the user wait.  We depend heavily on there not being any other lines
+	 * currently waiting to be displayed and the message truncation code in
+	 * the msgq_status routine working.
+	 *
+	 * And, finally, if we updated any status lines, make sure the cursor
+	 * gets back to where it belongs.
+	 */
+	for (need_refresh = 0, tsp = gp->dq.cqh_first;
+	    tsp != (void *)&gp->dq; tsp = tsp->q.cqe_next)
+		if (F_ISSET(tsp, SC_STATUS)) {
+			need_refresh = 1;
+			vs_resolve(tsp, sp, 0);
+		}
+	if (need_refresh)
+		(void)gp->scr_refresh(sp, 0);
 
 	/*
 	 * A side-effect of refreshing the screen is that it's now ready
@@ -160,7 +187,7 @@ vs_paint(sp, flags)
 	didpaint = leftright_warp = 0;
 
 	/*
-	 * 4: Reformat the lines.
+	 * 5: Reformat the lines.
 	 *
 	 * If the lines themselves have changed (:set list, for example),
 	 * fill in the map from scratch.  Adjust the screen that's being
@@ -185,12 +212,12 @@ vs_paint(sp, flags)
 	}
 
 	/*
-	 * 5: Line movement.
+	 * 6: Line movement.
 	 *
 	 * Line changes can cause the top line to change as well.  As
 	 * before, if the movement is large, the screen is repainted.
 	 *
-	 * 5a: Small screens.
+	 * 6a: Small screens.
 	 *
 	 * Users can use the window, w300, w1200 and w9600 options to make
 	 * the screen artificially small.  The behavior of these options
@@ -261,7 +288,7 @@ small_fill:			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 		}
 
 	/*
-	 * 5b: Line down, or current screen.
+	 * 6b: Line down, or current screen.
 	 */
 	if (LNO >= HMAP->lno) {
 		/* Current screen. */
@@ -287,7 +314,7 @@ small_fill:			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 	}
 
 	/*
-	 * 5c: If not on the current screen, may request center or top.
+	 * 6c: If not on the current screen, may request center or top.
 	 */
 	if (F_ISSET(sp, SC_SCR_TOP))
 		goto top;
@@ -295,7 +322,7 @@ small_fill:			(void)gp->scr_move(sp, LASTLINE(sp), 0);
 		goto middle;
 
 	/*
-	 * 5d: Line up.
+	 * 6d: Line up.
 	 */
 	lcnt = vs_sm_nlines(sp, HMAP, LNO, HALFTEXT(sp));
 	if (lcnt < HALFTEXT(sp)) {
@@ -403,7 +430,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	}
 
 	/*
-	 * 6: Cursor movements (current screen only).
+	 * 7: Cursor movements (current screen only).
 	 */
 	if (!LF_ISSET(UPDATE_CURSOR))
 		goto number;
@@ -457,7 +484,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	 */
 	if (CNO < OCNO) {
 		/*
-		 * 6a: Cursor moved left.
+		 * 7a: Cursor moved left.
 		 *
 		 * Point to the old character.  The old cursor position can
 		 * be past EOL if, for example, we just deleted the rest of
@@ -509,7 +536,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 		SCNO -= cwtotal;
 	} else {
 		/*
-		 * 6b: Cursor moved right.
+		 * 7b: Cursor moved right.
 		 *
 		 * Point to the first character to the right.
 		 */
@@ -540,7 +567,7 @@ adjust:	if (!O_ISSET(sp, O_LEFTRIGHT) &&
 	}
 
 	/*
-	 * 6c: Fast cursor update.
+	 * 7c: Fast cursor update.
 	 *
 	 * We have the current column, retrieve the current row.
 	 */
@@ -548,14 +575,14 @@ fast:	(void)gp->scr_cursor(sp, &y, &notused);
 	goto done_cursor;
 
 	/*
-	 * 6d: Slow cursor update.
+	 * 7d: Slow cursor update.
 	 *
 	 * Walk through the map and find the current line.
 	 */
 slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 
 	/*
-	 * 6e: Leftright scrolling adjustment.
+	 * 7e: Leftright scrolling adjustment.
 	 *
 	 * If doing left-right scrolling and the cursor movement has changed
 	 * the displayed screen, scroll the screen left or right, unless we're
@@ -565,34 +592,52 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 	 * first screen as compared to subsequent ones.
 	 */
 	if (O_ISSET(sp, O_LEFTRIGHT)) {
-		/* Get the screen column for this character. */
+		/*
+		 * Get the screen column for this character, and correct
+		 * for the number option offset.
+		 */
 		cnt = vs_columns(sp, NULL, LNO, &CNO, NULL);
+		if (O_ISSET(sp, O_NUMBER))
+			cnt -= O_NUMBER_LENGTH;
 
-		/* Adjust the window toward the beginning of the line. */
+		/* Adjust the window towards the beginning of the line. */
 		off = smp->coff;
-		while (off >= cnt)
-			if (off >= O_VAL(sp, O_SIDESCROLL))
-				off -= O_VAL(sp, O_SIDESCROLL);
-			else {
-				off = 0;
-				break;
-			}
-
-		/* Adjust the window toward the end of the line. */
-		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
-		    off != 0 && off + sp->cols < cnt)
-		while (off + sp->cols < cnt)
-			off += O_VAL(sp, O_SIDESCROLL);
-
-		/* Fill in screen map with the new offset. */
-		if (F_ISSET(sp, SC_TINPUT_INFO))
-			smp->coff = off;
-		else {
-			for (smp = HMAP; smp <= TMAP; ++smp)
-				smp->coff = off;
-			leftright_warp = 1;
+		if (off >= cnt) {
+			do {
+				if (off >= O_VAL(sp, O_SIDESCROLL))
+					off -= O_VAL(sp, O_SIDESCROLL);
+				else {
+					off = 0;
+					break;
+				}
+			} while (off >= cnt);
+			goto shifted;
 		}
-		goto paint;
+
+		/* Adjust the window towards the end of the line. */
+		if (off == 0 && off + SCREEN_COLS(sp) < cnt ||
+		    off != 0 && off + sp->cols < cnt) {
+			do {
+				off += O_VAL(sp, O_SIDESCROLL);
+			} while (off + sp->cols < cnt);
+
+shifted:		/* Fill in screen map with the new offset. */
+			if (F_ISSET(sp, SC_TINPUT_INFO))
+				smp->coff = off;
+			else {
+				for (smp = HMAP; smp <= TMAP; ++smp)
+					smp->coff = off;
+				leftright_warp = 1;
+			}
+			goto paint;
+		}
+
+		/*
+		 * We may have jumped here to adjust a leftright screen because
+		 * redraw was set.  If so, we have to paint the entire screen.
+		 */
+		if (F_ISSET(sp, SC_SCR_REDRAW))
+			goto paint;
 	}
 
 	/*
@@ -611,7 +656,7 @@ slow:	for (smp = HMAP; smp->lno != LNO; ++smp);
 	goto done_cursor;
 
 	/*
-	 * 7: Repaint the entire screen.
+	 * 8: Repaint the entire screen.
 	 *
 	 * Lost big, do what you have to do.  We flush the cache, since
 	 * SC_SCR_REDRAW gets set when the screen isn't worth fixing, and
@@ -639,12 +684,12 @@ paint:	for (smp = HMAP; smp <= TMAP; ++smp)
 	didpaint = 1;
 
 done_cursor:
-#ifdef DEBUG
 	/*
 	 * Sanity checking.  When the repainting code messes up, the usual
 	 * result is we don't repaint the cursor and so sc_smap will be
 	 * NULL.  If we're debugging, die, otherwise restart from scratch.
 	 */
+#ifdef DEBUG
 	if (vip->sc_smap == NULL)
 		abort();
 #else
@@ -655,13 +700,13 @@ done_cursor:
 #endif
 
 	/*
-	 * 8: Set the remembered cursor values.
+	 * 9: Set the remembered cursor values.
 	 */
 	OCNO = CNO;
 	OLNO = LNO;
 
 	/*
-	 * 9: Repaint the line numbers.
+	 * 10: Repaint the line numbers.
 	 *
 	 * If O_NUMBER is set and the VIP_N_RENUMBER bit is set, and we
 	 * didn't repaint the screen, repaint all of the line numbers,
@@ -672,7 +717,7 @@ number:	if (O_ISSET(sp, O_NUMBER) &&
 		return (1);
 
 	/*
-	 * 10: Update the mode line, position the cursor, and flush changes.
+	 * 11: Update the mode line, position the cursor, and flush changes.
 	 *
 	 * If we warped the screen, we have to refresh everything.
 	 */
@@ -701,7 +746,7 @@ number:	if (O_ISSET(sp, O_NUMBER) &&
 	if (LF_ISSET(UPDATE_SCREEN))
 		(void)gp->scr_refresh(sp, F_ISSET(vip, VIP_N_EX_PAINT));
 
-	/* 11: Clear the flags that are handled by this routine. */
+	/* 12: Clear the flags that are handled by this routine. */
 	F_CLR(sp, SC_SCR_CENTER | SC_SCR_REDRAW | SC_SCR_REFORMAT | SC_SCR_TOP);
 	F_CLR(vip, VIP_CUR_INVALID |
 	    VIP_N_EX_PAINT | VIP_N_REFRESH | VIP_N_RENUMBER | VIP_S_MODELINE);
@@ -733,11 +778,12 @@ vs_modeline(sp)
 	GS *gp;
 	size_t cols, curcol, curlen, endpoint, len, midpoint;
 	const char *t;
+	int ellipsis;
 	char *p, buf[20];
 
 	/*
 	 * It's possible that this routine will be called after sp->frp
-	 * has been set to NULL by file_end().  We return immediately
+	 * has been set to NULL by file_end(). We return immediately
 	 * to avoid a SEGV.
 	 */
 
@@ -756,32 +802,44 @@ vs_modeline(sp)
 	 * Leave the last character blank, in case it's a really dumb terminal
 	 * with hardware scroll.  Second, don't paint the last character in the
 	 * screen, SunOS 4.1.1 and Ultrix 4.2 curses won't let you.
-	 */
-	cols = sp->cols - 1;
-
-	curlen = 0;
-	for (p = sp->frp->name; *p != '\0'; ++p);
-	while (--p > sp->frp->name) {
-		if (*p == '/') {
-			++p;
-			break;
-		}
-		if ((curlen += KEY_LEN(sp, *p)) > cols) {
-			curlen -= KEY_LEN(sp, *p);
-			++p;
-			break;
-		}
-	}
-
-	/*
-	 * Move to the last line on the screen.  If more than one screen in
-	 * the display, show the file name.  Clear the rest of the line.
+	 *
+	 * Move to the last line on the screen.
 	 */
 	(void)gp->scr_move(sp, LASTLINE(sp), 0);
-	if (IS_SPLIT(sp))
+
+	/* If more than one screen in the display, show the file name. */
+	curlen = 0;
+	if (IS_SPLIT(sp)) {
+		for (p = sp->frp->name; *p != '\0'; ++p);
+		for (ellipsis = 0, cols = sp->cols / 2; --p > sp->frp->name;) {
+			if (*p == '/') {
+				++p;
+				break;
+			}
+			if ((curlen += KEY_LEN(sp, *p)) > cols) {
+				ellipsis = 3;
+				curlen +=
+				    KEY_LEN(sp, '.') * 3 + KEY_LEN(sp, ' ');
+				while (curlen > cols) {
+					++p;
+					curlen -= KEY_LEN(sp, *p);
+				}
+				break;
+			}
+		}
+		if (ellipsis) {
+			while (ellipsis--)
+				(void)gp->scr_addstr(sp,
+				    KEY_NAME(sp, '.'), KEY_LEN(sp, '.'));
+			(void)gp->scr_addstr(sp,
+			    KEY_NAME(sp, ' '), KEY_LEN(sp, ' '));
+		}
 		for (; *p != '\0'; ++p)
 			(void)gp->scr_addstr(sp,
 			    KEY_NAME(sp, *p), KEY_LEN(sp, *p));
+	}
+
+	/* Clear the rest of the line. */
 	(void)gp->scr_clrtoeol(sp);
 
 	/*
@@ -795,10 +853,11 @@ vs_modeline(sp)
 	 * Assume that numbers, commas, and spaces only take up a single
 	 * column on the screen.
 	 */
+	cols = sp->cols - 1;
 	if (O_ISSET(sp, O_RULER)) {
 		vs_column(sp, &curcol);
 		len = snprintf(buf, sizeof(buf), "%lu,%lu",
-		    (unsigned long)sp->lno, (unsigned long)(curcol + 1));
+		    (unsigned long) sp->lno, (unsigned long) (curcol + 1));
 
 		midpoint = (cols - ((len + 1) / 2)) / 2;
 		if (curlen < midpoint) {

@@ -1,3 +1,5 @@
+/*	$NetBSD: com_extern.h,v 1.2 2001/03/31 11:37:51 aymeric Exp $	*/
+
 #ifndef HAVE_BSEARCH
 void	*bsearch __P((const void *, const void *, size_t,
    size_t, int (*)(const void *, const void *)));
@@ -28,12 +30,6 @@ void *memset __P((void *, int, size_t));
 #endif
 #ifndef HAVE_MKSTEMP
 int mkstemp __P((char *));
-#endif
-#ifndef HAVE_MMAP
-char *mmap __P((char *, size_t, int, int, int, off_t));
-#endif
-#ifndef HAVE_MMAP
-int munmap __P((char *, size_t));
 #endif
 #ifndef HAVE_SNPRINTF
 int snprintf __P((char *, size_t, const char *, ...));
@@ -131,8 +127,9 @@ int mark_end __P((SCR *, EXF *));
 int mark_get __P((SCR *, ARG_CHAR_T, MARK *, mtype_t));
 int mark_set __P((SCR *, ARG_CHAR_T, MARK *, int));
 int mark_insdel __P((SCR *, lnop_t, recno_t));
-void msgq __P((SCR *, mtype_t, const char *, ...));
-void msgq_str __P((SCR *, mtype_t, char *, char *));
+void msgq __P((SCR *, mtype_t, const char *, ...))
+    __attribute__((__format__(__printf__, 3, 4)));
+void msgq_str __P((SCR *, mtype_t, const char *, const char *));
 void mod_rpt __P((SCR *));
 void msgq_status __P((SCR *, recno_t, u_int));
 int msg_open __P((SCR *, char *));

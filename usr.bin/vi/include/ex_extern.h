@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_extern.h,v 1.4 2000/10/11 14:46:22 is Exp $	*/
+/*	$NetBSD: ex_extern.h,v 1.5 2001/03/31 11:37:51 aymeric Exp $	*/
 
 int ex __P((SCR **));
 int ex_cmd __P((SCR *));
@@ -26,8 +26,6 @@ int argv_free __P((SCR *));
 int ex_at __P((SCR *, EXCMD *));
 int ex_bang __P((SCR *, EXCMD *));
 int ex_cd __P((SCR *, EXCMD *));
-int ex_cdalloc __P((SCR *, char *));
-int ex_cdfree __P((SCR *));
 int ex_cscope __P((SCR *, EXCMD *));
 int cscope_display __P((SCR *));
 int cscope_search __P((SCR *, TAGQ *, TAG *));
@@ -55,7 +53,6 @@ int ex_copy __P((SCR *, EXCMD *));
 int ex_move __P((SCR *, EXCMD *));
 int ex_open __P((SCR *, EXCMD *));
 int ex_perl __P((SCR*, EXCMD *));
-int ex_perldo __P((SCR*, EXCMD *));
 int ex_preserve __P((SCR *, EXCMD *));
 int ex_recover __P((SCR *, EXCMD *));
 int ex_list __P((SCR *, EXCMD *));
@@ -65,7 +62,7 @@ int ex_print __P((SCR *, EXCMD *, MARK *, MARK *, u_int32_t));
 int ex_ldisplay __P((SCR *, const char *, size_t, size_t, u_int));
 int ex_scprint __P((SCR *, MARK *, MARK *));
 int ex_printf __P((SCR *, const char *, ...))
-     __attribute__((__format__(__printf__, 2, 3)));
+    __attribute__((__format__(__printf__, 2, 3)));
 int ex_puts __P((SCR *, const char *));
 int ex_fflush __P((SCR *sp));
 int ex_put __P((SCR *, EXCMD *));
@@ -92,7 +89,7 @@ int ex_s __P((SCR *, EXCMD *));
 int ex_subagain __P((SCR *, EXCMD *));
 int ex_subtilde __P((SCR *, EXCMD *));
 int re_compile __P((SCR *,
-    char *, char **, size_t *, regex_t *, u_int));
+    char *, size_t, char **, size_t *, regex_t *, u_int));
 void re_error __P((SCR *, int, regex_t *));
 int ex_tag_first __P((SCR *, char *));
 #ifdef GTAGS

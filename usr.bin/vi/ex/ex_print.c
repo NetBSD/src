@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_print.c,v 1.8 2000/10/11 14:46:21 is Exp $	*/
+/*	$NetBSD: ex_print.c,v 1.9 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -124,8 +124,8 @@ ex_print(sp, cmdp, fp, tp, flags)
 		 */
 		if (LF_ISSET(E_C_HASH)) {
 			if (from <= 999999) {
-				snprintf(buf, sizeof(buf), "%6ld  ", 
-					 (long)from);
+				snprintf(buf, sizeof(buf), "%6ld  ",
+					 (long) from);
 				p = buf;
 			} else
 				p = "TOOBIG  ";

@@ -1,3 +1,5 @@
+#	$NetBSD: merge.awk,v 1.2 2001/03/31 11:37:48 aymeric Exp $
+#
 #	@(#)merge.awk	8.3 (Berkeley) 5/25/94
 #
 # merge index entries into one line per label

@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_read.c,v 1.9 2000/10/18 01:42:10 tv Exp $	*/
+/*	$NetBSD: ex_read.c,v 1.10 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_read.c	10.31 (Berkeley) 5/8/96";
+static const char sccsid[] = "@(#)ex_read.c	10.38 (Berkeley) 8/12/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -146,7 +146,7 @@ ex_read(sp, cmdp)
 		 * the don't-wait flag.
 		 */
 		if (!F_ISSET(sp, SC_SCR_EXWROTE))
-			F_SET(sp, SC_EX_DONTWAIT);
+			F_SET(sp, SC_EX_WAIT_NO);
 
 		/*
 		 * Switch into ex canonical mode.  The reason to restore the
@@ -158,7 +158,7 @@ ex_read(sp, cmdp)
 		 * the screen on a normal read.
 		 */
 		if (F_ISSET(sp, SC_VI)) {
-			if (sp->gp->scr_screen(sp, SC_EX)) {
+			if (gp->scr_screen(sp, SC_EX)) {
 				ex_emsg(sp, cmdp->cmd->name, EXM_NOCANON_F);
 				return (1);
 			}
@@ -231,7 +231,7 @@ ex_read(sp, cmdp)
 				F_SET(sp->frp, FR_NAMECHANGE | FR_EXNAMED);
 
 				/* Notify the screen. */
-				(void)gp->scr_rename(sp);
+				(void)sp->gp->scr_rename(sp, sp->frp->name, 1);
 			} else
 				set_alt_name(sp, name);
 			break;
@@ -245,17 +245,20 @@ ex_read(sp, cmdp)
 
 	/*
 	 * !!!
-	 * Historically, vi did not permit reads from non-regular files,
-	 * nor did it distinguish between "read !" and "read!", so there
-	 * was no way to "force" it.
+	 * Historically, vi did not permit reads from non-regular files, nor
+	 * did it distinguish between "read !" and "read!", so there was no
+	 * way to "force" it.  We permit reading from named pipes too, since
+	 * they didn't exist when the original implementation of vi was done
+	 * and they seem a reasonable addition.
 	 */
 	if ((fp = fopen(name, "r")) == NULL || fstat(fileno(fp), &sb)) {
 		msgq_str(sp, M_SYSERR, name, "%s");
 		return (1);
 	}
-	if (!S_ISREG(sb.st_mode)) {
+	if (!S_ISFIFO(sb.st_mode) && !S_ISREG(sb.st_mode)) {
 		(void)fclose(fp);
-		msgq(sp, M_ERR, "145|Only regular files may be read");
+		msgq(sp, M_ERR,
+		    "145|Only regular files and named pipes may be read");
 		return (1);
 	}
 
@@ -266,15 +269,20 @@ ex_read(sp, cmdp)
 	rval = ex_readfp(sp, name, fp, &cmdp->addr1, &nlines, 0);
 
 	/*
-	 * Set the cursor to the first line read in, if anything read
-	 * in, otherwise, the address.  (Historic vi set it to the
-	 * line after the address regardless, but since that line may
-	 * not exist we don't bother.)
+	 * In vi, set the cursor to the first line read in, if anything read
+	 * in, otherwise, the address.  (Historic vi set it to the line after
+	 * the address regardless, but since that line may not exist we don't
+	 * bother.)
+	 *
+	 * In ex, set the cursor to the last line read in, if anything read in,
+	 * otherwise, the address.
 	 */
-	sp->lno = cmdp->addr1.lno;
-	if (nlines)
-		++sp->lno;
-
+	if (F_ISSET(sp, SC_VI)) {
+		sp->lno = cmdp->addr1.lno;
+		if (nlines)
+			++sp->lno;
+	} else
+		sp->lno = cmdp->addr1.lno + nlines;
 	return (rval);
 }
 
@@ -337,7 +345,7 @@ ex_readfp(sp, name, fp, fm, nlinesp, silent)
 		p = msg_print(sp, name, &nf);
 		msgq(sp, M_INFO,
 		    "148|%s: %lu lines, %lu characters", p,
-		    (unsigned long)lcnt, (unsigned long)ccnt);
+		    (unsigned long) lcnt, ccnt);
 		if (nf)
 			FREE_SPACE(sp, p, 0);
 	}

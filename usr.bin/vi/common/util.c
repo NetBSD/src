@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 1998/01/09 08:07:11 perry Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2001/03/31 11:37:47 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)util.c	10.10 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)util.c	10.11 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ v_strdup(sp, str, len)
 	MALLOC(sp, copy, CHAR_T *, len + 1);
 	if (copy == NULL)
 		return (NULL);
-	memmove(copy, str, len * sizeof(CHAR_T));
+	memcpy(copy, str, len * sizeof(CHAR_T));
 	copy[len] = '\0';
 	return (copy);
 }

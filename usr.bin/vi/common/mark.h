@@ -1,5 +1,4 @@
-/*	$NetBSD: mark.h,v 1.2 1998/01/09 08:06:50 perry Exp $	*/
-
+/*	$NetBSD: mark.h,v 1.3 2001/03/31 11:37:46 aymeric Exp $	*/
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exf.c,v 1.2 1998/01/09 08:06:36 perry Exp $	*/
+/*	$NetBSD: exf.c,v 1.3 2001/03/31 11:37:45 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)exf.c	10.35 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -32,7 +32,6 @@ static const char sccsid[] = "@(#)exf.c	10.35 (Berkeley) 5/16/96";
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,6 +42,7 @@ static const char sccsid[] = "@(#)exf.c	10.35 (Berkeley) 5/16/96";
 static int	file_backup __P((SCR *, char *, char *));
 static void	file_cinit __P((SCR *));
 static void	file_comment __P((SCR *));
+static int	file_spath __P((SCR *, FREF *, struct stat *, int *));
 
 /*
  * file_add --
@@ -135,7 +135,7 @@ file_init(sp, frp, rcv_name, flags)
 	RECNOINFO oinfo;
 	struct stat sb;
 	size_t psize;
-	int fd, open_err, readonly;
+	int fd, exists, open_err, readonly;
 	char *oname, tname[MAXPATHLEN];
 
 	open_err = readonly = 0;
@@ -170,13 +170,20 @@ file_init(sp, frp, rcv_name, flags)
 	F_SET(ep, F_FIRSTMODIFY);
 
 	/*
+	 * Scan the user's path to find the file that we're going to
+	 * try and open.
+	 */
+	if (file_spath(sp, frp, &sb, &exists))
+		return (1);
+
+	/*
 	 * If no name or backing file, for whatever reason, create a backing
 	 * temporary file, saving the temp file name so we can later unlink
 	 * it.  If the user never named this file, copy the temporary file name
 	 * to the real name (we display that until the user renames it).
 	 */
 	oname = frp->name;
-	if (LF_ISSET(FS_OPENERR) || oname == NULL || stat(oname, &sb)) {
+	if (LF_ISSET(FS_OPENERR) || oname == NULL || !exists) {
 		if (opts_empty(sp, O_DIRECTORY, 0))
 			goto err;
 		(void)snprintf(tname, sizeof(tname),
@@ -202,6 +209,8 @@ file_init(sp, frp, rcv_name, flags)
 		psize = 1024;
 		if (!LF_ISSET(FS_OPENERR))
 			F_SET(frp, FR_NEWFILE);
+
+		time(&ep->mtime);
 	} else {
 		/*
 		 * XXX
@@ -216,8 +225,10 @@ file_init(sp, frp, rcv_name, flags)
 			psize = 1;
 		psize *= 1024;
 
+		F_SET(ep, F_DEVSET);
 		ep->mdev = sb.st_dev;
 		ep->minode = sb.st_ino;
+
 		ep->mtime = sb.st_mtime;
 
 		if (!S_ISREG(sb.st_mode))
@@ -339,10 +350,10 @@ file_init(sp, frp, rcv_name, flags)
 		}
 
 	/*
-         * Historically, the readonly edit option was set per edit buffer in
-         * vi, unless the -R command-line option was specified or the program
-         * was executed as "view".  (Well, to be truthful, if the letter 'w'
-         * occurred anywhere in the program name, but let's not get into that.)
+	 * Historically, the readonly edit option was set per edit buffer in
+	 * vi, unless the -R command-line option was specified or the program
+	 * was executed as "view".  (Well, to be truthful, if the letter 'w'
+	 * occurred anywhere in the program name, but let's not get into that.)
 	 * So, the persistant readonly state has to be stored in the screen
 	 * structure, and the edit option value toggles with the contents of
 	 * the edit buffer.  If the persistant readonly flag is set, set the
@@ -424,6 +435,74 @@ oerr:	if (F_ISSET(ep, F_RCV_ON))
 
 	return (open_err ?
 	    file_init(sp, frp, rcv_name, flags | FS_OPENERR) : 1);
+}
+
+/*
+ * file_spath --
+ *	Scan the user's path to find the file that we're going to
+ *	try and open.
+ */
+static int
+file_spath(sp, frp, sbp, existsp)
+	SCR *sp;
+	FREF *frp;
+	struct stat *sbp;
+	int *existsp;
+{
+	CHAR_T savech;
+	size_t len;
+	int found;
+	char *name, *p, *t, path[MAXPATHLEN];
+
+	/*
+	 * If the name is NULL or an explicit reference (i.e., the first
+	 * component is . or ..) ignore the O_PATH option.
+	 */
+	name = frp->name;
+	if (name == NULL) {
+		*existsp = 0;
+		return (0);
+	}
+	if (name[0] == '/' || name[0] == '.' &&
+	    (name[1] == '/' || name[1] == '.' && name[2] == '/')) {
+		*existsp = !stat(name, sbp);
+		return (0);
+	}
+
+	/* Try . */
+	if (!stat(name, sbp)) {
+		*existsp = 1;
+		return (0);
+	}
+
+	/* Try the O_PATH option values. */
+	for (found = 0, p = t = O_STR(sp, O_PATH);; ++p)
+		if (*p == ':' || *p == '\0') {
+			if (t < p - 1) {
+				savech = *p;
+				*p = '\0';
+				len = snprintf(path,
+				    sizeof(path), "%s/%s", t, name);
+				*p = savech;
+				if (!stat(path, sbp)) {
+					found = 1;
+					break;
+				}
+			}
+			t = p + 1;
+			if (*p == '\0')
+				break;
+		}
+
+	/* If we found it, build a new pathname and discard the old one. */
+	if (found) {
+		MALLOC_RET(sp, p, char *, len + 1);
+		memcpy(p, path, len + 1);
+		free(frp->name);
+		frp->name = p;
+	}
+	*existsp = found;
+	return (0);
 }
 
 /*
@@ -664,15 +743,19 @@ file_write(sp, fm, tm, name, flags)
 	FILE *fp;
 	FREF *frp;
 	MARK from, to;
+	size_t len;
 	u_long nlno, nch;
 	int fd, nf, noname, oflags, rval;
-	char *p;
+	char *p, *s, *t, buf[MAXPATHLEN + 64];
+	const char *msgstr;
+
+	ep = sp->ep;
+	frp = sp->frp;
 
 	/*
 	 * Writing '%', or naming the current file explicitly, has the
 	 * same semantics as writing without a name.
 	 */
-	frp = sp->frp;
 	if (name == NULL || !strcmp(name, frp->name)) {
 		noname = 1;
 		name = frp->name;
@@ -725,20 +808,17 @@ file_write(sp, fm, tm, name, flags)
 	if (stat(name, &sb))
 		mtype = NEWFILE;
 	else {
-		mtype = OLDFILE;
-		if (!LF_ISSET(FS_FORCE | FS_APPEND)) {
-			ep = sp->ep;
-			if (noname && ep->mtime != 0 &&
-			    (sb.st_dev != sp->ep->mdev ||
-			    sb.st_ino != ep->minode ||
-			    sb.st_mtime != ep->mtime)) {
-				msgq_str(sp, M_ERR, name,
-				    LF_ISSET(FS_POSSIBLE) ?
+		if (noname && !LF_ISSET(FS_FORCE | FS_APPEND) &&
+		    (F_ISSET(ep, F_DEVSET) &&
+		    (sb.st_dev != ep->mdev || sb.st_ino != ep->minode) ||
+		    sb.st_mtime != ep->mtime)) {
+			msgq_str(sp, M_ERR, name, LF_ISSET(FS_POSSIBLE) ?
 "250|%s: file modified more recently than this copy; use ! to override" :
 "251|%s: file modified more recently than this copy");
-				return (1);
-			}
+			return (1);
 		}
+
+		mtype = OLDFILE;
 	}
 
 	/* Set flags to create, write, and either append or truncate. */
@@ -811,16 +891,16 @@ file_write(sp, fm, tm, name, flags)
 	 * we re-init the time.  That way the user can clean up the disk
 	 * and rewrite without having to force it.
 	 */
-	if (noname) {
-		ep = sp->ep;
+	if (noname)
 		if (stat(name, &sb))
-			ep->mtime = 0;
+			time(&ep->mtime);
 		else {
+			F_SET(ep, F_DEVSET);
 			ep->mdev = sb.st_dev;
 			ep->minode = sb.st_ino;
+
 			ep->mtime = sb.st_mtime;
 		}
-	}
 
 	/*
 	 * If the write failed, complain loudly.  ex_writefp() has already
@@ -840,14 +920,15 @@ file_write(sp, fm, tm, name, flags)
 	F_CLR(frp, FR_NAMECHANGE);
 
 	/*
-	 * If wrote the entire file clear the modified bit.  If the file was
-	 * written back to the original file name and the file is a temporary,
-	 * set the "no exit" bit.  This permits the user to write the file and
-	 * use it in the context of the file system, but still keeps them from
-	 * losing their changes by exiting.
+	 * If wrote the entire file, and it wasn't by appending it to a file,
+	 * clear the modified bit.  If the file was written to the original
+	 * file name and the file is a temporary, set the "no exit" bit.  This
+	 * permits the user to write the file and use it in the context of the
+	 * filesystem, but still keeps them from discarding their changes by
+	 * exiting.
 	 */
-	if (LF_ISSET(FS_ALL)) {
-		F_CLR(sp->ep, F_MODIFIED);
+	if (LF_ISSET(FS_ALL) && !LF_ISSET(FS_APPEND)) {
+		F_CLR(ep, F_MODIFIED);
 		if (F_ISSET(frp, FR_TMPFILE))
 			if (noname)
 				F_SET(frp, FR_TMPEXIT);
@@ -858,14 +939,40 @@ file_write(sp, fm, tm, name, flags)
 	p = msg_print(sp, name, &nf);
 	switch (mtype) {
 	case NEWFILE:
-		msgq(sp, M_INFO, "256|%s: new file: %lu lines, %lu characters",
-		    p, nlno, nch);
+		msgstr = msg_cat(sp,
+		    "256|%s: new file: %lu lines, %lu characters", NULL);
+		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		break;
 	case OLDFILE:
-		msgq(sp, M_INFO, "257|%s: %s%lu lines, %lu characters",
-		    p, LF_ISSET(FS_APPEND) ? "appended: " : "", nlno, nch);
+		msgstr = msg_cat(sp, LF_ISSET(FS_APPEND) ?
+		    "315|%s: appended: %lu lines, %lu characters" :
+		    "257|%s: %lu lines, %lu characters", NULL);
+		len = snprintf(buf, sizeof(buf), msgstr, p, nlno, nch);
 		break;
+	default:
+		abort();
 	}
+
+	/*
+	 * There's a nasty problem with long path names.  Cscope and tags files
+	 * can result in long paths and vi will request a continuation key from
+	 * the user.  Unfortunately, the user has typed ahead, and chaos will
+	 * result.  If we assume that the characters in the filenames only take
+	 * a single screen column each, we can trim the filename.
+	 */
+	s = buf;
+	if (len >= sp->cols) {
+		for (s = buf, t = buf + strlen(p); s < t &&
+		    (*s != '/' || len >= sp->cols - 3); ++s, --len);
+		if (s == t)
+			s = buf;
+		else {
+			*--s = '.';		/* Leading ellipses. */
+			*--s = '.';
+			*--s = '.';
+		}
+	}
+	msgq(sp, M_INFO, s);
 	if (nf)
 		FREE_SPACE(sp, p, 0);
 	return (0);
@@ -1071,16 +1178,36 @@ file_comment(sp)
 	char *p;
 
 	for (lno = 1; !db_get(sp, lno, 0, &p, &len) && len == 0; ++lno);
-	if (p == NULL || len <= 1 || p[0] != '/' || p[1] != '*')
+	if (p == NULL)
 		return;
-	F_SET(sp, SC_SCR_TOP);
-	do {
-		for (; len; --len, ++p)
-			if (p[0] == '*' && len > 1 && p[1] == '/') {
+	if (p[0] == '#') {
+		F_SET(sp, SC_SCR_TOP);
+		while (!db_get(sp, ++lno, 0, &p, &len))
+			if (len < 1 || p[0] != '#') {
 				sp->lno = lno;
 				return;
 			}
-	} while (!db_get(sp, ++lno, 0, &p, &len));
+	} else if (len > 1 && p[0] == '/' && p[1] == '*') {
+		F_SET(sp, SC_SCR_TOP);
+		do {
+			for (; len > 1; --len, ++p)
+				if (p[0] == '*' && p[1] == '/') {
+					sp->lno = lno;
+					return;
+				}
+		} while (!db_get(sp, ++lno, 0, &p, &len));
+	} else if (len > 1 && p[0] == '/' && p[1] == '/') {
+		F_SET(sp, SC_SCR_TOP);
+		p += 2;
+		len -= 2;
+		do {
+			for (; len > 1; --len, ++p)
+				if (p[0] == '/' && p[1] == '/') {
+					sp->lno = lno;
+					return;
+				}
+		} while (!db_get(sp, ++lno, 0, &p, &len));
+	}
 }
 
 /*
@@ -1095,8 +1222,12 @@ file_m1(sp, force, flags)
 	SCR *sp;
 	int force, flags;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
@@ -1105,11 +1236,11 @@ file_m1(sp, force, flags)
 	 * unless force is also set.  Otherwise, we fail unless forced or
 	 * there's another open screen on this file.
 	 */
-	if (F_ISSET(sp->ep, F_MODIFIED))
+	if (F_ISSET(ep, F_MODIFIED))
 		if (O_ISSET(sp, O_AUTOWRITE)) {
 			if (!force && file_aw(sp, flags))
 				return (1);
-		} else if (sp->ep->refcnt <= 1 && !force) {
+		} else if (ep->refcnt <= 1 && !force) {
 			msgq(sp, M_ERR, LF_ISSET(FS_POSSIBLE) ?
 "262|File modified since last complete write; write or use ! to override" :
 "263|File modified since last complete write; write or use :edit! to override");
@@ -1131,15 +1262,19 @@ file_m2(sp, force)
 	SCR *sp;
 	int force;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
 	 * If the file has been modified, we'll want to fail, unless forced
 	 * or there's another open screen on this file.
 	 */
-	if (F_ISSET(sp->ep, F_MODIFIED) && sp->ep->refcnt <= 1 && !force) {
+	if (F_ISSET(ep, F_MODIFIED) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
 "264|File modified since last complete write; write or use ! to override");
 		return (1);
@@ -1159,8 +1294,12 @@ file_m3(sp, force)
 	SCR *sp;
 	int force;
 {
+	EXF *ep;
+
+	ep = sp->ep;
+
 	/* If no file loaded, return no modifications. */
-	if (sp->ep == NULL)
+	if (ep == NULL)
 		return (0);
 
 	/*
@@ -1170,7 +1309,7 @@ file_m3(sp, force)
 	 * We permit writing to temporary files, so that user maps using file
 	 * system names work with temporary files.
 	 */
-	if (F_ISSET(sp->frp, FR_TMPEXIT) && sp->ep->refcnt <= 1 && !force) {
+	if (F_ISSET(sp->frp, FR_TMPEXIT) && ep->refcnt <= 1 && !force) {
 		msgq(sp, M_ERR,
 		    "265|File is a temporary; exit will discard modifications");
 		return (1);
@@ -1348,8 +1487,11 @@ file_lock(sp, name, fdp, fd, iswrite)
 	 * as returning EACCESS and EAGAIN; add EWOULDBLOCK for good measure,
 	 * and assume they are the former.  There's no portable way to do this.
 	 */
-	return (errno == EACCES || errno == EAGAIN || errno == EWOULDBLOCK ?
-	    LOCK_UNAVAIL : LOCK_FAILED);
+	return (errno == EACCES || errno == EAGAIN
+#ifdef EWOULDBLOCK
+	|| errno == EWOULDBLOCK
+#endif
+	?  LOCK_UNAVAIL : LOCK_FAILED);
 }
 #endif
 #if !defined(HAVE_LOCK_FLOCK) && !defined(HAVE_LOCK_FCNTL)

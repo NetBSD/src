@@ -1,48 +1,25 @@
-.\"	$NetBSD: vi.1,v 1.4 1999/01/08 06:16:54 abs Exp $
+.\"	$NetBSD: vi.1,v 1.5 2001/03/31 11:37:48 aymeric Exp $
 .\"
 .\" Copyright (c) 1994
 .\"     The Regents of the University of California.  All rights reserved.
-.\" Copyright (c) 1994, 1995
+.\" Copyright (c) 1994, 1995, 1996
 .\"	Keith Bostic.  All rights reserved.
 .\"
-.\" Redistribution and use in source and binary forms, with or without
-.\" modification, are permitted provided that the following conditions
-.\" are met:
-.\" 1. Redistributions of source code must retain the above copyright
-.\"    notice, this list of conditions and the following disclaimer.
-.\" 2. Redistributions in binary form must reproduce the above copyright
-.\"    notice, this list of conditions and the following disclaimer in the
-.\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"	This product includes software developed by the University of
-.\"	California, Berkeley and its contributors.
-.\" 4. Neither the name of the University nor the names of its contributors
-.\"    may be used to endorse or promote products derived from this software
-.\"    without specific prior written permission.
+.\" This document may not be republished without written permission from
+.\" Keith Bostic. 
 .\"
-.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
-.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
-.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
-.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
-.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
-.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
-.\" SUCH DAMAGE.
+.\" See the LICENSE file for redistribution information.
 .\"
-.\"     @(#)vi.1	8.39 (Berkeley) 5/18/96
+.\"     @(#)vi.1	8.51 (Berkeley) 10/10/96
 .\"
-.TH VI 1 "May 18, 1996"
+.TH VI 1 "October 10, 1996"
 .UC
 .SH NAME
 ex, vi, view \- text editors
 .SH SYNOPSIS
 .B ex
 [\c
-.B -eFGRrsv\c
+.B -eFGRrSsv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -53,7 +30,7 @@ ex, vi, view \- text editors
 .br
 .B vi
 [\c
-.B -eFGlRrv\c
+.B -eFGlRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -64,7 +41,7 @@ ex, vi, view \- text editors
 .br
 .B view
 [\c
-.B -eFGRrv\c
+.B -eFGRrSv\c
 ] [\c
 .BI -c " cmd"\c
 ] [\c
@@ -72,6 +49,12 @@ ex, vi, view \- text editors
 ] [\c
 .BI -w " size"\c
 ] [file ...]
+.SH LICENSE
+The vi program is freely redistributable.  You are welcome to copy,
+modify and share it with others under the conditions listed in the
+LICENSE file.  If any company (not individual!) finds vi sufficiently
+useful that you would have purchased it, or if any company wishes to
+redistribute it, contributions to the authors would be appreciated.
 .SH DESCRIPTION
 .I \&Vi
 is a screen oriented text editor.
@@ -138,7 +121,7 @@ Don't copy the entire file when first starting to edit.
 the file during your edit session.)
 .TP
 .B \-G
-Start editing in gtags mode, as if the gtagsmode option was set.
+Start editing in gtags mode, as if the gtagsmode option were set.
 .TP
 .B \-l
 Start editing with the lisp and showmatch options set.
@@ -157,6 +140,11 @@ If no recoverable files by the specified name exist,
 the file is edited as if the
 .B \-r
 option had not been specified.
+.TP
+.B \-S
+Run with the
+.B secure
+edit option set, disallowing all access to external programs.
 .TP
 .B \-s
 Enter batch mode; applicable only to
@@ -446,8 +434,9 @@ commands or cancel partial commands.
 .TP
 .B "<control-]>"
 Push a tag reference onto the tag stack.
-In gtagsmode, if at the first column of line,
-locate function references otherwise function definitions.
+In gtags mode, if at the first column of line,
+locate function references otherwise function
+definitions.
 .TP
 .B "<control-^>"
 Switch to the most recently edited file.
@@ -866,9 +855,9 @@ Delete the lines from the file.
 .B "di[splay] b[uffers] | c[onnections] | s[creens] | t[ags]"
 Display buffers, Cscope connections, screens or tags.
 .TP
-.B "e[dit][!] [+cmd] [file]"
+.B "[Ee][dit][!] [+cmd] [file]"
 .TP
-.B "ex[!] [+cmd] [file]"
+.B "[Ee]x[!] [+cmd] [file]"
 Edit a different file.
 .TP
 .B "exu[sage] [command]"
@@ -879,7 +868,7 @@ command.
 .B "f[ile] [file]"
 Display and optionally change the file name.
 .TP
-.B "fg [name]"
+.B "[Ff]g [name]"
 .I \&Vi
 mode only.
 Foreground the specified screen.
@@ -919,7 +908,7 @@ Move the specified lines after the target line.
 Write the abbreviations, editor options and maps to the specified
 file.
 .TP
-.B "n[ext][!] [file ...]"
+.B "[Nn][ext][!] [file ...]"
 Edit the next file from the argument list.
 .TP
 .B "[line] o[pen] /pattern/ [flags]"
@@ -931,7 +920,7 @@ Save the file in a form that can later be recovered using the
 .B \-r
 option.
 .TP
-.B "prev[ious][!]"
+.B "[Pp]rev[ious][!]"
 Edit the previous file from the argument list.
 .TP
 .B "[range] p[rint] [count] [flags]"
@@ -960,7 +949,8 @@ Grow or shrink the current screen.
 Rewind the argument list.
 .TP
 .B "rta[g][!] tagstring"
-Edit the file refering the specified tag. (Only in gtagsmode)
+Edit the file refering to the specified tag.
+(only in gtags mode)
 .TP
 .B "se[t] [option[=[value]] ...] [nooption ...] [option? ...] [all]"
 Display or set editor options.
@@ -987,7 +977,7 @@ Make substitutions.
 .B <suspend>
 Suspend the edit session.
 .TP
-.B "ta[g][!] tagstring"
+.B "[Tt]a[g][!] tagstring"
 Edit the file containing the specified tag.
 .TP
 .B "tagn[ext][!]"
@@ -1013,7 +1003,7 @@ mode only.
 Enter
 .IR \&vi .
 .TP
-.B "vi[sual][!] [+cmd] [file]"
+.B "[Vi]i[sual][!] [+cmd] [file]"
 .I \&Vi
 mode only.
 Edit a new file.
@@ -1101,7 +1091,7 @@ Set the number of columns in the screen.
 .B "comment [off]"
 .I \&Vi
 only.
-Skip leading comments in files.
+Skip leading comments in shell, C and C++ language files.
 .TP
 .B "directory, dir [environment variable TMPDIR, or /tmp]"
 The directory where temporary files are created.
@@ -1233,6 +1223,9 @@ Define additional paragraph boundaries for the
 and
 .B \&}
 commands.
+.TP
+.B "path []"
+Define additional directories to search for files being edited.
 .\" I cannot get a double quote to print between the square brackets
 .\" to save my life.  The ONLY way I've been able to get this to work
 .\" is with the .tr command.
@@ -1315,7 +1308,7 @@ Set the autoindent and shift command indentation width.
 only.
 Note matching ``{'' and ``('' for ``}'' and ``)'' characters.
 .TP
-.B "showmode [off]"
+.B "showmode, smd [off]"
 .I \&Vi
 only.
 Display the current editor mode and a ``modified'' flag.
@@ -1349,7 +1342,7 @@ Set the terminal type.
 This option has historically made editor messages less verbose.
 It has no effect in this implementation.
 .TP
-.B "tildeop"
+.B "tildeop [off]"
 Modify the
 .B \&~
 command to take an associated motion.
@@ -1392,6 +1385,10 @@ command.
 .TP
 .B "window, w, wi [environment variable LINES]"
 Set the window size for the screen.
+.TP
+.B "windowname [off]"
+Change the icon/window name to the current file name even if it can't
+be restored on editor exit.
 .TP
 .B "wraplen, wl [0]"
 .I \&Vi

@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.h,v 1.2 1998/01/09 08:08:49 perry Exp $	*/
+/*	$NetBSD: vi.h,v 1.3 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -8,7 +8,7 @@
  *
  * See the LICENSE file for redistribution information.
  *
- *	@(#)vi.h	10.18 (Berkeley) 5/4/96
+ *	@(#)vi.h	10.19 (Berkeley) 6/30/96
  */
 
 /* Definition of a vi "word". */
@@ -372,8 +372,8 @@ typedef enum {
 
 /* Vi common error messages. */
 typedef enum {
-	VIM_COMBUF, VIM_EMPTY, VIM_EOF, VIM_EOL, VIM_NOCOM, VIM_NOCOM_B,
-	VIM_USAGE
+	VIM_COMBUF, VIM_EMPTY, VIM_EOF, VIM_EOL,
+	VIM_NOCOM, VIM_NOCOM_B, VIM_USAGE, VIM_WRESIZE
 } vim_t;
 
 #include "vi_extern.h"

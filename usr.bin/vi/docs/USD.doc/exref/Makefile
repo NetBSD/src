@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 08:07:17 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2001/03/31 11:37:47 aymeric Exp $
 #
-#	@(#)Makefile	8.1 (Berkeley) 6/8/93
+# @(#)Makefile	8.8 (Berkeley) 10/10/96
 
-DIR=	usd/13.ex
-SRCS=	ex.rm
-MACROS=	-msU
-CLEANFILES=summary.*
+DIR=		usd/12.ex
+SRCS=		ex.rm ex.summary
+MACROS=		-ms
+CLEANFILES=	summary.ps
 
-paper.ps: ${SRCS} summary.ps
-	${ROFF} ${SRCS} > ${.TARGET}
+all: paper.ps summary.ps
+
+paper.ps: ex.rm
+	${TBL} ex.rm | ${ROFF} > ${.TARGET}
 
 summary.ps: ex.summary
 	${TBL} ex.summary | ${ROFF} > ${.TARGET}

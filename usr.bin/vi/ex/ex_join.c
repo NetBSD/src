@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_join.c,v 1.7 1998/01/09 08:07:52 perry Exp $	*/
+/*	$NetBSD: ex_join.c,v 1.8 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_join.c	10.9 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)ex_join.c	10.10 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,7 +128,7 @@ ex_join(sp, cmdp)
 		}
 
 		if (len != 0) {
-			memmove(tbp, p, len);
+			memcpy(tbp, p, len);
 			tbp += len;
 			clen += len;
 			echar = p[len - 1];

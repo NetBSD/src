@@ -1,4 +1,4 @@
-/*	$NetBSD: v_ulcase.c,v 1.7 1998/01/09 08:08:42 perry Exp $	*/
+/*	$NetBSD: v_ulcase.c,v 1.8 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -118,7 +118,7 @@ v_mulcase(sp, vp)
 	recno_t lno;
 
 	for (lno = vp->m_start.lno;;) {
-		if (db_get(sp, lno, DBG_FATAL, (char **)&p, &len))
+		if (db_get(sp, lno, DBG_FATAL, (char **) &p, &len))
 			return (1);
 		if (len != 0 && ulcase(sp, lno, p, len,
 		    lno == vp->m_start.lno ? vp->m_start.cno : 0,

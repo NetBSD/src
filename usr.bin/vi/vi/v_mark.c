@@ -1,4 +1,4 @@
-/*	$NetBSD: v_mark.c,v 1.7 1998/01/09 08:08:32 perry Exp $	*/
+/*	$NetBSD: v_mark.c,v 1.8 2001/03/31 11:37:52 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -12,7 +12,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)v_mark.c	10.7 (Berkeley) 3/6/96";
+static const char sccsid[] = "@(#)v_mark.c	10.8 (Berkeley) 9/20/96";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -217,15 +217,18 @@ mark(sp, vp, cmd)
 	 * the character before the current one (this is safe because we know
 	 * the search had to move to succeed).
 	 *
-	 * Mark motions become line mode opertions if they start at column 0
-	 * and end at column 0 of another line.
+	 * Mark motions become line mode opertions if they start at the first
+	 * nonblank and end at column 0 of another line.
 	 */
 	if (vp->m_start.lno < vp->m_stop.lno && vp->m_stop.cno == 0) {
 		if (db_get(sp, --vp->m_stop.lno, DBG_FATAL, NULL, &len))
 			return (1);
-		if (vp->m_start.cno == 0)
-			F_SET(vp, VM_LMODE);
 		vp->m_stop.cno = len ? len - 1 : 0;
+		len = 0;
+		if (nonblank(sp, vp->m_start.lno, &len))
+			return (1);
+		if (vp->m_start.cno <= len)
+			F_SET(vp, VM_LMODE);
 	} else
 		--vp->m_stop.cno;
 

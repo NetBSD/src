@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_tag.c,v 1.10 1999/11/22 05:53:58 chopps Exp $	*/
+/*	$NetBSD: ex_tag.c,v 1.11 2001/03/31 11:37:50 aymeric Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -15,7 +15,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)ex_tag.c	10.32 (Berkeley) 5/16/96";
+static const char sccsid[] = "@(#)ex_tag.c	10.36 (Berkeley) 9/15/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -47,10 +47,10 @@ static const char sccsid[] = "@(#)ex_tag.c	10.32 (Berkeley) 5/16/96";
 static char	*binary_search __P((char *, char *, char *));
 static int	 compare __P((char *, char *, char *));
 static void	 ctag_file __P((SCR *, TAGF *, char *, char **, size_t *));
-static int	 ctag_search __P((SCR *, char *, char *));
+static int	 ctag_search __P((SCR *, char *, size_t, char *));
 #ifdef GTAGS
-static int     getentry __P((char *, char **, char **, char **));
-static TAGQ   *gtag_slist __P((SCR *, char *, int));
+static int	 getentry __P((char *, char **, char **, char **));
+static TAGQ	*gtag_slist __P((SCR *, char *, int));
 #endif
 static int	 ctag_sfile __P((SCR *, TAGF *, TAGQ *, char *));
 static TAGQ	*ctag_slist __P((SCR *, char *));
@@ -165,10 +165,12 @@ ex_tag_push(sp, cmdp)
 	/* Get the tag information. */
 #ifdef GTAGS
 	if (O_ISSET(sp, O_GTAGSMODE)) {
-		if ((tqp = gtag_slist(sp, exp->tag_last, F_ISSET(cmdp, E_REFERENCE))) == NULL)
+		tqp = gtag_slist(sp, exp->tag_last, F_ISSET(cmdp, E_REFERENCE));
+		if (tqp == NULL)
 			return (1);
 	} else
 #endif
+
 	if ((tqp = ctag_slist(sp, exp->tag_last)) == NULL)
 		return (1);
 
@@ -226,7 +228,8 @@ ex_tag_push(sp, cmdp)
 	/* Link the new TAGQ structure into place. */
 	CIRCLEQ_INSERT_HEAD(&exp->tq, tqp, q);
 
-	(void)ctag_search(sp, tqp->current->search, tqp->tag);
+	(void)ctag_search(sp,
+	    tqp->current->search, tqp->current->slen, tqp->tag);
 
 	/*
 	 * Move the current context from the temporary save area into the
@@ -289,7 +292,7 @@ ex_tag_next(sp, cmdp)
 	if (F_ISSET(tqp, TAG_CSCOPE))
 		(void)cscope_search(sp, tqp, tp);
 	else
-		(void)ctag_search(sp, tp->search, tqp->tag);
+		(void)ctag_search(sp, tp->search, tp->slen, tqp->tag);
 	return (0);
 }
 
@@ -324,7 +327,7 @@ ex_tag_prev(sp, cmdp)
 	if (F_ISSET(tqp, TAG_CSCOPE))
 		(void)cscope_search(sp, tqp, tp);
 	else
-		(void)ctag_search(sp, tp->search, tqp->tag);
+		(void)ctag_search(sp, tp->search, tp->slen, tqp->tag);
 	return (0);
 }
 
@@ -829,6 +832,11 @@ tagq_free(sp, tqp)
 		CIRCLEQ_REMOVE(&tqp->tagq, tp, q);
 		free(tp);
 	}
+	/*
+	 * !!!
+	 * If allocated and then the user failed to switch files, the TAGQ
+	 * structure was never attached to any list.
+	 */
 	if (tqp->q.cqe_next != NULL)
 		CIRCLEQ_REMOVE(&exp->tq, tqp, q);
 	free(tqp);
@@ -849,7 +857,8 @@ tag_msg(sp, msg, tag)
 {
 	switch (msg) {
 	case TAG_BADLNO:
-		msgq_str(sp, M_ERR, tag, "164|%s: the tag line doesn't exist");
+		msgq_str(sp, M_ERR, tag,
+	    "164|%s: the tag's line number is past the end of the file");
 		break;
 	case TAG_EMPTY:
 		msgq(sp, M_INFO, "165|The tags stack is empty");
@@ -893,7 +902,7 @@ ex_tagf_alloc(sp, str)
 					free(tfp);
 					return (1);
 				}
-				memmove(tfp->name, t, len);
+				memcpy(tfp->name, t, len);
 				tfp->name[len] = '\0';
 				tfp->flags = 0;
 				TAILQ_INSERT_TAIL(&exp->tagfq, tfp, q);
@@ -936,9 +945,10 @@ ex_tag_free(sp)
  *	Search a file for a tag.
  */
 static int
-ctag_search(sp, search, tag)
+ctag_search(sp, search, slen, tag)
 	SCR *sp;
 	char *search, *tag;
+	size_t slen;
 {
 	MARK m;
 	char *p;
@@ -963,15 +973,12 @@ ctag_search(sp, search, tag)
 		m.lno = 1;
 		m.cno = 0;
 		if (f_search(sp, &m, &m,
-		    search, NULL, SEARCH_FILE | SEARCH_TAG))
+		    search, slen, NULL, SEARCH_FILE | SEARCH_TAG))
 			if ((p = strrchr(search, '(')) != NULL) {
-				p[1] = '\0';
-				if (f_search(sp, &m, &m,
-				    search, NULL, SEARCH_FILE | SEARCH_TAG)) {
-					p[1] = '(';
+				slen = p - search;
+				if (f_search(sp, &m, &m, search, slen,
+				    NULL, SEARCH_FILE | SEARCH_TAG))
 					goto notfound;
-				}
-				p[1] = '(';
 			} else {
 notfound:			tag_msg(sp, TAG_SEARCH, tag);
 				return (1);
@@ -994,6 +1001,7 @@ notfound:			tag_msg(sp, TAG_SEARCH, tag);
 	(void)nonblank(sp, sp->lno, &sp->cno);
 	return (0);
 }
+
 #ifdef GTAGS
 /*
  * getentry --
@@ -1117,6 +1125,7 @@ alloc_err:
 	return (NULL);
 }
 #endif
+
 /*
  * ctag_slist --
  *	Search the list of tags files for a tag, and return tag queue.
@@ -1345,11 +1354,11 @@ ctag_file(sp, tfp, name, dirp, dlenp)
 	    stat(name, &sb) && (p = strrchr(tfp->name, '/')) != NULL) {
 		*p = '\0';
 		len = snprintf(buf, sizeof(buf), "%s/%s", tfp->name, name);
+		*p = '/';
 		if (stat(buf, &sb) == 0) {
 			*dirp = tfp->name;
 			*dlenp = strlen(*dirp);
 		}
-		*p = '/';
 	}
 }
 
