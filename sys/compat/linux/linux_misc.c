@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.4 1995/03/22 05:24:47 mycroft Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.5 1995/06/10 22:19:14 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -643,7 +643,7 @@ linux_readdir(p, uap, retval)
 	if ((fp->f_flag & FREAD) == 0)
 		return (EBADF);
 
-	vp = (struct vnode *) fp->f_data;
+	vp = (struct vnode *)fp->f_data;
 
 	if (vp->v_type != VDIR)	/* XXX  vnode readdir op should do this */
 		return (EINVAL);
@@ -654,12 +654,12 @@ linux_readdir(p, uap, retval)
 	nbytes = SCARG(uap, count);
 	if (nbytes == 1) {	/* Need this for older Linux libs, apparently */
 		nbytes = sizeof (struct linux_dirent);
+		buflen = max(va.va_blocksize, nbytes);
 		justone = 1;
-	}
-	else
+	} else {
+		buflen = min(MAXBSIZE, nbytes);
 		justone = 0;
-
-	buflen = max(va.va_blocksize, nbytes);
+	}
 	buf = malloc(buflen, M_TEMP, M_WAITOK);
 	VOP_LOCK(vp);
 	off = fp->f_offset;
@@ -677,7 +677,7 @@ again:
          * First we read into the malloc'ed buffer, then
          * we massage it into user space, one record at a time.
          */
-	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *) 0, 0);
+	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, (u_long *)0, 0);
 	if (error)
 		goto out;
 
@@ -688,11 +688,11 @@ again:
 		goto eof;
 
 	for (; len > 0; len -= reclen) {
-		reclen = ((struct dirent *) inp)->d_reclen;
+		bdp = (struct dirent *)inp;
+		reclen = bdp->d_reclen;
 		if (reclen & 3)
 			panic("linux_readdir");
 		off += reclen;	/* each entry points to next */
-		bdp = (struct dirent *) inp;
 		if (bdp->d_fileno == 0) {
 			inp += reclen;	/* it is a hole; squish it out */
 			continue;
@@ -708,10 +708,10 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
-		idb.l_dino = (long) bdp->d_fileno;
-		idb.l_doff = (linux_off_t) linuxreclen;
-		idb.l_dreclen = (u_short) bdp->d_namlen;	/* sigh */
-		strcpy(idb.l_dname, bdp->d_name);
+		idb.d_ino = (long)bdp->d_fileno;
+		idb.d_off = (linux_off_t)linuxreclen;
+		idb.d_reclen = (u_short)bdp->d_namlen;
+		strcpy(idb.d_name, bdp->d_name);
 		if ((error = copyout((caddr_t)&idb, outp, linuxreclen)))
 			goto out;
 		/* advance past this real entry */
