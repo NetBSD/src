@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.21 1997/01/27 19:41:04 gwr Exp $	*/
+/*	$NetBSD: mon.h,v 1.22 1997/02/05 14:51:23 gwr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -64,20 +64,12 @@
  * All rights reserved.
  *
  *
- * Header: /cdrom/src/kernel/Cvsroot/kernel/mach/sun3.md/machMon.h,v 9.1 90/10/03 13:52:34 mgbaker Exp SPRITE (Berkeley)
+ * Header: /cdrom/src/kernel/Cvsroot/kernel/mach/sun3.md/machMon.h,v 9.1
+ *         90/10/03 13:52:34 mgbaker Exp SPRITE (Berkeley)
  */
 
 #ifndef _MACHMON
 #define _MACHMON
-
-/*
- * The memory addresses for the PROM, and the EEPROM.
- * On the sun2 these addresses are actually 0x00EF??00
- * but only the bottom 24 bits are looked at so these still
- * work ok.
- */
-
-#define PROM_BASE       0x0fef0000
 
 /*
  * Structure set up by the boot command to pass arguments to the program that
@@ -91,11 +83,24 @@ typedef struct bootparam {
 	int		unitNum;	/* Unit number */
 	int		partNum;	/* Partition/file number */
 	char		*fileName;	/* File name, points into strings */
-	struct boottab   *bootDevice;	/* Defined in saio.h */
+	struct boottab	*bootDevice;	/* Defined in saio.h */
 } MachMonBootParam;
 
+#ifdef	sun3x
 /*
- * Here is the structure of the vector table which is at the front of the boot
+ * This structure defines a segment of physical memory. To support
+ * sparse physical memory, the PROM constructs a linked list of
+ * these at power-on-self-test time.
+ */
+struct physmemory {
+	unsigned int address;
+	unsigned int size;
+	struct physmemory *next;
+};
+#endif	/* sun3x */
+
+/*
+ * Here is the structure of the vector table found at the front of the boot
  * rom.  The functions defined in here are explained below.
  *
  * NOTE: This struct has references to the structures keybuf and globram which
@@ -109,15 +114,15 @@ typedef struct {
 
 	int	*diagberr;		/* Bus err handler for diags */
 
-	/* 
+	/*
 	 * Monitor and hardware revision and identification
 	 */
 
 	struct bootparam **bootParam;	/* Info for bootstrapped pgm */
- 	u_int	*memorySize;		/* Usable memory in bytes */
+	u_int	*memorySize;		/* Usable memory in bytes */
 
-	/* 
-	 * Single-character input and output 
+	/*
+	 * Single-character input and output
 	 */
 
 	u_char	(*getChar)__P((void));	/* Get char from input source */
@@ -128,14 +133,14 @@ typedef struct {
 	u_char	*inSource;	/* Input source selector */
 	u_char	*outSink;	/* Output sink selector */
 
-	/* 
-	 * Keyboard input (scanned by monitor nmi routine) 
+	/*
+	 * Keyboard input (scanned by monitor nmi routine)
 	 */
 
 	int	(*getKey)__P((void));	/* Get next key if one exists */
 	int	(*initGetKey)__P((void*)); /* Initialize get key */
-	u_int	*translation;		/* Kbd translation selector 
-					   (see keyboard.h in sun 
+	u_int	*translation;		/* Kbd translation selector
+					   (see keyboard.h in sun
 					    monitor code) */
 	u_char	*keyBid;		/* Keyboard ID byte */
 	int	*screen_x;		/* V2: Screen x pos (R/O) */
@@ -148,8 +153,8 @@ typedef struct {
 
 	char		*monId;
 
-	/* 
-	 * Frame buffer output and terminal emulation 
+	/*
+	 * Frame buffer output and terminal emulation
 	 */
 
 	int	(*fbWriteChar)__P((int)); /* Write a character to FB */
@@ -158,14 +163,14 @@ typedef struct {
 	/* Quickly write string to FB */
 	int	(*fbWriteStr)__P((char *buf, int len));
 
-	/* 
-	 * Reboot interface routine -- resets and reboots system.  No return. 
+	/*
+	 * Reboot interface routine -- resets and reboots system.  No return.
 	 */
 
 	int	(*reBoot)__P((char *));	/* e.g. reBoot("xy()vmunix") */
 
-	/* 
-	 * Line input and parsing 
+	/*
+	 * Line input and parsing
 	 */
 
 	u_char	*lineBuf;	/* The line input buffer */
@@ -177,23 +182,23 @@ typedef struct {
 	int		*fbThere;		/* =1 if frame buffer there */
 	int		(*getNum)__P((void));	/* Grab hex num from line */
 
-	/* 
-	 * Print formatted output to current output sink 
+	/*
+	 * Print formatted output to current output sink
 	 */
 
 	int	(*printf)__P((char *, ...));	/* Like kernel printf */
 	int	(*printHex)__P((int,int));	/* Format N digits in hex */
 
 	/*
-	 * Led stuff 
+	 * Led stuff
 	 */
 
 	u_char	*leds;			/* RAM copy of LED register */
 	int	(*setLeds)__P((int));	/* Sets LED's and RAM copy */
 
-	/* 
+	/*
 	 * Non-maskable interrupt  (nmi) information
-	 */ 
+	 */
 
 	int	(*nmiAddr)__P((void*));	/* Addr for level 7 vector */
 	int	(*abortEntry)__P((void*)); /* Entry for keyboard abort */
@@ -205,11 +210,11 @@ typedef struct {
 
 	int		*fbType;
 
-	/* 
-	 * Assorted other things 
+	/*
+	 * Assorted other things
 	 */
 
-	u_int	romvecVersion;		/* Version # of Romvec */ 
+	u_int	romvecVersion;		/* Version # of Romvec */
 	struct globram  *globRam;	/* monitor global variables */
 	caddr_t		kbdZscc;	/* Addr of keyboard in use */
 
@@ -222,15 +227,59 @@ typedef struct {
 	int	(*exitToMon)__P((void)); /* Exit from user program */
 	u_char	**memorybitmap;		/* V1: &{0 or &bits} */
 
+	/****************************************************************
+	 * Note: from here on, things vary per-architecture!
+	 ****************************************************************/
+
+#ifdef	sun3
 	/* Set seg in all contexts */
 	void	(*setcxsegmap)__P((int,int,int));
 
 	/* V2: Handler for 'v' cmd */
 	void	(**vector_cmd)__P((int, char*));
-	int	dummy1z;
-	int	dummy2z;
-	int	dummy3z;
-	int	dummy4z;
+
+	int	pad[6];
+#endif	/* sun3 */
+#ifdef	sun3x
+
+	/* V2: Handler for 'v' cmd */
+	void	(**vector_cmd)__P((int, char*));
+
+	/* Address of low memory PTEs (maps at least 4MB) */
+	int	**lomemptaddr;
+
+	/*
+	 * Address of debug/mon PTEs which map the 2MB space
+	 * starting at MON_KDB_START, ending at MONEND.
+	 */
+	int	**monptaddr;
+
+	/*
+	 * Address of dvma PTEs.  This is a VA that maps the I/O MMU
+	 * page table, but only the last part, which corresponds to
+	 * the CPU virtual space at MON_DVMA_BASE (see below).
+	 */
+	int	**dvmaptaddr;
+
+	/*
+	 * Physical Address of the debug/mon PTEs found at the
+	 * virtual address given by *romVectorPtr->monptaddr;
+	 */
+	int	**monptphysaddr;
+
+	/*
+	 * Address of shadow copy of DVMA PTEs.  This is a VA that
+	 * maps the PTEs used by the CPU to map the same physical
+	 * pages as the I/O MMU into the CPU virtual space starting
+	 * at MON_DVMA_BASE, length MON_DVMA_SIZE (see below).
+	 */
+	int	**shadowpteaddr;
+
+	struct physmemory *v_physmemory; /* Ptr to memory list for 3/80 */
+
+	int pad[1];
+
+#endif	/* sun3x */
 } MachMonRomVector;
 
 /*
@@ -246,7 +295,7 @@ typedef struct {
  *     void putChar(ch)
  *	   char ch;	
  *
- * mayGet -- Maybe get a character from the current input source.  Return -1 
+ * mayGet -- Maybe get a character from the current input source.  Return -1
  *           if don't return a character.
  *
  * 	int mayGet()
@@ -314,6 +363,7 @@ typedef struct {
  */
 
 #define	romVectorPtr	((MachMonRomVector *) PROM_BASE)
+/* #define romp romVectorPtr XXX - Too prone to conflicts. */
 
 /*
  * Functions and defines to access the monitor.
@@ -326,33 +376,65 @@ typedef struct {
 #define mon_reboot (romVectorPtr->reBoot)
 #define mon_panic(x) { mon_printf(x); mon_exit_to_mon();}
 
+#ifdef	sun3
+
 #define mon_setcxsegmap(context, va, sme) \
      romVectorPtr->setcxsegmap(context, va, sme)
-#define romp (romVectorPtr)
 
 /*
- * MONSTART and MONEND denote the range of the damn monitor.
- * 
- * supposedly you can steal pmegs within this range that do not contain
- * valid pages. 
+ * The memory addresses for the PROM, and the EEPROM.
+ * On the sun2 these addresses are actually 0x00EF??00
+ * but only the bottom 24 bits are looked at so these still
+ * work ok.
  */
-#define MONSTART     0x0FE00000
-#define MONEND       0x0FF00000
+
+#define PROM_BASE       0x0fef0000
+
+/*
+ * MONSTART and MONEND denote the range used by the monitor.
+ */
+#define MONSTART    	0x0FE00000
+#define MONEND      	0x0FF00000
 
 /*
  * These describe the monitor's short segment which it basically uses to map
  * one stupid page that it uses for storage.  MONSHORTPAGE is the page,
- * and MONSHORTSEG is the segment that it is in.  If this sounds dumb to
- * you, it is.  I can change the pmeg, but not the virtual address.
- * Sun defines these with the high nibble set to 0xF.  I believe this was
- * for the monitor source which accesses this piece of memory with addressing
- * limitations or some such crud.  I haven't replicated this here, because
- * it is confusing, and serves no obvious purpose if you aren't the monitor.
- *
+ * and MONSHORTSEG is the segment that it is in.  Its mapping must not
+ * be removed (or the PROM monitor will be unhappy).
  */
 
-#define MONSHORTPAGE 0x0FFFE000	
-#define MONSHORTSEG  0x0FFE0000     
+#define MONSHORTPAGE	0x0FFFE000
+#define MONSHORTSEG 	0x0FFE0000
 
-#endif /* _MACHMON */
-#endif /* MACHINE_MON_H */     
+#endif	/* sun3 */
+#ifdef	sun3x
+
+/*
+ * We don't have a separate kernel debugger like sun kadb,
+ * but this range is setup by the monitor for such a thing.
+ * We might as well preserve the mappings anyway.
+ */
+#define MON_KDB_START	0xFEE00000
+#define	MON_KDB_SIZE	  0x100000
+
+/*
+ * MONSTART and MONEND define the range used by the monitor.
+ * MONDATA is its data page (do not touch!)
+ * PROM_BASE is where the boot PROM lives.
+ */
+#define MONSTART    	0xFEF00000
+#define MONDATA     	0xFEF72000
+#define PROM_BASE   	0xFEFE0000
+#define MONEND      	0xFF000000
+
+/*
+ * These define the CPU virtual address range mapped by the
+ * PROM for use as DVMA space.  The physical pages mapped in
+ * this range are also mapped by the I/O MMU.
+ */
+#define MON_DVMA_BASE	0xFFF00000
+#define MON_DVMA_SIZE	  0x100000	/* 1MB */
+
+#endif	/* sun3x */
+#endif	/* _MACHMON */
+#endif	/* MACHINE_MON_H */
