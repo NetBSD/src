@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 1999/03/04 20:32:20 wrstuden Exp $
+#	$NetBSD: Makefile,v 1.3.2.1 2000/03/01 00:12:22 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -71,5 +71,17 @@ clean cleandir distclean:
 
 real-floppy:
 	dd if=${IMAGE} of=${FD_RDEV} bs=45k
+
+.ifdef RELEASEDIR
+release:
+	-mkdir -p ${RELEASEDIR}/installation/floppy
+	cp -p ${IMAGE} ${RELEASEDIR}/installation/floppy
+	gzip -c -9 < ${IMAGE} > ${RELEASEDIR}/installation/floppy/${IMAGE}.gz
+.else
+release:
+	@echo Set RELEASEDIR before making release.
+.endif
+
+depend:
 
 .include <bsd.obj.mk>

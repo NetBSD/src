@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2000/02/23 22:31:31 he Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2000/03/01 00:12:22 he Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -58,6 +58,8 @@ HACKOBJS:= getcap.o getgrent.o getnet.o getnetgr.o getpwent.o setlocale.o yplib.
 
 clean cleandir distclean:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+
+release:
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>
