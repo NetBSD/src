@@ -1,4 +1,4 @@
-#	$NetBSD: POWERMAC,v 1.13 1998/10/13 11:25:26 tsubai Exp $
+#	$NetBSD: POWERMAC,v 1.14 1998/10/14 12:27:03 tsubai Exp $
 #
 # POWERMAC config file
 #
@@ -44,6 +44,7 @@ options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# verbose PCI device messages
 
 options 	ZS_TXDMA	# Use dma on zs output
+options 	WSEMUL_VT100	# VT100 / VT220 emulation
 
 # Kernel root file system and dump configuration.
 config	netbsd	root on ? type ?
@@ -72,6 +73,10 @@ adb0	at obio0			# Apple Desktop Bus
 aed*	at adb?				# ADB Event Device
 akbd*	at adb?				# ADB keyboard
 ams*	at adb?				# ADB mouse
+
+ofb0	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
+wsdisplay* at ofb? console ?
+wskbd*	at akbd? console ?
 
 mc0	at obio0			# MACE ethernet
 esp0	at obio0 flags 0x0		# 53c9x SCSI
