@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.347 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.348 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -82,3 +82,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 	ipf(8): updated to version 4.1.3. [martti 20040723]
 	/etc/security: allow mtree specfile entries in /etc/mtree/special.local
 		to override entries in /etc/mtree/special.  [lukem 20040723]
+	spif(4): New driver for Sun SUNW,spif multi-port Sbus cards originally
+		written by Jason L. Wright for OpenBSD.  [mrg 20040724]
