@@ -27,58 +27,54 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: px.4,v 1.4 1999/03/16 01:19:22 garbled Exp $
+.\"	$NetBSD: px.4,v 1.5 1999/04/26 20:27:29 ad Exp $
 .\"
-.Dd November 11, 1997
+.Dd April 26, 1999
 .Dt PX 4 pmax
 .Os
 .Sh NAME
 .Nm px
 .Nd
-TurboChannel PMAG-C 2-D accelerated graphics board
+TURBOchannel ``PixelStamp'' accelerated graphics boards
 .Sh SYNOPSIS
 .Cd "px* at tc?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides minimal support for a
+driver provides support for the
 .Tn DEC
-.Tn PMAG-C
-video display option card.
-The
-.Nm
-driver does nothing except remove the requirement to remove
-.Tn PMAG-C 
-cards in order to boot
-.Nx . 
-It offers no support for either raster consoles or X11 servers
-because doing either requires using the undocumented packet protocol
-used to talk to the on-board blitter chip.
+.Tn PixelStamp 
+video display option cards:
+.Pp
+.Bl -tag -width 10n -offset indent -compact
+.It Sy PX
+(PMAG-C) 8 plane, 2D
+.It Sy PXG
+(PMAG-D) 8 plane, 3D, 128kB SRAM
+.It Sy PXG+
+(PMAG-E) 24 plane, 3D, 128kB SRAM
+.It Sy PXG+ Turbo
+(PMAG-F) 24 plane, 3D, 256kB SRAM, Z-Buffer
+.El
+.Pp
+.Tn PixelStamp
+based cards do not provide direct framebuffer access but instead use
+a packet-based protocol to communicate with the stamp, which in turn
+manipulates the framebuffer. 
 .Pp
 .Sh SEE ALSO
 .Xr rcons 4 ,
-.Xr tc 4 ,
-.Xr ws 4 .
+.Xr tc 4 .
 .Sh BUGS
-Console output support and X11 server support should be implemented.
-This implementation waits on documentation of the blitter chip protocol.
+Interrupt handling, packet queuing and hardware clipping for the
+.Nm PXG
+are totally broken. Support for the
+.Nm i860
+co-processor must first be added.
 .Pp
-The
-.Nm rcons
-glass-tty raster framebuffer console driver assumes direct bit
-read/write access to a framebuffer.
-The
-.Nm
-hardware does not provide this.
-.Nm rcons 
-should be replaced with a driver that allows a character-painting
-interface as well as direct blitting.
+The X server is a work in progress.
 .Pp
-The only known X server is an Ultrix binary which requires emulation
-of the
-.Tn Ultrix
-Xws ABI.
-Work on this is in progress.
+3D geometry acceleration is not supported, and probably never will be.
 .Sh HISTORY
 The
 .Nm
