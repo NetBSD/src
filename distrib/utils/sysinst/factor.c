@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.4 1997/12/20 23:47:02 cjs Exp $ */
+/*	$NetBSD: factor.c,v 1.5 1998/02/19 18:37:58 phil Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,7 +63,7 @@ static void build_primes (long max)
 	primes[0] = 2;
 	primes[1] = 3;
 	
-	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc < max; pc+=2) {
+	for (pc = primes[num_primes-1]; pc < 46345 && pc*pc <= max; pc+=2) {
 		j = 0;
 		rem = 1;
 		while (j<num_primes && primes[j]*primes[j] <= pc) {
