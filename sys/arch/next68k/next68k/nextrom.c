@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.8 1999/01/31 07:02:34 dbj Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.9 1999/01/31 18:12:14 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -102,10 +102,18 @@ u_char rom_boot_info[20];
 u_char rom_boot_file[20];
 u_char rom_bootfile[MG_boot_how-MG_bootfile];
 
+u_char *rom_return_sp;
+u_int rom_mon_stack;
+u_char rom_image[0x2000];
+u_int rom_vbr;;
+
+paddr_t rom_reboot_vect;
+
 void
 next68k_bootargs(args)
      unsigned char *args[];
 {
+	RELOC(rom_return_sp,u_char *) = args[0];
   RELOC(mg,char *) = args[1];
 
 	ROM_PUTS("Welcome to NetBSD/next68k\r\n");
@@ -200,7 +208,7 @@ next68k_bootargs(args)
 		 * top of memory
 		 */
 		RELOC(phys_seg_list[j-1].ps_end, vm_offset_t) -= 0x2000;
-		
+
     /* pmap is unhappy if it is not null terminated */
     for(;j<MAX_PHYS_SEGS;j++) {
       RELOC(phys_seg_list[j].ps_start, vm_offset_t) = 0;
@@ -271,6 +279,14 @@ next68k_bootargs(args)
 			if (MONRELOC(u_char *, MG_boot_file)[i] == '\0') break;
 		}
 		RELOC(rom_boot_file[sizeof(rom_boot_file)-1], u_char) = 0;
+
+		RELOC(rom_mon_stack, u_int) = MONRELOC(u_int, MG_mon_stack);
+		RELOC(rom_vbr, u_int) = MONRELOC(u_int, MG_vbr);
+		RELOC(rom_reboot_vect, paddr_t) = MONRELOC(paddr_t *, MG_vbr)[45]; /* trap #13 */
+
+		for(i=0;i<sizeof(rom_image);i++) {
+			RELOC(rom_image[i], u_char) = *(u_char *)(0x6000000-0x2000+i);
+		}
 	}
 
 	ROM_PUTS("Check serial port A for console.\r\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.11 1999/01/02 13:42:17 dbj Exp $	*/
+/*	$NetBSD: locore.s,v 1.12 1999/01/31 18:12:14 dbj Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -1797,19 +1797,23 @@ ENTRY_NOPROFILE(doboot)
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0007		| movc d0,dtt1
 
-        movel _ASM_LABEL(save_vbr), d0  | restore vbr
-        movec d0,vbr
-
         moveal   #NEXT_RAMBASE,a5       | amount to RELOC by.
 
-        ASRELOC(Ldoboot1,a0)
-#if 0
-        jbra    a0@                       | jump into physical address space.
-#else
-        jmp     a0@                       | jump into physical address space.
-#endif
-
+        | Create a new stack at address tmpstk, and push
+        | The existing sp onto it for kicks.
+	ASRELOC(tmpstk, a0)
+	movel	sp,a0@-
+	moveal  a0,sp
+	moveal  #0,a6
+        
+        ASRELOC(Ldoboot1, a0)
+        jmp     a0@                     | jump into physical address space.
 Ldoboot1:
+        
+        ASRELOC(save_vbr, a0)
+        movl    a0@,d0
+        movc    d0,vbr
+
         | reset the registers as the boot rom likes them:
         movel	#0x0200c040,d0          |
 	.long	0x4e7b0004		| movc d0,itt0
@@ -1817,16 +1821,13 @@ Ldoboot1:
         movel	#0x00ffc000,d0          |
 	.long	0x4e7b0005		| movc d0,itt1
 	.long	0x4e7b0007		| movc d0,dtt1
-hloop:
-#if 0
-        ASRELOC(halt, a0)
-        movel a0,d0
-#else
-        movel #halt+NEXT_RAMBASE,d0
-#endif
-        trap #13
-        bra hloop
 
+        RELOC(monbootflag, a0)
+        movel a0,d0                     | "-h" halts instead of reboot.
+        trap #13
+
+hloop:  
+        bra hloop                       | This shouldn't be reached.
 /*
  * Misc. global variables.
  */
@@ -1881,8 +1882,8 @@ GLOBAL(videolimit)
 ASLOCAL(save_vbr)               | VBR from ROM
         .long 0xdeadbeef
         
-halt:
-        .asciz "-h"
+GLOBAL(monbootflag)
+        .long 0
 
 #if defined(ENABLE_HP_CODE)
 GLOBAL(extiobase)
