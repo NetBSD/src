@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.14 1999/02/14 17:54:30 scw Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.15 1999/02/20 00:12:03 scw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -256,6 +256,52 @@ cachectl(req, addr, len)
 		break;
 	}
 	return(error);
+}
+
+/*
+ * DMA cache control
+ */
+
+/*ARGSUSED1*/
+int
+dma_cachectl(addr, len)
+	caddr_t	addr;
+	int len;
+{
+#if defined(M68040) || defined(M68060)
+	if (mmutype == MMU_68040) {
+		register int inc = 0;
+		int pa = 0;
+		caddr_t end;
+
+		end = addr + len;
+		if (len <= 1024) {
+			addr = (caddr_t)((int)addr & ~0xF);
+			inc = 16;
+		} else {
+			addr = (caddr_t)((int)addr & ~PGOFSET);
+			inc = NBPG;
+		}
+		do {
+			/*
+			 * Convert to physical address.
+			 */
+			if (pa == 0 || ((int)addr & PGOFSET) == 0) {
+				pa = kvtop (addr);
+			}
+			if (inc == 16) {
+				DCFL(pa);
+				ICPL(pa);
+			} else {
+				DCFP(pa);
+				ICPP(pa);
+			}
+			pa += inc;
+			addr += inc;
+		} while (addr < end);
+	}
+#endif	/* M68040 */
+	return(0);
 }
 
 int
