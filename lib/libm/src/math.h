@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $Id: math.h,v 1.1 1994/08/10 20:31:49 jtc Exp $
+ * $Id: math.h,v 1.2 1994/09/25 17:27:56 jtc Exp $
  */
 
 #ifndef _MATH_H_
@@ -215,6 +215,7 @@ extern float erff __P((float));
 extern float erfcf __P((float));
 extern float gammaf __P((float));
 extern float hypotf __P((float, float));
+extern int isinff __P((float));
 extern int isnanf __P((float));
 extern int finitef __P((float));
 extern float j0f __P((float));
