@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.2 2000/03/24 17:05:33 ws Exp $	*/
+/*	$NetBSD: locore.s,v 1.3 2000/05/10 20:20:21 is Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ __start:
 
 	bl	_C_LABEL(initppc)
 
-/* enbale internal i/d-cache */
+/* enable internal i/d-cache */
 	mfpvr	9
 	rlwinm	9,9,16,16,31
 	cmpi	0,9,1
