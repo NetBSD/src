@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.32 2000/03/06 03:16:26 mark Exp $
+#	$NetBSD: SHARK,v 1.33 2000/06/07 04:36:06 matt Exp $
 # From:  NetBSD: GENERIC,v 1.61 2000/01/20 19:12:29 wrstuden Exp
 #
 #	SHARK
@@ -152,10 +152,7 @@ options 	DDB		# in-kernel debugger
 #options 	KERNEL_DEBUG	# compile in kernel debuging capability
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
-config		netbsd_netboot	root on cs0 type nfs	# Ethernet
-config		netbsd_wdboot	root on wd0a type ffs	# IDE disk
-config		netbsd_sdboot	root on sd0a type ffs	# Zip disk
-#config		netbsd		root on ? type ?	# cannot yet detect
+config		netbsd		root on ? type ?
 
 # The main bus device
 mainbus0 at root
