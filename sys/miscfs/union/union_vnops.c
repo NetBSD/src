@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.31 1996/05/23 23:34:14 cgd Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.32 1996/09/01 23:48:36 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -988,8 +988,8 @@ union_select(v)
 {
 	struct vop_select_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
+		int a_which;
+		int a_fflags;
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;

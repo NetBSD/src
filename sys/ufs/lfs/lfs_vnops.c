@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.11 1996/05/11 18:27:41 mycroft Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.12 1996/09/01 23:49:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -52,8 +52,9 @@
 
 #include <vm/vm.h>
 
-#include <miscfs/specfs/specdev.h>
 #include <miscfs/fifofs/fifo.h>
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
 #include <ufs/ufs/inode.h>
@@ -481,10 +482,12 @@ lfs_close(v)
 	register struct vnode *vp = ap->a_vp;
 	register struct inode *ip = VTOI(vp);
 	int mod;
+	struct timespec ts;
 
 	if (vp->v_usecount > 1 && !(ip->i_flag & IN_LOCKED)) {
 		mod = ip->i_flag & IN_MODIFIED;
-		ITIMES(ip, &time, &time);
+		TIMEVAL_TO_TIMESPEC(&time, &ts);
+		ITIMES(ip, &ts, &ts, &ts);
 		if (!mod && ip->i_flag & IN_MODIFIED)
 			ip->i_lfs->lfs_uinodes++;
 	}

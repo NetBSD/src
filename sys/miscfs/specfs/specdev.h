@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
+/*	$NetBSD: specdev.h,v 1.13 1996/09/01 23:48:31 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -82,48 +82,45 @@ struct	flock;
 struct	buf;
 struct	uio;
 
-int	spec_badop	__P((void *));
-int	spec_ebadf	__P((void *));
-
 int	spec_lookup	__P((void *));
-#define	spec_create	spec_badop
-#define	spec_mknod	spec_badop
+#define	spec_create	genfs_badop
+#define	spec_mknod	genfs_badop
 int	spec_open	__P((void *));
 int	spec_close	__P((void *));
-#define	spec_access	spec_ebadf
-#define	spec_getattr	spec_ebadf
-#define	spec_setattr	spec_ebadf
+#define	spec_access	genfs_ebadf
+#define	spec_getattr	genfs_ebadf
+#define	spec_setattr	genfs_ebadf
 int	spec_read	__P((void *));
 int	spec_write	__P((void *));
-#define	spec_lease_check nullop
+#define	spec_lease_check genfs_nullop
 int	spec_ioctl	__P((void *));
 int	spec_select	__P((void *));
-#define	spec_mmap	spec_badop
+#define	spec_mmap	genfs_badop
 int	spec_fsync	__P((void *));
-#define	spec_seek	spec_badop
-#define	spec_remove	spec_badop
-#define	spec_link	spec_badop
-#define	spec_rename	spec_badop
-#define	spec_mkdir	spec_badop
-#define	spec_rmdir	spec_badop
-#define	spec_symlink	spec_badop
-#define	spec_readdir	spec_badop
-#define	spec_readlink	spec_badop
-#define	spec_abortop	spec_badop
-#define	spec_inactive	nullop
-#define	spec_reclaim	nullop
+#define	spec_seek	genfs_badop
+#define	spec_remove	genfs_badop
+#define	spec_link	genfs_badop
+#define	spec_rename	genfs_badop
+#define	spec_mkdir	genfs_badop
+#define	spec_rmdir	genfs_badop
+#define	spec_symlink	genfs_badop
+#define	spec_readdir	genfs_badop
+#define	spec_readlink	genfs_badop
+#define	spec_abortop	genfs_badop
+#define	spec_inactive	genfs_nullop
+#define	spec_reclaim	genfs_nullop
 int	spec_lock	__P((void *));
 int	spec_unlock	__P((void *));
 int	spec_bmap	__P((void *));
 int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
-#define	spec_islocked	nullop
+#define	spec_islocked	genfs_nullop
 int	spec_pathconf	__P((void *));
-int	spec_advlock	__P((void *));
-#define	spec_blkatoff	spec_badop
-#define	spec_valloc	spec_badop
-#define	spec_reallocblks spec_badop
-#define	spec_vfree	spec_badop
-#define	spec_truncate	nullop
-#define	spec_update	nullop
+#define	spec_advlock	genfs_eopnotsupp
+#define	spec_blkatoff	genfs_badop
+#define	spec_valloc	genfs_badop
+#define	spec_reallocblks genfs_badop
+#define	spec_vfree	genfs_badop
+#define	spec_truncate	genfs_nullop
+#define	spec_update	genfs_nullop
 #define	spec_bwrite	vn_bwrite

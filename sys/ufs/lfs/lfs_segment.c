@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.4 1996/02/09 22:28:54 christos Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.5 1996/09/01 23:49:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -381,6 +381,7 @@ lfs_writeinode(fs, sp, ip)
 	ino_t ino;
 	int error, i, ndx;
 	int redo_ifile = 0;
+	struct timespec ts;
 
 	if (!(ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)))
 		return(0);
@@ -414,7 +415,8 @@ lfs_writeinode(fs, sp, ip)
 	/* Update the inode times and copy the inode onto the inode page. */
 	if (ip->i_flag & IN_MODIFIED)
 		--fs->lfs_uinodes;
-	ITIMES(ip, &time, &time);
+	TIMESPEC_TO_TIMEVAL(&time, &ts);
+	ITIMES(ip, &ts, &ts, &ts);
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	bp = sp->ibp;
 	((struct dinode *)bp->b_data)[sp->ninodes % INOPB(fs)] = ip->i_din;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.6 1996/09/01 23:49:42 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -56,46 +56,46 @@ struct vattr;
 struct vnode;
 
 __BEGIN_DECLS
-int	 ufs_abortop	__P((void *));
-int	 ufs_access	__P((void *));
-int	 ufs_advlock	__P((void *));
-int	 ufs_bmap	__P((void *));
-int	 ufs_close	__P((void *));
-int	 ufs_create	__P((void *));
-int	 ufs_getattr	__P((void *));
-int	 ufs_inactive	__P((void *));
-int	 ufs_ioctl	__P((void *));
-int	 ufs_islocked	__P((void *));
+#define	ufs_abortop	genfs_abortop
+int	ufs_access	__P((void *));
+int	ufs_advlock	__P((void *));
+int	ufs_bmap	__P((void *));
+int	ufs_close	__P((void *));
+int	ufs_create	__P((void *));
+int	ufs_getattr	__P((void *));
+int	ufs_inactive	__P((void *));
+int	ufs_ioctl	__P((void *));
+int	ufs_islocked	__P((void *));
 #ifdef NFSSERVER
-int	 lease_check	__P((void *));
-#define	 ufs_lease_check lease_check
+int	lease_check	__P((void *));
+#define	ufs_lease_check lease_check
 #else
-#define	 ufs_lease_check ((int (*) __P((void *)))nullop)
+#define	ufs_lease_check genfs_nullop
 #endif
-int	 ufs_link	__P((void *));
-int	 ufs_lock	__P((void *));
-int	 ufs_lookup	__P((void *));
-int	 ufs_mkdir	__P((void *));
-int	 ufs_mknod	__P((void *));
-int	 ufs_mmap	__P((void *));
-int	 ufs_open	__P((void *));
-int	 ufs_pathconf	__P((void *));
-int	 ufs_print	__P((void *));
-int	 ufs_readdir	__P((void *));
-int	 ufs_readlink	__P((void *));
-int	 ufs_remove	__P((void *));
-int	 ufs_rename	__P((void *));
-int	 ufs_rmdir	__P((void *));
-int	 ufs_seek	__P((void *));
-int	 ufs_select	__P((void *));
-int	 ufs_setattr	__P((void *));
-int	 ufs_strategy	__P((void *));
-int	 ufs_symlink	__P((void *));
-int	 ufs_unlock	__P((void *));
-int	 ufs_whiteout	__P((void *));
-int	 ufsspec_close	__P((void *));
-int	 ufsspec_read	__P((void *));
-int	 ufsspec_write	__P((void *));
+int	ufs_link	__P((void *));
+int	ufs_lock	__P((void *));
+int	ufs_lookup	__P((void *));
+int	ufs_mkdir	__P((void *));
+int	ufs_mknod	__P((void *));
+int	ufs_mmap	__P((void *));
+int	ufs_open	__P((void *));
+int	ufs_pathconf	__P((void *));
+int	ufs_print	__P((void *));
+int	ufs_readdir	__P((void *));
+int	ufs_readlink	__P((void *));
+int	ufs_remove	__P((void *));
+int	ufs_rename	__P((void *));
+int	ufs_rmdir	__P((void *));
+#define	ufs_seek	genfs_nullop
+#define	ufs_select	genfs_select
+int	ufs_setattr	__P((void *));
+int	ufs_strategy	__P((void *));
+int	ufs_symlink	__P((void *));
+int	ufs_unlock	__P((void *));
+int	ufs_whiteout	__P((void *));
+int	ufsspec_close	__P((void *));
+int	ufsspec_read	__P((void *));
+int	ufsspec_write	__P((void *));
 
 #ifdef FIFO
 int	ufsfifo_read	__P((void *));
