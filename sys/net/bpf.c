@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.34 1997/03/15 18:12:18 is Exp $	*/
+/*	$NetBSD: bpf.c,v 1.35 1997/03/17 06:45:20 scottr Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -71,10 +71,10 @@
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
 
+#include <net/if_arc.h>
 #include <net/if_ether.h>
 
 #include <netinet/in.h>
-#include <netinet/if_arc.h>
 #include <netinet/if_inarp.h>
 
 /*
