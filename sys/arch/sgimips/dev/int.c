@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.5 2004/03/25 15:08:57 pooka Exp $	*/
+/*	$NetBSD: int.c,v 1.6 2004/03/25 15:16:11 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.5 2004/03/25 15:08:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.6 2004/03/25 15:16:11 pooka Exp $");
 
 #include "opt_cputype.h"
 
@@ -77,8 +77,9 @@ CFATTACH_DECL(int, sizeof(struct int_softc),
 static int
 int_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	if (	(mach_type == MACH_SGI_IP12) || (mach_type == MACH_SGI_IP20) ||
-		(mach_type == MACH_SGI_IP22) )
+
+	if ((mach_type == MACH_SGI_IP12) || (mach_type == MACH_SGI_IP20) ||
+	    (mach_type == MACH_SGI_IP22) )
 		return 1;
 
 	return 0;
@@ -137,7 +138,8 @@ int_attach(struct device *parent, struct device *self, void *aux)
 			int_cal_timer();
 
 			cps = 0;
-			for (i = 0; i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
+			for (i = 0;
+			    i < sizeof(ctrdiff) / sizeof(ctrdiff[0]); i++) {
 				do {
 					ctrdiff[i] = int_cal_timer();
 				} while (ctrdiff[i] == 0);
@@ -147,7 +149,8 @@ int_attach(struct device *parent, struct device *self, void *aux)
 
 			cps = cps / (sizeof(ctrdiff) / sizeof(ctrdiff[0]));
 
-			printf(": bus %luMHz, CPU %luMHz", cps / 10000, cps / 5000);
+			printf(": bus %luMHz, CPU %luMHz",
+			    cps / 10000, cps / 5000);
 
 			/* R4k/R4400/R4600/R5k count at half CPU frequency */
 			curcpu()->ci_cpu_freq = 2 * cps * hz;
@@ -210,7 +213,8 @@ int_mappable_intr(void *arg)
 }
 
 void
-int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
+		u_int32_t ipending)
 {
 	int i;
 	int ret;
@@ -228,13 +232,15 @@ int_local0_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipend
 			if (intrtab[i].ih_fun != NULL)
 				ret |= (intrtab[i].ih_fun)(intrtab[i].ih_arg);
 			else
-				printf("int0: unexpected local0 interrupt %d\n", i);
+				printf("int0: unexpected local0 interrupt %d\n",
+				    i);
 		}
 	}
 }
 
 void
-int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
+int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc,
+		u_int32_t ipending)
 {
 	int i;
 	int ret;
@@ -254,7 +260,7 @@ int_local1_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipend
 				    (intrtab[8 + i].ih_arg);
 			else
 				printf("int0: unexpected local1 interrupt %x\n",
-				    8 + i );
+				    8 + i);
 		}
 	}
 }
