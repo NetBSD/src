@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.2 2003/11/22 15:08:44 sekiya Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.3 2003/12/14 07:31:02 sekiya Exp $
 #
 # Indy
 
@@ -8,13 +8,12 @@ makeoptions	TEXTADDR=0x88069000	# Indy
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.2 $"
+#ident		"GENERIC-$Revision: 1.3 $"
 
 maxusers	32
 
 # CPU related options
-#options 	IP20		# Indigo R4k
-options 	IP22		# Indy / Indigo2
+options 	IP22		# Indigo / Indigo2 / Indy
 
 options 	MIPS3		# MIPS3 support
 
@@ -155,8 +154,8 @@ hpc2 		at gio? addr 0x1f980000
 # HPC devices
 sq* 		at hpc0 offset ?
 wdsc* 		at hpc0 offset ?
-dsclock*	at hpc0 offset ?
-#dpclock*	at hpc0 offset ?
+dpclock*	at hpc0 offset ?	# IP20
+dsclock*	at hpc0 offset ?	# IP22/24
 haltwo*         at hpc0 offset ?
 
 #
