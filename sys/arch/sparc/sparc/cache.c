@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.28 1997/05/15 22:53:01 pk Exp $ */
+/*	$NetBSD: cache.c,v 1.29 1997/07/02 14:53:00 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -102,7 +102,7 @@ sun4_cache_enable()
 	printf("cache enabled\n");
 
 #ifdef notyet
-	if (cpuinfo.sc_flags & SUN4_IOCACHE) {
+	if (cpuinfo.flags & SUN4_IOCACHE) {
 		stba(AC_SYSENABLE, ASI_CONTROL,
 		     lduba(AC_SYSENABLE, ASI_CONTROL) | SYSEN_IOCACHE);
 		printf("iocache enabled\n");
@@ -124,6 +124,8 @@ ms1_cache_enable()
 	/* Turn on caches via MMU */
 	sta(SRMMU_PCR, ASI_SRMMU,
 	    lda(SRMMU_PCR,ASI_SRMMU) | MS1_PCR_DCE | MS1_PCR_ICE);
+
+	cpuinfo.flags |= CPUFLG_CACHEPAGETABLES;
 
 	CACHEINFO.c_enabled = CACHEINFO.dc_enabled = 1;
 
@@ -164,6 +166,7 @@ viking_cache_enable()
 		stda(MXCC_ENABLE_ADDR, ASI_CONTROL,
 		     ldda(MXCC_ENABLE_ADDR, ASI_CONTROL) |
 		     (u_int64_t)MXCC_ENABLE_BIT);
+		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
 		CACHEINFO.ec_enabled = 1;
 	}
 	printf("cache enabled\n");
@@ -222,6 +225,10 @@ swift_cache_enable()
 	pcr = lda(SRMMU_PCR, ASI_SRMMU);
 	pcr |= (SWIFT_PCR_ICE | SWIFT_PCR_DCE);
 	sta(SRMMU_PCR, ASI_SRMMU, pcr);
+
+	/* XXX - assume that an MS2 with ecache is really a turbo in disguise */
+	if (CACHEINFO.ec_totalsize == 0)
+		cpuinfo.flags |= CPUFLG_CACHEPAGETABLES; /* Ok to cache PTEs */
 	CACHEINFO.c_enabled = 1;
 	printf("cache enabled\n");
 }
