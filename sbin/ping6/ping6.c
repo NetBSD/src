@@ -1,5 +1,5 @@
-/*	$NetBSD: ping6.c,v 1.29 2001/01/12 18:50:58 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.109 2000/12/27 11:32:37 itojun Exp $	*/
+/*	$NetBSD: ping6.c,v 1.30 2001/01/12 19:13:41 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.112 2001/01/12 19:11:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -81,7 +81,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.29 2001/01/12 18:50:58 itojun Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.30 2001/01/12 19:13:41 itojun Exp $");
 #endif
 #endif
 
@@ -248,11 +248,17 @@ struct msghdr smsghdr;
 struct iovec smsgiov;
 char *scmsg = 0;
 
+volatile int signo;
+volatile int seenalrm;
+volatile int seenint;
+volatile int seeninfo;
+
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
 int	 get_hoplim __P((struct msghdr *));
 struct in6_pktinfo *get_rcvpktinfo __P((struct msghdr *));
-void	 onalrm __P((int));
+void	 onsignal __P((int));
+void	 retransmit __P((void));
 void	 oninfo __P((int));
 void	 onint __P((int));
 void	 pinger __P((void));
@@ -284,7 +290,7 @@ main(argc, argv)
 {
 	struct itimerval itimer;
 	struct sockaddr_in6 from;
-	struct timeval timeout;
+	struct timeval timeout, *tv;
 	struct addrinfo hints;
 	fd_set *fdmaskp;
 	int fdmasks;
@@ -299,9 +305,6 @@ main(argc, argv)
 	struct in6_pktinfo *pktinfo = NULL;
 #ifdef USE_RFC2292BIS
 	struct ip6_rthdr *rthdr = NULL;
-#endif
-#ifndef __OpenBSD__
-	struct timeval tv;
 #endif
 #ifdef IPSEC_POLICY_IPSEC
 	char *policy_in = NULL;
@@ -633,8 +636,8 @@ main(argc, argv)
 
 	ident = getpid() & 0xFFFF;
 #ifndef __OpenBSD__
-	gettimeofday(&tv, NULL);
-	srand((unsigned int)(tv.tv_sec ^ tv.tv_usec ^ (long)ident));
+	gettimeofday(&timeout, NULL);
+	srand((unsigned int)(timeout.tv_sec ^ timeout.tv_usec ^ (long)ident));
 	memset(nonce, 0, sizeof(nonce));
 	for (i = 0; i < sizeof(nonce); i += sizeof(int))
 		*((int *)&nonce[i]) = rand();
@@ -963,22 +966,24 @@ main(argc, argv)
 	while (preload--)		/* Fire off them quickies. */
 		pinger();
 
-	(void)signal(SIGINT, onint);
+	(void)signal(SIGINT, onsignal);
 #ifdef SIGINFO
-	(void)signal(SIGINFO, oninfo);
+	(void)signal(SIGINFO, onsignal);
 #endif
 
 	if ((options & F_FLOOD) == 0) {
-		(void)signal(SIGALRM, onalrm);
+		(void)signal(SIGALRM, onsignal);
 		itimer.it_interval = interval;
-		itimer.it_value.tv_sec = 0;
-		itimer.it_value.tv_usec = 1;
+		itimer.it_value = interval;
 		(void)setitimer(ITIMER_REAL, &itimer, NULL);
+		retransmit();
 	}
 
 	fdmasks = howmany(s + 1, NFDBITS) * sizeof(fd_mask);
 	if ((fdmaskp = malloc(fdmasks)) == NULL)
 		err(1, "malloc");
+
+	signo = seenalrm = seenint = seeninfo = 0;
 
 	for (;;) {
 		struct msghdr m;
@@ -990,11 +995,30 @@ main(argc, argv)
 			pinger();
 			timeout.tv_sec = 0;
 			timeout.tv_usec = 10000;
-			memset(fdmaskp, 0, fdmasks);
-			FD_SET(s, fdmaskp);
-			if (select(s + 1, fdmaskp, NULL, NULL, &timeout) < 1)
-				continue;
-		}
+			tv = &timeout;
+		} else
+			tv = NULL;
+		memset(fdmaskp, 0, fdmasks);
+		FD_SET(s, fdmaskp);
+		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
+		if ((cc < 0 && errno == EINTR) || ((options & F_FLOOD) && signo)) {
+			if (seenalrm) {
+				retransmit();
+				seenalrm = 0;
+			}
+			if (seenint) {
+				onint(SIGINT);
+				seenint = 0;
+			}
+			if (seeninfo) {
+				oninfo(SIGINFO);
+				seeninfo = 0;
+			}
+			signo = 0;
+			continue;
+		} else if (cc == 0)
+			continue;
+
 		fromlen = sizeof(from);
 
 		m.msg_name = (caddr_t)&from;
@@ -1008,14 +1032,33 @@ main(argc, argv)
 		m.msg_control = (caddr_t)buf;
 		m.msg_controllen = sizeof(buf);
 
-		if ((cc = recvmsg(s, &m, 0)) < 0) {
-			if (errno == EINTR)
+		cc = recvmsg(s, &m, 0);
+		if (cc < 0) {
+			if (errno != EINTR) {
+				warn("recvmsg");
 				continue;
-			warn("recvfrom");
+			}
+			if (!signo)
+				continue;
+			if (seenalrm) {
+				retransmit();
+				seenalrm = 0;
+			}
+			if (seenint) {
+				onint(SIGINT);
+				seenint = 0;
+			}
+			if (seeninfo) {
+				oninfo(SIGINFO);
+				seeninfo = 0;
+			}
 			continue;
+		} else {
+			/*
+			 * an ICMPv6 message (probably an echoreply) arrived.
+			 */
+			pr_pack(packet, cc, &m);
 		}
-
-		pr_pack(packet, cc, &m);
 		if (npackets && nreceived >= npackets)
 			break;
 	}
@@ -1023,14 +1066,30 @@ main(argc, argv)
 	exit(nreceived == 0);
 }
 
+void
+onsignal(sig)
+	int sig;
+{
+	signo = sig;
+	switch (sig) {
+	case SIGALRM:
+		seenalrm++;
+		break;
+	case SIGINT:
+		seenint++;
+		break;
+	case SIGINFO:
+		seeninfo++;
+		break;
+	}
+}
+
 /*
- * onalrm --
+ * retransmit --
  *	This routine transmits another ping6.
  */
-/* ARGSUSED */
 void
-onalrm(signo)
-	int signo;
+retransmit()
 {
 	struct itimerval itimer;
 
@@ -1909,10 +1968,8 @@ void
 oninfo(notused)
 	int notused;
 {
-	int save_errno = errno;
 
 	summary();
-	errno = save_errno;
 }
 
 /*
