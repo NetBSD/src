@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.65 1999/07/31 18:41:15 itojun Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.66 1999/08/12 16:04:52 itojun Exp $	*/
 
 /*
 %%% portions-copyright-nrl-98
@@ -382,8 +382,9 @@ struct syn_cache_head {
 #ifndef INET6
 #define	sototcpcb(so)	(intotcpcb(sotoinpcb(so)))
 #else
-#define	sototcpcb(so)	(sotoinpcb(so) ? intotcpcb(sotoinpcb(so)) \
-				       : in6totcpcb(sotoin6pcb(so)))
+#define	sototcpcb(so)	(((so)->so_proto->pr_domain->dom_family == AF_INET) \
+				? intotcpcb(sotoinpcb(so)) \
+				: in6totcpcb(sotoin6pcb(so)))
 #endif
 
 /*
