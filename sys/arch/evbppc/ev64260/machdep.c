@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2003/03/17 23:28:09 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,7 +118,8 @@ void initppc(u_int, u_int, u_int, void *); /* Called from locore */
 void strayintr(int);
 int lcsplx(int);
 void gt_bus_space_init(void);
-extern void return_to_dink(int);
+void return_to_dink(int);
+void calc_delayconst(void);
 
 struct powerpc_bus_space gt_pci0_mem_bs_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
@@ -190,25 +191,12 @@ initppc(startkernel, endkernel, args, btinfo)
 	}
 	avail_end = physmemr[0].start + physmemr[0].size;    /* XXX temporary */
 
-	/*
-	 * Get CPU clock
-	 */
-	{	/* XXX AKB */
-		extern u_long ticks_per_sec, ns_per_tick;
-		extern void calc_delayconst(void);
-
-		ticks_per_sec = 100000000;	/* 100 MHz */
-		/* ticks_per_sec = 66000000;	* 66 MHz */
-		ticks_per_sec /= 4;	/* 4 cycles per DEC tick */
-		cpu_timebase = ticks_per_sec;
-		ns_per_tick = 1000000000 / ticks_per_sec;
-		calc_delayconst();
-	}
-
 	oea_batinit(0xf0000000, BAT_BL_256M);
 	oea_init((void (*)(void))ext_intr);
 
 	gt_bus_space_init();
+
+	calc_delayconst();			/* Set CPU clock */
 
 	consinit();
 
@@ -462,99 +450,3 @@ gt_bus_space_init(void)
 		    "I/O space 0x10000-0x7fffff: error=%d\n", error);
 #endif
 }
-#if 1
-#define ISSET(t, f)    ((t) & (f))
-
-#define KCOM_BASE	0xfd000000	/* XXX COM1 */
-#define KCOM_REGSIZE	0x00001000	/* XXX */
-
-unsigned char *kcombase = (unsigned char *)KCOM_BASE;
-
-void kcomcninit(struct consdev *);
-int kcomcngetc(dev_t);
-void kcomcnpollc(dev_t, int);
-void kcomcnputc(dev_t, int);
-
-static unsigned char kcom_reg_read(int);
-static void kcom_reg_write(int, unsigned char);
-
-/*
- * The following functions are polled getc and putc routines,
- * the core of the "kludge" in the Kludge Com driver :-)
- */
-
-static inline unsigned char 
-kcom_reg_read(int off)
-{
-	unsigned char rv;
-
-	__asm __volatile ("eieio; lbzx %0,%1,%2; eieio;"
-		: "=r"(rv) : "b"(off << 2), "r"(kcombase));
-	return rv;
-}
-
-static __inline void
-kcom_reg_write(int off, unsigned char val)
-{
-	__asm __volatile ("eieio; stbx %0,%1,%2; eieio;"
-		:: "r"(val), "b"(off << 2), "r"(kcombase));
-
-}
-
-void
-kcomcninit(struct consdev *cd)
-{
-	kcom_reg_write(com_ier, 0);
-	kcom_reg_write(com_mcr, MCR_RTS|MCR_DTR);
-}
-
-int
-kcomcngetc(dev_t dev)
-{
-	u_char stat, c;
-
-	/* block until a character becomes available */
-	while (!ISSET(stat = kcom_reg_read(com_lsr), LSR_RXRDY))
-		;
-
-	c = kcom_reg_read(com_data);
-	stat = kcom_reg_read(com_iir);
-	return (int)c;
-}
-
-void
-kcomcnputc(dev_t dev, int c)
-{
-	int timo;
-
-	/* wait for any pending transmission to finish */
-	timo = 150000;
-	while ((!ISSET(kcom_reg_read(com_lsr), LSR_TXRDY)) && --timo)
-		continue;
-
-	kcom_reg_write(com_data, c);
-
-	/* wait for this transmission to complete */
-	timo = 150000;
-	while ((!ISSET(kcom_reg_read(com_lsr), LSR_TXRDY)) && --timo)
-		continue;
-}
-
-void
-kcomcnpollc(dev_t dev, int on)
-{
-}
-
-struct consdev consdev_kcom = {
-	NULL,
-	kcomcninit,
-	kcomcngetc,
-	kcomcnputc,
-	kcomcnpollc,
-	NULL,
-};
-
-#if 1
-struct consdev *cn_tab = &consdev_kcom;
-#endif
-#endif
