@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.10 2005/03/04 16:06:26 christos Exp $
+.\"	$NetBSD: lastlogin.8,v 1.11 2005/03/04 16:10:00 wiz Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -116,9 +116,7 @@ aware might only write to
 .Pa /var/log/lastlog .
 To look at the old database one can use:
 .Pp
-.nf
-	lastlogin -f /var/log/lastlog
-.fi
+.Dl lastlogin -f /var/log/lastlog
 .Sh SEE ALSO
 .Xr last 1 ,
 .Xr lastlog 5 ,
