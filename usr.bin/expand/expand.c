@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.7 1998/11/06 23:10:40 christos Exp $	*/
+/*	$NetBSD: expand.c,v 1.8 1999/02/10 16:15:31 kleink Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93";
 #endif
-__RCSID("$NetBSD: expand.c,v 1.7 1998/11/06 23:10:40 christos Exp $");
+__RCSID("$NetBSD: expand.c,v 1.8 1999/02/10 16:15:31 kleink Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -70,7 +70,8 @@ main(argc, argv)
 	int n;
 
 	/* handle obsolete syntax */
-	while (argc > 1 && argv[1][0] && isdigit((unsigned char)argv[1][1])) {
+	while (argc > 1 &&
+	    argv[1][0] == '-' && isdigit((unsigned char)argv[1][1])) {
 		getstops(&argv[1][1]);
 		argc--; argv++;
 	}
@@ -93,7 +94,7 @@ main(argc, argv)
 		if (argc > 0) {
 			if (freopen(argv[0], "r", stdin) == NULL) {
 				perror(argv[0]);
-				exit(1);
+				exit(EXIT_FAILURE);
 			}
 			argc--, argv++;
 		}
@@ -147,7 +148,8 @@ main(argc, argv)
 			}
 		}
 	} while (argc > 0);
-	exit(0);
+	exit(EXIT_SUCCESS);
+	/* NOTREACHED */
 }
 
 static void
@@ -164,7 +166,7 @@ getstops(cp)
 		if (i <= 0 || i > 256) {
 bad:
 			fprintf(stderr, "Bad tab stop spec\n");
-			exit(1);
+			exit(EXIT_FAILURE);
 		}
 		if (nstops > 0 && i <= tabstops[nstops-1])
 			goto bad;
@@ -180,6 +182,7 @@ bad:
 static void
 usage()
 {
-	(void)fprintf (stderr, "usage: expand [-t tablist] [file ...]\n");
-	exit(1);
+
+	(void)fprintf(stderr, "usage: expand [-t tablist] [file ...]\n");
+	exit(EXIT_FAILURE);
 }
