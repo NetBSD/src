@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.76 1998/08/28 20:58:37 drochner Exp $	*/
+/*	$NetBSD: if_de.c,v 1.77 1998/09/15 02:39:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -3694,6 +3694,8 @@ tulip_tx_intr(
 	if (((volatile tulip_desc_t *) ri->ri_nextin)->d_status & TULIP_DSTS_OWNER)
 	    break;
 
+	ri->ri_free++;
+	descs++;
 	d_flag = ri->ri_nextin->d_flag;
 	if (d_flag & TULIP_DFLAG_TxLASTSEG) {
 	    if (d_flag & TULIP_DFLAG_TxSETUPPKT) {
@@ -3794,8 +3796,6 @@ tulip_tx_intr(
 	if (++ri->ri_nextin == ri->ri_last)
 	    ri->ri_nextin = ri->ri_first;
 
-	ri->ri_free++;
-	descs++;
 	if ((sc->tulip_flags & TULIP_TXPROBE_ACTIVE) == 0)
 	    sc->tulip_if.if_flags &= ~IFF_OACTIVE;
     }
@@ -4189,6 +4189,7 @@ tulip_txput(
 	       TULIP_PRINTF_ARGS,
 	       (sc->tulip_flags & TULIP_TXPROBE_ACTIVE) ? "(probe)" : "");
 	sc->tulip_flags |= TULIP_WANTTXSTART;
+	sc->tulip_dbg.dbg_txput_finishes[0]++;
 	goto finish;
     }
 #endif
@@ -4220,36 +4221,45 @@ tulip_txput(
     free = ri->ri_free;
 
 #if defined(TULIP_BUS_DMA) && !defined(TULIP_BUS_DMA_NOTX)
+    /*
+     * Reclaim some dma maps from if we are out.
+     */
+    if (sc->tulip_txmaps_free == 0)
+	free += tulip_tx_intr(sc);
     if (sc->tulip_txmaps_free > 0) {
 	map = sc->tulip_txmaps[--sc->tulip_txmaps_free];
     } else {
 	sc->tulip_flags |= TULIP_WANTTXSTART;
+#if defined(TULIP_DEBUG)
+	sc->tulip_dbg.dbg_txput_finishes[1]++;
+#endif
 	goto finish;
     }
     error = bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
-    if (error == EFBIG) {
-	/*
-	 * The packet exceeds the number of transmit buffer
-	 * entries that we can use for one packet, so we have
-	 * to recopy it into one mbuf and then try again.
-	 */
-	m = tulip_mbuf_compress(m);
-	if (m == NULL)
-	    goto finish;
-	error = bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
-	if (error) {
+    if (error != 0) {
+	if (error == EFBIG) {
+	    /*
+	     * The packet exceeds the number of transmit buffer
+	     * entries that we can use for one packet, so we have
+	     * to recopy it into one mbuf and then try again.
+	     */
+	    m = tulip_mbuf_compress(m);
+	    if (m == NULL) {
+#if defined(TULIP_DEBUG)
+		sc->tulip_dbg.dbg_txput_finishes[2]++;
+#endif
+		goto finish;
+	    }
+	    error = bus_dmamap_load_mbuf(sc->tulip_dmatag, map, m, BUS_DMA_NOWAIT);
+	}
+	if (error != 0) {
 	    printf(TULIP_PRINTF_FMT ": unable to load tx map, "
 		   "error = %d\n", TULIP_PRINTF_ARGS, error);
+#if defined(TULIP_DEBUG)
+	    sc->tulip_dbg.dbg_txput_finishes[3]++;
+#endif
 	    goto finish;
 	}
-    } else if (error != 0) {
-	/*
-	 * Some other error (possibly resource shortage?) has ocurred.
-	 * Report it.
-	 */
-	printf(TULIP_PRINTF_FMT ": unable to load tx map, error = %d\n",
-	       TULIP_PRINTF_ARGS, error);
-	goto finish;
     }
     if ((free -= (map->dm_nsegs + 1) / 2) <= 0
 	    /*
@@ -4263,6 +4273,9 @@ tulip_txput(
 	 * mbuf and return.
 	 */
 	sc->tulip_flags |= TULIP_WANTTXSTART;
+#if defined(TULIP_DEBUG)
+	sc->tulip_dbg.dbg_txput_finishes[4]++;
+#endif
 	goto finish;
     }
     for (; map->dm_nsegs - segcnt > 1; segcnt += 2) {
@@ -4332,6 +4345,9 @@ tulip_txput(
 			 * mbuf and return.
 			 */
 			sc->tulip_flags |= TULIP_WANTTXSTART;
+#if defined(TULIP_DEBUG)
+			sc->tulip_dbg.dbg_txput_finishes[1]++;
+#endif
 			goto finish;
 		    }
 		}
@@ -4434,9 +4450,11 @@ tulip_txput(
      * switch back to the single queueing ifstart.
      */
     sc->tulip_flags &= ~TULIP_WANTTXSTART;
-    sc->tulip_if.if_start = tulip_ifstart_one;
     if (sc->tulip_txtimer == 0)
 	sc->tulip_txtimer = TULIP_TXTIMER;
+#if defined(TULIP_DEBUG)
+    sc->tulip_dbg.dbg_txput_finishes[5]++;
+#endif
 
     /*
      * If we want a txstart, there must be not enough space in the
@@ -4448,6 +4466,9 @@ tulip_txput(
      * WANTTXSTART thereby causing TXINTR to be cleared.
      */
   finish:
+#if defined(TULIP_DEBUG)
+    sc->tulip_dbg.dbg_txput_finishes[6]++;
+#endif
     if (sc->tulip_flags & (TULIP_WANTTXSTART|TULIP_DOINGSETUP)) {
 	sc->tulip_if.if_flags |= IFF_OACTIVE;
 	sc->tulip_if.if_start = tulip_ifstart;
@@ -4758,6 +4779,8 @@ tulip_ifstart(
 		break;
 	    }
 	}
+	if (sc->tulip_if.if_snd.ifq_head == NULL)
+	    sc->tulip_if.if_start = tulip_ifstart_one;
     }
 
     TULIP_PERFEND(ifstart);
