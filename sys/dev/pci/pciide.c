@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.86 2000/08/21 15:43:46 enami Exp $	*/
+/*	$NetBSD: pciide.c,v 1.87 2000/08/21 15:52:50 enami Exp $	*/
 
 
 /*
@@ -3049,7 +3049,10 @@ hpt_pci_intr(arg)
 
 
 /* A macro to test product */
-#define PDC_IS_262(sc) (sc->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66)
+#define PDC_IS_262(sc)							\
+	((sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA66 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100 ||	\
+	(sc)->sc_pp->ide_product == PCI_PRODUCT_PROMISE_ULTRA100X)
 
 void
 pdc202xx_chip_map(sc, pa)
