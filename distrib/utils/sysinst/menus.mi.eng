@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.30 1999/06/20 02:09:20 cgd Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.31 1999/06/20 02:15:22 cgd Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -73,7 +73,7 @@ menu netbsd, x=15, title "NetBSD-@@VERSION@@ Install System",
 		action { run_prog(0, 0, NULL, "/sbin/reboot"); };
 	option "Utility menu", sub menu utility;
 
-menu utility, title "NetBSD-@@VERSION@@ Utility", exit;
+menu utility, title "NetBSD-@@VERSION@@ Utilities", exit;
 	option "Run /bin/sh",
 		action (endwin) { system("/bin/sh"); };
 /*	option "test", action { run_prog(0, 1, NULL, "/bin/pwd"); }; */
