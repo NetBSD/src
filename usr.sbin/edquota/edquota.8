@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)edquota.8	8.2 (Berkeley) 4/27/95
-.\"	$NetBSD: edquota.8,v 1.7 1997/10/17 02:25:02 lukem Exp $
+.\"	$NetBSD: edquota.8,v 1.8 2002/01/19 03:11:34 wiz Exp $
 .\"
 .Dd April 27, 1995
 .Dt EDQUOTA 8
@@ -58,8 +58,8 @@
 .Fl g
 .Sh DESCRIPTION
 .Nm
-is a quota editor.  
-By default, or if the 
+is a quota editor.
+By default, or if the
 .Fl u
 flag is specified,
 one or more users may be specified on the command line.
@@ -69,10 +69,10 @@ disk quotas for that user.
 The list of filesystems with user quotas is determined from
 .Pa /etc/fstab .
 An editor is invoked on the ASCII file.
-The editor invoked is 
+The editor invoked is
 .Xr vi 1
-unless the environment variable 
-.Ev EDITOR 
+unless the environment variable
+.Ev EDITOR
 specifies otherwise.
 .Pp
 The quotas may then be modified, new quotas added, etc.
@@ -81,8 +81,8 @@ Setting a hard limit to one indicates that no allocations should
 be permitted.
 Setting a soft limit to one with a hard limit of zero
 indicates that allocations should be permitted on
-only a temporary basis (see 
-.Fl t 
+only a temporary basis (see
+.Fl t
 below).
 The current usage information in the file is for informational purposes;
 only the hard and soft limits can be changed.
@@ -92,7 +92,7 @@ On leaving the editor,
 reads the temporary file and modifies the binary
 quota files to reflect the changes made.
 .Pp
-If the 
+If the
 .Fl p
 flag is specified,
 .Nm
@@ -101,17 +101,17 @@ specified for each user specified.
 This is the normal mechanism used to
 initialize quotas for groups of users.
 .Pp
-If the 
-.Fl g 
+If the
+.Fl g
 flag is specified,
 .Nm
 is invoked to edit the quotas of
 one or more groups specified on the command line.
-The 
-.Fl p 
+The
+.Fl p
 flag can be specified in conjunction with
-the 
-.Fl g 
+the
+.Fl g
 flag to specify a prototypical group
 to be duplicated among the listed set of groups.
 .Pp
@@ -121,15 +121,15 @@ Once the grace period has expired,
 the soft limit is enforced as a hard limit.
 The default grace period for a filesystem is specified in
 .Pa /usr/include/ufs/ufs/quota.h .
-The 
+The
 .Fl t
 flag can be used to change the grace period.
-By default, or when invoked with the 
+By default, or when invoked with the
 .Fl u
 flag, the grace period is set for all the filesystems with user
 quotas specified in
 .Pa /etc/fstab .
-When invoked with the 
+When invoked with the
 .Fl g
 flag the grace period is
 set for all the filesystems with group quotas specified in
@@ -150,6 +150,8 @@ at the filesystem root with group quotas
 .It Pa /etc/fstab
 to find filesystem names and locations
 .El
+.Sh DIAGNOSTICS
+Various messages about inaccessible files; self-explanatory.
 .Sh SEE ALSO
 .Xr quota 1 ,
 .Xr quotactl 2 ,
@@ -157,5 +159,3 @@ to find filesystem names and locations
 .Xr quotacheck 8 ,
 .Xr quotaon 8 ,
 .Xr repquota 8
-.Sh DIAGNOSTICS
-Various messages about inaccessible files; self-explanatory.
