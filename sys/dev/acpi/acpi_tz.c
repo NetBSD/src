@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.11 2004/05/01 12:03:48 kochi Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.12 2004/05/16 07:14:17 kochi Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.11 2004/05/01 12:03:48 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.12 2004/05/16 07:14:17 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_zone.tzp = v;
 		printf("%s: polling interval is", sc->sc_dev.dv_xname);
 	}
-	printf(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tsp % 10);
+	printf(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
