@@ -1,3 +1,5 @@
+/*	$NetBSD: ipft_hx.c,v 1.1.1.2 1997/03/29 02:49:52 darrenr Exp $	*/
+
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -38,15 +40,15 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipft_hx.c,v 1.1.1.2 1997/03/29 02:49:52 darrenr Exp $";
 #endif
 
 extern	int	opts;
-extern	u_short	portnum();
-extern	u_long	buildopts();
 
-static	int	hex_open(), hex_close(), hex_readip();
-static	char	*readhex();
+static	int	hex_open __P((char *));
+static	int	hex_close __P((void));
+static	int	hex_readip __P((char *, int, char **, int *));
+static	char	*readhex __P((char *, char *));
 
 struct	ipread	iphex = { hex_open, hex_close, hex_readip };
 static	FILE	*tfp = NULL;
@@ -85,7 +87,7 @@ static	int	hex_readip(buf, cnt, ifn, dir)
 char	*buf, **ifn;
 int	cnt, *dir;
 {
-	register char *s;
+	register char *s, *t, *u;
 	struct	ip *ip;
 	char	line[513];
 
@@ -96,8 +98,6 @@ int	cnt, *dir;
 				return (char *)ip - buf;
 			*s = '\0';
 		}
-		if ((s = index(line, '\r')))
-			*s = '\0';
 		if ((s = index(line, '#')))
 			*s = '\0';
 		if (!*line)
@@ -106,7 +106,30 @@ int	cnt, *dir;
 			printf("input: %s\n", line);
 			fflush(stdout);
 		}
-		ip = (struct ip *)readhex(line, (char *)ip);
+
+		/*
+		 * interpret start of line as possibly "[ifname]" or
+		 * "[in/out,ifname]".
+		 */
+		*ifn = NULL;
+		*dir = 0;
+		if ((*buf == '[') && (s = index(line, ']'))) {
+			t = buf + 1;
+			if (t - s > 0) {
+				if ((u = index(t, ',')) && (u < s)) {
+					u++;
+					*ifn = u;
+					if (*t == 'i')
+						*dir = 0;
+					else if (*t == 'o')
+						*dir = 1;
+				} else
+					*ifn = t;
+				*s++ = '\0';
+			}
+		} else
+			s = line;
+		ip = (struct ip *)readhex(s, (char *)ip);
 	}
 	return -1;
 }

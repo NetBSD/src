@@ -1,3 +1,5 @@
+/*	$NetBSD: ipft_ef.c,v 1.1.1.2 1997/03/29 02:49:48 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -47,10 +49,12 @@ etherfind -n -t
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_ef.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipft_ef.c,v 1.1.1.2 1997/03/29 02:49:48 darrenr Exp $";
 #endif
 
-static	int	etherf_open(), etherf_close(), etherf_readip();
+static	int	etherf_open __P((char *));
+static	int	etherf_close __P((void));
+static	int	etherf_readip __P((char *, int, char **, int *));
 
 struct	ipread	etherf = { etherf_open, etherf_close, etherf_readip };
 

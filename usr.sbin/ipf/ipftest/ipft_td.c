@@ -1,3 +1,5 @@
+/*	$NetBSD: ipft_td.c,v 1.1.1.2 1997/03/29 02:49:49 darrenr Exp $	*/
+
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -56,10 +58,13 @@ tcpdump -nqte
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_td.c,v 1.1.1.1 1997/01/05 13:09:04 mrg Exp $";
+static	char	rcsid[] = "$Id: ipft_td.c,v 1.1.1.2 1997/03/29 02:49:49 darrenr Exp $";
 #endif
 
-static	int	tcpd_open(), tcpd_close(), tcpd_readip();
+static	int	tcpd_open __P((char *));
+static	int	tcpd_close __P((void));
+static	int	tcpd_readip __P((char *, int, char **, int *));
+static	int	count_dots __P((char *));
 
 struct	ipread	tcpd = { tcpd_open, tcpd_close, tcpd_readip };
 

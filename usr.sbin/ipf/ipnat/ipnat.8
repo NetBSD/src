@@ -4,7 +4,7 @@ ipnat \- user interface to the NAT
 .SH SYNOPSIS
 .B ipnat
 [
-.B \-lnrsv
+.B \-lnrsvCF
 ]
 .B \-f <\fIfilename\fP>
 .SH DESCRIPTION
@@ -17,6 +17,13 @@ is added to the kernels internal lists if there are no parsing problems.
 Rules are added to the end of the internal lists, matching the order in
 which they appear when given to \fBipnat\fP.
 .SH OPTIONS
+.TP
+.B \-C
+delete all entries in the current NAT listing (NAT rules)
+.TP
+.B \-F
+delete all active entries in the current NAT table (currently active
+NAT mappings)
 .TP
 .B \-l
 Show the list of current NAT table entry mappings.
