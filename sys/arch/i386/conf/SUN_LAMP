@@ -13,6 +13,7 @@ options		UCONSOLE, XSERVER
 #options		"WD8013"
 options		FDESC,KERNFS
 options		KTRACE
+options		SCSI
 
 #options 	COM_IGNOREFIFO
 options 	COM_MULTIPORT
@@ -36,7 +37,6 @@ device		npx0	at isa? port "IO_NPX" irq 13 vector npxintr
 #device		com4	at isa? port 0x2b8 tty irq 4 flags 0x401 vector comintr
 
 controller	ahb0	at isa? bio irq 11 drq 5 vector ahbintr
-controller	scbus0
 
 device		sd0
 device		sd1

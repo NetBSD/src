@@ -9,6 +9,7 @@ maxusers	10
 options		INET,ISOFS,NFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+options		SCSI
 
 config		"386bsd"	root on sd0 swap on sd0
 
@@ -29,7 +30,6 @@ device		com2	at isa? port "IO_COM2" tty irq 3 vector comintr
 #controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 #controller	aha1	at isa? port "IO_AHA1" bio irq 12 drq 7 vector ahaintr
 controller	bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
-controller	scbus0
 
 device		sd0
 device		sd1

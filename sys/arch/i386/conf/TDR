@@ -9,6 +9,7 @@ maxusers	10
 options		INET,NFS,GATEWAY
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
+#options	SCSI
 
 config		vmunix	root on wd0 swap on wd0
 
@@ -30,7 +31,6 @@ disk		fd3	at fdc0 drive 3
 #controller	aha0	at isa? port "IO_AHA0" bio irq 11 drq 5 vector ahaintr
 #controller	aha1	at isa? port "IO_AHA1" bio irq 12 drq 7 vector ahaintr
 #controller     bt0	at isa? port "IO_BT0" bio irq 12  vector btintr
-#controller	scbus0
 
 #device          sd0
 #device          sd1
