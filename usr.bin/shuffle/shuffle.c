@@ -1,4 +1,4 @@
-/*	$NetBSD: shuffle.c,v 1.15 2004/01/05 23:23:36 jmmv Exp $	*/
+/*	$NetBSD: shuffle.c,v 1.16 2004/05/18 04:09:21 cube Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shuffle.c,v 1.15 2004/01/05 23:23:36 jmmv Exp $");
+__RCSID("$NetBSD: shuffle.c,v 1.16 2004/05/18 04:09:21 cube Exp $");
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -207,7 +207,7 @@ main(int argc, char *argv[])
 	size_t nlines = 0, pick = 0;
 	char sep = '\n';
 	
-	while ((ch = getopt(argc, argv, "f:n:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "0f:n:p:")) != -1) {
 		switch(ch) {
 		case '0':
 			sep = '\0';
