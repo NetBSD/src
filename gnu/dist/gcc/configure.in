@@ -2012,7 +2012,16 @@ for machine in $build $host $target; do
 		xm_file=mips/xm-netbsd.h
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
-		tmake_file=t-netbsd
+		tmake_file="t-netbsd mips/t-mipsel"
+		xmake_file=none
+		;;
+	mipseb-*-netbsd*)
+		tm_file=mips/netbsd.h
+		xm_file=mips/xm-netbsd.h
+		# On NetBSD, the headers are already okay, except for math.h.
+		fixincludes=fixinc.wrap
+		tmake_file="t-netbsd mips/t-mipseb"
+		xmake_file=none
 		;;
 	mips*el-*-openbsd*)	# mips little endian
 		target_cpu_default="MASK_GAS|MASK_ABICALLS"
@@ -2408,6 +2417,7 @@ for machine in $build $host $target; do
 		# On NetBSD, the headers are already okay, except for math.h.
 		fixincludes=fixinc.wrap
 		tmake_file=t-netbsd
+		xmake_file=none
 		;;
 	powerpc-*-eabiaix*)
 		tm_file=rs6000/eabiaix.h
