@@ -1,10 +1,10 @@
 #	from: @(#)Makefile	5.17 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.6 1993/10/01 00:38:38 jtc Exp $
+#	$Id: Makefile,v 1.7 1993/12/06 05:28:34 cgd Exp $
 
 PROG=	gprof
-SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE}.c hertz.c \
+SRCS=	gprof.c arcs.c dfn.c lookup.c ${MACHINE_ARCH}.c hertz.c \
 	printgprof.c printlist.c
-CFLAGS+=-I${.CURDIR}/../../lib/csu/${MACHINE}
+CFLAGS+=-I${.CURDIR}/../../lib/csu/${MACHINE_ARCH}
 
 beforeinstall:
 	@install -d -o root -g wheel -m 755 ${DESTDIR}/usr/share/misc
