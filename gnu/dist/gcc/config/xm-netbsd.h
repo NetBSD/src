@@ -22,3 +22,6 @@ Boston, MA 02111-1307, USA.  */
    running NetBSD.  This file should not be specified as $xm_file itself;
    instead $xm_file should be CPU/xm-netbsd.h, which should include both
    CPU/xm-CPU.h and this file xm-netbsd.h.  */
+
+#undef POSIX
+#define POSIX
