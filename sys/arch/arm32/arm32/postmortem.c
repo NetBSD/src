@@ -1,4 +1,4 @@
-/* $NetBSD: postmortem.c,v 1.4 1996/03/13 21:26:52 mark Exp $ */
+/* $NetBSD: postmortem.c,v 1.5 1996/04/26 20:48:28 mark Exp $ */
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -222,7 +222,6 @@ postmortem(frame)
 {
 	u_int s;
 	struct proc *p = curproc;
-	int loop;
 	u_int addr;
 			
 	s = splhigh();
