@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.1 2001/05/11 04:42:13 thorpej Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.2 2001/06/14 01:06:08 rafal Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -75,6 +75,8 @@ struct platform {
 	void	(*intr_establish)(int , int, int (*)(void *), void *);
 	unsigned (*clkread) __P((void));
 };
+
+extern struct platform platform;
 
 #endif /* _KERNEL */
 
