@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.4 1997/05/25 23:00:40 jonathan Exp $	*/
+/*	$NetBSD: locore.h,v 1.5 1997/06/15 17:33:53 mhitch Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -30,6 +30,8 @@
  *	MachTLBFlushAddr __P()
  *	MachTLBUpdate (u_int, (pt_entry_t?) u_int);
  *	MachTLBWriteIndexed
+ *	wbflush
+ *	proc_trampoline()
  *
  * We currently provide support for:
  *
@@ -41,26 +43,9 @@
 #define  _MIPS_LOCORE_H
 
 /*
- * locore functions used by vm_machdep.c.
- * These are not yet CPU-model specific.
- */
-
-struct user;
-extern int  copykstack __P((struct user *up));
-extern void MachSaveCurFPState __P((struct proc *p));
-extern int switch_exit __P((void)); /* XXX never really returns? */
-extern void blkclr __P((caddr_t val, int size));   /* bulk aligned bzero */
-
-
-/* MIPS-generic locore functions used by trap.c */
- extern void MachFPTrap __P((u_int statusReg, u_int CauseReg, u_int pc));
-
-/*
  * locore service routine for exeception vectors. Used outside locore
  * only to print them by name in stack tracebacks
  */
-
-extern void mips1_KernIntr __P((void));
 
 extern void mips1_ConfigCache  __P((void));
 extern void mips1_FlushCache  __P((void));
@@ -71,11 +56,12 @@ extern void mips1_SetPID   __P((int pid));
 extern void mips1_TLBFlush __P((void));
 extern void mips1_TLBFlushAddr   __P( /* XXX Really pte highpart ? */
 					  (vm_offset_t addr));
-extern void mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+extern int mips1_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
 extern void mips1_TLBWriteIndexed  __P((u_int index, u_int high,
 					    u_int low));
+extern void mips1_wbflush __P((void));
+extern void mips1_proc_trampoline __P((void));
 
-extern void mips3_KernIntr __P((void));
 extern void mips3_ConfigCache __P((void));
 extern void mips3_FlushCache  __P((void));
 extern void mips3_FlushDCache __P((vm_offset_t addr, vm_offset_t len));
@@ -85,9 +71,12 @@ extern void mips3_SetPID  __P((int pid));
 extern void mips3_TLBFlush __P((void));
 extern void mips3_TLBFlushAddr __P( /* XXX Really pte highpart ? */
 					  (vm_offset_t addr));
-extern void mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+extern int mips3_TLBUpdate __P((u_int, /*pt_entry_t*/ u_int));
+extern void mips3_TLBWriteIndexedVPS __P((u_int index, void *tlb));
 extern void mips3_TLBWriteIndexed __P((u_int index, u_int high,
-					    u_int low));
+					   u_int lo0, u_int lo1));
+extern void mips3_wbflush __P((void));
+extern void mips3_proc_trampoline __P((void));
 
 /*
  *  A vector with an entry for each mips-ISA-level dependent
@@ -104,8 +93,14 @@ typedef struct  {
 	void (*setTLBpid)  __P((int pid));
 	void (*tlbFlush)  __P((void));
 	void (*tlbFlushAddr)  __P((vm_offset_t)); /* XXX Really pte highpart ? */
-	void (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
+	int (*tlbUpdate)  __P((u_int highreg, u_int lowreg));
+#ifdef MIPS3
+	void (*tlbWriteIndexed)  __P((u_int, u_int, u_int, u_int));
+#else
 	void (*tlbWriteIndexed)  __P((u_int, u_int, u_int));
+#endif
+	void (*wbflush) __P((void));
+	void (*proc_trampoline) __P((void));
 } mips_locore_jumpvec_t;
 
 
@@ -127,5 +122,7 @@ extern mips_locore_jumpvec_t r4000_locore_vec;
 #define MachTLBFlushAddr	(*(mips_locore_jumpvec.tlbFlushAddr))
 #define MachTLBUpdate		(*(mips_locore_jumpvec.tlbUpdate))
 #define MachTLBWriteIndexed	(*(mips_locore_jumpvec.tlbWriteIndexed))
+#define wbflush			(*(mips_locore_jumpvec.wbflush))
+#define proc_trampoline		(mips_locore_jumpvec.proc_trampoline)
 
 #endif	/* _MIPS_LOCORE_H */
