@@ -7,6 +7,7 @@
 .SUFFIXES:
 .SUFFIXES: .out .o .po .s .c .f .y .cc .l .8 .7 .6 .5 .4 .3 .2 .1 .0
 
+CFLAGS+=-I$(.CURDIR)/../g++-include -+
 GXX=		g++
 GXXFLAGS=	-O -felide-constructors
 LDXX=		/usr/libexec/ld++
