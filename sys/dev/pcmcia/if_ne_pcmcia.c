@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.31.2.1 1999/04/14 02:25:35 abs Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.31.2.2 1999/04/19 15:19:14 perry Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -210,7 +210,7 @@ struct ne2000dev {
     { PCMCIA_STR_COMPEX_LINKPORT_ENET_B,
       PCMCIA_VENDOR_COMPEX, PCMCIA_PRODUCT_COMPEX_LINKPORT_ENET_B,
       PCMCIA_CIS_COMPEX_LINKPORT_ENET_B,
-      0, 0x01c0, { 0x01, 0x03, 0xdc } },
+      0, 0x01c0, { 0x00, 0xa0, 0x0c } },
 
 #if 0
     /* the rest of these are stolen from the linux pcnet pcmcia device
