@@ -648,7 +648,8 @@ slinput(c, tp)
 	sc = (struct sl_softc *)tp->t_sc;
 	if (sc == NULL)
 		return;
-	if (c & TTY_ERRORMASK|| !(tp->t_state&TS_CARR_ON)) {
+	if (c & TTY_ERRORMASK || ((tp->t_state & TS_CARR_ON) == 0 &&
+				  (tp->t_cflag & CLOCAL) == 0)) {
 		sc->sc_flags |= SC_ERROR;
 		return;
 	}
