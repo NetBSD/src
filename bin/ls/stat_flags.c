@@ -1,4 +1,4 @@
-/*	$NetBSD: stat_flags.c,v 1.14 2002/11/09 12:27:08 enami Exp $	*/
+/*	$NetBSD: stat_flags.c,v 1.15 2002/11/16 13:42:36 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)stat_flags.c	8.2 (Berkeley) 7/28/94";
 #else
-__RCSID("$NetBSD: stat_flags.c,v 1.14 2002/11/09 12:27:08 enami Exp $");
+__RCSID("$NetBSD: stat_flags.c,v 1.15 2002/11/16 13:42:36 itojun Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ flags_to_string(u_long flags, const char *def)
 	return (string);
 }
 
-#define	TEST(a, b, f) do {						\
+#define	TEST(a, b, f) {							\
 	if (!strcmp(a, b)) {						\
 		if (clear) {						\
 			if (clrp)					\
@@ -112,7 +112,7 @@ flags_to_string(u_long flags, const char *def)
 		}							\
 		break;							\
 	}								\
-} while (/* CONSTCOND */ 0)
+}
 
 /*
  * string_to_flags --
