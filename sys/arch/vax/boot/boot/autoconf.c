@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 2002/05/31 15:58:26 ragge Exp $ */
+/*	$NetBSD: autoconf.c,v 1.19 2002/06/01 15:33:22 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -78,6 +78,8 @@ autoconf()
 #endif
 	switch (vax_boardtype) {
 
+	case VAX_BTYP_780:
+	case VAX_BTYP_790:
 	case VAX_BTYP_8000:
 	case VAX_BTYP_9CC:
 	case VAX_BTYP_9RR:
