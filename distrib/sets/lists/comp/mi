@@ -1223,6 +1223,7 @@
 ./usr/share/man/cat3/fmod.0
 ./usr/share/man/cat3/fnmatch.0
 ./usr/share/man/cat3/fopen.0
+./usr/share/man/cat3/forkpty.0
 ./usr/share/man/cat3/fprintf.0
 ./usr/share/man/cat3/fpurge.0
 ./usr/share/man/cat3/fputc.0
@@ -1312,6 +1313,7 @@
 ./usr/share/man/cat3/hash.0
 ./usr/share/man/cat3/heapsort.0
 ./usr/share/man/cat3/herror.0
+./usr/share/man/cat3/hstrerror.0
 ./usr/share/man/cat3/htonl.0
 ./usr/share/man/cat3/htons.0
 ./usr/share/man/cat3/hypot.0
@@ -1391,6 +1393,10 @@
 ./usr/share/man/cat3/log10.0
 ./usr/share/man/cat3/log1p.0
 ./usr/share/man/cat3/logb.0
+./usr/share/man/cat3/login.0
+./usr/share/man/cat3/login_tty.0
+./usr/share/man/cat3/logout.0
+./usr/share/man/cat3/logwtmp.0
 ./usr/share/man/cat3/longjmp.0
 ./usr/share/man/cat3/longjmperror.0
 ./usr/share/man/cat3/lrand48.0
@@ -1425,6 +1431,7 @@
 ./usr/share/man/cat3/ntohs.0
 ./usr/share/man/cat3/opendir.0
 ./usr/share/man/cat3/openlog.0
+./usr/share/man/cat3/openpty.0
 ./usr/share/man/cat3/pause.0
 ./usr/share/man/cat3/pcap.0
 ./usr/share/man/cat3/pclose.0
@@ -1443,6 +1450,15 @@
 ./usr/share/man/cat3/putenv.0
 ./usr/share/man/cat3/puts.0
 ./usr/share/man/cat3/putw.0
+./usr/share/man/cat3/pw_abort.0
+./usr/share/man/cat3/pw_copy.0
+./usr/share/man/cat3/pw_edit.0
+./usr/share/man/cat3/pw_error.0
+./usr/share/man/cat3/pw_init.0
+./usr/share/man/cat3/pw_lock.0
+./usr/share/man/cat3/pw_mkdb.0
+./usr/share/man/cat3/pw_prompt.0
+./usr/share/man/cat3/pw_scan.0
 ./usr/share/man/cat3/pwcache.0
 ./usr/share/man/cat3/qabs.0
 ./usr/share/man/cat3/qdiv.0
