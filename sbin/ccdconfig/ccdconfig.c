@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.26 1999/01/21 08:48:46 thorpej Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.27 1999/04/01 09:12:21 ross Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.26 1999/01/21 08:48:46 thorpej Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.27 1999/04/01 09:12:21 ross Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.26 1999/01/21 08:48:46 thorpej Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#define __POOL_EXPOSE
 #include <dev/ccdvar.h>
 
 #include "pathnames.h"
