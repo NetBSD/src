@@ -1,2 +1,4 @@
+./boot
 ./usr/mdec/bootrz
+./usr/mdec/boot
 ./usr/mdec/rzboot
