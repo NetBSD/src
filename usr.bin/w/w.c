@@ -1,4 +1,4 @@
-/*	$NetBSD: w.c,v 1.43 2000/12/20 01:20:38 cgd Exp $	*/
+/*	$NetBSD: w.c,v 1.44 2001/01/05 04:54:53 mjl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)w.c	8.6 (Berkeley) 6/30/94";
 #else
-__RCSID("$NetBSD: w.c,v 1.43 2000/12/20 01:20:38 cgd Exp $");
+__RCSID("$NetBSD: w.c,v 1.44 2001/01/05 04:54:53 mjl Exp $");
 #endif
 #endif /* not lint */
 
@@ -119,7 +119,7 @@ struct	entry {
 static void	 pr_args __P((struct kinfo_proc2 *));
 static void	 pr_header __P((time_t *, int));
 static struct stat
-		*ttystat __P((char *));
+		*ttystat __P((char *, size_t));
 static void	 usage __P((int));
 int	main __P((int, char **));
 
@@ -134,6 +134,7 @@ main(argc, argv)
 	struct stat *stp;
 	FILE *ut;
 	struct in_addr l;
+	time_t touched;
 	int ch, i, nentries, nusers, wcmd, lognamelen;
 	char *memf, *nlistf, *p, *x;
 	char buf[MAXHOSTNAMELEN], errbuf[_POSIX2_LINE_MAX];
@@ -202,7 +203,7 @@ main(argc, argv)
 		*nextp = ep;
 		nextp = &(ep->next);
 		memmove(&(ep->utmp), &utmp, sizeof(struct utmp));
-		if (!(stp = ttystat(ep->utmp.ut_line))) {
+		if (!(stp = ttystat(ep->utmp.ut_line, UT_LINESIZE))) {
 #ifdef SUPPORT_FTPD_UTMP
 			/*
 			 * Hack to recognize and correctly parse
@@ -232,7 +233,13 @@ main(argc, argv)
 			size = sizeof(dev_t);
 			(void) sysctl(mib, 2, &ep->tdev, &size, NULL, 0);
 		}
-		if ((ep->idle = now - stp->st_atime) < 0)
+
+		touched = stp->st_atime;
+		if (touched < ep->utmp.ut_time) {
+				/* tty untouched since before login */
+				touched = ep->utmp.ut_time;
+			}
+	if ((ep->idle = now - touched) < 0)
 			ep->idle = 0;
 	}
 	if (ut)
@@ -327,7 +334,12 @@ main(argc, argv)
 	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
-		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
+		char host_buf[UT_HOSTSIZE + 1];
+
+		host_buf[UT_HOSTSIZE] = '\0';
+		strncpy(host_buf, ep->utmp.ut_host, UT_HOSTSIZE);
+		p = *host_buf ? host_buf : "-";
+
 		for (x = p; x < p + UT_HOSTSIZE; x++)
 			if (*x == '\0' || *x == ':')
 				break;
@@ -342,14 +354,13 @@ main(argc, argv)
 				p = hp->h_name;
 				p += strlen(hp->h_name);
 				p -= strlen(domain);
-				if (p > hp->h_name && strcmp(p, domain) == 0)
+				if (p > hp->h_name && strcasecmp(p, domain) == 0)
 					*p = '\0';
 			}
 			p = hp->h_name;
 		}
 		if (x) {
-			(void)snprintf(buf, sizeof(buf), "%s:%.*s", p,
-			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
+			(void)snprintf(buf, sizeof(buf), "%s:%s", p, x);
 			p = buf;
 		}
 		if (ep->kp == NULL) {
@@ -472,13 +483,14 @@ pr_header(nowp, nusers)
 }
 
 static struct stat *
-ttystat(line)
+ttystat(line, sz)
 	char *line;
+	size_t sz;
 {
 	static struct stat sb;
 	char ttybuf[MAXPATHLEN];
 
-	(void)snprintf(ttybuf, sizeof(ttybuf), "%s/%s", _PATH_DEV, line);
+	(void)snprintf(ttybuf, sizeof(ttybuf), "%s%.*s", _PATH_DEV, (int) sz, line);
 	if (stat(ttybuf, &sb))
 		return (NULL);
 	return (&sb);
