@@ -67,7 +67,7 @@ tape		st1	at scsi? slave ?
 
 device		le0	at scode?
 device		le1	at scode?
-device		dca0	at scode9 flags 1
+device		dca0	at scode9
 device		dcm0	at scode? flags 0xe
 device		dcm1	at scode? flags 0xe
 device		dcm2	at scode? flags 0xe
@@ -82,5 +82,6 @@ pseudo-device	ite
 pseudo-device	pty	32
 pseudo-device	loop
 pseudo-device	ether
-pseudo-device   ccd0 on sd1c and sd2c and sd3c
+pseudo-device	ppp	4
+#pseudo-device   ccd0 on sd1c and sd2c and sd3c
 #pseudo-device  ccd1 on rd1h and rd2h and rd3h interleave 6048
