@@ -1,21 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2002/03/05 20:29:36 thorpej Exp $
+#	$NetBSD: Makefile,v 1.7 2002/04/11 12:17:17 lukem Exp $
 
-.include <bsd.own.mk>
-
-TOP=	${.CURDIR}/..
-
-.include "${TOP}/Makefile.inc"
-
-IMAGE=	rescue-small.fs
-KDIR=	${TOP}/kernel-rescue
-KNAME=	INSTALL_SMALL
-
-KERNDIR!=	cd ${KDIR} && ${PRINTOBJDIR}
-KERN=		${KERNDIR}/netbsd.${KNAME}.gz
-
+IMAGE=		rescue-small.fs
+KERNELDIR=	kernel-rescue
+KERNEL=		netbsd.INSTALL_SMALL.gz
 DISKSIZE=	2400
 
-.include "${TOP}/common/Makefile.bootfloppy"
-
-${KERN}:
-	cd ${KDIR} && ${MAKE}
+.include "${.CURDIR}/../common/Makefile.bootfloppy"
