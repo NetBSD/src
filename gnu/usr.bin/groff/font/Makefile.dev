@@ -8,4 +8,7 @@ SCRIPTSDIR?=	${fontdir}/dev${DEV}
 SCRIPTSNAME_${script:T}= ${script:T}
 .endfor
 
+all: $(DEVFILES) $(DEVSCRIPTS)
+install: $(DEVFILES) $(DEVSCRIPTS)
+
 .include <bsd.prog.mk>

@@ -2,5 +2,7 @@
 
 DEV=		utf8
 
+DIST_SUBDIR=	font/devutf8
+
 .include "../Makefile.tty"
 .include "../Makefile.dev"
