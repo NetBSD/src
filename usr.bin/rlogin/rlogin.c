@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.4 1995/03/21 07:58:38 cgd Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.5 1995/05/03 07:13:51 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rlogin.c,v 1.4 1995/03/21 07:58:38 cgd Exp $";
+static char rcsid[] = "$NetBSD: rlogin.c,v 1.5 1995/05/03 07:13:51 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: rlogin.c,v 1.4 1995/03/21 07:58:38 cgd Exp $";
  * rlogin - remote login
  */
 #include <sys/param.h>
+#include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -65,7 +66,7 @@ static char rcsid[] = "$NetBSD: rlogin.c,v 1.4 1995/03/21 07:58:38 cgd Exp $";
 #include <netdb.h>
 #include <pwd.h>
 #include <setjmp.h>
-#include <sgtty.h>
+#include <termios.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,15 +100,15 @@ char dst_realm_buf[REALM_SZ], *dest_realm = NULL;
 #define	SIGUSR1	30
 #endif
 
-int eight, litout, rem;
+#ifndef CCEQ
+#define CCEQ(val, c)	(c == val ? val != _POSIX_VDISABLE : 0)
+#endif
+
+int eight, rem;
+struct termios deftty;
 
 int noescape;
 u_char escapechar = '~';
-
-char *speeds[] = {
-	"0", "50", "75", "110", "134", "150", "200", "300", "600", "1200",
-	"1800", "2400", "4800", "9600", "19200", "38400", "57600", "115200"
-};
 
 #ifdef OLDSUN
 struct winsize {
@@ -154,7 +155,7 @@ main(argc, argv)
 	extern int optind;
 	struct passwd *pw;
 	struct servent *sp;
-	struct sgttyb ttyb;
+	struct termios tty;
 	long omask;
 	int argoff, ch, dflag, one, uid;
 	char *host, *p, *user, term[1024];
@@ -194,9 +195,6 @@ main(argc, argv)
 #ifdef KERBEROS
 			use_kerberos = 0;
 #endif
-			break;
-		case 'L':
-			litout = 1;
 			break;
 		case 'd':
 			dflag = 1;
@@ -263,9 +261,9 @@ main(argc, argv)
 	}
 
 	(void)strcpy(term, (p = getenv("TERM")) ? p : "network");
-	if (ioctl(0, TIOCGETP, &ttyb) == 0) {
+	if (tcgetattr(0, &tty) == 0) {
 		(void)strcat(term, "/");
-		(void)strcat(term, speeds[(int)ttyb.sg_ospeed]);
+		(void)sprintf(term + strlen(term), "%d", cfgetospeed(&tty));
 	}
 
 	(void)get_window_size(0, &winsize);
@@ -352,46 +350,29 @@ try_connect:
 	/*NOTREACHED*/
 }
 
-int child, defflags, deflflags, tabflag;
-char deferase, defkill;
-struct tchars deftc;
-struct ltchars defltc;
-struct tchars notc = { -1, -1, -1, -1, -1, -1 };
-struct ltchars noltc = { -1, -1, -1, -1, -1, -1 };
+int child;
 
 void
 doit(omask)
 	long omask;
 {
-	struct sgttyb sb;
 
-	(void)ioctl(0, TIOCGETP, (char *)&sb);
-	defflags = sb.sg_flags;
-	tabflag = defflags & TBDELAY;
-	defflags &= ECHO | CRMOD;
-	deferase = sb.sg_erase;
-	defkill = sb.sg_kill;
-	(void)ioctl(0, TIOCLGET, &deflflags);
-	(void)ioctl(0, TIOCGETC, &deftc);
-	notc.t_startc = deftc.t_startc;
-	notc.t_stopc = deftc.t_stopc;
-	(void)ioctl(0, TIOCGLTC, &defltc);
 	(void)signal(SIGINT, SIG_IGN);
 	setsignal(SIGHUP);
 	setsignal(SIGQUIT);
+	mode(1);
 	child = fork();
 	if (child == -1) {
 		(void)fprintf(stderr, "rlogin: fork: %s.\n", strerror(errno));
 		done(1);
 	}
 	if (child == 0) {
-		mode(1);
 		if (reader(omask) == 0) {
 			msg("connection closed.");
 			exit(0);
 		}
 		sleep(1);
-		msg("\007connection closed.");
+		msg("\aconnection closed.");
 		exit(1);
 	}
 
@@ -508,11 +489,12 @@ writer()
 			}
 		} else if (local) {
 			local = 0;
-			if (c == '.' || c == deftc.t_eofc) {
+			if (c == '.' || CCEQ(deftty.c_cc[VEOF], c)) {
 				echo(c);
 				break;
 			}
-			if (c == defltc.t_suspc || c == defltc.t_dsuspc) {
+			if (CCEQ(deftty.c_cc[VSUSP], c) ||
+			    CCEQ(deftty.c_cc[VDSUSP], c)) {
 				bol = 1;
 				echo(c);
 				stop(c);
@@ -544,8 +526,10 @@ writer()
 				msg("line gone");
 				break;
 			}
-		bol = c == defkill || c == deftc.t_eofc ||
-		    c == deftc.t_intrc || c == defltc.t_suspc ||
+		bol = CCEQ(deftty.c_cc[VKILL], c) ||
+		    CCEQ(deftty.c_cc[VEOF], c) ||
+		    CCEQ(deftty.c_cc[VINTR], c) ||
+		    CCEQ(deftty.c_cc[VSUSP], c) ||
 		    c == '\r' || c == '\n';
 	}
 }
@@ -587,7 +571,7 @@ stop(cmdc)
 {
 	mode(0);
 	(void)signal(SIGCHLD, SIG_IGN);
-	(void)kill(cmdc == defltc.t_suspc ? 0 : getpid(), SIGTSTP);
+	(void)kill(CCEQ(deftty.c_cc[VSUSP], cmdc) ? 0 : getpid(), SIGTSTP);
 	(void)signal(SIGCHLD, catch_child);
 	mode(1);
 	sigwinch(0);			/* check for size changes */
@@ -649,7 +633,7 @@ void
 oob(signo)
 	int signo;
 {
-	struct sgttyb sb;
+	struct termios tty;
 	int atmark, n, out, rcvd;
 	char waste[BUFSIZ], mark;
 
@@ -684,22 +668,14 @@ oob(signo)
 		(void)kill(ppid, SIGUSR1);
 	}
 	if (!eight && (mark & TIOCPKT_NOSTOP)) {
-		(void)ioctl(0, TIOCGETP, (char *)&sb);
-		sb.sg_flags &= ~CBREAK;
-		sb.sg_flags |= RAW;
-		(void)ioctl(0, TIOCSETN, (char *)&sb);
-		notc.t_stopc = -1;
-		notc.t_startc = -1;
-		(void)ioctl(0, TIOCSETC, (char *)&notc);
+		(void)tcgetattr(0, &tty);
+		tty.c_iflag &= ~IXON;
+		(void)tcsetattr(0, TCSANOW, &tty);
 	}
 	if (!eight && (mark & TIOCPKT_DOSTOP)) {
-		(void)ioctl(0, TIOCGETP, (char *)&sb);
-		sb.sg_flags &= ~RAW;
-		sb.sg_flags |= CBREAK;
-		(void)ioctl(0, TIOCSETN, (char *)&sb);
-		notc.t_stopc = deftc.t_stopc;
-		notc.t_startc = deftc.t_startc;
-		(void)ioctl(0, TIOCSETC, (char *)&notc);
+		(void)tcgetattr(0, &tty);
+		tty.c_iflag |= (deftty.c_iflag & IXON);
+		(void)tcsetattr(0, TCSANOW, &tty);
 	}
 	if (mark & TIOCPKT_FLUSHWRITE) {
 		(void)ioctl(1, TIOCFLUSH, (char *)&out);
@@ -795,42 +771,30 @@ void
 mode(f)
 	int f;
 {
-	struct ltchars *ltc;
-	struct sgttyb sb;
-	struct tchars *tc;
-	int lflags;
+	struct termios tty;
 
-	(void)ioctl(0, TIOCGETP, (char *)&sb);
-	(void)ioctl(0, TIOCLGET, (char *)&lflags);
-	switch(f) {
+	switch (f) {
 	case 0:
-		sb.sg_flags &= ~(CBREAK|RAW|TBDELAY);
-		sb.sg_flags |= defflags|tabflag;
-		tc = &deftc;
-		ltc = &defltc;
-		sb.sg_kill = defkill;
-		sb.sg_erase = deferase;
-		lflags = deflflags;
+		(void)tcsetattr(0, TCSANOW, &deftty);
 		break;
 	case 1:
-		sb.sg_flags |= (eight ? RAW : CBREAK);
-		sb.sg_flags &= ~defflags;
-		/* preserve tab delays, but turn off XTABS */
-		if ((sb.sg_flags & TBDELAY) == XTABS)
-			sb.sg_flags &= ~TBDELAY;
-		tc = &notc;
-		ltc = &noltc;
-		sb.sg_kill = sb.sg_erase = -1;
-		if (litout)
-			lflags |= LLITOUT;
+		(void)tcgetattr(0, &deftty);
+		tty = deftty;
+		/* This is derived from sys/compat/tty_compat.c. */
+		tty.c_lflag &= ~(ECHO|ICANON);
+		tty.c_iflag &= ~ICRNL;
+		tty.c_oflag &= ~OPOST;
+		if (eight) {
+			tty.c_lflag &= ~(ISIG|IEXTEN);
+			tty.c_iflag &= IXOFF;
+			tty.c_cflag &= ~(CSIZE|PARENB);
+			tty.c_cflag |= CS8;
+		}
+		(void)tcsetattr(0, TCSANOW, &tty);
 		break;
 	default:
 		return;
 	}
-	(void)ioctl(0, TIOCSLTC, (char *)ltc);
-	(void)ioctl(0, TIOCSETC, (char *)tc);
-	(void)ioctl(0, TIOCSETN, (char *)&sb);
-	(void)ioctl(0, TIOCLSET, (char *)&lflags);
 }
 
 void
@@ -838,7 +802,7 @@ lostpeer(signo)
 	int signo;
 {
 	(void)signal(SIGPIPE, SIG_IGN);
-	msg("\007connection closed.");
+	msg("\aconnection closed.");
 	done(1);
 }
 
