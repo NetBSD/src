@@ -1,4 +1,5 @@
-/* $OpenBSD: hash.h,v 1.1 1997/04/15 22:06:12 maja Exp $ */
+/*	$NetBSD: hash.h,v 1.2 1997/10/06 06:54:12 lukem Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,7 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: hash.h,v 1.5 1997/02/22 14:22:02 peter Exp $
  */
 
 /* Groupname entry hung off a member_entry node. */
@@ -60,9 +60,10 @@ struct group_entry {
 
 #define LINSIZ 1024 * 10
 
-extern void store __P(( struct group_entry ** , char *, char * ));
-extern void mstore __P(( struct member_entry ** , char *, char *, char * ));
-extern char *lookup __P(( struct group_entry **, char * ));
-extern void __endnetgrent __P(( void ));
-extern void __setnetgrent __P(( char * ));
-extern int __getnetgrent __P(( char **, char **, char ** ));
+char   *lookup __P((struct group_entry **, const char *));
+void	mstore __P((struct member_entry **, const char *, const char *, const
+char *));
+void	store __P((struct group_entry **, const char *, const char *));
+void	rng_endnetgrent __P((void));
+int	rng_getnetgrent __P((char **, char **, char **));
+void	rng_setnetgrent __P((const char *));

@@ -1,4 +1,5 @@
-.\"	$OpenBSD: revnetgroup.8,v 1.1 1997/04/15 22:06:14 maja Exp $
+.\"	$NetBSD: revnetgroup.8,v 1.2 1997/10/06 06:54:14 lukem Exp $
+.\"
 .\" Copyright (c) 1995
 .\"	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
 .\"
@@ -29,8 +30,6 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$FreeBSD: revnetgroup.8,v 1.4 1997/02/22 14:22:03 peter Exp $
-.\"
 .Dd October 24, 1995
 .Dt REVNETGROUP 8
 .Os
@@ -38,12 +37,12 @@
 .Nm revnetgroup
 .Nd "generate reverse netgroup data"
 .Sh SYNOPSIS
-.Nm revnetgroup
+.Nm
 .Fl u
 .Fl h
 .Op Fl f Ar netgroup_file
 .Sh DESCRIPTION
-.Nm revnetgroup
+.Nm
 processes the contents of a file in
 .Xr netgroup 5
 format into what is called
@@ -52,23 +51,23 @@ form. That is, where the original file shows
 netgroup memberships in terms of which members reside in a particular
 group, the reverse netgroup format specifies what groups are associated
 with a particular member. This information is used to generate the
-.Nm netgroup.byuser
+.Pa netgroup.byuser
 and
-.Nm netgroup.byhosts
+.Pa netgroup.byhosts
 YP maps. These reverse netgroup maps are used to help speed up
 netgroup lookups, particularly for the
 .Fn innetgr
 library function.
 .Pp
 For example, the standard
-.Nm /etc/netgroup
+.Pa /etc/netgroup
 file may list a netgroup and a list of its members. Here, the
 netgroup is considered the
 .Pa key
 and the member names are the
 .Pa data .
 By contrast, the reverse
-.Nm netgroup.byusers
+.Pa netgroup.byusers
 database lists each unique
 member as the key and the netgroups to which the members belong become
 the data. Seperate databases are created to hold information pertaining
@@ -84,15 +83,15 @@ of users and hosts, since it can take a considerable amount of time
 to process very large netgroup databases.
 .Pp
 The
-.Nm revnetgroup
+.Nm
 command prints its results on the standard output. It is usually called
 only by
-.Nm /var/yp/\<domain\>/Makefile
+.Pa /var/yp/<domain>/Makefile
 when rebuilding the YP netgroup maps.
 .Pp
 .Sh OPTIONS
 The
-.Nm revnetgroup
+.Nm
 command supports the following options:
 .Bl -tag -width flag
 .It Fl u
@@ -107,19 +106,19 @@ or
 flags must be specified.)
 .It Op Fl f Ar netgroup_file
 The
-.Nm revnetgroup
+.Nm
 command uses
-.Nm /etc/netgroup
+.Pa /etc/netgroup
 as its default input file. The
 .Fl f
 flag allows the user to specify an alternate input file. Specifying ``-''
 as the input file causes
-.Nm revnetgroup
+.Nm
 to read from the standard input.
 .El
 .Sh FILES
 .Bl -tag -width Pa -compact
-.It Pa /var/yp/\<domain\>Makefile
+.It Pa /var/yp/<domain>/Makefile
 The Makefile that calls
 .Nm makedbm
 and

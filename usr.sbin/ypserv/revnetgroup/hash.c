@@ -1,4 +1,5 @@
-/* $OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp $ */
+/*	$NetBSD: hash.c,v 1.2 1997/10/06 06:54:11 lukem Exp $ */
+
 /*
  * Copyright (c) 1995
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -30,18 +31,24 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$FreeBSD: hash.c,v 1.4 1997/02/22 14:22:01 peter Exp $
  */
+
+#include <sys/cdefs.h>
+#ifndef lint
+__RCSID("$NetBSD: hash.c,v 1.2 1997/10/06 06:54:11 lukem Exp $");
+#endif
+
+#include <sys/types.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+
 #include "hash.h"
 
-#ifndef lint
-static const char rcsid[] = "$OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp $";
-#endif
+u_int32_t	hash __P((const void *, size_t));
+u_int32_t	hashkey __P((const char *));
+
 
 /*
  * This hash function is stolen directly from the
@@ -49,17 +56,18 @@ static const char rcsid[] = "$OpenBSD: hash.c,v 1.1 1997/04/15 22:06:11 maja Exp
  * it's declared static which prevents us from calling it
  * from here.
  */
+
 /*
  * OZ's original sdbm hash
  */
 u_int32_t
 hash(keyarg, len)
 	const void *keyarg;
-	register size_t len;
+	size_t len;
 {
-	register const u_char *key;
-	register size_t loop;
-	register u_int32_t h;
+	const u_char *key;
+	size_t loop;
+	u_int32_t h;
 
 #define HASHC   h = *key++ + 65599 * h
 
@@ -104,8 +112,9 @@ hash(keyarg, len)
  * We mask off all but the lower 8 bits since our table array
  * can only hold 256 elements.
  */
-u_int32_t hashkey(key)
-	char *key;
+u_int32_t
+hashkey(key)
+	const char *key;
 {
 
 	if (key == NULL)
@@ -114,9 +123,10 @@ u_int32_t hashkey(key)
 }
 
 /* Find an entry in the hash table (may be hanging off a linked list). */
-char *lookup(table, key)
+char *
+lookup(table, key)
 	struct group_entry *table[];
-	char *key;
+	const char *key;
 {
 	struct group_entry *cur;
 
@@ -148,9 +158,10 @@ char *lookup(table, key)
  *
  * That's a lot of comment for such a small piece of code, isn't it.
  */
-void store (table, key, data)
+void
+store(table, key, data)
 	struct group_entry *table[];
-	char *key, *data;
+	const char *key, *data;
 {
 	struct group_entry *new;
 	u_int32_t i;
@@ -178,9 +189,10 @@ void store (table, key, data)
  * an entry in the table, then we just have to do one thing, which is
  * to update its grouplist.
  */
-void mstore (table, key, data, domain)
+void
+mstore(table, key, data, domain)
 	struct member_entry *table[];
-	char *key, *data, *domain;
+	const char *key, *data, *domain;
 {
 	struct member_entry *cur, *new;
 	struct grouplist *tmp,*p;

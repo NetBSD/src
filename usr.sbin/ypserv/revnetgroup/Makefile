@@ -1,9 +1,7 @@
-#	$OpenBSD: Makefile,v 1.1 1997/04/15 22:06:10 maja Exp $
-#	$FreeBSD: Makefile,v 1.3 1997/02/22 14:22:00 peter Exp $
+#	$NetBSD: Makefile,v 1.2 1997/10/06 06:54:09 lukem Exp $
 
 PROG=	revnetgroup
 SRCS=	revnetgroup.c hash.c parse_netgroup.c
-
-MAN= revnetgroup.8
+MAN=	revnetgroup.8
 
 .include <bsd.prog.mk>
