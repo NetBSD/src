@@ -11,12 +11,12 @@ the GNU General Public License, version 2, 1991.
 ********************************************/
 
 /*$Log: rexp1.c,v $
-/*Revision 1.1.1.1  1993/03/21 09:45:37  cgd
-/*initial import of 386bsd-0.1 sources
+/*Revision 1.2  1993/07/02 23:58:36  jtc
+/*Updated to mawk 1.1.4
 /*
- * Revision 3.4  92/02/20  16:08:12  brennan
+ * Revision 3.4  1992/02/20  16:08:12  brennan
  * change new_TWO() to work around sun acc bug
- * 
+ *
  * Revision 3.3  91/10/29  10:54:01  brennan
  * SIZE_T
  * 
