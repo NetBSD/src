@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)trap.c	7.4 (Berkeley) 5/13/91
- *	$Id: trap.c,v 1.35 1994/04/02 21:32:54 mycroft Exp $
+ *	$Id: trap.c,v 1.36 1994/04/02 22:15:03 mycroft Exp $
  */
 
 /*
@@ -459,6 +459,7 @@ syscall(frame)
 	register struct sysent *callp;
 	register struct proc *p;
 	int error, opc;
+	u_int argsize;
 	int args[8], rval[2];
 	int code;
 	struct timeval sticks;
