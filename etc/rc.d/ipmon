@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ipmon,v 1.4 2001/07/05 05:26:58 tron Exp $
+# $NetBSD: ipmon,v 1.5 2002/02/28 01:06:13 lukem Exp $
 #
 
 # PROVIDE: ipmon
@@ -11,6 +11,7 @@
 name="ipmon"
 rcvar=$name
 command="/usr/sbin/${name}"
+command_args="-D"
 
 load_rc_config $name
 run_rc_command "$1"
