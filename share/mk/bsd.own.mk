@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.180 2001/09/22 05:45:50 tv Exp $
+#	$NetBSD: bsd.own.mk,v 1.181 2001/09/25 01:04:35 tv Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -9,6 +9,9 @@ MAKECONF?=	/etc/mk.conf
 .include "${MAKECONF}"
 .endif
 
+.ifdef BSD_PKG_MK
+USETOOLS:=	no
+.endif
 USETOOLS?=	yes
 
 .if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "sh3"
