@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aevar.h,v 1.1 1997/02/24 06:04:00 scottr Exp $	*/
+/*	$NetBSD: if_aevar.h,v 1.2 1997/02/24 07:34:21 scottr Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -35,6 +35,7 @@ struct ae_softc {
 	u_short	type;		/* interface type code */
 	u_char	vendor;		/* interface vendor */
 	u_char	regs_rev;	/* registers are reversed */
+	u_char	use16bit;	/* use word-width transfers */
 
 	u_char  cr_proto;	/* values always set in CR */
 
