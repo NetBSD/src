@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.71 2003/07/01 10:05:46 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.72 2003/07/09 09:38:05 wiz Exp $
 ./usr/share/info/g++FAQ.info
 ./usr/share/info/tar.info
 ./usr/share/man/cat1/amq.0
@@ -136,6 +136,7 @@
 ./usr/share/man/cat8/i386/apm.0
 ./usr/share/man/cat8/i386/apmd.0
 ./usr/share/man/cat8/i386/bad144.0
+./usr/share/man/cat8/i386/installboot.0
 ./usr/share/man/cat8/i386/ispcvt.0
 ./usr/share/man/cat8/i386/kbdio.0
 ./usr/share/man/cat8/i386/reboot.0
@@ -307,6 +308,7 @@
 ./usr/share/man/man8/i386/apm.8
 ./usr/share/man/man8/i386/apmd.8
 ./usr/share/man/man8/i386/bad144.8
+./usr/share/man/man8/i386/installboot.8
 ./usr/share/man/man8/i386/ispcvt.8
 ./usr/share/man/man8/i386/kbdio.8
 ./usr/share/man/man8/i386/reboot.8
