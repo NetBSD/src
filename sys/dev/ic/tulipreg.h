@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.1 1999/09/01 00:32:41 thorpej Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.2 1999/09/02 23:25:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,6 +93,7 @@ struct tulip_desc {
  * Descriptor Status bits for Receive Descriptor.
  */
 #define	TDSTAT_Rx_FF	0x40000000	/* Filtering Fail */
+#define	TDSTAT_WINB_Rx_RCMP 0x40000000	/* Receive Complete */
 #define	TDSTAT_Rx_FL	0x3fff0000	/* Frame Length including CRC */
 #define	TDSTAT_Rx_DE	0x00004000	/* Descriptor Error */
 #define	TDSTAT_Rx_DT	0x00003000	/* Data Type */
@@ -119,6 +120,7 @@ struct tulip_desc {
 /*
  * Descriptor Status bits for Transmit Descriptor.
  */
+#define	TDSTAT_WINB_Tx_TE 0x00008000	/* Transmit Error */
 #define	TDSTAT_Tx_TO	0x00004000	/* Transmit Jabber Timeout */
 #define	TDSTAT_Tx_LO	0x00000800	/* Loss of Carrier */
 #define	TDSTAT_Tx_NC	0x00000400	/* No Carrier */
@@ -250,6 +252,10 @@ struct tulip_desc {
 #define	BUSMODE_DAS		0x00010000	/* diagnostic address space */
 						/*   must be zero on most */
 						/* transmit auto-poll */
+		/*
+		 * Transmit auto-polling not supported on:
+		 *	Winbond 89C040F
+		 */
 #define	BUSMODE_TAP_NONE	0x00000000	/*     no auto-polling */
 #define	BUSMODE_TAP_200us	0x00020000	/*   200 uS */
 #define	BUSMODE_TAP_800us	0x00040000	/*   400 uS */
@@ -260,6 +266,7 @@ struct tulip_desc {
 #define	BUSMODE_TAP_102_4us	0x000e0000	/* 102.4 uS (21041+) */
 #define	BUSMODE_DBO		0x00100000	/* desc-only b/e (21041+) */
 #define	BUSMODE_RME		0x00200000	/* rd/mult enab (21140+) */
+#define	BUSMODE_WINB_WAIT	0x00200000	/* wait state insertion */
 #define	BUSMODE_RLE		0x00800000	/* rd/line enab (21140+) */
 #define	BUSMODE_WLE		0x01000000	/* wt/line enab (21140+) */
 #define	BUSMODE_PNIC_MBO	0x04000000	/* magic `must be one' bit */
@@ -288,7 +295,9 @@ struct tulip_desc {
 #define	STATUS_TPS		0x00000002	/* transmit process stopped */
 #define	STATUS_TU		0x00000004	/* transmit buffer unavail */
 #define	STATUS_TJT		0x00000008	/* transmit jabber timeout */
+#define	STATUS_WINB_REI		0x00000008	/* receive early interrupt */
 #define	STATUS_LNPANC		0x00000010	/* link pass (21041) */
+#define	STATUS_WINB_RERR	0x00000010	/* receive error */
 #define	STATUS_UNF		0x00000020	/* transmit underflow */
 #define	STATUS_RI		0x00000040	/* receive interrupt */
 #define	STATUS_RU		0x00000080	/* receive buffer unavail */
@@ -296,6 +305,7 @@ struct tulip_desc {
 #define	STATUS_RWT		0x00000200	/* receive watchdog timeout */
 #define	STATUS_AT		0x00000400	/* SIA AUI/TP pin changed
 						   (21040) */
+#define	STATUS_WINB_TEI		0x00000400	/* transmit early interrupt */
 #define	STATUS_FD		0x00000800	/* full duplex short frame
 						   received (21040) */
 #define	STATUS_TM		0x00000800	/* timer expired (21041) */
@@ -345,10 +355,15 @@ struct tulip_desc {
 #define	OPMODE_SR		0x00000002	/* start receive */
 #define	OPMODE_HO		0x00000004	/* hash only mode (ro) */
 #define	OPMODE_PB		0x00000008	/* pass bad frames */
+#define	OPMODE_WINB_APP		0x00000008	/* accept all physcal packet */
 #define	OPMODE_IF		0x00000010	/* inverse filter mode (ro) */
+#define	OPMODE_WINB_AMP		0x00000010	/* accept multicast packet */
 #define	OPMODE_SB		0x00000020	/* start backoff counter */
+#define	OPMODE_WINB_ABP		0x00000020	/* accept broadcast packet */
 #define	OPMODE_PR		0x00000040	/* promiscuous mode */
+#define	OPMODE_WINB_ARP		0x00000040	/* accept runt packet */
 #define	OPMODE_PM		0x00000080	/* pass all multicast */
+#define	OPMODE_WINB_AEP		0x00000080	/* accept error packet */
 #define	OPMODE_FKD		0x00000100	/* flaky oscillator disable */
 #define	OPMODE_FD		0x00000200	/* full-duplex mode */
 #define	OPMODE_OM		0x00000c00	/* operating mode */
@@ -362,6 +377,8 @@ struct tulip_desc {
 #define	OPMODE_TR_96		0x00004000	/*     96 bytes */
 #define	OPMODE_TR_128		0x00008000	/*    128 bytes */
 #define	OPMODE_TR_160		0x0000c000	/*    160 bytes */
+#define	OPMODE_WINB_TTH		0x001fc000	/* transmit threshold */
+#define	OPMODE_WINB_TTH_SHIFT	14
 #define	OPMODE_BP		0x00010000	/* backpressure enable */
 #define	OPMODE_CA		0x00020000	/* capture effect enable */
 #define	OPMODE_PMAC_COE		0x00020000	/* collision offset enable */
@@ -375,6 +392,8 @@ struct tulip_desc {
 						   (21140) */
 #define	OPMODE_SF		0x00200000	/* store and forward mode
 						   (21140) */
+#define	OPMODE_WINB_REIT	0x1fe00000	/* receive eartly intr thresh */
+#define	OPMODE_WINB_REIT_SHIFT	21
 #define	OPMODE_TTM		0x00400000	/* Transmit Threshold Mode:
 						   1 = 10mbps, 0 = 100mbps
 						   (21140) */
@@ -383,11 +402,14 @@ struct tulip_desc {
 #define	OPMODE_MBO		0x02000000	/* must be one (21140) */
 #define	OPMODE_PNIC_RXCRCDIS	0x20000000	/* don't include CRC in Rx
 						   frames (PNIC) */
+#define	OPMODE_WINB_FES		0x20000000	/* fast ethernet select */
 #define	OPMODE_RA		0x40000000	/* receive all (21140) */
 #define	OPMODE_PNIC_EXT_ENDEC	0x40000000	/* 1 == ext, 0 == int PHY
 						   (PNIC) */
+#define	OPMODE_WINB_TEIO	0x40000000	/* transmit early intr on */
 #define	OPMODE_SC		0x80000000	/* special capture effect
 						   enable (21041+) */
+#define	OPMODE_WINB_REIO	0x80000000	/* receive early intr on */
 
 /* CSR7 - Interrupt Enable */
 #define	CSR_INTEN		TULIP_CSR7
@@ -799,38 +821,46 @@ struct tulip_desc {
  */
 
 /* CSR12 - Current Receive Descriptor Register */
-#define	CSR_WINB_CURRXDESC	TULIP_CSR12
+#define	CSR_WINB_CRDAR		TULIP_CSR12
 
 
 /* CSR13 - Current Receive Buffer Register */
-#define	CSR_WINB_CURRXBUF	TULIP_CSR13
+#define	CSR_WINB_CCRBAR		TULIP_CSR13
 
 
 /* CSR14 - Multicast Address Register 0 */
-#define	CSR_WINB_MAR0		TULIP_CSR14
+#define	CSR_WINB_CMA0		TULIP_CSR14
 
 
 /* CSR15 - Multicast Address Register 1 */
-#define	CSR_WINB_MAR1		TULIP_CSR15
+#define	CSR_WINB_CMA1		TULIP_CSR15
 
 
-/* CSR16 - Node Address Register 0 */
-#define	CSR_WINB_NODE0		TULIP_CSR16
+/* CSR16 - Physical Address Register 0 */
+#define	CSR_WINB_CPA0		TULIP_CSR16
 
 
-/* CSR17 - Node Address Register 1 */
-#define	CSR_WINB_NODE1		TULIP_CSR17
+/* CSR17 - Physical Address Register 1 */
+#define	CSR_WINB_CPA1		TULIP_CSR17
 
 
 /* CSR18 - Boot ROM Size Register */
-#define	CSR_WINB_BOOTROMSIZE	TULIP_CSR18
+#define	CSR_WINB_CBRCR		TULIP_CSR18
+#define	WINB_CBRCR_NONE		0x00000000	/* no boot rom */
+			/*	0x00000001	   also no boot rom */
+#define	WINB_CBRCR_8K		0x00000002	/* 8k */
+#define	WINB_CBRCR_16K		0x00000003	/* 16k */
+#define	WINB_CBRCR_32K		0x00000004	/* 32k */
+#define	WINB_CBRCR_64K		0x00000005	/* 64k */
+#define	WINB_CBRCR_128K		0x00000006	/* 128k */
+#define	WINB_CBRCR_256K		0x00000007
 
 
 /* CSR19 - Current Transmit Descriptor Register */
-#define	CSR_WINB_CURTXDESC	TULIP_CSR19
+#define	CSR_WINB_CTDAR		TULIP_CSR19
 
 
 /* CSR20 - Current Transmit Buffer Register */
-#define	CSR_WINB_CURTXBUF	TULIP_CSR20
+#define	CSR_WINB_CTBAR		TULIP_CSR20
 
 #endif /* _DEV_IC_TULIPREG_H_ */
