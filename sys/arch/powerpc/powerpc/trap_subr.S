@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.36 2003/03/04 08:34:12 matt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.37 2003/03/15 07:21:02 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -38,6 +38,9 @@
  *	#include <powerpc/powerpc/trap_subr.S>
  */
 #include "opt_altivec.h"
+
+/* LINTSTUB: include <sys/param.h> */
+/* LINTSTUB: include <powerpc/oea/bat.h> */
 
 #ifdef ALTIVEC
 #define	SAVE_VRSAVE(tf,b)						\
@@ -102,6 +105,7 @@
  * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
  * traps when using IPKDB).
  */
+/* LINTSTUB: Var: int trapcode[1], trapsize[1]; */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
 _C_LABEL(trapcode):
@@ -120,6 +124,7 @@ _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 /*
  * For ALI: has to save DSISR and DAR
  */
+/* LINTSTUB: Var: int alicode[1], alisize[1]; */
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
 _C_LABEL(alitrap):
 	mtsprg	1,1			/* save SP */
@@ -142,6 +147,7 @@ _C_LABEL(alisize) = .-_C_LABEL(alitrap)
  * Has to handle BAT spills
  * and standard pagetable spills
  */
+/* LINTSTUB: Var: int dsicode[1], dsisize[1]; */
 	.globl	_C_LABEL(dsitrap),_C_LABEL(dsisize)
 _C_LABEL(dsitrap):
 	mtsprg	1,1
@@ -195,6 +201,7 @@ _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
  * Considers different BAT format and combined implementation
  * (being addressed as I-BAT).
  */
+/* LINTSTUB: Var: int dsi601code[1], dsi601size[1]; */
 	.globl	_C_LABEL(dsi601trap),_C_LABEL(dsi601size)
 _C_LABEL(dsi601trap):
 	mtsprg	1,1
@@ -247,6 +254,7 @@ _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
 /*
  * This one for the external interrupt handler.
  */
+/* LINTSTUB: Var: int extint[1], extsize[1]; */
 	.globl	_C_LABEL(extint),_C_LABEL(extsize)
 _C_LABEL(extint):
 	mtsprg	1,1			/* save SP */
@@ -268,6 +276,7 @@ _C_LABEL(extsize) = .-_C_LABEL(extint)
 /*
  * And this one for the decrementer interrupt handler.
  */
+/* LINTSTUB: Var: int decrint[1], decrsize[1]; */
 	.globl	_C_LABEL(decrint),_C_LABEL(decrsize)
 _C_LABEL(decrint):
 	mtsprg	1,1			/* save SP */
@@ -291,6 +300,7 @@ _C_LABEL(decrsize) = .-_C_LABEL(decrint)
  * (Code essentially from the 603e User Manual, Chapter 5, but
  * corrected a lot.)
  */
+/* LINTSTUB: Var: int tlbimiss[1], tlbimsize[1]; */
 	.globl	_C_LABEL(tlbimiss),_C_LABEL(tlbimsize)
 _C_LABEL(tlbimiss):
 #ifdef PMAPDEBUG
@@ -365,6 +375,7 @@ _C_LABEL(tlbimiss):
 	ba	EXC_ISI
 _C_LABEL(tlbimsize) = .-_C_LABEL(tlbimiss)
 
+/* LINTSTUB: Var: int tlbdlmiss[1], tlbdlmsize[1]; */
 	.globl	_C_LABEL(tlbdlmiss),_C_LABEL(tlbdlmsize)
 _C_LABEL(tlbdlmiss):
 	mfspr	2,SPR_HASH1		/* get first pointer */
@@ -416,6 +427,7 @@ _C_LABEL(tlbdlmiss):
 	ba	EXC_DSI
 _C_LABEL(tlbdlmsize) = .-_C_LABEL(tlbdlmiss)
 
+/* LINTSTUB: Var: int tlbdsmiss[1], tlbdsmsize[1]; */
 	.globl	_C_LABEL(tlbdsmiss),_C_LABEL(tlbdsmsize)
 _C_LABEL(tlbdsmiss):
 	mfspr	2,SPR_HASH1		/* get first pointer */
@@ -499,6 +511,7 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 	.local	ddbstk
 	.comm	ddbstk,INTSTK,8		/* ddb stack */
 
+/* LINTSTUB: Var: int ddblow[1], ddbsize[1]; */
 	.globl	_C_LABEL(ddblow),_C_LABEL(ddbsize)
 _C_LABEL(ddblow):
 	mtsprg	1,1			/* save SP */
@@ -521,6 +534,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	.local	ipkdbstk
 	.comm	ipkdbstk,INTSTK,8		/* ipkdb stack */
 
+/* LINTSTUB: Var: int ipkdblow[1], ipkdbsize[1]; */
 	.globl	_C_LABEL(ipkdblow),_C_LABEL(ipkdbsize)
 _C_LABEL(ipkdblow):
 	mtsprg	1,1			/* save SP */
@@ -700,6 +714,7 @@ trapagain:
 /* Call C trap code: */
 	addi	3,1,8
 	bl	_C_LABEL(trap)
+/* LINTSTUB: Var: int trapexit[1]; */
 	.globl	trapexit
 trapexit:
 /* Disable interrupts: */
@@ -724,7 +739,7 @@ trapexit:
 /* 
  * Trap handler for syscalls (EXC_SC)
  */
-
+/* LINTSTUB: Var: int sctrap[1], scsize[1]; */
 	.globl	_C_LABEL(sctrap),_C_LABEL(scsize)
 _C_LABEL(sctrap):
 	mtsprg	1,1			/* save SP */
@@ -813,6 +828,7 @@ s_sctrap:
 	mtmsr	5;							\
 	isync
 
+/* LINTSTUB: Var: int extint_call[1]; */
 	.globl	_C_LABEL(extint_call)
 extintr:
 	INTRENTER
