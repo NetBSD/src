@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68.2.13 2002/11/11 21:59:14 nathanw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.68.2.14 2002/11/25 21:40:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -206,7 +206,7 @@ extern struct cpu_info *cpu_info_list;
 #define i386_ipisend(ci)	0
 #endif
 
-#define aston(ci)		((ci)->ci_astpending = 1, i386_ipisend(ci))
+#define aston(p)		((p)->p_md.md_astpending = 1)
 
 extern	struct cpu_info *cpu_info[I386_MAXPROCS];
 
@@ -244,10 +244,11 @@ extern struct cpu_info cpu_info_primary;
 do {									\
 	struct cpu_info *__ci = (ci);					\
 	__ci->ci_want_resched = 1;					\
-	aston(__ci);							\
+	if ((ci)->ci_curlwp != NULL)					\
+		aston((ci)->ci_curlwp->l_proc);       			\
 } while (/*CONSTCOND*/ 0)
 
-#define aston(ci)		(curcpu()->ci_astpending = 1)
+#define aston(p)		((p)->p_md.md_astpending = 1)
 
 #endif
 
@@ -281,13 +282,13 @@ do {									\
  * buffer pages are invalid.  On the i386, request an ast to send us
  * through trap(), marking the proc as needing a profiling tick.
  */
-#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p->p_cpu))
+#define	need_proftick(p)	((p)->p_flag |= P_OWEUPC, aston(p))
 
 /*
  * Notify the current process (p) that it has a signal pending,
  * process as soon as possible.
  */
-#define	signotify(p)		aston(p->p_cpu)
+#define	signotify(p)		aston(p)
 
 /*
  * We need a machine-independent name for this.

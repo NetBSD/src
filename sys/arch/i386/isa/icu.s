@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.63.2.4 2002/11/11 21:59:20 nathanw Exp $	*/
+/*	$NetBSD: icu.s,v 1.63.2.5 2002/11/25 21:40:04 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ IDTVEC(doreti)
 	jnc     1b			# some intr cleared the in-memory bit
 	jmp	*_C_LABEL(Xresume)(,%eax,4)
 2:	/* Check for ASTs on exit to user mode. */
-	CHECK_ASTPENDING()
+	CHECK_ASTPENDING(%eax)
 	cli
 	je	3f
 	testb   $SEL_RPL,TF_CS(%esp)
@@ -131,7 +131,7 @@ IDTVEC(doreti)
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 #endif
 	jz	3f
-4:	CLEAR_ASTPENDING()
+4:	CLEAR_ASTPENDING(%eax)
 	sti
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
