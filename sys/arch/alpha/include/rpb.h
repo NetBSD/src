@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.22 1998/06/03 23:07:38 thorpej Exp $ */
+/* $NetBSD: rpb.h,v 1.23 1998/06/05 18:18:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -163,6 +163,12 @@ struct rpb {
 #define	SV_ST_ALPHAPC164SX_466	0x00003400	/* AlphaPC164SX, 433MHz */
 #define	SV_ST_ALPHAPC164SX_533	0x00003800	/* AlphaPC164SX, 533MHz */
 #define	SV_ST_ALPHAPC164SX_600	0x00003c00	/* AlphaPC164SX, 600MHz */
+
+/*
+ * System types for the Digital Personal Workstation (Miata) Family
+ * XXX These are not very complete!
+ */
+#define	SV_ST_MIATA_1_5		0x00004c00	/* Miata 1.5 */
 
 	u_int64_t	rpb_variation;		/*  58 */
 
