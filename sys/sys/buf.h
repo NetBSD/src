@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.33.4.2 1999/06/21 01:30:14 thorpej Exp $	*/
+/*	$NetBSD: buf.h,v 1.33.4.3 1999/07/04 01:48:19 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,6 +71,7 @@ struct buf {
 					/* Function to call upon completion. */
 	void	(*b_iodone) __P((struct buf *));
 	struct	vnode *b_vp;		/* Device vnode. */
+	void	*b_private;		/* Private data for locker */
 	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
 	int	b_dirtyend;		/* Offset of end of dirty region. */
 	struct	ucred *b_rcred;		/* Read credentials reference. */
@@ -101,6 +102,7 @@ struct buf {
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_BAD		0x00000008	/* Bad block revectoring in progress. */
 #define	B_BUSY		0x00000010	/* I/O in progress. */
+#define	B_CACHE		0x00000020	/* Bread found us in the cache. */
 #define	B_CALL		0x00000040	/* Call b_iodone from biodone. */
 #define	B_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	B_DIRTY		0x00000100	/* Dirty page to be pushed out async. */
@@ -120,7 +122,7 @@ struct buf {
 #define	B_WRITEINPROG	0x01000000	/* Write in progress. */
 #define	B_XXX		0x02000000	/* Debugging flag. */
 #define	B_VFLUSH	0x04000000	/* Buffer is being synced. */
-
+#define	B_PDAEMON	0x10000000	/* I/O initiated by pagedaemon. */
 /*
  * This structure describes a clustered I/O.  It is stored in the b_saveaddr
  * field of the buffer on which I/O is done.  At I/O completion, cluster
@@ -148,11 +150,15 @@ struct cluster_save {
 #define B_SYNC		0x02	/* Do all allocations synchronously. */
 
 #ifdef _KERNEL
+#include <sys/pool.h>
+
 int	nbuf;			/* The number of buffer headers */
 struct	buf *buf;		/* The buffer headers. */
 char	*buffers;		/* The buffer contents. */
 int	bufpages;		/* Number of memory pages in the buffer pool. */
 extern int nswbuf;		/* Number of swap I/O buffer headers. */
+extern struct pool bufpool;
+
 
 __BEGIN_DECLS
 void	allocbuf __P((struct buf *, int));
