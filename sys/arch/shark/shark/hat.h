@@ -1,4 +1,4 @@
-/*	$NetBSD: hat.h,v 1.1 2002/02/10 01:58:03 thorpej Exp $	*/
+/*	$NetBSD: hat.h,v 1.2 2002/10/05 17:01:51 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -83,7 +83,7 @@ int hatClkAdjust(int count);
 /* hatUnwedge: call this function periodically (slower than the frequency
                of the HAT) to unwedge the HAT, if necessary.  
 */
-void hatUnwedge();
+void hatUnwedge(void);
 
 /* HAT_MIN_FREQ: should be a power of 2.  Call hatUnwedge() no more
                  often than HAT_MIN_FREQ.  HMF should be a power of 2.

@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.9 2002/10/02 15:52:41 thorpej Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.10 2002/10/05 17:01:51 chs Exp $	*/
 
 /*
  * Copyright 1997
@@ -148,7 +148,7 @@ extern void ofrootfound		__P((void));
 
 /* Local routines */
 static void process_kernel_args	__P((void));
-
+void ofw_device_register(struct device *, void *);
 
 /**************************************************************/
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.18 2002/09/18 01:44:13 chs Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.19 2002/10/05 17:01:52 chs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -96,6 +96,9 @@ void	OF_close(int);
 int	OF_read(int, void *, int);
 int	OF_write(int, void *, int);
 int	OF_seek(int, u_quad_t);
+void	*OF_claim(void *, u_int, u_int);
+void	OF_release(void *, u_int);
+int	OF_milliseconds(void);
 void	OF_boot(char *) __attribute__((__noreturn__));
 void	OF_enter(void);
 void	OF_exit(void) __attribute__((__noreturn__));
