@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fhpib.c	7.3 (Berkeley) 12/16/90
- *	$Id: fhpib.c,v 1.2 1993/08/01 19:24:06 mycroft Exp $
+ *	$Id: fhpib.c,v 1.3 1994/05/05 10:10:25 mycroft Exp $
  */
 
 /*
@@ -475,8 +475,10 @@ fhpibwait(hd, x)
  * XXX: this will have to change if we every allow more than one
  * pending operation per HP-IB.
  */
-fhpibppwatch(unit)
+fhpibppwatch(arg)
+	void *arg;
 {
+	int unit = (int)arg;
 	register struct hpib_softc *hs = &hpib_softc[unit];
 	register struct fhpibdevice *hd;
 	register int slave;
@@ -491,7 +493,7 @@ fhpibppwatch(unit)
 			hd->hpib_stat = ST_IENAB;
 			hd->hpib_imask = IM_IDLE | IM_ROOM;
 		} else
-			timeout(fhpibppwatch, unit, 1);
+			timeout(fhpibppwatch, (void *)unit, 1);
 		return;
 	}
 	if ((fhpibdebug & FDB_PPOLL) && unit == fhpibdebugunit)

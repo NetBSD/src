@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ppi.c	7.3 (Berkeley) 12/16/90
- *	$Id: ppi.c,v 1.3 1994/02/10 13:59:37 mycroft Exp $
+ *	$Id: ppi.c,v 1.4 1994/05/05 10:10:34 mycroft Exp $
  */
 
 /*
@@ -144,9 +144,11 @@ ppiclose(dev, flags)
 	return(0);
 }
 
-ppistart(unit)
-	int unit;
+ppistart(arg)
+	void *arg;
 {
+	int unit = (int)arg;
+
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppistart(%x)\n", unit);
@@ -155,9 +157,11 @@ ppistart(unit)
 	wakeup(&ppi_softc[unit]);
 }
 
-ppitimo(unit)
-	int unit;
+ppitimo(arg)
+	void *arg;
 {
+	int unit = (int)arg;
+
 #ifdef DEBUG
 	if (ppidebug & PDB_FOLLOW)
 		printf("ppitimo(%x)\n", unit);
@@ -216,7 +220,7 @@ ppirw(dev, uio)
 	sc->sc_flags |= PPIF_UIO;
 	if (sc->sc_timo > 0) {
 		sc->sc_flags |= PPIF_TIMO;
-		timeout(ppitimo, unit, sc->sc_timo);
+		timeout(ppitimo, (void *)unit, sc->sc_timo);
 	}
 	while (uio->uio_resid > 0) {
 		len = MIN(buflen, uio->uio_resid);
@@ -241,7 +245,7 @@ again:
 				       sc->sc_flags);
 #endif
 			if (sc->sc_flags & PPIF_TIMO) {
-				untimeout(ppitimo, unit);
+				untimeout(ppitimo, (void *)unit);
 				sc->sc_flags &= ~PPIF_TIMO;
 			}
 			splx(s);
@@ -298,7 +302,7 @@ again:
 		 */
 		if (sc->sc_delay > 0) {
 			sc->sc_flags |= PPIF_DELAY;
-			timeout(ppistart, unit, sc->sc_delay);
+			timeout(ppistart, (void *)unit, sc->sc_delay);
 			error = tsleep(sc, PCATCH|PZERO+1, "hpib", 0);
 			if (error) {
 				splx(s);
@@ -319,11 +323,11 @@ again:
 	}
 	s = splsoftclock();
 	if (sc->sc_flags & PPIF_TIMO) {
-		untimeout(ppitimo, unit);
+		untimeout(ppitimo, (void *)unit);
 		sc->sc_flags &= ~PPIF_TIMO;
 	}
 	if (sc->sc_flags & PPIF_DELAY) {
-		untimeout(ppistart, unit);
+		untimeout(ppistart, (void *)unit);
 		sc->sc_flags &= ~PPIF_DELAY;
 	}
 	splx(s);

@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.31 1994/05/04 04:07:18 mycroft Exp $
+ *	$Id: machdep.c,v 1.32 1994/05/05 10:11:27 mycroft Exp $
  */
 
 #include "param.h"
@@ -358,8 +358,8 @@ setregs(p, entry, stack, retval)
 	u_long stack;
 	int retval[2];
 {
-	p->p_regs[PC] = entry & ~1;
-	p->p_regs[SP] = stack;
+	p->p_md.md_regs[PC] = entry & ~1;
+	p->p_md.md_regs[SP] = stack;
 #ifdef FPCOPROC
 	/* restore a null state frame */
 	p->p_addr->u_pcb.pcb_fpregs.fpf_null = 0;
@@ -368,7 +368,7 @@ setregs(p, entry, stack, retval)
 #ifdef COMPAT_HPUX
 	if (p->p_emul == EMUL_HPUX) {
 
-		p->p_regs[A0] = 0;	/* not 68010 (bit 31), no FPA (30) */
+		p->p_md.md_regs[A0] = 0;/* not 68010 (bit 31), no FPA (30) */
 		retval[0] = 0;		/* no float card */
 #ifdef FPCOPROC
 		retval[1] = 1;		/* yes 68881 */
@@ -583,9 +583,9 @@ sendsig(catcher, sig, mask, code)
 	extern short exframesize[];
 	extern char sigcode[], esigcode[];
 
-	frame = (struct frame *)p->p_regs;
+	frame = (struct frame *)p->p_md.md_regs;
 	ft = frame->f_format;
-	oonstack = ps->ps_onstack;
+	oonstack = ps->ps_sigstk.ss_onstack;
 	/*
 	 * Allocate and validate space for the signal handler
 	 * context. Note that if the stack is in P0 space, the
@@ -599,9 +599,9 @@ sendsig(catcher, sig, mask, code)
 	else
 #endif
 	fsize = sizeof(struct sigframe);
-	if (!ps->ps_onstack && (ps->ps_sigonstack & sigmask(sig))) {
-		fp = (struct sigframe *)(ps->ps_sigsp - fsize);
-		ps->ps_onstack = 1;
+	if (!ps->ps_sigstk.ss_onstack && (ps->ps_sigonstack & sigmask(sig))) {
+		fp = (struct sigframe *)(ps->ps_sigstk.ss_sp - fsize);
+		ps->ps_sigstk.ss_onstack = 1;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
@@ -800,9 +800,10 @@ sigreturn(p, uap, retval)
 		    (scp = hscp->hsc_realsc) == 0 ||
 		    useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
 		    copyin((caddr_t)scp, (caddr_t)&tsigc, sizeof tsigc)) {
-			p->p_sigacts->ps_onstack = hscp->hsc_onstack & 01;
+			p->p_sigacts->ps_sigstk.ss_onstack =
+			    hscp->hsc_onstack & 01;
 			p->p_sigmask = hscp->hsc_mask &~ sigcantmask;
-			frame = (struct frame *) p->p_regs;
+			frame = (struct frame *) p->p_md.md_regs;
 			frame->f_regs[SP] = hscp->hsc_sp;
 			frame->f_pc = hscp->hsc_pc;
 			frame->f_sr = hscp->hsc_ps &~ PSL_USERCLR;
@@ -832,9 +833,9 @@ sigreturn(p, uap, retval)
 	/*
 	 * Restore the user supplied information
 	 */
-	p->p_sigacts->ps_onstack = scp->sc_onstack & 01;
+	p->p_sigacts->ps_sigstk.ss_onstack = scp->sc_onstack & 01;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	frame = (struct frame *) p->p_regs;
+	frame = (struct frame *) p->p_md.md_regs;
 	frame->f_regs[SP] = scp->sc_sp;
 	frame->f_regs[A6] = scp->sc_fp;
 	frame->f_pc = scp->sc_pc;
@@ -1210,7 +1211,7 @@ int candbdelay = 50;	/* give em half a second */
 
 void
 candbtimer(arg)
-	caddr_t arg;
+	void *arg;
 {
 	crashandburn = 0;
 }
@@ -1245,7 +1246,7 @@ nmihand(frame)
 				      "forced crash, nosync" : "forced crash");
 			}
 			crashandburn++;
-			timeout(candbtimer, (caddr_t)0, candbdelay);
+			timeout(candbtimer, NULL, candbdelay);
 		}
 #endif
 #endif

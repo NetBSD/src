@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: cpu.h 1.16 91/03/25
  *	from: @(#)cpu.h	7.7 (Berkeley) 6/27/91
- *	$Id: cpu.h,v 1.4 1994/02/04 23:09:04 mycroft Exp $
+ *	$Id: cpu.h,v 1.5 1994/05/05 10:12:19 mycroft Exp $
  */
 
 /*
@@ -69,14 +69,15 @@
  * clockframe; for hp300, use just what the hardware
  * leaves on the stack.
  */
-typedef struct intrframe {
+struct clockframe {
 	int	ps;
 	int	pc;
-} clockframe;
+};
 
-#define	CLKF_USERMODE(framep)	(((framep)->ps & PSL_S) == 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->ps & PSL_IPL7) == 0)
-#define	CLKF_PC(framep)		((framep)->pc)
+#define	CLKF_USERMODE(frame)	(((frame)->ps & PSL_S) == 0)
+#define	CLKF_BASEPRI(frame)	(((frame)->ps & PSL_IPL7) == 0)
+#define	CLKF_PC(frame)		((frame)->pc)
+#define	CLKF_INTR(frame)	(0)	/* XXX */
 
 
 /*
@@ -152,10 +153,6 @@ extern unsigned char ssir;
 #ifdef KERNEL
 extern	int machineid, mmutype, ectype;
 extern	char *intiobase, *intiolimit;
-
-/* what is this supposed to do? i.e. how is it different than startrtclock? */
-#define	enablertclock()
-
 #endif
 
 /* physical memory sections */

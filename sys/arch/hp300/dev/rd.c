@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: rd.c 1.38 90/10/12
  *	from: @(#)rd.c	7.9 (Berkeley) 5/7/91
- *	$Id: rd.c,v 1.5 1994/02/10 13:59:39 mycroft Exp $
+ *	$Id: rd.c,v 1.6 1994/05/05 10:10:38 mycroft Exp $
  */
 
 /*
@@ -660,11 +660,11 @@ done:
 /*
  * Called from timeout() when handling maintenance releases
  */
-rdrestart(unit)
-	int unit;
+rdrestart(arg)
+	void *arg;
 {
 	int s = splbio();
-	rdustart(unit);
+	rdustart((int)arg);
 	splx(s);
 }
 
@@ -938,7 +938,7 @@ rderror(unit)
 		rdstats[unit].rdtimeouts++;
 #endif
 		hpibfree(&rs->sc_dq);
-		timeout(rdrestart, unit, rdtimo*hz);
+		timeout(rdrestart, (void *)unit, rdtimo*hz);
 		return(0);
 	}
 	/*

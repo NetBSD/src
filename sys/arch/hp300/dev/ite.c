@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: ite.c 1.1 90/07/09
  *	from: @(#)ite.c	7.6 (Berkeley) 5/16/91
- *	$Id: ite.c,v 1.19 1994/02/10 14:55:31 mycroft Exp $
+ *	$Id: ite.c,v 1.20 1994/05/05 10:10:28 mycroft Exp $
  */
 
 /*
@@ -359,7 +359,7 @@ itestart(tp)
 	}
 	if (hiwat) {
 		tp->t_state |= TS_TIMEOUT;
-		timeout((timeout_t)ttrstrt, (caddr_t)tp, 1);
+		timeout(ttrstrt, tp, 1);
 	}
 	tp->t_state &= ~TS_BUSY;
 	splx(s);

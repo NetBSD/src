@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: clock.c 1.18 91/01/21
  *	from: @(#)clock.c	7.6 (Berkeley) 5/7/91
- *	$Id: clock.c,v 1.8 1994/04/08 06:28:21 hpeyerl Exp $
+ *	$Id: clock.c,v 1.9 1994/05/05 10:11:02 mycroft Exp $
  */
 
 #include "param.h"
@@ -65,7 +65,7 @@ struct hil_dev *bbcaddr = NULL;
 /*
  * Machine-dependent clock routines.
  *
- * Startrtclock restarts the real-time clock, which provides
+ * cpu_initclocks() restarts the real-time clock, which provides
  * hardclock interrupts to kern_clock.c.
  *
  * Inittodr initializes the time of day hardware which provides
@@ -81,10 +81,16 @@ struct hil_dev *bbcaddr = NULL;
 
 clockattach() {}
 
+setstatclockrate()
+{
+
+	/* Not today. */
+}
+
 /*
  * Start the real-time clock.
  */
-startrtclock()
+cpu_initclocks()
 {
 	register struct clkreg *clk;
 
@@ -378,23 +384,23 @@ stopprofclock()
  * profclock() is expanded in line in lev6intr() unless profiling kernel.
  * Assumes it is called with clock interrupts blocked.
  */
-profclock(framep)
-	clockframe *framep;
+profclock(frame)
+	struct clockframe *frame;
 {
 	/*
 	 * Came from user mode.
 	 * If this process is being profiled record the tick.
 	 */
-	if (CLKF_USERMODE(framep)) {
+	if (CLKF_USERMODE(frame)) {
 		if (p->p_stats.p_prof.pr_scale)
-			addupc(CLKF_PC(framep), &curproc->p_stats.p_prof, 1);
+			addupc(CLKF_PC(frame), &curproc->p_stats.p_prof, 1);
 	}
 	/*
 	 * Came from kernel (supervisor) mode.
 	 * If we are profiling the kernel, record the tick.
 	 */
 	else if (profiling < 2) {
-		register int s = CLKF_PC(framep) - s_lowpc;
+		register int s = CLKF_PC(frame) - s_lowpc;
 
 		if (s < s_textsize)
 			kcount[s / (HISTFRACTION * sizeof (*kcount))]++;
