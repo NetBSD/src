@@ -1,4 +1,4 @@
-/*	$NetBSD: riscoscalls.h,v 1.3 2001/07/27 20:49:09 bjh21 Exp $	*/
+/*	$NetBSD: riscoscalls.h,v 1.4 2001/07/27 21:10:04 bjh21 Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -40,6 +40,8 @@
 #define XOS_NewLine		0x020003
 #define OS_ReadC		0x000004
 #define XOS_ReadC		0x020004
+#define OS_Byte			0x000006
+#define XOS_Byte		0x020006
 #define OS_Args			0x000009
 #define XOS_Args		0x020009
 #define OS_GBPB			0x00000c
@@ -68,6 +70,14 @@ typedef struct os_error {
 extern void os_writec(int);
 extern void os_new_line(void);
 extern int os_readc(void);
+#endif
+
+/* OS_Byte */
+
+#define osbyte_OUTPUT_CURSOR_POSITION	165
+
+#ifndef __ASSEMBLER__
+void os_byte(int, int, int, int *, int *);
 #endif
 
 /* OS_Args */
@@ -132,6 +142,7 @@ extern void os_exit(os_error const *, int) __attribute__((noreturn));
 #define os_MODEVAR_YWIND_LIMIT		12
 #define os_VDUVAR_DISPLAY_START		149
 #define os_VDUVAR_TOTAL_SCREEN_SIZE	150
+#define os_VDUVAR_TCHAR_SPACEY		170
 
 #ifndef __ASSEMBLER__
 extern void os_read_vdu_variables(const int *, int *);
