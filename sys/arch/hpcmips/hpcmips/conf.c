@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2000/02/29 19:08:54 augustss Exp $	*/
+/*	$NetBSD: conf.c,v 1.4 2000/03/03 19:54:40 uch Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -129,6 +129,8 @@ cdev_decl(ipl);
 cdev_decl(com);
 #include "tx39uart.h"
 cdev_decl(txcom);
+#include "ucbsnd.h"
+cdev_decl(ucbsnd);
 #if notyet
 #include "lpt.h"
 cdev_decl(lpt);
@@ -226,8 +228,13 @@ struct cdevsw	cdevsw[] =
 #else
 	cdev_notdef(),
 #endif
+#if NUCBSND > 0
+	cdev_audio_init(NUCBSND,ucbsnd),/* 36: UCB1200 Codec (TX39 companion chip) */
+#else
+	cdev_notdef(),
+#endif
 #if notyet
-	cdev_tty_init(NUCOM, ucom),	/* 36: USB tty */
+	cdev_tty_init(NUCOM, ucom),	/* 37: USB tty */
 #endif
 };
 
@@ -294,6 +301,8 @@ static int chrtoblktbl[] =  {
 	/* 33 */	NODEV,
 	/* 34 */	NODEV,
 	/* 35 */	NODEV,
+	/* 36 */	NODEV,
+	/* 37 */	NODEV,
 };
 
 /*
