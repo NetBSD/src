@@ -13,7 +13,7 @@
  * Currently supports the Western Digital/SMC 8003 and 8013 series, the 3Com
  * 3c503, the NE1000 and NE2000, and a variety of similar clones.
  *
- *	$Id: if_ed.c,v 1.30 1994/02/16 20:22:04 mycroft Exp $
+ *	$Id: if_ed.c,v 1.31 1994/02/17 07:20:06 mycroft Exp $
  */
 
 #include "ed.h"
@@ -1123,6 +1123,7 @@ ed_init(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	int i, s;
 	u_char command;
+	u_long mcaf[2];
 
 	/* Address not known. */
 	if (ifp->if_addrlist == 0)
@@ -1207,15 +1208,10 @@ ed_init(sc)
 	for (i = 0; i < ETHER_ADDR_LEN; ++i)
 		outb(sc->nic_addr + ED_P1_PAR0 + i, sc->sc_arpcom.ac_enaddr[i]);
 
-	/* Set up multicast addresses and filter modes if necessary. */
-	if (ifp->if_flags & (IFF_MULTICAST | IFF_PROMISC)) {
-		u_long mcaf[2];
-
-		/* Set multicast filter on chip. */
-		ed_getmcaf(&sc->sc_arpcom, mcaf);
-		for (i = 0; i < 8; i++)
-		      outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
-	}
+	/* Set multicast filter on chip. */
+	ed_getmcaf(&sc->sc_arpcom, mcaf);
+	for (i = 0; i < 8; i++)
+		outb(sc->nic_addr + ED_P1_MAR0 + i, ((u_char *)mcaf)[i]);
 
 	/* Set current page pointer to next_packet (initialized above). */
 	outb(sc->nic_addr + ED_P1_CURR, sc->next_packet);
@@ -1243,15 +1239,14 @@ ed_init(sc)
 			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
 	}
 
-	i = ED_RCR_AB;
+	i = ED_RCR_AB | ED_RCR_AM;
 	if (ifp->if_flags & IFF_PROMISC) {
 		/*
 		 * Set promiscuous mode.  Multicast filter was set earlier so
 		 * that we should receive all multicast packets.
 		 */
-		i |= ED_RCR_AM | ED_RCR_PRO;
-	} else if (ifp->if_flags & IFF_MULTICAST)
-		i |= ED_RCR_AM;
+		i |= ED_RCR_PRO;
+	}
 	outb(sc->nic_addr + ED_P0_RCR, i);
 
 	/* Set 'running' flag, and clear output active flag. */
