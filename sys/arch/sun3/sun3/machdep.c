@@ -1,11 +1,11 @@
-/*	$NetBSD: machdep.c,v 1.64 1995/09/19 23:17:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.65 1995/09/26 04:02:22 gwr Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
+ * Copyright (c) 1994, 1995 Gordon W. Ross
  * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1990, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -39,9 +39,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah Hdr: machdep.c 1.63 91/04/24
- *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	machdep.c,v 1.3 1993/07/07 07:20:03 cgd Exp
+ *	from: Utah Hdr: machdep.c 1.74 92/12/20
+ *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
 #include <sys/param.h>
@@ -65,8 +64,8 @@
 #include <sys/user.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
-#include <sys/syscallargs.h>
 #include <sys/sysctl.h>
+#include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
@@ -100,11 +99,9 @@
 extern char *cpu_string;
 extern char version[];
 extern short exframesize[];
-extern vm_offset_t u_area_va;
 extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
 
 int physmem;
-int cold;
 int fpu_type;
 
 /*
@@ -129,12 +126,12 @@ int	bufpages = 0;
 #endif
 long *nofault;
 
-caddr_t allocsys __P((caddr_t));
 void identifycpu();
 
 /*
- * This is called at the beginning of init_main.c:main()
- * to get the console device ready for kernel printf calls.
+ * Console initialization: called early on from main,
+ * before vm init or startup.  Do enough configuration
+ * to choose and initialize a console.
  */
 void consinit()
 {
@@ -151,134 +148,8 @@ void consinit()
 }
 
 /*
- * This is called early in init_main.c:main(), after the
- * kernel memory allocator is ready for use, but before
- * the creation of process 0,1,2 and mountroot, etc.
- */
-void cpu_startup()
-{
-    caddr_t v;
-    int sz, i;
-    vm_size_t size;    
-    int base, residual;
-    vm_offset_t minaddr, maxaddr, uarea_pages;
-
-    /* msgbuf mapped earlier, should figure out why? */
-    printf(version);
-    identifycpu();
-    printf("real mem  = %d\n", ctob(physmem));
-    
-    /*
-     * Find out how much space we need, allocate it,
-     * and then give everything true virtual addresses.
-     */
-    sz = (int)allocsys((caddr_t)0);
-    if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
-	panic("startup: no room for tables");
-    if (allocsys(v) - v != sz)
-	panic("startup: table size inconsistency");
-
-    /*
-     * Now allocate buffers proper.  They are different than the above
-     * in that they usually occupy more virtual memory than physical.
-     */
-    size = MAXBSIZE * nbuf;
-    buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
-			       &maxaddr, size, TRUE);
-    minaddr = (vm_offset_t)buffers;
-    if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
-		    &minaddr, size, FALSE) != KERN_SUCCESS)
-	panic("startup: cannot allocate buffers");
-    if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
-	/* don't want to alloc more physical mem than needed */
-	bufpages = btoc(MAXBSIZE) * nbuf;
-    }
-    base = bufpages / nbuf;
-    residual = bufpages % nbuf;
-    for (i = 0; i < nbuf; i++) {
-	vm_size_t curbufsize;
-	vm_offset_t curbuf;
-
-	/*
-	 * First <residual> buffers get (base+1) physical pages
-	 * allocated for them.  The rest get (base) physical pages.
-	 *
-	 * The rest of each buffer occupies virtual space,
-	 * but has no physical memory allocated for it.
-	 */
-	curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
-	curbufsize = CLBYTES * (i < residual ? base+1 : base);
-	vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
-	vm_map_simplify(buffer_map, curbuf);
-    }
-
-    /*
-     * Allocate a submap for exec arguments.  This map effectively
-     * limits the number of processes exec'ing at any time.
-     */
-    exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-			     16*NCARGS, TRUE);
-
-    /*
-     * Allocate a submap for physio
-     */
-    /*
-     * Allocate a map for physio and DVMA
-     */
-    phys_map = vm_map_create(pmap_kernel(), DVMA_SPACE_START,
-			     DVMA_SPACE_END, TRUE);
-    if (phys_map == NULL)
-	panic("cpu_startup: unable to create physmap");
-
-    /*
-     * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
-     * we use the more space efficient malloc in place of kmem_alloc.
-     */
-    mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
-			       M_MBUF, M_NOWAIT);
-    bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
-    mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			   VM_MBUF_SIZE, FALSE);
-
-    /*
-     * Initialize callouts
-     */
-    callfree = callout;
-    for (i = 1; i < ncallout; i++)
-	callout[i-1].c_next = &callout[i];
-    callout[i-1].c_next = NULL;
-
-    printf("avail mem = %d\n", ptoa(cnt.v_free_count));
-    printf("using %d buffers containing %d bytes of memory\n",
-	   nbuf, bufpages * CLBYTES);
-
-	/*
-	 * Allocate a virtual page (for use by /dev/mem)
-	 * This page is handed to pmap_enter() therefore
-	 * it has to be in the normal kernel VA range.
-	 */
-	vmmap = kmem_alloc_wait(kernel_map, NBPG);
-
-    /*    initcpu();*/
-    /*
-     * Set up buffers, so they can be used to read disk labels.
-     */
-    bufinit();
-
-    /*
-     * Configure the system.
-     */
-    nofault = NULL;
-    configure();
-
-	cold = 0;
-
-#ifdef	HAVECACHE
-	cache_enable();
-#endif
-}
-
-/*
+ * allocsys() - Private routine used by cpu_startup() below.
+ *
  * Allocate space for system data structures.  We are given
  * a starting virtual address and we return a final virtual
  * address; along the way we set each data structure pointer.
@@ -287,13 +158,12 @@ void cpu_startup()
  * allocate that much and fill it with zeroes, and then call
  * allocsys() again with the correct base virtual address.
  */
-caddr_t
+#define	valloc(name, type, num) \
+	v = (caddr_t)(((name) = (type *)v) + (num))
+static caddr_t
 allocsys(v)
 	register caddr_t v;
 {
-
-#define	valloc(name, type, num) \
-	    v = (caddr_t)(((name) = (type *)v) + (num))
 
 #ifdef REAL_CLISTS
 	valloc(cfree, struct cblock, nclist);
@@ -317,28 +187,165 @@ allocsys(v)
 #endif
 
 	/*
-	 * Determine how many buffers to allocate (enough to
-	 * hold 5% of total physical memory, but at least 16).
+	 * Determine how many buffers to allocate. We allocate
+	 * the BSD standard of use 10% of memory for the first 2 Meg,
+	 * 5% of remaining. Insure a minimum of 16 buffers.
 	 * Allocate 1/2 as many swap buffer headers as file i/o buffers.
 	 */
-	if (bufpages == 0)
-		if (physmem < (2 * 1024 * 1024 / NBPG))
-			bufpages = (physmem / 10) / CLSIZE;
-		else
-			bufpages = (physmem / 20) / CLSIZE;
-		if (nbuf == 0) {
-			nbuf = bufpages;
-			if (nbuf < 16)
-				nbuf = 16;
-		}
-		if (nswbuf == 0) {
-			nswbuf = (nbuf / 2) &~ 1;	/* force even */
-			if (nswbuf > 256)
-				nswbuf = 256;		/* sanity */
-		}
-		valloc(swbuf, struct buf, nswbuf);
-		valloc(buf, struct buf, nbuf);
-		return v;
+	if (bufpages == 0) {
+		/* We always have more than 2MB of memory. */
+		bufpages = ((btoc(2 * 1024 * 1024) + physmem) /
+		            (20 * CLSIZE));
+	}
+	if (nbuf == 0) {
+		nbuf = bufpages;
+		if (nbuf < 16)
+			nbuf = 16;
+	}
+	if (nswbuf == 0) {
+		nswbuf = (nbuf / 2) &~ 1;	/* force even */
+		if (nswbuf > 256)
+			nswbuf = 256;		/* sanity */
+	}
+	valloc(swbuf, struct buf, nswbuf);
+	valloc(buf, struct buf, nbuf);
+	return v;
+}
+#undef	valloc
+
+/*
+ * cpu_startup: allocate memory for variable-sized tables,
+ * initialize cpu, and do autoconfiguration.
+ *
+ * This is called early in init_main.c:main(), after the
+ * kernel memory allocator is ready for use, but before
+ * the creation of processes 1,2, and mountroot, etc.
+ */
+void cpu_startup()
+{
+	caddr_t v;
+	int sz, i;
+	vm_size_t size;	
+	int base, residual;
+	vm_offset_t minaddr, maxaddr;
+	
+	/*
+	 * The msgbuf was set up earlier (in sun3_startup.c)
+	 * just because it was more convenient to do there.
+	 */
+	
+	/*
+	 * Good {morning,afternoon,evening,night}.
+	 */
+	printf(version);
+	identifycpu();
+	printf("real mem = %d\n", ctob(physmem));
+
+	/*
+	 * Find out how much space we need, allocate it,
+	 * and then give everything true virtual addresses.
+	 */
+	sz = (int)allocsys((caddr_t)0);
+	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+	if (allocsys(v) - v != sz)
+		panic("startup: table size inconsistency");
+
+	/*
+	 * Now allocate buffers proper.  They are different than the above
+	 * in that they usually occupy more virtual memory than physical.
+	 */
+	size = MAXBSIZE * nbuf;
+	buffer_map = kmem_suballoc(kernel_map, (vm_offset_t *)&buffers,
+				   &maxaddr, size, TRUE);
+	minaddr = (vm_offset_t)buffers;
+	if (vm_map_find(buffer_map, vm_object_allocate(size), (vm_offset_t)0,
+			&minaddr, size, FALSE) != KERN_SUCCESS)
+		panic("startup: cannot allocate buffers");
+	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
+		/* don't want to alloc more physical mem than needed */
+		bufpages = btoc(MAXBSIZE) * nbuf;
+	}
+	base = bufpages / nbuf;
+	residual = bufpages % nbuf;
+	for (i = 0; i < nbuf; i++) {
+		vm_size_t curbufsize;
+		vm_offset_t curbuf;
+
+		/*
+		 * First <residual> buffers get (base+1) physical pages
+		 * allocated for them.  The rest get (base) physical pages.
+		 *
+		 * The rest of each buffer occupies virtual space,
+		 * but has no physical memory allocated for it.
+		 */
+		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
+		curbufsize = CLBYTES * (i < residual ? base+1 : base);
+		vm_map_pageable(buffer_map, curbuf, curbuf+curbufsize, FALSE);
+		vm_map_simplify(buffer_map, curbuf);
+	}
+
+	/*
+	 * Allocate a submap for exec arguments.  This map effectively
+	 * limits the number of processes exec'ing at any time.
+	 */
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				 16*NCARGS, TRUE);
+
+	/*
+	 * Allocate a submap for physio
+	 */
+	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
+				 VM_PHYS_SIZE, TRUE);
+
+	/*
+	 * Finally, allocate mbuf pool.  Since mclrefcnt is an off-size
+	 * we use the more space efficient malloc in place of kmem_alloc.
+	 */
+	mclrefcnt = (char *)malloc(NMBCLUSTERS+CLBYTES/MCLBYTES,
+				   M_MBUF, M_NOWAIT);
+	bzero(mclrefcnt, NMBCLUSTERS+CLBYTES/MCLBYTES);
+	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+			       VM_MBUF_SIZE, FALSE);
+
+	/*
+	 * Initialize callouts
+	 */
+	callfree = callout;
+	for (i = 1; i < ncallout; i++)
+		callout[i-1].c_next = &callout[i];
+	callout[i-1].c_next = NULL;
+
+	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
+	printf("using %d buffers containing %d bytes of memory\n",
+		   nbuf, bufpages * CLBYTES);
+
+	/*
+	 * Allocate a virtual page (for use by /dev/mem)
+	 * This page is handed to pmap_enter() therefore
+	 * it has to be in the normal kernel VA range.
+	 */
+	vmmap = kmem_alloc_wait(kernel_map, NBPG);
+
+	/*
+	 * Create the DVMA maps.
+	 */
+	dvma_init();
+
+	/*
+	 * Set up CPU-specific registers, cache, etc.
+	 */
+	initcpu();
+
+	/*
+	 * Set up buffers, so they can be used to read disk labels.
+	 */
+	bufinit();
+
+	/*
+	 * Configure the system.
+	 */
+	configure();
 }
 
 /*
@@ -886,8 +893,81 @@ dumpconf()
  */
 dumpsys()
 {
+#if 1
     printf("dumping not supported yet :)\n");
+#else
+	msgbufmapped = 0;
+	if (dumpdev == NODEV)
+		return;
+	if (dumpsize == 0) {
+		dumpconf();
+		if (dumpsize == 0)
+			return;
+	}
+	printf("\ndumping to dev %x, offset %d\n", dumpdev, dumplo);
+	/* XXX - todo... */
+#endif
 }
+
+initcpu()
+{
+	/* XXX: Enable RAM parity/ECC checking? */
+	/* XXX: parityenable(); */
+
+	nofault = NULL;	/* XXX - needed? */
+
+#ifdef	HAVECACHE
+	cache_enable();
+#endif
+}
+
+straytrap(frame)
+	struct frame frame;
+{
+	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
+		frame.f_vector, frame.f_pc);
+#ifdef	DDB
+	kdb_trap(-1, &frame);
+#endif
+}
+
+/* from hp300: badaddr() */
+int
+peek_word(addr)
+	register caddr_t addr;
+{
+	jmp_buf		faultbuf;
+	register int x;
+
+	nofault = (long*)&faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_short *)addr;
+	nofault = NULL;
+	return(x);
+}
+
+/* from hp300: badbaddr() */
+int
+peek_byte(addr)
+	register caddr_t addr;
+{
+	jmp_buf 	faultbuf;
+	register int x;
+
+	nofault = (long*)&faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
+		return(-1);
+	}
+	x = *(volatile u_char *)addr;
+	nofault = NULL;
+	return(x);
+}
+
+/* XXX: parityenable() ? */
 
 /*
  * Print a register and stack dump.
@@ -981,93 +1061,13 @@ hexstr(val, len)
 	return(nbuf);
 }
 
-straytrap(frame)
-	struct frame frame;
-{
-	printf("unexpected trap; vector offset 0x%x from 0x%x\n",
-		frame.f_vector, frame.f_pc);
-#ifdef	DDB
-	kdb_trap(-1, &frame);
-#endif
-}
-
-int
-peek_word(addr)
-	register caddr_t addr;
-{
-	jmp_buf		faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_short *)addr;
-	nofault = NULL;
-	return(x);
-}
-
-peek_byte(addr)
-	register caddr_t addr;
-{
-	jmp_buf 	faultbuf;
-	register int x;
-
-	nofault = (long*)&faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return(-1);
-	}
-	x = *(volatile u_char *)addr;
-	nofault = NULL;
-	return(x);
-}
-
-int
-sysarch(p, uap, retval)
-	struct proc *p;
-	void *uap;
-	int *retval;
-{
-	return ENOSYS;
-}
-
-/* XXX should be in an include file somewhere */
-#define CC_PURGE	1
-#define CC_FLUSH	2
-#define CC_IPURGE	4
-#define CC_EXTPURGE	0x80000000
-/* XXX end should be */
-
-/*ARGSUSED1*/
-cachectl(req, addr, len)
-	int req;
-	caddr_t	addr;
-	int len;
-{
-	int error = 0;
-
-	switch (req) {
-	case CC_EXTPURGE|CC_PURGE:
-	case CC_EXTPURGE|CC_FLUSH:
-	case CC_PURGE:
-	case CC_FLUSH:
-		DCIU();
-		break;
-	case CC_EXTPURGE|CC_IPURGE:
-		DCIU();
-		/* fall into... */
-	case CC_IPURGE:
-		ICIA();
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return(error);
-}
-
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ * 
+ * Determine if the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ */
 cpu_exec_aout_makecmds(p, epp)
 	struct proc *p;
 	struct exec_package *epp;

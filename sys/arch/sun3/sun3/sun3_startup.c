@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.46 1995/07/05 19:36:48 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.47 1995/09/26 04:02:27 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -43,8 +43,8 @@
 #include <machine/control.h>
 #include <machine/cpufunc.h>
 #include <machine/cpu.h>
+#include <machine/dvma.h>
 #include <machine/mon.h>
-#include <machine/control.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 #include <machine/idprom.h>
@@ -192,6 +192,18 @@ void sun3_mon_reboot(bootstring)
 	/*NOTREACHED*/
 }
 
+#ifndef DDB
+/*
+ * When DDB is included, Debugger() comes from db_interface.c
+ * otherwise provide this function.  This will just stop in
+ * the Sun PROM monitor.  (You can look around, or continue.)
+ */
+void Debugger()
+{
+	sun3_mon_abort();
+}
+#endif	/* DDB */
+
 void sun3_context_equiv()
 {
 	unsigned int i, sme;
@@ -262,32 +274,33 @@ sun3_save_symtab(kehp)
 {
 	int x, *symsz, *strsz;
 	char *endp;
+	char *errdesc = "?";
 
 	/*
 	 * First, sanity-check the exec header.
 	 */
 	mon_printf("sun3_save_symtab: ");
 	if ((kehp->a_midmag & 0xFFF0) != 0x100) {
-		mon_printf("bad magic\n");
-		return;
+		errdesc = "magic";
+		goto err;
 	}
 	/* Boundary between text and data varries a little. */
 	x = kehp->a_text + kehp->a_data;
 	if (x != (edata - kernel_text)) {
-		mon_printf("bad a_text+a_data\n");
-		return;
+		errdesc = "a_text+a_data";
+		goto err;
 	}
 	if (kehp->a_bss != (end - edata)) {
-		mon_printf("bad a_bss\n");
-		return;
+		errdesc = "a_bss";
+		goto err;
 	}
 	if (kehp->a_entry != (int)kernel_text) {
-		mon_printf("bad a_entry\n");
-		return;
+		errdesc = "a_entry";
+		goto err;
 	}
 	if (kehp->a_trsize || kehp->a_drsize) {
-		mon_printf("bad a_Xrsize\n");
-		return;
+		errdesc = "a_Xrsize";
+		goto err;
 	}
 	/* The exec header looks OK... */
 
@@ -295,8 +308,8 @@ sun3_save_symtab(kehp)
 	endp = end;
 	symsz = (int*)endp;
 	if (kehp->a_syms != *symsz) {
-		mon_printf("bad a_syms\n");
-		return;
+		errdesc = "a_syms";
+		goto err;
 	}
 	endp += sizeof(int);	/* past length word */
 	endp += *symsz;			/* past nlist array */
@@ -304,13 +317,18 @@ sun3_save_symtab(kehp)
 	/* Check the string table length. */
 	strsz = (int*)endp;
 	if ((*strsz < 4) || (*strsz > 0x80000)) {
-		mon_printf("bad strsz\n");
-		return;
+		errdesc = "strsize";
+		goto err;
 	}
+
+	/* Success!  We have a valid symbol table! */
 	endp += *strsz;			/* past strings */
 	esym = endp;
+	mon_printf(" found %d + %d\n", *symsz, *strsz);
+	return;
 
-	mon_printf(" %d + %d\n", *symsz, *strsz);
+ err:
+	mon_printf(" no symbols (bad %s)\n", errdesc);
 }
 #endif	/* DDB && !SYMTAB_SPACE */
 
@@ -329,7 +347,6 @@ void sun3_vm_init(kehp)
 	struct exec *kehp;	/* kernel exec header */
 {
 	vm_offset_t va, eva, sva, pte, temp_seg;
-	vm_offset_t u_area_va;
 	unsigned int sme;
 
 	/*
@@ -465,8 +482,8 @@ void sun3_vm_init(kehp)
 	/*
 	 * Clear-out pmegs left in DVMA space by the PROM.
 	 */
-	va = sun3_trunc_seg(DVMA_SPACE_START);
-	while (va < DVMA_SPACE_END) {
+	va = sun3_trunc_seg(DVMA_SEGMAP_BASE);
+	while (va < DVMA_SEGMAP_END) {
 		set_segmap(va, SEGINV);
 		va += NBSG;
 	}

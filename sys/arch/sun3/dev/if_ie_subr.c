@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_subr.c,v 1.6 1995/02/13 22:23:55 gwr Exp $	*/
+/*	$NetBSD: if_ie_subr.c,v 1.7 1995/09/26 04:02:04 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -51,6 +51,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/dvma.h>
 #include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/idprom.h>
@@ -117,7 +118,7 @@ ie_md_attach(parent, self, args)
 {
 	struct ie_softc *sc = (void *) self;
 	struct confargs *ca = args;
-	caddr_t mem, reg, dvma_malloc();
+	caddr_t mem, reg;
 
 	/*
 	 * *note*: we don't detect the difference between a VME3E and
@@ -133,7 +134,7 @@ ie_md_attach(parent, self, args)
 		sc->run_586 = ie_obrun;
 		sc->sc_bcopy = bcopy;
 		sc->sc_bzero = bzero;
-		sc->sc_iobase = (caddr_t)DVMA_SLAVE_BASE;
+		sc->sc_iobase = (caddr_t)DVMA_OBIO_SLAVE_BASE;
 		sc->sc_msize = MEMSIZE;
 
 		/* Map in the control register. */

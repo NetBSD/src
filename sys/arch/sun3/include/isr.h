@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.8 1995/01/11 20:38:34 gwr Exp $	*/
+/*	$NetBSD: isr.h,v 1.9 1995/09/26 04:02:09 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -39,8 +39,11 @@
  */
 
 void isr_init __P((void));
-void isr_cleanup __P((void));
+void isr_config __P((void));
+
 void isr_add_custom __P((int, void (*handler)()));
 void isr_add_autovect __P((int (*handler)(), void *arg, int level));
 void isr_add_vectored __P((int (*handler)(), void *arg, int pri, int vec));
 
+void isr_soft_request __P((int level));
+void isr_soft_clear __P((int level));
