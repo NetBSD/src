@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.470 2002/02/06 19:58:02 wiz Exp $
+# $NetBSD: GENERIC,v 1.471 2002/02/08 01:47:59 jmcneill Exp $
 #
 # GENERIC machine description file
 # 
@@ -20,7 +20,7 @@
 
 include 	"arch/i386/conf/std.i386"
 
-#ident 		"GENERIC-$Revision: 1.470 $"
+#ident 		"GENERIC-$Revision: 1.471 $"
 
 maxusers	32		# estimated number of users
 
@@ -294,6 +294,7 @@ mca0	at mainbus?
 # ISA PCMCIA controllers
 pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
 tcic0	at isa? port 0x240 iomem 0xd0000 iosiz 0x10000
 
 # PCI PCMCIA controllers
