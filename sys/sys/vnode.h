@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.104 2003/02/25 23:01:39 jdolecek Exp $	*/
+/*	$NetBSD: vnode.h,v 1.105 2003/03/17 09:06:40 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -561,7 +561,7 @@ int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
 int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, size_t *aresid, struct proc *p);
-int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
+int	vn_readdir(struct file *fp, char *, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies);
 void	vn_restorerecurse(struct vnode *vp, u_int flags);
 u_int	vn_setrecurse(struct vnode *vp);
