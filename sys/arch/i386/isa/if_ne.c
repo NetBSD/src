@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_ne.c	7.4 (Berkeley) 5/21/91
- *	$Id: if_ne.c,v 1.15 1994/01/15 03:24:23 briggs Exp $
+ *	$Id: if_ne.c,v 1.16 1994/01/24 00:17:32 deraadt Exp $
  */
 
 /*
@@ -783,8 +783,6 @@ neread(ns, buf, len)
 #if NBPFILTER > 0
 	m_adj(m, sizeof(struct ether_header));
 #endif
-	eh->ether_type = ntohs(eh->ether_type);
-
 	ether_input(&ns->ns_if, eh, m);
 }
 
