@@ -42,7 +42,7 @@
  *	@(#)locore.s	8.4 (Berkeley) 12/10/93
  *
  * from: Header: locore.s,v 1.51 93/04/21 06:19:37 torek Exp
- * $Id: locore.s,v 1.15 1994/08/23 14:37:22 pk Exp $
+ * $Id: locore.s,v 1.16 1994/08/24 09:27:57 deraadt Exp $
  */
 
 #define	LOCORE
@@ -2347,7 +2347,7 @@ dostart:
 	 * unlikely that OpenBoot would place the prom vector there.
 	 */
 	set	0x4000, %o1
-	cmp	%o0, 0x4000
+	cmp	%o0, %o1
 	beq	is_sun4
 	 nop
 
