@@ -821,6 +821,15 @@ msdosfs_rename(fndp, tndp, p)
 	tdep = tndp->ni_vp ? VTODE(tndp->ni_vp) : NULL;
 	pmp = fddep->de_pmp;
 
+#ifdef __NetBSD__
+	/* Check for cross-device rename */
+	if ((fndp->ni_vp->v_mount != tndp->ni_dvp->v_mount) ||
+	    (tndp->ni_vp && (fndp->ni_vp->v_mount != tndp->ni_vp->v_mount))) {
+		error = EXDEV;
+		goto bad;
+	}
+#endif
+
 	/*
 	 * Convert the filename in tdnp into a dos filename. We copy this
 	 * into the denode and directory entry for the destination
