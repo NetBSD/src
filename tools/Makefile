@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.81 2004/01/03 14:04:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.82 2004/06/08 21:44:46 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -58,6 +58,10 @@ SUBDIR+=	mips-elf2ecoff
 
 .if (${MACHINE} == "sgimips")
 SUBDIR+=	sgivol
+.endif
+
+.if ${MACHINE} == "acorn32"
+SUBDIR+=	sparkcrc
 .endif
 
 .if (${MACHINE} == "sparc" || ${MACHINE} == "sparc64")
