@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2var.h,v 1.2 2002/12/09 07:23:24 jmc Exp $	*/
+/*	$NetBSD: sbp2var.h,v 1.3 2002/12/18 04:48:34 jmc Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -88,6 +88,10 @@ struct sbp2_orb {
 	struct ieee1394_abuf resp;
 	
 	struct sbp2_status status;
+	u_int8_t status_rec;
+	u_int8_t ack;
+	u_int8_t db;
+	u_int8_t dback;
 
 	int state;
 	struct sbp2 *sbp2;

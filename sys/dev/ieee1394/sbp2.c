@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.10 2002/12/13 07:47:54 jmc Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.11 2002/12/18 04:48:33 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.10 2002/12/13 07:47:54 jmc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.11 2002/12/18 04:48:33 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -437,6 +437,7 @@ sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
 	orb->cmd.ab_data[2] = IEEE1394_CREATE_ADDR_HIGH(respaddr);
 	orb->cmd.ab_data[3] = IEEE1394_CREATE_ADDR_LOW(respaddr);
 	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_EXCLUSIVE;
+	orb->cmd.ab_data[4] |= SBP2_ORB_NOTIFY_MASK;
 
 	/* Ask for reasonable reconnect time. */
 	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_RECONNECT(SBP2_RECONNECT);
@@ -475,15 +476,17 @@ sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
 	orb->cmd.ab_length = (sbp2->orb_size * 4);
 	orb->cmd.ab_data[0] = htonl(SBP2_ORB_NULL_POINTER);
 	orb->cmd.ab_data[4] = htonl(SBP2_ORB_FMT_DUMMY_MASK);
+
+	/*
+	 * Go ahead and set the notify bit. Some SBP2 devices always
+	 * seem to return status on a dummy orb regardless so don't 2nd guess.
+	 */
+
+	orb->cmd.ab_data[4] |= SBP2_ORB_NOTIFY_MASK;
 	orb->cmd.ab_subok = 1;
 	orb->cmd.ab_cb = sbp2_orb_resp;
 	orb->cmd.ab_cbarg = orb;
 	orb->sbp2 = sbp2;
-
-	/*
-	 * XXX: Even though the notify bit isn't set some SBP2 devices always
-	 * seem to return status on a dummy orb.
-	 */
 
 	orb->cb = sbp2_status_resp;
 	CIRCLEQ_INSERT_HEAD(&sbp2->orbs, orb, orb_list);
@@ -750,7 +753,7 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	
 	if (cmd->data) {
 		/* XXX: Handle uio and large data chunks via page tables. */
-		if ((cmd->datalen == 0) || (cmd->datalen > 65536))
+		if ((cmd->datalen == 0) || (cmd->datalen > SBP2_MAXPHYS))
 			return NULL;
 
 		sbp2_alloc_data_mapping(sbp2, &orb->data_map, cmd->data,
@@ -783,11 +786,22 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	addr = orb->cmd.ab_addr;
 	toporb->cmd.ab_data[0] = IEEE1394_CREATE_ADDR_HIGH(addr);
 	toporb->cmd.ab_data[1] = IEEE1394_CREATE_ADDR_LOW(addr);
-	if (lun->state == SBP2_STATE_SUSPENDED) {
+	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
+	if ((lun->state == SBP2_STATE_SUSPENDED) || 
+	    ((lun->state == SBP2_STATE_ACTIVE) && 
+	     (toporb->state != SBP2_ORB_INIT_STATE))) {
 		DPRINTFN(1, ("Ringing doorbell\n"));
+		toporb->state = SBP2_ORB_INIT_STATE;
+		toporb->db = 1;
+		toporb->dback = 0;
 		sbp2->sc->sc1394_callback.sc1394_write(&lun->doorbell);
-		lun->state = SBP2_STATE_ACTIVE;
 	} else if (lun->state == SBP2_STATE_DEAD) {
+		CIRCLEQ_FOREACH(toporb, &orb->sbp2->orbs, orb_list) {
+			toporb->ack = 0;
+			toporb->status_rec = 0;
+			toporb->db = 0;
+			toporb->dback = 0;
+		}
 		toporb = CIRCLEQ_LAST(&sbp2->orbs);
 		lun->doorbell.ab_addr = lun->cmdreg + SBP2_CMDREG_AGENT_RESET;
 		lun->doorbell.ab_cb = sbp2_enable_status;
@@ -805,7 +819,6 @@ sbp2_runcmd(struct sbp2 *sbp2, struct sbp2_cmd *cmd)
 	simple_unlock(&toporb->orb_lock);
 	simple_unlock(&sbp2->orblist_lock);
 
-	sbp2->sc->sc1394_callback.sc1394_inreg(&orb->cmd, 0);
 	return orb;
 }
 
@@ -821,7 +834,7 @@ sbp2_agent_status(struct ieee1394_abuf *abuf, int status)
 static void
 sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 {
-	struct sbp2_orb *statorb, *orb, *torb;
+	struct sbp2_orb *statorb, *orb;
 	u_int64_t addr;
 	int found = 0;
 	u_int32_t t;
@@ -846,102 +859,126 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
         }
 #endif
 	simple_lock(&orb->orb_lock);
+
 	switch (orb->state) {
 	case SBP2_ORB_INIT_STATE:
-		orb->state = SBP2_ORB_SENT_STATE;
-		abuf->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
-		abuf->ab_req->sc1394_callback.sc1394_write(&orb->cmd);
-		if (orb == CIRCLEQ_FIRST(&orb->sbp2->orbs))
-			orb->lun->state = SBP2_STATE_SUSPENDED;
-		break;
-	case SBP2_ORB_SENT_STATE:
-
-		/*
-		 * After it's been sent turn this into a dummy orb. That way
-		 * if the engine stalls and has to be restarted this orb getting
-		 * reread won't cause duplicate work.
-		 */
-		
-		orb->state = SBP2_ORB_STATUS_STATE;
-		orb->cmd.ab_data[4] |= htonl(SBP2_ORB_FMT_DUMMY_MASK);
-		break;
-	case SBP2_ORB_STATUS_STATE:
-
-		/*
-		 * If it's not the fifo addr then just resend the orb out as
-		 * the doorbell was rung to reread.
-		 */
-		
-		if (orb->cmd.ab_addr != status_orb.cmd.ab_addr) {
-			orb->state = SBP2_ORB_NEXT_ORB_STATE;
+		if (abuf->ab_tcode == IEEE1394_TCODE_READ_REQ_BLOCK) {
+			orb->state = SBP2_ORB_STATUS_STATE;
 			abuf->ab_tcode = IEEE1394_TCODE_READ_RESP_BLOCK;
 			abuf->ab_length = abuf->ab_retlen;
 			abuf->ab_req->sc1394_callback.sc1394_write(&orb->cmd);
 			break;
 		}
 
+		/* FALL THRU */
+
+	case SBP2_ORB_STATUS_STATE:
+
 		/*
-		 * The orb passed in is the generic status. Find the one it
-		 * goes with so status can be filled in and passed back up.
+		 * If it's not the fifo addr then just resend the orb out as
+		 * the doorbell was rung to reread.
 		 */
+
+		if (orb->cmd.ab_addr != status_orb.cmd.ab_addr) {
+			/* An ack from a write */
+	
+			/*
+			 * Change engine state once this has been processed 
+			 * and it's next pointer is the null pointer. 
+			 */
+
+			if ((orb->cmd.ab_data[0] == 
+			    ntohl(SBP2_ORB_NULL_POINTER)) &&
+		    	    (orb->lun->state == SBP2_STATE_ACTIVE))
+				orb->lun->state = SBP2_STATE_SUSPENDED;
+			if (orb->ack == 0) 
+				orb->ack = 1;
+			else if ((orb->db == 1) && (orb->dback == 0)) 
+				orb->dback = 1;
+			else
+				panic ("Unknown packet received!");
+		} else {
+
+			/*
+			 * The orb passed in is the generic status. Find the 
+			 * one it goes with so status can be filled in and 
+			 * passed back up.
+			 */
 		
-		addr = ntohl(abuf->ab_data[0]);
-		addr &= 0x0000ffff;
-		addr = (addr << 32);
-		addr |= ntohl(abuf->ab_data[1]);
-		simple_lock(&orb->sbp2->orblist_lock);
-		CIRCLEQ_FOREACH(statorb, &orb->sbp2->orbs, orb_list) {
-			if (addr == statorb->cmd.ab_addr) {
-				found = 1;
-				break;
+			addr = ntohl(abuf->ab_data[0]);
+			addr &= 0x0000ffff;
+			addr = (addr << 32);
+			addr |= ntohl(abuf->ab_data[1]);
+			simple_lock(&orb->sbp2->orblist_lock);
+			CIRCLEQ_FOREACH(statorb, &orb->sbp2->orbs, orb_list) {
+				if (addr == statorb->cmd.ab_addr) {
+					found = 1;
+					break;
+				}
 			}
-		}
-		simple_unlock(&orb->sbp2->orblist_lock);
-		simple_lock(&statorb->orb_lock);
+			simple_unlock(&orb->sbp2->orblist_lock);
+			simple_lock(&statorb->orb_lock);
 		
-		/* XXX: Need to handle unsolicited correctly. */
-		if (SBP2_STATUS_GET_DEAD(ntohl(abuf->ab_data[0]))) {
-			DPRINTFN(1, ("Transitioning to dead state\n"));
-			statorb->lun->state = SBP2_STATE_DEAD;
-		}
-		if (!found) {
+			/* XXX: Need to handle unsolicited correctly. */
+			if (SBP2_STATUS_GET_DEAD(ntohl(abuf->ab_data[0]))) {
+				DPRINTFN(1, ("Transitioning to dead state\n"));
+				statorb->lun->state = SBP2_STATE_DEAD;
+			}
+			if (!found) {
 #ifdef SBP2_DEBUG
-			u_int32_t i = ntohl(abuf->ab_data[0]);
+				u_int32_t i = ntohl(abuf->ab_data[0]);
 #endif
-			DPRINTF(("Got a status block for an unknown orb addr:"
-			    " 0x%016qx\n", addr));
-			DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x\n",
+				DPRINTF(("Got a status block for an unknown "
+				    "orb addr: 0x%016qx\n", addr));
+				DPRINTF(("resp: 0x%x status: 0x%x len: 0x%x\n",
 				    SBP2_STATUS_GET_RESP(i),
 				    SBP2_STATUS_GET_STATUS(i),
 				    SBP2_STATUS_GET_LEN(i) - 1));
-			return;
+				return;
+			}
+
+			/*
+		 	 * After it's been sent turn this into a dummy orb. 
+			 * That way if the engine stalls and has to be 
+			 * restarted this orb getting reread won't cause 
+			 * duplicate work.
+		 	 */
+
+			statorb->cmd.ab_data[4] |= 
+				htonl(SBP2_ORB_FMT_DUMMY_MASK);
+			statorb->status.resp =
+			    SBP2_STATUS_GET_RESP(ntohl(abuf->ab_data[0]));
+			statorb->status.sbp_status =
+			    SBP2_STATUS_GET_STATUS(ntohl(abuf->ab_data[0]));
+			statorb->status.datalen =
+			    SBP2_STATUS_GET_LEN(ntohl(abuf->ab_data[0])) - 1;
+			if (statorb->status.datalen)
+				statorb->status.data = &abuf->ab_data[2];
+			if ((statorb->status.resp == 
+			    SBP2_STATUS_TRANSPORT_FAIL) &&
+			    (statorb->status.sbp_status == 
+			    SBP2_STATUS_UNSPEC_ERROR)) {
+				t = statorb->status.sbp_status;
+				statorb->status.object = 
+				    SBP2_STATUS_GET_OBJECT(t);
+				statorb->status.bus_error =
+				    SBP2_STATUS_GET_BUS_ERROR(t);
+			}
+			statorb->status_rec = 1;
+			simple_unlock(&statorb->orb_lock);
+			statorb->cb(&statorb->status, statorb->cb_arg);
+			statorb->cb = sbp2_status_resp;
+			orb = statorb;
 		}
-		statorb->status.resp =
-		    SBP2_STATUS_GET_RESP(ntohl(abuf->ab_data[0]));
-		statorb->status.sbp_status =
-		    SBP2_STATUS_GET_STATUS(ntohl(abuf->ab_data[0]));
-		statorb->status.datalen =
-		    SBP2_STATUS_GET_LEN(ntohl(abuf->ab_data[0])) - 1;
-		if (statorb->status.datalen)
-			statorb->status.data = &abuf->ab_data[2];
-		if ((statorb->status.resp == SBP2_STATUS_TRANSPORT_FAIL) &&
-		    (statorb->status.sbp_status == SBP2_STATUS_UNSPEC_ERROR)) {
-			t = statorb->status.sbp_status;
-			statorb->status.object = SBP2_STATUS_GET_OBJECT(t);
-			statorb->status.bus_error =
-			    SBP2_STATUS_GET_BUS_ERROR(t);
-		}
-		simple_unlock(&statorb->orb_lock);
-		statorb->cb(&statorb->status, statorb->cb_arg);
-		statorb->cb = sbp2_status_resp;
 		
 		/* If it's not the null pointer orb, free it. */
-		if ((statorb->cmd.ab_data[0] == ntohl(SBP2_ORB_NULL_POINTER)))
+		simple_lock(&orb->orb_lock);
+		if ((orb->cmd.ab_data[0] == ntohl(SBP2_ORB_NULL_POINTER)))
 			break;
-		orb = statorb;
-		/* Fall through. */
-		
-	case SBP2_ORB_NEXT_ORB_STATE:
+		/* Check conditions for free'ing an orb */
+		if ((orb->status_rec == 0) || (orb->ack == 0) || 
+		    ((orb->db == 1) && (orb->dback == 0)))
+			break;
 		simple_lock(&orb->sbp2->orblist_lock);
 
 		/*
@@ -954,18 +991,6 @@ sbp2_orb_resp(struct ieee1394_abuf *abuf, int status)
 			orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->cmd,
 			    0);
 
-			/*
-			 * Some SBP2 devices do unordered status returns. To
-			 * account for that if this isn't the last on the queue
-			 * make sure the address pointers for the next orb point
-			 * to the correct places.
-			 */
-
-			if (orb != CIRCLEQ_LAST(&orb->sbp2->orbs)) {
-				torb = CIRCLEQ_NEXT(orb, orb_list);
-				torb->cmd.ab_data[0] = orb->cmd.ab_data[0];
-				torb->cmd.ab_data[1] = orb->cmd.ab_data[1];
-			}
 			CIRCLEQ_REMOVE(&orb->sbp2->orbs, orb, orb_list);
 			simple_unlock(&orb->sbp2->orblist_lock);
 			simple_unlock(&orb->orb_lock);
@@ -1106,7 +1131,8 @@ static void
 sbp2_free_orb(struct sbp2_orb *orb)
 {
 	simple_lock(&orb->orb_lock);
-	DPRINTFN(2, ("Freeing orb at addr: 0x%016qx\n", orb->cmd.ab_addr));
+	DPRINTFN(2, ("Freeing orb at addr: 0x%016qx status_rec: 0x%0x\n", 
+	    orb->cmd.ab_addr, orb->status_rec));
 	if (orb->data_map.laddr) {
 		orb->sbp2->sc->sc1394_callback.sc1394_unreg(&orb->data, 1);
 		sbp2_free_data_mapping(orb->sbp2, &orb->data_map);
@@ -1121,6 +1147,10 @@ sbp2_free_orb(struct sbp2_orb *orb)
 	orb->lun = NULL;
 	orb->cb = NULL;
 	orb->cb_arg = NULL;
+	orb->status_rec = 0;
+	orb->db = 0;
+	orb->dback = 0;
+	orb->ack = 0;
 	orb->state = SBP2_ORB_FREE_STATE;
 	CIRCLEQ_INSERT_TAIL(&sbp2_freeorbs, orb, orb_list);
 	simple_unlock(&sbp2_freeorbs_lock);
