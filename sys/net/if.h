@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.35 1999/03/27 01:24:49 aidan Exp $	*/
+/*	$NetBSD: if.h,v 1.35.2.1 2000/05/11 09:25:45 he Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -189,6 +189,14 @@ struct ifnet {				/* and the entries */
 #define	IFF_CANTCHANGE \
 	(IFF_BROADCAST|IFF_POINTOPOINT|IFF_RUNNING|IFF_OACTIVE|\
 	    IFF_SIMPLEX|IFF_MULTICAST|IFF_ALLMULTI)
+
+/*
+ * Some convenience macros used for setting ifi_baudrate.
+ * XXX 1000 vs. 1024? --thorpej@netbsd.org
+ */
+#define	IF_Kbps(x)	((x) * 1000)		/* kilobits/sec. */
+#define	IF_Mbps(x)	(IF_Kbps((x) * 1000))	/* megabits/sec. */
+#define	IF_Gbps(x)	(IF_Mbps((x) * 1000))	/* gigabits/sec. */
 
 /*
  * Output queues (ifp->if_snd) and internetwork datagram level (pup level 1)
