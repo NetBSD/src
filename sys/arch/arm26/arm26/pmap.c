@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.10 2000/12/27 15:16:04 bjh21 Exp $ */
+/* $NetBSD: pmap.c,v 1.11 2000/12/27 16:50:12 bjh21 Exp $ */
 /*-
  * Copyright (c) 1997, 1998, 2000 Ben Harris
  * All rights reserved.
@@ -86,7 +86,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.10 2000/12/27 15:16:04 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.11 2000/12/27 16:50:12 bjh21 Exp $");
 
 #include <sys/kernel.h> /* for cold */
 #include <sys/malloc.h>
@@ -373,10 +373,8 @@ pmap_activate(struct proc *p)
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
 
-#ifdef DIAGNOSTIC
-	if (active_pmap != NULL || (pmap->pm_flags & PM_ACTIVE) != 0)
-		panic("pmap_activate");
-#endif
+	KASSERT(active_pmap == NULL);
+	KASSERT((pmap->pm_flags & PM_ACTIVE) == 0);
 
 	active_pmap = pmap;
 	pmap->pm_flags |= PM_ACTIVE;
@@ -398,10 +396,8 @@ pmap_deactivate(struct proc *p)
 	if (pmap == pmap_kernel())
 		return; /* kernel pmap is always active */
 
-#ifdef DIAGNOSTIC
-	if (active_pmap != pmap || (pmap->pm_flags & PM_ACTIVE) == 0)
-		panic("pmap_deactivate");
-#endif
+	KASSERT(pmap == active_pmap);
+	KASSERT(pmap->pm_flags & PM_ACTIVE);
 
 	active_pmap = NULL;
 	pmap->pm_flags &=~ PM_ACTIVE;
@@ -564,10 +560,7 @@ pv_release(pmap_t pmap, int ppn, int lpn)
 				break;
 			pv = npv;
 		}
-#ifdef DIAGNOSTIC
-		if (npv == NULL)
-			panic("pv_release");
-#endif
+		KASSERT(npv != NULL);
 		UVMHIST_LOG(pmaphist, "pv=%p; tail", pv, 0, 0, 0);
 		pv->pv_next = npv->pv_next;
 		pv_free(npv);
@@ -589,7 +582,7 @@ int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 {
 	int ppn, lpn, s;
-	struct pv_entry *pv;
+	struct pv_entry *pv, *ppv;
 	UVMHIST_FUNC("pmap_enter");
 
 	UVMHIST_CALLED(pmaphist);
@@ -606,18 +599,19 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 
 	/* Make a note */
 	pv = pv_get(pmap, ppn, lpn);
+	ppv = &pv_table[ppn];
 	pv->pv_pmap = pmap;
 	pv->pv_ppn = ppn;
 	pv->pv_lpn = lpn;
 	pv->pv_prot = prot;
 	pv->pv_vflags = 0;
-	pv->pv_pflags = 0;
+	/* pv->pv_pflags = 0; */
 	if (flags & PMAP_WIRED)
 		pv->pv_vflags |= PV_WIRED;
 	if (flags & VM_PROT_WRITE)
-		pv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
+		ppv->pv_pflags |= PV_REFERENCED | PV_MODIFIED;
 	else if (flags & (VM_PROT_ALL))
-		pv->pv_pflags |= PV_REFERENCED;
+		ppv->pv_pflags |= PV_REFERENCED;
 	pv_update(pv);
 	pmap->pm_entries[lpn] = pv;
 	splx(s);
