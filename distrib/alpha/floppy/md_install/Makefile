@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 1998/03/19 00:07:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.5 1998/05/02 08:50:12 ross Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -56,7 +56,7 @@ unconfig:
 	-vnconfig -u ${VND_DEV}
 	-/bin/rm -f ${IMAGE}
 
-${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
+${CBIN}.mk ${CBIN}.cache ${CBIN}.c! ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${.ALLSRC}
 
 ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c libhack.o
