@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 1998/07/08 05:41:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 1998/08/05 02:45:09 perry Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -262,7 +262,7 @@ pmap_bootstrap(virtual_start)
 	 * Create Kernel page directory table and page maps.
 	 * [ currently done in locore. i have wild and crazy ideas -wfj ]
 	 */
-	bzero(firstaddr, (1+nkpde)*NBPG);
+	memset(firstaddr, 0, (1+nkpde)*NBPG);
 	pmap_kernel()->pm_pdir = firstaddr + VM_MIN_KERNEL_ADDRESS;
 	pmap_kernel()->pm_ptab = firstaddr + VM_MIN_KERNEL_ADDRESS + NBPG;
 
@@ -742,7 +742,7 @@ pmap_create(size)
 		return NULL;
 
 	pmap = (pmap_t) malloc(sizeof *pmap, M_VMPMAP, M_WAITOK);
-	bzero(pmap, sizeof(*pmap));
+	memset(pmap, 0, sizeof(*pmap));
 	pmap_pinit(pmap);
 	return pmap;
 }
@@ -772,7 +772,7 @@ pmap_pinit(pmap)
 #endif
 
 	/* wire in kernel global address entries */
-	bcopy(&PTD[KPTDI], &pmap->pm_pdir[KPTDI], nkpde * sizeof(pd_entry_t));
+	memcpy(&pmap->pm_pdir[KPTDI], &PTD[KPTDI], nkpde * sizeof(pd_entry_t));
 
 	/* install self-referential address mapping entry */
 	pmap->pm_pdir[PTDPTDI] =
@@ -1618,7 +1618,7 @@ pmap_dump_pvlist(phys, m)
 
 /*
  *	pmap_zero_page zeros the specified by mapping it into
- *	virtual memory and using bzero to clear its contents.
+ *	virtual memory and using memset to clear its contents.
  */
 void
 pmap_zero_page(phys)
@@ -1633,12 +1633,12 @@ pmap_zero_page(phys)
 	pmap_dump_pvlist(phys, "pmap_zero_page: phys");
 	*CMAP2 = (phys & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	pmap_update();
-	bzero(CADDR2, NBPG);
+	memset(CADDR2, 0, NBPG);
 }
 
 /*
  *	pmap_copy_page copies the specified page by mapping
- *	it into virtual memory and using bcopy to copy its
+ *	it into virtual memory and using memcpy to copy its
  *	contents.
  */
 void
@@ -1656,7 +1656,7 @@ pmap_copy_page(src, dst)
 	*CMAP1 = (src & PG_FRAME) | PG_V | PG_KR;
 	*CMAP2 = (dst & PG_FRAME) | PG_V | PG_KW /*| PG_N*/;
 	pmap_update();
-	bcopy(CADDR1, CADDR2, NBPG);
+	memcpy(CADDR2, CADDR1, NBPG);
 }
 
 /*

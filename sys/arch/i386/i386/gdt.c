@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.13 1998/02/10 14:11:02 mrg Exp $	*/
+/*	$NetBSD: gdt.c,v 1.14 1998/08/05 02:45:08 perry Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@ gdt_init()
 	vm_map_pageable(kernel_map, (vm_offset_t)gdt,
 	    (vm_offset_t)gdt + min_len, FALSE);
 #endif
-	bcopy(old_gdt, gdt, NGDT * sizeof(gdt[0]));
+	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 
 	setregion(&region, gdt, max_len - 1);
 	lgdt(&region);
