@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.26 1995/10/09 14:03:32 mycroft Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.27 1995/10/09 14:20:04 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -514,9 +514,9 @@ struct fdesc_target {
 /* NOTE: The name must be less than UIO_MX-16 chars in length */
 #define N(s) sizeof(s)-1, s
 	{ FD_DEVFD,  DT_DIR,     N("fd")     },
-	{ FD_STDIN,  DT_UNKNOWN, N("stdin")  },
-	{ FD_STDOUT, DT_UNKNOWN, N("stdout") },
-	{ FD_STDERR, DT_UNKNOWN, N("stderr") },
+	{ FD_STDIN,  DT_LNK,     N("stdin")  },
+	{ FD_STDOUT, DT_LNK,     N("stdout") },
+	{ FD_STDERR, DT_LNK,     N("stderr") },
 	{ FD_CTTY,   DT_UNKNOWN, N("tty")    },
 #undef N
 };
