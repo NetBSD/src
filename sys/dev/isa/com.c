@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)com.c	7.5 (Berkeley) 5/16/91
- *	$Id: com.c,v 1.16 1994/01/30 16:41:27 ws Exp $
+ *	$Id: com.c,v 1.17 1994/02/01 03:42:08 cgd Exp $
  */
 
 #include "com.h"
@@ -273,17 +273,8 @@ comwrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
 {
-	int unit = UNIT(dev);
 	register struct tty *tp = com_tty[unit];
  
-	/*
-	 * (XXX) We disallow virtual consoles if the physical console is
-	 * a serial port.  This is in case there is a display attached that
-	 * is not the console.  In that situation we don't need/want the X
-	 * server taking over the console.
-	 */
-	if (constty && unit == comconsole)
-		constty = NULL;
 	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
 }
  
@@ -606,7 +597,7 @@ commctl(dev, bits, how)
 /*
  * Following are all routines needed for COM to act as console
  */
-#include <i386/i386/cons.h>
+#include <dev/cons.h>
 
 comcnprobe(cp)
 	struct consdev *cp;
