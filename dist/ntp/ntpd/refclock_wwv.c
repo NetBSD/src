@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.1.1.2 2000/04/22 14:53:39 simonb Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.2 2001/09/16 16:34:24 wiz Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -1990,7 +1990,7 @@ wwv_rsec(
 	 * At the end of second 1, latch and average the sync noise and
 	 * test for data bit error. Set SYNCNG if the sync pulse
 	 * amplitude and SNR are not above thresholds. Set DATANG if
-	 * data error occured on both second 59 and second 1. Finally,
+	 * data error occurred on both second 59 and second 1. Finally,
 	 * QSY back to the data channel.
 	 */
 	case SYNC3:			/* 1 */
@@ -2462,7 +2462,7 @@ wwv_tsec(
  *
  * This routine rotates a likelihood vector one position and increments
  * the clock digit modulo the radix. It returns the new clock digit -
- * zero if a carry occured. Once synchronized, the clock digit will
+ * zero if a carry occurred. Once synchronized, the clock digit will
  * match the maximum likelihood digit corresponding to that position.
  */
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.47 2001/01/13 02:08:15 aymeric Exp $	*/
+/*	$NetBSD: fd.c,v 1.48 2001/09/16 16:34:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -1586,7 +1586,7 @@ fddone(sc)
 	if ((bp = BUFQ_FIRST(&sc->bufq)) == NULL)
 		panic ("fddone");
 	/*
-	 * check for an error that may have occured
+	 * check for an error that may have occurred
 	 * while getting the track.
 	 */
 	if (sc->cachetrk == -1) {

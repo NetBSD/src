@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2001/09/16 05:40:46 chs Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2001/09/16 16:34:34 wiz Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -2404,7 +2404,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	 */
 	if (ps->avail_start == ps->end) {
 		/*
-		 * If this was the last one, then a very bad thing has occured
+		 * If this was the last one, then a very bad thing has occurred
 		 */
 		if (--vm_nphysseg == 0)
 			panic("pmap_steal_memory: out of memory!");

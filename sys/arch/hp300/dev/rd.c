@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.44 2000/10/10 19:58:43 he Exp $	*/
+/*	$NetBSD: rd.c,v 1.45 2001/09/16 16:34:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -1053,7 +1053,7 @@ rderror(unit)
 		return(1);
 
 	/*
-	 * First conjure up the block number at which the error occured.
+	 * First conjure up the block number at which the error occurred.
 	 * Note that not all errors report a block number, in that case
 	 * we just use b_blkno.
  	 */
@@ -1071,7 +1071,7 @@ rderror(unit)
 	 * Now output a generic message suitable for badsect.
 	 * Note that we don't use harderr cuz it just prints
 	 * out b_blkno which is just the beginning block number
-	 * of the transfer, not necessary where the error occured.
+	 * of the transfer, not necessary where the error occurred.
 	 */
 	printf("%s%c: hard error sn%d\n", rs->sc_dev.dv_xname,
 	    'a'+rdpart(bp->b_dev), pbn);

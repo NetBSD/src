@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.1 1999/01/23 15:05:39 drochner Exp $	*/
+/*	$NetBSD: omms.c,v 1.2 2001/09/16 16:34:30 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -208,7 +208,7 @@ mmsread(dev, uio, flag)
 	size_t length;
 	u_char buffer[MMS_CHUNK];
 
-	/* Block until mouse activity occured. */
+	/* Block until mouse activity occurred. */
 
 	s = spltty();
 	while (sc->sc_q.c_cc == 0) {

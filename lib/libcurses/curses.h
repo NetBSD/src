@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.57 2001/06/11 01:50:51 wiz Exp $	*/
+/*	$NetBSD: curses.h,v 1.58 2001/09/16 16:34:25 wiz Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -303,7 +303,7 @@ extern char	*__tc_ac, *__tc_AB, *__tc_ae, *__tc_AF, *__tc_AL,
 #define    KEY_SUNDO      0x196    /* Shift Undo key */
 #define    KEY_SUSPEND    0x197    /* Suspend key */
 #define    KEY_UNDO       0x198    /* Undo key */
-#define    KEY_MOUSE      0x199    /* Mouse event has occured */
+#define    KEY_MOUSE      0x199    /* Mouse event has occurred */
 #define    KEY_MAX        0x199    /* maximum extended key value */
 
 /* 8-bit ASCII characters. */

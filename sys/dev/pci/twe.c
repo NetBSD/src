@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.17 2001/09/15 20:36:35 chs Exp $	*/
+/*	$NetBSD: twe.c,v 1.18 2001/09/16 16:34:38 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -459,7 +459,7 @@ twe_intr(void *arg)
 
 	/*
 	 * Attention interrupts, signalled when a controller or child device
-	 * state change has occured.
+	 * state change has occurred.
 	 */
 	if ((status & TWE_STS_ATTN_INTR) != 0) {
 		if ((sc->sc_flags & TWEF_AEN) == 0) {
