@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.3 2003/07/29 08:16:01 sjg Exp $
+# $Id: Makefile,v 1.4 2003/07/29 08:44:42 sjg Exp $
 #
 # Unit tests for make(1)
 # The main targets are:
@@ -31,11 +31,12 @@ mod-ts:
 	@echo 'LIST:ts:S/two/2/="${LIST:ts:S/two/2/}"'
 	@echo 'LIST:S/two/2/:ts="${LIST:S/two/2/:ts}"'
 	@echo 'LIST:ts/:S/two/2/="${LIST:ts/:S/two/2/}"'
-	@echo 'LIST:ts\n="${LIST:ts\n}"'
-	@echo 'LIST:ts\t="${LIST:ts\t}"'
-	@echo 'LIST:ts\012:tu="${LIST:ts\012:tu}"'
+	@echo "Pretend the '/' in '/n' etc. below are back-slashes."
+	@echo 'LIST:ts/n="${LIST:ts\n}"'
+	@echo 'LIST:ts/t="${LIST:ts\t}"'
+	@echo 'LIST:ts/012:tu="${LIST:ts\012:tu}"'
 	@echo 'LIST:tx="${LIST:tx}"'
-	@echo 'LIST:ts\a:tu="${LIST:ts\a:tu}"'
+	@echo 'LIST:ts/a:tu="${LIST:ts\a:tu}"'
 	@echo 'FU_$@="${FU_${@:ts}:ts}"'
 	@echo 'FU_$@:ts:T="${FU_${@:ts}:ts:T}" == cool?'
 
