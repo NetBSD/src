@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.15 1996/03/14 21:09:01 christos Exp $ */
+/*	$NetBSD: cpu.c,v 1.16 1996/03/16 23:31:36 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -361,8 +361,8 @@ fsrtoname(impl, vers, fver, buf)
 
 	for (p = fpu_types; p->valid; p++)
 		if (p->iu_impl == impl &&
-		    (p->iu_vers == vers || p->iu_vers == ANY) &
-		    p->fpu_vers == fver)
+		    (p->iu_vers == vers || p->iu_vers == ANY) &&
+		    (p->fpu_vers == fver))
 			return (p->name);
 	sprintf(buf, "version %x", fver);
 	return (buf);
