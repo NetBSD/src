@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_misc.c,v 1.2 2001/07/29 19:30:56 christos Exp $	 */
+/*	$NetBSD: mach_misc.c,v 1.3 2001/11/13 02:09:02 lukem Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
  *
  * We actually don't implement anything here yet!
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mach_misc.c,v 1.3 2001/11/13 02:09:02 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

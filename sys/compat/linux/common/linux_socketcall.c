@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.22 2001/07/22 13:55:23 jdolecek Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.23 2001/11/13 02:09:00 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.23 2001/11/13 02:09:00 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

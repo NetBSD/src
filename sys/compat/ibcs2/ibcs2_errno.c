@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_errno.c,v 1.7 2001/01/18 20:28:25 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_errno.c,v 1.8 2001/11/13 02:08:21 lukem Exp $	*/
 
 /*
  * ibcs2_errno.c
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_errno.c,v 1.8 2001/11/13 02:08:21 lukem Exp $");
 
 #include <compat/ibcs2/ibcs2_errno.h>
 

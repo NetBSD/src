@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_exec.c,v 1.4 2001/10/30 15:32:01 thorpej Exp $	*/
+/*	$NetBSD: compat_exec.c,v 1.5 2001/11/13 02:07:59 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: compat_exec.c,v 1.5 2001/11/13 02:07:59 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

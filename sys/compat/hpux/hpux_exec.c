@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_exec.c,v 1.27 2001/09/18 19:36:39 jdolecek Exp $	*/
+/*	$NetBSD: hpux_exec.c,v 1.28 2001/11/13 02:08:14 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
  * Glue for exec'ing HP-UX executables and the HP-UX execv() system call.
  * Based on sys/kern/exec_aout.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_exec.c,v 1.28 2001/11/13 02:08:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

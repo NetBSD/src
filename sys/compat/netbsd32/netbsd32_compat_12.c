@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.12 2001/08/25 15:06:02 mrg Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.13 2001/11/13 02:09:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.13 2001/11/13 02:09:04 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"

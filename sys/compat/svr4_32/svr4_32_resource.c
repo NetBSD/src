@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_resource.c,v 1.1 2001/02/06 16:37:58 eeh Exp $	 */
+/*	$NetBSD: svr4_32_resource.c,v 1.2 2001/11/13 02:09:29 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_resource.c,v 1.2 2001/11/13 02:09:29 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.73 2001/09/18 19:36:41 jdolecek Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.74 2001/11/13 02:09:33 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -78,6 +78,9 @@
  *
  * from: Header: sun_misc.c,v 1.16 93/04/07 02:46:27 torek Exp 
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.74 2001/11/13 02:09:33 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"

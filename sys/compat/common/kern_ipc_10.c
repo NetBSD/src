@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.12 2000/07/27 14:00:56 mrg Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.13 2001/11/13 02:08:01 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.13 2001/11/13 02:08:01 lukem Exp $");
 
 #include "opt_sysv.h"
 

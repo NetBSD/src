@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.2 2001/10/30 15:32:03 thorpej Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.3 2001/11/13 02:09:18 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.3 2001/11/13 02:09:18 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

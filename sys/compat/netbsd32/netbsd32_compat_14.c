@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.5 2000/11/30 19:14:35 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.6 2001/11/13 02:09:04 lukem Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.6 2001/11/13 02:09:04 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/ipc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.23 2001/05/30 11:37:27 mrg Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.24 2001/11/13 02:08:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.24 2001/11/13 02:08:53 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"

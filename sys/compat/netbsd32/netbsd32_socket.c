@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.5 2001/07/17 11:49:40 jdolecek Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.6 2001/11/13 02:09:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,6 +27,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.6 2001/11/13 02:09:07 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.55 2000/12/29 21:07:16 fvdl Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.56 2001/11/13 02:08:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.56 2001/11/13 02:08:56 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

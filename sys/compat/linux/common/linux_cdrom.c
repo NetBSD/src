@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.9 2001/06/14 20:32:43 thorpej Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.10 2001/11/13 02:08:49 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.10 2001/11/13 02:08:49 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt_errno.c,v 1.5 1999/05/01 02:57:09 cgd Exp $ */
+/* $NetBSD: osf1_cvt_errno.c,v 1.6 2001/11/13 02:09:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt_errno.c,v 1.6 2001/11/13 02:09:11 lukem Exp $");
 
 #include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_cvt.h>

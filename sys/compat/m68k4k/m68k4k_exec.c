@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k4k_exec.c,v 1.7 2001/10/30 15:32:02 thorpej Exp $	*/
+/*	$NetBSD: m68k4k_exec.c,v 1.8 2001/11/13 02:09:02 lukem Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -39,6 +39,9 @@
  * This module only works on machines with NBPG == 4096.  It's not clear
  * that making it work on other machines is worth the trouble.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: m68k4k_exec.c,v 1.8 2001/11/13 02:09:02 lukem Exp $");
 
 #if !defined(__m68k__)
 #error YOU GOTTA BE KIDDING!

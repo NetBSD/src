@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.5 2001/10/14 17:15:58 manu Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.6 2001/11/13 02:08:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Linux 64bit filesystem calls. Used on 32bit archs, not used on 64bit ones.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.6 2001/11/13 02:08:52 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

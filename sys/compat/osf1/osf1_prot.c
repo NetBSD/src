@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_prot.c,v 1.3 1999/08/16 02:59:24 simonb Exp $ */
+/* $NetBSD: osf1_prot.c,v 1.4 2001/11/13 02:09:14 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_prot.c,v 1.4 2001/11/13 02:09:14 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

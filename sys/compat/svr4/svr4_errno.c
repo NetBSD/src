@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_errno.c,v 1.8 2001/02/21 21:39:59 jdolecek Exp $	 */
+/*	$NetBSD: svr4_errno.c,v 1.9 2001/11/13 02:09:21 lukem Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * Translate error codes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: svr4_errno.c,v 1.9 2001/11/13 02:09:21 lukem Exp $");
 
 #include <compat/svr4/svr4_errno.h>
 

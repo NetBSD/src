@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_ioctl.c,v 1.22 2001/06/14 20:32:42 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_ioctl.c,v 1.23 2001/11/13 02:08:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -25,6 +25,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_ioctl.c,v 1.23 2001/11/13 02:08:25 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_ioctl.c,v 1.5 2000/12/01 12:28:31 jdolecek Exp $	*/
+/*	$NetBSD: freebsd_ioctl.c,v 1.6 2001/11/13 02:08:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: freebsd_ioctl.c,v 1.6 2001/11/13 02:08:08 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

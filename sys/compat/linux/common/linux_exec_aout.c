@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.46 2001/10/30 15:32:02 thorpej Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.47 2001/11/13 02:08:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * based on exec_aout.c, sunos_exec.c and svr4_exec.c
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.47 2001/11/13 02:08:50 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux_compat.c,v 1.57 2001/06/14 20:32:42 thorpej Exp $	*/
+/*	$NetBSD: hpux_compat.c,v 1.58 2001/11/13 02:08:12 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,10 @@
 /*
  * Various HP-UX compatibility routines
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hpux_compat.c,v 1.58 2001/11/13 02:08:12 lukem Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
 #include "opt_compat_43.h"

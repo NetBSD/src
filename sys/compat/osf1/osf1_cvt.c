@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.11 2001/04/04 19:52:18 ross Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.12 2001/11/13 02:09:11 lukem Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -56,6 +56,9 @@
  * any improvements or extensions that they make and grant Carnegie the
  * rights to redistribute these changes.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.12 2001/11/13 02:09:11 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

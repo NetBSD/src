@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.27 2001/06/14 20:32:43 thorpej Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.28 2001/11/13 02:08:53 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.28 2001/11/13 02:08:53 lukem Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"

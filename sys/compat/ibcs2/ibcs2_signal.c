@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.13 2001/01/18 20:28:25 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.14 2001/11/13 02:08:27 lukem Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -26,6 +26,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.14 2001/11/13 02:08:27 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
