@@ -1,4 +1,4 @@
-.\"	$NetBSD: busmouse.4,v 1.1 2003/04/17 11:46:09 bjh21 Exp $
+.\"	$NetBSD: busmouse.4,v 1.2 2003/04/17 11:58:11 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Michael Graff
 .\" All rights reserved.
@@ -59,16 +59,24 @@ mouse movement generates a five byte event.
 The bytes contain:
 .Bl -tag -width xxxx -offset indent -compact
 .It 1
-Button status. (u_char)
+Button status.
+(u_char)
 .It 2
-Right/left movement.  Positive values indicate right, negative
-left. (char)
+Right/left movement.
+Positive values indicate right, negative left.
+(char)
 .It 3
-Up/down movement.  Positive values indicate up, negative down. (char)
+Up/down movement.
+Positive values indicate up, negative down.
+(char)
 .It 4
-Reserved.  Should be zero. (char)
+Reserved.
+Should be zero.
+(char)
 .It 5
-Reserved.  Should be zero. (char)
+Reserved.
+Should be zero.
+(char)
 .El
 .Pp
 The direction bytes are signed characters, giving a range of +127 to -127.
@@ -77,5 +85,5 @@ value movement left or down.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
 .Xr read 2 ,
-.Xr qms 4 ,
-.Xr opms 4
+.Xr opms 4 ,
+.Xr qms 4
