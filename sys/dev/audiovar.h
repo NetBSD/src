@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.22 2002/03/09 20:30:43 kent Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.23 2002/03/17 11:36:37 kent Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -35,7 +35,7 @@
  *	From: Header: audiovar.h,v 1.3 93/07/18 14:07:25 mccanne Exp  (LBL)
  */
 
-#include "aurateconvproto.h"	/* for AUDIO_MAX_CHANNELS */
+#include <dev/aurateconv.h>	/* for struct auconv_context */
 
 /*
  * Initial/default block duration is both configurable and patchable.
