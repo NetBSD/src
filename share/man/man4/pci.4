@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.51 2001/07/25 00:20:12 thorpej Exp $
+.\"	$NetBSD: pci.4,v 1.52 2001/07/30 19:59:07 ad Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -105,6 +105,8 @@ QLogic ISP-1020, ISP-1040, and ISP-2100
 and
 .Tn FibreChannel
 interfaces.
+.It mly
+Mylex AcceleRAID and eXtremeRAID controllers with v6 firmware.
 .It pcscp
 Advanced Micro Devices Am53c974 PCscsi-PCI
 .Tn SCSI
@@ -338,6 +340,7 @@ VGA graphics boards.
 .Xr le 4 ,
 .Xr lmc 4 ,
 .Xr mlx 4 ,
+.Xr mly 4 ,
 .Xr ne 4 ,
 .Xr neo 4 ,
 .Xr ntwoc 4 ,

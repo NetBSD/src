@@ -1,4 +1,4 @@
-.\"	$NetBSD: mlx.4,v 1.4 2001/06/12 11:35:03 wiz Exp $
+.\"	$NetBSD: mlx.4,v 1.5 2001/07/30 19:59:07 ad Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -66,6 +66,10 @@ Supported controllers include:
 .Pp
 .Bl -tag -width -offset indent -compact
 .It Tn DEC/Compaq SWXCR
+.It Tn Mylex AcceleRAID 150
+.It Tn Mylex AcceleRAID 200
+.It Tn Mylex AcceleRAID 250
+.It Tn Mylex DAC1164P (eXtremeRAID 1100)
 .It Tn Mylex DAC960P
 .It Tn Mylex DAC960PD
 .It Tn Mylex DAC960PG
@@ -80,6 +84,7 @@ Supported controllers include:
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr ld 4 ,
+.Xr mly 4 ,
 .Xr mlxctl 8
 .Sh AUTHOR
 The
