@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.43 1998/11/19 21:46:24 thorpej Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.44 1998/12/05 19:43:42 mjacob Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -239,6 +239,7 @@ void		*auxp;
 	sc->sc_link.device          = &ncr5380_dev;
 	sc->sc_link.openings        = NREQ - 1;
 	sc->sc_link.scsipi_scsi.max_target      = 7;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 	/*

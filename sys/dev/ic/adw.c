@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.4 1998/11/19 21:52:59 thorpej Exp $	 */
+/* $NetBSD: adw.c,v 1.5 1998/12/05 19:43:49 mjacob Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -468,6 +468,7 @@ adw_attach(sc)
 	sc->sc_link.device = &adw_dev;
 	sc->sc_link.openings = 4;
 	sc->sc_link.scsipi_scsi.max_target = ADW_MAX_TID;
+	sc->sc_link.scsipi_scsi.max_lun = 7;
 	sc->sc_link.type = BUS_SCSI;
 
 
