@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.old.c,v 1.54 1998/03/17 05:15:24 thorpej Exp $ */
+/* $NetBSD: pmap.old.c,v 1.55 1998/03/18 19:02:49 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.54 1998/03/17 05:15:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.old.c,v 1.55 1998/03/18 19:02:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -400,8 +400,9 @@ do {									\
  *	Bootstrap the system to run with virtual memory.
  */
 void
-pmap_bootstrap(ptaddr)
+pmap_bootstrap(ptaddr, maxasn)
 	vm_offset_t ptaddr;
+	u_int maxasn;
 {
 	pt_entry_t pte;
 	int i;
@@ -409,7 +410,7 @@ pmap_bootstrap(ptaddr)
 
 #ifdef DEBUG
 	if (pmapdebug & (PDB_FOLLOW|PDB_BOOTSTRAP))
-		printf("pmap_bootstrap(0x%lx)\n", ptaddr);
+		printf("pmap_bootstrap(0x%lx, %u)\n", ptaddr, maxasn);
 #endif
 
 	/*
