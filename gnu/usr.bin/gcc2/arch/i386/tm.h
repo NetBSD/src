@@ -1,6 +1,6 @@
 /* Configuration for an i386 running NetBSD as the target machine. 
 
-	$Id: tm.h,v 1.7 1994/12/21 11:24:58 cgd Exp $
+	$Id: tm.h,v 1.8 1994/12/23 21:16:50 pk Exp $
 */
 
 /* This is tested by i386gas.h.  */
@@ -82,8 +82,9 @@
 
 /*
  * Some imports from svr4.h in support of shared libraries.
- * Currently, we need the DECLARE_OBJECT_SIZE stuff.
  */
+
+#define HANDLE_SYSV_PRAGMA
 
 /* Define the strings used for the special svr4 .type and .size directives.
    These strings generally do not vary from one system running svr4 to
@@ -94,6 +95,7 @@
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
 #define WEAK_ASM_OP	".weak"
+#define SET_ASM_OP	".set"
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  Different svr4 assemblers

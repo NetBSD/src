@@ -1,4 +1,4 @@
-/*	$Id: tm.h,v 1.4 1994/12/21 11:25:22 cgd Exp $ */
+/*	$Id: tm.h,v 1.5 1994/12/23 21:16:58 pk Exp $ */
 
 #include <machine/ansi.h>
 #include "m68k/m68k.h"
@@ -79,6 +79,8 @@
  * Some imports from svr4.h in support of shared libraries.
  */
 
+#define HANDLE_SYSV_PRAGMA
+
 /* Define the strings used for the special svr4 .type and .size directives.
    These strings generally do not vary from one system running svr4 to
    another, but if a given system (e.g. m88k running svr) needs to use
@@ -88,6 +90,7 @@
 #define TYPE_ASM_OP	".type"
 #define SIZE_ASM_OP	".size"
 #define WEAK_ASM_OP	".weak"
+#define SET_ASM_OP	".set"
 
 /* The following macro defines the format used to output the second
    operand of the .type assembler directive.  Different svr4 assemblers
