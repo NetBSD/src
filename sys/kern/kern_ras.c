@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.7.2.1 2004/04/01 11:58:18 tron Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.7.2.2 2004/04/01 11:59:25 tron Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.7.2.1 2004/04/01 11:58:18 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.7.2.2 2004/04/01 11:59:25 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -108,18 +108,59 @@ int
 ras_fork(struct proc *p1, struct proc *p2)
 {
 	struct ras *rp, *nrp;
-	int nras = 0;
+	int nras;
 
+again:
+	/*
+	 * first, try to shortcut.
+	 */
+
+	if (LIST_EMPTY(&p1->p_raslist))
+		return (0);
+
+	/*
+	 * count entries.
+	 */
+
+	nras = 0;
 	simple_lock(&p1->p_lock);
-	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
+	LIST_FOREACH(rp, &p1->p_raslist, ras_list)
 		nras++;
+	simple_unlock(&p1->p_lock);
+
+	/*
+	 * allocate entries.
+	 */
+
+	for ( ; nras > 0; nras--) {
 		nrp = pool_get(&ras_pool, PR_WAITOK);
-		nrp->ras_startaddr = rp->ras_startaddr;
-		nrp->ras_endaddr = rp->ras_endaddr;
 		nrp->ras_hits = 0;
 		LIST_INSERT_HEAD(&p2->p_raslist, nrp, ras_list);
 	}
+
+	/*
+	 * copy entries.
+	 */
+
+	simple_lock(&p1->p_lock);
+	nrp = LIST_FIRST(&p2->p_raslist);
+	LIST_FOREACH(rp, &p1->p_raslist, ras_list) {
+		if (nrp == NULL)
+			break;
+		nrp->ras_startaddr = rp->ras_startaddr;
+		nrp->ras_endaddr = rp->ras_endaddr;
+		nrp = LIST_NEXT(nrp, ras_list);
+	}
 	simple_unlock(&p1->p_lock);
+
+	/*
+	 * if we lose a race, retry.
+	 */
+
+	if (rp != NULL || nrp != NULL) {
+		ras_purgeall(p2);
+		goto again;
+	}
 
 	DPRINTF(("ras_fork: p1=%p, p2=%p, nras=%d\n", p1, p2, nras));
 
