@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.31 1998/09/13 10:29:05 thorpej Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.32 1998/09/13 11:58:00 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.31 1998/09/13 10:29:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.32 1998/09/13 11:58:00 mycroft Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_uvm.h"
@@ -766,7 +766,6 @@ sendsig(catcher, sig, mask, code)
 	struct sigacts *psp = p->p_sigacts;
 	int onstack;
 	struct sigcontext ksc;
-	extern char sigcode[], esigcode[];
 
 	regs = p->p_md.md_regs;
 
@@ -853,7 +852,12 @@ sendsig(catcher, sig, mask, code)
 	regs[SP] = (int)fp;
 
 	/* Signal trampoline code is at base of user stack. */
-	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
+	regs[RA] = (int)psp->ps_sigcode;
+
+	/* Remember that we're now on the signal stack. */
+	if (onstack)
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid))
