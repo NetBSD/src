@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.15 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: sync.c,v 1.16 2001/01/04 02:43:33 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.15 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: sync.c,v 1.16 2001/01/04 02:43:33 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,17 @@ __RCSID("$NetBSD: sync.c,v 1.15 2001/01/01 21:57:38 jwise Exp $");
 #include "pathnames.h"
 
 #define BUFSIZE 4096
+
+void	fmtship(char *, size_t, const char *, struct ship *);
+void	makesignal(struct ship *, const char *, struct ship *, ...);
+void	makemsg(struct ship *, const char *, ...);
+int	sync_exists(int);
+int	sync_open(void);
+void	sync_close(int);
+void	Write(int, struct ship *, long, long, long, long);
+void	Writestr(int, struct ship *, const char *);
+int	Sync(void);
+static int	sync_update(int, struct ship *, const char *, long, long, long, long);
 
 static const char SF[] = _PATH_SYNC;
 static const char LF[] = _PATH_LOCK;
@@ -304,7 +315,7 @@ out:
 	return erred ? -1 : 0;
 }
 
-int
+static int
 sync_update(int type, struct ship *ship, const char *astr, long a, long b, long c, long d)
 {
 	switch (type) {

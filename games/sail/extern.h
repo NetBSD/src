@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2001/01/04 01:56:27 jwise Exp $ */
+/*	$NetBSD: extern.h,v 1.21 2001/01/04 02:43:32 jwise Exp $ */
 
 /*
  * Copyright (c) 1983, 1993
@@ -345,7 +345,6 @@ int lo_main (void);
 /* misc.c */
 int range (struct ship *, struct ship *);
 struct ship *closestenemy (struct ship *, int, int);
-int angle (int, int);
 int gunsbear (struct ship *, struct ship *);
 int portside (struct ship *, struct ship *, int);
 int colours (struct ship *);
@@ -379,11 +378,9 @@ void eyeball (struct ship *);
 /* pl_5.c */
 void acceptmove (void);
 void acceptboard (void);
-void parties (int[3], struct ship *, int, int);
 
 /* pl_6.c */
 void repair (void);
-int turned (void);
 void loadplayer (void);
 
 /* pl_7.c */
@@ -394,9 +391,7 @@ void Signal (const char *, struct ship *, ...)
 	 __attribute__((__format__(__printf__,1,3)));
 void Msg (const char *, ...)
 	 __attribute__((__format__(__printf__,1,2)));
-void Scroll (void);
 void prompt (const char *, struct ship *);
-void endprompt (int);
 int sgetch (const char *, struct ship *, int);
 void sgetstr (const char *, char *, int);
 void draw_screen (void);
@@ -410,11 +405,9 @@ void upview (void);
 void downview (void);
 void leftview (void);
 void rightview (void);
-void adjustview (void);
 
 /* pl_main.c */
 int pl_main (void);
-void initialize (void);
 
 /* sync.c */
 void fmtship (char *, size_t, const char *, struct ship *);
@@ -428,4 +421,3 @@ void sync_close (int);
 void Write (int, struct ship *, long, long, long, long);
 void Writestr (int, struct ship *, const char *);
 int Sync (void);
-int sync_update (int, struct ship *, const char *, long, long, long, long);

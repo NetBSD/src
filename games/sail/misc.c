@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2001/01/04 02:43:32 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.7 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: misc.c,v 1.8 2001/01/04 02:43:32 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,14 @@ __RCSID("$NetBSD: misc.c,v 1.7 2001/01/01 21:57:38 jwise Exp $");
 #include "pathnames.h"
 
 #define distance(x,y) (abs(x) >= abs(y) ? abs(x) + abs(y)/2 : abs(y) + abs(x)/2)
+
+int	range(struct ship *, struct ship *);
+struct ship	*closestenemy(struct ship *, int, int);
+static int	angle(int, int);
+int	gunsbear(struct ship *, struct ship *);
+int	portside(struct ship *, struct ship *, int);
+int	colours(struct ship *);
+void	logger(struct ship *);
 
 /* XXX */
 int
@@ -105,7 +113,7 @@ closestenemy(struct ship *from, int side, int anyship)
 	return closest;
 }
 
-int
+static int
 angle(int dr, int dc)
 {
 	int i;

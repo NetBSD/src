@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.16 2001/01/01 21:57:38 jwise Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.17 2001/01/04 02:43:33 jwise Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.16 2001/01/01 21:57:38 jwise Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.17 2001/01/04 02:43:33 jwise Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,6 +52,28 @@ __RCSID("$NetBSD: pl_7.c,v 1.16 2001/01/01 21:57:38 jwise Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 
+void	initscreen(void);
+void	cleanupscreen(void);
+void	newturn(int);
+void	Signal(const char *, struct ship *, ...);
+void	Msg(const char *, ...);
+static void	Scroll(void);
+void	prompt(const char *, struct ship *);
+static void	endprompt(int);
+int	sgetch(const char *, struct ship *, int);
+void	sgetstr(const char *, char *, int);
+void	draw_screen(void);
+void	draw_view(void);
+void	draw_turn(void);
+void	draw_stat(void);
+void	draw_slot(void);
+void	draw_board(void);
+void	centerview(void);
+void	upview(void);
+void	downview(void);
+void	leftview(void);
+void	rightview(void);
+static void	adjustview(void);
 
 /*
  * Display interface
@@ -201,7 +223,7 @@ Msg(const char *fmt, ...)
 	Scroll();
 }
 
-void
+static void
 Scroll(void)
 {
 	if (++sc_line >= SCROLL_Y)
@@ -211,9 +233,7 @@ Scroll(void)
 }
 
 void
-prompt(p, ship)
-	const char *p;
-	struct ship *ship;
+prompt(const char *p, struct ship *ship)
 {
 	static char buf[BUFSIZ];
 
@@ -224,7 +244,7 @@ prompt(p, ship)
 	waddstr(scroll_w, buf);
 }
 
-void
+static void
 endprompt(int flag)
 {
 	sc_hasprompt = 0;
@@ -510,7 +530,7 @@ rightview(void)
 	viewcol += VIEW_X / 5;
 }
 
-void
+static void
 adjustview(void)
 {
 	if (dont_adjust)
