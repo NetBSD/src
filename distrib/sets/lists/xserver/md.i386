@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.9.2.1 1999/09/10 21:52:52 he Exp $
+# $NetBSD: md.i386,v 1.9.2.2 2000/01/15 16:59:46 he Exp $
 ./usr/X11R6/bin/SuperProbe
 ./usr/X11R6/bin/X
 ./usr/X11R6/bin/XF86_3DLabs
@@ -20,7 +20,6 @@
 ./usr/X11R6/bin/Xwrapper
 ./usr/X11R6/lib/X11/XF86Config.eg
 ./usr/X11R6/lib/X11/doc/AccelCards
-./usr/X11R6/lib/X11/doc/BetaReport
 ./usr/X11R6/lib/X11/doc/BUILD
 ./usr/X11R6/lib/X11/doc/Devices
 ./usr/X11R6/lib/X11/doc/Monitors
@@ -57,6 +56,7 @@
 ./usr/X11R6/lib/X11/doc/README.i740
 ./usr/X11R6/lib/X11/doc/README.mouse
 ./usr/X11R6/lib/X11/doc/README.neo
+./usr/X11R6/lib/X11/doc/README.r128
 ./usr/X11R6/lib/X11/doc/README.rendition
 ./usr/X11R6/lib/X11/doc/README.trident
 ./usr/X11R6/lib/X11/doc/README.tseng
