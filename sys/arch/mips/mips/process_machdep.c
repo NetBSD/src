@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.15 2000/05/29 09:16:36 nisimura Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.16 2000/05/29 09:37:00 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2000/05/29 09:16:36 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.16 2000/05/29 09:37:00 nisimura Exp $");
 
 /*
  * This file may seem a bit stylized, but that so that it's easier to port.
@@ -78,10 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.15 2000/05/29 09:16:36 nisimur
 #include <machine/psl.h>
 #include <machine/reg.h>
 
-#if !defined(NOFPU) && !defined(SOFTFLOAT)
-void savefpregs __P((struct proc *));
-#endif
-
 int
 process_read_regs(p, regs)
 	struct proc *p;
@@ -98,10 +94,8 @@ process_write_regs(p, regs)
 {
 	memcpy(p->p_md.md_regs, regs, sizeof(struct reg));
 	/*
-	 * XXX: is it safe to let users set system coprocessor regs?
-	 * XXX: Clear to user set bits!!
+	 * XXX: is it safe to let users set system CP0 status reg?
 	 */
-	/*p->p_md.md_tf->tf_psr = psr | (regs->r_psr & PSR_ICC);*/
 	return (0);
 }
 
