@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char ocopyright[] =
-"$Id: dhclient.c,v 1.22 1999/04/26 15:47:03 mellon Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.23 1999/08/24 03:25:31 enami Exp $ Copyright (c) 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -88,9 +88,10 @@ u_int16_t remote_port;
 int log_priority;
 int no_daemon;
 int save_scripts;
+int caught_signal;
 
-void catch_sighup PROTO ((int));
-void catch_sigterm PROTO ((int));
+void catch_signal PROTO ((int));
+int error_handler PROTO ((void));
 
 static char copyright[] =
 "Copyright 1995, 1996, 1997, 1998, 1999 The Internet Software Consortium.";
@@ -211,11 +212,11 @@ int main (argc, argv, envp)
 	(void) sigaddset (&sa.sa_mask, SIGHUP);
 	(void) sigaddset (&sa.sa_mask, SIGTERM);
 
-	sa.sa_handler = catch_sighup;
+	sa.sa_handler = catch_signal;
 	if (sigaction (SIGHUP, &sa, NULL))
 		error ("Unable to setup SIGHUP handler.");
 
-	sa.sa_handler = catch_sigterm;
+	sa.sa_handler = catch_signal;
 	if (sigaction (SIGTERM, &sa, NULL))
 		error ("Unable to setup SIGTERM handler.");
 
@@ -295,7 +296,7 @@ int main (argc, argv, envp)
         sysconf_startup (status_message);
 
 	/* Start dispatching packets and timeouts... */
-	dispatch ();
+	dispatch (error_handler);
 
 	/*NOTREACHED*/
 	return 0;
@@ -2224,24 +2225,49 @@ void status_message (header, data)
 		error ("Unable to restore signals in sysconf handler.");
 }
 
-void catch_sighup (sig)
+void catch_signal (sig)
 	int sig;
 {
 
-	/* Treat this like NETWORK_LOCATION_CHANGED; re-initiialize
-	   the leases. */
-	client_reinit (1);
+	caught_signal = sig;
 }
 
-void catch_sigterm (sig)
-	int sig;
+/* handle select(2) or poll(2) error. */
+int error_handler ()
 {
+	int sig;
 
-	/* Treat this like RELEASE_CURRENT_DHCP_LEASES; release
-	   leases.  Then exit. */
-	client_reinit (0);
-	cleanup();
-	exit (0);
+	switch (errno) {
+	case EINTR:
+#ifdef USE_POLL
+	case EAGAIN:
+#endif
+		sig = caught_signal;
+		caught_signal = 0;
+		switch (sig) {
+		case SIGHUP:
+			/* Treat this like NETWORK_LOCATION_CHANGED;
+			   re-initiialize the leases. */
+			client_reinit (1);
+			return 0;
+
+		case SIGTERM:
+			/* Treat this like RELEASE_CURRENT_DHCP_LEASES; release
+			   leases.  Then exit. */
+			client_reinit (0);
+			cleanup();
+			exit (0);
+			break;
+
+		default:
+			break;
+		}
+		break;
+
+	default:
+		break;
+	}
+	return 1;
 }
 
 void client_reinit (state)

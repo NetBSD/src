@@ -44,7 +44,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: sysconfd.c,v 1.2 1999/02/18 22:14:01 mellon Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: sysconfd.c,v 1.3 1999/08/24 03:25:33 enami Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -124,7 +124,7 @@ int main (argc, argv, envp)
 	/* Kernel status stuff goes here... */
 
 	/* Wait for something to happen... */
-	dispatch ();
+	dispatch (NULL);
 
 	exit (0);
 }
@@ -253,5 +253,3 @@ void dhcp (packet)
 	struct packet *packet;
 {
 }
-
-
