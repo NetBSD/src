@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.98 2004/03/21 21:08:08 oster Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.99 2004/04/09 23:10:16 oster Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.98 2004/03/21 21:08:08 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.99 2004/04/09 23:10:16 oster Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -280,7 +280,8 @@ int
 rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 {
 	RF_RowCol_t col;
-	RF_IOBufHeader_t *tmpbuf;	
+	void *tmpbuf;
+	RF_VoidPointerListElem_t *vple;
 	int rc, i;
 
 	RF_LOCK_LKMGR_MUTEX(configureMutex);
@@ -410,14 +411,35 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 				 raidPtr->logBytesPerSector, 
 				 M_RAIDFRAME, M_NOWAIT);
 		if (tmpbuf) {
-			tmpbuf->next = raidPtr->iobuf;
-			raidPtr->iobuf = tmpbuf;
+			vple = rf_AllocVPListElem();
+			vple->p= tmpbuf;
+			vple->next = raidPtr->iobuf;
+			raidPtr->iobuf = vple;
 			raidPtr->iobuf_count++;
 		} else {
 			printf("raid%d: failed to allocate emergency buffer!\n",
 			       raidPtr->raidid);
 		}
 	}
+
+	/* XXX next line needs tuning too... */
+	raidPtr->numEmergencyStripeBuffers = 10;
+        for (i = 0; i < raidPtr->numEmergencyStripeBuffers; i++) {
+                tmpbuf = malloc( raidPtr->numCol * (raidPtr->Layout.sectorsPerStripeUnit <<
+                                 raidPtr->logBytesPerSector),
+                                 M_RAIDFRAME, M_NOWAIT);
+                if (tmpbuf) {
+                        vple = rf_AllocVPListElem();
+                        vple->p= tmpbuf;
+                        vple->next = raidPtr->stripebuf;
+                        raidPtr->stripebuf = vple;
+                        raidPtr->stripebuf_count++;
+                } else {
+                        printf("raid%d: failed to allocate emergency stripe buffer!\n",
+                               raidPtr->raidid);
+                }
+        }
+
 
 	raidPtr->valid = 1;
 
@@ -492,6 +514,7 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->flags = flags;
 	desc->states = states;
 	desc->state = 0;
+	desc->dagList = NULL;
 
 	desc->status = 0;
 #if RF_ACC_TRACE > 0
@@ -500,8 +523,9 @@ rf_AllocRaidAccDesc(RF_Raid_t *raidPtr, RF_IoType_t type,
 	desc->callbackFunc = NULL;
 	desc->callbackArg = NULL;
 	desc->next = NULL;
-	desc->cleanupList = NULL;
-	rf_MakeAllocList(desc->cleanupList);
+	desc->iobufs = NULL;
+	desc->stripebufs = NULL;
+
 	return (desc);
 }
 
@@ -510,6 +534,7 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 {
 	RF_Raid_t *raidPtr = desc->raidPtr;
 	RF_DagList_t *dagList, *temp;
+	RF_VoidPointerListElem_t *tmp;
 
 	RF_ASSERT(desc);
 
@@ -521,7 +546,18 @@ rf_FreeRaidAccDesc(RF_RaidAccessDesc_t *desc)
 		rf_FreeDAGList(temp);
 	}
 
-	rf_FreeAllocList(desc->cleanupList);
+	while (desc->iobufs) {
+		tmp = desc->iobufs;
+		desc->iobufs = desc->iobufs->next;
+		rf_FreeIOBuffer(raidPtr, tmp);
+	}
+
+	while (desc->stripebufs) {
+		tmp = desc->stripebufs;
+		desc->stripebufs = desc->stripebufs->next;
+		rf_FreeStripeBuffer(raidPtr, tmp);
+	}
+
 	pool_put(&rf_pools.rad, desc);
 	RF_LOCK_MUTEX(rf_rad_lock);
 	raidPtr->nAccOutstanding--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.32 2004/03/20 04:22:05 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.33 2004/04/09 23:10:16 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -165,9 +165,14 @@ struct RF_Raid_s {
 	struct simplelock iodone_lock;
 
 
-	RF_IOBufHeader_t *iobuf;       /* I/O buffer free list */
+	RF_VoidPointerListElem_t *iobuf;       /* I/O buffer free list */
 	int iobuf_count;             /* count of I/O buffers on the freelist */
 	int numEmergencyBuffers;     /* number of these buffers to pre-allocate */
+
+	RF_VoidPointerListElem_t *stripebuf;   /* Full-stripe buffer free list */
+	int stripebuf_count;           /* count of full-stripe buffers on the freelist */
+	int numEmergencyStripeBuffers; /* number of these buffers to pre-allocate */
+
 	/*
          * Cleanup stuff
          */
