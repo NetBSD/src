@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.9 1998/10/08 12:57:59 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.10 1998/10/12 12:03:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.9 1998/10/08 12:57:59 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.10 1998/10/12 12:03:26 agc Exp $");
 #endif
 #endif
 
@@ -44,7 +44,15 @@ char PlayPen[FILENAME_MAX];
 size_t PlayPenSize	= sizeof(PlayPen);
 char *CheckPkg		= NULL;
 
-static void usage __P((void));
+static void
+usage(void)
+{
+    fprintf(stderr, "%s\n%s\n%s\n",
+	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
+	"                pkg-name [pkg-name ...]",
+	"       pkg_info -a [flags]");
+    exit(1);
+}
 
 int
 main(int argc, char **argv)
@@ -156,14 +164,4 @@ main(int argc, char **argv)
 	warnx("missing package name(s)"), usage();
     *pkgs = NULL;
     return pkg_perform(start);
-}
-
-static void
-usage()
-{
-    fprintf(stderr, "%s\n%s\n%s\n",
-	"usage: pkg_info [-cDdfIikLmpqRrvh] [-e package] [-l prefix]",
-	"                pkg-name [pkg-name ...]",
-	"       pkg_info -a [flags]");
-    exit(1);
 }

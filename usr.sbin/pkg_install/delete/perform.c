@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.10 1998/10/09 18:27:33 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.11 1998/10/12 12:03:26 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.10 1998/10/09 18:27:33 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.11 1998/10/12 12:03:26 agc Exp $");
 #endif
 #endif
 
@@ -33,23 +33,89 @@ __RCSID("$NetBSD: perform.c,v 1.10 1998/10/09 18:27:33 agc Exp $");
 #include "lib.h"
 #include "delete.h"
 
-static int pkg_do(char *);
-static void sanity_check(char *);
-static int undepend(const char *, char *);
+int undepend(const char *deppkgname, char *pkg2delname);
+
 static char LogDir[FILENAME_MAX];
 
+static package_t Plist;
 
-int
-pkg_perform(char **pkgs)
+static void
+sanity_check(char *pkg)
 {
-    int i, err_cnt = 0;
-
-    for (i = 0; pkgs[i]; i++)
-	err_cnt += pkg_do(pkgs[i]);
-    return err_cnt;
+    if (!fexists(CONTENTS_FNAME)) {
+	cleanup(0);
+	errx(2, "installed package %s has no %s file!", pkg, CONTENTS_FNAME);
+    }
 }
 
-static package_t Plist;
+void
+cleanup(int sig)
+{
+    /* Nothing to do */
+    if(sig)	/* in case this is ever used as a signal handler */
+	exit(1);
+}
+
+/* deppkgname is the pkg from which's +REQUIRED_BY file we are
+ * about to remove pkg2delname. This function is called from
+ * findmatchingname(), deppkgname is expanded from a (possible) pattern.
+ */
+int
+undepend(const char *deppkgname, char *pkg2delname)
+{
+     char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
+     char fbuf[FILENAME_MAX];
+     FILE *fp, *fpwr;
+     char *tmp;
+     int s;
+
+     (void) snprintf(fname, sizeof(fname), "%s/%s/%s",
+	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
+	     deppkgname, REQUIRED_BY_FNAME);
+     fp = fopen(fname, "r");
+     if (fp == NULL) {
+	 warnx("couldn't open dependency file `%s'", fname);
+	 return 0;
+     }
+     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
+     s = mkstemp(ftmp);
+     if (s == -1) {
+	 fclose(fp);
+	 warnx("couldn't open temp file `%s'", ftmp);
+	 return 0;
+     }
+     fpwr = fdopen(s, "w");
+     if (fpwr == NULL) {
+	 close(s);
+	 fclose(fp);
+	 warnx("couldn't fdopen temp file `%s'", ftmp);
+	 remove(ftmp);
+	 return 0;
+     }
+     while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
+	 if (fbuf[strlen(fbuf)-1] == '\n')
+	     fbuf[strlen(fbuf)-1] = '\0';
+	 if (strcmp(fbuf, pkg2delname))		/* no match */
+	     fputs(fbuf, fpwr), putc('\n', fpwr);
+     }
+     (void) fclose(fp);
+     if (fchmod(s, 0644) == FAIL) {
+	 warnx("error changing permission of temp file `%s'", ftmp);
+	 fclose(fpwr);
+	 remove(ftmp);
+	 return 0;
+     }
+     if (fclose(fpwr) == EOF) {
+	 warnx("error closing temp file `%s'", ftmp);
+	 remove(ftmp);
+	 return 0;
+     }
+     if (rename(ftmp, fname) == -1)
+	 warnx("error renaming `%s' to `%s'", ftmp, fname);
+     remove(ftmp);			/* just in case */
+     
+     return 0;
+}
 
 /* This is seriously ugly code following.  Written very fast! */
 static int
@@ -161,81 +227,12 @@ pkg_do(char *pkg)
     return 0;
 }
 
-
-static void
-sanity_check(char *pkg)
-{
-    if (!fexists(CONTENTS_FNAME)) {
-	cleanup(0);
-	errx(2, "installed package %s has no %s file!", pkg, CONTENTS_FNAME);
-    }
-}
-
-void
-cleanup(int sig)
-{
-    /* Nothing to do */
-    if(sig)	/* in case this is ever used as a signal handler */
-	exit(1);
-}
-
-/* deppkgname is the pkg from which's +REQUIRED_BY file we are
- * about to remove pkg2delname. This function is called from
- * findmatchingname(), deppkgname is expanded from a (possible) pattern.
- */
 int
-undepend(const char *deppkgname, char *pkg2delname)
+pkg_perform(char **pkgs)
 {
-     char fname[FILENAME_MAX], ftmp[FILENAME_MAX];
-     char fbuf[FILENAME_MAX];
-     FILE *fp, *fpwr;
-     char *tmp;
-     int s;
+    int i, err_cnt = 0;
 
-     (void) snprintf(fname, sizeof(fname), "%s/%s/%s",
-	     (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR,
-	     deppkgname, REQUIRED_BY_FNAME);
-     fp = fopen(fname, "r");
-     if (fp == NULL) {
-	 warnx("couldn't open dependency file `%s'", fname);
-	 return 0;
-     }
-     (void) snprintf(ftmp, sizeof(ftmp), "%s.XXXXXX", fname);
-     s = mkstemp(ftmp);
-     if (s == -1) {
-	 fclose(fp);
-	 warnx("couldn't open temp file `%s'", ftmp);
-	 return 0;
-     }
-     fpwr = fdopen(s, "w");
-     if (fpwr == NULL) {
-	 close(s);
-	 fclose(fp);
-	 warnx("couldn't fdopen temp file `%s'", ftmp);
-	 remove(ftmp);
-	 return 0;
-     }
-     while (fgets(fbuf, sizeof(fbuf), fp) != NULL) {
-	 if (fbuf[strlen(fbuf)-1] == '\n')
-	     fbuf[strlen(fbuf)-1] = '\0';
-	 if (strcmp(fbuf, pkg2delname))		/* no match */
-	     fputs(fbuf, fpwr), putc('\n', fpwr);
-     }
-     (void) fclose(fp);
-     if (fchmod(s, 0644) == FAIL) {
-	 warnx("error changing permission of temp file `%s'", ftmp);
-	 fclose(fpwr);
-	 remove(ftmp);
-	 return 0;
-     }
-     if (fclose(fpwr) == EOF) {
-	 warnx("error closing temp file `%s'", ftmp);
-	 remove(ftmp);
-	 return 0;
-     }
-     if (rename(ftmp, fname) == -1)
-	 warnx("error renaming `%s' to `%s'", ftmp, fname);
-     remove(ftmp);			/* just in case */
-     
-     return 0;
+    for (i = 0; pkgs[i]; i++)
+	err_cnt += pkg_do(pkgs[i]);
+    return err_cnt;
 }

@@ -1,11 +1,11 @@
-/*	$NetBSD: perform.c,v 1.25 1998/10/09 18:27:32 agc Exp $	*/
+/*	$NetBSD: perform.c,v 1.26 1998/10/12 12:03:25 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.25 1998/10/09 18:27:32 agc Exp $");
+__RCSID("$NetBSD: perform.c,v 1.26 1998/10/12 12:03:25 agc Exp $");
 #endif
 #endif
 
@@ -36,27 +36,8 @@ __RCSID("$NetBSD: perform.c,v 1.25 1998/10/09 18:27:32 agc Exp $");
 #include <signal.h>
 #include <sys/wait.h>
 
-static int pkg_do(char *);
-static int sanity_check(char *);
 static char LogDir[FILENAME_MAX];
 static int zapLogDir;          /* Should we delete LogDir? */
-
-int
-pkg_perform(char **pkgs)
-{
-    int i, err_cnt = 0;
-
-    signal(SIGINT, cleanup);
-    signal(SIGHUP, cleanup);
-
-    if (AddMode == SLAVE)
-	err_cnt = pkg_do(NULL);
-    else {
-	for (i = 0; pkgs[i]; i++)
-	    err_cnt += pkg_do(pkgs[i]);
-    }
-    return err_cnt;
-}
 
 static package_t Plist;
 static char *Home;
@@ -66,8 +47,26 @@ static char *Home;
 static int
 check_if_installed(const char *found, char *note)
 {
-    strcpy(note, found);
-    return 0;
+	(void) strcpy(note, found);
+	return 0;
+}
+
+static int
+sanity_check(char *pkg)
+{
+    int code = 0;
+
+    if (!fexists(CONTENTS_FNAME)) {
+	warnx("package %s has no CONTENTS file!", pkg);
+	code = 1;
+    } else if (!fexists(COMMENT_FNAME)) {
+	warnx("package %s has no COMMENT file!", pkg);
+	code = 1;
+    } else if (!fexists(DESC_FNAME)) {
+	warnx("package %s has no DESC file!", pkg);
+	code = 1;
+    }
+    return code;
 }
 
 /*
@@ -567,26 +566,6 @@ pkg_do(char *pkg)
     return code;
 }
 
-static int
-sanity_check(char *pkg)
-{
-    int code = 0;
-
-    if (!fexists(CONTENTS_FNAME)) {
-	warnx("package %s has no CONTENTS file!", pkg);
-	code = 1;
-    }
-    else if (!fexists(COMMENT_FNAME)) {
-	warnx("package %s has no COMMENT file!", pkg);
-	code = 1;
-    }
-    else if (!fexists(DESC_FNAME)) {
-	warnx("package %s has no DESC file!", pkg);
-	code = 1;
-    }
-    return code;
-}
-
 void
 cleanup(int signo)
 {
@@ -608,4 +587,21 @@ cleanup(int signo)
     }
     signal(SIGINT, oldint);
     signal(SIGHUP, oldhup);
+}
+
+int
+pkg_perform(char **pkgs)
+{
+    int i, err_cnt = 0;
+
+    signal(SIGINT, cleanup);
+    signal(SIGHUP, cleanup);
+
+    if (AddMode == SLAVE)
+	err_cnt = pkg_do(NULL);
+    else {
+	for (i = 0; pkgs[i]; i++)
+	    err_cnt += pkg_do(pkgs[i]);
+    }
+    return err_cnt;
 }
