@@ -1,4 +1,4 @@
-/*	$NetBSD: rmt.c,v 1.8 1997/10/17 08:05:30 mrg Exp $	*/
+/*	$NetBSD: rmt.c,v 1.9 1997/10/17 13:03:25 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,17 +33,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-static char copyright[] =
-"@(#) Copyright (c) 1983, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)rmt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: rmt.c,v 1.8 1997/10/17 08:05:30 mrg Exp $";
+__RCSID("$NetBSD: rmt.c,v 1.9 1997/10/17 13:03:25 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -81,6 +81,7 @@ FILE	*debug;
 
 char	*checkbuf __P((char *, int));
 void	 error __P((int));
+int	 main __P((int, char **));
 void	 getstring __P((char *));
 
 int
