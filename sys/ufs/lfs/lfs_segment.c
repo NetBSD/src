@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.50 2000/06/22 18:11:45 perseant Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.51 2000/06/27 20:00:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -562,8 +562,11 @@ lfs_segwrite(mp, flags)
 				segusep->su_flags &= ~SEGUSE_ACTIVE;
 				
 			/* But the current segment is still ACTIVE */
-			if (fs->lfs_curseg/fs->lfs_sepb==(ibno-fs->lfs_cleansz))
-				((SEGUSE *)(bp->b_data))[fs->lfs_curseg%fs->lfs_sepb].su_flags |= SEGUSE_ACTIVE;
+			segusep = (SEGUSE *)bp->b_data;
+			if (datosn(fs, fs->lfs_curseg) / fs->lfs_sepb ==
+			    (ibno-fs->lfs_cleansz))
+				segusep[datosn(fs, fs->lfs_curseg) %
+					fs->lfs_sepb].su_flags |= SEGUSE_ACTIVE;
 			error = VOP_BWRITE(bp);
 		}
 	}
