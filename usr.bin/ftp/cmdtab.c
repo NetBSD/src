@@ -1,7 +1,7 @@
-/*	$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.35 2000/05/01 09:44:54 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.4 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.34 1999/11/12 02:50:38 lukem Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.35 2000/05/01 09:44:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -116,6 +116,7 @@ char	macdefhelp[] =  "define a macro";
 char	mdeletehelp[] =	"delete multiple files";
 char	mdirhelp[] =	"list contents of multiple remote directories";
 char	mgethelp[] =	"get multiple files";
+char	fgethelp[] =	"get files using a localfile as a source of names";
 char	mkdirhelp[] =	"make directory on the remote machine";
 char	mlshelp[] =	"list contents of multiple remote directories";
 char	modehelp[] =	"set file transfer mode";
@@ -197,6 +198,7 @@ struct cmd cmdtab[] = {
 	{ "edit",	edithelp,	0, 0, 0, CMPL0		setedit },
 	{ "epsv4",	epsv4help,	0, 0, 0, CMPL0		setepsv4 },
 	{ "exit",	quithelp,	0, 0, 0, CMPL0		quit },
+	{ "fget",	fgethelp,	1, 1, 1, CMPL(l)	fget },
 	{ "form",	formhelp,	0, 1, 1, CMPL0		setform },
 	{ "ftp",	connecthelp,	0, 0, 1, CMPL0		setpeer },
 	{ "gate",	gatehelp,	0, 0, 0, CMPL0		setgate },
