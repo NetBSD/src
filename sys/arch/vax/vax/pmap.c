@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.61.2.2 2000/01/31 19:22:56 he Exp $	   */
+/*	$NetBSD: pmap.c,v 1.61.2.3 2000/03/01 12:46:37 he Exp $	   */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -448,7 +448,7 @@ if (startpmapdebug)
 	s = splimp();
 	if (pv->pv_pte == ptp) {
 		g = (int *)pv->pv_pte;
-		if ((pv->pv_attr & (PG_V|PG_M)) == 0)
+		if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 			pv->pv_attr |= g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 		pv->pv_pte = 0;
 		pv->pv_pmap->pm_stats.resident_count--;
@@ -461,7 +461,7 @@ if (startpmapdebug)
 			pf = pl->pv_next;
 			pl->pv_next = pl->pv_next->pv_next;
 			g = (int *)pf->pv_pte;
-			if ((pv->pv_attr & (PG_V|PG_M)) == 0)
+			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			pf->pv_pmap->pm_stats.resident_count--;
@@ -1151,7 +1151,7 @@ pmap_page_protect(pa, prot)
 		g = (int *)pv->pv_pte;
 		s = splimp();
 		if (g) {
-			if ((pv->pv_attr & (PG_V|PG_M)) == 0)
+			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |= 
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
@@ -1163,7 +1163,7 @@ pmap_page_protect(pa, prot)
 		pv->pv_next = 0;
 		while (pl) {
 			g = (int *)pl->pv_pte;
-			if ((pv->pv_attr & (PG_V|PG_M)) == 0)
+			if ((pv->pv_attr & (PG_V|PG_M)) != (PG_V|PG_M))
 				pv->pv_attr |=
 				    g[0]|g[1]|g[2]|g[3]|g[4]|g[5]|g[6]|g[7];
 			bzero(g, sizeof(struct pte) * LTOHPN);
