@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3x.c,v 1.3 2002/05/23 03:50:37 nathanw Exp $	*/
+/*	$NetBSD: sun3x.c,v 1.4 2002/05/30 22:31:57 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  * We need to get the sun3x NBSG definition, even if we're
  * building this with a different sun68k target.
  */
-#include <arch/sun3/include/param3x.h>
+#include <arch/sun3/include/param.h>
 
 #include <sys/param.h>
 #include <machine/mon.h>
