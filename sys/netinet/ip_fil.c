@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.4 1997/01/08 21:45:39 veego Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.5 1997/03/18 07:14:45 cgd Exp $	*/
 
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
@@ -74,7 +74,7 @@ caddr_t	iplh = iplbuf, iplt = iplbuf;
 static	int	iplused = 0;
 #endif /* IPFILTER_LOG */
 static	void	frflush __P((caddr_t data));
-static	int	frrequest __P((int req, caddr_t data, int set));
+static	int	frrequest __P((u_long req, caddr_t data, int set));
 static	int	(*fr_savep) __P((ip_t *ip, int hlen, struct ifnet *ifp, int out,
 				 struct mbuf **mp));
 static	void	frzerostats __P((caddr_t data));
@@ -389,7 +389,8 @@ int mode;
 
 
 static int frrequest(req, data, set)
-int req, set;
+u_long req;
+int set;
 caddr_t data;
 {
 	register frentry_t *fp, *f, **fprev;
