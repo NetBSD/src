@@ -1,4 +1,4 @@
-.\" $NetBSD: setproctitle.3,v 1.10 2000/06/14 17:25:05 cgd Exp $
+.\" $NetBSD: setproctitle.3,v 1.11 2001/02/19 22:20:15 cgd Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -70,7 +70,8 @@ setproctitle("foo! (%d)", getpid());
 .Sh SEE ALSO
 .Xr ps 1 ,
 .Xr w 1 ,
-.Xr printf 3
+.Xr printf 3 ,
+.Xr getprogname 3
 .Sh HISTORY
 The
 .Fn setproctitle
