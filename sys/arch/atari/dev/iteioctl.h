@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.3 2003/08/07 16:27:01 agc Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.4 2004/05/18 20:08:51 he Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,11 @@
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
  */
 
+#ifndef _MACHINE_ITEIOCTL_H_
+#define _MACHINE_ITEIOCTL_H_
+
+#include <machine/kbdmap.h>
+
 struct itewinsize {
 	int x;			/* leftedge offset to the right */
 	int y;			/* topedge offset down */
@@ -115,3 +120,4 @@ struct iterepeat {
 
 #define ITESWITCH	_IOW('Z',0x69, int)	/* XXX */
 
+#endif /* _MACHINE_ITEIOCTL_H_ */

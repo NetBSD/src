@@ -1,4 +1,4 @@
-/*	$NetBSD: vuid_event.h,v 1.2 2003/08/07 16:27:02 agc Exp $	*/
+/*	$NetBSD: vuid_event.h,v 1.3 2004/05/18 20:08:51 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,9 @@
  * from: Header: vuid_event.h,v 1.4 92/11/26 01:20:27 torek Exp  (LBL)
  */
 
+#ifndef _MACHINE_VUID_EVENT_H_
+#define _MACHINE_VUID_EVENT_H_
+
 /*
  * The following is a minimal emulation of Sun's `Firm_event' structures
  * and related operations necessary to make X11 happy (i.e., make it
@@ -81,3 +84,5 @@ typedef struct firm_event {
 #define	VUIDSFORMAT	_IOW('v', 1, int)
 #define	VUIDGFORMAT	_IOR('v', 2, int)
 #define	VUID_FIRM_EVENT	1	/* the only format we support */
+
+#endif /* _MACHINE_VUID_EVENT_H_ */

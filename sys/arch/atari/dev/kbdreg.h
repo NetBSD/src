@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.3 2003/08/07 16:27:02 agc Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.4 2004/05/18 20:08:51 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,9 @@
  * from: Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
 
+#ifndef _MACHINE_KBDREG_H_
+#define _MACHINE_KBDREG_H_
+
 struct kbdbell {
 	u_int volume;		/* volume of bell (0-64) */
 	u_int pitch;		/* pitch of bell (10-20000) */
@@ -55,3 +58,5 @@ struct kbdbell {
 #define	KIOCRINGBELL	_IOW('k', 15, struct kbdbell) /* ring bell */
 
 #define	TR_UNTRANS_EVENT	3
+
+#endif /* _MACHINE_KBDREG_H_ */
