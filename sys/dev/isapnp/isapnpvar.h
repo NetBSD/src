@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.9 1998/07/23 19:30:46 christos Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.10 1998/07/30 18:02:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -184,6 +184,7 @@ void isapnp_unconfig __P((bus_space_tag_t, bus_space_tag_t,
 struct isapnp_devinfo;
 int isapnp_devmatch __P((const struct isapnp_attach_args *,
     const struct isapnp_devinfo *));
+void isapnp_isa_attach_hook __P((struct isa_softc *));
 #endif
 
 #ifdef DEBUG_ISAPNP

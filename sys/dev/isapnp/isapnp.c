@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnp.c,v 1.20 1998/07/23 19:30:45 christos Exp $	*/
+/*	$NetBSD: isapnp.c,v 1.21 1998/07/30 18:02:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -571,6 +571,7 @@ isapnp_submatch(parent, match, aux)
 	return ((*cf->cf_attach->ca_match)(parent, match, aux));
 }
 
+
 /* isapnp_devmatch():
  *	Match a probed device with the information from the driver
  */
@@ -590,6 +591,35 @@ isapnp_devmatch(ipa, dinfo)
 			return 1;
 
 	return 0;
+}
+
+
+/* isapnp_isa_attach_hook():
+ *	This routine is called from the isa attach code and
+ *	is a kludge; we are resetting all the cards here in order
+ *	to undo any card configuration that the bios did for us, in order
+ *	to avoid having the PnP devices match an isa probe. The correct
+ *	way of doing this is to read the PnP BIOS and find the card settings
+ *	from there. Unfortunately it is not as easy as it sounds.
+ */
+void
+isapnp_isa_attach_hook(isa_sc)
+	struct isa_softc *isa_sc;
+{
+	struct isapnp_softc sc;
+	
+	sc.sc_iot = isa_sc->sc_iot;
+	sc.sc_ncards = 0;
+
+	if (isapnp_map(&sc))
+		return;
+
+	isapnp_init(&sc);
+
+	isapnp_write_reg(&sc, ISAPNP_CONFIG_CONTROL, ISAPNP_CC_RESET_DRV);
+	DELAY(2000);
+
+	isapnp_unmap(&sc);
 }
 #endif
 
