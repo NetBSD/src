@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2003/05/07 10:20:20 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/05/07 19:02:55 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:20:57 thorpej Exp 	*/
 
@@ -98,54 +98,7 @@ menu editpart, title  "Wybierz aby zmienic";
 			   msg_display_add(MSG_newline);
 			};
 	option "Rodzaj", sub menu chooseid;
-	option "Poczatek i rozmiar", action 
-		{	char buf[40]; int start, size, inp, partn;
-
-			msg_table_add(MSG_mbrpart_start_special);
-			msg_prompt_add (MSG_start, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: start at end of part # given
-			 * 0: start of disk.
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				start = part[partn].mbrp_start +
-				    part[partn].mbrp_size;
-			} else if (inp == 0)
-				start = bsec;
-			else
-				start = NUMSEC(inp,sizemult,dlcylsize);
-
-			if (sizemult > 1 && start < bsec)
-				start = bsec;
-			msg_table_add(MSG_mbrpart_size_special);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: until start of part # given
-			 * 0: end of disk
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				size = part[partn].mbrp_start - start;
-			} else if (inp == 0)
-				size = dlsize - start;
-			else
-				size = NUMSEC(inp,sizemult,dlcylsize);
-			if (sizemult > 1 && start == bsec)
-				size -= bsec;
-			if (start + size > bsize)
-				size = bsize - start;
-			if (size < 0) {
-				size = 0;
-				start = 0;
-			}
-			part[editpart].mbrp_start = start;
-			part[editpart].mbrp_size = size;
-		};
+	option "Poczatek i rozmiar", action { edit_ptn_bounds(); };
 	option "Ustaw aktywna", action { activepart = editpart; };
 	option "Partycje OK", exit;
 

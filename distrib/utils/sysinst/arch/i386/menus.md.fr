@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.36 2003/05/07 10:20:22 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.37 2003/05/07 19:02:58 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -52,7 +52,7 @@ menu getboottype, title "Sélection de Bootblocks";
 
 menu fullpart, y=15, title  "Faite votre choix";
 	option "Utilisation d'une partie du disque", exit, action  {usefull = 0;};
-	option "Utilisation de tout le disque", 	    exit, action  {usefull = 1;};
+	option "Utilisation de tout le disque",	     exit, action  {usefull = 1;};
 
 menu wdtype, title  "Choix du type de disque";
 	display action { msg_display (MSG_wdtype, diskdev); };
@@ -87,10 +87,9 @@ menu dlgeom, title "Choisissez une option";
 			disk->dd_sec = dlsec;
 		};
 
-
 menu editparttable, title  "Choisissez votre partition", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart, -1);
 			};
 	option "Edition de la partition 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -105,44 +104,26 @@ menu editparttable, title  "Choisissez votre partition", exit;
 
 menu editpart, title  "Changement";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], activepart,editpart);
+			   disp_cur_part(&mbr.mbr_parts[0], editpart, -1);
 			   msg_display_add(MSG_newline);
 			};
 	option "du type de FS", sub menu chooseid;
-	option "du Début et de la taille", action 
-		{	char buf[40]; int start, size;
-			msg_prompt_add (MSG_start, NULL, buf, 40);
-			start = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start < bsec)
-				start = bsec;
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			size = NUMSEC(atoi(buf),sizemult,dlcylsize);
-			if (sizemult > 1 && start == bsec)
-				size -= bsec;
-			if (start + size > bsize)
-				size = bsize - start;
-			if (size < 0) {
-				size = 0;
-				start = 0;
-			}
-			part[editpart].mbrp_start = start;
-			part[editpart].mbrp_size = size;
-		};
+	option "du Début et de la taille", action { edit_ptn_bounds(); };
 	option "Rendre la partition active", action { activepart = editpart; };
 	option "Partition OK", exit;
 
 menu chooseid, title  "Type de Partition?";
 	option "NetBSD", 	exit,	action
 	{
-		part[editpart].mbrp_typ = 169;
+		part[editpart].mbrp_typ = MBR_PTYPE_NETBSD;
 	};
 	option "DOS < 32 Meg",	exit,	action
 	{
-		part[editpart].mbrp_typ = 4;
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16S;
 	};
 	option "DOS > 32 Meg",	exit,	action
 	{
-		part[editpart].mbrp_typ = 6;
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16B;
 	};
 	option "inutilis'e",	exit,	action
 	{
@@ -161,7 +142,7 @@ menu cyl1024;
 
 		c1024_resp = 1;
 	};
-    option "Rééditer le label", exit, action
+	option "Rééditer le label", exit, action
 	{
 		extern int c1024_resp;
 
@@ -264,91 +245,39 @@ menu biosmultmatch;
 	};
 
 menu configbootsel, title  "Changer une entree du menu", exit;
-        display action  { msg_display(MSG_configbootsel);
-                          disp_bootsel(&mbr.mbr_parts[0], mbs);
-			  msg_display_add(MSG_bootseltimeout, (10 * mbs->mbrb_timeo + 9) / 182);
-			  msg_display_add(MSG_defbootselopt);
-			  if (mbs->mbrb_defkey == SCAN_ENTER)
-			  	msg_display_add(MSG_defbootseloptactive);
-			  else if (mbs->mbrb_defkey < (SCAN_F1 + 4))
-				msg_display_add(MSG_defbootseloptpart,
-				    defbootselpart);
-			  else
-				msg_display_add(MSG_defbootseloptdisk,
-				    defbootseldisk);
-                        };
+        display action  { disp_bootsel(); };
         option "Changer l'entrée 0 du menu",
-		action {
-			if (part[0].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[0],
-				    mbs->mbrb_nametab[0], 8);
-		};
+		action { edit_bootsel_entry(0); };
         option "Changer l'entrée 1 du menu",
-		action {
-			if (part[1].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[1],
-				    mbs->mbrb_nametab[1], 8);
-		};
+		action { edit_bootsel_entry(1); };
         option "Changer l'entrée 2 du menu",
-		action {
-			if (part[2].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[2],
-				    mbs->mbrb_nametab[2], 8);
-		};
+		action { edit_bootsel_entry(2); };
         option "Changer l'entrée 3 du menu",
-		action {
-			if (part[3].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[3],
-				    mbs->mbrb_nametab[3], 8);
-		};
+		action { edit_bootsel_entry(3); };
 	option "Changer le temps d'attente",
-		action {
-			char tstr[8];
-			unsigned timo;
-
-			do {
-				snprintf(tstr, 8, "%u",
-				    (10 * mbs->mbrb_timeo + 9) / 182);
-				msg_prompt(MSG_bootseltimeoutval, tstr, tstr,
-				    8);
-				timo = (unsigned)atoi(tstr);
-			} while (timo > 3600);
-			mbs->mbrb_timeo = (u_int16_t)((timo * 182) / 10);
-		};
+		action { edit_bootsel_timeout(); };
 	option "Changer le choix par defaut", sub menu defaultbootsel;
 
 menu defaultbootsel, title "Choisissez un disque ou partition";
-	option "Partition 0", exit,
-		action {
-			if (mbs->mbrb_nametab[0][0] != 0 && part[0].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1; defbootselpart = 0;
-		};
-	option "Partition 1", exit,
-		action {
-			if (mbs->mbrb_nametab[1][0] != 0 && part[1].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 1; defbootselpart = 1;
-		};
-	option "Partition 2", exit,
-		action {
-			if (mbs->mbrb_nametab[2][0] != 0 && part[2].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 2; defbootselpart = 2;
-		};
-	option "Partition 3", exit,
-		action {
-			if (mbs->mbrb_nametab[3][0] != 0 && part[3].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 3; defbootselpart = 3;
-		};
-	option "Disque dur 0", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 4; defbootseldisk = 0; };
-	option "Disque dur 1", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 5; defbootseldisk = 1; };
-	option "Disque dur 2", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 6; defbootseldisk = 2; };
-	option "Disque dur 3", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 7; defbootseldisk = 3; };
-	option "Disque dur 4", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 8; defbootseldisk = 4; };
-	option "Disque dur 5", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 9; defbootseldisk = 5; };
 	option "Première partition active", exit,
 		action { mbs->mbrb_defkey = SCAN_ENTER; };
+	option "Partition 0", exit,
+		action { edit_bootsel_default_ptn(0); };
+	option "Partition 1", exit,
+		action { edit_bootsel_default_ptn(1); };
+	option "Partition 2", exit,
+		action { edit_bootsel_default_ptn(2); };
+	option "Partition 3", exit,
+		action { edit_bootsel_default_ptn(3); };
+	option "Disque dur 0", exit,
+		action { edit_bootsel_default_disk(0); };
+	option "Disque dur 1", exit,
+		action { edit_bootsel_default_disk(1); };
+	option "Disque dur 2", exit,
+		action { edit_bootsel_default_disk(2); };
+	option "Disque dur 3", exit,
+		action { edit_bootsel_default_disk(3); };
+	option "Disque dur 4", exit,
+		action { edit_bootsel_default_disk(4); };
+	option "Disque dur 5", exit,
+		action { edit_bootsel_default_disk(5); };

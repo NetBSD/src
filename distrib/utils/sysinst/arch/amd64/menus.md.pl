@@ -1,6 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.3 2003/05/07 10:20:19 dsl Exp $	*/
-/*	Based on english version: */
-/*	NetBSD: menus.md.en,v 1.36 2001/11/29 23:20:58 thorpej Exp 	*/
+/*	$NetBSD: menus.md.pl,v 1.4 2003/05/07 19:02:54 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,12 +39,20 @@
 /* Menu definitions for sysinst. i386 version, machine dependent. */
 
 menu getboottype, title "Wybor bootblokow";
-	option "Uzyj normalnych bootblokow", exit, action  {boottype = "normal";};
-	option "Uzyj bootblokow na zewn. konsole", exit, action  {boottype = "serial";};
+	option "Uzyj normalnych bootblokow", exit, action
+	    {boottype = "normal";};
+	option "Uzyj bootblokow na zewn. konsole (9600)", exit, action
+	    {boottype = "serial9600";};
+	option "Uzyj bootblokow na zewn. konsole (38400)", exit, action
+	    {boottype = "serial38400";};
+	option "Uzyj bootblokow na zewn. konsole (57600)", exit, action
+	    {boottype = "serial57600";};
+	option "Uzyj bootblokow na zewn. konsole (115200)", exit, action
+	    {boottype = "serial115200";};
 
 menu fullpart, title  "Wybierz";
 	option "Uzyj tylko czesci dysku", exit, action  {usefull = 0;};
-	option "Uzyj calego dysku", 	    exit, action  {usefull = 1;};
+	option "Uzyj calego dysku", 	  exit, action  {usefull = 1;};
 
 menu wdtype, title  "Wybierz typ";
 	display action { msg_display (MSG_wdtype, diskdev); };
@@ -83,7 +89,7 @@ menu dlgeom, title "Wybierz opcje";
 
 menu editparttable, title  "Wybierz swoje partycje", exit;
 	display action  { msg_display (MSG_editparttable);
-			  disp_cur_part(&mbr.mbr_parts[0], activepart,-1);
+			  disp_cur_part(&mbr.mbr_parts[0], activepart, -1);
 			};
 	option "Edytuj partycje 0",  sub menu editpart,
 		action  { editpart = 0; };
@@ -98,78 +104,32 @@ menu editparttable, title  "Wybierz swoje partycje", exit;
 
 menu editpart, title  "Wybierz aby zmienic";
 	display action { msg_display (MSG_editpart, editpart);
-			   disp_cur_part(&mbr.mbr_parts[0], editpart,-1);
+			   disp_cur_part(&mbr.mbr_parts[0], editpart, -1);
 			   msg_display_add(MSG_newline);
 			};
 	option "Rodzaj", sub menu chooseid;
-	option "Poczatek i rozmiar", action 
-		{	char buf[40]; int start, size, inp, partn;
-
-			msg_table_add(MSG_mbrpart_start_special);
-			msg_prompt_add (MSG_start, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: start at end of part # given
-			 * 0: start of disk.
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				start = part[partn].mbrp_start +
-				    part[partn].mbrp_size;
-			} else if (inp == 0)
-				start = bsec;
-			else
-				start = NUMSEC(inp,sizemult,dlcylsize);
-
-			if (sizemult > 1 && start < bsec)
-				start = bsec;
-			msg_table_add(MSG_mbrpart_size_special);
-			msg_prompt_add (MSG_size, NULL, buf, 40);
-			inp = atoi(buf);
-			/*
-			 * -0, -1, -2, -3: until start of part # given
-			 * 0: end of disk
-			 */
-			if ((inp == 0 && buf[0] == '-') ||
-			    (inp < 0 && inp >= -3)) {
-				partn = -inp;
-				size = part[partn].mbrp_start - start;
-			} else if (inp == 0)
-				size = dlsize - start;
-			else
-				size = NUMSEC(inp,sizemult,dlcylsize);
-			if (sizemult > 1 && start == bsec)
-				size -= bsec;
-			if (start + size > bsize)
-				size = bsize - start;
-			if (size < 0) {
-				size = 0;
-				start = 0;
-			}
-			part[editpart].mbrp_start = start;
-			part[editpart].mbrp_size = size;
-		};
+	option "Poczatek i rozmiar", action { edit_ptn_bounds(); };
 	option "Ustaw aktywna", action { activepart = editpart; };
 	option "Partycje OK", exit;
 
 menu chooseid, title  "Rodzaj partycji?";
 	option "NetBSD", 	exit,	action
 	{
-		part[editpart].mbrp_typ = 169;
+		part[editpart].mbrp_typ = MBR_PTYPE_NETBSD;
 	};
 	option "DOS < 32 Meg",	exit,	action
 	{
-		part[editpart].mbrp_typ = 4;
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16S;
 	};
 	option "DOS > 32 Meg",	exit,	action
 	{
-		part[editpart].mbrp_typ = 6;
+		part[editpart].mbrp_typ = MBR_PTYPE_FAT16B;
 	};
 	option "nie uzywana",	exit,	action
 	{
 		part[editpart].mbrp_typ = 0;
 	};
+	option "nie zmienia",	exit;
 
 menu cyl1024;
 	display action {
@@ -285,91 +245,39 @@ menu biosmultmatch;
 	};
 
 menu configbootsel, y=16, title  "Zmien bootmenu", exit;
-        display action  { msg_display(MSG_configbootsel);
-                          disp_bootsel(&mbr.mbr_parts[0], mbs);
-			  msg_display_add(MSG_bootseltimeout, (1000 * mbs->mbrb_timeo) / 18200);
-			  msg_display_add(MSG_defbootselopt);
-			  if (mbs->mbrb_defkey == SCAN_ENTER)
-			  	msg_display_add(MSG_defbootseloptactive);
-			  else if (mbs->mbrb_defkey < (SCAN_F1 + 4))
-				msg_display_add(MSG_defbootseloptpart,
-				    defbootselpart);
-			  else
-				msg_display_add(MSG_defbootseloptdisk,
-				    defbootseldisk);
-                        };
+        display action  { disp_bootsel(); };
         option "Edytuj wpis 0",
-		action {
-			if (part[0].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[0],
-				    mbs->mbrb_nametab[0], 8);
-		};
+		action { edit_bootsel_entry(0); };
         option "Edytuj wpis 1",
-		action {
-			if (part[1].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[1],
-				    mbs->mbrb_nametab[1], 8);
-		};
+		action { edit_bootsel_entry(1); };
         option "Edytuj wpis 2",
-		action {
-			if (part[2].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[2],
-				    mbs->mbrb_nametab[2], 8);
-		};
+		action { edit_bootsel_entry(2); };
         option "Edytuj wpis 3",
-		action {
-			if (part[3].mbrp_typ != 0)
-				msg_prompt(MSG_bootselitemname, mbs->mbrb_nametab[3],
-				    mbs->mbrb_nametab[3], 8);
-		};
+		action { edit_bootsel_entry(3); };
 	option "Ustaw opoznienie",
-		action {
-			char tstr[8];
-			unsigned timo;
-
-			do {
-				snprintf(tstr, 8, "%u",
-				    (1000 * mbs->mbrb_timeo) / 18200);
-				msg_prompt(MSG_bootseltimeoutval, tstr, tstr,
-				    8);
-				timo = (unsigned)atoi(tstr);
-			} while (timo > 3600);
-			mbs->mbrb_timeo = (u_int16_t)((timo * 18200) / 1000);
-		};
+		action { edit_bootsel_timeout(); };
 	option "Ustaw domyslna opcje", sub menu defaultbootsel;
 
 menu defaultbootsel, title "Wybierz domyslna partycje/dysk do uruchomiania";
-	option "Partycja 0", exit,
-		action {
-			if (mbs->mbrb_nametab[0][0] != 0 && part[0].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1; defbootselpart = 0;
-		};
-	option "Partycja 1", exit,
-		action {
-			if (mbs->mbrb_nametab[1][0] != 0 && part[1].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 1; defbootselpart = 1;
-		};
-	option "Partycja 2", exit,
-		action {
-			if (mbs->mbrb_nametab[2][0] != 0 && part[2].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 2; defbootselpart = 2;
-		};
-	option "Partycja 3", exit,
-		action {
-			if (mbs->mbrb_nametab[3][0] != 0 && part[3].mbrp_typ != 0)
-				mbs->mbrb_defkey = SCAN_F1 + 3; defbootselpart = 3;
-		};
-	option "Dysk twardy 0", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 4; defbootseldisk = 0; };
-	option "Dysk twardy 1", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 5; defbootseldisk = 1; };
-	option "Dysk twardy 2", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 6; defbootseldisk = 2; };
-	option "Dysk twardy 3", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 7; defbootseldisk = 3; };
-	option "Dysk twardy 4", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 8; defbootseldisk = 4; };
-	option "Dysk twardy 5", exit,
-		action { mbs->mbrb_defkey = SCAN_F1 + 9; defbootseldisk = 5; };
 	option "Pierwsza aktywna partycja", exit,
 		action { mbs->mbrb_defkey = SCAN_ENTER; };
+	option "Partycja 0", exit,
+		action { edit_bootsel_default_ptn(0); };
+	option "Partycja 1", exit,
+		action { edit_bootsel_default_ptn(1); };
+	option "Partycja 2", exit,
+		action { edit_bootsel_default_ptn(2); };
+	option "Partycja 3", exit,
+		action { edit_bootsel_default_ptn(3); };
+	option "Dysk twardy 0", exit,
+		action { edit_bootsel_default_disk(0); };
+	option "Dysk twardy 1", exit,
+		action { edit_bootsel_default_disk(1); };
+	option "Dysk twardy 2", exit,
+		action { edit_bootsel_default_disk(2); };
+	option "Dysk twardy 3", exit,
+		action { edit_bootsel_default_disk(3); };
+	option "Dysk twardy 4", exit,
+		action { edit_bootsel_default_disk(4); };
+	option "Dysk twardy 5", exit,
+		action { edit_bootsel_default_disk(5); };
