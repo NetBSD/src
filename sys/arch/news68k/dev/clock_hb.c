@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_hb.c,v 1.1 1999/12/09 14:53:03 tsutsui Exp $	*/
+/*	$NetBSD: clock_hb.c,v 1.2 2000/02/08 16:17:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,8 +70,7 @@ struct cfattach clock_hb_ca = {
 	sizeof(struct device), clock_hb_match, clock_hb_attach
 };
 
-static volatile u_char *ctrl_timer;
-static volatile u_char *ctrl_led;
+extern volatile u_char *ctrl_timer, *ctrl_led;
 extern struct cfdriver clock_cd;
 
 int
@@ -111,9 +110,6 @@ clock_hb_attach(parent, self, aux)
 
 	nvram = (caddr_t)(ha->ha_address - 0x7f8); /* XXX */
 	clockregs = (caddr_t)ha->ha_address;
-
-	ctrl_timer = (u_char *)IIOV(CTRL_TIMER); /* XXX */
-	ctrl_led = (u_char *)IIOV(CTRL_LED); /* XXX */
 
         clock_config(self, clockregs, nvram, MK48T02_SIZE,
 		clock_hb_initclocks);
@@ -179,6 +175,9 @@ clock_intr(cf)
 /* heartbeat LED */
 static u_char led_countdown = 0;
 static u_char led_stat = 0;
+
+#define LED0	0x01
+#define LED1	0x02
 
 static void
 leds_intr()

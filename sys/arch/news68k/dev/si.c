@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.2 2000/01/19 16:13:50 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.3 2000/02/08 16:17:32 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 #include <news68k/dev/dmac_0266.h>
 
 #define MIN_DMA_LEN 128
+#define DMAC_BASE	0xe0e80000 /* XXX */
 
 struct si_dma_handle {
 	int	dh_flags;
@@ -126,14 +127,7 @@ si_match(parent, cf, aux)
 	if (strcmp(ha->ha_name, "si"))
 		return 0;
 
-	switch(cf->cf_unit) {
-
-	case 0:
-		addr = IIOV(SCSI_BASE);	/* XXX hard coded now... */
-		break;
-	default:
-		return 0;
-	}
+	addr = IIOV(ha->ha_address);
 
 	if (badaddr((void *)addr, 1))
 		return 0;
@@ -153,7 +147,7 @@ si_attach(parent, self, aux)
 	struct si_softc *sc = (struct si_softc *)self;
 	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
 	struct cfdata *cf = self->dv_cfdata;
-	/* struct hb_attach_args *ha = aux; */
+	struct hb_attach_args *ha = aux;
 	u_char *addr;
 
 	/* Get options from config flags if specified. */
@@ -182,15 +176,15 @@ si_attach(parent, self, aux)
 		/* Override this function pointer. */
 		ncr_sc->sc_dma_alloc = NULL;
 
-	addr = (u_char *)IIOV(SCSI_BASE);
-	ncr_sc->sci_r0 = addr++;
-	ncr_sc->sci_r1 = addr++;
-	ncr_sc->sci_r2 = addr++;
-	ncr_sc->sci_r3 = addr++;
-	ncr_sc->sci_r4 = addr++;
-	ncr_sc->sci_r5 = addr++;
-	ncr_sc->sci_r6 = addr++;
-	ncr_sc->sci_r7 = addr;
+	addr = (u_char *)IIOV(ha->ha_address);
+	ncr_sc->sci_r0 = addr + 0;
+	ncr_sc->sci_r1 = addr + 1;
+	ncr_sc->sci_r2 = addr + 2;
+	ncr_sc->sci_r3 = addr + 3;
+	ncr_sc->sci_r4 = addr + 4;
+	ncr_sc->sci_r5 = addr + 5;
+	ncr_sc->sci_r6 = addr + 6;
+	ncr_sc->sci_r7 = addr + 7;
 
 	ncr_sc->sc_pio_in  = ncr5380_pio_in;
 	ncr_sc->sc_pio_out = ncr5380_pio_out;
