@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.5 2002/01/18 13:51:01 shin Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.6 2002/01/27 14:18:13 takemura Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -42,7 +42,7 @@
 #include <dev/pci/pciidereg.h>
 
 #include <hpcmips/vr/icureg.h>
-#include <hpcmips/vr/vripvar.h>
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vrpciureg.h>
 
 #include "pci.h"
@@ -160,7 +160,7 @@ vrpciu_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_intr, IPL_TTY,
+	sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0, IPL_TTY,
 	    vrpciu_intr, sc);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt\n");

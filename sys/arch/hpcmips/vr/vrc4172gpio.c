@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.2 2001/05/09 12:00:58 shin Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.3 2002/01/27 14:18:12 takemura Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -40,6 +40,7 @@
 
 #include <dev/hpc/hpciovar.h>
 
+#include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/vripvar.h>
 #include <hpcmips/vr/vrc4172gpioreg.h>
 
