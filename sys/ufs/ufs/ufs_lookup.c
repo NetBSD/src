@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.41 2002/11/25 01:55:21 thorpej Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.42 2002/11/26 01:23:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.41 2002/11/25 01:55:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.42 2002/11/26 01:23:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,7 @@ ufs_lookup(v)
 	int nameiop = cnp->cn_nameiop;
 	const int needswap = UFS_MPNEEDSWAP(ap->a_dvp->v_mount);
 	int dirblksiz = DIRBLKSIZ;
+	ino_t foundino;
 	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
 		dirblksiz = APPLEUFS_DIRBLKSIZ;
 	}
@@ -343,7 +344,7 @@ searchloop:
 					numdirpasses--;
 					goto notfound;
 				}
-				dp->i_ino = ufs_rw32(ep->d_ino, needswap);
+				foundino = ufs_rw32(ep->d_ino, needswap);
 				dp->i_reclen = ufs_rw16(ep->d_reclen, needswap);
 				goto found;
 			}
@@ -486,14 +487,14 @@ found:
 			dp->i_count = 0;
 		else
 			dp->i_count = dp->i_offset - prevoff;
-		if (dp->i_number == dp->i_ino) {
+		if (dp->i_number == foundino) {
 			VREF(vdp);
 			*vpp = vdp;
 			return (0);
 		}
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -533,11 +534,11 @@ found:
 		 * Careful about locking second inode.
 		 * This can only occur if the target is ".".
 		 */
-		if (dp->i_number == dp->i_ino)
+		if (dp->i_number == foundino)
 			return (EISDIR);
 		if (flags & ISDOTDOT)
 			VOP_UNLOCK(vdp, 0); /* race to get the inode */
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (flags & ISDOTDOT)
 			vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error)
@@ -574,7 +575,7 @@ found:
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0);	/* race to get the inode */
 		cnp->cn_flags |= PDIRUNLOCK;
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error) {
 			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY) == 0)
 				cnp->cn_flags &= ~PDIRUNLOCK;
@@ -588,11 +589,11 @@ found:
 			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = tdp;
-	} else if (dp->i_number == dp->i_ino) {
+	} else if (dp->i_number == foundino) {
 		VREF(vdp);	/* we want ourself, ie "." */
 		*vpp = vdp;
 	} else {
-		error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp);
+		error = VFS_VGET(vdp->v_mount, foundino, &tdp);
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN)) {
