@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_mca.c,v 1.1 2001/03/23 19:25:35 jdolecek Exp $	*/
+/*	$NetBSD: if_we_mca.c,v 1.2 2001/03/29 08:56:27 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -63,18 +63,13 @@
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/mbuf.h>
-#include <sys/syslog.h>
 
 #include <net/if.h>
-#include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/if_media.h>
-
 #include <net/if_ether.h>
 
 #include <machine/bus.h>
-#include <machine/bswap.h>
-#include <machine/intr.h>
 
 #include <dev/mca/mcareg.h>
 #include <dev/mca/mcavar.h>
