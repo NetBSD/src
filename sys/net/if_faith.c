@@ -1,4 +1,5 @@
-/*	$NetBSD: if_faith.c,v 1.11 2000/03/30 09:45:35 augustss Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.11.4.1 2001/05/09 19:37:00 he Exp $	*/
+/*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -33,7 +34,7 @@
  * SUCH DAMAGE.
  */
 /*
- * derived from 
+ * derived from
  *	@(#)if_loop.c	8.1 (Berkeley) 6/10/93
  * Id: if_loop.c,v 1.22 1996/06/19 16:24:10 wollman Exp
  */
@@ -61,6 +62,7 @@
 #include <net/netisr.h>
 #include <net/route.h>
 #include <net/bpf.h>
+#include <net/if_faith.h>
 
 #ifdef	INET
 #include <netinet/in.h>
@@ -75,6 +77,7 @@
 #endif
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
+#include <netinet6/ip6_var.h>
 #endif
 
 #include "bpfilter.h"
@@ -224,7 +227,7 @@ faithrtrequest(cmd, rt, sa)
 		 * should be at least twice the MTU plus a little more for
 		 * overhead.
 		 */
-		rt->rt_rmx.rmx_recvpipe = 
+		rt->rt_rmx.rmx_recvpipe =
 			rt->rt_rmx.rmx_sendpipe = 3 * FAITHMTU;
 	}
 }
@@ -289,5 +292,39 @@ faithioctl(ifp, cmd, data)
 		error = EINVAL;
 	}
 	return (error);
+}
+
+/*
+ * XXX could be slow
+ * XXX could be layer violation to call sys/net from sys/netinet6
+ */
+int
+faithprefix(in6)
+	struct in6_addr *in6;
+{
+	struct rtentry *rt;
+	struct sockaddr_in6 sin6;
+	int ret;
+
+	if (ip6_keepfaith == 0)
+		return 0;
+
+	bzero(&sin6, sizeof(sin6));
+	sin6.sin6_family = AF_INET6;
+	sin6.sin6_len = sizeof(struct sockaddr_in6);
+	sin6.sin6_addr = *in6;
+#ifdef __FreeBSD__
+	rt = rtalloc1((struct sockaddr *)&sin6, 0, 0UL);
+#else
+	rt = rtalloc1((struct sockaddr *)&sin6, 0);
+#endif
+	if (rt && rt->rt_ifp && rt->rt_ifp->if_type == IFT_FAITH &&
+	    (rt->rt_ifp->if_flags & IFF_UP) != 0)
+		ret = 1;
+	else
+		ret = 0;
+	if (rt)
+		RTFREE(rt);
+	return ret;
 }
 #endif /* NFAITH > 0 */
