@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.227 2002/09/16 02:35:04 perry Exp $
+#	$NetBSD: Makefile,v 1.228 2002/10/05 15:23:19 grant Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -140,6 +140,8 @@ install-etc-files: check_DESTDIR
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 600 ${BIN3} ${DESTDIR}/etc
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 aliases \
 	    ${DESTDIR}/etc/mail
+	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
+	    ${DESTDIR}/etc/mail/local-host-names
 	${INSTALL_FILE} -o root -g wheel -m 600 crontab \
 	    ${DESTDIR}/var/cron/tabs/root
 	${INSTALL_FILE} -o root -g wheel -m 600 master.passwd ${DESTDIR}/etc
