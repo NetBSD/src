@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.61.2.5 2005/01/17 19:32:55 skrll Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.61.2.6 2005/03/04 16:53:30 skrll Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.61.2.5 2005/01/17 19:32:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.61.2.6 2005/03/04 16:53:30 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -121,6 +121,8 @@ static int ip6_insertfraghdr __P((struct mbuf *, struct mbuf *, int,
 	struct ip6_frag **));
 static int ip6_insert_jumboopt __P((struct ip6_exthdrs *, u_int32_t));
 static int ip6_splithdr __P((struct mbuf *, struct ip6_exthdrs *));
+static int ip6_getpmtu __P((struct route_in6 *, struct route_in6 *,
+	struct ifnet *, struct in6_addr *, u_long *, int *));
 
 /*
  * IP6 output. The packet in mbuf chain m contains a skeletal IP6
@@ -1232,7 +1234,7 @@ ip6_insertfraghdr(m0, m, hlen, frghdrp)
 	return (0);
 }
 
-int
+static int
 ip6_getpmtu(ro_pmtu, ro, ifp, dst, mtup, alwaysfragp)
 	struct route_in6 *ro_pmtu, *ro;
 	struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: qdivrem.c,v 1.9.6.3 2004/09/21 13:35:54 skrll Exp $	*/
+/*	$NetBSD: qdivrem.c,v 1.9.6.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)qdivrem.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qdivrem.c,v 1.9.6.3 2004/09/21 13:35:54 skrll Exp $");
+__RCSID("$NetBSD: qdivrem.c,v 1.9.6.4 2005/03/04 16:52:29 skrll Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,7 +188,7 @@ __qdivrem(uq, vq, arq)
 	v2 = v[2];	/* for D3 */
 	do {
 		digit uj0, uj1, uj2;
-		
+
 		/*
 		 * D3: Calculate qhat (\^q, in TeX notation).
 		 * Let qhat = min((u[j]*B + u[j+1])/v[1], B-1), and

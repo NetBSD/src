@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.57.2.5 2004/09/21 13:33:21 skrll Exp $	*/
+/*	$NetBSD: ch.c,v 1.57.2.6 2005/03/04 16:50:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.5 2004/09/21 13:33:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.6 2005/03/04 16:50:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.57.2.5 2004/09/21 13:33:21 skrll Exp $");
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
-#include <sys/chio.h> 
+#include <sys/chio.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/conf.h>
@@ -517,7 +517,7 @@ static int
 ch_interpret_sense(struct scsipi_xfer *xs)
 {
 	struct scsipi_periph *periph = xs->xs_periph;
-	struct scsipi_sense_data *sense = &xs->sense.scsi_sense;
+	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
 	struct ch_softc *sc = (void *)periph->periph_dev;
 	u_int16_t asc_ascq;
 
@@ -532,8 +532,9 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 	 * If it isn't an extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
-	if ((sense->error_code & SSD_ERRCODE) != 0x70 &&
-	    (sense->error_code & SSD_ERRCODE) != 0x71)
+	if ((sense->response_code & SSD_RCODE_VALID) == 0 ||
+	    (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
+	     SSD_RCODE(sense->response_code) != SSD_RCODE_DEFERRED))
 		return (EJUSTRETURN);
 
 	/*
@@ -543,8 +544,8 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 	 * We use ASC/ASCQ codes for this.
 	 */
 
-	asc_ascq = (((u_int16_t) sense->add_sense_code) << 8) |
-	    sense->add_sense_code_qual;
+	asc_ascq = (((u_int16_t) sense->asc) << 8) |
+	    sense->ascq;
 
 	switch (asc_ascq) {
 	case 0x2800:
@@ -1157,7 +1158,7 @@ static int
 ch_get_params(struct ch_softc *sc, int scsiflags)
 {
 	struct scsi_mode_sense_data {
-		struct scsipi_mode_header header;
+		struct scsi_mode_parameter_header_6 header;
 		union {
 			struct page_element_address_assignment ea;
 			struct page_transport_geometry_parameters tg;

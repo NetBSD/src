@@ -27,7 +27,7 @@
  *	i4b_l3timer.c - timer and timeout handling for layer 3
  *	------------------------------------------------------
  *
- *	$Id: i4b_l3timer.c,v 1.4 2001/11/13 01:06:22 lukem Exp $ 
+ *	$Id: i4b_l3timer.c,v 1.4.16.1 2005/03/04 16:53:45 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_l3timer.c,v 1.4 2001/11/13 01:06:22 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_l3timer.c,v 1.4.16.1 2005/03/04 16:53:45 skrll Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -85,9 +85,9 @@ void i4b_l3_stop_all_timers(call_desc_t *cd)
 	T308_stop(cd);
 	T309_stop(cd);
 	T310_stop(cd);
-	T313_stop(cd);	
+	T313_stop(cd);
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	timer T303 timeout function
  *---------------------------------------------------------------------------*/
@@ -106,7 +106,7 @@ T303_start(call_desc_t *cd)
 {
 	if (cd->T303 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 	cd->T303 = TIMER_ACTIVE;
 
@@ -121,7 +121,7 @@ T303_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T303 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T303_callout, T303_timeout, cd);
@@ -149,7 +149,7 @@ T305_start(call_desc_t *cd)
 {
 	if (cd->T305 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 	cd->T305 = TIMER_ACTIVE;
 
@@ -164,14 +164,14 @@ T305_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T305 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T305_callout, T305_timeout, cd);
 		cd->T305 = TIMER_IDLE;
 	}
 	splx(s);
-	
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
 
@@ -193,7 +193,7 @@ T308_start(call_desc_t *cd)
 {
 	if(cd->T308 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 	cd->T308 = TIMER_ACTIVE;
 
@@ -208,14 +208,14 @@ T308_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T308 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T308_callout, T308_timeout, cd);
 		cd->T308 = TIMER_IDLE;
 	}
 	splx(s);
-	
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
 
@@ -252,14 +252,14 @@ T309_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T309 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T309_callout, T309_timeout, cd);
 		cd->T309 = TIMER_IDLE;
 	}
 	splx(s);
-	
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
 
@@ -281,7 +281,7 @@ T310_start(call_desc_t *cd)
 {
 	if (cd->T310 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 	cd->T310 = TIMER_ACTIVE;
 
@@ -296,7 +296,7 @@ T310_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T310 != TIMER_IDLE)
 	{
 		STOP_TIMER(cd->T310_callout, T310_timeout, cd);
@@ -325,7 +325,7 @@ T313_start(call_desc_t *cd)
 {
 	if (cd->T313 == TIMER_ACTIVE)
 		return;
-		
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 	cd->T313 = TIMER_ACTIVE;
 
@@ -340,14 +340,14 @@ T313_stop(call_desc_t *cd)
 {
 	int s;
 	s = splnet();
-	
+
 	if(cd->T313 != TIMER_IDLE)
 	{
 		cd->T313 = TIMER_IDLE;
 		STOP_TIMER(cd->T313_callout, T313_timeout, cd);
 	}
 	splx(s);
-	
+
 	NDBGL3(L3_T_MSG, "cr = %d", cd->cr);
 }
 

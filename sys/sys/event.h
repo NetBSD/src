@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.10.2.6 2005/02/04 11:48:05 skrll Exp $	*/
+/*	$NetBSD: event.h,v 1.10.2.7 2005/03/04 16:54:22 skrll Exp $	*/
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
  * All rights reserved.
@@ -121,7 +121,7 @@ struct kevent {
  * This is currently visible to userland to work around broken
  * programs which pull in <sys/proc.h> or <sys/select.h>.
  */
-#include <sys/queue.h> 
+#include <sys/queue.h>
 struct knote;
 SLIST_HEAD(klist, knote);
 
@@ -137,7 +137,7 @@ struct kfilter_mapping {
 	uint32_t	filter;		/* filter to lookup or return */
 };
 
-/* map filter to name (max size len) */ 
+/* map filter to name (max size len) */
 #define KFILTER_BYFILTER	_IOWR('k', 0, struct kfilter_mapping)
 /* map name to filter (len ignored) */
 #define KFILTER_BYNAME		_IOWR('k', 1, struct kfilter_mapping)

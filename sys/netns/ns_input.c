@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_input.c,v 1.18.10.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_input.c,v 1.18.10.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.18.10.3 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_input.c,v 1.18.10.4 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -394,7 +394,7 @@ idp_forward(struct mbuf *m)
 		x.l = x.s[0] + x.s[1];
 		if (x.l==0xffff) idp->idp_sum = 0; else idp->idp_sum = x.l;
 	}
-	if ((error = ns_output(m, &idp_droute, flags)) != 0 && 
+	if ((error = ns_output(m, &idp_droute, flags)) != 0 &&
 	    (mcopy!=NULL)) {
 		idp = mtod(mcopy, struct idp *);
 		type = NS_ERR_UNSPEC_T, code = 0;
@@ -433,7 +433,7 @@ cleanup:
 int
 idp_do_route(struct ns_addr *src, struct route *ro)
 {
-	
+
 	struct sockaddr_ns *dst;
 
 	bzero((caddr_t)ro, sizeof (*ro));

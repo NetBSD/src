@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.54.2.7 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.54.2.8 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.7 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.54.2.8 2005/03/04 16:55:00 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	BLKSIZE(a, b, c)	blksize(a, b, c)
@@ -285,6 +285,7 @@ WRITE(void *v)
 	if (usepc) {
 		simple_lock(&lfs_subsys_lock);
 		lfs_subsys_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
+		fs->lfs_pages += round_page(uio->uio_resid) >> PAGE_SHIFT;
 		simple_unlock(&lfs_subsys_lock);
 	}
 	lfs_check(vp, LFS_UNUSED_LBN, 0);

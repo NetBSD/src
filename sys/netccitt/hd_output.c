@@ -1,4 +1,4 @@
-/*	$NetBSD: hd_output.c,v 1.14.16.3 2004/09/21 13:36:56 skrll Exp $	*/
+/*	$NetBSD: hd_output.c,v 1.14.16.4 2005/03/04 16:53:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.14.16.3 2004/09/21 13:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd_output.c,v 1.14.16.4 2005/03/04 16:53:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ hd_start(hdp)
  * rest of the control part of the frame and then writes it out.  It also
  * starts the  acknowledgement  timer and keeps  the iframe in the Retransmit
  * queue (Retxq) just in case  we have to do this again.
- * 
+ *
  * Note: This routine is also called from hd_input.c when retransmission of old
  * frames is required.
  */

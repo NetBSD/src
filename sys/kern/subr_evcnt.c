@@ -1,9 +1,9 @@
-/* $NetBSD: subr_evcnt.c,v 1.2.4.4 2004/09/21 13:35:12 skrll Exp $ */
+/* $NetBSD: subr_evcnt.c,v 1.2.4.5 2005/03/04 16:52:00 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -19,7 +19,7 @@
  *          information about NetBSD.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -30,7 +30,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  * --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
  */
 
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.2.4.4 2004/09/21 13:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_evcnt.c,v 1.2.4.5 2005/03/04 16:52:00 skrll Exp $");
 
 #include "opt_ddb.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnwreg.h,v 1.3 2000/07/05 18:42:19 itojun Exp $	*/
+/*	$NetBSD: if_cnwreg.h,v 1.3.24.1 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
 #    define CNW_ASR_WOC			0x08	/* Write Operation Complete */
 #    define CNW_ASR_TXDN		0x20	/* Transmit done */
 #    define CNW_ASR_RXERR		0x40	/* Receive error */
-#    define CNW_ASR_RXRDY		0x80	/* Packet received */ 
+#    define CNW_ASR_RXRDY		0x80	/* Packet received */
 #define CNW_REG_IOLOW		0x6
 #define CNW_REG_IOHI		0x7
 #define CNW_REG_IOCONTROL	0x8
@@ -116,7 +116,7 @@
 
 /*
  * Commands used in the extended command buffer
- * CNW_EREG_CB (0x100-0x10f) 
+ * CNW_EREG_CB (0x100-0x10f)
  */
 #define CNW_CMD_NOP		0x00
 #define CNW_CMD_SRC		0x01

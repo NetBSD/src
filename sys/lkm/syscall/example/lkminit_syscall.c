@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_syscall.c,v 1.3.16.3 2004/09/21 13:36:25 skrll Exp $	*/
+/*	$NetBSD: lkminit_syscall.c,v 1.3.16.4 2005/03/04 16:52:48 skrll Exp $	*/
 
 /*
  * Makefile for newsyscall
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.3.16.3 2004/09/21 13:36:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_syscall.c,v 1.3.16.4 2005/03/04 16:52:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -108,7 +108,7 @@ syscall_load( lkmtp, cmd)
  */
 int
 syscall_example_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;	
+	struct lkm_table *lkmtp;
 	int	cmd, ver;
 {
 	DISPATCH(lkmtp,cmd,ver,syscall_load,lkm_nofunc,lkm_nofunc)

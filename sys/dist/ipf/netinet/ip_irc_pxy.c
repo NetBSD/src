@@ -1,11 +1,11 @@
-/*	$NetBSD: ip_irc_pxy.c,v 1.1.2.4 2005/02/09 08:26:13 skrll Exp $	*/
+/*	$NetBSD: ip_irc_pxy.c,v 1.1.2.5 2005/03/04 16:51:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000-2003 Darren Reed
  *
  * See the IPFILTER.LICENCE file for details on licencing.
  *
- * Id: ip_irc_pxy.c,v 2.39.2.3 2004/12/09 19:40:59 darrenr Exp
+ * Id: ip_irc_pxy.c,v 2.39.2.4 2005/02/04 10:22:55 darrenr Exp
  */
 
 #define	IPF_IRC_PROXY
@@ -399,6 +399,8 @@ nat_t *nat;
 		tcp2->th_win = htons(8192);
 		tcp2->th_sport = sp;
 		tcp2->th_dport = 0; /* XXX - don't specify remote port */
+		fi.fin_state = NULL;
+		fi.fin_nat = NULL;
 		fi.fin_data[0] = ntohs(sp);
 		fi.fin_data[1] = 0;
 		fi.fin_dp = (char *)tcp2;
@@ -414,6 +416,8 @@ nat_t *nat;
 			nat_update(&fi, nat2, nat2->nat_ptr);
 
 			(void) fr_addstate(&fi, NULL, SI_W_DPORT);
+			if (fi.fin_state != NULL)
+				fr_statederef(&fi, (ipstate_t **)&fi.fin_state);
 		}
 		ip->ip_src = swip;
 	}

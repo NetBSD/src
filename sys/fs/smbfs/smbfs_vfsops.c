@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.6 2005/01/17 19:32:25 skrll Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.31.2.7 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.6 2005/01/17 19:32:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.31.2.7 2005/03/04 16:51:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -138,7 +138,7 @@ struct vfsops smbfs_vfsops = {
 	smbfs_done,
 	NULL,
 	(int (*) (void)) eopnotsupp, /* mountroot */
-	(int (*) (struct mount *, struct mbuf *, int *, 
+	(int (*) (struct mount *, struct mbuf *, int *,
 		  struct ucred **)) eopnotsupp, /* checkexp */
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
@@ -191,7 +191,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	memset(smp, 0, sizeof(*smp));
 	mp->mnt_data = smp;
 
-	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST, 
+	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST,
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
 
 	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
@@ -313,7 +313,7 @@ smbfs_setroot(struct mount *mp)
 	return (0);
 }
 
-/* 
+/*
  * Return locked root vnode of a filesystem.
  */
 int

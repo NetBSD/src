@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.37.2.6 2005/02/04 11:47:33 skrll Exp $	*/
+/*	$NetBSD: kbd.c,v 1.37.2.7 2005/03/04 16:50:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.6 2005/02/04 11:47:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.37.2.7 2005/03/04 16:50:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -969,7 +969,7 @@ wssunkbd_enable(v, on)
 		if (k->k_ops != NULL && k->k_ops->close != NULL)
 			(*k->k_ops->close)(k);
 	}
-	
+
 	return 0;
 }
 

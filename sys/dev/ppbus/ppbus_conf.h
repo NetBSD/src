@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_conf.h,v 1.4.4.4 2004/09/21 13:32:37 skrll Exp $ */
+/* $NetBSD: ppbus_conf.h,v 1.4.4.5 2005/03/04 16:49:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -43,7 +43,7 @@
 
 /* Function pointer types used for interface */
 typedef u_char (*PARPORT_IO_T)(struct device *, int, u_char *, int, u_char);
-typedef int (*PARPORT_EXEC_MICROSEQ_T)(struct device *, 
+typedef int (*PARPORT_EXEC_MICROSEQ_T)(struct device *,
 	struct ppbus_microseq **);
 typedef void (*PARPORT_RESET_EPP_TIMEOUT_T)(struct device *);
 typedef int (*PARPORT_SETMODE_T)(struct device *, int);
@@ -53,11 +53,11 @@ typedef int (*PARPORT_READ_T)(struct device *, char *, int, int, size_t *);
 typedef int (*PARPORT_WRITE_T)(struct device *, char *, int, int, size_t *);
 typedef int (*PARPORT_READ_IVAR_T)(struct device *, int, unsigned int *);
 typedef int (*PARPORT_WRITE_IVAR_T)(struct device *, int, unsigned int *);
-typedef int (*PARPORT_DMA_MALLOC_T)(struct device *, caddr_t *, bus_addr_t *, 
+typedef int (*PARPORT_DMA_MALLOC_T)(struct device *, caddr_t *, bus_addr_t *,
 	bus_size_t);
-typedef void (*PARPORT_DMA_FREE_T)(struct device *, caddr_t *, bus_addr_t *, 
+typedef void (*PARPORT_DMA_FREE_T)(struct device *, caddr_t *, bus_addr_t *,
 	bus_size_t);
-typedef int (*PARPORT_ADD_HANDLER_T)(struct device *, void (*)(void *), 
+typedef int (*PARPORT_ADD_HANDLER_T)(struct device *, void (*)(void *),
 	void *);
 typedef int (*PARPORT_REMOVE_HANDLER_T)(struct device *, void (*)(void *));
 
@@ -93,7 +93,7 @@ struct ppbus_softc {
 #define PPBUS_NOK 0
 	u_int8_t sc_dev_ok;
 
-	/* ppbus capabilities (see ppbus_var.h) */ 
+	/* ppbus capabilities (see ppbus_var.h) */
 	u_int16_t sc_capabilities;
 
 /* PnP device type defined in ppbus_var.h */
@@ -110,7 +110,7 @@ struct ppbus_softc {
 	u_int32_t sc_mode;		/* IEEE 1284-1994 mode */
 
 	/* ppbus_device which owns the bus */
-	struct device * ppbus_owner; 
+	struct device * ppbus_owner;
 
 	/* Head of list of child devices */
 	SLIST_HEAD(childlist, ppbus_device_softc) sc_childlist_head;

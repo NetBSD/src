@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tc.c,v 1.23.2.1 2005/02/04 11:47:34 skrll Exp $ */
+/* $NetBSD: asc_tc.c,v 1.23.2.2 2005/03/04 16:50:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.23.2.1 2005/02/04 11:47:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tc.c,v 1.23.2.2 2005/03/04 16:50:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ asc_tc_match(parent, cfdata, aux)
 	void *aux;
 {
 	struct tc_attach_args *d = aux;
-	
+
 	if (strncmp("PMAZ-AA ", d->ta_modname, TC_ROM_LLEN))
 		return (0);
 
@@ -138,7 +138,7 @@ asc_tc_attach(parent, self, aux)
 	void *aux;
 {
 	struct tc_attach_args *ta = aux;
-	struct asc_softc *asc = (struct asc_softc *)self;	
+	struct asc_softc *asc = (struct asc_softc *)self;
 	struct ncr53c9x_softc *sc = &asc->sc_ncr53c9x;
 
 	/*
@@ -155,7 +155,7 @@ asc_tc_attach(parent, self, aux)
 	asc->sc_base = (caddr_t)ta->ta_addr;	/* XXX XXX XXX */
 
 	tc_intr_establish(parent, ta->ta_cookie, IPL_BIO, ncr53c9x_intr, sc);
-	
+
 	sc->sc_id = 7;
 	sc->sc_freq = (ta->ta_busspeed) ? 25000000 : 12500000;
 

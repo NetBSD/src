@@ -20,7 +20,7 @@
  * 4. Neither the name of the Company nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- *  
+ *
  * This software is provided ``as is'', and any express or implied
  * warranties, including, but not limited to, the implied warranties of
  * merchantability and fitness for a particular purpose are disclaimed.
@@ -36,7 +36,7 @@
 
 /* Header files used by all modules */
 /*
- * $Id: vinumhdr.h,v 1.1.1.1.4.4 2004/09/21 13:34:15 skrll Exp $
+ * $Id: vinumhdr.h,v 1.1.1.1.4.5 2005/03/04 16:51:14 skrll Exp $
  * $FreeBSD$
  */
 

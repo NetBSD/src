@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.7 2005/02/04 11:47:08 skrll Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.101.2.8 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.7 2005/02/04 11:47:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.101.2.8 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ static const struct ne2000dev {
 
     /*
      * You have to add new entries which contains
-     * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID 
+     * PCMCIA_VENDOR_INVALID and/or PCMCIA_PRODUCT_INVALID
      * in front of this comment.
      *
      * There are cards which use a generic vendor and product id but needs
@@ -617,7 +617,7 @@ again:
 		ne_dev = ne2000_match(pa->card, pa->pf->number, i);
 		if (ne_dev != NULL) {
 			if (ne_dev->enet_maddr >= 0) {
-				enaddr = ne_pcmcia_get_enaddr(psc, 
+				enaddr = ne_pcmcia_get_enaddr(psc,
 				    ne_dev->enet_maddr, myea);
 				if (enaddr == NULL)
 					continue;

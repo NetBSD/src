@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.9.6.3 2004/09/21 13:35:53 skrll Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.9.6.4 2005/03/04 16:52:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@ arc4_swap(u_int8_t *a, u_int8_t *b)
 	c = *a;
 	*a = *b;
 	*b = c;
-}	
+}
 
 /*
  * Stir our S-box.
@@ -199,7 +199,7 @@ arc4random(void)
 	if (!arc4_initialized)
 		arc4_init();
 
-	if ((++arc4_numruns > ARC4_MAXRUNS) || 
+	if ((++arc4_numruns > ARC4_MAXRUNS) ||
 	    (mono_time.tv_sec > arc4_tv_nextreseed.tv_sec)) {
 		arc4_randrekey();
 	}

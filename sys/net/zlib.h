@@ -1,4 +1,4 @@
-/* $NetBSD: zlib.h,v 1.6.12.3 2004/09/21 13:36:43 skrll Exp $ */
+/* $NetBSD: zlib.h,v 1.6.12.4 2005/03/04 16:53:01 skrll Exp $ */
 
 /* zlib.h -- interface of the 'zlib' general purpose compression library
   version 1.1.4, March 11th, 2002
@@ -40,10 +40,10 @@
 /* +++ zconf.h */
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2002 Jean-loup Gailly.
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.h,v 1.6.12.3 2004/09/21 13:36:43 skrll Exp $ */
+/* @(#) $Id: zlib.h,v 1.6.12.4 2005/03/04 16:53:01 skrll Exp $ */
 
 #ifndef _ZCONF_H
 #define _ZCONF_H
@@ -330,7 +330,7 @@ extern "C" {
 
 #define ZLIB_VERSION "1.1.4"
 
-/* 
+/*
      The 'zlib' compression library provides in-memory compression and
   decompression functions, including integrity checks of the uncompressed
   data.  This version of the library supports only one compression method
@@ -467,7 +467,7 @@ ZEXTERN const char * ZEXPORT zlibVersion __P((void));
    This check is automatically made by deflateInit and inflateInit.
  */
 
-/* 
+/*
 ZEXTERN int ZEXPORT deflateInit __P((z_streamp, int));
 
      Initializes the internal stream state for compression. The fields
@@ -552,7 +552,7 @@ ZEXTERN int ZEXPORT deflate __P((z_streamp, int));
   more input data, until it returns with Z_STREAM_END or an error. After
   deflate has returned Z_STREAM_END, the only possible operations on the
   stream are deflateReset or deflateEnd.
-  
+
     Z_FINISH can be used immediately after deflateInit if all the compression
   is to be done in a single step. In this case, avail_out must be at least
   0.1% larger than avail_in plus 12 bytes.  If deflate does not return
@@ -589,7 +589,7 @@ ZEXTERN int ZEXPORT deflateEnd __P((z_streamp));
 */
 
 
-/* 
+/*
 ZEXTERN int ZEXPORT inflateInit __P((z_streamp));
 
      Initializes the internal stream state for decompression. The fields
@@ -661,7 +661,7 @@ ZEXTERN int ZEXPORT inflate __P((z_streamp, int));
 
      If a preset dictionary is needed at this point (see inflateSetDictionary
   below), inflate sets strm-adler to the adler32 checksum of the
-  dictionary chosen by the compressor and returns Z_NEED_DICT; otherwise 
+  dictionary chosen by the compressor and returns Z_NEED_DICT; otherwise
   it sets strm->adler to the adler32 checksum of all output produced
   so far (that is, total_out bytes) and returns Z_OK, Z_STREAM_END or
   an error code as described below. At the end of the stream, inflate()
@@ -699,7 +699,7 @@ ZEXTERN int ZEXPORT inflateEnd __P((z_streamp));
     The following functions are needed only in some special applications.
 */
 
-/*   
+/*
 ZEXTERN int ZEXPORT deflateInit2 __P((z_streamp, int, int, int, int, int));
 
      This is another version of deflateInit with more compression options. The
@@ -737,7 +737,7 @@ ZEXTERN int ZEXPORT deflateInit2 __P((z_streamp, int, int, int, int, int));
    method). msg is set to null if there is no error message.  deflateInit2 does
    not perform any compression: this will be done by deflate().
 */
-                            
+
 ZEXTERN int ZEXPORT deflateSetDictionary __P((z_streamp, const Bytef *, uInt));
 /*
      Initializes the compression dictionary from the given byte sequence
@@ -835,7 +835,7 @@ ZEXTERN int ZEXPORT deflateOutputPending __P((z_streamp));
    or flush).
 */
 
-/*   
+/*
 ZEXTERN int ZEXPORT inflateInit2 __P((z_streamp, int));
 
      This is another version of inflateInit with an extra parameter. The
@@ -875,7 +875,7 @@ ZEXTERN int ZEXPORT inflateSetDictionary __P((z_streamp, const Bytef *, uInt));
 */
 
 ZEXTERN int ZEXPORT inflateSync __P((z_streamp));
-/* 
+/*
     Skips invalid compressed data until a full flush point (see above the
   description of deflate with Z_FULL_FLUSH) can be found, or until all
   available input is skipped. No output is provided.
@@ -1057,12 +1057,12 @@ ZEXTERN int ZEXPORT    gzflush __P((gzFile, int));
 
 */
 
-/* 
+/*
  * NetBSD note:
  * "long" gzseek has been there till Oct 1999 (1.4L), which was wrong.
  */
 ZEXTERN z_off_t ZEXPORT    gzseek __P((gzFile, z_off_t, int));
-/* 
+/*
       Sets the starting position for the next gzread or gzwrite on the
    given compressed file. The offset represents a number of bytes in the
    uncompressed data stream. The whence parameter is defined as in lseek(2);
@@ -1085,7 +1085,7 @@ ZEXTERN int ZEXPORT    gzrewind __P((gzFile));
    gzrewind(file) is equivalent to (int)gzseek(file, 0L, SEEK_SET)
 */
 
-/* 
+/*
  * NetBSD note:
  * "long" gztell has been there till Oct 1999 (1.4L), which was wrong.
  */

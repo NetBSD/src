@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.70.2.3 2004/09/21 13:35:53 skrll Exp $
+#	$NetBSD: Makefile,v 1.70.2.4 2005/03/04 16:52:29 skrll Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -13,7 +13,7 @@ ARCHSUBDIR=     ${LIBKERN_ARCH}
     exists(${KERNDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=     ${MACHINE_ARCH}
 .elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \
-    exists(${KERNDIR}/arch/${MACHINE_CPU}) 
+    exists(${KERNDIR}/arch/${MACHINE_CPU})
 ARCHSUBDIR=     ${MACHINE_CPU}
 .else
 .BEGIN:

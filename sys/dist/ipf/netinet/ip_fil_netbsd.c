@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.7 2005/02/17 07:10:37 skrll Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.1.2.8 2005/03/04 16:51:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
-static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.24 2005/01/08 16:55:54 darrenr Exp";
+static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.25 2005/02/01 03:14:31 darrenr Exp";
 #endif
 
 #if defined(KERNEL) || defined(_KERNEL)
@@ -135,8 +135,8 @@ struct mbuf **mp;
 struct ifnet *ifp;
 int dir;
 {
-	struct ip *ip = mtod(*mp, struct ip *);
-	int rv, hlen = ip->ip_hl << 2;
+	struct ip *ip;
+	int rv, hlen;
 #if __NetBSD_Version__ >= 200080000
 	/*
 	 * ensure that mbufs are writable beforehand
@@ -151,6 +151,8 @@ int dir;
 		return error;
 	}
 #endif
+	ip = mtod(*mp, struct ip *);
+	hlen = ip->ip_hl << 2;
 
 #ifdef INET
 #if defined(M_CSUM_TCPv4)
@@ -1386,7 +1388,7 @@ frdest_t *fdp;
 	struct ifnet *ifp;
 	frentry_t *fr;
 	u_long mtu;
-	int error;
+	int error = 0;
 
 	ro = &ip6route;
 	fr = fin->fin_fr;
@@ -1427,20 +1429,14 @@ frdest_t *fdp;
 		dst6->sin6_addr.s6_addr16[1] = htons(ifp->if_index);
 
 	{
-#if (__NetBSD_Version__ >= 106010000)
-		struct in6_addr finaldst = fin->fin_dst6;
-		int frag;
-#endif
+		struct in6_ifextra *ife;
+
 		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
 			dst6 = (struct sockaddr_in6 *)ro->ro_rt->rt_gateway;
 		ro->ro_rt->rt_use++;
 
-#if (__NetBSD_Version__ <= 106009999)
-		mtu = nd_ifinfo[ifp->if_index].linkmtu;
-#else
-		/* Determine path MTU. */
-		error = ip6_getpmtu(ro, ro, ifp, &finaldst, &mtu, &frag);
-#endif
+		ife = (struct in6_ifextra *)(ifp)->if_afdata[AF_INET6];
+		mtu = ife->nd_ifinfo[ifp->if_index].linkmtu;
 		if ((error == 0) && (m0->m_pkthdr.len <= mtu)) {
 			*mpp = NULL;
 			error = nd6_output(ifp, ifp, m0, dst6, rt);

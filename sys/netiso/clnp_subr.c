@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.14.16.3 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.14.16.3 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.14.16.4 2005/03/04 16:54:08 skrll Exp $");
 
 #include "opt_iso.h"
 
@@ -212,7 +212,7 @@ clnp_ours(
 	for (ia = iso_ifaddr.tqh_first; ia != 0; ia = ia->ia_list.tqe_next) {
 #ifdef ARGO_DEBUG
 		if (argo_debug[D_ROUTE]) {
-			printf("clnp_ours: ia_sis %p, dst %p\n", 
+			printf("clnp_ours: ia_sis %p, dst %p\n",
 			    &ia->ia_addr, dst);
 		}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_bsdpty.c,v 1.1.2.3 2004/11/29 07:24:51 skrll Exp $	*/
+/*	$NetBSD: tty_bsdpty.c,v 1.1.2.4 2005/03/04 16:52:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1.2.3 2004/11/29 07:24:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1.2.4 2005/03/04 16:52:02 skrll Exp $");
 
 #include "opt_ptm.h"
 
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: tty_bsdpty.c,v 1.1.2.3 2004/11/29 07:24:51 skrll Exp
 /*
  * All this hard-coding is really evil.
  */
-#define TTY_GID		4	
+#define TTY_GID		4
 #define TTY_PERM	(S_IRUSR|S_IWUSR|S_IWGRP)
 #define TTY_TEMPLATE	"/dev/XtyXX"
 #define TTY_NAMESIZE	sizeof(TTY_TEMPLATE)

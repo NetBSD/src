@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.9 2005/02/15 22:00:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.10 2005/03/04 16:54:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.5.2.9 2005/02/15 22:00:20 skrll E
 #define MNT_ILOCK(v)	simple_lock(&mntvnode_slock)
 #define MNT_IUNLOCK(v)	simple_unlock(&mntvnode_slock)
 
+#if !defined(FFS_NO_SNAPSHOT)
 static int cgaccount(int, struct vnode *, caddr_t, int);
 static int expunge_ufs1(struct vnode *, struct inode *, struct fs *,
     int (*)(struct vnode *, ufs1_daddr_t *, ufs1_daddr_t *, struct fs *,
@@ -106,9 +107,11 @@ static int snapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
 static int mapacct_ufs2(struct vnode *, ufs2_daddr_t *, ufs2_daddr_t *,
     struct fs *, ufs_lbn_t, int);
+#endif /* !defined(FFS_NO_SNAPSHOT) */
+
 static int ffs_copyonwrite(void *, struct buf *);
 static int readfsblk(struct vnode *, caddr_t, ufs2_daddr_t);
-static int readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
+static int __unused readvnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static int writevnblk(struct vnode *, caddr_t, ufs2_daddr_t);
 static inline int cow_enter(void);
 static inline void cow_leave(int);
@@ -131,6 +134,10 @@ ffs_snapshot(mp, vp, ctime)
 	struct vnode *vp;
 	struct timespec *ctime;
 {
+#if defined(FFS_NO_SNAPSHOT)
+	return EOPNOTSUPP;
+}
+#else /* defined(FFS_NO_SNAPSHOT) */
 	ufs2_daddr_t numblks, blkno, *blkp, snaplistsize = 0, *snapblklist;
 	int error, ns, cg, snaploc;
 	int i, size, len, loc;
@@ -698,7 +705,7 @@ cgaccount(cg, vp, data, passno)
 		}
 	}
 	if ((error = VOP_BALLOC(vp, lblktosize(fs, (off_t)(base + loc)),
-	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)	
+	    fs->fs_bsize, KERNCRED, B_METAONLY, &ibp)) != 0)
 		return (error);
 	indiroff = (base + loc - NDADDR) % NINDIR(fs);
 	for ( ; loc < len; loc++, indiroff++) {
@@ -824,7 +831,7 @@ expunge_ufs1(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs1(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1113,7 +1120,7 @@ expunge_ufs2(snapvp, cancelip, fs, acctfunc, expungetype)
 /*
  * Descend an indirect block chain for vnode cancelvp accounting for all
  * its indirect blocks in snapvp.
- */ 
+ */
 static int
 indiracct_ufs2(snapvp, cancelvp, level, blkno, lbn, rlbn, remblks,
 	    blksperindir, fs, acctfunc, expungetype)
@@ -1300,6 +1307,7 @@ mapacct_ufs2(vp, oldblkp, lastblkp, fs, lblkno, expungetype)
 	}
 	return (0);
 }
+#endif /* defined(FFS_NO_SNAPSHOT) */
 
 /*
  * Decrement extra reference on snapshot when last name is removed.
@@ -1826,7 +1834,7 @@ ffs_copyonwrite(v, bp)
 	ip = TAILQ_FIRST(&ump->um_snapshots);
 	if (ip == NULL) {
 		VI_UNLOCK(devvp);
-		return 0; 
+		return 0;
 	}
 	/*
 	 * First check to see if it is in the preallocated list.

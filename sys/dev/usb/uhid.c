@@ -1,7 +1,7 @@
-/*	$NetBSD: uhid.c,v 1.59.2.4 2004/09/21 13:33:46 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.59.2.5 2005/03/04 16:50:55 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.4 2004/09/21 13:33:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.59.2.5 2005/03/04 16:50:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

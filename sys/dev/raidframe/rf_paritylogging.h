@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogging.h,v 1.3.42.3 2004/09/21 13:32:53 skrll Exp $	*/
+/*	$NetBSD: rf_paritylogging.h,v 1.3.42.4 2005/03/04 16:50:07 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,38 +31,38 @@
 #ifndef _RF__RF_PARITYLOGGING_H_
 #define _RF__RF_PARITYLOGGING_H_
 
-int 
+int
 rf_ConfigureParityLogging(RF_ShutdownList_t ** listp, RF_Raid_t * raidPtr,
     RF_Config_t * cfgPtr);
 int     rf_GetDefaultNumFloatingReconBuffersParityLogging(RF_Raid_t * raidPtr);
 RF_HeadSepLimit_t rf_GetDefaultHeadSepLimitParityLogging(RF_Raid_t * raidPtr);
-RF_RegionId_t 
+RF_RegionId_t
 rf_MapRegionIDParityLogging(RF_Raid_t * raidPtr,
     RF_SectorNum_t address);
-void 
+void
 rf_MapSectorParityLogging(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector,
     int remap);
-void 
+void
 rf_MapParityParityLogging(RF_Raid_t * raidPtr, RF_RaidAddr_t raidSector,
     RF_RowCol_t * col, RF_SectorNum_t * diskSector,
     int remap);
-void 
+void
 rf_MapLogParityLogging(RF_Raid_t * raidPtr, RF_RegionId_t regionID,
     RF_SectorNum_t regionOffset, RF_RowCol_t * col,
     RF_SectorNum_t * startSector);
-void 
+void
 rf_MapRegionParity(RF_Raid_t * raidPtr, RF_RegionId_t regionID,
     RF_RowCol_t * col, RF_SectorNum_t * startSector,
     RF_SectorCount_t * numSector);
-void 
+void
 rf_IdentifyStripeParityLogging(RF_Raid_t * raidPtr, RF_RaidAddr_t addr,
     RF_RowCol_t ** diskids);
-void 
+void
 rf_MapSIDToPSIDParityLogging(RF_RaidLayout_t * layoutPtr,
     RF_StripeNum_t stripeID, RF_StripeNum_t * psID,
     RF_ReconUnitNum_t * which_ru);
-void 
+void
 rf_ParityLoggingDagSelect(RF_Raid_t * raidPtr, RF_IoType_t type,
     RF_AccessStripeMap_t * asmap, RF_VoidFuncPtr * createFunc);
 

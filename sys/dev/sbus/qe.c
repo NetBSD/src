@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.30.2.5 2005/02/04 11:47:23 skrll Exp $	*/
+/*	$NetBSD: qe.c,v 1.30.2.6 2005/03/04 16:50:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.5 2005/02/04 11:47:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.30.2.6 2005/03/04 16:50:31 skrll Exp $");
 
 #define QEDEBUG
 
@@ -532,7 +532,7 @@ qestart(ifp)
 void
 qestop(sc)
 	struct qe_softc *sc;
-{	
+{
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t mr = sc->sc_mr;
 	bus_space_handle_t cr = sc->sc_cr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.79.2.6 2004/12/18 09:33:17 skrll Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.79.2.7 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.6 2004/12/18 09:33:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.79.2.7 2005/03/04 16:54:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ nfsrv_lookup(nfsd, slp, lwp, mrq)
 				 * Found an index file. Get rid of
 				 * the old references.
 				 */
-				if (dirp)	
+				if (dirp)
 					vrele(dirp);
 				dirp = nd.ni_vp;
 				vrele(nd.ni_startdir);
@@ -1037,7 +1037,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	    nfsd->nd_stable = NFSV3WRITE_FILESYNC;
 	    cur_usec = (u_quad_t)time.tv_sec * 1000000 + (u_quad_t)time.tv_usec;
 	    nfsd->nd_time = cur_usec + nfsrvw_procrastinate;
-    
+
 	    /*
 	     * Now, get the write header..
 	     */
@@ -1055,7 +1055,7 @@ nfsrv_writegather(ndp, slp, lwp, mrq)
 	    len = fxdr_unsigned(int32_t, *tl);
 	    nfsd->nd_len = len;
 	    nfsd->nd_eoff = nfsd->nd_off + len;
-    
+
 	    /*
 	     * Trim the header out of the mbuf list and trim off any trailing
 	     * junk so that the mbuf list has only the write data.
@@ -1093,7 +1093,7 @@ nfsmout:
 		nfsd->nd_mrep = NULL;
 		nfsd->nd_time = 0;
 	    }
-    
+
 	    /*
 	     * Add this entry to the hash and time queues.
 	     */
@@ -1141,7 +1141,7 @@ nfsmout:
 	    }
 	    splx(s);
 	}
-    
+
 	/*
 	 * Now, do VOP_WRITE()s for any one(s) that need to be done now
 	 * and generate the associated reply mbuf list(s).
@@ -1163,7 +1163,7 @@ loop1:
 		cred = &nfsd->nd_cr;
 		v3 = (nfsd->nd_flag & ND_NFSV3);
 		forat_ret = aftat_ret = 1;
-		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp, 
+		error = nfsrv_fhtovp(&nfsd->nd_fh, 1, &vp, cred, slp,
 		    nfsd->nd_nam, &rdonly, (nfsd->nd_flag & ND_KERBAUTH),
 		    FALSE);
 		if (!error) {
@@ -1181,7 +1181,7 @@ loop1:
 		    nqsrv_getl(vp, ND_WRITE);
 		    error = nfsrv_access(vp, VWRITE, cred, rdonly, lwp, 1);
 		}
-    
+
 		if (nfsd->nd_stable == NFSV3WRITE_UNSTABLE)
 		    ioflags = IO_NODELOCKED;
 		else if (nfsd->nd_stable == NFSV3WRITE_DATASYNC)
@@ -2762,7 +2762,7 @@ again:
 			nfsm_clget;
 			*tl = txdr_unsigned(nlen);
 			bp += NFSX_UNSIGNED;
-	
+
 			/* And loop around copying the name */
 			xfer = nlen;
 			cp = dp->d_name;
@@ -2782,7 +2782,7 @@ again:
 			for (i = 0; i < rem; i++)
 				*bp++ = '\0';
 			nfsm_clget;
-	
+
 			/* Finish off the record */
 			txdr_hyper(*cookiep, &jar);
 			if (v3) {
@@ -3006,7 +3006,7 @@ again:
 		if (dp->d_fileno != 0 && dp->d_type != DT_WHT) {
 			nlen = dp->d_namlen;
 			rem = nfsm_rndup(nlen)-nlen;
-	
+
 			/*
 			 * For readdir_and_lookup get the vnode using
 			 * the file number.
@@ -3063,7 +3063,7 @@ again:
 			nfsm_clget;
 			*tl = txdr_unsigned(nlen);
 			bp += NFSX_UNSIGNED;
-	
+
 			/* And loop around copying the name */
 			xfer = nlen;
 			cp = dp->d_name;
@@ -3082,7 +3082,7 @@ again:
 			/* And null pad to an int32_t boundary */
 			for (i = 0; i < rem; i++)
 				*bp++ = '\0';
-	
+
 			/*
 			 * Now copy the flrep structure out.
 			 */
@@ -3513,7 +3513,7 @@ nfsrv_access(vp, flags, cred, rdonly, lwp, override)
 		 * If the vnode is in use as a process's text,
 		 * we can't allow writing.
 		 */
-		if (vp->v_flag & VTEXT) 
+		if (vp->v_flag & VTEXT)
 			return (ETXTBSY);
 	}
 	error = VOP_GETATTR(vp, &vattr, cred, lwp);

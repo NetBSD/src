@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9.8.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: main.c,v 1.9.8.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * TODO:
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.3 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.9.8.4 2005/03/04 16:54:09 skrll Exp $");
 
 #include <stdio.h>
 #include <strings.h>
@@ -58,7 +58,7 @@ void
 usage(a)
 	char *a;
 {
-	fprintf(stderr, 
+	fprintf(stderr,
 	"usage: %s <transition file> {-D<debug options>} <other options>\n",
 		a);
 	fprintf(stderr, "\t<other options> is any combination of:\n");
@@ -68,9 +68,9 @@ usage(a)
 	fprintf(stderr, "\t\t-I<initial values file name>\n");
 	fprintf(stderr, "\t\t-X<debugging file name>\n");
 	fprintf(stderr, "\t\t-K<directory name>\n");
-	fprintf(stderr, 
+	fprintf(stderr,
 	"\tThese names do NOT include the suffixes (.c, .h)\n");
-	fprintf(stderr, 
+	fprintf(stderr,
 	"\t\t-D<options> to turn on debug options for xebec itself\n");
 	fprintf(stderr, "\t-<nn> for levels of debugging output\n");
 	fprintf(stderr, "\t\t<nn> ranges from 1 to 3, 1 is default(everything)\n");
@@ -111,7 +111,7 @@ openfiles(proto)
 #ifdef DEBUG
 		DOIT(astringfile);
 #endif /* DEBUG */
-		fprintf(astringfile, 
+		fprintf(astringfile,
 				"#ifndef _NFILE\n#include <stdio.h>\n#endif /* _NFILE */\n" );
 	ENDDEBUG
 
@@ -123,7 +123,7 @@ openfiles(proto)
 
 	if(pgoption)
 		putdriver(actfile, 15);
-	else 
+	else
 		putdriver(actfile, 14);
 
 	FakeFilename(actfile, Transfilename, lineno);
@@ -355,7 +355,7 @@ char *argv[];
 		/*
 		putdriver(actfile, 10);
 		*/
-		if(debug['K']) { 
+		if(debug['K']) {
 			putdriver(actfile, 11);
 		} else {
 			switch(debug['X']) {
@@ -373,8 +373,8 @@ char *argv[];
 	ENDDEBUG
 	putdriver(actfile, 8);
 	(void) fclose(actfile);
-	IFDEBUG(X) 
-		/* { */ 
+	IFDEBUG(X)
+		/* { */
 		fprintf(astringfile, "};\n");
 		(void) fclose(astringfile);
 	ENDDEBUG
@@ -386,7 +386,7 @@ char *argv[];
 
 	finish = time(0);
 	fprintf(stdout, "%d seconds\n", finish - start);
-	if( print_protoerrs ) 
+	if( print_protoerrs )
 		printprotoerrs();
 
 	exit(0);
@@ -407,7 +407,7 @@ Exit(n)
 }
 
 #if 0
-syntax() 
+syntax()
 {
 	static char *synt[] = {
 		"*PROTOCOL <string>\n",
@@ -419,7 +419,7 @@ syntax()
 	};
 }
 #endif
-	
+
 void
 FakeFilename(outfile, name, l)
 	FILE *outfile;

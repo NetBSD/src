@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.18.2.5 2004/09/21 13:35:01 skrll Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.18.2.6 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.5 2004/09/21 13:35:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.18.2.6 2005/03/04 16:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,7 +225,7 @@ smbfs_nget(struct mount *mp, struct vnode *dvp, const char *name, int nmlen,
  * Free smbnode, and give vnode back to system
  */
 int
-smbfs_reclaim(v)                     
+smbfs_reclaim(v)
      void *v;
 {
         struct vop_reclaim_args /* {
@@ -236,7 +236,7 @@ smbfs_reclaim(v)
 	struct vnode *dvp;
 	struct smbnode *np = VTOSMB(vp);
 	struct smbmount *smp = VTOSMBFS(vp);
-	
+
 	if (prtactive && vp->v_usecount != 0)
 		vprint("smbfs_reclaim(): pushing active", vp);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.71.2.5 2004/11/02 07:53:23 skrll Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.71.2.6 2005/03/04 16:51:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.5 2004/11/02 07:53:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.71.2.6 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -113,7 +113,7 @@ int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 #endif /* defined(LOCKDEBUG) */
 
 #if defined(MULTIPROCESSOR)
-struct simplelock kernel_lock; 
+struct simplelock kernel_lock;
 #endif
 
 /*
@@ -854,7 +854,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 
 	case LK_DRAIN:
 		/*
-		 * Check that we do not already hold the lock, as it can 
+		 * Check that we do not already hold the lock, as it can
 		 * never drain if we do. Unfortunately, we have no way to
 		 * check for holding a shared lock, but at least we can
 		 * check for an exclusive one.
@@ -908,7 +908,7 @@ lockmgr(__volatile struct lock *lkp, u_int flags,
 	 */
 	if (error && lock_shutdown_noblock)
 		panic("lockmgr: deadlock (see previous panic)");
-	
+
 	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 	return (error);
 }
@@ -928,16 +928,16 @@ spinlock_release_all(__volatile struct lock *lkp)
 {
 	int s, count;
 	cpuid_t cpu_id;
-	
+
 	KASSERT(lkp->lk_flags & LK_SPIN);
-	
+
 	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
 
 	cpu_id = cpu_number();
 	count = lkp->lk_exclusivecount;
-	
+
 	if (count != 0) {
-#ifdef DIAGNOSTIC		
+#ifdef DIAGNOSTIC
 		if (WEHOLDIT(lkp, 0, 0, cpu_id) == 0) {
 			panic("spinlock_release_all: processor %lu, not "
 			    "exclusive lock holder %lu "
@@ -961,7 +961,7 @@ spinlock_release_all(__volatile struct lock *lkp)
 	else
 		panic("spinlock_release_all: release of unlocked lock!");
 #endif
-	INTERLOCK_RELEASE(lkp, LK_SPIN, s);	
+	INTERLOCK_RELEASE(lkp, LK_SPIN, s);
 
 	return (count);
 }
@@ -982,9 +982,9 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 {
 	int s, error;
 	cpuid_t cpu_id;
-	
+
 	KASSERT(lkp->lk_flags & LK_SPIN);
-	
+
 	INTERLOCK_ACQUIRE(lkp, LK_SPIN, s);
 
 	cpu_id = cpu_number();
@@ -1017,7 +1017,7 @@ spinlock_acquire_count(__volatile struct lock *lkp, int count)
 	lkp->lk_recurselevel = 1;
 	COUNT_CPU(cpu_id, count);
 
-	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);	
+	INTERLOCK_RELEASE(lkp, lkp->lk_flags, s);
 }
 
 

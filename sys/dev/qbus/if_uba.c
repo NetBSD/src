@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.23.2.3 2004/09/21 13:32:38 skrll Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.23.2.4 2005/03/04 16:49:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.23.2.3 2004/09/21 13:32:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.23.2.4 2005/03/04 16:49:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 		ifr[i].ifrw_mbuf = m;
 		bus_dmamap_load(uh->uh_dmat, ifr[i].ifrw_map,
 		    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
-		
+
 	}
 	/*
 	 * Load the tx maps with DMA memory (common case).
@@ -144,7 +144,7 @@ if_ubaminit(struct ifubinfo *ifu, struct uba_softc *uh, int size,
 	for (i = 0; i < nw; i++) {
 		ifw[i].ifw_vaddr = vaddr + size * i;
 		ifw[i].ifw_size = size;
-		bus_dmamap_load(uh->uh_dmat, ifw[i].ifw_map, 
+		bus_dmamap_load(uh->uh_dmat, ifw[i].ifw_map,
 		    ifw[i].ifw_vaddr, ifw[i].ifw_size, NULL, BUS_DMA_NOWAIT);
 	}
 	return 0;
@@ -186,7 +186,7 @@ getmcl()
  * so that protocols can determine where incoming packets arrived.
  * Note: we may be called to receive from a transmit buffer by some
  * devices.  In that case, we must force normal mapping of the buffer,
- * so that the correct data will appear (only unibus maps are 
+ * so that the correct data will appear (only unibus maps are
  * changed when remapping the transmit buffers).
  */
 struct mbuf *
@@ -252,7 +252,7 @@ if_ubaput(struct ifubinfo *ifu, struct ifxmt *ifw, struct mbuf *m)
 	} else {
 		if (ifw->ifw_flags & IFRW_MBUF) {
 			bus_dmamap_load(uh->uh_dmat, ifw->ifw_map,
-	                    ifw->ifw_vaddr, ifw->ifw_size,NULL,BUS_DMA_NOWAIT);
+			    ifw->ifw_vaddr, ifw->ifw_size,NULL,BUS_DMA_NOWAIT);
 			ifw->ifw_flags &= ~IFRW_MBUF;
 		}
 		len = m->m_pkthdr.len;

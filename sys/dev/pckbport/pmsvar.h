@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.1.4.3 2005/01/24 08:35:36 skrll Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.1.4.4 2005/03/04 16:49:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -40,7 +40,7 @@ struct pms_protocol {
 	int rates[3];
 	int response;
 	const char *name;
-}; 
+};
 
 struct pms_softc {		/* driver status information */
 	struct device sc_dev;

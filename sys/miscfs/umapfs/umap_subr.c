@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_subr.c,v 1.19.16.3 2004/09/21 13:36:34 skrll Exp $	*/
+/*	$NetBSD: umap_subr.c,v 1.19.16.4 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.3 2004/09/21 13:36:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_subr.c,v 1.19.16.4 2005/03/04 16:52:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,7 @@ umap_mapids(v_mount, credp)
 		credp->cr_gid = NULLGROUP;
 #endif
 
-	/* Now we must map each of the set of groups in the cr_groups 
+	/* Now we must map each of the set of groups in the cr_groups
 		structure. */
 
 	for(i=0; i < credp->cr_ngroups; i++) {

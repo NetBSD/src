@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.69.2.5 2004/11/21 13:54:35 skrll Exp $ */
+/* $NetBSD: wskbd.c,v 1.69.2.6 2005/03/04 16:51:14 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.5 2004/11/21 13:54:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.69.2.6 2005/03/04 16:51:14 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1287,7 +1287,7 @@ wskbd_cngetc(dev_t dev)
 		if (num-- > 0) {
 			ks = wskbd_console_data.t_symbols[pos++];
 			if (KS_GROUP(ks) == KS_GROUP_Ascii)
-				return (KS_VALUE(ks));	
+				return (KS_VALUE(ks));
 		} else {
 			(*wskbd_console_data.t_consops->getc)
 				(wskbd_console_data.t_consaccesscookie,

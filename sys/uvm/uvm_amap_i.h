@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap_i.h,v 1.20 2002/12/20 18:21:13 atatat Exp $	*/
+/*	$NetBSD: uvm_amap_i.h,v 1.20.2.1 2005/03/04 16:55:00 skrll Exp $	*/
 
 /*
  *
@@ -59,6 +59,7 @@ amap_lookup(aref, offset)
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_lookup"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -87,6 +88,7 @@ amap_lookups(aref, offset, anons, npages)
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_lookups"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -120,6 +122,7 @@ amap_add(aref, offset, anon, replace)
 	int slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_add"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;
@@ -166,6 +169,7 @@ amap_unadd(aref, offset)
 	int ptr, slot;
 	struct vm_amap *amap = aref->ar_amap;
 	UVMHIST_FUNC("amap_unadd"); UVMHIST_CALLED(maphist);
+	LOCK_ASSERT(simple_lock_held(&amap->am_l));
 
 	AMAP_B2SLOT(slot, offset);
 	slot += aref->ar_pageoff;

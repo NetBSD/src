@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciavar.h,v 1.17.6.6 2005/02/04 11:47:09 skrll Exp $	*/
+/*	$NetBSD: pcmciavar.h,v 1.17.6.7 2005/03/04 16:49:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -105,7 +105,7 @@ struct pcmcia_config_entry {
 		struct	pcmcia_mem_handle handle;
 		bus_size_t offset;
 		int	window;
-		
+
 	} memspace[2];		/* XXX this could be as high as 8 */
 	int		maxtwins;
 	SIMPLEQ_ENTRY(pcmcia_config_entry) cfe_list;

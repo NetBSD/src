@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_lookup.c,v 1.5.2.5 2004/09/21 13:34:43 skrll Exp $	*/
+/*	$NetBSD: cd9660_lookup.c,v 1.5.2.6 2005/03/04 16:51:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.5.2.5 2004/09/21 13:34:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_lookup.c,v 1.5.2.6 2005/03/04 16:51:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -129,7 +129,7 @@ cd9660_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags;
 	int nameiop = cnp->cn_nameiop;
-	
+
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 
@@ -139,7 +139,7 @@ cd9660_lookup(v)
 	dp = VTOI(vdp);
 	imp = dp->i_mnt;
 	lockparent = flags & LOCKPARENT;
-	
+
 	/*
 	 * Check accessiblity of directory.
 	 */
@@ -159,7 +159,7 @@ cd9660_lookup(v)
 	 */
 	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
 		return (error);
-	
+
 	len = cnp->cn_namelen;
 	name = cnp->cn_nameptr;
 	/*
@@ -170,7 +170,7 @@ cd9660_lookup(v)
 		len--;
 		name++;
 	}
-	
+
 	/*
 	 * If there is cached information on a previous search of
 	 * this directory, pick up where we last left off.
@@ -197,7 +197,7 @@ cd9660_lookup(v)
 		iso_nchstats.ncs_2passes++;
 	}
 	endsearch = dp->i_size;
-	
+
 searchloop:
 	while (dp->i_offset < endsearch) {
 		/*
@@ -219,7 +219,7 @@ searchloop:
 		 */
 		ep = (struct iso_directory_record *)
 			((char *)bp->b_data + entryoffsetinblock);
-		
+
 		reclen = isonum_711(ep->length);
 		if (reclen == 0) {
 			/* skip to next block, if any */
@@ -227,21 +227,21 @@ searchloop:
 			    (dp->i_offset & ~bmask) + imp->logical_block_size;
 			continue;
 		}
-		
+
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE)
 			/* illegal entry, stop */
 			break;
-		
+
 		if (entryoffsetinblock + reclen > imp->logical_block_size)
 			/* entries are not allowed to cross boundaries */
 			break;
-		
+
 		namelen = isonum_711(ep->name_len);
-		
+
 		if (reclen < ISO_DIRECTORY_RECORD_SIZE + namelen)
 			/* illegal entry, stop */
 			break;
-		
+
 		/*
 		 * Check for a name match.
 		 */
@@ -345,11 +345,11 @@ notfound:
 	if (nameiop == CREATE || nameiop == RENAME)
 		return (EROFS);
 	return (ENOENT);
-	
+
 found:
 	if (numdirpasses == 2)
 		iso_nchstats.ncs_pass2++;
-	
+
 	/*
 	 * Found component in pathname.
 	 * If the final component of path name, save information
@@ -357,7 +357,7 @@ found:
 	 */
 	if ((flags & ISLASTCN) && nameiop == LOOKUP)
 		dp->i_diroff = dp->i_offset;
-	
+
 	/*
 	 * Step through the translation in the name.  We do not `iput' the
 	 * directory because we may need it again if a symbolic link
@@ -417,7 +417,7 @@ found:
 		}
 		*vpp = tdp;
 	}
-	
+
 	/*
 	 * Insert name into cache if appropriate.
 	 */
@@ -451,7 +451,7 @@ cd9660_blkatoff(v)
 	imp = ip->i_mnt;
 	lbn = lblkno(imp, ap->a_offset);
 	bsize = blksize(imp, ip, lbn);
-	
+
 	if ((error = bread(ap->a_vp, lbn, bsize, NOCRED, &bp)) != 0) {
 		brelse(bp);
 		*ap->a_bpp = NULL;

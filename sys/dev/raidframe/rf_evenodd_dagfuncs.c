@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.12.2.3 2004/09/21 13:32:52 skrll Exp $	*/
+/*	$NetBSD: rf_evenodd_dagfuncs.c,v 1.12.2.4 2005/03/04 16:50:06 skrll Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.12.2.3 2004/09/21 13:32:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_evenodd_dagfuncs.c,v 1.12.2.4 2005/03/04 16:50:06 skrll Exp $");
 
 #include "rf_archs.h"
 #include "opt_raid_diagnostic.h"
@@ -63,7 +63,7 @@ RF_RedFuncs_t rf_eoERecoveryFuncs = {rf_RecoveryEFunc, "Recovery E Func", rf_Rec
 /**********************************************************************************************
  *   the following encoding node functions is used in  EO_000_CreateLargeWriteDAG
  **********************************************************************************************/
-int 
+int
 rf_RegularPEFunc(node)
 	RF_DagNode_t *node;
 {
@@ -93,7 +93,7 @@ rf_RegularPEFunc(node)
    old data and new data, then encode temp buf into old 'E' buf to form new 'E', but this approach
    take the same speed as the previous, and need more memory.
 */
-int 
+int
 rf_RegularONEFunc(node)
 	RF_DagNode_t *node;
 {
@@ -153,7 +153,7 @@ rf_RegularONEFunc(node)
 #endif
 }
 
-int 
+int
 rf_SimpleONEFunc(node)
 	RF_DagNode_t *node;
 {
@@ -194,7 +194,7 @@ rf_SimpleONEFunc(node)
 
 
 /****** called by rf_RegularPEFunc(node) and rf_RegularEFunc(node) in f.f. large write  ********/
-void 
+void
 rf_RegularESubroutine(node, ebuf)
 	RF_DagNode_t *node;
 	char   *ebuf;
@@ -227,7 +227,7 @@ rf_RegularESubroutine(node, ebuf)
 /*******************************************************************************************
  *			 Used in  EO_001_CreateLargeWriteDAG
  ******************************************************************************************/
-int 
+int
 rf_RegularEFunc(node)
 	RF_DagNode_t *node;
 {
@@ -250,7 +250,7 @@ rf_RegularEFunc(node)
  *  other than the above two into smaller accesses. We may have to change
  *  DegrESubroutin in the future.
  *******************************************************************************************/
-void 
+void
 rf_DegrESubroutine(node, ebuf)
 	RF_DagNode_t *node;
 	char   *ebuf;
@@ -288,7 +288,7 @@ rf_DegrESubroutine(node, ebuf)
  * failed in the stripe but not accessed at this time, then we should, instead, use
  * the rf_EOWriteDoubleRecoveryFunc().
  **************************************************************************************/
-int 
+int
 rf_Degraded_100_EOFunc(node)
 	RF_DagNode_t *node;
 {
@@ -304,7 +304,7 @@ rf_Degraded_100_EOFunc(node)
  * However, in evenodd this function can also be used as decoding function to recover
  * data from dead disk in the case of parity failure and a single data failure.
  **************************************************************************************/
-void 
+void
 rf_e_EncOneSect(
     RF_RowCol_t srcLogicCol,
     char *srcSecbuf,
@@ -379,7 +379,7 @@ rf_e_EncOneSect(
 	}
 }
 
-void 
+void
 rf_e_encToBuf(
     RF_Raid_t * raidPtr,
     RF_RowCol_t srcLogicCol,
@@ -401,7 +401,7 @@ rf_e_encToBuf(
  * to recover the data in dead disk. This function is used in the recovery node of
  * for EO_110_CreateReadDAG
  **************************************************************************************/
-int 
+int
 rf_RecoveryEFunc(node)
 	RF_DagNode_t *node;
 {
@@ -445,7 +445,7 @@ rf_RecoveryEFunc(node)
  * This function is used in the case where one data and the parity have filed.
  * (in EO_110_CreateWriteDAG )
  **************************************************************************************/
-int 
+int
 rf_EO_DegradedWriteEFunc(RF_DagNode_t * node)
 {
 	rf_DegrESubroutine(node, node->results[0]);
@@ -461,7 +461,7 @@ rf_EO_DegradedWriteEFunc(RF_DagNode_t * node)
  *  		THE FUNCTION IS FOR DOUBLE DEGRADED READ AND WRITE CASES
  **************************************************************************************/
 
-void 
+void
 rf_doubleEOdecode(
     RF_Raid_t * raidPtr,
     char **rrdbuf,
@@ -654,7 +654,7 @@ rf_doubleEOdecode(
 * 	EO_200_CreateReadDAG
 *
 ***************************************************************************************/
-int 
+int
 rf_EvenOddDoubleRecoveryFunc(node)
 	RF_DagNode_t *node;
 {
@@ -852,7 +852,7 @@ rf_EvenOddDoubleRecoveryFunc(node)
  * many accesses of single stripe unit.
  */
 
-int 
+int
 rf_EOWriteDoubleRecoveryFunc(node)
 	RF_DagNode_t *node;
 {

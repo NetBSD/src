@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.5.42.3 2004/09/21 13:36:18 skrll Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.5.42.4 2005/03/04 16:52:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -36,7 +36,7 @@
 #include "stand.h"
 
 
-#if defined(LIBSA_NO_DISKLABEL_MSGS) 
+#if defined(LIBSA_NO_DISKLABEL_MSGS)
 #define nolabel (char *)1
 #define corruptedlabel (char *)1
 #else

@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_pcb.c,v 1.18.2.3 2004/09/21 13:38:23 skrll Exp $	*/
+/*	$NetBSD: ns_pcb.c,v 1.18.2.4 2005/03/04 16:54:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18.2.3 2004/09/21 13:38:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ns_pcb.c,v 1.18.2.4 2005/03/04 16:54:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,7 +66,7 @@ ns_pcballoc(struct socket *so, struct nspcb *head)
 	so->so_pcb = nsp;
 	return (0);
 }
-	
+
 int
 ns_pcbbind(struct nspcb *nsp, struct mbuf *nam, struct proc *p)
 {
@@ -172,7 +172,7 @@ ns_pcbconnect(struct nspcb *nsp, struct mbuf *nam)
 		    rtalloc(ro);
 	}
 	if (ns_neteqnn(nsp->nsp_laddr.x_net, ns_zeronet)) {
-		/* 
+		/*
 		 * If route is known or can be allocated now,
 		 * our src addr is taken from the i/f, else punt.
 		 */
@@ -243,7 +243,7 @@ void
 ns_setsockaddr(struct nspcb *nsp, struct mbuf *nam)
 {
 	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-	
+
 	nam->m_len = sizeof (*sns);
 	sns = mtod(nam, struct sockaddr_ns *);
 	bzero((caddr_t)sns, sizeof (*sns));
@@ -256,7 +256,7 @@ void
 ns_setpeeraddr(struct nspcb *nsp, struct mbuf *nam)
 {
 	struct sockaddr_ns *sns = mtod(nam, struct sockaddr_ns *);
-	
+
 	nam->m_len = sizeof (*sns);
 	sns = mtod(nam, struct sockaddr_ns *);
 	bzero((caddr_t)sns, sizeof (*sns));
@@ -287,7 +287,7 @@ ns_pcbnotify(struct ns_addr *dst, int errno,
 		}
 		if (nsp->nsp_socket == 0)
 			goto next;
-		if (errno) 
+		if (errno)
 			nsp->nsp_socket->so_error = errno;
 		oinp = nsp;
 		nsp = nsp->nsp_next;

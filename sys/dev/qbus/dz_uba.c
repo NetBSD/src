@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.19.6.4 2005/02/04 11:47:09 skrll Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.19.6.5 2005/03/04 16:49:52 skrll Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -13,7 +13,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.4 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.19.6.5 2005/03/04 16:49:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,9 @@ CFATTACH_DECL(dz_uba, sizeof(struct dz_softc),
 
 static int
 dz_uba_match(parent, cf, aux)
-        struct device *parent;
+	struct device *parent;
 	struct cfdata *cf;
-        void *aux;
+	void *aux;
 {
 	struct uba_attach_args *ua = aux;
 	bus_space_tag_t	iot = ua->ua_iot;
@@ -106,13 +106,13 @@ dz_uba_match(parent, cf, aux)
 	/* Register the TX interrupt handler */
 
 
-       	return (1);
+	return (1);
 }
 
 static void
 dz_uba_attach(parent, self, aux)
-        struct device *parent, *self;
-        void *aux;
+	struct device *parent, *self;
+	void *aux;
 {
 	struct dz_softc *sc = (void *)self;
 	struct uba_attach_args *ua = aux;

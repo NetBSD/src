@@ -1,4 +1,4 @@
-/*	$NetBSD: krpc_subr.c,v 1.27.2.3 2004/09/21 13:38:35 skrll Exp $	*/
+/*	$NetBSD: krpc_subr.c,v 1.27.2.4 2005/03/04 16:54:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon Ross, Adam Glass
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.27.2.3 2004/09/21 13:38:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: krpc_subr.c,v 1.27.2.4 2005/03/04 16:54:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ krpc_portmap(sin,  prog, vers, proto, portp, l)
 	sin->sin_port = htons(PMAPPORT);
 	error = krpc_call(sin, PMAPPROG, PMAPVERS,
 					  PMAPPROC_GETPORT, &m, NULL, l);
-	if (error) 
+	if (error)
 		return error;
 
 	if (m->m_len < sizeof(*rdata)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap.h,v 1.9.36.3 2004/09/21 13:36:34 skrll Exp $	*/
+/*	$NetBSD: umap.h,v 1.9.36.4 2005/03/04 16:52:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,12 +56,12 @@ struct umap_args {
 #ifdef _KERNEL
 
 struct umap_mount {
-	struct layer_mount lm;		
+	struct layer_mount lm;
 	int             info_nentries;  /* number of uid mappings */
 	int		info_gnentries;	/* number of gid mappings */
-	u_long		info_mapdata[MAPFILEENTRIES][2]; /* mapping data for 
+	u_long		info_mapdata[MAPFILEENTRIES][2]; /* mapping data for
 	    user mapping in ficus */
-	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for 
+	u_long		info_gmapdata[GMAPFILEENTRIES][2]; /*mapping data for
 	    group mapping in ficus */
 };
 #define	umapm_vfs		lm.layerm_vfs

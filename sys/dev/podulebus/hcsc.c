@@ -1,4 +1,4 @@
-/*	$NetBSD: hcsc.c,v 1.12.6.3 2004/09/21 13:32:37 skrll Exp $	*/
+/*	$NetBSD: hcsc.c,v 1.12.6.4 2005/03/04 16:49:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.12.6.3 2004/09/21 13:32:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hcsc.c,v 1.12.6.4 2005/03/04 16:49:52 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -340,7 +340,7 @@ hcsc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen,
 		bus_space_write_multi_1(pdmat, pdmah, 0, data, 4);
 		data += 4;
 		resid -= 4;
-		
+
 		for (; resid >= HCSC_TSIZE_OUT; resid -= HCSC_TSIZE_OUT) {
 			if (hcsc_ready(ncr_sc) == 0) {
 				resid += 4; /* Overshot */

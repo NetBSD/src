@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $	*/
+/*	$NetBSD: zx.c,v 1.8.2.5 2005/03/04 16:50:32 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.4 2005/02/04 07:09:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.8.2.5 2005/03/04 16:50:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ struct zx_mmo {
 	{ ZX_LC0_KRN_VOFF,	ZX_OFF_LC_SS0_KRN,	0x00001000 },
 	{ ZX_LC1_KRN_VOFF,	ZX_OFF_LC_SS1_KRN,	0x00001000 },
 	{ ZX_LD_GBL_VOFF,	ZX_OFF_LD_GBL,		0x00001000 },
-};                                                                                                                
+};
 
 CFATTACH_DECL(zx, sizeof(struct zx_softc),
     zx_match, zx_attach, NULL, NULL);
@@ -152,7 +152,7 @@ int
 zx_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct sbus_attach_args *sa;
-	
+
 	sa = (struct sbus_attach_args *)aux;
 
 	return (strcmp(sa->sa_name, "SUNW,leo") == 0);
@@ -307,7 +307,7 @@ zxioctl(dev_t dev, u_long cmd, caddr_t data, int flags, struct lwp *l)
 	int rv, v, count, i;
 
 	sc = zx_cd.cd_devs[minor(dev)];
-	
+
 	switch (cmd) {
 	case FBIOGTYPE:
 		*(struct fbtype *)data = sc->sc_fb.fb_type;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.22.2.3 2004/09/21 13:39:15 skrll Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.22.2.4 2005/03/04 16:54:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #ifdef DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22.2.3 2004/09/21 13:39:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.22.2.4 2005/03/04 16:54:48 skrll Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -110,11 +110,11 @@ void lfs_dumplog(void)
 		}
 }
 
-void 
+void
 lfs_dump_super(struct lfs *lfsp)
 {
 	int i;
-	
+
 	printf("%s%x\t%s%x\t%s%d\t%s%d\n",
 	       "magic	 ", lfsp->lfs_magic,
 	       "version	 ", lfsp->lfs_version,
@@ -125,42 +125,42 @@ lfs_dump_super(struct lfs *lfsp)
 	       "bsize	 ", lfsp->lfs_bsize,
 	       "fsize	 ", lfsp->lfs_fsize,
 	       "frag	 ", lfsp->lfs_frag);
-	
+
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 	       "minfree	 ", lfsp->lfs_minfree,
 	       "inopb	 ", lfsp->lfs_inopb,
 	       "ifpb	 ", lfsp->lfs_ifpb,
 	       "nindir	 ", lfsp->lfs_nindir);
-	
+
 	printf("%s%d\t%s%d\t%s%d\t%s%d\n",
 	       "nseg	 ", lfsp->lfs_nseg,
 	       "nspf	 ", lfsp->lfs_nspf,
 	       "cleansz	 ", lfsp->lfs_cleansz,
 	       "segtabsz ", lfsp->lfs_segtabsz);
-	
+
 	printf("%s%x\t%s%d\t%s%lx\t%s%d\n",
 	       "segmask	 ", lfsp->lfs_segmask,
 	       "segshift ", lfsp->lfs_segshift,
 	       "bmask	 ", (unsigned long)lfsp->lfs_bmask,
 	       "bshift	 ", lfsp->lfs_bshift);
-	
+
 	printf("%s%lu\t%s%d\t%s%lx\t%s%u\n",
 	       "ffmask	 ", (unsigned long)lfsp->lfs_ffmask,
 	       "ffshift	 ", lfsp->lfs_ffshift,
 	       "fbmask	 ", (unsigned long)lfsp->lfs_fbmask,
 	       "fbshift	 ", lfsp->lfs_fbshift);
-	
+
 	printf("%s%d\t%s%d\t%s%x\t%s%qx\n",
 	       "sushift	 ", lfsp->lfs_sushift,
 	       "fsbtodb	 ", lfsp->lfs_fsbtodb,
 	       "cksum	 ", lfsp->lfs_cksum,
 	       "maxfilesize ", (long long)lfsp->lfs_maxfilesize);
-	
+
 	printf("Superblock disk addresses:");
 	for (i = 0; i < LFS_MAXNUMSB; i++)
 		printf(" %x", lfsp->lfs_sboffs[i]);
 	printf("\n");
-	
+
 	printf("Checkpoint Info\n");
 	printf("%s%d\t%s%x\t%s%d\n",
 	       "freehd	 ", lfsp->lfs_freehd,
@@ -180,7 +180,7 @@ void
 lfs_dump_dinode(struct ufs1_dinode *dip)
 {
 	int i;
-	
+
 	printf("%s%u\t%s%d\t%s%u\t%s%u\t%s%qu\t%s%d\n",
 	       "mode   ", dip->di_mode,
 	       "nlink  ", dip->di_nlink,
@@ -205,12 +205,12 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 {
 	int actual;
 #if 0
-	static int offset; 
+	static int offset;
 #endif
-	
+
 	if ((actual = 1) == 1)
 		return; /* XXXX not checking this anymore, really */
-	
+
 	if (sp->sum_bytes_left >= FINFOSIZE
 	   && sp->fip->fi_nblocks > 512) {
 		printf("%s:%d: fi_nblocks = %d\n",file,line,sp->fip->fi_nblocks);
@@ -218,21 +218,21 @@ lfs_check_segsum(struct lfs *fs, struct segment *sp, char *file, int line)
 		Debugger();
 #endif
 	}
-	
+
 	if (sp->sum_bytes_left > 484) {
 		printf("%s:%d: bad value (%d = -%d) for sum_bytes_left\n",
 		       file, line, sp->sum_bytes_left, fs->lfs_sumsize-sp->sum_bytes_left);
 		panic("too many bytes");
 	}
-	
+
 	actual = fs->lfs_sumsize
 		/* amount taken up by FINFOs */
 		- ((char *)&(sp->fip->fi_blocks[sp->fip->fi_nblocks]) - (char *)(sp->segsum))
 			/* amount taken up by inode blocks */
 			- sizeof(int32_t)*((sp->ninodes+INOPB(fs)-1) / INOPB(fs));
 #if 0
-	if (actual - sp->sum_bytes_left < offset) 
-	{  
+	if (actual - sp->sum_bytes_left < offset)
+	{
 		printf("%s:%d: offset changed %d -> %d\n", file, line,
 		       offset, actual-sp->sum_bytes_left);
 		offset = actual - sp->sum_bytes_left;
@@ -266,7 +266,7 @@ lfs_check_bpp(struct lfs *fs, struct segment *sp, char *file, int line)
 	daddr_t blkno;
 	struct buf **bpp;
 	struct vnode *devvp;
-	
+
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
 	blkno = (*(sp->bpp))->b_blkno;
 	for (bpp = sp->bpp; bpp < sp->cbpp; bpp++) {

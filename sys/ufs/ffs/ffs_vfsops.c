@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.118.2.10 2005/01/17 19:33:11 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.118.2.11 2005/03/04 16:54:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.10 2005/01/17 19:33:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.118.2.11 2005/03/04 16:54:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -528,7 +528,7 @@ ffs_reload(mp, cred, l)
 	} else
 #endif
 		fs->fs_flags &= ~FS_SWAPPED;
-	if ((newfs->fs_magic != FS_UFS1_MAGIC &&	
+	if ((newfs->fs_magic != FS_UFS1_MAGIC &&
 	     newfs->fs_magic != FS_UFS2_MAGIC)||
 	     newfs->fs_bsize > MAXBSIZE ||
 	     newfs->fs_bsize < sizeof(struct fs)) {
@@ -538,7 +538,7 @@ ffs_reload(mp, cred, l)
 	}
 	/* Store off old fs_sblockloc for fs_oldfscompat_read. */
 	sblockloc = fs->fs_sblockloc;
-	/* 
+	/*
 	 * Copy pointer fields back into superblock before copying in	XXX
 	 * new superblock. These should really be in the ufsmount.	XXX
 	 * Note that important parameters (eg fs_ncg) are unchanged.
@@ -920,7 +920,7 @@ ffs_mountfs(devvp, mp, l)
 		else
 #endif
 			memcpy(space, bp->b_data, (u_int)size);
-			
+
 		space = (char *)space + size;
 		brelse(bp);
 		bp = NULL;
@@ -1573,7 +1573,7 @@ ffs_init()
 #ifdef _LKM
 	pool_init(&ffs_inode_pool, sizeof(struct inode), 0, 0, 0,
 		  "ffsinopl", &pool_allocator_nointr);
-	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0, 
+	pool_init(&ffs_dinode1_pool, sizeof(struct ufs1_dinode), 0, 0, 0,
 		  "dino1pl", &pool_allocator_nointr);
 	pool_init(&ffs_dinode2_pool, sizeof(struct ufs2_dinode), 0, 0, 0,
 		  "dino2pl", &pool_allocator_nointr);
@@ -1671,7 +1671,7 @@ ffs_sbupdate(mp, waitfor)
 	    (int)fs->fs_sbsize, 0, 0);
 	saveflag = fs->fs_flags & FS_INTERNAL;
 	fs->fs_flags &= ~FS_INTERNAL;
-	
+
 	memcpy(bp->b_data, fs, fs->fs_sbsize);
 
 	ffs_oldfscompat_write((struct fs *)bp->b_data, mp);

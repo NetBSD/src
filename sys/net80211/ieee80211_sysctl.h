@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.1.2.4 2004/09/21 13:36:55 skrll Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.1.2.5 2005/03/04 16:53:17 skrll Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -33,7 +33,7 @@
 
 #include <net80211/ieee80211_channel.h>
 
-/* sysctl(9) interface to net80211 client/peer records */   
+/* sysctl(9) interface to net80211 client/peer records */
 
 /* Name index, offset from net.link.ieee80211.node. */
 
@@ -55,7 +55,7 @@
 						 */
 
 #define	IEEE80211_SYSCTL_OP_ALL		0
- 
+
 /* Every record begins with this information. */
 struct ieee80211_node_sysctlhdr {
 /*00*/	u_int16_t	sh_ifindex;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.171.2.7 2005/02/04 11:47:48 skrll Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.171.2.8 2005/03/04 16:53:29 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -70,12 +70,14 @@
  */
 
 /*-
- * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 1999, 2001, 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe and Kevin M. Lahey of the Numerical Aerospace Simulation
  * Facility, NASA Ames Research Center.
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Charles M. Hannum.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -148,7 +150,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.7 2005/02/04 11:47:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.171.2.8 2005/03/04 16:53:29 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -493,6 +495,7 @@ tcp_reass(struct tcpcb *tp, struct tcphdr *th, struct mbuf *m, int *tlen)
 		    SEQ_GEQ(q->ipqe_seq + q->ipqe_len, pkt_seq + pkt_len)) {
 			tcpstat.tcps_rcvduppack++;
 			tcpstat.tcps_rcvdupbyte += pkt_len;
+			tcp_new_dsack(tp, pkt_seq, pkt_len);
 			m_freem(m);
 			if (tiqe != NULL)
 				pool_put(&tcpipqent_pool, tiqe);
@@ -1369,7 +1372,7 @@ findpcb:
 				 *   (2a) "SHOULD NOT be used if alternate
 				 *        address with sufficient scope is
 				 *        available"
-				 *   (2b) nothing mentioned otherwise. 
+				 *   (2b) nothing mentioned otherwise.
 				 * Here we fall into (2b) case as we have no
 				 * choice in our source address selection - we
 				 * must obey the peer.
@@ -1484,6 +1487,10 @@ after_listen:
 		if (tcp_dooptions(tp, optp, optlen, th, m, toff, &opti) < 0)
 			goto drop;
 
+	if (TCP_SACK_ENABLED(tp)) {
+		tcp_del_sackholes(tp, th);
+	}
+
 	if (opti.ts_present && opti.ts_ecr) {
 		/*
 		 * Calculate the RTT from the returned time stamp and the
@@ -1556,6 +1563,7 @@ after_listen:
 				tp->t_lastoff -= acked;
 
 				tp->snd_una = th->th_ack;
+				tp->snd_fack = tp->snd_una;
 				if (SEQ_LT(tp->snd_high, tp->snd_una))
 					tp->snd_high = tp->snd_una;
 				m_freem(m);
@@ -1592,6 +1600,7 @@ after_listen:
 			 * we have enough buffer space to take it.
 			 */
 			++tcpstat.tcps_preddat;
+			tp->rcv_sack_num = 0;
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
@@ -1799,6 +1808,7 @@ after_listen:
 			tcpstat.tcps_rcvduppack++;
 			tcpstat.tcps_rcvdupbyte += tlen;
 			tcpstat.tcps_pawsdrop++;
+			tcp_new_dsack(tp, th->th_seq, tlen);
 			goto dropafterack;
 		}
 	}
@@ -1847,6 +1857,7 @@ after_listen:
 			tcpstat.tcps_rcvpartduppack++;
 			tcpstat.tcps_rcvpartdupbyte += todrop;
 		}
+		tcp_new_dsack(tp, th->th_seq, todrop);
 		hdroptlen += todrop;	/*drop from head afterwards*/
 		th->th_seq += todrop;
 		tlen -= todrop;
@@ -1990,7 +2001,7 @@ after_listen:
 				m_freem(tcp_saveti);
 			return;
 		}
-			
+
 		goto dropafterack_ratelim;
 	}
 
@@ -2075,12 +2086,19 @@ after_listen:
 				 * so bump cwnd by the amount in the receiver
 				 * to keep a constant cwnd packets in the
 				 * network.
+				 *
+				 * If we are using TCP/SACK, then enter
+				 * Fast Recovery if the receiver SACKs
+				 * data that is tcprexmtthresh * MSS
+				 * bytes past the last ACKed segment,
+				 * irrespective of the number of DupAcks.
 				 */
 				if (TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 ||
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
-				else if (++tp->t_dupacks == tcprexmtthresh &&
-					 tp->t_partialacks < 0) {
+				else if (tp->t_partialacks < 0 &&
+					 (++tp->t_dupacks == tcprexmtthresh ||
+					 TCP_FACK_FASTRECOV(tp))) {
 					tcp_seq onxt;
 					u_int win;
 
@@ -2105,6 +2123,13 @@ after_listen:
 					tp->t_partialacks = 0;
 					TCP_TIMER_DISARM(tp, TCPT_REXMT);
 					tp->t_rtttime = 0;
+					if (TCP_SACK_ENABLED(tp)) {
+						tp->t_dupacks = tcprexmtthresh;
+						tp->sack_newdata = tp->snd_nxt;
+						tp->snd_cwnd = tp->t_segsz;
+						(void) tcp_output(tp);
+						goto drop;
+					}
 					tp->snd_nxt = th->th_ack;
 					tp->snd_cwnd = tp->t_segsz;
 					(void) tcp_output(tp);
@@ -2138,10 +2163,12 @@ after_listen:
 		 * If the congestion window was inflated to account
 		 * for the other side's cached packets, retract it.
 		 */
-		if (!tcp_do_newreno)
-			tcp_reno_newack(tp, th);
-		else
+		if (TCP_SACK_ENABLED(tp))
+			tcp_sack_newack(tp, th);
+		else if (tcp_do_newreno)
 			tcp_newreno_newack(tp, th);
+		else
+			tcp_reno_newack(tp, th);
 		if (SEQ_GT(th->th_ack, tp->snd_max)) {
 			tcpstat.tcps_rcvacktoomuch++;
 			goto dropafterack;
@@ -2212,6 +2239,8 @@ after_listen:
 		}
 		sowwakeup(so);
 		tp->snd_una = th->th_ack;
+		if (SEQ_GT(tp->snd_una, tp->snd_fack))
+			tp->snd_fack = tp->snd_una;
 		if (SEQ_LT(tp->snd_nxt, tp->snd_una))
 			tp->snd_nxt = tp->snd_una;
 		if (SEQ_LT(tp->snd_high, tp->snd_una))
@@ -2406,6 +2435,7 @@ dodata:							/* XXX */
 		} else {
 			m_adj(m, hdroptlen);
 			tiflags = tcp_reass(tp, th, m, &tlen);
+			tcp_update_sack_list(tp);
 			tp->t_flags |= TF_ACKNOW;
 		}
 		TCP_REASS_UNLOCK(tp);
@@ -2478,8 +2508,10 @@ dodata:							/* XXX */
 	/*
 	 * Return any desired output.
 	 */
-	if (needoutput || (tp->t_flags & TF_ACKNOW))
+	if (needoutput || (tp->t_flags & TF_ACKNOW)) {
+		tcp_update_sack_list(tp);
 		(void) tcp_output(tp);
+	}
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
 	return;
@@ -2515,6 +2547,7 @@ dropafterack_ratelim:
 dropafterack2:
 	m_freem(m);
 	tp->t_flags |= TF_ACKNOW;
+	tcp_update_sack_list(tp);
 	(void) tcp_output(tp);
 	if (tcp_saveti)
 		m_freem(tcp_saveti);
@@ -2817,24 +2850,14 @@ tcp_dooptions(struct tcpcb *tp, u_char *cp, int cnt, struct tcphdr *th,
 				continue;
 			if (!(th->th_flags & TH_SYN))
 				continue;
-			tp->t_flags &= ~TF_CANT_TXSACK;
+			if (tcp_do_sack) {
+				tp->t_flags |= TF_SACK_PERMIT;
+				tp->t_flags |= TF_WILL_SACK;
+			}
 			break;
 
 		case TCPOPT_SACK:
-			if (tp->t_flags & TF_IGNR_RXSACK)
-				continue;
-			if (optlen % 8 != 2 || optlen < 10)
-				continue;
-			cp += 2;
-			optlen -= 2;
-			for (; optlen > 0; cp -= 8, optlen -= 8) {
-				tcp_seq lwe, rwe;
-				bcopy((char *)cp, (char *) &lwe, sizeof(lwe));
-				NTOHL(lwe);
-				bcopy((char *)cp, (char *) &rwe, sizeof(rwe));
-				NTOHL(rwe);
-				/* tcp_mark_sacked(tp, lwe, rwe); */
-			}
+			tcp_sack_option(tp, th, cp, optlen);
 			break;
 #ifdef TCP_SIGNATURE
 		case TCPOPT_SIGNATURE:
@@ -3663,6 +3686,9 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	TCP_TIMER_ARM(tp, TCPT_KEEP, TCPTV_KEEP_INIT);
 	tcpstat.tcps_accepts++;
 
+	if ((sc->sc_flags & SCF_SACK_PERMIT) && tcp_do_sack)
+		tp->t_flags |= TF_WILL_SACK;
+
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE)
 		tp->t_flags |= TF_SIGNATURE;
@@ -3952,6 +3978,8 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		sc->sc_requested_s_scale = 15;
 		sc->sc_request_r_scale = 15;
 	}
+	if ((tb.t_flags & TF_SACK_PERMIT) && tcp_do_sack)
+		sc->sc_flags |= SCF_SACK_PERMIT;
 #ifdef TCP_SIGNATURE
 	if (tb.t_flags & TF_SIGNATURE)
 		sc->sc_flags |= SCF_SIGNATURE;
@@ -4003,6 +4031,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 
 	/* Compute the size of the TCP options. */
 	optlen = 4 + (sc->sc_request_r_scale != 15 ? 4 : 0) +
+	    ((sc->sc_flags & SCF_SACK_PERMIT) ? (TCPOLEN_SACK_PERMITTED + 2) : 0) +
 #ifdef TCP_SIGNATURE
 	    ((sc->sc_flags & SCF_SIGNATURE) ? (TCPOLEN_SIGNATURE + 2) : 0) +
 #endif
@@ -4108,13 +4137,24 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 		optp += TCPOLEN_TSTAMP_APPA;
 	}
 
+	if (sc->sc_flags & SCF_SACK_PERMIT) {
+		u_int8_t *p = optp;
+
+		/* Let the peer know that we will SACK. */
+		p[0] = TCPOPT_SACK_PERMITTED;
+		p[1] = 2;
+		p[2] = TCPOPT_NOP;
+		p[3] = TCPOPT_NOP;
+		optp += 4;
+	}
+
 #ifdef TCP_SIGNATURE
 	if (sc->sc_flags & SCF_SIGNATURE) {
 		struct secasvar *sav;
 		u_int8_t *sigp;
 
 		sav = tcp_signature_getsav(m, th);
-		
+
 		if (sav == NULL) {
 			if (m)
 				m_freem(m);
@@ -4186,7 +4226,7 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET
 	case AF_INET:
 		error = ip_output(m, sc->sc_ipopts, ro,
-		    (ip_mtudisc ? IP_MTUDISC : 0), 
+		    (ip_mtudisc ? IP_MTUDISC : 0),
 		    (struct ip_moptions *)NULL, so);
 		break;
 #endif

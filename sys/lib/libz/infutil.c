@@ -1,8 +1,8 @@
-/* $NetBSD: infutil.c,v 1.6.2.3 2004/09/21 13:36:23 skrll Exp $ */
+/* $NetBSD: infutil.c,v 1.6.2.4 2005/03/04 16:52:42 skrll Exp $ */
 
 /* inflate_util.c -- data and routines common to blocks and codes
  * Copyright (C) 1995-2002 Mark Adler
- * For conditions of distribution and use, see copyright notice in zlib.h 
+ * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
 #include "zutil.h"

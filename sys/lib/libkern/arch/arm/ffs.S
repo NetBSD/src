@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2003/04/05 23:27:15 bjh21 Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3.2.1 2005/03/04 16:52:29 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Christopher Gilbert
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: ffs.S,v 1.3 2003/04/05 23:27:15 bjh21 Exp $")
+RCSID("$NetBSD: ffs.S,v 1.3.2.1 2005/03/04 16:52:29 skrll Exp $")
 
 /*
  * ffs - find first set bit, this algorithm isolates the first set
@@ -54,10 +54,10 @@ ENTRY(ffs)
 	 * if X = 0, all further instructions are skipped
 	 */
 	adrne   r2, .L_ffs_table
-	orrne   r0, r0, r0, lsl #4  /* r0 = X * 0x11 */ 
+	orrne   r0, r0, r0, lsl #4  /* r0 = X * 0x11 */
 	orrne   r0, r0, r0, lsl #6  /* r0 = X * 0x451 */
 	rsbne   r0, r0, r0, lsl #16 /* r0 = X * 0x0450fbaf */
-              
+
 	/* now lookup in table indexed on top 6 bits of r0 */
 	ldrneb  r0, [ r2, r0, lsr #26 ]
 

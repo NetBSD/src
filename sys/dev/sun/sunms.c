@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.16.2.5 2005/01/13 08:33:12 skrll Exp $	*/
+/*	$NetBSD: sunms.c,v 1.16.2.6 2005/03/04 16:50:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.16.2.5 2005/01/13 08:33:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.16.2.6 2005/03/04 16:50:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ CFATTACH_DECL(ms_tty, sizeof(struct ms_softc),
     sunms_match, sunms_attach, NULL, NULL);
 
 struct  linesw sunms_disc =
-	{ "sunms", 8, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
-	  sunmsinput, ttstart, nullmodem, ttpoll };	/* 8- SUNMOUSEDISC */
+	{ "sunms", -1, ttylopen, ttylclose, ttyerrio, ttyerrio, ttynullioctl,
+	  sunmsinput, ttstart, nullmodem, ttpoll };
 
 int	sunms_enable(void *);
 int	sunms_ioctl(void *, u_long, caddr_t, int, struct lwp *);
@@ -241,7 +241,7 @@ sunms_ioctl(v, cmd, data, flag, l)
 	case WSMOUSEIO_GTYPE:
 		*(u_int *)data = WSMOUSE_TYPE_PS2; /* XXX  */
 		break;
-		
+
 	default:
 		return (EPASSTHROUGH);
 	}

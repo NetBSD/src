@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.47.2.7 2004/12/18 09:32:50 skrll Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.47.2.8 2005/03/04 16:52:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.7 2004/12/18 09:32:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.47.2.8 2005/03/04 16:52:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +392,7 @@ portal_open(v)
 		error = so->so_error;
 		goto bad;
 	}
-		
+
 	/*
 	 * Set miscellaneous flags
 	 */
@@ -498,7 +498,7 @@ portal_open(v)
 	}
 
 	/*
-	 * Check that the mode the file is being opened for is a subset 
+	 * Check that the mode the file is being opened for is a subset
 	 * of the mode of the existing descriptor.
 	 */
  	fp = l->l_proc->p_fd->fd_ofiles[fd];
@@ -520,7 +520,7 @@ bad:;
 	/*
 	 * And discard the control message.
 	 */
-	if (cm) { 
+	if (cm) {
 		m_freem(cm);
 	}
 
@@ -554,7 +554,7 @@ portal_getattr(v)
 	/*
 	 * Make all times be current TOD.  Avoid microtime(9), it's slow.
 	 * We don't guard the read from time(9) with splclock(9) since we
-	 * don't actually need to be THAT sure the access is atomic. 
+	 * don't actually need to be THAT sure the access is atomic.
 	 */
 	TIMEVAL_TO_TIMESPEC(&time, &vap->va_ctime);
 	vap->va_atime = vap->va_mtime = vap->va_ctime;
@@ -703,15 +703,15 @@ portal_print(v)
 }
 
 int
-portal_link(v) 
+portal_link(v)
 	void *v;
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
-		struct vnode *a_vp;  
+		struct vnode *a_vp;
 		struct componentname *a_cnp;
 	} */ *ap = v;
- 
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
@@ -728,7 +728,7 @@ portal_symlink(v)
 		struct vattr *a_vap;
 		char *a_target;
 	} */ *ap = v;
-  
+
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_qe.c,v 1.57.2.1 2004/11/02 07:52:46 skrll Exp $ */
+/*      $NetBSD: if_qe.c,v 1.57.2.2 2005/03/04 16:49:52 skrll Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -12,7 +12,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed at Ludd, University of 
+ *      This product includes software developed at Ludd, University of
  *      Lule}, Sweden and its contributors.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.57.2.1 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qe.c,v 1.57.2.2 2005/03/04 16:49:52 skrll Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -158,7 +158,7 @@ qematch(struct device *parent, struct cfdata *cf, void *aux)
 	QE_WCSR(QE_CSR_VECTOR, ubasc->uh_lastiv);
 
 	/*
-	 * Map the ring area. Actually this is done only to be able to 
+	 * Map the ring area. Actually this is done only to be able to
 	 * send and receive a internal packet; some junk is loopbacked
 	 * so that the DEQNA has a reason to interrupt.
 	 */
@@ -224,9 +224,9 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
 
-        /*
-         * Allocate DMA safe memory for descriptors and setup memory.
-         */
+	/*
+	 * Allocate DMA safe memory for descriptors and setup memory.
+	 */
 
 	sc->sc_ui.ui_size = sizeof(struct qe_cdata) + ETHER_PAD_LEN;
 	if ((error = ubmemalloc((struct uba_softc *)parent, &sc->sc_ui, 0))) {
@@ -243,7 +243,7 @@ qeattach(struct device *parent, struct device *self, void *aux)
 	nullbuf = ((char*)sc->sc_qedata) + sizeof(struct qe_cdata);
 	/*
 	 * Create the transmit descriptor DMA maps. We take advantage
-	 * of the fact that the Qbus address space is big, and therefore 
+	 * of the fact that the Qbus address space is big, and therefore
 	 * allocate map registers for all transmit descriptors also,
 	 * so that we can avoid this each time we send a packet.
 	 */
@@ -725,7 +725,7 @@ qeioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
  * Add a receive buffer to the indicated descriptor.
  */
 int
-qe_add_rxbuf(struct qe_softc *sc, int i) 
+qe_add_rxbuf(struct qe_softc *sc, int i)
 {
 	struct mbuf *m;
 	struct qe_ring *rp;
@@ -798,7 +798,7 @@ qe_setup(struct qe_softc *sc)
 		qc->qc_setup[i * 8 + 1] = enaddr[i]; /* Own address */
 
 	/*
-	 * Multicast handling. The DEQNA can handle up to 12 direct 
+	 * Multicast handling. The DEQNA can handle up to 12 direct
 	 * ethernet addresses.
 	 */
 	j = 3; k = 0;

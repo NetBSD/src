@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.23.2.3 2004/09/21 13:35:06 skrll Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.23.2.4 2005/03/04 16:51:58 skrll Exp $	*/
 
 /******************************************************************************
  *                                                                            *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23.2.3 2004/09/21 13:35:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23.2.4 2005/03/04 16:51:58 skrll Exp $");
 
 #include "opt_ntp.h"
 
@@ -72,7 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.23.2.3 2004/09/21 13:35:06 skrll 
 #ifdef NTP
 /*
  * The following variables are used by the hardclock() routine in the
- * kern_clock.c module and are described in that module. 
+ * kern_clock.c module and are described in that module.
  */
 extern int time_state;		/* clock state */
 extern int time_status;		/* clock status bits */
@@ -227,8 +227,8 @@ ntp_adjtime1(ntv, v, retval)
 	int s;
 
 	/*
-	 * Update selected clock variables. Note that there is no error 
-	 * checking here on the assumption the superuser should know 
+	 * Update selected clock variables. Note that there is no error
+	 * checking here on the assumption the superuser should know
 	 * what it is doing.
 	 */
 	modes = ntv->modes;

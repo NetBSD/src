@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.7.2.4 2004/11/02 07:53:02 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.7.2.5 2005/03/04 16:50:54 skrll Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7.2.4 2004/11/02 07:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.7.2.5 2005/03/04 16:50:54 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -164,6 +164,8 @@ static const struct url_type {
 	{{ USB_VENDOR_ABOCOM, USB_PRODUCT_ABOCOM_LCS8138TX}, 0},
 	/* Micronet SP128AR */
 	{{ USB_VENDOR_MICRONET, USB_PRODUCT_MICRONET_SP128AR}, 0},
+	/* OQO model 01 */
+	{{ USB_VENDOR_OQO, USB_PRODUCT_OQO_ETHER01}, 0},
 };
 #define url_lookup(v, p) ((struct url_type *)usb_lookup(url_devs, v, p))
 

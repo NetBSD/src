@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.29.2.4 2004/09/21 13:38:00 skrll Exp $	*/
+/*	$NetBSD: esis.c,v 1.29.2.5 2005/03/04 16:54:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.29.2.4 2004/09/21 13:38:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esis.c,v 1.29.2.5 2005/03/04 16:54:08 skrll Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -1055,7 +1055,7 @@ isis_input(struct mbuf *m0, ...)
 			    (i < 5) ? ':' : ' ');
 		printf(" to:");
 		for (i = 0; i < 6; i++)
-			printf("%x%c", shp->snh_dhost[i] & 0xff, 
+			printf("%x%c", shp->snh_dhost[i] & 0xff,
 			    (i < 5) ? ':' : ' ');
 		printf("\n");
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.69.2.6 2004/09/21 13:39:13 skrll Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.69.2.7 2005/03/04 16:54:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.6 2004/09/21 13:39:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.69.2.7 2005/03/04 16:54:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -151,8 +151,8 @@ lfs_rf_valloc(struct lfs *fs, ino_t ino, int version, struct lwp *l,
 	 * The inode is not in use.  Find it on the free list.
 	 */
 	/* If the Ifile is too short to contain this inum, extend it */
-	while (VTOI(fs->lfs_ivnode)->i_size <= (ino / 
-		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz) 
+	while (VTOI(fs->lfs_ivnode)->i_size <= (ino /
+		fs->lfs_ifpb + fs->lfs_cleansz + fs->lfs_segtabsz)
 		<< fs->lfs_bshift) {
 		extend_ifile(fs, NOCRED);
 	}
@@ -236,7 +236,7 @@ extend_ifile(struct lfs *fs, struct ucred *cred)
 	ip->i_size += fs->lfs_bsize;
 	ip->i_ffs1_size = ip->i_size;
 	uvm_vnp_setsize(vp, ip->i_size);
-	
+
 	i = (blkno - fs->lfs_segtabsz - fs->lfs_cleansz) *
 		fs->lfs_ifpb;
 	LFS_GET_HEADFREE(fs, cip, cbp, &oldlast);
@@ -296,7 +296,7 @@ lfs_valloc(void *v)
 	if (fs->lfs_ronly)
 		return EROFS;
 	*ap->a_vpp = NULL;
-	
+
 	lfs_seglock(fs, SEGM_PROT);
 
 	/* Get the head of the freelist. */
@@ -313,7 +313,7 @@ lfs_valloc(void *v)
 #ifdef ALLOCPRINT
 	printf("lfs_valloc: allocate inode %d\n", new_ino);
 #endif
-	
+
 	/*
 	 * Remove the inode from the free list and write the new start
 	 * of the free list into the superblock.
@@ -422,19 +422,20 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	struct inode *ip;
 	struct ufs1_dinode *dp;
 	struct ufsmount *ump;
-#ifdef QUOTA
 	int i;
-#endif
-	
+
 	/* Get a pointer to the private mount structure. */
 	ump = VFSTOUFS(mp);
-	
+
 	/* Initialize the inode. */
 	ip = pool_get(&lfs_inode_pool, PR_WAITOK);
 	memset(ip, 0, sizeof(*ip));
 	dp = pool_get(&lfs_dinode_pool, PR_WAITOK);
 	memset(dp, 0, sizeof(*dp));
 	ip->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(ip->inode_ext.lfs, 0, sizeof(*ip->inode_ext.lfs));
+	for (i = 0; i < LFS_BLIST_HASH_WIDTH; i++)
+		LIST_INIT(&(ip->i_lfs_blist[i]));
 	vp->v_data = ip;
 	ip->i_din.ffs1_din = dp;
 	ip->i_ump = ump;
@@ -475,7 +476,7 @@ lfs_vfree(void *v)
 	daddr_t old_iaddr;
 	ino_t ino, otail;
 	int s;
-	
+
 	/* Get the inode number and file system. */
 	vp = ap->a_pvp;
 	ip = VTOI(vp);
@@ -489,7 +490,7 @@ lfs_vfree(void *v)
 	splx(s);
 
 	lfs_seglock(fs, SEGM_PROT);
-	
+
 	lfs_unmark_vnode(vp);
 	if (vp->v_flag & VDIROP) {
 		--lfs_dirvcount;
@@ -551,11 +552,11 @@ lfs_vfree(void *v)
 		sup->su_nbytes -= sizeof (struct ufs1_dinode);
 		LFS_WRITESEGENTRY(sup, fs, dtosn(fs, old_iaddr), bp); /* Ifile */
 	}
-	
+
 	/* Set superblock modified bit and decrement file count. */
 	fs->lfs_fmod = 1;
 	--fs->lfs_nfiles;
-	
+
 	lfs_segunlock(fs);
 
 	return (0);

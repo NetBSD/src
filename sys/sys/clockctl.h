@@ -1,11 +1,11 @@
-/*      $NetBSD: clockctl.h,v 1.6.2.5 2005/02/04 11:48:05 skrll Exp $ */
+/*      $NetBSD: clockctl.h,v 1.6.2.6 2005/03/04 16:54:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Emmanuel Dreyfus.  
+ * by Emmanuel Dreyfus.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.6.2.2 2004/11/02 07:53:02 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.6.2.3 2005/03/04 16:50:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.2 2004/11/02 07:53:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.6.2.3 2005/03/04 16:50:54 skrll Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -433,7 +433,7 @@ USB_MATCH(axe)
 		return(UMATCH_NONE);
 	}
 
-	return (axe_lookup(uaa->vendor, uaa->product) != NULL ? 
+	return (axe_lookup(uaa->vendor, uaa->product) != NULL ?
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
@@ -455,7 +455,7 @@ USB_ATTACH(axe)
 	struct ifnet *ifp;
 	int i, s;
 
-        usbd_devinfo(dev, 0, devinfo, sizeof devinfo); 
+        usbd_devinfo(dev, 0, devinfo, sizeof devinfo);
 	USB_ATTACH_SETUP;
 
 	err = usbd_set_config_no(dev, AXE_CONFIG_NO, 1);

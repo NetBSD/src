@@ -1,4 +1,4 @@
-/*	$NetBSD: keysock.c,v 1.5.2.6 2005/01/24 08:59:40 skrll Exp $	*/
+/*	$NetBSD: keysock.c,v 1.5.2.7 2005/03/04 16:53:44 skrll Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/keysock.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keysock.c,v 1.25 2001/08/13 20:07:41 itojun Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.6 2005/01/24 08:59:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: keysock.c,v 1.5.2.7 2005/03/04 16:53:44 skrll Exp $");
 
 #include "opt_ipsec.h"
 
@@ -84,7 +84,7 @@ int key_registered_sb_max = (NMBCLUSTERS * MHLEN); /* XXX arbitrary */
 
 /* XXX sysctl */
 #ifdef __FreeBSD__
-SYSCTL_INT(_net_key, OID_AUTO, registered_sbmax, CTLFLAG_RD, 
+SYSCTL_INT(_net_key, OID_AUTO, registered_sbmax, CTLFLAG_RD,
     &key_registered_sb_max , 0, "Maximum kernel-to-user PFKEY datagram size");
 #endif
 
@@ -304,7 +304,7 @@ key_sendup_mbuf(so, m, target /*, sbprio */)
 		panic("key_sendup_mbuf: NULL pointer was passed.\n");
 	if (so == NULL && target == KEY_SENDUP_ONE)
 		panic("key_sendup_mbuf: NULL pointer was passed.\n");
-	
+
 	/*
 	 * RFC 2367 says ACQUIRE and other kernel-generated messages
 	 * are special. We treat all KEY_SENDUP_REGISTERED messages

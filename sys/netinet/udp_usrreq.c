@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.103.2.7 2005/02/15 21:33:40 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.103.2.8 2005/03/04 16:53:30 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.103.2.7 2005/02/15 21:33:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.103.2.8 2005/03/04 16:53:30 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -932,7 +932,7 @@ udp_ctlinput(int cmd, struct sockaddr *sa, void *v)
 }
 
 int
-udp_ctloutput(op, so, level, optname, mp) 
+udp_ctloutput(op, so, level, optname, mp)
 	int op;
 	struct socket *so;
 	int level, optname;
@@ -982,7 +982,7 @@ udp_ctloutput(op, so, level, optname, mp)
 				error = EINVAL;
 				goto end;
 			}
-			
+
 			switch(*mtod(m, int *)) {
 #ifdef IPSEC_NAT_T
 			case 0:
@@ -993,7 +993,7 @@ udp_ctloutput(op, so, level, optname, mp)
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
 				inp->inp_flags |= INP_ESPINUDP;
 				break;
-				
+
 			case UDP_ENCAP_ESPINUDP_NON_IKE:
 				inp->inp_flags &= ~INP_ESPINUDP_ALL;
 				inp->inp_flags |= INP_ESPINUDP_NON_IKE;
@@ -1017,13 +1017,13 @@ udp_ctloutput(op, so, level, optname, mp)
 		error = EINVAL;
 		goto end;
 		break;
-	}	
-	
+	}
+
 end:
 	splx(s);
 	return error;
 }
-	
+
 
 int
 udp_output(struct mbuf *m, ...)
@@ -1361,7 +1361,7 @@ udp4_espinudp(m, off, src, so)
 	struct ip *ip;
 	struct mbuf *n;
 
-	/* 
+	/*
 	 * Collapse the mbuf chain if the first mbuf is too short
 	 * The longest case is: UDP + non ESP marker + ESP
 	 */
@@ -1376,7 +1376,7 @@ udp4_espinudp(m, off, src, so)
 		}
 	}
 
-	len = m->m_len - off;	
+	len = m->m_len - off;
 	data = mtod(m, caddr_t) + off;
 	inp = sotoinpcb(so);
 
@@ -1385,10 +1385,10 @@ udp4_espinudp(m, off, src, so)
 		return 1;
 	}
 
-	/* 
-	 * Check that the payload is long enough to hold 
+	/*
+	 * Check that the payload is long enough to hold
 	 * an ESP header and compute the length of encapsulation
-	 * header to remove 
+	 * header to remove
 	 */
 	if (inp->inp_flags & INP_ESPINUDP) {
 		u_int32_t *st = (u_int32_t *)data;
@@ -1405,14 +1405,14 @@ udp4_espinudp(m, off, src, so)
 		if ((len <= sizeof(u_int64_t) + sizeof(struct esp))
 		    || (*st != 0))
 			return 0; /* Normal UDP processing */
-		
+
 		skip = sizeof(struct udphdr) + sizeof(u_int64_t);
 	}
 
 	/*
 	 * Remove the UDP header (and possibly the non ESP marker)
 	 * IP header lendth is iphdrlen
-	 * Before:   
+	 * Before:
 	 *   <--- off --->
 	 *   +----+------+-----+
 	 *   | IP |  UDP | ESP |
@@ -1433,8 +1433,8 @@ udp4_espinudp(m, off, src, so)
 	ip->ip_p = IPPROTO_ESP;
 
 	/*
-	 * Copy the mbuf to avoid multiple free, as both 
-	 * esp4_input (which we call) and udp_input (which 
+	 * Copy the mbuf to avoid multiple free, as both
+	 * esp4_input (which we call) and udp_input (which
 	 * called us) free the mbuf.
 	 */
 	if ((n = m_dup(m, 0, M_COPYALL, M_DONTWAIT)) == NULL) {

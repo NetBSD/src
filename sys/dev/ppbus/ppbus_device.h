@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_device.h,v 1.3.4.4 2004/09/21 13:32:37 skrll Exp $ */
+/* $NetBSD: ppbus_device.h,v 1.3.4.5 2005/03/04 16:49:52 skrll Exp $ */
 
 #ifndef __PPBUS_DEVICE_H
 #define __PPBUS_DEVICE_H
@@ -9,7 +9,7 @@
 
 
 /* Parallel Port Bus Device context. */
-struct ppbus_context {  
+struct ppbus_context {
         int valid;                      /* 1 if the struct is valid */
 	int mode;                       /* XXX chipset operating mode */
 	struct microseq *curpc;         /* pc in curmsq */
@@ -17,13 +17,13 @@ struct ppbus_context {
 };
 
 /* Parallel Port Bus Device structure. */
-struct ppbus_device_softc {     
-        struct device sc_dev;   
+struct ppbus_device_softc {
+        struct device sc_dev;
 
 	u_int16_t mode;			/* current mode of the device */
 	u_int16_t capabilities;		/* ppbus capabilities */
-	
-	/* uint flags;                     flags */ 
+
+	/* uint flags;                     flags */
 	struct ppbus_context ctx;       /* context of the device */
 
 					/* mode dependent get msq. If NULL,
@@ -44,7 +44,7 @@ struct ppbus_attach_args {
 	/* Available IEEE1284 modes */
 	u_int16_t capabilities;
 
-	/* Flags? 
+	/* Flags?
 	u_int16_t flags;*/
 };
 

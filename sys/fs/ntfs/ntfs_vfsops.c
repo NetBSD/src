@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.7 2005/01/17 19:32:12 skrll Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.10.2.8 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.7 2005/01/17 19:32:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.10.2.8 2005/03/04 16:51:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ static int	ntfs_sync __P((struct mount *, int, struct ucred *,
 static int	ntfs_unmount __P((struct mount *, int, struct lwp *));
 static int	ntfs_vget __P((struct mount *mp, ino_t ino,
 			       struct vnode **vpp));
-static int	ntfs_mountfs __P((struct vnode *, struct mount *, 
+static int	ntfs_mountfs __P((struct vnode *, struct mount *,
 				  struct ntfs_args *, struct lwp *));
 static int	ntfs_vptofh __P((struct vnode *, struct fid *));
 
@@ -254,7 +254,7 @@ ntfs_init (
 #endif /* NetBSD */
 
 static int
-ntfs_mount ( 
+ntfs_mount (
 	struct mount *mp,
 #if defined(__FreeBSD__)
 	char *path,
@@ -511,9 +511,9 @@ ntfs_mountfs(devvp, mp, argsp, l)
 		ntmp->ntm_uid, ntmp->ntm_gid, ntmp->ntm_mode));
 
 	/*
-	 * We read in some system nodes to do not allow 
+	 * We read in some system nodes to do not allow
 	 * reclaim them and to have everytime access to them.
-	 */ 
+	 */
 	{
 		int pi[3] = { NTFS_MFTINO, NTFS_ROOTINO, NTFS_BITMAPINO };
 		for (i=0; i<3; i++) {
@@ -540,15 +540,15 @@ ntfs_mountfs(devvp, mp, argsp, l)
 
 	/*
 	 * Read and translate to internal format attribute
-	 * definition file. 
+	 * definition file.
 	 */
 	{
 		int num,j;
 		struct attrdef ad;
 
 		/* Open $AttrDef */
-		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp);
-		if(error) 
+		error = VFS_VGET(mp, NTFS_ATTRDEFINO, &vp );
+		if(error)
 			goto out1;
 
 		/* Count valid entries */
@@ -627,7 +627,7 @@ ntfs_start (
 }
 
 static int
-ntfs_unmount( 
+ntfs_unmount(
 	struct mount *mp,
 	int mntflags,
 	struct lwp *l)
@@ -651,7 +651,7 @@ ntfs_unmount(
 
 	/* Check if only system vnodes are rest */
 	for(i=0;i<NTFS_SYSNODESNUM;i++)
-		 if((ntmp->ntm_sysvn[i]) && 
+		 if((ntmp->ntm_sysvn[i]) &&
 		    (ntmp->ntm_sysvn[i]->v_usecount > 1)) return (EBUSY);
 
 	/* Dereference all system vnodes */
@@ -718,7 +718,7 @@ ntfs_root(
  */
 /* ARGSUSED */
 static int
-ntfs_quotactl ( 
+ntfs_quotactl (
 	struct mount *mp,
 	int cmds,
 	uid_t uid,
@@ -875,7 +875,7 @@ ntfs_vgetex(
 	char *attrname,
 	u_long lkflags,
 	u_long flags,
-	struct vnode **vpp) 
+	struct vnode **vpp)
 {
 	int error;
 	struct ntfsmount *ntmp;
@@ -924,9 +924,9 @@ ntfs_vgetex(
 			f_type = VNON;
 			fp->f_size = fp->f_allocated = 0;
 		} else {
-			f_type = VREG;	
+			f_type = VREG;
 
-			error = ntfs_filesize(ntmp, fp, 
+			error = ntfs_filesize(ntmp, fp,
 					      &fp->f_size, &fp->f_allocated);
 			if (error) {
 				ntfs_ntput(ip);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.5 2004/09/21 13:39:07 skrll Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.19.2.6 2005/03/04 16:54:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.5 2004/09/21 13:39:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.19.2.6 2005/03/04 16:54:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ static daddr_t	ext2fs_mapsearch __P((struct m_ext2fs *, char *, daddr_t));
 
 /*
  * Allocate a block in the file system.
- * 
+ *
  * A preference may be optionally specified. If a preference is given
  * the following hierarchy is used to allocate a block:
  *   1) allocate the requested block.
@@ -120,7 +120,7 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 	struct m_ext2fs *fs;
 	daddr_t bno;
 	int cg;
-	
+
 	*bnp = 0;
 	fs = ip->i_e2fs;
 #ifdef DIAGNOSTIC
@@ -153,7 +153,7 @@ nospace:
 
 /*
  * Allocate an inode in the file system.
- * 
+ *
  * If allocating a directory, use ext2fs_dirpref to select the inode.
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
@@ -183,7 +183,7 @@ ext2fs_valloc(v)
 	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
-	
+
 	*ap->a_vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_e2fs;
@@ -255,7 +255,7 @@ ext2fs_dirpref(fs)
  * Select the desired position for the next block in a file.  The file is
  * logically divided into sections. The first section is composed of the
  * direct blocks. Each additional section contains fs_maxbpg blocks.
- * 
+ *
  * If no blocks have been allocated in the first section, the policy is to
  * request a block in the same cylinder group as the inode that describes
  * the file. Otherwise, the policy is to try to allocate the blocks
@@ -668,7 +668,7 @@ ext2fs_mapsearch(fs, bbp, bpref)
 
 /*
  * Fserr prints the name of a file system with an error diagnostic.
- * 
+ *
  * The form of the error message is:
  *	fs: error message
  */

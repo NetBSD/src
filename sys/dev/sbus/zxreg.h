@@ -1,4 +1,4 @@
-/*	$NetBSD: zxreg.h,v 1.1 2002/09/13 14:03:53 ad Exp $	*/
+/*	$NetBSD: zxreg.h,v 1.1.10.1 2005/03/04 16:50:32 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  */
- 
+
 #ifndef _DEV_SBUS_ZXREG_H_
 #define _DEV_SBUS_ZXREG_H_
 

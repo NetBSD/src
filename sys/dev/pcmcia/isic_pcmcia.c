@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19.6.5 2005/02/04 11:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isic_pcmcia.c,v 1.19.6.6 2005/03/04 16:49:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -284,7 +284,7 @@ isic_pcmcia_activate(self, act)
 	splx(s);
 	return (error);
 }
-	
+
 /*---------------------------------------------------------------------------*
  *	card independend attach for pcmicia cards
  *---------------------------------------------------------------------------*/
@@ -361,7 +361,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 	/* HSCX setup */
 
 	isic_bchannel_setup(sc, HSCX_CH_A, BPROT_NONE, 0);
-	
+
 	isic_bchannel_setup(sc, HSCX_CH_B, BPROT_NONE, 0);
 
 	/* setup linktab */
@@ -392,7 +392,7 @@ isic_pcmcia_isdn_attach(struct isic_softc *sc, const char *cardname)
 #endif
 
 	/* announce chip versions */
-	
+
 	if(sc->sc_isac_version >= ISAC_UNKN)
 	{
 		printf(ISIC_FMT "ISAC Version UNKNOWN (VN=0x%x)" TERMFMT,

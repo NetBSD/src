@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.1.4.2 2005/01/17 19:31:52 skrll Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.1.4.3 2005/03/04 16:50:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.1.4.2 2005/01/17 19:31:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.1.4.3 2005/03/04 16:50:52 skrll Exp $");
 
 /*
  *
@@ -41,10 +41,10 @@ __KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.1.4.2 2005/01/17 19:31:52 skrll Exp $")
  *
  */
 #include <sys/param.h>
-#include <sys/callout.h> 
+#include <sys/callout.h>
 #include <sys/cdefs.h>
-#include <sys/device.h> 
-#include <sys/kernel.h> 
+#include <sys/device.h>
+#include <sys/kernel.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
 #include <sys/wdog.h>
@@ -101,7 +101,7 @@ swwdogattach(int count)
 static int
 swwdog_setmode(struct sysmon_wdog *smw)
 {
-	struct swwdog_softc *sc = smw->smw_cookie; 
+	struct swwdog_softc *sc = smw->smw_cookie;
 	int error = 0;
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
@@ -141,7 +141,7 @@ swwdog_disarm(struct swwdog_softc *sc)
 }
 
 static void
-swwdog_panic(void *vsc) 
+swwdog_panic(void *vsc)
 {
 	struct swwdog_softc *sc = vsc;
 	int do_panic;

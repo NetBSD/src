@@ -1,4 +1,4 @@
-/*	$NetBSD: ss_scanjet.c,v 1.28.6.6 2004/11/02 07:52:46 skrll Exp $	*/
+/*	$NetBSD: ss_scanjet.c,v 1.28.6.7 2005/03/04 16:50:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Kenneth Stailey.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.6 2004/11/02 07:52:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ss_scanjet.c,v 1.28.6.7 2005/03/04 16:50:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ scanjet_trigger_scanner(struct ss_softc *ss)
 		uprintf("%s: trigger_scanner failed\n", ss->sc_dev.dv_xname);
 		return (error);
 	}
-	
+
 	return (0);
 }
 
@@ -314,7 +314,7 @@ scanjet_read(struct ss_softc *ss, struct buf *bp)
 /*
  * Do a synchronous write.  Used to send control messages.
  */
-static int 
+static int
 scanjet_ctl_write(struct ss_softc *ss, char *buf, u_int size)
 {
 	struct scsi_rw_scanner cmd;
@@ -373,7 +373,7 @@ show_es(char *es)
 }
 #endif
 
-/* 
+/*
  * simulate SCSI_SET_WINDOW for ScanJets
  */
 static int
@@ -390,7 +390,7 @@ scanjet_set_window(struct ss_softc *ss)
 	p += snprintf(p, ep - p, "\033*f%ldY", ss->sio.scan_y_origin / 4);
 	p += snprintf(p, ep - p, "\033*a%dR", ss->sio.scan_x_resolution);
 	p += snprintf(p, ep - p, "\033*a%dS", ss->sio.scan_y_resolution);
-     
+
 	switch (ss->sio.scan_image_mode) {
 	case SIM_BINARY_MONOCHROME:
 		ss->sio.scan_bits_per_pixel = 1;

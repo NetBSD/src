@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.68.2.8 2004/12/18 09:33:18 skrll Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.68.2.9 2005/03/04 16:54:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.8 2004/12/18 09:33:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.68.2.9 2005/03/04 16:54:45 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -95,7 +95,7 @@ extern const u_char * const fragtbl[];
 
 /*
  * Allocate a block in the file system.
- * 
+ *
  * The size of the requested block is given, which must be some
  * multiple of fs_fsize and <= fs_bsize.
  * A preference may be optionally specified. If a preference is given
@@ -126,7 +126,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 #ifdef QUOTA
 	int error;
 #endif
-	
+
 	fs = ip->i_fs;
 
 #ifdef UVM_PAGE_TRKOWN
@@ -304,8 +304,8 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 	switch ((int)fs->fs_optim) {
 	case FS_OPTSPACE:
 		/*
-		 * Allocate an exact sized fragment. Although this makes 
-		 * best use of space, we will waste time relocating it if 
+		 * Allocate an exact sized fragment. Although this makes
+		 * best use of space, we will waste time relocating it if
 		 * the file continues to grow. If the fragmentation is
 		 * less than half of the minimum free reserve, we choose
 		 * to begin optimizing for time.
@@ -572,7 +572,7 @@ ffs_reallocblks(v)
 	 * Next we must write out the modified inode and indirect blocks.
 	 * For strict correctness, the writes should be synchronous since
 	 * the old block values may have been written to disk. In practise
-	 * they are almost never written, but if we are concerned about 
+	 * they are almost never written, but if we are concerned about
 	 * strict correctness, the `doasyncfree' flag should be set to zero.
 	 *
 	 * The test on `doasyncfree' should be changed to test a flag
@@ -638,7 +638,7 @@ fail:
 
 /*
  * Allocate an inode in the file system.
- * 
+ *
  * If allocating a directory, use ffs_dirpref to select the inode.
  * If allocating in a directory, the following hierarchy is followed:
  *   1) allocate the preferred inode.
@@ -669,7 +669,7 @@ ffs_valloc(v)
 	mode_t mode = ap->a_mode;
 	ino_t ino, ipref;
 	int cg, error;
-	
+
 	*ap->a_vpp = NULL;
 	pip = VTOI(pvp);
 	fs = pip->i_fs;
@@ -826,7 +826,7 @@ ffs_dirpref(pip)
 		maxcontigdirs = 1;
 
 	/*
-	 * Limit number of dirs in one cg and reserve space for 
+	 * Limit number of dirs in one cg and reserve space for
 	 * regular files, but only if we have no deficit in
 	 * inodes or space.
 	 */
@@ -861,7 +861,7 @@ ffs_dirpref(pip)
  * Select the desired position for the next block in a file.  The file is
  * logically divided into sections. The first section is composed of the
  * direct blocks. Each additional section contains fs_maxbpg blocks.
- * 
+ *
  * If no blocks have been allocated in the first section, the policy is to
  * request a block in the same cylinder group as the inode that describes
  * the file. If no blocks have been allocated in any other section, the
@@ -875,7 +875,7 @@ ffs_dirpref(pip)
  * indirect block, the information on the previous allocation is unavailable;
  * here a best guess is made based upon the logical block number being
  * allocated.
- * 
+ *
  * If a section is already partially allocated, the policy is to
  * contiguously allocate fs_maxcontig blocks.  The end of one of these
  * contiguous blocks and the beginning of the next is laid out
@@ -1031,7 +1031,7 @@ ffs_hashalloc(ip, cg, pref, size, allocator)
 /*
  * Determine whether a fragment can be extended.
  *
- * Check to see if the necessary fragments are available, and 
+ * Check to see if the necessary fragments are available, and
  * if they are, allocate them.
  */
 static daddr_t
@@ -1166,7 +1166,7 @@ ffs_alloccg(ip, cg, bpref, size)
 			break;
 	if (allocsiz == fs->fs_frag) {
 		/*
-		 * no fragments were available, so a block will be 
+		 * no fragments were available, so a block will be
 		 * allocated, and hacked up
 		 */
 		if (cgp->cg_cs.cs_nbfree == 0) {
@@ -1532,7 +1532,7 @@ gotit:
  * Free a block or fragment.
  *
  * The specified block or fragment is placed back in the
- * free map. If a fragment is deallocated, a possible 
+ * free map. If a fragment is deallocated, a possible
  * block reassembly is checked.
  */
 void
@@ -2043,7 +2043,7 @@ ffs_clusteracct(fs, cgp, blkno, cnt)
 
 /*
  * Fserr prints the name of a file system with an error diagnostic.
- * 
+ *
  * The form of the error message is:
  *	fs: error message
  */

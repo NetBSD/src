@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_inode.h,v 1.1 2002/12/23 17:38:33 jdolecek Exp $	*/
+/*	$NetBSD: ntfs_inode.h,v 1.1.4.1 2005/03/04 16:51:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -90,7 +90,7 @@ struct fnode {
 	struct lock	f_lock;	/* fnode lock >Keep this first< */
 #endif
 	struct genfs_node f_gnode;
-	
+
 	LIST_ENTRY(fnode) f_fnlist;
 	struct vnode   *f_vp;		/* Associatied vnode */
 	struct ntnode  *f_ip;		/* Associated ntnode */
