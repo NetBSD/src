@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2000/10/08 22:59:38 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2000/11/14 22:55:06 thorpej Exp $	*/
 
 /*
  *
@@ -137,7 +137,7 @@
  *
  * [A] new process' page directory page (PDP)
  *	- plan 1: done at pmap_pinit() we use
- *	  uvm_km_alloc(kernel_map, NBPG)  [fka kmem_alloc] to do this
+ *	  uvm_km_alloc(kernel_map, PAGE_SIZE)  [fka kmem_alloc] to do this
  *	  allocation.
  *
  * if we are low in free physical memory then we sleep in
@@ -646,7 +646,7 @@ pmap_kenter_pa(va, pa, prot)
  * => no need to lock anything
  * => caller must dispose of any vm_page mapped in the va range
  * => note: not an inline function
- * => we assume the va is page aligned and the len is a multiple of NBPG
+ * => we assume the va is page aligned and the len is a multiple of PAGE_SIZE
  * => we assume kernel only unmaps valid addresses and thus don't bother
  *    checking the valid bit before doing TLB flushing
  */
@@ -659,7 +659,7 @@ pmap_kremove(va, len)
 	pt_entry_t *pte;
 
 	len >>= PAGE_SHIFT;
-	for ( /* null */ ; len ; len--, va += NBPG) {
+	for ( /* null */ ; len ; len--, va += PAGE_SIZE) {
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			pte = vtopte(va);
 		else
@@ -704,7 +704,7 @@ pmap_kenter_pgs(va, pgs, npgs)
 #endif
 
 	for (lcv = 0 ; lcv < npgs ; lcv++) {
-		tva = va + lcv * NBPG;
+		tva = va + lcv * PAGE_SIZE;
 		if (va < VM_MIN_KERNEL_ADDRESS)
 			pte = vtopte(tva);
 		else
@@ -821,7 +821,7 @@ pmap_bootstrap(kva_start)
 
 		/* add PG_G attribute to already mapped kernel pages */
 		for (kva = VM_MIN_KERNEL_ADDRESS ; kva < virtual_avail ;
-		     kva += NBPG)
+		     kva += PAGE_SIZE)
 			if (pmap_valid_entry(PTE_BASE[i386_btop(kva)]))
 				PTE_BASE[i386_btop(kva)] |= PG_G;
 	}
@@ -875,33 +875,33 @@ pmap_bootstrap(kva_start)
 	pte = PTE_BASE + i386_btop(virtual_avail);
 
 	csrcp = (caddr_t) virtual_avail;  csrc_pte = pte;	/* allocate */
-	virtual_avail += NBPG; pte++;				/* advance */
+	virtual_avail += PAGE_SIZE; pte++;			/* advance */
 
 	cdstp = (caddr_t) virtual_avail;  cdst_pte = pte;
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 
 	zerop = (caddr_t) virtual_avail;  zero_pte = pte;
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 
 	ptpp = (caddr_t) virtual_avail;  ptp_pte = pte;
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 
 	/* XXX: vmmap used by mem.c... should be uvm_map_reserve */
 	vmmap = (char *)virtual_avail;			/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 
 	msgbuf_vaddr = virtual_avail;			/* don't need pte */
 	virtual_avail += round_page(MSGBUFSIZE); pte++;
 
 	idt_vaddr = virtual_avail;			/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 	idt_paddr = avail_start;			/* steal a page */
-	avail_start += NBPG;
+	avail_start += PAGE_SIZE;
 
 #if defined(I586_CPU)
 	/* pentium f00f bug stuff */
 	pentium_idt_vaddr = virtual_avail;		/* don't need pte */
-	virtual_avail += NBPG; pte++;
+	virtual_avail += PAGE_SIZE; pte++;
 #endif
 
 	/*
@@ -999,7 +999,7 @@ pmap_init()
 	 * structures.   we never free this page.
 	 */
 
-	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, NBPG);
+	pv_initpage = (struct pv_page *) uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (pv_initpage == NULL)
 		panic("pmap_init: pv_initpage");
 	pv_cachedva = 0;   /* a VA we have allocated but not used yet */
@@ -1139,7 +1139,7 @@ pmap_alloc_pvpage(pmap, mode)
 	s = splimp();   /* must protect kmem_map/kmem_object with splimp! */
 	if (pv_cachedva == 0) {
 		pv_cachedva = uvm_km_kmemalloc(kmem_map, uvmexp.kmem_object,
-		    NBPG, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
+		    PAGE_SIZE, UVM_KMF_TRYLOCK|UVM_KMF_VALLOC);
 		if (pv_cachedva == 0) {
 			splx(s);
 			goto steal_one;
@@ -1451,7 +1451,8 @@ pmap_free_pvpage()
 		/* unmap the page */
 		dead_entries = NULL;
 		(void)uvm_unmap_remove(map, (vaddr_t) pvp,
-				       ((vaddr_t) pvp) + NBPG, &dead_entries);
+				       ((vaddr_t) pvp) + PAGE_SIZE,
+				       &dead_entries);
 		vm_map_unlock(map);
 
 		if (dead_entries != NULL)
@@ -1765,7 +1766,7 @@ pmap_pinit(pmap)
 	pmap->pm_flags = 0;
 
 	/* allocate PDP */
-	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, NBPG);
+	pmap->pm_pdir = (pd_entry_t *) uvm_km_alloc(kernel_map, PAGE_SIZE);
 	if (pmap->pm_pdir == NULL)
 		panic("pmap_pinit: kernel_map out of virtual space!");
 	(void) pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_pdir,
@@ -1794,7 +1795,7 @@ pmap_pinit(pmap)
 	       nkpde * sizeof(pd_entry_t));
 	/* zero the rest */
 	memset(&pmap->pm_pdir[PDSLOT_KERN + nkpde], 0,
-	       NBPG - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
+	       PAGE_SIZE - ((PDSLOT_KERN + nkpde) * sizeof(pd_entry_t)));
 	LIST_INSERT_HEAD(&pmaps, pmap, pm_list);
 	simple_unlock(&pmaps_lock);
 }
@@ -1871,7 +1872,7 @@ pmap_release(pmap)
 	}
 
 	/* XXX: need to flush it out of other processor's APTE space? */
-	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, NBPG);
+	uvm_km_free(kernel_map, (vaddr_t)pmap->pm_pdir, PAGE_SIZE);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -2095,8 +2096,8 @@ pmap_map(va, spa, epa, prot)
 {
 	while (spa < epa) {
 		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += NBPG;
-		spa += NBPG;
+		va += PAGE_SIZE;
+		spa += PAGE_SIZE;
 	}
 	return va;
 }
@@ -2113,7 +2114,7 @@ pmap_zero_page(pa)
 	simple_lock(&pmap_zero_page_lock);
 	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
-	memset(zerop, 0, NBPG);				/* zero */
+	memset(zerop, 0, PAGE_SIZE);			/* zero */
 	simple_unlock(&pmap_zero_page_lock);
 }
 
@@ -2136,7 +2137,7 @@ pmap_zero_page_uncached(pa)
 	    ((cpu_class != CPUCLASS_386) ? PG_N : 0);
 	pmap_update_pg((vaddr_t)zerop);			/* flush TLB */
 
-	for (i = 0, ptr = (int *) zerop; i < NBPG / sizeof(int); i++) {
+	for (i = 0, ptr = (int *) zerop; i < PAGE_SIZE / sizeof(int); i++) {
 		if (sched_whichqs != 0) {
 			/*
 			 * A process has become ready.  Abort now,
@@ -2171,7 +2172,7 @@ pmap_copy_page(srcpa, dstpa)
 
 	*csrc_pte = (srcpa & PG_FRAME) | PG_V | PG_RW;
 	*cdst_pte = (dstpa & PG_FRAME) | PG_V | PG_RW;
-	memcpy(cdstp, csrcp, NBPG);
+	memcpy(cdstp, csrcp, PAGE_SIZE);
 	*csrc_pte = *cdst_pte = 0;			/* zap! */
 	pmap_update_2pg((vaddr_t)csrcp, (vaddr_t)cdstp);
 	simple_unlock(&pmap_copy_page_lock);
@@ -2217,7 +2218,7 @@ pmap_remove_ptes(pmap, pmap_rr, ptp, ptpva, startva, endva, flags)
 	 */
 
 	for (/*null*/; startva < endva && (ptp == NULL || ptp->wire_count > 1)
-			     ; pte++, startva += NBPG) {
+			     ; pte++, startva += PAGE_SIZE) {
 		if (!pmap_valid_entry(*pte))
 			continue;			/* VA not mapped */
 		if ((flags & PMAP_REMOVE_SKIPWIRED) && (*pte & PG_W)) {
@@ -2406,7 +2407,7 @@ pmap_do_remove(pmap, sva, eva, flags)
 	 * removing one page?  take shortcut function.
 	 */
 
-	if (sva + NBPG == eva) {
+	if (sva + PAGE_SIZE == eva) {
 
 		if (pmap_valid_entry(pmap->pm_pdir[pdei(sva)])) {
 
@@ -3346,7 +3347,7 @@ pmap_transfer_ptes(srcpmap, srcl, dstpmap, dstl, toxfer, move)
 	 */
 
 	for (/*null*/; toxfer > 0 ; toxfer--,
-			     srcl->addr += NBPG, dstl->addr += NBPG,
+			     srcl->addr += PAGE_SIZE, dstl->addr += PAGE_SIZE,
 			     srcl->pte++, dstl->pte++) {
 
 		if (!pmap_valid_entry(*srcl->pte))  /* skip invalid entrys */
@@ -3821,7 +3822,7 @@ pmap_dump(pmap, sva, eva)
 			continue;
 
 		pte = &ptes[i386_btop(sva)];
-		for (/* null */; sva < blkendva ; sva += NBPG, pte++) {
+		for (/* null */; sva < blkendva ; sva += PAGE_SIZE, pte++) {
 			if (!pmap_valid_entry(*pte))
 				continue;
 			printf("va %#lx -> pa %#x (pte=%#x)\n",
