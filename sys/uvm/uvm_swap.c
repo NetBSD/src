@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.42 2000/12/23 12:13:05 enami Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.43 2000/12/27 09:17:04 chs Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -927,15 +927,19 @@ swap_on(p, sdp)
 		printf("leaving %d pages of swap\n", size);
 	}
 
+  	/*
+	 * try to add anons to reflect the new swap space.
+	 */
+
+	error = uvm_anon_add(size);
+	if (error) {
+		goto bad;
+	}
+
 	/*
 	 * add a ref to vp to reflect usage as a swap device.
 	 */
 	vref(vp);
-
-  	/*
-	 * add anons to reflect the new swap space
-	 */
-	uvm_anon_add(size);
 
 	/*
 	 * now add the new swapdev to the drum and enable.
@@ -949,12 +953,17 @@ swap_on(p, sdp)
 	simple_unlock(&uvm.swap_data_lock);
 	return (0);
 
-bad:
 	/*
-	 * failure: close device if necessary and return error.
+	 * failure: clean up and return error.
 	 */
-	if (vp != rootvp)
+
+bad:
+	if (sdp->swd_ex) {
+		extent_destroy(sdp->swd_ex);
+	}
+	if (vp != rootvp) {
 		(void)VOP_CLOSE(vp, FREAD|FWRITE, p->p_ucred, p);
+	}
 	return (error);
 }
 
