@@ -1,6 +1,8 @@
 #!/usr/pkg/bin/perl
 
-require "ctime.pl";
+@longmonth = ( "January", "February", "March", "April", "May", "June", "July",
+	       "August", "September", "October", "November", "December" );
+# require "ctime.pl";
 
 $sec = 8;				# XXX
 
@@ -33,7 +35,7 @@ sub dehtmlchar {
 }
 
 ($mday, $mon, $year) = (localtime(time))[3 .. 5];
-$date = sprintf "%s %02d, %d", $ctime'MoY[$mon], $mday, $year + 1900;
+$date = sprintf "%s %02d, %d", $longmonth[$mon], $mday, $year + 1900;
 
 swallow("<H3>");
 chomp($_ = <>);
@@ -44,7 +46,7 @@ $descr =~ s/^\s*-\s*//;
 
 print <<EOF;
 .\\"	\$NetBSD\$
-.\\" Converted from HTML to mandoc by html-to-mdoc.pl
+.\\" Converted from HTML to mandoc by ntp-html2mdoc.pl
 .\\"
 .Dd $date
 .Dt $NAME $sec
