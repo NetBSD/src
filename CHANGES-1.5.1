@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.1,v 1.1.2.29 2001/03/09 18:05:32 he Exp $
+#	$NetBSD: CHANGES-1.5.1,v 1.1.2.30 2001/03/11 23:18:46 he Exp $
 
 A complete list of changes from NetBSD 1.5 to NetBSD 1.5.1:
 
@@ -1717,3 +1717,85 @@ gnu/usr.sbin/sendmail/sendmail/Makefile		1.7-1.8 via patch
 gnu/usr.sbin/sendmail/smrsh/Makefile		1.6 via patch
 
   Upgrade to sendmail 8.11.3.
+
+lib/libwrap/rfc931.c				1.7
+
+  Correct type casting bug.
+
+distrib/sets/lists/base/md.atari		1.41 via patch
+distrib/sets/lists/man/mi			1.324 via patch
+
+  Add ahdilabel.
+
+sbin/ping6/ping6.8				1.9-1.12
+sbin/ping6/ping6.c				1.23-1.24,1.26-1.32 via patch
+
+  Correct buffer management.  Fix handling of short packets.  More
+  robust signal handling.  Print icmp6 name lookup packets better.
+
+sys/netinet/in_proto.c				1.47 via patch
+sys/netinet/ip_icmp.c				1.59
+sys/netinet/ip_input.c				1.128
+sys/netinet6/ah_input.c				1.26
+sys/netinet6/esp_input.c			1.16
+sys/netinet6/ipcomp_input.c			1.16
+sys/netinet6/icmp6.c				1.59
+sys/netinet6/in6_proto.c			1.28 via patch
+sys/netinet6/ip6_input.c			1.37
+sys/sys/protosw.h				1.25
+
+  Ensure that we enforce inbound IPsec policy on all IP protocols,
+  not just TCP, UDP and ICMP.
+
+lib/libc/rpc/xdr_float.c			1.26
+
+  Correct handling of XDR doubles on ARM platforms to cope with
+  their odd byte ordering.
+
+usr.bin/telnet/main.c				1.15
+usr.bin/telnet/telnet.c				1.17
+
+  Correct handling of encryption and decryption with Kerberos4.
+  Fixes PR#12226.
+
+usr.bin/audio/common/audio.c			1.11 via patch
+usr.bin/audio/common/libaudio.h			1.7 via patch
+usr.bin/audio/play/play.c			1.23 via patch
+
+  Do not play trailing garbage at the end of RIFF WAVE (.wav) files.
+  Fixes PR#12328.
+
+share/man/man8/man8.atari/bootpref.8		1.6
+
+  Correct documentation of ``-k'' and ``-l'' options.
+
+distrib/sets/lists/xbase/mi			1.18
+
+  Add new files created by the latest XFree86 sources.
+
+distrib/sets/lists/xmisc/mi			1.3
+
+  Add missing directory entries for "/usr/X11R6/share/examples".
+
+sys/sys/lkm.h					1.20
+
+  Fix this so that LKMs work for both alpha and sparc64.
+
+sys/dev/ic/anreg.h				1.6
+
+  Add additional padding needed by the AIR-PCM342.  Fixes PR#12357.
+
+sys/dev/ic/an.c					1.11
+
+  Make sure data after header is aligned, so that this works on
+  architectures with strict alignment constraints.  Fixes PR#12356.
+
+bin/date/date.1					1.27
+
+  Cross-reference settimeofday(2), so it's obvious what system call
+  is used to set the system (and hardware!) clock.
+
+sys/dev/scsipi/sd.c				1.170
+
+  Fix a problem with some Hitachi drives by only issuing the ``lock
+  media'' and ``unlock media'' commands to removable media.
