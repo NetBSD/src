@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.19 1996/10/16 14:35:45 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.20 1996/10/19 02:38:36 abrown Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-static char rcsid[] = "$NetBSD: exec.c,v 1.19 1996/10/16 14:35:45 christos Exp $";
+static char rcsid[] = "$NetBSD: exec.c,v 1.20 1996/10/19 02:38:36 abrown Exp $";
 #endif
 #endif /* not lint */
 
@@ -536,7 +536,7 @@ loop:
 	if (cmdp)
 		delete_cmd_entry();
 	if (printerr)
-		outfmt(out2, "here %s: %s\n", name, errmsg(e, E_EXEC));
+		outfmt(out2, "%s: %s\n", name, errmsg(e, E_EXEC));
 	entry->cmdtype = CMDUNKNOWN;
 	return;
 
