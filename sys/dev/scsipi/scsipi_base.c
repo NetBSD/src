@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.15 1998/12/08 00:17:21 thorpej Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.16 1998/12/08 00:26:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,8 +148,10 @@ scsipi_free_xs(xs, flags)
 
 	TAILQ_REMOVE(&sc_link->pending_xfers, xs, device_q);
 	if (TAILQ_FIRST(&sc_link->pending_xfers) == NULL &&
-	    (sc_link->flags & SDEV_WAITDRAIN) != 0)
+	    (sc_link->flags & SDEV_WAITDRAIN) != 0) {
+		sc_link->flags &= ~SDEV_WAITDRAIN;
 		wakeup(&sc_link->pending_xfers);
+	}
 	xs->flags &= ~INUSE;
 	pool_put(&scsipi_xfer_pool, xs);
 
@@ -178,18 +180,10 @@ scsipi_wait_drain(sc_link)
 	int s;
 
 	s = splbio();
-	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL) {
+	while (TAILQ_FIRST(&sc_link->pending_xfers) != NULL) {
 		sc_link->flags |= SDEV_WAITDRAIN;
 		(void) tsleep(&sc_link->pending_xfers, PRIBIO, "sxdrn", 0);
-		sc_link->flags &= ~SDEV_WAITDRAIN;
 	}
-#ifdef DIAGNOSTIC
-	if (TAILQ_FIRST(&sc_link->pending_xfers) != NULL) {
-		(*sc_link->sc_print_addr)(sc_link);
-		printf("still pending xfers after wait\n");
-		panic("scsipi_wait_drain");
-	}
-#endif
 	splx(s);
 }
 
