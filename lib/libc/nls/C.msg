@@ -157,6 +157,12 @@ $ ENOSYS
 78 Function not implemented
 $ EFTYPE
 79 Inappropriate file type or format
+$ EAUTH
+80 Authentication error
+$ ENEEDAUTH
+81 Need authenticator
+$ EIDRM
+82 Identifier removed
 $set 2
 $ SIGHUP
 1 Hangup
