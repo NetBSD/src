@@ -1,17 +1,11 @@
-#	@(#)Makefile	6.1 (Berkeley) 3/3/91
-
-.include "../Makefile.g++"
+# Makefile for grotty
 
 PROG=		grotty
-SRCS=		grotty.cc
-LDADD+=		$(.CURDIR)/../libdriver/obj/libdriver.a \
-		$(.CURDIR)/../libgroff/obj/libgroff.a -lm
-# Nuke -Ig++-include when we finally install libg++.
-CXXFLAGS+=	-I$(.CURDIR)/../libdriver -I$(.CURDIR)/../libgroff \
-		-I$(.CURDIR)/../../../lib/libg++/g++-include
+SRCS=		tty.cc
+CFLAGS+=	-I$(.CURDIR)/../include
+LDADD+=		$(LIBDRIVER) $(LIBGROFF) -lm
+DPADD+=		$(LIBDRIVER) $(LIBGROFF) $(LIBMATH)
 
-afterinstall:
-	echo install macros and devices
-
-.include "../../Makefile.inc"
 .include <bsd.prog.mk>
+.include "../../Makefile.inc"
+.include "../Makefile.cfg"

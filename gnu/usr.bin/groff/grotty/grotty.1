@@ -1,11 +1,11 @@
 .\" -*- nroff -*-
-.TH GROTTY @MAN1EXT@ "31 May 1990" "Groff Version @VERSION@"
+.TH GROTTY 1 "11 August 1992" "Groff Version 1.08"
 .SH NAME
 grotty \- groff driver for typewriter-like devices
 .SH SYNOPSIS
 .B grotty
 [
-.B \-hfbuoBUv
+.B \-hfbuodBUv
 ] [
 .BI \-F dir
 ] [
@@ -13,12 +13,14 @@ grotty \- groff driver for typewriter-like devices
 ]
 .SH DESCRIPTION
 .B grotty
-translates the output of
-.B gtroff
+translates the output of GNU
+.B troff
 into a form suitable for typewriter-like devices.
 Normally
 .B grotty
-should invoked by using the groff command
+should invoked by using the
+.B groff
+command
 with a
 .B \-Tascii
 or
@@ -90,7 +92,7 @@ code which will be used to output the character.
 This code can also be used in the
 .B \eN
 escape sequence in
-.BR gtroff .
+.BR troff .
 .SH OPTIONS
 .TP
 .BI \-F dir
@@ -119,42 +121,63 @@ Suppress the use of overstriking for bold characters.
 Suppress the use of underlining for italic characters.
 .TP
 .B \-B
-Use only overstriking for bold, italic characters.
+Use only overstriking for bold-italic characters.
 .TP
 .B \-U
-Use only underlining for bold, italic characters.
+Use only underlining for bold-italic characters.
 .TP
 .B \-o
 Suppress overstriking (other than for bold or underlined characters).
+.TP
+.B \-d
+Ignore all
+.B \eD
+commands.
+Without this
+.B grotty
+will render
+.B \eD'l\|.\|.\|.'
+commands that have at least at least one zero argument
+(and so are either horizontal or vertical)
+using
+.BR \- ,
+.B |
+and
+.B +
+characters.
 .TP
 .B \-v
 Print the version number.
 .SH FILES
 .TP
-.B @FONTDIR@/devascii/DESC
+.B /usr/share/groff_font/devascii/DESC
 Device desciption file for
 .B ascii
 device.
 .TP
-.B @FONTDIR@/devascii/ F
+.B /usr/share/groff_font/devascii/ F
 Font description file for font
 .I F
 of
 .B ascii device.
 .TP
-.B @FONTDIR@/devlatin1/DESC
+.B /usr/share/groff_font/devlatin1/DESC
 Device desciption file for
 .B latin1
 device.
 .TP
-.B @FONTDIR@/devlatin1/ F
+.B /usr/share/groff_font/devlatin1/ F
 Font description file for font
 .I F
 of
 .B latin1 device.
 .TP
-.B @MACRODIR@/tmac.tty
+.B /usr/share/tmac/tmac.tty
 Macros for use with
+.BR grotty .
+.TP
+.B /usr/share/tmac/tmac.tty-char
+Additional klugey character definitions for use with
 .BR grotty .
 .SH BUGS
 .LP
@@ -163,17 +186,19 @@ is intended only for simple documents.
 .LP
 There is no support for fractional horizontal or vertical motions.
 .LP
-There is no pic support.
+There is no support for
+.B \eD
+commands
+other than horizontal and vertical lines.
 .LP
 Characters above the first line (ie with a vertical position of 0)
 cannot be printed.
 .SH "SEE ALSO"
-.BR groff (@MAN1EXT@),
-.BR gtroff (@MAN1EXT@),
-.BR groff_out (@MAN5EXT@),
-.BR groff_font (@MAN5EXT@),
+.BR groff (1),
+.BR troff (1),
+.BR groff_out (5),
+.BR groff_font (5),
+.BR groff_char (7),
 .BR ul (1),
 .BR more (1),
 .BR less (1)
-.br
-.I "Groff Character Names"
