@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.33 2000/06/27 17:29:19 mrg Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.34 2000/08/02 20:23:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -437,7 +437,7 @@ uao_free(aobj)
 				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
-		FREE(aobj->u_swhash, M_UVMAOBJ);
+		free(aobj->u_swhash, M_UVMAOBJ);
 	} else {
 		int i;
 
@@ -457,7 +457,7 @@ uao_free(aobj)
 				simple_unlock(&uvm.swap_data_lock);
 			}
 		}
-		FREE(aobj->u_swslots, M_UVMAOBJ);
+		free(aobj->u_swslots, M_UVMAOBJ);
 	}
 
 	/*
@@ -530,7 +530,7 @@ uao_create(size, flags)
 			if (aobj->u_swhash == NULL)
 				panic("uao_create: hashinit swhash failed");
 		} else {
-			MALLOC(aobj->u_swslots, int *, pages * sizeof(int),
+			aobj->u_swslots = malloc(pages * sizeof(int),
 			    M_UVMAOBJ, mflags);
 			if (aobj->u_swslots == NULL)
 				panic("uao_create: malloc swslots failed");
