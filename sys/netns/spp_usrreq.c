@@ -1,4 +1,4 @@
-/*	$NetBSD: spp_usrreq.c,v 1.35 2003/09/30 00:01:18 christos Exp $	*/
+/*	$NetBSD: spp_usrreq.c,v 1.36 2004/04/18 19:14:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1984, 1985, 1986, 1987, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.35 2003/09/30 00:01:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spp_usrreq.c,v 1.36 2004/04/18 19:14:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1371,19 +1371,17 @@ spp_usrreq(so, req, m, nam, control, p)
 		    (error = ns_pcballoc(so, &nspcb)))
 			break;
 		nsp = sotonspcb(so);
-		cb = malloc(sizeof(*cb), M_PCB, M_NOWAIT);
+		cb = malloc(sizeof(*cb), M_PCB, M_NOWAIT|M_ZERO);
 		if (cb == 0) {
 			error = ENOBUFS;
 			break;
 		}
-		bzero((caddr_t)cb, sizeof(*cb));
-		cb->s_idp = malloc(sizeof(*cb->s_idp), M_PCB, M_NOWAIT);
+		cb->s_idp = malloc(sizeof(*cb->s_idp), M_PCB, M_NOWAIT|M_ZERO);
 		if (cb->s_idp == 0) {
 			free(cb, M_PCB);
 			error = ENOBUFS;
 			break;
 		}
-		bzero((caddr_t)cb->s_idp, sizeof(*cb->s_idp));
 		cb->s_state = TCPS_LISTEN;
 		cb->s_smax = -1;
 		cb->s_swl1 = -1;
