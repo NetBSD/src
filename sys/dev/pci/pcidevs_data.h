@@ -212,6 +212,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ATM PCA-200",
 	},
 	{
+	    PCI_VENDOR_EFFICIENTNETS, PCI_PRODUCT_EFFICIENTNETS_ENI155P,
+	    0,
+	    "Efficent Networks",
+	    "ENI-155P ATM",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PCEB,
 	    0,
 	    "Intel",
