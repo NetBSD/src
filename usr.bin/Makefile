@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.91 1998/11/11 05:53:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.92 1998/12/15 22:08:53 pk Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>			# for EXPORTABLE_SYSTEM definition
@@ -11,7 +11,7 @@ SUBDIR=	apply apropos asa at audioctl banner basename bdes biff \
 	error expand false fdformat fgen file find finger fmt fold fpr \
 	from fsplit fstat ftp gencat getconf getopt gprof head \
 	hexdump id indent ipcrm ipcs join jot kdump ktrace \
-	lam last lastcomm leave less lex locate lock \
+	lam last lastcomm ldd leave less lex locate lock \
 	logger login logname look lorder m4 machine mail \
 	make man menuc mesg midiplay mixerctl mkdep mkfifo mkstr modstat \
 	msgc msgs netstat newsyslog nfsstat nice nohup pagesize \
@@ -32,11 +32,8 @@ SUBDIR+=elf2aout elf2ecoff ldd strip telnet
 .else
 
 # Don't use the standard a.out tool chain on non-aout (ELF) platforms.
-# On ELF platforms, build the  ELF ldd.
 .if (${OBJECT_FMT} != "ELF")
 SUBDIR+= strip
-.else
-SUBDIR+= ldd
 .endif
 
 # Build ELF to {ecoff, aout} tools on mips, for old bootblocks/PROMs.
