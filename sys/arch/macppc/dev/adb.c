@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
+/*	$NetBSD: adb.c,v 1.6.12.1 2001/04/01 16:58:46 he Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -102,7 +102,8 @@ adbattach(parent, self, aux)
 {
 	struct adb_softc *sc = (struct adb_softc *)self;
 	struct confargs *ca = aux;
-
+	int irq = ca->ca_intr[0];
+	int node;
 	ADBDataBlock adbdata;
 	struct adb_attach_args aa_args;
 	int totaladbs;
@@ -121,10 +122,16 @@ adbattach(parent, self, aux)
 	else if (strcmp(ca->ca_name, "via-pmu") == 0)
 		adbHardware = ADB_HW_PB;
 
+	node = getnodebyname(OF_parent(ca->ca_node), "extint-gpio1");
+	if (node)
+		OF_getprop(node, "interrupts", &irq, 4);
+
+	printf(" irq %d: ", irq);
+
 	adb_polling = 1;
 	ADBReInit();
 
-	intr_establish(ca->ca_intr[0], IST_LEVEL, IPL_HIGH, adb_intr, sc);
+	intr_establish(irq, IST_LEVEL, IPL_HIGH, adb_intr, sc);
 
 #ifdef ADB_DEBUG
 	if (adb_debug)
@@ -132,8 +139,7 @@ adbattach(parent, self, aux)
 #endif
 	totaladbs = CountADBs();
 
-	printf(" irq %d", ca->ca_intr[0]);
-	printf(": %d targets\n", totaladbs);
+	printf("%d targets\n", totaladbs);
 
 #if NAED > 0
 	/* ADB event device for compatibility */
