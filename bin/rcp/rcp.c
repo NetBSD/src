@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rcp.c	5.32 (Berkeley) 2/25/91";*/
-static char rcsid[] = "$Id: rcp.c,v 1.7 1995/01/30 19:37:34 mycroft Exp $";
+static char rcsid[] = "$Id: rcp.c,v 1.8 1995/01/30 19:39:36 mycroft Exp $";
 #endif /* not lint */
 
 /*
@@ -684,7 +684,7 @@ sink(argc, argv)
 	if (targetshouldbedirectory)
 		verifydir(targ);
 	(void)write(rem, "", 1);
-	if (stat(targ, &stb) == 0 && (stb.st_mode & S_IFMT) == S_IFDIR)
+	if (stat(targ, &stb) == 0 && S_ISDIR(stb.st_mode))
 		targisdir = 1;
 	for (first = 1;; first = 0) {
 		cp = buf;
@@ -781,7 +781,7 @@ sink(argc, argv)
 		exists = stat(np, &stb) == 0;
 		if (buf[0] == 'D') {
 			if (exists) {
-				if ((stb.st_mode&S_IFMT) != S_IFDIR) {
+				if (!S_ISDIR(stb.st_mode)) {
 					errno = ENOTDIR;
 					goto bad;
 				}
