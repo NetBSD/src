@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_fdesc.c,v 1.7 1996/04/13 01:31:15 jtc Exp $	*/
+/*	$NetBSD: mount_fdesc.c,v 1.8 1997/09/15 04:36:08 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1992 Jan-Simon Pendry
@@ -37,17 +37,17 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1992, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$NetBSD: mount_fdesc.c,v 1.7 1996/04/13 01:31:15 jtc Exp $";
+__RCSID("$NetBSD: mount_fdesc.c,v 1.8 1997/09/15 04:36:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,6 +68,7 @@ const struct mntopt mopts[] = {
 };
 
 void	usage __P((void));
+int	main __P((int, char *[]));
 
 int
 main(argc, argv)
@@ -77,7 +78,7 @@ main(argc, argv)
 	int ch, mntflags;
 
 	mntflags = 0;
-	while ((ch = getopt(argc, argv, "o:")) != EOF)
+	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags);
@@ -93,7 +94,7 @@ main(argc, argv)
 		usage();
 
 	if (mount(MOUNT_FDESC, argv[1], mntflags, NULL))
-		err(1, NULL);
+		err(1, "%s", "");
 	exit(0);
 }
 
