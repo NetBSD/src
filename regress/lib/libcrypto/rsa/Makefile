@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/10/03 15:13:26 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2001/10/31 15:57:54 tv Exp $
 
 PROG=	rsatest
 SRCS=	rsa_test.c
@@ -9,7 +9,7 @@ DPADD+=	${LIBCRYPTO}
 
 regress:	${PROG}
 	@echo "==> running ${PROG}"
-	@${.OBJDIR}/${PROG}
+	@./${PROG}
 
 .include <bsd.prog.mk>
 
