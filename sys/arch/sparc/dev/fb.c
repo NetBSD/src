@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.39 1999/06/02 23:24:00 christos Exp $ */
+/*	$NetBSD: fb.c,v 1.40 1999/08/13 09:59:47 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -411,7 +411,13 @@ fbrcons_init(fb)
 
 	/* Get operations set and connect to rcons */
 	if (rasops_init(ri, maxrow, maxcol, 0, 1))
-		panic("fbrcons_init: rasops_init failed!");
+		panic("fbrcons_init: rasops_init failed");
+		
+	/* PROM sets up colormap so black is index 0x00 and white is 0xff */
+	if (ri->ri_depth == 8) {
+		ri->ri_devcmap[0] = 0x00000000;
+		ri->ri_devcmap[1] = 0xffffffff;
+	}
 
 	rc->rc_row = rc->rc_col = 0;
 #if !defined(RASTERCONS_FULLSCREEN)
