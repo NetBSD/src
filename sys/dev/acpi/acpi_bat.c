@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_bat.c,v 1.35 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.35 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_bat.c,v 1.36 2004/03/24 11:32:09 kanaoka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,8 @@ int
 acpibat_battery_present(struct acpibat_softc *sc)
 {
 	u_int32_t sta;
-	int s, val;
+	int s;
+	ACPI_INTEGER val;
 	ACPI_STATUS rv;
 
 	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_STA", &val);
