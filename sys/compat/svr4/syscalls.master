@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.26 1997/10/19 18:45:04 christos Exp $
+	$NetBSD: syscalls.master,v 1.26.2.1 1997/10/29 21:19:31 mellon Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -289,7 +289,8 @@
 184	UNIMPL		tsolsys
 185	STD		{ int svr4_sys_acl(char *path, int cmd, int num, \
 			    struct svr4_aclent *buf); }
-186	UNIMPL		auditsys
+186	STD		{ int svr4_sys_auditsys(int code, int a1, int a2, \
+			    int a3, int a4, int a5); }
 187	UNIMPL		processor_bind
 188	UNIMPL		processor_info
 189	UNIMPL		p_online
