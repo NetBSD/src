@@ -1,4 +1,4 @@
-/*	$NetBSD: dec_prom.h,v 1.13 1999/02/01 02:18:46 simonb Exp $	*/
+/*	$NetBSD: dec_prom.h,v 1.14 1999/03/01 04:01:50 simonb Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,7 +127,7 @@ struct callback {
 	void	(*_wbflush) __P((void));				/* 70 */
 	void	(*_msdelay) __P((int delay));				/* 74 */
 	void	(*_leds) __P((int value));				/* 78 */
-	void	(*_clear_cache) __P((void));				/* 7c */
+	void	(*_clear_cache) __P((char *addr, int len));		/* 7c */
 	int	(*_getsysid) __P((void));				/* 80 */
 	int	(*_getbitmap) __P((memmap *map));			/* 84 */
 	int	(*_disableintr) __P((int sn));				/* 88 */
