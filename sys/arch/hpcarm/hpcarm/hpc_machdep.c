@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.56 2003/04/02 03:55:53 thorpej Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.57 2003/04/26 06:44:28 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -131,7 +131,6 @@ paddr_t physical_start;
 paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
-u_int free_pages;
 int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
@@ -337,7 +336,8 @@ initarm(argc, argv, bi)
 
 	printf("kernsize=0x%x\n", kerneldatasize);
 	kerneldatasize += symbolsize;
-	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
+	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) +
+	    PAGE_SIZE * 8;
 
 	/* parse kernel args */
 	boot_file[0] = '\0';
@@ -392,7 +392,6 @@ initarm(argc, argv, bi)
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address
 	    + bootconfig.dram[bootconfig.dramblocks - 1].pages * PAGE_SIZE;
 	physical_freeend = physical_end;
-/*	free_pages = bootconfig.drampages;*/
     
 	for (loop = 0; loop < bootconfig.dramblocks; ++loop)
 		physmem += bootconfig.dram[loop].pages;
@@ -443,7 +442,8 @@ initarm(argc, argv, bi)
 
 	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
-		alloc_pages(kernel_pt_table[loop].pv_pa, L2_TABLE_SIZE / PAGE_SIZE);
+		alloc_pages(kernel_pt_table[loop].pv_pa,
+		    L2_TABLE_SIZE / PAGE_SIZE);
 		kernel_pt_table[loop].pv_va = kernel_pt_table[loop].pv_pa;
 	}
 
@@ -464,10 +464,14 @@ initarm(argc, argv, bi)
 	valloc_pages(kernelstack, UPAGES);
 
 #ifdef VERBOSE_INIT_ARM
-	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa, irqstack.pv_va); 
-	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa, abtstack.pv_va); 
-	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa, undstack.pv_va); 
-	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa, kernelstack.pv_va); 
+	printf("IRQ stack: p0x%08lx v0x%08lx\n", irqstack.pv_pa,
+	    irqstack.pv_va); 
+	printf("ABT stack: p0x%08lx v0x%08lx\n", abtstack.pv_pa,
+	    abtstack.pv_va); 
+	printf("UND stack: p0x%08lx v0x%08lx\n", undstack.pv_pa,
+	    undstack.pv_va); 
+	printf("SVC stack: p0x%08lx v0x%08lx\n", kernelstack.pv_pa,
+	    kernelstack.pv_va); 
 #endif
 
 	alloc_pages(msgbufphys, round_page(MSGBUFSIZE) / PAGE_SIZE);
@@ -519,8 +523,7 @@ initarm(argc, argv, bi)
 	for (loop = 0; loop < KERNEL_PT_VMDATA_NUM; ++loop)
 		pmap_link_l2pt(l1pagetable, KERNEL_VM_BASE + loop * 0x00400000,
 		    &kernel_pt_table[KERNEL_PT_VMDATA + loop]);
-	pmap_link_l2pt(l1pagetable, PTE_BASE,
-	    &kernel_ptpt);
+	pmap_link_l2pt(l1pagetable, PTE_BASE, &kernel_ptpt);
 
 	/* update the top of the kernel VM */
 	pmap_curmaxkvaddr =
