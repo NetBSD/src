@@ -1,4 +1,4 @@
-/*	$NetBSD: termcap.c,v 1.46 2003/08/07 16:44:57 agc Exp $	*/
+/*	$NetBSD: termcap.c,v 1.47 2004/04/23 14:49:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)termcap.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: termcap.c,v 1.46 2003/08/07 16:44:57 agc Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.47 2004/04/23 14:49:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -218,7 +218,7 @@ t_getent(bp, name)
 	 * normally read.
 	 */
  	(*bp)->info = NULL;
- 	i = cgetent(&((*bp)->info), pathvec, name);      
+ 	i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);      
 
 	/*
 	 * if we get an error and we skipped doing the cgetset before
@@ -231,7 +231,7 @@ t_getent(bp, name)
 				error = -2;
 				goto out;
 			}
-		i = cgetent(&((*bp)->info), pathvec, name);      
+		i = cgetent(&((*bp)->info), (const char *const *)pathvec, name);      
 	}
 
 	/* no tc reference loop return code in libterm XXX */
