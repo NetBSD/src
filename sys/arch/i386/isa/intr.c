@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: intr.c,v 1.12 1993/10/31 20:21:11 mycroft Exp $
+ *	$Id: intr.c,v 1.13 1993/11/01 00:06:04 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ void isa_intrmaskwickedness __P((void));
 int	intrmask[NIRQ];
 struct	intrhand *intrhand[NIRQ];
 int	fastvec;
+extern	int ipending;
 
 #define	IDTVEC(name)	__CONCAT(X,name)
 /* default interrupt vector table entries */
@@ -88,6 +89,10 @@ intr_fasttrap(intr, ih)
 	intrhand[irqnum] = ih;
 
 	setidt(irqnum, IDTVEC(fast)[irqnum],  SDT_SYS386IGT, SEL_KPL);
+
+	if (irqnum >= 8)
+		intr |= IRQ_SLAVE;
+	intr_enable(intr);
 }
 
 /*
@@ -140,6 +145,8 @@ intr_establish(intr, ih, class)
 		;
 	*p = ih;
 
+	if (irqnum >= 8)
+		intr |= IRQ_SLAVE;
 	intr_enable(intr);
 }
 
@@ -163,9 +170,13 @@ isa_intrmaskwickedness()
 		intrmask[irq] = mask;
 	}
 
+	printf("biomask %x ttymask %x netmask %x\n",
+	       biomask, ttymask, netmask);
+
+	biomask |= astmask;
+	ttymask |= astmask;
+	netmask |= astmask;
 	impmask = netmask | ttymask;
-	printf("biomask %x ttymask %x netmask %x impmask %x astmask %x\n",
-	       biomask, ttymask, netmask, impmask, astmask);
 }
 
 /*
@@ -193,8 +204,8 @@ isa_defaultirq()
 #else
 	outb(IO_ICU1+1, 1);		/* 8086 mode */
 #endif
-	outb(IO_ICU1+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x68);		/* special mask mode */ 
+	outb(IO_ICU1+1, 0xff);		/* mask everything */
+	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */ 
 #ifdef REORDER_IRQ
 	outb(IO_ICU1, 0xc0 | (3 - 1));	/* pri order 3-7, 0-2 (com2 first) */
 #endif
@@ -207,8 +218,8 @@ isa_defaultirq()
 #else
 	outb(IO_ICU2+1, 1);		/* 8086 mode */
 #endif
-	outb(IO_ICU2+1, 0xff);		/* leave interrupts masked */
-	outb(IO_ICU1, 0x68);		/* special mask mode */ 
+	outb(IO_ICU2+1, 0xff);		/* mask everything */
+	outb(IO_ICU1, 0x68);		/* special mask mode (if available) */ 
 
 	/* enable interrupts, but all masked */
 	splhigh();
@@ -222,17 +233,35 @@ void
 isa_flushintrs()
 {
 	register int i;
-	extern unsigned ipending;
 
 	/* clear any pending interrupts */
 	disable_intr();
-	for (i = 0; i < 8; i++) {
-		outb(IO_ICU1 + 1, ICU_EOI);
-		outb(IO_ICU2 + 1, ICU_EOI);
-	}
 	intr_enable(ipending);
+	for (i = 0; i < 16; i++) {
+		outb(IO_ICU1, ICU_EOI);
+		outb(IO_ICU2, ICU_EOI);
+	}
 	ipending = 0;
 	enable_intr();
+}
+
+void
+isa_intrstate()
+{
+	register u_char a, b, c, d;
+
+	disable_intr();
+	outb(IO_ICU1, 0x0a);
+	a = inb(IO_ICU1);
+	outb(IO_ICU1, 0x0b);
+	b = inb(IO_ICU1);
+	outb(IO_ICU2, 0x0a);
+	c = inb(IO_ICU2);
+	outb(IO_ICU2, 0x0b);
+	d = inb(IO_ICU2);
+	enable_intr();
+	printf("irr1=%02x isr1=%02x irr2=%02x isr2=%02x ipending=%08x\n",
+	       a, b, c, d, ipending);
 }
 
 /*
@@ -245,13 +274,12 @@ isa_discoverintr(force, aux)
 	void (*force)();
 {
 	register int time = 1000000;	/* wait up to 1 second */
-	extern unsigned ipending;
 
 	isa_flushintrs();
 	/* attempt to force interrupt */
 	force(aux);
 	while (time > 0) {
-		register unsigned irr;
+		register int irr;
 		disable_intr();
 		outb(IO_ICU1, 0x0a);
 		outb(IO_ICU2, 0x0a);
@@ -290,19 +318,8 @@ isa_strayintr(irq)
 		intrcnt_wild++;
 		log(LOG_ERR, "wild interrupt\n");
 	} else {
-#ifdef DIAGNOSTIC
-		register u_char a, b, c, d;
-		disable_intr();
-		outb(IO_ICU1, 0x0a);
-		a = inb(IO_ICU1);
-		outb(IO_ICU1, 0x0b);
-		b = inb(IO_ICU1);
-		outb(IO_ICU2, 0x0a);
-		c = inb(IO_ICU2);
-		outb(IO_ICU2, 0x0b);
-		d = inb(IO_ICU2);
-		enable_intr();
-		printf("irr1=%02x isr1=%02x irr2=%02x isr2=%02x\n", a, b, c, d);
+#ifdef DEBUG
+		isa_intrstate();
 #endif
 		if (intrcnt_stray[irq]++ < 5)
 			log(LOG_ERR, "stray interrupt %d%s\n", irq,
