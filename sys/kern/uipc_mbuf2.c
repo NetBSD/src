@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf2.c,v 1.6 2001/02/14 17:09:19 itojun Exp $	*/
+/*	$NetBSD: uipc_mbuf2.c,v 1.7 2001/07/18 06:51:38 thorpej Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 
 /*
@@ -182,7 +182,7 @@ m_pulldown(m, off, len, offp)
 	    !sharedcluster) {
 		n->m_next->m_data -= hlen;
 		n->m_next->m_len += hlen;
-		bcopy(mtod(n, caddr_t) + off, mtod(n->m_next, caddr_t), hlen);
+		memcpy(mtod(n->m_next, caddr_t), mtod(n, caddr_t) + off, hlen);
 		n->m_len -= hlen;
 		n = n->m_next;
 		off = 0;
@@ -207,7 +207,7 @@ m_pulldown(m, off, len, offp)
 	}
 	/* get hlen from <n, off> into <o, 0> */
 	o->m_len = hlen;
-	bcopy(mtod(n, caddr_t) + off, mtod(o, caddr_t), hlen);
+	memcpy(mtod(o, caddr_t), mtod(n, caddr_t) + off, hlen);
 	n->m_len -= hlen;
 	/* get tlen from <n->m_next, 0> into <o, hlen> */
 	m_copydata(n->m_next, 0, tlen, mtod(o, caddr_t) + o->m_len);

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.9 2001/07/18 06:48:27 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.10 2001/07/18 06:51:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -840,8 +840,8 @@ pipe_clone_write_buffer(wpipe)
 
 	size = wpipe->pipe_map.cnt;
 	pos = wpipe->pipe_map.pos;
-	bcopy((caddr_t) wpipe->pipe_map.kva + pos,
-	    (caddr_t) wpipe->pipe_buffer.buffer, size);
+	memcpy((caddr_t) wpipe->pipe_buffer.buffer,
+	    (caddr_t) wpipe->pipe_map.kva + pos, size);
 
 	wpipe->pipe_buffer.in = size;
 	wpipe->pipe_buffer.out = 0;

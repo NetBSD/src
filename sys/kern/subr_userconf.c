@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.3 2001/07/03 08:06:40 itojun Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.4 2001/07/18 06:51:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -154,8 +154,8 @@ userconf_hist_int(val)
 {
 	sprintf(userconf_histbuf," %d",val);
 	if ((userconf_histcur + strlen(userconf_histbuf)) < userconf_histsz) {
-		bcopy(userconf_histbuf,
-		      &userconf_history[userconf_histcur],
+		memcpy(&userconf_history[userconf_histcur],
+		      userconf_histbuf,
 		      strlen(userconf_histbuf));
 		userconf_histcur = userconf_histcur + strlen(userconf_histbuf);
 	}
