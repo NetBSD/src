@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.22 1995/08/18 16:21:33 chopps Exp $	*/
+/*	$NetBSD: grf.c,v 1.23 1995/10/09 02:08:43 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,6 +270,7 @@ grfioctl(dev, cmd, data, flag, p)
 	case GRFIOCGSPRITEMAX:
 	case GRFIOCBITBLT:
     	case GRFIOCSETMON:
+	case GRFIOCBLANK:	/* blank ioctl, IOCON/OFF will turn ite on */
 	case GRFTOGGLE: /* Toggles between Cirrus boards and native ECS on
                      Amiga. 15/11/94 ill */
 		/*

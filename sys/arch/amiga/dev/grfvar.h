@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.11 1995/08/18 16:21:37 chopps Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.12 1995/10/09 02:08:48 chopps Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,5 +106,6 @@ enum grfunits {
 	GRF_RETINAII_UNIT,
 	GRF_RETINAIII_UNIT,
 	GRF_CL5426_UNIT,
-	GRF_ULOWELL_UNIT
+	GRF_ULOWELL_UNIT,
+	GRF_CV64_UNIT
 };

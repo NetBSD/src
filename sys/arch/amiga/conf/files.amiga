@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.30 1995/10/07 18:05:13 chopps Exp $
+#	$NetBSD: files.amiga,v 1.31 1995/10/09 02:08:38 chopps Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -74,6 +74,10 @@ file	arch/amiga/dev/ite_rt.c		grfrt ite
 device	grfcl at zbus: grfbus
 file	arch/amiga/dev/grf_cl.c		grfcl needs-flag
 file    arch/amiga/dev/ite_cl.c         grfcl ite
+
+# CyberVison 64 grf
+device	grfcv at zbus: grfbus
+file	arch/amiga/dev/grf_cv.c		grfcv needs-flag
 
 # A2410 grf
 device	grful at zbus: grfbus
