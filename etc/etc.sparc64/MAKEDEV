@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.38 2002/08/09 02:39:33 lukem Exp $
+#	$NetBSD: MAKEDEV,v 1.39 2002/08/16 17:56:56 petrov Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -61,6 +61,7 @@
 # Terminals:
 #	tty*	Z88530 serial controllers
 #	ttyC*	NS16550 serial controllers
+#	ttyh*	SAB82532 serial controllers
 # Pseudo terminals:
 #	pty*	set of 62 master and slave pseudo terminals
 #	opty	first 16 ptys, to save inodes on install media
@@ -119,7 +120,7 @@ do
 case $i in
 
 all)
-	sh -$- $0 std ttya ttyb ttyc ttyd ttyC00 ttyC01
+	sh -$- $0 std ttya ttyb ttyc ttyd ttyC00 ttyC01 ttyh0 ttyh1
 	sh -$- $0 fd sd0 sd1 sd2 sd3 sd4 ss0 ch0 uk0 uk1
 	sh -$- $0 wd0 wd1 wd2 wd3 cd0 st0 st1 fd0 md0 md1
 	sh -$- $0 audio0 audio1 audio2 audio3
@@ -191,6 +192,14 @@ ttyC*)
 	mknod ttyC$unit c 36 $(($unit + $dialin ))
 	mknod dtyC$unit c 36 $(($unit + $dialout))
 	chown uucp ttyC$unit dtyC$unit
+	;;
+
+ttyh*)
+	unit=${i#ttyh}
+	rm -f ttyh$unit dtyh$unit
+	mknod ttyh$unit c 77 $(($unit + $dialin ))
+	mknod dtyh$unit c 77 $(($unit + $dialout))
+	chown uucp ttyh$unit dtyh$unit
 	;;
 
 fd)
