@@ -1,4 +1,4 @@
-/*	$NetBSD: ext.h,v 1.11 2000/06/22 06:47:49 thorpej Exp $	*/
+/*	$NetBSD: ext.h,v 1.12 2001/02/04 22:32:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,7 +125,9 @@ extern void
 #ifdef DIAGNOSTICS
 	printoption P((char *, int)),
 	printdata P((char *, char *, int)),
+#if !defined(ENCRYPTION)
 	printsub P((int, unsigned char *, int)),
+#endif
 #endif
 	ptyflush P((void)),
 	putchr P((int)),
@@ -157,7 +159,6 @@ extern int
 #ifndef convex
 	getpty P((int *)),
 #endif
-	login_tty P((int)),
 	spcset P((int, cc_t *, cc_t **)),
 	stilloob P((int)),
 	terminit P((void)),
@@ -190,8 +191,6 @@ extern void
 	writenet P((unsigned char *, int));
 
 #ifdef	ENCRYPTION
-extern int	(*decrypt_input) P((int));
-extern void	(*encrypt_output) P((unsigned char *, int));
 extern char	*nclearto;
 #endif	/* ENCRYPTION */
 
@@ -235,4 +234,12 @@ extern int	needtermstat;
 #   endif
 #  endif
 # endif
+
+#if	defined(AUTHENTICATION)
+#include <libtelnet/auth.h>
+#endif
+
+#if defined(ENCRYPTION)
+#include <libtelnet/encrypt.h>
+#endif
 #endif

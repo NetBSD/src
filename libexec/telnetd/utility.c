@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.16 2001/01/10 02:51:37 lukem Exp $	*/
+/*	$NetBSD: utility.c,v 1.17 2001/02/04 22:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.16 2001/01/10 02:51:37 lukem Exp $");
+__RCSID("$NetBSD: utility.c,v 1.17 2001/02/04 22:32:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -46,18 +46,10 @@ __RCSID("$NetBSD: utility.c,v 1.16 2001/01/10 02:51:37 lukem Exp $");
 #define PRINTOPTIONS
 #include "telnetd.h"
 
-#if defined(AUTHENTICATION)
-#include <libtelnet/auth.h>
-#endif
-
-#if defined(ENCRYPTION)
-#include <libtelnet/encrypt.h>
-#endif
-
 char *nextitem __P((char *));
-void fatalperror __P((int, char *));
-void edithost __P((char *, char *));
 void putstr __P((char *));
+
+extern int not42;
 
 /*
  * utility functions performing io related tasks
@@ -262,7 +254,6 @@ netclear()
 netflush()
 {
     int n;
-    extern int not42;
 
     if ((n = nfrontp - nbackp) > 0) {
 	DIAG(TD_REPORT,
