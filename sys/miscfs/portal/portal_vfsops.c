@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.21 1999/02/26 23:44:45 wrstuden Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.22 1999/05/05 20:01:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -118,9 +118,11 @@ portal_mount(mp, path, data, ndp, p)
 	if (error)
 		return (error);
 
+	/* getsock() will use the descriptor for us */
 	if ((error = getsock(p->p_fd, args.pa_socket, &fp)) != 0)
 		return (error);
 	so = (struct socket *) fp->f_data;
+	FILE_UNUSE(fp, NULL);
 	if (so->so_proto->pr_domain->dom_family != AF_LOCAL)
 		return (ESOCKTNOSUPPORT);
 
@@ -202,6 +204,7 @@ portal_unmount(mp, mntflags, p)
 	 * daemon to wake up, and then the accept will get ECONNABORTED
 	 * which it interprets as a request to go and bury itself.
 	 */
+	FILE_USE(VFSTOPORTAL(mp)->pm_server);
 	soshutdown((struct socket *) VFSTOPORTAL(mp)->pm_server->f_data, 2);
 	/*
 	 * Discard reference to underlying file.  Must call closef because

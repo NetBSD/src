@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.11 1999/03/30 00:13:57 wrstuden Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.12 1999/05/05 20:01:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -378,14 +378,19 @@ compat_43_sys_getdirentries(p, v, retval)
 	int error, eofflag, readcnt;
 	long loff;
 
+	/* getvnode() will use the descriptor for us */
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto out;
+	}
 	vp = (struct vnode *)fp->f_data;
 unionread:
-	if (vp->v_type != VDIR)
-		return (EINVAL);
+	if (vp->v_type != VDIR) {
+		error = EINVAL;
+		goto out;
+	}
 	aiov.iov_base = SCARG(uap, buf);
 	aiov.iov_len = SCARG(uap, count);
 	auio.uio_iov = &aiov;
@@ -449,7 +454,7 @@ unionread:
 	}
 	VOP_UNLOCK(vp, 0);
 	if (error)
-		return (error);
+		goto out;
 
 #ifdef UNION
 {
@@ -481,13 +486,13 @@ unionread:
 
 			if (error) {
 				vrele(lvp);
-				return (error);
+				goto out;
 			}
 			fp->f_data = (caddr_t) lvp;
 			fp->f_offset = 0;
 			error = vn_close(vp, FREAD, fp->f_cred, p);
 			if (error)
-				return (error);
+				goto out;
 			vp = lvp;
 			goto unionread;
 		}
@@ -509,5 +514,7 @@ unionread:
 	error = copyout((caddr_t)&loff, (caddr_t)SCARG(uap, basep),
 	    sizeof(long));
 	*retval = SCARG(uap, count) - auio.uio_resid;
+ out:
+	FILE_UNUSE(fp, p);
 	return (error);
 }
