@@ -1,8 +1,8 @@
-/* $NetBSD: sscom_var.h,v 1.3 2003/06/23 11:01:09 martin Exp $ */
+/* $NetBSD: sscom_var.h,v 1.4 2003/07/31 19:08:10 bsh Exp $ */
 
 /*
- * Copyright (c) 2002 Fujitsu Component Limited
- * Copyright (c) 2002 Genetec Corporation
+ * Copyright (c) 2002, 2003 Fujitsu Component Limited
+ * Copyright (c) 2002, 2003 Genetec Corporation
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -227,7 +227,8 @@ int	sscomparam(struct tty *, struct termios *);
 int	sscomread(dev_t, struct uio *, int);
 void	sscom_config(struct sscom_softc *);
 
-int	sscomintr(void *);
+int	sscomtxintr(void *);
+int	sscomrxintr(void *);
 
 int	sscom_cnattach(bus_space_tag_t, const struct sscom_uart_info *, 
 	    int, int, tcflag_t);
