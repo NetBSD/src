@@ -140,6 +140,7 @@
 ./usr/share/man/cat1/mkdep.0
 ./usr/share/man/cat1/mkdir.0
 ./usr/share/man/cat1/mkfifo.0
+./usr/share/man/cat1/mopa.out.0
 ./usr/share/man/cat1/mopchk.0
 ./usr/share/man/cat1/mopprobe.0
 ./usr/share/man/cat1/moptrace.0
