@@ -24,7 +24,7 @@
  * rights to redistribute these changes.
  *
  *	From: db_interface.c,v 2.4 1991/02/05 17:11:13 mrt (CMU)
- *	$Id: db_interface.c,v 1.5 1993/12/19 03:41:33 mycroft Exp $
+ *	$Id: db_interface.c,v 1.6 1994/01/04 00:24:02 mycroft Exp $
  */
 
 /*
@@ -197,7 +197,7 @@ db_write_bytes(addr, size, data)
 	db_nofault = &db_jmpbuf;
 
 	if (addr >= VM_MIN_KERNEL_ADDRESS &&
-	    addr <= (vm_offset_t)&etext) {
+	    addr < (vm_offset_t)&etext) {
 		ptep0 = pmap_pte(kernel_pmap, addr);
 		oldmap0 = *ptep0;
 		*(int *)ptep0 |= /* INTEL_PTE_WRITE */ PG_RW;
