@@ -1,4 +1,4 @@
-/* $NetBSD: irqhandler.h,v 1.7 1996/10/15 00:39:23 mark Exp $ */
+/* $NetBSD: irqhandler.h,v 1.8 1997/01/06 02:19:06 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -222,7 +222,7 @@ typedef struct irqhandler {
 	void *ih_arg;			/* Argument to handler */
 	int ih_level;			/* Interrupt level */
 	int ih_num;			/* Interrupt number (for accounting) */
-	char *ih_name;			/* Name of interrupt (for vmstat -i) */
+	const char *ih_name;		/* Name of interrupt (for vmstat -i) */
 	u_int ih_flags;			/* Interrupt flags */
 	u_int ih_maskaddr;		/* mask address for expansion cards */
 	u_int ih_maskbits;		/* interrupt bit for expansion cards */
@@ -236,6 +236,8 @@ extern irqhandler_t *irqhandlers[NIRQS];
 void irq_init __P(());
 int irq_claim __P((int, irqhandler_t *));
 int irq_release __P((int, irqhandler_t *));
+void *intr_claim __P((int irq, int level, const char *name, int (*func) __P((void *)), void *arg));
+void intr_release __P((void *ih));
 void irq_setmasks __P((void));
 void disable_irq __P((int));
 void enable_irq __P((int));
