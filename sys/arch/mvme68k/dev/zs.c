@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25 2000/11/20 19:35:29 scw Exp $	*/
+/*	$NetBSD: zs.c,v 1.26 2000/11/21 11:41:37 scw Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -169,8 +169,12 @@ zs_config(zsc, zs, vector, pclk)
 			bcopy(zs_init_reg, cs->cs_preg, 16);
 			cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		}
+
+		cs->cs_brg_clk = pclk / 16;
 		cs->cs_creg[2] = cs->cs_preg[2] = vector;
-		cs->cs_creg[12] = cs->cs_preg[12] = ((pclk / 32) / 9600) - 1;
+		zs_set_speed(cs, cs->cs_defspeed);
+		cs->cs_creg[12] = cs->cs_preg[12];
+		cs->cs_creg[13] = cs->cs_preg[13];
 		cs->cs_defcflag = zs_def_cflag;
 
 		/* Make these correspond to cs_defcflag (-crtscts) */
@@ -182,7 +186,6 @@ zs_config(zsc, zs, vector, pclk)
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
-		cs->cs_brg_clk = pclk / 16;
 
 		/*
 		 * Clear the master interrupt enable.
@@ -248,8 +251,7 @@ zshard_unshared(arg)
 
 	rval = zsc_intr_hard(zsc);
 
-	if ((zsc->zsc_cs[0]->cs_softreq) ||
-	    (zsc->zsc_cs[1]->cs_softreq))
+	if ((zsc->zsc_cs[0]->cs_softreq) || (zsc->zsc_cs[1]->cs_softreq))
 		softintr_schedule(zsc->zsc_softintr_cookie);
 
 	return (rval);
@@ -525,13 +527,13 @@ zs_cnconfig(zsc_unit, channel, zs, pclk)
 	zs_hwflags[zsc_unit][channel] = ZS_HWFLAG_CONSOLE;
 
 	/* Setup temporary chanstate. */
+	cs->cs_brg_clk = pclk / 16;
 	cs->cs_reg_csr  = zc->zc_csr;
 	cs->cs_reg_data = zc->zc_data;
 
 	/* Initialize the pending registers. */
 	bcopy(zs_init_reg, cs->cs_preg, 16);
 	cs->cs_preg[5] |= (ZSWR5_DTR | ZSWR5_RTS);
-	cs->cs_preg[12] = ((pclk / 32) / 9600) - 1;
 
 #if 0
 	/* XXX: Preserve BAUD rate from boot loader. */
@@ -540,6 +542,9 @@ zs_cnconfig(zsc_unit, channel, zs, pclk)
 #else
 	cs->cs_defspeed = 9600;	/* XXX */
 #endif
+	zs_set_speed(cs, cs->cs_defspeed);
+	cs->cs_creg[12] = cs->cs_preg[12];
+	cs->cs_creg[13] = cs->cs_preg[13];
 
 	/* Clear the master interrupt enable. */
 	zs_write_reg(cs, 9, 0);
