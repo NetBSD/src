@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.13 1997/03/17 19:03:32 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.14 1997/03/31 02:22:25 jeremy Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,8 +80,8 @@ start:
 	subl	a5, a0
 	| Note: borrowing mon_crp for tt0 setup...
 	movl	#0x3F8107, a0@		| map the low 1GB v=p with the
-	pmove	a0@, tt0		| transparent translation reg0
-
+	.long	0xf0100800		| transparent translation reg0
+					| [ pmove a0@, tt0 ]
 | In order to map the kernel into high memory we will copy the root table
 | entry which maps the 16 megabytes of memory starting at 0x0 into the
 | entry which maps the 16 megabytes starting at KERNBASE.
@@ -119,7 +119,7 @@ L_high_code:
 | Now turn off the transparent translation of the low 1GB.
 | (this also flushes the ATC)
 	clrl	sp@-
-	pmove	sp@,tt0
+	.long	0xf0170800		| pmove	sp@,tt0
 	addql	#4,sp
 
 | Now that __bootstrap() is done using the PROM functions,
