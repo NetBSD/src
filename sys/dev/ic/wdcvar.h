@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.31 2001/12/01 00:00:30 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.32 2001/12/03 00:11:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -194,12 +194,18 @@ void  wdccommand __P((struct channel_softc *, u_int8_t, u_int8_t, u_int16_t,
 	                  u_int8_t, u_int8_t, u_int8_t, u_int8_t));
 void   wdccommandshort __P((struct channel_softc *, int, int));
 void  wdctimeout	__P((void *arg));
+void wdc_reset_channel __P((struct ata_drive_datas *));
+int wdc_exec_command __P((struct ata_drive_datas *, struct wdc_command*));
+#define WDC_COMPLETE 0x01
+#define WDC_QUEUED   0x02
+#define WDC_TRY_AGAIN 0x03
 
 int	wdc_addref __P((struct channel_softc *));
 void	wdc_delref __P((struct channel_softc *));
 void	wdc_kill_pending __P((struct channel_softc *));
 
 void	wdc_print_modes (struct channel_softc *);
+void	wdc_probe_caps __P((struct ata_drive_datas*));
 
 /*	
  * ST506 spec says that if READY or SEEKCMPLT go off, then the read or write

@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.14 2001/11/13 12:53:09 lukem Exp $      */
+/*      $NetBSD: ata.c,v 1.15 2001/12/03 00:11:15 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.14 2001/11/13 12:53:09 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.15 2001/12/03 00:11:15 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -44,9 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.14 2001/11/13 12:53:09 lukem Exp $");
 #include <sys/device.h>
 #include <sys/syslog.h>
 
-#include <dev/ic/wdcreg.h>
+#include <machine/intr.h>
+#include <machine/bus.h>
+
 #include <dev/ata/atareg.h>
 #include <dev/ata/atavar.h>
+#include <dev/ic/wdcreg.h>
+#include <dev/ic/wdcvar.h>
 
 #define DEBUG_FUNCS  0x08
 #define DEBUG_PROBE  0x10
@@ -186,40 +190,5 @@ ata_dmaerr(drvp)
 	if (drvp->n_xfers > NXFER) {
 		drvp->n_dmaerrs = 1; /* just got an error */
 		drvp->n_xfers = 1; /* restart counting from this error */
-	}
-}
-
-void
-ata_perror(drvp, errno, buf)
-	struct ata_drive_datas *drvp;
-	int errno;
-	char *buf;
-{
-	static char *errstr0_3[] = {"address mark not found",
-	    "track 0 not found", "aborted command", "media change requested",
-	    "id not found", "media changed", "uncorrectable data error",
-	    "bad block detected"};
-	static char *errstr4_5[] = {"obsolete (address mark not found)",
-	    "no media/write protected", "aborted command",
-	    "media change requested", "id not found", "media changed",
-	    "uncorrectable data error", "interface CRC error"};
-	char **errstr;
-	int i;
-	char *sep = "";
-
-	if (drvp->ata_vers >= 4)
-		errstr = errstr4_5;
-	else
-		errstr = errstr0_3;
-
-	if (errno == 0) {
-		sprintf(buf, "error not notified");
-	}
-
-	for (i = 0; i < 8; i++) {
-		if (errno & (1 << i)) {
-			buf += sprintf(buf, "%s%s", sep, errstr[i]);
-			sep = ", ";
-		}
 	}
 }
