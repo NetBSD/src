@@ -1,3 +1,5 @@
+/*	$NetBSD: strtoul.c,v 1.7 1995/12/28 08:52:56 thorpej Exp $	*/
+
 /*
  * Copyright (c) 1990 Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";*/
-static char *rcsid = "$Id: strtoul.c,v 1.6 1995/12/21 03:56:09 mycroft Exp $";
+#if 0
+static char *sccsid = "from: @(#)strtoul.c	5.3 (Berkeley) 2/23/91";
+#else
+static char *rcsid = "$NetBSD: strtoul.c,v 1.7 1995/12/28 08:52:56 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: abs.c,v 1.4 1995/12/28 08:51:59 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -32,8 +34,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)abs.c	5.2 (Berkeley) 5/17/90";*/
-static char *rcsid = "$Id: abs.c,v 1.3 1993/08/26 00:47:49 jtc Exp $";
+#if 0
+static char *sccsid = "from: @(#)abs.c	5.2 (Berkeley) 5/17/90";
+#else
+static char *rcsid = "$NetBSD: abs.c,v 1.4 1995/12/28 08:51:59 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: merge.c,v 1.3 1995/12/28 08:52:28 thorpej Exp $	*/
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,8 +37,11 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";*/
-static char *rcsid = "$Id: merge.c,v 1.2 1994/06/16 05:26:36 mycroft Exp $";
+#if 0
+static char sccsid[] = "from: @(#)merge.c	8.2 (Berkeley) 2/14/94";
+#else
+static char *rcsid = "$NetBSD: merge.c,v 1.3 1995/12/28 08:52:28 thorpej Exp $";
+#endif
 #endif /* LIBC_SCCS and not lint */
 
 /*
