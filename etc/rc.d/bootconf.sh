@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bootconf.sh,v 1.4 2002/03/24 15:08:58 lukem Exp $
+# $NetBSD: bootconf.sh,v 1.5 2002/03/25 03:22:10 wiz Exp $
 #
 
 # PROVIDE: bootconf
@@ -60,7 +60,7 @@ bootconf_start()
 		fi
 	done
 
-	case  $conf in;
+	case  $conf in
 	current|default)
 		;;
 	*)
