@@ -38,6 +38,9 @@
 
 #include <sys/exec.h>
 
+#if defined(amiga)
+#define	__LDPGSZ	8192
+#endif
 #if defined(hp300) || defined(i386)
 #define	__LDPGSZ	4096
 #endif
@@ -45,17 +48,30 @@
 #define	__LDPGSZ	1024
 #endif
 
+#define N_GETMAGIC(ex) \
+    ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : ((ex).a_midmag))
+#define N_GETMAGIC2(ex) \
+    ( (((ex).a_midmag)&0xffff0000) ? (ntohl(((ex).a_midmag))&0xffff) : \
+    (((ex).a_midmag) | 0x10000) )
+#define N_GETMID(ex) \
+    ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>16)&0x03ff) : MID_ZERO )
+#define N_GETFLAG(ex) \
+    ( (((ex).a_midmag)&0xffff0000) ? ((ntohl(((ex).a_midmag))>>26)&0x3f) : 0 )
+#define N_SETMAGIC(ex,mag,mid,flag) \
+    ( (ex).a_midmag = htonl( (((flag)&0x3f)<<26) | (((mid)&0x03ff)<<16) | \
+    (((mag)&0xffff)) ) )
+
 #define N_ALIGN(ex,x) \
-	((ex).a_magic == ZMAGIC || (ex).a_magic == QMAGIC ? \
+	(N_GETMAGIC(ex) == ZMAGIC || N_GETMAGIC(ex) == QMAGIC ? \
 	 ((x) + __LDPGSZ - 1) & ~(__LDPGSZ - 1) : (x))
 
 /* Valid magic number check. */
 #define	N_BADMAG(ex) \
-	((ex).a_magic != NMAGIC && (ex).a_magic != OMAGIC && \
-	    (ex).a_magic != ZMAGIC && (ex).a_magic != QMAGIC)
+	(N_GETMAGIC(ex) != NMAGIC && N_GETMAGIC(ex) != OMAGIC && \
+	    N_GETMAGIC(ex) != ZMAGIC && N_GETMAGIC(ex) != QMAGIC)
 
 /* Address of the bottom of the text segment. */
-#define N_TXTADDR(ex)	((ex).a_magic == QMAGIC ? __LDPGSZ : 0)
+#define N_TXTADDR(ex)	(N_GETMAGIC2(ex) == (ZMAGIC|0x10000) ? 0 : __LDPGSZ)
 
 /* Address of the bottom of the data segment. */
 #define N_DATADDR(ex) \
@@ -63,8 +79,8 @@
 
 /* Text segment offset. */
 #define	N_TXTOFF(ex) \
-	((ex).a_magic == ZMAGIC ? __LDPGSZ \
-	 : ((ex).a_magic == QMAGIC ? 0 : sizeof(struct exec)))
+	( N_GETMAGIC2(ex)==ZMAGIC || N_GETMAGIC2(ex)==(QMAGIC|0x10000) ? \
+	0 : (N_GETMAGIC2(ex)==(ZMAGIC|0x10000) ? __LDPGSZ : sizeof(struct exec)) )
 
 /* Data segment offset. */
 #define	N_DATOFF(ex) \

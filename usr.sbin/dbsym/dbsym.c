@@ -6,7 +6,9 @@
 
 char *malloc ();
 
-#define FILE_OFFSET(vadr) (((vadr) & ~0xff000000)-N_DATADDR(hdr)+N_DATOFF(hdr))
+#define FILE_OFFSET_FUDGE (N_TXTADDR(hdr))
+#define FILE_OFFSET(vadr) (((vadr) & ~0xff000000)-N_DATADDR(hdr)+N_DATOFF(hdr) \
+			   + FILE_OFFSET_FUDGE)
 
 struct nlist *old_syms;
 int num_old_syms;

@@ -1,4 +1,4 @@
-/*	BSDI $Id: ld.c,v 1.2 1993/04/16 13:33:05 mycroft Exp $	*/
+/*	BSDI $Id: ld.c,v 1.3 1993/06/18 06:49:59 cgd Exp $	*/
 /*-
  * This code is derived from software copyrighted by the Free Software
  * Foundation.
@@ -32,6 +32,7 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
    
 /* Define how to initialize system-dependent header fields.  */
 
+#include <sys/param.h>
 #include <ar.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -44,11 +45,22 @@ static char sccsid[] = "@(#)ld.c	6.10 (Berkeley) 5/22/91";
 #include <stab.h>
 #include <string.h>
 
+
 /* symseg.h defines the obsolete GNU debugging format; we should nuke it.  */
 #define CORE_ADDR unsigned long	/* For symseg.h */
 #include "symseg.h"
 
-#define N_SET_MAGIC(exec, val)  ((exec).a_magic = val)
+int oldmagic;
+
+N_SET_MAGIC(ex, mag)
+struct exec *ex;
+int mag;
+{
+	if(oldmagic)
+		ex->a_midmag = mag;
+	else
+		N_SETMAGIC(*ex, mag, MID_MACHINE, 0);
+}
 
 /* If compiled with GNU C, use the built-in alloca */
 #ifdef __GNUC__
@@ -73,11 +85,7 @@ char *progname;
 /* Define this to specify the default executable format.  */
 
 #ifndef DEFAULT_MAGIC
-#define DEFAULT_MAGIC QMAGIC
-#endif
-
-#ifdef hp300
-#define	INITIALIZE_HEADER	outheader.a_mid = MID_HP300
+#define DEFAULT_MAGIC ZMAGIC
 #endif
 
 /*
@@ -871,7 +879,7 @@ main (argc, argv)
      the text size, and initialize the text size accordingly.
      This depends on the kind of system and on the output format selected.  */
 
-  N_SET_MAGIC (outheader, magic);
+  N_SET_MAGIC (&outheader, magic);
 #ifdef INITIALIZE_HEADER
   INITIALIZE_HEADER;
 #endif
@@ -1217,15 +1225,18 @@ decode_option (swt, arg)
       return;
 #endif
 
+#ifdef QMAGIC
+    case 'Q':
+       magic = oldmagic = QMAGIC;
+       return;
+    case 'Z':
+       magic = oldmagic = ZMAGIC;
+       return;
+#endif
+
     case 'o':
       output_filename = arg;
       return;
-
-#ifdef QMAGIC
-    case 'q':
-      magic = QMAGIC;
-      return;
-#endif
 
     case 'r':
       relocatable_output = 1;
@@ -2341,11 +2352,7 @@ digest_symbols ()
   /* If necessary, pad text section to full page in the file.
      Include the padding in the text segment size.  */
 
-#ifdef QMAGIC
-  if (magic == QMAGIC || magic == ZMAGIC)
-#else
   if (magic == ZMAGIC)
-#endif
     {
       int text_end = text_size + N_TXTOFF (outheader);
       text_pad = ((text_end + page_size - 1) & (- page_size)) - text_end;
@@ -2521,11 +2528,7 @@ digest_symbols ()
   if (specified_data_size && specified_data_size > data_size)
     data_pad = specified_data_size - data_size;
 
-#ifdef QMAGIC
-  if (magic == ZMAGIC || magic == QMAGIC)
-#else
   if (magic == ZMAGIC)
-#endif
     data_pad = ((data_pad + data_size + page_size - 1) & (- page_size))
                - data_size;
 
@@ -3233,7 +3236,7 @@ void modify_location (), perform_relocation (), copy_text (), copy_data ();
 void
 write_header ()
 {
-  N_SET_MAGIC (outheader, magic);
+  N_SET_MAGIC (&outheader, magic);
   outheader.a_text = text_size;
   outheader.a_data = data_size;
   outheader.a_bss = bss_size;

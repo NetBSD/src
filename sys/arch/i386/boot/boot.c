@@ -29,7 +29,10 @@
 /*
  * HISTORY
  * $Log: boot.c,v $
- * Revision 1.6  1993/06/14 00:47:08  deraadt
+ * Revision 1.7  1993/06/18 06:50:52  cgd
+ * convert magic numbers to network byte order, and attendent changes
+ *
+ * Revision 1.6  1993/06/14  00:47:08  deraadt
  * *whoops*. The previous commit killed a few important characters of code.
  *
  * Revision 1.5  1993/06/05  22:52:11  cgd
@@ -93,7 +96,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <a.out.h>
 #include <sys/reboot.h>
 
-
 struct exec head;
 int argv[10], esym;
 char *name;
@@ -109,10 +111,13 @@ boot(drive)
 int drive;
 {
 	int loadflags, currname = 0;
-	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k of memory  [27/4/93]\n",
+	char *t;
+		
+	printf("\n>> NetBSD BOOT @ 0x%x: %d/%d k of memory  [%s]\n",
 		ouraddr,
 		argv[7] = memsize(0),
-		argv[8] = memsize(1));
+		argv[8] = memsize(1),
+		"$Revision: 1.7 $");
 	printf("use options hd(1,...... to boot sd0 when wd0 is also installed\n");
 	gateA20();
 loadstart:
@@ -151,15 +156,14 @@ loadprog(howto)
 	argv[3] = 0;
 	argv[4] = 0;
 	read(&head, sizeof(head));
-	if (head.a_magic == 0413 )
-	{
-		poff = 4096;
-	}
-	else
-	{
+	if ( N_BADMAG(head)) {
 		printf("Invalid format!\n");
 		return;
 	}
+
+	poff = N_TXTOFF(head);
+	/*if(poff==0)
+		poff = 32;*/
 
 	startaddr = (int)head.a_entry;
 	addr = (startaddr & 0x00f00000); /* some MEG boundary */

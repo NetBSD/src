@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.30 1993/06/18 02:03:42 brezak Exp $
+ *	$Id: machdep.c,v 1.31 1993/06/18 06:50:58 cgd Exp $
  */
 
 #include "npx.h"
@@ -61,6 +61,9 @@
 #include "vm/vm.h"
 #include "vm/vm_kern.h"
 #include "vm/vm_page.h"
+
+#include "sys/exec.h"
+#include "sys/vnode.h"
 
 extern vm_offset_t avail_end;
 
@@ -1191,27 +1194,148 @@ copystr(fromaddr, toaddr, maxlength, lencopied) u_int *lencopied, maxlength;
 	return(ENAMETOOLONG);
 }
 
-
-/*
- * the following function checks to see if a given machine
- * type (a_mid) field is valid for this architecture
- * a non-zero return value indicates that the machine type is correct.
- */
-int
-cpu_exec_checkmid(int mid)
+cpu_exec_makecmds(p, epp)
+struct proc *p;
+struct exec_package *epp;
 {
-	int rv;
-
-	switch (mid) {
 #ifdef COMPAT_NOMID
-	case MID_ZERO:
-		return 1;
+  int error;
+  u_long midmag, magic;
+  u_short mid;
+
+  midmag = ntohl(epp->ep_execp->a_midmag);
+  mid = (midmag >> 16 ) & 0xffff;
+  magic = midmag & 0xffff;
+
+  if(magic==0) {
+    magic = (epp->ep_execp->a_midmag & 0xffff);
+    mid = MID_ZERO;
+  }
+
+  switch (mid << 16 | magic) {
+  case (MID_ZERO << 16) | ZMAGIC:
+    error = cpu_exec_prep_oldzmagic(p, epp);
+    break;
+  case (MID_ZERO << 16) | QMAGIC:
+    error = exec_prep_zmagic(p, epp);
+    break;
+  default:
+    error = ENOEXEC;
+  }
+
+  return error;
+#else /* ! COMPAT_NOMID */
+  return ENOEXEC;
 #endif
-
-	case MID_I386:
-		return 1;
-
-	default:
-		return 0;
-	}
 }
+
+#ifdef COMPAT_NOMID
+int
+cpu_exec_prep_oldzmagic(p, epp)
+     struct proc *p;
+     struct exec_package *epp;
+{
+  struct exec *execp = epp->ep_execp;
+  struct exec_vmcmd *ccmdp;
+
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up size fields in epp\n");
+#endif
+  epp->ep_taddr = 0;
+  epp->ep_tsize = execp->a_text;
+  epp->ep_daddr = epp->ep_taddr + execp->a_text;
+  epp->ep_dsize = execp->a_data + execp->a_bss;
+  epp->ep_maxsaddr = USRSTACK - MAXSSIZ;
+  epp->ep_minsaddr = USRSTACK;
+  epp->ep_ssize = p->p_rlimit[RLIMIT_STACK].rlim_cur;
+
+  /* check if vnode is in open for writing, because we want to demand-page
+   * out of it.  if it is, don't do it, for various reasons
+   */
+  if ((execp->a_text != 0 || execp->a_data != 0) &&
+      (epp->ep_vp->v_flag & VTEXT) == 0 && epp->ep_vp->v_writecount != 0) {
+#ifdef DIAGNOSTIC
+    if (epp->ep_vp->v_flag & VTEXT)
+      panic("exec: a VTEXT vnode has writecount != 0\n");
+#endif
+    epp->ep_vcp = NULL;
+#ifdef EXEC_DEBUG
+    printf("exec_prep_oldzmagic: returning with ETXTBSY\n");
+#endif
+    return ETXTBSY;
+  }
+  epp->ep_vp->v_flag |= VTEXT;
+
+  /* set up command for text segment */
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up text segment commands\n");
+#endif
+  epp->ep_vcp = new_vmcmd(vmcmd_map_pagedvn,
+			  execp->a_text,
+			  epp->ep_taddr,
+			  epp->ep_vp,
+			  NBPG,                  /* should this be CLBYTES? */
+			  VM_PROT_READ|VM_PROT_EXECUTE);
+  ccmdp = epp->ep_vcp;
+
+  /* set up command for data segment */
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up data segment commands\n");
+#endif
+  ccmdp->ev_next = new_vmcmd(vmcmd_map_pagedvn,
+			     execp->a_data,
+			     epp->ep_daddr,
+			     epp->ep_vp,
+			     execp->a_text + NBPG, /* should be CLBYTES? */
+			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+  ccmdp = ccmdp->ev_next;
+
+  /* set up command for bss segment */
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up bss segment commands\n");
+#endif
+  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+			     execp->a_bss,
+			     epp->ep_daddr + execp->a_data,
+			     0,
+			     0,
+			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+  ccmdp = ccmdp->ev_next;
+
+  /* set up commands for stack.  note that this takes *two*, one
+   * to map the part of the stack which we can access, and one
+   * to map the part which we can't.
+   *
+   * arguably, it could be made into one, but that would require
+   * the addition of another mapping proc, which is unnecessary
+   *
+   * note that in memory, thigns assumed to be:
+   *    0 ....... ep_maxsaddr <stack> ep_minsaddr
+   */
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up unmapped stack segment commands\n");
+#endif
+  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+			     ((epp->ep_minsaddr - epp->ep_ssize) -
+			      epp->ep_maxsaddr),
+			     epp->ep_maxsaddr,
+			     0,
+			     0,
+			     VM_PROT_NONE);
+  ccmdp = ccmdp->ev_next;
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: setting up mapped stack segment commands\n");
+#endif
+  ccmdp->ev_next = new_vmcmd(vmcmd_map_zero,
+			     epp->ep_ssize,
+			     (epp->ep_minsaddr - epp->ep_ssize),
+			     0,
+			     0,
+			     VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+#ifdef EXEC_DEBUG
+  printf("exec_prep_oldzmagic: returning with no error\n");
+#endif
+  return 0;
+}
+#endif /* COMPAT_NOMID */
