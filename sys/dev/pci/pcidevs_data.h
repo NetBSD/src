@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.477 2002/10/21 13:41:12 grant Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.478 2002/10/21 14:45:20 soren Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.474 2002/10/18 00:56:17 yamt Exp 
+ *	NetBSD: pcidevs,v 1.476 2002/10/21 14:45:00 soren Exp 
  */
 
 /*
@@ -6574,10 +6574,10 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "PCI4451 OHCI IEEE 1394 HOST Controller w/ PCI-CardBus Bridge",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_DL520P,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_ACX100,
 	    0,
 	    "Texas Instruments",
-	    "DL520 Airplus Wireless Ethernet",
+	    "ACX100 802.11b",
 	},
 	{
 	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1130,
