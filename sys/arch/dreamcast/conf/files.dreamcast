@@ -1,4 +1,4 @@
-#	$NetBSD: files.dreamcast,v 1.4 2001/01/21 23:38:34 marcus Exp $
+#	$NetBSD: files.dreamcast,v 1.5 2001/01/31 00:14:29 thorpej Exp $
 #
 # new style config file for sh3 architecture
 #
@@ -18,7 +18,7 @@ defopt	opt_initbsc.h	BSC_BCR1_VAL BSC_BCR2_VAL BSC_WCR1_VAL BSC_WCR2_VAL
 			BSC_RTCSR_VAL BSC_RTCNT_VAL BSC_RTCOR_VAL BSC_RFCR_VAL
 			BSC_PCR_VAL FRQCR_VAL PFC_SCPCR_VAL
 
-device maple { }
+device maple { [port = -1], [subunit = -1] }
 attach maple at shb
 file	arch/dreamcast/dev/maple/maple.c	maple
 
