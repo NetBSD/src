@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.9 2004/04/08 12:29:45 pooka Exp $	*/
+/*	$NetBSD: magic.c,v 1.10 2004/05/21 21:18:57 ross Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -44,14 +44,14 @@
 #include <sys/mman.h>
 #endif
 
-#if defined(HAVE_UTIME)
+#if defined(HAVE_UTIMES)
+# include <sys/time.h>
+#elif defined(HAVE_UTIME)
 # if defined(HAVE_SYS_UTIME_H)
 #  include <sys/utime.h>
 # elif defined(HAVE_UTIME_H)
 #  include <utime.h>
 # endif
-#elif defined(HAVE_UTIMES)
-# include <sys/time.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -70,7 +70,7 @@
 #if 0
 FILE_RCSID("@(#)Id: magic.c,v 1.20 2004/03/23 15:33:43 christos Exp")
 #else
-__RCSID("$NetBSD: magic.c,v 1.9 2004/04/08 12:29:45 pooka Exp $");
+__RCSID("$NetBSD: magic.c,v 1.10 2004/05/21 21:18:57 ross Exp $");
 #endif
 #endif	/* lint */
 
