@@ -32,7 +32,7 @@
  */
 
 /* $Heimdal: gssapi.h,v 1.21 2001/05/04 13:52:02 assar Exp $
-   $NetBSD: gssapi.h,v 1.6 2002/09/12 13:19:08 joda Exp $ */
+   $NetBSD: gssapi.h,v 1.7 2002/09/12 14:52:33 joda Exp $ */
 
 #ifndef GSSAPI_H_
 #define GSSAPI_H_
@@ -45,8 +45,6 @@
 #include <sys/types.h>
 #include <inttypes.h>
 #include <sys/socket.h>
-typedef socklen_t krb5_socklen_t;
-typedef ssize_t krb5_ssize_t;
 
 /*
  * Now define the three implementation-dependent types.
