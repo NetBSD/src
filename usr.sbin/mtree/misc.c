@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2001/10/05 01:03:24 lukem Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2001/10/05 13:14:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.14 2001/10/05 01:03:24 lukem Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2001/10/05 13:14:56 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -93,9 +93,18 @@ int keycompare(const void *, const void *);
 u_int
 parsekey(const char *name, int *needvaluep)
 {
+	static int allbits;
 	KEY *k, tmp;
 
+	if (allbits == 0) {
+		int i;
+
+		for (i = 0; i < sizeof(keylist) / sizeof(KEY); i++)
+			allbits |= keylist[i].val;
+	}
 	tmp.name = name;
+	if (strcmp(name, "all") == 0)
+		return (allbits);
 	k = (KEY *)bsearch(&tmp, keylist, sizeof(keylist) / sizeof(KEY),
 	    sizeof(KEY), keycompare);
 	if (k == NULL)

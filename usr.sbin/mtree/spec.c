@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.29 2001/10/05 12:44:47 lukem Exp $	*/
+/*	$NetBSD: spec.c,v 1.30 2001/10/05 13:14:56 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: spec.c,v 1.29 2001/10/05 12:44:47 lukem Exp $");
+__RCSID("$NetBSD: spec.c,v 1.30 2001/10/05 13:14:56 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,6 +157,7 @@ dump_nodes(const char *dir, NODE *root)
 {
 	NODE	*cur;
 	char	path[MAXPATHLEN + 1];
+	const char *name;
 
 	for (cur = root; cur != NULL; cur = cur->next) {
 		if (cur->type != F_DIR && !matchtags(cur))
@@ -166,36 +167,47 @@ dump_nodes(const char *dir, NODE *root)
 		    dir, *dir ? "/" : "", cur->name)
 		    >= sizeof(path))
 			mtree_err("Pathname too long.");
-		if (keys & F_TYPE)
+
+#define MATCHFLAG(f)	((keys & (f)) && (cur->flags & (f)))
+		if (MATCHFLAG(F_TYPE))
 			printf("type=%s ", nodetype(cur->type));
-		if (keys & F_UID)
-			printf("uid=%u ", cur->st_uid);
-		if (keys & F_UNAME)
-			printf("uname=%s ", user_from_uid(cur->st_uid, 0));
-		if (keys & F_GID)
-			printf("gid=%u ", cur->st_gid);
-		if (keys & F_GNAME)
-			printf("gname=%s ", group_from_gid(cur->st_gid, 0));
-		if (keys & F_MODE)
+		if (MATCHFLAG(F_UID | F_UNAME)) {
+			if (keys & F_UNAME &&
+			    (name = user_from_uid(cur->st_uid, 1)) != NULL)
+				printf("uname=%s ", name);
+			else
+				printf("uid=%u ", cur->st_uid);
+		}
+		if (MATCHFLAG(F_GID | F_GNAME)) {
+			if (keys & F_GNAME &&
+			    (name = group_from_gid(cur->st_gid, 1)) != NULL)
+				printf("gname=%s ", name);
+			else
+				printf("gid=%u ", cur->st_gid);
+		}
+		if (MATCHFLAG(F_MODE))
 			printf("mode=%#o ", cur->st_mode);
-		if (keys & F_NLINK && cur->type != F_DIR &&
-		    cur->st_nlink != 1)
+		if (MATCHFLAG(F_NLINK) /* && cur->st_nlink > 1 */)
 			printf("nlink=%d ", cur->st_nlink);
-		if (keys & F_SLINK && cur->slink != NULL)
+		if (MATCHFLAG(F_SLINK))
 			printf("link=%s ", cur->slink);
-		if (keys & F_SIZE && cur->type == F_FILE)
+		if (MATCHFLAG(F_SIZE))
 			printf("size=%lld ", (long long)cur->st_size);
-		if (keys & F_TIME)
+		if (MATCHFLAG(F_TIME))
 			printf("time=%ld.%ld ", (long)cur->st_mtimespec.tv_sec,
 			    cur->st_mtimespec.tv_nsec);
-		if (keys & F_CKSUM && cur->type == F_FILE)
+		if (MATCHFLAG(F_CKSUM))
 			printf("cksum=%lu ", cur->cksum);
-		if (keys & F_MD5 && cur->type == F_FILE && cur->md5sum != NULL)
+		if (MATCHFLAG(F_MD5))
 			printf("md5=%s ", cur->md5sum);
-		if (keys & F_FLAGS)
+		if (MATCHFLAG(F_FLAGS))
 			printf("flags=%s ",
 			    flags_to_string(cur->st_flags, "none"));
-		if (keys & F_TAGS && cur->tags != NULL)
+		if (MATCHFLAG(F_IGN))
+			printf("ignore ");
+		if (MATCHFLAG(F_OPT))
+			printf("optional ");
+		if (MATCHFLAG(F_TAGS))
 			printf("tags=%s ", cur->tags);
 		puts(path);
 
@@ -217,6 +229,8 @@ set(char *t, NODE *ip)
 
 	val = NULL;
 	for (; (kw = strtok(t, "= \t\n")) != NULL; t = NULL) {
+		if (strcmp(kw, "all") == 0)
+			mtree_err("invalid keyword `all'");
 		ip->flags |= type = parsekey(kw, &value);
 		if (value && (val = strtok(NULL, " \t\n")) == NULL)
 			mtree_err("missing value");
@@ -317,6 +331,9 @@ unset(char *t, NODE *ip)
 {
 	char *p;
 
-	while ((p = strtok(t, "\n\t ")) != NULL)
+	while ((p = strtok(t, "\n\t ")) != NULL) {
+		if (strcmp(p, "all") == 0)
+			mtree_err("invalid keyword `all'");
 		ip->flags &= ~parsekey(p, NULL);
+	}
 }
