@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.102 2004/03/10 21:57:31 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.103 2004/03/15 22:43:43 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.102 2004/03/10 21:57:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.103 2004/03/15 22:43:43 bouyer Exp $");
 
 #include "opt_scsi.h"
 
@@ -727,6 +727,53 @@ scsipi_kill_pending(periph)
 		panic("scsipi_kill_pending");
 #endif
 	scsipi_wait_drain(periph);
+}
+
+/*
+ * scsipi_print_cbd:
+ * prints a command block descriptor (for debug purpose, error messages,
+ * SCSIPI_VERBOSE, ...)
+ */
+void
+scsipi_print_cbd(cmd)
+	struct scsipi_generic *cmd;
+{
+	int i, j;
+
+ 	printf("0x%02x", cmd->opcode);
+
+ 	switch (CDB_GROUPID(cmd->opcode)) {
+ 	case CDB_GROUPID_0:
+ 		j = CDB_GROUP0;
+ 		break;
+ 	case CDB_GROUPID_1:
+ 		j = CDB_GROUP1;
+ 		break;
+ 	case CDB_GROUPID_2:
+ 		j = CDB_GROUP2;
+ 		break;
+ 	case CDB_GROUPID_3:
+ 		j = CDB_GROUP3;
+ 		break;
+ 	case CDB_GROUPID_4:
+ 		j = CDB_GROUP4;
+ 		break;
+ 	case CDB_GROUPID_5:
+ 		j = CDB_GROUP5;
+ 		break;
+ 	case CDB_GROUPID_6:
+ 		j = CDB_GROUP6;
+ 		break;
+ 	case CDB_GROUPID_7:
+ 		j = CDB_GROUP7;
+ 		break;
+ 	default:
+ 		j = 0;
+ 	}
+ 	if (j == 0)
+ 		j = sizeof (cmd->bytes);
+ 	for (i = 0; i < j-1; i++) /* already done the opcode */
+ 		printf(" %02x", cmd->bytes[i]);
 }
 
 /*
