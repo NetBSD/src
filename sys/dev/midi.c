@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.34 2003/06/29 22:30:00 fvdl Exp $	*/
+/*	$NetBSD: midi.c,v 1.35 2003/11/02 11:56:36 gson Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.34 2003/06/29 22:30:00 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.35 2003/11/02 11:56:36 gson Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -327,12 +327,16 @@ midi_in(void *addr, int data)
 				sc->in_msg[1] = data;
 				sc->in_pos = 2;
 				sc->in_left = MIDI_LENGTH(sc->in_status) - 1;
+				if (sc->in_left == 0)
+				    goto deliver;
 			}
 		}
 		return;
 	case MIDI_IN_DATA:
+	   	KASSERT(sc->in_left >= 1);
+	   	KASSERT(sc->in_pos < 3);
 		sc->in_msg[sc->in_pos++] = data;
-		if (--sc->in_left <= 0)
+		if (--sc->in_left == 0)
 			break;	/* deliver data */
 		return;
 	case MIDI_IN_SYSEX:
