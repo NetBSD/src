@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.8 1998/07/24 03:29:29 sommerfe Exp $ */
+/* $NetBSD: pckbc.c,v 1.9 1998/11/16 22:35:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -949,22 +949,34 @@ pckbc_set_inputhandler(self, slot, func, arg)
 {
 	struct pckbc_internal *t = (struct pckbc_internal *)self;
 	struct pckbc_softc *sc = t->t_sc;
+	const char *name;
+	int irq;
 	void *rv;
 
 	/* XXX use machdep hook? */
 
 	switch (slot) {
 	    case PCKBC_KBD_SLOT:
-		rv = isa_intr_establish(sc->sc_ic, 1, IST_EDGE, IPL_TTY,
-					pckbcintr, sc);
+		irq = 1;
+		name = "kbd";
 		break;
 	    case PCKBC_AUX_SLOT:
-		rv = isa_intr_establish(sc->sc_ic, 12, IST_EDGE, IPL_TTY,
-					pckbcintr, sc);
 		/* XXX irq 9 on alpha AXP150 "Jensen" */
+		irq = 12;
+		name = "aux";
 		break;
 	    default:
 		panic("pckbc_set_inputhandler: bad slot %d", slot);
+	}
+
+	rv = isa_intr_establish(sc->sc_ic, irq, IST_EDGE, IPL_TTY,
+	    pckbcintr, sc);
+	if (rv == NULL) {
+		printf("%s: unable to establish interrupt for %s slot\n",
+		    sc->sc_dv.dv_xname, name);
+	} else {
+		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
+		    irq, name);
 	}
 
 	sc->inputhandler[slot] = func;
