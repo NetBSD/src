@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)tty_pty.c	7.21 (Berkeley) 5/30/91
- *	$Id: tty_pty.c,v 1.18 1994/02/09 21:06:49 mycroft Exp $
+ *	$Id: tty_pty.c,v 1.19 1994/04/25 05:48:41 cgd Exp $
  */
 
 /*
@@ -655,18 +655,6 @@ ptyioctl(dev, cmd, data, flag, p)
 	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
 	if (error < 0)
 		 error = ttioctl(tp, cmd, data, flag, p);
-	/*
-	 * Since we use the tty queues internally,
-	 * pty's can't be switched to disciplines which overwrite
-	 * the queues.  We can't tell anything about the discipline
-	 * from here...
-	 */
-	if (linesw[tp->t_line].l_rint != ttyinput) {
-		(*linesw[tp->t_line].l_close)(tp, flag);
-		tp->t_line = TTYDISC;
-		(void)(*linesw[tp->t_line].l_open)(dev, tp);
-		error = ENOTTY;
-	}
 	if (error < 0) {
 		if (pti->pt_flags & PF_UCNTL &&
 		    (cmd & ~0xff) == UIOCCMD(0)) {
