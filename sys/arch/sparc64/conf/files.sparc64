@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.74 2003/02/05 12:06:52 nakayama Exp $
+#	$NetBSD: files.sparc64,v 1.75 2003/03/22 06:39:43 nakayama Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -16,6 +16,7 @@ defflag	opt_sparc_arch.h	SUN4U
 # These files must be compiled w/no omtimization in 64-bit mode
 #
 
+file dev/ic/elink3.c		compile-with "${NOOPT_C}"
 file net/if_ppp.c		compile-with "${NOOPT_C}"
 file net/if_loop.c		compile-with "${NOOPT_C}"
 file net/if_sl.c		compile-with "${NOOPT_C}"
@@ -105,6 +106,10 @@ file	dev/ebus/cs4231_ebus.c			audiocs_ebus
 
 # PCMCIA bus (references fdc)
 include "dev/pcmcia/files.pcmcia"
+
+# CardBus Support
+include "dev/cardbus/files.cardbus"
+file	arch/sparc64/sparc64/rbus_machdep.c	cardbus
 
 #
 # Console related stuff
