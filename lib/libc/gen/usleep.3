@@ -1,4 +1,4 @@
-.\"	$NetBSD: usleep.3,v 1.5 1997/07/19 02:42:31 jtc Exp $
+.\"	$NetBSD: usleep.3,v 1.6 1997/09/20 04:52:36 mikel Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,11 +48,16 @@ The
 .Fn usleep
 function
 suspends execution of the calling process
-for
+until either the number of microseconds specified by
 .Fa microseconds
-of time.
-System activity or time spent in processing the
-call may lengthen the sleep slightly.
+have elapsed or a signal is delivered to the calling process and its
+action is to invoke a signal catching function or to terminate the
+process.  The suspension time may be longer than requested due to the
+scheduling of other activity by the system.
+.Sh RETURN VALUE
+The
+.Fn usleep
+function returns no value.
 .Sh SEE ALSO
 .Xr nanosleep 2 ,
 .Xr sleep 3
