@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_configure.c,v 1.19 2004/10/26 19:23:19 oster Exp $	*/
+/*	$NetBSD: rf_configure.c,v 1.20 2004/10/26 19:52:21 oster Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: rf_configure.c,v 1.19 2004/10/26 19:23:19 oster Exp $");
+__RCSID("$NetBSD: rf_configure.c,v 1.20 2004/10/26 19:52:21 oster Exp $");
 #endif
 
 
@@ -481,11 +481,17 @@ rf_get_next_nonblank_line(buf, len, fp, errmsg)
 	const char *errmsg;
 {
 	char *p;
+	int l;
 
 	while (fgets(buf, len, fp) != NULL) {
 		p = rf_find_non_white(buf);
 		if (*p == '\n' || *p == '\0' || *p == '#')
 			continue;
+		l = strlen(buf)-1;
+		while (l>=0 && (buf[l]==' ' || buf[l]=='\n')) {
+			buf[l]='\0';
+			l--;
+		}
 		return (0);
 	}
 	if (errmsg)
