@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2002/08/09 18:22:59 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2002/08/09 21:49:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2002/08/09 18:22:59 thorpej Exp $");        
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2002/08/09 21:49:09 thorpej Exp $");        
 #ifdef PMAP_DEBUG
 #define	PDEBUG(_lev_,_stat_) \
 	if (pmap_debug_level >= (_lev_)) \
@@ -3847,6 +3847,25 @@ pmap_pte_init_xscale(void)
 
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_xscale;
+
+#ifdef XSCALE_CACHE_READ_WRITE_ALLOCATE
+	/*
+	 * The XScale core has an enhanced mode where writes that
+	 * miss the cache cause a cache line to be allocated.  This
+	 * is significantly faster than the traditional, write-through
+	 * behavior of this case.
+	 *
+	 * However, there is a bug lurking in this pmap module, or in
+	 * other parts of the VM system, or both, which causes corruption
+	 * of NFS-backed files when this cache mode is used.  We have
+	 * an ugly work-around for this problem (disable r/w-allocate
+	 * for managed kernel mappings), but the bug is still evil enough
+	 * to consider this cache mode "experimental".
+	 */
+	pte_l1_s_cache_mode |= L1_S_XSCALE_TEX(TEX_XSCALE_X);
+	pte_l2_l_cache_mode |= L2_XSCALE_L_TEX(TEX_XSCALE_X);
+	pte_l2_s_cache_mode |= L2_XSCALE_T_TEX(TEX_XSCALE_X);
+#endif /* XSCALE_CACHE_READ_WRITE_ALLOCATE */
 
 #ifdef XSCALE_CACHE_WRITE_THROUGH
 	/*
