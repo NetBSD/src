@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.29 2002/09/27 18:56:58 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.30 2002/11/24 22:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.29 2002/09/27 18:56:58 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.30 2002/11/24 22:35:43 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ struct varinit {
 	struct var *var;
 	int flags;
 	const char *text;
-	void (*func) __P((const char *));
+	void (*func)(const char *);
 };
 
 
@@ -133,8 +133,8 @@ const struct varinit varinit[] = {
 
 struct var *vartab[VTABSIZE];
 
-STATIC struct var **hashvar __P((const char *));
-STATIC int varequal __P((const char *, const char *));
+STATIC struct var **hashvar(const char *);
+STATIC int varequal(const char *, const char *);
 
 /*
  * Initialize the varable symbol tables and import the environment
@@ -162,7 +162,8 @@ INIT {
  */
 
 void
-initvar() {
+initvar(void)
+{
 	const struct varinit *ip;
 	struct var *vp;
 	struct var **vpp;
@@ -194,9 +195,7 @@ initvar() {
  */
 
 int
-setvarsafe(name, val, flags)
-	const char *name, *val;
-	int flags;
+setvarsafe(const char *name, const char *val, int flags)
 {
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = handler;
@@ -221,9 +220,7 @@ setvarsafe(name, val, flags)
  */
 
 void
-setvar(name, val, flags)
-	const char *name, *val;
-	int flags;
+setvar(const char *name, const char *val, int flags)
 {
 	const char *p;
 	const char *q;
@@ -276,9 +273,7 @@ setvar(name, val, flags)
  */
 
 void
-setvareq(s, flags)
-	char *s;
-	int flags;
+setvareq(char *s, int flags)
 {
 	struct var *vp, **vpp;
 
@@ -291,6 +286,8 @@ setvareq(s, flags)
 				size_t len = strchr(s, '=') - s;
 				error("%.*s: is read only", len, s);
 			}
+			if (flags & VNOSET)
+				return;
 			INTOFF;
 
 			if (vp->func && (flags & VNOFUNC) == 0)
@@ -314,6 +311,8 @@ setvareq(s, flags)
 		}
 	}
 	/* not found */
+	if (flags & VNOSET)
+		return;
 	vp = ckmalloc(sizeof (*vp));
 	vp->flags = flags;
 	vp->text = s;
@@ -329,14 +328,13 @@ setvareq(s, flags)
  */
 
 void
-listsetvar(list)
-	struct strlist *list;
-	{
+listsetvar(struct strlist *list, int flags)
+{
 	struct strlist *lp;
 
 	INTOFF;
 	for (lp = list ; lp ; lp = lp->next) {
-		setvareq(savestr(lp->text), 0);
+		setvareq(savestr(lp->text), flags);
 	}
 	INTON;
 }
@@ -348,9 +346,8 @@ listsetvar(list)
  */
 
 char *
-lookupvar(name)
-	const char *name;
-	{
+lookupvar(const char *name)
+{
 	struct var *v;
 
 	for (v = *hashvar(name) ; v ; v = v->next) {
@@ -372,9 +369,7 @@ lookupvar(name)
  */
 
 char *
-bltinlookup(name, doall)
-	const char *name;
-	int doall;
+bltinlookup(const char *name, int doall)
 {
 	struct strlist *sp;
 	struct var *v;
@@ -402,7 +397,8 @@ bltinlookup(name, doall)
  */
 
 char **
-environment() {
+environment(void)
+{
 	int nenv;
 	struct var **vpp;
 	struct var *vp;
@@ -433,7 +429,7 @@ environment() {
  */
 
 #ifdef mkinit
-void shprocvar __P((void));
+void shprocvar(void);
 
 SHELLPROC {
 	shprocvar();
@@ -441,7 +437,8 @@ SHELLPROC {
 #endif
 
 void
-shprocvar() {
+shprocvar(void)
+{
 	struct var **vpp;
 	struct var *vp, **prev;
 
@@ -473,19 +470,93 @@ shprocvar() {
  * any variables.
  */
 
+void
+print_quoted(const char *p)
+{
+	const char *q;
+
+	if (strcspn(p, "|&;<>()$`\\\"' \t\n*?[]#~=%") == strlen(p)) {
+		out1fmt("%s", p);
+		return;
+	}
+	while (*p) {
+		if (*p == '\'') {
+			out1fmt("\\'");
+			p++;
+			continue;
+		}
+		q = index(p, '\'');
+		if (!q) {
+			out1fmt("'%s'", p );
+			return;
+		}
+		out1fmt("'%.*s'", q - p, p );
+		p = q;
+	}
+}
+
+static int
+sort_var(const void *v_v1, const void *v_v2)
+{
+	const struct var * const *v1 = v_v1;
+	const struct var * const *v2 = v_v2;
+
+	/* XXX Will anyone notice we include the '=' of the shorter name? */
+	return strcoll((*v1)->text, (*v2)->text);
+}
+
+/*
+ * POSIX requires that 'set' (but not export or readonly) output the
+ * variables in lexicographic order - by the locale's collating order (sigh).
+ * Maybe we could keep them in an ordered balanced binary tree
+ * instead of hashed lists.
+ * For now just roll 'em through qsort for printing...
+ */
+
 int
-showvarscmd(argc, argv)
-	int argc;
-	char **argv;
+showvars(const char *name, int flag, int show_value)
 {
 	struct var **vpp;
 	struct var *vp;
+	const char *p;
+
+	static struct var **list;	/* static in case we are interrupted */
+	static int list_len;
+	int count = 0;
+
+	if (!list) {
+		list_len = 32;
+		list = ckmalloc(list_len * sizeof *list);
+	}
 
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
 		for (vp = *vpp ; vp ; vp = vp->next) {
-			if ((vp->flags & VUNSET) == 0)
-				out1fmt("%s\n", vp->text);
+			if (flag && !(vp->flags & flag))
+				continue;
+			if (vp->flags & VUNSET && !(show_value & 2))
+				continue;
+			if (count >= list_len) {
+				list = ckrealloc(list,
+					(list_len << 1) * sizeof *list);
+				list_len <<= 1;
+			}
+			list[count++] = vp;
 		}
+	}
+
+	qsort(list, count, sizeof *list, sort_var);
+
+	for (vpp = list; count--; vpp++) {
+		vp = *vpp;
+		if (name)
+			out1fmt("%s ", name);
+		for (p = vp->text ; *p != '=' ; p++)
+			out1c(*p);
+		if (!(vp->flags & VUNSET) && show_value) {
+			out1fmt("=");
+			print_quoted(++p);
+		}
+		out1c('\n');
 	}
 	return 0;
 }
@@ -497,9 +568,7 @@ showvarscmd(argc, argv)
  */
 
 int
-exportcmd(argc, argv)
-	int argc;
-	char **argv;
+exportcmd(int argc, char **argv)
 {
 	struct var **vpp;
 	struct var *vp;
@@ -508,38 +577,26 @@ exportcmd(argc, argv)
 	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
 	int pflag;
 
-	listsetvar(cmdenviron);
-	pflag = (nextopt("p") == 'p');
-	if (argc > 1 && !pflag) {
-		while ((name = *argptr++) != NULL) {
-			if ((p = strchr(name, '=')) != NULL) {
-				p++;
-			} else {
-				vpp = hashvar(name);
-				for (vp = *vpp ; vp ; vp = vp->next) {
-					if (varequal(vp->text, name)) {
-						vp->flags |= flag;
-						goto found;
-					}
-				}
-			}
-			setvar(name, p, flag);
-found:;
-		}
-	} else {
-		for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
+	pflag = nextopt("p") == 'p' ? 3 : 0;
+	if (argc <= 1 || pflag) {
+		showvars( pflag ? argv[0] : 0, flag, pflag );
+		return 0;
+	}
+
+	while ((name = *argptr++) != NULL) {
+		if ((p = strchr(name, '=')) != NULL) {
+			p++;
+		} else {
+			vpp = hashvar(name);
 			for (vp = *vpp ; vp ; vp = vp->next) {
-				if ((vp->flags & flag) == 0)
-					continue;
-				if (pflag) {
-					out1fmt("%s %s\n", argv[0], vp->text);
-				} else {
-					for (p = vp->text ; *p != '=' ; p++)
-						out1c(*p);
-					out1c('\n');
+				if (varequal(vp->text, name)) {
+					vp->flags |= flag;
+					goto found;
 				}
 			}
 		}
+		setvar(name, p, flag);
+found:;
 	}
 	return 0;
 }
@@ -550,9 +607,7 @@ found:;
  */
 
 int
-localcmd(argc, argv)
-	int argc;
-	char **argv;
+localcmd(int argc, char **argv)
 {
 	char *name;
 
@@ -573,9 +628,8 @@ localcmd(argc, argv)
  */
 
 void
-mklocal(name, flags)
-	char *name;
-	{
+mklocal(char *name, int flags)
+{
 	struct localvar *lvp;
 	struct var **vpp;
 	struct var *vp;
@@ -584,8 +638,8 @@ mklocal(name, flags)
 	lvp = ckmalloc(sizeof (struct localvar));
 	if (name[0] == '-' && name[1] == '\0') {
 		char *p;
-		p = ckmalloc(sizeof optlist);
-		lvp->text = memcpy(p, optlist, sizeof optlist);
+		p = ckmalloc(sizeof_optlist);
+		lvp->text = memcpy(p, optlist, sizeof_optlist);
 		vp = NULL;
 	} else {
 		vpp = hashvar(name);
@@ -618,7 +672,8 @@ mklocal(name, flags)
  */
 
 void
-poplocalvars() {
+poplocalvars(void)
+{
 	struct localvar *lvp;
 	struct var *vp;
 
@@ -626,10 +681,10 @@ poplocalvars() {
 		localvars = lvp->next;
 		vp = lvp->vp;
 		if (vp == NULL) {	/* $- saved */
-			memcpy(optlist, lvp->text, sizeof optlist);
+			memcpy(optlist, lvp->text, sizeof_optlist);
 			ckfree(lvp->text);
 		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
-			(void)unsetvar(vp->text);
+			(void)unsetvar(vp->text, 0);
 		} else {
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
@@ -642,9 +697,7 @@ poplocalvars() {
 
 
 int
-setvarcmd(argc, argv)
-	int argc;
-	char **argv;
+setvarcmd(int argc, char **argv)
 {
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
@@ -663,9 +716,7 @@ setvarcmd(argc, argv)
  */
 
 int
-unsetcmd(argc, argv)
-	int argc;
-	char **argv;
+unsetcmd(int argc, char **argv)
 {
 	char **ap;
 	int i;
@@ -673,11 +724,11 @@ unsetcmd(argc, argv)
 	int flg_var = 0;
 	int ret = 0;
 
-	while ((i = nextopt("vf")) != '\0') {
+	while ((i = nextopt("evf")) != '\0') {
 		if (i == 'f')
 			flg_func = 1;
 		else
-			flg_var = 1;
+			flg_var = i;
 	}
 	if (flg_func == 0 && flg_var == 0)
 		flg_var = 1;
@@ -686,7 +737,7 @@ unsetcmd(argc, argv)
 		if (flg_func)
 			ret |= unsetfunc(*ap);
 		if (flg_var)
-			ret |= unsetvar(*ap);
+			ret |= unsetvar(*ap, flg_var == 'e');
 	}
 	return ret;
 }
@@ -697,9 +748,8 @@ unsetcmd(argc, argv)
  */
 
 int
-unsetvar(s)
-	const char *s;
-	{
+unsetvar(const char *s, int unexport)
+{
 	struct var **vpp;
 	struct var *vp;
 
@@ -709,15 +759,19 @@ unsetvar(s)
 			if (vp->flags & VREADONLY)
 				return (1);
 			INTOFF;
-			if (*(strchr(vp->text, '=') + 1) != '\0')
-				setvar(s, nullstr, 0);
-			vp->flags &= ~VEXPORT;
-			vp->flags |= VUNSET;
-			if ((vp->flags & VSTRFIXED) == 0) {
-				if ((vp->flags & VTEXTFIXED) == 0)
-					ckfree(vp->text);
-				*vpp = vp->next;
-				ckfree(vp);
+			if (unexport) {
+				vp->flags &= ~VEXPORT;
+			} else {
+				if (*(strchr(vp->text, '=') + 1) != '\0')
+					setvar(s, nullstr, 0);
+				vp->flags &= ~VEXPORT;
+				vp->flags |= VUNSET;
+				if ((vp->flags & VSTRFIXED) == 0) {
+					if ((vp->flags & VTEXTFIXED) == 0)
+						ckfree(vp->text);
+					*vpp = vp->next;
+					ckfree(vp);
+				}
 			}
 			INTON;
 			return (0);
@@ -734,9 +788,8 @@ unsetvar(s)
  */
 
 STATIC struct var **
-hashvar(p)
-	const char *p;
-	{
+hashvar(const char *p)
+{
 	unsigned int hashval;
 
 	hashval = ((unsigned char) *p) << 4;
@@ -754,9 +807,8 @@ hashvar(p)
  */
 
 STATIC int
-varequal(p, q)
-	const char *p, *q;
-	{
+varequal(const char *p, const char *q)
+{
 	while (*p == *q++) {
 		if (*p++ == '=')
 			return 1;

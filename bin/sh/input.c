@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.36 2002/09/27 18:56:52 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.37 2002/11/24 22:35:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
 #else
-__RCSID("$NetBSD: input.c,v 1.36 2002/09/27 18:56:52 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.37 2002/11/24 22:35:40 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,8 +110,8 @@ int whichprompt;		/* 1 == PS1, 2 == PS2 */
 
 EditLine *el;			/* cookie for editline package */
 
-STATIC void pushfile __P((void));
-static int preadfd __P((void));
+STATIC void pushfile(void);
+static int preadfd(void);
 
 #ifdef mkinit
 INCLUDE <stdio.h>
@@ -139,9 +139,7 @@ SHELLPROC {
  */
 
 char *
-pfgets(line, len)
-	char *line;
-	int len;
+pfgets(char *line, int len)
 {
 	char *p = line;
 	int nleft = len;
@@ -170,14 +168,14 @@ pfgets(line, len)
  */
 
 int
-pgetc()
+pgetc(void)
 {
 	return pgetc_macro();
 }
 
 
 static int
-preadfd()
+preadfd(void)
 {
 	int nr;
 	char *buf =  parsefile->buf;
@@ -186,18 +184,28 @@ preadfd()
 retry:
 #ifndef SMALL
 	if (parsefile->fd == 0 && el) {
-		const char *rl_cp;
+		static const char *rl_cp;
+		static int el_len;
 
-		rl_cp = el_gets(el, &nr);
+		if (rl_cp == NULL)
+			rl_cp = el_gets(el, &el_len);
 		if (rl_cp == NULL)
 			nr = 0;
 		else {
-			/* XXX - BUFSIZE should redesign so not necessary */
-			(void) strcpy(buf, rl_cp);
+			nr = el_len;
+			if (nr > BUFSIZ - 8)
+				nr = BUFSIZ - 8;
+			memcpy(buf, rl_cp, nr);
+			if (nr != el_len) {
+				el_len -= nr;
+				rl_cp += nr;
+			} else
+				rl_cp = 0;
 		}
+
 	} else
 #endif
-		nr = read(parsefile->fd, buf, BUFSIZ - 1);
+		nr = read(parsefile->fd, buf, BUFSIZ - 8);
 
 
 	if (nr <= 0) {
@@ -231,7 +239,7 @@ retry:
  */
 
 int
-preadbuffer()
+preadbuffer(void)
 {
 	char *p, *q;
 	int more;
@@ -320,7 +328,8 @@ check:
  */
 
 void
-pungetc() {
+pungetc(void)
+{
 	parsenleft++;
 	parsenextc--;
 }
@@ -330,11 +339,8 @@ pungetc() {
  * We handle aliases this way.
  */
 void
-pushstring(s, len, ap)
-	char *s;
-	int len;
-	void *ap;
-	{
+pushstring(char *s, int len, void *ap)
+{
 	struct strpush *sp;
 
 	INTOFF;
@@ -357,7 +363,7 @@ pushstring(s, len, ap)
 }
 
 void
-popstring()
+popstring(void)
 {
 	struct strpush *sp = parsefile->strpush;
 
@@ -380,9 +386,7 @@ popstring()
  */
 
 void
-setinputfile(fname, push)
-	const char *fname;
-	int push;
+setinputfile(const char *fname, int push)
 {
 	int fd;
 	int fd2;
@@ -408,8 +412,7 @@ setinputfile(fname, push)
  */
 
 void
-setinputfd(fd, push)
-	int fd, push;
+setinputfd(int fd, int push)
 {
 	(void) fcntl(fd, F_SETFD, FD_CLOEXEC);
 	if (push) {
@@ -431,10 +434,8 @@ setinputfd(fd, push)
  */
 
 void
-setinputstring(string, push)
-	char *string;
-	int push;
-	{
+setinputstring(char *string, int push)
+{
 	INTOFF;
 	if (push)
 		pushfile();
@@ -453,7 +454,8 @@ setinputstring(string, push)
  */
 
 STATIC void
-pushfile() {
+pushfile(void)
+{
 	struct parsefile *pf;
 
 	parsefile->nleft = parsenleft;
@@ -470,7 +472,8 @@ pushfile() {
 
 
 void
-popfile() {
+popfile(void)
+{
 	struct parsefile *pf = parsefile;
 
 	INTOFF;
@@ -495,7 +498,8 @@ popfile() {
  */
 
 void
-popallfiles() {
+popallfiles(void)
+{
 	while (parsefile != &basepf)
 		popfile();
 }
@@ -511,7 +515,8 @@ popallfiles() {
  */
 
 void
-closescript(int vforked) {
+closescript(int vforked)
+{
 	if (vforked) {
 		struct parsefile *pf;
 

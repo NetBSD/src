@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.25 2002/10/07 14:26:49 christos Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.26 2002/11/24 22:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.25 2002/10/07 14:26:49 christos Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.26 2002/11/24 22:35:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ __RCSID("$NetBSD: memalloc.c,v 1.25 2002/10/07 14:26:49 christos Exp $");
  */
 
 pointer
-ckmalloc(nbytes)
-	int nbytes;
+ckmalloc(int nbytes)
 {
 	pointer p;
 
@@ -77,9 +76,7 @@ ckmalloc(nbytes)
  */
 
 pointer
-ckrealloc(p, nbytes)
-	pointer p;
-	int nbytes;
+ckrealloc(pointer p, int nbytes)
 {
 	p = realloc(p, nbytes);
 	if (p == NULL)
@@ -93,8 +90,7 @@ ckrealloc(p, nbytes)
  */
 
 char *
-savestr(s)
-	char *s;
+savestr(char *s)
 {
 	char *p;
 
@@ -129,8 +125,7 @@ int sstrnleft;
 int herefd = -1;
 
 pointer
-stalloc(nbytes)
-	int nbytes;
+stalloc(int nbytes)
 {
 	char *p;
 
@@ -158,8 +153,7 @@ stalloc(nbytes)
 
 
 void
-stunalloc(p)
-	pointer p;
+stunalloc(pointer p)
 {
 	if (p == NULL) {		/*DEBUG */
 		write(2, "stunalloc\n", 10);
@@ -172,8 +166,7 @@ stunalloc(p)
 
 
 void
-setstackmark(mark)
-	struct stackmark *mark;
+setstackmark(struct stackmark *mark)
 {
 	mark->stackp = stackp;
 	mark->stacknxt = stacknxt;
@@ -184,8 +177,7 @@ setstackmark(mark)
 
 
 void
-popstackmark(mark)
-	struct stackmark *mark;
+popstackmark(struct stackmark *mark)
 {
 	struct stack_block *sp;
 
@@ -213,7 +205,7 @@ popstackmark(mark)
  */
 
 void
-growstackblock()
+growstackblock(void)
 {
 	int newlen = SHELL_ALIGN(stacknleft * 2 + 100);
 
@@ -257,8 +249,7 @@ growstackblock()
 }
 
 void
-grabstackblock(len)
-	int len;
+grabstackblock(int len)
 {
 	len = SHELL_ALIGN(len);
 	stacknxt += len;
@@ -266,7 +257,7 @@ grabstackblock(len)
 }
 
 /*
- * The following routines are somewhat easier to use that the above.
+ * The following routines are somewhat easier to use than the above.
  * The user declares a variable of type STACKSTR, which may be declared
  * to be a register.  The macro STARTSTACKSTR initializes things.  Then
  * the user uses the macro STPUTC to add characters to the string.  In
@@ -284,7 +275,7 @@ grabstackblock(len)
  */
 
 char *
-growstackstr()
+growstackstr(void)
 {
 	int len = stackblocksize();
 	if (herefd >= 0 && len >= 1024) {
@@ -302,7 +293,7 @@ growstackstr()
  */
 
 char *
-makestrspace()
+makestrspace(void)
 {
 	int len = stackblocksize() - sstrnleft;
 	growstackblock();
@@ -311,9 +302,7 @@ makestrspace()
 }
 
 void
-ungrabstackstr(s, p)
-	char *s;
-	char *p;
+ungrabstackstr(char *s, char *p)
 {
 	stacknleft += stacknxt - s;
 	stacknxt = s;

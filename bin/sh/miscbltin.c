@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.30 2001/02/04 19:52:06 christos Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.31 2002/11/24 22:35:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.30 2001/02/04 19:52:06 christos Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.31 2002/11/24 22:35:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.30 2001/02/04 19:52:06 christos Exp $");
  */
 
 int
-readcmd(argc, argv)
-	int argc;
-	char **argv;
+readcmd(int argc, char **argv)
 {
 	char **ap;
 	int backslash;
@@ -167,9 +165,7 @@ readcmd(argc, argv)
 
 
 int
-umaskcmd(argc, argv)
-	int argc;
-	char **argv;
+umaskcmd(int argc, char **argv)
 {
 	char *ap;
 	int mask;
@@ -302,9 +298,7 @@ static const struct limits limits[] = {
 };
 
 int
-ulimitcmd(argc, argv)
-	int argc;
-	char **argv;
+ulimitcmd(int argc, char **argv)
 {
 	int	c;
 	rlim_t val = 0;

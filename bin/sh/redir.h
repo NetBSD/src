@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.h,v 1.13 2002/09/27 18:56:55 christos Exp $	*/
+/*	$NetBSD: redir.h,v 1.14 2002/11/24 22:35:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -44,9 +44,9 @@
 #define REDIR_VFORK 04		/* running under vfork(2), be careful */
 
 union node;
-void redirect __P((union node *, int));
-void popredir __P((void));
-int fd0_redirected_p __P((void));
-void clearredir __P((int));
-int copyfd __P((int, int));
+void redirect(union node *, int);
+void popredir(void);
+int fd0_redirected_p(void);
+void clearredir(int);
+int copyfd(int, int);
 

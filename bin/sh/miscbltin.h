@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.h,v 1.1 1997/07/04 21:02:10 christos Exp $	*/
+/*	$NetBSD: miscbltin.h,v 1.2 2002/11/24 22:35:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -29,6 +29,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-int readcmd __P((int, char **));
-int umaskcmd __P((int, char **));
-int ulimitcmd __P((int, char **));
+int readcmd(int, char **);
+int umaskcmd(int, char **);
+int ulimitcmd(int, char **);

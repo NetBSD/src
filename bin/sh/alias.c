@@ -1,4 +1,4 @@
-/*	$NetBSD: alias.c,v 1.10 1998/05/20 00:27:56 christos Exp $	*/
+/*	$NetBSD: alias.c,v 1.11 2002/11/24 22:35:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: alias.c,v 1.10 1998/05/20 00:27:56 christos Exp $");
+__RCSID("$NetBSD: alias.c,v 1.11 2002/11/24 22:35:38 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,19 +54,19 @@ __RCSID("$NetBSD: alias.c,v 1.10 1998/05/20 00:27:56 christos Exp $");
 #include "mystring.h"
 #include "alias.h"
 #include "options.h"	/* XXX for argptr (should remove?) */
+#include "var.h"
 
 #define ATABSIZE 39
 
 struct alias *atab[ATABSIZE];
 
-STATIC void setalias __P((char *, char *));
-STATIC int unalias __P((char *));
-STATIC struct alias **hashalias __P((char *));
+STATIC void setalias(char *, char *);
+STATIC int unalias(char *);
+STATIC struct alias **hashalias(char *);
 
 STATIC
 void
-setalias(name, val)
-	char *name, *val;
+setalias(char *name, char *val)
 {
 	struct alias *ap, **app;
 
@@ -118,9 +118,8 @@ setalias(name, val)
 }
 
 STATIC int
-unalias(name)
-	char *name;
-	{
+unalias(char *name)
+{
 	struct alias *ap, **app;
 
 	app = hashalias(name);
@@ -152,7 +151,7 @@ unalias(name)
 }
 
 #ifdef mkinit
-MKINIT void rmaliases __P((void));
+MKINIT void rmaliases(void);
 
 SHELLPROC {
 	rmaliases();
@@ -160,7 +159,8 @@ SHELLPROC {
 #endif
 
 void
-rmaliases() {
+rmaliases(void)
+{
 	struct alias *ap, *tmp;
 	int i;
 
@@ -180,9 +180,7 @@ rmaliases() {
 }
 
 struct alias *
-lookupalias(name, check)
-	char *name;
-	int check;
+lookupalias(char *name, int check)
 {
 	struct alias *ap = *hashalias(name);
 
@@ -197,13 +195,22 @@ lookupalias(name, check)
 	return (NULL);
 }
 
+char *
+get_alias_text(char *name)
+{
+	struct alias *ap;
+
+	ap = lookupalias(name, 0);
+	if (ap == NULL)
+		return NULL;
+	return ap->val;
+}
+
 /*
  * TODO - sort output
  */
 int
-aliascmd(argc, argv)
-	int argc;
-	char **argv;
+aliascmd(int argc, char **argv)
 {
 	char *n, *v;
 	int ret = 0;
@@ -214,8 +221,11 @@ aliascmd(argc, argv)
 
 		for (i = 0; i < ATABSIZE; i++)
 			for (ap = atab[i]; ap; ap = ap->next) {
-				if (*ap->name != '\0')
-				    out1fmt("alias %s=%s\n", ap->name, ap->val);
+				if (*ap->name != '\0') {
+					out1fmt("alias %s=", ap->name);
+					print_quoted(ap->val);
+					out1c('\n');
+				}
 			}
 		return (0);
 	}
@@ -224,10 +234,12 @@ aliascmd(argc, argv)
 			if ((ap = lookupalias(n, 0)) == NULL) {
 				outfmt(out2, "alias: %s not found\n", n);
 				ret = 1;
-			} else
-				out1fmt("alias %s=%s\n", n, ap->val);
-		}
-		else {
+			} else {
+				out1fmt("alias %s=", n);
+				print_quoted(ap->val);
+				out1c('\n');
+			}
+		} else {
 			*v++ = '\0';
 			setalias(n, v);
 		}
@@ -237,9 +249,7 @@ aliascmd(argc, argv)
 }
 
 int
-unaliascmd(argc, argv)
-	int argc;
-	char **argv;
+unaliascmd(int argc, char **argv)
 {
 	int i;
 
@@ -256,9 +266,8 @@ unaliascmd(argc, argv)
 }
 
 STATIC struct alias **
-hashalias(p)
-	char *p;
-	{
+hashalias(char *p)
+{
 	unsigned int hashval;
 
 	hashval = *p << 4;
