@@ -1,4 +1,4 @@
-/*	$NetBSD: cyreg.h,v 1.1 1996/09/24 18:02:35 christos Exp $	*/
+/*	$NetBSD: cyreg.h,v 1.2 1999/09/09 21:52:11 tron Exp $	*/
 
 /*-
  * Copyright (c) 1995 Bruce Evans.
@@ -56,6 +56,7 @@
 #define CY_PCI_INTENA           0x68
 
 #define	CY_CLOCK		25000000	/* baud rate clock */
+#define	CY_CLOCK_60		60000000	/* new CD14000 */
 
 #define CY_MEMSIZE		0x2000
 
