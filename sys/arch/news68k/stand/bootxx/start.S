@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 1999/12/09 14:53:23 tsutsui Exp $	*/
+/*	$NetBSD: start.S,v 1.1.6.1 2000/12/24 07:48:46 jhawk Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui. All rights reserved.
@@ -52,5 +52,6 @@ ASENTRY_NOPROFILE(start)
 	movl	%d4,%sp@-	| %d4: physmem
 
 	jbsr	_C_LABEL(bootxx)
+	lea	%sp@(16),%sp
 
-	jra	_ASM_LABEL(halt)
+	jra	_C_LABEL(rom_halt)
