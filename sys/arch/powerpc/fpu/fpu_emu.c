@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emu.c,v 1.1 2001/06/13 06:01:47 simonb Exp $ */
+/*	$NetBSD: fpu_emu.c,v 1.2 2001/06/22 03:25:39 simonb Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -195,18 +195,22 @@ fpu_emulate(struct trapframe *frame, struct fpreg *fpf)
 	case NOTFPU:
 	default:
 		DPRINTF(FPE_EX, ("fpu_emulate: SIGILL\n"));
+#ifdef DEBUG
 		if (fpe_debug & FPE_EX) {
 			printf("fpu_emulate:  illegal insn %x at %p:",
 			insn.i_int, (void *) (frame->srr0));
 			opc_disasm((vaddr_t)(frame->srr0), insn.i_int);
 		}
+#endif
 		/*
 		* XXXX retry an illegal insn once due to cache issues.
 		*/
 		if (lastill == frame->srr0) {
 			sig = SIGILL;
+#ifdef DEBUG
 			if (fpe_debug & FPE_EX)
-			Debugger();
+				Debugger();
+#endif
 		}
 		lastill = frame->srr0;
 		break;
