@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.8 1995/03/29 22:10:15 briggs Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.9 1995/08/04 18:36:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -131,7 +131,8 @@ struct ctlname {
 #define	KERN_BOOTTIME		21	/* struct: time kernel was booted */
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
-#define	KERN_MAXID		24	/* number of valid kern ids */
+#define KERN_RAWPARTITION	24	/* int: raw partition number */
+#define	KERN_MAXID		25	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -158,6 +159,7 @@ struct ctlname {
 	{ "boottime", CTLTYPE_STRUCT }, \
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
+	{ "rawpartition", CTLTYPE_INT }, \
 }
 
 /* 
