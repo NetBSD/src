@@ -1,4 +1,4 @@
-/*	$NetBSD: db_variables.c,v 1.8 1996/02/05 01:57:19 christos Exp $	*/
+/*	$NetBSD: db_variables.c,v 1.9 1997/01/09 05:37:02 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -28,6 +28,8 @@
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <vm/vm.h>
+#include <sys/sysctl.h>
 
 #include <machine/db_machdep.h>
 
@@ -36,6 +38,15 @@
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
+
+/*
+ * If this is non-zero, the DDB will be entered when the system
+ * panics.  Initialize it so that it's patchable.
+ */
+#ifndef DDB_ONPANIC
+#define DDB_ONPANIC	1
+#endif
+int		db_onpanic = DDB_ONPANIC;
 
 extern unsigned int	db_maxoff;
 
@@ -50,8 +61,53 @@ struct db_variable db_vars[] = {
 	{ "maxwidth",	&db_max_width, FCN_NULL },
 	{ "tabstops",	&db_tab_stop_width, FCN_NULL },
 	{ "lines",	&db_max_line, FCN_NULL },
+	{ "onpanic",	&db_onpanic, FCN_NULL },
 };
 struct db_variable *db_evars = db_vars + sizeof(db_vars)/sizeof(db_vars[0]);
+
+/*
+ * sysctl(3) access to the DDB variables defined above.
+ */
+int
+ddb_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int	*name;
+	u_int	namelen;
+	void	*oldp;
+	size_t	*oldlenp;
+	void	*newp;
+	size_t	newlen;
+	struct proc *p;
+{
+
+	/* All sysctl names at this level are terminal. */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case DDBCTL_RADIX:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_radix));
+
+	case DDBCTL_MAXOFF:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    (int *)db_maxoff));
+
+	case DDBCTL_MAXWIDTH:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &db_max_width));
+
+	case DDBCTL_TABSTOPS:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &db_tab_stop_width));
+
+	case DDBCTL_LINES:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_max_line));
+
+	case DDBCTL_ONPANIC:
+		return (sysctl_int(oldp, oldlenp, newp, newlen, &db_onpanic));
+	}
+
+	return (EOPNOTSUPP);
+}
 
 int
 db_find_variable(varp)
