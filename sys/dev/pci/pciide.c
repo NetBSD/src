@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.68.2.3 2000/06/27 17:08:42 tron Exp $	*/
+/*	$NetBSD: pciide.c,v 1.68.2.4 2000/07/05 18:10:57 bouyer Exp $	*/
 
 
 /*
@@ -2846,7 +2846,7 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 2;
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
-		cp = &sc->pciide_channels[0];
+		cp = &sc->pciide_channels[i];
 		if (sc->sc_wdcdev.nchannels > 1) {
 			compatchan = i;
 			if((pciide_pci_read(sc->sc_pc, sc->sc_tag,
