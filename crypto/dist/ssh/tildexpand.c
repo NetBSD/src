@@ -1,4 +1,4 @@
-/*	$NetBSD: tildexpand.c,v 1.4 2001/04/10 08:08:05 itojun Exp $	*/
+/*	$NetBSD: tildexpand.c,v 1.5 2001/09/27 03:24:07 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: tildexpand.c,v 1.11 2001/02/08 19:30:53 itojun Exp $");
+RCSID("$OpenBSD: tildexpand.c,v 1.12 2001/08/11 22:51:27 jakob Exp $");
 
 #include "xmalloc.h"
 #include "log.h"
@@ -68,6 +68,6 @@ tilde_expand_filename(const char *filename, uid_t my_uid)
 	if (len > MAXPATHLEN)
 		fatal("Home directory too long (%d > %d", len-1, MAXPATHLEN-1);
 	expanded = xmalloc(len);
-	snprintf(expanded, len, "%s/%s", pw->pw_dir, cp + 1);
+	snprintf(expanded, len, "%s%s%s", pw->pw_dir, strcmp(pw->pw_dir, "/") ? "/" : "", cp + 1);
 	return expanded;
 }

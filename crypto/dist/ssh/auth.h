@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.h,v 1.6 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth.h,v 1.7 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $OpenBSD: auth.h,v 1.18 2001/06/23 00:20:58 markus Exp $
+ * $OpenBSD: auth.h,v 1.22 2001/06/26 17:27:22 markus Exp $
  */
 #ifndef AUTH_H
 #define AUTH_H
@@ -37,23 +37,36 @@
 #ifdef BSD_AUTH
 #include <bsd_auth.h>
 #endif
+#ifdef KRB5
+#include <krb5.h>
+#endif
 
 typedef struct Authctxt Authctxt;
 typedef struct KbdintDevice KbdintDevice;
 
 struct Authctxt {
-	int success;
-	int postponed;
-	int valid;
-	int attempt;
-	int failures;
-	char *user;
-	char *service;
-	struct passwd *pw;
-	char *style;
-	void *kbdintctxt;
+	int		 success;
+	int		 postponed;
+	int		 valid;
+	int		 attempt;
+	int		 failures;
+	char		*user;
+	char		*service;
+	struct passwd	*pw;
+	char		*style;
+	void		*kbdintctxt;
 #ifdef BSD_AUTH
-	auth_session_t *as;
+	auth_session_t	*as;
+#endif
+#ifdef KRB4
+	char		*krb4_ticket_file;
+#endif
+#ifdef KRB5
+	krb5_context	 krb5_ctx;
+	krb5_auth_context krb5_auth_ctx;
+	krb5_ccache	 krb5_fwd_ccache;
+	krb5_principal	 krb5_user;
+	char		*krb5_ticket_file;
 #endif
 };
 
@@ -75,122 +88,64 @@ struct KbdintDevice
 	void	(*free_ctx)	__P((void *ctx));
 };
 
-/*
- * Tries to authenticate the user using the .rhosts file.  Returns true if
- * authentication succeeds.  If ignore_rhosts is non-zero, this will not
- * consider .rhosts and .shosts (/etc/hosts.equiv will still be used).
- */
-int     auth_rhosts(struct passwd * pw, const char *client_user);
-
-/* extended interface similar to auth_rhosts() */
+int     auth_rhosts(struct passwd *, const char *);
 int
-auth_rhosts2(struct passwd *pw, const char *client_user, const char *hostname,
-    const char *ipaddr);
+auth_rhosts2(struct passwd *, const char *, const char *, const char *);
 
-/*
- * Tries to authenticate the user using the .rhosts file and the host using
- * its host key.  Returns true if authentication succeeds.
- */
-int
-auth_rhosts_rsa(struct passwd * pw, const char *client_user, RSA* client_host_key);
-
-/*
- * Tries to authenticate the user using password.  Returns true if
- * authentication succeeds.
- */
-int     auth_password(Authctxt *authctxt, const char *password);
-
-/*
- * Performs the RSA authentication dialog with the client.  This returns 0 if
- * the client could not be authenticated, and 1 if authentication was
- * successful.  This may exit if there is a serious protocol violation.
- */
-int     auth_rsa(struct passwd * pw, BIGNUM * client_n);
-
-/*
- * Parses an RSA key (number of bits, e, n) from a string.  Moves the pointer
- * over the key.  Skips any whitespace at the beginning and at end.
- */
-int     auth_rsa_read_key(char **cpp, u_int *bitsp, BIGNUM * e, BIGNUM * n);
-
-/*
- * Performs the RSA authentication challenge-response dialog with the client,
- * and returns true (non-zero) if the client gave the correct answer to our
- * challenge; returns zero if the client gives a wrong answer.
- */
-int     auth_rsa_challenge_dialog(RSA *pk);
-
-#ifdef KRB5
-#include <krb5.h>
-int	auth_krb5(const char* server_user, krb5_data *auth,
-		  krb5_principal *client);
-int	auth_krb5_tgt(char *server_user, krb5_data *tgt,
-		      krb5_principal tkt_client);
-int	krb5_init(void);
-void	krb5_cleanup_proc(void *ignore);
-int	auth_krb5_password(struct passwd *pw, const char *password);
-void	send_krb5_tgt(krb5_context context, krb5_auth_context auth_context);
-int	try_krb5_authentication(krb5_context *context, krb5_auth_context *auth_context);
-#endif /* KRB5 */
+int	 auth_rhosts_rsa(struct passwd *, const char *, RSA *);
+int      auth_password(Authctxt *, const char *);
+int      auth_rsa(struct passwd *, BIGNUM *);
+int      auth_rsa_read_key(char **, u_int *, BIGNUM *, BIGNUM *);
+int      auth_rsa_challenge_dialog(RSA *);
 
 #ifdef KRB4
 #include <krb.h>
-/*
- * Performs Kerberos v4 mutual authentication with the client. This returns 0
- * if the client could not be authenticated, and 1 if authentication was
- * successful.  This may exit if there is a serious protocol violation.
- */
-int     auth_krb4(const char *server_user, KTEXT auth, char **client);
-int     krb4_init(uid_t uid);
-void    krb4_cleanup_proc(void *ignore);
-int	auth_krb4_password(struct passwd * pw, const char *password);
-int	send_krb4_tgt(void);
+int     auth_krb4(Authctxt *, KTEXT, char **);
+int	auth_krb4_password(Authctxt *, const char *);
+void    krb4_cleanup_proc(void *);
 
 #ifdef AFS
 #include <kafs.h>
+int     auth_krb4_tgt(Authctxt *, const char *);
+int     auth_afs_token(Authctxt *, const char *);
+#endif /* AFS */
 
-/* Accept passed Kerberos v4 ticket-granting ticket and AFS tokens. */
-int     auth_krb4_tgt(struct passwd * pw, const char *string);
-int     auth_afs_token(struct passwd * pw, const char *token_string);
+#endif /* KRB4 */
 
-int	creds_to_radix(CREDENTIALS *creds, u_char *buf, size_t buflen);
-int	radix_to_creds(const char *buf, CREDENTIALS *creds);
-void	send_afs_tokens(void);
-
-#endif				/* AFS */
-
-#endif				/* KRB4 */
+#ifdef KRB5
+int	auth_krb5(Authctxt *authctxt, krb5_data *auth, char **client);
+int	auth_krb5_tgt(Authctxt *authctxt, krb5_data *tgt);
+int	auth_krb5_password(Authctxt *authctxt, const char *password);
+void	krb5_cleanup_proc(void *authctxt);
+#endif /* KRB5 */
 
 void	do_authentication(void);
 void	do_authentication2(void);
 
 Authctxt *authctxt_new(void);
-void	auth_log(Authctxt *authctxt, int authenticated, char *method, char *info);
-void	userauth_finish(Authctxt *authctxt, int authenticated, char *method);
-int	auth_root_allowed(char *method);
+void	auth_log(Authctxt *, int, char *, char *);
+void	userauth_finish(Authctxt *, int, char *);
+int	auth_root_allowed(char *);
 
-int	auth2_challenge(Authctxt *authctxt, char *devs);
+int	auth2_challenge(Authctxt *, char *);
 
-int	allowed_user(struct passwd * pw);
+int	allowed_user(struct passwd *);
 
-char	*get_challenge(Authctxt *authctxt);
-int	verify_response(Authctxt *authctxt, const char *response);
+char	*get_challenge(Authctxt *);
+int	verify_response(Authctxt *, const char *);
 
 struct passwd * auth_get_user(void);
 
-/* expand a filename - return buffer is allocated by xmalloc */
-char	*expand_filename(const char *template, struct passwd *pw);
-char	*authorized_keys_file(struct passwd *pw);
-char	*authorized_keys_file2(struct passwd *pw);
+char	*expand_filename(const char *, struct passwd *);
+char	*authorized_keys_file(struct passwd *);
+char	*authorized_keys_file2(struct passwd *);
 
-/* check a file and the path to it */
 int
-secure_filename(FILE *f, const char *file, uid_t u, char *err, size_t errlen);
+secure_filename(FILE *, const char *, struct passwd *, char *, size_t);
 
-/* helper for hostbased auth */
 HostStatus
-check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
-    const char *sysfile, const char *userfile);
+check_key_in_hostfiles(struct passwd *, Key *, const char *,
+    const char *, const char *);
 
 #define AUTH_FAIL_MAX 6
 #define AUTH_FAIL_LOG (AUTH_FAIL_MAX/2)

@@ -1,4 +1,4 @@
-/*	$NetBSD: sftp-int.c,v 1.10 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: sftp-int.c,v 1.11 2001/09/27 03:24:05 itojun Exp $	*/
 /*
  * Copyright (c) 2001 Damien Miller.  All rights reserved.
  *
@@ -27,7 +27,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.37 2001/06/23 15:12:20 itojun Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.40 2001/08/14 09:23:02 markus Exp $");
 
 #include <glob.h>
 
@@ -81,6 +81,7 @@ struct CMD {
 };
 
 const struct CMD cmds[] = {
+	{ "bye",	I_QUIT },
 	{ "cd",		I_CHDIR },
 	{ "chdir",	I_CHDIR },
 	{ "chgrp",	I_CHGRP },
@@ -166,10 +167,10 @@ local_do_shell(const char *args)
 		/* XXX: child has pipe fds to ssh subproc open - issue? */
 		if (args) {
 			debug3("Executing %s -c \"%s\"", shell, args);
-			execl(shell, shell, "-c", args, NULL);
+			execl(shell, shell, "-c", args, (char *)NULL);
 		} else {
 			debug3("Executing %s", shell);
-			execl(shell, shell, NULL);
+			execl(shell, shell, (char *)NULL);
 		}
 		fprintf(stderr, "Couldn't execute \"%s\": %s\n", shell,
 		    strerror(errno));
@@ -207,7 +208,8 @@ path_append(char *p1, char *p2)
 
 	ret = xmalloc(len);
 	strlcpy(ret, p1, len);
-	strlcat(ret, "/", len);
+	if (strcmp(p1, "/") != 0) 
+		strlcat(ret, "/", len);
 	strlcat(ret, p2, len);
 
 	return(ret);

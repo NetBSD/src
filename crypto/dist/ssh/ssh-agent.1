@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-agent.1,v 1.7 2001/05/15 15:26:10 itojun Exp $
-.\" $OpenBSD: ssh-agent.1,v 1.24 2001/04/10 09:13:21 itojun Exp $
+.\"	$NetBSD: ssh-agent.1,v 1.8 2001/09/27 03:24:05 itojun Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.28 2001/09/05 06:23:07 deraadt Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -43,11 +43,11 @@
 .Nd authentication agent
 .Sh SYNOPSIS
 .Nm ssh-agent
-.Ar command
-.Ar args ...
+.Op Fl c Li | Fl s
+.Op Fl d
+.Op Ar command Op Ar args ...
 .Nm ssh-agent
 .Op Fl c Li | Fl s
-.Nm ssh-agent
 .Fl k
 .Sh DESCRIPTION
 .Nm
@@ -81,6 +81,10 @@ does not look like it's a csh style of shell.
 Kill the current agent (given by the
 .Ev SSH_AGENT_PID
 environment variable).
+.It Fl d
+Debug mode.  When this option is specified
+.Nm
+will not fork.
 .El
 .Pp
 If a commandline is given, this is executed as a subprocess of the agent.
@@ -113,9 +117,9 @@ remote logins, and the user can thus use the privileges given by the
 identities anywhere in the network in a secure way.
 .Pp
 There are two main ways to get an agent setup:
-Either you let the agent
-start a new subcommand into which some environment variables are exported, or
-you let the agent print the needed shell commands (either
+Either the agent starts a new subcommand into which some environment
+variables are exported, or the agent prints the needed shell commands
+(either
 .Xr sh 1
 or
 .Xr csh 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.10 2001/06/23 19:37:40 itojun Exp $	*/
+/*	$NetBSD: packet.c,v 1.11 2001/09/27 03:24:03 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  *
  *
  * SSH2 packet format added by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: packet.c,v 1.68 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: packet.c,v 1.69 2001/06/25 08:25:38 markus Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -299,8 +299,6 @@ packet_set_encryption_key(const u_char *key, u_int keylen,
 	cipher_init(&send_context, cipher, key, keylen, NULL, 0);
 }
 
-/* Starts constructing a packet to send. */
-
 /* Start constructing a packet to send. */
 void
 packet_start(u_char type)
@@ -315,8 +313,6 @@ packet_start(u_char type)
 	buffer_clear(&outgoing_packet);
 	buffer_append(&outgoing_packet, buf, len);
 }
-
-/* Appends a character to the packet data. */
 
 /* Append payload. */
 void

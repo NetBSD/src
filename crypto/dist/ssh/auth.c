@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.7 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth.c,v 1.8 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth.c,v 1.24 2001/06/23 00:20:57 markus Exp $");
+RCSID("$OpenBSD: auth.c,v 1.27 2001/07/11 18:26:15 markus Exp $");
 
 #include <libgen.h>
 
@@ -61,12 +61,12 @@ int
 allowed_user(struct passwd * pw)
 {
 	struct stat st;
+	const char *hostname = NULL, *ipaddr = NULL;
 	char *shell;
 	int i;
 #ifdef HAVE_LOGIN_CAP
 	int match_name, match_ip;
 	login_cap_t *lc;
-	const char *hostname, *ipaddr;
 	char *cap_hlist, *hp;
 #endif
 
@@ -184,16 +184,23 @@ allowed_user(struct passwd * pw)
 	 * XXX logins, too.
 	 */
 
+	if (options.num_deny_users > 0 || options.num_allow_users > 0) {
+		hostname = get_canonical_hostname(options.reverse_mapping_check);
+		ipaddr = get_remote_ipaddr();
+	}
+
 	/* Return false if user is listed in DenyUsers */
 	if (options.num_deny_users > 0) {
 		for (i = 0; i < options.num_deny_users; i++)
-			if (match_pattern(pw->pw_name, options.deny_users[i]))
+			if (match_user(pw->pw_name, hostname, ipaddr,
+			    options.deny_users[i]))
 				return 0;
 	}
 	/* Return false if AllowUsers isn't empty and user isn't listed there */
 	if (options.num_allow_users > 0) {
 		for (i = 0; i < options.num_allow_users; i++)
-			if (match_pattern(pw->pw_name, options.allow_users[i]))
+			if (match_user(pw->pw_name, hostname, ipaddr,
+			    options.allow_users[i]))
 				break;
 		/* i < options.num_allow_users iff we break for loop */
 		if (i >= options.num_allow_users)
@@ -408,8 +415,10 @@ check_key_in_hostfiles(struct passwd *pw, Key *key, const char *host,
  * Returns 0 on success and -1 on failure
  */
 int
-secure_filename(FILE *f, const char *file, uid_t uid, char *err, size_t errlen)
+secure_filename(FILE *f, const char *file, struct passwd *pw,
+    char *err, size_t errlen)
 {
+	uid_t uid = pw->pw_uid;
 	char buf[MAXPATHLEN];
 	char *cp;
 	struct stat st;
@@ -446,6 +455,12 @@ secure_filename(FILE *f, const char *file, uid_t uid, char *err, size_t errlen)
 			return -1;
 		}
 
+		/* If are passed the homedir then we can stop */
+		if (strcmp(pw->pw_dir, buf) == 0) {
+			debug3("secure_filename: terminating check at '%s'",
+			    buf);
+			break;
+		}
 		/*
 		 * dirname should always complete with a "/" path,
 		 * but we can be paranoid and check for "." too

@@ -1,4 +1,4 @@
-/*	$NetBSD: serverloop.c,v 1.10 2001/06/23 19:37:41 itojun Exp $	*/
+/*	$NetBSD: serverloop.c,v 1.11 2001/09/27 03:24:04 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -12,7 +12,7 @@
  * called by a name other than "ssh" or "Secure Shell".
  *
  * SSH2 support by Markus Friedl.
- * Copyright (c) 2000 Markus Friedl.  All rights reserved.
+ * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.70 2001/06/23 15:12:19 itojun Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.77 2001/09/17 21:04:02 markus Exp $");
 
 #include "xmalloc.h"
 #include "packet.h"
@@ -60,6 +60,7 @@ extern ServerOptions options;
 
 /* XXX */
 extern Kex *xxx_kex;
+static Authctxt *xxx_authctxt;
 
 static Buffer stdin_buffer;	/* Buffer for stdin data. */
 static Buffer stdout_buffer;	/* Buffer for stdout data. */
@@ -169,7 +170,7 @@ make_packets_from_stdout_data(void)
  */
 static void
 wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
-    u_int max_time_milliseconds)
+    int *nallocp, u_int max_time_milliseconds)
 {
 	struct timeval tv, *tvp;
 	int ret;
@@ -183,17 +184,17 @@ wait_until_can_do_something(fd_set **readsetp, fd_set **writesetp, int *maxfdp,
 	 * this could be randomized somewhat to make traffic
 	 * analysis more difficult, but we're not doing it yet.  
 	 */
-	if (max_time_milliseconds == 0 && options.client_alive_interval) {
+	if (compat20 &&
+	    max_time_milliseconds == 0 && options.client_alive_interval) {
 		client_alive_scheduled = 1;
 		max_time_milliseconds = options.client_alive_interval * 1000;
-	} else 
-		client_alive_scheduled = 0;
+	}
 
 	/* When select fails we restart from here. */
 retry_select:
 
 	/* Allocate and update select() masks for channel descriptors. */
-	channel_prepare_select(readsetp, writesetp, maxfdp, 0);
+	channel_prepare_select(readsetp, writesetp, maxfdp, nallocp, 0);
 
 	if (compat20) {
 		/* wrong: bad condition XXX */
@@ -349,12 +350,15 @@ static void
 process_output(fd_set * writeset)
 {
 	struct termios tio;
+	u_char *data;
+	u_int dlen;
 	int len;
 
 	/* Write buffered data to program stdin. */
 	if (!compat20 && fdin != -1 && FD_ISSET(fdin, writeset)) {
-		len = write(fdin, buffer_ptr(&stdin_buffer),
-		    buffer_len(&stdin_buffer));
+		data = buffer_ptr(&stdin_buffer);
+		dlen = buffer_len(&stdin_buffer);
+		len = write(fdin, data, dlen);
 		if (len < 0 && (errno == EINTR || errno == EAGAIN)) {
 			/* do nothing */
 		} else if (len <= 0) {
@@ -369,7 +373,8 @@ process_output(fd_set * writeset)
 			fdin = -1;
 		} else {
 			/* Successful write. */
-			if (fdin_is_tty && tcgetattr(fdin, &tio) == 0 &&
+			if (fdin_is_tty && dlen >= 1 && data[0] != '\r' &&
+			    tcgetattr(fdin, &tio) == 0 &&
 			    !(tio.c_lflag & ECHO) && (tio.c_lflag & ICANON)) {
 				/*
 				 * Simulate echo to reduce the impact of
@@ -435,7 +440,7 @@ void
 server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int max_fd;
+	int max_fd = 0, nalloc = 0;
 	int wait_status;	/* Status returned by wait(). */
 	pid_t wait_pid;		/* pid returned by wait(). */
 	int waiting_termination = 0;	/* Have displayed waiting close message. */
@@ -476,12 +481,14 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 	else
 		buffer_high = 64 * 1024;
 
+#if 0
 	/* Initialize max_fd to the maximum of the known file descriptors. */
-	max_fd = MAX(fdin, fdout);
+	max_fd = MAX(connection_in, connection_out);
+	max_fd = MAX(max_fd, fdin);
+	max_fd = MAX(max_fd, fdout);
 	if (fderr != -1)
 		max_fd = MAX(max_fd, fderr);
-	max_fd = MAX(max_fd, connection_in);
-	max_fd = MAX(max_fd, connection_out);
+#endif
 
 	/* Initialize Initialize buffers. */
 	buffer_init(&stdin_buffer);
@@ -567,9 +574,14 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 				xfree(cp);
 			}
 		}
+		max_fd = MAX(connection_in, connection_out);
+		max_fd = MAX(max_fd, fdin);
+		max_fd = MAX(max_fd, fdout);
+		max_fd = MAX(max_fd, fderr);
+
 		/* Sleep in select() until we can do something. */
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
-		    max_time_milliseconds);
+		    &nalloc, max_time_milliseconds);
 
 		/* Process any channel events. */
 		channel_after_select(readset, writeset);
@@ -659,10 +671,10 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 }
 
 void
-server_loop2(void)
+server_loop2(Authctxt *authctxt)
 {
 	fd_set *readset = NULL, *writeset = NULL;
-	int rekeying = 0, max_fd, status;
+	int rekeying = 0, max_fd, status, nalloc = 0;
 	pid_t pid;
 
 	debug("Entering interactive session for SSH2.");
@@ -673,6 +685,7 @@ server_loop2(void)
 	connection_out = packet_get_connection_out();
 
 	max_fd = MAX(connection_in, connection_out);
+	xxx_authctxt = authctxt;
 
 	server_init_dispatch();
 
@@ -684,7 +697,7 @@ server_loop2(void)
 		if (!rekeying && packet_not_very_much_data_to_write())
 			channel_output_poll();
 		wait_until_can_do_something(&readset, &writeset, &max_fd,
-		    rekeying);
+		    &nalloc, 0);
 		if (child_terminated) {
 			while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 				session_close_by_pid(pid, status);
@@ -702,11 +715,27 @@ server_loop2(void)
 	if (writeset)
 		xfree(writeset);
 
-	channel_free_all();
-
 	signal(SIGCHLD, SIG_DFL);
+
 	while ((pid = waitpid(-1, &status, WNOHANG)) > 0)
 		session_close_by_pid(pid, status);
+	/*
+	 * there is a race between channel_free_all() killing children and
+	 * children dying before kill()
+	 */
+	channel_detach_all();
+	channel_stop_listening();
+
+	while (session_have_children()) {
+		pid = waitpid(-1, &status, 0);
+		if (pid > 0)
+			session_close_by_pid(pid, status);
+		else {
+			error("waitpid returned %d: %s", pid, strerror(errno));
+			break;
+		}
+	}
+	channel_free_all();
 }
 
 static void
@@ -819,7 +848,7 @@ server_request_session(char *ctype)
 		error("server_request_session: channel_new failed");
 		return NULL;
 	}
-	if (session_open(c->self) != 1) {
+	if (session_open(xxx_authctxt, c->self) != 1) {
 		debug("session open failed, free channel %d", c->self);
 		channel_free(c);
 		return NULL;
@@ -983,4 +1012,3 @@ server_init_dispatch(void)
 	else
 		server_init_dispatch_15();
 }
-

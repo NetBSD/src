@@ -1,5 +1,5 @@
-/*	$NetBSD: groupaccess.h,v 1.2 2001/04/10 08:07:57 itojun Exp $	*/
-/*	$OpenBSD: groupaccess.h,v 1.2 2001/01/29 01:58:15 niklas Exp $	*/
+/*	$NetBSD: groupaccess.h,v 1.3 2001/09/27 03:24:03 itojun Exp $	*/
+/*	$OpenBSD: groupaccess.h,v 1.4 2001/06/26 17:27:23 markus Exp $	*/
 
 /*
  * Copyright (c) 2001 Kevin Steves.  All rights reserved.
@@ -30,21 +30,8 @@
 
 #include <grp.h>
 
-/*
- * Initialize group access list for user with primary (base) and
- * supplementary groups.  Return the number of groups in the list.
- */
-int ga_init(const char *user, gid_t base);
-
-/*
- * Return 1 if one of user's groups is contained in groups.
- * Return 0 otherwise.  Use match_pattern() for string comparison.
- */
-int ga_match(char * const *groups, int ngroups);
-
-/*
- * Free memory allocated for group access list.
- */
-void ga_free(void);
+int	 ga_init(const char *, gid_t);
+int	 ga_match(char * const *, int);
+void	 ga_free(void);
 
 #endif

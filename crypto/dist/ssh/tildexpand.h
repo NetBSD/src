@@ -1,5 +1,5 @@
-/*	$NetBSD: tildexpand.h,v 1.2 2001/04/10 08:08:05 itojun Exp $	*/
-/*	$OpenBSD: tildexpand.h,v 1.2 2001/01/29 01:58:19 niklas Exp $	*/
+/*	$NetBSD: tildexpand.h,v 1.3 2001/09/27 03:24:07 itojun Exp $	*/
+/*	$OpenBSD: tildexpand.h,v 1.4 2001/06/26 17:27:25 markus Exp $	*/
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -13,8 +13,4 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-/*
- * Expands tildes in the file name.  Returns data allocated by xmalloc.
- * Warning: this calls getpw*.
- */
-char   *tilde_expand_filename(const char *filename, uid_t my_uid);
+char	*tilde_expand_filename(const char *, uid_t);

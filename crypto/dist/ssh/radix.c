@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.4 2001/06/23 19:37:40 itojun Exp $	*/
+/*	$NetBSD: radix.c,v 1.5 2001/09/27 03:24:03 itojun Exp $	*/
 /*
  * Copyright (c) 1999 Dug Song.  All rights reserved.
  *
@@ -25,7 +25,6 @@
 
 #include "includes.h"
 #include "uuencode.h"
-#include "auth.h"
 
 RCSID("$OpenBSD: radix.c,v 1.16 2001/06/23 15:12:19 itojun Exp $");
 

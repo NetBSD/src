@@ -1,4 +1,4 @@
-/*	$NetBSD: authfd.c,v 1.6 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: authfd.c,v 1.7 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfd.c,v 1.41 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: authfd.c,v 1.45 2001/09/19 19:35:30 stevesk Exp $");
 
 #include <openssl/evp.h>
 
@@ -59,7 +59,8 @@ int	decode_reply(int type);
 
 /* macro to check for "agent failure" message */
 #define agent_failed(x) \
-    ((x == SSH_AGENT_FAILURE) || (x == SSH_COM_AGENT2_FAILURE))
+    ((x == SSH_AGENT_FAILURE) || (x == SSH_COM_AGENT2_FAILURE) || \
+     (x == SSH2_AGENT_FAILURE))
 
 /* Returns the number of the authentication fd, or -1 if there is none. */
 
@@ -67,7 +68,7 @@ int
 ssh_get_authentication_socket(void)
 {
 	const char *authsocket;
-	int sock, len;
+	int sock;
 	struct sockaddr_un sunaddr;
 
 	authsocket = getenv(SSH_AUTHSOCKET_ENV_NAME);
@@ -76,8 +77,6 @@ ssh_get_authentication_socket(void)
 
 	sunaddr.sun_family = AF_UNIX;
 	strlcpy(sunaddr.sun_path, authsocket, sizeof(sunaddr.sun_path));
-	len = SUN_LEN(&sunaddr)+1;
-	sunaddr.sun_len = len;
 
 	sock = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0)
@@ -88,7 +87,7 @@ ssh_get_authentication_socket(void)
 		close(sock);
 		return -1;
 	}
-	if (connect(sock, (struct sockaddr *) & sunaddr, len) < 0) {
+	if (connect(sock, (struct sockaddr *) &sunaddr, sizeof sunaddr) < 0) {
 		close(sock);
 		return -1;
 	}
@@ -533,6 +532,25 @@ ssh_remove_identity(AuthenticationConnection *auth, Key *key)
 	return decode_reply(type);
 }
 
+int
+ssh_update_card(AuthenticationConnection *auth, int add, const char *reader_id)
+{
+	Buffer msg;
+	int type;
+
+	buffer_init(&msg);
+	buffer_put_char(&msg, add ? SSH_AGENTC_ADD_SMARTCARD_KEY :
+	    SSH_AGENTC_REMOVE_SMARTCARD_KEY);
+	buffer_put_cstring(&msg, reader_id);
+	if (ssh_request_reply(auth, &msg, &msg) == 0) {
+		buffer_free(&msg);
+		return 0;
+	}
+	type = buffer_get_char(&msg);
+	buffer_free(&msg);
+	return decode_reply(type);
+}
+
 /*
  * Removes all identities from the agent.  This call is not meant to be used
  * by normal applications.
@@ -565,6 +583,7 @@ decode_reply(int type)
 	switch (type) {
 	case SSH_AGENT_FAILURE:
 	case SSH_COM_AGENT2_FAILURE:
+	case SSH2_AGENT_FAILURE:
 		log("SSH_AGENT_FAILURE");
 		return 0;
 	case SSH_AGENT_SUCCESS:

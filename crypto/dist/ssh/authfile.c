@@ -1,4 +1,4 @@
-/*	$NetBSD: authfile.c,v 1.8 2001/06/23 19:37:39 itojun Exp $	*/
+/*	$NetBSD: authfile.c,v 1.9 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.37 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.38 2001/09/23 11:09:13 markus Exp $");
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -487,15 +487,18 @@ key_perm_ok(int fd, const char *filename)
 {
 	struct stat st;
 
-	/* check owner and modes */
-	if (fstat(fd, &st) < 0 ||
-	    (st.st_uid != 0 && getuid() != 0 && st.st_uid != getuid()) ||
-	    (st.st_mode & 077) != 0) {
-		close(fd);
+	if (fstat(fd, &st) < 0)
+		return 0;
+	/*
+	 * if a key owned by the user is accessed, then we check the
+	 * permissions of the file. if the key owned by a different user,
+	 * then we don't care.
+	 */
+	if ((st.st_uid == getuid()) && (st.st_mode & 077) != 0) {
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
 		error("@         WARNING: UNPROTECTED PRIVATE KEY FILE!          @");
 		error("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-		error("Bad ownership or mode(0%3.3o) for '%s'.",
+		error("Permissions 0%3.3o for '%s' are too open.",
 		    st.st_mode & 0777, filename);
 		error("It is recommended that your private key files are NOT accessible by others.");
 		error("This private key will be ignored.");

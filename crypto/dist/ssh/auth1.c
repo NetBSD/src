@@ -1,4 +1,4 @@
-/*	$NetBSD: auth1.c,v 1.13 2001/06/23 19:37:38 itojun Exp $	*/
+/*	$NetBSD: auth1.c,v 1.14 2001/09/27 03:24:02 itojun Exp $	*/
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -11,7 +11,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.24 2001/06/23 15:12:17 itojun Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.25 2001/06/26 16:15:23 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -25,17 +25,7 @@ RCSID("$OpenBSD: auth1.c,v 1.24 2001/06/23 15:12:17 itojun Exp $");
 #include "auth.h"
 #include "session.h"
 #include "misc.h"
-
-#ifdef KRB5
-extern krb5_context ssh_context;
-krb5_principal tkt_client = NULL;    /* Principal from the received ticket. 
-Also is used as an indication of succesful krb5 authentization. */
-#endif
-
-#if defined(KRB4) || defined(KRB5)
-int ssh_krb_auth; /* 4 or 5 indicates krb version we authenticated with */
-char *ssh_krb_user;
-#endif
+#include "uidswap.h"
 
 /* import */
 extern ServerOptions options;
@@ -92,17 +82,14 @@ do_authloop(Authctxt *authctxt)
 
 	/* If the user has no password, accept authentication immediately. */
 	if (options.password_authentication &&
-#ifdef KRB5
-	    !options.kerberos_authentication &&
-#endif /* KRB5 */
-#ifdef KRB4
-	    (!options.kerberos_authentication || options.krb4_or_local_passwd) &&
-#endif /* KRB4 */
+#if defined(KRB4) || defined(KRB5)
+	    (!options.kerberos_authentication || options.kerberos_or_local_passwd) &&
+#endif
 	    auth_password(authctxt, "")) {
 		auth_log(authctxt, 1, "without authentication", "");
 		return;
 	}
-
+	
 	/* Indicate that authentication is needed. */
 	packet_start(SSH_SMSG_FAILURE);
 	packet_send();
@@ -119,95 +106,44 @@ do_authloop(Authctxt *authctxt)
 
 		/* Process the packet. */
 		switch (type) {
-#ifdef AFS
-#ifndef KRB5
-		case SSH_CMSG_HAVE_KERBEROS_TGT:
-			if (!options.krb4_tgt_passing) {
-				verbose("Kerberos v4 tgt passing disabled.");
-				break;
-			} else {
-				/* Accept Kerberos v4 tgt. */
-				char *tgt = packet_get_string(&dlen);
-				packet_integrity_check(plen, 4 + dlen, type);
-				if (!auth_krb4_tgt(pw, tgt))
-					verbose("Kerberos v4 tgt REFUSED for %.100s", authctxt->user);
-				xfree(tgt);
-			}
-			continue;
-#endif /* !KRB5 */
-		case SSH_CMSG_HAVE_AFS_TOKEN:
-			if (!options.afs_token_passing || !k_hasafs()) {
-				verbose("AFS token passing disabled.");
-				break;
-			} else {
-				/* Accept AFS token. */
-				char *token_string = packet_get_string(&dlen);
-				packet_integrity_check(plen, 4 + dlen, type);
-				if (!auth_afs_token(pw, token_string))
-					verbose("AFS token REFUSED for %.100s", authctxt->user);
-				xfree(token_string);
-			}
-			continue;
-#endif /* AFS */
+
 #if defined(KRB4) || defined(KRB5)
 		case SSH_CMSG_AUTH_KERBEROS:
 			if (!options.kerberos_authentication) {
 				verbose("Kerberos authentication disabled.");
-				break;
 			} else {
-				unsigned int length;
-				char *kdata = packet_get_string(&length);
-				packet_integrity_check(plen, 4 + length, type);
-
-				/* 4 == KRB_PROT_VERSION */
-				if (kdata[0] == 4) {
-#ifndef KRB4
-					verbose("Kerberos v4 authentication disabled.");
-#else
-					/* Try Kerberos v4 authentication. */
-					KTEXT_ST auth;
-					char *tkt_user = NULL;
-					auth.length = length;
-
-					if (authctxt->valid) {
-					    if (auth.length < MAX_KTXT_LEN)
-						memcpy(auth.dat, kdata, auth.length);
-					    authenticated = auth_krb4(pw->pw_name, &auth, &tkt_user);
-					    if (authenticated) {
-						ssh_krb_auth = 4;
-						ssh_krb_user = strdup(authctxt->user);
-						snprintf(info, sizeof info,
-							 " tktuser %.100s", tkt_user);
-						xfree(tkt_user);
-					    }
+				char *kdata = packet_get_string(&dlen);
+				
+				packet_integrity_check(plen, 4 + dlen, type);
+				
+				if (kdata[0] == 4) { /* KRB_PROT_VERSION */
+#ifdef KRB4
+					KTEXT_ST tkt;
+					
+					tkt.length = dlen;
+					if (tkt.length < MAX_KTXT_LEN)
+						memcpy(tkt.dat, kdata, tkt.length);
+					
+					if (auth_krb4(authctxt, &tkt, &client_user)) {
+						authenticated = 1;
+						snprintf(info, sizeof(info),
+						    " tktuser %.100s",
+						    client_user);
+						xfree(client_user);
 					}
 #endif /* KRB4 */
 				} else {
-#ifndef KRB5
-					verbose("Kerberos v5 authentication disabled.");
-#else
-				  	krb5_data k5data; 
-					k5data.length = length;
-					k5data.data = kdata;
-  #if 0	
-					if (krb5_init_context(&ssh_context)) {
-						verbose("Error while initializing Kerberos V5.");
-						break;
-					}
-					krb5_init_ets(ssh_context);
-  #endif
-					/* pw->name is passed just for logging purposes */
-					if (authctxt->valid
-					    && auth_krb5(pw->pw_name, &k5data, &tkt_client)) {
-					  	/* authorize client against .k5login */
-					  	if (krb5_kuserok(ssh_context,
-						      tkt_client,
-						      pw->pw_name)) {
-							ssh_krb_user =
-							 strdup(authctxt->user);
-							ssh_krb_auth = 5;
-						  	authenticated = 1;
-						}
+#ifdef KRB5
+					krb5_data tkt;
+					tkt.length = dlen;
+					tkt.data = kdata;
+					
+					if (auth_krb5(authctxt, &tkt, &client_user)) {
+						authenticated = 1;
+						snprintf(info, sizeof(info),
+						    " tktuser %.100s",
+						    client_user);
+						xfree(client_user);
 					}
 #endif /* KRB5 */
 				}
@@ -215,7 +151,19 @@ do_authloop(Authctxt *authctxt)
 			}
 			break;
 #endif /* KRB4 || KRB5 */
-
+			
+#if defined(AFS) || defined(KRB5)
+			/* XXX - punt on backward compatibility here. */
+		case SSH_CMSG_HAVE_KERBEROS_TGT:
+			packet_send_debug("Kerberos TGT passing disabled before authentication.");
+			break;
+#ifdef AFS
+		case SSH_CMSG_HAVE_AFS_TOKEN:
+			packet_send_debug("AFS token passing disabled before authentication.");
+			break;
+#endif /* AFS */
+#endif /* AFS || KRB5 */
+			
 		case SSH_CMSG_AUTH_RHOSTS:
 			if (!options.rhosts_authentication) {
 				verbose("Rhosts authentication disabled.");
@@ -382,7 +330,7 @@ do_authentication(void)
 	struct passwd *pw;
 	int plen;
 	u_int ulen;
-	char *user, *style = NULL;
+	char *p, *user, *style = NULL;
 
 	/* Get the name of the user that we wish to log in as. */
 	packet_read_expect(&plen, SSH_CMSG_USER);
@@ -392,8 +340,12 @@ do_authentication(void)
 	packet_integrity_check(plen, (4 + ulen), SSH_CMSG_USER);
 
 	if ((style = strchr(user, ':')) != NULL)
-		*style++ = 0;
+		*style++ = '\0';
 
+	/* XXX - SSH.com Kerberos v5 braindeath. */
+	if ((p = strchr(user, '@')) != NULL)
+		*p = '\0';
+	
 	authctxt = authctxt_new();
 	authctxt->user = user;
 	authctxt->style = style;

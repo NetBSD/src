@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-dss.h,v 1.2 2001/04/10 08:08:02 itojun Exp $	*/
-/*	$OpenBSD: ssh-dss.h,v 1.3 2001/01/29 01:58:18 niklas Exp $	*/
+/*	$NetBSD: ssh-dss.h,v 1.3 2001/09/27 03:24:05 itojun Exp $	*/
+/*	$OpenBSD: ssh-dss.h,v 1.5 2001/06/26 17:27:25 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,16 +27,7 @@
 #ifndef DSA_H
 #define DSA_H
 
-int
-ssh_dss_sign(
-    Key *key,
-    u_char **sigp, int *lenp,
-    u_char *data, int datalen);
-
-int
-ssh_dss_verify(
-    Key *key,
-    u_char *signature, int signaturelen,
-    u_char *data, int datalen);
+int	 ssh_dss_sign(Key *, u_char **, int *, u_char *, int);
+int	 ssh_dss_verify(Key *, u_char *, int, u_char *, int);
 
 #endif
