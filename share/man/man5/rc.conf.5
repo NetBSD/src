@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.12.2.2 1997/11/18 01:43:08 mellon Exp $
+.\"	$NetBSD: rc.conf.5,v 1.12.2.3 1997/11/28 19:53:59 mellon Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" Copyright (c) 1997 Curt J. Sampson
@@ -87,6 +87,22 @@ Default network route.
 If empty or not set, then the contents of
 .Pa /etc/mygate
 (if it exists) are used.
+.El
+.Pp
+Boottime file-system and swap configuration:
+.Bl -tag -width critical_filesystems
+.It Sy critical_filesystems
+File systems mounted very early in the system boot, except for the
+.Pa /usr
+and
+.Pa /var
+file-systems.
+.It Sy no_swap
+Set the
+.Sy no_swap
+variable to YES if you have configured your system with no swap on
+purpose.  If not set, or set to anything other than YES, and no
+swap devices are configured, the system will warn you.
 .El
 .Pp
 One-time actions to perform or programs to run on boot-up:
