@@ -46,8 +46,10 @@
 #include <ar.h>
 
 #ifndef A_MAGIC1	/* must be a VM/UNIX system */
+#ifndef SARMAG
 #	undef ARMAG
 #	define ARMAG	0177545
+#endif
 #endif
 
 /*
