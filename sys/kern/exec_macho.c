@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.6.10.1 2003/09/27 15:53:13 tron Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.6.10.2 2003/10/02 09:52:48 tron Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.6.10.1 2003/09/27 15:53:13 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.6.10.2 2003/10/02 09:52:48 tron Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -295,19 +295,9 @@ exec_macho_load_file(struct proc *p, struct exec_package *epp,
 		goto badunlock;
 	}
 
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if (vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		error = ETXTBSY;
-		goto badunlock;
-	}
+	error = vn_marktext(vp);
+	if (error)
+		return (error);
 
 	if ((error = VOP_ACCESS(vp, VEXEC, p->p_ucred, p)) != 0)
 		goto badunlock;
@@ -518,18 +508,9 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 	if (epp->ep_vp->v_mount->mnt_flag & MNT_NOSUID)
 		epp->ep_vap->va_mode &= ~(S_ISUID | S_ISGID);
 
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if (epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
 
 	if (!epp->ep_esch->u.mach_probe_func)
 		epp->ep_emul_arg = "/";
@@ -553,7 +534,6 @@ exec_macho_makecmds(struct proc *p, struct exec_package *epp)
 		DPRINTF(("Copyinstr %p failed\n", epp->ep_name));
 		goto bad;
 	}
-	epp->ep_vp->v_flag |= VTEXT;
 	return exec_macho_setup_stack(p, epp);
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
