@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_machdep.c	7.3 (Berkeley) 5/13/91
- *	$Id: vm_machdep.c,v 1.23 1994/05/26 11:28:51 pk Exp $
+ *	$Id: vm_machdep.c,v 1.24 1994/05/29 06:47:51 mycroft Exp $
  */
 
 /*
@@ -148,6 +148,7 @@ cpu_exit(p)
 	if (vm->vm_refcnt == 1)
 		vm_map_remove(&vm->vm_map, VM_MIN_ADDRESS, VM_MAXUSER_ADDRESS);
 
+	cnt.v_swtch++;
 	switch_exit(p);
 }
 
