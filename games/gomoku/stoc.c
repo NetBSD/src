@@ -1,5 +1,5 @@
-/* $NetBSD: stoc.c,v 1.2 1996/12/28 18:57:05 tls Exp $
-*/
+/*	$NetBSD: stoc.c,v 1.3 1997/01/03 01:35:31 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)stoc.c	8.1 (Berkeley) 7/24/94";
 #else
-static char rcsid[] = "$NetBSD: stoc.c,v 1.2 1996/12/28 18:57:05 tls Exp $";
+static char rcsid[] = "$NetBSD: stoc.c,v 1.3 1997/01/03 01:35:31 cgd Exp $";
 #endif
 #endif /* not lint */
 

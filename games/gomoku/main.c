@@ -1,5 +1,5 @@
-/* $NetBSD: main.c,v 1.2 1996/12/28 18:57:01 tls Exp $
-*/
+/*	$NetBSD: main.c,v 1.3 1997/01/03 01:35:28 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.2 1996/12/28 18:57:01 tls Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.3 1997/01/03 01:35:28 cgd Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,5 +1,5 @@
-/* $NetBSD: bdisp.c,v 1.3 1997/01/03 01:16:04 cgd Exp $
-*/
+/*	$NetBSD: bdisp.c,v 1.4 1997/01/03 01:35:25 cgd Exp $	*/
+
 /*
  * Copyright (c) 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bdisp.c	8.2 (Berkeley) 5/3/95";
 #else
-static char rcsid[] = "$NetBSD: bdisp.c,v 1.3 1997/01/03 01:16:04 cgd Exp $";
+static char rcsid[] = "$NetBSD: bdisp.c,v 1.4 1997/01/03 01:35:25 cgd Exp $";
 #endif
 #endif /* not lint */
 
