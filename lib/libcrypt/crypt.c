@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.7 1997/10/09 10:28:43 lukem Exp $	*/
+/*	$NetBSD: crypt.c,v 1.8 1997/10/10 08:22:30 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.7 1997/10/09 10:28:43 lukem Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.8 1997/10/10 08:22:30 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -283,16 +283,19 @@ typedef union {
 	{ C_block tblk; permute(cpp,&tblk,p,8); LOAD (d,d0,d1,tblk); }
 #define	PERM3264(d,d0,d1,cpp,p)				\
 	{ C_block tblk; permute(cpp,&tblk,p,4); LOAD (d,d0,d1,tblk); }
-
+#endif /* LARGEDATA */
 
 STATIC	init_des __P((void));
 STATIC	init_perm __P((C_block [][], unsigned char [], int, int));
+#ifndef LARGEDATA
 STATIC	permute __P((unsigned char *, C_block *, C_block *, int));
+#endif
 #ifdef DEBUG
 STATIC	prtab __P((char *, unsigned char *, int));
 #endif
 
 
+#ifndef LARGEDATA
 STATIC
 permute(cp, out, p, chars_in)
 	unsigned char *cp;
