@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
-#	$Id: Makefile,v 1.33 1994/02/10 02:09:31 cgd Exp $
+#	$Id: Makefile,v 1.34 1994/02/10 03:31:19 cgd Exp $
 
 # Doing a make install builds /usr/include
 #
@@ -33,17 +33,14 @@ realinstall:
 	@echo installing ${FILES}
 	@-for i in ${FILES}; do \
 		cmp -s $$i ${DESTDIR}/usr/include/$$i || \
-		    install -c -m 644 $$i ${DESTDIR}/usr/include/$$i; \
+		    install -c -m 444 $$i ${DESTDIR}/usr/include/$$i; \
 	done
 	@echo installing ${DIRS}
 	@-for i in ${DIRS}; do \
-		if [ ! -d ${DESTDIR}/usr/include/$$i ]; \
-		then \
-			mkdir ${DESTDIR}/usr/include/$$i; \
-		fi; \
+		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			install -c -m 644 $$j ${DESTDIR}/usr/include/$$i/$$j; \
+			install -c -m 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	@echo installing ${LFILES}
@@ -56,8 +53,9 @@ realinstall:
 		rm -f ${DESTDIR}/usr/include/$$i; \
 		ln -s machine/$$i ${DESTDIR}/usr/include/$$i; \
 	done
-	@chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
-	@chmod -R a-w ${DESTDIR}/usr/include
+	chown -R ${BINOWN}:${BINGRP} ${DESTDIR}/usr/include
+	find ${DESTDIR}/usr/include -type f | \
+		xargs chmod a-w
 
 beforeinstall:
 	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include
@@ -67,15 +65,17 @@ copies:
 	@-for i in ${LDIRS}; do \
 		rm -rf ${DESTDIR}/usr/include/$$i; \
 		cd ../sys; \
+		install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/$$i ; \
 		tar cf - $$i/*.h | (cd ${DESTDIR}/usr/include; tar xpfB -); \
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
-	mkdir ${DESTDIR}/usr/include/machine
+	install -d -o bin -g bin -m 755 ${DESTDIR}/usr/include/machine
 	cd ../sys/arch/${MACHINE}/include; \
 	    tar cf - *.h | (cd ${DESTDIR}/usr/include/machine; tar xpfB -);
 	rm -rf ${DESTDIR}/usr/include/${MACHINE_ARCH}
 	if test ${MACHINE} != ${MACHINE_ARCH} ; then \
-		mkdir ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
+		install -d -o bin -g bin -m 755 \
+		    ${DESTDIR}/usr/include/${MACHINE_ARCH} ; \
 		cd ../sys/arch/${MACHINE_ARCH}/include ; \
 		tar cf - *.h | \
 		    (cd ${DESTDIR}/usr/include/${MACHINE_ARCH} ; tar xpfB -); \
