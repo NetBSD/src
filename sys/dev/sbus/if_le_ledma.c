@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ledma.c,v 1.13 2000/10/20 06:08:07 mrg Exp $	*/
+/*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct cfattach le_ledma_ca = {
 
 extern struct cfdriver le_cd;
 
-#if defined(_KERNEL) && !defined(_LKM)
+#if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #endif
 
