@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.30 1998/10/23 01:13:33 thorpej Exp $	*/
+/*	$NetBSD: inode.c,v 1.31 1999/09/06 19:52:28 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.30 1998/10/23 01:13:33 thorpej Exp $");
+__RCSID("$NetBSD: inode.c,v 1.31 1999/09/06 19:52:28 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -411,13 +411,16 @@ cacheino(dp, inumber)
 {
 	struct inoinfo *inp;
 	struct inoinfo **inpp;
-	unsigned int blks;
+	unsigned int blks, extra;
 
 	blks = howmany(iswap64(dp->di_size), sblock->fs_bsize);
 	if (blks > NDADDR)
 		blks = NDADDR + NIADDR;
-	inp = (struct inoinfo *)
-		malloc(sizeof(*inp) + (blks - 1) * sizeof(ufs_daddr_t));
+	if (blks > 0)
+		extra =  (blks - 1) * sizeof(ufs_daddr_t);
+	else
+		extra = 0;
+	inp = (struct inoinfo *) malloc(sizeof(*inp) + extra);
 	if (inp == NULL)
 		return;
 	inpp = &inphead[inumber % numdirs];
