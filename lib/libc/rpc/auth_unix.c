@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_unix.c,v 1.4 1996/12/20 20:17:19 cgd Exp $	*/
+/*	$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -29,10 +29,14 @@
  * Mountain View, California  94043
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-/*static char *sccsid = "from: @(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";*/
-/*static char *sccsid = "from: @(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char *rcsid = "$NetBSD: auth_unix.c,v 1.4 1996/12/20 20:17:19 cgd Exp $";
+#if 0
+static char *sccsid = "@(#)auth_unix.c 1.19 87/08/11 Copyr 1984 Sun Micro";
+static char *sccsid = "@(#)auth_unix.c	2.2 88/08/01 4.0 RPCSRC";
+#else
+__RCSID("$NetBSD: auth_unix.c,v 1.5 1997/07/13 20:07:36 christos Exp $");
+#endif
 #endif
 
 /*
@@ -57,15 +61,18 @@ static char *rcsid = "$NetBSD: auth_unix.c,v 1.4 1996/12/20 20:17:19 cgd Exp $";
 #include <rpc/auth.h>
 #include <rpc/auth_unix.h>
 
+
+/* auth_unix.c */
+static void authunix_nextverf __P((AUTH *));
+static bool_t authunix_marshal __P((AUTH *, XDR *));
+static bool_t authunix_validate __P((AUTH *, struct opaque_auth *));
+static bool_t authunix_refresh __P((AUTH *));
+static void authunix_destroy __P((AUTH *));
+static void marshal_new_auth __P((AUTH *));
+
 /*
  * Unix authenticator operations vector
  */
-static void	authunix_nextverf();
-static bool_t	authunix_marshal();
-static bool_t	authunix_validate();
-static bool_t	authunix_refresh();
-static void	authunix_destroy();
-
 static struct auth_ops auth_unix_ops = {
 	authunix_nextverf,
 	authunix_marshal,
@@ -85,9 +92,6 @@ struct audata {
 	u_int			au_mpos;	/* xdr pos at end of marshed */
 };
 #define	AUTH_PRIVATE(auth)	((struct audata *)auth->ah_private)
-
-static void marshal_new_auth();
-
 
 /*
  * Create a unix style authenticator.
@@ -214,14 +218,14 @@ authunix_marshal(auth, xdrs)
 static bool_t
 authunix_validate(auth, verf)
 	register AUTH *auth;
-	struct opaque_auth verf;
+	struct opaque_auth *verf;
 {
 	register struct audata *au;
 	XDR xdrs;
 
-	if (verf.oa_flavor == AUTH_SHORT) {
+	if (verf->oa_flavor == AUTH_SHORT) {
 		au = AUTH_PRIVATE(auth);
-		xdrmem_create(&xdrs, verf.oa_base, verf.oa_length, XDR_DECODE);
+		xdrmem_create(&xdrs, verf->oa_base, verf->oa_length, XDR_DECODE);
 
 		if (au->au_shcred.oa_base != NULL) {
 			mem_free(au->au_shcred.oa_base,
