@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.98 2004/04/17 15:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.97 2004/03/24 15:34:53 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.98 2004/04/17 15:15:29 christos Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -162,13 +162,14 @@ int sokvawaiters;
 
 static size_t sodopendfree(struct socket *);
 static size_t sodopendfreel(struct socket *);
-static __inline void sokvareserve(struct socket *, vsize_t);
+static __inline vsize_t sokvareserve(struct socket *, vsize_t);
 static __inline void sokvaunreserve(vsize_t);
 
-static __inline void
+static __inline vsize_t
 sokvareserve(struct socket *so, vsize_t len)
 {
 	int s;
+	int error;
 
 	s = splvm();
 	simple_lock(&so_pendfree_slock);
@@ -190,12 +191,18 @@ sokvareserve(struct socket *so, vsize_t len)
 
 		SOSEND_COUNTER_INCR(&sosend_kvalimit);
 		sokvawaiters++;
-		(void) ltsleep(&socurkva, PVM, "sokva", 0, &so_pendfree_slock);
+		error = ltsleep(&socurkva, PVM | PCATCH, "sokva", 0,
+		    &so_pendfree_slock);
 		sokvawaiters--;
+		if (error) {
+			len = 0;
+			break;
+		}
 	}
 	socurkva += len;
 	simple_unlock(&so_pendfree_slock);
 	splx(s);
+	return len;
 }
 
 static __inline void
@@ -225,7 +232,8 @@ sokvaalloc(vsize_t len, struct socket *so)
 	 * reserve kva.
 	 */
 
-	sokvareserve(so, len);
+	if (sokvareserve(so, len) == 0)
+		return 0;
 
 	/*
 	 * allocate kva.
@@ -479,6 +487,8 @@ socreate(int dom, struct socket **aso, int type, int proto)
 #endif
 	if (p != 0)
 		so->so_uid = p->p_ucred->cr_uid;
+	else
+		so->so_uid = UID_MAX;
 	error = (*prp->pr_usrreq)(so, PRU_ATTACH, (struct mbuf *)0,
 	    (struct mbuf *)(long)proto, (struct mbuf *)0, p);
 	if (error) {
@@ -540,7 +550,13 @@ sofree(struct socket *so)
 		if (!soqremque(so, 0))
 			return;
 	}
-	sbrelease(&so->so_snd);
+	if (so->so_rcv.sb_hiwat)
+		(void)chgsbsize(so->so_uid, &so->so_rcv.sb_hiwat, 0,
+		    RLIM_INFINITY);
+	if (so->so_snd.sb_hiwat)
+		(void)chgsbsize(so->so_uid, &so->so_snd.sb_hiwat, 0,
+		    RLIM_INFINITY);
+	sbrelease(&so->so_snd, so);
 	sorflush(so);
 	pool_put(&socket_pool, so);
 }
@@ -1367,7 +1383,7 @@ sorflush(struct socket *so)
 	splx(s);
 	if (pr->pr_flags & PR_RIGHTS && pr->pr_domain->dom_dispose)
 		(*pr->pr_domain->dom_dispose)(asb.sb_mb);
-	sbrelease(&asb);
+	sbrelease(&asb, so);
 }
 
 int
@@ -1441,7 +1457,7 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 			case SO_RCVBUF:
 				if (sbreserve(optname == SO_SNDBUF ?
 				    &so->so_snd : &so->so_rcv,
-				    (u_long) optval) == 0) {
+				    (u_long) optval, so) == 0) {
 					error = ENOBUFS;
 					goto bad;
 				}

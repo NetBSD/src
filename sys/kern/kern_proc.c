@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.75 2004/03/14 01:08:47 cl Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.76 2004/04/17 15:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.75 2004/03/14 01:08:47 cl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.76 2004/04/17 15:15:29 christos Exp $");
 
 #include "opt_kstack.h"
 
@@ -93,18 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.75 2004/03/14 01:08:47 cl Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-
-/*
- * Structure associated with user caching.
- */
-struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
-	uid_t	ui_uid;
-	long	ui_proccnt;
-};
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
-LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
 
 /*
  * Other process lists
@@ -318,44 +306,6 @@ proclist_unlock_write(int s)
 
 	(void) spinlockmgr(&proclist_lock, LK_RELEASE, NULL);
 	splx(s);
-}
-
-/*
- * Change the count associated with number of processes
- * a given user is using.
- */
-int
-chgproccnt(uid_t uid, int diff)
-{
-	struct uidinfo *uip;
-	struct uihashhead *uipp;
-
-	uipp = UIHASH(uid);
-
-	LIST_FOREACH(uip, uipp, ui_hash)
-		if (uip->ui_uid == uid)
-			break;
-
-	if (uip) {
-		uip->ui_proccnt += diff;
-		if (uip->ui_proccnt > 0)
-			return (uip->ui_proccnt);
-		if (uip->ui_proccnt < 0)
-			panic("chgproccnt: procs < 0");
-		LIST_REMOVE(uip, ui_hash);
-		FREE(uip, M_PROC);
-		return (0);
-	}
-	if (diff <= 0) {
-		if (diff == 0)
-			return(0);
-		panic("chgproccnt: lost user");
-	}
-	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
-	LIST_INSERT_HEAD(uipp, uip, ui_hash);
-	uip->ui_uid = uid;
-	uip->ui_proccnt = diff;
-	return (diff);
 }
 
 /*

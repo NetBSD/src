@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.78 2004/04/08 06:20:30 atatat Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.79 2004/04/17 15:15:29 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.78 2004/04/08 06:20:30 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.79 2004/04/17 15:15:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.78 2004/04/08 06:20:30 atatat Ex
  */
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
+
+static struct uidinfo *getuidinfo(uid_t);
+static void freeuidinfo(struct uidinfo *);
+static struct uidinfo *allocuidinfo(uid_t);
 
 /*
  * Resource controls and accounting.
@@ -848,6 +852,7 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 	create_proc_plimit("memorylocked",	PROC_PID_LIMIT_MEMLOCK);
 	create_proc_plimit("maxproc",		PROC_PID_LIMIT_NPROC);
 	create_proc_plimit("descriptors",	PROC_PID_LIMIT_NOFILE);
+	create_proc_plimit("sbsize",		PROC_PID_LIMIT_SBSIZE);
 
 #undef create_proc_plimit
 
@@ -869,4 +874,93 @@ SYSCTL_SETUP(sysctl_proc_setup, "sysctl proc subtree setup")
 		       SYSCTL_DESCR("Stop process before completing exit"),
 		       sysctl_proc_stop, 0, NULL, 0,
 		       CTL_PROC, PROC_CURPROC, PROC_PID_STOPEXIT, CTL_EOL);
+}
+
+static struct uidinfo *
+getuidinfo(uid_t uid)
+{
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
+
+	uipp = UIHASH(uid);
+
+	LIST_FOREACH(uip, uipp, ui_hash)
+		if (uip->ui_uid == uid)
+			return uip;
+	return NULL;
+}
+
+static void
+freeuidinfo(struct uidinfo *uip)
+{
+	LIST_REMOVE(uip, ui_hash);
+	FREE(uip, M_PROC);
+}
+
+static struct uidinfo *
+allocuidinfo(uid_t uid)
+{
+	struct uidinfo *uip;
+	struct uihashhead *uipp;
+
+	uipp = UIHASH(uid);
+	MALLOC(uip, struct uidinfo *, sizeof(*uip), M_PROC, M_WAITOK);
+	LIST_INSERT_HEAD(uipp, uip, ui_hash);
+	uip->ui_uid = uid;
+	uip->ui_proccnt = 0;
+	uip->ui_sbsize = 0;
+	return uip;
+}
+
+/*
+ * Change the count associated with number of processes
+ * a given user is using.
+ */
+int
+chgproccnt(uid_t uid, int diff)
+{
+	struct uidinfo *uip;
+
+	if (diff == 0)
+		return 0;
+
+	if ((uip = getuidinfo(uid)) != NULL) {
+		uip->ui_proccnt += diff;
+		KASSERT(uip->ui_proccnt >= 0);
+		if (uip->ui_proccnt > 0)
+			return uip->ui_proccnt;
+		else {
+			if (uip->ui_sbsize == 0)
+				freeuidinfo(uip);
+			return 0;
+		}
+	} else {
+		if (diff < 0)
+			panic("chgproccnt: lost user %lu", (unsigned long)uid);
+		uip = allocuidinfo(uid);
+		uip->ui_proccnt = diff;
+		return uip->ui_proccnt;
+	}
+}
+
+int
+chgsbsize(uid_t uid, u_long *hiwat, u_long to, rlim_t max)
+{
+	struct uidinfo *uip;
+	rlim_t nsb;
+	int rv = 0;
+
+	if ((uip = getuidinfo(uid)) == NULL)
+		uip = allocuidinfo(uid);
+	nsb = uip->ui_sbsize + to + *hiwat;
+	if (nsb > *hiwat && nsb > max)
+		goto done;
+	*hiwat = to;
+	uip->ui_sbsize = nsb;
+	rv = 1;
+	KASSERT(uip->ui_sbsize >= 0);
+done:
+	if (uip->ui_sbsize == 0 && uip->ui_proccnt == 0)
+		freeuidinfo(uip);
+	return rv;
 }
