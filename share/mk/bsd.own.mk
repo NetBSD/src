@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.316 2002/10/22 18:48:29 perry Exp $
+#	$NetBSD: bsd.own.mk,v 1.317 2002/11/26 19:30:13 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -327,16 +327,14 @@ MKGCC:= no
 .endif
 
 # The sh3 port is incomplete.
-.if ${MACHINE_CPU} == "sh3" && !defined(HAVE_GCC3)
+.if ${MACHINE_CPU} == "sh3"
 NOPIC=		# defined
 .endif
 
 # The sh5 port is incomplete.
-.if ${MACHINE_CPU} == "sh5" && !defined(HAVE_GCC3)
+.if ${MACHINE_CPU} == "sh5"
 NOPIC=		# defined
 NOPROFILE=	# defined
-NOLINT=		# defined
-NOGCCERROR=	# defined - The SuperH Gnu C compiler is too pedantic in places
 .endif
 
 # The m68000 port is incomplete.
@@ -365,8 +363,8 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.m68000=m68010
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
-GNU_ARCH.sh5eb=sh64
-GNU_ARCH.sh5el=sh64le
+GNU_ARCH.sh5eb=sh5
+GNU_ARCH.sh5el=sh5le
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 # In order to identify NetBSD to GNU packages, we sometimes need
@@ -380,8 +378,8 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
      ${MACHINE_ARCH} == "m68000" || \
      ${MACHINE_GNU_ARCH} == "sh" || \
      ${MACHINE_GNU_ARCH} == "shle" || \
-     ${MACHINE_GNU_ARCH} == "sh64" || \
-     ${MACHINE_GNU_ARCH} == "sh64le" || \
+     ${MACHINE_GNU_ARCH} == "sh5" || \
+     ${MACHINE_GNU_ARCH} == "sh5le" || \
      ${MACHINE_ARCH} == "sparc" || \
      ${MACHINE_ARCH} == "vax")
 MACHINE_GNU_PLATFORM=${MACHINE_GNU_ARCH}--netbsdelf
