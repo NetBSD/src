@@ -1,4 +1,4 @@
-.\"	$NetBSD: lastlogin.8,v 1.1.1.1 1997/02/11 18:36:51 phil Exp $
+.\"	$NetBSD: lastlogin.8,v 1.2 1997/10/17 10:18:36 lukem Exp $
 .\"
 .\" Copyright (c) 1996 John M. Vinopal
 .\" All rights reserved.
@@ -37,10 +37,10 @@
 .Nm lastlogin
 .Nd indicate last login time of users
 .Sh SYNOPSIS
-.Nm lastlogin
+.Nm
 .Op user ...
 .Sh DESCRIPTION
-.Nm Lastlogin
+.Nm
 will list the last login session of specified
 .Ar users ,
 or for all users by default.  Each line of output contains
@@ -53,9 +53,9 @@ are given, the session information for each user is printed in
 the order given on the command line.  Otherwise, information 
 for all users is printed, sorted by uid.
 .Pp
-.Nm Lastlogin
+.Nm
 differs from 
-.Nm last
+.Xr last 1
 in that it only prints information regarding the very last login session.
 The last login database is never turned over or deleted in standard usage.
 .Sh FILES
