@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.26 1994/10/30 21:47:38 cgd Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.27 1994/12/04 03:09:50 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -66,6 +66,36 @@
 struct filelist filehead;	/* head of list of open files */
 int nfiles;			/* actual number of open files */
 
+static __inline
+fd_used(fdp, fd)
+	register struct filedesc *fdp;
+	register int fd;
+{
+
+	if (fd > fdp->fd_lastfile)
+		fdp->fd_lastfile = fd;
+}
+
+static __inline
+fd_unused(fdp, fd)
+	register struct filedesc *fdp;
+	register int fd;
+{
+
+	if (fd < fdp->fd_freefile)
+		fdp->fd_freefile = fd;
+#ifdef DIAGNOSTIC
+	if (fd > fdp->fd_lastfile)
+		panic("fd_unused: fd_lastfile inconsistent");
+#endif
+	if (fd == fdp->fd_lastfile) {
+		do {
+			fd--;
+		} while (fd >= 0 && fdp->fd_ofiles[fd] == NULL);
+		fdp->fd_lastfile = fd;
+	}
+}
+
 /*
  * System calls on descriptors.
  */
@@ -94,25 +124,16 @@ dup(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
-	register struct filedesc *fdp;
-	u_int old;
-	int new, error;
+	register struct filedesc *fdp = p->p_fd;
+	register int old = SCARG(uap, fd);
+	int new;
+	int error;
 
-	old = SCARG(uap, fd);
-	/*
-	 * XXX Compatibility
-	 */
-	if (old &~ 077) {
-		SCARG(uap, fd) &= 077;
-		return (dup2(p, uap, retval));
-	}
-
-	fdp = p->p_fd;
-	if (old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL)
+	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL)
 		return (EBADF);
 	if (error = fdalloc(p, 0, &new))
 		return (error);
-	return (finishdup(fdp, (int)old, new, retval));
+	return (finishdup(fdp, old, new, retval));
 }
 
 /*
@@ -128,13 +149,12 @@ dup2(p, uap, retval)
 	register_t *retval;
 {
 	register struct filedesc *fdp = p->p_fd;
-	register u_int old = SCARG(uap, from), new = SCARG(uap, to);
+	register int old = SCARG(uap, from), new = SCARG(uap, to);
 	int i, error;
 
-	if (old >= fdp->fd_nfiles ||
-	    fdp->fd_ofiles[old] == NULL ||
-	    new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
-	    new >= maxfiles)
+	if ((u_int)old >= fdp->fd_nfiles || fdp->fd_ofiles[old] == NULL ||
+	    (u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+	    (u_int)new >= maxfiles)
 		return (EBADF);
 	if (old == new) {
 		*retval = new;
@@ -145,15 +165,10 @@ dup2(p, uap, retval)
 			return (error);
 		if (new != i)
 			panic("dup2: fdalloc");
-	} else if (fdp->fd_ofiles[new]) {
-		if (fdp->fd_ofileflags[new] & UF_MAPPED)
-			(void) munmapfd(p, new);
-		/*
-		 * dup2() must succeed even if the close has an error.
-		 */
-		(void) closef(fdp->fd_ofiles[new], p);
+	} else {
+		(void) fdclose(p, new);
 	}
-	return (finishdup(fdp, (int)old, (int)new, retval));
+	return (finishdup(fdp, old, new, retval));
 }
 
 /*
@@ -169,35 +184,37 @@ fcntl(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
-	register char *pop;
 	struct vnode *vp;
 	int i, tmp, error, flg = F_POSIX;
 	struct flock fl;
-	u_long newmin;
+	int newmin;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
-	pop = &fdp->fd_ofileflags[SCARG(uap, fd)];
 	switch (SCARG(uap, cmd)) {
 
 	case F_DUPFD:
-		newmin = (u_long)SCARG(uap, arg);
-		if (newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
-		    newmin >= maxfiles)
+		newmin = (int)SCARG(uap, arg);
+		if ((u_int)newmin >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
+		    (u_int)newmin >= maxfiles)
 			return (EINVAL);
 		if (error = fdalloc(p, newmin, &i))
 			return (error);
-		return (finishdup(fdp, SCARG(uap, fd), i, retval));
+		return (finishdup(fdp, fd, i, retval));
 
 	case F_GETFD:
-		*retval = *pop & 1;
+		*retval = fdp->fd_ofileflags[fd] & UF_EXCLOSE ? 1 : 0;
 		return (0);
 
 	case F_SETFD:
-		*pop = (*pop &~ 1) | ((long)SCARG(uap, arg) & 1);
+		if ((long)SCARG(uap, arg) & 1)
+			fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
+		else
+			fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
 		return (0);
 
 	case F_GETFL:
@@ -321,10 +338,31 @@ finishdup(fdp, old, new, retval)
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] &~ UF_EXCLOSE;
 	fp->f_count++;
-	if (new > fdp->fd_lastfile)
-		fdp->fd_lastfile = new;
+	fd_used(fdp, new);
 	*retval = new;
 	return (0);
+}
+
+int
+fdclose(p, fd)
+	struct proc *p;
+	int fd;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register struct file **fpp, *fp;
+	register char *pf;
+
+	fpp = &fdp->fd_ofiles[fd];
+	fp = *fpp;
+	if (fp == NULL)
+		return (EBADF);
+	pf = &fdp->fd_ofileflags[fd];
+	if (*pf & UF_MAPPED)
+		(void) munmapfd(p, fd);
+	*fpp = NULL;
+	*pf = 0;
+	fd_unused(fdp, fd);
+	return (closef(fp, p));
 }
 
 /*
@@ -338,24 +376,12 @@ close(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	register int fd = SCARG(uap, fd);
-	register u_char *pf;
 
-	if ((unsigned)fd >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[fd]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles)
 		return (EBADF);
-	pf = (u_char *)&fdp->fd_ofileflags[fd];
-	if (*pf & UF_MAPPED)
-		(void) munmapfd(p, fd);
-	fdp->fd_ofiles[fd] = NULL;
-	while (fdp->fd_lastfile > 0 && fdp->fd_ofiles[fdp->fd_lastfile] == NULL)
-		fdp->fd_lastfile--;
-	if (fd < fdp->fd_freefile)
-		fdp->fd_freefile = fd;
-	*pf = 0;
-	return (closef(fp, p));
+	return (fdclose(p, fd));
 }
 
 #if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_IBCS2)
@@ -371,14 +397,15 @@ compat_43_fstat(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct stat ub;
 	struct ostat oub;
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	switch (fp->f_type) {
 
@@ -414,13 +441,14 @@ fstat(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct stat ub;
 	int error;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	switch (fp->f_type) {
 
@@ -454,12 +482,13 @@ fpathconf(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct vnode *vp;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	switch (fp->f_type) {
 
@@ -511,9 +540,7 @@ fdalloc(p, want, result)
 			i = fdp->fd_freefile;
 		for (; i < last; i++) {
 			if (fdp->fd_ofiles[i] == NULL) {
-				fdp->fd_ofileflags[i] = 0;
-				if (i > fdp->fd_lastfile)
-					fdp->fd_lastfile = i;
+				fd_used(fdp, i);
 				if (want <= fdp->fd_freefile)
 					fdp->fd_freefile = i;
 				*result = i;
@@ -671,7 +698,7 @@ fdcopy(p)
 		 * allowing the table to shrink.
 		 */
 		i = newfdp->fd_nfiles;
-		while (i > 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
+		while (i >= 2 * NDEXTENT && i > newfdp->fd_lastfile * 2)
 			i /= 2;
 		MALLOC(newfdp->fd_ofiles, struct file **, i * OFILESIZE,
 		    M_FILEDESC, M_WAITOK);
@@ -681,7 +708,7 @@ fdcopy(p)
 	bcopy(fdp->fd_ofiles, newfdp->fd_ofiles, i * sizeof(struct file **));
 	bcopy(fdp->fd_ofileflags, newfdp->fd_ofileflags, i * sizeof(char));
 	fpp = newfdp->fd_ofiles;
-	for (i = newfdp->fd_lastfile; i-- >= 0; fpp++)
+	for (i = newfdp->fd_lastfile; i >= 0; i--, fpp++)
 		if (*fpp != NULL)
 			(*fpp)->f_count++;
 	return (newfdp);
@@ -701,8 +728,8 @@ fdfree(p)
 	if (--fdp->fd_refcnt > 0)
 		return;
 	fpp = fdp->fd_ofiles;
-	for (i = fdp->fd_lastfile; i-- >= 0; fpp++)
-		if (*fpp)
+	for (i = fdp->fd_lastfile; i >= 0; i--, fpp++)
+		if (*fpp != NULL)
 			(void) closef(*fpp, p);
 	if (fdp->fd_nfiles > NDFILE)
 		FREE(fdp->fd_ofiles, M_FILEDESC);
@@ -710,34 +737,6 @@ fdfree(p)
 	if (fdp->fd_rdir)
 		vrele(fdp->fd_rdir);
 	FREE(fdp, M_FILEDESC);
-}
-
-/*
- * Close any files on exec?
- */
-void
-fdcloseexec(p)
-	struct proc *p;
-{
-	struct filedesc *fdp = p->p_fd;
-	struct file **fpp;
-	char *fdfp;
-	register int i;
-
-	fpp = fdp->fd_ofiles;
-	fdfp = fdp->fd_ofileflags;
-	for (i = 0; i <= fdp->fd_lastfile; i++, fpp++, fdfp++)
-		if (*fpp != NULL && (*fdfp & UF_EXCLOSE)) {
-			if (*fdfp & UF_MAPPED)
-				(void) munmapfd(p, i);
-			(void) closef(*fpp, p);
-			*fpp = NULL;
-			*fdfp = 0;
-			if (i < fdp->fd_freefile)
-				fdp->fd_freefile = i;
-		}
-	while (fdp->fd_lastfile > 0 && fdp->fd_ofiles[fdp->fd_lastfile] == NULL)
-		fdp->fd_lastfile--;
 }
 
 /*
@@ -807,13 +806,15 @@ flock(p, uap, retval)
 	} */ *uap;
 	register_t *retval;
 {
+	int fd = SCARG(uap, fd);
+	int how = SCARG(uap, how);
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	struct vnode *vp;
 	struct flock lf;
 
-	if ((unsigned)SCARG(uap, fd) >= fdp->fd_nfiles ||
-	    (fp = fdp->fd_ofiles[SCARG(uap, fd)]) == NULL)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (fp = fdp->fd_ofiles[fd]) == NULL)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EOPNOTSUPP);
@@ -821,19 +822,19 @@ flock(p, uap, retval)
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
 	lf.l_len = 0;
-	if (SCARG(uap, how) & LOCK_UN) {
+	if (how & LOCK_UN) {
 		lf.l_type = F_UNLCK;
 		fp->f_flag &= ~FHASLOCK;
 		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_UNLCK, &lf, F_FLOCK));
 	}
-	if (SCARG(uap, how) & LOCK_EX)
+	if (how & LOCK_EX)
 		lf.l_type = F_WRLCK;
-	else if (SCARG(uap, how) & LOCK_SH)
+	else if (how & LOCK_SH)
 		lf.l_type = F_RDLCK;
 	else
 		return (EBADF);
 	fp->f_flag |= FHASLOCK;
-	if (SCARG(uap, how) & LOCK_NB)
+	if (how & LOCK_NB)
 		return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK));
 	return (VOP_ADVLOCK(vp, (caddr_t)fp, F_SETLK, &lf, F_FLOCK|F_WAIT));
 }
@@ -847,36 +848,32 @@ flock(p, uap, retval)
  * references to this file will be direct to the other driver.
  */
 /* ARGSUSED */
-fdopen(dev, mode, type, p)
+fdopen(dev, mode, type, p, fp)
 	dev_t dev;
 	int mode, type;
 	struct proc *p;
+	struct file *fp;
 {
 
-	/*
-	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
-	 * the file descriptor being sought for duplication. The error 
-	 * return ensures that the vnode for this device will be released
-	 * by vn_open. Open will detect this special error and take the
-	 * actions in dupfdopen below. Other callers of vn_open or VOP_OPEN
-	 * will simply report the error.
-	 */
-	p->p_dupfd = minor(dev);
-	return (ENODEV);
+	return (fddupopen(minor(dev), mode, p, fp));
 }
 
-/*
- * Duplicate the specified descriptor to a free descriptor.
- */
-dupfdopen(fdp, indx, dfd, mode, error)
-	register struct filedesc *fdp;
-	register int indx, dfd;
+int
+fddupopen(fd, mode, p, fp)
+	int fd;
 	int mode;
-	int error;
-{
-	register struct file *wfp;
+	struct proc *p;
 	struct file *fp;
-	
+{
+	struct filedesc *fdp = p->p_fd;
+	struct file *ofp;
+
+	/*
+	 * If we're not being called from open(), abort.
+	 */
+	if (p->p_dupfd >= 0)
+		return (ENODEV);
+
 	/*
 	 * If the to-be-dup'd fd number is greater than the allowed number
 	 * of file descriptors, or the fd to be dup'd has already been
@@ -884,62 +881,66 @@ dupfdopen(fdp, indx, dfd, mode, error)
 	 * falloc could allocate an already closed to-be-dup'd descriptor
 	 * as the new descriptor.
 	 */
-	fp = fdp->fd_ofiles[indx];
-	if ((u_int)dfd >= fdp->fd_nfiles ||
-	    (wfp = fdp->fd_ofiles[dfd]) == NULL || fp == wfp)
+	if ((u_int)fd >= fdp->fd_nfiles ||
+	    (ofp = fdp->fd_ofiles[fd]) == NULL || ofp == fp)
 		return (EBADF);
 
 	/*
-	 * There are two cases of interest here.
-	 *
-	 * For ENODEV simply dup (dfd) to file descriptor
-	 * (indx) and return.
-	 *
-	 * For ENXIO steal away the file structure from (dfd) and
-	 * store it in (indx).  (dfd) is effectively closed by
-	 * this operation.
-	 *
-	 * Any other error code is just returned.
+	 * Check that the mode the file is being opened for is a subset of
+	 * the mode of the existing descriptor.
 	 */
-	switch (error) {
-	case ENODEV:
-		/*
-		 * Check that the mode the file is being opened for is a
-		 * subset of the mode of the existing descriptor.
-		 */
-		if (((mode & (FREAD|FWRITE)) | wfp->f_flag) != wfp->f_flag)
-			return (EACCES);
-		fdp->fd_ofiles[indx] = wfp;
-		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
-		wfp->f_count++;
-		if (indx > fdp->fd_lastfile)
-			fdp->fd_lastfile = indx;
-		return (0);
+	if (((mode & (FREAD|FWRITE)) | ofp->f_flag) != ofp->f_flag)
+		return (EACCES);
 
-	case ENXIO:
-		/*
-		 * Steal away the file pointer from dfd, and stuff it into indx.
-		 */
-		fdp->fd_ofiles[indx] = fdp->fd_ofiles[dfd];
-		fdp->fd_ofiles[dfd] = NULL;
-		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
-		fdp->fd_ofileflags[dfd] = 0;
-		/*
-		 * Complete the clean up of the filedesc structure by
-		 * recomputing the various hints.
-		 */
-		if (indx > fdp->fd_lastfile)
-			fdp->fd_lastfile = indx;
-		else
-			while (fdp->fd_lastfile > 0 &&
-			       fdp->fd_ofiles[fdp->fd_lastfile] == NULL)
-				fdp->fd_lastfile--;
-			if (dfd < fdp->fd_freefile)
-				fdp->fd_freefile = dfd;
-		return (0);
+	/*
+	 * XXX Kludge: set curproc->p_dupfd to contain the value of the
+	 * the file descriptor being sought for duplication.  The error 
+	 * return ensures that the vnode for this device will be released
+	 * by vn_open().  open() will detect this special error and call
+	 * finishdup().
+	 */
+	p->p_dupfd = fd;
+	return (ENODEV);
+}
 
-	default:
-		return (error);
-	}
-	/* NOTREACHED */
+/*
+ * Duplicate the specified descriptor to a free descriptor.
+ */
+int
+finishmove(fdp, old, new, retval)
+	register struct filedesc *fdp;
+	register int old, new;
+	register_t *retval;
+{
+
+	/*
+	 * Steal away the file pointer from old, and stuff it into new.
+	 */
+	fdp->fd_ofiles[new] = fdp->fd_ofiles[old];
+	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old];
+	fdp->fd_ofiles[old] = NULL;
+	fdp->fd_ofileflags[old] = 0;
+	/*
+	 * Complete the clean up of the filedesc structure by
+	 * recomputing the various hints.
+	 */
+	fd_used(fdp, new);
+	fd_unused(fdp, old);
+	*retval = new;
+	return (0);
+}
+
+/*
+ * Close any files on exec?
+ */
+void
+fdcloseexec(p)
+	struct proc *p;
+{
+	register struct filedesc *fdp = p->p_fd;
+	register int fd;
+
+	for (fd = 0; fd <= fdp->fd_lastfile; fd++)
+		if (fdp->fd_ofileflags[fd] & UF_EXCLOSE)
+			(void) fdclose(p, fd);
 }
