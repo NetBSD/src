@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.22 1996/05/22 13:54:58 mycroft Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.23 1996/05/22 19:00:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -243,6 +243,7 @@ soconnect(so, nam)
 	register struct socket *so;
 	struct mbuf *nam;
 {
+	struct proc *p = curproc;		/* XXX */
 	int s;
 	int error;
 
@@ -261,8 +262,7 @@ soconnect(so, nam)
 		error = EISCONN;
 	else
 		error = (*so->so_proto->pr_usrreq)(so, PRU_CONNECT,
-		    (struct mbuf *)0, nam, (struct mbuf *)0,
-		    (struct proc *)0);
+		    (struct mbuf *)0, nam, (struct mbuf *)0, p);
 	splx(s);
 	return (error);
 }
