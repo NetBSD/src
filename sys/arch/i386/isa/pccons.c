@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pccons.c	5.11 (Berkeley) 5/21/91
- *	$Id: pccons.c,v 1.19 1993/05/28 09:10:55 deraadt Exp $
+ *	$Id: pccons.c,v 1.20 1993/05/31 00:54:40 cgd Exp $
  */
 
 /*
@@ -70,8 +70,7 @@ int pc_xmode;
 #endif /* XSERVER */
 
 struct	tty pccons;
-struct	tty *pccons_tty = &pccons;
-struct	tty **pc_tty = &pccons_tty;
+struct	tty *pc_tty[] = { &pccons };
 
 struct	pcconsoftc {
 	char	cs_flags;
