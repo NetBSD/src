@@ -1,4 +1,4 @@
-/* $NetBSD: sbicreg.h,v 1.2 2003/08/07 16:26:30 agc Exp $ */
+/* $NetBSD: sbicreg.h,v 1.3 2003/09/21 15:10:05 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -424,8 +424,8 @@ typedef struct {
 } while (0)
 
 #define GET_SBIC_asr(regs,val) \
-	(val) = bus_space_read_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, \
-	    SBIC_ASR)
+	((val) = bus_space_read_1((regs)->sc_sbiciot, (regs)->sc_sbicioh, \
+	    SBIC_ASR))
 
 #define WAIT_CIP(regs) do { \
 	while (bus_space_read_1(regs->sc_sbiciot, regs->sc_sbicioh, SBIC_ASR) \
