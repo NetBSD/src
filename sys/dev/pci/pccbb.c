@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.83 2002/10/19 18:01:59 atatat Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.84 2002/11/09 08:51:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.83 2002/10/19 18:01:59 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.84 2002/11/09 08:51:14 martin Exp $");
 
 /*
 #define CBB_DEBUG
@@ -325,6 +325,8 @@ const struct yenta_chipinfo {
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1450), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1451), CB_TI12XX,
+	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
+	{ MAKEID(PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI4410YENTA), CB_TI12XX,
 	    PCCBB_PCMCIA_IO_RELOC | PCCBB_PCMCIA_MEM_32},
 
 	/* Ricoh chips */
