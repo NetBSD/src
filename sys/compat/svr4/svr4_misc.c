@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_misc.c,v 1.32 1996/02/02 08:09:45 mycroft Exp $	 */
+/*	$NetBSD: svr4_misc.c,v 1.33 1996/02/09 23:12:14 christos Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -871,8 +871,6 @@ svr4_sys_hrtsys(p, v, retval)
 	register_t *retval;
 {
 	struct svr4_sys_hrtsys_args *uap = v;
-	int error;
-	struct timeval tv;
 
 	switch (SCARG(uap, cmd)) {
 	case SVR4_HRT_CNTL:
@@ -1059,8 +1057,6 @@ loop:
 			DPRINTF(("jobcontrol %d\n", q->p_pid));
 		        if (((SCARG(uap, options) & SVR4_WNOWAIT)) == 0)
 				q->p_flag |= P_WAITED;
-			else
-				DPRINTF(("Don't wait\n"));
 			*retval = 0;
 			return svr4_setinfo(q, W_STOPCODE(q->p_xstat),
 					    SCARG(uap, info));
