@@ -1,7 +1,9 @@
+#	$NetBSD: Makefile,v 1.15 1997/07/23 03:21:21 mikel Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 CFLAGS+=#-DTFILE=\"/dev/ttyp0\"
 CFLAGS+=-D_CURSES_PRIVATE -I${.CURDIR}
+WARNS?=	1
 LIB=	curses
 SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	cr_put.c ctrace.c cur_hash.c curses.c delch.c deleteln.c delwin.c \
@@ -10,7 +12,7 @@ SRCS=	addbytes.c addch.c addnstr.c box.c clear.c clrtobot.c clrtoeol.c \
 	overwrite.c printw.c putchar.c refresh.c scanw.c scroll.c setterm.c \
 	standout.c toucholap.c touchwin.c tscroll.c tstp.c tty.c unctrl.c
 MAN=	curses.3
-INCS=curses.h unctrl.h
+INCS=	curses.h unctrl.h
 INCSDIR=/usr/include
 
 .if make(install)
