@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.18 1994/12/14 19:07:14 mycroft Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.19 1995/05/23 06:11:29 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -69,8 +69,7 @@ vn_open(ndp, fmode, cmode)
 	register struct vnode *vp;
 	register struct proc *p = ndp->ni_cnd.cn_proc;
 	register struct ucred *cred = p->p_ucred;
-	struct vattr vat;
-	struct vattr *vap = &vat;
+	struct vattr va;
 	int error;
 
 	if (fmode & O_CREAT) {
@@ -81,12 +80,12 @@ vn_open(ndp, fmode, cmode)
 		if (error = namei(ndp))
 			return (error);
 		if (ndp->ni_vp == NULL) {
-			VATTR_NULL(vap);
-			vap->va_type = VREG;
-			vap->va_mode = cmode;
+			VATTR_NULL(&va);
+			va.va_type = VREG;
+			va.va_mode = cmode;
 			VOP_LEASE(ndp->ni_dvp, p, cred, LEASE_WRITE);
 			if (error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
-			    &ndp->ni_cnd, vap))
+			    &ndp->ni_cnd, &va))
 				return (error);
 			fmode &= ~O_TRUNC;
 			vp = ndp->ni_vp;
@@ -134,9 +133,9 @@ vn_open(ndp, fmode, cmode)
 		VOP_UNLOCK(vp);				/* XXX */
 		VOP_LEASE(vp, p, cred, LEASE_WRITE);
 		VOP_LOCK(vp);				/* XXX */
-		VATTR_NULL(vap);
-		vap->va_size = 0;
-		if (error = VOP_SETATTR(vp, vap, cred, p))
+		VATTR_NULL(&va);
+		va.va_size = 0;
+		if (error = VOP_SETATTR(vp, &va, cred, p))
 			goto bad;
 	}
 	if (error = VOP_OPEN(vp, fmode, cred, p))
@@ -300,21 +299,19 @@ vn_stat(vp, sb, p)
 	register struct stat *sb;
 	struct proc *p;
 {
-	struct vattr vattr;
-	register struct vattr *vap;
+	struct vattr va;
 	int error;
 	u_short mode;
 
-	vap = &vattr;
-	error = VOP_GETATTR(vp, vap, p->p_ucred, p);
+	error = VOP_GETATTR(vp, &va, p->p_ucred, p);
 	if (error)
 		return (error);
 	/*
 	 * Copy from vattr table
 	 */
-	sb->st_dev = vap->va_fsid;
-	sb->st_ino = vap->va_fileid;
-	mode = vap->va_mode;
+	sb->st_dev = va.va_fsid;
+	sb->st_ino = va.va_fileid;
+	mode = va.va_mode;
 	switch (vp->v_type) {
 	case VREG:
 		mode |= S_IFREG;
@@ -341,18 +338,18 @@ vn_stat(vp, sb, p)
 		return (EBADF);
 	};
 	sb->st_mode = mode;
-	sb->st_nlink = vap->va_nlink;
-	sb->st_uid = vap->va_uid;
-	sb->st_gid = vap->va_gid;
-	sb->st_rdev = vap->va_rdev;
-	sb->st_size = vap->va_size;
-	sb->st_atimespec = vap->va_atime;
-	sb->st_mtimespec = vap->va_mtime;
-	sb->st_ctimespec = vap->va_ctime;
-	sb->st_blksize = vap->va_blocksize;
-	sb->st_flags = vap->va_flags;
-	sb->st_gen = vap->va_gen;
-	sb->st_blocks = vap->va_bytes / S_BLKSIZE;
+	sb->st_nlink = va.va_nlink;
+	sb->st_uid = va.va_uid;
+	sb->st_gid = va.va_gid;
+	sb->st_rdev = va.va_rdev;
+	sb->st_size = va.va_size;
+	sb->st_atimespec = va.va_atime;
+	sb->st_mtimespec = va.va_mtime;
+	sb->st_ctimespec = va.va_ctime;
+	sb->st_blksize = va.va_blocksize;
+	sb->st_flags = va.va_flags;
+	sb->st_gen = va.va_gen;
+	sb->st_blocks = va.va_bytes / S_BLKSIZE;
 	return (0);
 }
 
