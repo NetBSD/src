@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.24 2003/08/07 16:29:32 agc Exp $	*/
+/*	$NetBSD: trap.c,v 1.25 2003/08/12 13:50:23 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.24 2003/08/07 16:29:32 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.25 2003/08/12 13:50:23 scw Exp $");
 
 #include "opt_ddb.h"
 
@@ -384,6 +384,13 @@ trap(struct lwp *l, struct trapframe *tf)
 		printf("trap: FPUEXC - fpscr = 0x%x\n",
 		    (u_int)l->l_addr->u_pcb.pcb_ctx.sf_fpregs.fpscr);
 #endif
+		/*
+		 * An FPUEXC leaves the PC pointing to the FP instruction
+		 * which caused the exception. To avoid an endless loop if
+		 * the user is ignoring or catching SIGFPE, adjust the saved
+		 * PC to skip over the offending instruction.
+		 */
+		tf->tf_state.sf_spc += 4;
 		break;
 
 	case T_AST|T_USER:
