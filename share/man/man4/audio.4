@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.4,v 1.3 1996/02/27 22:42:05 jtc Exp $
+.\"	$NetBSD: audio.4,v 1.4 1997/03/11 05:29:03 mikel Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,23 +34,18 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 5, 1995
+.Dd March 11, 1997
 .Dt AUDIO 4
-.Os 
+.Os NetBSD
 .Sh NAME
 .Nm audio
-.Nd
-device-independent audio driver layer
+.Nd device-independent audio driver layer
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/audioio.h>
-.Pa /dev/audio
-.br
-.Pa /dev/sound
-.br
-.Pa /dev/mixer
 .Sh DESCRIPTION
 The
-.Nm audio
+.Nm
 driver provides support for various audio peripherals.  It provides a
 uniform programming interface layer above different underlying audio
 hardware drivers.  The audio layer provides full-duplex operation if the
@@ -68,7 +63,6 @@ are used for recording or playback of digital samples.
 .Pa /dev/mixer
 is used to manipulate volume, recording source, or other audio mixer
 functions.
-
 .Sh SAMPLING DEVICES
 When
 .Pa /dev/audio
@@ -114,7 +108,9 @@ If a writing process does not call
 .Xr write 2
 frequently enough to provide audio playback blocks in time for the next
 hardware interrupt service, one or more audio silence blocks will be
-queued for playback.  The writing process must provide enough data via
+queued for playback, unless the
+.Dv AUMODE_PLAY_ALL
+mode is set.  The writing process must provide enough data via
 subsequent write calls to ``catch up'' in time to the current audio
 block before any more process-provided samples will be played.
 [Alternatively, the playing process can use one of the interfaces below
@@ -126,6 +122,7 @@ frequently enough, it will simply miss samples.
 The following
 .Xr ioctl 2
 commands are supported on the sample devices:
+.Pp
 .Bl -tag -width indent -compact
 .It Dv AUDIO_FLUSH
 This command stops all playback and recording, clears all queued
@@ -152,6 +149,8 @@ typedef struct audio_device {
 } audio_device_t;
 .Ed
 .It Dv AUDIO_GETENC (audio_encoding_t)
+This command is used iteratively to fetch sample encoding names and
+format_ids into the input/output audio_encoding_t argument.
 .Bd -literal
 typedef struct audio_encoding {
 	int index;	/* input: nth encoding */
@@ -159,8 +158,7 @@ typedef struct audio_encoding {
 	int format_id;
 } audio_encoding_t;
 .Ed
-This command is used iteratively to fetch sample encoding names and
-format_ids into the input/output audio_encoding_t argument.  To query
+To query
 all the supported encodings, start with an index field of zero and
 continue with successive encodings (1, 2, ...) until the command returns
 an error.
@@ -189,17 +187,32 @@ typedef struct audio_info {
 	u_int	mode;		/* current device mode */
 #define AUMODE_PLAY	0x01
 #define AUMODE_RECORD	0x02
-} audio_info_t;
+#define AUMODE_PLAY_ALL	0x04	/* play all samples--no real-time correction */
+};
 .Ed
-When setting the current state with AUDIO_SETINFO, the audio_info
-structure should first be initialized with AUDIO_INITINFO(&info) and
-then the particular values to be changed should be set.  This allows the
-audio driver to only set those things that you wish to change and
-eliminates the need to query the device with AUDIO_GETINFO first.
+.Pp
+When setting the current state with
+.Dv AUDIO_SETINFO ,
+the audio_info structure should first be initialized with
+.Li Dv AUDIO_INITINFO Po &info Pc
+and then the particular values to be changed should be set.  This
+allows the audio driver to only set those things that you wish to
+change and eliminates the need to query the device with
+.Dv AUDIO_GETINFO
+first.
 .Pp
 The
 .Va mode
-field should be set to AUMODE_PLAY, AUMODE_RECORD, or their bitwise OR.
+field should be set to
+.Dv AUMODE_PLAY ,
+.Dv AUMODE_RECORD ,
+.Dv AUMODE_PLAY_ALL ,
+or a bitwise OR combination of the three.
+.Dv AUMODE_PLAY
+and
+.Dv AUMODE_PLAY_ALL
+are mutually exclusive, and only full-duplex audio devices support
+simultaneous record and playback.
 .Pp
 .Va hiwat
 and
@@ -217,7 +230,8 @@ set those high- and low-water marks (in audio blocks).
 sets the current audio blocksize.  The generic audio driver layer and
 the hardware driver have the opportunity to adjust this block size to
 get it within implementation-required limits.  Upon return from an
-AUDIO_SETINFO call, the actual blocksize set is returned in this field.
+.Dv AUDIO_SETINFO
+call, the actual blocksize set is returned in this field.
 .Pp
 .Va backlog
 is currently unused.
@@ -249,15 +263,20 @@ recording information is always set last and will prevail on such hardware.]
 .Pp
 The gain and port settings provide simple shortcuts to the richer mixer
 interface described below.  The gain should be in the range
-[AUDIO_MIN_GAIN,AUDIO_MAX_GAIN].  The port value is hardware-dependent
-and should be selected (if setting with AUDIO_SETINFO) based upon return
-values from the mixer query functions below or from a prior AUDIO_GETINFO.
+.Bq Dv AUDIO_MIN_GAIN , Dv AUDIO_MAX_GAIN .
+The port value is hardware-dependent
+and should be selected (if setting with
+.Dv AUDIO_SETINFO )
+based upon return values from the mixer query functions below or from
+a prior
+.Dv AUDIO_GETINFO .
 .Pp
 The
 .Va seek
 and
 .Va samples
-fields are only used for AUDIO_GETINFO.
+fields are only used for
+.Dv AUDIO_GETINFO .
 .Va seek
 represents the count of
 samples pending;
@@ -267,7 +286,9 @@ that were dropped due to inadequate consumption/production rates.
 .Pp
 .Va pause
 returns the current pause/unpause state for recording or playback.
-For AUDIO_SETINFO, if the pause value is specified it will either pause
+For
+.Dv AUDIO_SETINFO ,
+if the pause value is specified it will either pause
 or unpause the particular direction.
 .El
 .Sh MIXER DEVICE
@@ -317,10 +338,14 @@ hardware device driver implementation).
 For an enumeration value, the
 .Va ord
 field should be set to one of the possible values as returned by a prior
-AUDIO_MIXER_DEVINFO command.
-The type
-AUDIO_MIXER_CLASS is only used for classifying particular mixer device
-types and is not used for AUDIO_MIXER_READ or AUDIO_MIXER_WRITE.
+.Dv AUDIO_MIXER_DEVINFO
+command.  The type
+.Dv AUDIO_MIXER_CLASS
+is only used for classifying particular mixer device
+types and is not used for
+.Dv AUDIO_MIXER_READ
+or
+.Dv AUDIO_MIXER_WRITE .
 .It Dv AUDIO_MIXER_DEVINFO (mixer_devinfo_t)
 This command is used iteratively to fetch audio mixer device information
 into the input/output mixer_devinfo_t argument.  To query all the
@@ -362,8 +387,11 @@ field identifies the name of this particular mixer control.  The
 .Va index 
 field may be used as the
 .Va dev
-field in AUDIO_MIXER_READ and AUDIO_MIXER_WRITE commands.
-The
+field in
+.Dv AUDIO_MIXER_READ
+and
+.Dv AUDIO_MIXER_WRITE
+commands.  The
 .Va type
 field identifies the type of this mixer control.
 Enumeration types are typically used for on/off style controls (e.g. a
@@ -389,13 +417,19 @@ and
 may be used by the hardware device driver to provide hints for the next
 and previous devices in a related set (for example, the line in level
 control would have the line in mute as its "next" value).  If there is
-no relevant next or previous value, AUDIO_MIXER_LAST is specified.
+no relevant next or previous value,
+.Dv AUDIO_MIXER_LAST
+is specified.
 .Pp
-For AUDIO_MIXER_ENUM mixer control types,
+For 
+.Dv AUDIO_MIXER_ENUM
+mixer control types,
 the enumeration values and their corresponding names are filled in.  For
 example, a mute control would return appropriate values paired with
 AudioNon and AudioNoff.
-For AUDIO_MIXER_VALUE mixer control types, the channel count is
+For
+.Dv AUDIO_MIXER_VALUE
+mixer control types, the channel count is
 returned; the units name specifies what the level controls (typical
 values are AudioNvolume, AudioNtreble, AudioNbass).
 .\" For AUDIO_MIXER_SET mixer control types, what is what?
@@ -405,6 +439,12 @@ By convention, all the mixer device indices for generic
 class grouping are at the end of the index number space for a particular
 hardware device, and can be distinguished from other mixer controls
 because they use a name from one of the AudioC* string values.
+.Sh FILES
+.Bl -tag -width /dev/audio -compact
+.It Pa /dev/audio
+.It Pa /dev/sound
+.It Pa /dev/mixer
+.El
 .Sh SEE ALSO
 .Xr ioctl 2 .
 .br
@@ -415,10 +455,9 @@ For ports using the ISA bus:
 .Xr sb 4 ,
 .Xr wss 4 .
 .Sh BUGS
-Some of the device-specific manual pages do not yet exist.
-.br
 The device class conventions are just a wish and not yet reality.
-.br
+.Pp
 Audio playback can be scratchy with pops and crackles due to the
 audio layer's buffering scheme.  Using a bigger blocksize will help
 reduce such annoyances.
+
