@@ -1,4 +1,4 @@
-.\" $NetBSD: main,v 1.6.2.35 2000/08/26 19:15:19 he Exp $
+.\" $NetBSD: main,v 1.6.2.36 2000/09/11 21:20:41 he Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -177,18 +177,18 @@ directory of the source tree.  The following are the highlights
 only.
 .Bl -bullet
 .It
-A driver for the Lucent Wavelan PCMCIA card has been added, see
+A driver for the Lucent Wavelan (Orinoco) 802.11B wireless
+Ethernet PCMCIA card has been added, see
 .Xr wi 4 .
 .It
-The PCI Cyclom-4Y and Cyclom-8Y cards are now supported.
+The PCI Cyclom-4Y and -8Y multiport serial cards are now supported.
 .It
 The Macintosh LC Ethernet Adapter is now supported.
 .It
 The on-board video on Macintosh Quadra 605 is now supported.
 .It
-Fixes to the Alteon Gigabit ethernet driver,
-.Xr ti 4 ,
-have been imported.
+Bugfixes to the Alteon Gigabit Ethernet driver,
+.Xr ti 4 .
 .It
 Support for several new PCI IDE controllers have been added,
 see
@@ -207,9 +207,27 @@ A problem with /etc/ftpchroot has been fixed.  Fixes SA#2000-006.
 A minor problem related to locking of semaphore resources has
 been fixed.  Fixes SA#2000-004.
 .It
+The DHCP software has been updated to ISC 2.0pl3.  This also fixes
+SA#2000-008 -- a security problem in the dhcp client code.
+.It
+A problem with use of user-supplied data as a format string in
+ftpd has been fixed.  Fixes SA#2000-009.
+.It
 The sparc c++rt0.o code is now compiled with -fPIC.  This means
 that libraries with global constructors (which must link in 
 c++rt0.o on sparc/a.out) must also be compiled -fPIC.
+.It
+Most countries can now
+import the full release without restriction, including the
+previously restricted
+.Em domestic
+portion.
+The only
+.Dq problem spots
+are US-embargoed countries.
+See
+.Lk http://www.NetBSD.ORG/Misc/crypto-export.html
+for the full details.
 .El
 .Pp
 In addition, many bugs have been fixed -- more than 40 problems
@@ -580,15 +598,15 @@ directory per architecture, for each of the architectures for which
 .Nx \*V
 has a binary distribution. There are also
 \&'README.export-control' files sprinkled liberally throughout the
-distribution tree, which point out that there are some portions of the
-distribution (i.e. the `domestic' portion) that may be subject to
-export regulations of the United States.  It is your responsibility
-to determine whether or not it is legal for you to export these portions
-and to act accordingly.  The NetBSD project maintains a web page at
+distribution tree, which spell out the current restrictions related
+to export of this code from the United States of America.  Note
+that these regulations were recently changed so that most countries
+can import the entire release without significant restrictions.
+See
 .Pp
 .Lk http://www.NetBSD.ORG/Misc/crypto-export.html
 .Pp
-which should contain up-to-date information on this issue.
+which contains up-to-date information on this issue.
 .Pp
 The source distribution sets can be found in subdirectories of the
 "source" subdirectory of the distribution tree. They contain the 
@@ -600,7 +618,7 @@ This set contains the "domestic" sources. These
 sources may be subject to United States export
 regulations.
 .br
-.Em 421K gzipped, 2M uncompressed
+.Em 423K gzipped, 2M uncompressed
 .It gnusrc.tgz:
 This set contains the "gnu" sources, including
 the source for the compiler, assembler, groff,
@@ -613,21 +631,21 @@ This set contains the sources to the
 .Nx \*V
 kernel, config(8), and dbsym(8).
 .br
-.Em 13.9M gzipped, 68.3M uncompressed
+.Em 13.9M gzipped, 68.8M uncompressed
 .It sharesrc.tgz:
 This set contains the "share" sources, which include
 the sources for the man pages not associated with
 any particular program, the sources for the
 typesettable document set, the dictionaries, and more.
 .br
-.Em 3M gzipped, 11.9M uncompressed
+.Em 3.1M gzipped, 11.8M uncompressed
 .It src.tgz:
 This set contains all of the
 .Nx \*V
 sources which
 are not mentioned above.
 .br
-.Em 14.4M gzipped, 67.4M uncompressed
+.Em 14.5M gzipped, 67.5M uncompressed
 .El
 .Pp
 Most of the above source sets are located in the
@@ -635,16 +653,16 @@ Most of the above source sets are located in the
 subdirectory of the distribution tree. The secrsrc.tgz set is
 contained in the
 .Pa source/security
-subdirectory. This set, which may only be
-available to users in the United States and Canada, contains the
+subdirectory. This set contains the
 sources normally found in
 .Pa /usr/src/domestic
-\- primarily Kerberos and
-other cryptographic security related software. (Remember, because of
-United States law, it may not be legal to distribute this set to
-locations outside of the United States and Canada.  Again, see
+\- primarily Kerberos (version 4) and
+other cryptographic security related software.
+This code can now be exported from the US to most countries.
+The document on
 .Lk http://www.NetBSD.ORG/Misc/crypto-export.html
-for updated information on this issue.)
+spells out the current (rather lenient) restrictions applicable for
+the export of this code.
 .Pp
 The source sets are distributed as compressed tar files. They may be
 unpacked into
