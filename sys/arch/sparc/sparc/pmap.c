@@ -42,7 +42,7 @@
  *	@(#)pmap.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pmap.c,v 1.39 93/04/20 11:17:12 torek Exp 
- * $Id: pmap.c,v 1.16 1994/08/08 20:52:29 pk Exp $
+ * $Id: pmap.c,v 1.17 1994/08/09 19:55:09 deraadt Exp $
  */
 
 /*
@@ -1879,7 +1879,7 @@ pmap_rmu(pm, va, endva, vseg, nleft, pmeg)
 		/* if cacheable, flush page as needed */
 		if ((tpte & PG_NC) == 0) {
 #ifdef perftest
-			if (doflush) {
+			if (doflush)
 				nvalid++;
 #endif
 			if (perpage)
