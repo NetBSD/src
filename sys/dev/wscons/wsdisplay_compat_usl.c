@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.4 1998/06/25 22:50:31 thorpej Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.5 1998/07/05 18:27:18 jonathan Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -33,6 +33,7 @@
  */
 
 #include "opt_compat_freebsd.h"
+#include "opt_compat_netbsd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
