@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: st.c 1.8 90/10/14
  *      from: @(#)st.c	7.3 (Berkeley) 5/4/91
- *	$Id: st.c,v 1.3 1993/08/01 19:24:30 mycroft Exp $
+ *	$Id: st.c,v 1.4 1994/01/11 17:19:42 mycroft Exp $
  */
 
 /*
@@ -687,6 +687,7 @@ stclose(dev, flag)
 	return(0);	/* XXX */
 }
 
+void
 ststrategy(bp)
 	register struct buf *bp;
 {
