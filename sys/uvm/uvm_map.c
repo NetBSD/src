@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.35 1999/03/25 18:48:52 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.36 1999/03/28 19:53:50 mycroft Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1707,8 +1707,8 @@ uvm_map_submap(map, start, end, submap)
  * => XXXCDC: does not work properly with share maps.  rethink.
  */
 
-#define MASK(entry)     ( UVM_ET_ISCOPYONWRITE(entry) ? \
-	~VM_PROT_WRITE : VM_PROT_ALL)
+#define MASK(entry)     (UVM_ET_ISCOPYONWRITE(entry) ? \
+			 ~VM_PROT_WRITE : VM_PROT_ALL)
 #define max(a,b)        ((a) > (b) ? (a) : (b))
 
 int
