@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.25 2003/10/12 04:12:23 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -42,11 +42,11 @@
  * written by Izumi Tsutsui <tsutsui@ceres.dti.ne.jp>
  *
  * Technical manual available at
- * http://www.amd.com/products/npd/techdocs/techdocs.html
+ * http://www.amd.com/files/connectivitysolutions/networking/archivednetworking/19113.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.24 2003/05/03 18:11:37 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.25 2003/10/12 04:12:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ struct pcscp_softc {
 #undef	NCR_WRITE_REG
 #define	NCR_WRITE_REG(sc, reg, val)	pcscp_write_reg((sc), (reg), (val))
 
-int	pcscp_match __P((struct device *, struct cfdata *, void *)); 
-void	pcscp_attach __P((struct device *, struct device *, void *));
+int	pcscp_match(struct device *, struct cfdata *, void *);
+void	pcscp_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
     pcscp_match, pcscp_attach, NULL, NULL);
@@ -116,16 +116,16 @@ CFATTACH_DECL(pcscp, sizeof(struct pcscp_softc),
  * Functions and the switch for the MI code.
  */
 
-u_char	pcscp_read_reg __P((struct ncr53c9x_softc *, int));
-void	pcscp_write_reg __P((struct ncr53c9x_softc *, int, u_char));
-int	pcscp_dma_isintr __P((struct ncr53c9x_softc *));
-void	pcscp_dma_reset __P((struct ncr53c9x_softc *));
-int	pcscp_dma_intr __P((struct ncr53c9x_softc *));
-int	pcscp_dma_setup __P((struct ncr53c9x_softc *, caddr_t *,
-			       size_t *, int, size_t *));
-void	pcscp_dma_go __P((struct ncr53c9x_softc *));
-void	pcscp_dma_stop __P((struct ncr53c9x_softc *));
-int	pcscp_dma_isactive __P((struct ncr53c9x_softc *));
+u_char	pcscp_read_reg(struct ncr53c9x_softc *, int);
+void	pcscp_write_reg(struct ncr53c9x_softc *, int, u_char);
+int	pcscp_dma_isintr(struct ncr53c9x_softc *);
+void	pcscp_dma_reset(struct ncr53c9x_softc *);
+int	pcscp_dma_intr(struct ncr53c9x_softc *);
+int	pcscp_dma_setup(struct ncr53c9x_softc *, caddr_t *, size_t *, int,
+    size_t *);
+void	pcscp_dma_go(struct ncr53c9x_softc *);
+void	pcscp_dma_stop(struct ncr53c9x_softc *);
+int	pcscp_dma_isactive(struct ncr53c9x_softc *);
 
 struct ncr53c9x_glue pcscp_glue = {
 	pcscp_read_reg,
@@ -238,7 +238,7 @@ pcscp_attach(parent, self, aux)
 	 * formula: 4 * period = (1000 / freq) * 4
 	 */
 
-	sc->sc_minsync = 1000 / sc->sc_freq; 
+	sc->sc_minsync = 1000 / sc->sc_freq;
 
 	/* Really no limit, but since we want to fit into the TCR... */
 	sc->sc_maxxfer = 16 * 1024 * 1024;
@@ -295,7 +295,7 @@ pcscp_attach(parent, self, aux)
 		    sc->sc_dev.dv_xname, error);
 		return;
 	}
-	if ((error = bus_dmamap_create(esc->sc_dmat, 
+	if ((error = bus_dmamap_create(esc->sc_dmat,
 	    sizeof(u_int32_t) * MDL_SIZE, 1, sizeof(u_int32_t) * MDL_SIZE,
 	    0, BUS_DMA_NOWAIT, &esc->sc_mdldmap)) != 0) {
 		printf("%s: unable to map_create for the MDL, error = %d\n",
@@ -559,7 +559,7 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	}
 
 	/* set transfer length */
-	WRITE_DMAREG(esc, DMA_STC, *dmasize); 
+	WRITE_DMAREG(esc, DMA_STC, *dmasize);
 
 	/* set up MDL */
 	mdl = esc->sc_mdladdr;
@@ -573,7 +573,7 @@ pcscp_dma_setup(sc, addr, len, datain, dmasize)
 	rest = MDL_SEG_SIZE - s_offset;
 
 	/* set the first MDL and offset */
-	WRITE_DMAREG(esc, DMA_SPA, s_offset); 
+	WRITE_DMAREG(esc, DMA_SPA, s_offset);
 	*mdl++ = htole32(s_addr);
 	count -= rest;
 
