@@ -1,4 +1,4 @@
-/*	$NetBSD: com2.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $	*/
+/*	$NetBSD: com2.c,v 1.9 2000/09/10 10:51:16 jsm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)com2.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: com2.c,v 1.8 1999/07/14 17:42:13 hubertf Exp $");
+__RCSID("$NetBSD: com2.c,v 1.9 2000/09/10 10:51:16 jsm Exp $");
 #endif
 #endif				/* not lint */
 
@@ -239,8 +239,8 @@ murder()
 			break;
 
 		default:
-			if (wordtype[wordnumber] != NOUNS)
-				puts("Kill what?");
+			if (wordtype[wordnumber] != OBJECT)
+				puts("You can't kill that!");
 			else
 				printf("You can't kill the %s!\n",
 				    objsht[wordvalue[wordnumber]]);
