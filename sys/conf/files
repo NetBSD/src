@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.309 1999/08/08 11:41:28 ragge Exp $
+#	$NetBSD: files,v 1.310 1999/08/13 03:30:14 oster Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -539,7 +539,6 @@ file dev/raidframe/rf_sstf.c            raid                    needs-flag
 file dev/raidframe/rf_states.c          raid                    needs-flag
 file dev/raidframe/rf_stripelocks.c     raid                    needs-flag
 file dev/raidframe/rf_strutils.c        raid                    needs-flag
-file dev/raidframe/rf_sys.c             raid                    needs-flag
 file dev/raidframe/rf_threadstuff.c     raid                    needs-flag
 file dev/raidframe/rf_utils.c           raid                    needs-flag
 file filecorefs/filecore_bmap.c		filecore
