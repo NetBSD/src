@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.S,v 1.2 1996/05/12 19:55:19 mark Exp $
+/* $NetBSD: ptrace.S,v 1.3 1996/08/07 17:38:16 mark Exp $
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,8 +41,15 @@
 	.align	0
 
 ENTRY(ptrace)
+	stmfd	sp!, {r0, r1}
+	mov	r0, #0x00000000
+	ldr	r1, Lerrno
+	str	r0, [r1]
+	ldmfd	sp!, {r0, r1}
+
 	swi	SYS_ptrace
 	bcs	cerror
-	mov	r0, #0
 	mov	r15, r14
 
+Lerrno:
+	.word	_errno
