@@ -1,4 +1,4 @@
-/*	$NetBSD: dasdreg.h,v 1.1 2001/04/19 07:30:24 jdolecek Exp $	*/
+/*	$NetBSD: edcreg.h,v 1.1 2001/04/19 17:17:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ed_mca.c,v 1.1 2001/04/19 07:30:24 jdolecek Exp $	*/
+/*	$NetBSD: ed_mca.c,v 1.2 2001/04/19 17:17:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -63,9 +63,9 @@
 #include <machine/intr.h>
 #include <machine/bus.h>
 
-#include <dev/mca/dasdreg.h>
+#include <dev/mca/edcreg.h>
 #include <dev/mca/edvar.h>
-#include <dev/mca/dasdvar.h>
+#include <dev/mca/edcvar.h>
 
 /* #define WDCDEBUG */
 
@@ -117,7 +117,7 @@ ed_mca_probe(parent, match, aux)
 	void *aux;
 {
 	u_int16_t cmd_args[2];
-	struct dasd_mca_softc *sc = (void *) parent;
+	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (void *) aux;
 
 	/*
@@ -125,7 +125,7 @@ ed_mca_probe(parent, match, aux)
 	 */
 	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (dasd_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0))
+	if (edc_run_cmd(sc, CMD_GET_DEV_CONF, eda->sc_devno, cmd_args, 2, 0))
 		return (0);
 
 	return (1);
@@ -137,15 +137,15 @@ ed_mca_attach(parent, self, aux)
 	void *aux;
 {
 	struct ed_softc *ed = (void *) self;
-	struct dasd_mca_softc *sc = (void *) parent;
+	struct edc_mca_softc *sc = (void *) parent;
 	struct ed_attach_args *eda = (void *) aux;
 	char pbuf[8];
 	int error, nsegs;
 
-	ed->dasd_softc = sc;
+	ed->edc_softc = sc;
 	ed->sc_dmat = eda->sc_dmat;
 	ed->sc_devno = eda->sc_devno;
-	dasd_add_disk(sc, ed, eda->sc_devno);
+	edc_add_disk(sc, ed, eda->sc_devno);
 
 	BUFQ_INIT(&ed->sc_q);
 	spinlockinit(&ed->sc_q_lock, "edbqlock", 0);
@@ -419,7 +419,7 @@ __edstart(ed, bp)
 	cmd_args[1] = bp->b_bcount / DEV_BSIZE;
 	cmd_args[2] = ((cyl & 0x1f) << 11) | (head << 5) | sector;
 	cmd_args[3] = ((cyl & 0x3E0) >> 5);
-	if (dasd_run_cmd(ed->dasd_softc,
+	if (edc_run_cmd(ed->edc_softc,
 			(bp->b_flags & B_READ) ? CMD_READ_DATA : CMD_WRITE_DATA,
 			ed->sc_devno, cmd_args, 4, 1)) {
 		printf("%s: data i/o command failed\n", ed->sc_dev.dv_xname);
@@ -1092,7 +1092,7 @@ ed_get_params(ed)
 	 */
 	cmd_args[0] = 6;	/* Options: 00s110, s: 0=Physical 1=Pseudo */
 	cmd_args[1] = 0;
-	if (dasd_run_cmd(ed->dasd_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
+	if (edc_run_cmd(ed->edc_softc, CMD_GET_DEV_CONF, ed->sc_devno, cmd_args, 2, 0))
 		return (1);
 
 	ed->spares = ed->sc_status_block[1] >> 8;
@@ -1129,7 +1129,7 @@ ed_shutdown(arg)
 	/* Issue Park Head command */
 	cmd_args[0] = 6;	/* Options: 000110 */
 	cmd_args[1] = 0;
-	(void) dasd_run_cmd(ed->dasd_softc, CMD_PARK_HEAD, ed->sc_devno,
+	(void) edc_run_cmd(ed->edc_softc, CMD_PARK_HEAD, ed->sc_devno,
 			cmd_args, 2, 0);
 #endif
 }
@@ -1171,10 +1171,10 @@ edworker(arg)
 			splx(s);
 
 			/*
-			 * Wait until the command executes; dasd_intr() wakes
+			 * Wait until the command executes; edc_intr() wakes
 			 * as up.
 			 */
-			(void) tsleep(&ed->dasd_softc, PRIBIO, "edwrk", 0);
+			(void) tsleep(&ed->edc_softc, PRIBIO, "edwrk", 0);
 
 			/* Handle i/o results */
 			s = splbio();

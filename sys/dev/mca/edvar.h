@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.1 2001/04/19 07:30:24 jdolecek Exp $	*/
+/*	$NetBSD: edvar.h,v 1.2 2001/04/19 17:17:29 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-struct dasd_mca_softc;
+struct edc_mca_softc;
 #define DASD_MAX_CMD_RES_LEN	8
 
 struct ed_softc {
@@ -46,7 +46,7 @@ struct ed_softc {
 	struct callout sc_edstart;
 
 	struct buf *sc_bp; /* buf being transfered */
-	struct dasd_mca_softc *dasd_softc;   /* pointer to our parent */
+	struct edc_mca_softc *edc_softc;   /* pointer to our parent */
 
 	int sc_flags;	  
 #define WDF_LOCKED	0x001
