@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vmparam.h 1.16 91/01/18
  *	from: @(#)vmparam.h	7.3 (Berkeley) 5/7/91
- *	$Id: vmparam.h,v 1.3 1993/08/01 19:25:07 mycroft Exp $
+ *	$Id: vmparam.h,v 1.4 1993/08/19 14:32:24 mycroft Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
  * have the user's stack hard-wired at FFF00000 for post-mortems,
  * and we must be compatible...
  */
-#define	USRTEXT		0
+#define	USRTEXT		NBPG
 #define	USRSTACK	(-HIGHPAGES*NBPG)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define P1PAGES		0x100000
