@@ -1,4 +1,4 @@
-/*	$NetBSD: genassym.c,v 1.19 1996/05/17 15:20:55 thorpej Exp $	*/
+/*	$NetBSD: genassym.c,v 1.20 1996/09/11 00:32:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -96,7 +96,7 @@ flush()
 
 main()
 {
-	/* CPU types */
+	/* CPU options */
 #ifdef M68020
 	def("M68020", 1);
 #endif
@@ -107,17 +107,24 @@ main()
 	def("M68040", 1);
 #endif
 
-	/* MMU types */
+	/* MMU options */
 #ifdef M68K_MMU_MOTOROLA
 	def("M68K_MMU_MOTOROLA", 1);
 #endif
 #ifdef M68K_MMU_HP
 	def("M68K_MMU_HP", 1);
 #endif
+
+	/* MMU types */
 	def("MMU_68040", MMU_68040);
 	def("MMU_68030", MMU_68030);
 	def("MMU_HP", MMU_HP);
 	def("MMU_68851", MMU_68851);
+
+	/* CPU types */
+	def("CPU_68020", CPU_68020);
+	def("CPU_68030", CPU_68030);
+	def("CPU_68040", CPU_68040);
 
 	/* values for machineid */
 	def("HP_320", HP_320);
