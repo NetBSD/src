@@ -1,7 +1,7 @@
 .\" @(#)rpcinfo.1m 1.23 93/03/29 SMI; from SVr4
 .\" Copyright 1989 AT&T
 .\" Copyright 1991 Sun Microsystems, Inc.
-.\" $NetBSD: rpcinfo.8,v 1.7 2001/04/04 09:42:49 wiz Exp $
+.\" $NetBSD: rpcinfo.8,v 1.8 2001/10/02 14:38:09 bjh21 Exp $
 .Dd August 18, 1992
 .Dt RPCINFO 8
 .Sh NAME
@@ -233,7 +233,7 @@ obsolete by the
 .Fl a
 option.
 .Pp
-.Fl p
+.It Fl p
 Probe
 .Nm rpcbind
 on
@@ -316,9 +316,10 @@ option to display a more concise list:
 .Pp
 To show whether the RPC
 service with program number
-.Ar prognum and version
-.Ar versnum is
-registered on the machine named
+.Ar prognum
+and version
+.Ar versnum
+is registered on the machine named
 .Nm klaxon
 for the transport TCP
 use:
