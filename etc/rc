@@ -1,4 +1,4 @@
-#	$NetBSD: rc,v 1.80 1997/07/10 13:43:14 drochner Exp $
+#	$NetBSD: rc,v 1.81 1997/07/11 09:06:59 veego Exp $
 #	originally from: @(#)rc	8.2 (Berkeley) 3/17/94
 
 # System startup script run by init on autoboot
@@ -75,7 +75,13 @@ fi
 echo 'setting tty flags'
 ttyflags -a
 
-# load any kernel modules specified in /etc/lkm.conf
+# /etc/rc.lkm needs /usr/bin/ld to load a lkm
+#  => you can not use lkm's if you have /usr on a nfs partition.
+# This is because of /etc/rc.lkm has to be come before /etc/netstart
+# to load possible network lkm's.
+mount -t nonfs /usr >/dev/null 2>&1
+
+# Load any kernel modules specified in /etc/lkm.conf
 if [ "$lkm_init" != NO ] && [ -f /etc/rc.lkm ]; then
 	. /etc/rc.lkm
 fi
@@ -87,7 +93,9 @@ if [ $? -ne 0 ]; then
 	exit 1
 fi
 
-mount /usr >/dev/null 2>&1
+# Mount a possible /usr on nfs partition and then mount a possible /var
+# partition.
+mount -t nfs /usr >/dev/null 2>&1
 mount /var >/dev/null 2>&1
 
 # "Critical" file systems are now mounted.  Go ahead and swap
