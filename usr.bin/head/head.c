@@ -1,8 +1,8 @@
-/*	$NetBSD: head.c,v 1.6 1997/01/09 20:19:50 tls Exp $	*/
+/*	$NetBSD: head.c,v 1.7 1997/10/18 13:15:40 mrg Exp $	*/
 
 /*
- * Copyright (c) 1980, 1987 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1980, 1987, 1992, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,23 +33,28 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
-char copyright[] =
-"@(#) Copyright (c) 1980, 1987 Regents of the University of California.\n\
- All rights reserved.\n";
+__COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1992, 1993\n\
+	The Regents of the University of California.  All rights reserved.\n");
 #endif /* not lint */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)head.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$NetBSD: head.c,v 1.6 1997/01/09 20:19:50 tls Exp $";
+#if 0
+static char sccsid[] = "@(#)head.c	8.2 (Berkeley) 5/4/95";
+#else
+__RCSID("$NetBSD: head.c,v 1.7 1997/10/18 13:15:40 mrg Exp $");
+#endif
 #endif /* not lint */
 
+#include <sys/types.h>
+
+#include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
 #include <unistd.h>
-
-static void usage ();
 
 /*
  * head - give the first few lines of a stream or of each of a set of files
@@ -57,65 +62,98 @@ static void usage ();
  * Bill Joy UCB August 24, 1977
  */
 
+void err __P((int, const char *, ...));
+void head __P((FILE *, int));
+void obsolete __P((char *[]));
+void usage __P((void));
+int main __P((int, char *[]));
+
+int eval;
+
 int
 main(argc, argv)
-	int	argc;
-	char	**argv;
+	int argc;
+	char *argv[];
 {
-	register int	ch, cnt;
-	int	firsttime, linecnt = 10;
+	register int ch;
+	FILE *fp;
+	int first, linecnt;
+	char *ep;
 
-	/* handle obsolete -number syntax */
-	if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
-		if ((linecnt = atoi(argv[1] + 1)) < 0) {
-			usage ();
-		}
-		argc--; argv++;
-	}
-
-	while ((ch = getopt (argc, argv, "n:")) != EOF)
-		switch (ch) {
+	obsolete(argv);
+	linecnt = 10;
+	while ((ch = getopt(argc, argv, "n:")) != EOF)
+		switch(ch) {
 		case 'n':
-			if ((linecnt = atoi(optarg)) < 0)
-				usage ();
+			linecnt = strtol(optarg, &ep, 10);
+			if (*ep || linecnt <= 0)
+				err(1, "illegal line count -- %s", optarg);
 			break;
 
+		case '?':
 		default:
-			usage();	
+			usage();
 		}
-	argc -= optind, argv += optind;
+	argc -= optind;
+	argv += optind;
 
-	/* setlinebuf(stdout); */
-	for (firsttime = 1; ; firsttime = 0) {
-		if (!*argv) {
-			if (!firsttime)
-				exit(0);
-		}
-		else {
-			if (!freopen(*argv, "r", stdin)) {
-				fprintf(stderr, "head: can't read %s.\n", *argv);
-				exit(1);
+	if (*argv)
+		for (first = 1; *argv; ++argv) {
+			if ((fp = fopen(*argv, "r")) == NULL) {
+				err(0, "%s: %s", *argv, strerror(errno));
+				continue;
 			}
 			if (argc > 1) {
-				if (!firsttime)
-					putchar('\n');
-				printf("==> %s <==\n", *argv);
+				(void)printf("%s==> %s <==\n",
+				    first ? "" : "\n", *argv);
+				first = 0;
 			}
-			++argv;
+			head(fp, linecnt);
+			(void)fclose(fp);
 		}
-		for (cnt = linecnt; cnt; --cnt)
-			while ((ch = getchar()) != EOF)
-				if (putchar(ch) == '\n')
-					break;
-	}
-	/*NOTREACHED*/
+	else
+		head(stdin, linecnt);
+	exit(eval);
 }
 
-
-static void
-usage ()
+void
+head(fp, cnt)
+	FILE *fp;
+	register int cnt;
 {
-	fputs("usage: head [-n line_count] [file ...]\n", stderr);
+	register int ch;
+
+	while (cnt--)
+		while ((ch = getc(fp)) != EOF) {
+			if (putchar(ch) == EOF)
+				err(1, "stdout: %s", strerror(errno));
+			if (ch == '\n')
+				break;
+		}
+}
+
+void
+obsolete(argv)
+	char *argv[];
+{
+	char *ap;
+
+	while ((ap = *++argv)) {
+		/* Return if "--" or not "-[0-9]*". */
+		if (ap[0] != '-' || ap[1] == '-' || !isdigit(ap[1]))
+			return;
+		if ((ap = malloc(strlen(*argv) + 2)) == NULL)
+			err(1, "%s", strerror(errno));
+		ap[0] = '-';
+		ap[1] = 'n';
+		(void)strcpy(ap + 2, *argv + 1);
+		*argv = ap;
+	}
+}
+
+void
+usage()
+{
+	(void)fputs("usage: head [-n lines] [file ...]\n", stderr);
 	exit(1);
 }
-
