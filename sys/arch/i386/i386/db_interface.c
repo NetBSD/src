@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.17 1995/04/10 13:14:20 mycroft Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.18 1995/10/10 04:45:03 mycroft Exp $	*/
 
 /* 
  * Mach Operating System
@@ -75,7 +75,7 @@ kdb_trap(type, code, regs)
 	/* XXX Should switch to kdb`s own stack here. */
 
 	ddb_regs = *regs;
-	if (ISPL(regs->tf_cs) == SEL_KPL) {
+	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/*
 		 * Kernel mode - esp and ss not saved
 		 */
@@ -103,7 +103,7 @@ kdb_trap(type, code, regs)
 	regs->tf_eip    = ddb_regs.tf_eip;
 	regs->tf_cs     = ddb_regs.tf_cs;
 	regs->tf_eflags = ddb_regs.tf_eflags;
-	if (ISPL(regs->tf_cs) != SEL_KPL) {
+	if (!KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/* ring transit - saved esp and ss valid */
 		regs->tf_esp    = ddb_regs.tf_esp;
 		regs->tf_ss     = ddb_regs.tf_ss;
