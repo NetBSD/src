@@ -31,8 +31,6 @@
 #include "utils.h"
 #include "commands.h"
 
-extern int  errno;
-
 extern char *copyright;
 
 /* imported from screen.c */
