@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.38 2002/03/20 17:42:23 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.39 2002/03/27 07:50:54 chs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.38 2002/03/20 17:42:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.39 2002/03/27 07:50:54 chs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -150,7 +150,7 @@ const char *smc91cxx_idstrs[] = {
 	NULL,				/* 1 */
 	NULL,				/* 2 */
 	"SMC91C90/91C92",		/* 3 */
-	"SMC91C94",			/* 4 */
+	"SMC91C94/91C96",		/* 4 */
 	"SMC91C95",			/* 5 */
 	NULL,				/* 6 */
 	"SMC91C100",			/* 7 */
