@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.21 1996/11/28 00:46:35 thorpej Exp $
+$NetBSD: pcidevs,v 1.22 1996/11/28 16:29:59 jtk Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -414,6 +414,9 @@ product	3COM 3C900COMBO	0x9001	3c900 10Mbps-Combo
 product	3COM 3C905TX	0x9050	3c905 100Base-TX
 product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
+/* ACC Products */
+product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
+
 /* Acer products */
 product ACER M1435	0x1435	M1435
 
@@ -473,7 +476,9 @@ product CIRRUS GD_5434_4	0x00a4	GD 5434-4
 product CIRRUS GD_5434_8	0x00a8	GD 5434-8
 product CIRRUS GD_5436		0x00ac	GD 5436
 product CIRRUS CL_6729		0x1100	CL 6729
+product CIRRUS CL_7541		0x1204	CL 7541
 product CIRRUS CL_7542		0x1200	CL 7542
+product CIRRUS CL_7543		0x1202	CL 7543
 
 /* CMD Technology products */
 product CMDTECH 640A		0x0640	640A
