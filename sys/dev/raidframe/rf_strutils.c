@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_strutils.c,v 1.1 1998/11/13 04:20:35 oster Exp $	*/
+/*	$NetBSD: rf_strutils.c,v 1.2 1999/01/26 02:34:03 oster Exp $	*/
 /*
  * rf_strutils.c
  *
@@ -34,13 +34,6 @@
  * rf_strutils.c -- some simple utilities for munging on strings.
  * I put them in a file by themselves because they're needed in
  * setconfig, in the user-level driver, and in the kernel.
- *
- * :  
- * Log: rf_strutils.c,v 
- * Revision 1.2  1996/06/02 17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
  *
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskevent.h,v 1.1 1998/11/13 04:20:28 oster Exp $	*/
+/*	$NetBSD: rf_diskevent.h,v 1.2 1999/01/26 02:33:56 oster Exp $	*/
 /* 
  * rf_diskevent.h
  * Adapted from original code by David Kotz (1994)
@@ -14,53 +14,11 @@
  *  	DDEventCancel
  */
 
-/* :  
- * Log: rf_diskevent.h,v 
- * Revision 1.10  1996/06/10 11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.9  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.8  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.7  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.6  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.5  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.4  1995/12/01  15:57:16  root
- * added copyright info
- *
- */
-
 #ifndef _RF__RF_DISKEVENT_H_
 #define _RF__RF_DISKEVENT_H_
 
 #include "rf_types.h"
 #include "rf_heap.h"
-#ifndef __NetBSD__
-#include "time.h"
-#endif
 
 #define RF_DD_NOTHING_THERE (-1)
 #define RF_DD_DAGEVENT_ROW  (-3)

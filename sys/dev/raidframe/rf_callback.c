@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_callback.c,v 1.1 1998/11/13 04:20:26 oster Exp $	*/
+/*	$NetBSD: rf_callback.c,v 1.2 1999/01/26 02:33:50 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,37 +32,6 @@
  *
  ****************************************************************************************/
 
-/* :  
- * Log: rf_callback.c,v 
- * Revision 1.11  1996/06/17 03:18:04  jimz
- * include shutdown.h for macroized ShutdownCreate
- *
- * Revision 1.10  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.9  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.8  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.7  1996/05/17  16:30:41  jimz
- * convert to RF_FREELIST stuff
- *
- * Revision 1.6  1995/12/01  15:16:04  root
- * added copyright info
- *
- */
-
-#ifndef _KERNEL
-#ifdef __NetBSD__
-#include <unistd.h>
-#endif /* __NetBSD__ */
-#endif
 
 #include "rf_types.h"
 #include "rf_threadstuff.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.4 1999/01/14 22:49:05 thorpej Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.5 1999/01/26 02:33:56 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -61,158 +61,6 @@
  *
  ***************************************************************************************/
 
-/*
- * :  
- *
- * Log: rf_diskqueue.c,v 
- * Revision 1.50  1996/08/07 21:08:38  jimz
- * b_proc -> kb_proc
- *
- * Revision 1.49  1996/07/05  20:36:14  jimz
- * make rf_ConfigureDiskQueueSystem return 0
- *
- * Revision 1.48  1996/06/18  20:53:11  jimz
- * fix up disk queueing (remove configure routine,
- * add shutdown list arg to create routines)
- *
- * Revision 1.47  1996/06/14  14:16:36  jimz
- * fix handling of bogus queue type
- *
- * Revision 1.46  1996/06/13  20:41:44  jimz
- * add scan, cscan, random queueing
- *
- * Revision 1.45  1996/06/11  01:27:50  jimz
- * Fixed bug where diskthread shutdown would crash or hang. This
- * turned out to be two distinct bugs:
- * (1) [crash] The thread shutdown code wasn't properly waiting for
- * all the diskthreads to complete. This caused diskthreads that were
- * exiting+cleaning up to unlock a destroyed mutex.
- * (2) [hang] TerminateDiskQueues wasn't locking, and DiskIODequeue
- * only checked for termination _after_ a wakeup if the queues were
- * empty. This was a race where the termination wakeup could be lost
- * by the dequeueing thread, and the system would hang waiting for the
- * thread to exit, while the thread waited for an I/O or a signal to
- * check the termination flag.
- *
- * Revision 1.44  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.43  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.42  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.41  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.40  1996/06/06  17:28:04  jimz
- * track sector number of last I/O dequeued
- *
- * Revision 1.39  1996/06/06  01:14:13  jimz
- * fix crashing bug when tracerec is NULL (ie, from copyback)
- * initialize req->queue
- *
- * Revision 1.38  1996/06/05  19:38:32  jimz
- * fixed up disk queueing types config
- * added sstf disk queueing
- * fixed exit bug on diskthreads (ref-ing bad mem)
- *
- * Revision 1.37  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.36  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.35  1996/05/30  12:59:18  jimz
- * make etimer happier, more portable
- *
- * Revision 1.34  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.33  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.32  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.31  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.30  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.29  1996/05/23  00:33:23  jimz
- * code cleanup: move all debug decls to rf_options.c, all extern
- * debug decls to rf_options.h, all debug vars preceded by rf_
- *
- * Revision 1.28  1996/05/20  16:14:29  jimz
- * switch to rf_{mutex,cond}_{init,destroy}
- *
- * Revision 1.27  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.26  1996/05/16  19:21:49  wvcii
- * fixed typo in init_dqd
- *
- * Revision 1.25  1996/05/16  16:02:51  jimz
- * switch to RF_FREELIST stuff for DiskQueueData
- *
- * Revision 1.24  1996/05/10  16:24:14  jimz
- * new cvscan function names
- *
- * Revision 1.23  1996/05/01  16:27:54  jimz
- * don't use ccmn bp management
- *
- * Revision 1.22  1995/12/12  18:10:06  jimz
- * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
- * fix 80-column brain damage in comments
- *
- * Revision 1.21  1995/12/01  15:59:59  root
- * added copyright info
- *
- * Revision 1.20  1995/11/07  16:27:20  wvcii
- * added Peek() function to diskqueuesw
- * non-locking accesses are never blocked (assume clients enforce proper
- * respect for lock acquisition)
- *
- * Revision 1.19  1995/10/05  18:56:52  jimz
- * fix req handling in IOComplete
- *
- * Revision 1.18  1995/10/04  20:13:50  wvcii
- * added asserts to monitor numOutstanding queueLength
- *
- * Revision 1.17  1995/10/04  07:43:52  wvcii
- * queue->numOutstanding now valid for user & sim
- * added queue->queueLength
- * user tested & verified, sim untested
- *
- * Revision 1.16  1995/09/12  00:21:19  wvcii
- * added support for tracing disk queue time
- *
- */
-
 #include "rf_types.h"
 #include "rf_threadstuff.h"
 #include "rf_threadid.h"
@@ -230,14 +78,6 @@
 #include "rf_sstf.h"
 #include "rf_fifo.h"
 
-#ifdef SIMULATE
-#include "rf_diskevent.h"
-#endif /* SIMULATE */
-
-#if !defined(__NetBSD__)
-extern struct buf *ubc_bufget();
-#endif
-
 static int init_dqd(RF_DiskQueueData_t *);
 static void clean_dqd(RF_DiskQueueData_t *);
 static void rf_ShutdownDiskQueueSystem(void *);
@@ -251,30 +91,9 @@ int rf_DispatchKernelIO(RF_DiskQueue_t *,RF_DiskQueueData_t *);
 #define Dprintf4(s,a,b,c,d)   if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),NULL,NULL,NULL,NULL)
 #define Dprintf5(s,a,b,c,d,e) if (rf_queueDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),(void *)((unsigned long)c),(void *)((unsigned long)d),(void *)((unsigned long)e),NULL,NULL,NULL)
 
-#if !defined(KERNEL) && !defined(SIMULATE)
-
-/* queue must be locked before invoking this */
-#define SIGNAL_DISK_QUEUE(_q_,_wh_)  \
-{                                    \
-  if ( (_q_)->numWaiting > 0) {      \
-    (_q_)->numWaiting--;             \
-    RF_SIGNAL_COND( ((_q_)->cond) );    \
-  }                                  \
-}
-
-/* queue must be locked before invoking this */
-#define WAIT_DISK_QUEUE(_q_,_wh_)                                         \
-{                                                                         \
-  (_q_)->numWaiting++;                                                    \
-  RF_WAIT_COND( ((_q_)->cond), ((_q_)->mutex) );                             \
-}
-
-#else /* !defined(KERNEL) && !defined(SIMULATE) */
 
 #define SIGNAL_DISK_QUEUE(_q_,_wh_)
 #define WAIT_DISK_QUEUE(_q_,_wh_)
-
-#endif /* !defined(KERNEL) && !defined(SIMULATE) */
 
 /*****************************************************************************************
  *
@@ -320,7 +139,7 @@ static RF_DiskQueueSW_t diskqueuesw[] = {
 	rf_CscanPeek,
 	rf_SstfPromote},
 
-#if !defined(KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
+#if !defined(_KERNEL) && RF_INCLUDE_QUEUE_RANDOM > 0
 	/* to make a point to Chris :-> */
 	{"random", /* random */
 	rf_FifoCreate,
@@ -338,47 +157,24 @@ static RF_FreeList_t *rf_dqd_freelist;
 #define RF_DQD_INC       16
 #define RF_DQD_INITIAL   64
 
-#ifdef __NetBSD__
-#ifdef _KERNEL
 #include <sys/buf.h>
-#endif
-#endif
 
 static int init_dqd(dqd)
   RF_DiskQueueData_t  *dqd;
 {
-#ifdef KERNEL
-#ifdef __NetBSD__
 	/* XXX not sure if the following malloc is appropriate... probably not quite... */
 	dqd->bp = (struct buf *) malloc( sizeof(struct buf), M_RAIDFRAME, M_NOWAIT);
-	/* XXX */
-	/* printf("NEED TO IMPLEMENT THIS BETTER!\n"); */
-#else
-	dqd->bp = ubc_bufget();
-#endif
 	if (dqd->bp == NULL) {
 		return(ENOMEM);
 	}
-#ifdef __NetBSD__
 	memset(dqd->bp,0,sizeof(struct buf)); /* if you don't do it, nobody else will.. */
-#endif
-#endif /* KERNEL */
 	return(0);
 }
 
 static void clean_dqd(dqd)
   RF_DiskQueueData_t  *dqd;
 {
-#ifdef KERNEL
-#ifdef __NetBSD__
-	/* printf("NEED TO IMPLEMENT THIS BETTER(2)!\n"); */
-	/* XXX ? */
 	free( dqd->bp, M_RAIDFRAME );
-#else
-    ubc_buffree(dqd->bp);
-#endif
-
-#endif /* KERNEL */
 }
 
 /* configures a single disk queue */
@@ -410,9 +206,7 @@ static int config_disk_queue(
   diskqueue->numWaiting=0;
   diskqueue->flags = 0;
   diskqueue->raidPtr = raidPtr;
-#if defined(__NetBSD__) && defined(_KERNEL)
   diskqueue->rf_cinfo = &raidPtr->raid_cinfo[r][c];
-#endif
   rc = rf_create_managed_mutex(listp, &diskqueue->mutex);
   if (rc) {
     RF_ERRORMSG3("Unable to init mutex file %s line %d rc=%d\n", __FILE__,
@@ -454,26 +248,6 @@ int rf_ConfigureDiskQueueSystem(listp)
     (RF_DiskQueueData_t *),init_dqd);
   return(0);
 }
-
-#ifndef KERNEL
-/* this is called prior to shutdown to wakeup everyone waiting on a disk queue
- * and tell them to exit
- */
-void rf_TerminateDiskQueues(raidPtr)
-  RF_Raid_t  *raidPtr;
-{
-  RF_RowCol_t r, c;
-
-  raidPtr->terminate_disk_queues = 1;
-  for (r=0; r<raidPtr->numRow; r++) {
-    for (c=0; c<raidPtr->numCol + ((r==0) ? raidPtr->numSpare : 0); c++) {
-      RF_LOCK_QUEUE_MUTEX(&raidPtr->Queues[r][c], "TerminateDiskQueues");
-      RF_BROADCAST_COND(raidPtr->Queues[r][c].cond);
-      RF_UNLOCK_QUEUE_MUTEX(&raidPtr->Queues[r][c], "TerminateDiskQueues");
-    }
-  }
-}
-#endif /* !KERNEL */
 
 int rf_ConfigureDiskQueues(
   RF_ShutdownList_t  **listp,
@@ -575,7 +349,6 @@ void rf_DiskIOEnqueue(queue, req, pri)
     printf("Warning: Enqueueing zero-sector access\n");
   }
   
-#ifdef KERNEL
   /*
    * kernel
    */
@@ -610,132 +383,8 @@ void rf_DiskIOEnqueue(queue, req, pri)
     (queue->qPtr->Enqueue)(queue->qHdr, req, pri);
   }
   RF_UNLOCK_QUEUE_MUTEX( queue, "DiskIOEnqueue" );
-  
-#else /* KERNEL */
-  /*
-   * user-level
-   */
-  RF_LOCK_QUEUE_MUTEX( queue, "DiskIOEnqueue" );
-  queue->queueLength++;  /* increment count of number of requests waiting in this queue */
-  /* unlocking request */
-  if (RF_UNLOCKING_REQ(req)) {
-    Dprintf4("[%d] enqueueing pri %d unlocking op & signalling r %d c %d\n", tid, pri, queue->row, queue->col);
-    RF_ASSERT(RF_QUEUE_LOCKED(queue) && queue->unlockingOp == NULL);
-    queue->unlockingOp = req;
-  }
-  /* locking and normal requests */
-  else {
-    req->queue = (void *)queue;
-    Dprintf5("[%d] enqueueing pri %d %s op & signalling r %d c %d\n", tid, pri,
-	     (RF_LOCKING_REQ(req)) ? "locking" : "regular",queue->row,queue->col);
-    (queue->qPtr->Enqueue)(queue->qHdr, req, pri);
-  }
-  SIGNAL_DISK_QUEUE( queue, "DiskIOEnqueue");
-  RF_UNLOCK_QUEUE_MUTEX( queue, "DiskIOEnqueue" );
-#endif /* KERNEL */
 }
     
-#if !defined(KERNEL) && !defined(SIMULATE)
-/* user-level only: tell all threads to wake up & recheck the queue */
-void rf_BroadcastOnQueue(queue)
-  RF_DiskQueue_t *queue;
-{
-  int i;
-
-  if (queue->maxOutstanding > 1) for (i=0; i<queue->maxOutstanding; i++) {
-    SIGNAL_DISK_QUEUE(queue, "BroadcastOnQueue" );
-  }
-}
-#endif /* !KERNEL && !SIMULATE */
-
-#ifndef KERNEL /* not used in kernel */
-
-RF_DiskQueueData_t *rf_DiskIODequeue(queue)
-  RF_DiskQueue_t *queue;
-{
-  RF_DiskQueueData_t *p, *headItem;
-  int tid;
-
-  rf_get_threadid(tid);
-  RF_LOCK_QUEUE_MUTEX( queue, "DiskIODequeue" );
-  for (p=NULL; !p; ) {
-    if (queue->unlockingOp) {
-      /* unlocking request */
-      RF_ASSERT(RF_QUEUE_LOCKED(queue));
-      p = queue->unlockingOp;
-      queue->unlockingOp = NULL;
-      Dprintf4("[%d] dequeueing pri %d unlocking op r %d c %d\n", tid, p->priority, queue->row,queue->col);
-    }
-    else {
-      headItem = (queue->qPtr->Peek)(queue->qHdr);
-      if (headItem) {
-        if (RF_LOCKING_REQ(headItem)) {
-          /* locking request */
-          if (!RF_QUEUE_LOCKED(queue)) {
-            /* queue isn't locked, so dequeue the request & lock the queue */
-            p = (queue->qPtr->Dequeue)( queue->qHdr );
-            if (p)
-              Dprintf4("[%d] dequeueing pri %d locking op r %d c %d\n", tid, p->priority, queue->row, queue->col);
-            else
-              Dprintf3("[%d] no dequeue -- raw queue empty r %d c %d\n", tid, queue->row, queue->col);
-          }
-          else {
-            /* queue already locked, no dequeue occurs */
-            Dprintf3("[%d] no dequeue -- queue is locked r %d c %d\n", tid, queue->row, queue->col);
-            p = NULL;
-          }
-        }
-        else {
-          /* normal request, always dequeue and assume caller already has lock (if needed) */
-          p = (queue->qPtr->Dequeue)( queue->qHdr );
-          if (p)
-            Dprintf4("[%d] dequeueing pri %d regular op r %d c %d\n", tid, p->priority, queue->row, queue->col);
-          else
-            Dprintf3("[%d] no dequeue -- raw queue empty r %d c %d\n", tid, queue->row, queue->col);
-        }
-      }
-      else {
-        Dprintf3("[%d] no dequeue -- raw queue empty r %d c %d\n", tid, queue->row, queue->col);
-      }
-    }
-
-    if (queue->raidPtr->terminate_disk_queues) {
-      p = NULL;
-      break;
-    }
-#ifdef SIMULATE
-    break;		/* in simulator, return NULL on empty queue instead of blocking */
-#else /* SIMULATE */
-    if (!p) {
-      Dprintf3("[%d] nothing to dequeue: waiting r %d c %d\n", tid, queue->row, queue->col);
-      WAIT_DISK_QUEUE( queue, "DiskIODequeue" );
-    }
-#endif /* SIMULATE */
-  }
-
-  if (p) {
-    queue->queueLength--;  /* decrement count of number of requests waiting in this queue */
-    RF_ASSERT(queue->queueLength >= 0);
-    queue->numOutstanding++;
-    queue->last_deq_sector = p->sectorOffset;
-    /* record the amount of time this request spent in the disk queue */
-    RF_ETIMER_STOP(p->qtime);
-    RF_ETIMER_EVAL(p->qtime);
-    if (p->tracerec)
-      p->tracerec->diskqueue_us += RF_ETIMER_VAL_US(p->qtime);
-  }
-
-  if (p && RF_LOCKING_REQ(p)) {
-    RF_ASSERT(!RF_QUEUE_LOCKED(queue));
-    Dprintf3("[%d] locking queue r %d c %d\n",tid,queue->row,queue->col);
-    RF_LOCK_QUEUE(queue);
-  }
-  RF_UNLOCK_QUEUE_MUTEX( queue, "DiskIODequeue" );
-  
-  return(p);
-}
-
-#else /* !KERNEL */
 
 /* get the next set of I/Os started, kernel version only */
 void rf_DiskIOComplete(queue, req, status)
@@ -812,7 +461,6 @@ void rf_DiskIOComplete(queue, req, status)
   
   RF_UNLOCK_QUEUE_MUTEX( queue, "DiskIOComplete" );
 }
-#endif /* !KERNEL */
 
 /* promotes accesses tagged with the given parityStripeID from low priority
  * to normal priority.  This promotion is optional, meaning that a queue
@@ -866,14 +514,9 @@ RF_DiskQueueData_t *rf_CreateDiskQueueData(
   p->priority      = RF_IO_NORMAL_PRIORITY;
   p->AuxFunc       = NULL;
   p->buf2          = NULL;
-#ifdef SIMULATE
-  p->owner         = rf_GetCurrentOwner();
-#endif /* SIMULATE */
   p->raidPtr       = raidPtr;
   p->flags         = flags;
-#ifdef KERNEL
   p->b_proc        = kb_proc;
-#endif /* KERNEL */
   return(p);
 }
 
@@ -912,14 +555,9 @@ RF_DiskQueueData_t *rf_CreateDiskQueueDataFull(
   p->priority      = priority;
   p->AuxFunc       = AuxFunc;
   p->buf2          = buf2;
-#ifdef SIMULATE
-  p->owner         = rf_GetCurrentOwner();
-#endif /* SIMULATE */
   p->raidPtr       = raidPtr;
   p->flags         = flags;
-#ifdef KERNEL
   p->b_proc        = kb_proc;
-#endif /* KERNEL */
   return(p);
 }
 

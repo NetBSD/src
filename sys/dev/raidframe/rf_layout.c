@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_layout.c,v 1.1 1998/11/13 04:20:30 oster Exp $	*/
+/*	$NetBSD: rf_layout.c,v 1.2 1999/01/26 02:33:58 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,212 +27,6 @@
  */
 
 /* rf_layout.c -- driver code dealing with layout and mapping issues
- */
-
-/*
- * :  
- * Log: rf_layout.c,v 
- * Revision 1.71  1996/08/20 22:41:30  jimz
- * add declustered evenodd
- *
- * Revision 1.70  1996/07/31  16:56:18  jimz
- * dataBytesPerStripe, sectorsPerDisk init arch-indep.
- *
- * Revision 1.69  1996/07/31  15:34:46  jimz
- * add EvenOdd
- *
- * Revision 1.68  1996/07/29  14:05:12  jimz
- * fix numPUs/numRUs confusion (everything is now numRUs)
- * clean up some commenting, return values
- *
- * Revision 1.67  1996/07/27  23:36:08  jimz
- * Solaris port of simulator
- *
- * Revision 1.66  1996/07/27  18:40:24  jimz
- * cleanup sweep
- *
- * Revision 1.65  1996/07/18  22:57:14  jimz
- * port simulator to AIX
- *
- * Revision 1.64  1996/07/15  17:22:18  jimz
- * nit-pick code cleanup
- * resolve stdlib problems on DEC OSF
- *
- * Revision 1.63  1996/07/13  00:00:59  jimz
- * sanitized generalized reconstruction architecture
- * cleaned up head sep, rbuf problems
- *
- * Revision 1.62  1996/07/11  19:08:00  jimz
- * generalize reconstruction mechanism
- * allow raid1 reconstructs via copyback (done with array
- * quiesced, not online, therefore not disk-directed)
- *
- * Revision 1.61  1996/06/19  22:23:01  jimz
- * parity verification is now a layout-configurable thing
- * not all layouts currently support it (correctly, anyway)
- *
- * Revision 1.60  1996/06/19  17:53:48  jimz
- * move GetNumSparePUs, InstallSpareTable ops into layout switch
- *
- * Revision 1.59  1996/06/19  14:57:58  jimz
- * move layout-specific config parsing hooks into RF_LayoutSW_t
- * table in rf_layout.c
- *
- * Revision 1.58  1996/06/10  11:55:47  jimz
- * Straightened out some per-array/not-per-array distinctions, fixed
- * a couple bugs related to confusion. Added shutdown lists. Removed
- * layout shutdown function (now subsumed by shutdown lists).
- *
- * Revision 1.57  1996/06/07  22:26:27  jimz
- * type-ify which_ru (RF_ReconUnitNum_t)
- *
- * Revision 1.56  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.55  1996/06/06  18:41:35  jimz
- * change interleaved declustering dag selection to an
- * interleaved-declustering-specific routine (so we can
- * use the partitioned mirror node)
- *
- * Revision 1.54  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.53  1996/06/03  23:28:26  jimz
- * more bugfixes
- * check in tree to sync for IPDS runs with current bugfixes
- * there still may be a problem with threads in the script test
- * getting I/Os stuck- not trivially reproducible (runs ~50 times
- * in a row without getting stuck)
- *
- * Revision 1.52  1996/06/02  17:31:48  jimz
- * Moved a lot of global stuff into array structure, where it belongs.
- * Fixed up paritylogging, pss modules in this manner. Some general
- * code cleanup. Removed lots of dead code, some dead files.
- *
- * Revision 1.51  1996/05/31  22:26:54  jimz
- * fix a lot of mapping problems, memory allocation problems
- * found some weird lock issues, fixed 'em
- * more code cleanup
- *
- * Revision 1.50  1996/05/30  23:22:16  jimz
- * bugfixes of serialization, timing problems
- * more cleanup
- *
- * Revision 1.49  1996/05/30  11:29:41  jimz
- * Numerous bug fixes. Stripe lock release code disagreed with the taking code
- * about when stripes should be locked (I made it consistent: no parity, no lock)
- * There was a lot of extra serialization of I/Os which I've removed- a lot of
- * it was to calculate values for the cache code, which is no longer with us.
- * More types, function, macro cleanup. Added code to properly quiesce the array
- * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
- * before. Fixed memory allocation, freeing bugs.
- *
- * Revision 1.48  1996/05/27  18:56:37  jimz
- * more code cleanup
- * better typing
- * compiles in all 3 environments
- *
- * Revision 1.47  1996/05/24  22:17:04  jimz
- * continue code + namespace cleanup
- * typed a bunch of flags
- *
- * Revision 1.46  1996/05/24  01:59:45  jimz
- * another checkpoint in code cleanup for release
- * time to sync kernel tree
- *
- * Revision 1.45  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.44  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.43  1996/02/22  16:46:35  amiri
- * modified chained declustering to use a seperate DAG selection routine
- *
- * Revision 1.42  1995/12/01  19:16:11  root
- * added copyright info
- *
- * Revision 1.41  1995/11/28  21:31:02  amiri
- * added Interleaved Declustering to switch table
- *
- * Revision 1.40  1995/11/20  14:35:17  arw
- * moved rf_StartThroughputStats in DefaultWrite and DefaultRead
- *
- * Revision 1.39  1995/11/19  16:28:46  wvcii
- * replaced LaunchDAGState with CreateDAGState, ExecuteDAGState
- *
- * Revision 1.38  1995/11/17  19:00:41  wvcii
- * added MapQ entries to switch table
- *
- * Revision 1.37  1995/11/17  16:58:13  amiri
- * Added the Chained Declustering architecture ('C'),
- * essentially a variant of mirroring.
- *
- * Revision 1.36  1995/11/16  16:16:10  amiri
- * Added RAID5 with rotated sparing ('R' configuration)
- *
- * Revision 1.35  1995/11/07  15:41:17  wvcii
- * modified state lists: DefaultStates, VSReadStates
- * necessary to support new states (LaunchDAGState, ProcessDAGState)
- *
- * Revision 1.34  1995/10/18  01:23:20  amiri
- * added ifndef SIMULATE wrapper around rf_StartThroughputStats()
- *
- * Revision 1.33  1995/10/13  15:05:46  arw
- * added rf_StartThroughputStats to DefaultRead and DefaultWrite
- *
- * Revision 1.32  1995/10/12  16:04:23  jimz
- * added config names to mapsw entires
- *
- * Revision 1.31  1995/10/04  03:57:48  wvcii
- * added raid level 1 to mapsw
- *
- * Revision 1.30  1995/09/07  01:26:55  jimz
- * Achive basic compilation in kernel. Kernel functionality
- * is not guaranteed at all, but it'll compile. Mostly. I hope.
- *
- * Revision 1.29  1995/07/28  21:43:42  robby
- * checkin after leaving for Rice. Bye
- *
- * Revision 1.28  1995/07/26  03:26:14  robby
- * *** empty log message ***
- *
- * Revision 1.27  1995/07/21  19:47:52  rachad
- * Added raid 0 /5 with caching architectures
- *
- * Revision 1.26  1995/07/21  19:29:27  robby
- * added virtual striping states
- *
- * Revision 1.25  1995/07/10  21:41:47  robby
- * switched to have my own virtual stripng write function from the cache
- *
- * Revision 1.24  1995/07/10  20:51:59  robby
- * added virtual striping states
- *
- * Revision 1.23  1995/07/10  16:57:42  robby
- * updated alloclistelem struct to the correct struct name
- *
- * Revision 1.22  1995/07/08  20:06:11  rachad
- * *** empty log message ***
- *
- * Revision 1.21  1995/07/08  19:43:16  cfb
- * *** empty log message ***
- *
- * Revision 1.20  1995/07/08  18:05:39  rachad
- * Linked up Claudsons code with the real cache
- *
- * Revision 1.19  1995/07/06  14:29:36  robby
- * added defaults states list to the layout switch
- *
- * Revision 1.18  1995/06/23  13:40:34  robby
- * updeated to prototypes in rf_layout.h
- *
  */
 
 #include "rf_types.h"
@@ -301,11 +95,11 @@ int distSpareNo  = 0;
 static int distSpareYes = 1;
 static int distSpareNo  = 0;
 #endif
-#ifdef KERNEL
+#ifdef _KERNEL
 #define RF_NK2(a,b)
-#else /* KERNEL */
+#else /* _KERNEL */
 #define RF_NK2(a,b) a,b,
-#endif /* KERNEL */
+#endif /* _KERNEL */
 
 #if RF_UTILITY > 0
 #define RF_NU(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.1 1998/11/13 04:20:33 oster Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.2 1999/01/26 02:34:01 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -29,39 +29,6 @@
 /******************************************************************************
  * rf_reconMap.h -- Header file describing reconstruction status data structure
  ******************************************************************************/
-
-/* :  
- * Log: rf_reconmap.h,v 
- * Revision 1.10  1996/08/01 15:59:25  jimz
- * minor cleanup
- *
- * Revision 1.9  1996/06/09  02:36:46  jimz
- * lots of little crufty cleanup- fixup whitespace
- * issues, comment #ifdefs, improve typing in some
- * places (esp size-related)
- *
- * Revision 1.8  1996/06/07  21:33:04  jimz
- * begin using consistent types for sector numbers,
- * stripe numbers, row+col numbers, recon unit numbers
- *
- * Revision 1.7  1996/06/05  18:06:02  jimz
- * Major code cleanup. The Great Renaming is now done.
- * Better modularity. Better typing. Fixed a bunch of
- * synchronization bugs. Made a lot of global stuff
- * per-desc or per-array. Removed dead code.
- *
- * Revision 1.6  1996/05/23  21:46:35  jimz
- * checkpoint in code cleanup (release prep)
- * lots of types, function names have been fixed
- *
- * Revision 1.5  1996/05/18  19:51:34  jimz
- * major code cleanup- fix syntax, make some types consistent,
- * add prototypes, clean out dead code, et cetera
- *
- * Revision 1.4  1995/12/06  15:04:01  root
- * added copyright info
- *
- */
 
 #ifndef _RF__RF_RECONMAP_H_
 #define _RF__RF_RECONMAP_H_
