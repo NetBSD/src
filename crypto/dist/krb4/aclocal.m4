@@ -1,6 +1,6 @@
-# ./aclocal.m4 generated automatically by aclocal 1.4b
+# aclocal.m4t generated automatically by aclocal 1.6.1 -*- Autoconf -*-
 
-# Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000
+# Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
 # Free Software Foundation, Inc.
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -11,7 +11,8 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: acinclude.m4,v 1.2 1999/03/01 13:06:21 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl Only put things that for some reason can't live in the `cf'
 dnl directory in this file.
@@ -21,152 +22,317 @@ dnl $xId: misc.m4,v 1.1 1997/12/14 15:59:04 joda Exp $
 dnl
 define(upcase,`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`)dnl
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+
+dnl $KTH-KRB: misc.m4,v 1.5 2002/05/24 15:35:32 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 AC_DEFUN([upcase],[`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`])dnl
+AC_DEFUN([rk_LIBOBJ],[AC_LIBOBJ([$1])])dnl
 AC_DEFUN([rk_CONFIG_HEADER],[AH_TOP([#ifndef RCSID
 #define RCSID(msg) \
-static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
+static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
-
-#undef BINDIR 
-#undef LIBDIR
-#undef LIBEXECDIR
-#undef SBINDIR
-
-#undef HAVE_INT8_T
-#undef HAVE_INT16_T
-#undef HAVE_INT32_T
-#undef HAVE_INT64_T
-#undef HAVE_U_INT8_T
-#undef HAVE_U_INT16_T
-#undef HAVE_U_INT32_T
-#undef HAVE_U_INT64_T
 
 /* Maximum values on all known systems */
 #define MaxHostNameLen (64+4)
 #define MaxPathLen (1024+4)
 
 ])])
-# Like AC_CONFIG_HEADER, but automatically create stamp file.
+# Like AC_CONFIG_HEADER, but automatically create stamp file. -*- Autoconf -*-
 
-# serial 3
+# Copyright 1996, 1997, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+AC_PREREQ([2.52])
+
+# serial 6
 
 # When config.status generates a header, we must update the stamp-h file.
 # This file resides in the same directory as the config header
 # that is generated.  We must strip everything past the first ":",
 # and everything past the last "/".
 
-AC_PREREQ([2.12])
+# _AM_DIRNAME(PATH)
+# -----------------
+# Like AS_DIRNAME, only do it during macro expansion
+AC_DEFUN([_AM_DIRNAME],
+       [m4_if(regexp([$1], [^.*[^/]//*[^/][^/]*/*$]), -1,
+	      m4_if(regexp([$1], [^//\([^/]\|$\)]), -1,
+		    m4_if(regexp([$1], [^/.*]), -1,
+			  [.],
+			  patsubst([$1], [^\(/\).*], [\1])),
+		    patsubst([$1], [^\(//\)\([^/].*\|$\)], [\1])),
+	      patsubst([$1], [^\(.*[^/]\)//*[^/][^/]*/*$], [\1]))[]dnl
+])# _AM_DIRNAME
 
+
+# The stamp files are numbered to have different names.
+# We could number them on a directory basis, but that's additional
+# complications, let's have a unique counter.
+m4_define([_AM_STAMP_Count], [0])
+
+
+# _AM_STAMP(HEADER)
+# -----------------
+# The name of the stamp file for HEADER.
+AC_DEFUN([_AM_STAMP],
+[m4_define([_AM_STAMP_Count], m4_incr(_AM_STAMP_Count))dnl
+AS_ESCAPE(_AM_DIRNAME(patsubst([$1],
+                               [:.*])))/stamp-h[]_AM_STAMP_Count])
+
+
+# _AM_CONFIG_HEADER(HEADER[:SOURCES], COMMANDS, INIT-COMMANDS)
+# ------------------------------------------------------------
+# We used to try to get a real timestamp in stamp-h.  But the fear is that
+# that will cause unnecessary cvs conflicts.
+AC_DEFUN([_AM_CONFIG_HEADER],
+[# Add the stamp file to the list of files AC keeps track of,
+# along with our hook.
+AC_CONFIG_HEADERS([$1],
+                  [# update the timestamp
+echo 'timestamp for $1' >"_AM_STAMP([$1])"
+$2],
+                  [$3])
+])# _AM_CONFIG_HEADER
+
+
+# AM_CONFIG_HEADER(HEADER[:SOURCES]..., COMMANDS, INIT-COMMANDS)
+# --------------------------------------------------------------
 AC_DEFUN([AM_CONFIG_HEADER],
-[AC_CONFIG_HEADER([$1])
-  AC_OUTPUT_COMMANDS(
-   ifelse(patsubst([$1], [[^ ]], []),
-	  [],
-	  [test -z "$CONFIG_HEADERS" || echo timestamp >dnl
-	   patsubst([$1], [^\([^:]*/\)?.*], [\1])stamp-h]),
-  [am_indx=1
-  for am_file in $1; do
-    case " $CONFIG_HEADERS " in
-    *" $am_file "*)
-      echo timestamp > `echo $am_file | sed 's%:.*%%;s%[^/]*$%%'`stamp-h$am_indx
-      ;;
-    esac
-    am_indx=\`expr \$am_indx + 1\`
-  done])
-])
+[AC_FOREACH([_AM_File], [$1], [_AM_CONFIG_HEADER(_AM_File, [$2], [$3])])
+])# AM_CONFIG_HEADER
 
-# Do all the work for Automake.  This macro actually does too much --
-# some checks are only needed if your package does certain things.
-# But this isn't really a big deal.
+# Do all the work for Automake.                            -*- Autoconf -*-
 
-# serial 3
+# This macro actually does too much some checks are only needed if
+# your package does certain things.  But this isn't really a big deal.
 
-AC_PREREQ([2.13])
+# Copyright 1996, 1997, 1998, 1999, 2000, 2001, 2002
+# Free Software Foundation, Inc.
 
-# AC_PROVIDE_IFELSE(MACRO-NAME, IF-PROVIDED, IF-NOT-PROVIDED)
-# -----------------------------------------------------------
-# If MACRO-NAME is provided do IF-PROVIDED, else IF-NOT-PROVIDED.
-# The purpose of this macro is to provide the user with a means to
-# check macros which are provided without letting her know how the
-# information is coded.
-# If this macro is not defined by Autoconf, define it here.
-ifdef([AC_PROVIDE_IFELSE],
-      [],
-      [define([AC_PROVIDE_IFELSE],
-              [ifdef([AC_PROVIDE_$1],
-                     [$2], [$3])])])
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 8
+
+# There are a few dirty hacks below to avoid letting `AC_PROG_CC' be
+# written in clear, in which case automake, when reading aclocal.m4,
+# will think it sees a *use*, and therefore will trigger all it's
+# C support machinery.  Also note that it means that autoscan, seeing
+# CC etc. in the Makefile, will ask for an AC_PROG_CC use...
 
 
-# AM_INIT_AUTOMAKE(PACKAGE,VERSION, [NO-DEFINE])
-# ----------------------------------------------
+AC_PREREQ([2.52])
+
+# Autoconf 2.50 wants to disallow AM_ names.  We explicitly allow
+# the ones we care about.
+m4_pattern_allow([^AM_[A-Z]+FLAGS$])dnl
+
+# AM_INIT_AUTOMAKE(PACKAGE, VERSION, [NO-DEFINE])
+# AM_INIT_AUTOMAKE([OPTIONS])
+# -----------------------------------------------
+# The call with PACKAGE and VERSION arguments is the old style
+# call (pre autoconf-2.50), which is being phased out.  PACKAGE
+# and VERSION should now be passed to AC_INIT and removed from
+# the call to AM_INIT_AUTOMAKE.
+# We support both call styles for the transition.  After
+# the next Automake release, Autoconf can make the AC_INIT
+# arguments mandatory, and then we can depend on a new Autoconf
+# release and drop the old call support.
 AC_DEFUN([AM_INIT_AUTOMAKE],
-[dnl We require 2.13 because we rely on SHELL being computed by configure.
-AC_REQUIRE([AC_PROG_INSTALL])dnl
+[AC_REQUIRE([AM_SET_CURRENT_AUTOMAKE_VERSION])dnl
+ AC_REQUIRE([AC_PROG_INSTALL])dnl
 # test to see if srcdir already configured
-if test "`CDPATH=:; cd $srcdir && pwd`" != "`pwd`" &&
+if test "`cd $srcdir && pwd`" != "`pwd`" &&
    test -f $srcdir/config.status; then
   AC_MSG_ERROR([source directory already configured; run "make distclean" there first])
 fi
 
 # Define the identity of the package.
-PACKAGE=$1
-AC_SUBST(PACKAGE)dnl
-VERSION=$2
-AC_SUBST(VERSION)dnl
-ifelse([$3],,
+dnl Distinguish between old-style and new-style calls.
+m4_ifval([$2],
+[m4_ifval([$3], [_AM_SET_OPTION([no-define])])dnl
+ AC_SUBST([PACKAGE], [$1])dnl
+ AC_SUBST([VERSION], [$2])],
+[_AM_SET_OPTIONS([$1])dnl
+ AC_SUBST([PACKAGE], [AC_PACKAGE_TARNAME])dnl
+ AC_SUBST([VERSION], [AC_PACKAGE_VERSION])])dnl
+
+_AM_IF_OPTION([no-define],,
 [AC_DEFINE_UNQUOTED(PACKAGE, "$PACKAGE", [Name of package])
-AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])])
+ AC_DEFINE_UNQUOTED(VERSION, "$VERSION", [Version number of package])])dnl
 
 # Some tools Automake needs.
 AC_REQUIRE([AM_SANITY_CHECK])dnl
 AC_REQUIRE([AC_ARG_PROGRAM])dnl
-AM_MISSING_PROG(ACLOCAL, aclocal)
+AM_MISSING_PROG(ACLOCAL, aclocal-${am__api_version})
 AM_MISSING_PROG(AUTOCONF, autoconf)
-AM_MISSING_PROG(AUTOMAKE, automake)
+AM_MISSING_PROG(AUTOMAKE, automake-${am__api_version})
 AM_MISSING_PROG(AUTOHEADER, autoheader)
 AM_MISSING_PROG(MAKEINFO, makeinfo)
 AM_MISSING_PROG(AMTAR, tar)
-AM_MISSING_INSTALL_SH
+AM_PROG_INSTALL_SH
+AM_PROG_INSTALL_STRIP
 # We need awk for the "check" target.  The system "awk" is bad on
 # some platforms.
 AC_REQUIRE([AC_PROG_AWK])dnl
 AC_REQUIRE([AC_PROG_MAKE_SET])dnl
-AC_REQUIRE([AM_DEP_TRACK])dnl
-AC_REQUIRE([AM_SET_DEPDIR])dnl
-AC_PROVIDE_IFELSE([AC_PROG_CC],
-                  [AM_DEPENDENCIES(CC)],
-                  [define([AC_PROG_CC],
-                          defn([AC_PROG_CC])[AM_DEPENDENCIES(CC)])])dnl
-AC_PROVIDE_IFELSE([AC_PROG_CXX],
-                  [AM_DEPENDENCIES(CXX)],
-                  [define([AC_PROG_CXX],
-                          defn([AC_PROG_CXX])[AM_DEPENDENCIES(CXX)])])dnl
+
+_AM_IF_OPTION([no-dependencies],,
+[AC_PROVIDE_IFELSE([AC_PROG_][CC],
+                  [_AM_DEPENDENCIES(CC)],
+                  [define([AC_PROG_][CC],
+                          defn([AC_PROG_][CC])[_AM_DEPENDENCIES(CC)])])dnl
+AC_PROVIDE_IFELSE([AC_PROG_][CXX],
+                  [_AM_DEPENDENCIES(CXX)],
+                  [define([AC_PROG_][CXX],
+                          defn([AC_PROG_][CXX])[_AM_DEPENDENCIES(CXX)])])dnl
 ])
+])
+
+# Copyright 2002  Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+
+# AM_AUTOMAKE_VERSION(VERSION)
+# ----------------------------
+# Automake X.Y traces this macro to ensure aclocal.m4 has been
+# generated from the m4 files accompanying Automake X.Y.
+AC_DEFUN([AM_AUTOMAKE_VERSION],[am__api_version="1.6"])
+
+# AM_SET_CURRENT_AUTOMAKE_VERSION
+# -------------------------------
+# Call AM_AUTOMAKE_VERSION so it can be traced.
+# This function is AC_REQUIREd by AC_INIT_AUTOMAKE.
+AC_DEFUN([AM_SET_CURRENT_AUTOMAKE_VERSION],
+	 [AM_AUTOMAKE_VERSION([1.6.1])])
+
+# Helper functions for option handling.                    -*- Autoconf -*-
+
+# Copyright 2001, 2002  Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 2
+
+# _AM_MANGLE_OPTION(NAME)
+# -----------------------
+AC_DEFUN([_AM_MANGLE_OPTION],
+[[_AM_OPTION_]m4_bpatsubst($1, [[^a-zA-Z0-9_]], [_])])
+
+# _AM_SET_OPTION(NAME)
+# ------------------------------
+# Set option NAME.  Presently that only means defining a flag for this option.
+AC_DEFUN([_AM_SET_OPTION],
+[m4_define(_AM_MANGLE_OPTION([$1]), 1)])
+
+# _AM_SET_OPTIONS(OPTIONS)
+# ----------------------------------
+# OPTIONS is a space-separated list of Automake options.
+AC_DEFUN([_AM_SET_OPTIONS],
+[AC_FOREACH([_AM_Option], [$1], [_AM_SET_OPTION(_AM_Option)])])
+
+# _AM_IF_OPTION(OPTION, IF-SET, [IF-NOT-SET])
+# -------------------------------------------
+# Execute IF-SET if OPTION is set, IF-NOT-SET otherwise.
+AC_DEFUN([_AM_IF_OPTION],
+[m4_ifset(_AM_MANGLE_OPTION([$1]), [$2], [$3])])
 
 #
 # Check to make sure that the build environment is sane.
 #
 
+# Copyright 1996, 1997, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 3
+
+# AM_SANITY_CHECK
+# ---------------
 AC_DEFUN([AM_SANITY_CHECK],
 [AC_MSG_CHECKING([whether build environment is sane])
 # Just in case
 sleep 1
-echo timestamp > conftestfile
+echo timestamp > conftest.file
 # Do `set' in a subshell so we don't clobber the current shell's
 # arguments.  Must try -L first in case configure is actually a
 # symlink; some systems play weird games with the mod time of symlinks
 # (eg FreeBSD returns the mod time of the symlink's containing
 # directory).
 if (
-   set X `ls -Lt $srcdir/configure conftestfile 2> /dev/null`
-   if test "[$]*" = "X"; then
+   set X `ls -Lt $srcdir/configure conftest.file 2> /dev/null`
+   if test "$[*]" = "X"; then
       # -L didn't work.
-      set X `ls -t $srcdir/configure conftestfile`
+      set X `ls -t $srcdir/configure conftest.file`
    fi
-   if test "[$]*" != "X $srcdir/configure conftestfile" \
-      && test "[$]*" != "X conftestfile $srcdir/configure"; then
+   rm -f conftest.file
+   if test "$[*]" != "X $srcdir/configure conftest.file" \
+      && test "$[*]" != "X conftest.file $srcdir/configure"; then
 
       # If neither matched, then we have a broken ls.  This can happen
       # if, for instance, CONFIG_SHELL is bash and it inherits a
@@ -176,7 +342,7 @@ if (
 alias in your environment])
    fi
 
-   test "[$]2" = conftestfile
+   test "$[2]" = conftest.file
    )
 then
    # Ok.
@@ -185,77 +351,261 @@ else
    AC_MSG_ERROR([newly created file is older than distributed files!
 Check your system clock])
 fi
-rm -f conftest*
 AC_MSG_RESULT(yes)])
 
+#  -*- Autoconf -*-
+
+
+# Copyright 1997, 1999, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 3
+
 # AM_MISSING_PROG(NAME, PROGRAM)
-AC_DEFUN([AM_MISSING_PROG], [
-AC_REQUIRE([AM_MISSING_HAS_RUN])
+# ------------------------------
+AC_DEFUN([AM_MISSING_PROG],
+[AC_REQUIRE([AM_MISSING_HAS_RUN])
 $1=${$1-"${am_missing_run}$2"}
 AC_SUBST($1)])
 
-# Like AM_MISSING_PROG, but only looks for install-sh.
-# AM_MISSING_INSTALL_SH()
-AC_DEFUN([AM_MISSING_INSTALL_SH], [
-AC_REQUIRE([AM_MISSING_HAS_RUN])
-if test -z "$install_sh"; then
-   install_sh="$ac_aux_dir/install-sh"
-   test -f "$install_sh" || install_sh="$ac_aux_dir/install.sh"
-   test -f "$install_sh" || install_sh="${am_missing_run}${ac_auxdir}/install-sh"
-   dnl FIXME: an evil hack: we remove the SHELL invocation from
-   dnl install_sh because automake adds it back in.  Sigh.
-   install_sh="`echo $install_sh | sed -e 's/\${SHELL}//'`"
-fi
-AC_SUBST(install_sh)])
 
-# AM_MISSING_HAS_RUN.
+# AM_MISSING_HAS_RUN
+# ------------------
 # Define MISSING if not defined so far and test if it supports --run.
 # If it does, set am_missing_run to use it, otherwise, to nothing.
-AC_DEFUN([AM_MISSING_HAS_RUN], [
-test x"${MISSING+set}" = xset || \
-  MISSING="\${SHELL} `CDPATH=:; cd $ac_aux_dir && pwd`/missing"
+AC_DEFUN([AM_MISSING_HAS_RUN],
+[AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+test x"${MISSING+set}" = xset || MISSING="\${SHELL} $am_aux_dir/missing"
 # Use eval to expand $SHELL
-if eval "$MISSING --run :"; then
+if eval "$MISSING --run true"; then
   am_missing_run="$MISSING --run "
 else
   am_missing_run=
-  am_backtick='`'
-  AC_MSG_WARN([${am_backtick}missing' script is too old or missing])
+  AC_MSG_WARN([`missing' script is too old or missing])
 fi
 ])
 
+# AM_AUX_DIR_EXPAND
+
+# Copyright 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# For projects using AC_CONFIG_AUX_DIR([foo]), Autoconf sets
+# $ac_aux_dir to `$srcdir/foo'.  In other projects, it is set to
+# `$srcdir', `$srcdir/..', or `$srcdir/../..'.
+#
+# Of course, Automake must honor this variable whenever it calls a
+# tool from the auxiliary directory.  The problem is that $srcdir (and
+# therefore $ac_aux_dir as well) can be either absolute or relative,
+# depending on how configure is run.  This is pretty annoying, since
+# it makes $ac_aux_dir quite unusable in subdirectories: in the top
+# source directory, any form will work fine, but in subdirectories a
+# relative path needs to be adjusted first.
+#
+# $ac_aux_dir/missing
+#    fails when called from a subdirectory if $ac_aux_dir is relative
+# $top_srcdir/$ac_aux_dir/missing
+#    fails if $ac_aux_dir is absolute,
+#    fails when called from a subdirectory in a VPATH build with
+#          a relative $ac_aux_dir
+#
+# The reason of the latter failure is that $top_srcdir and $ac_aux_dir
+# are both prefixed by $srcdir.  In an in-source build this is usually
+# harmless because $srcdir is `.', but things will broke when you
+# start a VPATH build or use an absolute $srcdir.
+#
+# So we could use something similar to $top_srcdir/$ac_aux_dir/missing,
+# iff we strip the leading $srcdir from $ac_aux_dir.  That would be:
+#   am_aux_dir='\$(top_srcdir)/'`expr "$ac_aux_dir" : "$srcdir//*\(.*\)"`
+# and then we would define $MISSING as
+#   MISSING="\${SHELL} $am_aux_dir/missing"
+# This will work as long as MISSING is not called from configure, because
+# unfortunately $(top_srcdir) has no meaning in configure.
+# However there are other variables, like CC, which are often used in
+# configure, and could therefore not use this "fixed" $ac_aux_dir.
+#
+# Another solution, used here, is to always expand $ac_aux_dir to an
+# absolute PATH.  The drawback is that using absolute paths prevent a
+# configured tree to be moved without reconfiguration.
+
+# Rely on autoconf to set up CDPATH properly.
+AC_PREREQ([2.50])
+
+AC_DEFUN([AM_AUX_DIR_EXPAND], [
+# expand $ac_aux_dir to an absolute path
+am_aux_dir=`cd $ac_aux_dir && pwd`
+])
+
+# AM_PROG_INSTALL_SH
+# ------------------
+# Define $install_sh.
+
+# Copyright 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+AC_DEFUN([AM_PROG_INSTALL_SH],
+[AC_REQUIRE([AM_AUX_DIR_EXPAND])dnl
+install_sh=${install_sh-"$am_aux_dir/install-sh"}
+AC_SUBST(install_sh)])
+
+# AM_PROG_INSTALL_STRIP
+
+# Copyright 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# One issue with vendor `install' (even GNU) is that you can't
+# specify the program used to strip binaries.  This is especially
+# annoying in cross-compiling environments, where the build's strip
+# is unlikely to handle the host's binaries.
+# Fortunately install-sh will honor a STRIPPROG variable, so we
+# always use install-sh in `make install-strip', and initialize
+# STRIPPROG with the value of the STRIP variable (set by the user).
+AC_DEFUN([AM_PROG_INSTALL_STRIP],
+[AC_REQUIRE([AM_PROG_INSTALL_SH])dnl
+# Installed binaries are usually stripped using `strip' when the user
+# run `make install-strip'.  However `strip' might not be the right
+# tool to use in cross-compilation environments, therefore Automake
+# will honor the `STRIP' environment variable to overrule this program.
+dnl Don't test for $cross_compiling = yes, because it might be `maybe'.
+if test "$cross_compiling" != no; then
+  AC_CHECK_TOOL([STRIP], [strip], :)
+fi
+INSTALL_STRIP_PROGRAM="\${SHELL} \$(install_sh) -c -s"
+AC_SUBST([INSTALL_STRIP_PROGRAM])])
+
+# serial 4						-*- Autoconf -*-
+
+# Copyright 1999, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+
+# There are a few dirty hacks below to avoid letting `AC_PROG_CC' be
+# written in clear, in which case automake, when reading aclocal.m4,
+# will think it sees a *use*, and therefore will trigger all it's
+# C support machinery.  Also note that it means that autoscan, seeing
+# CC etc. in the Makefile, will ask for an AC_PROG_CC use...
+
+
+
+# _AM_DEPENDENCIES(NAME)
+# ----------------------
 # See how the compiler implements dependency checking.
-# Usage:
-# AM_DEPENDENCIES(NAME)
-# NAME is "CC", "CXX" or "OBJC".
-
+# NAME is "CC", "CXX", "GCJ", or "OBJC".
 # We try a few techniques and use that to set a single cache variable.
+#
+# We don't AC_REQUIRE the corresponding AC_PROG_CC since the latter was
+# modified to invoke _AM_DEPENDENCIES(CC); we would have a circular
+# dependency, and given that the user is not expected to run this macro,
+# just rely on AC_PROG_CC.
+AC_DEFUN([_AM_DEPENDENCIES],
+[AC_REQUIRE([AM_SET_DEPDIR])dnl
+AC_REQUIRE([AM_OUTPUT_DEPENDENCY_COMMANDS])dnl
+AC_REQUIRE([AM_MAKE_INCLUDE])dnl
+AC_REQUIRE([AM_DEP_TRACK])dnl
 
-AC_DEFUN([AM_DEPENDENCIES],[
-AC_REQUIRE([AM_SET_DEPDIR])
-AC_REQUIRE([AM_OUTPUT_DEPENDENCY_COMMANDS])
-ifelse([$1],CC,[
-AC_REQUIRE([AC_PROG_CC])
-AC_REQUIRE([AC_PROG_CPP])
-depcc="$CC"
-depcpp="$CPP"],[$1],CXX,[
-AC_REQUIRE([AC_PROG_CXX])
-AC_REQUIRE([AC_PROG_CXXCPP])
-depcc="$CXX"
-depcpp="$CXXCPP"],[$1],OBJC,[
-am_cv_OBJC_dependencies_compiler_type=gcc],[
-AC_REQUIRE([AC_PROG_][$1])
-depcc="$[$1]"
-depcpp=""])
-AC_MSG_CHECKING([dependency style of $depcc])
-AC_CACHE_VAL(am_cv_[$1]_dependencies_compiler_type,[
-if test -z "$AMDEP"; then
-  echo '#include "conftest.h"' > conftest.c
-  echo 'int i;' > conftest.h
+ifelse([$1], CC,   [depcc="$CC"   am_compiler_list=],
+       [$1], CXX,  [depcc="$CXX"  am_compiler_list=],
+       [$1], OBJC, [depcc="$OBJC" am_compiler_list='gcc3 gcc']
+       [$1], GCJ,  [depcc="$GCJ"  am_compiler_list='gcc3 gcc'],
+                   [depcc="$$1"   am_compiler_list=])
 
-  am_cv_[$1]_dependencies_compiler_type=none
-  for depmode in `sed -n 's/^#*\([a-zA-Z0-9]*\))$/\1/p' < "$am_depcomp"`; do
-    case "$depmode" in
+AC_CACHE_CHECK([dependency style of $depcc],
+               [am_cv_$1_dependencies_compiler_type],
+[if test -z "$AMDEP_TRUE" && test -f "$am_depcomp"; then
+  # We make a subdir and do the tests there.  Otherwise we can end up
+  # making bogus files that we don't know about and never remove.  For
+  # instance it was reported that on HP-UX the gcc test will end up
+  # making a dummy file named `D' -- because `-MD' means `put the output
+  # in D'.
+  mkdir conftest.dir
+  # Copy depcomp to subdir because otherwise we won't find it if we're
+  # using a relative directory.
+  cp "$am_depcomp" conftest.dir
+  cd conftest.dir
+
+  am_cv_$1_dependencies_compiler_type=none
+  if test "$am_compiler_list" = ""; then
+     am_compiler_list=`sed -n ['s/^#*\([a-zA-Z0-9]*\))$/\1/p'] < ./depcomp`
+  fi
+  for depmode in $am_compiler_list; do
+    # We need to recreate these files for each test, as the compiler may
+    # overwrite some of them when testing with obscure command lines.
+    # This happens at least with the AIX C compiler.
+    echo '#include "conftest.h"' > conftest.c
+    echo 'int i;' > conftest.h
+    echo "${am__include} ${am__quote}conftest.Po${am__quote}" > confmf
+
+    case $depmode in
     nosideeffect)
       # after this tag, mechanisms are not by side-effect, so they'll
       # only be used when explicitly requested
@@ -270,85 +620,92 @@ if test -z "$AMDEP"; then
     # We check with `-c' and `-o' for the sake of the "dashmstdout"
     # mode.  It turns out that the SunPro C++ compiler does not properly
     # handle `-M -o', and we need to detect this.
-    if depmode="$depmode" \
+    if depmode=$depmode \
        source=conftest.c object=conftest.o \
        depfile=conftest.Po tmpdepfile=conftest.TPo \
-       $SHELL $am_depcomp $depcc -c conftest.c -o conftest.o >/dev/null 2>&1 &&
-       grep conftest.h conftest.Po > /dev/null 2>&1; then
-      am_cv_[$1]_dependencies_compiler_type="$depmode"
+       $SHELL ./depcomp $depcc -c conftest.c -o conftest.o >/dev/null 2>&1 &&
+       grep conftest.h conftest.Po > /dev/null 2>&1 &&
+       ${MAKE-make} -s -f confmf > /dev/null 2>&1; then
+      am_cv_$1_dependencies_compiler_type=$depmode
       break
     fi
   done
 
-  rm -f conftest.*
+  cd ..
+  rm -rf conftest.dir
 else
-  am_cv_[$1]_dependencies_compiler_type=none
+  am_cv_$1_dependencies_compiler_type=none
 fi
 ])
-AC_MSG_RESULT($am_cv_[$1]_dependencies_compiler_type)
-[$1]DEPMODE="depmode=$am_cv_[$1]_dependencies_compiler_type"
-AC_SUBST([$1]DEPMODE)
+AC_SUBST([$1DEPMODE], [depmode=$am_cv_$1_dependencies_compiler_type])
 ])
 
-# Choose a directory name for dependency files.
-# This macro is AC_REQUIREd in AM_DEPENDENCIES
 
-AC_DEFUN([AM_SET_DEPDIR],[
-if test -d .deps || mkdir .deps 2> /dev/null || test -d .deps; then
+# AM_SET_DEPDIR
+# -------------
+# Choose a directory name for dependency files.
+# This macro is AC_REQUIREd in _AM_DEPENDENCIES
+AC_DEFUN([AM_SET_DEPDIR],
+[rm -f .deps 2>/dev/null
+mkdir .deps 2>/dev/null
+if test -d .deps; then
   DEPDIR=.deps
-  # We redirect because .deps might already exist and be populated.
-  # In this situation we don't want to see an error.
-  rmdir .deps > /dev/null 2>&1
 else
+  # MS-DOS does not allow filenames that begin with a dot.
   DEPDIR=_deps
 fi
-AC_SUBST(DEPDIR)
+rmdir .deps 2>/dev/null
+AC_SUBST([DEPDIR])
 ])
 
-AC_DEFUN([AM_DEP_TRACK],[
-AC_ARG_ENABLE(dependency-tracking,
+
+# AM_DEP_TRACK
+# ------------
+AC_DEFUN([AM_DEP_TRACK],
+[AC_ARG_ENABLE(dependency-tracking,
 [  --disable-dependency-tracking Speeds up one-time builds
   --enable-dependency-tracking  Do not reject slow dependency extractors])
-if test "x$enable_dependency_tracking" = xno; then
-  AMDEP="#"
-else
+if test "x$enable_dependency_tracking" != xno; then
   am_depcomp="$ac_aux_dir/depcomp"
-  if test ! -f "$am_depcomp"; then
-    AMDEP="#"
-  else
-    AMDEP=
-  fi
-fi
-AC_SUBST(AMDEP)
-if test -z "$AMDEP"; then
   AMDEPBACKSLASH='\'
-else
-  AMDEPBACKSLASH=
 fi
-pushdef([subst], defn([AC_SUBST]))
-subst(AMDEPBACKSLASH)
-popdef([subst])
+AM_CONDITIONAL([AMDEP], [test "x$enable_dependency_tracking" != xno])
+AC_SUBST([AMDEPBACKSLASH])
 ])
 
-# Generate code to set up dependency tracking.
-# This macro should only be invoked once -- use via AC_REQUIRE.
-# Usage:
-# AM_OUTPUT_DEPENDENCY_COMMANDS
+# Generate code to set up dependency tracking.   -*- Autoconf -*-
 
-#
-# This code is only required when automatic dependency tracking
-# is enabled.  FIXME.  This creates each `.P' file that we will
-# need in order to bootstrap the dependency handling code.
-AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],[
-AC_OUTPUT_COMMANDS([
-test x"$AMDEP" != x"" ||
-for mf in $CONFIG_FILES; do
-  case "$mf" in
-  Makefile) dirpart=.;;
-  */Makefile) dirpart=`echo "$mf" | sed -e 's|/[^/]*$||'`;;
-  *) continue;;
-  esac
-  grep '^DEP_FILES *= *[^ #]' < "$mf" > /dev/null || continue
+# Copyright 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+#serial 2
+
+# _AM_OUTPUT_DEPENDENCY_COMMANDS
+# ------------------------------
+AC_DEFUN([_AM_OUTPUT_DEPENDENCY_COMMANDS],
+[for mf in $CONFIG_FILES; do
+  # Strip MF so we end up with the name of the file.
+  mf=`echo "$mf" | sed -e 's/:.*$//'`
+  if (sed 1q $mf | fgrep 'generated by automake') > /dev/null 2>&1; then
+    dirpart=`AS_DIRNAME("$mf")`
+  else
+    continue
+  fi
+  grep '^DEP_FILES *= *[[^ @%:@]]' < "$mf" > /dev/null || continue
   # Extract the definition of DEP_FILES from the Makefile without
   # running `make'.
   DEPDIR=`sed -n -e '/^DEPDIR = / s///p' < "$mf"`
@@ -372,29 +729,134 @@ for mf in $CONFIG_FILES; do
        sed -e 's/\$(DEPDIR)/'"$DEPDIR"'/g' -e 's/\$U/'"$U"'/g'`; do
     # Make sure the directory exists.
     test -f "$dirpart/$file" && continue
-    fdir=`echo "$file" | sed -e 's|/[^/]*$||'`
-    $ac_aux_dir/mkinstalldirs "$dirpart/$fdir" > /dev/null 2>&1
+    fdir=`AS_DIRNAME(["$file"])`
+    AS_MKDIR_P([$dirpart/$fdir])
     # echo "creating $dirpart/$file"
     echo '# dummy' > "$dirpart/$file"
   done
 done
-], [AMDEP="$AMDEP"
-ac_aux_dir="$ac_aux_dir"])])
+])# _AM_OUTPUT_DEPENDENCY_COMMANDS
 
+
+# AM_OUTPUT_DEPENDENCY_COMMANDS
+# -----------------------------
+# This macro should only be invoked once -- use via AC_REQUIRE.
+#
+# This code is only required when automatic dependency tracking
+# is enabled.  FIXME.  This creates each `.P' file that we will
+# need in order to bootstrap the dependency handling code.
+AC_DEFUN([AM_OUTPUT_DEPENDENCY_COMMANDS],
+[AC_CONFIG_COMMANDS([depfiles],
+     [test x"$AMDEP_TRUE" != x"" || _AM_OUTPUT_DEPENDENCY_COMMANDS],
+     [AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"])
+])
+
+# Copyright 2001 Free Software Foundation, Inc.             -*- Autoconf -*-
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 2
+
+# AM_MAKE_INCLUDE()
+# -----------------
+# Check to see how make treats includes.
+AC_DEFUN([AM_MAKE_INCLUDE],
+[am_make=${MAKE-make}
+cat > confinc << 'END'
+doit:
+	@echo done
+END
+# If we don't find an include directive, just comment out the code.
+AC_MSG_CHECKING([for style of include used by $am_make])
+am__include="#"
+am__quote=
+_am_result=none
+# First try GNU make style include.
+echo "include confinc" > confmf
+# We grep out `Entering directory' and `Leaving directory'
+# messages which can occur if `w' ends up in MAKEFLAGS.
+# In particular we don't look at `^make:' because GNU make might
+# be invoked under some other name (usually "gmake"), in which
+# case it prints its new name instead of `make'.
+if test "`$am_make -s -f confmf 2> /dev/null | fgrep -v 'ing directory'`" = "done"; then
+   am__include=include
+   am__quote=
+   _am_result=GNU
+fi
+# Now try BSD make style include.
+if test "$am__include" = "#"; then
+   echo '.include "confinc"' > confmf
+   if test "`$am_make -s -f confmf 2> /dev/null`" = "done"; then
+      am__include=.include
+      am__quote="\""
+      _am_result=BSD
+   fi
+fi
+AC_SUBST(am__include)
+AC_SUBST(am__quote)
+AC_MSG_RESULT($_am_result)
+rm -f confinc confmf
+])
+
+# AM_CONDITIONAL                                              -*- Autoconf -*-
+
+# Copyright 1997, 2000, 2001 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 5
+
+AC_PREREQ(2.52)
+
+# AM_CONDITIONAL(NAME, SHELL-CONDITION)
+# -------------------------------------
 # Define a conditional.
-
 AC_DEFUN([AM_CONDITIONAL],
-[AC_SUBST($1_TRUE)
-AC_SUBST($1_FALSE)
+[ifelse([$1], [TRUE],  [AC_FATAL([$0: invalid condition: $1])],
+        [$1], [FALSE], [AC_FATAL([$0: invalid condition: $1])])dnl
+AC_SUBST([$1_TRUE])
+AC_SUBST([$1_FALSE])
 if $2; then
   $1_TRUE=
   $1_FALSE='#'
 else
   $1_TRUE='#'
   $1_FALSE=
-fi])
+fi
+AC_CONFIG_COMMANDS_PRE(
+[if test -z "${$1_TRUE}" && test -z "${$1_FALSE}"; then
+  AC_MSG_ERROR([conditional \"$1\" was never defined.
+Usually this means the macro was only invoked conditionally.])
+fi])])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: krb-prog-ln-s.m4,v 1.1 1997/12/14 15:59:01 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
 dnl Better test for ln -s, ln or cp
@@ -424,17 +886,42 @@ AC_SUBST(LN_S)dnl
 
 
 
+# Copyright 1998, 1999, 2000, 2001, 2002 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2, or (at your option)
+# any later version.
+
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
+# 02111-1307, USA.
+
+# serial 3
+
+AC_PREREQ(2.50)
+
 # AM_PROG_LEX
-# Look for flex, lex or missing, then run AC_PROG_LEX and AC_DECL_YYTEXT
+# -----------
+# Autoconf leaves LEX=: if lex or flex can't be found.  Change that to a
+# "missing" invocation, for better error output.
 AC_DEFUN([AM_PROG_LEX],
-[AC_REQUIRE([AM_MISSING_HAS_RUN])
-AC_CHECK_PROGS(LEX, flex lex, [${am_missing_run}flex])
-AC_PROG_LEX
-AC_DECL_YYTEXT])
+[AC_REQUIRE([AM_MISSING_HAS_RUN])dnl
+AC_REQUIRE([AC_PROG_LEX])dnl
+if test "$LEX" = :; then
+  LEX=${am_missing_run}flex
+fi])
 
 # libtool.m4 - Configure libtool for the host system. -*-Shell-script-*-
 
 # serial 46 AC_PROG_LIBTOOL
+
 AC_DEFUN([AC_PROG_LIBTOOL],
 [AC_REQUIRE([AC_LIBTOOL_SETUP])dnl
 
@@ -560,9 +1047,30 @@ _LT_AC_LTCONFIG_HACK
 
 ])
 
+# AC_LIBTOOL_HEADER_ASSERT
+# ------------------------
+AC_DEFUN([AC_LIBTOOL_HEADER_ASSERT],
+[AC_CACHE_CHECK([whether $CC supports assert without backlinking],
+    [lt_cv_func_assert_works],
+    [case $host in
+    *-*-solaris*)
+      if test "$GCC" = yes && test "$with_gnu_ld" != yes; then
+        case `$CC --version 2>/dev/null` in
+        [[12]].*) lt_cv_func_assert_works=no ;;
+        *)        lt_cv_func_assert_works=yes ;;
+        esac
+      fi
+      ;;
+    esac])
+
+if test "x$lt_cv_func_assert_works" = xyes; then
+  AC_CHECK_HEADERS(assert.h)
+fi
+])# AC_LIBTOOL_HEADER_ASSERT
+
 # _LT_AC_CHECK_DLFCN
 # --------------------
-AC_DEFUN(_LT_AC_CHECK_DLFCN,
+AC_DEFUN([_LT_AC_CHECK_DLFCN],
 [AC_CHECK_HEADERS(dlfcn.h)
 ])# _LT_AC_CHECK_DLFCN
 
@@ -580,10 +1088,10 @@ AC_CACHE_VAL([lt_cv_sys_global_symbol_pipe], [dnl
 # [They come from Ultrix.  What could be older than Ultrix?!! ;)]
 
 # Character class describing NM global symbol codes.
-[symcode='[BCDEGRST]']
+symcode='[[BCDEGRST]]'
 
 # Regexp to match symbols that can be accessed directly from C.
-[sympat='\([_A-Za-z][_A-Za-z0-9]*\)']
+sympat='\([[_A-Za-z]][[_A-Za-z0-9]]*\)'
 
 # Transform the above into a raw symbol and a C symbol.
 symxfrm='\1 \2\3 \3'
@@ -591,25 +1099,29 @@ symxfrm='\1 \2\3 \3'
 # Transform an extracted symbol line into a proper C declaration
 lt_cv_global_symbol_to_cdecl="sed -n -e 's/^. .* \(.*\)$/extern char \1;/p'"
 
+# Transform an extracted symbol line into symbol name and symbol address
+lt_cv_global_symbol_to_c_name_address="sed -n -e 's/^: \([[^ ]]*\) $/  {\\\"\1\\\", (lt_ptr) 0},/p' -e 's/^$symcode \([[^ ]]*\) \([[^ ]]*\)$/  {\"\2\", (lt_ptr) \&\2},/p'"
+
 # Define system-specific variables.
 case $host_os in
 aix*)
-  [symcode='[BCDT]']
+  symcode='[[BCDT]]'
   ;;
 cygwin* | mingw* | pw32*)
-  [symcode='[ABCDGISTW]']
+  symcode='[[ABCDGISTW]]'
   ;;
 hpux*) # Its linker distinguishes data from code symbols
   lt_cv_global_symbol_to_cdecl="sed -n -e 's/^T .* \(.*\)$/extern char \1();/p' -e 's/^$symcode* .* \(.*\)$/extern char \1;/p'"
+  lt_cv_global_symbol_to_c_name_address="sed -n -e 's/^: \([[^ ]]*\) $/  {\\\"\1\\\", (lt_ptr) 0},/p' -e 's/^$symcode* \([[^ ]]*\) \([[^ ]]*\)$/  {\"\2\", (lt_ptr) \&\2},/p'"
   ;;
 irix*)
-  [symcode='[BCDEGRST]']
+  symcode='[[BCDEGRST]]'
   ;;
 solaris* | sysv5*)
-  [symcode='[BDT]']
+  symcode='[[BDT]]'
   ;;
 sysv4)
-  [symcode='[DFNSTU]']
+  symcode='[[DFNSTU]]'
   ;;
 esac
 
@@ -623,14 +1135,14 @@ esac
 
 # If we're using GNU nm, then use its standard symbol codes.
 if $NM -V 2>&1 | egrep '(GNU|with BFD)' > /dev/null; then
-  [symcode='[ABCDGISTW]']
+  symcode='[[ABCDGISTW]]'
 fi
 
 # Try without a prefix undercore, then with it.
 for ac_symprfx in "" "_"; do
 
   # Write the raw and C identifiers.
-[lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[ 	]\($symcode$symcode*\)[ 	][ 	]*\($ac_symprfx\)$sympat$opt_cr$/$symxfrm/p'"]
+lt_cv_sys_global_symbol_pipe="sed -n -e 's/^.*[[ 	]]\($symcode$symcode*\)[[ 	]][[ 	]]*\($ac_symprfx\)$sympat$opt_cr$/$symxfrm/p'"
 
   # Check to see that the pipe works correctly.
   pipe_works=no
@@ -672,23 +1184,23 @@ EOF
 
 	  cat <<EOF >> conftest.$ac_ext
 #if defined (__STDC__) && __STDC__
-# define lt_ptr_t void *
+# define lt_ptr void *
 #else
-# define lt_ptr_t char *
+# define lt_ptr char *
 # define const
 #endif
 
 /* The mapping between symbol names and symbols. */
 const struct {
   const char *name;
-  lt_ptr_t address;
+  lt_ptr address;
 }
-[lt_preloaded_symbols[] =]
+lt_preloaded_symbols[[]] =
 {
 EOF
-	  sed "s/^$symcode$symcode* \(.*\) \(.*\)$/  {\"\2\", (lt_ptr_t) \&\2},/" < "$nlist" >> conftest.$ac_ext
+	  sed "s/^$symcode$symcode* \(.*\) \(.*\)$/  {\"\2\", (lt_ptr) \&\2},/" < "$nlist" >> conftest.$ac_ext
 	  cat <<\EOF >> conftest.$ac_ext
-  {0, (lt_ptr_t) 0}
+  {0, (lt_ptr) 0}
 };
 
 #ifdef __cplusplus
@@ -732,10 +1244,13 @@ done
 global_symbol_pipe="$lt_cv_sys_global_symbol_pipe"
 if test -z "$lt_cv_sys_global_symbol_pipe"; then
   global_symbol_to_cdecl=
+  global_symbol_to_c_name_address=
 else
   global_symbol_to_cdecl="$lt_cv_global_symbol_to_cdecl"
+  global_symbol_to_c_name_address="$lt_cv_global_symbol_to_c_name_address"
 fi
-if test -z "$global_symbol_pipe$global_symbol_to_cdecl"; then
+if test -z "$global_symbol_pipe$global_symbol_to_cdec$global_symbol_to_c_name_address";
+then
   AC_MSG_RESULT(failed)
 else
   AC_MSG_RESULT(ok)
@@ -753,16 +1268,17 @@ if test "X${PATH_SEPARATOR+set}" != Xset; then
     *-DOS) lt_cv_sys_path_separator=';' ;;
     *)     lt_cv_sys_path_separator=':' ;;
   esac
+  PATH_SEPARATOR=$lt_cv_sys_path_separator
 fi
 ])# _LT_AC_LIBTOOL_SYS_PATH_SEPARATOR
 
 # _LT_AC_PROG_ECHO_BACKSLASH
 # --------------------------
 # Add some code to the start of the generated configure script which
-# will find an echo command which doesn;t interpret backslashes.
+# will find an echo command which doesn't interpret backslashes.
 AC_DEFUN([_LT_AC_PROG_ECHO_BACKSLASH],
 [ifdef([AC_DIVERSION_NOTICE], [AC_DIVERT_PUSH(AC_DIVERSION_NOTICE)],
-                              [AC_DIVERT_PUSH(NOTICE)])
+			      [AC_DIVERT_PUSH(NOTICE)])
 _LT_AC_LIBTOOL_SYS_PATH_SEPARATOR
 
 # Check that we are running under the correct shell.
@@ -828,7 +1344,7 @@ else
   #
   # So, first we look for a working echo in the user's PATH.
 
-  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS="${IFS}${PATH_SEPARATOR}"
+  IFS="${IFS= 	}"; save_ifs="$IFS"; IFS=$PATH_SEPARATOR
   for dir in $PATH /usr/ucb; do
     if (test -f $dir/echo || test -f $dir/echo$ac_exeext) &&
        test "X`($dir/echo '\t') 2>/dev/null`" = 'X\t' &&
@@ -917,7 +1433,7 @@ AC_DIVERT_POP
 # _LT_AC_TRY_DLOPEN_SELF (ACTION-IF-TRUE, ACTION-IF-TRUE-W-USCORE,
 #                           ACTION-IF-FALSE, ACTION-IF-CROSS-COMPILING)
 # ------------------------------------------------------------------
-AC_DEFUN(_LT_AC_TRY_DLOPEN_SELF,
+AC_DEFUN([_LT_AC_TRY_DLOPEN_SELF],
 [if test "$cross_compiling" = yes; then :
   [$4]
 else
@@ -1004,7 +1520,7 @@ rm -fr conftest*
 
 # AC_LIBTOOL_DLOPEN_SELF
 # -------------------
-AC_DEFUN(AC_LIBTOOL_DLOPEN_SELF,
+AC_DEFUN([AC_LIBTOOL_DLOPEN_SELF],
 [if test "x$enable_dlopen" != xyes; then
   enable_dlopen=unknown
   enable_dlopen_self=unknown
@@ -1026,16 +1542,22 @@ else
    ;;
 
   *)
-    AC_CHECK_LIB(dl, dlopen,  [lt_cv_dlopen="dlopen" lt_cv_dlopen_libs="-ldl"],
-      [AC_CHECK_FUNC(dlopen, lt_cv_dlopen="dlopen",
-        [AC_CHECK_FUNC(shl_load, lt_cv_dlopen="shl_load",
-          [AC_CHECK_LIB(svld, dlopen,
-	    [lt_cv_dlopen="dlopen" lt_cv_dlopen_libs="-lsvld"],
-            [AC_CHECK_LIB(dld, shl_load,
-              [lt_cv_dlopen="dld_link" lt_cv_dlopen_libs="-dld"])
+    AC_CHECK_FUNC([shl_load],
+          [lt_cv_dlopen="shl_load"],
+      [AC_CHECK_LIB([dld], [shl_load],
+            [lt_cv_dlopen="shl_load" lt_cv_dlopen_libs="-dld"],
+	[AC_CHECK_FUNC([dlopen],
+	      [lt_cv_dlopen="dlopen"],
+	  [AC_CHECK_LIB([dl], [dlopen],
+	        [lt_cv_dlopen="dlopen" lt_cv_dlopen_libs="-ldl"],
+	    [AC_CHECK_LIB([svld], [dlopen],
+	          [lt_cv_dlopen="dlopen" lt_cv_dlopen_libs="-lsvld"],
+	      [AC_CHECK_LIB([dld], [dld_link],
+	            [lt_cv_dlopen="dld_link" lt_cv_dlopen_libs="-dld"])
+	      ])
 	    ])
-          ])
-        ])
+	  ])
+	])
       ])
     ;;
   esac
@@ -1098,10 +1620,10 @@ AC_DEFUN([_LT_AC_LTCONFIG_HACK],
 # Sed substitution that helps us do robust quoting.  It backslashifies
 # metacharacters that are still active within double-quoted strings.
 Xsed='sed -e s/^X//'
-[sed_quote_subst='s/\([\\"\\`$\\\\]\)/\\\1/g']
+sed_quote_subst='s/\([[\\"\\`$\\\\]]\)/\\\1/g'
 
 # Same as above, but do not quote variable references.
-[double_quote_subst='s/\([\\"\\`\\\\]\)/\\\1/g']
+double_quote_subst='s/\([[\\"\\`\\\\]]\)/\\\1/g'
 
 # Sed substitution to delay expansion of an escaped shell variable in a
 # double_quote_subst'ed string.
@@ -1170,8 +1692,15 @@ old_postinstall_cmds='chmod 644 $oldlib'
 old_postuninstall_cmds=
 
 if test -n "$RANLIB"; then
+  case $host_os in
+  openbsd*)
+    old_postinstall_cmds="\$RANLIB -t \$oldlib~$old_postinstall_cmds"
+    ;;
+  *)
+    old_postinstall_cmds="\$RANLIB \$oldlib~$old_postinstall_cmds"
+    ;;
+  esac
   old_archive_cmds="$old_archive_cmds~\$RANLIB \$oldlib"
-  old_postinstall_cmds="\$RANLIB \$oldlib~$old_postinstall_cmds"
 fi
 
 # Allow CC to be a program name with arguments.
@@ -1191,7 +1720,7 @@ rmdir .libs 2>/dev/null
 AC_MSG_RESULT($objdir)
 
 
-AC_ARG_WITH(pic, 
+AC_ARG_WITH(pic,
 [  --with-pic              try to use only PIC/non-PIC objects [default=use both]],
 pic_mode="$withval", pic_mode=default)
 test -z "$pic_mode" && pic_mode=default
@@ -1219,7 +1748,7 @@ AC_CACHE_VAL(lt_cv_prog_cc_pic,
       # libC (AIX C++ library), which obviously doesn't included in libraries
       # list by gcc. This cause undefined symbols with -static flags.
       # This hack allows C programs to be linked with "-static -ldl", but
-      # we not sure about C++ programs.
+      # not sure about C++ programs.
       lt_cv_prog_cc_static="$lt_cv_prog_cc_static ${lt_cv_prog_cc_wl}-lC"
       ;;
     amigaos*)
@@ -1254,13 +1783,13 @@ AC_CACHE_VAL(lt_cv_prog_cc_pic,
     # PORTME Check for PIC flags for the system compiler.
     case $host_os in
     aix3* | aix4* | aix5*)
+      lt_cv_prog_cc_wl='-Wl,'
       # All AIX code is PIC.
       if test "$host_cpu" = ia64; then
-        # AIX 5 now supports IA64 processor
-        lt_cv_prog_cc_static='-Bstatic'
-        lt_cv_prog_cc_wl='-Wl,'
+	# AIX 5 now supports IA64 processor
+	lt_cv_prog_cc_static='-Bstatic'
       else
-        lt_cv_prog_cc_static='-bnso -bI:/lib/syscalls.exp'
+	lt_cv_prog_cc_static='-bnso -bI:/lib/syscalls.exp'
       fi
       ;;
 
@@ -1316,9 +1845,9 @@ AC_CACHE_VAL(lt_cv_prog_cc_pic,
       lt_cv_prog_cc_pic='-KPIC'
       lt_cv_prog_cc_static='-Bstatic'
       if test "x$host_vendor" = xsni; then
-        lt_cv_prog_cc_wl='-LD'
+	lt_cv_prog_cc_wl='-LD'
       else
-        lt_cv_prog_cc_wl='-Wl,'
+	lt_cv_prog_cc_wl='-Wl,'
       fi
       ;;
 
@@ -1385,7 +1914,7 @@ fi
 # Check for any special shared library compilation flags.
 if test -n "$lt_cv_prog_cc_shlib"; then
   AC_MSG_WARN([\`$CC' requires \`$lt_cv_prog_cc_shlib' to build shared libraries])
-  if echo "$old_CC $old_CFLAGS " | [egrep -e "[ 	]$lt_cv_prog_cc_shlib[ 	]"] >/dev/null; then :
+  if echo "$old_CC $old_CFLAGS " | egrep -e "[[ 	]]$lt_cv_prog_cc_shlib[[ 	]]" >/dev/null; then :
   else
    AC_MSG_WARN([add \`$lt_cv_prog_cc_shlib' to the CC or CFLAGS env variable and reconfigure])
     lt_cv_prog_cc_can_build_shared=no
@@ -1461,6 +1990,8 @@ if test x"$compiler_c_o" = x"yes"; then
   lt_cv_compiler_o_lo=no
   save_CFLAGS="$CFLAGS"
   CFLAGS="$CFLAGS -c -o conftest.lo"
+  save_objext="$ac_objext"
+  ac_objext=lo
   AC_TRY_COMPILE([], [int some_variable = 0;], [dnl
     # The compiler can only warn and ignore the option if not recognized
     # So say no if there are warnings
@@ -1470,10 +2001,11 @@ if test x"$compiler_c_o" = x"yes"; then
       lt_cv_compiler_o_lo=yes
     fi
   ])
+  ac_objext="$save_objext"
   CFLAGS="$save_CFLAGS"
   ])
   compiler_o_lo=$lt_cv_compiler_o_lo
-  AC_MSG_RESULT([$compiler_c_lo])
+  AC_MSG_RESULT([$compiler_o_lo])
 else
   compiler_o_lo=no
 fi
@@ -1566,7 +2098,7 @@ exclude_expsyms="_GLOBAL_OFFSET_TABLE_"
 extract_expsyms_cmds=
 
 case $host_os in
-cygwin* | mingw* | pw32* )
+cygwin* | mingw* | pw32*)
   # FIXME: the MSVC++ port hasn't been tested in a loooong time
   # When not using gcc, we currently assume that we are using
   # Microsoft Visual C++.
@@ -1574,7 +2106,9 @@ cygwin* | mingw* | pw32* )
     with_gnu_ld=no
   fi
   ;;
-
+openbsd*)
+  with_gnu_ld=no
+  ;;
 esac
 
 ld_shlibs=yes
@@ -1661,7 +2195,7 @@ EOF
     # can override, but on older systems we have to supply one (in ltdll.c)
     if test "x$lt_cv_need_dllmain" = "xyes"; then
       ltdll_obj='$output_objdir/$soname-ltdll.'"$ac_objext "
-      ltdll_cmds='test -f $output_objdir/$soname-ltdll.c || sed -e "/^# \/\* ltdll\.c starts here \*\//,/^# \/\* ltdll.c ends here \*\// { s/^# //; p; }" -e d < [$]0 > $output_objdir/$soname-ltdll.c~
+      ltdll_cmds='test -f $output_objdir/$soname-ltdll.c || sed -e "/^# \/\* ltdll\.c starts here \*\//,/^# \/\* ltdll.c ends here \*\// { s/^# //; p; }" -e d < $''0 > $output_objdir/$soname-ltdll.c~
 	test -f $output_objdir/$soname-ltdll.$ac_objext || (cd $output_objdir && $CC -c $soname-ltdll.c)~'
     else
       ltdll_obj=
@@ -1674,24 +2208,24 @@ EOF
     # Be careful not to strip the DATA tag left be newer dlltools.
     export_symbols_cmds="$ltdll_cmds"'
       $DLLTOOL --export-all --exclude-symbols '$dll_exclude_symbols' --output-def $output_objdir/$soname-def '$ltdll_obj'$libobjs $convenience~
-      [sed -e "1,/EXPORTS/d" -e "s/ @ [0-9]*//" -e "s/ *;.*$//"] < $output_objdir/$soname-def > $export_symbols'
+      sed -e "1,/EXPORTS/d" -e "s/ @ [[0-9]]*//" -e "s/ *;.*$//" < $output_objdir/$soname-def > $export_symbols'
 
     # If the export-symbols file already is a .def file (1st line
     # is EXPORTS), use it as is.
     # If DATA tags from a recent dlltool are present, honour them!
     archive_expsym_cmds='if test "x`head -1 $export_symbols`" = xEXPORTS; then
-        cp $export_symbols $output_objdir/$soname-def;
+	cp $export_symbols $output_objdir/$soname-def;
       else
-        echo EXPORTS > $output_objdir/$soname-def;
-        _lt_hint=1;
-        cat $export_symbols | while read symbol; do
-         set dummy \$symbol;
-         case \[$]# in
-           2) echo "   \[$]2 @ \$_lt_hint ; " >> $output_objdir/$soname-def;;
-           *) echo "     \[$]2 @ \$_lt_hint \[$]3 ; " >> $output_objdir/$soname-def;;
-         esac;
-         _lt_hint=`expr 1 + \$_lt_hint`;
-        done;
+	echo EXPORTS > $output_objdir/$soname-def;
+	_lt_hint=1;
+	cat $export_symbols | while read symbol; do
+	 set dummy \$symbol;
+	 case \[$]# in
+	   2) echo "   \[$]2 @ \$_lt_hint ; " >> $output_objdir/$soname-def;;
+	   *) echo "     \[$]2 @ \$_lt_hint \[$]3 ; " >> $output_objdir/$soname-def;;
+	 esac;
+	 _lt_hint=`expr 1 + \$_lt_hint`;
+	done;
       fi~
       '"$ltdll_cmds"'
       $CC -Wl,--base-file,$output_objdir/$soname-base '$lt_cv_cc_dll_switch' -Wl,-e,'$dll_entry' -o $output_objdir/$soname '$ltdll_obj'$libobjs $deplibs $compiler_flags~
@@ -1786,41 +2320,6 @@ else
     ;;
 
   aix4* | aix5*)
-    # When large executables or shared objects are built, AIX ld can
-    # have problems creating the table of contents.  If linking a library
-    # or program results in "error TOC overflow" add -mminimal-toc to
-    # CXXFLAGS/CFLAGS for g++/gcc.  In the cases where that is not
-    # enough to fix the problem, add -Wl,-bbigtoc to LDFLAGS.
-
-    archive_cmds=''
-    hardcode_libdir_separator=':'
-    if test "$GCC" = yes; then
-      collect2name=`${CC} -print-prog-name=collect2`
-      if test -f "$collect2name" && \
-	 strings "$collect2name" | grep resolve_lib_name >/dev/null
-      then
-	# We have reworked collect2
-	hardcode_direct=yes
-      else
-        # We have old collect2
-        hardcode_direct=unsupported
-        # It fails to find uninstalled libraries when the uninstalled
-        # path is not listed in the libpath.  Setting hardcode_minus_L
-        # to unsupported forces relinking
-        hardcode_minus_L=yes
-        hardcode_libdir_flag_spec='-L$libdir'
-        hardcode_libdir_separator=
-      fi
-      shared_flag='-shared'
-    else
-      if test "$host_cpu" = ia64; then
-        shared_flag='-G'
-      else
-        shared_flag='${wl}-bM:SRE'
-      fi
-      hardcode_direct=yes
-    fi
-
     if test "$host_cpu" = ia64; then
       # On IA64, the linker does run time linking by default, so we don't
       # have to do anything special.
@@ -1828,38 +2327,89 @@ else
       exp_sym_flag='-Bexport'
       no_entry_flag=""
     else
-      # Test if we are trying to use run time linking, or normal AIX style linking.
-      # If -brtl is somewhere in LDFLAGS, we need to do run time linking.
       aix_use_runtimelinking=no
-      for ld_flag in $LDFLAGS; do
-        if (test $ld_flag = "-brtl" || test $ld_flag = "-Wl,-brtl" ); then
-          aix_use_runtimelinking=yes
-          break
-        fi
-      done
+
+      # Test if we are trying to use run time linking or normal
+      # AIX style linking. If -brtl is somewhere in LDFLAGS, we
+      # need to do runtime linking.
+      case $host_os in aix4.[[23]]|aix4.[[23]].*|aix5*)
+	for ld_flag in $LDFLAGS; do
+	  if (test $ld_flag = "-brtl" || test $ld_flag = "-Wl,-brtl"); then
+	    aix_use_runtimelinking=yes
+	    break
+	  fi
+	done
+      esac
+
       exp_sym_flag='-bexport'
       no_entry_flag='-bnoentry'
     fi
+
+    # When large executables or shared objects are built, AIX ld can
+    # have problems creating the table of contents.  If linking a library
+    # or program results in "error TOC overflow" add -mminimal-toc to
+    # CXXFLAGS/CFLAGS for g++/gcc.  In the cases where that is not
+    # enough to fix the problem, add -Wl,-bbigtoc to LDFLAGS.
+
+    hardcode_direct=yes
+    archive_cmds=''
+    hardcode_libdir_separator=':'
+    if test "$GCC" = yes; then
+      case $host_os in aix4.[[012]]|aix4.[[012]].*)
+	collect2name=`${CC} -print-prog-name=collect2`
+	if test -f "$collect2name" && \
+	  strings "$collect2name" | grep resolve_lib_name >/dev/null
+	then
+	  # We have reworked collect2
+	  hardcode_direct=yes
+	else
+	  # We have old collect2
+	  hardcode_direct=unsupported
+	  # It fails to find uninstalled libraries when the uninstalled
+	  # path is not listed in the libpath.  Setting hardcode_minus_L
+	  # to unsupported forces relinking
+	  hardcode_minus_L=yes
+	  hardcode_libdir_flag_spec='-L$libdir'
+	  hardcode_libdir_separator=
+	fi
+      esac
+
+      shared_flag='-shared'
+    else
+      # not using gcc
+      if test "$host_cpu" = ia64; then
+	shared_flag='${wl}-G'
+      else
+	if test "$aix_use_runtimelinking" = yes; then
+	  shared_flag='${wl}-G'
+	else
+	  shared_flag='${wl}-bM:SRE'
+	fi
+      fi
+    fi
+
     # It seems that -bexpall can do strange things, so it is better to
     # generate a list of symbols to export.
     always_export_symbols=yes
     if test "$aix_use_runtimelinking" = yes; then
+      # Warning - without using the other runtime loading flags (-brtl),
+      # -berok will link without error, but may produce a broken library.
+      allow_undefined_flag='-berok'
       hardcode_libdir_flag_spec='${wl}-blibpath:$libdir:/usr/lib:/lib'
-      allow_undefined_flag=' -Wl,-G'
-      archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"
+      archive_expsym_cmds="\$CC"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags `if test "x${allow_undefined_flag}" != "x"; then echo "${wl}${allow_undefined_flag}"; else :; fi` '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols $shared_flag"
     else
       if test "$host_cpu" = ia64; then
-        hardcode_libdir_flag_spec='${wl}-R $libdir:/usr/lib:/lib'
-       allow_undefined_flag="-znodefs"
-        archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname ${wl}-h$soname $libobjs $deplibs $compiler_flags ${wl}${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"
+	hardcode_libdir_flag_spec='${wl}-R $libdir:/usr/lib:/lib'
+	allow_undefined_flag="-z nodefs"
+	archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname ${wl}-h$soname $libobjs $deplibs $compiler_flags ${wl}${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"
       else
-        hardcode_libdir_flag_spec='${wl}-bnolibpath ${wl}-blibpath:$libdir:/usr/lib:/lib'
-        # Warning - without using the other run time loading flags, -berok will
-        #           link without error, but may produce a broken library.
-        allow_undefined_flag='${wl}-berok"
-        # This is a bit strange, but is similar to how AIX traditionally builds
-        # it's shared libraries.
-        archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"' ~$AR -crlo $objdir/$libname$release.a $objdir/$soname'
+	hardcode_libdir_flag_spec='${wl}-bnolibpath ${wl}-blibpath:$libdir:/usr/lib:/lib'
+	# Warning - without using the other run time loading flags,
+	# -berok will link without error, but may produce a broken library.
+	allow_undefined_flag='${wl}-berok'
+	# This is a bit strange, but is similar to how AIX traditionally builds
+	# it's shared libraries.
+	archive_expsym_cmds="\$CC $shared_flag"' -o $output_objdir/$soname $libobjs $deplibs $compiler_flags ${allow_undefined_flag} '"\${wl}$no_entry_flag \${wl}$exp_sym_flag:\$export_symbols"' ~$AR -crlo $objdir/$libname$release.a $objdir/$soname'
       fi
     fi
     ;;
@@ -1891,11 +2441,18 @@ else
     ;;
 
   darwin* | rhapsody*)
-    allow_undefined_flag='-undefined suppress'
+    case "$host_os" in
+    rhapsody* | darwin1.[[012]])
+      allow_undefined_flag='-undefined suppress'
+      ;;
+    *) # Darwin 1.3 on
+      allow_undefined_flag='-flat_namespace -undefined suppress'
+      ;;
+    esac
     # FIXME: Relying on posixy $() will cause problems for
     #        cross-compilation, but unfortunately the echo tests do not
     #        yet detect zsh echo's removal of \ escapes.
-    archive_cmds='$CC $(test .$module = .yes && echo -bundle || echo -dynamiclib) $allow_undefined_flag -o $lib $libobjs $deplibs$linkopts -install_name $rpath/$soname $(test -n "$verstring" -a x$verstring != x0.0 && echo $verstring)'
+    archive_cmds='$nonopt $(test "x$module" = xyes && echo -bundle || echo -dynamiclib) $allow_undefined_flag -o $lib $libobjs $deplibs$linker_flags -install_name $rpath/$soname $verstring'
     # We need to add '_' to the symbols in $export_symbols first
     #archive_expsym_cmds="$archive_cmds"' && strip -s $export_symbols'
     hardcode_direct=yes
@@ -1970,7 +2527,7 @@ else
     ;;
 
   newsos6)
-    archive_cmds='$LD -G -h $soname -o $lib $libobjs $deplibs $linkopts'
+    archive_cmds='$LD -G -h $soname -o $lib $libobjs $deplibs $linker_flags'
     hardcode_direct=yes
     hardcode_libdir_flag_spec='${wl}-rpath ${wl}$libdir'
     hardcode_libdir_separator=:
@@ -1978,10 +2535,24 @@ else
     ;;
 
   openbsd*)
-    archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'
-    hardcode_libdir_flag_spec='-R$libdir'
     hardcode_direct=yes
     hardcode_shlibpath_var=no
+    if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+      archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+      hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+      export_dynamic_flag_spec='${wl}-E'
+    else
+      case "$host_os" in
+      openbsd[[01]].* | openbsd2.[[0-7]] | openbsd2.[[0-7]].*)
+	archive_cmds='$LD -Bshareable -o $lib $libobjs $deplibs $linker_flags'
+	hardcode_libdir_flag_spec='-R$libdir'
+        ;;
+      *)
+        archive_cmds='$CC -shared $pic_flag -o $lib $libobjs $deplibs $linker_flags'
+        hardcode_libdir_flag_spec='${wl}-rpath,$libdir'
+        ;;
+      esac
+    fi
     ;;
 
   os2*)
@@ -2026,10 +2597,39 @@ else
     hardcode_shlibpath_var=no
     runpath_var=LD_RUN_PATH
     hardcode_runpath_var=yes
+    export_dynamic_flag_spec='${wl}-Bexport'
     ;;
 
   solaris*)
+    # gcc --version < 3.0 without binutils cannot create self contained
+    # shared libraries reliably, requiring libgcc.a to resolve some of
+    # the object symbols generated in some cases.  Libraries that use
+    # assert need libgcc.a to resolve __eprintf, for example.  Linking
+    # a copy of libgcc.a into every shared library to guarantee resolving
+    # such symbols causes other problems:  According to Tim Van Holder
+    # <tim.van.holder@pandora.be>, C++ libraries end up with a separate
+    # (to the application) exception stack for one thing.
     no_undefined_flag=' -z defs'
+    if test "$GCC" = yes; then
+      case `$CC --version 2>/dev/null` in
+      [[12]].*)
+	cat <<EOF 1>&2
+
+*** Warning: Releases of GCC earlier than version 3.0 cannot reliably
+*** create self contained shared libraries on Solaris systems, without
+*** introducing a dependency on libgcc.a.  Therefore, libtool is disabling
+*** -no-undefined support, which will at least allow you to build shared
+*** libraries.  However, you may find that when you link such libraries
+*** into an application without using GCC, you have to manually add
+*** \`gcc --print-libgcc-file-name\` to the link command.  We urge you to
+*** upgrade to a newer version of GCC.  Another option is to rebuild your
+*** current GCC to use the GNU linker from GNU binutils 2.9.1 or newer.
+
+EOF
+        no_undefined_flag=
+	;;
+      esac
+    fi
     # $CC -shared without GNU ld will not create a library from C++
     # object files and a static libstdc++, better avoid it by now
     archive_cmds='$LD -G${allow_undefined_flag} -h $soname -o $lib $libobjs $deplibs $linker_flags'
@@ -2038,7 +2638,7 @@ else
     hardcode_libdir_flag_spec='-R$libdir'
     hardcode_shlibpath_var=no
     case $host_os in
-    [solaris2.[0-5] | solaris2.[0-5].*]) ;;
+    solaris2.[[0-5]] | solaris2.[[0-5]].*) ;;
     *) # Supported since Solaris 2.6 (maybe 2.5.1?)
       whole_archive_flag_spec='-z allextract$convenience -z defaultextract' ;;
     esac
@@ -2061,7 +2661,7 @@ else
 
   sysv4)
     if test "x$host_vendor" = xsno; then
-      archive_cmds='$LD -G -Bsymbolic -h $soname -o $lib $libobjs $deplibs $linkopts'
+      archive_cmds='$LD -G -Bsymbolic -h $soname -o $lib $libobjs $deplibs $linker_flags'
       hardcode_direct=yes # is this really true???
     else
       archive_cmds='$LD -G -h $soname -o $lib $libobjs $deplibs $linker_flags'
@@ -2218,22 +2818,24 @@ aix4* | aix5*)
     # depend on `.', always an invalid library.  This was fixed in
     # development snapshots of GCC prior to 3.0.
     case $host_os in
-      [ aix4 | aix4.[01] | aix4.[01].*)]
-      if { echo '#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 97)'
-           echo ' yes '
-           echo '#endif'; } | ${CC} -E - | grep yes > /dev/null; then
-        :
-      else
-        can_build_shared=no
-      fi
-      ;;
+      aix4 | aix4.[[01]] | aix4.[[01]].*)
+	if { echo '#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 97)'
+	     echo ' yes '
+	     echo '#endif'; } | ${CC} -E - | grep yes > /dev/null; then
+	  :
+	else
+	  can_build_shared=no
+	fi
+	;;
     esac
-    # AIX (on Power*) has no versioning support, so currently we can not hardcode correct
-    # soname into executable. Probably we can add versioning support to
-    # collect2, so additional links can be useful in future.
+    # AIX (on Power*) has no versioning support, so currently we can
+    # not hardcode correct soname into executable. Probably we can
+    # add versioning support to collect2, so additional links can
+    # be useful in future.
     if test "$aix_use_runtimelinking" = yes; then
-      # If using run time linking (on AIX 4.2 or later) use lib<name>.so instead of
-      # lib<name>.a to let people know that these are not typical AIX shared libraries.
+      # If using run time linking (on AIX 4.2 or later) use lib<name>.so
+      # instead of lib<name>.a to let people know that these are not
+      # typical AIX shared libraries.
       library_names_spec='${libname}${release}.so$versuffix ${libname}${release}.so$major $libname.so'
     else
       # We preserve .a as extension for shared libraries through AIX4.2
@@ -2242,14 +2844,13 @@ aix4* | aix5*)
       soname_spec='${libname}${release}.so$major'
     fi
     shlibpath_var=LIBPATH
-    deplibs_check_method=pass_all
   fi
   ;;
 
 amigaos*)
   library_names_spec='$libname.ixlibrary $libname.a'
   # Create ${libname}_ixlibrary.a entries in /sys/libs.
-  finish_eval='for lib in `ls $libdir/*.ixlibrary 2>/dev/null`; do libname=`$echo "X$lib" | [$Xsed -e '\''s%^.*/\([^/]*\)\.ixlibrary$%\1%'\'']`; test $rm /sys/libs/${libname}_ixlibrary.a; $show "(cd /sys/libs && $LN_S $lib ${libname}_ixlibrary.a)"; (cd /sys/libs && $LN_S $lib ${libname}_ixlibrary.a) || exit 1; done'
+  finish_eval='for lib in `ls $libdir/*.ixlibrary 2>/dev/null`; do libname=`$echo "X$lib" | $Xsed -e '\''s%^.*/\([[^/]]*\)\.ixlibrary$%\1%'\''`; test $rm /sys/libs/${libname}_ixlibrary.a; $show "(cd /sys/libs && $LN_S $lib ${libname}_ixlibrary.a)"; (cd /sys/libs && $LN_S $lib ${libname}_ixlibrary.a) || exit 1; done'
   ;;
 
 beos*)
@@ -2280,7 +2881,7 @@ cygwin* | mingw* | pw32*)
   case $GCC,$host_os in
   yes,cygwin*)
     library_names_spec='$libname.dll.a'
-    soname_spec='`echo ${libname} | sed -e 's/^lib/cyg/'``echo ${release} | [sed -e 's/[.]/-/g']`${versuffix}.dll'
+    soname_spec='`echo ${libname} | sed -e 's/^lib/cyg/'``echo ${release} | sed -e 's/[[.]]/-/g'`${versuffix}.dll'
     postinstall_cmds='dlpath=`bash 2>&1 -c '\''. $dir/${file}i;echo \$dlname'\''`~
       dldir=$destdir/`dirname \$dlpath`~
       test -d \$dldir || mkdir -p \$dldir~
@@ -2290,14 +2891,14 @@ cygwin* | mingw* | pw32*)
        $rm \$dlpath'
     ;;
   yes,mingw*)
-    library_names_spec='${libname}`echo ${release} | [sed -e 's/[.]/-/g']`${versuffix}.dll'
+    library_names_spec='${libname}`echo ${release} | sed -e 's/[[.]]/-/g'`${versuffix}.dll'
     sys_lib_search_path_spec=`$CC -print-search-dirs | grep "^libraries:" | sed -e "s/^libraries://" -e "s/;/ /g"`
     ;;
   yes,pw32*)
     library_names_spec='`echo ${libname} | sed -e 's/^lib/pw/'``echo ${release} | sed -e 's/[.]/-/g'`${versuffix}.dll'
     ;;
   *)
-    library_names_spec='${libname}`echo ${release} | [sed -e 's/[.]/-/g']`${versuffix}.dll $libname.lib'
+    library_names_spec='${libname}`echo ${release} | sed -e 's/[[.]]/-/g'`${versuffix}.dll $libname.lib'
     ;;
   esac
   dynamic_linker='Win32 ld.exe'
@@ -2455,9 +3056,19 @@ newsos6)
 
 openbsd*)
   version_type=sunos
-  if test "$with_gnu_ld" = yes; then
-    need_lib_prefix=no
-    need_version=no
+  need_lib_prefix=no
+  need_version=no
+  if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+    case "$host_os" in
+    openbsd2.[[89]] | openbsd2.[[89]].*)
+      shlibpath_overrides_runpath=no
+      ;;
+    *)
+      shlibpath_overrides_runpath=yes
+      ;;
+    esac
+  else
+    shlibpath_overrides_runpath=yes
   fi
   library_names_spec='${libname}${release}.so$versuffix ${libname}.so$versuffix'
   finish_cmds='PATH="\$PATH:/sbin" ldconfig -m $libdir'
@@ -2568,6 +3179,33 @@ test "$dynamic_linker" = no && can_build_shared=no
 AC_MSG_CHECKING([if libtool supports shared libraries])
 AC_MSG_RESULT([$can_build_shared])
 
+AC_MSG_CHECKING([whether to build shared libraries])
+test "$can_build_shared" = "no" && enable_shared=no
+
+# On AIX, shared libraries and static libraries use the same namespace, and
+# are all built from PIC.
+case "$host_os" in
+aix3*)
+  test "$enable_shared" = yes && enable_static=no
+  if test -n "$RANLIB"; then
+    archive_cmds="$archive_cmds~\$RANLIB \$lib"
+    postinstall_cmds='$RANLIB $lib'
+  fi
+  ;;
+
+aix4*)
+  if test "$host_cpu" != ia64 && test "$aix_use_runtimelinking" = no ; then
+    test "$enable_shared" = yes && enable_static=no
+  fi
+  ;;
+esac
+AC_MSG_RESULT([$enable_shared])
+
+AC_MSG_CHECKING([whether to build static libraries])
+# Make sure either enable_shared or enable_static is yes.
+test "$enable_shared" = yes || enable_static=yes
+AC_MSG_RESULT([$enable_static])
+
 if test "$hardcode_action" = relink; then
   # Fast installation is not supported
   enable_fast_install=no
@@ -2661,6 +3299,7 @@ if test -f "$ltmain"; then
     old_striplib striplib file_magic_cmd export_symbols_cmds \
     deplibs_check_method allow_undefined_flag no_undefined_flag \
     finish_cmds finish_eval global_symbol_pipe global_symbol_to_cdecl \
+    global_symbol_to_c_name_address \
     hardcode_libdir_flag_spec hardcode_libdir_separator  \
     sys_lib_search_path_spec sys_lib_dlsearch_path_spec \
     compiler_c_o compiler_o_lo need_locks exclude_expsyms include_expsyms; do
@@ -2727,11 +3366,11 @@ SHELL=$lt_SHELL
 # Whether or not to build shared libraries.
 build_libtool_libs=$enable_shared
 
-# Whether or not to add -lc for building shared libraries.
-build_libtool_need_lc=$need_lc
-
 # Whether or not to build static libraries.
 build_old_libs=$enable_static
+
+# Whether or not to add -lc for building shared libraries.
+build_libtool_need_lc=$need_lc
 
 # Whether or not to optimize for fast installation.
 fast_install=$enable_fast_install
@@ -2898,6 +3537,9 @@ global_symbol_pipe=$lt_global_symbol_pipe
 # Transform the output of nm in a proper C declaration
 global_symbol_to_cdecl=$lt_global_symbol_to_cdecl
 
+# Transform the output of nm in a C name address pair
+global_symbol_to_c_name_address=$lt_global_symbol_to_c_name_address
+
 # This is the shared library runtime path variable.
 runpath_var=$runpath_var
 
@@ -3020,9 +3662,9 @@ EOF
 #   return TRUE;
 # }
 # /* ltdll.c ends here */
-        # This is a source program that is used to create import libraries
-        # on Windows for dlls which lack them. Don't remove nor modify the
-        # starting and closing comments
+	# This is a source program that is used to create import libraries
+	# on Windows for dlls which lack them. Don't remove nor modify the
+	# starting and closing comments
 # /* impgen.c starts here */
 # /*   Copyright (C) 1999-2000 Free Software Foundation, Inc.
 #
@@ -3377,6 +4019,7 @@ test "$withval" = no || with_gnu_ld=yes, with_gnu_ld=no)
 AC_REQUIRE([AC_PROG_CC])dnl
 AC_REQUIRE([AC_CANONICAL_HOST])dnl
 AC_REQUIRE([AC_CANONICAL_BUILD])dnl
+AC_REQUIRE([_LT_AC_LIBTOOL_SYS_PATH_SEPARATOR])dnl
 ac_prog=ld
 if test "$GCC" = yes; then
   # Check if gcc -print-prog-name=ld gives a path.
@@ -3390,8 +4033,8 @@ if test "$GCC" = yes; then
   esac
   case $ac_prog in
     # Accept absolute paths.
-    [[\\/]* | [A-Za-z]:[\\/]*)]
-      [re_direlt='/[^/][^/]*/\.\./']
+    [[\\/]]* | [[A-Za-z]]:[[\\/]]*)
+      re_direlt='/[[^/]][[^/]]*/\.\./'
       # Canonicalize the path of ld
       ac_prog=`echo $ac_prog| sed 's%\\\\%/%g'`
       while echo $ac_prog | grep "$re_direlt" > /dev/null 2>&1; do
@@ -3415,7 +4058,7 @@ else
 fi
 AC_CACHE_VAL(lt_cv_path_LD,
 [if test -z "$LD"; then
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}${PATH_SEPARATOR-:}"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=$PATH_SEPARATOR
   for ac_dir in $PATH; do
     test -z "$ac_dir" && ac_dir=.
     if test -f "$ac_dir/$ac_prog" || test -f "$ac_dir/$ac_prog$ac_exeext"; then
@@ -3479,7 +4122,7 @@ lt_cv_deplibs_check_method='unknown'
 # `unknown' -- same as none, but documents that we really don't know.
 # 'pass_all' -- all dependencies passed with no checks.
 # 'test_compile' -- check by making test program.
-# ['file_magic [regex]'] -- check by looking for files in library path
+# 'file_magic [[regex]]' -- check by looking for files in library path
 # which responds to the $file_magic_cmd with a given egrep regex.
 # If you have `file' or equivalent on your system and you're not sure
 # whether `pass_all' will *always* work, you probably want this one.
@@ -3494,7 +4137,7 @@ beos*)
   ;;
 
 bsdi4*)
-  [lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (shared object|dynamic lib)']
+  lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[ML]]SB (shared object|dynamic lib)'
   lt_cv_file_magic_cmd='/usr/bin/file -L'
   lt_cv_file_magic_test_file=/shlib/libc.so
   ;;
@@ -3508,7 +4151,7 @@ darwin* | rhapsody*)
   lt_cv_deplibs_check_method='file_magic Mach-O dynamically linked shared library'
   lt_cv_file_magic_cmd='/usr/bin/file -L'
   case "$host_os" in
-  rhapsody* | darwin1.[012])
+  rhapsody* | darwin1.[[012]])
     lt_cv_file_magic_test_file=`echo /System/Library/Frameworks/System.framework/Versions/*/System | head -1`
     ;;
   *) # Darwin 1.3 on
@@ -3523,7 +4166,7 @@ freebsd*)
     i*86 )
       # Not sure whether the presence of OpenBSD here was a mistake.
       # Let's accept both of them until this is cleared up.
-      [lt_cv_deplibs_check_method='file_magic (FreeBSD|OpenBSD)/i[3-9]86 (compact )?demand paged shared library']
+      lt_cv_deplibs_check_method='file_magic (FreeBSD|OpenBSD)/i[[3-9]]86 (compact )?demand paged shared library'
       lt_cv_file_magic_cmd=/usr/bin/file
       lt_cv_file_magic_test_file=`echo /usr/lib/libc.so.*`
       ;;
@@ -3538,7 +4181,7 @@ gnu*)
   ;;
 
 hpux10.20*|hpux11*)
-  [lt_cv_deplibs_check_method='file_magic (s[0-9][0-9][0-9]|PA-RISC[0-9].[0-9]) shared library']
+  lt_cv_deplibs_check_method='file_magic (s[[0-9]][[0-9]][[0-9]]|PA-RISC[[0-9]].[[0-9]]) shared library'
   lt_cv_file_magic_cmd=/usr/bin/file
   lt_cv_file_magic_test_file=/usr/lib/libc.sl
   ;;
@@ -3557,7 +4200,7 @@ irix5* | irix6*)
     *) libmagic=never-match;;
     esac
     # this will be overridden with pass_all, but let us keep it just in case
-    [lt_cv_deplibs_check_method="file_magic ELF ${libmagic} MSB mips-[1234] dynamic lib MIPS - version 1"]
+    lt_cv_deplibs_check_method="file_magic ELF ${libmagic} MSB mips-[[1234]] dynamic lib MIPS - version 1"
     ;;
   esac
   lt_cv_file_magic_test_file=`echo /lib${libsuff}/libc.so*`
@@ -3567,27 +4210,37 @@ irix5* | irix6*)
 # This must be Linux ELF.
 linux-gnu*)
   case $host_cpu in
-  alpha* | i*86 | powerpc* | sparc* | ia64* )
+  alpha* | hppa* | i*86 | powerpc* | sparc* | ia64* )
     lt_cv_deplibs_check_method=pass_all ;;
   *)
     # glibc up to 2.1.1 does not perform some relocations on ARM
-    [lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [LM]SB (shared object|dynamic lib )' ;;]
+    lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[LM]]SB (shared object|dynamic lib )' ;;
   esac
   lt_cv_file_magic_test_file=`echo /lib/libc.so* /lib/libc-*.so`
   ;;
 
 netbsd*)
   if echo __ELF__ | $CC -E - | grep __ELF__ > /dev/null; then
-    [lt_cv_deplibs_check_method='match_pattern /lib[^/\.]+\.so\.[0-9]+\.[0-9]+$']
+    lt_cv_deplibs_check_method='match_pattern /lib[[^/\.]]+\.so\.[[0-9]]+\.[[0-9]]+$'
   else
-    [lt_cv_deplibs_check_method='match_pattern /lib[^/\.]+\.so$']
+    lt_cv_deplibs_check_method='match_pattern /lib[[^/\.]]+\.so$'
   fi
   ;;
 
 newos6*)
-  [lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (executable|dynamic lib)']
+  lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[ML]]SB (executable|dynamic lib)'
   lt_cv_file_magic_cmd=/usr/bin/file
   lt_cv_file_magic_test_file=/usr/lib/libnls.so
+  ;;
+
+openbsd*)
+  lt_cv_file_magic_cmd=/usr/bin/file
+  lt_cv_file_magic_test_file=`echo /usr/lib/libc.so.*`
+  if test -z "`echo __ELF__ | $CC -E - | grep __ELF__`" || test "$host_os-$host_cpu" = "openbsd2.8-powerpc"; then
+    lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[LM]]SB shared object'
+  else
+    lt_cv_deplibs_check_method='file_magic OpenBSD.* shared library'
+  fi
   ;;
 
 osf3* | osf4* | osf5*)
@@ -3606,14 +4259,14 @@ solaris*)
   lt_cv_file_magic_test_file=/lib/libc.so
   ;;
 
-[sysv5uw[78]* | sysv4*uw2*)]
+sysv5uw[[78]]* | sysv4*uw2*)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
 sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
   case $host_vendor in
   motorola)
-    [lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [ML]SB (shared object|dynamic lib) M[0-9][0-9]* Version [0-9]']
+    lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[ML]]SB (shared object|dynamic lib) M[[0-9]][[0-9]]* Version [[0-9]]'
     lt_cv_file_magic_test_file=`echo /usr/lib/libc.so*`
     ;;
   ncr)
@@ -3621,11 +4274,11 @@ sysv4 | sysv4.2uw2* | sysv4.3* | sysv5*)
     ;;
   sequent)
     lt_cv_file_magic_cmd='/bin/file'
-    [lt_cv_deplibs_check_method='file_magic ELF [0-9][0-9]*-bit [LM]SB (shared object|dynamic lib )']
+    lt_cv_deplibs_check_method='file_magic ELF [[0-9]][[0-9]]*-bit [[LM]]SB (shared object|dynamic lib )'
     ;;
   sni)
     lt_cv_file_magic_cmd='/bin/file'
-    [lt_cv_deplibs_check_method="file_magic ELF [0-9][0-9]*-bit [LM]SB dynamic lib"]
+    lt_cv_deplibs_check_method="file_magic ELF [[0-9]][[0-9]]*-bit [[LM]]SB dynamic lib"
     lt_cv_file_magic_test_file=/lib/libc.so
     ;;
   esac
@@ -3639,13 +4292,14 @@ deplibs_check_method=$lt_cv_deplibs_check_method
 
 # AC_PROG_NM - find the path to a BSD-compatible name lister
 AC_DEFUN([AC_PROG_NM],
-[AC_MSG_CHECKING([for BSD-compatible nm])
+[AC_REQUIRE([_LT_AC_LIBTOOL_SYS_PATH_SEPARATOR])dnl
+AC_MSG_CHECKING([for BSD-compatible nm])
 AC_CACHE_VAL(lt_cv_path_NM,
 [if test -n "$NM"; then
   # Let the user override the test.
   lt_cv_path_NM="$NM"
 else
-  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS="${IFS}${PATH_SEPARATOR-:}"
+  IFS="${IFS= 	}"; ac_save_ifs="$IFS"; IFS=$PATH_SEPARATOR
   for ac_dir in $PATH /usr/ccs/bin /usr/ucb /bin; do
     test -z "$ac_dir" && ac_dir=.
     tmp_nm=$ac_dir/${ac_tool_prefix}nm
@@ -3756,1252 +4410,8 @@ AC_DEFUN([AM_PROG_NM],        [AC_PROG_NM])
 # This is just to silence aclocal about the macro not being used
 ifelse([AC_DISABLE_FAST_INSTALL])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl AC_TEST_PACKAGE_NEW(package,headers,libraries,extra libs,default locations, conditional)
-
-AC_DEFUN(AC_TEST_PACKAGE,[AC_TEST_PACKAGE_NEW($1,[#include <$2>],$4,,$5)])
-
-AC_DEFUN(AC_TEST_PACKAGE_NEW,[
-AC_ARG_WITH($1,
-[  --with-$1=dir                use $1 in dir])
-AC_ARG_WITH($1-lib,
-[  --with-$1-lib=dir            use $1 libraries in dir],
-[if test "$withval" = "yes" -o "$withval" = "no"; then
-  AC_MSG_ERROR([No argument for --with-$1-lib])
-elif test "X$with_$1" = "X"; then
-  with_$1=yes
-fi])
-AC_ARG_WITH($1-include,
-[  --with-$1-include=dir        use $1 headers in dir],
-[if test "$withval" = "yes" -o "$withval" = "no"; then
-  AC_MSG_ERROR([No argument for --with-$1-include])
-elif test "X$with_$1" = "X"; then
-  with_$1=yes
-fi])
-
-AC_MSG_CHECKING(for $1)
-
-case "$with_$1" in
-yes)	;;
-no)	;;
-"")	;;
-*)	if test "$with_$1_include" = ""; then
-		with_$1_include="$with_$1/include"
-	fi
-	if test "$with_$1_lib" = ""; then
-		with_$1_lib="$with_$1/lib$abilibdirext"
-	fi
-	;;
-esac
-header_dirs=
-lib_dirs=
-d='$5'
-for i in $d; do
-	header_dirs="$header_dirs $i/include"
-	lib_dirs="$lib_dirs $i/lib$abilibdirext"
-done
-
-case "$with_$1_include" in
-yes) ;;
-no)  ;;
-*)   header_dirs="$with_$1_include $header_dirs";;
-esac
-case "$with_$1_lib" in
-yes) ;;
-no)  ;;
-*)   lib_dirs="$with_$1_lib $lib_dirs";;
-esac
-
-save_CFLAGS="$CFLAGS"
-save_LIBS="$LIBS"
-ires= lres=
-for i in $header_dirs; do
-	CFLAGS="-I$i $save_CFLAGS"
-	AC_TRY_COMPILE([$2],,ires=$i;break)
-done
-for i in $lib_dirs; do
-	LIBS="-L$i $3 $4 $save_LIBS"
-	AC_TRY_LINK([$2],,lres=$i;break)
-done
-CFLAGS="$save_CFLAGS"
-LIBS="$save_LIBS"
-
-if test "$ires" -a "$lres" -a "$with_$1" != "no"; then
-	$1_includedir="$ires"
-	$1_libdir="$lres"
-	INCLUDE_$1="-I$$1_includedir"
-	LIB_$1="-L$$1_libdir $3"
-	m4_ifval([$6],
-		AC_DEFINE_UNQUOTED($6,1,[Define if you have the $1 package.]),
-		AC_DEFINE_UNQUOTED(upcase($1),1,[Define if you have the $1 package.]))
-	with_$1=yes
-	AC_MSG_RESULT([headers $ires, libraries $lres])
-else
-	INCLUDE_$1=
-	LIB_$1=
-	with_$1=no
-	AC_MSG_RESULT($with_$1)
-fi
-dnl m4_ifval([$6],
-dnl 	AM_CONDITIONAL($6, test "$with_$1" = yes)
-dnl 	AM_CONDITIONAL(upcase($1), test "$with_$1" = yes))
-AC_SUBST(INCLUDE_$1)
-AC_SUBST(LIB_$1)
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl enable OSF C2 stuff
-
-AC_DEFUN(AC_CHECK_OSFC2,[
-AC_ARG_ENABLE(osfc2,
-[  --enable-osfc2          enable some OSF C2 support])
-LIB_security=
-if test "$enable_osfc2" = yes; then
-	AC_DEFINE(HAVE_OSFC2, 1, [Define to enable basic OSF C2 support.])
-	LIB_security=-lsecurity
-fi
-AC_SUBST(LIB_security)
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl
-dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
-dnl value.
-
-AC_DEFUN(AC_MIPS_ABI, [
-AC_ARG_WITH(mips_abi,
-[  --with-mips-abi=abi     ABI to use for IRIX (32, n32, or 64)])
-
-case "$host_os" in
-irix*)
-with_mips_abi="${with_mips_abi:-yes}"
-if test -n "$GCC"; then
-
-# GCC < 2.8 only supports the O32 ABI. GCC >= 2.8 has a flag to select
-# which ABI to use, but only supports (as of 2.8.1) the N32 and 64 ABIs.
-#
-# Default to N32, but if GCC doesn't grok -mabi=n32, we assume an old
-# GCC and revert back to O32. The same goes if O32 is asked for - old
-# GCCs doesn't like the -mabi option, and new GCCs can't output O32.
-#
-# Don't you just love *all* the different SGI ABIs?
-
-case "${with_mips_abi}" in 
-        32|o32) abi='-mabi=32';  abilibdirext=''     ;;
-       n32|yes) abi='-mabi=n32'; abilibdirext='32'  ;;
-        64) abi='-mabi=64';  abilibdirext='64'   ;;
-	no) abi=''; abilibdirext='';;
-         *) AC_MSG_ERROR("Invalid ABI specified") ;;
-esac
-if test -n "$abi" ; then
-ac_foo=krb_cv_gcc_`echo $abi | tr =- __`
-dnl
-dnl can't use AC_CACHE_CHECK here, since it doesn't quote CACHE-ID to
-dnl AC_MSG_RESULT
-dnl
-AC_MSG_CHECKING([if $CC supports the $abi option])
-AC_CACHE_VAL($ac_foo, [
-save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS $abi"
-AC_TRY_COMPILE(,int x;, eval $ac_foo=yes, eval $ac_foo=no)
-CFLAGS="$save_CFLAGS"
-])
-ac_res=`eval echo \\\$$ac_foo`
-AC_MSG_RESULT($ac_res)
-if test $ac_res = no; then
-# Try to figure out why that failed...
-case $abi in
-	-mabi=32) 
-	save_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -mabi=n32"
-	AC_TRY_COMPILE(,int x;, ac_res=yes, ac_res=no)
-	CLAGS="$save_CFLAGS"
-	if test $ac_res = yes; then
-		# New GCC
-		AC_MSG_ERROR([$CC does not support the $with_mips_abi ABI])
-	fi
-	# Old GCC
-	abi=''
-	abilibdirext=''
-	;;
-	-mabi=n32|-mabi=64)
-		if test $with_mips_abi = yes; then
-			# Old GCC, default to O32
-			abi=''
-			abilibdirext=''
-		else
-			# Some broken GCC
-			AC_MSG_ERROR([$CC does not support the $with_mips_abi ABI])
-		fi
-	;;
-esac
-fi #if test $ac_res = no; then
-fi #if test -n "$abi" ; then
-else
-case "${with_mips_abi}" in
-        32|o32) abi='-32'; abilibdirext=''     ;;
-       n32|yes) abi='-n32'; abilibdirext='32'  ;;
-        64) abi='-64'; abilibdirext='64'   ;;
-	no) abi=''; abilibdirext='';;
-         *) AC_MSG_ERROR("Invalid ABI specified") ;;
-esac
-fi #if test -n "$GCC"; then
-;;
-esac
-])
-
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-
-dnl
-dnl Test for __attribute__
-dnl
-
-AC_DEFUN(AC_C___ATTRIBUTE__, [
-AC_MSG_CHECKING(for __attribute__)
-AC_CACHE_VAL(ac_cv___attribute__, [
-AC_TRY_COMPILE([
-#include <stdlib.h>
-],
-[
-static void foo(void) __attribute__ ((noreturn));
-
-static void
-foo(void)
-{
-  exit(1);
-}
-],
-ac_cv___attribute__=yes,
-ac_cv___attribute__=no)])
-if test "$ac_cv___attribute__" = "yes"; then
-  AC_DEFINE(HAVE___ATTRIBUTE__, 1, [define if your compiler has __attribute__])
-fi
-AC_MSG_RESULT($ac_cv___attribute__)
-])
-
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl NEXTSTEP is not posix compliant by default,
-dnl you need a switch -posix to the compiler
-dnl
-
-AC_DEFUN(rk_SYS_NEXTSTEP, [
-AC_CACHE_CHECK(for NeXTSTEP, rk_cv_sys_nextstep, [
-AC_EGREP_CPP(yes, 
-[#if defined(NeXT) && !defined(__APPLE__)
-	yes
-#endif 
-], rk_cv_sys_nextstep=yes, rk_cv_sys_nextstep=no)])
-if test "$rk_cv_sys_nextstep" = "yes"; then
-  CFLAGS="$CFLAGS -posix"
-  LIBS="$LIBS -posix"
-fi
-AH_BOTTOM([#if defined(HAVE_SGTTY_H) && defined(__NeXT__)
-#define SGTTY
-#endif])
-])
-
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-
-AC_DEFUN(KRB_AIX,[
-aix=no
-case "$host" in 
-*-*-aix3*)
-	aix=3
-	;;
-*-*-aix4*)
-	aix=4
-	;;
-esac
-AM_CONDITIONAL(AIX, test "$aix" != no)dnl
-AM_CONDITIONAL(AIX4, test "$aix" = 4)
-aix_dynamic_afs=yes
-AM_CONDITIONAL(AIX_DYNAMIC_AFS, test "$aix_dynamic_afs" = yes)dnl
-
-AC_FIND_FUNC_NO_LIBS(dlopen, dl)
-
-if test "$aix" != no; then
-	if test "$aix_dynamic_afs" = yes; then
-		if test "$ac_cv_funclib_dlopen" = yes; then
-			AIX_EXTRA_KAFS=
-		elif test "$ac_cv_funclib_dlopen" != no; then
-			AIX_EXTRA_KAFS="$ac_cv_funclib_dlopen"
-		else
-			AIX_EXTRA_KAFS=-lld
-		fi
-	else
-		AIX_EXTRA_KAFS=
-	fi
-fi
-
-AM_CONDITIONAL(HAVE_DLOPEN, test "$ac_cv_funclib_dlopen" != no)dnl
-AC_SUBST(AIX_EXTRA_KAFS)dnl
-
-])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl
-dnl Look for function in any of the specified libraries
-dnl
-
-dnl AC_FIND_FUNC_NO_LIBS(func, libraries, includes, arguments, extra libs, extra args)
-AC_DEFUN(AC_FIND_FUNC_NO_LIBS, [
-AC_FIND_FUNC_NO_LIBS2([$1], ["" $2], [$3], [$4], [$5], [$6])])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl
-dnl Look for function in any of the specified libraries
-dnl
-
-dnl AC_FIND_FUNC_NO_LIBS2(func, libraries, includes, arguments, extra libs, extra args)
-AC_DEFUN(AC_FIND_FUNC_NO_LIBS2, [
-
-AC_MSG_CHECKING([for $1])
-AC_CACHE_VAL(ac_cv_funclib_$1,
-[
-if eval "test \"\$ac_cv_func_$1\" != yes" ; then
-	ac_save_LIBS="$LIBS"
-	for ac_lib in $2; do
-		case "$ac_lib" in
-		"") ;;
-		yes) ac_lib="" ;;
-		no) continue ;;
-		-l*) ;;
-		*) ac_lib="-l$ac_lib" ;;
-		esac
-		LIBS="$6 $ac_lib $5 $ac_save_LIBS"
-		AC_TRY_LINK([$3],[$1($4)],eval "if test -n \"$ac_lib\";then ac_cv_funclib_$1=$ac_lib; else ac_cv_funclib_$1=yes; fi";break)
-	done
-	eval "ac_cv_funclib_$1=\${ac_cv_funclib_$1-no}"
-	LIBS="$ac_save_LIBS"
-fi
-])
-
-eval "ac_res=\$ac_cv_funclib_$1"
-
-if false; then
-	AC_CHECK_FUNCS($1)
-dnl	AC_CHECK_LIBS($2, foo)
-fi
-# $1
-eval "ac_tr_func=HAVE_[]upcase($1)"
-eval "ac_tr_lib=HAVE_LIB[]upcase($ac_res | sed -e 's/-l//')"
-eval "LIB_$1=$ac_res"
-
-case "$ac_res" in
-	yes)
-	eval "ac_cv_func_$1=yes"
-	eval "LIB_$1="
-	AC_DEFINE_UNQUOTED($ac_tr_func)
-	AC_MSG_RESULT([yes])
-	;;
-	no)
-	eval "ac_cv_func_$1=no"
-	eval "LIB_$1="
-	AC_MSG_RESULT([no])
-	;;
-	*)
-	eval "ac_cv_func_$1=yes"
-	eval "ac_cv_lib_`echo "$ac_res" | sed 's/-l//'`=yes"
-	AC_DEFINE_UNQUOTED($ac_tr_func)
-	AC_DEFINE_UNQUOTED($ac_tr_lib)
-	AC_MSG_RESULT([yes, in $ac_res])
-	;;
-esac
-AC_SUBST(LIB_$1)
-])
-
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-
-dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3
-dnl you have to include standards.h before including these files
-
-AC_DEFUN(CHECK_NETINET_IP_AND_TCP,
-[
-AC_CHECK_HEADERS(standards.h)
-for i in netinet/ip.h netinet/tcp.h; do
-
-cv=`echo "$i" | sed 'y%./+-%__p_%'`
-
-AC_CACHE_CHECK([for $i],ac_cv_header_$cv,
-[AC_TRY_CPP([\
-#ifdef HAVE_STANDARDS_H
-#include <standards.h>
-#endif
-#include <$i>
-],
-eval "ac_cv_header_$cv=yes",
-eval "ac_cv_header_$cv=no")])
-ac_res=`eval echo \\$ac_cv_header_$cv`
-if test "$ac_res" = yes; then
-	ac_tr_hdr=HAVE_`echo $i | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
-	AC_DEFINE_UNQUOTED($ac_tr_hdr, 1)
-fi
-done
-if false;then
-	AC_CHECK_HEADERS(netinet/ip.h netinet/tcp.h)
-fi
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-AC_DEFUN(AC_GROK_TYPE, [
-AC_CACHE_VAL(ac_cv_type_$1, 
-AC_TRY_COMPILE([
-#ifdef HAVE_INTTYPES_H
-#include <inttypes.h>
-#endif
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_BITYPES_H
-#include <sys/bitypes.h>
-#endif
-#ifdef HAVE_BIND_BITYPES_H
-#include <bind/bitypes.h>
-#endif
-#ifdef HAVE_NETINET_IN6_MACHTYPES_H
-#include <netinet/in6_machtypes.h>
-#endif
-],
-$i x;
-,
-eval ac_cv_type_$1=yes,
-eval ac_cv_type_$1=no))])
-
-AC_DEFUN(AC_GROK_TYPES, [
-for i in $1; do
-	AC_MSG_CHECKING(for $i)
-	AC_GROK_TYPE($i)
-	eval ac_res=\$ac_cv_type_$i
-	if test "$ac_res" = yes; then
-		type=HAVE_[]upcase($i)
-		AC_DEFINE_UNQUOTED($type)
-	fi
-	AC_MSG_RESULT($ac_res)
-done
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl test for crypto libraries:
-dnl - libcrypto (from openssl)
-dnl - libdes (from krb4)
-dnl - own-built libdes
-
-AC_DEFUN([KRB_CRYPTO],[
-crypto_lib=unknown
-AC_WITH_ALL([openssl])
-
-DIR_des=
-
-AC_MSG_CHECKING([for crypto library])
-
-if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
-
-  save_CPPFLAGS="$CPPFLAGS"
-  save_LIBS="$LIBS"
-  INCLUDE_des=
-  LIB_des=
-  if test "$with_openssl_include" != ""; then
-    INCLUDE_des="-I${with_openssl}/include"
-  fi
-  if test "$with_openssl_lib" != ""; then
-    LIB_des="-L${with_openssl}/lib"
-  fi
-  CPPFLAGS="${INCLUDE_des} ${CPPFLAGS}"
-  LIB_des="${LIB_des} -lcrypto"
-  LIB_des_a="$LIB_des"
-  LIB_des_so="$LIB_des"
-  LIB_des_appl="$LIB_des"
-  LIBS="${LIBS} ${LIB_des}"
-  AC_TRY_LINK([
-  #include <openssl/md4.h>
-  #include <openssl/md5.h>
-  #include <openssl/sha.h>
-  #include <openssl/des.h>
-  #include <openssl/rc4.h>
-  ],
-  [
-    MD4_CTX md4;
-    MD5_CTX md5;
-    SHA_CTX sha1;
-
-    MD4_Init(&md4);
-    MD5_Init(&md5);
-    SHA1_Init(&sha1);
-
-    des_cbc_encrypt(0, 0, 0, 0, 0, 0);
-    RC4(0, 0, 0, 0);
-  ], [
-  crypto_lib=libcrypto
-  AC_DEFINE([HAVE_OPENSSL], 1, [define to use openssl's libcrypto])
-  AC_MSG_RESULT([libcrypto])])
-  CPPFLAGS="$save_CPPFLAGS"
-  LIBS="$save_LIBS"
-fi
-
-if test "$crypto_lib" = "unknown" -a "$with_krb4" != "no"; then
-
-  save_CPPFLAGS="$CPPFLAGS"
-  save_LIBS="$LIBS"
-  INCLUDE_des="${INCLUDE_krb4}"
-  LIB_des=
-  if test "$krb4_libdir"; then
-    LIB_des="-L${krb4_libdir}"
-  fi
-  LIB_des="${LIB_des} -ldes"
-  CPPFLAGS="${CPPFLAGS} ${INCLUDE_des}"
-  LIBS="${LIBS} ${LIB_des}"
-  LIB_des_a="$LIB_des"
-  LIB_des_so="$LIB_des"
-  LIB_des_appl="$LIB_des"
-  LIBS="${LIBS} ${LIB_des}"
-  AC_TRY_LINK([
-  #undef KRB5 /* makes md4.h et al unhappy */
-  #define KRB4
-  #include <md4.h>
-  #include <md5.h>
-  #include <sha.h>
-  #include <des.h>
-  #include <rc4.h>
-  ],
-  [
-    MD4_CTX md4;
-    MD5_CTX md5;
-    SHA_CTX sha1;
-
-    MD4_Init(&md4);
-    MD5_Init(&md5);
-    SHA1_Init(&sha1);
-
-    des_cbc_encrypt(0, 0, 0, 0, 0, 0);
-    RC4(0, 0, 0, 0);
-  ], [crypto_lib=krb4; AC_MSG_RESULT([krb4's libdes])])
-  CPPFLAGS="$save_CPPFLAGS"
-  LIBS="$save_LIBS"
-fi
-
-if test "$crypto_lib" = "unknown"; then
-
-  DIR_des='des'
-  LIB_des='$(top_builddir)/lib/des/libdes.la'
-  LIB_des_a='$(top_builddir)/lib/des/.libs/libdes.a'
-  LIB_des_so='$(top_builddir)/lib/des/.libs/libdes.so'
-  LIB_des_appl="-ldes"
-
-  AC_MSG_RESULT([included libdes])
-
-fi
-
-AC_SUBST(DIR_des)
-AC_SUBST(INCLUDE_des)
-AC_SUBST(LIB_des)
-AC_SUBST(LIB_des_a)
-AC_SUBST(LIB_des_so)
-AC_SUBST(LIB_des_appl)
-])
-
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-
-dnl AC_WITH_ALL(name)
-
-AC_DEFUN([AC_WITH_ALL], [
-AC_ARG_WITH($1,
-	AC_HELP_STRING([--with-$1=dir],
-		[use $1 in dir]))
-
-AC_ARG_WITH($1-lib,
-	AC_HELP_STRING([--with-$1-lib=dir],
-		[use $1 libraries in dir]),
-[if test "$withval" = "yes" -o "$withval" = "no"; then
-  AC_MSG_ERROR([No argument for --with-$1-lib])
-elif test "X$with_$1" = "X"; then
-  with_$1=yes
-fi])
-
-AC_ARG_WITH($1-include,
-	AC_HELP_STRING([--with-$1-include=dir],
-		[use $1 headers in dir]),
-[if test "$withval" = "yes" -o "$withval" = "no"; then
-  AC_MSG_ERROR([No argument for --with-$1-include])
-elif test "X$with_$1" = "X"; then
-  with_$1=yes
-fi])
-
-case "$with_$1" in
-yes)	;;
-no)	;;
-"")	;;
-*)	if test "$with_$1_include" = ""; then
-		with_$1_include="$with_$1/include"
-	fi
-	if test "$with_$1_lib" = ""; then
-		with_$1_lib="$with_$1/lib$abilibdirext"
-	fi
-	;;
-esac
-])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl test for IPv6
-dnl
-AC_DEFUN(AC_KRB_IPV6, [
-AC_ARG_WITH(ipv6,
-[  --without-ipv6	do not enable IPv6 support],[
-if test "$withval" = "no"; then
-	ac_cv_lib_ipv6=no
-fi])
-save_CFLAGS="${CFLAGS}"
-AC_CACHE_VAL(ac_cv_lib_ipv6,
-[dnl check for different v6 implementations (by itojun)
-v6type=unknown
-v6lib=none
-
-AC_MSG_CHECKING([ipv6 stack type])
-for i in v6d toshiba kame inria zeta linux; do
-	case $i in
-	v6d)
-		AC_EGREP_CPP(yes, [
-#include </usr/local/v6/include/sys/types.h>
-#ifdef __V6D__
-yes
-#endif],
-			[v6type=$i; v6lib=v6;
-			v6libdir=/usr/local/v6/lib;
-			CFLAGS="-I/usr/local/v6/include $CFLAGS"])
-		;;
-	toshiba)
-		AC_EGREP_CPP(yes, [
-#include <sys/param.h>
-#ifdef _TOSHIBA_INET6
-yes
-#endif],
-			[v6type=$i; v6lib=inet6;
-			v6libdir=/usr/local/v6/lib;
-			CFLAGS="-DINET6 $CFLAGS"])
-		;;
-	kame)
-		AC_EGREP_CPP(yes, [
-#include <netinet/in.h>
-#ifdef __KAME__
-yes
-#endif],
-			[v6type=$i; v6lib=inet6;
-			v6libdir=/usr/local/v6/lib;
-			CFLAGS="-DINET6 $CFLAGS"])
-		;;
-	inria)
-		AC_EGREP_CPP(yes, [
-#include <netinet/in.h>
-#ifdef IPV6_INRIA_VERSION
-yes
-#endif],
-			[v6type=$i; CFLAGS="-DINET6 $CFLAGS"])
-		;;
-	zeta)
-		AC_EGREP_CPP(yes, [
-#include <sys/param.h>
-#ifdef _ZETA_MINAMI_INET6
-yes
-#endif],
-			[v6type=$i; v6lib=inet6;
-			v6libdir=/usr/local/v6/lib;
-			CFLAGS="-DINET6 $CFLAGS"])
-		;;
-	linux)
-		if test -d /usr/inet6; then
-			v6type=$i
-			v6lib=inet6
-			v6libdir=/usr/inet6
-			CFLAGS="-DINET6 $CFLAGS"
-		fi
-		;;
-	esac
-	if test "$v6type" != "unknown"; then
-		break
-	fi
-done
-AC_MSG_RESULT($v6type)
-
-if test "$v6lib" != "none"; then
-	for dir in $v6libdir /usr/local/v6/lib /usr/local/lib; do
-		if test -d $dir -a -f $dir/lib$v6lib.a; then
-			LIBS="-L$dir -l$v6lib $LIBS"
-			break
-		fi
-	done
-fi
-AC_TRY_LINK([
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif
-],
-[
- struct sockaddr_in6 sin6;
- int s;
-
- s = socket(AF_INET6, SOCK_DGRAM, 0);
-
- sin6.sin6_family = AF_INET6;
- sin6.sin6_port = htons(17);
- sin6.sin6_addr = in6addr_any;
- bind(s, (struct sockaddr *)&sin6, sizeof(sin6));
-],
-ac_cv_lib_ipv6=yes,
-ac_cv_lib_ipv6=no)])
-AC_MSG_CHECKING(for IPv6)
-AC_MSG_RESULT($ac_cv_lib_ipv6)
-if test "$ac_cv_lib_ipv6" = yes; then
-  AC_DEFINE(HAVE_IPV6, 1, [Define if you have IPv6.])
-else
-  CFLAGS="${save_CFLAGS}"
-fi
-
-if test "$ac_cv_lib_ipv6" = yes; then
-	AC_CACHE_CHECK([for in6addr_loopback],[ac_cv_var_in6addr_loopback],[
-	AC_TRY_LINK([
-#ifdef HAVE_SYS_TYPES_H
-#include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#include <sys/socket.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#include <netinet/in.h>
-#endif
-#ifdef HAVE_NETINET_IN6_H
-#include <netinet/in6.h>
-#endif],[
-struct sockaddr_in6 sin6;
-sin6.sin6_addr = in6addr_loopback;
-],ac_cv_var_in6addr_loopback=yes,ac_cv_var_in6addr_loopback=no)])
-	if test "$ac_cv_var_in6addr_loopback" = yes; then
-		AC_DEFINE(HAVE_IN6ADDR_LOOPBACK, 1, 
-			[Define if you have the in6addr_loopback variable])
-	fi
-fi
-])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl AC_FIND_FUNC(func, libraries, includes, arguments)
-AC_DEFUN(AC_FIND_FUNC, [
-AC_FIND_FUNC_NO_LIBS([$1], [$2], [$3], [$4])
-if test -n "$LIB_$1"; then
-	LIBS="$LIB_$1 $LIBS"
-fi
-])
-
-dnl 
-dnl See if there is any X11 present
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-
-AC_DEFUN(KRB_CHECK_X,[
-AC_PATH_XTRA
-
-# try to figure out if we need any additional ld flags, like -R
-# and yes, the autoconf X test is utterly broken
-if test "$no_x" != yes; then
-	AC_CACHE_CHECK(for special X linker flags,krb_cv_sys_x_libs_rpath,[
-	ac_save_libs="$LIBS"
-	ac_save_cflags="$CFLAGS"
-	CFLAGS="$CFLAGS $X_CFLAGS"
-	krb_cv_sys_x_libs_rpath=""
-	krb_cv_sys_x_libs=""
-	for rflag in "" "-R" "-R " "-rpath "; do
-		if test "$rflag" = ""; then
-			foo="$X_LIBS"
-		else
-			foo=""
-			for flag in $X_LIBS; do
-			case $flag in
-			-L*)
-				foo="$foo $flag `echo $flag | sed \"s/-L/$rflag/\"`"
-				;;
-			*)
-				foo="$foo $flag"
-				;;
-			esac
-			done
-		fi
-		LIBS="$ac_save_libs $foo $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
-		AC_TRY_RUN([
-		#include <X11/Xlib.h>
-		foo()
-		{
-		XOpenDisplay(NULL);
-		}
-		main()
-		{
-		return 0;
-		}
-		], krb_cv_sys_x_libs_rpath="$rflag"; krb_cv_sys_x_libs="$foo"; break,:)
-	done
-	LIBS="$ac_save_libs"
-	CFLAGS="$ac_save_cflags"
-	])
-	X_LIBS="$krb_cv_sys_x_libs"
-fi
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl check for Xau{Read,Write}Auth and XauFileName
-dnl
-AC_DEFUN(AC_CHECK_XAU,[
-save_CFLAGS="$CFLAGS"
-CFLAGS="$X_CFLAGS $CFLAGS"
-save_LIBS="$LIBS"
-dnl LIBS="$X_LIBS $X_PRE_LIBS $X_EXTRA_LIBS $LIBS"
-LIBS="$X_PRE_LIBS $X_EXTRA_LIBS $LIBS"
-save_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS $X_LIBS"
-
-
-AC_FIND_FUNC_NO_LIBS(XauWriteAuth, X11 Xau)
-ac_xxx="$LIBS"
-LIBS="$LIB_XauWriteAuth $LIBS"
-AC_FIND_FUNC_NO_LIBS(XauReadAuth, X11 Xau)
-LIBS="$LIB_XauReadAauth $LIBS"
-AC_FIND_FUNC_NO_LIBS(XauFileName, X11 Xau)
-LIBS="$ac_xxx"
-
-case "$ac_cv_funclib_XauWriteAuth" in
-yes)	;;
-no)	;;
-*)	if test "$ac_cv_funclib_XauReadAuth" = yes; then
-		if test "$ac_cv_funclib_XauFileName" = yes; then
-			LIB_XauReadAuth="$LIB_XauWriteAuth"
-		else
-			LIB_XauReadAuth="$LIB_XauWriteAuth $LIB_XauFileName"
-		fi
-	else
-		if test "$ac_cv_funclib_XauFileName" = yes; then
-			LIB_XauReadAuth="$LIB_XauReadAuth $LIB_XauWriteAuth"
-		else
-			LIB_XauReadAuth="$LIB_XauReadAuth $LIB_XauWriteAuth $LIB_XauFileName"
-		fi
-	fi
-	;;
-esac
-
-if test "$AUTOMAKE" != ""; then
-	AM_CONDITIONAL(NEED_WRITEAUTH, test "$ac_cv_func_XauWriteAuth" != "yes")
-else
-	AC_SUBST(NEED_WRITEAUTH_TRUE)
-	AC_SUBST(NEED_WRITEAUTH_FALSE)
-	if test "$ac_cv_func_XauWriteAuth" != "yes"; then
-		NEED_WRITEAUTH_TRUE=
-		NEED_WRITEAUTH_FALSE='#'
-	else
-		NEED_WRITEAUTH_TRUE='#'
-		NEED_WRITEAUTH_FALSE=
-	fi
-fi
-CFLAGS=$save_CFLAGS
-LIBS=$save_LIBS
-LDFLAGS=$save_LDFLAGS
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl tests for various db libraries
-dnl
-AC_DEFUN([rk_DB],[berkeley_db=db
-AC_ARG_WITH(berkeley-db,
-[  --without-berkeley-db   if you don't want berkeley db],[
-if test "$withval" = no; then
-	berkeley_db=""
-fi
-])
-
-have_ndbm=no
-db_type=unknown
-
-if test "$berkeley_db"; then
-
-  AC_CHECK_HEADERS([				\
-	db.h					\
-	db_185.h				\
-  ])
-
-dnl db_create is used by db3
-
-  AC_FIND_FUNC_NO_LIBS(db_create, $berkeley_db, [
-  #include <stdio.h>
-  #include <db.h>
-  ],[NULL, NULL, 0])
-
-  if test "$ac_cv_func_db_create" = "yes"; then
-    db_type=db3
-    if test "$ac_cv_funclib_db_create" != "yes"; then
-      DBLIB="$ac_cv_funclib_db_create"
-    else
-      DBLIB=""
-    fi
-    AC_DEFINE(HAVE_DB3, 1, [define if you have a berkeley db3 library])
-  else
-
-dnl dbopen is used by db1/db2
-
-    AC_FIND_FUNC_NO_LIBS(dbopen, $berkeley_db, [
-    #include <stdio.h>
-    #if defined(HAVE_DB_185_H)
-    #include <db_185.h>
-    #elif defined(HAVE_DB_H)
-    #include <db.h>
-    #else
-    #error no db.h
-    #endif
-    ],[NULL, 0, 0, 0, NULL])
-
-    if test "$ac_cv_func_dbopen" = "yes"; then
-      db_type=db1
-      if test "$ac_cv_funclib_dbopen" != "yes"; then
-        DBLIB="$ac_cv_funclib_dbopen"
-      else
-        DBLIB=""
-      fi
-      AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
-    fi
-  fi
-
-dnl test for ndbm compatability
-
-  AC_FIND_FUNC_NO_LIBS2(dbm_firstkey, $ac_cv_funclib_dbopen $ac_cv_funclib_db_create, [
-  #include <stdio.h>
-  #define DB_DBM_HSEARCH 1
-  #include <db.h>
-  DBM *dbm;
-  ],[NULL])
-
-  if test "$ac_cv_func_dbm_firstkey" = "yes"; then
-    if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-      LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
-    else
-      LIB_NDBM=""
-    fi
-    AC_DEFINE(HAVE_DB_NDBM, 1, [define if you have ndbm compat in db])
-    AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
-  else
-    $as_unset ac_cv_func_dbm_firstkey
-    $as_unset ac_cv_funclib_dbm_firstkey
-  fi
-
-fi # berkeley db
-
-if test "$db_type" = "unknown" -o "$ac_cv_func_dbm_firstkey" = ""; then
-
-  AC_CHECK_HEADERS([				\
-	dbm.h					\
-	ndbm.h					\
-  ])
-
-  AC_FIND_FUNC_NO_LIBS(dbm_firstkey, ndbm, [
-  #include <stdio.h>
-  #if defined(HAVE_NDBM_H)
-  #include <ndbm.h>
-  #elif defined(HAVE_DBM_H)
-  #include <dbm.h>
-  #else
-  #error no ndbm.h
-  #endif
-  DBM *dbm;
-  ],[NULL])
-
-  if test "$ac_cv_func_dbm_firstkey" = "yes"; then
-    if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-      LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
-    else
-      LIB_NDBM=""
-    fi
-    AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
-    have_ndbm=yes
-    if test "$db_type" = "unknown"; then
-      db_type=ndbm
-      DBLIB="$LIB_NDBM"
-    fi
-  else
-
-    $as_unset ac_cv_func_dbm_firstkey
-    $as_unset ac_cv_funclib_dbm_firstkey
-
-    AC_CHECK_HEADERS([				\
-	  gdbm/ndbm.h				\
-    ])
-
-    AC_FIND_FUNC_NO_LIBS(dbm_firstkey, gdbm, [
-    #include <stdio.h>
-    #include <gdbm/ndbm.h>
-    DBM *dbm;
-    ],[NULL])
-
-    if test "$ac_cv_func_dbm_firstkey" = "yes"; then
-      if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
-	LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
-      else
-	LIB_NDBM=""
-      fi
-      AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
-      have_ndbm=yes
-      if test "$db_type" = "unknown"; then
-	db_type=ndbm
-	DBLIB="$LIB_NDBM"
-      fi
-    fi
-  fi
-
-fi # unknown
-
-if test "$have_ndbm" = "yes"; then
-  AC_MSG_CHECKING([if ndbm is implemented with db])
-  AC_TRY_RUN([
-#include <unistd.h>
-#include <fcntl.h>
-#if defined(HAVE_GDBM_NDBM_H)
-#include <gdbm/ndbm.h>
-#elif defined(HAVE_NDBM_H)
-#include <ndbm.h>
-#elif defined(HAVE_DBM_H)
-#include <dbm.h>
-#endif
-int main()
-{
-  DBM *d;
-
-  d = dbm_open("conftest", O_RDWR | O_CREAT, 0666);
-  if (d == NULL)
-    return 1;
-  dbm_close(d);
-  return 0;
-}],[
-    if test -f conftest.db; then
-      AC_MSG_RESULT([yes])
-      AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
-    else
-      AC_MSG_RESULT([no])
-    fi],[AC_MSG_RESULT([no])])
-fi
-
-AC_SUBST(DBLIB)dnl
-AC_SUBST(LIB_NDBM)dnl
-])
-
-dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-
-dnl
-dnl Test SGI capabilities
-dnl
-
-AC_DEFUN(KRB_CAPABILITIES,[
-
-AC_CHECK_HEADERS(capability.h sys/capability.h)
-
-AC_CHECK_FUNCS(sgi_getcapabilitybyname cap_set_proc)
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl check for getpwnam_r, and if it's posix or not
-
-AC_DEFUN(AC_CHECK_GETPWNAM_R_POSIX,[
-AC_FIND_FUNC_NO_LIBS(getpwnam_r,c_r)
-if test "$ac_cv_func_getpwnam_r" = yes; then
-	AC_CACHE_CHECK(if getpwnam_r is posix,ac_cv_func_getpwnam_r_posix,
-	ac_libs="$LIBS"
-	LIBS="$LIBS $LIB_getpwnam_r"
-	AC_TRY_RUN([
-#include <pwd.h>
-int main()
-{
-	struct passwd pw, *pwd;
-	return getpwnam_r("", &pw, NULL, 0, &pwd) < 0;
-}
-],ac_cv_func_getpwnam_r_posix=yes,ac_cv_func_getpwnam_r_posix=no,:)
-LIBS="$ac_libs")
-if test "$ac_cv_func_getpwnam_r_posix" = yes; then
-	AC_DEFINE(POSIX_GETPWNAM_R, 1, [Define if getpwnam_r has POSIX flavour.])
-fi
-fi
-])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl CHECK_COMPILE_ET
-AC_DEFUN([CHECK_COMPILE_ET], [
-
-AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et])
-
-krb_cv_compile_et="no"
-if test "${COMPILE_ET}" = "compile_et"; then
-
-dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
-AC_MSG_CHECKING(whether compile_et has the features we need)
-cat > conftest_et.et <<'EOF'
-error_table conf
-prefix CONFTEST
-index 1
-error_code CODE1, "CODE1"
-index 128
-error_code CODE2, "CODE2"
-end
-EOF
-if ${COMPILE_ET} conftest_et.et >/dev/null 2>&1; then
-  dnl XXX Some systems have <et/com_err.h>.
-  save_CPPFLAGS="${save_CPPFLAGS}"
-  if test -d "/usr/include/et"; then
-    CPPFLAGS="-I/usr/include/et ${CPPFLAGS}"
-  fi
-  dnl Check that the `prefix' and `index' directives were honored.
-  AC_TRY_RUN([
-#include <com_err.h>
-#include <string.h>
-#include "conftest_et.h"
-int main(){return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
-  ], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"])
-fi
-AC_MSG_RESULT(${krb_cv_compile_et})
-rm -fr conftest*
-fi
-
-if test "${krb_cv_compile_et}" = "yes"; then
-  dnl Since compile_et seems to work, let's check libcom_err
-  krb_cv_save_LIBS="${LIBS}"
-  LIBS="${LIBS} -lcom_err"
-  AC_MSG_CHECKING(for com_err)
-  AC_TRY_LINK([#include <com_err.h>],[
-    const char *p;
-    p = error_message(0);
-  ],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${save_CPPFLAGS}"])
-  AC_MSG_RESULT(${krb_cv_com_err})
-  LIBS="${krb_cv_save_LIBS}"
-else
-  dnl Since compile_et doesn't work, forget about libcom_err
-  krb_cv_com_err="no"
-fi
-
-dnl Only use the system's com_err if we found compile_et, libcom_err, and
-dnl com_err.h.
-if test "${krb_cv_com_err}" = "yes"; then
-    DIR_com_err=""
-    LIB_com_err="-lcom_err"
-    LIB_com_err_a=""
-    LIB_com_err_so=""
-    AC_MSG_NOTICE(Using the already-installed com_err)
-else
-    COMPILE_ET="\$(top_builddir)/lib/com_err/compile_et"
-    DIR_com_err="com_err"
-    LIB_com_err="\$(top_builddir)/lib/com_err/libcom_err.la"
-    LIB_com_err_a="\$(top_builddir)/lib/com_err/.libs/libcom_err.a"
-    LIB_com_err_so="\$(top_builddir)/lib/com_err/.libs/libcom_err.so"
-    AC_MSG_NOTICE(Using our own com_err)
-fi
-AC_SUBST(DIR_com_err)
-AC_SUBST(LIB_com_err)
-AC_SUBST(LIB_com_err_a)
-AC_SUBST(LIB_com_err_so)
-
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl Figure what authentication modules should be built
-
-AC_DEFUN(AC_AUTH_MODULES,[
-AC_MSG_CHECKING(which authentication modules should be built)
-
-LIB_AUTH_SUBDIRS=
-
-if test "$ac_cv_header_siad_h" = yes; then
-	LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS sia"
-fi
-
-if test "$ac_cv_header_security_pam_modules_h" = yes -a "$enable_shared" = yes; then
-	LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS pam"
-fi
-
-case "${host}" in
-*-*-irix[[56]]*) LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS afskauthlib" ;;
-esac
-
-AC_MSG_RESULT($LIB_AUTH_SUBDIRS)
-
-AC_SUBST(LIB_AUTH_SUBDIRS)dnl
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl
-dnl Check if the prototype of a function is compatible with another one
-dnl
-
-dnl AC_PROTO_COMPAT(includes, function, prototype)
-
-AC_DEFUN(AC_PROTO_COMPAT, [
-AC_CACHE_CHECK([if $2 is compatible with system prototype],
-ac_cv_func_$2_proto_compat,
-AC_TRY_COMPILE([$1],
-[$3;],
-eval "ac_cv_func_$2_proto_compat=yes",
-eval "ac_cv_func_$2_proto_compat=no"))
-define([foo], translit($2, [a-z], [A-Z])[_PROTO_COMPATIBLE])
-if test "$ac_cv_func_$2_proto_compat" = yes; then
-	AC_DEFINE(foo, 1, [define if prototype of $2 is compatible with
-	$3])
-fi
-undefine([foo])
-])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl
-dnl Check if we need the prototype for a function
-dnl
-
-dnl AC_NEED_PROTO(includes, function)
-
-AC_DEFUN(AC_NEED_PROTO, [
-if test "$ac_cv_func_$2+set" != set -o "$ac_cv_func_$2" = yes; then
-AC_CACHE_CHECK([if $2 needs a prototype], ac_cv_func_$2_noproto,
-AC_TRY_COMPILE([$1],
-[struct foo { int foo; } xx;
-extern int $2 (struct foo*);
-$2(&xx);
-],
-eval "ac_cv_func_$2_noproto=yes",
-eval "ac_cv_func_$2_noproto=no"))
-define([foo], [NEED_]translit($2, [a-z], [A-Z])[_PROTO])
-if test "$ac_cv_func_$2_noproto" = yes; then
-	AC_DEFINE(foo, 1, [define if the system is missing a prototype for $2()])
-fi
-undefine([foo])
-fi
-])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: roken-frag.m4,v 1.44 2002/09/04 20:57:30 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl some code to get roken working
 dnl
@@ -5036,7 +4446,7 @@ AC_REQUIRE([rk_DB])
 dnl C types
 
 AC_REQUIRE([AC_TYPE_SIZE_T])
-AC_CHECK_TYPE_EXTRA(ssize_t, int, [#include <unistd.h>])
+AC_HAVE_TYPE([ssize_t],[#include <unistd.h>])
 AC_REQUIRE([AC_TYPE_PID_T])
 AC_REQUIRE([AC_TYPE_UID_T])
 AC_HAVE_TYPE([long long])
@@ -5072,6 +4482,7 @@ AC_CHECK_HEADERS([\
 	shadow.h				\
 	sys/bswap.h				\
 	sys/ioctl.h				\
+	sys/mman.h				\
 	sys/param.h				\
 	sys/proc.h				\
 	sys/resource.h				\
@@ -5103,14 +4514,33 @@ AM_CONDITIONAL(have_vis_h, test "$ac_cv_header_vis_h" = yes)
 
 dnl Check for functions and libraries
 
-AC_KRB_IPV6
-
 AC_FIND_FUNC(socket, socket)
 AC_FIND_FUNC(gethostbyname, nsl)
 AC_FIND_FUNC(syslog, syslog)
+
+AC_KRB_IPV6
+
 AC_FIND_FUNC(gethostbyname2, inet6 ip6)
 
 AC_FIND_FUNC(res_search, resolv,
+[
+#include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif
+],
+[0,0,0,0,0])
+
+AC_FIND_FUNC(res_nsearch, resolv,
 [
 #include <stdio.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -5146,12 +4576,28 @@ AC_FIND_FUNC(dn_expand, resolv,
 ],
 [0,0,0,0,0])
 
+rk_CHECK_VAR(_res, 
+[#include <stdio.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_NAMESER_H
+#include <arpa/nameser.h>
+#endif
+#ifdef HAVE_RESOLV_H
+#include <resolv.h>
+#endif])
+
+
 AC_BROKEN_SNPRINTF
 AC_BROKEN_VSNPRINTF
 
 AC_BROKEN_GLOB
 if test "$ac_cv_func_glob_working" != yes; then
-	LIBOBJS="$LIBOBJS glob.o"
+	AC_LIBOBJ(glob)
 fi
 AM_CONDITIONAL(have_glob_h, test "$ac_cv_func_glob_working" = yes)
 
@@ -5186,10 +4632,12 @@ AC_CHECK_FUNCS([				\
 ])
 
 if test "$ac_cv_func_cgetent" = no; then
-	LIBOBJS="$LIBOBJS getcap.o"
+	AC_LIBOBJ(getcap)
 fi
 
 AC_REQUIRE([AC_FUNC_GETLOGIN])
+
+AC_REQUIRE([AC_FUNC_MMAP])
 
 AC_FIND_FUNC_NO_LIBS(getsockopt,,
 [#ifdef HAVE_SYS_TYPES_H
@@ -5213,39 +4661,17 @@ AC_FIND_IF_NOT_BROKEN(hstrerror, resolv,
 #include <netdb.h>
 #endif],
 17)
-if test "$ac_cv_func_hstrerror" = yes; then
 AC_NEED_PROTO([
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif],
 hstrerror)
-fi
 
-dnl sigh, wish this could be done in a loop
-if test "$ac_cv_func_asprintf" = yes; then
-AC_NEED_PROTO([
-#include <stdio.h>
-#include <string.h>],
-asprintf)dnl
-fi
-if test "$ac_cv_func_vasprintf" = yes; then
-AC_NEED_PROTO([
-#include <stdio.h>
-#include <string.h>],
-vasprintf)dnl
-fi
-if test "$ac_cv_func_asnprintf" = yes; then
-AC_NEED_PROTO([
-#include <stdio.h>
-#include <string.h>],
-asnprintf)dnl
-fi
-if test "$ac_cv_func_vasnprintf" = yes; then
-AC_NEED_PROTO([
-#include <stdio.h>
-#include <string.h>],
-vasnprintf)dnl
-fi
+AC_FOREACH([rk_func], [asprintf vasprintf asnprintf vasnprintf],
+	[AC_NEED_PROTO([
+	#include <stdio.h>
+	#include <string.h>],
+	rk_func)])
 
 AC_FIND_FUNC_NO_LIBS(bswap16,,
 [#ifdef HAVE_SYS_BSWAP_H
@@ -5312,6 +4738,7 @@ AC_BROKEN([					\
 	initgroups				\
 	innetgr					\
 	iruserok				\
+	localtime_r				\
 	lstat					\
 	memmove					\
 	mkstemp					\
@@ -5349,6 +4776,14 @@ AC_BROKEN([					\
 	warnx					\
 	writev					\
 ])
+
+AC_FOREACH([rk_func], [strndup strsep strtok_r],
+	[AC_NEED_PROTO([#include <string.h>], rk_func)])
+
+AC_FOREACH([rk_func], [strsvis strunvis strvis strvisx svis unvis vis],
+[AC_NEED_PROTO([#ifdef HAVE_VIS_H
+#include <vis.h>
+#endif], rk_func)])
 
 AC_BROKEN2(inet_aton,
 [#ifdef HAVE_SYS_TYPES_H
@@ -5405,14 +4840,15 @@ AC_HAVE_STRUCT_FIELD(struct sockaddr, sa_len, [#include <sys/types.h>
 if test "$ac_cv_func_getnameinfo" = "yes"; then
   rk_BROKEN_GETNAMEINFO
   if test "$ac_cv_func_getnameinfo_broken" = yes; then
-    LIBOBJS="$LIBOBJS getnameinfo.o"
+	AC_LIBOBJ(getnameinfo)
   fi
 fi
 
 if test "$ac_cv_func_getaddrinfo" = "yes"; then
   rk_BROKEN_GETADDRINFO
   if test "$ac_cv_func_getaddrinfo_numserv" = no; then
-    LIBOBJS="$LIBOBJS getaddrinfo.o"
+	AC_LIBOBJ(getaddrinfo)
+	AC_LIBOBJ(freeaddrinfo)
   fi
 fi
 
@@ -5531,16 +4967,6 @@ AC_NEED_PROTO([
 ],
 crypt)
 
-AC_NEED_PROTO([
-#include <string.h>
-],
-strtok_r)
-
-AC_NEED_PROTO([
-#include <string.h>
-],
-strsep)
-
 dnl variables
 
 rk_CHECK_VAR(h_errno, 
@@ -5597,6 +5023,7 @@ dnl or do we have a variable `timezone' ?
 dnl
 
 rk_CHECK_VAR(timezone,[#include <time.h>])
+rk_CHECK_VAR(altzone,[#include <time.h>])
 
 AC_HAVE_TYPE([sa_family_t],[#include <sys/socket.h>])
 AC_HAVE_TYPE([socklen_t],[#include <sys/socket.h>])
@@ -5604,6 +5031,14 @@ AC_HAVE_TYPE([struct sockaddr], [#include <sys/socket.h>])
 AC_HAVE_TYPE([struct sockaddr_storage], [#include <sys/socket.h>])
 AC_HAVE_TYPE([struct addrinfo], [#include <netdb.h>])
 AC_HAVE_TYPE([struct ifaddrs], [#include <ifaddrs.h>])
+AC_HAVE_TYPE([struct iovec],[
+#include <sys/types.h>
+#include <sys/uio.h>
+])
+AC_HAVE_TYPE([struct msghdr],[
+#include <sys/types.h>
+#include <sys/socket.h>
+])
 
 dnl
 dnl Check for struct winsize
@@ -5628,7 +5063,130 @@ AC_SUBST(LIB_roken)dnl
 AC_SUBST(INCLUDES_roken)dnl
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: mips-abi.m4,v 1.6 2002/04/30 16:46:05 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl
+dnl Check for MIPS/IRIX ABI flags. Sets $abi and $abilibdirext to some
+dnl value.
+
+AC_DEFUN(AC_MIPS_ABI, [
+AC_ARG_WITH(mips_abi,
+	AC_HELP_STRING([--with-mips-abi=abi],[ABI to use for IRIX (32, n32, or 64)]))
+
+case "$host_os" in
+irix*)
+with_mips_abi="${with_mips_abi:-yes}"
+if test -n "$GCC"; then
+
+# GCC < 2.8 only supports the O32 ABI. GCC >= 2.8 has a flag to select
+# which ABI to use, but only supports (as of 2.8.1) the N32 and 64 ABIs.
+#
+# Default to N32, but if GCC doesn't grok -mabi=n32, we assume an old
+# GCC and revert back to O32. The same goes if O32 is asked for - old
+# GCCs doesn't like the -mabi option, and new GCCs can't output O32.
+#
+# Don't you just love *all* the different SGI ABIs?
+
+case "${with_mips_abi}" in 
+        32|o32) abi='-mabi=32';  abilibdirext=''     ;;
+       n32|yes) abi='-mabi=n32'; abilibdirext='32'  ;;
+        64) abi='-mabi=64';  abilibdirext='64'   ;;
+	no) abi=''; abilibdirext='';;
+         *) AC_MSG_ERROR("Invalid ABI specified") ;;
+esac
+if test -n "$abi" ; then
+ac_foo=krb_cv_gcc_`echo $abi | tr =- __`
+dnl
+dnl can't use AC_CACHE_CHECK here, since it doesn't quote CACHE-ID to
+dnl AC_MSG_RESULT
+dnl
+AC_MSG_CHECKING([if $CC supports the $abi option])
+AC_CACHE_VAL($ac_foo, [
+save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $abi"
+AC_TRY_COMPILE(,int x;, eval $ac_foo=yes, eval $ac_foo=no)
+CFLAGS="$save_CFLAGS"
+])
+ac_res=`eval echo \\\$$ac_foo`
+AC_MSG_RESULT($ac_res)
+if test $ac_res = no; then
+# Try to figure out why that failed...
+case $abi in
+	-mabi=32) 
+	save_CFLAGS="$CFLAGS"
+	CFLAGS="$CFLAGS -mabi=n32"
+	AC_TRY_COMPILE(,int x;, ac_res=yes, ac_res=no)
+	CLAGS="$save_CFLAGS"
+	if test $ac_res = yes; then
+		# New GCC
+		AC_MSG_ERROR([$CC does not support the $with_mips_abi ABI])
+	fi
+	# Old GCC
+	abi=''
+	abilibdirext=''
+	;;
+	-mabi=n32|-mabi=64)
+		if test $with_mips_abi = yes; then
+			# Old GCC, default to O32
+			abi=''
+			abilibdirext=''
+		else
+			# Some broken GCC
+			AC_MSG_ERROR([$CC does not support the $with_mips_abi ABI])
+		fi
+	;;
+esac
+fi #if test $ac_res = no; then
+fi #if test -n "$abi" ; then
+else
+case "${with_mips_abi}" in
+        32|o32) abi='-32'; abilibdirext=''     ;;
+       n32|yes) abi='-n32'; abilibdirext='32'  ;;
+        64) abi='-64'; abilibdirext='64'   ;;
+	no) abi=''; abilibdirext='';;
+         *) AC_MSG_ERROR("Invalid ABI specified") ;;
+esac
+fi #if test -n "$GCC"; then
+;;
+esac
+])
+
+dnl
+dnl $KTH-KRB: c-attribute.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+dnl
+dnl Test for __attribute__
+dnl
+
+AC_DEFUN(AC_C___ATTRIBUTE__, [
+AC_MSG_CHECKING(for __attribute__)
+AC_CACHE_VAL(ac_cv___attribute__, [
+AC_TRY_COMPILE([
+#include <stdlib.h>
+],
+[
+static void foo(void) __attribute__ ((noreturn));
+
+static void
+foo(void)
+{
+  exit(1);
+}
+],
+ac_cv___attribute__=yes,
+ac_cv___attribute__=no)])
+if test "$ac_cv___attribute__" = "yes"; then
+  AC_DEFINE(HAVE___ATTRIBUTE__, 1, [define if your compiler has __attribute__])
+fi
+AC_MSG_RESULT($ac_cv___attribute__)
+])
+
+
+dnl $KTH-KRB: wflags.m4,v 1.3 1999/03/11 12:11:41 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl set WFLAGS
 
@@ -5650,31 +5208,288 @@ AC_SUBST(WFLAGS_NOUNUSED)dnl
 AC_SUBST(WFLAGS_NOIMPLICITINT)dnl
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: db.m4,v 1.8.4.1 2002/09/10 14:36:19 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
-dnl ac_check_type + extra headers
+dnl tests for various db libraries
+dnl
+AC_DEFUN([rk_DB],[
+AC_ARG_ENABLE(berkeley-db,
+                       AC_HELP_STRING([--disable-berkeley-db],
+                                      [if you don't want berkeley db]),[
+])
 
-dnl AC_CHECK_TYPE_EXTRA(TYPE, DEFAULT, HEADERS)
-AC_DEFUN(AC_CHECK_TYPE_EXTRA,
-[AC_REQUIRE([AC_HEADER_STDC])dnl
-AC_MSG_CHECKING(for $1)
-AC_CACHE_VAL(ac_cv_type_$1,
-[AC_EGREP_CPP(dnl
-changequote(<<,>>)dnl
-<<$1[^a-zA-Z_0-9]>>dnl
-changequote([,]), [#include <sys/types.h>
-#if STDC_HEADERS
-#include <stdlib.h>
-#include <stddef.h>
+have_ndbm=no
+db_type=unknown
+
+if test "$enable_berkeley_db" != no; then
+
+  AC_CHECK_HEADERS([				\
+	db4/db.h				\
+	db3/db.h				\
+	db.h					\
+	db_185.h				\
+  ])
+
+dnl db_create is used by db3 and db4
+
+  AC_FIND_FUNC_NO_LIBS(db_create, db4 db3 db, [
+  #include <stdio.h>
+  #ifdef HAVE_DB4_DB_H
+  #include <db4/db.h>
+  #elif defined(HAVE_DB3_DB_H)
+  #include <db3/db.h>
+  #else
+  #include <db.h>
+  #endif
+  ],[NULL, NULL, 0])
+
+  if test "$ac_cv_func_db_create" = "yes"; then
+    db_type=db3
+    if test "$ac_cv_funclib_db_create" != "yes"; then
+      DBLIB="$ac_cv_funclib_db_create"
+    else
+      DBLIB=""
+    fi
+    AC_DEFINE(HAVE_DB3, 1, [define if you have a berkeley db3/4 library])
+  else
+
+dnl dbopen is used by db1/db2
+
+    AC_FIND_FUNC_NO_LIBS(dbopen, db2 db, [
+    #include <stdio.h>
+    #if defined(HAVE_DB2_DB_H)
+    #include <db2/db.h>
+    #elif defined(HAVE_DB_185_H)
+    #include <db_185.h>
+    #elif defined(HAVE_DB_H)
+    #include <db.h>
+    #else
+    #error no db.h
+    #endif
+    ],[NULL, 0, 0, 0, NULL])
+
+    if test "$ac_cv_func_dbopen" = "yes"; then
+      db_type=db1
+      if test "$ac_cv_funclib_dbopen" != "yes"; then
+        DBLIB="$ac_cv_funclib_dbopen"
+      else
+        DBLIB=""
+      fi
+      AC_DEFINE(HAVE_DB1, 1, [define if you have a berkeley db1/2 library])
+    fi
+  fi
+
+dnl test for ndbm compatability
+
+  if test "$ac_cv_func_dbm_firstkey" != yes; then
+    AC_FIND_FUNC_NO_LIBS2(dbm_firstkey, $ac_cv_funclib_dbopen $ac_cv_funclib_db_create, [
+    #include <stdio.h>
+    #define DB_DBM_HSEARCH 1
+    #include <db.h>
+    DBM *dbm;
+    ],[NULL])
+  
+    if test "$ac_cv_func_dbm_firstkey" = "yes"; then
+      if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
+        LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+      else
+        LIB_NDBM=""
+      fi
+      AC_DEFINE(HAVE_DB_NDBM, 1, [define if you have ndbm compat in db])
+      AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
+    else
+      $as_unset ac_cv_func_dbm_firstkey
+      $as_unset ac_cv_funclib_dbm_firstkey
+    fi
+  fi
+
+fi # berkeley db
+
+if test "$db_type" = "unknown" -o "$ac_cv_func_dbm_firstkey" = ""; then
+
+  AC_CHECK_HEADERS([				\
+	dbm.h					\
+	ndbm.h					\
+  ])
+
+  AC_FIND_FUNC_NO_LIBS(dbm_firstkey, ndbm, [
+  #include <stdio.h>
+  #if defined(HAVE_NDBM_H)
+  #include <ndbm.h>
+  #elif defined(HAVE_DBM_H)
+  #include <dbm.h>
+  #endif
+  DBM *dbm;
+  ],[NULL])
+
+  if test "$ac_cv_func_dbm_firstkey" = "yes"; then
+    if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
+      LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+    else
+      LIB_NDBM=""
+    fi
+    AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
+    have_ndbm=yes
+    if test "$db_type" = "unknown"; then
+      db_type=ndbm
+      DBLIB="$LIB_NDBM"
+    fi
+  else
+
+    $as_unset ac_cv_func_dbm_firstkey
+    $as_unset ac_cv_funclib_dbm_firstkey
+
+    AC_CHECK_HEADERS([				\
+	  gdbm/ndbm.h				\
+    ])
+
+    AC_FIND_FUNC_NO_LIBS(dbm_firstkey, gdbm, [
+    #include <stdio.h>
+    #include <gdbm/ndbm.h>
+    DBM *dbm;
+    ],[NULL])
+
+    if test "$ac_cv_func_dbm_firstkey" = "yes"; then
+      if test "$ac_cv_funclib_dbm_firstkey" != "yes"; then
+	LIB_NDBM="$ac_cv_funclib_dbm_firstkey"
+      else
+	LIB_NDBM=""
+      fi
+      AC_DEFINE(HAVE_NDBM, 1, [define if you have a ndbm library])dnl
+      have_ndbm=yes
+      if test "$db_type" = "unknown"; then
+	db_type=ndbm
+	DBLIB="$LIB_NDBM"
+      fi
+    fi
+  fi
+
+fi # unknown
+
+if test "$have_ndbm" = "yes"; then
+  AC_MSG_CHECKING([if ndbm is implemented with db])
+  AC_TRY_RUN([
+#include <unistd.h>
+#include <fcntl.h>
+#if defined(HAVE_GDBM_NDBM_H)
+#include <gdbm/ndbm.h>
+#elif defined(HAVE_NDBM_H)
+#include <ndbm.h>
+#elif defined(HAVE_DBM_H)
+#include <dbm.h>
 #endif
-$3], ac_cv_type_$1=yes, ac_cv_type_$1=no)])dnl
-AC_MSG_RESULT($ac_cv_type_$1)
-if test $ac_cv_type_$1 = no; then
-  AC_DEFINE($1, $2, [Define this to what the type $1 should be.])
+int main()
+{
+  DBM *d;
+
+  d = dbm_open("conftest", O_RDWR | O_CREAT, 0666);
+  if (d == NULL)
+    return 1;
+  dbm_close(d);
+  return 0;
+}],[
+    if test -f conftest.db; then
+      AC_MSG_RESULT([yes])
+      AC_DEFINE(HAVE_NEW_DB, 1, [Define if NDBM really is DB (creates files *.db)])
+    else
+      AC_MSG_RESULT([no])
+    fi],[AC_MSG_RESULT([no])])
+fi
+
+AM_CONDITIONAL(HAVE_DB1, test "$db_type" = db1)dnl
+AM_CONDITIONAL(HAVE_DB3, test "$db_type" = db3)dnl
+AM_CONDITIONAL(HAVE_NDBM, test "$db_type" = ndbm)dnl
+
+z=""
+for i in $LDFLAGS; do
+	case "$i" in
+	-L*) z="$z $i";;
+	esac
+done
+DBLIB="$z $DBLIB"
+AC_SUBST(DBLIB)dnl
+AC_SUBST(LIB_NDBM)dnl
+])
+
+dnl $KTH-KRB: find-func-no-libs.m4,v 1.5 1999/10/30 21:08:18 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl
+dnl Look for function in any of the specified libraries
+dnl
+
+dnl AC_FIND_FUNC_NO_LIBS(func, libraries, includes, arguments, extra libs, extra args)
+AC_DEFUN(AC_FIND_FUNC_NO_LIBS, [
+AC_FIND_FUNC_NO_LIBS2([$1], ["" $2], [$3], [$4], [$5], [$6])])
+
+dnl $KTH-KRB: find-func-no-libs2.m4,v 1.6 2001/09/01 10:57:32 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl
+dnl Look for function in any of the specified libraries
+dnl
+
+dnl AC_FIND_FUNC_NO_LIBS2(func, libraries, includes, arguments, extra libs, extra args)
+AC_DEFUN(AC_FIND_FUNC_NO_LIBS2, [
+
+AC_MSG_CHECKING([for $1])
+AC_CACHE_VAL(ac_cv_funclib_$1,
+[
+if eval "test \"\$ac_cv_func_$1\" != yes" ; then
+	ac_save_LIBS="$LIBS"
+	for ac_lib in $2; do
+		case "$ac_lib" in
+		"") ;;
+		yes) ac_lib="" ;;
+		no) continue ;;
+		-l*) ;;
+		*) ac_lib="-l$ac_lib" ;;
+		esac
+		LIBS="$6 $ac_lib $5 $ac_save_LIBS"
+		AC_TRY_LINK([$3],[$1($4)],eval "if test -n \"$ac_lib\";then ac_cv_funclib_$1=$ac_lib; else ac_cv_funclib_$1=yes; fi";break)
+	done
+	eval "ac_cv_funclib_$1=\${ac_cv_funclib_$1-no}"
+	LIBS="$ac_save_LIBS"
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+eval "ac_res=\$ac_cv_funclib_$1"
+
+if false; then
+	AC_CHECK_FUNCS($1)
+dnl	AC_CHECK_LIBS($2, foo)
+fi
+# $1
+eval "ac_tr_func=HAVE_[]upcase($1)"
+eval "ac_tr_lib=HAVE_LIB[]upcase($ac_res | sed -e 's/-l//')"
+eval "LIB_$1=$ac_res"
+
+case "$ac_res" in
+	yes)
+	eval "ac_cv_func_$1=yes"
+	eval "LIB_$1="
+	AC_DEFINE_UNQUOTED($ac_tr_func)
+	AC_MSG_RESULT([yes])
+	;;
+	no)
+	eval "ac_cv_func_$1=no"
+	eval "LIB_$1="
+	AC_MSG_RESULT([no])
+	;;
+	*)
+	eval "ac_cv_func_$1=yes"
+	eval "ac_cv_lib_`echo "$ac_res" | sed 's/-l//'`=yes"
+	AC_DEFINE_UNQUOTED($ac_tr_func)
+	AC_DEFINE_UNQUOTED($ac_tr_lib)
+	AC_MSG_RESULT([yes, in $ac_res])
+	;;
+esac
+AC_SUBST(LIB_$1)
+])
+
+dnl $KTH-KRB: have-type.m4,v 1.6 2000/07/15 18:10:00 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl check for existance of a type
 
@@ -5706,7 +5521,8 @@ fi
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: retsigtype.m4,v 1.1 2000/07/15 18:05:56 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl Figure out return type of signal handlers, and define SIGRETURN macro
 dnl that can be used to return from one
@@ -5723,7 +5539,253 @@ AH_BOTTOM([#ifdef VOID_RETSIGTYPE
 #define SIGRETURN(x) return (RETSIGTYPE)(x)
 #endif])
 ])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl
+dnl $KTH-KRB: check-netinet-ip-and-tcp.m4,v 1.3 2000/07/18 10:33:02 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+dnl extra magic check for netinet/{ip.h,tcp.h} because on irix 6.5.3
+dnl you have to include standards.h before including these files
+
+AC_DEFUN(CHECK_NETINET_IP_AND_TCP,
+[
+AC_CHECK_HEADERS(standards.h)
+for i in netinet/ip.h netinet/tcp.h; do
+
+cv=`echo "$i" | sed 'y%./+-%__p_%'`
+
+AC_CACHE_CHECK([for $i],ac_cv_header_$cv,
+[AC_TRY_CPP([\
+#ifdef HAVE_STANDARDS_H
+#include <standards.h>
+#endif
+#include <$i>
+],
+eval "ac_cv_header_$cv=yes",
+eval "ac_cv_header_$cv=no")])
+ac_res=`eval echo \\$ac_cv_header_$cv`
+if test "$ac_res" = yes; then
+	ac_tr_hdr=HAVE_`echo $i | sed 'y%abcdefghijklmnopqrstuvwxyz./-%ABCDEFGHIJKLMNOPQRSTUVWXYZ___%'`
+	AC_DEFINE_UNQUOTED($ac_tr_hdr, 1)
+fi
+done
+if false;then
+	AC_CHECK_HEADERS(netinet/ip.h netinet/tcp.h)
+fi
+])
+
+dnl $KTH-KRB: find-func.m4,v 1.1 1997/12/14 15:58:58 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl AC_FIND_FUNC(func, libraries, includes, arguments)
+AC_DEFUN(AC_FIND_FUNC, [
+AC_FIND_FUNC_NO_LIBS([$1], [$2], [$3], [$4])
+if test -n "$LIB_$1"; then
+	LIBS="$LIB_$1 $LIBS"
+fi
+])
+
+dnl $KTH-KRB: krb-ipv6.m4,v 1.13 2002/04/30 16:48:13 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl test for IPv6
+dnl
+AC_DEFUN(AC_KRB_IPV6, [
+AC_ARG_WITH(ipv6,
+	AC_HELP_STRING([--without-ipv6],[do not enable IPv6 support]),[
+if test "$withval" = "no"; then
+	ac_cv_lib_ipv6=no
+fi])
+save_CFLAGS="${CFLAGS}"
+AC_CACHE_CHECK([for IPv6 stack type], v6type,
+[dnl check for different v6 implementations (by itojun)
+v6type=unknown
+v6lib=none
+
+for i in v6d toshiba kame inria zeta linux; do
+	case $i in
+	v6d)
+		AC_EGREP_CPP(yes, [
+#include </usr/local/v6/include/sys/types.h>
+#ifdef __V6D__
+yes
+#endif],
+			[v6type=$i; v6lib=v6;
+			v6libdir=/usr/local/v6/lib;
+			CFLAGS="-I/usr/local/v6/include $CFLAGS"])
+		;;
+	toshiba)
+		AC_EGREP_CPP(yes, [
+#include <sys/param.h>
+#ifdef _TOSHIBA_INET6
+yes
+#endif],
+			[v6type=$i; v6lib=inet6;
+			v6libdir=/usr/local/v6/lib;
+			CFLAGS="-DINET6 $CFLAGS"])
+		;;
+	kame)
+		AC_EGREP_CPP(yes, [
+#include <netinet/in.h>
+#ifdef __KAME__
+yes
+#endif],
+			[v6type=$i; v6lib=inet6;
+			v6libdir=/usr/local/v6/lib;
+			CFLAGS="-DINET6 $CFLAGS"])
+		;;
+	inria)
+		AC_EGREP_CPP(yes, [
+#include <netinet/in.h>
+#ifdef IPV6_INRIA_VERSION
+yes
+#endif],
+			[v6type=$i; CFLAGS="-DINET6 $CFLAGS"])
+		;;
+	zeta)
+		AC_EGREP_CPP(yes, [
+#include <sys/param.h>
+#ifdef _ZETA_MINAMI_INET6
+yes
+#endif],
+			[v6type=$i; v6lib=inet6;
+			v6libdir=/usr/local/v6/lib;
+			CFLAGS="-DINET6 $CFLAGS"])
+		;;
+	linux)
+		if test -d /usr/inet6; then
+			v6type=$i
+			v6lib=inet6
+			v6libdir=/usr/inet6
+			CFLAGS="-DINET6 $CFLAGS"
+		fi
+		;;
+	esac
+	if test "$v6type" != "unknown"; then
+		break
+	fi
+done
+
+if test "$v6lib" != "none"; then
+	for dir in $v6libdir /usr/local/v6/lib /usr/local/lib; do
+		if test -d $dir -a -f $dir/lib$v6lib.a; then
+			LIBS="-L$dir -l$v6lib $LIBS"
+			break
+		fi
+	done
+fi
+])
+
+AC_CACHE_CHECK([for IPv6], ac_cv_lib_ipv6, [
+AC_TRY_LINK([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif
+],
+[
+ struct sockaddr_in6 sin6;
+ int s;
+
+ s = socket(AF_INET6, SOCK_DGRAM, 0);
+
+ sin6.sin6_family = AF_INET6;
+ sin6.sin6_port = htons(17);
+ sin6.sin6_addr = in6addr_any;
+ bind(s, (struct sockaddr *)&sin6, sizeof(sin6));
+],
+ac_cv_lib_ipv6=yes,
+ac_cv_lib_ipv6=no)])
+if test "$ac_cv_lib_ipv6" = yes; then
+  AC_DEFINE(HAVE_IPV6, 1, [Define if you have IPv6.])
+else
+  CFLAGS="${save_CFLAGS}"
+fi
+
+if test "$ac_cv_lib_ipv6" = yes; then
+	AC_CACHE_CHECK([for in6addr_loopback],[ac_cv_var_in6addr_loopback],[
+	AC_TRY_LINK([
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SOCKET_H
+#include <sys/socket.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IN6_H
+#include <netinet/in6.h>
+#endif],[
+struct sockaddr_in6 sin6;
+sin6.sin6_addr = in6addr_loopback;
+],ac_cv_var_in6addr_loopback=yes,ac_cv_var_in6addr_loopback=no)])
+	if test "$ac_cv_var_in6addr_loopback" = yes; then
+		AC_DEFINE(HAVE_IN6ADDR_LOOPBACK, 1, 
+			[Define if you have the in6addr_loopback variable])
+	fi
+fi
+])
+dnl $KTH-KRB: check-var.m4,v 1.6 2001/08/21 12:00:16 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl rk_CHECK_VAR(variable, includes)
+AC_DEFUN([rk_CHECK_VAR], [
+AC_MSG_CHECKING(for $1)
+AC_CACHE_VAL(ac_cv_var_$1, [
+AC_TRY_LINK([extern int $1;
+int foo() { return $1; }],
+	    [foo()],
+	    ac_cv_var_$1=yes, ac_cv_var_$1=no)
+])
+ac_foo=`eval echo \\$ac_cv_var_$1`
+AC_MSG_RESULT($ac_foo)
+if test "$ac_foo" = yes; then
+	AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]$1), 1, 
+		[Define if you have the `]$1[' variable.])
+	m4_ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
+fi
+])
+
+AC_WARNING_ENABLE([obsolete])
+AU_DEFUN([AC_CHECK_VAR], [rk_CHECK_VAR([$2], [$1])], [foo])
+dnl $KTH-KRB: check-declaration.m4,v 1.3 1999/03/01 13:03:08 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl
+dnl Check if we need the declaration of a variable
+dnl
+
+dnl AC_HAVE_DECLARATION(includes, variable)
+AC_DEFUN(AC_CHECK_DECLARATION, [
+AC_MSG_CHECKING([if $2 is properly declared])
+AC_CACHE_VAL(ac_cv_var_$2_declaration, [
+AC_TRY_COMPILE([$1
+extern struct { int foo; } $2;],
+[$2.foo = 1;],
+eval "ac_cv_var_$2_declaration=no",
+eval "ac_cv_var_$2_declaration=yes")
+])
+
+define(foo, [HAVE_]translit($2, [a-z], [A-Z])[_DECLARATION])
+
+AC_MSG_RESULT($ac_cv_var_$2_declaration)
+if eval "test \"\$ac_cv_var_$2_declaration\" = yes"; then
+	AC_DEFINE(foo, 1, [define if your system declares $2])
+fi
+undefine([foo])
+])
+
+dnl $KTH-KRB: broken-snprintf.m4,v 1.4 2001/09/01 11:56:05 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 AC_DEFUN(AC_BROKEN_SNPRINTF, [
 AC_CACHE_CHECK(for working snprintf,ac_cv_func_snprintf_working,
@@ -5778,7 +5840,34 @@ AC_NEED_PROTO([#include <stdio.h>],vsnprintf)
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: need-proto.m4,v 1.4 2002/08/23 15:07:41 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl
+dnl Check if we need the prototype for a function
+dnl
+
+dnl AC_NEED_PROTO(includes, function)
+
+AC_DEFUN(AC_NEED_PROTO, [
+if test "$ac_cv_func_$2+set" != set -o "$ac_cv_func_$2" = yes; then
+AC_CACHE_CHECK([if $2 needs a prototype], ac_cv_func_$2_noproto,
+AC_TRY_COMPILE([$1],
+[struct foo { int foo; } xx;
+extern int $2 (struct foo*);
+$2(&xx);
+],
+eval "ac_cv_func_$2_noproto=yes",
+eval "ac_cv_func_$2_noproto=no"))
+if test "$ac_cv_func_$2_noproto" = yes; then
+	AC_DEFINE(AS_TR_CPP(NEED_[]$2[]_PROTO), 1,
+		[define if the system is missing a prototype for $2()])
+fi
+fi
+])
+
+dnl $KTH-KRB: broken-glob.m4,v 1.4 2001/06/19 09:59:46 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl check for glob(3)
 dnl
@@ -5809,7 +5898,8 @@ fi
 ])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: krb-func-getlogin.m4,v 1.1 1999/07/13 17:45:30 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl test for POSIX (broken) getlogin
 dnl
@@ -5831,7 +5921,8 @@ fi
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: find-if-not-broken.m4,v 1.4 2002/05/19 19:37:08 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
 dnl Mix between AC_FIND_FUNC and AC_BROKEN
@@ -5839,41 +5930,34 @@ dnl
 
 AC_DEFUN(AC_FIND_IF_NOT_BROKEN,
 [AC_FIND_FUNC([$1], [$2], [$3], [$4])
-if eval "test \"$ac_cv_func_$1\" != yes"; then
-LIBOBJS[]="$LIBOBJS $1.o"
+if eval "test \"$ac_cv_func_$1\" != yes"; then 
+	rk_LIBOBJ([$1])
 fi
-AC_SUBST(LIBOBJS)dnl
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: broken.m4,v 1.6 2002/05/19 19:36:52 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
 dnl Same as AC _REPLACE_FUNCS, just define HAVE_func if found in normal
 dnl libraries 
 
-AC_DEFUN(AC_BROKEN,
-[for ac_func in $1
-do
-AC_CHECK_FUNC($ac_func, [
-ac_tr_func=HAVE_[]upcase($ac_func)
-AC_DEFINE_UNQUOTED($ac_tr_func)],[LIBOBJS[]="$LIBOBJS ${ac_func}.o"])
-if false; then
-	AC_CHECK_FUNCS($1)
-fi
-done
-AC_SUBST(LIBOBJS)dnl
-])
+AC_DEFUN([AC_BROKEN],
+[AC_FOREACH([rk_func], [$1],
+	[AC_CHECK_FUNC(rk_func,
+		[AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]rk_func), 1, 
+			[Define if you have the function `]rk_func['.])],
+		[rk_LIBOBJ(rk_func)])])])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: broken2.m4,v 1.4 2002/05/19 22:16:46 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl AC_BROKEN but with more arguments
 
 dnl AC_BROKEN2(func, includes, arguments)
-AC_DEFUN(AC_BROKEN2,
-[for ac_func in $1
-do
-AC_MSG_CHECKING([for $ac_func])
-AC_CACHE_VAL(ac_cv_func_$ac_func,
+AC_DEFUN([AC_BROKEN2],
+[AC_MSG_CHECKING([for $1])
+AC_CACHE_VAL(ac_cv_func_[]$1,
 [AC_TRY_LINK([$2],
 [
 /* The GNU C library defines this for functions which it implements
@@ -5882,25 +5966,19 @@ AC_CACHE_VAL(ac_cv_func_$ac_func,
 #if defined (__stub_$1) || defined (__stub___$1)
 choke me
 #else
-$ac_func($3)
+$1($3)
 #endif
-], [eval "ac_cv_func_$ac_func=yes"], [eval "ac_cv_func_$ac_func=no"])])
-if eval "test \"\${ac_cv_func_$ac_func}\" = yes"; then
-  ac_tr_func=HAVE_[]upcase($ac_func)
-  AC_DEFINE_UNQUOTED($ac_tr_func)
+], [eval "ac_cv_func_[]$1=yes"], [eval "ac_cv_func_[]$1=no"])])
+if eval "test \"\${ac_cv_func_[]$1}\" = yes"; then
+  AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]$1), 1, define)
   AC_MSG_RESULT(yes)
 else
   AC_MSG_RESULT(no)
-  LIBOBJS[]="$LIBOBJS ${ac_func}.o"
-fi
-done
-if false; then
-	AC_CHECK_FUNCS($1)
-fi
-AC_SUBST(LIBOBJS)dnl
-])
+  rk_LIBOBJ($1)
+fi])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: have-struct-field.m4,v 1.6 1999/07/29 01:44:32 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl check for fields in a structure
 dnl
@@ -5920,7 +5998,8 @@ fi
 undefine([cache_val])
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: broken-getnameinfo.m4,v 1.2 2000/12/05 09:09:00 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl test for broken AIX getnameinfo
 
@@ -5949,7 +6028,8 @@ main(int argc, char **argv)
 }
 ]], ac_cv_func_getnameinfo_broken=no, ac_cv_func_getnameinfo_broken=yes))])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: broken-getaddrinfo.m4,v 1.3 2002/08/20 14:09:40 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl test if getaddrinfo can handle numeric services
 
@@ -5968,14 +6048,15 @@ main(int argc, char **argv)
 	hints.ai_flags = AI_PASSIVE;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_family = PF_UNSPEC;
-	if(getaddrinfo(NULL, "17", &hints, &ai) == EAI_SERVICE)
+	if(getaddrinfo(NULL, "17", &hints, &ai) != 0)
 		return 1;
 	return 0;
 }
 ]], ac_cv_func_getaddrinfo_numserv=yes, ac_cv_func_getaddrinfo_numserv=no))])
 
 dnl
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: broken-realloc.m4,v 1.1 2000/07/15 18:05:36 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl Test for realloc that doesn't handle NULL as first parameter
 dnl
@@ -6001,55 +6082,31 @@ AH_BOTTOM([#ifdef BROKEN_REALLOC
 #endif])
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
-dnl
-dnl rk_CHECK_VAR(variable, includes)
-AC_DEFUN([rk_CHECK_VAR], [
-AC_MSG_CHECKING(for $1)
-AC_CACHE_VAL(ac_cv_var_$1, [
-AC_TRY_LINK([extern int $1;
-int foo() { return $1; }],
-	    [foo()],
-	    ac_cv_var_$1=yes, ac_cv_var_$1=no)
-])
-ac_foo=`eval echo \\$ac_cv_var_$1`
-AC_MSG_RESULT($ac_foo)
-if test "$ac_foo" = yes; then
-	AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_[]$1), 1, 
-		[Define if you have the `]$1[' variable.])
-	m4_ifval([$2], AC_CHECK_DECLARATION([$2],[$1]))
-fi
-])
-
-AC_WARNING_ENABLE([obsolete])
-AU_DEFUN([AC_CHECK_VAR], [rk_CHECK_VAR([$2], [$1])], [foo])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: proto-compat.m4,v 1.3 1999/03/01 13:03:48 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
-dnl Check if we need the declaration of a variable
+dnl Check if the prototype of a function is compatible with another one
 dnl
 
-dnl AC_HAVE_DECLARATION(includes, variable)
-AC_DEFUN(AC_CHECK_DECLARATION, [
-AC_MSG_CHECKING([if $2 is properly declared])
-AC_CACHE_VAL(ac_cv_var_$2_declaration, [
-AC_TRY_COMPILE([$1
-extern struct { int foo; } $2;],
-[$2.foo = 1;],
-eval "ac_cv_var_$2_declaration=no",
-eval "ac_cv_var_$2_declaration=yes")
-])
+dnl AC_PROTO_COMPAT(includes, function, prototype)
 
-define(foo, [HAVE_]translit($2, [a-z], [A-Z])[_DECLARATION])
-
-AC_MSG_RESULT($ac_cv_var_$2_declaration)
-if eval "test \"\$ac_cv_var_$2_declaration\" = yes"; then
-	AC_DEFINE(foo, 1, [define if your system declares $2])
+AC_DEFUN(AC_PROTO_COMPAT, [
+AC_CACHE_CHECK([if $2 is compatible with system prototype],
+ac_cv_func_$2_proto_compat,
+AC_TRY_COMPILE([$1],
+[$3;],
+eval "ac_cv_func_$2_proto_compat=yes",
+eval "ac_cv_func_$2_proto_compat=no"))
+define([foo], translit($2, [a-z], [A-Z])[_PROTO_COMPATIBLE])
+if test "$ac_cv_func_$2_proto_compat" = yes; then
+	AC_DEFINE(foo, 1, [define if prototype of $2 is compatible with
+	$3])
 fi
 undefine([foo])
 ])
-
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: krb-struct-winsize.m4,v 1.3 2001/09/01 11:56:05 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
 dnl Search for struct winsize
@@ -6075,7 +6132,8 @@ AC_EGREP_HEADER(ws_ypixel, termios.h,
 	AC_DEFINE(HAVE_WS_YPIXEL, 1, [define if struct winsize has ws_ypixel]))
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: krb-struct-spwd.m4,v 1.3 1999/07/13 21:04:11 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl Test for `struct spwd'
 
@@ -6098,7 +6156,872 @@ if test "$ac_cv_struct_spwd" = "yes"; then
 fi
 ])
 
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl $KTH-KRB: test-package.m4,v 1.11 2002/08/28 19:30:48 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl rk_TEST_PACKAGE(package,headers,libraries,extra libs,
+dnl			default locations, conditional, config-program)
+
+AC_DEFUN(rk_TEST_PACKAGE,[
+AC_ARG_WITH($1,
+	AC_HELP_STRING([--with-$1=dir],[use $1 in dir]))
+AC_ARG_WITH($1-lib,
+	AC_HELP_STRING([--with-$1-lib=dir],[use $1 libraries in dir]),
+[if test "$withval" = "yes" -o "$withval" = "no"; then
+  AC_MSG_ERROR([No argument for --with-$1-lib])
+elif test "X$with_$1" = "X"; then
+  with_$1=yes
+fi])
+AC_ARG_WITH($1-include,
+	AC_HELP_STRING([--with-$1-include=dir],[use $1 headers in dir]),
+[if test "$withval" = "yes" -o "$withval" = "no"; then
+  AC_MSG_ERROR([No argument for --with-$1-include])
+elif test "X$with_$1" = "X"; then
+  with_$1=yes
+fi])
+AC_ARG_WITH($1-config,
+	AC_HELP_STRING([--with-$1-config=path],[config program for $1]))
+
+m4_ifval([$6],
+	m4_define([rk_pkgname], $6),
+	m4_define([rk_pkgname], AS_TR_CPP($1)))
+
+AC_MSG_CHECKING(for $1)
+
+case "$with_$1" in
+yes|"") d='$5' ;;
+no)	d= ;;
+*)	d="$with_$1" ;;
+esac
+
+header_dirs=
+lib_dirs=
+for i in $d; do
+	if test "$with_$1_include" = ""; then
+		if test -d "$i/include/$1"; then
+			header_dirs="$header_dirs $i/include/$1"
+		fi
+		if test -d "$i/include"; then
+			header_dirs="$header_dirs $i/include"
+		fi
+	fi
+	if test "$with_$1_lib" = ""; then
+		if test -d "$i/lib$abilibdirext"; then
+			lib_dirs="$lib_dirs $i/lib$abilibdirext"
+		fi
+	fi
+done
+
+if test "$with_$1_include"; then
+	header_dirs="$with_$1_include $header_dirs"
+fi
+if test "$with_$1_lib"; then
+	lib_dirs="$with_$1_lib $lib_dirs"
+fi
+
+if test "$with_$1_config" = ""; then
+	with_$1_config='$7'
+fi
+
+$1_cflags=
+$1_libs=
+
+case "$with_$1_config" in
+yes|no|"")
+	;;
+*)
+	$1_cflags="`$with_$1_config --cflags 2>&1`"
+	$1_libs="`$with_$1_config --libs 2>&1`"
+	;;
+esac
+
+found=no
+if test "$with_$1" != no; then
+	save_CFLAGS="$CFLAGS"
+	save_LIBS="$LIBS"
+	if test "$[]$1_cflags" -a "$[]$1_libs"; then
+		CFLAGS="$[]$1_cflags $save_CFLAGS"
+		LIBS="$[]$1_libs $save_LIBS"
+		AC_TRY_LINK([$2],,[
+			INCLUDE_$1="$[]$1_cflags"
+			LIB_$1="$[]$1_libs"
+			AC_MSG_RESULT([from $with_$1_config])
+			found=yes])
+	fi
+	if test "$found" = no; then
+		ires= lres=
+		for i in $header_dirs; do
+			CFLAGS="-I$i $save_CFLAGS"
+			AC_TRY_COMPILE([$2],,ires=$i;break)
+		done
+		for i in $lib_dirs; do
+			LIBS="-L$i $3 $4 $save_LIBS"
+			AC_TRY_LINK([$2],,lres=$i;break)
+		done
+		if test "$ires" -a "$lres" -a "$with_$1" != "no"; then
+			INCLUDE_$1="-I$ires"
+			LIB_$1="-L$lres $3"
+			found=yes
+			AC_MSG_RESULT([headers $ires, libraries $lres])
+		fi
+	fi
+	CFLAGS="$save_CFLAGS"
+	LIBS="$save_LIBS"
+fi
+
+if test "$found" = yes; then
+	AC_DEFINE_UNQUOTED(rk_pkgname, 1, [Define if you have the $1 package.])
+	with_$1=yes
+else
+	with_$1=no
+	INCLUDE_$1=
+	LIB_$1=
+	AC_MSG_RESULT(no)
+fi
+
+AC_SUBST(INCLUDE_$1)
+AC_SUBST(LIB_$1)
+])
+
+dnl $KTH-KRB: otp.m4,v 1.2 2002/05/19 20:51:08 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl check requirements for OTP library
+dnl
+AC_DEFUN([rk_OTP],[
+AC_REQUIRE([rk_DB])dnl
+AC_ARG_ENABLE(otp,
+	AC_HELP_STRING([--disable-otp],[if you don't want OTP support]))
+if test "$enable_otp" = yes -a "$db_type" = unknown; then
+	AC_MSG_ERROR([OTP requires a NDBM/DB compatible library])
+fi
+if test "$enable_otp" != no; then
+	if test "$db_type" != unknown; then
+		enable_otp=yes
+	else
+		enable_otp=no
+	fi
+fi
+if test "$enable_otp" = yes; then
+	AC_DEFINE(OTP, 1, [Define if you want OTP support in applications.])
+	LIB_otp='$(top_builddir)/lib/otp/libotp.la'
+	AC_SUBST(LIB_otp)
+fi
+AC_MSG_CHECKING([whether to enable OTP library])
+AC_MSG_RESULT($enable_otp)
+AM_CONDITIONAL(OTP, test "$enable_otp" = yes)dnl
+])
+
+dnl $KTH-KRB: osfc2.m4,v 1.3 2002/04/30 16:46:18 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl enable OSF C2 stuff
+
+AC_DEFUN(AC_CHECK_OSFC2,[
+AC_ARG_ENABLE(osfc2,
+	AC_HELP_STRING([--enable-osfc2],[enable some OSF C2 support]))
+LIB_security=
+if test "$enable_osfc2" = yes; then
+	AC_DEFINE(HAVE_OSFC2, 1, [Define to enable basic OSF C2 support.])
+	LIB_security=-lsecurity
+fi
+AC_SUBST(LIB_security)
+])
+
+dnl
+dnl $KTH-KRB: aix.m4,v 1.9 2002/08/28 19:19:43 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+AC_DEFUN(rk_AIX,[
+
+aix=no
+case "$host" in 
+*-*-aix3*)
+	aix=3
+	;;
+*-*-aix4*|*-*-aix5*)
+	aix=4
+	;;
+esac
+
+AM_CONDITIONAL(AIX, test "$aix" != no)dnl
+AM_CONDITIONAL(AIX4, test "$aix" = 4)
+
+
+AC_ARG_ENABLE(dynamic-afs,
+	AC_HELP_STRING([--disable-dynamic-afs],
+		[do not use loaded AFS library with AIX]))
+
+if test "$aix" != no; then
+	if test "$enable_dynamic_afs" != no; then
+		AC_REQUIRE([rk_DLOPEN])
+		if test "$ac_cv_func_dlopen" = no; then
+			AC_FIND_FUNC_NO_LIBS(loadquery, ld)
+		fi
+		if test "$ac_cv_func_dlopen" != no; then
+			AIX_EXTRA_KAFS='$(LIB_dlopen)'
+		elif test "$ac_cv_func_loadquery" != no; then
+			AIX_EXTRA_KAFS='$(LIB_loadquery)'
+		else
+			AC_MSG_NOTICE([not using dynloaded AFS library])
+			AIX_EXTRA_KAFS=
+			enable_dynamic_afs=no
+		fi
+	else
+		AIX_EXTRA_KAFS=
+	fi
+fi
+
+AM_CONDITIONAL(AIX_DYNAMIC_AFS, test "$enable_dynamic_afs" != no)dnl
+AC_SUBST(AIX_EXTRA_KAFS)dnl
+
+AH_BOTTOM([#if _AIX
+#define _ALL_SOURCE
+/* XXX this is gross, but kills about a gazillion warnings */
+struct ether_addr;
+struct sockaddr;
+struct sockaddr_dl;
+struct sockaddr_in;
+#endif])
+
+])
+
+dnl
+dnl $KTH-KRB: dlopen.m4,v 1.1 2002/08/28 16:32:16 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+AC_DEFUN([rk_DLOPEN], [
+	AC_FIND_FUNC_NO_LIBS(dlopen, dl)
+	AM_CONDITIONAL(HAVE_DLOPEN, test "$ac_cv_funclib_dlopen" != no)
+])
+
+dnl
+dnl $KTH-KRB: irix.m4,v 1.1 2002/08/28 19:11:44 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+AC_DEFUN([rk_IRIX],
+[
+irix=no
+case "$host" in
+*-*-irix4*) 
+	AC_DEFINE([IRIX4], 1,
+		[Define if you are running IRIX 4.])
+	irix=yes
+	;;
+*-*-irix*) 
+	irix=yes
+	;;
+esac
+AM_CONDITIONAL(IRIX, test "$irix" != no)dnl
+
+AH_BOTTOM([
+/* IRIX 4 braindamage */
+#if IRIX == 4 && !defined(__STDC__)
+#define __STDC__ 0
+#endif
+])
+])
+
+dnl
+dnl $KTH-KRB: sunos.m4,v 1.1 2002/08/28 19:53:51 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+AC_DEFUN([rk_SUNOS],[
+sunos=no
+case "$host" in 
+*-*-sunos4*)
+	sunos=40
+	;;
+*-*-solaris2.7)
+	sunos=57
+	;;
+*-*-solaris2.[89])
+	sunos=58
+	;;
+*-*-solaris2*)
+	sunos=50
+	;;
+esac
+if test "$sunos" != no; then
+	AC_DEFINE_UNQUOTED(SunOS, $sunos, 
+		[Define to what version of SunOS you are running.])
+fi
+])
+dnl $KTH-KRB: krb-sys-nextstep.m4,v 1.4 2002/08/28 18:44:32 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl NEXTSTEP is not posix compliant by default,
+dnl you need a switch -posix to the compiler
+dnl
+
+AC_DEFUN(rk_SYS_NEXTSTEP, [
+AC_CACHE_CHECK(for NeXTSTEP, rk_cv_sys_nextstep, [
+AC_EGREP_CPP(yes, 
+[#if defined(NeXT) && !defined(__APPLE__)
+	yes
+#endif 
+], rk_cv_sys_nextstep=yes, rk_cv_sys_nextstep=no)])
+if test "$rk_cv_sys_nextstep" = "yes"; then
+  CFLAGS="$CFLAGS -posix"
+  LIBS="$LIBS -posix"
+fi
+])
+
+dnl $KTH-KRB: crypto.m4,v 1.11 2002/08/28 23:09:05 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl test for crypto libraries:
+dnl - libcrypto (from openssl)
+dnl - libdes (from krb4)
+dnl - own-built libdes
+
+AC_DEFUN([KRB_CRYPTO],[
+crypto_lib=unknown
+AC_WITH_ALL([openssl])
+
+DIR_des=
+
+AC_MSG_CHECKING([for crypto library])
+
+openssl=no
+if test "$crypto_lib" = "unknown" -a "$with_openssl" != "no"; then
+
+  save_CPPFLAGS="$CPPFLAGS"
+  save_LIBS="$LIBS"
+  INCLUDE_des=
+  LIB_des=
+  if test "$with_openssl_include" != ""; then
+    INCLUDE_des="-I${with_openssl}/include"
+  fi
+  if test "$with_openssl_lib" != ""; then
+    LIB_des="-L${with_openssl}/lib"
+  fi
+  CPPFLAGS="${INCLUDE_des} ${CPPFLAGS}"
+  LIB_des="${LIB_des} -lcrypto"
+  LIB_des_a="$LIB_des"
+  LIB_des_so="$LIB_des"
+  LIB_des_appl="$LIB_des"
+  LIBS="${LIBS} ${LIB_des}"
+  AC_TRY_LINK([
+  #include <openssl/md4.h>
+  #include <openssl/md5.h>
+  #include <openssl/sha.h>
+  #include <openssl/des.h>
+  #include <openssl/rc4.h>
+  ],
+  [
+    void *schedule = 0;
+    MD4_CTX md4;
+    MD5_CTX md5;
+    SHA_CTX sha1;
+
+    MD4_Init(&md4);
+    MD5_Init(&md5);
+    SHA1_Init(&sha1);
+
+    des_cbc_encrypt(0, 0, 0, schedule, 0, 0);
+    RC4(0, 0, 0, 0);
+  ], [
+  crypto_lib=libcrypto openssl=yes
+  AC_MSG_RESULT([libcrypto])])
+  CPPFLAGS="$save_CPPFLAGS"
+  LIBS="$save_LIBS"
+fi
+
+if test "$crypto_lib" = "unknown" -a "$with_krb4" != "no"; then
+	save_CPPFLAGS="$CPPFLAGS"
+	save_LIBS="$LIBS"
+
+	cdirs= clibs=
+	for i in $LIB_krb4; do
+		case "$i" in
+		-L*) cdirs="$cdirs $i";;
+		-l*) clibs="$clibs $i";;
+		esac
+	done
+
+	ires=
+	for i in $INCLUDE_krb4; do
+		CFLAGS="$i $save_CFLAGS"
+		AC_TRY_COMPILE([
+			#undef KRB5 /* makes md4.h et al unhappy */
+			#define KRB4
+			#include <openssl/md4.h>
+			#include <openssl/md5.h>
+			#include <openssl/sha.h>
+			#include <openssl/des.h>
+			#include <openssl/rc4.h>
+			], [
+			MD4_CTX md4;
+			MD5_CTX md5;
+			SHA_CTX sha1;
+
+			MD4_Init(&md4);
+			MD5_Init(&md5);
+			SHA1_Init(&sha1);
+
+			des_cbc_encrypt(0, 0, 0, 0, 0, 0);
+			RC4(0, 0, 0, 0);],openssl=yes ires="$i"; break)
+		AC_TRY_COMPILE([
+			#undef KRB5 /* makes md4.h et al unhappy */
+			#define KRB4
+			#include <md4.h>
+			#include <md5.h>
+			#include <sha.h>
+			#include <des.h>
+			#include <rc4.h>
+			], [
+			MD4_CTX md4;
+			MD5_CTX md5;
+			SHA_CTX sha1;
+
+			MD4_Init(&md4);
+			MD5_Init(&md5);
+			SHA1_Init(&sha1);
+
+			des_cbc_encrypt(0, 0, 0, 0, 0, 0);
+			RC4(0, 0, 0, 0);],ires="$i"; break)
+	done
+	lres=
+	for i in $cdirs; do
+		for j in $clibs; do
+			LIBS="$i $j $save_LIBS"
+			if test "$openssl" = yes; then
+			AC_TRY_LINK([
+				#undef KRB5 /* makes md4.h et al unhappy */
+				#define KRB4
+				#include <openssl/md4.h>
+				#include <openssl/md5.h>
+				#include <openssl/sha.h>
+				#include <openssl/des.h>
+				#include <openssl/rc4.h>
+				], [
+				MD4_CTX md4;
+				MD5_CTX md5;
+				SHA_CTX sha1;
+	
+				MD4_Init(&md4);
+				MD5_Init(&md5);
+				SHA1_Init(&sha1);
+	
+				des_cbc_encrypt(0, 0, 0, 0, 0, 0);
+				RC4(0, 0, 0, 0);],lres="$i $j"; break 2)
+			else
+			AC_TRY_LINK([
+				#undef KRB5 /* makes md4.h et al unhappy */
+				#define KRB4
+				#include <md4.h>
+				#include <md5.h>
+				#include <sha.h>
+				#include <des.h>
+				#include <rc4.h>
+				], [
+				MD4_CTX md4;
+				MD5_CTX md5;
+				SHA_CTX sha1;
+	
+				MD4_Init(&md4);
+				MD5_Init(&md5);
+				SHA1_Init(&sha1);
+	
+				des_cbc_encrypt(0, 0, 0, 0, 0, 0);
+				RC4(0, 0, 0, 0);],lres="$i $j"; break 2)
+			fi
+		done
+	done
+	CFLAGS="$save_CFLAGS"
+	LIBS="$save_LIBS"
+	if test "$ires" -a "$lres"; then
+		INCLUDE_des="$ires"
+		LIB_des="$lres"
+		crypto_lib=krb4
+		AC_MSG_RESULT([same as krb4])
+		LIB_des_a='$(LIB_des)'
+		LIB_des_so='$(LIB_des)'
+		LIB_des_appl='$(LIB_des)'
+	fi
+fi
+
+if test "$crypto_lib" = "unknown"; then
+
+  DIR_des='des'
+  LIB_des='$(top_builddir)/lib/des/libdes.la'
+  LIB_des_a='$(top_builddir)/lib/des/.libs/libdes.a'
+  LIB_des_so='$(top_builddir)/lib/des/.libs/libdes.so'
+  LIB_des_appl="-ldes"
+
+  AC_MSG_RESULT([included libdes])
+
+fi
+
+if test "$openssl" = "yes"; then
+  AC_DEFINE([HAVE_OPENSSL], 1, [define to use openssl's libcrypto])
+fi
+AM_CONDITIONAL(HAVE_OPENSSL, test "$openssl" = yes)dnl
+
+AC_SUBST(DIR_des)
+AC_SUBST(INCLUDE_des)
+AC_SUBST(LIB_des)
+AC_SUBST(LIB_des_a)
+AC_SUBST(LIB_des_so)
+AC_SUBST(LIB_des_appl)
+])
+
+dnl
+dnl $KTH-KRB: with-all.m4,v 1.1 2001/08/29 17:01:23 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+dnl AC_WITH_ALL(name)
+
+AC_DEFUN([AC_WITH_ALL], [
+AC_ARG_WITH($1,
+	AC_HELP_STRING([--with-$1=dir],
+		[use $1 in dir]))
+
+AC_ARG_WITH($1-lib,
+	AC_HELP_STRING([--with-$1-lib=dir],
+		[use $1 libraries in dir]),
+[if test "$withval" = "yes" -o "$withval" = "no"; then
+  AC_MSG_ERROR([No argument for --with-$1-lib])
+elif test "X$with_$1" = "X"; then
+  with_$1=yes
+fi])
+
+AC_ARG_WITH($1-include,
+	AC_HELP_STRING([--with-$1-include=dir],
+		[use $1 headers in dir]),
+[if test "$withval" = "yes" -o "$withval" = "no"; then
+  AC_MSG_ERROR([No argument for --with-$1-include])
+elif test "X$with_$1" = "X"; then
+  with_$1=yes
+fi])
+
+case "$with_$1" in
+yes)	;;
+no)	;;
+"")	;;
+*)	if test "$with_$1_include" = ""; then
+		with_$1_include="$with_$1/include"
+	fi
+	if test "$with_$1_lib" = ""; then
+		with_$1_lib="$with_$1/lib$abilibdirext"
+	fi
+	;;
+esac
+])
+dnl 
+dnl See if there is any X11 present
+dnl
+dnl $KTH-KRB: check-x.m4,v 1.2 1999/11/05 04:25:23 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+
+AC_DEFUN(KRB_CHECK_X,[
+AC_PATH_XTRA
+
+# try to figure out if we need any additional ld flags, like -R
+# and yes, the autoconf X test is utterly broken
+if test "$no_x" != yes; then
+	AC_CACHE_CHECK(for special X linker flags,krb_cv_sys_x_libs_rpath,[
+	ac_save_libs="$LIBS"
+	ac_save_cflags="$CFLAGS"
+	CFLAGS="$CFLAGS $X_CFLAGS"
+	krb_cv_sys_x_libs_rpath=""
+	krb_cv_sys_x_libs=""
+	for rflag in "" "-R" "-R " "-rpath "; do
+		if test "$rflag" = ""; then
+			foo="$X_LIBS"
+		else
+			foo=""
+			for flag in $X_LIBS; do
+			case $flag in
+			-L*)
+				foo="$foo $flag `echo $flag | sed \"s/-L/$rflag/\"`"
+				;;
+			*)
+				foo="$foo $flag"
+				;;
+			esac
+			done
+		fi
+		LIBS="$ac_save_libs $foo $X_PRE_LIBS -lX11 $X_EXTRA_LIBS"
+		AC_TRY_RUN([
+		#include <X11/Xlib.h>
+		foo()
+		{
+		XOpenDisplay(NULL);
+		}
+		main()
+		{
+		return 0;
+		}
+		], krb_cv_sys_x_libs_rpath="$rflag"; krb_cv_sys_x_libs="$foo"; break,:)
+	done
+	LIBS="$ac_save_libs"
+	CFLAGS="$ac_save_cflags"
+	])
+	X_LIBS="$krb_cv_sys_x_libs"
+fi
+])
+
+dnl $KTH-KRB: check-xau.m4,v 1.3 1999/05/14 01:17:06 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl check for Xau{Read,Write}Auth and XauFileName
+dnl
+AC_DEFUN(AC_CHECK_XAU,[
+save_CFLAGS="$CFLAGS"
+CFLAGS="$X_CFLAGS $CFLAGS"
+save_LIBS="$LIBS"
+dnl LIBS="$X_LIBS $X_PRE_LIBS $X_EXTRA_LIBS $LIBS"
+LIBS="$X_PRE_LIBS $X_EXTRA_LIBS $LIBS"
+save_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS $X_LIBS"
+
+
+AC_FIND_FUNC_NO_LIBS(XauWriteAuth, X11 Xau)
+ac_xxx="$LIBS"
+LIBS="$LIB_XauWriteAuth $LIBS"
+AC_FIND_FUNC_NO_LIBS(XauReadAuth, X11 Xau)
+LIBS="$LIB_XauReadAauth $LIBS"
+AC_FIND_FUNC_NO_LIBS(XauFileName, X11 Xau)
+LIBS="$ac_xxx"
+
+case "$ac_cv_funclib_XauWriteAuth" in
+yes)	;;
+no)	;;
+*)	if test "$ac_cv_funclib_XauReadAuth" = yes; then
+		if test "$ac_cv_funclib_XauFileName" = yes; then
+			LIB_XauReadAuth="$LIB_XauWriteAuth"
+		else
+			LIB_XauReadAuth="$LIB_XauWriteAuth $LIB_XauFileName"
+		fi
+	else
+		if test "$ac_cv_funclib_XauFileName" = yes; then
+			LIB_XauReadAuth="$LIB_XauReadAuth $LIB_XauWriteAuth"
+		else
+			LIB_XauReadAuth="$LIB_XauReadAuth $LIB_XauWriteAuth $LIB_XauFileName"
+		fi
+	fi
+	;;
+esac
+
+if test "$AUTOMAKE" != ""; then
+	AM_CONDITIONAL(NEED_WRITEAUTH, test "$ac_cv_func_XauWriteAuth" != "yes")
+else
+	AC_SUBST(NEED_WRITEAUTH_TRUE)
+	AC_SUBST(NEED_WRITEAUTH_FALSE)
+	if test "$ac_cv_func_XauWriteAuth" != "yes"; then
+		NEED_WRITEAUTH_TRUE=
+		NEED_WRITEAUTH_FALSE='#'
+	else
+		NEED_WRITEAUTH_TRUE='#'
+		NEED_WRITEAUTH_FALSE=
+	fi
+fi
+CFLAGS=$save_CFLAGS
+LIBS=$save_LIBS
+LDFLAGS=$save_LDFLAGS
+])
+
+dnl
+dnl $KTH-KRB: capabilities.m4,v 1.2 1999/09/01 11:02:26 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+dnl
+dnl Test SGI capabilities
+dnl
+
+AC_DEFUN(KRB_CAPABILITIES,[
+
+AC_CHECK_HEADERS(capability.h sys/capability.h)
+
+AC_CHECK_FUNCS(sgi_getcapabilitybyname cap_set_proc)
+])
+
+dnl $KTH-KRB: check-getpwnam_r-posix.m4,v 1.2 1999/03/23 16:47:31 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl check for getpwnam_r, and if it's posix or not
+
+AC_DEFUN(AC_CHECK_GETPWNAM_R_POSIX,[
+AC_FIND_FUNC_NO_LIBS(getpwnam_r,c_r)
+if test "$ac_cv_func_getpwnam_r" = yes; then
+	AC_CACHE_CHECK(if getpwnam_r is posix,ac_cv_func_getpwnam_r_posix,
+	ac_libs="$LIBS"
+	LIBS="$LIBS $LIB_getpwnam_r"
+	AC_TRY_RUN([
+#include <pwd.h>
+int main()
+{
+	struct passwd pw, *pwd;
+	return getpwnam_r("", &pw, NULL, 0, &pwd) < 0;
+}
+],ac_cv_func_getpwnam_r_posix=yes,ac_cv_func_getpwnam_r_posix=no,:)
+LIBS="$ac_libs")
+if test "$ac_cv_func_getpwnam_r_posix" = yes; then
+	AC_DEFINE(POSIX_GETPWNAM_R, 1, [Define if getpwnam_r has POSIX flavour.])
+fi
+fi
+])
+dnl $KTH-KRB: check-compile-et.m4,v 1.6 2001/09/02 17:08:48 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl CHECK_COMPILE_ET
+AC_DEFUN([CHECK_COMPILE_ET], [
+
+AC_CHECK_PROG(COMPILE_ET, compile_et, [compile_et])
+
+krb_cv_compile_et="no"
+if test "${COMPILE_ET}" = "compile_et"; then
+
+dnl We have compile_et.  Now let's see if it supports `prefix' and `index'.
+AC_MSG_CHECKING(whether compile_et has the features we need)
+cat > conftest_et.et <<'EOF'
+error_table conf
+prefix CONFTEST
+index 1
+error_code CODE1, "CODE1"
+index 128
+error_code CODE2, "CODE2"
+end
+EOF
+if ${COMPILE_ET} conftest_et.et >/dev/null 2>&1; then
+  dnl XXX Some systems have <et/com_err.h>.
+  save_CPPFLAGS="${save_CPPFLAGS}"
+  if test -d "/usr/include/et"; then
+    CPPFLAGS="-I/usr/include/et ${CPPFLAGS}"
+  fi
+  dnl Check that the `prefix' and `index' directives were honored.
+  AC_TRY_RUN([
+#include <com_err.h>
+#include <string.h>
+#include "conftest_et.h"
+int main(){return (CONFTEST_CODE2 - CONFTEST_CODE1) != 127;}
+  ], [krb_cv_compile_et="yes"],[CPPFLAGS="${save_CPPFLAGS}"])
+fi
+AC_MSG_RESULT(${krb_cv_compile_et})
+rm -fr conftest*
+fi
+
+if test "${krb_cv_compile_et}" = "yes"; then
+  dnl Since compile_et seems to work, let's check libcom_err
+  krb_cv_save_LIBS="${LIBS}"
+  LIBS="${LIBS} -lcom_err"
+  AC_MSG_CHECKING(for com_err)
+  AC_TRY_LINK([#include <com_err.h>],[
+    const char *p;
+    p = error_message(0);
+  ],[krb_cv_com_err="yes"],[krb_cv_com_err="no"; CPPFLAGS="${save_CPPFLAGS}"])
+  AC_MSG_RESULT(${krb_cv_com_err})
+  LIBS="${krb_cv_save_LIBS}"
+else
+  dnl Since compile_et doesn't work, forget about libcom_err
+  krb_cv_com_err="no"
+fi
+
+dnl Only use the system's com_err if we found compile_et, libcom_err, and
+dnl com_err.h.
+if test "${krb_cv_com_err}" = "yes"; then
+    DIR_com_err=""
+    LIB_com_err="-lcom_err"
+    LIB_com_err_a=""
+    LIB_com_err_so=""
+    AC_MSG_NOTICE(Using the already-installed com_err)
+else
+    COMPILE_ET="\$(top_builddir)/lib/com_err/compile_et"
+    DIR_com_err="com_err"
+    LIB_com_err="\$(top_builddir)/lib/com_err/libcom_err.la"
+    LIB_com_err_a="\$(top_builddir)/lib/com_err/.libs/libcom_err.a"
+    LIB_com_err_so="\$(top_builddir)/lib/com_err/.libs/libcom_err.so"
+    AC_MSG_NOTICE(Using our own com_err)
+fi
+AC_SUBST(DIR_com_err)
+AC_SUBST(LIB_com_err)
+AC_SUBST(LIB_com_err_a)
+AC_SUBST(LIB_com_err_so)
+
+])
+
+dnl $KTH-KRB: auth-modules.m4,v 1.5 2002/09/09 13:31:45 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl Figure what authentication modules should be built
+dnl
+dnl rk_AUTH_MODULES(module-list)
+
+AC_DEFUN(rk_AUTH_MODULES,[
+AC_MSG_CHECKING([which authentication modules should be built])
+
+z='m4_ifval([$1], $1, [sia pam afskauthlib])'
+LIB_AUTH_SUBDIRS=
+for i in $z; do
+case $i in
+sia)
+if test "$ac_cv_header_siad_h" = yes; then
+	LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS sia"
+fi
+;;
+pam)
+case "${host}" in
+*-*-freebsd*)	ac_cv_want_pam_krb4=no ;;
+*)		ac_cv_want_pam_krb4=yes ;;
+esac
+
+if test "$ac_cv_want_pam_krb4" = yes -a \
+    "$ac_cv_header_security_pam_modules_h" = yes -a \
+    "$enable_shared" = yes; then
+	LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS pam"
+fi
+;;
+afskauthlib)
+case "${host}" in
+*-*-irix[[56]]*) LIB_AUTH_SUBDIRS="$LIB_AUTH_SUBDIRS afskauthlib" ;;
+esac
+;;
+esac
+done
+if test "$LIB_AUTH_SUBDIRS"; then
+	AC_MSG_RESULT($LIB_AUTH_SUBDIRS)
+else
+	AC_MSG_RESULT(none)
+fi
+
+AC_SUBST(LIB_AUTH_SUBDIRS)dnl
+])
+
+dnl $KTH-KRB: check-type-extra.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl ac_check_type + extra headers
+
+dnl AC_CHECK_TYPE_EXTRA(TYPE, DEFAULT, HEADERS)
+AC_DEFUN(AC_CHECK_TYPE_EXTRA,
+[AC_REQUIRE([AC_HEADER_STDC])dnl
+AC_MSG_CHECKING(for $1)
+AC_CACHE_VAL(ac_cv_type_$1,
+[AC_EGREP_CPP(dnl
+changequote(<<,>>)dnl
+<<$1[^a-zA-Z_0-9]>>dnl
+changequote([,]), [#include <sys/types.h>
+#if STDC_HEADERS
+#include <stdlib.h>
+#include <stddef.h>
+#endif
+$3], ac_cv_type_$1=yes, ac_cv_type_$1=no)])dnl
+AC_MSG_RESULT($ac_cv_type_$1)
+if test $ac_cv_type_$1 = no; then
+  AC_DEFINE($1, $2, [Define this to what the type $1 should be.])
+fi
+])
+
+dnl $KTH-KRB: krb-readline.m4,v 1.5 2002/08/29 02:22:32 assar Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl Tests for readline functions
 dnl
@@ -6128,20 +7051,98 @@ elif test "$ac_cv_func_readline" = yes; then
 	:
 elif test "$ac_cv_func_el_init" = yes; then
 	ac_foo=yes
-	LIB_readline="\$(top_builddir)/lib/editline/libel_compat.la $LIB_el_init"
+	LIB_readline="\$(top_builddir)/lib/editline/libel_compat.la \$(LIB_el_init) \$(LIB_tgetent)"
 else
-	LIB_readline='$(top_builddir)/lib/editline/libeditline.la'
+	LIB_readline="\$(top_builddir)/lib/editline/libeditline.la \$(LIB_tgetent)"
 fi
 AM_CONDITIONAL(el_compat, test "$ac_foo" = yes)
-if test "$readline_libdir"; then
-	LIB_readline="-rpath $readline_libdir $LIB_readline"
-fi
-LIB_readline="$LIB_readline \$(LIB_tgetent)"
 AC_DEFINE(HAVE_READLINE, 1, 
 	[Define if you have a readline compatible library.])dnl
 
 ])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+
+dnl
+dnl $KTH-KRB: telnet.m4,v 1.1 2002/08/28 19:19:01 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+dnl stuff used by telnet
+
+AC_DEFUN([rk_TELNET],[
+AC_DEFINE(AUTHENTICATION, 1, 
+	[Define if you want authentication support in telnet.])dnl
+AC_DEFINE(ENCRYPTION, 1,
+	[Define if you want encryption support in telnet.])dnl
+AC_DEFINE(DES_ENCRYPTION, 1,
+	[Define if you want to use DES encryption in telnet.])dnl
+AC_DEFINE(DIAGNOSTICS, 1,
+	[Define this to enable diagnostics in telnet.])dnl
+AC_DEFINE(OLD_ENVIRON, 1,
+	[Define this to enable old environment option in telnet.])dnl
+if false; then
+	AC_DEFINE(ENV_HACK, 1,
+		[Define this if you want support for broken ENV_{VAR,VAL} telnets.])
+fi
+
+# Simple test for streamspty, based on the existance of getmsg(), alas
+# this breaks on SunOS4 which have streams but BSD-like ptys
+#
+# And also something wierd has happend with dec-osf1, fallback to bsd-ptys
+
+case "$host" in
+*-*-aix3*|*-*-sunos4*|*-*-osf*|*-*-hpux1[[01]]*)
+	;;
+*)
+	AC_CHECK_FUNC(getmsg)
+	if test "$ac_cv_func_getmsg" = "yes"; then
+		AC_CACHE_CHECK([if getmsg works], ac_cv_func_getmsg_works,
+		AC_TRY_RUN([
+			#include <stdio.h>
+			#include <errno.h>
+
+			int main()
+			{
+			  int ret;
+			  ret = getmsg(open("/dev/null", 0), NULL, NULL, NULL);
+			  if(ret < 0 && errno == ENOSYS)
+			    return 1;
+			  return 0;
+			}
+			], ac_cv_func_getmsg_works=yes, 
+			ac_cv_func_getmsg_works=no,
+			ac_cv_func_getmsg_works=no))
+		if test "$ac_cv_func_getmsg_works" = "yes"; then
+			AC_DEFINE(HAVE_GETMSG, 1,
+				[Define if you have a working getmsg.])
+			AC_DEFINE(STREAMSPTY, 1,
+				[Define if you have streams ptys.])
+		fi
+	fi
+	;;
+esac
+
+AH_BOTTOM([
+#if defined(ENCRYPTION) && !defined(AUTHENTICATION)
+#define AUTHENTICATION 1
+#endif
+
+/* Set this to the default system lead string for telnetd 
+ * can contain %-escapes: %s=sysname, %m=machine, %r=os-release
+ * %v=os-version, %t=tty, %h=hostname, %d=date and time
+ */
+#undef USE_IM
+
+/* Used with login -p */
+#undef LOGIN_ARGS
+
+/* set this to a sensible login */
+#ifndef LOGIN_PATH
+#define LOGIN_PATH BINDIR "/login"
+#endif
+])
+])
+
+dnl $KTH-KRB: check-man.m4,v 1.3 2000/11/30 01:47:17 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl check how to format manual pages
 dnl
 
@@ -6199,16 +7200,37 @@ else
 fi
 AC_SUBST(CATMANEXT)
 ])
-dnl $Id: aclocal.m4,v 1.1.1.3 2001/09/17 12:09:40 assar Exp $
+dnl
+dnl $KTH-KRB: destdirs.m4,v 1.2 2002/08/12 15:12:50 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
+dnl
+
+AC_DEFUN([rk_DESTDIRS], [
+# This is done by AC_OUTPUT but we need the result here.
+test "x$prefix" = xNONE && prefix=$ac_default_prefix
+test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
+
+AC_FOREACH([rk_dir], [bin lib libexec localstate sbin sysconf], [
+	x="${rk_dir[]dir}"
+	eval y="$x"
+	while test "x$y" != "x$x"; do
+		x="$y"
+		eval y="$x"
+	done
+	AC_DEFINE_UNQUOTED(AS_TR_CPP(rk_dir[]dir), "$x", [path to ]rk_dir[])])
+])
+
+dnl $KTH-KRB: krb-version.m4,v 1.3 2002/08/20 15:49:58 joda Exp $
+dnl $NetBSD: aclocal.m4,v 1.1.1.4 2002/09/12 12:22:02 joda Exp $
 dnl
 dnl
 dnl output a C header-file with some version strings
 dnl
+
 AC_DEFUN(AC_KRB_VERSION,[
-dnl AC_OUTPUT_COMMANDS([
 cat > include/newversion.h.in <<FOOBAR
-const char *${PACKAGE}_long_version = "@(#)\$Version: $PACKAGE-$VERSION by @USER@ on @HOST@ ($host) @DATE@ \$";
-const char *${PACKAGE}_version = "$PACKAGE-$VERSION";
+const char *${PACKAGE_TARNAME}_long_version = "@(#)\$Version: $PACKAGE_STRING by @USER@ on @HOST@ ($host) @DATE@ \$";
+const char *${PACKAGE_TARNAME}_version = "$PACKAGE_STRING";
 FOOBAR
 
 if test -f include/version.h && cmp -s include/newversion.h.in include/version.h.in; then
@@ -6222,6 +7244,5 @@ else
 	mv -f include/newversion.h.in include/version.h.in
 	sed -e "s/@USER@/$User/" -e "s/@HOST@/$Host/" -e "s/@DATE@/$Date/" include/version.h.in > include/version.h
 fi
-dnl ],host=$host PACKAGE=$PACKAGE VERSION=$VERSION)
 ])
 

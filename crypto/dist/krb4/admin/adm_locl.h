@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: adm_locl.h,v 1.1.1.3 2001/09/17 12:09:42 assar Exp $ */
+/* $KTH-KRB: adm_locl.h,v 1.19 2001/08/26 01:40:36 assar Exp $
+   $NetBSD: adm_locl.h,v 1.1.1.4 2002/09/12 12:22:03 joda Exp $ */
 
 #ifndef __adm_locl_h
 #define __adm_locl_h

@@ -16,7 +16,8 @@
 ************************************************************************/
 /* Author: Wietse Venema <wietse@wzv.win.tue.nl> */
 
-/* $Id: sysv_default.h,v 1.1.1.3 2001/09/17 12:09:44 assar Exp $ */
+/* $KTH-KRB: sysv_default.h,v 1.6 2001/06/04 14:08:41 assar Exp $
+   $NetBSD: sysv_default.h,v 1.1.1.4 2002/09/12 12:22:04 joda Exp $ */
 
 extern char *default_console;
 extern char *default_altsh;

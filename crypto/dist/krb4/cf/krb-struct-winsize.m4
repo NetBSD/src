@@ -1,4 +1,5 @@
-dnl $Id: krb-struct-winsize.m4,v 1.1.1.3 2001/09/17 12:10:07 assar Exp $
+dnl $KTH-KRB: krb-struct-winsize.m4,v 1.3 2001/09/01 11:56:05 assar Exp $
+dnl $NetBSD: krb-struct-winsize.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl
 dnl Search for struct winsize

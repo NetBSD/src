@@ -38,7 +38,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: passwd_dlg.c,v 1.1.1.2 2000/12/29 01:43:40 assar Exp $");
+__RCSID("$KTH-KRB: passwd_dlg.c,v 1.8 1999/12/02 16:58:39 joda Exp $"
+      "$NetBSD: passwd_dlg.c,v 1.1.1.3 2002/09/12 12:22:12 joda Exp $");
 #endif
 
 #ifdef WIN32	/* Visual C++ 4.0 (Windows95/NT) */

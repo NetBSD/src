@@ -30,7 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Id: hash.h,v 1.1.1.2 2000/12/29 01:43:38 assar Exp $ */
+/* $KTH-KRB: hash.h,v 1.1 1999/03/22 19:16:25 joda Exp $
+   $NetBSD: hash.h,v 1.1.1.3 2002/09/12 12:22:12 joda Exp $ */
 
 /* stuff in common between md4, md5, and sha1 */
 

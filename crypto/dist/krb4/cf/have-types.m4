@@ -1,5 +1,6 @@
 dnl
-dnl $Id: have-types.m4,v 1.1.1.3 2001/09/17 12:10:06 assar Exp $
+dnl $KTH-KRB: have-types.m4,v 1.2 2000/07/15 18:09:16 joda Exp $
+dnl $NetBSD: have-types.m4,v 1.1.1.4 2002/09/12 12:22:14 joda Exp $
 dnl
 
 AC_DEFUN(AC_HAVE_TYPES, [

@@ -35,7 +35,8 @@ or implied warranty.
 
 #include "kadm_locl.h"
     
-RCSID("$Id: kadm_supp.c,v 1.1.1.2 2000/12/29 01:43:10 assar Exp $");
+__RCSID("$KTH-KRB: kadm_supp.c,v 1.14 1999/09/16 20:41:46 assar Exp $"
+      "$NetBSD: kadm_supp.c,v 1.1.1.3 2002/09/12 12:22:09 joda Exp $");
 
 static void
 time2str(char *buf, size_t len, time_t t)

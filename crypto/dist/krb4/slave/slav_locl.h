@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: slav_locl.h,v 1.1.1.2 2000/12/29 01:44:08 assar Exp $ */
+/* $KTH-KRB: slav_locl.h,v 1.14 1999/12/02 16:58:56 joda Exp $
+   $NetBSD: slav_locl.h,v 1.1.1.3 2002/09/12 12:22:14 joda Exp $ */
 
 #ifndef __slav_locl_h
 #define __slav_locl_h

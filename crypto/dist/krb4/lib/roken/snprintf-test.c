@@ -38,7 +38,8 @@
 
 #include "snprintf-test.h"
 
-RCSID("$Id: snprintf-test.c,v 1.1.1.1 2001/09/17 12:09:57 assar Exp $");
+__RCSID("$KTH-KRB: snprintf-test.c,v 1.5 2001/09/13 01:01:16 assar Exp $"
+      "$NetBSD: snprintf-test.c,v 1.1.1.2 2002/09/12 12:22:11 joda Exp $");
 
 static int
 try (const char *format, ...)

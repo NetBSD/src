@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: otp_locl.h,v 1.1.1.3 2001/09/17 12:09:45 assar Exp $ */
+/* $KTH-KRB: otp_locl.h,v 1.9 2001/08/22 20:30:21 assar Exp $
+   $NetBSD: otp_locl.h,v 1.1.1.4 2002/09/12 12:22:05 joda Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

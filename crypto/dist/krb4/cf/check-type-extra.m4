@@ -1,4 +1,5 @@
-dnl $Id: check-type-extra.m4,v 1.1.1.2 2000/12/29 01:44:09 assar Exp $
+dnl $KTH-KRB: check-type-extra.m4,v 1.2 1999/03/01 09:52:23 joda Exp $
+dnl $NetBSD: check-type-extra.m4,v 1.1.1.3 2002/09/12 12:22:14 joda Exp $
 dnl
 dnl ac_check_type + extra headers
 

@@ -33,7 +33,8 @@
 
 #include "bsd_locl.h"
 
-RCSID("$Id: krcmd.c,v 1.1.1.2 2000/12/29 01:42:20 assar Exp $");
+__RCSID("$KTH-KRB: krcmd.c,v 1.10 1997/03/30 18:20:18 joda Exp $"
+      "$NetBSD: krcmd.c,v 1.1.1.3 2002/09/12 12:22:03 joda Exp $");
 
 #define	SERVICE_NAME	"rcmd"
 
