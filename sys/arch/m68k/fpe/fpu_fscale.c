@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_fscale.c,v 1.6 1996/10/13 03:19:14 christos Exp $	*/
+/*	$NetBSD: fpu_fscale.c,v 1.7 1997/10/09 19:19:01 is Exp $	*/
 
 /*
  * Copyright (c) 1995 Ken Nakata
@@ -89,6 +89,7 @@ fpu_emul_fscale(fe, insn)
 	}
 	fpu_explode(fe, &fe->fe_f2, FTYPE_EXT, &fpregs[format * 3]);
 	fpu_implode(fe, &fe->fe_f2, FTYPE_LNG, buf);
+      scale = buf[0];
     } else {
 	/* the operand is in memory */
 	if (format == FTYPE_DBL) {
@@ -152,6 +153,7 @@ fpu_emul_fscale(fe, insn)
 	}
 	if (format == FTYPE_LNG) {
 	    /* nothing */
+          scale = buf[0];
 	} else if (format == FTYPE_WRD) {
 	    /* sign-extend */
 	    scale = buf[0] & 0xffff;
@@ -168,6 +170,7 @@ fpu_emul_fscale(fe, insn)
 		   format == FTYPE_EXT) {
 	    fpu_explode(fe, &fe->fe_f2, format, buf);
 	    fpu_implode(fe, &fe->fe_f2, FTYPE_LNG, buf);
+          scale = buf[0];
 	}
 	/* make it look like we've got an FP oprand */
 	fe->fe_f2.fp_class = (buf[0] == 0) ? FPC_ZERO : FPC_NUM;
