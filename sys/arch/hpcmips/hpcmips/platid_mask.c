@@ -1,4 +1,4 @@
-/* $Id: platid_mask.c,v 1.16 2000/02/06 08:47:07 takemura Exp $ */
+/* $Id: platid_mask.c,v 1.17 2000/02/06 14:02:43 takemura Exp $ */
 
 /*-
  * Copyright (c) 1999
@@ -423,7 +423,7 @@ platid_t platid_mask_MACH_IBM_WORKPAD_Z50 = {{
 	PLATID_WILD,
 	PLATID_MACH_IBM_WORKPAD_Z50
 }};
-platid_t platid_mask_MACH_IBM_WORKPAD_Z5026011AU = {{
+platid_t platid_mask_MACH_IBM_WORKPAD_26011AU = {{
 	PLATID_CPU_MIPS_VR_4121,
-	PLATID_MACH_IBM_WORKPAD_Z5026011AU
+	PLATID_MACH_IBM_WORKPAD_26011AU
 }};
