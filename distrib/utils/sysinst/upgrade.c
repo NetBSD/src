@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.12 1997/12/05 14:01:10 jonathan Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.13 1997/12/19 00:57:56 fvdl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,6 +197,8 @@ do_reinstall_sets(void)
 
 	if (!fsck_disks())
 		return;
+
+	fflush(stdout); puts(CL); wrefresh(stdscr);
 
 	/* Unpack the distribution. */
 	get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack);
