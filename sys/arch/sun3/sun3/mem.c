@@ -1,8 +1,6 @@
-/*	$NetBSD: mem.c,v 1.15 1995/04/07 04:44:26 gwr Exp $	*/
+/*	$NetBSD: mem.c,v 1.16 1995/04/10 11:55:07 mycroft Exp $	*/
 
 /*
- * Copyright (c) 1994 Gordon W. Ross
- * Copyright (c) 1993 Adam Glass 
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1982, 1986, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +37,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: Utah $Hdr: mem.c 1.14 90/10/12$
  *	from: @(#)mem.c	8.3 (Berkeley) 1/12/94
  */
 
@@ -54,45 +51,52 @@
 #include <sys/uio.h>
 #include <sys/malloc.h>
 
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_map.h>
-
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
 
+#include <vm/vm.h>
+
 extern int eeprom_uio();
-
 extern vm_offset_t avail_start, avail_end;
-extern vm_offset_t vmempage;
-
+extern vm_offset_t vmmap;
 caddr_t zeropage;
 
-/*
- * Sun3: XXXXX
- * 
- * Need support for various vme spaces,
- * Also make the unit constants into macros.
- *
- */
+/*ARGSUSED*/
+int
+mmopen(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
 
 /*ARGSUSED*/
+int
+mmclose(dev, flag, mode)
+	dev_t dev;
+	int flag, mode;
+{
+
+	return (0);
+}
+
+/*ARGSUSED*/
+int
 mmrw(dev, uio, flags)
 	dev_t dev;
 	struct uio *uio;
 	int flags;
 {
-	register int o;
-	register u_int c, v;
+	register vm_offset_t o, v;
+	register int c;
 	register struct iovec *iov;
 	int error = 0;
 	static int physlock;
 
 	if (minor(dev) == 0) {
-		if (vmempage == 0)
-			return (EIO);
-		/* lock against other uses of shared vmempage */
+		/* lock against other uses of shared vmmap */
 		while (physlock > 0) {
 			physlock++;
 			error = tsleep((caddr_t)&physlock, PZERO | PCATCH,
@@ -123,22 +127,26 @@ mmrw(dev, uio, flags)
 			}
 			if (v < avail_start) {
 				/*
-				 * The offset was below avail_start, where the pmap
-				 * will refuse to create mappings.  Everything below
-				 * there is mapped linearly with physical zero at
-				 * virtual KERNBASE, so use kmem! (hack alert! 8-)
+				 * The offset was below avail_start, where the
+				 * pmap will refuse to create mappings.
+				 * Everything below there is mapped linearly
+				 * with physical zero at virtual KERNBASE, so
+				 * use kmem! (hack alert! 8-)
 				 */
 				v += KERNBASE;
+				if (physlock > 1)
+					wakeup((caddr_t)&physlock);
+				physlock = 0;
 				goto use_kmem;
 			}
-			/* Temporarily map the memory at vmempage. */
-			pmap_enter(kernel_pmap, vmempage,
+			pmap_enter(kernel_pmap, (vm_offset_t)vmmap,
 			    trunc_page(v), uio->uio_rw == UIO_READ ?
 			    VM_PROT_READ : VM_PROT_WRITE, TRUE);
-			o = (int)uio->uio_offset & PGOFSET;
-			c = min(uio->uio_resid, (u_int)(NBPG - o));
-			error = uiomove((caddr_t)vmempage + o, (int)c, uio);
-			pmap_remove(kernel_pmap, vmempage, vmempage + NBPG);
+			o = uio->uio_offset & PGOFSET;
+			c = min(uio->uio_resid, (int)(NBPG - o));
+			error = uiomove((caddr_t)vmmap + o, c, uio);
+			pmap_remove(kernel_pmap, (vm_offset_t)vmmap,
+			    (vm_offset_t)vmmap + NBPG);
 			continue;
 
 /* minor device 1 is kernel memory */
@@ -146,15 +154,11 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 		use_kmem:
-			o = v & PGOFSET;
-			c = min(uio->uio_resid, (u_int)(NBPG - o));
+			c = min(iov->iov_len, MAXPHYS);
 			if (!kernacc((caddr_t)v, c,
 			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-			{
-				error = EFAULT;
-				goto unlock;
-			}
-			error = uiomove(v, (int)c, uio);
+				return (EFAULT);
+			error = uiomove((caddr_t)v, c, uio);
 			continue;
 
 /* minor device 2 is EOF/RATHOLE */
@@ -174,17 +178,13 @@ mmrw(dev, uio, flags)
 				c = iov->iov_len;
 				break;
 			}
-			/*
-			 * On the first call, allocate and zero a page
-			 * of memory for use with /dev/zero.
-			 */
 			if (zeropage == NULL) {
 				zeropage = (caddr_t)
 				    malloc(CLBYTES, M_TEMP, M_WAITOK);
 				bzero(zeropage, CLBYTES);
 			}
 			c = min(iov->iov_len, CLBYTES);
-			error = uiomove(zeropage, (int)c, uio);
+			error = uiomove(zeropage, c, uio);
 			continue;
 
 		default:
@@ -206,7 +206,8 @@ unlock:
 	return (error);
 }
 
-mmmap(dev, off, prot)
+int
+mmmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
