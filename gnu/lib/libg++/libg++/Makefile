@@ -1,5 +1,3 @@
-LIB=		g++
-CC=		gcc
 SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		regex.cc Regex.cc String.cc  Integer.cc Rational.cc Complex.cc Random.cc \
 		BitSet.cc BitString.cc LogNorm.cc SmplHist.cc SmplStat.cc \
@@ -17,23 +15,9 @@ SRCS=	 	AllocRing.cc Obstack.cc builtin.cc \
 		sbufvscan.C stdiostream.C floatconv.C outfloat.C iomanip.C \
 		insque.c strerror.c
 
-CFLAGS+=	-I$(.CURDIR) -I$(.CURDIR)/../libiberty
-GFLAGS=		-nostdinc++ -I$(.CURDIR) -I$(.CURDIR)/../g++-include \
-		-I$(.CURDIR)/../iostream
+CFLAGS+=	-nostdinc++ -I$(.CURDIR) -I$(.CURDIR)/../g++-include \
+		-I$(.CURDIR)/../iostream -I$(.CURDIR)/../libiberty
 NOMAN=		noman
 .PATH:		$(.CURDIR)/../iostream $(.CURDIR)/../libiberty
 
 .include <bsd.lib.mk>
-
-.SUFFIXES: .cc .C
-.cc.o:
-	$(CC) $(GFLAGS) -c $(.IMPSRC)
-
-.cc.po:
-	$(CC) -p $(GFLAGS) -c $(.IMPSRC) -o $(.TARGET)
-
-.C.o:
-	$(CC) $(GFLAGS) -c $(.IMPSRC)
-
-.C.po:
-	$(CC) -p $(GFLAGS) -c $(.IMPSRC) -o $(.TARGET)
