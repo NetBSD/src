@@ -1,4 +1,4 @@
-/*	$NetBSD: libaudio.h,v 1.10 2002/01/15 23:48:52 mrg Exp $	*/
+/*	$NetBSD: libaudio.h,v 1.11 2002/02/10 15:30:53 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999 Matthew R. Green
@@ -31,6 +31,7 @@
 /*
  * audio formats
  */
+#define AUDIO_FORMAT_DEFAULT	-1
 #define AUDIO_FORMAT_NONE	1
 #define AUDIO_FORMAT_SUN	2
 #define AUDIO_FORMAT_WAV	3
