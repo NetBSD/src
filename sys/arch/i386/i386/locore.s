@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.215.2.4 2000/02/23 06:12:04 sommerfeld Exp $	*/
+/*	$NetBSD: locore.s,v 1.215.2.5 2000/02/23 12:28:26 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -200,9 +200,8 @@
 #endif
 
 /* XXX temporary kluge; these should not be here */
-#define	IOM_BEGIN	0x0a0000	/* start of I/O memory "hole" */
-#define	IOM_END		0x100000	/* end of I/O memory "hole" */
-#define	IOM_SIZE	(IOM_END - IOM_BEGIN)
+/* Get definitions for IOM_BEGIN, IOM_END, and IOM_SIZE */
+#include <dev/isa/isareg.h>
 
 
 /* NB: NOP now preserves registers so NOPs can be inserted anywhere */
