@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.52 2004/08/09 20:02:36 mycroft Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.53 2004/08/10 02:50:52 mycroft Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.52 2004/08/09 20:02:36 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.53 2004/08/10 02:50:52 mycroft Exp $");
 
 #include "opt_pcmciaverbose.h"
 
@@ -241,6 +241,14 @@ pcmcia_card_detach(dev, flags)
 		} else
 			pf->child = NULL;
 	}
+
+	if (sc->sc_enabled_count != 0) {
+#ifdef DIAGNOSTIC
+		printf("pcmcia_card_detach: enabled_count should be 0 here??\n");
+#endif
+		pcmcia_chip_socket_disable(sc->pct, sc->pch);
+		sc->sc_enabled_count = 0;
+	}
 }
 
 void
@@ -430,6 +438,7 @@ int
 pcmcia_function_enable(pf)
 	struct pcmcia_function *pf;
 {
+	struct pcmcia_softc *sc = pf->sc;
 	struct pcmcia_function *tmp;
 	int reg;
 
@@ -440,10 +449,10 @@ pcmcia_function_enable(pf)
 	 * Increase the reference count on the socket, enabling power, if
 	 * necessary.
 	 */
-	if (pf->sc->sc_enabled_count++ == 0)
-		pcmcia_chip_socket_enable(pf->sc->pct, pf->sc->pch);
-	DPRINTF(("%s: ++enabled_count = %d\n", pf->sc->dev.dv_xname,
-		 pf->sc->sc_enabled_count));
+	if (sc->sc_enabled_count++ == 0)
+		pcmcia_chip_socket_enable(sc->pct, sc->pch);
+	DPRINTF(("%s: ++enabled_count = %d\n", sc->dev.dv_xname,
+		 sc->sc_enabled_count));
 
 	if (pf->pf_flags & PFF_ENABLED) {
 		/*
@@ -457,7 +466,7 @@ pcmcia_function_enable(pf)
 	 * underlying page.  Check for that.
 	 */
 
-	SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
+	SIMPLEQ_FOREACH(tmp, &sc->card.pf_head, pf_list) {
 		if ((tmp->pf_flags & PFF_ENABLED) &&
 		    (pf->ccr_base >= (tmp->ccr_base - tmp->pf_ccr_offset)) &&
 		    ((pf->ccr_base + PCMCIA_CCR_SIZE) <=
@@ -491,7 +500,7 @@ pcmcia_function_enable(pf)
 		}
 	}
 
-	if (pcmcia_mfc(pf->sc)) {
+	if (pcmcia_mfc(sc)) {
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE0,
 				 (pf->pf_mfc_iobase[0] >> 0) & 0xff);
 		pcmcia_ccr_write(pf, PCMCIA_CCR_IOBASE1,
@@ -505,7 +514,7 @@ pcmcia_function_enable(pf)
 
 	reg = (pf->cfe->number & PCMCIA_CCR_OPTION_CFINDEX);
 	reg |= PCMCIA_CCR_OPTION_LEVIREQ;
-	if (pcmcia_mfc(pf->sc)) {
+	if (pcmcia_mfc(sc)) {
 		reg |= (PCMCIA_CCR_OPTION_FUNC_ENABLE |
 			PCMCIA_CCR_OPTION_ADDR_DECODE);
 		if (pf->pf_ih)
@@ -525,7 +534,7 @@ pcmcia_function_enable(pf)
 
 #ifdef PCMCIADEBUG
 	if (pcmcia_debug) {
-		SIMPLEQ_FOREACH(tmp, &pf->sc->card.pf_head, pf_list) {
+		SIMPLEQ_FOREACH(tmp, &sc->card.pf_head, pf_list) {
 			printf("%s: function %d CCR at %d offset %lx: "
 			       "%x %x %x %x, %x %x %x %x, %x\n",
 			       tmp->sc->dev.dv_xname, tmp->number,
@@ -559,10 +568,10 @@ pcmcia_function_enable(pf)
 	 * Decrement the reference count, and power down the socket, if
 	 * necessary.
 	 */
-	if (--pf->sc->sc_enabled_count == 0)
-		pcmcia_chip_socket_disable(pf->sc->pct, pf->sc->pch);
-	DPRINTF(("%s: --enabled_count = %d\n", pf->sc->dev.dv_xname,
-		 pf->sc->sc_enabled_count));
+	if (--sc->sc_enabled_count == 0)
+		pcmcia_chip_socket_disable(sc->pct, sc->pch);
+	DPRINTF(("%s: --enabled_count = %d\n", sc->dev.dv_xname,
+		 sc->sc_enabled_count));
 
 	return (1);
 }
@@ -719,4 +728,191 @@ pcmcia_intr_disestablish(pf, ih)
 
 	pcmcia_chip_intr_disestablish(pf->sc->pct, pf->sc->pch, ih);
 	pf->pf_ih = 0;
+}
+
+int
+pcmcia_config_alloc(pf, cfe)
+	struct pcmcia_function *pf;
+	struct pcmcia_config_entry *cfe;
+{
+	int error;
+	int n, m;
+
+	for (n = 0; n < cfe->num_iospace; n++) {
+		bus_addr_t start = cfe->iospace[n].start;
+		bus_size_t length = cfe->iospace[n].length;
+		bus_size_t align = cfe->iomask ? (1 << cfe->iomask) :
+		    length;
+		bus_size_t skew = start & (align - 1);
+
+		if (skew)
+			printf("Drats!  I need a skew!\n");
+		if ((start & ~(align - 1)) == 0 && align < 0x400)
+			start = 0;
+
+		DPRINTF(("pcmcia_config_alloc: io %d start=%lx length=%lx align=%lx skew=%lx\n",
+		    n, (long)start, (long)length, (long)align, (long)skew));
+
+		error = pcmcia_io_alloc(pf, start, length, align,
+		    &cfe->iospace[n].handle);
+		if (error)
+			break;
+	}
+	if (n < cfe->num_iospace) {
+		for (m = 0; m < n; m++)
+			pcmcia_io_free(pf, &cfe->iospace[m].handle);
+		return (error);
+	}
+
+	for (n = 0; n < cfe->num_memspace; n++) {
+		bus_size_t length = cfe->memspace[n].length;
+
+		DPRINTF(("pcmcia_config_alloc: mem %d length %lx\n", n,
+		    (long)length));
+
+		error = pcmcia_mem_alloc(pf, length, &cfe->memspace[n].handle);
+		if (error)
+			break;
+	}
+	if (n < cfe->num_memspace) {
+		for (m = 0; m < cfe->num_iospace; m++)
+			pcmcia_io_free(pf, &cfe->iospace[m].handle);
+		for (m = 0; m < n; m++)
+			pcmcia_mem_free(pf, &cfe->memspace[m].handle);
+		return (error);
+	}
+
+	/* This one's good! */
+	return (0);
+}
+
+void
+pcmcia_config_free(pf)
+	struct pcmcia_function *pf;
+{
+	struct pcmcia_config_entry *cfe = pf->cfe;
+	int m;
+
+	for (m = 0; m < cfe->num_iospace; m++)
+		pcmcia_io_free(pf, &cfe->iospace[m].handle);
+	for (m = 0; m < cfe->num_memspace; m++)
+		pcmcia_mem_free(pf, &cfe->memspace[m].handle);
+}
+
+int
+pcmcia_config_map(pf)
+	struct pcmcia_function *pf;
+{
+	struct pcmcia_config_entry *cfe = pf->cfe;
+	int error;
+	int n, m;
+
+	for (n = 0; n < cfe->num_iospace; n++) {
+		int width;
+
+		switch (cfe->flags & (PCMCIA_CFE_IO8|PCMCIA_CFE_IO16)) {
+		case PCMCIA_CFE_IO8:
+			width = PCMCIA_WIDTH_IO8;
+			break;
+		case PCMCIA_CFE_IO16:
+			width = PCMCIA_WIDTH_IO16;
+			break;
+		case PCMCIA_CFE_IO8|PCMCIA_CFE_IO16:
+		default:
+			width = PCMCIA_WIDTH_AUTO;
+			break;
+		}
+		error = pcmcia_io_map(pf, width, &cfe->iospace[n].handle,
+		    &cfe->iospace[n].window);
+		if (error)
+			break;
+	}
+	if (n < cfe->num_iospace) {
+		for (m = 0; m < n; m++)
+			pcmcia_io_unmap(pf, cfe->iospace[m].window);
+		return (error);
+	}
+
+	for (n = 0; n < cfe->num_memspace; n++) {
+		bus_size_t length = cfe->memspace[n].length;
+		int width;
+
+		DPRINTF(("pcmcia_config_alloc: mem %d length %lx\n", n,
+		    (long)length));
+
+		/*XXX*/
+		width = PCMCIA_WIDTH_MEM8|PCMCIA_MEM_COMMON;
+		error = pcmcia_mem_map(pf, width, 0, length,
+		    &cfe->memspace[n].handle, &cfe->memspace[n].offset,
+		    &cfe->memspace[n].window);
+		if (error)
+			break;
+	}
+	if (n < cfe->num_memspace) {
+		for (m = 0; m < cfe->num_iospace; m++)
+			pcmcia_io_unmap(pf, cfe->iospace[m].window);
+		for (m = 0; m < n; m++)
+			pcmcia_mem_unmap(pf, cfe->memspace[m].window);
+		return (error);
+	}
+
+	/* This one's good! */
+	return (0);
+}
+
+void
+pcmcia_config_unmap(pf)
+	struct pcmcia_function *pf;
+{
+	struct pcmcia_config_entry *cfe = pf->cfe;
+	int m;
+
+	for (m = 0; m < cfe->num_iospace; m++)
+		pcmcia_io_unmap(pf, cfe->iospace[m].window);
+	for (m = 0; m < cfe->num_memspace; m++)
+		pcmcia_mem_unmap(pf, cfe->memspace[m].window);
+}
+
+int
+pcmcia_function_configure(pf, validator)
+	struct pcmcia_function *pf;
+	int (*validator) __P((struct pcmcia_config_entry *));
+{
+	struct pcmcia_config_entry *cfe;
+	int error = ENOENT;
+
+	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
+		error = validator(cfe);
+		if (error)
+			continue;
+		error = pcmcia_config_alloc(pf, cfe);
+		if (!error)
+			break;
+	}
+	if (!cfe) {
+		DPRINTF(("pcmcia_function_configure: no config entry found, error=%d\n",
+		    error));
+		return (error);
+	}
+
+	/* Remember which configuration entry we are using. */
+	pf->cfe = cfe;
+
+	error = pcmcia_config_map(pf);
+	if (error) {
+		DPRINTF(("pcmcia_function_configure: map failed, error=%d\n",
+		    error));
+		return (error);
+	}
+
+	return (0);
+}
+
+void
+pcmcia_function_unconfigure(pf)
+	struct pcmcia_function *pf;
+{
+
+	pcmcia_config_unmap(pf);
+	pcmcia_config_free(pf);
 }
