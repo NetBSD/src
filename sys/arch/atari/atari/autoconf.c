@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.44 2003/02/04 21:21:45 leo Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 2003/04/01 14:32:09 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -105,7 +105,7 @@ atari_config_found(pcfp, pdp, auxp, pfn)
 		return(config_found(pdp, auxp, pfn) != NULL);
 
 	memset(&temp, 0, sizeof(temp));
-	if (pdp == NULL) {
+	if (pdp == NULL)
 		pdp = &temp;
 
 	pdp->dv_cfdata = pcfp;
