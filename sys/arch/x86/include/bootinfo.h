@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2003/02/26 21:26:10 fvdl Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2003/04/16 19:16:42 dsl Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -112,13 +112,33 @@ struct btinfo_memmap {
  * Structure describing disk info as seen by the BIOS.
  */
 struct bi_biosgeom_entry {
-	int sec, head, cyl;			/* geometry */
-	u_int64_t totsec;			/* LBA sectors from ext int13 */
-	int flags, dev;				/* flags, BIOS device # */
-#define BI_GEOM_INVALID		0x01
-#define BI_GEOM_EXTINT13	0x02
-	unsigned int cksum;			/* MBR checksum */
-	int res0, res1, res2, res3;		/* future expansion; 0 now */
+	int		sec, head, cyl;		/* geometry */
+	u_int64_t	totsec;			/* LBA sectors from ext int13 */
+	int		flags, dev;		/* flags, BIOS device # */
+#define BI_GEOM_INVALID		0x000001
+#define BI_GEOM_EXTINT13	0x000002
+#ifdef BIOSDISK_EXT13INFO_V3
+#define BI_GEOM_BADCKSUM	0x000004	/* v3.x checksum invalid */
+#define BI_GEOM_BUS_MASK	0x00ff00	/* connecting bus type */
+#define BI_GEOM_BUS_ISA		0x000100
+#define BI_GEOM_BUS_PCI		0x000200
+#define BI_GEOM_BUS_OTHER	0x00ff00
+#define BI_GEOM_IFACE_MASK	0xff0000	/* interface type */
+#define BI_GEOM_IFACE_ATA	0x010000
+#define BI_GEOM_IFACE_ATAPI	0x020000
+#define BI_GEOM_IFACE_SCSI	0x030000
+#define BI_GEOM_IFACE_USB	0x040000
+#define BI_GEOM_IFACE_1394	0x050000	/* Firewire */
+#define BI_GEOM_IFACE_FIBRE	0x060000	/* Fibre channel */
+#define BI_GEOM_IFACE_OTHER	0xff0000	
+	unsigned int	cksum;			/* MBR checksum */
+	u_int		interface_path;		/* ISA iobase PCI bus/dev/fun */
+	u_int64_t	device_path;
+	int		res0;			/* future expansion; 0 now */
+#else
+	unsigned int	cksum;			/* MBR checksum */
+	int		res0, res1, res2, res3;	/* future expansion; 0 now */
+#endif
 	struct mbr_partition dosparts[NMBRPART]; /* MBR itself */
 } __attribute__((packed));
 
