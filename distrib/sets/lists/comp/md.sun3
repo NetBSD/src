@@ -53,6 +53,7 @@
 ./usr/include/machine/kbd.h
 ./usr/include/machine/kbio.h
 ./usr/include/machine/kcore.h
+./usr/include/machine/leds.h
 ./usr/include/machine/limits.h
 ./usr/include/machine/mon.h
 ./usr/include/machine/obctl.h
