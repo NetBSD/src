@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.43 1998/01/31 10:42:11 ross Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.44 1998/04/22 07:08:11 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -39,6 +39,8 @@
  *
  *	@(#)kern_clock.c	8.5 (Berkeley) 1/21/94
  */
+
+#include "opt_ntp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
