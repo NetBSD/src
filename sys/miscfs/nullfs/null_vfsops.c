@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.16 1997/09/10 13:44:23 christos Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.17 1997/10/06 09:32:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -367,7 +367,7 @@ nullfs_vptofh(vp, fhp)
 	return (EOPNOTSUPP);
 }
 
-struct vfsops null_vfsops = {
+struct vfsops nullfs_vfsops = {
 	MOUNT_NULL,
 	nullfs_mount,
 	nullfs_start,
