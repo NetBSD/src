@@ -1,4 +1,4 @@
-/*	$NetBSD: interwavevar.h,v 1.9 2003/02/01 06:23:37 thorpej Exp $	*/
+/*	$NetBSD: interwavevar.h,v 1.10 2004/07/09 01:13:53 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -98,8 +98,6 @@ struct iw_softc {
 	int	sc_irate;
 	int	sc_orate;
 	u_long	sc_dma_flags;
-	int	sc_playlocked;
-	int	sc_reclocked;
 	int	sc_irq;
 	int	sc_midi_irq;
 
@@ -118,7 +116,6 @@ struct iw_softc {
 	u_long	infifo;
 
 	int	fifosize;
-	int	playfirst;
 	u_short	silence;
 
 	u_long	sc_last_dmasize;
