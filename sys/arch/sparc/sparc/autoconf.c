@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.48 1996/03/31 22:55:33 pk Exp $ */
+/*	$NetBSD: autoconf.c,v 1.49 1996/04/04 00:27:24 cgd Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1764,7 +1764,8 @@ getdisk(str, len, defpart, devp)
 
 	if ((dv = parsedisk(str, len, defpart, devp)) == NULL) {
 		printf("use one of:");
-		for (dv = alldevs; dv != NULL; dv = dv->dv_next) {
+		for (dv = alldevs.tqh_first; dv != NULL;
+		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class == DV_DISK)
 				printf(" %s[a-h]", dv->dv_xname);
 #ifdef NFSCLIENT
@@ -1797,7 +1798,7 @@ parsedisk(str, len, defpart, devp)
 	} else
 		part = defpart;
 
-	for (dv = alldevs; dv != NULL; dv = dv->dv_next) {
+	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
 		if (dv->dv_class == DV_DISK &&
 		    strcmp(str, dv->dv_xname) == 0) {
 			majdev = findblkmajor(dv);
@@ -2088,7 +2089,7 @@ getdevunit(name, unit)
 	char *name;
 	int unit;
 {
-	struct device *dev = alldevs;
+	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
 	int lunit;
 
@@ -2102,7 +2103,7 @@ getdevunit(name, unit)
 	strcat(fullname, num);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_next) == NULL)
+		if ((dev = dev->dv_list.tqe_next) == NULL)
 			return NULL;
 	}
 	return dev;
