@@ -1,4 +1,4 @@
-/*	$NetBSD: getNAME.c,v 1.11 1998/02/03 03:24:24 perry Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.12 1998/03/30 01:45:27 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1997, Christos Zoulas
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-__RCSID("$NetBSD: getNAME.c,v 1.11 1998/02/03 03:24:24 perry Exp $");
+__RCSID("$NetBSD: getNAME.c,v 1.12 1998/03/30 01:45:27 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,6 +180,8 @@ oldman(pathname, name)
 			if (line[1] == 'S' && line[2] == 'H')
 				break;
 			if (line[1] == 's' && line[2] == 'h')
+				break;
+			if (line[1] == 'P' && line[2] == 'P')
 				break;
 		}
 		if (line[len - 1] == '\n') {
