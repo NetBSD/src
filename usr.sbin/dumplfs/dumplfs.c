@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.14 2000/06/14 01:55:37 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.15 2000/06/25 21:36:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.14 2000/06/14 01:55:37 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.15 2000/06/25 21:36:16 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,11 +370,21 @@ dump_ipage_segusage(lfsp, i, pp, tot)
 {
 	SEGUSE *sp;
 	int cnt, max;
+	struct seglist *slp;
 
 	max = i + tot;
 	for (sp = (SEGUSE *)pp, cnt = i;
-	     cnt < lfsp->lfs_nseg && cnt < max; cnt++, sp++)
-		print_suentry(cnt, sp);
+	     cnt < lfsp->lfs_nseg && cnt < max; cnt++, sp++) {
+		if (seglist == NULL)
+			print_suentry(cnt, sp);
+		else {
+			for (slp = seglist; slp != NULL; slp = slp->next)
+				if (cnt == slp->num) {
+					print_suentry(cnt, sp);
+					break;
+				}
+		}
+	}
 	if (max >= lfsp->lfs_nseg)
 		return (0);
 	else
