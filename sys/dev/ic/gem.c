@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.7 2001/10/18 15:19:21 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.8 2001/10/20 18:25:52 thorpej Exp $ */
 
 /*
  * 
@@ -785,10 +785,7 @@ gem_init(struct ifnet *ifp)
 	bus_space_write_4(t, h, GEM_RX_BLANKING, (2<<12)|6);
 
 	/* step 11. Configure Media */
-	gem_mii_statchg(&sc->sc_dev);
-
-/* XXXX Serial link needs a whole different setup. */
-
+	(void) gem_mediachange(ifp);
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -1644,8 +1641,7 @@ gem_mediachange(ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
-	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
-		return (EINVAL);
+	/* XXX Add support for serial media. */
 
 	return (mii_mediachg(&sc->sc_mii));
 }
