@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.1 2002/02/10 01:57:54 thorpej Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.2 2002/04/03 21:06:21 thorpej Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,8 +102,6 @@ extern char *_intrnames;
 
 /* Prototypes */
 
-extern void zero_page_readonly	__P((void));
-extern void zero_page_readwrite	__P((void));
 extern void set_spl_masks	__P((void));
 
 void irq_calculatemasks __P((void));
