@@ -1,4 +1,4 @@
-/*	$NetBSD: cy.c,v 1.26 2002/03/17 19:40:57 atatat Exp $	*/
+/*	$NetBSD: cy.c,v 1.26.4.1 2002/05/16 12:16:28 gehenna Exp $	*/
 
 /*
  * cy.c
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.26 2002/03/17 19:40:57 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy.c,v 1.26.4.1 2002/05/16 12:16:28 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,12 +54,24 @@ int	cy_speed(speed_t, int *, int *, int);
 
 extern struct cfdriver cy_cd;
 
+dev_type_open(cyopen);
+dev_type_close(cyclose);
+dev_type_read(cyread);
+dev_type_write(cywrite);
+dev_type_ioctl(cyioctl);
+dev_type_stop(cystop);
+dev_type_tty(cytty);
+dev_type_poll(cypoll);
+
+const struct cdevsw cy_cdevsw = {
+	cyopen, cyclose, cyread, cywrite, cyioctl,
+	cystop, cytty, cypoll, nommap, D_TTY
+};
+
 static int      cy_open = 0;
 static int      cy_events = 0;
 
 int	cy_attached_ttys;
-
-cdev_decl(cy);
 
 struct callout cy_poll_callout = CALLOUT_INITIALIZER;
 
