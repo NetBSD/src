@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.3 2001/12/31 18:34:52 thorpej Exp $	*/
+/*	$NetBSD: trace.c,v 1.4 2002/01/21 21:49:58 tv Exp $	*/
 /* $OpenBSD: trace.c,v 1.3 2001/09/29 15:47:18 espie Exp $ */
 
 /*
@@ -27,7 +27,6 @@
  */
 
 #include <sys/types.h>
-#include <err.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,7 +35,7 @@
 #include "stdd.h"
 #include "extern.h"
 
-FILE *traceout = stderr;
+FILE *traceout;
 
 int traced_macros = 0;
 
@@ -127,7 +126,7 @@ void
 trace_file(name)
 	const char *name;
 {
-	if (traceout != stderr)
+	if (traceout)
 		fclose(traceout);
 	traceout = fopen(name, "w");
 	if (!traceout)
@@ -208,14 +207,16 @@ static void
 print_header(inp)
 	struct input_file *inp;
 {
-	fprintf(traceout, "m4trace:");
+	FILE *out = traceout ? traceout : stderr;
+
+	fprintf(out, "m4trace:");
 	if (flags & TRACE_FILENAME)
-		fprintf(traceout, "%s:", inp->name);
+		fprintf(out, "%s:", inp->name);
 	if (flags & TRACE_LINENO)
-		fprintf(traceout, "%lu:", inp->lineno);
-	fprintf(traceout, " -%d- ", frame_level());
+		fprintf(out, "%lu:", inp->lineno);
+	fprintf(out, " -%d- ", frame_level());
 	if (flags & TRACE_ID)
-		fprintf(traceout, "id %lu: ", expansion_id);
+		fprintf(out, "id %lu: ", expansion_id);
 }
 
 ssize_t 
@@ -224,12 +225,14 @@ trace(argv, argc, inp)
 	int argc;
 	struct input_file *inp;
 {
+	FILE *out = traceout ? traceout : stderr;
+
 	print_header(inp);
 	if (flags & TRACE_CONT) {
-		fprintf(traceout, "%s ...\n", argv[1]);
+		fprintf(out, "%s ...\n", argv[1]);
 		print_header(inp);
 	}
-	fprintf(traceout, "%s", argv[1]);
+	fprintf(out, "%s", argv[1]);
 	if ((flags & TRACE_ARGS) && argc > 2) {
 		char delim[3];
 		int i;
@@ -237,7 +240,7 @@ trace(argv, argc, inp)
 		delim[0] = LPAREN;
 		delim[1] = EOS;
 		for (i = 2; i < argc; i++) {
-			fprintf(traceout, "%s%s%s%s", delim, 
+			fprintf(out, "%s%s%s%s", delim, 
 			    (flags & TRACE_QUOTE) ? lquote : "", 
 			    argv[i], 
 			    (flags & TRACE_QUOTE) ? rquote : "");
@@ -245,17 +248,17 @@ trace(argv, argc, inp)
 			delim[1] = ' ';
 			delim[2] = EOS;
 		}
-		fprintf(traceout, "%c", RPAREN);
+		fprintf(out, "%c", RPAREN);
 	}
 	if (flags & TRACE_CONT) {
-		fprintf(traceout, " -> ???\n");
+		fprintf(out, " -> ???\n");
 		print_header(inp);
-		fprintf(traceout, argc > 2 ? "%s(...)" : "%s", argv[1]);
+		fprintf(out, argc > 2 ? "%s(...)" : "%s", argv[1]);
 	}
 	if (flags & TRACE_EXPANSION)
 		return buffer_mark();
 	else {
-		fprintf(traceout, "\n");
+		fprintf(out, "\n");
 		return -1;
 	}
 }
@@ -264,11 +267,13 @@ void
 finish_trace(mark)
 size_t mark;
 {
-	fprintf(traceout, " -> ");
+	FILE *out = traceout ? traceout : stderr;
+
+	fprintf(out, " -> ");
 	if (flags & TRACE_QUOTE)
-		fprintf(traceout, "%s", lquote);
-	dump_buffer(traceout, mark);
+		fprintf(out, "%s", lquote);
+	dump_buffer(out, mark);
 	if (flags & TRACE_QUOTE)
-		fprintf(traceout, "%s", rquote);
-	fprintf(traceout, "\n");
+		fprintf(out, "%s", rquote);
+	fprintf(out, "\n");
 }
