@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2000/08/30 23:51:54 jhawk Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2000/12/06 02:35:19 simonb Exp $
 
 BINDIR=			/usr/mdec
 
@@ -21,18 +21,10 @@ DRIVERSOURCE=		apci.c ct.c dca.c dcm.c dnkbd.c fhpib.c hil.c \
 			ite_subr.c ite_tc.c ite_hy.c kbd.c kbdconf.c \
 			nhpib.c rd.c scsi.c sd.c
 
-### Figure out what to use for mkboot
-MKBOOTDIR=		${.CURDIR}/../mkboot
-
-.if exists(${MKBOOTDIR}/obj.${MACHINE})
-MKBOOTOBJDIR=		${MKBOOTDIR}/obj.${MACHINE}
-.elif exists (${MKBOOTDIR}/obj)
-MKBOOTOBJDIR=		${MKBOOTDIR}/obj
-.else
-MKBOOTOBJDIR=		${MKBOOTDIR}
-.endif
-
+.ifnmake(print-objdir)
+MKBOOTOBJDIR!=		cd ${.CURDIR}/../mkboot ; ${MAKE} print-objdir
 MKBOOT_PROG=		${MKBOOTOBJDIR}/mkboot
+.endif
 
 # Make sure ${MKBOOT_PROG} is always available
 ${MKBOOT_PROG}:
