@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.50.2.1 1997/12/09 20:28:39 thorpej Exp $	*/
+/*	$NetBSD: vnd.c,v 1.50.2.2 1998/01/29 12:30:56 mellon Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -616,7 +616,7 @@ vndiodone(bp)
 
 #ifdef DIAGNOSTIC
 		if (vnx->vx_pending != 0)
-			panic("swiodone: vnx pending: %d", vnx->vx_pending);
+			panic("vndiodone: vnx pending: %d", vnx->vx_pending);
 #endif
 
 		if ((vnx->vx_flags & VX_BUSY) == 0) {
@@ -982,6 +982,17 @@ vndsetcred(vnd, cred)
 	auio.uio_resid = aiov.iov_len;
 	VOP_LOCK(vnd->sc_vp);
 	error = VOP_READ(vnd->sc_vp, &auio, 0, vnd->sc_cred);
+	if (error == 0) {
+		/*
+		 * Because vnd does all IO directly through the vnode
+		 * we need to flush (atleast) the buffer from the above
+		 * VOP_READ from the buffer cache to prevent cache
+		 * incoherencies.  Also, be careful to write dirty
+		 * buffers back to stable storage.
+		 */
+		error = vinvalbuf(vnd->sc_vp, V_SAVE, vnd->sc_cred,
+		    curproc, 0, 0);
+	}
 	VOP_UNLOCK(vnd->sc_vp);
 
 	free(tmpbuf, M_TEMP);
@@ -1157,6 +1168,13 @@ vndgetdisklabel(dev)
 		 * occupy the entire disk.
 		 */
 		for (i = 0; i < MAXPARTITIONS; i++) {
+			/*
+			 * Don't wipe out port specific hack (such as
+			 * dos partition hack of i386 port).
+			 */
+			if (lp->d_partitions[i].p_fstype != FS_UNUSED)
+				continue;
+
 			lp->d_partitions[i].p_size = lp->d_secperunit;
 			lp->d_partitions[i].p_offset = 0;
 			lp->d_partitions[i].p_fstype = FS_BSDFFS;
