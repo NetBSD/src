@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425reg.h,v 1.14 2003/11/16 12:41:03 scw Exp $ */
+/*	$NetBSD: ixp425reg.h,v 1.15 2003/12/08 13:40:33 scw Exp $ */
 /*
  * Copyright (c) 2003
  *	Ichiro FUKUHARA <ichiro@ichiro.org>.
@@ -70,6 +70,12 @@
 /*
  * FFFF FFFF ---------------------------
  *
+ * FC00 0000 ---------------------------
+ *           PCI Data (memory space)
+ * F800 0000 ---------------------------
+ *
+ * F001 3000 ---------------------------
+ *           SDRAM Controller
  * F001 2000 ---------------------------
  *           PCI Configuration and Status Registers
  * F001 1000 ---------------------------
@@ -361,8 +367,8 @@
 #define	IXP425_PCI_CSR_BASE	IXP425_PCI_VBASE
 
 /* PCI Memory Space */
-#define	IXP425_PCI_MEM_HWBASE	0x48000000UL	/* VA == PA */
-#define	IXP425_PCI_MEM_VBASE	IXP425_PCI_MEM_HWBASE
+#define	IXP425_PCI_MEM_HWBASE	0x48000000UL
+#define	IXP425_PCI_MEM_VBASE	0xf8000000UL
 #define	IXP425_PCI_MEM_SIZE	0x04000000UL	/* 64MB */
 
 /* PCI I/O Space */
