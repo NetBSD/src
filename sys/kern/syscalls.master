@@ -1,4 +1,4 @@
- 	syscalls.master,v 1.6 1993/06/07 19:52:42 cgd Exp
+ 	$Id: syscalls.master,v 1.8 1993/10/02 09:51:40 mycroft Exp $
 ;	from: @(#)syscalls.master	7.26 (Berkeley) 3/25/91
 ; System call name/number master file.
 ; Processed to created init_sysent.c, syscalls.c and syscall.h.
