@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.49.4.1 1999/06/07 04:25:34 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.49.4.2 1999/07/04 01:52:13 chs Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -596,6 +596,8 @@ ffs_mountfs(devvp, mp, p)
 	mp->mnt_stat.f_fsid.val[0] = (long)dev;
 	mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_FFS);
 	mp->mnt_maxsymlinklen = fs->fs_maxsymlinklen;
+	mp->mnt_fs_bshift = fs->fs_bshift;
+	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
 #ifdef FFS_EI
 	if (needswap)
