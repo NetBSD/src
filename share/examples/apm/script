@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: script,v 1.1 1999/12/29 04:16:25 hubertf Exp $
+# $NetBSD: script,v 1.2 2000/06/01 21:54:54 gmcgarry Exp $
 #
 
 #
@@ -23,7 +23,7 @@ if=ne0
 case $0 in
 *suspend)	
 	logger 'Suspending...'
-	pcmplay -f 22050 -c 1 $S/KDE_Window_UnMaximize.wav
+	audioplay -q -f -s 22050 -c 1 $S/KDE_Window_UnMaximize.wav
 	# In case some NFS mounts still exist - we don't want them to hang:
 	umount -a    -t nfs
 	umount -a -f -t nfs
@@ -34,7 +34,7 @@ case $0 in
 
 *standby)
 	logger 'Going to standby mode ....'
-	pcmplay -f 22050 -c 1 $S/KDE_Window_UnMaximize.wav
+	audioplay -q -f -s 22050 -c 1 $S/KDE_Window_UnMaximize.wav
 	# In case some NFS mounts still exist - we don't want them to hang:
 	umount -a    -t nfs
 	umount -a -f -t nfs
@@ -45,7 +45,7 @@ case $0 in
 
 *resume)
 	logger Resuming...
-	pcmplay -f 22050 $S/KDE_Startup.wav
+	audioplay -q -f -s 22050 $S/KDE_Startup.wav
 	dhclient $if
 	# mount /home
 	# mount /data
@@ -53,11 +53,11 @@ case $0 in
 	;;
 
 *line)
-	# pcmplay -f 22050 -c 1 $S/KDE_Window_DeIconify.wav
+	# audioplay -q -f -s 22050 -c 1 $S/KDE_Window_DeIconify.wav
 	;;
 
 *battery)
-	# pcmplay -f 22050 -c 1 $S/KDE_Window_DeIconify.wav
+	# audioplay -q -f -s 22050 -c 1 $S/KDE_Window_DeIconify.wav
 	;;
 
 esac
