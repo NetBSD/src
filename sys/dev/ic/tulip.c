@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.47 2000/03/07 00:39:17 mycroft Exp $	*/
+/*	$NetBSD: tulip.c,v 1.48 2000/03/07 01:06:12 soren Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -1995,10 +1995,13 @@ tlp_srom_size(sc)
 	SROM_EMIT(sc, 0);
 
 	if (x > 12) {
-		printf("failed to find SROM size\n");
+		printf("%s: failed to find SROM size\n", sc->sc_dev.dv_xname);
 		return (0);
 	} else {
-		printf("SROM size is 2^%d*16 (%d) bits\n", x, 1 << (x + 4));
+#ifdef TLP_DEBUG
+		printf("%s: SROM size is 2^%d*16 (%d) bits\n", x, 1 << (x + 4),
+			sc->sc_dev.dv_xname);
+#endif
 		return (x);
 	}
 }
