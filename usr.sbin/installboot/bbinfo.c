@@ -1,4 +1,4 @@
-/*	$NetBSD: bbinfo.c,v 1.3 2002/05/20 14:56:10 lukem Exp $ */
+/*	$NetBSD: bbinfo.c,v 1.4 2002/05/20 15:04:25 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: bbinfo.c,v 1.3 2002/05/20 14:56:10 lukem Exp $");
+__RCSID("$NetBSD: bbinfo.c,v 1.4 2002/05/20 15:04:25 lukem Exp $");
 #endif	/* !__lint */
 
 #if HAVE_CONFIG_H
@@ -72,7 +72,7 @@ shared_bbinfo_clearboot(ib_params *params, struct bbinfo_params *bbparams)
 
 	retval = 0;
 	if ((bb = malloc(bbparams->maxsize)) == NULL) {
-		warn("Allocating %lu bytes for bbinfo", 
+		warn("Allocating %lu bytes for bbinfo",
 		    (unsigned long) bbparams->maxsize);
 		goto done;
 	}
@@ -143,7 +143,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	retval = 0;
 	blocks = NULL;
 	if ((bb = malloc(bbparams->maxsize)) == NULL) {
-		warn("Allocating %lu bytes for bbinfo", 
+		warn("Allocating %lu bytes for bbinfo",
 		    (unsigned long) bbparams->maxsize);
 		goto done;
 	}
@@ -175,7 +175,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		 */
 	if (memcmp(bb + bbparams->headeroffset + 1, "ELF", strlen("ELF"))
 	    == 0) {
-		warnx("`%s' is an ELF executable; need raw binary", 
+		warnx("`%s' is an ELF executable; need raw binary",
 		    params->stage1);
 		goto done;
 	}
@@ -190,7 +190,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 			break;
 	}
 	if (bbi >= bbparams->maxsize) {
-		warnx("%s bbinfo structure not found in `%s'", 
+		warnx("%s bbinfo structure not found in `%s'",
 		    params->machine->name, params->stage1);
 		goto done;
 	}
@@ -204,8 +204,8 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		/* Allocate space for our block list. */
 	blocks = malloc(sizeof(*blocks) * maxblk);
 	if (blocks == NULL) {
-		warn("Allocating %lu bytes", 
-		    (unsigned long) sizeof(*blocks) * maxblk);
+		warn("Allocating %lu bytes",
+		    (unsigned long)sizeof(*blocks) * maxblk);
 		goto done;
 	}
 
@@ -224,7 +224,7 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 		goto done;
 	if (nblk == 0) {
 		warnx("Secondary bootstrap `%s' is empty",
-		   params->stage2);
+		    params->stage2);
 		goto done;
 	}
 
@@ -232,11 +232,11 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 	bbinfop->bbi_block_count = HOSTTOTARGET32(nblk);
 	bbinfop->bbi_block_size = HOSTTOTARGET32(blocks[0].blocksize);
 	for (blk_i = 0; blk_i < nblk; blk_i++) {
-		bbinfop->bbi_block_table[blk_i] = 
+		bbinfop->bbi_block_table[blk_i] =
 		    HOSTTOTARGET32(blocks[blk_i].block);
 		if (blocks[blk_i].blocksize < blocks[0].blocksize &&
 		    blk_i + 1 != nblk) {
-			warnx("Secondary bootstrap `%s' blocks do not have " \
+			warnx("Secondary bootstrap `%s' blocks do not have "
 			    "a uniform size", params->stage2);
 			goto done;
 		}
@@ -274,8 +274,8 @@ shared_bbinfo_setboot(ib_params *params, struct bbinfo_params *bbparams,
 
  done:
 	if (blocks != NULL)
-		free (blocks);
+		free(blocks);
 	if (bb != NULL)
-		free (bb);
+		free(bb);
 	return (retval);
 }
