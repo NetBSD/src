@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.11 2003/08/09 13:44:39 christos Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.11 2003/08/09 13:44:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <sys/exec.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/signal.h>
@@ -51,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.10 2003/06/29 22:31:45 fvdl Exp $
 #include <sys/tty.h>
 
 #include <miscfs/procfs/procfs.h>
+#include <compat/linux/common/linux_exec.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -124,7 +126,7 @@ procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 	struct rusage *ru = &p->p_stats->p_ru;
 	struct rusage *cru = &p->p_stats->p_cru;
 	struct vm_map *map = &p->p_vmspace->vm_map;
-	struct vm_map_entry *entry, *last = NULL;
+	struct vm_map_entry *entry;
 	unsigned long stext = 0, etext = 0, sstack = 0;
 
 	if (map != &curproc->p_vmspace->vm_map)
@@ -137,12 +139,13 @@ procfs_do_pid_stat(struct proc *p, struct lwp *l, struct pfsnode *pfs,
 		if (stext == etext) {
 			stext = entry->start;
 			etext = entry->end;
+			break;
 		}
-		last = entry;
 	}
-	/* assume stack is the last entry */
-	if (last != NULL)
-		sstack = last->start;
+	if (strcmp(p->p_emul->e_name, "linux") == 0)
+		sstack = LINUX_USRSTACK;
+	else
+		sstack = USRSTACK;
 
 	if (map != &curproc->p_vmspace->vm_map)
 		vm_map_unlock_read(map);
