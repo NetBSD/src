@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.34 2000/12/03 05:56:27 perseant Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.35 2000/12/03 06:43:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -492,7 +492,7 @@ lfs_newbuf_malloclog(vp, daddr, size, file, line)
 	char *file;
 	int line;
 #else
-# define DOMALLOC(S, T, F) _malloc((S), (T), (F))
+# define DOMALLOC(S, T, F) malloc((S), (T), (F))
 struct buf *
 lfs_newbuf(vp, daddr, size)
 	struct vnode *vp;
