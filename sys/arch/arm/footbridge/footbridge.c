@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge.c,v 1.1 2001/06/09 10:29:12 chris Exp $	*/
+/*	$NetBSD: footbridge.c,v 1.2 2001/09/05 16:17:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include <dev/pci/pcivar.h>
 #define _ARM32_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/cpufunc.h>
 #include <arm/footbridge/footbridgevar.h>
 #include <arm/footbridge/dc21285reg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.3 2001/06/24 07:32:20 chs Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.4 2001/09/05 16:17:35 matt Exp $	*/
 
 /* 
  * Copyright (c) 1996 Mark Brinicombe
@@ -39,7 +39,7 @@
 #include <ddb/db_sym.h>
 #include <ddb/db_output.h>
 
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 
 void
 db_show_intrchain_cmd(addr, have_addr, count, modif)

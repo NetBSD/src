@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.8 2001/09/03 01:50:02 matt Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.9 2001/09/05 16:17:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -62,7 +62,7 @@
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
-#include <machine/irqhandler.h>
+#include <machine/intr.h>
 #include <machine/pte.h>
 #include <machine/undefined.h>
 
