@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.3 2000/02/12 23:58:09 perseant Exp $	*/
+/*	$NetBSD: newfs.c,v 1.4 2000/07/04 22:35:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.3 2000/02/12 23:58:09 perseant Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.4 2000/07/04 22:35:05 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,6 +82,7 @@ int	sectorsize;		/* bytes/sector */
 int	fsize = 0;		/* fragment size */
 int	bsize = 0;		/* block size */
 int	minfree = MINFREE;	/* free space threshold */
+int     minfreeseg = 0;         /* free segments reserved for the cleaner */
 int	bbsize = BBSIZE;	/* boot block size */
 int	sbsize = SBSIZE;	/* superblock size */
 u_long	memleft;		/* virtual memory available */
@@ -123,7 +124,7 @@ main(argc, argv)
 	if (maxpartitions > 26)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
-	opstring = "B:DFLNb:f:m:s:";
+	opstring = "B:DFLNb:f:M:m:s:";
 
 	debug = force = lfs = segsize = 0;
 	while ((ch = getopt(argc, argv, opstring)) != -1)
@@ -140,6 +141,9 @@ main(argc, argv)
 			break;
 		case 'L':	/* Create lfs */
 			lfs = 1;
+			break;
+		case 'M':
+			minfreeseg = atoi(optarg);
 			break;
 		case 'N':
 			Nflag++;
@@ -238,7 +242,8 @@ main(argc, argv)
 	}
 
 	/* If we're making a LFS, we break out here */
-	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize));
+	exit(make_lfs(fso, lp, pp, minfree, bsize, fsize, segsize,
+		      minfreeseg));
 }
 
 #ifdef COMPAT

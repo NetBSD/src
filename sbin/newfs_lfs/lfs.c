@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.c,v 1.15 2000/07/03 21:51:05 thorpej Exp $	*/
+/*	$NetBSD: lfs.c,v 1.16 2000/07/04 22:35:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: lfs.c,v 1.15 2000/07/03 21:51:05 thorpej Exp $");
+__RCSID("$NetBSD: lfs.c,v 1.16 2000/07/04 22:35:05 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -188,7 +188,7 @@ static void make_dir __P(( void *, struct direct *, int));
 static void put __P((int, off_t, void *, size_t));
 
 int
-make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
+make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size, minfreeseg)
 	int fd;
 	struct disklabel *lp;
 	struct partition *partp;
@@ -196,6 +196,7 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	int block_size;
 	int frag_size;
 	int seg_size;
+	int minfreeseg;
 {
 	struct dinode *dip;	/* Pointer to a disk inode */
 	struct dinode *dpagep;	/* Pointer to page of disk inodes */
@@ -209,7 +210,6 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	SEGSUM summary;		/* Segment summary structure */
 	SEGSUM *sp;		/* Segment summary pointer */
 	daddr_t	last_sb_addr;	/* Address of superblocks */
-	daddr_t last_addr;	/* Previous segment address */
 	daddr_t	sb_addr;	/* Address of superblocks */
 	daddr_t	seg_addr;	/* Address of current segment */
 	char *ipagep;		/* Pointer to the page we use to write stuff */
@@ -315,7 +315,10 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_nseg = lfsp->lfs_dsize / lfsp->lfs_ssize;
 	lfsp->lfs_nclean = lfsp->lfs_nseg - 1;
 	lfsp->lfs_maxfilesize = maxtable[lfsp->lfs_bshift] << lfsp->lfs_bshift;
-	lfsp->lfs_minfreeseg = lfsp->lfs_nseg / DFL_MIN_FREE_SEGS;
+	if (minfreeseg == 0)
+		lfsp->lfs_minfreeseg = lfsp->lfs_nseg / DFL_MIN_FREE_SEGS;
+	else
+		lfsp->lfs_minfreeseg = minfreeseg;
 	if (lfsp->lfs_minfreeseg < MIN_FREE_SEGS)
 		lfsp->lfs_minfreeseg = MIN_FREE_SEGS;
 
@@ -425,8 +428,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	lfsp->lfs_idaddr = (LFS_LABELPAD + LFS_SBPAD + LFS_SUMMARY_SIZE) /
 	    lp->d_secsize;
 
+	j = 1;
 	for (segp = segtable + 1, i = 1; i < lfsp->lfs_nseg; i++, segp++) {
-		if ((i % sb_interval) == 0) {
+		if ((i % sb_interval) == 0 && j < LFS_MAXNUMSB) {
 			segp->su_flags = SEGUSE_SUPERBLOCK;
 			lfsp->lfs_bfree -= (LFS_SBPAD / lp->d_secsize);
 		} else
@@ -438,12 +442,9 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	}
 
 	/* 
-	 * Initialize dynamic accounting.  The blocks available for
-	 * writing are the bfree blocks minus 1 segment summary for
-	 * each segment since you can't write any new data without
-	 * creating a segment summary.
+	 * Initialize dynamic accounting.
 	 */
-	lfsp->lfs_avail = lfsp->lfs_bfree - lfsp->lfs_nseg;
+	lfsp->lfs_avail = lfsp->lfs_bfree;
 	lfsp->lfs_uinodes = 0;
 
 	/*
@@ -685,32 +686,23 @@ make_lfs(fd, lp, partp, minfree, block_size, frag_size, seg_size)
 	    cksum(&sp->ss_datasum, LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum));
 	put(fd, off, sp, LFS_SUMMARY_SIZE);
 
-	/* Now, write rest of segments containing superblocks */
+	/* Now, write the rest of the superblocks */
 	lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
-	for (seg_addr = last_addr = lfsp->lfs_sboffs[0], j = 1, i = 1; 
-	    i < lfsp->lfs_nseg; i++) {
+	printf("super-block backups (for fsck -b #) at:\n");
+	for (i = 0; i < LFS_MAXNUMSB; i++) {
+		seg_addr = lfsp->lfs_sboffs[i];
+
+		printf("%d%s ", seg_addr, (i == LFS_MAXNUMSB - 1 ? "" : ","));
 
 		/* Leave the time stamp on the alt sb, zero the rest */
-		if(j > 1)
+		if(i == 2) {
 			lfsp->lfs_tstamp = 0;
-
-		seg_addr += lfsp->lfs_ssize << lfsp->lfs_fsbtodb;
-		sp->ss_next = last_addr;
-		last_addr = seg_addr;
+			lfsp->lfs_cksum = lfs_sb_cksum(&(lfsp->lfs_dlfs));
+		}
 		seg_seek = (off_t)seg_addr * lp->d_secsize;
-
-		if (i % sb_interval == 0) {
-			if (j < (LFS_MAXNUMSB - 2))
-				j++;
-			put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
-			seg_seek += LFS_SBPAD;
-		} 
-
-		/* Summary */
-		sp->ss_sumsum = cksum(&sp->ss_datasum, 
-		    LFS_SUMMARY_SIZE - sizeof(sp->ss_sumsum));
-		put(fd, seg_seek, sp, LFS_SUMMARY_SIZE);
+		put(fd, seg_seek, &(lfsp->lfs_dlfs), sizeof(struct dlfs));
 	}
+	printf("\n");
 	free(ipagep);
 	close(fd);
 	return (0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.h,v 1.3 2000/07/03 01:49:11 perseant Exp $	*/
+/*	$NetBSD: config.h,v 1.4 2000/07/04 22:35:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -57,7 +57,7 @@
  * the cleaner.  Experimental data show this number should be around
  * 5-10.
  */
-#define DFL_MIN_FREE_SEGS 8
+#define DFL_MIN_FREE_SEGS 10
 
 /*
  * MINFREE gives the minimum acceptable percentage of file system
