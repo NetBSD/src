@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.25 1995/07/02 05:26:27 briggs Exp $	*/
+/*	$NetBSD: grf.c,v 1.26 1995/07/06 00:28:32 briggs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -346,7 +346,7 @@ grfaddr(gp, off)
 	register struct grfmode *gm = &gp->curr_mode;
 	u_long	addr;
 
-	if (off < gm->fbsize) {
+	if (off < mac68k_round_page(gm->fbsize + gm->fboff) ) {
 		addr = NUBUS_VIRT_TO_PHYS((u_int) gm->fbbase) + off;
 		return mac68k_btop(addr);
 	}
@@ -371,10 +371,11 @@ grfmap(dev, addrp, p)
 	if (grfdebug & GDB_MMAP)
 		printf("grfmap(%d): addr %x\n", p->p_pid, *addrp);
 #endif
-	len = gp->curr_mode.fbsize + gp->curr_mode.fboff;
+	len = mac68k_round_page(gp->curr_mode.fbsize + gp->curr_mode.fboff);
 	flags = MAP_SHARED | MAP_FIXED;
 
-	*addrp = NUBUS_VIRT_TO_PHYS((u_int) gp->curr_mode.fbbase);
+	*addrp = mac68k_trunc_page(
+			NUBUS_VIRT_TO_PHYS((u_int) gp->curr_mode.fbbase));
 
 	vn.v_type = VCHR;	/* XXX */
 	vn.v_specinfo = &si;	/* XXX */
