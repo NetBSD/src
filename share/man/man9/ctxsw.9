@@ -1,4 +1,4 @@
-.\"	$NetBSD: ctxsw.9,v 1.14 2002/09/27 08:38:58 wiz Exp $
+.\"	$NetBSD: ctxsw.9,v 1.15 2003/04/04 20:33:21 wiz Exp $
 .\"
 .\" Copyright (c) 1996, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -107,7 +107,9 @@ This procedure is performed by saving the process context of the current
 process in its process control block (PCB) and restoring the process
 context of the new process.
 The address space of the new process is activated using
-.Xr pmap_activate 9 .
+.Fn pmap_activate
+(see
+.Xr pmap 9 ) .
 Finally, the new process is checked to see if it was previously
 preempted while inside a restartable atomic sequence
 .Pq see Xr ras 9 .
@@ -122,7 +124,7 @@ Both functions return with the scheduler lock released.
 .Sh SEE ALSO
 .Xr SCHED_LOCK 9 ,
 .Xr chooseproc 9 ,
-.Xr pmap_activate 9 ,
+.Xr pmap 9 ,
 .Xr ras 9 ,
 .Xr splsched 9 ,
 .Xr tsleep 9 ,
