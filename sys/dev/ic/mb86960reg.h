@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960reg.h,v 1.6 2002/09/29 17:10:37 tsutsui Exp $	*/
+/*	$NetBSD: mb86960reg.h,v 1.7 2002/10/04 15:22:30 tsutsui Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -292,9 +292,9 @@
 /* BMPR17 -- EEPROM data */
 #define FE_B17_DATA	0x80	/* EEPROM data bit			*/
 
-/* BMPR18 ??? */
+/* BMPR18 I/O Base Address (Only JLI mode) */
 
-/* BMPR19 -- ISA interface configuration */
+/* BMPR19 -- Jumperless Setting (Only JLI mode) */
 #define FE_B19_IRQ		0xC0
 #define FE_B19_IRQ_SHIFT	6
 
@@ -309,10 +309,26 @@
  */
 
 /* Number of bytes in an EEPROM accessible through 86965.  */
-#define FE_EEPROM_SIZE	32
+#define FE_EEPROM_SIZE		32
 
 /* Offset for JLI config; automatically copied into BMPR19 at startup.  */
-#define FE_EEPROM_CONF	0
+#define FE_EEPROM_CONF		0x00
+
+/* Delay for 93c06 EEPROM access */
+#define FE_EEPROM_DELAY()	DELAY(4)
+
+/*
+ * EEPROM allocation of AT1700/RE2000.
+ */
+#define FE_ATI_EEP_ADDR		0x08	/* Station address (0x08-0x0d)	*/
+#define FE_ATI_EEP_MEDIA	0x18	/* Media type			*/
+#define FE_ATI_EEP_MAGIC	0x19	/* XXX Magic			*/
+#define FE_ATI_EEP_MODEL	0x1e	/* Hardware type		*/
+#define  FE_ATI_MODEL_AT1700T	0x00
+#define  FE_ATI_MODEL_AT1700BT	0x01
+#define  FE_ATI_MODEL_AT1700FT	0x02
+#define  FE_ATI_MODEL_AT1700AT	0x03
+#define FE_ATI_EEP_REVISION	0x1f	/* Hardware revision		*/
 
 /*
  * Some 86960 specific constants.
