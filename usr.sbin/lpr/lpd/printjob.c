@@ -1,3 +1,4 @@
+/*	$NetBSD: printjob.c,v 1.8 1995/11/15 22:49:56 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.

@@ -1,3 +1,4 @@
+#	$NetBSD: Makefile,v 1.5 1995/11/15 22:52:05 pk Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	pac

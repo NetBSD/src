@@ -1,3 +1,4 @@
+/*	$NetBSD: lpd.c,v 1.6 1995/11/15 22:49:53 pk Exp $	*/
 /*
  * Copyright (c) 1983, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
