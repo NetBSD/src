@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.5.3,v 1.1.2.19 2001/12/27 12:37:48 he Exp $
+#	$NetBSD: CHANGES-1.5.3,v 1.1.2.20 2002/01/01 12:37:49 he Exp $
 
 A complete list of changes from NetBSD 1.5.2 to NetBSD 1.5.3:
 
@@ -1184,3 +1184,14 @@ sys/compat/ossaudio/ossaudio.c			1.39
 
   Change our emulation of SNDCTL_DSP_POST so that OSS applications
   (e.g. xmms) don't randomly pause.
+
+sys/dev/cardbus/if_ex_cardbus.c			1.17,1.19 via patch
+sys/dev/ic/elinkxl.c				1.47-1.48 via patch
+sys/dev/ic/elinkxlvar.h				1.10
+
+  Add Power Management support for Cardbus Etherlink XL cards, and
+  some cleanup.
+
+sys/dev/pci/if_ex_pci.c				1.18
+
+  Improve intr_ack code to support 3c556 and 3c556B.
