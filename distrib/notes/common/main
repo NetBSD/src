@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.257 2004/06/10 07:01:00 mbw Exp $
+.\"	$NetBSD: main,v 1.258 2004/06/12 06:57:53 mbw Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -326,7 +326,9 @@ You may want to read the section below on
 .\}
 .if \n[sparc]:\n[sparc64] \{\
 .It
-You will need to get to the OpenBoot PROM
+You will need to get to the 
+.if \n[sparc] OpenBoot PROM
+.if \n[sparc64] OpenFirmware
 .Dq Ic "ok"
 prompt.
 After your system first powers on, and displays some initial information,
