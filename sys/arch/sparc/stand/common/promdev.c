@@ -1,4 +1,4 @@
-/*	$NetBSD: promdev.c,v 1.8 1999/04/28 13:20:55 christos Exp $ */
+/*	$NetBSD: promdev.c,v 1.9 2001/01/18 12:50:10 pk Exp $ */
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -457,30 +457,50 @@ prom_getether(fd, ea)
 	u_char *ea;
 {
 static	struct idprom idprom;
-	char buf[64];
-	u_char *src, *dst;
-	int len, x;
 
 	switch (prom_version()) {
 	case PROM_OLDMON:
 		if (idprom.id_format == 0) {
-			dst = (char*)&idprom;
-			src = (char*)AC_IDPROM;
-			len = sizeof(struct idprom);
+			int len = sizeof(struct idprom);
+			u_char *src = (char *)AC_IDPROM;
+			u_char *dst = (char *)&idprom;
 			do {
-				x = lduba(src++, ASI_CONTROL);
-				*dst++ = x;
+				*dst++ = lduba(src++, ASI_CONTROL);
 			} while (--len > 0);
 		}
 		bcopy(idprom.id_ether, ea, 6);
 		break;
+
+	/*
+	 * XXX - maybe we should simply always look at the `idprom' property
+	 *	 and not bother with `pv_enaddr' or `prom_interpret()' at all.
+	 */
 	case PROM_OBP_V0:
+		if (idprom.id_format == 0) {
+			void *buf = &idprom;
+			int len = sizeof(struct idprom);
+			int node = prom_findroot();
+			if (getprop(node, "idprom", 1, &len, &buf) != 0) {
+				printf("`idprom' property cannot be read: "
+					"cannot get ethernet address");
+				/*
+				 * Copy ethernet address into `ea' anyway,
+				 * so that it will be zeroed.
+				 */
+			}
+		}
+		bcopy(idprom.id_ether, ea, 6);
+		break;
+
 	case PROM_OBP_V2:
 		(void)(*obpvec->pv_enaddr)(fd, (char *)ea);
 		break;
-	case PROM_OBP_V3:
+
+	case PROM_OBP_V3: {
+		char buf[64];
 		sprintf(buf, "%lx mac-address drop swap 6 cmove", (u_long)ea);
 		prom_interpret(buf);
+		}
 		break;
 	}
 }
