@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.37 1997/05/25 22:27:16 pk Exp $	*/
+/*	$NetBSD: vnd.c,v 1.38 1997/05/26 20:28:38 pk Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -318,7 +318,7 @@ vndstrategy(bp)
 			int rw = (flags & B_READ) ? UIO_READ : UIO_WRITE;
 			sz = resid;
 			error = vn_rdwr(rw, vnd->sc_vp, addr, sz,
-					dbtob(bp->b_blkno), UIO_SYSSPACE,
+					bn, UIO_SYSSPACE,
 					IO_SYNC | IO_NODELOCKED,
 					vnd->sc_cred, &resid, bp->b_proc);
 			bp->b_resid -= (sz - resid);
