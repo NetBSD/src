@@ -1,4 +1,4 @@
-/*	$NetBSD: rrs.c,v 1.31 2000/01/07 21:19:36 mycroft Exp $	*/
+/*	$NetBSD: rrs.c,v 1.32 2000/01/13 00:05:32 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1016,8 +1016,8 @@ write_rrs_text()
 	 * to collect them in.
 	 */
 	symsize = number_of_rrs_symbols * rrs_symbol_size;
-	nlp = rrs_symbols = (struct nzlist *)alloca(symsize);
-	rrs_strtab = (char *)alloca(rrs_strtab_size);
+	nlp = rrs_symbols = (struct nzlist *)malloc(symsize);
+	rrs_strtab = (char *)malloc(rrs_strtab_size);
 
 #define INCR_NLP(p)	((p) = (struct nzlist *)((long)(p) + rrs_symbol_size))
 
@@ -1229,6 +1229,9 @@ write_rrs_text()
 
 		mywrite(name, strlen(name) + 1, 1, outstream);
 	}
+
+	free(rrs_symbols);
+	free(rrs_strtab);
 }
 
 void
