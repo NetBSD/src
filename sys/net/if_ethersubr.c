@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.23 1997/04/02 21:23:26 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.24 1997/04/03 15:25:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -120,7 +120,9 @@ ether_output(ifp, m0, dst, rt0)
 	register struct rtentry *rt;
 	struct mbuf *mcopy = (struct mbuf *)0;
 	register struct ether_header *eh;
+#ifdef INET
 	struct arphdr *ah;
+#endif /* INET */
 #ifdef NETATALK
 	struct at_ifaddr *aa;
 #endif /* NETATALK */
@@ -660,7 +662,9 @@ ether_addmulti(ifr, ec)
 	register struct ethercom *ec;
 {
 	register struct ether_multi *enm;
+#ifdef INET
 	struct sockaddr_in *sin;
+#endif /* INET */
 	u_char addrlo[6];
 	u_char addrhi[6];
 	int s = splimp();
@@ -747,7 +751,9 @@ ether_delmulti(ifr, ec)
 	register struct ethercom *ec;
 {
 	register struct ether_multi *enm;
+#ifdef INET
 	struct sockaddr_in *sin;
+#endif /* INET */
 	u_char addrlo[6];
 	u_char addrhi[6];
 	int s = splimp();
