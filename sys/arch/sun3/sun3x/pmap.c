@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.5 1997/01/27 22:33:34 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.6 1997/02/02 08:41:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1825,7 +1825,7 @@ pmap_copy_page(src, dst)
 
 	pmap_enter_kernel(tmp_vpages[0], src, VM_PROT_READ);
 	pmap_enter_kernel(tmp_vpages[1], dst, VM_PROT_READ|VM_PROT_WRITE);
-	bcopy((char *) tmp_vpages[1], (char *) tmp_vpages[0], NBPG);
+	copypage((char *) tmp_vpages[1], (char *) tmp_vpages[0]);
 	/* xxx - there's no real need to unmap the mappings is there? */
 
 	tmp_vpages_inuse--;
@@ -1850,7 +1850,7 @@ pmap_zero_page(pa)
 	tmp_vpages_inuse++;
 
 	pmap_enter_kernel(tmp_vpages[0], pa, VM_PROT_READ|VM_PROT_WRITE);
-	bzero((char *) tmp_vpages[0], NBPG);
+	zeropage((char *) tmp_vpages[0]);
 	/* xxx - there's no real need to unmap the mapping is there? */
 
 	tmp_vpages_inuse--;
