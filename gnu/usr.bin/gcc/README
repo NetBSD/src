@@ -1,0 +1,9 @@
+This is the NetBSD version of the GNU C compiler (gcc).
+This tree is the output of the PERL script gcc2netbsd.
+
+Full source code for gcc is available in its original form
+from the Free Software Foundation at the following URL.
+
+   ftp://prep.ai.mit.edu/pub/gnu
+
+or at most GNU software mirrors.
