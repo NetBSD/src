@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.183 2002/05/05 06:01:28 thorpej Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.184 2002/05/15 11:43:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.183 2002/05/05 06:01:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.184 2002/05/15 11:43:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,6 +507,10 @@ const struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	{{T_DIRECT, T_FIXED,
 	 "IBM",	     "0664",		 ""},     PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
+	/* improperly report DT-only sync mode */
+	 "IBM     ", "DXHS36D",		 ""},
+				PQUIRK_CAP_SYNC|PQUIRK_CAP_WIDE16},
+	{{T_DIRECT, T_FIXED,
 	 "IBM     ", "H3171-S2",	 ""},
 				PQUIRK_NOLUNS|PQUIRK_AUTOSAVE},
 	{{T_DIRECT, T_FIXED,
@@ -868,10 +872,11 @@ scsi_probe_device(sc, target, lun)
 			if (inqbuf.flags4 & SID_QAS)
 				periph->periph_cap |= PERIPH_CAP_QAS;
 		}
-	} else {
-		if (quirks & PQUIRK_CAP_SYNC)
-			periph->periph_cap |= PERIPH_CAP_SYNC;
 	}
+	if (quirks & PQUIRK_CAP_SYNC)
+		periph->periph_cap |= PERIPH_CAP_SYNC;
+	if (quirks & PQUIRK_CAP_WIDE16)
+		periph->periph_cap |= PERIPH_CAP_WIDE16;
 
 	/*
 	 * Now apply any quirks from the table.
