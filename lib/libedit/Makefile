@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2000/08/15 12:01:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2001/01/05 21:15:49 jdolecek Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 LIB=	edit
@@ -24,9 +24,8 @@ SRCS+=	common.h emacs.h fcns.h help.h vi.h
 
 LIBEDITDIR?=${.CURDIR}
 
-INCS= histedit.h readline.h
+INCS= histedit.h
 INCSDIR=/usr/include
-LINKS=${INCSDIR}/readline.h ${INCSDIR}/history.h
 
 CLEANFILES+=common.h editline.c emacs.h fcns.c fcns.h help.c help.h vi.h
 CLEANFILES+=common.h.tmp editline.c.tmp emacs.h.tmp fcns.c.tmp fcns.h.tmp
@@ -38,6 +37,8 @@ CPPFLAGS+=#-DDEBUG_PASTE
 
 AHDR=vi.h emacs.h common.h 
 ASRC=${LIBEDITDIR}/vi.c ${LIBEDITDIR}/emacs.c ${LIBEDITDIR}/common.c
+
+SUBDIR=	readline
 
 vi.h: vi.c makelist
 	sh ${LIBEDITDIR}/makelist -h ${LIBEDITDIR}/vi.c > ${.TARGET}.tmp && \
@@ -83,3 +84,4 @@ readline.o readline.po readline.so readline.ln:	\
 	common.h emacs.h fcns.h help.h vi.h
 
 .include <bsd.lib.mk>
+.include <bsd.subdir.mk>
