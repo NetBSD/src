@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.70 1996/02/22 05:53:23 scottr Exp $	*/
+/*	$NetBSD: conf.c,v 1.71 1996/03/14 21:27:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -152,7 +152,7 @@ cdev_decl(cd);
 cdev_decl(lpt);
 #include "ch.h"
 cdev_decl(ch);
-dev_decl(fd,open);
+dev_decl(filedesc,open);
 #include "bpfilter.h"
 cdev_decl(bpf);
 #include "spkr.h"
@@ -206,7 +206,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ss_init(NSS,ss),		/* 19: SCSI scanner */
 	cdev_notdef(),			/* 20 */
 	cdev_notdef(),			/* 21 */
-	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
+	cdev_fd_init(1,filedesc),	/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
 	cdev_notdef(),			/* 25 */

@@ -1,4 +1,4 @@
-/* $NetBSD: conf.c,v 1.2 1996/03/13 20:55:21 mark Exp $ */
+/* $NetBSD: conf.c,v 1.3 1996/03/14 21:23:39 christos Exp $ */
 
 /*
  * Copyright (c) 1994 Mark Brinicombe.
@@ -222,7 +222,7 @@ cdev_decl(lpt);
 #define fdopen  Fdopen
 cdev_decl(fd);
 #undef  fdopen
-dev_decl(fd,open);
+dev_decl(filedesc,open);
 cdev_decl(rd);
 #include "bpfilter.h"
 cdev_decl(bpf);
@@ -297,7 +297,7 @@ struct cdevsw cdevsw[] = {
 	cdev_lkm_dummy(),		/* 31 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 32: Berkeley packet filter */
         cdev_bpftun_init(NTUN,tun),     /* 33: network tunnel */
-        cdev_fd_init(1,fd),             /* 34: file descriptor pseudo-device */
+        cdev_fd_init(1,filedesc),       /* 34: file descriptor pseudo-device */
 	cdev_lkm_init(NLKM,lkm),        /* 35: loadable module driver */
 	cdev_audio_init(NAUDIO,audio),	/* 36: generic audio I/O */
 	cdev_vidcvid_init(1,vidcvideo),	/* 37: vidcvideo device */
