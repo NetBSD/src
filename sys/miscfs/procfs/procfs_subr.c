@@ -1,6 +1,10 @@
 /*
- * Copyright (c) 1993 Paul Kranenburg
+ * Copyright (c) 1993 The Regents of the University of California.
+ * Copyright (c) 1993 Jan-Simon Pendry
  * All rights reserved.
+ *
+ * This code is derived from software contributed to Berkeley by
+ * Jan-Simon Pendry.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -12,369 +16,289 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Paul Kranenburg.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software withough specific prior written permission
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  *
- *	$Id: procfs_subr.c,v 1.4 1993/12/18 03:58:08 mycroft Exp $
+ * From:
+ *	Id: procfs_subr.c,v 4.1 1993/12/17 10:47:45 jsp Rel
+ *
+ *	$Id: procfs_subr.c,v 1.5 1994/01/05 07:51:29 cgd Exp $
  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/ioctl.h>
 #include <sys/proc.h>
-#include <sys/buf.h>
 #include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/resourcevar.h>
-#include <vm/vm.h>
-#include <vm/vm_page.h>
-#include <vm/vm_kern.h>
-#include <sys/kinfo.h>
-#include <sys/kinfo_proc.h>
+#include <miscfs/procfs/procfs.h>
 
-#include <sys/procfs.h>
-#include <miscfs/procfs/pfsnode.h>
-
-#include <machine/vmparam.h>
+static struct pfsnode *pfshead;
+static int pfsvplock;
 
 /*
- * Get process address map (PIOCGMAP)
+ * allocate a pfsnode/vnode pair.  the vnode is
+ * referenced, but not locked.
+ *
+ * the pid, pfs_type, and mount point uniquely
+ * identify a pfsnode.  the mount point is needed
+ * because someone might mount this filesystem
+ * twice.
+ *
+ * all pfsnodes are maintained on a singly-linked
+ * list.  new nodes are only allocated when they cannot
+ * be found on this list.  entries on the list are
+ * removed when the vfs reclaim entry is called.
+ *
+ * a single lock is kept for the entire list.  this is
+ * needed because the getnewvnode() function can block
+ * waiting for a vnode to become free, in which case there
+ * may be more than one process trying to get the same
+ * vnode.  this lock is only taken if we are going to
+ * call getnewvnode, since the kernel itself is single-threaded.
+ *
+ * if an entry is found on the list, then call vget() to
+ * take a reference.  this is done because there may be
+ * zero references to it and so it needs to removed from
+ * the vnode free list.
  */
-int
-pfs_vmmap(procp, pfsp, pmapp)
-struct proc	*procp;
-struct nfsnode	*pfsp;
-struct procmap	*pmapp;
+procfs_allocvp(mp, vpp, pid, pfs_type)
+	struct mount *mp;
+	struct vnode **vpp;
+	long pid;
+	pfstype pfs_type;
 {
-	int		error = 0;
-	vm_map_t	map;
-	vm_map_entry_t	entry;
-	struct procmap	prmap;
+	int error;
+	struct pfsnode *pfs;
+	struct pfsnode **pp;
+	struct vnode *vp;
 
-	map = &procp->p_vmspace->vm_map;
-	vm_map_lock(map);
-	entry = map->header.next;
-
-	while (entry != &map->header) {
-		if (entry->is_a_map) {
-			vm_map_t	submap = entry->object.share_map;
-			vm_map_entry_t	subentry;
-
-			vm_map_lock(submap);
-			subentry = submap->header.next;
-			while (subentry != &submap->header) {
-				prmap.vaddr = subentry->start;
-				prmap.size = subentry->end - subentry->start;
-				prmap.offset = subentry->offset;
-				prmap.prot = subentry->protection;
-				error = copyout(&prmap, pmapp, sizeof(prmap));
-				if (error)
-					break;
-				pmapp++;
-				subentry = subentry->next;
-			}
-			vm_map_unlock(submap);
-			if (error)
-				break;
+loop:
+	for (pfs = pfshead; pfs != 0; pfs = pfs->pfs_next) {
+		if (pfs->pfs_pid == pid &&
+		    pfs->pfs_type == pfs_type &&
+		    PFSTOV(pfs)->v_mount == mp) {
+			if (vget(pfs->pfs_vnode))
+				goto loop;
+			VOP_UNLOCK(pfs->pfs_vnode);
+			*vpp = pfs->pfs_vnode;
+			return (0);
 		}
-		prmap.vaddr = entry->start;
-		prmap.size = entry->end - entry->start;
-		prmap.offset = entry->offset;
-		prmap.prot = entry->protection;
-		error = copyout(&prmap, pmapp, sizeof(prmap));
-		if (error)
-			break;
-		pmapp++;
-		entry = entry->next;
 	}
 
-	vm_map_unlock(map);
-	return error;
-}
-
-/*
- * Count number of VM entries of process (PIOCNMAP)
- */
-int
-pfs_vm_nentries(procp, pfsp)
-struct proc	*procp;
-struct nfsnode	*pfsp;
-{
-	int		count = 0;
-	vm_map_t	map;
-	vm_map_entry_t	entry;
-
-	map = &procp->p_vmspace->vm_map;
-	vm_map_lock(map);
-	entry = map->header.next;
-
-	while (entry != &map->header) {
-		if (entry->is_a_map)
-			count += entry->object.share_map->nentries;
-		else
-			count++;
-		entry = entry->next;
+	/*
+	 * otherwise lock the vp list while we call getnewvnode
+	 * since that can block.
+	 */ 
+	if (pfsvplock & PROCFS_LOCKED) {
+		pfsvplock |= PROCFS_WANT;
+		sleep((caddr_t) &pfsvplock, PINOD);
+		goto loop;
 	}
+	pfsvplock |= PROCFS_LOCKED;
 
-	vm_map_unlock(map);
-	return count;
-}
-
-/*
- * Map process mapped file to file descriptor (PIOCGMAPFD)
- */
-int
-pfs_vmfd(procp, pfsp, vmfdp, p)
-struct proc	*procp;
-struct pfsnode	*pfsp;
-struct vmfd	*vmfdp;
-struct proc	*p;
-{
-	int		rv;
-	vm_map_t	map;
-	vm_offset_t	addr;
-	vm_size_t	size;
-	vm_prot_t	prot, maxprot;
-	vm_inherit_t	inherit;
-	boolean_t	shared;
-	vm_object_t	object;
-	vm_offset_t	objoff;
-	struct vnode	*vp;
-	struct file	*fp;
-	extern struct fileops	vnops;
-
-	map = &procp->p_vmspace->vm_map;
-
-	addr = vmfdp->vaddr;
-	rv = vm_region(map, &addr, &size, &prot, &maxprot,
-			&inherit, &shared, &object, &objoff);
-
-	if (rv != KERN_SUCCESS)
-		return EINVAL;
-
-	while (object != NULL && object->pager == NULL)
-		object = object->shadow;
-
-	if (object == NULL || object->pager == NULL
-			/* Nobody seems to care || !object->pager_ready */ )
-		return ENOENT;
-
-	if (object->pager->pg_type != PG_VNODE)
-		return ENOENT;
-
-	/* We have a vnode pager, allocate file descriptor */
-	vp = (struct vnode *)object->pager->pg_handle;
-	if (VOP_ACCESS(vp, VREAD, p->p_ucred, p)) {
-		rv = EACCES;
-		goto out;
-	}
-	rv = falloc(p, &fp, &vmfdp->fd);
-	if (rv)
+	error = getnewvnode(VT_PROCFS, mp, &procfs_vnodeops, vpp);
+	if (error)
 		goto out;
 
-	VREF(vp);
-	fp->f_type = DTYPE_VNODE;
-	fp->f_ops = &vnops;
-	fp->f_data = (caddr_t)vp;
-	fp->f_flag = FREAD;
+	/* 4.4: at this point, need to allocate a pfsnode */
+
+	pfs = VTOPFS(*vpp);
+	pfs->pfs_next = 0;
+	pfs->pfs_pid = (pid_t) pid;
+	pfs->pfs_type = pfs_type;
+	pfs->pfs_vnode = *vpp;
+	pfs->pfs_flags = 0;
+	pfs->pfs_fileno = PROCFS_FILENO(pid, pfs_type);
+
+	switch (pfs_type) {
+	case Proot:	/* /proc = dr-xr-xr-x */
+		pfs->pfs_mode = (VREAD|VEXEC) |
+				(VREAD|VEXEC) >> 3 |
+				(VREAD|VEXEC) >> 6;
+		break;
+
+	case Pproc:
+		pfs->pfs_mode = (VREAD|VEXEC) |
+				(VREAD|VEXEC) >> 3 |
+				(VREAD|VEXEC) >> 6;
+		break;
+
+	case Pfile:
+		pfs->pfs_mode = (VREAD|VWRITE);
+		break;
+
+	case Pmem:
+		pfs->pfs_mode = (VREAD|VWRITE);
+		break;
+
+	case Pregs:
+		pfs->pfs_mode = (VREAD|VWRITE);
+		break;
+
+	case Pctl:
+		pfs->pfs_mode = (VWRITE);
+		break;
+
+	case Pstatus:
+		pfs->pfs_mode = (VREAD) |
+				(VREAD >> 3) |
+				(VREAD >> 6);
+		break;
+
+	case Pnote:
+		pfs->pfs_mode = (VWRITE);
+		break;
+
+	case Pnotepg:
+		pfs->pfs_mode = (VWRITE);
+		break;
+
+	default:
+		panic("procfs_allocvp");
+	}
+
+	/* add to procfs vnode list */
+	for (pp = &pfshead; *pp; pp = &(*pp)->pfs_next)
+		continue;
+	*pp = pfs;
 
 out:
-	vm_object_unlock(object);
-	return rv;
-}
+	pfsvplock &= ~PROCFS_LOCKED;
 
-/*
- * Vnode op for reading/writing.
- */
-/* ARGSUSED */
-pfs_doio(vp, uio, ioflag, cred)
-	struct vnode *vp;
-	register struct uio *uio;
-	int ioflag;
-	struct ucred *cred;
-{
-	struct pfsnode	*pfsp = VTOPFS(vp);
-	struct proc	*procp;
-	int		error = 0;
-	long		n, on;
-
-#ifdef DEBUG
-	if (pfs_debug)
-		printf("pfs_doio(%s): vp 0x%x, proc %x\n",
-			uio->uio_rw==UIO_READ?"R":"W", vp, uio->uio_procp);
-#endif
-
-#ifdef DIAGNOSTIC
-	if (vp->v_type != VPROC)
-		panic("pfs_doio vtype");
-#endif
-	procp = pfsp->pfs_pid?pfind(pfsp->pfs_pid):&proc0;
-	if (!procp)
-		return ESRCH;
-
-	if (procp->p_flag & SSYS)
-		return EACCES;
-
-	if (uio->uio_resid == 0)
-		return (0);
-	if (uio->uio_offset < 0)
-		return (EINVAL);
-
-	do { /* One page at a time */
-		int		rv;
-		vm_map_t	map;
-		vm_offset_t	offset;
-		vm_size_t	size;
-		vm_prot_t	oldprot = 0, prot, maxprot;
-		vm_inherit_t	inherit;
-		boolean_t	shared;
-		vm_object_t	object;
-		vm_offset_t	objoff;
-		vm_page_t	m;
-		vm_offset_t	kva;
-
-		on = uio->uio_offset - trunc_page(uio->uio_offset);
-		n = MIN(PAGE_SIZE-on, uio->uio_resid);
-
-		/* Map page into kernel space */
-
-		map = &procp->p_vmspace->vm_map;
-#if 0
-	vm_map_print(map, 1);
-#endif
-
-		offset = trunc_page(uio->uio_offset);
-
-		rv = vm_region(map, &offset, &size, &prot, &maxprot,
-				&inherit, &shared, &object, &objoff);
-		if (rv != KERN_SUCCESS)
-			return EINVAL;
-
-		vm_object_unlock(object);
-
-		if (uio->uio_rw == UIO_WRITE && (prot & VM_PROT_WRITE) == 0) {
-			oldprot = prot;
-			prot |= VM_PROT_WRITE;
-			rv = vm_protect(map, offset, PAGE_SIZE, FALSE, prot);
-			if (rv != KERN_SUCCESS)
-				return EPERM;
-		}
-		/* Just fault the page */
-		rv = vm_fault(map, offset, prot, FALSE);
-		if (rv != KERN_SUCCESS)
-			return EFAULT;
-
-		/* Look up again as vm_fault() may have inserted a shadow object */
-		rv = vm_region(map, &offset, &size, &prot, &maxprot,
-				&inherit, &shared, &object, &objoff);
-		if (rv != KERN_SUCCESS)
-			return EINVAL;
-
-		/* Now find the page */
-		/* XXX hope it's still there, should we have wired it? */
-		m = vm_page_lookup(object, objoff);
-		if (m == NULL)
-			return ESRCH;
-
-		kva = kmem_alloc_wait(kernel_map, PAGE_SIZE);
-
-		pmap_enter(vm_map_pmap(kernel_map), kva, VM_PAGE_TO_PHYS(m),
-			VM_PROT_DEFAULT, TRUE);
-
-		error = uiomove(kva + on, (int)n, uio);
-
-		pmap_remove(vm_map_pmap(kernel_map), kva, kva + PAGE_SIZE);
-		kmem_free_wakeup(kernel_map, kva, PAGE_SIZE);
-		if (oldprot) {
-			rv = vm_protect(map, offset, PAGE_SIZE, FALSE, oldprot);
-			if (rv != KERN_SUCCESS)
-				return EPERM;
-		}
-
-	} while (error == 0 && uio->uio_resid > 0);
+	if (pfsvplock & PROCFS_WANT) {
+		pfsvplock &= ~PROCFS_WANT;
+		wakeup((caddr_t) &pfsvplock);
+	}
 
 	return (error);
 }
 
-#if 00
-int
-pfs_map(procp, kva, rw, offset)
-struct proc	*procp;
-int		rw;
-vm_offset_t	*kva, offset;
+procfs_freevp(vp)
+	struct vnode *vp;
 {
-	int		rv;
-	vm_map_t	map;
-	vm_size_t	size;
-	vm_prot_t	prot, maxprot;
-	vm_inherit_t	inherit;
-	boolean_t	shared;
-	vm_object_t	object;
-	vm_offset_t	objoff;
-	vm_page_t	m;
+	struct pfsnode **pfspp;
+	struct pfsnode *pfs = VTOPFS(vp);
 
-	map = &procp->p_vmspace->vm_map;
-#if 0
-	vm_map_print(map, 1);
-#endif
+	/* 4.4: at this point, need to deallocate the pfsnode */
 
-	offset = trunc_page(offset);
-
-	rv = vm_region(map, &offset, &size, &prot, &maxprot,
-			&inherit, &shared, &object, &objoff);
-	if (rv != KERN_SUCCESS)
-		return EINVAL;
-
-	vm_object_unlock(object);
-
-	if (rw == UIO_WRITE && (prot & VM_PROT_WRITE) == 0) {
-		prot |= VM_PROT_WRITE;
-		rv = vm_protect(map, offset, PAGE_SIZE, FALSE, prot);
-		if (rv != KERN_SUCCESS)
-			return EPERM;
+	for (pfspp = &pfshead; *pfspp != 0; pfspp = &(*pfspp)->pfs_next) {
+		if (*pfspp == pfs) {
+			*pfspp = pfs->pfs_next;
+			break;
+		}
 	}
-	/* Just fault page */
-	rv = vm_fault(map, offset, prot, FALSE);
-	if (rv != KERN_SUCCESS)
-		return EFAULT;
 
-	/* Look up again as vm_fault() may have inserted a shadow object */
-	rv = vm_region(map, &offset, &size, &prot, &maxprot,
-			&inherit, &shared, &object, &objoff);
-	if (rv != KERN_SUCCESS)
-		return EINVAL;
-
-	m = vm_page_lookup(object, objoff);
-	if (m == NULL)
-		return ESRCH;
-
-	*kva = kmem_alloc_wait(kernel_map, PAGE_SIZE);
-
-	pmap_enter(vm_map_pmap(kernel_map), *kva, VM_PAGE_TO_PHYS(m),
-			VM_PROT_DEFAULT, TRUE);
-
-	return 0;
+	return (0);
 }
 
-int
-pfs_unmap(procp, kva)
-struct proc	*procp;
-vm_offset_t	kva;
+procfs_rw(vp, uio, ioflag, cred)
+	struct vnode *vp;
+	struct uio *uio;
+	int ioflag;
+	struct ucred *cred;
 {
-	pmap_remove(vm_map_pmap(kernel_map), kva, kva + PAGE_SIZE);
-	kmem_free_wakeup(kernel_map, kva, PAGE_SIZE);
+	struct proc *curp = uio->uio_procp;
+	struct pfsnode *pfs = VTOPFS(vp);
+	struct proc *p;
+
+	p = PFIND(pfs->pfs_pid);
+	if (p == 0)
+		return (EINVAL);
+
+	switch (pfs->pfs_type) {
+	case Pnote:
+	case Pnotepg:
+		return (pfs_donote(curp, p, pfs, uio));
+
+	case Pregs:
+		return (pfs_doregs(curp, p, pfs, uio));
+
+	case Pctl:
+		return (pfs_doctl(curp, p, pfs, uio));
+
+	case Pstatus:
+		return (pfs_dostatus(curp, p, pfs, uio));
+
+	case Pmem:
+		return (pfs_domem(curp, p, pfs, uio));
+
+	default:
+		return (EOPNOTSUPP);
+	}
 }
-#endif
+
+/*
+ * Get a string from userland into (buf).  Strip a trailing
+ * nl character (to allow easy access from the shell).
+ * The buffer should be *buflenp + 1 chars long.  vfs_getuserstr
+ * will automatically add a nul char at the end.
+ *
+ * Returns 0 on success or the following errors
+ *
+ * EINVAL:    file offset is non-zero.
+ * EMSGSIZE:  message is longer than kernel buffer
+ * EFAULT:    user i/o buffer is not addressable
+ */
+vfs_getuserstr(uio, buf, buflenp)
+	struct uio *uio;
+	char *buf;
+	int *buflenp;
+{
+	int xlen;
+	int error;
+
+	if (uio->uio_offset != 0)
+		return (EINVAL);
+
+	xlen = *buflenp;
+
+	/* must be able to read the whole string in one go */
+	if (xlen < uio->uio_resid)
+		return (EMSGSIZE);
+	xlen = uio->uio_resid;
+
+	error = uiomove(buf, xlen, uio);
+	if (error)
+		return (error);
+
+	/* allow multiple writes without seeks */
+	uio->uio_offset = 0;
+
+	/* cleanup string and remove trailing newline */
+	buf[xlen] = '\0';
+	xlen = strlen(buf);
+	if (xlen > 0 && buf[xlen-1] == '\n')
+		buf[--xlen] = '\0';
+	*buflenp = xlen;
+
+	return (0);
+}
+
+vfs_namemap_t *
+vfs_findname(nm, buf, buflen)
+	vfs_namemap_t *nm;
+	char *buf;
+	int buflen;
+{
+	for (; nm->nm_name; nm++)
+		if (bcmp(buf, (char *) nm->nm_name, buflen+1) == 0)
+			return (nm);
+
+	return (0);
+}
