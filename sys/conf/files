@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.430 2001/03/24 12:40:29 martin Exp $
+#	$NetBSD: files,v 1.431 2001/03/29 22:40:06 fvdl Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -30,6 +30,8 @@ defopt	opt_kmempages.h	NKMEMPAGES NKMEMPAGES_MIN NKMEMPAGES_MAX
 defopt	opt_malloclog.h	MALLOCLOG MALLOCLOGSIZE
 defopt	opt_pool.h	POOL_DIAGNOSTIC
 defopt	opt_poollog.h	POOL_LOGSIZE
+
+defopt	opt_revcache.h	NAMECACHE_ENTER_REVERSE
 
 defopt	opt_execfmt.h	EXEC_AOUT EXEC_COFF EXEC_ECOFF EXEC_ELF32 EXEC_ELF64 EXEC_SCRIPT
 
