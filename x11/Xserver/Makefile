@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2004/01/10 23:35:55 lukem Exp $
+#	$NetBSD: Makefile,v 1.11 2004/01/18 05:24:45 rtr Exp $
 
 .include <bsd.own.mk>
 
@@ -20,10 +20,17 @@ SUBDIR.fb=
 SUBDIR.fb=fb
 .endif
 
+.if ${XSERVER_HAS_AFB} != "no"
+SUBDIR.afb=afb
+.else
+SUBDIR.afb=
+.endif
+
 SUBDIR=		include
 SUBDIR+=	.WAIT dix os mi printer Xext xkb xinput GL lbx dbe record
 SUBDIR+=	mfb randr render xtrap
-SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} hw ${SUBDIR.xfont} .WAIT Xserver
+SUBDIR+=	${SUBDIR.cfb} ${SUBDIR.fb} hw ${SUBDIR.xfont} ${SUBDIR.afb}
+SUBDIR+=	.WAIT Xserver
 
 XTODO=	afb miext/shadow miext/layer
 
