@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.56 2001/11/12 01:33:49 tv Exp $
+.\"	$NetBSD: make.1,v 1.57 2001/11/12 03:23:58 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -137,9 +137,9 @@ Print debugging information about target list maintenance.
 .It Ar v
 Print debugging information about variable assignment.
 .It Ar x
-Run shell commands with 
-.Fl x 
-so the actual commands are printed as they are executed. 
+Run shell commands with
+.Fl x
+so the actual commands are printed as they are executed.
 .El
 .It Fl e
 Specify that environmental variables override macro assignments within
@@ -477,24 +477,24 @@ entered into the environment for all programs which
 .Nm
 executes.
 .It Va .MAKEOVERRIDES
-This variable is used to record the names of variables assigned to 
-on the command line, so that they may be exported as part of 
+This variable is used to record the names of variables assigned to
+on the command line, so that they may be exported as part of
 .Ql Ev MAKEFLAGS .
-This behaviour can be disabled by assigning an empty value to 
+This behaviour can be disabled by assigning an empty value to
 .Ql Va .MAKEOVERRIDES
 within a makefile.  Extra variables can be exported from a makefile
-by appending their names to 
+by appending their names to
 .Ql Va .MAKEOVERRIDES .
 .Ql Ev MAKEFLAGS
-is re-exported whenever 
+is re-exported whenever
 .Ql Va .MAKEOVERRIDES
 is modified.
 .It Va MAKE_PRINT_VAR_ON_ERROR
-When 
+When
 .Nm
 stops due to an error, it prints its name and the value of
 .Ql Va .CURDIR
-as well as the value of any variables named in 
+as well as the value of any variables named in
 .Ql Va MAKE_PRINT_VAR_ON_ERROR .
 .It Va .newline
 This variable is simply assigned a newline character as its value.
@@ -667,12 +667,12 @@ potentially occur within each affected word.
 Replaces each word in the variable with its last component.
 .It Cm u
 Remove adjacent duplicate words (like
-.Xr uniq 1 ).
+.Xr uniq 1 ) .
 .It Cm ? Ar true_string Cm : Ar false_string
 If the variable evaluates to true, return as its value the
-.Ar true_string,
+.Ar true_string ,
 otherwise return the
-.Ar false_string.
+.Ar false_string .
 .It Ar old_string=new_string
 This is the
 .At V
@@ -1076,7 +1076,7 @@ to them.
 .It Ic .USEBEFORE
 Exactly like
 .Ic .USE ,
-but prepend the 
+but prepend the
 .Ic .USEBEFORE
 target commands to the target.
 .It Ic .WAIT
@@ -1086,7 +1086,7 @@ source is appears in a dependency line, the sources that precede it are
 made before the sources that succeed it in the line.  Loops are not being
 detected and targets that form loops will be silently ignored.
 .El
-.Sh "SPECIAL TARGETS"
+.Sh SPECIAL TARGETS
 Special targets may not be included with other targets, i.e. they must be
 the only target specified.
 .Bl -tag -width Ic .BEGIN
@@ -1202,7 +1202,7 @@ utilizes the following environment variables, if they exist:
 .Ev MAKEOBJDIRPREFIX ,
 and
 .Ev PWD .
-
+.Pp
 If
 .Ev MAKEOBJDIRPREFIX
 is set, then
