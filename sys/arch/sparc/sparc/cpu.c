@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.29 1997/03/12 09:08:29 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.30 1997/03/12 22:52:19 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -792,7 +792,11 @@ void
 viking_mmu_enable()
 {
 	int pcr = lda(SRMMU_PCR, ASI_SRMMU);
-	sta(SRMMU_PCR, ASI_SRMMU, (pcr | SRMMU_PCR_TC));
+	if (cpuinfo.mxcc)
+		pcr |= SRMMU_PCR_TC;
+	else
+		pcr &= ~SRMMU_PCR_TC;
+	sta(SRMMU_PCR, ASI_SRMMU, pcr);
 }
 
 
