@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.8 2002/02/24 13:19:09 kleink Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.9 2002/05/02 14:36:43 nonaka Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -30,6 +30,11 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_pci.h"
+#include "opt_residual.h"
+
+#include "pci.h"
+
 #include <sys/param.h>
 #include <sys/extent.h>
 #include <sys/systm.h>
@@ -39,12 +44,11 @@
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
-#include "pci.h"
-#include "opt_pci.h"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
 
 #include <machine/platform.h>
+#include <machine/residual.h>
 
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
@@ -61,7 +65,7 @@ union mainbus_attach_args {
 };
 
 /* There can be only one. */
-int	mainbus_found;
+int mainbus_found = 0;
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -100,6 +104,10 @@ mainbus_attach(parent, self, aux)
 	mainbus_found = 1;
 
 	printf("\n");
+
+#if defined(RESIDUAL_DATA_DUMP)
+	print_residual_device_info();
+#endif
 
 	ca.ca_name = "cpu";
 	ca.ca_node = 0;
