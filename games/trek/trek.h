@@ -1,4 +1,4 @@
-/*	$NetBSD: trek.h,v 1.10 2004/01/27 20:30:31 jsm Exp $	*/
+/*	$NetBSD: trek.h,v 1.11 2005/02/15 12:54:50 jsm Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -204,9 +204,6 @@ struct xy
 	unsigned char	x, y;		/* coordinates */
 };
 
-
-extern const struct cvntab	Skitab[];
-extern const struct cvntab	Lentab[];
 
 /*
  *	note that much of the stuff in the following structs CAN NOT
