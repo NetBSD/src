@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2000/05/13 05:23:37 jhawk Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2000/05/19 22:26:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999
@@ -84,7 +84,9 @@ void	command_ls __P((char *));
 void	command_quit __P((char *));
 void	command_boot __P((char *));
 void	command_dev __P((char *));
+#if 0
 void	command_consdev __P((char *));
+#endif
 
 struct bootblk_command commands[] = {
 	{ "help",	command_help },
@@ -93,7 +95,7 @@ struct bootblk_command commands[] = {
 	{ "quit",	command_quit },
 	{ "boot",	command_boot },
 	{ "dev",	command_dev },
-#ifdef SUPPORT_SERIAL
+#if defined(SUPPORT_SERIAL) && 0
 	{ "consdev",	command_consdev },
 #endif
 	{ NULL,		NULL },
@@ -296,7 +298,7 @@ command_help(arg)
 	    "     (ex. \"sd0a:netbsd.old -s\"\n"
 	    "ls [path]\n"
 	    "dev xd[N[x]]:\n"
-#ifdef SUPPORT_SERIAL
+#if defined(SUPPORT_SERIAL) && 0
 	    "consdev {pc|com[0123]|com[0123]kbd|auto}\n"
 #endif
 	    "help|?\n"
@@ -365,6 +367,7 @@ command_dev(arg)
 	default_devname = savedevname;
 }
 
+#if 0
 void
 command_consdev(arg)
 	char *arg;
@@ -396,3 +399,4 @@ command_consdev(arg)
 
 	print_banner();
 }
+#endif /* 0 */
