@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)cons.c	7.2 (Berkeley) 5/9/91
- *	$Id: cons.c,v 1.10 1994/01/27 07:55:44 cgd Exp $
+ *	$Id: cons.c,v 1.11 1994/02/01 03:35:06 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -50,7 +50,7 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
-#include "cons.h"
+#include <dev/cons.h>
 
 extern struct consdev constab[];
 
