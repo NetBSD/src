@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.13 2001/07/01 05:04:26 gmcgarry Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.14 2001/08/20 08:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andrew Doran.
@@ -56,7 +56,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.13 2001/07/01 05:04:26 gmcgarry Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.14 2001/08/20 08:21:09 ad Exp $");
 #endif /* not lint */
 
 #include <sys/endian.h>
@@ -239,7 +239,7 @@ main(argc, argv)
 		usage();
 
 	if (!cdname) {
-		sprintf(defdev, "cd0%c", 'a' + RAW_PART);
+		sprintf(defdev, "cd0%c", 'a' + getrawpartition());
 		cdname = defdev;
 	}
 	
