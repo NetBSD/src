@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.1 2002/12/09 12:15:54 scw Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.2 2003/04/08 23:12:20 thorpej Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -103,11 +103,11 @@ mapiodev(paddr_t pa, psize_t len, int flags)
 	if (va == 0)
 		return NULL;
 
-	for (; len > 0; len -= NBPG) {
+	for (; len > 0; len -= PAGE_SIZE) {
 		pmap_kenter_pa(taddr, faddr, 
 			VM_PROT_READ|VM_PROT_WRITE|PME_NOCACHE);
-		faddr += NBPG;
-		taddr += NBPG;
+		faddr += PAGE_SIZE;
+		taddr += PAGE_SIZE;
 	}
 
 	return (void *)(va + off);
