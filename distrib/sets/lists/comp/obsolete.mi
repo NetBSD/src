@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.61 2001/12/25 20:06:53 wiz Exp $
+# $NetBSD: obsolete.mi,v 1.62 2001/12/28 18:00:56 augustss Exp $
 /usr/bin/genclass
 /usr/bin/gettextize
 /usr/include/bfd
@@ -545,6 +545,7 @@
 /usr/include/sys/vlimit.h
 /usr/include/sys/vsio.h
 /usr/include/ufs/mfs/mfsiom.h
+/usr/include/usb.h
 /usr/include/uvm/uvm_inherit.h
 /usr/include/uvm/uvm_vnode.h
 /usr/include/vm
@@ -578,6 +579,8 @@
 /usr/lib/libntp.so
 /usr/lib/libntp_p.a
 /usr/lib/libntp_pic.a
+/usr/lib/libusb.a
+/usr/lib/libusb_p.a
 /usr/libdata/lint/llib-lntp.ln
 /usr/sbin/config.new
 /usr/share/ldscripts/m68kelf.x
@@ -643,6 +646,7 @@
 /usr/share/man/cat3/getpw.0
 /usr/share/man/cat3/hmac.0
 /usr/share/man/cat3/lhash.0
+/usr/share/man/cat3/libusb.0
 /usr/share/man/cat3/list_empty.0
 /usr/share/man/cat3/list_entry.0
 /usr/share/man/cat3/list_first.0
@@ -691,6 +695,7 @@
 /usr/share/man/cat3/tailq_next.0
 /usr/share/man/cat3/tailq_remove.0
 /usr/share/man/cat3/threads.0
+/usr/share/man/cat3/usb.0
 /usr/share/man/cat3/vlimit.0
 /usr/share/man/cat3/vtimes.0
 /usr/share/man/cat8/config.new.0
@@ -727,6 +732,7 @@
 /usr/share/man/man3/getpw.3
 /usr/share/man/man3/hmac.3
 /usr/share/man/man3/lhash.3
+/usr/share/man/man3/libusb.3
 /usr/share/man/man3/list_empty.3
 /usr/share/man/man3/list_entry.3
 /usr/share/man/man3/list_first.3
@@ -771,6 +777,7 @@
 /usr/share/man/man3/tailq_next.3
 /usr/share/man/man3/tailq_remove.3
 /usr/share/man/man3/threads.3
+/usr/share/man/man3/usb.3
 /usr/share/man/man3/vlimit.3
 /usr/share/man/man3/vtimes.3
 /usr/share/man/man9/disk_detatch.9
