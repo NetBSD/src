@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.14 1999/11/15 09:50:17 nisimura Exp $ */
+/*	$NetBSD: autoconf.h,v 1.15 2000/01/08 01:02:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,5 +37,5 @@ struct mainbus_attach_args {
 					   when attaching CPUs */
 };
 
-int	badaddr	__P((void *, u_int));
+int	badaddr __P((void *, u_int));
 void	makebootdev __P((char *));

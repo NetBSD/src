@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.22 1999/11/28 04:55:39 simonb Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.23 2000/01/08 01:02:39 simonb Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -50,15 +50,15 @@
 #ifdef COMPAT_ULTRIX
 #include <machine/dec_boot.h>
 
-extern char *
-compat_label __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		  struct disklabel *lp, struct cpu_disklabel *osdep));
+char	*compat_label __P((dev_t dev,
+	    void (*strat) __P((struct buf *bp)), struct disklabel *lp,
+	    struct cpu_disklabel *osdep));
 
 #endif
 
-char*	readdisklabel __P((dev_t dev, void (*strat) __P((struct buf *bp)),
-		       struct disklabel *lp,
-		       struct cpu_disklabel *osdep));
+char		*readdisklabel __P((dev_t dev,
+		    void (*strat) __P((struct buf *bp)), struct disklabel *lp,
+		    struct cpu_disklabel *osdep));
 
 /*
  * Attempt to read a disk label from a device

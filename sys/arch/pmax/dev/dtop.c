@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.42 1999/12/23 15:34:17 ad Exp $	*/
+/*	$NetBSD: dtop.c,v 1.43 2000/01/08 01:02:35 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -94,7 +94,7 @@ SOFTWARE.
 ********************************************************/
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.42 1999/12/23 15:34:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtop.c,v 1.43 2000/01/08 01:02:35 simonb Exp $");
 
 #include "rasterconsole.h"
 
@@ -162,8 +162,8 @@ struct dtop_softc {
 	short		bad_pkts;
 
 	struct dtop_ds {
-		int	(*handler)
-			__P((dtop_device_t, dtop_message_t, int, int));
+		int		(*handler) __P((dtop_device_t, dtop_message_t,
+				    int, int));
 		dtop_device	status;
 	} device[(DTOP_ADDR_DEFAULT - DTOP_ADDR_FIRST) >> 1];
 
@@ -178,14 +178,14 @@ typedef struct dtop_softc *dtop_softc_t;
 /*
  * Forward/prototyped declarations
  */
-int  dtop_get_packet __P((dtop_softc_t dtop, dtop_message_t pkt));
-int  dtop_escape	__P((int c));
-void dtop_keyboard_repeat	__P((void *));
-int  dtop_null_device_handler	__P((dtop_device_t, dtop_message_t, int, int));
-int  dtop_locator_handler	__P((dtop_device_t, dtop_message_t, int, int));
-int  dtop_keyboard_handler	__P((dtop_device_t, dtop_message_t, int, int));
-int  dtopparam		__P((struct tty *, struct termios *));
-void dtopstart		__P((struct tty *));
+int	dtop_get_packet __P((dtop_softc_t dtop, dtop_message_t pkt));
+int	dtop_escape __P((int c));
+void	dtop_keyboard_repeat __P((void *));
+int	dtop_null_device_handler __P((dtop_device_t, dtop_message_t, int, int));
+int	dtop_locator_handler __P((dtop_device_t, dtop_message_t, int, int));
+int	dtop_keyboard_handler __P((dtop_device_t, dtop_message_t, int, int));
+int	dtopparam __P((struct tty *, struct termios *));
+void	dtopstart __P((struct tty *));
 
 /*
  * lk201 keyboard divisions and up/down mode key bitmap.
@@ -219,9 +219,9 @@ static u_long keymodes[8] = {0, 0, 0, 0, 0, 0x0003e800, 0, 0};
  * config.old are completely gone.
  *
  */
-int  dtopmatch  __P((struct device * parent, struct cfdata *match, void *aux));
-void dtopattach __P((struct device *parent, struct device *self, void *aux));
-int dtopintr	__P((void *sc));
+int	dtopmatch __P((struct device * parent, struct cfdata *match, void *aux));
+void	dtopattach __P((struct device *parent, struct device *self, void *aux));
+int	dtopintr __P((void *sc));
 
 struct cfattach dtop_ca = {
 	sizeof(struct dtop_softc), dtopmatch, dtopattach

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.7 1999/12/09 00:16:14 simonb Exp $ */
+/*	$NetBSD: fbvar.h,v 1.8 2000/01/08 01:02:38 simonb Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -94,12 +94,12 @@ struct fbinfo {
 struct fbdriver {
 	int	(*fbd_unblank) __P((struct fbinfo *));
 	int	(*fbd_blank) __P((struct fbinfo *));
-	void	(*fbd_initcmap) __P ((struct fbinfo *));
-	int	(*fbd_getcmap) __P ((struct fbinfo *, u_char *, int, int));
-	int	(*fbd_putcmap) __P ((struct fbinfo *, const u_char *, int, int));
-	void	(*fbd_poscursor) __P ((struct fbinfo *fi, int x, int y));
-	void	(*fbd_loadcursor) __P ((struct fbinfo *fi, u_short *cursor));
-	void	(*fbd_cursorcolor) __P ((struct fbinfo *fi, u_int *color));
+	void	(*fbd_initcmap) __P((struct fbinfo *));
+	int	(*fbd_getcmap) __P((struct fbinfo *, u_char *, int, int));
+	int	(*fbd_putcmap) __P((struct fbinfo *, const u_char *, int, int));
+	void	(*fbd_poscursor) __P((struct fbinfo *fi, int x, int y));
+	void	(*fbd_loadcursor) __P((struct fbinfo *fi, u_short *cursor));
+	void	(*fbd_cursorcolor) __P((struct fbinfo *fi, u_int *color));
 };
 
 #ifdef _KERNEL
@@ -107,7 +107,7 @@ struct fbdriver {
 #define kbd_docmd(cmd, val)	0	/* For now, do nothing. */
 #define romgetcursoraddr(xp, yp)	0
 
-void	fbconnect __P ((char *name, struct fbinfo *info, int silent));
-int	fballoc __P ((caddr_t base, struct fbinfo **fip));
+void	fbconnect __P((char *name, struct fbinfo *info, int silent));
+int	fballoc __P((caddr_t base, struct fbinfo **fip));
 
 #endif /* _KERNEL */

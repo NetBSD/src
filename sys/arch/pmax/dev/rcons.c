@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.c,v 1.35 2000/01/07 13:43:02 simonb Exp $	*/
+/*	$NetBSD: rcons.c,v 1.36 2000/01/08 01:02:36 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -97,13 +97,13 @@ char rcons_maxcols [20];
 static struct rconsole rc;
 
 void	rasterconsoleattach __P((int n));
-void	rcons_vputc __P ((dev_t dev, int c));
+void	rcons_vputc __P((dev_t dev, int c));
 
 void	rconsreset __P((struct tty *tp, int rw));
 void	rcons_input __P((dev_t dev, int ic));
 
 #ifdef notyet
-void		rconsstart		__P((struct tty *));
+void		rconsstart __P((struct tty *));
 static void	rcons_later __P((void*));
 #endif
 
@@ -225,7 +225,7 @@ rcons_vputc(dev, c)
 	 * Call the pointer-to-function that rcons_init tried to give us,
 	 * discarding the dev_t argument.
 	 */
-	extern void rcons_cnputc __P((int c));
+	void	rcons_cnputc __P((int c));
 	rcons_cnputc(c);
 }
 
