@@ -1,4 +1,4 @@
-/*	$NetBSD: db_aout.c,v 1.16 1996/10/13 04:11:40 christos Exp $	*/
+/*	$NetBSD: db_aout.c,v 1.17 1997/06/26 01:11:00 thorpej Exp $	*/
 
 /* 
  * Mach Operating System
@@ -37,7 +37,7 @@
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
 
-#ifndef	DB_NO_AOUT
+#ifdef	DB_AOUT_SYMBOLS
 
 #include <ddb/db_aout.h>
 
@@ -63,9 +63,9 @@ int db_symtab[SYMTAB_SPACE/sizeof(int)] = { 0, 1 };
  * Find the symbol table and strings; tell ddb about them.
  */
 void
-X_db_sym_init(symtab, esymtab, name)
-	int *symtab;		/* pointer to start of symbol table */
-	char *esymtab;		/* pointer to end of string table,
+X_db_sym_init(vsymtab, vesymtab, name)
+	void *vsymtab;		/* pointer to start of symbol table */
+	void *vesymtab;		/* pointer to end of string table,
 				   for checking - rounded up to integer
 				   boundary */
 	char *name;
@@ -75,6 +75,13 @@ X_db_sym_init(symtab, esymtab, name)
 	register char *strtab;
 	register int slen;
 	char *estrtab;
+	int *symtab = vsymtab;
+	char *esymtab = vesymtab;
+
+	if (ALIGNED_POINTER(symtab, int) == 0) {
+		printf("DDB: bad symtol table start address %p\n", symtab);
+		return;
+	}
 
 #ifdef SYMTAB_SPACE
 	if (*symtab < sizeof(int)) {
@@ -212,7 +219,8 @@ X_db_search_symbol(symtab, off, strategy, diffp)
  * Return the name and value for a symbol.
  */
 void
-X_db_symbol_values(sym, namep, valuep)
+X_db_symbol_values(symtab, sym, namep, valuep)
+	db_symtab_t	*symtab;
 	db_sym_t	sym;
 	char		**namep;
 	db_expr_t	*valuep;
@@ -348,4 +356,4 @@ ddb_init()
 #endif
 }
 
-#endif	/* DB_NO_AOUT */
+#endif	/* DB_AOUT_SYMBOLS */
