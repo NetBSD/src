@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.1 2002/01/24 01:12:40 thorpej Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.2 2002/06/25 19:40:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -93,7 +93,7 @@ ASENTRY_NP(irq_entry)
 	/*
 	 * Get the interrupt status into a callee-save register.
 	 */
-	mrc	p13, 0, r4, c1, c0, 0
+	mrc	p13, 0, r4, c4, c0, 0
 
 	/*
 	 * XXX Right here will be a good place to check for PMU
@@ -108,7 +108,7 @@ ASENTRY_NP(irq_entry)
 	 * disabled.
 	 */
 	tst	r4, #(INTSRC_II)
-	bne	Lextirq_return		/* no external IRQ pending */
+	beq	Lextirq_return		/* no external IRQ pending */
 	ldr	r1, Lintr_dispatch
 	add	lr, pc, #Lextirq_return - . - 8
 	mov	r0, sp
