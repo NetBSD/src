@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsix.c,v 1.6 2001/09/24 23:49:34 eeh Exp $ */
+/*	$NetBSD: cgsix.c,v 1.7 2001/11/13 06:54:32 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -87,6 +87,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cgsix.c,v 1.7 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.43 2001/06/27 13:22:36 bouyer Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.44 2001/11/13 06:56:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -31,6 +31,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.44 2001/11/13 06:56:38 lukem Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG

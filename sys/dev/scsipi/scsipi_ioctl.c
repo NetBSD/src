@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.40 2001/07/18 18:25:41 thorpej Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.41 2001/11/13 06:56:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,9 @@
  *
  * Berkeley style copyright.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.41 2001/11/13 06:56:40 lukem Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.143 2001/07/18 18:21:06 thorpej Exp $ */
+/*	$NetBSD: st.c,v 1.144 2001/11/13 06:56:41 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,9 @@
  *
  * A lot of rewhacking done by mjacob (mjacob@nas.nasa.gov).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.144 2001/11/13 06:56:41 lukem Exp $");
 
 #include "opt_scsi.h"
 

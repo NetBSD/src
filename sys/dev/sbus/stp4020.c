@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.11 2000/07/09 20:57:44 pk Exp $ */
+/*	$NetBSD: stp4020.c,v 1.12 2001/11/13 06:58:18 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,9 @@
 /*
  * STP4020: SBus/PCMCIA bridge supporting two Type-3 PCMCIA cards.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.12 2001/11/13 06:58:18 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

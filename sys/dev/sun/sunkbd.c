@@ -1,4 +1,4 @@
-/*	$NetBSD: sunkbd.c,v 1.6 2001/05/17 02:24:00 chs Exp $	*/
+/*	$NetBSD: sunkbd.c,v 1.7 2001/11/13 06:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,9 @@
  * Keyboard interface line discipline.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunkbd.c,v 1.7 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

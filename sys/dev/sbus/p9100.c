@@ -1,4 +1,4 @@
-/*	$NetBSD: p9100.c,v 1.4 2001/09/26 20:53:15 eeh Exp $ */
+/*	$NetBSD: p9100.c,v 1.5 2001/11/13 06:58:17 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,9 @@
  *
  * XXX should defer colormap updates to vertical retrace interrupts
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: p9100.c,v 1.5 2001/11/13 06:58:17 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.158 2001/10/22 16:16:00 bouyer Exp $	*/
+/*	$NetBSD: cd.c,v 1.159 2001/11/13 06:56:39 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@
  *
  * Ported to run under 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.159 2001/11/13 06:56:39 lukem Exp $");
 
 #include "rnd.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunms.c,v 1.4 2001/05/17 02:24:00 chs Exp $	*/
+/*	$NetBSD: sunms.c,v 1.5 2001/11/13 06:54:32 lukem Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,9 @@
  * This is the "slave" driver that will be attached to
  * the "zsc" driver for a Sun mouse.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sunms.c,v 1.5 2001/11/13 06:54:32 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

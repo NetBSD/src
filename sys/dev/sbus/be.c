@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.28 2001/09/26 20:53:13 eeh Exp $	*/
+/*	$NetBSD: be.c,v 1.29 2001/11/13 06:58:16 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -62,6 +62,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.29 2001/11/13 06:58:16 lukem Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"

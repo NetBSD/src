@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.41 2001/09/13 06:27:23 enami Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.42 2001/11/13 06:56:38 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -28,6 +28,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.42 2001/11/13 06:56:38 lukem Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

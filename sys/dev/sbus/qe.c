@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.18 2001/09/26 20:53:15 eeh Exp $	*/
+/*	$NetBSD: qe.c,v 1.19 2001/11/13 06:58:17 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -71,6 +71,9 @@
  * and a loan of a card from Paul Southworth of the Internet Engineering
  * Group (www.ieng.com).
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.19 2001/11/13 06:58:17 lukem Exp $");
 
 #define QEDEBUG
 

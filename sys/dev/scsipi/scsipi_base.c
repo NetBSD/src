@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.61 2001/10/14 21:17:41 bouyer Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.62 2001/11/13 06:56:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -36,6 +36,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.62 2001/11/13 06:56:40 lukem Exp $");
 
 #include "opt_scsi.h"
 

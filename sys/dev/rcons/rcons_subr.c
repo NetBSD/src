@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons_subr.c,v 1.8 2001/09/18 18:15:53 wiz Exp $ */
+/*	$NetBSD: rcons_subr.c,v 1.9 2001/11/13 06:58:44 lukem Exp $ */
 
 /*
  * Copyright (c) 1991, 1993
@@ -43,6 +43,9 @@
  *
  *	@(#)rcons_subr.c	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rcons_subr.c,v 1.9 2001/11/13 06:58:44 lukem Exp $");
 
 #ifdef _KERNEL
 #include <sys/param.h>
