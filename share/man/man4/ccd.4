@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.4,v 1.12 1998/02/22 06:53:10 enami Exp $
+.\"	$NetBSD: ccd.4,v 1.13 1998/02/22 07:16:07 enami Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -90,7 +90,7 @@ partitions of the disks
 be combined.  Each component partition should be offset at least one
 cylinder from the beginning of the component disk.  This avoids potential
 conflicts between the component disk's disklabel and the
-.Nm ccd Ns 's
+.Nm Ns 's
 disklabel.  The kernel will only allow component partitions of type
 .Dv FS_BSDFFS .
 .Pp
@@ -101,15 +101,15 @@ pseudo-device	ccd	4	# concatenated disk devices
 .Ed
 .Pp
 The count argument is how many
-.Nm ccd Ns s
+.Nm Ns s
 memory is allocated for at boot time.  In this example, no more than 4
-.Nm ccd Ns s
+.Nm Ns s
 may be configured.
 .Pp
 A
-.Nm ccd
+.Nm
 may be either serially concatenated or interleaved.  If a
-.Nm ccd
+.Nm
 is interleaved correctly, a
 .Dq striping
 effect is achieved, which can increase performance.  The optimum interleave
@@ -128,10 +128,10 @@ geometry and size.  Optimum striping cannot occur with different
 disk types.
 .Pp
 The
-.Nm ccd
+.Nm
 also supports primitive data mirroring.  To enable this mirroring support,
 the
-.Nm ccd
+.Nm
 must be configured with the
 .Dv CCDF_MIRROR
 flag set.  Note that the
@@ -142,20 +142,20 @@ flag and requires an interleaved even number of components.
 .Pp
 Mirroring functions by making the second n/2 components exact duplicates
 of the first n/2.  For example, in a mirrored
-.Nm ccd
+.Nm
 with components sd0g, sd1g, sd2g, and sd3g, sd2g would mirror sd0g and
 sd3g would mirror sd1g.  Reads will come from the first n/2 components
 (in this example: sd0g and sd1g) while writes will go to all components.
 .Pp
 If a component of a mirrored
-.Nm ccd
+.Nm
 should fail, the
-.Nm ccd
+.Nm
 can be reconfigured as a non-mirrored
-.Nm ccd
+.Nm
 until the failed component can be replaced.  For example, using the
 hypothetical
-.Nm ccd
+.Nm
 above, the recovery process might look like this:
 .Bd -literal -offset indent
 * Component sd1g fails.  Reconfigure ccd without mirroring
@@ -167,13 +167,13 @@ above, the recovery process might look like this:
 .Ed
 .Pp
 There is a run-time utility that is used for configuring
-.Nm ccd Ns s.
+.Nm Ns s.
 See
 .Xr ccdconfig 8
 for more information.
 .Sh WARNINGS
 If just one (or more) of the disks in a non-mirrored
-.Nm ccd
+.Nm
 fails, the entire
 file system will be lost.
 .Sh FILES
