@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.14 2002/07/10 20:19:43 wiz Exp $	*/
+/*	$NetBSD: scm.c,v 1.15 2003/04/01 08:46:10 drochner Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -168,10 +168,6 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/socket.h>
-#include <sys/ioctl.h>
-#ifndef SIOCGIFCONF
-#include <sys/sockio.h>
-#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
