@@ -1,4 +1,4 @@
-.\"	$NetBSD: getgrent.3,v 1.12 1999/01/16 08:03:08 lukem Exp $
+.\"	$NetBSD: getgrent.3,v 1.12.2.1 1999/04/27 14:10:38 perry Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)getgrent.3	8.2 (Berkeley) 4/19/94
 .\"
-.Dd January 16, 1999
+.Dd April 25, 1999
 .Dt GETGRENT 3
 .Os
 .Sh NAME
@@ -98,7 +98,7 @@ function
 sequentially reads the group database and is intended for programs
 that wish to step through the complete list of groups.
 .Pp
-All three routines will open the group file for reading, if necessary.
+All three functions will open the group file for reading, if necessary.
 .Pp
 The
 .Fn setgroupent
@@ -198,3 +198,7 @@ and
 .Fn setgrent
 are fairly useless in a networked environment and should be
 avoided, if possible.
+.Fn getgrent
+makes no attempt to suppress duplicate information if multiple
+sources are specified in
+.Xr nsswitch.conf 5
