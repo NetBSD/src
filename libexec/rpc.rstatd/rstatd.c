@@ -1,4 +1,4 @@
-/*	$NetBSD: rstatd.c,v 1.9 1999/01/31 08:51:53 mrg Exp $	*/
+/*	$NetBSD: rstatd.c,v 1.10 2000/06/02 23:20:19 fvdl Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rstatd.c,v 1.9 1999/01/31 08:51:53 mrg Exp $");
+__RCSID("$NetBSD: rstatd.c,v 1.10 2000/06/02 23:20:19 fvdl Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,8 +72,6 @@ main(argc, argv)
         char *argv[];
 {
 	SVCXPRT *transp;
-        int sock = 0;
-        int proto = 0;
 	struct sockaddr_in from;
 	int fromlen;
         
@@ -86,14 +84,11 @@ main(argc, argv)
          * See if inetd started us
          */
 	fromlen = sizeof(from);
-        if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0) {
+        if (getsockname(0, (struct sockaddr *)&from, &fromlen) < 0)
                 from_inetd = 0;
-                sock = RPC_ANYSOCK;
-                proto = IPPROTO_UDP;
-        }
 
         if (!from_inetd) {
-                daemon(0, 0);
+                /* daemon(0, 0); */
 
                 (void)pmap_unset(RSTATPROG, RSTATVERS_TIME);
                 (void)pmap_unset(RSTATPROG, RSTATVERS_SWTCH);
@@ -106,22 +101,52 @@ main(argc, argv)
         
         openlog("rpc.rstatd", LOG_PID, LOG_DAEMON);
 
-	transp = svcudp_create(sock);
-	if (transp == NULL) {
-		syslog(LOG_ERR, "cannot create udp service.");
-		exit(1);
-	}
-	if (!svc_register(transp, RSTATPROG, RSTATVERS_TIME, rstat_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RSTATPROG, RSTATVERS_TIME, udp).");
-		exit(1);
-	}
-	if (!svc_register(transp, RSTATPROG, RSTATVERS_SWTCH, rstat_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RSTATPROG, RSTATVERS_SWTCH, udp).");
-		exit(1);
-	}
-	if (!svc_register(transp, RSTATPROG, RSTATVERS_ORIG, rstat_service, proto)) {
-		syslog(LOG_ERR, "unable to register (RSTATPROG, RSTATVERS_ORIG, udp).");
-		exit(1);
+	if (from_inetd) {
+		transp = svc_dg_create(0, 0, 0);
+		if (transp == NULL) {
+			syslog(LOG_ERR, "cannot create udp service.");
+			exit(1);
+		}
+
+		if (!svc_reg(transp, RSTATPROG, RSTATVERS_TIME, rstat_service,
+		    NULL)) {
+			syslog(LOG_ERR, "unable to register (RSTATPROG,"
+			    "RSTATVERS_TIME)");
+			exit(1);
+		}
+
+		if (!svc_reg(transp, RSTATPROG, RSTATVERS_SWTCH, rstat_service,
+		    NULL)) {
+			syslog(LOG_ERR, "unable to register (RSTATPROG,"
+			    "RSTATVERS_TIME)");
+			exit(1);
+		}
+
+		if (!svc_reg(transp, RSTATPROG, RSTATVERS_ORIG, rstat_service,
+		    NULL)) {
+			syslog(LOG_ERR, "unable to register (RSTATPROG,"
+			    "RSTATVERS_ORIG)");
+			exit(1);
+		}
+	} else {
+		if (!svc_create(rstat_service, RSTATPROG, RSTATVERS_TIME,
+		    "udp")) {
+			syslog(LOG_ERR,
+			    "unable to create (RSTATPROG, RSTATVERS_TIME).");
+			exit(1);
+		}
+		if (!svc_create(rstat_service, RSTATPROG, RSTATVERS_SWTCH,
+		    "udp")) {
+			syslog(LOG_ERR,
+			    "unable to create (RSTATPROG, RSTATVERS_SWTCH).");
+			exit(1);
+		}
+		if (!svc_create(rstat_service, RSTATPROG, RSTATVERS_ORIG,
+		    "udp")) {
+			syslog(LOG_ERR,
+			    "unable to register (RSTATPROG, RSTATVERS_ORIG).");
+			exit(1);
+		}
 	}
 
         svc_run();
