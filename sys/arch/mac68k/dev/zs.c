@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.17 1997/12/06 19:41:46 scottr Exp $	*/
+/*	$NetBSD: zs.c,v 1.18 1997/12/16 17:53:12 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1996 Bill Studenmund
@@ -300,6 +300,13 @@ zsc_attach(parent, self, aux)
 		cs->cs_brg_clk = ZS_STD_BRG;	/* RTxC is 230400*16, so use 230400 */
 		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
 		cs->cs_defcflag = zs_def_cflag;
+
+		/* Make these correspond to cs_defcflag (-crtscts) */
+		cs->cs_rr0_dcd = ZSRR0_DCD;
+		cs->cs_rr0_cts = 0;
+		cs->cs_wr5_dtr = ZSWR5_DTR;
+		cs->cs_wr5_rts = 0;
+
 #ifdef __notyet__
 		cs->cs_slave_type = ZS_SLAVE_NONE;
 #endif
