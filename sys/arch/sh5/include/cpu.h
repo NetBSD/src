@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.1 2002/07/05 13:31:57 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.2 2002/07/11 14:10:39 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -87,8 +87,8 @@
 #endif
 
 #include <sys/sched.h>
+#include <machine/frame.h>
 #include <sh5/conreg.h>
-#include <sh5/frame.h>
 #include <sh5/pte.h>
 
 /*
