@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2000/05/31 21:09:48 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2000/09/12 05:11:10 matt Exp $
 #
 #	etc.vax/Makefile.inc -- vax-specific etc Makefile targets
 #
@@ -10,10 +10,10 @@ BUILD_KERNELS+=INSTALL
 distribution: pcs750.bin
 
 pcs750.bin: etc.vax/pcs750.bin.uu
-	(cd etc.vax; uudecode pcs750.bin.uu)
-	(cd etc.vax; install -o ${BINOWN} -g ${BINGRP} -m 444 ${PCS} \
-	    ${DESTDIR}/)
-	
+	rm -f ${DESTDIR}/pcs750.bin
+	uudecode -p etc.vax/pcs750.bin.uu > ${DESTDIR}/pcs750.bin
+	chown ${BINOWN}.${BINGRP} ${DESTDIR}/pcs750.bin
+	chmod 444 ${DESTDIR}/pcs750.bin
 
 INSTALLATION_DIRS+=	installation \
 			installation/bootfs \
