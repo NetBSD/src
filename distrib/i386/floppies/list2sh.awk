@@ -1,4 +1,4 @@
-#	$Id: list2sh.awk,v 1.1.1.1 1994/08/29 15:30:14 cgd Exp $
+#	$Id: list2sh.awk,v 1.2 1994/10/18 07:02:52 glass Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -16,6 +16,11 @@ $1 == "COPY" {
 $1 == "LINK" {
 	printf("echo '%s'\n", $0);
 	printf("(cd ${TARGDIR}; ln %s %s)\n", $2, $3);
+	next;
+}
+$1 == "SYMLINK" {
+	printf("echo '%s'\n", $0);
+	printf("(cd ${TARGDIR}; ln -s %s %s)\n", $2, $3);
 	next;
 }
 $1 == "SPECIAL" {
