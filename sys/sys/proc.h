@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.81 1999/07/25 06:30:33 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.82 1999/07/26 23:00:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1989, 1991, 1993
@@ -362,6 +362,7 @@ void	uvm_swapin __P((struct proc *));  /* XXX: uvm_extern.h? */
 int	tsleep __P((void *chan, int pri, const char *wmesg, int timo));
 void	unsleep __P((struct proc *));
 void	wakeup __P((void *chan));
+void	wakeup_one __P((void *chan));
 void	reaper __P((void));
 void	exit1 __P((struct proc *, int));
 void	exit2 __P((struct proc *));

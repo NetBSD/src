@@ -1,4 +1,41 @@
-/*	$NetBSD: kern_synch.c,v 1.62 1999/07/25 06:30:35 thorpej Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.63 1999/07/26 23:00:59 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
+ * NASA Ames Research Center.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -73,6 +110,8 @@ void roundrobin __P((void *));
 void schedcpu __P((void *));
 void updatepri __P((struct proc *));
 void endtsleep __P((void *));
+
+__inline void awaken __P((struct proc *));
 
 /*
  * Force switch among equal priority processes every 100ms.
@@ -520,6 +559,29 @@ unsleep(p)
 }
 
 /*
+ * Optimized-for-wakeup() version of setrunnable().
+ */
+__inline void
+awaken(p)
+	struct proc *p;
+{
+
+	if (p->p_slptime > 1)
+		updatepri(p);
+	p->p_slptime = 0;
+	p->p_stat = SRUN;
+	/*
+	 * Since curpriority is a user priority, p->p_priority
+	 * is always better than curpriority.
+	 */
+	if (p->p_flag & P_INMEM) {
+		setrunqueue(p);
+		need_resched();
+	} else
+		wakeup((caddr_t)&proc0);
+}
+
+/*
  * Make all processes sleeping on the specified identifier runnable.
  */
 void
@@ -544,27 +606,75 @@ restart:
 			if (qp->sq_tailp == &p->p_forw)
 				qp->sq_tailp = q;
 			if (p->p_stat == SSLEEP) {
-				/* OPTIMIZED EXPANSION OF setrunnable(p); */
-				if (p->p_slptime > 1)
-					updatepri(p);
-				p->p_slptime = 0;
-				p->p_stat = SRUN;
-				if (p->p_flag & P_INMEM)
-					setrunqueue(p);
-				/*
-				 * Since curpriority is a user priority,
-				 * p->p_priority is always better than
-				 * curpriority.
-				 */
-				if ((p->p_flag & P_INMEM) == 0)
-					wakeup((caddr_t)&proc0);
-				else
-					need_resched();
-				/* END INLINE EXPANSION */
+				awaken(p);
 				goto restart;
 			}
 		} else
 			q = &p->p_forw;
+	}
+	splx(s);
+}
+
+/*
+ * Make the highest priority process first in line on the specified
+ * identifier runnable.
+ */
+void
+wakeup_one(ident)
+	void *ident;
+{
+	struct slpque *qp;
+	struct proc *p, **q;
+	struct proc *best_sleepp, **best_sleepq;
+	struct proc *best_stopp, **best_stopq;
+	int s;
+
+	best_sleepp = best_stopp = NULL;
+	best_sleepq = best_stopq = NULL;
+
+	s = splhigh();
+	qp = &slpque[LOOKUP(ident)];
+	for (q = &qp->sq_head; (p = *q) != NULL; q = &p->p_forw) {
+#ifdef DIAGNOSTIC
+		if (p->p_back || (p->p_stat != SSLEEP && p->p_stat != SSTOP))
+			panic("wakeup_one");
+#endif
+		if (p->p_wchan == ident) {
+			if (p->p_stat == SSLEEP) {
+				if (best_sleepp == NULL ||
+				    p->p_priority < best_sleepp->p_priority) {
+					best_sleepp = p;
+					best_sleepq = q;
+				}
+			} else {
+				if (best_stopp == NULL ||
+				    p->p_priority < best_stopp->p_priority) {
+					best_stopp = p;
+					best_stopq = q;
+				}
+			}
+		}
+	}
+
+	/*
+	 * Consider any SSLEEP process higher than the highest priority SSTOP
+	 * process.
+	 */
+	if (best_sleepp != NULL) {
+		p = best_sleepp;
+		q = best_sleepq;
+	} else {
+		p = best_stopp;
+		q = best_stopq;
+	}
+
+	if (p != NULL) {
+		p->p_wchan = 0;
+		*q = p->p_forw;
+		if (qp->sq_tailp == &p->p_forw)
+			qp->sq_tailp = q;
+		if (p->p_stat == SSLEEP)
+			awaken(p);
 	}
 	splx(s);
 }
