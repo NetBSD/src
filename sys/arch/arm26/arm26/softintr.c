@@ -1,4 +1,4 @@
-/* $NetBSD: softintr.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $ */
+/* $NetBSD: softintr.c,v 1.1.4.1 2000/07/03 22:40:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -38,7 +38,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: softintr.c,v 1.1 2000/05/09 21:55:57 bjh21 Exp $");
+__RCSID("$NetBSD: softintr.c,v 1.1.4.1 2000/07/03 22:40:42 thorpej Exp $");
 
 #include <sys/malloc.h>
 #include <sys/queue.h>
@@ -167,8 +167,10 @@ dosoftnet(void *arg)
 {
 
 #define DONETISR(bit, fn) do {						\
-	atomic_clear_bit(&netisr, 1 << (bit));				\
-	fn();								\
+	if (netisr & (1 << (bit))) {					\
+		atomic_clear_bit(&netisr, 1 << (bit));			\
+		fn();							\
+	}								\
 } while (0)
 #include <net/netisr_dispatch.h>
 #undef DONETISR
