@@ -38,7 +38,7 @@
  * from: Utah $Hdr: vm_machdep.c 1.21 91/04/06$
  *
  *	@(#)vm_machdep.c	7.10 (Berkeley) 5/7/91
- *	$Id: vm_machdep.c,v 1.9 1994/05/18 16:05:08 chopps Exp $
+ *	$Id: vm_machdep.c,v 1.10 1994/05/19 08:28:57 chopps Exp $
  */
 
 #include <sys/param.h>
@@ -191,6 +191,19 @@ physunaccess(vaddr, size)
 	for (size = btoc(size); size; size--)
 		*(int *)pte++ = PG_NV;
 	TBIAS();
+}
+
+/*
+ * Dump the machine specific header information at the start of a core dump.
+ */     
+cpu_coredump(p, vp, cred)
+	struct proc *p;
+	struct vnode *vp;
+	struct ucred *cred;
+{
+	return(vn_rdwr(UIO_WRITE, vp, (caddr_t) p->p_addr, ctob(UPAGES),
+	    (off_t)0, UIO_SYSSPACE, IO_NODELOCKED|IO_UNIT, cred, (int *)NULL,
+	    p));
 }
 
 /*
