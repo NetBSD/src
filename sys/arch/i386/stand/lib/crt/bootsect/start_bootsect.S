@@ -1,4 +1,4 @@
-/*	$NetBSD: start_bootsect.S,v 1.3 1998/02/19 14:15:38 drochner Exp $	*/
+/*	$NetBSD: start_bootsect.S,v 1.4 1998/07/07 13:58:59 drochner Exp $	*/
 	
 /* BIOS bootsector startup
  parts from netbsd:sys/arch/i386/boot/start.S
@@ -80,6 +80,18 @@ BOOTABLE		=	0x80	# value of dp_flag, means bootable partition
 	.text
 _boot1:
 ENTRY(start)
+
+	/*
+	 * XXX I have encountered at least one machine (a no-name laptop
+	 * with an AMI WinBIOS) that will refuse to run the bootblock
+	 * unless this short jump and nop are here. I'm not certain, but
+	 * this may be a case of the BIOS performing some kind of simple
+	 * virus detection.
+	 */
+	jmp pacify_braindead_bios
+	nop
+pacify_braindead_bios:
+
 	# start (aka boot1) is loaded at 0x0:0x7c00 but we want 0x7c0:0
 	# ljmp to the next instruction to adjust %cs
 	data32
