@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.33 1999/01/16 14:42:54 lukem Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.34 1999/01/18 00:59:10 lukem Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.33 1999/01/16 14:42:54 lukem Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.34 1999/01/18 00:59:10 lukem Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -670,10 +670,10 @@ __getpwcompat(type, uid, name)
 	const char	*name;
 {
 	static ns_dtab	dtab[] = {
-		NS_FILES_CB(_bad_getpw, NULL),
+		NS_FILES_CB(_bad_getpw, "files"),
 		NS_DNS_CB(_dns_getpw, NULL),
 		NS_NIS_CB(_nis_getpw, NULL),
-		NS_COMPAT_CB(_bad_getpw, NULL),
+		NS_COMPAT_CB(_bad_getpw, "compat"),
 		{ NULL, NULL, NULL }
 	};
 
@@ -822,19 +822,24 @@ _compat_getpw(rv, cb_data, ap)
 	va_list	 ap;
 {
 	DBT		key;
-	int		len, search, rval;
+	int		search, rval, r, s;
 	uid_t		uid;
 	char		bf[MAXLOGNAME + 1];
-	const char	*name;
+	const char	*name, *host, *user, *dom;
+
+	if (!_pw_db && !__initdb())
+		return NS_UNAVAIL;
+
+		/*
+		 * If there isn't a compat token in the database, use files.
+		 */
+	if (! __has_compatpw())
+		return (_local_getpw(rv, cb_data, ap));
 
 	search = va_arg(ap, int);
 	uid = 0;
 	name = NULL;
 	rval = NS_NOTFOUND;
-
-	if (!_pw_db && !__initdb())
-		return NS_UNAVAIL;
-
 	switch (search) {
 	case _PW_KEYBYNAME:
 		name = va_arg(ap, const char *);
@@ -846,120 +851,99 @@ _compat_getpw(rv, cb_data, ap)
 		abort();
 	}
 
-	/*
-	 * If YP is active, we must sequence through the passwd file
-	 * in sequence.
-	 */
-	if (__has_compatpw()) {
-		int r;
-		int s = -1;
-		const char *host, *user, *dom;
+	for(s = -1, _pw_keynum=1; _pw_keynum; _pw_keynum++) {
+		bf[0] = _PW_KEYBYNUM;
+		memmove(bf + 1, (char *)&_pw_keynum, sizeof(_pw_keynum));
+		key.data = (u_char *)bf;
+		key.size = sizeof(_pw_keynum) + 1;
+		if(__hashpw(&key) != NS_SUCCESS)
+			break;
+		switch(_pw_passwd.pw_name[0]) {
+		case '+':
+			/* save the prototype */
+			__pwproto_set();
 
-		for(_pw_keynum=1; _pw_keynum; _pw_keynum++) {
-			bf[0] = _PW_KEYBYNUM;
-			memmove(bf + 1, (char *)&_pw_keynum,
-			    sizeof(_pw_keynum));
-			key.data = (u_char *)bf;
-			key.size = sizeof(_pw_keynum) + 1;
-			if(__hashpw(&key) != NS_SUCCESS)
+			switch(_pw_passwd.pw_name[1]) {
+			case '\0':
+				r = __getpwcompat(search, uid, name);
+				if (r != NS_SUCCESS)
+					continue;
 				break;
-			switch(_pw_passwd.pw_name[0]) {
-			case '+':
-				/* save the prototype */
-				__pwproto_set();
-
-				switch(_pw_passwd.pw_name[1]) {
-				case '\0':
-					r = __getpwcompat(search, uid, name);
-					if (r != NS_SUCCESS)
-						continue;
-					break;
-				case '@':
+			case '@':
 pwnam_netgrp:
-					if(__ypcurrent) {
-						free(__ypcurrent);
-						__ypcurrent = NULL;
-					}
-					if(s == -1)	/* first time */
-						setnetgrent(_pw_passwd.pw_name + 2);
-					s = getnetgrent(&host, &user, &dom);
-					if(s == 0) {	/* end of group */
-						endnetgrent();
-						s = -1;
-						continue;
-					}
-					if (!user || !*user)
-						goto pwnam_netgrp;
-
-					r = __getpwcompat(_PW_KEYBYNAME,
-					    0, user);
-
-					if (r == NS_UNAVAIL)
-						return r;
-					if (r == NS_NOTFOUND) {
-						/*
-						 * just because this user is bad
-						 * it doesn't mean they all are.
-						 */
-						goto pwnam_netgrp;
-					}
-					break;
-				default:
-					user = _pw_passwd.pw_name + 1;
-					r = __getpwcompat(_PW_KEYBYNAME,
-					    0, user);
-
-					if (r == NS_UNAVAIL)
-						return r;
-					if (r == NS_NOTFOUND)
-						continue;
-					break;
+				if(__ypcurrent) {
+					free(__ypcurrent);
+					__ypcurrent = NULL;
 				}
-				if(__pwexclude_is(_pw_passwd.pw_name)) {
-					if(s == 1)	/* inside netgrp */
-						goto pwnam_netgrp;
+				if (s == -1)		/* first time */
+					setnetgrent(_pw_passwd.pw_name + 2);
+				s = getnetgrent(&host, &user, &dom);
+				if (s == 0) {		/* end of group */
+					endnetgrent();
+					s = -1;
 					continue;
 				}
-				break;
-			case '-':
-				/* attempted exclusion */
-				switch(_pw_passwd.pw_name[1]) {
-				case '\0':
-					break;
-				case '@':
-					setnetgrent(_pw_passwd.pw_name + 2);
-					while(getnetgrent(&host, &user, &dom)) {
-						if(user && *user)
-							__pwexclude_add(user);
-					}
-					endnetgrent();
-					break;
-				default:
-					__pwexclude_add(_pw_passwd.pw_name + 1);
-					break;
+				if (!user || !*user)
+					goto pwnam_netgrp;
+
+				r = __getpwcompat(_PW_KEYBYNAME, 0, user);
+
+				if (r == NS_UNAVAIL)
+					return r;
+				if (r == NS_NOTFOUND) {
+					/*
+					 * just because this user is bad
+					 * it doesn't mean they all are.
+					 */
+					goto pwnam_netgrp;
 				}
 				break;
-			}
-			if ((search == _PW_KEYBYNAME &&
-				    strcmp(_pw_passwd.pw_name, name) == 0)
-			 || (search == _PW_KEYBYUID &&
-				    _pw_passwd.pw_uid == uid)) {
-				rval = NS_SUCCESS;
+			default:
+				user = _pw_passwd.pw_name + 1;
+				r = __getpwcompat(_PW_KEYBYNAME, 0, user);
+
+				if (r == NS_UNAVAIL)
+					return r;
+				if (r == NS_NOTFOUND)
+					continue;
 				break;
 			}
-			if(s == 1)	/* inside netgrp */
-				goto pwnam_netgrp;
-			continue;
+			if(__pwexclude_is(_pw_passwd.pw_name)) {
+				if(s == 1)		/* inside netgroup */
+					goto pwnam_netgrp;
+				continue;
+			}
+			break;
+		case '-':
+			/* attempted exclusion */
+			switch(_pw_passwd.pw_name[1]) {
+			case '\0':
+				break;
+			case '@':
+				setnetgrent(_pw_passwd.pw_name + 2);
+				while(getnetgrent(&host, &user, &dom)) {
+					if(user && *user)
+						__pwexclude_add(user);
+				}
+				endnetgrent();
+				break;
+			default:
+				__pwexclude_add(_pw_passwd.pw_name + 1);
+				break;
+			}
+			break;
 		}
-		__pwproto = (struct passwd *)NULL;
-	} else {
-		bf[0] = _PW_KEYBYNAME;
-		len = strlen(name);
-		memmove(bf + 1, name, MIN(len, UT_NAMESIZE));
-		key.data = (u_char *)bf;
-		key.size = len + 1;
-		rval = __hashpw(&key);
+		if ((search == _PW_KEYBYNAME &&
+			    strcmp(_pw_passwd.pw_name, name) == 0)
+		 || (search == _PW_KEYBYUID && _pw_passwd.pw_uid == uid)) {
+			rval = NS_SUCCESS;
+			break;
+		}
+		if(s == 1)				/* inside netgroup */
+			goto pwnam_netgrp;
+		continue;
 	}
+	__pwproto = (struct passwd *)NULL;
 
 	if (!_pw_stayopen) {
 		(void)(_pw_db->close)(_pw_db);
