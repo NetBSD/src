@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.116 2001/11/12 15:25:15 lukem Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.117 2001/12/05 07:32:24 enami Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.116 2001/11/12 15:25:15 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.117 2001/12/05 07:32:24 enami Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_sunos.h"
@@ -1479,6 +1479,6 @@ int
 sigismasked(struct proc *p, int sig)
 {
 
-	return sigismember(&p->p_sigctx.ps_sigignore, SIGTTOU)
-		|| sigismember(&p->p_sigctx.ps_sigmask, SIGTTOU);
+	return (sigismember(&p->p_sigctx.ps_sigignore, sig) ||
+	    sigismember(&p->p_sigctx.ps_sigmask, sig));
 }
