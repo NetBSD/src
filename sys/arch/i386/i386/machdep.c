@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.419 2000/11/19 23:38:22 jdolecek Exp $	*/
+/*	$NetBSD: machdep.c,v 1.420 2000/11/22 16:41:56 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -372,9 +372,12 @@ cpu_startup()
 		printf("cpu0: features %s\n", buf);
 	}
 
-	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0))
-		printf("cpu0: serial number %08X%08X%08X\n",
-		       cpu_serial[0], cpu_serial[1], cpu_serial[2]);
+	if (cpuid_level >= 3 && ((cpu_feature & CPUID_PN) != 0)) {
+		printf("cpu0: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
+			cpu_serial[0] / 65536, cpu_serial[0] % 65536,
+			cpu_serial[1] / 65536, cpu_serial[1] % 65536,
+			cpu_serial[2] / 65536, cpu_serial[2] % 65536);
+	}
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
 	printf("total memory = %s\n", pbuf);
