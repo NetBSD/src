@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2002/03/03 10:55:35 scw Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2002/03/09 23:35:58 chs Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,9 +35,6 @@
 #ifndef	_LOCORE
 #include <machine/cpu.h>
 #endif	/* _LOCORE */
-#ifndef NEWPMAP
-#define	NEWPMAP
-#endif
 #endif	/* _KERNEL */
 
 /*

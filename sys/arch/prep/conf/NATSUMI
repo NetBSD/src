@@ -1,4 +1,4 @@
-#	$NetBSD: NATSUMI,v 1.12 2002/03/04 13:24:11 sommerfeld Exp $
+#	$NetBSD: NATSUMI,v 1.13 2002/03/09 23:35:59 chs Exp $
 #
 #	for development
 #
@@ -8,8 +8,6 @@ include "arch/prep/conf/std.prep"
 maxusers	32
 
 makeoptions	COPTS="-O2 -pipe"
-
-#options 	NEWPMAP
 
 # Standard system options
 
