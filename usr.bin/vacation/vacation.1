@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.24 2004/04/04 01:17:29 christos Exp $
+.\"	$NetBSD: vacation.1,v 1.25 2004/08/19 13:43:54 christos Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)vacation.1	8.2 (Berkeley) 4/28/95
 .\"
-.Dd April 3, 2004
+.Dd August 19, 2004
 .Dt VACATION 1
 .Os
 .Sh NAME
@@ -39,14 +39,19 @@
 indication
 .Sh SYNOPSIS
 .Nm
-.Fl di
-.Op Fl f Ar F|R|S
+.Fl diI
+.Op Fl f Ar databasefile
+.Op Fl m Ar messagefile
 .Op Fl r Ar interval
-.Op Fl t Ar A|D
+.Op Fl t Ar interval
 .Nm
+.Fl dj
 .Op Fl a Ar alias
-.Op Fl f Ar F|R|S
-.Op Fl t Ar A|D
+.Op Fl F Ar F|R|S
+.Op Fl f Ar databasefile
+.Op Fl m Ar messagefile
+.Op Fl s Ar sender
+.Op Fl T Ar A|D
 .Ar login
 .Sh DESCRIPTION
 .Nm
@@ -76,22 +81,66 @@ in the same manner as those received for the user's
 login name.
 .It Fl d
 Turn debugging on; don't send an actual message, but print it on stdout.
-.It Fl f Ar F|R|S
+.It Fl f Ar database_file
+Use the specified
+.Ar database_file
+prefix and append 
+.Dv \.db
+to it instead of 
+.Dv $HOME/.vacation.db .
+.It Fl F Ar F|R|S
 Make
 .Nm
 additionally look in From: (F), Return-Path: (R), or Sender: (S) headers
 to determine the From: field.
 .It Fl i
+.It Fl I
 Initialize the vacation database files.
 It should be used before you modify your
 .Pa .forward
 file.
-.It Fl r
+.It Fl j
+Do not check if the recipient is present in the 
+.Dv To:
+or
+.Dv Cc:
+lines. Usage of this option is strongly discouraged because it will result
+in
+.Nm
+replying to mailing lists or other inappropriate places (eg. messages that
+you have been
+.Dv Bcc
+to).
+.It Fl m Ar message_file
+Use
+.Ar message_file
+instead of
+.Dv $HOME/.vacation.msg .
+.It Fl s Ar sender
+Reply to
+.Ar sender
+instead of the the value read from the message.
+.It Fl r Ar interval
+.It Fl t Ar interval
 Set the reply interval to
 .Ar interval
-days.
-The default is one week.
-An interval of
+days. If the 
+.Ar interval
+number is followed by
+.Dv w ,
+.Dv d ,
+.Dv h ,
+.Dv m ,
+or
+.Dv s
+then the number is interpreted as weeks, days, hours, minutes, or seconds
+respectively.
+The default
+.Ar interval
+is one week.
+An
+.Ar interval
+of
 .Dq 0
 means that
 a reply is sent to each message, and an interval of
@@ -104,7 +153,7 @@ are quite
 dangerous, as it allows mailers to get into
 .Dq I am on vacation
 loops.
-.It Fl t Ar A|D
+.It Fl T Ar A|D
 Make
 .Nm
 additionally look in Apparently-To: (A) or Delivered-To: (D) headers
@@ -148,6 +197,9 @@ expects a file
 in your home directory, containing a message to be sent back to each
 sender.
 It should be an entire message (including headers).
+If the message contains the string
+.Dv $SUBJECT
+then it will will be replaced with the subject of the original message.
 For example, it might contain:
 .Pp
 .Bd -literal -offset indent -compact
@@ -156,8 +208,10 @@ Subject: I am on vacation
 Delivered-By-The-Graces-Of: The Vacation program
 Precedence: bulk
 
-I am on vacation until July 22.  If you have something urgent,
-please contact Keith Bostic \*[Lt]bostic@CS.Berkeley.EDU\*[Gt].
+I am on vacation until July 22.  
+Your mail regarding "$SUBJECT" will be read when I return.
+If you have something urgent, please contact Keith Bostic
+\*[Lt]bostic@CS.Berkeley.EDU\*[Gt].
 --eric
 .Ed
 .Pp
