@@ -42,7 +42,7 @@
  *	@(#)pte.h	8.1 (Berkeley) 6/11/93
  *
  * from: Header: pte.h,v 1.5 92/11/26 02:04:43 torek Exp 
- * $Id: pte.h,v 1.1 1993/10/02 10:23:22 deraadt Exp $
+ * $Id: pte.h,v 1.2 1994/08/20 01:26:43 deraadt Exp $
  */
 
 /*
@@ -116,6 +116,7 @@ typedef u_char pmeg_t;		/* 7 bits needed per Sun-4c segmap entry */
 
 /* number of PTEs that map one segment (not number that fit in one segment!) */
 #if defined(SUN4) && defined(SUN4C)
+extern int nptesg;
 #define	NPTESG	nptesg		/* (which someone will have to init) */
 #else
 #define	NPTESG	(NBPSG / NBPG)
@@ -136,8 +137,7 @@ typedef u_char pmeg_t;		/* 7 bits needed per Sun-4c segmap entry */
 
 #ifdef SUN4
 #ifdef SUN4C
-int	issun4c;
-#define VA_VPG(va)	(issun4c ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
+#define VA_VPG(va)	(cputyp == CPU_SUN4C ? VA_SUN4C_VPG(va) : VA_SUN4_VPG(va))
 #else /* sun4 and not sun4c */
 #define VA_VPG(va)	VA_SUN4_VPG(va)
 #endif
