@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx.c,v 1.13 1998/01/12 10:21:12 thorpej Exp $ */
+/* $NetBSD: dwlpx.c,v 1.14 1998/03/23 06:38:10 mjacob Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.13 1998/01/12 10:21:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.14 1998/03/23 06:38:10 mjacob Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: dwlpx.c,v 1.13 1998/01/12 10:21:12 thorpej Exp $");
 #include <alpha/include/pmap.old.h>
 
 #define	KV(_addr)	((caddr_t)ALPHA_PHYS_TO_K0SEG((_addr)))
+#define	DWLPX_SYSBASE(sc)	\
+	    ((((unsigned long)((sc)->dwlpx_node - 4))	<< 36) |	\
+	     (((unsigned long) (sc)->dwlpx_hosenum)	<< 34) |	\
+	     (1LL					<< 39))
+
 
 static int	dwlpxmatch __P((struct device *, struct cfdata *, void *));
 static void	dwlpxattach __P((struct device *, struct device *, void *));
-
 struct cfattach dwlpx_ca = {
 	sizeof(struct dwlpx_softc), dwlpxmatch, dwlpxattach
 };
@@ -64,6 +68,7 @@ struct cfattach dwlpx_ca = {
 extern struct cfdriver dwlpx_cd;
 
 static int	dwlpxprint __P((void *, const char *));
+static struct dwlpx_softc *dwlps[DWLPX_NIONODE][DWLPX_NHOSE];
 
 static int
 dwlpxprint(aux, pnp)
@@ -107,31 +112,28 @@ dwlpxattach(parent, self, aux)
 	sc->dwlpx_node = ka->ka_node;
 	sc->dwlpx_dtype = ka->ka_dtype;
 	sc->dwlpx_hosenum = ka->ka_hosenum;
-	/*
-	 * On reads, you get a fault if you read a nonexisted HPC.
-	 * The internal KFTIA hose (hose 0) has only 2 HPCs.
-	 */
-	sc->dwlpx_nhpc = NHPC;
-	if (sc->dwlpx_hosenum == 0) {
-		if (TLDEV_DTYPE(sc->dwlpx_dtype) == TLDEV_DTYPE_KFTIA) {
-			sc->dwlpx_nhpc = NHPC - 1;
-		}
-	}
-
+	dwlps[sc->dwlpx_node - 4][sc->dwlpx_hosenum] = sc;
 	dwlpx_init(sc);
 
-	/* XXX Need to detect DWLPA vs. DWLPB here. */
 	pcia_present = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
-
-	printf(": PCIA rev. %d, STD I/O %spresent\n",
+	printf(": PCIA rev. %d, STD I/O %spresent, %s DMA maps.\n",
 	    (pcia_present >> PCIA_PRESENT_REVSHIFT) & PCIA_PRESENT_REVMASK,
-	    (pcia_present & PCIA_PRESENT_STDIO) == 0 ? "not " : "");
+	    (pcia_present & PCIA_PRESENT_STDIO) == 0 ? "not " : "",
+#ifdef	MSS3_DEBUG_SG
+	    (sc->dwlpx_sgmapsz == DWLPX_SG128K)? "128K S/G" : "32K S/G");
+#else
+	    (physmem <= btoc(2048LL << 20LL))? "Direct" :
+	        (sc->dwlpx_sgmapsz == DWLPX_SG128K)? "128K S/G" : "32K S/G");
+#endif
 
-#if 0
+
+#if	0
 	{
 		int hpc, slot, slotval;
 		const char *str;
-
+		printf("%s: %sK Scatter/Gather RAM Entries Available.\n",
+			sc->dwlpx_dev.dv_xname,
+			sc->dwlpx_sgmapsz == DWLPX_SG32K?  "32" : "128");
 		for (hpc = 0; hpc < sc->dwlpx_nhpc; hpc++) {
 			for (slot = 0; slot < 4; slot++) {
 				slotval = (pcia_present >>
@@ -190,9 +192,30 @@ dwlpx_init(sc)
 	struct dwlpx_softc *sc;
 {
 	int i;
+	u_int32_t ctl;
 	struct dwlpx_config *ccp = &sc->dwlpx_cc;
+	unsigned long ls = DWLPX_SYSBASE(sc);
 
 	if (ccp->cc_initted == 0) {
+		/*
+		 * On reads, you get a fault if you read a nonexisted HPC.
+		 * We know the internal KFTIA hose (hose 0) has only 2 HPCs,
+		 * but we can also actually probe for HPCs.
+		 * Assume at least one.
+		 */
+		for (sc->dwlpx_nhpc = 1; sc->dwlpx_nhpc < NHPC;
+		    sc->dwlpx_nhpc++) {
+			if (badaddr(KV(PCIA_CTL(sc->dwlpx_nhpc) + ls),
+			    sizeof (ctl)) != 0) {
+				break;
+			}
+		}
+		if (sc->dwlpx_nhpc != NHPC) {
+			/* clear (potential) Illegal CSR Address Error */
+			REGVAL(PCIA_ERR(0) + DWLPX_SYSBASE(sc)) =
+				PCIA_ERR_ALLERR;
+		}
+
 		dwlpx_bus_io_init(&ccp->cc_iot, ccp);
 		dwlpx_bus_mem_init(&ccp->cc_memt, ccp);
 	}
@@ -202,15 +225,33 @@ dwlpx_init(sc)
 	/*
 	 * Establish a precalculated base for convenience's sake.
 	 */
-	ccp->cc_sysbase =
-	    (((unsigned long)(sc->dwlpx_node - 4))	<< 36) |
-	    (((unsigned long) sc->dwlpx_hosenum)	<< 34) |
-	    (1LL					<< 39);
+	ccp->cc_sysbase = ls;
 
 	/*
 	 * Set up DMA stuff for this DWLPX.
 	 */
 	dwlpx_dma_init(ccp);
+
+	/*
+	 * If there are only 2 HPCs, then the 'present' register is not
+	 * implemented, so there will only ever be 32K SG entries. Otherwise
+	 * any revision greater than zero will have 128K entries.
+	 */
+	ctl = REGVAL(PCIA_PRESENT + ccp->cc_sysbase);
+	if (sc->dwlpx_nhpc == 2) {
+		sc->dwlpx_sgmapsz = DWLPX_SG32K;
+#if	0
+	/*
+	 * As of 2/25/98- When I enable SG128K, and then have to flip
+	 * TBIT below, I get bad SGRAM errors. We'll fix this later
+	 * if this gets important.
+	 */
+	} else if ((ctl >> PCIA_PRESENT_REVSHIFT) & PCIA_PRESENT_REVMASK) {
+		sc->dwlpx_sgmapsz = DWLPX_SG128K;
+#endif
+	} else {
+		sc->dwlpx_sgmapsz = DWLPX_SG32K;
+	}
 
 	/*
 	 * Set up interrupt stuff for this DWLPX.
@@ -249,7 +290,7 @@ dwlpx_init(sc)
 	 * Establish HAE values, as well as make sure of sanity elsewhere.
 	 */
 	for (i = 0; i < sc->dwlpx_nhpc; i++) {
-		u_int32_t ctl = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase);
+		ctl = REGVAL(PCIA_CTL(i) + ccp->cc_sysbase);
 		ctl &= 0x0fffffff;
 		ctl &= ~(PCIA_CTL_MHAE(0x1f) | PCIA_CTL_IHAE(0x1f));
 		/*
@@ -265,7 +306,98 @@ dwlpx_init(sc)
 
 		ctl |= PCIA_CTL_CUTENA;
 
+		/*
+		 * Fit in appropriate S/G Map Ram size.
+		 */
+		if (sc->dwlpx_sgmapsz == DWLPX_SG32K)
+			ctl |= PCIA_CTL_SG32K;
+		else if (sc->dwlpx_sgmapsz == DWLPX_SG128K)
+			ctl |= PCIA_CTL_SG128K;
+		else
+			ctl |= PCIA_CTL_SG32K;
+
 		REGVAL(PCIA_CTL(i) + ccp->cc_sysbase) = ctl;
 	}
+	/*
+	 * Enable TBIT if required
+	 */
+	if (sc->dwlpx_sgmapsz == DWLPX_SG128K)
+		REGVAL(PCIA_TBIT + ccp->cc_sysbase) = 1;
+	alpha_mb();
 	ccp->cc_initted = 1;
+}
+
+void
+dwlpx_iointr(framep, vec)
+	void *framep;
+	unsigned long vec;
+{
+	struct dwlpx_softc *sc;
+	struct dwlpx_config *ccp;
+	int ionode, hosenum, i;
+	struct {
+		u_int32_t err;
+		u_int32_t addr;
+	} hpcs[NHPC];
+
+	ionode = (vec >> 8) & 0xf;
+	hosenum = (vec >> 4) & 0x7;
+	if (ionode >= DWLPX_NIONODE || hosenum >= DWLPX_NHOSE) {
+		panic("dwlpx_iointr: mangled vector %x", vec);
+		/* NOTREACHED */
+	}
+	sc = dwlps[ionode][hosenum];
+	ccp = &sc->dwlpx_cc;
+	for (i = 0; i < sc->dwlpx_nhpc; i++) {
+		hpcs[i].err = REGVAL(PCIA_ERR(i) + ccp->cc_sysbase);
+		hpcs[i].addr = REGVAL(PCIA_FADR(i) + ccp->cc_sysbase);
+	}
+	printf("%s: node %d hose %d error interrupt\n",
+		sc->dwlpx_dev.dv_xname, ionode + 4, hosenum);
+	
+	for (i = 0; i < sc->dwlpx_nhpc; i++) {
+		if ((hpcs[i].err & PCIA_ERR_ERROR) == 0)
+			continue;
+		printf("\tHPC %d: ERR=0x%08x; DMA %s Memory, "
+			"Failing Address 0x%x\n",
+			i, hpcs[i].err, hpcs[i].addr & 0x1? "write to" :
+			"read from", hpcs[i].addr & ~3);
+		if (hpcs[i].err & PCIA_ERR_SERR_L)
+			printf("\t       PCI device asserted SERR_L\n");
+		if (hpcs[i].err & PCIA_ERR_ILAT)
+			printf("\t       Incremental Latency Exceeded\n");
+		if (hpcs[i].err & PCIA_ERR_SGPRTY)
+			printf("\t       CPU access of SG RAM Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_ILLCSR)
+			printf("\t       Illegal CSR Address Error\n");
+		if (hpcs[i].err & PCIA_ERR_PCINXM)
+			printf("\t       Nonexistent PCI Address Error\n");
+		if (hpcs[i].err & PCIA_ERR_DSCERR)
+			printf("\t       PCI Target Disconnect Error\n");
+		if (hpcs[i].err & PCIA_ERR_ABRT)
+			printf("\t       PCI Target Abort Error\n");
+		if (hpcs[i].err & PCIA_ERR_WPRTY)
+			printf("\t       PCI Write Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_DPERR)
+			printf("\t       PCI Data Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_APERR)
+			printf("\t       PCI Address Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_DFLT)
+			printf("\t       SG Map RAM Invalid Entry Error\n");
+		if (hpcs[i].err & PCIA_ERR_DPRTY)
+			printf("\t       DMA access of SG RAM Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_DRPERR)
+			printf("\t       DMA Read Return Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_MABRT)
+			printf("\t       PCI Master Abort Error\n");
+		if (hpcs[i].err & PCIA_ERR_CPRTY)
+			printf("\t       CSR Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_COVR)
+			printf("\t       CSR Overrun Error\n");
+		if (hpcs[i].err & PCIA_ERR_MBPERR)
+			printf("\t       Mailbox Parity Error\n");
+		if (hpcs[i].err & PCIA_ERR_MBILI)
+			printf("\t       Mailbox Illegal Length Error\n");
+		REGVAL(PCIA_ERR(i) + ccp->cc_sysbase) = hpcs[i].err;
+	}
 }
