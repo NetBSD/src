@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.179 2001/02/13 15:54:33 pk Exp $ */
+/*	$NetBSD: pmap.c,v 1.180 2001/02/16 23:00:11 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -4489,8 +4489,7 @@ pmap_page_protect4_4c(pg, prot)
 	 * Skip unmanaged pages, or operations that do not take
 	 * away write permission.
 	 */
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) ||
-	     !managed(pa) || prot & VM_PROT_WRITE)
+	if (!managed(pa) || prot & VM_PROT_WRITE)
 		return;
 
 	write_user_windows();	/* paranoia */
@@ -6203,7 +6202,7 @@ pmap_clear_modify4_4c(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4_4c(pv);
 		rv = pv->pv_flags & PV_MOD;
@@ -6223,7 +6222,7 @@ pmap_is_modified4_4c(pg)
 	struct pvlist *pv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_MOD || pv_syncflags4_4c(pv) & PV_MOD)
 			return (1);
@@ -6242,7 +6241,7 @@ pmap_clear_reference4_4c(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4_4c(pv);
 		rv = pv->pv_flags & PV_REF;
@@ -6262,7 +6261,7 @@ pmap_is_referenced4_4c(pg)
 	struct pvlist *pv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	if ((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_REF || pv_syncflags4_4c(pv) & PV_REF)
 			return (1);
@@ -6293,7 +6292,7 @@ pmap_clear_modify4m(pg)	   /* XXX %%%: Should service from swpagetbl for 4m */
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4m(pv);
 		rv = pv->pv_flags & PV_MOD4M;
@@ -6313,7 +6312,7 @@ pmap_is_modified4m(pg) /* Test performance with SUN4M && SUN4/4C. XXX */
 	struct pvlist *pv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_MOD4M || pv_syncflags4m(pv) & PV_MOD4M)
 		        return(1);
@@ -6332,7 +6331,7 @@ pmap_clear_reference4m(pg)
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	boolean_t rv;
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		(void) pv_syncflags4m(pv);
 		rv = pv->pv_flags & PV_REF4M;
@@ -6352,7 +6351,7 @@ pmap_is_referenced4m(pg)
 	struct pvlist *pv;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
-	if ((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0 && managed(pa)) {
+	if (managed(pa)) {
 		pv = pvhead(pa);
 		if (pv->pv_flags & PV_REF4M || pv_syncflags4m(pv) & PV_REF4M)
 		        return(1);
@@ -6377,7 +6376,7 @@ pmap_zero_page4_4c(pa)
 	caddr_t va;
 	int pte;
 
-	if (((pa & (PMAP_TNC_4 & ~PMAP_NC)) == 0) && managed(pa)) {
+	if (managed(pa)) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
@@ -6447,7 +6446,7 @@ pmap_zero_page4m(pa)
 	caddr_t va;
 	int pte;
 
-	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
+	if (managed(pa)) {
 		/*
 		 * The following VAC flush might not be necessary since the
 		 * page is being cleared because it is about to be allocated,
@@ -6515,7 +6514,7 @@ pmap_zero_page_hypersparc(pa)
 	 * to flush the cache here. All we gain is the speed-up
 	 * in zero-fill loop itself..
 	 */
-	if (((pa & (PMAP_TNC_SRMMU & ~PMAP_NC)) == 0) && managed(pa)) {
+	if (managed(pa)) {
 		/*
 		 * The following might not be necessary since the page
 		 * is being cleared because it is about to be allocated,
