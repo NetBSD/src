@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.65 2000/03/03 01:46:36 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.66 2000/03/04 06:03:21 oster Exp $	*/
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -841,6 +841,7 @@ raidioctl(dev, cmd, data, flag, p)
 		if (raidPtr->valid) {
 			/* There is a valid RAID set running on this unit! */
 			printf("raid%d: Device already configured!\n",unit);
+			return(EINVAL);
 		}
 
 		/* copy-in the configuration information */
