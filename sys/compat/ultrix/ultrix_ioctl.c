@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_ioctl.c,v 1.20 2003/03/21 21:13:55 dsl Exp $ */
+/*	$NetBSD: ultrix_ioctl.c,v 1.21 2003/05/07 14:21:20 christos Exp $ */
 /*	from : NetBSD: sunos_ioctl.c,v 1.21 1995/10/07 06:27:31 mycroft Exp */
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.20 2003/03/21 21:13:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_ioctl.c,v 1.21 2003/05/07 14:21:20 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_ultrix.h"
@@ -701,60 +701,6 @@ ultrix_sys_ioctl(l, v, retval)
 	case _IOWR('i', 19, struct ifreq):
 		IFREQ_INOUT(SIOCSIFBRDADDR);
 
-	case _IOWR('i', 21, struct ifreq):
-		IFREQ_INOUT(OSIOCGIFNETMASK);
-
-	case _IOW('i', 22, struct ifreq):
-		IFREQ_IN(SIOCSIFNETMASK);
-
-	/* 18: _IOWR('i', 18, struct ifreq):  Ultrix SIOCGIFBRDADDR */
-	/* 19: _IOW('i',  19, struct ifreq):  Ultrix SIOCSIFBRDADDR */
-	/* 20: _IOWR('i', 20, struct ifreq):  Ultrix SIOCSIFCONF */
-	/* 21: _IOWR('i', 21, struct ifreq):  Ultrix SIOCGIFNETMASK */
-	/* 22: _IOW('i',  22, struct ifreq):  Ultrix SIOCSIFNETMASK */
-	/* 23: _IOWR('i', 23, struct ifreq):  Ultrix SIOCSPHYADDR */
-	/* 24: _IOWR('i', 24, struct ifreq):  Ultrix SIOCSADDMULTI */
-	/* 25: _IOWR('i', 25, struct ifreq):  Ultrix SIOCSDELMULTI */
-
-	/* 30: _IOWR('i', 30, struct arpreq):  Ultrix SIOCSARP */
-	/* 31: _IOWR('i', 31, struct arpreq):  Ultrix SIOCGARP */
-	/* 32: _IOWR('i', 32, struct arpreq):  Ultrix SIOCDARP */
-	
-	case _IOWR('i', 41, struct ifreq):
-		IFREQ_INOUT(SIOCGIFMETRIC);
-
-	case _IOWR('i', 42, struct ifreq):
-		IFREQ_IN(SIOCSIFMETRIC);
-
-	case _IOW('i', 30, struct arpreq):
-		/* SIOCSARP */
-		break;
-
-	case _IOWR('i', 31, struct arpreq):
-		/* SIOCGARP */
-		break;
-
-	case _IOW('i', 32, struct arpreq):
-		/* SIOCDARP */
-		break;
-
-	case _IOW('i',  26, struct ifreq):	/* SIOCSIFRDCTRS? */
-	case _IOWR('i', 27, struct ifreq):	/* SIOCGIFZCTRS? */
-	case _IOWR('i', 28, struct ifreq):	/* read physaddr ? */
-
-	case _IOW('i', 40, struct ifreq):	/* SIOCARPREQ */
-	case _IOW('i', 44, struct ifreq):	/* SIOCSETSYNC */
-	case _IOWR('i', 45, struct ifreq):	/* SIOCGETSYNC */
-	case _IOWR('i', 46, struct ifreq):	/* SIOCSDSTATS */
-	case _IOWR('i', 47, struct ifreq):	/* SIOCSESTATS */
-	case _IOW('i', 48, int):		/* SIOCSPROMISC */
-		return EOPNOTSUPP;
-
-	/* emulate for vat, vic tools */
-	case _IOW('i', 49, struct ifreq):	/* SIOCADDMULTI */
-	case _IOW('i', 50, struct ifreq):	/* SIOCDELMULTI */
-		return EOPNOTSUPP;
-
 	case _IOWR('i', 20, struct ifconf):	/* SIOCGIFCONF */
 	    {
 		struct ifconf ifconf;
@@ -772,6 +718,56 @@ ultrix_sys_ioctl(l, v, retval)
 			return error;
 		return copyout(&ifconf, SCARG(uap, data), sizeof (ifconf));
 	    }
+
+
+	case _IOWR('i', 21, struct ifreq):
+		IFREQ_INOUT(OSIOCGIFNETMASK);
+
+	case _IOW('i', 22, struct ifreq):
+		IFREQ_IN(SIOCSIFNETMASK);
+
+	/* 23: _IOWR('i', 23, struct ifreq):  Ultrix SIOCSPHYADDR */
+	/* 24: _IOWR('i', 24, struct ifreq):  Ultrix SIOCSADDMULTI */
+	/* 25: _IOWR('i', 25, struct ifreq):  Ultrix SIOCSDELMULTI */
+
+	case _IOW('i',  26, struct ifreq):	/* SIOCSIFRDCTRS? */
+	case _IOWR('i', 27, struct ifreq):	/* SIOCGIFZCTRS? */
+	case _IOWR('i', 28, struct ifreq):	/* read physaddr ? */
+		return EOPNOTSUPP;
+
+
+	case _IOW('i', 30, struct arpreq):
+		/* SIOCSARP */
+		break;
+
+	case _IOWR('i', 31, struct arpreq):
+		/* SIOCGARP */
+		break;
+
+	case _IOW('i', 32, struct arpreq):
+		/* SIOCDARP */
+		break;
+
+	case _IOW('i', 40, struct ifreq):	/* SIOCARPREQ */
+		return EOPNOTSUPP;
+
+	case _IOWR('i', 41, struct ifreq):
+		IFREQ_INOUT(SIOCGIFMETRIC);
+
+	case _IOWR('i', 42, struct ifreq):
+		IFREQ_IN(SIOCSIFMETRIC);
+
+	case _IOW('i', 44, struct ifreq):	/* SIOCSETSYNC */
+	case _IOWR('i', 45, struct ifreq):	/* SIOCGETSYNC */
+	case _IOWR('i', 46, struct ifreq):	/* SIOCSDSTATS */
+	case _IOWR('i', 47, struct ifreq):	/* SIOCSESTATS */
+	case _IOW('i', 48, int):		/* SIOCSPROMISC */
+		return EOPNOTSUPP;
+
+	/* emulate for vat, vic tools */
+	case _IOW('i', 49, struct ifreq):	/* SIOCADDMULTI */
+	case _IOW('i', 50, struct ifreq):	/* SIOCDELMULTI */
+		return EOPNOTSUPP;
 
 	}
 	return (sys_ioctl(l, uap, retval));
