@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.40 1996/05/29 21:45:28 pk Exp $ */
+/*	$NetBSD: zs.c,v 1.41 1996/05/30 00:57:35 pk Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -842,9 +842,11 @@ zshard(intrarg)
 			}
 		}
 
+#if defined(SUN4M)
 		if (CPU_ISSUN4M)
 			raise(0, PIL_TTY);
 		else
+#endif
 		ienab_bis(IE_ZSSOFT);
 	}
 	return (intflags & ZSHARD_WAS_SERVICED);
