@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.4 1994/07/04 19:46:37 cgd Exp $
+ *	$Id: md.c,v 1.5 1994/08/16 23:18:20 phil Exp $
  */
 
 #include <sys/param.h>
@@ -315,7 +315,16 @@ u_long		addr;
 {
 	put_num(sp->code, BR, 2);
 	put_disp(sp->code + 2, addr - offset - 1, 4);
+#ifdef RTLD
+/*
+ * Selfmodifing code is a problem on systems with
+ * instruction cache. If sp->reloc_index is not changed
+ * by ld.so, eventually binder will be more then once, but
+ * it will work at least.
+ */
+#else
 	sp->reloc_index = 0;
+#endif
 }
 
 /*
