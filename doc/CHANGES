@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.339 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.340 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -86,3 +86,5 @@ Changes from NetBSD 2.0 to NetBSD 2.1:
 		[seb 20040713]
 	sendmail: The sendmail daemon will now start by default if the
 		rc.d script determines a need for it.  [atatat 20040715]
+	mtree(8): Implement -M to permit merging of specfile entries that
+		have different types.  [lukem 20040722]
