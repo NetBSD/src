@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.67 2000/09/20 19:42:04 hubertf Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.68 2000/09/20 19:46:33 hubertf Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -764,7 +764,7 @@ message continue
 
 message choose_timezone
 {Please choose the timezone that fits you best from the list below.
-Press RETURN to select an entry, press 'x' followed by RETURN to quit
+Press RETURN to select an entry. Press 'x' followed by RETURN to quit
 the timezone selection. 
 
  Default:	%s 
