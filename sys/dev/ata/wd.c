@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wd.c	7.2 (Berkeley) 5/9/91
- *	$Id: wd.c,v 1.26 1993/08/01 19:25:45 mycroft Exp $
+ *	$Id: wd.c,v 1.27 1993/12/13 10:16:56 cgd Exp $
  */
 
 /* Note: This code heavily modified by tih@barsoom.nhh.no; use at own risk! */
@@ -141,15 +141,13 @@ struct board {
 	short dkc_port;
 };
 
-void bad144intern(struct disk *);
-void wddisksort();
-
 struct	board	wdcontroller[NWDC];
 struct	disk	*wddrives[NWD];		/* table of units */
 struct	buf	wdtab[NWDC];		/* various per-controller info */
 struct	buf	wdutab[NWD];		/* head of queue per drive */
 struct	buf	rwdbuf[NWD];		/* buffers for raw IO */
 long	wdxfer[NWD];			/* count of transfers */
+int	wdtimeoutstatus[NWD];		/* timeout counters */
 
 int wdprobe(), wdattach();
 
@@ -157,12 +155,16 @@ struct	isa_driver wdcdriver = {
 	wdprobe, wdattach, "wdc",
 };
 
-void wdustart(struct disk *);
-void wdstart(int);
-int wdcommand(struct disk *, int);
-int wdcontrol(struct buf *);
-int wdsetctlr(dev_t, struct disk *);
-int wdgetctlr(int, struct disk *);
+static void wdustart(struct disk *);
+static void wdstart(int);
+static int wdcommand(struct disk *, int);
+static int wdcontrol(struct buf *);
+static int wdsetctlr(dev_t, struct disk *);
+static int wdgetctlr(int, struct disk *);
+static void bad144intern(struct disk *);
+static void wddisksort();
+static int wdreset(int, int, int);
+static int wdtimeout(caddr_t);
 
 /*
  * Probe for controller.
@@ -238,7 +240,8 @@ wdattach(struct isa_device *dvp)
 	bzero(&wdutab[lunit], sizeof(struct buf));
 	bzero(&rwdbuf[lunit], sizeof(struct buf));
 	wdxfer[lunit] = 0;
-
+	wdtimeoutstatus[lunit] = 0;
+	wdtimeout(lunit);
 	du->dk_ctrlr = dvp->id_masunit;
 	du->dk_unit = unit;
 	du->dk_lunit = lunit;
@@ -595,8 +598,10 @@ retry:
 	}
     
 	/* if this is a read operation, just go away until it's done.	*/
-	if (bp->b_flags & B_READ)
+	if (bp->b_flags & B_READ) {
+		wdtimeoutstatus[lunit] = 2;
 		return;
+	}
     
 	/* ready to send data?	*/
 	for (timeout=0; (inb(wdc+wd_altsts) & WDCS_DRQ) == 0; ) {
@@ -617,6 +622,7 @@ outagain:
 		DEV_BSIZE/sizeof(short));
 	du->dk_bc -= DEV_BSIZE;
 	du->dk_bct -= DEV_BSIZE;
+	wdtimeoutstatus[lunit] = 2;
 }
 
 /* Interrupt routine for the controller.  Acknowledge the interrupt, check for
@@ -629,7 +635,7 @@ wdintr(struct intrframe wdif)
 {
 	register struct	disk *du;
 	register struct buf *bp, *dp;
-	int status, wdc, ctrlr;
+	int status, wdc, ctrlr, timeout;
     
 	ctrlr = wdif.if_vec;
 
@@ -642,13 +648,21 @@ wdintr(struct intrframe wdif)
 	bp = dp->b_actf;
 	du = wddrives[wdunit(bp->b_dev)];
 	wdc = du->dk_port;
+	wdtimeoutstatus[wdunit(bp->b_dev)] = 0;
     
 #ifdef	WDDEBUG
 	printf("I%d ", ctrlr);
 #endif
 
-	while ((status = inb(wdc+wd_status)) & WDCS_BUSY)
-		;
+	for (timeout=0; ((status=inb(wdc+wd_status)) & WDCS_BUSY); ) {
+		DELAY(WDCDELAY);
+		if (++timeout < WDCNDELAY/20)
+			continue;
+		wdstart(ctrlr);
+/* #ifdef WDDEBUG */
+		printf("wdc%d: timeout in wdintr WDCS_BUSY\n", ctrlr);
+/* #endif */
+	}
     
 	/* is it not a transfer, but a control operation? */
 	if (du->dk_state < OPEN) {
@@ -708,9 +722,17 @@ outt:
 		chk = min(DEV_BSIZE / sizeof(short), du->dk_bc / sizeof(short));
 	
 		/* ready to receive data? */
-		while ((inb(wdc+wd_status) & WDCS_DRQ) == 0)
-			;
-	
+		for (timeout=0; (inb(wdc+wd_status) & WDCS_DRQ) == 0; ) {
+			DELAY(WDCDELAY);
+			if (++timeout < WDCNDELAY/20)
+				continue;
+			wdstart(ctrlr);
+/* #ifdef WDDEBUG */
+			printf("wdc%d: timeout in wdintr WDCS_DRQ\n", ctrlr);
+/* #endif */
+			break;
+		}
+
 		/* suck in data */
 		insw (wdc+wd_data,
 			(int)bp->b_un.b_addr + du->dk_skip * DEV_BSIZE, chk);
@@ -1690,8 +1712,8 @@ insert:
 		dp->b_actl = bp;
 }
 
-wdreset(ctrlr, wdc, err)
-int ctrlr;
+static int
+wdreset(int ctrlr, int wdc, int err)
 {
 	int stat, timeout;
 
@@ -1714,4 +1736,35 @@ int ctrlr;
 	if(timeout>WDCNDELAY_DEBUG)
 		printf("wdc%d: timeout took %dus\n", ctrlr, WDCDELAY * timeout);
 #endif
+}
+
+
+static int
+wdtimeout(caddr_t arg)
+{
+	int x = splbio();
+	register int unit = (int) arg;
+
+	if (wdtimeoutstatus[unit]) {
+		if (--wdtimeoutstatus[unit] == 0) {
+			struct disk *du = wddrives[unit];
+			int wdc = du->dk_port;
+/* #ifdef WDDEBUG */
+			printf("wd%d: lost interrupt - status %x, error %x\n",
+			       unit, inb(wdc+wd_status), inb(wdc+wd_error));
+/* #endif */
+			outb(wdc+wd_ctlr, (WDCTL_RST|WDCTL_IDS));
+			DELAY(1000);
+			outb(wdc+wd_ctlr, WDCTL_IDS);
+			DELAY(1000);
+			(void) inb(wdc+wd_error);
+			outb(wdc+wd_ctlr, WDCTL_4BIT);
+			du->dk_skip = 0;
+			du->dk_flags |= DKFL_SINGLE;
+			wdstart(du->dk_ctrlr);		/* start controller */
+		}
+	}
+	timeout((timeout_t)wdtimeout, (caddr_t)unit, 50);
+	splx(x);
+	return (0);
 }
