@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.37 2000/12/09 06:20:17 mycroft Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.38 2000/12/09 06:25:03 mycroft Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+
+#include <machine/svr4_machdep.h>
 
 #include <compat/svr4/svr4_types.h>
 #include <compat/svr4/svr4_syscall.h>
