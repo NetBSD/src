@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2001/06/03 09:51:10 hannken Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2001/07/16 13:30:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.34 2001/06/03 09:51:10 hannken Exp $");
+__RCSID("$NetBSD: main.c,v 1.35 2001/07/16 13:30:13 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -619,7 +619,7 @@ sig(int signo)
 	case SIGTRAP:
 		if (pipeout)
 			quit("Signal on pipe: cannot recover\n");
-		msg("Rewriting attempted as response to unknown signal.\n");
+		msg("Rewriting attempted as response to signal %s.\n", sys_siglist[signo]);
 		(void)fflush(stderr);
 		(void)fflush(stdout);
 		close_rewind();
