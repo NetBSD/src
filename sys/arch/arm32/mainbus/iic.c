@@ -1,4 +1,4 @@
-/* $NetBSD: iic.c,v 1.8 1997/07/17 01:48:37 jtk Exp $ */
+/* $NetBSD: iic.c,v 1.9 1997/07/28 18:01:49 mark Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -240,7 +240,12 @@ iicmatch(parent, match, aux)
 	void *match;
 	void *aux;
 {
+	struct mainbus_attach_args *mb = aux;
 	int id;
+
+	/* We need a base address */
+	if (mb->mb_iobase == MAINBUSCF_BASE_DEFAULT)
+		return(0);
 
 /* Make sure we have an IOMD we understand */
     
@@ -292,7 +297,7 @@ iicsubmatch(parent, match, aux)
 
 	ib->ib_addr = cf->cf_loc[IICCF_ADDR];
 
-	if (ib->ib_addr == -1)
+	if (ib->ib_addr == IICCF_ADDR_DEFAULT)
 		return(0);
 
 	return((*cf->cf_attach->ca_match)(parent, match, aux));
