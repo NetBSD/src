@@ -1,4 +1,4 @@
-/* $NetBSD: asc_ioasic.c,v 1.2 2000/02/19 09:48:46 nisimura Exp $ */
+/* $NetBSD: asc_ioasic.c,v 1.3 2000/02/28 18:51:25 mhitch Exp $ */
 
 /*
  * Copyright (c) 2000 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.2 2000/02/19 09:48:46 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_ioasic.c,v 1.3 2000/02/28 18:51:25 mhitch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,10 +220,23 @@ asc_ioasic_intr(sc)
 {
 	struct asc_softc *asc = (struct asc_softc *)sc;
 	int trans, resid;
-	u_int tcl, tcm, ssr, scr;
+	u_int tcl, tcm, ssr, scr, intr;
 	
 	if (asc->sc_active == 0)
 		panic("dmaintr: DMA wasn't active");
+
+	/*
+	 * When doing polled I/O, the SCSI bits in the interrupt register won't
+	 * get cleared by the interrupt processing.  This will cause the DMA
+	 * address registers to not load on the next DMA transfer.
+	 * Check for these bits here, and clear them if needed.
+	 */
+	intr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR);
+	if ((intr & (IOASIC_INTR_SCSI_PTR_LOAD | IOASIC_INTR_SCSI_OVRUN |
+	    IOASIC_INTR_SCSI_READ_E)) != 0)
+		bus_space_write_4(asc->sc_bst, asc->sc_bsh, IOASIC_INTR,
+		    intr & ~(IOASIC_INTR_SCSI_PTR_LOAD | IOASIC_INTR_SCSI_OVRUN |
+		    IOASIC_INTR_SCSI_READ_E));
 
 	/* DMA has stopped */
 	ssr = bus_space_read_4(asc->sc_bst, asc->sc_bsh, IOASIC_CSR);
