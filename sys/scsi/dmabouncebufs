@@ -1,0 +1,1008 @@
+From agora.rain.com!rgrimes Sat Apr 24 09:38:42 1993
+Received: from agora.rain.com by jules.DIALix.oz.au with UUCP (5.67/25-eef)
+	id AA00109; Sat, 24 Apr 93 09:29:06 +0800
+Received: from uniwa.uwa.edu.au by perth.dialix.oz.au with SMTP id AA28179
+  (5.67a/IDA-1.5 for <julian@jules.dialix.oz.au>); Sat, 24 Apr 1993 09:04:48 +0800
+Received: from agora.rain.com by uniwa.uwa.edu.au with SMTP (5.65c)
+	id AA23685; Sat, 24 Apr 1993 09:04:26 +0800
+Received: by agora.rain.com (Smail3.1.26.7 #19)
+	id m0nmYf0-0001bcC; Fri, 23 Apr 93 18:04 PDT
+Message-Id: <m0nmYf0-0001bcC@agora.rain.com>
+From: rgrimes@agora.rain.com (Rodney Grimes)
+Subject: >16MB ram experimental patch (fwd)
+To: julian@jules.dialix.oz.au (Julian Elischer)
+Date: Fri, 23 Apr 93 18:04:06 PDT
+X-Mailer: ELM [version 2.4beta PL3]
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Length: 27406     
+Status: OR
+
+Julian,
+This has been filed in the bugfiler for processing.  I am forwarding it
+to you for approval.  If you approve this I will add it to the patch kit
+licity split.  If the person is way off base on these changes, or you would
+like to clean them up that is fine, just let me know.  
+
+This problem does effect a lot of people (me real soon, as I just came accross
+some money and will be going from 16MB to 32MB)
+
+Forwarded message:
+From bsd.coe.montana.edu!owner-bugs Fri Apr 23 15:58:05 1993
+Resent-Date: Sat, 24 Apr 1993 00:55:51 +0200
+Resent-From: <owner-bugs@bsd.coe.montana.edu>
+Resent-Message-Id: <9304232257.AA13748@bsd.coe.montana.edu>
+Subject: >16MB ram experimental patch
+To: 386bsd_bugs@bsd.coe.montana.edu
+Resent-To: rgrimes@bsd.coe.montana.edu
+Date: Sat, 24 Apr 1993 00:55:51 +0200
+From: Arne Juul <Arne.Juul@dsl.unit.no>
+Message-Id: <199304232255.AA00913@skarven.dsl.unit.no>
+
+Index: sys.386bsd 386BSD-0.1.2.3
+Reference: 386BSD-0.1.2.3/sys.386bsd/2
+
+Description:
+	Disk transfers scribble random things about when you have
+	more than 16 MB ram
+Repeat-By:
+	Install more than 16MB ram in your 386bsd machine
+Fix:
+
+  We have an Everex 486/33 box with ISA bus, Adaptec SCSI card,
+and 32MB ram. As most people should be aware of by now, 386bsd
+currently does not avoid doing DMA to memory outside the 16MB
+boundary. This causes great frustration for everybody with more
+than 16MB. Earlier we just patches machdep.c to turn off using
+those extra 16MB (too lazy to pick them physically out of the
+machine :-).
+  But the local high guru (tegge@pvv.unitno) has made the following
+patches for using bounce-buffers in a couple of night's programming.
+This currently works great on our machine, but may have unfortunate
+side-effects that we are not aware of.
+  I hope both the NetBSD people and the patch-kit maintainers will
+test this out and try to get it into the patch-kit (it's an option
+after all), so people will be able to use their full memory. Feel
+free to mail me about it, and I will answer questions as good as
+I can.
+  These patches are against the 0.1 + patchkit 0.2.3, and should
+fix both the as driver and Julian's drivers. It also has some extra
+debugging stuff (TRYGETSETUP, TRYTARGET) which may or may not be
+interesting. Hopefully it will also be applyable on NetBSD as-is.
+
+  If you test this, especially with >16MB ram:
+* remember to backup your system first. We crashed (totally!) our
+  root partition during the development of this. You were forewarned!
+* apply patches, add 'option HUGEMEM' to your configuration file,
+  reconfigure and remake the kernel.
+
+Happy hacking,
+
+  Arne H. Juul  (arnej@lise.unit.no)
+
+
+* EXPERIMENTAL PATCH * EXPERIMENTAL PATCH * EXPERIMENTAL PATCH *
+
+*** /usr/src/sys.386bsd/i386/isa/aha1542.c.orig	Sun Apr  4 09:39:16 1993
+--- /usr/src/sys.386bsd/i386/isa/aha1542.c	Mon Apr  5 05:21:11 1993
+***************
+*** 78,84 ****
+   * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   */
+  
+! 
+  #include <sys/types.h>
+  #include <aha.h>
+  
+--- 78,85 ----
+   * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+   */
+  
+! #undef TRYGETSETUP
+! #undef TRYTARGET
+  #include <sys/types.h>
+  #include <aha.h>
+  
+***************
+*** 128,133 ****
+--- 129,143 ----
+  #endif	__386BSD__
+  extern int delaycount;  /* from clock setup code */
+  
++ #ifdef HUGEMEM
++ #include "malloc.h"
++ struct bouncebuf *freebouncebufs;
++ int hugememflag=0;
++ #define NUM_BOUNCEBUFS 100   /* Should be moved to a header file */
++ #define MAXDMAADDR 0x1000000 /* Ditto ? */
++ #endif
++ 
++ 
+  /************************** board definitions *******************************/
+  /*
+   * I/O Port Interface
+***************
+*** 626,631 ****
+--- 636,671 ----
+  	   dev->dev_addr, dev->dev_spl);
+  #endif	__386BSD__
+  	ahaunit ++;
++ #ifdef HUGEMEM
++ 	{
++ 	  /* Allocate bounce buffers before all ISA memory is used. */
++ 	  char *bufs;
++ 	  int i;
++ 	  
++ 	  if (hugememflag)
++ 	    panic("Repeated ahaprobe");
++ 	  hugememflag=1;
++ 	  bufs=malloc((NUM_BOUNCEBUFS+1)*page_size,M_DEVBUF,M_NOWAIT);
++ 	  bufs = (char *) trunc_page(bufs+page_size);
++ 	  freebouncebufs=malloc(NUM_BOUNCEBUFS*sizeof(struct bouncebuf),
++ 				M_DEVBUF,M_NOWAIT);
++ 	  if (bufs && freebouncebufs)
++ 	    {
++ 	      for (i=0;i<NUM_BOUNCEBUFS;i++)
++ 		{
++ 		  freebouncebufs[i].s_vaddr=bufs;
++ 		  freebouncebufs[i].physaddr= vtophys(bufs);
++ 		  if ((int) (freebouncebufs[i].physaddr+page_size)>MAXDMAADDR)
++ 		    panic("asprobe: bouncebuf> MAXDMAADDR");
++ 		  freebouncebufs[i].next= 
++ 		    (i < NUM_BOUNCEBUFS-1) ? &freebouncebufs[i+1] : NULL ;
++ 		  bufs+=page_size;
++ 		}
++ 	    }
++ 	  else
++ 	    freebouncebufs=NULL;
++ 	}
++ #endif
+  	return(1);
+  }
+  
+***************
+*** 651,656 ****
+--- 691,715 ----
+  	{
+  		aha_timeout(0);
+  	}
++ #ifdef  TRYGETSETUP
++ 	{
++ 	  int i;
++   	  static struct aha_setup setup;
++ 	  bzero(&setup,sizeof(setup));
++ 	  aha_cmd(unit, 1, sizeof(setup), 0,&setup, AHA_SETUP_GET,
++ 		  sizeof(setup));
++ 	  printf("ahasetup: sync_neg=%d, parity=%d, speed=0x%x\n",
++ 		 setup.sync_neg,setup.parity,setup.speed);
++ 	  printf("ahasetup: bus_on=%d, bus_off=%d, num_mbx=%d\n",
++ 		 setup.bus_on,setup.bus_off,setup.num_mbx);
++ 	  printf("ahasetup: mbx=0x%x\n",(setup.mbx[0] << 16) |
++ 		   (setup.mbx[1] << 8 ) | setup.mbx[2] );
++ 	  for (i=0;i<8;i++)
++ 	    printf("ahasetup: sync[%d]: offset=%d, period=%d, valid=%d\n",i,
++ 		   setup.sync[i].offset,setup.sync[i].period,
++ 		   setup.sync[i].valid);
++ 	}
++ #endif
+  #ifdef	__386BSD__
+  	printf("aha%d",unit);
+  #endif	__386BSD__
+***************
+*** 911,916 ****
+--- 970,976 ----
+  	unsigned char ad[3];
+  	volatile int i,sts;
+  	struct	aha_config conf;
++ 	
+  
+  	/***********************************************\
+  	* reset board, If it doesn't respond, assume 	*
+***************
+*** 1018,1023 ****
+--- 1078,1086 ----
+  	}
+  	
+  
++ #ifdef TRYTARGET
++ 	aha_cmd(unit,8, 0, 0, 0, AHA_TARGET_EN,0,0,0,0,0,0,0,0);
++ #endif
+  	/***********************************************\
+  	* Initialize mail box 				*
+  	\***********************************************/
+***************
+*** 1172,1177 ****
+--- 1235,1244 ----
+  			* Set up the scatter gather block		*
+  			\***********************************************/
+  		
++ #ifdef HUGEMEM
++ 		  struct bouncebuf *bounced=NULL,*head;
++ 		  int s;
++ #endif
+  			if(scsi_debug & SHOWSCATGATH)
+  				printf("%d @0x%x:- ",xs->datalen,xs->data);
+  			datalen		=	xs->datalen;
+***************
+*** 1182,1188 ****
+  			{
+  				bytes_this_seg	= 0;
+  	
+! 				/* put in the base address */
+  				lto3b(thisphys,&(sg->seg_addr));
+  		
+  				if(scsi_debug & SHOWSCATGATH)
+--- 1249,1293 ----
+  			{
+  				bytes_this_seg	= 0;
+  	
+! #ifdef HUGEMEM
+! 				if (thisphys>=MAXDMAADDR) /* If already bounced --> won't hit this code */
+! 				  {
+! 				    /* Copy down to DMA-able ram */
+! 				    
+! 				    s=splbio();
+! 				    bounced=freebouncebufs;
+! 				    if (bounced)
+! 				      {
+! 					freebouncebufs=bounced->next;
+! 					splx(s);
+! 					bounced->next=xs->bouncebufs;
+! 					xs->bouncebufs=bounced;
+! 					/* Keep offset on page */
+! 					thisphys= bounced->physaddr
+! 					  +( thisphys & (PAGESIZ-1));
+! 					bounced->length=0;
+! 				      }
+! 				    else
+! 				      {
+! 					xs->error = XS_DRIVER_STUFFUP;
+! 					printf("aha_scsi_cmd%d: out of bouncebufs\n",
+! 					       unit);
+! 					head=xs->bouncebufs;
+! 					xs->bouncebufs=NULL;
+! 					while (head)
+! 					  {
+! 					    bounced=head;
+! 					    head=bounced->next;
+! 					    bounced->next=freebouncebufs;
+! 					    freebouncebufs=bounced;
+! 					  }
+! 					splx(s);
+! 					aha_free_ccb(unit,ccb,flags);
+! 					return(HAD_ERROR);
+! 				      }
+! 				  }
+! #endif
+! 				    /* put in the base address */
+  				lto3b(thisphys,&(sg->seg_addr));
+  		
+  				if(scsi_debug & SHOWSCATGATH)
+***************
+*** 1204,1209 ****
+--- 1309,1328 ----
+  					/**** or the data ****/
+  					bytes_this_page	= min(bytes_this_page
+  								,datalen);
++ #ifdef HUGEMEM
++ 					if (bounced)
++ 					  {
++ 					    bounced->vaddr=bounced->s_vaddr +
++ 					      (thisphys & (PAGESIZ-1));
++ 					    if (!xs->bp || 
++ 						!(xs->bp->b_flags & B_READ))
++ 					      bcopy(thiskv,bounced->vaddr,
++ 						    bytes_this_page);
++ 					    bounced->length=bytes_this_page;
++ 					    bounced->wanted=thiskv;
++ 					    bounced=NULL;
++ 					  }
++ #endif
+  					bytes_this_seg	+= bytes_this_page;
+  					datalen		-= bytes_this_page;
+  		
+***************
+*** 1212,1217 ****
+--- 1331,1374 ----
+  								+ PAGESIZ;
+  					if(datalen)
+  						thisphys = KVTOPHYS(thiskv);
++ #ifdef HUGEMEM
++ 				if (datalen && thisphys>=MAXDMAADDR)
++ 				  {
++ 				    /* Copy down to DMA-able ram */
++ 				    
++ 				    s=splbio();
++ 				    bounced=freebouncebufs;
++ 				    if (bounced)
++ 				      {
++ 					freebouncebufs=bounced->next;
++ 					splx(s);
++ 					bounced->next=xs->bouncebufs;
++ 					xs->bouncebufs=bounced;
++ 					/* Keep offset on page */
++ 					thisphys= bounced->physaddr
++ 					  +( thisphys & (PAGESIZ-1));
++ 					bounced->length=0;
++ 				      }
++ 				    else
++ 				      {
++ 					xs->error = XS_DRIVER_STUFFUP;
++ 					printf("aha_scsi_cmd%d: out of bouncebufs\n",
++ 					       unit,AHA_NSEG);
++ 					head=xs->bouncebufs;
++ 					xs->bouncebufs=NULL;
++ 					while (head)
++ 					  {
++ 					    bounced=head;
++ 					    head=bounced->next;
++ 					    bounced->next=freebouncebufs;
++ 					    freebouncebufs=bounced;
++ 					  }
++ 					splx(s);
++ 					aha_free_ccb(unit,ccb,flags);
++ 					return(HAD_ERROR);
++ 				      }
++ 				  }
++ #endif
+  				}
+  				/***************************************\
+  				* next page isn't contiguous, finish the seg*
+*** /usr/src/sys.386bsd/i386/isa/as.c.orig	Sun Apr  4 09:36:23 1993
+--- /usr/src/sys.386bsd/i386/isa/as.c	Mon Apr  5 05:21:12 1993
+***************
+*** 63,68 ****
+--- 63,99 ----
+   * 27 Feb 93	James da Silva		Tapedrive fixes. 
+   */
+  
++ /* 
++ 	HUGEMEM Fix (>16M ram).  Tries to implement the first of the 
++ 	alternatives listed below.
++ 
++      Some alternatives for handling of addresses outside DMA range:
++ 
++      - Do all the handling at splbio() level. Allocate bounce buffers
++        in asstart(). Performance problem due bcopy delaying the next disk IO ? 
++ 
++      - Do first part of handling in asstrategy() before disksort.
++        May cause use of MANY bounce buffers. (Or when running out of
++        them: cause less efficiency from the disksort().
++ 
++      - Do a variant of double buffering. Use an alternative disksort() 
++        which handles TWO active entries. (The second entry is active 
++        in the sense that it has allocated bounce buffers). Let asstrategy()
++        allocate bounce buffers if its the first or second on the list.
++        Add a mechanism for 'lazy' allocation of bounce buffers when 
++        removing the first entry from the active list. (Use spl0 from
++        inside an interrupt handler, or modify the exit part of the 
++        assembly part of the interrupt handler, to get an 'at interrupt leave'
++        callback). 
++        A lot of rewriting to be done.
++ 
++      Some unknowns:
++ 
++        - How costly is a 4K bcopy starting on a page boundary ?
++        - How costly are spl0(), splx() and splbio() ?
++ 
++ */
++ 
+  #include "as.h"
+  #if NAS > 0
+  
+***************
+*** 81,86 ****
+--- 112,118 ----
+  #include "syslog.h"
+  #include "vm/vm.h"
+  #include "kernel.h"
++ #include <malloc.h>
+  
+  #include "asreg.h"
+  
+***************
+*** 101,106 ****
+--- 133,141 ----
+  /* maximum scatter list size for Adaptech controller */
+  #define NSCATTER 17
+  
++ #define NUM_BOUNCEBUFS 100   /* Should be moved to a header file */
++ #define MAXDMAADDR 0x1000000 /* Ditto ? */
++ 
+  /* this array must reside in contiguous physical memory */
+  struct asinfo {
+  	dev_t dev;
+***************
+*** 138,146 ****
+--- 173,197 ----
+  	int retry_count;
+  	int start_time;
+  	int restart_pending;
++ #ifdef HUGEMEM
++ 	struct bouncebuf *bouncebufs;
++ #endif
+  
+  } asinfo[NTARGETS] = {0};
+  
++ 
++ #ifdef HUGEMEM
++ struct bouncebuf
++ {
++   struct bouncebuf *next; /* freelist or chain on same request */
++   caddr_t physaddr; /* a 4K buffer in phys. memory */
++   caddr_t vaddr;
++   caddr_t wanted;
++   int wantedsize;
++ } *freebouncebufs;
++ int hugememflag=0;
++ #endif
++ 
+  #define dev_part(dev) (minor (dev) & 7)
+  #define dev_target(dev) ((minor (dev) >> 3) & 7)
+  #define dev_rewind(dev) ((minor (dev) & 1) == 0)
+***************
+*** 169,175 ****
+  	val = inb (as_port + AS_STATUS);
+  
+  	if (val == (AS_STATUS_INIT | AS_STATUS_IDLE))
+! 		return (1);
+  	as_port = 0;
+  	return (0);
+  }
+--- 220,257 ----
+  	val = inb (as_port + AS_STATUS);
+  
+  	if (val == (AS_STATUS_INIT | AS_STATUS_IDLE))
+! 	  {
+! #ifdef HUGEMEM
+! 	    /* Allocate bounce buffers before all ISA memory is used. */
+! 	    char *bufs;
+! 	    int i;
+! 
+! 	    if (hugememflag)
+! 		panic("Repeated asprobe");
+! 	    hugememflag=1;
+! 	    bufs=malloc((NUM_BOUNCEBUFS+1)*page_size,M_DEVBUF,M_NOWAIT);
+! 	    bufs = (char *) trunc_page(bufs+page_size);
+! 	    freebouncebufs=malloc(NUM_BOUNCEBUFS*sizeof(struct bouncebuf),
+! 				  M_DEVBUF,M_NOWAIT);
+! 	    if (bufs && freebouncebufs)
+! 	      {
+! 	        for (i=0;i<NUM_BOUNCEBUFS;i++)
+! 		  {
+! 		    freebouncebufs[i].vaddr=bufs;
+! 		    freebouncebufs[i].physaddr=(caddr_t) vtophys(bufs);
+! 		    if ((int) (freebouncebufs[i].physaddr+page_size)>MAXDMAADDR)
+! 		      panic("asprobe: bouncebuf> MAXDMAADDR");
+! 		    freebouncebufs[i].next= 
+! 		      (i < NUM_BOUNCEBUFS-1) ? &freebouncebufs[i+1] : NULL ;
+! 		    bufs+=page_size;
+! 		  }
+! 	      }
+! 	    else
+! 	      freebouncebufs=NULL;
+! #endif
+! 
+! 	    return(1);
+! 	  }
+  	as_port = 0;
+  	return (0);
+  }
+***************
+*** 192,198 ****
+  	
+  	s = splbio ();
+  	if (as_put_byte (AS_CMD_MAILBOX_INIT) < 0
+! 	    || as_put_byte (NTARGETS) < 0
+  	    || as_put_byte (physaddr >> 16) < 0
+  	    || as_put_byte (physaddr >> 8) < 0
+  	    || as_put_byte (physaddr) < 0) {
+--- 274,280 ----
+  	
+  	s = splbio ();
+  	if (as_put_byte (AS_CMD_MAILBOX_INIT) < 0
+! 	    || as_put_byte (NTARGETS) < 0 /* Differs by factor 2 from aha1542.c */
+  	    || as_put_byte (physaddr >> 16) < 0
+  	    || as_put_byte (physaddr >> 8) < 0
+  	    || as_put_byte (physaddr) < 0) {
+***************
+*** 737,746 ****
+  
+  	if (asverbose)
+  		printf ("asstrategy %d %d ", bp->b_blkno, bp->b_bcount);
+- 	s = splbio ();
+  
+  	as = &asinfo[dev_target (bp->b_dev)];
+  	
+  	if (as->tape) {
+  		bp->av_forw = NULL;
+  		if (as->requests.b_actf)
+--- 819,834 ----
+  
+  	if (asverbose)
+  		printf ("asstrategy %d %d ", bp->b_blkno, bp->b_bcount);
+  
+  	as = &asinfo[dev_target (bp->b_dev)];
++ 
++ 	/* Moved up to avoid splstuff needlessly */
++ 	if (!as->tape && bp != as->scsi_bp
++ 	    && as->have_label == 0
++ 	    && dev_part (bp->b_dev) != 3)
++ 	  goto bad;
+  	
++ 	s = splbio ();
+  	if (as->tape) {
+  		bp->av_forw = NULL;
+  		if (as->requests.b_actf)
+***************
+*** 749,759 ****
+  			as->requests.b_actf = bp;
+  		as->requests.b_actl = bp;
+  	} else {
+- 		if (bp != as->scsi_bp
+- 		    && as->have_label == 0
+- 		    && dev_part (bp->b_dev) != 3)
+- 			goto bad;
+- 
+  		bp->b_cylin = bp->b_blkno;
+  		disksort (&as->requests, bp);
+  	}
+--- 837,842 ----
+***************
+*** 776,781 ****
+--- 859,879 ----
+  	s = splbio ();
+  	as->restart_pending = 0;
+  	as->retry_count++;
++ #ifdef HUGEMEM
++ 	{
++ 	  /* free bounce buffers. (something has gone wrong) */
++ 	  struct bouncebuf *tmp,*head;
++ 	  head=as->bouncebufs;
++ 	  as->bouncebufs=NULL;
++ 	  while (head)
++ 	    {
++ 	      tmp=head;
++ 	      head=tmp->next;
++ 	      tmp->next=freebouncebufs;
++ 	      freebouncebufs=tmp;
++ 	    }
++ 	}
++ #endif
+  	asstart (as);
+  	splx (s);
+  }
+***************
+*** 909,914 ****
+--- 1007,1040 ----
+  		sp[0] = thistime >> 16;
+  		sp[1] = thistime >> 8;
+  		sp[2] = thistime;
++ #ifdef HUGEMEM
++ 		if (physaddr+thistime > MAXDMAADDR)
++ 		  {
++ 		    struct bouncebuf *tmp;
++ 		    tmp=freebouncebufs;
++ 		    if (tmp)
++ 		      {
++ 			/* splbio() stuff ==> asintr is no problem here */
++ 			freebouncebufs=freebouncebufs->next;
++ 			tmp->next=as->bouncebufs;
++ 			as->bouncebufs=tmp;
++ 
++ 			physaddr = tmp->physaddr;
++ 			tmp->wanted=p;
++ 			tmp->wantedsize=thistime;
++ 			/* Ugly. bcopy may take some time. blocks BIO :-( */
++ 			if (!(bp->b_flags & B_READ))
++ 			  bcopy(p,tmp->vaddr,thistime);
++ 		      }
++ 		    else
++ 		      {
++ 			/* Too few allocated bounce buffers :-( */
++ 			printf("need more bounce buffers, cannot happen?");
++ 			bp->b_error = ENXIO;
++ 			goto bad;
++ 		      }
++ 		  }
++ #endif
+  		sp[3] = physaddr >> 16;
+  		sp[4] = physaddr >> 8;
+  		sp[5] = physaddr;
+***************
+*** 940,945 ****
+--- 1066,1072 ----
+  		ccb->ccb_addr_and_control |= (bp->b_flags & B_READ) ? 8 : 0x10;
+  	else
+  		ccb->ccb_addr_and_control |= 0x18;
++ 	/* Note: unit number is in the 3 LSB of ccb_addr_and_control */
+  
+  	nbytes = nscatter * 6;
+  	ccb->ccb_data_len_msb = nbytes >> 16;
+***************
+*** 1037,1042 ****
+--- 1164,1183 ----
+  
+  		as->active = 0;
+  		bp = as->requests.b_actf;
++ #ifdef HUGEMEM
++ 		{
++ 		  /* free bounce buffers. (something has gone wrong) */
++ 		  struct bouncebuf *tmp,*head=as->bouncebufs;
++ 		  as->bouncebufs=NULL;
++ 		  while (head)
++ 		    {
++ 		      tmp=head;
++ 		      head=tmp->next;
++ 		      tmp->next=freebouncebufs;
++ 		      freebouncebufs=tmp;
++ 		    }
++ 		}
++ #endif
+  		if (bp) {
+  			bp->b_flags |= B_ERROR;
+  			asdone (as, 1);
+***************
+*** 1260,1272 ****
+  int restart;
+  {
+  	struct buf *bp;
+  
+  	bp = as->requests.b_actf;
+  	as->requests.b_actf = bp->av_forw;
+! 	biodone (bp);
+! 	as->retry_count = 0;
+  	if (restart && as->requests.b_actf)
+  		asstart (as);
+  }
+  
+  int
+--- 1401,1444 ----
+  int restart;
+  {
+  	struct buf *bp;
++ #ifdef HUGEMEM
++ 	struct bouncebuf *tmp,*head;
++ 	int s;
++ 
++ 	head = as->bouncebufs;
++ 	as->bouncebufs=NULL;
++ #endif
+  
+  	bp = as->requests.b_actf;
+  	as->requests.b_actf = bp->av_forw;
+! 	as->retry_count = 0; 
+! 	/* side effect: done handling cannot get retry cnt. bad ??  */
+  	if (restart && as->requests.b_actf)
+  		asstart (as);
++ #ifdef HUGEMEM
++ 	/* free bounce buffers. */
++ 	/* s=spl0(); */
++ 	while (head)
++ 	  {
++ 	    tmp=head;
++ 	    head=tmp->next;
++ 	    
++ 	    /* Copy up from bounce buffer if read. Blocks BIO :-( */
++ 	    if ((bp->b_flags & (B_READ|B_ERROR))==B_READ)
++ 	      bcopy(tmp->vaddr,tmp->wanted,tmp->wantedsize);
++ 	    
++ 	    /* splx(s); */
++ 	    tmp->next=freebouncebufs;
++ 	    freebouncebufs=tmp;
++ 	    /* spl0(); */
++ 	  }
++ 	/* splx(s); */
++ 	/*
++ 	 * Should prepare new bounce buffers for next request here
++ 	 *  - not implemented
++ 	 */
++ #endif
++ 	biodone (bp);
+  }
+  
+  int
+*** /usr/src/sys.386bsd/scsi/scsiconf.h.orig	Sun Apr  4 09:39:40 1993
+--- /usr/src/sys.386bsd/scsi/scsiconf.h	Mon Apr  5 05:21:13 1993
+***************
+*** 85,91 ****
+--- 85,107 ----
+  	int	error;
+  	struct	buf *bp;
+  	struct	scsi_sense_data	sense;
++ #ifdef HUGEMEM
++ 	struct  bouncebuf *bouncebufs;
++ #endif
+  };
++ 
++ #ifdef HUGEMEM
++ struct bouncebuf
++ {
++   struct bouncebuf *next; /* freelist or chain on same request */
++   int  physaddr; /* a 4K buffer in phys. memory */
++   caddr_t vaddr; /* aligned with same offset on page as 'wanted' */
++   caddr_t s_vaddr; /* aligned on page boundary */
++   caddr_t wanted;
++   int length;
++ };
++ #endif
++ 
+  /********************************/
+  /* Flag values			*/
+  /********************************/
+*** /usr/src/sys.386bsd/scsi/sd.c.orig	Sun Apr  4 09:39:42 1993
+--- /usr/src/sys.386bsd/scsi/sd.c	Mon Apr  5 05:21:14 1993
+***************
+*** 46,53 ****
+  #include <scsi/scsiconf.h>
+  
+  long int sdstrats,sdqueues;
+  
+- 
+  #include <ddb.h>
+  #if	NDDB > 0
+  int	Debugger();
+--- 46,55 ----
+  #include <scsi/scsiconf.h>
+  
+  long int sdstrats,sdqueues;
++ #ifdef HUGEMEM
++ extern struct bouncebuf *freebouncebufs;
++ #endif
+  
+  #include <ddb.h>
+  #if	NDDB > 0
+  int	Debugger();
+***************
+*** 345,350 ****
+--- 347,357 ----
+  		splx(s);
+  		xs->flags = 0;
+  	}
++ #ifdef HUGEMEM
++ 	if (xs->bouncebufs)
++ 	  panic("sd_get_xs: bouncebufs!=NULL");
++ 
++ #endif
+  	return(xs);
+  }
+  
+***************
+*** 358,363 ****
+--- 365,374 ----
+  {
+  	int	s;
+  	
++ #ifdef HUGEMEM
++ 	if (xs->bouncebufs)
++ 	  panic("sd_free_xs: bouncebufs!=NULL");
++ #endif
+  	if(flags & SCSI_NOMASK)
+  	{
+  		if (sd_xfer_block_wait[unit])
+***************
+*** 611,616 ****
+--- 622,662 ----
+  	sdqueues++;
+  }
+  
++ #ifdef HUGEMEM
++ /*******************************************************\
++ * Frees bouncebuffers.
++ *
++ \*******************************************************/
++ 
++ int scsi_free_bouncebufs(xs,head,docopy)
++      struct scsi_xfer *xs;
++      struct bouncebuf *head;
++      int docopy;
++ {
++   struct bouncebuf *tmp;
++   int s;
++   if (xs)
++     xs->bouncebufs=NULL;
++   if (docopy)
++     for (tmp=head;tmp;tmp=tmp->next)
++       {
++ 	if (!tmp->length)
++ 	  panic("scsi_free_bouncebufs: length==0");
++ 	else
++ 	  bcopy(tmp->vaddr,tmp->wanted,tmp->length);
++       }
++   s=splbio();
++   while (head)
++     {
++       tmp=head;
++       head=head->next;
++       tmp->next=freebouncebufs;
++       freebouncebufs=tmp;
++     }
++   splx(s);
++ }
++ #endif    
++ 
+  /*******************************************************\
+  * This routine is called by the scsi interrupt when	*
+  * the transfer is complete.
+***************
+*** 657,662 ****
+--- 703,712 ----
+  			{
+  				xs->error = XS_NOERROR;
+  				xs->flags &= ~ITSDONE;
++ #ifdef HUGEMEM
++ 				if (xs->bouncebufs)
++ 				  scsi_free_bouncebufs(xs,xs->bouncebufs,0);
++ #endif
+  				if ( (*(sd_data[unit].sc_sw->scsi_cmd))(xs)
+  					== SUCCESSFULLY_QUEUED)
+  				{	/* don't wake the job, ok? */
+***************
+*** 673,681 ****
+--- 723,748 ----
+  			printf("sd%d: unknown error category from scsi driver\n"
+  				,unit);
+  		}	
++ #ifdef HUGEMEM
++ 		{
++ 		  struct bouncebuf *head;
++ 		  
++ 		  head=xs->bouncebufs;
++ 		  xs->bouncebufs=NULL;
++ 		  
++ 		  sd_free_xs(unit,xs,0);
++ 		  sdstart(unit);	/* If there's anything waiting.. do it */
++ 		  if (head)
++ 		    scsi_free_bouncebufs(NULL,head,
++ 					 (bp->b_flags & 
++ 					  (B_READ|B_ERROR))==B_READ);
++ 		  biodone(bp);
++ 		}
++ #else
+  		biodone(bp);
+  		sd_free_xs(unit,xs,0);
+  		sdstart(unit);	/* If there's anything waiting.. do it */
++ #endif
+  	}
+  	else /* special has finished */
+  	{
+***************
+*** 1168,1173 ****
+--- 1235,1245 ----
+  		xs->done_arg2	=	(int)xs;
+  retry:		xs->error	=	XS_NOERROR;
+  		xs->bp		=	0;
++ #ifdef HUGEMEM
++ 		/* Clean away bouncebufs */
++ 		if (xs->bouncebufs)
++ 		  scsi_free_bouncebufs(xs,xs->bouncebufs,0);
++ #endif
+  		retval = (*(sd->sc_sw->scsi_cmd))(xs);
+  		switch(retval)
+  		{
+***************
+*** 1226,1233 ****
+--- 1298,1319 ----
+  		default:
+  			retval = EIO;
+  		}
++ #ifdef HUGEMEM
++ 		{
++ 		  struct bouncebuf *head;
++ 
++ 		  head=xs->bouncebufs;
++ 		  xs->bouncebufs=NULL;
++ 
++ 		  sd_free_xs(unit,xs,flags);
++ 		  sdstart(unit);		/* check if anything is waiting fr the xs */
++ 		  if (head)
++ 		    scsi_free_bouncebufs(NULL,head,retval==ESUCCESS);
++ 		}
++ #else
+  		sd_free_xs(unit,xs,flags);
+  		sdstart(unit);		/* check if anything is waiting fr the xs */
++ #endif
+  	}
+  	else
+  	{
+*** /usr/src/sys.386bsd/scsi/st.c.orig	Sun Apr  4 09:39:44 1993
+--- /usr/src/sys.386bsd/scsi/st.c	Mon Apr  5 05:21:16 1993
+***************
+*** 850,855 ****
+--- 850,859 ----
+  			{
+  				xs->flags &= ~ITSDONE;
+  				xs->error = XS_NOERROR;
++ #ifdef HUGEMEM
++ 				if (xs->bouncebufs)
++ 				  scsi_free_bouncebufs(xs,xs->bouncebufs,0);
++ #endif
+  				if ( (*(st_data[unit].sc_sw->scsi_cmd))(xs)
+  					== SUCCESSFULLY_QUEUED)
+  				{       /* don't wake the job, ok? */
+***************
+*** 868,875 ****
+--- 872,887 ----
+  				,unit);
+  		}	
+  		biodone(bp);
++ #ifdef HUGEMEM
++ 		if (xs->bouncebufs)
++ 		  scsi_free_bouncebufs(xs,xs->bouncebufs,
++ 				       (bp->b_flags & 
++ 					(B_READ|B_ERROR))==B_READ);
++ 				     
++ #endif
+  		xs->flags = 0;	/* no longer in use */
+  		ststart(unit);		/* If there's another waiting.. do it */
++ #endif
+  	}
+  	else
+  	{
+***************
+*** 1380,1385 ****
+--- 1392,1401 ----
+  		xs->flags = INUSE;
+  		if(!(flags & SCSI_NOMASK))
+  			splx(s);
++ #ifdef HUGEMEM
++ 		if (xs->bouncebufs)
++ 		  panic("st_scsi_cmd: bouncebufs!=NULL");
++ #endif
+  
+  		/*******************************************************\
+  		* Fill out the scsi_xfer structure			*
+***************
+*** 1402,1407 ****
+--- 1418,1427 ----
+  		xs->done_arg2	=	(int)xs;
+  retry:		xs->error	=	XS_NOERROR;
+  		xs->bp		=	0;
++ #ifdef HUGEMEM
++ 		if (xs->bouncebufs)
++ 		  scsi_free_bouncebufs(xs,xs->bouncebufs,0);
++ #endif
+  		retval = (*(st->sc_sw->scsi_cmd))(xs);
+  		switch(retval)
+  		{
+***************
+*** 1469,1476 ****
+--- 1489,1501 ----
+  		default:
+  			retval = EIO;
+  		}
++ #ifdef HUGEMEM
++ 		if (xs->bouncebufs)
++ 		  scsi_free_bouncebufs(xs,xs->bouncebufs,retval==ESUCCESS);
++ #else
+  		xs->flags = 0;	/* it's free! */
+  		ststart(unit);
++ #endif
+  	}
+  	else
+  	{
+diff -c /usr/src/sys.386bsd/vm/vm_map.h.buggy /usr/src/sys.386bsd/vm/vm_map.h
+*** /usr/src/sys.386bsd/vm/vm_map.h.buggy	Tue Feb 16 00:29:04 1993
+--- /usr/src/sys.386bsd/vm/vm_map.h	Thu Feb 18 23:26:52 1993
+***************
+*** 210,216 ****
+--- 210,220 ----
+  #ifdef OMIT
+  #define MAX_KMAPENT     500
+  #else   /* !OMIT*/
++ #ifdef HUGEMEM
++ #define MAX_KMAPENT     2048
++ #else
+  #define MAX_KMAPENT     1000	/* 15 Aug 92*/
++ #endif
+  #endif  /* !OMIT*/
+  
+  #endif	_VM_MAP_
+
+
+
+-- 
+Rod Grimes						rgrimes@agora.rain.com
+386BSD patchkit coordinator			      Wish it paid real money!
+Accurate Automation Company          All opinions belong to me and my company!
+
