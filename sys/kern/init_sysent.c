@@ -41,6 +41,12 @@
 #define compat_12(func) sys_nosys
 #endif
 
+#ifdef COMPAT_13
+#define compat_13(func) __CONCAT(compat_13_,func)
+#else
+#define compat_13(func) sys_nosys
+#endif
+
 #define	s(type)	sizeof(type)
 
 struct sysent sysent[] = {
@@ -155,8 +161,8 @@ struct sysent sysent[] = {
 	    sys_acct },				/* 51 = acct */
 	{ 0, 0,
 	    sys_sigpending },			/* 52 = sigpending */
-	{ 2, s(struct sys_sigaltstack_args),
-	    sys_sigaltstack },			/* 53 = sigaltstack */
+	{ 2, s(struct compat_13_sys_sigaltstack_args),
+	    compat_13(sys_sigaltstack) },	/* 53 = compat_13 sigaltstack13 */
 	{ 3, s(struct sys_ioctl_args),
 	    sys_ioctl },			/* 54 = ioctl */
 	{ 1, s(struct compat_12_sys_reboot_args),
@@ -708,5 +714,7 @@ struct sysent sysent[] = {
 	    sys___fstat13 },			/* 279 = __fstat13 */
 	{ 2, s(struct sys___lstat13_args),
 	    sys___lstat13 },			/* 280 = __lstat13 */
+	{ 2, s(struct sys_sigaltstack_args),
+	    sys_sigaltstack },			/* 281 = sigaltstack */
 };
 
