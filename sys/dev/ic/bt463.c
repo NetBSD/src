@@ -1,6 +1,5 @@
-/* $NetBSD: tga_bt463.c,v 1.5 2000/03/04 10:27:59 elric Exp $ */
+/* $NetBSD: bt463.c,v 1.1 2000/04/02 18:57:36 nathanw Exp $ */
 
-#if 0
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -65,6 +64,10 @@
  * rights to redistribute these changes.
  */
 
+ /* This code was derived from and originally located in sys/dev/pci/
+  *	 NetBSD: tga_bt463.c,v 1.5 2000/03/04 10:27:59 elric Exp 
+  */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -77,46 +80,71 @@
 #include <dev/pci/tgareg.h>
 #include <dev/pci/tgavar.h>
 #include <dev/ic/bt463reg.h>
+#include <dev/ic/bt463var.h>
 
 #include <dev/wscons/wsconsio.h>
 
 /*
  * Functions exported via the RAMDAC configuration table.
  */
-void	tga_bt463_init __P((struct tga_devconfig *, int));
-int	tga_bt463_intr __P((void *));
-int	tga_bt463_set_cmap __P((struct tga_devconfig *,
+void	bt463_init __P((struct ramdac_cookie *));
+int	bt463_set_cmap __P((struct ramdac_cookie *,
 	    struct wsdisplay_cmap *));
-int	tga_bt463_get_cmap __P((struct tga_devconfig *,
+int	bt463_get_cmap __P((struct ramdac_cookie *,
 	    struct wsdisplay_cmap *));
+int	bt463_set_cursor __P((struct ramdac_cookie *,
+	    struct wsdisplay_cursor *));
+int	bt463_get_cursor __P((struct ramdac_cookie *,
+	    struct wsdisplay_cursor *));
+int	bt463_set_curpos __P((struct ramdac_cookie *,
+	    struct wsdisplay_curpos *));
+int	bt463_get_curpos __P((struct ramdac_cookie *,
+	    struct wsdisplay_curpos *));
+int	bt463_get_curmax __P((struct ramdac_cookie *,
+	    struct wsdisplay_curpos *));
+int	bt463_check_curcmap __P((struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp));
+void	bt463_set_curcmap __P((struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp));
+int	bt463_get_curcmap __P((struct ramdac_cookie *,
+	    struct wsdisplay_cursor *cursorp));
 
-int	tga_bt463_check_curcmap __P((struct tga_devconfig *,
-	    struct wsdisplay_cursor *cursorp));
-void	tga_bt463_set_curcmap __P((struct tga_devconfig *,
-	    struct wsdisplay_cursor *cursorp));
-int	tga_bt463_get_curcmap __P((struct tga_devconfig *,
-	    struct wsdisplay_cursor *cursorp));
+#ifdef BT463_DEBUG
+int bt463_store __P((void *));
+int bt463_debug __P((void *));
+int bt463_readback __P((void *));
+void	bt463_copyback __P((void *));
+#endif
 
-const struct tga_ramdac_conf tga_ramdac_bt463 = {
+struct ramdac_funcs bt463_funcsstruct = {
 	"Bt463",
-	tga_bt463_init,
-	tga_bt463_intr,
-	tga_bt463_set_cmap,
-	tga_bt463_get_cmap,
-	tga_builtin_set_cursor,
-	tga_builtin_get_cursor,
-	tga_builtin_set_curpos,
-	tga_builtin_get_curpos,
-	tga_builtin_get_curmax,
-	tga_bt463_check_curcmap,
-	tga_bt463_set_curcmap,
-	tga_bt463_get_curcmap,
+	bt463_register,
+	bt463_init,
+	bt463_set_cmap,
+	bt463_get_cmap,
+	bt463_set_cursor,
+	bt463_get_cursor,
+	bt463_set_curpos,
+	bt463_get_curpos,
+	bt463_get_curmax,
+	bt463_check_curcmap,
+	bt463_set_curcmap,
+	bt463_get_curcmap,
 };
 
 /*
  * Private data.
  */
 struct bt463data {
+	void            *cookie;        /* This is what is passed
+					 * around, and is probably
+					 * struct tga_devconfig *
+					 */
+	
+	int             (*ramdac_sched_update) __P((void *, void (*)(void *)));
+	void            (*ramdac_wr) __P((void *, u_int, u_int8_t));
+	u_int8_t        (*ramdac_rd) __P((void *, u_int));
+
 	int	changed;			/* what changed; see below */
 	char curcmap_r[2];			/* cursor colormap */
 	char curcmap_g[2];
@@ -127,6 +155,14 @@ struct bt463data {
 	int window_type[16]; /* 16 24-bit window type table entries */
 };
 
+#define BTWREG(data, addr, val) do { bt463_wraddr((data), (addr)); \
+	(data)->ramdac_wr((data)->cookie, BT463_REG_IREG_DATA, (val)); } while (0)
+#define BTWNREG(data, val) (data)->ramdac_wr((data)->cookie, \
+	BT463_REG_IREG_DATA, (val))
+#define BTRREG(data, addr) (bt463_wraddr((data), (addr)), \
+	(data)->ramdac_rd((data)->cookie, BT463_REG_IREG_DATA))
+#define BTRNREG(data) ((data)->ramdac_rd((data)->cookie, BT463_REG_IREG_DATA))
+
 #define	DATA_CURCMAP_CHANGED	0x01	/* cursor colormap changed */
 #define	DATA_CMAP_CHANGED	0x02	/* colormap changed */
 #define	DATA_WTYPE_CHANGED	0x04	/* window type table changed */
@@ -135,18 +171,10 @@ struct bt463data {
 /*
  * Internal functions.
  */
-inline void tga_bt463_wr_d __P((bus_space_tag_t, bus_space_handle_t,
-		u_int, u_int8_t));
-inline u_int8_t tga_bt463_rd_d __P((bus_space_tag_t, bus_space_handle_t,
-		u_int));
-inline void tga_bt463_wraddr __P((bus_space_tag_t, bus_space_handle_t,
-		u_int16_t));
+inline void bt463_wraddr __P((struct bt463data *, u_int16_t));
 
-void	tga_bt463_update __P((bus_space_tag_t, bus_space_handle_t, 
-		struct bt463data *));
+void	bt463_update __P((void *));
 
-#define	tga_bt463_sched_update(tag,regs)					\
-	bus_space_write_4((tag), (regs), (TGA_REG_SISR*4), (0x00010000))
  
 /*****************************************************************************/
 
@@ -154,75 +182,100 @@ void	tga_bt463_update __P((bus_space_tag_t, bus_space_handle_t,
  * Functions exported via the RAMDAC configuration table.
  */
 
-void
-tga_bt463_init(dc, alloc)
-	struct tga_devconfig *dc;
-	int alloc;
+struct ramdac_funcs *
+bt463_funcs(void)
 {
-	struct bt463data tmp, *data;
-	bus_space_tag_t tag;
-	bus_space_handle_t regs;
+	return &bt463_funcsstruct;
+}
+
+struct ramdac_cookie *
+bt463_register(v, sched_update, wr, rd)
+	void *v;
+	int (*sched_update)(void *, void (*)(void *));
+	void (*wr)(void *, u_int, u_int8_t);
+	u_int8_t (*rd)(void *, u_int);
+{
+	struct bt463data *data;
+	/*
+	 * XXX -- comment out of date.  rcd.
+	 * If we should allocate a new private info struct, do so.
+	 * Otherwise, use the one we have (if it's there), or
+	 * use the temporary one on the stack.
+	 */
+	data = malloc(sizeof *data, M_DEVBUF, M_WAITOK);
+	/* XXX -- if !data */
+	data->cookie = v;
+	data->ramdac_sched_update = sched_update;
+	data->ramdac_wr = wr;
+	data->ramdac_rd = rd;
+	return (struct ramdac_cookie *)data;
+}
+
+/*
+ * This function exists solely to provide a means to init
+ * the RAMDAC without first registering.  It is useful for
+ * initializing the console early on.
+ */
+void
+bt463_cninit(v, sched_update, wr, rd)
+	void *v;
+	int (*sched_update)(void *, void (*)(void *));
+	void (*wr)(void *, u_int, u_int8_t);
+	u_int8_t (*rd)(void *, u_int);
+{
+	struct bt463data tmp, *data = &tmp;
+	data->cookie = v;
+	data->ramdac_sched_update = sched_update;
+	data->ramdac_wr = wr;
+	data->ramdac_rd = rd;
+	bt463_init((struct ramdac_cookie *)data);
+}
+
+void
+bt463_init(rc)
+	struct ramdac_cookie *rc;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+
 	int i;
 
 	/*
 	 * Init the BT463 for normal operation.
 	 */
 
-	tag = dc->dc_memt;
-	bus_space_subregion(tag, dc->dc_vaddr, TGA_MEM_CREGS, 512, 
-						&regs);
+
 	/*
 	 * Setup:
 	 * reg 0: 4:1 multiplexing, 25/75 blink.
 	 * reg 1: Overlay mapping: mapped to common palette, 
 	 *        14 window type entries, 24-plane configuration mode,
 	 *        4 overlay planes, underlays disabled, no cursor. 
-	 * reg 2: sync-on-green disabled, pedestal enabled.
+	 * reg 2: sync-on-green enabled, pedestal enabled.
 	 */
-	tga_bt463_wraddr(tag, regs, BT463_IREG_COMMAND_0);
-	tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0x40);
 
-	tga_bt463_wraddr(tag, regs, BT463_IREG_COMMAND_1);
-	tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0x48);
-
-	tga_bt463_wraddr(tag, regs, BT463_IREG_COMMAND_2);
-	tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0x40);
+	BTWREG(data, BT463_IREG_COMMAND_0, 0x40);
+	BTWREG(data, BT463_IREG_COMMAND_1, 0x48);
+	BTWREG(data, BT463_IREG_COMMAND_2, 0xC0);
 
 	/*
 	 * Initialize the read mask.
 	 */
-	tga_bt463_wraddr(tag, regs, BT463_IREG_READ_MASK_P0_P7);
-	for (i = 0; i < 3; i++)
-		tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0xff);
+	bt463_wraddr(data, BT463_IREG_READ_MASK_P0_P7);
+	for (i = 0; i < 4; i++)
+		BTWNREG(data, 0xff);
 
 	/*
 	 * Initialize the blink mask.
 	 */
-	tga_bt463_wraddr(tag, regs, BT463_IREG_BLINK_MASK_P0_P7);
-	for (i = 0; i < 3; i++)
-		tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0);
+	bt463_wraddr(data, BT463_IREG_BLINK_MASK_P0_P7);
+	for (i = 0; i < 4; i++)
+		BTWNREG(data, 0);
+
 
 	/*
 	 * Clear test register
 	 */
-	tga_bt463_wraddr(tag, regs, BT463_IREG_TEST);
-	tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 0);
-
-	/*
-	 * If we should allocate a new private info struct, do so.
-	 * Otherwise, use the one we have (if it's there), or
-	 * use the temporary one on the stack.
-	 */
-	if (alloc) {
-		if (dc->dc_ramdac_private != NULL)
-			panic("tga_bt463_init: already have private struct");
-		dc->dc_ramdac_private = malloc(sizeof *data, M_DEVBUF,
-		    M_WAITOK);
-	}
-	if (dc->dc_ramdac_private != NULL)
-		data = dc->dc_ramdac_private;
-	else
-		data = &tmp;
+	BTWREG(data, BT463_IREG_TEST, 0);
 
 	/*
 	 * Initalize the RAMDAC info struct to hold all of our
@@ -241,68 +294,60 @@ tga_bt463_init(dc, alloc)
 
 
 	/* Initialize the window type table:
-	 * Entry 0: 8-plane pseudocolor in the bottom 8 bits, 
-	 *          overlays disabled, colormap starting at 0. 
+	 *
+	 * Entry 0: 24-plane truecolor, overlays enabled, bypassed.
+	 *
+	 *  Lookup table bypass:      yes (    1 << 23 & 0x800000)  800000
+	 *  Colormap address:       0x000 (0x000 << 17 & 0x7e0000)       0 
+	 *  Overlay mask:             0xf (  0xf << 13 & 0x01e000)   1e000
+	 *  Overlay location:    P<27:24> (    0 << 12 & 0x001000)       0
+	 *  Display mode:       Truecolor (    0 <<  9 & 0x000e00)     000
+	 *  Number of planes:           8 (    8 <<  5 & 0x0001e0)     100
+	 *  Plane shift:                0 (    0 <<  0 & 0x00001f)       0
+	 *                                                        --------
+	 *                                                        0x81e100
+	 */	  
+	data->window_type[0] = 0x81e100;
+
+	/* Entry 1: 8-plane pseudocolor in the bottom 8 bits, 
+	 *          overlays enabled, colormap starting at 0. 
 	 *
 	 *  Lookup table bypass:       no (    0 << 23 & 0x800000)       0
 	 *  Colormap address:       0x000 (0x000 << 17 & 0x7e0000)       0 
-	 *  Overlay mask:             0x0 (    0 << 13 & 0x01e000)       0
+	 *  Overlay mask:             0xf (  0xf << 13 & 0x01e000) 0x1e000
 	 *  Overlay location:    P<27:24> (    0 << 12 & 0x001000)       0
 	 *  Display mode:     Pseudocolor (    1 <<  9 & 0x000e00)   0x200
 	 *  Number of planes:           8 (    8 <<  5 & 0x0001e0)   0x100
-	 *  Plane shift:               16 (   16 <<  0 & 0x00001f)      10
+	 *  Plane shift:               16 ( 0x10 <<  0 & 0x00001f)      10
 	 *                                                        --------
-	 *                                                           0x310
+	 *                                                        0x01e310
 	 */	  
-	data->window_type[0] = 0x310;
+	data->window_type[1] = 0x01e310;
+
 	/* The colormap interface to the world only supports one colormap, 
 	 * so having an entry for the 'alternate' colormap in the bt463 
 	 * probably isn't useful.
 	 */
-	/* Entry 1: 24-plane truecolor, overlays disabled. */
-	data->window_type[1] = 0x200;
 
 	/* Fill the remaining table entries with clones of entry 0 until we 
 	 * figure out a better use for them.
 	 */
 
 	for (i = 2; i < BT463_NWTYPE_ENTRIES; i++) {
-		data->window_type[i] = 0x310;
+		data->window_type[i] = 0x81e100;
 	}
 
-	/* The Bt463 won't accept window type table data
-	 * except during a blanking interval. Normally we would 
-	 * do this by scheduling an interrupt, but this is run 
-	 * during autoconfiguration, when interrupts are disabled. 
-	 * So we spin on the end-of-frame interrupt bit. 
-	 */
-
-	bus_space_write_4(tag, regs, TGA_REG_SISR*4, 0x00010001);
-	bus_space_barrier(tag, regs, TGA_REG_SISR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	while ((bus_space_read_4(tag, regs, (TGA_REG_SISR * 4))& 0x00000001) == 0);
-
-	tga_bt463_update(tag, regs, data);
-
-	bus_space_write_4(tag, regs, TGA_REG_SISR*4, 0x00000001);
-	bus_space_barrier(tag, regs, TGA_REG_SISR*4, 4, BUS_SPACE_BARRIER_WRITE);
-
-	tga_bt463_sched_update(tag, regs);
+	data->ramdac_sched_update(data->cookie, bt463_update);
 
 }
 
 int
-tga_bt463_set_cmap(dc, cmapp)
-	struct tga_devconfig *dc;
+bt463_set_cmap(rc, cmapp)
+	struct ramdac_cookie *rc;
 	struct wsdisplay_cmap *cmapp;
 {
-	struct bt463data *data = dc->dc_ramdac_private;
-	bus_space_tag_t tag = dc->dc_memt;
-	bus_space_handle_t regs;
+	struct bt463data *data = (struct bt463data *)rc;
 	int count, index, s;
-
-	bus_space_subregion(tag, dc->dc_vaddr, TGA_MEM_CREGS, 512, 
-						&regs);
-	
 
 	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
 	    ((u_int)cmapp->index + (u_int)cmapp->count) > BT463_NCMAP_ENTRIES)
@@ -322,18 +367,18 @@ tga_bt463_set_cmap(dc, cmapp)
 
 	data->changed |= DATA_CMAP_CHANGED;
 
-	tga_bt463_sched_update(tag, regs);
+	data->ramdac_sched_update(data->cookie, bt463_update);
 	splx(s);
 
 	return (0);
 }
 
 int
-tga_bt463_get_cmap(dc, cmapp)
-	struct tga_devconfig *dc;
+bt463_get_cmap(rc, cmapp)
+	struct ramdac_cookie *rc;
 	struct wsdisplay_cmap *cmapp;
 {
-	struct bt463data *data = dc->dc_ramdac_private;
+	struct bt463data *data = (struct bt463data *)rc;
 	int error, count, index;
 
 	if ((u_int)cmapp->index >= BT463_NCMAP_ENTRIES ||
@@ -354,8 +399,8 @@ tga_bt463_get_cmap(dc, cmapp)
 }
 
 int
-tga_bt463_check_curcmap(dc, cursorp)
-	struct tga_devconfig *dc;
+bt463_check_curcmap(rc, cursorp)
+	struct ramdac_cookie *rc;
 	struct wsdisplay_cursor *cursorp;
 {
 	int count;
@@ -373,17 +418,12 @@ tga_bt463_check_curcmap(dc, cursorp)
 }
 
 void
-tga_bt463_set_curcmap(dc, cursorp)
-	struct tga_devconfig *dc;
+bt463_set_curcmap(rc, cursorp)
+	struct ramdac_cookie *rc;
 	struct wsdisplay_cursor *cursorp;
 {
-	struct bt463data *data = dc->dc_ramdac_private;
+	struct bt463data *data = (struct bt463data *)rc;
 	int count, index;
-	bus_space_tag_t tag = dc->dc_memt;
-	bus_space_handle_t regs;
-
-	bus_space_subregion(tag, dc->dc_vaddr, TGA_MEM_CREGS, 512, 
-						&regs);
 
 	/* can't fail; parameters have already been checked. */
 	count = cursorp->cmap.count;
@@ -392,15 +432,15 @@ tga_bt463_set_curcmap(dc, cursorp)
 	copyin(cursorp->cmap.green, &data->curcmap_g[index], count);
 	copyin(cursorp->cmap.blue, &data->curcmap_b[index], count);
 	data->changed |= DATA_CURCMAP_CHANGED;
-	tga_bt463_sched_update(tag, regs);
+	data->ramdac_sched_update(data->cookie, bt463_update);
 }
 
 int
-tga_bt463_get_curcmap(dc, cursorp)
-	struct tga_devconfig *dc;
+bt463_get_curcmap(rc, cursorp)
+	struct ramdac_cookie *rc;
 	struct wsdisplay_cursor *cursorp;
 {
-	struct bt463data *data = dc->dc_ramdac_private;
+	struct bt463data *data = (struct bt463data *)rc;
 	int error;
 
 	cursorp->cmap.index = 0;	/* DOCMAP */
@@ -423,29 +463,6 @@ tga_bt463_get_curcmap(dc, cursorp)
 	return (0);
 }
 
-int
-tga_bt463_intr(v)
-	void *v;
-{
-	struct tga_devconfig *dc = v;
-	bus_space_tag_t tag = dc->dc_memt;
-	bus_space_handle_t regs;
-
-	bus_space_subregion(tag, dc->dc_vaddr, TGA_MEM_CREGS, 512, 
-						&regs);
-
-	if ( (bus_space_read_4(tag, regs, TGA_REG_SISR*4) & 0x00010001) != 
-		 0x00010001) {
-		printf("Spurious interrupt");
-		return 0;
-	}
-
-	tga_bt463_update(tag, regs, dc->dc_ramdac_private);
-
-	bus_space_write_4(tag, regs, TGA_REG_SISR*4, 0x00000001);
-	bus_space_barrier(tag, regs, TGA_REG_SISR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	return (1);
-}
 
 /*****************************************************************************/
 
@@ -453,141 +470,167 @@ tga_bt463_intr(v)
  * Internal functions.
  */
 
-inline void
-tga_bt463_wr_d(tag, regs, btreg, val)
-	 bus_space_tag_t tag;
-	 bus_space_handle_t regs;
-	u_int btreg;
+#ifdef BT463_DEBUG
+int bt463_store(void *v)
+{
+	struct bt463data *data = (struct bt463data *)v;	
+
+	data->changed = DATA_ALL_CHANGED;
+	data->ramdac_sched_update(data->cookie, bt463_update);
+	printf("Scheduled bt463 store\n");
+
+	return 0;
+}
+
+
+int bt463_readback(void *v)
+{
+	struct bt463data *data = (struct bt463data *)v;	
+
+	data->ramdac_sched_update(data->cookie, bt463_copyback);
+	printf("Scheduled bt463 copyback\n");
+	return 0;
+}
+
+int
+bt463_debug(v)
+	void *v;
+{
+	struct bt463data *data = (struct bt463data *)v;
+	int i;
 	u_int8_t val;
-{
 
-	if (btreg > BT463_REG_MAX)
-		panic("tga_bt463_wr_d: reg %d out of range\n", btreg);
+	printf("BT463 main regs:\n");
+	for (i = 0x200; i < 0x20F; i ++) {
+	  val = BTRREG(data, i);
+	  printf("  $%04x %02x\n", i, val);
+	}
 
-	/* 
-	 * In spite of the 21030 documentation, to set the MPU bus bits for
-	 * a write, you set them in the upper bits of EPDR, not EPSR.
-	 */
-	
-	/* 
-	 * Strobe CE# (high->low->high) since status and data are latched on
-	 * the falling and rising edges of this active-low signal.
-	 */
-	   
-	bus_space_barrier(tag, regs, TGA_REG_EPDR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPDR*4, (btreg << 10 ) | 0x100 | val);
-	bus_space_barrier(tag, regs, TGA_REG_EPDR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPDR*4, (btreg << 10 ) | 0x000 | val);
-	bus_space_barrier(tag, regs, TGA_REG_EPDR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPDR*4, (btreg << 10 ) | 0x100 | val);
+	printf("BT463 revision register:\n");
+	  val = BTRREG(data, 0x220);
+	  printf("  $%04x %02x\n", 0x220, val);
+
+	printf("BT463 window type table (from softc):\n");
+
+	for (i = 0; i < BT463_NWTYPE_ENTRIES; i++) {
+	  printf("%02x %06x\n", i, data->window_type[i]);
+	}
+
+	return 0;
 }
 
-inline u_int8_t
-tga_bt463_rd_d(tag, regs, btreg)
-	 bus_space_tag_t tag;
-	 bus_space_handle_t regs;
-	u_int btreg;
+void 
+bt463_copyback(p)
+	 void *p;
 {
-	tga_reg_t rdval;
+	struct bt463data *data = (struct bt463data *)p;
+	int i;
 
-	if (btreg > BT463_REG_MAX)
-		panic("tga_bt463_rd_d: reg %d out of range\n", btreg);
-
-	/* 
-	 * Strobe CE# (high->low->high) since status and data are latched on 
-	 * the falling and rising edges of this active-low signal.
-	 */
-
-	bus_space_barrier(tag, regs, TGA_REG_EPSR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPSR*4, (btreg << 2) | 2 | 1);
-	bus_space_barrier(tag, regs, TGA_REG_EPSR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPSR*4, (btreg << 2) | 2 | 0);
-
-	bus_space_barrier(tag, regs, TGA_REG_EPSR*4, 4, BUS_SPACE_BARRIER_READ);
-
-	rdval = bus_space_read_4(tag, regs, TGA_REG_EPDR*4);
-	bus_space_barrier(tag, regs, TGA_REG_EPSR*4, 4, BUS_SPACE_BARRIER_WRITE);
-	bus_space_write_4(tag, regs, TGA_REG_EPSR*4, (btreg << 2) | 2 | 1);
-
-	return (rdval >> 16) & 0xff;
+		for (i = 0; i < BT463_NWTYPE_ENTRIES; i++) {
+			bt463_wraddr(data, BT463_IREG_WINDOW_TYPE_TABLE + i);
+			data->window_type[i] = (BTRNREG(data) & 0xff);        /* B0-7   */
+			data->window_type[i] |= (BTRNREG(data) & 0xff) << 8;  /* B8-15  */
+			data->window_type[i] |= (BTRNREG(data) & 0xff) << 16; /* B16-23 */
+		}
 }
+#endif
 
 inline void
-tga_bt463_wraddr(tag, regs, ireg)
-	 bus_space_tag_t tag;
-	 bus_space_handle_t regs;
+bt463_wraddr(data, ireg)
+	struct bt463data *data;
 	u_int16_t ireg;
 {
-	tga_bt463_wr_d(tag, regs, BT463_REG_ADDR_LOW, ireg & 0xff);
-	tga_bt463_wr_d(tag, regs, BT463_REG_ADDR_HIGH, (ireg >> 8) & 0xff);
+	data->ramdac_wr(data->cookie, BT463_REG_ADDR_LOW, ireg & 0xff);
+	data->ramdac_wr(data->cookie, BT463_REG_ADDR_HIGH, (ireg >> 8) & 0xff);
 }
 
 void
-tga_bt463_update(tag, regs, data)
-	 bus_space_tag_t tag;
-	 bus_space_handle_t regs;
-	struct bt463data *data;
+bt463_update(p)
+	void *p;
 {
-	int i, v, valid, blanked;
+	struct bt463data *data = (struct bt463data *)p;
+	int i, v;
 
 	v = data->changed;
 
 	/* The Bt463 won't accept window type data except during a blanking
-	 * interval. So we (1) do this early in the interrupt, in case it 
-	 * takes a long time, and (2) blank the screen while doing so, in case
-	 * we run out normal vertical blanking. 
+	 * interval, so we do this early in the interrupt.
+	 * Blanking the screen might also be a good idea, but it can cause 
+	 * unpleasant flashing and is hard to do from this side of the
+	 * ramdac interface.
 	 */
 	if (v & DATA_WTYPE_CHANGED) {
-		valid = bus_space_read_4(tag, regs, TGA_REG_VVVR*4);
-		blanked = valid | VVR_BLANK;
-		bus_space_write_4(tag, regs, TGA_REG_VVVR*4, blanked);
-		bus_space_barrier(tag, regs, TGA_REG_VVVR*4, 4, 
-			BUS_SPACE_BARRIER_WRITE);
 		/* spit out the window type data */
 		for (i = 0; i < BT463_NWTYPE_ENTRIES; i++) {
-			tga_bt463_wraddr(tag, regs, BT463_IREG_WINDOW_TYPE_TABLE + i);
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 
-				(data->window_type[i]) & 0xff);         /* B0-7   */
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 
-				(data->window_type[i] >> 8) & 0xff);    /* B8-15  */
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA, 
-				(data->window_type[i] >> 16) & 0xff);   /* B16-23 */
-
+			bt463_wraddr(data, BT463_IREG_WINDOW_TYPE_TABLE + i);
+			BTWNREG(data, (data->window_type[i]) & 0xff);       /* B0-7   */
+			BTWNREG(data, (data->window_type[i] >> 8) & 0xff);  /* B8-15   */
+			BTWNREG(data, (data->window_type[i] >> 16) & 0xff); /* B16-23  */
 		}
-		bus_space_write_4(tag, regs, TGA_REG_VVVR*4, valid);
-		bus_space_barrier(tag, regs, TGA_REG_VVVR*4, 4, 
-			BUS_SPACE_BARRIER_WRITE);
 	}
-
+	
 	if (v & DATA_CURCMAP_CHANGED) {
-		tga_bt463_wraddr(tag, regs, BT463_IREG_CURSOR_COLOR_0);
+		bt463_wraddr(data, BT463_IREG_CURSOR_COLOR_0);
 		/* spit out the cursor data */
 		for (i = 0; i < 2; i++) {
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA,
-				data->curcmap_r[i]);
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA,
-				data->curcmap_g[i]);
-			tga_bt463_wr_d(tag, regs, BT463_REG_IREG_DATA,
-				data->curcmap_b[i]);
+			BTWNREG(data, data->curcmap_r[i]);
+			BTWNREG(data, data->curcmap_g[i]);
+			BTWNREG(data, data->curcmap_b[i]);
 		}
 	}
-
+	
 	if (v & DATA_CMAP_CHANGED) {
-
-		tga_bt463_wraddr(tag, regs, BT463_IREG_CPALETTE_RAM);
+		bt463_wraddr(data, BT463_IREG_CPALETTE_RAM);
 		/* spit out the colormap data */
 		for (i = 0; i < BT463_NCMAP_ENTRIES; i++) {
-			tga_bt463_wr_d(tag, regs, BT463_REG_CMAP_DATA,
+			data->ramdac_wr(data->cookie, BT463_REG_CMAP_DATA, 
 				data->cmap_r[i]);
-			tga_bt463_wr_d(tag, regs, BT463_REG_CMAP_DATA,
+			data->ramdac_wr(data->cookie, BT463_REG_CMAP_DATA, 
 				data->cmap_g[i]);
-			tga_bt463_wr_d(tag, regs, BT463_REG_CMAP_DATA,
+			data->ramdac_wr(data->cookie, BT463_REG_CMAP_DATA, 
 				data->cmap_b[i]);
 		}
 	}
 
 	data->changed = 0;
-
-
 }
-#endif
+
+int	bt463_set_cursor (rc, cur)
+	struct ramdac_cookie *rc;
+	struct wsdisplay_cursor *cur;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+	return tga_builtin_set_cursor(data->cookie, cur);
+}
+
+int	bt463_get_cursor (rc, cur)
+	struct ramdac_cookie *rc;
+	struct wsdisplay_cursor *cur;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+	return tga_builtin_get_cursor(data->cookie, cur);
+}
+
+int	bt463_set_curpos (rc, cur)
+	struct ramdac_cookie *rc;
+	struct wsdisplay_curpos *cur;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+	return tga_builtin_set_curpos(data->cookie, cur);
+}
+
+int	bt463_get_curpos (rc, cur)
+	struct ramdac_cookie *rc;
+	struct wsdisplay_curpos *cur;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+	return tga_builtin_get_curpos(data->cookie, cur);
+}
+
+int	bt463_get_curmax (rc, cur)
+	struct ramdac_cookie *rc;
+	struct wsdisplay_curpos *cur;
+{
+	struct bt463data *data = (struct bt463data *)rc;
+	return tga_builtin_get_curmax(data->cookie, cur);
+}
