@@ -1,4 +1,4 @@
-.\" $NetBSD: wsconsctl.8,v 1.3 1999/02/03 21:05:14 augustss Exp $
+.\" $NetBSD: wsconsctl.8,v 1.4 1999/06/28 21:48:13 agc Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,48 +70,111 @@ command displays or sets various wscons system driver variables.
 If a list of variables is present on the command line, then
 .Nm
 prints the current value of those variables for the specified device.
-If the 
-.Fl a
-flag is specified, all variables for the device are printed.
-If the
-.Fl w
-flag is specified
+.Bl -tag -width Ds
+.It Fl a
+is used to specify all variables for the device.
+.It Fl w
 .Nm
 attempts to set or modify the specified variables to the given values.
-To set a variable the value is specified with an equal sign like
-.Bd -literal -offset indent -compact
-bell.pitch=1200
-.Ed
-To modify a variable the value is specified like
-.Bd -literal -offset indent -compact
-bell.pitch+=200
-.Ed
-Not all variables can be modified.
+The value can be specified as either an absolute value, by using the
+.Ar =
+symbol
+or as a relative value, by using the
+.Ar +=
+symbol. See the
+.Ar EXAMPLES
+section for more details.
+.It Fl f Ar file
+is used to specify an alternative control device.
+.It Fl n
+suppresses the printing of the variable name in the output -
+only the value will appear.
+.It Fl k
+selects the keyboard portion of the device (this is the default).
+.It Fl d
+selects the display portion of the device.
+.It Fl m
+selects the mouse portion of the device.
+.El
 .Pp
 The
-.Fl f
-flag can be used to give an alternative control device.
+.Nm
+utility can be used to view and modify aspects of the keyboard,
+display and mouse, using the standard, machine-independent
+workstation console device driver
+.Xr wscons 4 .
 .Pp
-The
-.Fl n
-flag suppresses printing of the variable name.
+The keyboard type can be modified, the keyboard bell's pitch,
+period and duration
+can be modified, 
+the
+.Ar typematic
+value can be changed, and the keyboard encoding can be modified
+to switch keys, should the user find a keyboard's default layout
+difficult to use.
+The keyboard types and other relevant definitions,
+can all be found in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file.
 .Pp
-The
-.Fl k
-flag selects the keyboard portion of the device.
-If no flag out of
-.Fl kdm
-is given 
-.Fl k
-is the default.
+The mouse types are defined in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file.
 .Pp
-The
-.Fl d
-flag selects the display portion of the device.
+The keyboard types, and the height, width,
+depth (bits per pixel), color map size, and colormap
+are defined in the
+.Ar /usr/include/dev/wscons/wsconsio.h
+file. There are also definitions relating to video
+control and cursor control, which are not applicable to
+all display types, and to text emulation and graphics
+(mapped) modes.
 .Pp
-The
-.Fl m
-flag selects the mouse portion of the device.
+There are currently keyboard encodings for the following
+countries: user-defined, US, German, Danish, Italian,
+French, British and Japanese.
+.Sh EXAMPLES
+The following are just a few examples of
+.Nm
+and its functionality.
+.Pp
+.Dl wsconsctl -w encoding=uk
+.Pp
+Sets a UK keyboard encoding.
+.Pp
+.Dl wsconsctl -w map+="keysym Caps_Lock = Control_L"
+.Pp
+Modifies the current keyboard encoding so that, when the
+.Ar Caps Lock
+key is pressed, the same encoding sequence as
+.Ar Left Control
+is sent.
+For a full list of keysyms, and keycodes, please refer
+to the
+.Ar /usr/include/dev/wscons/wsksymdef.h
+file.
+.Pp
+.Dl wsconsctl -w encoding=us.swapctrlcaps
+.Pp
+sets a US keyboard encoding, with the
+.Ar Caps Lock
+and
+.Ar Left Control
+keys swapped. The
+.Ar .swapctrlcaps
+encoding does not work for all national keyboard encodings.
+For most purposes, the ability to set the value returned
+by the
+.Ar Caps Lock
+key is enough - see the previous example for details.
+.Pp
+.Dl wsconsctl -w bell.pitch=1200
+.Pp
+Sets the bell pitch to be 1200, whilst
+.Pp
+.Dl wsconsctl -w bell.pitch+=200
+.Pp
+adds 200 to the current pitch of the bell.
 .Sh FILES
 .Bl -tag -width /dev/wsmouse0
 .It Pa /dev/wskbd0
@@ -122,6 +185,7 @@ mouse control device
 display control device
 .El
 .Sh SEE ALSO
+.Xr pckbd 4 ,
 .Xr wscons 4 ,
 .Xr wsconscfg 8 ,
 .Xr wsfontload 8
