@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.54 1999/09/15 14:17:14 augustss Exp $	*/
+/*	$NetBSD: uhci.c,v 1.55 1999/09/15 21:12:29 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -1381,7 +1381,7 @@ uhci_device_bulk_start(reqh)
 	usbd_device_handle dev = upipe->pipe.device;
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
 	uhci_intr_info_t *ii = upipe->iinfo;
-	uhci_soft_td_t *xfer, *xferend;
+	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status r;
 	int len, isread, endpt;
@@ -1405,28 +1405,28 @@ uhci_device_bulk_start(reqh)
 
 	r = uhci_alloc_std_chain(upipe, sc, len, isread, 
 				 reqh->flags & USBD_SHORT_XFER_OK,
-				 &reqh->dmabuf, &xfer, &xferend);
+				 &reqh->dmabuf, &data, &dataend);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	xferend->td.td_status |= LE(UHCI_TD_IOC);
+	dataend->td.td_status |= LE(UHCI_TD_IOC);
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 8) {
-		DPRINTF(("uhci_device_bulk_transfer: xfer(1)\n"));
-		uhci_dump_tds(xfer);
+		DPRINTF(("uhci_device_bulk_transfer: data(1)\n"));
+		uhci_dump_tds(data);
 	}
 #endif
 
 	/* Set up interrupt info. */
 	ii->reqh = reqh;
-	ii->stdstart = xfer;
-	ii->stdend = xferend;
+	ii->stdstart = data;
+	ii->stdend = dataend;
 #ifdef DIAGNOSTIC
 	ii->isdone = 0;
 #endif
 
-	sqh->elink = xfer;
-	sqh->qh.qh_elink = LE(xfer->physaddr);
+	sqh->elink = data;
+	sqh->qh.qh_elink = LE(data->physaddr);
 	sqh->intr_info = ii;
 
 	s = splusb();
@@ -1441,8 +1441,8 @@ uhci_device_bulk_start(reqh)
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_bulk_transfer: xfer(2)\n"));
-		uhci_dump_tds(xfer);
+		DPRINTF(("uhci_device_bulk_transfer: data(2)\n"));
+		uhci_dump_tds(data);
 	}
 #endif
 
@@ -1578,7 +1578,7 @@ uhci_device_intr_start(reqh)
 	usbd_device_handle dev = upipe->pipe.device;
 	uhci_softc_t *sc = (uhci_softc_t *)dev->bus;
 	uhci_intr_info_t *ii = upipe->iinfo;
-	uhci_soft_td_t *xfer, *xferend;
+	uhci_soft_td_t *data, *dataend;
 	uhci_soft_qh_t *sqh;
 	usbd_status r;
 	int i, s;
@@ -1593,15 +1593,15 @@ uhci_device_intr_start(reqh)
 
 	r = uhci_alloc_std_chain(upipe, sc, reqh->length, 1,
  				 reqh->flags & USBD_SHORT_XFER_OK,
-				 &reqh->dmabuf, &xfer, &xferend);
+				 &reqh->dmabuf, &data, &dataend);
 	if (r != USBD_NORMAL_COMPLETION)
 		return (r);
-	xferend->td.td_status |= LE(UHCI_TD_IOC);
+	dataend->td.td_status |= LE(UHCI_TD_IOC);
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_intr_transfer: xfer(1)\n"));
-		uhci_dump_tds(xfer);
+		DPRINTF(("uhci_device_intr_transfer: data(1)\n"));
+		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->u.intr.qhs[0]);
 	}
 #endif
@@ -1609,8 +1609,8 @@ uhci_device_intr_start(reqh)
 	s = splusb();
 	/* Set up interrupt info. */
 	ii->reqh = reqh;
-	ii->stdstart = xfer;
-	ii->stdend = xferend;
+	ii->stdstart = data;
+	ii->stdend = dataend;
 #ifdef DIAGNOSTIC
 	ii->isdone = 0;
 #endif
@@ -1619,15 +1619,15 @@ uhci_device_intr_start(reqh)
 		     upipe->u.intr.qhs[0]));
 	for (i = 0; i < upipe->u.intr.npoll; i++) {
 		sqh = upipe->u.intr.qhs[i];
-		sqh->elink = xfer;
-		sqh->qh.qh_elink = LE(xfer->physaddr);
+		sqh->elink = data;
+		sqh->qh.qh_elink = LE(data->physaddr);
 	}
 	splx(s);
 
 #ifdef USB_DEBUG
 	if (uhcidebug > 10) {
-		DPRINTF(("uhci_device_intr_transfer: xfer(2)\n"));
-		uhci_dump_tds(xfer);
+		DPRINTF(("uhci_device_intr_transfer: data(2)\n"));
+		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->u.intr.qhs[0]);
 	}
 #endif
@@ -1716,7 +1716,7 @@ uhci_device_request(reqh)
 	int addr = dev->address;
 	int endpt = upipe->pipe.endpoint->edesc->bEndpointAddress;
 	uhci_intr_info_t *ii = upipe->iinfo;
-	uhci_soft_td_t *setup, *xfer, *stat, *next, *xferend;
+	uhci_soft_td_t *setup, *data, *stat, *next, *dataend;
 	uhci_soft_qh_t *sqh;
 	int len;
 	u_int32_t ls;
@@ -1743,12 +1743,12 @@ uhci_device_request(reqh)
 		upipe->nexttoggle = 1;
 		r = uhci_alloc_std_chain(upipe, sc, len, isread, 
 					 reqh->flags & USBD_SHORT_XFER_OK,
-					 &reqh->dmabuf, &xfer, &xferend);
+					 &reqh->dmabuf, &data, &dataend);
 		if (r != USBD_NORMAL_COMPLETION)
 			return (r);
-		next = xfer;
-		xferend->link.std = stat;
-		xferend->td.td_link = LE(stat->physaddr);
+		next = data;
+		dataend->link.std = stat;
+		dataend->td.td_link = LE(stat->physaddr);
 	} else {
 		next = stat;
 	}
@@ -2131,31 +2131,31 @@ uhci_device_intr_done(reqh)
 
 	/* XXX Wasteful. */
 	if (reqh->pipe->repeat) {
-		uhci_soft_td_t *xfer, *xferend;
+		uhci_soft_td_t *data, *dataend;
 
 		/* This alloc cannot fail since we freed the chain above. */
 		uhci_alloc_std_chain(upipe, sc, reqh->length, 1,
 				     reqh->flags & USBD_SHORT_XFER_OK,
-				     &reqh->dmabuf, &xfer, &xferend);
-		xferend->td.td_status |= LE(UHCI_TD_IOC);
+				     &reqh->dmabuf, &data, &dataend);
+		dataend->td.td_status |= LE(UHCI_TD_IOC);
 
 #ifdef USB_DEBUG
 		if (uhcidebug > 10) {
-			DPRINTF(("uhci_device_intr_done: xfer(1)\n"));
-			uhci_dump_tds(xfer);
+			DPRINTF(("uhci_device_intr_done: data(1)\n"));
+			uhci_dump_tds(data);
 			uhci_dump_qh(upipe->u.intr.qhs[0]);
 		}
 #endif
 
-		ii->stdstart = xfer;
-		ii->stdend = xferend;
+		ii->stdstart = data;
+		ii->stdend = dataend;
 #ifdef DIAGNOSTIC
 		ii->isdone = 0;
 #endif
 		for (i = 0; i < npoll; i++) {
 			sqh = upipe->u.intr.qhs[i];
-			sqh->elink = xfer;
-			sqh->qh.qh_elink = LE(xfer->physaddr);
+			sqh->elink = data;
+			sqh->qh.qh_elink = LE(data->physaddr);
 		}
 	} else {
 		ii->stdstart = 0;	/* mark as inactive */
