@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: md.c,v 1.1 1993/10/16 21:53:14 pk Exp $
+ *	$Id: md.c,v 1.2 1993/10/27 00:54:58 pk Exp $
  */
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ int		magic, flags;
 	N_SETMAGIC((*hp), magic, MID_I386, flags);
 
 	/* TEXT_START depends on the value of outheader.a_entry.  */
-	if (entry_symbol)
+	if (!(link_mode & SHAREABLE)) /*WAS: if (entry_symbol) */
 		hp->a_entry = PAGSIZ;
 }
 
