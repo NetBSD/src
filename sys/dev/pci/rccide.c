@@ -1,4 +1,4 @@
-/*	$NetBSD: rccide.c,v 1.9 2004/08/14 15:08:06 thorpej Exp $	*/
+/*	$NetBSD: rccide.c,v 1.10 2004/08/19 23:25:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 By Noon Software, Inc.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.9 2004/08/14 15:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rccide.c,v 1.10 2004/08/19 23:25:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,8 +173,8 @@ static void
 serverworks_setup_channel(struct ata_channel *chp)
 {
 	struct ata_drive_datas *drvp;
-	struct pciide_channel *cp = (struct pciide_channel*)chp;
-	struct pciide_softc *sc = (struct pciide_softc *)cp->ata_channel.ch_wdc;
+	struct pciide_channel *cp = CHAN_TO_PCHAN(chp);
+	struct pciide_softc *sc = CHAN_TO_PCIIDE(chp);
 	struct wdc_softc *wdc = &sc->sc_wdcdev;
 	int channel = chp->ch_channel;
 	int drive, unit;
