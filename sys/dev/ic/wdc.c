@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.145 2003/10/25 08:30:46 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.146 2003/10/25 08:37:00 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.145 2003/10/25 08:30:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.146 2003/10/25 08:37:00 christos Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -1131,10 +1131,10 @@ __wdcwait_reset(chp, drv_mask, poll)
 	int drv_mask;
 {
 	int timeout, nloop;
-	u_int8_t st0, er0, st1, er1;
+	u_int8_t st0 = 0, er0 = 0, st1 = 0, er1 = 0;
 #ifdef WDCDEBUG
-	u_int8_t sc0, sn0, cl0, ch0;
-	u_int8_t sc1, sn1, cl1, ch1;
+	u_int8_t sc0 = 0, sn0 = 0, cl0 = 0, ch0 = 0;
+	u_int8_t sc1 = 0, sn1 = 0, cl1 = 0, ch1 = 0;
 #endif
 
 	if (poll)
