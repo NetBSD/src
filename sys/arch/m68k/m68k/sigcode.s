@@ -1,4 +1,4 @@
-/*	$NetBSD: sigcode.s,v 1.10 2000/11/26 11:47:25 jdolecek Exp $	*/
+/*	$NetBSD: sigcode.s,v 1.11 2002/07/04 01:50:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,30 +50,27 @@
  */
 
 /*
- * Signal "trampoline" code (18 bytes).  Invoked from RTE setup by sendsig().
+ * Signal trampoline; copied to top of user stack.
  *
- * Stack looks like:
+ * The handler has returned here as if we had called it.  On
+ * entry, the stack looks like:
  *
- *	sp+0	->	signal number
- *	sp+4		signal specific code
- *	sp+8		pointer to signal context frame (scp)
- *	sp+12		address of handler
- *	sp+16		saved hardware state
- *				.
- *				.
- *				.
- *	scp+0	->	beginning of signal context frame
+ *		sigcontext structure			[12]
+ *		pointer to sigcontext structure		[8]
+ *		signal specific code			[4]
+ *	sp->	signal number				[0]
  */
 
 	.data
 	.align	2
 GLOBAL(sigcode)
-	movl	%sp@(12),%a0	| signal handler addr		(4 bytes)
-	jsr	%a0@		| call signal handler		(2 bytes)
-	addql	#4,%sp		| pop signal number		(2 bytes)
-	trap	#3		| special sigreturn trap	(2 bytes)
-	movl	%d0,%sp@(4)	| save errno			(4 bytes)
-	moveq	#SYS_exit,%d0	| syscall == exit		(2 bytes)
-	trap	#0		| exit(errno)			(2 bytes)
+	leal	%sp@(12),%a0	/* get pointer to sigcontext */
+	movl	%a0,%sp@(4)	/* put it in the argument slot */
+				/* fake return address already there */
+	trap	#3		/* special sigreturn trap */
+	movl	%d0,%sp@(4)	/* exit with errno */
+	moveq	#SYS_exit,%d0	/* if sigreturn fails */
+	trap	#0
+
 	.align	2
 GLOBAL(esigcode)

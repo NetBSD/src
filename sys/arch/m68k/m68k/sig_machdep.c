@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.15 2001/07/28 13:08:34 tsutsui Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16 2002/07/04 01:50:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,10 +112,10 @@ sendsig(catcher, sig, mask, code)
 #endif
 
 	/* Build stack frame for signal trampoline. */
+	kf.sf_ra = (int)p->p_sigctx.ps_sigcode;
 	kf.sf_signum = sig;
 	kf.sf_code = code;
 	kf.sf_scp = &fp->sf_sc;
-	kf.sf_handler = catcher;
 
 	/*
 	 * Save necessary hardware state.  Currently this includes:
@@ -209,9 +209,12 @@ sendsig(catcher, sig, mask, code)
 		       kf.sf_sc.sc_sp, kf.sf_sc.sc_ap);
 #endif
 
-	/* Set up the registers to return to sigcode. */
+	/*
+	 * Set up the registers to return to the signal handler.  The
+	 * handler will then return to the signal trampoline.
+	 */
 	frame->f_regs[SP] = (int)fp;
-	frame->f_pc = (int)p->p_sigctx.ps_sigcode;
+	frame->f_pc = (int)catcher;
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

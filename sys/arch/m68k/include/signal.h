@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2002/06/23 21:31:12 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2002/07/04 01:50:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -95,15 +95,12 @@ struct sigstate {
 
 /*
  * Stack frame layout when delivering a signal.
- *
- * WARNING: code in locore.s assumes the layout shown for sf_signum
- * thru sf_handler, so... don't screw with them!
  */
 struct sigframe {
+	int	sf_ra;			/* handler return address */
 	int	sf_signum;		/* signal number for handler */
 	int	sf_code;		/* additional info for handler */
 	struct sigcontext *sf_scp;	/* context pointer for handler */
-	sig_t	sf_handler;		/* handler address for u_sigc */
 	struct sigcontext sf_sc;	/* actual context */
 	struct sigstate sf_state;	/* state of the hardware */
 };
