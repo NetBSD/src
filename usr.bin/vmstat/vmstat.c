@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.87 2001/11/26 07:40:01 lukem Exp $ */
+/* $NetBSD: vmstat.c,v 1.88 2001/11/26 10:18:08 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.87 2001/11/26 07:40:01 lukem Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.88 2001/11/26 10:18:08 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -219,12 +219,13 @@ kvm_t *kd;
 #define	HISTLIST	1<<6
 #define	HISTDUMP	1<<7
 #define	HASHSTAT	1<<8
+#define	HASHLIST	1<<9
 
 void	cpustats(void);
 void	deref_kptr(const void *, void *, size_t, const char *);
 void	dkstats(void);
 void	doevcnt(int verbose);
-void	dohashstat(int verbose);
+void	dohashstat(int, int, const char *);
 void	dointr(int verbose);
 void	domem(void);
 void	dopool(void);
@@ -258,12 +259,13 @@ main(int argc, char *argv[])
 	int reps;
 	char errbuf[_POSIX2_LINE_MAX];
 	gid_t egid = getegid();
-	const char *histname = NULL;
+	const char *histname, *hashname;
 
+	histname = hashname = NULL;
 	(void)setegid(getgid());
 	memf = nlistf = NULL;
 	interval = reps = todo = verbose = 0;
-	while ((c = getopt(argc, argv, "c:efhilM:mN:suUvw:")) != -1) {
+	while ((c = getopt(argc, argv, "c:efh:HilLM:mN:suUvw:")) != -1) {
 		switch (c) {
 		case 'c':
 			reps = atoi(optarg);
@@ -275,6 +277,9 @@ main(int argc, char *argv[])
 			todo |= FORKSTAT;
 			break;
 		case 'h':
+			hashname = optarg;
+			/* FALLTHROUGH */
+		case 'H':
 			todo |= HASHSTAT;
 			break;
 		case 'i':
@@ -282,6 +287,9 @@ main(int argc, char *argv[])
 			break;
 		case 'l':
 			todo |= HISTLIST;
+			break;
+		case 'L':
+			todo |= HASHLIST;
 			break;
 		case 'M':
 			memf = optarg;
@@ -392,43 +400,46 @@ main(int argc, char *argv[])
 	 */
 	if ((todo & VMSTAT) == 0) {
 	    for (;;) {
-	    	if (todo & (HISTLIST|HISTDUMP)) {
-	    		if ((todo & (HISTLIST|HISTDUMP)) ==
-			    (HISTLIST|HISTDUMP))
-	    			errx(1, "you may list or dump, but not both!");
-	    		hist_traverse(todo, histname);
-			putchar('\n');
-	    	}
-	    	if (todo & FORKSTAT) {
-	    		doforkst();
+		if (todo & (HISTLIST|HISTDUMP)) {
+			if ((todo & (HISTLIST|HISTDUMP)) ==
+			(HISTLIST|HISTDUMP))
+				errx(1, "you may list or dump, but not both!");
+			hist_traverse(todo, histname);
 			putchar('\n');
 		}
-	    	if (todo & MEMSTAT) {
-	    		domem();
-	    		dopool();
-			putchar('\n');
-	    	}
-	    	if (todo & SUMSTAT) {
-	    		dosum();
+		if (todo & FORKSTAT) {
+			doforkst();
 			putchar('\n');
 		}
-	    	if (todo & INTRSTAT) {
-	    		dointr(verbose);
+		if (todo & MEMSTAT) {
+			domem();
+			dopool();
 			putchar('\n');
 		}
-	    	if (todo & EVCNTSTAT) {
-	    		doevcnt(verbose);
+		if (todo & SUMSTAT) {
+			dosum();
 			putchar('\n');
 		}
-		if (todo & HASHSTAT) {
-			dohashstat(verbose);
+		if (todo & INTRSTAT) {
+			dointr(verbose);
 			putchar('\n');
 		}
-	    	
-	    	if (reps >= 0 && --reps <=0) 
+		if (todo & EVCNTSTAT) {
+			doevcnt(verbose);
+			putchar('\n');
+		}
+		if (todo & (HASHLIST|HASHSTAT)) {
+			if ((todo & (HASHLIST|HASHSTAT)) == (HASHLIST|HASHSTAT))
+				errx(1,
+				    "you may list or display, but not both!");
+			dohashstat(verbose, todo, hashname);
+			putchar('\n');
+		}
+		
+		if (reps >= 0 && --reps <=0) 
 			break;
-	    	sleep(interval);
-	    }
+		sleep(interval);
+	}
 	} else
 		dovmstat(interval, reps);
 	exit(0);
@@ -1155,7 +1166,7 @@ struct kernel_hash {
 };
 
 void
-dohashstat(int verbose)
+dohashstat(int verbose, int todo, const char *hashname)
 { 
 	LIST_HEAD(, generic)	*hashtbl_list;
 	TAILQ_HEAD(, generic)	*hashtbl_tailq;
@@ -1167,12 +1178,40 @@ dohashstat(int verbose)
 
 	hashbuf = NULL;
 	hashbufsize = 0;
-	printf("%-16s %8s %8s %8s %8s %8s %8s\n",
-	    "", "total", "used", "util", "num", "average", "maximum");
-	printf("%-16s %8s %8s %8s %8s %8s %8s\n",
-	    "hash table", "buckets", "buckets", "%", "items", "chain", "chain");
+
+	if (todo & HASHLIST) {
+		const char *prefix = "";
+
+		printf("Supported hashes:\n\t");
+		for (curhash = khashes; curhash->hashsize != -1; curhash++) {
+			printf("%s%s",
+			    prefix, namelist[curhash->hashsize].n_name + 1);
+			prefix = ", ";
+		}
+		return;
+	}
+
+	if (hashname != NULL) {
+		for (curhash = khashes; curhash->hashsize != -1; curhash++) {
+			if (strcmp(namelist[curhash->hashsize].n_name + 1,
+			    hashname) == 0)
+				break;
+		}
+		if (curhash->hashsize == -1)
+			errx(1, "%s: no such hash", hashname);
+	}
+
+	printf(
+	    "%-16s %8s %8s %8s %8s %8s %8s\n"
+	    "%-16s %8s %8s %8s %8s %8s %8s\n",
+	    "", "total", "used", "util", "num", "average", "maximum",
+	    "hash table", "buckets", "buckets", "%", "items", "chain",
+	    "chain");
 
 	for (curhash = khashes; curhash->hashsize != -1; curhash++) {
+		if (hashname != NULL &&
+		    strcmp(namelist[curhash->hashsize].n_name + 1, hashname))
+			continue;
 		elemsize = curhash->type == HASH_LIST ?
 		    sizeof(*hashtbl_list) : sizeof(*hashtbl_tailq);
 		kread(curhash->hashsize, &hashsize, sizeof(hashsize));
@@ -1404,7 +1443,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-efhilmsUv] [-u histname] [-c count] [-M core] "
-	    "[-N system] [-w wait] [disks]\n", getprogname());
+	    "usage: %s [-efHilmsUv] [-h hashname] [-u histname] [-c count]\n"
+	    "\t\t[-M core] [-N system] [-w wait] [disks]\n", getprogname());
 	exit(1);
 }

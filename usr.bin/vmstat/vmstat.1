@@ -1,4 +1,4 @@
-.\"	$NetBSD: vmstat.1,v 1.4 2001/11/26 07:52:46 wiz Exp $
+.\"	$NetBSD: vmstat.1,v 1.5 2001/11/26 10:18:08 lukem Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,7 +72,7 @@
 .Nd report virtual memory statistics
 .Sh SYNOPSIS
 .Nm
-.Op Fl efhilmsUv
+.Op Fl efHilLmsUv
 .Bk -words
 .Op Fl M Ar core
 .Ek
@@ -81,6 +81,9 @@
 .Ek
 .Bk -words
 .Op Fl c Ar count
+.Ek
+.Bk -words
+.Op Fl h Ar hashname
 .Ek
 .Bk -words
 .Op Fl u Ar histname
@@ -116,12 +119,20 @@ interval is specified, the default is 1 second.
 Report the values of system event counters.
 .It Fl f
 Report fork statistics.
-.It Fl h
-Report hash table statistics.
+.It Fl h Ar hashname
+Report hash table statistics for
+.Ar hashname .
+.It Fl H
+Report all hash table statistics.
 .It Fl i
 Report the values of system interrupt counters.
 .It Fl l
 List the UVM histories being maintained by the kernel.
+.It Fl L
+List all the hashes supported for
+.Fl h
+and
+.Fl H .
 .It Fl m
 Report on the usage of kernel dynamic memory listed first by size of
 allocation and then by type of usage.
