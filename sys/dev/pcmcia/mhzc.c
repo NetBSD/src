@@ -1,7 +1,7 @@
-/*	$NetBSD: mhzc.c,v 1.3 1999/10/20 14:57:57 enami Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.4 2000/02/04 01:27:13 cgd Exp $	*/
 
 /*-
- * Copyright (c) 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -142,11 +142,8 @@ struct cfattach mhzc_ca = {
 int	mhzc_em3336_enaddr __P((struct mhzc_softc *, u_int8_t *));
 int	mhzc_em3336_enable __P((struct mhzc_softc *));
 
-struct mhzc_product {
-	u_int32_t	mp_vendor;	/* PCMCIA vendor ID */
-	u_int32_t	mp_product;	/* PCMCIA product ID */
-	int		mp_expfunc;	/* expected function number */
-	const char	*mp_name;	/* device name */
+const struct mhzc_product {
+	struct pcmcia_product mp_product;
 
 	/* Get the Ethernet address for this card. */
 	int		(*mp_enaddr) __P((struct mhzc_softc *, u_int8_t *));
@@ -154,8 +151,8 @@ struct mhzc_product {
 	/* Perform any special `enable' magic. */
 	int		(*mp_enable) __P((struct mhzc_softc *));
 } mhzc_products[] = {
-	{ PCMCIA_VENDOR_MEGAHERTZ,	PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
-	  0,				PCMCIA_STR_MEGAHERTZ_XJEM3336,
+	{ { PCMCIA_STR_MEGAHERTZ_XJEM3336,	PCMCIA_VENDOR_MEGAHERTZ,
+	    PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,	0 },
 	  mhzc_em3336_enaddr,		mhzc_em3336_enable },
 
 	/*
@@ -164,9 +161,7 @@ struct mhzc_product {
 	 * most of them work more or less the same way.
 	 */
 
-	{ 0,				0,
-	  0,				NULL,
-	  NULL,				NULL },
+	{ { NULL } }
 };
 
 int	mhzc_print __P((void *, const char *));
@@ -179,23 +174,6 @@ void	mhzc_disable __P((struct mhzc_softc *, int));
 
 int	mhzc_intr __P((void *));
 
-const struct mhzc_product *mhzc_lookup __P((const struct pcmcia_attach_args *));
-
-const struct mhzc_product *
-mhzc_lookup(pa)
-	const struct pcmcia_attach_args *pa;
-{
-	const struct mhzc_product *mp;
-
-	for (mp = mhzc_products; mp->mp_name != NULL; mp++) {
-		if (pa->manufacturer == mp->mp_vendor &&
-		    pa->product == mp->mp_product &&
-		    pa->pf->number == mp->mp_expfunc)
-			return (mp);
-	}
-	return (NULL);
-}
-
 int
 mhzc_match(parent, match, aux)
 	struct device *parent;
@@ -204,7 +182,9 @@ mhzc_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (mhzc_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa,
+	    (const struct pcmcia_product *)mhzc_products,
+	    sizeof mhzc_products[0], NULL) != NULL)
 		return (10);		/* beat `com' */
 
 	return (0);
@@ -221,13 +201,15 @@ mhzc_attach(parent, self, aux)
 
 	sc->sc_pf = pa->pf;
 
-	sc->sc_product = mhzc_lookup(pa);
+	sc->sc_product = (const struct mhzc_product *)pcmcia_product_lookup(pa,
+            (const struct pcmcia_product *)mhzc_products,
+            sizeof mhzc_products[0], NULL);
 	if (sc->sc_product == NULL) {
 		printf("\n");
 		panic("mhzc_attach: impossible");
 	}
 
-	printf(": %s\n", sc->sc_product->mp_name);
+	printf(": %s\n", sc->sc_product->mp_product.pp_name);
 
 	/*
 	 * The address decoders on these cards are wacky.  The configuration
