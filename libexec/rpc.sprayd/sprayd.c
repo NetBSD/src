@@ -27,11 +27,11 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: sprayd.c,v 1.4 1995/01/13 20:53:08 mycroft Exp $
+ *	$Id: sprayd.c,v 1.5 1995/01/13 21:07:00 mycroft Exp $
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: sprayd.c,v 1.4 1995/01/13 20:53:08 mycroft Exp $";
+static char rcsid[] = "$Id: sprayd.c,v 1.5 1995/01/13 21:07:00 mycroft Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -117,14 +117,14 @@ spray_service(rqstp, transp)
 	static struct timeval clear, get;
 
 	switch (rqstp->rq_proc) {
-	case NULLPROC:
-		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
-		return;
-
 	case SPRAYPROC_CLEAR:
 		scum.counter = 0;
 		(void) gettimeofday(&clear, 0);
 		/*FALLTHROUGH*/
+
+	case NULLPROC:
+		(void)svc_sendreply(transp, xdr_void, (char *)NULL);
+		return;
 
 	case SPRAYPROC_SPRAY:
 		scum.counter++;
