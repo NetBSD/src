@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.29 2000/01/19 23:28:33 hubertf Exp $ */
+/* $NetBSD: lib.h,v 1.30 2000/08/28 21:35:14 hubertf Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -211,6 +211,8 @@ void    format_cmd(char *, size_t, char *, char *, char *);
 /* ftpio.c: FTP handling */
 int	expandURL(char *expandedurl, const char *wildcardurl);
 int	unpackURL(const char *url, const char *dir);
+int	ftp_cmd(const char *cmd, const char *expectstr);
+int	ftp_start(char *base);
 void	ftp_stop(void);
 
 /* Packing list */
