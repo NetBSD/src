@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc_machdep.c,v 1.57 2003/04/26 06:44:28 toshii Exp $	*/
+/*	$NetBSD: hpc_machdep.c,v 1.58 2003/04/26 07:09:26 toshii Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -398,9 +398,9 @@ initarm(argc, argv, bi)
     
 	/* XXX handle UMA framebuffer memory */
 
-	/* Use the first 1MB to allocate things */
-	freemempos = 0xc0000000;
-	memset((void *)0xc0000000, 0, KERNEL_TEXT_BASE - 0xc0000000);
+	/* Use the first 256kB to allocate things */
+	freemempos = KERNEL_BASE;
+	memset((void *)KERNEL_BASE, 0, KERNEL_TEXT_BASE - KERNEL_BASE);
 
 	/*
 	 * Right We have the bottom meg of memory mapped to 0x00000000
