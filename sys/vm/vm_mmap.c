@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: vm_mmap.c 1.3 90/01/21
  *	from: @(#)vm_mmap.c	7.5 (Berkeley) 6/28/91
- *	$Id: vm_mmap.c,v 1.26 1994/05/07 00:39:58 cgd Exp $
+ *	$Id: vm_mmap.c,v 1.27 1994/05/19 18:03:04 mycroft Exp $
  */
 
 /*
@@ -577,9 +577,10 @@ vm_mmap(map, addr, size, prot, maxprot, flags, handle, foff)
 	 * gain a reference to ensure continued existance of the object.
 	 * (XXX the exception is to appease the pageout daemon)
 	 */
-	if (flags & MAP_ANON)
+	if (flags & MAP_ANON) {
 		type = PG_DFLT;
-	else {
+		foff = 0;
+	} else {
 		vp = (struct vnode *)handle;
 		if (vp->v_type == VCHR) {
 			type = PG_DEVICE;
