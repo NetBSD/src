@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.77 1999/11/08 07:57:32 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.78 1999/11/09 22:14:29 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -1031,3 +1031,26 @@ sys/arch/mac68k/conf/GENERIC			1.90
 sys/arch/mac68k/mac68k/conf.c			1.53 via patch
 
   Add Coda support to NetBSD/mac68k.
+
+libexec/lfs_cleanerd/clean.h			1.8
+
+  Fix arithmetic overflow which had prevented cleaning of segments
+  above the first 2GB of the file system.
+
+sys/dev/raidframe/rf_dagutils.c			1.5
+
+  Do not trust the parity disk for read balancing in a RAID 1 set
+  if we know that the parity might not be up-to-date (and if we
+  have a choice in the matter).
+
+sys/arch/i386/i386/apmcall.s			1.6
+
+  Make a standard kernel usable on IBM laptops (and possibly others).
+  Some machines require interrupts enabled at suspend-time in order
+  to avoid a hang at resume.  Fixes PR#6279.
+
+sys/nfs/nfs_socket.c				1.52-1.53
+
+  Fix overzealous DIAGNOSTIC check in nfs_disconnect() and
+  don't try to copy a possibly freed mbuf.  Fixes PR#8249, PR#8288
+  and PR#8766.
