@@ -1,7 +1,7 @@
-/*	$NetBSD: amrreg.h,v 1.1 2002/01/30 14:35:45 ad Exp $	*/
+/*	$NetBSD: amrreg.h,v 1.2 2003/05/04 16:15:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,9 +77,7 @@
 
 #define	AMR_MAX_CMDS_PU		63
 
-#define	AMR_MAX_SEGS		17
-#define	AMR_MAX_XFER		(PAGE_SIZE * (AMR_MAX_SEGS - 1))
-
+#define	AMR_MAX_SEGS		26
 #define	AMR_MAX_CHANNEL		3
 #define	AMR_MAX_TARGET		15
 #define	AMR_MAX_LUN		7
@@ -331,9 +329,7 @@ struct amr_enquiry3 {
  * Mailbox and command structures.
  */
 
-#define	AMR_MBOX_CMDSIZE	0x10	/* portion worth copying for controller */
-
-struct amr_mailbox {
+struct amr_mailbox_cmd {
 	u_int8_t	mb_command;
 	u_int8_t	mb_ident;
 	u_int16_t	mb_blkcount;
@@ -343,17 +339,22 @@ struct amr_mailbox {
 	u_int8_t	mb_nsgelem;
 	u_int8_t	res1;
 	u_int8_t	mb_busy;
+} __attribute__ ((__packed__));
+
+struct amr_mailbox_resp {
 	u_int8_t	mb_nstatus;
 	u_int8_t	mb_status;
 	u_int8_t	mb_completed[46];
+}  __attribute__ ((__packed__));
+
+struct amr_mailbox {
+	u_int32_t	mb_res1[3];
+	u_int32_t	mb_segment;
+	struct		amr_mailbox_cmd mb_cmd;
+	struct		amr_mailbox_resp mb_resp;
 	u_int8_t	mb_poll;
 	u_int8_t	mb_ack;
-	u_int8_t	res2[62];		/* Pad to 128 bytes. */
-} __attribute__ ((__packed__));
-
-struct amr_mailbox64 {
-	u_int32_t		mb64_segment;	/* for 64-bit controllers */
-	struct amr_mailbox	mb;
+	u_int8_t	res2[62];		/* Pad to 128+16 bytes. */
 } __attribute__ ((__packed__));
 
 struct amr_mailbox_ioctl {
