@@ -1,6 +1,6 @@
 #!/usr/gnu/bin/perl
 #
-#	$NetBSD: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
+#	$NetBSD: gcc2netbsd,v 1.19 1997/05/14 06:44:20 phil Exp $
 #
 #  Perl script to convert a standard distribution directory for gcc into
 #	a NetBSD source tree.
@@ -18,12 +18,13 @@
 #  Written by Phil Nelson, November 22, 1995.  (for gcc-2.7.1)
 #
 #  Updated November 29, 1995 for gcc-2.7.2
+#  Updated May 13, 1997 for gcc-2.7.2.1
 #
-#  This is currently updated for gcc-2.7.2.  Newer versions of gcc
+#  This is currently updated for gcc-2.7.2.1.  Newer versions of gcc
 #	should have this script and related files updated.
 #
 
-$version = "2.7.2";
+$version = "2.7.2.1";
 
 # definitions ...
 
@@ -462,6 +463,16 @@ foreach $n (keys(%sedlist)) {
 # that need to be created.
 
 __END__
+%% file README
+This is the NetBSD version of the GNU C compiler (gcc).
+This tree is the output of the PERL script gcc2netbsd.
+
+Full source code for gcc is available in its original form
+from the Free Software Foundation at the following URL.
+
+   ftp://prep.ai.mit.edu/pub/gnu
+
+or at most GNU software mirrors.
 %% file Makefile
 %% NetBSD
 
@@ -1270,17 +1281,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 #include <xm-netbsd.h>
 %% patch arch/arm32
---- gcc/arch/arm32/arm32.md	Tue May 13 11:47:15 1997
-+++ gcc.current/arch/arm32/arm32.md	Tue May 13 09:23:00 1997
-@@ -3319,7 +3319,7 @@
- 	(if_then_else (match_operand 1 "comparison_operator" "")
- 		      (match_operand:SI 2 "arm_not_operand" "")
- 		      (match_operand:SI 3 "register_operand" "")))]
--  ""
-+  "0"
-   "
- {
-   enum rtx_code code = GET_CODE (operands[1]);
 --- gcc/arch/arm32/xm-arm32.h   Tue May 13 10:58:09 1997
 +++ gcc.current/arch/arm32/xm-arm32.h   Tue May 13 09:23:00 1997
 @@ -69,6 +69,6 @@
@@ -2270,8 +2270,8 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
  .if n .sp
  .if t .sp 0.4
  ..
--.Id $Id: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
-+.Id $Id: gcc2netbsd,v 1.18 1997/05/13 21:18:24 phil Exp $
+-.Id $Id: gcc2netbsd,v 1.19 1997/05/14 06:44:20 phil Exp $
++.Id $Id: gcc2netbsd,v 1.19 1997/05/14 06:44:20 phil Exp $
  .TH GCC 1 "\*(Dt" "GNU Tools" "GNU Tools"
  .SH NAME
  gcc, g++ \- GNU project C and C++ Compiler (v2.7)
