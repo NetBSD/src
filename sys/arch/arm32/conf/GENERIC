@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.59 1999/11/21 14:00:38 itojun Exp $
+#	$NetBSD: GENERIC,v 1.60 1999/12/24 00:15:51 tron Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -282,7 +282,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 #pseudo-device	raid	4		# RAIDframe disk driver
 pseudo-device	md	1		# Ramdisk driver

@@ -1,4 +1,4 @@
-#	$NetBSD: RC7500,v 1.29 1999/07/29 10:37:14 augustss Exp $
+#	$NetBSD: RC7500,v 1.30 1999/12/24 00:15:51 tron Exp $
 #
 #	RC7500 - Config for the VLSI RC7500 board
 #
@@ -208,7 +208,7 @@ pseudo-device	bpfilter 8              # packet filter
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Memory disk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom

@@ -1,4 +1,4 @@
-#	$NetBSD: A7000,v 1.35 1999/07/29 10:37:14 augustss Exp $
+#	$NetBSD: A7000,v 1.36 1999/12/24 00:15:50 tron Exp $
 #
 #	A7000 - Full A7000 configuration
 #
@@ -259,7 +259,7 @@ pseudo-device	tun	2		# network tunneling over tty
 #pseudo-device	strip	4		# STRIP 
 pseudo-device	pty     32              # pseudo-terminals
 pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	md	1		# Ramdisk driver
 pseudo-device	rnd			# /dev/random and /dev/urandom

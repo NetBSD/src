@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.9 1999/03/27 07:11:36 explorer Exp $
+#	$NetBSD: OFWGENCFG,v 1.10 1999/12/24 00:15:51 tron Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -132,7 +132,7 @@ pseudo-device	bpfilter 8              # packet filter
 
 pseudo-device	pty     32              # pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd     4               # paging to files
+pseudo-device	vnd     4               # disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 

@@ -1,4 +1,4 @@
-#	$NetBSD: SHARK,v 1.28 1999/11/22 08:14:05 tron Exp $
+#	$NetBSD: SHARK,v 1.29 1999/12/24 00:15:51 tron Exp $
 # From:  NetBSD: GENERIC,v 1.55 1999/03/27 07:11:36 explorer Exp
 #
 #	SHARK
@@ -223,7 +223,7 @@ pseudo-device	gif	4		# IPv[46] over IPv[46] tunnel (RFC1933)
 
 pseudo-device	pty	32		# pseudo-terminals
 #pseudo-device	tb	1		# tablet line discipline
-pseudo-device	vnd	4		# paging to files
+pseudo-device	vnd	4		# disk-like interface to files
 #pseudo-device	ccd	2		# concatenated disk devices
 pseudo-device	rnd			# /dev/random and /dev/urandom
 
