@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.143 1998/04/03 04:23:50 enami Exp $
+#	$NetBSD: GENERIC,v 1.144 1998/04/03 04:29:13 enami Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -344,6 +344,7 @@ ne*	at isapnp?			# NE2000-compatible Ethernet
 
 # PCMCIA network interfaces
 ep*	at pcmcia? function ?		# 3Com 3c589 and 3c562 Ethernet
+mbe*	at pcmcia? function ?		# MB8696x based Ethernet
 ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 sm*	at pcmcia? function ?		# Megahertz Ethernet
 
