@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2000/02/08 13:45:34 tron Exp $
+#	$NetBSD: Makefile,v 1.2 2000/02/26 18:41:43 mycroft Exp $
 
 .include <bsd.own.mk>
 
@@ -25,12 +25,8 @@ BINGRP= kmem
 BINMODE=6555
 .if ${MKSHARE} != "no"
 FILES=sendmail.hf
+FILESGRP=wheel
 FILESDIR=/usr/share/misc
 .endif
-
-afterinstall:
-	${INSTALL} ${INSTPRIV} -c -o ${BINOWN} -g ${BINGRP} -m 644 /dev/null \
-	    ${DESTDIR}/var/log/sendmail.st
-
 
 .include <bsd.prog.mk>
