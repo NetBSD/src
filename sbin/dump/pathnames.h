@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.8 1995/03/18 14:55:06 cgd Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 1997/04/15 07:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,6 @@
 
 #include <paths.h>
 
-#define	_PATH_DEFTAPE	"/dev/rmt8"
 #define	_PATH_DTMP	"/etc/dtmp"
 #define	_PATH_DUMPDATES	"/etc/dumpdates"
 #define	_PATH_LOCK	"/tmp/dumplockXXXXXX"
