@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.23 2001/11/28 10:21:17 lukem Exp $
+# $NetBSD: files.next68k,v 1.24 2002/01/21 21:57:04 jdolecek Exp $
 
 # next68k-specific configuration info
 
@@ -87,7 +87,7 @@ attach	esp at intio
 file	arch/next68k/dev/esp.c		esp needs-flag
 
 # Memory disk for boot tape
-file arch/next68k/dev/md_root.c		memory_disk_hooks
+file	dev/md_root.c			memory_disk_hooks
 major	{sd = 4}
 major	{cd = 6}
 major	{md = 13}
