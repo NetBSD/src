@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $	*/
+/*	$NetBSD: su.c,v 1.34 1999/07/11 23:41:10 kim Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.33 1999/03/22 03:25:33 abs Exp $");
+__RCSID("$NetBSD: su.c,v 1.34 1999/07/11 23:41:10 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,6 +189,25 @@ main(argc, argv)
 		int ok = pwd->pw_uid != 0;
 		char **g;
 
+#ifdef ROOTAUTH
+		/*
+		 * Allow those in group rootauth to su to root, by supplying
+		 * their own password.
+		 */
+		if (!ok && (gr = getgrnam(ROOTAUTH)))
+			for (g = gr->gr_mem;; ++g) {
+				if (!*g) {
+					ok = 0;
+					break;
+				}
+				if (!strcmp(username, *g)) {
+					pass = userpass;
+					user = username;
+					ok = 1;
+					break;
+				}
+			}
+#endif
 		/*
 		 * Only allow those in group SUGROUP to su to root,
 		 * but only if that group has any members.
@@ -209,25 +228,6 @@ main(argc, argv)
 					}
 				}
 		}
-#ifdef ROOTAUTH
-		/*
-		 * Allow those in group rootauth to su to root, by supplying
-		 * their own password.
-		 */
-		if (!ok && (gr = getgrnam(ROOTAUTH)))
-			for (g = gr->gr_mem;; ++g) {
-				if (!*g) {
-					ok = 0;
-					break;
-				}
-				if (!strcmp(username, *g)) {
-					pass = userpass;
-					user = username;
-					ok = 1;
-					break;
-				}
-			}
-#endif
 		if (!ok)
 			errx(1,
 	    "you are not listed in the correct secondary group (%s) to su %s.",
