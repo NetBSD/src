@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.35 1998/08/13 02:10:51 eeh Exp $	*/
+/*	$NetBSD: midway.c,v 1.36 1998/08/20 11:42:13 pk Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -149,7 +149,7 @@
 #endif
 
 
-#if !defined(sparc) && !defined(__FreeBSD__)
+#if !defined(__FreeBSD__)
 #include <machine/bus.h>
 #endif
 
@@ -714,7 +714,7 @@ done_probe:
 	(MID_IS_SABRE(reg)) ? "sabre controller, " : "",
 	(MID_IS_SUNI(reg)) ? "SUNI" : "Utopia",
 	(!MID_IS_SUNI(reg) && MID_IS_UPIPE(reg)) ? " (pipelined)" : "",
-	sc->en_obmemsz / 1024);
+	(u_long)sc->en_obmemsz / 1024);
 
   if (sc->is_adaptec) {
     if (sc->bestburstlen == 64 && sc->alburst == 0)
