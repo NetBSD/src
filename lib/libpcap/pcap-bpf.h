@@ -1,5 +1,5 @@
-.\" $NetBSD: pcap-bpf.h,v 1.1.1.1 2004/09/19 21:31:46 dyoung Exp $
-.\
+/*	$NetBSD: pcap-bpf.h,v 1.1.1.2 2004/09/19 21:57:55 dyoung Exp $	*/
+
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
