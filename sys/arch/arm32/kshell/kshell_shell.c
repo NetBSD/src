@@ -1,7 +1,7 @@
-/* $NetBSD: kshell_shell.c,v 1.3 1996/03/06 23:50:14 mark Exp $ */
+/* $NetBSD: kshell_shell.c,v 1.4 1996/03/13 21:45:54 mark Exp $ */
 
 /*
- * Copyright (c) 1994 Mark Brinicombe.
+ * Copyright (c) 1994-1996 Mark Brinicombe.
  * Copyright (c) 1994 Brini.
  * All rights reserved.
  *
@@ -77,7 +77,6 @@ void shell_devices	__P((int argc, char *argv[]));
 void shell_vmmap	__P((int argc, char *argv[]));
 void shell_flush	__P((int argc, char *argv[]));
 void shell_pextract	__P((int argc, char *argv[]));
-void shell_kstack	__P((int argc, char *argv[]));
 void shell_vnode	__P((int argc, char *argv[]));
 void debug_show_all_procs __P((int argc, char *argv[]));
 void debug_show_callout	__P((int argc, char *argv[]));
@@ -429,30 +428,6 @@ shell_pextract(argc, argv)
 
 
 void
-shell_kstack(argc, argv)
-	int argc;
-	char *argv[];	
-{
-	struct proc *p;
-
-	if (argc < 2) {
-		printf("Syntax: kstack <proc>\n\r");
-		return;
-	}
-
-/* Decode the one argument */
-
-	p = (struct proc *)readhex(argv[1]);
-
-#ifdef POSTMORTEM
-	kstack_stuff(p);
-#else
-	printf("Kernel not built with postmortem support\n");
-#endif
-}
-
-
-void
 shell_vnode(argc, argv)
 	int argc;
 	char *argv[];	
@@ -646,8 +621,6 @@ shell()
 			pmap_dump_pvs();
 		else if (strcmp(argv[0], "pextract") == 0)
 			shell_pextract(args, argv);
-		else if (strcmp(argv[0], "kstack") == 0)
-			shell_kstack(args, argv);
 		else if (strcmp(argv[0], "vnode") == 0)
 			shell_vnode(args, argv);
 		else if (strcmp(argv[0], "help") == 0
@@ -677,7 +650,6 @@ shell()
 			printf("forceboot\r\n");
 			printf("dumppvs\r\n");
 			printf("pextract <phys addr>\r\n");
-			printf("kstack <proc>\r\n");
 			printf("vnode <vp>\r\n");
 		}
 	} while (!quit);
