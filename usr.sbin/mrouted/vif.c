@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.6 1995/12/10 10:07:19 mycroft Exp $	*/
+/*	$NetBSD: vif.c,v 1.7 1999/01/23 22:44:44 hwr Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -1369,7 +1369,7 @@ dump_vifs(fp)
 	    }
 	}
 	v_req.vifi = vifi;
-	if (ioctl(udp_socket, SIOCGETVIFCNT, (char *)&v_req) < 0) {
+	if (ioctl(igmp_socket, SIOCGETVIFCNT, (char *)&v_req) < 0) {
 	    log(LOG_WARNING, 0,
 		"SIOCGETVIFCNT fails");
 	}
