@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.61 2002/05/10 07:51:37 enami Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.62 2002/05/14 19:37:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.61 2002/05/10 07:51:37 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.62 2002/05/14 19:37:18 perseant Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1007,11 +1007,13 @@ genfs_putpages(void *v)
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 	if (uobj->uo_npages == 0) {
+		s = splbio();
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
 		    (vp->v_flag & VONWORKLST)) {
 			vp->v_flag &= ~VONWORKLST;
 			LIST_REMOVE(vp, v_synclist);
 		}
+		splx(s);
 		simple_unlock(slock);
 		return (0);
 	}
@@ -1285,6 +1287,7 @@ genfs_putpages(void *v)
 	 * and we're doing sync i/o, wait for all writes to finish.
 	 */
 
+	s = splbio();
 	if ((flags & PGO_CLEANIT) && wasclean &&
 	    startoff == 0 && endoff == trunc_page(LLONG_MAX) &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL &&
@@ -1292,6 +1295,7 @@ genfs_putpages(void *v)
 		vp->v_flag &= ~VONWORKLST;
 		LIST_REMOVE(vp, v_synclist);
 	}
+	splx(s);
 	if (!wasclean && !async) {
 		s = splbio();
 		while (vp->v_numoutput != 0) {
