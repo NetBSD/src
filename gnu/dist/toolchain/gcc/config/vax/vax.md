@@ -686,7 +686,7 @@
   "*
 {
   rtx low[3];
-  char *pattern;
+  const char *pattern;
   int carry = 1;
 
   split_quadword_operands (operands, low, 3);
