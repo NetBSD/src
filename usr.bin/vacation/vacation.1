@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.7 1997/09/20 05:24:36 mikel Exp $
+.\"	$NetBSD: vacation.1,v 1.8 1997/10/20 02:53:02 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,14 +40,14 @@
 .Nm vacation
 .Nd return ``I am not here'' indication
 .Sh SYNOPSIS
-.Nm vacation
+.Nm
 .Fl i
 .Op Fl r Ar interval
-.Nm vacation
+.Nm
 .Op Fl a Ar alias
 .Ar login
 .Sh DESCRIPTION
-.Nm Vacation
+.Nm
 returns a message to the sender of a message telling them that you
 are currently not reading your mail.  The intended use is in a
 .Pa .forward
@@ -123,7 +123,7 @@ database in the file
 .Pa .vacation.db
 in your home directory.
 .Pp
-.Nm Vacation
+.Nm
 expects a file
 .Pa .vacation.msg ,
 in your home directory, containing a message to be sent back to each
@@ -141,7 +141,7 @@ please contact Keith Bostic <bostic@CS.Berkeley.EDU>.
 --eric
 .Ed
 .Pp
-.Nm Vacation
+.Nm
 reads the first line from the standard input for a
 .Ux
 .Dq From
@@ -152,7 +152,7 @@ includes this
 line automatically.
 .Pp
 Fatal errors, such as calling
-.Nm vacation
+.Nm
 with incorrect arguments, or with non-existent
 .Ar login Ns Ar s ,
 are logged in the system log file, using
@@ -169,6 +169,6 @@ message to send
 .Xr sendmail 8
 .Sh HISTORY
 The
-.Nm vacation
+.Nm
 command appeared in
 .Bx 4.3 .
