@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.96 2003/01/27 23:17:57 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.97 2003/01/29 03:09:32 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.96 2003/01/27 23:17:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.97 2003/01/29 03:09:32 simonb Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1584,7 +1584,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct inode *ip;
 	size_t pmsize;
 	int use_pagemove;
-	daddr_t pseg_daddr;
 	int32_t *daddrp;	/* XXX ondisk32 */
 	int changed;
 #if defined(DEBUG) && defined(LFS_PROPELLER)
@@ -1595,7 +1594,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	if (propeller == 4)
 		propeller = 0;
 #endif
-	pseg_daddr = (*(sp->bpp))->b_blkno;
 
 	/*
 	 * If there are no buffers other than the segment summary to write
