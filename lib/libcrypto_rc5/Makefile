@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2000/09/30 00:24:53 itojun Exp $
+#	$NetBSD: Makefile,v 1.2 2001/01/08 14:59:33 itojun Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -39,5 +39,9 @@ AFLAGS+=-DELF
 .else
 AFLAGS+=-DOUT
 .endif
+
+MKPIC=no
+#MKPROFILE=no
+#MKLINT=no
 
 .include <bsd.lib.mk>
