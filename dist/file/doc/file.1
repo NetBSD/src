@@ -1,14 +1,14 @@
-.\"	$NetBSD: file.1,v 1.5 2003/10/15 20:00:35 wiz Exp $
+.\"	$NetBSD: file.1,v 1.6 2003/10/27 16:22:35 pooka Exp $
 .\"
 .TH FILE 1 "Copyright but distributable"
-.\" Id: file.man,v 1.50 2003/07/10 17:51:09 christos Exp
+.\" Id: file.man,v 1.52 2003/10/09 15:18:12 christos Exp
 .SH NAME
 file
 \- determine file type
 .SH SYNOPSIS
 .B file
 [
-.B \-bcikLnNpsvz
+.B \-bcikLnNprsvz
 ]
 [
 .B \-f
@@ -31,7 +31,7 @@ file
 .B \-m 
 magicfile ]
 .SH DESCRIPTION
-This manual page documents version 4.04 of the
+This manual page documents version 4.06 of the
 .B file
 command.
 .PP
@@ -206,6 +206,7 @@ option causes symlinks to be followed, as the like-named option in
 Specify an alternate list of files containing magic numbers.
 This can be a single file, or a colon-separated list of files.
 If a compiled magic file is found alongside, it will be used instead.
+With the \-i or \-\-mime option, the program adds ".mime" to each file name.
 .TP 8
 .B "\-n, \-\-no\-buffer"
 Force stdout to be flushed after checking each file.
@@ -223,6 +224,12 @@ or
 attempt to preserve the access time of files analyzed, to pretend that
 .BR file (2)
 never read them.
+.TP 8
+.B "\-r, \-\-raw"
+Don't translate unprintable characters to \eooo.
+Normally
+.B file
+translates unprintable characters to their octal representation.
 .TP 8
 .B "\-s, \-\-special\-files"
 Normally,
@@ -275,7 +282,9 @@ Local additions to magic wisdom.
 .SH ENVIRONMENT
 The environment variable
 .B MAGIC
-can be used to set the default magic number files.
+can be used to set the default magic number file name.
+.B file
+adds ".mime" and/or ".mgc" to the value of this variable as appropriate.
 .SH SEE ALSO
 .BR magic (5)
 \- description of magic file format.
