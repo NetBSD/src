@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipl.4,v 1.3 1997/01/07 11:32:24 mrg Exp $
+.\"	$NetBSD: ipl.4,v 1.4 1997/02/18 21:28:19 mrg Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -109,6 +109,8 @@ This ioctl flushes the log buffer and returns the number of bytes flushed.
 There is currently no support for non-blocking IO with this device, meaning
 all read operations should be considered blocking in nature (if there is no
 data to read, it will sleep until some is made available).
+.Pp
+This pseudo-device includes the PFIL_HOOKS option.
 .Sh SEE ALSO
 .Xr ipf 4
 .Sh BUGS
