@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 1998/03/22 12:52:03 drochner Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 1998/04/28 02:04:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -149,8 +149,8 @@ mainbus_attach(parent, self, aux)
 	}
 #if NAPM > 0
 	if (apm_busprobe()) {
-	    mba.mba_aaa.aaa_busname = "apm";
-	    config_found(self, &mba.mba_aaa, mainbus_print);
+		mba.mba_aaa.aaa_busname = "apm";
+		config_found(self, &mba.mba_aaa, mainbus_print);
 	}
 #endif
 }
