@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.3 1999/10/24 08:37:30 takemura Exp $	*/
+/*	$NetBSD: vr.c,v 1.4 1999/11/21 07:01:54 uch Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -90,6 +90,8 @@ void	vr_bus_reset __P((void));
 int	vr_intr __P((u_int32_t mask, u_int32_t pc, u_int32_t statusReg, u_int32_t causeReg));
 void	vr_cons_init __P((void));
 void	vr_device_register __P((struct device *, void *));
+void    vr_fb_init __P((caddr_t*));
+int     vr_mem_init __P((caddr_t));
 
 char	*vrbcu_vrip_getcpuname __P((void));
 int	vrbcu_vrip_getcpumajor __P((void));
@@ -125,11 +127,49 @@ vr_init()
 	platform.bus_reset = vr_bus_reset;
 	platform.cons_init = vr_cons_init;
 	platform.device_register = vr_device_register;
+	platform.fb_init = vr_fb_init;
+	platform.mem_init = vr_mem_init;
 
 	sprintf(cpu_model, "NEC %s rev%d.%d", 
 		vrbcu_vrip_getcpuname(),
 		vrbcu_vrip_getcpumajor(),
 		vrbcu_vrip_getcpuminor());
+}
+
+int
+vr_mem_init(kernend)
+	caddr_t kernend; /* kseg0 */
+{
+	u_int32_t startaddr, endaddr, page;
+	int npage;
+#define VR41_SYSADDR_DRAMSTART 0x0
+#define VR41_SYSADDR_DRAM_LEN 0x04000000
+	startaddr = MIPS_PHYS_TO_KSEG1(
+		(btoc((u_int32_t)kernend - MIPS_KSEG0_START)) << PGSHIFT);
+	endaddr = MIPS_PHYS_TO_KSEG1(VR41_SYSADDR_DRAMSTART +
+				     VR41_SYSADDR_DRAM_LEN);
+	for(page = startaddr, npage = 0; page < endaddr; 
+	    page+= NBPG, npage++) {
+		if (badaddr((char*)page, 4))
+			break;
+		((volatile int *)page)[0] = 0xa5a5a5a5;
+		((volatile int *)page)[4] = 0x5a5a5a5a;
+		wbflush();
+		if (*(volatile int *)page != 0xa5a5a5a5)
+			break;
+	}
+	/* Clear currently unused D-RAM area (For reboot Windows CE clearly)*/
+	memset((void*)startaddr, 0, npage * NBPG);
+	memset((void*)(KERNBASE + 0x400), 0, KERNTEXTOFF - KERNBASE - 0x800); 
+
+	return npage;
+}
+
+void
+vr_fb_init(kernend)
+	caddr_t *kernend;
+{
+	/* Nothing to do */
 }
 
 void
