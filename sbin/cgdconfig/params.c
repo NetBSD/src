@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $ */
+/* $NetBSD: params.c,v 1.9.2.1 2004/08/13 15:02:17 tv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.9 2004/03/17 01:29:13 dan Exp $");
+__RCSID("$NetBSD: params.c,v 1.9.2.1 2004/08/13 15:02:17 tv Exp $");
 #endif
 
 #include <sys/types.h>
