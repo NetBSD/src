@@ -1,4 +1,4 @@
-/*	$NetBSD: pk_extern.h,v 1.7 2000/07/02 17:35:00 sommerfeld Exp $	*/
+/*	$NetBSD: pk_extern.h,v 1.8 2000/07/08 17:45:53 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -114,7 +114,9 @@ void pk_restartcause __P((struct pkcb *, struct x25_packet *));
 void pk_resetcause __P((struct pkcb *, struct x25_packet *));
 void pk_clearcause __P((struct pkcb *, struct x25_packet *));
 char *format_ntn __P((struct x25config *));
-void pk_message __P((int, struct x25config *, char *, ...));
+void pk_message __P((int, struct x25config *, char *, ...))
+     __attribute__((__format__(__printf__, 3, 4)));
+;
 int pk_fragment __P((struct pklcd *, struct mbuf *, int, int, int));
 
 /* pk_timer.c */
