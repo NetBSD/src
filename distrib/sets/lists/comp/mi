@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.337 2001/05/04 03:20:26 matt Exp $
+#	$NetBSD: mi,v 1.338 2001/05/06 10:43:23 ichiro Exp $
 ./sys				comp-sysutil-root
 ./usr/bin/addr2line		comp-debug-bin
 ./usr/bin/ar			comp-util-bin
@@ -137,6 +137,7 @@
 ./usr/include/dev/ic/rrunnerreg.h	comp-c-include
 ./usr/include/dev/ic/rrunnervar.h	comp-c-include
 ./usr/include/dev/ic/wdcreg.h		comp-c-include
+./usr/include/dev/ic/wi_ieee.h		comp-c-include
 ./usr/include/dev/isa			comp-c-include
 ./usr/include/dev/isa/satlinkio.h	comp-c-include
 ./usr/include/dev/isa/spkrio.h		comp-c-include
@@ -153,7 +154,6 @@
 ./usr/include/dev/pcmcia		comp-c-include
 ./usr/include/dev/pcmcia/if_cnwioctl.h	comp-c-include
 ./usr/include/dev/pcmcia/if_rayreg.h	comp-c-include
-./usr/include/dev/pcmcia/if_wi_ieee.h	comp-c-include
 ./usr/include/dev/sbus			comp-c-include
 ./usr/include/dev/sbus/mbppio.h		comp-c-include
 ./usr/include/dev/scsipi		comp-c-include
