@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2002/05/17 17:27:12 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2002/06/14 00:41:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.12 2002/05/17 17:27:12 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2002/06/14 00:41:42 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -105,14 +105,12 @@ char *fname;			/* File name. */
 u_long linenum;
 int lastline;			/* TRUE on the last line of the last file */
 
-static void add_compunit __P((enum e_cut, char *));
-static void add_file __P((char *));
-int	main __P((int, char **));
+static void add_compunit(enum e_cut, char *);
+static void add_file(char *);
+int	main(int, char **);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	int c, fflag;
 
@@ -172,9 +170,7 @@ main(argc, argv)
  * together.  Empty strings and files are ignored.
  */
 char *
-cu_fgets(buf, n)
-	char *buf;
-	int n;
+cu_fgets(char *buf, int n)
 {
 	static enum {ST_EOF, ST_FILE, ST_STRING} state = ST_EOF;
 	static FILE *f;		/* Current open file */
@@ -260,9 +256,7 @@ again:
  * Set len to the length of the line.
  */
 int
-mf_fgets(sp, spflag)
-	SPACE *sp;
-	enum e_spflag spflag;
+mf_fgets(SPACE *sp, enum e_spflag spflag)
 {
 	static FILE *f;		/* Current open file */
 	size_t len;
@@ -334,9 +328,7 @@ mf_fgets(sp, spflag)
  * Add a compilation unit to the linked list
  */
 static void
-add_compunit(type, s)
-	enum e_cut type;
-	char *s;
+add_compunit(enum e_cut type, char *s)
 {
 	struct s_compunit *cu;
 
@@ -352,8 +344,7 @@ add_compunit(type, s)
  * Add a file to the linked list
  */
 static void
-add_file(s)
-	char *s;
+add_file(char *s)
 {
 	struct s_flist *fp;
 
