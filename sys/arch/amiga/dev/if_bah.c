@@ -1,3 +1,5 @@
+/*	$NetBSD: if_bah.c,v 1.2 1995/03/01 11:34:02 chopps Exp $ */
+
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
  * Copyright (c) 1994 Timo Rossi
@@ -28,8 +30,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- *	$Id: if_bah.c,v 1.1 1995/02/28 22:03:59 chopps Exp $
  */
 
 /*
