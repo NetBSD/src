@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd.c,v 1.1 1997/10/09 23:13:12 explorer Exp $	*/
+/*	$NetBSD: rnd.c,v 1.2 1997/10/10 16:35:00 explorer Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -579,6 +579,13 @@ rnd_attach_source(rs, name, tyfl)
 	u_int32_t tyfl;
 {
 	strcpy(rs->data.name, name);
+
+	/*
+	 * force network devices to not collect any entropy by
+	 * default
+	 */
+	if ((tyfl & 0x00ff) == RND_TYPE_NET)
+		tyfl |= RND_FLAG_NO_ESTIMATE;
 
 	rs->data.tyfl = tyfl;
 
