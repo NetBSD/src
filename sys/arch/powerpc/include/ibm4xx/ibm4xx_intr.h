@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_intr.h,v 1.3 2003/08/05 02:10:31 simonb Exp $	*/
+/*	$NetBSD: ibm4xx_intr.h,v 1.4 2003/09/03 21:33:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@
 
 #ifndef _LOCORE
 
+#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19 2003/06/25 00:03:13 dyoung Exp $	*/
+/*	$NetBSD: intr.h,v 1.20 2003/09/03 21:33:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,6 +150,8 @@ extern long intrcnt[];
 struct cpu_info;
 void macppc_send_ipi(volatile struct cpu_info *, u_long);
 #endif
+
+#define	CLKF_BASEPRI(frame)	((frame)->pri == 0)
 
 #endif /* _LOCORE */
 
