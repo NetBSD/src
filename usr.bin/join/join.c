@@ -1,4 +1,4 @@
-/*	$NetBSD: join.c,v 1.14 1998/10/13 17:02:17 wsanchez Exp $	*/
+/*	$NetBSD: join.c,v 1.15 1998/12/19 17:05:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -48,7 +48,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "from: @(#)join.c	5.1 (Berkeley) 11/18/91";
 #else
-__RCSID("$NetBSD: join.c,v 1.14 1998/10/13 17:02:17 wsanchez Exp $");
+__RCSID("$NetBSD: join.c,v 1.15 1998/12/19 17:05:30 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -446,13 +446,13 @@ outtwoline(F1, lp1, F2, lp2)
 	int cnt;
 
 	/* Output a pair of lines according to the join list (if any). */
-	if (olist)
+	if (olist) {
 		for (cnt = 0; cnt < olistcnt; ++cnt)
 			if (olist[cnt].fileno == 1)
 				outfield(lp1, olist[cnt].fieldno);
 			else /* if (olist[cnt].fileno == 2) */
 				outfield(lp2, olist[cnt].fieldno);
-	else {
+	} else {
 		/*
 		 * Output the join field, then the remaining fields from F1
 		 * and F2.
