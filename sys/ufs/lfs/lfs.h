@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.67 2003/07/12 16:17:06 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.68 2003/07/30 13:36:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -896,8 +896,6 @@ struct lfs_cluster {
 	u_int32_t flags;       /* Flags */
 	struct lfs *fs;	       /* LFS that this belongs to */
 	struct segment *seg;   /* Segment structure, for LFS_CL_SYNC */
-	void *saveaddr;	       /* Original contents of saveaddr */
-	char *olddata;	       /* Original b_data, if LFS_CL_MALLOC */
 };
 #endif /* _KERNEL */
 

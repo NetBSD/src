@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.129 2003/07/23 13:53:51 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.130 2003/07/30 13:36:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.129 2003/07/23 13:53:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.130 2003/07/30 13:36:40 yamt Exp $");
 
 #define ivndebug(vp,str) printf("ino %d: %s\n",VTOI(vp)->i_number,(str))
 
@@ -1591,20 +1591,6 @@ lfs_newseg(struct lfs *fs)
 	}
 }
 
-#define BQUEUES 4 /* XXX */
-#define BQ_EMPTY 3 /* XXX */
-extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-extern struct simplelock bqueue_slock;
-
-#define	BUFHASH(dvp, lbn)	\
-	(&bufhashtbl[((long)(dvp) / sizeof(*(dvp)) + (int)(lbn)) & bufhash])
-extern LIST_HEAD(bufhashhdr, buf) invalhash;
-/*
- * Insq/Remq for the buffer hash lists.
- */
-#define	binshash(bp, dp)	LIST_INSERT_HEAD(dp, bp, b_hash)
-#define	bremhash(bp)		LIST_REMOVE(bp, b_hash)
-
 static struct buf *
 lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 {
@@ -1630,41 +1616,17 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr, int n)
 
 	/* Get an empty buffer header, or maybe one with something on it */
 	s = splbio();
-	simple_lock(&bqueue_slock);
-	if ((bp = TAILQ_FIRST(&bufqueues[BQ_EMPTY])) != NULL) {
-		simple_lock(&bp->b_interlock);
-		bremfree(bp);
-		/* clear out various other fields */
-		bp->b_flags = B_BUSY;
-		bp->b_dev = NODEV;
-		bp->b_blkno = bp->b_lblkno = 0;
-		bp->b_error = 0;
-		bp->b_resid = 0;
-		bp->b_bcount = 0;
-		
-		/* nuke any credentials we were holding */
-		/* XXXXXX */
-	
-		bremhash(bp);
-
-		/* disassociate us from our vnode, if we had one... */
-		if (bp->b_vp)
-			brelvp(bp);
-	}
-	while (!bp)
-		bp = getnewbuf(0, 0);
-	bgetvp(vp, bp);
-	binshash(bp,&invalhash);
-	simple_unlock(&bp->b_interlock);
-	simple_unlock(&bqueue_slock);
+	bp = pool_get(&bufpool, PR_WAITOK); /* XXX should use lfs_malloc? */
 	splx(s);
-	bp->b_bcount = 0;
-	bp->b_blkno = bp->b_lblkno = addr;
+	memset(bp, 0, sizeof(*bp));
+	BUF_INIT(bp);
 
-	bp->b_flags |= B_CALL;
+	bp->b_flags = B_BUSY | B_CALL;
+	bp->b_dev = NODEV;
+	bp->b_blkno = bp->b_lblkno = addr;
 	bp->b_iodone = lfs_cluster_callback;
-	cl->saveaddr = bp->b_saveaddr; /* XXX is this ever used? */
 	bp->b_saveaddr = (caddr_t)cl;
+	bp->b_vp = vp;
 
 	return bp;
 }
@@ -1958,7 +1920,6 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		cbp->b_flags |= B_ASYNC | B_BUSY;
 		cbp->b_bcount = 0;
 
-		cl->olddata = cbp->b_data;
 #if defined(DEBUG) && defined(DIAGNOSTIC)
 		if (bpp - sp->bpp > (fs->lfs_sumsize - SEGSUM_SIZE(fs))
 		    / sizeof(int32_t)) {
@@ -2213,7 +2174,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	cl = (struct lfs_cluster *)bp->b_saveaddr;
 	fs = cl->fs;
 	devvp = VTOI(fs->lfs_ivnode)->i_devvp;
-	bp->b_saveaddr = cl->saveaddr;
 
 	cp = (char *)bp->b_data + cl->bufsize;
 	/* Put the pages back, and release the buffer */
@@ -2310,15 +2270,9 @@ lfs_cluster_aiodone(struct buf *bp)
 	/* Fix up the cluster buffer, and release it */
 	if (cl->flags & LFS_CL_MALLOC)
 		lfs_free(fs, bp->b_data, LFS_NB_CLUSTER);
-	bp->b_data = cl->olddata;
-	bp->b_bcount = 0;
-	bp->b_iodone = NULL;
-	bp->b_flags &= ~B_DELWRI;
-	bp->b_flags |= B_DONE;
 	s = splbio();
-	reassignbuf(bp, bp->b_vp);
+	pool_put(&bufpool, bp); /* XXX should use lfs_free? */
 	splx(s);
-	brelse(bp);
 
 	/* Note i/o done */
 	if (cl->flags & LFS_CL_SYNC) {
