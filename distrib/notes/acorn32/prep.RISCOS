@@ -1,13 +1,13 @@
-	$NetBSD: prep.RISCOS,v 1.6 2002/02/16 02:31:30 reinoud Exp $
+	$NetBSD: prep.RISCOS,v 1.7 2002/02/16 10:54:55 wiz Exp $
 
 These instructions are specific to NetBSD/acorn32 on Acorn RISCOS platforms
 (RiscPC/A7000/A7000+/NC's).
 
 Last updated for the BtNetBSD bootloader version 0.99 at 16 February 2002 by
-Reinoud Zandijk (mailto:reinoud@netbsd.org), portmaster of NetBSD/acorn32.
+Reinoud Zandijk (reinoud@netbsd.org), portmaster of NetBSD/acorn32.
 
-For a more detailed acknowledgement and list of contributers see Apendix B at the
-bottom.
+For a more detailed acknowledgement and list of contributers see Appendix B
+at the bottom.
 
 
 
@@ -25,7 +25,7 @@ specifically.
 
 1.1 Hardware
 
-Refer to the NetBSD installation notes and/or the website
+Refer to the NetBSD installation notes and/or the web site
 http://www.netbsd.org/Ports/Acorn32/ for a list of supported hardware.
 
 
@@ -354,16 +354,16 @@ can be non-trivial to put it back.
 
 Now that your device is ready for the installation you need to
 unpack the bootloader archive. Pick either BtNetBSD.tgz or BtNetBSD.zip
-depending on wich type of archive you can extract easiest. (if you're
+depending on which type of archive you can extract easiest. (if you're
 installing from CD-ROM then this should be unpacked already), copy the
-directory to your hard disc. In the archive you'll find the tools
+directory to your hard disk. In the archive you'll find the tools
 mentioned in this document as well as the bootloader !BtNetBSD itself.
 
 
 4.1 Configuring the !BtNetBSD bootloader before installation
 
 Open the !BtNetBSD application and edit the `fastboot' file to specify
-the installation kernel location; an example is allready given. 
+the installation kernel location; an example is already given. 
 
 
 You can also set other details like tweaking with the amount of memory in
@@ -371,19 +371,19 @@ the WimpSlot of the bootloader when this is too much. Remember however that
 this shouldn't be set too low for it can crash the bootloader.
 
 When you think you've filled in the proper details save the file again
-and proceed...
+and proceed.
 
 
 4.2 Running !BtNetBSD
 
 Double click on the !BtNetBSD icon (or the !Run file in it) to start it
-up!
+up.
 
 NetBSD should now start to boot, install NetBSD as per the NetBSD
 installation notes.
 
 When you finish the installation you can restarted the computer as
-instructed....
+instructed.
 
 
 4.3 Configuring !BtNetBSD after installation
@@ -562,8 +562,8 @@ Also, if you have different controllers, all devices on controller
                 if you have both /var and /usr this will be /var
         - f     The second additional partition.
                 i.e. if you have /var and /usr, this will be /usr
-        - g     The third ....
-        - h     The fourth ....
+        - g     The third ...
+        - h     The fourth ...
 
 If you only have one partition on the drive this can normally be
 accessed with either partition a (root partition) or c (whole
@@ -603,5 +603,5 @@ Markus Baeurle (emw4maba@gp.fht-esslingen.de)
 Jasper Wallace (jasper@ivision.co.uk)
 Mark Brinicombe (amb@physig.ph.kcl.ac.uk)
 Scott Stevens (s.k.stevens@ic.ac.uk)
-and a lot more people posting to the origional RiscBSD mailing list.
+and a lot more people posting to the original RiscBSD mailing list.
 
