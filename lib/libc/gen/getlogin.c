@@ -1,4 +1,4 @@
-/*	$NetBSD: getlogin.c,v 1.7 1996/09/23 02:43:11 thorpej Exp $	*/
+/*	$NetBSD: getlogin.c,v 1.8 1997/07/13 19:03:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -33,11 +33,12 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)getlogin.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: getlogin.c,v 1.7 1996/09/23 02:43:11 thorpej Exp $";
+__RCSID("$NetBSD: getlogin.c,v 1.8 1997/07/13 19:03:35 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +48,7 @@ static char rcsid[] = "$NetBSD: getlogin.c,v 1.7 1996/09/23 02:43:11 thorpej Exp
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include "extern.h"
 
 int	__logname_valid;		/* known to setlogin() */
 
