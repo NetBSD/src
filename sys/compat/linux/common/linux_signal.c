@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.22 1999/09/08 16:52:08 jdolecek Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.23 1999/09/30 19:32:53 tron Exp $	*/
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,7 +97,7 @@ int native_to_linux_sig[NSIG] = {
 	LINUX_SIGKILL,
 	LINUX_SIGBUS,
 	LINUX_SIGSEGV,
-	0,			/* SIGSEGV */
+	0,			/* SIGSYS */
 	LINUX_SIGPIPE,
 	LINUX_SIGALRM,
 	LINUX_SIGTERM,
