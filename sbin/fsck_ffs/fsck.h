@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.20 1999/11/15 19:19:41 fvdl Exp $	*/
+/*	$NetBSD: fsck.h,v 1.21 2000/12/13 22:38:15 scw Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -206,8 +206,8 @@ char	*statemap;		/* ptr to inode state table */
 u_char	*typemap;		/* ptr to inode type table */
 int16_t	*lncntp;		/* ptr to link count table */
 
-ino_t	lfdir;			/* lost & found directory inode number */
-char	*lfname;		/* lost & found directory name */
+extern ino_t	lfdir;		/* lost & found directory inode number */
+extern char	*lfname;	/* lost & found directory name */
 int	lfmode;			/* lost & found directory creation mode */
 
 ufs_daddr_t n_blks;		/* number of blocks in use */
