@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.21 1997/10/18 11:38:27 mrg Exp $	*/
+/*	$NetBSD: fstat.c,v 1.22 1997/10/18 14:49:52 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-static char *rcsid = "$NetBSD: fstat.c,v 1.21 1997/10/18 11:38:27 mrg Exp $";
+static char *rcsid = "$NetBSD: fstat.c,v 1.22 1997/10/18 14:49:52 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -167,7 +167,7 @@ main(argc, argv)
 	arg = 0;
 	what = KERN_PROC_ALL;
 	nlistf = memf = NULL;
-	while ((ch = getopt(argc, argv, "fnp:u:vN:M:")) != EOF)
+	while ((ch = getopt(argc, argv, "fnp:u:vN:M:")) != -1)
 		switch((char)ch) {
 		case 'f':
 			fsflg = 1;
