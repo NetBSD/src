@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.140 2003/10/12 19:28:50 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.141 2003/10/15 19:54:30 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.140 2003/10/12 19:28:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.141 2003/10/15 19:54:30 bouyer Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -481,6 +481,8 @@ atabusconfig(atabus_sc)
 		aprint_normal("atapibus at %s not configured\n",
 		    chp->wdc->sc_dev.dv_xname);
 		chp->atapibus = NULL;
+		chp->ch_drive[0].drive_flags &= ~DRIVE_ATAPI;
+		chp->ch_drive[1].drive_flags &= ~DRIVE_ATAPI;
 #endif
 	}
 
@@ -497,9 +499,11 @@ atabusconfig(atabus_sc)
 		adev.adev_drv_data = &chp->ch_drive[i];
 		chp->ata_drives[i] = config_found(&atabus_sc->sc_dev,
 		    &adev, wdprint);
-		if (chp->ata_drives[i] != NULL) {
+		if (chp->ata_drives[i] != NULL)
 			wdc_probe_caps(&chp->ch_drive[i]);
-		}
+		else
+			chp->ch_drive[i].drive_flags &=
+			    ~(DRIVE_ATA | DRIVE_OLD);
 	}
 
 	/* now that we know the drives, the controller can set its modes */
