@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.46 2002/01/23 17:11:38 lukem Exp $ */
+/* $NetBSD: vga.c,v 1.47 2002/03/13 15:05:15 ad Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.46 2002/01/23 17:11:38 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.47 2002/03/13 15:05:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,7 +349,8 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, char *name,
 
 	TAILQ_FOREACH(f, &vc->vc_fontlist, next) {
 		if (wsfont_matches(f->wsfont, name,
-				   8, scr->pcs.type->fontheight, 0) &&
+				   8, scr->pcs.type->fontheight, 0,
+				   WSDISPLAY_FONTORDER_L2R, 0) &&
 		    (!primary || vga_valid_primary_font(f))) {
 #ifdef VGAFONTDEBUG
 			if (scr != &vga_console_screen || vga_console_attached)
@@ -370,7 +371,7 @@ egavga_getfont(struct vga_config *vc, struct vgascreen *scr, char *name,
 		return (0);
 	}
 
-	if (wsfont_lock(cookie, &wf, WSDISPLAY_FONTORDER_L2R, 0) < 0)
+	if (wsfont_lock(cookie, &wf))
 		return (0);
 
 #ifdef VGA_CONSOLE_SCREENTYPE

@@ -1,4 +1,4 @@
-/* $NetBSD: tfb.c,v 1.32 2001/11/13 06:26:10 lukem Exp $ */
+/* $NetBSD: tfb.c,v 1.33 2002/03/13 15:05:16 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.32 2001/11/13 06:26:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tfb.c,v 1.33 2002/03/13 15:05:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,15 +386,17 @@ tfb_common_init(ri)
 
 	wsfont_init();
 	/* prefer 12 pixel wide font */
-	if ((cookie = wsfont_find(NULL, 12, 0, 0)) <= 0)
-		cookie = wsfont_find(NULL, 0, 0, 0);
+	cookie = wsfont_find(NULL, 12, 0, 0, WSDISPLAY_FONTORDER_L2R,
+	    WSDISPLAY_FONTORDER_L2R);
+	if (cookie <= 0)
+		cookie = wsfont_find(NULL, 0, 0, 0, WSDISPLAY_FONTORDER_L2R,
+		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0) {
 		printf("tfb: font table is empty\n");
 		return;
 	}
 
-	if (wsfont_lock(cookie, &ri->ri_font,
-	    WSDISPLAY_FONTORDER_L2R, WSDISPLAY_FONTORDER_L2R) <= 0) {
+	if (wsfont_lock(cookie, &ri->ri_font)) {
 		printf("tfb: couldn't lock font\n");
 		return;
 	}
