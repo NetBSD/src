@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.18 1997/12/30 05:58:06 mycroft Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.19 1998/02/03 09:13:49 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 __COPYRIGHT(
 "@(#) Copyright (c) 1996, 1997\
 	The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.18 1997/12/30 05:58:06 mycroft Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.19 1998/02/03 09:13:49 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -581,7 +581,7 @@ dump_ccd(argc, argv, action)
 				continue;
 			}
 			if ((error = pathtounit(ccd, &i)) != 0) {
-				warnx("%s: %s", ccd, strerror(error));
+				warn("%s", ccd);
 				continue;
 			}
 			if (i >= numccd) {
