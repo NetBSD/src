@@ -1,4 +1,4 @@
-#	$NetBSD: files.scsipi,v 1.14 1998/02/16 22:12:49 thorpej Exp $
+#	$NetBSD: files.scsipi,v 1.15 1998/03/28 21:57:08 christos Exp $
 #
 # Config file and device description for machine-independent SCSI code.
 # Included by ports that need it.  Ports that use it must provide
@@ -10,6 +10,7 @@ file	dev/scsipi/scsipiconf.c		scsi | atapi
 file	dev/scsipi/scsipi_base.c	scsi | atapi
 file	dev/scsipi/scsipi_ioctl.c	scsi | atapi
 file	dev/scsipi/scsi_base.c		scsi 
+file	dev/scsipi/scsi_verbose.c	scsi & scsiverbose
 file	dev/scsipi/atapi_base.c		atapi
 
 device	scsibus {target = -1, lun = -1}
