@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.12 1995/01/18 17:34:18 mycroft Exp $	*/
+/*	$NetBSD: start.S,v 1.13 1996/06/18 07:17:49 mycroft Exp $	*/
 
 /*
  * Ported to boot 386BSD by Julian Elischer (julian@tfs.com) Sept 1992
@@ -100,14 +100,14 @@ start1:
 	int	$0x14
 	data32
 	popl	%edx
-#endif
+#endif /* SERIAL */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$one, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 
 	# bootstrap passes us drive number in %dl
 	cmpb	$0x80, %dl
@@ -116,20 +116,20 @@ start1:
 
 fd:
 #	reset the disk system
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$two, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 	movb	$0x00, %ah
 	int	$0x13
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$three, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 	data32
 	movl	$0x0001, %ecx	# cyl 0, sector 1
 	movb	$0x00, %dh	# head
@@ -139,23 +139,23 @@ fd:
 	jmp	load
 
 hd:	/**** load sector 0 into the BOOTSEG ****/
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$four, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 	data32
 	movl	$0x0201, %eax
 	xorl	%ebx, %ebx	# %bx = 0
 	data32
 	movl	$0x0001, %ecx
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$five, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 	data32
 	andl	$0xff, %edx
 	/*mov	$0x0080, %edx*/
@@ -215,12 +215,12 @@ load:
 	# After ljmp, %cs is BOOTSEG and boot1 (512 bytes) will be used
 	# as an internal buffer "intbuf".
 
-#ifdef	DEBUG
+#ifdef DEBUG
 	data32
 	movl	$six, %esi
 	data32
 	call	message
-#endif
+#endif /* DEBUG */
 
 	data32
 	ljmp	$BOOTSEG, $_C_LABEL(boot2)
@@ -243,20 +243,22 @@ err_stop:
 #
 
 message:
-/*
 #ifndef SERIAL
+/*
 # BIOS call "INT 10H Function 0Eh" to write character to console
 #	Call with	%ah = 0x0e
 #			%al = character
 #			%bh = page
 #			%bl = foreground color
-#else
+*/
+#else /* SERIAL */
+/*
 # BIOS call "INT 14H Function 01h" to write character to console
 #	Call with	%ah = 0x01
 #			%al = character
 #			%dx = port number
-#endif
 */
+#endif /* SERIAL */
 	data32
 	pushl	%eax
 	data32
@@ -276,11 +278,11 @@ nextb:
 	data32
 	movl	$0x0001, %ebx
 	int	$0x10
-#else
+#else /* SERIAL */
 	movb	$0x01, %ah
 	xorl	%edx, %edx
 	int	$0x14
-#endif
+#endif /* SERIAL */
 
 	data32
 	jmp	nextb
@@ -356,7 +358,7 @@ stop:
 
 /* error messages */
 
-#ifdef	DEBUG
+#ifdef DEBUG
 one:	.asciz		"1\r\n"
 two:	.asciz		"2\r\n"
 three:	.asciz		"3\r\n"
@@ -364,7 +366,7 @@ four:	.asciz		"4\r\n"
 five:	.asciz		"5\r\n"
 six:	.asciz		"6\r\n"
 seven:	.asciz		"7\r\n"
-#endif	DEBUG
+#endif /* DEBUG */
 eread:	.asciz		"Read error\r\n"
 enoboot: .asciz		"No bootable partition\r\n"
 endofcode:
