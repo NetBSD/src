@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.1 2000/01/17 01:38:43 augustss Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.2 2000/01/17 13:25:22 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -105,7 +105,6 @@
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <net/if_dl.h>
-#include <net/if_media.h>
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <net/if_ether.h>
@@ -748,7 +747,7 @@ USB_DETACH(kue)
 	return (EBUSY);
 #endif
 
-#endif
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 }
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
@@ -1455,9 +1454,6 @@ kue_stop(sc)
 
 	/* Free RX resources. */
 	for (i = 0; i < KUE_RX_LIST_CNT; i++) {
-		if (sc->kue_cdata.kue_rx_chain[i].kue_buf != NULL) {
-			sc->kue_cdata.kue_rx_chain[i].kue_buf = NULL;
-		}
 		if (sc->kue_cdata.kue_rx_chain[i].kue_mbuf != NULL) {
 			m_freem(sc->kue_cdata.kue_rx_chain[i].kue_mbuf);
 			sc->kue_cdata.kue_rx_chain[i].kue_mbuf = NULL;
@@ -1470,9 +1466,6 @@ kue_stop(sc)
 
 	/* Free TX resources. */
 	for (i = 0; i < KUE_TX_LIST_CNT; i++) {
-		if (sc->kue_cdata.kue_tx_chain[i].kue_buf != NULL) {
-			sc->kue_cdata.kue_tx_chain[i].kue_buf = NULL;
-		}
 		if (sc->kue_cdata.kue_tx_chain[i].kue_mbuf != NULL) {
 			m_freem(sc->kue_cdata.kue_tx_chain[i].kue_mbuf);
 			sc->kue_cdata.kue_tx_chain[i].kue_mbuf = NULL;
