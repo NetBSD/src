@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.2 1998/07/05 07:53:45 dbj Exp $	*/
+/*	$NetBSD: cpu.h,v 1.3 1998/08/28 22:53:47 dbj Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,7 +181,11 @@ void	next68k_calibrate_delay __P((void));
 #endif	M68030
 #endif
 #ifdef	M68040
+#ifdef DISABLE_NEXT_BMAP_CHIP		/* @@@ For turbo testing */
+#define	NEXT_SLOT_ID_BMAP	0x0
+#else
 #define	NEXT_SLOT_ID_BMAP	0x00100000
+#endif
 #define NEXT_SLOT_ID            0x0
 #endif	M68040
 
