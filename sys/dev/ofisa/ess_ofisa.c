@@ -1,4 +1,4 @@
-/*	$NetBSD: ess_ofisa.c,v 1.12 2003/05/03 18:11:31 wiz Exp $	*/
+/*	$NetBSD: ess_ofisa.c,v 1.12.2.1 2004/08/12 11:41:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.12 2003/05/03 18:11:31 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ess_ofisa.c,v 1.12.2.1 2004/08/12 11:41:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,5 +179,5 @@ ess_ofisa_attach(parent, self, aux)
 			printf(": %s\n%s", model, sc->sc_dev.dv_xname);
 	}
 
-	essattach(sc);
+	essattach(sc, 0);
 }

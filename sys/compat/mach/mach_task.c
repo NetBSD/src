@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_task.c,v 1.25.2.1 2004/08/03 10:44:07 skrll Exp $ */
+/*	$NetBSD: mach_task.c,v 1.25.2.2 2004/08/12 11:41:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include "opt_compat_darwin.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.1 2004/08/03 10:44:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_task.c,v 1.25.2.2 2004/08/12 11:41:15 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,9 @@ mach_ports_lookup(args)
 	mach_ports_lookup_request_t *req = args->smsg;
 	mach_ports_lookup_reply_t *rep = args->rmsg;
 	size_t *msglen = args->rsize;
+	struct lwp *l = args->l;
 	struct lwp *tl = args->tl;
+	struct proc *p = l->l_proc;
 	struct mach_emuldata *med;
 	struct mach_right *mr;
 	mach_port_name_t mnp[7];
@@ -149,18 +151,19 @@ mach_ports_lookup(args)
 	mnp[5] = (mach_port_name_t)MACH_PORT_DEAD;
 	mnp[6] = (mach_port_name_t)MACH_PORT_DEAD;
 
-	mr = mach_right_get(med->med_kernel, tl, MACH_PORT_TYPE_SEND, 0);
+	mr = mach_right_get(med->med_kernel, l, MACH_PORT_TYPE_SEND, 0);
 	mnp[MACH_TASK_KERNEL_PORT] = mr->mr_name;
-	mr = mach_right_get(med->med_host, tl, MACH_PORT_TYPE_SEND, 0);
+	mr = mach_right_get(med->med_host, l, MACH_PORT_TYPE_SEND, 0);
 	mnp[MACH_TASK_HOST_PORT] = mr->mr_name;
-	mr = mach_right_get(med->med_bootstrap, tl, MACH_PORT_TYPE_SEND, 0);
+	mr = mach_right_get(med->med_bootstrap, l, MACH_PORT_TYPE_SEND, 0);
 	mnp[MACH_TASK_BOOTSTRAP_PORT] = mr->mr_name;
 
 	/*
 	 * On Darwin, the data seems always null...
 	 */
 	uaddr = NULL;
-	if ((error = mach_ool_copyout(tl, &mnp[0], 
+	uaddr = NULL;
+	if ((error = mach_ool_copyout(l, &mnp[0], 
 	    &uaddr, sizeof(mnp), MACH_OOL_TRACE)) != 0)
 		return mach_msg_error(args, error);
 

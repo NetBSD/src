@@ -1,7 +1,7 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.1 2004/08/03 10:50:18 skrll Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.55.2.2 2004/08/12 11:42:05 skrll Exp $ */
 
 /*-
- * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.1 2004/08/03 10:50:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.55.2.2 2004/08/12 11:42:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,48 +64,35 @@ struct wdc_pcmcia_softc {
 	struct wdc_channel *wdc_chanlist[1];
 	struct wdc_channel wdc_channel;
 	struct ata_queue wdc_chqueue;
-	struct pcmcia_io_handle sc_pioh;
-	struct pcmcia_io_handle sc_auxpioh;
-	struct pcmcia_mem_handle sc_pmembaseh;
-	struct pcmcia_mem_handle sc_pmemh;
-	struct pcmcia_mem_handle sc_auxpmemh;
-	int sc_memwindow;
-	int sc_iowindow;
-	int sc_auxiowindow;
-	void *sc_ih;
+
 	struct pcmcia_function *sc_pf;
-	int sc_flags;
-#define WDC_PCMCIA_ATTACH	0x0001
-#define WDC_PCMCIA_MEMMODE	0x0002
+	void *sc_ih;
+
+	int sc_state;
+#define WDC_PCMCIA_ATTACHED	3
 };
 
 static int wdc_pcmcia_match	__P((struct device *, struct cfdata *, void *));
+static int wdc_pcmcia_validate_config_io __P((struct pcmcia_config_entry *));
+static int wdc_pcmcia_validate_config_memory __P((struct pcmcia_config_entry *));
 static void wdc_pcmcia_attach	__P((struct device *, struct device *, void *));
 static int wdc_pcmcia_detach	__P((struct device *, int));
 
 CFATTACH_DECL(wdc_pcmcia, sizeof(struct wdc_pcmcia_softc),
     wdc_pcmcia_match, wdc_pcmcia_attach, wdc_pcmcia_detach, wdcactivate);
 
-const struct wdc_pcmcia_product {
-	u_int32_t	wpp_vendor;	/* vendor ID */
-	u_int32_t	wpp_product;	/* product ID */
-	int		wpp_quirk_flag;	/* Quirk flags */
-#define WDC_PCMCIA_NO_EXTRA_RESETS	0x02 /* Only reset ctrl once */
-	const char	*wpp_cis_info[4];	/* XXX necessary? */
-} wdc_pcmcia_products[] = {
-
-	{ /* PCMCIA_VENDOR_DIGITAL XXX */ 0x0100,
+const struct pcmcia_product wdc_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_DIGITAL,
 	  PCMCIA_PRODUCT_DIGITAL_MOBILE_MEDIA_CDROM,
-	  0, {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
+	  {NULL, "Digital Mobile Media CD-ROM", NULL, NULL} },
 
 	{ PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM,
-	  0, {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
+	  {NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL} },
 
 	/* The TEAC IDE/Card II is used on the Sony Vaio */
 	{ PCMCIA_VENDOR_TEAC,
 	  PCMCIA_PRODUCT_TEAC_IDECARDII,
-	  WDC_PCMCIA_NO_EXTRA_RESETS,
 	  PCMCIA_CIS_TEAC_IDECARDII },
 
 	/*
@@ -114,80 +101,51 @@ const struct wdc_pcmcia_product {
 	 */
 	{ PCMCIA_VENDOR_PANASONIC,
 	  PCMCIA_PRODUCT_PANASONIC_KXLC005,
-	  0,
 	  PCMCIA_CIS_PANASONIC_KXLC005 },
 
 	/*
 	 * EXP IDE/ATAPI DVD Card use with some DVD players.
 	 * Does not have a vendor ID or product ID.
 	 */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_EXP_EXPMULTIMEDIA },
 
 	/* Mobile Dock 2, neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"SHUTTLE TECHNOLOGY LTD.", "PCCARD-IDE/ATAPI Adapter", NULL, NULL} },
 
 	/* Toshiba Portege 3110 CD, neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"FREECOM", "PCCARD-IDE", NULL, NULL} },
 
 	/* Random CD-ROM, (badged AMACOM), neither vendor ID nor product ID */ 
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "CD-ROM", NULL, NULL} },
 
 	/* IO DATA CBIDE2, with neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_IODATA_CBIDE2 },
 
 	/* TOSHIBA PA2673U(IODATA_CBIDE2 OEM), */
 	/*  with neither vendor ID nor product ID */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  PCMCIA_CIS_TOSHIBA_CBIDE2 },
 
 	/* 
 	 * Novac PCMCIA-IDE Card for HD530P IDE Box, 
 	 * with neither vendor ID nor product ID
 	 */
-	{ -1, -1, 0,
+	{ PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
 	  {"PCMCIA", "PnPIDE", NULL, NULL} },
 };
-
-const struct wdc_pcmcia_product *
-	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
+const size_t wdc_pcmcia_nproducts =
+    sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
 
 int	wdc_pcmcia_enable __P((struct device *, int));
-
-const struct wdc_pcmcia_product *
-wdc_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct wdc_pcmcia_product *wpp;
-	int i, cis_match;
-	int n;
-
-	for (wpp = wdc_pcmcia_products,
-	    n = sizeof(wdc_pcmcia_products) / sizeof(wdc_pcmcia_products[0]);
-	    n; wpp++, n--) {
-		if ((wpp->wpp_vendor == -1 ||
-		     pa->manufacturer == wpp->wpp_vendor) &&
-		    (wpp->wpp_product == -1 ||
-		     pa->product == wpp->wpp_product)) {
-			cis_match = 1;
-			for (i = 0; i < 4; i++) {
-				if (!(wpp->wpp_cis_info[i] == NULL ||
-				      (pa->card->cis1_info[i] != NULL &&
-				       strcmp(pa->card->cis1_info[i],
-					      wpp->wpp_cis_info[i]) == 0)))
-					cis_match = 0;
-			}
-			if (cis_match)
-				return (wpp);
-		}
-	}
-
-	return (NULL);
-}
+void	wdc_pcmcia_datain_memory __P((struct wdc_channel *, int, void *,
+	    size_t));
+void	wdc_pcmcia_dataout_memory __P((struct wdc_channel *, int, void *,
+	    size_t));
 
 static int
 wdc_pcmcia_match(parent, match, aux)
@@ -198,13 +156,34 @@ wdc_pcmcia_match(parent, match, aux)
 	struct pcmcia_attach_args *pa = aux;
 
 	if (pa->pf->function == PCMCIA_FUNCTION_DISK && 
-	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA) {
-		return 10;
-	}
-
-	if (wdc_pcmcia_lookup(pa) != NULL)
+	    pa->pf->pf_funce_disk_interface == PCMCIA_TPLFE_DDI_PCCARD_ATA)
 		return (1);
+	if (pcmcia_product_lookup(pa, wdc_pcmcia_products, wdc_pcmcia_nproducts,
+	    sizeof(wdc_pcmcia_products[0]), NULL))
+		return (2);
+	return (0);
+}
 
+static int
+wdc_pcmcia_validate_config_io(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_iospace < 1 || cfe->num_iospace > 2)
+		return (EINVAL);
+	cfe->num_memspace = 0;
+	return (0);
+}
+
+static int
+wdc_pcmcia_validate_config_memory(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_MEMORY ||
+	    cfe->num_memspace > 1 ||
+	    cfe->memspace[0].length < 2048)
+		return (EINVAL);
+	cfe->num_iospace = 0;
 	return (0);
 }
 
@@ -217,123 +196,54 @@ wdc_pcmcia_attach(parent, self, aux)
 	struct wdc_pcmcia_softc *sc = (void *)self;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	const struct wdc_pcmcia_product *wpp;
-	bus_size_t offset = 0;
-	int quirks, i;
-
-	aprint_normal("\n");
+	bus_size_t offset;
+	int i;
+	int error;
 
 	sc->sc_pf = pa->pf;
 
-	SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-		if (cfe->num_iospace != 1 && cfe->num_iospace != 2)
-			continue;
-
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length,
-		    cfe->iospace[0].start == 0 ? cfe->iospace[0].length : 0,
-		    &sc->sc_pioh))
-			continue;
-
-		if (cfe->num_iospace == 2) {
-			if (!pcmcia_io_alloc(pa->pf, cfe->iospace[1].start,
-			    cfe->iospace[1].length, 0, &sc->sc_auxpioh))
-				break;
-		} else /* num_iospace == 1 */ {
-			sc->sc_auxpioh.iot = sc->sc_pioh.iot;
-			if (!bus_space_subregion(sc->sc_pioh.iot,
-			    sc->sc_pioh.ioh, WDC_PCMCIA_AUXREG_OFFSET,
-			    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpioh.ioh))
-				break;
-		}
-		pcmcia_io_free(pa->pf, &sc->sc_pioh);
+	error = pcmcia_function_configure(pa->pf,
+	    wdc_pcmcia_validate_config_io);
+	if (error)
+		/*XXXmem16|common*/
+		error = pcmcia_function_configure(pa->pf,
+		    wdc_pcmcia_validate_config_memory);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	/* 
-	 * Compact Flash memory mapped mode
-	 * CF+ and CompactFlash Spec. Rev 1.4, 6.1.3 Memory Mapped Addressing.
-	 * http://www.compactflash.org/cfspc1_4.pdf
-	 */
-	if (cfe == NULL) {
-		SIMPLEQ_FOREACH(cfe, &pa->pf->cfe_head, cfe_list) {
-			if (cfe->iftype != PCMCIA_IFTYPE_MEMORY)
-				continue;
-			if (pcmcia_mem_alloc(pa->pf, cfe->memspace[0].length,
-			    &sc->sc_pmembaseh) == 0) {
-				sc->sc_flags |= WDC_PCMCIA_MEMMODE;
-				break;
-			}
-		}
-	}
-
-	if (cfe == NULL) {
-		aprint_error("%s: can't handle card info\n", self->dv_xname);
-		goto no_config_entry;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pa->pf, cfe);
-	if (pcmcia_function_enable(pa->pf)) {
-		aprint_error("%s: function enable failed\n", self->dv_xname);
-		goto enable_failed;
-	}
-
-	wpp = wdc_pcmcia_lookup(pa);
-	if (wpp != NULL)
-		quirks = wpp->wpp_quirk_flag;
-	else
-		quirks = 0;
-
-	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
-		if (pcmcia_mem_map(pa->pf, PCMCIA_MEM_COMMON, 0,
-		    sc->sc_pmembaseh.size, &sc->sc_pmembaseh, &offset,
-		    &sc->sc_memwindow)) {
-			aprint_error("%s: can't map memory space\n",
-			    self->dv_xname);
-			goto map_failed;
-		}
-
-		sc->sc_pmemh.memt = sc->sc_pmembaseh.memt;
-		sc->sc_pmemh.memh = sc->sc_pmembaseh.memh;
-
-		sc->sc_auxpmemh.memt = sc->sc_pmemh.memt;
-		if (bus_space_subregion(sc->sc_pmemh.memt,
-		    sc->sc_pmembaseh.memh, WDC_PCMCIA_AUXREG_OFFSET + offset,
-		    WDC_PCMCIA_AUXREG_NPORTS, &sc->sc_auxpmemh.memh))
-			goto mapaux_failed;
-		
-		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
-	} else {
-		if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-		    sc->sc_pioh.size, &sc->sc_pioh, &sc->sc_iowindow)) {
-			aprint_error("%s: can't map first I/O space\n",
-			     self->dv_xname);
-			goto map_failed;
-		} 
-	}
-
-	if (cfe->num_iospace <= 1 || sc->sc_flags & WDC_PCMCIA_MEMMODE)
-		sc->sc_auxiowindow = -1;
-	else if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0,
-	    sc->sc_auxpioh.size, &sc->sc_auxpioh, &sc->sc_auxiowindow)) {
-		aprint_error("%s: can't map second I/O space\n",
-		    self->dv_xname);
-		goto mapaux_failed;
-	}
-
+	cfe = pa->pf->cfe;
 	sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA16;
-	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
-		sc->wdc_channel.cmd_iot = sc->sc_pmemh.memt;
-		sc->wdc_channel.cmd_baseioh = sc->sc_pmemh.memh;
-		sc->wdc_channel.ctl_iot = sc->sc_auxpmemh.memt;
-		sc->wdc_channel.ctl_ioh = sc->sc_auxpmemh.memh;
+
+	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
+		sc->wdc_channel.cmd_iot = cfe->memspace[0].handle.memt;
+		sc->wdc_channel.cmd_baseioh = cfe->memspace[0].handle.memh;
+		offset = cfe->memspace[0].offset;
+		sc->wdc_channel.ctl_iot = cfe->memspace[0].handle.memt;
+		if (bus_space_subregion(cfe->memspace[0].handle.memt,
+		    cfe->memspace[0].handle.memh,
+		    offset + WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
+		    &sc->wdc_channel.ctl_ioh))
+			goto fail;
 	} else {
-		sc->wdc_channel.cmd_iot = sc->sc_pioh.iot;
-		sc->wdc_channel.cmd_baseioh = sc->sc_pioh.ioh;
-		sc->wdc_channel.ctl_iot = sc->sc_auxpioh.iot;
-		sc->wdc_channel.ctl_ioh = sc->sc_auxpioh.ioh;
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+		sc->wdc_channel.cmd_iot = cfe->iospace[0].handle.iot;
+		sc->wdc_channel.cmd_baseioh = cfe->iospace[0].handle.ioh;
+		offset = 0;
+		if (cfe->num_iospace == 1) {
+			sc->wdc_channel.ctl_iot = cfe->iospace[0].handle.iot;
+			if (bus_space_subregion(cfe->iospace[0].handle.iot,
+			    cfe->iospace[0].handle.ioh,
+			    WDC_PCMCIA_AUXREG_OFFSET, WDC_PCMCIA_AUXREG_NPORTS,
+			    &sc->wdc_channel.ctl_ioh))
+				goto fail;
+		} else {
+			sc->wdc_channel.ctl_iot = cfe->iospace[1].handle.iot;
+			sc->wdc_channel.ctl_ioh = cfe->iospace[1].handle.ioh;
+		}
 	}
+
 	for (i = 0; i < WDC_PCMCIA_REG_NPORTS; i++) {
 		if (bus_space_subregion(sc->wdc_channel.cmd_iot,
 		    sc->wdc_channel.cmd_baseioh,
@@ -341,12 +251,32 @@ wdc_pcmcia_attach(parent, self, aux)
 		    &sc->wdc_channel.cmd_iohs[i]) != 0) {
 			aprint_error("%s: can't subregion I/O space\n",
 			    self->dv_xname);
-			goto mapaux_failed;
+			goto fail2;
 		}
 	}
+
+	if (cfe->iftype == PCMCIA_IFTYPE_MEMORY) {
+		aprint_normal("%s: memory mapped mode\n", self->dv_xname);
+		sc->wdc_channel.data32iot = cfe->memspace[0].handle.memt;
+		if (bus_space_subregion(cfe->memspace[0].handle.memt,
+		    cfe->memspace[0].handle.memh, offset + 1024, 1024,
+		    &sc->wdc_channel.data32ioh))
+			goto fail;
+		sc->sc_wdcdev.datain_pio = wdc_pcmcia_datain_memory;
+		sc->sc_wdcdev.dataout_pio = wdc_pcmcia_dataout_memory;
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NOIRQ;
+	} else {
+		aprint_normal("%s: i/o mapped mode\n", self->dv_xname);
+		sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
+		sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[wd_data];
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DATA32;
+	}
+
+	error = wdc_pcmcia_enable(self, 1);
+	if (error)
+		goto fail;
+
 	wdc_init_shadow_regs(&sc->wdc_channel);
-	sc->wdc_channel.data32iot = sc->wdc_channel.cmd_iot;
-	sc->wdc_channel.data32ioh = sc->wdc_channel.cmd_iohs[0];
 	sc->sc_wdcdev.PIO_cap = 0;
 	sc->wdc_chanlist[0] = &sc->wdc_channel;
 	sc->sc_wdcdev.channels = sc->wdc_chanlist;
@@ -354,42 +284,21 @@ wdc_pcmcia_attach(parent, self, aux)
 	sc->wdc_channel.ch_channel = 0;
 	sc->wdc_channel.ch_wdc = &sc->sc_wdcdev;
 	sc->wdc_channel.ch_queue = &sc->wdc_chqueue;
-#if 0
-	if (quirks & WDC_PCMCIA_NO_EXTRA_RESETS)
-		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
-#endif
 
 	/* We can enable and disable the controller. */
 	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_enable =
 	    wdc_pcmcia_enable;
+	sc->sc_wdcdev.sc_atapi_adapter._generic.adapt_refcnt = 1;
 
-	sc->sc_flags |= WDC_PCMCIA_ATTACH;
 	wdcattach(&sc->wdc_channel);
-
+	wdc_delref(&sc->wdc_channel);
+	sc->sc_state = WDC_PCMCIA_ATTACHED;
 	return;
 
- mapaux_failed:
-	/* Unmap our i/o window. */
-	if (sc->sc_flags & WDC_PCMCIA_MEMMODE)
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwindow);
-	else
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
-
- map_failed:
-	/* Disable the function */
-	pcmcia_function_disable(sc->sc_pf);
-
- enable_failed:
-	/* Unmap our i/o space. */
-	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_pmembaseh);
-	} else  {
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
-		if (cfe->num_iospace == 2)
-		    pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
-	}
- no_config_entry:
-	sc->sc_iowindow = -1;
+fail2:
+	wdc_pcmcia_enable(self, 0);
+fail:
+	pcmcia_function_unconfigure(pa->pf);
 }
 
 int
@@ -400,35 +309,13 @@ wdc_pcmcia_detach(self, flags)
 	struct wdc_pcmcia_softc *sc = (struct wdc_pcmcia_softc *)self;
 	int error;
 
-	if (sc->sc_iowindow == -1)
-		/* Nothing to detach */
+	if (sc->sc_state != WDC_PCMCIA_ATTACHED)
 		return (0);
-
-	/*
-	 * If the WDC_PCMCIA_ATTACH flag is still set, then we didn't get
-	 * a chance * enable/disable the card in the wdc/atabus layer, so
-	 * we still need to disable the function here.
-	 */
-	if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
-		sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
-		pcmcia_function_disable(sc->sc_pf);
-	}
 
 	if ((error = wdcdetach(self, flags)) != 0)
 		return (error);
 
-	/* Unmap our i/o window and i/o space. */
-	if (sc->sc_flags & WDC_PCMCIA_MEMMODE) {
-		pcmcia_mem_unmap(sc->sc_pf, sc->sc_memwindow);
-		pcmcia_mem_free(sc->sc_pf, &sc->sc_pmembaseh);
-	} else {
-		pcmcia_io_unmap(sc->sc_pf, sc->sc_iowindow);
-		pcmcia_io_free(sc->sc_pf, &sc->sc_pioh);
-		if (sc->sc_auxiowindow != -1) {
-			pcmcia_io_unmap(sc->sc_pf, sc->sc_auxiowindow);
-			pcmcia_io_free(sc->sc_pf, &sc->sc_auxpioh);
-		}
-	}
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -439,38 +326,72 @@ wdc_pcmcia_enable(self, onoff)
 	int onoff;
 {
 	struct wdc_pcmcia_softc *sc = (void *)self;
+	int error;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
 		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
 		    wdcintr, &sc->wdc_channel);
-		if (sc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    sc->sc_wdcdev.sc_dev.dv_xname);
+		if (!sc->sc_ih)
 			return (EIO);
-		}
 
-		/*
-		 * If the WDC_PCMCIA_ATTACH flag is set, we've already
-		 * enabled the card in the attach routine, so don't
-		 * re-enable it here (to save power cycle time).  Clear
-		 * the flag, though, so that the next disable/enable
-		 * will do the right thing.
-		 */
-		if (sc->sc_flags & WDC_PCMCIA_ATTACH) {
-			sc->sc_flags &= ~WDC_PCMCIA_ATTACH;
-		} else {
-			if (pcmcia_function_enable(sc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    sc->sc_wdcdev.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
-				return (EIO);
-			}
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
 	} else {
 		pcmcia_function_disable(sc->sc_pf);
 		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 	}
 
 	return (0);
+}
+
+void
+wdc_pcmcia_datain_memory(chp, flags, buf, len)
+	struct wdc_channel *chp;
+	int flags;
+	void *buf;
+	size_t len;
+{
+
+	while (len > 0) {
+		size_t n;
+
+		n = min(len, 1024);
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+			bus_space_read_region_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 2);
+		else
+			bus_space_read_region_stream_2(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 1);
+		buf = (char *)buf + n;
+		len -= n;
+	}
+}
+
+void
+wdc_pcmcia_dataout_memory(chp, flags, buf, len)
+	struct wdc_channel *chp;
+	int flags;
+	void *buf;
+	size_t len;
+{
+
+	while (len > 0) {
+		size_t n;
+
+		n = min(len, 1024);
+		if ((flags & DRIVE_CAP32) && (n & 3) == 0)
+			bus_space_write_region_stream_4(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 2);
+		else
+			bus_space_write_region_stream_2(chp->data32iot,
+			    chp->data32ioh, 0, buf, n >> 1);
+		buf = (char *)buf + n;
+		len -= n;
+	}
 }

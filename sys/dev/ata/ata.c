@@ -1,4 +1,4 @@
-/*      $NetBSD: ata.c,v 1.18.2.1 2004/08/03 10:45:46 skrll Exp $      */
+/*      $NetBSD: ata.c,v 1.18.2.2 2004/08/12 11:41:22 skrll Exp $      */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.1 2004/08/03 10:45:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.18.2.2 2004/08/12 11:41:22 skrll Exp $");
 
 #ifndef WDCDEBUG
 #define WDCDEBUG
@@ -147,7 +147,7 @@ atabus_thread(void *arg)
 	for (;;) {
 		s = splbio();
 		if ((chp->ch_flags & (WDCF_TH_RESET | WDCF_SHUTDOWN)) == 0 &&
-		    ((chp->ch_flags & WDCF_ACTIVE) == 0 ||
+		    (chp->ch_queue->active_xfer == NULL ||
 		     chp->ch_queue->queue_freeze == 0)) {
 			chp->ch_flags &= ~WDCF_TH_RUN;
 			(void) tsleep(&chp->ch_thread, PRIBIO, "atath", 0);
@@ -164,13 +164,13 @@ atabus_thread(void *arg)
 			 */
 			chp->ch_queue->queue_freeze--;
 			wdc_reset_channel(chp, AT_WAIT | chp->ch_reset_flags);
-		} else if ((chp->ch_flags & WDCF_ACTIVE) != 0 &&
+		} else if (chp->ch_queue->active_xfer != NULL &&
 			   chp->ch_queue->queue_freeze == 1) {
 			/*
 			 * Caller has bumped queue_freeze, decrease it.
 			 */
 			chp->ch_queue->queue_freeze--;
-			xfer = TAILQ_FIRST(&chp->ch_queue->queue_xfer);
+			xfer = chp->ch_queue->active_xfer;
 			KASSERT(xfer != NULL);
 			(*xfer->c_start)(chp, xfer);
 		} else if (chp->ch_queue->queue_freeze > 1)
@@ -236,6 +236,9 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 	aprint_naive("\n");
+
+        if (wdc_addref(chp))
+                return;
 
 	initq = malloc(sizeof(*initq), M_DEVBUF, M_WAITOK);
 	initq->atabus_sc = sc;
@@ -349,7 +352,6 @@ atabus_detach(struct device *self, int flags)
 		}
 	}
 
-	wdc_kill_pending(chp);
  out:
 #ifdef WDCDEBUG
 	if (dev != NULL && error != 0)
@@ -374,7 +376,7 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
 	char tb[DEV_BSIZE];
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 	int i;
@@ -385,38 +387,38 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 
 	memset(tb, 0, DEV_BSIZE);
 	memset(prms, 0, sizeof(struct ataparams));
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 
 	if (drvp->drive_flags & DRIVE_ATA) {
-		wdc_c.r_command = WDCC_IDENTIFY;
-		wdc_c.r_st_bmask = WDCS_DRDY;
-		wdc_c.r_st_pmask = 0;
-		wdc_c.timeout = 3000; /* 3s */
+		ata_c.r_command = WDCC_IDENTIFY;
+		ata_c.r_st_bmask = WDCS_DRDY;
+		ata_c.r_st_pmask = 0;
+		ata_c.timeout = 3000; /* 3s */
 	} else if (drvp->drive_flags & DRIVE_ATAPI) {
-		wdc_c.r_command = ATAPI_IDENTIFY_DEVICE;
-		wdc_c.r_st_bmask = 0;
-		wdc_c.r_st_pmask = 0;
-		wdc_c.timeout = 10000; /* 10s */
+		ata_c.r_command = ATAPI_IDENTIFY_DEVICE;
+		ata_c.r_st_bmask = 0;
+		ata_c.r_st_pmask = 0;
+		ata_c.timeout = 10000; /* 10s */
 	} else {
 		WDCDEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	}
-	wdc_c.flags = AT_READ | flags;
-	wdc_c.data = tb;
-	wdc_c.bcount = DEV_BSIZE;
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE) {
+	ata_c.flags = AT_READ | flags;
+	ata_c.data = tb;
+	ata_c.bcount = DEV_BSIZE;
+	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE) {
 		WDCDEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_AGAIN;
 	}
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
-		WDCDEBUG_PRINT(("ata_get_parms: wdc_c.flags=0x%x\n",
-		    wdc_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+		WDCDEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
+		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
 		return CMD_ERR;
 	} else {
 		/* if we didn't read any data something is wrong */
-		if ((wdc_c.flags & AT_XFDONE) == 0)
+		if ((ata_c.flags & AT_XFDONE) == 0)
 			return CMD_ERR;
 		/* Read in parameter block. */
 		memcpy(prms, tb, sizeof(struct ataparams));
@@ -452,21 +454,21 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 int
 ata_set_mode(struct ata_drive_datas *drvp, u_int8_t mode, u_int8_t flags)
 {
-	struct wdc_command wdc_c;
+	struct ata_command ata_c;
 
 	WDCDEBUG_PRINT(("ata_set_mode=0x%x\n", mode), DEBUG_FUNCS);
-	memset(&wdc_c, 0, sizeof(struct wdc_command));
+	memset(&ata_c, 0, sizeof(struct ata_command));
 
-	wdc_c.r_command = SET_FEATURES;
-	wdc_c.r_st_bmask = 0;
-	wdc_c.r_st_pmask = 0;
-	wdc_c.r_features = WDSF_SET_MODE;
-	wdc_c.r_count = mode;
-	wdc_c.flags = flags;
-	wdc_c.timeout = 1000; /* 1s */
-	if (wdc_exec_command(drvp, &wdc_c) != WDC_COMPLETE)
+	ata_c.r_command = SET_FEATURES;
+	ata_c.r_st_bmask = 0;
+	ata_c.r_st_pmask = 0;
+	ata_c.r_features = WDSF_SET_MODE;
+	ata_c.r_count = mode;
+	ata_c.flags = flags;
+	ata_c.timeout = 1000; /* 1s */
+	if (wdc_exec_command(drvp, &ata_c) != ATACMD_COMPLETE)
 		return CMD_AGAIN;
-	if (wdc_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
+	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		return CMD_ERR;
 	}
 	return CMD_OK;
@@ -544,6 +546,8 @@ atabusioctl(dev, cmd, addr, flag, l)
         struct lwp *l;
 {
         struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct wdc_channel *chp = sc->sc_chan;
+	int min_drive, max_drive, drive;
         int error;
 	int s;
 
@@ -567,6 +571,48 @@ atabusioctl(dev, cmd, addr, flag, l)
 		splx(s);
 		error = 0;
 		break;
+	case ATABUSIOSCAN:
+	{
+#if 0
+		struct atabusioscan_args *a=
+		    (struct atabusioscan_args *)addr;
+#endif
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
+			return (EOPNOTSUPP);
+		return (EOPNOTSUPP);
+	}
+	case ATABUSIODETACH:
+	{
+		struct atabusioscan_args *a=
+		    (struct atabusioscan_args *)addr;
+		if ((chp->ch_drive[0].drive_flags & DRIVE_OLD) ||
+		    (chp->ch_drive[1].drive_flags & DRIVE_OLD))
+			return (EOPNOTSUPP);
+		switch (a->at_dev) {
+		case -1:
+			min_drive = 0;
+			max_drive = 1;
+			break;
+		case 0:
+		case 1:
+			min_drive = max_drive = a->at_dev;
+			break;
+		default:
+			return (EINVAL);
+		}
+		for (drive = min_drive; drive <= max_drive; drive++) {
+			if (chp->ch_drive[drive].drv_softc != NULL) {
+				error = config_detach(
+				    chp->ch_drive[drive].drv_softc, 0);
+				if (error)
+					return (error);
+				chp->ch_drive[drive].drv_softc = NULL;
+			}
+		}
+		error = 0;
+		break;
+	}
 	default:
 		error = ENOTTY;
 	}

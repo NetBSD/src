@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.42.2.1 2004/08/03 10:34:01 skrll Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.42.2.2 2004/08/12 11:41:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.42.2.1 2004/08/03 10:34:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.42.2.2 2004/08/12 11:41:03 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -648,10 +648,10 @@ initarm(void *arg)
 #if 1
 	/* MULTI-ICE requires that page 0 is NC/NB so that it can download
 	   the cache-clean code there.  */
-	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, ARM_VECTORS_LOW, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 #else
-	pmap_map_entry(l1pagetable, vector_page, systempage.pv_pa,
+	pmap_map_entry(l1pagetable, ARM_VECTORS_LOW, systempage.pv_pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #endif
 

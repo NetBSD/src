@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.2.24.1 2004/08/03 10:34:59 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: tabwindow.cpp,v 1.2.24.2 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ TabWindowBase::focusManagerHook(WORD vk, UINT flags, HWND prev)
 BOOL
 TabWindow::create(LPCREATESTRUCT unused)
 {
-	_window = CreateDialogParam 
+	_window = CreateDialogParam
 	    (_app._instance, _name, _base._window,
 		reinterpret_cast <DLGPROC>(Window::_dlg_proc),
 		reinterpret_cast <LPARAM>(this));
@@ -167,7 +167,7 @@ TabWindow::init(HWND w)
 	item.iImage =(int)_id;
 	item.lParam = reinterpret_cast <LPARAM>(this);
 	// register myself to parent tab-control.
-	_base.insert(_id, item);    
+	_base.insert(_id, item);
 	// fit my dialog size to tab-control window.
 	_base.adjust(_rect);
 	hide();

@@ -1,4 +1,4 @@
-/*	$NetBSD: 7750.h,v 1.1 2002/02/11 17:08:57 uch Exp $	*/
+/*	$NetBSD: 7750.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 #ifndef _HPCBOOT_SH_CPU_7750_H_
-#define _HPCBOOT_SH_CPU_7750_H_
+#define	_HPCBOOT_SH_CPU_7750_H_
 
-#define SH7750_CACHE_FLUSH()						\
+#define	SH7750_CACHE_FLUSH()						\
 __BEGIN_MACRO								\
 	u_int32_t __e, __a;						\
 									\
@@ -55,6 +55,6 @@ __BEGIN_MACRO								\
 	}								\
 __END_MACRO
 
-#define SH7750_MMU_DISABLE	SH4_MMU_DISABLE
+#define	SH7750_MMU_DISABLE	SH4_MMU_DISABLE
 
 #endif // _HPCBOOT_SH_CPU_7750_H_

@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.45.2.1 2004/08/03 10:46:20 skrll Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.45.2.2 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.1 2004/08/03 10:46:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.45.2.2 2004/08/12 11:41:25 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ccitt.h"
@@ -248,24 +248,28 @@ smc91cxx_attach(sc, myea)
 	int i, aui, mult, scale, memsize;
 	char pbuf[9];
 
+	tmp = bus_space_read_2(bst, bsh, BANK_SELECT_REG_W);
+	/* check magic number */
+	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
+		aprint_error("%s: failed to detect chip, bsr=%04x\n",
+		    sc->sc_dev.dv_xname, tmp);
+		return;
+	}
+
 	/* Make sure the chip is stopped. */
 	smc91cxx_stop(sc);
 
 	SMC_SELECT_BANK(sc, 3);
 	tmp = bus_space_read_2(bst, bsh, REVISION_REG_W);
 	sc->sc_chipid = RR_ID(tmp);
-	/* check magic number */
-	if ((tmp & BSR_DETECT_MASK) != BSR_DETECT_VALUE) {
-		idstr = NULL;
-		printf("%s: invalid BSR 0x%04x\n", sc->sc_dev.dv_xname, tmp);
-	} else
-		idstr = smc91cxx_idstrs[sc->sc_chipid];
-	printf("%s: ", sc->sc_dev.dv_xname);
+	idstr = smc91cxx_idstrs[sc->sc_chipid];
+
+	aprint_normal("%s: ", sc->sc_dev.dv_xname);
 	if (idstr != NULL)
-		printf("%s, ", idstr);
+		aprint_normal("%s, ", idstr);
 	else
-		printf("unknown chip id %d, ", sc->sc_chipid);
-	printf("revision %d, ", RR_REV(tmp));
+		aprint_normal("unknown chip id %d, ", sc->sc_chipid);
+	aprint_normal("revision %d, ", RR_REV(tmp));
 
 	SMC_SELECT_BANK(sc, 0);
 	switch (sc->sc_chipid) {
@@ -283,7 +287,7 @@ smc91cxx_attach(sc, myea)
 	memsize *= scale * mult;
 
 	format_bytes(pbuf, sizeof(pbuf), memsize);
-	printf("buffer size: %s\n", pbuf);
+	aprint_normal("buffer size: %s\n", pbuf);
 
 	/* Read the station address from the chip. */
 	SMC_SELECT_BANK(sc, 1);
@@ -295,7 +299,7 @@ smc91cxx_attach(sc, myea)
 			myea[i] = tmp & 0xff;
 		}
 	}
-	printf("%s: MAC address %s, ", sc->sc_dev.dv_xname,
+	aprint_normal("%s: MAC address %s, ", sc->sc_dev.dv_xname,
 	    ether_sprintf(myea));
 
 	/* Initialize the ifnet structure. */
@@ -336,13 +340,13 @@ smc91cxx_attach(sc, myea)
 	case CHIP_91100FD:
 	case CHIP_91C111:
 		if (tmp & CR_MII_SELECT) {
-			printf("default media MII");
+			aprint_normal("default media MII");
 			if (sc->sc_chipid == CHIP_91C111) {
-				printf(" (%s PHY)\n", (tmp & CR_AUI_SELECT) ?
+				aprint_normal(" (%s PHY)\n", (tmp & CR_AUI_SELECT) ?
 				    "external" : "internal");
 				sc->sc_internal_phy = !(tmp & CR_AUI_SELECT);
 			} else
-				printf("\n");
+				aprint_normal("\n");
 			mii_attach(&sc->sc_dev, &sc->sc_mii, miicapabilities,
 			    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 			if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -361,13 +365,13 @@ smc91cxx_attach(sc, myea)
 			/*
 			 * XXX: Should bring it out of low-power mode
 			 */
-			printf("EPH interface in low power mode\n");
+			aprint_normal("EPH interface in low power mode\n");
 			sc->sc_internal_phy = 0;
 			return;
 		}
 		/*FALLTHROUGH*/
 	default:
-		printf("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
+		aprint_normal("default media %s\n", (aui = (tmp & CR_AUI_SELECT)) ?
 		    "AUI" : "UTP");
 		for (i = 0; i < NSMC91CxxMEDIA; i++)
 			ifmedia_add(ifm, smc91cxx_media[i], 0, NULL);
@@ -526,8 +530,13 @@ smc91cxx_init(sc)
 	 */
 	SMC_SELECT_BANK(sc, 2);
 	bus_space_write_2(bst, bsh, MMU_CMD_REG_W, MMUCR_RESET);
-	while (bus_space_read_2(bst, bsh, MMU_CMD_REG_W) & MMUCR_BUSY)
-		/* XXX bound this loop! */ ;
+	for (;;) {
+		tmp = bus_space_read_2(bst, bsh, MMU_CMD_REG_W);
+		if (tmp == 0xffff)	/* card went away! */
+			return;
+		if ((tmp & MMUCR_BUSY) == 0)
+			break;
+	}
 
 	/*
 	 * Disable all interrupts.

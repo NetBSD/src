@@ -1,4 +1,4 @@
-/*	$NetBSD: cirvar.h,v 1.4.2.2 2004/08/03 10:47:57 skrll Exp $	*/
+/*	$NetBSD: cirvar.h,v 1.4.2.3 2004/08/12 11:41:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  */
 
 struct cir_methods {
-	int (*im_open)(void *, int, int, struct lwp *);
-	int (*im_close)(void *, int, int, struct lwp *);
+	int (*im_open)(void *, int, int, struct proc *);
+	int (*im_close)(void *, int, int, struct proc *);
 	int (*im_read)(void *, struct uio *, int);
 	int (*im_write)(void *, struct uio *, int);
 	int (*im_setparams)(void *, struct cir_params *);

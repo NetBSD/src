@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.9 2002/02/11 17:08:56 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_console.cpp,v 1.9.16.1 2004/08/12 11:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ SHConsole::~SHConsole()
 BOOL
 SHConsole::init()
 {
-	
+
 	if (!super::init())
 		return FALSE;
 
@@ -104,8 +104,8 @@ SHConsole::init()
 	if (tab != 0) {
 		SetKMode(1);	// Native method access P4.
 		_print = tab->print;
-	} 
-	
+	}
+
 	// override default instance.
 	Console::_instance = this;
 

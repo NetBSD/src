@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.23.10.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.23.10.2 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -46,7 +46,8 @@
  *	sun3: si driver; need bus.h first
  */
 #if defined(acorn26) || defined(__i386__) || defined(__vax__) || \
-	defined(__mips__) || defined(__sparc__) || defined(sun2)
+	defined(__mips__) || defined(__sparc__) || defined(sun2) || \
+	defined(__alpha__)
 # define NCR5380_USE_BUS_SPACE
 #endif
 

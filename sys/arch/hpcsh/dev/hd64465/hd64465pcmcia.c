@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.12.2.1 2004/08/03 10:35:28 skrll Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.12.2.2 2004/08/12 11:41:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.12.2.1 2004/08/03 10:35:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.12.2.2 2004/08/12 11:41:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,6 +158,7 @@ STATIC int hd64465pcmcia_chip_io_map(pcmcia_chipset_handle_t, int, bus_addr_t,
 STATIC void hd64465pcmcia_chip_io_unmap(pcmcia_chipset_handle_t, int);
 STATIC void hd64465pcmcia_chip_socket_enable(pcmcia_chipset_handle_t);
 STATIC void hd64465pcmcia_chip_socket_disable(pcmcia_chipset_handle_t);
+STATIC void hd64465pcmcia_chip_socket_settype(pcmcia_chipset_handle_t, int);
 STATIC void *hd64465pcmcia_chip_intr_establish(pcmcia_chipset_handle_t,
     struct pcmcia_function *, int, int (*)(void *), void *);
 STATIC void hd64465pcmcia_chip_intr_disestablish(pcmcia_chipset_handle_t,
@@ -176,6 +177,7 @@ STATIC struct pcmcia_chip_functions hd64465pcmcia_functions = {
 	hd64465pcmcia_chip_intr_disestablish,
 	hd64465pcmcia_chip_socket_enable,
 	hd64465pcmcia_chip_socket_disable,
+	hd64465pcmcia_chip_socket_settype,
 };
 
 STATIC int hd64465pcmcia_match(struct device *, struct cfdata *, void *);
@@ -679,22 +681,36 @@ hd64465pcmcia_chip_socket_enable(pcmcia_chipset_handle_t pch)
 {
 	struct hd64465pcmcia_channel *ch = (struct hd64465pcmcia_channel *)pch;
 	int channel = ch->ch_channel;
-	bus_addr_t isr, gcr;
+	bus_addr_t gcr;
 	u_int8_t r;
-	int cardtype;
 
 	DPRINTF("enable channel %d\n", channel);
-	isr = HD64461_PCCISR(channel);
 	gcr = HD64461_PCCGCR(channel);
+
+	r = hd64465_reg_read_1(gcr);
+	r &= ~HD64461_PCC0GCR_P0PCCT;
+	hd64465_reg_write_1(gcr, r);
 
 	/* Set Common memory area #0. */
 	hd64465pcmcia_memory_window16_switch(channel, MEMWIN_16M_COMMON_0);
 
-	/* Set the card type */
-	cardtype = pcmcia_card_gettype(ch->ch_pcmcia);
+	DPRINTF("OK.\n");
+}
 
+void
+hd64465pcmcia_chip_socket_settype(pcmcia_chipset_handle_t pch, int type)
+{
+	struct hd64465pcmcia_channel *ch = (struct hd64465pcmcia_channel *)pch;
+	int channel = ch->ch_channel;
+	bus_addr_t gcr;
+	u_int8_t r;
+
+	DPRINTF("settype channel %d\n", channel);
+	gcr = HD64461_PCCGCR(channel);
+
+	/* Set the card type */
 	r = hd64465_reg_read_1(gcr);
-	if (cardtype == PCMCIA_IFTYPE_IO)
+	if (type == PCMCIA_IFTYPE_IO)
 		r |= HD64461_PCC0GCR_P0PCCT;
 	else
 		r &= ~HD64461_PCC0GCR_P0PCCT;

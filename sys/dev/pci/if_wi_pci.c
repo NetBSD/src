@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.25.2.2 2004/08/03 10:49:09 skrll Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.25.2.3 2004/08/12 11:41:44 skrll Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25.2.2 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.25.2.3 2004/08/12 11:41:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,10 +173,12 @@ wi_pci_reset(sc)
 {
 	int i, secs, usecs;
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_SOFT_RESET);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_SOFT_RESET);
 	DELAY(250*1000); /* 1/4 second */
 
-	CSR_WRITE_2(sc, WI_PCI_COR, WI_COR_CLEAR);
+	bus_space_write_2(sc->sc_iot, sc->sc_ioh,
+	    WI_PCI_COR, WI_COR_CLEAR);
 	DELAY(500*1000); /* 1/2 second */
 
 	/* wait 2 seconds for firmware to complete initialization. */
@@ -321,11 +323,6 @@ wi_pci_attach(parent, self, aux)
 	sc->sc_enable = wi_pci_enable;
 	sc->sc_disable = wi_pci_disable;
 
-	/* Enable the card. */
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-		pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
-		PCI_COMMAND_MASTER_ENABLE);
-
 	sc->sc_iot = iot;
 	sc->sc_ioh = ioh;
 	/* Make sure interrupts are disabled. */
@@ -344,7 +341,7 @@ wi_pci_attach(parent, self, aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf("%s: couldn't map interrupt\n", self->dv_xname);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -352,15 +349,14 @@ wi_pci_attach(parent, self, aux)
 	psc->psc_ih = ih;
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, wi_intr, sc);
 	if (sc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		printf("%s: couldn't establish interrupt", self->dv_xname);
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
 		return;
 	}
 
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	printf("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
 	switch (wpp->wpp_chip) {
 	case CHIP_PLX_OTHER:
@@ -384,10 +380,10 @@ wi_pci_attach(parent, self, aux)
 		break;
 	}
 
-	printf("%s:", sc->sc_dev.dv_xname);
-	if (wi_attach(sc) != 0) {
-		printf("%s: failed to attach controller\n",
-			sc->sc_dev.dv_xname);
+	printf("%s:", self->dv_xname);
+
+	if (wi_attach(sc, 0) != 0) {
+		printf("%s: failed to attach controller\n", self->dv_xname);
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		return;
 	}
@@ -398,8 +394,8 @@ wi_pci_attach(parent, self, aux)
 	/* Add a suspend hook to restore PCI config state */
 	psc->sc_powerhook = powerhook_establish(wi_pci_powerhook, psc);
 	if (psc->sc_powerhook == NULL)
-		printf ("%s: WARNING: unable to establish pci power hook\n",
-		        sc->sc_dev.dv_xname);
+		printf("%s: WARNING: unable to establish pci power hook\n",
+		    self->dv_xname);
 }
 
 static void

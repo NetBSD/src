@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh.h,v 1.1 2002/02/11 17:08:58 uch Exp $	*/
+/* -*-C++-*-	$NetBSD: sh.h,v 1.1.18.1 2004/08/12 11:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_SH_CPU_SH_H_
-#define _HPCBOOT_SH_CPU_SH_H_
+#define	_HPCBOOT_SH_CPU_SH_H_
 
 /*
  * SH3, SH4 common defines.
@@ -46,25 +46,25 @@
 /*
  * Address space.
  */
-#define SH_P0_START		0x00000000
-#define SH_P1_START		0x80000000
-#define SH_P2_START		0xa0000000
-#define SH_P3_START		0xc0000000
-#define SH_P4_START		0xe0000000
+#define	SH_P0_START		0x00000000
+#define	SH_P1_START		0x80000000
+#define	SH_P2_START		0xa0000000
+#define	SH_P3_START		0xc0000000
+#define	SH_P4_START		0xe0000000
 
 /*
  * Chip select.
  */
-#define SH_AREA_SIZE		0x04000000
+#define	SH_AREA_SIZE		0x04000000
 
-#define SH_AREA0_START		0x00000000
-#define SH_AREA1_START		0x04000000
-#define SH_AREA2_START		0x08000000
-#define SH_AREA3_START		0x0c000000
-#define SH_AREA4_START		0x10000000
-#define SH_AREA5_START		0x14000000
-#define SH_AREA6_START		0x18000000
-#define SH_AREA7_START		0x1c000000
+#define	SH_AREA0_START		0x00000000
+#define	SH_AREA1_START		0x04000000
+#define	SH_AREA2_START		0x08000000
+#define	SH_AREA3_START		0x0c000000
+#define	SH_AREA4_START		0x10000000
+#define	SH_AREA5_START		0x14000000
+#define	SH_AREA6_START		0x18000000
+#define	SH_AREA7_START		0x1c000000
 
 
 #endif /* _HPCBOOT_SH_CPU_SH_H_ */

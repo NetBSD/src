@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.3 2002/02/11 17:08:57 uch Exp $	*/
+/*	$NetBSD: sh_mmu.cpp,v 1.3.16.1 2004/08/12 11:41:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
 	idx = vaddr & SH3_MMU_VPN_MASK;
 
 	kmode = SetKMode(1);
-	// Get current ASID 
+	// Get current ASID
 	asid = _reg_read_4(SH3_PTEH) & SH3_PTEH_ASID_MASK;
 
 	// to avoid another TLB access, disable external interrupt.
@@ -74,7 +74,7 @@ MemoryManager_SHMMU::searchPage(vaddr_t vaddr)
 			entry_idx = idx | (way << SH3_MMU_WAY_SHIFT);
 			// inquire MMU address array.
 			aae = _reg_read_4(SH3_MMUAA | entry_idx);
-						      
+
 			if (!(aae & SH3_MMU_D_VALID) ||
 			    ((aae & SH3_MMUAA_D_ASID_MASK) != asid) ||
 			    (((aae | idx) & SH3_PAGE_MASK) != vpn))
@@ -108,7 +108,7 @@ MemoryManager_SHMMU::CacheDump()
 	kmode = SetKMode(1);
 	switch (SHArchitecture::cpu_type()) {
 	default:
-		DPRINTF((TEXT("unknown architecture.\n")));		
+		DPRINTF((TEXT("unknown architecture.\n")));
 		SetKMode(kmode);
 		return;
 	case 3:
@@ -140,7 +140,7 @@ MemoryManager_SHMMU::CacheDump()
 	}
 	DPRINTF((TEXT(".")));
 
-	// Write-through/back 
+	// Write-through/back
 	DPRINTF((TEXT(" P0, U0, P3 write-%S P1 write-%S\n"),
 	    write_through_p0_u0_p3 ? "through" : "back",
 	    write_through_p1 ? "through" : "back"));
@@ -151,7 +151,7 @@ MemoryManager_SHMMU::CacheDump()
 void
 MemoryManager_SHMMU::MMUDump()
 {
-#define ON(x, c)	((x) & (c) ? '|' : '.')
+#define	ON(x, c)	((x) & (c) ? '|' : '.')
 	u_int32_t r, e, a;
 	int i, kmode;
 
@@ -161,7 +161,7 @@ MemoryManager_SHMMU::MMUDump()
 	DPRINTF((TEXT("MMU:\n")));
 	switch (SHArchitecture::cpu_type()) {
 	default:
-		DPRINTF((TEXT("unknown architecture.\n")));		
+		DPRINTF((TEXT("unknown architecture.\n")));
 		SetKMode(kmode);
 		return;
 	case 3:
@@ -207,16 +207,16 @@ MemoryManager_SHMMU::MMUDump()
 		r = _reg_read_4(SH4_MMUCR);
 		if (!(r & SH4_MMUCR_AT))
 			goto disabled;
-		DPRINTF((TEXT("%s virtual storage mode,"), 
+		DPRINTF((TEXT("%s virtual storage mode,"),
 		    r & SH3_MMUCR_SV ? TEXT("single") : TEXT("multiple")));
 		DPRINTF((TEXT(" SQ access: (priviledge%S)"),
 		    r & SH4_MMUCR_SQMD ? "" : "/user"));
 		DPRINTF((TEXT("\n")));
 #if sample_code
 		//
-		// Memory mapped TLB accessing program must run on P2. 
+		// Memory mapped TLB accessing program must run on P2.
 		// This is sample code.
-		// 
+		//
 		// Dump ITLB
 		DPRINTF((TEXT("---ITLB---\n")));
 		for (i = 0; i < 4; i++) {
@@ -236,7 +236,7 @@ MemoryManager_SHMMU::MMUDump()
 			    ));
 			r = _reg_read_4(SH4_ITLB_DA2 | e);
 			DPRINTF((TEXT(" %c%d\n"),
-			    ON(r, SH4_ITLB_DA2_TC), 
+			    ON(r, SH4_ITLB_DA2_TC),
 			    r & SH4_ITLB_DA2_SA_MASK));
 		}
 		// Dump UTLB

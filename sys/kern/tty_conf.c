@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_conf.c,v 1.42.2.2 2004/08/03 10:52:56 skrll Exp $	*/
+/*	$NetBSD: tty_conf.c,v 1.42.2.3 2004/08/12 11:42:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.2 2004/08/03 10:52:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_conf.c,v 1.42.2.3 2004/08/12 11:42:20 skrll Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_43.h"
@@ -105,7 +105,7 @@ int	irframetinput(int c, struct tty *tp);
 int	irframetstart(struct tty *tp);
 int	irframetread(struct tty *tp, struct uio *uio, int flag);
 int	irframetwrite(struct tty *tp, struct uio *uio, int flag);
-int	irframetpoll(struct tty *tp, int events, struct lwp *p);
+int	irframetpoll(struct tty *tp, int events, struct lwp *l);
 #endif
 
 

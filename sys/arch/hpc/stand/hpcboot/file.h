@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: file.h,v 1.1.26.1 2004/08/03 10:34:58 skrll Exp $	*/
+/* -*-C++-*-	$NetBSD: file.h,v 1.1.26.2 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #ifndef _HPCBOOT_FILE_H_
-#define _HPCBOOT_FILE_H_
+#define	_HPCBOOT_FILE_H_
 
 #include <hpcboot.h>
 
@@ -55,7 +55,7 @@ public:
 	File(Console *&cons) : _cons(cons) { /* NO-OP */ }
 	virtual ~File() { /* NO-OP */ }
 	BOOL &setDebug(void) { return _debug; }
-  
+
 	virtual BOOL setRoot(TCHAR *) = 0;
 	virtual BOOL open(const TCHAR *, u_int32_t = OPEN_EXISTING) = 0;
 	virtual size_t size(void) = 0;
@@ -68,7 +68,7 @@ public:
 
 class FileManager : public File {
 	// GZIP staff
-#define Z_BUFSIZE	1024
+#define	Z_BUFSIZE	1024
 private:
 	enum flags {
 		ASCII_FLAG  = 0x01, /* bit 0 set: file probably ascii text */

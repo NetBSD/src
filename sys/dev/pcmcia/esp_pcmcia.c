@@ -1,7 +1,7 @@
-/*	$NetBSD: esp_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $	*/
+/*	$NetBSD: esp_pcmcia.c,v 1.15.2.2 2004/08/12 11:41:59 skrll Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.15.2.1 2004/08/03 10:50:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_pcmcia.c,v 1.15.2.2 2004/08/12 11:41:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,19 +70,20 @@ struct esp_pcmcia_softc {
 	size_t		*sc_pdmalen;
 
 	/* PCMCIA-specific goo. */
-	struct pcmcia_io_handle sc_pcioh;	/* PCMCIA i/o space info */
-	int sc_io_window;			/* our i/o window */
 	struct pcmcia_function *sc_pf;		/* our PCMCIA function */
 	void *sc_ih;				/* interrupt handler */
 #ifdef ESP_PCMCIA_POLL
 	struct callout sc_poll_ch;
 #endif
-	int sc_flags;
-#define	ESP_PCMCIA_ATTACHED	1		/* attach completed */
-#define ESP_PCMCIA_ATTACHING	2		/* attach in progress */
+	bus_space_tag_t	sc_iot;
+	bus_space_handle_t sc_ioh;
+
+	int sc_state;
+#define ESP_PCMCIA_ATTACHED	3
 };
 
 int	esp_pcmcia_match __P((struct device *, struct cfdata *, void *)); 
+int	esp_pcmcia_validate_config __P((struct pcmcia_config_entry *));
 void	esp_pcmcia_attach __P((struct device *, struct device *, void *));  
 void	esp_pcmcia_init __P((struct esp_pcmcia_softc *));
 int	esp_pcmcia_detach __P((struct device *, int));
@@ -108,10 +109,7 @@ void	esp_pcmcia_dma_go __P((struct ncr53c9x_softc *));
 void	esp_pcmcia_dma_stop __P((struct ncr53c9x_softc *));
 int	esp_pcmcia_dma_isactive __P((struct ncr53c9x_softc *));
 
-static const struct esp_pcmcia_product *
-    esp_pcmcia_lookup __P((struct pcmcia_attach_args *));
-
-struct ncr53c9x_glue esp_pcmcia_glue = {
+const struct ncr53c9x_glue esp_pcmcia_glue = {
 	esp_pcmcia_read_reg,
 	esp_pcmcia_write_reg,
 	esp_pcmcia_dma_isintr,
@@ -124,47 +122,15 @@ struct ncr53c9x_glue esp_pcmcia_glue = {
 	NULL,			/* gl_clear_latched_intr */
 };
 
-const struct esp_pcmcia_product {
-	const char	*epp_name;		/* product name */
-	u_int32_t	epp_vendor;		/* vendor ID */
-	u_int32_t	epp_product;		/* product ID */
-	const char	*epp_cisinfo[4];	/* CIS information */
-} esp_pcmcia_products[] = {
-	{ PCMCIA_STR_PANASONIC_KXLC002,		PCMCIA_VENDOR_PANASONIC,
-	  PCMCIA_PRODUCT_PANASONIC_KXLC002,	PCMCIA_CIS_PANASONIC_KXLC002 },
+const struct pcmcia_product esp_pcmcia_products[] = {
+	{ PCMCIA_VENDOR_PANASONIC, PCMCIA_PRODUCT_PANASONIC_KXLC002,
+	  PCMCIA_CIS_PANASONIC_KXLC002 },
 
-	{ PCMCIA_STR_RATOC_REX_9530,		PCMCIA_VENDOR_RATOC,
-	  PCMCIA_PRODUCT_RATOC_REX_9530,	PCMCIA_CIS_RATOC_REX_9530 },
-
-	{ NULL }
+	{ PCMCIA_VENDOR_RATOC, PCMCIA_PRODUCT_RATOC_REX_9530,
+	  PCMCIA_CIS_RATOC_REX_9530 },
 };
-
-static const struct esp_pcmcia_product *
-esp_pcmcia_lookup(pa)
-	struct pcmcia_attach_args *pa;
-{
-	const struct esp_pcmcia_product *epp;
-
-	for (epp = esp_pcmcia_products; epp->epp_name != NULL; epp++) {
-		/* match by CIS information */
-		if (pa->card->cis1_info[0] != NULL &&
-		    epp->epp_cisinfo[0] != NULL &&
-		    strcmp(pa->card->cis1_info[0], epp->epp_cisinfo[0]) == 0 &&
-		    pa->card->cis1_info[1] != NULL &&
-		    epp->epp_cisinfo[1] != NULL &&
-		    strcmp(pa->card->cis1_info[1], epp->epp_cisinfo[1]) == 0)
-			return (epp);
-
-		/* match by vendor/product id */
-		if (pa->manufacturer != PCMCIA_VENDOR_INVALID &&
-		    pa->manufacturer == epp->epp_vendor &&
-		    pa->product != PCMCIA_PRODUCT_INVALID &&
-		    pa->product == epp->epp_product)
-			return (epp);
-	}
-
-	return (NULL);
-}
+const size_t esp_pcmcia_nproducts =
+    sizeof(esp_pcmcia_products) / sizeof(esp_pcmcia_products[0]);
 
 int
 esp_pcmcia_match(parent, match, aux)
@@ -174,8 +140,20 @@ esp_pcmcia_match(parent, match, aux)
 {
 	struct pcmcia_attach_args *pa = aux;
 
-	if (esp_pcmcia_lookup(pa) != NULL)
+	if (pcmcia_product_lookup(pa, esp_pcmcia_products, esp_pcmcia_nproducts,
+	    sizeof(esp_pcmcia_products[0]), NULL))
 		return (1);
+	return (0);
+}
+
+int
+esp_pcmcia_validate_config(cfe)
+	struct pcmcia_config_entry *cfe;
+{
+	if (cfe->iftype != PCMCIA_IFTYPE_IO ||
+	    cfe->num_memspace != 0 ||
+	    cfe->num_iospace != 1)
+		return (EINVAL);
 	return (0);
 }
 
@@ -189,71 +167,38 @@ esp_pcmcia_attach(parent, self, aux)
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
 	struct pcmcia_function *pf = pa->pf;
-	const struct esp_pcmcia_product *epp;
+	int error;
 
 	esc->sc_pf = pf;
 
-	SIMPLEQ_FOREACH(cfe, &pf->cfe_head, cfe_list) {
-		if (cfe->num_memspace != 0 ||
-		    cfe->num_iospace != 1)
-			continue;
-
-		if (pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-		    cfe->iospace[0].length, 0, &esc->sc_pcioh) == 0)
-			break;
+	error = pcmcia_function_configure(pf, esp_pcmcia_validate_config);
+	if (error) {
+		aprint_error("%s: configure failed, error=%d\n", self->dv_xname,
+		    error);
+		return;
 	}
 
-	if (cfe == 0) {
-		printf(": can't alloc i/o space\n");
-		goto no_config_entry;
-	}
-
-	/* Enable the card. */
-	pcmcia_function_init(pf, cfe);
-	if (pcmcia_function_enable(pf)) {
-		printf(": function enable failed\n");
-		goto enable_failed;
-	}
-
-	/* Map in the I/O space */
-	if (pcmcia_io_map(pa->pf, PCMCIA_WIDTH_AUTO, 0, esc->sc_pcioh.size,
-	    &esc->sc_pcioh, &esc->sc_io_window)) {
-		printf(": can't map i/o space\n");
-		goto iomap_failed;
-	}
-
-	epp = esp_pcmcia_lookup(pa);
-	if (epp == NULL) {
-		printf("\n");
-		panic("esp_pcmcia_attach: impossible");
-	}
-
-	printf(": %s", epp->epp_name);
-
+	cfe = pf->cfe;
+	esc->sc_iot = cfe->iospace[0].handle.iot;
+	esc->sc_ioh = cfe->iospace[0].handle.ioh;
 	esp_pcmcia_init(esc);
 
-	/*
-	 *  Initialize nca board itself.
-	 */
-	esc->sc_flags |= ESP_PCMCIA_ATTACHING;
+	error = esp_pcmcia_enable(self, 1);
+	if (error)
+		goto fail;
+
 	sc->sc_adapter.adapt_minphys = minphys;
 	sc->sc_adapter.adapt_request = ncr53c9x_scsipi_request;
 	sc->sc_adapter.adapt_enable = esp_pcmcia_enable;
+	sc->sc_adapter.adapt_refcnt = 1;
+
 	ncr53c9x_attach(sc);
-	esc->sc_flags &= ~ESP_PCMCIA_ATTACHING;
-	esc->sc_flags |= ESP_PCMCIA_ATTACHED;
+	scsipi_adapter_delref(&sc->sc_adapter);
+	esc->sc_state = ESP_PCMCIA_ATTACHED;
 	return;
 
-iomap_failed:
-	/* Disable the device. */
-	pcmcia_function_disable(esc->sc_pf);
-
-enable_failed:
-	/* Unmap our I/O space. */
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
-
-no_config_entry:
-	return;
+fail:
+	pcmcia_function_unconfigure(pf);
 }
 
 void
@@ -261,8 +206,6 @@ esp_pcmcia_init(esc)
 	struct esp_pcmcia_softc *esc;
 {
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
-	bus_space_tag_t iot = esc->sc_pcioh.iot;
-	bus_space_handle_t ioh = esc->sc_pcioh.ioh;
 
 	/* id 7, clock 40M, parity ON, sync OFF, fast ON, slow ON */
 
@@ -287,14 +230,6 @@ esp_pcmcia_init(esc)
 	sc->sc_cfg5 = NCRCFG5_CRS1 | NCRCFG5_AADDR | NCRCFG5_PTRINC;
 	sc->sc_minsync = 0;
 	sc->sc_maxxfer = 64 * 1024;
-
-	bus_space_write_1(iot, ioh, NCR_CFG5, sc->sc_cfg5);
-
-	bus_space_write_1(iot, ioh, NCR_PIOI, 0);
-	bus_space_write_1(iot, ioh, NCR_PSTAT, 0);
-	bus_space_write_1(iot, ioh, 0x09, 0x24);
-
-	bus_space_write_1(iot, ioh, NCR_CFG4, sc->sc_cfg4);
 }
 
 int
@@ -302,21 +237,17 @@ esp_pcmcia_detach(self, flags)
 	struct device *self;
 	int flags;
 {
-	struct esp_pcmcia_softc *esc = (void *)self;
+	struct esp_pcmcia_softc *sc = (void *)self;
 	int error;
 
-	if ((esc->sc_flags & ESP_PCMCIA_ATTACHED) == 0) {
-		/* Nothing to detach. */
+	if (sc->sc_state != ESP_PCMCIA_ATTACHED)
 		return (0);
-	}
 
-	error = ncr53c9x_detach(&esc->sc_ncr53c9x, flags);
+	error = ncr53c9x_detach(&sc->sc_ncr53c9x, flags);
 	if (error)
 		return (error);
 
-	/* Unmap our i/o window and i/o space. */
-	pcmcia_io_unmap(esc->sc_pf, esc->sc_io_window);
-	pcmcia_io_free(esc->sc_pf, &esc->sc_pcioh);
+	pcmcia_function_unconfigure(sc->sc_pf);
 
 	return (0);
 }
@@ -326,45 +257,36 @@ esp_pcmcia_enable(arg, onoff)
 	struct device *arg;
 	int onoff;
 {
-	struct esp_pcmcia_softc *esc = (void *) arg;
+	struct esp_pcmcia_softc *sc = (void *)arg;
+	int error;
 
 	if (onoff) {
 #ifdef ESP_PCMCIA_POLL
-		callout_reset(&esc->sc_poll_ch, 1, esp_pcmcia_poll, esc);
+		callout_reset(&sc->sc_poll_ch, 1, esp_pcmcia_poll, sc);
 #else
 		/* Establish the interrupt handler. */
-		esc->sc_ih = pcmcia_intr_establish(esc->sc_pf, IPL_BIO,
-		    ncr53c9x_intr, &esc->sc_ncr53c9x);
-		if (esc->sc_ih == NULL) {
-			printf("%s: couldn't establish interrupt handler\n",
-			    esc->sc_ncr53c9x.sc_dev.dv_xname);
+		sc->sc_ih = pcmcia_intr_establish(sc->sc_pf, IPL_BIO,
+		    ncr53c9x_intr, &sc->sc_ncr53c9x);
+		if (!sc->sc_ih)
 			return (EIO);
-		}
 #endif
 
-		/*
-		 * If attach is in progress, we know that card power is
-		 * enabled and chip will be initialized later.
-		 * Otherwise, enable and reset now.
-		 */
-		if ((esc->sc_flags & ESP_PCMCIA_ATTACHING) == 0) {
-			if (pcmcia_function_enable(esc->sc_pf)) {
-				printf("%s: couldn't enable PCMCIA function\n",
-				    esc->sc_ncr53c9x.sc_dev.dv_xname);
-				pcmcia_intr_disestablish(esc->sc_pf,
-				    esc->sc_ih);
-				return (EIO);
-			}
-
-			/* Initialize only chip.  */
-			ncr53c9x_init(&esc->sc_ncr53c9x, 0);
+		error = pcmcia_function_enable(sc->sc_pf);
+		if (error) {
+			pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+			sc->sc_ih = 0;
+			return (error);
 		}
+
+		/* Initialize only chip.  */
+		ncr53c9x_init(&sc->sc_ncr53c9x, 0);
 	} else {
-		pcmcia_function_disable(esc->sc_pf);
+		pcmcia_function_disable(sc->sc_pf);
 #ifdef ESP_PCMCIA_POLL
-		callout_stop(&esc->sc_poll_ch);
+		callout_stop(&sc->sc_poll_ch);
 #else
-		pcmcia_intr_disestablish(esc->sc_pf, esc->sc_ih);
+		pcmcia_intr_disestablish(sc->sc_pf, sc->sc_ih);
+		sc->sc_ih = 0;
 #endif
 	}
 
@@ -394,7 +316,7 @@ esp_pcmcia_read_reg(sc, reg)
 	struct esp_pcmcia_softc *esc = (struct esp_pcmcia_softc *)sc;
 	u_char v;
 
-	v = bus_space_read_1(esc->sc_pcioh.iot, esc->sc_pcioh.ioh, reg);
+	v = bus_space_read_1(esc->sc_iot, esc->sc_ioh, reg);
 	return v;
 }
 
@@ -409,7 +331,7 @@ esp_pcmcia_write_reg(sc, reg, val)
 
 	if (reg == NCR_CMD && v == (NCRCMD_TRANS|NCRCMD_DMA))
 		v = NCRCMD_TRANS;
-	bus_space_write_1(esc->sc_pcioh.iot, esc->sc_pcioh.ioh, reg, v);
+	bus_space_write_1(esc->sc_iot, esc->sc_ioh, reg, v);
 }
 
 int

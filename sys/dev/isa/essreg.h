@@ -1,4 +1,4 @@
-/*	$NetBSD: essreg.h,v 1.13 2001/09/29 19:08:49 augustss Exp $	*/
+/*	$NetBSD: essreg.h,v 1.13.18.1 2004/08/12 11:41:43 skrll Exp $	*/
 /*
  * Copyright 1997
  * Digital Equipment Corporation. All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 /*
-** @(#) $RCSfile: essreg.h,v $ $Revision: 1.13 $ (SHARK) $Date: 2001/09/29 19:08:49 $
+** @(#) $RCSfile: essreg.h,v $ $Revision: 1.13.18.1 $ (SHARK) $Date: 2004/08/12 11:41:43 $
 **
 **++
 **
@@ -175,7 +175,7 @@
 
 #define ESS_DRQ2_VALID(chan) ((chan) == 0 || (chan) == 1 || (chan) == 3 || (chan) == 5)
 
-#define ESS_USE_AUDIO1(model) (((model) == ESS_1788) || ((model) == ESS_1868) || ((model) == ESS_1878) || ((model) == ESS_1869) || ((model) == ESS_1879))
+#define ESS_USE_AUDIO1(model) ((model) <= ESS_1879)
 
 /*
  * Macros to manipulate gain values

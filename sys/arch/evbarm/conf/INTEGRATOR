@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.14.2.1 2004/08/03 10:33:54 skrll Exp $
+#	$NetBSD: INTEGRATOR,v 1.14.2.2 2004/08/12 11:41:03 skrll Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -21,7 +21,7 @@ options 	NTP		# NTP phase/frequency locked loop
 options 	CPU_ARM9	# Support the ARM9TDMI core
 options 	CPU_ARM10	# Support the ARM10 core
 # XXX Should be armv5 for ARM10 processor.
-makeoptions	COPTS="-O2 -march=armv4"
+makeoptions	CPUFLAGS="-march=armv4"
 
 # Architecture options
 
@@ -136,7 +136,10 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 options 	PLCONSOLE,PLCOMCNUNIT=0,PLCONSPEED=38400,PLCONMODE=0xB00
-config		netbsd	root on ? type ?
+
+config		netbsd		root on ? type ?
+config		netbsd-fxp0	root on fxp0 type nfs
+config		netbsd-sd0	root on sd0 type ffs
 
 # The main bus device
 mainbus0	at root
@@ -156,6 +159,10 @@ plrtc0		at ifpga? offset 0x05000000
 
 # PCI bus via ifpga
 pci0		at ifpga?			# PCI bus
+
+# Compact PCI bus via PCI bridge.
+ppb*		at pci? dev? function ?		# PCI-PCI bridges
+pci*		at ppb? bus ?
 
 # PCI IDE Controllers and Devices
 # PCI IDE controllers - see pciide(4) for supported hardware.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.h,v 1.13.2.2 2004/08/03 10:54:21 skrll Exp $	*/
+/*	$NetBSD: ieee80211_node.h,v 1.13.2.3 2004/08/12 11:42:20 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -40,6 +40,7 @@
 #define	IEEE80211_TRANS_WAIT 	5		/* transition wait */
 #define	IEEE80211_INACT_WAIT	5		/* inactivity timer interval */
 #define	IEEE80211_INACT_MAX	(300/IEEE80211_INACT_WAIT)
+#define	IEEE80211_CACHE_SIZE	100
 
 #define	IEEE80211_NODE_HASHSIZE	32
 /* simple hash is enough for variation of macaddr */
@@ -54,6 +55,23 @@ struct ieee80211_rateset {
 	u_int8_t		rs_nrates;
 	u_int8_t		rs_rates[IEEE80211_RATE_MAXSIZE];
 };
+
+enum ieee80211_node_state {
+	IEEE80211_STA_CACHE,	/* cached node */
+	IEEE80211_STA_BSS,	/* ic->ic_bss, the network we joined */
+	IEEE80211_STA_AUTH,	/* successfully authenticated */
+	IEEE80211_STA_ASSOC,	/* successfully associated */
+	IEEE80211_STA_COLLECT	/* This node remains in the cache while
+				 * the driver sends a de-auth message;
+				 * afterward it should be freed to make room
+				 * for a new node.
+				 */
+};
+
+#define	ieee80211_node_newstate(__ni, __state)	\
+	do {					\
+		(__ni)->ni_state = (__state);	\
+	} while (0)
 
 #ifdef _KERNEL
 /*
@@ -111,6 +129,7 @@ struct ieee80211_node {
 	int			ni_fails;	/* failure count to associate */
 	int			ni_inact;	/* inactivity mark count */
 	int			ni_txrate;	/* index to ni_rates[] */
+	int			ni_state;
 	u_int32_t		*ni_challenge;	/* shared-key challenge */
 };
 
@@ -187,14 +206,14 @@ extern	struct ieee80211_node *ieee80211_find_txnode(struct ieee80211com *,
 extern	struct ieee80211_node *ieee80211_find_node_for_beacon(
 		struct ieee80211com *, u_int8_t *macaddr,
 		struct ieee80211_channel *, char *ssid);
-extern	void ieee80211_free_node(struct ieee80211com *,
+extern	void ieee80211_release_node(struct ieee80211com *,
 		struct ieee80211_node *);
 extern	void ieee80211_free_allnodes(struct ieee80211com *);
 
 typedef void ieee80211_iter_func(void *, struct ieee80211_node *);
 extern	void ieee80211_iterate_nodes(struct ieee80211com *ic,
 		ieee80211_iter_func *, void *);
-extern	void ieee80211_timeout_nodes(struct ieee80211com *);
+extern	void ieee80211_clean_nodes(struct ieee80211com *);
 
 extern	void ieee80211_node_join(struct ieee80211com *,
 		struct ieee80211_node *, int);

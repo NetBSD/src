@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_message.c,v 1.27.2.2 2004/08/03 10:44:06 skrll Exp $ */
+/*	$NetBSD: mach_message.c,v 1.27.2.3 2004/08/12 11:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.2 2004/08/03 10:44:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_message.c,v 1.27.2.3 2004/08/12 11:41:14 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_compat_mach.h" /* For COMPAT_MACH in <sys/ktrace.h> */
@@ -884,7 +884,7 @@ mach_trade_rights_complex(l, mm)
 			lumnp = NULL;
 
 			/* This allocates kmnp */
-			error = mach_ool_copyin(mm->mm_l, rumnp, &kaddr, size, 0);
+			error = mach_ool_copyin(rp, rumnp, &kaddr, size, 0);
 			if (error != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -893,7 +893,7 @@ mach_trade_rights_complex(l, mm)
 				mach_trade_rights(l, mm->mm_l, &kmnp[j], disp);
 
 			/* This frees kmnp */
-			if ((error = mach_ool_copyout(l, kmnp, &lumnp, 
+			if ((error = mach_ool_copyout(lp, kmnp, &lumnp, 
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -928,12 +928,12 @@ mach_trade_rights_complex(l, mm)
 			 */ 
 
 			/* This allocates kdata */
-			error = mach_ool_copyin(mm->mm_l, rudata, &kdata, size, 0);
+			error = mach_ool_copyin(rp, rudata, &kdata, size, 0);
 			if (error != 0)
 				return MACH_SEND_INVALID_DATA;
 
 			/* This frees kdata */
-			if ((error = mach_ool_copyout(l, kdata, &ludata, 
+			if ((error = mach_ool_copyout(lp, kdata, &ludata, 
 			    size, MACH_OOL_FREE|MACH_OOL_TRACE)) != 0)
 				return MACH_SEND_INVALID_DATA;
 
@@ -953,14 +953,13 @@ mach_trade_rights_complex(l, mm)
 }
 
 inline int
-mach_ool_copyin(l, uaddr, kaddr, size, flags)
-	struct lwp *l;
+mach_ool_copyin(p, uaddr, kaddr, size, flags)
+	struct proc *p;
 	const void *uaddr;
 	void **kaddr;
 	size_t size;
 	int flags;
 {
-	struct proc *p = l->l_proc;
 	int error;
 	void *kbuf;
 
@@ -989,7 +988,7 @@ mach_ool_copyin(l, uaddr, kaddr, size, flags)
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
 	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(l, kaddr, size, uaddr);
+		ktrmool(p, kaddr, size, uaddr);
 #endif
 
 	*kaddr = kbuf;
@@ -997,14 +996,13 @@ mach_ool_copyin(l, uaddr, kaddr, size, flags)
 }
 
 inline int
-mach_ool_copyout(l, kaddr, uaddr, size, flags)
-	struct lwp *l;
+mach_ool_copyout(p, kaddr, uaddr, size, flags)
+	struct proc *p;
 	void *kaddr;
 	void **uaddr;
 	size_t size;
 	int flags;
 {
-	struct proc *p = l->l_proc;
 	vaddr_t ubuf;
 	int error = 0; 
 
@@ -1042,7 +1040,7 @@ mach_ool_copyout(l, kaddr, uaddr, size, flags)
 	if (size > PAGE_SIZE)
 		size = PAGE_SIZE;
 	if ((flags & MACH_OOL_TRACE) && KTRPOINT(p, KTR_MOOL))
-		ktrmool(l, kaddr, size, (void *)ubuf);
+		ktrmool(p, kaddr, size, (void *)ubuf);
 #endif
 
 out:

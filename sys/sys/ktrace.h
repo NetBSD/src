@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.30.2.3 2004/08/03 10:56:28 skrll Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.30.2.4 2004/08/12 11:42:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -222,7 +222,6 @@ struct ktr_saupcall {
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define KTRFAC_MOOL	(1<<KTR_MOOL)
 #define	KTRFAC_SAUPCALL	(1<<KTR_SAUPCALL)
-
 /*
  * trace flags (also in p_traceflags)
  */

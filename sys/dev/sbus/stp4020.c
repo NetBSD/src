@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.34.2.1 2004/08/03 10:51:05 skrll Exp $ */
+/*	$NetBSD: stp4020.c,v 1.34.2.2 2004/08/12 11:42:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.1 2004/08/03 10:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.34.2.2 2004/08/12 11:42:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,7 @@ void	stp4020_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
 void	stp4020_chip_socket_enable __P((pcmcia_chipset_handle_t));
 void	stp4020_chip_socket_disable __P((pcmcia_chipset_handle_t));
+void	stp4020_chip_socket_settype __P((pcmcia_chipset_handle_t, int));
 void	*stp4020_chip_intr_establish __P((pcmcia_chipset_handle_t,
 					  struct pcmcia_function *, int,
 					  int (*) __P((void *)), void *));
@@ -201,7 +202,8 @@ static struct pcmcia_chip_functions stp4020_functions = {
 	stp4020_chip_intr_disestablish,
 
 	stp4020_chip_socket_enable,
-	stp4020_chip_socket_disable
+	stp4020_chip_socket_disable,
+	stp4020_chip_socket_settype,
 };
 
 
@@ -986,8 +988,10 @@ stp4020_chip_socket_enable(pch)
 	 */
 	delay(10);
 
-	/* Clear reset flag */
+	/* Clear reset flag, set to memory mode */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
 	v &= ~STP4020_ICR0_RESET;
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
@@ -1009,15 +1013,24 @@ stp4020_chip_socket_enable(pch)
 			bits);
 		return;
 	}
+}
 
-	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
+void
+stp4020_chip_socket_settype(pch, type)
+	pcmcia_chipset_handle_t pch;
+	int type;
+{
+	struct stp4020_socket *h = (struct stp4020_socket *)pch;
+	int v;
 
 	/*
 	 * Check the card type.
 	 * Enable socket I/O interrupts for IO cards.
 	 */
-	if (pcmcia_card_gettype(h->pcmcia) == PCMCIA_IFTYPE_IO) {
-		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE);
+	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
+	if (type == PCMCIA_IFTYPE_IO) {
 		v |= STP4020_ICR0_IFTYPE_IO|STP4020_ICR0_IOIE
 		    |STP4020_ICR0_SPKREN;
 		v |= h->sbus_intno ? STP4020_ICR0_IOILVL_SB1
@@ -1026,8 +1039,6 @@ stp4020_chip_socket_enable(pch)
 		h->int_disable = v & ~STP4020_ICR0_IOIE;
 		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
 	} else {
-		v &= ~(STP4020_ICR0_IOILVL|STP4020_ICR0_IFTYPE
-		    |STP4020_ICR0_SPKREN);
 		v |= STP4020_ICR0_IFTYPE_MEM;
 		h->int_enable = h->int_disable = v;
 		DPRINTF(("%s: configuring card for IO useage\n", h->sc->sc_dev.dv_xname));
@@ -1047,7 +1058,8 @@ stp4020_chip_socket_disable(pch)
 	 * Disable socket I/O interrupts.
 	 */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL);
+	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN);
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Power down the socket */

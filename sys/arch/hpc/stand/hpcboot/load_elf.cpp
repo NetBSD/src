@@ -1,4 +1,4 @@
-/*	$NetBSD: load_elf.cpp,v 1.7.16.1 2004/08/03 10:34:59 skrll Exp $	*/
+/*	$NetBSD: load_elf.cpp,v 1.7.16.2 2004/08/12 11:41:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <memory.h>
 #include <file.h>
 
-#define ROUND4(x)	(((x) + 3) & ~3)
+#define	ROUND4(x)	(((x) + 3) & ~3)
 
 ElfLoader::ElfLoader(Console *&cons, MemoryManager *&mem)
 	: Loader(cons, mem)
@@ -145,7 +145,7 @@ ElfLoader::load()
 	Elf_Phdr *ph;
 	vaddr_t kv;
 	int i;
-  
+
 	_load_segment_start();
 
 	for (i = 0, ph = _ph; i < _eh.e_phnum; i++, ph++) {
@@ -262,7 +262,7 @@ void
 ElfLoader::load_symbol_block(vaddr_t kv)
 {
 	size_t sz;
-	
+
 	if (!_sym_blk.enable)
 		return;
 
@@ -291,7 +291,7 @@ ElfLoader::read_header()
 		DPRINTF((TEXT("not a ELF file.\n")));
 		return FALSE;
 	}
-  
+
 	// Windows CE is 32bit little-endian only.
 	if (_eh.e_ident[EI_DATA] != ELFDATA2LSB ||
 	    _eh.e_ident[EI_CLASS] != ELFCLASS32) {
@@ -308,14 +308,14 @@ ElfLoader::read_header()
 		    _eh.e_machine));
 		return FALSE;
 	}
-  
+
 	// Check object type
 	if (_eh.e_type != ET_EXEC) {
 		DPRINTF((TEXT("not a executable file. type = %d\n"),
 		    _eh.e_type));
 		return FALSE;
 	}
-  
+
 	if (_eh.e_phoff == 0 || _eh.e_phnum == 0 || _eh.e_phnum > 16 ||
 	    _eh.e_phentsize != sizeof(Elf_Phdr)) {
 		DPRINTF((TEXT("invalid program header information.\n")));

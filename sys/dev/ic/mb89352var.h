@@ -1,4 +1,4 @@
-/*	$NetBSD: mb89352var.h,v 1.3.22.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mb89352var.h,v 1.3.22.2 2004/08/12 11:41:25 skrll Exp $	*/
 /*	NecBSD: mb89352var.h,v 1.4 1998/03/14 07:31:22 kmatsuda Exp 	*/
 
 /*-
@@ -147,6 +147,7 @@ struct spc_softc {
 #define SPC_DOINGDMA	0x04	/* doing DMA */
 #define SPC_INACTIVE	0x80	/* The FIFO data path is active! */
 	u_char	sc_selid;	/* Reselection ID */
+	struct device *sc_child;/* Our child */
 
 	/* Message stuff */
 	u_char	sc_msgpriq;	/* Messages we want to send */
@@ -204,8 +205,10 @@ extern int spc_debug; /* SPC_SHOWSTART|SPC_SHOWMISC|SPC_SHOWTRACE; */
 #define SPC_START(s)	SPC_PRINT(SPC_SHOWSTART, s)
 
 void	spc_attach	__P((struct spc_softc *));
+int	spc_activate	__P((struct device *, enum devact));
+int	spc_detach	__P((struct device *, int));
 int	spc_intr	__P((void *));
 int	spc_find	__P((bus_space_tag_t, bus_space_handle_t, int));
-void	spc_init	__P((struct spc_softc *));
+void	spc_init	__P((struct spc_softc *, int));
 void	spc_sched	__P((struct spc_softc *));
 #endif	/* _MB89352VAR_H_ */

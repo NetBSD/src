@@ -1,4 +1,4 @@
-/* $NetBSD: if_atw_cardbus.c,v 1.10.2.2 2004/08/03 10:45:47 skrll Exp $ */
+/* $NetBSD: if_atw_cardbus.c,v 1.10.2.3 2004/08/12 11:41:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.2 2004/08/03 10:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.3 2004/08/12 11:41:22 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -97,7 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_atw_cardbus.c,v 1.10.2.2 2004/08/03 10:45:47 skrl
 #include <dev/pci/pcidevs.h>
 
 #include <dev/cardbus/cardbusvar.h>
-#include <dev/cardbus/cardbusdevs.h>
+#include <dev/pci/pcidevs.h>
 
 /*
  * PCI configuration space registers used by the ADM8211.
@@ -187,7 +187,6 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	cardbus_devfunc_t ct = ca->ca_ct;
 	const struct atw_cardbus_product *acp;
 	bus_addr_t adr;
-	int rev;
 
 	sc->sc_dmat = ca->ca_dmat;
 	csc->sc_ct = ct;
@@ -209,12 +208,13 @@ atw_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_intr_ack = atw_cardbus_intr_ack;
 
 	/* Get revision info. */
-	rev = PCI_REVISION(ca->ca_class);
+	sc->sc_rev = PCI_REVISION(ca->ca_class);
 
-	printf(": %s\n", acp->acp_product_name);
+	printf(": %s, revision %d.%d\n", acp->acp_product_name,
+	    (sc->sc_rev >> 4) & 0xf, sc->sc_rev & 0xf);
 
 #if 0
-	printf("%s: pass %d.%d signature %08x\n", sc->sc_dev.dv_xname,
+	printf("%s: signature %08x\n", sc->sc_dev.dv_xname,
 	    (rev >> 4) & 0xf, rev & 0xf,
 	    cardbus_conf_read(ct->ct_cc, ct->ct_cf, csc->sc_tag, 0x80));
 #endif
@@ -412,13 +412,13 @@ atw_cardbus_setup(struct atw_cardbus_softc *csc)
 	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
 	    PCI_PWR_D0);
 
-	/* Make sure the right access type is on the CardBus bridge. */
-	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
-	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
-
 	/* Program the BAR. */
 	cardbus_conf_write(cc, cf, csc->sc_tag, csc->sc_bar_reg,
 	    csc->sc_bar_val);
+
+	/* Make sure the right access type is on the CardBus bridge. */
+	(*ct->ct_cf->cardbus_ctrl)(cc, csc->sc_cben);
+	(*ct->ct_cf->cardbus_ctrl)(cc, CARDBUS_BM_ENABLE);
 
 	/* Enable the appropriate bits in the PCI CSR. */
 	reg = cardbus_conf_read(cc, cf, csc->sc_tag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.38.2.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.38.2.2 2004/08/12 11:41:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.38.2.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.38.2.2 2004/08/12 11:41:25 skrll Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -108,6 +108,10 @@ void	ne2000_writemem __P((bus_space_tag_t, bus_space_handle_t,
 	    int, int));
 void	ne2000_readmem __P((bus_space_tag_t, bus_space_handle_t,
 	    bus_space_tag_t, bus_space_handle_t, int, u_int8_t *, size_t, int));
+
+#define	ASIC_BARRIER(asict, asich) \
+	bus_space_barrier((asict), (asich), 0, 0x10, \
+	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE)
 
 int
 ne2000_attach(nsc, myea)
@@ -326,13 +330,11 @@ ne2000_detect(nict, nich, asict, asich)
 	/* Reset the board. */
 #ifdef GWETHER
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, 0);
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	ASIC_BARRIER(asict, asich);
 	delay(200);
 #endif /* GWETHER */
 	tmp = bus_space_read_1(asict, asich, NE2000_ASIC_RESET);
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	ASIC_BARRIER(asict, asich);
 	delay(10000);
 
 	/*
@@ -344,8 +346,7 @@ ne2000_detect(nict, nich, asict, asich)
 	 * the invasive thing for now.  Yuck.]
 	 */
 	bus_space_write_1(asict, asich, NE2000_ASIC_RESET, tmp);
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	ASIC_BARRIER(asict, asich);
 	delay(5000);
 
 	/*
@@ -751,8 +752,7 @@ ne2000_readmem(nict, nich, asict, asich, src, dst, amount, useword)
 	bus_space_write_1(nict, nich, ED_P0_CR,
 	    ED_CR_RD0 | ED_CR_PAGE_0 | ED_CR_STA);
 
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	ASIC_BARRIER(asict, asich);
 	if (useword)
 		bus_space_read_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)dst, amount >> 1);
@@ -801,15 +801,16 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 	NIC_BARRIER(nict, nich);
 	bus_space_write_1(nict, nich, ED_P0_CR,
 	    ED_CR_RD1 | ED_CR_PAGE_0 | ED_CR_STA);
+	NIC_BARRIER(nict, nich);
 
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
+	ASIC_BARRIER(asict, asich);
 	if (useword)
 		bus_space_write_multi_stream_2(asict, asich, NE2000_ASIC_DATA,
 		    (u_int16_t *)src, len >> 1);
 	else
 		bus_space_write_multi_1(asict, asich, NE2000_ASIC_DATA,
 		    src, len);
+	ASIC_BARRIER(asict, asich);
 
 	/*
 	 * Wait for remote DMA to complete.  This is necessary because on the
@@ -818,8 +819,6 @@ ne2000_writemem(nict, nich, asict, asich, src, dst, len, useword, quiet)
 	 * waiting causes really bad things to happen - like the NIC wedging
 	 * the bus.
 	 */
-	bus_space_barrier(nict, nich, 0, NE2000_NPORTS,
-			  BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 	while (((bus_space_read_1(nict, nich, ED_P0_ISR) & ED_ISR_RDC) !=
 	    ED_ISR_RDC) && --maxwait)
 		DELAY(1);

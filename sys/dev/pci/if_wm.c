@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.37.2.1 2004/08/03 10:49:09 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.37.2.2 2004/08/12 11:41:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.1 2004/08/03 10:49:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.37.2.2 2004/08/12 11:41:44 skrll Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -112,22 +112,28 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
 
 /*
  * Transmit descriptor list size.  Due to errata, we can only have
- * 256 hardware descriptors in the ring.  We tell the upper layers
- * that they can queue a lot of packets, and we go ahead and manage
- * up to 64 (16 for the i82547) of them at a time.  We allow up to
- * 40 DMA segments per packet (there have been reports of jumbo frame
- * packets with as many as 30 DMA segments!).
+ * 256 hardware descriptors in the ring on < 82544, but we use 4096
+ * on >= 82544.  We tell the upper layers that they can queue a lot
+ * of packets, and we go ahead and manage up to 64 (16 for the i82547)
+ * of them at a time.
+ *
+ * We allow up to 256 (!) DMA segments per packet.  Pathological packet
+ * chains containing many small mbufs have been observed in zero-copy
+ * situations with jumbo frames.
  */
-#define	WM_NTXSEGS		40
+#define	WM_NTXSEGS		256
 #define	WM_IFQUEUELEN		256
 #define	WM_TXQUEUELEN_MAX	64
 #define	WM_TXQUEUELEN_MAX_82547	16
 #define	WM_TXQUEUELEN(sc)	((sc)->sc_txnum)
 #define	WM_TXQUEUELEN_MASK(sc)	(WM_TXQUEUELEN(sc) - 1)
 #define	WM_TXQUEUE_GC(sc)	(WM_TXQUEUELEN(sc) / 8)
-#define	WM_NTXDESC		256
-#define	WM_NTXDESC_MASK		(WM_NTXDESC - 1)
-#define	WM_NEXTTX(x)		(((x) + 1) & WM_NTXDESC_MASK)
+#define	WM_NTXDESC_82542	256
+#define	WM_NTXDESC_82544	4096
+#define	WM_NTXDESC(sc)		((sc)->sc_ntxdesc)
+#define	WM_NTXDESC_MASK(sc)	(WM_NTXDESC(sc) - 1)
+#define	WM_TXDESCSIZE(sc)	(WM_NTXDESC(sc) * sizeof(wiseman_txdesc_t))
+#define	WM_NEXTTX(sc, x)	(((x) + 1) & WM_NTXDESC_MASK(sc))
 #define	WM_NEXTTXS(sc, x)	(((x) + 1) & WM_TXQUEUELEN_MASK(sc))
 
 /*
@@ -146,19 +152,25 @@ int	wm_debug = WM_DEBUG_TX|WM_DEBUG_RX|WM_DEBUG_LINK;
  * a single clump that maps to a single DMA segment to make serveral things
  * easier.
  */
-struct wm_control_data {
-	/*
-	 * The transmit descriptors.
-	 */
-	wiseman_txdesc_t wcd_txdescs[WM_NTXDESC];
-
+struct wm_control_data_82544 {
 	/*
 	 * The receive descriptors.
 	 */
 	wiseman_rxdesc_t wcd_rxdescs[WM_NRXDESC];
+
+	/*
+	 * The transmit descriptors.  Put these at the end, because
+	 * we might use a smaller number of them.
+	 */
+	wiseman_txdesc_t wcd_txdescs[WM_NTXDESC_82544];
 };
 
-#define	WM_CDOFF(x)	offsetof(struct wm_control_data, x)
+struct wm_control_data_82542 {
+	wiseman_rxdesc_t wcd_rxdescs[WM_NRXDESC];
+	wiseman_txdesc_t wcd_txdescs[WM_NTXDESC_82542];
+};
+
+#define	WM_CDOFF(x)	offsetof(struct wm_control_data_82544, x)
 #define	WM_CDTXOFF(x)	WM_CDOFF(wcd_txdescs[(x)])
 #define	WM_CDRXOFF(x)	WM_CDOFF(wcd_rxdescs[(x)])
 
@@ -242,7 +254,8 @@ struct wm_softc {
 	/*
 	 * Control data structures.
 	 */
-	struct wm_control_data *sc_control_data;
+	int			sc_ntxdesc;	/* must be a power of two */
+	struct wm_control_data_82544 *sc_control_data;
 #define	sc_txdescs	sc_control_data->wcd_txdescs
 #define	sc_rxdescs	sc_control_data->wcd_rxdescs
 
@@ -375,11 +388,11 @@ do {									\
 	__n = (n);							\
 									\
 	/* If it will wrap around, sync to the end of the ring. */	\
-	if ((__x + __n) > WM_NTXDESC) {					\
+	if ((__x + __n) > WM_NTXDESC(sc)) {				\
 		bus_dmamap_sync((sc)->sc_dmat, (sc)->sc_cddmamap,	\
 		    WM_CDTXOFF(__x), sizeof(wiseman_txdesc_t) *		\
-		    (WM_NTXDESC - __x), (ops));				\
-		__n -= (WM_NTXDESC - __x);				\
+		    (WM_NTXDESC(sc) - __x), (ops));			\
+		__n -= (WM_NTXDESC(sc) - __x);				\
 		__x = 0;						\
 	}								\
 									\
@@ -613,51 +626,7 @@ const struct wm_product {
 };
 
 #ifdef WM_EVENT_COUNTERS
-#if WM_NTXSEGS != 40
-#error Update wm_txseg_evcnt_names
-#endif
-static const char *wm_txseg_evcnt_names[WM_NTXSEGS] = {
-	"txseg1",
-	"txseg2",
-	"txseg3",
-	"txseg4",
-	"txseg5",
-	"txseg6",
-	"txseg7",
-	"txseg8",
-	"txseg9",
-	"txseg10",
-	"txseg11",
-	"txseg12",
-	"txseg13",
-	"txseg14",
-	"txseg15",
-	"txseg16",
-	"txseg17",
-	"txseg18",
-	"txseg19",
-	"txseg20",
-	"txseg21",
-	"txseg22",
-	"txseg23",
-	"txseg24",
-	"txseg25",
-	"txseg26",
-	"txseg27",
-	"txseg28",
-	"txseg29",
-	"txseg30",
-	"txseg31",
-	"txseg32",
-	"txseg33",
-	"txseg34",
-	"txseg35",
-	"txseg36",
-	"txseg37",
-	"txseg38",
-	"txseg39",
-	"txseg40",
-};
+static char wm_txseg_evcnt_names[WM_NTXSEGS][sizeof("txsegXXX")];
 #endif /* WM_EVENT_COUNTERS */
 
 #if 0 /* Not currently used */
@@ -720,6 +689,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	size_t cdata_size;
 	const char *intrstr = NULL;
 	const char *eetype;
 	bus_space_tag_t memt;
@@ -961,9 +931,13 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	 * memory.  So must Rx descriptors.  We simplify by allocating
 	 * both sets within the same 4G segment.
 	 */
-	if ((error = bus_dmamem_alloc(sc->sc_dmat,
-				      sizeof(struct wm_control_data),
-				      PAGE_SIZE, (bus_size_t) 0x100000000ULL,
+	WM_NTXDESC(sc) = sc->sc_type < WM_T_82544 ?
+	    WM_NTXDESC_82542 : WM_NTXDESC_82544;
+	cdata_size = sc->sc_type < WM_T_82544 ?
+	    sizeof(struct wm_control_data_82542) :
+	    sizeof(struct wm_control_data_82544);
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, cdata_size, PAGE_SIZE,
+				      (bus_size_t) 0x100000000ULL,
 				      &seg, 1, &rseg, 0)) != 0) {
 		aprint_error(
 		    "%s: unable to allocate control data, error = %d\n",
@@ -971,26 +945,22 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 		goto fail_0;
 	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
-				    sizeof(struct wm_control_data),
+	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
 				    (caddr_t *)&sc->sc_control_data, 0)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat,
-				       sizeof(struct wm_control_data), 1,
-				       sizeof(struct wm_control_data), 0, 0,
-				       &sc->sc_cddmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, cdata_size, 1, cdata_size,
+				       0, 0, &sc->sc_cddmamap)) != 0) {
 		aprint_error("%s: unable to create control data DMA map, "
 		    "error = %d\n", sc->sc_dev.dv_xname, error);
 		goto fail_2;
 	}
 
 	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-				     sc->sc_control_data,
-				     sizeof(struct wm_control_data), NULL,
+				     sc->sc_control_data, cdata_size, NULL,
 				     0)) != 0) {
 		aprint_error(
 		    "%s: unable to load control data DMA map, error = %d\n",
@@ -1258,9 +1228,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_txctx_miss, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txctx miss");
 
-	for (i = 0; i < WM_NTXSEGS; i++)
+	for (i = 0; i < WM_NTXSEGS; i++) {
+		sprintf(wm_txseg_evcnt_names[i], "txseg%d", i);
 		evcnt_attach_dynamic(&sc->sc_ev_txseg[i], EVCNT_TYPE_MISC,
 		    NULL, sc->sc_dev.dv_xname, wm_txseg_evcnt_names[i]);
+	}
 
 	evcnt_attach_dynamic(&sc->sc_ev_txdrop, EVCNT_TYPE_MISC,
 	    NULL, sc->sc_dev.dv_xname, "txdrop");
@@ -1310,7 +1282,7 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
  fail_2:
 	bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->sc_control_data,
-	    sizeof(struct wm_control_data));
+	    cdata_size);
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
@@ -1450,7 +1422,7 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 		sc->sc_txctx_ipcs = ipcs;
 		sc->sc_txctx_tucs = tucs;
 
-		sc->sc_txnext = WM_NEXTTX(sc->sc_txnext);
+		sc->sc_txnext = WM_NEXTTX(sc, sc->sc_txnext);
 		txs->txs_ndesc++;
 	}
 
@@ -1458,6 +1430,19 @@ wm_tx_cksum(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
 	*fieldsp = fields;
 
 	return (0);
+}
+
+static void
+wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
+{
+	struct mbuf *m;
+	int i;
+
+	printf("%s: mbuf chain:\n", sc->sc_dev.dv_xname);
+	for (m = m0, i = 0; m != NULL; m = m->m_next, i++)
+		printf("\tm_data = %p, m_len = %d, m_flags = 0x%08x\n",
+		    m->m_data, m->m_len, m->m_flags);
+	printf("\t%d mbuf%s in chain\n", i, i == 1 ? "" : "s");
 }
 
 /*
@@ -1534,6 +1519,7 @@ wm_start(struct ifnet *ifp)
 				    "DMA segments, dropping...\n",
 				    sc->sc_dev.dv_xname);
 				IFQ_DEQUEUE(&ifp->if_snd, m0);
+				wm_dump_mbuf_chain(sc, m0);
 				m_freem(m0);
 				continue;
 			}
@@ -1624,7 +1610,7 @@ wm_start(struct ifnet *ifp)
 		 */
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
-		     seg++, nexttx = WM_NEXTTX(nexttx)) {
+		     seg++, nexttx = WM_NEXTTX(sc, nexttx)) {
 			wm_set_dma_addr(&sc->sc_txdescs[nexttx].wtx_addr,
 			    dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].wtx_cmdlen =
@@ -1729,7 +1715,7 @@ wm_watchdog(struct ifnet *ifp)
 	 */
 	wm_txintr(sc);
 
-	if (sc->sc_txfree != WM_NTXDESC) {
+	if (sc->sc_txfree != WM_NTXDESC(sc)) {
 		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_dev.dv_xname, sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
@@ -2351,10 +2337,10 @@ wm_init(struct ifnet *ifp)
 	wm_reset(sc);
 
 	/* Initialize the transmit descriptor ring. */
-	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
-	WM_CDTXSYNC(sc, 0, WM_NTXDESC,
+	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
+	WM_CDTXSYNC(sc, 0, WM_NTXDESC(sc),
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	sc->sc_txfree = WM_NTXDESC;
+	sc->sc_txfree = WM_NTXDESC(sc);
 	sc->sc_txnext = 0;
 
 	sc->sc_txctx_ipcs = 0xffffffff;
@@ -2363,14 +2349,14 @@ wm_init(struct ifnet *ifp)
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TBDAH, WM_CDTXADDR_HI(sc, 0));
 		CSR_WRITE(sc, WMREG_OLD_TBDAL, WM_CDTXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TDLEN, sizeof(sc->sc_txdescs));
+		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
 		CSR_WRITE(sc, WMREG_TBDAH, WM_CDTXADDR_HI(sc, 0));
 		CSR_WRITE(sc, WMREG_TBDAL, WM_CDTXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_TDLEN, sizeof(sc->sc_txdescs));
+		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
 		CSR_WRITE(sc, WMREG_TIDV, 128);

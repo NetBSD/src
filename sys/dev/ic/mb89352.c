@@ -1,8 +1,8 @@
-/*	$NetBSD: mb89352.c,v 1.15.2.1 2004/08/03 10:46:17 skrll Exp $	*/
+/*	$NetBSD: mb89352.c,v 1.15.2.2 2004/08/12 11:41:25 skrll Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
 /*-
- * Copyright (c) 1996,97,98,99 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996,97,98,99,2004 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15.2.1 2004/08/03 10:46:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.15.2.2 2004/08/12 11:41:25 skrll Exp $");
 
 #ifdef DDB
 #define	integrate
@@ -247,6 +247,8 @@ void
 spc_attach(sc)
 	struct spc_softc *sc;
 {
+	struct scsipi_adapter *adapt = &sc->sc_adapter;
+	struct scsipi_channel *chan = &sc->sc_channel;
 
 	SPC_TRACE(("spc_attach  "));
 	sc->sc_state = SPC_INIT;
@@ -267,29 +269,74 @@ spc_attach(sc)
 	sc->sc_maxsync = (9 * 250) / sc->sc_freq;
 #endif
 
-	spc_init(sc);	/* Init chip and driver */
-
 	/*
 	 * Fill in the adapter.
 	 */
-	sc->sc_adapter.adapt_dev = &sc->sc_dev;
-	sc->sc_adapter.adapt_nchannels = 1;
-	sc->sc_adapter.adapt_openings = 7;
-	sc->sc_adapter.adapt_max_periph = 1;
-	sc->sc_adapter.adapt_minphys = minphys;
-	sc->sc_adapter.adapt_request = spc_scsipi_request;
+	adapt->adapt_dev = &sc->sc_dev;
+	adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = 7;
+	adapt->adapt_max_periph = 1;
+	adapt->adapt_request = spc_scsipi_request;
+	adapt->adapt_minphys = minphys;
 
-	sc->sc_channel.chan_adapter = &sc->sc_adapter;
-	sc->sc_channel.chan_bustype = &scsi_bustype;
-	sc->sc_channel.chan_channel = 0;
-	sc->sc_channel.chan_ntargets = 8;
-	sc->sc_channel.chan_nluns = 8;
-	sc->sc_channel.chan_id = sc->sc_initiator;
+	chan->chan_adapter = &sc->sc_adapter;
+	chan->chan_bustype = &scsi_bustype;
+	chan->chan_channel = 0;
+	chan->chan_ntargets = 8;
+	chan->chan_nluns = 8;
+	chan->chan_id = sc->sc_initiator;
+
+	/*
+	 * Add reference to adapter so that we drop the reference after
+	 * config_found() to make sure the adatper is disabled.
+	 */
+	if (scsipi_adapter_addref(adapt) != 0) {
+		printf("%s: unable to enable controller\n",
+		    sc->sc_dev.dv_xname);
+		return;
+	}
+
+	spc_init(sc, 1);	/* Init chip and driver */
 
 	/*
 	 * ask the adapter what subunits are present
 	 */
-	config_found(&sc->sc_dev, &sc->sc_channel, scsiprint);
+	sc->sc_child = config_found(&sc->sc_dev, chan, scsiprint);
+	scsipi_adapter_delref(adapt);
+}
+
+int
+spc_activate(struct device *self, enum devact act)
+{
+	struct spc_softc *sc = (void *)self;
+	int s, rv = 0;
+
+	s = splhigh();
+	switch (act) {
+	case DVACT_ACTIVATE:
+		rv = EOPNOTSUPP;
+		break;
+
+	case DVACT_DEACTIVATE:
+		if (sc->sc_child != NULL)
+			rv = config_deactivate(sc->sc_child);
+		break;
+	}
+	splx(s);
+
+	return (rv);
+}
+
+int
+spc_detach(struct device *self, int flags)
+{
+	struct spc_softc *sc = (void *)self;
+	int rv = 0;
+
+	if (sc->sc_child != NULL)
+		rv = config_detach(sc->sc_child, flags);
+
+	return (rv);
 }
 
 /*
@@ -350,15 +397,18 @@ spc_scsi_reset(sc)
  * Initialize spc SCSI driver.
  */
 void
-spc_init(sc)
+spc_init(sc, bus_reset)
 	struct spc_softc *sc;
+	int bus_reset;
 {
 	struct spc_acb *acb;
 	int r;
 
 	SPC_TRACE(("spc_init  "));
-	spc_reset(sc);
-	spc_scsi_reset(sc);
+	if (bus_reset) {
+		spc_reset(sc);
+		spc_scsi_reset(sc);
+	}
 	spc_reset(sc);
 
 	if (sc->sc_state == SPC_INIT) {
@@ -970,9 +1020,6 @@ nextbyte:
 		}
 
 		bus_space_write_1(iot, ioh, PCTL, PH_MSGIN);
-		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
-		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
-			continue;	/* XXX needs timeout */
 		msg = bus_space_read_1(iot, ioh, TEMP);
 #endif
 
@@ -1007,6 +1054,9 @@ nextbyte:
 
 #ifndef NO_MANUAL_XFER /* XXX */
 		/* Ack the last byte read. */
+		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+			continue;	/* XXX needs timeout */
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 	}
@@ -1028,8 +1078,8 @@ nextbyte:
 		case MSG_CMDCOMPLETE:
 			if (sc->sc_dleft < 0) {
 				periph = acb->xs->xs_periph;
-				printf("%s: %d extra bytes from %d:%d\n",
-				    sc->sc_dev.dv_xname, -sc->sc_dleft,
+				printf("%s: %ld extra bytes from %d:%d\n",
+				    sc->sc_dev.dv_xname, (long)-sc->sc_dleft,
 				    periph->periph_target, periph->periph_lun);
 				sc->sc_dleft = 0;
 			}
@@ -1181,6 +1231,9 @@ nextbyte:
 
 #ifndef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
+	bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
+	while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
+		continue;	/* XXX needs timeout */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 
@@ -1188,8 +1241,10 @@ nextbyte:
 	goto nextmsg;
 
 out:
+#ifdef NO_MANUAL_XFER /* XXX */
 	/* Ack the last message byte. */
 	bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
+#endif
 	SPC_MISC(("n=%d imess=0x%02x  ", n, sc->sc_imess[0]));
 }
 
@@ -1546,52 +1601,29 @@ spc_datain_pio(sc, p, n)
 	bus_space_write_1(iot, ioh, SCMD,
 	    SCMD_XFR | SCMD_PROG_XFR);	/* XXX */
 #endif
-	for (;;) {
-		if ((bus_space_read_1(iot, ioh, SSTS) & SSTS_BUSY) != 0)
-			break;
-		if (bus_space_read_1(iot, ioh, INTS) != 0)
-			goto phasechange;
-	}
 
 	/*
 	 * We leave this loop if one or more of the following is true:
 	 * a) phase != PH_DATAIN && FIFOs are empty
 	 * b) reset has occurred or busfree is detected.
 	 */
+	intstat = 0;
 	while (n > 0) {
-		int xfer;
-
-		/* Wait for fifo half full or phase mismatch */
-		for (;;) {
-			/* XXX needs timeout */
-			intstat = bus_space_read_1(iot, ioh, INTS);
-			sstat = bus_space_read_1(iot, ioh, SSTS);
-			if (intstat != 0 ||
-			    (sstat & SSTS_DREG_EMPTY) == 0)
-				break;
-		}
-
-#ifdef NEED_DREQ_ON_HARDWARE_XFER
-		if (intstat != 0)
-			goto phasechange;
-#endif
-
-		if (sstat & SSTS_DREG_FULL) {
-			xfer = DINAMOUNT;
-			n -= xfer;
-			in += xfer;
-			bus_space_read_multi_1(iot, ioh, DREG, p, xfer);
-			p += xfer;
-		}
-		while (n > 0 &&
-		    (bus_space_read_1(iot, ioh, SSTS) & SSTS_DREG_EMPTY) == 0) {
+		sstat = bus_space_read_1(iot, ioh, SSTS);
+		if ((sstat & SSTS_DREG_FULL) != 0) {
+			n -= DINAMOUNT;
+			in += DINAMOUNT;
+			bus_space_read_multi_1(iot, ioh, DREG, p, DINAMOUNT);
+			p += DINAMOUNT;
+		} else if ((sstat & SSTS_DREG_EMPTY) == 0) {
 			n--;
 			in++;
 			*p++ = bus_space_read_1(iot, ioh, DREG);
+		} else {
+			if (intstat != 0)
+				goto phasechange;
+			intstat = bus_space_read_1(iot, ioh, INTS);
 		}
-
-		if (intstat != 0)
-			goto phasechange;
 	}
 
 	/*
@@ -1603,9 +1635,14 @@ spc_datain_pio(sc, p, n)
 	 */
 	if (in == 0) {
 		for (;;) {
-			/* XXX needs timeout */
-			if (bus_space_read_1(iot, ioh, INTS) != 0)
-				break;
+			sstat = bus_space_read_1(iot, ioh, SSTS);
+			if ((sstat & SSTS_DREG_EMPTY) == 0) {
+				(void) bus_space_read_1(iot, ioh, DREG);
+			} else {
+				if (intstat != 0)
+					goto phasechange;
+				intstat = bus_space_read_1(iot, ioh, INTS);
+			}
 		}
 		SPC_MISC(("extra data  "));
 	}
@@ -1998,10 +2035,10 @@ dophase:
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) == 0)
 			continue;	/* XXX needs timeout */
 		bus_space_write_1(iot, ioh, PCTL, PH_STAT);
+		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_SET_ACK);
 		while ((bus_space_read_1(iot, ioh, PSNS) & PSNS_REQ) != 0)
 			continue;	/* XXX needs timeout */
-		acb->target_stat = bus_space_read_1(iot, ioh, TEMP);
 		bus_space_write_1(iot, ioh, SCMD, SCMD_RST_ACK);
 #endif
 
@@ -2013,7 +2050,7 @@ dophase:
 	printf("%s: unexpected bus phase; resetting\n", sc->sc_dev.dv_xname);
 	SPC_BREAK();
 reset:
-	spc_init(sc);
+	spc_init(sc, 1);
 	return 1;
 
 finish:

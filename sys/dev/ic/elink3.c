@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.106 2003/01/31 00:26:29 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.106.2.1 2004/08/12 11:41:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106 2003/01/31 00:26:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.106.2.1 2004/08/12 11:41:24 skrll Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -665,7 +665,7 @@ ep_vortex_probemedia(sc)
 	GO_WINDOW(3);
 	config1 = (u_int)bus_space_read_2(iot, ioh,
 	    ELINK_W3_INTERNAL_CONFIG + 2);
-	reset_options = (int)bus_space_read_1(iot, ioh, ELINK_W3_RESET_OPTIONS);
+	reset_options = (int)bus_space_read_2(iot, ioh, ELINK_W3_RESET_OPTIONS);
 	GO_WINDOW(0);
 
 	default_media = (config1 & CONFIG_MEDIAMASK) >> CONFIG_MEDIAMASK_SHIFT;
@@ -756,6 +756,7 @@ epinit(ifp)
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i, error;
+	u_int8_t *addr;
 
 	if (!sc->enabled && (error = epenable(sc)) != 0)
 		return (error);
@@ -781,23 +782,25 @@ epinit(ifp)
 	}
 
 	GO_WINDOW(2);
-	for (i = 0; i < 6; i++)	/* Reload the ether_addr. */
-		bus_space_write_1(iot, ioh, ELINK_W2_ADDR_0 + i,
-		    LLADDR(ifp->if_sadl)[i]);
+	/* Reload the ether_addr. */
+	addr = LLADDR(ifp->if_sadl);
+	for (i = 0; i < 6; i += 2)
+		bus_space_write_2(iot, ioh, ELINK_W2_ADDR_0 + i,
+		    (addr[i] << 0) | (addr[i + 1] << 8));
 
 	/*
 	 * Reset the station-address receive filter.
 	 * A bug workaround for busmastering (Vortex, Demon) cards.
 	 */
-	for (i = 0; i < 6; i++)
-		bus_space_write_1(iot, ioh, ELINK_W2_RECVMASK_0 + i, 0);
+	for (i = 0; i < 6; i += 2)
+		bus_space_write_2(iot, ioh, ELINK_W2_RECVMASK_0 + i, 0);
 
 	ep_reset_cmd(sc, ELINK_COMMAND, RX_RESET);
 	ep_reset_cmd(sc, ELINK_COMMAND, TX_RESET);
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
-		bus_space_read_1(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS));
+		bus_space_read_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS));
 
 	/* Set threshold for Tx-space available interrupt. */
 	bus_space_write_2(iot, ioh, ELINK_COMMAND,
@@ -1366,9 +1369,9 @@ eptxstat(sc)
 	 * We need to read+write TX_STATUS until we get a 0 status
 	 * in order to turn off the interrupt flag.
 	 */
-	while ((i = bus_space_read_1(iot, ioh,
+	while ((i = bus_space_read_2(iot, ioh,
 	     ep_w1_reg(sc, ELINK_W1_TX_STATUS))) & TXS_COMPLETE) {
-		bus_space_write_1(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS),
+		bus_space_write_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_TX_STATUS),
 		    0x0);
 
 		if (i & TXS_JABBER) {
@@ -1867,7 +1870,7 @@ epshutdown(arg)
  * each card compares the data on the bus; if there is a difference
  * then that card goes into ID_WAIT state again). In the meantime;
  * one bit of data is returned in the AX register which is conveniently
- * returned to us by bus_space_read_1().  Hence; we read 16 times getting one
+ * returned to us by bus_space_read_2().  Hence; we read 16 times getting one
  * bit of data with each read.
  *
  * NOTE: the caller must provide an i/o handle for ELINK_ID_PORT!
@@ -1881,7 +1884,7 @@ epreadeeprom(iot, ioh, offset)
 	u_int16_t data = 0;
 	int i;
 
-	bus_space_write_1(iot, ioh, 0, 0x80 + offset);
+	bus_space_write_2(iot, ioh, 0, 0x80 + offset);
 	delay(1000);
 	for (i = 0; i < 16; i++)
 		data = (data << 1) | (bus_space_read_2(iot, ioh, 0) & 1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wivar.h,v 1.34.2.1 2004/08/03 10:46:21 skrll Exp $	*/
+/*	$NetBSD: wivar.h,v 1.34.2.2 2004/08/12 11:41:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -37,8 +37,8 @@
 #define WI_RX_RADIOTAP_PRESENT	((1 << IEEE80211_RADIOTAP_FLAGS) | \
 				 (1 << IEEE80211_RADIOTAP_RATE) | \
 				 (1 << IEEE80211_RADIOTAP_CHANNEL) | \
-				 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) | \
-				 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+				 (1 << IEEE80211_RADIOTAP_DB_ANTSIGNAL) | \
+				 (1 << IEEE80211_RADIOTAP_DB_ANTNOISE))
 
 struct wi_rx_radiotap_header {
 	struct ieee80211_radiotap_header	wr_ihdr;
@@ -178,8 +178,6 @@ struct wi_node {
 
 #define	WI_LUCENT_DBM_OFFSET	149
 
-#define	WI_RSSI_TO_DBM(sc, rssi) ((rssi) - (sc)->sc_dbm_offset)
-
 #define	WI_SCAN_INQWAIT			3	/* wait sec before inquire */
 #define	WI_SCAN_WAIT			5	/* maximum scan wait */
 
@@ -275,7 +273,7 @@ struct wi_card_ident {
 			(sc->sc_pci? reg * 2: reg), buf, count)
 
 
-int	wi_attach(struct wi_softc *);
+int	wi_attach(struct wi_softc *, const u_int8_t *);
 int	wi_detach(struct wi_softc *);
 int	wi_activate(struct device *, enum devact);
 int	wi_intr(void *arg);

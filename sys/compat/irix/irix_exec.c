@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.29.2.1 2004/08/03 10:43:52 skrll Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.29.2.2 2004/08/12 11:41:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.29.2.1 2004/08/03 10:43:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.29.2.2 2004/08/12 11:41:14 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.29.2.1 2004/08/03 10:43:52 skrll Exp
 extern const int native_to_svr4_signo[];
 
 static void irix_e_proc_exec __P((struct proc *, struct exec_package *));
-static void irix_e_proc_fork __P((struct proc *, struct proc *));
+static void irix_e_proc_fork __P((struct proc *, struct proc *, int));
 static void irix_e_proc_exit __P((struct proc *));
 static void irix_e_proc_init __P((struct proc *, struct vmspace *));
 
@@ -270,8 +270,9 @@ irix_e_proc_exit(p)
  * fork() hook used to allocate per process structures
  */
 static void
-irix_e_proc_fork(p, parent)
+irix_e_proc_fork(p, parent, forkflags)
         struct proc *p, *parent;
+	int forkflags;
 {
 	struct irix_emuldata *ied1;
 	struct irix_emuldata *ied2;

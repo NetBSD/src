@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.129.2.1 2004/08/03 10:47:58 skrll Exp $
+#	$NetBSD: files.isa,v 1.129.2.2 2004/08/12 11:41:43 skrll Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -356,6 +356,9 @@ file	dev/isa/ess_isa.c		ess_isa			needs-flag
 
 attach	opl at ess with opl_ess
 file	dev/isa/opl_ess.c		opl_ess
+
+attach	joy at ess with joy_ess
+file	dev/isa/joy_ess.c		joy_ess			needs-flag
 
 # Yamaha OPL2/OPL3 FM synth
 attach	opl at isa with opl_isa
