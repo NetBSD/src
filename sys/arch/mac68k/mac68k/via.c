@@ -1,4 +1,4 @@
-/*	$NetBSD: via.c,v 1.59 1997/03/15 18:33:48 scottr Exp $	*/
+/*	$NetBSD: via.c,v 1.60 1997/04/04 15:33:30 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -325,7 +325,7 @@ add_nubus_intr(slot, func, client_data)
 void
 enable_nubus_intr()
 {
-	if (nubus_intr_mask == 0)
+	if ((nubus_intr_mask & 0x3f) == 0)
 		return;
 
 	if (VIA2 == VIA2OFF)
