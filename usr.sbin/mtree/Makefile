@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 1999/12/07 18:42:06 wennmach Exp $
+#	$NetBSD: Makefile,v 1.16 2001/09/10 03:22:24 lukem Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/27/95
 
 PROG=	mtree
@@ -6,6 +6,9 @@ PROG=	mtree
 MAN=	mtree.8
 SRCS=	compare.c crc.c create.c misc.c mtree.c spec.c verify.c \
 	stat_flags.c
+
+LDADD+=	-lutil
+DPADD+=	${LIBUTIL}
 
 CPPFLAGS+=	-I${.CURDIR}/../../bin/ls
 .PATH:	${.CURDIR}/../../usr.bin/cksum ${.CURDIR}/../../bin/ls
