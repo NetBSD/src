@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.h,v 1.29 1996/03/19 03:05:15 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.h,v 1.29.4.1 1997/03/04 14:46:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -151,6 +151,8 @@ struct scsi_link {
 #define	SDEV_NOSYNCWIDE		0x02	/* does not grok SDTR or WDTR */
 #define	SDEV_NOLUNS		0x04	/* does not grok LUNs */
 #define	SDEV_FORCELUNS		0x08	/* prehistoric drive/ctlr groks LUNs */
+#define SDEV_NOMODESENSE	0x10	/* removable media/optical drives */
+#define SDEV_NOSTARTUNIT	0x20	/* do not issue start unit requests in sd.c */
 	struct	scsi_device *device;	/* device entry points etc. */
 	void	*device_softc;		/* needed for call to foo_start */
 	struct	scsi_adapter *adapter;	/* adapter entry points etc. */
