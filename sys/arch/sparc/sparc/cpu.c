@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.102 2000/06/02 08:12:29 pk Exp $ */
+/*	$NetBSD: cpu.c,v 1.103 2000/06/03 09:56:35 pk Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -132,6 +132,9 @@ alloc_cpuinfo_global_va(ismaster, sizep)
 	 * address. Since we need to access an other CPU's cpuinfo
 	 * structure occasionally, this must be done at a virtual address
 	 * that's cache congruent to the fixed address CPUINFO_VA.
+	 *
+	 * NOTE: we're using the cache properties of the boot CPU to
+	 * determine the alignment (XXX).
 	 */
 	align = NBPG;
 	if (CACHEINFO.c_totalsize > align)
@@ -288,9 +291,13 @@ static	int cpu_instance;
 	 */
 	if (bootcpu == NULL) {
 		extern struct pcb idle_u[];
+
 		bootcpu = sc;
 		cpus = malloc(ncpu * sizeof(cpi), M_DEVBUF, M_NOWAIT);
 		bzero(cpus, ncpu * sizeof(cpi));
+
+		getcpuinfo(&cpuinfo, node);
+
 #if defined(MULTIPROCESSOR)
 		/*
 		 * Allocate a suitable global VA for the boot CPU's
@@ -318,6 +325,7 @@ static	int cpu_instance;
 		cpi->ci_self = cpi;
 		cpi->curpcb = cpi->idle_u;
 		/* Note: `idle_u' and `eintstack' are set in alloc_cpuinfo() */
+		getcpuinfo(cpi, node);
 #else
 		printf(": no SMP support in kernel\n");
 		return;
@@ -335,8 +343,6 @@ static	int cpu_instance;
 
 	if (ncpu > 1)
 		printf(": mid %d", mid);
-
-	getcpuinfo(cpi, node);
 
 	if (cpi->master) {
 		cpu_setup(sc);
