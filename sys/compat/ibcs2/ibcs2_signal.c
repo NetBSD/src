@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_signal.c,v 1.18 2003/01/18 07:40:45 thorpej Exp $	*/
+/*	$NetBSD: ibcs2_signal.c,v 1.19 2003/11/05 04:03:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Bartram
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18 2003/01/18 07:40:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.19 2003/11/05 04:03:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_signal.c,v 1.18 2003/01/18 07:40:45 thorpej Ex
 #include <sys/kernel.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
-#include <sys/malloc.h>
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
