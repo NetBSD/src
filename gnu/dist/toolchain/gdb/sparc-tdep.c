@@ -2029,6 +2029,14 @@ sparc64_write_fp (val)
     write_register (FP_REGNUM, val);
 }
 
+CORE_ADDR
+sparc64_frame_address (struct frame_info *fi)
+{
+	if (fi->frame & 0x1)
+		return (fi->frame - 2047);
+	return fi->frame;
+}
+
 /* The SPARC 64 ABI passes floating-point arguments in FP0-31. They are
    also copied onto the stack in the correct places. */
 
