@@ -1,5 +1,5 @@
-/*	$NetBSD: pfkey_dump.c,v 1.8 2000/07/20 09:51:40 itojun Exp $	*/
-/*	$KAME: pfkey_dump.c,v 1.20 2000/07/20 09:50:42 itojun Exp $	*/
+/*	$NetBSD: pfkey_dump.c,v 1.9 2000/10/03 23:00:54 itojun Exp $	*/
+/*	$KAME: pfkey_dump.c,v 1.22 2000/09/12 07:10:53 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
@@ -151,6 +151,9 @@ static struct val2str str_alg_enc[] = {
 #endif
 	{ SADB_X_EALG_CAST128CBC, "cast128-cbc", },
 	{ SADB_X_EALG_BLOWFISHCBC, "blowfish-cbc", },
+#ifdef SADB_X_EALG_RIJNDAELCBC
+	{ SADB_X_EALG_RIJNDAELCBC, "rijndael-cbc", },
+#endif
 	{ -1, NULL, },
 };
 
