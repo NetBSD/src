@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs.h,v 1.126 2001/05/18 06:14:40 jhawk Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.127 2001/05/20 09:16:14 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -61,6 +61,7 @@
 #define	PCMCIA_VENDOR_TDK	0x0105	/* TDK Corporation */
 #define	PCMCIA_VENDOR_XIRCOM	0x0105	/* Xircom */
 #define	PCMCIA_VENDOR_SMC	0x0108	/* Standard Microsystems Corporation */
+#define	PCMCIA_VENDOR_NI	0x010b	/* National Instruments */
 #define	PCMCIA_VENDOR_USROBOTICS	0x0115	/* US Robotics Corporation */
 #define	PCMCIA_VENDOR_MEGAHERTZ2	0x0128	/* Megahertz Corporation */
 #define	PCMCIA_VENDOR_OLICOM	0x0121	/* Olicom */
@@ -298,6 +299,11 @@
 #define	PCMCIA_CIS_MELCO_LPC3_TX	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_MELCO_LPC3_TX	0xc1ab
 #define	PCMCIA_STR_MELCO_LPC3_TX	"Melco LPC3-TX"
+
+/* National Instruments */
+#define	PCMCIA_CIS_NI_PCMCIA-GPIB	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_NI_PCMCIA-GPIB	0x4882
+#define	PCMCIA_STR_NI_PCMCIA-GPIB	"National Instruments PCMCIA-GPIB"
 
 /* Nokia Products */
 #define	PCMCIA_CIS_NOKIA_C020_WLAN	{ NULL, NULL, NULL, NULL }

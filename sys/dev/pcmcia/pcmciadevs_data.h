@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.126 2001/05/18 06:14:40 jhawk Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.127 2001/05/20 09:16:15 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -408,6 +408,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Melco Corporation",
 	    "Melco LPC3-TX"	},
+	},
+	{
+	    PCMCIA_VENDOR_NI, PCMCIA_PRODUCT_NI_PCMCIA-GPIB,
+	    PCMCIA_CIS_NI_PCMCIA-GPIB,
+	    0,
+	    "National Instruments",
+	    "National Instruments PCMCIA-GPIB"	},
 	},
 	{
 	    PCMCIA_VENDOR_NOKIA, PCMCIA_PRODUCT_NOKIA_C020_WLAN,
@@ -1135,6 +1142,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    PCMCIA_KNOWNDEV_NOPROD,
 	    PCMCIA_CIS_INVALID,
 	    "Standard Microsystems Corporation",
+	    NULL,
+	},
+	{
+	    PCMCIA_VENDOR_NI, 0,
+	    PCMCIA_KNOWNDEV_NOPROD,
+	    PCMCIA_CIS_INVALID,
+	    "National Instruments",
 	    NULL,
 	},
 	{
