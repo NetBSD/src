@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ssh.c,v 1.3 2005/01/03 03:08:40 lukem Exp $	*/
+/*	$NetBSD: pam_ssh.c,v 1.4 2005/02/27 01:16:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
@@ -38,7 +38,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ssh/pam_ssh.c,v 1.40 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ssh.c,v 1.3 2005/01/03 03:08:40 lukem Exp $");
+__RCSID("$NetBSD: pam_ssh.c,v 1.4 2005/02/27 01:16:27 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -254,17 +254,15 @@ pam_ssh_process_agent_output(pam_handle_t *pamh, FILE *f)
  * its output.
  */
 static int
-pam_ssh_start_agent(pam_handle_t *pamh)
+pam_ssh_start_agent(pam_handle_t *pamh, struct passwd *pwd)
 {
 	int agent_pipe[2];
 	pid_t pid;
 	FILE *f;
 
 	/* get a pipe which we will use to read the agent's output */
-	if (pipe(agent_pipe) == -1) {
-		openpam_restore_cred(pamh);
+	if (pipe(agent_pipe) == -1)
 		return (PAM_SYSTEM_ERR);
-	}
 
 	/* start the agent */
 	openpam_log(PAM_LOG_DEBUG, "starting an ssh agent");
@@ -279,22 +277,37 @@ pam_ssh_start_agent(pam_handle_t *pamh)
 #ifndef F_CLOSEM
 		int fd;
 #endif
-
 		/* child: drop privs, close fds and start agent */
-		setgid(getegid());
-		setuid(geteuid());
-		close(STDIN_FILENO);
-		open(_PATH_DEVNULL, O_RDONLY);
-		dup2(agent_pipe[1], STDOUT_FILENO);
-		dup2(agent_pipe[1], STDERR_FILENO);
+		if (setgid(pwd->pw_gid) == -1) {
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setgid %d (%m)",
+			    __FUNCTION__, (int)pwd->pw_gid);
+			goto done;
+		}
+		if (initgroups(pwd->pw_name, pwd->pw_gid) == -1) {
+			openpam_log(PAM_LOG_DEBUG,
+			    "%s: Cannot initgroups for %s (%m)",
+			    __FUNCTION__, pwd->pw_name);
+			goto done;
+		}
+		if (setuid(pwd->pw_uid) == -1) {
+			openpam_log(PAM_LOG_DEBUG, "%s: Cannot setuid %d (%m)",
+			    __FUNCTION__, (int)pwd->pw_uid);
+			goto done;
+		}
+		(void)close(STDIN_FILENO);
+		(void)open(_PATH_DEVNULL, O_RDONLY);
+		(void)dup2(agent_pipe[1], STDOUT_FILENO);
+		(void)dup2(agent_pipe[1], STDERR_FILENO);
 #ifdef F_CLOSEM
 		(void)fcntl(3, F_CLOSEM, 0);
 #else
 		for (fd = 3; fd < getdtablesize(); ++fd)
-			close(fd);
+			(void)close(fd);
 #endif
-		execve(pam_ssh_agent, (char **)__UNCONST(pam_ssh_agent_argv),
+		(void)execve(pam_ssh_agent,
+		    (char **)__UNCONST(pam_ssh_agent_argv),
 		    (char **)__UNCONST(pam_ssh_agent_envp));
+done:
 		_exit(127);
 	}
 
@@ -323,12 +336,17 @@ pam_ssh_add_keys_to_agent(pam_handle_t *pamh)
 	/* switch to PAM environment */
 	envlist = environ;
 	if ((environ = pam_getenvlist(pamh)) == NULL) {
+		openpam_log(PAM_LOG_DEBUG, "%s: cannot get envlist",
+		    __FUNCTION__);
 		environ = envlist;
 		return (PAM_SYSTEM_ERR);
 	}
 
 	/* get a connection to the agent */
 	if ((ac = ssh_get_authentication_connection()) == NULL) {
+		openpam_log(PAM_LOG_DEBUG,
+		    "%s: cannot get authentication connection",
+		    __FUNCTION__);
 		pam_err = PAM_SYSTEM_ERR;
 		goto end;
 	}
@@ -369,7 +387,7 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 	struct passwd *pwd;
 	const char *user;
 	void *data;
-	int pam_err;
+	int pam_err = PAM_SUCCESS;
 
 	/* no keys, no work */
 	if (pam_get_data(pamh, pam_ssh_have_keys, &data) != PAM_SUCCESS &&
@@ -383,25 +401,26 @@ pam_sm_open_session(pam_handle_t *pamh, int flags __unused,
 	pwd = getpwnam(user);
 	if (pwd == NULL)
 		return (PAM_USER_UNKNOWN);
-	pam_err = openpam_borrow_cred(pamh, pwd);
-	if (pam_err != PAM_SUCCESS)
-		return (pam_err);
 
 	/* start the agent */
-	pam_err = pam_ssh_start_agent(pamh);
-	if (pam_err != PAM_SUCCESS) {
-		openpam_restore_cred(pamh);
-		return (pam_err);
-	}
+	pam_err = pam_ssh_start_agent(pamh, pwd);
+	if (pam_err != PAM_SUCCESS)
+		return pam_err;
+
+	pam_err = openpam_borrow_cred(pamh, pwd);
+	if (pam_err != PAM_SUCCESS)
+		return pam_err;
 
 	/* we have an agent, see if we can add any keys to it */
 	pam_err = pam_ssh_add_keys_to_agent(pamh);
 	if (pam_err != PAM_SUCCESS) {
 		/* XXX ignore failures */
+		openpam_log(PAM_LOG_DEBUG, "failed adding keys to ssh agent");
+		pam_err = PAM_SUCCESS;
 	}
 
 	openpam_restore_cred(pamh);
-	return (PAM_SUCCESS);
+	return pam_err;
 }
 
 PAM_EXTERN int
