@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pmap.c,v 1.30 1994/07/12 05:18:53 gwr Exp $
+ *	$Id: pmap.c,v 1.31 1994/07/14 01:18:46 gwr Exp $
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1648,6 +1648,10 @@ void pmap_remove_range_mmu(pmap, sva, eva)
     saved_context = get_context();
     if (pmap != kernel_pmap) 
 	set_context(pmap->pm_context->context_num);
+
+    /* XXX - Never unmap DVMA space... */
+    if (sva >= VM_MAX_KERNEL_ADDRESS)
+	return;
 
     sme = get_segmap(sva);
     if (sme != SEGINV) {
