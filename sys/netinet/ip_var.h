@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.59 2003/09/06 03:36:31 itojun Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.60 2003/11/17 21:34:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -251,7 +251,25 @@ struct	ipflow *ipflow_reap __P((int));
 void	ipflow_create __P((const struct route *, struct mbuf *));
 void	ipflow_slowtimo __P((void));
 
+extern uint16_t	ip_id;
+static __inline uint16_t ip_newid __P((void));
+
+#ifdef RANDOM_IP_ID
 u_int16_t ip_randomid __P((void));
+extern int ip_do_randomid;
 #endif
+
+static __inline uint16_t
+ip_newid(void)
+{
+#ifdef RANDOM_IP_ID
+	if (ip_do_randomid)
+	    return ip_randomid();
+#endif	/* RANDOM_IP_ID */
+
+	return htons(ip_id++);
+}
+
+#endif  /* _KERNEL */
 
 #endif /* _NETINET_IP_VAR_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.6 2003/11/14 07:15:28 jonathan Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.7 2003/11/17 21:34:27 jonathan Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.6 2003/11/14 07:15:28 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.7 2003/11/17 21:34:27 jonathan Exp $");
 
 /*
  * IP-inside-IP processing
@@ -484,7 +484,9 @@ ipip_output(
 		ipo->ip_src = saidx->src.sin.sin_addr;
 		ipo->ip_dst = saidx->dst.sin.sin_addr;
 
-#if defined(__NetBSD__) || defined(RANDOM_IP_ID)
+#if defined(__NetBSD__) 
+		ipo->ip_id = ip_newid();
+#elif defined(RANDOM_IP_ID)
 		ipo->ip_id = ip_randomid();
 #else
 		ipo->ip_id = htons(ip_id++);
