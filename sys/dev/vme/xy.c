@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.54 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: xy.c,v 1.55 2003/12/23 13:15:18 pk Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.54 2003/09/29 09:50:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.55 2003/12/23 13:15:18 pk Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -458,7 +458,7 @@ xycattach(parent, self, aux)
 				MAXPHYS,	/* maxsegsz */
 				0,		/* boundary */
 				BUS_DMA_NOWAIT,
-				&xyc->reqs[lcv].dmamap)) != 0) {
+				&xyc->auxmap)) != 0) {
 
 		printf("%s: DMA buffer map create error %d\n",
 			xyc->sc_dev.dv_xname, error);
