@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.360 2004/07/28 10:50:30 tron Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.361 2004/07/28 11:07:18 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -6197,4 +6197,40 @@ sys/dev/usb/usbdevs_data.h			regen
 	Fix various bugs including PR kern/21043 and add support for
 	Sitecom USB to serial cable taken from PR kern/25510.
 	[dbj, ticket #717]
+
+sys/dev/pci/geodeide.c				1.2
+sys/dev/pci/pcidevs				1.635
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pciide_geode_reg.h			1.2
+
+	Add support for the controller found on the AMD (previously
+	NatSemi) Geode SC1100 controller (as found on the Soekris
+	NET4801). The chip has two bugs: the first requires dword
+	alignment, and the second cannot handle exact 64K transfers.
+	[rumble, ticket #718]
+
+sys/dev/pci/if_ti.c				1.61
+sys/dev/pci/if_tireg.h				1.14
+
+	Make the SSLOTS, MSLOTS and JSLOTS tunable (redefineable).
+	Bump the default values for these to the values used by FreeBSD,
+	and also adjust ti_init_rx_ring_jumbo() to use the same constant
+	that FreeBSD uses. Yes, this consumes more kernel memory.
+	The effect of this is that you can use jumbo frames in a back-to-back
+	setup with TCP windows up to about 250KB and get ~930Mbit/s throughput,
+	while we were earlier limited to around 3-400Mbit/s, and trying to push
+	above that mark by widening the TCP window caused
+	  ti0: jumbo buffer allocation failed
+	messages to be logged and a corresponding stall in the traffic.
+	[he, ticket #719]
+
+sys/kern/init_sysctl.c				1.31
+
+	The message buffer datum instrumented by KERN_MSGBUFSIZE is actually a
+	long, not an int, and this causes "problems" on LP64be machines
+	(sparc64, etc). Assign the value to a temporary int and instrument
+	that instead.  Should be fine until someone wants a message buffer
+	larger than two gigabytes.
+	[atatat, ticket #720]
 
