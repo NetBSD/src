@@ -1,4 +1,4 @@
-.\"	$NetBSD: systrace.1,v 1.8 2002/07/30 21:43:26 jdolecek Exp $
+.\"	$NetBSD: systrace.1,v 1.9 2002/07/30 21:58:25 jdolecek Exp $
 .\"	$OpenBSD: systrace.1,v 1.23 2002/07/30 16:27:21 itojun Exp $
 .\"
 .\" Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -47,11 +47,17 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility enforces system call policies for applications by
-constraining the application's access to the system.
-The policy is generated interactively.
-Operations not covered by the policy raise an
-alarm and allow a user to refine the currently configured policy.
+utility monitors and controls an application's access to the system by
+enforcing access policies for system calls.  The
+.Nm
+utility might be used to trace an untrusted application's access to
+the system.  Alternatively, it might be used to protect the system
+from software bugs (such as buffer overflows) by constraining a
+daemon's access to the system.
+.Pp
+The access policy can be generated interactively or obtained from a
+policy file.  Operations not covered by the policy raise an alarm and
+allow an user to refine the currently configured policy.
 .Pp
 The options are as follows:
 .Bl -tag -width Dfxfile
