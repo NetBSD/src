@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.82 2002/09/01 10:39:38 bouyer Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.83 2002/10/21 12:52:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.82 2002/09/01 10:39:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.83 2002/10/21 12:52:32 yamt Exp $");
 
 #include "opt_nfs.h"
 #include "opt_ddb.h"
@@ -1132,6 +1132,14 @@ nfs_getpages(v)
 	}
 	np->n_rcred = curproc->p_ucred;
 	crhold(np->n_rcred);
+
+	/*
+	 * if we have delayed truncation and it's safe, do it now.
+	 */
+	
+	if (ap->a_flags & PGO_SYNCIO) {
+		nfs_delayedtruncate(vp);
+	}
 
 	/*
 	 * call the genfs code to get the pages.  `pgs' may be NULL
