@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia_cis.c,v 1.17 2000/02/10 09:01:52 chopps Exp $	*/
+/*	$NetBSD: pcmcia_cis.c,v 1.18 2000/02/21 03:26:41 enami Exp $	*/
 
 #define	PCMCIACISDEBUG
 
@@ -413,8 +413,8 @@ pcmcia_scan_cis(dev, fct, arg)
 
 				pcmcia_chip_mem_map(pct, pch,
 				    mfc[mfc_index].common ?
-				    ( PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON )
-				    : PCMCIA_MEM_ATTR,
+				    (PCMCIA_WIDTH_MEM8 | PCMCIA_MEM_COMMON) :
+				    PCMCIA_MEM_ATTR,
 				    mfc[mfc_index].addr, PCMCIA_CIS_SIZE,
 				    &pcmh, &tuple.ptr, &window);
 
