@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.3,v 1.1.2.85 2000/10/27 15:58:05 he Exp $
+#	$NetBSD: CHANGES-1.4.3,v 1.1.2.86 2000/10/27 20:54:59 he Exp $
 
 A complete list of changes from NetBSD 1.4.2 to NetBSD 1.4.3:
 
@@ -1843,3 +1843,12 @@ sys/nfs/nfs_syscalls.c				1.45 via patch
 distrib/notes/common/main			patch
 
   Fix wording.
+
+lib/libkvm/kvm_sun3.c				1.10
+lib/libkvm/kvm_sun3x.c				1.7
+
+  Use %lx to format u_long parameter.
+
+sys/miscfs/specfs/spec_vnops.c			1.51
+
+  Fix security problem in spec_open().
