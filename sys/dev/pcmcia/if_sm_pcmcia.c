@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.15 1998/11/18 18:34:53 thorpej Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.16 1999/02/19 21:49:43 abs Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -120,6 +120,9 @@ struct sm_pcmcia_product {
 	{ PCMCIA_VENDOR_MEGAHERTZ2,	PCMCIA_PRODUCT_MEGAHERTZ2_XJACK,
 	  0,				PCMCIA_STR_MEGAHERTZ2_XJACK },
 
+	{ PCMCIA_VENDOR_MEGAHERTZ,	PCMCIA_PRODUCT_MEGAHERTZ_XJEM3336,
+	  0,				PCMCIA_STR_MEGAHERTZ_XJEM3336 },
+
 	{ PCMCIA_VENDOR_NEWMEDIA,	PCMCIA_PRODUCT_NEWMEDIA_BASICS,
 	  0,				PCMCIA_STR_NEWMEDIA_BASICS },
 
@@ -224,6 +227,7 @@ sm_pcmcia_attach(parent, self, aux)
 		char *cisstr = NULL;
 
 		switch (pa->manufacturer) {
+		case PCMCIA_VENDOR_MEGAHERTZ:
 		case PCMCIA_VENDOR_MEGAHERTZ2:
 			cisstr = pa->pf->sc->card.cis1_info[3];
 			break;
