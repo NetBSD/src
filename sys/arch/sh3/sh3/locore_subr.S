@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.14 2003/03/20 17:45:14 tsutsui Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.15 2003/11/16 00:07:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -155,15 +155,30 @@ ENTRY(cpu_switchto)
 	mov.l	r15,	@-r1
 
 	/*
+	 * curlwp = NULL;
+	 * XXX Is this necessary?  We know we won't go idle.
+	 */
+	mov.l	_L.curlwp, r0
+	mov	#0, r1
+	mov.l	r1, @r0
+
+	/* old and new lwps are already in r4, r5 */
+	mov.l	_L.cpu_switch_prepare, r0
+	jsr	@r0
+	 nop
+
+	/*
 	 * Put the incoming LWP in r4 and jump into the middle
 	 * of cpu_switch(), and let it do the work to restore the
 	 * incoming LWP's context.
 	 */
 	bra	_L.doswitch
-	 mov	r5, r4
+	 mov	r0, r4
 
 	.align	2
 _L.SFp:			.long	(L_MD_PCB)
+_L.curlwp:		.long	_C_LABEL(curlwp)
+_L.cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 
 #ifdef SH3
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.6 2003/11/05 01:43:16 uwe Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.7 2003/11/16 00:07:13 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.6 2003/11/05 01:43:16 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.7 2003/11/16 00:07:13 uwe Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -132,6 +132,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.6 2003/11/05 01:43:16 uwe Exp $");
 
 void (*__sh_switch_resume)(struct lwp *);
 struct lwp *cpu_switch_search(struct lwp *);
+struct lwp *cpu_switch_prepare(struct lwp *, struct lwp *);
 void idle(void);
 int want_resched;
 
@@ -143,9 +144,40 @@ int want_resched;
 #define	SCHED_UNLOCK_IDLE()	((void)0)
 #endif
 
+
 /*
- * struct proc *cpu_switch_search(struct proc *oldproc):
- *	Find the highest priority process.
+ * Prepare context switch from oldlwp to newlwp.
+ * This code is shared by cpu_switch and cpu_switchto.
+ */
+struct lwp *
+cpu_switch_prepare(struct lwp *oldlwp, struct lwp *newlwp)
+{
+
+	newlwp->l_stat = LSONPROC;
+
+	if (newlwp != oldlwp) {
+		struct proc *p = newlwp->l_proc;
+
+		curpcb = newlwp->l_md.md_pcb;
+		pmap_activate(newlwp);
+
+		/* Check for Restartable Atomic Sequences. */
+		if (!LIST_EMPTY(&p->p_raslist)) {
+			caddr_t pc;
+
+			pc = ras_lookup(p,
+				(caddr_t)newlwp->l_md.md_regs->tf_spc);
+			if (pc != (caddr_t) -1)
+				newlwp->l_md.md_regs->tf_spc = (int) pc;
+		}
+	}
+
+	curlwp = newlwp;
+	return (newlwp);
+}
+
+/*
+ * Find the highest priority lwp and prepare to switching to it.
  */
 struct lwp *
 cpu_switch_search(struct lwp *oldlwp)
@@ -153,7 +185,7 @@ cpu_switch_search(struct lwp *oldlwp)
 	struct prochd *q;
 	struct lwp *l;
 
-	curlwp = 0;
+	curlwp = NULL;
 
 	SCHED_LOCK_IDLE();
 	while (sched_whichqs == 0) {
@@ -168,26 +200,7 @@ cpu_switch_search(struct lwp *oldlwp)
 	want_resched = 0;
 	SCHED_UNLOCK_IDLE();
 
-	l->l_stat = LSONPROC;
-
-	if (l != oldlwp) {
-		struct proc *p = l->l_proc;
-
-		curpcb = l->l_md.md_pcb;
-		pmap_activate(l);
-
-		/* Check for Restartable Atomic Sequences. */
-		if (!LIST_EMPTY(&p->p_raslist)) {
-			caddr_t pc;
-
-			pc = ras_lookup(p, (caddr_t) l->l_md.md_regs->tf_spc);
-			if (pc != (caddr_t) -1)
-				l->l_md.md_regs->tf_spc = (int) pc;
-		}
-	}
-	curlwp = l;
-
-	return (l);
+	return (cpu_switch_prepare(oldlwp, l));
 }
 
 /*
