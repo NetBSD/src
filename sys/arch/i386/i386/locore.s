@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165 1997/03/22 16:56:00 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.166 1997/07/05 20:47:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -144,14 +144,6 @@
 	.set	_APTD,(_APTmap + APTDPTDI * NBPG)
 	.set	_APTDpde,(_PTD + APTDPTDI * 4)		# XXX 4 == sizeof pde
 
-
-/*
- * Non-profiled, profiled, and alternate entry points.
- *
- * XXX most entry points should be profilable. Due to ignorance of which 
- * are safe, only a few (bcopy, copyin, copyout) are profiled.
- */
-#define	ALTENTRY(name)	.globl _/**/name; _/**/name:
 
 /*
  * Initialization
@@ -1917,13 +1909,8 @@ ENTRY(savectx)
 
 #define	TRAP(a)		pushl $(a) ; jmp _alltraps
 #define	ZTRAP(a)	pushl $0 ; TRAP(a)
-#ifdef KGDB
-#define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
-			pushl $(a) ; jmp _bpttraps
-#else
 #define	BPTTRAP(a)	testb $(PSL_I>>8),13(%esp) ; jz 1f ; sti ; 1: ; \
 			TRAP(a)
-#endif
 
 	.text
 IDTVEC(trap00)
@@ -2084,19 +2071,6 @@ calltrap:
 	jmp	2b
 4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT\n"
 #endif /* DIAGNOSTIC */
-
-#ifdef KGDB
-/*
- * This code checks for a kgdb trap, then falls through
- * to the regular trap code.
- */
-NENTRY(bpttraps)
-	INTRENTRY
-	testb	$SEL_RPL,TF_CS(%esp)
-	jne	calltrap
-	call	_kgdb_trap_glue		
-	jmp	calltrap
-#endif /* KGDB */
 
 /*
  * Old call gate entry for syscall
