@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.11 1998/08/13 17:32:46 drochner Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.12 1998/08/31 00:01:59 thorpej Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -54,6 +54,7 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
+#include <sys/pool.h>
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
@@ -137,6 +138,11 @@ struct uao_swhash_elt {
 
 LIST_HEAD(uao_swhash, uao_swhash_elt);
 
+/*
+ * uao_swhash_elt_pool: pool of uao_swhash_elt structures
+ */
+
+struct pool uao_swhash_elt_pool;
 
 /*
  * uvm_aobj: the actual anon-backed uvm_object
@@ -159,6 +165,12 @@ struct uvm_aobj {
 	u_long u_swhashmask;		/* mask for hashtable */
 	LIST_ENTRY(uvm_aobj) u_list;	/* global list of aobjs */
 };
+
+/*
+ * uvm_aobj_pool: pool of uvm_aobj structures
+ */
+
+struct pool uvm_aobj_pool;
 
 /*
  * local functions
@@ -254,9 +266,9 @@ uao_find_swhash_elt(aobj, pageidx, create)
 
 
 	/*
-	 * malloc a new entry for the bucket and init/insert it in
+	 * allocate a new entry for the bucket and init/insert it in
 	 */
-	MALLOC(elt, struct uao_swhash_elt *, sizeof(*elt), M_UVMAOBJ, M_WAITOK);
+	elt = pool_get(&uao_swhash_elt_pool, PR_WAITOK);
 	LIST_INSERT_HEAD(swhash, elt, list);
 	elt->tag = page_tag;
 	elt->count = 0;
@@ -339,8 +351,20 @@ uao_set_swslot(uobj, pageidx, slot)
 	 */
 
 	if (UAO_USES_SWHASH(aobj)) {
+		/*
+		 * Avoid allocating an entry just to free it again if
+		 * the page had not swap slot in the first place, and
+		 * we are freeing.
+		 */
 		struct uao_swhash_elt *elt =
-		    uao_find_swhash_elt(aobj, pageidx, TRUE);
+		    uao_find_swhash_elt(aobj, pageidx, slot ? TRUE : FALSE);
+		if (elt == NULL) {
+#ifdef DIAGNOSTIC
+			if (slot)
+				panic("uao_set_swslot: didn't create elt");
+#endif
+			return (0);
+		}
 
 		oldslot = UAO_SWHASH_ELT_PAGESLOT(elt, pageidx);
 		UAO_SWHASH_ELT_PAGESLOT(elt, pageidx) = slot;
@@ -360,7 +384,7 @@ uao_set_swslot(uobj, pageidx, slot)
 
 			if (elt->count == 0) {
 				LIST_REMOVE(elt, list);
-				FREE(elt, M_UVMAOBJ);
+				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
 
@@ -409,7 +433,7 @@ uao_free(aobj)
 				}
 
 				next = elt->list.le_next;
-				FREE(elt, M_UVMAOBJ);
+				pool_put(&uao_swhash_elt_pool, elt);
 			}
 		}
 		FREE(aobj->u_swhash, M_UVMAOBJ);
@@ -433,7 +457,7 @@ uao_free(aobj)
 	/*
 	 * finally free the aobj itself
 	 */
-	FREE(aobj, M_UVMAOBJ);
+	pool_put(&uvm_aobj_pool, aobj);
 }
 
 /*
@@ -465,6 +489,12 @@ uao_create(size, flags)
 		if (kobj_alloced)
 			panic("uao_create: kernel object already allocated");
 
+		/*
+		 * XXXTHORPEJ: Need to call this now, so the pool gets
+		 * initialized!
+		 */
+		uao_init();
+
 		aobj = &kernel_object_store;
 		aobj->u_pages = pages;
 		aobj->u_flags = UAO_FLAG_NOSWAP;	/* no swap to start */
@@ -477,8 +507,7 @@ uao_create(size, flags)
 		    panic("uao_create: asked to enable swap on kernel object");
 		kobj_alloced = UAO_FLAG_KERNSWAP;
 	} else {	/* normal object */
-		MALLOC(aobj, struct uvm_aobj *, sizeof(*aobj), M_UVMAOBJ,
-		    M_WAITOK);
+		aobj = pool_get(&uvm_aobj_pool, PR_WAITOK);
 		aobj->u_pages = pages;
 		aobj->u_flags = 0;		/* normal object */
 		aobj->u_obj.uo_refs = 1;	/* start with 1 reference */
@@ -548,9 +577,22 @@ uao_create(size, flags)
 static void
 uao_init()
 {
+	static int uao_initialized;
+
+	if (uao_initialized)
+		return;
+	uao_initialized = TRUE;
 
 	LIST_INIT(&uao_list);
 	simple_lock_init(&uao_list_lock);
+
+	pool_init(&uao_swhash_elt_pool, sizeof(struct uao_swhash_elt),
+	    0, 0, 0, "uaoeltpl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAOBJ);
+
+	pool_init(&uvm_aobj_pool, sizeof(struct uvm_aobj), 0, 0, 0,
+	    "aobjpl", 0,
+	    pool_page_alloc_nointr, pool_page_free_nointr, M_UVMAOBJ);
 }
 
 /*
