@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 1996/10/18 06:32:14 thorpej Exp $
+#	$NetBSD: Makefile,v 1.4 1997/01/27 00:28:31 cjs Exp $
 
-NOOBJ=	noobj
+MAN= ypinit.8
 
-install:
+beforeinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${.CURDIR}/ypinit.sh ${DESTDIR}/usr/sbin/ypinit
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 0644 \
