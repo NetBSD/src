@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.35 2004/07/08 21:33:45 kleink Exp $	*/
+/*	$NetBSD: eso.c,v 1.36 2004/07/09 01:02:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004 Klaus J. Klein
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.35 2004/07/08 21:33:45 kleink Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.36 2004/07/09 01:02:32 mycroft Exp $");
 
 #include "mpu.h"
 
@@ -658,13 +658,6 @@ eso_open(hdl, flags)
 	void *hdl;
 	int flags;
 {
-	struct eso_softc *sc = hdl;
-	
-	DPRINTF(("%s: open\n", sc->sc_dev.dv_xname));
-
-	sc->sc_pintr = NULL;
-	sc->sc_rintr = NULL;
-	
 	return (0);
 }
 
@@ -672,8 +665,6 @@ static void
 eso_close(hdl)
 	void *hdl;
 {
-
-	DPRINTF(("%s: close\n", ((struct eso_softc *)hdl)->sc_dev.dv_xname));
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.20 2003/10/30 01:58:17 simonb Exp $	*/
+/*	$NetBSD: neo.c,v 1.21 2004/07/09 01:02:32 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.20 2003/10/30 01:58:17 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.21 2004/07/09 01:02:32 mycroft Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -690,13 +690,6 @@ neo_open(void *addr, int flags)
 void
 neo_close(void *addr)
 {
-	struct neo_softc *sc = addr;
-    
-	neo_halt_output(sc);
-	neo_halt_input(sc);
-
-	sc->pintr = 0;
-	sc->rintr = 0;
 }
 
 int
