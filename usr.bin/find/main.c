@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.12 2000/03/10 11:46:04 itohy Exp $	*/
+/*	$NetBSD: main.c,v 1.13 2000/03/10 14:50:36 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)main.c	8.4 (Berkeley) 5/4/95";
 #else
 __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: main.c,v 1.12 2000/03/10 11:46:04 itohy Exp $");
+__RCSID("$NetBSD: main.c,v 1.13 2000/03/10 14:50:36 kleink Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: main.c,v 1.12 2000/03/10 11:46:04 itohy Exp $");
 #include <errno.h>
 #include <fcntl.h>
 #include <fts.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -82,6 +83,7 @@ main(argc, argv)
 	int ch;
 
 	(void)time(&now);	/* initialize the time-of-day */
+	(void)setlocale(LC_ALL, "");
 
 	/* array to hold dir list.  at most (argc - 1) elements. */
 	p = start = alloca(argc * sizeof (char *));
