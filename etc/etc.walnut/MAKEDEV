@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.22 2002/07/10 13:44:19 simonb Exp $
+#	$NetBSD: MAKEDEV,v 1.23 2002/08/01 23:18:44 simonb Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -95,6 +95,7 @@
 #	wsmux*	wscons event multiplexor
 #	systrace syscall tracer
 #	kttcp	kernel ttcp helper
+#	sysmon	System Monitoring hardware
 #
 
 dialin=0
@@ -135,6 +136,7 @@ all)
 	makedev clockctl
 	makedev systrace
 	makedev kttcp
+	makedev	sysmon
 	;;
 
 ramdisk)
@@ -547,6 +549,17 @@ kttcp)
 	rm -f kttcp
 	mknod kttcp c 61 0
 	chmod 600 kttcp
+	;;
+
+sysmon)
+	major=62
+	rm -f sysmon
+	mknod sysmon c $major 0
+	chmod 644 sysmon
+
+	rm -f watchdog
+	mknod watchdog c $major 1
+	chmod 644 watchdog
 	;;
 
 local)
