@@ -1,4 +1,38 @@
-.\"	$NetBSD: core.5,v 1.16 2002/02/13 08:18:10 ross Exp $
+.\"	$NetBSD: core.5,v 1.17 2002/07/09 01:05:32 thorpej Exp $
+.\"
+.\" Copyright (c) 2002 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Jason R. Thorpe.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +67,7 @@
 .\"
 .\"     @(#)core.5	8.3 (Berkeley) 12/11/93
 .\"
-.Dd October 7, 2000
+.Dd July 8, 2002
 .Dt CORE 5
 .Os
 .Sh NAME
@@ -41,6 +75,15 @@
 .Nd memory image file format
 .Sh SYNOPSIS
 .Fd #include \*[Lt]sys/param.h\*[Gt]
+.Pp
+For a.out-format core files:
+.Pp
+.Fd #include \*[Lt]sys/core.h\*[Gt]
+.Pp
+For ELF-format core files:
+.Pp
+.Fd #include \*[Lt]sys/exec.h\*[Gt]
+.Fd #include \*[Lt]sys/exec_elf.h\*[Gt]
 .Sh DESCRIPTION
 A small number of signals which cause abnormal termination of a process
 also cause a record of the process's in-core state to be written
@@ -94,6 +137,127 @@ to point to the default core name template on execution of a set-id binary.
 The maximum size of a core file is limited by
 .Xr setrlimit 2 .
 Files which would be larger than the limit are not created.
+.Ss ELF CORE FORMAT
+ELF-format core files are described by a standard ELF exec header and
+a series of ELF program headers.  Each program header describes a range
+of the virtual address space of the process.
+.Pp
+In addition,
+.Nx
+ELF core files include an ELF note section which provides additional
+information about the process.  The first note in the note section
+has a note name of
+.Dq NetBSD-CORE
+and a note type of
+ELF_NOTE_NETBSD_CORE_PROCINFO (1), and contains the following
+structure:
+.Bd -literal
+struct netbsd_elfcore_procinfo {
+   /* Version 1 fields start here. */
+    uint32_t cpi_version;      /* netbsd_elfcore_procinfo version */
+    uint32_t cpi_cpisize;      /* sizeof(netbsd_elfcore_procinfo) */
+    uint32_t cpi_signo;        /* killing signal */
+    uint32_t cpi_sigcode;      /* signal code */
+    uint32_t cpi_sigpend[4];   /* pending signals */
+    uint32_t cpi_sigmask[4];   /* blocked signals */
+    uint32_t cpi_sigignore[4]; /* blocked signals */
+    uint32_t cpi_sigcatch[4];  /* blocked signals */
+    int32_t  cpi_pid;          /* process ID */
+    int32_t  cpi_ppid;         /* parent process ID */
+    int32_t  cpi_pgrp;         /* process group ID */
+    int32_t  cpi_sid;          /* session ID */
+    uint32_t cpi_ruid;         /* real user ID */
+    uint32_t cpi_euid;         /* effective user ID */
+    uint32_t cpi_svuid;        /* saved user ID */
+    uint32_t cpi_rgid;         /* real group ID */
+    uint32_t cpi_egid;         /* effective group ID */
+    uint32_t cpi_svgid;        /* saved group ID */
+    uint32_t cpi_nlwps;        /* number of LWPs */
+    int8_t   cpi_name[32];     /* copy of p->p_comm */
+    /* Add version 2 fields below here. */
+};
+.Ed
+.Pp
+The fields of
+.Fa struct netbsd_elfcore_procinfo
+are as follows:
+.Bl -tag -width cpi_sigignoreXX
+.It cpi_version
+The version of this structure.  The current version is defined by
+the NETBSD_ELFCORE_PROCINFO_VERSION constant.
+.It cpi_cpisize
+The size of this structure.
+.It cpi_signo
+Signal that caused the process to dump core.
+.It cpi_sigcode
+Signal-specific code, if any, corresponding to
+.Va cpi_signo .
+.It cpi_sigpend
+A mask of signals pending delivery to the process.  This may be
+examined by copying it to a
+.Fa sigset_t .
+.It cpi_sigmask
+The set of signals currently blocked by the process.  This may be
+examined by copying it to a
+.Fa sigset_t .
+.It cpi_sigignore
+The set of signals currently being ignored by the process.  This may be
+examined by copying it to a
+.Fa sigset_t .
+.It cpi_sigcatch
+The set of signals with registers signals handlers for the process.  This
+may be examined by copying it to a
+.Fa sigset_t .
+.It cpi_pid
+Process ID of the process.
+.It cpi_ppid
+Process ID of the parent process.
+.It cpi_pgrp
+Process group ID of the process.
+.It cpi_sid
+Session ID of the process.
+.It cpi_ruid
+Real user ID of the process.
+.It cpi_euid
+Effective user ID of the process.
+.It cpi_svuid
+Saved user ID of the process.
+.It cpi_rgid
+Real group ID of the process.
+.It cpi_egid
+Effective group ID of the process.
+.It cpi_svgid
+Saved group ID of the process.
+.It cpi_nlwps
+Number of kernel-visible execution contexts (LWPs) of the process.
+.It cpi_name
+Process name, copied from the p_comm field of
+.Fa struct proc .
+.El
+.Pp
+The note section also contains additional notes for each
+kernel-visible execution context of the process (LWP).
+These notes have names of the form
+.Dq NetBSD-CORE@nn
+where
+.Dq nn
+is the LWP ID of the execution context, for example:
+.Dq NetBSD-CORE@1 .
+These notes contain register and other per-execution context
+data in the same format as is used by the
+.Xr ptrace 2
+system call.  The note types correspond to the
+.Xr ptrace 2
+request numbers that return the same data.  For example,
+a note with a note type of PT_GETREGS would contain a
+.Fa struct reg
+with the registister contents of the execution context.
+For a complete list of available
+.Xr ptrace 2
+request types for a given architecture, refer to that architecture's
+.Pa \*[Lt]machine/ptrace.h\*[Gt]
+header file.
+.Ss A.OUT CORE FORMAT
 .Pp
 The core file contains of a core header followed by a number of
 segments. Each segment is preceded by a core segment header.
@@ -204,6 +368,8 @@ Meaningless if the segment type is
 Size of the segment, not including this header.
 .El
 .Sh SEE ALSO
+.Xr a.out 5 ,
+.Xr elf 5 ,
 .Xr gdb 1 ,
 .Xr setrlimit 2 ,
 .Xr sysctl 3 ,
@@ -214,6 +380,18 @@ A
 .Nm core
 file format appeared in
 .At v6 .
+The
+.Nx
+a.out core file format was introduced in
+.Nx 1.0 .
+The
+.Nx
+ELF core file format was introduced in
+.Nx 1.6 .
+.Pp
+In releases previous to
+.Nx 1.6 ,
+ELF program images produced a.out-format core files.
 .Sh BUGS
 There is no standard location or name for the
 CPU-dependent data structure stored in the
