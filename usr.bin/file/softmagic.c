@@ -1,4 +1,4 @@
-/*	$NetBSD: softmagic.c,v 1.21 2001/03/17 11:21:51 pooka Exp $	*/
+/*	$NetBSD: softmagic.c,v 1.22 2001/03/17 11:25:32 pooka Exp $	*/
 
 /*
  * softmagic - interpret variable magic from MAGIC
@@ -41,7 +41,7 @@
 #if 0
 FILE_RCSID("@(#)Id: softmagic.c,v 1.43 2001/03/11 20:29:16 christos Exp ")
 #else
-__RCSID("$NetBSD: softmagic.c,v 1.21 2001/03/17 11:21:51 pooka Exp $");
+__RCSID("$NetBSD: softmagic.c,v 1.22 2001/03/17 11:25:32 pooka Exp $");
 #endif
 #endif	/* lint */
 
@@ -118,7 +118,6 @@ match(magic, nmagic, s, nbytes)
 	int32 oldoff = 0;
 	int returnval = 0; /* if a match is found it is set to 1*/
 	int firstline = 1; /* a flag to print X\n  X\n- X */
-	struct mlist *ml;
 
 	if (tmpoff == NULL)
 		if ((tmpoff = (int32 *) malloc(tmplen = 20)) == NULL)
