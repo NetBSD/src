@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee80211subr.c,v 1.8 2002/08/05 06:55:06 onoe Exp $	*/
+/*	$NetBSD: if_ieee80211subr.c,v 1.9 2002/08/11 12:08:55 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.8 2002/08/05 06:55:06 onoe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee80211subr.c,v 1.9 2002/08/11 12:08:55 drochner Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2161,7 +2161,7 @@ ieee80211_cfgget(struct ifnet *ifp, u_long cmd, caddr_t data)
 		    htole16((ic->ic_flags & IEEE80211_F_HASWEP) ? 1 : 0);
 		wreq.wi_len = 1;
 		break;
-	case WI_RID_AUTH_CNTL:
+	case WI_RID_CNFAUTHMODE:
 		wreq.wi_val[0] = htole16(1);	/* TODO: open system only */
 		wreq.wi_len = 1;
 		break;
@@ -2447,7 +2447,7 @@ ieee80211_cfgset(struct ifnet *ifp, u_long cmd, caddr_t data)
 		return EPERM;
 	case WI_RID_WEP_AVAIL:
 		return EPERM;
-	case WI_RID_AUTH_CNTL:
+	case WI_RID_CNFAUTHMODE:
 		if (wreq.wi_len != 1)
 			return EINVAL;
 		if (le16toh(wreq.wi_val[0]) != 1)
