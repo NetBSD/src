@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.40 1999/09/26 05:33:31 cgd Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.41 1999/09/26 13:39:52 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -515,3 +515,24 @@ sys/sys/disklabel_mbr.h				1.5
 
   Correct handling of extended partitions within extended partitions, and
   add support for Linux extended partitions.
+
+include/db.h					1.17
+
+  Fix P_{16,32}_SWAP() macros to avoid unaligned 16 and 32 bit
+  memory accesses.  This fixes a problem seen on arm32 when trying
+  to use the db(3) functions to access a BIG_ENDIAN btree.
+
+usr.bin/systat/extern.h				1.8-1.9
+usr.bin/systat/fetch.c				1.5
+usr.bin/systat/main.c				1.16
+usr.bin/systat/netstat.c			1.11
+usr.bin/systat/pigs.c				1.14
+
+  LP64 and type sanity fixes, with visible effects of enabling echo
+  on commands and correct cursor placement after update.
+
+usr.bin/systat/cmds.c				1.10
+usr.bin/systat/keyboard.c			1.6
+
+  Do not downcase input, which prevented "ignore X11" in the
+  "netstat" display from working.  Fixes PR#7655.
