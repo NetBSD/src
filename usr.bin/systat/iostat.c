@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.18 2001/01/16 02:50:30 cgd Exp $	*/
+/*	$NetBSD: iostat.c,v 1.19 2002/01/28 13:20:43 augustss Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: iostat.c,v 1.18 2001/01/16 02:50:30 cgd Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.19 2002/01/28 13:20:43 augustss Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,7 +83,7 @@ int
 initiostat(void)
 {
 
-	dkinit(1, egid);
+	dkinit(1);
 	dkreadstats();
 	return(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.36 2001/09/28 11:58:51 augustss Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.37 2002/01/28 13:20:43 augustss Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.36 2001/09/28 11:58:51 augustss Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.37 2002/01/28 13:20:43 augustss Exp $");
 #endif /* not lint */
 
 /*
@@ -187,7 +187,7 @@ initvmstat(void)
 		}
 	}
 	hertz = stathz ? stathz : hz;
-	if (! dkinit(1, egid))
+	if (! dkinit(1))
 		return(0);
 	if (dk_ndrive && !once) {
 #define	allocate(e, t) \
