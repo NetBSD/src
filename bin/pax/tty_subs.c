@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subs.c,v 1.10 2001/10/25 05:33:34 lukem Exp $	*/
+/*	$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)tty_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tty_subs.c,v 1.10 2001/10/25 05:33:34 lukem Exp $");
+__RCSID("$NetBSD: tty_subs.c,v 1.11 2002/01/31 19:27:54 tv Exp $");
 #endif
 #endif /* not lint */
 

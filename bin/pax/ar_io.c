@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_io.c,v 1.21 2002/01/29 10:20:28 tv Exp $	*/
+/*	$NetBSD: ar_io.c,v 1.22 2002/01/31 19:27:53 tv Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -38,11 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
+#if defined(__RCSID) && !defined(lint)
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_io.c,v 1.21 2002/01/29 10:20:28 tv Exp $");
+__RCSID("$NetBSD: ar_io.c,v 1.22 2002/01/31 19:27:53 tv Exp $");
 #endif
 #endif /* not lint */
 
