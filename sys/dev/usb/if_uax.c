@@ -1,12 +1,11 @@
-/*	$NetBSD: if_uax.c,v 1.2 2003/02/16 13:52:37 augustss Exp $	*/
+/*	$NetBSD: if_uax.c,v 1.3 2003/02/16 17:18:47 augustss Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
+ * by Lennart Augustsson (lennart@augustsson.net).
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,9 +38,8 @@
 
 /*
  * TODO:
- *   compute multicast filter
  *   toggle link LED
- *   find performance bug
+ *   do something in interrupt routine
  */
 
 /*
@@ -51,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.2 2003/02/16 13:52:37 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.3 2003/02/16 17:18:47 augustss Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -101,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_uax.c,v 1.2 2003/02/16 13:52:37 augustss Exp $");
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdevs.h>
 
-/*#include <dev/usb/if_uaxreg.h>*/
+#include <dev/usb/if_uaxreg.h>
 
 #ifdef UAX_DEBUG
 #define DPRINTF(x)	if (uaxdebug) logprintf x
@@ -114,61 +112,6 @@ int	uaxdebug = 0;
 
 #define ETHER_ALIGN		2
 
-/********** if_uaxreg.h ***********/
-
-#define UAX_CONFIG_NO		1
-#define UAX_IFACE_IDX		0
-
-#define UAX_MAX_PHYS		2
-
-#define UAX_TX_TIMEOUT		10000 /* ms */
-#define UAX_BUFSZ		1518 /* XXX 1514 */
-
-/* Requests */
-#define UAX_READ_SRAM		0x02
-#define UAX_WRITE_RX_SRAM	0x03
-#define UAX_WRITE_TX_SRAM	0x04
-#define UAX_SOFTWARE_MII	0x06
-#define UAX_READ_MII_REG	0x07
-#define UAX_WRITE_MII_REG	0x08
-#define UAX_READ_MII_OPMODE	0x09
-#define UAX_HARDWARE_MII	0x0a
-#define UAX_READ_SROM		0x0b
-#define UAX_WRITE_SROM		0x0c
-#define UAX_WRITE_SROM_ENABLE	0x0d
-#define UAX_WRITE_SROM_DISABLE	0x0e
-#define UAX_READ_RX_CTRL	0x0f
-#define UAX_WRITE_RX_CTRL	0x10
-#define  UAX_RX_PROMISCUOUS		0x01
-#define  UAX_RX_ALL_MULTICAST		0x02
-#define  UAX_RX_DIRECTED		0x04
-#define  UAX_RX_BROADCAST		0x08
-#define  UAX_RX_MULTICAST		0x10
-#define  UAX_RX_ALTERNATE		0x80
-#define UAX_READ_IPGS		0x11
-#define UAX_WRITE_IPG		0x12
-#define UAX_WRITE_IPG1		0x13
-#define UAX_WRITE_IPG2		0x14
-#define UAX_READ_MULTI_FILTER	0x15
-#define  UAX_MULTI_FILTER_SIZE		8
-#define UAX_WRITE_MULTI_FILTER	0x16
-#define UAX_READ_NODEID		0x17
-#define UAX_READ_PHYID		0x19
-#define  UAX_GET_PHY(r)			((r) & 0x1f)
-#define  UAX_GET_PHY_TYPE(r)		(((r) >> 5) & 0x07)
-#define UAX_READ_MEDIUM_STATUS	0x1a
-#define UAX_WRITE_MEDIUM_STATUS	0x1b
-#define UAX_GET_MONITOR_MODE	0x1c
-#define UAX_SET_MONITOR_MODE	0x1d
-#define UAX_READ_GPIOS		0x1e
-#define UAX_WRITE_GPIOS		0x1f
-
-#define UAX_INTR_PKTLEN 8
-#define UAX_INTR_INTERVAL 100	/* XXX */
-struct uax_intrpkt {
-	u_int8_t		uax_intrdata[UAX_INTR_PKTLEN];
-};
-
 /********** if_uaxvar.h ***********/
 
 #define UAX_ENDPT_RX 0
@@ -178,7 +121,7 @@ struct uax_intrpkt {
 
 /* XXX Must be 1 for now */
 #define UAX_TX_LIST_CNT		1
-#define UAX_RX_LIST_CNT		1
+#define UAX_RX_LIST_CNT		2
 
 struct uax_softc;
 
@@ -188,9 +131,6 @@ struct uax_chain {
 	char			*uch_buf;
 	struct mbuf		*uch_mbuf;
 	int			uch_idx;
-};
-
-struct uax_cdata {
 };
 
 struct uax_phy_info {
@@ -241,9 +181,6 @@ struct uax_softc {
 
 	/* Rx info */
 	struct uax_chain	sc_rx_chain[UAX_RX_LIST_CNT];
-#if 0
-	int			sc_rx_prod;
-#endif
 	u_int			sc_rx_errs;
 	struct timeval		sc_rx_notice;
 
@@ -296,6 +233,8 @@ Static int uax_tx_list_init(struct uax_softc *);
 Static int uax_rx_list_init(struct uax_softc *);
 Static int uax_newbuf(struct uax_softc *, struct uax_chain *, struct mbuf *);
 Static int uax_openpipes(struct uax_softc *);
+Static u_int32_t uax_crc(u_int8_t *eaddr);
+Static void uax_setmulti(struct uax_softc *sc);
 
 static inline usbd_status
 uax_request(struct uax_softc *sc, uint type, uint req,
@@ -457,7 +396,11 @@ USB_ATTACH(uax)
 	mii->mii_statchg = uax_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 	ifmedia_init(&mii->mii_media, 0, uax_ifmedia_upd, uax_ifmedia_sts);
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+
+	uax_grab_mii(sc);
+	mii_attach(self, mii, ~0, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	uax_ungrab_mii(sc);
+
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
@@ -598,8 +541,15 @@ uax_phy_init(struct uax_softc *sc, int i)
 		v1 = uax_miibus_readreg(&sc->sc_dev, p->phy, MII_BMSR);
 		v2 = uax_miibus_readreg(&sc->sc_dev, p->phy, MII_BMCR);
 		if ((v1 & v2) != 0xffff) {
+#if 0
+			/*
+			 * The data sheet and the Windows driver isolates and
+			 * power down the PHY at this point, but doing so
+			 * makes mii_attach() fail often.
+			 */
 			uax_miibus_writereg(&sc->sc_dev, p->phy, MII_BMCR,
 					    BMCR_ISO | BMCR_PDOWN);
+#endif
 			p->phy_present = 1;
 			sc->sc_nphys++;
 		}
@@ -607,6 +557,7 @@ uax_phy_init(struct uax_softc *sc, int i)
 	DPRINTF(("uax_phy_init: i=%d done\n", i));
 }
 
+/* Switch to software PHY access mode. */
 Static void
 uax_grab_mii(struct uax_softc *sc)
 {
@@ -616,6 +567,7 @@ uax_grab_mii(struct uax_softc *sc)
 			  0, 0, 0, NULL);
 }
 
+/* Switch to hardware PHY access mode. */
 Static void
 uax_ungrab_mii(struct uax_softc *sc)
 {
@@ -650,49 +602,6 @@ uax_setup_phy(struct uax_softc *sc)
 	for (i = 0; i < UAX_MAX_PHYS; i++)
 		uax_phy_init(sc, i);
 
-#if 0
-	if (sc->sc_phys[0].phy_present && sc->sc_phys[1].phy_present)
-		uax_miibus_writereg(&sc->sc_dev, 0, MII_BMCR,
-				    BMCR_ISO | BMCR_PDOWN);
-	else
-		sc->sc_fixed_phy = 1;
-
-	if (sc->sc_pna)
-		uax_miibus_writereg(&sc->sc_dev, sc->sc_phys[1].phy, MII_BMCR,
-				    BMCR_RESET);
-	else
-		uax_miibus_writereg(&sc->sc_dev, sc->sc_phys[0].phy, MII_BMCR,
-				    BMCR_RESET);
-
-#if 0
-	if (sc->sc_phys[0].phy_present && sc->sc_phys[1].phy_present)
-		uax_miibus_writereg(sc, 0, MII_ADDR, sc->sc_phys[1].phy);
-#endif
-	
-	if (sc->sc_pna)
-		phy = sc->sc_phys[1].phy;
-	else
-		phy = sc->sc_phys[0].phy;
-	for (i = 0; i < 1000; i++) {
-		if (!(uax_miibus_readreg(&sc->sc_dev, phy, MII_BMCR) &
-		      BMCR_RESET))
-			break;
-		delay(5000); /* XXX */
-	}
-#if 0
-	XXX skipped stuff
-#endif
-#else
-	uax_miibus_writereg(&sc->sc_dev, sc->sc_phys[0].phy, MII_BMCR,
-			    BMCR_RESET);
-	for (i = 0; i < 1000; i++) {
-		delay(5000); /* XXX */
-		if (!(uax_miibus_readreg(&sc->sc_dev, sc->sc_phys[0].phy,
-					 MII_BMCR) & BMCR_RESET))
-			break;
-	}
-#endif
-
 	uax_ungrab_mii(sc);
 
 	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_IPG,
@@ -701,12 +610,6 @@ uax_setup_phy(struct uax_softc *sc)
 			  0x0c, 0, 0, NULL);
 	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_IPG2,
 			  sc->sc_pna ? 0x14 : 0x12, 0, 0, NULL);
-
-
-	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MEDIUM_STATUS,
-			  0x06, 0, 0, NULL);
-
-	delay(50000);		/* XXX */
 }
 
 Static void
@@ -748,25 +651,19 @@ uax_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
-#if 0
-			if (TULIP_IS_ENABLED(sc)) {
-				/*
-				 * Multicast list has changed.  Set the
-				 * hardware filter accordingly.
-				 */
-				(*sc->sc_filter_setup)(sc);
-			}
-#endif
+			/*
+			 * Multicast list has changed.  Set the
+			 * hardware filter accordingly.
+			 */
+			uax_setmulti(sc);
 			error = 0;
 		}
 		break;
 	}
 
-#if 0
 	/* Try to get more packets going. */
-	if (IS_ENABLED(sc))
+	if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
 		uax_start(ifp);
-#endif
 
 	splx(s);
 	return (error);
@@ -847,6 +744,7 @@ uax_miibus_readreg(device_ptr_t dev, int phy, int reg)
 	if (sc->sc_dying)
 		return (0);
 
+	/* We must limit the PHY address to avoid false hits. */
 	if (phy >= sc->sc_nphys)
 		return (0);
 
@@ -899,12 +797,6 @@ uax_miibus_statchg(device_ptr_t dev)
 		return;
 
 #if 0
-	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
-	} else {
-	}
-#endif
-
-#if 0
 	if ((mii->mii_media_active & IFM_GMASK) == IFM_FDX)
 		val = 0x02;
 	else
@@ -929,6 +821,7 @@ uax_send(struct uax_softc *sc, struct mbuf *m, int idx)
 	c = &sc->sc_tx_chain[idx];
 
 	/* Copy data to tx buffer. */
+	KASSERT(m->m_pkthdr.len <= UAX_BUFSZ);
 	m_copydata(m, 0, m->m_pkthdr.len, c->uch_buf);
 	c->uch_mbuf = m;
 
@@ -960,7 +853,6 @@ uax_send(struct uax_softc *sc, struct mbuf *m, int idx)
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-
 Static void
 uax_txeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
@@ -1352,10 +1244,8 @@ uax_init(struct ifnet *ifp)
 
 	uax_stop(ifp, 0);
 
-#if 0
 	/* Load the multicast filter. */
 	uax_setmulti(sc);
-#endif
 
 	/* Init TX ring. */
 	if (uax_tx_list_init(sc) == ENOBUFS) {
@@ -1464,7 +1354,6 @@ uax_openpipes(struct uax_softc *sc)
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		return (EIO);
 	}
-#if 1
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UAX_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UAX_ENDPT_INTR], sc,
 	    &sc->sc_ibuf, UAX_INTR_PKTLEN, uax_intr,
@@ -1474,7 +1363,6 @@ uax_openpipes(struct uax_softc *sc)
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 		return (EIO);
 	}
-#endif
 
 	/* Start up the receive pipe. */
 	for (i = 0; i < UAX_RX_LIST_CNT; i++) {
@@ -1523,3 +1411,77 @@ uax_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	}
 
 }
+
+/* Polynomial calculation taken from the Windows driver. */
+Static u_int32_t
+uax_crc(u_int8_t *eaddr)
+{
+	u_int32_t crc32;
+	u_int8_t byte, carry;
+	int i, j;
+
+	crc32 = 0xffffffff;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		byte = eaddr[i];
+		for (j = 0; j < 8; j++)	{
+			carry = byte & 1;
+			if (crc32 & 0x80000000)
+				carry ^= 1;
+			crc32 <<= 1;
+			byte >>= 1;
+			if (carry)
+				crc32 ^= 0x04c11db7;
+		}
+	}
+	return (crc32);
+}
+
+Static void
+uax_setmulti(struct uax_softc *sc)
+{
+	struct ifnet		*ifp;
+	struct ether_multi	*enm;
+	struct ether_multistep	step;
+	u_int32_t		h;
+	int			nmcast;
+
+	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->sc_dev), __func__));
+
+	ifp = GET_IFP(sc);
+
+	sc->sc_packet_filter &= ~(UAX_RX_PROMISCUOUS |
+				  UAX_RX_ALL_MULTICAST |
+				  UAX_RX_MULTICAST);
+	if (ifp->if_flags & IFF_PROMISC) {
+		sc->sc_packet_filter |= UAX_RX_PROMISCUOUS;
+	} else {
+		ifp->if_flags &= ~IFF_ALLMULTI;
+
+		memset(sc->sc_mcast, 0, sizeof sc->sc_mcast);
+		nmcast = 0;
+		ETHER_FIRST_MULTI(step, &sc->sc_ec, enm);
+		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo,
+				   enm->enm_addrhi, ETHER_ADDR_LEN) != 0) {
+				ifp->if_flags |= IFF_ALLMULTI;
+				sc->sc_packet_filter |= UAX_RX_ALL_MULTICAST;
+				nmcast = 0;
+				break;
+			}
+			h = (uax_crc(enm->enm_addrlo) >> 26) & 0x3f;
+			sc->sc_mcast[h / 8] |= 1 << (h % 8);
+
+			ETHER_NEXT_MULTI(step, enm);
+			nmcast++;
+		}
+		if (nmcast > 0)
+			sc->sc_packet_filter |= UAX_RX_MULTICAST;
+	}
+	/* Set the multicast filter. */
+	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_MULTI_FILTER,
+			  0, 0, sizeof sc->sc_mcast, &sc->sc_mcast);
+	/* And tell the chip which mode we want. */
+	(void)uax_request(sc, UT_WRITE_VENDOR_DEVICE, UAX_WRITE_RX_CTRL,
+			  sc->sc_packet_filter, 0, 0, NULL);
+}
+
