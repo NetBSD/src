@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.34 1998/07/26 23:03:30 mycroft Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.35 1998/07/27 09:33:44 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -110,7 +110,7 @@ div_t	 div __P((int, int));
 __dead void
 	 exit __P((int));
 void	 free __P((void *));
-char	*getenv __P((const char *));
+__aconst char *getenv __P((const char *));
 __pure long
 	 labs __P((long));
 ldiv_t	 ldiv __P((long, long));
@@ -216,7 +216,7 @@ int	 cgetstr __P((char *, const char *, char **));
 int	 cgetustr __P((char *, const char *, char **));
 
 int	 daemon __P((int, int));
-char	*devname __P((dev_t, mode_t));
+__aconst char *devname __P((dev_t, mode_t));
 int	 getloadavg __P((double [], int));
 
 void	 cfree __P((void *));
