@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.3 1999/09/14 11:20:52 tsubai Exp $
+#	$NetBSD: GENERIC,v 1.4 1999/11/15 19:10:48 fvdl Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -69,6 +69,7 @@ file-system	CODA		# Coda File System; also needs vcoda (below)
 # File system options
 #options 	QUOTA		# UFS quotas
 #options 	FFS_EI		# FFS Endian Independant support
+#options 	SOFTDEP         # FFS soft updates support.
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
