@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.4 2001/11/12 23:23:36 lukem Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.5 2003/03/16 08:01:13 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2001/11/12 23:23:36 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.5 2003/03/16 08:01:13 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2001/11/12 23:23:36 lukem Exp $"
 #include <sys/lkm.h>
 #include <sys/file.h>
 #include <sys/errno.h>
+
+int union_lkmentry __P((struct lkm_table *, int, int));
 
 /*
  * This is the vfsops table for the file system in question
