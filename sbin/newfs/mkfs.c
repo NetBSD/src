@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.37 1999/07/30 17:44:01 wrstuden Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.38 2000/05/22 10:33:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.37 1999/07/30 17:44:01 wrstuden Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.38 2000/05/22 10:33:45 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -561,6 +561,14 @@ next:
 	sblock.fs_csaddr = cgdmin(&sblock, 0);
 	sblock.fs_cssize =
 	    fragroundup(&sblock, sblock.fs_ncg * sizeof(struct csum));
+	if (sblock.fs_cssize / sblock.fs_bsize > MAXCSBUFS) {
+		printf("With %d cylinder groups %d cylinder group sumary "
+		    "area are needed.\n",
+		    sblock.fs_ncg, sblock.fs_cssize / sblock.fs_bsize);
+		printf("Only %ld are available, reduce the number of cylinder "
+		    "groups.\n", (long)MAXCSBUFS);
+		exit(38);
+	}
 	i = sblock.fs_bsize / sizeof(struct csum);
 	sblock.fs_csmask = ~(i - 1);
 	for (sblock.fs_csshift = 0; i > 1; i >>= 1)
