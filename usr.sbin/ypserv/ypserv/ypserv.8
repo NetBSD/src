@@ -1,4 +1,4 @@
-.\"	$NetBSD: ypserv.8,v 1.4 1997/10/07 14:23:58 lukem Exp $
+.\"	$NetBSD: ypserv.8,v 1.5 1997/10/18 06:50:50 mikel Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -105,17 +105,17 @@ or
 .Ar /var/yp/securenet .
 .El
 .Sh FILES
-.Bl -tag -width /var/yp/ypserv.log -compact
+.Bl -tag -width /var/run/ypserv.pid -compact
 .It Pa /var/yp/ypserv.log
 .It Pa /var/yp/securenet
 .It Pa /var/run/ypserv.pid
 .El
 .Sh SEE ALSO
-.Xr ypbind 1  ,
 .Xr securenet 5 ,
 .Xr ypserv.acl 5 ,
 .Xr yp 8 ,
-.Xr ypinit 8
+.Xr ypbind 8 ,
+.Xr ypinit 8 .
 .Sh AUTHOR
 This implementation of
 .Nm
