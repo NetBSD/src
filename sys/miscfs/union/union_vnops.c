@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.22 1995/05/30 18:11:49 mycroft Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.23 1995/05/30 18:52:47 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994 The Regents of the University of California.
@@ -1165,8 +1165,6 @@ union_rmdir(ap)
 		vput(ap->a_vp);
 	}
 
-	if (!error)
-		union_diruncache(un);
 	return (error);
 }
 
