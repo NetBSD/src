@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2002/12/06 01:55:55 simonb Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2003/01/21 20:50:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1996 Matthias Pfaller.
@@ -66,6 +66,7 @@
 #include <sys/syscallargs.h>
 #include <sys/core.h>
 #include <sys/kcore.h>
+#include <sys/ucontext.h>
 
 #include <dev/cons.h>
 
@@ -483,6 +484,73 @@ sys___sigreturn14(p, v, retval)
 	(void) sigprocmask1(p, SIG_SETMASK, &context.sc_mask, 0);
 
 	return(EJUSTRETURN);
+}
+
+void
+cpu_getmcontext(l, mcp, flags)
+	struct lwp *l;
+	mcontext_t *mcp;
+	unsigned int *flags;
+{
+
+	(void)memcpy(mcp->__gregs, l->l_md.md_regs, sizeof (mcp->__gregs));
+	*flags |= _UC_CPU;
+
+#ifdef NS381
+	{
+		/*
+		 * XXX Unaware of LWP universe.
+		 */
+		extern struct proc *fpu_proc;
+
+		/* If we're the FPU owner, dump its state to the PCB first. */
+		if (fpu_proc == p)
+			save_fpu_context(&l->l_addr->u_pcb);
+
+		mcp->__fpregs.__fpr_psr = l->l_addr->u_pcb.pcb_fsr;
+		(void)memcpy(mcp->__fpregs.__fpr_regs,
+		    l->l_addr->u_pcb.pcb_freg,
+		    sizeof (mcp->__fpregs.__fpr_regs));
+		*flags |= _UC_FPU;
+	}
+#endif
+}
+
+int
+cpu_setmcontext(l, mcp, flags)
+	struct lwp *l;
+	const mcontext_t *mcp;
+	unsigned int flags;
+{
+	struct reg *regs = l->l_md.md_regs;
+
+	/* Restore CPU context, if any. */
+	if (flags & _UC_CPU) {
+		/* Check for security violations. */
+		if (((mcp.__gregs[_REG_PS] ^ regs->r_psr) & PSL_USERSTATIC)
+		    != 0)
+			return (EINVAL);
+		(void)memcpy(l->l_md.md_regs, mcp->__gregs,
+		    sizeof (l->l_md.md_regs));
+	}
+
+#ifdef NS381
+	/* Restore FPU context, if any. */
+	/*
+	 * XXX Unaware of LWP universe.
+	 */
+	if (flags & _UC_FPU) {
+		l->l_addr->u_pcb.pcb_fsr = mcp->__fpregs.__fpr_psr;
+		(void)memcpy(l->l_addr->u_pcb.pcb_freg,
+		    mcp->__fpregs.__fpr_regs,
+		    sizeof (l->l_addr->u_pcb.pcb_freg));
+		/* If we're the FPU owner, force a reload. */
+		if (fpu_proc == p)
+			restore_fpu_context(&l->l_addr->u_pcb);
+	}
+#endif
+
+	return (0);
 }
 
 int waittime = -1;
