@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.26 2003/06/28 14:21:51 darrenr Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.27 2003/06/29 12:17:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.26 2003/06/28 14:21:51 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.27 2003/06/29 12:17:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,7 +307,7 @@ smbfs_closel(struct vop_close_args *ap)
 		return (error);
 	}
 
-	smb_makescred(&scred, p, ap->a_cred);
+	smb_makescred(&scred, l, ap->a_cred);
 	if (vp->v_type == VDIR) {
 		struct smb_share *ssp = np->n_mount->sm_share;
 
@@ -351,7 +351,7 @@ smbfs_close(v)
 	struct vnode *vp = ap->a_vp;
 	int error;
 
-	error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_p, 1);
+	error = smbfs_vinvalbuf(vp, V_SAVE, ap->a_cred, ap->a_l, 1);
 	if (error)
 		return (error);
 
