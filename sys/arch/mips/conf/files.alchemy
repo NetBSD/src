@@ -1,0 +1,36 @@
+#	$NetBSD: files.alchemy,v 1.1 2002/07/29 15:39:16 simonb Exp $
+
+file	arch/mips/alchemy/au_icu.c
+file	arch/mips/alchemy/au_timer.c
+file	arch/mips/alchemy/au_cpureg_mem.c
+
+# Alchemy peripheral bus
+device	aubus { [addr=-1] }
+attach	aubus at mainbus
+file	arch/mips/alchemy/aubus.c		aubus
+
+# "fake" RTC for using an Au1x00 timer for boards without a real RTC
+device	aurtc
+attach	aurtc at aubus
+file	arch/mips/alchemy/dev/aurtc.c		aurtc
+
+# On-chip com-alike device(s)
+device	aucom { } : tty
+file	arch/mips/alchemy/dev/aucom.c		aucom		needs-flag
+
+attach	aucom at aubus with aucom_aubus
+file	arch/mips/alchemy/dev/aucom_aubus.c	aucom_aubus
+
+# On-chip ethernet device(s)
+device	aumac: ether, ifnet, arp, mii
+attach	aumac at aubus
+file	arch/mips/alchemy/dev/if_aumac.c	aumac
+
+# On-chip OHCI USB controller
+attach	ohci at aubus with ohci_aubus
+file	arch/mips/alchemy/dev/ohci.c		ohci
+
+# On-chip AC'97 audio controller
+device	auaudio: audiobus, auconv, mulaw, ac97, aurateconv
+attach	auaudio at aubus
+file	arch/mips/alchemy/dev/auaudio.c		auaudio
