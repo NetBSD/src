@@ -15,163 +15,24 @@
 #include <compat/svr4/svr4_ucontext.h>
 #include <compat/svr4/svr4_syscallargs.h>
 #include <compat/svr4/svr4_statvfs.h>
-int	sys_nosys();
-int	sys_exit();
-int	sys_fork();
-int	sys_read();
-int	sys_write();
-int	svr4_sys_open();
-int	sys_close();
-int	svr4_sys_wait();
-int	svr4_sys_creat();
-int	sys_link();
-int	sys_unlink();
-int	svr4_sys_execv();
-int	sys_chdir();
-int	svr4_sys_time();
-int	svr4_sys_mknod();
-int	sys_chmod();
-int	sys_chown();
-int	svr4_sys_break();
-int	svr4_sys_stat();
-int	compat_43_sys_lseek();
-int	sys_getpid();
-int	sys_setuid();
-int	sys_getuid();
-int	svr4_sys_alarm();
-int	svr4_sys_fstat();
-int	svr4_sys_access();
-int	sys_sync();
-int	svr4_sys_kill();
-int	svr4_sys_pgrpsys();
-int	sys_dup();
-int	sys_pipe();
-int	svr4_sys_times();
-int	sys_setgid();
-int	sys_getgid();
-int	svr4_sys_signal();
-#ifdef SYSVMSG
-int	svr4_sys_msgsys();
-#else
-#endif
-int	svr4_sys_sysarch();
-#ifdef SYSVSHM
-int	svr4_sys_shmsys();
-#else
-#endif
-#ifdef SYSVSEM
-int	svr4_sys_semsys();
-#else
-#endif
-int	svr4_sys_ioctl();
-int	svr4_sys_utssys();
-int	sys_fsync();
-int	svr4_sys_execve();
-int	sys_umask();
-int	sys_chroot();
-int	svr4_sys_fcntl();
-int	svr4_sys_ulimit();
-int	sys_rmdir();
-int	sys_mkdir();
-int	svr4_sys_getdents();
-int	svr4_sys_getmsg();
-int	svr4_sys_putmsg();
-int	svr4_sys_poll();
-int	svr4_sys_lstat();
-int	sys_symlink();
-int	sys_readlink();
-int	sys_getgroups();
-int	sys_setgroups();
-int	sys_fchmod();
-int	sys_fchown();
-int	svr4_sys_sigprocmask();
-int	svr4_sys_sigsuspend();
-int	svr4_sys_sigaltstack();
-int	svr4_sys_sigaction();
-int	svr4_sys_sigpending();
-int	svr4_sys_context();
-int	svr4_sys_statvfs();
-int	svr4_sys_fstatvfs();
-int	svr4_sys_waitsys();
-int	svr4_sys_hrtsys();
-int	svr4_sys_mmap();
-int	sys_mprotect();
-int	sys_munmap();
-int	sys_fpathconf();
-int	sys_vfork();
-int	sys_fchdir();
-int	sys_readv();
-int	sys_writev();
-int	svr4_sys_xstat();
-int	svr4_sys_lxstat();
-int	svr4_sys_fxstat();
-int	svr4_sys_setrlimit();
-int	svr4_sys_getrlimit();
-int	sys_rename();
-int	svr4_sys_uname();
-int	sys_setegid();
-int	svr4_sys_sysconfig();
-int	sys_adjtime();
-int	svr4_sys_systeminfo();
-int	sys_seteuid();
-int	svr4_sys_fchroot();
-int	svr4_sys_vhangup();
-int	svr4_sys_gettimeofday();
-int	sys_getitimer();
-int	sys_setitimer();
 
 #ifdef COMPAT_43
 #define compat_43(func) __CONCAT(compat_43_,func)
-
-#ifdef SYSVMSG
 #else
+#define compat_43(func) sys_nosys
 #endif
-#ifdef SYSVSHM
-#else
-#endif
-#ifdef SYSVSEM
-#else
-#endif
-
-#else /* COMPAT_43 */
-#define compat_43(func) nosys
-#endif /* COMPAT_43 */
-
 
 #ifdef COMPAT_09
 #define compat_09(func) __CONCAT(compat_09_,func)
-
-#ifdef SYSVMSG
 #else
+#define compat_09(func) sys_nosys
 #endif
-#ifdef SYSVSHM
-#else
-#endif
-#ifdef SYSVSEM
-#else
-#endif
-
-#else /* COMPAT_09 */
-#define compat_09(func) nosys
-#endif /* COMPAT_09 */
-
 
 #ifdef COMPAT_10
 #define compat_10(func) __CONCAT(compat_10_,func)
-
-#ifdef SYSVMSG
 #else
+#define compat_10(func) sys_nosys
 #endif
-#ifdef SYSVSHM
-#else
-#endif
-#ifdef SYSVSEM
-#else
-#endif
-
-#else /* COMPAT_10 */
-#define compat_10(func) nosys
-#endif /* COMPAT_10 */
 
 #define	s(type)	sizeof(type)
 
@@ -179,391 +40,391 @@ struct sysent svr4_sysent[] = {
 	{ 0, 0,
 	    sys_nosys },			/* 0 = syscall */
 	{ 1, s(struct sys_exit_args),
-	    sys_exit },				/* 1 = sys_exit */
+	    sys_exit },				/* 1 = exit */
 	{ 0, 0,
-	    sys_fork },				/* 2 = sys_fork */
+	    sys_fork },				/* 2 = fork */
 	{ 3, s(struct sys_read_args),
-	    sys_read },				/* 3 = sys_read */
+	    sys_read },				/* 3 = read */
 	{ 3, s(struct sys_write_args),
-	    sys_write },			/* 4 = sys_write */
+	    sys_write },			/* 4 = write */
 	{ 3, s(struct svr4_sys_open_args),
-	    svr4_sys_open },			/* 5 = svr4_sys_open */
+	    svr4_sys_open },			/* 5 = open */
 	{ 1, s(struct sys_close_args),
-	    sys_close },			/* 6 = sys_close */
+	    sys_close },			/* 6 = close */
 	{ 1, s(struct svr4_sys_wait_args),
-	    svr4_sys_wait },			/* 7 = svr4_sys_wait */
+	    svr4_sys_wait },			/* 7 = wait */
 	{ 2, s(struct svr4_sys_creat_args),
-	    svr4_sys_creat },			/* 8 = svr4_sys_creat */
+	    svr4_sys_creat },			/* 8 = creat */
 	{ 2, s(struct sys_link_args),
-	    sys_link },				/* 9 = sys_link */
+	    sys_link },				/* 9 = link */
 	{ 1, s(struct sys_unlink_args),
-	    sys_unlink },			/* 10 = sys_unlink */
+	    sys_unlink },			/* 10 = unlink */
 	{ 2, s(struct svr4_sys_execv_args),
-	    svr4_sys_execv },			/* 11 = svr4_sys_execv */
+	    svr4_sys_execv },			/* 11 = execv */
 	{ 1, s(struct sys_chdir_args),
-	    sys_chdir },			/* 12 = sys_chdir */
+	    sys_chdir },			/* 12 = chdir */
 	{ 1, s(struct svr4_sys_time_args),
-	    svr4_sys_time },			/* 13 = svr4_sys_time */
+	    svr4_sys_time },			/* 13 = time */
 	{ 3, s(struct svr4_sys_mknod_args),
-	    svr4_sys_mknod },			/* 14 = svr4_sys_mknod */
+	    svr4_sys_mknod },			/* 14 = mknod */
 	{ 2, s(struct sys_chmod_args),
-	    sys_chmod },			/* 15 = sys_chmod */
+	    sys_chmod },			/* 15 = chmod */
 	{ 3, s(struct sys_chown_args),
-	    sys_chown },			/* 16 = sys_chown */
+	    sys_chown },			/* 16 = chown */
 	{ 1, s(struct svr4_sys_break_args),
-	    svr4_sys_break },			/* 17 = svr4_sys_break */
+	    svr4_sys_break },			/* 17 = break */
 	{ 2, s(struct svr4_sys_stat_args),
-	    svr4_sys_stat },			/* 18 = svr4_sys_stat */
+	    svr4_sys_stat },			/* 18 = stat */
 	{ 3, s(struct compat_43_sys_lseek_args),
-	    compat_43_sys_lseek },		/* 19 = compat_43_sys_lseek */
+	    compat_43_sys_lseek },		/* 19 = lseek */
 	{ 0, 0,
-	    sys_getpid },			/* 20 = sys_getpid */
+	    sys_getpid },			/* 20 = getpid */
 	{ 0, 0,
-	    nosys },				/* 21 = unimplemented old_mount */
+	    sys_nosys },			/* 21 = unimplemented old_mount */
 	{ 0, 0,
-	    nosys },				/* 22 = unimplemented System V umount */
+	    sys_nosys },			/* 22 = unimplemented System V umount */
 	{ 1, s(struct sys_setuid_args),
-	    sys_setuid },			/* 23 = sys_setuid */
+	    sys_setuid },			/* 23 = setuid */
 	{ 0, 0,
-	    sys_getuid },			/* 24 = sys_getuid */
+	    sys_getuid },			/* 24 = getuid */
 	{ 0, 0,
-	    nosys },				/* 25 = unimplemented stime */
+	    sys_nosys },			/* 25 = unimplemented stime */
 	{ 0, 0,
-	    nosys },				/* 26 = unimplemented ptrace */
+	    sys_nosys },			/* 26 = unimplemented ptrace */
 	{ 1, s(struct svr4_sys_alarm_args),
-	    svr4_sys_alarm },			/* 27 = svr4_sys_alarm */
+	    svr4_sys_alarm },			/* 27 = alarm */
 	{ 2, s(struct svr4_sys_fstat_args),
-	    svr4_sys_fstat },			/* 28 = svr4_sys_fstat */
+	    svr4_sys_fstat },			/* 28 = fstat */
 	{ 0, 0,
-	    nosys },				/* 29 = unimplemented pause */
+	    sys_nosys },			/* 29 = unimplemented pause */
 	{ 0, 0,
-	    nosys },				/* 30 = unimplemented utime */
+	    sys_nosys },			/* 30 = unimplemented utime */
 	{ 0, 0,
-	    nosys },				/* 31 = unimplemented was stty */
+	    sys_nosys },			/* 31 = unimplemented was stty */
 	{ 0, 0,
-	    nosys },				/* 32 = unimplemented was gtty */
+	    sys_nosys },			/* 32 = unimplemented was gtty */
 	{ 2, s(struct svr4_sys_access_args),
-	    svr4_sys_access },			/* 33 = svr4_sys_access */
+	    svr4_sys_access },			/* 33 = access */
 	{ 0, 0,
-	    nosys },				/* 34 = unimplemented nice */
+	    sys_nosys },			/* 34 = unimplemented nice */
 	{ 0, 0,
-	    nosys },				/* 35 = unimplemented statfs */
+	    sys_nosys },			/* 35 = unimplemented statfs */
 	{ 0, 0,
-	    sys_sync },				/* 36 = sys_sync */
+	    sys_sync },				/* 36 = sync */
 	{ 2, s(struct svr4_sys_kill_args),
-	    svr4_sys_kill },			/* 37 = svr4_sys_kill */
+	    svr4_sys_kill },			/* 37 = kill */
 	{ 0, 0,
-	    nosys },				/* 38 = unimplemented fstatfs */
+	    sys_nosys },			/* 38 = unimplemented fstatfs */
 	{ 3, s(struct svr4_sys_pgrpsys_args),
-	    svr4_sys_pgrpsys },			/* 39 = svr4_sys_pgrpsys */
+	    svr4_sys_pgrpsys },			/* 39 = pgrpsys */
 	{ 0, 0,
-	    nosys },				/* 40 = unimplemented xenix */
+	    sys_nosys },			/* 40 = unimplemented xenix */
 	{ 1, s(struct sys_dup_args),
-	    sys_dup },				/* 41 = sys_dup */
+	    sys_dup },				/* 41 = dup */
 	{ 0, 0,
-	    sys_pipe },				/* 42 = sys_pipe */
+	    sys_pipe },				/* 42 = pipe */
 	{ 1, s(struct svr4_sys_times_args),
-	    svr4_sys_times },			/* 43 = svr4_sys_times */
+	    svr4_sys_times },			/* 43 = times */
 	{ 0, 0,
-	    nosys },				/* 44 = unimplemented profil */
+	    sys_nosys },			/* 44 = unimplemented profil */
 	{ 0, 0,
-	    nosys },				/* 45 = unimplemented plock */
+	    sys_nosys },			/* 45 = unimplemented plock */
 	{ 1, s(struct sys_setgid_args),
-	    sys_setgid },			/* 46 = sys_setgid */
+	    sys_setgid },			/* 46 = setgid */
 	{ 0, 0,
-	    sys_getgid },			/* 47 = sys_getgid */
+	    sys_getgid },			/* 47 = getgid */
 	{ 2, s(struct svr4_sys_signal_args),
-	    svr4_sys_signal },			/* 48 = svr4_sys_signal */
+	    svr4_sys_signal },			/* 48 = signal */
 #ifdef SYSVMSG
 	{ 5, s(struct svr4_sys_msgsys_args),
-	    svr4_sys_msgsys },			/* 49 = svr4_sys_msgsys */
+	    svr4_sys_msgsys },			/* 49 = msgsys */
 #else
 	{ 0, 0,
-	    nosys },				/* 49 = unimplemented msgsys */
+	    sys_nosys },			/* 49 = unimplemented msgsys */
 #endif
 	{ 2, s(struct svr4_sys_sysarch_args),
-	    svr4_sys_sysarch },			/* 50 = svr4_sys_sysarch */
+	    svr4_sys_sysarch },			/* 50 = sysarch */
 	{ 0, 0,
-	    nosys },				/* 51 = unimplemented acct */
+	    sys_nosys },			/* 51 = unimplemented acct */
 #ifdef SYSVSHM
 	{ 4, s(struct svr4_sys_shmsys_args),
-	    svr4_sys_shmsys },			/* 52 = svr4_sys_shmsys */
+	    svr4_sys_shmsys },			/* 52 = shmsys */
 #else
 	{ 0, 0,
-	    nosys },				/* 52 = unimplemented shmsys */
+	    sys_nosys },			/* 52 = unimplemented shmsys */
 #endif
 #ifdef SYSVSEM
 	{ 5, s(struct svr4_sys_semsys_args),
-	    svr4_sys_semsys },			/* 53 = svr4_sys_semsys */
+	    svr4_sys_semsys },			/* 53 = semsys */
 #else
 	{ 0, 0,
-	    nosys },				/* 53 = unimplemented semsys */
+	    sys_nosys },			/* 53 = unimplemented semsys */
 #endif
 	{ 3, s(struct svr4_sys_ioctl_args),
-	    svr4_sys_ioctl },			/* 54 = svr4_sys_ioctl */
+	    svr4_sys_ioctl },			/* 54 = ioctl */
 	{ 0, 0,
-	    nosys },				/* 55 = unimplemented uadmin */
+	    sys_nosys },			/* 55 = unimplemented uadmin */
 	{ 0, 0,
-	    nosys },				/* 56 = unimplemented exch */
+	    sys_nosys },			/* 56 = unimplemented exch */
 	{ 4, s(struct svr4_sys_utssys_args),
-	    svr4_sys_utssys },			/* 57 = svr4_sys_utssys */
+	    svr4_sys_utssys },			/* 57 = utssys */
 	{ 1, s(struct sys_fsync_args),
-	    sys_fsync },			/* 58 = sys_fsync */
+	    sys_fsync },			/* 58 = fsync */
 	{ 3, s(struct svr4_sys_execve_args),
-	    svr4_sys_execve },			/* 59 = svr4_sys_execve */
+	    svr4_sys_execve },			/* 59 = execve */
 	{ 1, s(struct sys_umask_args),
-	    sys_umask },			/* 60 = sys_umask */
+	    sys_umask },			/* 60 = umask */
 	{ 1, s(struct sys_chroot_args),
-	    sys_chroot },			/* 61 = sys_chroot */
+	    sys_chroot },			/* 61 = chroot */
 	{ 3, s(struct svr4_sys_fcntl_args),
-	    svr4_sys_fcntl },			/* 62 = svr4_sys_fcntl */
+	    svr4_sys_fcntl },			/* 62 = fcntl */
 	{ 2, s(struct svr4_sys_ulimit_args),
-	    svr4_sys_ulimit },			/* 63 = svr4_sys_ulimit */
+	    svr4_sys_ulimit },			/* 63 = ulimit */
 	{ 0, 0,
-	    nosys },				/* 64 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 64 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 65 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 65 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 66 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 66 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 67 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 67 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 68 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 68 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 69 = unimplemented reserved for unix/pc */
+	    sys_nosys },			/* 69 = unimplemented reserved for unix/pc */
 	{ 0, 0,
-	    nosys },				/* 70 = obsolete advfs */
+	    sys_nosys },			/* 70 = obsolete advfs */
 	{ 0, 0,
-	    nosys },				/* 71 = obsolete unadvfs */
+	    sys_nosys },			/* 71 = obsolete unadvfs */
 	{ 0, 0,
-	    nosys },				/* 72 = obsolete rmount */
+	    sys_nosys },			/* 72 = obsolete rmount */
 	{ 0, 0,
-	    nosys },				/* 73 = obsolete rumount */
+	    sys_nosys },			/* 73 = obsolete rumount */
 	{ 0, 0,
-	    nosys },				/* 74 = obsolete rfstart */
+	    sys_nosys },			/* 74 = obsolete rfstart */
 	{ 0, 0,
-	    nosys },				/* 75 = obsolete sigret */
+	    sys_nosys },			/* 75 = obsolete sigret */
 	{ 0, 0,
-	    nosys },				/* 76 = obsolete rdebug */
+	    sys_nosys },			/* 76 = obsolete rdebug */
 	{ 0, 0,
-	    nosys },				/* 77 = obsolete rfstop */
+	    sys_nosys },			/* 77 = obsolete rfstop */
 	{ 0, 0,
-	    nosys },				/* 78 = unimplemented rfsys */
+	    sys_nosys },			/* 78 = unimplemented rfsys */
 	{ 1, s(struct sys_rmdir_args),
-	    sys_rmdir },			/* 79 = sys_rmdir */
+	    sys_rmdir },			/* 79 = rmdir */
 	{ 2, s(struct sys_mkdir_args),
-	    sys_mkdir },			/* 80 = sys_mkdir */
+	    sys_mkdir },			/* 80 = mkdir */
 	{ 3, s(struct svr4_sys_getdents_args),
-	    svr4_sys_getdents },		/* 81 = svr4_sys_getdents */
+	    svr4_sys_getdents },		/* 81 = getdents */
 	{ 0, 0,
-	    nosys },				/* 82 = obsolete libattach */
+	    sys_nosys },			/* 82 = obsolete libattach */
 	{ 0, 0,
-	    nosys },				/* 83 = obsolete libdetach */
+	    sys_nosys },			/* 83 = obsolete libdetach */
 	{ 0, 0,
-	    nosys },				/* 84 = unimplemented sysfs */
+	    sys_nosys },			/* 84 = unimplemented sysfs */
 	{ 4, s(struct svr4_sys_getmsg_args),
-	    svr4_sys_getmsg },			/* 85 = svr4_sys_getmsg */
+	    svr4_sys_getmsg },			/* 85 = getmsg */
 	{ 4, s(struct svr4_sys_putmsg_args),
-	    svr4_sys_putmsg },			/* 86 = svr4_sys_putmsg */
+	    svr4_sys_putmsg },			/* 86 = putmsg */
 	{ 3, s(struct svr4_sys_poll_args),
-	    svr4_sys_poll },			/* 87 = svr4_sys_poll */
+	    svr4_sys_poll },			/* 87 = poll */
 	{ 2, s(struct svr4_sys_lstat_args),
-	    svr4_sys_lstat },			/* 88 = svr4_sys_lstat */
+	    svr4_sys_lstat },			/* 88 = lstat */
 	{ 2, s(struct sys_symlink_args),
-	    sys_symlink },			/* 89 = sys_symlink */
+	    sys_symlink },			/* 89 = symlink */
 	{ 3, s(struct sys_readlink_args),
-	    sys_readlink },			/* 90 = sys_readlink */
+	    sys_readlink },			/* 90 = readlink */
 	{ 2, s(struct sys_getgroups_args),
-	    sys_getgroups },			/* 91 = sys_getgroups */
+	    sys_getgroups },			/* 91 = getgroups */
 	{ 2, s(struct sys_setgroups_args),
-	    sys_setgroups },			/* 92 = sys_setgroups */
+	    sys_setgroups },			/* 92 = setgroups */
 	{ 2, s(struct sys_fchmod_args),
-	    sys_fchmod },			/* 93 = sys_fchmod */
+	    sys_fchmod },			/* 93 = fchmod */
 	{ 3, s(struct sys_fchown_args),
-	    sys_fchown },			/* 94 = sys_fchown */
+	    sys_fchown },			/* 94 = fchown */
 	{ 3, s(struct svr4_sys_sigprocmask_args),
-	    svr4_sys_sigprocmask },		/* 95 = svr4_sys_sigprocmask */
+	    svr4_sys_sigprocmask },		/* 95 = sigprocmask */
 	{ 1, s(struct svr4_sys_sigsuspend_args),
-	    svr4_sys_sigsuspend },		/* 96 = svr4_sys_sigsuspend */
+	    svr4_sys_sigsuspend },		/* 96 = sigsuspend */
 	{ 2, s(struct svr4_sys_sigaltstack_args),
-	    svr4_sys_sigaltstack },		/* 97 = svr4_sys_sigaltstack */
+	    svr4_sys_sigaltstack },		/* 97 = sigaltstack */
 	{ 3, s(struct svr4_sys_sigaction_args),
-	    svr4_sys_sigaction },		/* 98 = svr4_sys_sigaction */
+	    svr4_sys_sigaction },		/* 98 = sigaction */
 	{ 2, s(struct svr4_sys_sigpending_args),
-	    svr4_sys_sigpending },		/* 99 = svr4_sys_sigpending */
+	    svr4_sys_sigpending },		/* 99 = sigpending */
 	{ 2, s(struct svr4_sys_context_args),
-	    svr4_sys_context },			/* 100 = svr4_sys_context */
+	    svr4_sys_context },			/* 100 = context */
 	{ 0, 0,
-	    nosys },				/* 101 = unimplemented evsys */
+	    sys_nosys },			/* 101 = unimplemented evsys */
 	{ 0, 0,
-	    nosys },				/* 102 = unimplemented evtrapret */
+	    sys_nosys },			/* 102 = unimplemented evtrapret */
 	{ 2, s(struct svr4_sys_statvfs_args),
-	    svr4_sys_statvfs },			/* 103 = svr4_sys_statvfs */
+	    svr4_sys_statvfs },			/* 103 = statvfs */
 	{ 2, s(struct svr4_sys_fstatvfs_args),
-	    svr4_sys_fstatvfs },		/* 104 = svr4_sys_fstatvfs */
+	    svr4_sys_fstatvfs },		/* 104 = fstatvfs */
 	{ 0, 0,
-	    nosys },				/* 105 = unimplemented */
+	    sys_nosys },			/* 105 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 106 = unimplemented nfssvc */
+	    sys_nosys },			/* 106 = unimplemented nfssvc */
 	{ 4, s(struct svr4_sys_waitsys_args),
-	    svr4_sys_waitsys },			/* 107 = svr4_sys_waitsys */
+	    svr4_sys_waitsys },			/* 107 = waitsys */
 	{ 0, 0,
-	    nosys },				/* 108 = unimplemented sigsendsys */
+	    sys_nosys },			/* 108 = unimplemented sigsendsys */
 	{ 5, s(struct svr4_sys_hrtsys_args),
-	    svr4_sys_hrtsys },			/* 109 = svr4_sys_hrtsys */
+	    svr4_sys_hrtsys },			/* 109 = hrtsys */
 	{ 0, 0,
-	    nosys },				/* 110 = unimplemented acancel */
+	    sys_nosys },			/* 110 = unimplemented acancel */
 	{ 0, 0,
-	    nosys },				/* 111 = unimplemented async */
+	    sys_nosys },			/* 111 = unimplemented async */
 	{ 0, 0,
-	    nosys },				/* 112 = unimplemented priocntlsys */
+	    sys_nosys },			/* 112 = unimplemented priocntlsys */
 	{ 0, 0,
-	    nosys },				/* 113 = unimplemented pathconf */
+	    sys_nosys },			/* 113 = unimplemented pathconf */
 	{ 0, 0,
-	    nosys },				/* 114 = unimplemented mincore */
+	    sys_nosys },			/* 114 = unimplemented mincore */
 	{ 6, s(struct svr4_sys_mmap_args),
-	    svr4_sys_mmap },			/* 115 = svr4_sys_mmap */
+	    svr4_sys_mmap },			/* 115 = mmap */
 	{ 3, s(struct sys_mprotect_args),
-	    sys_mprotect },			/* 116 = sys_mprotect */
+	    sys_mprotect },			/* 116 = mprotect */
 	{ 2, s(struct sys_munmap_args),
-	    sys_munmap },			/* 117 = sys_munmap */
+	    sys_munmap },			/* 117 = munmap */
 	{ 2, s(struct sys_fpathconf_args),
-	    sys_fpathconf },			/* 118 = sys_fpathconf */
+	    sys_fpathconf },			/* 118 = fpathconf */
 	{ 0, 0,
-	    sys_vfork },			/* 119 = sys_vfork */
+	    sys_vfork },			/* 119 = vfork */
 	{ 1, s(struct sys_fchdir_args),
-	    sys_fchdir },			/* 120 = sys_fchdir */
+	    sys_fchdir },			/* 120 = fchdir */
 	{ 3, s(struct sys_readv_args),
-	    sys_readv },			/* 121 = sys_readv */
+	    sys_readv },			/* 121 = readv */
 	{ 3, s(struct sys_writev_args),
-	    sys_writev },			/* 122 = sys_writev */
+	    sys_writev },			/* 122 = writev */
 	{ 3, s(struct svr4_sys_xstat_args),
-	    svr4_sys_xstat },			/* 123 = svr4_sys_xstat */
+	    svr4_sys_xstat },			/* 123 = xstat */
 	{ 3, s(struct svr4_sys_lxstat_args),
-	    svr4_sys_lxstat },			/* 124 = svr4_sys_lxstat */
+	    svr4_sys_lxstat },			/* 124 = lxstat */
 	{ 3, s(struct svr4_sys_fxstat_args),
-	    svr4_sys_fxstat },			/* 125 = svr4_sys_fxstat */
+	    svr4_sys_fxstat },			/* 125 = fxstat */
 	{ 0, 0,
-	    nosys },				/* 126 = unimplemented xmknod */
+	    sys_nosys },			/* 126 = unimplemented xmknod */
 	{ 0, 0,
-	    nosys },				/* 127 = unimplemented clocal */
+	    sys_nosys },			/* 127 = unimplemented clocal */
 	{ 2, s(struct svr4_sys_setrlimit_args),
-	    svr4_sys_setrlimit },		/* 128 = svr4_sys_setrlimit */
+	    svr4_sys_setrlimit },		/* 128 = setrlimit */
 	{ 2, s(struct svr4_sys_getrlimit_args),
-	    svr4_sys_getrlimit },		/* 129 = svr4_sys_getrlimit */
+	    svr4_sys_getrlimit },		/* 129 = getrlimit */
 	{ 0, 0,
-	    nosys },				/* 130 = unimplemented lchown */
+	    sys_nosys },			/* 130 = unimplemented lchown */
 	{ 0, 0,
-	    nosys },				/* 131 = unimplemented memcntl */
+	    sys_nosys },			/* 131 = unimplemented memcntl */
 	{ 0, 0,
-	    nosys },				/* 132 = unimplemented getpmsg */
+	    sys_nosys },			/* 132 = unimplemented getpmsg */
 	{ 0, 0,
-	    nosys },				/* 133 = unimplemented putpmsg */
+	    sys_nosys },			/* 133 = unimplemented putpmsg */
 	{ 2, s(struct sys_rename_args),
-	    sys_rename },			/* 134 = sys_rename */
+	    sys_rename },			/* 134 = rename */
 	{ 2, s(struct svr4_sys_uname_args),
-	    svr4_sys_uname },			/* 135 = svr4_sys_uname */
+	    svr4_sys_uname },			/* 135 = uname */
 	{ 1, s(struct sys_setegid_args),
-	    sys_setegid },			/* 136 = sys_setegid */
+	    sys_setegid },			/* 136 = setegid */
 	{ 1, s(struct svr4_sys_sysconfig_args),
-	    svr4_sys_sysconfig },		/* 137 = svr4_sys_sysconfig */
+	    svr4_sys_sysconfig },		/* 137 = sysconfig */
 	{ 2, s(struct sys_adjtime_args),
-	    sys_adjtime },			/* 138 = sys_adjtime */
+	    sys_adjtime },			/* 138 = adjtime */
 	{ 3, s(struct svr4_sys_systeminfo_args),
-	    svr4_sys_systeminfo },		/* 139 = svr4_sys_systeminfo */
+	    svr4_sys_systeminfo },		/* 139 = systeminfo */
 	{ 0, 0,
-	    nosys },				/* 140 = unimplemented */
+	    sys_nosys },			/* 140 = unimplemented */
 	{ 1, s(struct sys_seteuid_args),
-	    sys_seteuid },			/* 141 = sys_seteuid */
+	    sys_seteuid },			/* 141 = seteuid */
 	{ 0, 0,
-	    nosys },				/* 142 = unimplemented vtrace */
+	    sys_nosys },			/* 142 = unimplemented vtrace */
 	{ 0, 0,
-	    nosys },				/* 143 = unimplemented fork1 */
+	    sys_nosys },			/* 143 = unimplemented fork1 */
 	{ 0, 0,
-	    nosys },				/* 144 = unimplemented sigwait */
+	    sys_nosys },			/* 144 = unimplemented sigwait */
 	{ 0, 0,
-	    nosys },				/* 145 = unimplemented lwp_info */
+	    sys_nosys },			/* 145 = unimplemented lwp_info */
 	{ 0, 0,
-	    nosys },				/* 146 = unimplemented yield */
+	    sys_nosys },			/* 146 = unimplemented yield */
 	{ 0, 0,
-	    nosys },				/* 147 = unimplemented lwp_sema_p */
+	    sys_nosys },			/* 147 = unimplemented lwp_sema_p */
 	{ 0, 0,
-	    nosys },				/* 148 = unimplemented lwp_sema_v */
+	    sys_nosys },			/* 148 = unimplemented lwp_sema_v */
 	{ 0, 0,
-	    nosys },				/* 149 = unimplemented */
+	    sys_nosys },			/* 149 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 150 = unimplemented */
+	    sys_nosys },			/* 150 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 151 = unimplemented */
+	    sys_nosys },			/* 151 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 152 = unimplemented modctl */
+	    sys_nosys },			/* 152 = unimplemented modctl */
 	{ 1, s(struct svr4_sys_fchroot_args),
-	    svr4_sys_fchroot },			/* 153 = svr4_sys_fchroot */
+	    svr4_sys_fchroot },			/* 153 = fchroot */
 	{ 0, 0,
-	    nosys },				/* 154 = unimplemented utimes */
+	    sys_nosys },			/* 154 = unimplemented utimes */
 	{ 0, 0,
-	    svr4_sys_vhangup },			/* 155 = svr4_sys_vhangup */
+	    svr4_sys_vhangup },			/* 155 = vhangup */
 	{ 1, s(struct svr4_sys_gettimeofday_args),
-	    svr4_sys_gettimeofday },		/* 156 = svr4_sys_gettimeofday */
+	    svr4_sys_gettimeofday },		/* 156 = gettimeofday */
 	{ 2, s(struct sys_getitimer_args),
-	    sys_getitimer },			/* 157 = sys_getitimer */
+	    sys_getitimer },			/* 157 = getitimer */
 	{ 3, s(struct sys_setitimer_args),
-	    sys_setitimer },			/* 158 = sys_setitimer */
+	    sys_setitimer },			/* 158 = setitimer */
 	{ 0, 0,
-	    nosys },				/* 159 = unimplemented lwp_create */
+	    sys_nosys },			/* 159 = unimplemented lwp_create */
 	{ 0, 0,
-	    nosys },				/* 160 = unimplemented lwp_exit */
+	    sys_nosys },			/* 160 = unimplemented lwp_exit */
 	{ 0, 0,
-	    nosys },				/* 161 = unimplemented lwp_suspend */
+	    sys_nosys },			/* 161 = unimplemented lwp_suspend */
 	{ 0, 0,
-	    nosys },				/* 162 = unimplemented lwp_continue */
+	    sys_nosys },			/* 162 = unimplemented lwp_continue */
 	{ 0, 0,
-	    nosys },				/* 163 = unimplemented lwp_kill */
+	    sys_nosys },			/* 163 = unimplemented lwp_kill */
 	{ 0, 0,
-	    nosys },				/* 164 = unimplemented lwp_self */
+	    sys_nosys },			/* 164 = unimplemented lwp_self */
 	{ 0, 0,
-	    nosys },				/* 165 = unimplemented lwp_getprivate */
+	    sys_nosys },			/* 165 = unimplemented lwp_getprivate */
 	{ 0, 0,
-	    nosys },				/* 166 = unimplemented lwp_setprivate */
+	    sys_nosys },			/* 166 = unimplemented lwp_setprivate */
 	{ 0, 0,
-	    nosys },				/* 167 = unimplemented lwp_wait */
+	    sys_nosys },			/* 167 = unimplemented lwp_wait */
 	{ 0, 0,
-	    nosys },				/* 168 = unimplemented lwp_mutex_unlock */
+	    sys_nosys },			/* 168 = unimplemented lwp_mutex_unlock */
 	{ 0, 0,
-	    nosys },				/* 169 = unimplemented lwp_mutex_lock */
+	    sys_nosys },			/* 169 = unimplemented lwp_mutex_lock */
 	{ 0, 0,
-	    nosys },				/* 170 = unimplemented lwp_cond_wait */
+	    sys_nosys },			/* 170 = unimplemented lwp_cond_wait */
 	{ 0, 0,
-	    nosys },				/* 171 = unimplemented lwp_cond_signal */
+	    sys_nosys },			/* 171 = unimplemented lwp_cond_signal */
 	{ 0, 0,
-	    nosys },				/* 172 = unimplemented lwp_cond_broadcast */
+	    sys_nosys },			/* 172 = unimplemented lwp_cond_broadcast */
 	{ 0, 0,
-	    nosys },				/* 173 = unimplemented pread */
+	    sys_nosys },			/* 173 = unimplemented pread */
 	{ 0, 0,
-	    nosys },				/* 174 = unimplemented pwrite */
+	    sys_nosys },			/* 174 = unimplemented pwrite */
 	{ 0, 0,
-	    nosys },				/* 175 = unimplemented llseek */
+	    sys_nosys },			/* 175 = unimplemented llseek */
 	{ 0, 0,
-	    nosys },				/* 176 = unimplemented inst_sync */
+	    sys_nosys },			/* 176 = unimplemented inst_sync */
 	{ 0, 0,
-	    nosys },				/* 177 = unimplemented */
+	    sys_nosys },			/* 177 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 178 = unimplemented */
+	    sys_nosys },			/* 178 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 179 = unimplemented */
+	    sys_nosys },			/* 179 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 180 = unimplemented */
+	    sys_nosys },			/* 180 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 181 = unimplemented */
+	    sys_nosys },			/* 181 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 182 = unimplemented */
+	    sys_nosys },			/* 182 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 183 = unimplemented */
+	    sys_nosys },			/* 183 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 184 = unimplemented */
+	    sys_nosys },			/* 184 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 185 = unimplemented */
+	    sys_nosys },			/* 185 = unimplemented */
 	{ 0, 0,
-	    nosys },				/* 186 = unimplemented auditsys */
+	    sys_nosys },			/* 186 = unimplemented auditsys */
 };
 
