@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.8 2001/05/27 05:29:48 gmcgarry Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.9 2002/02/11 11:19:28 wiz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,7 +188,7 @@ struct rd_describe {
  * This makes it rather difficult to break them into 512 and 1024 byte blocks.
  * So...we just do like HPUX and don't bother to respect hardware track/head
  * boundries -- we just mold the disk so that we use the entire capacity.
- * HPUX also sometimes doen't abide by cylinder boundries, we attempt to
+ * HPUX also sometimes doesn't abide by cylinder boundries, we attempt to
  * whenever possible.
  *
  * DISK		REAL (256 BPS)		HPUX (1024 BPS)		BSD (512 BPS)

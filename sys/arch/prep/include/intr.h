@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2002/02/11 10:57:58 wiz Exp $	*/
+/*	$NetBSD: intr.h,v 1.14 2002/02/11 11:19:29 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ extern vaddr_t prep_intr_reg;
 /*
  *  Reorder protection in the following inline functions is
  * achieved with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
+ * seems to detect and then doesn't move instructions past....
  */
 static __inline int
 splraise(int newcpl)

@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.56 2001/11/15 09:48:06 lukem Exp $	*/
+/*	$NetBSD: midway.c,v 1.57 2002/02/11 11:19:29 wiz Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -63,12 +63,12 @@
  *	  the CAIRN project written by Suresh Bhogavilli (suresh@isi.edu).
  *
  *    code cleanup:
- *	- remove WMAYBE related code.  ENI WMAYBE DMA doen't work.
+ *	- remove WMAYBE related code.  ENI WMAYBE DMA doesn't work.
  *	- remove updating if_lastchange for every packet.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.56 2001/11/15 09:48:06 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.57 2002/02/11 11:19:29 wiz Exp $");
 
 #undef	EN_DEBUG
 #undef	EN_DEBUG_RANGE		/* check ranges on en_read/en_write's? */

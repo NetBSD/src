@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.22 2002/01/31 19:27:53 tv Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.22 2002/01/31 19:27:53 tv Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.23 2002/02/11 11:19:26 wiz Exp $");
 #endif
 #endif /* not lint */
 
@@ -629,7 +629,7 @@ chk_path( char *name, uid_t st_uid, gid_t st_gid)
 			(void)set_ids(name, st_uid, st_gid);
 
 		/*
-		 * make sure the user doen't have some strange umask that
+		 * make sure the user doesn't have some strange umask that
 		 * causes this newly created directory to be unusable. We fix
 		 * the modes and restore them back to the creation default at
 		 * the end of pax
