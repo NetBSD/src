@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.74 2001/04/05 02:27:33 mjacob Exp $ */
+/* $NetBSD: isp.c,v 1.75 2001/04/10 21:51:21 mjacob Exp $ */
 /*
  * This driver, which is contained in NetBSD in the files:
  *
@@ -2977,6 +2977,7 @@ isp_intr(void *arg)
 		isp_prt(isp, ISP_LOGDEBUG2,
 		    "bogus intr- isr %x (%x) iptr %x optr %x",
 		    isr, junk, iptr, optr);
+		isp->isp_intbogus++;
 	}
 
 	while (optr != iptr) {
