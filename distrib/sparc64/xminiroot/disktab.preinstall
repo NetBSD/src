@@ -1,4 +1,4 @@
-#	$NetBSD: disktab.preinstall,v 1.1 2000/08/10 14:38:53 mrg Exp $
+#	$NetBSD: disktab.preinstall,v 1.1 2001/01/07 09:30:20 mrg Exp $
 #
 # Disk geometry and partition layout tables. 
 # Key:
