@@ -1,7 +1,5 @@
-/*	$NetBSD: amq.h,v 1.1.1.2 2000/11/19 23:42:57 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amq.h,v 1.14 2000/02/24 22:57:10 ezk Exp
+ * $Id: amq.h,v 1.1.1.3 2001/05/13 17:34:30 veego Exp $
  *
  */
 

@@ -1,7 +1,5 @@
-/*	$NetBSD: amd.h,v 1.1.1.2 2000/11/19 23:43:48 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amd.h,v 1.8 2000/02/16 13:52:56 ezk Exp
+ * $Id: amd.h,v 1.1.1.3 2001/05/13 17:34:20 veego Exp $
  *
  */
 
@@ -55,7 +53,7 @@
 /* options for amd.conf */
 #define CFM_BROWSABLE_DIRS		0x0001
 #define CFM_MOUNT_TYPE_AUTOFS		0x0002
-#define CFM_ENABLE_DEFAULT_SELECTORS	0x0004
+#define CFM_SELECTORS_IN_DEFAULTS	0x0004
 #define CFM_NORMALIZE_HOSTNAMES		0x0008
 #define CFM_PROCESS_LOCK		0x0010
 #define CFM_PRINT_PID			0x0020
@@ -231,7 +229,7 @@ extern voidp amqproc_umnt_1_svc(voidp argp, struct svc_req *rqstp);
 
 /* other external definitions */
 extern am_nfs_fh *root_fh(char *dir);
-extern am_node * autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
+extern am_node *autofs_lookuppn(am_node *mp, char *fname, int *error_return, int op);
 extern am_node *find_ap(char *);
 extern am_node *find_ap2(char *, am_node *);
 extern bool_t xdr_amq_mount_info_qelem(XDR *xdrs, qelem *qhead);

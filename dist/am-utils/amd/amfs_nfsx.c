@@ -1,7 +1,5 @@
-/*	$NetBSD: amfs_nfsx.c,v 1.1.1.2 2000/11/19 23:43:35 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_nfsx.c,v 1.3 2000/01/12 16:44:15 ezk Exp
+ * $Id: amfs_nfsx.c,v 1.1.1.3 2001/05/13 17:34:06 veego Exp $
  *
  */
 
@@ -151,7 +149,7 @@ amfs_nfsx_match(am_opts *fo)
    */
   xmtab = str3cat((char *) 0, fo->opt_rhost, ":", fo->opt_rfs);
 #ifdef DEBUG
-  dlog("NFS: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
+  dlog("NFSX: mounting remote server \"%s\", remote fs \"%s\" on \"%s\"",
        fo->opt_rhost, fo->opt_rfs, fo->opt_fs);
 #endif /* DEBUG */
 

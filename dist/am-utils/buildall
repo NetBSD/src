@@ -212,7 +212,7 @@ Usage: buildall [-b] [-[cCdD][s]] [-K] [-q] [-h] [-- makeopts]
      -D:  configure in /usr/local/AMD (strict compile, debugging)
      -Ds: configure in /usr/local/AMD (strict compile, debugging, shared libs)
      -K: run mkconf to update *.in files (developers only)
-     -q: quick configure only (run config.guess)
+     -q: quick configure only (run config.status)
      -h: print usage
      makeopts: options to pass to make (must be last and after a --)
 You may pass variables: CFLAGS for build, MAKE for your make program

@@ -1,7 +1,5 @@
-/*	$NetBSD: rpc_fwd.c,v 1.1.1.2 2000/11/19 23:43:42 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1989 Jan-Simon Pendry
  * Copyright (c) 1989 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1989 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: rpc_fwd.c,v 1.3 2000/01/12 16:44:26 ezk Exp
+ * $Id: rpc_fwd.c,v 1.1.1.3 2001/05/13 17:34:11 veego Exp $
  *
  */
 
@@ -189,7 +187,7 @@ fwd_init(void)
    * Some things we talk to require a priv port - so make one here
    */
   if (bind_resv_port(fwd_sock, (u_short *) 0) < 0)
-    plog(XLOG_ERROR, "can't bind privileged port");
+    plog(XLOG_ERROR, "can't bind privileged port (rpc_fwd)");
 
   if (fcntl(fwd_sock, F_SETFL, FNDELAY) < 0
 #ifdef FIONBIO

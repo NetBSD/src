@@ -1,6 +1,6 @@
 # -*- text -*-
 
-			  AM-UTILS-6.0 MIRRORS
+			  AM-UTILS-6.x MIRRORS
 
 Note: in case of any problems accessing the individual FTP sites, please
 contact their respective maintainers.  If you wish to be added to the
@@ -21,6 +21,9 @@ U.S.A:
 	Ohio (Kent State University):
 		ftp://info.mcs.kent.edu/pub/am-utils
 		Maintainer: root@mcs.kent.edu
+	Florida (University of Florida)
+		ftp://ftp.cise.ufl.edu/pub/am-utils
+		Maintainer: mirror@cise.ufl.edu
 
 Europe:
 	Germany:

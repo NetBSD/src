@@ -1,7 +1,5 @@
-/*	$NetBSD: xdr_func.c,v 1.1.1.2 2000/11/19 23:43:23 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: xdr_func.c,v 1.4 2000/02/11 02:09:54 ezk Exp
+ * $Id: xdr_func.c,v 1.1.1.3 2001/05/13 17:34:24 veego Exp $
  *
  */
 
@@ -52,6 +50,7 @@
 #endif /* HAVE_CONFIG_H */
 #include <am_defs.h>
 #include <amu.h>
+
 
 /*
  * MACROS:
@@ -261,11 +260,7 @@ xdr_exportnode(XDR *xdrs, exportnode *objp)
   if (!xdr_dirpath(xdrs, &objp->ex_dir)) {
     return (FALSE);
   }
-  /*
-   * This cast to (groups) is needed for Irix6.  If you change it, it
-   * may produce a warning/error on other systems.
-   */
-  if (!xdr_groups(xdrs, (groups) &objp->ex_groups)) {
+  if (!xdr_groups(xdrs, &objp->ex_groups)) {
     return (FALSE);
   }
   if (!xdr_exports(xdrs, &objp->ex_next)) {
@@ -432,11 +427,7 @@ xdr_groupnode(XDR *xdrs, groupnode *objp)
   if (!xdr_name(xdrs, &objp->gr_name)) {
     return (FALSE);
   }
-  /*
-   * This cast to (groups) is needed for Irix6.  If you change it, it
-   * may produce a warning/error on other systems.
-   */
-  if (!xdr_groups(xdrs, (groups) &objp->gr_next)) {
+  if (!xdr_groups(xdrs, &objp->gr_next)) {
     return (FALSE);
   }
   return (TRUE);
@@ -446,7 +437,7 @@ xdr_groupnode(XDR *xdrs, groupnode *objp)
 
 #ifndef HAVE_XDR_GROUPS
 bool_t
-xdr_groups(XDR *xdrs, groups objp)
+xdr_groups(XDR *xdrs, groups *objp)
 {
 #ifdef DEBUG
   amuDebug(D_XDRTRACE)

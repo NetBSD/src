@@ -1,5 +1,3 @@
-/*	$NetBSD: acconfig.h,v 1.1.1.1 2000/11/19 23:42:08 wiz Exp $	*/
-
 /*
  * Start of am-utils-6.x config.h file.
  * Erez Zadok <ezk@cs.columbia.edu>
@@ -430,6 +428,9 @@
 /* Mount Table option string: max groups */
 #undef MNTTAB_OPT_MAXGROUPS
 
+/* Mount Table option string: support property lists (ACLs) */
+#undef MNTTAB_OPT_PROPLIST
+
 /*
  * Generic mount(2) options (hex numbers)
  */
@@ -439,6 +440,9 @@
 
 /* automounter filesystem (ignore) flag, used in bsdi-4.1 */
 #undef MNT2_GEN_OPT_AUTOMNTFS
+
+/* directory hardlink */
+#undef MNT2_GEN_OPT_BIND
 
 /* cache (what?) */
 #undef MNT2_GEN_OPT_CACHE
@@ -470,13 +474,13 @@
 /* nocache (what?) */
 #undef MNT2_GEN_OPT_NOCACHE
 
-/* not a device */
+/* do not interpret special device files */
 #undef MNT2_GEN_OPT_NODEV
 
 /* no exec calls allowed */
 #undef MNT2_GEN_OPT_NOEXEC
 
-/* not a device  */
+/* do not interpret special device files */
 #undef MNT2_GEN_OPT_NONDEV
 
 /* Disallow mounts beneath this mount */
@@ -618,6 +622,9 @@
 /* Get lease for lookup */
 #undef MNT2_NFS_OPT_NQLOOKLEASE
 
+/* Don't use locking */
+#undef MNT2_NFS_OPT_NONLM
+
 /* Use Nqnfs protocol */
 #undef MNT2_NFS_OPT_NQNFS
 
@@ -630,8 +637,17 @@
 /* Do lookup with readdir (nqnfs) */
 #undef MNT2_NFS_OPT_RDIRALOOK
 
+/* allow property list operations (ACLs over NFS) */
+#undef MNT2_NFS_OPT_PROPLIST
+
+/* Use Readdirplus for NFSv3 */
+#undef MNT2_NFS_OPTS_RDIRPLUS
+
 /* set read ahead */
 #undef MNT2_NFS_OPT_READAHEAD
+
+/* Set readdir size */
+#undef MNT2_NFS_OPT_READDIRSIZE
 
 /* Allocate a reserved port */
 #undef MNT2_NFS_OPT_RESVPORT
@@ -689,6 +705,9 @@
 
 /* paging threshold */
 #undef MNT2_NFS_OPT_PGTHRESH
+
+/* 32<->64 dir cookie translation */
+#undef MNT2_NFS_OPT_XLATECOOKIE
 
 /*
  * CDFS-specific mount(2) options (hex numbers)
@@ -849,9 +868,6 @@
 
 /* Turn off memory debugging by default */
 #undef DEBUG_MEM
-
-/* Enable "amq -M" remote mount code (insecure due to IP spoofing) */
-#undef ENABLE_AMQ_MOUNT
 
 /* Define package name (must be defined by configure.in) */
 #undef PACKAGE

@@ -1,7 +1,5 @@
-/*	$NetBSD: nfs_prot_aix4_2.h,v 1.1.1.2 2000/11/19 23:43:02 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_aix4_2.h,v 1.4 2000/01/12 16:44:45 ezk Exp
+ * $Id: nfs_prot_aix4_2.h,v 1.1.1.3 2001/05/13 17:33:46 veego Exp $
  *
  */
 
@@ -310,6 +308,6 @@ typedef struct nfs_fh3 nfs_fh3;
 /*
  * EXTERNALS:
  */
-extern bool_t xdr_groups(XDR *xdrs, groups objp);
+extern bool_t xdr_groups(XDR *xdrs, groups *objp);
 
 #endif /* not _AMU_NFS_PROT_H */

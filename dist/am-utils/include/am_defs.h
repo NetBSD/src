@@ -1,7 +1,5 @@
-/*	$NetBSD: am_defs.h,v 1.1.1.2 2000/11/19 23:43:01 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: am_defs.h,v 1.15.2.3 2000/05/26 23:40:50 ionut Exp
+ * $Id: am_defs.h,v 1.1.1.3 2001/05/13 17:34:02 veego Exp $
  *
  */
 
@@ -460,32 +458,29 @@ struct ypall_callback;
  * NFS and other definitions included.
  */
 # ifndef NFSCLIENT
-#  define NFSCLIENT
+#  define NFSCLIENT 1
 # endif /* not NFSCLIENT */
 # ifndef NFS
-#  define NFS
+#  define NFS 1
 # endif /* not NFS */
 # ifndef PCFS
-#  define PCFS
+#  define PCFS 1
 # endif /* not PCFS */
 # ifndef LOFS
-#  define LOFS
+#  define LOFS 1
 # endif /* not LOFS */
 # ifndef RFS
-#  define RFS
+#  define RFS 1
 # endif /* not RFS */
 # ifndef MSDOSFS
-#  define MSDOSFS
+#  define MSDOSFS 1
 # endif /* not MSDOSFS */
 # ifndef MFS
-#  define MFS
+#  define MFS 1
 # endif /* not MFS */
 # ifndef CD9660
-#  define CD9660
+#  define CD9660 1
 # endif /* not CD9660 */
-# ifndef NFS
-#  define NFS
-# endif /* not NFS */
 # include <sys/mount.h>
 #endif /* HAVE_SYS_MOUNT_H */
 
@@ -495,8 +490,10 @@ struct ypall_callback;
 
 /*
  * Actions to take if <linux/fs.h> exists.
+ * There is no point in including this on a glibc2 system,
+ * we're only asking for trouble
  */
-#ifdef HAVE_LINUX_FS_H
+#if defined HAVE_LINUX_FS_H && (!defined __GLIBC__ || __GLIBC__ < 2)
 /*
  * There are various conflicts in definitions between RedHat Linux, newer
  * 2.2 kernels, and <netinet/in.h> and <linux/fs.h>.
@@ -576,7 +573,7 @@ struct ypall_callback;
 #  undef __KERNEL__
 # endif /* HAVE_LINUX_LIST_H */
 # include <linux/fs.h>
-#endif /* HAVE_LINUX_FS_H */
+#endif /* HAVE_LINUX_FS_H && (!__GLIBC__ || __GLIBC__ < 2) */
 
 #ifdef HAVE_CDFS_CDFS_MOUNT_H
 # include <cdfs/cdfs_mount.h>
@@ -588,7 +585,11 @@ struct ypall_callback;
 
 /*
  * Actions to take if <linux/auto_fs.h> exists.
+ * We really don't want <linux/fs.h> pulled in here
  */
+#ifndef _LINUX_FS_H
+#define _LINUX_FS_H
+#endif /* _LINUX_FS_H */
 #ifdef HAVE_LINUX_AUTO_FS_H
 # include <linux/auto_fs.h>
 #endif /* HAVE_LINUX_AUTO_FS_H */
@@ -602,7 +603,11 @@ struct ypall_callback;
 
 /*
  * Actions to take if <sys/fs/autofs_prot.h> exists.
+ * We really don't want <linux/fs.h> pulled in here
  */
+#ifndef _LINUX_FS_H
+#define _LINUX_FS_H
+#endif /* _LINUX_FS_H */
 #ifdef HAVE_SYS_FS_AUTOFS_PROT_H
 # include <sys/fs/autofs_prot.h>
 #endif /* HAVE_SYS_FS_AUTOFS_PROT_H */
@@ -666,6 +671,7 @@ struct ypall_callback;
 #ifdef HAVE_LINUX_NFS_MOUNT_H
 # define _LINUX_NFS_H
 # define _LINUX_NFS2_H
+# define _LINUX_NFS3_H
 # define _LINUX_NFS_FS_H
 # define _LINUX_IN_H
 # include <linux/nfs_mount.h>
@@ -1295,7 +1301,7 @@ typedef struct _am_mntent {
  */
 
 #ifndef HAVE_EXTERN_SYS_ERRLIST
-extern const char * const sys_errlist[];
+extern const char *const sys_errlist[];
 #endif /* not HAVE_EXTERN_SYS_ERRLIST */
 
 #ifndef HAVE_EXTERN_OPTARG

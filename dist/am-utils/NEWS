@@ -1,5 +1,67 @@
 # -*- text -*-
 
+*** Notes specific to am-utils version 6.0.6:
+
+- new ports:
+	Apple OS X support (Darwin, Rhapsody)
+
+- reworked autoconf scripts so that newer versions of known OSs will default
+  their configuration to the last known version (better chance that it will
+  pass autoconf and work).
+
+- linux support for lofs and "bind" mounts, so type:=lofs can work (whether
+  you're using autofs or not)
+
+- renamed amd.conf option "selectors_on_default" to "selectors_in_defaults"
+  (on -> in, and added "s").  Old name remains in place for compatibility.
+
+- lots of cleanups of debugging and logging messages
+
+- Bugs fixed:
+	lots of Linux-related ones, so it compiles for recent kernels
+	better checking on various mount options of the form foo=N or foo=STR
+	fixed NFS errno mapping bug which mapped ENOENT to success
+
+*** Notes specific to am-utils version 6.0.5:
+
+- Minor ports:
+	alphaev6-dec-osf5.1
+	i386-unknown-freebsd4.2
+	support for Linux 2.4 kernels and newer GLIBC versions
+	cleanup of AIX and IRIX6 ports
+
+- Support new mount options:
+	proplist (ACLs over NFS, DU-4.0)
+	kerb, rdirplus, readdirsize, and xlatecookie (NetBSD-1.5K+)
+	nonlm, lock, nolock (Linux)
+
+- Don't force rsize/wsize on Linux 2.2.18+ and 2.4.x.  Improves performance
+  a lot.
+
+- Lots of documentation updates: texinfo, man pages, scripts, and more.
+
+- LDAP: included proposed Schema and Internet Draft for LDAP Schema.  See
+  README.ldap for more information.
+
+- Removed all remains of the dangerous amq -M code.
+
+- Major bug fix: initialize NFS fileid field correctly, to avoid cache
+  aliasing problems, esp. on Linux.
+
+- Major Linux bug fix: map errnos to NFS errors (mistakenly turned off a
+  while back).  Also support unused errno 41.
+
+- Other bugs fixes:
+	default MAXHOSTNAMELEN (if undefined) is 256, not 64
+	truncate hostnames to MAXHOSTNAMELEN (security fix)
+	alignment problem in getwire() on ALPHA
+	other buf overflow problems (security fixes)
+	ctl-amd supports "condrestart" (Red Hat)
+	bell char is \g not \a
+	lostaltmail verify MAILDIR is defined
+	am-eject accepts "floppy" and "cdrom" as args
+	other assorted small bug fixes
+
 *** Notes specific to am-utils version 6.0.4:
 
 - NFSv3 support for Linux and HPUX-11

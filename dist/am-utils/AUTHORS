@@ -299,3 +299,15 @@ December 9, 1999: detect all wire() interfaces correctly.
 
 * Steven Danz <sdanz@awc.kc.noaa.gov>
 January 25, 2000: allow browsable auto maps.
+
+* Wolfram Klaus	<klaus@physik.fu-berlin.de>.
+November 21, 2000: recognize proplist mnttab flag.
+
+* Thomas Klausner <wiz@danbala.ifoer.tuwien.ac.at>
+November 21, 2000: lots of NetBSD fixes (many of which are generic).
+
+* Olaf Kirch <okir@caldera.de>
+February 1, 2001: important Linux NFS error number mapping fixed
+
+* Ahmon Dancy <dancy@franz.com>
+February 9, 2001: Apple Rhapsody/Darwin/OS X port

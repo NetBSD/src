@@ -1,7 +1,5 @@
-/*	$NetBSD: nfs_prot_irix6.h,v 1.1.1.2 2000/11/19 23:43:03 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: nfs_prot_irix6.h,v 1.4 2000/01/12 16:44:48 ezk Exp
+ * $Id: nfs_prot_irix6.h,v 1.1.1.3 2001/05/13 17:33:49 veego Exp $
  *
  */
 
@@ -62,10 +60,13 @@
 #ifdef HAVE_SYS_FS_NFS_H
 # include <sys/fs/nfs.h>
 #endif /* HAVE_SYS_FS_NFS_H */
-#ifdef HAVE_RPCSVC_MOUNT_H
+
+#ifdef HAVE_RPCSVC_MOUNT_H_off
 # include <rpcsvc/mount.h>
 #endif /* HAVE_RPCSVC_MOUNT_H */
 
+/* evil: don't include */
+#undef HAVE_RPCSVC_MOUNT_H
 
 /*
  * MACROS
@@ -79,6 +80,18 @@
 #define NFS_COOKIESIZE 4
 #define	MNTPATHLEN 1024
 #define	MNTNAMLEN 255
+#define FHSIZE 32
+
+#define MOUNTPROG 100005
+#define MOUNTPROC_MNT 1
+#define MOUNTPROC_DUMP 2
+#define MOUNTPROC_UMNT 3
+#define MOUNTPROC_UMNTALL 4
+#define MOUNTPROC_EXPORT 5
+#define MOUNTPROC_EXPORTALL 6
+#define MOUNTVERS_ORIG 1
+#define MOUNTVERS 1
+#define MOUNTVERS3      3
 
 #define NFSMODE_FMT 0170000
 #define NFSMODE_DIR 0040000
@@ -184,24 +197,24 @@ typedef struct writeargs nfswriteargs;
  * EXTERNALS:
  */
 
-extern void * nfsproc_null_2_svc(void *, struct svc_req *);
-extern nfsattrstat * nfsproc_getattr_2_svc(nfs_fh *, struct svc_req *);
-extern nfsattrstat * nfsproc_setattr_2_svc(nfssattrargs *, struct svc_req *);
-extern void * nfsproc_root_2_svc(void *, struct svc_req *);
-extern nfsdiropres * nfsproc_lookup_2_svc(nfsdiropargs *, struct svc_req *);
-extern nfsreadlinkres * nfsproc_readlink_2_svc(nfs_fh *, struct svc_req *);
-extern nfsreadres * nfsproc_read_2_svc(nfsreadargs *, struct svc_req *);
-extern void * nfsproc_writecache_2_svc(void *, struct svc_req *);
-extern nfsattrstat * nfsproc_write_2_svc(nfswriteargs *, struct svc_req *);
-extern nfsdiropres * nfsproc_create_2_svc(nfscreateargs *, struct svc_req *);
-extern nfsstat * nfsproc_remove_2_svc(nfsdiropargs *, struct svc_req *);
-extern nfsstat * nfsproc_rename_2_svc(nfsrenameargs *, struct svc_req *);
-extern nfsstat * nfsproc_link_2_svc(nfslinkargs *, struct svc_req *);
-extern nfsstat * nfsproc_symlink_2_svc(nfssymlinkargs *, struct svc_req *);
-extern nfsdiropres * nfsproc_mkdir_2_svc(nfscreateargs *, struct svc_req *);
-extern nfsstat * nfsproc_rmdir_2_svc(nfsdiropargs *, struct svc_req *);
-extern nfsreaddirres * nfsproc_readdir_2_svc(nfsreaddirargs *, struct svc_req *);
-extern nfsstatfsres * nfsproc_statfs_2_svc(nfs_fh *, struct svc_req *);
+extern void *nfsproc_null_2_svc(void *, struct svc_req *);
+extern nfsattrstat *nfsproc_getattr_2_svc(nfs_fh *, struct svc_req *);
+extern nfsattrstat *nfsproc_setattr_2_svc(nfssattrargs *, struct svc_req *);
+extern void *nfsproc_root_2_svc(void *, struct svc_req *);
+extern nfsdiropres *nfsproc_lookup_2_svc(nfsdiropargs *, struct svc_req *);
+extern nfsreadlinkres *nfsproc_readlink_2_svc(nfs_fh *, struct svc_req *);
+extern nfsreadres *nfsproc_read_2_svc(nfsreadargs *, struct svc_req *);
+extern void *nfsproc_writecache_2_svc(void *, struct svc_req *);
+extern nfsattrstat *nfsproc_write_2_svc(nfswriteargs *, struct svc_req *);
+extern nfsdiropres *nfsproc_create_2_svc(nfscreateargs *, struct svc_req *);
+extern nfsstat *nfsproc_remove_2_svc(nfsdiropargs *, struct svc_req *);
+extern nfsstat *nfsproc_rename_2_svc(nfsrenameargs *, struct svc_req *);
+extern nfsstat *nfsproc_link_2_svc(nfslinkargs *, struct svc_req *);
+extern nfsstat *nfsproc_symlink_2_svc(nfssymlinkargs *, struct svc_req *);
+extern nfsdiropres *nfsproc_mkdir_2_svc(nfscreateargs *, struct svc_req *);
+extern nfsstat *nfsproc_rmdir_2_svc(nfsdiropargs *, struct svc_req *);
+extern nfsreaddirres *nfsproc_readdir_2_svc(nfsreaddirargs *, struct svc_req *);
+extern nfsstatfsres *nfsproc_statfs_2_svc(nfs_fh *, struct svc_req *);
 
 extern bool_t xdr_nfsstat(XDR *, nfsstat*);
 extern bool_t xdr_ftype(XDR *, nfsftype*);
@@ -232,6 +245,7 @@ extern bool_t xdr_dirlist(XDR *, nfsdirlist*);
 extern bool_t xdr_readdirres(XDR *, nfsreaddirres*);
 extern bool_t xdr_statfsokres(XDR *, nfsstatfsokres*);
 extern bool_t xdr_statfsres(XDR *, nfsstatfsres*);
+
 
 /*
  * STRUCTURES:
@@ -402,6 +416,88 @@ struct statfsres {
   } sfr_u;
 };
 
+
+/*
+ * Partial definitions from rpcsvc/mount.h (can't use that header
+ * because it includes other "bad" stuff wrt xdr_groups.
+ */
+
+struct mountlist {
+  char *ml_name;
+  char *ml_path;
+  struct mountlist *ml_nxt;
+};
+
+struct fhstatus {
+  int fhs_status;
+  fhandle_t fhs_fh;
+};
+
+typedef char fhandle[FHSIZE];
+
+typedef struct {
+  u_int fhandle3_len;
+  char *fhandle3_val;
+} fhandle3;
+
+enum mountstat3 {
+  MNT_OK = 0,
+  MNT3ERR_PERM = 1,
+  MNT3ERR_NOENT = 2,
+  MNT3ERR_IO = 5,
+  MNT3ERR_ACCES = 13,
+  MNT3ERR_NOTDIR = 20,
+  MNT3ERR_INVAL = 22,
+  MNT3ERR_NAMETOOLONG = 63,
+  MNT3ERR_NOTSUPP = 10004,
+  MNT3ERR_SERVERFAULT = 10006
+};
+typedef enum mountstat3 mountstat3;
+
+struct mountres3_ok {
+  fhandle3 fhandle;
+  struct {
+    u_int auth_flavors_len;
+    int *auth_flavors_val;
+  } auth_flavors;
+};
+typedef struct mountres3_ok mountres3_ok;
+
+struct mountres3 {
+  mountstat3 fhs_status;
+  union {
+    mountres3_ok mountinfo;
+  } mountres3_u;
+};
+typedef struct mountres3 mountres3;
+
+/*
+ * List of exported directories
+ * An export entry with ex_groups
+ * NULL indicates an entry which is exported to the world.
+ */
+struct exports {
+  dev_t ex_dev;			/* dev of directory */
+  char *ex_name;		/* name of directory */
+  struct groups *ex_groups;	/* groups allowed to mount this entry */
+  struct exports *ex_next;
+  short ex_rootmap;		/* id to map root requests to */
+  short ex_flags;		/* bits to mask off file mode */
+};
+
+struct groups {
+  char *g_name;
+  struct groups	*g_next;
+};
+
+extern bool_t xdr_groups(XDR *, groups *);
+extern bool_t xdr_exports(XDR *, struct exports **);
+extern bool_t xdr_mountres3_ok(XDR *, mountres3_ok *);
+extern bool_t xdr_mountres3(XDR *, mountres3 *);
+extern bool_t xdr_fhstatus(XDR *, struct fhstatus *);
+extern bool_t xdr_mountlist(XDR *, struct mountlist **);
+
+
 /*
  **************************************************************************
  * Irix 6's autofs is not ported or tested yet...
@@ -417,5 +513,6 @@ struct statfsres {
 #ifdef HAVE_FS_AUTOFS
 # undef HAVE_FS_AUTOFS
 #endif /* HAVE_FS_AUTOFS */
+
 
 #endif /* not _AMU_NFS_PROT_H */

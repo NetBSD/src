@@ -10,6 +10,7 @@ SYSTEM				AUTOCONF  COMPILE    RUN      SHLIB
 alpha-dec-osf2.1		ezk       ezk        ezk     !ezk
 alpha-dec-osf4.0		ezk       ezk        dsr[3]   ezk
 alpha-dec-osf4.0f		ezk       ezk        dsr[3]   ezk
+alpha-dec-osf5.1		ro        ro         ro       ro
 alphaev5-unknown-linux-gnu	ezk       ezk        finkel   ezk
 alphaev5-unknown-linux-gnu-rh5.2 ezk      ezk        ezk      ezk
 alphaev6-dec-osf5.0		ezk       ezk        dsr[3]   ezk
@@ -36,6 +37,7 @@ i386-unknown-freebsd2.2.6	ezk       ezk        ezk      ezk
 i386-unknown-freebsd2.2.7	ezk       ezk        ezk      ezk
 i386-unknown-freebsd2.2.8	ezk       ezk        ezk      ezk
 i386-unknown-freebsd3.0		ezk       ezk        ezk      ezk
+i386-unknown-freebsd4.2		ezk       ezk        ezk      ezk
 i386-unknown-freebsdelf3.0	ezk       ezk        ezk      ezk
 i386-unknown-freebsdelf3.1	ezk       ezk        ezk      ezk
 i386-unknown-freebsdelf3.2	ezk       ezk        ezk      ezk

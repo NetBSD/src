@@ -1,7 +1,5 @@
-/*	$NetBSD: ops_xfs.c,v 1.1.1.2 2000/11/19 23:43:47 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: ops_xfs.c,v 1.3 2000/01/12 16:44:25 ezk Exp
+ * $Id: ops_xfs.c,v 1.1.1.3 2001/05/13 17:34:19 veego Exp $
  *
  */
 
@@ -55,7 +53,7 @@
 #include <amd.h>
 
 /* forward declarations */
-static char * xfs_match(am_opts *fo);
+static char *xfs_match(am_opts *fo);
 static int xfs_fmount(mntfs *mf);
 static int xfs_fumount(mntfs *mf);
 

@@ -1,7 +1,5 @@
-/*	$NetBSD: amfs_host.c,v 1.1.1.2 2000/11/19 23:43:34 wiz Exp $	*/
-
 /*
- * Copyright (c) 1997-2000 Erez Zadok
+ * Copyright (c) 1997-2001 Erez Zadok
  * Copyright (c) 1990 Jan-Simon Pendry
  * Copyright (c) 1990 Imperial College of Science, Technology & Medicine
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +38,7 @@
  *
  *      %W% (Berkeley) %G%
  *
- * Id: amfs_host.c,v 1.4 2000/01/12 16:44:14 ezk Exp
+ * $Id: amfs_host.c,v 1.1.1.3 2001/05/13 17:34:05 veego Exp $
  *
  */
 
@@ -206,7 +204,7 @@ sortfun(const voidp x, const voidp y)
  * Get filehandle
  */
 static int
-fetch_fhandle(CLIENT * client, char *dir, am_nfs_handle_t *fhp, u_long nfs_version)
+fetch_fhandle(CLIENT *client, char *dir, am_nfs_handle_t *fhp, u_long nfs_version)
 {
   struct timeval tv;
   enum clnt_stat clnt_stat;
@@ -258,8 +256,7 @@ fetch_fhandle(CLIENT * client, char *dir, am_nfs_handle_t *fhp, u_long nfs_versi
 			  (SVC_IN_ARG_TYPE) &fhp->v2,
 			  tv);
     if (clnt_stat != RPC_SUCCESS) {
-      const char *msg = clnt_sperrno(clnt_stat);
-      plog(XLOG_ERROR, "mountd rpc failed: %s", msg);
+      plog(XLOG_ERROR, "mountd rpc failed: %s", clnt_sperrno(clnt_stat));
       return EIO;
     }
     /* Check status of filehandle */
@@ -405,7 +402,6 @@ amfs_host_fmount(mntfs *mf)
    * Figure out how many exports were returned
    */
   for (n_export = 0, ex = exlist; ex; ex = ex->ex_next) {
-    /* printf("export %s\n", ex->ex_dir); */
     n_export++;
   }
 

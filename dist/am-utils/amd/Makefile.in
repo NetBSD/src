@@ -320,16 +320,13 @@ distdir: $(DISTFILES)
 	@for file in $(DISTFILES); do \
 	  d=$(srcdir); \
 	  if test -d $$d/$$file; then \
-	    cp -pr $$/$$file $(distdir)/$$file; \
+	    cp -pr $$d/$$file $(distdir)/$$file; \
 	  else \
 	    test -f $(distdir)/$$file \
 	    || ln $$d/$$file $(distdir)/$$file 2> /dev/null \
 	    || cp -p $$d/$$file $(distdir)/$$file || :; \
 	  fi; \
 	done
-am_ops.o: am_ops.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
-	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
-	../include/am_compat.h ../include/am_xdr_func.h amd.h
 amd.o: amd.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h amd.h
@@ -385,6 +382,9 @@ amfs_union.o: amfs_union.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
+am_ops.o: am_ops.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
+	../include/am_compat.h ../include/am_xdr_func.h amd.h
 amq_subr.o: amq_subr.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
@@ -441,10 +441,10 @@ info_union.o: info_union.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
-map.o: map.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+mapc.o: mapc.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h amd.h
-mapc.o: mapc.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+map.o: map.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h amd.h
 mntfs.o: mntfs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
@@ -466,30 +466,21 @@ ops_autofs.o: ops_autofs.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
-ops_cachefs.o: ops_cachefs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
 ops_cdfs.o: ops_cdfs.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
-ops_lofs.o: ops_lofs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_nfs.o: ops_nfs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+ops_efs.o: ops_efs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
 	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
 	../include/am_compat.h ../include/am_xdr_func.h amd.h
 ops_nfs3.o: ops_nfs3.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
+ops_nfs.o: ops_nfs.c ../config.h ../include/am_defs.h ../amu_nfs_prot.h \
+	../include/am_utils.h ../include/amq_defs.h ../aux_conf.h \
+	../include/am_compat.h ../include/am_xdr_func.h amd.h
 ops_pcfs.o: ops_pcfs.c ../config.h ../include/am_defs.h \
-	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
-	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
-	amd.h
-ops_tmpfs.o: ops_tmpfs.c ../config.h ../include/am_defs.h \
 	../amu_nfs_prot.h ../include/am_utils.h ../include/amq_defs.h \
 	../aux_conf.h ../include/am_compat.h ../include/am_xdr_func.h \
 	amd.h
