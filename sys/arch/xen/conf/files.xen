@@ -1,6 +1,6 @@
-#	$NetBSD: files.xen,v 1.3 2004/03/25 15:26:35 wiz Exp $
+#	$NetBSD: files.xen,v 1.3.2.1 2004/05/22 15:59:02 he Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
-#	NetBSD: files.i386,v 1.249 2004/02/16 17:11:27 wiz Exp 
+#	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
 maxpartitions 8
 
@@ -28,7 +28,7 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	kern/subr_disk_mbr.c		disk
 file	arch/xen/i386/gdt.c
-file	arch/xen/i386/hypervisor.c
+file	arch/xen/i386/hypervisor_machdep.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
@@ -42,7 +42,7 @@ file	netns/ns_cksum.c		ns
 file	arch/xen/i386/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
-file	arch/i386/i386/sys_machdep.c
+file	arch/xen/i386/sys_machdep.c
 file	arch/i386/i386/syscall.c
 file	arch/xen/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
@@ -85,7 +85,7 @@ file	dev/md_root.c			memory_disk_hooks
 define  mainbus { [apid = -1] }
 
 file	arch/x86/x86/bus_dma.c
-file	arch/x86/x86/bus_space.c
+file	arch/xen/x86/bus_space.c
 file	arch/x86/x86/cacheinfo.c
 file	arch/xen/x86/consinit.c
 file	arch/xen/x86/intr.c
@@ -101,22 +101,29 @@ include	"arch/xen/conf/files.compat"
 
 device	mainbus: mainbus
 attach	mainbus at root
-file	arch/xen/i386/mainbus.c	mainbus
+file	arch/xen/i386/mainbus.c		mainbus
+
+# Xen hypervisor
+device	hypervisor { }
+attach	hypervisor at mainbus
+file	arch/xen/xen/hypervisor.c	hypervisor needs-flag
 
 # Numeric Processing Extension; Math Co-processor
 device	npx
 file	arch/xen/i386/npx.c		npx needs-flag
 
-attach	npx at mainbus with npx_hv
+attach	npx at hypervisor with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv
 
 # Xen console support
-device	xenc: tty
-attach	xenc at mainbus
-file	arch/xen/xen/console.c		xenc needs-flag
+device	xencons: tty
+attach	xencons at hypervisor
+file	arch/xen/xen/xencons.c		xencons needs-flag
 
-#include	"dev/wscons/files.wscons"
-#include	"dev/wsfont/files.wsfont"
+include	"dev/wscons/files.wscons"
+include	"dev/wsfont/files.wsfont"
+
+include	"dev/pckbport/files.pckbport"
 
 # CPUS
 
@@ -187,13 +194,38 @@ include	"compat/ossaudio/files.ossaudio"
 
 # Xen devices
 
+# Network driver
 device	xennet: arp, ether, ifnet
-attach	xennet at mainbus
+attach	xennet at hypervisor
 file	arch/xen/xen/if_xennet.c	xennet needs-flag
 
-#device	xd: XXXXdisk
-#attach	xd at mainbus
-#file	arch/xen/xen/disk.c		xd needs-flag
+# Block device driver and wd/sd/cd identities
+device	xbd: disk
+attach	xbd at hypervisor
+file	arch/xen/xen/xbd.c		xbd | wd | sd | cd needs-flag
 
+device	wd: disk
+attach	wd at hypervisor
+
+device	sd: disk
+attach	sd at hypervisor
+
+device	cd: disk
+attach	cd at hypervisor
+
+# Keyboard
+device	xenkbc: pckbport
+attach	xenkbc at hypervisor
+file	arch/xen/xen/xenkbc.c		xenkbc		needs-flag
+
+# Generic VGA
+attach	vga at hypervisor with vga_xen
+file	arch/xen/xen/vga_xen.c		vga_xen		needs-flag
+
+# Domain-0 operations
+defflag	opt_xen.h			DOM0OPS
+file	arch/xen/xen/machmem.c		dom0ops
+file	arch/xen/xen/privcmd.c		dom0ops
+file	arch/xen/xen/vfr.c		dom0ops
 
 include "arch/xen/conf/majors.i386"
