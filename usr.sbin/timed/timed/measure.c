@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)measure.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -138,7 +138,7 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 
 	(void)gettimeofday(&tdone, 0);
 	mstotvround(&tout, maxmsec);
-	timevaladd(&tdone, &tout);		/* when we give up */
+	timeradd(&tdone, &tout, &tdone);	/* when we give up */
 
 	mstotvround(&twait, wmsec);
 
@@ -168,14 +168,13 @@ measure(u_long maxmsec,			/* wait this many msec at most */
 			}
 			++oicp->icmp_seq;
 
-			ttrans = tcur;
-			timevaladd(&ttrans, &twait);
+			timeradd(&tcur, &twait, &ttrans);
 		} else {
 			ttrans = tdone;
 		}
 
 		while (rcvcount < trials) {
-			timevalsub(&tout, &ttrans, &tcur);
+			timersub(&ttrans, &tcur, &tout);
 			if (tout.tv_sec < 0)
 				tout.tv_sec = 0;
 
@@ -318,34 +317,3 @@ mstotvround(struct timeval *res, long x)
 		res->tv_sec--;
 	}
 }
-
-void
-timevaladd(struct timeval *tv1, struct timeval *tv2)
-{
-	tv1->tv_sec += tv2->tv_sec;
-	tv1->tv_usec += tv2->tv_usec;
-	if (tv1->tv_usec >= 1000000) {
-		tv1->tv_sec++;
-		tv1->tv_usec -= 1000000;
-	}
-	if (tv1->tv_usec < 0) {
-		tv1->tv_sec--;
-		tv1->tv_usec += 1000000;
-	}
-}
-
-void
-timevalsub(struct timeval *res, struct timeval *tv1, struct timeval *tv2)
-{
-	res->tv_sec = tv1->tv_sec - tv2->tv_sec;
-	res->tv_usec = tv1->tv_usec - tv2->tv_usec;
-	if (res->tv_usec >= 1000000) {
-		res->tv_sec++;
-		res->tv_usec -= 1000000;
-	}
-	if (res->tv_usec < 0) {
-		res->tv_sec--;
-		res->tv_usec += 1000000;
-	}
-}
-
