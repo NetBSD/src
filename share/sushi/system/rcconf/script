@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: script,v 1.4 2005/01/11 22:16:24 peter Exp $
+# $NetBSD: script,v 1.5 2005/01/18 18:12:55 peter Exp $
 
 BIGLIST=`grep -v ^# /usr/share/sushi/system/rcconf/form | \
     awk '{print $1}' | sed -e 's/.*\,\(.*\)/\1/'`
@@ -64,7 +64,7 @@ if [ $? -eq 0 ]; then
 	echo
 	cat $CONFFILE
 else
-	echo "Failed"
+	echo "Failed to write a new $CONFFILE"
 fi
 
 rm -f $BACKUP.new $BACKUP.old
