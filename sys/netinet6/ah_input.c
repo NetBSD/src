@@ -1,4 +1,4 @@
-/*	$NetBSD: ah_input.c,v 1.3 1999/07/03 21:30:17 thorpej Exp $	*/
+/*	$NetBSD: ah_input.c,v 1.4 1999/07/06 08:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -182,8 +182,8 @@ ah4_input(m, va_alist)
 
 	if ((ah->ah_len << 2) - sizoff != siz1) {
 		log(LOG_NOTICE, "sum length mismatch in IPv4 AH input "
-			"(%d should be %d): %s\n",
-			(ah->ah_len << 2) - sizoff, siz1,
+			"(%d should be %u): %s\n",
+			(ah->ah_len << 2) - sizoff, (unsigned int)siz1,
 			ipsec4_logpacketstr(ip, spi));
 		ipsecstat.in_inval++;
 		goto fail;
@@ -570,8 +570,8 @@ ah6_input(mp, offp, proto)
 
 	if ((ah->ah_len << 2) - sizoff != siz1) {
 		log(LOG_NOTICE, "sum length mismatch in IPv6 AH input "
-			"(%d should be %d): %s\n",
-			(ah->ah_len << 2) - sizoff, siz1,
+			"(%d should be %u): %s\n",
+			(ah->ah_len << 2) - sizoff, (unsigned int)siz1,
 			ipsec6_logpacketstr(ip6, spi));
 		ipsec6stat.in_inval++;
 		goto fail;

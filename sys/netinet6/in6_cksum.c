@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.3 1999/07/03 21:30:18 thorpej Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.4 1999/07/06 08:55:56 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -184,7 +184,7 @@ in6_cksum(m, nxt, off, len)
 	/*
 	 * Force to even boundary.
 	 */
-	if ((1 & (int) w) && (mlen > 0)) {
+	if ((1 & (long) w) && (mlen > 0)) {
 		REDUCE;
 		sum <<= 8;
 		s_util.c[0] = *(u_char *)w;
@@ -260,7 +260,7 @@ in6_cksum(m, nxt, off, len)
 		/*
 		 * Force to even boundary.
 		 */
-		if ((1 & (int) w) && (mlen > 0)) {
+		if ((1 & (long) w) && (mlen > 0)) {
 			REDUCE;
 			sum <<= 8;
 			s_util.c[0] = *(u_char *)w;
