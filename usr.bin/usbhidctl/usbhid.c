@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhid.c,v 1.11 1999/05/12 00:38:20 augustss Exp $	*/
+/*	$NetBSD: usbhid.c,v 1.12 1999/05/16 19:42:03 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 #include <usb.h>
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
-
-#define USBDEV "/dev/uhid0"
 
 int verbose = 0;
 int all = 0;
