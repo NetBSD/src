@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.22 1997/03/19 05:36:26 mycroft Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.23 1997/06/06 23:14:38 veego Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -230,7 +230,8 @@ struct kinfo_proc {
 #define	HW_PAGESIZE	 7		/* int: software page size */
 #define	HW_DISKNAMES	 8		/* strings: disk drive names */
 #define	HW_DISKSTATS	 9		/* struct: diskstats[] */
-#define	HW_MAXID	10		/* number of valid hw ids */
+#define	HW_MACHINE_ARCH	10		/* string: machine architecture */
+#define	HW_MAXID	11		/* number of valid hw ids */
 
 #define CTL_HW_NAMES { \
 	{ 0, 0 }, \
@@ -243,6 +244,7 @@ struct kinfo_proc {
 	{ "pagesize", CTLTYPE_INT }, \
 	{ "disknames", CTLTYPE_STRUCT }, \
 	{ "diskstats", CTLTYPE_STRUCT }, \
+	{ "machine_arch", CTLTYPE_STRING }, \
 }
 
 /*

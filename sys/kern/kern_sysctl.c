@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.26 1997/05/16 21:39:57 gwr Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.27 1997/06/06 23:14:36 veego Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -329,7 +329,7 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	extern char machine[], cpu_model[];
+	extern char machine[], machine_arch[], cpu_model[];
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -338,6 +338,8 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	switch (name[0]) {
 	case HW_MACHINE:
 		return (sysctl_rdstring(oldp, oldlenp, newp, machine));
+	case HW_MACHINE_ARCH:
+		return (sysctl_rdstring(oldp, oldlenp, newp, machine_arch));
 	case HW_MODEL:
 		return (sysctl_rdstring(oldp, oldlenp, newp, cpu_model));
 	case HW_NCPU:
