@@ -1,4 +1,4 @@
-/*	$NetBSD: vripvar.h,v 1.8 2002/02/11 04:56:27 takemura Exp $	*/
+/*	$NetBSD: vripvar.h,v 1.9 2002/02/11 08:15:41 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -68,6 +68,7 @@ struct vrip_softc {
 
 void vrip_intr_suspend(void);
 void vrip_intr_resume(void);
+int vripmatch(struct device *, struct cfdata *, void *);
 void vripattach_common(struct device *, struct device *, void *);
 
 #endif /* !_VRIPVAR_H_ */
