@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.17 2000/09/22 16:34:59 pooka Exp $	*/
+/*	$NetBSD: file.c,v 1.18 2000/10/04 20:09:04 mjl Exp $	*/
 
 /*
  * file - find type of a file or files - main program.
@@ -61,7 +61,7 @@
 #if 0
 FILE_RCSID("@(#)Id: file.c,v 1.51 2000/05/14 17:58:36 christos Exp ")
 #else
-__RCSID("$NetBSD: file.c,v 1.17 2000/09/22 16:34:59 pooka Exp $");
+__RCSID("$NetBSD: file.c,v 1.18 2000/10/04 20:09:04 mjl Exp $");
 #endif
 #endif	/* lint */
 
@@ -134,7 +134,7 @@ main(argc, argv)
 	if (!(magicfile = getenv("MAGIC")))
 		magicfile = default_magicfile;
 
-	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzL")) != EOF)
+	while ((c = getopt(argc, argv, "bcdf:ikm:nsvzL")) != -1)
 		switch (c) {
 		case 'b':
 			++bflag;
