@@ -1,4 +1,4 @@
-/*	$NetBSD: print-nfs.c,v 1.8 1997/10/03 19:55:25 christos Exp $	*/
+/*	$NetBSD: print-nfs.c,v 1.9 1998/07/26 16:01:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -27,7 +27,7 @@
 static const char rcsid[] =
     "@(#) Header: print-nfs.c,v 1.65 97/08/17 13:24:22 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: print-nfs.c,v 1.8 1997/10/03 19:55:25 christos Exp $");
+__RCSID("$NetBSD: print-nfs.c,v 1.9 1998/07/26 16:01:12 mycroft Exp $");
 #endif
 #endif
 
@@ -882,7 +882,7 @@ trunc:
 /*
  * Not all systems have strerror().
  */
-static char *
+static const char *
 strerr(int errno)
 {
 	return (strerror(errno));
@@ -898,7 +898,7 @@ parsestatus(const u_int32_t *dp, int *er)
 	if (er)
 		*er = errno;
 	if (errno != 0 && !qflag) {
-		char *errmsg;
+		const char *errmsg;
 
 		errmsg = strerr(errno);
 		if (errmsg)
