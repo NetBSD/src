@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.22 1998/03/25 03:57:55 jonathan Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.23 1998/03/25 06:22:20 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -45,6 +45,8 @@
 #include <pmax/pmax/kn01var.h>
 
 #include "tc.h"			/* Is Turbochannel configured? */
+#include "opt_dec_3100.h"	/* XXX ibus */
+
 
 struct mainbus_softc {
 	struct	device sc_dv;
@@ -71,15 +73,12 @@ void	mb_intr_disestablish __P((struct confargs *));
 /*
  * Declarations of Potential child busses and how to configure them.
  */
-/* KN01 has devices directly on the system bus */
-void	kn01_intr_establish __P((struct device *parent, void *cookie,
-				 int level,
-			       int (*handler)(intr_arg_t),
-			       intr_arg_t val ));
-void	kn01_intr_disestablish __P((struct confargs *));
-static void	kn01_attach __P((struct device *, struct device *, void *));
 
-/* XXXjrs */
+/*
+ * XXX  KN01 has devices directly on the system bus,
+ * XXX   but it should be redone as an "ibus"
+ */
+static void	kn01_attach __P((struct device *, struct device *, void *));
 void		dec_3100_enable_intr 
 		   __P ((u_int slotno, int (*handler) __P((intr_arg_t sc)),
 			 intr_arg_t sc, int onoff));
@@ -149,13 +148,13 @@ mbattach(parent, self, aux)
 	 * which really only has a mainbus, baseboard devices, and an
 	 * optional framebuffer.
 	 */
-#if 1 /*defined(DS3100)*/
+#if 1 /*defined(DEC_3100)*/
 
 	/* XXX mipsmate: just a guess */
 	if (systype == DS_PMAX || systype == DS_MIPSMATE) {
 		kn01_attach(mb, (void*)0, aux);
 	}
-#endif /*DS3100*/
+#endif /*DEC_3100*/
 }
 
 
@@ -263,9 +262,9 @@ mb_intr_disestablish(ca)
 	panic("can never mb_intr_disestablish");
 }
 
-#ifdef DS3100
+#ifdef DEC_3100
 void
-kn01_intr_establish(parent, cookie, level, handler, arg)
+ibus_intr_establish(parent, cookie, level, handler, arg)
 	struct device *parent;
 	void * cookie;
 	int level;
@@ -277,13 +276,14 @@ kn01_intr_establish(parent, cookie, level, handler, arg)
 	dec_3100_enable_intr((u_int) cookie, handler, arg, 1);
 }
 
+
 void
-kn01_intr_disestablish(ca)
+ibus_intr_disestablish(ca)
 	struct confargs *ca;
 {
 	printf("(kn01: ignoring intr_disestablish) ");
 }
-#endif /* DS3100 */
+#endif /* DEC_3100 */
 
 /*
  * An  interrupt-establish method.  This should somehow be folded
@@ -313,9 +313,9 @@ generic_intr_establish(parent, cookie, level, handler, arg)
 		tc_intr_establish(parent, cookie, level, handler, arg);
 	} else
 #endif
-#ifdef DS3100
+#ifdef DEC_3100
 	if (dev->dv_parent->dv_cfdata->cf_driver == &mainbus_cd) {
-		kn01_intr_establish(parent, cookie, level, handler, arg);
+		ibus_intr_establish(parent, cookie, level, handler, arg);
 	}
 	else {
 #else
