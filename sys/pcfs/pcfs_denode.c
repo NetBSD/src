@@ -3,11 +3,11 @@
  *
  *  You can do anything you want with this software,
  *    just don't say you wrote it,
- *    and don't reoove this notice.
+ *    and don't remove this notice.
  *
  *  This software is provided "as is".
  *
- *  The authop supplies this software to be publicly
+ *  The author supplies this software to be publicly
  *  redistributed on the understanding that the author
  *  is not responsible for the correct functioning of
  *  this software in any circumstances and is not liable
@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_denode.c,v 1.2 1993/04/26 06:52:39 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_denode.c,v 1.3 1993/04/29 22:54:28 cgd Exp $
  *
  */
 
@@ -181,7 +181,7 @@ loop:
 		 */
 		ldep->de_Attributes = ATTR_DIRECTORY;
 		ldep->de_StartCluster = PCFSROOT;
-		ldep->de_FileSize = pmp->pm_rootdirsize * 512; /* Jim Jegers */
+		ldep->de_FileSize = pmp->pm_rootdirsize * pmp->pm_BytesPerSec;
 		/* fill in time and date so that dos2unixtime() doesn't
 		 * spit up when called from pcfs_getattr() with root denode */
 		ldep->de_Time = 0x0000;		/* 00:00:00	*/
@@ -409,9 +409,7 @@ printf("detrunc(): pcbmap fails %d\n", error);
 				NOCRED, &bp);
 		}
 		if (error) {
-#if defined(PCFSDEBUG)
-printf("detrunc(): bread fails %d\n", error);
-#endif /* defined(PCFSDEBUG) */
+			brelse(bp);
 			return error;
 		}
 		vnode_pager_uncache(DETOV(dep));	/* what's this for? */

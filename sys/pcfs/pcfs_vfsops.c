@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vfsops.c,v 1.1 1993/04/09 19:38:10 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_vfsops.c,v 1.2 1993/04/29 22:54:33 cgd Exp $
  *
  *  April 6, 1992
  *
@@ -189,7 +189,7 @@ mountpcfs(devvp, mp, p)
 	struct proc *p;
 {
 	int i;
-	int bpc;
+	u_long bpc;
 	int bit;
 	int error = 0;
 	int needclose;
@@ -212,9 +212,8 @@ mountpcfs(devvp, mp, p)
  *  If the ufs filesystem is not gen'ed into the system
  *  we will get an unresolved reference.
  */
-	if (error = mountedon(devvp)) {
+	if (error = mountedon(devvp))
 		return error;
-	}
 	if (vcount(devvp) > 1)
 		return EBUSY;
 	vinvalbuf(devvp, 1);
@@ -225,14 +224,6 @@ mountpcfs(devvp, mp, p)
 	if (error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, NOCRED, p))
 		return error;
 	needclose = 1;
-#if defined(HDSUPPORT)
-/*
- *  Put this in when we support reading dos filesystems
- *  from partitioned harddisks.
- */
-	if (VOP_IOCTL(devvp, DIOCGPART, &pcfspart, FREAD, NOCRED, p) == 0) {
-	}
-#endif /* defined(HDSUPPORT) */
 
 /*
  *  Read the boot sector of the filesystem, and then
@@ -312,25 +303,14 @@ mountpcfs(devvp, mp, p)
  *  byte offsets and cluster numbers from a file offset.
  */
 	bpc = pmp->pm_SectPerClust * pmp->pm_BytesPerSec;
-	pmp->pm_bpcluster = bpc;
-	pmp->pm_depclust  = bpc/sizeof(struct direntry);
-	pmp->pm_crbomask = bpc - 1;
-	if (bpc == 0) {
+	if (!bpc || (bpc & (bpc - 1))) {
 		error = EINVAL;
 		goto error_exit;
 	}
-	bit = 1;
-	for (i = 0; i < 32; i++) {
-		if (bit & bpc) {
-			if (bit ^ bpc) {
-				error = EINVAL;
-				goto error_exit;
-			}
-			pmp->pm_cnshift = i;
-			break;
-		}
-		bit <<= 1;
-	}
+	pmp->pm_bpcluster = bpc;
+	pmp->pm_depclust  = bpc/sizeof(struct direntry);
+	pmp->pm_crbomask = bpc - 1;
+	pmp->pm_cnshift = ffs(bpc) - 1;
 
 	pmp->pm_brbomask = 0x01ff;	/* 512 byte blocks only (so far) */
 	pmp->pm_bnshift = 9;		/* shift right 9 bits to get bn */
@@ -345,7 +325,7 @@ mountpcfs(devvp, mp, p)
  *  Allocate memory for the bitmap of allocated clusters,
  *  and then fill it in.
  */
-	pmp->pm_inusemap = malloc((pmp->pm_maxcluster >> 3) + 1,
+	pmp->pm_inusemap = malloc((pmp->pm_maxcluster / 8) + 1,
 		M_PCFSFAT, M_WAITOK);
 
 /*

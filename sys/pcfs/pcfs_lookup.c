@@ -15,7 +15,7 @@
  *
  *  October 1992
  *
- *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_lookup.c,v 1.1 1993/04/09 19:38:08 cgd Exp $
+ *	$Header: /cvsroot/src/sys/pcfs/Attic/pcfs_lookup.c,v 1.2 1993/04/29 22:54:31 cgd Exp $
  *
  */
 
@@ -207,11 +207,13 @@ printf("pcfs_lookup(): dos version of filename %s, length %d\n",
 				break;
 			return error;
 		}
-		if (error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, &bp))
+		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, &bp);
+		if (error) {
+			brelse(bp);
 			return error;
-		for (diroff = 0; diroff < pmp->pm_depclust; diroff++) {
-			dep = (struct direntry *)bp->b_un.b_addr + diroff;
-
+		}
+		dep = (struct direntry *)bp->b_un.b_addr;
+		for (diroff = 0; diroff < pmp->pm_depclust; diroff++, dep++) {
 /*
  *  If the slot is empty and we are still looking for
  *  an empty then remember this one.  If the slot is
@@ -572,8 +574,10 @@ dosdirempty(dep)
 			return 1;	/* it's empty */
 		error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED,
 			&bp);
-		if (error)
+		if (error) {
+			brelse(bp);
 			return error;
+		}
 		dentp = (struct direntry *)bp->b_un.b_addr;
 		for (dei = 0; dei < pmp->pm_depclust; dei++) {
 			if (dentp->deName[0] != SLOT_DELETED) {
@@ -648,18 +652,16 @@ doscheckpath(source, target)
 	for (;;) {
 		if ((dep->de_Attributes & ATTR_DIRECTORY) == 0) {
 			error = ENOTDIR;
-			goto out;
+			break;
 		}
 		pmp = dep->de_pmp;
 		scn = dep->de_StartCluster;
-		error = bread(pmp->pm_devvp, cntobn(pmp, scn),
-			pmp->pm_bpcluster, NOCRED, &bp);
-		if (error) {
+		error = readep(pmp, scn, 1, &bp, &ep);
+		if (error)
 			break;
-		}
-		ep = (struct direntry *)bp->b_un.b_addr + 1;
 		if ((ep->deAttributes & ATTR_DIRECTORY) == 0  ||
 		    bcmp(ep->deName, "..         ", 11) != 0) {
+			/* Bad Directory */
 			error = ENOTDIR;
 			break;
 		}
@@ -704,6 +706,7 @@ readep(pmp, dirclu, dirofs, bpp, epp)
 
 	bn = detobn(pmp, dirclu, dirofs);
 	if (error = bread(pmp->pm_devvp, bn, pmp->pm_bpcluster, NOCRED, bpp)) {
+		brelse(*bpp);
 		*bpp = NULL;
 		return error;
 	}
