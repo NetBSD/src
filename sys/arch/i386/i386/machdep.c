@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.429.2.25 2002/08/01 03:30:21 nathanw Exp $	*/
+/*	$NetBSD: machdep.c,v 1.429.2.26 2002/08/14 18:29:35 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.25 2002/08/01 03:30:21 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.429.2.26 2002/08/14 18:29:35 nathanw Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -3520,9 +3520,16 @@ cpu_getmcontext(l, mcp, flags)
 			npxsave();
 		}
 #endif
-		memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-		 &l->l_addr->u_pcb.pcb_savefpu,
-		 sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
+		if (i386_use_fxsave) {
+			memcpy(&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+			    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+			    sizeof (mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm));
+			*flags |= _UC_FXSAVE;
+		} else {
+			memcpy(&mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+			    &l->l_addr->u_pcb.pcb_savefpu.sv_87,
+			    sizeof (mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state));
+		}
 #if 0
 		/* Apparently nothing ever touches this. */
 		ucp->mcp.mc_fp.fp_emcsts = l->l_addr->u_pcb.pcb_saveemc;
@@ -3595,9 +3602,29 @@ cpu_setmcontext(l, mcp, flags)
 		if (l == npxproc)
 			npxdrop();
 #endif
-		(void)memcpy(&l->l_addr->u_pcb.pcb_savefpu,
-		    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
-		    sizeof (l->l_addr->u_pcb.pcb_savefpu));
+		if (flags & _UC_FXSAVE) {
+			if (i386_use_fxsave) {
+				memcpy(
+					&l->l_addr->u_pcb.pcb_savefpu.sv_xmm,
+					&mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+					sizeof (&l->l_addr->u_pcb.pcb_savefpu.sv_xmm));
+			} else {
+				/* This is a weird corner case */
+				process_xmm_to_s87((struct savexmm *)
+				    &mcp->__fpregs.__fp_reg_set.__fp_xmm_state.__fp_xmm,
+				    &l->l_addr->u_pcb.pcb_savefpu.sv_87);
+			}
+		} else {
+			if (i386_use_fxsave) {
+				process_s87_to_xmm((struct save87 *)
+				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+				    &l->l_addr->u_pcb.pcb_savefpu.sv_xmm);
+			} else {
+				memcpy(&l->l_addr->u_pcb.pcb_savefpu.sv_87,
+				    &mcp->__fpregs.__fp_reg_set.__fpchip_state.__fp_state,
+				    sizeof (l->l_addr->u_pcb.pcb_savefpu.sv_87));
+			}
+		}
 		/* If not set already. */
 		l->l_md.md_flags |= MDP_USEDFPU;
 #if 0
