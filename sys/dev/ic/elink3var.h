@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3var.h,v 1.12.4.1 1997/07/30 07:05:24 marc Exp $	*/
+/*	$NetBSD: elink3var.h,v 1.12.4.2 1997/09/27 01:58:40 marc Exp $	*/
 
 /*
  * Copyright (c) 1994 Herb Peyerl <hpeyerl@beer.org>
@@ -82,8 +82,11 @@ struct ep_softc {
 #define EP_IS_BUS_32(a)	((a) & 0x2)
 	int ep_pktlenshift;		/* scale factor for pkt lengths */
 
-	/* PCMCIA-specific */
-	int pcmcia_io_window;
+	/* power management hooks */
+	int (*enable)(void *arg);
+	void (*disable)(void *arg);
+	void *able_arg;
+	int enabled;
 };
 
 u_int16_t epreadeeprom __P((bus_space_tag_t, bus_space_handle_t, int));
