@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_exec.c,v 1.5 1996/03/23 04:59:03 jonathan Exp $	*/
+/*	$NetBSD: cpu_exec.c,v 1.6 1996/05/09 23:48:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,18 +123,16 @@ cpu_exec_aout_makecmds(p, epp)
 extern struct emul emul_ultrix;
 
 void
-cpu_exec_ecoff_setregs(p, pack, stack, retval)
+cpu_exec_ecoff_setregs(p, epp, stack, retval)
 	struct proc *p;
-	struct exec_package *pack;
+	struct exec_package *epp;
 	u_long stack;
 	register_t *retval;
 {
-	struct ecoff_aouthdr *eap;
+	struct ecoff_exechdr *execp = (struct ecoff_exechdr *)epp->ep_hdr;
 
-	setregs(p, pack, stack, retval);
-	eap = (struct ecoff_aouthdr *)
-	    ((caddr_t)pack->ep_hdr + sizeof(struct ecoff_filehdr));
-	p->p_md.md_regs[GP] = eap->ea_gp_value;
+	setregs(p, epp, stack, retval);
+	p->p_md.md_regs[GP] = execp->a.gp_value;
 }
 
 /*
@@ -145,10 +143,9 @@ cpu_exec_ecoff_setregs(p, pack, stack, retval)
  *
  */
 int
-cpu_exec_ecoff_hook(p, epp, eap)
+cpu_exec_ecoff_hook(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
-	struct ecoff_aouthdr *eap;
 {
 
 	epp->ep_emul = &emul_ultrix;
