@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 1997/10/21 18:03:56 gwr Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2000/12/19 21:09:59 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -162,5 +162,13 @@
 
 #define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
+
+#ifdef _KERNEL
+/*
+ * From m68k/syscall.c
+ */
+/* extern void syscall(register_t, struct frame); Only called from locore.s */
+extern	void	child_return(void *);
+#endif /* _KERNEL */
 
 #endif /* _M68K_CPU_H_ */
