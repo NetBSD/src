@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.33 1998/09/12 11:04:59 mycroft Exp $	*/
+/*	$NetBSD: signal.h,v 1.34 1998/09/12 11:18:20 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -149,8 +149,14 @@ typedef struct {
 #define	__sigaddset(s, n)	((s)->__bits[__sigword(n)] |= __sigmask(n))
 #define	__sigdelset(s, n)	((s)->__bits[__sigword(n)] &= ~__sigmask(n))
 #define	__sigismember(s, n)	(((s)->__bits[__sigword(n)] & __sigmask(n)) != 0)
-#define	__sigemptyset(s)	memset((s), 0x00, sizeof(*(s)))
-#define	__sigfillset(s)		memset((s), 0xff, sizeof(*(s)))
+#define	__sigemptyset(s)	((s)->__bits[0] = 0x00000000, \
+				 (s)->__bits[1] = 0x00000000, \
+				 (s)->__bits[2] = 0x00000000, \
+				 (s)->__bits[3] = 0x00000000)
+#define	__sigfillset(s)		((s)->__bits[0] = 0xffffffff, \
+				 (s)->__bits[1] = 0xffffffff, \
+				 (s)->__bits[2] = 0xffffffff, \
+				 (s)->__bits[3] = 0xffffffff)
 
 #ifdef _KERNEL
 #define	sigaddset(s, n)		__sigaddset(s, n)
