@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.150 2004/02/10 00:32:40 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.151 2004/02/10 00:47:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.150 2004/02/10 00:32:40 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.151 2004/02/10 00:47:41 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -572,6 +572,38 @@ wi_intr(void *arg)
 	return 1;
 }
 
+#define arraylen(a) (sizeof(a) / sizeof((a)[0]))
+
+static void
+wi_rssdescs_init(struct wi_rssdesc (*rssd)[WI_NTXRSS], wi_rssdescq_t *rssdfree)
+{
+	int i;
+	SLIST_INIT(rssdfree);
+	for (i = 0; i < arraylen(*rssd); i++) {
+		SLIST_INSERT_HEAD(rssdfree, &(*rssd)[i], rd_next);
+	}
+}
+
+static void
+wi_rssdescs_reset(struct ieee80211com *ic, struct wi_rssdesc (*rssd)[WI_NTXRSS],
+    wi_rssdescq_t *rssdfree, u_int8_t (*txpending)[IEEE80211_RATE_MAXSIZE])
+{
+	struct ieee80211_node *ni;
+	int i;
+	for (i = 0; i < arraylen(*rssd); i++) {
+		ni = (*rssd)[i].rd_desc.id_node;
+		(*rssd)[i].rd_desc.id_node = NULL;
+		if (ni != NULL && (ic->ic_if.if_flags & IFF_DEBUG) != 0)
+			printf("%s: cleaning outstanding rssadapt "
+			    "descriptor for %s\n",
+			    ic->ic_if.if_xname, ether_sprintf(ni->ni_macaddr));
+		if (ni != NULL && ni != ic->ic_bss)
+			ieee80211_free_node(ic, ni);
+	}
+	memset(*txpending, 0, sizeof(*txpending));
+	wi_rssdescs_init(rssd, rssdfree);
+}
+
 static int
 wi_init(struct ifnet *ifp)
 {
@@ -707,10 +739,7 @@ wi_init(struct ifnet *ifp)
 	}
 	sc->sc_txcur = sc->sc_txnext = 0;
 
-	SLIST_INIT(&sc->sc_rssdfree);
-	for (i = 0; i < WI_NTXRSS; i++) {
-		SLIST_INSERT_HEAD(&sc->sc_rssdfree, &sc->sc_rssd[i], rd_next);
-	}
+	wi_rssdescs_init(&sc->sc_rssd, &sc->sc_rssdfree);
 
 	/* Enable desired port */
 	wi_cmd(sc, WI_CMD_ENABLE | sc->sc_portnum, 0, 0, 0);
@@ -762,8 +791,7 @@ wi_stop(struct ifnet *ifp, int disable)
 {
 	struct wi_softc	*sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ieee80211_node *ni;
-	int i, s;
+	int s;
 
 	if (!sc->sc_enabled)
 		return;
@@ -778,17 +806,8 @@ wi_stop(struct ifnet *ifp, int disable)
 		wi_cmd(sc, WI_CMD_DISABLE | sc->sc_portnum, 0, 0, 0);
 	}
 
-	for (i = 0; i < WI_NTXRSS; i++) {
-		ni = sc->sc_rssd[i].rd_desc.id_node;
-		sc->sc_rssd[i].rd_desc.id_node = NULL;
-		if (ni != NULL && (ifp->if_flags & IFF_DEBUG) != 0)
-			printf("%s: cleaning outstanding rssadapt "
-			    "descriptor for %s\n",
-			    sc->sc_dev.dv_xname, ether_sprintf(ni->ni_macaddr));
-		if (ni != NULL && ni != ic->ic_bss)
-			ieee80211_free_node(ic, ni);
-	}
-	memset(sc->sc_txpending, 0, sizeof(sc->sc_txpending));
+	wi_rssdescs_reset(ic, &sc->sc_rssd, &sc->sc_rssdfree,
+	    &sc->sc_txpending);
 
 	sc->sc_tx_timer = 0;
 	sc->sc_scan_timer = 0;
