@@ -1,4 +1,4 @@
-/*	$NetBSD: scp.c,v 1.11 2001/04/10 08:08:00 itojun Exp $	*/
+/*	$NetBSD: scp.c,v 1.12 2001/05/15 14:50:51 itojun Exp $	*/
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
  * uses ssh to do the data transfer (instead of using rcmd).
@@ -123,6 +123,11 @@ struct {
 	int	num;
 	int	nalloc;
 } args;
+
+/* prototypes */
+void alarmtimer(int);
+void updateprogressmeter(int);
+int foregroundproc(void);
 
 /*
  * This function executes the given command as the specified user on the
@@ -1065,7 +1070,7 @@ lostconn(signo)
 }
 
 
-static void
+void
 alarmtimer(int wait)
 {
 	struct itimerval itv;
@@ -1076,7 +1081,7 @@ alarmtimer(int wait)
 	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
-static void
+void
 updateprogressmeter(int ignore)
 {
 	int save_errno = errno;
@@ -1085,7 +1090,7 @@ updateprogressmeter(int ignore)
 	errno = save_errno;
 }
 
-static int
+int
 foregroundproc(void)
 {
 	static pid_t pgrp = -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kex.c,v 1.7 2001/04/10 08:07:57 itojun Exp $	*/
+/*	$NetBSD: kex.c,v 1.8 2001/05/15 14:50:51 itojun Exp $	*/
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -44,11 +44,23 @@ RCSID("$OpenBSD: kex.c,v 1.33 2001/04/05 10:42:50 markus Exp $");
 
 #define KEX_COOKIE_LEN	16
 
-void	kex_kexinit_finish(Kex *kex);
-void	kex_choose_conf(Kex *k);
+/* prototype */
+void kex_prop2buf(Buffer *, char *[PROPOSAL_MAX]);
+char **kex_buf2prop(Buffer *);
+void kex_prop_free(char **);
+void kex_protocol_error(int, int, void *);
+void kex_clear_dispatch(void);
+void	kex_kexinit_finish(Kex *);
+void choose_enc(Enc *, char *, char *);
+void choose_mac(Mac *, char *, char *);
+void choose_comp(Comp *, char *, char *);
+void choose_kex(Kex *, char *, char *);
+void choose_hostkeyalg(Kex *, char *, char *);
+void	kex_choose_conf(Kex *);
+u_char *derive_key(Kex *, int, int, u_char *, BIGNUM *);
 
 /* put algorithm proposal into buffer */
-static void
+void
 kex_prop2buf(Buffer *b, char *proposal[PROPOSAL_MAX])
 {
 	u_int32_t rand = 0;
@@ -68,7 +80,7 @@ kex_prop2buf(Buffer *b, char *proposal[PROPOSAL_MAX])
 }
 
 /* parse buffer and return algorithm proposal */
-static char **
+char **
 kex_buf2prop(Buffer *raw)
 {
 	Buffer b;
@@ -98,7 +110,7 @@ kex_buf2prop(Buffer *raw)
 
 /* diffie-hellman-group1-sha1 */
 
-static void
+void
 kex_prop_free(char **proposal)
 {
 	int i;
@@ -108,13 +120,13 @@ kex_prop_free(char **proposal)
 	xfree(proposal);
 }
 
-static void
+void
 kex_protocol_error(int type, int plen, void *ctxt)
 {
 	error("Hm, kex protocol error: type %d plen %d", type, plen);
 }
 
-static void
+void
 kex_clear_dispatch(void)
 {
 	int i;
@@ -233,7 +245,7 @@ kex_kexinit_finish(Kex *kex)
 	}
 }
 
-static void
+void
 choose_enc(Enc *enc, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
@@ -247,7 +259,7 @@ choose_enc(Enc *enc, char *client, char *server)
 	enc->iv = NULL;
 	enc->key = NULL;
 }
-static void
+void
 choose_mac(Mac *mac, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
@@ -262,7 +274,7 @@ choose_mac(Mac *mac, char *client, char *server)
 	mac->key = NULL;
 	mac->enabled = 0;
 }
-static void
+void
 choose_comp(Comp *comp, char *client, char *server)
 {
 	char *name = match_list(client, server, NULL);
@@ -277,7 +289,7 @@ choose_comp(Comp *comp, char *client, char *server)
 	}
 	comp->name = name;
 }
-static void
+void
 choose_kex(Kex *k, char *client, char *server)
 {
 	k->name = match_list(client, server, NULL);
@@ -290,7 +302,7 @@ choose_kex(Kex *k, char *client, char *server)
 	} else
 		fatal("bad kex alg %s", k->name);
 }
-static void
+void
 choose_hostkeyalg(Kex *k, char *client, char *server)
 {
 	char *hostkeyalg = match_list(client, server, NULL);
@@ -362,7 +374,7 @@ kex_choose_conf(Kex *kex)
 	kex_prop_free(peer);
 }
 
-static u_char *
+u_char *
 derive_key(Kex *kex, int id, int need, u_char *hash, BIGNUM *shared_secret)
 {
 	Buffer b;
