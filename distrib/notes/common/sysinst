@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.23 2001/05/25 08:04:13 mbw Exp $
+.\"	$NetBSD: sysinst,v 1.24 2001/06/06 23:12:48 scottr Exp $
 .\"
 .\" Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1129,8 +1129,9 @@ in answer to these questions, and DNS will not be used.
 .Pp
 You will also be asked to specify the host that you want
 to transfer the sets from, the directory on that host,
-and the account name and password used to log into that
-host using ftp. If you did not set up DNS when answering
+the account name and password used to log into that
+host using ftp, and optionally a proxy server to use.
+If you did not set up DNS when answering
 the questions to configure networking, you will need to
 specify an IP address instead of a hostname for the ftp
 server.

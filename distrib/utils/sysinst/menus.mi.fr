@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.fr,v 1.31 2001/01/14 02:38:15 mrg Exp $	*/
+/*	$NetBSD: menus.mi.fr,v 1.32 2001/06/06 23:12:49 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -242,7 +242,8 @@ menu ftpsource, title "Changer";
 		{ msg_clear();
 		  msg_table_add (MSG_ftpsource, ftp_host, ftp_dir, ftp_user,
 		     strcmp(ftp_user, "ftp") == 0 ? ftp_pass :
-		       strlen(ftp_pass) != 0 ? "** caché **" : "");
+		       strlen(ftp_pass) != 0 ? "** caché **" : "",
+		     ftp_proxy);
 		};
 	option "Serveur ftp", action
 		{ msg_prompt (MSG_host, ftp_host, ftp_host, 255); };
@@ -256,6 +257,13 @@ menu ftpsource, title "Changer";
 		  else {
 			msg_prompt_noecho (MSG_passwd, "", ftp_pass, 255);
 		  }
+		};
+	option "Proxy", action
+		{ msg_prompt (MSG_proxy, ftp_proxy, ftp_proxy, 255);
+		  if (strcmp(ftp_proxy, "") == 0)
+			unsetenv("ftp_proxy");
+		  else
+			setenv("ftp_proxy", ftp_proxy, 1);
 		};
 	option "Récupérer la Distribution", exit;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2000/12/22 10:12:13 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.25 2001/06/06 23:12:49 scottr Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -256,6 +256,7 @@ static char *ftp_dir_ptr = ftp_dir;
 static char *ftp_prefix_ptr = ftp_prefix;
 static char *ftp_user_ptr = ftp_user;
 static char *ftp_pass_ptr = ftp_pass;
+static char *ftp_proxy_ptr = ftp_proxy;
 static char *nfs_host_ptr = nfs_host;
 static char *nfs_dir_ptr = nfs_dir;
 static char *cdrom_dev_ptr = cdrom_dev;
@@ -278,6 +279,8 @@ struct lookfor fflagopts[] = {
 		STRSIZE, NULL},
 	{"ftp user", "ftp user = %s", "a $0", &ftp_user_ptr, 1, STRSIZE, NULL},
 	{"ftp pass", "ftp pass = %s", "a $0", &ftp_pass_ptr, 1, STRSIZE, NULL},
+	{"ftp proxy", "ftp proxy = %s", "a $0", &ftp_proxy_ptr, 1, STRSIZE,
+		NULL},
 	{"nfs host", "nfs host = %s", "a $0", &nfs_host_ptr, 1, STRSIZE, NULL},
 	{"nfs dir", "ftp dir = %s", "a $0", &nfs_dir_ptr, 1, STRSIZE, NULL},
 	{"cd dev", "cd dev = %s", "a $0", &cdrom_dev_ptr, 1, STRSIZE, NULL},
