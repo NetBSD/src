@@ -1,4 +1,4 @@
-/*	$NetBSD: targmatch.h,v 1.1.1.1 1997/09/26 02:38:49 gwr Exp $	*/
+/*	$NetBSD: targmatch.h,v 1.1.1.1.2.1 1998/11/09 08:04:28 cgd Exp $	*/
 
 /*
  * This file was copied by hand from the result of configure with a
@@ -553,8 +553,16 @@
     
 #if !defined (SELECT_VECS) || defined (HAVE_bfd_elf32_littlemips_vec)
 
-{ "mips-dec-netbsd*",
+{ "mipsel-*-netbsd*", NULL },{ "mips-dec-netbsd*",
 &bfd_elf32_littlemips_vec },
+#endif
+
+
+    
+#if !defined (SELECT_VECS) || defined (HAVE_bfd_elf32_bigmips_vec)
+
+{ "mipseb-*-netbsd*",
+&bfd_elf32_bigmips_vec },
 #endif
 
 
