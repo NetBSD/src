@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)isa.c	7.2 (Berkeley) 5/13/91
- *	$Id: isa.c,v 1.28.2.10 1993/10/15 03:50:03 mycroft Exp $
+ *	$Id: isa.c,v 1.28.2.11 1993/10/15 13:05:40 mycroft Exp $
  */
 
 /*
@@ -160,11 +160,10 @@ isasubmatch(isa, cf, aux)
 		return 0;
 
 	/* Driver says it is there.  Try to reserve ports and memory. */
-	if (isa_reserveports(ia.ia_iobase, ia.ia_iosize)) {
-		if (isa_reservemem(ia.ia_maddr, ia.ia_msize))
-			config_attach(isa, cf, &ia, isaprint);	/* victory! */
-		else
-			isa_unreserveports(ia.ia_iobase, ia.ia_iosize);
+	if (isa_portcheck(ia.ia_iobase, ia.ia_iosize) &&
+	    isa_memcheck(ia.ia_maddr, ia.ia_msize)) {
+		isa_portalloc(ia.ia_iobase, ia.ia_iosize);
+		config_attach(isa, cf, &ia, isaprint);	/* victory! */
 	}
 
 	/* In any case, move on to next config entry. */
