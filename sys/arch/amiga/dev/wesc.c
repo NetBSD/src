@@ -1,4 +1,4 @@
-/*	$NetBSD: wesc.c,v 1.5 1994/12/01 17:25:38 chopps Exp $	*/
+/*	$NetBSD: wesc.c,v 1.6 1994/12/28 09:26:04 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -47,7 +47,7 @@
 #include <amiga/amiga/device.h>
 #include <amiga/dev/siopreg.h>
 #include <amiga/dev/siopvar.h>
-#include <amiga/dev/zthreebusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int wescprint __P((void *auxp, char *));
 void wescattach __P((struct device *, struct device *, void *));
@@ -88,7 +88,7 @@ wescmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 	if (zap->manid == 2203 && zap->prodid == 19)
@@ -102,7 +102,7 @@ wescattach(pdp, dp, auxp)
 	void *auxp;
 {
 	struct siop_softc *sc;
-	struct zthreebus_args *zap;
+	struct zbus_args *zap;
 	siop_regmap_p rp;
 
 	printf("\n");

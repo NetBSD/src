@@ -1,4 +1,4 @@
-/*	$NetBSD: atzsc.c,v 1.8 1994/12/01 17:24:52 chopps Exp $	*/
+/*	$NetBSD: atzsc.c,v 1.9 1994/12/28 09:24:59 chopps Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -48,7 +48,7 @@
 #include <amiga/dev/sbicreg.h>
 #include <amiga/dev/sbicvar.h>
 #include <amiga/dev/atzscreg.h>
-#include <amiga/dev/ztwobusvar.h>
+#include <amiga/dev/zbusvar.h>
 
 int atzscprint __P((void *auxp, char *));
 void atzscattach __P((struct device *, struct device *, void *));
@@ -97,7 +97,7 @@ atzscmatch(pdp, cdp, auxp)
 	struct cfdata *cdp;
 	void *auxp;
 {
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 
@@ -118,7 +118,7 @@ atzscattach(pdp, dp, auxp)
 {
 	volatile struct sdmac *rp;
 	struct sbic_softc *sc;
-	struct ztwobus_args *zap;
+	struct zbus_args *zap;
 
 	zap = auxp;
 	

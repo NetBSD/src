@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.4 1994/10/26 02:03:50 cgd Exp $	*/
+/*	$NetBSD: if_lereg.h,v 1.5 1994/12/28 09:25:30 chopps Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -43,18 +43,18 @@
 /* HP seems to have 16K RAM on board, A2065/Ameristar come with 32K.
    First try to get a working driver with the HP values, and later 
    try and see whether 32K works too. */
-#define LE_USE_16K
+#define LE_USE_32K
 
 #ifdef LE_USE_16K
 #define	LERBUF		8
 #define	LERBUFLOG2	3
-#define	LETBUF		1
-#define	LETBUFLOG2	0
+#define	LETBUF		4
+#define	LETBUFLOG2	2
 #else /* 32K */
 #define LERBUF		16
 #define LERBUFLOG2	4
-#define LETBUF		2
-#define LETBUFLOG2	1
+#define LETBUF		4
+#define LETBUFLOG2	2
 #endif
 
 #define	LE_RLEN		(LERBUFLOG2 << 13)

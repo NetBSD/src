@@ -1,4 +1,4 @@
-/*	$NetBSD: siopvar.h,v 1.5 1994/10/26 02:05:01 cgd Exp $	*/
+/*	$NetBSD: siopvar.h,v 1.6 1994/12/28 09:26:02 chopps Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,10 +63,12 @@ struct siop_ds {			/* Data Structure for SCRIPTS */
 	char	*stsbuf;
 	long	msglen;			/* Message */
 	char	*msgbuf;
-	long	sdtrolen;		/* Sync Data Transfer Request out */
-	char	*sdtrobuf;
-	long	sdtrilen;		/* Sync Data Transfer Request in */
-	char	*sdtribuf;
+	long	msginlen;		/* Message in */
+	char	*msginbuf;
+	long	extmsglen;		/* Extended message in */
+	char	*extmsgbuf;
+	long	synmsglen;		/* Sync transfer request */
+	char	*synmsgbuf;
 	struct {
 		long datalen;
 		char *databuf;
@@ -76,35 +78,40 @@ struct siop_ds {			/* Data Structure for SCRIPTS */
 struct	siop_softc {
 	struct	device sc_dev;
 
-	/* should have one for each target? */
 	u_char	sc_istat;
 	u_char	sc_dstat;
 	u_char	sc_sstat0;
 	u_char	sc_sstat1;
-	struct siop_ds sc_ds;
 	struct	scsi_link sc_link;	/* proto for sub devices */
 	siop_regmap_p	sc_siopp;	/* the SIOP */
 	volatile void 	*sc_cregs;	/* driver specific regs */
-	TAILQ_HEAD(,siop_pending) sc_xslist;	/* LIFO */
-	struct	siop_pending sc_xsstore[8][8];	/* one for every unit */
 	struct	scsi_xfer *sc_xs;	/* transfer from high level code */
+	u_long	sc_active;		/* number of active I/O's */
+	/* I/O blocks for each active I/O */
+	struct siop_iob {
+		struct	scsi_xfer *sc_xs;
+		struct siop_ds sc_ds;
+		void	*iob_buf;
+		u_long	iob_curbuf;
+		u_long	iob_len, iob_curlen;
+		u_char	sc_msgout[6];
+		u_char	sc_msg[6];
+		u_char	sc_stat[1];
+		u_char	sc_status;
+		u_char	sc_dummy[2];
+	} *sc_cur;			/* current I/O block */
+	struct	siop_iob sc_iob[2];	/* I/O blocks */
 	u_long	sc_scriptspa;		/* physical address of scripts */
-	u_long	sc_dspa;		/* physical address of DS */
-	u_long	sc_lunpa;
-	u_long	sc_statuspa;
-	u_long	sc_msgpa;
-	u_char	sc_flags;
-	u_char	sc_lun;
 	u_long	sc_clock_freq;
+	u_char	sc_flags;
+	u_char	sc_slave;
 	/* one for each target */
 	struct syncpar {
 	  u_char state;
 	  u_char period, offset;
 	} sc_sync[8];
-	u_char	sc_slave;
-	u_char	sc_scsi_addr;
-	u_char	sc_stat[2];
-	u_char	sc_msg[8];
+	TAILQ_HEAD(,siop_pending) sc_xslist;	/* LIFO */
+	struct	siop_pending sc_xsstore[8][8];	/* one for every unit */
 };
 
 /* sc_flags */
