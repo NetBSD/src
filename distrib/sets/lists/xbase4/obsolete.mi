@@ -1,0 +1,15 @@
+# $NetBSD: obsolete.mi,v 1.1 2003/03/01 00:11:29 tron Exp $
+./usr/X11R6/bin/ucs2any.pl
+./usr/X11R6/bin/xftcache
+./usr/X11R6/lib/X11/XftConfig
+./usr/X11R6/lib/X11/locale/common
+./usr/X11R6/lib/X11/locale/common/ximcp.so.2
+./usr/X11R6/lib/X11/locale/common/xlcDef.so.2
+./usr/X11R6/lib/X11/locale/common/xlcUTF8Load.so.2
+./usr/X11R6/lib/X11/locale/common/xlibi18n.so.2
+./usr/X11R6/lib/X11/locale/common/xlocale.so.2
+./usr/X11R6/lib/X11/locale/common/xomGeneric.so.2
+./usr/X11R6/lib/X11/xedit/lisp/fun.lsp
+./usr/X11R6/lib/X11/xkb/types/cancel
+./usr/X11R6/lib/X11/xkb/types/nocancel
+./usr/X11R6/man/cat1/xftcache.0
