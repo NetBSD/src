@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)htable.c	5.10 (Berkeley) 2/6/91";*/
-static char rcsid[] = "$Id: htable.c,v 1.2 1993/08/01 17:59:40 mycroft Exp $";
+static char rcsid[] = "$Id: htable.c,v 1.3 1994/12/23 16:47:04 cgd Exp $";
 #endif /* not lint */
 
 /*
@@ -47,6 +47,7 @@ static char rcsid[] = "$Id: htable.c,v 1.2 1993/08/01 17:59:40 mycroft Exp $";
  * NIC format is described in RFC 810, 1 March 1982.
  */
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
