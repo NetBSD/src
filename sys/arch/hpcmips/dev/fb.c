@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.c,v 1.9 1999/12/06 19:25:58 drochner Exp $	*/
+/*	$NetBSD: fb.c,v 1.10 1999/12/11 03:29:26 takemura Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -67,7 +67,7 @@
 static const char _copyright[] __attribute__ ((unused)) =
     "Copyright (c) 1999 Shin Takemura.  All rights reserved.";
 static const char _rcsid[] __attribute__ ((unused)) =
-    "$Id: fb.c,v 1.9 1999/12/06 19:25:58 drochner Exp $";
+    "$Id: fb.c,v 1.10 1999/12/11 03:29:26 takemura Exp $";
 
 
 #include <sys/param.h>
@@ -420,7 +420,7 @@ fb_getdevconfig(dc)
 	 */
 	ri->ri_devcmap[0] = bg;
 	for (i = 1; i < 16; i++) {
-		ri->ri_devcmap[1] = fg;
+		ri->ri_devcmap[i] = fg;
 	}
 #endif /* USE_RASTERCONS */
 	return (0);
