@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.46 2000/11/21 23:19:42 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.47 2000/11/24 10:29:21 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,7 +85,7 @@
 
 #ifdef COMPAT_SUNOS
 #include <compat/sunos/sunos_syscall.h>
-extern struct emul emul_sunos;
+#include <compat/sunos/sunos_exec.h>
 #endif
 
 #ifdef COMPAT_LINUX
