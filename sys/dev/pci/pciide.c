@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.56 2000/04/01 14:32:23 bouyer Exp $	*/
+/*	$NetBSD: pciide.c,v 1.57 2000/05/12 17:52:07 thorpej Exp $	*/
 
 
 /*
@@ -463,16 +463,18 @@ pciide_attach(parent, self, aux)
 	struct pciide_softc *sc = (struct pciide_softc *)self;
 	pcireg_t csr;
 	char devinfo[256];
+	const char *displaydev;
 
 	sc->sc_pp = pciide_lookup_product(pa->pa_id);
 	if (sc->sc_pp == NULL) {
 		sc->sc_pp = &default_product_desc;
 		pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-		printf(": %s (rev. 0x%02x)\n", devinfo,
-		    PCI_REVISION(pa->pa_class));
-	} else {
-		printf(": %s\n", sc->sc_pp->ide_name);
-	}
+		displaydev = devinfo;
+	} else
+		displaydev = sc->sc_pp->ide_name;
+
+	printf(": %s (rev. 0x%02x)\n", displaydev, PCI_REVISION(pa->pa_class));
+
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 #ifdef WDCDEBUG
