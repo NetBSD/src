@@ -1,4 +1,4 @@
-/*	$NetBSD: dtop.c,v 1.1.2.5 1999/05/11 06:43:14 nisimura Exp $ */
+/* $NetBSD: dtop.c,v 1.1.2.6 1999/11/19 08:56:48 nisimura Exp $ */
 
 /*
  * Copyright (c) 1998, 1999 Tohru Nishimura.  All rights reserved.
@@ -30,7 +30,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ddb.h"
+#include "opt_ddb.h"	/* XXX TBD XXX */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,11 +49,9 @@
 #include <dev/wscons/wsksymdef.h>
 #include <dev/dec/wskbdmap_lk201.h>
 
-#include <pmax/pmax/pmaxtype.h>
-
 #include <dev/tc/tcvar.h>
 #include <dev/tc/ioasicvar.h>
-#include <pmax/tc/ioasicreg.h>	/* XXX XXX XXX */
+#include <pmax/tc/ioasicreg.h>
 #include <pmax/pmax/maxine.h>
 
 #include <dev/dec/lk201reg.h>
@@ -69,71 +67,72 @@ struct lk501_state {
 	int down_keys_list[LK_KLL];
 	int bellvol;
 	int leds_state;
+	u_int8_t msg[256];
 };
 
-struct dtop_softc {
+struct dti_softc {
 	struct device	sc_dv;
-	struct device	*sc_wskbddev;
-	struct device	*sc_wsmousedev;
 	struct lk501_state *lk501_ks;
 
 	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;
 
-	u_int8_t	sc_xmit[256];
-	u_int8_t	sc_recv[256];
-	u_int8_t	*sc_xmitp, *sc_xtailp;
-	u_int8_t	*sc_recvp, *sc_rtailp;
+	struct device	*sc_wskbddev;
+	struct device	*sc_wsmousedev;
+
+	/* xmit/recv msg buffer pool management here */
 };
 
-int  dtopmatch	__P((struct device *, struct cfdata *, void *));
-void dtopattach	__P((struct device *, struct device *, void *));
+static int  dtimatch __P((struct device *, struct cfdata *, void *));
+static void dtiattach __P((struct device *, struct device *, void *));
 
-struct cfattach dtop_ca = {
-	sizeof(struct dtop_softc), dtopmatch, dtopattach
+const struct cfattach dtop_ca = {
+	sizeof(struct dti_softc), dtimatch, dtiattach
 };
 
-int  lk501_init __P((struct lk501_state *));
-int  lk501_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
-int  lk501_bell __P((struct lk501_state *, struct wskbd_bell_data *));
-void lk501_set_leds __P((struct lk501_state *, int));
-int  lk501_decode __P((struct lk501_state *, struct dtmessage *));
-int  nop_enable __P((void *, int));
+static int lk501_init __P((struct lk501_state *));
+static int lk501_decode __P((struct lk501_state *,
+				struct dtmessage *, u_int *, int *));
+static int lk501_null __P((void));
 
-struct wskbd_accessops lk501_accessops = {
-	nop_enable,
-	(void (*)(void *, int))lk501_set_leds,
-	lk501_ioctl,
+const struct wskbd_accessops lk501_accessops = {
+	(void *)lk501_null,
+	(void *)lk501_null,
+	(void *)lk501_null,
 };
 
-struct wskbd_mapdata lk501_keymapdata = {
-#if 1
-	NULL
-#else
+const struct wskbd_mapdata lk501_keymapdata = {
 	zskbd_keydesctab,	/* XXX mis-no-ner XXX */
-#endif
 	KB_US | KB_LK401,
 };
 
-void dtopkbd_cngetc __P((void *, u_int *, int *));
-void dtopkbd_cnpollc __P((void *, int));
-void dtopgetmsg __P((void *, struct dtmessage *));
-void dtopputmsg __P((void *, struct dtmessage *));
+void dtikbd_cnattach __P((void));
+static void dtikbd_cngetc __P((void *, u_int *, int *));
+static void dtikbd_cnpollc __P((void *, int));
+void dtikbd_input __P((struct dti_softc *, struct dtmessage *));
 
-const struct wskbd_consops dtopkbd_consops = {
-	dtopkbd_cngetc,
-	dtopkbd_cnpollc,
+const struct wskbd_consops dtikbd_consops = {
+	dtikbd_cngetc,
+	dtikbd_cnpollc,
 };
 
-int wscons_dtop;
-struct lk501_state dtopkbd_private;
+static int  dtims_enable __P((void *));
+static int  dtims_ioctl __P((void *, u_long, caddr_t, int, struct proc *));
+static void dtims_disable __P((void *));
+void dtims_input __P((struct dti_softc *, struct dtmessage *));
 
-int dtopintr __P((void *));
-int dtop_decode __P((struct dtop_softc *, struct dtmessage *));
-int dtopkbd_cnattach __P((paddr_t));		/* EXPORT */
+static const struct wsmouse_accessops dtims_accessops = { 
+	dtims_enable,
+	dtims_ioctl,
+	dtims_disable,
+};
 
-int
-dtopmatch(parent, match, aux)
+static int wscons_dti;
+static struct lk501_state dti_private;
+
+
+static int
+dtimatch(parent, match, aux)
 	struct device *parent;
 	struct cfdata *match;
 	void *aux;
@@ -142,26 +141,25 @@ dtopmatch(parent, match, aux)
 
 	if (strcmp(d->iada_modname, "dtop") != 0)
 		return 0;
-	if (systype != DS_MAXINE)
-		return 0;
 
 	return 1;
 }
-void
-dtopattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
+
+static void
+dtiattach(parent, self, aux)
+	struct device *parent, *self;
 	void *aux;
 {
-	struct ioasicdev_attach_args *d = aux;
-	struct dtop_softc *sc = (struct dtop_softc*)self;
+	struct dti_softc *sc = (void *)self;
 	struct lk501_state *dti;
+#if 0
+	struct ioasicdev_attach_args *d = aux;
+#endif
 
-	ioasic_intr_establish(parent, d->iada_cookie, IPL_TTY, dtopintr, sc);
-	printf("\n");
+	printf(": unsable\n");
 
-	if (wscons_dtop)
-		dti = &dtopkbd_private;
+	if (wscons_dti)
+		dti = &dti_private;
 	else {
 		dti = malloc(sizeof(struct lk501_state), M_DEVBUF, M_NOWAIT);
 		lk501_init(dti);
@@ -170,27 +168,163 @@ dtopattach(parent, self, aux)
 
 	sc->sc_bst = ((struct ioasic_softc *)parent)->sc_bst;
 	sc->sc_bsh = ((struct ioasic_softc *)parent)->sc_bsh;
-	sc->sc_xmitp = sc->sc_xtailp = sc->sc_xmit;
-	sc->sc_recvp = sc->sc_rtailp = sc->sc_recv;
-
-	{
-	struct wskbddev_attach_args a;
-	a.console = wscons_dtop;
-	a.keymap = &lk501_keymapdata;
-	a.accessops = &lk501_accessops;
-	a.accesscookie = (void *)sc;
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
-	}
 
 #if 0
-	{
-	struct wsmousedev_attach_args b;
-	b.accessops = &dtopms_accessops;
-	b.accesscookie = (void *)sc;
-	sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint);
+	Send a query and wait for a while any response
+
+	foreach responder
+	switch whoitis {
+	case 0x6c: /* LK501 keyboard */ {
+		struct wskbddev_attach_args a;
+		a.console = wscons_dti;
+		a.keymap = &lk501_keymapdata;
+		a.accessops = &dtikbd_accessops;
+		a.accesscookie = (void *)sc;
+		sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	    	break;
+		}
+	case 0x6a: /* VSXXX-GB mouse */ {
+		struct wsmousedev_attach_args b;
+		b.accessops = &dtims_accessops;
+		b.accesscookie = (void *)sc;
+		sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint);
+		break;
+		}
 	}
+
+	ioasic_intr_establish(parent, d->iada_cookie, IPL_TTY, dtiintr, sc);
 #endif
 }
+
+/* EXPORT */ void
+dtikbd_cnattach()
+{
+	struct lk501_state *dti;
+
+	dti = &dti_private;
+	lk501_init(dti);
+
+	wskbd_cnattach(&dtikbd_consops, dti, &lk501_keymapdata);
+	wscons_dti = 1;
+}
+
+static void
+dtikbd_cngetc(v, type, data)
+	void *v;
+	u_int *type;
+	int *data;
+{
+#if 0
+	struct lk501_state *lks = v;
+	struct dtmessage *pkt = lks->msg;
+
+	do {
+		do {
+			dtimsgpoll(lks, pkt);
+		} while (pkt->src != 0x6c);
+	} while (!lk501_decode(lks, &msg, type, data));
+#endif
+}
+
+void
+dtikbd_cnpollc(v, on)
+	void *v;
+	int on;
+{
+}
+
+/* ------------------------------------------------------- */
+
+void
+dtikbd_input(sc, data)
+	struct dti_softc *sc;
+	struct dtmessage *data;
+{
+	u_int type;
+	int val;
+
+	if (lk501_decode(sc->lk501_ks, data, &type, &val))
+		wskbd_input(sc->sc_wskbddev, type, val);
+}
+
+static int
+lk501_decode(lks, pkt, type, dataout)
+	struct lk501_state *lks;
+	struct dtmessage *pkt;
+	u_int *type;
+	int *dataout;
+{
+	return 1;
+}
+
+static int
+lk501_init(lks)
+	struct lk501_state *lks;
+{
+	lks->bellvol = -1;
+	lks->leds_state = 0;
+
+	return 0;
+}
+
+static int
+lk501_null()
+{
+	return 1;
+}
+
+/* ------------------------------------------------------- */
+
+static int
+dtims_enable(v)
+	void *v;
+{
+	return 0;
+}
+
+static void
+dtims_disable(v)
+	void *v;
+{
+}
+
+/*ARGUSED*/
+static int
+dtims_ioctl(v, cmd, data, flag, p)
+	void *v;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	if (cmd == WSMOUSEIO_GTYPE) {
+		*(u_int *)data = WSMOUSE_TYPE_VSXXX;
+		return 0;
+	}
+	return -1;
+}
+
+void
+dtims_input(sc, pkt)
+	struct dti_softc *sc;
+	struct dtmessage *pkt;
+{
+	int buttons, x, y;
+
+	buttons = pkt->body[0] << 8 | pkt->body[1];
+	/* adjust button bit order; MRL -> LMR */
+	if (buttons & 01)
+		buttons |= 010;
+	buttons = (buttons >> 1) & 03;
+
+	x = pkt->body[2] << 8 | pkt->body[3];
+	y = pkt->body[4] << 8 | pkt->body[5];
+
+	wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0);
+}
+
+/* ------------------------------------------------------- */
+#if 0
 
 /* XXX needs to have smart packet receiver logic XXX */
 #define	DTOP_IDLE		0
@@ -201,10 +335,10 @@ dtopattach(parent, self, aux)
 #define	XINE_DTOP_DATA	IOASIC_SLOT_10_START
 
 int
-dtopintr(v)
+dtiintr(v)
 	void *v;
 {
-	struct dtop_softc *sc = v;
+	struct dti_softc *sc = v;
 	u_int32_t intr;
 	int cc;
 
@@ -223,176 +357,7 @@ dtopintr(v)
 		cc = *sc->sc_xmitp++ << 8;
 		bus_space_write_2(sc->sc_bst, sc->sc_bsh, XINE_DTOP_DATA, cc);
 	}
-	return 0;
-}
-
-int
-dtop_decode(sc, pkt)
-	struct dtop_softc *sc;
-	struct dtmessage *pkt;
-{
-	if (pkt->src == 0x6c) {
-		lk501_decode(sc->lk501_ks, pkt);
-	}
-	else if (pkt->src == 0x6a) {
-		int buttons, x, y;
-
-		buttons = pkt->body[0] << 8 | pkt->body[1];
-		/* adjust button bit order; MRL -> LMR */
-		if (buttons & 01)
-			buttons |= 010;
-		buttons = (buttons >> 1) & 03;
-
-		x = pkt->body[2] << 8 | pkt->body[3];	/* sign extended */
-		y = pkt->body[4] << 8 | pkt->body[5];	/* sign extended */
-
-		wsmouse_input(sc->sc_wsmousedev, buttons, x, y, 0);
-	}
 	return 1;
 }
 
-int
-lk501_decode(lks, pkt)
-	struct lk501_state *lks;
-	struct dtmessage *pkt;
-{
-	return 1;
-}
-
-int
-lk501_init(lks)
-	struct lk501_state *lks;
-{
-	lks->bellvol = -1;
-	lks->leds_state = 0;
-
-	return 0;
-}
-
-int
-lk501_bell(lks, bell)
-	struct lk501_state *lks;
-	struct wskbd_bell_data *bell;
-{
-	unsigned int vol;
-
-	if (bell->which & WSKBD_BELL_DOVOLUME) {
-		vol = 8 - bell->volume * 8 / 100;
-		if (vol > 7)
-			vol = 7;
-	} else
-		vol = 3;
-
-	if (vol != lks->bellvol) {
-		/* build beep volume set packet and send it to LK501 */
-		lks->bellvol = vol;
-	}
-	/* build "ring bell" packet and send it to LK501 */
-	return 1;
-}
-
-void
-lk501_set_leds(lks, leds)
-	struct lk501_state *lks;
-	int leds;
-{
-	unsigned newleds;
-
-	newleds = 0;
-	if (leds & WSKBD_LED_SCROLL)
-		newleds |= LK_LED_WAIT;
-	if (leds & WSKBD_LED_CAPS)
-		newleds |= LK_LED_LOCK;
-
-	/* build LED control packet and sent it to LK501 */
-	lks->leds_state = leds;
-}
-
-int
-lk501_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
-{
-	struct dtop_softc *sc = v;
-
-	switch (cmd) {
-	    case WSKBDIO_GTYPE:
-		*(int *)data = WSKBD_TYPE_LK401;
-		return 0;
-	    case WSKBDIO_SETLEDS:
-		lk501_set_leds(sc->lk501_ks, *(int *)data);
-		return 0;
-	    case WSKBDIO_GETLEDS:
-		*(int *)data = sc->lk501_ks->leds_state;
-		return 0;
-	    case WSKBDIO_BELL:
-		lk501_bell(sc->lk501_ks, (struct wskbd_bell_data *)data);
-		return 0;
-	}
-	return ENOTTY;
-}
-
-int
-nop_enable(v, onoff)
-	void *v;
-	int onoff;
-{
-	return 1;
-}
-
-/* EXPORT */ int
-dtopkbd_cnattach(addr)
-	paddr_t addr; /* XXX IOASIC base XXX */
-{
-	struct lk501_state *dti;
-
-	dti = &dtopkbd_private;
-	lk501_init(dti);
-
-	wskbd_cnattach(&dtopkbd_consops, dti, &lk501_keymapdata);
-	wscons_dtop = 1;
-
-	return 0;
-}
-
-/*ARGUSED*/
-void
-dtopkbd_cngetc(v, type, data)
-	void *v;
-	u_int *type;
-	int *data;
-{
-	struct lk501_state *lks = v;
-	struct dtmessage msg;
-
-	do {
-		dtopgetmsg(lks, &msg);
-	} while (!lk501_decode(lks, &msg));
-}
-
-/*ARGUSED*/
-void
-dtopkbd_cnpollc(v, on)
-	void *v;
-	int on;
-{
-}
-
-/*ARGUSED*/
-void
-dtopgetmsg(v, pkt)
-	void *v;
-	struct dtmessage *pkt;
-{
-}
-
-/*ARGUSED*/
-void
-dtopputmsg(v, pkt)
-	void *v;
-	struct dtmessage *pkt;
-{
-}
+#endif
