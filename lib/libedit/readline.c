@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.41 2003/11/01 23:39:22 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.42 2003/11/02 01:45:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.41 2003/11/01 23:39:22 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.42 2003/11/02 01:45:14 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1445,9 +1445,13 @@ filename_completion_function(const char *text, int state)
 			(void)strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
-			filename = strdup(text);
-			if (filename == NULL)
-				return NULL;
+			if (*text == 0)
+				filename = NULL;
+			else {
+				filename = strdup(text);
+				if (filename == NULL)
+					return NULL;
+			}
 			dirname = NULL;
 		}
 
@@ -1467,9 +1471,7 @@ filename_completion_function(const char *text, int state)
 			free(temp);	/* no longer needed */
 		}
 		/* will be used in cycle */
-		filename_len = strlen(filename);
-		if (filename_len == 0)
-			return (NULL);	/* no expansion possible */
+		filename_len = filename ? strlen(filename) : 0;
 
 		if (dir != NULL) {
 			(void)closedir(dir);
@@ -1481,6 +1483,12 @@ filename_completion_function(const char *text, int state)
 	}
 	/* find the match */
 	while ((entry = readdir(dir)) != NULL) {
+		/* skip . and .. */
+		if (entry->d_name[0] == '.' && (!entry->d_name[1]
+		    || (entry->d_name[1] == '.' && !entry->d_name[2])))
+			continue;
+		if (filename_len == 0)
+			break;
 		/* otherwise, get first entry where first */
 		/* filename_len characters are equal	  */
 		if (entry->d_name[0] == filename[0]
@@ -1727,13 +1735,14 @@ rl_complete_internal(int what_to_do)
 	rl_point = li->cursor - li->buffer;
 	rl_end = li->lastchar - li->buffer;
 
-	if (!rl_attempted_completion_function)
-		matches = completion_matches(temp, (CPFunction *)complet_func);
-	else {
+	if (rl_attempted_completion_function) {
 		int end = li->cursor - li->buffer;
 		matches = (*rl_attempted_completion_function) (temp, (int)
 		    (end - len), end);
-	}
+	} else
+		matches = 0;
+	if (!rl_attempted_completion_function || !matches)
+		matches = completion_matches(temp, (CPFunction *)complet_func);
 
 	if (matches) {
 		int i, retval = CC_REFRESH;
