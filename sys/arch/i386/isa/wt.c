@@ -1,4 +1,4 @@
-/*	$NetBSD: wt.c,v 1.19 1994/10/30 21:44:24 cgd Exp $	*/
+/*	$NetBSD: wt.c,v 1.20 1994/11/03 23:21:30 mycroft Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -163,8 +163,8 @@ int wtreadfm __P((struct wt_softc *sc));
 int wtwritefm __P((struct wt_softc *sc));
 u_char wtpoll __P((struct wt_softc *sc, int mask, int bits));
 
-int wtprobe();
-void wtattach();
+int wtprobe __P((struct device *, void *, void *));
+void wtattach __P((struct device *, struct device *, void *));
 int wtintr __P((struct wt_softc *sc));
 
 struct cfdriver wtcd = {
@@ -175,11 +175,11 @@ struct cfdriver wtcd = {
  * Probe for the presence of the device.
  */
 int
-wtprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+wtprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct wt_softc *sc = (void *)self;
+	struct wt_softc *sc = match;
 	struct isa_attach_args *ia = aux;
 	u_short iobase;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.23 1994/10/27 04:18:02 cgd Exp $	*/
+/*	$NetBSD: npx.c,v 1.24 1994/11/03 23:21:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -113,8 +113,8 @@ int	npxintr		__P((struct intrframe *frame));
 void	npxsave		__P((struct save87 *addr));
 int	npxprobe1	__P((struct isa_attach_args *));
 
-int npxprobe();
-void npxattach();
+int npxprobe __P((struct device *, void *, void *));
+void npxattach __P((struct device *, struct device *, void *));
 
 struct cfdriver npxcd = {
 	NULL, "npx", npxprobe, npxattach, DV_DULL, sizeof(struct device)
@@ -170,9 +170,9 @@ _probetrap:
  * need to use interrupts.  Return 1 if device exists.
  */
 int
-npxprobe(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+npxprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
 	struct	isa_attach_args *ia = aux;
 	int	result;
