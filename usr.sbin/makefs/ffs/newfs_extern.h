@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_extern.h,v 1.1.1.1 2001/10/26 06:22:10 lukem Exp $	*/
+/*	$NetBSD: newfs_extern.h,v 1.2 2004/06/24 22:30:13 lukem Exp $	*/
 /* From: NetBSD: extern.h,v 1.3 2000/12/01 12:03:27 simonb Exp $ */
 
 /*
@@ -36,6 +36,4 @@ void		ffs_write_superblock(struct fs *, const fsinfo_t *);
 void		ffs_rdfs(daddr_t, int, void *, const fsinfo_t *);
 void		ffs_wtfs(daddr_t, int, void *, const fsinfo_t *);
 
-#ifndef MAXINOPB
-#define MAXINOPB	(MAXBSIZE / DINODE_SIZE)
-#endif
+#define	FFS_MAXBSIZE	65536
