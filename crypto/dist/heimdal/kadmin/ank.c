@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include "kadmin_locl.h"
 
-RCSID("$Id: ank.c,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $");
+RCSID("$Id: ank.c,v 1.1.1.1.2.1 2001/04/05 23:22:59 he Exp $");
 
 /*
  * fetch the default principal corresponding to `princ'
@@ -211,7 +211,7 @@ static int num_args = sizeof(args) / sizeof(args[0]);
 static void
 usage(void)
 {
-    arg_printusage (args, num_args, "ank", "principal");
+    arg_printusage (args, num_args, "add", "principal...");
 }
 
 /*

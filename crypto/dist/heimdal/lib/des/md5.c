@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 
-RCSID("$Id: md5.c,v 1.1.1.1 2000/06/16 18:32:26 thorpej Exp $");
+RCSID("$Id: md5.c,v 1.1.1.1.2.1 2001/04/05 23:23:06 he Exp $");
 #endif
 
 #include "md5.h"
@@ -47,7 +47,7 @@ RCSID("$Id: md5.c,v 1.1.1.1 2000/06/16 18:32:26 thorpej Exp $");
 #define X data
 
 void
-MD5Init (struct md5 *m)
+MD5_Init (struct md5 *m)
 {
   m->sz[0] = 0;
   m->sz[1] = 0;
@@ -199,7 +199,7 @@ struct x32{
 };
 
 void
-MD5Update (struct md5 *m, const void *v, size_t len)
+MD5_Update (struct md5 *m, const void *v, size_t len)
 {
   const unsigned char *p = v;
   size_t old_sz = m->sz[0];
@@ -234,7 +234,7 @@ MD5Update (struct md5 *m, const void *v, size_t len)
 }
 
 void
-MD5Final (void *res, struct md5 *m)
+MD5_Final (void *res, struct md5 *m)
 {
   static unsigned char zeros[72];
   unsigned offset = (m->sz[0] / 8) % 64;
@@ -250,7 +250,7 @@ MD5Final (void *res, struct md5 *m)
   zeros[dstart+5] = (m->sz[1] >> 8) & 0xff;
   zeros[dstart+6] = (m->sz[1] >> 16) & 0xff;
   zeros[dstart+7] = (m->sz[1] >> 24) & 0xff;
-  MD5Update (m, zeros, dstart + 8);
+  MD5_Update (m, zeros, dstart + 8);
   {
       int i;
       unsigned char *r = (unsigned char *)res;

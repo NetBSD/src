@@ -33,10 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: getarg.c,v 1.1.1.1 2000/06/16 18:32:34 thorpej Exp $");
+RCSID("$Id: getarg.c,v 1.1.1.1.2.1 2001/04/05 23:23:15 he Exp $");
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <roken.h>
 #include "getarg.h"
 
@@ -56,11 +58,12 @@ print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 	if(longp)
 	    strlcat(string, "= Ns", len);
 	strlcat(string, " Ar ", len);
-    }else
+    } else {
 	if (longp)
 	    strlcat (string, "=", len);
 	else
 	    strlcat (string, " ", len);
+    }
 
     if (arg->arg_help)
 	s = arg->arg_help;
@@ -68,6 +71,8 @@ print_arg (char *string, size_t len, int mdoc, int longp, struct getargs *arg)
 	s = "integer";
     else if (arg->type == arg_string)
 	s = "string";
+    else if (arg->type == arg_strings)
+	s = "strings";
     else if (arg->type == arg_double)
 	s = "float";
     else

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2000, PADL Software Pty Ltd.
+ * Copyright (c) 1999 - 2001, PADL Software Pty Ltd.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
 
 #include "hdb_locl.h"
 
-RCSID("$Id: hdb-ldap.c,v 1.1.1.1 2000/06/16 18:32:49 thorpej Exp $");
+RCSID("$Id: hdb-ldap.c,v 1.1.1.1.2.1 2001/04/05 23:23:08 he Exp $");
 
 #ifdef OPENLDAP
 
@@ -583,8 +583,8 @@ LDAP__lookup_princ(krb5_context context, HDB * db, const char *princname,
     rc = 1;
     (void) ldap_set_option((LDAP *) db->db, LDAP_OPT_SIZELIMIT, (void *) &rc);
 
-    rc = ldap_search_s((LDAP *) db->db, db->name,
-		       LDAP_SCOPE_ONELEVEL, filter, NULL, 0, msg);
+    rc = ldap_search_s((LDAP *) db->db, db->name, LDAP_SCOPE_ONELEVEL, filter, 
+		       krb5kdcentry_attrs, 0, msg);
     if (rc != LDAP_SUCCESS) {
 	ret = HDB_ERR_NOENTRY;
 	goto out;
@@ -888,8 +888,11 @@ LDAP_seq(krb5_context context, HDB * db, unsigned flags, hdb_entry * entry)
     } while (rc == LDAP_RES_SEARCH_REFERENCE);
 
     if (ret == 0) {
-	if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	    hdb_unseal_keys(db, entry);
+	if (db->master_key_set && (flags & HDB_F_DECRYPT)) {
+	    ret = hdb_unseal_keys(context, db, entry);
+	    if (ret)
+		hdb_free_entry(context,entry);
+	}
     }
 
     return ret;
@@ -962,7 +965,8 @@ static krb5_error_code LDAP__connect(krb5_context context, HDB * db)
     if (db->db != NULL) {
 	/* connection has been opened. ping server. */
 	struct sockaddr_un addr;
-	int sd, len;
+	socklen_t len;
+	int sd;
 
 	if (ldap_get_option((LDAP *) db->db, LDAP_OPT_DESC, &sd) == 0 &&
 	    getpeername(sd, (struct sockaddr *) &addr, &len) < 0) {
@@ -1105,8 +1109,11 @@ LDAP_fetch(krb5_context context, HDB * db, unsigned flags,
 
     ret = LDAP_message2entry(context, db, e, entry);
     if (ret == 0) {
-	if (db->master_key_set && (flags & HDB_F_DECRYPT))
-	    hdb_unseal_keys(db, entry);
+	if (db->master_key_set && (flags & HDB_F_DECRYPT)) {
+	    ret = hdb_unseal_keys(context, db, entry);
+	    if (ret)
+		hdb_free_entry(context,entry);
+	}
     }
 
   out:
@@ -1134,7 +1141,9 @@ LDAP_store(krb5_context context, HDB * db, unsigned flags,
 	e = ldap_first_entry((LDAP *) db->db, msg);
     }
 
-    hdb_seal_keys(db, entry);
+    ret = hdb_seal_keys(context, db, entry);
+    if (ret)
+	goto out;
 
     /* turn new entry into LDAPMod array */
     ret = LDAP_entry2mods(context, db, entry, e, &mods);

@@ -38,7 +38,7 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-RCSID("$Id: main.c,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $");
+RCSID("$Id: main.c,v 1.1.1.1.2.1 2001/04/05 23:22:54 he Exp $");
 
 /* These values need to be the same as defined in libtelnet/kerberos5.c */
 /* Either define them in both places, or put in some common header file. */
@@ -103,7 +103,11 @@ static void
 krb5_init(void)
 {
     krb5_context context;
-    krb5_init_context(&context);
+    krb5_error_code ret;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return;
 
 #if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
     if (krb5_config_get_bool (context, NULL,

@@ -32,7 +32,7 @@
  */
 
 /* 
- * $Id: kadmin_locl.h,v 1.1.1.1 2000/06/16 18:32:07 thorpej Exp $
+ * $Id: kadmin_locl.h,v 1.1.1.1.2.1 2001/04/05 23:23:00 he Exp $
  */
 
 #ifndef __ADMIN_LOCL_H__
@@ -46,14 +46,21 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
 #endif
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
@@ -65,6 +72,9 @@
 #include <netinet6/in6.h>
 #endif
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
@@ -157,11 +167,23 @@ kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
 /* version4.c */
 
 void
-handle_v4(krb5_context context, int len, int fd);
+handle_v4(krb5_context context, krb5_keytab keytab, int len, int fd);
 
 /* random_password.c */
 
 void
 random_password(char *pw, size_t len);
+
+/* kadm_conn.c */
+
+sig_atomic_t term_flag, doing_useful_work;
+
+void parse_ports(krb5_context, const char*);
+int start_server(krb5_context);
+
+/* server.c */
+
+krb5_error_code
+kadmind_loop (krb5_context, krb5_auth_context, krb5_keytab, int);
 
 #endif /* __ADMIN_LOCL_H__ */

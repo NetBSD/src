@@ -1,6 +1,6 @@
-dnl $Id: test-package.m4,v 1.1.1.1 2000/06/16 18:32:18 thorpej Exp $
+dnl $Id: test-package.m4,v 1.1.1.1.2.1 2001/04/05 23:22:58 he Exp $
 dnl
-dnl AC_TEST_PACKAGE_NEW(package,headers,libraries,extra libs,default locations)
+dnl AC_TEST_PACKAGE_NEW(package,headers,libraries,extra libs,default locations, conditional)
 
 AC_DEFUN(AC_TEST_PACKAGE,[AC_TEST_PACKAGE_NEW($1,[#include <$2>],$4,,$5)])
 
@@ -74,7 +74,9 @@ if test "$ires" -a "$lres" -a "$with_$1" != "no"; then
 	$1_libdir="$lres"
 	INCLUDE_$1="-I$$1_includedir"
 	LIB_$1="-L$$1_libdir $3"
-	AC_DEFINE_UNQUOTED(upcase($1),1,[Define if you have the $1 package.])
+	m4_ifval([$6],
+		AC_DEFINE_UNQUOTED($6,1,[Define if you have the $1 package.]),
+		AC_DEFINE_UNQUOTED(upcase($1),1,[Define if you have the $1 package.]))
 	with_$1=yes
 	AC_MSG_RESULT([headers $ires, libraries $lres])
 else
@@ -83,6 +85,9 @@ else
 	with_$1=no
 	AC_MSG_RESULT($with_$1)
 fi
+dnl m4_ifval([$6],
+dnl 	AM_CONDITIONAL($6, test "$with_$1" = yes)
+dnl 	AM_CONDITIONAL(upcase($1), test "$with_$1" = yes))
 AC_SUBST(INCLUDE_$1)
 AC_SUBST(LIB_$1)
 ])

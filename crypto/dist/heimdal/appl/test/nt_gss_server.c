@@ -36,7 +36,7 @@
 #include <krb5.h>
 #include "nt_gss_common.h"
 
-RCSID("$Id: nt_gss_server.c,v 1.1.1.1 2000/06/16 18:31:46 thorpej Exp $");
+RCSID("$Id: nt_gss_server.c,v 1.1.1.1.2.1 2001/04/05 23:22:56 he Exp $");
 
 /*
  * This program tries to act as a server for the sample in `Sample
@@ -66,7 +66,7 @@ static int
 proto (int sock, const char *service)
 {
     struct sockaddr_in remote, local;
-    int addrlen;
+    socklen_t addrlen;
     gss_ctx_id_t context_hdl = GSS_C_NO_CONTEXT;
     gss_buffer_t input_token, output_token;
     gss_buffer_desc real_input_token, real_output_token;

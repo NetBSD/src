@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "test_locl.h"
-RCSID("$Id: uu_client.c,v 1.1.1.1 2000/06/16 18:31:47 thorpej Exp $");
+RCSID("$Id: uu_client.c,v 1.1.1.1.2.1 2001/04/05 23:22:56 he Exp $");
 
 krb5_context context;
 
@@ -40,7 +40,7 @@ static int
 proto (int sock, const char *hostname, const char *service)
 {
     struct sockaddr_in remote, local;
-    int addrlen;
+    socklen_t addrlen;
     krb5_address remote_addr, local_addr;
     krb5_context context;
     krb5_ccache ccache;
@@ -63,7 +63,7 @@ proto (int sock, const char *hostname, const char *service)
 
     status = krb5_init_context(&context);
     if (status)
-	krb5_err(context, 1, status, "krb5_init_context");
+	errx(1, "krb5_init_context failed: %d", status);
 
     status = krb5_cc_default (context, &ccache);
     if (status)

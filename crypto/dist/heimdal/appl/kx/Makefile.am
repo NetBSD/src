@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:31:42 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.1.2.1 2001/04/05 23:22:49 he Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -6,22 +6,21 @@ INCLUDES += $(INCLUDE_krb4) $(X_CFLAGS)
 
 WFLAGS += $(WFLAGS_NOIMPLICITINT)
 
-X_PROGS_BIN_PROGS     = kx
-X_PROGS_BIN_SCRPTS    = rxterm rxtelnet tenletxr
-X_PROGS_LIBEXEC_PROGS = kxd
+if HAVE_X
+
+bin_PROGRAMS = kx
+bin_SCRIPTS = rxterm rxtelnet tenletxr
+libexec_PROGRAMS = kxd
+
+else
+
+bin_PROGRAMS = 
+bin_SCRIPTS = 
+libexec_PROGRAMS = 
+
+endif
 
 CLEANFILES = rxterm rxtelnet tenletxr
-
-MAKE_X_PROGS_BIN_PROGS     = @MAKE_X_PROGS_BIN_PROGS@
-MAKE_X_PROGS_BIN_SCRPTS    = @MAKE_X_PROGS_BIN_SCRPTS@
-MAKE_X_PROGS_LIBEXEC_PROGS = @MAKE_X_PROGS_LIBEXEC_PROGS@
-
-bin_PROGRAMS     = $(MAKE_X_PROGS_BIN_PROGS)
-bin_SCRIPTS      = $(MAKE_X_PROGS_BIN_SCRPTS)
-libexec_PROGRAMS = $(MAKE_X_PROGS_LIBEXEC_PROGS)
-
-EXTRA_PROGRAMS         = $(X_PROGS_BIN_PROGS) $(X_PROGS_LIBEXEC_PROGS)
-EXTRA_SCRIPTS          = $(X_PROGS_BIN_SCRPTS)
 
 if NEED_WRITEAUTH
 XauWriteAuth_c = writeauth.c
@@ -69,6 +68,6 @@ LDADD = \
 	$(LIB_kafs)				\
 	$(LIB_krb5) \
 	$(LIB_krb4)				\
-	$(top_builddir)/lib/des/libdes.la	\
+	$(LIB_des)	\
 	$(LIB_roken)				\
 	$(X_LIBS) $(LIB_XauReadAuth) $(X_PRE_LIBS) $(X_EXTRA_LIBS)

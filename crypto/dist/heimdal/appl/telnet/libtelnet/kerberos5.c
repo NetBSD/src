@@ -53,7 +53,7 @@
 
 #include <config.h>
 
-RCSID("$Id: kerberos5.c,v 1.1.1.1 2000/06/16 18:31:54 thorpej Exp $");
+RCSID("$Id: kerberos5.c,v 1.1.1.1.2.1 2001/04/05 23:22:53 he Exp $");
 
 #ifdef	KRB5
 
@@ -77,6 +77,12 @@ RCSID("$Id: kerberos5.c,v 1.1.1.1 2000/06/16 18:31:54 thorpej Exp $");
 #include "encrypt.h"
 #include "auth.h"
 #include "misc.h"
+
+#if defined(DCE)
+int dfsk5ok = 0;
+int dfspag = 0;
+int dfsfwd = 0;
+#endif
 
 int forward_flags = 0;  /* Flags get set in telnet/main.c on -f and -F */
 
@@ -139,9 +145,12 @@ Data(Authenticator *ap, int type, void *d, int c)
 int
 kerberos5_init(Authenticator *ap, int server)
 {
-    krb5_init_context(&context);
+    krb5_error_code ret;
+
+    ret = krb5_init_context(&context);
+    if (ret)
+	return 0;
     if (server) {
-	krb5_error_code ret;
 	krb5_keytab kt;
 	krb5_kt_cursor cursor;
 
@@ -163,6 +172,7 @@ kerberos5_init(Authenticator *ap, int server)
     return(1);
 }
 
+extern int net;
 static int
 kerberos5_send(char *name, Authenticator *ap)
 {
@@ -171,9 +181,7 @@ kerberos5_send(char *name, Authenticator *ap)
     int ap_opts;
     krb5_data cksum_data;
     char foo[2];
-    extern int net;
     
-    printf("[ Trying %s ... ]\r\n", name);
     if (!UserNameRequested) {
 	if (auth_debug_mode) {
 	    printf("Kerberos V5: no user name supplied\r\n");
@@ -223,10 +231,42 @@ kerberos5_send(char *name, Authenticator *ap)
 
     cksum_data.length = sizeof(foo);
     cksum_data.data   = foo;
-    ret = krb5_mk_req(context, &auth_context, ap_opts,
-		      "host", RemoteHostName, 
-		      &cksum_data, ccache, &auth);
 
+
+    {
+	krb5_principal service;
+	char sname[128];
+
+
+	ret = krb5_sname_to_principal (context,
+				       RemoteHostName,
+				       NULL,
+				       KRB5_NT_SRV_HST,
+				       &service);
+	if(ret) {
+	    if (auth_debug_mode) {
+		printf ("Kerberos V5:"
+			" krb5_sname_to_principal(%s) failed (%s)\r\n",
+			RemoteHostName, krb5_get_err_text(context, ret));
+	    }
+	    return 0;
+	}
+	ret = krb5_unparse_name_fixed(context, service, sname, sizeof(sname));
+	if(ret) {
+	    if (auth_debug_mode) {
+		printf ("Kerberos V5:"
+			" krb5_unparse_name_fixed failed (%s)\r\n",
+			krb5_get_err_text(context, ret));
+	    }
+	    return 0;
+	}
+	printf("[ Trying %s (%s)... ]\r\n", name, sname);
+	ret = krb5_mk_req_exact(context, &auth_context, ap_opts,
+				service, 
+				&cksum_data, ccache, &auth);
+	krb5_free_principal (context, service);
+
+    }
     if (ret) {
 	if (1 || auth_debug_mode) {
 	    printf("Kerberos V5: mk_req failed (%s)\r\n",
@@ -328,8 +368,8 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 			  NULL,
 			  NULL,
 			  &ticket);
-	krb5_free_principal (context, server);
 
+	krb5_free_principal (context, server);
 	if (ret) {
 	    char *errbuf;
 
@@ -380,7 +420,7 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	}
 
 	if ((ap->way & AUTH_HOW_MASK) == AUTH_HOW_MUTUAL) {
-	    ret = krb5_mk_rep(context, &auth_context, &outbuf);
+	    ret = krb5_mk_rep(context, auth_context, &outbuf);
 	    if (ret) {
 		Data(ap, KRB_REJECT,
 		     "krb5_mk_rep failed", -1);
@@ -470,10 +510,13 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 	    break;
 	}
 
-	ret = krb5_rd_cred (context,
-			    auth_context,
-			    ccache,
-			    &inbuf);
+#if defined(DCE)
+	esetenv("KRB5CCNAME", ccname, 1);
+#endif
+	ret = krb5_rd_cred2 (context,
+			     auth_context,
+			     ccache,
+			     &inbuf);
 	if(ret) {
 	    char *errbuf;
 
@@ -488,8 +531,12 @@ kerberos5_is(Authenticator *ap, unsigned char *data, int cnt)
 		printf("Could not read forwarded credentials: %s\r\n",
 		       errbuf);
 	    free (errbuf);
-	} else
+	} else {
 	    Data(ap, KRB_FORWARD_ACCEPT, 0, 0);
+#if defined(DCE)
+	    dfsfwd = 1;
+#endif
+	}
 	chown (ccname + 5, pwd->pw_uid, -1);
 	if (auth_debug_mode)
 	    printf("Forwarded credentials obtained\r\n");
@@ -606,6 +653,9 @@ kerberos5_status(Authenticator *ap, char *name, size_t name_sz, int level)
 		     UserNameRequested))
 	{
 	    strlcpy(name, UserNameRequested, name_sz);
+#if defined(DCE)
+	    dfsk5ok = 1;
+#endif
 	    return(AUTH_VALID);
 	} else
 	    return(AUTH_USER);
@@ -748,5 +798,17 @@ kerberos5_forward(Authenticator *ap)
 	    printf("Forwarded local Kerberos V5 credentials to server\r\n");
     }
 }
+
+#if defined(DCE)
+/* if this was a K5 authentication try and join a PAG for the user. */
+void
+kerberos5_dfspag(void)
+{
+    if (dfsk5ok) {
+	dfspag = krb5_dfs_pag(context, dfsfwd, ticket->client,
+			      UserNameRequested);
+    }
+}
+#endif
 
 #endif /* KRB5 */

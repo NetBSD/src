@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,88 @@
 
 #include "kadm5_locl.h"
 
-RCSID("$Id: chpass_s.c,v 1.1.1.1 2000/06/16 18:32:50 thorpej Exp $");
+RCSID("$Id: chpass_s.c,v 1.1.1.1.2.1 2001/04/05 23:23:09 he Exp $");
+
+static kadm5_ret_t
+change(void *server_handle, 
+       krb5_principal princ,
+       char *password,
+       int cond)
+{
+    kadm5_server_context *context = server_handle;
+    hdb_entry ent;
+    kadm5_ret_t ret;
+    Key *keys;
+    size_t num_keys;
+    int cmp = 1;
+
+    ent.principal = princ;
+    ret = context->db->open(context->context, context->db, O_RDWR, 0);
+    if(ret)
+	return ret;
+    ret = context->db->fetch(context->context, context->db, 
+			     0, &ent);
+    if(ret == HDB_ERR_NOENTRY)
+	goto out;
+
+    num_keys = ent.keys.len;
+    keys     = ent.keys.val;
+
+    ent.keys.len = 0;
+    ent.keys.val = NULL;
+
+    ret = _kadm5_set_keys(context, &ent, password);
+    if(ret) {
+	_kadm5_free_keys (server_handle, num_keys, keys);
+	goto out2;
+    }
+    if (cond)
+	cmp = _kadm5_cmp_keys (ent.keys.val, ent.keys.len,
+			       keys, num_keys);
+    _kadm5_free_keys (server_handle, num_keys, keys);
+
+    if (cmp == 0)
+	goto out2;
+
+    ret = _kadm5_set_modifier(context, &ent);
+    if(ret)
+	goto out2;
+
+    ret = _kadm5_bump_pw_expire(context, &ent);
+    if (ret)
+	goto out2;
+
+    ret = hdb_seal_keys(context->context, context->db, &ent);
+    if (ret)
+	goto out2;
+
+    kadm5_log_modify (context,
+		      &ent,
+		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
+		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION);
+    
+    ret = context->db->store(context->context, context->db, 
+			     HDB_F_REPLACE, &ent);
+out2:
+    hdb_free_entry(context->context, &ent);
+out:
+    context->db->close(context->context, context->db);
+    return _kadm5_error_code(ret);
+}
+
+
+
+/*
+ * change the password of `princ' to `password' if it's not already that.
+ */
+
+kadm5_ret_t
+kadm5_s_chpass_principal_cond(void *server_handle, 
+			      krb5_principal princ,
+			      char *password)
+{
+    return change (server_handle, princ, password, 1);
+}
 
 /*
  * change the password of `princ' to `password'
@@ -44,38 +125,7 @@ kadm5_s_chpass_principal(void *server_handle,
 			 krb5_principal princ,
 			 char *password)
 {
-    kadm5_server_context *context = server_handle;
-    hdb_entry ent;
-    kadm5_ret_t ret;
-    ent.principal = princ;
-    ret = context->db->open(context->context, context->db, O_RDWR, 0);
-    if(ret)
-	return ret;
-    ret = context->db->fetch(context->context, context->db, 
-			     0, &ent);
-    if(ret == HDB_ERR_NOENTRY)
-	goto out;
-    ret = _kadm5_set_keys(context, &ent, password);
-    if(ret)
-	goto out2;
-    ret = _kadm5_set_modifier(context, &ent);
-    if(ret)
-	goto out2;
-
-    hdb_seal_keys(context->db, &ent);
-
-    kadm5_log_modify (context,
-		      &ent,
-		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO);
-    
-    ret = context->db->store(context->context, context->db, 
-			     HDB_F_REPLACE, &ent);
-out2:
-    hdb_free_entry(context->context, &ent);
-out:
-    context->db->close(context->context, context->db);
-    return _kadm5_error_code(ret);
+    return change (server_handle, princ, password, 0);
 }
 
 /*
@@ -104,13 +154,18 @@ kadm5_s_chpass_principal_with_key(void *server_handle,
     ret = _kadm5_set_modifier(context, &ent);
     if(ret)
 	goto out2;
+    ret = _kadm5_bump_pw_expire(context, &ent);
+    if (ret)
+	goto out2;
 
-    hdb_seal_keys(context->db, &ent);
+    ret = hdb_seal_keys(context->context, context->db, &ent);
+    if (ret)
+	goto out2;
 
     kadm5_log_modify (context,
 		      &ent,
 		      KADM5_PRINCIPAL | KADM5_MOD_NAME | KADM5_MOD_TIME |
-		      KADM5_KEY_DATA | KADM5_KVNO);
+		      KADM5_KEY_DATA | KADM5_KVNO | KADM5_PW_EXPIRATION);
     
     ret = context->db->store(context->context, context->db, 
 			     HDB_F_REPLACE, &ent);

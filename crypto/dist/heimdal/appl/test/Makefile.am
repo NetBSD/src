@@ -1,4 +1,4 @@
-# $Id: Makefile.am,v 1.1.1.1 2000/06/16 18:31:46 thorpej Exp $
+# $Id: Makefile.am,v 1.1.1.1.2.1 2001/04/05 23:22:55 he Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -32,6 +32,6 @@ nt_gss_client_LDADD = $(gssapi_server_LDADD)
 nt_gss_server_LDADD = $(nt_gss_client_LDADD)
 
 LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
-	$(top_builddir)/lib/des/libdes.la \
+	$(LIB_des) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)

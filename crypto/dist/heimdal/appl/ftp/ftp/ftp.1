@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.1.1.1 2000/06/16 18:31:49 thorpej Exp $
+.\" 	$NetBSD: ftp.1,v 1.1.1.1.2.1 2001/04/05 23:22:46 he Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,6 +50,7 @@ file transfer program
 .Op Fl n
 .Op Fl g
 .Op Fl p
+.Op Fl l
 .Op Ar host
 .Sh DESCRIPTION
 .Nm Ftp
@@ -96,6 +97,8 @@ Turn on passive mode.
 Enables debugging.
 .It Fl g
 Disables file name globbing.
+.It Fl l
+Disables command line editing.
 .El
 .Pp
 The client host with which
@@ -913,7 +916,7 @@ if verbose is on, when a file transfer completes, statistics
 regarding the efficiency of the transfer are reported.
 By default,
 verbose is on.
-.It Ic ? Op Ar command
+.It Ic \&? Op Ar command
 A synonym for help.
 .El
 .Pp

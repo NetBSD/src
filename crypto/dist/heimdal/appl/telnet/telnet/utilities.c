@@ -37,7 +37,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$Id: utilities.c,v 1.1.1.1 2000/06/16 18:31:56 thorpej Exp $");
+RCSID("$Id: utilities.c,v 1.1.1.1.2.1 2001/04/05 23:22:54 he Exp $");
 
 FILE	*NetTrace = 0;		/* Not in bss, since needs to stay */
 int	prettydump;
@@ -816,6 +816,9 @@ EmptyTerminal(void)
     fd_set	outs;
 
     FD_ZERO(&outs);
+
+    if (tout >= FD_SETSIZE)
+	ExitString("fd too large", 1);
 
     if (TTYBYTES() == 0) {
 	FD_SET(tout, &outs);

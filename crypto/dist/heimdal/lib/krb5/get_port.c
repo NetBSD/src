@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$Id: get_port.c,v 1.1.1.1 2000/06/16 18:32:57 thorpej Exp $");
+RCSID("$Id: get_port.c,v 1.1.1.1.2.1 2001/04/05 23:23:12 he Exp $");
 
 int
 krb5_getportbyname (krb5_context context,
@@ -44,8 +44,10 @@ krb5_getportbyname (krb5_context context,
     struct servent *sp;
 
     if ((sp = roken_getservbyname (service, proto)) == NULL) {
+#if 0
 	krb5_warnx(context, "%s/%s unknown service, using default port %d", 
 		   service, proto, default_port);
+#endif
 	return htons(default_port);
     } else
 	return sp->s_port;

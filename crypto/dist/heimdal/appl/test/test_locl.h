@@ -31,7 +31,7 @@
  * SUCH DAMAGE. 
  */
 
-/* $Id: test_locl.h,v 1.1.1.1 2000/06/16 18:31:47 thorpej Exp $ */
+/* $Id: test_locl.h,v 1.1.1.1.2.1 2001/04/05 23:22:56 he Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -79,6 +79,7 @@
 #define PORT "test"
 
 extern char *service;
+extern krb5_keytab keytab;
 extern int fork_flag;
 int server_setup(krb5_context*, int, char**);
 int client_setup(krb5_context*, int*, char**);
