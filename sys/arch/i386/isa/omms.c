@@ -1,4 +1,4 @@
-/*	$NetBSD: omms.c,v 1.1 1999/01/23 15:05:39 drochner Exp $	*/
+/*	$NetBSD: omms.c,v 1.1.24.1 2001/09/08 21:38:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -353,7 +353,7 @@ ommsintr(arg)
 			sc->sc_state &= ~MMS_ASLP;
 			wakeup((caddr_t)sc);
 		}
-		selwakeup(&sc->sc_rsel);
+		selnotify(&sc->sc_rsel, 0);
 	}
 
 	return -1;
@@ -378,4 +378,53 @@ mmspoll(dev, events, p)
 
 	splx(s);
 	return (revents);
+}
+
+static void
+filt_mmsrdetach(struct knote *kn)
+{
+	struct omms_softc *sc = (void *) kn->kn_hook;
+	int s;
+
+	s = spltty();
+	SLIST_REMOVE(&sc->sc_rsel.si_klist, kn, knote, kn_selnext);
+	splx(s);
+}
+
+static int
+filt_mmsread(struct knote *kn, long hint)
+{
+	struct omms_softc *sc = (void *) kn->kn_hook;
+
+	kn->kn_data = sc->sc_q.c_cc;
+	return (kn->kn_data > 0);
+}
+
+static const struct filterops mmsread_filtops =
+	{ 1, NULL, filt_mmsrdetach, filt_mmsread };
+
+int
+mmskqfilter(dev_t dev, struct knote *kn)
+{
+	struct omms_softc *sc = omms_cd.cd_devs[MMSUNIT(dev)];
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &sc->sc_rsel.si_klist;
+		kn->kn_fop = &mmsread_filtops;
+		break;
+
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *) sc;
+
+	s = spltty();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
 }
