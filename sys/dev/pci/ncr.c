@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.80.2.3 1999/09/18 01:12:25 cgd Exp $	*/
+/*	$NetBSD: ncr.c,v 1.80.2.4 1999/10/18 05:43:11 cgd Exp $	*/
 
 /**************************************************************************
 **
@@ -1356,8 +1356,8 @@ struct script {
 	ncrcmd  msg_bad		[  6];
 	ncrcmd  complete	[ 13];
 	ncrcmd	cleanup		[ 12];
-	ncrcmd	cleanup0	[ 11];
-	ncrcmd	signal		[ 10];
+	ncrcmd	cleanup0	[ 9];
+	ncrcmd	signal		[ 12];
 	ncrcmd  save_dp		[  5];
 	ncrcmd  restore_dp	[  5];
 	ncrcmd  disconnect	[ 12];
@@ -1518,7 +1518,7 @@ static	int	read_tekram_eeprom
 
 #if 0
 static char ident[] =
-	"\n$NetBSD: ncr.c,v 1.80.2.3 1999/09/18 01:12:25 cgd Exp $\n";
+	"\n$NetBSD: ncr.c,v 1.80.2.4 1999/10/18 05:43:11 cgd Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -2287,20 +2287,20 @@ static	struct script script0 = {
 		0,
 	SCR_JUMP ^ IFTRUE (DATA (S_CHECK_COND)),
 		PADDRH(getcc2),
-	/*
-	**	And make the DSA register invalid.
-	*/
-/*>>>*/	SCR_LOAD_REG (dsa, 0xff), /* invalid */
-		0,
 }/*-------------------------< SIGNAL >----------------------*/,{
 	/*
 	**	if status = queue full,
 	**	reinsert in startqueue and stall queue.
 	*/
-	SCR_FROM_REG (SS_REG),
+/*>>>*/	SCR_FROM_REG (SS_REG),
 		0,
 	SCR_INT ^ IFTRUE (DATA (S_QUEUE_FULL)),
 		SIR_STALL_QUEUE,
+	/*
+	**	And make the DSA register invalid.
+	*/
+	SCR_LOAD_REG (dsa, 0xff), /* invalid */
+		0,
 	/*
 	**	if job completed ...
 	*/
@@ -5836,8 +5836,19 @@ static void ncr_settags (tcb_p tp, lcb_p lp, u_long usrtags)
 	tmp = lp->actlink;
 	if (tmp < reqtags) tmp = reqtags;
 	lp->reqccbs = tmp;
+
+#if 0
+	/*
+	 * XXX unless we do this, we'll end up wasting ccbs (since
+	 * XXX they are never freed back to the system), but wasting
+	 * XXX CCBs is better than keeping reqlink high, because that
+	 * XXX allows high numbers of tags to continue to be used...
+	 * XXX which in turn prevents 'queue full' problems from ever
+	 * XXX being solved.
+	 */
 	if (lp->reqlink < lp->reqccbs)
 		lp->reqlink = lp->reqccbs;
+#endif
 }
 
 /*----------------------------------------------------
@@ -7236,8 +7247,36 @@ void ncr_int_sir (ncb_p np)
 
 		/*
 		**	Try to disable tagged transfers.
+		**
+		**	XXX The right thing to do here is to back off
+		**	XXX gracefully, i.e. issue one fewer command
+		**	XXX at a time, since this command should be
+		**	XXX triggered by the first command beyond what
+		**	XXX the device can handle.
+		**	XXX
+		**	XXX However, that doesn't work right now, because
+		**	XXX of a combination of two bugs: some (Quantum)
+		**	XXX drives seem to interpret the tags (tags are
+		**	XXX supposed to be opaque) and reject tags over
+		**	XXX a certain number, and this driver doesn't free
+		**	XXX 'extra' CCBs which will never be used for
+		**	XXX transfters (based on the fact that there are
+		**	XXX more CCBs than tags allowed).
+		**	XXX
+		**	XXX Therefore, though it costs performance on
+		**	XXX some drives that could do better, for hardware
+		**	XXX compatibility we just disable tagged queueing
+		**	XXX when we see a QUEUE FULL message.
+		**	XXX
+		**	XXX This driver should be shot from a cannon.
 		*/
+#if 0 /* XXX this, or something like it, is better, but doesn't work */
+		assert(cp->tag);
+		if (cp->tag) /* XXX should be a better way than cp->tag - 1 */
+			ncr_setmaxtags (&np->target[target], cp->tag - 1);
+#else
 		ncr_setmaxtags (&np->target[target], 0);
+#endif
 
 		/*
 		** @QUEUE@
