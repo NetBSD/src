@@ -31,7 +31,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pathnames.h	5.2 (Berkeley) 4/16/91
- *	$Id: pathnames.h,v 1.2 1993/08/01 18:09:56 mycroft Exp $
+ *	$Id: pathnames.h,v 1.3 1994/01/03 19:14:20 jtc Exp $
  */
 
+#define _NAME_RANTMP	"ranlib.XXXXXX"
 #define _PATH_RANTMP	"/tmp/ranlib.XXXXXX"

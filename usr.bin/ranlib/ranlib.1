@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ranlib.1	6.7 (Berkeley) 5/9/91
-.\"	$Id: ranlib.1,v 1.2 1993/08/01 07:29:45 mycroft Exp $
+.\"	$Id: ranlib.1,v 1.3 1994/01/03 19:14:21 jtc Exp $
 .\"
 .Dd May 9, 1991
 .Dt RANLIB 1
@@ -69,6 +69,11 @@ This is also useful after using the
 .Fl t
 option of
 .Xr make 1 .
+.El
+.Sh ENVIRONMENT
+.Bl -tag -width TMPDIR -compact
+.It Ev TMPDIR
+The pathname of the directory to use when creating temporary files.
 .El
 .Sh FILES
 .Bl -tag -width /tmp/ranlib.XXXXXX -compact
