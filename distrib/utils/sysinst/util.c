@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.33 1999/01/25 23:34:24 garbled Exp $	*/
+/*	$NetBSD: util.c,v 1.34 1999/03/08 19:42:30 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -198,6 +198,7 @@ get_via_floppy()
 	char fddev[STRSIZE] = "/dev/fd0a";
 	char fname[STRSIZE];
 	char fullname[STRSIZE];
+	char catcmd[STRSIZE];
 	distinfo *list;
 	char post[4];
 	int  mounted = 0;
@@ -236,7 +237,13 @@ get_via_floppy()
 				mounted = 1;
 				first = 0;
 			}
-			run_prog(0, 0, "/bin/cat %s >> %s", fullname, distname);
+			sprintf(catcmd, "/bin/cat %s >> %s",
+				fullname, distname);
+			if (logging)
+				(void)fprintf(log, "%s\n", catcmd);
+			if (scripting)
+				(void)fprintf(script, "%s\n", catcmd);
+			do_system(catcmd);
 			if (post[2] < 'z')
 				post[2]++;
 			else
