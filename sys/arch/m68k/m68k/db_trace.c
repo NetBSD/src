@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.18 1997/01/27 23:07:04 gwr Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.19 1997/02/04 18:15:18 gwr Exp $	*/
 
 /* 
  * Mach Operating System
@@ -47,26 +47,26 @@ static int db_var_short __P((struct db_variable *, db_expr_t *, int));
 
 struct db_variable db_regs[] = {
 	/* D0-D7 */
-	{ "d0",	(int *)&ddb_regs.tf_regs[0],	FCN_NULL },
-	{ "d1",	(int *)&ddb_regs.tf_regs[1],	FCN_NULL },
-	{ "d2",	(int *)&ddb_regs.tf_regs[2],	FCN_NULL },
-	{ "d3",	(int *)&ddb_regs.tf_regs[3],	FCN_NULL },
-	{ "d4",	(int *)&ddb_regs.tf_regs[4],	FCN_NULL },
-	{ "d5",	(int *)&ddb_regs.tf_regs[5],	FCN_NULL },
-	{ "d6",	(int *)&ddb_regs.tf_regs[6],	FCN_NULL },
-	{ "d7",	(int *)&ddb_regs.tf_regs[7],	FCN_NULL },
+	{ "d0",	(long *)&ddb_regs.tf_regs[0],	FCN_NULL },
+	{ "d1",	(long *)&ddb_regs.tf_regs[1],	FCN_NULL },
+	{ "d2",	(long *)&ddb_regs.tf_regs[2],	FCN_NULL },
+	{ "d3",	(long *)&ddb_regs.tf_regs[3],	FCN_NULL },
+	{ "d4",	(long *)&ddb_regs.tf_regs[4],	FCN_NULL },
+	{ "d5",	(long *)&ddb_regs.tf_regs[5],	FCN_NULL },
+	{ "d6",	(long *)&ddb_regs.tf_regs[6],	FCN_NULL },
+	{ "d7",	(long *)&ddb_regs.tf_regs[7],	FCN_NULL },
 	/* A0-A7 */
-	{ "a0",	(int *)&ddb_regs.tf_regs[8+0],	FCN_NULL },
-	{ "a1",	(int *)&ddb_regs.tf_regs[8+1],	FCN_NULL },
-	{ "a2",	(int *)&ddb_regs.tf_regs[8+2],	FCN_NULL },
-	{ "a3",	(int *)&ddb_regs.tf_regs[8+3],	FCN_NULL },
-	{ "a4",	(int *)&ddb_regs.tf_regs[8+4],	FCN_NULL },
-	{ "a5",	(int *)&ddb_regs.tf_regs[8+5],	FCN_NULL },
-	{ "a6",	(int *)&ddb_regs.tf_regs[8+6],	FCN_NULL },
-	{ "sp",	(int *)&ddb_regs.tf_regs[8+7],	FCN_NULL },
+	{ "a0",	(long *)&ddb_regs.tf_regs[8+0],	FCN_NULL },
+	{ "a1",	(long *)&ddb_regs.tf_regs[8+1],	FCN_NULL },
+	{ "a2",	(long *)&ddb_regs.tf_regs[8+2],	FCN_NULL },
+	{ "a3",	(long *)&ddb_regs.tf_regs[8+3],	FCN_NULL },
+	{ "a4",	(long *)&ddb_regs.tf_regs[8+4],	FCN_NULL },
+	{ "a5",	(long *)&ddb_regs.tf_regs[8+5],	FCN_NULL },
+	{ "a6",	(long *)&ddb_regs.tf_regs[8+6],	FCN_NULL },
+	{ "sp",	(long *)&ddb_regs.tf_regs[8+7],	FCN_NULL },
 	/* misc. */
-	{ "pc",	(int *)&ddb_regs.tf_pc, 	FCN_NULL },
-	{ "sr",	(int *)&ddb_regs.tf_sr,	db_var_short }
+	{ "pc",	(long *)&ddb_regs.tf_pc, 	FCN_NULL },
+	{ "sr",	(long *)&ddb_regs.tf_sr,	db_var_short }
 };
 struct db_variable *db_eregs = db_regs + sizeof(db_regs)/sizeof(db_regs[0]);
 
