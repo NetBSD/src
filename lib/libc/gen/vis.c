@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.8 1997/07/21 14:07:47 jtc Exp $	*/
+/*	$NetBSD: vis.c,v 1.9 1998/02/03 18:23:58 perry Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)vis.c	8.1 (Berkeley) 7/19/93";
 #else
-__RCSID("$NetBSD: vis.c,v 1.8 1997/07/21 14:07:47 jtc Exp $");
+__RCSID("$NetBSD: vis.c,v 1.9 1998/02/03 18:23:58 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,9 +61,9 @@ __weak_alias(vis,_vis);
  */
 char *
 vis(dst, c, flag, nextc)
-	register char *dst;
+	char *dst;
 	int c, nextc;
-	register int flag;
+	int flag;
 {
 	if (((u_int)c <= UCHAR_MAX && isascii(c) && isgraph(c)) ||
 	   ((flag & VIS_SP) == 0 && c == ' ') ||
@@ -165,11 +165,11 @@ done:
  */
 int
 strvis(dst, src, flag)
-	register char *dst;
-	register const char *src;
+	char *dst;
+	const char *src;
 	int flag;
 {
-	register char c;
+	char c;
 	char *start;
 
 	for (start = dst; (c = *src) != '\0';)
@@ -180,12 +180,12 @@ strvis(dst, src, flag)
 
 int
 strvisx(dst, src, len, flag)
-	register char *dst;
-	register const char *src;
-	register size_t len;
+	char *dst;
+	const char *src;
+	size_t len;
 	int flag;
 {
-	register char c;
+	char c;
 	char *start;
 
 	for (start = dst; len > 1; len--) {

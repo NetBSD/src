@@ -1,4 +1,4 @@
-/*	$NetBSD: psignal.c,v 1.11 1997/07/21 14:07:24 jtc Exp $	*/
+/*	$NetBSD: psignal.c,v 1.12 1998/02/03 18:23:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)psignal.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: psignal.c,v 1.11 1997/07/21 14:07:24 jtc Exp $");
+__RCSID("$NetBSD: psignal.c,v 1.12 1998/02/03 18:23:50 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -63,8 +63,8 @@ psignal(sig, s)
 	const char *s;
 {
 	static char buf[NL_TEXTMAX];
-	register const char *c;
-	register int n;
+	const char *c;
+	int n;
 
 	c = __strsignal(sig, buf, NL_TEXTMAX);
 	if (s && *s) {

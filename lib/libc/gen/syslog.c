@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.13 1998/02/02 02:41:31 perry Exp $	*/
+/*	$NetBSD: syslog.c,v 1.14 1998/02/03 18:23:53 perry Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.13 1998/02/02 02:41:31 perry Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.14 1998/02/03 18:23:53 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -107,11 +107,11 @@ syslog(pri, fmt, va_alist)
 void
 vsyslog(pri, fmt, ap)
 	int pri;
-	register const char *fmt;
+	const char *fmt;
 	va_list ap;
 {
-	register int cnt;
-	register char ch, *p, *t;
+	int cnt;
+	char ch, *p, *t;
 	time_t now;
 	int fd, saved_errno;
 #define	TBUF_LEN	2048

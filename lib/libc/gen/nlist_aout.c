@@ -1,4 +1,4 @@
-/*	$NetBSD: nlist_aout.c,v 1.4 1997/12/15 05:43:50 mrg Exp $	*/
+/*	$NetBSD: nlist_aout.c,v 1.5 1998/02/03 18:23:47 perry Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.4 1997/12/15 05:43:50 mrg Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.5 1998/02/03 18:23:47 perry Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -59,14 +59,14 @@ __RCSID("$NetBSD: nlist_aout.c,v 1.4 1997/12/15 05:43:50 mrg Exp $");
 #ifdef NLIST_AOUT
 int
 __fdnlist_aout(fd, list)
-	register int fd;
-	register struct nlist *list;
+	int fd;
+	struct nlist *list;
 {
-	register struct nlist *p, *s;
-	register caddr_t strtab;
-	register off_t stroff, symoff;
-	register u_long symsize;
-	register int nent, cc;
+	struct nlist *p, *s;
+	caddr_t strtab;
+	off_t stroff, symoff;
+	u_long symsize;
+	int nent, cc;
 	size_t strsize;
 	struct nlist nbuf[1024];
 	struct exec exec;
@@ -124,7 +124,7 @@ __fdnlist_aout(fd, list)
 			break;
 		symsize -= cc;
 		for (s = nbuf; cc > 0; ++s, cc -= sizeof(*s)) {
-			register int soff = s->n_un.n_strx;
+			int soff = s->n_un.n_strx;
 
 			if (soff == 0 || (s->n_type & N_STAB) != 0)
 				continue;
