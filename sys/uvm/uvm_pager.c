@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.18 1999/05/24 23:36:23 thorpej Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.19 1999/05/26 06:42:57 thorpej Exp $	*/
 
 /*
  *
@@ -116,6 +116,9 @@ uvm_pager_init()
  *
  * we basically just map in a blank map entry to reserve the space in the
  * map and then use pmap_enter() to put the mappings in by hand.
+ *
+ * XXX It would be nice to know the direction of the I/O, so that we can
+ * XXX map only what is necessary.
  */
 
 vaddr_t
@@ -172,8 +175,14 @@ ReStart:
 			panic("uvm_pagermapin: page not busy");
 #endif
 
+		/*
+		 * XXX VM_PROT_DEFAULT includes VM_PROT_EXEC; is that
+		 * XXX really necessary?  It could lead to unnecessary
+		 * XXX instruction cache flushes.
+		 */
 		pmap_enter(vm_map_pmap(pager_map), cva, VM_PAGE_TO_PHYS(pp),
-		    VM_PROT_DEFAULT, TRUE, 0);
+		    VM_PROT_DEFAULT, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
 	}
 
 	UVMHIST_LOG(maphist, "<- done (KVA=0x%x)", kva,0,0,0);
