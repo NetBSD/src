@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.29 1996/04/18 00:25:22 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.30 1996/04/22 02:37:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -135,6 +135,23 @@ lerdcsr(sc, port)
 	val = ler1->ler1_rdp;
 	return (val);
 }
+
+integrate void
+lehwinit(sc)
+	struct le_softc *sc;
+{
+#if defined(SUN4M) 
+	if (CPU_ISSUN4M) {
+		struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+
+		if (ifp->if_flags & IFF_LINK0)
+			sc->sc_dma->sc_regs->csr |= D_MEDIA_UTP;
+		else
+			sc->sc_dma->sc_regs->csr &= ~D_MEDIA_UTP;
+	}
+#endif
+}
+	
 
 int
 lematch(parent, match, aux)
