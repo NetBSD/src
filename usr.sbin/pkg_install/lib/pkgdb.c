@@ -1,8 +1,8 @@
-/*	$NetBSD: pkgdb.c,v 1.3 1999/03/01 12:06:57 agc Exp $	*/
+/*	$NetBSD: pkgdb.c,v 1.3.2.1 1999/09/13 22:35:32 he Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkgdb.c,v 1.3 1999/03/01 12:06:57 agc Exp $");
+__RCSID("$NetBSD: pkgdb.c,v 1.3.2.1 1999/09/13 22:35:32 he Exp $");
 #endif
 
 /*
@@ -57,24 +57,24 @@ static int pkgdb_iter_flag;
 int
 pkgdb_open(int ro)
 {
-    BTREEINFO info;
-    
-    pkgdb_iter_flag=0;    /* used in pkgdb_iter() */
+	BTREEINFO info;
 
-    /* try our btree format first */
-    info.flags = 0;
-    info.cachesize = 0;
-    info.maxkeypage = 0;
-    info.minkeypage = 0;
-    info.psize = 0;
-    info.compare = NULL;
-    info.prefix = NULL;
-    info.lorder = 0;
-    pkgdbp = (DB *)dbopen(_pkgdb_getPKGDB_FILE(),
-			   ro?O_RDONLY:O_RDWR|O_CREAT,
-			   0644, DB_BTREE, (void *)&info);
-    return (pkgdbp==NULL)?-1:0;
-  }
+	pkgdb_iter_flag = 0;	/* used in pkgdb_iter() */
+
+	/* try our btree format first */
+	info.flags = 0;
+	info.cachesize = 0;
+	info.maxkeypage = 0;
+	info.minkeypage = 0;
+	info.psize = 0;
+	info.compare = NULL;
+	info.prefix = NULL;
+	info.lorder = 0;
+	pkgdbp = (DB *) dbopen(_pkgdb_getPKGDB_FILE(),
+	    ro ? O_RDONLY : O_RDWR | O_CREAT,
+	    0644, DB_BTREE, (void *) &info);
+	return (pkgdbp == NULL) ? -1 : 0;
+}
 
 /*
  * Close the pkg database
@@ -82,8 +82,8 @@ pkgdb_open(int ro)
 void
 pkgdb_close(void)
 {
-    if (pkgdbp != NULL)
-	(void)(pkgdbp->close)(pkgdbp);
+	if (pkgdbp != NULL)
+		(void) (pkgdbp->close) (pkgdbp);
 }
 
 /*
@@ -96,20 +96,20 @@ pkgdb_close(void)
 int
 pkgdb_store(const char *key, const char *val)
 {
-    DBT keyd, vald;
-    
-    if (pkgdbp == NULL)
-	return -1;
-    
-    keyd.data = (void *) key;
-    keyd.size = strlen(key) + 1;
-    vald.data = (void *) val;
-    vald.size = strlen(val) + 1;
+	DBT     keyd, vald;
 
-    if (keyd.size > FILENAME_MAX || vald.size > FILENAME_MAX)
-	return -1;
+	if (pkgdbp == NULL)
+		return -1;
 
-    return (pkgdbp->put)(pkgdbp, &keyd, &vald, R_NOOVERWRITE);
+	keyd.data = (void *) key;
+	keyd.size = strlen(key) + 1;
+	vald.data = (void *) val;
+	vald.size = strlen(val) + 1;
+
+	if (keyd.size > FILENAME_MAX || vald.size > FILENAME_MAX)
+		return -1;
+
+	return (pkgdbp->put) (pkgdbp, &keyd, &vald, R_NOOVERWRITE);
 }
 
 /*
@@ -118,30 +118,31 @@ pkgdb_store(const char *key, const char *val)
  *  NULL if some error occurred or value for key not found (check errno!)
  *  String for "value" else
  */
-char *
+char   *
 pkgdb_retrieve(const char *key)
 {
-    DBT keyd, vald;
-    int status;
-    
-    if (pkgdbp == NULL)
-	return NULL;
-    
-    keyd.data=(void *)key; keyd.size=strlen(key)+1;
-    errno=0; /* to be sure it's 0 if the key doesn't match anything */
+	DBT     keyd, vald;
+	int     status;
 
-    status = (pkgdbp->get)(pkgdbp, &keyd, &vald, 0);
-    if (status) {
-	vald.data = NULL;
-	vald.size = 0;
-    }
-    
-    return vald.data;
+	if (pkgdbp == NULL)
+		return NULL;
+
+	keyd.data = (void *) key;
+	keyd.size = strlen(key) + 1;
+	errno = 0;		/* to be sure it's 0 if the key doesn't match anything */
+
+	status = (pkgdbp->get) (pkgdbp, &keyd, &vald, 0);
+	if (status) {
+		vald.data = NULL;
+		vald.size = 0;
+	}
+
+	return vald.data;
 }
 
 /*
  *  Remove data set from pkgdb
- *  Return value as ypdb_delete: 
+ *  Return value as ypdb_delete:
  *   0: everything ok
  *   1: key not present
  *  -1: some error occured (see errno)
@@ -149,26 +150,26 @@ pkgdb_retrieve(const char *key)
 int
 pkgdb_remove(const char *key)
 {
-    DBT keyd;
-    int status;
-    
-    if (pkgdbp == NULL)
-	return -1;
+	DBT     keyd;
+	int     status;
 
-    keyd.data=(char *)key;
-    keyd.size=strlen(key)+1;
-    if (keyd.size > FILENAME_MAX)
-	return -1;
-    
-    errno=0;
-    status = (pkgdbp->del)(pkgdbp, &keyd, 0);
-    if (status) {
-	if (errno) 
-	    return -1;    /* error */
-	else
-	    return 1;     /* key not present */
-    } else
-	return 0;         /* everything fine */
+	if (pkgdbp == NULL)
+		return -1;
+
+	keyd.data = (char *) key;
+	keyd.size = strlen(key) + 1;
+	if (keyd.size > FILENAME_MAX)
+		return -1;
+
+	errno = 0;
+	status = (pkgdbp->del) (pkgdbp, &keyd, 0);
+	if (status) {
+		if (errno)
+			return -1;	/* error */
+		else
+			return 1;	/* key not present */
+	} else
+		return 0;	/* everything fine */
 }
 
 /*
@@ -177,52 +178,52 @@ pkgdb_remove(const char *key)
  *    NULL if no more data is available
  *   !NULL else
  */
-char *
+char   *
 pkgdb_iter(void)
 {
-    DBT key, val;    
-    int status;
-    
-    if (pkgdb_iter_flag == 0) {
-  	pkgdb_iter_flag = 1;
+	DBT     key, val;
+	int     status;
 
-	status = (pkgdbp->seq)(pkgdbp, &key, &val, R_FIRST);
-    } else 
-	status = (pkgdbp->seq)(pkgdbp, &key, &val, R_NEXT);
-    
-    if (status)
-	key.data = NULL;
-    
-    return (char *) key.data;
+	if (pkgdb_iter_flag == 0) {
+		pkgdb_iter_flag = 1;
+
+		status = (pkgdbp->seq) (pkgdbp, &key, &val, R_FIRST);
+	} else
+		status = (pkgdbp->seq) (pkgdbp, &key, &val, R_NEXT);
+
+	if (status)
+		key.data = NULL;
+
+	return (char *) key.data;
 }
 
 /*
- *  return filename as string that can be passed to free(3)
+ *  Return filename as string that can be passed to free(3)
  */
-char *
+char   *
 _pkgdb_getPKGDB_FILE(void)
 {
-    char *tmp;
+	char   *tmp;
 
-    tmp=malloc(FILENAME_MAX);
-    if (tmp==NULL)
-	    errx(1, "_pkgdb_getPKGDB_FILE: out of memory");
-    snprintf(tmp, FILENAME_MAX, "%s/%s", _pkgdb_getPKGDB_DIR(), PKGDB_FILE);
-    return tmp;
+	tmp = malloc(FILENAME_MAX);
+	if (tmp == NULL)
+		errx(1, "_pkgdb_getPKGDB_FILE: out of memory");
+	snprintf(tmp, FILENAME_MAX, "%s/%s", _pkgdb_getPKGDB_DIR(), PKGDB_FILE);
+	return tmp;
 }
 
 /*
- *  return directory where pkgdb is stored
+ *  Return directory where pkgdb is stored
  *  as string that can be passed to free(3)
  */
-char *
+char   *
 _pkgdb_getPKGDB_DIR(void)
 {
-    char *tmp;
-    static char *cache=NULL;
+	char   *tmp;
+	static char *cache = NULL;
 
-    if (cache == NULL) 
-	cache = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
-    
-    return cache;
+	if (cache == NULL)
+		cache = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+
+	return cache;
 }
