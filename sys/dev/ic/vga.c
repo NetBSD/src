@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.16 1999/04/01 11:52:42 drochner Exp $ */
+/* $NetBSD: vga.c,v 1.17 1999/04/10 14:02:11 drochner Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -169,6 +169,21 @@ const struct wsscreen_descr vga_stdscreen = {
 	&vga_emulops,
 	8, 16,
 	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
+}, vga_40lscreen = {
+	"80x40", 80, 40,
+	&vga_emulops,
+	8, 10,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_BLINK
+}, vga_40lscreen_mono = {
+	"80x40", 80, 40,
+	&vga_emulops,
+	8, 10,
+	WSSCREEN_HILIT | WSSCREEN_UNDERLINE | WSSCREEN_BLINK | WSSCREEN_REVERSE
+}, vga_40lscreen_bf = {
+	"80x40bf", 80, 40,
+	&vga_emulops,
+	8, 10,
+	WSSCREEN_WSCOLORS | WSSCREEN_BLINK
 }, vga_50lscreen = {
 	"80x50", 80, 50,
 	&vga_emulops,
@@ -191,11 +206,14 @@ const struct wsscreen_descr vga_stdscreen = {
 const struct wsscreen_descr *_vga_scrlist[] = {
 	&vga_stdscreen,
 	&vga_stdscreen_bf,
+	&vga_40lscreen,
+	&vga_40lscreen_bf,
 	&vga_50lscreen,
 	&vga_50lscreen_bf,
 	/* XXX other formats, graphics screen? */
 }, *_vga_scrlist_mono[] = {
 	&vga_stdscreen_mono,
+	&vga_40lscreen_mono,
 	&vga_50lscreen_mono,
 	/* XXX other formats, graphics screen? */
 };
