@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.34 2002/02/10 17:09:08 wiz Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.35 2002/03/14 04:41:09 chs Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.34 2002/02/10 17:08:24 wiz Exp 
+ *	NetBSD: miidevs,v 1.35 2002/03/14 04:40:27 chs Exp 
  */
 
 /*-
@@ -169,6 +169,8 @@
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
 #define	MII_STR_xxLEVEL1_LXT970	"LXT970 10/100 media interface"
+#define	MII_MODEL_LEVEL1_LXT971	0x000e
+#define	MII_STR_LEVEL1_LXT971	"LXT971 10/100 media interface"
 #define	MII_MODEL_LEVEL1_LXT1000_OLD	0x0003
 #define	MII_STR_LEVEL1_LXT1000_OLD	"LXT1000 1000BASE-T media interface"
 #define	MII_MODEL_LEVEL1_LXT1000	0x000c
