@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.5.2.2 2004/06/27 13:15:00 he Exp $
+#	$NetBSD: Makefile,v 1.5.2.2.2.1 2005/01/30 14:55:58 he Exp $
 
 .include <bsd.own.mk>
 
 CPPSCRIPTS=	Xresources Xservers.ws xdm-config 
 
 CPPSCRIPTFLAGS_Xresources=	-DXPM -DBITMAPDIR=${X11LIBDIR}/xdm/pixmaps \
-				-DXDM_PIXMAP=XFree86.xpm \
-				-DXDM_BWPIXMAP=XFree86bw.xpm
+				-DXDM_PIXMAP=NetBSD.xpm \
+				-DXDM_BWPIXMAP=NetBSDbw.xpm
 
 # native only gives DEFAULTVT for i386 and amd64.
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
@@ -20,10 +20,14 @@ CPPSCRIPTFLAGS_xdm-config=	-DXDMDIR=${X11LIBDIR}/xdm -DXDMLOGDIR=/var/log \
 				-DXDMAUTHDIR=${X11LIBDIR}/xdm \
 				-DXDMPIDDIR=/var/run -DSU="su -m"
 
-FILES=			GiveConsole TakeConsole XFree86.xpm XFree86bw.xpm \
+FILES=			GiveConsole NetBSD.xpm NetBSDbw.xpm NetBSDinv.xpm \
+			TakeConsole XFree86.xpm XFree86bw.xpm \
 			Xaccess Xservers.fs Xsession Xsetup_0 Xwilling \
 			${CPPSCRIPTS} 
 FILESDIR=		${X11LIBDIR}/xdm
+FILESDIR_NetBSD.xpm=	${X11LIBDIR}/xdm/pixmaps
+FILESDIR_NetBSDbw.xpm=	${X11LIBDIR}/xdm/pixmaps
+FILESDIR_NetBSDinv.xpm=	${X11LIBDIR}/xdm/pixmaps
 FILESDIR_XFree86.xpm=	${X11LIBDIR}/xdm/pixmaps
 FILESDIR_XFree86bw.xpm=	${X11LIBDIR}/xdm/pixmaps
 
