@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365.c,v 1.10 1998/06/09 07:36:55 thorpej Exp $	*/
+/*	$NetBSD: i82365.c,v 1.11 1998/10/15 04:04:43 mycroft Exp $	*/
 
 #define	PCICDEBUG
 
@@ -1038,7 +1038,8 @@ pcic_wait_ready(h)
 	}
 
 #ifdef DIAGNOSTIC
-	printf("pcic_wait_ready ready never happened\n");
+	printf("pcic_wait_ready: ready never happened, status = %02x\n",
+	    pcic_read(h, PCIC_IF_STATUS));
 #endif
 }
 
