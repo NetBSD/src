@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $	*/
+/*	$NetBSD: statd.c,v 1.18 2001/02/19 23:22:47 cgd Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.17 2000/06/09 14:02:13 fvdl Exp $");
+__RCSID("$NetBSD: statd.c,v 1.18 2001/02/19 23:22:47 cgd Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -76,7 +76,6 @@ static DBT undefkey = {
 	undefdata,
 	sizeof(undefdata)
 };
-extern char *__progname;
 
 
 /* statd.c */
@@ -106,7 +105,8 @@ main(argc, argv)
 			break;
 		default:
 		case '?':
-			(void)fprintf(stderr, "usage: %s [-d]\n", __progname);
+			(void)fprintf(stderr, "usage: %s [-d]\n",
+			    getprogname());
 			exit(1);
 			/* NOTREACHED */
 		}

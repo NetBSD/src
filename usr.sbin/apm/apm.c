@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.8 1999/01/15 00:29:02 augustss Exp $ */
+/*	$NetBSD: apm.c,v 1.9 2001/02/19 23:22:41 cgd Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,8 +57,6 @@
 #define FALSE 0
 #define TRUE 1
 
-extern char *__progname;
-
 void usage(void);
 void zzusage(void);
 int do_zzz(const char *pn, enum apm_action action);
@@ -71,7 +69,7 @@ void
 usage(void)
 {
     fprintf(stderr,"usage: %s [-v] [-z | -S] [-slmba] [-f socket]\n",
-	    __progname);
+	    getprogname());
     exit(1);
 }
 
@@ -79,7 +77,7 @@ void
 zzusage(void)
 {
     fprintf(stderr,"usage: %s [-z | -S] [-f socket]\n",
-	    __progname);
+	    getprogname());
     exit(1);
 }
 
@@ -225,7 +223,7 @@ main(int argc, char *argv[])
 	    usage();
 	}
 
-    if (!strcmp(__progname, "zzz")) {
+    if (!strcmp(getprogname(), "zzz")) {
 	exit(do_zzz(sockname, action));
     }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.16 1999/07/25 07:59:48 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.17 2001/02/19 23:22:50 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.16 1999/07/25 07:59:48 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.17 2001/02/19 23:22:50 cgd Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,8 +56,6 @@ __RCSID("$NetBSD: makedbm.c,v 1.16 1999/07/25 07:59:48 lukem Exp $");
 #include "protos.h"
 #include "ypdb.h"
 #include "ypdef.h"
-
-extern	char *__progname;		/* from crt0.o */
 
 int	main __P((int, char *[]));
 void	usage __P((void));
@@ -373,8 +371,8 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s -u file\n", __progname);
-	fprintf(stderr, "       %s [-lbs] %s\n", __progname,
+	fprintf(stderr, "usage: %s -u file\n", getprogname());
+	fprintf(stderr, "       %s [-lbs] %s\n", getprogname(),
 	    "[-i YP_INPUT_FILE] [-o YP_OUTPUT_FILE]");
 	fprintf(stderr, "          %s infile outfile\n",
 	    "[-d YP_DOMAIN_NAME] [-m YP_MASTER_NAME]");

@@ -1,4 +1,4 @@
-/*	$NetBSD: mknetid.c,v 1.10 1999/07/25 09:01:04 lukem Exp $	*/
+/*	$NetBSD: mknetid.c,v 1.11 2001/02/19 23:22:51 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mknetid.c,v 1.10 1999/07/25 09:01:04 lukem Exp $");
+__RCSID("$NetBSD: mknetid.c,v 1.11 2001/02/19 23:22:51 cgd Exp $");
 #endif
 
 /*
@@ -86,8 +86,6 @@ void	usage __P((void));
 TAILQ_HEAD(user_list, user);
 struct user_list root;
 struct user_list hroot[HASHMAX];
-
-extern	char *__progname;		/* from crt0.o */
 
 int
 main(argc, argv)
@@ -470,9 +468,9 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s %s\n", __progname,
+	fprintf(stderr, "usage: %s %s\n", getprogname(),
 	    "[-d domain] [-q] [-p passwdfile] [-g groupfile]");
-	fprintf(stderr, "       %s  %s", __progname,
+	fprintf(stderr, "       %s  %s", getprogname(),
 	    "[-g groupfile] [-h hostfile] [-m netidfile]");
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vipw.c,v 1.7 2000/12/06 14:04:25 tron Exp $	*/
+/*	$NetBSD: vipw.c,v 1.8 2001/02/19 23:22:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)vipw.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: vipw.c,v 1.7 2000/12/06 14:04:25 tron Exp $");
+__RCSID("$NetBSD: vipw.c,v 1.8 2001/02/19 23:22:49 cgd Exp $");
 #endif
 #endif /* not lint */
 
@@ -147,8 +147,7 @@ copyfile(int from, int to)
 static void
 usage(void)
 {
-	extern char *__progname;
 
-	(void)fprintf(stderr, "Usage: %s [-d directory]\n", __progname);
+	(void)fprintf(stderr, "Usage: %s [-d directory]\n", getprogname());
 	exit(1);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.7 2000/07/07 15:11:47 itojun Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.8 2001/02/19 23:22:49 cgd Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -51,11 +51,10 @@ int main __P((int, char**));
 static void
 usage()
 {
-	extern char *__progname;
 
 	(void)fprintf(stderr,
 		      "Usage: %s [-f wsdev] [-d [-F]] [-k] [-m] [-t type]"
-		      "[-e emul] {vt | [kbd] | [mux]}\n", __progname);
+		      "[-e emul] {vt | [kbd] | [mux]}\n", getprogname());
 	exit(1);
 }
 

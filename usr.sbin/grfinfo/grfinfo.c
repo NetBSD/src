@@ -19,12 +19,12 @@
  * improvements that they make and grant CSS redistribution rights.
  *
  * 	from: Utah $Hdr: grfinfo.c 1.3 94/04/04$
- *	$NetBSD: grfinfo.c,v 1.7 1997/11/01 06:54:11 lukem Exp $
+ *	$NetBSD: grfinfo.c,v 1.8 2001/02/19 23:22:43 cgd Exp $
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: grfinfo.c,v 1.7 1997/11/01 06:54:11 lukem Exp $");
+__RCSID("$NetBSD: grfinfo.c,v 1.8 2001/02/19 23:22:43 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -32,6 +32,7 @@ __RCSID("$NetBSD: grfinfo.c,v 1.7 1997/11/01 06:54:11 lukem Exp $");
 #include <dev/grfioctl.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 int aflg = 0;
@@ -147,8 +148,7 @@ tname()
 void
 usage()
 {
-	extern char *__progname;	/* from crt0.o */
 
-	fprintf(stderr, "usage: %s [-at] device\n", __progname);
+	fprintf(stderr, "usage: %s [-at] device\n", getprogname());
 	exit(1);
 }

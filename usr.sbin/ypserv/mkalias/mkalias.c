@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.8 1999/06/07 03:06:09 mrg Exp $ */
+/*	$NetBSD: mkalias.c,v 1.9 2001/02/19 23:22:50 cgd Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.8 1999/06/07 03:06:09 mrg Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.9 2001/02/19 23:22:50 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,8 +63,6 @@ int	check_host __P((char *, char *, int, int, int));
 int	main __P((int, char *[]));
 void	split_address __P((char *, int, char *, char *));
 void	usage __P((void));
-
-extern char *__progname;		/* from crt0.o */
 
 void
 split_address(address, len, user, host)
@@ -299,7 +297,7 @@ main(argc, argv)
 			status = ypdb_store(new_db, val, key, YPDB_INSERT);
 			if (status != 0) {
 				printf("%s: problem storing %*.*s %*.*s\n",
-				       __progname,
+				       getprogname(),
 				       val.dsize, val.dsize, val.dptr,
 				       key.dsize, key.dsize, key.dptr);
 			}
@@ -356,6 +354,6 @@ usage()
 {
 	fprintf(stderr,
 		"usage: %s [-e|-E [-d] [-u]] [-n] [-v] input [output]\n",
-		__progname);
+		getprogname());
 	exit(1);
 }

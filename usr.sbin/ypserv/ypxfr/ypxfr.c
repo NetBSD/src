@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.10 2001/01/11 00:35:49 lukem Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.11 2001/02/19 23:22:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.10 2001/01/11 00:35:49 lukem Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.11 2001/02/19 23:22:53 cgd Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,8 +60,6 @@ __RCSID("$NetBSD: ypxfr.c,v 1.10 2001/01/11 00:35:49 lukem Exp $");
 #include "yplib_host.h"
 #include "ypdb.h"
 #include "ypdef.h"
-
-extern	char *__progname;		/* from crt0.o */
 
 DBM	*db;
 
@@ -157,7 +155,8 @@ main(argc, argv)
 	if (need_usage) {
 		status = YPPUSH_BADARGS;
 		fprintf(stderr, "usage: %s [-cf] [-d domain] [-h host] %s\n",
-		   __progname, "[-s domain] [-C tid prog ipadd port] mapname");
+		   getprogname(),
+		   "[-s domain] [-C tid prog ipadd port] mapname");
 		goto punt;
 	}
 
