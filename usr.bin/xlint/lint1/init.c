@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.10 2002/01/31 19:36:54 tv Exp $	*/
+/*	$NetBSD: init.c,v 1.11 2002/09/13 14:59:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.10 2002/01/31 19:36:54 tv Exp $");
+__RCSID("$NetBSD: init.c,v 1.11 2002/09/13 14:59:24 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -101,14 +101,14 @@ popi2(void)
 
 	initstk = (istk = initstk)->i_nxt;
 	if (initstk == NULL)
-		lerror("popi2() 1");
+		LERROR("popi2()");
 	free(istk);
 
 	istk = initstk;
 
 	istk->i_cnt--;
 	if (istk->i_cnt < 0)
-		lerror("popi2() 3");
+		LERROR("popi2()");
 
 	/*
 	 * If the removed element was a structure member, we must go
@@ -118,7 +118,7 @@ popi2(void)
 		do {
 			m = istk->i_mem = istk->i_mem->s_nxt;
 			if (m == NULL)
-				lerror("popi2() 2");
+				LERROR("popi2()");
 		} while (m->s_field && m->s_name == unnamed);
 		istk->i_subt = m->s_type;
 	}
@@ -166,25 +166,25 @@ pushinit(void)
 		 * type.
 		 */
 		if (istk->i_nxt->i_nxt != NULL)
-			lerror("pushinit() 1");
+			LERROR("pushinit()");
 		istk->i_cnt = 1;
 		if (istk->i_type->t_tspec != ARRAY)
-			lerror("pushinit() 2");
+			LERROR("pushinit()");
 		istk->i_type->t_dim++;
 		/* from now its an complete type */
 		setcompl(istk->i_type, 0);
 	}
 
 	if (istk->i_cnt <= 0)
-		lerror("pushinit() 3");
+		LERROR("pushinit()");
 	if (istk->i_type != NULL && issclt(istk->i_type->t_tspec))
-		lerror("pushinit() 4");
+		LERROR("pushinit()");
 
 	initstk = xcalloc(1, sizeof (istk_t));
 	initstk->i_nxt = istk;
 	initstk->i_type = istk->i_subt;
 	if (initstk->i_type->t_tspec == FUNC)
-		lerror("pushinit() 5");
+		LERROR("pushinit()");
 
 	istk = initstk;
 
@@ -402,7 +402,7 @@ mkinit(tnode_t *tn)
 	rt = tn->tn_type->t_tspec;
 
 	if (!issclt(lt))
-		lerror("mkinit() 1");
+		LERROR("mkinit()");
 
 	if (!typeok(INIT, 0, ln, tn))
 		goto end;

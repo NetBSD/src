@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.18 2002/03/07 20:17:37 tv Exp $	*/
+/*	$NetBSD: err.c,v 1.19 2002/09/13 14:59:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.18 2002/03/07 20:17:37 tv Exp $");
+__RCSID("$NetBSD: err.c,v 1.19 2002/09/13 14:59:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -231,7 +231,7 @@ const	char *msgs[] = {
 	"too many array initializers",				      /* 173 */
 	"too many initializers",				      /* 174 */
 	"initialisation of an incomplete type",			      /* 175 */
-	"invalid initializer",					      /* 176 */
+	"invalid initializer type %s",				      /* 176 */
 	"non-constant initializer",				      /* 177 */
 	"initializer does not fit",				      /* 178 */
 	"cannot initialize struct/union with no named member",	      /* 179 */
@@ -450,14 +450,15 @@ error(int n, ...)
 }
 
 void
-lerror(const char *msg, ...)
+lerror(const char *file, int line, const char *msg, ...)
 {
 	va_list	ap;
 	const	char *fn;
 
 	va_start(ap, msg);
 	fn = lbasename(curr_pos.p_file);
-	(void)fprintf(stderr, "%s(%d): lint error: ", fn, curr_pos.p_line);
+	(void)fprintf(stderr, "%s(%d): lint error: %s, %d", fn, curr_pos.p_line,
+	    file, line);
 	(void)vfprintf(stderr, msg, ap);
 	(void)fprintf(stderr, "\n");
 	va_end(ap);
