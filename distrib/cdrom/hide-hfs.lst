@@ -4,6 +4,7 @@ MD5
 SYSVSUM
 TRANS.TBL
 INSTALL.more
-./boot*
+./boot
+./boot.*
 ./netbsd*
 ./packages
