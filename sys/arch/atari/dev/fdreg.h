@@ -1,4 +1,4 @@
-/*	$NetBSD: fdreg.h,v 1.1.1.1 1995/03/26 07:12:15 leo Exp $	*/
+/*	$NetBSD: fdreg.h,v 1.2 1995/04/22 22:18:21 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -41,10 +41,10 @@
  * Accessing the FDC registers is indirect through ST-specific
  * DMA circuitry. See also dma.h.
  */
-#define	FDC_CS	(FDC      )	/* command/status			*/
-#define	FDC_TR	(FDC|   A0)	/* track register			*/
-#define	FDC_SR	(FDC|A1   )	/* sector register			*/
-#define	FDC_DR	(FDC|A1|A0)	/* data register			*/
+#define	FDC_CS	(DMA_FDC              )	/* command/status		*/
+#define	FDC_TR	(DMA_FDC|       DMA_A0)	/* track register		*/
+#define	FDC_SR	(DMA_FDC|DMA_A1       )	/* sector register		*/
+#define	FDC_DR	(DMA_FDC|DMA_A1|DMA_A0)	/* data register		*/
 
 /*
  * commands (relevant bits/fields indicated)

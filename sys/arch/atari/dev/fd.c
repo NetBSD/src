@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.3 1995/04/16 14:56:25 leo Exp $	*/
+/*	$NetBSD: fd.c,v 1.4 1995/04/22 22:18:20 leo Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -71,9 +71,8 @@
 /*
  * Be verbose for debugging
  */
-/*#define FLP_DEBUG		1 */
+/*#define FLP_DEBUG	1 */
 
-#define	FDC_DELAY	64	/* for dma[rw]dat()			*/
 #define	FDC_MAX_DMA_AD	0x1000000	/* No DMA possible beyond	*/
 
 /* Parameters for the disk drive. */
@@ -111,8 +110,8 @@ static short	selected = 0;		/* drive/head currently selected*/
 static short	motoron  = 0;		/* motor is spinning		*/
 static short	nopens   = 0;		/* Number of opens executed	*/
 
-static short	fd_state = FLP_IDLE;/* Current driver state		*/
-static short	fd_in_dma= 0;		/* 1: dmagrab() called		*/
+static short	fd_state = FLP_IDLE;	/* Current driver state		*/
+static short	fd_in_dma= 0;		/* 1: st_dmagrab() called	*/
 static short	fd_cmd   = 0;		/* command being executed	*/
 static char	*fd_error= NULL;	/* error from fd_xfer_ok()	*/
 
@@ -141,11 +140,15 @@ struct fd_softc {
 /*
  * Flags in fd_softc:
  */
-#define FLPF_NOTRESP	0x01		/* Unit not responding		*/
-#define FLPF_ISOPEN	0x02		/* Unit is open			*/
-#define FLPF_ISHD	0x04		/* Use High Density		*/
-#define FLPF_HAVELAB	0x08		/* We have a valid label	*/
-#define FLPF_BOUNCE	0x10		/* Now using the  bounce buffer	*/
+#define FLPF_NOTRESP	0x001		/* Unit not responding		*/
+#define FLPF_ISOPEN	0x002		/* Unit is open			*/
+#define FLPF_ISHD	0x004		/* Use High Density		*/
+#define FLPF_HAVELAB	0x008		/* We have a valid label	*/
+#define FLPF_BOUNCE	0x010		/* Now using the bounce buffer	*/
+#define FLPF_WRTPROT	0x020		/* Unit is write-protected	*/
+#define FLPF_EMPTY	0x040		/* Unit is empty		*/
+#define FLPF_INOPEN	0x080		/* Currently being opened	*/
+#define FLPF_GETSTAT	0x100		/* Getting unit status		*/
 
 struct fd_types {
 	int		nheads;		/* Heads in use			*/
@@ -164,13 +167,32 @@ typedef void	(*FPV)();
  */
 static void	fdstart __P((struct fd_softc *));
 static void	fddone __P((struct fd_softc *));
+static void	fdstatus __P((struct fd_softc *));
 static void	fd_xfer __P((struct fd_softc *));
-static int	fdcint __P((struct fd_softc *));
+static void	fdcint __P((struct fd_softc *));
 static int	fd_xfer_ok __P((struct fd_softc *));
 static void	fdmotoroff __P((struct fd_softc *));
 static int	fdminphys __P((struct buf *));
 static void	fdtestdrv __P((struct fd_softc *));
 static int	fdgetdisklabel __P((struct fd_softc *, dev_t));
+
+extern __inline__ u_char read_fdreg(u_short regno)
+{
+	DMA->dma_mode = regno;
+	return(DMA->dma_data);
+}
+
+extern __inline__ void write_fdreg(u_short regno, u_short val)
+{
+	DMA->dma_mode = regno;
+	DMA->dma_data = val;
+}
+
+extern __inline__ u_char read_dmastat(void)
+{
+	DMA->dma_mode = FDC_CS | DMA_SCREG;
+	return(DMA->dma_stat);
+}
 
 /*
  * Autoconfig stuff....
@@ -210,8 +232,8 @@ void		*auxp;
 		 */
 		fdsoftc.unit  = i;
 		fdsoftc.flags = 0;
-		dmagrab(fdcint, fdtestdrv, &fdsoftc);
-		dmafree();
+		st_dmagrab(fdcint, fdtestdrv, &fdsoftc, 0);
+		st_dmafree();
 
 		if(!(fdsoftc.flags & FLPF_NOTRESP)) {
 			nfound++;
@@ -220,6 +242,7 @@ void		*auxp;
 	}
 
 	if(nfound) {
+
 		/*
 		 * enable disk related interrupts
 		 */
@@ -345,8 +368,16 @@ struct proc	*proc;
 		printf("Fdopen device not yet open\n");
 #endif
 		nopens++;
-		dmawdat(FDC_CS, IRUPT, FDC_DELAY);
+		write_fdreg(FDC_CS, IRUPT);
 	}
+
+	/*
+	 * Sleep while other process is opening the device
+	 */
+	sps = splbio();
+	while(sc->flags & FLPF_INOPEN)
+		tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
+	splx(sps);
 
 	if(!(sc->flags & FLPF_ISOPEN)) {
 		/*
@@ -370,7 +401,26 @@ struct proc	*proc;
 		if(sc->nsectors > 9) /* XXX */
 			sc->flags |= FLPF_ISHD;
 
-		sc->flags	= FLPF_ISOPEN;
+		/*
+		 * Go get write protect + loaded status
+		 */
+		sc->flags = FLPF_INOPEN|FLPF_GETSTAT;
+		sps = splbio();
+		fd_in_dma = 1; st_dmagrab(fdcint, fdstatus, sc, 0);
+		while(sc->flags & FLPF_GETSTAT)
+			tsleep((caddr_t)sc, PRIBIO, "Fdopen", 0);
+		splx(sps);
+		wakeup((caddr_t)sc);
+
+		if((sc->flags & FLPF_WRTPROT) && (flags & FWRITE)) {
+			sc->flags = 0;
+			return(EPERM);
+		}
+		if(sc->flags & FLPF_EMPTY) {
+			sc->flags = 0;
+			return(ENXIO);
+		}
+		sc->flags = FLPF_ISOPEN;
 	}
 	else {
 		/*
@@ -401,6 +451,7 @@ struct proc	*proc;
 #ifdef FLP_DEBUG
 	printf("Closed floppy device -- nopens: %d\n", nopens);
 #endif
+	return(0);
 }
 
 void
@@ -457,7 +508,7 @@ struct buf	*bp;
 		if(fd_state & FLP_MON)
 			untimeout((FPV)fdmotoroff, (void*)sc);
 		fd_state = FLP_IDLE;
-		fd_in_dma = 1; dmagrab(fdcint, fdstart, sc);
+		fd_in_dma = 1; st_dmagrab(fdcint, fdstart, sc, 0);
 	}
 	splx(sps);
 
@@ -502,6 +553,28 @@ struct uio	*uio;
 {
 	return(physio(cdevsw[major(dev)].d_strategy, (struct buf *)NULL,
 	    dev, B_WRITE, fdminphys, uio));
+}
+
+/*
+ * Called through DMA-dispatcher, get status.
+ */
+static void
+fdstatus(sc)
+struct fd_softc	*sc;
+{
+#ifdef FLP_DEBUG
+	printf("fdstatus\n");
+#endif
+	sc->errcnt = 0;
+	fd_state   = FLP_STAT;
+
+	/*
+	 * Make sure the floppy controller is the correct density mode
+	 */
+	if(sc->flags & FLPF_ISHD)
+		DMA->dma_drvmode |= (FDC_HDSET|FDC_HDSIG);
+	else DMA->dma_drvmode &= ~(FDC_HDSET|FDC_HDSIG);
+	fd_xfer(sc);
 }
 
 /*
@@ -551,26 +624,30 @@ register struct fd_softc	*sc;
 	 */
 	DMA->dma_drvmode &= ~(FDC_HDSET|FDC_HDSIG);
 
-	dp = &sc->bufq;
-	bp = dp->b_actf;
-	if(bp == NULL)
-		panic("fddone");
-	dp->b_actf = bp->b_actf;
-
-#ifdef FLP_DEBUG
-	printf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
-							sc->io_bytes);
-#endif
 	/*
 	 * Give others a chance to use the dma.
 	 */
-	fd_in_dma = 0; dmafree();
+	fd_in_dma = 0; st_dmafree();
 
-	/*
-	 * Finish current transaction.
-	 */
-	bp->b_resid = sc->io_bytes;
-	biodone(bp);
+
+	if(fd_state != FLP_STAT) {
+		/*
+		 * Finish current transaction.
+		 */
+		dp = &sc->bufq;
+		bp = dp->b_actf;
+		if(bp == NULL)
+			panic("fddone");
+		dp->b_actf = bp->b_actf;
+
+#ifdef FLP_DEBUG
+		printf("fddone: unit: %d, buf: %x, resid: %d\n",sc->unit,bp,
+								sc->io_bytes);
+#endif
+		bp->b_resid = sc->io_bytes;
+		biodone(bp);
+	}
+	fd_state = FLP_MON;
 
 	if(fd_in_dma)
 		return;		/* XXX Is this possible?	*/
@@ -597,7 +674,7 @@ register struct fd_softc	*sc;
 #ifdef FLP_DEBUG
 	printf("fddone: Staring job on unit %d\n", sc1->unit);
 #endif
-	fd_in_dma = 1; dmagrab(fdcint, fdstart, sc1);
+	fd_in_dma = 1; st_dmagrab(fdcint, fdstart, sc1, 0);
 }
 
 /****************************************************************************
@@ -625,18 +702,29 @@ struct fd_softc	*sc;
 		 int	i;
 		 u_long	phys_addr;
 
-	if(fd_state != FLP_XFER)
-		panic("fd_xfer: wrong state (0x%x)", fd_state);
-
-	/*
-	 * Calculate head/track values
-	 */
-	track  = sc->sector / sc->nsectors;
-	head   = track % sc->nheads;
-	track  = track / sc->nheads;
+	switch(fd_state) {
+	    case FLP_XFER:
+		/*
+		 * Calculate head/track values
+		 */
+		track  = sc->sector / sc->nsectors;
+		head   = track % sc->nheads;
+		track  = track / sc->nheads;
 #ifdef FLP_DEBUG
-	printf("fd_xfer: sector:%d,head:%d,track:%d\n", sc->sector,head,track);
+		printf("fd_xfer: sector:%d,head:%d,track:%d\n", sc->sector,head,
+								track);
 #endif
+		break;
+
+	    case FLP_STAT:
+		/*
+		 * FLP_STAT only wants to recalibrate
+		 */
+		sc->curtrk = INV_TRK;
+		break;
+	    default:
+		panic("fd_xfer: wrong state (0x%x)", fd_state);
+	}
 
 	/*
 	 * Determine if the controller should check spin-up.
@@ -666,7 +754,7 @@ struct fd_softc	*sc;
 		 * a recalibration is done, which forces the arm to track 0.
 		 * This way the controller can get back into sync with reality.
 		 */
-		dmawdat(FDC_CS, RESTORE|VBIT|hbit, FDC_DELAY);
+		write_fdreg(FDC_CS, RESTORE|VBIT|hbit);
 		fd_cmd = RESTORE;
 		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
 
@@ -676,7 +764,7 @@ struct fd_softc	*sc;
 		return;
 	}
 
-	dmawdat(FDC_TR, sc->curtrk, FDC_DELAY);
+	write_fdreg(FDC_TR, sc->curtrk);
 
 	/*
 	 * Issue a SEEK command on the indicated drive unless the arm is
@@ -684,8 +772,8 @@ struct fd_softc	*sc;
 	 */
 	if(track != sc->curtrk) {
 		sc->curtrk = track;	/* be optimistic */
-		dmawdat(FDC_DR, track, FDC_DELAY);
-		dmawdat(FDC_CS, SEEK|RATE6|VBIT|hbit, FDC_DELAY);
+		write_fdreg(FDC_DR, track);
+		write_fdreg(FDC_CS, SEEK|RATE6|VBIT|hbit);
 		timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
 		fd_cmd = SEEK;
 #ifdef FLP_DEBUG
@@ -700,7 +788,7 @@ struct fd_softc	*sc;
 	sector = sc->sector % sc->nsectors;
 	sector++;	/* start numbering at 1 */
 
-	dmawdat(FDC_SR, sector, FDC_DELAY);
+	write_fdreg(FDC_SR, sector);
 
 	phys_addr = (u_long)kvtop(sc->io_data);
 	if(phys_addr >= FDC_MAX_DMA_AD) {
@@ -712,7 +800,7 @@ struct fd_softc	*sc;
 			bcopy(sc->io_data, sc->bounceb, SECTOR_SIZE);
 		sc->flags |= FLPF_BOUNCE;
 	}
-	dmaaddr(phys_addr);	/* DMA address setup */
+	st_dmaaddr((caddr_t)phys_addr);	/* DMA address setup */
 
 #ifdef FLP_DEBUG
 	printf("fd_xfer:Start io (io_addr:%x)\n", kvtop(sc->io_data));
@@ -720,14 +808,14 @@ struct fd_softc	*sc;
 
 	if(sc->io_dir == B_READ) {
 		/* Issue the command */
-		dmacomm(FDC | SCREG, 1, 0);
-		dmawdat(FDC_CS, F_READ|hbit, FDC_DELAY);
+		st_dmacomm(DMA_FDC | DMA_SCREG, 1);
+		write_fdreg(FDC_CS, F_READ|hbit);
 		fd_cmd = F_READ;
 	}
 	else {
 		/* Issue the command */
-		dmacomm(WRBIT | FDC | SCREG, 1, FDC_DELAY);
-		dmawdat(WRBIT | FDC_CS, F_WRITE|hbit|EBIT|PBIT, FDC_DELAY);
+		st_dmacomm(DMA_WRBIT | DMA_FDC | DMA_SCREG, 1);
+		write_fdreg(DMA_WRBIT | FDC_CS, F_WRITE|hbit|EBIT|PBIT);
 		fd_cmd = F_WRITE;
 	}
 	timeout((FPV)fdmotoroff, (void*)sc, FLP_XFERDELAY);
@@ -742,7 +830,7 @@ struct fd_softc	*sc;
 /*
  * Hardware interrupt function.
  */
-static int
+static void
 fdcint(sc)
 struct fd_softc	*sc;
 {
@@ -771,6 +859,14 @@ struct fd_softc	*sc;
 			 * Non recoverable error. Fall back to motor-on
 			 * idle-state.
 			 */
+			if(fd_state == FLP_STAT) {
+				sc->flags |= FLPF_EMPTY;
+				sc->flags &= ~FLPF_GETSTAT;
+				wakeup((caddr_t)sc);
+				fddone(sc);
+				return;
+			}
+
 			bp = sc->bufq.b_actf;
 
 			bp->b_error  = EIO;
@@ -794,6 +890,14 @@ struct fd_softc	*sc;
 			 * to motor-on idle state.
 			 */
 			sc->errcnt = 0;
+
+			if(fd_state == FLP_STAT) {
+				sc->flags &= ~FLPF_GETSTAT;
+				wakeup((caddr_t)sc);
+				fddone(sc);
+				return;
+			}
+
 			if((sc->flags & FLPF_BOUNCE) && (sc->io_dir == B_READ))
 				bcopy(sc->bounceb, sc->io_data, SECTOR_SIZE);
 			sc->flags &= ~FLPF_BOUNCE;
@@ -826,6 +930,9 @@ register struct fd_softc	*sc;
 {
 	register int	status;
 
+#ifdef FLP_DEBUG
+	printf("fd_xfer_ok: cmd: 0x%x, state: 0x%x\n", fd_cmd, fd_state);
+#endif
 	switch(fd_cmd) {
 		case IRUPT:
 			/*
@@ -838,7 +945,7 @@ register struct fd_softc	*sc;
 			/*
 			 * Test for DMA error
 			 */
-			status = dmastat(FDC_CS | SCREG, 0);
+			status = read_dmastat();
 			if(!(status & DMAOK)) {
 				fd_error = "Dma error";
 				return(X_ERROR);
@@ -846,7 +953,7 @@ register struct fd_softc	*sc;
 			/*
 			 * Get controller status and check for errors.
 			 */
-			status = dmardat(FDC_CS, FDC_DELAY);
+			status = read_fdreg(FDC_CS);
 			if(status & (RNF | CRCERR | LD_T00)) {
 				fd_error = "Read error";
 				if(status & RNF)
@@ -856,9 +963,17 @@ register struct fd_softc	*sc;
 			break;
 		case F_WRITE:
 			/*
+			 * Test for DMA error
+			 */
+			status = read_dmastat();
+			if(!(status & DMAOK)) {
+				fd_error = "Dma error";
+				return(X_ERROR);
+			}
+			/*
 			 * Get controller status and check for errors.
 			 */
-			status = dmardat(WRBIT | FDC_CS, FDC_DELAY);
+			status = read_fdreg(FDC_CS);
 			if(status & WRI_PRO) {
 				fd_error = "Write protected";
 				return(X_FAIL);
@@ -870,7 +985,7 @@ register struct fd_softc	*sc;
 			}
 			break;
 		case SEEK:
-			status = dmardat(FDC_CS, FDC_DELAY);
+			status = read_fdreg(FDC_CS);
 			if(status & (RNF | CRCERR)) {
 				fd_error = "Seek error";
 				sc->curtrk = INV_TRK;
@@ -881,15 +996,20 @@ register struct fd_softc	*sc;
 			/*
 			 * Determine if the recalibration succeeded.
 			 */
-			status = dmardat(FDC_CS, FDC_DELAY);
+			status = read_fdreg(FDC_CS);
 			if(status & RNF) {
 				fd_error = "Recalibrate error";
 				/* reset controller */
-				dmawdat(FDC_CS, IRUPT, FDC_DELAY);
+				write_fdreg(FDC_CS, IRUPT);
 				sc->curtrk = INV_TRK;
 				return(X_ERROR);
 			}
 			sc->curtrk = 0;
+			if(fd_state == FLP_STAT) {
+				if(status & WRI_PRO)
+					sc->flags |= FLPF_WRTPROT;
+				break;
+			}
 			return(X_AGAIN);
 		default:
 			fd_error = "Driver error: fd_xfer_ok : Unknown state";
@@ -917,6 +1037,7 @@ struct fd_softc	*sc;
 #endif
 
 	switch(fd_state) {
+		case FLP_STAT :
 		case FLP_XFER :
 			/*
 			 * Timeout during a transfer; cancel transaction
@@ -927,9 +1048,9 @@ struct fd_softc	*sc;
 			/*
 			 * Cancel current transaction
 			 */
-			wrbit = (fd_cmd == F_WRITE) ? WRBIT : 0;
+			wrbit = (fd_cmd == F_WRITE) ? DMA_WRBIT : 0;
 			fd_cmd = IRUPT;
-			dmawdat(FDC_CS, wrbit|IRUPT, FDC_DELAY);
+			write_fdreg(FDC_CS, wrbit|IRUPT);
 
 			/*
 			 * Simulate floppy interrupt.
@@ -1002,16 +1123,16 @@ struct fd_softc	*fdsoftc;
 		SOUND->sd_wdat = (SOUND->sd_rdat & 0xF8) | (i ^ 0x07);
 	}
 
-	dmawdat(FDC_CS, RESTORE|VBIT|HBIT, FDC_DELAY);
+	write_fdreg(FDC_CS, RESTORE|VBIT|HBIT);
 
 	/*
 	 * Wait for about 2 seconds.
 	 */
 	delay(2000000);
 
-	status = dmardat(FDC_CS, FDC_DELAY);
+	status = read_fdreg(FDC_CS);
 	if(status & (RNF|BUSY))
-		dmawdat(FDC_CS, IRUPT, FDC_DELAY);	/* reset controller */
+		write_fdreg(FDC_CS, IRUPT);	/* reset controller */
 
 	if(!(status & LD_T00))
 		fdsoftc->flags |= FLPF_NOTRESP;
