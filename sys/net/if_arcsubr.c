@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.3 1995/04/14 17:06:39 chopps Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.4 1995/06/07 00:13:52 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -61,10 +61,27 @@
 #endif
 #include <netinet/if_arc.h>
 
-u_char	arcbroadcastaddr = 0;
+#ifndef	ARC_PHDSMTU
+#define	ARC_PHDSMTU	1500
+#endif
+
+/* why isnt this in /sys/sys/mbuf.h?? */
+extern struct mbuf *m_split __P((struct mbuf *, int, int));
+static struct mbuf *arc_defrag __P((struct ifnet *, struct mbuf *));
+
+/*
+ * RC1201 requires us to have this configurable. We have it only per 
+ * machine at the moment... there is no generic "set mtu" ioctl, AFAICS.
+ * Anyway, it is possible to binpatch this or set it per kernel config
+ * option.
+ */
+#if ARC_PHDSMTU > 60480
+ERROR: The arc_phdsmtu is ARC_PHDSMTU, but must not exceed 60480.
+#endif
+u_int16_t arc_phdsmtu = ARC_PHDSMTU;
+u_int8_t  arcbroadcastaddr = 0;
 
 #define senderr(e) { error = (e); goto bad;}
-
 #define SIN(s) ((struct sockaddr_in *)s)
 
 /*
@@ -79,17 +96,24 @@ arc_output(ifp, m0, dst, rt0)
 	struct sockaddr *dst;
 	struct rtentry *rt0;
 {
-	int s, error = 0;
-	u_char atype, adst;
-	register struct mbuf *m = m0;
-	register struct rtentry *rt;
-	struct mbuf *mcopy = (struct mbuf *)0;
+	struct mbuf		*m, *m1, *mcopy;
+	struct rtentry		*rt;
+	struct arccom		*ac;
 	register struct arc_header *ah;
-	int off, len = m->m_pkthdr.len;
-	struct arccom *ac = (struct arccom *)ifp;
+	int			off, len;
+	int			s, error, newencoding;
+	u_int8_t		atype, adst;
+	int			tfrags, sflag, fsflag, rsflag;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
 		senderr(ENETDOWN);
+
+	error = newencoding = 0;
+	ac = (struct arccom *)ifp;
+	m = m0;
+	len = m->m_pkthdr.len;
+	mcopy = m1 = NULL;
+
 	ifp->if_lastchange = time;
 	if (rt = rt0) {
 		if ((rt->rt_flags & RTF_UP) == 0) {
@@ -113,8 +137,8 @@ arc_output(ifp, m0, dst, rt0)
 			    time.tv_sec < rt->rt_rmx.rmx_expire)
 				senderr(rt == rt0 ? EHOSTDOWN : EHOSTUNREACH);
 	}
-	switch (dst->sa_family) {
 
+	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
 
@@ -130,9 +154,16 @@ arc_output(ifp, m0, dst, rt0)
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
 		off = m->m_pkthdr.len - m->m_len;
-		atype = ARCTYPE_IP_OLD;
+		if (ifp->if_flags & IFF_LINK0) {
+			atype = ARCTYPE_IP;
+			newencoding = 1;
+		} else {
+			atype = ARCTYPE_IP_OLD;
+			newencoding = 0;
+		}
 		break;
 #endif
+
 	case AF_UNSPEC:
 		ah = (struct arc_header *)dst->sa_data;
  		adst = ah->arc_dhost;
@@ -145,9 +176,9 @@ arc_output(ifp, m0, dst, rt0)
 		senderr(EAFNOSUPPORT);
 	}
 
-
 	if (mcopy)
 		(void) looutput(ifp, mcopy, dst, rt);
+
 	/*
 	 * Add local net header.  If no space in first mbuf,
 	 * allocate another.
@@ -157,35 +188,306 @@ arc_output(ifp, m0, dst, rt0)
 	 * the wire.  At this point, it contains source, destination and
 	 * packet type.
 	 */
-	M_PREPEND(m, ARC_HDRLEN, M_DONTWAIT);
-	if (m == 0)
-		senderr(ENOBUFS);
-	ah = mtod(m, struct arc_header *);
-	ah->arc_type = atype;
-	ah->arc_dhost= adst;
-	ah->arc_shost= ac->ac_anaddr;
-	s = splimp();
-	/*
-	 * Queue message on interface, and start output if interface
-	 * not yet active.
-	 */
-	if (IF_QFULL(&ifp->if_snd)) {
-		IF_DROP(&ifp->if_snd);
-		splx(s);
-		senderr(ENOBUFS);
-	}
-	IF_ENQUEUE(&ifp->if_snd, m);
-	if ((ifp->if_flags & IFF_OACTIVE) == 0)
-		(*ifp->if_start)(ifp);
-	splx(s);
+	if (newencoding) {
+		++ac->ac_seqid; /* make the seqid unique */
+
+		tfrags = (len + 503) / 504;
+		fsflag = 2*tfrags-3;
+		sflag = 0;
+		rsflag = fsflag;
+
+		while (sflag < fsflag) {
+			/* we CAN'T have short packets here */
+			m1 = m_split(m, 504, M_DONTWAIT);
+			if (m1 == 0)
+				senderr(ENOBUFS);
+
+			M_PREPEND(m, ARC_HDRNEWLEN, M_DONTWAIT);
+			if (m == 0)
+				senderr(ENOBUFS);
+			m = m_pullup(m,ARC_HDRNEWLEN);
+			if (m == 0)
+				senderr(ENOBUFS);
+
+			ah = mtod(m, struct arc_header *);
+			ah->arc_type = atype;
+			ah->arc_dhost = adst;
+			ah->arc_shost = ac->ac_anaddr;
+			ah->arc_flag = rsflag;
+			ah->arc_seqid = ac->ac_seqid;
+
+			s = splimp();
+			/*
+			 * Queue message on interface, and start output if 
+			 * interface not yet active.
+			 */
+			if (IF_QFULL(&ifp->if_snd)) {
+				IF_DROP(&ifp->if_snd);
+				splx(s);
+				senderr(ENOBUFS);
+			}
+			IF_ENQUEUE(&ifp->if_snd, m);
+			if ((ifp->if_flags & IFF_OACTIVE) == 0)
+				(*ifp->if_start)(ifp);
+			splx(s);
 	
-	ifp->if_obytes += len + ARC_HDRLEN;
+			/* we don't count the hardwares lenght bytes here */
+			ifp->if_obytes += 504 + ARC_HDRNEWLEN;
+
+			m = m1;
+			len -= 504;
+			sflag += 2;
+			rsflag = sflag;
+		}
+		m1 = NULL;
+
+		M_PREPEND(m, ARC_HDRNEWLEN, M_DONTWAIT);
+		if (m == 0)
+			senderr(ENOBUFS);
+		m = m_pullup(m, ARC_HDRNEWLEN);
+		if (m == 0)
+			senderr(ENOBUFS);
+
+		ah = mtod(m, struct arc_header *);
+		ah->arc_type = atype;
+		ah->arc_flag = sflag;
+		ah->arc_seqid= ac->ac_seqid;
+
+		/* here we can have small, especially forbidden packets */
+
+		if ((len >= ARC_MIN_FORBID_LEN - ARC_HDRNEWLEN + 2) &&
+		    (len <= ARC_MAX_FORBID_LEN - ARC_HDRNEWLEN + 2)) {
+
+			M_PREPEND(m, 4, M_DONTWAIT);
+			if (m == 0)
+				senderr(ENOBUFS);
+				
+			m = m_pullup(m, ARC_HDRNEWLEN);
+			if (m == 0)
+				senderr(ENOBUFS);
+
+			ah = mtod(m, struct arc_header *);
+			ah->arc_type = atype;
+			ah->arc_flag = 0xFF;
+			ah->arc_seqid= 0xFFFF;
+			len += 4;
+		}
+
+		ah->arc_dhost= adst;
+		ah->arc_shost= ac->ac_anaddr;
+
+		s = splimp();
+		/*
+		 * Queue message on interface, and start output if interface
+		 * not yet active.
+		 */
+		if (IF_QFULL(&ifp->if_snd)) {
+			IF_DROP(&ifp->if_snd);
+			splx(s);
+			senderr(ENOBUFS);
+		}
+		IF_ENQUEUE(&ifp->if_snd, m);
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			(*ifp->if_start)(ifp);
+		splx(s);
+	
+		ifp->if_obytes += len + ARC_HDRNEWLEN;
+		
+	} else {
+		M_PREPEND(m, ARC_HDRLEN, M_DONTWAIT);
+		if (m == 0)
+			senderr(ENOBUFS);
+		ah = mtod(m, struct arc_header *);
+		ah->arc_type = atype;
+		ah->arc_dhost= adst;
+		ah->arc_shost= ac->ac_anaddr;
+		s = splimp();
+		/*
+		 * Queue message on interface, and start output if interface
+		 * not yet active.
+		 */
+		if (IF_QFULL(&ifp->if_snd)) {
+			IF_DROP(&ifp->if_snd);
+			splx(s);
+			senderr(ENOBUFS);
+		}
+		IF_ENQUEUE(&ifp->if_snd, m);
+		if ((ifp->if_flags & IFF_OACTIVE) == 0)
+			(*ifp->if_start)(ifp);
+		splx(s);
+	
+		ifp->if_obytes += len + ARC_HDRLEN;
+	}
 	return (error);
 
 bad:
+	if (m1)
+		m_freem(m1);
 	if (m)
 		m_freem(m);
 	return (error);
+}
+
+/*
+ * Defragmenter. Returns mbuf if last packet found, else 
+ * NULL. frees imcoming mbuf as necessary.
+ */
+
+__inline struct mbuf *
+arc_defrag(ifp, m)
+	struct ifnet *ifp;
+	struct mbuf *m;
+{
+	struct arc_header *ah, *ah1;
+	struct arccom *ac;
+	struct ac_frag *af;
+	struct mbuf *m1;
+	char *s;
+	int newflen;
+	u_char src,dst,typ;
+	
+	ac = (struct arccom *)ifp;
+
+	m = m_pullup(m, ARC_HDRNEWLEN);
+	if (m == NULL) {
+		++ifp->if_ierrors;
+		return NULL;
+	}
+
+	ah = mtod(m, struct arc_header *);
+	typ = ah->arc_type;
+
+	if (!arc_isphds(typ))
+		return m;
+
+	src = ah->arc_shost;
+	dst = ah->arc_dhost;
+
+	if (ah->arc_flag == 0xff) {
+		m_adj(m, 4);
+
+		m = m_pullup(m, ARC_HDRNEWLEN);
+		if (m == NULL) {
+			++ifp->if_ierrors;
+			return NULL;
+		}
+
+		ah = mtod(m, struct arc_header *);
+		ah->arc_shost = src;
+		ah->arc_dhost = dst;
+		ah->arc_type = typ;
+	}
+
+	af = &ac->ac_fragtab[src];
+	m1 = af->af_packet;
+	s = "debug code error";
+
+	if (ah->arc_flag & 1) {
+		/* 
+		 * first fragment. We always initialize, which is
+		 * about the right thing to do, as we only want to
+		 * accept one fragmented packet per src at a time.
+		 */
+		if (m1 != NULL)
+			m_freem(m1);
+
+		af->af_packet = m;
+		m1 = m;
+		af->af_maxflag = ah->arc_flag;
+		af->af_lastseen = 0;
+		af->af_seqid = ah->arc_seqid;
+
+		return NULL;
+		/* notreached */
+	} else {
+		/* check for unfragmented packet */
+		if (ah->arc_flag == 0)
+			return m;
+
+		/* do we have a first packet from that src? */
+		if (m1 == NULL) {
+			s = "no first frag";
+			goto outofseq;
+		}
+
+		ah1 = mtod(m1, struct arc_header *);
+
+		if (ah->arc_seqid != ah1->arc_seqid) {
+			s = "seqid differs";
+			goto outofseq;
+		}
+
+		if (ah->arc_type != ah1->arc_type) {
+			s = "type differs";
+			goto outofseq;
+		}
+
+		if (ah->arc_dhost != ah1->arc_dhost) {
+			s = "dest host differs";
+			goto outofseq;
+		}
+
+		/* typ, seqid and dst are ok here. */
+
+		if (ah->arc_flag == af->af_lastseen) {
+			m_freem(m);
+			return NULL;
+		}
+
+		if (ah->arc_flag == af->af_lastseen + 2) {
+			/* ok, this is next fragment */
+			af->af_lastseen = ah->arc_flag;
+			m_adj(m,ARC_HDRNEWLEN);
+
+			/* 
+			 * m_cat might free the first mbuf (with pkthdr)
+			 * in 2nd chain; therefore:
+			 */
+
+			newflen = m->m_pkthdr.len;	
+
+			m_cat(m1,m);
+
+			m1->m_pkthdr.len += newflen;
+
+			/* is it the last one? */
+			if (af->af_lastseen > af->af_maxflag) {
+				af->af_packet = NULL;
+				return(m1);
+			} else
+				return NULL;
+		}
+		s = "other reason";
+		/* if all else fails, it is out of sequence, too */
+	}
+outofseq:
+	if (m1) {
+		m_freem(m1);
+		af->af_packet = NULL;
+	}
+
+	if (m) 
+		m_freem(m);
+
+	log(LOG_INFO,"%s%d: got out of seq. packet: %s\n",
+	    ifp->if_name, ifp->if_unit, s);
+
+	return NULL;
+}
+
+/*
+ * return 1 if Packet Header Definition Standard, else 0.
+ * For now: old IP, old ARP aren't obviously. Lacking correct information,
+ * we guess that besides new IP and new ARP also IPX and APPLETALK are PHDS.
+ * (Apple and Novell corporations were involved, among others, in PHDS work).
+ * Easiest is to assume that everybody else uses that, too.
+ */
+int
+arc_isphds(type)
+	int type;
+{
+	return ((type != ARCTYPE_IP_OLD && 
+		 type != ARCTYPE_ARP_OLD));
 }
 
 /*
@@ -200,14 +502,20 @@ arc_input(ifp, m)
 {
 	register struct arc_header *ah;
 	register struct ifqueue *inq;
-	u_char atype;
+	u_int8_t atype;
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		return;
 	}
-	ah = mtod(m,struct arc_header *);
+
+	/* possibly defragment: */
+	m = arc_defrag(ifp, m);
+	if (m == NULL) 
+		return;
+
+	ah = mtod(m, struct arc_header *);
 
 	ifp->if_lastchange = time;
 	ifp->if_ibytes += m->m_pkthdr.len;
@@ -220,6 +528,12 @@ arc_input(ifp, m)
 	atype = ah->arc_type;
 	switch (atype) {
 #ifdef INET
+	case ARCTYPE_IP:
+		m_adj(m,ARC_HDRNEWLEN);
+		schednetisr(NETISR_IP);
+		inq = &ipintrq;
+		break;
+
 	case ARCTYPE_IP_OLD:
 		m_adj(m,ARC_HDRLEN);
 		schednetisr(NETISR_IP);
@@ -246,7 +560,7 @@ arc_input(ifp, m)
 static char digits[] = "0123456789abcdef";
 char *
 arc_sprintf(ap)
-	register u_char *ap;
+	register u_int8_t *ap;
 {
 	static char arcbuf[3];
 	register char *cp = arcbuf;
@@ -266,14 +580,22 @@ arc_ifattach(ifp)
 {
 	register struct ifaddr *ifa;
 	register struct sockaddr_dl *sdl;
+	register struct arccom *ac;
 
 	ifp->if_type = IFT_ARCNET;
 	ifp->if_addrlen = 1;
 	ifp->if_hdrlen = ARC_HDRLEN;
-	ifp->if_mtu = ARCMTU;
-	if (((struct arccom *)ifp)->ac_anaddr == 0) {
-		log(LOG_ERR,"%s%d: link address 0 reserved for broadcasts.\n\
-Please change it and ifconfig %s%d down up\n",
+	if (ifp->if_flags & IFF_LINK0 && arc_phdsmtu > 60480)
+		log(LOG_ERR,
+		    "%s%d: arc_phdsmtu is %d, but must not exceed 60480",
+		    ifp->if_name, ifp->if_unit, arc_phdsmtu);
+
+	ifp->if_mtu = (ifp->if_flags & IFF_LINK0 ? arc_phdsmtu : ARCMTU);
+	ac = (struct arccom *)ifp;
+	ac->ac_seqid = (time.tv_sec) & 0xFFFF; /* try to make seqid unique */
+	if (ac->ac_anaddr == 0) {
+		/* XXX this message isn't entirely clear, to me -- cgd */
+		log(LOG_ERR,"%s%d: link address 0 reserved for broadcasts.  Please change it and ifconfig %s%d down up\n",
 		   ifp->if_name,ifp->if_unit,ifp->if_name,ifp->if_unit); 
 	}
 	for (ifa = ifp->if_addrlist; ifa; ifa = ifa->ifa_next)
