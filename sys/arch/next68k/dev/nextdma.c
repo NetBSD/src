@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdma.c,v 1.3 1998/07/19 21:41:17 dbj Exp $	*/
+/*	$NetBSD: nextdma.c,v 1.4 1998/07/21 06:17:35 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -160,6 +160,7 @@ nextdma_init(nd)
 	}
 #endif
 }
+
 
 void
 nextdma_reset(nd)
@@ -652,6 +653,11 @@ nextdma_start(nd, dmadir)
 	next_dma_setup_curr_regs(nd);
 	nd->_nd_map = 0;
 	nd->_nd_idx = 0;
+
+
+#if (defined(ND_DEBUG))
+	next_dma_print(nd);
+#endif
 
 	if (nd->nd_chaining_flag) {
 		bus_space_write_4(nd->nd_bst, nd->nd_bsh, DD_CSR,
