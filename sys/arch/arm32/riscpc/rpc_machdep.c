@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.7 1998/06/09 01:57:42 tv Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.8 1998/06/24 18:40:10 mark Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -117,7 +117,6 @@ vm_offset_t physical_freeend;
 vm_offset_t physical_end;
 int physical_memoryblock;
 u_int free_pages;
-vm_offset_t pagetables_start;
 int physmem = 0;
 
 #ifndef PMAP_STATIC_L1S
@@ -189,13 +188,15 @@ void map_entry_nc	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 void map_entry_ro	__P((vm_offset_t pt, vm_offset_t va, vm_offset_t pa));
 
 void pmap_bootstrap		__P((vm_offset_t kernel_l1pt, pt_entry_t kernel_ptpt));
-void process_kernel_args	__P((void));
 caddr_t allocsys		__P((caddr_t v));
 void data_abort_handler		__P((trapframe_t *frame));
 void prefetch_abort_handler	__P((trapframe_t *frame));
 void undefinedinstruction_bounce	__P((trapframe_t *frame));
 void zero_page_readonly		__P((void));
 void zero_page_readwrite	__P((void));
+
+static void process_kernel_args	__P((void));
+
 extern void dump_spl_masks	__P((void));
 extern pt_entry_t *pmap_pte	__P((pmap_t pmap, vm_offset_t va));
 extern void db_machine_init	__P((void));
@@ -1211,8 +1212,8 @@ initarm(bootconf)
 	return(kernelstack.virtual + USPACE_SVC_STACK_TOP);
 }
 
-void
-process_kernel_args()
+static void
+process_kernel_args(void)
 {
 	char *args;
 
