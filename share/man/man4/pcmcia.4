@@ -1,4 +1,4 @@
-.\" $NetBSD: pcmcia.4,v 1.18 2000/08/30 19:05:47 jhawk Exp $
+.\" $NetBSD: pcmcia.4,v 1.19 2000/12/19 15:33:53 onoe Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -77,8 +77,10 @@ drivers, sorted by function and driver name:
 .Pp
 .Ss Network interfaces
 .Bl -tag -width speaker -offset indent
+.It an
+Aironet 4500/4800 and Cisco 340 series 802.11 controller.
 .It awi
-BayStack 650 wireless 802.11FH controller.
+802.11 controller based on the AMD PCnetMobile chipset.
 .It cnw
 Netwave AirSurfer Wireless LAN interface.
 .It ep
@@ -94,7 +96,7 @@ Raytheon Raylink and WebGear Aviator2.4 802.11 controller.
 .It sm
 Megahertz Ethernet card.
 .It wi
-Lucent WaveLan/IEEE 802.11 controller.
+Lucent WaveLan/IEEE and PRISM-II based 802.11 controller.
 .El
 .\"
 .Pp
@@ -119,6 +121,7 @@ Digital Hinote Ultra Mobile Media Adapter
 .Xr intro 4 ,
 .Xr options 4 ,
 .Xr aic 4 ,
+.Xr an 4 ,
 .Xr awi 4 ,
 .Xr cardbus 4 ,
 .Xr cnw 4 ,
