@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.130.2.10 2001/03/12 13:31:24 bouyer Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.130.2.11 2001/04/11 01:16:04 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -155,11 +155,15 @@ scsibusattach(parent, self, aux)
 
 	sc->sc_channel = chan;
 
+	/* Initialize the channel structure first */
+	if (scsipi_channel_init(chan) == 0) {
+		printf(": failed to init channel\n");
+		return;
+	}
+
 	printf(": %d targets, %d luns per target\n",
 	    chan->chan_ntargets, chan->chan_nluns);
 
-	/* Initialize the channel. */
-	scsipi_channel_init(chan);
 
 	/*
 	 * Defer configuration of the children until interrupts
@@ -674,7 +678,14 @@ scsi_probe_device(sc, target, lun)
 	if (scsipi_lookup_periph(chan, target, lun) != NULL)
 		return (docontinue);
 
-	periph = scsipi_alloc_periph(M_WAITOK);
+	periph = scsipi_alloc_periph(M_NOWAIT);
+	if (periph == NULL) {
+#ifdef	DIAGNOSTIC
+		printf("%s: cannot allocate periph for target %d lun %d\n",
+		    sc->sc_dev.dv_xname, target, lun);
+#endif
+		return (ENOMEM);
+	}
 	periph->periph_channel = chan;
 	periph->periph_switch = &scsi_probe_dev;
 

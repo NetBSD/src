@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipiconf.h,v 1.32.2.12 2001/04/03 15:27:18 bouyer Exp $	*/
+/*	$NetBSD: scsipiconf.h,v 1.32.2.13 2001/04/11 01:16:05 mjacob Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -623,7 +623,7 @@ int	scsipi_do_ioctl __P((struct scsipi_periph *, dev_t, u_long, caddr_t,
 void	scsipi_print_xfer_mode __P((struct scsipi_periph *));
 void	scsipi_set_xfer_mode __P((struct scsipi_channel *, int, int));
 
-void	scsipi_channel_init __P((struct scsipi_channel *));
+int	scsipi_channel_init __P((struct scsipi_channel *));
 void	scsipi_channel_shutdown __P((struct scsipi_channel *));
 
 void	scsipi_insert_periph __P((struct scsipi_channel *,
