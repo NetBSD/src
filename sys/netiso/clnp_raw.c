@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)clnp_raw.c	7.8 (Berkeley) 5/6/91
- *	$Id: clnp_raw.c,v 1.3 1993/12/18 00:42:46 mycroft Exp $
+ *	from: @(#)clnp_raw.c	8.1 (Berkeley) 6/10/93
+ *	$Id: clnp_raw.c,v 1.4 1994/05/13 06:08:22 mycroft Exp $
  */
 
 /***********************************************************
@@ -80,7 +80,7 @@ SOFTWARE.
 #include <netiso/clnp_stat.h>
 #include <netiso/argo_debug.h>
 
-#include <netiso/tp_user.h>/* XXX -- defines SOL_NETWORK */
+#include <netiso/tp_user.h>		/* XXX -- defines SOL_NETWORK */
 
 struct sockproto	rclnp_proto	= { PF_ISO, 0 };
 /*
@@ -97,6 +97,7 @@ struct sockproto	rclnp_proto	= { PF_ISO, 0 };
  * NOTES:			The protocol field of rclnp_proto is set to zero indicating
  *					no protocol.
  */
+void
 rclnp_input(m, src, dst, hdrlen)
 struct mbuf 		*m;		/* ptr to packet */
 struct sockaddr_iso	*src;	/* ptr to src address */
@@ -108,13 +109,9 @@ int					hdrlen; /* length (in bytes) of clnp header */
 		m_freem(m);
 		return;
 	}
-#endif	TROLL
+#endif	/* TROLL */
 
-	if (raw_input(m, &rclnp_proto, (struct sockaddr *)src,
-		(struct sockaddr *)dst) == 0) {
-			clnp_stat.cns_delivered--;
-			clnp_stat.cns_noproto++;
-	}
+	raw_input(m, &rclnp_proto, (struct sockaddr *)src, (struct sockaddr *)dst);
 }
 
 /*
@@ -141,7 +138,7 @@ struct socket	*so;	/* socket to send from */
 	int						error;		/* return value of function */
 	int						flags;		/* flags for clnp_output */
 
-	if (0 == m0->m_flags & M_PKTHDR)
+	if (0 == (m0->m_flags & M_PKTHDR))
 		return (EINVAL);
 	/*
 	 *	Set up src address. If user has bound socket to an address, use it.
@@ -209,7 +206,7 @@ struct mbuf		**m;			/* ptr to ptr to option data */
 	else switch (op) {
 #else
 	switch (op) {
-#endif SOL_NETWORK
+#endif /* SOL_NETWORK */
 		case PRCO_SETOPT:
 			switch (optname) {
 				case CLNPOPT_FLAGS: {
@@ -255,7 +252,7 @@ struct mbuf		**m;			/* ptr to ptr to option data */
 					error = EINVAL;
 					break;
 			}
-#endif notdef
+#endif /* notdef */
 			break;
 		default:
 			error = EINVAL;

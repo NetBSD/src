@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1989 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1989, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)cltp_var.h	7.3 (Berkeley) 6/28/90
- *	$Id: cltp_var.h,v 1.3 1993/05/20 05:27:01 cgd Exp $
+ *	from: @(#)cltp_var.h	8.1 (Berkeley) 6/10/93
+ *	$Id: cltp_var.h,v 1.4 1994/05/13 06:08:31 mycroft Exp $
  */
-
-#ifndef _NETISO_CLTP_VAR_H_
-#define _NETISO_CLTP_VAR_H_
 
 #define UD_TPDU_type	0x40	/* packet type */
 
@@ -56,5 +53,3 @@ struct	cltpstat {
 struct	isopcb cltb;
 struct	cltpstat cltpstat;
 #endif
-
-#endif /* !_NETISO_CLTP_VAR_H_ */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)if_cons.c	7.10 (Berkeley) 5/29/91
- *	$Id: if_cons.c,v 1.3 1993/12/18 00:43:02 mycroft Exp $
+ *	from: @(#)if_cons.c	8.1 (Berkeley) 6/10/93
+ *	$Id: if_cons.c,v 1.4 1994/05/13 06:08:44 mycroft Exp $
  */
 
 /***********************************************************
@@ -71,11 +71,9 @@ SOFTWARE.
 #ifdef ARGO_DEBUG
 #define Static  
 unsigned LAST_CALL_PCB;
-#else ARGO_DEBUG
+#else /* ARGO_DEBUG */
 #define Static static
-#endif ARGO_DEBUG
-
-
+#endif /* ARGO_DEBUG */
 
 #ifndef SOCK_STREAM
 #include <sys/param.h>
@@ -86,7 +84,7 @@ unsigned LAST_CALL_PCB;
 #include <sys/socketvar.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
-#include "tsleep.h"
+#include <sys/tsleep.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -116,7 +114,7 @@ unsigned LAST_CALL_PCB;
 #define MT_XCONFIRM	MT_DATA
 #define MT_XDATA	MT_DATA
 #define MT_XHEADER	MT_HEADER
-#endif ARGO_DEBUG
+#endif /* ARGO_DEBUG */
 
 #define DONTCLEAR	 -1
 
@@ -167,21 +165,12 @@ Static 	int				issue_clear_req();
 
 #ifndef	PHASEONE
 extern	struct ifaddr	*ifa_ifwithnet();
-#endif	PHASEONE
+#endif	/* PHASEONE */
 
 extern	struct ifaddr	*ifa_ifwithaddr();
 
-Static  struct socket	dummysocket; /* for use by cosns */
-
 extern struct	isopcb	tp_isopcb; /* chain of all TP pcbs */
-struct	isopcb			tp_incoming_pending;  /* incoming connections
-										for TP, pending */
 
-struct isopcb 	*Xpcblist[] =  {
-	&tp_incoming_pending,
-	&tp_isopcb,
-	(struct isopcb *)0
-};
 
 Static 	int parse_facil(), NSAPtoDTE(), make_partial_x25_packet();
 Static	int FACILtoNSAP(), DTEtoNSAP();
@@ -297,6 +286,7 @@ nibble_match( src_octet, src_nibble, dst_octet, dst_nibble, len)
  * FUNCTION:
  *	initialize the protocol
  */
+void
 cons_init()
 {
 	int tp_incoming(), clnp_incoming();
@@ -322,14 +312,13 @@ struct pklcd *lcp;
 register struct mbuf *m;
 {
 	register struct isopcb *isop;
-	extern struct isopcb tp_isopcb;
 	int cons_tpinput();
 
-	if (iso_pcballoc((struct socket *)0, &tp_incoming_pending)) {
+	if (iso_pcballoc((struct socket *)0, &tp_isopcb)) {
 		pk_close(lcp);
 		return;
 	}
-	isop = tp_incoming_pending.isop_next;
+	isop = tp_isopcb.isop_next;
 	lcp->lcd_upper = cons_tpinput;
 	lcp->lcd_upnext = (caddr_t)isop;
 	lcp->lcd_send(lcp); /* Confirms call */
@@ -338,7 +327,7 @@ register struct mbuf *m;
 	isop->isop_faddr = &isop->isop_sfaddr;
 	DTEtoNSAP(isop->isop_laddr, &lcp->lcd_laddr);
 	DTEtoNSAP(isop->isop_faddr, &lcp->lcd_faddr);
-	parse_facil(isop, lcp, &(mtod(m, struct x25_packet *)->packet_data),
+	parse_facil(lcp, isop, &(mtod(m, struct x25_packet *)->packet_data),
 		m->m_pkthdr.len - PKHEADERLN);
 }
 
@@ -348,26 +337,20 @@ struct pklcd *lcp;
 {
 	register struct isopcb *isop = (struct isopcb *)lcp->lcd_upnext;
 	register struct x25_packet *xp;
-	int cmd;
+	int cmd, ptype = CLEAR;
 
 	if (isop == 0)
 		return;
-	if (m0 == 0) {
-		isop->isop_chan = 0;
-		isop->isop_refcnt = 0;
-		lcp->lcd_upnext = 0;
-		lcp->lcd_upper = 0;
+	if (m0 == 0)
 		goto dead;
-	}
 	switch(m0->m_type) {
 	case MT_DATA:
 	case MT_OOBDATA:
-		tpcons_input(m0, isop->isop_faddr, isop->isop_laddr,
-			(struct socket *)0, (caddr_t)lcp);
+		tpcons_input(m0, isop->isop_faddr, isop->isop_laddr, (caddr_t)lcp);
 		return;
 
 	case MT_CONTROL:
-		switch (pk_decode(mtod(m0, struct x25_packet *))) {
+		switch (ptype = pk_decode(mtod(m0, struct x25_packet *))) {
 
 		case RR:
 			cmd = PRC_CONS_SEND_DONE;
@@ -381,12 +364,17 @@ struct pklcd *lcp;
 			return;
 
 		dead:
-		case RESET:
 		case CLEAR:
 		case CLEAR_CONF:
+			lcp->lcd_upper = 0;
+			lcp->lcd_upnext = 0;
+			isop->isop_chan = 0;
+		case RESET:
 			cmd = PRC_ROUTEDEAD;
 		}
 		tpcons_ctlinput(cmd, isop->isop_faddr, isop);
+		if (cmd = PRC_ROUTEDEAD && isop->isop_refcnt == 0) 
+			iso_pcbdetach(isop);
 	}
 }
 
@@ -447,6 +435,7 @@ cons_connect(isop)
  * NOTE: this takes 3rd arg. because cons uses it to inform itself
  *  of things (timeouts, etc) but has a pcb instead of an address.
  */
+void
 cons_ctlinput(cmd, sa, copcb)
 	int cmd;
 	struct sockaddr *sa;
@@ -524,7 +513,7 @@ done:
 
 
 
-#endif KERNEL
+#endif /* KERNEL */
 
 /*
  * NAME:	make_partial_x25_packet()
@@ -553,9 +542,9 @@ done:
 
 #ifdef X25_1984 
 int cons_use_facils = 1;
-#else X25_1984 
+#else /* X25_1984  */
 int cons_use_facils = 0;
-#endif X25_1984 
+#endif /* X25_1984  */
 
 int cons_use_udata = 1; /* KLUDGE FOR DEBUGGING */
 
@@ -594,7 +583,7 @@ make_partial_x25_packet(isop, lcp)
 		lcp->lcd_facilities = 0;
 		return 0;
 	}
-	MGETHDR(m, MT_DATA, M_WAITOK);
+	MGETHDR(m, M_WAITOK, MT_DATA);
 	if (m == 0)
 		return ENOBUFS;
 	buf = mtod(m, caddr_t);
@@ -727,10 +716,15 @@ NSAPtoDTE(siso, sx25)
 		dtelen = out - sx25->x25_addr;
 		*out++ = 0;
 	} else {
-		register struct rtentry *rt = rtalloc1(siso, 1);
 		/* error = iso_8208snparesolve(addr, x121string, &x121strlen);*/
+		register struct rtentry *rt;
+		extern struct sockaddr_iso blank_siso;
+		struct sockaddr_iso nsiso;
 
-		if (rt) {
+		nsiso = blank_siso;
+		bcopy(nsiso.siso_data, siso->siso_data,
+				nsiso.siso_nlen = siso->siso_nlen);
+		if (rt = rtalloc1(&nsiso, 1)) {
 			register struct sockaddr_x25 *sxx =
 							(struct sockaddr_x25 *)rt->rt_gateway;
 			register char *in = sxx->x25_addr;
@@ -754,16 +748,16 @@ NSAPtoDTE(siso, sx25)
  * 	Creates and NSAP in the sockaddr_iso (addr) from the
  *  x.25 facility found at buf - 1.
  * RETURNS:
- *  length of parameter if ok, -1 if error.
+ *  0 if ok, -1 if error.
  */
 
 Static int
 FACILtoNSAP(addr, buf)
-	u_char 		*buf;
+	register u_char 		*buf;
 	register struct sockaddr_iso *addr;
 {
-	int len_in_nibbles, param_len = *buf++;
-	u_char			buf_len; /* in bytes */
+	int			len_in_nibbles = *++buf & 0x3f;
+	u_char		buf_len = (len_in_nibbles + 1) >> 1;; /* in bytes */
 
 	IFDEBUG(D_CADDR)
 		printf("FACILtoNSAP( 0x%x, 0x%x, 0x%x )\n", 
@@ -771,7 +765,6 @@ FACILtoNSAP(addr, buf)
 	ENDDEBUG
 
 	len_in_nibbles = *buf & 0x3f;
-	buf_len = (len_in_nibbles + 1) >> 1;
 	/* despite the fact that X.25 makes us put a length in nibbles
 	 * here, the NSAP-addrs are always in full octets
 	 */
@@ -793,10 +786,10 @@ FACILtoNSAP(addr, buf)
 		/* Rather than blow away the connection, just ignore and use
 		   NSAP from DTE */;
 	}
-	return param_len;
+	return 0;
 }
 
-static
+Static
 init_siso(siso)
 register struct sockaddr_iso *siso;
 {
@@ -830,15 +823,17 @@ DTEtoNSAP(addr, sx)
 
 
 	init_siso(addr);
-	src_len = strlen(sx->x25_addr);
 	in = sx->x25_addr;
-	out = addr->siso_data + 1;
-	if (*in == '0' && (src_len & 1 == 0)) {
+	src_len = strlen(in);
+	addr->siso_nlen = (src_len + 3) / 2;
+	out = addr->siso_data;
+	*out++ = 0x37;
+	if (src_len & 1) {
 		pad_tail = 0xf;
 		src_len++;
 	}
-	for (first = 0; src_len > 0; src_len --) {
-		first |= *in++;
+	for (first = 0; src_len > 0; src_len--) {
+		first |= 0xf & *in++;
 		if (src_len & 1) {
 			*out++ = first;
 			first = 0;
@@ -858,15 +853,13 @@ DTEtoNSAP(addr, sx)
  *  0 if ok, E* otherwise.
  */
 
-static int
+Static int
 parse_facil(lcp, isop, buf, buf_len)
 	caddr_t 		buf;
 	u_char			buf_len; /* in bytes */
 	struct			isopcb *isop;
 	struct			pklcd *lcp;
 {
-	register struct sockaddr_iso *called = isop->isop_laddr;
-	register struct sockaddr_iso *calling = isop->isop_faddr;
 	register int 	i;
 	register u_char 	*ptr = (u_char *)buf;
 	u_char			*ptr_lim, *facil_lim;
@@ -874,7 +867,7 @@ parse_facil(lcp, isop, buf, buf_len)
 
 	IFDEBUG(D_CADDR)
 		printf("parse_facil(0x%x, 0x%x, 0x%x, 0x%x)\n", 
-			buf, buf_len, called, calling);
+			lcp, isop, buf, buf_len);
 		dump_buf(buf, buf_len);
 	ENDDEBUG
 
@@ -896,7 +889,7 @@ parse_facil(lcp, isop, buf, buf_len)
 		printf("parse_facils: facil length is  0x%x\n", (int) facil_len);
 	ENDDEBUG
 
-	while (ptr <= facil_lim) {
+	while (ptr < facil_lim) {
 		/* get NSAP addresses from facilities */
 		switch (*ptr++) {
 			case 0xcb:
@@ -929,6 +922,7 @@ parse_facil(lcp, isop, buf, buf_len)
 						(example of intelligent protocol design) */
 			case 0x04: 	/* charging info : requesting service */
 			case 0x08: 	/* called line addr modified notification */
+			case 0x00:  /* marker to indicate beginning of CCITT facils */
 				facil_param_len = 1;
 				break;
 
@@ -941,24 +935,26 @@ parse_facil(lcp, isop, buf, buf_len)
 				facil_param_len = 2;
 				break;
 
-				/* don't have any 3 octets */
-				/*
-				facil_param_len = 3;
-				*/
 			default:
 				printf(
-"BOGUS FACILITY CODE facil_len 0x%x *facil_len 0x%x, ptr 0x%x *ptr 0x%x\n",
-					ptr, facil_len, ptr - 1, ptr[-1]);
-				/* facil that we don't handle */
-				return E_CO_HLI_REJI;
+"BOGUS FACILITY CODE facil_lim 0x%x facil_len %d, ptr 0x%x *ptr 0x%x\n",
+					facil_lim, facil_len, ptr - 1, ptr[-1]);
+				/* facil that we don't handle
+				return E_CO_HLI_REJI; */
+				switch (ptr[-1] & 0xc0) {
+				case 0x00:	facil_param_len = 1; break;
+				case 0x40:	facil_param_len = 2; break;
+				case 0x80:	facil_param_len = 3; break;
+				case 0xc0:	facil_param_len = 0; break;
+				}
 		}
 		if (facil_param_len == -1)
 			return E_CO_REG_ICDA;
 		if (facil_param_len == 0) /* variable length */ 
-			facil_param_len = (int)*ptr; /* 1 + the real facil param */
+			facil_param_len = (int)*ptr++; /* 1 + the real facil param */
 		ptr += facil_param_len;
 	}
 	return 0;
 }
 
-#endif TPCONS
+#endif /* TPCONS */

@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1991 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1991, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,12 +30,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)tp_param.h	7.8 (Berkeley) 6/27/91
- *	$Id: tp_param.h,v 1.3 1993/05/20 05:27:48 cgd Exp $
+ *	from: @(#)tp_param.h	8.1 (Berkeley) 6/10/93
+ *	$Id: tp_param.h,v 1.4 1994/05/13 06:09:32 mycroft Exp $
  */
-
-#ifndef _NETISO_TP_PARAM_H_
-#define _NETISO_TP_PARAM_H_
 
 /***********************************************************
 		Copyright IBM Corporation 1987
@@ -64,6 +61,9 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#ifndef _NETISO_TP_PARAM_H_
+#define _NETISO_TP_PARAM_H_
+
 /******************************************************
  * compile time parameters that can be changed
  *****************************************************/
@@ -89,15 +89,19 @@ extern int N_TPREF;
 	 * wraparound in checksumming
 	 * (No mtu is likely to be larger than 4K anyway...)
 	 */
-#define		TP_NRETRANS			5 /* was 1; cray uses 6 */
+#define		TP_NRETRANS			12		/* TCP_MAXRXTSHIFT + 1 */
+#define		TP_MAXRXTSHIFT		6		/* factor of 64 */
 #define		TP_MAXPORT			0xefff
 
-#define		TP_RTT_NUM			0x7
 /* ALPHA: to be used in the context: gain= 1/(2**alpha), or 
  * put another way, gaintimes(x) (x)>>alpha (forgetting the case alpha==0) 
  */
 #define 	TP_RTT_ALPHA		3 
 #define 	TP_RTV_ALPHA		2
+#define		TP_REXMTVAL(tpcb)\
+	((tp_rttadd + (tpcb)->tp_rtt + ((tpcb)->tp_rtv) << 2) / tp_rttdiv)
+#define		TP_RANGESET(tv, value, min, max) \
+	((tv = value) > (max) ? (tv = max) : (tv < min ? tv = min : tv))
 
 /*
  * not sure how to treat data on disconnect 
@@ -194,24 +198,27 @@ extern int N_TPREF;
 #define		TPP_addl_opt		0xc6
 #define		TPP_alt_class		0xc7
 #define		TPP_perf_meas		0xc8	/* local item : perf meas on, svp */
+#define		TPP_ptpdu_size		0xf0	/* preferred TPDU size */
+#define		TPP_inact_time		0xf2	/* inactivity time exchanged */
+
 
 /******************************************************
  * Some fundamental data types
  *****************************************************/
 #ifndef		TRUE
 #define		TRUE				1
-#endif		TRUE
+#endif		/* TRUE */
 
 #ifndef		FALSE
 #define		FALSE				0
-#endif		FALSE
+#endif		/* FALSE */
 
 #define		TP_LOCAL				22
 #define		TP_FOREIGN				33
 
 #ifndef 	EOK
 #define 	EOK 	0
-#endif  	EOK
+#endif  	/* EOK */
 
 #define 	TP_CLASS_0 	(1<<0)
 #define 	TP_CLASS_1 	(1<<1)
@@ -224,7 +231,7 @@ extern int N_TPREF;
 
 #ifndef 	MNULL
 #define 	MNULL				(struct mbuf *)0
-#endif 	MNULL
+#endif 	/* MNULL */
 	/* if ../sys/mbuf.h gets MT_types up to 0x40, these will 
 	 * have to be changed:
 	 */
@@ -235,16 +242,6 @@ extern int N_TPREF;
 
 typedef 	unsigned int	SeqNum;
 typedef		unsigned short	RefNum;
-typedef		int				ProtoHook;
-
-
-/******************************************************
- * Some fundamental constants
- *****************************************************/
-
-#define TP_MIN_WIN	2048
-#define TP_MAX_WIN 16384
-#define TP_MAX_WIN_UNPRIV 8192
 
 /******************************************************
  * Macro used all over, for driver
@@ -327,36 +324,36 @@ bcopy((caddr_t)&(((struct tp_vbp *)(src))->tpv_val),(caddr_t)&(dst),sizeof(type)
 #if defined(ARGO_DEBUG)&&!defined(LOCAL_CREDIT_EXPAND)
 #define LOCAL_CREDIT(tpcb) tp_local_credit(tpcb)
 #else
-#define LOCAL_CREDIT( tpcb ) {\
+#define LOCAL_CREDIT(tpcb) { if (tpcb->tp_rsycnt == 0) {\
     register struct sockbuf *xxsb = &((tpcb)->tp_sock->so_rcv);\
-    register int xxi = ((xxsb)->sb_hiwat-(xxsb)->sb_cc);\
-    register int maxcredit = ((tpcb)->tp_xtd_format?0xffff:0xf);\
-    xxi = (xxi<0) ? 0 : ((xxi)>>(tpcb)->tp_tpdusize);\
-    xxi = MIN(xxi, maxcredit); \
+    register int xxi = sbspace(xxsb);\
+    xxi = (xxi<0) ? 0 : ((xxi) / (tpcb)->tp_l_tpdusize);\
+    xxi = min(xxi, (tpcb)->tp_maxlcredit); \
     if (!(tpcb->tp_cebit_off)) { \
         (tpcb)->tp_lcredit = ROUND((tpcb)->tp_win_recv); \
         if (xxi < (tpcb)->tp_lcredit) { \
             (tpcb)->tp_lcredit = xxi; \
         } \
-    } \
-    else { \
+    } else \
         (tpcb)->tp_lcredit = xxi; \
-    } \
-}
-#endif ARGO_DEBUG
+} }
+#endif /* ARGO_DEBUG */
 
 #ifdef KERNEL
+extern int tp_rttadd, tp_rttdiv;
+#include <sys/syslog.h>
+#define printf logpri(LOG_DEBUG),addlog
 
 #ifndef  tp_NSTATES 
 
-#include "tp_states.h"
-#include "tp_events.h"
+#include <netiso/tp_states.h>
+#include <netiso/tp_events.h>
 #if defined(__STDC__) || defined(__cplusplus)
 #undef ATTR
 #define ATTR(X) ev_union.EV_ ## X
 #endif /* defined(__STDC__) || defined(__cplusplus) */
 
-#endif  tp_NSTATES 
-#endif KERNEL
+#endif  /* tp_NSTATES  */
+#endif /* KERNEL */
 
-#endif /* !_NETISO_TP_PARAM_H_ */
+#endif /* _NETISO_TP_PARAM_H_ */
