@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2001/11/19 13:55:06 minoura Exp $
+#	$NetBSD: Makefile,v 1.41 2001/11/29 23:08:53 bjh21 Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/17/94
 
 PROG=	disklabel
@@ -40,6 +40,11 @@ CPPFLAGS+= -DUSE_MBR
 # read in the old boot area even though we don't support writing the boot
 # area with disklabel(8).
 CPPFLAGS+= -DSAVEBOOTAREA
+.endif
+
+.if (${MACHINE} == "acorn32" || ${MACHINE} == "arm26")
+# Support FileCore boot block
+CPPFLAGS+= -DUSE_ACORN
 .endif
 
 .include <bsd.prog.mk>
