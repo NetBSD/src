@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.25.2.5 2002/06/20 03:50:00 nathanw Exp $	*/
+/*	$NetBSD: nfs.h,v 1.25.2.6 2002/12/11 06:46:47 thorpej Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -131,8 +131,10 @@ extern int nfs_niothreads;              /* Number of async_daemons desired */
  * The VA_EXCLUSIVE flag should be added for va_vaflags and set for an
  * exclusive create.
  */
+#if 0
 #ifndef VA_EXCLUSIVE
 #define VA_EXCLUSIVE	0
+#endif
 #endif
 
 /*

@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1998/06/12 23:23:09 cgd Exp $
+#	$NetBSD: Makefile,v 1.1.26.1 2002/12/11 06:46:46 thorpej Exp $
 
-KDIR=	/sys/netns
 INCSDIR= /usr/include/netns
 
 INCS=	idp.h idp_var.h ns.h ns_error.h ns_if.h ns_pcb.h ns_var.h sp.h \

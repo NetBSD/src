@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.4.4.1 2001/10/22 20:41:58 nathanw Exp $
+#	$NetBSD: Makefile,v 1.4.4.2 2002/12/11 06:46:39 thorpej Exp $
 
-KDIR=	/sys/netinet6
 INCSDIR= /usr/include/netinet6
 
 INCS=	ah.h esp.h in6.h in6_gif.h in6_ifattach.h in6_pcb.h \

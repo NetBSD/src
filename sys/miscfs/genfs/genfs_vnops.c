@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.31.2.20 2002/11/11 22:14:46 nathanw Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.31.2.21 2002/12/11 06:46:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.20 2002/11/11 22:14:46 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.31.2.21 2002/12/11 06:46:30 thorpej Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -1620,7 +1620,7 @@ genfs_compat_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	iov.iov_base = (void *)kva;
 	iov.iov_len = npages << PAGE_SHIFT;
 	uio.uio_iov = &iov;
-	uio.uio_iovcnt = npages;
+	uio.uio_iovcnt = 1;
 	uio.uio_offset = offset;
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_WRITE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.20.4.4 2002/11/11 22:13:57 nathanw Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.20.4.5 2002/12/11 06:43:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.20.4.4 2002/11/11 22:13:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.20.4.5 2002/12/11 06:43:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,7 @@ filt_logrdetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	SLIST_REMOVE(&logsoftc.sc_selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&logsoftc.sc_selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -261,7 +261,7 @@ logkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &logsoftc.sc_selp.si_klist;
+		klist = &logsoftc.sc_selp.sel_klist;
 		kn->kn_fop = &logread_filtops;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.75.2.18 2002/11/11 22:13:48 nathanw Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.75.2.19 2002/12/11 06:43:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.18 2002/11/11 22:13:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.75.2.19 2002/12/11 06:43:05 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1235,7 +1235,8 @@ format_bytes(buf, len, bytes)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code, void *args, register_t rval[])
+trace_enter(struct lwp *l, register_t code,
+	register_t realcode, void *args, register_t rval[])
 {
 #if defined(KTRACE) || defined(SYSTRACE)
 	struct proc *p = l->l_proc;
@@ -1247,7 +1248,7 @@ trace_enter(struct lwp *l, register_t code, void *args, register_t rval[])
 
 #ifdef KTRACE
 	if (KTRPOINT(p, KTR_SYSCALL))
-		ktrsyscall(p, code, args);
+		ktrsyscall(p, code, realcode, args);
 #endif /* KTRACE */
 
 #ifdef SYSTRACE

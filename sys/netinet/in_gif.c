@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.19.2.9 2002/11/11 22:15:15 nathanw Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.19.2.10 2002/12/11 06:46:36 thorpej Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,13 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.9 2002/11/11 22:15:15 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.19.2.10 2002/12/11 06:46:36 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
-
-/* define it if you want to use encap_attach_func (it helps *BSD merge) */
-/*#define USE_ENCAPCHECK*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,7 +242,7 @@ in_gif_input(m, va_alist)
 		ipstat.ips_nogif++;
 		return;
 	}
-#ifndef USE_ENCAPCHECK
+#ifndef GIF_ENCAPCHECK
 	if (!gif_validate4(ip, (struct gif_softc *)gifp, m->m_pkthdr.rcvif)) {
 		m_freem(m);
 		ipstat.ips_nogif++;
@@ -372,6 +369,7 @@ gif_validate4(ip, sc, ifp)
 	return 32 * 2;
 }
 
+#ifdef GIF_ENCAPCHECK
 /*
  * we know that we are in IFF_UP, outer address available, and outer family
  * matched the physical addr family.  see gif_encapcheck().
@@ -396,12 +394,13 @@ gif_encapcheck4(m, off, proto, arg)
 
 	return gif_validate4(&ip, sc, ifp);
 }
+#endif
 
 int
 in_gif_attach(sc)
 	struct gif_softc *sc;
 {
-#ifndef USE_ENCAPCHECK
+#ifndef GIF_ENCAPCHECK
 	struct sockaddr_in mask4;
 
 	bzero(&mask4, sizeof(mask4));

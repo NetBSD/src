@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.42.2.8 2002/11/11 22:15:03 nathanw Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.42.2.9 2002/12/11 06:46:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.42.2.8 2002/11/11 22:15:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.42.2.9 2002/12/11 06:46:32 thorpej Exp $");
 
 #include "tun.h"
 
@@ -932,7 +932,7 @@ filt_tunrdetach(struct knote *kn)
 	int s;
 
 	s = splnet();
-	SLIST_REMOVE(&tp->tun_rsel.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&tp->tun_rsel.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -973,12 +973,12 @@ tunkqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &tp->tun_rsel.si_klist;
+		klist = &tp->tun_rsel.sel_klist;
 		kn->kn_fop = &tunread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &tp->tun_rsel.si_klist;
+		klist = &tp->tun_rsel.sel_klist;
 		kn->kn_fop = &tun_seltrue_filtops;
 		break;
 

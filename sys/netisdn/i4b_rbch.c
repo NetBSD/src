@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.2.2.5 2002/11/11 22:15:55 nathanw Exp $
+ *	$Id: i4b_rbch.c,v 1.2.2.6 2002/12/11 06:46:41 thorpej Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.2.2.5 2002/11/11 22:15:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.2.2.6 2002/12/11 06:46:41 thorpej Exp $");
 
 #include "isdnbchan.h"
 
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.2.2.5 2002/11/11 22:15:55 nathanw Exp
 #endif
 
 #if defined (__NetBSD__) || defined (__OpenBSD__)
-extern cc_t ttydefchars;
 #define termioschars(t) memcpy((t)->c_cc, &ttydefchars, sizeof((t)->c_cc))
 #endif
 
@@ -804,7 +803,7 @@ filt_i4brbchdetach(struct knote *kn)
 	int s;
 
 	s = splhigh();
-	SLIST_REMOVE(&sc->selp.si_klist, kn, knote, kn_selnext);
+	SLIST_REMOVE(&sc->selp.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
 
@@ -859,12 +858,12 @@ isdnbchankqfilter(dev_t dev, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		kn->kn_fop = &i4brbchread_filtops;
 		break;
 
 	case EVFILT_WRITE:
-		klist = &sc->selp.si_klist;
+		klist = &sc->selp.sel_klist;
 		kn->kn_fop = &i4brbchwrite_filtops;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.84.2.19 2002/11/12 09:24:30 skrll Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.84.2.20 2002/12/11 06:43:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.19 2002/11/12 09:24:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.84.2.20 2002/12/11 06:43:03 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_systrace.h"
@@ -190,6 +190,9 @@ sys___clone(struct lwp *l, void *v, register_t *retval)
 	    NULL, NULL, retval, NULL));
 }
 
+/* print the 'table full' message once per 10 seconds */
+struct timeval fork_tfmrate = { 10, 0 };
+
 int
 fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
     void (*func)(void *), void *arg, register_t *retval,
@@ -200,20 +203,25 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	struct lwp	*l2;
 	int		count, s;
 	vaddr_t		uaddr;
+	boolean_t	inmem;
 	static int	nextpid, pidchecked;
 
 	/*
 	 * Although process entries are dynamically created, we still keep
 	 * a global limit on the maximum number we will create.  Don't allow
-	 * a nonprivileged user to use the last process; don't let root
+	 * a nonprivileged user to use the last few processes; don't let root
 	 * exceed the limit. The variable nprocs is the current number of
 	 * processes, maxproc is the limit.
 	 */
 	p1 = l1->l_proc;
 	uid = p1->p_cred->p_ruid;
-	if (__predict_false((nprocs >= maxproc - 1 && uid != 0) ||
+	if (__predict_false((nprocs >= maxproc - 5 && uid != 0) ||
 			    nprocs >= maxproc)) {
-		tablefull("proc", "increase kern.maxproc or NPROC");
+		static struct timeval lasttfm;
+
+		if (ratecheck(&lasttfm, &fork_tfmrate))
+			tablefull("proc", "increase kern.maxproc or NPROC");
+		(void)tsleep(&nprocs, PUSER, "forkmx", hz / 2);
 		return (EAGAIN);
 	}
 	nprocs++;
@@ -227,6 +235,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 			    p1->p_rlimit[RLIMIT_NPROC].rlim_cur)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
+		(void)tsleep(&nprocs, PUSER, "forkulim", hz / 2);
 		return (EAGAIN);
 	}
 
@@ -234,10 +243,10 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Allocate virtual address space for the U-area now, while it
 	 * is still easy to abort the fork operation if we're out of
 	 * kernel virtual address space.  The actual U-area pages will
-	 * be allocated and wired in uvm_fork().
+	 * be allocated and wired in uvm_fork() if needed.
 	 */
 
-	uaddr = uvm_uarea_alloc();
+	inmem = uvm_uarea_alloc(&uaddr);
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		nprocs--;
@@ -270,7 +279,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 * Increase reference counts on shared objects.
 	 * The p_stats and p_sigacts substructs are set in uvm_fork().
 	 */
-	p2->p_flag = p1->p_flag & (P_SUGID);
+	p2->p_flag = (p1->p_flag & P_SUGID);
 	p2->p_emul = p1->p_emul;
 	p2->p_execsw = p1->p_execsw;
 
@@ -338,16 +347,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 			ktradref(p2);
 	}
 #endif
-#ifdef SYSTRACE
-	/* Tell systrace what's happening. */
-	if (ISSET(p1->p_flag, P_SYSTRACE))
-		systrace_sys_fork(p1, p2);
-#endif
-
-
-#ifdef __HAVE_SYSCALL_INTERN
-	(*p2->p_emul->e_syscall_intern)(p2);
-#endif
 
 	scheduler_fork_hook(p1, p2);
 
@@ -383,6 +382,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	newlwp(l1, p2, uaddr, 0, stack, stacksize, 
 	    (func != NULL) ? func : child_return, 
 	    arg, &l2);
+	if (inmem)
+		l2->l_flag |= L_INMEM;
 
 	/*
 	 * BEGIN PID ALLOCATION.
@@ -462,6 +463,16 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	proclist_unlock_write(s);
 
+#ifdef SYSTRACE
+	/* Tell systrace what's happening. */
+	if (ISSET(p1->p_flag, P_SYSTRACE))
+		systrace_sys_fork(p1, p2);
+#endif
+
+#ifdef __HAVE_SYSCALL_INTERN
+	(*p2->p_emul->e_syscall_intern)(p2);
+#endif
+
 	/*
 	 * Make child runnable, set start time, and add to run queue
 	 * except if the parent requested the child to start in SSTOP state.
@@ -494,8 +505,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	PRELE(l1);
 
 	/*
-	* Notify any interested parties about the new process.
-	*/
+	 * Notify any interested parties about the new process.
+	 */
 	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*

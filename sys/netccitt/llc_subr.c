@@ -1,4 +1,4 @@
-/*	$NetBSD: llc_subr.c,v 1.12.6.3 2001/11/14 19:17:37 nathanw Exp $	*/
+/*	$NetBSD: llc_subr.c,v 1.12.6.4 2002/12/11 06:46:35 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1990, 1991, 1992
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.12.6.3 2001/11/14 19:17:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: llc_subr.c,v 1.12.6.4 2002/12/11 06:46:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,19 +302,19 @@ llc_getsapinfo(sap, ifp)
 	struct ifnet *ifp;
 {
 	struct sockaddr_dl *ifdl_addr;
-	struct sockaddr_dl si_addr;
+	struct sockaddr_dl sdl_addr;
 	struct rtentry *sirt;
 	u_char          saploc;
 
 	USES_AF_LINK_RTS;
 
 	ifdl_addr = sdl_getaddrif(ifp);
-	sdl_copy(ifdl_addr, &si_addr);
-	saploc = LLSAPLOC(&si_addr, ifp);
-	si_addr.sdl_data[saploc] = sap;
-	si_addr.sdl_alen++;
+	sdl_copy(ifdl_addr, &sdl_addr);
+	saploc = LLSAPLOC(&sdl_addr, ifp);
+	sdl_addr.sdl_data[saploc] = sap;
+	sdl_addr.sdl_alen++;
 
-	if ((sirt = rtalloc1((struct sockaddr *) & si_addr, 0)))
+	if ((sirt = rtalloc1((struct sockaddr *) & sdl_addr, 0)))
 		sirt->rt_refcnt--;
 	else
 		return (0);

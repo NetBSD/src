@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.1.1.1.4.1 2001/10/22 20:42:07 nathanw Exp $
+#	$NetBSD: Makefile,v 1.1.1.1.4.2 2002/12/11 06:46:41 thorpej Exp $
 
-KDIR=	/sys/netisdn
 INCSDIR= /usr/include/netisdn
 
 INCS=	i4b_cause.h i4b_trace.h i4b_debug.h i4b_ioctl.h i4b_tel_ioctl.h \

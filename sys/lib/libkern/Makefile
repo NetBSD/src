@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60.2.7 2002/11/11 22:14:19 nathanw Exp $
+#	$NetBSD: Makefile,v 1.60.2.8 2002/12/11 06:46:23 thorpej Exp $
 
 LIB=		kern
 NOPIC=		# defined
@@ -6,7 +6,10 @@ LLIBS=		# defined
 
 .include <bsd.own.mk>
 
-.if defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
+.if defined(LIBKERN_ARCH) && !empty(LIBKERN_ARCH) && \
+    exists(${KERNDIR}/arch/${LIBKERN_ARCH})
+ARCHSUBDIR=     ${LIBKERN_ARCH}
+.elif defined(MACHINE_ARCH) && !empty(MACHINE_ARCH) && \
     exists(${KERNDIR}/arch/${MACHINE_ARCH})
 ARCHSUBDIR=     ${MACHINE_ARCH}
 .elif defined(MACHINE_CPU) && !empty(MACHINE_CPU) && \

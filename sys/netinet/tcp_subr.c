@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.107.2.12 2002/11/11 22:15:31 nathanw Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.107.2.13 2002/12/11 06:46:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.12 2002/11/11 22:15:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.107.2.13 2002/12/11 06:46:38 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -567,6 +567,7 @@ tcp_respond(tp, template, m, th0, ack, seq, flags)
 #endif
 	}
 
+	th = NULL;	/* Quell uninitialized warning */
 	ip = NULL;
 #ifdef INET6
 	ip6 = NULL;

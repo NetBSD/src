@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.86.2.24 2002/11/11 22:13:52 nathanw Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.86.2.25 2002/12/11 06:43:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.24 2002/11/11 22:13:52 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.86.2.25 2002/12/11 06:43:06 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_insecure.h"
@@ -300,11 +300,11 @@ sysctl_docptime(void *oldp, size_t *oldlenp, void *newp)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	for (i=0; i<CPUSTATES; i++)
+	for (i = 0; i < CPUSTATES; i++)
 		cp_time[i] = 0;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		for (i=0; i<CPUSTATES; i++)
+		for (i = 0; i < CPUSTATES; i++)
 			cp_time[i] += ci->ci_schedstate.spc_cp_time[i];
 	}
 	return (sysctl_rdstruct(oldp, oldlenp, newp,
@@ -1239,13 +1239,13 @@ static int
 sysctl_sysvipc(int *name, u_int namelen, void *where, size_t *sizep)
 {
 #ifdef SYSVMSG
-	struct msg_sysctl_info *msgsi;
+	struct msg_sysctl_info *msgsi = NULL;
 #endif
 #ifdef SYSVSEM
-	struct sem_sysctl_info *semsi;
+	struct sem_sysctl_info *semsi = NULL;
 #endif
 #ifdef SYSVSHM
-	struct shm_sysctl_info *shmsi;
+	struct shm_sysctl_info *shmsi = NULL;
 #endif
 	size_t infosize, dssize, tsize, buflen;
 	void *buf = NULL;
@@ -1457,6 +1457,9 @@ sysctl_doeproc(int *name, u_int namelen, void *vwhere, size_t *sizep)
 		op = name[1];
 		if (op != KERN_PROC_ALL)
 			arg = name[2];
+		else
+			arg = 0;		/* Quell compiler warning */
+		elem_size = elem_count = 0;	/* Ditto */
 	} else {
 		if (namelen != 5)
 			return (EINVAL);

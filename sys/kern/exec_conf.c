@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.55.2.12 2002/09/17 21:21:55 nathanw Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.55.2.13 2002/12/11 06:43:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.12 2002/09/17 21:21:55 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.13 2002/12/11 06:43:00 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.55.2.12 2002/09/17 21:21:55 nathanw 
 #include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
 #include "opt_compat_mach.h"
+#include "opt_compat_darwin.h"
 #include "opt_compat_svr4.h"
 #include "opt_compat_netbsd32.h"
 #include "opt_compat_aout.h"
@@ -126,6 +127,10 @@ int ELF64NAME2(netbsd,probe)(struct proc *, struct exec_package *,
 
 #ifdef COMPAT_LINUX
 #include <compat/linux/common/linux_exec.h>
+#endif
+
+#ifdef COMPAT_DARWIN
+#include <compat/darwin/darwin_exec.h>
 #endif
 
 #ifdef COMPAT_FREEBSD
@@ -353,7 +358,7 @@ const struct execsw execsw_builtin[] = {
 	  &emul_linux,
 	  EXECSW_PRIO_ANY,
 	  LINUX_ELF_AUX_ARGSIZ,
-	  LINUX_COPYARGS_FUNCTION,
+	  linux_elf32_copyargs,
 	  NULL,
 	  coredump_elf32 },
 #endif
@@ -363,18 +368,18 @@ const struct execsw execsw_builtin[] = {
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
 	  { ELF32NAME2(irix,probe_n32) },
-	  &emul_irix_n32,
+	  &emul_irix,
 	  EXECSW_PRIO_ANY,
 	  IRIX_AUX_ARGSIZ,
 	  irix_elf32_copyargs,
-	  NULL,
-	  coredump_netbsd },
+	  irix_n32_setregs,
+	  coredump_elf32 },
 
 	/* IRIX Elf32 o32 ABI */
 	{ sizeof (Elf32_Ehdr),
 	  exec_elf32_makecmds,
 	  { ELF32NAME2(irix,probe_o32) },
-	  &emul_irix_o32,
+	  &emul_irix,
 	  EXECSW_PRIO_ANY,
 	  IRIX_AUX_ARGSIZ,
 	  irix_elf32_copyargs,
@@ -485,6 +490,19 @@ const struct execsw execsw_builtin[] = {
 	  EXECSW_PRIO_ANY,
 	  MAXPATHLEN + 1,
 	  exec_mach_copyargs,
+	  NULL,
+	  coredump_netbsd },
+#endif
+
+#ifdef COMPAT_DARWIN
+	/* Darwin Mach-O (native word size) */
+	{ sizeof (struct exec_macho_fat_header),
+	  exec_macho_makecmds,
+	  { .mach_probe_func = exec_darwin_probe },
+	  &emul_darwin,
+	  EXECSW_PRIO_ANY,
+	  MAXPATHLEN + 1,
+	  exec_darwin_copyargs,
 	  NULL,
 	  coredump_netbsd },
 #endif

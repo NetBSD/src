@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.17.2.1 2001/11/14 19:17:30 nathanw Exp $	*/
+/*	$NetBSD: radix.c,v 1.17.2.2 2002/12/11 06:46:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.17.2.1 2001/11/14 19:17:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radix.c,v 1.17.2.2 2002/12/11 06:46:33 thorpej Exp $");
 
 #ifndef _NET_RADIX_H_
 #include <sys/param.h>
@@ -929,6 +929,6 @@ rn_init()
 	addmask_key = cplim = rn_ones + max_keylen;
 	while (cp < cplim)
 		*cp++ = -1;
-	if (rn_inithead((void **)&mask_rnhead, 0) == 0)
+	if (rn_inithead((void *)&mask_rnhead, 0) == 0)
 		panic("rn_init 2");
 }

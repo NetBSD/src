@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.54.2.17 2002/11/11 22:14:07 nathanw Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.54.2.18 2002/12/11 06:43:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.17 2002/11/11 22:14:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.54.2.18 2002/12/11 06:43:10 thorpej Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -1341,11 +1341,13 @@ sosetopt(struct socket *so, int level, int optname, struct mbuf *m0)
 				goto bad;
 			}
 			tv = mtod(m, struct timeval *);
-			if (tv->tv_sec * hz + tv->tv_usec / tick > SHRT_MAX) {
+			if (tv->tv_sec > (SHRT_MAX - tv->tv_usec / tick) / hz) {
 				error = EDOM;
 				goto bad;
 			}
 			val = tv->tv_sec * hz + tv->tv_usec / tick;
+			if (val == 0 && tv->tv_usec != 0)
+				val = 1;
 
 			switch (optname) {
 
@@ -1476,8 +1478,8 @@ filt_sordetach(struct knote *kn)
 	struct socket	*so;
 
 	so = (struct socket *)kn->kn_fp->f_data;
-	SLIST_REMOVE(&so->so_rcv.sb_sel.si_klist, kn, knote, kn_selnext);
-	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_klist))
+	SLIST_REMOVE(&so->so_rcv.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))
 		so->so_rcv.sb_flags &= ~SB_KNOTE;
 }
 
@@ -1507,8 +1509,8 @@ filt_sowdetach(struct knote *kn)
 	struct socket	*so;
 
 	so = (struct socket *)kn->kn_fp->f_data;
-	SLIST_REMOVE(&so->so_snd.sb_sel.si_klist, kn, knote, kn_selnext);
-	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_klist))
+	SLIST_REMOVE(&so->so_snd.sb_sel.sel_klist, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))
 		so->so_snd.sb_flags &= ~SB_KNOTE;
 }
 
@@ -1580,7 +1582,7 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 	default:
 		return (1);
 	}
-	SLIST_INSERT_HEAD(&sb->sb_sel.si_klist, kn, kn_selnext);
+	SLIST_INSERT_HEAD(&sb->sb_sel.sel_klist, kn, kn_selnext);
 	sb->sb_flags |= SB_KNOTE;
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.41.2.12 2002/10/18 02:45:34 nathanw Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.41.2.13 2002/12/11 06:46:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.12 2002/10/18 02:45:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.13 2002/12/11 06:46:47 thorpej Exp $");
 
 #include "opt_nfs.h"
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.41.2.12 2002/10/18 02:45:34 nathanw E
 #include <nfs/nqnfs.h>
 #include <nfs/nfs_var.h>
 
-LIST_HEAD(nfsnodehashhead, nfsnode) *nfsnodehashtbl;
+struct nfsnodehashhead *nfsnodehashtbl;
 u_long nfsnodehash;
 struct lock nfs_hashlock;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.53.2.8 2002/11/11 22:13:43 nathanw Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.53.2.9 2002/12/11 06:43:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,9 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.8 2002/11/11 22:13:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.9 2002/12/11 06:43:04 thorpej Exp $");
 
 #include "opt_ktrace.h"
+#include "opt_compat_mach.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +56,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.53.2.8 2002/11/11 22:13:43 nathanw
 #include <sys/mount.h>
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#ifdef COMPAT_MACH
+#include <compat/mach/mach_types.h>
+#include <compat/mach/mach_message.h>
+#endif
 
 #ifdef KTRACE
 
@@ -74,7 +80,9 @@ int	ktrsamefile(struct file *, struct file *);
  */
 
 int
-ktrsamefile(struct file *f1, struct file *f2)
+ktrsamefile(f1, f2)
+	struct file *f1;
+	struct file *f2;
 {
 	return ((f1 == f2) ||
 	    ((f1 != NULL) && (f2 != NULL) &&
@@ -83,7 +91,8 @@ ktrsamefile(struct file *f1, struct file *f2)
 }
 
 void
-ktrderef(struct proc *p)
+ktrderef(p)
+	struct proc *p;
 {
 	struct file *fp = p->p_tracep;
 	p->p_traceflag = 0;
@@ -101,7 +110,8 @@ ktrderef(struct proc *p)
 }
 
 void
-ktradref(struct proc *p)
+ktradref(p)
+	struct proc *p;
 {
 	struct file *fp = p->p_tracep;
 
@@ -109,7 +119,10 @@ ktradref(struct proc *p)
 }
 
 void
-ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
+ktrinitheader(kth, p, type)
+	struct ktr_header *kth;
+	struct proc *p;
+	int type;
 {
 
 	memset(kth, 0, sizeof(*kth));
@@ -120,7 +133,11 @@ ktrinitheader(struct ktr_header *kth, struct proc *p, int type)
 }
 
 void
-ktrsyscall(struct proc *p, register_t code, register_t args[])
+ktrsyscall(p, code, realcode, args)
+	struct proc *p;
+	register_t code;
+	register_t realcode;
+	register_t args[];
 {
 	struct ktr_header kth;
 	struct ktr_syscall *ktp;
@@ -135,7 +152,7 @@ ktrsyscall(struct proc *p, register_t code, register_t args[])
 	p->p_traceflag |= KTRFAC_ACTIVE;
 	ktrinitheader(&kth, p, KTR_SYSCALL);
 	ktp = malloc(len, M_TEMP, M_WAITOK);
-	ktp->ktr_code = code;
+	ktp->ktr_code = realcode;
 	ktp->ktr_argsize = argsize;
 	argp = (register_t *)((char *)ktp + sizeof(struct ktr_syscall));
 	for (i = 0; i < (argsize / sizeof(*argp)); i++)
@@ -148,7 +165,11 @@ ktrsyscall(struct proc *p, register_t code, register_t args[])
 }
 
 void
-ktrsysret(struct proc *p, register_t code, int error, register_t retval)
+ktrsysret(p, code, error, retval)
+	struct proc *p; 
+	register_t code; 
+	int error; 
+	register_t retval;
 {
 	struct ktr_header kth;
 	struct ktr_sysret ktp;
@@ -168,7 +189,9 @@ ktrsysret(struct proc *p, register_t code, int error, register_t retval)
 }
 
 void
-ktrnamei(struct proc *p, char *path)
+ktrnamei(p, path)
+	struct proc *p;
+	char *path;
 {
 	struct ktr_header kth;
 
@@ -182,7 +205,8 @@ ktrnamei(struct proc *p, char *path)
 }
 
 void
-ktremul(struct proc *p)
+ktremul(p)
+	struct proc *p;
 {
 	struct ktr_header kth;
 	const char *emul = p->p_emul->e_name;
@@ -197,8 +221,13 @@ ktremul(struct proc *p)
 }
 
 void
-ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
-    int len, int error)
+ktrgenio(p, fd, rw, iov, len, error)
+	struct proc *p;
+	int fd;
+	enum uio_rw rw;
+	struct iovec *iov;
+	int len;
+	int error;
 {
 	struct ktr_header kth;
 	struct ktr_genio *ktp;
@@ -257,7 +286,12 @@ ktrgenio(struct proc *p, int fd, enum uio_rw rw, struct iovec *iov,
 }
 
 void
-ktrpsig(struct proc *p, int sig, sig_t action, sigset_t *mask, int code)
+ktrpsig(p, sig, action, mask, code)
+	struct proc *p;
+	int sig;
+	sig_t action;
+	sigset_t *mask;
+	int code;
 {
 	struct ktr_header kth;
 	struct ktr_psig	kp;
@@ -276,7 +310,10 @@ ktrpsig(struct proc *p, int sig, sig_t action, sigset_t *mask, int code)
 }
 
 void
-ktrcsw(struct proc *p, int out, int user)
+ktrcsw(p, out, user)
+	struct proc *p;
+	int out;
+	int user;
 {
 	struct ktr_header kth;
 	struct ktr_csw kc;
@@ -327,10 +364,41 @@ ktruser(p, id, addr, len, ustr)
 
 }
 
+#ifdef COMPAT_MACH
+void
+ktrmmsg(p, msgh, size)
+	struct proc *p;
+	const char *msgh;
+	size_t size;
+{
+	struct ktr_header kth;
+	struct ktr_mmsg	*kp;
+	int error;
+	
+	p->p_traceflag |= KTRFAC_ACTIVE;
+	ktrinitheader(&kth, p, KTR_MMSG);
+
+	kp = (struct ktr_mmsg *)malloc(size, M_TEMP, M_WAITOK);
+	if ((error = copyin(msgh, kp, size)) != 0)
+		size = 0; /* Still log a message, but empty */
+
+	kth.ktr_buf = (caddr_t)kp;
+	kth.ktr_len = size;
+	(void) ktrwrite(p, &kth);
+	free(kp, M_TEMP);
+	p->p_traceflag &= ~KTRFAC_ACTIVE;
+}
+#endif /* COMPAT_MACH */
+
 /* Interface and common routines */
 
 int
-ktrace_common(struct proc *curp, int ops, int facs, int pid, struct file *fp)
+ktrace_common(curp, ops, facs, pid, fp)
+	struct proc *curp;
+	int ops;
+	int facs;
+	int pid;
+	struct file *fp;
 {
 	int ret = 0;
 	int error = 0;
@@ -423,7 +491,10 @@ done:
  */
 /* ARGSUSED */
 int
-sys_fktrace(struct lwp *l, void *v, register_t *retval)
+sys_fktrace(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
 {
 	struct sys_fktrace_args /* {
 		syscallarg(int) fd;
@@ -450,7 +521,10 @@ sys_fktrace(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_ktrace(struct lwp *l, void *v, register_t *retval)
+sys_ktrace(l, v, retval)
+	struct lwp *l;
+	void *v;
+	register_t *retval;
 {
 	struct sys_ktrace_args /* {
 		syscallarg(const char *) fname;
@@ -520,7 +594,12 @@ done:
 }
 
 int
-ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct file *fp)
+ktrops(curp, p, ops, facs, fp)
+	struct proc *curp;
+	struct proc *p;
+	int ops;
+	int facs;
+	struct file *fp;
 {
 
 	if (!ktrcanset(curp, p))
@@ -559,8 +638,12 @@ ktrops(struct proc *curp, struct proc *p, int ops, int facs, struct file *fp)
 }
 
 int
-ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
-    struct file *fp)
+ktrsetchildren(curp, top, ops, facs, fp)
+	struct proc *curp;
+	struct proc *top;
+	int ops;
+	int facs;
+	struct file *fp;
 {
 	struct proc *p;
 	int ret = 0;
@@ -589,7 +672,9 @@ ktrsetchildren(struct proc *curp, struct proc *top, int ops, int facs,
 }
 
 int
-ktrwrite(struct proc *p, struct ktr_header *kth)
+ktrwrite(p, kth)
+	struct proc *p;
+	struct ktr_header *kth;
 {
 	struct uio auio;
 	struct iovec aiov[2];
@@ -657,7 +742,9 @@ ktrwrite(struct proc *p, struct ktr_header *kth)
  * TODO: check groups.  use caller effective gid.
  */
 int
-ktrcanset(struct proc *callp, struct proc *targetp)
+ktrcanset(callp, targetp)
+	struct proc *callp;
+	struct proc *targetp;
 {
 	struct pcred *caller = callp->p_cred;
 	struct pcred *target = targetp->p_cred;
