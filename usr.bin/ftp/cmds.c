@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.72 1999/10/09 03:00:55 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.73 1999/10/10 22:33:54 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -107,7 +107,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.72 1999/10/09 03:00:55 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.73 1999/10/10 22:33:54 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,8 +134,8 @@ __RCSID("$NetBSD: cmds.c,v 1.72 1999/10/09 03:00:55 lukem Exp $");
 
 #include "ftp_var.h"
 
-jmp_buf	jabort;
-char   *mname;
+sigjmp_buf	 jabort;
+char		*mname;
 
 struct	types {
 	char	*t_name;
@@ -1658,7 +1658,7 @@ account(argc, argv)
 	(void)command("ACCT %s", ap);
 }
 
-jmp_buf abortprox;
+sigjmp_buf abortprox;
 
 void
 proxabort(notused)

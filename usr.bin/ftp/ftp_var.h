@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.42 1999/10/05 01:16:13 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.43 1999/10/10 22:33:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ GLOBAL	const char *no_proxy;	/* list of domains not to proxy */
 GLOBAL	char   *outfile;	/* filename to output URLs to */
 GLOBAL	int	restartautofetch; /* restart auto-fetch */
 
-GLOBAL	jmp_buf	toplevel;	/* non-local goto stuff for cmd scanner */
+GLOBAL	sigjmp_buf toplevel;	/* non-local goto stuff for cmd scanner */
 
 GLOBAL	char	line[FTPBUFLEN]; /* input line buffer */
 GLOBAL	char	*stringbase;	/* current scan point in line buffer */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.82 1999/10/09 12:48:12 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.83 1999/10/10 22:33:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-1999 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.82 1999/10/09 12:48:12 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.83 1999/10/10 22:33:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ __RCSID("$NetBSD: ftp.c,v 1.82 1999/10/09 12:48:12 lukem Exp $");
 
 volatile int	abrtflag = 0;
 volatile int	timeoutflag = 0;
-jmp_buf	ptabort;
+sigjmp_buf	ptabort;
 int	ptabflg;
 int	ptflag = 0;
 char	pasv[BUFSIZ];	/* passive port for proxy data connection */
@@ -685,7 +685,7 @@ empty(cin, din, sec)
 	return nr;
 }
 
-jmp_buf	xferabort;
+sigjmp_buf	xferabort;
 
 void
 abortxfer(notused)
