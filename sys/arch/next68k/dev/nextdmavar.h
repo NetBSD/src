@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.4 1998/12/30 03:05:29 dbj Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.5 1999/03/04 14:18:26 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -65,3 +65,5 @@ void nextdma_start __P((struct nextdma_config *, u_long));
 /* query to see if nextdma is finished */
 int nextdma_finished __P((	struct nextdma_config *));
 void nextdma_reset __P((struct nextdma_config *));
+
+int nextdma_intr __P((void *));
