@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 1996/03/26 16:55:37 is Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 1996/03/30 16:22:55 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,7 +175,7 @@ int machineid, mmutype, fputype;
 #define	IC40_ENABLE	0x00008000	/* enable instruction cache */
 #define DC40_ENABLE	0x80000000	/* enable data cache */
 
-/* additional fields in the 68060 cache control register /
+/* additional fields in the 68060 cache control register */
 
 #define DC60_NAD	0x40000000	/* no allocate mode, data cache */
 #define DC60_ESB	0x20000000	/* enable store buffer */
