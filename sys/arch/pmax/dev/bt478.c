@@ -1,4 +1,4 @@
-/*	$NetBSD: bt478.c,v 1.2 1995/11/25 10:38:42 mellon Exp $	*/
+/*	$NetBSD: bt478.c,v 1.3 1996/01/16 02:40:21 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -266,22 +266,25 @@ bt478LoadColorMap(fi, bits, index, count)
 	u_char *cmap;
 	int i;
 
-	if (index > 256 || index < 0 || index + count > 256)
+	if (index < 0 || count < 1 || index + count > 256)
 		return EINVAL;
 
 	cmap_bits = (u_char *)bits;
 	cmap = (u_char *)(fi -> fi_cmap_bits) + index * 3;
 
-	vdac->mapWA = index; MachEmptyWriteBuffer();
 	for (i = 0; i < count; i++) {
-		cmap [(i + index) * 3]
-			= vdac->map = cmap_bits [i * 3];
+		vdac->mapWA = i + index; MachEmptyWriteBuffer();
+
+		cmap [i * 3] = cmap_bits [i * 3];
+		vdac->map = cmap_bits [i * 3];
 		MachEmptyWriteBuffer();
-		cmap [(i + index) * 3 + 1]
-			= vdac->map = cmap_bits [i * 3 + 1];
+
+		cmap [i * 3 + 1] = cmap_bits [i * 3 + 1];
+		vdac->map = cmap_bits [i * 3 + 1];
 		MachEmptyWriteBuffer();
-		cmap [(i + index) * 3 + 2]
-			= vdac -> map = cmap_bits [i * 3 + 2];
+
+		cmap [i * 3 + 2] = cmap_bits [i * 3 + 2];
+		vdac -> map = cmap_bits [i * 3 + 2];
 		MachEmptyWriteBuffer();
 	}
 	return 0;
