@@ -1,4 +1,4 @@
-/*	$NetBSD: cmds.c,v 1.45 1999/01/24 00:51:08 lukem Exp $	*/
+/*	$NetBSD: cmds.c,v 1.46 1999/01/24 02:39:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: cmds.c,v 1.45 1999/01/24 00:51:08 lukem Exp $");
+__RCSID("$NetBSD: cmds.c,v 1.46 1999/01/24 02:39:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -589,7 +589,6 @@ mabort(signo)
 
 	alarmtimer(0);
 	putc('\n', ttyout);
-	(void)fflush(ttyout);
 	if (mflag && fromatty) {
 		ointer = interactive;
 		oconf = confirmrest;
@@ -756,13 +755,10 @@ togglevar(argc, argv, var, mesg)
 		*var = 0;
 	} else {
 		fprintf(ttyout, "usage: %s [ on | off ]\n", argv[0]);
-		(void)fflush(ttyout);
 		return (-1);
 	}
-	if (mesg) {
+	if (mesg)
 		fprintf(ttyout, "%s %s.\n", mesg, onoff(*var));
-		(void)fflush(ttyout);
-	}
 	return (*var);
 }
 
@@ -1209,9 +1205,6 @@ ls(argc, argv)
 			goto freels;
 	}
 	recvrequest(cmd, argv[2], argv[1], "w", 0, 0);
-
-	/* flush results in case commands are coming from a pipe */
-	fflush(ttyout);
 freels:
 	if (argv[2] != globargv2)		/* free up after globulize() */
 		free(argv[2]);
@@ -1307,7 +1300,6 @@ shell(argc, argv)
 		if (debug) {
 			fputs(shell, ttyout);
 			putc('\n', ttyout);
-			(void)fflush(ttyout);
 		}
 		if (argc > 1) {
 			execl(shell, shellnam, "-c", altarg, (char *)0);
@@ -1690,19 +1682,16 @@ doproxy(argc, argv)
 	c = getcmd(argv[1]);
 	if (c == (struct cmd *) -1) {
 		fputs("?Ambiguous command.\n", ttyout);
-		(void)fflush(ttyout);
 		code = -1;
 		return;
 	}
 	if (c == 0) {
 		fputs("?Invalid command.\n", ttyout);
-		(void)fflush(ttyout);
 		code = -1;
 		return;
 	}
 	if (!c->c_proxy) {
 		fputs("?Invalid proxy command.\n", ttyout);
-		(void)fflush(ttyout);
 		code = -1;
 		return;
 	}
@@ -1714,7 +1703,6 @@ doproxy(argc, argv)
 	pswitch(1);
 	if (c->c_conn && !connected) {
 		fputs("Not connected.\n", ttyout);
-		(void)fflush(ttyout);
 		pswitch(0);
 		(void)signal(SIGINT, oldintr);
 		code = -1;
