@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ai.c,v 1.15 2002/09/27 20:38:25 thorpej Exp $	*/
+/*	$NetBSD: if_ai.c,v 1.16 2002/10/02 02:09:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.15 2002/09/27 20:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ai.c,v 1.16 2002/10/02 02:09:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -514,6 +514,5 @@ check_ie_present(sc, memt, memh, size)
 	return (size);
 }
 
-const struct cfattach ai_ca = {
-	sizeof(struct ai_softc), ai_match, ai_attach
-};
+CFATTACH_DECL(ai, sizeof(struct ai_softc),
+	ai_match, ai_attach, NULL, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_ym.c,v 1.4 2002/09/27 20:38:45 thorpej Exp $	*/
+/*	$NetBSD: opl_ym.c,v 1.5 2002/10/02 02:09:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.4 2002/09/27 20:38:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_ym.c,v 1.5 2002/10/02 02:09:19 thorpej Exp $");
 
 #include "mpu_ym.h"
 
@@ -70,9 +70,8 @@ void	opl_ym_attach __P((struct device *, struct device *, void *));
 int	opl_ym_power_ctl __P((void *, int));
 #endif
 
-const struct cfattach opl_ym_ca = {
-	sizeof (struct opl_softc), opl_ym_match, opl_ym_attach
-};
+CFATTACH_DECL(opl_ym, sizeof(struct opl_ym_softc),
+	opl_ym_match, opl_ym_attach, NULL, NULL);
 
 int
 opl_ym_match(parent, match, aux)

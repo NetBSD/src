@@ -1,4 +1,4 @@
-/* $NetBSD: radiotrack2.c,v 1.6 2002/09/27 20:38:49 thorpej Exp $ */
+/* $NetBSD: radiotrack2.c,v 1.7 2002/10/02 02:09:20 thorpej Exp $ */
 /* $OpenBSD: radiotrack2.c,v 1.1 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: radiotrack2.c,v 1.2 2001/10/18 16:51:36 pva Exp $ */
 
@@ -105,9 +105,8 @@ struct rtii_softc {
 	struct tea5757_t	tea;
 };
 
-const struct cfattach rtii_ca = {
-	sizeof(struct rtii_softc), rtii_probe, rtii_attach
-};
+CFATTACH_DECL(rtii, sizeof(struct rtii_softc),
+	rtii_probe, rtii_attach, NULL, NULL);
 
 void	rtii_set_mute(struct rtii_softc *);
 int	rtii_find(bus_space_tag_t, bus_space_handle_t);

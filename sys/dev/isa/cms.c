@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.5 2002/09/27 20:38:18 thorpej Exp $ */
+/* $NetBSD: cms.c,v 1.6 2002/10/02 02:09:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.5 2002/09/27 20:38:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.6 2002/10/02 02:09:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,9 +78,8 @@ struct cms_softc {
 int	cms_probe __P((struct device *, struct cfdata *, void *));
 void	cms_attach __P((struct device *, struct device *, void *));
 
-const struct cfattach cms_ca = {
-	sizeof(struct cms_softc), cms_probe, cms_attach,
-};
+CFATTACH_DECL(cms, sizeof(struct cms_softc),
+	cms_probe, cms_attach, NULL, NULL);
 
 int	cms_open __P((midisyn *, int));
 void	cms_close __P((midisyn *));

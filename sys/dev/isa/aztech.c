@@ -1,4 +1,4 @@
-/* $NetBSD: aztech.c,v 1.5 2002/09/27 20:38:17 thorpej Exp $ */
+/* $NetBSD: aztech.c,v 1.6 2002/10/02 02:09:16 thorpej Exp $ */
 /* $OpenBSD: aztech.c,v 1.2 2001/12/05 10:27:06 mickey Exp $ */
 /* $RuOBSD: aztech.c,v 1.11 2001/10/20 13:23:47 pva Exp $ */
 
@@ -100,9 +100,8 @@ struct az_softc {
 	struct lm700x_t	lm;
 };
 
-const struct cfattach az_ca = {
-	sizeof(struct az_softc), az_probe, az_attach
-};
+CFATTACH_DECL(az, sizeof(struct az_softc),
+	az_probe, az_attach, NULL, NULL);
 
 u_int	az_find(bus_space_tag_t, bus_space_handle_t);
 void	az_set_mute(struct az_softc *);

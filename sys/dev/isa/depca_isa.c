@@ -1,4 +1,4 @@
-/*	$NetBSD: depca_isa.c,v 1.4 2002/09/27 20:38:20 thorpej Exp $	*/
+/*	$NetBSD: depca_isa.c,v 1.5 2002/10/02 02:09:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.4 2002/09/27 20:38:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: depca_isa.c,v 1.5 2002/10/02 02:09:17 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -120,9 +120,8 @@ struct depca_isa_softc {
 	int sc_irq;
 };
 
-const struct cfattach depca_isa_ca = {
-	sizeof(struct depca_isa_softc), depca_isa_probe, depca_isa_attach
-};
+CFATTACH_DECL(depca_isa, sizeof(struct depca_isa_softc),
+	depca_isa_probe, depca_isa_attach, NULL, NULL);
 
 void	*depca_isa_intr_establish(struct depca_softc *, struct lance_softc *);
 

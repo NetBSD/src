@@ -1,4 +1,4 @@
-/*	$NetBSD: wds.c,v 1.50 2002/09/27 20:38:54 thorpej Exp $	*/
+/*	$NetBSD: wds.c,v 1.51 2002/10/02 02:09:20 thorpej Exp $	*/
 
 /*
  * XXX
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.50 2002/09/27 20:38:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wds.c,v 1.51 2002/10/02 02:09:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -209,9 +209,8 @@ int	wds_create_scbs __P((struct wds_softc *, void *, size_t));
 int	wdsprobe __P((struct device *, struct cfdata *, void *));
 void	wdsattach __P((struct device *, struct device *, void *));
 
-const struct cfattach wds_ca = {
-	sizeof(struct wds_softc), wdsprobe, wdsattach
-};
+CFATTACH_DECL(wds, sizeof(struct wds_softc),
+	wdsprobe, wdsattach, NULL, NULL);
 
 #define	WDS_ABORT_TIMEOUT	2000	/* time to wait for abort (mSec) */
 

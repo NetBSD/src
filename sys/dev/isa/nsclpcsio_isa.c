@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.2 2002/09/27 20:38:44 thorpej Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.3 2002/10/02 02:09:19 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.2 2002/09/27 20:38:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.3 2002/10/02 02:09:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,9 +52,8 @@ struct nsclpcsio_softc {
 	struct sysmon_envsys sc_sysmon;
 };
 
-const struct cfattach nsclpcsio_isa_ca = {
-	sizeof(struct nsclpcsio_softc),
-	nsclpcsio_isa_match, nsclpcsio_isa_attach
+CFATTACH_DECL(nsclpcsio_isa, sizeof(struct nsclpcsio_isa_softc),
+	nsclpcsio_isa_match, nsclpcsio_isa_attach, NULL, NULL);
 };
 
 static const struct envsys_range tms_ranges[] = {
