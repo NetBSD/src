@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.28 1997/09/13 09:05:56 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.29 1997/10/19 19:09:05 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.28 1997/09/13 09:05:56 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.29 1997/10/19 19:09:05 mycroft Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,8 +498,7 @@ sendrequest(cmd, local, remote, printnames)
 			return;
 		}
 		closefunc = fclose;
-		if (fstat(fileno(fin), &st) < 0 ||
-		    (st.st_mode & S_IFMT) != S_IFREG) {
+		if (fstat(fileno(fin), &st) < 0 || !S_ISREG(st.st_mode)) {
 			printf("%s: not a plain file.\n", local);
 			(void)signal(SIGINT, oldintr);
 			(void)signal(SIGINFO, oldinti);
@@ -895,7 +894,7 @@ recvrequest(cmd, local, remote, lmode, printnames, ignorespecial)
 		}
 		bufsize = st.st_blksize;
 	}
-	if ((st.st_mode & S_IFMT) != S_IFREG) {
+	if (!S_ISREG(st.st_mode)) {
 		progress = 0;
 		preserve = 0;
 	}
