@@ -1,3 +1,5 @@
+/*	$NetBSD: ipcp.c,v 1.1.1.2 1997/05/17 21:38:27 christos Exp $	*/
+
 /*
  * ipcp.c - PPP IP Control Protocol.
  *
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipcp.c,v 1.1.1.1 1997/03/12 19:38:13 christos Exp $";
+#if 0
+static char rcsid[] = "Id: ipcp.c,v 1.31 1997/04/30 05:52:48 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: ipcp.c,v 1.1.1.2 1997/05/17 21:38:27 christos Exp $";
+#endif
 #endif
 
 /*
@@ -604,7 +610,7 @@ ipcp_nakci(f, p, len)
 	    no.neg_vj = 1;
 	    break;
 	case CI_ADDRS:
-	    if (go->neg_addr && go->old_addrs || no.old_addrs
+	    if ((go->neg_addr && go->old_addrs) || no.old_addrs
 		|| cilen != CILEN_ADDRS)
 		goto bad;
 	    try.neg_addr = 1;
@@ -1269,8 +1275,6 @@ static void
 ipcp_down(f)
     fsm *f;
 {
-    u_int32_t ouraddr, hisaddr;
-
     IPCPDEBUG((LOG_INFO, "ipcp: down"));
     np_down(f->unit, PPP_IP);
     sifvjcomp(f->unit, 0, 0, 0);

@@ -1,3 +1,5 @@
+/*	$NetBSD: ccp.h,v 1.1.1.2 1997/05/17 21:38:41 christos Exp $	*/
+
 /*
  * ccp.h - Definitions for PPP Compression Control Protocol.
  *
@@ -24,7 +26,7 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  *
- * $Id: ccp.h,v 1.1.1.1 1997/03/12 19:38:06 christos Exp $
+ * Id: ccp.h,v 1.7 1996/07/01 01:11:49 paulus Exp 
  */
 
 typedef struct ccp_options {

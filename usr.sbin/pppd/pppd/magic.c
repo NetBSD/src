@@ -1,3 +1,5 @@
+/*	$NetBSD: magic.c,v 1.1.1.2 1997/05/17 21:38:16 christos Exp $	*/
+
 /*
  * magic.c - PPP Magic Number routines.
  *
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: magic.c,v 1.1.1.1 1997/03/12 19:38:20 christos Exp $";
+#if 0
+static char rcsid[] = "Id: magic.c,v 1.6 1996/04/04 03:58:41 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: magic.c,v 1.1.1.2 1997/05/17 21:38:16 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>

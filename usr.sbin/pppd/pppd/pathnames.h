@@ -1,7 +1,9 @@
+/*	$NetBSD: pathnames.h,v 1.1.1.2 1997/05/17 21:38:01 christos Exp $	*/
+
 /*
  * define path names
  *
- * $Id: pathnames.h,v 1.1.1.1 1997/03/12 19:38:29 christos Exp $
+ * Id: pathnames.h,v 1.9 1996/08/28 06:41:46 paulus Exp 
  */
 
 #ifdef HAVE_PATHS_H

@@ -1,3 +1,5 @@
+/*	$NetBSD: options.c,v 1.1.1.2 1997/05/17 21:38:05 christos Exp $	*/
+
 /*
  * options.c - handles option processing for PPP.
  *
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: options.c,v 1.1.1.1 1997/03/12 19:38:25 christos Exp $";
+#if 0
+static char rcsid[] = "Id: options.c,v 1.38 1997/04/30 05:55:54 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: options.c,v 1.1.1.2 1997/05/17 21:38:05 christos Exp $";
+#endif
 #endif
 
 #include <ctype.h>
@@ -36,6 +42,10 @@ static char rcsid[] = "$Id: options.c,v 1.1.1.1 1997/03/12 19:38:25 christos Exp
 #include <sys/stat.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#ifdef PPP_FILTER
+#include <pcap.h>
+#include <pcap-int.h>	/* XXX: To get struct pcap */
+#endif
 
 #include "pppd.h"
 #include "pathnames.h"
@@ -70,6 +80,9 @@ char *strdup __P((char *));
 /*
  * Option variables and default values.
  */
+#ifdef PPP_FILTER
+int	dflag = 0;		/* Tell libpcap we want debugging */
+#endif
 int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
@@ -95,6 +108,7 @@ int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 char	remote_name[MAXNAMELEN]; /* Peer's name for authentication */
+int	explicit_remote = 0;	/* User specified explicit remote name */
 int	usehostname = 0;	/* Use hostname for our_name */
 int	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 int	demand = 0;		/* do dial-on-demand */
@@ -105,75 +119,85 @@ int	holdoff = 30;		/* # seconds to pause before reconnecting */
 int	refuse_pap = 0;		/* Set to say we won't do PAP */
 int	refuse_chap = 0;	/* Set to say we won't do CHAP */
 
+#ifdef MSLANMAN
+int	ms_lanman = 0;    	/* Nonzero if use LanMan password instead of NT */
+			  	/* Has meaning only with MS-CHAP challenges */
+#endif
+
 struct option_info auth_req_info;
 struct option_info connector_info;
 struct option_info disconnector_info;
 struct option_info welcomer_info;
 struct option_info devnam_info;
+#ifdef PPP_FILTER
+struct	bpf_program pass_filter;/* Filter program for packets to pass */
+struct	bpf_program active_filter; /* Filter program for link-active pkts */
+pcap_t  pc;			/* Fake struct pcap so we can compile expr */
+#endif
 
 /*
  * Prototypes
  */
 static int setdevname __P((char *, int));
 static int setipaddr __P((char *));
-static int setdebug __P((void));
+static int setspeed __P((char *));
+static int setdebug __P((char **));
 static int setkdebug __P((char **));
-static int setpassive __P((void));
-static int setsilent __P((void));
-static int noopt __P((void));
-static int setnovj __P((void));
-static int setnovjccomp __P((void));
+static int setpassive __P((char **));
+static int setsilent __P((char **));
+static int noopt __P((char **));
+static int setnovj __P((char **));
+static int setnovjccomp __P((char **));
 static int setvjslots __P((char **));
-static int reqpap __P((void));
-static int nopap __P((void));
+static int reqpap __P((char **));
+static int nopap __P((char **));
 #ifdef OLD_OPTIONS
 static int setupapfile __P((char **));
 #endif
-static int nochap __P((void));
-static int reqchap __P((void));
-static int setspeed __P((char *));
-static int noaccomp __P((void));
-static int noasyncmap __P((void));
-static int noip __P((void));
-static int nomagicnumber __P((void));
+static int nochap __P((char **));
+static int reqchap __P((char **));
+static int noaccomp __P((char **));
+static int noasyncmap __P((char **));
+static int noip __P((char **));
+static int nomagicnumber __P((char **));
 static int setasyncmap __P((char **));
 static int setescape __P((char **));
 static int setmru __P((char **));
 static int setmtu __P((char **));
 #ifdef CBCP_SUPPORT
-static int setcbcp __P((char **));
+static int setcbcp __P((char *));
 #endif
-static int nomru __P((void));
-static int nopcomp __P((void));
+static int nomru __P((char **));
+static int nopcomp __P((char **));
 static int setconnector __P((char **));
 static int setdisconnector __P((char **));
 static int setwelcomer __P((char **));
 static int setmaxconnect __P((char **));
 static int setdomain __P((char **));
 static int setnetmask __P((char **));
-static int setcrtscts __P((void));
-static int setnocrtscts __P((void));
-static int setxonxoff __P((void));
-static int setnodetach __P((void));
-static int setmodem __P((void));
-static int setlocal __P((void));
-static int setlock __P((void));
+static int setcrtscts __P((char **));
+static int setnocrtscts __P((char **));
+static int setxonxoff __P((char **));
+static int setnodetach __P((char **));
+static int setmodem __P((char **));
+static int setlocal __P((char **));
+static int setlock __P((char **));
 static int setname __P((char **));
 static int setuser __P((char **));
 static int setremote __P((char **));
-static int setauth __P((void));
-static int setnoauth __P((void));
+static int setauth __P((char **));
+static int setnoauth __P((char **));
 static int readfile __P((char **));
 static int callfile __P((char **));
-static int setdefaultroute __P((void));
-static int setnodefaultroute __P((void));
-static int setproxyarp __P((void));
-static int setnoproxyarp __P((void));
-static int setpersist __P((void));
-static int setnopersist __P((void));
-static int setdologin __P((void));
-static int setusehostname __P((void));
-static int setnoipdflt __P((void));
+static int setdefaultroute __P((char **));
+static int setnodefaultroute __P((char **));
+static int setproxyarp __P((char **));
+static int setnoproxyarp __P((char **));
+static int setpersist __P((char **));
+static int setnopersist __P((char **));
+static int setdologin __P((char **));
+static int setusehostname __P((char **));
+static int setnoipdflt __P((char **));
 static int setlcptimeout __P((char **));
 static int setlcpterm __P((char **));
 static int setlcpconf __P((char **));
@@ -188,33 +212,39 @@ static int setpapreqtime __P((char **));
 static int setchaptimeout __P((char **));
 static int setchapchal __P((char **));
 static int setchapintv __P((char **));
-static int setipcpaccl __P((void));
-static int setipcpaccr __P((void));
+static int setipcpaccl __P((char **));
+static int setipcpaccr __P((char **));
 static int setlcpechointv __P((char **));
 static int setlcpechofails __P((char **));
-static int noccp __P((void));
+static int noccp __P((char **));
 static int setbsdcomp __P((char **));
-static int setnobsdcomp __P((void));
+static int setnobsdcomp __P((char **));
 static int setdeflate __P((char **));
-static int setnodeflate __P((void));
-static int setdemand __P((void));
-static int setpred1comp __P((void));
-static int setnopred1comp __P((void));
+static int setnodeflate __P((char **));
+static int setdemand __P((char **));
+static int setpred1comp __P((char **));
+static int setnopred1comp __P((char **));
 static int setipparam __P((char **));
-static int setpapcrypt __P((void));
+static int setpapcrypt __P((char **));
 static int setidle __P((char **));
 static int setholdoff __P((char **));
 static int setdnsaddr __P((char **));
-static int resetipxproto __P((void));
+static int resetipxproto __P((char **));
 static int setwinsaddr __P((char **));
-static int showversion __P((void));
-static int showhelp __P((void));
+static int showversion __P((char **));
+static int showhelp __P((char **));
+
+#ifdef PPP_FILTER
+static int setpdebug __P((char **));
+static int setpassfilter __P((char **));
+static int setactivefilter __P((char **));
+#endif
 
 #ifdef IPX_CHANGE
-static int setipxproto __P((void));
-static int setipxanet __P((void));
-static int setipxalcl __P((void));
-static int setipxarmt __P((void));
+static int setipxproto __P((char **));
+static int setipxanet __P((char **));
+static int setipxalcl __P((char **));
+static int setipxarmt __P((char **));
 static int setipxnetwork __P((char **));
 static int setipxnode __P((char **));
 static int setipxrouter __P((char **));
@@ -224,6 +254,10 @@ static int setipxcpterm __P((char **));
 static int setipxcpconf __P((char **));
 static int setipxcpfails __P((char **));
 #endif /* IPX_CHANGE */
+
+#ifdef MSLANMAN
+static int setmslanman __P((void));
+#endif
 
 static int number_option __P((char *, u_int32_t *, int));
 static int int_option __P((char *, int *));
@@ -235,7 +269,7 @@ static int readable __P((int fd));
 static struct cmd {
     char *cmd_name;
     int num_args;
-    int (*cmd_func)();
+    int (*cmd_func) __P((char **));
 } cmds[] = {
     {"-all", 0, noopt},		/* Don't request/allow any options (useless) */
     {"noaccomp", 0, noaccomp},	/* Disable Address/Control compression */
@@ -355,6 +389,12 @@ static struct cmd {
     {"--help", 0, showhelp},		/* Show brief listing of options */
     {"-h", 0, showhelp},		/* ditto */
 
+#ifdef PPP_FILTER
+    {"pdebug", 1, setpdebug},		/* libpcap debugging */
+    {"pass-filter", 1, setpassfilter},	/* set filter for packets to pass */
+    {"active-filter", 1, setactivefilter}, /* set filter for active pkts */
+#endif
+
 #ifdef IPX_CHANGE
     {"ipx-network",          1, setipxnetwork}, /* IPX network number */
     {"ipxcp-accept-network", 0, setipxanet},    /* Accept peer netowrk */
@@ -373,6 +413,10 @@ static struct cmd {
     {"ipx",		     0, setipxproto},	/* Enable IPXCP (and IPX) */
     {"+ipx",		     0, setipxproto},	/* Enable IPXCP (and IPX) */
 #endif /* IPX_CHANGE */
+
+#ifdef MSLANMAN
+    {"ms-lanman", 0, setmslanman},	/* Use LanMan psswd when using MS-CHAP */
+#endif
 
     {NULL, 0, NULL}
 };
@@ -397,7 +441,6 @@ Usage: %s [ options ], where options are:\n\
 	file <f>	Take options from file <f>\n\
 	modem		Use modem control lines\n\
 	mru <n>		Set MRU value to <n> for negotiation\n\
-	netmask <n>	Set interface netmask to <n>\n\
 See pppd(8) for more options.\n\
 ";
 
@@ -506,7 +549,8 @@ usage()
  * showhelp - print out usage message and exit.
  */
 static int
-showhelp()
+showhelp(argv)
+    char **argv;
 {
     if (phase == PHASE_INITIALIZE) {
 	usage();
@@ -519,7 +563,8 @@ showhelp()
  * showversion - print out the version number and exit.
  */
 static int
-showversion()
+showversion(argv)
+    char **argv;
 {
     if (phase == PHASE_INITIALIZE) {
 	fprintf(stderr, "pppd version %s patch level %d%s\n",
@@ -671,7 +716,6 @@ void
 option_error __V((char *fmt, ...))
 {
     va_list args;
-    int n;
     char buf[256];
 
 #if __STDC__
@@ -1065,7 +1109,8 @@ callfile(argv)
  * setdebug - Set debug (command line argument).
  */
 static int
-setdebug()
+setdebug(argv)
+    char **argv;
 {
     debug++;
     return (1);
@@ -1081,11 +1126,56 @@ setkdebug(argv)
     return int_option(*argv, &kdebugflag);
 }
 
+#ifdef PPP_FILTER
+/*
+ * setpdebug - Set libpcap debugging level.
+ */
+static int
+setpdebug(argv)
+    char **argv;
+{
+    return int_option(*argv, &dflag);
+}
+
+/*
+ * setpassfilter - Set the pass filter for packets
+ */
+static int
+setpassfilter(argv)
+    char **argv;
+{
+    pc.linktype = DLT_PPP;
+    pc.snapshot = PPP_HDRLEN;
+ 
+    if (pcap_compile(&pc, &pass_filter, *argv, 1, netmask) == 0)
+	return 1;
+    option_error("error in pass-filter expression: %s\n", pcap_geterr(&pc));
+    return 0;
+}
+
+/*
+ * setactivefilter - Set the active filter for packets
+ */
+static int
+setactivefilter(argv)
+    char **argv;
+{
+    pc.linktype = DLT_PPP;
+    pc.snapshot = PPP_HDRLEN;
+ 
+    if (pcap_compile(&pc, &active_filter, *argv, 1, netmask) == 0)
+	return 1;
+    option_error("error in active-filter expression: %s\n", pcap_geterr(&pc));
+    return 0;
+}
+#endif
+
 /*
  * noopt - Disable all options.
  */
 static int
-noopt()
+noopt(argv)
+    char **argv;
 {
     BZERO((char *) &lcp_wantoptions[0], sizeof (struct lcp_options));
     BZERO((char *) &lcp_allowoptions[0], sizeof (struct lcp_options));
@@ -1104,7 +1194,8 @@ noopt()
  * noaccomp - Disable Address/Control field compression negotiation.
  */
 static int
-noaccomp()
+noaccomp(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_accompression = 0;
     lcp_allowoptions[0].neg_accompression = 0;
@@ -1116,7 +1207,8 @@ noaccomp()
  * noasyncmap - Disable async map negotiation.
  */
 static int
-noasyncmap()
+noasyncmap(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_asyncmap = 0;
     lcp_allowoptions[0].neg_asyncmap = 0;
@@ -1128,7 +1220,8 @@ noasyncmap()
  * noip - Disable IP and IPCP.
  */
 static int
-noip()
+noip(argv)
+    char **argv;
 {
     ipcp_protent.enabled_flag = 0;
     return (1);
@@ -1139,7 +1232,8 @@ noip()
  * nomagicnumber - Disable magic number negotiation.
  */
 static int
-nomagicnumber()
+nomagicnumber(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_magicnumber = 0;
     lcp_allowoptions[0].neg_magicnumber = 0;
@@ -1151,7 +1245,8 @@ nomagicnumber()
  * nomru - Disable mru negotiation.
  */
 static int
-nomru()
+nomru(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_mru = 0;
     lcp_allowoptions[0].neg_mru = 0;
@@ -1216,7 +1311,8 @@ setcbcp(argv)
  * nopcomp - Disable Protocol field compression negotiation.
  */
 static int
-nopcomp()
+nopcomp(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_pcompression = 0;
     lcp_allowoptions[0].neg_pcompression = 0;
@@ -1229,7 +1325,8 @@ nopcomp()
  * LCP configure-requests).
  */
 static int
-setpassive()
+setpassive(argv)
+    char **argv;
 {
     lcp_wantoptions[0].passive = 1;
     return (1);
@@ -1241,7 +1338,8 @@ setpassive()
  * until we get one from the peer).
  */
 static int
-setsilent()
+setsilent(argv)
+    char **argv;
 {
     lcp_wantoptions[0].silent = 1;
     return 1;
@@ -1252,7 +1350,8 @@ setsilent()
  * nopap - Disable PAP authentication with peer.
  */
 static int
-nopap()
+nopap(argv)
+    char **argv;
 {
     refuse_pap = 1;
     return (1);
@@ -1263,10 +1362,11 @@ nopap()
  * reqpap - Require PAP authentication from peer.
  */
 static int
-reqpap()
+reqpap(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_upap = 1;
-    setauth();
+    setauth(NULL);
     return 1;
 }
 
@@ -1318,7 +1418,8 @@ setupapfile(argv)
  * nochap - Disable CHAP authentication with peer.
  */
 static int
-nochap()
+nochap(argv)
+    char **argv;
 {
     refuse_chap = 1;
     return (1);
@@ -1329,10 +1430,11 @@ nochap()
  * reqchap - Require CHAP authentication from peer.
  */
 static int
-reqchap()
+reqchap(argv)
+    char **argv;
 {
     lcp_wantoptions[0].neg_chap = 1;
-    setauth();
+    setauth(NULL);
     return (1);
 }
 
@@ -1341,7 +1443,8 @@ reqchap()
  * setnovj - disable vj compression
  */
 static int
-setnovj()
+setnovj(argv)
+    char **argv;
 {
     ipcp_wantoptions[0].neg_vj = 0;
     ipcp_allowoptions[0].neg_vj = 0;
@@ -1353,7 +1456,8 @@ setnovj()
  * setnovjccomp - disable VJ connection-ID compression
  */
 static int
-setnovjccomp()
+setnovjccomp(argv)
+    char **argv;
 {
     ipcp_wantoptions[0].cflag = 0;
     ipcp_allowoptions[0].cflag = 0;
@@ -1512,7 +1616,7 @@ setescape(argv)
 	    return 0;
 	}
 	p = endp;
-	if (n < 0 || 0x20 <= n && n <= 0x3F || n == 0x5E || n > 0xFF) {
+	if (n < 0 || (0x20 <= n && n <= 0x3F) || n == 0x5E || n > 0xFF) {
 	    option_error("can't escape character 0x%x", n);
 	    ret = 0;
 	} else
@@ -1655,7 +1759,8 @@ setipaddr(arg)
  * setnoipdflt - disable setipdefault()
  */
 static int
-setnoipdflt()
+setnoipdflt(argv)
+    char **argv;
 {
     disable_defaultip = 1;
     return 1;
@@ -1666,7 +1771,8 @@ setnoipdflt()
  * setipcpaccl - accept peer's idea of our address
  */
 static int
-setipcpaccl()
+setipcpaccl(argv)
+    char **argv;
 {
     ipcp_wantoptions[0].accept_local = 1;
     return 1;
@@ -1677,7 +1783,8 @@ setipcpaccl()
  * setipcpaccr - accept peer's idea of its address
  */
 static int
-setipcpaccr()
+setipcpaccr(argv)
+    char **argv;
 {
     ipcp_wantoptions[0].accept_remote = 1;
     return 1;
@@ -1721,31 +1828,35 @@ setnetmask(argv)
 	++p;
     }
 
+    mask = htonl(mask);
+
     if (*p != 0 || (netmask & ~mask) != 0) {
 	option_error("invalid netmask value '%s'", *argv);
 	return 0;
     }
 
-    netmask = mask;
     return (1);
 }
 
 static int
-setcrtscts()
+setcrtscts(argv)
+    char **argv;
 {
     crtscts = 1;
     return (1);
 }
 
 static int
-setnocrtscts()
+setnocrtscts(argv)
+    char **argv;
 {
     crtscts = -1;
     return (1);
 }
 
 static int
-setxonxoff()
+setxonxoff(argv)
+    char **argv;
 {
     lcp_wantoptions[0].asyncmap |= 0x000A0000;	/* escape ^S and ^Q */
     lcp_wantoptions[0].neg_asyncmap = 1;
@@ -1755,14 +1866,16 @@ setxonxoff()
 }
 
 static int
-setnodetach()
+setnodetach(argv)
+    char **argv;
 {
     nodetach = 1;
     return (1);
 }
 
 static int
-setdemand()
+setdemand(argv)
+    char **argv;
 {
     demand = 1;
     persist = 1;
@@ -1770,28 +1883,32 @@ setdemand()
 }
 
 static int
-setmodem()
+setmodem(argv)
+    char **argv;
 {
     modem = 1;
     return 1;
 }
 
 static int
-setlocal()
+setlocal(argv)
+    char **argv;
 {
     modem = 0;
     return 1;
 }
 
 static int
-setlock()
+setlock(argv)
+    char **argv;
 {
     lockflag = 1;
     return 1;
 }
 
 static int
-setusehostname()
+setusehostname(argv)
+    char **argv;
 {
     usehostname = 1;
     return 1;
@@ -1829,7 +1946,8 @@ setremote(argv)
 }
 
 static int
-setauth()
+setauth(argv)
+    char **argv;
 {
     auth_required = 1;
     if (privileged_option > auth_req_info.priv) {
@@ -1840,7 +1958,8 @@ setauth()
 }
 
 static int
-setnoauth()
+setnoauth(argv)
+    char **argv;
 {
     if (auth_required && privileged_option < auth_req_info.priv) {
 	option_error("cannot override auth option set by %s",
@@ -1852,7 +1971,8 @@ setnoauth()
 }
 
 static int
-setdefaultroute()
+setdefaultroute(argv)
+    char **argv;
 {
     if (!ipcp_allowoptions[0].default_route) {
 	option_error("defaultroute option is disabled");
@@ -1863,7 +1983,8 @@ setdefaultroute()
 }
 
 static int
-setnodefaultroute()
+setnodefaultroute(argv)
+    char **argv;
 {
     ipcp_allowoptions[0].default_route = 0;
     ipcp_wantoptions[0].default_route = 0;
@@ -1871,7 +1992,8 @@ setnodefaultroute()
 }
 
 static int
-setproxyarp()
+setproxyarp(argv)
+    char **argv;
 {
     if (!ipcp_allowoptions[0].proxy_arp) {
 	option_error("proxyarp option is disabled");
@@ -1882,7 +2004,8 @@ setproxyarp()
 }
 
 static int
-setnoproxyarp()
+setnoproxyarp(argv)
+    char **argv;
 {
     ipcp_wantoptions[0].proxy_arp = 0;
     ipcp_allowoptions[0].proxy_arp = 0;
@@ -1890,21 +2013,24 @@ setnoproxyarp()
 }
 
 static int
-setpersist()
+setpersist(argv)
+    char **argv;
 {
     persist = 1;
     return 1;
 }
 
 static int
-setnopersist()
+setnopersist(argv)
+    char **argv;
 {
     persist = 0;
     return 1;
 }
 
 static int
-setdologin()
+setdologin(argv)
+    char **argv;
 {
     uselogin = 1;
     return 1;
@@ -2030,7 +2156,8 @@ setchapintv(argv)
 }
 
 static int
-noccp()
+noccp(argv)
+    char **argv;
 {
     ccp_protent.enabled_flag = 0;
     return 1;
@@ -2053,8 +2180,8 @@ setbsdcomp(argv)
 	option_error("invalid parameter '%s' for bsdcomp option", *argv);
 	return 0;
     }
-    if (rbits != 0 && (rbits < BSD_MIN_BITS || rbits > BSD_MAX_BITS)
-	|| abits != 0 && (abits < BSD_MIN_BITS || abits > BSD_MAX_BITS)) {
+    if ((rbits != 0 && (rbits < BSD_MIN_BITS || rbits > BSD_MAX_BITS))
+	|| (abits != 0 && (abits < BSD_MIN_BITS || abits > BSD_MAX_BITS))) {
 	option_error("bsdcomp option values must be 0 or %d .. %d",
 		     BSD_MIN_BITS, BSD_MAX_BITS);
 	return 0;
@@ -2073,7 +2200,8 @@ setbsdcomp(argv)
 }
 
 static int
-setnobsdcomp()
+setnobsdcomp(argv)
+    char **argv;
 {
     ccp_wantoptions[0].bsd_compress = 0;
     ccp_allowoptions[0].bsd_compress = 0;
@@ -2097,9 +2225,9 @@ setdeflate(argv)
 	option_error("invalid parameter '%s' for deflate option", *argv);
 	return 0;
     }
-    if (rbits != 0 && (rbits < DEFLATE_MIN_SIZE || rbits > DEFLATE_MAX_SIZE)
-	|| abits != 0 && (abits < DEFLATE_MIN_SIZE
-			  || abits > DEFLATE_MAX_SIZE)) {
+    if ((rbits != 0 && (rbits < DEFLATE_MIN_SIZE || rbits > DEFLATE_MAX_SIZE))
+	|| (abits != 0 && (abits < DEFLATE_MIN_SIZE
+			  || abits > DEFLATE_MAX_SIZE))) {
 	option_error("deflate option values must be 0 or %d .. %d",
 		     DEFLATE_MIN_SIZE, DEFLATE_MAX_SIZE);
 	return 0;
@@ -2118,7 +2246,8 @@ setdeflate(argv)
 }
 
 static int
-setnodeflate()
+setnodeflate(argv)
+    char **argv;
 {
     ccp_wantoptions[0].deflate = 0;
     ccp_allowoptions[0].deflate = 0;
@@ -2126,7 +2255,8 @@ setnodeflate()
 }
 
 static int
-setpred1comp()
+setpred1comp(argv)
+    char **argv;
 {
     ccp_wantoptions[0].predictor_1 = 1;
     ccp_allowoptions[0].predictor_1 = 1;
@@ -2134,7 +2264,8 @@ setpred1comp()
 }
 
 static int
-setnopred1comp()
+setnopred1comp(argv)
+    char **argv;
 {
     ccp_wantoptions[0].predictor_1 = 0;
     ccp_allowoptions[0].predictor_1 = 0;
@@ -2153,7 +2284,8 @@ setipparam(argv)
 }
 
 static int
-setpapcrypt()
+setpapcrypt(argv)
+    char **argv;
 {
     cryptpap = 1;
     return 1;
@@ -2319,21 +2451,24 @@ setipxnetwork(argv)
 }
 
 static int
-setipxanet()
+setipxanet(argv)
+    char **argv;
 {
     ipxcp_wantoptions[0].accept_network = 1;
     ipxcp_allowoptions[0].accept_network = 1;
 }
 
 static int
-setipxalcl()
+setipxalcl(argv)
+    char **argv;
 {
     ipxcp_wantoptions[0].accept_local = 1;
     ipxcp_allowoptions[0].accept_local = 1;
 }
 
 static int
-setipxarmt()
+setipxarmt(argv)
+    char **argv;
 {
     ipxcp_wantoptions[0].accept_remote = 1;
     ipxcp_allowoptions[0].accept_remote = 1;
@@ -2388,14 +2523,16 @@ setipxnode(argv)
 }
 
 static int
-setipxproto()
+setipxproto(argv)
+    char **argv;
 {
     ipxcp_protent.enabled_flag = 1;
     return 1;
 }
 
 static int
-resetipxproto()
+resetipxproto(argv)
+    char **argv;
 {
     ipxcp_protent.enabled_flag = 0;
     return 1;
@@ -2403,8 +2540,18 @@ resetipxproto()
 #else
 
 static int
-resetipxproto()
+resetipxproto(argv)
+    char **argv;
 {
     return 1;
 }
 #endif /* IPX_CHANGE */
+
+#ifdef MSLANMAN
+static int
+setmslanman()
+{
+    ms_lanman = 1;
+    return (1);
+}
+#endif

@@ -1,3 +1,5 @@
+/*	$NetBSD: auth.c,v 1.1.1.2 1997/05/17 21:38:48 christos Exp $	*/
+
 /*
  * auth.c - PPP authentication and phase control.
  *
@@ -33,7 +35,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: auth.c,v 1.1.1.1 1997/03/12 19:38:02 christos Exp $";
+#if 0
+static char rcsid[] = "Id: auth.c,v 1.31 1997/04/30 05:50:16 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: auth.c,v 1.1.1.2 1997/05/17 21:38:48 christos Exp $";
+#endif
 #endif
 
 #include <stdio.h>
@@ -51,14 +57,6 @@ static char rcsid[] = "$Id: auth.c,v 1.1.1.1 1997/03/12 19:38:02 christos Exp $"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#if defined(SVR4) || defined(_linux_)
-#include <crypt.h>
-#else
-#if defined(SUNOS4) || defined(ULTRIX)
-extern char *crypt();
-#endif
-#endif
-
 #ifdef USE_PAM
 #include <security/pam_appl.h>
 #include <security/pam_modules.h>
@@ -66,7 +64,9 @@ extern char *crypt();
 
 #ifdef HAS_SHADOW
 #include <shadow.h>
+#ifndef SVR4
 #include <shadow/pwauth.h>
+#endif
 #ifndef PW_PPP
 #define PW_PPP PW_LOGIN
 #endif
@@ -128,11 +128,13 @@ static int passwd_from_file;
 #define CHAP_WITHPEER	4
 #define CHAP_PEER	8
 
+extern char *crypt __P((const char *, const char *));
+
 /* Prototypes for procedures local to this file. */
 
 static void network_phase __P((int));
-static void check_idle __P((caddr_t));
-static void connect_time_expired __P((caddr_t));
+static void check_idle __P((void *));
+static void connect_time_expired __P((void *));
 static int  login __P((char *, char *, char **, int *));
 static void logout __P((void));
 static int  null_login __P((int));
@@ -463,7 +465,7 @@ np_finished(unit, proto)
  */
 static void
 check_idle(arg)
-    caddr_t arg;
+    void *arg;
 {
     struct ppp_idle idle;
     time_t itime;
@@ -486,7 +488,7 @@ check_idle(arg)
  */
 static void
 connect_time_expired(arg)
-    caddr_t arg;
+    void *arg;
 {
     syslog(LOG_INFO, "Connect time expired");
     lcp_close(0, "Connect time expired");	/* Close connection */
@@ -544,9 +546,9 @@ auth_check_options()
 	    option_error("can't override device name when noauth option used");
 	    exit(1);
 	}
-	if (connector != NULL && connector_info.priv == 0
-	    || disconnector != NULL && disconnector_info.priv == 0
-	    || welcomer != NULL && welcomer_info.priv == 0) {
+	if ((connector != NULL && connector_info.priv == 0)
+	    || (disconnector != NULL && disconnector_info.priv == 0)
+	    || (welcomer != NULL && welcomer_info.priv == 0)) {
 	    option_error("can't override connect, disconnect or welcome");
 	    option_error("option values when noauth option used");
 	    exit(1);
@@ -762,7 +764,6 @@ login(user, passwd, msg, msglen)
 #else /* #ifdef USE_PAM */
 
     struct passwd *pw;
-    char *epasswd;
 
 #ifdef HAS_SHADOW
     struct spwd *spwd;
@@ -1135,7 +1136,7 @@ ip_addr_check(addr, addrs)
 	if (ptr_mask != NULL)
 	    *ptr_mask = '/';
 
-	if (a == -1L)
+	if (a == (u_int32_t)-1L)
 	    syslog (LOG_WARNING,
 		    "unknown host %s in auth. address list",
 		    addrs->word);

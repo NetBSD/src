@@ -1,3 +1,5 @@
+/*	$NetBSD: ccp.c,v 1.1.1.2 1997/05/17 21:38:43 christos Exp $	*/
+
 /*
  * ccp.c - PPP Compression Control Protocol.
  *
@@ -26,7 +28,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ccp.c,v 1.1.1.1 1997/03/12 19:38:04 christos Exp $";
+#if 0
+static char rcsid[] = "Id: ccp.c,v 1.20 1997/04/30 05:50:40 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: ccp.c,v 1.1.1.2 1997/05/17 21:38:43 christos Exp $";
+#endif
 #endif
 
 #include <string.h>
@@ -92,7 +98,7 @@ static int  ccp_reqci __P((fsm *, u_char *, int *, int));
 static void ccp_up __P((fsm *));
 static void ccp_down __P((fsm *));
 static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P(());
+static void ccp_rack_timeout __P((void *));
 static char *method_name __P((ccp_options *, ccp_options *));
 
 static fsm_callbacks ccp_callbacks = {
@@ -268,7 +274,7 @@ ccp_extcode(f, code, id, p, len)
     case CCP_RESETACK:
 	if (ccp_localstate[f->unit] & RACK_PENDING && id == f->reqid) {
 	    ccp_localstate[f->unit] &= ~(RACK_PENDING | RREQ_REPEAT);
-	    UNTIMEOUT(ccp_rack_timeout, (caddr_t) f);
+	    UNTIMEOUT(ccp_rack_timeout, f);
 	}
 	break;
 
@@ -772,7 +778,7 @@ ccp_reqci(f, p, lenp, dont_nak)
 
 	if (newret == CONFNAK && dont_nak)
 	    newret = CONFREJ;
-	if (!(newret == CONFACK || newret == CONFNAK && ret == CONFREJ)) {
+	if (!(newret == CONFACK || (newret == CONFNAK && ret == CONFREJ))) {
 	    /* we're returning this option */
 	    if (newret == CONFREJ && ret == CONFNAK)
 		retp = p0;
@@ -869,7 +875,7 @@ ccp_down(f)
     fsm *f;
 {
     if (ccp_localstate[f->unit] & RACK_PENDING)
-	UNTIMEOUT(ccp_rack_timeout, (caddr_t) f);
+	UNTIMEOUT(ccp_rack_timeout, f);
     ccp_localstate[f->unit] = 0;
     ccp_flags_set(f->unit, 1, 0);
 }
@@ -1017,7 +1023,7 @@ ccp_datainput(unit, pkt, len)
 	     */
 	    if (!(ccp_localstate[f->unit] & RACK_PENDING)) {
 		fsm_sdata(f, CCP_RESETREQ, f->reqid = ++f->id, NULL, 0);
-		TIMEOUT(ccp_rack_timeout, (caddr_t) f, RACKTIMEOUT);
+		TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
 		ccp_localstate[f->unit] |= RACK_PENDING;
 	    } else
 		ccp_localstate[f->unit] |= RREQ_REPEAT;
@@ -1030,13 +1036,13 @@ ccp_datainput(unit, pkt, len)
  */
 static void
 ccp_rack_timeout(arg)
-    caddr_t arg;
+    void *arg;
 {
-    fsm *f = (fsm *) arg;
+    fsm *f = arg;
 
     if (f->state == OPENED && ccp_localstate[f->unit] & RREQ_REPEAT) {
 	fsm_sdata(f, CCP_RESETREQ, f->reqid, NULL, 0);
-	TIMEOUT(ccp_rack_timeout, (caddr_t) f, RACKTIMEOUT);
+	TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
 	ccp_localstate[f->unit] &= ~RREQ_REPEAT;
     } else
 	ccp_localstate[f->unit] &= ~RACK_PENDING;

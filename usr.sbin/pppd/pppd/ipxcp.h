@@ -1,3 +1,5 @@
+/*	$NetBSD: ipxcp.h,v 1.1.1.2 1997/05/17 21:38:23 christos Exp $	*/
+
 /*
  * ipxcp.h - IPX Control Protocol definitions.
  *
@@ -16,7 +18,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ipxcp.h,v 1.1.1.1 1997/03/12 19:38:16 christos Exp $
+ * Id: ipxcp.h,v 1.3 1997/03/04 03:39:33 paulus Exp 
  */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: lcp.c,v 1.1.1.2 1997/05/17 21:38:19 christos Exp $	*/
+
 /*
  * lcp.c - PPP Link Control Protocol.
  *
@@ -18,7 +20,11 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: lcp.c,v 1.1.1.1 1997/03/12 19:38:16 christos Exp $";
+#if 0
+static char rcsid[] = "Id: lcp.c,v 1.30 1997/04/30 05:52:59 paulus Exp ";
+#else
+static char rcsid[] = "$NetBSD: lcp.c,v 1.1.1.2 1997/05/17 21:38:19 christos Exp $";
+#endif
 #endif
 
 /*
@@ -78,10 +84,11 @@ static void lcp_rprotrej __P((fsm *, u_char *, int));
 
 static void lcp_echo_lowerup __P((int));
 static void lcp_echo_lowerdown __P((int));
-static void LcpEchoTimeout __P((caddr_t));
+static void LcpEchoTimeout __P((void *));
 static void lcp_received_echo_reply __P((fsm *, int, u_char *, int));
 static void LcpSendEchoRequest __P((fsm *));
 static void LcpLinkFailure __P((fsm *));
+static void LcpEchoCheck __P((fsm *));
 
 static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_resetci,		/* Reset our Configuration Information */
@@ -916,7 +923,7 @@ lcp_nakci(f, p, len)
 
 	switch (citype) {
 	case CI_MRU:
-	    if (go->neg_mru && go->mru != DEFMRU
+	    if ((go->neg_mru && go->mru != DEFMRU)
 		|| no.neg_mru || cilen != CILEN_SHORT)
 		goto bad;
 	    GETSHORT(cishort, p);
@@ -924,7 +931,7 @@ lcp_nakci(f, p, len)
 		try.mru = cishort;
 	    break;
 	case CI_ASYNCMAP:
-	    if (go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF
+	    if ((go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF)
 		|| no.neg_asyncmap || cilen != CILEN_LONG)
 		goto bad;
 	    break;
@@ -1566,7 +1573,6 @@ lcp_printpkt(p, plen, printer, arg)
     u_char *pstart, *optend;
     u_short cishort;
     u_int32_t cilong;
-    int fascii;
 
     if (plen < HEADERLEN)
 	return 0;
@@ -1747,7 +1753,7 @@ LcpEchoCheck (f)
      * Start the timer for the next interval.
      */
     assert (lcp_echo_timer_running==0);
-    TIMEOUT (LcpEchoTimeout, (caddr_t) f, lcp_echo_interval);
+    TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
     lcp_echo_timer_running = 1;
 }
 
@@ -1757,7 +1763,7 @@ LcpEchoCheck (f)
 
 static void
 LcpEchoTimeout (arg)
-    caddr_t arg;
+    void *arg;
 {
     if (lcp_echo_timer_running != 0) {
         lcp_echo_timer_running = 0;
@@ -1855,7 +1861,7 @@ lcp_echo_lowerdown (unit)
     fsm *f = &lcp_fsm[unit];
 
     if (lcp_echo_timer_running != 0) {
-        UNTIMEOUT (LcpEchoTimeout, (caddr_t) f);
+        UNTIMEOUT (LcpEchoTimeout, f);
         lcp_echo_timer_running = 0;
     }
 }

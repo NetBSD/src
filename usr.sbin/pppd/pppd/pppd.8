@@ -1,5 +1,6 @@
+.\"	$NetBSD: pppd.8,v 1.1.1.2 1997/05/17 21:37:58 christos Exp $
 .\" manual page [] for pppd 2.3
-.\" $Id: pppd.8,v 1.1.1.1 1997/03/12 19:38:30 christos Exp $
+.\" Id: pppd.8,v 1.26 1997/04/30 05:56:22 paulus Exp 
 .\" SH section heading
 .\" SS subsection heading
 .\" LP paragraph
@@ -44,6 +45,22 @@ used.
 Set the baud rate to <speed> (a decimal number).  On systems such as
 4.4BSD and NetBSD, any speed can be specified.  Other systems
 (e.g. SunOS) allow only a limited set of speeds.
+.TP
+.B active-filter \fIfilter-expression
+Specifies a packet filter to be applied to data packets to determine
+which packets are to be regarded as link activity, and therefore reset
+the idle timer, or cause the link to be brought up in demand-dialling
+mode.  This option is useful in conjunction with the
+\fBidle\fR option if there are packets being sent or received
+regularly over the link (for example, routing information packets)
+which would otherwise prevent the link from ever appearing to be idle.
+The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+except that qualifiers which are inappropriate for a PPP link, such as
+\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
+expression should be enclosed in single-quotes to prevent whitespace
+in the expression from being interpreted by the shell. This option
+is currently only available under NetBSD, and then only
+if both the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
 .B asyncmap \fI<map>
 Set the async character map to <map>.  This map describes which
@@ -237,6 +254,9 @@ Specifies that pppd should disconnect if the link is idle for \fIn\fR
 seconds.  The link is idle when no data packets (i.e. IP packets) are
 being sent or received.  Note: it is not advisable to use this option
 with the \fIpersist\fR option without the \fIdemand\fR option.
+If the \fBactive-filter\fR
+option is given, data packets which are rejected by the specified
+activity filter also count as the link being idle.
 .TP
 .B ipcp-accept-local
 With this option, pppd will accept the peer's idea of our local IP
@@ -535,6 +555,23 @@ seconds (default 3).
 .B pap-timeout \fIn
 Set the maximum time that pppd will wait for the peer to authenticate
 itself with PAP to \fIn\fR seconds (0 means no limit).
+.TP
+.B pass-filter \fIfilter-expression
+Specifies a packet filter to applied to data packets being sent or
+received to determine which packets should be allowed to pass.
+Packets which are rejected by the filter are silently discarded.  This
+option can be used to prevent specific network daemons (such as
+routed) using up link bandwidth, or to provide a basic firewall
+capability.
+The \fIfilter-expression\fR syntax is as described for tcpdump(1),
+except that qualifiers which are inappropriate for a PPP link, such as
+\fBether\fR and \fBarp\fR, are not permitted.  Generally the filter
+expression should be enclosed in single-quotes to prevent whitespace
+in the expression from being interpreted by the shell.  Note that it
+is possible to apply different constraints to incoming and outgoing
+packets using the \fBinbound\fR and \fBoutbound\fR qualifiers. This
+option is currently only available under NetBSD, and then only if both
+the kernel and pppd were compiled with PPP_FILTER defined.
 .TP
 .B persist
 Do not exit after a connection is terminated; instead try to reopen
