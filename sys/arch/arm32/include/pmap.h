@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.13 1998/08/04 19:11:29 mark Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14 1998/08/25 21:55:06 mark Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -170,6 +170,7 @@ extern vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t, int));
 #define pmap_pte_v(pte)		(*(pte) != 0)
 
 /* Size of the kernel part of the L1 page table */
-#define KERNEL_PD_SIZE	0x400
+#define KERNEL_PD_SIZE	\
+	(PD_SIZE - (KERNEL_SPACE_START >> PDSHIFT) * sizeof(pd_entry_t))
 
 #endif	/* _ARM32_PMAP_H_ */
