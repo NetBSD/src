@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.1 1997/10/14 19:40:39 mark Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.1.4.1 1997/10/27 19:51:18 mellon Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
+#include <machine/asm.h>
 
 /*
  * BUS_SPACE - name of this bus space
