@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.14.2.2 2000/09/29 06:42:43 itojun Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.14.2.3 2001/04/06 00:28:47 he Exp $	*/
 /*	$KAME: ipsec.h,v 1.36 2000/08/02 17:58:25 sakane Exp $	*/
 
 /*
@@ -261,6 +261,11 @@ struct ipsec_output_state {
 	struct sockaddr *dst;
 };
 
+struct ipsec_history {
+	int ih_proto;
+	u_int32_t ih_spi;
+};
+
 extern int ipsec_debug;
 
 #ifdef INET
@@ -370,8 +375,12 @@ extern int ipsec6_tunnel_validate __P((struct ip6_hdr *, u_int,
 	struct secasvar *));
 #endif
 extern struct mbuf *ipsec_copypkt __P((struct mbuf *));
-extern void ipsec_setsocket __P((struct mbuf *, struct socket *));
+extern void ipsec_delaux __P((struct mbuf *));
+extern int ipsec_setsocket __P((struct mbuf *, struct socket *));
 extern struct socket *ipsec_getsocket __P((struct mbuf *));
+extern int ipsec_addhist __P((struct mbuf *, int, u_int32_t)); 
+extern struct ipsec_history *ipsec_gethist __P((struct mbuf *, int *));
+extern void ipsec_clearhist __P((struct mbuf *));
 
 extern int ipsec_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 extern int ipsec6_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
