@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.14 2001/10/21 23:23:19 jmc Exp $
+#	$NetBSD: Makefile,v 1.15 2002/03/05 19:57:47 thorpej Exp $
 
 .include "../../../../Makefile.inc"
 
-RAMDISK!=cd ${.CURDIR}/../ramdisk; \
-	printf "xxx: .MAKE\n\t@echo \$${.OBJDIR}/ramdisk.fs\n" | \
-	${MAKE} -s -f-
+RAMDISKDIR!=	cd ${.CURDIR}/../ramdisk && ${PRINTOBJDIR}
+RAMDISK=	${RAMDISKDIR}/ramdisk.fs
 
 MDSETIMAGE?=	mdsetimage
 KERNEL?=${KERNOBJDIR}/INSTALL/netbsd
