@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.1 2001/03/28 18:42:13 ichiro Exp $	*/
+/*	$NetBSD: umct.c,v 1.2 2001/04/01 03:28:11 augustss Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -592,18 +592,17 @@ umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 		return;
 	}
 
-	DPRINTF(("%s: umct status = MSR:%02x, LSR:%02x\n", USBDEVNAME(sc->sc_dev), 
-		buf[0],buf[1]));
+	DPRINTF(("%s: umct status = MSR:%02x, LSR:%02x\n",
+		 USBDEVNAME(sc->sc_dev), buf[0],buf[1]));
 
-		sc->sc_lsr = sc->sc_msr = 0;
-		mstatus = buf[0];
-		lstatus = buf[1];
-		if (ISSET(mstatus, MSR_DSR))
-			sc->sc_msr |= UMSR_DSR;
-		if (ISSET(mstatus, MSR_DCD))
-			sc->sc_msr |= UMSR_DCD;
-		ucom_status_change((struct ucom_softc *) sc->sc_subdev);
-
+	sc->sc_lsr = sc->sc_msr = 0;
+	mstatus = buf[0];
+	lstatus = buf[1];
+	if (ISSET(mstatus, MSR_DSR))
+		sc->sc_msr |= UMSR_DSR;
+	if (ISSET(mstatus, MSR_DCD))
+		sc->sc_msr |= UMSR_DCD;
+	ucom_status_change((struct ucom_softc *)sc->sc_subdev);
 }
 
 void
