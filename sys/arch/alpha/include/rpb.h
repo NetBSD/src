@@ -1,4 +1,4 @@
-/* $NetBSD: rpb.h,v 1.33 2000/03/29 03:50:40 simonb Exp $ */
+/* $NetBSD: rpb.h,v 1.34 2000/05/31 18:29:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -77,6 +77,12 @@ struct rpb {
 #define	ST_DEC_EV56_PBP		32		/* "Takara" */
 #define	ST_DEC_ALPHAVME_320	33		/* "Yukon" (VME) */
 #define	ST_DEC_6600		34		/* EV6-Tsunami based systems */
+#define	ST_DEC_WILDFIRE		35		/* "Wildfire" */
+#define	ST_DEC_CUSCO		36		/* "CUSCO" */
+#define	ST_DEC_EIGER		37		/* "Eiger" */
+
+	/* Alpha Processor, Inc. systypes */
+#define	ST_API_NAUTILUS		201		/* EV6-AMD 751 UP1000 */
 
 	u_int64_t	rpb_type;		/*  50: */
 
