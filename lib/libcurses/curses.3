@@ -1,4 +1,4 @@
-.\"	$NetBSD: curses.3,v 1.30 2001/01/01 10:36:12 simonb Exp $
+.\"	$NetBSD: curses.3,v 1.31 2001/04/20 13:06:35 jdc Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -160,11 +160,15 @@ relative to
 .Em win
 .It getmaxx(win)	get maximum x position on
 .Em win
+.It getnstr(str, len)	get a string of maximun len characters through
+.Em stdscr
 .It getstr(str)	get a string through
 .Em stdscr
 .It gettmode()	get tty modes
 .It getyx(win,y,x)	get (y,x) co-ordinates
 .It has_colors()	check if terminal has colors
+.It has_ic()	check if terminal has insert/delete character
+.It has_il()	check if terminal has insert/delete line
 .It hline(ch, count)	draw a horizontal line of character ch.
 .It idlok(win,boolf)	set insert/deleteln flags for
 .Em win
@@ -203,6 +207,16 @@ is always ignored.
 .It move(y,x)	move to (y,x) on
 .Em stdscr
 .It mvcur(lasty,lastx,newy,newx)	actually move cursor
+.It mvgetnstr(str, len)	move to
+.Em y ,
+.Em x 
+and get a string of maximun n characters through
+.Em stdscr
+.It mvgetstr(str, n)	move to
+.Em y ,
+.Em x 
+and get a string through
+.Em stdscr
 .It mvhline(y, x, ch, count)	move to
 .Em y ,
 .Em x
@@ -219,6 +233,16 @@ and draw a vertical line of character
 for
 .Em count
 characters.
+.It mvwgetnstr(str, len)	move to
+.Em y ,
+.Em x 
+and get a string of maximun n characters through
+.Em win
+.It mvwgetstr(str, n)	move to
+.Em y ,
+.Em x 
+and get a string through
+.Em win
 .It mvwhline(win, y, x, ch, count)	move to 
 .Em y ,
 .Em x
@@ -272,6 +296,8 @@ n lines
 one line
 .It scrollok(win,boolf)	set scroll flag for
 .Em win
+.It setscrreg(top, bottom)	set scrolling region on
+.Em stdscr
 .It setterm(name)	set term variables for name
 .It standend()	end standout mode
 .It standout()	start standout mode
@@ -331,7 +357,9 @@ as changed
 .Em win
 .It wgetch(win)	get a char through
 .Em win
-.It wgetstr(win,str)	get a string through
+.It wgetnstr(win, str, len)	get a string of maximun n characters through
+.Em win
+.It wgetstr(win, str)	get a string through
 .Em win
 .It whline(win, ch, count)	Draw a horizontal line of character
 .Em ch
@@ -367,6 +395,8 @@ to virtual screen
 .It wscrl(win,n)	scroll
 .Em win
 n lines
+.It wsetscrreg(win, top, bottom)	set scrolling region on
+.Em win
 .It wstandend(win)	end standout mode on
 .Em win
 .It wstandout(win)	start standout mode on
