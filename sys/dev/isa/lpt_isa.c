@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.56 2003/01/20 05:30:06 simonb Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.57 2003/04/03 15:35:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.56 2003/01/20 05:30:06 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.57 2003/04/03 15:35:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ lpt_isa_probe(parent, match, aux)
 	u_char mask, data;
 	int i, rv;
 
-#ifdef DEBUG
+#ifdef LPT_DEBUG
 #define	ABORT	do {printf("lptprobe: mask %x data %x failed\n", mask, data); \
 		    goto out;} while (0)
 #else
