@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.9 1999/04/14 15:22:07 christos Exp $	*/
+/*	$NetBSD: libi386.h,v 1.10 1999/12/21 14:22:54 drochner Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -55,6 +55,7 @@ int getextmem1 __P((void));
 #else
 #define getextmem() getextmemx()
 #endif
+void printmemlist __P((void));
 void reboot __P((void));
 void gateA20 __P((void));
 
