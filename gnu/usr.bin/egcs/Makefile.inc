@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 1999/02/24 17:48:42 drochner Exp $
+#	$NetBSD: Makefile.inc,v 1.19 1999/03/17 00:46:35 thorpej Exp $
 
 .if !defined(GCC_MAKEFILE_INC)
 GCC_MAKEFILE_INC=1
@@ -34,7 +34,7 @@ CPPFLAGS+=	-I${.CURDIR}/../arch \
 		-I${DIST}/config \
 		-DIN_GCC -DNETBSD_NATIVE
 
-.if (${OBJECT_FMT} == "ELF")
+.if (${OBJECT_FMT} == "ELF" || defined(BOOTSTRAP_ELF))
 CPPFLAGS+=-DDEFAULT_ELF
 .endif
 

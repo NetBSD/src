@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/03/07 10:43:59 ragge Exp $
+#	$NetBSD: Makefile,v 1.9 1999/03/17 00:46:35 thorpej Exp $
 
 LIB=		bfd
 
@@ -7,8 +7,12 @@ MKMAN=		no
 MKPROFILE=	no
 MKLINKLIB=	no
 
-# for MKPIC, BFD_SLIM, BFD_UNIFIED
+# for MKPIC, BFD_SLIM, BFD_UNIFIED, OBJECT_FMT
 .include <bsd.own.mk>
+
+.if (${OBJECT_FMT} == "ELF") || defined(BOOTSTRAP_ELF)
+ELF_PLEASE=
+.endif
 
 # XXX BFD_UNIFIED should go away if benchmarking shows minor to no difference
 .if ${MKPIC} == "no" || !defined(BFD_UNIFIED)
@@ -89,9 +93,15 @@ SRCS+=			cpu-arm.c aout-arm32.c armnetbsd.c arm-dis.c
 
 .if (${MACHINE_ARCH} == "i386" || !defined(BFD_SLIM))
 ARCHES+=		i386
+.if defined(ELF_PLEASE)
+DEFAULT_VEC.i386=	bfd_elf32_i386_vec
+SELECT_VECS+=		${DEFAULT_VEC.i386} i386netbsd_vec i386bsd_vec \
+			i386freebsd_vec i386coff_vec
+.else
 DEFAULT_VEC.i386=	i386netbsd_vec
 SELECT_VECS+=		${DEFAULT_VEC.i386} bfd_elf32_i386_vec i386bsd_vec \
 			i386freebsd_vec i386coff_vec
+.endif
 SRCS+=			cpu-i386.c i386bsd.c i386freebsd.c i386netbsd.c \
 			coff-i386.c elf32-i386.c i386-dis.c \
 			aout32.c cofflink.c elf32.c elf.c elflink.c dwarf2.c
@@ -148,9 +158,15 @@ SRCS+=			cpu-powerpc.c elf32-ppc.c ppc-dis.c ppc-opc.c \
 .if (${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" || \
      !defined(BFD_SLIM))
 ARCHES+=		sparc
+.if (${MACHINE_ARCH} == "sparc") && defined(ELF_PLEASE)
+DEFAULT_VEC.sparc=	bfd_elf32_sparc_vec
+SELECT_VECS+=		${DEFAULT_VEC.sparc} ${DEFAULT_VEC.sparc64} \
+			sunos_big_vec sparcnetbsd_vec
+.else
 DEFAULT_VEC.sparc=	sparcnetbsd_vec
 SELECT_VECS+=		${DEFAULT_VEC.sparc} ${DEFAULT_VEC.sparc64} \
 			sunos_big_vec bfd_elf32_sparc_vec
+.endif
 SRCS+=			cpu-sparc.c sparcnetbsd.c sunos.c elf32-sparc.c \
 			sparc-dis.c sparc-opc.c \
 			aout32.c elf32.c elf.c elflink.c dwarf2.c
