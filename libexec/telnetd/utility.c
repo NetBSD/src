@@ -1,4 +1,4 @@
-/*	$NetBSD: utility.c,v 1.11 1997/10/08 08:45:15 mrg Exp $	*/
+/*	$NetBSD: utility.c,v 1.12 1997/10/16 06:55:38 mikel Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utility.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: utility.c,v 1.11 1997/10/08 08:45:15 mrg Exp $");
+__RCSID("$NetBSD: utility.c,v 1.12 1997/10/16 06:55:38 mikel Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,7 +333,7 @@ fatal(f, msg)
 {
 	char buf[BUFSIZ];
 
-	(void)snprintf(buf, sizeof buf,"telnetd: %s.\r\n", msg);
+	(void)snprintf(buf, sizeof buf, "telnetd: %s.\r\n", msg);
 	(void)write(f, buf, (int)strlen(buf));
 	sleep(1);	/*XXX*/
 	exit(1);
@@ -426,10 +426,6 @@ putf(cp, where)
 	time_t t;
 	char db[100];
 	struct utsname utsinfo;
-#ifdef	STREAMSPTY
-	extern char *strchr();
-#else
-#endif
 
 	uname(&utsinfo);
 
@@ -515,6 +511,9 @@ printsub(direction, pointer, length)
     int			length;		/* length of suboption data */
 {
     register int i = 0;		/* XXX gcc */
+#if	defined(AUTHENTICATION)
+    char buf[512];
+#endif
 
 	if (!(diagnostic & TD_OPTIONS))
 		return;
