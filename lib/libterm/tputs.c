@@ -1,4 +1,4 @@
-/*	$NetBSD: tputs.c,v 1.15 2000/06/02 13:13:12 itojun Exp $	*/
+/*	$NetBSD: tputs.c,v 1.16 2000/07/14 05:26:04 itohy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tputs.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: tputs.c,v 1.15 2000/06/02 13:13:12 itojun Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.16 2000/07/14 05:26:04 itohy Exp $");
 #endif
 #endif /* not lint */
 
@@ -75,20 +75,20 @@ _tputs_convert(ptr, affcnt)
 	/*
 	 * Convert the number representing the delay.
 	 */
-	if (isdigit(*(*ptr))) {
+	if (isdigit(*(unsigned char *)(*ptr))) {
 		do
 			i = i * 10 + *(*ptr)++ - '0';
-		while (isdigit(*(*ptr)));
+		while (isdigit(*(unsigned char *)(*ptr)));
 	}
 	i *= 10;
 	if (*(*ptr) == '.') {
 		(*ptr)++;
-		if (isdigit(*(*ptr)))
+		if (isdigit(*(unsigned char *)(*ptr)))
 			i += *(*ptr) - '0';
 		/*
 		 * Only one digit to the right of the decimal point.
 		 */
-		while (isdigit(*(*ptr)))
+		while (isdigit(*(unsigned char *)(*ptr)))
 			(*ptr)++;
 	}
 
