@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)time.h	7.6 (Berkeley) 2/22/91
+ *	from: @(#)time.h	7.6 (Berkeley) 2/22/91
+ *	$Id: time.h,v 1.2 1993/05/20 16:23:22 cgd Exp $
  */
 
 #ifndef _SYS_TIME_H_

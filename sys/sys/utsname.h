@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)utsname.h	1.0 (Berkeley) 43/29/93
+ *	from: @(#)utsname.h	1.0 (Berkeley) 43/29/93
+ *	$Id: utsname.h,v 1.2 1993/05/20 16:23:46 cgd Exp $
  */
 
 #ifndef _UTSNAME_H_

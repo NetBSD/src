@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mman.h	7.5 (Berkeley) 6/27/91
+ *	from: @(#)mman.h	7.5 (Berkeley) 6/27/91
+ *	$Id: mman.h,v 1.3 1993/05/20 16:22:41 cgd Exp $
  */
 
 #ifndef _SYS_MMAN_H_

@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)asm.h	5.5 (Berkeley) 5/7/91
+ *	from: @(#)asm.h	5.5 (Berkeley) 5/7/91
+ *	$Id: asm.h,v 1.3 1993/05/20 16:21:47 cgd Exp $
  */
 
 #ifndef _SYS_ASM_H_

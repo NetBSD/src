@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)kinfo_proc.h	7.1 (Berkeley) 5/9/91
+ *	from: @(#)kinfo_proc.h	7.1 (Berkeley) 5/9/91
+ *	$Id: kinfo_proc.h,v 1.3 1993/05/20 16:22:31 cgd Exp $
  */
 
 #ifndef _SYS_KINFO_PROC_H_

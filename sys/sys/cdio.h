@@ -1,11 +1,5 @@
 /*
- *
- * PATCHES MAGIC                LEVEL   PATCH THAT GOT US HERE
- * --------------------         -----   ----------------------
- * CURRENT PATCH LEVEL:         1       00098
- * --------------------         -----   ----------------------
- *
- * 16 Feb 93	Julian Elischer		ADDED for SCSI system
+ *	$Id: cdio.h,v 1.3 1993/05/20 16:21:53 cgd Exp $
  */
 
 #ifndef _SYS_CDIO_H_

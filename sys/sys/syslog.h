@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)syslog.h	7.20 (Berkeley) 2/23/91
+ *	from: @(#)syslog.h	7.20 (Berkeley) 2/23/91
+ *	$Id: syslog.h,v 1.3 1993/05/20 16:23:17 cgd Exp $
  */
 
 #ifndef _SYS_SYSLOG_H_
