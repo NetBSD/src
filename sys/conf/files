@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.530.2.1 2002/12/12 23:48:37 he Exp $
+#	$NetBSD: files,v 1.530.2.2 2004/11/11 23:28:51 he Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -370,6 +370,10 @@ file	dev/ic/isp_target.c		isp
 #
 device	lfmiop: scsi
 file	dev/ic/lfmiop.c			lfmiop
+
+# Workbit NinjaSCSI-32 controllers
+device	njs: scsi
+file	dev/ic/ninjascsi32.c		njs
 
 # Symbios/NCR 53c710 SCSI controllers
 #
