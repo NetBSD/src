@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2002/08/04 01:41:32 gmcgarry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2002/08/06 06:52:49 shin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@
 #include <sys/mount.h>
 #include <sys/kcore.h>
 #include <sys/boot_flag.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
