@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.86 2000/07/02 05:45:12 cgd Exp $	*/
+/*	$NetBSD: machdep.c,v 1.87 2000/07/28 14:58:01 minoura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -946,6 +946,8 @@ badbaddr(addr)
 	nofault = (int *) 0;
 	return(0);
 }
+
+void netintr __P((void));
 
 void
 netintr()
