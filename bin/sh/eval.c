@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.21 1995/05/11 21:28:56 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.22 1995/05/14 04:19:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)eval.c	8.4 (Berkeley) 5/4/95";
+static char sccsid[] = "@(#)eval.c	8.6 (Berkeley) 5/14/95";
 #else
-static char rcsid[] = "$NetBSD: eval.c,v 1.21 1995/05/11 21:28:56 christos Exp $";
+static char rcsid[] = "$NetBSD: eval.c,v 1.22 1995/05/14 04:19:18 christos Exp $";
 #endif
 #endif /* not lint */
 
@@ -235,19 +235,17 @@ evaltree(n, flags)
 		evalsubshell(n, flags);
 		break;
 	case NIF: {
-		int status = 0; 
+		int status; 
 
 		evaltree(n->nif.test, EV_TESTED);
+		status = exitstatus;
+		exitstatus = 0;
 		if (evalskip)
 			goto out;
-		if (exitstatus == 0) {
+		if (status == 0)
 			evaltree(n->nif.ifpart, flags);
-			status = exitstatus;
-		} else if (n->nif.elsepart) {
+		else if (n->nif.elsepart)
 			evaltree(n->nif.elsepart, flags);
-			status = exitstatus;
-		}
-		exitstatus = status;
 		break;
 	}
 	case NWHILE:
@@ -291,7 +289,7 @@ out:
 STATIC void
 evalloop(n)
 	union node *n;
-	{
+{
 	int status;
 
 	loopnest++;
@@ -327,8 +325,8 @@ skipping:	  if (evalskip == SKIPCONT && --skipcount <= 0) {
 
 STATIC void
 evalfor(n)
-	union node *n;
-	{
+    union node *n;
+{
 	struct arglist arglist;
 	union node *argp;
 	struct strlist *sp;
@@ -430,7 +428,7 @@ evalsubshell(n, flags)
 STATIC void
 expredir(n)
 	union node *n;
-	{
+{
 	register union node *redir;
 
 	for (redir = n ; redir ; redir = redir->nfile.next) {
@@ -466,7 +464,7 @@ expredir(n)
 STATIC void
 evalpipe(n)
 	union node *n;
-	{
+{
 	struct job *jp;
 	struct nodelist *lp;
 	int pipelen;
@@ -533,7 +531,7 @@ void
 evalbackcmd(n, result)
 	union node *n;
 	struct backcmd *result;
-	{
+{
 	int pip[2];
 	struct job *jp;
 	struct stackmark smark;		/* unnecessary */
@@ -864,7 +862,7 @@ out:
 STATIC void
 prehash(n)
 	union node *n;
-	{
+{
 	struct cmdentry entry;
 
 	if (n->type == NCMD && n->ncmd.args)
@@ -890,7 +888,10 @@ bltincmd(argc, argv)
 	char **argv; 
 {
 	listsetvar(cmdenviron);
-	/* Preserve the exitstatus as POSIX.2 mandates */
+	/* 
+	 * Preserve exitstatus of a previous possible redirection
+	 * as POSIX mandates 
+	 */
 	return exitstatus;
 }
 
