@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.54.2.15 2002/07/12 03:05:34 nathanw Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.54.2.16 2002/07/17 19:56:54 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.15 2002/07/12 03:05:34 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.54.2.16 2002/07/17 19:56:54 nathanw Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -736,7 +736,8 @@ realtimerupcall(struct lwp *l, void *arg)
 {
 	struct ptimer *pt;
 
-	/* The LWP that is running doesn't change, so we don't need
+	/*
+	 * The LWP that is running doesn't change, so we don't need
 	 * to touch sa_vp.
 	 */
 	pt = (struct ptimer *)arg;
@@ -778,41 +779,16 @@ realtimerexpire(void *arg)
 			psignal(p, pt->pt_ev.sigev_signo);
 		}
 	} else if (pt->pt_ev.sigev_notify == SIGEV_SA && (p->p_flag & P_SA)) {
-		int notified = 0;
 		/* Cause the process to generate an upcall when it returns. */
+		struct sadata *sa = p->p_sa;
 		
-		if (p->p_nrlwps == 0) {
-			struct sadata_upcall *sd;
-			struct sadata *sa = p->p_sa;
-			struct lwp *l2;
-			int s, ret;
-
-			SCHED_LOCK(s);
-			l2 = sa_getcachelwp(p);
-			if (l2 != NULL) {
-				sd = sadata_upcall_alloc(0);
-				cpu_setfunc(l2, sa_switchcall, NULL);
-				ret = sa_upcall0(l2, SA_UPCALL_SIGEV,
-				    NULL, NULL, sizeof(siginfo_t), 
-				    &pt->pt_info, sd);
-				if (ret == 0) {
-					l2->l_priority = l2->l_usrpri;
-					PRELE(l2);
-					KDASSERT(sa->sa_vp == NULL);
-					sa->sa_vp = l2;
-					setrunnable(l2);
-					notified = 1;
-				} else 
-					sa_putcachelwp(p, l2);
-			}
-			SCHED_UNLOCK(s);
-		} else if (p->p_userret == NULL) {
+		if (p->p_userret == NULL) {
+			if (sa->sa_idle)
+				wakeup(p);
 			pt->pt_overruns = 0;
 			p->p_userret = realtimerupcall;
 			p->p_userret_arg = pt;
-			notified = 1;
-		}
-		if (notified == 0)
+		} else
 			pt->pt_overruns++;
 	}
 	if (!timerisset(&pt->pt_time.it_interval)) {
