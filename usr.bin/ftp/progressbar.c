@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.1 2003/01/21 16:08:08 jhawk Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.2 2003/02/12 15:18:28 grant Exp $	*/
 
 /*-
  * Copyright (c) 1997-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.1 2003/01/21 16:08:08 jhawk Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.2 2003/02/12 15:18:28 grant Exp $");
 #endif /* not lint */
 
 /*
@@ -95,7 +95,7 @@ __RCSID("$NetBSD: progressbar.c,v 1.1 2003/01/21 16:08:08 jhawk Exp $");
 
 #include "progressbar.h"
 
-#if !defined(NO_PROGRESS) && !defined(STANDALONE_PROGRESS)
+#if !defined(NO_PROGRESS)
 /*
  * return non-zero if we're the current foreground process
  */
@@ -109,7 +109,7 @@ foregroundproc(void)
 
 	return (tcgetpgrp(fileno(ttyout)) == pgrp);
 }
-#endif	/* !defined(NO_PROGRESS) && !defined(STANDALONE_PROGRESS) */
+#endif	/* !defined(NO_PROGRESS) */
 
 
 #ifndef	NO_PROGRESS
@@ -230,14 +230,11 @@ progressmeter(int flag)
 		return;
 	len = 0;
 
-#ifndef STANDALONE_PROGRESS
 	/*
 	 * print progress bar only if we are foreground process.
 	 */
 	if (! foregroundproc())
 		return;
-#endif	/* !STANDALONE_PROGRESS */
-
 
 	len += snprintf(buf + len, BUFLEFT, "\r");
 	if (filesize > 0) {
