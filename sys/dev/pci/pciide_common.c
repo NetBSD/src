@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.15 2004/08/13 03:12:59 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.16 2004/08/13 04:10:49 thorpej Exp $	*/
 
 
 /*
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.15 2004/08/13 03:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.16 2004/08/13 04:10:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -91,8 +91,8 @@ __KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.15 2004/08/13 03:12:59 thorpej E
 
 #include <dev/ic/wdcreg.h>
 
-#ifdef WDCDEBUG
-int wdcdebug_pciide_mask = 0;
+#ifdef ATADEBUG
+int atadebug_pciide_mask = 0;
 #endif
 
 static const char dmaerrfmt[] = 
@@ -159,8 +159,8 @@ pciide_common_attach(sc, pa, pp)
 	sc->sc_dma_maxsegsz = IDEDMA_BYTE_COUNT_MAX;
 	sc->sc_dma_boundary = IDEDMA_BYTE_COUNT_ALIGN;
 
-#ifdef WDCDEBUG
-	if (wdcdebug_pciide_mask & DEBUG_PROBE)
+#ifdef ATADEBUG
+	if (atadebug_pciide_mask & DEBUG_PROBE)
 		pci_conf_print(sc->sc_pc, sc->sc_tag, NULL);
 #endif
 	sc->sc_pp->chip_map(sc, pa);
@@ -170,7 +170,7 @@ pciide_common_attach(sc, pa, pp)
 		csr |= PCI_COMMAND_MASTER_ENABLE;
 		pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
 	}
-	WDCDEBUG_PRINT(("pciide: command/status register=%x\n",
+	ATADEBUG_PRINT(("pciide: command/status register=%x\n",
 	    pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG)), DEBUG_PROBE);
 }
 
@@ -546,7 +546,7 @@ pciide_dma_table_setup(sc, channel, drive)
 		    "map", drive, error);
 		return error;
 	}
-	WDCDEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
+	ATADEBUG_PRINT(("pciide_dma_table_setup: table at %p len %lu, "
 	    "phy 0x%lx\n", dma_maps->dma_table, (u_long)dma_table_size,
 	    (unsigned long)seg.ds_addr), DEBUG_PROBE);
 	/* Create and load table DMA map for this disk */
@@ -565,7 +565,7 @@ pciide_dma_table_setup(sc, channel, drive)
 		    "load", drive, error);
 		return error;
 	}
-	WDCDEBUG_PRINT(("pciide_dma_table_setup: phy addr of table 0x%lx\n",
+	ATADEBUG_PRINT(("pciide_dma_table_setup: phy addr of table 0x%lx\n",
 	    (unsigned long)dma_maps->dmamap_table->dm_segs[0].ds_addr),
 	    DEBUG_PROBE);
 	/* Create a xfer DMA map for this drive */
@@ -628,7 +628,7 @@ pciide_dma_init(v, channel, drive, databuf, datalen, flags)
 		dma_maps->dma_table[seg].byte_count =
 		    htole32(dma_maps->dmamap_xfer->dm_segs[seg].ds_len &
 		    IDEDMA_BYTE_COUNT_MASK);
-		WDCDEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
+		ATADEBUG_PRINT(("\t seg %d len %d addr 0x%x\n",
 		   seg, le32toh(dma_maps->dma_table[seg].byte_count),
 		   le32toh(dma_maps->dma_table[seg].base_addr)), DEBUG_DMA);
 
@@ -671,7 +671,7 @@ pciide_dma_start(v, channel, drive)
 	struct pciide_softc *sc = v;
 	struct pciide_channel *cp = &sc->pciide_channels[channel];
 
-	WDCDEBUG_PRINT(("pciide_dma_start\n"),DEBUG_XFERS);
+	ATADEBUG_PRINT(("pciide_dma_start\n"),DEBUG_XFERS);
 	bus_space_write_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD], 0,
 	    bus_space_read_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CMD], 0)
 		| IDEDMA_CMD_START);
@@ -690,7 +690,7 @@ pciide_dma_finish(v, channel, drive, force)
 	struct pciide_dma_maps *dma_maps = &cp->dma_maps[drive];
 
 	status = bus_space_read_1(sc->sc_dma_iot, cp->dma_iohs[IDEDMA_CTL], 0);
-	WDCDEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
+	ATADEBUG_PRINT(("pciide_dma_finish: status 0x%x\n", status),
 	    DEBUG_XFERS);
 
 	if (force == WDC_DMAEND_END && (status & IDEDMA_CTL_INTR) == 0)
