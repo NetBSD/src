@@ -1,0 +1,13 @@
+#	$NetBSD: CHANGES-2.0.3,v 1.1.2.1 2005/04/06 11:40:45 tron Exp $
+
+A complete list of changes from the NetBSD 2.0.2 release to the NetBSD 2.0.3
+release.
+
+File						Revision(s)
+----						--------
+sys/ufs/ufs/ufs_bmap.c				patch
+
+	Fix a silent truncation problem that could cause corruption with large
+	FFSv1 file systems.
+	[mycroft, ticket #1035]
+
