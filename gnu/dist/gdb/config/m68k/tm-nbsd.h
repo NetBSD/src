@@ -1,4 +1,4 @@
-/* Macro definitions for i386 running under NetBSD.
+/* Macro definitions for m68k running under NetBSD.
    Copyright 1994 Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -20,22 +20,26 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #ifndef TM_NBSD_H
 #define TM_NBSD_H
 
-#include <sys/param.h>
-#include <machine/vmparam.h>
+/* Generic definitions.  */
+#include "m68k/tm-m68k.h"
+#include "tm-nbsd.h"
 
-/* Define BPT_VECTOR if it is different than the default.
-   This is the vector number used by traps to indicate a breakpoint. */
-
-#define BPT_VECTOR 0x2
+/* NetBSD uses trap 15 for both user and kernel breakpoints. */
+#define BPT_VECTOR 0xf
+#define REMOTE_BPT_VECTOR 0xf
 
 /* Address of end of stack space.  */
-#define STACK_END_ADDR USRSTACK
-
+#if 0 /* XXX: Need to determine this at run-time! */
+extern CORE_ADDR get_stack_end_addr();
+#define STACK_END_ADDR get_stack_end_addr();
 /* For NetBSD, sigtramp is 32 bytes before STACK_END_ADDR.  */
 #define SIGTRAMP_START (STACK_END_ADDR - 32)
 #define SIGTRAMP_END (STACK_END_ADDR)
+#endif
 
-#include "m68k/tm-m68k.h"
-#include "tm-nbsd.h"
+/* Saved Pc.  Get it from sigcontext if within sigtramp.  */
+
+/* Offset to saved PC in sigcontext, from <machine/signal.h>.  */
+#define SIGCONTEXT_PC_OFFSET 20
 
 #endif /* TM_NBSD_H */
