@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.55 2003/10/23 03:03:20 provos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.56 2003/10/23 08:30:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -140,13 +140,14 @@
 #define	VM_MDPAGE_INIT(pg)					\
 	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));		\
 	simple_lock_init(&(pg)->mdpage.mp_pvhead.pvh_lock);	\
+	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
 
 struct pv_entry;
 
 struct pv_head {
-	struct simplelock pvh_lock;	/* locks every pv on this list */
+	struct simplelock pvh_lock;	/* locks every pv in this tree */
 	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
-					/* head of list (locked by pvh_lock) */
+					/* head of tree (locked by pvh_lock) */
 };
 
 struct vm_page_md {

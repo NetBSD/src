@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2003/10/23 03:03:20 provos Exp $	*/
+/*	$NetBSD: pmap.c,v 1.159 2003/10/23 08:30:21 chs Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2003/10/23 03:03:20 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2003/10/23 08:30:21 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_user_ldt.h"
@@ -403,8 +403,8 @@ pv_compare(struct pv_entry *a, struct pv_entry *b)
 		return (0);
 }
 
-SPLAY_PROTOTYPE(pvtree, pv_entry, pv_next, pv_compare);
-SPLAY_GENERATE(pvtree, pv_entry, pv_next, pv_compare);
+SPLAY_PROTOTYPE(pvtree, pv_entry, pv_node, pv_compare);
+SPLAY_GENERATE(pvtree, pv_entry, pv_node, pv_compare);
 
 /*
  * linked list of all non-kernel pmaps
@@ -1217,7 +1217,7 @@ pmap_alloc_pv(pmap, mode)
 		}
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next.spe_right;
+		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
 		pv_nfpvents--;  /* took one from pool */
 	} else {
 		pv = NULL;		/* need more of them */
@@ -1276,7 +1276,7 @@ pmap_alloc_pvpage(pmap, mode)
 		pvpage->pvinfo.pvpi_nfree--;	/* can't go to zero */
 		pv = pvpage->pvinfo.pvpi_pvfree;
 		KASSERT(pv);
-		pvpage->pvinfo.pvpi_pvfree = pv->pv_next.spe_right;
+		pvpage->pvinfo.pvpi_pvfree = SPLAY_RIGHT(pv, pv_node);
 		pv_nfpvents--;  /* took one from pool */
 		return(pv);
 	}
@@ -1337,7 +1337,8 @@ pmap_add_pvpage(pvp, need_entry)
 	pvp->pvinfo.pvpi_pvfree = NULL;
 	pvp->pvinfo.pvpi_nfree = tofree;
 	for (lcv = 0 ; lcv < tofree ; lcv++) {
-		pvp->pvents[lcv].pv_next.spe_right = pvp->pvinfo.pvpi_pvfree;
+		SPLAY_RIGHT(&pvp->pvents[lcv], pv_node) =
+			pvp->pvinfo.pvpi_pvfree;
 		pvp->pvinfo.pvpi_pvfree = &pvp->pvents[lcv];
 	}
 	if (need_entry)
@@ -1373,7 +1374,7 @@ pmap_free_pv_doit(pv)
 	}
 
 	/* free it */
-	pv->pv_next.spe_right = pvp->pvinfo.pvpi_pvfree;
+	SPLAY_RIGHT(pv, pv_node) = pvp->pvinfo.pvpi_pvfree;
 	pvp->pvinfo.pvpi_pvfree = pv;
 
 	/*
@@ -1427,7 +1428,7 @@ pmap_free_pvs(pmap, pvs)
 	simple_lock(&pvalloc_lock);
 
 	for ( /* null */ ; pvs != NULL ; pvs = nextpv) {
-		nextpv = pvs->pv_next.spe_right;
+		nextpv = SPLAY_RIGHT(pvs, pv_node);
 		pmap_free_pv_doit(pvs);
 	}
 
@@ -1549,14 +1550,10 @@ pmap_remove_pv(pvh, pmap, va)
 
 	tmp.pv_pmap = pmap;
 	tmp.pv_va = va;
-
 	pve = SPLAY_FIND(pvtree, &pvh->pvh_root, &tmp);
-
 	if (pve == NULL)
 		return (NULL);
-
 	SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve);
-
 	return(pve);				/* return removed pve */
 }
 
@@ -2234,7 +2231,7 @@ pmap_remove_ptes(pmap, ptp, ptpva, startva, endva, cpumaskp, flags)
 		simple_unlock(&mdpg->mp_pvhead.pvh_lock);
 
 		if (pve) {
-			pve->pv_next.spe_right = pv_tofree;
+			SPLAY_RIGHT(pve, pv_node) = pv_tofree;
 			pv_tofree = pve;
 		}
 
@@ -2625,7 +2622,7 @@ pmap_page_remove(pg)
 		}
 		pmap_unmap_ptes(pve->pv_pmap);		/* unlocks pmap */
 		SPLAY_REMOVE(pvtree, &pvh->pvh_root, pve); /* remove it */
-		pve->pv_next.spe_right = killlist;	/* mark it for death */
+		SPLAY_RIGHT(pve, pv_node) = killlist;	/* mark it for death */
 		killlist = pve;
 	}
 	pmap_free_pvs(NULL, killlist);
