@@ -1,5 +1,5 @@
-/*	$NetBSD: in6_proto.c,v 1.20 2000/10/10 13:25:28 enami Exp $	*/
-/*	$KAME: in6_proto.c,v 1.64 2000/06/20 16:20:27 itojun Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.21 2000/10/10 16:26:44 itojun Exp $	*/
+/*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
