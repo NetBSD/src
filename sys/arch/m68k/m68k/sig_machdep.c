@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.6 1998/01/07 22:46:00 is Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.7 1998/02/15 21:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
  *	from: @(#)machdep.c	8.10 (Berkeley) 4/20/94
  */
 
+#include "opt_uvm.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -55,6 +57,10 @@
 #include <sys/buf.h>
 
 #include <vm/vm.h>
+
+#if defined(UVM)
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <sys/syscallargs.h>
 
@@ -133,8 +139,13 @@ sendsig(catcher, sig, mask, code)
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
 		fp = (struct sigframe *)(frame->f_regs[SP] - fsize);
+#if defined(UVM)
+	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
+		(void)uvm_grow(p, (unsigned)fp);
+#else
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize))
 		(void)grow(p, (unsigned)fp);
+#endif
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
 		printf("sendsig(%d): sig %d ssp %p usp %p scp %p ft %d\n",
