@@ -1,4 +1,4 @@
-/*	$NetBSD: siginterrupt.c,v 1.6 1995/03/04 01:56:00 cgd Exp $	*/
+/*	$NetBSD: siginterrupt.c,v 1.7 1996/04/03 19:49:03 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)siginterrupt.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: siginterrupt.c,v 1.6 1995/03/04 01:56:00 cgd Exp $";
+static char rcsid[] = "$NetBSD: siginterrupt.c,v 1.7 1996/04/03 19:49:03 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,6 +47,7 @@ static char rcsid[] = "$NetBSD: siginterrupt.c,v 1.6 1995/03/04 01:56:00 cgd Exp
  * Set signal state to prevent restart of system calls
  * after an instance of the indicated signal.
  */
+int
 siginterrupt(sig, flag)
 	int sig, flag;
 {

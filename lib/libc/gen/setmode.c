@@ -1,4 +1,4 @@
-/*	$NetBSD: setmode.c,v 1.12 1995/03/23 19:51:13 jtc Exp $	*/
+/*	$NetBSD: setmode.c,v 1.13 1996/04/03 19:49:01 jtc Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)setmode.c	8.2 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$NetBSD: setmode.c,v 1.12 1995/03/23 19:51:13 jtc Exp $";
+static char rcsid[] = "$NetBSD: setmode.c,v 1.13 1996/04/03 19:49:01 jtc Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -72,7 +72,7 @@ typedef struct bitcmd {
 #define	CMD2_UBITS	0x10
 
 static BITCMD	*addcmd __P((BITCMD *, int, int, int, u_int));
-static int	 compress_mode __P((BITCMD *));
+static void	 compress_mode __P((BITCMD *));
 #ifdef SETMODE_DEBUG
 static void	 dumpmode __P((BITCMD *));
 #endif
@@ -407,7 +407,7 @@ dumpmode(set)
  * 'g' and 'o' commands continue to be separate.  They could probably be 
  * compacted, but it's not worth the effort.
  */
-static int
+static void
 compress_mode(set)
 	register BITCMD *set;
 {
