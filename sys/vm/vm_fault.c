@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)vm_fault.c	7.6 (Berkeley) 5/7/91
- *	$Id: vm_fault.c,v 1.6 1993/07/15 14:25:21 cgd Exp $
+ *	$Id: vm_fault.c,v 1.7 1993/07/28 02:23:33 cgd Exp $
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -529,6 +529,7 @@ thread_wakeup(&vm_pages_needed); /* XXX */
 
 			vm_page_lock_queues();
 			vm_page_activate(m);
+			vm_page_deactivate(m);
 			pmap_page_protect(VM_PAGE_TO_PHYS(m), VM_PROT_NONE);
 			vm_page_unlock_queues();
 

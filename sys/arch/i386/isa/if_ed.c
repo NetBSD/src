@@ -14,60 +14,7 @@
  */
 
 /*
- * Modification history
- *
- * $Log: if_ed.c,v $
- * Revision 1.2  1993/07/12 13:13:41  deraadt
- * moved bfdttach point  to same place as other drivers, from greenman
- *
- * Revision 1.1  1993/07/03  12:19:45  cgd
- * add support for David Greenman's "ed" driver.
- *
- * Revision 1.12  93/07/07  06:27:44  davidg
- * moved call to bpfattach to after this drivers attach printf -
- * improves readability of startup messages.
- * 
- * Revision 1.11  93/06/27  03:07:01  davidg
- * fixed bugs in the 3Com part of the probe routine that were uncovered by
- * the previous fix.
- * 
- * Revision 1.10  93/06/25  19:23:19  davidg
- * fixed bug that caused erroneous 'Invalid irq configuration' message when
- * no board is present (during autoconfiguration).
- * 
- * Revision 1.9  93/06/23  03:48:14  davidg
- * fixed minor typo introduced when cleaning up probe routine
- * 
- * Revision 1.8  93/06/23  03:37:19  davidg
- * cleaned up/added some comments. Also improved readability of a part of
- * the probe routine.
- * 
- * Revision 1.7  93/06/22  04:45:01  davidg
- * (no additional changes) Second beta release
- * 
- * Revision 1.6  93/06/22  04:40:35  davidg
- * minor definition fix to ed_reset()
- * 
- * Revision 1.5  93/06/22  04:37:39  davidg
- * fixed some comments
- * 
- * Revision 1.4  93/06/22  04:34:34  davidg
- * added support to use the LLC0 'link-level control' flag
- * to disable the tranceiver for AUI operation on 3Com boards.
- * The default for this flag can be set in the kernel config
- * file - 'flags 0x01' sets the flag (disables the tranceiver).
- * 
- * Revision 1.3  93/06/17  03:57:28  davidg
- * fixed some printf's
- * 
- * Revision 1.2  93/06/17  03:26:49  davidg
- * fixed 3c503 code to determine 8/16bit board
- * changed attach printf to work with Interim-0.1.5 and NetBSD
- * 
- * Revision 1.1  93/06/14  22:21:24  davidg
- * Beta release of device driver for SMC/WD80x3 and 3C503 ethernet boards.
- * 
- * 
+ *	$Id: if_ed.c,v 1.3 1993/07/28 02:21:17 cgd Exp $
  */
  
 #include "ed.h"
@@ -75,12 +22,13 @@
 #include "bpfilter.h"
 
 #include "param.h"
+#include "systm.h"
+#include "select.h"
 #include "errno.h"
 #include "ioctl.h"
 #include "mbuf.h"
 #include "socket.h"
 #include "syslog.h"
-#include "select.h"
 
 #include "net/if.h"
 #include "net/if_dl.h"
@@ -308,10 +256,25 @@ type_WD80x3:
 	}
 
 #if ED_DEBUG
-	printf("type=%s width=%d memsize=%d\n",sc->type_str,memwidth,memsize);
+	printf("type=%s memwidth=%d memsize=%d id_msize=%d\n",
+		sc->type_str,memwidth,memsize,isa_dev->id_msize);
 	for (i=0; i<8; i++)
 		printf("%x -> %x\n", i, inb(sc->asic_addr + i));
 #endif
+	/*
+	 * Allow the user to override the autoconfiguration
+	 */
+	if (isa_dev->id_msize)
+		memsize = isa_dev->id_msize;
+	/*
+	 * (note that if the user specifies both of the following flags
+	 *	that '8bit' mode intentionally has precedence)
+	 */
+	if (isa_dev->id_flags & ED_FLAGS_FORCE_16BIT_MODE)
+		memwidth = 16;
+	if (isa_dev->id_flags & ED_FLAGS_FORCE_8BIT_MODE)
+		memwidth = 8;
+
 	/*
 	 * Check 83C584 interrupt configuration register if this board has one
 	 *	XXX - we could also check the IO address register. But why
@@ -343,7 +306,7 @@ type_WD80x3:
 	/*
 	 * allocate one xmit buffer if < 16k, two buffers otherwise
 	 */
-	if (memsize < 16384) {
+	if ((memsize < 16384) || (isa_dev->id_msize & ED_FLAGS_NO_DOUBLE_BUFFERING)) {
 		sc->smem_ring = sc->smem_start + (ED_PAGE_SIZE * ED_TXBUF_SIZE);
 		sc->txb_cnt = 1;
 		sc->rec_page_start = ED_TXBUF_SIZE;
@@ -633,7 +596,7 @@ type_3Com:
 #if 0
 printf("Starting write\n");
 for (i = 0; i < 8192; ++i)
-	bzerow(sc->smem_start, 8192);
+	bzero(sc->smem_start, 8192);
 printf("Done.\n");
 #endif
 #if 0
@@ -789,10 +752,8 @@ ed_stop(unit)
 	 *	to 'n' (about 5ms). It shouldn't even take 5us on modern
 	 *	DS8390's, but just in case it's an old one.
 	 */
-	while ((inb(sc->nic_addr + ED_P0_ISR) & ED_ISR_RST) == 0) {
-		if (--n == 0)
-			break;
-	}
+	while (((inb(sc->nic_addr + ED_P0_ISR) & ED_ISR_RST) == 0) && --n);
+
 }
 
 /*
@@ -941,10 +902,12 @@ ed_init(unit)
 	 * If this is a 3Com board, the tranceiver must be software enabled
 	 *	(there is no settable hardware default).
 	 */
-	if ((sc->vendor == ED_VENDOR_3COM) && (ifp->if_flags & IFF_LLC0)) {
-		outb(sc->asic_addr + ED_3COM_CR, 0);
-	} else {
-		outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+	if (sc->vendor == ED_VENDOR_3COM) {
+		if (ifp->if_flags & IFF_LLC0) {
+			outb(sc->asic_addr + ED_3COM_CR, 0);
+		} else {
+			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+		}
 	}
 
 	/*
@@ -1447,13 +1410,24 @@ edintr(unit)
 		}
 
 		/*
-		 * return NIC CR to standard state before looping back
-		 *	to top: page 0, remote DMA complete, start
-		 * (toggling the TXP bit off, even if was just set in the
-		 *	transmit routine, is *okay* - it is 'edge' triggered
-		 *	from low to high)
+		 * return NIC CR to standard state: page 0, remote DMA complete,
+		 * 	start (toggling the TXP bit off, even if was just set
+		 *	in the transmit routine, is *okay* - it is 'edge'
+		 *	triggered from low to high)
 		 */
 		outb(sc->nic_addr + ED_P0_CR, ED_CR_RD2|ED_CR_STA);
+
+		/*
+		 * If the Network Talley Counters overflow, read them to
+		 *	reset them. It appears that old 8390's won't
+		 *	clear the ISR flag otherwise - resulting in an
+		 *	infinite loop.
+		 */
+		if (isr & ED_ISR_CNT) {
+			(void) inb(sc->nic_addr + ED_P0_CNTR0);
+			(void) inb(sc->nic_addr + ED_P0_CNTR1);
+			(void) inb(sc->nic_addr + ED_P0_CNTR2);
+		}
 	}
 }
  
@@ -1567,10 +1541,12 @@ ed_ioctl(ifp, command, data)
 		 *	of the tranceiver for 3Com boards. The LLC0 flag disables
 		 *	the tranceiver if set.
 		 */
-		if ((sc->vendor == ED_VENDOR_3COM) && (ifp->if_flags & IFF_LLC0)) {
-			outb(sc->asic_addr + ED_3COM_CR, 0);
-		} else {
-			outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+		if (sc->vendor == ED_VENDOR_3COM) {
+			if (ifp->if_flags & IFF_LLC0) {
+				outb(sc->asic_addr + ED_3COM_CR, 0);
+			} else {
+				outb(sc->asic_addr + ED_3COM_CR, ED_3COM_CR_XSEL);
+			}
 		}
 
 		break;

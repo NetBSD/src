@@ -13,7 +13,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: st.c,v 1.14 1993/07/19 11:30:54 cgd Exp $
+ *	$Id: st.c,v 1.15 1993/07/28 02:22:41 cgd Exp $
  */
 
 /*
@@ -701,6 +701,8 @@ stioctl(dev_t dev, int cmd, caddr_t arg, int mode)
 		return ENXIO;
 
 	switch(cmd) {
+	default:
+		return EINVAL;
 	case MTIOCGET:
 		g = (struct mtget *)arg;
 		bzero(g, sizeof *g);

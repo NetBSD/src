@@ -15,7 +15,7 @@
  * on the understanding that TFS is not responsible for the correct
  * functioning of this software in any circumstances.
  *
- *	$Id: ultra14f.c,v 1.12 1993/07/17 11:00:11 deraadt Exp $
+ *	$Id: ultra14f.c,v 1.13 1993/07/28 02:21:32 cgd Exp $
  */
  
 #include <sys/types.h>
@@ -310,7 +310,7 @@ uha_send_mbox(  int             unit
 		,struct mscp     *mscp)
 {
 	int     port = uha_data[unit].baseport;
-	int     spincount = FUDGE(delaycount) * 1; /* 1ms should be enough */
+	int     spincount = FUDGE(delaycount) * 1000; /* 1s should be enough */
 	int     s = splbio();
 		
 	while(      ((inb(port + UHA_LINT) & (UHA_LDIP))

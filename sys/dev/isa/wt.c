@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wt.c	7.1 (Berkeley) 5/9/91
- *	$Id: wt.c,v 1.4 1993/07/19 16:58:20 cgd Exp $
+ *	$Id: wt.c,v 1.5 1993/07/28 02:21:40 cgd Exp $
  */
 
 /*
@@ -445,9 +445,7 @@ errxit:				bp->b_flags |= B_ERROR;
 			}
 		/* Reading file marks or writing end of tape return 0 bytes */
 		} else	{
-			/* XXX (cgd) - for broken 386bsd physio only:
-			 * bp->b_flags |= B_ERROR;
-			 */
+			bp->b_flags |= B_ERROR;
 			wtflags &= ~(TPWO|TPRO);
 		}
 	}

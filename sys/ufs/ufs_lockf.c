@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ufs_lockf.c	7.7 (Berkeley) 7/2/91
- *	$Id: ufs_lockf.c,v 1.4 1993/05/22 09:01:16 cgd Exp $
+ *	$Id: ufs_lockf.c,v 1.5 1993/07/28 02:23:18 cgd Exp $
  */
 
 #include "param.h"
@@ -245,23 +245,20 @@ lf_setlock(lock)
 			lf_printlist("lf_setlock", block);
 		}
 #endif /* LOCKF_DEBUG */
-		if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
-			/* Don't leave a dangling pointer in block list */
-			if (lf_getblock(lock) == block) {
-				struct lockf    **prev;
- 
-				/* Still there, find us on list */
-				prev = &block->lf_block;
-				while ((block = block->lf_block) != NOLOCKF) {
-					if (block == lock) {
-						*prev = block->lf_block;
-						break;
-					}
-					prev = &block->lf_block;
-				}
+	if (error = tsleep((caddr_t)lock, priority, lockstr, 0)) {
+			/*
+			 * Delete ourselves from the waiting to lock list.
+			 */
+			for (block = lock->lf_next;
+			     block != NOLOCKF;
+			     block = block->lf_block) {
+				if (block->lf_block != lock)
+					continue;
+				block->lf_block = block->lf_block->lf_block;
+				free(lock, M_LOCKF);
+				return (error);
 			}
-			free(lock, M_LOCKF);
-			return (error);
+			panic("lf_setlock: lost lock");
 		}
 	}
 	/*
