@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1993 Christopher G. Demetriou
+ * Copyright (c) 1993, 1994 Christopher G. Demetriou
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec_aout.c,v 1.7 1994/01/13 02:33:28 cgd Exp $
+ *	$Id: exec_aout.c,v 1.8 1994/01/16 03:08:18 cgd Exp $
  */
 
 #include <sys/param.h>
@@ -62,8 +62,12 @@ exec_aout_makecmds(p, epp)
 	u_long midmag, magic;
 	u_short mid;
 	int error;
+	struct exec *execp = epp->ep_hdr;
 
-	midmag = ntohl(epp->ep_execp->a_midmag);
+	if (epp->ep_hdrvalid < sizeof(struct exec))
+		return ENOEXEC;
+
+	midmag = ntohl(execp->a_midmag);
 	mid = (midmag >> 16) & 0x3ff;
 	magic = midmag & 0xffff;
 
@@ -105,7 +109,7 @@ exec_aout_prep_zmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 
 	epp->ep_taddr = USRTEXT;
 	epp->ep_tsize = execp->a_text;
@@ -154,7 +158,7 @@ exec_aout_prep_nmagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
@@ -192,7 +196,7 @@ exec_aout_prep_omagic(p, epp)
 	struct proc *p;
 	struct exec_package *epp;
 {
-	struct exec *execp = epp->ep_execp;
+	struct exec *execp = epp->ep_hdr;
 	long bsize, baddr;
 
 	epp->ep_taddr = USRTEXT;
