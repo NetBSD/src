@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecreg.h,v 1.2 2001/08/14 03:57:16 fredette Exp $	*/
+/*	$NetBSD: if_ecreg.h,v 1.3 2001/08/17 20:27:12 fredette Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,4 +112,4 @@ struct ec_regs {
 #define	EC_PKT_MAXTDOFF	(EC_BUF_SZ - (ETHER_MIN_LEN - ETHER_CRC_LEN))	/* max xmit doff (min size) */
 #define	EC_PKT_RDOFF	2			/* packet offset in buffer */
 #define	EC_PKT_MINRDOFF	(EC_PKT_RDOFF + (ETHER_MIN_LEN - ETHER_CRC_LEN))	/* min packet doff (min size) */
-#define	EC_PKT_MAXRDOFF	(EC_PKT_RDOFF + (ETHER_MAX_LEN - ETHER_CRC_LEN))	/* max packet doff (max size) */
+#define	EC_PKT_MAXRDOFF	(EC_BUF_SZ - EC_PKT_RDOFF)	/* max packet doff (max size) */
