@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.32 1998/08/08 05:06:56 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.33 1998/08/08 06:46:02 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.32 1998/08/08 05:06:56 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.33 1998/08/08 06:46:02 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -741,9 +741,10 @@ progressmeter(flag)
 	(void)write(fileno(ttyout), buf, len);
 
 	if (flag == -1) {
-		(void)signal(SIGALRM, updateprogressmeter);
+		(void)xsignal(SIGALRM, updateprogressmeter);
 		alarmtimer(1);		/* set alarm timer for 1 Hz */
 	} else if (flag == 1) {
+		(void)xsignal(SIGALRM, SIG_DFL);
 		alarmtimer(0);
 		(void)putc('\n', ttyout);
 	}
@@ -1078,4 +1079,19 @@ xstrdup(str)
 	if (s == NULL)
 		err(1, "Unable to allocate memory for string copy");
 	return (s);
+}
+
+sig_t
+xsignal(sig, func)
+	int sig;
+	void (*func) __P((int));
+{
+	struct sigaction act, oact;
+
+	act.sa_handler = func;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags = SA_RESTART;
+	if (sigaction(sig, &act, &oact) < 0)
+		return (SIG_ERR);
+	return (oact.sa_handler);
 }
