@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.24 1999/01/18 02:11:07 castor Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25 1999/02/26 19:03:39 is Exp $	*/
 
 /* 
  * Copyright (c) 1987 Carnegie-Mellon University
@@ -122,6 +122,9 @@ struct pmap kernel_pmap_store;
 void	pmap_bootstrap __P((void));
 
 void	pmap_set_modified __P((paddr_t));
+
+void	pmap_procwr __P((struct proc *, vaddr_t, size_t));
+#define	PMAP_NEED_PROCWR
 
 /*
  * pmap_prefer()  helps reduce virtual-coherency exceptions in
