@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_rb.c,v 1.10 1997/01/30 09:18:48 thorpej Exp $	*/
+/*	$NetBSD: grf_rb.c,v 1.11 1997/03/31 07:34:17 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -47,13 +47,13 @@
  * Graphics routines for the Renaissance, HP98720 Graphics system.
  */
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -82,6 +82,10 @@ void	rbox_intio_attach __P((struct device *, struct device *, void *));
 
 int	rbox_dio_match __P((struct device *, struct cfdata *, void *));
 void	rbox_dio_attach __P((struct device *, struct device *, void *));
+
+int	rbox_console_scan __P((int, caddr_t, void *));
+void	rboxcnprobe __P((struct consdev *cp));
+void	rboxcninit __P((struct consdev *cp));
 
 struct cfattach rbox_intio_ca = {
 	sizeof(struct grfdev_softc), rbox_intio_match, rbox_intio_attach
@@ -203,10 +207,9 @@ rb_init(gp, scode, addr)
 	int scode;
 	caddr_t addr;
 {
-	register struct rboxfb *rbp;
+	struct rboxfb *rbp;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
-	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -229,7 +232,7 @@ rb_init(gp, scode, addr)
 			 * For DIO II space the fbaddr just computed is
 			 * the offset from the select code base (regaddr)
 			 * of the framebuffer.  Hence it is also implicitly
-			 * the size of the register set.
+			 * the size of the set.
 			 */
 			gi->gd_regsize = (int) gi->gd_fbaddr;
 			gi->gd_fbaddr += (int) gi->gd_regaddr;
@@ -258,17 +261,17 @@ rb_init(gp, scode, addr)
  */
 int
 rb_mode(gp, cmd, data)
-	register struct grf_data *gp;
+	struct grf_data *gp;
 	int cmd;
 	caddr_t data;
 {
-	register struct rboxfb *rbp;
+	struct rboxfb *rbp;
 	int error = 0;
 
 	rbp = (struct rboxfb *) gp->g_regkva;
 	switch (cmd) {
 	/*
-	 * The minimal register info here is from the Renaissance X driver.
+	 * The minimal info here is from the Renaissance X driver.
 	 */
 	case GM_GRFON:
 	case GM_GRFOFF:
@@ -355,7 +358,7 @@ void
 rbox_init(ip)
 	struct ite_data *ip;
 {
-	register int i;
+	int i;
 
 	/* XXX */
 	if (ip->regbase == 0) {
@@ -462,7 +465,7 @@ rbox_putc(ip, c, dy, dx, mode)
 	struct ite_data *ip;
         int dy, dx, c, mode;
 {
-        register int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
+        int wrr = ((mode == ATTR_INV) ? RR_COPYINVERTED : RR_COPY);
 	
 	rbox_windowmove(ip, charY(ip, c), charX(ip, c),
 			dy * ip->ftheight, dx * ip->ftwidth,
@@ -500,10 +503,10 @@ rbox_scroll(ip, sy, sx, count, dir)
         struct ite_data *ip;
         int sy, count, dir, sx;
 {
-	register int dy;
-	register int dx = sx;
-	register int height = 1;
-	register int width = ip->cols;
+	int dy;
+	int dx = sx;
+	int height = 1;
+	int width = ip->cols;
 
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
@@ -535,7 +538,7 @@ rbox_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	struct ite_data *ip;
 	int sy, sx, dy, dx, h, w, func;
 {
-	register struct rboxfb *rp = REGBASE;
+	struct rboxfb *rp = REGBASE;
 	if (h == 0 || w == 0)
 		return;
 	

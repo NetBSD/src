@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.8 1997/01/30 09:18:47 thorpej Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.9 1997/03/31 07:34:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -48,14 +48,14 @@
  * Graphics routines for HYPERION frame buffer
  */
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/errno.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/systm.h>
-#include <sys/uio.h>
+#include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/ioctl.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
+#include <sys/uio.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -84,6 +84,10 @@ void	hyper_ite_fontinit __P((struct ite_data *));
 
 int	hyper_dio_match __P((struct device *, struct cfdata *, void *));
 void	hyper_dio_attach __P((struct device *, struct device *, void *));
+
+int	hyper_console_scan __P((int, caddr_t, void *));
+void	hypercnprobe __P((struct consdev *cp));
+void	hypercninit __P((struct consdev *cp));
 
 struct cfattach hyper_dio_ca = {
 	sizeof(struct grfdev_softc), hyper_dio_match, hyper_dio_attach
@@ -166,10 +170,9 @@ hy_init(gp, scode, addr)
 	int scode;
 	caddr_t addr;
 {
-	register struct hyboxfb *hy = (struct hyboxfb *) addr;
+	struct hyboxfb *hy = (struct hyboxfb *) addr;
 	struct grfinfo *gi = &gp->g_display;
 	int fboff;
-	extern caddr_t iomap();
 
 	/*
 	 * If the console has been initialized, and it was us, there's
@@ -355,7 +358,7 @@ void
 hyper_ite_fontinit(ip)
 	struct ite_data *ip;
 {
-	register u_char *fbmem, *dp;
+	u_char *fbmem, *dp;
 	int c, l, b;
 	int stride, width;
 
@@ -423,10 +426,10 @@ hyper_scroll(ip, sy, sx, count, dir)
         struct ite_data *ip;
         int sy, count, dir, sx;
 {
-	register int dy;
-	register int dx = sx;
-	register int height = 1;
-	register int width = ip->cols;
+	int dy;
+	int dx = sx;
+	int height = 1;
+	int width = ip->cols;
 
 	if (dir == SCROLL_UP) {
 		dy = sy - count;
@@ -542,16 +545,16 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 
 	unsigned int *psrcLine, *pdstLine;
                                 /* pointers to line with current src and dst */
-	register unsigned int *psrc;  /* pointer to current src longword */
-	register unsigned int *pdst;  /* pointer to current dst longword */
+	unsigned int *psrc;  /* pointer to current src longword */
+	unsigned int *pdst;  /* pointer to current dst longword */
 
                                 /* following used for looping through a line */
 	unsigned int startmask, endmask;  /* masks for writing ends of dst */
 	int nlMiddle;		/* whole longwords in dst */
-	register int nl;	/* temp copy of nlMiddle */
-	register unsigned int tmpSrc;
+	int nl;	/* temp copy of nlMiddle */
+	unsigned int tmpSrc;
                                 /* place to store full source word */
-	register int xoffSrc;	/* offset (>= 0, < 32) from which to
+	int xoffSrc;	/* offset (>= 0, < 32) from which to
                                    fetch whole longwords fetched
                                    in src */
 	int nstart;		/* number of ragged bits at start of dst */
@@ -663,8 +666,8 @@ hyper_windowmove(ip, sy, sx, dy, dx, h, w, func)
 	    }
 	    else /* move right to left */
 	    {
-		pdstLine += (dx+w >> 5);
-		psrcLine += (sx+w >> 5);
+		pdstLine += ((dx + w) >> 5);
+		psrcLine += ((sx + w) >> 5);
 		/* if fetch of last partial bits from source crosses
 		   a longword boundary, start at the previous longword
 		   */

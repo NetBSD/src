@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.23 1997/01/30 09:18:42 thorpej Exp $	*/
+/*	$NetBSD: grf.c,v 1.24 1997/03/31 07:34:12 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,15 +49,16 @@
  */
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/file.h>
-#include <sys/malloc.h>
-#include <sys/vnode.h>
-#include <sys/mman.h>
-#include <sys/poll.h>
+#include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+#include <sys/mman.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/vnode.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -355,7 +356,7 @@ grfoff(dev)
 int
 grfaddr(sc, off)
 	struct grf_softc *sc;
-	register int off;
+	int off;
 {
 	struct grf_data *gp= sc->sc_data;
 	struct grfinfo *gi = &gp->g_display;
@@ -519,8 +520,8 @@ grflock(gp, block)
 			return(OEAGAIN);
 		do {
 			gp->g_flags |= GF_WANTED;
-			if (error = tsleep((caddr_t)&gp->g_flags,
-					   (PZERO+1) | PCATCH, devioc, 0))
+			if ((error = tsleep((caddr_t)&gp->g_flags,
+					   (PZERO+1) | PCATCH, devioc, 0)))
 				return (error);
 		} while (gp->g_lockp);
 	}
@@ -644,6 +645,7 @@ grfmap(dev, addrp, p)
 	return(error);
 }
 
+int
 grfunmap(dev, addr, p)
 	dev_t dev;
 	caddr_t addr;
@@ -685,9 +687,9 @@ iounmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;
 {
+#ifdef DEBUG
 	int unit = minor(dev);
 
-#ifdef DEBUG
 	if (grfdebug & (GDB_MMAP|GDB_IOMAP))
 		printf("iounmmap(%d): id %d addr %x\n",
 		       curproc->p_pid, unit, addr);
@@ -702,11 +704,12 @@ iounmmap(dev, addr)
  * process ids.  Returns a slot number between 1 and GRFMAXLCK or 0 if no
  * slot is available. 
  */
+int
 grffindpid(gp)
 	struct grf_data *gp;
 {
-	register short pid, *sp;
-	register int i, limit;
+	short pid, *sp;
+	int i, limit;
 	int ni;
 
 	if (gp->g_pid == NULL) {
@@ -740,11 +743,12 @@ done:
 	return(i);
 }
 
+void
 grfrmpid(gp)
 	struct grf_data *gp;
 {
-	register short pid, *sp;
-	register int limit, i;
+	short pid, *sp;
+	int limit, i;
 	int mi;
 
 	if (gp->g_pid == NULL || (limit = gp->g_pid[0]) == 0)
@@ -768,6 +772,7 @@ grfrmpid(gp)
 #endif
 }
 
+int
 grflckmmap(dev, addrp)
 	dev_t dev;
 	caddr_t *addrp;
@@ -782,6 +787,7 @@ grflckmmap(dev, addrp)
 	return(EINVAL);
 }
 
+int
 grflckunmmap(dev, addr)
 	dev_t dev;
 	caddr_t addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.14 1997/01/30 09:06:54 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.15 1997/03/31 07:37:30 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Jason R. Thorpe.  All rights reserved.
@@ -47,6 +47,7 @@
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
+#include <machine/psl.h>
 
 #include <hp300/hp300/isr.h>
 
@@ -217,7 +218,7 @@ nhpibreset(hs)
 
 void
 nhpibifc(hd)
-	register struct nhpibdevice *hd;
+	struct nhpibdevice *hd;
 {
 	hd->hpib_acr = AUX_TCA;
 	hd->hpib_acr = AUX_CSRE;
@@ -397,8 +398,8 @@ nhpibreadtimo(arg)
 	int s = splbio();
 
 	if (hs->sc_flags & HPIBF_IO) {
-		register struct nhpibdevice *hd = sc->sc_regs;
-		register struct hpibqueue *hq;
+		struct nhpibdevice *hd = sc->sc_regs;
+		struct hpibqueue *hq;
 
 		hd->hpib_mim = 0;
 		hd->hpib_acr = AUX_TCA;
@@ -512,10 +513,10 @@ int nhpibreporttimo = 0;
 
 int
 nhpibwait(hd, x)
-	register struct nhpibdevice *hd;
+	struct nhpibdevice *hd;
 	int x;
 {
-	register int timo = hpibtimeout;
+	int timo = hpibtimeout;
 
 	while ((hd->hpib_mis & x) == 0 && --timo)
 		DELAY(1);
