@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.39 2002/04/29 09:33:30 uch Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.40 2002/05/09 12:28:09 uch Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -125,11 +125,14 @@ struct user *proc0paddr;	/* init_main.c use this. */
 struct pcb *curpcb;
 struct md_upte *curupte;	/* SH3 wired u-area hack */
 
-#ifndef IOM_RAM_BEGIN
+#if !defined(IOM_RAM_BEGIN)
 #error "define IOM_RAM_BEGIN"
+#elif (IOM_RAM_BEGIN & SH3_P1SEG_BASE) != 0
+#error "IOM_RAM_BEGIN is physical address. not P1 address."
 #endif
-#define	VBR	(u_int8_t *)IOM_RAM_BEGIN
-vaddr_t ram_start = IOM_RAM_BEGIN;
+
+#define	VBR	(u_int8_t *)SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN)
+vaddr_t ram_start = SH3_PHYS_TO_P1SEG(IOM_RAM_BEGIN);
 /* exception handler holder (sh3/sh3/exception_vector.S) */
 extern char sh_vector_generic[], sh_vector_generic_end[];
 extern char sh_vector_interrupt[], sh_vector_interrupt_end[];
@@ -185,116 +188,65 @@ sh_cpu_init(int arch, int product)
 	memcpy(VBR + 0x600, sh_vector_interrupt,
 	    sh_vector_interrupt_end - sh_vector_interrupt);
 
-	sh_icache_sync_all();	/* for I/D separated cache */
+	if (!SH_HAS_UNIFIED_CACHE)
+		sh_icache_sync_all();
 
-	__asm__ __volatile__ ("ldc	%0, vbr" :: "r"(VBR));
+	__asm__ __volatile__("ldc %0, vbr" :: "r"(VBR));
 
 	/* kernel stack setup */
 	__sh_switch_resume = CPU_IS_SH3 ? sh3_switch_resume : sh4_switch_resume;
+
+	/* Set page size (4KB) */
+	uvm_setpagesize();
 }
 
 /*
- * vsize_t sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
- *
- *	kernend ... P1 address.
- *	pstart  ... physical address of RAM start address.
- *	pend    ... physical address of the last RAM address
- *
- *      Returns size of stealed memory.
- *
- *	Memory map
- *	....|  proc0 stack  | Page Dir |    Page Table    |
- *	    *    USPACE        NBPG     (1+nkpde)*NBPG
- *       kernend
+ * void sh_proc0_init(void):
+ *	Setup proc0 u-area.
  */
-vsize_t
-sh_proc0_init(vaddr_t kernend, paddr_t pstart, paddr_t pend)
+void
+sh_proc0_init()
 {
-	pd_entry_t *pagedir, *pagetab, pte;
-	vsize_t sz;
-	vaddr_t p0;
-	int i;
+	struct switchframe *sf;
+	vaddr_t u;
 
-	/* Set default page size (4KB) */
-	uvm_setpagesize();
-
-	/* # of pdes maps whole physical memory area. */
-	nkpde = sh3_btod(((pend - pstart + 1) + PDOFSET) & ~PDOFSET);
-
-	/* Steal page dir area, process0 stack, page table area */
-	sz = USPACE + NBPG + (1 + nkpde) * NBPG;
-	p0 = round_page(kernend);
-	memset((void *)p0, 0, sz);
-
-	/* Build initial page tables */
-	pagedir = (pt_entry_t *)(p0 + USPACE);
-	pagetab = (pt_entry_t *)(p0 + USPACE + NBPG);
-
-	/* Construct a page table directory */
-	pte = (pt_entry_t)pagetab;
-	pte |= PG_KW | PG_V | PG_4K | PG_M | PG_N;
-	pagedir[(SH3_PHYS_TO_P1SEG(pstart)) >> PDSHIFT] = pte;
-
-	/* Map whole physical memory space from VM_MIN_KERNEL_ADDRESS */
-	pte += NBPG;
-	for (i = 0; i < nkpde; i++, pte += NBPG)
-		pagedir[(VM_MIN_KERNEL_ADDRESS >> PDSHIFT) + i] = pte;
-
-	/* Install a PDE recursively mapping page directory as a page table. */
-	pte = (pt_entry_t)pagedir;
-	pte |= PG_V | PG_4K | PG_KW | PG_M | PG_N;
-	pagedir[PDSLOT_PTE] = pte;	/* 0xcfc00000 */
-
-	/* Set page directory base */
-	SH_MMU_TTB_WRITE((u_int32_t)pagedir);
+	/* Steal process0 u-area */
+	u = uvm_pageboot_alloc(USPACE);
+	memset((void *)u, 0, USPACE);
 
 	/* Setup proc0 */
-	proc0paddr = (struct user *)p0;
+	proc0paddr = (struct user *)u;
 	proc0.p_addr = proc0paddr;
-	curpcb = &proc0.p_addr->u_pcb;
-	curpcb->pageDirReg = (pt_entry_t)pagedir;
 	/*
 	 * u-area map:
 	 * |user| .... | ............... |
-	 * |      NBPG +  USPACE - NBPG  +
-         *           pcb_fp(P1)        pcb_sp
-	 * pcb_fp and pcb_sp are stored into r6_bank, r7_bank
-	 * when context switching.
+	 * |      NBPG |  USPACE - NBPG  |
+         *        frame top        stack top
+	 * current frame ... r6_bank
+	 * stack top     ... r7_bank
+	 * current stack ... r15
 	 */
-
-	curpcb->pcb_sp = p0 + USPACE;
-	curpcb->pcb_fp = p0 + NBPG;
-	curpcb->pcb_sf.sf_r6_bank = curpcb->pcb_fp;
-	curpcb->pcb_sf.sf_r15 = curpcb->pcb_sp;
-	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(curpcb->pcb_fp));
-	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(curpcb->pcb_sp));
+	curpcb = proc0.p_md.md_pcb = &proc0.p_addr->u_pcb;
 	curupte = proc0.p_md.md_upte;
 
-	/* trap frame */
-	proc0.p_md.md_regs = (struct trapframe *)curpcb->pcb_fp - 1;
+	sf = &curpcb->pcb_sf;
+	sf->sf_r6_bank = u + NBPG;
+	sf->sf_r7_bank = sf->sf_r15	= u + USPACE;
+	__asm__ __volatile__("ldc %0, r6_bank" :: "r"(sf->sf_r6_bank));
+	__asm__ __volatile__("ldc %0, r7_bank" :: "r"(sf->sf_r7_bank));
+
+	proc0.p_md.md_regs = (struct trapframe *)sf->sf_r6_bank - 1;
 #ifdef KSTACK_DEBUG
-	memset((char *)(p0 + sizeof(struct user)), 0x5a,
+	memset((char *)(u + sizeof(struct user)), 0x5a,
 	    NBPG - sizeof(struct user));
-	memset((char *)(p0 + NBPG), 0xa5, USPACE - NBPG);
-#endif
-
-	/* Enable MMU */
-	sh_mmu_start();
-
-	/* Mask all interrupt */
-	_cpu_intr_suspend();
-
-	/* Enable exception for P3 access */
-	_cpu_exception_resume(0);
-
-	return (p0 + sz - kernend);
+	memset((char *)(u + NBPG), 0xa5, USPACE - NBPG);
+#endif /* KSTACK_DEBUG */
 }
 
 void
 sh_startup()
 {
-	caddr_t v;
-	int i, sz, base, residual;
+	int i, base, residual;
 	vaddr_t minaddr, maxaddr;
 	vsize_t size;
 	char pbuf[9];
@@ -304,7 +256,7 @@ sh_startup()
 		printf("%s", cpu_model);
 #ifdef DEBUG
 	printf("general exception handler:\t%d byte\n",
-	       sh_vector_generic_end - sh_vector_generic);
+	    sh_vector_generic_end - sh_vector_generic);
 	printf("TLB miss exception handler:\t%d byte\n",
 #if defined(SH3) && defined(SH4)
 	    CPU_IS_SH3 ? sh3_vector_tlbmiss_end - sh3_vector_tlbmiss :
@@ -316,21 +268,11 @@ sh_startup()
 #endif
 	    );
 	printf("interrupt exception handler:\t%d byte\n",
-	       sh_vector_interrupt_end - sh_vector_interrupt);
+	    sh_vector_interrupt_end - sh_vector_interrupt);
 #endif /* DEBUG */
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s\n", pbuf);
-
-	/*
-	 * Find out how much space we need, allocate it,
-	 * and then give everything true virtual addresses.
-	 */
-	sz = (int)allocsys(NULL, NULL);
-	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
-		panic("startup: no room for tables");
-	if (allocsys(v, NULL) - v != sz)
-		panic("startup: table size inconsistency");
 
 	/*
 	 * Now allocate buffers proper.  They are different than the above
@@ -339,9 +281,9 @@ sh_startup()
 	size = MAXBSIZE * nbuf;
 	buffers = 0;
 	if (uvm_map(kernel_map, (vaddr_t *) &buffers, round_page(size),
-		    NULL, UVM_UNKNOWN_OFFSET, 0,
-		    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
-				UVM_ADV_NORMAL, 0)) != 0)
+	    NULL, UVM_UNKNOWN_OFFSET, 0,
+	    UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
+		UVM_ADV_NORMAL, 0)) != 0)
 		panic("sh3_startup: cannot allocate VM for buffers");
 	minaddr = (vaddr_t)buffers;
 	if ((bufpages / nbuf) >= btoc(MAXBSIZE)) {
@@ -371,7 +313,7 @@ sh_startup()
 				panic("sh3_startup: not enough memory for "
 				    "buffer cache");
 			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
-					VM_PROT_READ|VM_PROT_WRITE);
+			    VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -383,13 +325,13 @@ sh_startup()
 	 * limits the number of processes exec'ing at any time.
 	 */
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
+	    16 * NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 
 	/*
 	 * Allocate a submap for physio
 	 */
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, FALSE, NULL);
+	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -400,7 +342,6 @@ sh_startup()
 	 * Set up buffers, so they can be used to read disk labels.
 	 */
 	bufinit();
-
 }
 
 /*
@@ -413,23 +354,6 @@ sh_startup()
 void
 cpu_dumpconf()
 {
-}
-
-/*
- * Doadump comes here after turning off memory management and
- * getting on the dump stack, either when called above, or by
- * the auto-restart code.
- */
-#define	BYTES_PER_DUMP  NBPG	/* must be a multiple of pagesize XXX small */
-static vaddr_t dumpspace;
-
-vaddr_t
-reserve_dumppages(p)
-	vaddr_t p;
-{
-
-	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
 }
 
 void
@@ -465,7 +389,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	/* Allocate space for the signal handler context. */
 	if (onstack)
 		fp = (struct sigframe *)((caddr_t)p->p_sigctx.ps_sigstk.ss_sp +
-						p->p_sigctx.ps_sigstk.ss_size);
+		    p->p_sigctx.ps_sigstk.ss_size);
 	else
 		fp = (struct sigframe *)tf->tf_r15;
 	fp--;
@@ -496,7 +420,7 @@ sendsig(sig_t catcher, int sig, sigset_t *mask, u_long code)
 	frame.sf_sc.sc_r2 = tf->tf_r2;
 	frame.sf_sc.sc_r1 = tf->tf_r1;
 	frame.sf_sc.sc_r0 = tf->tf_r0;
-	frame.sf_sc.sc_trapno = tf->tf_trapno;
+	frame.sf_sc.sc_expevt = tf->tf_expevt;
 
 	/* Save signal stack. */
 	frame.sf_sc.sc_onstack = p->p_sigctx.ps_sigstk.ss_flags & SS_ONSTACK;
@@ -607,11 +531,9 @@ sys___sigreturn14(struct proc *p, void *v, register_t *retval)
 void
 setregs(struct proc *p, struct exec_package *pack, u_long stack)
 {
-	register struct pcb *pcb = &p->p_addr->u_pcb;
-	register struct trapframe *tf;
+	struct trapframe *tf;
 
 	p->p_md.md_flags &= ~MDP_USEDFPU;
-	pcb->pcb_flags = 0;
 
 	tf = p->p_md.md_regs;
 
@@ -619,9 +541,9 @@ setregs(struct proc *p, struct exec_package *pack, u_long stack)
 	tf->tf_r1 = 0;
 	tf->tf_r2 = 0;
 	tf->tf_r3 = 0;
-	tf->tf_r4 = *(int *)stack;	/* argc */
-	tf->tf_r5 = stack+4;		/* argv */
-	tf->tf_r6 = stack+4*tf->tf_r4 + 8; /* envp */
+	tf->tf_r4 = fuword((caddr_t)stack);	/* argc */
+	tf->tf_r5 = stack + 4;			/* argv */
+	tf->tf_r6 = stack + 4 * tf->tf_r4 + 8;	/* envp */
 	tf->tf_r7 = 0;
 	tf->tf_r8 = 0;
 	tf->tf_r9 = (int)p->p_psstr;
@@ -643,7 +565,7 @@ cpu_reset()
 {
 
 	_cpu_exception_suspend();
-	_reg_write_4(SH_(EXPEVT), 0x020);	/* manual reset */
+	_reg_write_4(SH_(EXPEVT), EXPEVT_RESET_MANUAL);
 
 	goto *(u_int32_t *)0xa0000000;
 	/* NOTREACHED */
