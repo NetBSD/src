@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.0,v 1.1.2.22 2005/03/30 05:45:18 jmc Exp $
+#	$NetBSD: CHANGES-3.0,v 1.1.2.23 2005/03/30 10:29:33 tron Exp $
 
 A complete list of changes from the initial NetBSD 3.0 branch on 16 March 2005
 until the 3.0 release:
@@ -347,3 +347,100 @@ sys/dev/pci/pciconf.h				1.9
 doc/README.files				patch
 
 	Update for 3.0 branch
+
+lib/libc/citrus/citrus_none.c			1.13
+
+	Don't sign extend characters when they get converted to wide characters
+	in mbtowc. Otherwise you are not going to be able to wctomb them. Added
+	regression test.
+	[christos, ticket #68]
+
+sys/arch/evbarm/stand/gzboot/Makefile.gzboot	1.11
+
+	include <bsd.obj.mk> to teach make the rules for OBJDIR names.
+	This is to fix a problem on compiling gzboot with BUILDID defined
+	(by build.sh -B BUILDID).
+	[bsh, ticket #69]
+
+sys/net/if_vlan.c				1.45
+
+	vlan_input: add a missing EVL_VLANOFTAG in the case of hw offloading.
+	[yamt, ticket #70]
+
+sys/arch/xen/i386/hypervisor_machdep.c		1.6
+sys/arch/xen/include/cpufunc.h			1.6
+sys/arch/xen/include/xen.h			1.11
+
+	Don't assume we're on a uniprocessor system (the hypervisor may be
+	running SMP) and add "lock;" barrier to avoid instruction reordering
+	in event handlings. This fix the last issue with event loss I was
+	getting on SMP systems.
+	[bouyer, ticket #71]
+
+sys/arch/xen/xen/ctrl_if.c			1.4
+sys/arch/xen/xen/if_xennet.c			1.16
+sys/arch/xen/xen/xbd.c				1.15
+sys/arch/xen/xen/xbdback.c			1.5
+sys/arch/xen/xen/xennetback.c			1.5
+
+	Remplace __insn_barrier() with x86_lfence() where appropriate.
+	While here, replace a panic() with a return of error code in xbdback.c.
+	[bouyer, ticket #72]
+
+sys/arch/xen/i386/gdt.c				1.4
+
+	Merge 1.1.14.3 from yamt-km branch:
+	We can't write directly to a gdt slot, we need to go though
+	xen_update_descriptor().
+	[bouyer, ticket #73]
+
+sys/ufs/lfs/lfs_alloc.c				1.77
+sys/ufs/lfs/lfs_vnops.c				1.138-1.140
+sys/ufs/ufs/ufs_vnops.c				1.127
+
+	Improve LFS's compatibility with stacked filesystems.
+	[perseant, ticket #74]
+
+usr.bin/lastcomm/lastcomm.c			1.17
+
+	PR/29819: Robert Elz: lastcomm mangles elapsed time calculation because
+	of incorrect rounding.
+	[christos, ticket #75]
+
+sys/arch/alpha/common/shared_intr.c		1.17
+sys/arch/alpha/include/intr.h			1.50
+sys/arch/alpha/pci/pci_1000.c			1.15
+sys/arch/alpha/pci/pci_1000a.c			1.17
+sys/arch/alpha/pci/pci_2100_a500.c		1.6
+sys/arch/alpha/pci/pci_550.c			1.25
+sys/arch/alpha/pci/pci_6600.c			1.11
+sys/arch/alpha/pci/pci_eb164.c			1.33
+sys/arch/alpha/pci/pci_eb64plus.c		1.13
+sys/arch/alpha/pci/pci_eb66.c			1.13
+sys/arch/alpha/pci/pci_kn20aa.c			1.45
+sys/arch/alpha/pci/pci_kn300.c			1.27
+sys/arch/alpha/pci/sio_pic.c			1.33
+
+	- Add a alpha_shared_intr_reset_strays() function that resets the  
+	  stray interrupt counter for a given shared interrupt descriptor.
+	- When an interrupt is successfully handled, reset the strays counter,
+	  thus preventing a "slow leak" from eventually shutting off the  
+	  interrupt vector. Idea taken from pci_kn300.c (which was changed
+	  to use the new alpha_shared_intr_reset_strays() function).
+	[thorpej, ticket #76]
+
+usr.bin/login/login.c				1.84
+
+	Add a colon before %m in calls to syslog(3) for consistency with other
+	messages in this same file and in many other tools.
+	[jmmv, ticket #77]
+
+lib/libc/db/hash/hash.c				1.21
+
+	Don't refuse to create a hash database on 0 length files. Treat
+	them as new files the same way that the btree code does.  Note that
+	we do the fstat() after the open() instead of re-using the previous
+	result of the stat() to avoid races (we open with O_EXLOCK when we
+	care).
+	[christos, ticket #78]
+
