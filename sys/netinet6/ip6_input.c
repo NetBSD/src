@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.22.2.3 2001/03/11 21:12:36 he Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.22.2.4 2001/04/06 01:37:35 he Exp $	*/
 /*	$KAME: ip6_input.c,v 1.119 2000/08/26 10:00:45 itojun Exp $	*/
 
 /*
@@ -308,7 +308,15 @@ ip6_input(m)
 	 * in the list may have previously cleared it.
 	 */
 	m0 = m;
+#ifdef IPSEC
+	if (ipsec_gethist(m, NULL))
+		pfh = NULL;
+	else
+		pfh = pfil_hook_get(PFIL_IN,
+		    &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+#else
 	pfh = pfil_hook_get(PFIL_IN, &inetsw[ip_protox[IPPROTO_IPV6]].pr_pfh);
+#endif
 	for (; pfh; pfh = pfh->pfil_link.tqe_next)
 		if (pfh->pfil_func) {
 			rv = pfh->pfil_func(ip6, sizeof(*ip6),
