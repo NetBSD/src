@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.28 1998/02/20 18:09:29 mycroft Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.29 1998/08/05 00:44:32 perry Exp $	*/
 
 /*
  * System call argument lists.
@@ -467,4 +467,5 @@ int	linux_sys_fdatasync	__P((struct proc *, void *, register_t *));
 int	linux_sys___sysctl	__P((struct proc *, void *, register_t *));
 int	sys_mlock	__P((struct proc *, void *, register_t *));
 int	sys_munlock	__P((struct proc *, void *, register_t *));
+int	sys_nanosleep	__P((struct proc *, void *, register_t *));
 int	linux_sys_mremap	__P((struct proc *, void *, register_t *));
