@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.340 2001/07/31 22:27:25 matt Exp $
+$NetBSD: pcidevs,v 1.341 2001/08/13 08:51:38 cjs Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -504,6 +504,7 @@ vendor ESSTECH		0x125d	ESS Technology Inc
 vendor SILMOTION	0x126f	Silicon Motion
 vendor ENSONIQ		0x1274	Ensoniq
 vendor NETAPP		0x1275	Network Appliance
+vendor TRANSMETA	0x1279	Transmeta Corp
 vendor ROCKWELL		0x127a	Rockwell Semiconductor Systems
 vendor DAVICOM		0x1282	Davicom Semiconductor
 vendor ESSTECH2		0x1285	ESS Technology Inc
@@ -659,6 +660,8 @@ product ALI M4803	0x5215	M4803
 product ALI M5229	0x5229	M5229 UDMA IDE Controller
 product ALI M5237	0x5237	M5237 USB Host Controller
 product ALI M5243	0x5243	M5243 PCI-AGP Bridge
+product ALI M5451	0x5451	M5451 AC-Link Controller Audio Device
+product ALI M5453	0x5453	M5453 AC-Link Controller Modem Device
 product ALI M7101	0x7101	M7101 Power Management Controller
 
 /* Adaptec products */
@@ -1755,6 +1758,12 @@ product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC100	0x0617	ToPIC100 CardBus-PCI Bridge
 product TOSHIBA2 OBOE		0x0701	Fast Infrared Type O
 product TOSHIBA2 DONAUOBOE	0x0d01	Fast Infrared Type DO
+
+/* Transmeta products */
+product TRANSMETA NORTHBRIDGE	0x0295	Virtual Northbridge
+product TRANSMETA LONGRUN	0x0395	LongRun Northbridge
+product TRANSMETA SDRAM		0x0396	SDRAM Controller
+product TRANSMETA BIOS_SCRATCH	0x0397	BIOS Scratchpad
 
 /* Trident products */
 product TRIDENT CYBERBLADE_I7	0x8420	CyberBlade i7
