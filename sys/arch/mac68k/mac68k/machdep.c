@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 1998/02/21 00:37:08 scottr Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 1998/02/23 07:24:44 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -413,23 +413,23 @@ again:
 	 * Determine how many buffers to allocate.
 	 * Use 10% of memory for the first 2 Meg, 5% of the remaining
 	 * memory. Insure a minimum of 16 buffers.
-	 * We allocate 1/2 as many swap buffer headers as file i/o buffers.
+	 * We allocate 3/4 as many swap buffer headers as file i/o buffers.
 	 */
 	if (bufpages == 0)
 		if (physmem < btoc(2 * 1024 * 1024))
-			bufpages = physmem / 10 / CLSIZE;
+			bufpages = physmem / (10 * CLSIZE);
 		else
-			bufpages = (btoc(2 * 1024 * 1024) + physmem) / 20 / CLSIZE;
-
-	bufpages = min(NKMEMCLUSTERS * 2 / 5, bufpages);
+			bufpages = (btoc(2 * 1024 * 1024) + physmem) /
+			    (20 * CLSIZE);
 
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
 			nbuf = 16;
 	}
+
 	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;	/* force even */
+		nswbuf = (nbuf * 3 / 4) & ~1;	/* force even */
 		if (nswbuf > 256)
 			nswbuf = 256;	/* sanity */
 	}
