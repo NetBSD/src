@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm.h,v 1.11 2004/04/27 20:13:46 kleink Exp $	*/
+/*	$NetBSD: ndbm.h,v 1.12 2004/04/27 20:59:43 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -69,17 +69,17 @@ typedef DB DBM;
 #endif
 
 __BEGIN_DECLS
-void	 dbm_close __P((DBM *));
-int	 dbm_delete __P((DBM *, datum));
-datum	 dbm_fetch __P((DBM *, datum));
-datum	 dbm_firstkey __P((DBM *));
-datum	 dbm_nextkey __P((DBM *));
-DBM	*dbm_open __P((const char *, int, mode_t));
-int	 dbm_store __P((DBM *, datum, datum, int));
-int	 dbm_error __P((DBM *));
-int	 dbm_clearerr __P((DBM *));
+void	 dbm_close(DBM *);
+int	 dbm_delete(DBM *, datum);
+datum	 dbm_fetch(DBM *, datum);
+datum	 dbm_firstkey(DBM *);
+datum	 dbm_nextkey(DBM *);
+DBM	*dbm_open(const char *, int, mode_t);
+int	 dbm_store(DBM *, datum, datum, int);
+int	 dbm_error(DBM *);
+int	 dbm_clearerr(DBM *);
 #if defined(_NETBSD_SOURCE)
-int	 dbm_dirfno __P((DBM *));
+int	 dbm_dirfno(DBM *);
 #endif
 __END_DECLS
 
