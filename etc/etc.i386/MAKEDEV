@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.150 2001/11/15 22:16:19 augustss Exp $
+#	$NetBSD: MAKEDEV,v 1.151 2001/12/02 10:50:26 augustss Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -104,7 +104,9 @@
 # Special purpose devices:
 #	fd	file descriptors
 #	bpf*	packet filter
+#	cir*	Consumer IR
 #	ipl	IP filter
+#	irframe* IrDA physical frame
 #	random	Random number generator, see rnd(4)
 #	speaker	pc speaker		(XXX - installed)
 #	lkm	loadable kernel modules interface
@@ -181,6 +183,7 @@ all)
 	sh $0 pci0 pci1 pci2 pci3 pci4 pci5 pci6 pci7
 	sh $0 altq
 	sh $0 ed0 ed1
+	sh $0 cir0 cir1 irframe0 irframe1
 	;;
 
 audio)
@@ -914,6 +917,26 @@ wsfont)
 	mknod wsfont c 81 0
 	chown root:wheel wsfont
 	chmod 600 wsfont
+	;;
+
+cir*)
+	unit=${i#cir}
+	cir=cir$unit
+	major=86
+	rm -f $cir
+	mknod $cir c $major $unit
+	chown root.wheel $cir
+	chmod 666 $cir
+	;;
+
+irframe*)
+	unit=${i#irframe}
+	irframe=irframe$unit
+	major=85
+	rm -f $irframe
+	mknod $irframe c $major $unit
+	chown root.wheel $irframe
+	chmod 600 $irframe
 	;;
 
 local)
