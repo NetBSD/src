@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -39,14 +39,14 @@
  */
 
 #ifdef MAKE_BOOTSTRAP
-static char rcsid[] = "$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.33 2000/04/20 11:23:25 sjg Exp $");
+__RCSID("$NetBSD: job.c,v 1.34 2000/12/03 01:27:03 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -166,13 +166,6 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 #define JOB_FINISHED	2   	/* The job is already finished */
 #define JOB_STOPPED	3   	/* The job is stopped */
 
-/*
- * tfile is the name of a file into which all shell commands are put. It is
- * used over by removing it before the child shell is executed. The XXXXX in
- * the string are replaced by the pid of the make process in a 5-character
- * field with leading zeroes.
- */
-static char     tfile[] = TMPPAT;
 
 
 /*
@@ -253,11 +246,11 @@ STATIC char    	*targFmt;   	/* Format string to use to head output from a
 #ifdef REMOTE
 # define TARG_FMT  "--- %s at %s ---\n" /* Default format */
 # define MESSAGE(fp, gn) \
-	(void) fprintf(fp, targFmt, gn->name, gn->rem.hname);
+	(void) fprintf(fp, targFmt, gn->name, gn->rem.hname)
 #else
 # define TARG_FMT  "--- %s ---\n" /* Default format */
 # define MESSAGE(fp, gn) \
-	(void) fprintf(fp, targFmt, gn->name);
+	(void) fprintf(fp, targFmt, gn->name)
 #endif
 
 /*
@@ -773,6 +766,7 @@ JobFinish(job, status)
 	JobClose(job);
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
 	   (void) fclose(job->cmdFILE);
+	   job->cmdFILE = NULL;
 	}
 	done = TRUE;
 #ifdef REMOTE
@@ -819,6 +813,8 @@ JobFinish(job, status)
 	     * output file as well.
 	     */
 	    out = fdopen(job->outFd, "w");
+	    if (out == NULL)
+		Punt("Cannot fdopen");
 	} else {
 	    out = stdout;
 	}
@@ -1232,7 +1228,7 @@ JobExec(job, argv)
 #endif /* RMT_NO_EXEC */
 
     if ((cpid = vfork()) == -1) {
-	Punt("Cannot fork");
+	Punt("Cannot vfork");
     } else if (cpid == 0) {
 
 	/*
@@ -1732,6 +1728,13 @@ JobStart(gn, flags, previous)
      */
     if ((gn->type & OP_MAKE) || (!noExecute && !touchFlag)) {
 	/*
+	 * tfile is the name of a file into which all shell commands are
+	 * put. It is used over by removing it before the child shell is
+	 * executed. The XXXXXX in the string are replaced by the pid of
+	 * the make process in a 6-character field with leading zeroes.
+	 */
+	char     tfile[sizeof(TMPPAT)];
+	/*
 	 * We're serious here, but if the commands were bogus, we're
 	 * also dead...
 	 */
@@ -1739,6 +1742,7 @@ JobStart(gn, flags, previous)
 	    DieHorribly();
 	}
 
+	(void)strcpy(tfile, TMPPAT);
 	if ((tfd = mkstemp(tfile)) == -1)
 	    Punt("Could not create temporary file %s", strerror(errno));
 	(void) eunlink(tfile);
@@ -1851,8 +1855,10 @@ JobStart(gn, flags, previous)
 	 * Unlink and close the command file if we opened one
 	 */
 	if (job->cmdFILE != stdout) {
-	    if (job->cmdFILE != NULL)
+	    if (job->cmdFILE != NULL) {
 		(void) fclose(job->cmdFILE);
+		job->cmdFILE = NULL;
+	    }
 	} else {
 	     (void) fflush(stdout);
 	}
@@ -2212,6 +2218,8 @@ end_loop:
 	    }
 	    (void) fclose(oFILE);
 	    (void) eunlink(job->outFile);
+	} else {
+	    Punt("Cannot open `%s'", job->outFile);
 	}
     }
 }
@@ -2943,8 +2951,7 @@ JobInterrupt(runINTERRUPT, signo)
  *	Number of errors reported.
  *
  * Side Effects:
- *	The process' temporary file (tfile) is removed if it still
- *	existed.
+ *	None.
  *-----------------------------------------------------------------------
  */
 int
