@@ -1,5 +1,5 @@
 #	@(#)rc	5.27 (Berkeley) 6/5/91
-#	$Id: rc,v 1.41 1994/05/29 03:37:33 jtc Exp $
+#	$Id: rc,v 1.42 1994/05/29 19:10:22 mycroft Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -72,6 +72,7 @@ echo 'starting network'
 . /etc/netstart
 
 mount /usr >/dev/null 2>&1
+mount /var >/dev/null 2>&1
 
 # clean up left-over files
 rm -f /etc/nologin
