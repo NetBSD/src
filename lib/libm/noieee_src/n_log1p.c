@@ -1,4 +1,4 @@
-/*      $NetBSD: n_log1p.c,v 1.2 1997/10/20 14:13:15 ragge Exp $ */
+/*      $NetBSD: n_log1p.c,v 1.3 1998/10/20 02:26:12 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -122,9 +122,9 @@ double x;
 	double z,s,t,c;
 	int k;
 
-#if !defined(vax)&&!defined(tahoe)
+#if !defined(__vax__)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
-#endif	/* !defined(vax)&&!defined(tahoe) */
+#endif	/* !defined(__vax__)&&!defined(tahoe) */
 
 	if(finite(x)) {
 	   if( x > negone ) {
@@ -148,18 +148,18 @@ double x;
 	/* end of if (x > negone) */
 
 	    else {
-#if defined(vax)||defined(tahoe)
+#if defined(__vax__)||defined(tahoe)
 		if ( x == negone )
 		    return (infnan(-ERANGE));	/* -INF */
 		else
 		    return (infnan(EDOM));	/* NaN */
-#else	/* defined(vax)||defined(tahoe) */
+#else	/* defined(__vax__)||defined(tahoe) */
 		/* x = -1, return -INF with signal */
 		if ( x == negone ) return( negone/zero );
 
 		/* negative argument for log, return NaN with signal */
 	        else return ( zero / zero );
-#endif	/* defined(vax)||defined(tahoe) */
+#endif	/* defined(__vax__)||defined(tahoe) */
 	    }
 	}
     /* end of if (finite(x)) */

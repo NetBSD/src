@@ -1,4 +1,4 @@
-/*      $NetBSD: n_cosh.c,v 1.2 1997/10/20 14:12:06 ragge Exp $ */
+/*      $NetBSD: n_cosh.c,v 1.3 1998/10/20 02:26:10 matt Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -101,11 +101,11 @@ ic(lnovfl, 7.0978271289338397310E2,     9, 1.62E42FEFA39EF)
 #define   lnovfl    vccast(lnovfl)
 #endif
 
-#if defined(vax)||defined(tahoe)
-static max = 126                      ;
-#else	/* defined(vax)||defined(tahoe) */
-static max = 1023                     ;
-#endif	/* defined(vax)||defined(tahoe) */
+#if defined(__vax__)||defined(tahoe)
+static int max = 126;
+#else	/* defined(__vax__)||defined(tahoe) */
+static int max = 1023;
+#endif	/* defined(__vax__)||defined(tahoe) */
 
 double cosh(x)
 double x;
@@ -117,13 +117,14 @@ double x;
 #if !defined(vax)&&!defined(tahoe)
 	if(x!=x) return(x);	/* x is NaN */
 #endif	/* !defined(vax)&&!defined(tahoe) */
-	if((x=copysign(x,one)) <= 22)
-	    if(x<0.3465) 
-		if(x<small) return(one+x);
+	if((x=copysign(x,one)) <= 22) {
+	    if(x<0.3465) {
+		if(x<small) { return(one+x); }
 		else {t=x+__exp__E(x,0.0);x=t+t; return(one+t*t/(2.0+x)); }
 
-	    else /* for x lies in [0.3465,22] */
+	    } else /* for x lies in [0.3465,22] */
 	        { t=exp(x); return((t+one/t)*half); }
+	}
 
 	if( lnovfl <= x && x <= (lnovfl+0.7)) 
         /* for x lies in [lnovfl, lnovfl+ln2], decrease x by ln(2^(max+1)) 
