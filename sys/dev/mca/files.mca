@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.5 2001/03/19 21:58:09 jdolecek Exp $
+# $NetBSD: files.mca,v 1.6 2001/03/22 16:54:46 jdolecek Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -10,9 +10,9 @@ attach	mca at mcabus
 file	dev/mca/mca.c			mca			needs-flag
 file	dev/mca/mca_subr.c		mca
 
-# 3Com 3C529 (not yet)
-#attach	ep at mca with ep_mca: elink
-#file	dev/mca/if_ep_mca.c		ep_mca
+# 3Com 3C529
+attach	ep at mca with ep_mca: elink
+file	dev/mca/if_ep_mca.c		ep_mca
 
 # WD/SMC 80x3/A (not yet)
 #device	we: ether, ifnet, arp, dp8390nic

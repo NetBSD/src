@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.88 2001/03/22 12:00:26 jdolecek Exp $	*/
+/*	$NetBSD: elink3.c,v 1.89 2001/03/22 16:54:46 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -585,7 +585,7 @@ ep_internalconfig(sc)
  * Use the config_cntrl register  in window 0 instead.
  * Used on original, 10Mbit ISA (3c509), 3c509B, and pre-Demon EISA cards
  * that implement  CONFIG_CTRL.  We don't have a good way to set the
- * default active mediuim; punt to ifconfig  instead.
+ * default active medium; punt to ifconfig  instead.
  */
 void
 ep_509_probemedia(sc)
@@ -772,7 +772,8 @@ epinit(ifp)
 	 */
 	epstop(ifp, 0);
 
-	if (sc->bustype != ELINK_BUS_PCI && sc->bustype != ELINK_BUS_EISA) {
+	if (sc->bustype != ELINK_BUS_PCI && sc->bustype != ELINK_BUS_EISA
+	    && sc->bustype != ELINK_BUS_MCA) {
 		GO_WINDOW(0);
 		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL, 0);
 		bus_space_write_2(iot, ioh, ELINK_W0_CONFIG_CTRL,
@@ -781,6 +782,12 @@ epinit(ifp)
 
 	if (sc->bustype == ELINK_BUS_PCMCIA) {
 		bus_space_write_2(iot, ioh, ELINK_W0_RESOURCE_CFG, 0x3f00);
+	}
+
+	if (sc->bustype == ELINK_BUS_MCA) {
+		/* use Synchronous Read mode of operation */
+		GO_WINDOW(0);
+		bus_space_write_2(iot, ioh, ELINK_W0_RESOURCE_CFG, 1<<6);
 	}
 
 	GO_WINDOW(2);
