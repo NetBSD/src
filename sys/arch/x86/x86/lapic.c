@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.6 2004/04/30 17:58:04 toshii Exp $ */
+/* $NetBSD: lapic.c,v 1.7 2004/05/12 20:05:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.6 2004/04/30 17:58:04 toshii Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.7 2004/05/12 20:05:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -463,7 +463,7 @@ x86_ipi(vec,target,dl)
 	for (j=100000;
 	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
 	     j--)
-		;
+		x86_pause();
 
 	if ((target & LAPIC_DEST_MASK) == 0)
 		i82489_writereg(LAPIC_ICRHI, target << LAPIC_ID_SHIFT);
@@ -474,7 +474,7 @@ x86_ipi(vec,target,dl)
 	for (j=100000;
 	     j > 0 && (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY);
 	     j--)
-		;
+		x86_pause();
 
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
 
