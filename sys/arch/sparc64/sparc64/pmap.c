@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.146 2003/10/21 08:43:32 petrov Exp $	*/
+/*	$NetBSD: pmap.c,v 1.147 2003/10/21 12:08:11 kleink Exp $	*/
 /*
  * 
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.146 2003/10/21 08:43:32 petrov Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2003/10/21 12:08:11 kleink Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3470,7 +3470,7 @@ pmap_testout()
 
 	/* Allocate a page */
 	va = (vaddr_t)(vmmap - PAGE_SIZE);
-	KASSERT(va != NULL);
+	KASSERT(va != 0);
 	loc = (int*)va;
 
 	pmap_get_page(&pa);
