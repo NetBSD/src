@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.60 1999/05/06 15:29:26 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.61 1999/07/07 23:30:03 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -114,7 +114,8 @@ struct vnode {
 	int	v_ralen;			/* Read-ahead length */
 	daddr_t	v_maxra;			/* last readahead block */
 	struct	simplelock v_interlock;		/* lock on usecount and flag */
-	struct	lock *v_vnlock;			/* used for non-locking fs's */
+	struct	lock	v_lock;			/* lock for this vnode */
+	struct	lock *v_vnlock;			/* pointer to vnode lock */
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
 };
@@ -123,6 +124,18 @@ struct vnode {
 #define	v_vmdata	v_un.vu_vmdata
 #define	v_specinfo	v_un.vu_specinfo
 #define	v_fifoinfo	v_un.vu_fifoinfo
+/*
+ * All vnode locking operations should use vp->v_vnlock. For leaf filesystems
+ * (such as ffs, lfs, msdosfs, etc), vp->v_vnlock = &vp->v_lock. For
+ * stacked filesystems, vp->v_vnlock may equal lowervp->v_vnlock.
+ *
+ * vp->v_vnlock may also be NULL, which indicates that a leaf node does not
+ * export a struct lock for vnode locking. Stacked filesystems (such as
+ * nullfs) must call the underlying fs for locking. See layerfs_ routines
+ * for examples.
+ *
+ * All filesystems must (pretend to) understand lockmanager flags.
+ */
 
 /*
  * Vnode flags.
@@ -303,12 +316,20 @@ extern	struct vattr va_null;		/* predefined null vattr structure */
 /*
  * Flags for vdesc_flags:
  */
-#define VDESC_MAX_VPS		16
+#define VDESC_MAX_VPS		8
 /* Low order 16 flag bits are reserved for willrele flags for vp arguments. */
 #define VDESC_VP0_WILLRELE	0x0001
 #define VDESC_VP1_WILLRELE	0x0002
 #define VDESC_VP2_WILLRELE	0x0004
 #define VDESC_VP3_WILLRELE	0x0008
+#define VDESC_VP0_WILLUNLOCK	0x0100
+#define VDESC_VP1_WILLUNLOCK	0x0200
+#define VDESC_VP2_WILLUNLOCK	0x0400
+#define VDESC_VP3_WILLUNLOCK	0x0800
+#define VDESC_VP0_WILLPUT	0x0101
+#define VDESC_VP1_WILLPUT	0x0202
+#define VDESC_VP2_WILLPUT	0x0404
+#define VDESC_VP3_WILLPUT	0x0808
 #define VDESC_NOMAP_VPP		0x0100
 #define VDESC_VPP_WILLRELE	0x0200
 
