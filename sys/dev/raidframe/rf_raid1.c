@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid1.c,v 1.5 2000/01/08 22:57:30 oster Exp $	*/
+/*	$NetBSD: rf_raid1.c,v 1.6 2001/07/18 06:45:34 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -388,7 +388,7 @@ rf_VerifyParityRAID1(
 	}
 	RF_ASSERT(pda == NULL);
 
-	bzero((char *) &tracerec, sizeof(tracerec));
+	memset((char *) &tracerec, 0, sizeof(tracerec));
 	rd_dag_h->tracerec = &tracerec;
 
 	if (rf_verifyParityDebug > 1) {
@@ -495,7 +495,7 @@ rf_VerifyParityRAID1(
 			wrBlock->succedents[i]->params[2].v = psID;
 			wrBlock->succedents[0]->params[3].v = RF_CREATE_PARAM3(RF_IO_NORMAL_PRIORITY, 0, 0, which_ru);
 		}
-		bzero((char *) &tracerec, sizeof(tracerec));
+		memset((char *) &tracerec, 0, sizeof(tracerec));
 		wr_dag_h->tracerec = &tracerec;
 		if (rf_verifyParityDebug > 1) {
 			printf("Parity verify write dag:\n");

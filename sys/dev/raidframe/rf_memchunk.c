@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_memchunk.c,v 1.4 1999/08/13 03:41:56 oster Exp $	*/
+/*	$NetBSD: rf_memchunk.c,v 1.5 2001/07/18 06:45:33 thorpej Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -178,7 +178,7 @@ rf_GetMemChunk(size)
 		p = NewMemChunk(size, buf);
 	}
 	RF_UNLOCK_MUTEX(chunkmutex);
-	(void) bzero(p->buf, size);
+	(void) memset(p->buf, 0, size);
 	return (p);
 }
 
