@@ -1,11 +1,17 @@
-.\"	$NetBSD: console.4,v 1.7 2002/01/15 01:41:11 wiz Exp $
+.\"	$NetBSD: console.4,v 1.8 2003/04/09 17:30:04 jmmv Exp $
 .\"
-.Dd May 12, 2000
+.Dd April 9, 2003
 .Os
 .Dt CONS 4 i386
 .Sh NAME
 .Nm console
 .Nd i386 console interface
+.Sh SYNOPSIS
+.Cd options CONSDEVNAME=string
+.Cd options CONADDR=integer
+.Cd options CONSPEED=integer
+.Cd options CONS_OVERRIDE
+.Cd options CONMODE=integer
 .Sh DESCRIPTION
 The
 .Dq console
