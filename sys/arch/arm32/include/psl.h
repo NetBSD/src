@@ -1,4 +1,4 @@
-/* $NetBSD: psl.h,v 1.3 1996/04/26 21:10:21 mark Exp $ */
+/* $NetBSD: psl.h,v 1.4 1996/06/03 22:00:50 mark Exp $ */
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -70,14 +70,15 @@
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-int raisespl __P((int));
-int lowerspl __P((int));
-int splx __P((int));
+int raisespl	__P((int));
+int lowerspl	__P((int));
+int splx	__P((int));
 int splsoftclock __P(());
 
-void setsoftnet __P(());
-void setsoftast __P(());
+void setsoftnet	__P(());
+void setsoftast	__P(());
 void setsoftclock __P(());
+void setsoftintr __P((u_int intrmask));
 
 extern int current_spl_level;
 
