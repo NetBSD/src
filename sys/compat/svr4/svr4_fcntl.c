@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.19 1997/10/27 11:45:57 kleink Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.20 1997/10/28 12:06:56 kleink Exp $	 */
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -301,6 +301,7 @@ svr4_sys_pread(p, v, retval)
 	struct svr4_sys_pread_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_read_args rap;
+	register_t retval2;
 	off_t oldoff;
 	int error, error2;
 
@@ -329,8 +330,8 @@ svr4_sys_pread(p, v, retval)
 
 	/* In any case, try to seek back to the old file offset. */
 	SCARG(&lap, offset) = oldoff;
-	error2 = sys_lseek(p, &lap, retval);
-
+	error2 = sys_lseek(p, &lap, &retval2);
+	
 	return (error == 0 ? error2 : error);
 }
 
@@ -344,6 +345,7 @@ svr4_sys_pread64(p, v, retval)
 	struct svr4_sys_pread64_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_read_args rap;
+	register_t retval2;
 	off_t oldoff;
 	int error, error2;
 
@@ -372,7 +374,7 @@ svr4_sys_pread64(p, v, retval)
 
 	/* In any case, try to seek back to the old file offset. */
 	SCARG(&lap, offset) = oldoff;
-	error2 = sys_lseek(p, &lap, retval);
+	error2 = sys_lseek(p, &lap, &retval2);
 
 	return (error == 0 ? error2 : error);
 }
@@ -387,6 +389,7 @@ svr4_sys_pwrite(p, v, retval)
 	struct svr4_sys_pwrite_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_write_args rap;
+	register_t retval2;
 	off_t oldoff;
 	int error, error2;
 
@@ -415,7 +418,7 @@ svr4_sys_pwrite(p, v, retval)
 
 	/* In any case, try to seek back to the old file offset. */
 	SCARG(&lap, offset) = oldoff;
-	error2 = sys_lseek(p, &lap, retval);
+	error2 = sys_lseek(p, &lap, &retval2);
 
 	return (error == 0 ? error2 : error);
 }
@@ -430,6 +433,7 @@ svr4_sys_pwrite64(p, v, retval)
 	struct svr4_sys_pwrite64_args *uap = v;
 	struct sys_lseek_args lap;
 	struct sys_write_args rap;
+	register_t retval2;
 	off_t oldoff;
 	int error, error2;
 
@@ -458,7 +462,7 @@ svr4_sys_pwrite64(p, v, retval)
 
 	/* In any case, try to seek back to the old file offset. */
 	SCARG(&lap, offset) = oldoff;
-	error2 = sys_lseek(p, &lap, retval);
+	error2 = sys_lseek(p, &lap, &retval2);
 
 	return (error == 0 ? error2 : error);
 }
