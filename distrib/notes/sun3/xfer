@@ -12,9 +12,8 @@ installation media depends on the type of media.  Instructions
 for each type of media are given below.
 
 In order to create installation media, you will need all the 
-files in these two directories:
-	.../NetBSD-1.2/sun3/install
-	.../NetBSD-1.2/sun3/binary
+files in this directory:
+	.../NetBSD-_VER/sun3/
 
 * Creating boot/install tapes:
 
@@ -24,23 +23,13 @@ tape, and another called the "install" tape.
 
 The boot tape is created as follows:
 
-	cd .../NetBSD-1.2/sun3/install
-	set T = /dev/nrst0
-	mt -f $T rewind
-	dd if=tapeboot of=$T obs=8k conv=sync
-	gzip -dc netbsd-rd.gz | dd of=$T obs=8k conv=sync
-	gzip -dc miniroot.gz  | dd of=$T obs=8k
-	mt -f $T rewind
+	cd .../NetBSD-_VER/sun3/installation/tapeimage
+	sh MakeBootTape /dev/nrst0
 
 The install tape is created as follows:
 
-	cd .../NetBSD-1.2/sun3/install
-	set T = /dev/nrst0
-	mt -f $T rewind
-	foreach f (base etc comp games man misc text)
-	  gzip -d < $f.gz | dd of=$T bs=8k
-	end
-	mt -f $T rewind
+	cd .../NetBSD-_VER/sun3/installation/tapeimage
+	sh MakeInstallTape /dev/nrst0
 
 If the tapes do not work as expected, you may need to explicitly
 set the EOF mark at the end of each tape segment.  It may also be
@@ -113,16 +102,11 @@ over the net using FTP.  The "install" program in the miniroot
 automates the work required to configure the network interface and
 transfer the files.
 
-This method, of course, requires network access to an FTP server.
-This might be a local system, or it might even be ftp.NetBSD.ORG
-itself.  If you wish to use ftp.NetBSD.ORG as your FTP file
-server, you may want to keep the following information handy:
-
-	IP Address: ftp.NetBSD.ORG
-	Login: anonymous
-	Password: <your e-mail address>
-	Server path: /pub/NetBSD/NetBSD-1.2/sun3/binary
-
-Note: if you're not using a nameserver duing installation,
-you might find 206.86.8.12 handy; it's the IP address of
-ftp.NetBSD.ORG as of September 2, 1996.
+The preparations for this installation/upgrade method are easy; all
+you make sure that there's some FTP site from which you can retrieve
+the NetBSD distribution when you're about to install or upgrade.  You
+need to know the numeric IP address of that site, and, if it's not on
+a network directly connected to the machine on which you're installing
+or upgrading NetBSD, you need to know the numeric IP address of the
+router closest to the NetBSD machine.  Finally, you need to know the
+numeric IP address of the NetBSD machine itself.

@@ -1,27 +1,34 @@
-NetBSD/sun3 1.2 runs on most Sun3 machines, including:
+NetBSD/sun3 _VER runs on most Sun3 machines, including:
 		3/50, 3/60, 3/110
 		3/75, 3/150, 3/160
-		3/260, 3/280
+		3/260, 3/280, 3/E
 
-NetBSD/sun3 1.2 does not run on the Sun3/80 (sun3x class)
-because the sun3x MMU and other devices are very different.
+NetBSD/sun3 _VER does not run on the Sun3/80 (sun3x class)
+but that is presently handled as a separate distribution.
+Use NetBSD/sun3x for Sun3/80 and Sun3/470 support.
 
-The minimal configuration requires 4M of RAM and ~80MB of disk space.
-To install the entire system requires much more disk space (approx.
-100MB additional space is necessary for full sources).  To run X
-or compile the system, more RAM is recommended.  Good performance
-requires 8MB of RAM, or 16 MB when running the X Window System.
+The minimal configuration requires 4M of RAM and about 80MB of disk
+space.  To install the entire system requires much more disk space
+(approx. 100MB additional space is necessary for full sources).
+To run X or compile the system, more RAM is recommended.  Good
+performance requires 8MB of RAM, or 16 MB when running the
+X Window System.
 
 Here is a table of recommended HD partition sizes for a full install:
-	partition:	advise		needed
-	root (/)	15M		10M
-	user (/usr)	80M		45M
-	swap		(2 or 3 * RAM)	 8M
-	Anything else is up to you!
+	partition:	advise,	with X,	needed,	with X
+	root (/)	20M	20M	15M	15M
+	user (/usr)	95M	125M	75M 	105M
+	swap		----- 2M for every M ram -----
+	local (/usr/local)	up to you
+
+As you may note the recommended size of /usr is 20M greater than
+needed. This is to leave room for a kernel source and compile tree as
+you will probably want to compile your own kernel. (GENERIC is large
+and bulky to accommodate all people).
 
 Note that the sun3 installation procedure uses a `miniroot' image
 which is placed into the swap area of the disk.  The swap partition
-must be large enough to hold this miniroot image.
+must be at least as large as the miniroot image (8MB).
 
 The following Sun3 hardware is supported:
 
@@ -32,29 +39,23 @@ The following Sun3 hardware is supported:
 		bwtwo, cgtwo, cgfour
 
 	Network interfaces:
-		On-board Lance Ethernet (le)
-		On-board or VME Intel Ethernet (ie)
+		On-board Lance Ethernet
+		On-board or VME Intel Ethernet
+		Sun3/E SCSI/Ethernet board
 
 	SCSI:  (Most SCSI disks, tapes, CD-ROMs, etc.)
-		On-board "si" (SCSI-3)  [Note 1]
-		VME "si" (SCSI-3) board [Note 1]
+		On-board "si" (SCSI-3)
+		VME "si" (SCSI-3) board
+		Sun3/E SCSI/Ethernet board
 
 	SMD Disks:  (the big, heavy ones 8^)
-		Xylogics 450/451  [Note 2]
-		Xylogics 753/7053 [Note 2]
+		Xylogics 450/451
+		Xylogics 753/7053
 
 	Input devices:
 		Sun keyboard and mouse
 
 	Miscellaneous:
 		Battery-backed real-time clock.
-
-Note 1:
-    The "si" driver now supports DMA and disconnect/reselect.
-    DMA is enabled by default, but not disconnect/reselect.
-
-Note 2:
-    The SMD disk drivers ("xd" and "xy") are working but
-    have not had much testing.  (Probably need work.)
 
 If it's not on this list, there is no support for it in this release.

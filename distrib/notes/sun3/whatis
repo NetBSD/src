@@ -1,1 +1,3 @@
-This is the second public release of NetBSD for the sun3.
+
+For the sun3, NetBSD _VER brings support for the Sun3/E, and
+significantly improved VM and context swtich performance.
