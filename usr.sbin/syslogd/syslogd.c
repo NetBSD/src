@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.70 2004/11/19 02:18:11 thorpej Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.71 2004/11/19 02:51:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.70 2004/11/19 02:18:11 thorpej Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.71 2004/11/19 02:51:18 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -467,8 +467,6 @@ getgroup:
 		dprintf("Listening on unix dgram socket `%s'\n", *pp);
 	}
 
-	init(NULL);
-
 	if ((fklog = open(_PATH_KLOG, O_RDONLY, 0)) < 0) {
 		dprintf("Can't open `%s' (%d)\n", _PATH_KLOG, errno);
 	} else {
@@ -519,6 +517,13 @@ getgroup:
 		logerror("Cannot create event queue");
 		die(NULL);	/* XXX This error is lost! */
 	}
+
+	/*
+	 * We must read the configuration file for the first time
+	 * after the kqueue descriptor is created, because we install
+	 * events during this process.
+	 */
+	init(NULL);
 
 	/*
 	 * Always exit on SIGTERM.  Also exit on SIGINT and SIGQUIT
