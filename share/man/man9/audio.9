@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.11 1999/04/13 20:25:29 augustss Exp $
+.\"	$NetBSD: audio.9,v 1.12 1999/06/12 20:10:55 kleink Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -83,7 +83,7 @@ struct audio_hw_if {
 	
 	void	*(*alloc)__P((void *, unsigned long, int, int));
 	void	(*free)__P((void *, void *, int));
-	u_long	(*round_buffersize)__P((void *, u_long));
+	size_t	(*round_buffersize)__P((void *, int, size_t));
 	int	(*mappage)__P((void *, void *, int, int));
 
 	int 	(*get_props)__P((void *));
@@ -337,7 +337,7 @@ optional, is called to free memory allocated by
 If not supplied
 .Xr free 9
 is used.
-.It Dv u_long round_buffer(void *hdl, u_long bufsize)
+.It Dv size_t round_buffersize(void *hdl, int direction, size_t bufsize)
 optional, is called at startup to determine the audio
 buffer size.  The upper layer supplies the suggested
 size in
