@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.73 1999/03/23 00:33:32 thorpej Exp $
+.\"	$NetBSD: options.4,v 1.74 1999/03/29 08:58:30 minoura Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -649,11 +649,6 @@ machines such as personal workstations which run
 .Xr X 1
 servers, where one would prefer to permit console output to be
 viewed in a window without requiring a suid root program to do it.
-.It Cd options MACHINE_NONCONTIG
-This option changes part of the VM/pmap interface, to allow for
-non-contiguous memory.
-On some ports it is not an option.
-These ports typically only use one of the interfaces.
 .It Cd options MEMORY_DISK_HOOKS
 This option allows for some machine dependent functions to be called when
 the
@@ -1099,38 +1094,6 @@ for the default.
 .El
 .Ss VM Related Options
 .Bl -ohang
-.It Cd options SWAPPAGER
-Turns on paging.
-(To be specific, this enables the virtual memory
-module responsible for handling page faults for
-.Dq anonymous
-objects (i.e. BSS pages)).
-.Em MANDATORY
--- you cannot actually run without this
-.Dq option .
-.It Cd options VNODEPAGER
-Support for
-.Xr mmap 2 Ns ing
-of files.
-(Specifically, this enables the
-virtual memory module responsible for handling page faults on mapped
-files (
-.Dq plain file
-vnodes)).
-.Em MANDATORY
--- you cannot actually run without this
-.Dq option .
-.It Cd options DEVPAGER
-Support for
-.Xr mmap 2 Ns ing
-of devices.
-(Specifically, this enables the virtual memory module responsible
-for handling page faults on mapped devices (
-.Dq cdev
-vnodes)).
-.Em MANDATORY
--- you cannot actually run without this
-.Dq option .
 .It Cd options NMBCLUSTERS=value
 The number of mbuf clusters the kernel supports.  Mbuf clusters are
 MCLBYTES in size (usually 2k).  This is used to compute the size of
@@ -1392,6 +1355,27 @@ Enable support for sun4 3-level MMU machines.
 .It Cd options V9
 Enable SPARC V9 assembler in
 .Xr ddb 4 .
+.El
+.Ss x68k-specific Options
+.Bl -ohang
+.It Cd options EXTENDED_MEMORY
+Include support for extended memory e.g. TS-6BE16 and 060turbo on-board.
+.It Cd options JUPITER
+Include support for Jupiter-X MPU accelerator
+.It Cd options ZSCONSOLE,ZSCN_SPEED=value
+Use the built-in serial port as the system-console.
+Speed is specified in bps, defaults to 9600.
+.It Cd options ITE_KERNEL_ATTR=value
+Set the kernel message attribute for ITE.
+Value, an integer, is a logical or of the following values:
+.Bl -tag -width 4n -compact -offset indent
+.It 1
+color inversed
+.It 2
+underlined
+.It 4
+bolded
+.El
 .El
 .\" The following requests should be uncommented and used where appropriate.
 .\" .Sh FILES
