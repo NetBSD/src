@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 1994/12/23 06:52:56 jtc Exp $
+#	$NetBSD: Makefile,v 1.11 1997/06/23 12:47:45 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	login
@@ -6,6 +6,7 @@ SRCS=	login.c
 DPADD=	${LIBUTIL} ${LIBCRYPT} ${LIBSKEY}
 LDADD=	-lutil -lcrypt -lskey
 CFLAGS+= -DSKEY
+LDSTATIC= -static
 
 .if defined(KERBEROS5)
 SRCS+=	k5login.c
