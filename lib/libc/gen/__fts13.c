@@ -1,4 +1,4 @@
-/*	$NetBSD: __fts13.c,v 1.39 2002/02/26 22:29:40 tv Exp $	*/
+/*	$NetBSD: __fts13.c,v 1.40 2002/09/16 04:10:36 briggs Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: __fts13.c,v 1.39 2002/02/26 22:29:40 tv Exp $");
+__RCSID("$NetBSD: __fts13.c,v 1.40 2002/09/16 04:10:36 briggs Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -93,7 +93,6 @@ __warn_references(fts_set,
     " include <fts.h> for correct reference")
 #endif
 
-#if !HAVE_FTS_H
 static FTSENT	*fts_alloc __P((FTS *, const char *, size_t));
 static FTSENT	*fts_build __P((FTS *, int));
 static void	 fts_lfree __P((FTSENT *));
@@ -1207,4 +1206,3 @@ bail:
 	}
 	return ret;
 }
-#endif /* !HAVE_FTS_H */
