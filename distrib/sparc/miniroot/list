@@ -1,8 +1,9 @@
-#	$NetBSD: list,v 1.14 1999/10/18 20:47:19 pk Exp $
+#	$NetBSD: list,v 1.15 2000/02/07 11:07:19 pk Exp $
 
 # Sparc extra's
 LINK	instbin			sbin/disklabel
 LINK	instbin			sbin/mount_kernfs
+LINK	instbin			sbin/sysctl
 
 SYMLINK	../../instbin		usr/bin/basename
 SYMLINK ../../instbin		usr/bin/cksum usr/bin/sum
@@ -12,7 +13,6 @@ SYMLINK ../../instbin		usr/bin/rsh
 SYMLINK ../../instbin		usr/bin/tset usr/bin/reset
 SYMLINK ../../instbin		usr/bin/vi
 SYMLINK	../../instbin		usr/bin/less usr/bin/more
-SYMLINK	../../instbin		usr/sbin/sysctl
 
 # crunchgen source directory specials
 CRUNCHSPECIAL	vi srcdir usr.bin/vi/build
