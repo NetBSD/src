@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.4 1999/10/19 20:16:48 ad Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.5 1999/11/29 15:04:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 Andy Doran <ad@NetBSD.org>
@@ -44,35 +44,19 @@
 
 #ifdef _KERNEL
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-#define SWAP32(x)	bswap32((x))
-#define SWAP16(x)	bswap16((x))
-#define RSWAP32(x)	(x)
-#define RSWAP16(x)	(x)
-#else
-#define SWAP32(x)	(x)
-#define SWAP16(x)	(x)
-#define RSWAP32(x)	bswap32((x))
-#define RSWAP16(x)	bswap16((x))
-#endif
-
 #define dpt_inb(x, o)	\
     bus_space_read_1((x)->sc_iot, (x)->sc_ioh, (o))
-
 #define dpt_inw(x, o)	\
-    RSWAP16(bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o)))
-
+    le16toh(bus_space_read_2((x)->sc_iot, (x)->sc_ioh, (o)))
 #define dpt_inl(x, o)	\
-    RSWAP32(bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o)))
+    le32toh(bus_space_read_4((x)->sc_iot, (x)->sc_ioh, (o)))
 
 #define dpt_outb(x, o, d) \
     bus_space_write_1((x)->sc_iot, (x)->sc_ioh, (o), (d))
-
 #define dpt_outw(x, o, d) \
-    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), RSWAP16(d))
-
+    bus_space_write_2((x)->sc_iot, (x)->sc_ioh, (o), htole16(d))
 #define dpt_outl(x, o, d) \
-    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), RSWAP32(d))
+    bus_space_write_4((x)->sc_iot, (x)->sc_ioh, (o), htole32(d))
 
 #endif	/* _KERNEL */
  
@@ -87,7 +71,7 @@
 #define HA_ICMD_CODE1	       	(HA_BASE + 5)
 #define HA_ICMD			(HA_BASE + 6)
 
-/* EATA commands. There are many more the we don't define or use. */
+/* EATA commands. There are many more that we don't define or use. */
 #define HA_COMMAND		(HA_BASE + 7)
 #define   CP_PIO_GETCFG		0xf0	/* Read configuration data, PIO */
 #define   CP_PIO_CMD		0xf2	/* Execute command, PIO */
