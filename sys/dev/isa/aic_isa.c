@@ -1,4 +1,4 @@
-/*	$NetBSD: aic_isa.c,v 1.1 1997/10/06 19:49:41 christos Exp $	*/
+/*	$NetBSD: aic_isa.c,v 1.2 1997/10/16 22:55:34 enami Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -75,8 +75,15 @@
 
 int	aic_isa_probe	__P((struct device *, void *, void *));
 
+struct aic_isa_softc {
+	struct	aic_softc sc_aic;	/* real "aic" softc */
+
+	/* ISA-specific goo. */
+	void	*sc_ih;			/* interrupt handler */
+};
+
 struct cfattach aic_isa_ca = {
-	sizeof(struct aic_softc), aic_isa_probe, aic_isa_attach
+	sizeof(struct aic_isa_softc), aic_isa_probe, aic_isa_attach
 };
 
 
@@ -119,7 +126,8 @@ aic_isa_attach(parent, self, aux)
 	void *aux;
 {
 	struct isa_attach_args *ia = aux;
-	struct aic_softc *sc = (void *)self;
+	struct aic_isa_softc *isc = (void *)self;
+	struct aic_softc *sc = &isc->sc_aic;
 	bus_space_tag_t iot = ia->ia_iot;
 	bus_space_handle_t ioh;
 	isa_chipset_tag_t ic = ia->ia_ic;
@@ -135,9 +143,9 @@ aic_isa_attach(parent, self, aux)
 	if (!aic_find(iot, ioh))
 		panic("aic_isa_attach: aic_find failed");
 
-	sc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
+	isc->sc_ih = isa_intr_establish(ic, ia->ia_irq, IST_EDGE, IPL_BIO,
 	    aicintr, sc);
-	if (sc->sc_ih == NULL) {
+	if (isc->sc_ih == NULL) {
 		printf("%s: couldn't establish interrupt\n",
 		    sc->sc_dev.dv_xname);
 		return;
