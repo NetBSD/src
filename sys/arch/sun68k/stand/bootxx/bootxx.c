@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.5 2002/05/06 01:25:11 lukem Exp $ */
+/*	$NetBSD: bootxx.c,v 1.6 2002/05/06 13:35:17 lukem Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,9 +47,8 @@
  */
 
 #include <sys/param.h>
+#include <sys/bootblock.h>
 #include <machine/mon.h>
-
-#include <dev/sun/sun_boot.h>
 
 #include <stand.h>
 #include "libsa.h"
