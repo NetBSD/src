@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.103 1996/12/20 12:21:48 jtk Exp $	*/
+/*	$NetBSD: fd.c,v 1.104 1997/01/09 04:30:08 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996
@@ -1134,7 +1134,7 @@ loop:
 		    fdc->sc_drq);
 #endif
 		if (fdc->sc_errors) {
-			diskerr(bp, "fd", "soft error", LOG_PRINTF,
+			diskerr(bp, "fd", "soft error (corrected)", LOG_PRINTF,
 			    fd->sc_skip / FDC_BSIZE, (struct disklabel *)NULL);
 			printf("\n");
 			fdc->sc_errors = 0;
