@@ -1,4 +1,4 @@
-/*	$NetBSD: netif_of.c,v 1.8 2003/03/13 14:05:53 drochner Exp $	*/
+/*	$NetBSD: netif_of.c,v 1.9 2003/12/26 13:43:29 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -59,8 +59,7 @@
 static struct iodesc sdesc;
 
 struct iodesc *
-socktodesc(sock)
-	int sock;
+socktodesc(int sock)
 {
 	if (sock != 0)
 		return NULL;
@@ -68,8 +67,7 @@ socktodesc(sock)
 }
 
 int
-netif_of_open(op)
-	struct of_dev *op;
+netif_of_open(struct of_dev *op)
 {
 	struct iodesc *io;
 	int fd, error;
@@ -104,8 +102,7 @@ netif_of_open(op)
 }
 
 void
-netif_of_close(fd)
-	int fd;
+netif_of_close(int fd)
 {
 	struct iodesc *io;
 
@@ -133,10 +130,7 @@ netif_of_close(fd)
  * Return the length sent (or -1 on error).
  */
 ssize_t
-netif_put(desc, pkt, len)
-	struct iodesc *desc;
-	void *pkt;
-	size_t len;
+netif_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	struct of_dev *op;
 	ssize_t rv;
@@ -183,11 +177,7 @@ netif_put(desc, pkt, len)
  * Return the total length received (or -1 on error).
  */
 ssize_t
-netif_get(desc, pkt, maxlen, timo)
-	struct iodesc *desc;
-	void *pkt;
-	size_t maxlen;
-	time_t timo;
+netif_get(struct iodesc *desc, void *pkt, size_t maxlen, time_t timo)
 {
 	struct of_dev *op;
 	int tick0, tmo_ms;
@@ -232,7 +222,7 @@ netif_get(desc, pkt, maxlen, timo)
  * Shouldn't really be here, but is used solely for networking, so...
  */
 time_t
-getsecs()
+getsecs(void)
 {
 	return OF_milliseconds() / 1000;
 }

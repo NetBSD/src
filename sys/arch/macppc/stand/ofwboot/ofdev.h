@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.h,v 1.3 2001/08/13 15:38:11 tsubai Exp $	*/
+/*	$NetBSD: ofdev.h,v 1.4 2003/12/26 13:43:29 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,6 +32,8 @@
  */
 #ifndef _STAND_DEV_H_
 #define _STAND_DEV_H_
+
+#include <sys/types.h>
 
 struct of_dev {
 	int handle;

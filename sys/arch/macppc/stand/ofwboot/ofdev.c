@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.13 2003/10/08 04:25:45 lukem Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.14 2003/12/26 13:43:29 aymeric Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,8 @@
  * Device I/O routines using Open Firmware
  */
 
+#include "ofdev.h"
+
 #include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/bootblock.h>
@@ -47,14 +49,11 @@
 #include <lib/libsa/ustarfs.h>
 
 #include "hfs.h"
-#include "ofdev.h"
 
 extern char bootdev[];
 
 static char *
-filename(str, ppart)
-	char *str;
-	char *ppart;
+filename(char *str, char *ppart)
 {
 	char *cp, *lp;
 	char savec;
@@ -131,8 +130,12 @@ strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 }
 
 static int
-devclose(of)
-	struct open_file *of;
+devopen_dummy(struct open_file *of, ...) {
+	return -1;
+}
+
+static int
+devclose(struct open_file *of)
 {
 	struct of_dev *op = of->f_devdata;
 
@@ -144,11 +147,7 @@ devclose(of)
 }
 
 static struct devsw devsw[1] = {
-	"OpenFirmware",
-	strategy,
-	(int (*)__P((struct open_file *, ...)))nodev,
-	devclose,
-	noioctl
+	"OpenFirmware", strategy, devopen_dummy, devclose, noioctl
 };
 int ndevs = sizeof devsw / sizeof devsw[0];
 
@@ -181,8 +180,7 @@ char opened_name[256];
 int floppyboot;
 
 static u_long
-get_long(p)
-	const void *p;
+get_long(const void *p)
 {
 	const unsigned char *cp = p;
 
@@ -193,12 +191,8 @@ get_long(p)
  * Find a valid disklabel.
  */
 static int
-search_label(devp, off, buf, lp, off0)
-	struct of_dev *devp;
-	u_long off;
-	u_char *buf;
-	struct disklabel *lp;
-	u_long off0;
+search_label(struct of_dev *devp, u_long off, u_char *buf, struct disklabel *lp,
+	     u_long off0)
 {
 	size_t read;
 	struct mbr_partition *p;
@@ -256,10 +250,7 @@ search_label(devp, off, buf, lp, off0)
 }
 
 int
-devopen(of, name, file)
-	struct open_file *of;
-	const char *name;
-	char **file;
+devopen(struct open_file *of, const char *name, char **file)
 {
 	char *cp;
 	char partition;
