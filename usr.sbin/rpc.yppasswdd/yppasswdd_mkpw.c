@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.7 2000/08/03 08:22:34 ad Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.8 2000/12/08 22:23:14 tron Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.ORG>
@@ -36,10 +36,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.7 2000/08/03 08:22:34 ad Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.8 2000/12/08 22:23:14 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -69,6 +70,7 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 {
 	struct passwd *pw;
 	int pfd, tfd;
+	char mpwd[MAXPATHLEN];
 
 #define REPLY(val)	do { \
 		int res = (val); \
@@ -103,10 +105,12 @@ make_passwd(yppasswd *argp, struct svc_req *rqstp, SVCXPRT *transp)
 		warnx("the passwd file is busy.");
 		RETURN(1);
 	}
-	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
+	(void)strlcpy(mpwd, pw_getprefix(), sizeof(mpwd));
+	(void)strlcat(mpwd, _PATH_MASTERPASSWD, sizeof(mpwd));
+	pfd = open(mpwd, O_RDONLY, 0);
 	if (pfd < 0) {
 		pw_abort();
-		warnx("%s", _PATH_MASTERPASSWD);
+		warnx("%s", mpwd);
 		RETURN(1);
 	}
 

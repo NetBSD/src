@@ -1,4 +1,4 @@
-.\"	$NetBSD: rpc.yppasswdd.8,v 1.9 2000/12/08 21:51:21 tron Exp $
+.\"	$NetBSD: rpc.yppasswdd.8,v 1.10 2000/12/08 22:23:14 tron Exp $
 .\"
 .\" Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nd YP update password file daemon
 .Sh SYNOPSIS
 .Nm
+.Op Fl d Ar directory
 .Op Fl noshell
 .Op Fl nogecos
 .Op Fl nopw
@@ -50,6 +51,11 @@ in the password file.
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl d Ar directory
+Change the root directory of the password file from
+.Dq Pa /
+to
+.Ar directory .
 .It Fl noshell
 Don't allow changes of the shell field in the passwd file.
 .It Fl nogecos
