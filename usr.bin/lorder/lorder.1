@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)lorder.1	6.7 (Berkeley) 6/2/91
-.\"	$Id: lorder.1,v 1.2 1993/08/01 07:31:20 mycroft Exp $
+.\"	$Id: lorder.1,v 1.3 1994/11/03 15:31:17 jtc Exp $
 .\"
 .Dd June 2, 1991
 .Dt LORDER 1
@@ -59,7 +59,7 @@ object modules so that all references may be resolved in a single
 pass of the loader.
 .Sh EXAMPLES
 .Bd -literal -offset indent
-ar cr library.a `lorder ${OBJS}  tsort`
+ar cr library.a `lorder ${OBJS} | tsort`
 .Ed
 .Sh SEE ALSO
 .Xr ar 1 ,
