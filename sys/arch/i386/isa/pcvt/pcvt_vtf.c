@@ -2009,14 +2009,6 @@ roll_up(struct video_state *svsp, int n)
 		{
 			svsp->Crtat += n * svsp->maxcol;
 		}
-
-		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
-		{
-			outb(addr_6845, CRTC_STARTADRH);
-			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
-			outb(addr_6845, CRTC_STARTADRL);
-			outb(addr_6845+1, (svsp->Crtat - Crtat));
-		}
 	}
 	else
 #endif
@@ -2070,14 +2062,6 @@ roll_down(struct video_state *svsp, int n)
 		else
 		{
 			svsp->Crtat -= n * svsp->maxcol;
-		}
-
-		if(vsp == svsp && !(vsp->vt_status & VT_GRAFX))
-		{
-			outb(addr_6845, CRTC_STARTADRH);
-			outb(addr_6845+1, (svsp->Crtat - Crtat) >> 8);
-			outb(addr_6845, CRTC_STARTADRL);
-			outb(addr_6845+1, (svsp->Crtat - Crtat));
 		}
 	}
 	else
