@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2004/12/22 01:25:05 lha Exp $
+#	$NetBSD: Makefile,v 1.41 2005/02/20 08:52:10 christos Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
 
 .include <bsd.own.mk>
@@ -28,6 +28,11 @@ DPADD+=	${LIBKRB5} ${LIBASN1} ${LIBCRYPTO}
 CPPFLAGS+=-DKRB4
 LDADD+= -lkrb
 DPADD+=	${LIBKRB}
+.endif
+
+.if (${USE_PAM} != "no")
+LDADD+= -lpam
+DPADD+=	${LIBPAM}
 .endif
 
 VERS!=	cd ${NETBSDSRCDIR}/lib/libvers && ${PRINTOBJDIR}
