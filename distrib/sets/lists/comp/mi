@@ -726,6 +726,16 @@
 ./usr/include/nfs/xdr_subs.h
 ./usr/include/nl_types.h
 ./usr/include/nlist.h
+./usr/include/objc/NXConstStr.h
+./usr/include/objc/Object.h
+./usr/include/objc/Protocol.h
+./usr/include/objc/encoding.h
+./usr/include/objc/hash.h
+./usr/include/objc/list.h
+./usr/include/objc/objc.h
+./usr/include/objc/objc-api.h
+./usr/include/objc/sarray.h
+./usr/include/objc/typedstream.h
 ./usr/include/paths.h
 ./usr/include/pcap-namedb.h
 ./usr/include/pcap.h

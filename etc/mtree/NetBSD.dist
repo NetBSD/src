@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.52 1997/10/18 21:38:14 thorpej Exp $
+#	$NetBSD: NetBSD.dist,v 1.53 1997/10/22 12:56:37 is Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 /set type=dir uname=root gname=wheel mode=0755
@@ -138,6 +138,11 @@ std		uname=bin gname=bin mode=0755
 ..
 
 # ./usr/include/g++
+..
+
+# ./usr/include/objc
+objc		uname=bin gname=bin mode=0755
+# ./usr/include/objc
 ..
 
 # ./usr/include/kerberosIV

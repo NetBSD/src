@@ -27,8 +27,8 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __object_INCLUDE_GNU
 #define __object_INCLUDE_GNU
 
-#include <objc.h>
-#include <typedstream.h>
+#include <objc/objc.h>
+#include <objc/typedstream.h>
 
 /*
  * All classes are derived from Object.  As such,

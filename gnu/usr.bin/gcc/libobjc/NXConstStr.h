@@ -22,7 +22,7 @@ Boston, MA 02111-1307, USA.  */
 #ifndef __nxconstantstring_INCLUDE_GNU
 #define __nxconstantstring_INCLUDE_GNU
 
-#include "Object.h"
+#include "objc/Object.h"
 
 @interface NXConstantString: Object
 {
