@@ -1,12 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.4 1997/01/29 17:19:35 is Exp $
+# $NetBSD: Makefile.inc,v 1.5 1997/05/24 20:09:49 veego Exp $
 
-BINDIR=$(DESTDIR)/usr/share/keymaps/amiga
+BINDIR=/usr/share/keymaps/amiga
 NOMAN=
 
 realinstall: ${PROG}
-.if !exists(${BINDIR})
-	mkdir -p ${BINDIR}
+.if !exists($(DESTDIR)${BINDIR})
+	mkdir -p $(DESTDIR)${BINDIR}
 .endif
-	./${PROG} > ${BINDIR}/${MAP}
-	chmod 555 ${BINDIR}/${MAP}
-	chown ${BINOWN}.${BINGRP} ${BINDIR}/${MAP}
+	./${PROG} > $(DESTDIR)${BINDIR}/${MAP}
+	chmod 555 $(DESTDIR)${BINDIR}/${MAP}
+	chown ${BINOWN}.${BINGRP} $(DESTDIR)${BINDIR}/${MAP}
