@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.153.4.3 2002/06/06 08:18:57 lukem Exp $	*/
+/*	$NetBSD: locore.s,v 1.153.4.4 2003/06/24 09:34:15 grant Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -11567,6 +11567,7 @@ _C_LABEL(cpu_clockrate):
 	.xword	0
 	.text
 
+#if 0	/* XXX use MI microtime(), so should be removed */
 ENTRY(microtime)
 	sethi	%hi(timerreg_4u), %g3
 	sethi	%hi(_C_LABEL(time)), %g2
@@ -11672,6 +11673,7 @@ microtick:
 
 	retl
 	 STPTR	%o1, [%o0+PTRSZ]				! Save time_t low word
+#endif
 #endif
 
 /*
