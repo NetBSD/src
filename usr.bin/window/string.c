@@ -36,12 +36,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)string.c	3.13 (Berkeley) 6/6/90";*/
-static char rcsid[] = "$Id: string.c,v 1.2 1993/08/01 18:02:11 mycroft Exp $";
+static char rcsid[] = "$Id: string.c,v 1.3 1994/12/24 17:07:49 cgd Exp $";
 #endif /* not lint */
 
 #include "string.h"
-
-char *malloc();
+#include <stdlib.h>
+#include <string.h>
 
 char *
 str_cpy(s)
