@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.1 2003/07/25 16:26:53 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.2 2003/07/28 01:29:01 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/toolchain.
@@ -114,6 +114,7 @@ get_libobjc () {
 
 	getvars $_PLATFORM/libobjc/Makefile \
 		ALL_CFLAGS INCLUDES OBJS OBJC_H \
+		| sed "s,$_GNU_DIST,\$\${GNUHOSTDIST},g" \
 		| write_mk gnu/lib/libobjc3/defs.mk
 }
 
@@ -191,6 +192,7 @@ _TMPDIR=$2
 _TOP=$3
 _PLATFORM=$4
 _VPATH=`grep VPATH ${_TMPDIR}/Makefile | sed 's,^.*= ,,'`
+_GNU_DIST=`cd ${_VPATH}; pwd`
 
 case $1 in
 libgcc)	# .mk and .h files for libgcc bootstrap (from host build)
