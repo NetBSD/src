@@ -1,11 +1,9 @@
-/*	$NetBSD: snoop.h,v 1.2 2000/05/03 11:40:17 veego Exp $	*/
+/*	$NetBSD: snoop.h,v 1.2.4.1 2002/02/09 16:55:34 he Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 
 #ifndef	__SNOOP_H__
@@ -13,7 +11,7 @@
 
 /*
  * written to comply with the RFC (1761) from Sun.
- * Id: snoop.h,v 2.2 2000/03/13 22:10:27 darrenr Exp
+ * Id: snoop.h,v 2.2.2.1 2001/06/26 10:43:20 darrenr Exp
  */
 struct	snoophdr	{
 	char	s_id[8];
