@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.25 2003/05/06 18:30:42 wiz Exp $
+.\"	$NetBSD: ahc.4,v 1.26 2003/06/27 18:07:51 wiz Exp $
 .\"
 .\" Copyright (c) 1995, 1996, 1997, 1998, 2000
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -41,10 +41,10 @@ For one or more VL/EISA cards:
 .Cd device ahc
 \}
 \{For VL cards:
-.Cd ahc0 at isa? port ? irq ?
+.Cd "ahc0 at isa? port ? irq ?"
 .Pp
 For EISA cards:
-.Cd ahc* at eisa? slot ?\}
+.Cd "ahc* at eisa? slot ?"\}
 .Pp
 .ie 0 \{
 For one or more PCI cards:
@@ -52,10 +52,10 @@ For one or more PCI cards:
 .Cd device ahc
 \}
 \{For PCI cards:
-.Cd ahc* at pci? dev ? function ?
+.Cd "ahc* at pci? dev ? function ?"
 .Pp
 For CardBus cards:
-.Cd ahc* at cardbus? dev ? function ?\}
+.Cd "ahc* at cardbus? dev ? function ?"\}
 .Pp
 To allow PCI adapters to use memory mapped I/O if enabled:
 .Cd options AHC_ALLOW_MEMIO
