@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.43 1998/10/02 00:21:39 ross Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.43.6.1 1999/10/18 05:05:14 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -551,7 +551,12 @@ spec_close(v)
 	register struct vnode *vp = ap->a_vp;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
-	int mode, error;
+	int mode, error, count, flags, flags1;
+
+	simple_lock(&vp->v_interlock);
+	count = vcount(vp);
+	flags = vp->v_flag;
+	simple_unlock(&vp->v_interlock);
 
 	switch (vp->v_type) {
 
@@ -565,9 +570,10 @@ spec_close(v)
 		 * if the reference count is 2 (this last descriptor
 		 * plus the session), release the reference from the session.
 		 */
-		if (vcount(vp) == 2 && ap->a_p &&
+		if (count == 2 && ap->a_p &&
 		    vp == ap->a_p->p_session->s_ttyvp) {
 			vrele(vp);
+			count--;
 			ap->a_p->p_session->s_ttyvp = NULL;
 		}
 		/*
@@ -575,7 +581,7 @@ spec_close(v)
 		 * of forcably closing the device, otherwise we only
 		 * close on last reference.
 		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = cdevsw[major(dev)].d_close;
 		mode = S_IFCHR;
@@ -599,7 +605,7 @@ spec_close(v)
 		 * sum of the reference counts on all the aliased
 		 * vnodes descends to one, we are on last close.
 		 */
-		if (vcount(vp) > 1 && (vp->v_flag & VXLOCK) == 0)
+		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
 		devclose = bdevsw[major(dev)].d_close;
 		mode = S_IFBLK;
@@ -609,7 +615,30 @@ spec_close(v)
 		panic("spec_close: not special");
 	}
 
-	return ((*devclose)(dev, ap->a_fflag, mode, ap->a_p));
+	flags1 = ap->a_fflag;
+
+	/*
+	 * if VXLOCK is set, then we're going away soon, so make this
+	 * non-blocking. Also ensures that we won't wedge in vn_lock below.
+	 */
+	if (flags & VXLOCK)
+		flags1 |= FNONBLOCK;
+
+	/*
+	 * If we're able to block, release the vnode lock & reaquire. We
+	 * might end up sleaping for someone else who wants our queues. They
+	 * won't get them if we hold the vnode locked. Also, if VXLOCK is set,
+	 * don't release the lock as we won't be able to regain it.
+	 */
+	if (!(flags1 & FNONBLOCK))
+		VOP_UNLOCK(vp, 0);
+
+	error =  (*devclose)(dev, flags1, mode, ap->a_p);
+
+	if (!(flags1 & FNONBLOCK))
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	return (error);
 }
 
 /*
