@@ -28,7 +28,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: upgrade.sh,v 1.1.4.1 1996/06/27 14:32:28 oki Exp $
+#	$Id: upgrade.sh,v 1.1.4.2 1996/07/04 16:29:14 oki Exp $
 
 #	NetBSD upgrade script.
 #	In a perfect world, this would be a nice C program, with a reasonable
@@ -38,7 +38,7 @@ DT=/etc/disktab				# /etc/disktab
 FSTABDIR=/mnt/etc			# /mnt/etc
 #DONTDOIT=echo
 
-VERSION=1.1
+VERSION=1.2
 FSTAB=${FSTABDIR}/fstab
 
 getresp() {
@@ -218,9 +218,16 @@ if [ $? != 0 ]; then
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
 fi
-disklabel -R -B $drivename /mnt/tmp/${drivename}.label
+disklabel -R $drivename /mnt/tmp/${drivename}.label
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
+	echo	"It in unclear why this error would occur.  It looks"
+	echo	"like you may end up having to upgrade by hand."
+	exit 1
+fi
+dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
+if [ $? != 0 ]; then
+	echo	"FATAL ERROR: UPDATE OF BOOT PROGRAM FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
 	echo	"like you may end up having to upgrade by hand."
 	exit 1
