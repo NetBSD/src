@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr_sbc.c,v 1.9 1996/04/25 14:40:26 scottr Exp $	*/
+/*	$NetBSD: ncr_sbc.c,v 1.10 1996/04/25 21:18:04 scottr Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott Reynolds
@@ -900,19 +900,6 @@ sbc_dma_alloc(ncr_sc)
 	/* Make sure our caller checked sc_min_dma_len. */
 	if (xlen < MIN_DMA_LEN)
 		panic("sbc_dma_alloc: len=0x%x\n", xlen);
-
-#if 0
-	/* XXX - should segment these instead */
-	if (xlen > MAX_DMA_LEN) {
-		printf("%s: excessive dma len=0x%x\n",
-		    ncr_sc->sc_dev.dv_xname, xlen);
-#ifdef DDB
-		if (sbc_debug & SBC_DB_BREAK)
-			Debugger();
-#endif
-		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
-	}
-#endif
 
 	/*
 	 * Find free PDMA handle.  Guaranteed to find one since we
