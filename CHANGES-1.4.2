@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.4.2,v 1.1.2.112 2000/02/03 09:26:11 he Exp $
+#	$NetBSD: CHANGES-1.4.2,v 1.1.2.113 2000/02/04 23:22:25 he Exp $
 
 A complete list of changes from NetBSD 1.4.1 to NetBSD 1.4.2:
 
@@ -3119,3 +3119,44 @@ gnu/dist/gcc/config/i386/i386.md		patch (1.1.1.3->1.2)
 lib/libc/arch/powerpc/sys/cerror.S		1.5
 
   Implement *__errno() indirection.
+
+usr.sbin/mountd/mountd.c			1.59 via patch
+
+  Fix reexportation problem when options are being used or modified,
+  or if export point was globally exported.
+
+usr.sbin/pkg_install/lib/ftpio.c		1.16
+
+  Initialize buffer properly, so that the expect-routine doesn't
+  get confused.
+
+usr.sbin/user/user.c				1.11
+
+  Add RCS IDs and copyright.
+
+sys/msdosfs/msdosfs_vnops.c			1.91
+
+  Purge appropriate name cache entry on file removal.  Should fix
+  MI part of PR#8037.
+
+distrib/miniroot/install.sub			1.32
+
+  Display meaningful error message in get_localdir() and clarify
+  the expected input.
+
+sys/arch/i386/isa/clock.c			1.63
+
+  Detect and handle National Geode (Cyrix MediaGX) built-in clock
+  module bug.  Fixes PR#8654.
+
+sys/arch/i386/i386/machdep.c			1.376
+
+  Add Cyrix MediaGX identification.
+
+sys/arch/amiga/amiga/locore.s			1.112
+sys/arch/amiga/amiga/amiga_init.c		1.67-1.68 via patch
+sys/arch/amiga/conf/files.amiga			1.93
+sys/arch/amiga/conf/GENERIC			1.129
+sys/arch/amiga/conf/AMIGA			regenerate
+
+  Add reboot code for Phase5 68040+PPC boards.
