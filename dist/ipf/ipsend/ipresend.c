@@ -1,4 +1,4 @@
-/*	$NetBSD: ipresend.c,v 1.1.1.2 2002/01/24 08:18:33 martti Exp $	*/
+/*	$NetBSD: ipresend.c,v 1.2 2002/01/24 08:21:39 martti Exp $	*/
 
 /*
  * ipresend.c (C) 1995-1998 Darren Reed

@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.4,v 1.5 2001/09/16 16:34:24 wiz Exp $
+.\"	$NetBSD: ipf.4,v 1.6 2002/01/24 08:21:42 martti Exp $
 .\"
 .TH IPF 4
 .SH NAME
@@ -37,8 +37,8 @@ However, the full complement is as follows:
 	ioctl(fd, SIOCFRSYN, u_int *)
 	ioctl(fd, SIOCFRZST, struct friostat **)
 	ioctl(fd, SIOCZRLST, struct frentry **)
-	ioctl(fd, SIOCAUTHW, struct fr_info **)
-	ioctl(fd, SIOCAUTHR, struct fr_info **)
+	ioctl(fd, SIOCAUTHW, struct frauth_t **)
+	ioctl(fd, SIOCAUTHR, struct frauth_t **)
 	ioctl(fd, SIOCATHST, struct fr_authstat **)
 .fi
 .PP

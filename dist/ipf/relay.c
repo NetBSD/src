@@ -1,4 +1,4 @@
-/*	$NetBSD: relay.c,v 1.3 2001/06/07 14:15:39 mrg Exp $	*/
+/*	$NetBSD: relay.c,v 1.4 2002/01/24 08:21:36 martti Exp $	*/
 
 /*
  * Sample program to be used as a transparent proxy.
@@ -117,7 +117,7 @@ char *argv[];
 		exit(-1);
 	}
 
-	bzero(&nl, sizeof(nl);
+	bzero(&nl, sizeof(nl));
 	nl.nl_flags = IPN_TCP;
 
 	bzero(&sin, sizeof(sin));

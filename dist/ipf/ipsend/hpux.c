@@ -1,4 +1,4 @@
-/*	$NetBSD: hpux.c,v 1.1.1.2 2002/01/24 08:18:32 martti Exp $	*/
+/*	$NetBSD: hpux.c,v 1.2 2002/01/24 08:21:39 martti Exp $	*/
 
 /*
  * (C)opyright 1997-1998 Darren Reed. (from tcplog)

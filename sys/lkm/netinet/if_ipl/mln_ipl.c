@@ -1,11 +1,9 @@
-/*	$NetBSD: mln_ipl.c,v 1.26 2001/11/12 23:23:25 lukem Exp $	*/
+/*	$NetBSD: mln_ipl.c,v 1.27 2002/01/24 08:22:01 martti Exp $	*/
 
 /*
- * Copyright (C) 1993-2000 by Darren Reed.
+ * Copyright (C) 1993-2001 by Darren Reed.
  *
- * Redistribution and use in source and binary forms are permitted
- * provided that this notice is preserved and due credit is given
- * to the original author and the contributors.
+ * See the IPFILTER.LICENCE file for details on licencing.
  */
 /*
  * 29/12/94 Added code from Marc Huber <huber@fzi.de> to allow it to allocate
@@ -13,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.26 2001/11/12 23:23:25 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mln_ipl.c,v 1.27 2002/01/24 08:22:01 martti Exp $");
 
 #include <sys/param.h>
 

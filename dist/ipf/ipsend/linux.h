@@ -1,4 +1,4 @@
-/*	$NetBSD: linux.h,v 1.1.1.2 2002/01/24 08:18:33 martti Exp $	*/
+/*	$NetBSD: linux.h,v 1.2 2002/01/24 08:21:40 martti Exp $	*/
 
 /*
  * Copyright (C) 1995-1998 by Darren Reed.

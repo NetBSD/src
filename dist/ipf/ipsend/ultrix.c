@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix.c,v 1.1.1.2 2002/01/24 08:18:33 martti Exp $	*/
+/*	$NetBSD: ultrix.c,v 1.2 2002/01/24 08:21:41 martti Exp $	*/
 
 /*
  * (C)opyright 1998 Darren Reed. (from tcplog)
