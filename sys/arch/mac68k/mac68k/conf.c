@@ -65,7 +65,7 @@
  */
 /*-
  *      from: @(#)conf.c	7.9 (Berkeley) 5/28/91
- *	$Id: conf.c,v 1.3 1993/12/15 03:27:52 briggs Exp $
+ *	$Id: conf.c,v 1.4 1994/02/03 21:46:51 briggs Exp $
  */
 /*
    ALICE
@@ -138,6 +138,7 @@ bdev_decl(no);	/* dummy declarations */
 #include "st.h"
 #include "sd.h"
 #include "cd.h"
+#include "ch.h"
 #define NVN 0 /*#include "vn.h"*/
 
 bdev_decl(st);
@@ -154,9 +155,9 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),         	/* 2: hpib disk */
 	bdev_swap_init(),	/* 3: swap pseudo-device */
 	bdev_disk_init(NSD,sd),	/* 4: scsi disk */
-	bdev_cd_init(NCD,cd),	/* 5: scsi CD driver */
-	bdev_notdef(),		/* 6: vnode disk driver (swap to files) */
-	bdev_tape_init(NST,st),	/* 7: scsi tape */
+	bdev_tape_init(NST,st),	/* 5: scsi tape */
+	bdev_cd_init(NCD,cd),	/* 6: scsi CD driver */
+	bdev_notdef(),		/* i386-14: vnode disk driver (swap to files) */
 };
 
 int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
@@ -265,6 +266,7 @@ cdev_decl(log);
 
 cdev_decl(st);
 cdev_decl(sd);
+/* cdev_decl(ch); */
 
 /* 06/02/92,23:18:17 BG -- I removed rd, ct, grf, ppi, dca, ite, dcm, and I */
 /*  made hil into kbd (keyboard) */
@@ -345,11 +347,12 @@ struct cdevsw	cdevsw[] =
 	cdev_grf_init(1,grf),		/* 10: was frame buffer */
 	cdev_notdef(),			/* 11: was printer/plotter interface */
 	cdev_tty_init(NSER,ser),	/* 12: 2 mac serial ports -- BG*/
-	cdev_notdef(),			/* 13: was built-in single-port serial*/
-	cdev_notdef(),			/* 14: was console terminal emulator */
-	cdev_kbd_init(0,kbd),		/* 15: ADB keyboard -- BG -- BARF*/
-	cdev_notdef(),			/* 16 */
-	cdev_disk_init(NCD,cd),		/* 17: concatenated disk */
+	cdev_disk_init(NSD,sd),		/* 13: scsi disk */
+	cdev_tape_init(NST,st),		/* 14: scsi tape */
+	cdev_tape_init(NCD,cd),		/* 15: scsi compact disc */
+	cdev_kbd_init(0,kbd),		/* 16: ADB keyboard -- BG -- BARF*/
+/*	cdev_disk_init(NCH,ch),		 17: scsi changer device */
+	cdev_notdef(),			/* 17: until we find chstrategy... */
 	cdev_clock_init(NCLOCK,clock),	/* 18: mapped clock */
 	cdev_vn_init(NVN,vn),		/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: exabyte tape */
