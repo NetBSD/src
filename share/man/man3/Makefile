@@ -1,5 +1,5 @@
-#	from: @(#)Makefile	5.16.1.1 (Berkeley) 5/7/91
-#	$Id: Makefile,v 1.6 1994/10/06 09:02:21 mycroft Exp $
+#	$NetBSD: Makefile,v 1.7 1994/11/30 15:24:27 jtc Exp $
+#	@(#)Makefile	8.2 (Berkeley) 12/13/93
 
 MAN3=	assert.0 bitstring.0 end.0 intro.0 queue.0 stdarg.0
 MLINKS+=end.3 edata.3 end.3 etext.3
