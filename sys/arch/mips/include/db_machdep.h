@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.9 2000/06/26 14:59:02 mrg Exp $ */
+/* $NetBSD: db_machdep.h,v 1.10 2000/07/17 07:04:19 jeffs Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -55,19 +55,20 @@ db_regs_t		ddb_regs;	/* register state */
 	if ((db_get_value((regs)->f_regs[PC], sizeof(int), FALSE) &	\
 	     0xfc00003f) == 0xd)					\
 		(regs)->f_regs[PC] += BKPT_SIZE;			\
-} while(0)				/* XXX endianness? */
+} while(0)
 
-#define BKPT_INST	0x0001000D	/* XXX endianness? */
+/* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
+#define PC_BREAK_ADVANCE(regs) do {					 \
+	if (db_get_value((regs)->f_regs[PC], sizeof(int), FALSE) == 0xd) \
+		(regs)->f_regs[PC] += BKPT_SIZE;			 \
+} while(0)
+
+#define BKPT_INST	0x0001000D
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAK)
 #define IS_WATCHPOINT_TRAP(type, code)	(0)	/* XXX mips3 watchpoint */
-
-#define	inst_trap_return(ins)	((ins)&0)
-#define	inst_return(ins)	((ins)&0)
-#define inst_load(ins)		0
-#define inst_store(ins)		0
 
 /*
  * Interface to  disassembly (shared with mdb)
@@ -79,24 +80,42 @@ db_addr_t  db_disasm_insn __P((int insn, db_addr_t loc,  boolean_t altfmt));
  * Entrypoints to DDB for kernel, keyboard drivers, init hook
  */
 void 	kdb_kbd_trap __P((db_regs_t *));
+void 	db_set_ddb_regs __P((int type, mips_reg_t *));
 int 	kdb_trap __P((int type, mips_reg_t *));
 void	db_machine_init __P((void));
 
+
+/*
+ * Constants for KGDB.
+ */
+typedef	mips_reg_t	kgdb_reg_t;
+#define	KGDB_NUMREGS	90
+#define	KGDB_BUFLEN	1024
 
 /*
  * MIPS cpus have no hardware single-step.
  */
 #define SOFTWARE_SSTEP
 
+#define inst_trap_return(ins)	((ins)&0)
+
 boolean_t inst_branch __P((int inst));
 boolean_t inst_call __P((int inst));
+boolean_t inst_return __P((int inst));
+boolean_t inst_load __P((int inst));
+boolean_t inst_store __P((int inst));
 boolean_t inst_unconditional_flow_transfer __P((int inst));
 db_addr_t branch_taken __P((int inst, db_addr_t pc, db_regs_t *regs));
 db_addr_t next_instr_address __P((db_addr_t pc, boolean_t bd));
 
 /*
- * We have  machine-dependent commands.
+ * We have machine-dependent commands.
  */
 #define DB_MACHINE_COMMANDS
+
+/*
+ * Hook to MIPS platform code to allow management of kernel breakpoints.
+ */
+extern void (*db_mach_break_hook)(int);
 
 #endif	/* _MIPS_DB_MACHDEP_H_ */
