@@ -1,4 +1,4 @@
-.\"	$NetBSD: iop.4,v 1.8 2001/06/12 12:00:20 wiz Exp $
+.\"	$NetBSD: iop.4,v 1.9 2001/08/04 17:06:22 ad Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,6 +54,47 @@ driver provides support for
 I/O processors conforming to the
 .Tn I2O
 specification, revision 1.5 and above.
+.Pp
+I2O is a specification that defines a software interface for communicating
+with a number of device types.  In its basic form, I2O provides the
+following:
+.Pp
+.Bl -bullet
+.It
+A vendor-neutral interface for communicating with an I/O processor (IOP)
+and a number of types of peripherals.  In order to achieve this,
+hardware-specific device drivers run on the IOP, and hardware-neutral device
+drivers run on the host.
+.It
+Reduced I/O overhead for the host.  All communication between the host and
+the IOP is performed using a high level protocol.  The specification also
+provides for batching of requests and replies between the host and IOP.
+.It
+An optional vendor-neutral configuration interface.  Data from HTTP GET and
+POST operations can be channeled to individual devices, and HTML pages
+returned.
+.El
+.Pp
+Five types of devices are well defined by the specification.  These are:
+.Pp
+.Bl -bullet -compact
+.It
+Random block storage devices (disks).
+.It
+Sequential storage devices (tapes).
+.It
+LAN interfaces, including Ethernet, FDDI, Token Ring and FC.
+.It
+Bus ports (SCSI).
+.It
+SCSI peripherals.
+.El
+.Pp
+The
+.Nm
+driver's role is to initalize and monitor the IOP, provide a conduit for
+messages and replies to and from devices, and provide other common services
+for peripheral drivers, such as DMA mapping.
 .Sh IOCTL INTERFACE
 The following structures and constants are defined in
 .Pa dev/i2o/iopio.h .
@@ -90,6 +131,12 @@ The minimum timeout value that may be specified is 1000ms.  All other values
 must not exceed the
 .Nm
 driver's operational limits.
+.Pp
+The initiator context and transaction context fields in the message frame
+will be filled by the
+.Nm
+driver.  As such, this ioctl may not be used to send messages without a
+transaction context payload.
 .It Dv IOPIOCGSTATUS (struct iovec)
 Request the latest available status record from the IOP.  This special-case
 ioctl is provided as the I2O_EXEC_STATUS_GET message does not post replies,
