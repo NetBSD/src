@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.173.2.3 2003/10/05 11:47:07 tron Exp $
+#	$NetBSD: files.pci,v 1.173.2.4 2004/11/11 23:22:25 he Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -566,3 +566,8 @@ file	dev/pci/joy_pci.c		joy_pci
 device bce: ether, ifnet, arp, mii
 attach bce at pci
 file	dev/pci/if_bce.c		bce
+
+# Workbit NinjaSCSI-32 controllers
+# device declaration in sys/conf/files
+attach	njs at pci with njs_pci
+file	dev/pci/njs_pci.c		njs_pci
