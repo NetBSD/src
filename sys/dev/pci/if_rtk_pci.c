@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtk_pci.c,v 1.20 2004/02/13 10:05:50 wiz Exp $	*/
+/*	$NetBSD: if_rtk_pci.c,v 1.21 2004/08/21 23:48:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.20 2004/02/13 10:05:50 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtk_pci.c,v 1.21 2004/08/21 23:48:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,17 +116,14 @@ static const struct rtk_type rtk_pci_devs[] = {
 	{ 0, 0, 0, NULL }
 };
 
-const struct rtk_type *rtk_pci_lookup __P((const struct pci_attach_args *));
-
-int	rtk_pci_match __P((struct device *, struct cfdata *, void *));
-void	rtk_pci_attach __P((struct device *, struct device *, void *));
+static int	rtk_pci_match(struct device *, struct cfdata *, void *);
+static void	rtk_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(rtk_pci, sizeof(struct rtk_pci_softc),
     rtk_pci_match, rtk_pci_attach, NULL, NULL);
 
-const struct rtk_type *
-rtk_pci_lookup(pa)
-	const struct pci_attach_args *pa;
+static const struct rtk_type *
+rtk_pci_lookup(const struct pci_attach_args *pa)
 {
 	const struct rtk_type *t;
 
@@ -139,11 +136,8 @@ rtk_pci_lookup(pa)
 	return (NULL);
 }
 
-int
-rtk_pci_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+static int
+rtk_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -157,10 +151,8 @@ rtk_pci_match(parent, match, aux)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void
-rtk_pci_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void
+rtk_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct rtk_pci_softc *psc = (struct rtk_pci_softc *)self;
 	struct rtk_softc *sc = &psc->sc_rtk;
