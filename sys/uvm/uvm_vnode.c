@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.22 1999/03/25 18:48:56 mrg Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.22.2.1 1999/04/16 16:29:56 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1455,7 +1455,7 @@ uvn_get(uobj, offset, pps, npagesp, centeridx, access_type, advice, flags)
 			if (ptmp == NULL) {
 
 				ptmp = uvm_pagealloc(uobj, current_offset,
-				    NULL);	/* alloc */
+				    NULL, 0);
 
 				/* out of RAM? */
 				if (ptmp == NULL) {
