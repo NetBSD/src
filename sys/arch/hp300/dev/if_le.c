@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)if_le.c	7.6 (Berkeley) 5/8/91
- *	$Id: if_le.c,v 1.8 1994/02/06 00:46:02 mycroft Exp $
+ *	$Id: if_le.c,v 1.9 1994/02/14 23:03:54 mycroft Exp $
  */
 
 #include "le.h"
@@ -228,7 +228,7 @@ void
 lesetladrf(sc)
 	struct le_softc *sc;
 {
-	struct lereg2 *ler2 = sc->sc_r2;
+	u_long *af = sc->sc_r2->ler2_ladrf;
 	struct ifnet *ifp = &sc->sc_if;
 	struct ether_multi *enm;
 	register u_char *cp, c;
@@ -237,60 +237,53 @@ lesetladrf(sc)
 	struct ether_multistep step;
 
 	/*
-	 * Set up multicast address filter by passing all multicast
-	 * addresses through a crc generator, and then using the high
-	 * order 6 bits as a index into the 64 bit logical address
-	 * filter. The high order two bits select the word, while the
-	 * rest of the bits select the bit within the word.
+	 * Set up multicast address filter by passing all multicast addresses
+	 * through a crc generator, and then using the high order 6 bits as an
+	 * index into the 64 bit logical address filter.  The high order bit
+	 * selects the word, while the rest of the bits select the bit within
+	 * the word.
 	 */
 
-	ler2->ler2_ladrf[0] = 0;
-	ler2->ler2_ladrf[1] = 0;
-	ifp->if_flags &= ~IFF_ALLMULTI;
+	if (ifp->if_flags & IFF_ALLMULTI) {
+		af[0] = af[1] = 0xffffffff;
+		return;
+	}
+
+	af[0] = af[1] = 0;
 	ETHER_FIRST_MULTI(step, &sc->sc_ac, enm);
 	while (enm != NULL) {
-		if (bcmp((caddr_t)&enm->enm_addrlo,
-		    (caddr_t)&enm->enm_addrhi, sizeof(enm->enm_addrlo)) != 0) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi,
+		    sizeof(enm->enm_addrlo)) != 0) {
 			/*
-			 * We must listen to a range of multicast
-			 * addresses. For now, just accept all
-			 * multicasts, rather than trying to set only
-			 * those filter bits needed to match the range.
-			 * (At this time, the only use of address
-			 * ranges is for IP multicast routing, for
-			 * which the range is big enough to require all
-			 * bits set.)
+			 * We must listen to a range of multicast addresses.
+			 * For now, just accept all multicasts, rather than
+			 * trying to set only those filter bits needed to match
+			 * the range.  (At this time, the only use of address
+			 * ranges is for IP multicast routing, for which the
+			 * range is big enough to require all bits set.)
 			 */
-			ler2->ler2_ladrf[0] = 0xffffffff;
-			ler2->ler2_ladrf[1] = 0xffffffff;
-			ifp->if_flags |= IFF_ALLMULTI;
+			af[0] = af[1] = 0xffffffff;
 			return;
 		}
 
-		/*
-		 * One would think, given the AM7990 document's polynomial
-		 * of 0x04c11db6, that this should be 0x6db88320 (the bit
-		 * reversal of the AMD value), but that is not right.  See
-		 * the BASIC listing: bit 0 (our bit 31) must then be set.
-		 */
-		cp = (unsigned char *)&enm->enm_addrlo;
+		cp = enm->enm_addrlo;
 		crc = 0xffffffff;
-		for (len = 6; --len >= 0;) {
+		for (len = sizeof(enm->enm_addrlo); --len >= 0;) {
 			c = *cp++;
 			for (i = 8; --i >= 0;) {
 				if ((c & 0x01) ^ (crc & 0x01)) {
 					crc >>= 1;
-					crc = crc ^ 0xedb88320;
+					crc ^= 0x6db88320 | 0x80000000;
 				} else
 					crc >>= 1;
 				c >>= 1;
 			}
 		}
 		/* Just want the 6 most significant bits. */
-		crc = crc >> 26;
+		crc >>= 26;
 
 		/* Turn on the corresponding bit in the filter. */
-		ler2->ler2_ladrf[crc >> 5] |= 1 << (crc & 0x1f);
+		af[crc >> 5] |= 1 << (crc & 0x1f);
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
