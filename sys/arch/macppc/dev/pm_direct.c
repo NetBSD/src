@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.21 2005/01/07 05:03:08 briggs Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.22 2005/02/01 02:23:26 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.21 2005/01/07 05:03:08 briggs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.22 2005/02/01 02:23:26 briggs Exp $");
 
 #ifdef DEBUG
 #ifndef ADB_DEBUG
@@ -1293,6 +1293,7 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 
 	info->flags = p.data[1];
 
+	info->secs_remaining = 0;
 	switch (p.data[0]) {
 	case 3:
 	case 4:
@@ -1314,6 +1315,16 @@ pm_battery_info(int battery, struct pmu_battery_info *info)
 		info->draw = 0;
 		info->voltage = 0;
 		break;
+	}
+	if (info->draw) {
+		if (info->flags & PMU_PWR_AC_PRESENT && info->draw > 0) {
+			info->secs_remaining =
+				((info->max_charge - info->cur_charge) * 3600)
+				/ info->draw;
+		} else {
+			info->secs_remaining =
+				(info->cur_charge * 3600) / -info->draw;
+		}
 	}
 
 	return 1;
