@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.15 2004/12/23 05:54:54 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.16 2004/12/23 05:57:18 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.15 2004/12/23 05:54:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.16 2004/12/23 05:57:18 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2424,6 +2424,19 @@ rtw_dmamap_load_txbuf(bus_dma_tag_t dmat, bus_dmamap_t dmam, struct mbuf *chain,
 }
 
 static void
+rtw_print_txdesc(struct rtw_softc *sc, const char *action,
+    struct rtw_txctl *stx, struct rtw_txdesc_blk *htc, int desc)
+{
+	struct rtw_txdesc *htx = &htc->htc_desc[desc];
+	DPRINTF2(sc, ("%s: stx %p %s txdesc[%d] ctl0 %#08x "
+	    "ctl1 %#08x buf %#08x len %#08x\n",
+	    sc->sc_dev.dv_xname, stx, action, desc,
+	    le32toh(htx->htx_ctl0),
+	    le32toh(htx->htx_ctl1), le32toh(htx->htx_buf),
+	    le32toh(htx->htx_len)));
+}
+
+static void
 rtw_start(struct ifnet *ifp)
 {
 	uint8_t tppoll;
@@ -2484,6 +2497,15 @@ rtw_start(struct ifnet *ifp)
 			goto post_dequeue_err;
 		}
 
+#ifdef RTW_DEBUG
+		if ((sc->sc_if.if_flags & (IFF_DEBUG|IFF_LINK2)) ==
+		    (IFF_DEBUG|IFF_LINK2)) {
+			ieee80211_dump_pkt(mtod(m0, uint8_t *),
+			    (dmamap->dm_nsegs == 1) ? m0->m_pkthdr.len
+			                            : sizeof(wh),
+			    rate, 0);
+		}
+#endif /* RTW_DEBUG */
 		ctl0 = proto_ctl0 |
 		    LSHIFT(m0->m_pkthdr.len, RTW_TXCTL0_TPKTSIZE_MASK);
 
@@ -2532,22 +2554,24 @@ rtw_start(struct ifnet *ifp)
 			htx->htx_buf = htole32(dmamap->dm_segs[i].ds_addr);
 			htx->htx_len = htole32(dmamap->dm_segs[i].ds_len);
 			lastdesc = desc;
-			DPRINTF2(sc, ("%s: stx %p txdesc[%d] ctl0 %#08x "
-			    "ctl1 %#08x buf %#08x len %#08x\n",
-			    sc->sc_dev.dv_xname, stx, desc, htx->htx_ctl0,
-			    htx->htx_ctl1, htx->htx_buf, htx->htx_len));
+#ifdef RTW_DEBUG
+			rtw_print_txdesc(sc, "load", stx, htc, desc);
+#endif /* RTW_DEBUG */
 		}
-
-		htc->htc_desc[lastdesc].htx_ctl0 |= htole32(RTW_TXCTL0_LS);
-		htc->htc_desc[stx->stx_first].htx_ctl0 |=
-		   htole32(RTW_TXCTL0_FS);
-
-		DPRINTF2(sc, ("%s: stx %p FS on txdesc[%d], LS on txdesc[%d]\n",
-		    sc->sc_dev.dv_xname, stx, lastdesc, stx->stx_first));
 
 		stx->stx_ni = ni;
 		stx->stx_mbuf = m0;
 		stx->stx_last = lastdesc;
+		htc->htc_desc[stx->stx_last].htx_ctl0 |= htole32(RTW_TXCTL0_LS);
+		htc->htc_desc[stx->stx_first].htx_ctl0 |=
+		   htole32(RTW_TXCTL0_FS);
+
+#ifdef RTW_DEBUG
+		rtw_print_txdesc(sc, "FS on", stx, htc, stx->stx_first);
+#endif /* RTW_DEBUG */
+#ifdef RTW_DEBUG
+		rtw_print_txdesc(sc, "LS on", stx, htc, stx->stx_last);
+#endif /* RTW_DEBUG */
 
 		htc->htc_nfree -= dmamap->dm_nsegs;
 		htc->htc_next = desc;
@@ -2559,8 +2583,9 @@ rtw_start(struct ifnet *ifp)
 		htc->htc_desc[stx->stx_first].htx_ctl0 |=
 		    htole32(RTW_TXCTL0_OWN);
 
-		DPRINTF2(sc, ("%s: stx %p OWN on txdesc[%d]\n",
-		    sc->sc_dev.dv_xname, stx, stx->stx_first));
+#ifdef RTW_DEBUG
+		rtw_print_txdesc(sc, "OWN on", stx, htc, stx->stx_first);
+#endif /* RTW_DEBUG */
 
 		rtw_txdescs_sync(sc->sc_dmat, sc->sc_desc_dmamap,
 		    htc, stx->stx_first, 1,
