@@ -1,6 +1,6 @@
 # GENERIC
 #
-#     $Id: GENERIC,v 1.9 1994/02/27 03:44:24 briggs Exp $
+#     $Id: GENERIC,v 1.10 1994/02/27 16:48:34 briggs Exp $
 
 include	"std.mac68k"
 
@@ -36,7 +36,7 @@ options		PORTAL		# portal filesystem (still experimental)
 options		PROCFS
 
 options		SCSI
-options		SCSIDEBUG
+#options	SCSIDEBUG
 
 # Networking options
 options		INET
@@ -53,6 +53,7 @@ options		SYSVSHM,SYSVSEM,SYSVMSG
 
 # Mac-specific options
 options		FPCOPROC
+options		COMPAT_NOMID
 
 config		netbsd	swap generic
 
