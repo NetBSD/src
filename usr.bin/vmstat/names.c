@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)names.c	5.2 (Berkeley) 6/4/91
- *	$Id: names.c,v 1.5 1994/03/13 03:38:30 cgd Exp $
+ *	$Id: names.c,v 1.6 1994/03/27 12:26:33 cgd Exp $
  */
 
 #if !defined(hp300) && !defined(tahoe) && !defined(vax) && !defined(i386)
@@ -75,6 +75,8 @@ read_names()
 			continue;
 		if (dev.id_parent == NULL)
 			continue;
+
+		continue;	/* XXX screw it */
 
 		(void)kvm_read(dev.id_driver, &drv, sizeof drv);
 		(void)kvm_read(drv.name, name, sizeof name);
