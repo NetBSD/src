@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcvt.4,v 1.3 1998/01/09 08:04:35 perry Exp $
+.\"	$NetBSD: pcvt.4,v 1.4 1998/02/06 06:06:58 perry Exp $
 .\"
 .\" 
 .\"  Copyright (c) 1992, 1995 Hellmuth Michaelis, Brian Dunford-Shore,
@@ -164,11 +164,13 @@ Help you to make money...
 .Ss Configuration
 The
 .Nm pcvt
-console driver is currently available for the Intel-based BSD operating
-systems
-.Em NetBSD/i386 Pq release 0.9 or higher,
-and
-.Em FreeBSD Pq release 1.0-GAMMA or higher .
+console driver is currently available for the Intel-based
+.Bx
+operating systems
+.Nx 0.9
+or higher, and
+.Fx 1.0
+or higher.
 In order to get the appropriate system support, one of the options
 .Em PCVT_NETBSD ,
 or
@@ -176,13 +178,13 @@ or
 must be defined in the system's config file
 .Pq see Xr config 8 .
 In addition, for the
-.Em FreeBSD
+.Fx
 and
-.Em NetBSD
+.Nx
 operating systems, it is necessary to set this option to the operating
 system's version number.
 For
-.Em FreeBSD
+.Fx
 this version number must be expressed as a 3-digit number.
 E.\& g., if you are running the 1.0 release
 .Pq which is actually version 1.0.2 ,
@@ -191,11 +193,21 @@ you should define
 .Em PCVT_FREEBSD = 102
 
 For
-.Em NetBSD
-this version number must be expressed as 9 if you are running NetBSD 0.9
-and anything greater than 9 for NetBSD-current (pre 1.0). It is recommended
-to use (as with FreeBSD) 100 for NetBSD 1.0 and 999 for NetBSD-current.
-E.\& g., if you are running the NetBSD 1.0 release, you should define
+.Nx
+this version number must be expressed as 9 if you are running
+.Nx 0.9
+and anything greater than 9 for
+.Nx Ns -current
+(pre 1.0). It is recommended
+to use (as with
+.Fx )
+100 for
+.Nx 1.0
+and 999 for
+.Nx Ns -current.
+E.\& g., if you are running the 
+.Nx 1.0
+release, you should define
 
 .Em PCVT_NETBSD = 100
 
@@ -828,10 +840,18 @@ Documents the various compile-time options to tailor
 .Sh HISTORY
 The
 .Nm pcvt
-driver has been developed for and contributed to 386BSD release 0.1. Since
-release 3.00 explicit support is provided for NetBSD 0.9. It is expected
-that no further development on pcvt is done for 386BSD 0.1 after release 3.00,
-in fact, 386BSD support was dropped with release 3.20.
+driver has been developed for and contributed to 
+.Tn 386BSD
+release 0.1. Since
+release 3.00 explicit support is provided for
+.Nx 0.9 .
+It is expected
+that no further development on pcvt is done for 
+.Tn 386BSD 0.1
+after release 3.00,
+in fact, 
+.Tn 386BSD
+support was dropped with release 3.20.
 .Sh AUTHORS
 .Bl -tag -width 30n -offset indent
 .It Written by :

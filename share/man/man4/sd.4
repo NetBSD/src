@@ -1,4 +1,4 @@
-.\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
+.\"	$NetBSD: sd.4,v 1.4 1998/02/06 06:06:50 perry Exp $
 .\"
 .\" Copyright (c) 1996
 .\"     Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -110,8 +110,11 @@ driver.
 On many systems 
 .Xr disklabel 8
 is used to partition the drive into filesystems.  On some systems the
-NetBSD portion of the disk resides within a native partition, and another
-program is used to create the NetBSD portion.
+.Nx
+portion of the disk resides within a native partition, and another
+program is used to create the
+.Nx
+portion.
 .Pp
 For example, the i386 port uses
 .Xr fdisk 8
@@ -226,7 +229,7 @@ The
 driver was originally written for
 .Tn Mach
 2.5, and was ported to
-.Tn FreeBSD
+.Fx
 by Julian Elischer.
 It was later ported to
-.Tn NetBSD .
+.Nx .

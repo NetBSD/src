@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.5 1997/09/24 00:47:34 hubertf Exp $
+.\"	$NetBSD: crunchgen.1,v 1.6 1998/02/06 06:18:01 perry Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -28,10 +28,10 @@
 .Dt CRUNCHGEN 1
 .Os BSD 4
 .Sh NAME
-.Nm \&crunchgen
+.Nm crunchgen
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
-.Nm \&crunchgen
+.Nm
 .Op Fl fq
 .Op Fl m Ar makefile-name
 .Op Fl c Ar c-file-name
@@ -47,24 +47,24 @@ argv[0].  The main reason to crunch programs together is for fitting
 as many programs as possible onto an installation or system recovery
 floppy.
 .Pp
-.Nm Crunchgen
+.Nm
 reads in the specifications in
 .Ar conf-file
 for a crunched binary, and generates a Makefile and accompanying
 top-level C source file that when built create the crunched executable
 file from the component programs.  For each component program, 
-.Nm crunchgen
+.Nm
 can optionally attempt to determine the object (.o) files that make up
 the program from its source directory Makefile.  This information is
 cached between runs.
-.Nm Crunchgen
+.Nm
 uses the companion program
-.Nm crunchide
+.Em crunchide
 to eliminate link-time conflicts between the component programs by
 hiding all unnecessary symbols.
 .Pp
 After
-.Nm crunchgen
+.Nm
 is run, the crunched binary can be built by running ``make -f
 <conf-name>.mk''.  The component programs' object files must already
 be built.  A ``objs'' target, included in the output makefile, will
@@ -99,17 +99,17 @@ Try to obtain libraries from
 .Ar lib-dir .
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
-.Nm Crunchgen
+.Nm
 reads specifications from the 
 .Ar conf-file
 that describe the components of the crunched binary.  In its simplest
 use, the component program names are merely listed along with the
 top-level source directories in which their sources can be found.
-.Nm Crunchgen
+.Nm
 then calculates (via the source makefiles) and caches the
 list of object files and their locations.  For more specialized
 situations, the user can specify by hand all the parameters that 
-.Nm crunchgen
+.Nm
 needs.
 .Pp
 The
@@ -119,18 +119,19 @@ commands are as follows:
 .It Nm srcdirs Ar dirname ...
 A list of source trees in which the source directories of the
 component programs can be found.  These dirs are searched using the
-BSD ``<source-dir>/<progname>/'' convention.  Multiple 
-.Nm srcdirs
+.Bx
+``<source-dir>/<progname>/'' convention.  Multiple 
+.Em srcdirs
 lines can be specified.  The directories are searched in the order
 they are given.
 .It Nm progs Ar progname ...
 A list of programs that make up the crunched binary.  Multiple
-.Nm progs
+.Em progs
 lines can be specified.
 .It Nm libs Ar libspec ...
 A list of library specifications to be included in the crunched binary link.
 Multiple
-.Nm libs
+.Em libs
 lines can be specified.
 .It Nm ln Ar progname linkname
 Causes the crunched binary to invoke
@@ -143,16 +144,16 @@ run under different names to operate correctly.
 .Pp
 To handle specialized situations, such as when the source is not
 available or not built via a conventional Makefile, the following
-.Nm special
+.Em special
 commands can be used to set 
-.Nm crunchgen
+.Nm
 parameters for a component program.
 .Bl -tag -width indent
 .It Nm special Ar progname Nm srcdir Ar pathname
 Set the source directory for
 .Ar progname .
 This is normally calculated by searching the specified
-.Nm srcdirs
+.Em srcdirs
 for a directory named
 .Ar progname .
 .It Nm special Ar progname Nm objdir Ar pathname
@@ -176,42 +177,42 @@ and outputs the value of $(OBJS).
 Sets the pathnames of the object files for program
 .Ar progname .
 This is normally calculated by prepending the
-.Nm objdir
+.Em objdir
 pathname to each file in the
 .Nm objs
 list.
 .El
 .Pp
 Only the 
-.Nm objpaths
+.Em objpaths
 parameter is actually needed by
-.Nm crunchgen ,
+.Nm
 but it is calculated from
-.Nm objdir
+.Em objdir
 and
-.Nm objs ,
+.Em objs ,
 which are in turn calculated from
-.Nm srcdir ,
+.Em srcdir ,
 so is sometimes convenient to specify the earlier parameters and let 
-.Nm crunchgen
+.Nm
 calculate forward from there if it can.
 .Pp
 The makefile produced by
-.Nm crunchgen
+.Nm
 contains an optional
 .Ar objs
 target that will build the object files for each component program by
 running make inside that program's source directory.  For this to work the
-.Nm srcdir
+.Em srcdir
 and
-.Nm objs
+.Em objs
 parameters must also be valid.  If they are not valid for a particular program, that
 program is skipped in the 
 .Ar objs
 target.
 .Sh EXAMPLE
 Here is an example
-.Nm crunchgen
+.Em crunchgen
 input conf file, named
 .Dq Pa kcopy.conf :
 .Pp
@@ -231,7 +232,7 @@ This conf file specifies a small crunched binary consisting of some
 basic system utilities plus a homegrown install program ``myinstall'',
 for which no source directory is specified, but its object file is
 specified directly with the
-.Nm special
+.Em special
 line.
 .Pp
 The crunched binary ``kcopy'' can be built as follows:
@@ -250,19 +251,21 @@ and hard-linked to the names of the component programs.
 .Xr crunchide 1
 .Sh CAVEATS
 While
-.Nm crunch
+.Nm
 takes care to eliminate link conflicts between the component programs
 of a crunched binary, conflicts are still possible between the
 libraries that are linked in.  Some shuffling in the order of
 libraries may be required, and in some rare cases two libraries may
 have an unresolveable conflict and thus cannot be crunched together.
 .Pp
-Some versions of the BSD build environment do not by default build the
+Some versions of the
+.Bx
+build environment do not by default build the
 intermediate object file for single-source file programs.  The ``make
 objs'' target must then be used to get those object files built, or
 some other arrangements made.
 .Sh AUTHOR
-.Nm Crunch
+.Nm
 was written by James da Silva <jds@cs.umd.edu>.
 .sp 0
 Copyright (c) 1994 University of Maryland.  All Rights Reserved.

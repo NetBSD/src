@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$NetBSD: autoconf.4,v 1.3 1997/10/18 03:52:53 mark Exp $
+.\"	$NetBSD: autoconf.4,v 1.4 1998/02/06 06:06:55 perry Exp $
 .\"
 .Dd
 .Dt AUTOCONF 4 arm32
@@ -38,7 +38,7 @@
 .Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
 When
-.Tn NetBSD
+.Nx
 bootstraps it probes the innards of the machine
 on which it is running
 and locates controllers, drives, and other devices, printing out
@@ -52,12 +52,12 @@ kernel are not detected.
 .Bl -diag
 .It CPU class not configured.
 You tried to boot
-.Tn NetBSD
+.Nx
 on a class of
 .Tn CPU
 type which it doesn't
 (or at least this compiled version of
-.Tn NetBSD
+.Nx
 doesn't) understand.
 .El
 .Sh SEE ALSO

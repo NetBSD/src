@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_nfs.8,v 1.7 1997/10/19 01:24:47 fvdl Exp $
+.\"	$NetBSD: mount_nfs.8,v 1.8 1998/02/06 05:57:35 perry Exp $
 .\"
 .\" Copyright (c) 1992, 1993, 1994, 1995
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,15 +113,21 @@ Set the retry count for doing the mount to the specified value.
 Use TCP transport instead of UDP.
 This is recommended for servers that are not on the same LAN cable as
 the client.
-(NB: This is NOT supported by most non-BSD servers.)
+(NB: This is NOT supported by most non
+.Bx
+servers.)
 .It Fl U
 Force the mount protocol to use UDP transport, even for TCP NFS mounts.
-(Necessary for some old BSD servers.)
+(Necessary for some old
+.Bx
+servers.)
 .It Fl X
 Perform 32 <-> 64 bit directory cookie translation for version 3 mounts.
 This may be need in the case of a server using the upper 32 bits of
 v3 directory cookies, and when you are running emulated binaries
-that access such a filesystem. Native NetBSD binaries will never need this
+that access such a filesystem. Native
+.Nx
+binaries will never need this
 option. This option introduces some overhead.
 .It Fl a
 Set the read-ahead count to the specified value.
@@ -195,10 +201,15 @@ to maintain cache consistency.
 This protocol version 2 revision to Not Quite Nfs (NQNFS)
 is only supported by this updated release of NFS code.
 It is not backwards compatible with the version 1 NQNFS protocol
-that was part of the first release of 4.4BSD-Lite.
-To interoperate with a first release 4.4BSD-Lite NFS system you will have to
-avoid this option until you have had an oppurtunity to upgrade the NFS code
-to release 2 of 4.4BSD-Lite on all your systems.
+that was part of the first release of
+.Bx 4.4 Lite .
+To interoperate with a first release
+.Bx 4.4 Lite
+NFS system you will have to
+avoid this option until you have had an opportunity to upgrade the NFS code
+to release 2 of
+.Bx 4.4 Lite
+on all your systems.
 .It Fl r
 Set the read data size to the specified value.
 It should normally be a power of 2 greater than or equal to 1024.
@@ -257,4 +268,6 @@ to have limited success.
 For clients mounting servers that are not on the same
 LAN cable or that tend to be overloaded,
 TCP transport is strongly recommended,
-but unfortunately this is restricted to mostly 4.4BSD servers.
+but unfortunately this is restricted to mostly
+.Bx 4.4
+servers.

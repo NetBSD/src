@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_sunos.8,v 1.9 1997/11/13 03:39:36 thorpej Exp $
+.\"	$NetBSD: compat_sunos.8,v 1.10 1998/02/06 06:14:49 perry Exp $
 .\"
 .\" Copyright (c) 1984 Theo de Raadt
 .\" All rights reserved.
@@ -37,10 +37,16 @@
 .Nm compat_sunos
 .Nd setup procedure for m68k and sparc architectures
 .Sh DESCRIPTION
-NetBSD/sparc and some of the NetBSD/m68k architectures can run
-SunOS executables.  Most executables will work.
+.Nx Ns Tn /sparc
+and some of the
+.Nx Ns Tn /m68k
+architectures can run
+.Tn SunOS
+executables.  Most executables will work.
 .Pp
-The exceptions include programs that use the SunOS kvm library,
+The exceptions include programs that use the
+.Tn SunOS
+kvm library,
 and various system calls, ioctl()'s, or kernel semantics
 that are difficult to emulate.
 The number of reasons why a program might fail to work is (thankfully)
@@ -50,10 +56,14 @@ Static executables will normally run without any extra setup.
 This procedure details the directories and files that must be
 setup to allow dynamically linked executables to work.
 .Pp
-The files you need are on your SunOS machine.
+The files you need are on your
+.Tn SunOS
+machine.
 You need to worry about the legal issues of ensuring that you
 have a right to use the required files on your machine.
-On your NetBSD machine, do the following:
+On your
+.Nx
+machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .It
@@ -78,7 +88,9 @@ If you ever expect to use YP, you will want to create a link:
 .Pp
 Alternatively, you can use an NFS mount to accomplish the same
 effect.
-On your NetBSD machine, do the following:
+On your
+.Nx
+machine, do the following:
 .Pp
 .Bl -enum -inset -offset 123 -compact
 .Pp
@@ -90,15 +102,22 @@ On your NetBSD machine, do the following:
 .fi
 .El
 .Pp
-This will place the SunOS libraries on your NetBSD machine
-in a location where the SunOS compatibility code will look for
+This will place the
+.Tn SunOS
+libraries on your
+.Nx
+machine
+in a location where the
+.Tn SunOS
+compatibility code will look for
 first, where they do not conflict with the standard libraries.
 .Pp
 .Sh BUGS
 A list of things which fail to work in compatibility mode should
 be here.
 .Pp
-SunOS executables can not handle directory offset cookies > 32 bits.
+.Tn SunOS
+executables can not handle directory offset cookies > 32 bits.
 Should such an offset occur, you will see the message "sunos_getdents:
 dir offset too large for emulated program". Currently, this can only 
 happen on NFS mounted filesystems, mounted from servers that return

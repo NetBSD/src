@@ -1,4 +1,4 @@
-.\"	$NetBSD: tr.1,v 1.6 1997/10/20 00:56:05 lukem Exp $
+.\"	$NetBSD: tr.1,v 1.7 1998/02/06 06:19:13 perry Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -247,9 +247,12 @@ Strip out non-printable characters from file1.
 .D1 Li "tr -cd \*q[:print:]\*q < file1"
 .Sh COMPATIBILITY
 System V has historically implemented character ranges using the syntax
-``[c-c]'' instead of the ``c-c'' used by historic BSD implementations and
+``[c-c]'' instead of the ``c-c'' used by historic
+.Bx
+implementations and
 standardized by POSIX.
-System V shell scripts should work under this implementation as long as
+.At V
+shell scripts should work under this implementation as long as
 the range is intended to map in another range, i.e. the command
 ``tr [a-z] [A-Z]'' will work as it will map the ``['' character in
 .Ar string1

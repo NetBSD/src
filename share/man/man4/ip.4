@@ -1,4 +1,4 @@
-.\"	$NetBSD: ip.4,v 1.5 1998/01/07 23:39:49 lukem Exp $
+.\"	$NetBSD: ip.4,v 1.6 1998/02/06 06:06:47 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -350,7 +350,7 @@ setsockopt(s, IPPROTO_IP, IP_HDRINCL, &hincl, sizeof(hincl));
 .Ed
 .sp
 Unlike previous 
-.Tn BSD 
+.Bx
 releases, the program must set all
 the fields of the IP header, including the following:
 .Bd -literal

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.4 1997/07/10 07:37:23 mikel Exp $
+.\"	$NetBSD: boot.8,v 1.5 1998/02/06 06:14:55 perry Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ system bootstrapping procedures
 .Sy Power fail and crash recovery
 .Pp
 When the
-.Tn NetBSD
+.Nx
 kernel is booted normally (using one of the two methods discussed below),
 it initializes itself and proceeds to boot the system.  An automatic
 consistency check of the file systems takes place, and unless this
@@ -70,12 +70,14 @@ or not), the system will attempt a reboot.
 .Sy Booting NetBSD using the bootloader
 .Pp
 When a bootable
-.Tn NetBSD
+.Nx
 partition is created by means of
 .Xr installboot 8
 and the boot-preference bit in the NVRAM is either invalid or set to
-.Tn NetBSD
-, the Atari BIOS will automatically start the NetBSD bootloader. By default
+.Nx
+, the Atari BIOS will automatically start the
+.Nx
+bootloader. By default
 it will load the kernel image
 .Pa /netbsd
 and attempts to boot it into multi-user mode. This behaviour can be changed by
@@ -136,7 +138,9 @@ Enter the kernel debugger
 .Pp
 .Sy Booting using the loadbsd program
 .Pp
-When you want (or have to) start NetBSD from GEM, you have to use the
+When you want (or have to) start
+.Nx
+from GEM, you have to use the
 .Xr loadbsd 8
 program that is supplied on the kernel-floppy. The loadbsd command line
 specification is:
@@ -163,9 +167,12 @@ here.
 Write all output to the file
 .Ar outputfile.
 .It Fl s
-Tell NetBSD only to use ST compatible RAM. 
+Tell
+.Nx
+only to use ST compatible RAM. 
 .It Fl t
-Test loading of the kernel but don't start NetBSD.
+Test loading of the kernel but don't start
+.Nx .
 .It Fl w
 Wait for a keypress before exiting loadbsd. This is useful when starting this
 program under GEM.

@@ -1,4 +1,4 @@
-.\"	$NetBSD: diskless.8,v 1.12 1998/01/26 07:23:20 ross Exp $
+.\"	$NetBSD: diskless.8,v 1.13 1998/02/06 06:14:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Gordon W. Ross, Theo de Raadt
 .\" All rights reserved.
@@ -77,7 +77,8 @@ using a special PROM on the network card.
 .Pp
 In phase 2, the boot program loads a kernel.  Operation in
 this phase depends on the design of the boot program.
-(The design described here is the one used by Sun and NetBSD/hp300.)
+(The design described here is the one used by Sun and
+.Nx Ns Tn /hp300 Ns .)
 The boot program:
 .Pp
 .Bl -tag -width 2.2 -compact
@@ -241,7 +242,9 @@ This creates a 16 Megabyte swap file.
 Populate myclient's
 .Pa /
 filesystem on the server.  How this is done depends on the
-client architecture and the version of the NetBSD distribution.
+client architecture and the version of the
+.Nx
+distribution.
 It can be as simple as copying and modifying the server's root
 filesystem, or perhaps you need to get those files out of the
 standard binary distribution.
