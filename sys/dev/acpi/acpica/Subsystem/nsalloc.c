@@ -115,7 +115,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.6 2003/03/04 17:25:21 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsalloc.c,v 1.7 2003/05/13 13:07:13 kochi Exp $");
 
 #define __NSALLOC_C__
 
@@ -210,7 +210,14 @@ AcpiNsDeleteNode (
     }
     else
     {
-        ParentNode->Child = NextNode->Peer;
+        if (NextNode->Flags & ANOBJ_END_OF_PEER_LIST)
+        {
+            ParentNode->Child = NULL;
+        }
+	else
+        {
+            ParentNode->Child = NextNode->Peer;
+        }
     }
 
 
