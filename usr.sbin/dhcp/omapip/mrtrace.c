@@ -133,7 +133,7 @@ void trace_mr_statp_setup (res_state statp)
 	if (trace_record ()) {
 		trace_iov_t *iov;
 		iov = dmalloc ((statp -> nscount *
-				sizeof (struct in_addr)), MDL);
+				sizeof (trace_iov_t)), MDL);
 		if (!iov) {
 			trace_stop ();
 			log_error ("No memory for statp iov.");
