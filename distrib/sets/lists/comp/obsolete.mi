@@ -1,4 +1,4 @@
-# $NetBSD: obsolete.mi,v 1.19.2.4 2000/10/20 15:12:54 tv Exp $
+# $NetBSD: obsolete.mi,v 1.19.2.5 2001/04/24 22:48:09 he Exp $
 /usr/bin/genclass
 /usr/include/bfd/ansidecl.h
 /usr/include/bfd/bfd.h
@@ -286,6 +286,7 @@
 /usr/include/g++/tree.cc
 /usr/include/g++/typemacros.h
 /usr/include/g++/values.h
+/usr/include/krb5/kadm5_err.h
 /usr/include/netinet/if_arc.h
 /usr/include/netinet6/icmp6.h
 /usr/include/netinet6/ip6.h
