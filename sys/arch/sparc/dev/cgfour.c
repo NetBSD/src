@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.24.4.2 2002/03/16 15:59:45 jdolecek Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.24.4.3 2002/06/28 07:50:42 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -398,6 +398,31 @@ cgfourpoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_cgfourdetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cgfour_filtops =
+	{ 1, NULL, filt_cgfourdetach, filt_seltrue };
+
+int
+cgfourkqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cgfour_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.24.4.2 2002/03/16 15:59:45 jdolecek Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.24.4.3 2002/06/28 07:50:41 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -401,6 +401,31 @@ cgeightpoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_cgeightdetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops cgeight_filtops =
+	{ 1, NULL, filt_cgeightdetach, filt_seltrue };
+
+int
+cgeightkqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &cgeight_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*

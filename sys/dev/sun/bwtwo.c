@@ -1,4 +1,4 @@
-/*	$NetBSD: bwtwo.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $ */
+/*	$NetBSD: bwtwo.c,v 1.2.6.2 2002/06/28 07:50:46 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.1 2002/01/10 19:58:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwtwo.c,v 1.2.6.2 2002/06/28 07:50:46 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +283,31 @@ bwtwopoll(dev, events, p)
 {
 
 	return (seltrue(dev, events, p));
+}
+
+static void
+filt_bwtwodetach(struct knote *kn)
+{
+	/* Nothing to do */
+}
+
+static const struct filterops bwtwo_filtops =
+	{ 1, NULL, filt_bwtwodetach, filt_seltrue };
+
+int
+bwtwokqfilter(dev_t dev, struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+	case EVFILT_WRITE:
+		kn->kn_fop = &bwtwo_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	/* Nothing more to do */
+	return (0);
 }
 
 /*
