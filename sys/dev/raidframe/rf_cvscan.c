@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_cvscan.c,v 1.1 1998/11/13 04:20:27 oster Exp $	*/
+/*	$NetBSD: rf_cvscan.c,v 1.2 1998/11/18 15:13:51 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -413,7 +413,7 @@ static void PrintCvscanQueue(RF_CvscanHeader_t *hdr)
 int rf_CvscanPromote(void *q_in, RF_StripeNum_t parityStripeID, RF_ReconUnitNum_t which_ru)
 {
     RF_CvscanHeader_t *hdr = (RF_CvscanHeader_t *) q_in;
-    RF_DiskQueueData_t *trailer, *tmp = hdr->burner, *tlist = NULL;
+    RF_DiskQueueData_t *trailer = NULL, *tmp = hdr->burner, *tlist = NULL;
     int retval=0;
 
 	DO_CHECK_STATE(hdr);
