@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.9 1997/10/09 15:42:29 bouyer Exp $	*/
+/*	$NetBSD: endian.h,v 1.10 1998/08/08 11:18:32 ragge Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -59,10 +59,10 @@ typedef u_int32_t	in_addr_t;
 typedef u_int16_t	in_port_t;
 
 __BEGIN_DECLS
-in_addr_t  htonl __P((in_addr_t));
-in_port_t  htons __P((in_port_t));
-in_addr_t  ntohl __P((in_addr_t));
-in_port_t  ntohs __P((in_port_t));
+in_addr_t	htonl __P((in_addr_t));
+in_port_t	htons __P((in_port_t));
+in_addr_t	ntohl __P((in_addr_t));
+in_port_t	ntohs __P((in_port_t));
 u_int16_t	bswap16 __P((u_int16_t));
 u_int32_t	bswap32 __P((u_int32_t));
 u_int64_t	bswap64 __P((u_int64_t));
@@ -85,13 +85,11 @@ __END_DECLS
 #define __byte_swap_word_variable(x)		\
 ({ register u_int16_t __y, __x = (x);		\
 						\
-	__asm ("rotl	$8, %1, %0;		\
-		rotl	$-8, %1, r1;		\
-		movb	r1, %0;			\
-		movzwl	%0, %0"			\
+	__asm ("insv	%1,$16,$8,%1;		\
+		ashl	$-8,%1,%0" 		\
 		: "&=r" (__y)			\
 		: "r" (__x)			\
-		: "r1", "cc" );			\
+		: "cc" );			\
 	__y; })
 
 
@@ -102,6 +100,8 @@ __END_DECLS
 #define ntohs(x)        __byte_swap_word(x)
 #define htonl(x)        __byte_swap_long(x)
 #define htons(x)        __byte_swap_word(x)
+#define bswap16(x)      __byte_swap_word(x)
+#define bswap32(x)      __byte_swap_long(x)
 
 #endif /* __GNUC__ */
 

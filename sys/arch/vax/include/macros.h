@@ -1,7 +1,7 @@
-/*	$NetBSD: macros.h,v 1.15 1998/03/02 17:00:01 ragge Exp $	*/
+/*	$NetBSD: macros.h,v 1.16 1998/08/08 11:18:33 ragge Exp $	*/
 
 /*
- * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
+ * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,13 +32,14 @@
 
  /* All bugs are subject to removal without further notice */
 
-#if !defined(_VAX_MACROS_H_) && !defined(STANDALONE) && \
-	(!defined(_LOCORE) && defined(_VAX_INLINE_))
+#if !defined(_VAX_MACROS_H_)
 #define _VAX_MACROS_H_
 
 /* Here general macros are supposed to be stored */
 
-static __inline__ int ffs(int reg){
+static __inline__ int
+ffs(int reg)
+{
 	register int val;
 
 	__asm__ __volatile ("ffs	$0,$32,%1,%0
@@ -50,41 +51,85 @@ static __inline__ int ffs(int reg){
 	return	val;
 }
 
-static __inline__ void _remque(void*p){
+static __inline__ void 
+_remque(void *p)
+{
 	__asm__ __volatile ("remque (%0),%0;clrl 4(%0)"
 			:
 			: "r" (p)
 			: "memory" );
 }
 
-static __inline__ void _insque(void*p, void*q) {
+static __inline__ void 
+_insque(void *p, void *q)
+{
 	__asm__ __volatile ("insque (%0), (%1)"
 			:
 			: "r" (p),"r" (q)
 			: "memory" );
 }
 
-static __inline__ void bcopy(const void*from, void*toe, u_int len) {
+static __inline__ void *
+memcpy(void *toe, const void *from, u_int len)
+{
 	__asm__ __volatile ("movc3 %0,(%1),(%2)"
 			:
 			: "r" (len),"r" (from),"r"(toe)
-			:"r0","r1","r2","r3","r4","r5");
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	return toe;
+}
+static __inline__ void *
+memmove(void *toe, const void *from, u_int len)
+{
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+			:
+			: "r" (len),"r" (from),"r"(toe)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	return toe;
+}
+
+static __inline__ void
+bcopy(const void *from, void *toe, u_int len)
+{
+	__asm__ __volatile ("movc3 %0,(%1),(%2)"
+			:
+			: "r" (len),"r" (from),"r"(toe)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
 }
 
 void	blkclr __P((void *, u_int));
 
-static __inline__ void bzero(void*block, u_int len){
+static __inline__ void *
+memset(void *block, int c, size_t len)
+{
+	if (len > 65535)
+		blkclr(block, len);
+	else {
+		__asm__ __volatile ("movc5 $0,(%0),%2,%1,(%0)"
+			:
+			: "r" (block), "r" (len), "r"(c)
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
+	}
+	return block;
+}
+
+static __inline__ void
+bzero(void *block, u_int len)
+{
 	if (len > 65535)
 		blkclr(block, len);
 	else {
 		__asm__ __volatile ("movc5 $0,(%0),$0,%1,(%0)"
 			:
 			: "r" (block), "r" (len)
-			:"r0","r1","r2","r3","r4","r5");
+			:"r0","r1","r2","r3","r4","r5","memory","cc");
 	}
 }
 
-static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
+/* XXX - the return syntax of memcmp is wrong */
+static __inline__ int
+memcmp(const void *b1, const void *b2, size_t len)
+{
 	register ret;
 
 	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
@@ -93,6 +138,100 @@ static __inline__ int bcmp(const void *b1, const void *b2, size_t len){
 			: "r0","r1","r2","r3" );
 	return ret;
 }
+
+static __inline__ int
+bcmp(const void *b1, const void *b2, size_t len)
+{
+	register ret;
+
+	__asm__ __volatile("cmpc3 %3,(%1),(%2);movl r0,%0"
+			: "=r" (ret)
+			: "r" (b1), "r" (b2), "r" (len)
+			: "r0","r1","r2","r3" );
+	return ret;
+}
+
+/* Begin nya */
+static __inline__ size_t
+strlen(const char *cp)
+{
+        register ret;
+
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,%0"
+                        : "=r" (ret)
+                        : "r" (cp)
+                        : "r0","r1","cc" );
+        return  ret;
+}
+
+static __inline__ char *
+strcat(char *cp, const char *c2)
+{
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;incl r2;
+                            locc $0,$65535,(%0);movc3 r2,(%1),(r1)"
+                        :
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strncat(char *cp, const char *c2, size_t count)
+{
+        __asm__ __volatile("locc $0,%2,(%1);subl3 r0,%2,r2;
+                            locc $0,$65535,(%0);movc3 r2,(%1),(r1);movb $0,(r3)"
+                        :
+                        : "r" (cp), "r" (c2), "g"(count)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strcpy(char *cp, const char *c2)
+{
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r2;
+                            movc3 r2,(%1),(%0);movb $0,(r3)"
+                        :
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ char *
+strncpy(char *cp, const char *c2, size_t len)
+{
+        __asm__ __volatile("movl %2,r2;locc $0,r2,(%1);beql 1f;subl3 r0,%2,r2;
+                            clrb (%0)[r2];1:;movc3 r2,(%1),(%0)"
+                        :
+                        : "r" (cp), "r" (c2), "g"(len)
+                        : "r0","r1","r2","r3","r4","r5","memory","cc");
+        return  cp;
+}
+
+static __inline__ void *
+memchr(const void *cp, int c, size_t len)
+{
+        void *ret;
+        __asm__ __volatile("locc %2,%3,(%1);bneq 1f;clrl r1;1:movl r1,%0"
+                        : "=g"(ret)
+                        : "r" (cp), "r" (c), "g"(len)
+                        : "r0","r1","cc");
+        return  ret;
+}
+
+static __inline__ int
+strcmp(const char *cp, const char *c2)
+{
+        register ret;
+        __asm__ __volatile("locc $0,$65535,(%1);subl3 r0,$65535,r0;incl r0;
+                            cmpc3 r0,(%1),(%2);beql 1f;movl $1,r2;
+                            cmpb (r1),(r3);bcc 1f;movl $-1,r2;1:movl r2,%0"
+                        : "=g"(ret)
+                        : "r" (cp), "r" (c2)
+                        : "r0","r1","r2","r3","cc");
+        return  ret;
+}
+/* End nya */
 
 #if 0 /* unused, but no point in deleting it since it _is_ an instruction */
 static __inline__ int locc(int mask, char *cp,u_int size){
@@ -107,7 +246,8 @@ static __inline__ int locc(int mask, char *cp,u_int size){
 #endif
 
 static __inline__ int
-scanc(u_int size, const u_char *cp, const u_char *table, int mask){
+scanc(u_int size, const u_char *cp, const u_char *table, int mask)
+{
 	register ret;
 
 	__asm__ __volatile("scanc	%1,(%2),(%3),%4;movl r0,%0"
@@ -117,7 +257,9 @@ scanc(u_int size, const u_char *cp, const u_char *table, int mask){
 	return ret;
 }
 
-static __inline__ int skpc(int mask, size_t size, u_char *cp){
+static __inline__ int
+skpc(int mask, size_t size, u_char *cp)
+{
 	register ret;
 
 	__asm__ __volatile("skpc %1,%2,(%3);movl r0,%0"
