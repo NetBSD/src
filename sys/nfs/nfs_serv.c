@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.73 2003/05/04 11:40:22 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.74 2003/05/07 13:10:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.73 2003/05/04 11:40:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.74 2003/05/07 13:10:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -869,29 +869,29 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	 * which is to return ok so long as there are no permission problems.
 	 */
 	if (len > 0) {
-	    zeroing = 1;
-	    mp = mrep;
-	    while (mp) {
-		if (mp == md) {
-			zeroing = 0;
-			adjust = dpos - mtod(mp, caddr_t);
-			mp->m_len -= adjust;
-			if (mp->m_len > 0 && adjust > 0)
-				NFSMADV(mp, adjust);
-		}
-		if (zeroing)
-			mp->m_len = 0;
-		else if (mp->m_len > 0) {
-			i += mp->m_len;
-			if (i > len) {
-				mp->m_len -= (i - len);
-				zeroing	= 1;
+		zeroing = 1;
+		mp = mrep;
+		while (mp) {
+			if (mp == md) {
+				zeroing = 0;
+				adjust = dpos - mtod(mp, caddr_t);
+				mp->m_len -= adjust;
+				if (mp->m_len > 0 && adjust > 0)
+					NFSMADV(mp, adjust);
 			}
-			if (mp->m_len > 0)
-				cnt++;
+			if (zeroing)
+				mp->m_len = 0;
+			else if (mp->m_len > 0) {
+				i += mp->m_len;
+				if (i > len) {
+					mp->m_len -= (i - len);
+					zeroing	= 1;
+				}
+				if (mp->m_len > 0)
+					cnt++;
+			}
+			mp = mp->m_next;
 		}
-		mp = mp->m_next;
-	    }
 	}
 	if (len > NFS_MAXDATA || len < 0 || i < len) {
 		error = EIO;
@@ -926,40 +926,40 @@ nfsrv_write(nfsd, slp, procp, mrq)
 	}
 
 	if (len > 0) {
-	    ivp = malloc(cnt * sizeof (struct iovec), M_TEMP, M_WAITOK);
-	    uiop->uio_iov = iv = ivp;
-	    uiop->uio_iovcnt = cnt;
-	    mp = mrep;
-	    while (mp) {
-		if (mp->m_len > 0) {
-			ivp->iov_base = mtod(mp, caddr_t);
-			ivp->iov_len = mp->m_len;
-			ivp++;
+		ivp = malloc(cnt * sizeof (struct iovec), M_TEMP, M_WAITOK);
+		uiop->uio_iov = iv = ivp;
+		uiop->uio_iovcnt = cnt;
+		mp = mrep;
+		while (mp) {
+			if (mp->m_len > 0) {
+				ivp->iov_base = mtod(mp, caddr_t);
+				ivp->iov_len = mp->m_len;
+				ivp++;
+			}
+			mp = mp->m_next;
 		}
-		mp = mp->m_next;
-	    }
 
-	    /*
-	     * XXX
-	     * The IO_METASYNC flag indicates that all metadata (and not just
-	     * enough to ensure data integrity) mus be written to stable storage
-	     * synchronously.
-	     * (IO_METASYNC is not yet implemented in 4.4BSD-Lite.)
-	     */
-	    if (stable == NFSV3WRITE_UNSTABLE)
-		ioflags = IO_NODELOCKED;
-	    else if (stable == NFSV3WRITE_DATASYNC)
-		ioflags = (IO_SYNC | IO_NODELOCKED);
-	    else
-		ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
-	    uiop->uio_resid = len;
-	    uiop->uio_rw = UIO_WRITE;
-	    uiop->uio_segflg = UIO_SYSSPACE;
-	    uiop->uio_procp = (struct proc *)0;
-	    uiop->uio_offset = off;
-	    error = VOP_WRITE(vp, uiop, ioflags, cred);
-	    nfsstats.srvvop_writes++;
-	    free((caddr_t)iv, M_TEMP);
+		/*
+		 * XXX
+		 * The IO_METASYNC flag indicates that all metadata (and not
+		 * just enough to ensure data integrity) must be written to
+		 * stable storage synchronously.
+		 * (IO_METASYNC is not yet implemented in 4.4BSD-Lite.)
+		 */
+		if (stable == NFSV3WRITE_UNSTABLE)
+			ioflags = IO_NODELOCKED;
+		else if (stable == NFSV3WRITE_DATASYNC)
+			ioflags = (IO_SYNC | IO_NODELOCKED);
+		else
+			ioflags = (IO_METASYNC | IO_SYNC | IO_NODELOCKED);
+		uiop->uio_resid = len;
+		uiop->uio_rw = UIO_WRITE;
+		uiop->uio_segflg = UIO_SYSSPACE;
+		uiop->uio_procp = (struct proc *)0;
+		uiop->uio_offset = off;
+		error = VOP_WRITE(vp, uiop, ioflags, cred);
+		nfsstats.srvvop_writes++;
+		free(iv, M_TEMP);
 	}
 	aftat_ret = VOP_GETATTR(vp, &va, cred, procp);
 	vput(vp);
