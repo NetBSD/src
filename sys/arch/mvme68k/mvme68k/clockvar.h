@@ -1,4 +1,4 @@
-/*	$NetBSD: clockvar.h,v 1.1 1996/04/26 19:26:33 chuck Exp $	*/
+/*	$NetBSD: clockvar.h,v 1.2 1996/09/12 05:10:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,6 +41,24 @@
  */
 
 extern	struct cfdriver clock_cd;
+extern	struct evcnt clock_profcnt;
+extern	struct evcnt clock_statcnt;
+
+extern	int clock_statvar;
+extern	int clock_statmin;
 
 void	clock_config __P((struct device *, caddr_t, caddr_t, int,
-	    void (*)(void)));
+	    void (*)(int, int)));
+
+/*
+ * Macro to compute a new randomized interval.  The intervals are
+ * uniformly distributed on [statint - statvar / 2, statint + statvar / 2],
+ * and therefore have mean statint, giving a stathz frequency clock.
+ *
+ * This is gratuitously stolen from sparc/sparc/clock.c
+ */
+#define CLOCK_NEWINT(statvar, statmin)	({				\
+		u_long r, var = (statvar);				\
+		do { r = random() & (var - 1); } while (r == 0);	\
+		(statmin + r);						\
+	})

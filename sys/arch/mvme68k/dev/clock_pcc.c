@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.1 1996/04/26 18:59:58 chuck Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.2 1996/09/12 05:10:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,8 +57,10 @@
 
 int	clock_pcc_match __P((struct device *, void *, void *));
 void	clock_pcc_attach __P((struct device *, struct device *, void *));
-int	clock_pcc_intr __P((void *));
-void	clock_pcc_initclocks __P((void));
+int	clock_pcc_profintr __P((void *));
+int	clock_pcc_statintr __P((void *));
+void	clock_pcc_initclocks __P((int, int));
+void	clock_pcc_shutdown __P((void *));
 
 u_char	clock_pcc_lvl;
 
@@ -106,28 +108,71 @@ clock_pcc_attach(parent, self, aux)
 	clock_config(self, clockregs, nvram, MK48T02_SIZE,
 	    clock_pcc_initclocks);
 
-	/* Attach the interrupt handler. */
-	pccintr_establish(PCCV_TIMER1, clock_pcc_intr, pa->pa_ipl, NULL);
-	/* XXX timer2 */
+	/* Ensure our interrupts get disabled at shutdown time. */
+	(void)shutdownhook_establish(clock_pcc_shutdown, NULL);
+
+	/* Attach the interrupt handlers. */
+	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl, NULL);
+	pccintr_establish(PCCV_TIMER2, clock_pcc_statintr, pa->pa_ipl, NULL);
 	clock_pcc_lvl = pa->pa_ipl | PCC_IENABLE | PCC_TIMERACK;
 }
 
 void
-clock_pcc_initclocks()
+clock_pcc_initclocks(proftick, stattick)
+	int proftick, stattick;
 {
 
-	sys_pcc->t1_pload = PCC_TIMER100HZ;
+	sys_pcc->t1_pload = pcc_timer_us2lim(proftick);
 	sys_pcc->t1_cr = PCC_TIMERCLEAR;
 	sys_pcc->t1_cr = PCC_TIMERSTART;
 	sys_pcc->t1_int = clock_pcc_lvl;
+
+	sys_pcc->t2_pload = pcc_timer_us2lim(stattick);
+	sys_pcc->t2_cr = PCC_TIMERCLEAR;
+	sys_pcc->t2_cr = PCC_TIMERSTART; 
+	sys_pcc->t2_int = clock_pcc_lvl;
 }
 
 int
-clock_pcc_intr(frame)
+clock_pcc_profintr(frame)
 	void *frame;
 {
 
 	sys_pcc->t1_int = clock_pcc_lvl;
 	hardclock(frame);
+	clock_profcnt.ev_count++;
 	return (1);
+}
+
+int
+clock_pcc_statintr(frame)
+	void *frame;
+{
+
+	/* Disable the timer interrupt while we handle it. */
+	sys_pcc->t2_int = 0;
+
+	statclock((struct clockframe *)frame);
+
+	sys_pcc->t2_pload =
+	    pcc_timer_us2lim(CLOCK_NEWINT(clock_statvar, clock_statmin));
+	sys_pcc->t2_cr = PCC_TIMERCLEAR;
+	sys_pcc->t2_cr = PCC_TIMERSTART;
+	sys_pcc->t2_int = clock_pcc_lvl;
+
+	clock_statcnt.ev_count++;
+	return (1);
+}
+
+/* ARGSUSED */
+void
+clock_pcc_shutdown(arg)
+	void *arg;
+{
+
+	/* Make sure the timer interrupts are turned off. */
+	sys_pcc->t1_cr = PCC_TIMERCLEAR;
+	sys_pcc->t1_int = 0;
+	sys_pcc->t2_cr = PCC_TIMERCLEAR;
+	sys_pcc->t2_int = 0;
 }
