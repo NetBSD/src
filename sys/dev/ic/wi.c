@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.151 2004/02/10 00:47:41 dyoung Exp $	*/
+/*	$NetBSD: wi.c,v 1.152 2004/02/10 00:52:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.151 2004/02/10 00:47:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.152 2004/02/10 00:52:12 dyoung Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -694,8 +694,7 @@ wi_init(struct ifnet *ifp)
 		wi_write_val(sc, WI_RID_DTIM_PERIOD, 1);
 	}
 
-	if (sc->sc_firmware_type == WI_INTERSIL &&
-	    (sc->sc_flags & WI_FLAGS_RSSADAPT) != 0)
+	if (sc->sc_firmware_type == WI_INTERSIL)
 		wi_write_val(sc, WI_RID_ALT_RETRY_COUNT, sc->sc_alt_retry);
 
 	/*
@@ -1048,6 +1047,8 @@ wi_start(struct ifnet *ifp)
 #endif
 		frmhdr.wi_tx_ctl =
 		    htole16(WI_ENC_TX_802_11|WI_TXCNTL_TX_EX|WI_TXCNTL_TX_OK);
+		if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_ALTRTRY);
 		if (ic->ic_opmode == IEEE80211_M_HOSTAP &&
 		    (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			if ((m0 = ieee80211_wep_crypt(ifp, m0, 1)) == NULL) {
