@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.22 2004/05/25 14:54:57 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.23 2004/05/30 20:46:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.22 2004/05/25 14:54:57 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.23 2004/05/30 20:46:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -704,7 +704,7 @@ ntfs_unmount(
 	vinvalbuf(ntmp->ntm_devvp, V_SAVE, NOCRED, p, 0, 0);
 
 	/* lock the device vnode before calling VOP_CLOSE() */
-	VOP_LOCK(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(ntmp->ntm_devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_CLOSE(ntmp->ntm_devvp, ronly ? FREAD : FREAD|FWRITE,
 		NOCRED, p);
 	VOP_UNLOCK(ntmp->ntm_devvp, 0);
