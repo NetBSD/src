@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.128 2001/03/01 16:31:39 itojun Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.129 2001/03/02 02:05:36 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -416,6 +416,13 @@ ip_input(struct mbuf *m)
 	if (IN_MULTICAST(ip->ip_src.s_addr)) {
 		/* XXX stat */
 		goto bad;
+	}
+
+	/* 127/8 must not appear on wire - RFC1122 */
+	if ((ntohl(ip->ip_dst.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET ||
+	    (ntohl(ip->ip_src.s_addr) >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET) {
+		if ((m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) == 0)
+			goto bad;
 	}
 
 	if (in_cksum(m, hlen) != 0) {
