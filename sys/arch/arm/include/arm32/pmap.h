@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.61 2002/09/22 07:53:40 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.62 2002/11/12 09:46:37 chris Exp $	*/
 
 /*
  * Copyright (c 2002 Wasabi Systems, Inc.
@@ -257,7 +257,7 @@ extern vaddr_t	pmap_curmaxkvaddr;
 
 #define	PTE_SYNC_RANGE(pte, cnt) \
 	cpu_dcache_wb_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
-#define	PTE_FLUSH_RANGE(pte) \
+#define	PTE_FLUSH_RANGE(pte, cnt) \
 	cpu_dcache_wbinv_range((vaddr_t)(pte), (cnt) << 2) /* * sizeof(...) */
 
 #define	l1pte_valid(pde)	((pde) != 0)
