@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.46 2002/12/09 21:29:28 manu Exp $	*/
+/*	$NetBSD: kdump.c,v 1.47 2003/01/30 21:43:26 atatat Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.46 2002/12/09 21:29:28 manu Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.47 2003/01/30 21:43:26 atatat Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: kdump.c,v 1.46 2002/12/09 21:29:28 manu Exp $");
 
 #include <sys/syscall.h>
 
-int timestamp, decimal, plain, tail, maxdata, numeric;
+int timestamp, decimal, plain, tail, maxdata = -1, numeric;
 pid_t do_pid = -1;
 const char *tracefile = NULL;
 struct ktr_header ktr_header;
@@ -555,7 +555,9 @@ ktrgenio(ktr, len)
 	}
 	printf("fd %d %s %d bytes\n", ktr->ktr_fd,
 		ktr->ktr_rw == UIO_READ ? "read" : "wrote", datalen);
-	if (maxdata && datalen > maxdata)
+	if (maxdata == 0)
+		return;
+	if (maxdata > 0 && datalen > maxdata)
 		datalen = maxdata;
 	(void)printf("       \"");
 	col = 8;
