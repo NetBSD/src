@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.4 2001/05/15 09:10:05 minoura Exp $	*/
+/*	$NetBSD: vs.c,v 1.5 2001/05/22 00:15:54 minoura Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -271,7 +271,7 @@ vs_dmaintr(void *hdl)
 		/* start next transfer */
 		sc->sc_current.dmap += sc->sc_current.blksize;
 		if (sc->sc_current.dmap + sc->sc_current.blksize
-			>= sc->sc_current.bufsize)
+			> sc->sc_current.bufsize)
 		dmac_start_xfer_offset (sc->sc_dma_ch->ch_softc,
 					sc->sc_current.xfer,
 					sc->sc_current.dmap,
