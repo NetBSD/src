@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.145 1999/04/01 00:22:45 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.145.2.1 2000/01/15 17:45:59 he Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
 #include <net/raw_cb.h>
 
 char	copyright[] = "\
-Copyright (c) 1996, 1997, 1998, 1999
+Copyright (c) 1996, 1997, 1998, 1999, 2000
     The NetBSD Foundation, Inc.  All rights reserved.
 Copyright (c) 1982, 1986, 1989, 1991, 1993
     The Regents of the University of California.  All rights reserved.
