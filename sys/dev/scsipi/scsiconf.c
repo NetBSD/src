@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.15 1994/11/03 20:24:21 mycroft Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.16 1994/11/03 22:05:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -151,7 +151,7 @@ struct scsi_device probe_switch = {
 	0,
 };
 
-int scsibusmatch __P((struct device *, struct cfdata *, void *));
+int scsibusmatch __P((struct device *, void *, void *));
 void scsibusattach __P((struct device *, struct device *, void *));
 
 struct cfdriver scsibuscd = {
@@ -162,7 +162,7 @@ struct cfdriver scsibuscd = {
 int
 scsibusmatch(parent, cf, aux)
         struct device *parent;
-        struct cfdata *cf;
+        void *match;
         void *aux;
 {
 
@@ -321,19 +321,12 @@ scsi_probe_bus(bus, targ, lun)
 }
 
 int
-#ifndef CONFIG_INDIRECT
-scsi_targmatch(parent, cf, aux)
+scsi_targmatch(parent, match, aux)
 	struct device *parent;
-	struct cfdata *cf;
+	void *match;
 	void *aux;
 {
-#else
-scsi_targmatch(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
-{
-	struct cfdata *cf = self->dv_cfdata;
-#endif
+	struct cfdata *cf = match;
 	struct scsi_link *sc_link = aux;
 	char *devname = sc_link->fordriver;
 
