@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.3 1997/08/30 01:51:02 jonathan Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1997/11/28 00:33:53 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -164,8 +164,7 @@ typedef u_long bus_space_handle_t;
  * For now, simply do CPU writebuffer flushes and export the flags
  * to  MI code.
  */
-#define bus_space_barrier(t, h, o, l, f) \
-	((void)  wbflush();
+#define bus_space_barrier(t, h, o, l, f)	wbflush()
 
 #define BUS_BARRIER_READ 	0x01
 #define BUS_BARRIER_WRITE	0x02
