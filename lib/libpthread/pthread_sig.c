@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_sig.c,v 1.16 2003/07/21 22:24:09 nathanw Exp $	*/
+/*	$NetBSD: pthread_sig.c,v 1.17 2003/08/22 17:35:52 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_sig.c,v 1.16 2003/07/21 22:24:09 nathanw Exp $");
+__RCSID("$NetBSD: pthread_sig.c,v 1.17 2003/08/22 17:35:52 nathanw Exp $");
 
 /* We're interposing a specific version of the signal interface. */
 #define	__LIBC12_SOURCE__
@@ -800,7 +800,7 @@ void
 pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 {
 	sigset_t oldmask, *maskp;
-	ucontext_t *uc;
+	ucontext_t *uc, *olduc;
 	struct sigaction act;
 
 	pthread_spinlock(self, &pt_sigacts_lock);
@@ -815,6 +815,11 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	__sigplusset(&target->pt_sigmask, &act.sa_mask);
 	__sigaddset14(&target->pt_sigmask, sig);
 
+	if (target->pt_trapuc) {
+		olduc = target->pt_trapuc;
+		target->pt_trapuc = NULL;
+	} else
+		olduc = target->pt_uc;
 	/*
 	 * We'd like to just pass oldmask to the
 	 * pthread__signal_tramp(), but makecontext() can't reasonably
@@ -823,7 +828,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	 * handler. So we borrow a bit of space from the target's
 	 * stack, which we were adjusting anyway.
 	 */
-	maskp = (sigset_t *)(void *)((char *)(void *)target->pt_uc -
+	maskp = (sigset_t *)(void *)((char *)(void *)olduc -
 	    STACKSPACE - sizeof(sigset_t));
 	*maskp = oldmask;
 
@@ -844,7 +849,7 @@ pthread__deliver_signal(pthread_t self, pthread_t target, int sig, int code)
 	SDPRINTF(("(makecontext %p): target %p: sig: %d %d uc: %p oldmask: %08x\n",
 	    self, target, sig, code, target->pt_uc, maskp->__bits[0]));
 	makecontext(uc, pthread__signal_tramp, 5,
-	    sig, code, act.sa_handler, target->pt_uc, maskp);
+	    sig, code, act.sa_handler, olduc, maskp);
 	target->pt_uc = uc;
 }
 
