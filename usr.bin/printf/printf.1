@@ -1,4 +1,4 @@
-.\"	$NetBSD: printf.1,v 1.13 2001/12/01 16:43:23 wiz Exp $
+.\"	$NetBSD: printf.1,v 1.14 2001/12/08 19:10:43 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -176,7 +176,7 @@ if the output string has fewer characters than the field width it will
 be blank-padded on the left (or right, if the left-adjustment indicator
 has been given) to make up the field width (note that a leading zero
 is a flag, but an embedded zero is part of a field width);
-.It Precision:
+.It Precision :
 An optional period,
 .Sq Cm \&.\& ,
 followed by an optional digit string giving a
@@ -189,7 +189,7 @@ and
 formats, or the maximum number of characters to be printed
 from a string; if the digit string is missing, the precision is treated
 as zero;
-.It Format:
+.It Format :
 A character which indicates the type of format to use (one of
 .Cm diouxXfwEgGbcs ) .
 .El
