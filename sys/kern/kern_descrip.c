@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.115 2003/10/30 07:27:02 provos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.116 2003/11/01 18:47:16 provos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.115 2003/10/30 07:27:02 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.116 2003/11/01 18:47:16 provos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1142,9 +1142,9 @@ fdcopy(struct proc *p)
 	 */
 	if (newfdp->fd_knlistsize != -1) {
 		fpp = newfdp->fd_ofiles;
-		for (i = newfdp->fd_lastfile; i-- >= 0; fpp++) {
+		for (i = 0; i <= newfdp->fd_lastfile; i++, fpp++) {
 			if (*fpp != NULL && (*fpp)->f_type == DTYPE_KQUEUE)
-				*fpp = NULL;
+				fdremove(newfdp, i);
 		}
 		newfdp->fd_knlist = NULL;
 		newfdp->fd_knlistsize = -1;
