@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.43 1997/08/04 10:00:11 fair Exp $	*/
+/*	$NetBSD: ccd.c,v 1.44 1997/10/08 23:06:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -190,6 +190,7 @@ static	int ccdinit __P((struct ccddevice *, char **, struct proc *));
 static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
 static	void ccdbuffer __P((struct ccd_softc *, struct buf *,
 		daddr_t, caddr_t, long, struct ccdbuf **));
+static	void ccdgetdefaultlabel __P((struct ccd_softc *, struct disklabel *));
 static	void ccdgetdisklabel __P((dev_t));
 static	void ccdmakedisklabel __P((struct ccd_softc *));
 static	int ccdlock __P((struct ccd_softc *));
@@ -1093,6 +1094,7 @@ ccdioctl(dev, cmd, data, flag, p)
 	case DIOCWDINFO:
 	case DIOCGPART:
 	case DIOCWLABEL:
+	case DIOCGDEFLABEL:
 		if ((cs->sc_flags & CCDF_INITED) == 0)
 			return (ENXIO);
 	}
@@ -1300,6 +1302,10 @@ ccdioctl(dev, cmd, data, flag, p)
 			cs->sc_flags &= ~CCDF_WLABEL;
 		break;
 
+	case DIOCGDEFLABEL:
+		ccdgetdefaultlabel(cs, (struct disklabel *)data);
+		break;
+
 	default:
 		return (ENOTTY);
 	}
@@ -1413,23 +1419,14 @@ ccdlookup(path, p, vpp)
 	return (0);
 }
 
-/*
- * Read the disklabel from the ccd.  If one is not present, fake one
- * up.
- */
 static void
-ccdgetdisklabel(dev)
-	dev_t dev;
+ccdgetdefaultlabel(cs, lp)
+	struct ccd_softc *cs;
+	struct disklabel *lp;
 {
-	int unit = ccdunit(dev);
-	struct ccd_softc *cs = &ccd_softc[unit];
-	char *errstring;
-	struct disklabel *lp = cs->sc_dkdev.dk_label;
-	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
 	struct ccdgeom *ccg = &cs->sc_geom;
 
 	bzero(lp, sizeof(*lp));
-	bzero(clp, sizeof(*clp));
 
 	lp->d_secperunit = cs->sc_size;
 	lp->d_secsize = ccg->ccg_secsize;
@@ -1453,6 +1450,25 @@ ccdgetdisklabel(dev)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(cs->sc_dkdev.dk_label);
+}
+
+/*
+ * Read the disklabel from the ccd.  If one is not present, fake one
+ * up.
+ */
+static void
+ccdgetdisklabel(dev)
+	dev_t dev;
+{
+	int unit = ccdunit(dev);
+	struct ccd_softc *cs = &ccd_softc[unit];
+	char *errstring;
+	struct disklabel *lp = cs->sc_dkdev.dk_label;
+	struct cpu_disklabel *clp = cs->sc_dkdev.dk_cpulabel;
+
+	bzero(clp, sizeof(*clp));
+
+	ccdgetdefaultlabel(cs, lp);
 
 	/*
 	 * Call the generic disklabel extraction routine.
@@ -1487,6 +1503,8 @@ ccdmakedisklabel(cs)
 	lp->d_partitions[RAW_PART].p_fstype = FS_BSDFFS;
 
 	strncpy(lp->d_packname, "default label", sizeof(lp->d_packname));
+
+	lp->d_checksum = dkcksum(lp);
 }
 
 /*

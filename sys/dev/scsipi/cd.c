@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.103 1997/10/01 01:18:44 enami Exp $	*/
+/*	$NetBSD: cd.c,v 1.104 1997/10/08 23:05:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -94,6 +94,7 @@ int	cdlock __P((struct cd_softc *));
 void	cdunlock __P((struct cd_softc *));
 void	cdstart __P((void *));
 void	cdminphys __P((struct buf *));
+void	cdgetdefaultlabel __P((struct cd_softc *, struct disklabel *));
 void	cdgetdisklabel __P((struct cd_softc *));
 void	cddone __P((struct scsipi_xfer *));
 u_long	cd_size __P((struct cd_softc *, int));
@@ -707,6 +708,10 @@ cdioctl(dev, cmd, addr, flag, p)
 	case DIOCWLABEL:
 		return (EBADF);
 
+	case DIOCGDEFLABEL:
+		cdgetdefaultlabel(cd, (struct disklabel *)addr);
+		return (0);
+
 	case CDIOCPLAYTRACKS: {
 		struct ioc_play_track *args = (struct ioc_play_track *)addr;
 
@@ -878,21 +883,13 @@ cdioctl(dev, cmd, addr, flag, p)
 #endif
 }
 
-/*
- * Load the label information on the named device
- * Actually fabricate a disklabel
- *
- * EVENTUALLY take information about different
- * data tracks from the TOC and put it in the disklabel
- */
 void
-cdgetdisklabel(cd)
+cdgetdefaultlabel(cd, lp)
 	struct cd_softc *cd;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = cd->sc_dk.dk_label;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = cd->params.blksize;
 	lp->d_ntracks = 1;
@@ -921,6 +918,24 @@ cdgetdisklabel(cd)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+/*
+ * Load the label information on the named device
+ * Actually fabricate a disklabel
+ *
+ * EVENTUALLY take information about different
+ * data tracks from the TOC and put it in the disklabel
+ */
+void
+cdgetdisklabel(cd)
+	struct cd_softc *cd;
+{
+	struct disklabel *lp = cd->sc_dk.dk_label;
+
+	bzero(cd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	cdgetdefaultlabel(cd, lp);
 }
 
 /*

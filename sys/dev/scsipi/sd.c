@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.118 1997/10/01 01:19:17 enami Exp $	*/
+/*	$NetBSD: sd.c,v 1.119 1997/10/08 23:05:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -118,6 +118,7 @@ void	sdattach __P((struct device *, struct device *, void *));
 int	sdlock __P((struct sd_softc *));
 void	sdunlock __P((struct sd_softc *));
 void	sdminphys __P((struct buf *));
+void	sdgetdefaultlabel __P((struct sd_softc *, struct disklabel *));
 void	sdgetdisklabel __P((struct sd_softc *));
 void	sdstart __P((void *));
 void	sddone __P((struct scsipi_xfer *));
@@ -767,6 +768,10 @@ sdioctl(dev, cmd, addr, flag, p)
 		return ((sd->sc_link->flags & SDEV_REMOVABLE) == 0 ? ENOTTY :
 		    scsipi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
+	case DIOCGDEFLABEL:
+		sdgetdefaultlabel(sd, (struct disklabel *)addr);
+		return (0);
+
 	default:
 		if (SDPART(dev) != RAW_PART)
 			return (ENOTTY);
@@ -778,28 +783,19 @@ sdioctl(dev, cmd, addr, flag, p)
 #endif
 }
 
-/*
- * Load the label information on the named device
- */
 void
-sdgetdisklabel(sd)
+sdgetdefaultlabel(sd, lp)
 	struct sd_softc *sd;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = sd->sc_dk.dk_label;
-	char *errstring;
 
 	bzero(lp, sizeof(struct disklabel));
-	bzero(sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sd->params.blksize;
 	lp->d_ntracks = sd->params.heads;
 	lp->d_nsectors = sd->params.sectors;
 	lp->d_ncylinders = sd->params.cyls;
 	lp->d_secpercyl = lp->d_ntracks * lp->d_nsectors;
-	if (lp->d_secpercyl == 0) {
-		lp->d_secpercyl = 100;
-		/* as long as it's not 0 - readdisklabel divides by it (?) */
-	}
 
 	if (sd->type == T_OPTICAL)
 		strncpy(lp->d_typename, "SCSI optical", 16);
@@ -821,6 +817,27 @@ sdgetdisklabel(sd)
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+
+/*
+ * Load the label information on the named device
+ */
+void
+sdgetdisklabel(sd)
+	struct sd_softc *sd;
+{
+	struct disklabel *lp = sd->sc_dk.dk_label;
+	char *errstring;
+
+	bzero(sd->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	sdgetdefaultlabel(sd, lp);
+
+	if (lp->d_secpercyl == 0) {
+		lp->d_secpercyl = 100;
+		/* as long as it's not 0 - readdisklabel divides by it (?) */
+	}
 
 	/*
 	 * Call the generic disklabel extraction routine

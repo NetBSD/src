@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.54 1997/06/14 08:55:14 thorpej Exp $	*/
+/*	$NetBSD: mcd.c,v 1.55 1997/10/08 23:10:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -189,6 +189,7 @@ struct cfdriver mcd_cd = {
 	NULL, "mcd", DV_DISK
 };
 
+void	mcdgetdefaultlabel __P((struct mcd_softc *, struct disklabel *));
 void	mcdgetdisklabel __P((struct mcd_softc *));
 int	mcd_get_parms __P((struct mcd_softc *));
 void	mcdstrategy __P((struct buf *));
@@ -617,6 +618,10 @@ mcdioctl(dev, cmd, addr, flag, p)
 	case DIOCWLABEL:
 		return EBADF;
 
+	case DIOCGDEFLABEL:
+		mcdgetdefaultlabel(sc, (struct disklabel *)addr);
+		return 0;
+
 	case CDIOCPLAYTRACKS:
 		return mcd_playtracks(sc, (struct ioc_play_track *)addr);
 	case CDIOCPLAYMSF:
@@ -674,18 +679,13 @@ mcdioctl(dev, cmd, addr, flag, p)
 #endif
 }
 
-/*
- * This could have been taken from scsi/cd.c, but it is not clear
- * whether the scsi cd driver is linked in.
- */
 void
-mcdgetdisklabel(sc)
+mcdgetdefaultlabel(sc, lp)
 	struct mcd_softc *sc;
+	struct disklabel *lp;
 {
-	struct disklabel *lp = sc->sc_dk.dk_label;
-	
+
 	bzero(lp, sizeof(struct disklabel));
-	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
 
 	lp->d_secsize = sc->blksize;
 	lp->d_ntracks = 1;
@@ -710,10 +710,25 @@ mcdgetdisklabel(sc)
 	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
 	lp->d_partitions[RAW_PART].p_fstype = FS_ISO9660;
 	lp->d_npartitions = RAW_PART + 1;
-	
+
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
+}
+
+/*
+ * This could have been taken from scsi/cd.c, but it is not clear
+ * whether the scsi cd driver is linked in.
+ */
+void
+mcdgetdisklabel(sc)
+	struct mcd_softc *sc;
+{
+	struct disklabel *lp = sc->sc_dk.dk_label;
+	
+	bzero(sc->sc_dk.dk_cpulabel, sizeof(struct cpu_disklabel));
+
+	mcdgetdefaultlabel(sc, lp);
 }
 
 int
