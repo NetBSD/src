@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.1 1997/09/22 23:37:21 scottr Exp $
+#	$NetBSD: list,v 1.2 1997/09/23 06:12:22 scottr Exp $
 
 # mac68k extra's
 LINK	instbin			sbin/dmesg
@@ -31,7 +31,7 @@ SPECIAL	/bin/rm dev/MAKEDEV
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
 # and the termcap file
-#COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+COPY	${CURDIR}/../mac68k/miniroot/termcap	usr/share/misc/termcap
 
 # copy the kernel
 #COPY	${CURDIR}/../../sys/arch/mac68k/compile/GENERIC/netbsd	netbsd
