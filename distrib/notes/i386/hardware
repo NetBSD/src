@@ -1,4 +1,4 @@
-.\"	$NetBSD: hardware,v 1.97 2001/11/26 02:34:14 jhawk Exp $
+.\"	$NetBSD: hardware,v 1.98 2001/12/01 00:30:13 bouyer Exp $
 .
 .Nx \*V
 runs on ISA (AT-Bus), EISA, MCA, PCI, and VL-bus systems
@@ -412,6 +412,8 @@ LAN Media Corporation DS3/LMC5245 [*] [+]
 .Te 2 "Tape drives"
 .(bullet -compact
 Most SCSI tape drives
+.It
+Seagate and OnStream ATAPI tape drives, possibly others
 .It
 QIC-02 and QIC-36 format (Archive- and Wangtek- compatible) tape drives [*] [+]
 .bullet)
