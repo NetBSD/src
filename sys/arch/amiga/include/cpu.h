@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2000/08/25 01:04:06 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2000/12/19 21:09:55 scw Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -242,11 +242,6 @@ void	setredzone __P((u_int *, caddr_t));
  * Prototypes from pmap.c:
  */
 void	pmap_bootstrap __P((vm_offset_t, vm_offset_t));
-
-/*
- * Prototypes from trap.c:
- */
-void	child_return __P((void *));
 
 #endif /* _KERNEL */
 

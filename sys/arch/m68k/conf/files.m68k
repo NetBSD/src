@@ -1,4 +1,4 @@
-#       $NetBSD: files.m68k,v 1.29 2000/05/14 14:13:55 minoura Exp $
+#       $NetBSD: files.m68k,v 1.30 2000/12/19 21:09:59 scw Exp $
 #
 
 defopt	opt_fpsp.h		FPSP
@@ -19,6 +19,7 @@ file	arch/m68k/m68k/oc_cksum.s		inet
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
+file	arch/m68k/m68k/m68k_syscall.c
 
 file	arch/m68k/m68k/compat_13_machdep.c	compat_13
 
