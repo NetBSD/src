@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	7.4 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.111 1994/07/01 02:58:53 deraadt Exp $
+ *	$Id: machdep.c,v 1.112 1994/07/20 23:01:26 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -532,20 +532,20 @@ check_selectors(u_short cs, u_short ss, u_short ds, u_short es)
 	andl	%%edx,%%eax
 
 	movl	%3,%%edx
-	verr	%%dx
-	jz	2f
 	testl	$0xfffc,%%edx
-	jnz	1f
-2:	andl	%%edx,%%eax
-
-	movl	%4,%%edx
-	verr	%%dx
 	jz	2f
-	testl	$0xfffc,%%edx
+	verr	%%dx
 	jnz	1f
-2:	andl	%%edx,%%eax
+	andl	%%edx,%%eax
 
-	andl	$3,%%eax
+2:	movl	%4,%%edx
+	testl	$0xfffc,%%edx
+	jz	2f
+	verr	%%dx
+	jnz	1f
+	andl	%%edx,%%eax
+
+2:	andl	$3,%%eax
 	subl	$3,%%eax
 	jmp	3f
 1:	movl	$1,%%eax
