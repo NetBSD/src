@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.47 2000/02/19 04:16:18 nisimura Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.48 2000/02/19 09:43:40 nisimura Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2000/02/19 04:16:18 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.48 2000/02/19 09:43:40 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,14 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.47 2000/02/19 04:16:18 nisimura Exp $
 #include <machine/sysconf.h>
 
 #include <pmax/dev/device.h>
+
+#include "rz.h"
+#include "xasc_ioasic.h"
+#include "xasc_pmaz.h"
+
+#if NRZ > 0 && (NXASC_PMAZ + NXASC_IOASIC) > 0
+#error  MI SCSI can not coexist with pmax old SCSI.
+#endif
 
 struct intrhand intrtab[MAX_INTR_COOKIES];
 struct device *booted_device;
@@ -78,9 +86,10 @@ cpu_configure()
 
 	/* Configuration is finished, turn on interrupts. */
 	_splnone();	/* enable all source forcing SOFT_INTs cleared */
-
+#if NRZ > 0
 	printf("Beginning old-style SCSI device autoconfiguration\n");
 	configure_scsi();
+#endif
 }
 
 /*
@@ -124,6 +133,7 @@ makebootdev(cp)
 void
 cpu_rootconf()
 {
+#if NRZ > 0
 	struct device *dv;
 	char name[4];
 
@@ -138,8 +148,40 @@ cpu_rootconf()
 			break;
 		}
 	}
+#endif
 	printf("boot device: %s\n",
 	    booted_device ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, booted_partition);
 }
+
+#if (NXASC_PMAZ + NXASC_IOASIC) > 0
+
+#include <dev/scsipi/scsipi_all.h>
+#include <dev/scsipi/scsiconf.h>
+#include <sys/disk.h>
+
+struct xx_softc {
+	struct device sc_dev;
+	struct disk sc_dk;
+	int flag;
+	struct scsipi_link *sc_link;
+};	
+#define	SCSITARGETID(dev) ((struct xx_softc *)dev)->sc_link->scsipi_scsi.target
+
+int slot_in_progress; /* XXX - TC slot being probed, ugly backdoor interface */
+
+void
+dk_establish(dk, dev)
+	struct disk *dk;
+	struct device *dev;
+{
+	if (booted_device || strcmp(booted_protocol, "SCSI"))
+		return;
+	if (booted_slot != slot_in_progress)
+		return;
+	if (booted_unit != SCSITARGETID(dev))
+		return;
+	booted_device = dev;
+}
+#endif
