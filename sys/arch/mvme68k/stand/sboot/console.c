@@ -120,7 +120,7 @@ void puts ( char * str )
  * ngets: get string from console 
  */
 
-void ngets ( char * str, int size )
+char *ngets ( char * str, int size )
 {
   int i = 0;
   while ( (i < size - 1) && (str[i] = cngetc()) != '\r') {
@@ -135,5 +135,6 @@ void ngets ( char * str, int size )
   }
   puts("\n");
   str[i] = '\0';
+  return(&str[i]);
 }
 
