@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_cd9660.c,v 1.8 1999/06/25 19:28:35 perseant Exp $	*/
+/*	$NetBSD: mount_cd9660.c,v 1.9 1999/07/13 11:12:49 scw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -50,7 +50,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_cd9660.c	8.7 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mount_cd9660.c,v 1.8 1999/06/25 19:28:35 perseant Exp $");
+__RCSID("$NetBSD: mount_cd9660.c,v 1.9 1999/07/13 11:12:49 scw Exp $");
 #endif
 #endif /* not lint */
 
@@ -86,13 +86,16 @@ main(argc, argv)
 	char *dev, *dir;
 
 	mntflags = opts = 0;
-	while ((ch = getopt(argc, argv, "ego:r")) != -1)
+	while ((ch = getopt(argc, argv, "egjo:r")) != -1)
 		switch (ch) {
 		case 'e':
 			opts |= ISOFSMNT_EXTATT;
 			break;
 		case 'g':
 			opts |= ISOFSMNT_GENS;
+			break;
+		case 'j':
+			opts |= ISOFSMNT_NOJOLIET;
 			break;
 		case 'o':
 			getmntopts(optarg, mopts, &mntflags, 0);
