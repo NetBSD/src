@@ -24,12 +24,37 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.3 1993/10/15 06:01:06 deraadt Exp $
+ *	$Id: exec.h,v 1.4 1993/10/18 09:47:42 pk Exp $
  */
 
 #ifndef _SPARC_EXEC_H_
 #define _SPARC_EXEC_H_
 
 #define __LDPGSZ	8192	/* linker page size */
+
+enum reloc_type {
+	RELOC_8,	RELOC_16, 	RELOC_32,
+	RELOC_DISP8,	RELOC_DISP16,	RELOC_DISP32,
+	RELOC_WDISP30	RELOC_WDISP22,
+	RELOC_HI22,	RELOC_22,
+	RELOC_13,	RELOC_LO10,
+	RELOC_UNUSED1,	RELOC_UNUSED2,
+	RELOC_BASE10,	RELOC_BASE13,	RELOC_BASE22,
+	RELOC_PC10,	RELOC_PC22,
+	RELOC_JMP_TBL,
+	RELOC_UNUSED3,
+	RELOC_GLOB_DAT,	RELOC_JMP_SLOT,	RELOC_RELATIVE,
+};
+
+/* Relocation format. */
+struct relocation_info_sparc {
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+				 :  2,	/* unused bits */
+	  enum reloc_type r_type :  5;	/* relocation type time copy */
+	long r_addend;			/* relocation addend */
+};
+#define relocation_info	relocation_info_sparc
 
 #endif  /* _SPARC_EXEC_H_ */

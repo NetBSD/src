@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: exec.h,v 1.4 1993/08/19 14:34:25 mycroft Exp $
+ *	$Id: exec.h,v 1.5 1993/10/18 09:47:16 pk Exp $
  */
 
 #ifndef _HP300_EXEC_H_
@@ -58,5 +58,21 @@ int cpu_exec_makecmds __P((struct proc *p, struct exec_package *epp));
 #endif
 
 #endif /* KERNEL */
+
+#define __LDPGSZ	4096
+
+/* Relocation format. */
+struct relocation_info_hp300 {
+	int r_address;			/* offset in text or data segment */
+	unsigned int r_symbolnum : 24,	/* ordinal number of add symbol */
+			 r_pcrel :  1,	/* 1 if value should be pc-relative */
+			r_length :  2,	/* log base 2 of value's width */
+			r_extern :  1,	/* 1 if need to add symbol to value */
+		       r_baserel :  1,	/* linkage table relative */
+		      r_jmptable :  1,	/* relocate to jump table */
+		      r_relative :  1,	/* load address relative */
+			  r_copy :  1;	/* run time copy */
+};
+#define relocation_info	relocation_info_hp300
 
 #endif  /* _HP300_EXEC_H_ */
