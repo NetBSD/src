@@ -1,9 +1,10 @@
-.\" Copyright (c) 1990, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1990, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
 .\"
 .\" This code is derived from software contributed to Berkeley by
 .\" the Systems Programming Group of the University of Utah Computer
 .\" Science Department.
+.\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
 .\" are met:
@@ -32,9 +33,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     @(#)cons.4	5.2 (Berkeley) 3/27/91
+.\"     @(#)cons.4	8.1 (Berkeley) 6/9/93
 .\"
-.Dd March 27, 1991
+.Dd June 9, 1993
 .Dt CONS 4 hp300
 .Os
 .Sh NAME
@@ -67,11 +68,6 @@ console in that order.
 .Sh SEE ALSO
 .Xr tty 4 ,
 .Xr reboot 8
-.Sh HISTORY
-The
-.Nm
-device
-.Ud
 .Sh BUGS
 You should be able to specify potential console devices at
 .Xr config 8
