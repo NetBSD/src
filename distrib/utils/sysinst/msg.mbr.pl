@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mbr.pl,v 1.4 2003/06/14 12:58:45 dsl Exp $	*/
+/*	$NetBSD: msg.mbr.pl,v 1.5 2003/06/27 22:20:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -130,9 +130,11 @@ message ovrwrite
 nadpisac z NetBSD?
 }
 
+.if 0
 message parttable
 {Aktualnie tablica partycji na twoim dysku wyglada tak:
 }
+.endif
 
 message editpart
 {Edytujesz partycje %d. Podswietlona partycja to ta, ktora edytujesz.
@@ -215,7 +217,7 @@ message dofdisk
 }
 
 message wmbrfail
-{Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.} 
+{Nadpisanie MBR nie powiodlo sie. Nie moge kontynuowac.}
 
 .if BOOTSEL
 message installbootsel
