@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.1.2.4 1999/01/31 06:44:26 minoura Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.1.2.5 1999/02/02 23:44:59 minoura Exp $	*/
 
 /*
  *
@@ -132,6 +132,34 @@ extern u_int8_t *intiobase;
 	(intio_sysport[sysport_waitctrl])
 #define intio_get_sysport_mpustat() \
 	(intio_sysport[sysport_mpustat])
+
+/* I/O controler (sicilian/pluto) */
+#define INTIO_SICILIAN		(0x00e9c000)
+#define intio_sicilian		INTIO_ADDR(INTIO_SICILIAN)
+#define sicilian_intr		1
+#define sicilian_ivec		3
+
+#define intio_get_sicilian_intr() \
+	(intio_sicilian[sicilian_intr])
+#define intio_set_sicilian_intr(a) \
+	intio_sicilian[sicilian_intr] = (a)
+#define SICILIAN_INTR_PAR 0x01
+#define SICILIAN_INTR_FDD 0x02
+#define SICILIAN_INTR_FDC 0x04
+#define SICILIAN_INTR_HDD 0x08
+#define SICILIAN_STAT_HDD 0x10
+#define SICILIAN_STAT_PAR 0x20
+#define SICILIAN_STAT_FDD 0x40
+#define SICILIAN_STAT_FDC 0x80
+
+#define intio_enable_intr(a) \
+	intio_sicilian[sicilian_intr] = ((a) | intio_sicilian[sicilian_intr])
+#define intio_disable_intr(a) \
+	intio_sicilian[sicilian_intr] = (~(a) & intio_sicilian[sicilian_intr])
+
+#define intio_set_sicilian_ivec(a) \
+	intio_sicilian[sicilian_ivec] = (a)
+void intio_set_ivec __P((int));
 
 struct intio_dma_cookie {
 	int	id_flags;		/* flags; see below */

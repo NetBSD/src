@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.1.2.4 1999/01/31 06:44:26 minoura Exp $	*/
+/*	$NetBSD: intio.c,v 1.1.2.5 1999/02/02 23:44:58 minoura Exp $	*/
 
 /*
  *
@@ -254,11 +254,11 @@ intio_print(aux, name)
 /*	if (ia->ia_addr > 0)	*/
 		printf (" addr 0x%06x", ia->ia_addr);
 	if (ia->ia_intr > 0)
-		printf (" interrupting at 0x%02x", ia->ia_intr);
+		printf (" intr 0x%02x", ia->ia_intr);
 	if (ia->ia_dma >= 0) {
 		printf (" using DMA ch%d", ia->ia_dma);
 		if (ia->ia_dmaintr > 0)
-			printf (" interrupting at 0x%02x and 0x%02x",
+			printf (" intr 0x%02x and 0x%02x",
 				ia->ia_dmaintr, ia->ia_dmaintr+1);
 	}
 
@@ -312,6 +312,7 @@ intio_alloc_system_ports(sc)
 	struct intio_softc *sc;
 {
 	extent_alloc_region (sc->sc_map, INTIO_SYSPORT, 16, 0);
+	extent_alloc_region (sc->sc_map, INTIO_SICILIAN, 0x2000, 0);
 }
 
 
@@ -409,6 +410,22 @@ intio_intr (frame)
 	return (*(iiv[vector].iiv_handler)) (iiv[vector].iiv_arg);
 }
 
+/*
+ * Intio I/O controler interrupt
+ */
+static intio_ivec = 0;
+void
+intio_set_ivec (vec)
+	int vec;
+{
+	vec &= 0xfc;
+
+	if (intio_ivec && intio_ivec != (vec & 0xfc))
+		panic ("Wrong interrupt vector for Sicilian.");
+
+	intio_ivec = vec;
+	intio_set_sicilian_ivec(vec);
+}
 
 
 /*
