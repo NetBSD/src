@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.6 1997/04/04 15:35:59 augustss Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.7 1998/01/15 14:52:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -36,6 +36,8 @@
 
 struct linux_sys_ioctl_args;
 int linux_machdepioctl __P((struct proc *, void *, register_t *));
+int linux_ioctl_cdrom __P((struct proc *, struct linux_sys_ioctl_args *,
+    register_t *));
 int linux_ioctl_termios __P((struct proc *, struct linux_sys_ioctl_args *,
     register_t *));
 int linux_ioctl_socket __P((struct proc *, struct linux_sys_ioctl_args *,
