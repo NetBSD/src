@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.0,v 1.1.2.13 2004/03/31 09:21:05 grant Exp $
+#	$NetBSD: CHANGES-2.0,v 1.1.2.14 2004/03/31 18:21:31 tron Exp $
 
 A complete list of changes from the initial NetBSD 2.0 branch on 28 March 2004
 until 2.0 release:
@@ -140,3 +140,24 @@ usr.bin/gzip/gzip.c				1.31
 	use off_t instead of ssize_t in a few places.
 	fix "gzip -l" in -DSMALL (it wasn't doing a stat(2)).
 	[mrg, ticket #22]
+
+sys/uvm/uvm_map.c				1.165
+
+	uvm_map_findspace: don't return unaligned address if alignment is
+	specified. discussed on tech-kern@.
+	[yamt, ticket #23]
+
+usr.bin/find/find.1				1.48
+usr.bin/find/find.c				1.19
+
+	Do not skip whiteout files returned by fts_read(), which only returns
+	them if requested. Patch from Dave Huang in PR bin/5419.
+	Mention -type w, which is coded as a synonym for W (whitespace).
+	[heas, ticket #25]
+
+usr.bin/calendar/calendars/calendar.birthday	1.16
+
+	Tweak change for Asimov's entry some. Restore reference to
+	Russian SFSR, but note that it's now Russia, not part of the USSR.
+	[wrstuden, ticket #26]
+
