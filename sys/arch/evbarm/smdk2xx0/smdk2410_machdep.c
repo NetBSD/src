@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.5 2003/08/27 03:46:05 bsh Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.6 2003/08/29 13:46:38 bsh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.5 2003/08/27 03:46:05 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.6 2003/08/29 13:46:38 bsh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -362,6 +362,8 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 #define ioreg_write8(a,v)  (*(volatile uint8_t *)(a)=(v))
+#define	ioreg_read32(a)  	(*(volatile uint32_t *)(a))
+#define	ioreg_write32(a,v)  	(*(volatile uint32_t *)(a)=(v))
 
 /*
  * u_int initarm(...)
@@ -403,6 +405,21 @@ initarm(void *arg)
 #define __LED(x)  (pdatf = (pdatf & ~0xf0) | (~(x) & 0xf0))
 
 	LEDSTEP();
+
+	/* CS8900A on CS3 and CL-PD7610 need nBE1 signal. make sure
+	 * memory controller is set correctly.  (USB download firmware
+	 * doesn't do this right) Also, we use WAIT signal for them.
+	 */
+	ioreg_write32(S3C2410_MEMCTL_BASE + MEMCTL_BWSCON, 
+	    (BWSCON_ST|BWSCON_WS) << BWSCON_BANK_SHIFT(2) |
+	    (BWSCON_ST|BWSCON_WS) << BWSCON_BANK_SHIFT(3) | 
+	    ioreg_read32(S3C2410_MEMCTL_BASE + MEMCTL_BWSCON));
+	/* tweak access timing for CS8900A */
+	ioreg_write32(S3C2410_MEMCTL_BASE + MEMCTL_BANKCON(3),
+	    (0<<BANKCON_TACS_SHIFT)|(1<<BANKCON_TCOS_SHIFT)|
+	    (7<<BANKCON_TACC_SHIFT)|(0<<BANKCON_TOCH_SHIFT)|
+	    (0<<BANKCON_TCAH_SHIFT));
+
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
 	 */
