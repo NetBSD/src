@@ -42,7 +42,7 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: autoconf.c,v 1.32 93/05/28 03:55:59 torek Exp  (LBL)
- * $Id: autoconf.c,v 1.4 1993/11/24 02:30:56 deraadt Exp $
+ * $Id: autoconf.c,v 1.5 1993/11/25 00:14:19 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -69,7 +69,7 @@
  * the configuration process, and are used in initializing
  * the machine.
  */
-int	cold;		/* if 1, still working on cold-start */
+extern	int cold;	/* if 1, still working on cold-start */
 int	dkn;		/* number of iostat dk numbers assigned so far */
 int	fbnode;		/* node ID of ROM's console frame buffer */
 int	optionsnode;	/* node ID of ROM's options */
@@ -289,9 +289,6 @@ configure()
 	(void)spl0();
 	if (bootdv)
 		printf("Found boot device %s\n", bootdv->dv_xname);
-	setroot();
-	swapconf();
-	dumpconf();
 	cold = 0;
 }
 
