@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.41 1998/09/08 23:50:14 thorpej Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.42 1998/10/19 22:19:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,6 +46,7 @@
 #include "opt_insecure.h"
 #include "opt_shortcorename.h"
 #include "opt_uvm.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

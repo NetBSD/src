@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.59 1998/09/18 18:48:22 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.60 1998/10/19 22:19:26 tron Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
+#include "opt_sysv.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
