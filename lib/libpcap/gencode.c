@@ -1,4 +1,4 @@
-/*	$NetBSD: gencode.c,v 1.32 2002/09/22 16:13:01 thorpej Exp $	*/
+/*	$NetBSD: gencode.c,v 1.33 2002/12/19 16:33:47 hannken Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -26,7 +26,7 @@
 static const char rcsid[] =
     "@(#) Header: gencode.c,v 1.93 97/06/12 14:22:47 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: gencode.c,v 1.32 2002/09/22 16:13:01 thorpej Exp $");
+__RCSID("$NetBSD: gencode.c,v 1.33 2002/12/19 16:33:47 hannken Exp $");
 #endif
 #endif
 
@@ -79,6 +79,10 @@ struct rtentry;
 /* Locals */
 static jmp_buf top_ctx;
 static pcap_t *bpf_pcap;
+
+/* Hack for updating VLAN offsets. */
+static u_int	orig_linktype = (u_int)-1;
+static u_int	orig_nl = (u_int)-1;
 
 /* XXX */
 #ifdef PCAP_FDDIPAD
@@ -547,6 +551,8 @@ init_linktype(type)
 	int type;
 {
 	linktype = type;
+	orig_linktype = -1;
+	orig_nl = -1;
 
 	if (DLT_IS_RAWAF(type)) {
 		off_linktype = -1;
@@ -3038,4 +3044,50 @@ gen_ahostop(eaddr, dir)
 	}
 	abort();
 	/* NOTREACHED */
+}
+
+/*
+ * support IEEE 802.1Q VLAN trunk over ethernet
+ */
+struct block *
+gen_vlan(vlan_num)
+	int vlan_num;
+{
+	struct	block	*b0;
+
+	/*
+	 * Change the offsets to point to the type and data fields within
+	 * the VLAN packet.  This is somewhat of a kludge.
+	 */
+	if (orig_nl == (u_int)-1) {
+		orig_linktype = off_linktype;	/* save original values */
+		orig_nl = off_nl;
+
+		switch (linktype) {
+
+		case DLT_EN10MB:
+			off_linktype = 16;
+			off_nl = 18;
+			break;
+
+		default:
+			bpf_error("no VLAN support for data link type %d",
+				  linktype);
+			/*NOTREACHED*/
+		}
+	}
+
+	/* check for VLAN */
+	b0 = gen_cmp(orig_linktype, BPF_H, (bpf_int32)ETHERTYPE_8021Q);
+
+	/* If a specific VLAN is requested, check VLAN id */
+	if (vlan_num >= 0) {
+		struct block *b1;
+
+		b1 = gen_cmp(orig_nl, BPF_H, (bpf_int32)vlan_num);
+		gen_and(b0, b1);
+		b0 = b1;
+	}
+
+	return (b0);
 }
