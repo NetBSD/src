@@ -1,4 +1,4 @@
-/*	$NetBSD: lockd_lock.c,v 1.9 2002/07/10 23:16:34 wiz Exp $	*/
+/*	$NetBSD: lockd_lock.c,v 1.10 2002/07/26 01:00:46 wiz Exp $	*/
 
 /*
  * Copyright (c) 2000 Manuel Bouyer.
@@ -597,7 +597,7 @@ do_unlock(rfl)
 	int error;
 	int lockst;
 
-	/* unlock the file: closing is enouth ! */
+	/* unlock the file: closing is enough ! */
 	if (close(rfl->fd) < 0) {
 		if (errno == ESTALE)
 			error = nlm4_stale_fh;
