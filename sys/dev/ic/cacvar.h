@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.2 2000/03/16 15:07:22 ad Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.3 2000/04/26 15:58:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,8 +41,8 @@
 
 #include "locators.h"
 
-#define	CAC_MAX_CCBS	64
-#define	CAC_MAX_XFER	1048576
+#define	CAC_MAX_CCBS	20
+#define	CAC_MAX_XFER	(0xffff * 512)
 #define CAC_SG_SIZE	32
 
 struct cac_softc;
