@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.30 2002/09/17 23:18:32 thorpej Exp $
+#	$NetBSD: Makefile,v 1.31 2003/03/01 13:08:42 mrg Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKBFD} != "no"
-SUBDIR+= libbfd libiberty
+SUBDIR+= libopcodes libbfd libiberty
 .endif
 
 .if ${MKGCC} != "no"
