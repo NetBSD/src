@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-1.6.1,v 1.1.2.93 2003/01/27 07:10:48 jmc Exp $
+#	$NetBSD: CHANGES-1.6.1,v 1.1.2.94 2003/01/28 06:32:03 jmc Exp $
 
 A complete list of changes from NetBSD 1.6 to NetBSD 1.6.1:
 
@@ -3372,3 +3372,73 @@ sys/arch/shark/shark/shark_machdep.c		1.10-1.11
 	If booted_kernel ends in .aout, remove it, to help libkvm find 
 	an ELF kernel.
 	[toddpw, ticket #1081]
+
+sys/dev/ic/i82586.c				1.44-1.46
+
+	Use a properly zero'd buffer to pad the packet to 
+	ETHER_MIN_LEN-ETHER_CRC_LEN.
+	[bouyer, ticket #1085]
+
+sys/arch/acorn32/podulebus/if_ie.c		1.10-1.11
+
+	Bzero the part of the buffer used to pad the packet to
+	ETHER_MIN_LEN - ETHER_CRC_LEN.
+	[bouyer, ticket #1120]
+
+sys/arch/amiga/dev/if_ed.c			1.42-1.44
+
+	Bzero the part of the buffer used to pad the packet to
+	ETHER_MIN_LEN - ETHER_CRC_LEN.
+	Pass proper len to word_zero().
+	Bump totlen in the last wantsbyte case, so that it's always even.
+	[bouyer, ticket #1121]
+
+sys/arch/sun2/dev/if_ec.c			1.6-1.7
+
+	Bzero the part of the buffer used to pad the packet to
+	ETHER_MIN_LEN - ETHER_CRC_LEN.
+	[bouyer, ticket #1122]
+
+sys/arch/sun3/dev/if_ie.c			1.37-1.38
+
+	Bzero the part of the buffer used to pad the packet to
+	ETHER_MIN_LEN - ETHER_CRC_LEN.
+	[bouyer, ticket #1123]
+
+sys/arch/mac68k/dev/if_ae.c			1.73-1.74
+
+	We want bus_space_set_region_2(), not _1() here.
+	[bouyer, ticket #1124]
+
+sys/arch/next68k/dev/mb8795.c			1.11-1.12 of 
+						sys/arch/next68k/dev/if_xe.c
+						(patch provided)
+
+	Bzero the part of the buffer used to pad the packet to
+	ETHER_MIN_LEN - ETHER_CRC_LEN.
+	[bouyer, ticket #1125]
+
+lib/libc/rpc/xdr_rec.c				1.20-1.21
+
+	Reset in_reclen and in_received after having received a full record 
+	in the nonblocking case.
+	[fvdl, ticket #1127]
+
+sys/dev/pci/if_bge.c				1.1-1.19,1.22-1.27 (hand gen'd)
+sys/dev/pci/if_bgereg.h				1.1-1.6 (hand gen'd)
+sys/dev/pci/files.pci				1.174-1.175
+sys/dev/pci/pcidevs				1.442-1.443,1.444-1.445,
+						1.452-1.453,1.491-1.492,
+						1.496-1.497
+sys/dev/pci/pcidevs.h				1.433.2.17-1.433.2.18 (regen)
+sys/dev/pci/pcidevs_data.h			1.431.2.17-1.431.2.18 (regen)
+sys/dev/mii/brgphy.c				1.9-1.10,1.13-1.16
+sys/dev/mii/brgphyreg.h				1.1-1.2
+sys/dev/mii/miidevs				1.42-1.44
+sys/dev/mii/miidevs.h				1.37.4.2-1.37.4.3 (regen)
+sys/dev/mii/miidevs_data.h			1.27.4.2-1.27.4.3 (regen)
+sys/arch/i386/conf/GENERIC			1.496-1.497
+sys/arch/i386/conf/INSTALL			1.196-1.197
+
+	Pullup support for bge device. (Broadcom Gigabit Ethernet)
+	[fvdl, ticket #1126]
