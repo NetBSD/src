@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.40.6.1 2000/07/23 03:49:30 itojun Exp $	*/
+/*	$NetBSD: param.h,v 1.40.6.2 2001/04/06 00:36:52 he Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -123,6 +123,13 @@
 #else
 #define	NMBCLUSTERS	256		/* map size, max cluster allocation */
 #endif
+#endif
+
+#ifndef NFS_RSIZE
+#define NFS_RSIZE	32768
+#endif
+#ifndef NFS_WSIZE
+#define NFS_WSIZE	32768
 #endif
 
 /*
