@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.1 1997/03/14 02:40:31 perry Exp $
+#	$NetBSD: Makefile,v 1.2 1997/03/14 04:59:41 thorpej Exp $
 
-S= ../../../../
+S=	${.CURDIR}/../../../../
 
 PROG= netboot
 NOMAN=
