@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.2 2001/11/01 22:55:25 thorpej Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 2001/11/02 20:24:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -196,8 +196,8 @@ main()
 		    bootprog_maker[], bootprog_date[];
 	int chosen, options;
 	char bootline[512];		/* Should check size? */
-	char *cp;
-	u_long marks[MARK_MAX];
+	char *cp, *startbuf, *endbuf;
+	u_long marks[MARK_MAX], size;
 	u_int32_t entry;
 	void *ssym, *esym;
 
@@ -219,6 +219,22 @@ main()
 	parseargs(bootline, &boothowto);
 	DPRINTF("bootline=%s\n", bootline);
 
+	/*
+	 * Per the ARM OpenFirmware bindings, the firmware must
+	 * allocate and map at least 6MB of physical memory starting
+	 * at VA 0xf0000000.  We have been loaded at 0xf0000000,
+	 * and the memory after us has been unmapped and freed.
+	 * We expect to load the kernel at 0xf0100000, so we will
+	 * allocate 5MB of virtual memory starting there, and
+	 * unmap/free what we don't use.
+	 */
+	startbuf = OF_claim((void *) 0xf0100000, (5 * 1024 * 1024), 0);
+	if (startbuf != (void *) 0xf0100000) {
+		printf("Unable to claim buffer for kernel\n");
+		OF_exit();
+	}
+	endbuf = startbuf + (5 * 1024 * 1024);
+
 	for (;;) {
 		int i;
 
@@ -236,7 +252,7 @@ main()
 		for (i = 0; kernels[i]; i++) {
 			DPRINTF("Trying %s\n", kernels[i]);
 
-			marks[MARK_START] = 0;
+			marks[MARK_START] = 0xf0100000;
 			if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
 				goto loaded;
 		}
@@ -244,6 +260,14 @@ main()
 		boothowto |= RB_ASKNAME;
 	}
  loaded:
+	/*
+	 * Okay, kernel is loaded, free the extra memory at the end.
+	 * Round to the ARM OpenFirmare page size (4k).
+	 */
+	cp = (char *) ((marks[MARK_END] + 0xfff) & ~0xfff);
+	size = (u_long) (endbuf - cp);
+	if (size)
+		OF_release(cp, size);
 
 #ifdef	__notyet__
 	OF_setprop(chosen, "bootpath", opened_name, strlen(opened_name) + 1);
