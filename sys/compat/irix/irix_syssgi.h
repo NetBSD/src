@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_syssgi.h,v 1.4 2002/03/25 20:42:50 manu Exp $ */
+/*	$NetBSD: irix_syssgi.h,v 1.5 2002/10/13 22:13:48 manu Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,14 @@
 
 #ifndef _IRIX_SYSSGI_H_
 #define _IRIX_SYSSGI_H_
+
+/* From IRIX's <sys/systeminfo.h> */
+#define IRIX_MAX_SERIAL_SIZE 16
+struct irix_module_info_s {
+	__uint64_t serial_num;
+	int mod_num;
+	char serial_str[IRIX_MAX_SERIAL_SIZE];
+};
 
 #define IRIX_MAPELF_RELOCATE		0x4000000
 
@@ -420,6 +428,5 @@
 #define IRIX_PC_ABI_ASYNC_IO		65
 #define IRIX_PC_ABI_AIO_XFER_MAX	66
 #define IRIX_PC_FILESIZEBITS		67
-
 
 #endif /* _IRIX_TYPES_H_ */
