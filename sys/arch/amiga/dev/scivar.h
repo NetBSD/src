@@ -1,4 +1,4 @@
-/*	$NetBSD: scivar.h,v 1.9 1996/04/21 21:12:26 veego Exp $	*/
+/*	$NetBSD: scivar.h,v 1.10 1996/04/28 06:41:01 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -70,9 +70,9 @@ struct	sci_softc {
 	volatile u_char	*sci_irecv;	/* w: Start dma receive, initiator */
 
 	/* psuedo DMA transfer */
-	int	(*dma_xfer_in) ();
+	int	(*dma_xfer_in) __P((struct sci_softc *, int, u_char *, int));
 	/* psuedo DMA transfer */
-	int	(*dma_xfer_out) ();
+	int	(*dma_xfer_out) __P((struct sci_softc *, int, u_char *, int));
 	u_char	sc_flags;
 	u_char	sc_lun;
 	/* one for each target */
