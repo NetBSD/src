@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.53 2001/10/26 05:56:11 lukem Exp $	*/
+/*	$NetBSD: fstat.c,v 1.54 2001/11/25 18:49:02 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.53 2001/10/26 05:56:11 lukem Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.54 2001/11/25 18:49:02 jdolecek Exp $");
 #endif
 #endif /* not lint */
 
@@ -937,10 +937,12 @@ ptrans(fp, cpipe, i)
 	}
 
 	/* pipe descriptor is either read or write, never both */
-	printf("* pipe %p %s %p %c", cpipe,
+	printf("* pipe %p %s %p %s%s%s", cpipe,
 		(fp->f_flag & FWRITE) ? "->" : "<-",
 		cp.pipe_peer,
-		(fp->f_flag & FWRITE) ? 'w' : 'r');
+		(fp->f_flag & FWRITE) ? "w" : "r",
+		(fp->f_flag & FNONBLOCK) ? "n" : "",
+		(cp.pipe_state & PIPE_ASYNC) ? "a" : "");
 	printf("\n");
 	return;
 bad:
