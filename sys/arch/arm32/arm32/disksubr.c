@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.11 1998/06/08 20:21:17 mark Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.12 2000/01/18 19:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -74,8 +74,6 @@
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <sys/disk.h>
-
-#define	b_cylin	b_resid
 
 /*
  * Attempt to read a disk label from a device
@@ -164,7 +162,7 @@ readdisklabel(dev, strat, lp, osdep)
 /*	printf("Reading disklabel addr=%08x\n", netbsdpartoff * DEV_BSIZE);*/
   
 	bp->b_blkno = netbsdpartoff + LABELSECTOR;
-	bp->b_cylin = bp->b_blkno / lp->d_secpercyl;
+	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -209,7 +207,7 @@ readdisklabel(dev, strat, lp, osdep)
 			else
 				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
 			bp->b_bcount = lp->d_secsize;
-			bp->b_cylin = lp->d_ncylinders - 1;
+			bp->b_cylinder = lp->d_ncylinders - 1;
 			(*strat)(bp);
 
 			/* if successful, validate, otherwise try another */
@@ -352,7 +350,7 @@ writedisklabel(dev, strat, lp, osdep)
 	/* next, dig out disk label */
 
 	bp->b_blkno = netbsdpartoff + LABELSECTOR;
-	bp->b_cylin = cyl;
+	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
 	(*strat)(bp);
@@ -427,7 +425,7 @@ bounds_check_with_label(bp, lp, wlabel)
 	}
 
 	/* calculate cylinder for disksort to order transfers with */
-	bp->b_cylin = (bp->b_blkno + p->p_offset) /
+	bp->b_cylinder = (bp->b_blkno + p->p_offset) /
 	    (lp->d_secsize / DEV_BSIZE) / lp->d_secpercyl;
 	return (1);
 

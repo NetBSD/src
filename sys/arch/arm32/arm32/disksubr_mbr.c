@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr_mbr.c,v 1.3 1999/01/29 21:20:22 matthias Exp $	*/
+/*	$NetBSD: disksubr_mbr.c,v 1.4 2000/01/18 19:36:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -78,8 +78,6 @@
 
 #include "opt_mbr.h"
 
-#define	b_cylin	b_resid
-
 #define MBRSIGOFS 0x1fe
 static char mbrsig[2] = {0x55, 0xaa};
 
@@ -119,7 +117,7 @@ mbr_label_read(dev, strat, lp, osdep, msgp, cylp, netbsd_label_offp)
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	/* if successful, wander through dos partition table */
@@ -231,7 +229,7 @@ mbr_label_locate(dev, strat, lp, osdep, cylp, netbsd_label_offp)
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_BUSY | B_READ;
-	bp->b_cylin = MBR_BBSECTOR / lp->d_secpercyl;
+	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
 	if ((rv = biowait(bp)) != 0) {
