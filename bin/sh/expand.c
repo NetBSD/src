@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.66 2004/06/26 22:09:49 dsl Exp $	*/
+/*	$NetBSD: expand.c,v 1.67 2004/07/13 15:05:59 seb Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.66 2004/06/26 22:09:49 dsl Exp $");
+__RCSID("$NetBSD: expand.c,v 1.67 2004/07/13 15:05:59 seb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1533,4 +1533,27 @@ cvtnum(int num, char *buf)
 	while (*p)
 		STPUTC(*p++, buf);
 	return buf;
+}
+
+/*
+ * Do most of the work for wordexp(3).
+ */
+
+int
+wordexpcmd(int argc, char **argv)
+{
+	size_t len;
+	int i;
+
+	out1fmt("%d", argc - 1);
+	out1c('\0');
+	for (i = 1, len = 0; i < argc; i++)
+		len += strlen(argv[i]);
+	out1fmt("%zd", len);
+	out1c('\0');
+	for (i = 1; i < argc; i++) {
+		out1str(argv[i]);
+		out1c('\0');
+	}
+	return (0);
 }
