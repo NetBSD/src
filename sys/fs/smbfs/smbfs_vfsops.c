@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.20 2003/02/25 23:57:27 jdolecek Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.21 2003/02/26 18:16:37 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.20 2003/02/25 23:57:27 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.21 2003/02/26 18:16:37 jdolecek Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ int smbfs_mount(struct mount *, const char *, void *,
 		struct nameidata *, struct proc *);
 int smbfs_quotactl(struct mount *, int, uid_t, caddr_t, struct proc *);
 int smbfs_root(struct mount *, struct vnode **);
+static int smbfs_setroot(struct mount *);
 int smbfs_start(struct mount *, int, struct proc *);
 int smbfs_statfs(struct mount *, struct statfs *, struct proc *);
 int smbfs_sync(struct mount *, int, struct ucred *, struct proc *);
@@ -120,7 +121,6 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 	struct smbmount *smp = NULL;
 	struct smb_vc *vcp;
 	struct smb_share *ssp = NULL;
-	struct vnode *vp;
 	struct smb_cred scred;
 	size_t size;
 	int error;
@@ -184,11 +184,9 @@ smbfs_mount(struct mount *mp, const char *path, void *data,
 		ssp->ss_name);
 
 	vfs_getnewfsid(mp);
-	error = smbfs_root(mp, &vp);
+	error = smbfs_setroot(mp);
 	if (error)
 		goto bad;
-	VOP_UNLOCK(vp, 0);
-	SMBVDEBUG("root.v_usecount = %d\n", vp->v_usecount);
 
 	return (0);
 
@@ -239,23 +237,21 @@ smbfs_unmount(struct mount *mp, int mntflags, struct proc *p)
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
-	if (smp->sm_hash)
-		free(smp->sm_hash, M_SMBFSHASH);
+	free(smp->sm_hash, M_SMBFSHASH);
 #ifdef __NetBSD__
 	lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
 #else
 	lockdestroy(&smp->sm_hashlock);
 #endif
 	FREE(smp, M_SMBFSDATA);
-	mp->mnt_flag &= ~MNT_LOCAL;
 	return error;
 }
 
-/* 
- * Return locked root vnode of a filesystem
+/*
+ * Get root vnode of the smbfs filesystem, and store it in sm_root.
  */
-int
-smbfs_root(struct mount *mp, struct vnode **vpp)
+static int
+smbfs_setroot(struct mount *mp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	struct vnode *vp;
@@ -265,10 +261,8 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 	struct smb_cred scred;
 	int error;
 
-	if (smp->sm_root) {
-		*vpp = SMBTOV(smp->sm_root);
-		return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
-	}
+	KASSERT(smp->sm_root == NULL);
+
 	smb_makescred(&scred, p, cred);
 	error = smbfs_smb_lookup(NULL, NULL, 0, &fattr, &scred);
 	if (error)
@@ -278,12 +272,29 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 		return error;
 	vp->v_flag |= VROOT;
 	smp->sm_root = VTOSMB(vp);
-	*vpp = vp;
-	return 0;
+
+	/* Keep reference, but unlock */
+	VOP_UNLOCK(vp, 0);
+
+	return (0);
+}
+
+/* 
+ * Return locked root vnode of a filesystem.
+ */
+int
+smbfs_root(struct mount *mp, struct vnode **vpp)
+{
+	struct smbmount *smp = VFSTOSMBFS(mp);
+
+	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
+	*vpp = SMBTOV(smp->sm_root);
+	return vget(*vpp, LK_EXCLUSIVE | LK_RETRY);
 }
 
 /*
- * Vfs start routine, a no-op.
+ * Make a filesystem operational.
+ * Nothing to do at the moment.
  */
 /* ARGSUSED */
 int
@@ -343,13 +354,11 @@ int
 smbfs_statfs(struct mount *mp, struct statfs *sbp, struct proc *p)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
-	struct smbnode *np = smp->sm_root;
 	struct smb_share *ssp = smp->sm_share;
 	struct smb_cred scred;
 	int error = 0;
 
-	if (np == NULL)
-		return EINVAL;
+	KASSERT(smp->sm_root != NULL);
 	
 	sbp->f_iosize = SSTOVC(ssp)->vc_txmax;		/* optimal transfer block size */
 	smb_makescred(&scred, p, p->p_ucred);
