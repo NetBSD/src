@@ -42,7 +42,7 @@
  *	@(#)kbd.c	8.1 (Berkeley) 6/11/93
  *
  * from: Header: kbd.c,v 1.16 92/11/26 01:28:44 torek Exp  (LBL)
- * $Id: kbd.c,v 1.4 1994/02/27 19:49:11 deraadt Exp $
+ * $Id: kbd.c,v 1.5 1994/03/03 12:19:13 deraadt Exp $
  */
 
 /*
@@ -241,7 +241,7 @@ kbd_ascii(struct tty *tp)
 
 /*
  * Attach the console keyboard serial (down-link) interface.
- * We pick up the initial keyboard clock state here as well.
+ * We pick up the initial keyboard click state here as well.
  */
 void
 kbd_serial(struct tty *tp, void (*iopen)(), void (*iclose)())
