@@ -1,4 +1,4 @@
-#	$NetBSD: LAGER,v 1.8 1995/03/28 23:57:20 hpeyerl Exp $
+#	$NetBSD: LAGER,v 1.9 1996/05/26 23:45:42 hpeyerl Exp $
 #
 # LAGER (hpeyerl's hp380)
 #
@@ -30,7 +30,6 @@ options		GATEWAY
 # Options for all HP machines
 options		SYSVSHM
 options		FPSP
-#options		HPUXCOMPAT
 
 options "COMPAT_09"
 
@@ -43,6 +42,8 @@ options		"NKMEMCLUSTERS=256"
 options		"HILVID=1"
 options		PROFTIMER,"PRF_INTERVAL=500"
 #options 	KGDB,"KGDBDEV=15*256+2","KGDBRATE=19200"
+options		COMPAT_HPUX
+options		USELEDS
 
 config		netbsd root on sd0 swap on sd0b and sd1b
 #config		vgnetbsd root on sd0 swap on sd0b and sd1b and sd2b
@@ -85,5 +86,4 @@ pseudo-device	pty	32
 pseudo-device	loop
 pseudo-device	ether
 pseudo-device	ppp	4
-#pseudo-device   ccd0 on sd1c and sd2c and sd3c
-#pseudo-device  ccd1 on rd1h and rd2h and rd3h interleave 6048
+pseudo-device	ccd 4
