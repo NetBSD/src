@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.10 2002/11/24 10:43:15 scw Exp $	*/
+/*	$NetBSD: locore.S,v 1.11 2003/01/16 15:52:53 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -46,6 +46,9 @@
  * The bootloader (to be written) will have stashed the boot parameters
  * in r56 - r62
  */
+	.globl	_C_LABEL(kernel_text)
+_C_LABEL(kernel_text):
+
 ASENTRY_NOPROFILE(text)
 ASENTRY_NOPROFILE(start)
 	getcon	sr, r1
