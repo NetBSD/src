@@ -1,4 +1,4 @@
-.\"	$NetBSD: pim6sd.conf.5,v 1.1 2000/01/28 19:32:50 itojun Exp $
+.\"	$NetBSD: pim6sd.conf.5,v 1.2 2000/05/19 10:43:50 itojun Exp $
 .\" 
 .\" Copyright (C) 1999 WIDE Project.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	KAME Id: pim6sd.conf.5,v 1.7 1999/12/03 07:31:45 jinmei Exp
+.\"	KAME Id: pim6sd.conf.5,v 1.9 2000/05/05 14:57:14 sumikawa Exp
 .\"
 .Dd Oct 6, 1999
 .Dt PIM6SD.CONF 5
@@ -257,6 +257,7 @@ specifies a group prefix that the RP will handle.
 .Op Ar interface
 .Op Ic time Ar time
 .Op Ic priority Ar priority
+.Op Ic masklen Ar masklen
 .Ic ;
 .Xc
 Specifies to act as a candidate bootstrap router(BSR).
@@ -278,6 +279,11 @@ Another optional parameter
 .Ic priority
 specifies the priority of the RP.
 The default value is 0, which means the lowest priority.
+Hash mask length can also be specified by the
+.Ic masklen
+parametr. Its value,
+.Ar masklen ,
+must be no less than 0 and no greater than 128.
 .\"
 .It Xo
 .Ic switch_register_threshold Ic rate Ar rate Ic interval Ar interval;
@@ -304,12 +310,12 @@ The default values are 50000 and 20, respectively.
 .\"
 .Sh EXAMPLE
 .Bd -literal -offset
-#phyint gif0 disable;
-#phyint ep0 preference 101;
+# phyint gif0 disable;
+# phyint ep0 preference 101;
 phyint de0 disable;
 #
-#followings are for a candidate Rendezvous Point, which should usually
-#be disabled.
+# followings are for a candidate Rendezvous Point, which should usually
+# be disabled.
 cand_bootstrap_router;
 cand_rp;
 .Ed
@@ -327,5 +333,3 @@ which has also been derived from
 .Nm Mrouted
 is COPYRIGHT 1989 by The Board of Trustees of
 Leland Stanford Junior University.
-.\" .Sh BUGS
-.\" (to be written)

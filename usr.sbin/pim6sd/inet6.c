@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.1 2000/01/28 19:32:48 itojun Exp $	*/
+/*	$NetBSD: inet6.c,v 1.2 2000/05/19 10:43:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -45,6 +45,8 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <stdio.h>
 #include <netdb.h>
 #include <string.h>
@@ -186,17 +188,30 @@ inet6_match_prefix(sa1, sa2, mask)
     return (1);
 }
 
-char           *
-inet6_fmt(struct in6_addr * addr)
+char *
+sa6_fmt(struct sockaddr_in6 *sa6)
 {
     static char     ip6buf[8][MAXHOSTNAMELEN];
     static int      ip6round = 0;
-    char           *cp;
-    struct sockaddr_in6 sa6;
     int flags = NI_WITHSCOPEID;
+    char           *cp;    
 
     ip6round = (ip6round + 1) & 7;
     cp = ip6buf[ip6round];
+
+    if (numerichost)
+	    flags |= NI_NUMERICHOST;
+    getnameinfo((struct sockaddr *)sa6, sa6->sin6_len, cp, MAXHOSTNAMELEN,
+		NULL, 0, flags);
+
+    return(cp);
+}
+
+char *
+inet6_fmt(struct in6_addr * addr)
+{
+    struct sockaddr_in6 sa6;
+
 
     memset(&sa6, 0, sizeof(sa6));
     sa6.sin6_len = sizeof(sa6);
@@ -204,12 +219,7 @@ inet6_fmt(struct in6_addr * addr)
     sa6.sin6_addr = *addr;
     sa6.sin6_scope_id = 0;	/* XXX */
 
-    if (numerichost)
-	    flags |= NI_NUMERICHOST;
-    getnameinfo((struct sockaddr *)&sa6, sa6.sin6_len, cp, MAXHOSTNAMELEN,
-		NULL, 0, flags);
-
-    return(cp);
+    return(sa6_fmt(&sa6));
 }
 
 char           *

@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.3 1999/12/10 06:13:32 itojun Exp $	*/
+/*	$NetBSD: vif.c,v 1.4 2000/05/19 10:43:44 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -36,7 +36,7 @@
  *  Questions concerning this software should be directed to 
  *  Pavlin Ivanov Radoslavov (pavlin@catarina.usc.edu)
  *
- *  KAME Id: vif.c,v 1.3 1999/09/12 17:00:11 jinmei Exp
+ *  KAME Id: vif.c,v 1.5 2000/05/18 15:29:40 itojun Exp
  */
 /*
  * Part of this program has been derived from mrouted.
@@ -258,6 +258,13 @@ start_vif(vifi)
      * query.
      */
     v->uv_flags |= VIFF_QUERIER;
+    if (!v->uv_querier) {
+	v->uv_querier = (struct listaddr *)malloc(sizeof(*v->uv_querier));
+	memset(v->uv_querier, 0, sizeof(*v->uv_querier));
+    }
+    v->uv_querier->al_addr = v->uv_linklocal->pa_addr;
+    v->uv_querier->al_timer = MLD6_OTHER_QUERIER_PRESENT_INTERVAL;
+    time(&v->uv_querier->al_ctime); /* reset timestamp */
     query_groups(v);
 
     /*

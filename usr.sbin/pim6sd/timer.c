@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.1 2000/01/28 19:32:52 itojun Exp $	*/
+/*	$NetBSD: timer.c,v 1.2 2000/05/19 10:43:51 itojun Exp $	*/
 
 /*
  *  Copyright (c) 1998 by the University of Southern California.
@@ -59,6 +59,7 @@
 #include "debug.h"
 #include "rp.h"
 #include "pim6_proto.h"
+#include "mld6.h"
 #include "mld6_proto.h"
 #include "route.h"
 #include "kern.h"
@@ -214,8 +215,23 @@ age_vifs()
     {
 	if (v->uv_flags & (VIFF_DISABLED | VIFF_DOWN | MIFF_REGISTER))
 	    continue;
-	/* Timeout neighbors */
 
+	/* Timeout the MLD querier (unless we re the querier) */
+	if ((v->uv_flags & VIFF_QUERIER) == 0 &&
+	    v->uv_querier) { /* this must be non-NULL, but check for safety. */
+	    IF_TIMEOUT(v->uv_querier->al_timer) {
+		v->uv_querier_timo++; /* count statistics */
+
+		/* act as a querier by myself */
+		v->uv_flags |= VIFF_QUERIER;
+		v->uv_querier->al_addr = v->uv_linklocal->pa_addr;
+		v->uv_querier->al_timer = MLD6_OTHER_QUERIER_PRESENT_INTERVAL;
+		time(&v->uv_querier->al_ctime); /* reset timestamp */
+		query_groups(v);
+	    }
+	}
+
+	/* Timeout neighbors */
 	for (curr_nbr = v->uv_pim_neighbors; curr_nbr != NULL;
 	     curr_nbr = next_nbr)
 	{
