@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tcp_debug.h	7.4 (Berkeley) 6/28/90
+ *	from: @(#)tcp_debug.h	7.4 (Berkeley) 6/28/90
+ *	$Id: tcp_debug.h,v 1.3 1993/05/20 03:50:33 cgd Exp $
  */
 
 #ifndef _NETINET_TCP_DEBUG_H_
