@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_jazz.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $	*/
+/*	$NetBSD: c_nec_jazz.c,v 1.8 2005/01/22 08:43:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.8 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,13 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: c_nec_jazz.c,v 1.7 2005/01/22 07:35:33 tsutsui Exp $
 #include <arc/jazz/jazziovar.h>
 #include <arc/jazz/timer_jazziovar.h>
 
-extern int cpu_int_mask;
-
 /*
  * chipset-dependent timer routine.
  */
 
-int timer_nec_jazz_intr(u_int, struct clockframe *);
+uint32_t timer_nec_jazz_intr(uint32_t, struct clockframe *);
 void timer_nec_jazz_init(int);
 
 struct timer_jazzio_config timer_nec_jazz_conf = {
@@ -63,8 +61,8 @@ struct timer_jazzio_config timer_nec_jazz_conf = {
 };
 
 /* handle jazzio bus clock interrupt */
-int
-timer_nec_jazz_intr(u_int mask, struct clockframe *cf)
+uint32_t
+timer_nec_jazz_intr(uint32_t mask, struct clockframe *cf)
 {
 	int temp;
 
@@ -111,8 +109,8 @@ struct pica_dev nec_rd94_cpu[] = {
 };
 
 void
-c_nec_jazz_set_intr(int mask, int (*int_hand)(u_int, struct clockframe *),
-    int prio)
+c_nec_jazz_set_intr(uint32_t mask,
+     uint32_t (*int_hand)(uint32_t, struct clockframe *), int prio)
 {
 
 	arc_set_intr(mask, int_hand, prio);

@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.8 2005/01/22 07:56:28 tsutsui Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.9 2005/01/22 08:43:02 tsutsui Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.8 2005/01/22 07:56:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.9 2005/01/22 08:43:02 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,13 +101,11 @@ __KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.8 2005/01/22 07:56:28 tsutsui Exp $")
 #include <arc/jazz/timer_jazziovar.h>
 #include <arc/isa/isabrvar.h>
 
-extern int cpu_int_mask;
-
 /*
  * chipset-dependent timer routine.
  */
 
-int timer_magnum_intr(u_int, struct clockframe *);
+uint32_t timer_magnum_intr(uint32_t, struct clockframe *);
 void timer_magnum_init(int);
 
 struct timer_jazzio_config timer_magnum_conf = {
@@ -164,8 +162,8 @@ static const uint32_t magnum_ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
 };
 
-int
-timer_magnum_intr(u_int mask, struct clockframe *cf)
+uint32_t
+timer_magnum_intr(uint32_t mask, struct clockframe *cf)
 {
 	int temp;
 
@@ -233,8 +231,8 @@ jazzio_magnum_set_iointr_mask(int mask)
  */
 
 void
-c_magnum_set_intr(int mask, int	(*int_hand)(u_int, struct clockframe *),
-    int prio)
+c_magnum_set_intr(uint32_t mask,
+    uint32_t (*int_hand)(uint32_t, struct clockframe *), int prio)
 {
 
 	arc_set_intr(mask, int_hand, prio);
