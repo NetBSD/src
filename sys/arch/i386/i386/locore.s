@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)locore.s	7.3 (Berkeley) 5/13/91
- *	$Id: locore.s,v 1.75 1994/06/14 19:53:39 mycroft Exp $
+ *	$Id: locore.s,v 1.76 1994/06/14 20:25:53 mycroft Exp $
  */
 
 /*
@@ -948,6 +948,7 @@ ENTRY(copyoutstr)
 	cmpl	%ecx,%edx
 	jae	3f
 	movl	%edx,%ecx		# ecx = min (ecx, edx)
+	cld
 
 3:	subl	%ecx,%edx		# predecrement total count
 	incl	%ecx
@@ -987,6 +988,7 @@ ENTRY(copyoutstr)
 	movl	%eax,20(%esp)
 
 1:	incl	%edx
+	cld
 
 1:	decl	%edx
 	jz	2f
@@ -1040,6 +1042,7 @@ ENTRY(copyinstr)
 	movl	%eax,20(%esp)
 
 1:	incl	%edx
+	cld
 
 1:	decl	%edx
 	jz	4f
@@ -1095,6 +1098,7 @@ ENTRY(copystr)
 	movl	16(%esp),%edi		# edi = to
 	movl	20(%esp),%edx		# edx = maxlen
 	incl	%edx
+	cld
 
 1:	decl	%edx
 	jz	4f
