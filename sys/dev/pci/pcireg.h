@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.30 2000/08/21 05:17:33 castor Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.31 2000/10/02 14:48:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999
@@ -257,7 +257,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_WIRELESS_MISC		0x80
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
-#define	PCI_SUBCLASS_I2O_10			0x00	/* I2O 1.0 XXX ??? */
+#define	PCI_SUBCLASS_I2O_STANDARD		0x00
 
 /* 0x0f satellite communication subclasses */
 /*	PCI_SUBCLASS_SATCOM_???			0x00	/ * XXX ??? */
