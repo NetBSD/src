@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.162 2004/03/11 15:03:47 pooka Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.163 2004/03/17 23:58:12 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.162 2004/03/11 15:03:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.163 2004/03/17 23:58:12 mycroft Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -2086,8 +2086,7 @@ int
 uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
     struct vm_map *dstmap, vaddr_t *dstaddrp, int flags)
 {
-	vaddr_t dstaddr, end, newend, oldoffset, fudge, orig_fudge,
-	    oldstart;
+	vaddr_t dstaddr, end, newend, oldoffset, fudge, orig_fudge;
 	struct vm_map_entry *chain, *endchain, *entry, *orig_entry, *newentry,
 	    *deadentry, *oldentry;
 	vsize_t elen;
@@ -2187,10 +2186,6 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 		/* clear needs_copy (allow chunking) */
 		if (UVM_ET_ISNEEDSCOPY(entry)) {
-			if (fudge)
-				oldstart = entry->start;
-			else
-				oldstart = 0;	/* XXX: gcc */
 			amap_copy(srcmap, entry, M_NOWAIT, TRUE, start, end);
 			if (UVM_ET_ISNEEDSCOPY(entry)) {  /* failed? */
 				error = ENOMEM;
@@ -2199,7 +2194,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 			/* amap_copy could clip (during chunk)!  update fudge */
 			if (fudge) {
-				fudge = fudge - (entry->start - oldstart);
+				fudge = start - entry->start;
 				orig_fudge = fudge;
 			}
 		}
