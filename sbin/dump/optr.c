@@ -1,4 +1,4 @@
-/*	$NetBSD: optr.c,v 1.28 2002/08/18 08:03:35 yamt Exp $	*/
+/*	$NetBSD: optr.c,v 1.29 2003/03/27 13:56:47 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-__RCSID("$NetBSD: optr.c,v 1.28 2002/08/18 08:03:35 yamt Exp $");
+__RCSID("$NetBSD: optr.c,v 1.29 2003/03/27 13:56:47 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,13 +64,9 @@ __RCSID("$NetBSD: optr.c,v 1.28 2002/08/18 08:03:35 yamt Exp $");
 #include "dump.h"
 #include "pathnames.h"
 
-#include "utmpentry.h"
-
 void	alarmcatch(int);
 struct fstab *allocfsent(struct fstab *);
 int	datesort(const void *, const void *);
-static	void sendmes(char *, char *);
-extern  gid_t egid;
 extern  char *time_string;
 extern  char default_time_string[];
 
@@ -187,126 +183,28 @@ interrupt(int signo)
 }
 
 /*
- *	The following variables and routines manage alerting
- *	operators to the status of dump.
- *	This works much like wall(1) does.
- */
-struct	group *gp;
-
-/*
- *	Get the names from the group entry "operator" to notify.
- */
-void
-set_operators(void)
-{
-
-	if (!notify)		/*not going to notify*/
-		return;
-	gp = getgrnam(OPGRENT);
-	(void) endgrent();
-	if (gp == NULL) {
-		msg("No group entry for %s.\n", OPGRENT);
-		notify = 0;
-		return;
-	}
-}
-
-struct tm *localclock;
-
-/*
- *	We fork a child to do the actual broadcasting, so
- *	that the process control groups are not messed up
+ *	Use wall(1) "-g operator" to do the actual broadcasting.
  */
 void
 broadcast(char	*message)
 {
-	time_t	now;
-	char  **np;
-	int	pid, s;
-	struct utmpentry *ep;
+	FILE	*fp;
+	char	buf[sizeof(_PATH_WALL) + sizeof(OPGRENT) + 3];
 
-	if (!notify || gp == NULL)
+	if (!notify)
 		return;
 
-	/* Restore 'tty' privs for the child's use only. */
-	setegid(egid);
-	switch (pid = fork()) {
-	case -1:
-		setegid(getgid());
-		return;
-	case 0:
-		break;
-	default:
-		setegid(getgid());
-		while (wait(&s) != pid)
-			continue;
-		return;
-	}
-
-	now = time((time_t *)0);
-	localclock = localtime(&now);
-
-	(void)getutentries(NULL, &ep);
-
-	for (; ep; ep = ep->next) {
-		for (np = gp->gr_mem; *np; np++) {
-			if (strcmp(*np, ep->name) != 0)
-				continue;
-			/*
-			 *	Do not send messages to operators on dialups
-			 */
-			if (strcmp(ep->line, DIALUP) == 0)
-				continue;
-#ifdef DEBUG
-			msg("Message to %s at %s\n", *np, ep->line);
-#endif
-			sendmes(ep->line, message);
-		}
-	}
-	Exit(0);	/* the wait in this same routine will catch this */
-	/* NOTREACHED */
-}
-
-static void
-sendmes(char *tty, char *message)
-{
-	char t[50], buf[BUFSIZ];
-	char *cp;
-	int lmsg = 1;
-	FILE *f_tty;
-
-	if (strcspn(tty, "./") != strlen(tty))
+	(void)snprintf(buf, sizeof(buf), "%s -g %s", _PATH_WALL, OPGRENT);
+	if ((fp = popen(buf, "w")) == NULL)
 		return;
 
-	(void)strncpy(t, _PATH_DEV, sizeof(t) - 1);
-	(void)strncat(t, tty, sizeof(t) - sizeof(_PATH_DEV) - 1);
-	t[sizeof(t) - 1] = '\0';
+	(void) fputs("\a\a\aMessage from the dump program to all operators\n\nDUMP: NEEDS ATTENTION: ", fp);
+	if (lastmsg[0])
+		(void) fputs(lastmsg, fp);
+	if (message[0])
+		(void) fputs(message, fp);
 
-	if ((f_tty = fopen(t, "w")) != NULL) {
-		if (!isatty(fileno(f_tty)))
-			return;
-		setbuf(f_tty, buf);
-		(void) fprintf(f_tty,
-		    "\n\
-\a\a\aMessage from the dump program to all operators at %d:%02d ...\r\n\n\
-DUMP: NEEDS ATTENTION: ",
-		    localclock->tm_hour, localclock->tm_min);
-		for (cp = lastmsg; ; cp++) {
-			if (*cp == '\0') {
-				if (lmsg) {
-					cp = message;
-					if (*cp == '\0')
-						break;
-					lmsg = 0;
-				} else
-					break;
-			}
-			if (*cp == '\n')
-				(void) putc('\r', f_tty);
-			(void) putc(*cp, f_tty);
-		}
-		(void) fclose(f_tty);
-	}
+	(void) pclose(fp);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.34 2003/01/24 21:55:05 fvdl Exp $	*/
+/*	$NetBSD: dump.h,v 1.35 2003/03/27 13:56:46 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -166,7 +166,6 @@ void	msg(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
 void	msgtail(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
 int	query(char *);
 void	quit(const char *fmt, ...) __attribute__((__format__(__printf__,1,2)));
-void	set_operators(void);
 time_t	do_stats(void);
 void	statussig(int);
 void	timeest(void);
@@ -274,9 +273,6 @@ extern int read(), write();
 extern int errno;
 #endif
 
-#ifndef	_PATH_UTMP
-#define	_PATH_UTMP	"/etc/utmp"
-#endif
 #ifndef	_PATH_FSTAB
 #define	_PATH_FSTAB	"/etc/fstab"
 #endif

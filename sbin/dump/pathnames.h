@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.9 1997/04/15 07:00:47 lukem Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.10 2003/03/27 13:56:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,3 +41,4 @@
 #define	_PATH_DUMPDATES	"/etc/dumpdates"
 #define	_PATH_LOCK	"/tmp/dumplockXXXXXX"
 #define	_PATH_RMT	"/etc/rmt"
+#define	_PATH_WALL	"/usr/bin/wall"
