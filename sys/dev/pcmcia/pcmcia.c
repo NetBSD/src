@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.6 1998/03/07 17:58:17 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.7 1998/06/05 02:51:17 enami Exp $	*/
 
 #define	PCMCIADEBUG
 
@@ -274,17 +274,18 @@ int
 pcmcia_card_gettype(dev)
 	struct device  *dev;
 {
-	struct pcmcia_softc *sc = (struct pcmcia_softc *) dev;
+	struct pcmcia_softc *sc = (struct pcmcia_softc *)dev;
+	struct pcmcia_function *pf;
 
 	/*
 	 * set the iftype to memory if this card has no functions (not yet
-	 * probed), or only one function, and that is memory.
+	 * probed), or only one function, and that is not initialized yet or
+	 * that is memory.
 	 */
-	if (sc->card.pf_head.sqh_first == NULL ||
-	    (sc->card.pf_head.sqh_first != NULL &&
-	     sc->card.pf_head.sqh_first->pf_list.sqe_next == NULL &&
-	     (sc->card.pf_head.sqh_first->cfe_head.sqh_first->iftype ==
-	      PCMCIA_IFTYPE_MEMORY)))
+	pf = SIMPLEQ_FIRST(&sc->card.pf_head);
+	if (pf == NULL ||
+	    (SIMPLEQ_NEXT(pf, pf_list) == NULL &&
+	    (pf->cfe == NULL || pf->cfe->iftype == PCMCIA_IFTYPE_MEMORY)))
 		return (PCMCIA_IFTYPE_MEMORY);
 	else
 		return (PCMCIA_IFTYPE_IO);
