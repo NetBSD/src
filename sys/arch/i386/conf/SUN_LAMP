@@ -1,4 +1,4 @@
-#	$NetBSD: SUN_LAMP,v 1.65 1996/03/05 01:32:29 thorpej Exp $
+#	$NetBSD: SUN_LAMP,v 1.66 1996/03/07 00:48:43 jtk Exp $
 #
 #	SUN_LAMP -- kernel for one of cgd's 486/50 EISA boxes...
 #
@@ -162,7 +162,7 @@ ed0	at isa? port 0x300 iomem 0xd0000 irq 10	# WD/SMC, 3C503, and NE[12]000
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 #sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter

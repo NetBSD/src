@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.17 1996/03/05 01:32:13 thorpej Exp $
+#	$NetBSD: DISKLESS,v 1.18 1996/03/07 00:48:35 jtk Exp $
 #
 # DISKLESS -- Generic machine setup for diskless boot.
 # This kernel can be loaded from a bootable floppy (i.e. kernel-copy)
@@ -159,7 +159,7 @@ ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN & 3C507 ethernet cards
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
 
 sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
-#spkr0	at isa? ...
+#spkr0	at isa? port 0x61
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 8		# packet filter
