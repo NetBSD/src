@@ -1,4 +1,4 @@
-.\"	$NetBSD: fgetstr.3,v 1.1 2004/04/21 00:01:57 christos Exp $
+.\"	$NetBSD: fgetstr.3,v 1.2 2004/04/21 00:19:40 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 .Os
 .Sh NAME
 .Nm fgetstr
-.Nd get a delimited string from a stream.
+.Nd get a delimited string from a stream
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -46,7 +46,7 @@ The
 .Fn fgetstr
 function
 returns a pointer to the next string from the stream referenced by
-.Fa stream 
+.Fa stream
 ending in
 .Fa delim .
 This string is
@@ -54,7 +54,7 @@ This string is
 a C string as it does not end with a terminating
 .Dv NUL
 character.
-The length of the line, including the 
+The length of the line, including the
 .Fa delim
 is stored in the memory location to which
 .Fa len
@@ -62,7 +62,7 @@ points.
 (Note, however, that if the string is the last
 in a file that does not end in
 .Fa delim ,
-the returned text will not contain 
+the returned text will not contain
 .Fa delim . )
 .Sh RETURN VALUES
 Upon successful completion a pointer is returned;
@@ -129,14 +129,14 @@ The
 function first appeared in
 .Nx 2.1 .
 .Sh CAVEATS
-Since the returned buffer is not a C string (it is not null terminated), a
+Since the returned buffer is not a C string (it is not nul-terminated), a
 common practice is to replace the
 .Fa delim
 character with
 .Sq \e0 .
-However, if the last line in a file does not contain 
+However, if the last line in a file does not contain
 .Fa delim ,
-the returned text won't contain 
+the returned text won't contain
 .Fa delim
 either.
 The following code demonstrates how to deal with this problem by allocating a
@@ -146,7 +146,7 @@ temporary buffer:
 	size_t len;
 
 	lbuf = NULL;
-	while ((buf = fgetstr(fp, &len, '\et'))) {
+	while ((buf = fgetstr(fp, \*[Am]len, '\et'))) {
 		if (buf[len - 1] == '\et')
 			buf[len - 1] = '\e0';
 		else {
