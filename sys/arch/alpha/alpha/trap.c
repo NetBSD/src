@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.77.2.2 2001/08/30 23:43:42 nathanw Exp $ */
+/* $NetBSD: trap.c,v 1.77.2.3 2001/11/17 00:46:04 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.2 2001/08/30 23:43:42 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77.2.3 2001/11/17 00:46:04 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1202,10 +1202,8 @@ startlwp(arg)
  * XXX This is a terrible name.
  */
 void
-upcallret(arg)
-	void *arg;
+upcallret(struct lwp *l)
 {
-	struct lwp *l = curproc;
 
 	userret(l);
 }
