@@ -1,4 +1,4 @@
-/*	$NetBSD: tspld.c,v 1.2 2004/12/26 22:02:11 joff Exp $	*/
+/*	$NetBSD: tspld.c,v 1.3 2004/12/27 02:42:49 joff Exp $	*/
 
 /*-
  * Copyright (c) 2004 Jesse Off
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.2 2004/12/26 22:02:11 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tspld.c,v 1.3 2004/12/27 02:42:49 joff Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,6 +62,8 @@ int	tspldmatch __P((struct device *, struct cfdata *, void *));
 void	tspldattach __P((struct device *, struct device *, void *));
 static int	tspld_wdog_setmode __P((struct sysmon_wdog *));
 static int	tspld_wdog_tickle __P((struct sysmon_wdog *));
+int tspld_search __P((struct device *, struct cfdata *, void *));
+int tspld_print __P((void *, const char *));
 
 struct tspld_softc {
         struct device           sc_dev;
@@ -70,7 +72,6 @@ struct tspld_softc {
 	bus_space_handle_t	sc_wdogctrl_ioh;	
 	struct sysmon_wdog	sc_wdog;
 };
-
 
 CFATTACH_DECL(tspld, sizeof(struct tspld_softc),
     tspldmatch, tspldattach, NULL, NULL);
@@ -94,7 +95,6 @@ tspldattach(parent, self, aux)
 {
 	int	i, rev, features, jp, model;
 	struct tspld_softc *sc = (struct tspld_softc *)self;
-	struct tspld_attach_args ta;
 	bus_space_handle_t 	ioh;
 
 	sc->sc_iot = &ep93xx_bs_tag;
@@ -162,11 +162,34 @@ tspldattach(parent, self, aux)
 	sysmon_wdog_register(&sc->sc_wdog);
 	tspld_wdog_setmode(&sc->sc_wdog);
 
-	ta.ta_iot = sc->sc_iot;
-	config_found_ia(self, "tspldbus", &ta, NULL);
-			
 	/* Set the on board peripherals bus callback */
 	config_defer(self, tspld_callback);
+}
+
+int
+tspld_search(parent, cf, aux)
+	struct device *parent;
+	struct cfdata *cf;
+	void *aux;
+{
+	struct tspld_softc *sc = (struct tspld_softc *)parent;
+	struct tspld_attach_args sa;
+
+	sa.ta_iot = sc->sc_iot;
+
+	if (config_match(parent, cf, &sa) > 0)
+		config_attach(parent, cf, &sa, tspld_print);
+
+	return (0);
+}
+
+int
+tspld_print(aux, name)
+	void *aux;
+	const char *name;
+{
+
+	return (UNCONF);
 }
 
 void
@@ -184,6 +207,11 @@ tspld_callback(self)
 	iba.iba_memt = &isa_mem_bs_tag;
 	config_found_ia(self, "isabus", &iba, isabusprint);
 #endif
+	/*
+	 *  Attach each devices
+	 */
+	config_search(tspld_search, self, NULL);
+	
 }
 
 static int
