@@ -1,7 +1,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpcinfo.c 1.22 87/08/12 SMI";*/
 /*static char sccsid[] = "from: @(#)rpcinfo.c	2.2 88/08/11 4.0 RPCSRC";*/
-static char rcsid[] = "$Id: rpcinfo.c,v 1.3 1993/08/01 18:09:11 mycroft Exp $";
+static char rcsid[] = "$Id: rpcinfo.c,v 1.4 1995/05/21 14:46:39 mycroft Exp $";
 #endif
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: rpcinfo.c,v 1.3 1993/08/01 18:09:11 mycroft Exp $";
 #include <rpc/pmap_clnt.h>
 #include <signal.h>
 #include <ctype.h>
+#include <arpa/inet.h>
 
 #define MAXHOSTLEN 256
 
@@ -67,8 +68,6 @@ static void	usage(/*void*/);
 static u_long	getprognum(/*char *arg*/);
 static u_long	getvers(/*char *arg*/);
 static void	get_inet_address(/*struct sockaddr_in *addr, char *host*/);
-extern u_long inet_addr();  /* in 4.2BSD, arpa/inet.h called that a in_addr */
-extern char *inet_ntoa();
 
 /*
  * Functions to be performed.
@@ -496,7 +495,7 @@ pmapdump(argc, argv)
 			bcopy(hp->h_addr, (caddr_t)&server_addr.sin_addr,
 			    hp->h_length);
 		else
-			server_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+			(void) inet_aton("0.0.0.0", &server_addr.sin_addr);
 	}
 	minutetimeout.tv_sec = 60;
 	minutetimeout.tv_usec = 0;
@@ -654,8 +653,7 @@ get_inet_address(addr, host)
 	register struct hostent *hp;
 
 	bzero((char *)addr, sizeof *addr);
-	addr->sin_addr.s_addr = (u_long) inet_addr(host);
-	if (addr->sin_addr.s_addr == -1 || addr->sin_addr.s_addr == 0) {
+	if (inet_aton(host, &addr->sin_addr) == 0) {
 		if ((hp = gethostbyname(host)) == NULL) {
 			fprintf(stderr, "rpcinfo: %s is unknown host\n", host);
 			exit(1);
