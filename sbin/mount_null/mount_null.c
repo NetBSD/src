@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_null.c,v 1.6 1999/06/25 19:28:37 perseant Exp $	*/
+/*	$NetBSD: mount_null.c,v 1.7 1999/07/08 03:04:39 wrstuden Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -46,7 +46,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_null.c,v 1.6 1999/06/25 19:28:37 perseant Exp $");
+__RCSID("$NetBSD: mount_null.c,v 1.7 1999/07/08 03:04:39 wrstuden Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(argc, argv)
 		errx(1, "%s (%s) and %s are not distinct paths",
 		    argv[0], target, argv[1]);
 
-	args.target = target;
+	args.la.target = target;
 
 	if (mount(MOUNT_NULL, argv[1], mntflags, &args))
 		err(1, "%s on %s", target, argv[1]);
