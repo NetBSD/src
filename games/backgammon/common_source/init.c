@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 1997/10/10 08:59:46 lukem Exp $	*/
+/*	$NetBSD: init.c,v 1.6 1997/10/14 00:53:31 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.5 1997/10/10 08:59:46 lukem Exp $");
+__RCSID("$NetBSD: init.c,v 1.6 1997/10/14 00:53:31 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,3 +67,37 @@ int     iroll = 0;		/* special flag for inputting rolls */
 int     rfl = 0;
 
 char   *color[] = {"White", "Red", "white", "red"};
+
+
+char	**Colorptr;
+char	**colorptr;
+int	*inopp;
+int	*inptr;
+int	*offopp;
+int	*offptr;
+char	args[100];
+int	bar;
+int	begscr;
+int	board[26];
+char	cin[100];
+int	colen;
+int	cturn;
+int	curc;
+int	curr;
+int	d0;
+int	dice[2];
+int	dlast;
+int	g[5];
+int	gvalue;
+int	h[4];
+int	home;
+int	in[2];
+int	mvl;
+int	mvlim;
+int	ncin;
+int	off[2];
+int	p[5];
+int	rscore;
+int	table[6][6];
+int	wscore;
+struct termios	old, noech, raw;
