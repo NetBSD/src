@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.323 2001/05/18 15:35:19 enami Exp $
+$NetBSD: pcidevs,v 1.324 2001/05/21 22:11:06 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1144,6 +1144,14 @@ product INTEL 80960RN		0x0964	i960 RN PCI-PCI
 product INTEL 82452		0x1000	PRO/1000 Gigabit Ethernet (i82452)
 product INTEL 82453		0x1001	PRO/1000 Gigabit Ethernet (i82453)
 product INTEL 82453_SC		0x1003	PRO/1000 Gigabit Ethernet (i82453-SC)
+product INTEL PRO_100_VE_0	0x1031	PRO/100 VE Network Controller
+product INTEL PRO_100_VE_1	0x1032	PRO/100 VE Network Controller
+product INTEL PRO_100_VM_0	0x1033	PRO/100 VM Network Controller
+product INTEL PRO_100_VM_1	0x1034	PRO/100 VM Network Controller
+product INTEL 82562EH_HPNA_0	0x1035	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_1	0x1036	82562EH HomePNA Network Controller
+product INTEL 82562EH_HPNA_2	0x1037	82562EH HomePNA Network Controller
+product INTEL PRO_100_VM_2	0x1038	PRO/100 VM Network Controller
 product INTEL 82815_DC100_HUB	0x1100	82815 Hub
 product INTEL 82815_DC100_AGP	0x1101	82815 AGP
 product INTEL 82815_DC100_GRAPH	0x1102	82815 Graphics
