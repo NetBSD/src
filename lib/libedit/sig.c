@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.7 2001/01/04 15:55:03 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.8 2001/01/09 17:31:04 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)sig.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: sig.c,v 1.7 2001/01/04 15:55:03 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.8 2001/01/09 17:31:04 jdolecek Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: sig.c,v 1.7 2001/01/04 15:55:03 christos Exp $");
 
 private EditLine *sel = NULL;
 
-private int sighdl[] = {
+private const int sighdl[] = {
 #define	_DO(a)	(a),
 	ALLSIGS
 #undef	_DO
