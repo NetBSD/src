@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.49 2002/09/27 15:37:05 provos Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.50 2002/10/05 22:34:04 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.49 2002/09/27 15:37:05 provos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_aout.c,v 1.50 2002/10/05 22:34:04 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,7 @@ exec_linux_aout_prep_qmagic(p, epp)
 	struct exec_package *epp;
 {
 	struct exec *execp = epp->ep_hdr;
+	int error;
 
 	epp->ep_taddr = LINUX_N_TXTADDR(*execp, QMAGIC);
 	epp->ep_tsize = execp->a_text;
@@ -303,20 +304,9 @@ exec_linux_aout_prep_qmagic(p, epp)
 	epp->ep_dsize = execp->a_data + execp->a_bss;
 	epp->ep_entry = execp->a_entry;
 
-	/*
-	 * check if vnode is in open for writing, because we want to
-	 * demand-page out of it.  if it is, don't do it, for various
-	 * reasons
-	 */
-	if ((execp->a_text != 0 || execp->a_data != 0) &&
-	    epp->ep_vp->v_writecount != 0) {
-#ifdef DIAGNOSTIC
-		if (epp->ep_vp->v_flag & VTEXT)
-			panic("exec: a VTEXT vnode has writecount != 0");
-#endif
-		return ETXTBSY;
-	}
-	epp->ep_vp->v_flag |= VTEXT;
+	error = vn_marktext(epp->ep_vp);
+	if (error)
+		return (error);
 
 	/* set up command for text segment */
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_pagedvn, execp->a_text,
