@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zgrep,v 1.2.2.1 2004/05/30 14:59:56 tron Exp $
+# $NetBSD: zgrep,v 1.2.2.2 2004/05/30 15:00:44 tron Exp $
 #
 # Copyright (c) 2003 Thomas Klausner.
 #
@@ -101,12 +101,12 @@ fi
 if [ $# -lt 1 ]
 then
     # ... on stdin
-    ${zcat} - | ${grep} ${grep_args} "${pattern}" -
+    ${zcat} -fq - | ${grep} ${grep_args} "${pattern}" -
 else
     # ... on all files given on the command line
     while [ $# -gt 0 ]
     do
-	${zcat} -- "$1" | ${grep} -H --label="${1}" "${pattern}" ${grep_args} -
+	${zcat} -fq -- "$1" | ${grep} -H --label="${1}" "${pattern}" ${grep_args} -
 	shift
     done
 fi
