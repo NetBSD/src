@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.45 2000/10/02 19:48:35 cgd Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.46 2000/12/02 23:01:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,8 +80,17 @@ mkmakefile(void)
 	char *ifname;
 	char line[BUFSIZ], buf[200];
 
+	/* Try a makefile for the port first.
+	 */
 	(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machine, machine);
 	ifname = sourcepath(buf);
+	if ((ifp = fopen(ifname, "r")) == NULL) {
+		/* Try a makefile for the architecture second.
+		 */
+		(void)sprintf(buf, "arch/%s/conf/Makefile.%s", machinearch,
+			machinearch);
+		ifname = sourcepath(buf);
+	}
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		(void)fprintf(stderr, "config: cannot read %s: %s\n",
 		    ifname, strerror(errno));
@@ -211,6 +220,10 @@ emitdefs(FILE *fp)
 	if (putc('\n', fp) < 0)
 		return (1);
 	if (fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers) < 0)
+		return (1);
+	if (fprintf(fp, "MACHINE=%s\n", machine) < 0)
+		return (1);
+	if (fprintf(fp, "MACHINE_ARCH=%s\n", machinearch) < 0)
 		return (1);
 	if (*srcdir == '/' || *srcdir == '.') {
 		if (fprintf(fp, "S=\t%s\n", srcdir) < 0)
