@@ -1,4 +1,4 @@
-/*	$NetBSD: pax.c,v 1.25 2003/02/25 13:37:00 wiz Exp $	*/
+/*	$NetBSD: pax.c,v 1.26 2003/03/03 11:42:36 grant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pax.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: pax.c,v 1.25 2003/02/25 13:37:00 wiz Exp $");
+__RCSID("$NetBSD: pax.c,v 1.26 2003/03/03 11:42:36 grant Exp $");
 #endif
 #endif /* not lint */
 
@@ -244,6 +244,8 @@ main(int argc, char **argv)
 {
 	char *tmpdir;
 	size_t tdlen;
+
+	setprogname(argv[0]);
 
 	listf = stderr;
 
