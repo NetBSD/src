@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.23 2000/07/04 05:48:36 wrstuden Exp $	*/
+/*	$NetBSD: conf.c,v 1.24 2000/07/17 16:57:19 wrstuden Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,7 +111,6 @@ cdev_decl(audio);
 #include "midi.h"
 cdev_decl(midi);
 #include "sequencer.h"
-cdev_decl(music);
 #include "ss.h"
 #include "uk.h"
 #include "ite.h"
