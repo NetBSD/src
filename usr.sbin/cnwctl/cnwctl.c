@@ -1,3 +1,5 @@
+/*	$NetBSD: cnwctl.c,v 1.2 1999/11/29 12:55:08 itojun Exp $	*/
+
 /*
  * Copyright (c) 1997 Berkeley Software Design, Inc.
  * All rights reserved.
@@ -45,7 +47,7 @@
 
 #include <net/if.h>
 
-#include <machine/if_cnwioctl.h>
+#include <dev/pcmcia/if_cnwioctl.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -54,7 +56,7 @@
 #include <time.h>
 #include <unistd.h>
 
-void
+int
 main(int argc, char **argv)
 {
 	int c, domain, i, key, rate, sflag, Sflag, skt;
@@ -161,23 +163,23 @@ main(int argc, char **argv)
 		if (ioctl(skt, SIOCGCNWDOMAIN, (caddr_t)&ifr) < 0)
 			err(1, "SIOCGCNWDOMAIN");
 		printf("%s:\n     0x%03x domain\n", interface, ifr.ifr_domain);
-			printf("%10d rx\n", cnwis.stats.nws_rx);
-		printf("%10d rxoverflow\n", cnwis.stats.nws_rxoverflow);
-		printf("%10d rxoverrun\n", cnwis.stats.nws_rxoverrun);
-		printf("%10d rxcrcerror\n", cnwis.stats.nws_rxcrcerror);
-		printf("%10d rxframe\n", cnwis.stats.nws_rxframe);
-		printf("%10d rxerrors\n", cnwis.stats.nws_rxerrors);
-		printf("%10d rxavail\n", cnwis.stats.nws_rxavail);
+		printf("%qu rx\n", cnwis.stats.nws_rx);
+		printf("%qu rxoverflow\n", cnwis.stats.nws_rxoverflow);
+		printf("%qu rxoverrun\n", cnwis.stats.nws_rxoverrun);
+		printf("%qu rxcrcerror\n", cnwis.stats.nws_rxcrcerror);
+		printf("%qu rxframe\n", cnwis.stats.nws_rxframe);
+		printf("%qu rxerrors\n", cnwis.stats.nws_rxerrors);
+		printf("%qu rxavail\n", cnwis.stats.nws_rxavail);
 
-		printf("%10d tx\n", cnwis.stats.nws_tx);
-		printf("%10d txokay\n", cnwis.stats.nws_txokay);
-		printf("%10d txabort\n", cnwis.stats.nws_txabort);
-		printf("%10d txlostcd\n", cnwis.stats.nws_txlostcd);
-		printf("%10d txerrors\n", cnwis.stats.nws_txerrors);
-		printf("%10d txretries\n", cnwis.stats.nws_txretries[0]);
+		printf("%qu tx\n", cnwis.stats.nws_tx);
+		printf("%qu txokay\n", cnwis.stats.nws_txokay);
+		printf("%qu txabort\n", cnwis.stats.nws_txabort);
+		printf("%qu txlostcd\n", cnwis.stats.nws_txlostcd);
+		printf("%qu txerrors\n", cnwis.stats.nws_txerrors);
+		printf("%qu txretries\n", cnwis.stats.nws_txretries[0]);
 		for (i = 1; i < 16; ++i)
 			if (cnwis.stats.nws_txretries[i])
-				printf("%10s %10d %dx retries\n", "",
+				printf("%10s %qu %dx retries\n", "",
 				    cnwis.stats.nws_txretries[i], i);
 	}
 
@@ -233,12 +235,12 @@ main(int argc, char **argv)
 			c = ts.ts_lines - 3;
 			memset(&onwis, 0, sizeof(onwis));
 		}
-		printf("%10d ", cnwis.stats.nws_tx - onwis.stats.nws_tx);
-		printf("%10d ", cnwis.stats.nws_txokay - onwis.stats.nws_txokay);
-		printf("%10d ", cnwis.stats.nws_txerrors - onwis.stats.nws_txerrors);
-		printf("%10d ", cnwis.stats.nws_txretries[0] - onwis.stats.nws_txretries[0]);
-		printf("%10d ", cnwis.stats.nws_rx - onwis.stats.nws_rx);
-		printf("%10d\n", cnwis.stats.nws_rxerrors - onwis.stats.nws_rxerrors);
+		printf("%10qu ", cnwis.stats.nws_tx - onwis.stats.nws_tx);
+		printf("%10qu ", cnwis.stats.nws_txokay - onwis.stats.nws_txokay);
+		printf("%10qu ", cnwis.stats.nws_txerrors - onwis.stats.nws_txerrors);
+		printf("%10qu ", cnwis.stats.nws_txretries[0] - onwis.stats.nws_txretries[0]);
+		printf("%10qu ", cnwis.stats.nws_rx - onwis.stats.nws_rx);
+		printf("%10qu\n", cnwis.stats.nws_rxerrors - onwis.stats.nws_rxerrors);
 		fflush(stdout);
 		sleep (rate);
 		onwis = cnwis;
