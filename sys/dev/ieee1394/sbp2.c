@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp2.c,v 1.5 2002/12/03 06:11:31 explorer Exp $	*/
+/*	$NetBSD: sbp2.c,v 1.6 2002/12/06 02:19:34 jmc Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.5 2002/12/03 06:11:31 explorer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp2.c,v 1.6 2002/12/06 02:19:34 jmc Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -437,8 +437,8 @@ sbp2_login(struct sbp2 *sbp2, struct sbp2_lun *lun)
 	orb->cmd.ab_data[3] = IEEE1394_CREATE_ADDR_LOW(respaddr);
 	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_EXCLUSIVE;
 
-	/* Ask for max reconnect time. */
-	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_RECONNECT(SBP2_MAX_RECONNECT);
+	/* Ask for reasonable reconnect time. */
+	orb->cmd.ab_data[4] |= SBP2_LOGIN_SET_RECONNECT(SBP2_RECONNECT);
 	orb->cmd.ab_data[4] |= lun->loginid;
 	orb->cmd.ab_data[4] = htonl(orb->cmd.ab_data[4]);
 
@@ -1154,8 +1154,13 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 				}
 			} else {
 				count = 0;
-				startbyte = byte;
-				startbit = bitpos;
+				if (bitpos != (CHAR_BIT - 1)) {
+					startbyte = byte;
+					startbit = bitpos + 1;
+				} else {
+					startbyte = byte + 1;
+					startbit = 0;
+				}
 			}
 		}
 		if (found)
@@ -1180,7 +1185,8 @@ sbp2_alloc_data_mapping(struct sbp2 *sbp2, struct sbp2_mapping *map,
 
 	/* Allocate bytes at a time */
 	if (size) {
-		for (byte = startbyte; byte < (size / CHAR_BIT); byte++) {
+		for (byte = startbyte; byte < (startbyte + (size / CHAR_BIT)); 
+		    byte++) {
 			for (bitpos = 0; bitpos < CHAR_BIT; bitpos++) {
 				bit = 0x1 << bitpos;
 				size--;
