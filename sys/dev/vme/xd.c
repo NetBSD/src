@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.31 2000/07/10 13:54:54 mrg Exp $	*/
+/*	$NetBSD: xd.c,v 1.32 2000/07/24 15:00:41 scw Exp $	*/
 
 /*
  *
@@ -654,7 +654,7 @@ xdcattach(parent, self, aux)
 	}
 
 	/* link in interrupt with higher level software */
-	vme_intr_map(ct, va->ivector, va->ilevel, &ih);
+	vme_intr_map(ct, va->ilevel, va->ivector, &ih);
 	vme_intr_establish(ct, ih, IPL_BIO, xdcintr, xdc);
 	evcnt_attach_dynamic(&xdc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
 	    xdc->sc_dev.dv_xname, "intr");
