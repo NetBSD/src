@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.238.2.2 2004/06/28 08:36:47 tron Exp $
+#	$NetBSD: INSTALL,v 1.238.2.3 2004/07/13 09:26:51 tron Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -504,6 +504,7 @@ mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
+re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 sf*	at pci? dev ? function ?	# Adaptec AIC-6915 Ethernet
 sip*	at pci? dev ? function ?	# SiS 900/DP83815 Ethernet
