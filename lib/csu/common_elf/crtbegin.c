@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbegin.c,v 1.4 1998/03/28 00:52:07 cgd Exp $	*/
+/*	$NetBSD: crtbegin.c,v 1.5 1998/05/06 05:32:08 ross Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 
 #include "sysident.h"
+#include "crt.h"
 
 static void (*__CTOR_LIST__[1]) __P((void))
     __attribute__((section(".ctors"))) = { (void *)-1 };	/* XXX */
@@ -91,16 +92,17 @@ void
 _init()
 {
 	static int initialized = 0;
-
+	static voidvoid call__ctors = __ctors;
 	/*
 	 * Call global constructors.
 	 * Arrange to call global destructors at exit.
 	 */
+	/* prevent function pointer constant propagation */
+	__noconst_i(&call__ctors);
 	if (!initialized) {
 		initialized = 1;
-		__ctors();
+		(*call__ctors)();
 	}
-
 }
 
 extern void _fini(void) __attribute__((section(".fini")));
@@ -108,8 +110,11 @@ extern void _fini(void) __attribute__((section(".fini")));
 void
 _fini()
 {
+	static voidvoid call__dtors = __dtors;
 	/*
 	 * Call global destructors.
 	 */
-	__dtors();
+	/* prevent function pointer constant propagation */
+	__noconst_f(&call__dtors);
+	(*call__dtors)();
 }
