@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.23.2.2 2004/04/11 11:26:04 tron Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.23.2.3 2004/04/28 05:32:31 jmc Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.23.2.2 2004/04/11 11:26:04 tron Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.23.2.3 2004/04/28 05:32:31 jmc Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -276,13 +276,8 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 	if (name[0] == CTL_QUERY) {
 		uint v;
 		node = newp;
-		if (node == NULL) {
-			v = SYSCTL_VERS_0;
-			newlen = sizeof(struct sysctlnode);
-		}
-		else if (SYSCTL_VERS(node->sysctl_flags) == SYSCTL_VERS_0 &&
-			 newlen == sizeof(struct sysctlnode0))
-			v = SYSCTL_VERS_0;
+		if (node == NULL)
+			return (EINVAL);
 		else if (SYSCTL_VERS(node->sysctl_flags) == SYSCTL_VERS_1 &&
 			 newlen == sizeof(struct sysctlnode))
 			v = SYSCTL_VERS_1;
@@ -382,33 +377,10 @@ user_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 static size_t
 __cvt_node_out(uint v, const struct sysctlnode *n, void **o, size_t *l)
 {
-	struct sysctlnode0 node0;
 	const void *src = n;
 	size_t sz;
 
 	switch (v) {
-	    case SYSCTL_VERS_0:
-		memset(&node0, 0, sizeof(node0));
-		node0.sysctl0_flags = n->sysctl_flags;
-		node0.sysctl0_num = n->sysctl_num;
-		node0.sysctl0_size = n->sysctl_size;
-		memcpy(node0.sysctl0_name, n->sysctl_name, SYSCTL_NAMELEN);
-		node0.sysctl0_csize = n->sysctl_csize;
-		node0.sysctl0_clen = n->sysctl_clen;
-		node0.sysctl0_child = NULL;
-		node0.sysctl0_alias = n->sysctl_alias;
-		node0.sysctl0_idata = n->sysctl_idata;
-		node0.sysctl0_qdata = n->sysctl_qdata;
-		node0.sysctl0_data = n->sysctl_data;
-		node0.sysctl0_func = NULL;
-		node0.sysctl0_parent = NULL;
-		node0.sysctl0_ver = n->sysctl_ver;
-		node0.sysctl0_flags &= ~SYSCTL_VERS_MASK;
-		node0.sysctl0_flags |= SYSCTL_VERS_0;
-		src = &node0;
-		sz = sizeof(node0);
-		break;
-
 #if (SYSCTL_VERSION != SYSCTL_VERS_1)
 #error __cvt_node_out: no support for SYSCTL_VERSION
 #endif /* (SYSCTL_VERSION != SYSCTL_VERS_1) */
@@ -416,6 +388,7 @@ __cvt_node_out(uint v, const struct sysctlnode *n, void **o, size_t *l)
 	case SYSCTL_VERSION:
 		sz = sizeof(struct sysctlnode);
 		break;
+
 	default:
 		sz = 0;
 		break;
