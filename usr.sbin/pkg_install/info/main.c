@@ -1,11 +1,11 @@
-/*	$NetBSD: main.c,v 1.35 2003/06/05 13:15:45 agc Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2003/06/19 08:54:29 agc Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char *rcsid = "from FreeBSD Id: main.c,v 1.14 1997/10/08 07:47:26 charnier Exp";
 #else
-__RCSID("$NetBSD: main.c,v 1.35 2003/06/05 13:15:45 agc Exp $");
+__RCSID("$NetBSD: main.c,v 1.36 2003/06/19 08:54:29 agc Exp $");
 #endif
 #endif
 
@@ -64,8 +64,9 @@ usage(void)
 int
 main(int argc, char **argv)
 {
-	int     ch, rc;
 	lpkg_t *lpp;
+	int     ch;
+	int	rc;
 
 	setprogname(argv[0]);
 	while ((ch = getopt(argc, argv, Options)) != -1)
@@ -242,6 +243,16 @@ main(int argc, char **argv)
 				if (findmatchingname(_pkgdb_getPKGDB_DIR(), *argv, add_to_list_fn, &pkgs) <= 0)
 					errx(EXIT_FAILURE, "No matching pkg for %s.", *argv);
 			} else {
+				char   *dbdir;
+				char   *tmp;
+
+				dbdir = (tmp = getenv(PKG_DBDIR)) ? tmp : DEF_LOG_DIR;
+				if (**argv == '/' && strncmp(*argv, dbdir, strlen(dbdir)) == 0) {
+					*argv += strlen(dbdir) + 1;
+					if ((*argv)[strlen(*argv) - 1] == '/') {
+						(*argv)[strlen(*argv) - 1] = 0;
+					}
+				}
 				lpp = alloc_lpkg(*argv);
 				TAILQ_INSERT_TAIL(&pkgs, lpp, lp_link);
 			}
