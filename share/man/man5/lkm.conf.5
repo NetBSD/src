@@ -1,4 +1,4 @@
-.\"	$NetBSD: lkm.conf.5,v 1.5 2000/11/08 01:37:52 lukem Exp $
+.\"	$NetBSD: lkm.conf.5,v 1.6 2001/06/05 12:38:32 wiz Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -31,24 +31,23 @@
 .Os
 .Sh NAME
 .Nm lkm.conf
-.Nd loadable kernel module configuration file.
+.Nd loadable kernel module configuration file
 .Sh DESCRIPTION
 The
 .Nm
 file specifies loadable kernel modules, see
 .Xr lkm 4 ,
 that are to be loaded a boot time.
-The 
+The
 .Nm
-file
-is processed by
+file is processed by
 .Pa /etc/rc.lkm
 at system boot time, if it exists.
 .Pp
 Each line of the file is of the form
 .Dl path options entry postinstall output when
 .Pp
-Except for the 
+Except for the
 .Em path ,
 all other fields can be "-" to indicate empty.
 .Pp
@@ -62,7 +61,7 @@ that is the LKM to be loaded.
 .Pp
 The
 .Em options
-is some combination of the -d and -v options to
+are some combination of the -d and -v options to
 .Xr modload 8 .
 .Pp
 The
@@ -86,18 +85,20 @@ There are three predefined values which correspond to three points in
 the processing of the system startup script
 .Pa /etc/rc :
 .Bl -tag -width XXX
-.It BEFORENET - before networking is started. This works only
-if the
+.It BEFORENET
+Before networking is started. This works only if the
 .Pa /usr
 filesystem can already be mounted at this time.
-.It BEFOREMOUNT - before all filesystems listed in
+.It BEFOREMOUNT
+Before all filesystems listed in
 .Pa /etc/fstab
 are mounted (the
 .Pa /usr
 and
 .Pa /var
 filesystems are already present).
-.It AFTERMOUNT - after all filesystems are mounted.
+.It AFTERMOUNT
+After all filesystems are mounted.
 .El
 .Pp
 A "-" entry defaults to BEFORENET.
@@ -107,8 +108,8 @@ A "-" entry defaults to BEFORENET.
 .Pa /etc/rc.d/lkm ,
 .Pa /etc/rc.lkm
 .Sh SEE ALSO
-.Xr modload 8 ,
-.Xr lkm 4
+.Xr lkm 4 ,
+.Xr modload 8
 .Sh HISTORY
 The
 .Nm
