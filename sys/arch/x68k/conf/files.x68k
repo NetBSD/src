@@ -1,9 +1,8 @@
-#	$NetBSD: files.x68k,v 1.53 2002/12/01 09:00:36 isaki Exp $
+#	$NetBSD: files.x68k,v 1.54 2003/06/24 19:56:22 martin Exp $
 #
 # new style config file for x68k architecture
 #
 
-defflag				FPU_EMULATE
 defflag				M060SP
 
 defflag	opt_m680x0.h		M68020 M68030 M68040 M68060
