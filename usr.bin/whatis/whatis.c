@@ -1,4 +1,4 @@
-/*	$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $	*/
+/*	$NetBSD: whatis.c,v 1.13.2.1 2002/11/03 19:46:00 he Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\n\
 #if 0
 static char sccsid[] = "@(#)whatis.c	8.5 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $");
+__RCSID("$NetBSD: whatis.c,v 1.13.2.1 2002/11/03 19:46:00 he Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: whatis.c,v 1.13 2002/03/08 20:23:11 jdolecek Exp $");
 #include <string.h>
 #include <unistd.h>
 
-#include <man/config.h>
+#include <man/manconf.h>
 #include <man/pathnames.h>
 
 #define	MAXLINELEN	8192			/* max line handled */
@@ -121,9 +121,8 @@ main(argc, argv)
 		whatis(argv, p_path, 1);
 	else {
 		config(conffile);
-		ep = (tp = getlist("_whatdb")) == NULL ?
-		   NULL : TAILQ_FIRST(&tp->list);
-		for (; ep != NULL; ep = TAILQ_NEXT(ep, q)) {
+		tp = getlist("_whatdb", 0);
+		TAILQ_FOREACH(ep, &tp->list, q) {
 			if ((rv = glob(ep->s, GLOB_BRACE | GLOB_NOSORT, NULL,
 			    &pg)) != 0) {
 				if (rv == GLOB_NOMATCH)
