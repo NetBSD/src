@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs_data.h,v 1.186 2003/09/11 11:34:46 ichiro Exp $	*/
+/*	$NetBSD: pcmciadevs_data.h,v 1.187 2003/09/16 08:27:35 onoe Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.185 2003/09/11 11:34:18 ichiro Exp 
+ *	NetBSD: pcmciadevs,v 1.186 2003/09/16 08:26:37 onoe Exp 
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -398,6 +398,13 @@ struct pcmcia_knowndev pcmcia_knowndevs[] = {
 	    0,
 	    "Fujitsu Corporation",
 	    "Fujitsu Towa LA501 Ethernet",	}
+	,
+	{
+	    PCMCIA_VENDOR_FUJITSU, PCMCIA_PRODUCT_FUJITSU_WL110,
+	    PCMCIA_CIS_FUJITSU_WL110,
+	    0,
+	    "Fujitsu Corporation",
+	    "PEGA-WL110 Wireless LAN",	}
 	,
 	{
 	    PCMCIA_VENDOR_IBM, PCMCIA_PRODUCT_IBM_MICRODRIVE,
