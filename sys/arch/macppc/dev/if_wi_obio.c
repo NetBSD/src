@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi_obio.c,v 1.3 2002/10/02 05:30:42 thorpej Exp $	*/
+/*	$NetBSD: if_wi_obio.c,v 1.4 2002/10/02 20:13:48 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.  All rights reserved.
@@ -104,7 +104,6 @@ wi_obio_attach(parent, self, aux)
 	wisc->sc_enable = wi_obio_enable;
 	wisc->sc_disable = wi_obio_disable;
 
-	wisc->sc_ifp = &wisc->sc_ethercom.ec_if;
 	if (wi_attach(wisc)) {
 		printf("%s: failed to attach controller\n", self->dv_xname);
 		return;
