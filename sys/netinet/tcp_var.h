@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.24 1997/10/10 01:51:12 explorer Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.25 1997/10/17 22:12:46 kml Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -340,6 +340,7 @@ void	 tcp_init __P((void));
 void	 tcp_input __P((struct mbuf *, ...));
 int	 tcp_mss_to_advertise __P((const struct tcpcb *));
 void	 tcp_mss_from_peer __P((struct tcpcb *, int));
+void	 tcp_mtudisc __P((struct inpcb *, int));
 struct tcpcb *
 	 tcp_newtcpcb __P((struct inpcb *));
 void	 tcp_notify __P((struct inpcb *, int));
