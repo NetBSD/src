@@ -1,4 +1,4 @@
-/*	$NetBSD: opm.c,v 1.12 2004/05/08 08:38:36 minoura Exp $	*/
+/*	$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.12 2004/05/08 08:38:36 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opm.c,v 1.13 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,17 +61,14 @@ struct opm_softc {
 
 struct opm_softc	*opm0;	/* XXX */
 
-static int opm_match __P((struct device *, struct cfdata *, void *));
-static void opm_attach __P((struct device *, struct device *, void *));
+static int opm_match(struct device *, struct cfdata *, void *);
+static void opm_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(opm, sizeof (struct opm_softc),
     opm_match, opm_attach, NULL, NULL);
 
-static int
-opm_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+static int 
+opm_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
 
@@ -87,10 +84,8 @@ opm_match(parent, cf, aux)
 	return 1;
 }
 
-static void
-opm_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+static void 
+opm_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct opm_softc *sc = (struct opm_softc *)self;
 	struct intio_attach_args *ia = aux;
@@ -120,20 +115,19 @@ opm_attach(parent, self, aux)
 	return;
 }
 
-void opm_set_volume __P((int, int));
-void opm_set_key __P((int, int));
-void opm_set_voice __P((int, struct opm_voice *));
-void opm_set_voice_sub __P((int, struct opm_operator *));
-__inline static void writeopm __P((int, int));
-__inline static int readopm __P((int));
-void opm_key_on __P((u_char));
-void opm_key_off __P((u_char));
-int opmopen __P((dev_t, int, int));
-int opmclose __P((dev_t));
+void opm_set_volume(int, int);
+void opm_set_key(int, int);
+void opm_set_voice(int, struct opm_voice *);
+void opm_set_voice_sub(int, struct opm_operator *);
+__inline static void writeopm(int, int);
+__inline static int readopm(int);
+void opm_key_on(u_char);
+void opm_key_off(u_char);
+int opmopen(dev_t, int, int);
+int opmclose(dev_t);
 
-__inline static void
-writeopm(reg, dat)
-	int reg, dat;
+__inline static void 
+writeopm(int reg, int dat)
 {
 	while (bus_space_read_1 (opm0->sc_bst, opm0->sc_bht, OPM_DATA) & 0x80);
 	bus_space_write_1 (opm0->sc_bst, opm0->sc_bht, OPM_REG, reg);
@@ -142,9 +136,8 @@ writeopm(reg, dat)
 	opm0->sc_regs[reg] = dat;
 }
 
-__inline static int
-readopm(reg)
-	int reg;
+__inline static int 
+readopm(int reg)
 {
 	return opm0->sc_regs[reg];
 }
@@ -155,8 +148,7 @@ readopm(reg)
 
 #if NVS > 0
 void
-adpcm_chgclk(clk)
-	u_char	clk;
+adpcm_chgclk(u_char clk)
 {
 	writeopm(0x1b, (readopm(0x1b) & ~OPM1B_CT1MSK) | clk);
 }
@@ -164,8 +156,7 @@ adpcm_chgclk(clk)
 
 #if NFD > 0
 void
-fdc_force_ready(rdy)
-	u_char	rdy;
+fdc_force_ready(u_char rdy)
 {
 	writeopm(0x1b, (readopm(0x1b) & ~OPM1B_CT2MSK) | rdy);
 }
@@ -173,23 +164,19 @@ fdc_force_ready(rdy)
 
 #if NBELL > 0
 void
-opm_key_on(channel)
-	u_char channel;
+opm_key_on(u_char channel)
 {
-    writeopm(0x08, opm0->sc_vdata[channel].sm << 3 | channel);
+	writeopm(0x08, opm0->sc_vdata[channel].sm << 3 | channel);
 }
 
 void
-opm_key_off(channel)
-	u_char	channel;
+opm_key_off(u_char channel)
 {
-    writeopm(0x08, channel);
+	writeopm(0x08, channel);
 }
 
-void
-opm_set_voice(channel, voice)
-	int channel;
-	struct opm_voice *voice;
+void 
+opm_set_voice(int channel, struct opm_voice *voice)
 {
 	memcpy(&opm0->sc_vdata[channel], voice, sizeof(struct opm_voice));
 
@@ -197,82 +184,74 @@ opm_set_voice(channel, voice)
 	opm_set_voice_sub(0x48 + channel, &voice->m2);
 	opm_set_voice_sub(0x50 + channel, &voice->c1);
 	opm_set_voice_sub(0x58 + channel, &voice->c2);
-	writeopm(0x20 + channel, 0xc0 | (voice->fb & 0x7) << 3 | (voice->con & 0x7));
+	writeopm(0x20 + channel, 0xc0 | (voice->fb & 0x7) << 3 |
+		 (voice->con & 0x7));
 }
 
-void
-opm_set_voice_sub(reg, op)
-	register int reg;
-	struct opm_operator *op;
+void 
+opm_set_voice_sub(int reg, struct opm_operator *op)
 {
-    /* DT1/MUL */
-    writeopm(reg, (op->dt1 & 0x7) << 3 | (op->mul & 0x7));
+	/* DT1/MUL */
+	writeopm(reg, (op->dt1 & 0x7) << 3 | (op->mul & 0x7));
 
-    /* TL */
-    writeopm(reg + 0x20, op->tl & 0x7f);
+	/* TL */
+	writeopm(reg + 0x20, op->tl & 0x7f);
 
-    /* KS/AR */
-    writeopm(reg + 0x40, (op->ks & 0x3) << 6 | (op->ar & 0x1f));
+	/* KS/AR */
+	writeopm(reg + 0x40, (op->ks & 0x3) << 6 | (op->ar & 0x1f));
 
-    /* AMS/D1R */
-    writeopm(reg + 0x60, (op->ame & 0x1) << 7 | (op->d1r & 0x1f));
+	/* AMS/D1R */
+	writeopm(reg + 0x60, (op->ame & 0x1) << 7 | (op->d1r & 0x1f));
 
-    /* DT2/D2R */
-    writeopm(reg + 0x80, (op->dt2 & 0x3) << 6 | (op->d2r & 0x1f));
+	/* DT2/D2R */
+	writeopm(reg + 0x80, (op->dt2 & 0x3) << 6 | (op->d2r & 0x1f));
 
-    /* D1L/RR */
-    writeopm(reg + 0xa0, (op->d1l & 0xf) << 4 | (op->rr & 0xf));
+	/* D1L/RR */
+	writeopm(reg + 0xa0, (op->d1l & 0xf) << 4 | (op->rr & 0xf));
 }
 
-void
-opm_set_volume(channel, volume)
-	int channel;
-	int volume;
+void 
+opm_set_volume(int channel, int volume)
 {
-    int value;
+	int value;
 
-    switch (opm0->sc_vdata[channel].con) {
-    case 7:
-	value = opm0->sc_vdata[channel].m1.tl + volume;
-	writeopm(0x60 + channel, ((value > 0x7f) ? 0x7f : value));
-    case 6:
-    case 5:
-	value = opm0->sc_vdata[channel].m2.tl + volume;
-	writeopm(0x68 + channel, ((value > 0x7f) ? 0x7f : value));
-    case 4:
-	value = opm0->sc_vdata[channel].c1.tl + volume;
-	writeopm(0x70 + channel, ((value > 0x7f) ? 0x7f : value));
-    case 3:
-    case 2:
-    case 1:
-    case 0:
-	value = opm0->sc_vdata[channel].c2.tl + volume;
-	writeopm(0x78 + channel, ((value > 0x7f) ? 0x7f : value));
-    }
+	switch (opm0->sc_vdata[channel].con) {
+	case 7:
+		value = opm0->sc_vdata[channel].m1.tl + volume;
+		writeopm(0x60 + channel, ((value > 0x7f) ? 0x7f : value));
+	case 6:
+	case 5:
+		value = opm0->sc_vdata[channel].m2.tl + volume;
+		writeopm(0x68 + channel, ((value > 0x7f) ? 0x7f : value));
+	case 4:
+		value = opm0->sc_vdata[channel].c1.tl + volume;
+		writeopm(0x70 + channel, ((value > 0x7f) ? 0x7f : value));
+	case 3:
+	case 2:
+	case 1:
+	case 0:
+		value = opm0->sc_vdata[channel].c2.tl + volume;
+		writeopm(0x78 + channel, ((value > 0x7f) ? 0x7f : value));
+	}
 }
 
-void
-opm_set_key(channel, tone)
-	int channel;
-	int tone;
+void 
+opm_set_key(int channel, int tone)
 {
 	writeopm(0x28 + channel, tone >> 8);
 	writeopm(0x30 + channel, tone & 0xff);
 }
 
 /*ARGSUSED*/
-int
-opmopen(dev, flag, mode)
-	dev_t dev;
-	int flag, mode;
+int 
+opmopen(dev_t dev, int flag, int mode)
 {
 	return 0;
 }
 
 /*ARGSUSED*/
-int
-opmclose(dev)
-	dev_t dev;
+int 
+opmclose(dev_t dev)
 {
 	return 0;
 }

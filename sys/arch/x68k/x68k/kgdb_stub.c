@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.10 2004/02/13 11:36:20 wiz Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.11 2005/01/18 07:12:16 chs Exp $";
 #endif
 
 #include <sys/param.h>
@@ -108,13 +108,10 @@ static int (*kgdb_putc)();
  * Send a message.  The host gets one chance to read it.
  */
 static void
-kgdb_send(type, bp, len)
-	register u_char type;
-	register u_char *bp;
-	register int len;
+kgdb_send(u_char type, u_char *bp, int len)
 {
-	register u_char csum;
-	register u_char *ep = bp + len;
+	u_char csum;
+	u_char *ep = bp + len;
 
 	PUTC(FRAME_START);
 	PUTESC(type);
@@ -131,13 +128,11 @@ kgdb_send(type, bp, len)
 }
 
 static int
-kgdb_recv(bp, lenp)
-	u_char *bp;
-	int *lenp;
+kgdb_recv(u_char *bp, int *lenp)
 {
-	register u_char c, csum;
-	register int escape, len;
-	register int type;
+	u_char c, csum;
+	int escape, len;
+	int type;
 
 restart:
 	csum = len = escape = 0;
@@ -201,8 +196,7 @@ restart:
  * (gdb only understands unix signal numbers).
  */
 static int 
-computeSignal(type)
-	int type;
+computeSignal(int type)
 {
 	int sigval;
 
@@ -253,8 +247,8 @@ computeSignal(type)
  * Trap into kgdb to wait for debugger to connect, 
  * noting on the console why nothing else is going on.
  */
-kgdb_connect(verbose)
-	int verbose;
+void
+kgdb_connect(int verbose)
 {
 
 	if (verbose)
@@ -268,7 +262,8 @@ kgdb_connect(verbose)
 /*
  * Decide what to do on panic.
  */
-kgdb_panic()
+void
+kgdb_panic(void)
 {
 
 	if (kgdb_active == 0 && kgdb_debug_panic && kgdb_dev != NODEV)
@@ -286,11 +281,9 @@ kgdb_panic()
 #define GDB_PC 17
 
 static inline void
-kgdb_copy(src, dst, nbytes)
-	register u_char *src, *dst;
-	register u_int nbytes;
+kgdb_copy(u_char *src, u_char *dst, u_int nbytes)
 {
-	register u_char *ep = src + nbytes;
+	u_char *ep = src + nbytes;
 
 	while (src < ep)
 		*dst++ = *src++;
@@ -303,18 +296,14 @@ kgdb_copy(src, dst, nbytes)
  * SR).  We must skip this when copying into and out of gdb.
  */
 static inline void
-regs_to_gdb(fp, regs)
-	struct frame *fp;
-	u_long *regs;
+regs_to_gdb(struct frame *fp, u_long *regs)
 {
 	kgdb_copy((u_char *)fp->f_regs, (u_char *)regs, 16*4);
 	kgdb_copy((u_char *)&fp->f_stackadj, (u_char *)&regs[GDB_SR], 2*4);
 }
 
 static inline void
-gdb_to_regs(fp, regs)
-	struct frame *fp;
-	u_long *regs;
+gdb_to_regs(struct frame *fp, u_long *regs)
 {
 	kgdb_copy((u_char *)regs, (u_char *)fp->f_regs, 16*4);
 	kgdb_copy((u_char *)&regs[GDB_SR], (u_char *)&fp->f_stackadj, 2*4);
@@ -329,15 +318,13 @@ static u_char outbuffer[SL_RPCSIZE];
  * a remote gdb.
  */
 int 
-kgdb_trap(type, frame)
-	int type;
-	struct frame *frame;
+kgdb_trap(int type, struct frame *frame)
 {
-	register u_long len;
+	u_long len;
 	u_char *addr;
-	register u_char *cp;
-	register u_char out, in;
-	register int outlen;
+	u_char *cp;
+	u_char out, in;
+	int outlen;
 	int inlen;
 	u_long gdb_regs[NUM_REGS];
 
@@ -461,7 +448,7 @@ kgdb_trap(type, frame)
 		case KGDB_REG_W | KGDB_DELTA:
 			cp = inbuffer;
 			for (len = 0; len < inlen; len += 5) {
-				register int j = cp[len];
+				int j = cp[len];
 
 				kgdb_copy(&cp[len + 1],
 					  (u_char *)&gdb_regs[j], 4);
@@ -531,9 +518,8 @@ kgdb_trap(type, frame)
  * XXX do kernacc call if safe, otherwise attempt
  * to simulate by simple bounds-checking.
  */
-kgdb_acc(addr, len, rw)
-	caddr_t addr;
-	int len, rw;
+int
+kgdb_acc(caddr_t addr, int len, int rw)
 {
 	extern char proc0paddr[], kstack[];	/* XXX */
 	extern char *kernel_map;		/* XXX! */

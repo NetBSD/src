@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2004/09/26 21:44:27 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2005/01/18 07:12:16 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -189,39 +189,39 @@ extern int machineid;
 extern char *intiolimit;
 
 /* autoconf.c functions */
-void	config_console __P((void));
+void	config_console(void);
 
 /* fpu.c functions */
-int	fpu_probe __P((void));
+int	fpu_probe(void);
 
 /* machdep.c functions */
-void	dumpconf __P((void));
-void	dumpsys __P((void));
+void	dumpconf(void);
+void	dumpsys(void);
 
 /* locore.s functions */
 struct pcb;
 struct fpframe;
-int	suline __P((caddr_t, caddr_t));
-void	savectx __P((struct pcb *));
-void	switch_exit __P((struct lwp *));
-void	switch_lwp_exit __P((struct lwp *));
-void	proc_trampoline __P((void));
-void	loadustp __P((int));
-void	m68881_save __P((struct fpframe *));
-void	m68881_restore __P((struct fpframe *));
+int	suline(caddr_t, caddr_t);
+void	savectx(struct pcb *);
+void	switch_exit(struct lwp *);
+void	switch_lwp_exit(struct lwp *);
+void	proc_trampoline(void);
+void	loadustp(int);
+void	m68881_save(struct fpframe *);
+void	m68881_restore(struct fpframe *);
 
 /* machdep.c functions */
-int	badaddr __P((caddr_t));
-int	badbaddr __P((caddr_t));
+int	badaddr(caddr_t);
+int	badbaddr(caddr_t);
 
 /* sys_machdep.c functions */
-int	cachectl1 __P((unsigned long, vaddr_t, size_t, struct proc *));
-int	dma_cachectl __P((caddr_t, int));
+int	cachectl1(unsigned long, vaddr_t, size_t, struct proc *);
+int	dma_cachectl(caddr_t, int);
 
 /* vm_machdep.c functions */
-void	physaccess __P((caddr_t, caddr_t, int, int));
-void	physunaccess __P((caddr_t, int));
-int	kvtop __P((caddr_t));
+void	physaccess(caddr_t, caddr_t, int, int);
+void	physunaccess(caddr_t, int);
+int	kvtop(caddr_t);
 
 #endif
 

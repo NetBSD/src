@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.29 2004/01/25 13:17:00 minoura Exp $	*/
+/*	$NetBSD: grf.c,v 1.30 2005/01/18 07:12:15 chs Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.29 2004/01/25 13:17:00 minoura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.30 2005/01/18 07:12:15 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,13 +144,10 @@ const struct cdevsw grf_cdevsw = {
 
 /*ARGSUSED*/
 int
-grfopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+grfopen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp;
+	struct grf_softc *gp;
 	int error = 0;
 
 	if (unit >= grf_cd.cd_ndevs ||
@@ -175,12 +172,9 @@ grfopen(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags, mode;
-	struct proc *p;
+grfclose(dev_t dev, int flags, int mode, struct proc *p)
 {
-	register struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
+	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
 		return ENXIO;
@@ -193,15 +187,10 @@ grfclose(dev, flags, mode, p)
 
 /*ARGSUSED*/
 int
-grfioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+grfioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	int unit = GRFUNIT(dev);
-	register struct grf_softc *gp = grf_cd.cd_devs[unit];
+	struct grf_softc *gp = grf_cd.cd_devs[unit];
 	int error;
 
 	if ((gp->g_flags & GF_ALIVE) == 0)
@@ -246,18 +235,14 @@ grfioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 paddr_t
-grfmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+grfmmap(dev_t dev, off_t off, int prot)
 {
 
 	return grfaddr(grf_cd.cd_devs[GRFUNIT(dev)], off);
 }
 
 int
-grfon(gp)
-	struct grf_softc *gp;
+grfon(struct grf_softc *gp)
 {
 	int unit = gp->g_device.dv_unit;
 
@@ -272,8 +257,7 @@ grfon(gp)
 }
 
 int
-grfoff(gp)
-	struct grf_softc *gp;
+grfoff(struct grf_softc *gp)
 {
 	int unit = gp->g_device.dv_unit;
 	int error;
@@ -289,11 +273,9 @@ grfoff(gp)
 }
 
 off_t
-grfaddr(gp, off)
-	struct grf_softc *gp;
-	off_t off;
+grfaddr(struct grf_softc *gp, off_t off)
 {
-	register struct grfinfo *gi = &gp->g_display;
+	struct grfinfo *gi = &gp->g_display;
 
 	/* control registers */
 	if (off >= 0 && off < gi->gd_regsize)
@@ -309,10 +291,7 @@ grfaddr(gp, off)
 }
 
 int
-grfmap(dev, addrp, p)
-	dev_t dev;
-	caddr_t *addrp;
-	struct proc *p;
+grfmap(dev_t dev, caddr_t *addrp, struct proc *p)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 	int len, error;
@@ -346,10 +325,7 @@ grfmap(dev, addrp, p)
 }
 
 int
-grfunmap(dev, addr, p)
-	dev_t dev;
-	caddr_t addr;
-	struct proc *p;
+grfunmap(dev_t dev, caddr_t addr, struct proc *p)
 {
 	struct grf_softc *gp = grf_cd.cd_devs[GRFUNIT(dev)];
 	vsize_t size;
