@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.18 2000/01/12 05:13:32 mjl Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.19 2000/02/14 04:36:21 aidan Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.18 2000/01/12 05:13:32 mjl Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.19 2000/02/14 04:36:21 aidan Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: local_passwd.c,v 1.18 2000/01/12 05:13:32 mjl Exp $");
 static	char   *getnewpasswd __P((struct passwd *, int));
 
 static uid_t uid;
+static int force_local;
 
 char *tempname;
 
@@ -139,8 +140,43 @@ getnewpasswd(pw, min_pw_len)
 }
 
 int
-local_passwd(uname)
-	char *uname;
+local_init(progname)
+	const char *progname;
+{
+	force_local = 0;
+	return (0);
+}
+
+int
+local_arg(char arg, const char *optarg)
+{
+	switch (arg) {
+	case 'l':
+		force_local = 1;
+		break;
+	default:
+		return(0);
+	}
+	return(1);
+}
+
+int
+local_arg_end()
+{
+	if (force_local)
+		return(PW_USE_FORCE);
+	return(PW_USE);
+}
+
+void
+local_end()
+{
+	/* NOOP */
+}
+
+int
+local_chpw(uname)
+	const char *uname;
 {
 	struct passwd *pw;
 	struct passwd old_pw;
