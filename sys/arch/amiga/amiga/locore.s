@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 1997/06/17 00:34:11 is Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 1997/07/04 20:52:53 is Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -129,8 +129,8 @@ _buserr60:
 	orl	#IC60_CABC,d2		| clear all branch cache entries
 	movc	d2,cacr
 	movl	d0,d1
-	andl	#0x7ffd,d1
 	addql	#1,L60bpe
+	andl	#0x7ffd,d1
 	jeq	_ASM_LABEL(faultstkadjnotrap2)
 Lnobpe:
 | we need to adjust for misaligned addresses
