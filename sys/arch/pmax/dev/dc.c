@@ -1,4 +1,4 @@
-/*	$NetBSD: dc.c,v 1.75 2003/08/07 16:29:07 agc Exp $	*/
+/*	$NetBSD: dc.c,v 1.76 2003/09/28 17:25:07 chs Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.75 2003/08/07 16:29:07 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dc.c,v 1.76 2003/09/28 17:25:07 chs Exp $");
 
 /*
  * devDC7085.c --
@@ -203,6 +203,8 @@ static struct consdev dccons = {
 	NODEV, CN_REMOTE
 };
 
+static boolean_t dc_getc_dotimeout;
+
 void
 dc_cnattach(addr, line)
 paddr_t addr;
@@ -327,13 +329,15 @@ dcattach(sc, addr, dtr_mask, rtscts_mask, speed,
 	sc->dc_flags = 0;
 
 	switch (systype) {
-	  case DS_PMAX:
-	  case DS_3MAX:
+	case DS_PMAX:
+	case DS_3MAX:
 		sc->dc_flags |= DC_KBDMOUSE;
 		break;
-	  case DS_MIPSMATE:
+
+	case DS_MIPSMATE:
 		break;
-	  default:
+
+	default:
 		/* XXX error?? */
 		break;
 	}
@@ -449,7 +453,9 @@ dc_mouse_init(sc, dev)
 	 * mouse tracking required by Xservers.
 	 */
 	DELAY(10000);
+	dc_getc_dotimeout = TRUE;
 	lk_mouseinit(ctty.t_dev, dcPutc, dcGetc);
+	dc_getc_dotimeout = FALSE;
 	DELAY(10000);
 
 	splx(s);
@@ -1215,9 +1221,7 @@ dcGetc(dev)
 	dev_t dev;
 {
 	dcregs *dcaddr;
-	int c;
-	int line;
-	int s;
+	int s, c, line, timeout;
 
 	line = DCLINE(dev);
 	if (cold && dc_cons_addr) {
@@ -1230,13 +1234,21 @@ dcGetc(dev)
 	if (!dcaddr)
 		return (0);
 	s = spltty();
+	timeout = 500000;
 	for (;;) {
-		if (!(dcaddr->dc_csr & CSR_RDONE))
+		if (!(dcaddr->dc_csr & CSR_RDONE)) {
+			DELAY(10);
+			if (dc_getc_dotimeout && --timeout == 0) {
+				splx(s);
+				return (-1);
+			}
 			continue;
+		}
 		c = dcaddr->dc_rbuf;
 		DELAY(10);
 		if (((c >> 8) & 03) == line)
 			break;
+		timeout = 500000;
 	}
 	splx(s);
 	return (c & 0xff);
