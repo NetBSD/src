@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.104 2000/08/29 10:49:09 wennmach Exp $
+#	$NetBSD: Makefile.inc,v 1.105 2000/10/20 18:46:10 briggs Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
@@ -7,8 +7,8 @@
 SRCS+= 	_errno.c alarm.c assert.c basename.c clock.c closedir.c \
 	confstr.c ctermid.c ctype_.c daemon.c devname.c dirname.c \
 	disklabel.c err.c errx.c __errlist14.c errlist.c errno.c execl.c \
-	execle.c execlp.c execv.c execvp.c fmtmsg.c fnmatch.c fstab.c \
-	ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
+	execle.c execlp.c execv.c execvp.c fmtcheck.c fmtmsg.c fnmatch.c \
+	fstab.c ftok.c __fts13.c fts.c getbsize.c getcap.c getcwd.c \
 	getdomainname.c getgrent.c getgrouplist.c gethostname.c \
 	getloadavg.c getlogin.c getmntinfo.c getnetgrent.c \
 	getpagesize.c getpass.c getpwent.c getsubopt.c getttyent.c \
@@ -37,9 +37,9 @@ SRCS+=	_err.c _errx.c _sys_errlist.c _sys_nerr.c _sys_siglist.c \
 .include "${ARCHDIR}/gen/Makefile.inc"
 
 MAN+=	alarm.3 basename.3 bswap.3 clock.3 confstr.3 ctermid.3 ctype.3 \
-	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 fmtmsg.3 \
-	fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 getbsize.3 getcap.3 \
-	getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
+	daemon.3 devname.3 directory.3 dirname.3 err.3 exec.3 fmtcheck.3 \
+	fmtmsg.3 fnmatch.3 fpgetmask.3 frexp.3 ftok.3 fts.3 getbsize.3 \
+	getcap.3 getcwd.3 getdomainname.3 getdiskbyname.3 getfsent.3 \
 	getgrent.3 getgrouplist.3 gethostname.3 getloadavg.3 \
 	getmntinfo.3 getnetgrent.3 getpagesize.3 getpass.3 \
 	getpwent.3 getttyent.3 getusershell.3 glob.3 \
