@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.44 1996/10/19 18:42:12 perry Exp $
+#	$NetBSD: Makefile.inc,v 1.45 1996/11/11 13:43:57 mycroft Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
 # sys sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/sys ${.CURDIR}/sys
 
 # modules with non-default implementations on at least one architecture:
-SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S reboot.S \
+SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S pipe.S ptrace.S \
 	sbrk.S setlogin.S sigpending.S sigprocmask.S sigreturn.S \
 	sigsuspend.S syscall.S
 
@@ -28,7 +28,8 @@ ASM=	accept.o access.o acct.o adjtime.o bind.o chdir.o chflags.o chmod.o \
 	mount.o mprotect.o msgctl.o msgget.o msgrcv.o msgsnd.o msync.o \
 	munlock.o munmap.o nfssvc.o open.o pathconf.o poll.o \
 	profil.o quotactl.o \
-	read.o readlink.o readv.o recvfrom.o recvmsg.o rename.o revoke.o \
+	read.o readlink.o readv.o reboot.o \
+	recvfrom.o recvmsg.o rename.o revoke.o \
 	rmdir.o select.o semconfig.o semget.o semop.o sendmsg.o sendto.o \
 	setegid.o seteuid.o setgid.o setgroups.o setitimer.o setpgid.o \
 	setpriority.o setregid.o setreuid.o \
