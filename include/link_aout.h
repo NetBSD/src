@@ -1,4 +1,4 @@
-/*	$NetBSD: link_aout.h,v 1.12 1998/05/12 21:21:21 pk Exp $	*/
+/*	$NetBSD: link_aout.h,v 1.13 1998/05/14 01:55:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -40,6 +40,8 @@
 
 #ifndef _LINK_H_
 #define _LINK_H_
+
+#include <dlfcn.h>			/* for Dl_info */
 
 /*
  * A `Shared Object Descriptor' descibes a shared object that is needed
