@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.32 2000/03/17 11:23:23 soren Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.33 2000/03/28 17:24:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -181,7 +181,7 @@ atapibusattach(parent, self, aux)
 	sc_link_proto = malloc(sizeof(struct scsipi_link),
 	    M_DEVBUF, M_NOWAIT);
 	if (sc_link_proto == NULL)
-	    printf("atapibusattach : can't allocate scsipi link proto\n");
+		panic("atapibusattach : can't allocate scsipi link proto\n");
 	memset(sc_link_proto, 0, sizeof(struct scsipi_link));
 
 	sc_link_proto->type = BUS_ATAPI;
