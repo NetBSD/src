@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.1 2004/11/11 01:40:32 christos Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.2 2004/11/11 05:46:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -34,11 +34,11 @@
  */
 
 /*
- * Kernel params Filesystem
+ * Pseudo-tty Filesystem
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.1 2004/11/11 01:40:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.2 2004/11/11 05:46:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
