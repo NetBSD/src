@@ -13,7 +13,7 @@
 #define PCMCIA_MANUFACTURER_ADAPTEC	0x12F
 #define PCMCIA_PRODUCT_ADAPTEC_APA1460	0x1
 
-struct aic_softc {
+struct aic_pcmcia_softc {
     struct device sc_dev;
 
     struct pcmcia_io_handle sc_pcioh;
@@ -30,7 +30,7 @@ int aic_pcmcia_match __P((struct device *, struct cfdata *, void *));
 void aic_pcmcia_attach __P((struct device *, struct device *, void *));
 
 struct cfattach aic_pcmcia_ca = {
-    sizeof(struct aic_softc), aic_pcmcia_match, aic_pcmcia_attach
+    sizeof(struct aic_pcmcia_softc), aic_pcmcia_match, aic_pcmcia_attach
 };
 
 struct cfdriver aicx_cd = {
@@ -65,7 +65,7 @@ aic_pcmcia_attach(parent, self, aux)
     struct aic_pcmcia_softc *sc = (void *) self;
     struct pcmcia_attach_args *pa = aux;
     struct pcmcia_config_entry *cfe;
-    struct pcmcia_function *pf = pa->pa_pf;
+    struct pcmcia_function *pf = pa->pf;
 
     sc->sc_pf = pf;
     cfe = pf->cfe_head.sqh_first;
