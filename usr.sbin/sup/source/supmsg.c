@@ -25,8 +25,16 @@
 /*
  **********************************************************************
  * HISTORY
+ *
+ * 7-July-93  Nate Williams at Montana State University
+ *	Modified SUP to use gzip based compression when sending files
+ *	across the network to save BandWidth
+ *
  * $Log: supmsg.c,v $
- * Revision 1.1.1.1  1993/05/21 14:52:19  cgd
+ * Revision 1.2  1993/08/04 17:46:23  brezak
+ * Changes from nate for gzip'ed sup
+ *
+ * Revision 1.1.1.1  1993/05/21  14:52:19  cgd
  * initial import of CMU's SUP to NetBSD
  *
  * Revision 2.4  92/09/09  22:05:17  mrt
@@ -599,4 +607,16 @@ int msgxpatch ()
 		x = writemend ();
 	}
 	return (x);
+}
+
+/*
+ * Compression check protocol message
+ */
+extern int	docompress;		/* Compress file before sending? */
+
+int msgcompress ()
+{
+	if (server)
+		return (readmint (MSGCOMPRESS,&docompress));
+	return (writemint (MSGCOMPRESS, docompress));
 }

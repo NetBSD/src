@@ -23,7 +23,10 @@
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .\" HISTORY
 .\" $Log: sup.1,v $
-.\" Revision 1.1.1.1  1993/05/21 14:52:16  cgd
+.\" Revision 1.2  1993/08/04 17:46:14  brezak
+.\" Changes from nate for gzip'ed sup
+.\"
+.\" Revision 1.1.1.1  1993/05/21  14:52:16  cgd
 .\" initial import of CMU's SUP to NetBSD
 .\"
 .\" Revision 1.4  92/08/11  12:08:40  mrt
@@ -306,6 +309,26 @@ flag overrides and disables the
 .B -o
 flag and the
 .B old
+supfile option.
+.TP
+.B -z
+Normally sup transfers files directly without any
+other processing, but with the 
+.B -z
+flag, or the
+.B compress
+supfile option, sup will compress the file 
+before sending it across the network and
+uncompress it and restore all the correct 
+file attributes at the recieving end.
+.TP
+.B -Z
+The
+.B -Z
+flag overrides and disables the
+.B -z
+flag and the
+.B compress
 supfile option.
 .TP
 .B -v
