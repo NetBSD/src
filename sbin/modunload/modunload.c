@@ -1,4 +1,4 @@
-/*	$NetBSD: modunload.c,v 1.8 1995/03/18 14:56:50 cgd Exp $	*/
+/*	$NetBSD: modunload.c,v 1.9 1995/05/28 05:23:05 jtc Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -38,7 +38,7 @@
 #include <sys/mount.h>
 #include <sys/lkm.h>
 #include <sys/file.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <err.h>
