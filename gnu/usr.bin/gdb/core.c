@@ -8,7 +8,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)core.c	6.3 (Berkeley) 5/8/91";*/
-static char rcsid[] = "$Id: core.c,v 1.3 1993/08/01 18:47:22 mycroft Exp $";
+static char rcsid[] = "$Id: core.c,v 1.4 1994/01/28 02:12:02 mycroft Exp $";
 #endif /* not lint */
 
 /* Work with core dump and executable files, for GDB.
@@ -78,8 +78,6 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 #define AOUTHDR		struct exec
 #endif
 #endif
-
-extern char *sys_siglist[];
 
 extern core_file_command (), exec_file_command ();
 
