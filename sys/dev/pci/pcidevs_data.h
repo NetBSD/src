@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.588 2003/11/22 20:56:53 fvdl Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.589 2003/11/26 18:47:16 matt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.592 2003/11/22 20:54:01 fvdl Exp 
+ *	NetBSD: pcidevs,v 1.593 2003/11/26 18:44:16 matt Exp 
  */
 
 /*
@@ -6988,6 +6988,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    "82C701",
 	},
 	{
+	    PCI_VENDOR_PCHDTV, PCI_PRODUCT_PCHDTV_HD2000,
+	    0,
+	    "pcHDTV",
+	    "HD-2000 HDTV video capture",
+	},
+	{
 	    PCI_VENDOR_PCTECH, PCI_PRODUCT_PCTECH_RZ1000,
 	    0,
 	    "PC Technology",
@@ -13507,6 +13513,12 @@ const struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_KURUSUGAWA, 0,
 	    PCI_KNOWNDEV_NOPROD,
 	    "Kurusugawa Electronics, Inc.",
+	    NULL,
+	},
+	{
+	    PCI_VENDOR_PCHDTV, 0,
+	    PCI_KNOWNDEV_NOPROD,
+	    "pcHDTV",
 	    NULL,
 	},
 	{
