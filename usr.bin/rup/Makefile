@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1994/12/22 12:30:45 cgd Exp $
+#	$NetBSD: Makefile,v 1.5 1996/09/27 01:46:08 thorpej Exp $
 
 PROG=	rup
 
