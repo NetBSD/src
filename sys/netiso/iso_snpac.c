@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_snpac.c,v 1.19 1998/07/05 04:37:43 jonathan Exp $	*/
+/*	$NetBSD: iso_snpac.c,v 1.20 1998/08/25 04:43:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -262,13 +262,14 @@ iso_setmcasts(ifp, req)
 	bzero((caddr_t) & ifr, sizeof(ifr));
 	for (cpp = (caddr_t *) addrlist; *cpp; cpp++) {
 		bcopy(*cpp, (caddr_t) ifr.ifr_addr.sa_data, 6);
-		if (req == RTM_ADD)
+		if (req == RTM_ADD) {
 			if (ether_addmulti(&ifr, (struct ethercom *)ifp) 
 			    == ENETRESET)
 				doreset++;
 			else if (ether_delmulti(&ifr, (struct ethercom *)ifp)
 			    == ENETRESET)
 				doreset++;
+		}
 	}
 	if (doreset) {
 		if (ifp->if_reset)
