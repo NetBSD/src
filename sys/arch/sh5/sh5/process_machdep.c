@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11 2003/01/20 20:07:54 scw Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12 2003/03/13 13:44:19 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -124,8 +124,8 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 	 * Until such time as the cause is determined and fixed, this works
 	 * around the problem.
 	 */
-	if (__cpu_cache_iinv_all)
-		__cpu_cache_iinv_all();
+	if (cpu_cache_iinv_all)
+		cpu_cache_iinv_all();
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.9 2003/01/19 19:49:48 scw Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10 2003/03/13 13:44:18 scw Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -143,7 +143,6 @@ struct cpu_info {
 	vsid_t ci_curvsid;		/* current pmap's vsid */
 	u_int ci_want_resched;		/* current process pre-empted */
 	volatile u_int ci_intr_depth;	/* nesting level of interrupts */
-	paddr_t ci_panicstkphys;	/* panic stack top physical address */
 	struct exc_scratch_frame ci_escratch;	/* exception scratch area */
 	struct tlb_scratch_frame ci_tscratch;	/* TLB miss scratch area */
 };
@@ -253,6 +252,7 @@ struct pcb;
 extern void savectx(struct pcb *);
 extern void dumpsys(void);
 
+extern void cpu_identify(void);
 extern void sh5_reboot(int, char *);
 #endif /* _KERNEL */
 

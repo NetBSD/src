@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_machdep.h,v 1.2 2002/07/11 21:20:23 scw Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.3 2003/03/13 13:44:18 scw Exp $	*/
 
 #ifndef _BYTE_ORDER
 #error Define _BYTE_ORDER!
@@ -76,6 +76,14 @@
 #define R_SH_DIR10SW		49
 #define R_SH_DIR10SL		50
 #define R_SH_DIR10SQ		51
+#define	R_SH_TLS_GD_32		144
+#define	R_SH_TLS_LD_32		145
+#define	R_SH_TLS_LDO_32		146
+#define	R_SH_TLS_IE_32		147
+#define	R_SH_TLS_LE_32		148
+#define	R_SH_TLS_DTPMOD32	149
+#define	R_SH_TLS_DTPOFF32	150
+#define	R_SH_TLS_TPOFF32	151
 #define	R_SH_GOT32		160
 #define	R_SH_PLT32		161
 #define	R_SH_COPY		162
