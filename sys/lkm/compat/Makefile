@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2002/02/10 16:25:35 mrg Exp $
+# $NetBSD: Makefile,v 1.18 2002/02/16 11:02:37 is Exp $
 
 .if (${MACHINE_ARCH} == "sparc64")
 SUBDIR+=	netbsd32 sunos32 svr4 svr4_32
@@ -26,7 +26,7 @@ SUBDIR+=	aout ibcs2
 .endif
 
 .if (${MACHINE_ARCH} == "m68k")
-SUBDIR+=	aoutm68k linux sunos svr4
+SUBDIR+=	aoutm68k sunos svr4
 .endif
 
 .if (${MACHINE_ARCH} == "mipsel")
