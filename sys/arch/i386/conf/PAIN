@@ -1,4 +1,4 @@
-#	$NetBSD: PAIN,v 1.52 1995/04/19 19:08:52 mycroft Exp $
+#	$NetBSD: PAIN,v 1.53 1995/05/16 14:58:44 mycroft Exp $
 #
 #	PAIN -- mail server and test machine
 #
@@ -37,7 +37,7 @@ options		COMPAT_10	# NetBSD 1.0,
 options		COMPAT_43	# and 4.3BSD
 options		TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 
-#options	COMPAT_SVR4	# binary compatibility with SVR4
+options		COMPAT_SVR4	# binary compatibility with SVR4
 options		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 options		COMPAT_LINUX	# binary compatibility with Linux
 
@@ -87,10 +87,10 @@ com1	at isa? port 0x2f8 irq 3
 #ast0	at isa? port 0x1a0 irq 3	# AST 4-port serial cards
 #com*	at ast? slave ? flags 1
 rtfps0	at isa? port 0x3230 irq 10	# RT 4-port serial cards
-com*	at rtfps? slave 0
-#com*	at rtfps? slave ?
-com*	at rtfps? slave 2
-com*	at rtfps? slave 3
+com2	at rtfps? slave 0
+#com3	at rtfps? slave ?
+com4	at rtfps? slave 2
+com5	at rtfps? slave 3
 
 #cy0	at isa? ...
 
