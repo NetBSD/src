@@ -1,4 +1,4 @@
-.\"	$NetBSD: cron.8,v 1.4 2002/02/08 01:38:47 ross Exp $
+.\"	$NetBSD: cron.8,v 1.5 2004/03/20 09:18:03 jdolecek Exp $
 .\"
 .\"/* Copyright 1988,1990,1993 by Paul Vixie
 .\" * All rights reserved
@@ -19,45 +19,47 @@
 .\"
 .\" Id: cron.8,v 2.2 1993/12/28 08:34:43 vixie Exp
 .\"
-.TH CRON 8 "20 December 1993"
-.UC 4
-.SH NAME
-cron \- daemon to execute scheduled commands (Vixie Cron)
-.SH SYNOPSIS
-cron
-.SH DESCRIPTION
-.I Cron
+.Dd March 20, 2004
+.Dt CRON 8
+.Sh NAME
+.Nm cron
+.Nd daemon to execute scheduled commands (Vixie Cron)
+.Sh SYNOPSIS
+.Nm
+.Sh DESCRIPTION
+.Nm
 should be started from /etc/rc or /etc/rc.local.  It will return immediately,
 so you don't need to start it with '\*[Am]'.
-.PP
-.I Cron
+.Pp
+.Nm
 searches /var/cron/tabs for crontab files which are named after accounts in
 /etc/passwd; crontabs found are loaded into memory.
-.I Cron
+.Nm
 also searches for /etc/crontab which is in a different format (see
-.IR crontab(5)).
-.I Cron
+.Xr crontab 5 ).
+.Nm
 then wakes up every minute, examining all stored crontabs, checking each
 command to see if it should be run in the current minute.  When executing
 commands, any output is mailed to the owner of the crontab (or to the user
 named in the MAILTO environment variable in the crontab, if such exists).
-.PP
+.Pp
 Additionally,
-.I cron
+.Nm
 checks each minute to see if its spool directory's modtime (or the modtime
 on
-.IR /etc/crontab)
+.Pa /etc/crontab )
 has changed, and if it has,
-.I cron
+.Nm
 will then examine the modtime on all crontabs and reload those which have
 changed.  Thus
-.I cron
+.Nm
 need not be restarted whenever a crontab file is modified.  Note that the
-.IR crontab (1)
+.Xr crontab 1
 command updates the modtime of the spool directory whenever it changes a
 crontab.
-.SH "SEE ALSO"
-crontab(1), crontab(5)
-.SH AUTHOR
-.nf
-Paul Vixie \*[Lt]paul@vix.com\*[Gt]
+.Sh SEE ALSO
+.Xr crontab 1 ,
+.Xr crontab 5
+.Sh AUTHOR
+.An Paul Vixie
+.Aq paul@vix.com
