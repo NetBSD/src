@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:41:08 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/02 17:40:45 pooka Exp $
 #
 #	@(#)Makefile	1.8 (Berkeley) 6/8/93
 
@@ -8,6 +8,6 @@ MACROS=	-ms
 
 paper.ps: ${SRCS} alloc.fig usage.tbl
 	${SOELIM} ${SRCS} | ${TBL} | ${PIC} | ${EQN} | ${GRIND} | \
-	    ${ROFF} > ${.TARGET}
+	    ${ROFF} ${MACROS} > ${.TARGET}
 
 .include <bsd.doc.mk>

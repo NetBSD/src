@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 1998/01/09 06:41:32 perry Exp $
+#	$NetBSD: Makefile,v 1.3 2002/06/02 17:40:45 pooka Exp $
 #
 #	@(#)Makefile	1.8 (Berkeley) 6/8/93
 
@@ -10,7 +10,7 @@ EXTRA=	ref.bib A.t tmac.srefs
 CLEANFILES=ref.bib.i A.gt paper.t
 
 paper.ps: paper.t
-	${ROFF} tmac.srefs paper.t > ${.TARGET}
+	${ROFF} ${MACROS} tmac.srefs paper.t > ${.TARGET}
 
 paper.t: ${SRCS} ref.bib.i A.gt
 	${REFER} ${SRCS} A.gt > ${.TARGET}
