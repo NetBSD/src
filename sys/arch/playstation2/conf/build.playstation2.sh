@@ -29,6 +29,7 @@ HOSTED_CC=cc;				export HOSTED_CC
 TARGET=mipsel;				export TARGET
 MACHINE=playstation2;			export MACHINE
 MACHINE_ARCH=mipsel;			export MACHINE_ARCH
+MACHINE_CPU=mips;			export MACHINE_CPU
 
 DESTDIR=${bsd_root};			export DESTDIR
 
