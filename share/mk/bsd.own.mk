@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.64 1998/04/13 12:03:07 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.65 1998/05/04 04:37:33 thorpej Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -65,6 +65,18 @@ STRIPFLAG?=	-s
 # source (``symlinks''), or a separate copy (``copies''); (latter useful
 # in environments where it's not possible to keep /sys publicly readable)
 #SYS_INCLUDE= 	symlinks
+
+# XXX The next two are temporary until the transition to UVM is complete.
+
+# Systems on which UVM is the standard VM system.
+.if	(${MACHINE} == "alpha")
+UVM?=		yes
+.endif
+
+# Systems that use UVM's new pmap interface.
+.if	(${MACHINE} == "alpha")
+PMAP_NEW?=	yes
+.endif
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
