@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.24 2001/12/16 22:22:04 thorpej Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.25 2001/12/16 22:23:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.24 2001/12/16 22:22:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.25 2001/12/16 22:23:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -692,7 +692,7 @@ const struct puc_device_description puc_devices[] = {
 	 * This is the Middle Digital, Inc. PCI-Weasel, which
 	 * uses a PCI interface implemented in FPGA.
 	 */
-	{   "Middle Digital, Inc. Weasel Serial port",
+	{   "Middle Digital, Inc. Weasel serial port",
 	    {	0xdeaf,	0x9051,	0,	0	},
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
