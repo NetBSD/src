@@ -1,4 +1,4 @@
-/*	$NetBSD: cons_machdep.c,v 1.7 2003/06/14 17:01:12 thorpej Exp $	*/
+/*	$NetBSD: cons_machdep.c,v 1.8 2003/07/15 01:37:40 lukem Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -40,6 +40,9 @@
  *
  * XXX: Needs a rototil.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cons_machdep.c,v 1.8 2003/07/15 01:37:40 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

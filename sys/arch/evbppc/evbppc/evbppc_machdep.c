@@ -1,4 +1,4 @@
-/*	$NetBSD: evbppc_machdep.c,v 1.2 2003/04/08 23:12:20 thorpej Exp $	*/
+/*	$NetBSD: evbppc_machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -65,6 +65,9 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: evbppc_machdep.c,v 1.3 2003/07/15 01:37:36 lukem Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

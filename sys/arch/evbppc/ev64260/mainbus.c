@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2003/03/16 07:07:19 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2003/07/15 01:37:35 lukem Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2003/07/15 01:37:35 lukem Exp $");
 
 #include "mainbus.h"
 #include "pci.h"
