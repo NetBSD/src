@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.8 1998/12/02 22:57:08 augustss Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.9 1998/12/08 15:18:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@ usb_descriptor_t *usbd_get_descriptor
 usb_endpoint_descriptor_t *usbd_interface2endpoint_descriptor
 	__P((usbd_interface_handle iface, u_int8_t address));
 usbd_status usbd_set_configuration
-	__P((usbd_device_handle dev, u_int16_t conf));
+	__P((usbd_device_handle dev, u_int8_t conf));
 usbd_status usbd_retry_request
 	__P((usbd_request_handle reqh, u_int32_t retry_count));
 usbd_status usbd_abort_pipe __P((usbd_pipe_handle pipe));
@@ -223,6 +223,14 @@ usb_config_descriptor_t *usbd_get_config_descriptor
 usb_device_descriptor_t *usbd_get_device_descriptor
 	__P((usbd_device_handle dev));
 usbd_status usbd_set_interface __P((usbd_interface_handle, int));
+int usbd_get_no_alt __P((usbd_interface_handle iface));
+usbd_status	usbd_get_interface
+	__P((usbd_interface_handle iface, u_int8_t *aiface));
+
+usb_interface_descriptor_t *usbd_find_idesc
+	__P((usb_config_descriptor_t *cd, int iindex, int ano));
+usb_endpoint_descriptor_t *usbd_find_edesc
+	__P((usb_config_descriptor_t *cd, int ifaceidx, int altidx, int endptidx));
 
 void usbd_dopoll __P((usbd_interface_handle));
 void usbd_set_polling __P((usbd_interface_handle iface, int on));
@@ -263,3 +271,5 @@ struct usb_attach_arg {
 void usbd_devinfo __P((usbd_device_handle, int, char *));
 struct usbd_quirks *usbd_get_quirks __P((usbd_device_handle));
 void usbd_set_disco __P((usbd_pipe_handle, void (*)(void *), void *));
+usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
+	__P((usbd_interface_handle iface, u_int8_t address));

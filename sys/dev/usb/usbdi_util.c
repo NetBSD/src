@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.6 1998/12/02 17:17:40 augustss Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.7 1998/12/08 15:18:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -414,4 +414,19 @@ usbd_alloc_report_desc(ifc, descp, sizep, mem)
 		return (r);
 	}
 	return (USBD_NORMAL_COMPLETION);
+}
+
+usbd_status 
+usbd_get_config(dev, conf)
+	usbd_device_handle dev;
+	u_int8_t *conf;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_CONFIG;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 1);
+	return (usbd_do_request(dev, &req, conf));
 }

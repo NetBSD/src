@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.11 1998/11/25 22:32:05 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.12 1998/12/08 15:18:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,8 @@ usbd_open_pipe(iface, address, flags, pipe)
 { 
 	usbd_pipe_handle p;
 	struct usbd_endpoint *ep;
-	int i, r;
+	usbd_status r;
+	int i;
 
 	if (iface->state != USBD_INTERFACE_ACTIVE)
 		return (USBD_INTERFACE_NOT_ACTIVE);
@@ -412,13 +413,14 @@ usbd_interface2endpoint_descriptor(iface, index)
 	u_int8_t index;
 {
 	if (index >= iface->idesc->bNumEndpoints)
-		return 0;
+		return (0);
 	return (iface->endpoints[index].edesc);
 }
 
-usbd_status usbd_set_configuration(dev, conf)
+usbd_status 
+usbd_set_configuration(dev, conf)
 	usbd_device_handle dev;
-	u_int16_t conf;
+	u_int8_t conf;
 {
 	return usbd_set_config_no(dev, conf, 0);
 }
@@ -829,6 +831,43 @@ usbd_set_interface(iface, aiface)
 	USETW(req.wIndex, iface->idesc->iInterface);
 	USETW(req.wLength, 0);
 	return usbd_do_request(iface->device, &req, 0);
+	/* XXX needs to update interface descriptor!!! */
+}
+
+int
+usbd_get_no_alt(iface)
+	usbd_interface_handle iface;
+{
+	int ino = iface->idesc->bInterfaceNumber;
+	usb_config_descriptor_t *cd = iface->device->cdesc;
+	char *p = (char *)cd;
+	char *end = p + UGETW(cd->wTotalLength);
+	usb_interface_descriptor_t *d;
+	int n;
+
+	for (n = 0; p < end; p += d->bLength) {
+		d = (usb_interface_descriptor_t *)p;
+		if (p + d->bLength <= end && 
+		    d->bDescriptorType == UDESC_INTERFACE &&
+		    d->bInterfaceNumber == ino)
+			n++;
+	}
+	return (n);
+}
+
+usbd_status
+usbd_get_interface(iface, aiface)
+	usbd_interface_handle iface;
+	u_int8_t *aiface;
+{
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_READ_INTERFACE;
+	req.bRequest = UR_GET_INTERFACE;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, iface->idesc->iInterface);
+	USETW(req.wLength, 1);
+	return usbd_do_request(iface->device, &req, aiface);
 }
 
 /*** Internal routines ***/
@@ -1079,3 +1118,21 @@ usbd_set_polling(iface, on)
 {
 	iface->device->bus->use_polling = on;
 }
+
+
+usb_endpoint_descriptor_t *
+usbd_get_endpoint_descriptor(iface, address)
+	usbd_interface_handle iface;
+	u_int8_t address;
+{
+	struct usbd_endpoint *ep;
+	int i;
+
+	for (i = 0; i < iface->idesc->bNumEndpoints; i++) {
+		ep = &iface->endpoints[i];
+		if (ep->edesc->bEndpointAddress == address)
+			return (iface->endpoints[i].edesc);
+	}
+	return (0);
+}
+

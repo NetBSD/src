@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.5 1998/12/02 22:47:20 augustss Exp $	*/
+/*	$NetBSD: usb.h,v 1.6 1998/12/08 15:18:45 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -186,6 +186,7 @@ typedef struct {
 #define UE_IN		0x80
 #define UE_OUT		0x00
 #define UE_ADDR		0x0f
+#define UE_GET_ADDR(a)	((a) & UE_ADDR)
 #define UE_GET_IN(a)	(((a) >> 7) & 1)
 	uByte		bmAttributes;
 #define UE_CONTROL	0x00
@@ -300,8 +301,15 @@ typedef struct {
 #define  UPROTO_PRINTER_BI	2
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		1
+#define UCLASS_DATA		10
 
 #define USB_HUB_MAX_DEPTH 5
+
+/* 
+ * Minimum time a device needs to be powered down to go through 
+ * a power cycle.  XXX Is this time in the spec?
+ */
+#define USB_POWER_DOWN_TIME	1000 /* ms */
 
 #define USB_PORT_RESET_DELAY	10  /* ms */
 #define USB_PORT_POWERUP_DELAY	100 /* ms */
@@ -322,8 +330,38 @@ struct usb_ctl_request {
 	void	*data;
 };
 
-struct usb_all_desc {
-	u_char	data[1024];	/* filled data size will vary */
+struct usb_alt_interface {
+	int	interface_index;
+	int	alt_no;
+};
+
+#define USB_CURRENT_CONFIG_INDEX (-1)
+#define USB_CURRENT_ALT_INDEX (-1)
+
+struct usb_config_desc {
+	int	config_index;
+	usb_config_descriptor_t desc;
+};
+
+struct usb_interface_desc {
+	int	config_index;
+	int	interface_index;
+	int	alt_index;
+	usb_interface_descriptor_t desc;
+};
+
+struct usb_endpoint_desc {
+	int	config_index;
+	int	interface_index;
+	int	alt_index;
+	int	endpoint_index;
+	usb_endpoint_descriptor_t desc;
+};
+
+struct usb_full_desc {
+	int	config_index;
+	u_int	size;
+	u_char	*data;
 };
 
 struct usb_ctl_report_desc {
@@ -370,12 +408,17 @@ struct usb_device_stats {
 #define USB_GET_REPORT		_IOWR('U', 23, struct usb_ctl_report)
 
 /* Generic USB device */
-#define USB_SET_CONFIG		_IOW ('U', 100, int)
-#define USB_SET_INTERFACE	_IOW ('U', 101, int)
-#define USB_GET_DEVICE_DESC	_IOR ('U', 102, usb_device_descriptor_t)
-#define USB_GET_CONFIG_DESC	_IOR ('U', 103, usb_config_descriptor_t)
-#define USB_GET_INTERFACE_DESC	_IOR ('U', 104, usb_interface_descriptor_t)
-#define USB_GET_ALL_DESC	_IOR ('U', 105, struct usb_all_desc)
+#define USB_GET_CONFIG		_IOR ('U', 100, int)
+#define USB_SET_CONFIG		_IOW ('U', 101, int)
+#define USB_GET_ALTINTERFACE	_IOWR('U', 102, struct usb_alt_interface)
+#define USB_SET_ALTINTERFACE	_IOW ('U', 103, struct usb_alt_interface)
+#define USB_GET_NO_ALT		_IOWR('U', 104, struct usb_alt_interface)
+#define USB_GET_DEVICE_DESC	_IOR ('U', 105, usb_device_descriptor_t)
+#define USB_GET_CONFIG_DESC	_IOR ('U', 106, struct usb_config_desc)
+#define USB_GET_INTERFACE_DESC	_IOWR('U', 107, struct usb_interface_desc)
+#define USB_GET_ENDPOINT_DESC	_IOWR('U', 108, struct usb_endpoint_desc)
+#define USB_GET_FULL_DESC	_IOR ('U', 109, struct usb_full_desc)
+#define USB_DO_REQUEST		_IOWR('U', 110, struct usb_ctl_request)
 
 
 #endif /* _USB_H_ */
