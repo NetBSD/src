@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16 1997/01/19 14:19:15 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.16 1997/01/19 14:19:15 lukem Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.17 1997/02/01 10:45:07 lukem Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,6 +87,8 @@ main(argc, argv)
 	autologin = 1;
 	passivemode = 0;
 	preserve = 1;
+	verbose = 0;
+	progress = 0;
 	mark = HASHBYTES;
 	marg_sl = sl_init();
 
@@ -95,7 +97,13 @@ main(argc, argv)
 	if (strcmp(cp, "pftp") == 0)
 		passivemode = 1;
 
-	while ((ch = getopt(argc, argv, "adginpP:tv")) != EOF) {
+	fromatty = isatty(fileno(stdin));
+	if (fromatty)
+		verbose = 1;		/* verbose if from a tty */
+	if (isatty(fileno(stdout)))
+		progress = 1;		/* progress bar on if going to a tty */
+
+	while ((ch = getopt(argc, argv, "adginpP:tvV")) != EOF) {
 		switch (ch) {
 		case 'a':
 			anonftp = 1;
@@ -131,11 +139,15 @@ main(argc, argv)
 			break;
 
 		case 't':
-			trace++;
+			trace = 1;
 			break;
 
 		case 'v':
-			verbose++;
+			verbose = 1;
+			break;
+
+		case 'V':
+			verbose = 0;
 			break;
 
 		default:
@@ -145,11 +157,6 @@ main(argc, argv)
 	argc -= optind;
 	argv += optind;
 
-	fromatty = isatty(fileno(stdin));
-	if (fromatty) {
-		verbose++;
-		progress = 1;		/* progress bar on if a tty */
-	}
 	cpend = 0;	/* no pending replies */
 	proxy = 0;	/* proxy not active */
 	crflag = 1;	/* strip c.r. on ascii gets */
@@ -191,6 +198,9 @@ main(argc, argv)
 	}
 #endif /* !SMALLFTP */
 
+	setttywidth(0);
+	(void) signal(SIGWINCH, setttywidth);
+
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
 			anonftp = 1;	/* Handle "automatic" transfers. */
@@ -227,6 +237,7 @@ void
 intr()
 {
 
+	alarmtimer(0);
 	longjmp(toplevel, 1);
 }
 
@@ -234,6 +245,7 @@ void
 lostpeer()
 {
 
+	alarmtimer(0);
 	if (connected) {
 		if (cout != NULL) {
 			(void) shutdown(fileno(cout), 1+1);
@@ -309,13 +321,12 @@ cmdscanner(top)
 				break;
 			} /* else it was a line without a newline */
 #ifndef SMALLFTP
-		}
-		else {
+		} else {
 			const char *buf;
 			cursor_pos = NULL;
 
 			if ((buf = el_gets(el, &num)) == NULL || num == 0)
-				break;
+				quit(0, 0);
 			if (line[--num] == '\n') {
 				if (num == 0)
 					break;
@@ -332,7 +343,7 @@ cmdscanner(top)
 		makeargv();
 		if (margc == 0)
 			continue;
-#if 0 || !defined(SMALLFTP)	/* XXX: don't want el_parse */
+#if 0 && !defined(SMALLFTP)	/* XXX: don't want el_parse */
 		/*
 		 * el_parse returns -1 to signal that it's not been handled
 		 * internally.
@@ -619,7 +630,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-adginptv] [host [port]]\n"
+	    "usage: %s [-adginptvV] [host [port]]\n"
 	    "       %s host:path[/]\n"
 	    "       %s ftp://host[:port]/path[/]\n"
 	    "       %s http://host[:port]/file\n",

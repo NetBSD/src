@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.16 1997/01/19 14:19:11 lukem Exp $
+.\" 	$NetBSD: ftp.1,v 1.17 1997/02/01 10:45:01 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -52,6 +52,7 @@ file transfer program
 .Op Fl P Ar port
 .Op Fl t
 .Op Fl v
+.Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
 ftp://\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
@@ -106,10 +107,15 @@ Sets the port number to
 .It Fl t
 Enables packet tracing.
 .It Fl v
-Verbose option forces
+Enable verbose mode.
+This is the default if input is from a terminal.
+Forces
 .Nm
 to show all responses from the remote server, as well
 as report on data transfer statistics.
+.It Fl V
+Disable verbose mode, overriding the default of enabled when input
+is from a terminal.
 .El
 .Pp
 The client host with which
@@ -276,7 +282,7 @@ A synonym for
 .It Ic edit
 Toggle command line editing, and context sensitive command and file
 completion.
-This is automatically enabled for interactive tty sessions, and
+This is automatically enabled if input is from a terminal, and
 disabled otherwise.
 .It Ic exit
 A synonym for
@@ -1268,7 +1274,7 @@ Various features such as command line editing, context sensitive
 command and file completion, dynamic progress bar, automatic
 fetching of files, ftp and http URLs, and modification time
 preservation were implemented in
-.Nx
+.Nx 1.2b
 by Luke Mewburn, with assistance from Jason Thorpe.
 .Sh BUGS
 Correct execution of many commands depends upon proper behavior
