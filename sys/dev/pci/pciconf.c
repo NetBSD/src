@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.23.10.2 2005/03/19 08:35:12 yamt Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.23.10.3 2005/03/26 18:19:19 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.23.10.2 2005/03/19 08:35:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.23.10.3 2005/03/26 18:19:19 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -705,10 +705,6 @@ setup_iowins(pciconf_bus_t *pb)
 			    PRIu64 " req)\n", pi->size);
 			return -1;
 		}
-		if (!pb->io_32bit && pi->address > 0xFFFF) {
-			pi->address = 0;
-			pd->enable = 0;
-		}
 		if (pd->ppb && pi->reg == 0) {
 			pd->ppb->ioext = extent_create("pciconf", pi->address,
 			    pi->address + pi->size, M_DEVBUF, NULL, 0,
@@ -721,7 +717,12 @@ setup_iowins(pciconf_bus_t *pb)
 			}
 			continue;
 		}
-		pd->enable |= PCI_CONF_ENABLE_IO;
+		if (!pb->io_32bit && pi->address > 0xFFFF) {
+			pi->address = 0;
+			pd->enable &= ~PCI_CONF_ENABLE_IO;
+		} else {
+			pd->enable |= PCI_CONF_ENABLE_IO;
+		}
 		if (pci_conf_debug) {
 			print_tag(pd->pc, pd->tag);
 			printf("Putting %" PRIu64 " I/O bytes @ %#" PRIx64
@@ -775,7 +776,7 @@ setup_memwins(pciconf_bus_t *pb)
 		if (pm->prefetch && !pb->pmem_64bit &&
 		    pm->address > 0xFFFFFFFFULL) {
 			pm->address = 0;
-			pd->enable = 0;
+			pd->enable &= ~PCI_CONF_ENABLE_MEM;
 		} else {
 			pd->enable |= PCI_CONF_ENABLE_MEM;
 		}
@@ -1005,7 +1006,10 @@ configure_bus(pciconf_bus_t *pb)
 		class = pci_conf_read(pd->pc, pd->tag, PCI_CLASS_REG);
 		misc = pci_conf_read(pd->pc, pd->tag, PCI_BHLC_REG);
 		cmd = pci_conf_read(pd->pc, pd->tag, PCI_COMMAND_STATUS_REG);
-		cmd |= PCI_COMMAND_SERR_ENABLE | PCI_COMMAND_PARITY_ENABLE;
+		if (pd->enable & PCI_CONF_ENABLE_PARITY)
+			cmd |= PCI_COMMAND_PARITY_ENABLE;
+		if (pd->enable & PCI_CONF_ENABLE_SERR)
+			cmd |= PCI_COMMAND_SERR_ENABLE;
 		if (pb->fast_b2b)
 			cmd |= PCI_COMMAND_BACKTOBACK_ENABLE;
 		if (PCI_CLASS(class) != PCI_CLASS_BRIDGE ||
@@ -1022,7 +1026,8 @@ configure_bus(pciconf_bus_t *pb)
 			cmd |= PCI_COMMAND_MASTER_ENABLE;
 			ltim = MIN (pb->def_ltim, pb->max_ltim);
 		}
-		if (!(pd->enable)) {
+		if ((pd->enable &
+		    (PCI_CONF_ENABLE_MEM|PCI_CONF_ENABLE_IO)) == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf("Disabled due to lack of resources.\n");
 			cmd &= ~(PCI_COMMAND_MASTER_ENABLE |

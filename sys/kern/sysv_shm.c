@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.82.6.1 2005/01/25 12:59:35 yamt Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.82.6.2 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.82.6.1 2005/01/25 12:59:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.82.6.2 2005/03/26 18:19:20 yamt Exp $");
 
 #define SYSVSHM
 
@@ -358,7 +358,8 @@ sys_shmat(l, v, retval)
 			return EINVAL;
 	} else {
 		/* This is just a hint to uvm_mmap() about where to put it. */
-		attach_va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, size);
+		attach_va = p->p_emul->e_vm_default_addr(p,
+		    (vaddr_t)p->p_vmspace->vm_daddr, size);
 	}
 	uobj = shmseg->_shm_internal;
 	(*uobj->pgops->pgo_reference)(uobj);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.191.6.3 2005/03/19 08:36:11 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.191.6.4 2005/03/26 18:19:20 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191.6.3 2005/03/19 08:36:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.191.6.4 2005/03/26 18:19:20 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -176,6 +176,8 @@ const struct emul emul_netbsd = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 #ifdef LKM
@@ -1331,7 +1333,8 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	}
 
 	/* Just a hint to uvm_map where to put it. */
-	va = VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, round_page(sz));
+	va = e->e_vm_default_addr(p, (vaddr_t)p->p_vmspace->vm_daddr,
+	    round_page(sz));
 
 #ifdef __alpha__
 	/*

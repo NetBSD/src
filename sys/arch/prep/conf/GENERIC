@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.85.2.2 2005/03/19 08:33:12 yamt Exp $
+# $NetBSD: GENERIC,v 1.85.2.3 2005/03/26 18:19:17 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 makeoptions	COPTS="-Os -mmultiple"	# -Os -mmultiple to reduce size.
 
-#ident		"GENERIC-$Revision: 1.85.2.2 $"
+#ident		"GENERIC-$Revision: 1.85.2.3 $"
 
 maxusers	32
 
@@ -233,6 +233,7 @@ wsdisplay*	at vga? console ?
 wskbd*		at pckbd? console ?
 wsmouse*	at pms? mux 0
 
+attimer0	at isa?			# AT Timer
 pcppi0	at isa?				# PC prog. periph. interface
 isabeep0 at pcppi?			# "keyboard" beep
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_misc.c,v 1.96.2.2 2005/03/19 08:33:48 yamt Exp $	*/
+/*	$NetBSD: ultrix_misc.c,v 1.96.2.3 2005/03/26 18:19:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.96.2.2 2005/03/19 08:33:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.96.2.3 2005/03/26 18:19:18 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: ultrix_misc.c,v 1.96.2.2 2005/03/19 08:33:48 yamt Ex
 
 #include <sys/sa.h>
 #include <sys/syscallargs.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <compat/ultrix/ultrix_syscall.h>
 #include <compat/ultrix/ultrix_syscallargs.h>
@@ -193,6 +195,8 @@ const struct emul emul_ultrix = {
 #endif
 	NULL,
 	NULL,
+
+	uvm_default_mapaddr,
 };
 
 #define GSI_PROG_ENV 1
