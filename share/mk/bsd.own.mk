@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.149 2001/01/04 08:38:51 itojun Exp $
+#	$NetBSD: bsd.own.mk,v 1.150 2001/01/04 10:29:11 itojun Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -127,7 +127,8 @@ GNU_ARCH.mipseb=mipseb
 GNU_ARCH.mipsel=mipsel
 GNU_ARCH.ns32k=ns32k
 GNU_ARCH.powerpc=powerpc
-GNU_ARCH.sh3=sh
+GNU_ARCH.sh3eb=sh
+GNU_ARCH.sh3el=sh
 GNU_ARCH.sparc=sparc
 GNU_ARCH.sparc64=sparc
 GNU_ARCH.vax=vax
