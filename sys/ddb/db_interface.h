@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.h,v 1.11 2003/05/22 20:17:11 briggs Exp $	*/
+/*	$NetBSD: db_interface.h,v 1.12 2003/09/20 03:02:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ void		db_kgdb_cmd(db_expr_t, int, db_expr_t, char *);
 /* kern/kern_proc.c */
 void		db_kill_proc(db_expr_t, int, db_expr_t, char *);
 void		db_show_all_procs(db_expr_t, int, db_expr_t, char *);
+void		db_show_sched_qs(db_expr_t, int, db_expr_t, char *);
 
 /* kern/kern_clock.c */
 void		db_show_callout(db_expr_t, int, db_expr_t, char *);

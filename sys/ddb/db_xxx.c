@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.27 2003/09/07 14:14:36 uwe Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.28 2003/09/20 03:02:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -39,7 +39,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.27 2003/09/07 14:14:36 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.28 2003/09/20 03:02:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,4 +271,28 @@ db_dmesg(db_expr_t addr, int haddr, db_expr_t count, char *modif)
 	}
 	if (!newl)
 		db_printf("\n");
+}
+
+void
+db_show_sched_qs(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	struct prochd *ph;
+	struct lwp *l;
+	int i, first;
+
+	for (i = 0; i < RUNQUE_NQS; i++)
+	{
+		first = 1;
+		ph = &sched_qs[i];
+		for (l = ph->ph_link; l != (struct lwp *)ph; l = l->l_forw) {
+			if (first) {
+				db_printf("%c%d",
+				    (sched_whichqs & (1U << i))
+				    ? ' ' : '!', i);
+				first = 0;
+			}
+			db_printf("\t%d.%d (%s)\n", l->l_proc->p_pid,
+			    l->l_lid, l->l_proc->p_comm);
+		}
+	}
 }

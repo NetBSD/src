@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.71 2003/05/16 16:28:30 itojun Exp $	*/
+/*	$NetBSD: db_command.c,v 1.72 2003/09/20 03:02:03 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.71 2003/05/16 16:28:30 itojun Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.72 2003/09/20 03:02:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -144,6 +144,7 @@ static const struct db_command db_show_cmds[] = {
 	{ "page",	db_page_print_cmd,	0,	NULL },
 	{ "pool",	db_pool_print_cmd,	0,	NULL },
 	{ "registers",	db_show_regs,		0,	NULL },
+	{ "sched_qs",	db_show_sched_qs,	0,	NULL },
 	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
 	{ "vnode",	db_vnode_print_cmd,	0,	NULL },
 	{ "watches",	db_listwatch_cmd, 	0,	NULL },
