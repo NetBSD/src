@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.3 2002/12/17 19:47:15 gmcgarry Exp $	*/
+/*	$NetBSD: locore.S,v 1.4 2002/12/17 20:49:07 gmcgarry Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -1944,22 +1944,19 @@ switch_restored:
 
 /*
  *  Check for restartable atomic sequences (RAS)
- *  XXX %edi reloads are not necessary here as %edi is callee-saved!
  */
 	movl	CPUVAR(CURPROC),%edi
 	cmpl	$0,P_NRAS(%edi)
 	je	1f
-	movl	P_MD_REGS(%edi),%edx
-	movl	TF_EIP(%edx),%eax
+	movl	P_MD_REGS(%edi),%ebx
+	movl	TF_EIP(%ebx),%eax
 	pushl	%eax
 	pushl	%edi
 	call	_C_LABEL(ras_lookup)
 	addl	$8,%esp
 	cmpl	$-1,%eax
 	je	1f
-	movl	CPUVAR(CURPROC),%edi
-	movl	P_MD_REGS(%edi),%edx
-	movl	%eax,TF_EIP(%edx)
+	movl	%eax,TF_EIP(%ebx)
 1:
 
 switch_return:
