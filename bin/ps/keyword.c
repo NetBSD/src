@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.16 1998/02/06 04:47:32 mrg Exp $	*/
+/*	$NetBSD: keyword.c,v 1.17 1998/02/17 21:37:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.16 1998/02/06 04:47:32 mrg Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.17 1998/02/17 21:37:56 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,6 +150,7 @@ VAR var[] = {
 	UID("ruid", "RUID", evar, EOFF(e_pcred.p_ruid)),
 	{"ruser", "RUSER", NULL, LJUST, runame, USERLEN},
 	{"sess", "SESS", NULL, 0, evar, 6, EOFF(e_sess), KPTR, "x"},
+	PID("sid", "SID", evar, EOFF(e_sid)),
 	{"sig", "PENDING", NULL, 0, pvar, 8, POFF(p_siglist), INT, "x"},
 	{"sigcatch", "CAUGHT", NULL, 0, pvar, 8, POFF(p_sigcatch), UINT, "x"},
 	{"sigignore", "IGNORED",
