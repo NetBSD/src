@@ -10,7 +10,7 @@ options		INET,NFS,MFS
 options		"COMPAT_43"
 options		"TCP_COMPAT_42"
 options		UCONSOLE, XSERVER
-options		"WD8013"
+#options		"WD8013"
 
 #options 	COM_IGNOREFIFO
 options 	COM_MULTIPORT
