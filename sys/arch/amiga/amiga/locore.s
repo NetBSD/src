@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.101 1998/09/30 23:01:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.102 1998/09/30 23:47:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -376,16 +376,6 @@ _trap0:
 	moveml	sp@+,d0-d7/a0-a6	| restore most registers
 	addql	#8,sp			| pop SP and stack adjust
 	jra	rei			| all done
-
-/*
- * Our native 4.3 implementation uses trap 1 as sigreturn() and trap 2
- * as a breakpoint trap.
- */
-_trap1:
-	jra	sigreturn
-
-_trap2:
-	jra	_trace
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
