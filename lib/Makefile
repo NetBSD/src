@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.73 2001/09/22 01:22:59 tv Exp $
+#	$NetBSD: Makefile,v 1.74 2001/12/28 18:25:24 augustss Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
 
 SUBDIR=	csu libc .WAIT libarch libbz2 libcdk libcompat libcrypt libcurses libedit \
 	libform libintl libkvm libl libm libmenu libossaudio libpcap libpci \
-	libposix libresolv librmt librpcsvc libskey libterm libusb libutil \
+	libposix libresolv librmt librpcsvc libskey libterm libusbhid libutil \
 	libwrap liby libz
 
 # XXX Crypto bits must be done before libtelnet.
