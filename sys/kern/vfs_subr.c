@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.89 1998/06/08 15:52:07 kleink Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.90 1998/07/31 22:50:54 perry Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -399,9 +399,9 @@ getnewvnode(tag, mp, vops, vpp)
 	     numvnodes < 2 * desiredvnodes) ||
 	    numvnodes < desiredvnodes) {
 		simple_unlock(&vnode_free_list_slock);
-		vp = (struct vnode *)malloc((u_long)sizeof *vp,
+		vp = (struct vnode *)malloc((u_long)sizeof(*vp),
 		    M_VNODE, M_WAITOK);
-		bzero((char *)vp, sizeof *vp);
+		bzero((char *)vp, sizeof(*vp));
 		numvnodes++;
 	} else {
 		for (vp = vnode_free_list.tqh_first;
@@ -1532,8 +1532,8 @@ sysctl_vnode(where, sizep, p)
 	char *ewhere;
 	int error;
 
-#define VPTRSZ	sizeof (struct vnode *)
-#define VNODESZ	sizeof (struct vnode)
+#define VPTRSZ	sizeof(struct vnode *)
+#define VNODESZ	sizeof(struct vnode)
 	if (where == NULL) {
 		*sizep = (numvnodes + KINFO_VNODESLOP) * (VPTRSZ + VNODESZ);
 		return (0);

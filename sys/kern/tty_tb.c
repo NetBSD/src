@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_tb.c,v 1.19 1998/03/01 02:22:33 fvdl Exp $	*/
+/*	$NetBSD: tty_tb.c,v 1.20 1998/07/31 22:50:52 perry Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -82,17 +82,17 @@ static void poldecode __P((struct tbconf *, char *, union tbpos *));
 
 struct	tbconf tbconf[TBTYPE] = {
 { 0 },
-{ 5, sizeof (struct hitpos), 0200, tbolddecode, "6", "4" },
-{ 5, sizeof (struct hitpos), 0200, tbolddecode, "\1CN", "\1RT", "\2", "\4" },
-{ 8, sizeof (struct gtcopos), 0200, gtcodecode },
-{17, sizeof (struct polpos), 0200, poldecode, 0, 0, "\21", "\5\22\2\23",
+{ 5, sizeof(struct hitpos), 0200, tbolddecode, "6", "4" },
+{ 5, sizeof(struct hitpos), 0200, tbolddecode, "\1CN", "\1RT", "\2", "\4" },
+{ 8, sizeof(struct gtcopos), 0200, gtcodecode },
+{17, sizeof(struct polpos), 0200, poldecode, 0, 0, "\21", "\5\22\2\23",
   TBF_POL },
-{ 5, sizeof (struct hitpos), 0100, tblresdecode, "\1CN", "\1PT", "\2", "\4",
+{ 5, sizeof(struct hitpos), 0100, tblresdecode, "\1CN", "\1PT", "\2", "\4",
   TBF_INPROX },
-{ 6, sizeof (struct hitpos), 0200, tbhresdecode, "\1CN", "\1PT", "\2", "\4",
+{ 6, sizeof(struct hitpos), 0200, tbhresdecode, "\1CN", "\1PT", "\2", "\4",
   TBF_INPROX },
-{ 5, sizeof (struct hitpos), 0100, tblresdecode, "\1CL\33", "\1PT\33", 0, 0},
-{ 6, sizeof (struct hitpos), 0200, tbhresdecode, "\1CL\33", "\1PT\33", 0, 0},
+{ 5, sizeof(struct hitpos), 0100, tblresdecode, "\1CL\33", "\1PT\33", 0, 0},
+{ 6, sizeof(struct hitpos), 0200, tbhresdecode, "\1CL\33", "\1PT\33", 0, 0},
 };
 
 /*
@@ -137,7 +137,7 @@ tbopen(dev, tp)
 	tbp->tbflags = TBTIGER|TBPOINT;		/* default */
 	tbp->tbcp = tbp->cbuf;
 	tbp->tbinbuf = 0;
-	bzero((caddr_t)&tbp->tbpos, sizeof (tbp->tbpos));
+	bzero((caddr_t)&tbp->tbpos, sizeof(tbp->tbpos));
 	tp->t_sc = (caddr_t)tbp;
 	tp->t_flags |= LITOUT;
 	return (0);

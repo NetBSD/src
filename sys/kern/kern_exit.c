@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.51 1998/06/25 21:17:16 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.52 1998/07/31 22:50:49 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -324,7 +324,7 @@ loop:
 			if (SCARG(uap, rusage) &&
 			    (error = copyout((caddr_t)p->p_ru,
 			    (caddr_t)SCARG(uap, rusage),
-			    sizeof (struct rusage))))
+			    sizeof(struct rusage))))
 				return (error);
 			/*
 			 * If we got the child via ptrace(2) or procfs, and

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.47 1998/06/25 23:41:20 thorpej Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.48 1998/07/31 22:50:50 perry Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -644,8 +644,8 @@ sys___getlogin(p, v, retval)
 		syscallarg(u_int) namelen;
 	} */ *uap = v;
 
-	if (SCARG(uap, namelen) > sizeof (p->p_pgrp->pg_session->s_login))
-		SCARG(uap, namelen) = sizeof (p->p_pgrp->pg_session->s_login);
+	if (SCARG(uap, namelen) > sizeof(p->p_pgrp->pg_session->s_login))
+		SCARG(uap, namelen) = sizeof(p->p_pgrp->pg_session->s_login);
 	return (copyout((caddr_t) p->p_pgrp->pg_session->s_login,
 	    (caddr_t) SCARG(uap, namebuf), SCARG(uap, namelen)));
 }
@@ -668,7 +668,7 @@ sys_setlogin(p, v, retval)
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
 		return (error);
 	error = copyinstr(SCARG(uap, namebuf), p->p_pgrp->pg_session->s_login,
-	    sizeof (p->p_pgrp->pg_session->s_login) - 1, (size_t *)0);
+	    sizeof(p->p_pgrp->pg_session->s_login) - 1, (size_t *)0);
 	if (error == ENAMETOOLONG)
 		error = EINVAL;
 	return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.121 1998/07/05 08:49:43 jonathan Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.122 1998/07/31 22:50:54 perry Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1479,7 +1479,7 @@ sys___stat13(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	error = copyout(&sb, SCARG(uap, ub), sizeof (sb));
+	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
 	return (error);
 }
 
@@ -1509,7 +1509,7 @@ sys___lstat13(p, v, retval)
 	vput(nd.ni_vp);
 	if (error)
 		return (error);
-	error = copyout(&sb, SCARG(uap, ub), sizeof (sb));
+	error = copyout(&sb, SCARG(uap, ub), sizeof(sb));
 	return (error);
 }
 
@@ -2067,7 +2067,7 @@ change_utimes(vp, tptr, p)
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
 	} else {
-		error = copyin(tptr, tv, sizeof (tv));
+		error = copyin(tptr, tv, sizeof(tv));
 		if (error)
 			return (error);
 	}

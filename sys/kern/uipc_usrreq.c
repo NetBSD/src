@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.34 1998/07/18 05:04:38 lukem Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.35 1998/07/31 22:50:53 perry Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -800,7 +800,7 @@ unp_externalize(rights)
 	register int i, *fdp = (int *)(cm + 1);
 	register struct file **rp = (struct file **)ALIGN(cm + 1);
 	register struct file *fp;
-	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof (struct file *);
+	int nfds = (cm->cmsg_len - ALIGN(sizeof(*cm))) / sizeof(struct file *);
 	int f;
 
 	/* Make sure that the recipient has space */
@@ -857,7 +857,7 @@ unp_internalize(control, p)
 		return (EINVAL);
 
 	/* Verify that the file descriptors are valid */
-	nfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
+	nfds = (cm->cmsg_len - sizeof(*cm)) / sizeof(int);
 	fdp = (int *)(cm + 1);
 	for (i = 0; i < nfds; i++) {
 		fd = *fdp++;
@@ -868,7 +868,7 @@ unp_internalize(control, p)
 
 	/* Make sure we have room for the struct file pointers */
 morespace:
-	neededspace = (ALIGN(sizeof (*cm)) + nfds * sizeof (struct file *)) -
+	neededspace = (ALIGN(sizeof(*cm)) + nfds * sizeof(struct file *)) -
 		control->m_len;
 	if (neededspace > M_TRAILINGSPACE(control)) {
 
@@ -1103,8 +1103,8 @@ unp_scan(m0, op)
 				if (cm->cmsg_level != SOL_SOCKET ||
 				    cm->cmsg_type != SCM_RIGHTS)
 					continue;
-				qfds = (cm->cmsg_len - sizeof *cm)
-						/ sizeof (struct file *);
+				qfds = (cm->cmsg_len - sizeof(*cm))
+						/ sizeof(struct file *);
 				rp = (struct file **)(cm + 1);
 				for (i = 0; i < qfds; i++)
 					(*op)(*rp++);
