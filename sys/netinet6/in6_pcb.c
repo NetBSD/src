@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.15 2000/02/01 00:18:29 thorpej Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.16 2000/02/02 23:28:10 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -869,6 +869,21 @@ in6_pcbnotify(head, dst, fport_arg, laddr6, lport_arg, cmd, notify)
 		nmatch++;
 	}
 	return nmatch;
+}
+
+void
+in6_pcbpurgeif(head, ifp)
+	struct in6pcb *head;
+	struct ifnet *ifp;
+{
+	struct in6pcb *in6p, *nin6p;
+
+	for (in6p = head->in6p_next; in6p != head; in6p = nin6p) {
+		nin6p = in6p->in6p_next;
+		if (in6p->in6p_route.ro_rt != NULL &&
+		    in6p->in6p_route.ro_rt->rt_ifp == ifp)
+			in6_rtchange(in6p, 0);
+	}
 }
 
 /*

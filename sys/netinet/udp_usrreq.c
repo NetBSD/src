@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.59 2000/02/01 22:52:10 thorpej Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.60 2000/02/02 23:28:09 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -1309,8 +1309,9 @@ udp_usrreq(so, req, m, nam, control, p)
 		return (in_control(so, (long)m, (caddr_t)nam,
 		    (struct ifnet *)control, p));
 
-	if (req == PRU_PURGEADDR) {
-		in_purgeaddr((struct ifaddr *)nam, (struct ifnet *)control);
+	if (req == PRU_PURGEIF) {
+		in_purgeif((struct ifnet *)control);
+		in_pcbpurgeif(&udbtable, (struct ifnet *)control);
 		return (0);
 	}
 
