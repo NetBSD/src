@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf32.c,v 1.9 1996/09/26 20:51:05 cgd Exp $	*/
+/*	$NetBSD: exec_elf32.c,v 1.10 1996/09/26 21:50:56 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -204,27 +204,7 @@ ELFNAME(check_header)(eh, type)
 
 	switch (eh->e_machine) {
 
-#if 0 /* XXX notyet */
-	ELFDEFNNAME(MACHDEP_ID_CASES);
-#else /* XXX */
-#ifdef i386
-	case Elf_em_386:
-	case Elf_em_486:
-		break;
-#endif
-#ifdef sparc
-	case Elf_em_sparc:
-		break;
-#endif
-#ifdef mips
-	case Elf_em_mips:
-		break;
-#endif
-#ifdef alpha
-	case Elf_em_alpha:
-		break;
-#endif
-#endif /* XXX */
+	ELFDEFNNAME(MACHDEP_ID_CASES)
 
 	default:
 		return ENOEXEC;
