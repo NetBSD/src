@@ -1,4 +1,4 @@
-/*	$NetBSD: makewhatis.c,v 1.7.4.1 2000/07/12 20:18:55 tron Exp $	*/
+/*	$NetBSD: makewhatis.c,v 1.7.4.2 2000/07/13 16:42:34 tron Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\n\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: makewhatis.c,v 1.7.4.1 2000/07/12 20:18:55 tron Exp $");
+__RCSID("$NetBSD: makewhatis.c,v 1.7.4.2 2000/07/13 16:42:34 tron Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -54,9 +54,11 @@ __RCSID("$NetBSD: makewhatis.c,v 1.7.4.1 2000/07/12 20:18:55 tron Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <fts.h>
 #include <locale.h>
 #include <paths.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -456,9 +458,16 @@ nroff(gzFile *in)
 {
 	char tempname[MAXPATHLEN], buffer[65536], *data;
 	int tempfd, bytes, pipefd[2], status;
+	static int devnull = -1;
 	pid_t child;
 
 	if (gzrewind(in) < 0) {
+		perror(__progname);
+		return NULL;
+	}
+
+	if ((devnull < 0) &&
+	    ((devnull = open(_PATH_DEVNULL, O_WRONLY, 0)) < 0)) {
 		perror(__progname);
 		return NULL;
 	}
@@ -495,11 +504,19 @@ nroff(gzFile *in)
 		/* NOTREACHED */
 	case 0:
 		(void)close(pipefd[0]);
+		if (tempfd != STDIN_FILENO) {
+			(void)dup2(tempfd, STDIN_FILENO);
+			(void)close(tempfd);
+		}
 		if (pipefd[1] != STDOUT_FILENO) {
 			(void)dup2(pipefd[1], STDOUT_FILENO);
 			(void)close(pipefd[1]);
 		}
-		(void)execlp("nroff", "nroff", "-mandoc", tempname, NULL);
+		if (devnull != STDERR_FILENO) {
+			(void)dup2(devnull, STDERR_FILENO);
+			(void)close(devnull);
+		}
+		(void)execlp("nroff", "nroff", "-S", "-man", NULL);
 		_exit(EXIT_FAILURE);
 	default:
 		(void)close(pipefd[1]);
@@ -511,7 +528,9 @@ nroff(gzFile *in)
 		if (errno == 0)
 			errno = ENOMEM;
 		perror(__progname);
-		(void)close(pipefd[0]); /* Child will be killed by SIGPIPE. */
+		(void)close(pipefd[0]);
+		(void)kill(child, SIGTERM);
+		while (waitpid(child, NULL, 0) != child);
 		(void)unlink(tempname);
 		return NULL;
 	}
