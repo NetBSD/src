@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_twe.c,v 1.15 2003/09/21 19:33:10 thorpej Exp $	*/
+/*	$NetBSD: ld_twe.c,v 1.16 2003/09/22 18:31:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.15 2003/09/21 19:33:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_twe.c,v 1.16 2003/09/22 18:31:10 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -72,6 +72,7 @@ struct ld_twe_softc {
 };
 
 static void	ld_twe_attach(struct device *, struct device *, void *);
+static int	ld_twe_detach(struct device *, int);
 static int	ld_twe_dobio(struct ld_twe_softc *, void *, int, int, int,
 			     struct buf *);
 static int	ld_twe_dump(struct ld_softc *, void *, int, int);
@@ -79,8 +80,14 @@ static void	ld_twe_handler(struct twe_ccb *, int);
 static int	ld_twe_match(struct device *, struct cfdata *, void *);
 static int	ld_twe_start(struct ld_softc *, struct buf *);
 
+static void	ld_twe_adjqparam(struct device *, int);
+
 CFATTACH_DECL(ld_twe, sizeof(struct ld_twe_softc),
-    ld_twe_match, ld_twe_attach, NULL, NULL);
+    ld_twe_match, ld_twe_attach, ld_twe_detach, NULL);
+
+static const struct twe_callbacks ld_twe_callbacks = {
+	ld_twe_adjqparam,
+};
 
 static int
 ld_twe_match(struct device *parent, struct cfdata *match, void *aux)
@@ -108,12 +115,14 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 	twea = aux;
 	td = &twe->sc_units[twea->twea_unit];
 
+	twe_register_callbacks(twe, twea->twea_unit, &ld_twe_callbacks);
+
 	sc->sc_hwunit = twea->twea_unit;
 	ld->sc_flags = LDF_ENABLED;
 	ld->sc_maxxfer = twe_get_maxxfer(twe_get_maxsegs());
 	ld->sc_secperunit = td->td_size;
 	ld->sc_secsize = TWE_SECTOR_SIZE;
-	ld->sc_maxqueuecnt = (TWE_MAX_QUEUECNT - 1) / twe->sc_nunits;
+	ld->sc_maxqueuecnt = twe->sc_openings;
 	ld->sc_start = ld_twe_start;
 	ld->sc_dump = ld_twe_dump;
 
@@ -153,6 +162,18 @@ ld_twe_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": %s%s, status: %s\n", stripebuf, typestr, statstr);
 	ldattach(ld);
+}
+
+static int
+ld_twe_detach(struct device *self, int flags)
+{
+	int rv;
+
+	if ((rv = ldbegindetach((struct ld_softc *)self, flags)) != 0)
+		return (rv);
+	ldenddetach((struct ld_softc *)self);
+
+	return (0);
 }
 
 static int
@@ -252,4 +273,11 @@ ld_twe_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 
 	return (ld_twe_dobio((struct ld_twe_softc *)ld, data,
 	    blkcnt * ld->sc_secsize, blkno, 1, NULL));
+}
+
+static void
+ld_twe_adjqparam(struct device *self, int openings)
+{
+
+	ldadjqparam((struct ld_softc *)self, openings);
 }
