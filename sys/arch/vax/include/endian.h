@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.7 1996/04/08 18:35:48 ragge Exp $	*/
+/*	$NetBSD: endian.h,v 1.8 1996/10/13 03:28:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991 Regents of the University of California.
@@ -55,17 +55,20 @@
 
 #include <sys/cdefs.h>
 
+typedef u_int32_t	in_addr_t;
+typedef u_int16_t	in_port_t;
+
 __BEGIN_DECLS
-unsigned long   htonl __P((unsigned long));
-unsigned short  htons __P((unsigned short));
-unsigned long   ntohl __P((unsigned long));
-unsigned short  ntohs __P((unsigned short));
+in_addr_t  htonl __P((in_addr_t));
+in_port_t  htons __P((in_port_t));
+in_addr_t  ntohl __P((in_addr_t));
+in_port_t  ntohs __P((in_port_t));
 __END_DECLS
 
 #ifdef	__GNUC__
 
 #define	__byte_swap_long_variable(x)		\
-({ register unsigned long __y, __x = (x);	\
+({ register u_int32_t __y, __x = (x);		\
 						\
 	__asm ("rotl	$-8, %1, %0;   		\
 		insv	%0, $16, $8, %0;	\
@@ -77,7 +80,7 @@ __END_DECLS
 	__y; })
 
 #define __byte_swap_word_variable(x)		\
-({ register unsigned short __y, __x = (x);	\
+({ register u_int16_t __y, __x = (x);		\
 						\
 	__asm ("rotl	$8, %1, %0;		\
 		rotl	$-8, %1, r1;		\
@@ -102,10 +105,10 @@ __END_DECLS
 /*
  * Macros for network/external number representation conversion.
  */
-#define NTOHL(x)	(x) = ntohl((unsigned long)(x))
-#define NTOHS(x)	(x) = ntohs((unsigned long)(x))
-#define HTONL(x)	(x) = htonl((unsigned long)(x))
-#define HTONS(x)	(x) = htons((unsigned long)(x))
+#define NTOHL(x)	(x) = ntohl((in_addr_t)(x))
+#define NTOHS(x)	(x) = ntohs((in_port_t)(x))
+#define HTONL(x)	(x) = htonl((in_addr_t)(x))
+#define HTONS(x)	(x) = htons((in_port_t)(x))
 
 #endif	/* _POSIX_SOURCE */
 
