@@ -1,15 +1,14 @@
-.\"$NetBSD: hardware,v 1.24.2.8 2003/06/24 09:18:50 grant Exp $
+.\"$NetBSD: hardware,v 1.24.2.9 2003/10/21 06:34:58 jmc Exp $
 .
 Currently,
 .Nx*M
 requires the use of
 .Tn "Open Firmware"
 to boot.
-Open Firmware is a command environment using the FORTH language which the
+Open Firmware is a command environment using the FORTH language.  The
 .Nx
-kernel uses to gether information about your system, and to control some
-of your devices.
-It is part of the boot ROMs in most
+kernel uses Open Firmware to gather information about your system and to 
+control some of your devices.  It is part of the boot ROMs in most
 .Tn PowerPC Ns No -based
 .Tn Macintosh
 systems.
@@ -45,11 +44,12 @@ or G4 microprocessor via a daughtercard replacement, in which case
 will run on this system.
 .Pp
 The minimal configuration requires 16 MB of RAM and ~80 MB of disk space.
-To install the entire system requires much more disk space, and to run
-X or compile the system, more RAM is recommended, as
+To install the entire system requires 200 MB plus space for the swap 
+partition (usually the RAM size, unless you've got a lot of RAM).  To 
+install X, an additional 60 MB disk space is required, as is more RAM (at 
+least 32 MB).
 .Nx
-with 16 MB of RAM is very slow.
-Note that until you have around 32 MB of RAM,
+with 16 MB of RAM is very slow.  Until you have around 32 MB of RAM,
 getting more RAM is more important than getting a faster CPU.
 .
 .Ss2 Supported models
@@ -132,7 +132,7 @@ Apple PowerMacintosh (G4 (PCI), G4 (AGP), G4 (Gigabit Ethernet), G4
 (Digital Audio), G4 (Quicksilver), G4 (Quicksilver 2002), G4 (FW 800), 
 and G4 Cube)
 .It
-Apple Xserve
+Apple original Xserve and Xserve (Slot Load)
 .bullet)
 .tag)
 .
@@ -140,6 +140,8 @@ Apple Xserve
 .(bullet -compact -offset indent
 Systems with Open Firmware, but using a PPC 601 microprocessor
 (PowerMacintosh 7200 and 7500 (without CPU upgrade))
+.It
+Systems with Open Firmware, but using a PPC G5 microprocessor
 .It
 Systems with a PowerPC microprocessor, but lacking Open Firmware
 .(bullet -compact
@@ -179,7 +181,7 @@ Most CPU upgrades are supported.
 Some older models will not automatically enable the L2 and/or L3 caches on
 a G3 or G4 processor.
 See the FAQ entry
-.Lk http://www.netbsd.org/Ports/macppc/faq.html#cpu-upgrade
+.Lk http://www.NetBSD.org/Ports/macppc/faq.html#cpu-upgrade
 .bullet)
 .It
 Ethernet
@@ -402,6 +404,20 @@ reported problems trying to run ppp or other high speed serial applications
 .Note)
 .Pp
 .It
+The Xserve serial port.
+.(Note
+This serial port can be used for console (57600 bps, 8 bits, no 
+parity, 1 stop bit, no handshaking).  Use
+.Pq Em scca
+for the Open Firmware
+.Sq input-device
+and
+.Sq output-device
+variables.  Alternatively, if you remove your video card,
+Open Firmware will default to using the serial port for the console.
+.Note)
+.Pp
+.It
 The Gee Three Stealth Serial Port, possibly the Griffin Technology gPort
 .(Note
 These serial ports can be used for console (57600 bps, 8 bits, no parity,
@@ -423,7 +439,7 @@ USB devices
 .(bullet -compact
 Most MI USB devices should work (such as disks, printers, input devices,
 SCSI adapters, and ethernet interfaces)
-.Lk http://www.netbsd.org/Hardware/usb.html
+.Lk http://www.NetBSD.org/Hardware/usb.html
 .bullet)
 .It
 PCMCIA and Cardbus cards
@@ -431,15 +447,15 @@ PCMCIA and Cardbus cards
 Most MI PCMCIA and Cardbus cards should work, although very few have been
 tested with
 .Nx*M
-.Lk http://www.netbsd.org/Hardware/cardbus.html
-.Lk http://www.netbsd.org/Hardware/pcmcia.html
+.Lk http://www.NetBSD.org/Hardware/cardbus.html
+.Lk http://www.NetBSD.org/Hardware/pcmcia.html
 .bullet)
 .It
 PCI cards
 .(bullet -compact
 Most MI PCI cards should work, although very few have been tested with
 .Nx*M
-.Lk http://www.netbsd.org/Hardware/pci.html
+.Lk http://www.NetBSD.org/Hardware/pci.html
 .bullet)
 .Pp
 .(Note
@@ -510,4 +526,4 @@ Go to the
 Model Support webpage and look up your system.
 Take note of the comments about your model and keep these in
 mind during the rest of this installation procedure.
-.Lk http://www.netbsd.org/Ports/macppc/models.html
+.Lk http://www.NetBSD.org/Ports/macppc/models.html
