@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohcireg.h,v 1.8 2001/03/15 22:26:03 enami Exp $	*/
+/*	$NetBSD: fwohcireg.h,v 1.9 2001/05/11 06:04:49 jmc Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -543,5 +543,9 @@ struct fwohci_desc {
 #define	OHCI_DESC_WAIT		0x0003
 
 #define	OHCI_DESC_MAX		8
+
+/* Some constants for passing ACK values around with from status reg's */
+
+#define OHCI_DESC_STATUS_ACK_MASK 0x1f
 
 #endif	/* _DEV_IEEE1394_FWOHCIREG_ */
