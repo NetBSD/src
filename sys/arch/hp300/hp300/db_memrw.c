@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.7 1998/08/20 08:33:42 kleink Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.8 1998/08/31 19:20:17 frueauf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ db_read_bytes(addr, size, data)
  */
 static void
 db_write_text(addr, size, data)
-	dbaddr_t addr;
+	db_addr_t addr;
 	size_t size;
 	char *data;
 {
