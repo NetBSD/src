@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.2 1999/05/23 22:56:54 ragge Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.3 1999/08/07 10:36:48 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -64,13 +64,13 @@ findcpu()
 
 	switch (vax_cputype) {
 	case VAX_TYP_780:
-		vax_bustype = VAX_SBIBUS | VAX_CPUBUS;
+		vax_bustype = VAX_SBIBUS;
 		break;
 	case VAX_TYP_750:
-		vax_bustype = VAX_CMIBUS | VAX_CPUBUS;
+		vax_bustype = VAX_CMIBUS;
 		break;
 	case VAX_TYP_790:
-		vax_bustype = VAX_CPUBUS | VAX_MEMBUS;
+		vax_bustype = VAX_ABUS;
 		break;
 
 	case VAX_TYP_UV2:
@@ -89,7 +89,7 @@ findcpu()
 		case VAX_BTYP_48:
 		case VAX_BTYP_49:
 			vax_confdata = *(int *)(0x20020000);
-			vax_bustype = VAX_VSBUS | VAX_CPUBUS;
+			vax_bustype = VAX_VSBUS;
 			break;
 
 		case VAX_BTYP_9CC:
@@ -103,10 +103,9 @@ findcpu()
 		case VAX_BTYP_660:
 		case VAX_BTYP_60:
 		case VAX_BTYP_69D:
-			/* vax_bustype = VAX_MVBUS; */
 		case VAX_BTYP_630:
 		case VAX_BTYP_650:
-			vax_bustype = VAX_UNIBUS | VAX_CPUBUS;
+			vax_bustype = VAX_IBUS;
 			break;
 
 		}
@@ -117,13 +116,12 @@ findcpu()
 		vax_bustype = VAX_BIBUS;
 		break;
 
-#ifdef notyet
 	case VAX_TYP_8NN:
 	case VAX_TYP_8PS:
 		vax_boardtype = VAX_BTYP_8800;
 		vax_bustype = VAX_NBIBUS;
 		break;
-#endif
+
 	default:
 		/* CPU not supported, just give up */
 		asm("halt");

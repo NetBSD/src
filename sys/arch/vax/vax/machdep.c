@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.84 1999/05/26 19:16:35 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.85 1999/08/07 10:36:50 ragge Exp $	 */
 
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -131,7 +131,6 @@ char		machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char		cpu_model[100];
 caddr_t		msgbufaddr;
 int		physmem;
-int		todrstopped = 0;
 int		dumpsize = 0;
 
 #define	IOMAPSZ	100
@@ -161,15 +160,14 @@ cpu_startup()
 	 */
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
-#if VAX750 || VAX650
-	if (vax_cputype == VAX_750 || vax_cputype == VAX_650)
-		if (!mfpr(PR_TODR))
-			mtpr(todrstopped = 1, PR_TODR);
-#endif
 	/*
 	 * Good {morning,afternoon,evening,night}.
+	 * Also call CPU init on systems that need that.
 	 */
 	printf("%s\n%s\n", version, cpu_model);
+        if (dep_call->cpu_conf)
+                (*dep_call->cpu_conf)();
+
 	format_bytes(pbuf, sizeof(pbuf), avail_end);
 	printf("total memory = %s\n", pbuf);
 	physmem = btoc(avail_end);

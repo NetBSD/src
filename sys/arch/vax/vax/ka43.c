@@ -1,4 +1,4 @@
-/*	$NetBSD: ka43.c,v 1.17 1999/05/01 16:13:44 ragge Exp $ */
+/*	$NetBSD: ka43.c,v 1.18 1999/08/07 10:36:48 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,7 @@
 #include <machine/ka43.h>
 #include <machine/clock.h>
 
-static	void ka43_conf __P((struct device*, struct device*, void*));
+static	void ka43_conf __P((void));
 static	void ka43_steal_pages __P((void));
 
 static	int ka43_mchk __P((caddr_t));
@@ -301,13 +301,11 @@ ka43_cache_enable()
 }
 
 void
-ka43_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka43_conf()
 {
         extern  int clk_adrshift, clk_tweak;
 
-	printf(": KA43\n");
+	printf("cpu: KA43\n");
 	ka43_cpu = (void *)vax_map_physmem(VS_REGS, 1);
 
 	ka43_creg = (void *)vax_map_physmem(KA43_CH2_CREG, 1);

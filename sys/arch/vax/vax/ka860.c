@@ -1,4 +1,4 @@
-/*	$NetBSD: ka860.c,v 1.14 1999/05/01 16:13:45 ragge Exp $	*/
+/*	$NetBSD: ka860.c,v 1.15 1999/08/07 10:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1986, 1988 Regents of the University of California.
  * All rights reserved.
@@ -36,14 +36,12 @@
 
 /*
  * VAX 8600 specific routines.
+ * Also contains abus spec's and memory init routines.
  */
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-
-#include <vm/vm.h>
-#include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
 #include <machine/clock.h>
@@ -51,14 +49,14 @@
 #include <machine/nexus.h>
 #include <machine/ioa.h>
 #include <machine/sid.h>
+
 #include <vax/vax/gencons.h>
 
-void	ka86_conf __P((struct device *, struct device *, void *));
-void	ka86_memenable __P((struct sbi_attach_args *, struct device *));
-void	ka86_memerr __P((void));
-int	ka86_mchk __P((caddr_t));
-void	ka86_reboot __P((int));
-void	ka86_clrf __P((void));
+static	void	ka86_memerr __P((void));
+static	int	ka86_mchk __P((caddr_t));
+static	void	ka86_reboot __P((int));
+static	void	ka86_clrf __P((void));
+static	void	ka860_init __P((struct device *));
 
 void	crlattach __P((void));
 
@@ -66,7 +64,7 @@ struct	cpu_dep	ka860_calls = {
 	0,
 	ka86_mchk,
 	ka86_memerr,
-	ka86_conf,
+	0,
 	generic_clkread,
 	generic_clkwrite,
 	6,      /* ~VUPS */
@@ -124,15 +122,6 @@ struct	cpu_dep	ka860_calls = {
 
 #define M8600_MSTAT2_BITS "\20\20CP_BYT_WR\17ABUS_BD_DT_CODE\10MULT_ERR\
 \7CHE_TAG_PE\6CHE_TAG_W_PE\5CHE_WRTN_BIT\4NXM\3CP-IO_BUF_ERR\2MBOX_LOCK"
-
-/* enable CRD reports */
-void
-ka86_memenable(sa, dev)
-	struct sbi_attach_args *sa; /* XXX */
-	struct device *dev;
-{
-	mtpr(mfpr(PR_MERG) & ~M8600_ICRD, PR_MERG);
-}
 
 /* log CRD errors */
 void
@@ -277,16 +266,15 @@ struct ka86 {
 };
 
 void
-ka86_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+ka860_init(self)
+	struct device *self;
 {
 	struct	ka86 *ka86 = (void *)&vax_cpudata;
 
 	/* Enable cache */
 	mtpr(3, PR_CSWP);
 
-	printf(": KA86, serial number %d(%d), hardware ECO level %d(%d)\n%s: ",
+	printf(": CPU serial number %d(%d), hardware ECO level %d(%d)\n%s: ",
 	    ka86->snr, ka86->plant, ka86->eco >> 4, ka86->eco, self->dv_xname);
 	if (mfpr(PR_ACCS) & 255) {
 		printf("FPA present, type %d, serial number %d, enabling.\n", 
@@ -294,6 +282,8 @@ ka86_conf(parent, self, aux)
 		mtpr(0x8000, PR_ACCS);
 	} else
 		printf("no FPA\n");
+	/* enable CRD reports */
+	mtpr(mfpr(PR_MERG) & ~M8600_ICRD, PR_MERG);
 	crlattach();
 }
 
@@ -344,4 +334,83 @@ ka86_reboot(howto)
 	WAIT;
 
 	asm("halt");
+}
+
+static	int abus_print __P((void *, const char *));
+static  int abus_match __P((struct device *, struct cfdata *, void *));
+static  void abus_attach __P((struct device *, struct device *, void*));
+
+struct  cfattach abus_ca = {
+        sizeof(struct device), abus_match, abus_attach
+};
+
+/*
+ * Abus is the master bus on VAX 8600.
+ */
+int
+abus_match(parent, cf, aux)
+        struct device *parent;
+        struct cfdata *cf;
+        void *aux;
+{
+        if (vax_bustype == VAX_ABUS)
+                return 1;
+        return 0;
+}
+
+void
+abus_attach(parent, self, aux)
+        struct device *parent, *self;
+        void *aux;
+{
+        volatile int tmp;
+        volatile struct sbia_regs *sbiar;
+        struct ioa *ioa;
+        int     type, i;
+	struct bp_conf bp;
+
+	/*
+	 * Init CPU.
+	 */
+	ka860_init(self);
+
+        for (i = 0; i < MAXNIOA; i++) {
+                ioa = (struct ioa *)vax_map_physmem((paddr_t)IOA8600(0),
+                    (IOAMAPSIZ / VAX_NBPG));
+                if (badaddr((caddr_t)ioa, 4)) {
+                        vax_unmap_physmem((vaddr_t)ioa, (IOAMAPSIZ / VAX_NBPG));
+                        continue;
+                }
+                tmp = ioa->ioacsr.ioa_csr;
+                type = tmp & IOA_TYPMSK;
+
+                switch (type) {
+        
+                case IOA_SBIA:
+                        bp.type = "sbi";
+                        bp.num = i;
+                        config_found(self, &bp, abus_print);
+                        sbiar = (void *)ioa;
+                        sbiar->sbi_errsum = -1;
+                        sbiar->sbi_error = 0x1000;
+                        sbiar->sbi_fltsts = 0xc0000;
+                        break;
+
+                default:
+                        printf("IOAdapter %x unsupported\n", type);
+                        break;
+                }
+                vax_unmap_physmem((vaddr_t)ioa, (IOAMAPSIZ / VAX_NBPG));
+        }
+}
+
+int
+abus_print(aux, hej)
+        void *aux;
+        const char *hej;
+{
+        struct bp_conf *bp = aux;
+        if (hej)
+                printf("%s at %s", bp->type, hej);
+        return (UNCONF);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.38 1999/06/06 14:23:46 ragge Exp $	*/
+/*	$NetBSD: locore.c,v 1.39 1999/08/07 10:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -98,6 +98,9 @@ start()
 #if VAX780
 	case VAX_BTYP_780:
 		dep_call = &ka780_calls;
+		strcpy(cpu_model,"VAX 11/780");
+		if (vax_cpudata & 0x100)
+			cpu_model[9] = '5';
 		break;
 #endif
 #if VAX750

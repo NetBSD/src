@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.37 1999/05/23 22:56:54 ragge Exp $      */
+/*      $NetBSD: cpu.h,v 1.38 1999/08/07 10:36:46 ragge Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -53,7 +53,7 @@ struct	cpu_dep {
 	int	(*cpu_mchk) __P((caddr_t));   /* Machine check handling */
 	void	(*cpu_memerr) __P((void)); /* Memory subsystem errors */
 	    /* Autoconfiguration */
-	void	(*cpu_conf) __P((struct device *, struct device *, void *));
+	void	(*cpu_conf) __P((void));
 	int	(*cpu_clkread) __P((time_t));	/* Read cpu clock time */
 	void	(*cpu_clkwrite) __P((void));	/* Write system time to cpu */
 	short	cpu_vups;	/* speed of cpu */

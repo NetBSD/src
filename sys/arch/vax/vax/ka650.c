@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.c,v 1.19 1999/05/01 16:13:44 ragge Exp $	*/
+/*	$NetBSD: ka650.c,v 1.20 1999/08/07 10:36:49 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -65,9 +65,12 @@ int	*KA650_CACHE_ptr;
 #define	CACHEOFF	0
 #define	CACHEON		1
 
-void	ka650setcache __P((int));
-static void ka650_halt __P((void));
-static void ka650_reboot __P((int));
+static	void	ka650setcache __P((int));
+static	void	ka650_halt __P((void));
+static	void	ka650_reboot __P((int));
+static	void    uvaxIII_conf __P((void));
+static	void    uvaxIII_memerr __P((void));
+static	int     uvaxIII_mchk __P((caddr_t));
 
 struct	cpu_dep	ka650_calls = {
 	0, /* No special page stealing anymore */
@@ -86,9 +89,7 @@ struct	cpu_dep	ka650_calls = {
  * uvaxIII_conf() is called by cpu_attach to do the cpu_specific setup.
  */
 void
-uvaxIII_conf(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+uvaxIII_conf()
 {
 	int syssub = GETSYSSUBT(vax_siedata);
 
@@ -104,7 +105,7 @@ uvaxIII_conf(parent, self, aux)
 	KA650_CACHE_ptr = (void *)vax_map_physmem(KA650_CACHE,
 	    (KA650_CACHESIZE/VAX_NBPG));
 
-	printf(": KA6%d%d, CVAX microcode rev %d Firmware rev %d\n",
+	printf("cpu: KA6%d%d, CVAX microcode rev %d Firmware rev %d\n",
 	    syssub == VAX_SIE_KA640 ? 4 : 5,
 	    syssub == VAX_SIE_KA655 ? 5 : 0,
 	    (vax_cpudata & 0xff), GETFRMREV(vax_siedata));
@@ -115,6 +116,8 @@ uvaxIII_conf(parent, self, aux)
 		    ctob(physmem), (int)ka650merr_ptr->merr_qbmbr);
 		panic("qbus map unprotected");
 	}
+	if (mfpr(PR_TODR) == 0)
+		mtpr(1, PR_TODR);
 }
 
 void

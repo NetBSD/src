@@ -1,4 +1,4 @@
-/*	$NetBSD: ka650.h,v 1.6 1997/07/26 10:12:43 ragge Exp $	*/
+/*	$NetBSD: ka650.h,v 1.7 1999/08/07 10:36:46 ragge Exp $	*/
 /*
  * Copyright (c) 1988 The Regents of the University of California.
  * All rights reserved.
@@ -242,14 +242,3 @@ struct ka650_ipcr {
 #define	GETSYSSUBT(x)	((x >> 8) & 0xff)
 #define	GETFRMREV(x)	((x >> 16) & 0xff)
 #define	GETCODREV(x)	(x & 0xff)
-
-/* prototypes */
-struct sbi_attach_args;
-
-void	uvaxIII_conf __P((struct device *, struct device *, void *));
-int	uvaxIII_clock __P((void));
-void	uvaxIII_memenable __P((struct sbi_attach_args *, struct device *));
-void	uvaxIII_memerr __P((void));
-int	uvaxIII_mchk __P((caddr_t));
-void	uvaxIII_steal_pages __P((void));
-
