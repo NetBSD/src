@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.147 1999/08/24 21:32:04 soren Exp $
+$NetBSD: pcidevs,v 1.148 1999/08/27 23:25:36 thorpej Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1138,6 +1138,9 @@ product S3 VIRGE_GX2	0x8a10	ViRGE/GX2
 product S3 VIRGE_MX	0x8c01	ViRGE/MX
 product S3 VIRGE_MXP	0x8c03	ViRGE/MXP
 product	S3 SONICVIBES	0xca00	SonicVibes
+
+/* Samgsung Semiconductor products */
+product SAMSUNGSEMI KS8920	0x8920	KS8920 10/100 Ethernet
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
