@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $	*/
+/*	$NetBSD: yds.c,v 1.18.2.1 2004/09/22 20:58:46 jmc Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.18 2003/09/29 09:50:22 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.18.2.1 2004/09/22 20:58:46 jmc Exp $");
 
 #include "mpu.h"
 
@@ -172,7 +172,7 @@ int	yds_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
 int     yds_attach_codec __P((void *sc, struct ac97_codec_if *));
 int	yds_read_codec __P((void *sc, u_int8_t a, u_int16_t *d));
 int	yds_write_codec __P((void *sc, u_int8_t a, u_int16_t d));
-void    yds_reset_codec __P((void *sc));
+int     yds_reset_codec __P((void *sc));
 int     yds_get_portnum_by_name __P((struct yds_softc *, char *, char *,
 				     char *));
 
@@ -988,7 +988,7 @@ yds_write_codec(sc_, reg, data)
 /*
  * XXX: Must handle the secondary differntly!!
  */
-void
+int
 yds_reset_codec(sc_)
 	void *sc_;
 {
@@ -1009,6 +1009,7 @@ yds_reset_codec(sc_)
 	}
 
 	yds_ready_codec(sc_);
+	return 0;
 }
 
 int
