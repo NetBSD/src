@@ -1,7 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 1997/01/07 10:47:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 1999/03/18 06:01:42 ross Exp $
 
-.if ${MACHINE} != "alpha"
 SUBDIR=	if_ipl
-.endif
 
 .include <bsd.subdir.mk>
