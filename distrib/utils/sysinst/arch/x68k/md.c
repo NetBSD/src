@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2003/10/19 20:17:33 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.27 2003/11/30 14:36:45 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -199,7 +199,7 @@ md_newdisk(void)
 {
 	msg_display(MSG_newdisk, diskdev, diskdev);
 
-	return run_prog(RUN_FATAL|RUN_DISPLAY, MSG_NONE,
+	return run_program(RUN_FATAL|RUN_DISPLAY,
 	    "/usr/mdec/newdisk -v %s", diskdev);
 }
 
@@ -241,9 +241,10 @@ md_post_newfs(void)
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
 	cp_to_target("/usr/mdec/boot", "/boot");
-	run_prog(RUN_DISPLAY, "Warning: disk is probably not bootable",
-		"/usr/mdec/installboot.new /usr/mdec/sdboot_ufs /dev/r%sa",
-		diskdev);
+	if (run_program(RUN_DISPLAY | RUN_NO_CLEAR,
+	    "/usr/mdec/installboot.new /usr/mdec/sdboot_ufs /dev/r%sa",
+	    diskdev))
+		process_menu(MENU_ok, "Warning: disk is probably not bootable");
 	return 0;
 }
 
@@ -272,18 +273,18 @@ int
 md_check_partitions(void)
 {
 	/* X68k partitions must be in order of the range. */
-	int part, start = 0, last = A-1;
+	int part, start = 0, last = PART_A-1;
 
-	for (part = A; part < 8; part++) {
-		if (part == C)
+	for (part = PART_A; part < 8; part++) {
+		if (part == PART_C)
 			continue;
-		if (last >= A && bsdlabel[part].pi_size > 0) {
+		if (last >= PART_A && bsdlabel[part].pi_size > 0) {
 			msg_display(MSG_emptypart, part+'a');
 			process_menu(MENU_ok, NULL);
 			return 0;
 		}
 		if (bsdlabel[part].pi_size == 0) {
-			if (last < A)
+			if (last < PART_A)
 				last = part;
 		} else {
 			if (start >= bsdlabel[part].pi_offset) {
@@ -319,9 +320,9 @@ md_cleanup_install(void)
 #ifdef notyet			/* sed is too large for ramdisk */
 	enable_rc_conf();
 #endif
-	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.13 2003/11/13 08:03:03 sekiya Exp $	*/
+/*	$NetBSD: md.c,v 1.14 2003/11/30 14:36:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,16 +114,16 @@ md_post_disklabel(void)
 {
 	set_swap(diskdev, bsdlabel);
         if (strstr(instsys.version, "(INSTALL32_IP3x)"))   
-		return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	    		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
-			diskdev);
+		return run_program(RUN_DISPLAY,
+		    "%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip3xboot",
+		    diskdev);
 	else
-	run_prog(RUN_DISPLAY, MSG_cmdfail,
-	 		"%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
-			diskdev);
-	return run_prog(RUN_DISPLAY, MSG_cmdfail,
-	 		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
-			diskdev);
+	run_program(RUN_DISPLAY,
+		"%s %s", "/usr/mdec/sgivol -f -w aoutboot /usr/mdec/aoutboot",
+		diskdev);
+	return run_program(RUN_DISPLAY,
+		"%s %s", "/usr/mdec/sgivol -f -w boot /usr/mdec/ip2xboot",
+		diskdev);
 }
 
 int
@@ -174,9 +174,9 @@ md_cleanup_install(void)
 
 	enable_rc_conf();
 
-	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.10 2003/07/25 08:26:31 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.11 2003/11/30 14:36:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,11 +47,11 @@
 
 #include "mbr.h"
 
-#define	PART_ROOT	A
-#define	PART_SWAP	B
-#define	PART_RAW	C
-#define	PART_USR	D
-#define	PART_FIRST_FREE	D
+#define	PART_ROOT	PART_A
+#define	PART_SWAP	PART_B
+#define	PART_RAW	PART_C
+#define	PART_USR	PART_D
+#define	PART_FIRST_FREE	PART_D
 
 #define	DEFSWAPRAM	64	/* Assume at least this RAM for swap calc */
 #define	DEFROOTSIZE	32	/* Default root size */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.17 2003/08/27 16:00:30 lukem Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.18 2003/11/30 14:36:45 dsl Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -56,6 +56,7 @@ Selected bootblock: }
 
 message console_PC {BIOS console}
 message console_com {Serial port com%d, baud rate %d}
+message console_unchanged {Unchanged}
 
 message Bootblocks_selection
 {Wybor bootblokow}
@@ -67,18 +68,7 @@ message Use_serial_com3		{Use serial port com3}
 message serial_baud_rate	{Serial baud rate}
 message Use_existing_bootblocks	{Use existing bootblocks}
 
-.if 0
-message Use_normal_bootblocks
-{Uzyj normalnych bootblokow}
-message Use_serial_9600_bootblocks
-{Uzyj bootblokow na zewn. konsole (9600)}
-message Use_serial_38400_bootblocks
-{Uzyj bootblokow na zewn. konsole (38400)}
-message Use_serial_57600_bootblocks
-{Uzyj bootblokow na zewn. konsole (57600)}
-message Use_serial_115200_bootblocks
-{Uzyj bootblokow na zewn. konsole (115200)}
-.endif
+message No_Bootcode		{No bootcode for root partition}
 
 message dobootblks
 {Instalowanie bootblokow na %s....

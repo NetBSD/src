@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.44 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: target.c,v 1.45 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.44 2003/10/19 20:17:32 dsl Exp $");
+__RCSID("$NetBSD: target.c,v 1.45 2003/11/30 14:36:44 dsl Exp $");
 #endif
 
 /*
@@ -113,13 +113,12 @@ int	target_test_symlink (const char *path);	/* deprecated */
 
 void backtowin(void);
 
-void unwind_mounts (void);
-int mount_with_unwind (const char *fstype, const char *from, const char *on);
+void unwind_mounts(void);
 
 /* Record a mount for later unwinding of target mounts. */
 struct unwind_mount {
 	struct unwind_mount *um_prev;
-	char um_mountpoint[STRSIZE];
+	char um_mountpoint[4];		/* Allocated longer... */
 };
 
 /* Unwind-mount stack */
@@ -262,7 +261,7 @@ static void
 make_prefixed_dir(const char *prefix, const char *path)
 {
 
-	run_prog(0, NULL, "/bin/mkdir -p %s", concat_paths(prefix, path));
+	run_program(0, "/bin/mkdir -p %s", concat_paths(prefix, path));
 }
 
 /* Make a directory with a pathname relative to the installation target. */
@@ -273,64 +272,6 @@ make_target_dir(const char *path)
 	make_prefixed_dir(target_prefix(), path);
 }
 
-#ifdef notdef
-/* Make a directory with a pathname in the currently-mounted root. */
-void
-make_ramdisk_dir(const char *path)
-{
-
-	make_prefixed_dir(path, "");
-}
-
-/* unused, will not work with new run.c */
-/*
- *
- * Append |string| to the  filename |path|, where |path| is
- * relative to the root of the install target.
- * for example, 
- *    echo_to_target_file( "Newbie.NetBSD.ORG", "/etc/myname");
- * would set the default hostname at the next reboot of the installed-on disk.
- */
-void
-append_to_target_file(const char *path, const char *string)
-{
-
-	run_prog(RUN_FATAL, NULL, "echo %s >> %s", string, target_expand(path));
-}
-
-/*
- * As append_to_target_file, but with ftrunc semantics. 
- */
-void
-echo_to_target_file(const char *path, const char *string)
-{
-	trunc_target_file(path);
-	append_to_target_file(path, string);
-}
-
-void
-sprintf_to_target_file(const char *path, const char *format, ...)
-{
-	char lines[STRSIZE];
-	va_list ap;
-
-	trunc_target_file(path);
-
-	va_start(ap, format);
-	vsnprintf(lines, STRSIZE, format, ap);
-	va_end(ap);
-
-	append_to_target_file(path, lines);
-}
-
-
-void
-trunc_target_file(const char *path)
-{
-
-	run_prog(RUN_FATAL, NULL, "cat < /dev/null > %s",  target_expand(path));
-}
-#endif /* if 0 */
 
 static int
 do_target_chdir(const char *dir, int must_succeed)
@@ -395,7 +336,7 @@ cp_to_target(const char *srcpath, const char *tgt_path)
 {
 	const char *real_path = target_expand(tgt_path);
 
-	return run_prog(0, NULL, "/bin/cp %s %s", srcpath, real_path);
+	return run_program(0, "/bin/cp %s %s", srcpath, real_path);
 }
 
 /*
@@ -413,7 +354,7 @@ dup_file_into_target(const char *filename)
 
 
 /*
- * Do a mv where both pathnames are  within the target filesystem.
+ * Do a mv where both pathnames are within the target filesystem.
  */
 void
 mv_within_target_or_die(const char *frompath, const char *topath)
@@ -424,10 +365,10 @@ mv_within_target_or_die(const char *frompath, const char *topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	run_prog(RUN_FATAL, NULL, "mv %s %s", realfrom, realto);
+	run_program(RUN_FATAL, "mv %s %s", realfrom, realto);
 }
 
-/* Do a cp where both pathnames are  within the target filesystem. */
+/* Do a cp where both pathnames are within the target filesystem. */
 int
 cp_within_target(const char *frompath, const char *topath)
 {
@@ -437,7 +378,7 @@ cp_within_target(const char *frompath, const char *topath)
 	strncpy(realfrom, target_expand(frompath), STRSIZE);
 	strncpy(realto, target_expand(topath), STRSIZE);
 
-	return (run_prog(0, NULL, "cp -p %s %s", realfrom, realto));
+	return (run_program(0, "cp -p %s %s", realfrom, realto));
 }
 
 /* fopen a pathname in the target. */
@@ -449,22 +390,23 @@ target_fopen(const char *filename, const char *type)
 }
 
 /*
- * Do a mount and record the mountpoint in a list of mounts to 
- * unwind after completing or aborting a mount.
+ * Do a mount onto a mountpoint in the install target.
+ * Record mountpoint so we can unmount when finished.
+ * NB: does not prefix mount-from, which probably breaks nullfs mounts.
  */
 int
-mount_with_unwind(const char *opts, const char *from, const char *on)
+target_mount(const char *opts, const char *from, int ptn, const char *on)
 {
+	struct unwind_mount *m;
 	int error;
-	struct unwind_mount * m;
+	int len;
 
-	m = malloc(sizeof(*m));
+	len = strlen(on);
+	m = malloc(sizeof *m + len);
 	if (m == 0)
 		return (ENOMEM);	/* XXX */
 
-	strncpy(m->um_mountpoint, on, STRSIZE);
-	m->um_prev = unwind_mountlist;
-        unwind_mountlist = m;
+	memcpy(m->um_mountpoint, on, len + 1);
 
 #ifdef DEBUG_UNWIND
 	endwin();
@@ -472,9 +414,15 @@ mount_with_unwind(const char *opts, const char *from, const char *on)
 	backtowin();
 #endif
 
-	error = run_prog(RUN_PROGRESS, NULL,
-			"/sbin/mount %s %s %s", opts, from, on);
-	return (error);
+	error = run_program(0, "/sbin/mount %s /dev/%s%c %s%s",
+			opts, from, 'a' + ptn, target_prefix(), on);
+	if (error) {
+		free(m);
+		return error;
+	}
+	m->um_prev = unwind_mountlist;
+	unwind_mountlist = m;
+	return 0;
 }
 
 /*
@@ -494,36 +442,18 @@ unwind_mounts(void)
 		return;
 	unwind_in_progress = 1;
 
-	for (m = unwind_mountlist; m;  ) {
-		struct unwind_mount *prev;
+	while ((m = unwind_mountlist) != NULL) {
+		unwind_mountlist = m->um_prev;
 #ifdef DEBUG_UNWIND
 		endwin();
 		fprintf(stderr, "unmounting %s\n", m->um_mountpoint);
 		backtowin();
 #endif
-		run_prog(0, NULL, "/sbin/umount %s", m->um_mountpoint);
-		prev = m->um_prev;
+		run_program(0, "/sbin/umount %s%s",
+			target_prefix(), m->um_mountpoint);
 		free(m);
-		m = prev;
 	}
-	unwind_mountlist = NULL;
 	unwind_in_progress = 0;
-}
-
-/*
- * Do a mount onto a mountpoint in the install target.
- * NB: does not prefix mount-from, which probably breaks  nullfs mounts.
- */
-int
-target_mount(const char *fstype, const char *from, const char *on)
-{
-	int error;
-	const char *realmount = target_expand(on);
-
-	/* mount and record for unmounting when done.  */
-	error = mount_with_unwind(fstype, from, realmount);
-
-	return (error);
 }
 
 int

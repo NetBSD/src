@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.54 2003/11/11 17:27:13 dsl Exp $	*/
+/*	$NetBSD: run.c,v 1.55 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -562,7 +562,7 @@ loop:
  */
 
 int
-run_prog(int flags, msg errmsg, const char *cmd, ...)
+run_program(int flags, const char *cmd, ...)
 {
 	va_list ap;
 	struct winsize win;
@@ -603,7 +603,8 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 
 	ret = launch_subwin(&actionwin, args, &win, flags, scmd, &errstr);
 
-	if (ret != 0 && actionwin == NULL && flags & RUN_DISPLAY_ERR)
+	/* If the command failed, show command name */
+	if (ret != 0 && actionwin == NULL && !(flags & RUN_SILENT_ERR))
 		actionwin = show_cmd(scmd, &win);
 
 	if (actionwin != NULL) {
@@ -622,7 +623,8 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 				mvaddstr(0, 13, msg_string(MSG_Finished));
 		standend();
 		refresh();
-		if (ret != 0 || (y + x != 0 && !(flags & RUN_PROGRESS))) {
+		if ((ret != 0 && !(flags & RUN_ERROR_OK)) ||
+		    (y + x != 0 && !(flags & RUN_PROGRESS))) {
 			if (actionwin != stdscr)
 				move(2, 5);
 			else if (x != 0)
@@ -633,28 +635,26 @@ run_prog(int flags, msg errmsg, const char *cmd, ...)
 		}
 	}
 
+	va_end(ap);
+	/* restore tty setting we saved earlier */
+	reset_prog_mode();
+
 	/* clean things up */
 	if (actionwin != NULL) {
 		if (actionwin != stdscr)
 			delwin(actionwin);
-		wclear(stdscr);
-		touchwin(stdscr);
-		clearok(stdscr, 1);
-		refresh();
+		if (err == 0 || !(flags & RUN_NO_CLEAR)) {
+			wclear(stdscr);
+			touchwin(stdscr);
+			clearok(stdscr, 1);
+			refresh();
+		}
 	}
 
-	va_end(ap);
-	/* restore tty setting we saved earlier */
-	reset_prog_mode();
-	if (ret != 0) {
-		if (errmsg != NULL) {
-			msg_display(errmsg, scmd);
-			process_menu(MENU_ok, NULL);
-		}
-		if (flags & RUN_FATAL)
-			exit(ret);
-	}
 	free(scmd);
 	free_argv(args);
+
+	if (ret != 0 && flags & RUN_FATAL)
+		exit(ret);
 	return ret;
 }

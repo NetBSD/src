@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.15 2003/07/25 08:26:31 dsl Exp $	*/
+/*	$NetBSD: md.h,v 1.16 2003/11/30 14:36:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -44,7 +44,7 @@
 #define XNEEDMB 50
 
 /* Size of boot partition */
-#define	PART_BOOT D
+#define	PART_BOOT PART_D
 #define BOOT_HIGH
 #define BOOT_SIZE 80
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.42 2003/10/19 20:17:32 dsl Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.43 2003/11/30 14:36:44 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -77,7 +77,7 @@ do_upgrade(void)
 
 	process_menu(MENU_distset, NULL);
 
-	if (!fsck_disks())
+	if (mount_disks() != 0)
 		return;
 
 
@@ -196,8 +196,8 @@ restore_etc(void)
 		return;
 
 	tp = target_prefix();
-	run_prog(0, NULL, "mv -f %s/etc.old/* %s/etc", tp, tp);
-	run_prog(0, NULL, "rmdir  %s/etc.old", tp);
+	run_program(0, "mv -f %s/etc.old/* %s/etc", tp, tp);
+	run_program(0, "rmdir  %s/etc.old", tp);
 	etc_saved = 0;
 }
 
@@ -281,15 +281,8 @@ do_reinstall_sets(void)
 
 	process_menu(MENU_distset, NULL);
 
-	if (!fsck_disks())
+	if (mount_disks() != 0)
 		return;
-
-	fflush(stdout);
-	wrefresh(curscr);
-	wmove(stdscr, 0, 0);
-	touchwin(stdscr);
-	wclear(stdscr);
-	wrefresh(stdscr);
 
 	/* Unpack the distribution. */
 	if (get_and_unpack_sets(MSG_unpackcomplete, MSG_abortunpack) != 0)

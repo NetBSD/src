@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.41 2003/10/19 20:17:31 dsl Exp $	*/
+/*	$NetBSD: label.c,v 1.42 2003/11/30 14:36:43 dsl Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.41 2003/10/19 20:17:31 dsl Exp $");
+__RCSID("$NetBSD: label.c,v 1.42 2003/11/30 14:36:43 dsl Exp $");
 #endif
 
 #include <sys/types.h>
@@ -145,13 +145,16 @@ check_one_root(partinfo *lp, int nparts)
 	int foundroot = 0;
 	
 	for (part = 0; part < nparts; lp++, part++) {
+#if 0
 		if (!PI_ISBSDFS(lp))
 			continue;
+#endif
 		if (!(lp->pi_flags & PIF_MOUNT))
 			continue;
 		if (strcmp(lp->pi_mount, "/") != 0)
 			continue;
 		if (foundroot)
+			/* Duplicate */
 			return 0;
 		foundroot = 1;
 		/* Save partition number, a few things need to know it */
@@ -192,7 +195,15 @@ edit_fs_size(menudesc *m, void *arg)
 	return 0;
 }
 
-int
+void
+set_ptype(partinfo *p, int fstype, int flag, int bsize)
+{
+	p->pi_fstype = fstype;
+	p->pi_flags = (p->pi_flags & ~PIF_FFSv2) | flag;
+	set_bsize(p, bsize);
+}
+
+void
 set_bsize(partinfo *p, int size)
 {
 	int frags, sz;
@@ -208,11 +219,9 @@ set_bsize(partinfo *p, int size)
 
 	p->pi_frag = frags;
 	p->pi_fsize = size / frags;
-
-	return 0;
 }
 
-int
+void
 set_fsize(partinfo *p, int fsize)
 {
 	int bsz = p->pi_fsize * p->pi_frag;
@@ -225,7 +234,6 @@ set_fsize(partinfo *p, int fsize)
 
 	p->pi_fsize = fsize;
 	p->pi_frag = frags;
-	return 0;
 }
 
 static int
@@ -265,14 +273,6 @@ edit_fs_mountpt(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 	char buff[4];
-
-	if (!PI_ISBSDFS(p) && p->pi_fstype != FS_MSDOS) {
-		msg_prompt_win(MSG_nomount, -1, 18, 0, 0,
-			"OK", buff, sizeof buff,
-			'a' + p - bsdlabel);
-		p->pi_mount[0] = 0;
-		return 0;
-	}
 
 	msg_prompt_win(MSG_mountpoint, -1, 18, 0, 0,
 		p->pi_mount, p->pi_mount, sizeof p->pi_mount);
@@ -337,14 +337,14 @@ edit_ptn(menudesc *menu, void *arg)
 	    {NULL, OPT_NOMENU, 0, edit_fs_size},
 #define PTN_MENU_END		3
 	    {NULL, OPT_NOMENU, OPT_IGNORE, NULL},	/* displays 'end' */
-#define PTN_MENU_BSIZE		4
-	    {NULL, MENU_selbsize, OPT_SUB, NULL},
-#define PTN_MENU_FSIZE		5
-	    {NULL, MENU_selfsize, OPT_SUB, NULL},
-#define PTN_MENU_ISIZE		6
-	    {NULL, OPT_NOMENU, 0, edit_fs_isize},
-#define PTN_MENU_NEWFS		7
+#define PTN_MENU_NEWFS		4
 	    {NULL, OPT_NOMENU, 0, edit_fs_preserve},
+#define PTN_MENU_ISIZE		5
+	    {NULL, OPT_NOMENU, 0, edit_fs_isize},
+#define PTN_MENU_BSIZE		6
+	    {NULL, MENU_selbsize, OPT_SUB, NULL},
+#define PTN_MENU_FSIZE		7
+	    {NULL, MENU_selfsize, OPT_SUB, NULL},
 #define PTN_MENU_MOUNT		8
 	    {NULL, OPT_NOMENU, 0, edit_fs_mount},
 #define PTN_MENU_MOUNTOPT	9
@@ -376,7 +376,7 @@ edit_ptn(menudesc *menu, void *arg)
 		}
 		all_fstype_menu = new_menu(MSG_Select_the_type,
 			all_fstypes, nelem(all_fstypes),
-			-1, 15, 10, 0, MC_SCROLL,
+			30, 6, 10, 0, MC_SCROLL,
 			get_fstype, NULL, NULL, NULL, MSG_unchanged);
 	}
 
@@ -398,22 +398,44 @@ set_ptn_header(menudesc *m, void *arg)
 {
 	partinfo *p = arg;
 	int i;
+	int t;
 
 	msg_clear();
 	msg_table_add(MSG_edfspart, 'a' + (p - bsdlabel));
 
+	/* Determine which of the properties can be changed */
 	for (i = PTN_MENU_START; i <= PTN_MENU_MOUNTPT; i++) {
+		/* Default to disabled... */
 		m->opts[i].opt_flags |= OPT_IGNORE;
-		if (i == PTN_MENU_END) {
+		t = p->pi_fstype;
+		if (i == PTN_MENU_END)
+			/* The 'end address' is calculated from the size */
+			continue;
+		if (t == FS_UNUSED || (t == FS_SWAP && i > PTN_MENU_END)) {
+			/* Nothing after 'size' can be set for swap/unused */
+			p->pi_flags &= ~(PIF_NEWFS | PIF_MOUNT);
+			p->pi_mount[0] = 0;
 			continue;
 		}
-		if (p->pi_fstype == FS_SWAP && i > PTN_MENU_END)
+		if (i == PTN_MENU_NEWFS && t != FS_BSDFFS && t != FS_BSDLFS
+		    && t != FS_APPLEUFS) {
+			/* Can only newfs UFS and LFS filesystems */
+			p->pi_flags &= ~PIF_NEWFS;
 			continue;
-		if (p->pi_fstype == FS_UNUSED)
-			continue;
-		if (!PI_ISBSDFS(p)
-		    && i >= PTN_MENU_BSIZE && i <= PTN_MENU_ISIZE)
-			continue;
+		}
+		if (i >= PTN_MENU_ISIZE && i <= PTN_MENU_FSIZE) {
+			/* Parameters for newfs... */
+			if (!(p->pi_flags & PIF_NEWFS))
+				/* Not if we aren't going to run newfs */
+				continue;
+			 if (t == FS_APPLEUFS && i != PTN_MENU_ISIZE)
+				/* Can only set # inodes for appleufs */
+				continue;
+			 if (t == FS_BSDLFS && i == PTN_MENU_FSIZE)
+				/* LFS doesn't have fragments */
+				continue;
+		}
+		/* Ok: we want this one */
 		m->opts[i].opt_flags &= ~OPT_IGNORE;
 	}
 }
@@ -431,6 +453,7 @@ static void
 set_ptn_label(menudesc *m, int opt, void *arg)
 {
 	partinfo *p = arg;
+	const char *c;
 
 	if (m->opts[opt].opt_flags & OPT_IGNORE
 	    && (opt != PTN_MENU_END || p->pi_fstype == FS_UNUSED)) {
@@ -440,8 +463,14 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 
 	switch (opt) {
 	case PTN_MENU_FSKIND:
-		wprintw(m->mw, msg_string(MSG_fstype_fmt),
-			fstypenames[p->pi_fstype]);
+		if (p->pi_fstype == FS_BSDFFS)
+			if (p->pi_flags & PIF_FFSv2)
+				c = "FFSv2";
+			else
+				c = "FFSv1";
+		else
+			c = fstypenames[p->pi_fstype];
+		wprintw(m->mw, msg_string(MSG_fstype_fmt), c);
 		break;
 	case PTN_MENU_START:
 		disp_sector_count(m, MSG_start_fmt, p->pi_offset);
@@ -452,20 +481,20 @@ set_ptn_label(menudesc *m, int opt, void *arg)
 	case PTN_MENU_END:
 		disp_sector_count(m, MSG_end_fmt, p->pi_offset + p->pi_size);
 		break;
+	case PTN_MENU_NEWFS:
+		wprintw(m->mw, msg_string(MSG_newfs_fmt),
+			msg_string(p->pi_flags & PIF_NEWFS ? MSG_Yes : MSG_No));
+		break;
+	case PTN_MENU_ISIZE:
+		wprintw(m->mw, msg_string(p->pi_isize > 0 ?
+			MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
+		break;
 	case PTN_MENU_BSIZE:
 		wprintw(m->mw, msg_string(MSG_bsize_fmt),
 			p->pi_fsize * p->pi_frag);
 		break;
 	case PTN_MENU_FSIZE:
 		wprintw(m->mw, msg_string(MSG_fsize_fmt), p->pi_fsize);
-		break;
-	case PTN_MENU_ISIZE:
-		wprintw(m->mw, msg_string(p->pi_isize > 0 ?
-			MSG_isize_fmt : MSG_isize_fmt_dflt), p->pi_isize);
-		break;
-	case PTN_MENU_NEWFS:
-		wprintw(m->mw, msg_string(MSG_newfs_fmt),
-			msg_string(p->pi_flags & PIF_NEWFS ? MSG_Yes : MSG_No));
 		break;
 	case PTN_MENU_MOUNT:
 		wprintw(m->mw, msg_string(MSG_mount_fmt),
@@ -512,8 +541,8 @@ set_label_texts(menudesc *menu, void *arg)
 	int rawptn = getrawpartition();
 	int maxpart = getmaxpartitions();
 
-	msg_display(MSG_fspart, multname);
-	msg_table_add(MSG_fspart_header);
+	msg_display(MSG_fspart);
+	msg_table_add(MSG_fspart_header, multname, multname, multname);
 
 	for (show_unused_ptn = 0, ptn = 0; ptn < maxpart; ptn++) {
 		m = &menu->opts[ptn];
@@ -524,7 +553,7 @@ set_label_texts(menudesc *menu, void *arg)
 #ifdef PART_BOOT
 		    || ptn == PART_BOOT
 #endif
-		    || ptn == C) {
+		    || ptn == PART_C) {
 			m->opt_flags = OPT_IGNORE;
 		} else {
 			m->opt_flags = 0;

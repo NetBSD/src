@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.98 2003/10/19 20:17:33 dsl Exp $ */
+/*	$NetBSD: md.c,v 1.99 2003/11/30 14:36:45 dsl Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -68,6 +68,7 @@ static int mbr_root_above_chs(void);
 static void md_upgrade_mbrtype(void);
 static int md_read_bootcode(const char *, struct mbr_sector *);
 static unsigned int get_bootmodel(void);
+static char *md_bootxx_name(void);
 
 
 int
@@ -280,6 +281,7 @@ md_post_newfs(void)
 	size_t len;
 	int td, sd;
 	char bootxx[8192 + 4];
+	char *bootxx_filename;
 	static struct x86_boot_params boottype =
 		{sizeof boottype, 0, 10, 0, 9600, ""};
 	static int conmib[] = {CTL_MACHDEP, CPU_CONSDEV};
@@ -318,7 +320,9 @@ md_post_newfs(void)
 
 	snprintf(bootxx, sizeof bootxx, "/dev/r%s%c", diskdev, 'a' + rootpart);
 	td = open(bootxx, O_RDWR, 0);
-	sd = open("/usr/mdec/bootxx_ffsv1", O_RDONLY);
+	bootxx_filename = md_bootxx_name();
+	sd = open(bootxx_filename, O_RDONLY);
+	free(bootxx_filename);
 	if (td == -1 || sd == -1)
 		goto bad_bootxx;
 	len = read(sd, bootxx, sizeof bootxx);
@@ -373,7 +377,17 @@ md_pre_update(void)
 int
 md_check_partitions(void)
 {
-	return 1;
+	int rval;
+	char *bootxx;
+
+	/* check we have boot code for the root partition type */
+	bootxx = md_bootxx_name();
+	rval = access(bootxx, R_OK);
+	free(bootxx);
+	if (rval == 0)
+		return 1;
+	process_menu(MENU_ok, deconst(MSG_No_Bootcode));
+	return 0;
 }
 
 
@@ -435,18 +449,18 @@ md_cleanup_install(void)
 	 * Otherwise, run getty on 4 VTs.
 	 */
 	if (sets_selected & SET_KERNEL_TINY)
-		run_prog(0, NULL, "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
+		run_program(0, "sed -an -e '/^screen/s/^/#/;/^mux/s/^/#/;"
 			    "H;$!d;g;w %s/etc/wscons.conf' %s/etc/wscons.conf",
 			tp, tp);
 	else
 #endif
-		run_prog(0, NULL, "sed -an -e '/^ttyE[1-9]/s/off/on/;"
+		run_program(0, "sed -an -e '/^ttyE[1-9]/s/off/on/;"
 			    "H;$!d;g;w %s/etc/ttys' %s/etc/ttys",
 			tp, tp);
 
-	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int
@@ -593,4 +607,28 @@ md_set_sizemultname(void)
 {
 
 	set_sizemultname_meg();
+}
+
+static char *
+md_bootxx_name(void)
+{
+	int fstype;
+	const char *bootfs = 0;
+	char *bootxx;
+
+	/* check we have boot code for the root partition type */
+	fstype = bsdlabel[rootpart].pi_fstype;
+	if (fstype == FS_BSDFFS)
+		if (bsdlabel[rootpart].pi_flags & PIF_FFSv2)
+			bootfs = "ffsv2";
+		else
+			bootfs = "ffsv1";
+	else
+		bootfs = mountnames[fstype];
+
+	if (bootfs == NULL)
+		return NULL;
+
+	asprintf(&bootxx, "/usr/mdec/bootxx_%s", bootfs);
+	return bootxx;
 }

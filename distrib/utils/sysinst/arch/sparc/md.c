@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.40 2003/10/19 20:17:33 dsl Exp $	*/
+/*	$NetBSD: md.c,v 1.41 2003/11/30 14:36:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -138,9 +138,9 @@ md_post_newfs(void)
 
 	/* boot blocks ... */
 	msg_display(MSG_dobootblks, diskdev);
-	return (run_prog(RUN_DISPLAY, NULL, "/sbin/disklabel -W %s", diskdev) ||
-	    run_prog(RUN_DISPLAY, NULL,
-		    "/usr/mdec/binstall ffs %s", targetroot_mnt));
+	return (run_program(RUN_DISPLAY, "/sbin/disklabel -W %s", diskdev) ||
+	    run_program(RUN_DISPLAY, "/usr/mdec/binstall ffs %s",
+		targetroot_mnt));
 }
 
 /*
@@ -191,9 +191,9 @@ md_cleanup_install(void)
 
 	enable_rc_conf();
 
-	run_prog(0, NULL, "rm -f %s", target_expand("/sysinst"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.termcap"));
-	run_prog(0, NULL, "rm -f %s", target_expand("/.profile"));
+	run_program(0, "rm -f %s", target_expand("/sysinst"));
+	run_program(0, "rm -f %s", target_expand("/.termcap"));
+	run_program(0, "rm -f %s", target_expand("/.profile"));
 }
 
 int

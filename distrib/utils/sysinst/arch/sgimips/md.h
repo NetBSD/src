@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.14 2003/11/13 02:33:39 sekiya Exp $	*/
+/*	$NetBSD: md.h,v 1.15 2003/11/30 14:36:45 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,12 +43,12 @@
 /*
  * Symbolic names for disk partitions.
  */
-#define PART_ROOT	A
-#define PART_SWAP	B
-#define PART_RAW	C
-#define PART_BOOT	D
-#define PART_USR	E	/* Can be after PART_FIRST_FREE */
-#define PART_FIRST_FREE	F
+#define PART_ROOT	PART_A
+#define PART_SWAP	PART_B
+#define PART_RAW	PART_C
+#define PART_BOOT	PART_D
+#define PART_USR	PART_E	/* Can be after PART_FIRST_FREE */
+#define PART_FIRST_FREE	PART_F
 
 #define BOOT_SIZE	MEG	/* Size in bytes, rounded to cylinders later */
 
