@@ -1,3 +1,73 @@
+Tue Sep  1 01:58:38 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* egcs-1.1 released.
+	* version.c: Update for egcs-1.1 release.
+
+Mon Aug 31 14:55:02 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* NEWS: Add SCO Openserver and Unixware 7 notes.
+
+	* NEWS: Fix typos.
+
+Sat Aug 29 14:52:28 1998  David S. Miller  <davem@pierdol.cobaltmicro.com>
+
+	* config/sparc/sparc.md (movdf_insn, movtf_insn): Fix type and
+	length attributes to match May 3rd changes made here.
+	* config/sparc/sparc.h (CONDITIONAL_REGISTER_USAGE): Fix and make
+	call-used %l7 when generating pic code.
+
+Sat Aug 29 14:59:32 1998  Mumit Khan  <khan@xraylith.wisc.edu>
+
+	* i386/cygwin32.h (ASM_OUTPUT_SECTION_NAME): Don't emit
+	.linkonce directive after the first time.
+
+Sat Aug 29 14:48:12 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* m68k.md (beq0_di): Generate correct (and more efficient) code when
+	the clobbered operand overlaps with an input.
+	(bne0_di): Similarly.
+
+Sat Aug 29 12:38:54 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* NEWS: Various updates.
+
+Tue Aug 25 19:35:24 1998  Jim Wilson  <wilson@cygnus.com>
+
+	* configure.in (powerpc-ibm-aix4.[12]*): Change from 4.[12].*.
+	(rs6000-ibm-aix4.[12]*): Likewise.
+	* configure: Regnerate.
+
+Thu Aug 27 23:44:49 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* reload1.c (forget_old_reloads_1): Keep track of the largest mode
+	found while stripping SUBREGS and invalidate reloads for all the hard
+	regs specified by that largest mode.  egcs-1.1 only hack.  The
+	mainline tree will get a better fix.
+
+Tue Aug 25 19:43:11 1998  Jeffrey A Law  (law@cygnus.com)
+
+	* From Alexandre:
+	* configure.in: Do not set thread_file to "irix" since no such
+	support exists yet.
+
+	* reorg.c (fill_simple_delay_slots): Do not abort if we encounter
+	an insn on the unfilled_slots_list that has no delay slots.
+	(fill_eager_delay_slots): Similarly.
+
+Mon Aug 24 15:20:19 1998  David Edelsohn  <edelsohn@mhpcc.edu>
+
+	* rs6000.h (GO_IF_LEGITIMATE_ADDRESS): Use TARGET_POWERPC64
+	when testing LEGITIMATE_INDEXED_ADDRESS_P DFmode and DImode.
+	(LEGITIMIZE_ADDRESS): Use TARGET_POWERPC64 for INDEXED fixup.
+	* rs6000.c (print_operand, case 'L'): Add UNITS_PER_WORD, not 4.
+	(print_operand, cases 'O' and 'T'): Fix typos in lossage strings.
+	* rs6000.md (fix_truncdfsi2_store): Remove %w from non-CONST_INT
+	operand.
+	(movdf_softfloat32, movdf_hardfloat64, movdf_softfloat64): Change
+	'o' to 'm' for GPR variant constraints.
+
+	* rs6000.md (movqi, movhi): Add CONSTANT_P_RTX.
+
 Mon Aug 24 01:21:38 PDT 1998 Jeff Law  (law@cygnus.com)
 
 	* version.c: Bump for snapshot.
