@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.35 2003/11/03 03:58:28 yamt Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.36 2003/11/10 16:13:05 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -342,7 +342,7 @@ vm_physseg_find(pframe, offp)
 
 #elif (VM_PHYSSEG_STRAT == VM_PSTRAT_BSEARCH)
 	/* binary search for it */
-	int	start, len, try;
+	u_int	start, len, try;
 
 	/*
 	 * if try is too large (thus target is less than try) we reduce
