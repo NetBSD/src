@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.77 2004/04/25 16:42:42 simonb Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.78 2005/01/27 11:33:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.77 2004/04/25 16:42:42 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.78 2005/01/27 11:33:26 yamt Exp $");
 
 #include "opt_nfs.h"
 
@@ -246,14 +246,15 @@ nfs_inactive(v)
 		nfs_vinvalbuf(vp, 0, sp->s_cred, p, 1);
 	removed = (np->n_flag & NREMOVED) != 0;
 	np->n_flag &= (NMODIFIED | NFLUSHINPROG | NFLUSHWANT | NQNFSEVICTED |
-		NQNFSNONCACHE | NQNFSWRITE);
+		NQNFSNONCACHE | NQNFSWRITE | NEOFVALID);
 
 	if ((nmp->nm_flag & NFSMNT_NQNFS) && CIRCLEQ_NEXT(np, n_timer) != 0) {
 		CIRCLEQ_REMOVE(&nmp->nm_timerhead, np, n_timer);
 	}
 
 	if (vp->v_type == VDIR && np->n_dircache)
-		nfs_invaldircache(vp, 1);
+		nfs_invaldircache(vp,
+		    NFS_INVALDIRCACHE_FORCE | NFS_INVALDIRCACHE_KEEPEOF);
 
 	VOP_UNLOCK(vp, 0);
 
