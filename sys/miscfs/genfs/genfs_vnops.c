@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.9 1998/08/10 08:11:11 matthias Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.10 1998/08/13 09:59:53 kleink Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -140,6 +140,15 @@ genfs_nullop(v)
 {
 
 	return (0);
+}
+
+/*ARGSUSED*/
+int
+genfs_einval(v)
+	void *v;
+{
+
+	return (EINVAL);
 }
 
 /*ARGSUSED*/
