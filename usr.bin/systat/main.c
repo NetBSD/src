@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2004/11/04 07:18:47 dsl Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.38 2004/11/04 07:18:47 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -371,7 +371,7 @@ error(const char *fmt, ...)
 }
 
 void
-nlisterr(struct nlist namelist[])
+nlisterr(struct nlist name_list[])
 {
 	int i, n;
 
@@ -379,9 +379,9 @@ nlisterr(struct nlist namelist[])
 	clear();
 	mvprintw(2, 10, "systat: nlist: can't find following symbols:");
 	for (i = 0;
-	    namelist[i].n_name != NULL && *namelist[i].n_name != '\0'; i++)
-		if (namelist[i].n_value == 0)
-			mvprintw(2 + ++n, 10, "%s", namelist[i].n_name);
+	    name_list[i].n_name != NULL && *name_list[i].n_name != '\0'; i++)
+		if (name_list[i].n_value == 0)
+			mvprintw(2 + ++n, 10, "%s", name_list[i].n_name);
 	move(CMDLINE, 0);
 	clrtoeol();
 	refresh();

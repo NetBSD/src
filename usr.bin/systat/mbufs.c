@@ -1,4 +1,4 @@
-/*	$NetBSD: mbufs.c,v 1.12 2003/08/07 11:15:59 agc Exp $	*/
+/*	$NetBSD: mbufs.c,v 1.13 2005/02/26 22:12:33 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,13 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)mbufs.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: mbufs.c,v 1.12 2003/08/07 11:15:59 agc Exp $");
+__RCSID("$NetBSD: mbufs.c,v 1.13 2005/02/26 22:12:33 dsl Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 
-#include <nlist.h>
 #include <stdlib.h>
 
 #include "systat.h"
@@ -48,7 +47,7 @@ __RCSID("$NetBSD: mbufs.c,v 1.12 2003/08/07 11:15:59 agc Exp $");
 
 static struct mbstat *mb;
 
-char *mtnames[] = {
+const char *mtnames[] = {
 	"free",
 	"data",
 	"headers",
@@ -97,24 +96,24 @@ labelmbufs(void)
 void
 showmbufs(void)
 {
-	int i, j, max, index;
+	int i, j, max, idx;
 	char buf[10];
 
 	if (mb == 0)
 		return;
 	for (j = 0; j < getmaxy(wnd); j++) {
-		max = 0, index = -1; 
+		max = 0, idx = -1; 
 		for (i = 0; i < getmaxy(wnd); i++)
 			if (mb->m_mtypes[i] > max) {
 				max = mb->m_mtypes[i];
-				index = i;
+				idx = i;
 			}
 		if (max == 0)
 			break;
 		if (j > NNAMES)
-			mvwprintw(wnd, 1+j, 0, "%10d", index);
+			mvwprintw(wnd, 1+j, 0, "%10d", idx);
 		else
-			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[index]);
+			mvwprintw(wnd, 1+j, 0, "%-10.10s", mtnames[idx]);
 		wmove(wnd, 1 + j, 10);
 		if (max > 60) {
 			snprintf(buf, sizeof buf, " %5d", max);
@@ -126,7 +125,7 @@ showmbufs(void)
 			wclrtoeol(wnd);
 			whline(wnd, 'X', max);
 		}
-		mb->m_mtypes[index] = 0;
+		mb->m_mtypes[idx] = 0;
 	}
 	wmove(wnd, 1+j, 0); wclrtobot(wnd);
 }
