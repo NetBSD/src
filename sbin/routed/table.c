@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.11 1999/11/19 10:46:35 bouyer Exp $	*/
+/*	$NetBSD: table.c,v 1.12 2000/02/11 18:39:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -37,7 +37,7 @@
 static char sccsid[] __attribute__((unused)) = "@(#)tables.c	8.1 (Berkeley) 6/5/93";
 #elif defined(__NetBSD__)
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: table.c,v 1.11 1999/11/19 10:46:35 bouyer Exp $");
+__RCSID("$NetBSD: table.c,v 1.12 2000/02/11 18:39:02 christos Exp $");
 #endif
 
 #include "defs.h"
@@ -1733,6 +1733,7 @@ rtadd(naddr	dst,
 				    rhead, rt->rt_nodes)) {
 		msglog("rnh_addaddr() failed for %s mask=%#lx",
 		       naddr_ntoa(dst), (u_long)mask);
+		free(rt);
 	}
 }
 
