@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119.6.2 2002/06/13 02:47:34 lukem Exp $ */
+/*	$NetBSD: machdep.c,v 1.119.6.3 2002/11/08 09:25:26 tron Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1282,7 +1282,7 @@ _bus_dmamap_load_mbuf(t, map, m, flags)
 			(bus_size_t)len, flags);
 		if (map->dm_mapsize != len) {
 			printf("load_mbuf: mapsize %ld != len %lx\n",
-				map->dm_mapsize, len);
+				(long)map->dm_mapsize, len);
 			Debugger();
 		}
 		sglen = 0;
