@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.229 1999/03/27 23:27:58 nathanw Exp $
+#	$NetBSD: GENERIC,v 1.230 1999/03/29 19:57:34 drochner Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -148,6 +148,7 @@ options 	NFS_BOOT_BOOTP,NFS_BOOT_BOOTPARAM
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 # different kernel output - see dev/wscons/wsdisplayvar.h
 options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
 # compatibility to other console drivers
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
