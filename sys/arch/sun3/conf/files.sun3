@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.51 1999/04/16 11:13:38 kleink Exp $
+#	$NetBSD: files.sun3,v 1.52 1999/04/19 21:23:01 kleink Exp $
 
 #
 # sun3-specific configuration info
@@ -256,6 +256,9 @@ file arch/sun3/dev/md_root.c		memory_disk_hooks
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include "compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# SVR4 Binary Compatibility (COMPAT_SVR4)
+include "compat/svr4/files.svr4"
 
 # Linux binary compatibility (COMPAT_LINUX)
 include "compat/linux/files.linux"
