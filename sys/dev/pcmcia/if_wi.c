@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wi.c,v 1.21.2.6 2000/08/22 02:32:45 enami Exp $	*/
+/*	$NetBSD: if_wi.c,v 1.21.2.7 2000/10/17 00:56:32 tv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -660,7 +660,9 @@ int wi_intr(arg)
 	struct ifnet		*ifp;
 	u_int16_t		status;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
+	if (sc->sc_enabled == 0 ||
+	    (sc->sc_dev.dv_flags & DVF_ACTIVE) == 0 ||
+	    (sc->sc_ethercom.ec_if.if_flags & IFF_RUNNING) == 0)
 		return (0);
 
 	ifp = &sc->sc_ethercom.ec_if;
