@@ -1,4 +1,4 @@
-/*	$NetBSD: fils.c,v 1.5 1997/03/29 04:31:10 darrenr Exp $	*/
+/*	$NetBSD: fils.c,v 1.6 1997/05/25 12:05:03 darrenr Exp $	*/
 
 /*
  * (C)opyright 1993-1996 by Darren Reed.
@@ -14,6 +14,7 @@
 #include <strings.h>
 #endif
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <stdlib.h>
@@ -31,9 +32,11 @@
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include <netinet/tcp.h>
 #include <netinet/ip_compat.h>
 #include <netinet/ip_fil.h>
 #include "ipf.h"
+#include "ip_proxy.h"
 #include <netinet/ip_nat.h>
 #include <netinet/ip_frag.h>
 #include <netinet/ip_state.h>
@@ -44,7 +47,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "Id: fils.c,v 2.0.2.4 1996/11/17 05:08:11 darrenr Exp";
+static	char	rcsid[] = "$Id: fils.c,v 1.6 1997/05/25 12:05:03 darrenr Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -97,7 +100,7 @@ char *argv[];
 	(void)setuid(getuid());
 	(void)setgid(getgid());
 
-	while ((c = getopt(argc, argv, "afhIiosvd:")) != -1)
+	while ((c = getopt(argc, argv, "afhIinosvd:")) != -1)
 	{
 		switch (c)
 		{
@@ -150,9 +153,18 @@ char *argv[];
 		perror("ioctl(SIOCGETFS)");
 		exit(-1);
 	}
-	if ((opts & OPT_IPSTATES) && (ioctl(fd, SIOCGIPST, &ipsst) == -1)) {
-		perror("ioctl(SIOCGIPST)");
-		exit(-1);
+	if ((opts & OPT_IPSTATES)) {
+		int	sfd = open(IPL_STATE, O_RDONLY);
+
+		if (sfd == -1) {
+			perror("open");
+			exit(-1);
+		}
+		if ((ioctl(sfd, SIOCGIPST, &ipsst) == -1)) {
+			perror("ioctl(SIOCGIPST)");
+			exit(-1);
+		}
+		close(sfd);
 	}
 	if ((opts & OPT_FRSTATES) && (ioctl(fd, SIOCGFRST, &ifrst) == -1)) {
 		perror("ioctl(SIOCGFRST)");
@@ -293,9 +305,17 @@ struct	friostat	*fiop;
 		if (opts & OPT_OUTQUE)
 			fp->fr_flags |= FR_OUTQUE;
 		if (opts & (OPT_HITS|OPT_VERBOSE))
+#ifdef	USE_QUAD_T
+			PRINTF("%qd ", fp->fr_hits);
+#else
 			PRINTF("%ld ", fp->fr_hits);
+#endif
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
+#ifdef	USE_QUAD_T
+			PRINTF("%qd ", fp->fr_bytes);
+#else
 			PRINTF("%ld ", fp->fr_bytes);
+#endif
 		if (opts & OPT_SHOWLINENO)
 			PRINTF("@%d ", n);
 		printfr(fp);
@@ -328,11 +348,11 @@ ips_stat_t *ipsp;
 				    sizeof(ips)) == -1)
 				break;
 			PRINTF("%s -> ", inet_ntoa(ips.is_src));
-			PRINTF("%s age %d pass %d pr %d state %d/%d\n",
+			PRINTF("%s age %ld pass %d pr %d state %d/%d\n",
 				inet_ntoa(ips.is_dst), ips.is_age,
 				ips.is_pass, ips.is_p, ips.is_state[0],
 				ips.is_state[1]);
-			PRINTF("\tpkts %d bytes %d",
+			PRINTF("\tpkts %ld bytes %ld",
 				ips.is_pkts, ips.is_bytes);
 			if (ips.is_p == IPPROTO_TCP)
 				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu\n",
