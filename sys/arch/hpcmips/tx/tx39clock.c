@@ -1,30 +1,41 @@
-/*	$NetBSD: tx39clock.c,v 1.5 2000/01/03 18:24:04 uch Exp $ */
+/*	$NetBSD: tx39clock.c,v 1.6 2000/09/28 16:18:26 uch Exp $ */
 
-/*
- * Copyright (c) 1999, 2000 by UCHIYAMA Yasushi
+/*-
+ * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by UCHIYAMA Yasushi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. The name of the developer may NOT be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opt_tx39_debug.h"
 
 #include <sys/param.h>
@@ -47,16 +58,16 @@
 #include <dev/dec/clockvar.h>
 
 #ifdef TX39CLKDEBUG
-#define	DPRINTF(arg) printf arg
+#define	DPRINTF(arg)	printf arg
 #else
-#define	DPRINTF(arg)
+#define	DPRINTF(arg)	((void)0)
 #endif
 
 #define ISSETPRINT(r, m) __is_set_print(r, TX39_CLOCK_EN##m##CLK, #m)
 
-void	tx39clock_init __P((struct device*));
-void	tx39clock_get __P((struct device*, time_t, struct clocktime*));
-void	tx39clock_set __P((struct device*, struct clocktime*));
+void	tx39clock_init(struct device *);
+void	tx39clock_get(struct device *, time_t, struct clocktime *);
+void	tx39clock_set(struct device *, struct clocktime *);
 
 const struct clockfns tx39clockfns = {
 	tx39clock_init, tx39clock_get, tx39clock_set,
@@ -72,41 +83,34 @@ struct tx39clock_softc {
 	tx_chipset_tag_t sc_tc;
 
 	int sc_alarm;
-
 	int sc_enabled;
 	int sc_year;
 	struct clocktime sc_epoch;
 };
 
-int	tx39clock_match __P((struct device*, struct cfdata*, void*));
-void	tx39clock_attach __P((struct device*, struct device*, void*));
-void	tx39clock_dump __P((tx_chipset_tag_t));
+int	tx39clock_match(struct device *, struct cfdata *, void *);
+void	tx39clock_attach(struct device *, struct device *, void *);
+void	tx39clock_dump(tx_chipset_tag_t);
 
-void	tx39clock_cpuspeed __P((int*, int*));
+void	tx39clock_cpuspeed(int *, int *);
 
-void	__tx39timer_rtcfreeze __P((tx_chipset_tag_t));
-void	__tx39timer_rtcreset __P((tx_chipset_tag_t));
-__inline void	__tx39timer_rtcget __P((struct txtime*));
-__inline time_t	__tx39timer_rtc2sec __P((struct txtime*));
+void	__tx39timer_rtcfreeze(tx_chipset_tag_t);
+void	__tx39timer_rtcreset(tx_chipset_tag_t);
+__inline__ void	__tx39timer_rtcget(struct txtime *);
+__inline__ time_t __tx39timer_rtc2sec(struct txtime *);
 
 struct cfattach tx39clock_ca = {
 	sizeof(struct tx39clock_softc), tx39clock_match, tx39clock_attach
 };
 
 int
-tx39clock_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+tx39clock_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	return 2; /* 1st attach group of txsim */
 }
 
 void
-tx39clock_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+tx39clock_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct txsim_attach_args *ta = aux;
 	struct tx39clock_softc *sc = (void*)self;
@@ -144,15 +148,13 @@ tx39clock_attach(parent, self, aux)
  * cpuspeed ... instructions-per-microsecond
  */
 void
-tx39clock_cpuspeed(cpuclock, cpuspeed)
-	int *cpuclock;
-	int *cpuspeed;
+tx39clock_cpuspeed(int *cpuclock, int *cpuspeed)
 {
 	struct txtime t0, t1;
 	int elapsed;
 	
 	__tx39timer_rtcget(&t0);
-	__asm __volatile("
+	__asm__ __volatile__("
 		.set	noreorder;
 		li	$8, 10000000;
 	1:	nop;
@@ -173,12 +175,10 @@ tx39clock_cpuspeed(cpuclock, cpuspeed)
 
 	*cpuclock = (100000000 / elapsed) * TX39_RTCLOCK;
 	*cpuspeed = *cpuclock / 1000000;
-
 }
 
 void
-__tx39timer_rtcfreeze(tc)
-	tx_chipset_tag_t tc;
+__tx39timer_rtcfreeze(tx_chipset_tag_t tc)
 {
 	txreg_t reg;	
 
@@ -194,17 +194,15 @@ __tx39timer_rtcfreeze(tc)
 	tx_conf_write(tc, TX39_TIMERCONTROL_REG, reg);
 }
 
-__inline time_t
-__tx39timer_rtc2sec(t)
-	struct txtime *t;
+__inline__ time_t
+__tx39timer_rtc2sec(struct txtime *t)
 {
 	/* This rely on RTC is 32.768kHz */
 	return (t->t_lo >> 15) | (t->t_hi << 17);
 }
 
-__inline void
-__tx39timer_rtcget(t)
-	struct txtime *t;
+__inline__ void
+__tx39timer_rtcget(struct txtime *t)
 {
 	tx_chipset_tag_t tc;	
 	txreg_t reghi, reglo, oreghi, oreglo;
@@ -231,8 +229,7 @@ __tx39timer_rtcget(t)
 }
 
 void
-__tx39timer_rtcreset(tc)
- 	tx_chipset_tag_t tc;	
+__tx39timer_rtcreset(tx_chipset_tag_t tc)
 {
 	txreg_t reg;
 	
@@ -247,10 +244,8 @@ __tx39timer_rtcreset(tc)
 	tx_conf_write(tc, TX39_TIMERCONTROL_REG, reg);
 }
 
-
 void
-tx39clock_init(dev)
-	struct device *dev;
+tx39clock_init(struct device *dev)
 {
 	struct tx39clock_softc *sc = (void*)dev;
 	tx_chipset_tag_t tc = sc->sc_tc;
@@ -280,10 +275,7 @@ tx39clock_init(dev)
 }
 
 void
-tx39clock_get(dev, base, ct)
-	struct device *dev;
-	time_t base;
-	struct clocktime *ct;
+tx39clock_get(struct device *dev, time_t base, struct clocktime *ct)
 {
 	struct clock_ymdhms dt;
 	struct tx39clock_softc *sc = (void*)dev;
@@ -324,9 +316,7 @@ tx39clock_get(dev, base, ct)
 }
 
 void
-tx39clock_set(dev, ct)
-	struct device *dev;
-	struct clocktime *ct;
+tx39clock_set(struct device *dev, struct clocktime *ct)
 {
 	struct tx39clock_softc *sc = (void*)dev;
 
@@ -338,9 +328,7 @@ tx39clock_set(dev, ct)
 }
 
 int
-tx39clock_alarm_set(tc, msec)
-	tx_chipset_tag_t tc;
-	int msec;
+tx39clock_alarm_set(tx_chipset_tag_t tc, int msec)
 {
 	struct tx39clock_softc *sc = tc->tc_clockt;
 
@@ -351,22 +339,26 @@ tx39clock_alarm_set(tc, msec)
 }
 
 void
-tx39clock_alarm_refill(tc)
-	tx_chipset_tag_t tc;
+tx39clock_alarm_refill(tx_chipset_tag_t tc)
 {
 	struct tx39clock_softc *sc = tc->tc_clockt;
 	struct txtime t;	
+	u_int64_t time;
 	
 	__tx39timer_rtcget(&t);
 
-	tx_conf_write(tc, TX39_TIMERALARMHI_REG, t.t_hi); /* XXX */
-	tx_conf_write(tc, TX39_TIMERALARMLO_REG, t.t_lo + sc->sc_alarm);
+	time = ((u_int64_t)t.t_hi << 32) | (u_int64_t)t.t_lo;
+	time += (u_int64_t)sc->sc_alarm;
 
+	t.t_hi = (u_int32_t)((time >> 32) & TX39_TIMERALARMHI_MASK);
+	t.t_lo = (u_int32_t)(time & 0xffffffff);
+
+	tx_conf_write(tc, TX39_TIMERALARMHI_REG, t.t_hi);
+	tx_conf_write(tc, TX39_TIMERALARMLO_REG, t.t_lo);
 }
 
 void
-tx39clock_dump(tc)
-	tx_chipset_tag_t tc;
+tx39clock_dump(tx_chipset_tag_t tc)
 {
 	txreg_t reg;
 
