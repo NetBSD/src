@@ -1,0 +1,24 @@
+.\" @(#)rpc.rstatd.8c	2.2 88/08/03 4.0 RPCSRC; from 1.10 87/09/09 SMI
+.TH RPC.RSTATD 8C "24 November 1987"
+.SH NAME
+rpc.rstatd \- kernel statistics server
+.SH SYNOPSIS
+.B /usr/sbin/rpc.rstatd
+.SH DESCRIPTION
+.LP
+.B rpc.rstatd
+is a server which returns performance statistics
+obtained from the kernel.
+These statistics are read using the 
+.BR rup (1)
+command.
+The
+.B rpc.rstatd
+daemon is normally invoked through /usr/sbin/inetd.
+.PP
+.B rpc.rstatd
+uses an RPC protocol defined in /usr/include/rpcsvc/rstat.x.
+.SH "SEE ALSO"
+.BR rup (1),
+.BR inetd (8),
+
