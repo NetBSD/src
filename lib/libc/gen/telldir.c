@@ -1,4 +1,4 @@
-/*	$NetBSD: telldir.c,v 1.8 1998/02/27 18:55:46 perry Exp $	*/
+/*	$NetBSD: telldir.c,v 1.9 1998/02/28 12:57:28 enami Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)telldir.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: telldir.c,v 1.8 1998/02/27 18:55:46 perry Exp $");
+__RCSID("$NetBSD: telldir.c,v 1.9 1998/02/28 12:57:28 enami Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -135,6 +135,6 @@ __seekdir(dirp, loc)
 found:
 #ifdef SINGLEUSE
 	*prevlp = lp->loc_next;
-	free((void *)lp);
+	free(lp);
 #endif
 }
