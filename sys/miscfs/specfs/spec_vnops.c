@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.61 2002/05/12 20:42:03 matt Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.61.2.1 2002/05/16 04:04:27 gehenna Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.61 2002/05/12 20:42:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.61.2.1 2002/05/16 04:04:27 gehenna Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -164,8 +164,9 @@ spec_open(v)
 	} */ *ap = v;
 	struct proc *p = ap->a_p;
 	struct vnode *bvp, *vp = ap->a_vp;
-	dev_t bdev, dev = (dev_t)vp->v_rdev;
-	int maj = major(dev);
+	const struct bdevsw *bdev;
+	const struct cdevsw *cdev;
+	dev_t blkdev, dev = (dev_t)vp->v_rdev;
 	int error;
 	struct partinfo pi;
 
@@ -178,14 +179,15 @@ spec_open(v)
 	switch (vp->v_type) {
 
 	case VCHR:
-		if ((u_int)maj >= nchrdev)
+		cdev = cdevsw_lookup(dev);
+		if (cdev == NULL)
 			return (ENXIO);
 		if (ap->a_cred != FSCRED && (ap->a_mode & FWRITE)) {
 			/*
 			 * When running in very secure mode, do not allow
 			 * opens for writing of any disk character devices.
 			 */
-			if (securelevel >= 2 && cdevsw[maj].d_type == D_DISK)
+			if (securelevel >= 2 && cdev->d_type == D_DISK)
 				return (EPERM);
 			/*
 			 * When running in secure mode, do not allow opens
@@ -194,30 +196,32 @@ spec_open(v)
 			 * currently mounted.
 			 */
 			if (securelevel >= 1) {
-				if ((bdev = chrtoblk(dev)) != (dev_t)NODEV &&
-				    vfinddev(bdev, VBLK, &bvp) &&
+				blkdev = devsw_chr2blk(dev);
+				if (blkdev != (dev_t)NODEV &&
+				    vfinddev(blkdev, VBLK, &bvp) &&
 				    (error = vfs_mountedon(bvp)))
 					return (error);
 				if (iskmemdev(dev))
 					return (EPERM);
 			}
 		}
-		if (cdevsw[maj].d_type == D_TTY)
+		if (cdev->d_type == D_TTY)
 			vp->v_flag |= VISTTY;
 		VOP_UNLOCK(vp, 0);
-		error = (*cdevsw[maj].d_open)(dev, ap->a_mode, S_IFCHR, p);
+		error = (*cdev->d_open)(dev, ap->a_mode, S_IFCHR, p);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
 	case VBLK:
-		if ((u_int)maj >= nblkdev)
+		bdev = bdevsw_lookup(dev);
+		if (bdev == NULL)
 			return (ENXIO);
 		/*
 		 * When running in very secure mode, do not allow
 		 * opens for writing of any disk block devices.
 		 */
 		if (securelevel >= 2 && ap->a_cred != FSCRED &&
-		    (ap->a_mode & FWRITE) && bdevsw[maj].d_type == D_DISK)
+		    (ap->a_mode & FWRITE) && bdev->d_type == D_DISK)
 			return (EPERM);
 		/*
 		 * Do not allow opens of block devices that are
@@ -225,11 +229,11 @@ spec_open(v)
 		 */
 		if ((error = vfs_mountedon(vp)) != 0)
 			return (error);
-		error = (*bdevsw[maj].d_open)(dev, ap->a_mode, S_IFBLK, p);
+		error = (*bdev->d_open)(dev, ap->a_mode, S_IFBLK, p);
 		if (error) {
 			return error;
 		}
-		error = (*bdevsw[major(vp->v_rdev)].d_ioctl)(vp->v_rdev,
+		error = (*bdev->d_ioctl)(vp->v_rdev,
 		    DIOCGPART, (caddr_t)&pi, FREAD, curproc);
 		if (error == 0) {
 			vp->v_size = (voff_t)pi.disklab->d_secsize *
@@ -267,11 +271,12 @@ spec_read(v)
 	struct uio *uio = ap->a_uio;
  	struct proc *p = uio->uio_procp;
 	struct buf *bp;
+	const struct bdevsw *bdev;
+	const struct cdevsw *cdev;
 	daddr_t bn;
 	int bsize, bscale;
 	struct partinfo dpart;
-	int n, on, majordev;
-	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
+	int n, on;
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -287,8 +292,11 @@ spec_read(v)
 
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
-		error = (*cdevsw[major(vp->v_rdev)].d_read)
-			(vp->v_rdev, uio, ap->a_ioflag);
+		cdev = cdevsw_lookup(vp->v_rdev);
+		if (cdev != NULL)
+			error = (*cdev->d_read)(vp->v_rdev, uio, ap->a_ioflag);
+		else
+			error = ENXIO;
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 		return (error);
 
@@ -296,9 +304,10 @@ spec_read(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		if ((majordev = major(vp->v_rdev)) < nblkdev &&
-		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+		bdev = bdevsw_lookup(vp->v_rdev);
+		if (bdev != NULL &&
+		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
+				     FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -344,11 +353,12 @@ spec_write(v)
 	struct uio *uio = ap->a_uio;
 	struct proc *p = uio->uio_procp;
 	struct buf *bp;
+	const struct bdevsw *bdev;
+	const struct cdevsw *cdev;
 	daddr_t bn;
 	int bsize, bscale;
 	struct partinfo dpart;
-	int n, on, majordev;
-	int (*ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
+	int n, on;
 	int error = 0;
 
 #ifdef DIAGNOSTIC
@@ -362,8 +372,11 @@ spec_write(v)
 
 	case VCHR:
 		VOP_UNLOCK(vp, 0);
-		error = (*cdevsw[major(vp->v_rdev)].d_write)
-			(vp->v_rdev, uio, ap->a_ioflag);
+		cdev = cdevsw_lookup(vp->v_rdev);
+		if (cdev != NULL)
+			error = (*cdev->d_write)(vp->v_rdev, uio, ap->a_ioflag);
+		else
+			error = ENXIO;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		return (error);
 
@@ -373,9 +386,10 @@ spec_write(v)
 		if (uio->uio_offset < 0)
 			return (EINVAL);
 		bsize = BLKDEV_IOSIZE;
-		if ((majordev = major(vp->v_rdev)) < nblkdev &&
-		    (ioctl = bdevsw[majordev].d_ioctl) != NULL &&
-		    (*ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart, FREAD, p) == 0) {
+		bdev = bdevsw_lookup(vp->v_rdev);
+		if (bdev != NULL &&
+		    (*bdev->d_ioctl)(vp->v_rdev, DIOCGPART, (caddr_t)&dpart,
+				    FREAD, p) == 0) {
 			if (dpart.part->p_fstype == FS_BSDFFS &&
 			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
 				bsize = dpart.part->p_frag *
@@ -431,23 +445,30 @@ spec_ioctl(v)
 		struct ucred *a_cred;
 		struct proc *a_p;
 	} */ *ap = v;
+	const struct bdevsw *bdev;
+	const struct cdevsw *cdev;
 	dev_t dev = ap->a_vp->v_rdev;
-	int maj = major(dev);
 
 	switch (ap->a_vp->v_type) {
 
 	case VCHR:
-		return ((*cdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
+		cdev = cdevsw_lookup(dev);
+		if (cdev == NULL)
+			return (ENXIO);
+		return ((*cdev->d_ioctl)(dev, ap->a_command, ap->a_data,
 		    ap->a_fflag, ap->a_p));
 
 	case VBLK:
+		bdev = bdevsw_lookup(dev);
+		if (bdev == NULL)
+			return (ENXIO);
 		if (ap->a_command == 0 && (long)ap->a_data == B_TAPE) {
-			if (bdevsw[maj].d_type == D_TAPE)
+			if (bdev->d_type == D_TAPE)
 				return (0);
 			else
 				return (1);
 		}
-		return ((*bdevsw[maj].d_ioctl)(dev, ap->a_command, ap->a_data,
+		return ((*bdev->d_ioctl)(dev, ap->a_command, ap->a_data,
 		   ap->a_fflag, ap->a_p));
 
 	default:
@@ -466,13 +487,17 @@ spec_poll(v)
 		int a_events;
 		struct proc *a_p;
 	} */ *ap = v;
+	const struct cdevsw *cdev;
 	dev_t dev;
 
 	switch (ap->a_vp->v_type) {
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
-		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
+		cdev = cdevsw_lookup(dev);
+		if (cdev == NULL)
+			return (ENXIO);
+		return (*cdev->d_poll)(dev, ap->a_events, ap->a_p);
 
 	default:
 		return (genfs_poll(v));
@@ -512,12 +537,15 @@ spec_strategy(v)
 		struct buf *a_bp;
 	} */ *ap = v;
 	struct buf *bp;
+	const struct bdevsw *bdev;
 
 	bp = ap->a_bp;
 	if (!(bp->b_flags & B_READ) &&
 	    (LIST_FIRST(&bp->b_dep)) != NULL && bioops.io_start)
 		(*bioops.io_start)(bp);
-	(*bdevsw[major(bp->b_dev)].d_strategy)(bp);
+	bdev = bdevsw_lookup(bp->b_dev);
+	if (bdev != NULL)
+		(*bdev->d_strategy)(bp);
 	return (0);
 }
 
@@ -573,6 +601,8 @@ spec_close(v)
 		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	const struct bdevsw *bdev;
+	const struct cdevsw *cdev;
 	dev_t dev = vp->v_rdev;
 	int (*devclose) __P((dev_t, int, int, struct proc *));
 	int mode, error, count, flags, flags1;
@@ -607,7 +637,11 @@ spec_close(v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		devclose = cdevsw[major(dev)].d_close;
+		cdev = cdevsw_lookup(dev);
+		if (cdev != NULL)
+			devclose = cdev->d_close;
+		else
+			devclose = NULL;
 		mode = S_IFCHR;
 		break;
 
@@ -631,7 +665,11 @@ spec_close(v)
 		 */
 		if (count > 1 && (flags & VXLOCK) == 0)
 			return (0);
-		devclose = bdevsw[major(dev)].d_close;
+		bdev = bdevsw_lookup(dev);
+		if (bdev != NULL)
+			devclose = bdev->d_close;
+		else
+			devclose = NULL;
 		mode = S_IFBLK;
 		break;
 
@@ -657,7 +695,10 @@ spec_close(v)
 	if (!(flags1 & FNONBLOCK))
 		VOP_UNLOCK(vp, 0);
 
-	error =  (*devclose)(dev, flags1, mode, ap->a_p);
+	if (devclose != NULL)
+		error = (*devclose)(dev, flags1, mode, ap->a_p);
+	else
+		error = ENXIO;
 
 	if (!(flags1 & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
