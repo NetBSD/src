@@ -63,7 +63,7 @@
 
 9564	lelong		0x00011954	Unix Fast File system (little-endian),
 >8404	string		x		last mounted on %s,
->9504	ledate		x		last checked at %s,
+#>9504	ledate		x		last checked at %s,
 >8224	ledate		x		last written at %s,
 >8401	byte		x		clean flag %d,
 >8228	lelong		x		number of blocks %d,
@@ -79,7 +79,7 @@
 
 9564	belong		0x00011954	Unix Fast File system (big-endian),
 >8404	string		x		last mounted on %s,
->9504	bedate		x		last checked at %s,
+#>9504	bedate		x		last checked at %s,
 >8224	bedate		x		last written at %s,
 >8401	byte		x		clean flag %d,
 >8228	belong		x		number of blocks %d,
