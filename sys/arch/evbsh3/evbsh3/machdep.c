@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2001/01/30 02:39:57 msaitoh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.23 2001/01/30 03:01:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -988,6 +988,7 @@ shpcmcia_memio_unmap(t, bsh, size)
 #endif
 
 	pmap_extract(pmap_kernel(), va, &bpa);
+	bpa += bsh & PGOFFSET;
 
 	/*
 	 * Free the kernel virtual mapping.
