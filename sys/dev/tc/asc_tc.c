@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_tc.c,v 1.7 1997/07/28 19:39:26 mhitch Exp $	*/
+/*	$NetBSD: asc_tc.c,v 1.8 1997/10/31 06:29:59 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -131,7 +131,7 @@ asc_tc_attach(parent, self, aux)
 	 * Now for timing. The 3max has a 25Mhz tb whereas the 3min and
 	 * maxine are 12.5Mhz.
 	 */
-	printf(" (bus speed: %d) ", t->ta_busspeed);
+	printf(" (bus speed: %s MHz) ", t->ta_busspeed? "25"  : "12.5");
 
 	switch (t->ta_busspeed) {
 	case TC_SPEED_25_MHZ:
