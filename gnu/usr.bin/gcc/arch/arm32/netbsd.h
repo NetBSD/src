@@ -54,7 +54,7 @@ the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA.  */
 
 /*#undef ASM_DECLARE_FUNCTION_NAME*/
 
-#include "arm32/arm32.h"
+#include "arm32/aout.h"
 
 /* NetBSD assembler can cope with $ in labels so lets be compatible */
 
