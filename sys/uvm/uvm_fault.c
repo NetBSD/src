@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.7 1998/03/09 00:58:56 mrg Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.8 1998/03/22 21:29:30 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!   
@@ -982,7 +982,7 @@ ReFault:
 	 * not touched it yet).  if we have faulted on the bottom (uobj)
 	 * layer [i.e. case 2] and the page was both present and available,
 	 * then we've got a pointer to it as "uobjpage" and we've already
-	 * made it BUSY and tmpwired it.
+	 * made it BUSY.
 	 */
 
 	/*
@@ -1208,14 +1208,8 @@ ReFault:
 	uvm_lock_pageq();
 
 	if (fault_type == VM_FAULT_WIRE) {
-		uvm_pagewire(pg, FALSE);
+		uvm_pagewire(pg);
 	} else {
-		/*
-		 * tmpwire page to remove from q's if we didn't just allocate it
-		 */
-		if (anon == oanon)
-			uvm_pagewire(pg, TRUE);
-
 		/* activate it */
 		uvm_pageactivate(pg);
 
@@ -1623,13 +1617,10 @@ Case2:
 	uvm_lock_pageq();
 
 	if (fault_type == VM_FAULT_WIRE) {
-		uvm_pagewire(pg, FALSE);
+		uvm_pagewire(pg);
 	} else {
 		
 		/* activate it */
-		if (pg == uobjpage)
-			/* remove from q's before activating */
-			uvm_pagewire(pg, TRUE);
 		uvm_pageactivate(pg);
 
 	}

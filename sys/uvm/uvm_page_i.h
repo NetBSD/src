@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_i.h,v 1.5 1998/03/09 00:58:58 mrg Exp $	*/
+/*	$NetBSD: uvm_page_i.h,v 1.6 1998/03/22 21:29:30 chuck Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -116,16 +116,14 @@ uvm_pagelookup(obj, off)
 }
 
 /*
- * uvm_pagewire: wire the page by removing it from the daemon's grasp
- *    tmpwire is true if we are just briefly wiring the page (e.g. fault).
+ * uvm_pagewire: wire the page, thus removing it from the daemon's grasp
  *
  * => caller must lock page queues
  */
 
 PAGE_INLINE void
-uvm_pagewire(pg, tmpwire)
+uvm_pagewire(pg)
 	struct vm_page *pg;
-	boolean_t tmpwire;
 {
 
 	if (pg->wire_count == 0) {
@@ -142,12 +140,9 @@ uvm_pagewire(pg, tmpwire)
 			pg->pqflags &= ~PQ_INACTIVE;
 			uvmexp.inactive--;
 		}
-		if (tmpwire)
-			return;
 		uvmexp.wired++;
 	}
-	if (!tmpwire)
-		pg->wire_count++;
+	pg->wire_count++;
 }
 
 /*
