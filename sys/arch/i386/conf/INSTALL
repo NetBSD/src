@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.238 2004/02/16 17:11:26 wiz Exp $
+#	$NetBSD: INSTALL,v 1.238.2.1 2004/04/30 03:48:33 jmc Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -718,7 +718,8 @@ include	"arch/i386/conf/GENERIC.local"
 
 # disk/mass storage pseudo-devices
 #pseudo-device	ccd		4	# concatenated/striped disk devices
-#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	raid		8	# RAIDframe disk driver
+options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	md		1	# memory disk device (ramdisk)
 #pseudo-device	vnd		4	# disk-like interface to files
 
