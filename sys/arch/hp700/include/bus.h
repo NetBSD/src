@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.5 2003/06/15 23:08:59 fvdl Exp $	*/
+/*	$NetBSD: bus.h,v 1.6 2004/07/27 22:16:40 jkunz Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -63,6 +63,7 @@ struct hppa_bus_space_tag {
 	void (*hbt_free) __P((void *, bus_space_handle_t, bus_size_t));
 	void (*hbt_barrier) __P((void *v, bus_space_handle_t h,
 				 bus_size_t o, bus_size_t l, int op));
+	void *(*hbt_vaddr) __P((void *, bus_space_handle_t));
 
 	u_int8_t  (*hbt_r1) __P((void *, bus_space_handle_t, bus_size_t));
 	u_int16_t (*hbt_r2) __P((void *, bus_space_handle_t, bus_size_t));
@@ -168,6 +169,16 @@ struct hppa_bus_space_tag {
 typedef const struct hppa_bus_space_tag *bus_space_tag_t;
 extern const struct hppa_bus_space_tag hppa_bustag;
 
+/* flags for bus space map functions */
+#define BUS_SPACE_MAP_CACHEABLE		0x0001
+#define BUS_SPACE_MAP_LINEAR		0x0002
+#define BUS_SPACE_MAP_READONLY		0x0004
+#define BUS_SPACE_MAP_PREFETCHABLE	0x0008
+#define BUS_SPACE_MAP_NOEXTENT		0x8000  /* no extent ops */
+#define	BUS_SPACE_BARRIER_READ		0x0000
+#define	BUS_SPACE_BARRIER_WRITE		0x0001
+
+
 /* bus access routines */
 #define DCIAS(pa)	((void)(pa))
 
@@ -183,6 +194,10 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 	(((t)->hbt_alloc)((t)->hbt_alloc,(b),(e),(c),(al),(bn),(ca),(ap),(hp)))
 #define	bus_space_free(t,h,c) \
 	(((t)->hbt_free)((t)->hbt_cookie,(h),(c)))
+#define	bus_space_barrier(t,h,o,l,op) \
+	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
+#define	bus_space_vaddr(t,h) \
+	(((t)->hbt_vaddr)((t)->hbt_cookie,(h)))
 
 #define	bus_space_read_1(t,h,o) (((t)->hbt_r1)((t)->hbt_cookie,(h),(o)))
 #define	bus_space_read_2(t,h,o) (((t)->hbt_r2)((t)->hbt_cookie,(h),(o)))
@@ -294,12 +309,6 @@ extern const struct hppa_bus_space_tag hppa_bustag;
 	(((t)->hbt_cp_4)((t)->hbt_cookie, (h1), (o1), (h2), (o2), (c)))
 #define	bus_space_copy_8(t, h1, o1, h2, o2, c) \
 	(((t)->hbt_cp_8)((t)->hbt_cookie, (h1), (o1), (h2), (o2), (c)))
-
-#define	BUS_SPACE_BARRIER_READ	0
-#define	BUS_SPACE_BARRIER_WRITE	1
-
-#define	bus_space_barrier(t,h,o,l,op) \
-	((t)->hbt_barrier((t)->hbt_cookie, (h), (o), (l), (op)))
 
 #define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
 #define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
