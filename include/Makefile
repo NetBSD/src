@@ -20,7 +20,7 @@ FILES=	a.out.h ar.h assert.h bitstring.h ctype.h db.h dirent.h disktab.h \
 MFILES=	float.h frame.h
 LFILES=	errno.h fcntl.h signal.h syslog.h termios.h
 
-DIRS=	arpa protocols
+DIRS=	arpa protocols rpc
 LDIRS=	net netinet netccitt netiso netns nfs sys ufs vm 
 
 NOOBJ=	noobj
@@ -43,10 +43,9 @@ install: beforeinstall _PROGSUBDIR ${SHARED}
 		then \
 			mkdir ${DESTDIR}/usr/include/$$i; \
 		fi; \
-		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/$$i; \
 		(cd $$i; for j in *.[ih]; do \
 			cmp -s $$j ${DESTDIR}/usr/include/$$i/$$j || \
-			install -c 444 $$j ${DESTDIR}/usr/include/$$i/$$j; \
+			install -c $$j ${DESTDIR}/usr/include/$$i/$$j; \
 		done); \
 	done
 	@echo installing ${LFILES}
@@ -90,6 +89,9 @@ symlinks:
 	done
 	rm -rf ${DESTDIR}/usr/include/machine
 	ln -s /sys/${MACHINE}/include ${DESTDIR}/usr/include/machine
+
+.include <bsd.prog.mk>
+de ${DESTDIR}/usr/include/machine
 
 .include <bsd.prog.mk>
 nks: ${LDIRS}
