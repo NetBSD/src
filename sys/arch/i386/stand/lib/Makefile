@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2000/09/24 18:13:54 jdolecek Exp $
+#	$NetBSD: Makefile,v 1.18 2001/05/19 17:53:30 jdolecek Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -9,6 +9,7 @@ MKPROFILE=no
 I386_INCLUDE_DISK?= yes
 I386_INCLUDE_DOS?= no
 I386_INCLUDE_BUS?= no
+I386_INCLUDE_PS2?= yes
 
 CPPFLAGS= -I$S/lib/libsa ${I386CPPFLAGS} ${I386MISCCPPFLAGS}
 #CPPFLAGS+= -DDISK_DEBUG
@@ -32,6 +33,9 @@ SRCS+= diskbuf.c
 .endif
 .if (${I386_INCLUDE_BUS} == "yes")
 SRCS+= biospci.c bios_pci.S isapnp.c isadma.c
+.endif
+.if (${I386_INCLUDE_PS2} == "yes")
+SRCS+= biosmca.S
 .endif
 
 .include <bsd.lib.mk>
