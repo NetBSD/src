@@ -1,4 +1,4 @@
-/*      $NetBSD: sv.c,v 1.7 1999/03/22 07:58:55 mycroft Exp $ */
+/*      $NetBSD: sv.c,v 1.8 1999/04/14 03:26:34 jonathan Exp $ */
 /*      $OpenBSD: sv.c,v 1.2 1998/07/13 01:50:15 csapuntz Exp $ */
 
 /*
@@ -662,7 +662,7 @@ sv_set_params(addr, setmode, usemode, play, rec)
 	struct audio_params *play, *rec;
 {
 	struct sv_softc *sc = addr;
-	struct audio_params *p;
+	struct audio_params *p = NULL;
 	int mode;
 	u_int32_t val;
 	
