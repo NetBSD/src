@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.h,v 1.24 2001/05/13 17:06:58 sommerfeld Exp $	*/
+/*	$NetBSD: pool.h,v 1.25 2001/05/13 17:17:34 sommerfeld Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -176,6 +176,10 @@ void		pool_init(struct pool *, size_t, u_int, u_int,
 				 int);
 void		pool_destroy(struct pool *);
 
+void		*pool_get(struct pool *, int);
+void		pool_put(struct pool *, void *);
+void		pool_reclaim(struct pool *);
+
 #ifdef DIAGNOSTIC
 /*
  * These versions do reentrancy checking.
@@ -186,10 +190,6 @@ void		_pool_reclaim(struct pool *, const char *, long);
 #define		pool_get(h, f)	_pool_get((h), (f), __FILE__, __LINE__)
 #define		pool_put(h, v)	_pool_put((h), (v), __FILE__, __LINE__)
 #define		pool_reclaim(h)	_pool_reclaim((h), __FILE__, __LINE__)
-#else
-void		*pool_get(struct pool *, int);
-void		pool_put(struct pool *, void *);
-void		pool_reclaim(struct pool *);
 #endif
 
 int		pool_prime(struct pool *, int);
