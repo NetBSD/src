@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: @(#)cpu.h	7.7 (Berkeley) 11/15/92
- * $Id: cpu.h,v 1.2 1993/10/15 02:57:11 deraadt Exp $
+ * $Id: cpu.h,v 1.3 1994/01/14 04:53:37 deraadt Exp $
  */
 
 #ifndef _CPU_H_
@@ -134,10 +134,8 @@ union cpuprid {
 #define	MIPS_R4010	0x05
 
 #ifdef KERNEL
-#ifdef notdef
 union	cpuprid cpu;
 union	cpuprid fpu;
-#endif
 u_int	machDataCacheSize;
 u_int	machInstCacheSize;
 extern	struct intr_tab intr_tab[];
