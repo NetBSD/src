@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.33 1996/12/21 01:30:48 cgd Exp $	*/
+/*	$NetBSD: unistd.h,v 1.34 1997/05/09 19:38:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -73,6 +73,7 @@ char	*getcwd __P((char *, size_t));
 gid_t	 getegid __P((void));
 uid_t	 geteuid __P((void));
 gid_t	 getgid __P((void));
+int	 getgrouplist __P((const char *, gid_t, gid_t *, int *));
 int	 getgroups __P((int, gid_t *));
 char	*getlogin __P((void));
 pid_t	 getpgrp __P((void));
