@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)tee.c	5.11 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$Id: tee.c,v 1.2 1993/08/01 18:07:36 mycroft Exp $";
+static char rcsid[] = "$Id: tee.c,v 1.3 1993/12/31 19:31:52 jtc Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,10 @@ static char rcsid[] = "$Id: tee.c,v 1.2 1993/08/01 18:07:36 mycroft Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <locale.h>
+#include <err.h>
+
+void add	__P((int, char *));
 
 typedef struct _list {
 	struct _list *next;
@@ -58,20 +62,21 @@ typedef struct _list {
 } LIST;
 LIST *head;
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
-	extern int errno, optind;
 	register LIST *p;
 	register int n, fd, rval, wval;
 	register char *bp;
 	int append, ch, exitval;
 	char *buf;
-	off_t lseek();
+
+	setlocale(LC_ALL, "");
 
 	append = 0;
-	while ((ch = getopt(argc, argv, "ai")) != EOF)
+	while ((ch = getopt(argc, argv, "ai")) != -1)
 		switch((char)ch) {
 		case 'a':
 			append = 1;
@@ -88,39 +93,49 @@ main(argc, argv)
 	argc -= optind;
 
 	if (!(buf = malloc((u_int)8 * 1024))) {
-		(void)fprintf(stderr, "tee: out of space.\n");
-		exit(1);
+		err(1, NULL);
+		/* NOTREACHED */
 	}
+
 	add(STDOUT_FILENO, "stdout");
 	for (; *argv; ++argv)
 		if ((fd = open(*argv, append ? O_WRONLY|O_CREAT|O_APPEND :
 		    O_WRONLY|O_CREAT|O_TRUNC, DEFFILEMODE)) < 0)
-			(void)fprintf(stderr, "tee: %s: %s.\n",
-			    *argv, strerror(errno));
+			warn("%s", *argv);
 		else
 			add(fd, *argv);
+
 	exitval = 0;
-	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0)
+	while ((rval = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
 		for (p = head; p; p = p->next) {
 			n = rval;
 			bp = buf;
 			do {
 				if ((wval = write(p->fd, bp, n)) == -1) {
-					(void)fprintf(stderr, "tee: %s: %s.\n",
-					    p->name, strerror(errno));
+					warn("%s", p->name);
 					exitval = 1;
 					break;
 				}
 				bp += wval;
 			} while (n -= wval);
 		}
-	if (rval < 0) {
-		(void)fprintf(stderr, "tee: read: %s\n", strerror(errno));
-		exit(1);
 	}
+	if (rval < 0) {
+		warn("read");
+		exitval = 1;
+	}
+
+	for (p = head; p; p = p->next) {
+		if (close(p->fd)) {
+			warn("%s", p->name);
+			exitval = 1;
+		}
+	}
+
 	exit(exitval);
 }
 
+void
 add(fd, name)
 	int fd;
 	char *name;
@@ -128,8 +143,8 @@ add(fd, name)
 	LIST *p;
 
 	if (!(p = malloc((u_int)sizeof(LIST)))) {
-		(void)fprintf(stderr, "tee: out of space.\n");
-		exit(1);
+		err(1, NULL);
+		/* NOTREACHED */
 	}
 	p->fd = fd;
 	p->name = name;
