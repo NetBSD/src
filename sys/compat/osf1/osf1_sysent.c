@@ -1,3 +1,5 @@
+/*	$NetBSD: osf1_sysent.c,v 1.11 1998/01/09 06:24:55 thorpej Exp $	*/
+
 /*
  * System call switch table.
  *

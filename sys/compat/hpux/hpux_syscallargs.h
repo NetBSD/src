@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux_syscallargs.h,v 1.14 1998/01/09 06:19:03 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *

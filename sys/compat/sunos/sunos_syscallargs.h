@@ -1,3 +1,5 @@
+/*	$NetBSD: sunos_syscallargs.h,v 1.32 1998/01/09 06:25:54 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *

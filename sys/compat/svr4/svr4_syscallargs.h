@@ -1,3 +1,5 @@
+/*	$NetBSD: svr4_syscallargs.h,v 1.37 1998/01/09 06:26:50 thorpej Exp $	*/
+
 /*
  * System call argument lists.
  *

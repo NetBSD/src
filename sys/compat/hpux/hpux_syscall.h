@@ -1,3 +1,5 @@
+/*	$NetBSD: hpux_syscall.h,v 1.18 1998/01/09 06:19:02 thorpej Exp $	*/
+
 /*
  * System call numbers.
  *
