@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 1997/10/17 22:24:20 phil Exp $	*/
+/*	$NetBSD: net.c,v 1.8 1997/10/20 06:13:36 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,6 +49,8 @@
 #include "menu_defs.h"
 #include "txtwalk.h"
 
+static network_up = 0;
+
 static void get_ifconfig_info (void)
 {
 	char *textbuf;
@@ -83,6 +85,9 @@ static int config_network (void)
 	int  pass;
 
 	FILE *f;
+
+	if (network_up)
+		return 1;
 
 	net_devices[0] = '\0';
 	get_ifconfig_info ();
@@ -125,9 +130,9 @@ static int config_network (void)
 				strcpy (net_mask, "0xffff0000");
 		}
 		msg_prompt_add (MSG_net_mask, net_mask, net_mask, STRSIZE);
-		msg_prompt_add (MSG_net_namesrv, net_namesvr, net_namesvr,
-				STRSIZE);
 		msg_prompt_add (MSG_net_defroute, net_defroute, net_defroute,
+				STRSIZE);
+		msg_prompt_add (MSG_net_namesrv, net_namesvr, net_namesvr,
 				STRSIZE);
 
 		msg_display (MSG_netok, net_domain, net_host, net_ip,
@@ -160,8 +165,10 @@ static int config_network (void)
 	run_prog ("/sbin/route add default %s > /dev/null 2> /dev/null",
 		  net_defroute);
 
-	return run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
+	network_up =  run_prog ("/sbin/ping -c 2 %s > /dev/null", net_defroute)
 		|| run_prog ("/sbin/ping -c 2 %s > /dev/null", net_namesvr);
+
+	return network_up;
 }
 
 int
@@ -247,14 +254,37 @@ get_via_nfs(void)
 	process_menu (MENU_nfssource);
 
 	/* Mount it */
-	if (!run_prog ("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
+	while(!run_prog("/sbin/mount -t nfs %s:%s /mnt2", nfs_host, nfs_dir)) {
 		process_menu (MENU_nfsbadmount);
 		if (!yesno)
 			return 0;
+		/* verify distribution files are there. XXX */
 	}
 
 	/* return location, don't clean... */
 	strcpy (dist_dir, "/mnt2");
 	clean_dist_dir = 0;
+	mnt2_mounted = 1;
 	return 1;
+}
+
+void
+mnt_net_config(void)
+{
+	char ans [5] = "y";
+
+	if (network_up) {
+		msg_prompt (MSG_mntnetconfig, ans, ans, 5);
+		if (*ans == 'y') {
+			run_prog ("/bin/cp /etc/resolv.conf /mnt/etc");
+			run_prog ("echo %s > /mnt/etc/myname", net_host);
+			run_prog ("echo %s %s >> /mnt/etc/hosts", net_ip,
+				  net_host);
+			run_prog ("echo %s > /mnt/etc/defaultdomain",
+				  net_domain);
+			run_prog ("echo %s netmask %s > /mnt/etc/ifconfig.%s",
+				  net_ip, net_mask, net_dev);
+			run_prog ("echo %s > /mnt/etc/mygate", net_defroute);
+		}
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.eng,v 1.6 1997/10/17 22:17:19 phil Exp $	*/
+/*	$NetBSD: menus.mi.eng,v 1.7 1997/10/20 06:13:32 phil Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -225,9 +225,9 @@ menu selfskind, title "  Select the type ", y=15;
 menu distmedium, title "  Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
 	option "ftp",    action { got_dist = get_via_ftp(); }, exit;
-	option "nfs",    action { get_via_nfs(); }, exit;
-/*	option "cdrom",  action {  }, exit; 
-	option "floppy", action {  }, exit; */
+	option "nfs",    action { got_dist = get_via_nfs(); }, exit;
+	option "cdrom",  action { got_dist = get_via_cdrom(); }, exit; 
+	option "floppy", action { got_dist = get_via_floppy(); }, exit;
 	option "none",   action { nodist = 1; }, exit;
 
 
@@ -279,3 +279,20 @@ menu nfsbadmount, title "  What do you want to do?";
 menu fdremount, title " What do you want to do? ";
 	option "Try again", exit, action { yesno = 1; };
 	option "Abort install", exit, action { yesno = 0; };
+
+menu cdromsource, title "  Change";
+	display action
+		{ msg_display (MSG_cdromsource, cdrom_dev, cdrom_dir); };
+	option "Host", action
+		{ msg_prompt (MSG_dev, cdrom_dev, cdrom_dev, SSTRSIZE); };
+	option "Directory", action
+		{ msg_prompt (MSG_dir, cdrom_dir, cdrom_dir, STRSIZE); };
+	option "Continue", exit;
+
+menu cdrombadmount, title "  What do you want to do?";
+	display action
+		{ msg_display (MSG_cdrombadmount, nfs_host, nfs_dir); };
+	option "Try again", exit, sub menu cdromsource, action
+		{ yesno = 1; };
+	option "Give up", exit, action
+		{ yesno = 0; };
