@@ -37,7 +37,7 @@
  *
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  *	from: @(#)machdep.c	7.16 (Berkeley) 6/3/91
- *	$Id: machdep.c,v 1.12 1993/10/13 09:36:43 cgd Exp $
+ *	$Id: machdep.c,v 1.13 1993/12/06 13:14:16 mycroft Exp $
  */
 
 #include "param.h"
@@ -750,12 +750,13 @@ sendsig(catcher, sig, mask, code)
  * psl to gain improper priviledges or to cause
  * a machine fault.
  */
-/* ARGSUSED */
+struct sigreturn_args {
+	struct sigcontext *sigcntxp;
+};
+
 sigreturn(p, uap, retval)
 	struct proc *p;
-	struct args {
-		struct sigcontext *sigcntxp;
-	} *uap;
+	struct sigreturn_args *uap;
 	int *retval;
 {
 	register struct sigcontext *scp;
@@ -1199,7 +1200,9 @@ int panicbutton = 1;	/* non-zero if panic buttons are enabled */
 int crashandburn = 0;
 int candbdelay = 50;	/* give em half a second */
 
-candbtimer()
+void
+candbtimer(arg)
+	caddr_t arg;
 {
 	crashandburn = 0;
 }
