@@ -1,4 +1,4 @@
-.\"	$NetBSD: join.1,v 1.4 1997/01/09 20:20:24 tls Exp $
+.\"	$NetBSD: join.1,v 1.5 1997/10/19 03:32:12 lukem Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"   The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)join.1	8.3 (Berkeley) 4/28/95
-.\"	$NetBSD: join.1,v 1.4 1997/01/09 20:20:24 tls Exp $
+.\"	$NetBSD: join.1,v 1.5 1997/10/19 03:32:12 lukem Exp $
 .\"
 .Dd April 28, 1995
 .Dt JOIN 1
@@ -44,7 +44,7 @@
 .Nm join
 .Nd relational database operator
 .Sh SYNOPSIS
-.Nm join
+.Nm
 .Oo
 .Fl a Ar file_number | Fl v Ar file_number
 .Oc
@@ -146,7 +146,7 @@ should be ordered in the collating sequence of
 using the
 .Fl b
 option, on the fields on which they are to be joined, otherwise
-.Nm join
+.Nm
 may not report all field matches.
 When the field delimiter characters are specified by the
 .Fl t
@@ -163,11 +163,11 @@ or
 is ``-'', the standard input is used.
 .Pp
 The
-.Nm join
+.Nm
 utility exits 0 on success, and >0 if an error occurs.
 .Sh COMPATIBILITY
 For compatibility with historic versions of
-.Nm join ,
+.Nm "" ,
 the following options are available:
 .Bl -tag -width Fl
 .It Fl a
@@ -175,7 +175,7 @@ In addition to the default output, produce a line for each unpairable line
 in both file 1 and file 2.
 (To distinguish between this and
 .Fl a Ar file_number ,
-.Nm join
+.Nm
 currently requires that the latter not include any white space.)
 .It Fl j1 Ar field
 Join on the
@@ -191,7 +191,7 @@ Join on the
 field of both file 1 and file 2.
 .It Fl o Ar list ...
 Historical implementations of
-.Nm join
+.Nm
 permitted multiple arguments to the
 .Fl o
 option.
@@ -206,7 +206,7 @@ These options are available only so historic shellscripts don't require
 modification and should not be used.
 .Sh STANDARDS
 The
-.Nm join
+.Nm
 command is expected to be
 .St -p1003.2
 compatible.
