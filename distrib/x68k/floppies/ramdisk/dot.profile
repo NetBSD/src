@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.10 2000/06/14 22:52:49 cgd Exp $
+# $NetBSD: dot.profile,v 1.10.2.1 2000/09/14 14:15:24 minoura Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -55,9 +55,6 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 
 	# mount the ramdisk read write
 	mount -u $ROOTDEV /
-
-	# mount the kern_fs so that we can examine the dmesg state
-	mount -t kernfs /kern /kern
 
 	# pull in the functions that people will use from the shell prompt.
 	. /.commonutils

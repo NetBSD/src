@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: upgrade.tmpl,v 1.10 2000/06/14 22:52:49 cgd Exp $
+# $NetBSD: upgrade.tmpl,v 1.10.2.1 2000/09/14 14:15:24 minoura Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -149,7 +149,7 @@ echo	"You may have to increase the virtual memory by activating"
 echo	"the swap device if your machine has only 4MB memory installed, or,"
 echo	"if one or more of your NetBSD disk partitions are very large."
 echo	""
-if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
+if [ `sysctl -n hw.physmem` -le 4194304 ]; then # less than 4megs
     defresp=y
 else
     defresp=n
@@ -246,7 +246,7 @@ echo	"Done."
 echo	""
 echo	"Updating boot blocks on ${drivename}..."
 # shouldn't be needed, but...
-$DONTDOIT dd if=/usr/mdec/sdboot of=/dev/r${drivename}a conv=sync
+$DONTDOIT /usr/mdec/installboot /usr/mdec/sdboot /dev/r${drivename}a
 if [ $? != 0 ]; then
 	echo	"FATAL ERROR: UPDATE OF DISK LABEL FAILED."
 	echo	"It in unclear why this error would occur.  It looks"
@@ -276,13 +276,6 @@ echo	"Right now, your hard disk is mounted on /mnt.  You should consult"
 echo	"the installation notes to determine how to load and install the new"
 echo	"NetBSD distribution sets, and how to clean up after the upgrade"
 echo	"software, when you are done."
-
-if [ `cat /kern/physmem` -le 1024 ]; then # less than 4megs
-    echo	""
-    echo	"Note that you have to use the SMALL kernel named"
-    echo	"netbsd.SMALL in x68k/binary/kernel/ directory instead of"
-    echo	"the standard kernel which is included the kern.tgz."
-fi
 
 echo	""
 echo	"GOOD LUCK!"
