@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.4 2004/04/11 11:34:13 pooka Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.5 2004/04/14 10:29:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.4 2004/04/11 11:34:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.5 2004/04/14 10:29:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ arcemu_ip12_GetEnvironmentVariable(char *var)
 			return "serial(0)";
 		case 'g':
 		case 'G':
-			return "graphics(0)";
+			return "video()";
 		default:
 			printf("arcemu: unknown console type %c\n",
 			    ip12nvram.console);
