@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2001/03/15 17:30:56 uch Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.4 2001/07/09 18:18:25 uch Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,14 +33,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/map.h>
 #include <sys/extent.h>
 
-#include <uvm/uvm_extern.h>
 #include <machine/bus.h>
 
 #ifdef BUS_SPACE_DEBUG

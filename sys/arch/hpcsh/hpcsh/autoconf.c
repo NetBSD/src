@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2001/04/23 11:22:19 uch Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2001/07/09 18:18:25 uch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,23 +42,9 @@
  *	@(#)autoconf.c	8.1 (Berkeley) 6/10/93
  */
 
-#include <sys/cdefs.h>
-/*
- * Setup the system to run on the current machine.
- *
- * Configure() is called at boot time.  Available
- * devices are determined (from possibilities mentioned in ioconf.c),
- * and the drivers are initialized.
- */
-
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/map.h>
-#include <sys/buf.h>
-#include <sys/dkstat.h>
 #include <sys/conf.h>
 #include <sys/disklabel.h>
-#include <sys/reboot.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -71,13 +57,6 @@ static int booted_partition;
 static char booted_device_name[16];
 static void get_device(char *name);
 
-/*
- * Determine mass storage and memory configuration for a machine.
- * Print cpu type, and then iterate over an array of devices
- * found on the baseboard or in turbochannel option slots.
- * Once devices are configured, enable interrupts, and probe
- * for attached scsi devices.
- */
 void
 cpu_configure()
 {
