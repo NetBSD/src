@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.1.1.5 1997/07/05 05:12:44 darrenr Exp $	*/
+/*	$NetBSD: kmem.h,v 1.1.1.6 1997/09/21 16:48:00 veego Exp $	*/
 
 /*
  * (C)opyright 1993-1997 by Darren Reed.
@@ -6,7 +6,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
- * $Id: kmem.h,v 1.1.1.5 1997/07/05 05:12:44 darrenr Exp $
+ * Id: kmem.h,v 2.0.2.5 1997/04/30 13:49:35 darrenr Exp 
  */
 
 #ifndef	__KMEM_H__
