@@ -1,4 +1,4 @@
-.\"	$NetBSD: telnet.1,v 1.22 2002/02/08 01:36:34 ross Exp $
+.\"	$NetBSD: telnet.1,v 1.23 2002/08/23 08:14:20 kanaoka Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,6 +43,8 @@
 protocol
 .Sh SYNOPSIS
 .Nm ""
+.Op Fl 4
+.Op Fl 6
 .Op Fl 8
 .Op Fl E
 .Op Fl F
@@ -101,6 +103,14 @@ command with those arguments.
 .Pp
 Options:
 .Bl -tag -width indent
+.It Fl 4
+Forces
+.Nm
+to use IPv4 addreses only.
+.It Fl 6
+Forces
+.Nm
+to use IPv6 addresses only.
 .It Fl 8
 Specifies an 8-bit data path.  This causes an attempt to
 negotiate the
