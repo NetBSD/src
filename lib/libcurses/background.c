@@ -1,4 +1,4 @@
-/*	$NetBSD: background.c,v 1.1 2000/04/12 21:43:37 jdc Exp $	*/
+/*	$NetBSD: background.c,v 1.2 2000/04/13 00:01:03 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -64,8 +64,6 @@ wbkgd(win, ch)
 	WINDOW	*win;
 	chtype	 ch;
 {
-	int	 i, j;
-	
 	wbkgdset(win, ch);
 	__touchwin(win);
 	return (OK);
