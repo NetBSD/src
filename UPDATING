@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.110 2004/03/14 14:56:47 dbj Exp $
+$NetBSD: UPDATING,v 1.111 2004/03/14 21:08:10 simonb Exp $
 
 This file is intended to be a brief introduction to the build
 process and a reference on what to do if something doesn't work.
@@ -25,11 +25,11 @@ Recent changes:
 	when using those layouts.  If you have been using -current
 	since 20030402, you may find that fsck again signals fatal
 	superblock mismatches.  To repair, make sure you have
-        an updated fsck_ffs and then you can use fsck_ffs -b 16 -c 4
+	an updated fsck_ffs and then you can use fsck_ffs -b 16 -c 4
 	to complete the filesystem upgrade.  A message has
- 	been added to the kernel which should detect this problem.
-        See the following discussion for more information:
-        http://mail-index.netbsd.org/current-users/2004/01/11/0022.html
+	been added to the kernel which should detect this problem.
+	See the following discussion for more information:
+	http://mail-index.netbsd.org/current-users/2004/01/11/0022.html
 
 20031203:
 	New binutils builds may fail due to old dependencies.
@@ -46,13 +46,13 @@ Recent changes:
 	the dependencies will be rebuilt correctly.
 
 20031007:
-        A sign exension bug was fixed which set all the high bits
-        of our newly expanded ffs fs_flags.  This should only
-        affect users who installed or upgraded in September of 2003.
+	A sign exension bug was fixed which set all the high bits
+	of our newly expanded ffs fs_flags.  This should only
+	affect users who installed or upgraded in September of 2003.
 	A small utility program was posted to tech-kern which
-        should fix this problem, and a warning message was added
-        to the kernel which should discover and warn about it.  See
-        http://mail-index.NetBSD.org/tech-kern/2003/10/07/0005.html
+	should fix this problem, and a warning message was added
+	to the kernel which should discover and warn about it.  See
+	http://mail-index.NetBSD.org/tech-kern/2003/10/07/0005.html
 
 20030906:
 	With the addition of siginfo support the old signal trampoline
@@ -419,7 +419,7 @@ Recent changes:
 
 20010803: 
 	(i386 only): i386 kernel now uses new instructions like
-        `fxsave' which old gas doesn't understand.  To build the
+	`fxsave' which old gas doesn't understand.  To build the
 	kernel successfully, you need to build and install a new toolchain, 
 	(i.e., build.sh -t) or 	(temporarily) comment out "options I686_CPU" 
 	from your kernel configuration until you rebuild your userland.
@@ -473,13 +473,13 @@ Recent changes:
 
 20010219:
 	get/setprogname() added. Any hostprogs that may use this will need
-        to be bootstrapped manually until the host system is current.
+	to be bootstrapped manually until the host system is current.
 
-        Known problems: sys/arch/macppc/stand/fixcoff
+	Known problems: sys/arch/macppc/stand/fixcoff
 			usr.sbin/config (adding -DMAKE_BOOTSTRAP to
 			  CFLAGS and rebuilding should work)
 			usr.sbin/mdsetimage - Build a static copy if
-  		          building a snapshot before fully bootstrapped.
+			  building a snapshot before fully bootstrapped.
 
 20010204:
 	prepare the code to compile with stricter gcc flags. in
@@ -622,7 +622,7 @@ Fix:	Rebuild gnu/usr.bin/egcs
 Symptom:Complaints involving a Makefile.
 Fix:	Rebuild usr.bin/make:
 	cd usr.bin/make && make && make install
-        Or, a failsafe method if that doesn't work:
+	Or, a failsafe method if that doesn't work:
 	cd usr.bin/make && cc *.c */*.c -I . -o make && mv make /usr/bin
 
 Fix:	Make sure .mk files are up to date.
