@@ -1,4 +1,4 @@
-/*	$NetBSD: icu.s,v 1.54 1998/07/05 02:12:24 jonathan Exp $	*/
+/*	$NetBSD: icu.s,v 1.55 1998/07/05 04:37:37 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1997 Charles M. Hannum.  All rights reserved.
@@ -32,6 +32,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
+#include "opt_iso.h"
 #include "opt_vm86.h"
 
 #include <net/netisr.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_options.c,v 1.9 1996/10/13 02:04:17 christos Exp $	*/
+/*	$NetBSD: clnp_options.c,v 1.10 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#include "opt_iso.h"
 #ifdef ISO
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.86 1998/07/05 00:51:11 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.87 1998/07/05 04:37:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,11 +43,13 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.86 1998/07/05 00:51:11 jonathan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.87 1998/07/05 04:37:38 jonathan Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_inet.h"
 #include "opt_atalk.h"
+#include "opt_ccitt.h"
+#include "opt_iso.h"
 #include "opt_ktrace.h"
 #include "opt_uvm.h"
 #include "opt_ddb.h"
@@ -972,7 +974,7 @@ trap(status, cause, vaddr, opc, frame)
 			}
 		switchfpregs(fpcurproc, p);
 		fpcurproc = p;
-		p->p_md.md_regs[PS] |= MIPS_SR_COP_1_BIT;
+		p->p_md.md_regs[SR] |= MIPS_SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		userret(p, opc, sticks);
 		return; /* GEN */
@@ -997,14 +999,26 @@ trap(status, cause, vaddr, opc, frame)
 #include "arp.h"
 #include "ppp.h"
 
-#ifdef NETATALK
-void	atintr		__P((void));
-#endif
 #ifdef NS
-void	nsintr		__P((void));
+#include <netns/ns_var.h>
 #endif
+
 #ifdef ISO
-void	clnlintr	__P((void));
+#include <netiso/iso.h>
+#include <netiso/clnp.h>
+#endif
+
+#ifdef CCITT
+#include <netccitt/x25.h>
+#include <netccitt/pk.h>
+#include <netccitt/pk_extern.h>
+#endif
+
+#ifdef NATM
+#include <netnatm/natm.h>
+#endif
+#ifdef NETATALK
+#include <netatalk/at_extern.h>
 #endif
 
 /*
@@ -1086,6 +1100,9 @@ interrupt(status, cause, pc, frame)
 #endif
 #ifdef ISO
 		if (isr & (1 << NETISR_ISO)) clnlintr();
+#endif
+#ifdef CCITT
+		if (isr & (1 << NETISR_CCITT)) ccittintr();
 #endif
 #if NPPP > 0
 		if (isr & (1 << NETISR_PPP)) pppintr();

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.13 1998/02/07 02:44:59 chs Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.14 1998/07/05 04:37:44 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,6 +43,8 @@
  *		of an NFS Server", in Proc. Winter 1989 USENIX Conference,
  *		pages 53-63. San Diego, February 1989.
  */
+#include "opt_iso.h"
+
 #include <sys/param.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>

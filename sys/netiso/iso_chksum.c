@@ -1,4 +1,4 @@
-/*	$NetBSD: iso_chksum.c,v 1.10 1996/10/13 02:04:27 christos Exp $	*/
+/*	$NetBSD: iso_chksum.c,v 1.11 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,8 @@ SOFTWARE.
  * stuffed, and the length of the chunk.  The 2 octets have to be logically
  * adjacent, but may be physically located in separate mbufs.
  */
+
+#include "opt_iso.h"
 
 #ifdef ISO
 #include <sys/param.h>

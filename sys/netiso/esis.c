@@ -1,4 +1,4 @@
-/*	$NetBSD: esis.c,v 1.19 1998/03/01 02:24:45 fvdl Exp $	*/
+/*	$NetBSD: esis.c,v 1.20 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,6 +62,7 @@ SOFTWARE.
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
 
+#include "opt_iso.h"
 #ifdef ISO
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.20 1998/05/11 19:58:17 thorpej Exp $	*/
+/*	$NetBSD: iso.c,v 1.21 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -86,6 +86,7 @@ SOFTWARE.
 #include <netiso/clnp.h>
 #include <netiso/argo_debug.h>
 
+#include "opt_iso.h"
 #ifdef ISO
 
 int             iso_interfaces = 0;	/* number of external interfaces */

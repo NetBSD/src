@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.17 1998/07/05 00:51:28 jonathan Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.18 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -66,6 +66,7 @@ SOFTWARE.
  */
 
 #include "opt_inet.h"
+#include "opt_iso.h"
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

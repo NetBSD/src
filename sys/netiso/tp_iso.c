@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.12 1998/05/11 19:58:18 thorpej Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.13 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -78,6 +78,7 @@ SOFTWARE.
  * isopcb & some data
  */
 
+#include "opt_iso.h"
 #ifdef ISO
 
 #include <sys/param.h>

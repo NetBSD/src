@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 1998/07/05 02:12:29 jonathan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 1998/07/05 04:37:40 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,7 @@
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_ccitt.h"
+#include "opt_iso.h"
 #include "opt_uvm.h"
 #include "opt_compat_hpux.h"
 

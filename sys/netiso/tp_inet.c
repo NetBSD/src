@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.15 1998/07/05 00:51:28 jonathan Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.16 1998/07/05 04:37:43 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,6 +77,7 @@ SOFTWARE.
  */
 
 #include "opt_inet.h"
+#include "opt_iso.h"
 
 #ifdef INET
 

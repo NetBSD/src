@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.12 1998/06/25 21:19:18 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.13 1998/07/05 04:37:39 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,9 @@
  *	@(#)trap.c	8.5 (Berkeley) 1/11/94
  */
 
+#include "opt_inet.h"
+#include "opt_atalk.h"
+#include "opt_iso.h"
 #include "opt_ktrace.h"
 
 #if #defined(CPU_R4000) && !defined(CPU_R3000)

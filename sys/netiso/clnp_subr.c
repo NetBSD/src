@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.10 1996/10/13 02:04:20 christos Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.11 1998/07/05 04:37:42 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,8 @@ SOFTWARE.
 /*
  * ARGO Project, Computer Sciences Dept., University of Wisconsin - Madison
  */
+
+#include "opt_iso.h"
 
 #ifdef ISO
 
