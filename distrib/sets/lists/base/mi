@@ -270,6 +270,7 @@
 ./usr/bin/sed
 ./usr/bin/send-pr
 ./usr/bin/shar
+./usr/bin/shlock
 ./usr/bin/showmount
 ./usr/bin/size
 ./usr/bin/skey
@@ -517,8 +518,8 @@
 ./usr/sbin/nfsiod
 ./usr/sbin/nslookup
 ./usr/sbin/ntpdate
-./usr/sbin/ntptime
 ./usr/sbin/ntpq
+./usr/sbin/ntptime
 ./usr/sbin/ntptrace
 ./usr/sbin/pac
 ./usr/sbin/pkg_add
@@ -861,11 +862,11 @@
 ./usr/share/sendmail/cf/Makefile
 ./usr/share/sendmail/cf/boat-anchor.mc
 ./usr/share/sendmail/cf/chimera.mc
-./usr/share/sendmail/cf/sun-lamp.mc
-./usr/share/sendmail/cf/trinity.mc
 ./usr/share/sendmail/cf/clientproto.mc
 ./usr/share/sendmail/cf/netbsd-proto.mc
+./usr/share/sendmail/cf/sun-lamp.mc
 ./usr/share/sendmail/cf/tcpproto.mc
+./usr/share/sendmail/cf/trinity.mc
 ./usr/share/sendmail/cf/uucpproto.mc
 ./usr/share/sendmail/domain
 ./usr/share/sendmail/domain/Berkeley.EDU.m4
