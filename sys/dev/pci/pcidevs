@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.534 2003/06/07 09:07:12 wiz Exp $
+$NetBSD: pcidevs,v 1.535 2003/06/07 09:15:00 wiz Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1035,6 +1035,10 @@ product	BROOKTREE BT848		0x0350	Bt848 Video Capture
 product	BROOKTREE BT849		0x0351	Bt849 Video Capture
 product	BROOKTREE BT878		0x036e	Bt878 Video Capture
 product	BROOKTREE BT879		0x036f	Bt879 Video Capture
+product	BROOKTREE BT880		0x0370	Bt880 Video Capture
+product	BROOKTREE BT878A	0x0878	Bt878 Video Capture (Audio Section)
+product	BROOKTREE BT879A	0x0879	Bt879 Video Capture (Audio Section)
+product	BROOKTREE BT880A	0x0880	Bt880 Video Capture (Audio Section)
 product	BROOKTREE BT8474	0x8474	Bt8474 Multichannel HDLC Controller
 
 /* BusLogic products */
