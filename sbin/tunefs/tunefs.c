@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.13 1998/03/18 17:19:14 bouyer Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.14 1998/03/26 06:00:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.13 1998/03/18 17:19:14 bouyer Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.14 1998/03/26 06:00:34 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.13 1998/03/18 17:19:14 bouyer Exp $");
 #include <stdio.h>
 #include <paths.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /* the optimization warning string template */
