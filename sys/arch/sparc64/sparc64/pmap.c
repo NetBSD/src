@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 1999/03/28 16:01:19 eeh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 1999/03/28 19:01:03 eeh Exp $	*/
 /* #define NO_VCACHE */ /* Don't forget the locked TLB in dostart */
 #define HWREF
 /* #define BOOT_DEBUG */
@@ -1014,10 +1014,11 @@ pmap_bootstrap(kernelstart, kernelend, maxctx)
 				}
 #else
 				prom_printf("i=%d j=%d\r\n", i, j);
-				pmap_enter_phys(pmap_kernel(),
-				    (vaddr_t)prom_map[i].vstart + j, 
-				    (prom_map[i].tte & TLB_PA_MASK) + j,
-				    TLB_8K, VM_PROT_WRITE, 1);
+				pmap_enter(pmap_kernel(),
+					   (vaddr_t)prom_map[i].vstart + j, 
+					   (prom_map[i].tte & TLB_PA_MASK) + j,
+					   VM_PROT_WRITE, 1, 
+					   VM_PROT_WRITE|VM_PROT_READ|VM_PROT_EXECUTE);
 #endif
 			}
 #ifdef BOOT1_DEBUG
@@ -1390,28 +1391,7 @@ pmap_deactivate(p)
 {
 }
 
-/*
- * Insert physical page at pa into the given pmap at virtual address va.
- */
-void
-pmap_enter(pm, va, pa, prot, wired, access_type)
-	struct pmap *pm;
-	vaddr_t va;
-	paddr_t pa;
-	vm_prot_t prot;
-	int wired;
-	vm_prot_t access_type;
-{
-	register u_int64_t phys;
-
-	phys = pa;
-	/* Call 64-bit clean version of pmap_enter */
-	pmap_enter_phys(pm, va, phys, TLB_8K, prot, wired);
-}
-
 #if defined(PMAP_NEW)
-/* Different interfaces to pmap_enter_phys */
-
 /*
  * pmap_kenter_pa:		[ INTERFACE ]
  *
@@ -1445,7 +1425,8 @@ pmap_kenter_pa(va, pa, prot)
 	tte.data.data = TSB_DATA(0, TLB_8K, pa, pm == pmap_kernel(),
 				 (VM_PROT_WRITE & prot),
 				 (!(pa & PMAP_NC)), pa & (PMAP_NVC), 1);
-	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W; /* HWREF -- XXXX */
+	/* We don't track modification here. */
+	if (VM_PROT_WRITE & prot) tte.data.data |= TLB_REAL_W|TLB_W; /* HWREF -- XXXX */
 	tte.data.data |= TLB_TSB_LOCK;	/* wired */
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	pg = NULL;
@@ -1474,12 +1455,12 @@ pmap_kenter_pa(va, pa, prot)
 	i = ptelookup_va(va);
 #ifdef DEBUG
 	if( pmapdebug & PDB_ENTER )
-		prom_printf("pmap_kenter: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
+		prom_printf("pmap_kenter_pa: va=%08x tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n", va,
 			    (int)(tte.tag.tag>>32), (int)tte.tag.tag, 
 			    (int)(tte.data.data>>32), (int)tte.data.data, 
 			    i, &tsb[i]);
 	if( pmapdebug & PDB_MMU_STEAL && tsb[i].data.data ) {
-		prom_printf("pmap_kenter: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
+		prom_printf("pmap_kenter_pa: evicting entry tag=%x:%08x data=%08x:%08x tsb[%d]=%08x\r\n",
 			    (int)(tsb[i].tag.tag>>32), (int)tsb[i].tag.tag, 
 			    (int)(tsb[i].data.data>>32), (int)tsb[i].data.data, 
 			    i, &tsb[i]);
@@ -1622,18 +1603,19 @@ pmap_kremove(va, size)
  * Supports 64-bit pa so we can map I/O space.
  */
 void
-pmap_enter_phys(pm, va, pa, size, prot, wired)
+pmap_enter(pm, va, pa, prot, wired, access_type)
 	struct pmap *pm;
 	vaddr_t va;
 	u_int64_t pa;
-	u_int64_t size;
 	vm_prot_t prot;
 	int wired;
+	vm_prot_t access_type;
 {
 	pte_t tte;
 	int s, i, aliased = 0;
 	register pv_entry_t pv=NULL, npv;
 	paddr_t pg;
+	int size = 0; /* PMAP_SZ_TO_TTE(pa); */
 
 	/*
 	 * Is this part of the permanent 4MB mapping?
@@ -1714,22 +1696,22 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 	ASSERT((tte.data.data & TLB_NFO) == 0);
 	pg = NULL;
 #ifdef NOTDEF_DEBUG
-	printf("pmap_enter_phys: inserting %x:%x at %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
+	printf("pmap_enter: inserting %x:%x at %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va);
 #endif
 	while (pseg_set(pm, va, tte.data.data, pg) != NULL) {
 		if (pmap_initialized || !uvm_page_physget(&pg)) {
 			vm_page_t page;
 #ifdef NOTDEF_DEBUG
-			printf("pmap_enter_phys: need to alloc page\n");
+			printf("pmap_enter: need to alloc page\n");
 #endif
 			while ((page = vm_page_alloc1()) == NULL) {
 				/*
 				 * Let the pager run a bit--however this may deadlock
 				 */
 #ifdef NOTDEF_DEBUG
-				printf("pmap_enter_phys: calling uvm_wait()\n");
+				printf("pmap_enter: calling uvm_wait()\n");
 #endif
-				uvm_wait("pmap_enter_phys");
+				uvm_wait("pmap_enter");
 			}
 			pg = (paddr_t)VM_PAGE_TO_PHYS(page);
 		} 
@@ -1738,7 +1720,7 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 		enter_stats.ptpneeded ++;
 #endif
 #ifdef NOTDEF_DEBUG
-	printf("pmap_enter_phys: inserting %x:%x at %x with %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va, (int)pg);
+	printf("pmap_enter: inserting %x:%x at %x with %x\n", (int)(tte.data.data>>32), (int)tte.data.data, (int)va, (int)pg);
 #endif
 	}
 
@@ -1826,19 +1808,19 @@ pmap_enter_phys(pm, va, pa, size, prot, wired)
 				pv->pv_va|=(pa & PMAP_NVC)?PV_NVC:PV_ALIAS;
 #ifdef DEBUG
 				if (pmapdebug & PDB_ALIAS) 
-						printf("pmap_enter_phys: aliased page %p:%p\n", 
+						printf("pmap_enter: aliased page %p:%p\n", 
 						       (int)(pa>>32), (int)pa);
 #endif
 				for (npv = pv; npv; npv = npv->pv_next) 
 					if (npv->pv_pmap == pm) {
 #ifdef DEBUG
 						if (pmapdebug & PDB_ALIAS) 
-							printf("pmap_enter_phys: dealiasing %p in ctx %d\n", 
+							printf("pmap_enter: dealiasing %p in ctx %d\n", 
 							       npv->pv_va, npv->pv_pmap->pm_ctx);
 #endif
 						/* Turn off cacheing of this TTE */
 						if (pseg_set(npv->pv_pmap, va, pseg_get(npv->pv_pmap, va) & ~TLB_CV, 0)) {
-							printf("pmap_enter_phys: aliased pseg empty!\n");
+							printf("pmap_enter: aliased pseg empty!\n");
 							Debugger();
 							/* panic? */
 						}
@@ -2180,7 +2162,8 @@ pmap_map(va, pa, endpa, prot)
 #ifdef DEBUG
 			page_size_map[i].use++;
 #endif
-			pmap_enter_phys(pmap_kernel(), va, pa, page_size_map[i].code, prot, 1);
+			pmap_enter(pmap_kernel(), va, pa|page_size_map[i].code, 
+				   prot, 1, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
 			va += pgsize;
 			pa += pgsize;
 		} while (pa & page_size_map[i].mask);
