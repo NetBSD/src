@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.1 2001/05/28 16:22:21 thorpej Exp $	*/
+/*	$NetBSD: pci_alignstride_bus_io_chipdep.c,v 1.2 2001/06/01 15:57:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -204,12 +204,14 @@ void		__C(CHIP,_io_copy_region_4) __P((void *, bus_space_handle_t,
 void		__C(CHIP,_io_copy_region_8) __P((void *, bus_space_handle_t,
 		    bus_size_t, bus_space_handle_t, bus_size_t, bus_size_t));
 
+#ifdef CHIP_IO_EXTENT
 #ifndef	CHIP_IO_EX_STORE
 static long
     __C(CHIP,_io_ex_storage)[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 #define	CHIP_IO_EX_STORE(v)		(__C(CHIP, _io_ex_storage))
 #define	CHIP_IO_EX_STORE_SIZE(v)	(sizeof __C(CHIP, _io_ex_storage))
 #endif
+#endif /* CHIP_IO_EXTENT */
 
 #ifndef CHIP_ALIGN_STRIDE
 #define	CHIP_ALIGN_STRIDE	0
@@ -220,7 +222,9 @@ __C(CHIP,_bus_io_init)(t, v)
 	bus_space_tag_t t;
 	void *v;
 {
+#ifdef CHIP_IO_EXTENT
 	struct extent *ex;
+#endif
 
 	/*
 	 * Initialize the bus space tag.
@@ -301,6 +305,7 @@ __C(CHIP,_bus_io_init)(t, v)
 	t->bs_c_4 =		__C(CHIP,_io_copy_region_4);
 	t->bs_c_8 =		__C(CHIP,_io_copy_region_8);
 
+#ifdef CHIP_IO_EXTENT
 	/* XXX WE WANT EXTENT_NOCOALESCE, BUT WE CAN'T USE IT. XXX */
 	ex = extent_create(__S(__C(CHIP,_bus_io)), 0x0UL, 0xffffffffUL,
 	    M_DEVBUF, (caddr_t)CHIP_IO_EX_STORE(v), CHIP_IO_EX_STORE_SIZE(v),
@@ -328,6 +333,7 @@ __C(CHIP,_bus_io_init)(t, v)
 	extent_print(ex);
 #endif
 	CHIP_IO_EXTENT(v) = ex;
+#endif /* CHIP_IO_EXTENT */
 }
 
 int
@@ -433,6 +439,7 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	if (error)
 		return (error);
 
+#ifdef CHIP_IO_EXTENT
 	if (acct == 0)
 		goto mapit;
 
@@ -450,6 +457,7 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, flags, iohp, acct)
 	}
 
  mapit:
+#endif /* CHIP_IO_EXTENT */
 	if (flags & BUS_SPACE_MAP_CACHEABLE)
 		*iohp = MIPS_PHYS_TO_KSEG0(mbst.mbst_sys_start +
 		    (ioaddr - mbst.mbst_bus_start));
@@ -467,6 +475,7 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 	bus_size_t iosize;
 	int acct;
 {
+#ifdef CHIP_IO_EXTENT
 	bus_addr_t ioaddr;
 	int error;
 
@@ -525,6 +534,7 @@ __C(CHIP,_io_unmap)(v, ioh, iosize, acct)
 		extent_print(CHIP_IO_EXTENT(v));
 #endif
 	}	
+#endif /* CHIP_IO_EXTENT */
 }
 
 int
@@ -547,6 +557,7 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 	int flags;
 	bus_space_handle_t *bshp;
 {
+#ifdef CHIP_IO_EXTENT
 	struct mips_bus_space_translation mbst;
 	int linear = flags & BUS_SPACE_MAP_LINEAR;
 	bus_addr_t ioaddr;
@@ -596,6 +607,9 @@ __C(CHIP,_io_alloc)(v, rstart, rend, size, align, boundary, flags,
 		    (ioaddr - mbst.mbst_bus_start));
 
 	return (0);
+#else /* ! CHIP_IO_EXTENT */
+	return (EOPNOTSUPP);
+#endif /* CHIP_IO_EXTENT */
 }
 
 void
