@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.10 1997/10/18 21:46:27 hubertf Exp $
+#	$NetBSD: Makefile.booters,v 1.11 1998/01/22 15:48:02 drochner Exp $
 
 BINDIR= /usr/mdec
 STRIPFLAG=
@@ -30,7 +30,8 @@ ${.OBJDIR}/machine::
 ### find out what to use for libkern
 KERN_AS=	library
 # XXX only bzero is missing in libkern, but we have to list all we need
-KERNMISCMAKEFLAGS= "SRCS=bzero.S bcmp.S strchr.c strncpy.c strcmp.S __main.c"
+# XXX index.c makes strchr.o too
+KERNMISCMAKEFLAGS= "SRCS=bzero.S bcmp.S index.c strncpy.c strcmp.S __main.c"
 .include "${S}/lib/libkern/Makefile.inc"
 LIBKERN=	${KERNLIB}
 
