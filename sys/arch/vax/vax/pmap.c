@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2001/06/04 15:36:00 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.102 2001/06/06 06:23:13 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -622,9 +622,10 @@ void
 pmap_kremove(vaddr_t va, vsize_t len)
 {
 	struct pte *pte;
-	int i;
 
 #ifdef PMAPDEBUG
+	int i;
+
 	if(startpmapdebug)
 		printf("pmap_kremove: va: %lx, len %lx, ptp %p\n",
 		    va, len, kvtopte(va));
@@ -632,7 +633,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 
 	pte = kvtopte(va);
 
-#ifdef DEBUG
+#ifdef PMAPDEBUG
 	/*
 	 * Check if any pages are on the pv list.
 	 * This shouldn't happen anymore.
