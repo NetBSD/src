@@ -1,4 +1,4 @@
-/*	$NetBSD: standout.c,v 1.10 2000/04/12 21:44:19 jdc Exp $	*/
+/*	$NetBSD: standout.c,v 1.11 2000/04/15 13:17:05 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,20 +38,43 @@
 #if 0
 static char sccsid[] = "@(#)standout.c	8.3 (Berkeley) 8/10/94";
 #else
-__RCSID("$NetBSD: standout.c,v 1.10 2000/04/12 21:44:19 jdc Exp $");
+__RCSID("$NetBSD: standout.c,v 1.11 2000/04/15 13:17:05 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+
 /*
- * wstandout
+ * standout
+ *	Enter standout mode on stdscr.
+ */
+int
+standout(void)
+{
+	return wstandout(stdscr);
+}
+
+/*
+ * standend --
+ *	Exit standout mode on stdscr.
+ */
+int
+standend(void)
+{
+	return wstandend(stdscr);
+}
+
+#endif
+
+/*
+ * standout
  *	Enter standout mode.
  */
 int
-wstandout(win)
-	WINDOW *win;
+wstandout(WINDOW *win)
 {
 	/*
 	 * If standout/standend strings, or can underline, set the
@@ -68,13 +91,13 @@ wstandout(win)
 	}
 	return (1);
 }
+
 /*
  * wstandend --
  *	Exit standout mode.
  */
 int
-wstandend(win)
-	WINDOW *win;
+wstandend(WINDOW *win)
 {
 	win->wattr &= ~__STANDOUT;
 	return (1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: getstr.c,v 1.10 1999/04/13 14:08:18 mrg Exp $	*/
+/*	$NetBSD: getstr.c,v 1.11 2000/04/15 13:17:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,20 +38,56 @@
 #if 0
 static char sccsid[] = "@(#)getstr.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getstr.c,v 1.10 1999/04/13 14:08:18 mrg Exp $");
+__RCSID("$NetBSD: getstr.c,v 1.11 2000/04/15 13:17:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
 #include "curses.h"
+#include "curses_private.h"
+
+#ifndef _CURSES_USE_MACROS
+
+/*
+ * getstr --
+ *	Get a string from stdscr starting at (cury, curx).
+ */
+int
+getstr(char *str)
+{
+	return wgetstr(stdscr, str);
+}
+
+/*
+ * mvgetstr --
+ *      Get a string from stdscr starting at (y, x).
+ */
+int
+mvgetstr(int y, int x, char *str)
+{
+	return mvwgetstr(stdscr, y, x, str);
+}
+
+/*
+ * mvwgetstr --
+ *      Get a string from the given window starting at (y, x).
+ */
+int
+mvwgetstr(WINDOW *win, int y, int x, char *str)
+{
+	if (wmove(win, y, x) == ERR)
+		return ERR;
+
+	return wgetstr(win, str);
+}
+
+#endif
 
 /*
  * wgetstr --
  *	Get a string starting at (cury, curx).
  */
 int
-wgetstr(win, str)
-	WINDOW *win;
-	char   *str;
+wgetstr(WINDOW *win, char *str)
 {
 	while ((*str = wgetch(win)) != ERR && *str != '\n')
 		str++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.15 2000/04/12 21:45:30 jdc Exp $	*/
+/*	$NetBSD: setterm.c,v 1.16 2000/04/15 13:17:04 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.15 2000/04/12 21:45:30 jdc Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.16 2000/04/15 13:17:04 blymn Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,8 +99,7 @@ static char	tspace[4096];		/* Space for capability strings */
 char *ttytype;
 
 int
-setterm(type)
-	char *type;
+setterm(char *type)
 {
 	static char genbuf[2048];
 	static char __ttytype[128];
@@ -257,8 +256,7 @@ zap()
  *	Return a capability from termcap.
  */
 char	*
-getcap(name)
-	char	*name;
+getcap(char *name)
 {
 	return (tgetstr(name, &aoftspace));
 }

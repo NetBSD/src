@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.3 2000/04/12 21:43:57 jdc Exp $	*/
+/*	$NetBSD: attributes.c,v 1.4 2000/04/15 13:17:02 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -39,6 +39,41 @@
 #include "curses.h"
 #include "curses_private.h"
 
+#ifndef _CURSES_USE_MACROS
+/*
+ * attron
+ *	Test and set attributes on stdscr
+ */
+
+int
+attron(int attr)
+{
+	return wattron(stdscr, attr);
+}
+
+/*
+ * attroff
+ *	Test and unset attributes on stdscr.
+ */
+int
+attroff(int attr)
+{
+	return wattroff(stdscr, attr);
+}
+
+/*
+ * attrset
+ *	Set specific attribute modes.
+ *	Unset others.  On stdscr.
+ */
+int
+attrset(int attr)
+{
+	return wattrset(stdscr, attr);
+}
+
+#endif
+
 /*
  * wattron
  *	Test and set attributes.
@@ -48,9 +83,7 @@
  */
 
 int
-wattron(win, attr)
-	WINDOW	*win;
-	int	 attr;
+wattron(WINDOW *win, int attr)
 {
 #ifdef DEBUG
 	__CTRACE ("wattron: %08x, %08x\n", attr, __nca);
@@ -143,9 +176,7 @@ wattron(win, attr)
  *	which attributes should really be set in refresh.c:makech().
  */
 int
-wattroff(win, attr)
-	WINDOW	*win;
-	int	 attr;
+wattroff(WINDOW *win, int attr)
 {
 #ifdef DEBUG
 	__CTRACE ("wattroff: %08x\n", attr);
@@ -203,9 +234,7 @@ wattroff(win, attr)
  *	Unset others.
  */
 int
-wattrset(win, attr)
-	WINDOW	*win;
-	int	 attr;
+wattrset(WINDOW *win, int attr)
 {
 	if ((attr_t) attr & __BLINK)
 		wattron(win, __BLINK);
