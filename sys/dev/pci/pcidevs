@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.140 1999/07/27 17:52:59 castor Exp $
+$NetBSD: pcidevs,v 1.141 1999/07/28 22:36:10 soren Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -409,7 +409,7 @@ vendor MIRTRON		0x1175	Mitron Computer
 vendor SBE		0x1176	SBE
 vendor SILICONENG	0x1177	Silicon Engineering
 vendor ALFA		0x1178	Alfa
-vendor TOSHIBA2		0x1179	Toshiba Info Systems (2nd PCI Vendor ID)
+vendor TOSHIBA2		0x1179	Toshiba America Info Systems
 vendor ATREND		0x117a	A-Trend Technology
 vendor ATTO		0x117c	Atto Technology
 vendor TR		0x117e	T/R Systems
@@ -426,7 +426,7 @@ vendor HILEVEL		0x118a	HiLevel Technology
 vendor COROLLARY	0x118c	Corrollary
 vendor BITFLOW		0x118d	BitFlow
 vendor HERMSTEDT	0x118e	Hermstedt
-vendor ACARD		0x1191	ACARD
+vendor ACARD		0x1191	Acard
 vendor DENSAN		0x1192	Densan
 vendor ZEINET		0x1193	Zeinet
 vendor TOUCAN		0x1194	Toucan Technology
@@ -573,13 +573,13 @@ product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
 product ACC 2051_HB 	0x2051	2051 PCI Single Chip Solution (host bridge)
 product ACC 2051_ISA 	0x5842	2051 PCI Single Chip Solution (ISA bridge)
 
-/* ACARD products */
-product ACARD AEC6710   0x8002  AEC6710 SCSI
-product ACARD AEC6712UW 0x8010  AEC6712UW SCSI
-product ACARD AEC6712U  0x8020  AEC6712U SCSI
-product ACARD AEC6712S  0x8030  AEC6712S SCSI
-product ACARD AEC6712D  0x8040  AEC6712D SCSI
-product ACARD AEC6712SUW 0x8050 AEC6712SUW SCSI
+/* Acard products */
+product ACARD AEC6710	0x8002	AEC6710 SCSI
+product ACARD AEC6712UW	0x8010	AEC6712UW SCSI
+product ACARD AEC6712U	0x8020	AEC6712U SCSI
+product ACARD AEC6712S	0x8030	AEC6712S SCSI
+product ACARD AEC6710D	0x8040	AEC6710D SCSI
+product ACARD AEC6715UW	0x8050	AEC6715UW SCSI
 
 /* Accton products */
 product ACCTON MPX5030	0x1211	MPX 5030/5038 Ethernet
@@ -875,16 +875,19 @@ product EFFICIENTNETS ENI155PA	0x0002	155P-MF1 ATM (ASIC)
 product HP J2585A	0x1030	J2585A
 
 /* IBM products */
-product IBM 0x0002 	0x0002	MCA Bridge
-product IBM 0x0005 	0x0005	CPU Bridge - Alta Lite
-product IBM 0x0007 	0x0007	CPU Bridge - Alta MP
-product IBM 0x000a 	0x000a	ISA Bridge w/PnP
-product IBM 0x0017 	0x0017	CPU Bridge
-product IBM 0x0018 	0x0018	Auto LANStreamer
-product IBM GXT150P	0x001B	GXT-150P 2D Accelerator
-product IBM 0x0020	0x0020	MCA Bridge
+product IBM MCABRIDGE 	0x0002	MCA Bridge
+product IBM ALTALITE 	0x0005	CPU Bridge - Alta Lite
+product IBM ALTAMP 	0x0007	CPU Bridge - Alta MP
+product IBM ISABRIDGE	0x000a	ISA Bridge w/PnP
+product IBM CPUBRIDGE 	0x0017	CPU Bridge
+product IBM LANSTREAMER	0x0018	Auto LANStreamer
+product IBM GXT150P	0x001b	GXT-150P 2D Accelerator
+product IBM MCABRIDGE2	0x0020	MCA Bridge
 product IBM 82351	0x0022	82351 PCI-PCI Bridge
-product IBM 0x0036	0x0036	Miami/PCI
+product IBM SERVERAID	0x002e	ServeRAID
+product IBM OLYMPIC	0x003e	Token Ring
+product IBM MIAMI	0x0036	Miami/PCI
+product IBM TURBOWAYS25	0x0053	Turboways 25 ATM
 
 /* IDT products */
 product IDT 77201	0x0001	77201/77211 ATM (\"NICStAR\")
@@ -1017,6 +1020,7 @@ product SYMBIOS 875J	0x008f	53c875J
 product SYMBIOS PE_GNIC	0x0702	Packet Engines G-NIC Ethernet
 
 /* NEC products */
+product NEC USB		0x0035	USB Host Controller
 product NEC POWERVR2	0x0046	PowerVR PCX2
 
 /* Neomagic products */
@@ -1183,14 +1187,16 @@ product TI	PCI2030		0xac20	PCI2030 PCI-CardBus Bridge
 /* Sony products */
 product	SONY	CXD1947A	0x8009	CXD1947A FireWire Host Controller
 
-/* Toshiba products */
+/* Toshiba America products */
 product TOSHIBA R4X00		0x0009	R4x00 Host-PCI Bridge
 product TOSHIBA TC35856F	0x0020	TC35856F ATM (\"Meteor\")
 
-/* Toshiba2 products */
+/* Toshiba America Info Systems products */
+product TOSHIBA2 HOST		0x0601  Host Bridge/Controller
 product TOSHIBA2 ToPIC95	0x0603	ToPIC95 CardBus-PCI Bridge
 product TOSHIBA2 ToPIC95B	0x060a	ToPIC95B CardBus-PCI Bridge
 product TOSHIBA2 ToPIC97	0x060f	ToPIC97 CardBus-PCI Bridge
+product TOSHIBA2 FIRO		0x0701	Fast Infrared Type O
 
 /* Trident products */
 product TRIDENT	TGUI_9320	0x9320	TGUI 9320
