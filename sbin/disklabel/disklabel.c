@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.31 1996/06/29 15:50:16 pk Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.32 1996/06/29 18:44:11 pk Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -47,7 +47,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$NetBSD: disklabel.c,v 1.31 1996/06/29 15:50:16 pk Exp $";
+static char rcsid[] = "$NetBSD: disklabel.c,v 1.32 1996/06/29 18:44:11 pk Exp $";
 #endif
 #endif /* not lint */
 
@@ -477,6 +477,16 @@ writelabel(f, boot, lp)
 		if (bootbuf && write(f, bootbuf, bootsize) != bootsize) {
 			perror("write");
 			return(1);
+		}
+#endif
+
+#ifdef __sparc__
+		/*
+		 * Let the kernel deal with SunOS disklabel compatibility.
+		 */
+		if (ioctl(f, DIOCWDINFO, lp) < 0) {
+			l_perror("ioctl DIOCWDINFO");
+			return (1);
 		}
 #endif
 
