@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.68 2003/03/22 13:05:26 dsl Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.69 2003/05/12 14:59:51 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.68 2003/03/22 13:05:26 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.69 2003/05/12 14:59:51 dsl Exp $");
 
 #include "opt_compat_oldboot.h"
 
@@ -118,7 +118,7 @@ int booted_partition;
  * Determine i/o configuration for a machine.
  */
 void
-cpu_configure()
+cpu_configure(void)
 {
 
 	startrtclock();
@@ -164,7 +164,7 @@ cpu_configure()
 }
 
 void
-cpu_rootconf()
+cpu_rootconf(void)
 {
 	findroot();
 	matchbiosdisks();
@@ -180,7 +180,7 @@ cpu_rootconf()
  * match between BIOS disks and native disks can be done.
  */
 static void
-matchbiosdisks()
+matchbiosdisks(void)
 {
 	struct btinfo_biosgeom *big;
 	struct bi_biosgeom_entry *be;
@@ -312,9 +312,7 @@ u_long	bootdev = 0;		/* should be dev_t, but not until 32 bits */
  * return nonzero if disk device matches bootinfo
  */
 static int
-match_harddisk(dv, bid)
-	struct device *dv;
-	struct btinfo_bootdisk *bid;
+match_harddisk(struct device *dv, struct btinfo_bootdisk *bid)
 {
 	struct vnode *tmpvn;
 	int error;
@@ -420,7 +418,7 @@ findroot(void)
 		 * boot device.
 		 */
 		for (dv = alldevs.tqh_first; dv != NULL;
-		dv = dv->dv_list.tqe_next) {
+		    dv = dv->dv_list.tqe_next) {
 			if (dv->dv_class != DV_DISK)
 				continue;
 
@@ -457,8 +455,8 @@ findroot(void)
 found:
 			if (booted_device) {
 				printf("warning: double match for boot "
-				    "device (%s, %s)\n", booted_device->dv_xname,
-				    dv->dv_xname);
+				    "device (%s, %s)\n",
+				    booted_device->dv_xname, dv->dv_xname);
 				continue;
 			}
 			booted_device = dv;
@@ -504,9 +502,7 @@ found:
 #endif
 
 void
-device_register(dev, aux)
-	struct device *dev;
-	void *aux;
+device_register(struct device *dev, void *aux)
 {
 	/*
 	 * Handle network interfaces here, the attachment information is
@@ -527,8 +523,7 @@ device_register(dev, aux)
 		 */
 
 		if (bin->bus == BI_BUS_ISA &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
-		    "isa")) {
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "isa")) {
 			struct isa_attach_args *iaa = aux;
 
 			/* compare IO base address */
@@ -539,8 +534,7 @@ device_register(dev, aux)
 		}
 #if NPCI > 0
 		if (bin->bus == BI_BUS_PCI &&
-		    !strcmp(dev->dv_parent->dv_cfdata->cf_name,
-		    "pci")) {
+		    !strcmp(dev->dv_parent->dv_cfdata->cf_name, "pci")) {
 			struct pci_attach_args *paa = aux;
 			int b, d, f;
 
