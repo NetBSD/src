@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_aout.c,v 1.42 2000/11/21 00:37:54 jdolecek Exp $	*/
+/*	$NetBSD: linux_exec_aout.c,v 1.43 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -366,7 +366,7 @@ linux_sys_uselib(p, v, retval)
 	size_t rem;
 
 	sg = stackgap_init(p->p_emul);
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	NDINIT(&ni, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 

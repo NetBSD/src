@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.58 2000/08/29 14:33:27 sommerfeld Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.59 2000/12/01 12:28:33 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -229,7 +229,7 @@ linux_sys_utime(p, v, retval)
 
 	sg = stackgap_init(p->p_emul);
 	tvp = (struct timeval *) stackgap_alloc(&sg, sizeof(tv));
-	LINUX_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 
 	SCARG(&ua, path) = SCARG(uap, path);
 

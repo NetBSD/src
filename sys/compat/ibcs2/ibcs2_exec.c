@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_exec.c,v 1.37 2000/11/21 00:37:53 jdolecek Exp $	*/
+/*	$NetBSD: ibcs2_exec.c,v 1.38 2000/12/01 12:28:32 jdolecek Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1998 Scott Bartram
@@ -98,8 +98,6 @@ extern struct sysent ibcs2_sysent[];
 extern const char * const ibcs2_syscallnames[];
 extern char ibcs2_sigcode[], ibcs2_esigcode[];
 
-const char ibcs2_emul_path[] = "/emul/ibcs2";
-
 #ifdef IBCS2_DEBUG
 int ibcs2_debug = 1;
 #else
@@ -108,6 +106,7 @@ int ibcs2_debug = 0;
 
 const struct emul emul_ibcs2 = {
 	"ibcs2",
+	"/emul/ibcs2",
 	native_to_ibcs2_errno,
 	ibcs2_sendsig,
 	0,
@@ -193,7 +192,8 @@ ibcs2_elf32_probe(p, epp, eh, itp, pos)
                 return error;
 
 	if (itp[0]) {
-		if ((error = emul_find(p, NULL, ibcs2_emul_path, itp, &bp, 0)))
+		if ((error = emul_find(p, NULL, epp->ep_esch->es_emul->e_path,
+		    itp, &bp, 0)))
 			return error;
 		if ((error = copystr(bp, itp, MAXPATHLEN, &len)))
 			return error;
@@ -724,7 +724,7 @@ coff_load_shlib(p, path, epp)
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	IBCS2_CHECK_ALT_EXIST(p, NULL, path);	/* path is on kernel stack */
+	CHECK_ALT_EXIST(p, NULL, path);	/* path is on kernel stack */
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, path, p);
 	/* first get the vnode */
 	if ((error = namei(&nd)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_util.h,v 1.6 2000/06/16 01:56:37 matt Exp $	*/
+/*	$NetBSD: ibcs2_util.h,v 1.7 2000/12/01 12:28:32 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -71,16 +71,14 @@
 #include <compat/common/compat_util.h>
 
 #ifdef _KERNEL
+
+#ifdef DEBUG_IBCS2
 extern int ibcs2_debug;
 #define DPRINTF(a)      do { if (ibcs2_debug) printf a; } while (0)
-#endif
+#else /* !DEBUG_IBCS2 */
+#define DPRINTF(a)
+#endif /* DEBUG_IBCS2 */
 
-extern const char ibcs2_emul_path[];
-
-#define IBCS2_CHECK_ALT_EXIST(p, sgp, path) \
-	CHECK_ALT_EXIST(p, sgp, ibcs2_emul_path, path)
-
-#define IBCS2_CHECK_ALT_CREAT(p, sgp, path) \
-	CHECK_ALT_CREAT(p, sgp, ibcs2_emul_path, path)
+#endif /* _KERNEL */
 
 #endif /* !_IBCS2_UTIL_H_ */

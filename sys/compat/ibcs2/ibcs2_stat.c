@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_stat.c,v 1.16 2000/08/29 14:33:27 sommerfeld Exp $	*/
+/*	$NetBSD: ibcs2_stat.c,v 1.17 2000/12/01 12:28:32 jdolecek Exp $	*/
 /*
  * Copyright (c) 1995, 1998 Scott Bartram
  * All rights reserved.
@@ -139,7 +139,7 @@ ibcs2_sys_statfs(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -199,7 +199,7 @@ ibcs2_sys_statvfs(p, v, retval)
 	struct nameidata nd;
 	caddr_t sg = stackgap_init(p->p_emul);
 
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	if ((error = namei(&nd)) != 0)
 		return (error);
@@ -259,7 +259,7 @@ ibcs2_sys_stat(p, v, retval)
 	int error;
 	caddr_t sg = stackgap_init(p->p_emul);
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___stat13(p, &cup, retval)) != 0)
@@ -288,7 +288,7 @@ ibcs2_sys_lstat(p, v, retval)
 	caddr_t sg = stackgap_init(p->p_emul);
 
 	SCARG(&cup, ub) = stackgap_alloc(&sg, sizeof(st));
-	IBCS2_CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
+	CHECK_ALT_EXIST(p, &sg, SCARG(uap, path));
 	SCARG(&cup, path) = SCARG(uap, path);
 
 	if ((error = sys___lstat13(p, &cup, retval)) != 0)
