@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide.c,v 1.132 2001/10/21 18:55:14 thorpej Exp $	*/
+/*	$NetBSD: pciide.c,v 1.133 2001/10/26 10:38:12 augustss Exp $	*/
 
 
 /*
@@ -2093,6 +2093,10 @@ apollo_chip_map(sc, pa)
 			printf("ATA66 controller\n");
 			sc->sc_wdcdev.UDMA_cap = 4;
 		}
+		break;
+	case PCI_PRODUCT_VIATECH_VT8233:
+		printf("VT8233 ATA100 controller\n");
+		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
 		printf("unknown ATA controller\n");
