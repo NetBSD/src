@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.7 2002/01/30 03:59:40 thorpej Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.8 2002/02/22 05:07:46 thorpej Exp $
 
 .if (${BOARDTYPE} == "integrator")
 GENASSYM_EXTRAS+=	${THISARM}/ifpga/genassym.cf
@@ -13,6 +13,9 @@ SYSTEM_LD_TAIL_EXTRA=; \
 .if (${BOARDTYPE} == "iq80310")
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${OBJCOPY} -S -O srec $@ $@.srec; \
-	${OBJCOPY} -S -O srec $@ $@.srec
+	${OBJCOPY} -S -O srec $@ $@.srec; \
+	echo ${OBJCOPY} -S -O binary $@ $@.bin; \
+	${OBJCOPY} -S -O binary $@ $@.bin
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.srec@}
+EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.bin@}
 .endif
