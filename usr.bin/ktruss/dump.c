@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.15 2003/08/07 11:14:15 agc Exp $	*/
+/*	$NetBSD: dump.c,v 1.16 2003/09/23 18:46:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.15 2003/08/07 11:14:15 agc Exp $");
+__RCSID("$NetBSD: dump.c,v 1.16 2003/09/23 18:46:33 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -352,7 +352,7 @@ ktrsyscall(ktr, nohdr, buff, bufsz, lenp)
 					*bp++ = '(';
 				eol = 0;
 				break;
-			case SYS___sigaction14 :
+			case SYS_compat_16___sigaction14 :
 				(void)snprintf(bp, BLEFT, "(%s",
 					       signals[(int)*ap].name);
 				s = ", ";
