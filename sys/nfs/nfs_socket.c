@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.80 2003/04/02 15:14:21 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.81 2003/04/03 15:14:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.80 2003/04/02 15:14:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.81 2003/04/03 15:14:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -2064,9 +2064,7 @@ nfsrv_getstream(slp, waitflag)
 	int waitflag;
 {
 	struct mbuf *m, **mpp;
-	char *cp1, *cp2;
-	int len;
-	struct mbuf *om, *m2, *recm;
+	struct mbuf *recm;
 	u_int32_t recmark;
 
 	if (slp->ns_flag & SLP_GETSTREAM)
@@ -2079,23 +2077,8 @@ nfsrv_getstream(slp, waitflag)
 			return (0);
 		}
 		m = slp->ns_raw;
-		if (m->m_len >= NFSX_UNSIGNED) {
-			memcpy((caddr_t)&recmark, mtod(m, caddr_t), NFSX_UNSIGNED);
-			m->m_data += NFSX_UNSIGNED;
-			m->m_len -= NFSX_UNSIGNED;
-		} else {
-			cp1 = (caddr_t)&recmark;
-			cp2 = mtod(m, caddr_t);
-			while (cp1 < ((caddr_t)&recmark) + NFSX_UNSIGNED) {
-				while (m->m_len == 0) {
-					m = m->m_next;
-					cp2 = mtod(m, caddr_t);
-				}
-				*cp1++ = *cp2++;
-				m->m_data++;
-				m->m_len--;
-			}
-		}
+		m_copydata(m, 0, NFSX_UNSIGNED, (caddr_t)&recmark);
+		m_adj(m, NFSX_UNSIGNED);
 		slp->ns_cc -= NFSX_UNSIGNED;
 		recmark = ntohl(recmark);
 		slp->ns_reclen = recmark & ~0x80000000;
@@ -2120,53 +2103,17 @@ nfsrv_getstream(slp, waitflag)
 		slp->ns_raw = slp->ns_rawend = (struct mbuf *)0;
 		slp->ns_cc = slp->ns_reclen = 0;
 	    } else if (slp->ns_cc > slp->ns_reclen) {
-		len = 0;
-		m = slp->ns_raw;
-		recm = om = NULL;
-
-		while (len < slp->ns_reclen) {
-			if ((len + m->m_len) > slp->ns_reclen) {
-				size_t left = slp->ns_reclen - len;
-
-				MGETHDR(m2, waitflag, m->m_type);
-				if (m2 == NULL) {
-					slp->ns_flag &= ~SLP_GETSTREAM;
-					return (EWOULDBLOCK);
-				}
-				MCLAIM(m2, &nfs_mowner);
-				if (left > MHLEN) {
-					MCLGET(m2, waitflag);
-					if (!(m2->m_flags & M_EXT)) {
-						m_freem(m2);
-						slp->ns_flag &= ~SLP_GETSTREAM;
-						return (EWOULDBLOCK);
-					}
-				}
-				memcpy(mtod(m2, caddr_t), mtod(m, caddr_t),
-				    left);
-				m2->m_len = left;
-				m->m_data += left;
-				m->m_len -= left;
-				if (om) {
-					om->m_next = m2;
-					recm = slp->ns_raw;
-				} else
-					recm = m2;
-				len = slp->ns_reclen;
-			} else if ((len + m->m_len) == slp->ns_reclen) {
-				om = m;
-				len += m->m_len;
-				m = m->m_next;
-				recm = slp->ns_raw;
-				om->m_next = (struct mbuf *)0;
-			} else {
-				om = m;
-				len += m->m_len;
-				m = m->m_next;
-			}
+		recm = slp->ns_raw;
+		m = m_split(recm, slp->ns_reclen, waitflag);
+		if (m == NULL) {
+			slp->ns_flag &= ~SLP_GETSTREAM;
+			return (EWOULDBLOCK);
 		}
+		m_claim(recm, &nfs_mowner);
 		slp->ns_raw = m;
-		slp->ns_cc -= len;
+		if (m->m_next == NULL)
+			slp->ns_rawend = m;
+		slp->ns_cc -= slp->ns_reclen;
 		slp->ns_reclen = 0;
 	    } else {
 		slp->ns_flag &= ~SLP_GETSTREAM;
