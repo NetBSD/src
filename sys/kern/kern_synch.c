@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.41 1996/10/13 02:32:35 christos Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.42 1996/10/15 23:00:10 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -298,11 +298,6 @@ tsleep(ident, priority, wmesg, timo)
 	extern int cold;
 	void endtsleep __P((void *));
 
-#ifdef KTRACE
-	if (KTRPOINT(p, KTR_CSW))
-		ktrcsw(p->p_tracep, 1, 0);
-#endif
-	s = splhigh();
 	if (cold || panicstr) {
 		/*
 		 * After a panic, or during autoconfiguration,
@@ -310,10 +305,18 @@ tsleep(ident, priority, wmesg, timo)
 		 * don't run any other procs or panic below,
 		 * in case this is the idle process and already asleep.
 		 */
+		s = splhigh();
 		splx(safepri);
 		splx(s);
 		return (0);
 	}
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_CSW))
+		ktrcsw(p->p_tracep, 1, 0);
+#endif
+	s = splhigh();
+
 #ifdef DIAGNOSTIC
 	if (ident == NULL || p->p_stat != SRUN || p->p_back)
 		panic("tsleep");
