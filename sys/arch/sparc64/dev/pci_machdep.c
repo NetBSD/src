@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.35 2003/03/22 06:33:09 nakayama Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36 2003/05/04 21:36:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -71,6 +71,8 @@ int sparc_pci_debug = 0x0;
 struct sparc_pci_chipset _sparc_pci_chipset = {
 	NULL,
 };
+
+static int pci_bus_frequency(int node);
 
 static pcitag_t
 ofpci_make_tag(pci_chipset_tag_t pc, int node, int b, int d, int f)
@@ -254,6 +256,27 @@ pci_decompose_tag(pc, tag, bp, dp, fp)
 		*fp = PCITAG_FUN(tag);
 }
 
+static int 
+pci_bus_frequency(int node)
+{
+	int len, bus_frequency;
+
+	len = OF_getproplen(node, "clock-frequency");
+	if (len < sizeof(bus_frequency)) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_bus_frequency: clock-frequency len %d too small\n",
+		     len));
+		return 33;
+	}
+	if (OF_getprop(node, "clock-frequency", &bus_frequency,
+		       sizeof(bus_frequency)) != len) {
+		DPRINTF(SPDB_PROBE,
+		    ("pci_bus_frequency: could not read clock-frequency\n"));
+		return 33;
+	}
+	return bus_frequency / 1000000;
+}
+
 int
 pci_enumerate_bus(struct pci_softc *sc,
     int (*match)(struct pci_attach_args *), struct pci_attach_args *pap)
@@ -263,7 +286,7 @@ pci_enumerate_bus(struct pci_softc *sc,
 	pcitag_t tag;
 	pcireg_t class, csr, bhlc, ic;
 	int node, b, d, f, ret;
-	int len, bus_frequency, lt, cl;
+	int bus_frequency, lt, cl;
 	char name[30];
 	extern int pci_config_dump;
 
@@ -272,20 +295,7 @@ pci_enumerate_bus(struct pci_softc *sc,
 	else
 		node = pc->rootnode;
 
-	len = OF_getproplen(node, "clock-frequency");
-	if (len < sizeof(bus_frequency)) {
-		DPRINTF(SPDB_PROBE,
-		    ("pci_enumerate_bus: clock-frequency len %d too small\n",
-		     len));
-		return 0;
-	}
-	if (OF_getprop(node, "clock-frequency", &bus_frequency,
-		       sizeof(bus_frequency)) != len) {
-		DPRINTF(SPDB_PROBE,
-		    ("pci_enumerate_bus: could not read clock-frequency\n"));
-		return 0;
-	}
-	bus_frequency /= 1000000;
+	bus_frequency = pci_bus_frequency(node);
 
 	/* Turn on parity for the bus. */
 	tag = ofpci_make_tag(pc, node, sc->sc_bus, 0, 0);
