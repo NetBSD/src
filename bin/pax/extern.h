@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.17 1999/08/24 07:57:06 tron Exp $	*/
+/*	$NetBSD: extern.h,v 1.18 1999/10/22 10:43:11 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -129,6 +129,7 @@ int bcpio_wr __P((ARCHD *));
 /*
  * file_subs.c
  */
+extern char *gnu_hack_string;
 int file_creat __P((ARCHD *));
 void file_close __P((ARCHD *, int));
 int lnk_creat __P((ARCHD *));
