@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.6 1994/08/06 23:26:39 jtc Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.7 1995/03/21 21:47:04 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -89,6 +89,7 @@ main(argc, argv)
 	register int cc;
 	int fromlen;
 	char msgbuf[100];
+	sigset_t sigset;
 
 	/* verify proper invocation */
 	fromlen = sizeof(from);
@@ -124,11 +125,14 @@ main(argc, argv)
 		}
 		if (!nutmp)		/* no one has logged in yet */
 			continue;
-		sigblock(sigmask(SIGALRM));
+		sigemptyset(&sigset);
+		sigaddset(&sigset, SIGALRM);
+		sigprocmask(SIG_SETMASK, &sigset, NULL);
 		msgbuf[cc] = '\0';
 		(void)time(&lastmsgtime);
 		mailfor(msgbuf);
-		sigsetmask(0L);
+		sigemptyset(&sigset);
+		sigprocmask(SIG_SETMASK, &sigset, NULL);
 	}
 }
 

@@ -37,7 +37,7 @@
 
 #ifndef lint
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 4/6/94";
-static char rcsid[] = "$Id: popen.c,v 1.3 1994/06/29 01:49:50 deraadt Exp $";
+static char rcsid[] = "$Id: popen.c,v 1.4 1995/03/21 21:47:19 mycroft Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -151,6 +151,7 @@ ftpd_pclose(iop)
 {
 	int fdes, omask, status;
 	pid_t pid;
+	sigset_t sigset, osigset;
 
 	/*
 	 * pclose returns -1 if stream is not associated with a
@@ -159,10 +160,14 @@ ftpd_pclose(iop)
 	if (pids == 0 || pids[fdes = fileno(iop)] == 0)
 		return (-1);
 	(void)fclose(iop);
-	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
+	sigemptyset(&sigset);
+	sigaddset(&sigset, SIGINT);
+	sigaddset(&sigset, SIGQUIT);
+	sigaddset(&sigset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	while ((pid = waitpid(pids[fdes], &status, 0)) < 0 && errno == EINTR)
 		continue;
-	(void)sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &osigset, NULL);
 	pids[fdes] = 0;
 	if (pid < 0)
 		return (pid);
