@@ -1,4 +1,4 @@
-.\"	$NetBSD: packages.7,v 1.49 2001/03/16 12:51:50 wiz Exp $
+.\"	$NetBSD: packages.7,v 1.50 2001/04/29 05:56:20 tron Exp $
 .\"
 .\" from: NetBSD: bsd.pkg.mk,v 1.89 1998/06/01 21:30:10 hubertf Exp
 .\"
@@ -351,6 +351,10 @@ Says that the package uses a Java virtual machine.
 Says that the package uses
 .Pa perl5
 for building and running.
+.It PERL5_REQD
+Sets the minimum
+.Pa perl5
+version required. The default is 5.0.
 .It USE_IMAKE	
 Says that the package uses
 .Pa imake .
