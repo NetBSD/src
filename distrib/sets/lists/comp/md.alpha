@@ -1,4 +1,4 @@
-# $NetBSD: md.alpha,v 1.24 2000/03/17 22:54:04 tron Exp $
+# $NetBSD: md.alpha,v 1.25 2000/04/25 22:52:03 thorpej Exp $
 ./usr/include/alpha	comp-c-include
 ./usr/include/alpha/_G_config.h	comp-c-include
 ./usr/include/alpha/alpha_cpu.h	comp-c-include
@@ -46,7 +46,6 @@
 ./usr/include/alpha/reg.h	comp-c-include
 ./usr/include/alpha/rpb.h	comp-c-include
 ./usr/include/alpha/setjmp.h	comp-c-include
-./usr/include/alpha/sfbreg.h	comp-c-include
 ./usr/include/alpha/signal.h	comp-c-include
 ./usr/include/alpha/stdarg.h	comp-c-include
 ./usr/include/alpha/types.h	comp-c-include
