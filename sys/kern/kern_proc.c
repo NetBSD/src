@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.71 2004/02/06 06:59:33 pk Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.72 2004/02/26 11:20:08 junyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.71 2004/02/06 06:59:33 pk Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.72 2004/02/26 11:20:08 junyoung Exp $");
 
 #include "opt_kstack.h"
 
@@ -93,8 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.71 2004/02/06 06:59:33 pk Exp $");
 #include <sys/ras.h>
 #include <sys/sa.h>
 #include <sys/savar.h>
-
-static void pg_delete(pid_t);
 
 /*
  * Structure associated with user cacheing.
@@ -134,7 +132,7 @@ struct proclist zombproc;	/* resources have been freed */
 struct lock proclist_lock;
 
 /*
- * pid to proc lookup is done by indexing the pid_table array. 
+ * pid to proc lookup is done by indexing the pid_table array.
  * Since pid numbers are only allocated when an empty slot
  * has been found, there is no need to search any lists ever.
  * (an orphaned pgrp will lock the slot, a session will lock
@@ -148,12 +146,12 @@ struct lock proclist_lock;
 struct pid_table {
 	struct proc	*pt_proc;
 	struct pgrp	*pt_pgrp;
-}; 
+};
 #if 1	/* strongly typed cast - should be a noop */
-static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; };
+static __inline uint p2u(struct proc *p) { return (uint)(uintptr_t)p; }
 #else
 #define p2u(p) ((uint)p)
-#endif 
+#endif
 #define P_VALID(p) (!(p2u(p) & 1))
 #define P_NEXT(p) (p2u(p) >> 1)
 #define P_FREE(pid) ((struct proc *)(uintptr_t)((pid) << 1 | 1))
@@ -198,9 +196,10 @@ const struct proclist_desc proclists[] = {
 	{ NULL		},
 };
 
-static void orphanpg __P((struct pgrp *));
+static void orphanpg(struct pgrp *);
+static void pg_delete(pid_t);
 #ifdef DEBUG
-void pgrpdump __P((void));
+void pgrpdump(void);
 #endif
 
 /*
@@ -260,7 +259,7 @@ procinit(void)
 	    &pool_allocator_nointr);
 	pool_init(&sadata_pool, sizeof(struct sadata), 0, 0, 0, "sadatapl",
 	    &pool_allocator_nointr);
-	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0, 
+	pool_init(&saupcall_pool, sizeof(struct sadata_upcall), 0, 0, 0,
 	    "saupcpl", &pool_allocator_nointr);
 	pool_init(&sastack_pool, sizeof(struct sastack), 0, 0, 0, "sastackpl",
 	    &pool_allocator_nointr);
@@ -505,7 +504,7 @@ expand_pid_table(void)
 		FREE(new_pt, M_PROC);
 		return;
 	}
-	   
+
 	/*
 	 * Copy entries from old table into new one.
 	 * If 'pid' is 'odd' we need to place in the upper half,
@@ -530,7 +529,7 @@ expand_pid_table(void)
 				pid = pgrp->pg_id;
 		} else
 			pid = proc->p_pid;
-		
+
 		/* Save entry in appropriate half of table */
 		n_pt[pid & pt_size].pt_proc = proc;
 		n_pt[pid & pt_size].pt_pgrp = pgrp;
@@ -651,12 +650,12 @@ proc_free_mem(struct proc *p)
  * Move p to a new or existing process group (and session)
  *
  * If we are creating a new pgrp, the pgid should equal
- * the calling processes pid.
+ * the calling process' pid.
  * If is only valid to enter a process group that is in the session
  * of the process.
  * Also mksess should only be set if we are creating a process group
  *
- * Only called from sys_setsid, sys_setpgid/sys_setprp and the
+ * Only called from sys_setsid, sys_setpgid/sys_setpgrp and the
  * SYSV setpgrp support for hpux == enterpgrp(curproc, curproc->p_pid)
  */
 int
@@ -979,7 +978,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 	}
 }
 
-/* 
+/*
  * A process group has become orphaned;
  * if there are any stopped processes in the group,
  * hang-up all process in that group.
@@ -1058,7 +1057,7 @@ pidtbl_dump(void)
 			    pgrp->pg_members.lh_first);
 			for (p = pgrp->pg_members.lh_first; p != 0;
 			    p = p->p_pglist.le_next) {
-				db_printf("\t\tpid %d addr %p pgrp %p %s\n", 
+				db_printf("\t\tpid %d addr %p pgrp %p %s\n",
 				    p->p_pid, p, p->p_pgrp, p->p_comm);
 			}
 		}
@@ -1090,7 +1089,7 @@ kstack_setup_magic(const struct lwp *l)
 	 * so that later modification on it can be detected.
 	 */
 	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++) {
 		*ip = KSTACK_MAGIC;
 	}
@@ -1110,17 +1109,17 @@ kstack_check_magic(const struct lwp *l)
 
 #ifdef __MACHINE_STACK_GROWS_UP
 	/* stack grows upwards (eg. hppa) */
-	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	ip = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	end = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
 	for (ip--; ip >= end; ip--)
 		if (*ip != KSTACK_MAGIC)
 			break;
-		
+
 	stackleft = (caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE - (caddr_t)ip;
 #else /* __MACHINE_STACK_GROWS_UP */
 	/* stack grows downwards (eg. i386) */
 	ip = (u_int32_t *)KSTACK_LOWEST_ADDR(l);
-	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE); 
+	end = (u_int32_t *)((caddr_t)KSTACK_LOWEST_ADDR(l) + KSTACK_SIZE);
 	for (; ip < end; ip++)
 		if (*ip != KSTACK_MAGIC)
 			break;
