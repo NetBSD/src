@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.10 1999/10/25 23:48:17 thorpej Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.10.6.1 2000/08/22 07:09:52 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,18 +43,23 @@
 #if 0
 	RCSID("from: @(#)sbrk.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: sbrk.S,v 1.10 1999/10/25 23:48:17 thorpej Exp $")
+	RCSID("$NetBSD: sbrk.S,v 1.10.6.1 2000/08/22 07:09:52 kleink Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 	.globl	_C_LABEL(end)
 	.globl	CURBRK
 
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(sbrk, _sbrk)
+#endif
+
 	.data
 CURBRK:	.long	_C_LABEL(end)
+
 	.text
 
-ENTRY(sbrk)
+ENTRY(_sbrk)
 #ifdef	PIC
 #ifdef	__ELF__
 	lea	%pc@(_GLOBAL_OFFSET_TABLE_@GOTPC),%a1
