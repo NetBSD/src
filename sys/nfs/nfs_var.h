@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.43 2004/04/05 10:44:09 yamt Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.44 2004/05/10 10:40:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ int nfs_receive __P((struct nfsreq *, struct mbuf **, struct mbuf **));
 int nfs_reply __P((struct nfsreq *));
 int nfs_request __P((struct nfsnode *, struct mbuf *, int, struct proc *,
 		     struct ucred *, struct mbuf **, struct mbuf **,
-		     caddr_t *));
+		     caddr_t *, int *));
 int nfs_rephead __P((int, struct nfsrv_descript *, struct nfssvc_sock *,
 		     int, int, u_quad_t *, struct mbuf **, struct mbuf **,			     caddr_t *));
 void nfs_timer __P((void *));

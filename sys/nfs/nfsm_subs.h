@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.36 2004/04/05 10:41:45 yamt Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.37 2004/05/10 10:40:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -395,14 +395,16 @@
 #define nfsm_rndup(a)	(((a)+3)&(~0x3))
 #define nfsm_padlen(a)	(nfsm_rndup(a) - (a))
 
-#define	nfsm_request(v, t, p, c)	\
+#define	nfsm_request1(v, t, p, c, rexmitp)	\
 		if ((error = nfs_request((v), mreq, (t), (p), \
-		   (c), &mrep, &md, &dpos)) != 0) { \
+		   (c), &mrep, &md, &dpos, (rexmitp))) != 0) { \
 			if (error & NFSERR_RETERR) \
 				error &= ~NFSERR_RETERR; \
 			else \
 				goto nfsmout; \
 		}
+
+#define	nfsm_request(v, t, p, c)	nfsm_request1((v), (t), (p), (c), NULL)
 
 #define	nfsm_strtom(a,s,m) \
 		if ((s) > (m)) { \

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.44 2003/12/06 02:48:35 jonathan Exp $	*/
+/*	$NetBSD: nfs.h,v 1.45 2004/05/10 10:40:42 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -340,6 +340,7 @@ extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 #define	R_TPRINTFMSG	0x20		/* Did a tprintf msg. */
 #define	R_MUSTRESEND	0x40		/* Must resend request */
 #define	R_GETONEREP	0x80		/* Probe for one reply only */
+#define	R_REXMITTED	0x100		/* retransmitted after reconnect */
 
 /*
  * A list of nfssvc_sock structures is maintained with all the sockets
