@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.113 2004/06/08 21:46:52 abs Exp $
+#	$NetBSD: bsd.sys.mk,v 1.114 2004/10/19 01:05:40 simonb Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -55,6 +55,7 @@ CFLAGS+=	-Wa,-Av8plus
 .endif
 
 CFLAGS+=	${CPUFLAGS}
+AFLAGS+=	${CPUFLAGS}
 
 # Helpers for cross-compiling
 HOST_CC?=	cc
