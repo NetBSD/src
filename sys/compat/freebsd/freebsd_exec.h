@@ -92,6 +92,7 @@
 
 #define	FREEBSD_AOUT_HDR_SIZE	sizeof(struct exec)
 
+void freebsd_setregs __P((struct proc *, struct exec_package *, u_long));
 int exec_freebsd_aout_makecmds __P((struct proc *, struct exec_package *));
 
 extern char freebsd_sigcode[], freebsd_esigcode[];
