@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.55 2001/01/15 20:19:50 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.56 2001/04/14 00:45:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.55 2001/01/15 20:19:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.56 2001/04/14 00:45:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -399,7 +399,7 @@ softintr_init()
 
 	for (i = 0; i < IPL_NSOFT; i++) {
 		asi = &alpha_soft_intrs[i];
-		LIST_INIT(&asi->softintr_q);
+		TAILQ_INIT(&asi->softintr_q);
 		simple_lock_init(&asi->softintr_slock);
 		asi->softintr_ipl = i;
 		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
@@ -424,6 +424,7 @@ softintr_dispatch()
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
 	u_int64_t n, i;
+	int s;
 
 	KERNEL_LOCK(LK_CANRECURSE|LK_EXCLUSIVE);
 
@@ -433,22 +434,22 @@ softintr_dispatch()
 				continue;
 			asi = &alpha_soft_intrs[i];
 
-			/* Already at splsoft() */
-			simple_lock(&asi->softintr_slock);
-
 			asi->softintr_evcnt.ev_count++;
 
-			for (sih = LIST_FIRST(&asi->softintr_q);
-			     sih != NULL;
-			     sih = LIST_NEXT(sih, sih_q)) {
-				if (sih->sih_pending) {
-					uvmexp.softs++;
-					sih->sih_pending = 0;
-					(*sih->sih_fn)(sih->sih_arg);
+			for (;;) {
+				alpha_softintr_lock(asi, s);
+				sih = TAILQ_FIRST(&asi->softintr_q);
+				if (sih == NULL) {
+					alpha_softintr_unlock(asi, s);
+					break;
 				}
-			}
+				TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
+				sih->sih_pending = 0;
+				alpha_softintr_unlock(asi, s);
 
-			simple_unlock(&asi->softintr_slock);
+				uvmexp.softs++;
+				(*sih->sih_fn)(sih->sih_arg);
+			}
 		}
 	}
 
@@ -465,7 +466,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 {
 	struct alpha_soft_intr *asi;
 	struct alpha_soft_intrhand *sih;
-	int s;
 
 	if (__predict_false(ipl >= IPL_NSOFT || ipl < 0))
 		panic("softintr_establish");
@@ -478,11 +478,6 @@ softintr_establish(int ipl, void (*func)(void *), void *arg)
 		sih->sih_fn = func;
 		sih->sih_arg = arg;
 		sih->sih_pending = 0;
-		s = splsoft();
-		simple_lock(&asi->softintr_slock);
-		LIST_INSERT_HEAD(&asi->softintr_q, sih, sih_q);
-		simple_unlock(&asi->softintr_slock);
-		splx(s);
 	}
 	return (sih);
 }
@@ -499,13 +494,12 @@ softintr_disestablish(void *arg)
 	struct alpha_soft_intr *asi = sih->sih_intrhead;
 	int s;
 
-	(void) asi;	/* XXX Unused if simple locks are noops. */
-
-	s = splsoft();
-	simple_lock(&asi->softintr_slock);
-	LIST_REMOVE(sih, sih_q);
-	simple_unlock(&asi->softintr_slock);
-	splx(s);
+	alpha_softintr_lock(asi, s);
+	if (sih->sih_pending) {
+		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
+		sih->sih_pending = 0;
+	}
+	alpha_softintr_unlock(asi, s);
 
 	free(sih, M_DEVBUF);
 }
