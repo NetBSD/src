@@ -1,13 +1,13 @@
-# $NetBSD: INSTALL,v 1.15 2001/06/11 01:50:52 wiz Exp $
+# $NetBSD: INSTALL,v 1.16 2001/07/08 16:34:03 abs Exp $
 #
 # This file was automatically created. Changes will be
 # lost when running make in this directory.
 #
-# Created from: #NetBSD: GENERIC,v 1.156 2001/02/02 21:52:13 is Exp $
+# Created from: #NetBSD: GENERIC,v 1.160 2001/07/08 16:32:13 abs Exp $
 
 include "arch/amiga/conf/std.amiga"
 
-#ident  		"GENERIC-$Revision: 1.15 $"
+#ident  		"GENERIC-$Revision: 1.16 $"
 
 makeoptions	COPTS="-Os"
 
