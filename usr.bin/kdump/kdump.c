@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.47 2003/01/30 21:43:26 atatat Exp $	*/
+/*	$NetBSD: kdump.c,v 1.48 2003/05/15 12:57:54 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.47 2003/01/30 21:43:26 atatat Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.48 2003/05/15 12:57:54 dsl Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ __RCSID("$NetBSD: kdump.c,v 1.47 2003/01/30 21:43:26 atatat Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <signal.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,7 +102,7 @@ int	fread_tail __P((char *, int, int));
 void	dumpheader __P((struct ktr_header *));
 void	ioctldecode __P((u_long));
 void	ktrsyscall __P((struct ktr_syscall *));
-void	ktrsysret __P((struct ktr_sysret *));
+void	ktrsysret __P((struct ktr_sysret *, int));
 void	ktrnamei __P((char *, int));
 void	ktremul __P((char *, int, int));
 void	ktrgenio __P((struct ktr_genio *, int));
@@ -111,6 +112,7 @@ void	ktruser __P((struct ktr_user *, int));
 void	ktrmmsg __P((struct ktr_mmsg *, int));
 void	usage __P((void));
 void	eprint __P((int));
+void	rprint __P((register_t));
 char	*ioctlname __P((long));
 static const char *signame __P((long, int));
 
@@ -215,7 +217,7 @@ main(argc, argv)
 			ktrsyscall((struct ktr_syscall *)m);
 			break;
 		case KTR_SYSRET:
-			ktrsysret((struct ktr_sysret *)m);
+			ktrsysret((struct ktr_sysret *)m, ktrlen);
 			break;
 		case KTR_NAMEI:
 			ktrnamei(m, ktrlen);
@@ -422,11 +424,11 @@ ktrsyscall(ktr)
 }
 
 void
-ktrsysret(ktr)
+ktrsysret(ktr, len)
 	struct ktr_sysret *ktr;
+	int len;
 {
 	const struct emulation *revelant;
-	register_t ret = ktr->ktr_retval;
 	int error = ktr->ktr_error;
 	int code = ktr->ktr_code;
 
@@ -444,15 +446,11 @@ ktrsysret(ktr)
 
 	switch (error) {
 	case 0:
-		if (!plain) {
-			(void)printf("%ld", (long)ret);
-			if (ret < 0 || ret > 9)
-				(void)printf("/%#lx", (long)ret);
-		} else {
-			if (decimal)
-				(void)printf("%ld", (long)ret);
-			else
-				(void)printf("%#lx", (long)ret);
+		rprint(ktr->ktr_retval);
+		if (len > offsetof(struct ktr_sysret, ktr_retval_1) &&
+		    ktr->ktr_retval_1 != 0) {
+			(void)printf(", ");
+			rprint(ktr->ktr_retval_1);
 		}
 		break;
 
@@ -461,6 +459,21 @@ ktrsysret(ktr)
 		break;
 	}
 	(void)putchar('\n');
+}
+
+void
+rprint(register_t ret)
+{
+	if (!plain) {
+		(void)printf("%ld", (long)ret);
+		if (ret < 0 || ret > 9)
+			(void)printf("/%#lx", (long)ret);
+	} else {
+		if (decimal)
+			(void)printf("%ld", (long)ret);
+		else
+			(void)printf("%#lx", (long)ret);
+	}
 }
 
 /*
