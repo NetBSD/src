@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.25 2002/03/17 23:29:55 christos Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.26 2002/03/17 23:36:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -221,6 +221,4 @@ extern int auconv_play(struct auconv_context *, const struct audio_params *,
 extern int auconv_record(struct auconv_context *, const struct audio_params *,
 			 uint8_t *, const uint8_t *, int);
 #endif /* NAURATECONV */
-
-};
 #endif /* _SYS_DEV_AUDIOVAR_H_ */
