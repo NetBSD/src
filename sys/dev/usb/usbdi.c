@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.91 2001/12/12 15:23:59 augustss Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.92 2001/12/12 15:38:58 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.91 2001/12/12 15:23:59 augustss Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.92 2001/12/12 15:38:58 augustss Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,9 +361,13 @@ usbd_alloc_buffer(usbd_xfer_handle xfer, u_int32_t size)
 	struct usbd_bus *bus = xfer->device->bus;
 	usbd_status err;
 
+#ifdef DIAGNOSTIC
+	if (xfer->rqflags & (URQ_DEV_DMABUF | URQ_AUTO_DMABUF))
+		printf("usbd_alloc_buffer: xfer already has a buffer\n");
+#endif
 	err = bus->methods->allocm(bus, &xfer->dmabuf, size);
 	if (err)
-		return (0);
+		return (NULL);
 	xfer->rqflags |= URQ_DEV_DMABUF;
 	return (KERNADDR(&xfer->dmabuf));
 }
