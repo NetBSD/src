@@ -1,4 +1,4 @@
-/*	$NetBSD: mtree.c,v 1.6 1996/09/05 09:56:49 mycroft Exp $	*/
+/*	$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mtree.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mtree.c,v 1.6 1996/09/05 09:56:49 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mtree.c,v 1.7 1996/09/05 23:29:22 thorpej Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,7 @@ main(argc, argv)
 			crc_total = ~strtol(optarg, &p, 0);
 			if (*p)
 				err("illegal seed value -- %s", optarg);
+			break;
 		case 't':
 			tflag = 1;
 			break;
