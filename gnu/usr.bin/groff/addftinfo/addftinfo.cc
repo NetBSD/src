@@ -16,7 +16,7 @@ for more details.
 
 You should have received a copy of the GNU General Public License along
 with groff; see the file COPYING.  If not, write to the Free Software
-Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
+Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -40,14 +40,14 @@ static struct {
   const char *name;
   param_t par;
 } param_table[] = {
-  "x-height", &font_params::x_height,
-  "fig-height", &font_params::fig_height,
-  "asc-height", &font_params::asc_height,
-  "body-height", &font_params::body_height,
-  "cap-height", &font_params::cap_height,
-  "comma-depth", &font_params::comma_depth,
-  "desc-depth", &font_params::desc_depth,
-  "body-depth", &font_params::body_depth,
+  { "x-height", &font_params::x_height },
+  { "fig-height", &font_params::fig_height },
+  { "asc-height", &font_params::asc_height },
+  { "body-height", &font_params::body_height },
+  { "cap-height", &font_params::cap_height },
+  { "comma-depth", &font_params::comma_depth },
+  { "desc-depth", &font_params::desc_depth },
+  { "body-depth", &font_params::body_depth },
 };
 
 // These are all in thousandths of an em.
@@ -89,14 +89,16 @@ int main(int argc, char **argv)
   param.comma_depth = DEFAULT_COMMA_DEPTH;
   param.desc_depth = DEFAULT_DESC_DEPTH;
   param.body_depth = DEFAULT_BODY_DEPTH;
-  int i; for (i = 1; i < argc && argv[i][0] == '-'; i++) {
+  int i;
+  for (i = 1; i < argc && argv[i][0] == '-'; i++) {
     if (argv[i][1] == '-' && argv[i][2] == '\0') {
       i++;
       break;
     }
     if (i + 1 >= argc)
       usage();
-    int j; for (j = 0;; j++) {
+    int j;
+    for (j = 0;; j++) {
       if (j >= sizeof(param_table)/sizeof(param_table[0]))
 	fatal("parameter `%1' not recognized", argv[i] + 1);
       if (strcmp(param_table[j].name, argv[i] + 1) == 0)
@@ -113,7 +115,7 @@ int main(int argc, char **argv)
   if (infp == 0)
     fatal("can't open `%1': %2", font, strerror(errno));
   convert_font(param, infp, stdout);
-  exit(0);
+  return 0;
 }
 
 static void usage()
