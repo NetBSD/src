@@ -1,4 +1,4 @@
-/*	$NetBSD: cgeight.c,v 1.17 1998/03/29 22:10:32 pk Exp $	*/
+/*	$NetBSD: cgeight.c,v 1.18 1998/04/07 20:18:18 pk Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -344,13 +344,13 @@ int
 cgeightioctl(dev, cmd, data, flags, p)
 	dev_t dev;
 	u_long cmd;
-	register caddr_t data;
+	caddr_t data;
 	int flags;
 	struct proc *p;
 {
 #if defined(SUN4)
-	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
-	register struct fbgattr *fba;
+	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
+	struct fbgattr *fba;
 	int error;
 
 	switch (cmd) {
@@ -425,7 +425,8 @@ cgeightmmap(dev, off, prot)
 	dev_t dev;
 	int off, prot;
 {
-	register struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
+	struct cgeight_softc *sc = cgeight_cd.cd_devs[minor(dev)];
+	bus_space_handle_t bh;
 	int poff;
 
 #define START_ENABLE	(128*1024)
@@ -491,10 +492,13 @@ cgeightmmap(dev, off, prot)
 	} else
 		return (-1);
 
-	return (bus_space_mmap (sc->sc_bustag,
-				sc->sc_btype,
-				sc->sc_paddr + poff,
-				BUS_SPACE_MAP_LINEAR));
+	if (bus_space_mmap(sc->sc_bustag,
+			   sc->sc_btype,
+			   sc->sc_paddr + poff,
+			   BUS_SPACE_MAP_LINEAR, &bh))
+		return (-1);
+
+	return ((int)bh);
 }
 
 #if defined(SUN4)
@@ -534,9 +538,9 @@ cgeightloadcmap(sc, start, ncolors)
 	register struct cgeight_softc *sc;
 	register int start, ncolors;
 {
-	register volatile struct bt_regs *bt;
-	register u_int *ip;
-	register int count;
+	volatile struct bt_regs *bt;
+	u_int *ip;
+	int count;
 
 	ip = &sc->sc_cmap.cm_chip[BT_D4M3(start)];	/* start/4 * 3 */
 	count = BT_D4M3(start + ncolors - 1) - BT_D4M3(start) + 3;
