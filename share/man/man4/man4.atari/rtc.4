@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtc.4,v 1.1 1999/11/24 12:54:28 jdc Exp $
+.\"	$NetBSD: rtc.4,v 1.2 2000/01/12 07:56:46 leo Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,13 +50,13 @@ the
 .Xr strftime 3
 manual page, is:
 .Bd -literal -offset indent
-``%y%m%d%H%M.%S''
+``%Y%m%d%H%M.%S''
 .Ed
 .Pp
 The same format is used to set the RTC to the current date.  Note that the
 kernel expects the RTC to run in UTC.
 .Sh EXAMPLES
-date -u +%y%m%d%H%M.%S > /dev/rtc
+date -u +%Y%m%d%H%M.%S > /dev/rtc
 .Sh FILES
 .Bl -tag -width "xxxxxxxxxx" -compact
 .It Pa /dev/rtc
