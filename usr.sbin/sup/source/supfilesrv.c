@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.26 2003/07/28 23:13:17 itojun Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.27 2003/08/11 16:20:11 itojun Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1281,10 +1281,10 @@ sendone(TREE * t, void *v)
 				char rcs_release[STRINGLENGTH];
 
 				tmpnam(rcs_file);
-                                fd = open(rcs_file, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
-                                if (fd < 0)
-                                        goaway("We died trying to create temp file");
-                                close(fd);
+				fd = open(rcs_file, (O_WRONLY | O_CREAT | O_TRUNC | O_EXCL), 0600);
+				if (fd < 0)
+					goaway("We died trying to create temp file");
+				close(fd);
 				fd = -1;
 				if (strcmp(&t->Tname[strlen(t->Tname) - 2], ",v") == 0) {
 					t->Tname[strlen(t->Tname) - 2] = '\0';
