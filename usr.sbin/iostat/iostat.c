@@ -1,4 +1,4 @@
-/*	$NetBSD: iostat.c,v 1.26 2002/05/22 13:12:27 simonb Exp $	*/
+/*	$NetBSD: iostat.c,v 1.27 2002/06/30 00:10:35 sommerfeld Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -75,7 +75,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: iostat.c,v 1.26 2002/05/22 13:12:27 simonb Exp $");
+__RCSID("$NetBSD: iostat.c,v 1.27 2002/06/30 00:10:35 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,7 +273,7 @@ disk_stats(double etime)
 			mbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
 		else
 			mbps = 0.0;
-		(void)printf(" %5.2f", mbps); 
+		(void)printf(" %5.2f", mbps);
 
 					/* average transfers per second. */
 		(void)printf(" %3.0f", cur.dk_xfer[dn] / etime);
@@ -285,7 +285,7 @@ disk_stats(double etime)
 					/* Megabytes per second. */
 		if (atime != 0.0)
 			mbps = cur.dk_bytes[dn] / (double)(1024 * 1024);
-		else 
+		else
 			mbps = 0;
 		(void)printf(" %4.2f ", mbps / etime);
 	}
@@ -334,7 +334,7 @@ disk_statsx(double etime)
 			kbps = (cur.dk_bytes[dn] / (1024.0)) / cur.dk_xfer[dn];
 		else
 			kbps = 0.0;
-		(void)printf(" %8.2f", kbps); 
+		(void)printf(" %8.2f", kbps);
 
 					/* average transfers (per second) */
 		(void)printf(" %8.0f", cur.dk_xfer[dn] / etime);
@@ -379,18 +379,10 @@ usage(void)
 static void
 display(void)
 {
-	int	i;
 	double	etime;
 
 	/* Sum up the elapsed ticks. */
-	etime = 0.0;
-	for (i = 0; i < CPUSTATES; i++) {
-		etime += cur.cp_time[i];
-	}
-	if (etime == 0.0)
-		etime = 1.0;
-					/* Convert to seconds. */
-	etime /= (float)hz;
+	etime = cur.cp_etime;
 
 	/* If we're showing totals only, then don't divide by the
 	 * system time.
@@ -400,7 +392,7 @@ display(void)
 
 	if (ISSET(todo, SHOW_TTY))
 		printf("%4.0f %4.0f", cur.tk_nin / etime, cur.tk_nout / etime);
-	
+
 	if (ISSET(todo, SHOW_STATS_1))
 		disk_stats(etime);
 

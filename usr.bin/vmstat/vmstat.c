@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.100 2002/03/13 11:02:11 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.101 2002/06/30 00:10:34 sommerfeld Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.100 2002/03/13 11:02:11 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.101 2002/06/30 00:10:34 sommerfeld Exp $");
 #endif
 #endif /* not lint */
 
@@ -465,8 +465,8 @@ main(int argc, char *argv[])
 				dohashstat(verbose, todo, hashname);
 				putchar('\n');
 			}
-		
-			if (reps >= 0 && --reps <=0) 
+
+			if (reps >= 0 && --reps <=0)
 				break;
 			sleep(interval);
 		}
@@ -776,18 +776,13 @@ doforkst(void)
 void
 dkstats(void)
 {
-	int dn, state;
+	int dn;
 	double etime;
 
 	/* Calculate disk stat deltas. */
 	dkswap();
-	etime = 0;
-	for (state = 0; state < CPUSTATES; ++state) {
-		etime += cur.cp_time[state];
-	}
-	if (etime == 0)
-		etime = 1;
-	etime /= hz;
+	etime = cur.cp_etime;
+
 	for (dn = 0; dn < dk_ndrive; ++dn) {
 		if (!dk_select[dn])
 			continue;
@@ -1204,7 +1199,7 @@ struct kernel_hash {
 	int		hashsize;	/* nlist index for hash size */
 	int		hashtbl;	/* nlist index for hash table */
 	enum hashtype	type;		/* type of hash table */
-	size_t		offset;		/* offset of {LIST,TAILQ}_NEXT */ 
+	size_t		offset;		/* offset of {LIST,TAILQ}_NEXT */
 } khashes[] =
 {
 	{
@@ -1250,7 +1245,7 @@ struct kernel_hash {
 
 void
 dohashstat(int verbose, int todo, const char *hashname)
-{ 
+{
 	LIST_HEAD(, generic)	*hashtbl_list;
 	TAILQ_HEAD(, generic)	*hashtbl_tailq;
 	struct kernel_hash	*curhash;
@@ -1265,7 +1260,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 	if (todo & HASHLIST) {
 		printf("Supported hashes:\n");
 		for (curhash = khashes; curhash->description; curhash++) {
-			if (hashnl[curhash->hashsize].n_value == 0 || 
+			if (hashnl[curhash->hashsize].n_value == 0 ||
 			    hashnl[curhash->hashtbl].n_value == 0)
 				continue;
 			printf("\t%-16s%s\n",
@@ -1279,7 +1274,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 		for (curhash = khashes; curhash->description; curhash++) {
 			if (strcmp(hashnl[curhash->hashsize].n_name + 1,
 			    hashname) == 0 &&
-			    hashnl[curhash->hashsize].n_value != 0 && 
+			    hashnl[curhash->hashsize].n_value != 0 &&
 			    hashnl[curhash->hashtbl].n_value != 0)
 				break;
 		}
@@ -1297,7 +1292,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 	    "chain");
 
 	for (curhash = khashes; curhash->description; curhash++) {
-		if (hashnl[curhash->hashsize].n_value == 0 || 
+		if (hashnl[curhash->hashsize].n_value == 0 ||
 		    hashnl[curhash->hashtbl].n_value == 0)
 			continue;
 		if (hashname != NULL &&
@@ -1316,13 +1311,13 @@ dohashstat(int verbose, int todo, const char *hashname)
 			printf("%s %lu, %s %p, offset %ld, elemsize %llu\n",
 			    hashnl[curhash->hashsize].n_name + 1, hashsize,
 			    hashnl[curhash->hashtbl].n_name + 1, hashaddr,
-			    (long)curhash->offset, 
+			    (long)curhash->offset,
 			    (unsigned long long)elemsize);
 		thissize = hashsize * elemsize;
 		if (thissize > hashbufsize) {
 			hashbufsize = thissize;
 			if ((hashbuf = realloc(hashbuf, hashbufsize)) == NULL)
-				errx(1, "malloc hashbuf %llu", 
+				errx(1, "malloc hashbuf %llu",
 				    (unsigned long long)hashbufsize);
 		}
 		deref_kptr(hashaddr, hashbuf, thissize,
@@ -1383,7 +1378,7 @@ kread(int nlx, void *addr, size_t size)
 }
 
 /*
- * Dereference the kernel pointer `kptr' and fill in the local copy 
+ * Dereference the kernel pointer `kptr' and fill in the local copy
  * pointed to by `ptr'.  The storage space must be pre-allocated,
  * and the size of the copy passed in `len'.
  */
