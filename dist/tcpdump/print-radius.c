@@ -1,5 +1,26 @@
-/*	$NetBSD: print-radius.c,v 1.2 2001/06/25 20:00:00 itojun Exp $	*/
+/*	$NetBSD: print-radius.c,v 1.3 2001/10/22 06:59:26 itojun Exp $	*/
 
+/*
+ * Copyright (C) 2000 Alfredo Andres Omella.  All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  
+ *   1. Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *   2. Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in
+ *      the documentation and/or other materials provided with the
+ *      distribution.
+ *   3. The names of the authors may not be used to endorse or promote
+ *      products derived from this software without specific prior
+ *      written permission.
+ *  
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ */
 /*
  * Radius printer routines as specified on:
  *
@@ -29,7 +50,7 @@
 static const char rcsid[] =
     "Id: print-radius.c,v 1.7 2001/06/18 09:16:28 guy Exp";
 #else
-__RCSID("$NetBSD: print-radius.c,v 1.2 2001/06/25 20:00:00 itojun Exp $");
+__RCSID("$NetBSD: print-radius.c,v 1.3 2001/10/22 06:59:26 itojun Exp $");
 #endif
 #endif
 
