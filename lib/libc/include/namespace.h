@@ -1,7 +1,7 @@
-/*	$NetBSD: namespace.h,v 1.12 1998/10/13 14:07:04 kleink Exp $	*/
+/*	$NetBSD: namespace.h,v 1.13 1998/10/13 14:19:21 kleink Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -282,6 +282,7 @@
 #define sl_free			_sl_free
 #define sl_init			_sl_init
 #define sleep			_sleep
+#define snprintf		_snprintf
 #define sradixsort		_sradixsort
 #define srand48			_srand48
 #define srandom			_srandom
@@ -345,6 +346,7 @@
 #define utime			_utime
 #define valloc			_valloc
 #define vis			_vis
+#define vsnprintf		_vsnprintf
 #define vsyslog			_vsyslog
 #define wait			_wait
 #define wait3			_wait3

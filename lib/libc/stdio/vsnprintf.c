@@ -1,4 +1,4 @@
-/*	$NetBSD: vsnprintf.c,v 1.8 1997/12/19 14:08:47 kleink Exp $	*/
+/*	$NetBSD: vsnprintf.c,v 1.9 1998/10/13 14:19:21 kleink Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -41,11 +41,16 @@
 #if 0
 static char sccsid[] = "@(#)vsnprintf.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vsnprintf.c,v 1.8 1997/12/19 14:08:47 kleink Exp $");
+__RCSID("$NetBSD: vsnprintf.c,v 1.9 1998/10/13 14:19:21 kleink Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
+#include "namespace.h"
 #include <stdio.h>
+
+#ifdef __weak_alias
+__weak_alias(vsnprintf,_vsnprintf);
+#endif
 
 int
 vsnprintf(str, n, fmt, ap)
