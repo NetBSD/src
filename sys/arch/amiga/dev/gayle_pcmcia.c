@@ -1,4 +1,4 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.1 2000/01/23 20:57:27 aymeric Exp $	*/
+/*	$NetBSD: gayle_pcmcia.c,v 1.2 2000/02/21 18:27:50 aymeric Exp $	*/
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -234,7 +234,8 @@ pccard_intr6(arg)
 	struct pccard_softc *self = arg;
 
 	if (gayle.intreq & GAYLE_INT_DETECT) {
-		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_IREQ;
+		gayle.intreq = GAYLE_INT_IDE | GAYLE_INT_STSCHG |
+		    GAYLE_INT_SPKR | GAYLE_INT_WP | GAYLE_INT_IREQ;
 		self->devs[0].flags |= SLOT_NEW_CARD_EVENT;
 		return 1;
 	}
@@ -257,10 +258,10 @@ pccard_intr2(arg)
 		gayle.pcc_config = 0;
 		pccard_attach_slot(&self->devs[0]);
 	} else {
-		int intreq = gayle.intreq;
-		if (intreq & GAYLE_INT_IREQ) {
-			gayle.intreq = (intreq ^ GAYLE_INT_IREQ) |
-				GAYLE_INT_IDE | GAYLE_INT_DETECT;
+		int intreq = gayle.intreq &
+		    (GAYLE_INT_STSCHG | GAYLE_INT_WP | GAYLE_INT_IREQ);
+		if (intreq) {
+			gayle.intreq = (intreq ^ 0x2c) | 0xc0;
 
 			if (slot->flags & SLOT_OCCUPIED &&
 		   	    slot->intr_func != NULL)
