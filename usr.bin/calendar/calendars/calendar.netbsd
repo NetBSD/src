@@ -74,6 +74,7 @@
 10/30   pkgsrc/Darwin support added, 2001
 11/17   pkgsrc/FreeBSD support added, 2002
 11/18   NetBSD/acorn32 port started, 2001
+11/20   pkgsrc/OSF1 support added, 2004
 11/25   NetBSD 1.4.3 released, 2000
 11/26   NetBSD 1.1 released, 1995
 11/30   pkgsrc/OpenBSD support added, 2002
