@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.5 1998/02/07 17:00:44 mrg Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.6 1998/02/09 13:08:26 mrg Exp $	*/
 
 /*
  * XXXCDC: "ROUGH DRAFT" QUALITY UVM PRE-RELEASE FILE!
@@ -496,10 +496,10 @@ struct pglist *pglst;
        */
     
       swap_backed = ((p->pqflags & PQ_SWAPBACKED) != 0);
-      uvmexp.pdpageouts++;
       p->flags |= PG_BUSY;		/* now we own it */
       UVM_PAGE_OWN(p, "scan_inactive");
       pmap_page_protect(PMAP_PGARG(p), VM_PROT_READ);
+      uvmexp.pgswapout++;
 
       /*
        * for swap-backed pages we need to (re)allocate swap space.
@@ -544,7 +544,7 @@ struct pglist *pglst;
 	 * add block to cluster
 	 */
 	swpps[swcpages] = p;
-	uvmexp.pageouts++;
+	uvmexp.pgswapout++;
 	if (anon)
 	  anon->an_swslot = swslot + swcpages;
 	else
@@ -622,6 +622,7 @@ struct pglist *pglst;
      */
 
     /* locked: uobj (if !swap_backed), page queues */
+    uvmexp.pdpageouts++;
     result = uvm_pager_put((swap_backed) ? NULL : uobj, p, &ppsp, &npages,
 			   PGO_ALLPAGES|PGO_PDFREECLUST, start, 0);
     /* locked: uobj (if !swap_backed && result != PEND) */
