@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.10 2001/09/25 00:03:03 wiz Exp $ */
+/* $NetBSD: setup.c,v 1.11 2002/02/04 23:43:43 perseant Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -89,7 +89,7 @@ useless(void)
 static daddr_t
 try_verify(struct lfs * osb, struct lfs * nsb)
 {
-	daddr_t         daddr;
+	daddr_t         daddr, odaddr;
 	SEGSUM         *sp;
 	char           *summary;
 	int             bc, flag;
@@ -112,6 +112,7 @@ oncemore:
 		  sp->ss_sumsum != cksum(&sp->ss_datasum, osb->lfs_sumsize -
 					 sizeof(sp->ss_sumsum))) {
 			if (flag == 0) {
+				flag = 1;
 				daddr += btofsb(osb, LFS_SBPAD);
 				goto oncemore;
 			}
@@ -120,10 +121,13 @@ oncemore:
 		bc = check_summary(osb, sp, daddr);
 		if (bc == 0)
 			break;
+		odaddr = daddr;
 		daddr += btofsb(osb, osb->lfs_sumsize + bc);
-		if (dtosn(osb, daddr) != dtosn(osb, daddr +
-			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize)))
+		if (dtosn(osb, odaddr) != dtosn(osb, daddr) ||
+		    dtosn(osb, daddr) != dtosn(osb, daddr +
+			btofsb(osb, osb->lfs_sumsize + osb->lfs_bsize))) {
 			daddr = ((SEGSUM *)summary)->ss_next;
+		}
 	}
 	return daddr;
 }
