@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_mainbus.c,v 1.2 2001/11/09 20:58:58 thorpej Exp $	*/
+/*	$NetBSD: i80312_mainbus.c,v 1.3 2001/11/09 23:15:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -108,6 +108,15 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_sh = IQ80310_80312_VBASE;
 
 	/*
+	 * Slice off a subregion for the Memory Controller -- we need it
+	 * here in order read the memory size.
+	 */
+	if (bus_space_subregion(sc->sc_st, sc->sc_sh, I80312_MEM_BASE,
+	    I80312_MEM_SIZE, &sc->sc_mem_sh))
+		panic("%s: unable to subregion MEM registers\n",
+		    sc->sc_dev.dv_xname);
+
+	/*
 	 * We have mapped the the PCI I/O windows in the early
 	 * bootstrap phase.
 	 */
@@ -127,7 +136,7 @@ i80312_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	    I80312_ATU_BASE + PCI_SUBSYS_ID_REG,
 	    PCI_ID_CODE(PCI_VENDOR_CYCLONE, PCI_PRODUCT_CYCLONE_PCI_700));
 
-	i80312_sdram_bounds(sc->sc_st, sc->sc_sh, &memstart, &memsize);
+	i80312_sdram_bounds(sc->sc_st, sc->sc_mem_sh, &memstart, &memsize);
 
 	/*
 	 * Set the Primary Inbound window xlate base to the start
