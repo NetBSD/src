@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.1.2.2.2.8 1997/05/11 08:44:56 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.1.2.2.2.9 1997/05/11 08:50:20 mrg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Matthew R. Green
@@ -276,7 +276,7 @@ do_fstab()
 			if (swapon(SWAP_ON, fp->fs_spec, (int)priority) < 0)
 				warn("%s", fp->fs_spec);
 			else
-				printf("swap: adding %s as swap device",
+				printf("swap: adding %s as swap device\n",
 				    fp->fs_spec);
 		}
 	}
