@@ -1,4 +1,4 @@
-.\"	$NetBSD: ahc.4,v 1.12 1999/12/20 12:44:04 abs Exp $
+.\"	$NetBSD: ahc.4,v 1.13 2000/02/02 19:57:18 augustss Exp $
 .\"
 .\" Copyright (c) 1995, 1996 
 .\" 	Justin T. Gibbs.  All rights reserved.
@@ -53,6 +53,9 @@ For one or more PCI cards:
 \}
 \{For PCI cards:
 .Cd ahc* at pci? dev ? function ?\}
+.Pp
+\{For CardBus cards:
+.Cd ahc* at cardbus? dev ? function ?\}
 .Pp
 To enable tagged queueing:
 .Cd options AHC_TAGENABLE
