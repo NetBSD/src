@@ -179,7 +179,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, sig_handler);
 
 	if (daemonize)
-		openlog("altqd", LOG_PID | LOG_PERROR, LOG_DAEMON);
+		openlog("altqd", LOG_PID, LOG_DAEMON);
 
 	if (qcmd_init() != 0) {
 		if (daemonize)
