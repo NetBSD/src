@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.45.2.7 2002/09/17 21:21:32 nathanw Exp $	*/
+/*	$NetBSD: ugen.c,v 1.45.2.8 2002/10/18 02:44:31 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ugen.c,v 1.26 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.2.7 2002/09/17 21:21:32 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.45.2.8 2002/10/18 02:44:31 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -749,7 +749,6 @@ ugen_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.32.2.6 2002/08/27 23:47:41 nathanw Exp $	*/
+/*	$NetBSD: libkern.h,v 1.32.2.7 2002/10/18 02:44:59 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -67,134 +67,107 @@ LIBKERN_INLINE int tolower __P((int)) __attribute__((__unused__));
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
-imax(a, b)
-	int a, b;
+imax(int a, int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE int
-imin(a, b)
-	int a, b;
+imin(int a, int b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE long
-lmax(a, b)
-	long a, b;
+lmax(long a, long b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE long
-lmin(a, b)
-	long a, b;
+lmin(long a, long b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_int
-max(a, b)
-	u_int a, b;
+max(u_int a, u_int b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_int
-min(a, b)
-	u_int a, b;
+min(u_int a, u_int b)
 {
 	return (a < b ? a : b);
 }
 LIBKERN_INLINE u_long
-ulmax(a, b)
-	u_long a, b;
+ulmax(u_long a, u_long b)
 {
 	return (a > b ? a : b);
 }
 LIBKERN_INLINE u_long
-ulmin(a, b)
-	u_long a, b;
+ulmin(u_long a, u_long b)
 {
 	return (a < b ? a : b);
 }
 
 LIBKERN_INLINE int
-abs(j)
-	int j;
+abs(int j)
 {
 	return(j < 0 ? -j : j);
 }
 
 LIBKERN_INLINE int
-isspace(ch)
-	int ch;
+isspace(int ch)
 {
-
 	return (ch == ' ' || (ch >= '\t' && ch <= '\r'));
 }
 
 LIBKERN_INLINE int
-isascii(ch)
-	int ch;
+isascii(int ch)
 {
-
 	return ((ch & ~0x7f) == 0);
 }
 
 LIBKERN_INLINE int
-isupper(ch)
-	int ch;
+isupper(int ch)
 {
-
 	return (ch >= 'A' && ch <= 'Z');
 }
 
 LIBKERN_INLINE int
-islower(ch)
-	int ch;
+islower(int ch)
 {
-
 	return (ch >= 'a' && ch <= 'z');
 }
 
 LIBKERN_INLINE int
-isalpha(ch)
-	int ch;
+isalpha(int ch)
 {
-
 	return (isupper(ch) || islower(ch));
 }
 
 LIBKERN_INLINE int
-isdigit(ch)
-	int ch;
+isdigit(int ch)
 {
-
 	return (ch >= '0' && ch <= '9');
 }
 
 LIBKERN_INLINE int
-isxdigit(ch)
-	int ch;
+isxdigit(int ch)
 {
-
 	return (isdigit(ch) ||
 	    (ch >= 'A' && ch <= 'F') ||
 	    (ch >= 'a' && ch <= 'f'));
 }
 
 LIBKERN_INLINE int
-toupper(ch)
-	int ch;
+toupper(int ch)
 {
-
 	if (islower(ch))
 		return (ch - 0x20);
 	return (ch);
 }
 
 LIBKERN_INLINE int
-tolower(ch)
-	int ch;
+tolower(int ch)
 {
-
 	if (isupper(ch))
 		return (ch + 0x20);
 	return (ch);
@@ -286,6 +259,8 @@ int	 strncmp __P((const char *, const char *, size_t));
 char	*strchr __P((const char *, int));
 char	*strrchr __P((const char *, int));
 
+char	*strstr __P((const char *, const char *));
+
 /*
  * ffs is an instruction on vax.
  */
@@ -304,6 +279,7 @@ void	*memchr __P((const void *, int, size_t));
 void	*memmove __P((void *, const void *, size_t));
 int	 pmatch __P((const char *, const char *, const char **));
 u_int32_t arc4random __P((void));
+void	 arc4randbytes __P((void *, size_t));
 u_long	 random __P((void));
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));

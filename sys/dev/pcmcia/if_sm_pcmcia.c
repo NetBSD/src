@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sm_pcmcia.c,v 1.23.2.4 2002/06/20 03:46:09 nathanw Exp $	*/
+/*	$NetBSD: if_sm_pcmcia.c,v 1.23.2.5 2002/10/18 02:43:32 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.23.2.4 2002/06/20 03:46:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sm_pcmcia.c,v 1.23.2.5 2002/10/18 02:43:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,10 +82,8 @@ struct sm_pcmcia_softc {
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-struct cfattach sm_pcmcia_ca = {
-	sizeof(struct sm_pcmcia_softc), sm_pcmcia_match, sm_pcmcia_attach,
-	    sm_pcmcia_detach, smc91cxx_activate
-};
+CFATTACH_DECL(sm_pcmcia, sizeof(struct sm_pcmcia_softc),
+    sm_pcmcia_match, sm_pcmcia_attach, sm_pcmcia_detach, smc91cxx_activate);
 
 int	sm_pcmcia_enable __P((struct smc91cxx_softc *));
 void	sm_pcmcia_disable __P((struct smc91cxx_softc *));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_lookup.c,v 1.16.2.3 2002/08/01 02:47:01 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_lookup.c,v 1.16.2.4 2002/10/18 02:45:46 nathanw Exp $	*/
 
 /* 
  * Modified for NetBSD 1.2E
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.16.2.3 2002/08/01 02:47:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_lookup.c,v 1.16.2.4 2002/10/18 02:45:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ ext2fs_dirconv2ffs( e2dir, ffsdir)
 	 */
 #if 0
 	if (e2dir->e2d_namlen > MAXNAMLEN)
-		panic("ext2fs: e2dir->e2d_namlen\n");
+		panic("ext2fs: e2dir->e2d_namlen");
 #endif
 #endif
 	strncpy(ffsdir->d_name, e2dir->e2d_name, ffsdir->d_namlen);

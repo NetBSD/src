@@ -1,4 +1,4 @@
-/*	$NetBSD: key_var.h,v 1.8.4.4 2002/06/20 03:49:55 nathanw Exp $	*/
+/*	$NetBSD: key_var.h,v 1.8.4.5 2002/10/18 02:45:30 nathanw Exp $	*/
 /*	$KAME: key_var.h,v 1.12 2001/11/06 03:48:29 itojun Exp $	*/
 
 /*
@@ -84,10 +84,10 @@
 }
 
 #ifdef _KERNEL
-#define _ARRAYLEN(p) (sizeof(p)/sizeof(p[0]))
-#define _KEYLEN(key) ((u_int)((key)->sadb_key_bits >> 3))
-#define _KEYBITS(key) ((u_int)((key)->sadb_key_bits))
-#define _KEYBUF(key) ((caddr_t)((caddr_t)(key) + sizeof(struct sadb_key)))
+#define _ARRAYLEN(p)	(sizeof(p)/sizeof(p[0]))
+#define _KEYLEN(key)	((u_int)((key)->sadb_key_bits >> 3))
+#define _KEYBITS(key)	((u_int)((key)->sadb_key_bits))
+#define _KEYBUF(key)	((u_int8_t *)(key) + sizeof(struct sadb_key))
 #endif /*_KERNEL*/
 
 #endif /* _NETKEY_KEY_VAR_H_ */

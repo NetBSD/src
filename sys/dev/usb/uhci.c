@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.133.2.11 2002/08/01 02:45:57 nathanw Exp $	*/
+/*	$NetBSD: uhci.c,v 1.133.2.12 2002/10/18 02:44:32 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.11 2002/08/01 02:45:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.133.2.12 2002/10/18 02:44:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1273,10 +1273,12 @@ uhci_softintr(void *v)
 	for (ii = LIST_FIRST(&sc->sc_intrhead); ii; ii = LIST_NEXT(ii, list))
 		uhci_check_intr(sc, ii);
 
+#ifdef USB_USE_SOFTINTR
 	if (sc->sc_softwake) {
 		sc->sc_softwake = 0;
 		wakeup(&sc->sc_softwake);
 	}
+#endif /* USB_USE_SOFTINTR */
 
 	sc->sc_bus.intr_context--;
 }
@@ -1527,7 +1529,7 @@ uhci_waitintr(uhci_softc_t *sc, usbd_xfer_handle xfer)
 		;
 #ifdef DIAGNOSTIC
 	if (ii == NULL)
-		panic("uhci_waitintr: lost intr_info\n");
+		panic("uhci_waitintr: lost intr_info");
 #endif
 	uhci_idone(ii);
 }
@@ -1810,7 +1812,7 @@ uhci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_bulk_transfer: a request\n");
+		panic("uhci_device_bulk_transfer: a request");
 #endif
 
 	len = xfer->length;
@@ -1911,7 +1913,7 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
-		panic("uhci_abort_xfer: not in process context\n");
+		panic("uhci_abort_xfer: not in process context");
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -1931,10 +1933,14 @@ uhci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	 */
 	usb_delay_ms(upipe->pipe.device->bus, 2); /* Hardware finishes in 1ms */
 	s = splusb();
+#ifdef USB_USE_SOFTINTR
 	sc->sc_softwake = 1;
+#endif /* USB_USE_SOFTINTR */
 	usb_schedsoftintr(&sc->sc_bus);
+#ifdef USB_USE_SOFTINTR
 	DPRINTFN(1,("uhci_abort_xfer: tsleep\n"));
 	tsleep(&sc->sc_softwake, PZERO, "uhciab", 0);
+#endif /* USB_USE_SOFTINTR */
 	splx(s);
 
 	/*
@@ -1990,7 +1996,7 @@ uhci_device_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_device_ctrl_transfer: not a request\n");
+		panic("uhci_device_ctrl_transfer: not a request");
 #endif
 
 	err = uhci_device_request(xfer);
@@ -2039,7 +2045,7 @@ uhci_device_intr_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("uhci_device_intr_transfer: a request\n");
+		panic("uhci_device_intr_transfer: a request");
 #endif
 
 	err = uhci_alloc_std_chain(upipe, sc, xfer->length, 1, xfer->flags,
@@ -2667,7 +2673,7 @@ uhci_device_ctrl_done(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_ctrl_done: not a request\n");
+		panic("uhci_ctrl_done: not a request");
 #endif
 
 	uhci_del_intr_info(ii);	/* remove from active list */
@@ -2989,7 +2995,7 @@ uhci_root_ctrl_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST))
-		panic("uhci_root_ctrl_transfer: not a request\n");
+		panic("uhci_root_ctrl_transfer: not a request");
 #endif
 	req = &xfer->request;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6.2.4 2002/09/17 21:20:33 nathanw Exp $ */
+/* $NetBSD: pms.c,v 1.6.2.5 2002/10/18 02:43:25 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1994 Charles M. Hannum.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.2.4 2002/09/17 21:20:33 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.2.5 2002/10/18 02:43:25 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,9 +91,8 @@ int pmsprobe __P((struct device *, struct cfdata *, void *));
 void pmsattach __P((struct device *, struct device *, void *));
 void pmsinput __P((void *, int));
 
-struct cfattach pms_ca = {
-	sizeof(struct pms_softc), pmsprobe, pmsattach,
-};
+CFATTACH_DECL(pms, sizeof(struct pms_softc),
+    pmsprobe, pmsattach, NULL, NULL);
 
 static int	pms_protocol __P((pckbc_tag_t, pckbc_slot_t));
 static void	do_enable __P((struct pms_softc *));

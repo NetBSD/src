@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.85.2.6 2002/08/01 02:46:05 nathanw Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.85.2.7 2002/10/18 02:44:38 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.85.2.6 2002/08/01 02:46:05 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.85.2.7 2002/10/18 02:44:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1222,7 +1222,7 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 			uaa->matchlvl = UMATCH_VENDOR_PRODUCT;
 	} else
 		uaa->matchlvl = 0;
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 #endif

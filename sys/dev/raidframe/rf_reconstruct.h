@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.5.4.2 2002/09/17 21:20:58 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.5.4.3 2002/10/18 02:43:57 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -192,8 +192,5 @@ rf_ForceOrBlockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap,
     void (*cbFunc) (RF_Raid_t *, void *), void *cbArg);
 
 	int     rf_UnblockRecon(RF_Raid_t * raidPtr, RF_AccessStripeMap_t * asmap);
-
-	int     rf_RegisterReconDoneProc(RF_Raid_t * raidPtr, void (*proc) (RF_Raid_t *, void *), void *arg,
-            RF_ReconDoneProc_t ** handlep);
 
 #endif				/* !_RF__RF_RECONSTRUCT_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dagfuncs.c,v 1.7.2.2 2002/09/17 21:20:45 nathanw Exp $	*/
+/*	$NetBSD: rf_dagfuncs.c,v 1.7.2.3 2002/10/18 02:43:45 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.7.2.2 2002/09/17 21:20:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_dagfuncs.c,v 1.7.2.3 2002/10/18 02:43:45 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -228,21 +228,6 @@ rf_ParityLogOverwriteFunc(node)
 	}
 	return (0);
 }
-#else				/* RF_INCLUDE_PARITYLOGGING > 0 */
-
-int 
-rf_ParityLogUpdateFunc(node)
-	RF_DagNode_t *node;
-{
-	return (0);
-}
-int 
-rf_ParityLogOverwriteFunc(node)
-	RF_DagNode_t *node;
-{
-	return (0);
-}
-#endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
 
 int 
 rf_ParityLogUpdateUndoFunc(node)
@@ -257,6 +242,8 @@ rf_ParityLogOverwriteUndoFunc(node)
 {
 	return (0);
 }
+#endif				/* RF_INCLUDE_PARITYLOGGING > 0 */
+
 /*****************************************************************************************
  * the execution function associated with a NOP node
  ****************************************************************************************/

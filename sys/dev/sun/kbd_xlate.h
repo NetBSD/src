@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_xlate.h,v 1.3 2000/03/19 12:50:43 pk Exp $	*/
+/*	$NetBSD: kbd_xlate.h,v 1.3.6.1 2002/10/18 02:44:23 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -66,10 +66,7 @@
  */
 struct kbd_state {
 	struct keyboard kbd_k;	/* table pointers */
-	int	kbd_modbits;		/* modifier keys */
-	int kbd_expect; 		/* expect ID or layout byte */
-#define	KBD_EXPECT_IDCODE	1
-#define	KBD_EXPECT_LAYOUT	2
+	int	kbd_modbits;	/* modifier keys */
 
 	u_char	kbd_id;		/* a place to store the ID */
 	u_char	kbd_layout;	/* which keyboard layout */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.41.2.10 2002/07/15 20:49:20 nathanw Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.41.2.11 2002/10/18 02:45:48 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.41.2.10 2002/07/15 20:49:20 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.41.2.11 2002/10/18 02:45:48 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -149,7 +149,7 @@ ffs_alloc(ip, lbn, bpref, size, cred, bnp)
 		panic("ffs_alloc: bad size");
 	}
 	if (cred == NOCRED)
-		panic("ffs_alloc: missing credential\n");
+		panic("ffs_alloc: missing credential");
 #endif /* DIAGNOSTIC */
 	if (size == fs->fs_bsize && fs->fs_cstotal.cs_nbfree == 0)
 		goto nospace;
@@ -236,7 +236,7 @@ ffs_realloccg(ip, lbprev, bpref, osize, nsize, cred, bpp, blknop)
 		panic("ffs_realloccg: bad size");
 	}
 	if (cred == NOCRED)
-		panic("ffs_realloccg: missing credential\n");
+		panic("ffs_realloccg: missing credential");
 #endif /* DIAGNOSTIC */
 	if (cred->cr_uid != 0 && freespace(fs, fs->fs_minfree) <= 0)
 		goto nospace;
@@ -1667,7 +1667,7 @@ ffs_freefile(v)
 #endif
 
 	if ((u_int)ino >= fs->fs_ipg * fs->fs_ncg)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
+		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 		    pip->i_dev, ino, fs->fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp, fsbtodb(fs, cgtod(fs, cg)),

@@ -1,4 +1,4 @@
-/*	$NetBSD: twe.c,v 1.12.2.10 2002/08/13 02:19:47 nathanw Exp $	*/
+/*	$NetBSD: twe.c,v 1.12.2.11 2002/10/18 02:43:22 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.10 2002/08/13 02:19:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twe.c,v 1.12.2.11 2002/10/18 02:43:22 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,9 +113,8 @@ static int	twe_status_wait(struct twe_softc *, u_int, int);
 static inline u_int32_t	twe_inl(struct twe_softc *, int);
 static inline void	twe_outl(struct twe_softc *, int, u_int32_t);
 
-struct cfattach twe_ca = {
-	sizeof(struct twe_softc), twe_match, twe_attach
-};
+CFATTACH_DECL(twe, sizeof(struct twe_softc),
+    twe_match, twe_attach, NULL, NULL);
 
 struct {
 	const u_int	aen;	/* High byte indicates type of message */
@@ -480,7 +479,7 @@ twe_submatch(struct device *parent, struct cfdata *cf, void *aux)
 	    cf->tweacf_unit != twea->twea_unit)
 		return (0);
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: qe.c,v 1.14.2.7 2002/08/27 23:47:03 nathanw Exp $	*/
+/*	$NetBSD: qe.c,v 1.14.2.8 2002/10/18 02:44:10 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.7 2002/08/27 23:47:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qe.c,v 1.14.2.8 2002/10/18 02:44:10 nathanw Exp $");
 
 #define QEDEBUG
 
@@ -187,9 +187,8 @@ static struct mbuf	*qe_get __P((struct qe_softc *, int, int));
 void	qe_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int	qe_ifmedia_upd __P((struct ifnet *));
 
-struct cfattach qe_ca = {
-	sizeof(struct qe_softc), qematch, qeattach
-};
+CFATTACH_DECL(qe, sizeof(struct qe_softc),
+    qematch, qeattach, NULL, NULL);
 
 int
 qematch(parent, cf, aux)
@@ -199,7 +198,7 @@ qematch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

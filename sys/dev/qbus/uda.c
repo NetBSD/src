@@ -1,4 +1,4 @@
-/*	$NetBSD: uda.c,v 1.38.4.3 2002/06/20 03:46:24 nathanw Exp $	*/
+/*	$NetBSD: uda.c,v 1.38.4.4 2002/10/18 02:43:41 nathanw Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.38.4.3 2002/06/20 03:46:24 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uda.c,v 1.38.4.4 2002/10/18 02:43:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,13 +89,11 @@ static	int udaprint(void *, const char *);
 static	void udasaerror(struct device *, int);
 static	void udago(struct device *, struct mscp_xi *);
 
-struct	cfattach mtc_ca = {
-	sizeof(struct uda_softc), udamatch, udaattach
-};
+CFATTACH_DECL(mtc, sizeof(struct uda_softc),
+    udamatch, udaattach, NULL, NULL);
 
-struct	cfattach uda_ca = {
-	sizeof(struct uda_softc), udamatch, udaattach
-};
+CFATTACH_DECL(uda, sizeof(struct uda_softc),
+    udamatch, udaattach, NULL, NULL);
 
 /*
  * More driver definitions, for generic MSCP code.
@@ -213,7 +211,7 @@ udaattach(struct device *parent, struct device *self, void *aux)
 	 * ctlr type it is, we check what is generated and later
 	 * set the correct vcid.
 	 */
-	ma.ma_type = (strcmp(self->dv_cfdata->cf_driver->cd_name, "mtc") ?
+	ma.ma_type = (strcmp(self->dv_cfdata->cf_name, "mtc") ?
 	    MSCPBUS_DISK : MSCPBUS_TAPE);
 
 	ma.ma_mc = &uda_mscp_ctlr;

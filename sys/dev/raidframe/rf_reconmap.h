@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconmap.h,v 1.3.20.1 2001/10/22 20:41:39 nathanw Exp $	*/
+/*	$NetBSD: rf_reconmap.h,v 1.3.20.2 2002/10/18 02:43:56 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -34,12 +34,12 @@
 #define _RF__RF_RECONMAP_H_
 
 #include <dev/raidframe/raidframevar.h>
+#include <sys/pool.h>
 
 #include "rf_threadstuff.h"
 
 /*
- * Main reconstruction status descriptor. size and maxsize are used for
- * monitoring only:  they have no function for reconstruction.
+ * Main reconstruction status descriptor.
  */
 struct RF_ReconMap_s {
 	RF_SectorCount_t sectorsPerReconUnit;	/* sectors per reconstruct
@@ -51,10 +51,9 @@ struct RF_ReconMap_s {
 					 * disk */
 	RF_StripeCount_t totalParityStripes;	/* total number of parity
 						 * stripes in array */
-	u_int   size;		/* overall size of this structure */
-	u_int   maxSize;	/* maximum size so far */
 	RF_ReconMapListElem_t **status;	/* array of ptrs to list elements */
-	        RF_DECLARE_MUTEX(mutex)
+	struct pool elem_pool;          /* pool of RF_ReconMapListElem_t's */
+	RF_DECLARE_MUTEX(mutex)
 };
 /* a list element */
 struct RF_ReconMapListElem_s {

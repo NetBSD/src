@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.9 2002/09/17 21:23:58 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.42.2.10 2002/10/18 02:45:47 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.9 2002/09/17 21:23:58 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.42.2.10 2002/10/18 02:45:47 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -224,6 +224,15 @@ ext2fs_mount(mp, path, data, ndp, p)
 	size_t size;
 	int error, flags;
 	mode_t accessmode;
+
+	if (mp->mnt_flag & MNT_GETARGS) {
+		ump = VFSTOUFS(mp);
+		if (ump == NULL)
+			return EIO;
+		args.fspec = NULL;
+		vfs_showexport(mp, &args.export, &ump->um_export);
+		return copyout(&args, data, sizeof(args));
+	}
 
 	error = copyin(data, (caddr_t)&args, sizeof (struct ufs_args));
 	if (error)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.8.4.5 2002/09/17 21:21:18 nathanw Exp $ */
+/*	$NetBSD: ses.c,v 1.8.4.6 2002/10/18 02:44:20 nathanw Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.5 2002/09/17 21:21:18 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.8.4.6 2002/10/18 02:44:20 nathanw Exp $");
 
 #include "opt_scsi.h"
 
@@ -170,9 +170,9 @@ static int ses_match __P((struct device *, struct cfdata *, void *));
 static void ses_attach __P((struct device *, struct device *, void *));
 static enctyp ses_device_type __P((struct scsipibus_attach_args *));
 
-struct cfattach ses_ca = {
-	sizeof (struct ses_softc), ses_match, ses_attach
-};
+CFATTACH_DECL(ses, sizeof (struct ses_softc),
+    ses_match, ses_attach, NULL, NULL);
+
 extern struct cfdriver ses_cd;
 
 const struct scsipi_periphsw ses_switch = {

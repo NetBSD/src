@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.26.2.8 2002/07/12 01:40:38 nathanw Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.26.2.9 2002/10/18 02:45:37 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.26.2.8 2002/07/12 01:40:38 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.26.2.9 2002/10/18 02:45:37 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -459,7 +459,7 @@ ntfs_ntput(ip)
 
 #ifdef DIAGNOSTIC
 	if (ip->i_usecount < 0) {
-		panic("ntfs_ntput: ino: %d usecount: %d \n",
+		panic("ntfs_ntput: ino: %d usecount: %d ",
 		      ip->i_number,ip->i_usecount);
 	}
 #endif
@@ -471,7 +471,7 @@ ntfs_ntput(ip)
 			ip->i_number));
 
 		if (ip->i_fnlist.lh_first)
-			panic("ntfs_ntput: ntnode has fnodes\n");
+			panic("ntfs_ntput: ntnode has fnodes");
 
 		ntfs_nthashrem(ip);
 
@@ -514,7 +514,7 @@ ntfs_ntrele(ip)
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
-		panic("ntfs_ntrele: ino: %d usecount: %d \n",
+		panic("ntfs_ntrele: ino: %d usecount: %d ",
 		      ip->i_number,ip->i_usecount);
 	simple_unlock(&ip->i_interlock);
 }
@@ -2071,7 +2071,7 @@ ntfs_toupper_unuse()
 	}
 #ifdef DIAGNOSTIC
 	else if (ntfs_toupper_usecount < 0) {
-		panic("ntfs_toupper_unuse(): use count negative: %d\n",
+		panic("ntfs_toupper_unuse(): use count negative: %d",
 			ntfs_toupper_usecount);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.12.2.8 2002/08/27 23:47:01 nathanw Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.12.2.9 2002/10/18 02:44:05 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.8 2002/08/27 23:47:01 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.12.2.9 2002/10/18 02:44:05 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,13 +83,11 @@ void	espattach_dma	__P((struct device *, struct device *, void *));
 int	espmatch_sbus	__P((struct device *, struct cfdata *, void *));
 
 
-/* Linkup to the rest of the kernel */
-struct cfattach esp_sbus_ca = {
-	sizeof(struct esp_softc), espmatch_sbus, espattach_sbus
-};
-struct cfattach esp_dma_ca = {
-	sizeof(struct esp_softc), espmatch_sbus, espattach_dma
-};
+CFATTACH_DECL(esp_sbus, sizeof(struct esp_softc),
+    espmatch_sbus, espattach_sbus, NULL, NULL);
+
+CFATTACH_DECL(esp_dma, sizeof(struct esp_softc),
+    espmatch_sbus, espattach_dma, NULL, NULL);
 
 /*
  * Functions and the switch for the MI code.
@@ -147,7 +145,7 @@ espmatch_sbus(parent, cf, aux)
 	if (strcmp("SUNW,fas", sa->sa_name) == 0)
 	        return 1;
 
-	rv = (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0 ||
+	rv = (strcmp(cf->cf_name, sa->sa_name) == 0 ||
 	    strcmp("ptscII", sa->sa_name) == 0);
 	return (rv);
 }
@@ -759,7 +757,7 @@ db_esp(addr, have_addr, count, modif)
 		}
 		db_printf("\n");
 		
-		for (t=0; t<NCR_NTARG; t++) {
+		for (t=0; t<sc->sc_ntarg; t++) {
 			LIST_FOREACH(li, &sc->sc_tinfo[t].luns, link) {
 				db_printf("t%d lun %d untagged %p busy %d used %x\n",
 					  t, (int)li->lun, li->untagged, li->busy,

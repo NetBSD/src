@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.39.2.10 2002/09/17 21:21:47 nathanw Exp $ */
+/* $NetBSD: wskbd.c,v 1.39.2.11 2002/10/18 02:44:45 nathanw Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39.2.10 2002/09/17 21:21:47 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.39.2.11 2002/10/18 02:44:45 nathanw Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -236,10 +236,8 @@ static int wskbd_mux_close(struct wsevsrc *);
 static int wskbd_do_open(struct wskbd_softc *, struct wseventvar *);
 static int wskbd_do_ioctl(struct device *, u_long, caddr_t, int, struct proc *);
 
-struct cfattach wskbd_ca = {
-	sizeof (struct wskbd_softc), wskbd_match, wskbd_attach,
-	wskbd_detach, wskbd_activate
-};
+CFATTACH_DECL(wskbd, sizeof (struct wskbd_softc),
+    wskbd_match, wskbd_attach, wskbd_detach, wskbd_activate);
 
 extern struct cfdriver wskbd_cd;
 

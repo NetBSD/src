@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.72.2.13 2002/09/17 21:21:59 nathanw Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.72.2.14 2002/10/18 02:44:50 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.13 2002/09/17 21:21:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.72.2.14 2002/10/18 02:44:50 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1088,8 +1088,6 @@ closef(struct file *fp, struct proc *p)
 			fp->f_usecount--;
 			return (0);
 		}
-		if (fp->f_count < 0)
-			panic("closef: count < 0");
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lebuffer.c,v 1.7.6.5 2002/04/01 07:47:13 nathanw Exp $ */
+/*	$NetBSD: lebuffer.c,v 1.7.6.6 2002/10/18 02:44:08 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.5 2002/04/01 07:47:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lebuffer.c,v 1.7.6.6 2002/10/18 02:44:08 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,8 @@ int	lebufprint	__P((void *, const char *));
 int	lebufmatch	__P((struct device *, struct cfdata *, void *));
 void	lebufattach	__P((struct device *, struct device *, void *));
 
-struct cfattach lebuffer_ca = {
-	sizeof(struct lebuf_softc), lebufmatch, lebufattach
-};
+CFATTACH_DECL(lebuffer, sizeof(struct lebuf_softc),
+    lebufmatch, lebufattach, NULL, NULL);
 
 int
 lebufprint(aux, busname)
@@ -84,7 +83,7 @@ lebufmatch(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 /*

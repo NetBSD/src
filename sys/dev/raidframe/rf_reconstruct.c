@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.27.2.9 2002/09/17 21:20:57 nathanw Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.27.2.10 2002/10/18 02:43:56 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.9 2002/09/17 21:20:57 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.10 2002/10/18 02:43:56 nathanw Exp $");
 
 #include <sys/time.h>
 #include <sys/buf.h>
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.9 2002/09/17 21:20:57 nath
 
 /* setting these to -1 causes them to be set to their default values if not set by debug options */
 
-#ifdef DEBUG
+#if RF_DEBUG_RECON
 #define Dprintf(s)         if (rf_reconDebug) rf_debug_printf(s,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define Dprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
@@ -79,7 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.9 2002/09/17 21:20:57 nath
 #define DDprintf1(s,a)         if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),NULL,NULL,NULL,NULL,NULL,NULL,NULL)
 #define DDprintf2(s,a,b)       if (rf_reconDebug) rf_debug_printf(s,(void *)((unsigned long)a),(void *)((unsigned long)b),NULL,NULL,NULL,NULL,NULL,NULL)
 
-#else /* DEBUG */
+#else /* RF_DEBUG_RECON */
 
 #define Dprintf(s) {}
 #define Dprintf1(s,a) {}
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.27.2.9 2002/09/17 21:20:57 nath
 #define DDprintf1(s,a) {}
 #define DDprintf2(s,a,b) {}
 
-#endif /* DEBUG */
+#endif /* RF_DEBUG_RECON */
 
 
 static RF_FreeList_t *rf_recond_freelist;
@@ -158,28 +158,6 @@ SignalReconDone(RF_Raid_t * raidPtr)
 	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
 }
 
-int 
-rf_RegisterReconDoneProc(
-    RF_Raid_t * raidPtr,
-    void (*proc) (RF_Raid_t *, void *),
-    void *arg,
-    RF_ReconDoneProc_t ** handlep)
-{
-	RF_ReconDoneProc_t *p;
-
-	RF_FREELIST_GET(rf_rdp_freelist, p, next, (RF_ReconDoneProc_t *));
-	if (p == NULL)
-		return (ENOMEM);
-	p->proc = proc;
-	p->arg = arg;
-	RF_LOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	p->next = raidPtr->recon_done_procs;
-	raidPtr->recon_done_procs = p;
-	RF_UNLOCK_MUTEX(raidPtr->recon_done_proc_mutex);
-	if (handlep)
-		*handlep = p;
-	return (0);
-}
 /**************************************************************************
  *
  * sets up the parameters that will be used by the reconstruction process
@@ -417,7 +395,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	RF_RaidDisk_t *spareDiskPtr = NULL;
 	RF_RaidReconDesc_t *reconDesc;
 	RF_LayoutSW_t *lp;
-	RF_RaidDisk_t *badDisk;
 	RF_ComponentLabel_t c_label;
 	int     numDisksDone = 0, rc;
 	struct partinfo dpart;
@@ -456,6 +433,7 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			return (EINVAL);
 		}
 		if (raidPtr->Disks[row][col].status == rf_ds_spared) {
+			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}
 
@@ -492,8 +470,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 			RF_UNLOCK_MUTEX(raidPtr->mutex);
 			return (EINVAL);
 		}			
-
-		badDisk = &raidPtr->Disks[row][col];
 
 		proc = raidPtr->engine_thread;
 
@@ -639,7 +615,6 @@ rf_ReconstructInPlace(raidPtr, row, col)
 	}
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
 	RF_SIGNAL_COND(raidPtr->waitForReconCond);
-	wakeup(&raidPtr->waitForReconCond);	
 	return (rc);
 }
 
@@ -654,7 +629,7 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 	RF_RowCol_t srow = reconDesc->srow;
 	RF_RowCol_t scol = reconDesc->scol;
 	RF_ReconMap_t *mapPtr;
-
+	RF_ReconCtrl_t *tmp_reconctrl;
 	RF_ReconEvent_t *event;
 	struct timeval etime, elpsd;
 	unsigned long xor_s, xor_resid_us;
@@ -685,11 +660,14 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 	case 1:
 
+		/* allocate our RF_ReconCTRL_t before we protect raidPtr->reconControl[row] */
+		tmp_reconctrl = rf_MakeReconControl(reconDesc, row, col, srow, scol);
+
 		RF_LOCK_MUTEX(raidPtr->mutex);
 
 		/* create the reconstruction control pointer and install it in
 		 * the right slot */
-		raidPtr->reconControl[row] = rf_MakeReconControl(reconDesc, row, col, srow, scol);
+		raidPtr->reconControl[row] = tmp_reconctrl;
 		mapPtr = raidPtr->reconControl[row]->reconMap;
 		raidPtr->status[row] = rf_rs_reconstructing;
 		raidPtr->Disks[row][col].status = rf_ds_reconstructing;
@@ -745,9 +723,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			raidPtr->reconControl[row]->percentComplete = 
 				(raidPtr->reconControl[row]->numRUsComplete * 100 / raidPtr->reconControl[row]->numRUsTotal);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 
 
@@ -770,9 +750,11 @@ rf_ContinueReconstructFailedDisk(reconDesc)
 
 			(void) ProcessReconEvent(raidPtr, row, event);	/* ignore return code */
 			raidPtr->reconControl[row]->percentComplete = 100 - (rf_UnitsLeftToReconstruct(mapPtr) * 100 / mapPtr->totalRUs);
+#if RF_DEBUG_RECON
 			if (rf_prReconSched) {
 				rf_PrintReconSchedule(raidPtr->reconControl[row]->reconMap, &(raidPtr->reconControl[row]->starttime));
 			}
+#endif
 		}
 		reconDesc->state = 5;
 
@@ -875,7 +857,7 @@ ProcessReconEvent(raidPtr, frow, event)
 
 		/* a write I/O has completed */
 	case RF_REVENT_WRITEDONE:
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
@@ -928,7 +910,7 @@ ProcessReconEvent(raidPtr, frow, event)
 	case RF_REVENT_BUFREADY:
 		Dprintf2("RECON: BUFREADY EVENT: row %d col %d\n", frow, event->col);
 		retcode = IssueNextWriteRequest(raidPtr, frow);
-#if RF_DEBUG_RECONBUFFER
+#if RF_DEBUG_RECON
 		if (rf_floatingRbufDebug) {
 			rf_CheckFloatingRbufCount(raidPtr, 1);
 		}
@@ -1685,8 +1667,10 @@ rf_UnblockRecon(raidPtr, asmap)
 	if (!pssPtr) {
 		/* printf("Warning: no pss descriptor upon unblock on psid %ld
 		 * RU %d\n",psid,which_ru); */
+#if (RF_DEBUG_RECON > 0) || (RF_DEBUG_PSS > 0)
 		if (rf_reconDebug || rf_pssDebug)
 			printf("Warning: no pss descriptor upon unblock on psid %ld RU %d\n", (long) psid, which_ru);
+#endif
 		goto out;
 	}
 	pssPtr->blockCount--;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_reg.h,v 1.1.4.2 2002/04/01 07:47:24 nathanw Exp $ */
+/*	$NetBSD: kbd_reg.h,v 1.1.4.3 2002/10/18 02:44:23 nathanw Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -92,5 +92,6 @@
 #define	LED_CAPS_LOCK	0x8
 
 #ifdef _KERNEL
-int	kbd_docmd __P((int, int));
+/* XXX: backdoor for /dev/fb driver */
+extern void kbd_bell(int);
 #endif

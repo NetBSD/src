@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.89.2.7 2002/08/27 23:48:27 nathanw Exp $	*/
+/*	$NetBSD: vnode.h,v 1.89.2.8 2002/10/18 02:45:43 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -512,9 +512,6 @@ int	vrecycle(struct vnode *vp, struct simplelock *inter_lkp,
 int	vn_bwrite(void *ap);
 int 	vn_close(struct vnode *vp,
 	    int flags, struct ucred *cred, struct proc *p);
-int 	vn_closefile(struct file *fp, struct proc *p);
-int	vn_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p);
-int	vn_fcntl(struct file *fp, u_int com, caddr_t data, struct proc *p);
 int	vn_lock(struct vnode *vp, int flags);
 u_int	vn_setrecurse(struct vnode *vp);
 void	vn_restorerecurse(struct vnode *vp, u_int flags);
@@ -522,18 +519,14 @@ int 	vn_open(struct nameidata *ndp, int fmode, int cmode);
 int 	vn_rdwr(enum uio_rw rw, struct vnode *vp, caddr_t base,
 	    int len, off_t offset, enum uio_seg segflg, int ioflg,
 	    struct ucred *cred, size_t *aresid, struct proc *p);
-int	vn_read(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
 int	vn_readdir(struct file *fp, char *buf, int segflg, u_int count,
 	    int *done, struct proc *p, off_t **cookies, int *ncookies);
-int	vn_poll(struct file *fp, int events, struct proc *p);
-int	vn_stat(void *fdata, struct stat *sb, struct proc *p);
+int	vn_stat(struct vnode *vp, struct stat *sb, struct proc *p);
 void	vn_syncer_add_to_worklist(struct vnode *vp, int delay);
 void	vn_syncer_remove_from_worklist(struct vnode *vp);
-int	vn_write(struct file *fp, off_t *offset, struct uio *uio,
-	    struct ucred *cred, int flags);
 int	vn_writechk(struct vnode *vp);
-void	vn_markexec(struct vnode *vp);
+void	vn_markexec(struct vnode *);
+int	vn_marktext(struct vnode *);
 int	vn_isunder(struct vnode *dvp, struct vnode *rvp, struct proc *p);
 struct vnode *
 	checkalias(struct vnode *vp, dev_t nvp_rdev, struct mount *mp);

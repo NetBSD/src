@@ -1,4 +1,4 @@
-/*	$NetBSD: cgsixvar.h,v 1.1.4.1 2002/04/01 07:47:23 nathanw Exp $ */
+/*	$NetBSD: cgsixvar.h,v 1.1.4.2 2002/10/18 02:44:22 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -77,8 +77,5 @@ extern int cgsix_use_rasterconsole;
 #else
 #define cgsix_use_rasterconsole 0
 #endif
-
-/* XXX - export sbus attach struct for overloaded obio bus */
-extern struct cfattach cgsix_sbus_ca;
 
 void	cg6attach(struct cgsix_softc *, char *, int);

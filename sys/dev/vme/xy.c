@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.33.2.7 2002/09/17 21:21:45 nathanw Exp $	*/
+/*	$NetBSD: xy.c,v 1.33.2.8 2002/10/18 02:44:43 nathanw Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.33.2.7 2002/09/17 21:21:45 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.33.2.8 2002/10/18 02:44:43 nathanw Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -193,13 +193,11 @@ int	xygetdisklabel __P((struct xy_softc *, void *));
  * cfattach's: device driver interface to autoconfig
  */
 
-struct cfattach xyc_ca = {
-	sizeof(struct xyc_softc), xycmatch, xycattach
-};
+CFATTACH_DECL(xyc, sizeof(struct xyc_softc),
+    xycmatch, xycattach, NULL, NULL);
 
-struct cfattach xy_ca = {
-	sizeof(struct xy_softc), xymatch, xyattach
-};
+CFATTACH_DECL(xy, sizeof(struct xy_softc),
+    xymatch, xyattach, NULL, NULL);
 
 extern struct cfdriver xy_cd;
 
@@ -1572,7 +1570,7 @@ xyc_submit_iorq(xycsc, iorq, type)
 	if (dmaiopb == NULL) { /* nothing doing? */
 		if (type == XY_SUB_NORM || type == XY_SUB_NOQ)
 			return(XY_ERR_AOK);
-		panic("xyc_submit_iorq: xyc_chain failed!\n");
+		panic("xyc_submit_iorq: xyc_chain failed!");
 	}
 
 	XYC_GO(xycsc->xyc, (u_long)dmaiopb);

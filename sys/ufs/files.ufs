@@ -1,11 +1,11 @@
-#	$NetBSD: files.ufs,v 1.1.6.2 2002/06/20 03:50:21 nathanw Exp $
+#	$NetBSD: files.ufs,v 1.1.6.3 2002/10/18 02:45:44 nathanw Exp $
 
 deffs					FFS
 deffs					EXT2FS
 deffs	fs_mfs.h			MFS		# XXX
 deffs	fs_lfs.h			LFS		# XXX
 
-defflag	opt_ffs.h			FFS_EI
+defflag	opt_ffs.h			FFS_EI	APPLE_UFS
 
 file	ufs/ext2fs/ext2fs_alloc.c	ext2fs
 file	ufs/ext2fs/ext2fs_balloc.c	ext2fs
@@ -29,6 +29,7 @@ file	ufs/ffs/ffs_subr.c		ffs | mfs
 file	ufs/ffs/ffs_tables.c		ffs | mfs
 file	ufs/ffs/ffs_vfsops.c		ffs | mfs
 file	ufs/ffs/ffs_vnops.c		ffs | mfs
+file	ufs/ffs/ffs_appleufs.c		ffs & apple_ufs
 
 file	ufs/lfs/lfs_alloc.c		lfs  
 file	ufs/lfs/lfs_balloc.c		lfs

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.1.6.4 2002/09/17 22:35:37 nathanw Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.1.6.5 2002/10/18 02:44:53 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.1.6.4 2002/09/17 22:35:37 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.1.6.5 2002/10/18 02:44:53 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/lock.h>
@@ -243,8 +243,8 @@ sys_rasctl(struct lwp *l, void *v, register_t *retval)
 	len = (size_t)SCARG(uap, len);
 	op = SCARG(uap, op);
 
-	DPRINTF(("sys_rasctl: p=%p addr=%p, len=%d, op=0x%x\n",
-	    p, addr, len, op));
+	DPRINTF(("sys_rasctl: p=%p addr=%p, len=%ld, op=0x%x\n",
+	    p, addr, (long)len, op));
 
 	switch (op) {
 	case RAS_INSTALL:

@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.39.2.6 2002/09/17 21:22:39 nathanw Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.39.2.7 2002/10/18 02:45:03 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.39.2.6 2002/09/17 21:22:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.39.2.7 2002/10/18 02:45:03 nathanw Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -138,6 +138,8 @@ kernfs_mount(mp, path, data, ndp, p)
 	printf("kernfs_mount(mp = %p)\n", mp);
 #endif
 
+	if (mp->mnt_flag & MNT_GETARGS)
+		return 0;
 	/*
 	 * Update is a no-op
 	 */

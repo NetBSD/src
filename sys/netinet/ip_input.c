@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.130.2.13 2002/09/17 21:23:03 nathanw Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.130.2.14 2002/10/18 02:45:17 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.13 2002/09/17 21:23:03 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.130.2.14 2002/10/18 02:45:17 nathanw Exp $");
 
 #include "opt_gateway.h"
 #include "opt_pfil_hooks.h"
@@ -1863,10 +1863,13 @@ ip_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		}
 		return (error);
 	case IPCTL_MTUDISCTIMEOUT:
+		old = ip_mtudisc_timeout;
 		error = sysctl_int(oldp, oldlenp, newp, newlen,
 		   &ip_mtudisc_timeout);
-		if (ip_mtudisc_timeout < 0)
+		if (ip_mtudisc_timeout < 0) {
+			ip_mtudisc_timeout = old;
 			return (EINVAL);
+		}
 		if (ip_mtudisc_timeout_q != NULL)
 			rt_timer_queue_change(ip_mtudisc_timeout_q,
 					      ip_mtudisc_timeout);

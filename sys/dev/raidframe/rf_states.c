@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.15.2.2 2002/08/01 02:45:39 nathanw Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.15.2.3 2002/10/18 02:43:58 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.15.2.2 2002/08/01 02:45:39 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.15.2.3 2002/10/18 02:43:58 nathanw Exp $");
 
 #include <sys/errno.h>
 
@@ -46,6 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.15.2.2 2002/08/01 02:45:39 nathanw E
 #include "rf_etimer.h"
 #include "rf_kintf.h"
 
+#ifndef RF_DEBUG_STATES
+#define RF_DEBUG_STATES 0
+#endif
+
 /* prototypes for some of the available states.
 
    States must:
@@ -58,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.15.2.2 2002/08/01 02:45:39 nathanw E
      - increment desc->state when they have finished their work.
 */
 
+#if RF_DEBUG_STATES
 static char *
 StateName(RF_AccessState_t state)
 {
@@ -85,6 +90,7 @@ StateName(RF_AccessState_t state)
 		return "!!! UnnamedState !!!";
 	}
 }
+#endif
 
 void 
 rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
@@ -92,7 +98,9 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 	int     suspended = RF_FALSE;
 	int     current_state_index = desc->state;
 	RF_AccessState_t current_state = desc->states[current_state_index];
+#if RF_DEBUG_STATES
 	int     unit = desc->raidPtr->raidid;
+#endif
 
 	do {
 
@@ -137,12 +145,14 @@ rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc)
 		 * have been freed. desc is only freed in LastState, so if we
 		 * renter this function or loop back up, desc should be valid. */
 
+#if RF_DEBUG_STATES
 		if (rf_printStatesDebug) {
 			printf("raid%d: State: %-24s StateIndex: %3i desc: 0x%ld %s\n",
 			       unit, StateName(current_state), 
 			       current_state_index, (long) desc,
 			       suspended ? "callback scheduled" : "looping");
 		}
+#endif
 	} while (!suspended && current_state != rf_LastState);
 
 	return;
@@ -258,7 +268,7 @@ rf_State_DecrAccessCount(RF_RaidAccessDesc_t * desc)
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);
 	raidPtr->accs_in_flight--;
 	if (raidPtr->accesses_suspended && raidPtr->accs_in_flight == 0) {
-		rf_SignalQuiescenceLock(raidPtr, raidPtr->reconDesc);
+		rf_SignalQuiescenceLock(raidPtr);
 	}
 	rf_UpdateUserStats(raidPtr, RF_ETIMER_VAL_US(desc->timer), desc->numBlocks);
 	RF_UNLOCK_MUTEX(raidPtr->access_suspend_mutex);
@@ -299,9 +309,10 @@ rf_State_Quiesce(RF_RaidAccessDesc_t * desc)
 	RF_ETIMER_EVAL(timer);
 	tracerec->specific.user.suspend_ovhd_us += RF_ETIMER_VAL_US(timer);
 
+#if RF_DEBUG_QUIESCE
 	if (suspended && rf_quiesceDebug)
 		printf("Stalling access due to quiescence lock\n");
-
+#endif
 	desc->state++;
 	return suspended;
 }

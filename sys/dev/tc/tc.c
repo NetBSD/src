@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.28.4.1 2001/11/14 19:16:13 nathanw Exp $	*/
+/*	$NetBSD: tc.c,v 1.28.4.2 2002/10/18 02:44:26 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.28.4.1 2001/11/14 19:16:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.28.4.2 2002/10/18 02:44:26 nathanw Exp $");
 
 #include "opt_tcverbose.h"
 
@@ -45,9 +45,9 @@ __KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.28.4.1 2001/11/14 19:16:13 nathanw Exp $");
 int	tcmatch __P((struct device *, struct cfdata *, void *));
 void	tcattach __P((struct device *, struct device *, void *));
 
-struct cfattach tc_ca = {
-	sizeof(struct tc_softc), tcmatch, tcattach
-};
+CFATTACH_DECL(tc, sizeof(struct tc_softc),
+    tcmatch, tcattach, NULL, NULL);
+
 extern struct cfdriver tc_cd;
 
 int	tcprint __P((void *, const char *));
@@ -63,7 +63,7 @@ tcmatch(parent, cf, aux)
 {
 	struct tcbus_attach_args *tba = aux;
 
-	if (strcmp(tba->tba_busname, cf->cf_driver->cd_name))
+	if (strcmp(tba->tba_busname, cf->cf_name))
 		return (0);
 
 	return (1);
@@ -213,7 +213,7 @@ tcsubmatch(parent, cf, aux)
 	    (cf->tccf_offset != d->ta_offset))
 		return 0;
 
-	return ((*cf->cf_attach->ca_match)(parent, cf, aux));
+	return (config_match(parent, cf, aux));
 }
 
 

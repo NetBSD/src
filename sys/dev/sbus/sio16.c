@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.1.2.5 2002/09/17 21:21:07 nathanw Exp $	*/
+/*	$NetBSD: sio16.c,v 1.1.2.6 2002/10/18 02:44:11 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.5 2002/09/17 21:21:07 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.1.2.6 2002/10/18 02:44:11 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,9 +91,8 @@ struct sio16_softc {
 
 };
 
-struct cfattach siosixteen_ca = {
-	sizeof(struct sio16_softc), sio16_match, sio16_attach
-};
+CFATTACH_DECL(siosixteen, sizeof(struct sio16_softc),
+    sio16_match, sio16_attach, NULL, NULL);
 
 struct sio16_attach_args {
 	bus_space_tag_t		cd_tag;
@@ -140,7 +139,7 @@ sio16_attach(parent, self, aux)
 	int i;
 
 	if (sa->sa_nreg != 4)
-		panic("sio16_attach: got %d registers intead of 4\n",
+		panic("sio16_attach: got %d registers intead of 4",
 		    sa->sa_nreg);
 
 	/* copy our bus tag, we will need it */
@@ -281,9 +280,8 @@ sio16_ackfunc(v, who)
 static int	clcd_match(struct device *, struct cfdata *, void *);
 static void	clcd_attach(struct device *, struct device *, void *);
 
-struct cfattach clcd_ca = {
-	sizeof(struct cd18xx_softc), clcd_match, clcd_attach
-};
+CFATTACH_DECL(clcd, sizeof(struct cd18xx_softc),
+    clcd_match, clcd_attach, NULL, NULL);
 
 static int
 clcd_match(parent, cf, aux)

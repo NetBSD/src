@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.49.2.15 2002/09/17 21:24:10 nathanw Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.49.2.16 2002/10/18 02:46:00 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.15 2002/09/17 21:24:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.49.2.16 2002/10/18 02:46:00 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,10 +654,12 @@ sys_munmap(l, v, retval)
 	 */
 
 	vm_map_lock(map);
+#if 0
 	if (!uvm_map_checkprot(map, addr, addr + size, VM_PROT_NONE)) {
 		vm_map_unlock(map);
 		return (EINVAL);
 	}
+#endif
 	uvm_unmap_remove(map, addr, addr + size, &dead_entries);
 	vm_map_unlock(map);
 	if (dead_entries != NULL)

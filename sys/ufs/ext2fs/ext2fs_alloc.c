@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_alloc.c,v 1.9.2.3 2001/11/14 19:18:53 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_alloc.c,v 1.9.2.4 2002/10/18 02:45:44 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.9.2.3 2001/11/14 19:18:53 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_alloc.c,v 1.9.2.4 2002/10/18 02:45:44 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,7 @@ ext2fs_alloc(ip, lbn, bpref, cred, bnp)
 	fs = ip->i_e2fs;
 #ifdef DIAGNOSTIC
 	if (cred == NOCRED)
-		panic("ext2fs_alloc: missing credential\n");
+		panic("ext2fs_alloc: missing credential");
 #endif /* DIAGNOSTIC */
 	if (fs->e2fs.e2fs_fbcount == 0)
 		goto nospace;
@@ -559,7 +559,7 @@ ext2fs_vfree(v)
 	pip = VTOI(ap->a_pvp);
 	fs = pip->i_e2fs;
 	if ((u_int)ino >= fs->e2fs.e2fs_icount || (u_int)ino < EXT2_FIRSTINO)
-		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s\n",
+		panic("ifree: range: dev = 0x%x, ino = %d, fs = %s",
 			pip->i_dev, ino, fs->e2fs_fsmnt);
 	cg = ino_to_cg(fs, ino);
 	error = bread(pip->i_devvp,

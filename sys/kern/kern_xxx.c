@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.45.2.7 2002/08/01 02:46:23 nathanw Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.45.2.8 2002/10/18 02:44:54 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.7 2002/08/01 02:46:23 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.45.2.8 2002/10/18 02:44:54 nathanw Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -111,12 +111,19 @@ scdebug_call(l, code, args)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_NSYSENT ||
-	     sy->sy_call == sys_nosys))
+	if (!(scdebug & SCDEBUG_ALL || code < 0
+#ifndef __HAVE_MINIMAL_EMUL
+	    || code >= em->e_nsysent
+#endif
+	    || sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0
+#ifndef __HAVE_MINIMAL_EMUL
+	    || code >= em->e_nsysent
+#endif
+	    )
 		printf("OUT OF RANGE (%ld)", (long)code);
 	else {
 		printf("%ld call: %s", (long)code, em->e_syscallnames[code]);
@@ -147,12 +154,19 @@ scdebug_ret(l, code, error, retval)
 
 	em = p->p_emul;
 	sy = &em->e_sysent[code];
-	if (!(scdebug & SCDEBUG_ALL || code < 0 || code >= SYS_NSYSENT ||
-	    sy->sy_call == sys_nosys))
+	if (!(scdebug & SCDEBUG_ALL || code < 0 
+#ifndef __HAVE_MINIMAL_EMUL
+	    || code >= em->e_nsysent
+#endif
+	    || sy->sy_call == sys_nosys))
 		return;
 		
 	printf("proc %d (%s): %s num ", p->p_pid, p->p_comm, em->e_name);
-	if (code < 0 || code >= em->e_nsysent)
+	if (code < 0
+#ifndef __HAVE_MINIMAL_EMUL
+	    || code >= em->e_nsysent
+#endif
+	    )
 		printf("OUT OF RANGE (%ld)", (long)code);
 	else
 		printf("%ld ret: err = %d, rv = 0x%lx,0x%lx", (long)code,

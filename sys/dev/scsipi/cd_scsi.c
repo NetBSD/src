@@ -1,4 +1,4 @@
-/*	$NetBSD: cd_scsi.c,v 1.18.4.4 2002/01/08 00:31:48 nathanw Exp $	*/
+/*	$NetBSD: cd_scsi.c,v 1.18.4.5 2002/10/18 02:44:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.18.4.4 2002/01/08 00:31:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.18.4.5 2002/10/18 02:44:15 nathanw Exp $");
 
 #include "rnd.h"
 
@@ -81,11 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: cd_scsi.c,v 1.18.4.4 2002/01/08 00:31:48 nathanw Exp
 int	cd_scsibus_match __P((struct device *, struct cfdata *, void *));
 void	cd_scsibus_attach __P((struct device *, struct device *, void *));
 
-struct cfattach cd_scsibus_ca = {
-	sizeof(struct cd_softc), cd_scsibus_match, cd_scsibus_attach,
-	cddetach, cdactivate
-};
-
+CFATTACH_DECL(cd_scsibus, sizeof(struct cd_softc),
+    cd_scsibus_match, cd_scsibus_attach, cddetach, cdactivate);
 
 struct scsipi_inquiry_pattern cd_scsibus_patterns[] = {
 	{T_CDROM, T_REMOV,

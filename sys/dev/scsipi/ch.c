@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.43.4.5 2002/09/17 21:21:13 nathanw Exp $	*/
+/*	$NetBSD: ch.c,v 1.43.4.6 2002/10/18 02:44:15 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.5 2002/09/17 21:21:13 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.43.4.6 2002/10/18 02:44:15 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,9 +109,8 @@ struct ch_softc {
 int	chmatch __P((struct device *, struct cfdata *, void *));
 void	chattach __P((struct device *, struct device *, void *));
 
-struct cfattach ch_ca = {
-	sizeof(struct ch_softc), chmatch, chattach
-};
+CFATTACH_DECL(ch, sizeof(struct ch_softc),
+    chmatch, chattach, NULL, NULL);
 
 extern struct cfdriver ch_cd;
 

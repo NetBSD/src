@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_extern.h,v 1.9.2.1 2001/09/21 22:37:03 nathanw Exp $	*/
+/*	$NetBSD: ext2fs_extern.h,v 1.9.2.2 2002/10/18 02:45:45 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997 Manuel Bouyer.
@@ -72,8 +72,6 @@ int ext2fs_vfree __P((void *));
 int ext2fs_balloc __P((struct inode *, ufs_daddr_t, int, struct ucred *,
 			struct buf **, int));
 int ext2fs_gop_alloc __P((struct vnode *, off_t, off_t, int, struct ucred *));
-int ext2fs_balloc_range __P((struct vnode *, off_t, off_t, struct ucred *,
-			     int));
 
 /* ext2fs_bmap.c */
 int ext2fs_bmap __P((void *));

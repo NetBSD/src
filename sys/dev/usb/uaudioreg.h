@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.7.2.2 2002/08/01 02:45:55 nathanw Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.7.2.3 2002/10/18 02:44:30 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -125,6 +125,14 @@ struct usb_audio_cluster {
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 } UPACKED;
+
+/* Shared by all units and terminals */
+struct usb_audio_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bUnitId;
+};
 
 /* UDESCSUB_AC_INPUT */
 struct usb_audio_input_terminal {

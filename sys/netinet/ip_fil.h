@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.38.2.7 2002/09/20 23:40:47 thorpej Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.38.2.8 2002/10/18 02:45:17 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1993-2002 by Darren Reed.
@@ -416,8 +416,7 @@ typedef	struct frgroup {
 typedef	struct	iplog	{
 	u_32_t	ipl_magic;
 	u_int	ipl_count;
-	u_long	ipl_sec;
-	u_long	ipl_usec;
+	struct timeval ipl_time;
 	size_t	ipl_dsize;
 	struct	iplog	*ipl_next;
 } iplog_t;
@@ -644,7 +643,7 @@ extern	int	fr_minttllog;
 extern	fr_info_t	frcache[2];
 extern	char	ipfilter_version[];
 extern	iplog_t	**iplh[IPL_LOGMAX+1], *iplt[IPL_LOGMAX+1];
-extern	size_t	iplused[IPL_LOGMAX + 1];
+extern	int	iplused[IPL_LOGMAX + 1];
 extern	struct frentry *ipfilter[2][2], *ipacct[2][2];
 #ifdef	USE_INET6
 extern	struct frentry *ipfilter6[2][2], *ipacct6[2][2];

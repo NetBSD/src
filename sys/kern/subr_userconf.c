@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.4.2.3 2001/11/14 19:16:41 nathanw Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.4.2.4 2002/10/18 02:44:55 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.4.2.3 2001/11/14 19:16:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.4.2.4 2002/10/18 02:44:55 nathanw Exp $");
 
 #include "opt_userconf.h"
 
@@ -113,7 +113,7 @@ userconf_init()
 	struct cfdata *cf;
 
 	i = 0;
-	for (cf = cfdata; cf->cf_driver; cf++)
+	for (cf = cfdata; cf->cf_name; cf++)
 		i++;
 
 	userconf_maxdev = i - 1;
@@ -203,7 +203,7 @@ userconf_pdevnam(dev)
 	struct cfdata *cd;
 
 	cd = &cfdata[dev];
-	printf("%s", cd->cf_driver->cd_name);
+	printf("%s", cd->cf_name);
 	switch (cd->cf_fstate) {
 	case FSTATE_NOTFOUND:
 	case FSTATE_DNOTFOUND:
@@ -227,9 +227,9 @@ userconf_pdev(devno)
 	short devno;
 {
 	struct cfdata *cd;
-	short *p;
+	const struct cfparent *cfp;
 	int   *l;
-	const char **ln;
+	const char * const *ln;
 	char c;
 
 	if (devno > userconf_maxdev) {
@@ -243,14 +243,14 @@ userconf_pdev(devno)
 	userconf_pdevnam(devno);
 	printf(" at");
 	c = ' ';
-	p = cd->cf_parents;
-	if (*p == -1)
+	cfp = cd->cf_pspec;
+	if (cfp == NULL)
 		printf(" root");
-	while (*p != -1) {
-		printf("%c", c);
-		userconf_pdevnam(*p++);
-		c = '|';
-	}
+	else if (cfp->cfp_parent != NULL && cfp->cfp_unit != -1)
+		printf(" %s%d", cfp->cfp_parent, cfp->cfp_unit);
+	else
+		printf(" %s?", cfp->cfp_parent != NULL ? cfp->cfp_parent
+						       : cfp->cfp_iattr);
 	switch (cd->cf_fstate) {
 	case FSTATE_NOTFOUND:
 	case FSTATE_FOUND:
@@ -397,7 +397,7 @@ userconf_change(devno)
 	char c = '\0';
 	int   *l;
 	int   ln;
-	const char **locnames;
+	const char * const *locnames;
 
 	if (devno <=  userconf_maxdev) {
 
@@ -580,7 +580,7 @@ userconf_list()
 
 	userconf_cnt = 0;
 
-	while (cfdata[i].cf_attach != 0) {
+	while (cfdata[i].cf_name != NULL) {
 		if (userconf_more())
 			break;
 		userconf_pdev(i++);
@@ -606,8 +606,8 @@ userconf_common_dev(dev, len, unit, state, routine)
 		break;
 	}
 
-	while (cfdata[i].cf_attach != 0) {
-		if (strlen(cfdata[i].cf_driver->cd_name) == len) {
+	while (cfdata[i].cf_name != NULL) {
+		if (strlen(cfdata[i].cf_name) == len) {
 
 			/*
 			 * Ok, if device name is correct
@@ -615,7 +615,7 @@ userconf_common_dev(dev, len, unit, state, routine)
 			 *  If state == FSTATE_STAR, look for "dev*"
 			 *  If state == FSTATE_NOTFOUND, look for "dev0"
 			 */
-			if (strncasecmp(dev, cfdata[i].cf_driver->cd_name,
+			if (strncasecmp(dev, cfdata[i].cf_name,
 					len) == 0 &&
 			    (state == FSTATE_FOUND ||
 			     (state == FSTATE_STAR &&
@@ -688,7 +688,7 @@ userconf_add_read(prompt, field, dev, len, val)
 					printf("Unknown devno (max is %d)\n",
 					    userconf_maxdev);
 				} else if (strncasecmp(dev,
-				    cfdata[a].cf_driver->cd_name, len) != 0 &&
+				    cfdata[a].cf_name, len) != 0 &&
 					field == 'a') {
 					printf("Not same device type\n");
 				} else {
@@ -817,7 +817,6 @@ userconf_parse(cmd)
 			userconf_hist_cmd('q');
 			userconf_hist_eoc();
 			return(-1);
-			break;
 		case 's':
 		default:
 			printf("Unknown command\n");

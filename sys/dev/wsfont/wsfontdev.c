@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.1.6.5 2002/09/17 21:21:50 nathanw Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.1.6.6 2002/10/18 02:44:46 nathanw Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.1.6.5 2002/09/17 21:21:50 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.1.6.6 2002/10/18 02:44:46 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,4 @@ wsfontioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	default:
 		return (EINVAL);
 	}
-
-	return (0);
 }

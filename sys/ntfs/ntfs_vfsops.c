@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.12 2002/09/17 21:23:48 nathanw Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.33.2.13 2002/10/18 02:45:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.12 2002/09/17 21:23:48 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.33.2.13 2002/10/18 02:45:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,6 +286,18 @@ ntfs_mount (
 	}
 #endif /* FreeBSD */
 
+	if (mp->mnt_flag & MNT_GETARGS) {
+		struct ntfsmount *ntmp = VFSTONTFS(mp);
+		if (ntmp == NULL)
+			return EIO;
+		args.fspec = NULL;
+		args.uid = ntmp->ntm_uid;
+		args.gid = ntmp->ntm_gid;
+		args.mode = ntmp->ntm_mode;
+		args.flag = ntmp->ntm_flag;
+		vfs_showexport(mp, &args.export, &ntmp->ntm_export);
+		return copyout(&args, data, sizeof(args));
+	}
 	/*
 	 ***
 	 * Mounting non-root file system or updating a file system

@@ -1,4 +1,4 @@
-/*	$NetBSD: xbox.c,v 1.4.2.2 2001/11/14 19:15:59 nathanw Exp $ */
+/*	$NetBSD: xbox.c,v 1.4.2.3 2002/10/18 02:44:12 nathanw Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.2.2 2001/11/14 19:15:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbox.c,v 1.4.2.3 2002/10/18 02:44:12 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -102,9 +102,8 @@ int	xbox_match __P((struct device *, struct cfdata *, void *));
 void	xbox_attach __P((struct device *, struct device *, void *));
 int	xbox_print __P(( void *, const char *));
 
-struct cfattach xbox_ca = {
-	sizeof(struct xbox_softc), xbox_match, xbox_attach
-};
+CFATTACH_DECL(xbox, sizeof(struct xbox_softc),
+    xbox_match, xbox_attach, NULL, NULL);
 
 int
 xbox_print(args, busname)

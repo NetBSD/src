@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.18.2.1 2001/11/14 19:15:31 nathanw Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.18.2.2 2002/10/18 02:43:22 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.18.2.1 2001/11/14 19:15:31 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.18.2.2 2002/10/18 02:43:22 nathanw Exp $");
 
 #include "ehci.h"
 
@@ -76,10 +76,8 @@ struct uhci_pci_softc {
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
-struct cfattach uhci_pci_ca = {
-	sizeof(struct uhci_pci_softc), uhci_pci_match, uhci_pci_attach,
-	uhci_pci_detach, uhci_activate
-};
+CFATTACH_DECL(uhci_pci, sizeof(struct uhci_pci_softc),
+    uhci_pci_match, uhci_pci_attach, uhci_pci_detach, uhci_activate);
 
 int
 uhci_pci_match(struct device *parent, struct cfdata *match, void *aux)

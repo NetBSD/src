@@ -1,4 +1,4 @@
-/*	$NetBSD: stic.c,v 1.8.2.8 2002/09/17 21:21:29 nathanw Exp $	*/
+/*	$NetBSD: stic.c,v 1.8.2.9 2002/10/18 02:44:26 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.8 2002/09/17 21:21:29 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stic.c,v 1.8.2.9 2002/10/18 02:44:26 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,10 +350,10 @@ stic_init(struct stic_info *si)
 		cookie = wsfont_find(NULL, 0, 0, 2, WSDISPLAY_FONTORDER_R2L,
 		    WSDISPLAY_FONTORDER_L2R);
 	if (cookie <= 0)
-		panic("stic_init: font table is empty\n");
+		panic("stic_init: font table is empty");
 
 	if (wsfont_lock(cookie, &si->si_font))
-		panic("stic_init: couldn't lock font\n");
+		panic("stic_init: couldn't lock font");
 
 	si->si_fontw = si->si_font->fontwidth;
 	si->si_fonth = si->si_font->fontheight;

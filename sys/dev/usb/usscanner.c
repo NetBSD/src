@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.6.2.3 2002/08/01 02:46:11 nathanw Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.6.2.4 2002/10/18 02:44:41 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.6.2.3 2002/08/01 02:46:11 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.6.2.4 2002/10/18 02:44:41 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,7 +398,6 @@ usscanner_activate(device_ptr_t self, enum devact act)
 	switch (act) {
 	case DVACT_ACTIVATE:
 		return (EOPNOTSUPP);
-		break;
 
 	case DVACT_DEACTIVATE:
 		sc->sc_dying = 1;

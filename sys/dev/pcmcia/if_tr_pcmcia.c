@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.3.2.4 2002/06/20 03:46:09 nathanw Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.3.2.5 2002/10/18 02:43:32 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.3.2.4 2002/06/20 03:46:09 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.3.2.5 2002/10/18 02:43:32 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,13 +102,8 @@ static void	tr_pcmcia_mediastatus(struct tr_softc *, struct ifmediareq *);
 static void	tr_pcmcia_disable(struct tr_softc *);
 static void	tr_pcmcia_setup(struct tr_softc *);
 
-struct cfattach tr_pcmcia_ca = {
-	sizeof(struct tr_pcmcia_softc),
-	tr_pcmcia_match,
-	tr_pcmcia_attach,
-	tr_pcmcia_detach,
-	tr_activate
-};
+CFATTACH_DECL(tr_pcmcia, sizeof(struct tr_pcmcia_softc),
+    tr_pcmcia_match, tr_pcmcia_attach, tr_pcmcia_detach, tr_activate);
 
 static int
 tr_pcmcia_match(parent, match, aux)

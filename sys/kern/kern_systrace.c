@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_systrace.c,v 1.2.2.8 2002/09/17 21:22:14 nathanw Exp $	*/
+/*	$NetBSD: kern_systrace.c,v 1.2.2.9 2002/10/18 02:44:54 nathanw Exp $	*/
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.8 2002/09/17 21:22:14 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_systrace.c,v 1.2.2.9 2002/10/18 02:44:54 nathanw Exp $");
 
 #include "opt_systrace.h"
 
@@ -110,6 +110,8 @@ struct str_policy {
 #define STR_PROC_SYSCALLRES	0x04
 #define STR_PROC_REPORT		0x08	/* Report emulation */
 #define STR_PROC_NEEDSEQNR	0x10	/* Answer must quote seqnr */
+#define STR_PROC_SETEUID	0x20	/* Elevate privileges */
+#define STR_PROC_SETEGID	0x40
 
 struct str_process {
 	TAILQ_ENTRY(str_process) next;
@@ -117,6 +119,9 @@ struct str_process {
 
 	struct proc *proc;
 	const struct emul *oldemul;
+	uid_t olduid;
+	gid_t oldgid;
+
 	pid_t pid;
 
 	struct fsystrace *parent;
@@ -129,9 +134,16 @@ struct str_process {
 	short error;
 	u_int16_t seqnr;	/* expected reply sequence number */
 
+	uid_t seteuid;
+	uid_t saveuid;
+	gid_t setegid;
+	gid_t savegid;
+
 	struct str_message msg;
 };
 
+uid_t	systrace_seteuid(struct proc *,  uid_t);
+gid_t	systrace_setegid(struct proc *,  gid_t);
 void systrace_lock(void);
 void systrace_unlock(void);
 
@@ -159,6 +171,7 @@ int	systrace_msg_ask(struct fsystrace *, struct str_process *,
 int	systrace_msg_result(struct fsystrace *, struct str_process *,
 	    int, int, size_t, register_t [], register_t []);
 int	systrace_msg_emul(struct fsystrace *, struct str_process *);
+int	systrace_msg_ugid(struct fsystrace *, struct str_process *);
 int	systrace_make_msg(struct str_process *, int);
 
 static struct fileops systracefops = {
@@ -671,7 +684,8 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	struct str_process *strp;
 	struct str_policy *strpolicy;
 	struct fsystrace *fst;
-	int policy, error = 0, report = 0, maycontrol = 0;
+	struct pcred *pc;
+	int policy, error = 0, report = 0, maycontrol = 0, issuser = 0;
 
 	systrace_lock();
 	strp = p->p_systrace;
@@ -694,9 +708,10 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	 * real gid match the monitored process.  Changing the
 	 * uid or gid causes P_SUGID to be set.
 	 */
-	if (fst->issuser)
+	if (fst->issuser) {
 		maycontrol = 1;
-	else if (!(p->p_flag & P_SUGID)) {
+		issuser = 1;
+	} else if (!(p->p_flag & P_SUGID)) {
 		maycontrol = fst->p_ruid == p->p_cred->p_ruid &&
 		    fst->p_rgid == p->p_cred->p_rgid;
 	}
@@ -759,13 +774,33 @@ systrace_enter(struct proc *p, register_t code, void *v, register_t retval[])
 	if (fst) {
 		SYSTRACE_UNLOCK(fst, p);
 	}
-	if (strp != NULL) {
-		if (error == 0)
-			strp->oldemul = p->p_emul;
-		else
-			strp->oldemul = NULL;
+
+	systrace_lock();
+	if ((strp = p->p_systrace) == NULL)
+		goto out;
+
+	if (error) {
+		strp->oldemul = NULL;
+		goto out;
 	}
-	return error;
+
+	pc = p->p_cred;
+	strp->oldemul = p->p_emul;
+	strp->olduid = pc->p_ruid;
+	strp->oldgid = pc->p_rgid;
+
+	/* Elevate privileges as desired */
+	if (issuser) {
+		if (ISSET(strp->flags, STR_PROC_SETEUID))
+			strp->saveuid = systrace_seteuid(p, strp->seteuid);
+		if (ISSET(strp->flags, STR_PROC_SETEGID))
+			strp->savegid = systrace_setegid(p, strp->setegid);
+	} else
+		CLR(strp->flags, STR_PROC_SETEUID|STR_PROC_SETEGID);
+
+ out:
+	systrace_unlock();
+	return (error);
 }
 
 void
@@ -775,6 +810,7 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	const struct sysent *callp;
 	struct str_process *strp;
 	struct fsystrace *fst;
+	struct pcred *pc;
 
 	/* Report change in emulation */
 	systrace_lock();
@@ -785,6 +821,19 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	}
 	DPRINTF(("exit syscall %lu, oldemul %p\n", (u_long)code, strp->oldemul));
 
+	/* Return to old privileges */
+	pc = p->p_cred;
+	if (ISSET(strp->flags, STR_PROC_SETEUID)) {
+		if (pc->pc_ucred->cr_uid == strp->seteuid)
+			systrace_seteuid(p, strp->saveuid);
+		CLR(strp->flags, STR_PROC_SETEUID);
+	}
+	if (ISSET(strp->flags, STR_PROC_SETEGID)) {
+		if (pc->pc_ucred->cr_gid == strp->setegid)
+			systrace_setegid(p, strp->savegid);
+		CLR(strp->flags, STR_PROC_SETEGID);
+	}
+	
 	if (p->p_flag & P_SUGID) {
 		if ((fst = strp->parent) == NULL || !fst->issuser) {
 			systrace_unlock();
@@ -812,6 +861,20 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 	} else
 		systrace_unlock();
 
+	/* Report if effective uid or gid changed */
+	systrace_lock();
+	strp = p->p_systrace;
+	if (strp != NULL && (strp->olduid != p->p_cred->p_ruid ||
+	    strp->oldgid != p->p_cred->p_rgid)) {
+
+		fst = strp->parent;
+		SYSTRACE_LOCK(fst, p);
+		systrace_unlock();
+
+		systrace_msg_ugid(fst, strp);
+	} else
+		systrace_unlock();
+
 	/* Report result from system call */
 	systrace_lock();
 	strp = p->p_systrace;
@@ -829,6 +892,44 @@ systrace_exit(struct proc *p, register_t code, void *v, register_t retval[],
 		DPRINTF(("will not ask syscall %lu, strp %p\n", (u_long)code, strp));
 		systrace_unlock();
 	}
+}
+
+uid_t
+systrace_seteuid(struct proc *p,  uid_t euid)
+{
+	struct pcred *pc = p->p_cred;
+	uid_t oeuid = pc->pc_ucred->cr_uid;
+
+	if (pc->pc_ucred->cr_uid == euid)
+		return (oeuid);
+
+	/*
+	 * Copy credentials so other references do not see our changes.
+	 */
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	pc->pc_ucred->cr_uid = euid;
+	p_sugid(p);
+
+	return (oeuid);
+}
+
+gid_t
+systrace_setegid(struct proc *p,  gid_t egid)
+{
+	struct pcred *pc = p->p_cred;
+	gid_t oegid = pc->pc_ucred->cr_gid;
+
+	if (pc->pc_ucred->cr_gid == egid)
+		return (oegid);
+
+	/*
+	 * Copy credentials so other references do not see our changes.
+	 */
+	pc->pc_ucred = crcopy(pc->pc_ucred);
+	pc->pc_ucred->cr_gid = egid;
+	p_sugid(p);
+
+	return (oegid);
 }
 
 /* Called with fst locked */
@@ -861,6 +962,17 @@ systrace_answer(struct str_process *strp, struct systrace_answer *ans)
 		strp->error = EPERM;
 	if (ISSET(ans->stra_flags, SYSTR_FLAGS_RESULT))
 		SET(strp->flags, STR_PROC_SYSCALLRES);
+
+	/* See if we should elevate privileges for this system call */
+	if (ISSET(ans->stra_flags, SYSTR_FLAGS_SETEUID)) {
+		SET(strp->flags, STR_PROC_SETEUID);
+		strp->seteuid = ans->stra_seteuid;
+	}
+	if (ISSET(ans->stra_flags, SYSTR_FLAGS_SETEGID)) {
+		SET(strp->flags, STR_PROC_SETEGID);
+		strp->setegid = ans->stra_setegid;
+	}
+	
 
 	/* Clearing the flag indicates to the process that it woke up */
 	CLR(strp->flags, STR_PROC_WAITANSWER);
@@ -1406,6 +1518,18 @@ systrace_msg_emul(struct fsystrace *fst, struct str_process *strp)
 	memcpy(msg_emul->emul, p->p_emul->e_name, SYSTR_EMULEN);
 
 	return (systrace_make_msg(strp, SYSTR_MSG_EMUL));
+}
+
+int
+systrace_msg_ugid(struct fsystrace *fst, struct str_process *strp)
+{
+	struct str_msg_ugid *msg_ugid = &strp->msg.msg_data.msg_ugid;
+	struct proc *p = strp->proc;
+
+	msg_ugid->uid = p->p_cred->p_ruid;
+	msg_ugid->gid = p->p_cred->p_rgid;
+
+	return (systrace_make_msg(strp, SYSTR_MSG_UGID));
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.16.2.5 2002/09/17 21:21:04 nathanw Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16.2.6 2002/10/18 02:44:07 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.16.2.5 2002/09/17 21:21:04 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.16.2.6 2002/10/18 02:44:07 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -95,9 +95,8 @@ static int lemedia[] = {
 };
 #define NLEMEDIA	(sizeof(lemedia) / sizeof(lemedia[0]))
 
-struct cfattach le_sbus_ca = {
-	sizeof(struct le_softc), lematch_sbus, leattach_sbus
-};
+CFATTACH_DECL(le_sbus, sizeof(struct le_softc),
+    lematch_sbus, leattach_sbus, NULL, NULL);
 
 extern struct cfdriver le_cd;
 
@@ -160,7 +159,7 @@ lematch_sbus(parent, cf, aux)
 {
 	struct sbus_attach_args *sa = aux;
 
-	return (strcmp(cf->cf_driver->cd_name, sa->sa_name) == 0);
+	return (strcmp(cf->cf_name, sa->sa_name) == 0);
 }
 
 void

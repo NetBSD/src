@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.40.2.9 2002/08/01 02:46:05 nathanw Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.40.2.10 2002/10/18 02:44:38 nathanw Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -125,6 +125,7 @@ typedef int usb_malloc_type;
 
 #define logprintf printf
 
+#define	USB_DNAME(dname)	dname
 #define USB_DECLARE_DRIVER(dname)  \
 int __CONCAT(dname,_match)(struct device *, struct cfdata *, void *); \
 void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
@@ -133,13 +134,12 @@ int __CONCAT(dname,_activate)(struct device *, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
-struct cfattach __CONCAT(dname,_ca) = { \
-	sizeof(struct __CONCAT(dname,_softc)), \
-	__CONCAT(dname,_match), \
-	__CONCAT(dname,_attach), \
-	__CONCAT(dname,_detach), \
-	__CONCAT(dname,_activate), \
-}
+CFATTACH_DECL(USB_DNAME(dname), \
+    sizeof(struct ___CONCAT(dname,_softc)), \
+    ___CONCAT(dname,_match), \
+    ___CONCAT(dname,_attach), \
+    ___CONCAT(dname,_detach), \
+    ___CONCAT(dname,_activate))
 
 #define USB_MATCH(dname) \
 int __CONCAT(dname,_match)(struct device *parent, struct cfdata *match, void *aux)
@@ -268,7 +268,6 @@ typedef int usb_malloc_type;
 #define	usbpoll			usbselect
 #define	uhidpoll		uhidselect
 #define	ugenpoll		ugenselect
-#define	uriopoll		urioselect
 #define uscannerpoll		uscannerselect
 
 #define powerhook_establish(fn, sc) (fn)
@@ -316,7 +315,7 @@ struct cfdriver __CONCAT(dname,_cd) = { \
 	NULL, #dname, DV_DULL \
 }; \
 \
-struct cfattach __CONCAT(dname,_ca) = { \
+const struct cfattach __CONCAT(dname,_ca) = { \
 	sizeof(struct __CONCAT(dname,_softc)), \
 	__CONCAT(dname,_match), \
 	__CONCAT(dname,_attach), \

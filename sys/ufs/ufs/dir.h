@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.10.26.2 2002/02/28 04:15:30 nathanw Exp $	*/
+/*	$NetBSD: dir.h,v 1.10.26.3 2002/10/18 02:45:56 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -80,6 +80,7 @@
 #define	DIRBLKSIZ	DEV_BSIZE
 #undef	MAXNAMLEN
 #define	MAXNAMLEN	255
+#define APPLEUFS_DIRBLKSIZ 1024
 
 struct	direct {
 	u_int32_t d_ino;		/* inode number of entry */

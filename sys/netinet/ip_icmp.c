@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_icmp.c,v 1.59.2.6 2002/08/27 23:47:59 nathanw Exp $	*/
+/*	$NetBSD: ip_icmp.c,v 1.59.2.7 2002/10/18 02:45:17 nathanw Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.59.2.6 2002/08/27 23:47:59 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_icmp.c,v 1.59.2.7 2002/10/18 02:45:17 nathanw Exp $");
 
 #include "opt_ipsec.h"
 
@@ -936,8 +936,6 @@ icmp_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 				rt_timer_queue_create(icmp_redirtimeout);
 		}
 		return (error);
-
-		break;
 	default:
 		error = ENOPROTOOPT;
 		break;

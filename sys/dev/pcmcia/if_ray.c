@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.27.2.5 2002/06/20 03:46:08 nathanw Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.27.2.6 2002/10/18 02:43:31 nathanw Exp $	*/
 /* 
  * Copyright (c) 2000 Christian E. Hopps
  * All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.27.2.5 2002/06/20 03:46:08 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.27.2.6 2002/10/18 02:43:31 nathanw Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -464,11 +464,8 @@ static ray_cmd_func_t ray_subcmdtab[] = {
 static int ray_nsubcmdtab = sizeof(ray_subcmdtab) / sizeof(*ray_subcmdtab);
 
 /* autoconf information */
-struct cfattach ray_ca = {
-	sizeof(struct ray_softc), ray_match, ray_attach, ray_detach,
-	ray_activate
-};
-
+CFATTACH_DECL(ray, sizeof(struct ray_softc),
+    ray_match, ray_attach, ray_detach, ray_activate);
 
 /*
  * Config Routines

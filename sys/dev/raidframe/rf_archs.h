@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_archs.h,v 1.11.2.3 2002/09/17 21:20:45 nathanw Exp $	*/
+/*	$NetBSD: rf_archs.h,v 1.11.2.4 2002/10/18 02:43:42 nathanw Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -116,12 +116,28 @@
 #define RF_DEBUG_STRIPELOCK 0
 #endif
 
-#ifndef RF_DEBUG_RECONBUFFER
-#define RF_DEBUG_RECONBUFFER 0
+#ifndef RF_DEBUG_RECON
+#define RF_DEBUG_RECON 0
 #endif
 
 #ifndef RF_DEBUG_VERIFYPARITY
 #define RF_DEBUG_VERIFYPARITY 0
+#endif
+
+#ifndef RF_DEBUG_QUEUE
+#define RF_DEBUG_QUEUE 0
+#endif
+
+#ifndef RF_DEBUG_QUIESCE
+#define RF_DEBUG_QUIESCE 0
+#endif
+
+#ifndef RF_DEBUG_PSS
+#define RF_DEBUG_PSS 0
+#endif
+
+#ifndef RF_DEBUG_MAP
+#define RF_DEBUG_MAP 0
 #endif
 
 #include "rf_options.h"

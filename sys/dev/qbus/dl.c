@@ -1,4 +1,4 @@
-/*	$NetBSD: dl.c,v 1.15.2.5 2002/09/17 21:20:41 nathanw Exp $	*/
+/*	$NetBSD: dl.c,v 1.15.2.6 2002/10/18 02:43:38 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -81,14 +81,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.5 2002/09/17 21:20:41 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl.c,v 1.15.2.6 2002/10/18 02:43:38 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/proc.h>
-#include <sys/map.h>
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/file.h>
@@ -122,9 +121,8 @@ static	void	dlstart (struct tty *);
 static	int	dlparam (struct tty *, struct termios *);
 static	void	dlbrk (struct dl_softc *, int);
 
-struct cfattach dl_ca = {
-	sizeof(struct dl_softc), dl_match, dl_attach
-};
+CFATTACH_DECL(dl, sizeof(struct dl_softc),
+    dl_match, dl_attach, NULL, NULL);
 
 dev_type_open(dlopen);
 dev_type_close(dlclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.2.4.7 2002/08/27 23:47:10 nathanw Exp $	*/
+/*	$NetBSD: ehci.c,v 1.2.4.8 2002/10/18 02:44:27 nathanw Exp $	*/
 
 /*
  * TODO
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.7 2002/08/27 23:47:10 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.2.4.8 2002/10/18 02:44:27 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1198,7 +1198,7 @@ ehci_open(usbd_pipe_handle pipe)
 	case USB_SPEED_LOW:  speed = EHCI_QH_SPEED_LOW;  break;
 	case USB_SPEED_FULL: speed = EHCI_QH_SPEED_FULL; break;
 	case USB_SPEED_HIGH: speed = EHCI_QH_SPEED_HIGH; break;
-	default: panic("ehci_open: bad device speed %d\n", dev->speed);
+	default: panic("ehci_open: bad device speed %d", dev->speed);
 	}
 	naks = 8;		/* XXX */
 	sqh = ehci_alloc_sqh(sc);
@@ -1300,7 +1300,7 @@ ehci_rem_qh(ehci_softc_t *sc, ehci_soft_qh_t *sqh, ehci_soft_qh_t *head)
 	for (p = head; p == NULL && p->next != sqh; p = p->next)
 		;
 	if (p == NULL)
-		panic("ehci_rem_qh: ED not found\n");
+		panic("ehci_rem_qh: ED not found");
 	p->next = sqh->next;
 	p->qh.qh_link = sqh->qh.qh_link;
 
@@ -2114,7 +2114,7 @@ ehci_alloc_sqtd_chain(struct ehci_pipe *epipe, ehci_softc_t *sc,
 				    "curlen=%d\n", curlen));
 #ifdef DIAGNOSTIC
 			if (curlen == 0)
-				panic("ehci_alloc_std: curlen == 0\n");
+				panic("ehci_alloc_std: curlen == 0");
 #endif
 		}
 		DPRINTFN(4,("ehci_alloc_sqtd_chain: dataphys=0x%08x "
@@ -2246,7 +2246,7 @@ ehci_abort_xfer(usbd_xfer_handle xfer, usbd_status status)
 	}
 
 	if (xfer->device->bus->intr_context || !curproc)
-		panic("ehci_abort_xfer: not in process context\n");
+		panic("ehci_abort_xfer: not in process context");
 
 	/*
 	 * Step 1: Make interrupt routine and hardware ignore xfer.
@@ -2401,7 +2401,7 @@ ehci_device_ctrl_done(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (!(xfer->rqflags & URQ_REQUEST)) {
-		panic("ehci_ctrl_done: not a request\n");
+		panic("ehci_ctrl_done: not a request");
 	}
 #endif
 
@@ -2626,7 +2626,7 @@ ehci_device_bulk_start(usbd_xfer_handle xfer)
 
 #ifdef DIAGNOSTIC
 	if (xfer->rqflags & URQ_REQUEST)
-		panic("ehci_device_bulk_transfer: a request\n");
+		panic("ehci_device_bulk_transfer: a request");
 #endif
 
 	len = xfer->length;

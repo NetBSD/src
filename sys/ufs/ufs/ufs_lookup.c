@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.33.2.3 2002/06/20 03:50:36 nathanw Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.33.2.4 2002/10/18 02:45:57 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.2.3 2002/06/20 03:50:36 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.33.2.4 2002/10/18 02:45:57 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,10 @@ ufs_lookup(v)
 	int flags;
 	int nameiop = cnp->cn_nameiop;
 	const int needswap = UFS_MPNEEDSWAP(ap->a_dvp->v_mount);
+	int dirblksiz = DIRBLKSIZ;
+	if (UFS_MPISAPPLEUFS(ap->a_dvp->v_mount)) {
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	}
 
 	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
@@ -209,7 +213,7 @@ ufs_lookup(v)
 		nchstats.ncs_2passes++;
 	}
 	prevoff = dp->i_offset;
-	endsearch = roundup(dp->i_ffs_size, DIRBLKSIZ);
+	endsearch = roundup(dp->i_ffs_size, dirblksiz);
 	enduseful = 0;
 
 searchloop:
@@ -231,7 +235,7 @@ searchloop:
 		 * boundary, have to start looking for free space again.
 		 */
 		if (slotstatus == NONE &&
-		    (entryoffsetinblock & (DIRBLKSIZ - 1)) == 0) {
+		    (entryoffsetinblock & (dirblksiz - 1)) == 0) {
 			slotoffset = -1;
 			slotfreespace = 0;
 		}
@@ -248,7 +252,7 @@ searchloop:
 			int i;
 
 			ufs_dirbad(dp, dp->i_offset, "mangled entry");
-			i = DIRBLKSIZ - (entryoffsetinblock & (DIRBLKSIZ - 1));
+			i = dirblksiz - (entryoffsetinblock & (dirblksiz - 1));
 			dp->i_offset += i;
 			entryoffsetinblock += i;
 			continue;
@@ -390,12 +394,12 @@ notfound:
 		 * dp->i_offset + dp->i_count.
 		 */
 		if (slotstatus == NONE) {
-			dp->i_offset = roundup(dp->i_ffs_size, DIRBLKSIZ);
+			dp->i_offset = roundup(dp->i_ffs_size, dirblksiz);
 			dp->i_count = 0;
 			enduseful = dp->i_offset;
 		} else if (nameiop == DELETE) {
 			dp->i_offset = slotoffset;
-			if ((dp->i_offset & (DIRBLKSIZ - 1)) == 0)
+			if ((dp->i_offset & (dirblksiz - 1)) == 0)
 				dp->i_count = 0;
 			else
 				dp->i_count = dp->i_offset - prevoff;
@@ -405,7 +409,7 @@ notfound:
 			if (enduseful < slotoffset + slotsize)
 				enduseful = slotoffset + slotsize;
 		}
-		dp->i_endoff = roundup(enduseful, DIRBLKSIZ);
+		dp->i_endoff = roundup(enduseful, dirblksiz);
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		/*
 		 * We return with the directory locked, so that
@@ -456,7 +460,7 @@ found:
 	 * in the cache as to where the entry was found.
 	 */
 	if ((flags & ISLASTCN) && nameiop == LOOKUP)
-		dp->i_diroff = dp->i_offset &~ (DIRBLKSIZ - 1);
+		dp->i_diroff = dp->i_offset &~ (dirblksiz - 1);
 
 	/*
 	 * If deleting, and at end of pathname, return
@@ -478,7 +482,7 @@ found:
 		 * is a previous entry in this block) in dp->i_count.
 		 * Save directory inode pointer in ndp->ni_dvp for dirremove().
 		 */
-		if ((dp->i_offset & (DIRBLKSIZ - 1)) == 0)
+		if ((dp->i_offset & (dirblksiz - 1)) == 0)
 			dp->i_count = 0;
 		else
 			dp->i_count = dp->i_offset - prevoff;
@@ -638,6 +642,10 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 	int i;
 	int namlen;
 	const int needswap = UFS_MPNEEDSWAP(dp->v_mount);
+	int dirblksiz = DIRBLKSIZ;
+	if (UFS_MPISAPPLEUFS(dp->v_mount)) {
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	}
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 	if (dp->v_mount->mnt_maxsymlinklen > 0 || needswap != 0)
@@ -652,16 +660,16 @@ ufs_dirbadentry(dp, ep, entryoffsetinblock)
 #endif
 	if ((ufs_rw16(ep->d_reclen, needswap) & 0x3) != 0 ||
 	    ufs_rw16(ep->d_reclen, needswap) >
-		DIRBLKSIZ - (entryoffsetinblock & (DIRBLKSIZ - 1)) ||
+		dirblksiz - (entryoffsetinblock & (dirblksiz - 1)) ||
 	    ufs_rw16(ep->d_reclen, needswap) <
 		DIRSIZ(FSFMT(dp), ep, needswap) ||
 	    namlen > MAXNAMLEN) {
 		/*return (1); */
 		printf("First bad, reclen=%x, DIRSIZ=%lu, namlen=%d, flags=%x "
-			"entryoffsetinblock=%d\n",
+			"entryoffsetinblock=%d, dirblksiz = %d\n",
 			ufs_rw16(ep->d_reclen, needswap),
 			(u_long)DIRSIZ(FSFMT(dp), ep, needswap),
-			namlen, dp->v_mount->mnt_flag, entryoffsetinblock);
+			namlen, dp->v_mount->mnt_flag, entryoffsetinblock,dirblksiz);
 		goto bad;
 	}
 	if (ep->d_ino == 0)
@@ -732,6 +740,10 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 	char *dirbuf;
 	struct timespec ts;
 	const int needswap = UFS_MPNEEDSWAP(dvp->v_mount);
+	int dirblksiz = DIRBLKSIZ;
+	if (UFS_MPISAPPLEUFS(dvp->v_mount)) {
+		dirblksiz = APPLEUFS_DIRBLKSIZ;
+	}
 
 	error = 0;
 	cr = cnp->cn_cred;
@@ -747,21 +759,21 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 		 * be on a directory block boundary and we will write the
 		 * new entry into a fresh block.
 		 */
-		if (dp->i_offset & (DIRBLKSIZ - 1))
+		if (dp->i_offset & (dirblksiz - 1))
 			panic("ufs_direnter: newblk");
 		flags = B_CLRBUF;
 		if (!DOINGSOFTDEP(dvp))
 			flags |= B_SYNC;
-		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, DIRBLKSIZ,
+		if ((error = VOP_BALLOC(dvp, (off_t)dp->i_offset, dirblksiz,
 		    cr, flags, &bp)) != 0) {
 			if (DOINGSOFTDEP(dvp) && newdirbp != NULL)
 				bdwrite(newdirbp);
 			return (error);
 		}
-		dp->i_ffs_size = dp->i_offset + DIRBLKSIZ;
+		dp->i_ffs_size = dp->i_offset + dirblksiz;
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_ffs_size);
-		dirp->d_reclen = ufs_rw16(DIRBLKSIZ, needswap);
+		dirp->d_reclen = ufs_rw16(dirblksiz, needswap);
 		dirp->d_ino = ufs_rw32(dirp->d_ino, needswap);
 		if (dvp->v_mount->mnt_maxsymlinklen <= 0) {
 #if (BYTE_ORDER == LITTLE_ENDIAN)
@@ -785,11 +797,11 @@ ufs_direnter(dvp, tvp, dirp, cnp, newdirbp)
 			 * block does not have to ensure that the block is
 			 * written before the inode.
 			 */
-			blkoff += DIRBLKSIZ;
+			blkoff += dirblksiz;
 			while (blkoff < bp->b_bcount) {
 				((struct direct *)
-				   (bp->b_data + blkoff))->d_reclen = DIRBLKSIZ;
-				blkoff += DIRBLKSIZ;
+				   (bp->b_data + blkoff))->d_reclen = dirblksiz;
+				blkoff += dirblksiz;
 			}
 			if (softdep_setup_directory_add(bp, dp, dp->i_offset,
 			    ufs_rw32(dirp->d_ino, needswap), newdirbp, 1) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.169.2.10 2002/09/17 21:21:17 nathanw Exp $	*/
+/*	$NetBSD: sd.c,v 1.169.2.11 2002/10/18 02:44:19 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.10 2002/09/17 21:21:17 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.169.2.11 2002/10/18 02:44:19 nathanw Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -178,10 +178,6 @@ sdattach(parent, sd, periph, ops)
 	sd->sc_dk.dk_driver = &sddkdriver;
 	sd->sc_dk.dk_name = sd->sc_dev.dv_xname;
 	disk_attach(&sd->sc_dk);
-
-#ifdef __BROKEN_DK_ESTABLISH
-	dk_establish(&sd->sc_dk, &sd->sc_dev);		/* XXX */
-#endif
 
 	/*
 	 * Use the subdriver to request information regarding the drive.

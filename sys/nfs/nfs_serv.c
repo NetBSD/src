@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.59.2.3 2001/11/14 19:18:43 nathanw Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.59.2.4 2002/10/18 02:45:34 nathanw Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.59.2.3 2001/11/14 19:18:43 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.59.2.4 2002/10/18 02:45:34 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1415,7 +1415,6 @@ nfsrv_create(nfsd, slp, procp, mrq)
 			if (error) {
 				nfsm_reply(0);
 			}
-			PNBUF_PUT(nd.ni_cnd.cn_pnbuf);
 			if (nd.ni_cnd.cn_flags & ISSYMLINK) {
 				vrele(nd.ni_dvp);
 				vput(nd.ni_vp);
@@ -2990,7 +2989,7 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 	int error = 0, rdonly, for_ret = 1, aft_ret = 1, cnt, cache;
 	char *cp2;
 	struct mbuf *mb, *mb2, *mreq;
-	u_quad_t frev, off;
+	u_quad_t frev, off, end;
 
 #ifndef nolint
 	cache = 0;
@@ -3010,7 +3009,10 @@ nfsrv_commit(nfsd, slp, procp, mrq)
 		return (0);
 	}
 	for_ret = VOP_GETATTR(vp, &bfor, cred, procp);
-	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, off + cnt, procp);
+	end = (cnt > 0) ? off + cnt : vp->v_size;
+	if (end < off || end > vp->v_size)
+		end = vp->v_size;
+	error = VOP_FSYNC(vp, cred, FSYNC_WAIT, off, end, procp);
 	aft_ret = VOP_GETATTR(vp, &aft, cred, procp);
 	vput(vp);
 	nfsm_reply(NFSX_V3WCCDATA + NFSX_V3WRITEVERF);

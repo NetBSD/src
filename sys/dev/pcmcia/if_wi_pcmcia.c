@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.11 2002/09/17 21:20:35 nathanw Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.3.2.12 2002/10/18 02:43:33 nathanw Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.3.2.11 2002/09/17 21:20:35 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.3.2.12 2002/10/18 02:43:33 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,10 +101,8 @@ struct wi_pcmcia_softc {
 static int wi_pcmcia_find __P((struct wi_pcmcia_softc *,
 	struct pcmcia_attach_args *, struct pcmcia_config_entry *));
 
-struct cfattach wi_pcmcia_ca = {
-	sizeof(struct wi_pcmcia_softc), wi_pcmcia_match, wi_pcmcia_attach,
-	wi_pcmcia_detach, wi_activate,
-};
+CFATTACH_DECL(wi_pcmcia, sizeof(struct wi_pcmcia_softc),
+    wi_pcmcia_match, wi_pcmcia_attach, wi_pcmcia_detach, wi_activate);
 
 static const struct wi_pcmcia_product {
 	u_int32_t	pp_vendor;	/* vendor ID */
@@ -472,7 +470,6 @@ wi_pcmcia_attach(parent, self, aux)
 		goto no_interrupt;
 	}
 
-	sc->sc_ifp = &sc->sc_ethercom.ec_if;
 	if (wi_attach(sc) != 0) {
 		printf("%s: failed to attach controller\n",
 		    sc->sc_dev.dv_xname);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_mchain.c,v 1.1.4.2 2002/01/11 23:39:49 nathanw Exp $	*/
+/*	$NetBSD: subr_mchain.c,v 1.1.4.3 2002/10/18 02:45:33 nathanw Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Boris Popov
@@ -189,7 +189,7 @@ mb_reserve(struct mbchain *mbp, int size)
 	caddr_t bpos;
 
 	if (size > MLEN)
-		panic("mb_reserve: size = %d\n", size);
+		panic("mb_reserve: size = %d", size);
 	m = mbp->mb_cur;
 	if (mbp->mb_mleft < size) {
 		mn = m_get(M_TRYWAIT, MT_DATA);

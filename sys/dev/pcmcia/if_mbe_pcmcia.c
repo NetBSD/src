@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mbe_pcmcia.c,v 1.20.6.3 2002/06/20 03:46:06 nathanw Exp $	*/
+/*	$NetBSD: if_mbe_pcmcia.c,v 1.20.6.4 2002/10/18 02:43:30 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.20.6.3 2002/06/20 03:46:06 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mbe_pcmcia.c,v 1.20.6.4 2002/10/18 02:43:30 nathanw Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,8 @@ struct mbe_pcmcia_softc {
 	struct	pcmcia_function *sc_pf;		/* our PCMCIA function */
 };
 
-struct cfattach mbe_pcmcia_ca = {
-	sizeof(struct mbe_pcmcia_softc), mbe_pcmcia_match, mbe_pcmcia_attach,
-	    mbe_pcmcia_detach, mb86960_activate
-};
+CFATTACH_DECL(mbe_pcmcia, sizeof(struct mbe_pcmcia_softc),
+    mbe_pcmcia_match, mbe_pcmcia_attach, mbe_pcmcia_detach, mb86960_activate);
 
 int	mbe_pcmcia_enable __P((struct mb86960_softc *));
 void	mbe_pcmcia_disable __P((struct mb86960_softc *));

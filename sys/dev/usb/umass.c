@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.52.2.7 2002/08/01 02:46:00 nathanw Exp $	*/
+/*	$NetBSD: umass.c,v 1.52.2.8 2002/10/18 02:44:35 nathanw Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.7 2002/08/01 02:46:00 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.52.2.8 2002/10/18 02:44:35 nathanw Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -1161,7 +1161,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		} else if (sc->transfer_actlen > sc->transfer_datalen) {
 			/* Buffer overrun! Don't let this go by unnoticed */
-			panic("%s: transferred %d bytes instead of %d bytes\n",
+			panic("%s: transferred %d bytes instead of %d bytes",
 				USBDEVNAME(sc->sc_dev),
 				sc->transfer_actlen, sc->transfer_datalen);
 #if 0
@@ -1236,7 +1236,7 @@ umass_bbb_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/***** Default *****/
 	default:
-		panic("%s: Unknown state %d\n",
+		panic("%s: Unknown state %d",
 		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
 	}
 }
@@ -1644,7 +1644,7 @@ umass_cbi_state(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 	/***** Default *****/
 	default:
-		panic("%s: Unknown state %d\n",
+		panic("%s: Unknown state %d",
 		      USBDEVNAME(sc->sc_dev), sc->transfer_state);
 	}
 }

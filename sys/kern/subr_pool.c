@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.50.2.10 2002/08/27 23:47:30 nathanw Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.50.2.11 2002/10/18 02:44:55 nathanw Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.10 2002/08/27 23:47:30 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.50.2.11 2002/10/18 02:44:55 nathanw Exp $");
 
 #include "opt_pool.h"
 #include "opt_poollog.h"
@@ -564,7 +564,7 @@ pool_destroy(struct pool *pp)
 #ifdef DIAGNOSTIC
 	if (pp->pr_nout != 0) {
 		pr_printlog(pp, NULL, printf);
-		panic("pool_destroy: pool busy: still out: %u\n",
+		panic("pool_destroy: pool busy: still out: %u",
 		    pp->pr_nout);
 	}
 #endif
@@ -715,7 +715,7 @@ pool_get(struct pool *pp, int flags)
 			simple_unlock(&pp->pr_slock);
 			printf("pool_get: %s: curpage NULL, nitems %u\n",
 			    pp->pr_wchan, pp->pr_nitems);
-			panic("pool_get: nitems inconsistent\n");
+			panic("pool_get: nitems inconsistent");
 		}
 #endif
 
@@ -785,7 +785,7 @@ pool_get(struct pool *pp, int flags)
 		simple_unlock(&pp->pr_slock);
 		printf("pool_get: %s: items on itemlist, nitems %u\n",
 		    pp->pr_wchan, pp->pr_nitems);
-		panic("pool_get: nitems inconsistent\n");
+		panic("pool_get: nitems inconsistent");
 	}
 #endif
 

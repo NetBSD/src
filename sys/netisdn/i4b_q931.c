@@ -27,7 +27,7 @@
  *	i4b_q931.c - Q931 received messages handling
  *	--------------------------------------------
  *
- *	$Id: i4b_q931.c,v 1.2.2.7 2002/06/20 03:49:40 nathanw Exp $ 
+ *	$Id: i4b_q931.c,v 1.2.2.8 2002/10/18 02:45:28 nathanw Exp $ 
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.7 2002/06/20 03:49:40 nathanw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_q931.c,v 1.2.2.8 2002/10/18 02:45:28 nathanw Exp $");
 
 #ifdef __FreeBSD__
 #include "i4bq931.h"
@@ -106,7 +106,7 @@ setup_cr(call_desc_t *cd, unsigned char cr)
 	else if(cd->crflag == CRF_DEST)
 		return(cr | 0x80);	/* set cr ref flag */
 	else
-		panic("setup_cr: invalid crflag!\n"); 
+		panic("setup_cr: invalid crflag!"); 
 }
 
 /*---------------------------------------------------------------------------*
