@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)ip_output.c	7.23 (Berkeley) 11/12/90
- *	$Id: ip_output.c,v 1.11 1994/01/08 21:21:52 mycroft Exp $
+ *	$Id: ip_output.c,v 1.12 1994/01/09 01:06:18 mycroft Exp $
  */
 
 #include <sys/param.h>
@@ -51,13 +51,15 @@
 #include <netinet/in_pcb.h>
 #include <netinet/in_var.h>
 #include <netinet/ip_var.h>
+#include <netinet/ip_mroute.h>
 
 #ifdef vax
 #include <machine/mtpr.h>
 #endif
 
-struct mbuf *ip_insertoptions();
-void ip_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
+static struct mbuf *ip_insertoptions __P((struct mbuf *, struct mbuf *, int *));
+static void ip_mloopback
+	   __P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
 
 /*
  * IP output.  The packet in mbuf chain m contains a skeletal IP
@@ -65,6 +67,7 @@ void ip_mloopback __P((struct ifnet *, struct mbuf *, struct sockaddr_in *));
  * The mbuf chain containing the packet will be freed.
  * The mbuf opt, if present, will not be freed.
  */
+int
 ip_output(m0, opt, ro, flags
 #ifdef MULTICAST
 	,imo
@@ -402,7 +405,7 @@ bad:
  * Adjust IP destination as required for IP source routing,
  * as indicated by a non-zero in_addr at the start of the options.
  */
-struct mbuf *
+static struct mbuf *
 ip_insertoptions(m, opt, phlen)
 	register struct mbuf *m;
 	struct mbuf *opt;
@@ -447,6 +450,7 @@ ip_insertoptions(m, opt, phlen)
  * Copy options from ip to jp,
  * omitting those not copied during fragmentation.
  */
+int
 ip_optcopy(ip, jp)
 	struct ip *ip, *jp;
 {
@@ -480,6 +484,7 @@ ip_optcopy(ip, jp)
 /*
  * IP socket option processing.
  */
+int
 ip_ctloutput(op, so, level, optname, mp)
 	int op;
 	struct socket *so;
@@ -632,6 +637,7 @@ ip_ctloutput(op, so, level, optname, mp)
  * Store in mbuf with pointer in pcbopt, adding pseudo-option
  * with destination address if source routed.
  */
+int
 #ifdef notyet
 ip_pcbopts(optname, pcbopt, m)
 	int optname;
@@ -1044,7 +1050,7 @@ ip_freemoptions(imo)
  * calls the output routine of the loopback "driver", but with an interface
  * pointer that might NOT be &loif -- easier than replicating that code here.
  */
-void
+static void
 ip_mloopback(ifp, m, dst)
 	struct ifnet *ifp;
 	register struct mbuf *m;
