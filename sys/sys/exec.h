@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.42 1994/06/29 06:44:04 cgd Exp $	*/
+/*	$NetBSD: exec.h,v 1.43 1994/07/01 01:30:26 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -42,53 +42,7 @@
  *	@(#)exec.h	8.3 (Berkeley) 1/21/94
  */
 
-/*
- * Header prepended to each a.out file.
- * only manipulate the a_midmag field via the
- * N_SETMAGIC/N_GET{MAGIC,MID,FLAG} macros in a.out.h
- */
-struct exec {
-	u_long	a_midmag;	/* htonl(flags<<26 | mid<<16 | magic) */
-	u_long	a_text;		/* text segment size */
-	u_long	a_data;		/* initialized data size */
-	u_long	a_bss;		/* uninitialized data size */
-	u_long	a_syms;		/* symbol table size */
-	u_long	a_entry;	/* entry point */
-	u_long	a_trsize;	/* text relocation size */
-	u_long	a_drsize;	/* data relocation size */
-};
-
-/* a_magic */
-#define	OMAGIC		0407	/* old impure format */
-#define	NMAGIC		0410	/* read-only text */
-#define	ZMAGIC		0413	/* demand load format */
-#define	QMAGIC		0314	/* "compact" demand load format; deprecated */
-
-/*
- * a_mid - keep sorted in numerical order for sanity's sake
- * ensure that: 0 < mid < 0x3ff
- */
-#define	MID_ZERO	0	/* unknown - implementation dependent */
-#define	MID_SUN010	1	/* sun 68010/68020 binary */
-#define	MID_SUN020	2	/* sun 68020-only binary */
-#define	MID_PC386	100	/* 386 PC binary. (so quoth BFD) */
-#define	MID_HP200	200	/* hp200 (68010) BSD binary */
-#define	MID_I386	134	/* i386 BSD binary */
-#define	MID_M68K	135	/* m68k BSD binary with 8K page sizes */
-#define	MID_M68K4K	136	/* m68k BSD binary with 4K page sizes */
-#define	MID_NS32532	137	/* ns32532 */
-#define	MID_SPARC	138	/* sparc */
-#define	MID_PMAX	139	/* pmax */
-#define	MID_VAX		140	/* vax */
-#define	MID_ALPHA	141	/* Alpha BSD binary */
-#define	MID_HP300	300	/* hp300 (68020+68881) BSD binary */
-#define	MID_HPUX	0x20C	/* hp200/300 HP-UX binary */
-#define	MID_HPUX800     0x20B   /* hp800 HP-UX binary */
-
-/*
- * a_flags
- */
-#define EX_DYNAMIC	0x20	/* a.out contains run-time link-edit info */
+#include <machine/exec.h>
 
 /*
  * The following structure is found at the top of the user stack of each
@@ -256,3 +210,5 @@ extern int	nexecs;
 extern int	exec_maxhdrsz;
 
 #endif /* KERNEL */
+
+#include <sys/exec_aout.h>
