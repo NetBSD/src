@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2001/12/24 00:47:42 atatat Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2002/03/06 22:36:58 lukem Exp $
 #
 # Makefile for install
 
@@ -10,15 +10,8 @@ NOMAN=		# defined
 LDADD=		-lcurses -ltermcap -lutil
 LDSTATIC?=	-static
 
-.if exists(${.CURDIR}/../../../../sys/conf/osrelease.sh)
-VERDEP=		${.CURDIR}/../../../../sys/conf/osrelease.sh
+VERDEP=		${_SRC_TOP_}/sys/conf/osrelease.sh
 VER!=		sh ${VERDEP}
-.endif
-
-.if exists(${.CURDIR}/../../../../../sys/conf/osrelease.sh)
-VERDEP=		${.CURDIR}/../../../../../sys/conf/osrelease.sh
-VER!=		sh ${VERDEP}
-.endif
 
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		-DREL=\"${VER}\" -DMACH=\"${MACHINE}\"
