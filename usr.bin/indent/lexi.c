@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
- * Copyright (c) 1980 The Regents of the University of California.
- * Copyright (c) 1976 Board of Trustees of the University of Illinois.
+ * Copyright (c) 1980, 1993
+ *	The Regents of the University of California.  All rights reserved.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)lexi.c	5.16 (Berkeley) 2/26/91";
+static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 
 /*
