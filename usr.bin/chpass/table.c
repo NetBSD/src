@@ -1,6 +1,6 @@
 /*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1990, 1993, 1994
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)table.c	5.1 (Berkeley) 2/12/91";
+static char sccsid[] = "@(#)table.c	8.3 (Berkeley) 4/2/94";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,9 +41,6 @@ static char sccsid[] = "@(#)table.c	5.1 (Berkeley) 2/12/91";
 
 char e1[] = ": ";
 char e2[] = ":,";
-
-int p_change(), p_class(), p_expire(), p_gecos(), p_gid(), p_hdir();
-int p_login(), p_passwd(), p_shell(), p_uid();
 
 ENTRY list[] = {
 	{ "login",		p_login,  1,   5, e1,   },
