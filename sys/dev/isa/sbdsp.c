@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdsp.c,v 1.54 1997/05/27 23:37:53 augustss Exp $	*/
+/*	$NetBSD: sbdsp.c,v 1.55 1997/05/28 00:07:49 augustss Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -416,6 +416,12 @@ sbdsp_query_encoding(addr, fp)
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
 	case 2:
+		strcpy(fp->name, AudioEalaw);
+		fp->encoding = AUDIO_ENCODING_ALAW;
+		fp->precision = 8;
+		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		return 0;
+	case 3:
 		strcpy(fp->name, AudioElinear);
 		fp->encoding = AUDIO_ENCODING_LINEAR;
 		fp->precision = 8;
@@ -426,25 +432,25 @@ sbdsp_query_encoding(addr, fp)
 		return EINVAL;
 
         switch(fp->index) {
-        case 3:
+        case 4:
 		strcpy(fp->name, AudioElinear_le);
 		fp->encoding = AUDIO_ENCODING_LINEAR_LE;
 		fp->precision = 16;
 		fp->flags = 0;
 		return 0;
-	case 4:
+	case 5:
 		strcpy(fp->name, AudioEulinear_le);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_LE;
 		fp->precision = 16;
 		fp->flags = emul;
 		return 0;
-	case 5:
+	case 6:
 		strcpy(fp->name, AudioElinear_be);
 		fp->encoding = AUDIO_ENCODING_LINEAR_BE;
 		fp->precision = 16;
 		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 		return 0;
-	case 6:
+	case 7:
 		strcpy(fp->name, AudioEulinear_be);
 		fp->encoding = AUDIO_ENCODING_ULINEAR_BE;
 		fp->precision = 16;
@@ -501,6 +507,11 @@ sbdsp_set_params(addr, mode, p, q)
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
 			bmode = 0;
 			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
+			bmode = 0;
+			break;
 		default:
 			return EINVAL;
 		}
@@ -524,6 +535,10 @@ sbdsp_set_params(addr, mode, p, q)
 			swcode = mode == AUMODE_PLAY ? 
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
 			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
+			break;
 		default:
 			return EINVAL;
 		}
@@ -539,6 +554,10 @@ sbdsp_set_params(addr, mode, p, q)
 		case AUDIO_ENCODING_ULAW:
 			swcode = mode == AUMODE_PLAY ? 
 				mulaw_to_ulinear8 : ulinear8_to_mulaw;
+			break;
+		case AUDIO_ENCODING_ALAW:
+			swcode = mode == AUMODE_PLAY ? 
+				alaw_to_ulinear8 : ulinear8_to_alaw;
 			break;
 		default:
 			return EINVAL;
