@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: tcdevs,v 1.3 1996/03/05 23:15:59 cgd Exp 
+ *	NetBSD: tcdevs,v 1.4 1996/05/09 21:35:27 cgd Exp 
  */
 
 /*
@@ -86,6 +86,21 @@ struct tc_knowndev tc_knowndevs[] = {
 	    "PMAGB-BA",
 	    TC_DEVICE_PMAGB_BA,
 	    TC_DESCRIPTION_PMAGB_BA,
+	},
+	{
+	    "PMAGD   ",
+	    TC_DEVICE_PMAGD,
+	    TC_DESCRIPTION_PMAGD,
+	},
+	{
+	    "PMAGD-AA",
+	    TC_DEVICE_PMAGD_AA,
+	    TC_DESCRIPTION_PMAGD_AA,
+	},
+	{
+	    "PMAGD-BA",
+	    TC_DEVICE_PMAGD_BA,
+	    TC_DESCRIPTION_PMAGD_BA,
 	},
 	{
 	    "PMAZ-AA ",
