@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi.en,v 1.69 2003/06/06 14:31:22 dsl Exp $	*/
+/*	$NetBSD: menus.mi.en,v 1.70 2003/06/10 17:47:15 dsl Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -106,6 +106,7 @@ menu sizechoice, title  "Choose your size specifier";
 		  multname = msg_string(MSG_secname);
 		};
 
+.if 0
 menu fspartok, title "Partitions ok?", y=15;
 	display action  {
 		msg_display(MSG_fspart, multname);
@@ -173,29 +174,33 @@ menu edfspart, title "Change what?", exit, y=14;
 		};
 	option "Preserve", action 
 		{	bsdlabel[editpart].pi_newfs ^= 1; };
+.endif
 
 menu selfskind, title "Select the type", y=15;
 	option "4.2BSD", exit, action 
-			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
-			  bsdlabel[editpart].pi_bsize  = 8192;
-			  bsdlabel[editpart].pi_fsize  = 1024;
-			};
+	    { ((partinfo *)arg)->pi_fstype = FS_BSDFFS; set_bsize(arg, 8192); };
 	option "unused", exit, action 
-			{ bsdlabel[editpart].pi_fstype = FS_UNUSED;
-			  bsdlabel[editpart].pi_bsize  = 0;
-			  bsdlabel[editpart].pi_fsize  = 0;
-			};
+	    { ((partinfo *)arg)->pi_fstype = FS_UNUSED; set_bsize(arg, 0); };
 	option "swap", exit, action 
-			{ bsdlabel[editpart].pi_fstype = FS_SWAP;
-			  bsdlabel[editpart].pi_bsize  = 0;
-			  bsdlabel[editpart].pi_fsize  = 0;
-			};
+	    { ((partinfo *)arg)->pi_fstype = FS_SWAP;   set_bsize(arg, 0); };
 	option "msdos", exit, action 
-			{ bsdlabel[editpart].pi_fstype = FS_MSDOS;
-			  bsdlabel[editpart].pi_bsize  = 0;
-			  bsdlabel[editpart].pi_fsize  = 0;
-			};
+	    { ((partinfo *)arg)->pi_fstype = FS_MSDOS;  set_bsize(arg, 0); };
+	option "4.4LFS", exit, action 
+	    { ((partinfo *)arg)->pi_fstype = FS_BSDLFS; set_bsize(arg, 8192); };
 
+menu selbsize, title "Select file system block size", y = 15;
+	option "8192", exit, action { set_bsize(arg, 8192); };
+	option "4096", exit, action { set_bsize(arg, 4096); };
+	option "16384", exit, action { set_bsize(arg, 16384); };
+	option "32768", exit, action { set_bsize(arg, 32768); };
+
+menu selfsize, title "Select number of fragments per filesystem block", y = 15;
+	option "8 per block", exit, action { set_fsize(arg, 8); };
+	option "4 per block", exit, action { set_fsize(arg, 4); };
+	option "2 per block", exit, action { set_fsize(arg, 2); };
+	option "1 per block", exit, action { set_fsize(arg, 1); };
+
+.if 0
 menu selfskindlfs, title "Select the type", y=15;
 	option "4.2BSD", exit, action 
 			{ bsdlabel[editpart].pi_fstype = FS_BSDFFS;
@@ -222,7 +227,7 @@ menu selfskindlfs, title "Select the type", y=15;
 			  bsdlabel[editpart].pi_bsize  = 8192;
 			  bsdlabel[editpart].pi_fsize  = 1024;
 			};
-
+.endif
 
 menu distmedium, title "Select medium";
 	display action { msg_display (MSG_distmedium); nodist = 0; };
