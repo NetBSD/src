@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 1998/08/22 20:43:56 tv Exp $
+# $NetBSD: Makefile,v 1.20 1998/09/06 15:07:01 tv Exp $
 
 TOP=	$(.CURDIR)/../..
 dist=	$(TOP)/dist
@@ -34,7 +34,7 @@ DEFS= -DNO_MMALLOC
 
 CPPFLAGS+= $(INCLS) $(DEFS)
 
-.include "_${MACHINE_ARCH}.mk"
+.include "_${MACHINE_ARCH:S/^mips$/mipsel/}.mk"
 
 # Any NetBSD: (i386 m68k ns32k sparc vax)
 NDEP_CMN?= infptrace.c inftarg.c fork-child.c corelow.c kcore-nbsd.c
