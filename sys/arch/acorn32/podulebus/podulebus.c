@@ -1,4 +1,4 @@
-/* $NetBSD: podulebus.c,v 1.5 2002/02/18 13:11:07 bjh21 Exp $ */
+/* $NetBSD: podulebus.c,v 1.6 2002/02/20 00:10:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -43,7 +43,7 @@
 
 #include <sys/param.h>
 
-__RCSID("$NetBSD: podulebus.c,v 1.5 2002/02/18 13:11:07 bjh21 Exp $");
+__RCSID("$NetBSD: podulebus.c,v 1.6 2002/02/20 00:10:16 thorpej Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -72,7 +72,6 @@ extern struct bus_space podulebus_bs_tag;
 
 /* Declare prototypes */
 
-void map_section __P((vm_offset_t, vm_offset_t, vm_offset_t, int cacheable));
 u_int poduleread __P((u_int, int));
 int podulebusmatch(struct device *, struct cfdata *, void *);
 void podulebusattach(struct device *, struct device *, void *);
@@ -443,8 +442,9 @@ podulebusattach(parent, self, aux)
 
 	/* Map the FAST and SYNC simple podules */
 
-	map_section((vm_offset_t)pmap_kernel()->pm_pdir,
-	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000, 0);
+	pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+	    SYNC_PODULE_BASE & 0xfff00000, SYNC_PODULE_HW_BASE & 0xfff00000,
+	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	cpu_tlb_flushD();
 
 	/* Now map the EASI space */
@@ -454,8 +454,9 @@ podulebusattach(parent, self, aux)
         
 		for (loop1 = loop * EASI_SIZE; loop1 < ((loop + 1) * EASI_SIZE);
 		    loop1 += L1_SEC_SIZE)
-		map_section((vm_offset_t)pmap_kernel()->pm_pdir, EASI_BASE + loop1,
-		    EASI_HW_BASE + loop1, 0);
+		pmap_map_section((vm_offset_t)pmap_kernel()->pm_pdir,
+		    EASI_BASE + loop1, EASI_HW_BASE + loop1,
+		    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE);
 	}
 	cpu_tlb_flushD();
 
