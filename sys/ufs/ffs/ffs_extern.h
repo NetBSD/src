@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.4 1996/02/09 22:22:22 christos Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.5 1996/09/01 23:49:18 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -105,7 +105,7 @@ int ffs_cgupdate __P((struct ufsmount *, int));
 /* ffs_vnops.c */
 int ffs_read __P((void *));
 int ffs_write __P((void *));
-int ffs_fsync __P((void *));
+#define ffs_fsync genfs_fsync
 int ffs_reclaim __P((void *));
 __END_DECLS
 

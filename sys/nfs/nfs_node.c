@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.17 1996/09/01 23:49:00 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -304,22 +304,3 @@ nfs_islocked(v)
 	return (0);
 }
 #endif /* Lite2_integrated */
-
-/*
- * Nfs abort op, called after namei() when a CREATE/DELETE isn't actually
- * done. Currently nothing to do.
- */
-/* ARGSUSED */
-int
-nfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}

@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.18 1996/05/23 18:45:14 mycroft Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.19 1996/09/01 23:48:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,6 +62,8 @@
 #include <sys/un.h>
 #include <sys/unpcb.h>
 #include <sys/syscallargs.h>
+
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/portal/portal.h>
 
 static int portal_fileid = PORTAL_ROOTFILEID+1;
@@ -69,49 +71,46 @@ static int portal_fileid = PORTAL_ROOTFILEID+1;
 static void	portal_closefd __P((struct proc *, int));
 static int	portal_connect __P((struct socket *, struct socket *));
 
-int	portal_badop	__P((void *));
-int	portal_enotsupp	__P((void *));
-
 int	portal_lookup	__P((void *));
-#define	portal_create	portal_enotsupp
-#define	portal_mknod	portal_enotsupp
+#define	portal_create	genfs_eopnotsupp
+#define	portal_mknod	genfs_eopnotsupp
 int	portal_open	__P((void *));
-#define	portal_close	nullop
-#define	portal_access	nullop
+#define	portal_close	genfs_nullop
+#define	portal_access	genfs_nullop
 int	portal_getattr	__P((void *));
 int	portal_setattr	__P((void *));
-#define	portal_read	portal_enotsupp
-#define	portal_write	portal_enotsupp
-#define	portal_ioctl	portal_enotsupp
-#define	portal_select	portal_enotsupp
-#define	portal_mmap	portal_enotsupp
-#define	portal_fsync	nullop
-#define	portal_seek	nullop
-#define	portal_remove	portal_enotsupp
+#define	portal_read	genfs_badop
+#define	portal_write	genfs_badop
+#define	portal_ioctl	genfs_badop
+#define	portal_select	genfs_badop
+#define	portal_mmap	genfs_badop
+#define	portal_fsync	genfs_badop
+#define	portal_seek	genfs_badop
+#define	portal_remove	genfs_eopnotsupp
 int	portal_link	__P((void *));
-#define	portal_rename	portal_enotsupp
-#define	portal_mkdir	portal_enotsupp
-#define	portal_rmdir	portal_enotsupp
+#define	portal_rename	genfs_eopnotsupp
+#define	portal_mkdir	genfs_eopnotsupp
+#define	portal_rmdir	genfs_eopnotsupp
 int	portal_symlink	__P((void *));
 int	portal_readdir	__P((void *));
-#define	portal_readlink	portal_enotsupp
-int	portal_abortop	__P((void *));
+#define	portal_readlink	genfs_badop
+#define	portal_abortop	genfs_abortop
 int	portal_inactive	__P((void *));
 int	portal_reclaim	__P((void *));
-#define	portal_lock	nullop
-#define	portal_unlock	nullop
-#define	portal_bmap	portal_badop
-#define	portal_strategy	portal_badop
+#define	portal_lock	genfs_nullop
+#define	portal_unlock	genfs_nullop
+#define	portal_bmap	genfs_badop
+#define	portal_strategy	genfs_badop
 int	portal_print	__P((void *));
-#define	portal_islocked	nullop
+#define	portal_islocked	genfs_nullop
 int	portal_pathconf	__P((void *));
-#define	portal_advlock	portal_enotsupp
-#define	portal_blkatoff	portal_enotsupp
-#define	portal_valloc	portal_enotsupp
-int	portal_vfree	__P((void *));
-#define	portal_truncate	portal_enotsupp
-#define	portal_update	portal_enotsupp
-#define	portal_bwrite	portal_enotsupp
+#define	portal_advlock	genfs_badop
+#define	portal_blkatoff	genfs_badop
+#define	portal_valloc	genfs_eopnotsupp
+#define	portal_vfree	genfs_nullop
+#define	portal_truncate	genfs_badop
+#define	portal_update	genfs_badop
+#define	portal_bwrite	genfs_badop
 
 int (**portal_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
@@ -594,6 +593,7 @@ int
 portal_readdir(v)
 	void *v;
 {
+
 	return (0);
 }
 
@@ -675,15 +675,6 @@ portal_print(v)
 	return (0);
 }
 
-/* ARGSUSED */
-int
-portal_vfree(v)
-	void *v;
-{
-
-	return (0);
-}
-
 int
 portal_link(v) 
 	void *v;
@@ -714,43 +705,4 @@ portal_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-portal_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-/*
- * Portal vnode unsupported operation
- */
-/*ARGSUSED*/
-int
-portal_enotsupp(v)
-	void *v;
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*
- * Portal "should never get here" operation
- */
-/*ARGSUSED*/
-int
-portal_badop(v)
-	void *v;
-{
-
-	panic("portal: bad op");
-	/* NOTREACHED */
 }
