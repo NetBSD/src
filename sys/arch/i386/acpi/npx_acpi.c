@@ -1,4 +1,4 @@
-/* $NetBSD: npx_acpi.c,v 1.5 2003/11/03 18:07:10 mycroft Exp $ */
+/* $NetBSD: npx_acpi.c,v 1.6 2004/04/10 11:50:55 kochi Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.5 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_acpi.c,v 1.6 2004/04/10 11:50:55 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,6 +139,6 @@ npx_acpi_attach(struct device *parent, struct device *self, void *aux)
 	case NPX_NONE:
 		panic("npx_acpi_attach");
 	}
-	
+
 	npxattach(sc);
 }

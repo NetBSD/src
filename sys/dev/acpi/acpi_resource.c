@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.10 2004/04/10 11:48:10 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,18 +48,18 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *              
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE 
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.         
+ * SUCH DAMAGE.
  */
 
 /*
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.9 2003/11/03 18:07:10 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.10 2004/04/10 11:48:10 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 		case ACPI_RSTYPE_MEM32:
 			if (res->Data.Memory32.MinBaseAddress ==
 			    res->Data.Memory32.MaxBaseAddress) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, 
+				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				    "Memory32 0x%x/%d\n",
 				    res->Data.Memory32.MinBaseAddress,
 				    res->Data.Memory32.RangeLength));
@@ -203,7 +203,7 @@ acpi_resource_parse(struct device *dev, struct acpi_devnode *ad,
 		case ACPI_RSTYPE_MEM24:
 			if (res->Data.Memory24.MinBaseAddress ==
 			    res->Data.Memory24.MaxBaseAddress) {
-				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, 
+				ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				    "Memory24 0x%x/%d\n",
 				    res->Data.Memory24.MinBaseAddress,
 				    res->Data.Memory24.RangeLength));
@@ -672,7 +672,7 @@ acpi_res_parse_drq(struct device *dev, void *context, uint32_t drq)
 static void
 acpi_res_parse_start_dep(struct device *dev, void *context, int preference)
 {
-	
+
 	printf("%s: ACPI: dependant functions not supported\n",
 	    dev->dv_xname);
 }

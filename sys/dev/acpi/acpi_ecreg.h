@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ecreg.h,v 1.1 2001/09/29 05:34:23 thorpej Exp $	*/
+/*	$NetBSD: acpi_ecreg.h,v 1.2 2004/04/10 11:48:10 kochi Exp $	*/
 
 /******************************************************************************
  *
@@ -33,9 +33,9 @@
  * The above copyright and patent license is granted only if the following
  * conditions are met:
  *
- * 3. Conditions 
+ * 3. Conditions
  *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.  
+ * 3.1. Redistribution of Source with Rights to Further Distribute Source.
  * Redistribution of source code of any substantial portion of the Covered
  * Code or modification with rights to further distribute source must include
  * the above Copyright Notice, the above License, this list of Conditions,
@@ -43,11 +43,11 @@
  * Licensee must cause all Covered Code to which Licensee contributes to
  * contain a file documenting the changes Licensee made to create that Covered
  * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee 
+ * documentation of any changes made by any predecessor Licensee.  Licensee
  * must include a prominent statement that the modification is derived,
  * directly or indirectly, from Original Intel Code.
  *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.  
+ * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
  * Redistribution of source code of any substantial portion of the Covered
  * Code or modification without rights to further distribute source must
  * include the following Disclaimer and Export Compliance provision in the
@@ -81,7 +81,7 @@
  * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
  * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
  * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE. 
+ * PARTICULAR PURPOSE.
  *
  * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
  * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
@@ -122,14 +122,14 @@ typedef UINT8				EC_COMMAND;
 #define EC_COMMAND_BURST_DISABLE	((EC_COMMAND) 0x83)
 #define EC_COMMAND_QUERY		((EC_COMMAND) 0x84)
 
-/* 
+/*
  * EC_STATUS:
  * ----------
  * The encoding of the EC status register is illustrated below.
  * Note that a set bit (1) indicates the property is TRUE
  * (e.g. if bit 0 is set then the output buffer is full).
  * +-+-+-+-+-+-+-+-+
- * |7|6|5|4|3|2|1|0|	
+ * |7|6|5|4|3|2|1|0|
  * +-+-+-+-+-+-+-+-+
  *  | | | | | | | |
  *  | | | | | | | +- Output Buffer Full?

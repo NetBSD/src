@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSynch.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $	*/
+/*	$NetBSD: OsdSynch.c,v 1.7 2004/04/10 11:48:11 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*-     
+/*-
  * Copyright (c) 2000 Michael Smith
  * Copyright (c) 2000 BSDi
  * All rights reserved.
@@ -58,7 +58,7 @@
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
  * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.6 2003/10/31 20:52:30 mycroft Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSynch.c,v 1.7 2004/04/10 11:48:11 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

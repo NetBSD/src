@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.23 2004/03/30 15:18:56 kochi Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.24 2004/04/10 11:48:10 kochi Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -95,9 +95,9 @@
  * The above copyright and patent license is granted only if the following
  * conditions are met:
  *
- * 3. Conditions 
+ * 3. Conditions
  *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.  
+ * 3.1. Redistribution of Source with Rights to Further Distribute Source.
  * Redistribution of source code of any substantial portion of the Covered
  * Code or modification with rights to further distribute source must include
  * the above Copyright Notice, the above License, this list of Conditions,
@@ -105,11 +105,11 @@
  * Licensee must cause all Covered Code to which Licensee contributes to
  * contain a file documenting the changes Licensee made to create that Covered
  * Code and the date of any change.  Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee.  Licensee 
+ * documentation of any changes made by any predecessor Licensee.  Licensee
  * must include a prominent statement that the modification is derived,
  * directly or indirectly, from Original Intel Code.
  *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.  
+ * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
  * Redistribution of source code of any substantial portion of the Covered
  * Code or modification without rights to further distribute source must
  * include the following Disclaimer and Export Compliance provision in the
@@ -143,7 +143,7 @@
  * INSTALLATION, TRAINING OR OTHER SERVICES.  INTEL WILL NOT PROVIDE ANY
  * UPDATES, ENHANCEMENTS OR EXTENSIONS.  INTEL SPECIFICALLY DISCLAIMS ANY
  * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE. 
+ * PARTICULAR PURPOSE.
  *
  * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
  * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
@@ -172,7 +172,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.23 2004/03/30 15:18:56 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.24 2004/04/10 11:48:10 kochi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,7 +281,7 @@ static struct acpi_ec_softc *ecdt_sc;
 static __inline int
 EcIsLocked(struct acpi_ec_softc *sc)
 {
- 
+
 	return (lockstatus(&sc->sc_lock) == LK_EXCLUSIVE);
 }
 
@@ -581,11 +581,11 @@ acpiec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_gpebit = v;
 
 	/*
-	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are 
+	 * Install a handler for this EC's GPE bit.  Note that EC SCIs are
 	 * treated as both edge- and level-triggered interrupts; in other words
 	 * we clear the status bit immediately after getting an EC-SCI, then
 	 * again after we're done processing the event.  This guarantees that
-	 * events we cause while performing a transaction (e.g. IBE/OBF) get 
+	 * events we cause while performing a transaction (e.g. IBE/OBF) get
 	 * cleared before re-enabling the GPE.
 	 */
 	rv = AcpiInstallGpeHandler(NULL, sc->sc_gpebit,
@@ -623,7 +623,7 @@ EcGpeQueryHandler(void *Context)
 	for (;;) {
 		/*
 		 * Check EC_SCI.
-		 * 
+		 *
 		 * Bail out if the EC_SCI bit of the status register is not
 		 * set. Note that this function should only be called when
 		 * this bit is set (polling is used to detect IBE/OBF events).
@@ -644,7 +644,7 @@ EcGpeQueryHandler(void *Context)
 		Status = EcQuery(sc, &Data);
 
 		EcUnlock(sc);
-	    
+
 		/*
 		 * If we failed to get anything from the EC, give up.
 		 */
@@ -688,7 +688,7 @@ EcGpeHandler(void *Context)
 	uint32_t csrvalue;
 	ACPI_STATUS Status;
 
-	/* 
+	/*
 	 * If EC is locked, the intr must process EcRead/Write wait only.
 	 * Query request must be pending.
 	 */
@@ -811,7 +811,7 @@ EcWaitEventIntr(struct acpi_ec_softc *sc, EC_EVENT Event)
 		if ((Event == EC_EVENT_OUTPUT_BUFFER_FULL) &&
 		    (EcStatus & EC_FLAG_OUTPUT_BUFFER) != 0)
 			return_ACPI_STATUS(AE_OK);
-      
+
 		if ((Event == EC_EVENT_INPUT_BUFFER_EMPTY) &&
 		    (EcStatus & EC_FLAG_INPUT_BUFFER) == 0)
 			return_ACPI_STATUS(AE_OK);
@@ -869,7 +869,7 @@ EcWaitEvent(struct acpi_ec_softc *sc, EC_EVENT Event)
 	}
 
 	return (AE_ERROR);
-}    
+}
 
 static ACPI_STATUS
 EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
@@ -890,7 +890,7 @@ EcQuery(struct acpi_ec_softc *sc, UINT8 *Data)
 		    "EC_COMMAND_QUERY\n", sc->sc_dev.dv_xname);
 
 	return (Status);
-}    
+}
 
 static ACPI_STATUS
 EcTransaction(struct acpi_ec_softc *sc, EC_REQUEST *EcRequest)
@@ -953,7 +953,7 @@ EcRead(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
 	/* EcBurstDisable(EmbeddedController); */
 
 	return (AE_OK);
-}    
+}
 
 static ACPI_STATUS
 EcWrite(struct acpi_ec_softc *sc, UINT8 Address, UINT8 *Data)
