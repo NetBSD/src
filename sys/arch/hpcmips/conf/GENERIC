@@ -2,11 +2,11 @@
 # Distribution kernel (NEC VR based model) kernel config file
 
 #
-# 	$NetBSD: GENERIC,v 1.70 2000/10/03 03:13:04 sato Exp $
+# 	$NetBSD: GENERIC,v 1.71 2000/10/21 07:27:41 takemura Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
-#ident 		"GENERIC-$Revision: 1.70 $"
+#ident 		"GENERIC-$Revision: 1.71 $"
 
 maxusers	8
 
@@ -97,6 +97,11 @@ options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
 options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
 options 	WSDISPLAY_COMPAT_USL		# VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+#
+# Hpckbd will set key board layout appropriately. You can use option
+# 'PCKBD_LAYOUT' to overrite the default layout.
+#
+#options	PCKBD_LAYOUT="(KB_US | KB_SWAPCTRLCAPS | KB_MACHDEP)"
 
 # temporally power management
 hpcapm0	at mainbus0			# power management
