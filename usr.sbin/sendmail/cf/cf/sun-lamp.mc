@@ -35,9 +35,9 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.6 $')
+VERSIONID(`@(#)sun-lamp.mc	$Revision: 1.7 $')
 OSTYPE(bsd4.4)dnl
-MASQUERADE_AS(NetBSD.ORG)dnl
+MASQUERADE_AS(netbsd.org)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
 define(`UUCP_RELAY', mailhost.Berkeley.EDU)dnl
@@ -47,6 +47,6 @@ define(`confCHECKPOINT_INTERVAL', 10)dnl
 define(`confAUTO_REBUILD', True)dnl
 define(`confMESSAGE_TIMEOUT', 3d/4h)dnl
 Cw lamp.CS.Berkeley.EDU
-Cw mail.NetBSD.ORG
-Cw ftp.NetBSD.ORG
-Cw NetBSD.ORG
+Cw mail.netbsd.org
+Cw ftp.netbsd.org
+Cw netbsd.org

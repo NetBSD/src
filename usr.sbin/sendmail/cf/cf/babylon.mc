@@ -45,7 +45,7 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`$NetBSD: babylon.mc,v 1.3 1998/05/12 01:23:50 thorpej Exp $')
+VERSIONID(`$NetBSD: babylon.mc,v 1.4 1998/08/07 13:55:12 mycroft Exp $')
 OSTYPE(bsd4.4)dnl
 MAILER(local)dnl
 MAILER(smtp)dnl
@@ -55,10 +55,10 @@ define(`confMIME_FORMAT_ERRORS', False)dnl
 
 FEATURE(redirect)dnl
 
-MASQUERADE_AS(`NetBSD.ORG')dnl
+MASQUERADE_AS(`netbsd.org')dnl
 FEATURE(allmasquerade)dnl
 EXPOSED_USER(root)dnl
 
-define(`MAIL_HUB', `mail.NetBSD.ORG')dnl
-define(`LOCAL_RELAY', `mail.NetBSD.ORG')dnl
-define(`SMART_HOST', `mail.NetBSD.ORG')dnl
+define(`MAIL_HUB', `mail.netbsd.org')dnl
+define(`LOCAL_RELAY', `mail.netbsd.org')dnl
+define(`SMART_HOST', `mail.netbsd.org')dnl
