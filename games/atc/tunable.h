@@ -33,7 +33,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)tunable.h	5.3 (Berkeley) 4/30/90
+ *	from: @(#)tunable.h	5.3 (Berkeley) 4/30/90
+ *	$Id: tunable.h,v 1.2 1993/08/01 18:57:13 mycroft Exp $
  */
 
 /*

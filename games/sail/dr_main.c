@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)dr_main.c	5.5 (Berkeley) 6/1/90";
+/*static char sccsid[] = "from: @(#)dr_main.c	5.5 (Berkeley) 6/1/90";*/
+static char rcsid[] = "$Id: dr_main.c,v 1.2 1993/08/01 18:51:48 mycroft Exp $";
 #endif /* not lint */
 
 #include "driver.h"

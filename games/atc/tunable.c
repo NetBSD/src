@@ -44,7 +44,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)tunable.c	5.4 (Berkeley) 4/30/90";
+/*static char sccsid[] = "from: @(#)tunable.c	5.4 (Berkeley) 4/30/90";*/
+static char rcsid[] = "$Id: tunable.c,v 1.2 1993/08/01 18:57:03 mycroft Exp $";
 #endif /* not lint */
 
 /*

@@ -32,7 +32,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)pl_7.c	5.7 (Berkeley) 2/28/91";
+/*static char sccsid[] = "from: @(#)pl_7.c	5.7 (Berkeley) 2/28/91";*/
+static char rcsid[] = "$Id: pl_7.c,v 1.2 1993/08/01 18:51:35 mycroft Exp $";
 #endif /* not lint */
 
 #include "player.h"

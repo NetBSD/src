@@ -48,7 +48,8 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)fortune.c	5.13 (Berkeley) 4/8/91";
+/*static char sccsid[] = "from: @(#)fortune.c	5.13 (Berkeley) 4/8/91";*/
+static char rcsid[] = "$Id: fortune.c,v 1.5 1993/08/01 18:54:48 mycroft Exp $";
 #endif /* not lint */
 
 # include	<machine/endian.h>

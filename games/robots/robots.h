@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)robots.h	5.6 (Berkeley) 2/28/91
+ *	from: @(#)robots.h	5.6 (Berkeley) 2/28/91
+ *	$Id: robots.h,v 1.3 1993/08/01 18:52:51 mycroft Exp $
  */
 
 # include	<curses.h>

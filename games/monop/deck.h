@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)deck.h	5.3 (Berkeley) 6/1/90
+ *	from: @(#)deck.h	5.3 (Berkeley) 6/1/90
+ *	$Id: deck.h,v 1.2 1993/08/01 18:53:47 mycroft Exp $
  */
 
 # define	bool	char

@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)pathnames.h	5.2 (Berkeley) 11/10/91
+ *	from: @(#)pathnames.h	5.2 (Berkeley) 11/10/91
+ *	$Id: pathnames.h,v 1.2 1993/08/01 18:53:01 mycroft Exp $
  */
 
 #define	_PATH_PAGER	"/usr/bin/more"

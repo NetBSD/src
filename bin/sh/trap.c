@@ -35,8 +35,8 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)trap.c	5.2 (Berkeley) 4/12/91";
-static char rcsid[] = "$Header: /cvsroot/src/bin/sh/trap.c,v 1.3 1993/03/23 00:29:28 cgd Exp $";
+/*static char sccsid[] = "from: @(#)trap.c	5.2 (Berkeley) 4/12/91";*/
+static char rcsid[] = "$Id: trap.c,v 1.4 1993/08/01 18:57:59 mycroft Exp $";
 #endif /* not lint */
 
 #include "shell.h"

@@ -30,9 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	5.2 (Berkeley) 6/3/91
- *
- *	$Header: /cvsroot/src/bin/ps/extern.h,v 1.3 1993/03/23 00:26:29 cgd Exp $
+ *	from: @(#)extern.h	5.2 (Berkeley) 6/3/91
+ *	$Id: extern.h,v 1.4 1993/08/01 18:59:12 mycroft Exp $
  */
 
 #include <sys/cdefs.h>

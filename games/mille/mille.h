@@ -30,7 +30,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mille.h	5.5 (Berkeley) 6/1/90
+ *	from: @(#)mille.h	5.5 (Berkeley) 6/1/90
+ *	$Id: mille.h,v 1.2 1993/08/01 18:54:07 mycroft Exp $
  */
 
 # include	<sys/types.h>
