@@ -1,4 +1,4 @@
-/*	$NetBSD: pecoff_exec.c,v 1.7 2000/12/11 05:29:02 mycroft Exp $	*/
+/*	$NetBSD: pecoff_exec.c,v 1.8 2001/01/15 17:05:32 oki Exp $	*/
 
 /*
  * Copyright (c) 2000 Masaru OKI
@@ -312,17 +312,20 @@ pecoff_load_section(vcset, vp, sh, addr, size, prot)
 	*addr = COFF_ALIGN(sh->s_vaddr);
 	diff = (sh->s_vaddr - *addr);
 	offset = sh->s_scnptr - diff;
-	*size = sh->s_size + diff;
+	*size = COFF_ROUND(sh->s_size + diff, COFF_LDPGSZ);
 
 	*prot |= (sh->s_flags & COFF_STYP_EXEC) ? VM_PROT_EXECUTE : 0;
 	*prot |= (sh->s_flags & COFF_STYP_READ) ? VM_PROT_READ : 0;
 	*prot |= (sh->s_flags & COFF_STYP_WRITE) ? VM_PROT_WRITE : 0;
 
-	if ((sh->s_flags & COFF_STYP_BSS) == 0) {
-		NEW_VMCMD(vcset, vmcmd_map_readvn, *size, *addr, vp,
-			  offset, *prot);
-	}
-	if (sh->s_size < sh->s_paddr) {
+	if (diff == 0 && offset == COFF_ALIGN(offset))
+		NEW_VMCMD(vcset, vmcmd_map_pagedvn, *size, *addr, vp,
+ 			  offset, *prot);
+	else
+		NEW_VMCMD(vcset, vmcmd_map_readvn, sh->s_size, sh->s_vaddr, vp,
+			  sh->s_scnptr, *prot);
+
+	if (*size < sh->s_paddr) {
 		u_long baddr, bsize;
 
 		baddr = *addr + COFF_ROUND(*size, COFF_LDPGSZ);
@@ -465,7 +468,7 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 {
 	int error, i;
 	struct pecoff_opthdr *wp;
-	long daddr, dsize; /*baddr, bsize;*/
+	long daddr, dsize, baddr, bsize;
 	struct coff_scnhdr *sh;
 	struct pecoff_args *argp;
 	int scnsiz = sizeof(struct coff_scnhdr) * fp->f_nscns;
@@ -510,16 +513,17 @@ exec_pecoff_prep_zmagic(p, epp, fp, ap, peofs)
 			dsize = daddr + dsize - epp->ep_daddr;
 			epp->ep_dsize = max(epp->ep_dsize, dsize);
 		}
-#if 0 /* no need? */
 		if ((sh[i].s_flags & COFF_STYP_BSS) != 0) {
 			/* set up command for bss segment */
-			baddr = round_page(epp->ep_daddr + dsize);
-			bsize = epp->ep_daddr + epp->ep_dsize - baddr;
+			baddr = sh[i].s_vaddr;
+			bsize = sh[i].s_paddr;
 			NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_zero,
 				  bsize, baddr, NULLVP, 0,
 				  VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+			epp->ep_daddr = min(epp->ep_daddr, baddr);
+			bsize = baddr + bsize - epp->ep_daddr;
+			epp->ep_dsize = max(epp->ep_dsize, bsize);
 		}
-#endif
 	}
 	/* set up ep_emul_arg */
 	argp = malloc(sizeof(struct pecoff_args), M_TEMP, M_WAITOK);
