@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr53c9xvar.h,v 1.18 1999/09/22 03:31:23 mhitch Exp $	*/
+/*	$NetBSD: ncr53c9xvar.h,v 1.18.2.1 1999/10/19 17:47:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -232,8 +232,8 @@ struct ncr53c9x_softc {
 	struct device sc_dev;			/* us as a device */
 
 	struct evcnt sc_intrcnt;		/* intr count */
-	struct scsipi_link sc_link;		/* scsipi link struct */
-	struct scsipi_adapter sc_adapter;	/* scsipi adapter glue */
+	struct scsipi_adapter sc_adapter;	/* out scsipi adapter */
+	struct scsipi_channel sc_channel;	/* our scsipi channel */
 
 	struct ncr53c9x_glue *sc_glue;		/* glue to MD code */
 
@@ -392,11 +392,10 @@ struct ncr53c9x_softc {
 #define	ncr53c9x_cpb2stp(sc, cpb)	\
 	((250 * (cpb)) / (sc)->sc_freq)
 
-void	ncr53c9x_attach __P((struct ncr53c9x_softc *, struct scsipi_device *));
-int	ncr53c9x_scsi_cmd __P((struct scsipi_xfer *));
+void	ncr53c9x_attach __P((struct ncr53c9x_softc *));
+void	ncr53c9x_scsipi_request __P((struct scsipi_channel *chan,
+	    scsipi_adapter_req_t req, void *));
 void	ncr53c9x_reset __P((struct ncr53c9x_softc *));
 int	ncr53c9x_intr __P((struct ncr53c9x_softc *));
 
 extern	int ncr53c9x_dmaselect;
-
-extern int ncr53c9x_dmaselect;

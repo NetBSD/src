@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.c,v 1.18 1999/10/17 01:23:21 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.c,v 1.18.2.1 1999/10/19 17:47:37 thorpej Exp $ */
 /*
  * Platform (NetBSD) dependent common attachment code for Qlogic adapters.
  * Matthew Jacob <mjacob@nas.nasa.gov>
@@ -34,12 +34,11 @@
 #include <sys/scsiio.h>
 
 static void ispminphys __P((struct buf *));
-static int32_t ispcmd_slow __P((ISP_SCSI_XFER_T *));
-static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
+static void isp_scsipi_request __P((struct scsipi_channel *,
+	scsipi_adapter_req_t, void *));
 static int
-ispioctl __P((struct scsipi_link *, u_long, caddr_t, int, struct proc *));
+ispioctl __P((struct scsipi_channel *, u_long, caddr_t, int, struct proc *));
 
-static struct scsipi_device isp_dev = { NULL, NULL, NULL, NULL };
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
 static void isp_watch __P((void *));
 static void isp_command_requeue __P((void *));
@@ -52,81 +51,84 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
-
-	isp->isp_osinfo._adapter.scsipi_minphys = ispminphys;
-	isp->isp_osinfo._adapter.scsipi_ioctl = ispioctl;
+	struct scsipi_adapter *adapt = &isp->isp_osinfo._adapter;
+	struct scsipi_channel *chan;
+	int i;
 
 	isp->isp_state = ISP_RUNSTATE;
-	isp->isp_osinfo._link.scsipi_scsi.channel = SCSI_CHANNEL_ONLY_ONE;
-	isp->isp_osinfo._link.adapter_softc = isp;
-	isp->isp_osinfo._link.device = &isp_dev;
-	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
-	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
 	TAILQ_INIT(&isp->isp_osinfo.waitq);	/* XXX 2nd Bus? */
 
-	if (IS_FC(isp)) {
-		/*
-		 * Give it another chance here to come alive...
-		 */
-		fcparam *fcp = isp->isp_param;
-		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
-		if (fcp->isp_fwstate != FW_READY) {
-			(void) isp_control(isp, ISPCTL_FCLINK_TEST, NULL);
-		}
-		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_FC_TARG-1;
-#ifdef	ISP2100_SCCLUN
-		/*
-		 * 16 bits worth, but let's be reasonable..
-		 */
-		isp->isp_osinfo._link.scsipi_scsi.max_lun = 255;
-#else
-		isp->isp_osinfo._link.scsipi_scsi.max_lun = 15;
-#endif
-		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
-			((fcparam *)isp->isp_param)->isp_loopid;
-	} else {
-		sdparam *sdp = isp->isp_param;
-		isp->isp_osinfo._adapter.scsipi_cmd = ispcmd_slow;
-		isp->isp_osinfo._link.scsipi_scsi.max_target = MAX_TARGETS-1;
-		if (isp->isp_bustype == ISP_BT_SBUS) {
-			isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
-		} else {
+	/*
+	 * Fill in the scsipi_adapter.
+	 */
+	adapt->adapt_dev = &isp->isp_osinfo._dev;
+	if (IS_FC(isp) == 0 && IS_12X0(isp) != 0)
+		adapt->adapt_nchannels = 2;
+	else
+		adapt->adapt_nchannels = 1;
+	adapt->adapt_openings = isp->isp_maxcmds;
+	adapt->adapt_max_periph = adapt->adapt_openings;
+	adapt->adapt_request = isp_scsipi_request;
+	adapt->adapt_minphys = ispminphys;
+	adapt->adapt_ioctl = ispioctl;
+
+	/*
+	 * Fill in the scsipi_channel(s).
+	 */
+	for (i = 0; i < adapt->adapt_nchannels; i++) {
+		chan = &isp->isp_osinfo._channels[i];
+		chan->chan_adapter = adapt;
+		chan->chan_bustype = &scsi_bustype;
+		chan->chan_channel = i;
+
+		if (IS_FC(isp)) {
+			fcparam *fcp = isp->isp_param;
+			fcp = &fcp[i];
+
 			/*
-			 * Too much target breakage at present.
+			 * Give it another chance here to come alive...
 			 */
-#if	0
-			if (isp->isp_fwrev >= ISP_FW_REV(7,55,0))
-				isp->isp_osinfo._link.scsipi_scsi.max_lun = 31;
-			else
+			if (fcp->isp_fwstate != FW_READY) {
+				(void) isp_control(isp, ISPCTL_FCLINK_TEST,
+				    NULL);
+			}
+			chan->chan_ntargets = MAX_FC_TARG;
+#ifdef	ISP2100_SCCLUN
+			/*
+			 * 16 bits worth, but let's be reasonable..
+			 */
+			chan->chan_nluns = 256;
+#else
+			chan->chan_nluns = 16;
 #endif
-				isp->isp_osinfo._link.scsipi_scsi.max_lun = 7;
-		}
-		isp->isp_osinfo._link.scsipi_scsi.adapter_target =
-		    sdp->isp_initiator_id;
-		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
-		if (IS_12X0(isp)) {
-			isp->isp_osinfo._link_b = isp->isp_osinfo._link;
-			sdp++;
-			isp->isp_osinfo.discovered[1] =
-			    1 << sdp->isp_initiator_id;
-			isp->isp_osinfo._link_b.scsipi_scsi.adapter_target =
-			    sdp->isp_initiator_id;
-			isp->isp_osinfo._link_b.scsipi_scsi.channel = 1;
+			chan->chan_id = fcp->isp_loopid;
+		} else {
+			sdparam *sdp = isp->isp_param;
+			sdp = &sdp[i];
+
+			chan->chan_ntargets = MAX_TARGETS;
+			if (isp->isp_bustype == ISP_BT_SBUS)
+				chan->chan_nluns = 8;
+			else {
+#if 0
+				/* Too many broken targets... */
+				if (isp->isp_fwrev >= ISP_FW_REV(7,55,0))
+					chan->chan_nluns = 32;
+				else
+#endif
+					chan->chan_nluns = 7;
+			}
+			chan->chan_id = sdp->isp_initiator_id;
 		}
 	}
-	isp->isp_osinfo._link.type = BUS_SCSI;
 
 	/*
 	 * Send a SCSI Bus Reset (used to be done as part of attach,
 	 * but now left to the OS outer layers).
 	 */
 	if (IS_SCSI(isp)) {
-		int bus = 0;
-		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		if (IS_12X0(isp)) {
-			bus++;
-			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		}
+		for (i = 0; i < adapt->adapt_nchannels; i++)
+			(void) isp_control(isp, ISPCTL_RESET_BUS, &i);
 		SYS_DELAY(2*1000000);
 	}
 
@@ -139,10 +141,9 @@ isp_attach(isp)
 	/*
 	 * And attach children (if any).
 	 */
-	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
-	if (IS_12X0(isp)) {
-		config_found((void *)isp, &isp->isp_osinfo._link_b, scsiprint);
-	}
+	for (i = 0; i < adapt->adapt_nchannels; i++)
+		(void) config_found((void *)isp, &isp->isp_osinfo._channels[i],
+		    scsiprint);
 }
 
 /*
@@ -166,65 +167,22 @@ ispminphys(bp)
 	minphys(bp);
 }
 
-static int32_t
-ispcmd_slow(xs)
-	ISP_SCSI_XFER_T *xs;
-{
-	/*
-	 * Have we completed discovery for this adapter?
-	 */
-	if ((xs->xs_control & XS_CTL_DISCOVERY) == 0) {
-		struct ispsoftc *isp = XS_ISP(xs);
-		sdparam *sdp = isp->isp_param;
-		int s = splbio();
-		int chan = XS_CHANNEL(xs), chmax = IS_12X0(isp)? 2 : 1;
-		u_int16_t f = DPARM_DEFAULT;
-
-		sdp += chan;
-		if (xs->sc_link->quirks & SDEV_NOSYNC) {
-			f ^= DPARM_SYNC;
-		}
-		if (xs->sc_link->quirks & SDEV_NOWIDE) {
-			f ^= DPARM_WIDE;
-		}
-		if (xs->sc_link->quirks & SDEV_NOTAG) {
-			f ^= DPARM_TQING;
-		}
-		sdp->isp_devparam[XS_TGT(xs)].dev_flags = f;
-		sdp->isp_devparam[XS_TGT(xs)].dev_update = 1;
-		isp->isp_osinfo.discovered[chan] |= (1 << XS_TGT(xs));
-		f = 0xffff ^ (1 << sdp->isp_initiator_id);
-		for (chan = 0; chan < chmax; chan++) {
-			if (isp->isp_osinfo.discovered[chan] == f)
-				break;
-		}
-		if (chan == chmax) {
-			isp->isp_osinfo._adapter.scsipi_cmd = ispcmd;
-			isp->isp_update = 1;
-			if (IS_12X0(isp))
-				isp->isp_update |= 2;
-		}
-		(void) splx(s);
-	}
-	return (ispcmd(xs));
-}
-
 static int      
-ispioctl(sc_link, cmd, addr, flag, p)
-	struct scsipi_link *sc_link;
+ispioctl(chan, cmd, addr, flag, p)
+	struct scsipi_channel *chan;
 	u_long cmd;
 	caddr_t addr;
 	int flag;
 	struct proc *p;
 {
-	struct ispsoftc *isp = sc_link->adapter_softc;
-	int s, chan, retval = ENOTTY;
+	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
+	int s, ch, retval = ENOTTY;
 	
 	switch (cmd) {
 	case SCBUSIORESET:
-		chan = sc_link->scsipi_scsi.channel;
+		ch = chan->chan_channel;
 		s = splbio();
-		if (isp_control(isp, ISPCTL_RESET_BUS, &chan))
+		if (isp_control(isp, ISPCTL_RESET_BUS, &ch))
 			retval = EIO;
 		else
 			retval = 0;
@@ -236,86 +194,102 @@ ispioctl(sc_link, cmd, addr, flag, p)
 	return (retval);
 }
 
-
-static int32_t
-ispcmd(xs)
-	ISP_SCSI_XFER_T *xs;
+static void
+isp_scsipi_request(chan, req, arg)
+	struct scsipi_channel *chan;
+	scsipi_adapter_req_t req;
+	void *arg;
 {
-	struct ispsoftc *isp;
+	struct scsipi_xfer *xs;
+	struct ispsoftc *isp = (void *)chan->chan_adapter->adapt_dev;
 	int result, s;
 
-	isp = XS_ISP(xs);
-	s = splbio();
-	if (isp->isp_state < ISP_RUNSTATE) {
-		DISABLE_INTS(isp);
-		isp_init(isp);
-                if (isp->isp_state != ISP_INITSTATE) {
+	switch (req) {
+	case ADAPTER_REQ_RUN_XFER:
+		s = splbio();
+		if (isp->isp_state < ISP_RUNSTATE) {
+			DISABLE_INTS(isp);
+			isp_init(isp);
+			if (isp->isp_state != ISP_INITSTATE) {
+				ENABLE_INTS(isp);
+				(void) splx(s);
+				XS_SETERR(xs, HBA_BOTCH);
+				XS_CMD_DONE(xs);
+				return;
+			}
+			isp->isp_state = ISP_RUNSTATE;
 			ENABLE_INTS(isp);
-                        (void) splx(s);
-                        XS_SETERR(xs, HBA_BOTCH);
-                        return (COMPLETE);
-                }
-                isp->isp_state = ISP_RUNSTATE;
-		ENABLE_INTS(isp);
-        }
-
-	/*
-	 * Check for queue blockage...
-	 */
-	if (isp->isp_osinfo.blocked) {
-		if (xs->xs_control & XS_CTL_POLL) {
-			xs->error = XS_DRIVER_STUFFUP;
-			splx(s);
-			return (TRY_AGAIN_LATER);
 		}
-		TAILQ_INSERT_TAIL(&isp->isp_osinfo.waitq, xs, adapter_q);
-		splx(s);
-		return (SUCCESSFULLY_QUEUED);
-	}
-	DISABLE_INTS(isp);
-	result = ispscsicmd(xs);
-	ENABLE_INTS(isp);
 
-	if ((xs->xs_control & XS_CTL_POLL) == 0) {
+		/*
+		 * Check for queue blockage...
+		 * XXX Should be done in the mid-layer.
+		 */
+		if (isp->isp_osinfo.blocked) {
+			if (xs->xs_control & XS_CTL_POLL) {
+				xs->error = XS_BUSY;
+				scsipi_done(xs);
+				splx(s);
+				return;
+			}
+			TAILQ_INSERT_TAIL(&isp->isp_osinfo.waitq, xs,
+			    channel_q);
+			splx(s);
+			return;
+		}
+
+		DISABLE_INTS(isp);
+		result = ispscsicmd(xs);
+		ENABLE_INTS(isp);
+
 		switch (result) {
 		case CMD_QUEUED:
-			result = SUCCESSFULLY_QUEUED;
+			/*
+			 * If we're not polling for completion, just return.
+			 */
+			if ((xs->xs_control & XS_CTL_POLL) == 0) {
+				(void) splx(s);
+				return;
+			}
 			break;
-		case CMD_EAGAIN:
-			result = TRY_AGAIN_LATER;
-			break;
-		case CMD_RQLATER:
-			result = SUCCESSFULLY_QUEUED;
-			timeout(isp_command_requeue, xs, hz);
-			break;
-		case CMD_COMPLETE:
-			result = COMPLETE;
-			break;
-		}
-		(void) splx(s);
-		return (result);
-	}
 
-	switch (result) {
-	case CMD_QUEUED:
-		result = SUCCESSFULLY_QUEUED;
-		break;
-	case CMD_RQLATER:
-	case CMD_EAGAIN:
-		if (XS_NOERR(xs)) {
-			xs->error = XS_DRIVER_STUFFUP;
+		case CMD_EAGAIN:
+			/*
+			 * Adapter resource shortage of some sort.  Should
+			 * retry later.
+			 */
+			XS_SETERR(xs, XS_RESOURCE_SHORTAGE);
+			XS_CMD_DONE(xs);
+			(void) splx(s);
+			return;
+
+		case CMD_RQLATER:
+			/*
+			 * XXX I think what we should do here is freeze
+			 * XXX the channel queue, and do a timed thaw
+			 * XXX of it.  Need to add this to the mid-layer.
+			 */
+			if ((xs->xs_control & XS_CTL_POLL) != 0) {
+				XS_SETERR(xs, XS_DRIVER_STUFFUP);
+				XS_CMD_DONE(xs);
+			} else
+				timeout(isp_command_requeue, xs, hz);
+			(void) splx(s);
+			return;
+
+		case CMD_COMPLETE:
+			/*
+			 * Something went horribly wrong, xs->error is set,
+			 * and we just need to finish it off.
+			 */
+			XS_CMD_DONE(xs);
+			(void) splx(s);
+			return;
 		}
-		result = TRY_AGAIN_LATER;
-		break;
-	case CMD_COMPLETE:
-		result = COMPLETE;
-		break;
-		
-	}
-	/*
-	 * If we can't use interrupts, poll on completion.
-	 */
-	if (result == SUCCESSFULLY_QUEUED) {
+
+		/*
+		 * If we can't use interrupts, poll on completion.
+		 */
 		if (isp_poll(isp, xs, XS_TIME(xs))) {
 			/*
 			 * If no other error occurred but we didn't finish,
@@ -328,12 +302,77 @@ ispcmd(xs)
 				if (XS_NOERR(xs)) {
 					XS_SETERR(xs, HBA_BOTCH);
 				}
+				XS_CMD_DONE(xs);
 			}
 		}
-		result = COMPLETE;
+		(void) splx(s);
+		return;
+
+	case ADAPTER_REQ_GROW_RESOURCES:
+		/* XXX Not supported. */
+		return;
+
+	case ADAPTER_REQ_SET_XFER_MODE:
+		if (isp->isp_type & ISP_HA_SCSI) {
+			sdparam *sdp = isp->isp_param;
+			struct scsipi_periph *periph = arg;
+			u_int16_t flags;
+
+			sdp = &sdp[periph->periph_channel->chan_channel];
+
+			flags =
+			    sdp->isp_devparam[periph->periph_target].dev_flags;
+			flags &= ~(DPARM_WIDE|DPARM_SYNC|DPARM_TQING);
+
+			if (periph->periph_cap & PERIPH_CAP_SYNC)
+				flags |= DPARM_SYNC;
+
+			if (periph->periph_cap & PERIPH_CAP_WIDE16)
+				flags |= DPARM_WIDE;
+
+			if (periph->periph_cap & PERIPH_CAP_TQING)
+				flags |= DPARM_TQING;
+
+			sdp->isp_devparam[periph->periph_target].dev_flags =
+			    flags;
+			sdp->isp_devparam[periph->periph_target].dev_update = 1;
+			isp->isp_update |=
+			    (1 << periph->periph_channel->chan_channel);
+			(void) isp_control(isp, ISPCTL_UPDATE_PARAMS, NULL);
+		}
+		return;
+
+	case ADAPTER_REQ_GET_XFER_MODE:
+		if (isp->isp_type & ISP_HA_SCSI) {
+			sdparam *sdp = isp->isp_param;
+			struct scsipi_periph *periph = arg;
+			u_int16_t flags;
+
+			sdp = &sdp[periph->periph_channel->chan_channel];
+
+			periph->periph_mode = 0;
+			periph->periph_period = 0;
+			periph->periph_offset = 0;
+
+			flags =
+			    sdp->isp_devparam[periph->periph_target].cur_dflags;
+
+			if (flags & DPARM_SYNC) {
+				periph->periph_mode |= PERIPH_CAP_SYNC;
+				periph->periph_period =
+			    sdp->isp_devparam[periph->periph_target].cur_period;
+				periph->periph_offset =
+			    sdp->isp_devparam[periph->periph_target].cur_offset;
+			}
+			if (flags & DPARM_WIDE)
+				periph->periph_mode |= PERIPH_CAP_WIDE16;
+			if (flags & DPARM_TQING)
+				periph->periph_mode |= PERIPH_CAP_TQING;
+
+			periph->periph_flags |= PERIPH_MODE_VALID;
+		}
+		return;
 	}
-	(void) splx(s);
-	return (result);
 }
 
 static int
@@ -439,26 +478,11 @@ isp_command_requeue(arg)
 	void *arg;
 {
 	struct scsipi_xfer *xs = arg;
-	struct ispsoftc *isp = XS_ISP(xs);
-	int s = splbio();
-	switch (ispcmd_slow(xs)) {
-	case SUCCESSFULLY_QUEUED:
-		printf("%s: isp_command_requeue: requeued for %d.%d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
-		break;
-	case TRY_AGAIN_LATER:
-		printf("%s: EAGAIN for %d.%d\n",
-		    isp->isp_name, XS_TGT(xs), XS_LUN(xs));
-		/* FALLTHROUGH */
-	case COMPLETE:
-		/* can only be an error */
-		xs->xs_status |= XS_STS_DONE;
-		if (XS_NOERR(xs)) {
-			XS_SETERR(xs, HBA_BOTCH);
-		}
-		scsipi_done(xs);
-		break;
-	}
+	int s;
+
+	s = splbio();
+	scsipi_adapter_request(xs->xs_periph->periph_channel,
+	    ADAPTER_REQ_RUN_XFER, xs);
 	(void) splx(s);
 }
 
@@ -477,17 +501,16 @@ isp_internal_restart(arg)
 	if (isp->isp_osinfo.blocked == 0) {
 		struct scsipi_xfer *xs;
 		while ((xs = TAILQ_FIRST(&isp->isp_osinfo.waitq)) != NULL) {
-			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, adapter_q);
+			TAILQ_REMOVE(&isp->isp_osinfo.waitq, xs, channel_q);
 			DISABLE_INTS(isp);
 			result = ispscsicmd(xs);
 			ENABLE_INTS(isp);
 			if (result != CMD_QUEUED) {
 				printf("%s: botched command restart (0x%x)\n",
 				    isp->isp_name, result);
-				xs->xs_status |= XS_STS_DONE;
-				if (xs->error == XS_NOERROR)
-					xs->error = XS_DRIVER_STUFFUP;
-				scsipi_done(xs);
+				if (XS_ERR(xs) == XS_NOERROR)
+					XS_SETERR(xs, HBA_BOTCH);
+				XS_CMD_DONE(xs);
 			}
 			nrestarted++;
 		}
@@ -502,68 +525,14 @@ isp_async(isp, cmd, arg)
 	ispasync_t cmd;
 	void *arg;
 {
-	int bus, tgt;
+	int bus;
 	int s = splbio();
 	switch (cmd) {
 	case ISPASYNC_NEW_TGT_PARAMS:
-	if (IS_SCSI(isp) && isp->isp_dblev) {
-		sdparam *sdp = isp->isp_param;
-		char *wt;
-		int mhz, flags, period;
-
-		tgt = *((int *) arg);
-		bus = (tgt >> 16) & 0xffff;
-		tgt &= 0xffff;
-
-		flags = sdp->isp_devparam[tgt].cur_dflags;
-		period = sdp->isp_devparam[tgt].cur_period;
-		if ((flags & DPARM_SYNC) && period &&
-		    (sdp->isp_devparam[tgt].cur_offset) != 0) {
-			if (sdp->isp_lvdmode) {
-				switch (period) {
-				case 0xa:
-					mhz = 40;
-					break;
-				case 0xb:
-					mhz = 33;
-					break;
-				case 0xc:
-					mhz = 25;
-					break;
-				default:
-					mhz = 1000 / (period * 4);
-					break;
-				}
-			} else {
-				mhz = 1000 / (period * 4);
-			}
-		} else {
-			mhz = 0;
-		}
-		switch (flags & (DPARM_WIDE|DPARM_TQING)) {
-		case DPARM_WIDE:
-			wt = ", 16 bit wide\n";
-			break;
-		case DPARM_TQING:
-			wt = ", Tagged Queueing Enabled\n";
-			break;
-		case DPARM_WIDE|DPARM_TQING:
-			wt = ", 16 bit wide, Tagged Queueing Enabled\n";
-			break;
-		default:
-			wt = "\n";
-			break;
-		}
-		if (mhz) {
-			printf("%s: Bus %d Target %d at %dMHz Max "
-			    "Offset %d%s", isp->isp_name, bus, tgt, mhz,
-			    sdp->isp_devparam[tgt].cur_offset, wt);
-		} else {
-			printf("%s: Bus %d Target %d Async Mode%s",
-			    isp->isp_name, bus, tgt, wt);
-		}
+		/*
+		 * XXX Should we really do anything here?
+		 */
 		break;
-	}
 	case ISPASYNC_BUS_RESET:
 		if (arg)
 			bus = *((int *) arg);

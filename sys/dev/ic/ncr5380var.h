@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.14 1999/09/21 18:07:54 ragge Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.14.2.1 1999/10/19 17:47:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -105,8 +105,8 @@ struct sci_req {
 
 struct ncr5380_softc {
 	struct device		sc_dev;
-	struct scsipi_link	sc_link;
 	struct scsipi_adapter	sc_adapter;
+	struct scsipi_channel	sc_channel;
 
 #ifdef NCR5380_USE_BUS_SPACE
 	/* Pointers to bus_space */
@@ -215,7 +215,8 @@ struct ncr5380_softc {
 void	ncr5380_init __P((struct ncr5380_softc *));
 void	ncr5380_reset_scsibus __P((struct ncr5380_softc *));
 int 	ncr5380_intr __P((struct ncr5380_softc *));
-int 	ncr5380_scsi_cmd __P((struct scsipi_xfer *));
+void 	ncr5380_scsipi_request __P((struct scsipi_channel *,
+	    scsipi_adapter_req_t, void *));
 int 	ncr5380_pio_in __P((struct ncr5380_softc *, int, int, u_char *));
 int 	ncr5380_pio_out __P((struct ncr5380_softc *, int, int, u_char *));
 

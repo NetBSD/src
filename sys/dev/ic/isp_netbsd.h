@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.18 1999/10/14 02:33:38 mjacob Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.18.2.1 1999/10/19 17:47:38 thorpej Exp $ */
 /* release_6_5_99 */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
@@ -65,17 +65,12 @@
 #define	ISP_SCSI_XFER_T		struct scsipi_xfer
 struct isposinfo {
 	struct device		_dev;
-	struct scsipi_link	_link;
-	struct scsipi_link	_link_b;
 	struct scsipi_adapter   _adapter;
+	struct scsipi_channel	_channels[2];
+	int			seed;
 	int			blocked;
-	union {
-		int		_seed;
-		u_int16_t	_discovered[2];
-	} un;
-#define	seed		un._seed
-#define	discovered	un._discovered
-	TAILQ_HEAD(, scsipi_xfer) waitq; 
+
+	struct scsipi_xfer_queue waitq;
 };
 
 #define	MAXISPREQUEST	256
@@ -127,13 +122,13 @@ struct isposinfo {
 #define	ISP_IUNLOCK		ISP_UNLOCK
 
 
-#define	XS_NULL(xs)		xs == NULL || xs->sc_link == NULL
-#define	XS_ISP(xs)		(xs)->sc_link->adapter_softc
-#define	XS_LUN(xs)		((int) (xs)->sc_link->scsipi_scsi.lun)
-#define	XS_TGT(xs)		((int) (xs)->sc_link->scsipi_scsi.target)
+#define	XS_NULL(xs)		xs == NULL || xs->xs_periph == NULL
+#define	XS_ISP(xs)		\
+    (void *)(xs)->xs_periph->periph_channel->chan_adapter->adapt_dev
+#define	XS_LUN(xs)		((int) (xs)->xs_periph->periph_lun)
+#define	XS_TGT(xs)		((int) (xs)->xs_periph->periph_target)
 #define	XS_CHANNEL(xs)		\
-    (((xs)->sc_link == &(((struct ispsoftc *)XS_ISP(xs))->isp_osinfo._link_b))?\
-    1 : 0)
+    (xs)->xs_periph->periph_channel->chan_channel
 #define	XS_RESID(xs)		(xs)->resid
 #define	XS_XFRLEN(xs)		(xs)->datalen
 #define	XS_CDBLEN(xs)		(xs)->cmdlen
@@ -166,7 +161,7 @@ struct isposinfo {
 #define	XS_ERR(xs)		(xs)->error
 #define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
 
-#define	XS_CMD_DONE(xs)		(xs)->xs_status |= XS_STS_DONE, scsipi_done(xs)
+#define	XS_CMD_DONE(xs)		scsipi_done(xs)
 #define	XS_IS_CMD_DONE(xs)	(((xs)->xs_status & XS_STS_DONE) != 0)
 
 /*

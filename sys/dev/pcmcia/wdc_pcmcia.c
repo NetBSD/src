@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.21 1999/09/23 11:04:33 enami Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.21.2.1 1999/10/19 17:52:19 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@ int	wdc_pcmcia_disk_device_interface __P((struct pcmcia_function *));
 struct wdc_pcmcia_product *
 	wdc_pcmcia_lookup __P((struct pcmcia_attach_args *));
 
-int	wdc_pcmcia_enable __P((void *, int));
+int	wdc_pcmcia_enable __P((struct device *, int));
 
 int
 wdc_pcmcia_disk_device_interface_callback(tuple, arg)
@@ -350,7 +350,7 @@ wdc_pcmcia_attach(parent, self, aux)
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_EXTRA_RESETS;
 
 	/* We can enable and disable the controller. */
-	sc->sc_wdcdev.sc_atapi_adapter.scsipi_enable = wdc_pcmcia_enable;
+	sc->sc_wdcdev.sc_atapi_adapter.adapt_enable = wdc_pcmcia_enable;
 
 	/*
 	 * Disable the pcmcia function now; wdcattach() will enable
@@ -386,11 +386,11 @@ wdc_pcmcia_detach(self, flags)
 }
 
 int
-wdc_pcmcia_enable(arg, onoff)
-	void *arg;
+wdc_pcmcia_enable(self, onoff)
+	struct device *self;
 	int onoff;
 {
-	struct wdc_pcmcia_softc *sc = arg;
+	struct wdc_pcmcia_softc *sc = (void *)self;
 
 	if (onoff) {
 		/* Establish the interrupt handler. */
