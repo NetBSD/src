@@ -34,9 +34,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)mips.h	8.1 (Berkeley) 6/6/93
- *
  * From: @(#)sparc.h	5.1 (Berkeley) 7/8/92
+ *
+ *	from: @(#)mips.h	8.1 (Berkeley) 6/6/93
+ *	$Id: mips.h,v 1.2 1994/05/17 03:36:20 cgd Exp $
  */
 
 /*

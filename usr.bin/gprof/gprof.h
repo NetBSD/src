@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,38 +30,40 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)gprof.h	5.10 (Berkeley) 4/24/91
- *	$Id: gprof.h,v 1.8 1994/05/14 06:26:07 cgd Exp $
+ *	from: @(#)gprof.h	8.1 (Berkeley) 6/6/93
+ *	$Id: gprof.h,v 1.9 1994/05/17 03:36:02 cgd Exp $
  */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/gmon.h>
+
 #include <a.out.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef vax
+#if vax
 #   include "vax.h"
 #endif
-#ifdef sun
-#   include "sun.h"
-#endif
-#ifdef tahoe
-#   include "tahoe.h"
-#endif
-#ifdef m68k
-#   include "m68k.h"
-#endif
-#ifdef i386
-#   include "i386.h"
-#endif
-#ifdef sparc
+#if sparc
 #   include "sparc.h"
 #endif
-#ifdef ns32k
-#   include "ns32k.h"
+#if tahoe
+#   include "tahoe.h"
 #endif
+#if m68k
+#   include "m68k.h"
+#endif
+#if i386
+#   include "i386.h"
+#endif
+#if mips
+#   include "mips.h"
+#endif
+#if pmax
+#   include "pmax.h"
+#endif
+
 
     /*
      *	who am i, for error messages.
@@ -98,13 +100,22 @@ char	*gmonname;
 struct arcstruct {
     struct nl		*arc_parentp;	/* pointer to parent's nl entry */
     struct nl		*arc_childp;	/* pointer to child's nl entry */
-    long		arc_count;	/* how calls from parent to child */
+    long		arc_count;	/* num calls from parent to child */
     double		arc_time;	/* time inherited along arc */
     double		arc_childtime;	/* childtime inherited along arc */
     struct arcstruct	*arc_parentlist; /* parents-of-this-child list */
     struct arcstruct	*arc_childlist;	/* children-of-this-parent list */
+    struct arcstruct	*arc_next;	/* list of arcs on cycle */
+    unsigned short	arc_cyclecnt;	/* num cycles involved in */
+    unsigned short	arc_flags;	/* see below */
 };
 typedef struct arcstruct	arctype;
+
+    /*
+     * arc flags
+     */
+#define	DEADARC	0x01	/* time should not propagate across the arc */
+#define	ONLIST	0x02	/* arc is on list of arcs in cycles */
 
     /*
      * The symbol table;
@@ -118,14 +129,17 @@ struct nl {
     double		time;		/* ticks in this routine */
     double		childtime;	/* cumulative ticks in children */
     long		ncall;		/* how many times called */
+    long		npropcall;	/* times called by live arcs */
     long		selfcalls;	/* how many calls to self */
     double		propfraction;	/* what % of time propagates */
     double		propself;	/* how much self time propagates */
     double		propchild;	/* how much child time propagates */
-    bool		printflag;	/* should this be printed? */
+    short		printflag;	/* should this be printed? */
+    short		flags;		/* see below */
     int			index;		/* index in the graph list */
     int			toporder;	/* graph call chain top-sort order */
     int			cycleno;	/* internal number of cycle on */
+    int			parentcnt;	/* number of live parent arcs */
     struct nl		*cyclehead;	/* pointer to head of cycle */
     struct nl		*cnext;		/* pointer to next member of cycle */
     arctype		*parents;	/* list of caller arcs */
@@ -136,6 +150,28 @@ typedef struct nl	nltype;
 nltype	*nl;			/* the whole namelist */
 nltype	*npe;			/* the virtual end of the namelist */
 int	nname;			/* the number of function names */
+
+#define	HASCYCLEXIT	0x08	/* node has arc exiting from cycle */
+#define	CYCLEHEAD	0x10	/* node marked as head of a cycle */
+#define	VISITED		0x20	/* node visited during a cycle */
+
+    /*
+     * The cycle list.
+     * for each subcycle within an identified cycle, we gather
+     * its size and the list of included arcs.
+     */
+struct cl {
+    int		size;		/* length of cycle */
+    struct cl	*next;		/* next member of list */
+    arctype	*list[1];	/* list of arcs in cycle */
+    /* actually longer */
+};
+typedef struct cl cltype;
+
+arctype	*archead;		/* the head of arcs in current cycle list */
+cltype	*cyclehead;		/* the head of the list */
+int	cyclecnt;		/* the number of cycles found */
+#define	CYCLEMAX	100	/* maximum cycles before cutting one of them */
 
     /*
      *	flag which marks a nl entry as topologically ``busy''
@@ -153,19 +189,17 @@ int	ncycle;			/* number of cycles discovered */
 
     /*
      * The header on the gmon.out file.
-     * gmon.out consists of one of these headers,
-     * and then an array of ncnt samples
-     * representing the discretized program counter values.
-     *	this should be a struct phdr, but since everything is done
-     *	as UNITs, this is in UNITs too.
+     * gmon.out consists of a struct phdr (defined in gmon.h)
+     * and then an array of ncnt samples representing the
+     * discretized program counter values.
+     *
+     *	Backward compatible old style header
      */
-struct hdr {
-    UNIT	*lowpc;
-    UNIT	*highpc;
-    int	ncnt;
+struct ophdr {
+    UNIT	*lpc;
+    UNIT	*hpc;
+    int		ncnt;
 };
-
-struct hdr	h;
 
 int	debug;
 
@@ -186,9 +220,10 @@ double	printtime;		/* total of time being printed */
 double	scale;			/* scale factor converting samples to pc
 				   values: each sample covers scale bytes */
 char	*strtab;		/* string table in core */
-off_t	ssiz;			/* size of the string table */
+long	ssiz;			/* size of the string table */
 struct	exec xbuf;		/* exec header of a.out */
-unsigned char	*textspace;		/* text space of a.out in core */
+unsigned char	*textspace;	/* text space of a.out in core */
+int	cyclethreshold;		/* with -C, minimum cycle size to ignore */
 
     /*
      *	option flags, from a to z.
@@ -196,6 +231,7 @@ unsigned char	*textspace;		/* text space of a.out in core */
 bool	aflag;				/* suppress static functions */
 bool	bflag;				/* blurbs, too */
 bool	cflag;				/* discovered call graph, too */
+bool	Cflag;				/* find cut-set to eliminate cycles */
 bool	dflag;				/* debugging options */
 bool	eflag;				/* specific functions excluded */
 bool	Eflag;				/* functions excluded with time */
@@ -307,4 +343,6 @@ int		totalcmp();
 #define	CALLDEBUG	128
 #define	LOOKUPDEBUG	256
 #define	PROPDEBUG	512
-#define	ANYDEBUG	1024
+#define	BREAKCYCLE	1024
+#define	SUBCYCLELIST	2048
+#define	ANYDEBUG	4096

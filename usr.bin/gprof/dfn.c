@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1983 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1983, 1993
+ *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,8 @@
  */
 
 #ifndef lint
-/*static char sccsid[] = "from: @(#)dfn.c	5.4 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: dfn.c,v 1.2 1993/08/01 18:15:12 mycroft Exp $";
+/* from: static char sccsid[] = "@(#)dfn.c	8.1 (Berkeley) 6/6/93"; */
+static char *rcsid = "$Id: dfn.c,v 1.3 1994/05/17 03:35:58 cgd Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -47,9 +47,16 @@ struct dfnstruct {
 typedef struct dfnstruct	dfntype;
 
 dfntype	dfn_stack[ DFN_DEPTH ];
-int	dfn_depth = 0;
+int	dfn_depth;
 
-int	dfn_counter = DFN_NAN;
+int	dfn_counter;
+
+dfn_init()
+{
+
+    dfn_depth = 0;
+    dfn_counter = DFN_NAN;
+}
 
     /*
      *	given this parent, depth first number its children.
@@ -87,6 +94,8 @@ dfn( parentp )
 	 *	visit children
 	 */
     for ( arcp = parentp -> children ; arcp ; arcp = arcp -> arc_childlist ) {
+	    if ( arcp -> arc_flags & DEADARC )
+		continue;
 	    dfn( arcp -> arc_childp );
     }
 	/*
