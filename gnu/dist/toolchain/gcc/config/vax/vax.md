@@ -245,7 +245,11 @@
       return \"movab %a1,%0\";
     }
   if (operands[1] == const0_rtx)
-    return \"clrl %0\";
+    {
+      if (push_operand (operands[0], SImode))
+	return \"pushl %1\";
+      return \"clrl %0\";
+    }
   if (GET_CODE (operands[1]) == CONST_INT
       && (unsigned) INTVAL (operands[1]) >= 64)
     {
