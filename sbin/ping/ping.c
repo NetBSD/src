@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.23 1997/03/11 21:53:42 christos Exp $	*/
+/*	$NetBSD: ping.c,v 1.24 1997/03/13 16:19:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -60,7 +60,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: ping.c,v 1.23 1997/03/11 21:53:42 christos Exp $";
+static char rcsid[] = "$NetBSD: ping.c,v 1.24 1997/03/13 16:19:10 christos Exp $";
 #endif
 
 #include <stdio.h>
@@ -841,12 +841,11 @@ pr_pack(u_char *buf,
 				tmax = triptime;
 		}
 
-		if (TST(icp->icmp_seq)) {
+		if (TST(ntohs((u_short)icp->icmp_seq))) {
 			nrepeats++, nreceived--;
 			dupflag=1;
-		} else {
-			SET(icp->icmp_seq);
-		}
+		} else
+			SET(ntohs((u_short)icp->icmp_seq));
 
 		if (pingflags & F_QUIET)
 			return;
