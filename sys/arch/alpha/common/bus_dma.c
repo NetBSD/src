@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.32 1999/09/12 01:16:58 chs Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,11 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_pmap_new.h"
-
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.31 1999/07/08 18:05:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.32 1999/09/12 01:16:58 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

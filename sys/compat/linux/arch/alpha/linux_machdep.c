@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.6 1999/03/24 05:51:19 mrg Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.7 1999/09/12 01:17:31 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,8 +40,6 @@
  *	written by Frank van der Linden
  *
  */
-
-#include "opt_pmap_new.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

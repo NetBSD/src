@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.70 1999/08/01 13:48:06 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.71 1999/09/12 01:17:29 chs Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -58,8 +58,6 @@
 #include <machine/sid.h>
 #include <machine/cpu.h>
 #include <machine/scb.h>
-
-#include "opt_pmap_new.h"
 
 /* QDSS console mapping hack */
 #include "qd.h"

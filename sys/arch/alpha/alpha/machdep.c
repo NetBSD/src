@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.181 1999/08/19 21:31:43 mjacob Exp $ */
+/* $NetBSD: machdep.c,v 1.182 1999/09/12 01:16:55 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -66,7 +66,6 @@
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_pmap_new.h"
 #include "opt_dec_3000_300.h"
 #include "opt_dec_3000_500.h"
 #include "opt_compat_osf1.h"
@@ -80,7 +79,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 1999/08/19 21:31:43 mjacob Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 1999/09/12 01:16:55 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -943,13 +942,8 @@ cpu_startup()
 			if (pg == NULL)
 				panic("cpu_startup: not enough memory for "
 				    "buffer cache");
-#if defined(PMAP_NEW)
-			pmap_kenter_pgs(curbuf, &pg, 1);
-#else
-			pmap_enter(kernel_map->pmap, curbuf,
-			    VM_PAGE_TO_PHYS(pg), VM_PROT_READ|VM_PROT_WRITE,
-			    TRUE, VM_PROT_READ|VM_PROT_WRITE);
-#endif
+			pmap_kenter_pa(curbuf, VM_PAGE_TO_PHYS(pg),
+					VM_PROT_READ|VM_PROT_WRITE);
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
