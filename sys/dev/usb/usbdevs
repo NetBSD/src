@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.220 2002/01/25 22:54:34 augustss Exp $
+$NetBSD: usbdevs,v 1.221 2002/02/02 02:29:28 augustss Exp $
 
 /*
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -324,6 +324,7 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
+vendor DAISY		0x3579	Daisy Technology
 vendor INTEL		0x8086	Intel
 vendor HP2		0xf003	Hewlett Packard
 
@@ -510,16 +511,8 @@ product CYPRESS MOUSE		0x0001	mouse
 product CYPRESS THERMO		0x0002	thermometer
 product CYPRESS FMRADIO		0x1002	FM Radio
 
-/* D-Link products */
-/*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
-product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
-product DLINK DSB650C		0x4000	10Mbps ethernet adapter
-product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
-product DLINK DSB650TX		0x4002	10/100 ethernet adapter
-product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
-product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
-product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
-product DLINK DSB650		0xabc1	10/100 ethernet adapter
+/* Daisy Technology products */
+product DAISY DMC		0x6901	PhotoClip Camera
 
 /* Dallas Semiconductor products */
 product DALLAS J6502		0x4201	J-6502 speakers
@@ -535,6 +528,17 @@ product DIGI ACCELEPORT8	0x0008	AccelePort USB 8
 
 /* Digital Stream Corp. products */
 product DIGITALSTREAM PS2	0x0001	PS/2 Active Adapter
+
+/* D-Link products */
+/*product DLINK DSBS25		0x0100	DSB-S25 serial adapter*/
+product DLINK DSB650TX4		0x200c	10/100 ethernet adapter
+product DLINK DSB650C		0x4000	10Mbps ethernet adapter
+product DLINK DSB650TX1		0x4001	10/100 ethernet adapter
+product DLINK DSB650TX		0x4002	10/100 ethernet adapter
+product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
+product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
+product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
+product DLINK DSB650		0xabc1	10/100 ethernet adapter
 
 /* DMI products */
 product DMI SA2_0		0xb001	Storage Adapter
